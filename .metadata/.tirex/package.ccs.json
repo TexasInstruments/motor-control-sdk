@@ -1,0 +1,18 @@
+[
+    {
+        "rootMacroName": "COM_TI_MOTOR_CONTROL_SDK_AMXXX_INSTALL_DIR",
+        "compilerIncludePath": [ ],
+        "compilerSymbols": [ ],
+        "linkerSearchPath": [ ],
+        "properties": {
+            "rtsc.repositories": [
+                "source",
+                "."
+            ]
+        },
+        "helpTocs": [
+        ],
+        "docs": [
+        ]
+    }
+]
