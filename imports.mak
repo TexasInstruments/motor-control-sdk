@@ -37,7 +37,7 @@ else
 endif
 
 # Variable pointing to location of MCU+ SDK
-export MCU_PLUS_SDK_PATH?=$(TOOLS_PATH)/mcu_plus_sdk_am64x_09_00_00_01
+export MCU_PLUS_SDK_PATH?=./mcu_plus_sdk
 
 CGT_TI_PRU_PATH=$(TOOLS_PATH)/ti-cgt-pru_2.3.3
 CGT_TI_SMART_PLACEMENT_TOOL_PATH=$(TOOLS_PATH)/ti-cgt-armllvm_3.0.0.STS
