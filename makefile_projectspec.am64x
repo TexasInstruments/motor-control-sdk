@@ -318,7 +318,7 @@ $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL) $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_
 # Same CCS workspace used by the examples is used here.
 import_extra_components:
 	$(MKDIR) $(MOTOR_CONTROL_SDK_PATH)/ccs_projects
-	$(CCS_ECLIPSE) -noSplash -data $(MOTOR_CONTROL_SDK_PATH)/ccs_projects -application com.ti.common.core.initialize -ccs.productDiscoveryPath $(COM_TI_MOTOR_CONTROL_SDK_AMXXX_INSTALL_DIR) -ccs.productDiscoveryPath $(COM_TI_MCU_PLUS_SDK_AMXXX_INSTALL_DIR)
+	$(CCS_ECLIPSE) -noSplash -data $(MOTOR_CONTROL_SDK_PATH)/ccs_projects -application com.ti.common.core.initialize -ccs.productDiscoveryPath $(COM_TI_MOTOR_CONTROL_SDK_AMXXX_INSTALL_DIR)
 
 help:
 	@echo  Notes,

@@ -143,13 +143,6 @@ const utils = {
         return require(`./device/project_${device}`).getProductNameProjectSpec();
     },
 	
-    getDependentProductNameProjectSpec: (device) => {
-
-        if(common.isDevelopmentMode())
-            return "MCU_PLUS_SDK_AMXXX"
-
-        return require(`./device/project_${device}`).getDependentProductNameProjectSpec();
-    },
     /* default action for files in project spec, i.e copy or link */
     getDefaultActionProjectSpec: () => {
 

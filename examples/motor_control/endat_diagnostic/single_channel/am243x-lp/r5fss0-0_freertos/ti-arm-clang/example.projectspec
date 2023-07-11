@@ -12,7 +12,7 @@
     <project
         title="Endat Diagnostic Single Channel"
         name = "endat_diagnostic_single_channel_am243x-lp_r5fss0-0_freertos_ti-arm-clang"
-        products="sysconfig;com.ti.MOTOR_CONTROL_SDK_AMXXX;com.ti.MCU_PLUS_SDK_AMXXX"
+        products="sysconfig;com.ti.MOTOR_CONTROL_SDK_AMXXX;"
         configurations="
                 Debug,
                 Release,
@@ -30,11 +30,11 @@
 
         compilerBuildOptions="
             -I${CG_TOOL_ROOT}/include/c
-            -I${MCU_PLUS_SDK_PATH}/source
+            -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source
             -I${MOTOR_CONTROL_SDK_PATH}/source
-            -I${MCU_PLUS_SDK_PATH}/source/kernel/freertos/FreeRTOS-Kernel/include
-            -I${MCU_PLUS_SDK_PATH}/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F
-            -I${MCU_PLUS_SDK_PATH}/source/kernel/freertos/config/am243x/r5f
+            -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/FreeRTOS-Kernel/include
+            -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F
+            -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/am243x/r5f
             -mcpu=cortex-r5
             -mfloat-abi=hard
             -mfpu=vfpv3-d16
@@ -48,9 +48,9 @@
             -DSOC_AM243X
         "
         linkerBuildOptions="
-            -i${MCU_PLUS_SDK_PATH}/source/kernel/freertos/lib
-            -i${MCU_PLUS_SDK_PATH}/source/drivers/lib
-            -i${MCU_PLUS_SDK_PATH}/source/board/lib
+            -i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/lib
+            -i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers/lib
+            -i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/board/lib
             -i${MOTOR_CONTROL_SDK_PATH}/source/motor_control/position_sense/endat/lib
             -i${CG_TOOL_ROOT}/lib
             -m=endat_diagnostic_single_channel.${ConfigName}.map
@@ -59,7 +59,7 @@
             --reread_libs
         "
 
-        postBuildStep="$(MAKE) -C ${CCS_PROJECT_DIR} -f makefile_ccs_bootimage_gen OUTNAME=${BuildArtifactFileBaseName} PROFILE=${ConfigName} MCU_PLUS_SDK_PATH=${MCU_PLUS_SDK_PATH} CG_TOOL_ROOT=${CG_TOOL_ROOT} CCS_INSTALL_DIR=${CCS_INSTALL_DIR} CCS_IDE_MODE=${CCS_IDE_MODE} DEVICE=am243x"
+        postBuildStep="$(MAKE) -C ${CCS_PROJECT_DIR} -f makefile_ccs_bootimage_gen OUTNAME=${BuildArtifactFileBaseName} PROFILE=${ConfigName} MOTOR_CONTROL_SDK_PATH=${MOTOR_CONTROL_SDK_PATH} CG_TOOL_ROOT=${CG_TOOL_ROOT} CCS_INSTALL_DIR=${CCS_INSTALL_DIR} CCS_IDE_MODE=${CCS_IDE_MODE} DEVICE=am243x"
 
         enableSysConfigTool="true"
         sysConfigBuildOptions="
@@ -94,7 +94,6 @@
                 -llibsysbm.a
             "
         ></configuration>
-        <pathVariable name="MCU_PLUS_SDK_PATH" path="${COM_TI_MCU_PLUS_SDK_AMXXX_INSTALL_DIR}" scope="project" />
         <pathVariable name="MOTOR_CONTROL_SDK_PATH" path="${COM_TI_MOTOR_CONTROL_SDK_AMXXX_INSTALL_DIR}" scope="project" />
         <file path="../../../../endat_diagnostic.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>

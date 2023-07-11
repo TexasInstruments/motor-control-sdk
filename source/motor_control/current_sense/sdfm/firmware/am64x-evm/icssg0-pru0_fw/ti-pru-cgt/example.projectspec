@@ -12,7 +12,7 @@
     <project
         title="Sdfm Firmware"
         name = "sdfm_firmware_am64x-evm_icssg0-pru0_fw_ti-pru-cgt"
-        products="com.ti.MOTOR_CONTROL_SDK_AMXXX;com.ti.MCU_PLUS_SDK_AMXXX"
+        products="com.ti.MOTOR_CONTROL_SDK_AMXXX;"
         configurations="
                 Debug,
                 Release,
@@ -30,7 +30,7 @@
 
         compilerBuildOptions="
             -I${CG_TOOL_ROOT}/include
-            -I${MCU_PLUS_SDK_PATH}/source
+            -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source
             -I${MOTOR_CONTROL_SDK_PATH}/source
             -I${MOTOR_CONTROL_SDK_PATH}/source/motor_control/current_sense/sdfm/firmware
             -DICSSG0
@@ -75,7 +75,6 @@
             linkerBuildOptions="
             "
         ></configuration>
-        <pathVariable name="MCU_PLUS_SDK_PATH" path="${COM_TI_MCU_PLUS_SDK_AMXXX_INSTALL_DIR}" scope="project" />
         <pathVariable name="MOTOR_CONTROL_SDK_PATH" path="${COM_TI_MOTOR_CONTROL_SDK_AMXXX_INSTALL_DIR}" scope="project" />
         <file path="../../../sddf.asm" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>

@@ -2,7 +2,7 @@
 DEVICE_TYPE?=GP
 
 # Path to the signing tools, keys etc
-SIGNING_TOOL_PATH=$(MCU_PLUS_SDK_PATH)/tools/boot/signing
+SIGNING_TOOL_PATH=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/signing
 
 # Path to the keys
 ROM_DEGENERATE_KEY:=$(SIGNING_TOOL_PATH)/rom_degenerateKey.pem

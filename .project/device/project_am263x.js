@@ -116,7 +116,7 @@ function getLinuxFwName(cpu) {
 }
 
 function getProductNameProjectSpec() {
-    return "MCU_PLUS_SDK_AM263X";
+    return "MOTOR_CONTROL_SDK_AM263X";
 }
 
 function getFlashAddr() {
@@ -135,6 +135,5 @@ module.exports = {
     getDevToolTirex,
     getProperty,
     getLinuxFwName,
-    getProductNameProjectSpec,
     getFlashAddr,
 };

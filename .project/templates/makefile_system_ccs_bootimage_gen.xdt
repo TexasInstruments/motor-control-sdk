@@ -3,7 +3,7 @@
 #
 
 # Below variables need to be defined outside this file or via command line
-# - MCU_PLUS_SDK_PATH
+# - MOTOR_CONTROL_SDK_PATH
 # - PROFILE
 # - OUTNAME
 # - CCS_INSTALL_DIR
@@ -71,7 +71,7 @@ BOOTIMAGE_CORE_ID_r5fss0-1 = 1
 BOOTIMAGE_CORE_ID_c66ss0   = 2
 % if (args.project.device == "awr294x") {
 BOOTIMAGE_CORE_ID_r4       = 3
-R4_RPRC_PATH = $(MCU_PLUS_SDK_PATH)/source/drivers/bootloader/soc/awr294x/xwr2xxx_radarss_metarprc.bin
+R4_RPRC_PATH = $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/drivers/bootloader/soc/awr294x/xwr2xxx_radarss_metarprc.bin
 % }
 SBL_RUN_ADDRESS=0x10200000
 SBL_DEV_ID=55
@@ -87,10 +87,10 @@ SBL_RUN_ADDRESS=0x70000000
 SBL_DEV_ID=55
 % }
 
-MULTI_CORE_IMAGE_GEN = $(CCS_NODE) $(MCU_PLUS_SDK_PATH)/tools/boot/multicoreImageGen/multicoreImageGen.js
-OUTRPRC_CMD = $(CCS_NODE) $(MCU_PLUS_SDK_PATH)/tools/boot/out2rprc/elf2rprc.js
+MULTI_CORE_IMAGE_GEN = $(CCS_NODE) $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/multicoreImageGen/multicoreImageGen.js
+OUTRPRC_CMD = $(CCS_NODE) $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/out2rprc/elf2rprc.js
 % if ((args.project.device == "am243x") || (args.project.device == "am64x")) {
-APP_IMAGE_SIGN_CMD = $(MCU_PLUS_SDK_PATH)/tools/boot/signing/appimage_x509_cert_gen.py
+APP_IMAGE_SIGN_CMD = $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/signing/appimage_x509_cert_gen.py
 % }
 
 MULTI_CORE_APP_PARAMS = \

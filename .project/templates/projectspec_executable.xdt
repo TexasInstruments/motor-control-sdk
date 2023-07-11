@@ -7,8 +7,6 @@
     }
     products+=`com.ti.${args.utils.getProductNameProjectSpec(args.project.device)};`
     productName = args.utils.getProductNameProjectSpec(args.project.device);
-    products+=`com.ti.${args.utils.getDependentProductNameProjectSpec(args.project.device)}`
-    dependentProductName = args.utils.getDependentProductNameProjectSpec(args.project.device);
     if(args.project.projecspecFileAction)  // should be renamed to projectspecFileAction
     {
         defaultAction = args.project.projecspecFileAction;
@@ -160,8 +158,8 @@
         % let projectPath = `${obj.relpath}/${obj.board}/${obj.cpu}_${obj.os}/${obj.cgt}`;
         % if(args.project["defaultPruPostBuildSteps"]) {
         postBuildStep="
-            $(CG_TOOL_ROOT)/bin/hexpru.exe ${MCU_PLUS_SDK_PATH}/`projectPath`/hexpru.cmd `projectName`.out;
-            ${MCU_PLUS_SDK_PATH}/tools/bin2header/bin2header.exe `projectName`.b00 pru_load_bin.h PRUFirmware 4;
+            $(CG_TOOL_ROOT)/bin/hexpru.exe ${MOTOR_CONTROL_SDK_PATH}/`projectPath`/hexpru.cmd `projectName`.out;
+            ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/tools/bin2header/bin2header.exe `projectName`.b00 pru_load_bin.h PRUFirmware 4;
         "
         % }
         % if("postBuildSteps" in args.project) {
@@ -173,7 +171,7 @@
         "
         % } else if (args.project.cpu.includes("pru")) {
         % } else {
-        postBuildStep="$(MAKE) -C ${CCS_PROJECT_DIR} -f makefile_ccs_bootimage_gen OUTNAME=${BuildArtifactFileBaseName} PROFILE=${ConfigName} MCU_PLUS_SDK_PATH=${MCU_PLUS_SDK_PATH} CG_TOOL_ROOT=${CG_TOOL_ROOT} CCS_INSTALL_DIR=${CCS_INSTALL_DIR} CCS_IDE_MODE=${CCS_IDE_MODE} DEVICE=`args.project.device`"
+        postBuildStep="$(MAKE) -C ${CCS_PROJECT_DIR} -f makefile_ccs_bootimage_gen OUTNAME=${BuildArtifactFileBaseName} PROFILE=${ConfigName} MOTOR_CONTROL_SDK_PATH=${MOTOR_CONTROL_SDK_PATH} CG_TOOL_ROOT=${CG_TOOL_ROOT} CCS_INSTALL_DIR=${CCS_INSTALL_DIR} CCS_IDE_MODE=${CCS_IDE_MODE} DEVICE=`args.project.device`"
         % }
 
         % if("syscfgfile" in args.project) {
@@ -252,7 +250,6 @@
         % if(args.project.device == "am273x") {
         <pathVariable name="DSPLIB_PATH" path="${COM_TI_`productName`_INSTALL_DIR}/source/dsplib_c66x_3_4_0_0" scope="project" />
         % }
-        <pathVariable name="MCU_PLUS_SDK_PATH" path="${COM_TI_`dependentProductName`_INSTALL_DIR}" scope="project" />
         <pathVariable name="`args.sdkName`" path="${COM_TI_`productName`_INSTALL_DIR}" scope="project" />
         % filelist = args.utils.getFileListProjectSpec(args.project.files, args.project.filedirs, args.project.dirPath)
         % for (file of filelist) {

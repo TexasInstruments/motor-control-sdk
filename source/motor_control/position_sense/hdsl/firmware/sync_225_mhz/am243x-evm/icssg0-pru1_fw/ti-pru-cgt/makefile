@@ -3,9 +3,9 @@
 ################################################################################
 
 #   Required input arguments:
-#   MCU_PLUS_SDK_PATH=${MCU_PLUS_SDK_PATH}      sdk_dir_path
-#   CCS_INSTALL_DIR=${CCS_INSTALL_DIR}          ccs_dir_path
-#   CCS_PROJECT_DEBUG=${CWD}       				project_debug_dir_path
+#   MOTOR_CONTROL_SDK_PATH=${MOTOR_CONTROL_SDK_PATH}	sdk_dir_path
+#   CCS_INSTALL_DIR=${CCS_INSTALL_DIR}          		ccs_dir_path
+#   CCS_PROJECT_DEBUG=${CWD}       						project_debug_dir_path
 
 SHELL = cmd.exe
 CCS_PATH?=$(CCS_INSTALL_DIR)/ccs_base/pru/include
@@ -17,7 +17,7 @@ GEN_CMDS__FLAG :=
 
 ORDERED_OBJS += \
 "./main.obj" \
-"$(MCU_PLUS_SDK_PATH)/source/motor_control/position_sense/hdsl/firmware/sync_225_mhz/am243x-evm/icssg0-pru1_fw/ti-pru-cgt/hdsl_master_icssg.cmd" \
+"${MOTOR_CONTROL_SDK_PATH}/source/motor_control/position_sense/hdsl/firmware/sync_225_mhz/am243x-evm/icssg0-pru1_fw/ti-pru-cgt/hdsl_master_icssg.cmd" \
 $(GEN_CMDS__FLAG) \
 -llibc.a \
 
@@ -32,10 +32,10 @@ SUBDIRS := \
 
 # Add inputs and outputs from these tool invocations to the build variables
 CMD_SRCS += \
-$(MCU_PLUS_SDK_PATH)/source/motor_control/position_sense/hdsl/firmware/sync_225_mhz/am243x-evm/icssg0-pru1_fw/ti-pru-cgt/hdsl_master_icssg.cmd \
+${MOTOR_CONTROL_SDK_PATH}/source/motor_control/position_sense/hdsl/firmware/sync_225_mhz/am243x-evm/icssg0-pru1_fw/ti-pru-cgt/hdsl_master_icssg.cmd \
 
 ASM_SRCS += \
-$(MCU_PLUS_SDK_PATH)/source/motor_control/position_sense/hdsl/firmware/sync_225_mhz/main.asm
+${MOTOR_CONTROL_SDK_PATH}/source/motor_control/position_sense/hdsl/firmware/sync_225_mhz/main.asm
 
 OBJS += \
 ./main.obj
@@ -50,10 +50,10 @@ ASM_DEPS__QUOTED += \
 "main.d"
 
 ASM_SRCS__QUOTED += \
-"$(MCU_PLUS_SDK_PATH)/source/motor_control/position_sense/hdsl/firmware/sync_225_mhz/main.asm"
+"${MOTOR_CONTROL_SDK_PATH}/source/motor_control/position_sense/hdsl/firmware/sync_225_mhz/main.asm"
 
 # Each subdirectory must supply rules for building sources it contributes
-main.obj: $(MCU_PLUS_SDK_PATH)/source/motor_control/position_sense/hdsl/firmware/sync_225_mhz/main.asm $(GEN_OPTS) | $(GEN_FILES) $(GEN_MISC_FILES)
+main.obj: ${MOTOR_CONTROL_SDK_PATH}/source/motor_control/position_sense/hdsl/firmware/sync_225_mhz/main.asm $(GEN_OPTS) | $(GEN_FILES) $(GEN_MISC_FILES)
 	@echo 'Building file: "$<"'
 	@echo 'Invoking: PRU Compiler'
 	"$(CG_TOOL_ROOT)/bin/clpru" -DICSSG0 -DPRU1 -DSLICE1 --define=SOC_AM243X --define=icss1 --define=PRU1 --define=CHANNEL_0 --define=EXT_SYNC_ENABLE --define=ICSS_G_V_1_0 --include_path="$(CCS_PATH)" --include_path="$(SYSCFG_DIR)" --include_path="${MOTOR_CONTROL_SDK_PATH}/source/motor_control/position_sense/hdsl/firmware"  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little --preproc_with_compile --preproc_dependency="$(basename $(<F)).d_raw" $(GEN_OPTS__FLAG) "$<"
@@ -108,7 +108,7 @@ clean:
 	-@echo ' '
 
 post-build:
-	-$(CG_TOOL_ROOT)/bin/hexpru.exe ${MOTOR_CONTROL_SDK_PATH}/source/motor_control/position_sense/hdsl/firmware/hdsl_master_icssg_hexpru.cmd hdsl_master_sync_225_mhz_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out; ${MCU_PLUS_SDK_PATH}/tools/bin2header/bin2header.exe hdsl_master_sync_225_mhz_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.b00 hdsl_master_icssg_sync_bin.h Hiperface_DSL_SYNC2_0 4;  move  hdsl_master_icssg_sync_bin.h  ${MOTOR_CONTROL_SDK_PATH}/source/motor_control/position_sense/hdsl/firmware/hdsl_master_icssg_sync_bin.h 
+	-$(CG_TOOL_ROOT)/bin/hexpru.exe ${MOTOR_CONTROL_SDK_PATH}/source/motor_control/position_sense/hdsl/firmware/hdsl_master_icssg_hexpru.cmd hdsl_master_sync_225_mhz_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out; ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/tools/bin2header/bin2header.exe hdsl_master_sync_225_mhz_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.b00 hdsl_master_icssg_sync_bin.h Hiperface_DSL_SYNC2_0 4;  move  hdsl_master_icssg_sync_bin.h  ${MOTOR_CONTROL_SDK_PATH}/source/motor_control/position_sense/hdsl/firmware/hdsl_master_icssg_sync_bin.h 
 	-@echo ' '
 
 .PHONY: all clean dependents

@@ -17,24 +17,30 @@
     "documentationPath": "../docs",
     "includePaths": [
         "../source",
+        "../mcu_plus_sdk/source",
     ],
     "components": [
 % if((args.device == "am64x") || (args.device == "am243x")) {
         "/motor_control/motor_control",
+        "/kernel/dpl",
+        "/drivers/drivers",
+        "/board/board",
+        "/fs/fs",
+        "/networking/networking",
+        "/security/security",
+        "/usb/usb",
+        "/pru_io/pru_io",
 % }
 % if(args.device == "am263x") {
         "/motor_control/motor_control",
-% }
-% if((args.device == "am273x") || (args.device == "awr294x")) {
         "/kernel/dpl",
         "/drivers/drivers",
         "/board/board",
+        "/fs/fs",
         "/networking/networking",
-% }
-% if(args.device == "am62x") {
-        "/kernel/dpl",
-        "/drivers/drivers",
-        "/board/board",
+        "/security/security",
+        "/usb/usb",
+        "/pru_io/pru_io",
 % }
     ],
     "devices": [
@@ -45,17 +51,8 @@
         "AM243x_ALV_beta",
         "AM243x_ALX_beta",
 % }
-% if((args.device == "am273x") || (isDevelopmentMode)) {
-        "AM273x",
-% }
-% if((args.device == "awr294x") || (isDevelopmentMode)) {
-        "AWR294X",
-% }
 % if((args.device == "am263x") || (isDevelopmentMode)) {
         "AM263x_beta",
-% }
-% if((args.device == "am62x") || (isDevelopmentMode)) {
-        "AM62x",
 % }
     ],
     "contexts": {
@@ -85,22 +82,6 @@
             "m4fss0-0",
         ],
 % }
-% if((args.device == "am273x") || (isDevelopmentMode)) {
-        "AM273x": [
-            "r5fss0-0",
-            "r5fss0-1",
-            "c66ss0",
-            "hsm0-0",
-        ],
-% }
-% if((args.device == "awr294x") || (isDevelopmentMode)) {
-        "AWR294X": [
-            "r5fss0-0",
-            "r5fss0-1",
-            "c66ss0",
-            "hsm0-0",
-        ],
-% }
 % if((args.device == "am263x") || (isDevelopmentMode)) {
         "AM263x_beta": [
             "r5fss0-0",
@@ -108,11 +89,6 @@
             "r5fss1-0",
             "r5fss1-1",
             "hsm0-0",
-        ],
-% }
-% if((args.device == "am62x") || (isDevelopmentMode)) {
-        "AM62x": [
-            "m4fss0-0",
         ],
 % }
     },

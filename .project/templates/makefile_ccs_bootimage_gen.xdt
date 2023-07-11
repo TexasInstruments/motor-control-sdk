@@ -3,7 +3,7 @@
 #
 
 # Below variables need to be defined outside this file or via command line
-# - MCU_PLUS_SDK_PATH
+# - MOTOR_CONTROL_SDK_PATH
 # - PROFILE
 # - CG_TOOL_ROOT
 # - OUTNAME
@@ -11,9 +11,9 @@
 # - CCS_IDE_MODE
 
 CCS_PATH=$(CCS_INSTALL_DIR)
-include $(MCU_PLUS_SDK_PATH)/imports.mak
+include ${MOTOR_CONTROL_SDK_PATH}/imports.mak
 % if (["am243x", "am64x", "am263x", "am273x"].includes(args.project.device)) {
-include $(MCU_PLUS_SDK_PATH)/devconfig/devconfig.mak
+include ${MOTOR_CONTROL_SDK_PATH}/devconfig/devconfig.mak
 % }
 
 STRIP=$(CG_TOOL_ROOT)/bin/`args.cgtOptions.strip`
@@ -65,30 +65,30 @@ ifeq ($(OS),Windows_NT)
 EXE_EXT=.exe
 endif
 ifeq ($(OS),Windows_NT)
-  BOOTIMAGE_CERT_GEN_CMD=powershell -executionpolicy unrestricted -command $(MCU_PLUS_SDK_PATH)/tools/boot/signing/x509CertificateGen.ps1
+  BOOTIMAGE_CERT_GEN_CMD=powershell -executionpolicy unrestricted -command $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/signing/x509CertificateGen.ps1
 else
-  BOOTIMAGE_CERT_GEN_CMD=$(MCU_PLUS_SDK_PATH)/tools/boot/signing/x509CertificateGen.sh
+  BOOTIMAGE_CERT_GEN_CMD=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/signing/x509CertificateGen.sh
 endif
 BOOTIMAGE_TEMP_OUT_FILE=$(PROFILE)/temp_stdout_$(PROFILE).txt
 
 % if (args.project.isBootLoader) {
 % if ((args.project.device == "am64x") || (args.project.device == "am243x")) {
 BOOTIMAGE_CERT_KEY=$(APP_SIGNING_KEY)
-BOOTIMAGE_CERT_GEN_CMD=$(PYTHON) $(MCU_PLUS_SDK_PATH)/tools/boot/signing/rom_image_gen.py
-SYSFW_PATH=$(MCU_PLUS_SDK_PATH)/source/drivers/sciclient/soc/am64x_am243x
+BOOTIMAGE_CERT_GEN_CMD=$(PYTHON) $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/signing/rom_image_gen.py
+SYSFW_PATH=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/drivers/sciclient/soc/am64x_am243x
 SYSFW_LOAD_ADDR=0x44000
 BOARDCFG_LOAD_ADDR=0x7B000
 % if (args.project.name.includes("linux")) {
 % if (args.project.device == "am64x") {
-BOARDCFG_BLOB=$(MCU_PLUS_SDK_PATH)/source/drivers/sciclient/sciclient_default_boardcfg/am64x/boardcfg_blob_linux.bin
+BOARDCFG_BLOB=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/drivers/sciclient/sciclient_default_boardcfg/am64x/boardcfg_blob_linux.bin
 % } else if (args.project.device == "am243x") {
-BOARDCFG_BLOB=$(MCU_PLUS_SDK_PATH)/source/drivers/sciclient/sciclient_default_boardcfg/am243x/boardcfg_blob_linux.bin
+BOARDCFG_BLOB=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/drivers/sciclient/sciclient_default_boardcfg/am243x/boardcfg_blob_linux.bin
 % }
 % } else {
 % if (args.project.device == "am64x") {
-BOARDCFG_BLOB=$(MCU_PLUS_SDK_PATH)/source/drivers/sciclient/sciclient_default_boardcfg/am64x/boardcfg_blob.bin
+BOARDCFG_BLOB=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/drivers/sciclient/sciclient_default_boardcfg/am64x/boardcfg_blob.bin
 % } else if (args.project.device == "am243x") {
-BOARDCFG_BLOB=$(MCU_PLUS_SDK_PATH)/source/drivers/sciclient/sciclient_default_boardcfg/am243x/boardcfg_blob.bin
+BOARDCFG_BLOB=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/drivers/sciclient/sciclient_default_boardcfg/am243x/boardcfg_blob.bin
 % }
 % }
 % }
@@ -96,9 +96,9 @@ BOARDCFG_BLOB=$(MCU_PLUS_SDK_PATH)/source/drivers/sciclient/sciclient_default_bo
 ifeq ($(DEVICE_TYPE),HS)
 BOOTIMAGE_CERT_KEY=$(APP_SIGNING_KEY)
 else
-BOOTIMAGE_CERT_KEY=$(MCU_PLUS_SDK_PATH)/tools/boot/signing/mcu_gpkey.pem
+BOOTIMAGE_CERT_KEY=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/signing/mcu_gpkey.pem
 endif
-BOOTIMAGE_CERT_GEN_CMD=$(PYTHON) $(MCU_PLUS_SDK_PATH)/tools/boot/signing/mcu_rom_image_gen.py
+BOOTIMAGE_CERT_GEN_CMD=$(PYTHON) $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/signing/mcu_rom_image_gen.py
 % }
 
 % if ((args.project.device == "am273x") || (args.project.device == "awr294x")) {
@@ -109,7 +109,7 @@ SBL_RUN_ADDRESS=0x70002000
 SBL_RUN_ADDRESS=0x70000000
 % }
 
-SBL_PREBUILT_PATH=$(MCU_PLUS_SDK_PATH)/tools/boot/sbl_prebuilt/`args.project.board`
+SBL_PREBUILT_PATH=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/sbl_prebuilt/`args.project.board`
 
 all:
 ifeq ($(CCS_IDE_MODE),cloud)
@@ -197,7 +197,7 @@ BOOTIMAGE_CORE_ID_r5fss0-1 = 1
 BOOTIMAGE_CORE_ID_c66ss0   = 2
 % if (args.project.device == "awr294x") {
 BOOTIMAGE_CORE_ID_r4       = 3
-R4_RPRC_PATH = $(MCU_PLUS_SDK_PATH)/source/drivers/bootloader/soc/awr294x/xwr2xxx_radarss_metarprc.bin
+R4_RPRC_PATH = $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/drivers/bootloader/soc/awr294x/xwr2xxx_radarss_metarprc.bin
 % }
 SBL_RUN_ADDRESS=0x10200000
 SBL_DEV_ID=55
@@ -213,16 +213,16 @@ SBL_RUN_ADDRESS=0x70000000
 SBL_DEV_ID=55
 % }
 
-MULTI_CORE_IMAGE_GEN = $(CCS_NODE) $(MCU_PLUS_SDK_PATH)/tools/boot/multicoreImageGen/multicoreImageGen.js
-OUTRPRC_CMD = $(CCS_NODE) $(MCU_PLUS_SDK_PATH)/tools/boot/out2rprc/elf2rprc.js
+MULTI_CORE_IMAGE_GEN = $(CCS_NODE) $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/multicoreImageGen/multicoreImageGen.js
+OUTRPRC_CMD = $(CCS_NODE) $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/out2rprc/elf2rprc.js
 % if (((args.project.device == "am243x") || (args.project.device == "am64x")) && (!args.project.isPartOfSystemProject)) {
-APP_IMAGE_SIGN_CMD = $(MCU_PLUS_SDK_PATH)/tools/boot/signing/appimage_x509_cert_gen.py
+APP_IMAGE_SIGN_CMD = $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/signing/appimage_x509_cert_gen.py
 % }
 
 ifeq ($(OS),Windows_NT)
-  XIPGEN_CMD=$(MCU_PLUS_SDK_PATH)/tools/boot/xipGen/xipGen.exe
+  XIPGEN_CMD=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/xipGen/xipGen.exe
 else
-  XIPGEN_CMD=$(MCU_PLUS_SDK_PATH)/tools/boot/xipGen/xipGen.out
+  XIPGEN_CMD=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/xipGen/xipGen.out
 endif
 
 MULTI_CORE_IMAGE_PARAMS = \

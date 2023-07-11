@@ -6,9 +6,9 @@
 ################################################################################
 
 #   Required input arguments:
-#   MCU_PLUS_SDK_PATH=${MCU_PLUS_SDK_PATH}      sdk_dir_path
-#   CCS_INSTALL_DIR=${CCS_INSTALL_DIR}          ccs_dir_path
-#   CCS_PROJECT_DEBUG=${CWD}       				project_debug_dir_path
+#   MOTOR_CONTROL_SDK_PATH=${MOTOR_CONTROL_SDK_PATH}	sdk_dir_path
+#   CCS_INSTALL_DIR=${CCS_INSTALL_DIR}          		ccs_dir_path
+#   CCS_PROJECT_DEBUG=${CWD}       						project_debug_dir_path
 
 SHELL = cmd.exe
 CCS_PATH?=$(CCS_INSTALL_DIR)/ccs_base/pru/include
@@ -20,7 +20,7 @@ GEN_CMDS__FLAG :=
 
 ORDERED_OBJS += \
 "./`obj.pru_main_file`.obj" \
-"$(MCU_PLUS_SDK_PATH)/`projectPath`/`obj.pru_linker_file`.cmd" \
+"${MOTOR_CONTROL_SDK_PATH}/`projectPath`/`obj.pru_linker_file`.cmd" \
 $(GEN_CMDS__FLAG) \
 -llibc.a \
 
@@ -36,10 +36,10 @@ SUBDIRS := \
 
 # Add inputs and outputs from these tool invocations to the build variables
 CMD_SRCS += \
-$(MCU_PLUS_SDK_PATH)/`projectPath`/`obj.pru_linker_file`.cmd \
+${MOTOR_CONTROL_SDK_PATH}/`projectPath`/`obj.pru_linker_file`.cmd \
 
 ASM_SRCS += \
-$(MCU_PLUS_SDK_PATH)/`obj.relpath`/`obj.pru_main_file`.asm
+${MOTOR_CONTROL_SDK_PATH}/`obj.relpath`/`obj.pru_main_file`.asm
 
 OBJS += \
 ./`obj.pru_main_file`.obj
@@ -54,7 +54,7 @@ ASM_DEPS__QUOTED += \
 "`obj.pru_main_file`.d"
 
 ASM_SRCS__QUOTED += \
-"$(MCU_PLUS_SDK_PATH)/`obj.relpath`/`obj.pru_main_file`.asm"
+"${MOTOR_CONTROL_SDK_PATH}/`obj.relpath`/`obj.pru_main_file`.asm"
 
 % let commandString = "";
 % let cflags = obj.cflags;
@@ -87,7 +87,7 @@ ASM_SRCS__QUOTED += \
     % }
 % }
 # Each subdirectory must supply rules for building sources it contributes
-`obj.pru_main_file`.obj: $(MCU_PLUS_SDK_PATH)/`obj.relpath`/`obj.pru_main_file`.asm $(GEN_OPTS) | $(GEN_FILES) $(GEN_MISC_FILES)
+`obj.pru_main_file`.obj: ${MOTOR_CONTROL_SDK_PATH}/`obj.relpath`/`obj.pru_main_file`.asm $(GEN_OPTS) | $(GEN_FILES) $(GEN_MISC_FILES)
 	@echo 'Building file: "$<"'
 	@echo 'Invoking: PRU Compiler'
 	"$(CG_TOOL_ROOT)/bin/clpru" `commandString` --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little --preproc_with_compile --preproc_dependency="$(basename $(<F)).d_raw" $(GEN_OPTS__FLAG) "$<"
@@ -152,8 +152,8 @@ post-build:
 % }
 % if(obj["defaultPruPostBuildSteps"]) {
 post-build:
-	-$(CG_TOOL_ROOT)/bin/hexpru.exe ${MCU_PLUS_SDK_PATH}/`projectPath`/hexpru.cmd `projectName`.out
-	-${MCU_PLUS_SDK_PATH}/tools/bin2header/bin2header.exe `projectName`.b00 pru_load_bin.h PRUFirmware 4
+	-$(CG_TOOL_ROOT)/bin/hexpru.exe ${MOTOR_CONTROL_SDK_PATH}/`projectPath`/hexpru.cmd `projectName`.out
+	-${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/tools/bin2header/bin2header.exe `projectName`.b00 pru_load_bin.h PRUFirmware 4
 	-@echo ' '
 % }
 

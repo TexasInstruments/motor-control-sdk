@@ -50,7 +50,7 @@ const lflags = {
 };
 
 let postBuildSteps = [
-    "$(CG_TOOL_ROOT)/bin/hexpru.exe ${MOTOR_CONTROL_SDK_PATH}/source/motor_control/position_sense/hdsl/firmware/hdsl_master_icssg_hexpru.cmd hdsl_master_multichannel_ch1_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out; ${MCU_PLUS_SDK_PATH}/tools/bin2header/bin2header.exe hdsl_master_multichannel_ch1_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.b00 hdsl_master_icssg_multichannel_ch1_bin.h Hiperface_DSL2_0_PRU 4;  move  hdsl_master_icssg_multichannel_ch1_bin.h  ${MOTOR_CONTROL_SDK_PATH}/source/motor_control/position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch1_bin.h ;"
+    "$(CG_TOOL_ROOT)/bin/hexpru.exe ${MOTOR_CONTROL_SDK_PATH}/source/motor_control/position_sense/hdsl/firmware/hdsl_master_icssg_hexpru.cmd hdsl_master_multichannel_ch1_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out; ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/tools/bin2header/bin2header.exe hdsl_master_multichannel_ch1_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.b00 hdsl_master_icssg_multichannel_ch1_bin.h Hiperface_DSL2_0_PRU 4;  move  hdsl_master_icssg_multichannel_ch1_bin.h  ${MOTOR_CONTROL_SDK_PATH}/source/motor_control/position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch1_bin.h ;"
 
 ];
 

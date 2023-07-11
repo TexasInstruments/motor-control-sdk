@@ -5,18 +5,24 @@
     "documentationPath": "../docs",
     "includePaths": [
         "../source",
+        "../mcu_plus_sdk/source",
     ],
     "components": [
         "/motor_control/motor_control",
+        "/kernel/dpl",
+        "/drivers/drivers",
+        "/board/board",
+        "/fs/fs",
+        "/networking/networking",
+        "/security/security",
+        "/usb/usb",
+        "/pru_io/pru_io",
     ],
     "devices": [
         "AM64x_beta",
         "AM243x_ALV_beta",
         "AM243x_ALX_beta",
-        "AM273x",
-        "AWR294X",
         "AM263x_beta",
-        "AM62x",
     ],
     "contexts": {
         "AM64x_beta": [
@@ -41,27 +47,12 @@
             "r5fss1-1",
             "m4fss0-0",
         ],
-        "AM273x": [
-            "r5fss0-0",
-            "r5fss0-1",
-            "c66ss0",
-            "hsm0-0",
-        ],
-        "AWR294X": [
-            "r5fss0-0",
-            "r5fss0-1",
-            "c66ss0",
-            "hsm0-0",
-        ],
         "AM263x_beta": [
             "r5fss0-0",
             "r5fss0-1",
             "r5fss1-0",
             "r5fss1-1",
             "hsm0-0",
-        ],
-        "AM62x": [
-            "m4fss0-0",
         ],
     },
     "pinmuxUIOptions": {

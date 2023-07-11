@@ -3,7 +3,6 @@
 ################################################################################
 
 SHELL = cmd.exe
-MCU_PLUS_SDK_PATH?=$(abspath ../../../../..)
 CCS_PATH?=C:/ti/ccs1200/ccs/ccs_base/pru/include
 CG_TOOL_ROOT := C:/ti/ti-cgt-pru_2.3.3
 
@@ -40,7 +39,7 @@ CMD_SRCS += \
 endat_diagnostic.cmd
 
 ASM_SRCS += \
-$(MCU_PLUS_SDK_PATH)/source/motor_control/position_sense/endat/firmware/endat_main.asm
+$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/motor_control/position_sense/endat/firmware/endat_main.asm
 
 OBJS += \
 ./endat_main.obj
@@ -55,13 +54,13 @@ ASM_DEPS__QUOTED += \
 "endat_main.d"
 
 ASM_SRCS__QUOTED += \
-"$(MCU_PLUS_SDK_PATH)/source/motor_control/position_sense/endat/firmware/endat_main.asm"
+"$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/motor_control/position_sense/endat/firmware/endat_main.asm"
 
 # Each subdirectory must supply rules for building sources it contributes
-endat_main.obj: $(MCU_PLUS_SDK_PATH)/source/motor_control/position_sense/endat/firmware/endat_main.asm $(GEN_OPTS) | $(GEN_FILES) $(GEN_MISC_FILES)
+endat_main.obj: $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/motor_control/position_sense/endat/firmware/endat_main.asm $(GEN_OPTS) | $(GEN_FILES) $(GEN_MISC_FILES)
 	@echo 'Building file: "$<"'
 	@echo 'Invoking: PRU Compiler'
-	"$(CG_TOOL_ROOT)/bin/clpru" --include_path="$(CCS_PATH)" --include_path="$(MCU_PLUS_SDK_PATH)/source/motor_control/position_sense/endat/firmware" --include_path="$(CG_TOOL_ROOT)/include" --define=PRU1 --define=$(MULTI_CHANNEL) --define=icssg1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little --preproc_with_compile --preproc_dependency="$(basename $(<F)).d_raw" $(GEN_OPTS__FLAG) "$<"
+	"$(CG_TOOL_ROOT)/bin/clpru" --include_path="$(CCS_PATH)" --include_path="$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/motor_control/position_sense/endat/firmware" --include_path="$(CG_TOOL_ROOT)/include" --define=PRU1 --define=$(MULTI_CHANNEL) --define=icssg1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little --preproc_with_compile --preproc_dependency="$(basename $(<F)).d_raw" $(GEN_OPTS__FLAG) "$<"
 	@echo 'Finished building: "$<"'
 	@echo '
 
@@ -116,10 +115,10 @@ clean:
 
 post-build:
 ifeq ($(CHANNELS),SINGLE)
-	$(CG_TOOL_ROOT)\bin\hexpru.exe endat_master_hexpru.cmd endat_master.out && $(MCU_PLUS_SDK_PATH)\tools\bin2header\bin2header.exe endat_master.b00 endat_master_bin.h EnDatFirmware 4
+	$(CG_TOOL_ROOT)/bin/hexpru.exe endat_master_hexpru.cmd endat_master.out && $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/bin2header/bin2header.exe endat_master.b00 endat_master_bin.h EnDatFirmware 4
 endif
 ifeq ($(CHANNELS),MULTI)
-	$(CG_TOOL_ROOT)\bin\hexpru.exe endat_master_hexpru.cmd endat_master.out && $(MCU_PLUS_SDK_PATH)\tools\bin2header\bin2header.exe endat_master.b00 endat_master_multi_bin.h EnDatFirmwareMulti 4
+	$(CG_TOOL_ROOT)/bin/hexpru.exe endat_master_hexpru.cmd endat_master.out && $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/bin2header/bin2header.exe endat_master.b00 endat_master_multi_bin.h EnDatFirmwareMulti 4
 endif
 	-
 	-@echo ' '

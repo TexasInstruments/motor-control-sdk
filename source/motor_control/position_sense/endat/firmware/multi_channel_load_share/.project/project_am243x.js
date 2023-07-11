@@ -74,15 +74,15 @@ const buildOptionCombos = [
 ];
 
 let postBuildStepsPru1 = [
-    "$(CG_TOOL_ROOT)/bin/hexpru.exe ${MOTOR_CONTROL_SDK_PATH}/source/motor_control/position_sense/endat/firmware/endat_master_hexpru.cmd endat_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out; ${MCU_PLUS_SDK_PATH}/tools/bin2header/bin2header.exe endat_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.b00 endat_master_multi_PRU_bin.h EnDatFirmwareMultiMakePRU 4;  move  endat_master_multi_PRU_bin.h  ${MOTOR_CONTROL_SDK_PATH}/source/motor_control/position_sense/endat/firmware/endat_master_multi_PRU_bin.h;",
+    "$(CG_TOOL_ROOT)/bin/hexpru.exe ${MOTOR_CONTROL_SDK_PATH}/source/motor_control/position_sense/endat/firmware/endat_master_hexpru.cmd endat_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out; ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/tools/bin2header/bin2header.exe endat_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.b00 endat_master_multi_PRU_bin.h EnDatFirmwareMultiMakePRU 4;  move  endat_master_multi_PRU_bin.h  ${MOTOR_CONTROL_SDK_PATH}/source/motor_control/position_sense/endat/firmware/endat_master_multi_PRU_bin.h;",
 
 ];
 let postBuildStepsRtupru1 = [
-    "$(CG_TOOL_ROOT)/bin/hexpru.exe ${MOTOR_CONTROL_SDK_PATH}/source/motor_control/position_sense/endat/firmware/endat_master_hexpru.cmd endat_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-rtupru1_fw_ti-pru-cgt.out; ${MCU_PLUS_SDK_PATH}/tools/bin2header/bin2header.exe endat_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-rtupru1_fw_ti-pru-cgt.b00 endat_master_multi_RTU_bin.h EnDatFirmwareMultiMakeRTU 4;  move  endat_master_multi_RTU_bin.h  ${MOTOR_CONTROL_SDK_PATH}/source/motor_control/position_sense/endat/firmware/endat_master_multi_RTU_bin.h;",
+    "$(CG_TOOL_ROOT)/bin/hexpru.exe ${MOTOR_CONTROL_SDK_PATH}/source/motor_control/position_sense/endat/firmware/endat_master_hexpru.cmd endat_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-rtupru1_fw_ti-pru-cgt.out; ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/tools/bin2header/bin2header.exe endat_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-rtupru1_fw_ti-pru-cgt.b00 endat_master_multi_RTU_bin.h EnDatFirmwareMultiMakeRTU 4;  move  endat_master_multi_RTU_bin.h  ${MOTOR_CONTROL_SDK_PATH}/source/motor_control/position_sense/endat/firmware/endat_master_multi_RTU_bin.h;",
 
 ];
 let postBuildStepsTxpru1 = [
-    "$(CG_TOOL_ROOT)/bin/hexpru.exe ${MOTOR_CONTROL_SDK_PATH}/source/motor_control/position_sense/endat/firmware/endat_master_hexpru.cmd endat_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-txpru1_fw_ti-pru-cgt.out; ${MCU_PLUS_SDK_PATH}/tools/bin2header/bin2header.exe endat_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-txpru1_fw_ti-pru-cgt.b00 endat_master_multi_TXPRU_bin.h EnDatFirmwareMultiMakeTXPRU 4; move  endat_master_multi_TXPRU_bin.h  ${MOTOR_CONTROL_SDK_PATH}/source/motor_control/position_sense/endat/firmware/endat_master_multi_TXPRU_bin.h;",
+    "$(CG_TOOL_ROOT)/bin/hexpru.exe ${MOTOR_CONTROL_SDK_PATH}/source/motor_control/position_sense/endat/firmware/endat_master_hexpru.cmd endat_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-txpru1_fw_ti-pru-cgt.out; ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/tools/bin2header/bin2header.exe endat_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-txpru1_fw_ti-pru-cgt.b00 endat_master_multi_TXPRU_bin.h EnDatFirmwareMultiMakeTXPRU 4; move  endat_master_multi_TXPRU_bin.h  ${MOTOR_CONTROL_SDK_PATH}/source/motor_control/position_sense/endat/firmware/endat_master_multi_TXPRU_bin.h;",
 
 ];
 

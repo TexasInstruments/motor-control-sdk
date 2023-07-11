@@ -36,9 +36,6 @@ else
     endif
 endif
 
-# Variable pointing to location of MCU+ SDK
-export MCU_PLUS_SDK_PATH?=./mcu_plus_sdk
-
 CGT_TI_PRU_PATH=$(TOOLS_PATH)/ti-cgt-pru_2.3.3
 CGT_TI_SMART_PLACEMENT_TOOL_PATH=$(TOOLS_PATH)/ti-cgt-armllvm_3.0.0.STS
 CGT_TI_ARM_CLANG_PATH=$(CCS_PATH)/tools/compiler/ti-cgt-armllvm_2.1.2.LTS
@@ -46,11 +43,10 @@ ifeq ($(wildcard $(CGT_TI_ARM_CLANG_PATH)),)
     CGT_TI_ARM_CLANG_PATH=$(TOOLS_PATH)/ti-cgt-armllvm_2.1.2.LTS
 endif
 CGT_TI_C6000_PATH=$(CCS_PATH)/tools/compiler/ti-cgt-c6000_8.3.12
-DSPLIB_PATH=$(MCU_PLUS_SDK_PATH)/source/dsplib_c66x_3_4_0_0
+DSPLIB_PATH=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/dsplib_c66x_3_4_0_0
 CCS_NODE = $(CCS_PATH)/tools/node/node
 SYSCFG_PATH ?= $(TOOLS_PATH)/sysconfig_1.14.0
 SYSCFG_CLI_PATH ?= $(SYSCFG_PATH)
 SYSCFG_NODE = $(SYSCFG_PATH)/nodejs/node
 SYSCFG_NWJS = $(SYSCFG_PATH)/nw/nw
 SYSCFG_SDKPRODUCT=$(MOTOR_CONTROL_SDK_PATH)/.metadata/product.json
-SYSCFG_MCUPLUSSDKPRODUCT=$(MCU_PLUS_SDK_PATH)/.metadata/product.json

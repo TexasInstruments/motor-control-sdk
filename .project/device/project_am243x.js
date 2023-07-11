@@ -154,10 +154,6 @@ function getProductNameProjectSpec() {
     return "MOTOR_CONTROL_SDK_AM243X";
 }
 
-function getDependentProductNameProjectSpec() {
-    return "MCU_PLUS_SDK_AM243X";
-}
-
 function getFlashAddr() {
     return 0x60000000;
 }
@@ -175,6 +171,5 @@ module.exports = {
     getProperty,
     getLinuxFwName,
     getProductNameProjectSpec,
-    getDependentProductNameProjectSpec,
     getFlashAddr,
 };
