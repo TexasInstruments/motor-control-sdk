@@ -9,7 +9,7 @@
 
 ## Introduction
 
-The Motor Control SDK enables real-time industrial communications for TI processors. Industrial communication is typically handled by the Programmable Real-Time Unit Industrial Communication Subsystem (PRU-ICSS). The PRU-ICSS is a co-processor subsystem containing Programmable Real-Time (PRU) cores and Ethernet media access controllers (EMACs), which implement the low level industrial Ethernet and fieldbus protocols through firmware.
+The Motor Control SDK enables real-time communications with encoders for TI processors. Communication is typically handled by the Programmable Real-Time Unit Industrial Communication Subsystem (PRU-ICSS). The PRU-ICSS is a co-processor subsystem containing Programmable Real-Time (PRU) cores which implement the low level firmware
 
 These devices currently include
 
@@ -20,13 +20,14 @@ These devices currently include
 ## Features
 
 - Out of Box peripheral and application Examples
-  - Application Level Examples: Motor Drives, Industrial Communications etc.
+  - Application Level Examples: Motor Drives etc.
 
 - Protocol stacks and middleware
   - Various Industrial Protocol Stacks
 
-- Industrial protocol firmware
-  - ICCSG, ICSSM etc.
+- Fimrware
+  - Motor Drivers fimrware
+  - Industrial protocol firmware
 
 ## Overview
 
@@ -77,10 +78,10 @@ To clone the repositories using repo tool, do below in your workarea folder:
 
 Note that depending on the SoC you're working with, the components you clone might be
 slightly different. So please choose the manifest folder according to the SoC of your
-interest. For example, we are showing for am263x below.
+interest. For example, we are showing for am243x below.
 
 ```bash
-repo init -u https://github.com/TexasInstruments/industrial-comms-manifests.git -m am243x/dev.xml -b main
+repo init -u https://github.com/TexasInstruments/motor-control-manifests.git -m am243x/dev.xml -b main
 ```
 
 Note that repo uses symbolic links. So if you're on Windows and do not have permissions
@@ -89,7 +90,7 @@ to create symbolic links, the above command might fail for you. So you can eithe
 worktree feature of repo. To do this, initialize the repo like so:
 
 ```bash
-repo init --worktree -u https://github.com/TexasInstruments/industrial-comms-manifests.git -m am243x/dev.xml -b main
+repo init --worktree -u https://github.com/TexasInstruments/motor-control-manifests.git -m am243x/dev.xml -b main
 ```
 
 After the repo is initialized, do a
@@ -102,35 +103,35 @@ This should clone all the repositories required for Motor Control SDK developmen
 
 #### Downloading And Installing Dependencies
 
-Note that the dependencies are also soc specific, here we take an example of am263x.
+Note that the dependencies are also soc specific, here we take an example of am243x.
 You can replace that with the SoC of your choice like the `repo init` step.
 
 **To download and install dependencies in linux, follow the below steps**:
 
-Run the following from the same location where you have `industrial_comms` and `industrial_comms_setup`
+Run the following from the same location where you have `motor_control_sdk` and `motor_control_setup`
 folders.
 
 ```bash
-./industrial_comms_setup/am243x/download_components.sh
+./motor_control_setup/am243x/download_components.sh
 ```
 
 This will install all the required dependencies including Code Composer Studio (CCS).
-The script assumes that `industrial_comms` folder is in the same location from where
+The script assumes that `motor_control_sdk` folder is in the same location from where
 you have invoked the script, and that dependencies are installed into `${HOME}/ti`
 location. If these defaults don't work for you, please pass these as arguments to
 the script like
 
 ```bash
-./industrial_comms_setup/am243x/download_components.sh --install_dir=/path/to/tools
+./motor_control_setup/am243x/download_components.sh --install_dir=/path/to/tools
 
 OR
 
-./industrial_comms_setup/am243x/download_components.sh --industrial_comms_sdk_folder=/path/to/industrial_comms/folder
+./motor_control_setup/am243x/download_components.sh --motor_control_sdk_sdk_folder=/path/to/motor_control_sdk/folder
 ```
 and so on. For a complete list of arguments you can pass to the script, please run
 
 ```bash
-./industrial_comms_setup/am243x/download_components.sh -h
+./motor_control_setup/am243x/download_components.sh -h
 ```
 
 **In windows the dependencies has to be manually installed. Given below are the steps**:
@@ -149,9 +150,9 @@ and so on. For a complete list of arguments you can pass to the script, please r
 4. Download and install Node.js v12.18.4 LTS
   - Go to the [NodeJS Website](https://nodejs.org/en/) and use the installer to
     download and install v12.18.4 of node. Install in the default directory.
-  - After successful installation, run an `npm ci` inside the `industrial_comms` folder like so:
+  - After successful installation, run an `npm ci` inside the `motor_control_sdk` folder like so:
     ```bash
-    $ cd industrial_comms/
+    $ cd motor_control_sdk/
     $ npm ci
     $ cd ../
     ```
@@ -230,8 +231,8 @@ repo start dev --all
 
 - Use `gmake` in windows, add path to gmake present in CCS at `C:\ti\ccsxxxx\ccs\utils\bin` to your windows PATH. We have
   used `make` in below instructions.
-- Unless mentioned otherwise, all below commands are invoked from root folder of the "industrial_comms"  repository.
-- Current supported device names are am64x, am243x, am263x, am273x and awr294x
+- Unless mentioned otherwise, all below commands are invoked from root folder of the "motor_control_sdk"  repository.
+- Current supported device names are am64x, am243x, am243x, am273x and awr294x
 - Pass one of these values to `"DEVICE="`
 - You can also build components (examples, tests or libraries) in `release` or `debug`
   profiles. To do this pass one of these values to `"PROFILE="`
@@ -241,29 +242,29 @@ repo start dev --all
 1. Run the following command to create makefiles, this step is optional since this is invoked as part of other steps as well,
 
    ```bash
-   make gen-buildfiles DEVICE=am263x
+   make gen-buildfiles DEVICE=am243x
    ```
 
 2. To see all granular build options, run
 
    ```bash
-   make -s help DEVICE=am263x
+   make -s help DEVICE=am243x
    ```
    This should show you commands to build specific libraries, examples or tests.
 
 3. Make sure to build the libraries before attempting to build an example. For example,
    to build a Hello World example for AM263x, run the following:
    ```bash
-   make -s -j4 libs DEVICE=am263x PROFILE=debug
+   make -s -j4 libs DEVICE=am243x PROFILE=debug
    ```
    Once the library build is complete, to build the example run:
    ```bash
-   make -s -C examples/hello_world/am263x-cc/r5fss0-0_nortos/ti-arm-clang all PROFILE=debug
+   make -s -C examples/hello_world/am243x-cc/r5fss0-0_nortos/ti-arm-clang all PROFILE=debug
    ```
 
 4. Following are the commands to build **all libraries** and **all examples**. Valid PROFILE's are "release" or "debug"
 
    ```bash
-   make -s -j4 clean DEVICE=am263x PROFILE=debug
-   make -s -j4 all   DEVICE=am263x PROFILE=debug
+   make -s -j4 clean DEVICE=am243x PROFILE=debug
+   make -s -j4 all   DEVICE=am243x PROFILE=debug
    ```
