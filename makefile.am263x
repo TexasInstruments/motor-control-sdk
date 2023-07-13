@@ -40,7 +40,7 @@ help:
 	@echo  .
 	@echo  Example build targets,
 	@echo  ======================
-	@echo  $(MAKE) -s -C examples/motor_control/tamagawa_diagnostic_over_soc_uart/am263x-lp/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C examples/position_sense/tamagawa_diagnostic_over_soc_uart/am263x-lp/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
 	@echo  .
 	@echo  System Example build targets,
 	@echo  =============================
@@ -65,7 +65,7 @@ libs-prebuilt: $(BUILD_COMBO_PREBUILT_ALL)
 libs-private: $(BUILD_COMBO_PRIVATE_ALL)
 
 $(BUILD_COMBO_motorcontrol_tamagawa_over_soc_uart):
-	$(MAKE) -C source/motor_control/position_sense/tamagawa_over_soc_uart -f makefile.am263x.$(subst motorcontrol_tamagawa_over_soc_uart_,,$@) all
+	$(MAKE) -C source/position_sense/tamagawa_over_soc_uart -f makefile.am263x.$(subst motorcontrol_tamagawa_over_soc_uart_,,$@) all
 
 
 # Various Component Clean Targets
@@ -82,7 +82,7 @@ libs-clean: $(BUILD_COMBO_CLEAN_ALL)
 libs-prebuilt-clean: $(BUILD_COMBO_PREBUILT_CLEAN_ALL)
 
 $(BUILD_COMBO_CLEAN_motorcontrol_tamagawa_over_soc_uart):
-	$(MAKE) -C source/motor_control/position_sense/tamagawa_over_soc_uart -f makefile.am263x.$(subst motorcontrol_tamagawa_over_soc_uart_,,$(subst _clean,,$@)) clean
+	$(MAKE) -C source/position_sense/tamagawa_over_soc_uart -f makefile.am263x.$(subst motorcontrol_tamagawa_over_soc_uart_,,$(subst _clean,,$@)) clean
 
 
 # Various Component Scrub Targets
@@ -99,7 +99,7 @@ libs-scrub: $(BUILD_COMBO_SCRUB_ALL)
 libs-prebuilt-scrub: $(BUILD_COMBO_PREBUILT_SCRUB_ALL)
 
 $(BUILD_COMBO_SCRUB_motorcontrol_tamagawa_over_soc_uart):
-	$(MAKE) -C source/motor_control/position_sense/tamagawa_over_soc_uart -f makefile.am263x.$(subst motorcontrol_tamagawa_over_soc_uart_,,$(subst _scrub,,$@)) scrub
+	$(MAKE) -C source/position_sense/tamagawa_over_soc_uart -f makefile.am263x.$(subst motorcontrol_tamagawa_over_soc_uart_,,$(subst _scrub,,$@)) scrub
 
 
 BUILD_COMBO_EXAMPLE_ALL =
@@ -116,7 +116,7 @@ examples: $(BUILD_COMBO_EXAMPLE_ALL)
 examples-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_ALL)
 
  tamagawa_diagnostic_soc_uart_am263x-lp_r5fss0-0_freertos_ti-arm-clang:
-	$(MAKE) -C examples/motor_control/tamagawa_diagnostic_over_soc_uart/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile all
+	$(MAKE) -C examples/position_sense/tamagawa_diagnostic_over_soc_uart/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile all
 
 
 BUILD_COMBO_EXAMPLE_CLEAN_ALL =
@@ -133,7 +133,7 @@ examples-clean: $(BUILD_COMBO_EXAMPLE_CLEAN_ALL)
 examples-private-clean: $(BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL)
 
  tamagawa_diagnostic_soc_uart_am263x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
-	$(MAKE) -C examples/motor_control/tamagawa_diagnostic_over_soc_uart/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile clean
+	$(MAKE) -C examples/position_sense/tamagawa_diagnostic_over_soc_uart/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile clean
 
 
 BUILD_COMBO_EXAMPLE_SCRUB_ALL =
@@ -150,7 +150,7 @@ examples-scrub: $(BUILD_COMBO_EXAMPLE_SCRUB_ALL)
 examples-scrub-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL)
 
  tamagawa_diagnostic_soc_uart_am263x-lp_r5fss0-0_freertos_ti-arm-clang_scrub:
-	$(MAKE) -C examples/motor_control/tamagawa_diagnostic_over_soc_uart/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile scrub
+	$(MAKE) -C examples/position_sense/tamagawa_diagnostic_over_soc_uart/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile scrub
 
 
 .PHONY: all clean scrub help

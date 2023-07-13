@@ -1,7 +1,7 @@
 const common = require("../common.js");
 
 const component_file_list = [
-    "source/motor_control/position_sense/tamagawa_over_soc_uart/.project/project.js",
+    "source/position_sense/tamagawa_over_soc_uart/.project/project.js",
 ];
 
 const device_defines = {
@@ -11,7 +11,7 @@ const device_defines = {
 };
 
 const example_file_list = [
-    "examples/motor_control/tamagawa_diagnostic_over_soc_uart/.project/project.js",
+    "examples/position_sense/tamagawa_diagnostic_over_soc_uart/.project/project.js",
 ];
 
 function getProjectSpecCpu(cpu) {

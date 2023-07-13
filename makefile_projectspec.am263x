@@ -16,7 +16,7 @@ all: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL)
 all-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL)
 
  tamagawa_diagnostic_soc_uart_am263x-lp_r5fss0-0_freertos_ti-arm-clang_build:
-	$(MAKE) -C examples/motor_control/tamagawa_diagnostic_over_soc_uart/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
+	$(MAKE) -C examples/position_sense/tamagawa_diagnostic_over_soc_uart/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
 
 
 
@@ -34,7 +34,7 @@ clean: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL)
 clean-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL)
 
  tamagawa_diagnostic_soc_uart_am263x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
-	$(MAKE) -C examples/motor_control/tamagawa_diagnostic_over_soc_uart/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
+	$(MAKE) -C examples/position_sense/tamagawa_diagnostic_over_soc_uart/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
 
 
 
@@ -52,7 +52,7 @@ export: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL)
 export-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL)
 
  tamagawa_diagnostic_soc_uart_am263x-lp_r5fss0-0_freertos_ti-arm-clang_export:
-	$(MAKE) -C examples/motor_control/tamagawa_diagnostic_over_soc_uart/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
+	$(MAKE) -C examples/position_sense/tamagawa_diagnostic_over_soc_uart/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
 
 
 
@@ -74,7 +74,7 @@ help:
 	@echo  .
 	@echo  Example ProjectSpec build targets,
 	@echo  ==================================
-	@echo  $(MAKE) -s -C examples/motor_control/tamagawa_diagnostic_over_soc_uart/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C examples/position_sense/tamagawa_diagnostic_over_soc_uart/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  .
 	@echo  System Example ProjectSpec build targets,
 	@echo  =========================================

@@ -9,7 +9,7 @@
         ],
         "description": "A Endat Diagnostic Single Channel Example. CPU is R5FSS0-0 running FREERTOS.",
         "name": "endat_diagnostic_single_channel",
-        "location": "../../examples/motor_control/endat_diagnostic/single_channel/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "location": "../../examples/position_sense/endat_diagnostic/single_channel/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "AM243x_GP_EVM"
         ],
@@ -20,7 +20,7 @@
             "ticlang"
         ],
         "subCategories": [
-            "motor_control",
+            "position_sense",
             "endat_diagnostic",
             "single_channel",
             "r5fss0-0_freertos"
@@ -42,7 +42,7 @@
         ],
         "description": "A Endat Diagnostic Single Channel Example. CPU is R5FSS0-0 running FREERTOS.",
         "name": "endat_diagnostic_single_channel",
-        "location": "../../examples/motor_control/endat_diagnostic/single_channel/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "location": "../../examples/position_sense/endat_diagnostic/single_channel/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "AM243x_LAUNCHPAD"
         ],
@@ -53,7 +53,7 @@
             "ticlang"
         ],
         "subCategories": [
-            "motor_control",
+            "position_sense",
             "endat_diagnostic",
             "single_channel",
             "r5fss0-0_freertos"
@@ -75,7 +75,7 @@
         ],
         "description": "A Endat Diagnostic Multi Channel Load Share Example. CPU is R5FSS0-0 running FREERTOS.",
         "name": "endat_diagnostic_multi_channel_load_share",
-        "location": "../../examples/motor_control/endat_diagnostic/multi_channel_load_share/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "location": "../../examples/position_sense/endat_diagnostic/multi_channel_load_share/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "AM243x_GP_EVM"
         ],
@@ -86,7 +86,7 @@
             "ticlang"
         ],
         "subCategories": [
-            "motor_control",
+            "position_sense",
             "endat_diagnostic",
             "multi_channel_load_share",
             "r5fss0-0_freertos"
@@ -108,7 +108,7 @@
         ],
         "description": "A Endat Diagnostic Multi Channel Single Pru Example. CPU is R5FSS0-0 running FREERTOS.",
         "name": "endat_diagnostic_multi_channel_single_pru",
-        "location": "../../examples/motor_control/endat_diagnostic/multi_channel_single_pru/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "location": "../../examples/position_sense/endat_diagnostic/multi_channel_single_pru/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "AM243x_GP_EVM"
         ],
@@ -119,7 +119,7 @@
             "ticlang"
         ],
         "subCategories": [
-            "motor_control",
+            "position_sense",
             "endat_diagnostic",
             "multi_channel_single_pru",
             "r5fss0-0_freertos"
@@ -141,7 +141,7 @@
         ],
         "description": "A Hdsl Diagnostic Multi Channel Example. CPU is R5FSS0-0 running FREERTOS.",
         "name": "hdsl_diagnostic_multi_channel",
-        "location": "../../examples/motor_control/hdsl_diagnostic/multi_channel/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "location": "../../examples/position_sense/hdsl_diagnostic/multi_channel/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "AM243x_GP_EVM"
         ],
@@ -152,7 +152,7 @@
             "ticlang"
         ],
         "subCategories": [
-            "motor_control",
+            "position_sense",
             "hdsl_diagnostic",
             "multi_channel",
             "r5fss0-0_freertos"
@@ -174,7 +174,7 @@
         ],
         "description": "A Hdsl Diagnostic Single Channel Example. CPU is R5FSS0-0 running FREERTOS.",
         "name": "hdsl_diagnostic_single_channel",
-        "location": "../../examples/motor_control/hdsl_diagnostic/single_channel/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "location": "../../examples/position_sense/hdsl_diagnostic/single_channel/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "AM243x_GP_EVM"
         ],
@@ -185,7 +185,7 @@
             "ticlang"
         ],
         "subCategories": [
-            "motor_control",
+            "position_sense",
             "hdsl_diagnostic",
             "single_channel",
             "r5fss0-0_freertos"
@@ -207,7 +207,7 @@
         ],
         "description": "A Hdsl Diagnostic Single Channel Example. CPU is R5FSS0-0 running FREERTOS.",
         "name": "hdsl_diagnostic_single_channel",
-        "location": "../../examples/motor_control/hdsl_diagnostic/single_channel/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "location": "../../examples/position_sense/hdsl_diagnostic/single_channel/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "AM243x_LAUNCHPAD"
         ],
@@ -218,7 +218,7 @@
             "ticlang"
         ],
         "subCategories": [
-            "motor_control",
+            "position_sense",
             "hdsl_diagnostic",
             "single_channel",
             "r5fss0-0_freertos"
@@ -240,7 +240,7 @@
         ],
         "description": "A Hdsl Diagnostic Ddr Example. CPU is R5FSS0-0 running FREERTOS.",
         "name": "hdsl_diagnostic_ddr",
-        "location": "../../examples/motor_control/hdsl_diagnostic_with_traces/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "location": "../../examples/position_sense/hdsl_diagnostic_with_traces/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "AM243x_GP_EVM"
         ],
@@ -251,7 +251,7 @@
             "ticlang"
         ],
         "subCategories": [
-            "motor_control",
+            "position_sense",
             "hdsl_diagnostic_with_traces",
             "r5fss0-0_freertos"
         ],
@@ -272,7 +272,7 @@
         ],
         "description": "A Tamagawa Diagnostic Multi Channel Example. CPU is R5FSS0-0 running FREERTOS.",
         "name": "tamagawa_diagnostic_multi_channel",
-        "location": "../../examples/motor_control/tamagawa_diagnostic/multi_channel/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "location": "../../examples/position_sense/tamagawa_diagnostic/multi_channel/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "AM243x_GP_EVM"
         ],
@@ -283,7 +283,7 @@
             "ticlang"
         ],
         "subCategories": [
-            "motor_control",
+            "position_sense",
             "tamagawa_diagnostic",
             "multi_channel",
             "r5fss0-0_freertos"
@@ -305,7 +305,7 @@
         ],
         "description": "A Tamagawa Diagnostic Single Channel Example. CPU is R5FSS0-0 running FREERTOS.",
         "name": "tamagawa_diagnostic_single_channel",
-        "location": "../../examples/motor_control/tamagawa_diagnostic/single_channel/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "location": "../../examples/position_sense/tamagawa_diagnostic/single_channel/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "AM243x_GP_EVM"
         ],
@@ -316,7 +316,7 @@
             "ticlang"
         ],
         "subCategories": [
-            "motor_control",
+            "position_sense",
             "tamagawa_diagnostic",
             "single_channel",
             "r5fss0-0_freertos"
@@ -338,7 +338,7 @@
         ],
         "description": "A Tamagawa Diagnostic Single Channel Example. CPU is R5FSS0-0 running FREERTOS.",
         "name": "tamagawa_diagnostic_single_channel",
-        "location": "../../examples/motor_control/tamagawa_diagnostic/single_channel/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "location": "../../examples/position_sense/tamagawa_diagnostic/single_channel/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "AM243x_LAUNCHPAD"
         ],
@@ -349,7 +349,7 @@
             "ticlang"
         ],
         "subCategories": [
-            "motor_control",
+            "position_sense",
             "tamagawa_diagnostic",
             "single_channel",
             "r5fss0-0_freertos"
@@ -371,7 +371,7 @@
         ],
         "description": "A Icss Sdfm Example. CPU is R5FSS0-0 running FREERTOS.",
         "name": "icss_sdfm",
-        "location": "../../examples/motor_control/icss_sdfm/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "location": "../../examples/current_sense/icss_sdfm/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "AM243x_GP_EVM"
         ],
@@ -382,7 +382,7 @@
             "ticlang"
         ],
         "subCategories": [
-            "motor_control",
+            "current_sense",
             "icss_sdfm",
             "r5fss0-0_freertos"
         ],

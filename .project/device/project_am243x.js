@@ -1,10 +1,10 @@
 const common = require("../common.js");
 
 const component_file_list = [
-    "source/motor_control/current_sense/sdfm/.project/project.js",
-    "source/motor_control/position_sense/endat/.project/project.js",
-    "source/motor_control/position_sense/hdsl/.project/project.js",
-    "source/motor_control/position_sense/tamagawa/.project/project.js",
+    "source/current_sense/sdfm/.project/project.js",
+    "source/position_sense/endat/.project/project.js",
+    "source/position_sense/hdsl/.project/project.js",
+    "source/position_sense/tamagawa/.project/project.js",
 ];
 
 const device_defines = {
@@ -14,26 +14,26 @@ const device_defines = {
 };
 
 const example_file_list = [
-    "examples/motor_control/endat_diagnostic/single_channel/.project/project.js",
-    "examples/motor_control/endat_diagnostic/multi_channel_load_share/.project/project.js",
-    "examples/motor_control/endat_diagnostic/multi_channel_single_pru/.project/project.js",
-    "examples/motor_control/hdsl_diagnostic/multi_channel/.project/project.js",
-    "examples/motor_control/hdsl_diagnostic/single_channel/.project/project.js",
-    "examples/motor_control/hdsl_diagnostic_with_traces/.project/project.js",
-    "examples/motor_control/tamagawa_diagnostic/multi_channel/.project/project.js",
-    "examples/motor_control/tamagawa_diagnostic/single_channel/.project/project.js",
-    "examples/motor_control/icss_sdfm/.project/project.js",
-    "source/motor_control/current_sense/sdfm/firmware/.project/project.js",
-    "source/motor_control/position_sense/endat/firmware/multi_channel_load_share/.project/project.js",
-    "source/motor_control/position_sense/endat/firmware/single_channel/.project/project.js",
-    "source/motor_control/position_sense/endat/firmware/multi_channel_single_pru/.project/project.js",
-    "source/motor_control/position_sense/hdsl/firmware/freerun_225_mhz/.project/project.js",
-    "source/motor_control/position_sense/hdsl/firmware/freerun_300_mhz/.project/project.js",
-    "source/motor_control/position_sense/hdsl/firmware/multichannel_ch0/.project/project.js",
-    "source/motor_control/position_sense/hdsl/firmware/multichannel_ch1/.project/project.js",
-    "source/motor_control/position_sense/hdsl/firmware/sync_225_mhz/.project/project.js",
-    "source/motor_control/position_sense/tamagawa/firmware/multi_channel/.project/project.js",
-    "source/motor_control/position_sense/tamagawa/firmware/single_channel/.project/project.js",
+    "examples/position_sense/endat_diagnostic/single_channel/.project/project.js",
+    "examples/position_sense/endat_diagnostic/multi_channel_load_share/.project/project.js",
+    "examples/position_sense/endat_diagnostic/multi_channel_single_pru/.project/project.js",
+    "examples/position_sense/hdsl_diagnostic/multi_channel/.project/project.js",
+    "examples/position_sense/hdsl_diagnostic/single_channel/.project/project.js",
+    "examples/position_sense/hdsl_diagnostic_with_traces/.project/project.js",
+    "examples/position_sense/tamagawa_diagnostic/multi_channel/.project/project.js",
+    "examples/position_sense/tamagawa_diagnostic/single_channel/.project/project.js",
+    "examples/current_sense/icss_sdfm/.project/project.js",
+    "source/current_sense/sdfm/firmware/.project/project.js",
+    "source/position_sense/endat/firmware/multi_channel_load_share/.project/project.js",
+    "source/position_sense/endat/firmware/single_channel/.project/project.js",
+    "source/position_sense/endat/firmware/multi_channel_single_pru/.project/project.js",
+    "source/position_sense/hdsl/firmware/freerun_225_mhz/.project/project.js",
+    "source/position_sense/hdsl/firmware/freerun_300_mhz/.project/project.js",
+    "source/position_sense/hdsl/firmware/multichannel_ch0/.project/project.js",
+    "source/position_sense/hdsl/firmware/multichannel_ch1/.project/project.js",
+    "source/position_sense/hdsl/firmware/sync_225_mhz/.project/project.js",
+    "source/position_sense/tamagawa/firmware/multi_channel/.project/project.js",
+    "source/position_sense/tamagawa/firmware/single_channel/.project/project.js",
 ];
 
 function getProjectSpecCpu(cpu) {

@@ -8,7 +8,7 @@
         "../mcu_plus_sdk/source",
     ],
     "components": [
-        "/motor_control/motor_control",
+        "/motor_control",
         "/kernel/dpl",
         "/drivers/drivers",
         "/board/board",

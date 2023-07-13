@@ -20,19 +20,8 @@
         "../mcu_plus_sdk/source",
     ],
     "components": [
-% if((args.device == "am64x") || (args.device == "am243x")) {
-        "/motor_control/motor_control",
-        "/kernel/dpl",
-        "/drivers/drivers",
-        "/board/board",
-        "/fs/fs",
-        "/networking/networking",
-        "/security/security",
-        "/usb/usb",
-        "/pru_io/pru_io",
-% }
-% if(args.device == "am263x") {
-        "/motor_control/motor_control",
+% if((args.device == "am64x") || (args.device == "am243x") || (args.device == "am263x")) {
+        "/motor_control",
         "/kernel/dpl",
         "/drivers/drivers",
         "/board/board",

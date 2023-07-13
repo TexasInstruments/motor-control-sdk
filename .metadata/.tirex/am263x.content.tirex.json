@@ -9,7 +9,7 @@
         ],
         "description": "An Example of tamagawa single channel with soc uart CPU is R5FSS0-0 running FREERTOS.",
         "name": "tamagawa_diagnostic_soc_uart",
-        "location": "../../examples/motor_control/tamagawa_diagnostic_over_soc_uart/am263x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "location": "../../examples/position_sense/tamagawa_diagnostic_over_soc_uart/am263x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "LP-AM263"
         ],
@@ -20,7 +20,7 @@
             "ticlang"
         ],
         "subCategories": [
-            "motor_control",
+            "position_sense",
             "tamagawa_diagnostic_over_soc_uart",
             "r5fss0-0_freertos"
         ],
