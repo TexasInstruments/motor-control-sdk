@@ -16,10 +16,6 @@ This SDK also contains examples to interface these ARM R5F, ARM M4F applications
 
 To get started, see \ref GETTING_STARTED
 
-## Migration Information {#MIGRATION_INFORMATION}
-
-When migrating from Processor SDK RTOS, see \ref MIGRATION_GUIDES for more details.
-
 ## Block Diagram
 
 Given below is a block diagram of the SW modules in this SDK,
@@ -45,7 +41,7 @@ The main software components in the block diagram are described below
 <tr>
     <td>Motor Control
     <td>\ref EXAMPLES_MOTORCONTROL
-    <td>Drive protocols for EnDAT, HDSL and Benchmark demo for CFFT, FIR and FOC.
+    <td>Drive protocols for EnDAT, HDSL.
 </tr>
 <tr><td colspan="3" bgcolor=#F0F0F0>**Examples and Demos**</td></tr>
 <tr>
@@ -88,10 +84,6 @@ Given below is a overview of the directory structure to help you navigate the SD
 <tr>
     <td>source/
     <td>Device drivers, middleware libraries and APIs</td>
-</tr>
-<tr>
-    <td>motor_control/
-    <td>Motor control related encoder libraries like HDSL and EnDATc</td>
 </tr>
 </table>
 
