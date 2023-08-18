@@ -11,15 +11,13 @@ const files = {
 
 const filedirs = {
     common: [
-        "driver",
-        //"${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/driver",
+        "${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/driver",
     ],
 };
 
 const includes = {
-    common: [
-        "include",
-        //"${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/include",
+    common: [  
+        "${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/include",
     ],
 };
 

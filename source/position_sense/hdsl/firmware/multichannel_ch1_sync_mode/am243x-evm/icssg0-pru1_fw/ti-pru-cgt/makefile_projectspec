@@ -7,7 +7,7 @@ include $(MOTOR_CONTROL_SDK_PATH)/imports.mak
 
 PROFILE?=Release
 
-PROJECT_NAME=hdsl_master_freerun_300_mhz_am243x-evm_icssg0-pru1_fw_ti-pru-cgt
+PROJECT_NAME=hdsl_master_multichannel_ch1_sync_mode_am243x-evm_icssg0-pru1_fw_ti-pru-cgt
 
 all:
 	$(CCS_ECLIPSE) -noSplash -data $(MOTOR_CONTROL_SDK_PATH)/ccs_projects -application com.ti.ccstudio.apps.projectBuild -ccs.projects $(PROJECT_NAME) -ccs.configuration $(PROFILE)

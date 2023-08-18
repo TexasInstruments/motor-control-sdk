@@ -38,16 +38,26 @@
 	.ref qm_add
 	.ref calc_rssi
 	.ref send_stuffing
+	.ref datalink_wait_vsynch
+	.if $defined("HDSL_MULTICHANNEL")
+	.ref send_header_300m
+	.else
 	.ref send_header
+	.endif
+	.ref send_header_modified
 	.ref send_trailer
 	.ref wait_delay
 	.ref datalink_loadfw
 	.ref recv_dec
-	.ref datalink_wait_vsynch
+	.ref transport_on_h_frame
+	.ref sync_pulse
+	.ref check_test_pattern
+	.ref datalink_abort_jmp
+	.ref receive
+	.ref datalink_abort
 	.global datalink_reset
 	.global datalink_init_start
-	.global send_01
-	.global int_div
+
 
 	.sect	".text"
 
@@ -173,30 +183,15 @@ datalink_reset2:
     ;push first 4 bytes to fill fifo to max level then trigger channel for transmitting data
     ;later push further bytes in continous fifo load way
     .if $defined("HDSL_MULTICHANNEL")
+	LOOP push_1b_0,4
 	PUSH_FIFO_CONST			0x00
-	PUSH_FIFO_CONST			0x00
-	PUSH_FIFO_CONST			0x00
-	PUSH_FIFO_CONST			0x00
+push_1b_0:
     TX_CHANNEL
+   	LOOP push_2b_0,6
     WAIT_TX_FIFO_FREE
 	PUSH_FIFO_CONST		0x00
 	PUSH_FIFO_CONST		0x00
-	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_CONST		0x00
-	PUSH_FIFO_CONST		0x00
-    ;Push 8 bytes for single byte 0x00
-	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_CONST		0x00
-	PUSH_FIFO_CONST		0x00
-	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_CONST		0x00
-	PUSH_FIFO_CONST		0x00
-	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_CONST		0x00
-	PUSH_FIFO_CONST		0x00
-	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_CONST		0x00
-	PUSH_FIFO_CONST		0x00
+push_2b_0:
 
     .else
 	PUSH_FIFO_CONST		0x00
@@ -209,7 +204,11 @@ RESET_LOOP:
 	;loop			datalink_reset2_end, 4
 	;send m_par_reset 8b/10b: 5b/6b and 3b/4b, first=0,vsync=0,reserved=0
 	ldi			REG_FNC.w0, (0x0000 | M_PAR_RESET)
+	.if $defined("HDSL_MULTICHANNEL")
+	CALL			send_header_300m
+	.else
 	CALL			send_header
+	.endif
 	CALL1			send_stuffing
 	add 			LOOP_CNT_0, LOOP_CNT_0, 1
 	qbne RESET_LOOP,LOOP_CNT_0,2
@@ -224,7 +223,11 @@ SYNC_LOOP:
 datalink_sync:
 	;send m_par_reset 8b/10b: 5b/6b and 3b/4b, first=0,vsync=0,reserved=0
 	ldi			REG_FNC.w0, (0x0000 | M_PAR_SYNC)
+	.if $defined("HDSL_MULTICHANNEL")
+	CALL			send_header_300m
+	.else
 	CALL			send_header
+	.endif
 	CALL1			send_stuffing
 	;TX_CHANNEL
 datalink_sync_end:
@@ -247,7 +250,11 @@ datalink_learn:
 	;;WAIT_TX_FIFO_FREE
 ;send m_par_reset 8b/10b: 5b/6b and 3b/4b, first=0,vsync=0,reserved=0
 	ldi			REG_FNC.w0, (0x0000 | M_PAR_START)
+	.if $defined("HDSL_MULTICHANNEL")
+	CALL			send_header_300m
+	.else
 	CALL			send_header
+	.endif
 ; indication of TX_DONE comes about 53ns after wire timing
 	WAIT_TX_DONE
     .if $defined("FREERUN_300_MHZ")
@@ -389,7 +396,9 @@ datalink_learn_recv_loop_final:
 	sub			REG_TMP11, r3, REG_TMP2
 	MOV			REG_TMP2.b0, REG_TMP11.b0
 ; WAIT subracts -1 from parameter before compare. On 0 it wraps around!!!
+
 	WAIT		REG_TMP11
+
 datalink_learn_skip_wait:
 	TX_EN
     .if $defined("HDSL_MULTICHANNEL")
@@ -408,11 +417,10 @@ datalink_learn_skip_wait:
     .if $defined("HDSL_MULTICHANNEL")
 	PUSH_FIFO_CONST		0x00
 	TX_CHANNEL
+	LOOP push_3b_0,3
 	PUSH_FIFO_CONST		0x00
 	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_CONST		0x00
-	PUSH_FIFO_CONST		0x00
-	WAIT_TX_FIFO_FREE
+push_3b_0:
 	PUSH_FIFO_CONST		0xff
 	PUSH_FIFO_CONST		0xff
     .else
@@ -440,14 +448,10 @@ datalink_learn_skip_wait:
 	ldi			DISPARITY, 0
 	;2 dummy cycles
 	NOP_2
-    .if $defined("HDSL_MULTICHANNEL")
-    TX_CLK_DIV_WAIT		CLKDIV_NORMAL, REG_TMP2
-    .else
+    .if !$defined("HDSL_MULTICHANNEL")
     TX_CLK_DIV		CLKDIV_NORMAL, REG_TMP2
     .endif
 
-;syn with clock before resetting counter
-	WAIT_CLK_LOW		REG_TMP2
 ;reset cycle count
 	RESET_CYCLCNT
 datalink_learn_pattern:
@@ -527,9 +531,9 @@ datalink_learn_delay:
 	or			r19.b0, r19.b0, REG_TMP0.b0
 	lsl			r18, r18, 1
 ;check pattern
+
 	CALL1		check_test_pattern
 	qbeq		datalink_abort2, LOOP_CNT.b3, 14
-;	qbeq		datalink_learn_end_test, LOOP_CNT.b3, 14
 	qbne		datalink_learn_delay, REG_FNC.b0, 1
 datalink_learn_end_test:
 ; SLAVE_DELAY has no switch bit
@@ -541,7 +545,6 @@ datalink_learn_end_test:
 datalink_learn_end:
 	sub			LOOP_CNT.b1, LOOP_CNT.b1, 1
 	qblt		datalink_learn, LOOP_CNT.b1, 0
-;	qba			datalink_abort2_no_wait
 ;we need a rel. jump here
 	qba			datalink_learn2_before
 ;--------------------------------------------------------------------------------------------------
@@ -549,15 +552,9 @@ datalink_abort2:
 	qbbs			datalink_abort2_no_wait, r30, RX_ENABLE						;changed here from 24 to 26
 	WAIT_TX_DONE
     .if $defined("FREERUN_300_MHZ")
+	LOOP no_operation_2cycle,9
 	NOP_2
-	NOP_2
-	NOP_2
-	NOP_2
-	NOP_2
-	NOP_2
-	NOP_2
-	NOP_2
-	NOP_2
+no_operation_2cycle:
     .endif
 datalink_abort3:
 datalink_abort2_no_wait:
@@ -594,7 +591,11 @@ datalink_learn2:
     .endif
 ;send m_par_reset 8b/10b: 5b/6b and 3b/4b, first=0,vsync=0,reserved=0
 	ldi			REG_FNC.w0, (0x0000 | M_PAR_LEARN)
+	.if $defined("HDSL_MULTICHANNEL")
+	CALL			send_header_300m
+	.else
 	CALL			send_header
+	.endif
 	CALL			receive
 	.if $defined(EXT_SYNC_ENABLE_DEBUG)
 	lbco        &REG_TMP2, c25, 0, 4
@@ -614,7 +615,11 @@ datalink_learn2_end:
 	ldi			LOOP_CNT.b1, 16
 datalink_line_check:
 	ldi			REG_FNC.w0, (0x0000 | M_PAR_CHECK)
+	.if $defined("HDSL_MULTICHANNEL")
+	CALL			send_header_300m
+	.else
 	CALL			send_header
+	.endif
 	CALL			receive
 ;check test pattern
 	CALL1			check_test_pattern
@@ -629,7 +634,11 @@ datalink_line_check_end:
 	sbco			&SLAVE_DELAY, MASTER_REGS_CONST, DELAY, 1
 datalink_id_req:
 	ldi			REG_FNC.w0, (0x0000 | M_PAR_IDREQ)
+	.if $defined("HDSL_MULTICHANNEL")
+	CALL			send_header_300m
+	.else
 	CALL			send_header
+	.endif
 	CALL			recv_dec
 ;--------------------------------------------------------------------------------------------------
 ;State ID STORE
@@ -677,219 +686,4 @@ datalink_id_compute:
 	;qba datalink_id_req
 	CALL1		send_stuffing
 	jmp         datalink_wait_vsynch
-;--------------------------------------------------------------------------------------------------
 
-;--------------------------------------------------------------------------------------------------
-;Function:
-;This functions receives data without deocoding.
-;output:
-;	r20-r19: data
-;--------------------------------------------------------------------------------------------------
-receive:
-	ldi			LOOP_CNT.b0, 32
-	CALL1		wait_delay
-	ldi			REG_TMP0.w0, 0
-	ldi			REG_TMP11, (PDMEM00+0x5a4);LUT_B2B)
-	zero		&r18, (4*5)
-datalink_receive_signal_0_31_1:
-	qbbc			datalink_receive_signal_0_31_1, r31, RX_VALID_FLAG
-	POP_FIFO		REG_TMP0.b0
-	CLEAR_VAL
-	sub			LOOP_CNT.b0, LOOP_CNT.b0, 1
-	qbbc			datalink_receive_signal_0_31_received_0_1, REG_TMP0.w0, SAMPLE_EDGE
-	set			r20, r20, LOOP_CNT.b0
-datalink_receive_signal_0_31_received_0_1:
-	mov			REG_TMP0.b1, REG_TMP0.b0
-;get edges
-	lsr			REG_TMP1.b0, REG_TMP0.w0, 1
-	xor			CUR_EDGES, REG_TMP1.b0, REG_TMP0.b0
-	CALL1		calc_rssi
-	qbne		datalink_receive_signal_0_31_1, LOOP_CNT.b0, 0
-;receive next bits
-	ldi			LOOP_CNT.b0, 29
-datalink_receive_signal_32_60_1:
-	qbbc			datalink_receive_signal_32_60_1, r31, RX_VALID_FLAG					;changed here from 24 to 26
-	POP_FIFO		REG_TMP0.b0
-	CLEAR_VAL
-	sub			LOOP_CNT.b0, LOOP_CNT.b0, 1
-	qbbc			datalink_receive_signal_32_60_received_0_1, REG_TMP0.w0, SAMPLE_EDGE
-	set			r19, r19, LOOP_CNT.b0
-datalink_receive_signal_32_60_received_0_1:
-	mov			REG_TMP0.b1, REG_TMP0.b0
-;get edges
-	lsr			REG_TMP1.b0, REG_TMP0.w0, 1
-	xor			CUR_EDGES, REG_TMP1.b0, REG_TMP0.b0
-	CALL1			calc_rssi
-	qbne			datalink_receive_signal_32_60_1, LOOP_CNT.b0, 1
-datalink_receive_signal_last_1:
-	qbbc			datalink_receive_signal_last_1, r31, RX_VALID_FLAG					;changed here from 24 to 26
-	POP_FIFO		REG_TMP0.b0
-	qbbc			datalink_receive_signal_last_received_0_1, REG_TMP0.w0, SAMPLE_EDGE
-	set			r19, r19, 0
-datalink_receive_signal_last_received_0_1:
-	lsl			r19, r19, 3
-	CLEAR_VAL
-; same delay code as in learn
-	ldi			REG_TMP1, (74*CYCLES_BIT+7)  ; -9 for 100 m
-	READ_CYCLCNT		REG_TMP0
-	qble	    receive_skip_wait, REG_TMP0, REG_TMP1
-	sub			REG_TMP0, REG_TMP1, REG_TMP0
-	add			r0,r0,1
-	WAIT		REG_TMP0
-receive_skip_wait:
-	TX_EN
-; datalink_receive_signal_no_delay_wait_1:
-	CALL1			send_trailer
-	CALL1			send_stuffing
-	RET
-;--------------------------------------------------------------------------------------------------
-;Function: sync_pulse (RET_ADDR1)
-;functions bussy waits for sync pulse
-;input:
-;modifies:
-;--------------------------------------------------------------------------------------------------
-;stores sync pulse period in R20 in unit of cycles
-sync_pulse:
-	lbco        &REG_TMP1, c1, IEP_CAPR6_RISE, 4
-wait_next_pulse:
-	lbco        &R20, c1, IEP_CAPR6_RISE, 4
-	QBEQ		wait_next_pulse, R20, REG_TMP1
-	SUB         R20, R20, REG_TMP1
-	RET1
-;--------------------------------------------------------------------------------------------------
-;Function: int_div (RET_ADDR1)
-;integer divides
-;input:
-;	REG_FNC.w0: Number
-;	REG_FNC.w2: Divisor
-;output:
-;	REG_FNC.w2: Result
-;	REG_FNC.w0: Rest
-;modifies:
-;--------------------------------------------------------------------------------------------------
-int_div:
-	ldi			REG_TMP0, 0
-int_div_loop:
-	qbgt			int_div_end, REG_FNC.w0, REG_FNC.w2
-	sub			REG_FNC.w0, REG_FNC.w0, REG_FNC.w2
-	add			REG_TMP0, REG_TMP0, 1
-	qba			int_div_loop
-int_div_end:
-	mov			REG_FNC.w2, REG_TMP0
-	RET1
-;--------------------------------------------------------------------------------------------------
-;Function: check_test_pattern (RET_ADDR1)
-;This function checks if the test pattern was received
-;input:
-;	r18-r20: data
-;output:
-;	REG_FNC.b0: 1 if true
-;modifies:
-;	REG_TMP0, REG_FNC
-;--------------------------------------------------------------------------------------------------
-check_test_pattern:
-;load test pattern and mask from memory
-	lbco			&REG_TMP0, MASTER_REGS_CONST, TEST_PATTERN0, 12
-;rm switch bit
-	and			REG_TMP11, r19, REG_TMP2
-	ldi			REG_TMP2, 0xff8
-	and			REG_TMP2, r19, REG_TMP2
-	lsl			REG_TMP2, REG_TMP2, 1
-	or			REG_TMP11, REG_TMP2, REG_TMP11
-;if found go to next step
-	qbne			check_test_pattern_false, r20, REG_TMP0
-	qbne			check_test_pattern_false, REG_TMP11, REG_TMP1
-check_test_pattern_true:
-	ldi			REG_FNC.b0, 1
-	RET1
-check_test_pattern_false:
-	ldi			REG_FNC.b0, 0
-	RET1
-;--------------------------------------------------------------------------------------------------
-;Function: send_01 (RET_ADDR1)
-;This function sends 01 pattern in RESET and SYNC state
-;input:
-;	REG_FNC.b2: last two bits of parameter channel
-;output:
-;modifies:
-;--------------------------------------------------------------------------------------------------
-send_01:
-;send 01 pattern
-;2 para bits, 1 switch bit, 5 slave bit
-	or			REG_FNC.b2, REG_FNC.b2, 0x15;0bPPS10101
-    .if $defined("HDSL_MULTICHANNEL")
-	mov FIFO_L,REG_FNC.b2
-	PUSH_FIFO_8x	FIFO_L
-    .else
-	PUSH_FIFO		REG_FNC.b2
-    .endif
-;56+12 line delay slave bits
-	ldi			REG_TMP0.b0, 8
-send_header_send_01_pattern_loop:
-	;;PUSH 8 bytes for 1 byte data (0x55) in FIFO
-	WAIT_TX_FIFO_FREE
-    .if $defined("HDSL_MULTICHANNEL")
-	PUSH_FIFO_CONST		0x00
-	PUSH_FIFO_CONST		0xff
-	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_CONST		0x00
-	PUSH_FIFO_CONST		0xff
-	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_CONST		0x00
-	PUSH_FIFO_CONST		0xff
-	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_CONST		0x00
-	PUSH_FIFO_CONST		0xff
-    .else
-    PUSH_FIFO_CONST		0x55
-    .endif
-	sub			REG_TMP0.b0, REG_TMP0.b0, 1
-	qbne			send_header_send_01_pattern_loop, REG_TMP0.b0, 0
-;send last 0101 (4 bits)
-	WAIT_TX_FIFO_FREE
-;overclock(8x)
-	PUSH_FIFO_CONST		0x00
-	ldi			REG_TMP0, (9*(CLKDIV_NORMAL+1)-9)
-    .if !$defined("HDSL_MULTICHANNEL")
-	WAIT			REG_TMP0
-	TX_CLK_DIV		CLKDIV_FAST, REG_TMP0
-    .endif
-	PUSH_FIFO_CONST		0xff
-	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_CONST		0x00
-	PUSH_FIFO_CONST		0xff
-;push TRAILER
-	;PUSH 8 bytes for 1 byte data (0x03) in FIFO
-	WAIT_TX_FIFO_FREE
-    .if $defined("HDSL_MULTICHANNEL")
-	PUSH_FIFO_CONST		0x00
-	PUSH_FIFO_CONST		0x00
-	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_CONST		0x00
-	PUSH_FIFO_CONST		0x00
-	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_CONST		0x00
-	PUSH_FIFO_CONST		0x00
-	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_CONST		0xff
-	PUSH_FIFO_CONST		0xff
-    .else
-    PUSH_FIFO_CONST		0x03
-    .endif
-    .if $defined("FREERUN_300_MHZ")
-	ldi			REG_TMP0, (6*(CLKDIV_FAST+1)-8+2)
-    .else
-    ldi			REG_TMP0, (6*(CLKDIV_FAST+1)-8)
-    .endif
-    .if !$defined("HDSL_MULTICHANNEL")
-    WAIT			REG_TMP0
-	TX_CLK_DIV		CLKDIV_NORMAL, REG_TMP0
-    ;wait to have same timing as send_trailer
-	ldi			REG_TMP0, 30;6
-    WAIT			REG_TMP0
-    .endif
-
-
-;reset cyclecount
-	RESET_CYCLCNT
-	RET1

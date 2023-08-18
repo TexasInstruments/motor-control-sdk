@@ -11,21 +11,20 @@ const files = {
 
 const filedirs = {
     common: [
-        "driver",
-        // "${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/driver",
+        
+         "${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/driver",
     ],
 };
 
 const includes = {
     common: [
-        "include",
-        // "${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/include",
+       
+         "${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/include",
     ],
 };
 
 const buildOptionCombos = [
     { device: device, cpu: "r5f", cgt: "ti-arm-clang"},
-    // { device: device, cpu: "r5f", cgt: "gcc-armv7"},
 ];
 
 function getComponentProperty() {

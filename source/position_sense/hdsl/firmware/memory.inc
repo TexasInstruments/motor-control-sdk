@@ -216,11 +216,7 @@ LONG_MSG_RECV .sassign r28, long_msg_recv_s
 	.asg							r8.w2, DELTA_ACC3
 	.asg							r9.w0, DELTA_ACC4
 	.asg							r9.w2, LAST_ACC
-	;.asg							r10, EXTRA_POS
-	;.asg							r10.w0, TIME_COMP
-	;.asg							r10.w2, LAST_TIME_COMP
 	.asg							r10.w0, SYNC_DIFF0
-    .asg							r10.w2, LOOP_CNT_0
 	.asg							r12.b0, EXTRA_SIZE
 	.asg							r12.b1, NUM_STUFFING
 	.asg							r12.b2, EXTRA_EDGE
@@ -238,7 +234,7 @@ LONG_MSG_RECV .sassign r28, long_msg_recv_s
 	.asg							r24.w2, CRC_SEC
 	.asg							r24.b3, CRC_SEC_H
 	.asg							r24.b2, CRC_SEC_L
-
+    .asg							r28.b0, LOOP_CNT_0
 	.asg							r2.b0, EXTRA_SIZE_SELF ;take care! these are not persistent registers, r2 is actually temp reigister. these names are
 	.asg							r2.b1, EXTRA_EDGE_SELF ;given to temp register for ease of reading. they are used as temp.
 

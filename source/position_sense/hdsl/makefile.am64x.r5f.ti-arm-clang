@@ -20,13 +20,13 @@ FILES_common := \
     hdsl_lut.c \
 
 FILES_PATH_common = \
-    driver \
+    ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/driver \
 
 INCLUDES_common := \
     -I${CG_TOOL_ROOT}/include/c \
     -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source \
     -I${MOTOR_CONTROL_SDK_PATH}/source \
-    -Iinclude \
+    -I${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/include \
 
 DEFINES_common := \
     -DSOC_AM64X \

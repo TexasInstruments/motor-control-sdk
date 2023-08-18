@@ -177,8 +177,10 @@ no_sub_carry:
 transport_on_v_frame_diff_pos:
 
     .if $defined("HDSL_MULTICHANNEL")
+    WAIT_TX_FIFO_FREE
+    LOOP push_1B,2
 	PUSH_FIFO_CONST  0xff
-	PUSH_FIFO_CONST  0xff
+push_1B:
     .endif
 
 ;check for diff. is 0 -> estimate if not
@@ -223,7 +225,11 @@ transport_on_v_frame_exit:
 ;reset rel. pos
     .if $defined("HDSL_MULTICHANNEL")
 	PUSH_FIFO_CONST  0xff
-    .endif
+	qbeq			free_run_mode1, EXTRA_SIZE, 0
+	PUSH_FIFO_CONST		0xff
+	RESET_CYCLCNT
+free_run_mode1:
+	.endif
 	ldi		REG_TMP0, 0
 	sbco		&REG_TMP0, MASTER_REGS_CONST, REL_POS0, 4
 ;store last FAST_POS
@@ -325,6 +331,20 @@ transport_on_v_frame_2_exit:
 ; generate interrupt PRU0_ARM_IRQ1
 	ldi		    r31.w0, PRU0_ARM_IRQ1
 transport_skip_vpos_update:
+	qbne			not_7th_hframe_0, LOOP_CNT.b2, 7
+	qbbc			not_7th_hframe_0, H_FRAME.flags, FLAG_NORMAL_FLOW
+ 	.if $defined("HDSL_MULTICHANNEL")
+ 	WAIT_TX_FIFO_FREE
+ 	LOOP push_1B_0 ,2
+	PUSH_FIFO_CONST  0xff
+push_1B_0:
+	qbeq			free_run_mode2, EXTRA_SIZE, 0
+	PUSH_FIFO_CONST		0xff
+	RESET_CYCLCNT
+free_run_mode2:
+	.endif
+not_7th_hframe_0:
+
 ; Set POSTX to 3
     ldi         REG_TMP0.b0, 0x3
     sbco		&REG_TMP0.b0, MASTER_REGS_CONST, POSTX, 1
@@ -419,8 +439,6 @@ transport_layer_recving_long_msg_data_high_nibble:
 
 	lsl		REG_TMP0.b0, REG_TMP2.b0, 4
 	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, LONG_MSG_RECV.ptr, 1
-	;160
-
 	qba		transport_layer_recving_long_msg_data_nibble_end
 transport_layer_recving_long_msg_data_low_nibble:
 
@@ -433,7 +451,6 @@ transport_layer_recving_long_msg_data_nibble_end:
 	qba		transport_layer_recving_long_msg_end
 transport_layer_recving_long_msg_crc:
 ;we are receiving crc
-
 	qbne		transport_layer_recving_long_msg_end, LONG_MSG_RECV.bits_left, 4
 ;set long msg channel to unbusy
 ; Set EVENT_FREL in EVENT register
@@ -478,6 +495,7 @@ transport_layer_check_for_new_msg:
 	qbeq		transport_layer_recv_no_msg, REG_TMP0.b0, S_PAR_IDLE
 	qbbs		transport_layer_recv_msg_end, H_FRAME.flags, FLAG_WAIT_IDLE
 ;check for special character
+
 	qbbs		transport_layer_recv_msg_check_for_nak, REG_TMP0.b0, 4
 ;set flag to signalize that we need to wait for next S_PAR_IDLE again, so we do not parse data multiple times
 	set		H_FRAME.flags, H_FRAME.flags, FLAG_WAIT_IDLE
@@ -501,12 +519,16 @@ transport_layer_check_for_new_msg:
 	lsr		REG_TMP2, REG_TMP2, 10
 transport_layer_reassemble_msg_loop:
 ;identify message type
-	;jmp transport_layer_received_long_msg
 	qbbs		transport_layer_received_long_msg, REG_TMP11.b3, 7
 transport_layer_received_short_msg:
 ;check crc
 	ldi		REG_TMP1.b0, &r12.b0
 ;read or write?
+	.if $defined("HDSL_MULTICHANNEL")
+	WAIT_TX_FIFO_FREE
+	PUSH_FIFO_1_8x
+	PUSH_FIFO_2_8x
+	.endif
 	qbbs		transport_layer_short_msg_recv_read, REG_TMP11.b3, 6
 ;received write ack
 	ldi		REG_FNC.b0, 1
@@ -554,7 +576,6 @@ update_events_no_int10:
     sbco		&REG_TMP0.b0, MASTER_REGS_CONST, (ONLINE_STATUS_1_L), 1
 	qba		transport_layer_recv_msg_check_for_nak
 transport_layer_received_long_msg:
-
 ;process long message
 ;calculate number of bits we still need to receive
 	lsr		REG_TMP0.b0, REG_TMP11.b3, 2
@@ -579,6 +600,7 @@ transport_layer_received_long_msg_no_loffset:
 	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, PC_ADD_H, 2
 ;lower two bytes data or crc?
 ;if crc then dont save to PC_BUFFER
+
 	qbeq		transport_layer_received_long_msg_no_loffset_crc, LONG_MSG_RECV.bits_left, 0
 ;set ptr
 	ldi		LONG_MSG_RECV.ptr, 0x22
@@ -602,6 +624,10 @@ update_events_no_int11:
     sbco		&REG_TMP0.b0, MASTER_REGS_CONST, (ONLINE_STATUS_D_L), 1
 	clr		H_FRAME.flags, H_FRAME.flags, FLAG_PARA_BUSY
 transport_layer_received_long_msg_loffset_end:
+	.if $defined("HDSL_MULTICHANNEL")
+	PUSH_FIFO_1_8x
+	PUSH_FIFO_2_8x
+	.endif
 ;calculate CRC for already recevied bits
 	ldi		REG_FNC.b0, 4
 	ldi		r1.b0, &r12.b0
@@ -610,6 +636,7 @@ transport_layer_received_long_msg_loffset_end:
 ;raise error if long message complete and error
 	qbne		transport_layer_resend_msg_end, LONG_MSG_RECV.bits_left, 0
 	qbeq		transport_layer_resend_msg_end, LONG_MSG_RECV.crc, 0
+
 ; Set EVENT_ANS in EVENT register
 	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_H, 4
 	set		REG_TMP0.w0, REG_TMP0.w0, EVENT_ANS
@@ -697,7 +724,6 @@ transport_layer_resend_msg:
 transport_layer_resend_msg_read:
 transport_layer_resend_msg_end:
 transport_layer_recv_msg_end:
-
 	jmp		transport_layer_recv_msg_done
 ;----------------------------------------------------
 ;transport_layer_send_msg
@@ -968,6 +994,11 @@ transport_on_h_frame:
     sbco		&REG_TMP0.b0, MASTER_REGS_CONST, POSTX, 1
 
 ;check for byte error in acceleration channel
+	.if $defined("HDSL_MULTICHANNEL")
+	WAIT_TX_FIFO_FREE
+	PUSH_FIFO_CONST  0x00
+	PUSH_FIFO_CONST  0x00
+	.endif
 	qbbs		transport_acc_err_inc, H_FRAME.flags, FLAG_ERR_ACC
 ;crc error verification
 	;CALL1		calc_acc_crc
@@ -993,6 +1024,7 @@ transport_acc_err_inc:
 	jmp		datalink_abort
 transport_on_h_frame_no_reset:
 ;save return addr
+
 	mov		REG_TMP11.w0, RET_ADDR0
 	;CALL		estimator_acc; Instead of calling the API, copy the code here to save PRU cycles.
 ;----------------------------------------------------
