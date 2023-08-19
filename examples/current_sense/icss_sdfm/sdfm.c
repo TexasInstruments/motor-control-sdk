@@ -41,23 +41,23 @@
 #include <drivers/pruicss.h>
 #include <drivers/sciclient.h>
 
-#include "tisddf_pruss_intc_mapping.h"  /* INTC configuration */
-#include "current_sense/sdfm/firmware/sdfm_bin.h"            /* SDDF image data */
-#include "sddf.h"
-#include "current_sense/sdfm/include/sddf_api.h"
-/* PRU SDDF FW image info */
-typedef struct PRUSDDF_PruFwImageInfo_s {
+#include "tisdfm_pruss_intc_mapping.h"  /* INTC configuration */
+#include "current_sense/sdfm/firmware/sdfm_bin.h"            /* SDFM image data */
+#include "sdfm.h"
+#include "current_sense/sdfm/include/sdfm_api.h"
+/* PRU SDFM FW image info */
+typedef struct PRUSDFM_PruFwImageInfo_s {
     const uint32_t *pPruImemImg;
     const uint32_t pruImemImgSz;
-} PRUSDDF_PruFwImageInfo;
+} PRUSDFM_PruFwImageInfo;
 
 /* Number of PRU images */
-#define PRU_SDDF_NUM_PRU_IMAGE  ( 3 )
+#define PRU_SDFM_NUM_PRU_IMAGE  ( 3 )
 
-/* PRU SDDF image info */
-static PRUSDDF_PruFwImageInfo gPruFwImageInfo[PRU_SDDF_NUM_PRU_IMAGE] =
+/* PRU SDFM image info */
+static PRUSDFM_PruFwImageInfo gPruFwImageInfo[PRU_SDFM_NUM_PRU_IMAGE] =
 {
-    {pru_SDDF_PRU0_image_0, sizeof(pru_SDDF_PRU0_image_0)}, /* PRU FW */
+    {pru_SDFM_PRU0_image_0, sizeof(pru_SDFM_PRU0_image_0)}, /* PRU FW */
     {NULL, 0}
 };
 
@@ -82,7 +82,7 @@ int32_t initIcss(
     /* Open ICSS PRU instance */
     pruIcssHandle = PRUICSS_open(icssInstId);
     if (pruIcssHandle == NULL) {
-        return SDDF_ERR_INIT_ICSSG;
+        return SDFM_ERR_INIT_ICSSG;
     }
 
     /* Disable slice PRU cores */
@@ -90,31 +90,31 @@ int32_t initIcss(
     {
         status = PRUICSS_disableCore(pruIcssHandle, PRUICSS_PRU0);
         if (status != SystemP_SUCCESS) {
-            return SDDF_ERR_INIT_ICSSG;
+            return SDFM_ERR_INIT_ICSSG;
         }
     }
     else if (sliceId == ICSSG_SLICE_ID_1)
     {
         status = PRUICSS_disableCore(pruIcssHandle, PRUICSS_PRU1);
         if (status != SystemP_SUCCESS) {
-            return SDDF_ERR_INIT_ICSSG;
+            return SDFM_ERR_INIT_ICSSG;
         }
     }
     else
     {
-        return SDDF_ERR_INIT_ICSSG;
+        return SDFM_ERR_INIT_ICSSG;
     }
 
     /* Reset slice memories */
     size = PRUICSS_initMemory(pruIcssHandle, PRUICSS_IRAM_PRU(sliceId));
     if (size == 0)
     {
-        return SDDF_ERR_INIT_ICSSG;
+        return SDFM_ERR_INIT_ICSSG;
     }
     size = PRUICSS_initMemory(pruIcssHandle, PRUICSS_DATARAM(sliceId));
     if (size == 0)
     {
-        return SDDF_ERR_INIT_ICSSG;
+        return SDFM_ERR_INIT_ICSSG;
     }
 
     /* Set ICSS pin mux */
@@ -123,12 +123,12 @@ int32_t initIcss(
     /* Initialize ICSS INTC */
     status = PRUICSS_intcInit(pruIcssHandle, &gPruicssIntcInitdata);
     if (status != SystemP_SUCCESS) {
-        return SDDF_ERR_INIT_ICSSG;
+        return SDFM_ERR_INIT_ICSSG;
     }
 
     *pPruIcssHandle = pruIcssHandle;
 
-    return SDDF_ERR_NERR;
+    return SDFM_ERR_NERR;
 }
 void sdfm_configure_gpio_pin(sdfm_handle h_sdfm)
 {
@@ -169,95 +169,99 @@ void sdfm_configure_gpio_pin(sdfm_handle h_sdfm)
 
 
 }
-/* Initialize SDDF PRU FW */
-int32_t init_sdfm_pru_fw(uint8_t pruId, SddfPrms *pSddfPrms, sdfm_handle *pHSddf)
+/* Initialize SDFM PRU FW */
+int32_t init_sdfm_pru_fw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm)
 {
-    sdfm_handle hSddf;
+    sdfm_handle hSdfm;
 
-    /* Initialize SDDF instance */
-    hSddf = SDFM_init(pruId);
-    if (hSddf == NULL)
+    /* Initialize SDFM instance */
+    hSdfm = SDFM_init(pruId);
+    if (hSdfm == NULL)
     {
-        return SDDF_ERR_INIT_SDDF;
+        return SDFM_ERR_INIT_SDFM;
     }
 
     uint8_t SDFM_CH;
-    hSddf->iep_clock = 300000000; //300MHz
-    hSddf->sdfm_clock = 20000000; //20MHz
-    hSddf->iep_inc = 1; // Default IEP increment 1
+    hSdfm->iep_clock = pSdfmPrms->iep_clock; 
+    hSdfm->sdfm_clock = pSdfmPrms->sd_clock; 
+    hSdfm->iep_inc = 1; /* Default IEP increment 1 */
 
-    uint8_t acc_osr = 13;
+
     uint8_t acc_filter = 0; //SINC3 filter
     uint8_t ecap_divider = 0x0F; //IEP at 300MHz: SD clock = 300/15=20Mhz
 
     /*configure IEP count for one epwm period*/
-    SDFM_configIepCount(hSddf, pSddfPrms->epwm_out_freq);
+    SDFM_configIepCount(hSdfm, pSdfmPrms->epwm_out_freq);
 
     /*configure ecap as PWM code for generate 20 MHz sdfm clock*/
-    SDFM_configEcap(hSddf, ecap_divider);
+    SDFM_configEcap(hSdfm, ecap_divider);
 
-     /*set comparator osr or OC osr*/
-    SDFM_setCompFilterOverSamplingRatio(hSddf, pSddfPrms->ComFilterOsr);
-
-    /*set OC sample count for NC  & NC OSR */
-    SDFM_setFilterOverSamplingRatio(hSddf, pSddfPrms->FilterOsr, pSddfPrms->ComFilterOsr);
+    /*set Noraml current OSR */
+    SDFM_setFilterOverSamplingRatio(hSdfm, pSdfmPrms->FilterOsr);
 
     /*below configuration for all three channel*/
     for(SDFM_CH = 0; SDFM_CH < NUM_CH_SUPPORTED; SDFM_CH++)
     {
-        SDFM_setEnableChannel(hSddf, SDFM_CH);
+        SDFM_setEnableChannel(hSdfm, SDFM_CH);
 
-        SDFM_setAccOverSamplingRatio(hSddf, SDFM_CH, acc_osr);
+        /*set comparator osr or Over current osr*/
+        SDFM_setCompFilterOverSamplingRatio(hSdfm, SDFM_CH, pSdfmPrms->ComFilterOsr);
 
         /*set ACC source or filter type*/
-        SDFM_configDataFilter(hSddf, SDFM_CH, acc_filter);
+        SDFM_configDataFilter(hSdfm, SDFM_CH, acc_filter);
 
         /*set clock inversion & clock source for all three channel*/
-        SDFM_selectClockSource(hSddf, SDFM_CH, pSddfPrms->clkPrms[SDFM_CH]);
+        SDFM_selectClockSource(hSdfm, SDFM_CH, pSdfmPrms->clkPrms[SDFM_CH]);
 
         /*set threshold values */
-        SDFM_setCompFilterThresholds(hSddf, SDFM_CH, pSddfPrms->threshold_parms[SDFM_CH]);
-
-
-
-        if(pSddfPrms->en_com)
+        SDFM_setCompFilterThresholds(hSdfm, SDFM_CH, pSdfmPrms->threshold_parms[SDFM_CH]);
+        
+        if(pSdfmPrms->en_com)
         {
-            SDFM_enableComparator(hSddf, SDFM_CH);
+            SDFM_enableComparator(hSdfm, SDFM_CH);       
         }
         else
         {
-            SDFM_disableComparator(hSddf, SDFM_CH);
+            SDFM_disableComparator(hSdfm, SDFM_CH);
         }
 
     }
 
     /*GPIO pin configuration for threshold measurment*/
-    sdfm_configure_gpio_pin(hSddf);
+    sdfm_configure_gpio_pin(hSdfm);
 
-    SDFM_setSampleReadingTime(hSddf, pSddfPrms->trigSampTime);
+    SDFM_setSampleTriggerTime(hSdfm, pSdfmPrms->firstSampTrigTime);
+    if(pSdfmPrms->en_second_update)
+    {
+        SDFM_enableDoubleSampling(hSdfm, pSdfmPrms->secondSampTrigTime);
+    }
+    else
+    {
+        SDFM_disableDoubleSampling(hSdfm);
+    }
 
-    /* Enable (global) SDDF */
-    SDFM_enable(hSddf);
+    /* Enable (global) SDFM */
+    SDFM_enable(hSdfm);
 
-    pHSddf = &hSddf;
+    pHSdfm = &hSdfm;
 
- return SDDF_ERR_NERR;
+ return SDFM_ERR_NERR;
 }
 
 /*
- *  ======== initPruSddf ========
+ *  ======== initPruSdfm ========
  */
-/* Initialize PRU core for SDDF */
-int32_t initPruSddf(
+/* Initialize PRU core for SDFM */
+int32_t initPruSdfm(
     PRUICSS_Handle pruIcssHandle,
     uint8_t pruInstId,
-    SddfPrms *pSddfPrms,
-    sdfm_handle *pHSddf
+    SdfmPrms *pSdfmPrms,
+    sdfm_handle *pHSdfm
 )
 {
     uint8_t sliceId;
     uint32_t pruIMem;
-    PRUSDDF_PruFwImageInfo *pPruFwImageInfo;
+    PRUSDFM_PruFwImageInfo *pPruFwImageInfo;
     int32_t size;
     const uint32_t *sourceMem;          /* Source memory[ Array of uint32_t ] */
     uint32_t imemOffset;    /* Offset at which write will happen */
@@ -268,7 +272,7 @@ int32_t initPruSddf(
     /* Reset PRU */
     status = PRUICSS_resetCore(pruIcssHandle, pruInstId);
     if (status != SystemP_SUCCESS) {
-        return SDDF_ERR_INIT_PRU_SDDF;
+        return SDFM_ERR_INIT_PRU_SDFM;
     }
 
     /* Calculate slice ID */
@@ -299,7 +303,7 @@ int32_t initPruSddf(
     if ((pPruFwImageInfo == NULL) ||
         (pPruFwImageInfo->pPruImemImg == NULL))
     {
-        return SDDF_ERR_INIT_PRU_SDDF;
+        return SDFM_ERR_INIT_PRU_SDFM;
     }
 
     /* Write IMEM */
@@ -309,15 +313,15 @@ int32_t initPruSddf(
     size = PRUICSS_writeMemory(pruIcssHandle, pruIMem, imemOffset, sourceMem, byteLen);
     if (size == 0)
     {
-        return SDDF_ERR_INIT_PRU_SDDF;
+        return SDFM_ERR_INIT_PRU_SDFM;
     }
 
     /* Enable PRU */
     status = PRUICSS_enableCore(pruIcssHandle, pruInstId);
     if (status != SystemP_SUCCESS) {
-        return SDDF_ERR_INIT_PRU_SDDF;
+        return SDFM_ERR_INIT_PRU_SDFM;
     }
-/* Translate PRU ID to SDDF API */
+/* Translate PRU ID to SDFM API */
     if (pruInstId == PRUICSS_PRU0) {
         pruId = PRU_ID_0;
     }
@@ -325,15 +329,15 @@ int32_t initPruSddf(
         pruId = PRU_ID_1;
     }
     else {
-        return SDDF_ERR_INIT_PRU_SDDF;
+        return SDFM_ERR_INIT_PRU_SDFM;
     }
 
-    /* Initialize SDDF PRU FW */
-    status = init_sdfm_pru_fw(pruId, pSddfPrms, pHSddf);
-    if (status != SDDF_ERR_NERR) {
-        return SDDF_ERR_INIT_PRU_SDDF;
+    /* Initialize SDFM PRU FW */
+    status = init_sdfm_pru_fw(pruId, pSdfmPrms, pHSdfm);
+    if (status != SDFM_ERR_NERR) {
+        return SDFM_ERR_INIT_PRU_SDFM;
     }
-    return SDDF_ERR_NERR;
+    return SDFM_ERR_NERR;
 
 }
 

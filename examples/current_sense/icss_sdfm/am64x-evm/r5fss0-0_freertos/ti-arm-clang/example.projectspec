@@ -36,7 +36,7 @@
             -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F
             -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/am64x/r5f
             -I${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/include
-            -I${MOTOR_CONTROL_SDK_PATH}/examples/icss_sdfm
+            -I${MOTOR_CONTROL_SDK_PATH}/examples/current_sense/icss_sdfm
             -mcpu=cortex-r5
             -mfloat-abi=hard
             -mfpu=vfpv3-d16
@@ -96,7 +96,7 @@
             "
         ></configuration>
         <pathVariable name="MOTOR_CONTROL_SDK_PATH" path="${COM_TI_MOTOR_CONTROL_SDK_AMXXX_INSTALL_DIR}" scope="project" />
-        <file path="../../../app_sddf.c" openOnCreation="false" excludeFromBuild="false" action="copy">
+        <file path="../../../app_sdfm.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
         <file path="../../../epwm_dc.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
@@ -104,7 +104,7 @@
         </file>
         <file path="../../../epwm_mod.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
-        <file path="../../../sddf.c" openOnCreation="false" excludeFromBuild="false" action="copy">
+        <file path="../../../sdfm.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
         <file path="../../../cfg_pad.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>

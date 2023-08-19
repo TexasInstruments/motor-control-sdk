@@ -31,8 +31,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SDDF_DRV_H_
-#define _SDDF_DRV_H_
+#ifndef _SDFM_DRV_H_
+#define _SDFM_DRV_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -111,13 +111,12 @@ extern "C" {
 #define SDFM_RECFG_TRIG_OUT_SAMP_BUF    ( SDFM_RECFG_BF_RECFG_TRIG_OUT_SAMP_BUF_MASK )
 /**    \brief IEP_CFG*/
 #define IEP_DEFAULT_INC                 0x1
-/**    \brief IEP_CFG_EPWM_PRD */
-#define CMP0_CNT_EPWM_PRD               0x927C
+
 
 /* SDFM output buffer size in 32-bit words */
 
 
-#define ICSSG_SD_SAMP_CH_BUF_SZ  128
+#define ICSSG_SD_SAMP_CH_BUF_SZ  ( 128 )
 #define NUM_CH_SUPPORTED        ( 3 )
 
 /* ========================================================================== */
@@ -148,14 +147,14 @@ typedef struct SDFM_CfgSdClk_s
  */
 typedef struct SDFM_CfgTrigger_s
 {
-    /**< time to start sampling after trigger input  */
-    volatile uint32_t trig_samp_time;
-    /**< IEP0 counts in OC sampling period*/
-    volatile uint16_t oc_prd_iep_cnt;
-    /**< IEP0 counts in NC sampling period*/
-    volatile uint16_t nc_prd_iep_cnt;
-    /**< OC Sample count for one NC sample*/
-    volatile uint16_t sample_count;
+    /**< bit-field for enable double update */
+    volatile uint16_t    en_double_nc_sampling;
+    /**< First sample starting point */
+    volatile uint32_t first_samp_trig_time;
+    /**<Second sample starting point*/
+    volatile uint32_t second_samp_trig_time;
+    /**< IEP0 counts in normal current sampling period*/
+    volatile uint32_t nc_prd_iep_cnt;
 } SDFM_CfgTrigger;
 
 /**
@@ -254,10 +253,10 @@ typedef struct SDFM_Cfg_s
     volatile uint8_t    osr;
     /**< sdfm threshold parms*/
     SDFM_ThresholdParms  sdfm_threshold_parms;
-    /**< reserved*/
-    volatile uint8_t    reserved4;
-    /**< reserved*/
-    volatile uint32_t    reserved5;
+    /**< Reserved*/
+    volatile uint32_t    reserved1;
+    /**< reserved */
+    volatile uint8_t    reserved2;
     /**< sdfm ch clock parms*/
     SDFM_ClkSourceParms  sdfm_clk_parms;
     /**< array to store the params for gpio toggle for different channels*/
@@ -273,10 +272,12 @@ typedef struct SDFM_Cfg_s
  */
 typedef struct SDFM_Ctrl_s
 {
-    /**< SDFM control */
-    volatile uint8_t  ctrl;
-    /**< SDFM status */
-    volatile uint8_t  stat;
+    /**< SDFM Enable */
+    volatile uint8_t sdfm_en;
+    /**< SDFM Enable Ack */
+    volatile uint8_t  sdfm_en_ack;
+    /**< SDFM PRU ID*/
+    volatile uint8_t  sdfm_pru_id;
 } SDFM_Ctrl;
 
 typedef struct SDFM_Interface_s{
@@ -312,7 +313,7 @@ typedef struct SDFM_s {
 } SDFM;
 
 
-#include "sddf_api.h"
+#include "sdfm_api.h"
 
 #ifdef __cplusplus
 }

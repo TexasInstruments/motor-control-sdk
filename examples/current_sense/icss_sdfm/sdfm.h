@@ -30,34 +30,34 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SDDF_H_
-#define _SDDF_H_
+#ifndef _SDFM_H_
+#define _SDFM_H_
 
 #include <stdint.h>
 #include <drivers/pruicss.h>
-#include "current_sense/sdfm/include/sddf_api.h"
+#include "current_sense/sdfm/include/sdfm_api.h"
 
 /* Status codes */
-#define SDDF_ERR_NERR               (  0 )  /* no error */
-#define SDDF_ERR_CFG_PIN_MUX        ( -1 )  /* pin mux configuration error */
-#define SDDF_ERR_CFG_ICSSG_CLKCFG   ( -2 )  /* ICSSG clock configuration error */
-#define SDDF_ERR_INIT_ICSSG         ( -3 )  /* initialize ICSSG error */
-#define SDDF_ERR_CFG_MCU_INTR       ( -4 )  /* interrupt configuration error */
-#define SDDF_ERR_INIT_PRU_SDDF      ( -5 )  /* initialize PRU for SDDF error */
-#define SDDF_ERR_INIT_SDDF          ( -6 )  /* initialize SDDF error */
+#define SDFM_ERR_NERR               (  0 )  /* no error */
+#define SDFM_ERR_CFG_PIN_MUX        ( -1 )  /* pin mux configuration error */
+#define SDFM_ERR_CFG_ICSSG_CLKCFG   ( -2 )  /* ICSSG clock configuration error */
+#define SDFM_ERR_INIT_ICSSG         ( -3 )  /* initialize ICSSG error */
+#define SDFM_ERR_CFG_MCU_INTR       ( -4 )  /* interrupt configuration error */
+#define SDFM_ERR_INIT_PRU_SDFM      ( -5 )  /* initialize PRU for SDFM error */
+#define SDFM_ERR_INIT_SDFM          ( -6 )  /* initialize SDFM error */
 
-/* Bit for SDDF configuration mask */
-#define SDDF_CFG_CLK                    ( 1<<0 )
-#define SDDF_CFG_OSR                    ( 1<<1 )
-#define SDDF_CFG_TRIG_SAMP_TIME         ( 1<<2 )
-#define SDDF_CFG_TRIG_SAMP_CNT          ( 1<<3 )
-#define SDDF_CFG_CH_EN                  ( 1<<4 )
-#define SDDF_CFG_FD                     ( 1<<5 )
-#define SDDF_CFG_TRIG_OUT_SAMP_BUF      ( 1<<6 )
+/* Bit for SDFM configuration mask */
+#define SDFM_CFG_CLK                    ( 1<<0 )
+#define SDFM_CFG_OSR                    ( 1<<1 )
+#define SDFM_CFG_TRIG_SAMP_TIME         ( 1<<2 )
+#define SDFM_CFG_TRIG_SAMP_CNT          ( 1<<3 )
+#define SDFM_CFG_CH_EN                  ( 1<<4 )
+#define SDFM_CFG_FD                     ( 1<<5 )
+#define SDFM_CFG_TRIG_OUT_SAMP_BUF      ( 1<<6 )
 
-/* SDDF mode */
-#define SDDF_MODE_TRIG                  ( 0 )
-#define SDDF_MODE_CONT                  ( 1 )
+/* SDFM mode */
+#define SDFM_MODE_TRIG                  ( 0 )
+#define SDFM_MODE_CONT                  ( 1 )
 
 /* ICSSG Core clock source selection options */
 #define CORE_CLK_SEL_ICSSGn_CORE_CLK    ( 0 )   /* Mux Output */
@@ -121,16 +121,31 @@ typedef enum PRUICSS_MaxInstances_s
    PRUICSS_INSTANCE_MAX=2
 } PRUICSS_MaxInstances;
 
-/* SDDF configuration parameters */
-typedef struct SddfPrms_s {
-    float trigSampTime;
+/* SDFM configuration parameters */
+typedef struct SdfmPrms_s {
+    /**< IEP clock value */
+    uint32_t iep_clock;
+    /**< Sigma delta input clock value  */
+    uint32_t sd_clock;
+    /**< double update enable field  */
+    uint8_t en_second_update;
+    /**< First normal current sample trigger time  */
+    float firstSampTrigTime;
+    /**< First normal current sample trigger time  */
+    float secondSampTrigTime;
+    /**< output freq. of EPWM0  */
     uint32_t epwm_out_freq;
+    /**< Over current threshold parameters  */
     SDFM_ThresholdParms   threshold_parms[NUM_CH_SUPPORTED];
+    /**< SD clock source and clock inversion  */
     SDFM_ClkSourceParms   clkPrms[3];
+    /**< Over current OSR  */
     uint16_t ComFilterOsr;
+    /**< Normal current OSR  */
     uint16_t FilterOsr;
+    /**< over current enable field */
     uint8_t en_com;
-} SddfPrms;
+} SdfmPrms;
 
 
 /* Initialize ICSSG */
@@ -141,13 +156,13 @@ int32_t initIcss(
     PRUICSS_Handle *pPruIcssHandle
 );
 
-/* Initialize PRU core for SDDF */
-int32_t initPruSddf(
+/* Initialize PRU core for SDFM */
+int32_t initPruSdfm(
     PRUICSS_Handle pruIcssHandle,
     uint8_t pruInstId,
-    SddfPrms *pSddfPrms,
-    sdfm_handle *pHSddf
+    SdfmPrms *pSdfmPrms,
+    sdfm_handle *pHSdfm
 );
 
 
-#endif /* _SDDF_H_ */
+#endif /* _SDFM_H_ */

@@ -1,5 +1,5 @@
 ;
-; sddf.h
+; sdfm.h
 ;
 ; Copyright (c) 2023, Texas Instruments Incorporated
 ; All rights reserved.
@@ -32,8 +32,8 @@
 ;  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;
 
-        .if !$defined("__sddf_h")
-__sddf_h    .set    1
+        .if !$defined("__sdfm_h")
+__sdfm_h    .set    1
 
 ;
 ; Substitution symbols
@@ -47,35 +47,34 @@ __sddf_h    .set    1
         .asg    C11, CT_PRU_ICSSG_CTRL          ; Constant Table, PRU Control
         .asg    C24, CT_PRU_ICSSG_LOC_DMEM      ; Constant Table, local PRU DMEM
         .asg    C26, CT_PRU_ICSSG_IEP0          ; Constant Table, PRU_ICSSG IEP0
+	    .asg	CT_PRU_ICSSG_LOC_DMEM,		PRUx_DMEM  ;DMEM base address
 
-        .asg    R1, TREG0                       ; temporary register 0
-        .asg    R2, TREG1                       ; temporary register 1
-        .asg    R3, TREG2                       ; temporary register 2
-        .asg    R4, TREG3                       ; temporary register 3
+        .asg    R1, TEMP_REG0                       ; temporary register 0
+        .asg    R2, TEMP_REG1                       ; temporary register 1
+        .asg    R3, TEMP_REG2                       ; temporary register 2
+        .asg    R4, TEMP_REG3                       ; temporary register 3
 
-        .asg    R23, SDDF_CFG_BASE_PTR_REG      ; SDDF CFG FW registers base pointer register
+        .asg    R23, SDFM_CFG_BASE_PTR_REG      ; SDFM CFG FW registers base pointer register
         .asg    R24, SD_HW_BASE_PTR_REG         ; SD hardware base pointer register
         .asg    R25.w0, RET_ADDR_REG            ; function return register
 
         .asg    R5, DN0                         ; SD integrator 3 (ACC3) output
-        .asg    R6, CN3                         ; SDDF differentiator 1 output
-        .asg    R7, CN4                         ; SDDF differentiator 2 output
-        .asg    R8, CN5                         ; SDDF differentiator 3 output
+        .asg    R6, CN3                         ; SDFM differentiator 1 output
+        .asg    R7, CN4                         ; SDFM differentiator 2 output
+        .asg    R8, CN5                         ; SDFM differentiator 3 output
         .asg    R21, MASK_REG                    ; integrator & differentiator output mask
-        .asg    R22.w2, SAMP_CNT_REG             ; NC sample count
 
         .asg    R26.w0, COMPARATOR_EN           ; SD comparator enable for different channels
         .asg    R26.w2, ZERO_CROSS_EN           ; SD Zero Crossing enable for different channels
         .asg    R19, OC_HIGH_THR              ; SD OC High threshold
         .asg    R27, OC_LOW_THR              ; SD OC Low threshold
-        .asg    R29, OC_ZC_THR                ; SD zero crosssing threshold
 
-        .asg    R18, GPIO_TGL_ADDR              ; Address to write to for the GPIO toggle
 
-        .asg    R28, CURRENT_COMP4_REG_VALUE     ; Current Cmp4 register value
+        .asg    R29, GPIO_TGL_ADDR              ; Address to write to for the GPIO toggle
 
-        .asg    R1, T0_CTXT_BASE_REG            ; base PRU register for T0 context
-        .asg    R9, T1_S0_CTXT_BASE_REG         ; base PRU register for T1_S0 context
+
+       .asg    R1, T0_CTXT_BASE_REG            ; base PRU register for T0 context
+    .asg    R9, T1_S0_CTXT_BASE_REG         ; base PRU register for T1_S0 context
 
         .asg    R9, ACC3_DN1_CH0                ; Ch X (0...8), differentiator 1 state
         .asg    R10, ACC3_DN3_CH0               ; Ch X (0...8), differentiator 2 state
@@ -87,9 +86,25 @@ __sddf_h    .set    1
         .asg    R16, ACC3_DN3_CH2               ; CH Z (0...8), differentiator 2 state
         .asg    R17, ACC3_DN5_CH2               ; CH Z (0...8), differentiator 3 state
 
-        .asg    R22.w0, SD_CH_ID                ; SD channel IDs
+        .asg    R22.b0, SD_CH0_ID                ; SD channel0 ID
+        .asg    R22.b1, SD_CH1_ID                ; SD Channel1 ID
+        .asg    R22.b2, SD_CH2_ID                ; SD Channel2 ID
 
         .asg    R20, OUT_SAMP_BUF_REG           ; address of local interleaved NC output sample buffer
+
+        .asg    R28.b0,  SAMP_CNT_REG             ; NC sample count
+        .asg    R28.b1,  SAMP_NAME                ; First/second sample number
+        .asg    R28.b2,  NC_OUTPUT_SAMP         ;
+        .asg    R28.b3,  EN_DOUBLE_UPDATE
+
+;Fast detect registers(using only in SDFM init)
+
+        .asg R19.b0,  FAST_TZ_OUT_REG
+        .asg R19.b1,  FAST_window_REG
+        .asg R19.b2,  FAST_ONE_max_REG
+        .asg R19.b3,  FAST_ONE_min_REG
+        .asg R27.b0,  FAST_ZERO_max_REG
+        .asg R27.b1,  FAST_ZERO_min_REG
 
 
 ;
@@ -122,6 +137,8 @@ NONE_HINT_BIT                   .set 31                 ; ICSSG_PRI_HINT_REG:NON
 ICSSG_CNTLSELF_BASE             .set 0
 PRUx_CNTL_CONST_IDX0_OFFSET     .set 0x0020         ;  Constant Table Block Index Reg 0
 PRUx_CNTLSELF_CONST_IDX0_REG    .set (ICSSG_CNTLSELF_BASE + PRUx_CNTL_CONST_IDX0_OFFSET)
+
+
 ; ICSSG_PRU_CTBIR0:C24_BLK_INDEX, PRU Constant Entry C24 Block Index
 C24_BLK_INDEX_FW_REGS_VAL       .set 0
 C24_BLK_INDEX_OUT_SAMP_BUF_VAL  .set 8
@@ -134,6 +151,7 @@ ICSSG_CFG_GPCFG1                .set 0x000C ;  GP IO Configuration Register 1
 ICSSG_CFG_SPPC                  .set 0x0034 ;  Scratch PAD priority and config
 ICSSG_CFG_PRU0_SD0_CLK          .set 0x48
 ICSSG_CFG_PRU1_SD0_CLK          .set 0x94
+ICSSG_CFG_PWM1                   .set 0x134 ; PWM1 trip generation configuration
 
 ;
 ; ICSSG_GPCFGn_REG:PR1_PRUn_GP_MUX_SEL, Controls the icss_wrap mux sel
@@ -255,4 +273,7 @@ TASKS_MGR_TS1_GEN_CFG1          .set 0x38
 
 TM_YIELD_XID                    .set 252
 
-    .endif  ; __sddf_h
+;IEP_CFG
+IEP_DEFAULT_INC                 .set 0x1
+
+    .endif  ; __sdfm_h

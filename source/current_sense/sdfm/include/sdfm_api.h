@@ -31,15 +31,15 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SDDF_API_H_
-#define _SDDF_API_H_
+#ifndef _SDFM_API_H_
+#define _SDFM_API_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include <stdint.h>
-#include "../firmware/icssg_sddf.h"
+#include "../firmware/icssg_sdfm.h"
 #include <current_sense/sdfm/include/sdfm_drv.h>
 
  /**
@@ -124,16 +124,16 @@ void SDFM_setEnableChannel(sdfm_handle h_sdfm, uint8_t channel_number);
 
 /**
  *
- *  \brief  Configure Accumulator  over sampling ratio
+ *  \brief  Configure comparator filter (over current) sampling ratio
  *
  *  \param[in]  h_sdfm          SDFM handle
  *  \param[in]  ch_id           current ch number
- *  \param[in]  osr             over sampling ratio
+ *  \param[in]  osr             comparator filter/Over current sampling ratio
  *
  *
  *
  */
-void SDFM_setAccOverSamplingRatio(sdfm_handle h_sdfm, uint8_t ch_id, uint8_t osr);
+void SDFM_setCompFilterOverSamplingRatio(sdfm_handle h_sdfm, uint8_t ch_id, uint16_t osr);
 
 /**
  *
@@ -161,15 +161,41 @@ void SDFM_setCompFilterThresholds(sdfm_handle h_sdfm, uint8_t ch_id, SDFM_Thresh
 
 /**
  *
- *  \brief  configuration of sample read time one Epwm cycle
+ *  \brief  configuration of single sample trigger time one Epwm cycle
  *
  *  \param[in]  h_sdfm          SDFM handle
- *  \param[in] trig_samp_time      sample read time in one pwm cycle
+ *  \param[in] samp_trig_time     first sample trigger time in one pwm cycle
  *
  *
  *
  */
-void SDFM_setSampleReadingTime(sdfm_handle h_sdfm, float trig_samp_time);
+void SDFM_setSampleTriggerTime(sdfm_handle h_sdfm, float samp_trig_time);
+
+/**
+ *
+ *
+ * \brief  configuration and enable second normal current sample starting time one Epwm cycle
+ *
+ *  \param[in]  h_sdfm          SDFM handle
+ *  \param[in] samp_trig_time     second sample trigger time in one PWM cycle
+ *
+ *
+ *
+*/
+void SDFM_enableDoubleSampling(sdfm_handle h_sdfm, float samp_trig_time);
+
+/**
+ *
+ *
+ * \brief  Disable double normal current update/sampling
+ *
+ *  \param[in]  h_sdfm          SDFM handle
+ *
+ *
+ *
+*/
+void SDFM_disableDoubleSampling(sdfm_handle h_sdfm);
+
 
 /**
  *
@@ -250,19 +276,6 @@ void SDFM_configComparatorGpioPins(sdfm_handle h_sdfm, uint8_t ch,uint32_t gpio_
  *
  */
 uint32_t SDFM_getFilterData(uint8_t ch);
-
-/**
- *
- *  \brief  Configure iep count for over current sampling
- *
- *  \param[in]  h_sdfm          SDFM handle
- *  \param[in]  osr             over current osr value
- *
- *
- *
- */
-void SDFM_setCompFilterOverSamplingRatio(sdfm_handle h_sdfm, uint16_t osr);
-
 /**
  *
  *  \brief  Configure iep count for normal current sampling
@@ -273,7 +286,8 @@ void SDFM_setCompFilterOverSamplingRatio(sdfm_handle h_sdfm, uint16_t osr);
  *
  *
  */
-void SDFM_setFilterOverSamplingRatio(sdfm_handle h_sdfm, uint16_t nc_osr, uint16_t oc_osr);
+void SDFM_setFilterOverSamplingRatio(sdfm_handle h_sdfm, uint16_t nc_osr);
+
 
 /** @} */
 
