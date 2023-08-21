@@ -67,3 +67,5 @@ source/position_sense/endat/firmware/*.xml
 !*boardcfg_*.bin
 mcu_plus_sdk
 ind_comms_sdk
+.repo/*
+mcupsdk_setup
