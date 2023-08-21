@@ -177,7 +177,6 @@ transport_on_v_frame_diff_pos:
 	mov		REG_TMP0.b2, REG_TMP0.b3
 	mov		REG_TMP0.b3, REG_TMP0.b0
 ;check if it is larger
-	lbco		&REG_TMP1.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
 	qbge		transport_on_v_frame_dont_update_maxdev, REG_TMP2, REG_TMP0.w2
 	mov		REG_TMP0.b0, REG_TMP2.b1
 	mov		REG_TMP0.b1, REG_TMP2.b0
@@ -193,10 +192,10 @@ transport_on_v_frame_dont_update_maxdev:
 	mov		REG_TMP0.b2, REG_TMP0.b3
 	mov		REG_TMP0.b3, REG_TMP0.b0
 ;check if it is larger
-	lbco		&REG_TMP1.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
 	qbge		transport_on_v_frame_dont_update_dte, REG_TMP2, REG_TMP0.w2
 ; Set EVENT_DTE in ONLINE_STATUS_D register
-    set         REG_TMP1.b0, REG_TMP1.b0, ONLINE_STATUS_D_DTE
+	lbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
+    set         REG_TMP2.b0, REG_TMP2.b0, ONLINE_STATUS_D_DTE
 ; Set EVENT_DTE in EVENT register
 	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_H, 4
 	set		REG_TMP0.w0, REG_TMP0.w0, EVENT_DTE
@@ -208,8 +207,9 @@ transport_on_v_frame_dont_update_maxdev:
 update_events_no_int6:
 transport_on_v_frame_dont_update_dte:
 ; Clear EVENT_DTE in ONLINE_STATUS_D register
-    clr         REG_TMP1.b0, REG_TMP1.b0, ONLINE_STATUS_D_DTE
-	sbco		&REG_TMP1.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
+	lbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
+    clr         REG_TMP2.b0, REG_TMP2.b0, ONLINE_STATUS_D_DTE
+	sbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
 ;check for diff. is 0 -> estimate if not
 
 	qbne		transport_on_v_frame_estimate, REG_TMP1, 0
@@ -1073,7 +1073,6 @@ calc_speed_extend_acc1:
 	sub		DELTA_ACC0, REG_TMP0.w0, LAST_ACC
 	mov		LAST_ACC, REG_TMP0.w0
     CALL1		calc_fastpos
-	RET
 ;restore return addr
 	mov		RET_ADDR0, REG_TMP11.w0
 ; Moving the event and online register update during stuffing
@@ -1108,8 +1107,14 @@ calc_speed_extend_acc0:
 transport_on_h_frame_exit:
 ;calculate rel. pos and store
 	lbco		&REG_TMP0, MASTER_REGS_CONST, REL_POS0, 4
-	add		REG_TMP0.w0, REG_TMP0.w0, SPEED.w0
-	adc		REG_TMP0.w2, REG_TMP0.w2, SPEED.b2
+;sign extend speed to 32 bits and add it to REL_POS
+	mov		REG_TMP1, SPEED
+    ldi     REG_TMP1.b3, 0
+	qbbc	calc_relpos_extend_vel, SPEED, 23
+	ldi		REG_TMP1.b3, 0xff
+calc_relpos_extend_vel:
+	add		REG_TMP0.w0, REG_TMP0.w0, REG_TMP1.w0
+	adc		REG_TMP0.w2, REG_TMP0.w2, REG_TMP1.w2
 	sbco		&REG_TMP0, MASTER_REGS_CONST, REL_POS0, 4
 ;store fast pos. and velocity
     mov     REG_TMP0, FAST_POSH
@@ -1205,21 +1210,32 @@ estimator_fpos:
 	add		FAST_POSL, VERT_L.b2, REG_TMP0.b0
 	adc		FAST_POSH.b0, VERT_L.b3, REG_TMP0.b1
 	adc		FAST_POSH.w1, VERT_H.w0, REG_TMP0.w2
+;sign extend relative position to 40 bits
+	qbbc	estimator_fpos_add_relpos_positive, REG_TMP0, 31
+	adc		FAST_POSH.b3, VERT_H.b2, 0xFF
+    qba     estimator_fpos_add_relpos_done
+estimator_fpos_add_relpos_positive:
 	adc		FAST_POSH.b3, VERT_H.b2, 0
+estimator_fpos_add_relpos_done:
 	qbne		estimator_fpos_align_ph_not_2, ALIGN_PH, 2
 ;vel = vel+acc/8
-	qbbc		estimator_fpos_acc_pos, LAST_ACC, 15
+    ldi     REG_TMP0.b2, 0
+	qbbc	estimator_fpos_acc_pos, LAST_ACC, 15
 	not		REG_TMP0.w0, LAST_ACC
 	add		REG_TMP0.w0, REG_TMP0.w0, 1
 	lsr		REG_TMP0.w0, REG_TMP0.w0, 3
 	not		REG_TMP0.w0, REG_TMP0.w0
 	add		REG_TMP0.w0, REG_TMP0.w0, 1
+;sign extend acceleration to  24 bit -> speed size
+	qbeq    estimator_fpos_acc_sing_check_end, REG_TMP0.w0, 0
+    or      REG_TMP0.b2, REG_TMP0.b2, 0xFF
 	qba		estimator_fpos_acc_sing_check_end
 estimator_fpos_acc_pos:
+	mov		REG_TMP0.w0, LAST_ACC
 	lsr		REG_TMP0.w0, REG_TMP0.w0, 3
 estimator_fpos_acc_sing_check_end:
 	add		SPEED.w0, SPEED.w0, REG_TMP0.w0
-	adc		SPEED.b3, SPEED.b3, 0
+	adc		SPEED.b2, SPEED.b2, REG_TMP0.b2
 estimator_fpos_align_ph_not_2:
 	RET1
 ;--------------------------------------------------------------------------------------------------

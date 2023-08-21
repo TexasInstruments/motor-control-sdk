@@ -202,7 +202,7 @@ LONG_MSG_RECV .sassign r28, long_msg_recv_s
 	.asg							r16.b3, BYTE_ERROR
 	.asg							r15, FAST_POSH
 	.asg							r14.b3, FAST_POSL
-	.asg							r14, SPEED
+	.asg							r14, SPEED ; NOTE: r14.b3 is used as FAST_POSL
 	.asg							r17.b0, DISPARITY
 	.asg							r17.b1, SEND_PARA
 	.asg							r29.w0, RET_ADDR0

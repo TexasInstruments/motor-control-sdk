@@ -376,12 +376,12 @@ datalink_learn_recv_loop_final:
 	sbco        &REG_TMP2, c25, 0, 4
 	.endif
 
-	READ_CYCLCNT	r25
+	READ_CYCLCNT	REG_TMP2
 ; avoid wrap around, need to skip on equal as wait does not work for 0.
-;	qble	    datalink_learn_skip_wait, r25, r3
-	qble	    datalink_abort2, r25, r3
-	sub			REG_TMP11, r3, r25
-	MOV			r25.b0, REG_TMP11.b0
+;	qble	    datalink_learn_skip_wait, REG_TMP2, r3
+	qble	    datalink_abort2, REG_TMP2, r3
+	sub			REG_TMP11, r3, REG_TMP2
+	MOV			REG_TMP2.b0, REG_TMP11.b0
 ; WAIT subracts -1 from parameter before compare. On 0 it wraps around!!!
 	WAIT		REG_TMP11
 datalink_learn_skip_wait:
