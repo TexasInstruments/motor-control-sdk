@@ -1593,7 +1593,7 @@ switch_clk:
 ;input:
 ;	REG_FNC.b0: value
 ;modifies:
-;	REG_TMP0, REG_FNC
+;	REG_TMP1, REG_FNC
 ;--------------------------------------------------------------------------------------------------
 qm_add:
 	.if 1
@@ -1617,9 +1617,9 @@ qm_add_no_capping:
 	qble	qm_add_below_not_14, QM, 14
 ; Defer the events register update to later
 ; Set EVENT_UPDATE_PENDING_QMLW to indicate a low QM value
-	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_UPDATE_PENDING, 1
-	set         REG_TMP0.b0, REG_TMP0.w0, EVENT_UPDATE_PENDING_QMLW
-	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_UPDATE_PENDING, 1
+	lbco		&REG_TMP1.b0, MASTER_REGS_CONST, EVENT_UPDATE_PENDING, 1
+	set         REG_TMP1.b0, REG_TMP1.b0, EVENT_UPDATE_PENDING_QMLW
+	sbco		&REG_TMP1.b0, MASTER_REGS_CONST, EVENT_UPDATE_PENDING, 1
 qm_add_below_not_14:
 	or	QM, QM, (1<<7)
 ;update MASTER_QM
