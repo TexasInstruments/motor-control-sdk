@@ -159,9 +159,9 @@ datalink_wait_vsynch:
 	ldi		r31.w0, PRU0_ARM_IRQ4
 update_events_no_int0:
 ; Set ONLINE_STATUS_1_FRES in ONLINE_STATUS_1 register
-	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, (ONLINE_STATUS_1+1), 1
+	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, (ONLINE_STATUS_1_L), 1
 	set		    REG_TMP0.b0, REG_TMP0.b0, (ONLINE_STATUS_1_FRES-8)
-    sbco		&REG_TMP0.b0, MASTER_REGS_CONST, (ONLINE_STATUS_1+1), 1
+    sbco		&REG_TMP0.b0, MASTER_REGS_CONST, (ONLINE_STATUS_1_L), 1
 ; Set EVENT_FREL in EVENT_L register
 	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_H, 4
 	set		REG_TMP0.w0, REG_TMP0.w0, EVENT_FREL
@@ -172,9 +172,9 @@ update_events_no_int0:
 	ldi		r31.w0, PRU0_ARM_IRQ
 update_events_no_int1:
 ; Set ONLINE_STATUS_D_FREL in ONLINE_STATUS_D register
-	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, (ONLINE_STATUS_D+1), 1
+	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, (ONLINE_STATUS_D_L), 1
 	set		    REG_TMP0.b0, REG_TMP0.b0, (ONLINE_STATUS_D_FREL-8)
-    sbco		&REG_TMP0.b0, MASTER_REGS_CONST, (ONLINE_STATUS_D+1), 1
+    sbco		&REG_TMP0.b0, MASTER_REGS_CONST, (ONLINE_STATUS_D_L), 1
 ;--------------------------------------------------------------------------------------------------
 ;State RX0-RX7
 	ldi			LOOP_CNT.w2, 8
@@ -1560,11 +1560,11 @@ update_events_no_int2:
 update_events_no_int18:
 
 ; Set PRST bits in ONLINE_STATUS registers
-	lbco		&REG_TMP0, MASTER_REGS_CONST, ONLINE_STATUS_D, 6
+	lbco		&REG_TMP0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 6
     set         REG_TMP0.w0, REG_TMP0.w0, ONLINE_STATUS_D_PRST
     set         REG_TMP0.w2, REG_TMP0.w2, ONLINE_STATUS_1_PRST
     set         REG_TMP1.w0, REG_TMP1.w0, ONLINE_STATUS_2_PRST
-	sbco		&REG_TMP0, MASTER_REGS_CONST, ONLINE_STATUS_D, 6
+	sbco		&REG_TMP0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 6
 	jmp			datalink_reset
 ;--------------------------------------------------------------------------------------------------
 ;Function: switch_clk (RET_ADDR1)

@@ -494,9 +494,12 @@ VPOSCRC2_H  .set                        0x4C
 VPOSCRC2_L  .set                        0x4D
 POSTX       .set                        0x4E
 
-ONLINE_STATUS_D	.set					0x50
-ONLINE_STATUS_1	.set					0x52
-ONLINE_STATUS_2	.set					0x54
+ONLINE_STATUS_D_H	.set					0x50
+ONLINE_STATUS_D_L	.set					0x51
+ONLINE_STATUS_1_H	.set					0x52
+ONLINE_STATUS_1_L	.set					0x53
+ONLINE_STATUS_2_H	.set					0x54
+ONLINE_STATUS_2_L	.set					0x55
 
 H_FRAME_FLAGS_TEMP .set                 0x56 ; 2 bytes
 CRC_SEC_TEMP .set                       0x58 ; 2 bytes
