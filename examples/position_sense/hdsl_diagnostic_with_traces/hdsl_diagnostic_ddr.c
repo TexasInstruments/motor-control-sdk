@@ -452,8 +452,6 @@ void hdsl_init(void)
     HwiP_construct(&gPRUHwiObject, &hwiPrms);
 
     HDSL_iep_init(gHdslHandleCh0);
-    DebugP_log("\r\nPress Enter to start application\n");
-    DebugP_scanf("%d",&ES);
     ClockP_usleep(5000);
 
     if(CONFIG_HDSL0_MODE==0)
