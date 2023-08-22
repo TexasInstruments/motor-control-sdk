@@ -135,7 +135,6 @@ transport_on_v_frame_dont_update_qm:
 	add		REG_TMP1, REG_TMP1, 1
 	sbco		&REG_TMP1, MASTER_REGS_CONST, NUM_VERT_ERR0, 4
 	.endif
-	;HALT
 	qba		transport_on_v_frame_exit
 check_for_slave_error_on_v_frame:
 ;CRC was correct -> add 1 to QM
@@ -825,11 +824,7 @@ transport_layer_check_for_new_short_msg:
 
 	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, SLAVE_REG_CTRL, 1
 	qbeq		transport_layer_no_short_msg, REG_TMP0.b0, 0x3f
-;set short msg channel to busy (reset EVENT_S_FRES)
-	lbco		&REG_TMP0.b2, MASTER_REGS_CONST, EVENT_S, 1
-	clr		REG_TMP0.b2, REG_TMP0.b2, EVENT_S_FRES
-	sbco		&REG_TMP0.b2, MASTER_REGS_CONST, EVENT_S, 1
-; Set ONLINE_STATUS_1_FRES in ONLINE_STATUS_1 register
+; Clear ONLINE_STATUS_1_FRES in ONLINE_STATUS_1 register
 	lbco		&REG_TMP0.b2, MASTER_REGS_CONST, (ONLINE_STATUS_1_L), 1
 	clr		    REG_TMP0.b2, REG_TMP0.b2, (ONLINE_STATUS_1_FRES-8)
     sbco		&REG_TMP0.b2, MASTER_REGS_CONST, (ONLINE_STATUS_1_L), 1
@@ -869,11 +864,7 @@ transport_layer_no_short_msg:
 	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, PC_CTRL, 1
 ;set para channel to busy
 	set		H_FRAME.flags, H_FRAME.flags, FLAG_PARA_BUSY
-;set long msg channel to busy (reset FREL)
-	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_H, 2
-	clr		REG_TMP0.w0, REG_TMP0.w0, EVENT_FREL
-	sbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_H, 2
-; Set ONLINE_STATUS_D_FREL in ONLINE_STATUS_D register
+; Clear ONLINE_STATUS_D_FREL in ONLINE_STATUS_D register
 	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, (ONLINE_STATUS_D_L), 1
 	clr		    REG_TMP0.b0, REG_TMP0.b0, (ONLINE_STATUS_D_FREL-8)
     sbco		&REG_TMP0.b0, MASTER_REGS_CONST, (ONLINE_STATUS_D_L), 1
