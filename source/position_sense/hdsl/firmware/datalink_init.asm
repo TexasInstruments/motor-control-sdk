@@ -70,6 +70,12 @@ datalink_reset:
     .else
     TX_CLK_DIV 		CLKDIV_NORMAL, REG_TMP0
     .endif
+
+; set the VERSION and VERSION2 register
+    ldi     REG_TMP0.b0, ICSS_FIRMWARE_RELEASE
+    sbco	&REG_TMP0.b0, MASTER_REGS_CONST, VERSION, 1
+    sbco	&REG_TMP0.b0, MASTER_REGS_CONST, VERSION2, 1
+
 	zero			&H_FRAME, (4*2)
 ;init transport layer here
 	CALL			transport_init
