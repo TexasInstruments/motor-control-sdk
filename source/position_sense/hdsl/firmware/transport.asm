@@ -164,7 +164,11 @@ transport_on_v_frame_not_first:
 ;check for LAST FAST POS and SAFE POS mismatch
 	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, LAST_FAST_POS0, SIZE_FAST_POS
 	sub		REG_TMP1.w0, VERT_L.w2, REG_TMP0.w0
-	suc		REG_TMP1.w2, VERT_H.w0, REG_TMP0.w2
+	sub		REG_TMP1.w2, VERT_H.w0, REG_TMP0.w2
+	qble 	no_sub_carry, VERT_L.w2, REG_TMP0.w0
+; if carry is needed, subtract 1 separately
+	sub		REG_TMP1.w2, REG_TMP1.w2, 1
+no_sub_carry:
 	mov		REG_TMP2, REG_TMP1
 ;check if diff is neg,
 	qbbc		transport_on_v_frame_diff_pos, REG_TMP2, 31
