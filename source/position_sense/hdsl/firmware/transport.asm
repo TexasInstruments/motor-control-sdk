@@ -112,7 +112,7 @@ transport_on_v_frame:
 ;transmission error?
 	qbbs		transport_on_v_frame_dont_update_qm, H_FRAME.flags, FLAG_ERR_VERT
     lbco		&REG_TMP1.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H, 1
-    and         REG_TMP1.b0, REG_TMP1.b0, (~((1<<ONLINE_STATUS_1_SCE) | (1<<ONLINE_STATUS_1_VPOS)) & 0xF)
+    and         REG_TMP1.b0, REG_TMP1.b0, (~((1<<ONLINE_STATUS_1_SCE) | (1<<ONLINE_STATUS_1_VPOS)) & 0xFF)
 ;checking for crc error
 	qbeq		check_for_slave_error_on_v_frame, CRC_VERT, 0
 ; Set EVENT_S_SCE in EVENT register
@@ -366,9 +366,6 @@ transport_skip_vpos_update:
 ;check SUMMARY and MASK_SUM
     lbco		&REG_TMP1.b1, MASTER_REGS_CONST, MASK_SUM, 1
 	and		    REG_TMP1.b0, REG_TMP0.b0, REG_TMP1.b1
-	lbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 3
-    clr         REG_TMP2.b0, REG_TMP2.b0, ONLINE_STATUS_D_SUM
-    clr         REG_TMP2.b2, REG_TMP2.b0, ONLINE_STATUS_1_SSUM
 	qbeq		summary_no_int, REG_TMP1.b0, 0x00
 ;set event and generate interrupt
 	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_H, 4
@@ -389,9 +386,17 @@ update_events_no_int7:
 ; generate interrupt_s
 	ldi		r31.w0, PRU0_ARM_IRQ4
 update_events_no_int17:
+summary_no_int:
+
+; Update SUM and SSUM bits in ONLINE_STATUS registers
+    lbco		&REG_TMP0.b0, MASTER_REGS_CONST, SAFE_SUM, 1
+	lbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 3
+    clr         REG_TMP2.b0, REG_TMP2.b0, ONLINE_STATUS_D_SUM
+    clr         REG_TMP2.b2, REG_TMP2.b0, ONLINE_STATUS_1_SSUM
+	qbeq		online_status_sum_clear, REG_TMP0.b0, 0x00
     set         REG_TMP2.b0, REG_TMP2.b0, ONLINE_STATUS_D_SUM
     set         REG_TMP2.b2, REG_TMP2.b0, ONLINE_STATUS_1_SSUM
-summary_no_int:
+online_status_sum_clear:
     sbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 3
 
 ;restore REG_FNC.w0 content
