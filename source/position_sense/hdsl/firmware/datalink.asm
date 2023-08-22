@@ -1074,11 +1074,11 @@ send_header_encode_sec_subblock_end:
 	lsr			REG_TMP0.b0, REG_FNC.b2, 2
 	or			REG_FNC.b3, REG_FNC.b3, REG_TMP0.b0
 	lsl			REG_FNC.b2, REG_FNC.b2, 6
-	qbbc			transport_layer_send_msg_done1, H_FRAME.flags, FLAG_NORMAL_FLOW
     .if $defined("HDSL_MULTICHANNEL")
 	PUSH_FIFO_1_8x
 	PUSH_FIFO_2_8x
     .endif
+; transport_layer_send_msg sends short/long message (if pending) and also checks for QMLW/POS errors
 	jmp			transport_layer_send_msg
 transport_layer_send_msg_done1:
     .if $defined("HDSL_MULTICHANNEL")

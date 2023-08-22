@@ -740,6 +740,8 @@ transport_layer_recv_msg_end:
 ;----------------------------------------------------
 transport_layer_send_msg:
 ;TODO: reduce cycles
+; Skip message processing until one v-frame is complete
+	qbbc			transport_layer_send_msg_end, H_FRAME.flags, FLAG_NORMAL_FLOW
 	ldi		SEND_PARA, M_PAR_IDLE
 ;check if we discard any messages and reset parameter channel
 	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, SYS_CTRL, 1
@@ -935,6 +937,8 @@ transport_layer_no_qmlw_event:
 
 ; Update QMLW bits in ONLINE_STATUS registers
 	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, MASTER_QM, 1
+    and	        REG_TMP0.b0, REG_TMP0.b0, 0x7f
+; Set QMLW if value is < 14
     qble	    transport_layer_online_status_qm_not_low, REG_TMP0.b0, 14
 ; Set QMLW bits
 	lbco		&REG_TMP0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 6
