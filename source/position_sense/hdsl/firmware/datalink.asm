@@ -1402,7 +1402,6 @@ calculation_for_wait_done:
 	mov			REG_TMP11, RET_ADDR1
 	qbeq			send_stuffing_no_stuffing, NUM_STUFFING, 0
 ;check if we have stuffing
-	;halt
 	READ_CYCLCNT		REG_TMP0
 	rsb			REG_TMP2, REG_TMP0, (5*(CLKDIV_NORMAL+1)+4);(6*(CLKDIV_NORMAL+1)+4)
 	mov			REG_FNC.b3, NUM_STUFFING
@@ -1600,10 +1599,6 @@ qm_add:
 	and	QM, QM, 0x7f
 ;check if negative (bit 7 indicates there is a link -> check bit 6)
 	qbbc	qm_add_no_reset, QM, 6
-	; set EDIO28
-    ;ldi32   REG_TMP1, 0x02e300
-	;sbbo    &REG_TMP1.b0, REG_TMP1, 0x13, 1
-	halt
 	ldi	QM, 0
 ;update MASTER_QM
 	sbco	&QM, MASTER_REGS_CONST, MASTER_QM, 1

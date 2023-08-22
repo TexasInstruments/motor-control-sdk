@@ -54,10 +54,10 @@
 relocatable0:
 
 datalink_init_start:
+datalink_reset:
 ;State RESET
 	zero			&r0, 124
 ;send 2 times
-datalink_reset:
 
 ;setup ICSS encoder peripheral for Hiperface DSL
 	ldi			DISPARITY, 0x00
@@ -546,7 +546,6 @@ datalink_learn_end:
 	qba			datalink_learn2_before
 ;--------------------------------------------------------------------------------------------------
 datalink_abort2:
-    	halt
 	qbbs			datalink_abort2_no_wait, r30, RX_ENABLE						;changed here from 24 to 26
 	WAIT_TX_DONE
     .if $defined("FREERUN_300_MHZ")
@@ -561,7 +560,6 @@ datalink_abort2:
 	NOP_2
     .endif
 datalink_abort3:
-    	halt
 datalink_abort2_no_wait:
 	lbco			&REG_TMP0.b0, MASTER_REGS_CONST, NUM_RESETS, 1
 	add			REG_TMP0.b0, REG_TMP0.b0, 1
