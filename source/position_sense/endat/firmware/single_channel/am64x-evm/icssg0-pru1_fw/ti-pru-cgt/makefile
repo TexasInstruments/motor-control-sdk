@@ -108,7 +108,7 @@ clean:
 	-@echo ' '
 
 post-build:
-	-$(CG_TOOL_ROOT)/bin/hexpru.exe ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/endat_master_hexpru.cmd endat_peripheral_interface_single_ch_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.out; ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/tools/bin2header/bin2header.exe endat_peripheral_interface_single_ch_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.b00 endat_master_bin.h EnDatFirmware 4; move endat_master_bin.h   ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/endat_master_bin.h
+	-$(CG_TOOL_ROOT)/bin/hexpru.exe --diag_wrap=off --array --array:name_prefix=EnDatFirmware -o endat_peripheral_interface_single_ch_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.h endat_peripheral_interface_single_ch_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.out;  move endat_peripheral_interface_single_ch_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/endat_master_bin.
 	-@echo ' '
 
 .PHONY: all clean dependents

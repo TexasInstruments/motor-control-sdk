@@ -31,8 +31,8 @@
 ; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;
 
-	.include "../../../../pru_io/firmware/common/icss_regs.inc"
-	.include "../../../../pru_io/firmware/common/icss_cfg_regs.inc"
+	.include "../../../../mcu_plus_sdk/source/pru_io/firmware/common/icss_regs.inc"
+	.include "../../../../mcu_plus_sdk/source/pru_io/firmware/common/icss_cfg_regs.inc"
 
 	.asg	R30.t24,	ENDAT_CH0_RX_EN
 	.asg	R31.t27,	ENDAT_CH0_RX_CLR_OVF
@@ -57,6 +57,13 @@
 ENDAT_TX_CH0_SEL	.set					0
 ENDAT_TX_CH1_SEL	.set					1
 ENDAT_TX_CH2_SEL	.set					2
+
+
+; ICSSG INTC events
+PRU_TRIGGER_HOST_ENDAT_EVT0  .set         34
+PRU_TRIGGER_HOST_ENDAT_EVT1  .set         35
+PRU_TRIGGER_HOST_ENDAT_EVT2  .set         36
+
 
 ; CLK MODE bits R30[20:19]
 ENDAT_TX_CLK_MODE_FREERUN_STOPLOW	.set	(0 << 3)
