@@ -111,8 +111,8 @@ transport_on_v_frame:
 	sbco		&REG_TMP1, MASTER_REGS_CONST, VPOSCRC_TEMP, 2
 ;transmission error?
 	qbbs		transport_on_v_frame_dont_update_qm, H_FRAME.flags, FLAG_ERR_VERT
-    lbco		&REG_TMP1.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H, 1
-    and         REG_TMP1.b0, REG_TMP1.b0, (~((1<<ONLINE_STATUS_1_SCE) | (1<<ONLINE_STATUS_1_VPOS)) & 0xFF)
+    lbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H, 1
+    and         REG_TMP2.b0, REG_TMP2.b0, (~((1<<ONLINE_STATUS_1_SCE) | (1<<ONLINE_STATUS_1_VPOS)) & 0xFF)
 ;checking for crc error
 	qbeq		check_for_slave_error_on_v_frame, CRC_VERT, 0
 ; Set EVENT_S_SCE in EVENT register
@@ -125,8 +125,8 @@ transport_on_v_frame:
 	ldi		r31.w0, PRU0_ARM_IRQ4
 update_events_no_int4:
 ; Set ONLINE_STATUS_1_SCE in ONLINE_STATUS_1 register
-    set         REG_TMP1.b0, REG_TMP1.b0, ONLINE_STATUS_1_SCE
-    sbco		&REG_TMP1.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H, 1
+    set         REG_TMP2.b0, REG_TMP2.b0, ONLINE_STATUS_1_SCE
+    sbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H, 1
 	QM_SUB		6
 transport_on_v_frame_dont_update_qm:
 ;update CRC error count
@@ -138,6 +138,7 @@ transport_on_v_frame_dont_update_qm:
 	qba		transport_on_v_frame_exit
 check_for_slave_error_on_v_frame:
 ;CRC was correct -> add 1 to QM
+;Note: QM_ADD uses REG_TMP1
 	QM_ADD		1
 ;check for special character: K29.7 is sent in first byte of vertical channel if slave error occured
 	qbne		transport_on_v_frame_check_pos, VERT_H.b3, K29_7
@@ -151,11 +152,11 @@ check_for_slave_error_on_v_frame:
 	ldi		r31.w0, PRU0_ARM_IRQ4
 update_events_no_int5:
 ; Set ONLINE_STATUS_1_VPOS in ONLINE_STATUS_1 register
-    set         REG_TMP1.b0, REG_TMP1.b0, ONLINE_STATUS_1_VPOS
-    sbco		&REG_TMP1.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H, 1
+    set         REG_TMP2.b0, REG_TMP2.b0, ONLINE_STATUS_1_VPOS
+    sbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H, 1
 	qba		transport_on_v_frame_exit
 transport_on_v_frame_check_pos:
-	sbco		&REG_TMP1.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H, 1
+	sbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H, 1
 	lsl		REG_TMP2, CHANNEL.ch_verth, 8
 	mov		REG_TMP2.b0, VERT_L.b3
 ;first V-Frame? -> update FAST POS with SAFE POS
