@@ -41,6 +41,14 @@ SysConfig can be used to configure things mentioned below:
 
 \subpage HDSL_DESIGN explains the design in detail.
 
+## Register List
+
+\subpage HDSL_REGISTER_LIST contains the description of registers in TI's HDSL implementation. Please note that all the corresponding register fields are not implemented.
+
+## Exceptions
+
+\subpage HDSL_EXCEPTIONS_LIST  lists the exceptions TI's HDSL implementation when compared with SICK HDSL FPGA IP Core. Please note that all the corresponding register fields are not implemented.
+
 ## Example
 
 - \ref EXAMPLE_MOTORCONTROL_HDSL
