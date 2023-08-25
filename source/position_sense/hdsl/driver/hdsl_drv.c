@@ -213,27 +213,27 @@ uint8_t HDSL_get_safe_events(HDSL_Handle hdslHandle)
 
 uint16_t HDSL_get_online_status_d(HDSL_Handle hdslHandle)
 {
-    uint16_t ureg = hdslHandle->hdslInterface->ONLINE_STATUS_D;
+    uint16_t ureg = hdslHandle->hdslInterface->ONLINE_STATUS_D_L | (hdslHandle->hdslInterface->ONLINE_STATUS_D_H << 8);
     return ureg;
 }
 
 uint16_t HDSL_get_online_status_1(HDSL_Handle hdslHandle)
 {
-    uint16_t ureg =hdslHandle->hdslInterface->ONLINE_STATUS_1;
+    uint16_t ureg =hdslHandle->hdslInterface->ONLINE_STATUS_1_L | (hdslHandle->hdslInterface->ONLINE_STATUS_1_H << 8);
     return ureg;
 }
 
 uint16_t HDSL_get_online_status_2(HDSL_Handle hdslHandle)
 {
-    uint16_t ureg = hdslHandle->hdslInterface->ONLINE_STATUS_2;
+    uint16_t ureg = hdslHandle->hdslInterface->ONLINE_STATUS_2_L | (hdslHandle->hdslInterface->ONLINE_STATUS_2_H << 8);
     return ureg;
 }
+
 uint8_t HDSL_get_sum(HDSL_Handle hdslHandle)
 {
     uint8_t ureg = hdslHandle->hdslInterface->SAFE_SUM;
     return ureg;
 }
-
 
 uint8_t HDSL_get_acc_err_cnt(HDSL_Handle hdslHandle)
 {
@@ -251,7 +251,7 @@ int32_t HDSL_write_pc_short_msg(HDSL_Handle hdslHandle,uint8_t addr, uint8_t dat
     uint64_t end;
     end = ClockP_getTimeUsec() + timeout;
 
-    while((hdslHandle->hdslInterface->EVENT_S & 0x1) != 1)
+    while((hdslHandle->hdslInterface->ONLINE_STATUS_1_L & ONLINE_STATUS_1_L_FRES) != 1)
     {
         if(ClockP_getTimeUsec() > end)
         {
@@ -260,14 +260,14 @@ int32_t HDSL_write_pc_short_msg(HDSL_Handle hdslHandle,uint8_t addr, uint8_t dat
     }
     hdslHandle->hdslInterface->S_PC_DATA = data;
     hdslHandle->hdslInterface->SLAVE_REG_CTRL =  addr;
-    while((hdslHandle->hdslInterface->EVENT_S & 0x1) != 0)
+    while((hdslHandle->hdslInterface->ONLINE_STATUS_1_L & ONLINE_STATUS_1_L_FRES) != 0)
     {
         if(ClockP_getTimeUsec() > end)
         {
             return SystemP_TIMEOUT;
         }
     }
-    while((hdslHandle->hdslInterface->EVENT_S & 0x1) != 1)
+    while((hdslHandle->hdslInterface->ONLINE_STATUS_1_L & ONLINE_STATUS_1_L_FRES) != 1)
     {
         if(ClockP_getTimeUsec() > end)
         {
@@ -279,11 +279,10 @@ int32_t HDSL_write_pc_short_msg(HDSL_Handle hdslHandle,uint8_t addr, uint8_t dat
 
 int32_t HDSL_read_pc_short_msg(HDSL_Handle hdslHandle,uint8_t addr, uint8_t *data, uint64_t timeout)
 {
-
     uint64_t end;
     end = ClockP_getTimeUsec() + timeout;
 
-    while((hdslHandle->hdslInterface->EVENT_S & 0x1) != 1)
+    while((hdslHandle->hdslInterface->ONLINE_STATUS_1_L & ONLINE_STATUS_1_L_FRES) != 1)
     {
         if(ClockP_getTimeUsec() > end)
         {
@@ -292,14 +291,14 @@ int32_t HDSL_read_pc_short_msg(HDSL_Handle hdslHandle,uint8_t addr, uint8_t *dat
     }
     hdslHandle->hdslInterface->S_PC_DATA = 0;
     hdslHandle->hdslInterface->SLAVE_REG_CTRL =  (addr | (1<<7));
-    while((hdslHandle->hdslInterface->EVENT_S & 0x1) != 0)
+    while((hdslHandle->hdslInterface->ONLINE_STATUS_1_L & ONLINE_STATUS_1_L_FRES) != 0)
     {
         if(ClockP_getTimeUsec() > end)
         {
             return SystemP_TIMEOUT;
         }
     }
-    while((hdslHandle->hdslInterface->EVENT_S & 0x1) != 1)
+    while((hdslHandle->hdslInterface->ONLINE_STATUS_1_L & ONLINE_STATUS_1_L_FRES) != 1)
     {
         if(ClockP_getTimeUsec() > end)
         {

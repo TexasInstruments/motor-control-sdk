@@ -54,10 +54,10 @@
 relocatable0:
 
 datalink_init_start:
+datalink_reset:
 ;State RESET
 	zero			&r0, 124
 ;send 2 times
-datalink_reset:
 
 ;setup ICSS encoder peripheral for Hiperface DSL
 	ldi			DISPARITY, 0x00
@@ -70,6 +70,12 @@ datalink_reset:
     .else
     TX_CLK_DIV 		CLKDIV_NORMAL, REG_TMP0
     .endif
+
+; set the VERSION and VERSION2 register
+    ldi     REG_TMP0.b0, ICSS_FIRMWARE_RELEASE
+    sbco	&REG_TMP0.b0, MASTER_REGS_CONST, VERSION, 1
+    sbco	&REG_TMP0.b0, MASTER_REGS_CONST, VERSION2, 1
+
 	zero			&H_FRAME, (4*2)
 ;init transport layer here
 	CALL			transport_init
@@ -85,31 +91,31 @@ datalink_reset:
 ;reset SAFE_CTRL register
     zero        &REG_TMP0.b0, 1
 	sbco        &REG_TMP0.b0, MASTER_REGS_CONST, SAFE_CTRL, 1
-; Write the fixed bits and reset PRST bits in ONLINE_STATUS_D, ONLINE_STATUS_1 and ONLINE_STATUS_2
+; Initialize ONLINE_STATUS_D, ONLINE_STATUS_1 and ONLINE_STATUS_2
 ; In ONLINE_STATUS_D high, bit 2 is FIX0, bit 4 is FIX1 and bit 5 is FIX0
 ; In ONLINE_STATUS_D low, bit 0 is FIX0 and bit 3 is FIX0
-	lbco        &REG_TMP0.w0, MASTER_REGS_CONST, ONLINE_STATUS_D, 2
-    ; clearing bits with fix0 and PRST bit
-    and         REG_TMP0.w0, REG_TMP0.w0, ((~((1<<ONLINE_STATUS_D_PRST) | (1<<ONLINE_STATUS_D_HIGH_BIT5_FIX0) | (1<<ONLINE_STATUS_D_HIGH_BIT2_FIX0) | (1<<ONLINE_STATUS_D_LOW_BIT3_FIX0) | (1<<ONLINE_STATUS_D_LOW_BIT0_FIX0))) & 0xFF)
+	lbco        &REG_TMP0.w0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 2
+    ; clearing bits
+    ldi        REG_TMP0.w0, 0
     ; setting bits with fix1
     or         REG_TMP0.w0, REG_TMP0.w0, (1<<ONLINE_STATUS_D_HIGH_BIT4_FIX1)
-	sbco        &REG_TMP0, MASTER_REGS_CONST, ONLINE_STATUS_D, 2
+	sbco        &REG_TMP0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 2
 ; In ONLINE_STATUS_1 high, bit 1 is FIX0, bit 3 is FIX0 and bit 4 is FIX1
 ; In ONLINE_STATUS_1 low, bit 1 is FIX0, bit 3 is FIX0 and bit 4 is FIX0
-	lbco        &REG_TMP0.w0, MASTER_REGS_CONST, ONLINE_STATUS_1, 2
-    ; clearing bits with fix0 and PRST bit
-    and         REG_TMP0.w0, REG_TMP0.w0, ((~((1<<ONLINE_STATUS_1_PRST) | (1<<ONLINE_STATUS_1_HIGH_BIT1_FIX0) | (1<<ONLINE_STATUS_1_HIGH_BIT3_FIX0) | (1<<ONLINE_STATUS_1_LOW_BIT4_FIX0) | (1<<ONLINE_STATUS_1_LOW_BIT3_FIX0) | (1<<ONLINE_STATUS_1_LOW_BIT1_FIX0))) & 0xFF)
+	lbco        &REG_TMP0.w0, MASTER_REGS_CONST, ONLINE_STATUS_1_H, 2
+    ; clearing bits
+    ldi        REG_TMP0.w0, 0
     ; setting bits with fix1
     or         REG_TMP0.w0, REG_TMP0.w0, (1<<ONLINE_STATUS_1_HIGH_BIT4_FIX1)
-	sbco        &REG_TMP0, MASTER_REGS_CONST, ONLINE_STATUS_1, 2
+	sbco        &REG_TMP0, MASTER_REGS_CONST, ONLINE_STATUS_1_H, 2
 ; In ONLINE_STATUS_2 high, bit 1 is FIX0, bit 3 is FIX0, bit 4 is FIX1 and bit7 is FIX1
 ; In ONLINE_STATUS_2 low, bits 0, 1, 3, 4, 5 are FIX0
-	lbco        &REG_TMP0.w0, MASTER_REGS_CONST, ONLINE_STATUS_2, 2
-    ; clearing bits with fix0 and PRST bit
-    and         REG_TMP0.w0, REG_TMP0.w0, ((~((1<<ONLINE_STATUS_2_PRST) | (1<<ONLINE_STATUS_2_HIGH_BIT1_FIX0) | (1<<ONLINE_STATUS_2_HIGH_BIT3_FIX0) | (1<<ONLINE_STATUS_2_HIGH_BIT7_FIX0) | (1<<ONLINE_STATUS_2_LOW_BIT0_FIX0) | (1<<ONLINE_STATUS_2_LOW_BIT1_FIX0) | (1<<ONLINE_STATUS_2_LOW_BIT3_FIX0) | (1<<ONLINE_STATUS_2_LOW_BIT4_FIX0) | (1<<ONLINE_STATUS_2_LOW_BIT5_FIX0))) & 0xFF)
+	lbco        &REG_TMP0.w0, MASTER_REGS_CONST, ONLINE_STATUS_2_H, 2
+    ; clearing bits
+    ldi        REG_TMP0.w0, 0
     ; setting bits with fix1
     or         REG_TMP0.w0, REG_TMP0.w0, (1<<ONLINE_STATUS_2_HIGH_BIT4_FIX1)
-	sbco        &REG_TMP0, MASTER_REGS_CONST, ONLINE_STATUS_2, 2
+	sbco        &REG_TMP0, MASTER_REGS_CONST, ONLINE_STATUS_2_H, 2
 ;check for SPOL and configure eCAP accordingly
 	ldi			REG_TMP1, (ECAP+ECAP_ECCTL1)
 	lbco			&REG_TMP2, PWMSS1_CONST, REG_TMP1, 4
@@ -376,12 +382,12 @@ datalink_learn_recv_loop_final:
 	sbco        &REG_TMP2, c25, 0, 4
 	.endif
 
-	READ_CYCLCNT	r25
+	READ_CYCLCNT	REG_TMP2
 ; avoid wrap around, need to skip on equal as wait does not work for 0.
-;	qble	    datalink_learn_skip_wait, r25, r3
-	qble	    datalink_abort2, r25, r3
-	sub			REG_TMP11, r3, r25
-	MOV			r25.b0, REG_TMP11.b0
+;	qble	    datalink_learn_skip_wait, REG_TMP2, r3
+	qble	    datalink_abort2, REG_TMP2, r3
+	sub			REG_TMP11, r3, REG_TMP2
+	MOV			REG_TMP2.b0, REG_TMP11.b0
 ; WAIT subracts -1 from parameter before compare. On 0 it wraps around!!!
 	WAIT		REG_TMP11
 datalink_learn_skip_wait:
@@ -540,7 +546,6 @@ datalink_learn_end:
 	qba			datalink_learn2_before
 ;--------------------------------------------------------------------------------------------------
 datalink_abort2:
-    	halt
 	qbbs			datalink_abort2_no_wait, r30, RX_ENABLE						;changed here from 24 to 26
 	WAIT_TX_DONE
     .if $defined("FREERUN_300_MHZ")
@@ -555,7 +560,6 @@ datalink_abort2:
 	NOP_2
     .endif
 datalink_abort3:
-    	halt
 datalink_abort2_no_wait:
 	lbco			&REG_TMP0.b0, MASTER_REGS_CONST, NUM_RESETS, 1
 	add			REG_TMP0.b0, REG_TMP0.b0, 1

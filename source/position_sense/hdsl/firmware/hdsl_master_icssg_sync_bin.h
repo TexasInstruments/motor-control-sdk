@@ -2,7 +2,7 @@
  * hdsl_master_icssg_sync_bin.h
  * 
  * 
- * Copyright (c) 2021-2023, Texas Instruments Incorporated
+ * Copyright (c) 2015 - 2016, Texas Instruments Incorporated
  * All rights reserved not granted herein.
  *
  * Limited License.
@@ -1454,15 +1454,15 @@ const unsigned int Hiperface_DSL_SYNC2_0[]= {
 0x2eff8000,
 0x81351800,
 0x91501880,
-0x11da8080,
+0x24000080,
 0x13108080,
 0x81501880,
 0x91521880,
-0x11f48080,
+0x24000080,
 0x13108080,
 0x81521880,
 0x91541880,
-0x11748080,
+0x24000080,
 0x13108080,
 0x81541880,
 0x240128e1,

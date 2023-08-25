@@ -159,9 +159,9 @@ datalink_wait_vsynch:
 	ldi		r31.w0, PRU0_ARM_IRQ4
 update_events_no_int0:
 ; Set ONLINE_STATUS_1_FRES in ONLINE_STATUS_1 register
-	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, (ONLINE_STATUS_1+1), 1
+	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, (ONLINE_STATUS_1_L), 1
 	set		    REG_TMP0.b0, REG_TMP0.b0, (ONLINE_STATUS_1_FRES-8)
-    sbco		&REG_TMP0.b0, MASTER_REGS_CONST, (ONLINE_STATUS_1+1), 1
+    sbco		&REG_TMP0.b0, MASTER_REGS_CONST, (ONLINE_STATUS_1_L), 1
 ; Set EVENT_FREL in EVENT_L register
 	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_H, 4
 	set		REG_TMP0.w0, REG_TMP0.w0, EVENT_FREL
@@ -172,9 +172,9 @@ update_events_no_int0:
 	ldi		r31.w0, PRU0_ARM_IRQ
 update_events_no_int1:
 ; Set ONLINE_STATUS_D_FREL in ONLINE_STATUS_D register
-	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, (ONLINE_STATUS_D+1), 1
+	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, (ONLINE_STATUS_D_L), 1
 	set		    REG_TMP0.b0, REG_TMP0.b0, (ONLINE_STATUS_D_FREL-8)
-    sbco		&REG_TMP0.b0, MASTER_REGS_CONST, (ONLINE_STATUS_D+1), 1
+    sbco		&REG_TMP0.b0, MASTER_REGS_CONST, (ONLINE_STATUS_D_L), 1
 ;--------------------------------------------------------------------------------------------------
 ;State RX0-RX7
 	ldi			LOOP_CNT.w2, 8
@@ -1074,11 +1074,11 @@ send_header_encode_sec_subblock_end:
 	lsr			REG_TMP0.b0, REG_FNC.b2, 2
 	or			REG_FNC.b3, REG_FNC.b3, REG_TMP0.b0
 	lsl			REG_FNC.b2, REG_FNC.b2, 6
-	qbbc			transport_layer_send_msg_done1, H_FRAME.flags, FLAG_NORMAL_FLOW
     .if $defined("HDSL_MULTICHANNEL")
 	PUSH_FIFO_1_8x
 	PUSH_FIFO_2_8x
     .endif
+; transport_layer_send_msg sends short/long message (if pending) and also checks for QMLW/POS errors
 	jmp			transport_layer_send_msg
 transport_layer_send_msg_done1:
     .if $defined("HDSL_MULTICHANNEL")
@@ -1402,7 +1402,6 @@ calculation_for_wait_done:
 	mov			REG_TMP11, RET_ADDR1
 	qbeq			send_stuffing_no_stuffing, NUM_STUFFING, 0
 ;check if we have stuffing
-	;halt
 	READ_CYCLCNT		REG_TMP0
 	rsb			REG_TMP2, REG_TMP0, (5*(CLKDIV_NORMAL+1)+4);(6*(CLKDIV_NORMAL+1)+4)
 	mov			REG_FNC.b3, NUM_STUFFING
@@ -1560,11 +1559,11 @@ update_events_no_int2:
 update_events_no_int18:
 
 ; Set PRST bits in ONLINE_STATUS registers
-	lbco		&REG_TMP0, MASTER_REGS_CONST, ONLINE_STATUS_D, 6
+	lbco		&REG_TMP0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 6
     set         REG_TMP0.w0, REG_TMP0.w0, ONLINE_STATUS_D_PRST
     set         REG_TMP0.w2, REG_TMP0.w2, ONLINE_STATUS_1_PRST
     set         REG_TMP1.w0, REG_TMP1.w0, ONLINE_STATUS_2_PRST
-	sbco		&REG_TMP0, MASTER_REGS_CONST, ONLINE_STATUS_D, 6
+	sbco		&REG_TMP0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 6
 	jmp			datalink_reset
 ;--------------------------------------------------------------------------------------------------
 ;Function: switch_clk (RET_ADDR1)
@@ -1593,17 +1592,13 @@ switch_clk:
 ;input:
 ;	REG_FNC.b0: value
 ;modifies:
-;	REG_TMP0, REG_FNC
+;	REG_TMP1, REG_FNC
 ;--------------------------------------------------------------------------------------------------
 qm_add:
 	.if 1
 	and	QM, QM, 0x7f
 ;check if negative (bit 7 indicates there is a link -> check bit 6)
 	qbbc	qm_add_no_reset, QM, 6
-	; set EDIO28
-    ;ldi32   REG_TMP1, 0x02e300
-	;sbbo    &REG_TMP1.b0, REG_TMP1, 0x13, 1
-	halt
 	ldi	QM, 0
 ;update MASTER_QM
 	sbco	&QM, MASTER_REGS_CONST, MASTER_QM, 1
@@ -1617,9 +1612,9 @@ qm_add_no_capping:
 	qble	qm_add_below_not_14, QM, 14
 ; Defer the events register update to later
 ; Set EVENT_UPDATE_PENDING_QMLW to indicate a low QM value
-	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_UPDATE_PENDING, 1
-	set         REG_TMP0.b0, REG_TMP0.w0, EVENT_UPDATE_PENDING_QMLW
-	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_UPDATE_PENDING, 1
+	lbco		&REG_TMP1.b0, MASTER_REGS_CONST, EVENT_UPDATE_PENDING, 1
+	set         REG_TMP1.b0, REG_TMP1.b0, EVENT_UPDATE_PENDING_QMLW
+	sbco		&REG_TMP1.b0, MASTER_REGS_CONST, EVENT_UPDATE_PENDING, 1
 qm_add_below_not_14:
 	or	QM, QM, (1<<7)
 ;update MASTER_QM
