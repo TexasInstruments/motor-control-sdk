@@ -41,8 +41,10 @@
 
 #include "epwm_dc.h"
 #include "cfg_pad.h"
-#include "sddf.h"
+#include "sdfm.h"
 
+/*EPWM1 configuration for sigma delta clock generation: */
+#define APP_EPWM1_ENABLE  0 /*make sure EPWM1 is added in sysconfig before making true this macro */
 /* Output channel - A or B */
 #define APP_EPWM_OUT_CH_EN              ( 0x1 ) /* ChA enabled */
 
@@ -73,7 +75,9 @@
 #define APP_EPWM_OUTPUT_FREQ            ( APP_EPWM_OUTPUT_FREQ_8K ) /* init freq */
 
 /*sample Read time */
-#define SAMPLE_READ_TIME                ((float)(1000000/(2*APP_EPWM_OUTPUT_FREQ))) //Middle of PWM loop
+#define FIRST_SAMPLE_TRIGGER_TIME                ((float)((float)1000000/(4*APP_EPWM_OUTPUT_FREQ))) /*sample trigger time for Single Update */
+
+#define SECOND_SAMPLE_TRIGGER_TIME               ((float)((float)3000000/(4*APP_EPWM_OUTPUT_FREQ))) /*Sample trigger time for double update*/
 
 /* PWM count direction (Up, Down, Up/Down) */
 #define APP_EPWM_TB_COUNTER_DIR         ( EPWM_TB_COUNTER_DIR_UP_DOWN )
@@ -87,47 +91,72 @@
 #define TEST_RTU_INST_ID                ( PRUICSS_RTU_PRU0 )
 
 /* R5F interrupt settings for ICSSG */
-#define ICSSG_PRU_SDDF_INT_NUM          ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_0 )  /* VIM interrupt number */
-#define ICSSG_RTU_SDDF_INT_NUM          ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_1 )  /* VIM interrupt number */
+#define ICSSG_PRU_SDFM_INT_NUM          ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_0 )  /* VIM interrupt number */
+#define ICSSG_RTU_SDFM_INT_NUM          ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_1 )  /* VIM interrupt number */
 
 /* EPWM0 IRQ handler */
 static void epwmIrqHandler(void *handle);
 
+/* EPWM1 IRQ handler */
+static void epwmIrqHandler1(void *handle);
+
 /* HWI global variables */
-static HwiP_Object gIcssgPruSddfHwiObject;  /* ICSSG PRU SDDF FW HWI */
-//static HwiP_Object gIcssgRtuSddfHwiObject;  /* ICSSG RTU SDDF FW HWI */
+static HwiP_Object gIcssgPruSdfmHwiObject;  /* ICSSG PRU SDFM FW HWI */
+
+#if APP_EPWM1_ENABLE
+#define APP_EPWM_OUTPUT_FREQ1            (1U*20000000 )
+static HwiP_Object gIcssgRtuSDFMHwiObject;  /* ICSSG RTU SDFM FW HWI */
+
+static HwiP_Object gEpwm1HwiObject;         /* EPWM1 HWI */
+
+uint32_t gEpwm1BaseAddr;    /* EPWM1 base address */
+EPwmObj_t gEpwm1Obj;        /* EPWM1 object */
+Epwm_Handle hEpwm1;         /* EPWM1 handle */
+
+volatile uint32_t gEpwmOutFreq1 = APP_EPWM_OUTPUT_FREQ1; /*EPWM1 output freq. */
+
+#endif
+
 static HwiP_Object gEpwm0HwiObject;         /* EPWM0 HWI */
 
 /* EPWM global variables */
 uint32_t gEpwm0BaseAddr;    /* EPWM0 base address */
 EPwmObj_t gEpwm0Obj;        /* EPWM0 object */
 Epwm_Handle hEpwm0;         /* EPWM0 handle */
+
+
+
 volatile uint32_t gEpwmOutFreq = APP_EPWM_OUTPUT_FREQ; /* EPWM output frequency */
 
-/* ICSSG PRU SDDF FW IRQ handler */
-static void pruSddfIrqHandler(void *handle);
+
+/* ICSSG PRU SDFM FW IRQ handler */
+static void pruSdfmIrqHandler(void *handle);
 
 
 /* Test ICSSG handle */
 PRUICSS_Handle gPruIcssHandle;
 
-/* Test SDDF handles */
-sdfm_handle gHPruSddf;
+/* Test Sdfm handles */
+sdfm_handle gHPruSdfm;
 
 
-/* Test SDDF parameters */
-SddfPrms gTestSddfPrms = {
-    SAMPLE_READ_TIME,       // trigSampTime in us; always middel of PWM cycle
-    APP_EPWM_OUTPUT_FREQ,        // PWM output frequency
-    {{3500,2500,0},    //threshold parameters(High, low & reserevd)
-    {3500,2500,0},
-    {3500,2500,0}},
-    {{0,0},                //clock sourse & clock inversion for all channels
+/* Test Sdfm parameters */
+SdfmPrms gTestSdfmPrms = {
+    300000000,   /*Value of IEP clock*/
+    20000000,    /*Value of SD clock (It should be exact equal to sd clock value)*/
+    0,                        /*enable double update*/
+    FIRST_SAMPLE_TRIGGER_TIME,       /*first sample  trigger time*/
+    SECOND_SAMPLE_TRIGGER_TIME,       /*second sample trigger time*/
+    APP_EPWM_OUTPUT_FREQ,     /*PWM output frequency*/
+    {{3500, 1000,0},    /*threshold parameters(High, low & reserevd)*/
+    {3500, 1000,0},
+    {3500, 1000,0}},
+    {{0,0},                /*clock sourse & clock inversion for all channels*/
     {0,0},
     {0,0}},
-     32,   //OC osr
-     64,   //NC osr
-     1   //comparator enable
+     15,   /*Over current osr: The effect count is OSR + 1*/
+     128,   /*Normal current osr */
+     1   /*comparator enable*/
 };
 
 #define PRUICSS_G_MUX_EN    ( 0x1 ) /* ICSSG_SA_MX_REG:G_MUX_EN */
@@ -155,12 +184,14 @@ uint32_t sdfm_ch2_idx = 0;
 
 
 /* IRQ counters */
-volatile uint32_t gPruSddfIrqCnt=0; /* PRU SDDF FW IRQ count */
+volatile uint32_t gPruSdfmIrqCnt=0; /* PRU Sdfm FW IRQ count */
 volatile uint32_t gEpwmIsrCnt=0;    /* EPWM0 IRQ count */
-
+volatile uint32_t gEpwmIsrCnt1=0;
 /*PWM Parameters*/
 HwiP_Params hwiPrms;
+HwiP_Params hwiPrms1;
 EPwmCfgPrms_t epwmCfgPrms;
+EPwmCfgPrms_t epwm1CfgPrms;
 
 void init_pwm()
 {
@@ -206,6 +237,46 @@ void init_pwm()
     hEpwm0 = epwmInit(&epwmCfgPrms, &gEpwm0Obj);
     DebugP_assert(hEpwm0 != NULL);
 
+#if APP_EPWM1_ENABLE  // DEBUG code for SDFM clock generation from EPWM1
+    /* EPWM1 for SD clock generation */
+    /* Initialize EPWM1 base address, perform address translation */
+    gEpwm1BaseAddr = (uint32_t)AddrTranslateP_getLocalAddr(CONFIG_EPWM1_BASE_ADDR);
+    /* Register & enable EPWM0 interrupt */
+    HwiP_Params_init(&hwiPrms1);
+    hwiPrms1.intNum      = CONFIG_EPWM1_INTR;
+    hwiPrms1.callback    = &epwmIrqHandler1;
+    hwiPrms1.args        = 0;
+    hwiPrms1.isPulse     = CONFIG_EPWM1_INTR_IS_PULSE;
+    hwiPrms1.isFIQ       = FALSE;
+    status              = HwiP_construct(&gEpwm1HwiObject, &hwiPrms1);
+    DebugP_assert(status == SystemP_SUCCESS);
+    /* Configure EPWM0 */
+    epwm1CfgPrms.epwmId = EPWM_ID_1;
+    epwm1CfgPrms.epwmBaseAddr = gEpwm1BaseAddr;
+    epwm1CfgPrms.epwmOutChEn = APP_EPWM_OUT_CH_EN;
+    epwm1CfgPrms.hspClkDiv = APP_EPWM_FCLK_HSPCLKDIV;
+    epwm1CfgPrms.clkDiv = APP_EPWM_FCLK_CLKDIV;
+    epwm1CfgPrms.epwmTbFreq = APP_EPWM_TB_FREQ;
+    epwm1CfgPrms.epwmOutFreq = gEpwmOutFreq1;
+    epwm1CfgPrms.epwmDutyCycle[EPWM_OUTPUT_CH_A] = APP_EPWM0_DUTY_CYCLE;
+    epwm1CfgPrms.epwmTbCounterDir = APP_EPWM_TB_COUNTER_DIR;
+    epwm1CfgPrms.cfgTbSyncIn = FALSE;
+    epwm1CfgPrms.tbPhsValue = 0;
+    epwm1CfgPrms.cfgTbSyncOut = FALSE;
+    epwm1CfgPrms.tbSyncOutMode = EPWM_TB_SYNC_OUT_EVT_CNT_EQ_ZERO;
+    epwm1CfgPrms.aqCfg[EPWM_OUTPUT_CH_A].zeroAction = EPWM_AQ_ACTION_DONOTHING;
+    epwm1CfgPrms.aqCfg[EPWM_OUTPUT_CH_A].prdAction = EPWM_AQ_ACTION_DONOTHING;
+    epwm1CfgPrms.aqCfg[EPWM_OUTPUT_CH_A].cmpAUpAction = EPWM_AQ_ACTION_HIGH;
+    epwm1CfgPrms.aqCfg[EPWM_OUTPUT_CH_A].cmpADownAction = EPWM_AQ_ACTION_LOW;
+    epwm1CfgPrms.aqCfg[EPWM_OUTPUT_CH_A].cmpBUpAction = EPWM_AQ_ACTION_DONOTHING;
+    epwm1CfgPrms.aqCfg[EPWM_OUTPUT_CH_A].cmpBDownAction = EPWM_AQ_ACTION_DONOTHING;
+    epwm1CfgPrms.cfgDb = FALSE;
+    epwm1CfgPrms.cfgEt = FALSE;
+    epwm1CfgPrms.intSel = EPWM_ET_INTR_EVT_CNT_EQ_ZRO;
+    epwm1CfgPrms.intPrd = EPWM_ET_INTR_PERIOD_FIRST_EVT;
+    hEpwm1 = epwmInit(&epwm1CfgPrms, &gEpwm1Obj);
+    DebugP_assert(hEpwm1 != NULL);
+#endif 
 }
 
 void init_sdfm()
@@ -213,30 +284,31 @@ void init_sdfm()
     int32_t status;
     /* Initialize ICSSG */
     status = initIcss(TEST_ICSSG_INST_ID, TEST_ICSSG_SLICE_ID, PRUICSS_G_MUX_EN, &gPruIcssHandle);
-    if (status != SDDF_ERR_NERR) {
+    if (status != SDFM_ERR_NERR) {
         DebugP_log("Error: initIcss() fail.\r\n");
         return;
     }
 
-    /* Register & enable ICSSG PRU SDDF FW interrupt */
+    /* Register & enable ICSSG PRU SDFM FW interrupt */
     HwiP_Params_init(&hwiPrms);
-    hwiPrms.intNum      = ICSSG_PRU_SDDF_INT_NUM;
-    hwiPrms.callback    = &pruSddfIrqHandler;
+    hwiPrms.intNum      = ICSSG_PRU_SDFM_INT_NUM;
+    hwiPrms.callback    = &pruSdfmIrqHandler;
     hwiPrms.args        = 0;
     hwiPrms.isPulse     = FALSE;
     hwiPrms.isFIQ       = FALSE;
-    status              = HwiP_construct(&gIcssgPruSddfHwiObject, &hwiPrms);
+    status              = HwiP_construct(&gIcssgPruSdfmHwiObject, &hwiPrms);
     DebugP_assert(status == SystemP_SUCCESS);
 
-    /* Initialize PRU core for SDDF */
-    status = initPruSddf(gPruIcssHandle, TEST_PRU_INST_ID, &gTestSddfPrms, &gHPruSddf);
-    if (status != SDDF_ERR_NERR) {
-        DebugP_log("Error: initPruSddf() fail.\r\n");
+    /* Initialize PRU core for SDFM */
+    status = initPruSdfm(gPruIcssHandle, TEST_PRU_INST_ID, &gTestSdfmPrms, &gHPruSdfm);
+    if (status != SDFM_ERR_NERR) 
+    {
+        DebugP_log("Error: initPruSdfm() fail.\r\n");
         return;
     }
 
 }
-void sddf_main(void *args)
+void sdfm_main(void *args)
 {
 
     /* Open drivers to open the UART driver for console */
@@ -260,10 +332,10 @@ void sddf_main(void *args)
     init_pwm();
     DebugP_log("EPWM Configured!\r\n");
     /*
-     *  Configure SDDF
+     *  Configure SDFM
      */
 
-    /* Configure SOC pads for SDDF.
+    /* Configure SOC pads for SDFM.
        Normally handled via Pinmux_init(),
        but currently no way to pads for ICSSG from Sysconfig. */
     cfgPad();
@@ -290,11 +362,8 @@ void sddf_main(void *args)
     /* Destroy EPWM0 HWI */
     HwiP_destruct(&gEpwm0HwiObject);
 
-    /* Destroy PRU SDDF HWI */
-    HwiP_destruct(&gIcssgPruSddfHwiObject);
-
-    /* Destroy RTU SDDF HWI */
-    //HwiP_destruct(&gIcssgRtuSddfHwiObject);
+    /* Destroy PRU SDFM HWI */
+    HwiP_destruct(&gIcssgPruSdfmHwiObject);
 
     DebugP_log("All tests have passed!!\r\n");
 
@@ -302,17 +371,17 @@ void sddf_main(void *args)
     Drivers_close();
 }
 
-/* PRU SDDF FW IRQ handler */
-void pruSddfIrqHandler(void *args)
+/* PRU SDFM FW IRQ handler */
+void pruSdfmIrqHandler(void *args)
 {
-    /* debug, inncrement PRU SDDF IRQ count */
-    gPruSddfIrqCnt++;
+    /* debug, inncrement PRU SDFM IRQ count */
+    gPruSdfmIrqCnt++;
     /* Clear interrupt at source */
     /* Write 18 to ICSSG_STATUS_CLR_INDEX_REG
-        Firmware:   TRIGGER_HOST_SDDF_IRQ defined as 18
+        Firmware:   TRIGGER_HOST_SDFM_IRQ defined as 18
         18 = 16+2, 2 is Host Interrupt Number. See AM64x TRM.
     */
-    PRUICSS_clearEvent(gPruIcssHandle, PRU_TRIGGER_HOST_SDDF_EVT);
+    PRUICSS_clearEvent(gPruIcssHandle, PRU_TRIGGER_HOST_SDFM_EVT);
 
    /* SDFM Output sample for Channel 0 */
     sdfm_ch0_samples[sdfm_ch0_idx++] = SDFM_getFilterData(0);
@@ -342,8 +411,27 @@ static void epwmIrqHandler(void *args)
     gEpwmIsrCnt++;
 
     status = EPWM_etIntrStatus(gEpwm0BaseAddr);
-    if (status & EPWM_ETFLG_INT_MASK) {
+    if (status & EPWM_ETFLG_INT_MASK) 
+    {
         EPWM_etIntrClear(gEpwm0BaseAddr);
     }
     return;
 }
+
+#if APP_EPWM1_ENABLE //DEBUG code for EPWM1
+/* EPWM0 IRQ handler */
+static void epwmIrqHandler1(void *args)
+{
+    volatile uint16_t status;
+
+    /* debug, inncrement EPWM0 IRQ count */
+    gEpwmIsrCnt1++;
+
+    status = EPWM_etIntrStatus(gEpwm1BaseAddr);
+    if (status & EPWM_ETFLG_INT_MASK) 
+    {
+        EPWM_etIntrClear(gEpwm0BaseAddr);
+    }
+    return;
+}
+#endif

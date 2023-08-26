@@ -33,7 +33,7 @@
 #include <drivers/pinmux.h>
 #include "cfg_pad.h"
 
-static Pinmux_PerCfg_t gPinMuxMainDomainCfgSddf[] = {
+static Pinmux_PerCfg_t gPinMuxMainDomainCfgsdfm[] = {
 
     /* PRG0_ECAP0_IN_APWM_OUT,
        PRG0_PRU1_GPO15, PRG0_ECAP0_IN_APWM_OUT, U5, J2.C11  */
@@ -65,48 +65,12 @@ static Pinmux_PerCfg_t gPinMuxMainDomainCfgSddf[] = {
         PIN_PRG0_PRU0_GPO5,
         ( PIN_MODE(1) | PIN_INPUT_ENABLE | PIN_PULL_DISABLE )
     },
-    /* SD3_D,
-       PRG0_PRU0_GPI7,  SD3_D,      T1, J2B:P7  */
-    {
-        PIN_PRG0_PRU0_GPO7,
-        ( PIN_MODE(1) | PIN_INPUT_ENABLE | PIN_PULL_DISABLE )
-    },
-    /* SD4_D,
-       PRG0_PRU0_GPI18,  SD4_D,     V1, J2B:P9  */
-    {
-        PIN_PRG0_PRU0_GPO18,
-        ( PIN_MODE(1) | PIN_INPUT_ENABLE | PIN_PULL_DISABLE )
-    },
-    /* SD5_D,
-       PRG0_PRU0_GPI11, SD5_D,      Y3, J2B:P14 */
-    {
-        PIN_PRG0_PRU0_GPO11,
-        ( PIN_MODE(1) | PIN_INPUT_ENABLE | PIN_PULL_DISABLE )
-    },
-    /* SD6_D,
-       PRG0_PRU0_GPI13, SD6_D,      R6, J2C:P5  */
-    {
-        PIN_PRG0_PRU0_GPO13,
-        ( PIN_MODE(1) | PIN_INPUT_ENABLE | PIN_PULL_DISABLE )
-    },
-    /* SD7_D,
-       PRG0_PRU0_GPI15, SD7_D,      T5, J2D:P12 */
-    {
-        PIN_PRG0_PRU0_GPO15,
-        ( PIN_MODE(1) | PIN_INPUT_ENABLE | PIN_PULL_DISABLE )
-    },
-    /* SD8_D,
-       PRG0_PRU0_GPI17, SD8_D,      U1, J2B:P8  */
-    {
-        PIN_PRG0_PRU0_GPO17,
-        ( PIN_MODE(1) | PIN_INPUT_ENABLE | PIN_PULL_DISABLE )
-    },
-
+    
     {PINMUX_END, PINMUX_END}
 };
 
 /* Configure SOC pads */
 void cfgPad(void)
 {
-    Pinmux_config(gPinMuxMainDomainCfgSddf, PINMUX_DOMAIN_ID_MAIN);
+    Pinmux_config(gPinMuxMainDomainCfgsdfm, PINMUX_DOMAIN_ID_MAIN);
 }

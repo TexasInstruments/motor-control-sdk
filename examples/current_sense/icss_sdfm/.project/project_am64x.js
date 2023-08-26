@@ -4,11 +4,11 @@ let device = "am64x";
 
 const files = {
     common: [
-        "app_sddf.c",
+        "app_sdfm.c",
         "epwm_dc.c",
         "epwm_drv_aux.c",
         "epwm_mod.c",
-        "sddf.c",
+        "sdfm.c",
         "cfg_pad.c",
         "main.c",
     ],
@@ -39,7 +39,7 @@ const includes_freertos_r5f = {
         "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F",
         "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/am64x/r5f",
         "${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/include",
-        "${MOTOR_CONTROL_SDK_PATH}/examples/icss_sdfm",
+        "${MOTOR_CONTROL_SDK_PATH}/examples/current_sense/icss_sdfm",
     ],
 };
 
@@ -74,7 +74,7 @@ const templates_freertos_r5f =
         input: ".project/templates/am64x/freertos/main_freertos.c.xdt",
         output: "../main.c",
         options: {
-            entryFunction: "sddf_main",
+            entryFunction: "sdfm_main",
         },
     }
 ];
