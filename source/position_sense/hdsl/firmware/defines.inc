@@ -30,14 +30,13 @@
 ; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;
 
-;Firmware version
-FIRMWARE_VERSION_CODING .set            0x1
-;  bit5..4		major number
+
+;  bit7..4		major number
 FIRMWARE_VERSION_MAJOR	.set			0x0
 ;  bit3..0		minor number
-FIRMWARE_VERSION_MINOR	.set			0x4
+FIRMWARE_VERSION_MINOR	.set			0x5
 
-ICSS_FIRMWARE_RELEASE	.set            ((FIRMWARE_VERSION_CODING << 6) | (FIRMWARE_VERSION_MAJOR << 4) | (FIRMWARE_VERSION_MINOR << 0))
+ICSS_FIRMWARE_RELEASE	.set            ((FIRMWARE_VERSION_MAJOR << 4) | (FIRMWARE_VERSION_MINOR << 0))
 
 ;number of cycles for 1 bit
     .if $defined("FREERUN_300_MHZ")
