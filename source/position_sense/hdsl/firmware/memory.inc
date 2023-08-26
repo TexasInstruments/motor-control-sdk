@@ -302,9 +302,9 @@ SAFE_SUM	.set						0x36
 S_PC_DATA	.set						0x37
 
 ACC_ERR_CNT	.set						0x38
-MAXACC		.set						0x39
-MAXDEV_H	.set						0x3A
-MAXDEV_L	.set						0x3B
+MAXACC		.set						0x39 ; not implemented
+MAXDEV_H	.set						0x3A ; not implemented
+MAXDEV_L	.set						0x3B ; not implemented
 
 EVENT_S		.set						0x3D
 MASK_S		.set						0x3E
@@ -312,9 +312,9 @@ MASK_S		.set						0x3E
 DUMMY		.set						0x3F
 ;extra Master Registers as workaround for different access method depended behaviour (r/w)
 SLAVE_REG_CTRL	.set						0x40
-ACC_ERR_CNT_TRESH .set						0x41
-MAXDEV_TRESH_H	.set						0x42
-MAXDEV_TRESH_L	.set						0x43
+ACC_ERR_CNT_THRESH .set						0x41
+MAXDEV_THRESH_H	.set						0x42 ; not implemented
+MAXDEV_THRESH_L	.set						0x43 ; not implemented
 ;extra MASTER registers (not in the specification! little endian!)
 NUM_VERT_ERR0	.set						0x90
 NUM_VERT_ERR1	.set						0x91

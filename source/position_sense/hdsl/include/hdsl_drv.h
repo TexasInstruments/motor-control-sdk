@@ -185,17 +185,17 @@ typedef struct {
     volatile uint8_t SAFE_SUM;          /**< Summarized slave status */
     volatile uint8_t S_PC_DATA;         /**< Response of Short message parameters channel Read for safe1 channel */
     volatile uint8_t ACC_ERR_CNT;       /**< Fast position error counter */
-    volatile uint8_t MAXACC;            /**< Fast position acceleration boundary */
-    volatile uint8_t MAXDEV_H;          /**< Fast position estimator deviation high byte */
-    volatile uint8_t MAXDEV_L;          /**< Fast position estimator deviation low byte */
+    volatile uint8_t resvd8;            /**< Reserved 8 */
     volatile uint8_t resvd9;            /**< Reserved 9 */
+    volatile uint8_t resvd10;           /**< Reserved 10 */
+    volatile uint8_t resvd11;           /**< Reserved 11 */
     volatile uint8_t EVENT_S;           /**< Safe Events */
     volatile uint8_t MASK_S;            /**< Safe Event Mask */
     volatile uint8_t DUMMY;             /**< Dummy, no data */
     volatile uint8_t SLAVE_REG_CTRL;    /**< Short message control */
-    volatile uint8_t ACC_ERR_CNT_THRES; /**< Fast position error counter threshold */
-    volatile uint8_t MAXDEV_H_THRES;    /**< Fast position estimator deviation high byte threshold */
-    volatile uint8_t MAXDEV_L_THRES;    /**< Fast position estimator deviation low byte threshold */
+    volatile uint8_t ACC_ERR_CNT_THRESH;/**< Fast position error counter threshold */
+    volatile uint8_t resvd12;           /**< Reserved 12 */
+    volatile uint8_t resvd13;           /**< Reserved 13 */
     /*Safe 2 Interface */
     volatile uint8_t VERSION2;          /**< Version in Safe Channel 2 */
     volatile uint8_t ENC2_ID;           /**< Encoder ID in Safe Channel 2 */
@@ -208,7 +208,7 @@ typedef struct {
     volatile uint8_t VPOSCRC2_H;        /**< CRC of Safe Position 2, byte 1 */
     volatile uint8_t VPOSCRC2_L;        /**< CRC of Safe Position 2, byte 0 */
     volatile uint8_t POSTX;             /**< Position transmission status */
-    volatile uint8_t resvd10;           /**< Reserved 10 */
+    volatile uint8_t resvd14;           /**< Reserved 14 */
 	/* Online Status*/
 	volatile uint8_t ONLINE_STATUS_D_H; /**< Online Status D, high byte*/
     volatile uint8_t ONLINE_STATUS_D_L; /**< Online Status D, low byte*/
