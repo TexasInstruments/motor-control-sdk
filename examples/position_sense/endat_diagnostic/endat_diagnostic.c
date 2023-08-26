@@ -48,6 +48,9 @@
 #include "ti_drivers_open_close.h"
 #include "ti_board_open_close.h"
 #include <position_sense/endat/include/endat_drv.h>
+
+#include "endat_periodic_trigger.h"
+
 #if PRU_ICSSGx_PRU_SLICE
 #define PRUICSS_PRUx PRUICSS_PRU1
 #define PRUICSS_TXPRUx PRUICSS_TX_PRU1
@@ -103,13 +106,14 @@ static void (*endat_fn_position_loop)(unsigned int);
 
 uint32_t gTaskFxnStack[TASK_STACK_SIZE/sizeof(uint32_t)] __attribute__((aligned(32)));
 TaskP_Object gTaskObject;
+#define VALID_PERIODIC_CMD(x) ((x) == 200)
 
 #define VALID_HOST_CMD(x) ((x == 100) || ((x) == 101) || ((x) == 102) || ((x) == 103) || ((x) == 104) || ((x) == 105) || \
                            ((x) == 106) || ((x) == 107) || ((x) == 108) || ((x) == 109) || ((x) == 110))
 
 #define HAVE_COMMAND_SUPPLEMENT(x) (((x) == 2) || ((x) == 3) || ((x) == 4) || ((x) == 7) || \
                                     ((x) == 9) || ((x) == 10) || ((x) == 11) || ((x) == 13) || ((x) == 14) || \
-                                    ((x) == 100) || ((x) == 101) || ((x)== 103) || ((x) == 105) || ((x) == 106) || ((x) == 107) || ((x) == 108) || ((x) == 109))
+                                    ((x) == 100) || ((x) == 101) || ((x)== 103) || ((x) == 105) || ((x) == 106) || ((x) == 107) || ((x) == 108) || ((x) == 109)||((x) == 200))
 
 #define ENDAT_INPUT_CLOCK_UART_FREQUENCY 192000000
 /* use uart clock only to start with */
@@ -118,6 +122,7 @@ TaskP_Object gTaskObject;
 #define ENDAT_POSITION_LOOP_STOP    0
 #define ENDAT_POSITION_LOOP_START   1
 
+   
 union position
 {
     float angle;
@@ -206,8 +211,8 @@ uint32_t endat_pruss_load_run_fw(struct endat_priv *priv)
             status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_RTUPRUx);
             DebugP_assert(SystemP_SUCCESS == status);
             status=PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_RTU_PRU(PRUICSS_SLICEx),
-                                                        0, (uint32_t *) EnDatFirmwareMultiMakeRTU,
-                                                        sizeof(EnDatFirmwareMultiMakeRTU));
+                                                        0, (uint32_t *) EnDatFirmwareMultiMakeRTU_0,
+                                                        sizeof(EnDatFirmwareMultiMakeRTU_0));
             DebugP_assert(0 != status);
             status = PRUICSS_resetCore(gPruIcssXHandle, PRUICSS_RTUPRUx);
             DebugP_assert(SystemP_SUCCESS == status);
@@ -221,8 +226,8 @@ uint32_t endat_pruss_load_run_fw(struct endat_priv *priv)
             status=PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_PRUx );
             DebugP_assert(SystemP_SUCCESS == status);
             status = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_SLICEx),
-                                                      0, (uint32_t *) EnDatFirmwareMultiMakePRU,
-                                                      sizeof(EnDatFirmwareMultiMakePRU));
+                                                      0, (uint32_t *) EnDatFirmwareMultiMakePRU_0,
+                                                      sizeof(EnDatFirmwareMultiMakePRU_0));
             DebugP_assert(0 != status);
             status = PRUICSS_resetCore(gPruIcssXHandle, PRUICSS_PRUx);
             DebugP_assert(SystemP_SUCCESS == status);
@@ -236,8 +241,8 @@ uint32_t endat_pruss_load_run_fw(struct endat_priv *priv)
            status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_TXPRUx);
              DebugP_assert(SystemP_SUCCESS == status);
             status = PRUICSS_writeMemory(gPruIcssXHandle,  PRUICSS_IRAM_TX_PRU(PRUICSS_SLICEx),
-                                                        0, (uint32_t *) EnDatFirmwareMultiMakeTXPRU,
-                                                        sizeof(EnDatFirmwareMultiMakeTXPRU));
+                                                        0, (uint32_t *) EnDatFirmwareMultiMakeTXPRU_0,
+                                                        sizeof(EnDatFirmwareMultiMakeTXPRU_0));
             DebugP_assert(0 != status);
             status = PRUICSS_resetCore(gPruIcssXHandle, PRUICSS_TXPRUx);
             DebugP_assert(SystemP_SUCCESS == status);
@@ -256,14 +261,14 @@ uint32_t endat_pruss_load_run_fw(struct endat_priv *priv)
 #if(CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU)
 
             status = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_SLICEx),
-                                0, (uint32_t *) EnDatFirmwareMulti,
-                                sizeof(EnDatFirmwareMulti));
+                                0, (uint32_t *) EnDatFirmwareMulti_0,
+                                sizeof(EnDatFirmwareMulti_0));
 
 #else
 
             status = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_SLICEx),
-                                0, (uint32_t *) EnDatFirmware,
-                                sizeof(EnDatFirmware));
+                                0, (uint32_t *) EnDatFirmware_0,
+                                sizeof(EnDatFirmware_0));
 #endif
         DebugP_assert(0 != status);
 
@@ -284,23 +289,23 @@ uint32_t endat_pruss_load_run_fw(struct endat_priv *priv)
 uint64_t endat_get_fw_version(void)
 {
 #if CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU
-    return *((unsigned long *)EnDatFirmwareMulti + 2);
+    return *((unsigned long *)EnDatFirmwareMulti_0 + 2);
 #endif
 
 #if (CONFIG_ENDAT0_CHANNEL0) && (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
-    return *((unsigned long *)EnDatFirmwareMultiMakeRTU + 2);
+    return *((unsigned long *)EnDatFirmwareMultiMakeRTU_0 + 2);
 #endif
 
 #if (CONFIG_ENDAT0_CHANNEL1) && (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
-    return *((unsigned long *)EnDatFirmwareMultiMakePRU + 2);
+    return *((unsigned long *)EnDatFirmwareMultiMakePRU_0 + 2);
 #endif
 
 #if (CONFIG_ENDAT0_CHANNEL2) && (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
-    return *((unsigned long *)EnDatFirmwareMultiMakeTXPRU + 2);
+    return *((unsigned long *)EnDatFirmwareMultiMakeTXPRU_0 + 2);
 #endif
 
 #if CONFIG_ENDAT0_MODE == ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU
-    return *((unsigned long *)EnDatFirmware + 2);
+    return *((unsigned long *)EnDatFirmware_0 + 2);
 #endif
 
 }
@@ -334,11 +339,8 @@ static void endat_print_menu(void)
     DebugP_log("\r|101: Simulate motor control 2.1 position loop                                 |\n");
     DebugP_log("\r|102: Toggle raw data display                                                  |\n");
     DebugP_log("\r|103: Configure tST delay                                                      |\n");
+    DebugP_log("\r|104: Start continuous mode                                                    |\n");
 
-    if((!gEndat_is_multi_ch) && (!gEndat_is_load_share_mode))
-    {
-        DebugP_log("\r|104: Start continuous mode                                                    |\n");
-    }
 
     DebugP_log("\r|105: Configure rx arm counter (account tD)                                    |\n");
     DebugP_log("\r|106: Configure rx clock disable time (for tD)                                 |\n");
@@ -357,6 +359,7 @@ static void endat_print_menu(void)
     }
 
     DebugP_log("\r|110: Recovery Time (RT)                                                    |\n");
+    DebugP_log("\r|200: Start periodic continuous mode                                        |\n");
 
     DebugP_log("\r|------------------------------------------------------------------------------|\n\r|\n");
     DebugP_log("\r| enter value: ");
@@ -373,7 +376,7 @@ static inline int32_t endat_get_command(void)
     }
 
     if(VALID_2_1_CMD(cmd) || (priv->cmd_set_2_2 && VALID_2_2_CMD(cmd))
-            || VALID_HOST_CMD(cmd))
+            || VALID_HOST_CMD(cmd) || VALID_PERIODIC_CMD(cmd))
     {
         return cmd;
     }
@@ -859,6 +862,51 @@ static int32_t endat_get_command_supplement(int32_t cmd,
 
             break;
 
+        case 200:
+           
+            if(gEndat_is_load_share_mode)
+            {   
+                if(gEndat_multi_ch_mask & 0)
+                {
+                    DebugP_log("\r| Enter IEP cycle count for Channel0: \n");
+                    if(DebugP_scanf("%u\n", &cmd_supplement->cmp3) < 0)
+                    {
+                        DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                        return -EINVAL;
+                    }
+                }
+
+                if(gEndat_multi_ch_mask & 1)
+                {
+                    DebugP_log("\r| Enter IEP cycle count for Channel1: \n");
+                    if(DebugP_scanf("%u\n", &cmd_supplement->cmp5) < 0)
+                    {
+                        DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                        return -EINVAL;
+                    }
+                }
+                if(gEndat_multi_ch_mask & 2)
+                {
+                    DebugP_log("\r| Enter IEP cycle count for Channel2: \n");
+                    if(DebugP_scanf("%u\n", &cmd_supplement->cmp6) < 0)
+                    {
+                        DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                        return -EINVAL;
+                    }
+                }
+                
+            }
+            else
+            {
+                DebugP_log("\r| Enter IEP cycle count: ");
+                if(DebugP_scanf("%u\n", &cmd_supplement->cmp3) < 0)
+                {
+                    DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                    return -EINVAL;
+                }
+            }
+            break;
+
         default:
             cmd = -EINVAL;
             DebugP_log("\r| ERROR: no command data required for the command\n");
@@ -1242,12 +1290,13 @@ static void endat_print_position_loop_channel_info(struct endat_priv *priv,
 static void endat_handle_prop_delay(struct endat_priv *priv,
                                     uint16_t prop_delay)
 {
-    if(prop_delay > priv->rx_en_cnt)
+    float ct = (priv->rx_en_cnt)/2; /*one endat clock cycle time = 1/endat frequency = 2*rx_en_cnt*/
+    /* if propagation delay is more than half clock cycle time (2/endat frequency) then we have to reduce clock cycles for rx*/
+    if(prop_delay > (ct/2))
     {
-        uint16_t dis = (prop_delay - priv->rx_en_cnt) * 2 / priv->rx_en_cnt;
-
+        uint16_t dis = round(prop_delay/ct);
         endat_config_rx_arm_cnt(priv, prop_delay);
-        /* propagation delay - 2T */
+        /* propagation delay/cycle_time */
         endat_config_rx_clock_disable(priv, dis);
     }
     else
@@ -1257,6 +1306,104 @@ static void endat_handle_prop_delay(struct endat_priv *priv,
     }
 }
 
+static void endat_process_periodic_command(int32_t cmd,
+                                       struct cmd_supplement *cmd_supplement, struct endat_priv *priv)
+{
+    if(cmd == 200)
+    {
+        endat_config_periodic_trigger(priv);
+        int32_t status;
+        int32_t pos_cmd = 1;
+        DebugP_assert(endat_command_process(priv, pos_cmd, NULL) >= 0);
+        if(gEndat_is_load_share_mode)
+        {
+            priv->cmp3 = gEndat_multi_ch_mask & 0 ? cmd_supplement->cmp3 : 0;
+            priv->cmp5 = gEndat_multi_ch_mask & 1 ? cmd_supplement->cmp5 : 0;
+            priv->cmp6 = gEndat_multi_ch_mask & 2 ? cmd_supplement->cmp6 : 0;
+        }
+        else
+        {
+            priv->cmp3 = cmd_supplement->cmp3; 
+        }
+
+        if(endat_loop_task_create() != SystemP_SUCCESS)
+        {
+            DebugP_log("\r| ERROR: OS not allowing continuous mode as related Task creation failed\r\n|\r\n|\n");
+            DebugP_log("Task_create() failed!\n");
+            return;
+        }
+
+        struct endat_periodic_interface endat_periodic_interface;
+        endat_periodic_interface.pruss_cfg = priv->pruss_cfg;
+        endat_periodic_interface.pruss_iep = priv->pruss_iep;
+        endat_periodic_interface.pruss_dmem = priv->pruss_xchg;
+        endat_periodic_interface.load_share = priv->load_share;
+        endat_periodic_interface.cmp3 = priv->cmp3;
+        endat_periodic_interface.cmp5 = priv->cmp5;
+        endat_periodic_interface.cmp6 = priv->cmp6;
+        
+        status = endat_config_periodic_mode(&endat_periodic_interface, gPruIcssXHandle);
+        DebugP_assert(0 != status);
+        endat_position_loop_status = ENDAT_POSITION_LOOP_START;
+    
+        if(priv->multi_turn_res)
+        {
+            DebugP_log("\r|\n\r| press enter to stop the continuous mode\r\n|\r\n|         position,       revolution, f1\r\n| ");
+        }
+        else
+        {
+            DebugP_log("\r|\n\r| press enter to stop the continuous mode\r\n|\r\n|         position, f1\r\n| ");
+        }
+    
+        while(1)
+            if(endat_position_loop_status == ENDAT_POSITION_LOOP_STOP)
+            {
+                endat_stop_periodic_continuous_mode(&endat_periodic_interface);
+                endat_config_host_trigger(priv);
+                return;
+            }
+            else
+            {
+                int32_t i;
+
+                if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
+                {
+                    int32_t j;
+                    for(i = 0, j = 0; j < 3; j++)
+                    {
+                        if(gEndat_multi_ch_mask & 1 << j)
+                        {
+                            endat_multi_channel_set_cur(priv, j);
+                            endat_recvd_process(priv, 1, &gEndat_format_data_mtrctrl[j]);
+                            i += endat_get_position_loop_chars(priv, 0, 0);
+                            DebugP_log("| ");
+                            DebugP_log("\r|\n\r| Channel: %10u\r\n| ", j);
+                            endat_print_position_loop(priv, 1, 0, j);
+                            DebugP_log(" ");
+                            DebugP_log("\n");
+                            i += 3;
+                        }
+                    }
+                }
+                else
+                {        
+                    endat_recvd_process(priv, 1, &gEndat_format_data_mtrctrl[0]);
+
+                    i = endat_get_position_loop_chars(priv, 1, 0);
+                    endat_print_position_loop(priv, 1, 0, 0);
+                }
+                /* increase sleep value if glitches in display to be prevented (and would result in slower position display freq) */
+                ClockP_usleep(100);
+
+                while(i--)
+                {
+                    DebugP_log("%c", 8);
+                }
+            }
+    
+    
+    }
+}
 static void endat_process_host_command(int32_t cmd,
                                        struct cmd_supplement *cmd_supplement, struct endat_priv *priv)
 {
@@ -1471,12 +1618,6 @@ static void endat_process_host_command(int32_t cmd,
     else if(cmd == 104)
     {
 
-        if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
-        {
-            DebugP_log("\r| ERROR: Multi channel configuration does not support continuous clock mode\r\n|\r\n|\n");
-            return;
-        }
-
         if(endat_loop_task_create() != SystemP_SUCCESS)
         {
             DebugP_log("\r| ERROR: OS not allowing continuous mode as related Task creation failed\r\n|\r\n|\n");
@@ -1504,13 +1645,34 @@ static void endat_process_host_command(int32_t cmd,
             }
             else
             {
-                int i;
+                int32_t i;
 
-                endat_recvd_process(priv, 1, &gEndat_format_data_mtrctrl[0]);
+                if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
+                {
+                    int32_t j;
+                    for(i = 0, j = 0; j < 3; j++)
+                    {
+                        if(gEndat_multi_ch_mask & 1 << j)
+                        {
+                            endat_multi_channel_set_cur(priv, j);
+                            endat_recvd_process(priv, 1, &gEndat_format_data_mtrctrl[j]);
+                            i += endat_get_position_loop_chars(priv, 0, 0);
+                            DebugP_log("| ");
+                            DebugP_log("\r|\n\r| Channel: %10u\r\n| ", j);
+                            endat_print_position_loop(priv, 1, 0, j);
+                            DebugP_log(" ");
+                            DebugP_log("\n");
+                            i += 3;
+                        }
+                    }
+                }
+                else
+                {        
+                    endat_recvd_process(priv, 1, &gEndat_format_data_mtrctrl[0]);
 
-                i = endat_get_position_loop_chars(priv, 1, 0);
-                endat_print_position_loop(priv, 1, 0, 0);
-
+                    i = endat_get_position_loop_chars(priv, 1, 0);
+                    endat_print_position_loop(priv, 1, 0, 0);
+                }
                 /* increase sleep value if glitches in display to be prevented (and would result in slower position display freq) */
                 ClockP_usleep(100);
 
@@ -1845,6 +2007,7 @@ void endat_main(void *args)
     uint64_t icssgclk;
 
     void *pruss_cfg;
+    void *pruss_iep;
 
     /* Open drivers to open the UART driver for console */
     Drivers_open();
@@ -1855,7 +2018,6 @@ void endat_main(void *args)
     GPIO_setDirMode(ENC1_EN_BASE_ADDR, ENC1_EN_PIN, ENC1_EN_DIR);
     GPIO_pinWriteHigh(ENC1_EN_BASE_ADDR, ENC1_EN_PIN);
 #endif
-
 
     i = endat_get_fw_version();
 
@@ -1905,14 +2067,15 @@ void endat_main(void *args)
     DebugP_log("\r\n\n");
 
     pruss_cfg = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->cfgRegBase);
+    pruss_iep  = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->iep0RegBase);
 
     #if PRU_ICSSGx_PRU_SLICE
         priv = endat_init((struct endat_pruss_xchg *)((PRUICSS_HwAttrs *)(
-                          gPruIcssXHandle->hwAttrs))->pru1DramBase, pruss_cfg, PRUICSS_SLICEx);
+                          gPruIcssXHandle->hwAttrs))->pru1DramBase, pruss_cfg, pruss_iep, PRUICSS_SLICEx);
 
     #else
         priv = endat_init((struct endat_pruss_xchg *)((PRUICSS_HwAttrs *)(
-                          gPruIcssXHandle->hwAttrs))->pru0DramBase, pruss_cfg, PRUICSS_SLICEx);
+                          gPruIcssXHandle->hwAttrs))->pru0DramBase, pruss_cfg, pruss_iep, PRUICSS_SLICEx);
     #endif
 
 
@@ -2036,7 +2199,6 @@ void endat_main(void *args)
 
     endat_process_host_command(100, &cmd_supplement, priv);
 
-
     while(1)
     {
         int32_t cmd;
@@ -2051,6 +2213,13 @@ void endat_main(void *args)
         if(VALID_HOST_CMD(cmd))
         {
             endat_process_host_command(cmd, &cmd_supplement, priv);
+            DebugP_log("\r|\n\r|\n");
+            continue;
+        }
+
+        if(VALID_PERIODIC_CMD(cmd))
+        {
+            endat_process_periodic_command(cmd, &cmd_supplement, priv);
             DebugP_log("\r|\n\r|\n");
             continue;
         }

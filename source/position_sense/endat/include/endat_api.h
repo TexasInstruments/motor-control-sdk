@@ -500,13 +500,14 @@ int32_t endat_wait_initialization(struct endat_priv *priv, uint32_t timeout, uin
  *
  *  \param[in]  pruss_xchg      EnDat firmware interface address
  *  \param[in]  pruss_cfg       ICSS PRU config base address
+ *  \param[in]  pruss_iep       ICSS PRU iep base address
  *  \param[in]  slice           ICSS PRU SLICE
  *
  *  \retval     priv            pointer to struct endat_priv instance
  *
  */
 struct endat_priv *endat_init(struct endat_pruss_xchg *pruss_xchg,
-                              void *pruss_cfg, int32_t slice);
+                              void *pruss_cfg, void *pruss_iep, int32_t slice);
 
 /**
  *  \brief      Read EnDat 2.2 angular position in steps for rotary encoders      <br>

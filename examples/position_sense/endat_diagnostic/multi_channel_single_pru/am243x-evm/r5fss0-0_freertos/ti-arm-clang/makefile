@@ -39,6 +39,7 @@ endif
 
 FILES_common := \
 	endat_diagnostic.c \
+	endat_periodic_trigger.c \
 	main.c \
 	ti_drivers_config.c \
 	ti_drivers_open_close.c \
@@ -60,6 +61,7 @@ INCLUDES_common := \
 	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/FreeRTOS-Kernel/include \
 	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F \
 	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/am243x/r5f \
+	-I${MOTOR_CONTROL_SDK_PATH}/examples/position_sense/endat_diagnostic \
 	-Igenerated \
 
 DEFINES_common := \

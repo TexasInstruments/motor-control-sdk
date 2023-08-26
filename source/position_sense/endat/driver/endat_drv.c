@@ -1764,15 +1764,34 @@ void endat_config_rx_clock_disable(struct endat_priv *priv,
 static void endat_set_continuous_mode(struct endat_priv *priv)
 {
     struct endat_pruss_xchg *pruss_xchg = priv->pruss_xchg;
+    if(priv->load_share)
+    {
+        pruss_xchg->config[0].trigger |= pruss_xchg->config[0].channel==1?(0x1 << 7 | 0x1):0;
+        pruss_xchg->config[1].trigger |= pruss_xchg->config[1].channel==2?(0x1 << 7 | 0x1):0;
+        pruss_xchg->config[2].trigger |= pruss_xchg->config[2].channel==4?(0x1 << 7 | 0x1):0;      
+    }
+    else
+    {
+        pruss_xchg->config[0].trigger |= (0x1 << 7 | 0x1);
+    }
 
-    pruss_xchg->config[0].trigger |= (0x1 << 7 | 0x1);
 }
 
 static void endat_clear_continuous_mode(struct endat_priv *priv)
 {
     struct endat_pruss_xchg *pruss_xchg = priv->pruss_xchg;
 
-    pruss_xchg->config[0].trigger &= ~(0x1 << 7);
+    if(priv->load_share)
+    {
+        pruss_xchg->config[0].trigger &= ~(0x1 << 7);
+        pruss_xchg->config[1].trigger &= ~(0x1 << 7);
+        pruss_xchg->config[2].trigger &= ~(0x1 << 7);
+    }
+    else
+    {
+        pruss_xchg->config[0].trigger &= ~(0x1 << 7);
+    }
+
 }
 
 int32_t endat_start_continuous_mode(struct endat_priv *priv)
@@ -1816,8 +1835,17 @@ void endat_config_host_trigger(struct endat_priv *priv)
 void endat_config_periodic_trigger(struct endat_priv *priv)
 {
     struct endat_pruss_xchg *pruss_xchg = priv->pruss_xchg;
-
-    pruss_xchg->config[0].opmode = 0;
+    /*for loadshare mode trigger set based on connected channels*/
+    if(priv->load_share)
+    {
+         pruss_xchg->config[0].opmode=(pruss_xchg->config[0].channel&(1<<0))?0x0:pruss_xchg->config[0].opmode;
+         pruss_xchg->config[1].opmode=(pruss_xchg->config[1].channel&(1<<1))?0x0:pruss_xchg->config[0].opmode;
+         pruss_xchg->config[2].opmode=(pruss_xchg->config[2].channel&(1<<2))?0x0:pruss_xchg->config[0].opmode;
+    }
+    else
+    {
+        pruss_xchg->config[0].opmode = 0;
+    }
 }
 
 void endat_config_channel(struct endat_priv *priv, int32_t ch)
@@ -2033,12 +2061,13 @@ static void endat_hw_init(struct endat_priv *priv)
 }
 
 struct endat_priv *endat_init(struct endat_pruss_xchg *pruss_xchg,
-                              void *pruss_cfg, int32_t slice)
+                              void *pruss_cfg, void* pruss_iep, int32_t slice)
 {
 
     endat_priv.pruss_xchg = pruss_xchg;
     endat_priv.pruss_cfg = pruss_cfg;
     endat_priv.pruicss_slicex = slice;
+    endat_priv.pruss_iep = pruss_iep;
     endat_hw_init(&endat_priv);
     return &endat_priv;
 }
