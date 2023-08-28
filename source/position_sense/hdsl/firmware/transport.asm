@@ -175,51 +175,16 @@ no_sub_carry:
 	not		REG_TMP2, REG_TMP2
 	add		REG_TMP2, REG_TMP2, 1
 transport_on_v_frame_diff_pos:
-;load MAXDEV_H/L
-	lbco		&REG_TMP0.w2, MASTER_REGS_CONST, MAXDEV_H, 2
-	mov		REG_TMP0.b0, REG_TMP0.b2
-	mov		REG_TMP0.b2, REG_TMP0.b3
-	mov		REG_TMP0.b3, REG_TMP0.b0
-;check if it is larger
-	qbge		transport_on_v_frame_dont_update_maxdev, REG_TMP2, REG_TMP0.w2
-	mov		REG_TMP0.b0, REG_TMP2.b1
-	mov		REG_TMP0.b1, REG_TMP2.b0
-	sbco		&REG_TMP0, MASTER_REGS_CONST, MAXDEV_H, 2
-transport_on_v_frame_dont_update_maxdev:
-;load MAXDEV_TRESH_H/L
+
     .if $defined("HDSL_MULTICHANNEL")
 	PUSH_FIFO_CONST  0xff
 	PUSH_FIFO_CONST  0xff
     .endif
-	lbco		&REG_TMP0.w2, MASTER_REGS_CONST, MAXDEV_TRESH_H, 2
-	mov		REG_TMP0.b0, REG_TMP0.b2
-	mov		REG_TMP0.b2, REG_TMP0.b3
-	mov		REG_TMP0.b3, REG_TMP0.b0
-;check if it is larger
-	qbge		transport_on_v_frame_dont_update_dte, REG_TMP2, REG_TMP0.w2
-; Set EVENT_DTE in ONLINE_STATUS_D register
-	lbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
-    set         REG_TMP2.b0, REG_TMP2.b0, ONLINE_STATUS_D_DTE
-; Set EVENT_DTE in EVENT register
-	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_H, 4
-	set		REG_TMP0.w0, REG_TMP0.w0, EVENT_DTE
-;save events
-	sbco		&REG_TMP0.w0, MASTER_REGS_CONST, EVENT_H, 2
-	qbbc		update_events_no_int6, REG_TMP0.w2, EVENT_DTE
-; generate interrupt
-	ldi		r31.w0, PRU0_ARM_IRQ
-update_events_no_int6:
-transport_on_v_frame_dont_update_dte:
-; Clear EVENT_DTE in ONLINE_STATUS_D register
-	lbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
-    clr         REG_TMP2.b0, REG_TMP2.b0, ONLINE_STATUS_D_DTE
-	sbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
-;check for diff. is 0 -> estimate if not
 
+;check for diff. is 0 -> estimate if not
 	qbne		transport_on_v_frame_estimate, REG_TMP1, 0
 	qbne		transport_on_v_frame_estimate, VERT_H.b2, FAST_POSL
-;reset MAXDEV_H/L
-	sbco		&REG_FNC.w0, MASTER_REGS_CONST, MAXDEV_H, 2
+
 ;reset ALIGN_PH
 	ldi		ALIGN_PH, 0
 	qba		transport_on_v_frame_no_pos_mismatch
@@ -1023,7 +988,7 @@ transport_acc_err_inc:
 	add		REG_TMP0.b0, REG_TMP0.b0, 1
 	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, ACC_ERR_CNT, 1
 ;reset if it is too large
-	lbco		&REG_TMP0.b1, MASTER_REGS_CONST, ACC_ERR_CNT_TRESH, 1
+	lbco		&REG_TMP0.b1, MASTER_REGS_CONST, ACC_ERR_CNT_THRESH, 1
 	qbgt		transport_on_h_frame_no_reset, REG_TMP0.b0, REG_TMP0.b1
 	jmp		datalink_abort
 transport_on_h_frame_no_reset:
@@ -1057,7 +1022,7 @@ transport_on_h_frame_no_reset:
 	qbbc		estimator_acc_sign_extend_dacc1, REG_TMP0.w0, 10
 	or		REG_TMP0.b1, REG_TMP0.b1, 0xf8
 estimator_acc_sign_extend_dacc1:
-; calcuate MAXACC, cap acc
+; TODO: calcuate MAXACC, cap acc
 ;add estimated delta acc to LAST_ACC
 	add		REG_FNC.w0, LAST_ACC, REG_TMP0.w0
 ;check if estimated acc is neg. or pos.
