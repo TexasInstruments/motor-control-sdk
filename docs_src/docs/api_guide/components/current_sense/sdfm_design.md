@@ -1,4 +1,4 @@
-# SDFM Interface Design {#SDFM_DESIGN}
+# %SDFM Interface Design {#SDFM_DESIGN}
 
 [TOC]
 
@@ -24,23 +24,23 @@ SDK example uses the %SDFM hardware capability in Slice 1 of PRU-ICSSG0.
 <table>
 <tr>
     <th>Parameter
-    <th>Value
+    <th>Default Value
 	<th>Details
 </tr>
 <tr>
     <td>Normal current OSR
-    <td>32
-	<td>Tested with 32, 64, 128 & 256
+    <td>64
+	<td>Tested with 16, 32, 64, 128 and 256
 </tr>
 <tr>
     <td>Over current OSR
-    <td>64
-	<td>Tested with 32, 64, 128 & 256
+    <td>16
+	<td>Tested with 16, 32, 64, 128 and 256
 </tr>
 <tr>
     <td>Sigma Delta Modulator Clock
     <td>20 MHz
-	<td>
+	<td> Tested with 5MHz, 10MHz and 20MHz from clock from PRU-ICSSG ECAP and 5MHz clock from SoC EPWM1
 </tr>
 <tr>
     <td>Simulated EPWM frequency
@@ -49,42 +49,59 @@ SDK example uses the %SDFM hardware capability in Slice 1 of PRU-ICSSG0.
 </tr>
 <tr>
     <td>IEP frequency
-    <td>300MHz
-	<td>
+    <td>300 MHz
+	<td>Tested with 200MHz, 225MHz and 300MHz
 </tr>
-
 </table>
 
 ### ICSS SDFM PRU hardware
 
-Refer TRM for details
+Refer section 6.4.5.2.2.3.5 Sigma Delta (SD) Decimation Filtering in Technical Reference Manual(TRM) of AM243x for details.
 
 ### ICSS SDFM Firmware Implementation
 
-Following section describes the firmware implementation of Sigma delta decimation filter on PRU-ICSS.
+Following section describes the firmware implementation of Sigma Delta Decimation Filter on PRU-ICSS.
 
-####	Firmware Architecture
+#### Firmware Architecture
+
 \image html SDFM_FIRMWARE_FLOWCHART.png "Overall Block Diagram"
 
-Firmware first clear PRU registers & Task manager.
-Then it waits for the R5 to set %SDFM enable bit. After the enable set then it acknowledge to R5.
-After above these initial steps firmware does initialization of PRU-ICSSG's %SDFM hardware interface, task manager & IEP0 then it comes in infinite waiting loop.
+- Firmware first clears the PRU registers and task manager.
+- Then it waits for the ARM core to set %SDFM enable bit. After the enable bit is set, it sends an acknowledgement to ARM core.
+- After this, the firmware does initialization of PRU-ICSSG's %SDFM hardware interface, task manager and IEP0.
+- If threshold comparator is enabled, then a free run over current loop is setup, else it sets up an infinite waiting loop. In over current loop, the firmware reads sample data from the shadow copy register and does low and high theshold compersion with sample data, and depending on the configuration it toggles the GPIO pins.
+- Time triggered normal current task is configured to be triggered based on IEP CMP4 event. When the CMP4 event hits, the task manager sets the program counter to normal current task. In normal current task, firmware reads sample data from accumulator and it checks for fourth normal current sample (for SINC3 filtering). If the current normal current sample belongs to fourth normal current sample, then it stores the same in data memory DMEM as normal current row data and trigger interrupt.
+- At the end of normal current firmware task, execution flow comes into infinite waiting loop or over current loop.
 
-When the COMP4 event hits the task manager assign OC loop to PC and Firmware starts execution of OC loop
-In OC loop firmware read sample data from accumulator and it checks for NC sample if the current OC sample belongs to NC sample then it does sampling for NC.
-During the NC sampling if current NC sample is closest to sample read time then it trigger R5 interrupt.
-at the end of OC loop firmware exit task manager and again firmware execution flow comes into infinite waiting loop.
+##### Normal Curent (NC)
+This section describes normal current implementation. Its implementation is trigger based. It starts execution when the trigger point is acquired (first time CMP4 event hits) and performs four continuous samplings to bring the accumulator and differntiator registers to stable state for the configured normal current OSR.
 
-##### Threshold Comparator
-This section describe threshold comparator implementation. When the sample value crosses the high or low thresholds, the corresponding GPIO pin goes high.
- \image html Threshold_comparator_flow.png "Threshold Comparator"
+Initially the CMP4 register is configured with the first sample trigger start time and then until the next third continuous normal current sample it is updated with the normal current OSR sampling time. At the end of the fourth normal current sample again, it is updated with the second sample start time if double update is enabled otherwise with the first sample trigger start time.
 
+\image html SDFM_NC_FLOW_CHART.png "Normal Current"
 
+###### Single Update
 
-##### Sample data read jitter
-Firmware trigger R5 interrupt for the NC sample closest to the sample read time in every PWM cycle.
+Normal current sampling is done per EPWM cycle.
+\image html SDFM_single_update.PNG "Single Update"
 
-NOTE: There is some jitter in sample read timing, Sample data can be sampled before or after the maximum half nc sample time.
+###### Double Update
+
+Normal current sampling is done twice in one EPWM cycle.
+
+\image html SDFM_Double_update.PNG "Double Update"
+
+##### Over Current (OC)/Threshold Comparator 
+This section describes the over current implementation. It performs continuous sampling (free run) and when the sample value crosses the high or low threshold, the corresponding GPIO pin goes high.
+
+\image html SDFM_OC_Flow_Chart.png "Over current"
+\image html SDFM_GPIO_toggle.png "GPIOs behaviour for High and Low threshold"
+
+#### Sync with EPWM and trigger timing
+This section describes the EPWM to %SDFM synchronization and trigger timing for each EPWM cycle. At the end of the every EPWM cycle, the EPWM generates a sync out event that resets the IEP timer.
+The firmware initiates normal current sampling at the sample trigger point in each EPWM cycle. It takes four consecutive samples to bring the accumulator and differentiator registers to stable state. It takes the first sample at the trigger point and the next three samples, each after ONE_SAMPLE_TIME.
+Here ONE_SAMPLE_TIME is: OSR*(1/SD_CLK)  
+\image html SDFM_epwm_sync_and_trigger_timing.png "Sync with EPWM and trigger timing"
 
 #### AM64x/AM243x EVM Pin-Multiplexing
 <table>
@@ -141,16 +158,82 @@ NOTE: There is some jitter in sample read timing, Sample data can be sampled bef
 <tr>
     <td>PRG0_ECAP0_IN_APWM_OUT
     <td>PIN_PRG0_PRU1_GPO15
-	<td>
+	<td>ECAP output frequency 
 </tr>
 <tr>
     <td>GPIO_MTR_1_PWM_EN
     <td>GPMC0_AD15/Y20
-	<td>
+	<td>Enable EPWM0 on 3-axis board
 </tr>
 <tr>
     <td>SD8_CLK
     <td>PIN_PRG0_PRU0_GPO16
-	<td>%SDFM clock input pin
+	<td>Comman %SDFM clock input pin
 </tr>
 </table>
+
+\cond SOC_AM243X
+#### AM243x LP Pin-Multiplexing
+<table>
+<tr>
+    <th>Pin name
+    <th>Signal name
+	<th>Function
+</tr>
+<tr>
+    <td>GPIO_HIGH_TH_CH0
+    <td>PRG1_PRU0_GPO18
+	<td>(J7.64)Ch0 High threshold output
+</tr>
+<tr>
+    <td>GPIO_LOW_TH_CH0
+    <td>PRG0_PRU1_GPO11
+	<td>(J7.70)Ch0 low threshold output
+</tr>
+<tr>
+    <td>GPIO_HIGH_TH_CH1
+    <td>PRG1_PRU0_GPO17
+	<td>(J7.65)Ch1 High threshold output
+</tr>
+<tr>
+    <td>GPIO_LOW_TH_CH1
+    <td>PRG1_PRU0_GPO7
+	<td>(J7.66)Ch1 low threshold output
+</tr>
+<tr>
+    <td>GPIO_HIGH_TH_CH2
+    <td>PRG0_PRU1_GPO1
+	<td>(J7.67)Ch2 High threshold output
+</tr>
+<tr>
+    <td>GPIO_LOW_TH_CH2
+    <td>PRG0_PRU1_GPO2
+	<td>(J7.68)Ch2 Low threshold output
+</tr>
+<tr>
+    <td>SD0_D
+    <td>PIN_PRG0_PRU0_GPO1
+	<td>(J4.32)Channel0 data input
+</tr>
+<tr>
+    <td>SD1_D
+    <td>PIN_PRG0_PRU0_GPO3
+	<td>(J2.19)Channel1 data input
+</tr>
+<tr>
+    <td>SD2_D
+    <td>PIN_PRG0_PRU0_GPO5
+	<td>(J2.13)Channel2 data input
+</tr>
+<tr>
+    <td>PRG0_ECAP0_IN_APWM_OUT
+    <td>PIN_PRG0_PRU1_GPO15
+	<td>(J6.59)ECAP output frequency 
+</tr>
+<tr>
+    <td>SD8_CLK
+    <td>PIN_PRG0_PRU0_GPO16
+	<td>(J1.7)Comman %SDFM clock input pin
+</tr>
+</table>
+\endcond
