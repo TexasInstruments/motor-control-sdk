@@ -28,7 +28,6 @@ const example_file_list = [
     "source/position_sense/endat/firmware/single_channel/.project/project.js",
     "source/position_sense/endat/firmware/multi_channel_single_pru/.project/project.js",
     "source/position_sense/hdsl/firmware/freerun_225_mhz/.project/project.js",
-    "source/position_sense/hdsl/firmware/freerun_300_mhz/.project/project.js",
     "source/position_sense/hdsl/firmware/multichannel_ch0/.project/project.js",
     "source/position_sense/hdsl/firmware/multichannel_ch1/.project/project.js",
     "source/position_sense/hdsl/firmware/multichannel_ch0_sync_mode/.project/project.js",
