@@ -38,6 +38,8 @@ const defines = {
         "CHANNEL_0",
         "ICSS_G_V_1_0",
         "FREERUN_300_MHZ",
+        "HDSL_MULTICHANNEL",
+        "EXT_SYNC_ENABLE",
     ],
 };
 
@@ -49,8 +51,7 @@ const lflags = {
 };
 
 let postBuildSteps = [
-    "$(CG_TOOL_ROOT)/bin/hexpru.exe ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/hdsl_master_icssg_hexpru.cmd hdsl_master_freerun_300_mhz_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out; ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/tools/bin2header/bin2header.exe hdsl_master_freerun_300_mhz_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.b00 hdsl_master_icssg_300_mhz_bin.h Hiperface_DSL2_0 4;  move  hdsl_master_icssg_300_mhz_bin.h  ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/hdsl_master_icssg_300_mhz_bin.h ;"
-
+    "$(CG_TOOL_ROOT)/bin/hexpru.exe --diag_wrap=off --array --array:name_prefix=Hiperface_DSL_SYNC2_0_RTU -o hdsl_master_icssg_multichannel_ch0_sync_mode_bin.h hdsl_master_multichannel_ch0_sync_mode_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out;  move  hdsl_master_icssg_multichannel_ch0_sync_mode_bin.h  ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch0_sync_mode_bin.h"
 ];
 
 const readmeDoxygenPageTag = "HDSL_DESIGN";
@@ -65,7 +66,7 @@ function getComponentProperty() {
     property.dirPath = path.resolve(__dirname, "..");
     property.type = "executable";
     property.makefile = "pru";
-    property.name = "hdsl_master_freerun_300_mhz";
+    property.name = "hdsl_master_multichannel_ch0_sync_mode";
     property.description = "HDSL Master Free Run Mode Firmware for PRU-ICSS running at 300 MHz";
     property.isInternal = false;
     property.buildOptionCombos = buildOptionCombos;

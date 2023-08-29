@@ -69,6 +69,8 @@ help:
 	@echo  $(MAKE) -s -C source/position_sense/hdsl/firmware/freerun_300_mhz/am243x-evm/icssg0-pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/hdsl/firmware/multichannel_ch0/am243x-evm/icssg0-pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/hdsl/firmware/multichannel_ch1/am243x-evm/icssg0-pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C source/position_sense/hdsl/firmware/multichannel_ch0_sync_mode/am243x-evm/icssg0-pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C source/position_sense/hdsl/firmware/multichannel_ch1_sync_mode/am243x-evm/icssg0-pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/hdsl/firmware/sync_225_mhz/am243x-evm/icssg0-pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/tamagawa/firmware/multi_channel/am243x-evm/icssg0-pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/tamagawa/firmware/single_channel/am243x-evm/icssg0-pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
@@ -199,6 +201,8 @@ BUILD_COMBO_EXAMPLE_PRIVATE_ALL += hdsl_master_freerun_225_mhz_am243x-evm_icssg0
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += hdsl_master_freerun_300_mhz_am243x-evm_icssg0-pru1_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += hdsl_master_multichannel_ch0_am243x-evm_icssg0-pru1_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += hdsl_master_multichannel_ch1_am243x-evm_icssg0-pru1_fw_ti-pru-cgt
+BUILD_COMBO_EXAMPLE_PRIVATE_ALL += hdsl_master_multichannel_ch0_sync_mode_am243x-evm_icssg0-pru1_fw_ti-pru-cgt
+BUILD_COMBO_EXAMPLE_PRIVATE_ALL += hdsl_master_multichannel_ch1_sync_mode_am243x-evm_icssg0-pru1_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += hdsl_master_sync_225_mhz_am243x-evm_icssg0-pru1_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += tamagawa_multi_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += tamagawa_single_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt
@@ -278,6 +282,12 @@ examples-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_ALL)
  hdsl_master_multichannel_ch1_am243x-evm_icssg0-pru1_fw_ti-pru-cgt:
 	$(MAKE) -C source/position_sense/hdsl/firmware/multichannel_ch1/am243x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile all
 
+ hdsl_master_multichannel_ch0_sync_mode_am243x-evm_icssg0-pru1_fw_ti-pru-cgt:
+	$(MAKE) -C source/position_sense/hdsl/firmware/multichannel_ch0_sync_mode/am243x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile all
+
+ hdsl_master_multichannel_ch1_sync_mode_am243x-evm_icssg0-pru1_fw_ti-pru-cgt:
+	$(MAKE) -C source/position_sense/hdsl/firmware/multichannel_ch1_sync_mode/am243x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile all
+
  hdsl_master_sync_225_mhz_am243x-evm_icssg0-pru1_fw_ti-pru-cgt:
 	$(MAKE) -C source/position_sense/hdsl/firmware/sync_225_mhz/am243x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile all
 
@@ -320,6 +330,8 @@ BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += hdsl_master_freerun_225_mhz_am243x-evm_
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += hdsl_master_freerun_300_mhz_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += hdsl_master_multichannel_ch0_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += hdsl_master_multichannel_ch1_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += hdsl_master_multichannel_ch0_sync_mode_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += hdsl_master_multichannel_ch1_sync_mode_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += hdsl_master_sync_225_mhz_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += tamagawa_multi_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += tamagawa_single_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_clean
@@ -399,6 +411,12 @@ examples-private-clean: $(BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL)
  hdsl_master_multichannel_ch1_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/hdsl/firmware/multichannel_ch1/am243x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile clean
 
+ hdsl_master_multichannel_ch0_sync_mode_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/position_sense/hdsl/firmware/multichannel_ch0_sync_mode/am243x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile clean
+
+ hdsl_master_multichannel_ch1_sync_mode_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/position_sense/hdsl/firmware/multichannel_ch1_sync_mode/am243x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile clean
+
  hdsl_master_sync_225_mhz_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/hdsl/firmware/sync_225_mhz/am243x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile clean
 
@@ -441,6 +459,8 @@ BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += hdsl_master_freerun_225_mhz_am243x-evm_
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += hdsl_master_freerun_300_mhz_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += hdsl_master_multichannel_ch0_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += hdsl_master_multichannel_ch1_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_scrub
+BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += hdsl_master_multichannel_ch0_sync_mode_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_scrub
+BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += hdsl_master_multichannel_ch1_sync_mode_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += hdsl_master_sync_225_mhz_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += tamagawa_multi_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += tamagawa_single_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_scrub
@@ -519,6 +539,12 @@ examples-scrub-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL)
 
  hdsl_master_multichannel_ch1_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_scrub:
 	$(MAKE) -C source/position_sense/hdsl/firmware/multichannel_ch1/am243x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile scrub
+
+ hdsl_master_multichannel_ch0_sync_mode_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_scrub:
+	$(MAKE) -C source/position_sense/hdsl/firmware/multichannel_ch0_sync_mode/am243x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile scrub
+
+ hdsl_master_multichannel_ch1_sync_mode_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_scrub:
+	$(MAKE) -C source/position_sense/hdsl/firmware/multichannel_ch1_sync_mode/am243x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile scrub
 
  hdsl_master_sync_225_mhz_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_scrub:
 	$(MAKE) -C source/position_sense/hdsl/firmware/sync_225_mhz/am243x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile scrub
