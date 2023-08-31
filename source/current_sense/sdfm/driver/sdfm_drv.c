@@ -284,11 +284,9 @@ void SDFM_configComparatorGpioPins(sdfm_handle h_sdfm, uint8_t ch,uint32_t gpio_
 }
 
 /* Get current (or latest) sample for the specified channel */
-uint32_t SDFM_getFilterData(uint8_t ch)
+uint32_t SDFM_getFilterData(sdfm_handle h_sdfm, uint8_t ch)
 {
-    SDFM *p_sdfm = NULL;
-    p_sdfm->p_sdfm_interface = (SDFM_Interface *)(PRU_ICSSG_DRAM0_SLV_RAM + 0x0);
-    return p_sdfm->p_sdfm_interface->curr_out_samp_buf[ch];
+    return h_sdfm->p_sdfm_interface->curr_out_samp_buf[ch];
 }
 
 /*Configure normal current OSR for data filter*/
