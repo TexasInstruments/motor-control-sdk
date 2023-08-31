@@ -866,7 +866,7 @@ static int32_t endat_get_command_supplement(int32_t cmd,
            
             if(gEndat_is_load_share_mode)
             {   
-                if(gEndat_multi_ch_mask & 0)
+                if(gEndat_multi_ch_mask & (1<<0))
                 {
                     DebugP_log("\r| Enter IEP cycle count for Channel0: \n");
                     if(DebugP_scanf("%u\n", &cmd_supplement->cmp3) < 0)
@@ -876,7 +876,7 @@ static int32_t endat_get_command_supplement(int32_t cmd,
                     }
                 }
 
-                if(gEndat_multi_ch_mask & 1)
+                if(gEndat_multi_ch_mask & (1<<1))
                 {
                     DebugP_log("\r| Enter IEP cycle count for Channel1: \n");
                     if(DebugP_scanf("%u\n", &cmd_supplement->cmp5) < 0)
@@ -885,7 +885,7 @@ static int32_t endat_get_command_supplement(int32_t cmd,
                         return -EINVAL;
                     }
                 }
-                if(gEndat_multi_ch_mask & 2)
+                if(gEndat_multi_ch_mask & (1<<2))
                 {
                     DebugP_log("\r| Enter IEP cycle count for Channel2: \n");
                     if(DebugP_scanf("%u\n", &cmd_supplement->cmp6) < 0)
@@ -1317,9 +1317,9 @@ static void endat_process_periodic_command(int32_t cmd,
         DebugP_assert(endat_command_process(priv, pos_cmd, NULL) >= 0);
         if(gEndat_is_load_share_mode)
         {
-            priv->cmp3 = gEndat_multi_ch_mask & 0 ? cmd_supplement->cmp3 : 0;
-            priv->cmp5 = gEndat_multi_ch_mask & 1 ? cmd_supplement->cmp5 : 0;
-            priv->cmp6 = gEndat_multi_ch_mask & 2 ? cmd_supplement->cmp6 : 0;
+            priv->cmp3 = gEndat_multi_ch_mask & (1<<0) ? cmd_supplement->cmp3 : 0;
+            priv->cmp5 = gEndat_multi_ch_mask & (1<<1) ? cmd_supplement->cmp5 : 0;
+            priv->cmp6 = gEndat_multi_ch_mask & (2<<1) ? cmd_supplement->cmp6 : 0;
         }
         else
         {
