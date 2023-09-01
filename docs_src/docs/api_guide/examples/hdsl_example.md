@@ -132,7 +132,7 @@ Other than the basic EVM setup mentioned in \htmllink{@VAR_MCU_SDK_DOCS_PATH/EVM
 <tr>
     <td>J17</td>
     <td>Pin 1-2 Connected</td>
-    <td>SDFM Clock Feedback Select</td>
+    <td>%SDFM Clock Feedback Select</td>
 </tr>
 <tr>
     <td>J18/J19</td>
@@ -172,7 +172,7 @@ Other than the basic EVM setup mentioned in \htmllink{@VAR_MCU_SDK_DOCS_PATH/EVM
 <tr>
     <td>J27</td>
     <td>ON</td>
-    <td>3WIRE/SDFM MUX</td>
+    <td>3WIRE/%SDFM MUX</td>
 </tr>
 <tr>
     <td>J28</td>
