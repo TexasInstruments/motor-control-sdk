@@ -316,7 +316,7 @@ Module       | Supported CPUs | SysConfig Support | OS Support        | Key feat
 </tr>
 </table>
 
-## Upgrade and Compatibility Information
+## Upgrade and Compatibility Information {#UPGRADE_AND_COMPATIBILITY_INFORMATION_9_0_0}
 
 <!-- \attention When migrating from MCU+ SDK, see \ref MIGRATION_GUIDES for more details -->
 
