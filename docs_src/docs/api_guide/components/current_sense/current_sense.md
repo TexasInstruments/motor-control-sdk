@@ -1,8 +1,11 @@
-# SDFM {#SDFM}
+# Current Sense {#CURRENT_SENSE}
 
 [TOC]
 
-## Introduction
+Current sensing is handled by the Programmable Real-Time Unit Industrial Communication Subsystem (PRU-ICSS). The PRU-ICSS is a co-processor subsystem containing Programmable Real-Time (PRU) cores which implements the low level firmware. The PRU-ICSS frees up the main ARM cores in the device for other functions, such as control and data processing.
+
+## SDFM {#SDFM}
+
 ICSS SDFM is a sigma delta interface for phase current measurement in high performance motor and servo drives. During Sigma delta decimation filtering (SDDF) the PRU hardware provides hardware integrators that do the accumulation part of Sinc filtering, while the ICSS SDFM firmware does differentiation part.
 
 ## Features Supported
@@ -15,7 +18,6 @@ ICSS SDFM is a sigma delta interface for phase current measurement in high perfo
 ## Features Not Supported
 - Zero cross comparator
 - Below 32 OSR
-
 
 ## ICSS SDFM Design
 \subpage SDFM_DESIGN explains the design in detail.

@@ -54,6 +54,7 @@ source/usb/tinyusb/tinyusb-stack
 source/dsplib_c66x_3_4_0_0/
 docs/industrial_protocol_docs
 mcusdk_tagfile
+mcsdk_tagfile
 __pycache__/
 source/position_sense/hdsl/firmware/*.lst
 source/position_sense/hdsl/firmware/*.obj

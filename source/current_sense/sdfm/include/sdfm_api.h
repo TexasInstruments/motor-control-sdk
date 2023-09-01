@@ -281,8 +281,7 @@ uint32_t SDFM_getFilterData(sdfm_handle h_sdfm,uint8_t ch);
  *  \brief  Configure iep count for normal current sampling
  *
  *  \param[in]  h_sdfm          SDFM handle
- *  \param[in]  nc_osr             normal current osr value
- *  \param[in]  oc_osr             over current osr value
+ *  \param[in]  nc_osr          Normal current osr value
  *
  *
  */

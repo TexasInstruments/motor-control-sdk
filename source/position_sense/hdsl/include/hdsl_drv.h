@@ -229,7 +229,7 @@ typedef struct HDSL_Config_s {
     /**< PRUICSS_Handle for icssg0 or icssg1 instance*/
     uint32_t icssCore;
     /**< PRUICSS core identifier
-     * Check #PRUICSS_PRU0 and check other available macros
+     * Check PRUICSS_PRU0 and check other available macros
     */
     uint32_t *baseMemAddr; // icssgHandle->hwAttrs->baseAddr + PRUICSS_DATARAM(PRUICSS_PRUx)
     /**< Base Memory Address for HDSL channel configuration */
@@ -262,7 +262,7 @@ void hdsl_enable_load_share_mode(void *gPru_cfg ,uint32_t  PRU_SLICE);
  *  \brief      Open HDSL handle for the specified core
  *              (interrupt mapping should already be completed)
  *
- *  \param[in]  icssgHandle #PRUICSS_Handle for the ICSS instance
+ *  \param[in]  icssgHandle PRUICSS_Handle for the ICSS instance
  *  \param[in]  icssCore    Core to map in ICSSG instance
  *  \param[in]  PRU_mode    0 for dissabled load share mode, 1 for enabled load share mode
  *  \retval     HDSL_Handle
@@ -396,7 +396,7 @@ uint8_t HDSL_get_rssi(HDSL_Handle hdslHandle);
  *  \param[in]  data    Data
  *  \param[in]  timeout Timeout in microseconds
  *
- *  \return     #SystemP_SUCCESS in case of success, #SystemP_TIMEOUT in case of timeout
+ *  \return     SystemP_SUCCESS in case of success, SystemP_TIMEOUT in case of timeout
  *
  */
 int32_t HDSL_write_pc_short_msg(HDSL_Handle hdslHandle,uint8_t addr, uint8_t data, uint64_t timeout);
@@ -409,7 +409,7 @@ int32_t HDSL_write_pc_short_msg(HDSL_Handle hdslHandle,uint8_t addr, uint8_t dat
  *  \param[in]  data    Pointer to data buffer where read data will be stored
  *  \param[in]  timeout Timeout in microseconds
  *
- *  \return     #SystemP_SUCCESS in case of success, #SystemP_TIMEOUT in case of timeout
+ *  \return     SystemP_SUCCESS in case of success, SystemP_TIMEOUT in case of timeout
  *
  */
 int32_t HDSL_read_pc_short_msg(HDSL_Handle hdslHandle,uint8_t addr, uint8_t *data, uint64_t timeout);
