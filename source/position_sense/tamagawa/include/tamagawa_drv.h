@@ -35,7 +35,7 @@
 
 /**
  *  \defgroup TAMAGAWA_API_MODULE APIs for Tamagawa Encoder
- *  \ingroup MOTOR_CONTROL_API
+ *  \ingroup POSITION_SENSE_API
  *
  * Here is the list of APIs used for Tamagawa encoder communication protocol
  *

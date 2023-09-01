@@ -43,14 +43,14 @@ extern "C" {
 #include <current_sense/sdfm/include/sdfm_drv.h>
 
  /**
- * \defgroup MOTOR_CONTROL_API APIs for Motor Control Encoders
+ * \defgroup CURRENT_SENSE_API APIs for Current Sense
  *
- * This module contains APIs for device drivers for various motor control encoders supported in this SDK.
+ * This module contains APIs for device drivers for current sense supported in this SDK.
  */
 
 /**
  *  \defgroup SDFM_API_MODULE APIs for SDFM
- *  \ingroup MOTOR_CONTROL_API
+ *  \ingroup CURRENT_SENSE_API
  *
  * Here is the list of APIs used for Sigma Delta interface
  *

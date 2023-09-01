@@ -35,7 +35,7 @@
 
 /**
  *  \defgroup HDSL_API_MODULE APIs for HDSL Encoder
- *  \ingroup MOTOR_CONTROL_API
+ *  \ingroup POSITION_SENSE_API
  *
  * Here is the list of APIs used for HDSL Encoder communication protocol
  *
