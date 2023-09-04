@@ -268,14 +268,14 @@ void SDFM_configComparatorGpioPins(sdfm_handle h_sdfm, uint8_t ch,uint32_t gpio_
 /**
  *
  *  \brief  get sample data from DMEM
- *
+ *  \param[in]  h_sdfm          SDFM handle
  *  \param[in]  ch           current ch number
  *
  *
  *  \retval current sample value
  *
  */
-uint32_t SDFM_getFilterData(uint8_t ch);
+uint32_t SDFM_getFilterData(sdfm_handle h_sdfm,uint8_t ch);
 /**
  *
  *  \brief  Configure iep count for normal current sampling

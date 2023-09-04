@@ -384,11 +384,11 @@ void pruSdfmIrqHandler(void *args)
     PRUICSS_clearEvent(gPruIcssHandle, PRU_TRIGGER_HOST_SDFM_EVT);
 
    /* SDFM Output sample for Channel 0 */
-    sdfm_ch0_samples[sdfm_ch0_idx++] = SDFM_getFilterData(0);
+    sdfm_ch0_samples[sdfm_ch0_idx++] = SDFM_getFilterData(gHPruSdfm, 0);
     /* SDFM Output sample for Channel 1 */
-    sdfm_ch1_samples[sdfm_ch1_idx++] = SDFM_getFilterData(1);
+    sdfm_ch1_samples[sdfm_ch1_idx++] = SDFM_getFilterData(gHPruSdfm, 1);
     /* SDFM Output sample for Channel 2 */
-    sdfm_ch2_samples[sdfm_ch2_idx++] = SDFM_getFilterData(2);
+    sdfm_ch2_samples[sdfm_ch2_idx++] = SDFM_getFilterData(gHPruSdfm, 2);
 
 
      if(sdfm_ch0_idx >= MAX_SAMPLES)

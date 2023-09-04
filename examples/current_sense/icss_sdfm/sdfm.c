@@ -243,7 +243,7 @@ int32_t init_sdfm_pru_fw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm
     /* Enable (global) SDFM */
     SDFM_enable(hSdfm);
 
-    pHSdfm = &hSdfm;
+    *pHSdfm = hSdfm;
 
  return SDFM_ERR_NERR;
 }
