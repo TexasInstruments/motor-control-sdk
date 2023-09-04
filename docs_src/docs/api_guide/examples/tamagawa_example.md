@@ -287,13 +287,13 @@ Shown below is a sample output when the application is run:
     </tr>
 	<tr>
         <td>Data ID 8</td>
-        <td>Reset- absolute</td>
-        <td>This command used to reset absolute position data(ABS) </td>
-        <td>CRC success with ABS, SF, CF and CRC values printed in the terminal.</td>
+        <td>Reset - absolute</td>
+        <td>This command is used to reset absolute position data(ABS). In order to reset the ABS value, send this command 10 times and send Data ID 0. </td>
+        <td>CRC success with ABS value set to 0 along with SF, CF and CRC values printed in the terminal.</td>
     </tr>    <tr>
         <td>Data ID C</td>
-        <td>Reset- multiturn</td>
-        <td>This command used to reset multi-turn data(ABM) </td>
-        <td>CRC success with ABS, SF, CF and CRC values printed in the terminal.</td>
+        <td>Reset - multiturn</td>
+        <td>This command is used to reset multi-turn data(ABM). In order to reset the ABM value, send this command 10 times and send Data ID 1. </td>
+        <td>CRC success with ABM value set to 0 along with SF, CF and CRC values printed in the terminal.</td>
     </tr>
 </table>
