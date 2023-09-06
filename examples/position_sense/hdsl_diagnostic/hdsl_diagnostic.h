@@ -63,11 +63,10 @@ void TC_write_pc_short_msg();
 
 //void _copy_reg_into_ddr();
 void direct_read_rid0_length8();
-void direct_read_rid0_length8_offset6();
 void direct_read_rid81_length8();
 void direct_read_rid81_length2();
 void indirect_write_rid0_length8();
-void  indirect_write_rid0_length8_offset0();
+void indirect_write_rid0_length8_offset0();
 
 /**
  *  @name       HDSL_sync_calculation
