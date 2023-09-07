@@ -33,14 +33,14 @@
 #ifndef TAMAGAWA_UART_DRV_H_
 #define TAMAGAWA_UART_DRV_H_
  /**
- * \defgroup MOTOR_CONTROL_API APIs for Motor Control Encoders
+ * \defgroup POSITION_SENSE_API APIs for Position Sense
  *
- * This module contains APIs for device drivers for various motor control encoders supported in this SDK.
+ * This module contains APIs for device drivers for position sense encoders supported in this SDK.
  */
 
 /**
  *  \defgroup TAMAGAWA_UART_API_MODULE APIs for Tamagawa Encoder Over UART
- *  \ingroup MOTOR_CONTROL_API
+ *  \ingroup POSITION_SENSE_API
  *
  * Here is the list of APIs used for Tamagawa encoder communication protocol
  *

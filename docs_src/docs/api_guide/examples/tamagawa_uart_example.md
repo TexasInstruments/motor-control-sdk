@@ -82,10 +82,10 @@ The tamagawa over uart example runs on R5 and communicates with tamagawa encoder
 
 ## Build, load and run
 
-- **When using CCS projects to build**, import the CCS project and build it using the CCS project menu (see \ref CCS_PROJECTS_PAGE).
+- **When using CCS projects to build**, import the CCS project and build it using the CCS project menu (see \htmllink{@VAR_MCU_SDK_DOCS_PATH/CCS_PROJECTS_PAGE.html, Using SDK with CCS Projects}).
 - **When using makefiles to build**, note the required combination and build using
-  make command (see \ref MAKEFILE_BUILD_PAGE)
-- Launch a CCS debug session and run the executable, see \ref CCS_LAUNCH_PAGE
+  make command (see \htmllink{@VAR_MCU_SDK_DOCS_PATH/MAKEFILE_BUILD_PAGE.html, Using SDK with Makefiles})
+- Launch a CCS debug session and run the executable, see \htmllink{@VAR_MCU_SDK_DOCS_PATH/CCS_LAUNCH_PAGE.html, CCS Launch\, Load and Run}
 - Refer to UART terminal for user interface menu options.
 
 ### Sample Output

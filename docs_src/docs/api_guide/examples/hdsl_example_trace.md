@@ -57,7 +57,7 @@ Firmware is split to three sections, initialization, datalink and transport. At 
 
 ## Hardware Prerequisites
 
-Other than the basic EVM setup mentioned in \ref EVM_SETUP_PAGE, below additional HW is required to run this demo
+Other than the basic EVM setup mentioned in \htmllink{@VAR_MCU_SDK_DOCS_PATH/EVM_SETUP_PAGE.html, EVM Setup}, below additional HW is required to run this demo
 - HDSL encoder
 - Below are two options to connect encoder to AM64x/AM243x EVM.
     - **Option 1**
@@ -84,10 +84,10 @@ Other than the basic EVM setup mentioned in \ref EVM_SETUP_PAGE, below additiona
 
 ## Build, load and run
 
-- **When using CCS projects to build**, import the CCS project and build it using the CCS project menu (see \ref CCS_PROJECTS_PAGE).
+- **When using CCS projects to build**, import the CCS project and build it using the CCS project menu (see \htmllink{@VAR_MCU_SDK_DOCS_PATH/CCS_PROJECTS_PAGE.html, Using SDK with CCS Projects}).
 - **When using makefiles to build**, note the required combination and build using
-  make command (see \ref MAKEFILE_BUILD_PAGE)
-- Launch a CCS debug session and run the executable, see \ref CCS_LAUNCH_PAGE
+  make command (see \htmllink{@VAR_MCU_SDK_DOCS_PATH/MAKEFILE_BUILD_PAGE.html, Using SDK with Makefiles})
+- Launch a CCS debug session and run the executable, see \htmllink{@VAR_MCU_SDK_DOCS_PATH/CCS_LAUNCH_PAGE.html, CCS Launch\, Load and Run}
 - Refer to UART terminal for user interface menu options.
 
 \imageStyle{hdsl_ddr_trace.png,width:60%}

@@ -1,5 +1,0 @@
-C:/ti/motor_control_sdk/docs_src/docs/api_guide/examples/tamagawa_uart_example.md:89: warning: unable to resolve reference to `CCS_PROJECTS_PAGE' for \ref command
-C:/ti/motor_control_sdk/docs_src/docs/api_guide/examples/tamagawa_uart_example.md:91: warning: unable to resolve reference to `MAKEFILE_BUILD_PAGE' for \ref command
-C:/ti/motor_control_sdk/docs_src/docs/api_guide/examples/tamagawa_uart_example.md:92: warning: unable to resolve reference to `CCS_LAUNCH_PAGE' for \ref command
-C:/ti/motor_control_sdk/docs_src/docs/api_guide/main_page/main_page.md:13: warning: unable to resolve reference to `GETTING_STARTED' for \ref command
-C:/ti/motor_control_sdk/docs_src/docs/api_guide/main_page/main_page.md:34: warning: unable to resolve reference to `EXAMPLES_MOTORCONTROL' for \ref command

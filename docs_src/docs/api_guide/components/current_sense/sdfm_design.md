@@ -4,8 +4,8 @@
 
 ## Introduction
 This design implements Sigma delta interface on TI Sitara™ AM64x/AM243x.
-ICSS SDFM is a Sigma delta filter for phase current measurement.
-Only two lines are required for each channel, differential pair each for SDFM clock & SDFM data.
+ICSS %SDFM is a Sigma delta filter for phase current measurement.
+Only two lines are required for each channel, differential pair each for %SDFM clock & %SDFM data.
 Clock is provided by external device or internal device and data comes from sigma delta modulator in form of digital bit stream.
 
 
@@ -16,8 +16,8 @@ Clock is provided by external device or internal device and data comes from sigm
 ## Implementation
 The Sigma delta filter is implemented on TI Sitara™ Devices.
 Design is split into three parts – Sigma delta hardware support in PRU, firmware running in PRU and driver running in ARM.
-Application is supposed to use the ICSS SDFM driver APIs to leverage SDFM functionality.
-SDK example uses the SDFM hardware capability in Slice 1 of PRU-ICSSG0.
+Application is supposed to use the ICSS %SDFM driver APIs to leverage %SDFM functionality.
+SDK example uses the %SDFM hardware capability in Slice 1 of PRU-ICSSG0.
 
 
 ###  Specifications
@@ -67,8 +67,8 @@ Following section describes the firmware implementation of Sigma delta decimatio
 \image html SDFM_FIRMWARE_FLOWCHART.png "Overall Block Diagram"
 
 Firmware first clear PRU registers & Task manager.
-Then it waits for the R5 to set SDFM enable bit. After the enable set then it acknowledge to R5.
-After above these initial steps firmware does initialization of PRU-ICSSG's SDFM hardware interface, task manager & IEP0 then it comes in infinite waiting loop.
+Then it waits for the R5 to set %SDFM enable bit. After the enable set then it acknowledge to R5.
+After above these initial steps firmware does initialization of PRU-ICSSG's %SDFM hardware interface, task manager & IEP0 then it comes in infinite waiting loop.
 
 When the COMP4 event hits the task manager assign OC loop to PC and Firmware starts execution of OC loop
 In OC loop firmware read sample data from accumulator and it checks for NC sample if the current OC sample belongs to NC sample then it does sampling for NC.
@@ -151,6 +151,6 @@ NOTE: There is some jitter in sample read timing, Sample data can be sampled bef
 <tr>
     <td>SD8_CLK
     <td>PIN_PRG0_PRU0_GPO16
-	<td>SDFM clock input pin
+	<td>%SDFM clock input pin
 </tr>
 </table>
