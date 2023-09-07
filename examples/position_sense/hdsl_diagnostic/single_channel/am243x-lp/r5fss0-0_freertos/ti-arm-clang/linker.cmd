@@ -106,7 +106,7 @@ SECTIONS
     /* General purpose non cacheable memory, used in some examples */
     .bss.nocache (NOLOAD) : {} > NON_CACHE_MEM
 
-	.hdslInterface_ddr_mem (NOLOAD) > DDR
+	.hdslInterface_mem (NOLOAD) > DDR
 }
 
 /*

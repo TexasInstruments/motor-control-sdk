@@ -238,38 +238,6 @@
         "resourceSubClass": [
             "example.general"
         ],
-        "description": "A Hdsl Diagnostic Ddr Example. CPU is R5FSS0-0 running FREERTOS.",
-        "name": "hdsl_diagnostic_ddr",
-        "location": "../../examples/position_sense/hdsl_diagnostic_with_traces/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
-        "devtools": [
-            "AM243x_GP_EVM"
-        ],
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
-        "subCategories": [
-            "position_sense",
-            "hdsl_diagnostic_with_traces",
-            "r5fss0-0_freertos"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ]
-    },
-    {
-        "resourceType": "project.ccs",
-        "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
-        ],
         "description": "A Tamagawa Diagnostic Multi Channel Example. CPU is R5FSS0-0 running FREERTOS.",
         "name": "tamagawa_diagnostic_multi_channel",
         "location": "../../examples/position_sense/tamagawa_diagnostic/multi_channel/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",

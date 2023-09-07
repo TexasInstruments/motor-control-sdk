@@ -12,7 +12,6 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += endat_diagnostic_multi_channel_load
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += endat_diagnostic_multi_channel_single_pru_am64x-evm_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += hdsl_diagnostic_multi_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += hdsl_diagnostic_single_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang_build
-BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += hdsl_diagnostic_ddr_am64x-evm_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += tamagawa_diagnostic_multi_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += tamagawa_diagnostic_single_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += icss_sdfm_am64x-evm_r5fss0-0_freertos_ti-arm-clang_build
@@ -54,9 +53,6 @@ all-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL)
 
  hdsl_diagnostic_single_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang_build:
 	$(MAKE) -C examples/position_sense/hdsl_diagnostic/single_channel/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
-
- hdsl_diagnostic_ddr_am64x-evm_r5fss0-0_freertos_ti-arm-clang_build:
-	$(MAKE) -C examples/position_sense/hdsl_diagnostic_with_traces/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
 
  tamagawa_diagnostic_multi_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang_build:
 	$(MAKE) -C examples/position_sense/tamagawa_diagnostic/multi_channel/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
@@ -118,7 +114,6 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += endat_diagnostic_multi_channel_load
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += endat_diagnostic_multi_channel_single_pru_am64x-evm_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += hdsl_diagnostic_multi_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += hdsl_diagnostic_single_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang_clean
-BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += hdsl_diagnostic_ddr_am64x-evm_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += tamagawa_diagnostic_multi_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += tamagawa_diagnostic_single_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += icss_sdfm_am64x-evm_r5fss0-0_freertos_ti-arm-clang_clean
@@ -160,9 +155,6 @@ clean-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL)
 
  hdsl_diagnostic_single_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang_clean:
 	$(MAKE) -C examples/position_sense/hdsl_diagnostic/single_channel/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
-
- hdsl_diagnostic_ddr_am64x-evm_r5fss0-0_freertos_ti-arm-clang_clean:
-	$(MAKE) -C examples/position_sense/hdsl_diagnostic_with_traces/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
 
  tamagawa_diagnostic_multi_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang_clean:
 	$(MAKE) -C examples/position_sense/tamagawa_diagnostic/multi_channel/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
@@ -224,7 +216,6 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += endat_diagnostic_multi_channel_loa
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += endat_diagnostic_multi_channel_single_pru_am64x-evm_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += hdsl_diagnostic_multi_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += hdsl_diagnostic_single_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang_export
-BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += hdsl_diagnostic_ddr_am64x-evm_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += tamagawa_diagnostic_multi_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += tamagawa_diagnostic_single_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += icss_sdfm_am64x-evm_r5fss0-0_freertos_ti-arm-clang_export
@@ -266,9 +257,6 @@ export-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL)
 
  hdsl_diagnostic_single_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang_export:
 	$(MAKE) -C examples/position_sense/hdsl_diagnostic/single_channel/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
-
- hdsl_diagnostic_ddr_am64x-evm_r5fss0-0_freertos_ti-arm-clang_export:
-	$(MAKE) -C examples/position_sense/hdsl_diagnostic_with_traces/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
 
  tamagawa_diagnostic_multi_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang_export:
 	$(MAKE) -C examples/position_sense/tamagawa_diagnostic/multi_channel/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
@@ -355,7 +343,6 @@ help:
 	@echo  $(MAKE) -s -C examples/position_sense/endat_diagnostic/multi_channel_single_pru/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/position_sense/hdsl_diagnostic/multi_channel/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/position_sense/hdsl_diagnostic/single_channel/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
-	@echo  $(MAKE) -s -C examples/position_sense/hdsl_diagnostic_with_traces/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/position_sense/tamagawa_diagnostic/multi_channel/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/position_sense/tamagawa_diagnostic/single_channel/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/current_sense/icss_sdfm/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
