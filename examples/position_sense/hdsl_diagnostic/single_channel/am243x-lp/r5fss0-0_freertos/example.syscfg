@@ -45,7 +45,6 @@ pruicss1.AdditionalICSSSettings[0].$name = "CONFIG_PRU_ICSS_IO1";
 udma1.$name                                     = "CONFIG_UDMA0";
 udma1.udmaBlkCopyChannel.create(1);
 udma1.udmaBlkCopyChannel[0].$name               = "CONFIG_UDMA_BLKCOPY_CH0";
-udma1.udmaBlkCopyChannel[0].intrEnable          = true;
 udma1.udmaBlkCopyChannel[0].transferCallbackFxn = "App_udmaEventCb";
 
 debug_log.enableUartLog        = true;

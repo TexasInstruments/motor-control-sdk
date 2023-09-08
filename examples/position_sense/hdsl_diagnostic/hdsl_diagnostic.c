@@ -161,8 +161,6 @@ HDSL_Interface gHdslInterfaceTrace[NUM_RESOURCES] __attribute__((aligned(128), s
 
 HwiP_Object gPRUHwiObject;
 
-/* Semaphore to indicate transfer completion */
-static SemaphoreP_Object gUdmaTestDoneSem;
 /* UDMA TRPD Memory */
 uint8_t gUdmaTestTrpdMem[UDMA_TEST_TRPD_SIZE] __attribute__((aligned(UDMA_CACHELINE_ALIGNMENT)));
 #endif
@@ -185,44 +183,57 @@ static void App_udmaTrpdInit(Udma_ChHandle chHandle,
 {
     CSL_UdmapTR15  *pTr;
     uint32_t        cqRingNum = Udma_chGetCqRingNum(chHandle);
+    static          uint32_t initDone = 0;
 
-    /* Make TRPD with TR15 TR type */
-    UdmaUtils_makeTrpdTr15(trpdMem, 1U, cqRingNum);
+    if(initDone == 0)
+    {
+        /* Make TRPD with TR15 TR type */
+        UdmaUtils_makeTrpdTr15(trpdMem, 1U, cqRingNum);
 
-    /* Setup TR */
-    pTr = UdmaUtils_getTrpdTr15Pointer(trpdMem, 0U);
-    pTr->flags    = CSL_FMK(UDMAP_TR_FLAGS_TYPE, CSL_UDMAP_TR_FLAGS_TYPE_4D_BLOCK_MOVE_REPACKING_INDIRECTION);
-    pTr->flags   |= CSL_FMK(UDMAP_TR_FLAGS_STATIC, 0U);
-    pTr->flags   |= CSL_FMK(UDMAP_TR_FLAGS_EOL, CSL_UDMAP_TR_FLAGS_EOL_MATCH_SOL_EOL);
-    pTr->flags   |= CSL_FMK(UDMAP_TR_FLAGS_EVENT_SIZE, CSL_UDMAP_TR_FLAGS_EVENT_SIZE_COMPLETION);
-    pTr->flags   |= CSL_FMK(UDMAP_TR_FLAGS_TRIGGER0, CSL_UDMAP_TR_FLAGS_TRIGGER_NONE);
-    pTr->flags   |= CSL_FMK(UDMAP_TR_FLAGS_TRIGGER0_TYPE, CSL_UDMAP_TR_FLAGS_TRIGGER_TYPE_ALL);
-    pTr->flags   |= CSL_FMK(UDMAP_TR_FLAGS_TRIGGER1, CSL_UDMAP_TR_FLAGS_TRIGGER_NONE);
-    pTr->flags   |= CSL_FMK(UDMAP_TR_FLAGS_TRIGGER1_TYPE, CSL_UDMAP_TR_FLAGS_TRIGGER_TYPE_ALL);
-    pTr->flags   |= CSL_FMK(UDMAP_TR_FLAGS_CMD_ID, 0x25U);  /* This will come back in TR response */
-    pTr->flags   |= CSL_FMK(UDMAP_TR_FLAGS_SA_INDIRECT, 0U);
-    pTr->flags   |= CSL_FMK(UDMAP_TR_FLAGS_DA_INDIRECT, 0U);
-    pTr->flags   |= CSL_FMK(UDMAP_TR_FLAGS_EOP, 1U);
-    pTr->icnt0    = length;
-    pTr->icnt1    = 1U;
-    pTr->icnt2    = 1U;
-    pTr->icnt3    = 1U;
-    pTr->dim1     = pTr->icnt0;
-    pTr->dim2     = (pTr->icnt0 * pTr->icnt1);
-    pTr->dim3     = (pTr->icnt0 * pTr->icnt1 * pTr->icnt2);
-    pTr->addr     = (uint64_t) Udma_defaultVirtToPhyFxn(srcBuf, 0U, NULL);
-    pTr->fmtflags = 0x00000000U;    /* Linear addressing, 1 byte per elem */
-    pTr->dicnt0   = length;
-    pTr->dicnt1   = 1U;
-    pTr->dicnt2   = 1U;
-    pTr->dicnt3   = 1U;
-    pTr->ddim1    = pTr->dicnt0;
-    pTr->ddim2    = (pTr->dicnt0 * pTr->dicnt1);
-    pTr->ddim3    = (pTr->dicnt0 * pTr->dicnt1 * pTr->dicnt2);
-    pTr->daddr    = (uint64_t) Udma_defaultVirtToPhyFxn(destBuf, 0U, NULL);
+        /* Setup TR */
+        pTr = UdmaUtils_getTrpdTr15Pointer(trpdMem, 0U);
+        pTr->flags    = CSL_FMK(UDMAP_TR_FLAGS_TYPE, CSL_UDMAP_TR_FLAGS_TYPE_4D_BLOCK_MOVE_REPACKING_INDIRECTION);
+        pTr->flags   |= CSL_FMK(UDMAP_TR_FLAGS_STATIC, 0U);
+        pTr->flags   |= CSL_FMK(UDMAP_TR_FLAGS_EOL, CSL_UDMAP_TR_FLAGS_EOL_MATCH_SOL_EOL);
+        pTr->flags   |= CSL_FMK(UDMAP_TR_FLAGS_EVENT_SIZE, CSL_UDMAP_TR_FLAGS_EVENT_SIZE_COMPLETION);
+        pTr->flags   |= CSL_FMK(UDMAP_TR_FLAGS_TRIGGER0, CSL_UDMAP_TR_FLAGS_TRIGGER_NONE);
+        pTr->flags   |= CSL_FMK(UDMAP_TR_FLAGS_TRIGGER0_TYPE, CSL_UDMAP_TR_FLAGS_TRIGGER_TYPE_ALL);
+        pTr->flags   |= CSL_FMK(UDMAP_TR_FLAGS_TRIGGER1, CSL_UDMAP_TR_FLAGS_TRIGGER_NONE);
+        pTr->flags   |= CSL_FMK(UDMAP_TR_FLAGS_TRIGGER1_TYPE, CSL_UDMAP_TR_FLAGS_TRIGGER_TYPE_ALL);
+        pTr->flags   |= CSL_FMK(UDMAP_TR_FLAGS_CMD_ID, 0x25U);  /* This will come back in TR response */
+        pTr->flags   |= CSL_FMK(UDMAP_TR_FLAGS_SA_INDIRECT, 0U);
+        pTr->flags   |= CSL_FMK(UDMAP_TR_FLAGS_DA_INDIRECT, 0U);
+        pTr->flags   |= CSL_FMK(UDMAP_TR_FLAGS_EOP, 1U);
+        pTr->icnt0    = length;
+        pTr->icnt1    = 1U;
+        pTr->icnt2    = 1U;
+        pTr->icnt3    = 1U;
+        pTr->dim1     = pTr->icnt0;
+        pTr->dim2     = (pTr->icnt0 * pTr->icnt1);
+        pTr->dim3     = (pTr->icnt0 * pTr->icnt1 * pTr->icnt2);
+        pTr->addr     = (uint64_t) Udma_defaultVirtToPhyFxn(srcBuf, 0U, NULL);
+        pTr->fmtflags = 0x00000000U;    /* Linear addressing, 1 byte per elem */
+        pTr->dicnt0   = length;
+        pTr->dicnt1   = 1U;
+        pTr->dicnt2   = 1U;
+        pTr->dicnt3   = 1U;
+        pTr->ddim1    = pTr->dicnt0;
+        pTr->ddim2    = (pTr->dicnt0 * pTr->dicnt1);
+        pTr->ddim3    = (pTr->dicnt0 * pTr->dicnt1 * pTr->dicnt2);
+        pTr->daddr    = (uint64_t) Udma_defaultVirtToPhyFxn(destBuf, 0U, NULL);
+        /* Perform cache writeback */
+        CacheP_wb(trpdMem, UDMA_TEST_TRPD_SIZE, CacheP_TYPE_ALLD);
 
-    /* Perform cache writeback */
-    CacheP_wb(trpdMem, UDMA_TEST_TRPD_SIZE, CacheP_TYPE_ALLD);
+        initDone = 1;
+    }
+    else
+    {
+        pTr = UdmaUtils_getTrpdTr15Pointer(trpdMem, 0U);
+        pTr->daddr    = (uint64_t) Udma_defaultVirtToPhyFxn(destBuf, 0U, NULL);
+        /* Perform cache writeback */
+        CacheP_wb(trpdMem, UDMA_TEST_TRPD_SIZE, CacheP_TYPE_ALLD);
+    }
+
 
     return;
 }
@@ -243,28 +254,21 @@ void udma_copy(uint8_t *srcBuf, uint8_t *destBuf, uint32_t length)
     DebugP_assert(UDMA_SOK == retVal);
 
     /* Wait for return descriptor in completion ring - this marks transfer completion */
-    SemaphoreP_pend(&gUdmaTestDoneSem, SystemP_WAIT_FOREVER);
-
-    retVal = Udma_ringDequeueRaw(Udma_chGetCqRingHandle(chHandle), &pDesc);
-    DebugP_assert(UDMA_SOK == retVal);
-
-    /* Check TR response status */
-    CacheP_inv(trpdMem, UDMA_TEST_TRPD_SIZE, CacheP_TYPE_ALLD);
-
-    trRespStatus = UdmaUtils_getTrpdTr15Response(trpdMem, 1U, 0U);
-    //DebugP_log("\r\n.trRespStatus = %u ", trRespStatus);
-    DebugP_assert(CSL_UDMAP_TR_RESPONSE_STATUS_COMPLETE == trRespStatus);
+    while(1)
+    {
+        retVal = Udma_ringDequeueRaw(Udma_chGetCqRingHandle(chHandle), &pDesc);
+        if(UDMA_SOK == retVal)
+        {
+            /* Check TR response status */
+            CacheP_inv(trpdMem, UDMA_TEST_TRPD_SIZE, CacheP_TYPE_ALLD);
+            trRespStatus = UdmaUtils_getTrpdTr15Response(trpdMem, 1U, 0U);
+            DebugP_assert(CSL_UDMAP_TR_RESPONSE_STATUS_COMPLETE == trRespStatus);
+            break;
+        }
+    }
 
     /* Validate data in destination memory */
     CacheP_inv(destBuf, length, CacheP_TYPE_ALLD);
-}
-
-void App_udmaEventCb(Udma_EventHandle eventHandle, uint32_t eventType, void *appData)
-{
-    if(UDMA_EVENT_TYPE_DMA_COMPLETION == eventType)
-    {
-        SemaphoreP_post(&gUdmaTestDoneSem);
-    }
 }
 
 static void HDSL_IsrFxn()
@@ -1245,7 +1249,7 @@ void hdsl_diagnostic_main(void *arg)
     uint8_t     ureg;
 
 #ifndef HDSL_MULTI_CHANNEL
-    int32_t     retVal = UDMA_SOK, status;
+    int32_t     retVal = UDMA_SOK;
 #endif
 
     /* Open drivers to open the UART driver for console */
@@ -1255,8 +1259,6 @@ void hdsl_diagnostic_main(void *arg)
 #ifndef HDSL_MULTI_CHANNEL
     /* UDMA initialization */
     chHandle = gConfigUdma0BlkCopyChHandle[0];  /* Has to be done after driver open */
-    status = SemaphoreP_constructBinary(&gUdmaTestDoneSem, 0);
-    DebugP_assert(SystemP_SUCCESS == status);
     /* Channel enable */
     retVal = Udma_chEnable(chHandle);
     DebugP_assert(UDMA_SOK == retVal);
