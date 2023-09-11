@@ -66,15 +66,15 @@
 #include  <position_sense/endat/firmware/endat_master_multi_bin.h>
 #endif
 
-#if (CONFIG_ENDAT0_CHANNEL0) && (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
+#if (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
 #include <position_sense/endat/firmware/endat_master_multi_RTU_bin.h>
 #endif
 
-#if (CONFIG_ENDAT0_CHANNEL1) && (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
+#if (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
 #include <position_sense/endat/firmware/endat_master_multi_PRU_bin.h>
 #endif
 
-#if (CONFIG_ENDAT0_CHANNEL2) && (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
+#if (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
 #include <position_sense/endat/firmware/endat_master_multi_TXPRU_bin.h>
 #endif
 
@@ -109,11 +109,11 @@ TaskP_Object gTaskObject;
 #define VALID_PERIODIC_CMD(x) ((x) == 200)
 
 #define VALID_HOST_CMD(x) ((x == 100) || ((x) == 101) || ((x) == 102) || ((x) == 103) || ((x) == 104) || ((x) == 105) || \
-                           ((x) == 106) || ((x) == 107) || ((x) == 108) || ((x) == 109) || ((x) == 110))
+                           ((x) == 106) || ((x) == 107) || ((x) == 108) || ((x) == 109) || ((x) == 110) || ((x) == 111))
 
 #define HAVE_COMMAND_SUPPLEMENT(x) (((x) == 2) || ((x) == 3) || ((x) == 4) || ((x) == 7) || \
                                     ((x) == 9) || ((x) == 10) || ((x) == 11) || ((x) == 13) || ((x) == 14) || \
-                                    ((x) == 100) || ((x) == 101) || ((x)== 103) || ((x) == 105) || ((x) == 106) || ((x) == 107) || ((x) == 108) || ((x) == 109)||((x) == 200))
+                                    ((x) == 100) || ((x) == 101) || ((x)== 103) || ((x) == 105) || ((x) == 106) || ((x) == 107) || ((x) == 108) || ((x) == 109)  || ((x) == 200))
 
 #define ENDAT_INPUT_CLOCK_UART_FREQUENCY 192000000
 /* use uart clock only to start with */
@@ -206,7 +206,7 @@ uint32_t endat_pruss_load_run_fw(struct endat_priv *priv)
 
 #if CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU /*enable loadshare mode*/
 
-#if(CONFIG_ENDAT0_CHANNEL0)
+
 
             status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_RTUPRUx);
             DebugP_assert(SystemP_SUCCESS == status);
@@ -219,9 +219,6 @@ uint32_t endat_pruss_load_run_fw(struct endat_priv *priv)
             status = PRUICSS_enableCore(gPruIcssXHandle, PRUICSS_RTUPRUx);
             DebugP_assert(SystemP_SUCCESS == status);
 
-#endif
-
-#if(CONFIG_ENDAT0_CHANNEL1)
 
             status=PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_PRUx );
             DebugP_assert(SystemP_SUCCESS == status);
@@ -234,9 +231,6 @@ uint32_t endat_pruss_load_run_fw(struct endat_priv *priv)
             status = PRUICSS_enableCore(gPruIcssXHandle, PRUICSS_PRUx);
             DebugP_assert(SystemP_SUCCESS == status);
 
-#endif
-
-#if(CONFIG_ENDAT0_CHANNEL2)
 
            status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_TXPRUx);
              DebugP_assert(SystemP_SUCCESS == status);
@@ -249,7 +243,7 @@ uint32_t endat_pruss_load_run_fw(struct endat_priv *priv)
             status = PRUICSS_enableCore(gPruIcssXHandle, PRUICSS_TXPRUx);
             DebugP_assert(SystemP_SUCCESS == status);
 
-#endif
+
         status=endat_wait_initialization(priv, WAIT_5_SECOND, gEndat_multi_ch_mask);
 
 
@@ -358,8 +352,9 @@ static void endat_print_menu(void)
         DebugP_log("\r|109: Configure wire delay                                                     |\n");
     }
 
-    DebugP_log("\r|110: Recovery Time (RT)                                                    |\n");
-    DebugP_log("\r|200: Start periodic continuous mode                                        |\n");
+    DebugP_log("\r|110: Recovery Time (RT)                                                       |\n");
+    DebugP_log("\r|111: Simulate motor control 2.1 position loop for long time                   |\n");
+    DebugP_log("\r|200: Start periodic continuous mode                                           |\n");
 
     DebugP_log("\r|------------------------------------------------------------------------------|\n\r|\n");
     DebugP_log("\r| enter value: ");
@@ -861,7 +856,6 @@ static int32_t endat_get_command_supplement(int32_t cmd,
             }
 
             break;
-
         case 200:
            
             if(gEndat_is_load_share_mode)
@@ -1953,6 +1947,79 @@ static void endat_process_host_command(int32_t cmd,
             DebugP_log("\n");
         }
 
+    }
+    else if(cmd == 111)
+    {   
+        DebugP_log("\r|press enter to stop the long time continuous mode\n|");
+        if(endat_loop_task_create() != SystemP_SUCCESS)
+        {
+            DebugP_log("\r| ERROR: OS not allowing position loop as related Task creation failed\n|\n|\n");
+            DebugP_log("\rTask_create() failed!\n");
+            return;
+        }
+
+        endat_position_loop_status = ENDAT_POSITION_LOOP_START;
+
+        uint64_t poaition_read = 0;
+        /*clear CRC error count */
+        memset(gEndat_mtrctrl_crc_err, 0, 3);
+        while(1)
+        {
+            if(endat_position_loop_status == ENDAT_POSITION_LOOP_STOP)
+            {
+
+                if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
+                {
+                    int32_t j;
+
+                    for(j = 0; j < 3; j++)
+                    {
+                        if(gEndat_multi_ch_mask & 1 << j)
+                        {
+                           DebugP_log("\r -------Channel %u ------\n", j);
+                           DebugP_log("\r position command sent = %u \n", poaition_read);
+                           DebugP_log("\r CRC failures encountered = %u \n", gEndat_mtrctrl_crc_err[j]);
+                           DebugP_log(" ");
+                           DebugP_log("\r");
+                        }
+                    }
+                }
+                else
+                {
+                    DebugP_log("\r position command sent = %u \n", poaition_read);
+                    DebugP_log("\r CRC failures encountered = %u \n", gEndat_mtrctrl_crc_err[0]);
+                    DebugP_log(" ");
+                    DebugP_log("\r");
+                }
+                
+                return;
+            }
+            else
+            {
+                poaition_read++;
+                if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
+                {
+                    int32_t j;
+
+                    for(j = 0; j < 3; j++)
+                    {
+                        if(gEndat_multi_ch_mask & 1 << j)
+                        {
+                            endat_multi_channel_set_cur(priv, j);
+                            endat_process_position_command(j);
+                        }
+                    }
+                }
+                else
+                {
+                    endat_process_position_command(0);
+                }
+
+                /* increase sleep value if glitches in display to be prevented (and would result in slower position display freq) */
+                ClockP_usleep(500);
+
+            }
+        }
     }
     else
     {
