@@ -370,9 +370,6 @@ void process_request(HDSL_Handle hdslHandle,int menu){
         case MENU_DIRECT_READ_RID0_LENGTH8:
             direct_read_rid0_length8(hdslHandle);
             break;
-        case MENU_DIRECT_READ_RID0_LENGTH8_OFFSET6:
-            direct_read_rid0_length8_offset6(hdslHandle);
-            break;
         case MENU_DIRECT_READ_RID81_LENGTH8:
             direct_read_rid81_length8(hdslHandle);
             break;
@@ -690,7 +687,6 @@ static void display_menu(void)
     DebugP_log("\r\n | %2d : Access on RID 81h, direct read access with length 2                     |", MENU_DIRECT_READ_RID81_LENGTH2);
     DebugP_log("\r\n | %2d : Access on RID 0h, indirect write, length 8, with offset 0               |", MENU_INDIRECT_WRITE_RID0_LENGTH8_OFFSET0);
     DebugP_log("\r\n | %2d : Access on RID 0h; indirect write, length 8, without offset value        |", MENU_INDIRECT_WRITE_RID0_LENGTH8);
-    DebugP_log("\r\n | %2d : Access on RID 0h, direct read, length 8, with offset 6                  |", MENU_DIRECT_READ_RID0_LENGTH8_OFFSET6);
     DebugP_log("\r\n |------------------------------------------------------------------------------|\n");
     DebugP_log("\r\n Enter value: ");
 }
@@ -934,39 +930,6 @@ void  indirect_write_rid0_length8(HDSL_Handle hdslHandle)
     }
 }
 
-void  direct_read_rid0_length8_offset6(HDSL_Handle hdslHandle)
-{
-    uint8_t  dir=0x00;
-
-    gPc_addrh = 0xec;
-    gPc_addrl = 0x00;
-    gPc_offh = 0x80;
-    gPc_offl = 0x06;
-
-    HDSL_set_pc_addr(hdslHandle, gPc_addrh, gPc_addrl, gPc_offh, gPc_offl);
-
-    HDSL_set_pc_ctrl(hdslHandle,dir);
-
-    ClockP_sleep(1);
-
-    gPc_buf0 = HDSL_read_pc_buffer(hdslHandle,0);
-    if(gPc_buf0 == 0x41)
-    {
-        gPc_buf1 = HDSL_read_pc_buffer(hdslHandle,1);
-        if(gPc_buf1 == 0x10)
-        {
-            DebugP_log("\r\n PASS ");
-        }
-        else
-        {
-            DebugP_log("\r\n FAIL: gPc_buf1 != 0x10 = %u", gPc_buf1);
-        }
-    }
-    else
-    {
-        DebugP_log("\r\n FAIL: gPc_buf0 != 0x41 = %u", gPc_buf0);
-    }
-}
 static int get_menu(void)
 {
     unsigned int cmd;
