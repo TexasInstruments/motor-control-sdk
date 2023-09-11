@@ -95,7 +95,7 @@ Other than the basic EVM setup mentioned in \htmllink{@VAR_MCU_SDK_DOCS_PATH/EVM
 
 - Tamagawa encoder
 - AM243x-LP board
-- BP-AM2BLDCSERVO
+- BP-AM2BLDCSERVO, https://www.ti.com/tool/BP-AM2BLDCSERVO
 \endcond
 
 

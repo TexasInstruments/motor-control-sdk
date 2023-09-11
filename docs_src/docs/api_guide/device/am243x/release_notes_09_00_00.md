@@ -369,10 +369,21 @@ earlier SDKs.
     <th> Additional Remarks
 </tr>
 <tr>
+    <td> Position Sense EnDat
+    <td> \ref endat_init
+    <td> Added api parameter
+    <td> void* pruss_iep
+</tr>
+<tr>
+    <td> Position Sense EnDat
+    <td> Structure: endat_priv
+    <td> Added variables: pruss_iep, cmp3, cmp5 and cmp6
     <td> 
-    <td> 
-    <td> 
+</tr>
+<tr>
+    <td> Position Sense EnDat
+    <td> Structure: cmd_supplement
+    <td> Added variables: cmp3, cmp5 and cmp6
     <td> 
 </tr>
 </table>
-
