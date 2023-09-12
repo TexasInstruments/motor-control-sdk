@@ -1943,6 +1943,25 @@ uint8_t endat_multi_channel_detected(struct endat_priv *priv)
 void endat_multi_channel_set_cur(struct endat_priv *priv, int32_t ch)
 {
     priv->channel = ch;
+    if(priv->load_share)
+    {
+        if(priv->channel == 0)
+        {
+            priv->pos_res =  priv->pos_rx_bits_21_RTUPRU - (ENDAT_NUM_BITS_POSITION_CRC + ENDAT_NUM_BITS_F1);
+        }
+        else if(priv->channel == 1)
+        {
+            priv->pos_res = priv->pos_rx_bits_21_PRU - (ENDAT_NUM_BITS_POSITION_CRC + ENDAT_NUM_BITS_F1);
+        }
+        else
+        {
+            priv->pos_res = priv->pos_rx_bits_21_TXPRU - (ENDAT_NUM_BITS_POSITION_CRC + ENDAT_NUM_BITS_F1);
+        }
+    }
+    else
+    {
+        priv->pos_res =  priv->pos_rx_bits_21_RTUPRU - (ENDAT_NUM_BITS_POSITION_CRC + ENDAT_NUM_BITS_F1);
+    }
 }
 
 int32_t endat_wait_initialization(struct endat_priv *priv, uint32_t timeout, uint8_t mask)
