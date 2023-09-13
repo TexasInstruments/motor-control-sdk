@@ -61,18 +61,20 @@ static void HDSL_IsrFxn(void);
 void TC_read_pc_short_msg();
 void TC_write_pc_short_msg();
 
-//void _copy_reg_into_ddr();
+#ifndef HDSL_MULTI_CHANNEL
+/*
+ * @brief It will test copy of traces into memory
+ * \n Here user will decide how many copies of HDSL_Interface_Register
+ * \n will be copied into memory
+ */
+void traces_into_memory();
+#endif
+
 void direct_read_rid0_length8();
 void direct_read_rid81_length8();
 void direct_read_rid81_length2();
 void indirect_write_rid0_length8();
 void indirect_write_rid0_length8_offset0();
-
-/**
- *  @name       HDSL_sync_calculation
- *  @brief      Measurement of syn period
- */
-int HDSL_sync_calculation(void);
 
 #ifdef __cplusplus
 }
