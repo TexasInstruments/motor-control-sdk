@@ -137,6 +137,12 @@ transport_on_v_frame_dont_update_qm:
 	.endif
 	qba		transport_on_v_frame_exit
 check_for_slave_error_on_v_frame:
+    .if $defined("HDSL_MULTICHANNEL")
+    WAIT_TX_FIFO_FREE
+    LOOP push_1B,3
+	PUSH_FIFO_CONST  0xff
+push_1B:
+    .endif
 ;CRC was correct -> add 1 to QM
 ;Note: QM_ADD uses REG_TMP1
 	QM_ADD		1
@@ -154,14 +160,16 @@ update_events_no_int5:
 ; Set ONLINE_STATUS_1_VPOS in ONLINE_STATUS_1 register
     set         REG_TMP2.b0, REG_TMP2.b0, ONLINE_STATUS_1_VPOS
     sbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H, 1
-	qba		transport_on_v_frame_exit
+	qba		no_first_push_for_exit
 transport_on_v_frame_check_pos:
+
 	sbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H, 1
 	lsl		REG_TMP2, CHANNEL.ch_verth, 8
 	mov		REG_TMP2.b0, VERT_L.b3
 ;first V-Frame? -> update FAST POS with SAFE POS
 transport_on_v_frame_not_first:
 ;check for LAST FAST POS and SAFE POS mismatch
+
 	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, LAST_FAST_POS0, SIZE_FAST_POS
 	sub		REG_TMP1.w0, VERT_L.w2, REG_TMP0.w0
 	sub		REG_TMP1.w2, VERT_H.w0, REG_TMP0.w2
@@ -176,12 +184,7 @@ no_sub_carry:
 	add		REG_TMP2, REG_TMP2, 1
 transport_on_v_frame_diff_pos:
 
-    .if $defined("HDSL_MULTICHANNEL")
-    WAIT_TX_FIFO_FREE
-    LOOP push_1B,2
-	PUSH_FIFO_CONST  0xff
-push_1B:
-    .endif
+
 
 ;check for diff. is 0 -> estimate if not
 	qbne		transport_on_v_frame_estimate, REG_TMP1, 0
@@ -219,13 +222,21 @@ transport_on_v_frame_no_pos_mismatch:
 	sbco	&CRC_SEC, MASTER_REGS_CONST, CRC_SEC_TEMP, 2
 ; store the 8 bytes from secondary channel
 	sbco	&R20, MASTER_REGS_CONST, VPOS2_TEMP, 8
-
+	jmp no_first_push_for_exit
 transport_on_v_frame_exit:
 ;we are in RX0
 ;reset rel. pos
-    .if $defined("HDSL_MULTICHANNEL")
+	loop Wait_and_Push_2_byte,2
+   	WAIT_TX_FIFO_FREE
 	PUSH_FIFO_CONST  0xff
+Wait_and_Push_2_byte:
+
+	PUSH_FIFO_CONST  0xff
+
+no_first_push_for_exit:
+    .if $defined("HDSL_MULTICHANNEL")
 	qbeq			free_run_mode1, EXTRA_SIZE, 0
+	WAIT_TX_FIFO_FREE
 	PUSH_FIFO_CONST		0xff
 	RESET_CYCLCNT
 free_run_mode1:
@@ -321,7 +332,19 @@ online_status_2_sum2_not_set:
 	ldi	    r31.w0, PRU0_ARM_IRQ2
 
 transport_on_v_frame_2_exit:
-
+	qbne			not_7th_hframe_0, LOOP_CNT.b2, 7
+	qbbc			not_7th_hframe_0, H_FRAME.flags, FLAG_NORMAL_FLOW
+ 	.if $defined("HDSL_MULTICHANNEL")
+ 	WAIT_TX_FIFO_FREE
+	LOOP push_1B_0 ,2
+	PUSH_FIFO_CONST  0xff
+push_1B_0:
+	qbeq			free_run_mode2, EXTRA_SIZE, 0
+	PUSH_FIFO_CONST		0xff
+	RESET_CYCLCNT
+free_run_mode2:
+	.endif
+not_7th_hframe_0:
 ; Check for VPOS_VALID, If it is valid, update the position and crc to DMEM
 ; and raise interrupt
 	lbco	&REG_TMP0.b0, MASTER_REGS_CONST, VPOS_VALID, 1
@@ -331,19 +354,7 @@ transport_on_v_frame_2_exit:
 ; generate interrupt PRU0_ARM_IRQ1
 	ldi		    r31.w0, PRU0_ARM_IRQ1
 transport_skip_vpos_update:
-	qbne			not_7th_hframe_0, LOOP_CNT.b2, 7
-	qbbc			not_7th_hframe_0, H_FRAME.flags, FLAG_NORMAL_FLOW
- 	.if $defined("HDSL_MULTICHANNEL")
- 	WAIT_TX_FIFO_FREE
- 	LOOP push_1B_0 ,2
-	PUSH_FIFO_CONST  0xff
-push_1B_0:
-	qbeq			free_run_mode2, EXTRA_SIZE, 0
-	PUSH_FIFO_CONST		0xff
-	RESET_CYCLCNT
-free_run_mode2:
-	.endif
-not_7th_hframe_0:
+
 
 ; Set POSTX to 3
     ldi         REG_TMP0.b0, 0x3
@@ -497,6 +508,7 @@ transport_layer_check_for_new_msg:
 ;check for special character
 
 	qbbs		transport_layer_recv_msg_check_for_nak, REG_TMP0.b0, 4
+
 ;set flag to signalize that we need to wait for next S_PAR_IDLE again, so we do not parse data multiple times
 	set		H_FRAME.flags, H_FRAME.flags, FLAG_WAIT_IDLE
 ;reassemble 32 bits of msg, 5bits->4bits
@@ -507,7 +519,11 @@ transport_layer_check_for_new_msg:
 	or		REG_TMP0.b0, REG_TMP0.b0, REG_TMP0.b1
 	and		REG_TMP0.b0, REG_TMP0.b0, 0x0f
 	or		REG_TMP11.b3, REG_TMP11.b3, REG_TMP0.b0
-
+	.if $defined("HDSL_MULTICHANNEL")
+	WAIT_TX_FIFO_FREE
+	PUSH_FIFO_1_8x
+	PUSH_FIFO_2_8x
+	.endif
 	mov		REG_TMP2, CHANNEL.ch_paral
 	ldi		REG_TMP1.b0, &REG_TMP11.b0
 	loop		transport_layer_reassemble_msg_loop, 3
@@ -519,16 +535,13 @@ transport_layer_check_for_new_msg:
 	lsr		REG_TMP2, REG_TMP2, 10
 transport_layer_reassemble_msg_loop:
 ;identify message type
+
 	qbbs		transport_layer_received_long_msg, REG_TMP11.b3, 7
 transport_layer_received_short_msg:
 ;check crc
 	ldi		REG_TMP1.b0, &r12.b0
 ;read or write?
-	.if $defined("HDSL_MULTICHANNEL")
-	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_1_8x
-	PUSH_FIFO_2_8x
-	.endif
+
 	qbbs		transport_layer_short_msg_recv_read, REG_TMP11.b3, 6
 ;received write ack
 	ldi		REG_FNC.b0, 1
@@ -624,10 +637,7 @@ update_events_no_int11:
     sbco		&REG_TMP0.b0, MASTER_REGS_CONST, (ONLINE_STATUS_D_L), 1
 	clr		H_FRAME.flags, H_FRAME.flags, FLAG_PARA_BUSY
 transport_layer_received_long_msg_loffset_end:
-	.if $defined("HDSL_MULTICHANNEL")
-	PUSH_FIFO_1_8x
-	PUSH_FIFO_2_8x
-	.endif
+
 ;calculate CRC for already recevied bits
 	ldi		REG_FNC.b0, 4
 	ldi		r1.b0, &r12.b0
@@ -994,11 +1004,7 @@ transport_on_h_frame:
     sbco		&REG_TMP0.b0, MASTER_REGS_CONST, POSTX, 1
 
 ;check for byte error in acceleration channel
-	.if $defined("HDSL_MULTICHANNEL")
-	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_CONST  0x00
-	PUSH_FIFO_CONST  0x00
-	.endif
+
 	qbbs		transport_acc_err_inc, H_FRAME.flags, FLAG_ERR_ACC
 ;crc error verification
 	;CALL1		calc_acc_crc
@@ -1014,6 +1020,7 @@ transport_on_h_frame:
 	ldi		REG_TMP0.w0, DOUBLE_K29_7
     qbne		delta_delta_position, H_FRAME.acc, REG_TMP0.w0
 transport_acc_err_inc:
+
 ;update the acc_err_cnt register
 	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, ACC_ERR_CNT, 1
 	add		REG_TMP0.b0, REG_TMP0.b0, 1
@@ -1074,6 +1081,11 @@ calc_speed_extend_acc1:
 	mov		DELTA_ACC1, DELTA_ACC0
 	sub		DELTA_ACC0, REG_TMP0.w0, LAST_ACC
 	mov		LAST_ACC, REG_TMP0.w0
+	.if $defined("HDSL_MULTICHANNEL")
+	WAIT_TX_FIFO_FREE
+	PUSH_FIFO_CONST  0x00
+	PUSH_FIFO_CONST  0x00
+	.endif
     CALL1		calc_fastpos
 ;restore return addr
 	mov		RET_ADDR0, REG_TMP11.w0
@@ -1084,6 +1096,7 @@ calc_speed_extend_acc1:
 	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_UPDATE_PENDING, 1
 	qba		transport_on_h_frame_exit
 delta_delta_position:
+
 ;reset ACC_ERR_CNT
 	sbco		&REG_FNC.b0, MASTER_REGS_CONST, ACC_ERR_CNT, 1
 ;shift out crc bits
@@ -1105,6 +1118,11 @@ calc_speed_extend_acc0:
 	mov		DELTA_ACC1, DELTA_ACC0
 	sub		DELTA_ACC0, REG_TMP0.w0, LAST_ACC
 	mov		LAST_ACC, REG_TMP0.w0
+	.if $defined("HDSL_MULTICHANNEL")
+	WAIT_TX_FIFO_FREE
+	PUSH_FIFO_CONST  0x00
+	PUSH_FIFO_CONST  0x00
+	.endif
 	CALL1		calc_fastpos
 transport_on_h_frame_exit:
 ;calculate rel. pos and store

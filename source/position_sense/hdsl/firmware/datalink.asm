@@ -224,6 +224,7 @@ modified_header_early_data_push_done:
 modified_header_early_data_push_done:
 ;go to H-Frame callback on transport layer (max. 120-50=70 cycles)
  	CALL			transport_on_h_frame
+
 	sub		LOOP_CNT.b2, LOOP_CNT.b2, 1
 	qbeq 	hframe_7_fifo_push,LOOP_CNT.b2,7
 	qblt 	Hframe_fifo_push, LOOP_CNT.b2, 0
@@ -232,12 +233,11 @@ modified_header_early_data_push_done:
 Hframe_fifo_push:
 	WAIT_TX_FIFO_FREE
 	PUSH_FIFO_CONST  0xff
-	WAIT_TX_FIFO_FREE
 	PUSH_FIFO_CONST  0x00
-	LOOP push_2b_0_0 ,2
+	LOOP push_2b_0_0 ,4
 	WAIT_TX_FIFO_FREE
 	PUSH_FIFO_CONST  0xff
-	PUSH_FIFO_CONST  0xff
+
 push_2b_0_0:
 	qbeq			free_run_mode_0, EXTRA_SIZE, 0
 	PUSH_FIFO_CONST		0xff
@@ -313,7 +313,7 @@ datalink_receive_signal_last_received_0_1:
 	lsl			r19, r19, 3
 	CLEAR_VAL
 ; same delay code as in learn
-	ldi			REG_TMP1, (74*CYCLES_BIT+7-2);-7=14iters;-35  ;-34; -9 for 100 m
+	ldi			REG_TMP1, (74*CYCLES_BIT+9);-7=14iters;-35  ;-34; -9 for 100 m
 	READ_CYCLCNT		REG_TMP0
 	qble	    receive_skip_wait, REG_TMP0, REG_TMP1
 	sub			REG_TMP0, REG_TMP1, REG_TMP0
@@ -1254,8 +1254,6 @@ send_header_300m:
 ;check if we have an EXTRA period
 ;if we have a EXTRA period: do TX FIFO synchronization here to gain processing time
 	qbeq			send_header_no_extra_wait, EXTRA_SIZE, 0
-	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_CONST		0xff
 	RESET_CYCLCNT
 
 send_header_modified:
@@ -1307,6 +1305,7 @@ send_header_end_disp:
 ; V-frame processing is split into two parts : transport_on_v_frame and
 ; transport_on_v_frame_2.
 	qbne			datalink_transport_no_v_frame, LOOP_CNT.b2, 8
+	WAIT_TX_FIFO_FREE
 	PUSH_FIFO_CONST  0x00
 	PUSH_FIFO_CONST  0xff
 	jmp			transport_on_v_frame
@@ -1317,6 +1316,7 @@ datalink_transport_no_v_frame:
 ; is being sent). If yes, perform the remaining part of V-frame processing
 	qbne			datalink_transport_no_v_frame_2, LOOP_CNT.b2, 7
  	qbbc			dont_push_for_non7_hframe_1, H_FRAME.flags, FLAG_NORMAL_FLOW
+	WAIT_TX_FIFO_FREE
 	PUSH_FIFO_CONST  0xff
 	PUSH_FIFO_CONST  0xff
 dont_push_for_non7_hframe_1:
@@ -1585,7 +1585,7 @@ SAFE_CTRL_PRST_cleared:
 	and		FIFO_L, FIFO_L, 0x1f
 	qbeq		No_long_short_msg, FIFO_L, S_PAR_IDLE
 	qbbs		No_long_short_msg, H_FRAME.flags, FLAG_WAIT_IDLE
-	and			FIFO_L, H_FRAME.s_par, 0x1f
+	qbbs		No_long_short_msg, FIFO_L, 4
 	mov FIFO_L,REG_FNC.b3
 	ldi			LEARN_STATE_STARTED , 3
 	jmp comp_logic_starts
@@ -1595,9 +1595,7 @@ comp_logic_done1:
 No_long_short_msg:
 	mov FIFO_L,REG_FNC.b3
 	ldi			LEARN_STATE_STARTED , 2
-	LOOP push_2B,2
-	PUSH_FIFO_2B_8x
-push_2B:
+
 	jmp comp_logic_starts
 Push_done:
 	jmp			transport_layer_recv_msg
@@ -1657,6 +1655,7 @@ send_stuffing:
 	.if $defined(EXT_SYNC_ENABLE)
 	mov			REG_TMP11, RET_ADDR1
 	;do calc
+
 	;stuffing value decide starts
 	qbeq        num_pulses_is_one, NUM_PULSES, 1
 	mov			REG_FNC.b3, NUM_STUFFING
@@ -1665,18 +1664,21 @@ num_pulses_is_one:
 	mov			REG_FNC.b3, NUM_STUFFING_COMP
 stuffing_value_decided:
 	;stuffing value decide ends
+
 	;remainder increament logic starts
 	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, SYNC_STUFFING_REMAINDER, 1 ;reload ES
 	qbgt        remainder_increament_done, REG_TMP0.b0, NUM_PULSES
 	add			REG_FNC.b3, REG_FNC.b3, 1
 remainder_increament_done:
 	;remainder increament logic ends
+
 	;ES reload starts
 	sub			NUM_PULSES, NUM_PULSES, 1
 	qbne        num_pulses_non_zero, NUM_PULSES, 0
 	lbco		&NUM_PULSES, MASTER_REGS_CONST, SYNC_CTRL, 1 ;reload ES
 num_pulses_non_zero:
 	;ES reload ends
+
 	qbeq		send_stuffing_no_stuffing, REG_FNC.b3, 0
 ;check if we have stuffing
 	READ_CYCLCNT		REG_TMP0
@@ -1688,7 +1690,6 @@ learn_state_started:
 	rsb			REG_TMP2, REG_TMP0, (4*(CLKDIV_NORMAL+1)+4);(6*(CLKDIV_NORMAL+1)+4)
 calculation_for_wait_done:
 	nop
-
 	.else
 	mov			REG_TMP11, RET_ADDR1
 	qbeq			send_stuffing_no_stuffing, NUM_STUFFING, 0
@@ -1697,13 +1698,15 @@ calculation_for_wait_done:
 	rsb			REG_TMP2, REG_TMP0, (5*(CLKDIV_NORMAL+1)+4);(6*(CLKDIV_NORMAL+1)+4)
 	mov			REG_FNC.b3, NUM_STUFFING
 	.endif;EXT_SYNC_ENABLE
+
 	.if $defined("HDSL_MULTICHANNEL")
 	WAIT_TX_FIFO_FREE
 	PUSH_FIFO_CONST		0x00
+	WAIT_TX_FIFO_FREE
 	PUSH_FIFO_CONST		0x00
 
-	WAIT_TX_FIFO_FREE
 	PUSH_FIFO_CONST		0xff
+	WAIT_TX_FIFO_FREE
 	PUSH_FIFO_CONST		0x00
 
 	WAIT_TX_FIFO_FREE
@@ -1748,17 +1751,27 @@ send_stuffing_loop_8x:
 	WAIT_TX_FIFO_FREE
 	PUSH_FIFO_CONST		0x00
 	PUSH_FIFO_CONST		0x00
-
-	WAIT_TX_FIFO_FREE
 	PUSH_FIFO_CONST		0xff
-	PUSH_FIFO_CONST		0x00
-
 	WAIT_TX_FIFO_FREE
+	PUSH_FIFO_CONST		0x00
 	PUSH_FIFO_CONST		0xff
 	PUSH_FIFO_CONST		0xff
 
 	sub			REG_FNC.b3, REG_FNC.b3, 1
-	qbne			send_stuffing_loop_8x, REG_FNC.b3, 0
+	qbne			send_stuffing_loop_8x, REG_FNC.b3, 1
+	WAIT_TX_FIFO_FREE
+	PUSH_FIFO_CONST		0x00
+	WAIT_TX_FIFO_FREE
+	PUSH_FIFO_CONST		0x00
+
+
+	PUSH_FIFO_CONST		0xff
+	WAIT_TX_FIFO_FREE
+	PUSH_FIFO_CONST		0x00
+
+
+	PUSH_FIFO_CONST		0xff
+	PUSH_FIFO_CONST		0xff
 	.else
 
 send_stuffing_loop:
@@ -1812,9 +1825,9 @@ send_trailer:
 	PUSH_FIFO_CONST		0x00
 	WAIT_TX_FIFO_FREE
 	PUSH_FIFO_CONST		0x00
+	WAIT_TX_FIFO_FREE
 	PUSH_FIFO_CONST		0xff
 	PUSH_FIFO_CONST		0xff
-
     .else
     PUSH_FIFO_CONST		0x03
 	TX_CHANNEL
@@ -1827,14 +1840,12 @@ send_trailer:
 	NOP_2
 	NOP_2
 	NOP_2
-    .if !$defined("HDSL_MULTICHANNEL")
     .if $defined("FREERUN_300_MHZ")
 	NOP_2
 	NOP_2
 	NOP_2
 	NOP_2
 	NOP_2
-    .endif
     .endif
     .if !$defined("HDSL_MULTICHANNEL")
 	TX_CLK_DIV		CLKDIV_SLOW, REG_TMP0
@@ -1858,7 +1869,6 @@ send_trailer_dont_update_qm:
 	.if !$defined("HDSL_MULTICHANNEL")
 	WAIT_CLK_LOW		REG_TMP0
 	.endif
-
 	RESET_CYCLCNT
 	RET1
 ;--------------------------------------------------------------------------------------------------
@@ -1906,6 +1916,7 @@ update_events_no_int18:
 ;	REG_TMP0, REG_FNC
 ;--------------------------------------------------------------------------------------------------
 switch_clk:
+	.if !$defined("HDSL_MULTICHANNEL")
 	WAIT_CLK_LOW		REG_TMP0
 	WAIT_CLK_HIGH		REG_TMP0
 	sub			REG_FNC.b2, REG_FNC.b2, 1
@@ -1914,6 +1925,7 @@ switch_clk:
 	;ldi     		REG_SCRATCH, P0EDTXCFG+2
 	sbco			&REG_FNC.w0, ICSS_CFGx, EDTXCFG+2, 2
 	WAIT_CLK_HIGH		REG_TMP0
+	.endif
 	RET1
 ;--------------------------------------------------------------------------------------------------
 ;Function: qm_add (RET_ADDR1)
@@ -1972,6 +1984,7 @@ wait_delay:
 	NOP_2
 	.endif
     .if $defined("HDSL_MULTICHANNEL")
+	NOP_2
 	NOP_2
 	NOP_2
 	NOP_2
@@ -2067,9 +2080,8 @@ calc_rssi_discard:
 comp_logic_starts:
 	.if $defined(EXT_SYNC_ENABLE)
 	;compensation logic for diff between sync signal and extra edge starts;
-
 	qbne        num_pulses_is_not_one2, NUM_PULSES, 1 ;not the last frame of period
-
+	PUSH_FIFO_2B_8x
 	mov         EXTRA_EDGE_COMP, EXTRA_EDGE
 	mov         EXTRA_SIZE_COMP, EXTRA_SIZE
 	mov         NUM_STUFFING_COMP, NUM_STUFFING
@@ -2090,7 +2102,7 @@ comp_logic_starts:
 no_capping1:
 	mov         REG_TMP1, REG_FNC ;taking backup
 	mov			REG_FNC.w0, REG_TMP0
-	ldi			REG_FNC.w2, 4;3
+	ldi			REG_FNC.w2, 3;3
 	CALL1		int_div
 	mov         REG_TMP0.b0, REG_FNC.b2
 	qbeq        no_reminder1, REG_FNC.w0, 0
@@ -2109,7 +2121,7 @@ extra_edge_ahead:
 no_capping2:
 	mov         REG_TMP1, REG_FNC ;taking backup
 	mov			REG_FNC.w0, REG_TMP0
-	ldi			REG_FNC.w2, 4;3
+	ldi			REG_FNC.w2, 3;3
 	CALL1		int_div
 	mov         REG_TMP0.b0, REG_FNC.b2
 	qbeq        no_reminder2, REG_FNC.w0, 0
@@ -2124,7 +2136,6 @@ cycle_diff_more_than_max_allowed:
 
 child_overhead_more1:
 	.if $defined("HDSL_MULTICHANNEL")
-	PUSH_FIFO_2B_8x
 	.endif
 	ldi         REG_TMP1.b0, 8
 	sub         REG_TMP1.b0, REG_TMP1.b0, TIME_REST_COMP
@@ -2140,7 +2151,6 @@ time_rest_comp_not_8_1:
 	qba         check_time_rest_size_violation1
 self_overhead_more1:
 	.if $defined("HDSL_MULTICHANNEL")
-	PUSH_FIFO_2B_8x
 	.endif
 	ldi         REG_TMP1.b0, 8
 	sub         REG_TMP1.b0, REG_TMP1.b0, TIME_REST_COMP
@@ -2165,6 +2175,10 @@ check_time_rest_size_violation1:
 comp_done1:
 	mov			REG_TMP0.b1, TIME_REST_COMP
 	ldi			EXTRA_EDGE_COMP, 0
+	.if $defined("HDSL_MULTICHANNEL")
+	PUSH_FIFO_2B_8x
+	.endif
+
 	qbeq		extra_edge_bit_setting_loop_end1, REG_TMP0.b1, 0
 	ldi			REG_TMP0.b2, 7
 extra_edge_bit_setting1:
@@ -2190,9 +2204,7 @@ send_header_extra_not_too_small1:
 	add			NUM_STUFFING_COMP, NUM_STUFFING_COMP, 1
 extra_size_validation_done1:
 num_pulses_is_not_one2:
-	.if $defined("HDSL_MULTICHANNEL")
-	PUSH_FIFO_2B_8x
-	.endif
+
 	.if !$defined("HDSL_MULTICHANNEL")
 	jmp comp_logic_done_1
 	.endif
@@ -2207,12 +2219,18 @@ num_pulses_is_not_one2:
 	.endif
 	.if $defined("HDSL_MULTICHANNEL")
 comp_logic_ends:
-	qbeq	comp1,LEARN_STATE_STARTED,2
+	qbeq	comp2,LEARN_STATE_STARTED,2
 	qbeq	comp1,LEARN_STATE_STARTED,3
 	ldi			LEARN_STATE_STARTED , 1
 	jmp comp_logic_done
 
 comp1:
+	ldi			LEARN_STATE_STARTED , 1
+	jmp transport_layer_recv_msg
+comp2:
+	WAIT_TX_FIFO_FREE
+	PUSH_FIFO_1_8x
+	PUSH_FIFO_2_8x
 	ldi			LEARN_STATE_STARTED , 1
 	jmp transport_layer_recv_msg
 	.endif

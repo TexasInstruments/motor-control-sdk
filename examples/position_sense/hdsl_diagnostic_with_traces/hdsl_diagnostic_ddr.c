@@ -239,9 +239,7 @@ void sync_calculation(HDSL_Handle hdslHandle)
     {
         DebugP_log("\r\n ERROR: ES or period selected is Invalid ");
     }
-    #if (CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ==300000000)
-        wait_before_start=4968;
-    #endif
+
     DebugP_log("\r\n ********************************************************************");
     DebugP_log("\r\n SYNC MODE: period = %d", period);
     DebugP_log("\r\n SYNC MODE: ES = %d", ES);
