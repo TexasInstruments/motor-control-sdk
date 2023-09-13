@@ -46,6 +46,7 @@
 #include <kernel/dpl/ClockP.h>
 
 #include <drivers/pruicss.h>
+#include <drivers/udma.h>
 
 #include "ti_drivers_config.h"
 #include "ti_drivers_open_close.h"
@@ -69,6 +70,11 @@
 #include <position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch1_bin.h>
 #include <position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch0_sync_mode_bin.h>
 #include <position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch1_sync_mode_bin.h>
+
+#if (CONFIG_HDSL0_CHANNEL0 + CONFIG_HDSL0_CHANNEL1 > 1)
+#define HDSL_MULTI_CHANNEL
+#endif
+
 /* Divide factor for normal clock (default value for 300 MHz=31) */
 #define DIV_FACTOR_NORMAL 31
 /* Divide factor for oversampled clock (default value for 300 MHz=3) */
@@ -100,38 +106,229 @@
 #define ENCODER_RSSI_REG_ADDRESS    (0x7C)
 #define ENCODER_PING_REG_ADDRESS    (0x7F)
 
-extern PRUICSS_Config gPruicssConfig[2];
 
-struct hdslvariables *hdslvariables;
+#ifndef HDSL_MULTI_CHANNEL
+/* Memory Trace is triggered for each H-Frame. SYS_EVENT_21 is triggered for each
+   H-Frame from PRU. SYS_EVENT_21 is mapped to PRU_ICSSG0_PR1_HOST_INTR_PEND_3 of R5F
+   in INTC Mapping. */
 
-HwiP_Object         gPRUHwiObject;
-/** \brief Global Structure pointer holding PRUSS1 memory Map. */
-PRUICSS_Handle gPruIcss0Handle;
+/*Event number for SYS_EVENT_21 (pr1_pru_mst_intr<5>_int_req) */
+#define HDSL_MEMORY_TRACE_ICSS_INTC_EVENT_NUM (21U)
+
+/* R5F Interrupt number for Memory Traces */
+#define HDSL_MEMORY_TRACE_R5F_IRQ_NUM  (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_3)
+#endif
+
 HDSL_Handle     gHdslHandleCh0;
 HDSL_Handle     gHdslHandleCh1;
-HDSL_Handle     gHdslHandleCh2;
+
+PRUICSS_Handle  gPruIcss0Handle;
 PRUICSS_IntcInitData gPruss0_intc_initdata = PRU_ICSS0_INTC_INITDATA;
 PRUICSS_Handle gPruIcss1Handle;
 PRUICSS_IntcInitData gPruss1_intc_initdata = PRU_ICSS1_INTC_INITDATA;
-
 
 static char gUart_buffer[256];
 static void *gPru_cfg;
 void *gPru_dramx;
 void *gPru_dramx_0;
 void *gPru_dramx_1;
-int get_pos=1;
+int32_t get_pos=1;
 
 uint32_t gMulti_turn, gRes;
 uint64_t gMask;
-
 uint8_t gPc_data;
-
 uint8_t gPc_addrh, gPc_addrl, gPc_offh, gPc_offl, gPc_buf0, gPc_buf1, gPc_buf2, gPc_buf3, gPc_buf4, gPc_buf5, gPc_buf6, gPc_buf7;
-
 
 #ifdef HDSL_AM64xE1_TRANSCEIVER
 static TCA6424_Config  gTCA6424_Config;
+#endif
+
+#ifndef HDSL_MULTI_CHANNEL
+
+Udma_ChHandle   chHandle;
+
+/* To store user input to start memory copy*/
+volatile uint8_t start_copy;
+
+/* To store user input number of count of memory copy*/
+uint16_t trace_count;
+
+/* To save log h-frame count during memory copy*/
+uint32_t h_frame_count_arr[NUM_RESOURCES];
+
+/* Location for copying HDSL Interface structure */
+HDSL_Interface gHdslInterfaceTrace[NUM_RESOURCES] __attribute__((aligned(128), section(".hdslInterface_mem")));
+
+HwiP_Object gPRUHwiObject;
+
+/* UDMA TRPD Memory */
+uint8_t gUdmaTestTrpdMem[UDMA_TEST_TRPD_SIZE] __attribute__((aligned(UDMA_CACHELINE_ALIGNMENT)));
+#endif
+
+#ifndef HDSL_MULTI_CHANNEL
+
+void App_udmaEventCb(Udma_EventHandle eventHandle, uint32_t eventType, void *appData);
+
+static void App_udmaTrpdInit(Udma_ChHandle chHandle,
+                             uint8_t *trpdMem,
+                             const void *destBuf,
+                             const void *srcBuf,
+                             uint32_t length);
+
+static void App_udmaTrpdInit(Udma_ChHandle chHandle,
+                             uint8_t *trpdMem,
+                             const void *destBuf,
+                             const void *srcBuf,
+                             uint32_t length)
+{
+    CSL_UdmapTR15  *pTr;
+    uint32_t        cqRingNum = Udma_chGetCqRingNum(chHandle);
+    static          uint32_t initDone = 0;
+
+    if(initDone == 0)
+    {
+        /* Make TRPD with TR15 TR type */
+        UdmaUtils_makeTrpdTr15(trpdMem, 1U, cqRingNum);
+
+        /* Setup TR */
+        pTr = UdmaUtils_getTrpdTr15Pointer(trpdMem, 0U);
+        pTr->flags    = CSL_FMK(UDMAP_TR_FLAGS_TYPE, CSL_UDMAP_TR_FLAGS_TYPE_4D_BLOCK_MOVE_REPACKING_INDIRECTION);
+        pTr->flags   |= CSL_FMK(UDMAP_TR_FLAGS_STATIC, 0U);
+        pTr->flags   |= CSL_FMK(UDMAP_TR_FLAGS_EOL, CSL_UDMAP_TR_FLAGS_EOL_MATCH_SOL_EOL);
+        pTr->flags   |= CSL_FMK(UDMAP_TR_FLAGS_EVENT_SIZE, CSL_UDMAP_TR_FLAGS_EVENT_SIZE_COMPLETION);
+        pTr->flags   |= CSL_FMK(UDMAP_TR_FLAGS_TRIGGER0, CSL_UDMAP_TR_FLAGS_TRIGGER_NONE);
+        pTr->flags   |= CSL_FMK(UDMAP_TR_FLAGS_TRIGGER0_TYPE, CSL_UDMAP_TR_FLAGS_TRIGGER_TYPE_ALL);
+        pTr->flags   |= CSL_FMK(UDMAP_TR_FLAGS_TRIGGER1, CSL_UDMAP_TR_FLAGS_TRIGGER_NONE);
+        pTr->flags   |= CSL_FMK(UDMAP_TR_FLAGS_TRIGGER1_TYPE, CSL_UDMAP_TR_FLAGS_TRIGGER_TYPE_ALL);
+        pTr->flags   |= CSL_FMK(UDMAP_TR_FLAGS_CMD_ID, 0x25U);  /* This will come back in TR response */
+        pTr->flags   |= CSL_FMK(UDMAP_TR_FLAGS_SA_INDIRECT, 0U);
+        pTr->flags   |= CSL_FMK(UDMAP_TR_FLAGS_DA_INDIRECT, 0U);
+        pTr->flags   |= CSL_FMK(UDMAP_TR_FLAGS_EOP, 1U);
+        pTr->icnt0    = length;
+        pTr->icnt1    = 1U;
+        pTr->icnt2    = 1U;
+        pTr->icnt3    = 1U;
+        pTr->dim1     = pTr->icnt0;
+        pTr->dim2     = (pTr->icnt0 * pTr->icnt1);
+        pTr->dim3     = (pTr->icnt0 * pTr->icnt1 * pTr->icnt2);
+        pTr->addr     = (uint64_t) Udma_defaultVirtToPhyFxn(srcBuf, 0U, NULL);
+        pTr->fmtflags = 0x00000000U;    /* Linear addressing, 1 byte per elem */
+        pTr->dicnt0   = length;
+        pTr->dicnt1   = 1U;
+        pTr->dicnt2   = 1U;
+        pTr->dicnt3   = 1U;
+        pTr->ddim1    = pTr->dicnt0;
+        pTr->ddim2    = (pTr->dicnt0 * pTr->dicnt1);
+        pTr->ddim3    = (pTr->dicnt0 * pTr->dicnt1 * pTr->dicnt2);
+        pTr->daddr    = (uint64_t) Udma_defaultVirtToPhyFxn(destBuf, 0U, NULL);
+        /* Perform cache writeback */
+        CacheP_wb(trpdMem, UDMA_TEST_TRPD_SIZE, CacheP_TYPE_ALLD);
+
+        initDone = 1;
+    }
+    else
+    {
+        pTr = UdmaUtils_getTrpdTr15Pointer(trpdMem, 0U);
+        pTr->daddr    = (uint64_t) Udma_defaultVirtToPhyFxn(destBuf, 0U, NULL);
+        /* Perform cache writeback */
+        CacheP_wb(trpdMem, UDMA_TEST_TRPD_SIZE, CacheP_TYPE_ALLD);
+    }
+
+
+    return;
+}
+
+void udma_copy(uint8_t *srcBuf, uint8_t *destBuf, uint32_t length)
+{
+    int32_t         retVal = UDMA_SOK;
+    uint64_t        pDesc;
+    uint32_t        trRespStatus;
+    uint8_t        *trpdMem = &gUdmaTestTrpdMem[0U];
+    uint64_t        trpdMemPhy = (uint64_t) Udma_defaultVirtToPhyFxn(trpdMem, 0U, NULL);
+
+    /* Init TR packet descriptor */
+    App_udmaTrpdInit(chHandle, trpdMem, destBuf, srcBuf, length);
+
+    /* Submit TRPD to channel */
+    retVal = Udma_ringQueueRaw(Udma_chGetFqRingHandle(chHandle), trpdMemPhy);
+    DebugP_assert(UDMA_SOK == retVal);
+
+    /* Wait for return descriptor in completion ring - this marks transfer completion */
+    while(1)
+    {
+        retVal = Udma_ringDequeueRaw(Udma_chGetCqRingHandle(chHandle), &pDesc);
+        if(UDMA_SOK == retVal)
+        {
+            /* Check TR response status */
+            CacheP_inv(trpdMem, UDMA_TEST_TRPD_SIZE, CacheP_TYPE_ALLD);
+            trRespStatus = UdmaUtils_getTrpdTr15Response(trpdMem, 1U, 0U);
+            DebugP_assert(CSL_UDMAP_TR_RESPONSE_STATUS_COMPLETE == trRespStatus);
+            break;
+        }
+    }
+
+    /* Validate data in destination memory */
+    CacheP_inv(destBuf, length, CacheP_TYPE_ALLD);
+}
+
+static void HDSL_IsrFxn()
+{
+    static uint64_t h_frames_count = 0;
+    static uint32_t temp = 0;
+    uint8_t         *srcBuf;
+    uint8_t         *destBuf;
+    uint32_t        length;
+
+    srcBuf = (uint8_t*)HDSL_get_src_loc(gHdslHandleCh0);
+    length = HDSL_get_length(gHdslHandleCh0);
+    PRUICSS_clearEvent(gPruIcss0Handle, HDSL_MEMORY_TRACE_ICSS_INTC_EVENT_NUM);
+
+    /* No of h-frames count */
+    h_frames_count++;
+
+    if((start_copy == 1) && (temp < trace_count))
+    {
+
+        /* Init buffers and TR packet descriptor */
+        destBuf = (uint8_t*)&gHdslInterfaceTrace[temp];
+
+        /* start UDMA copying data from src to dest */
+        udma_copy(srcBuf,destBuf,length);
+
+        h_frame_count_arr[temp] = h_frames_count;
+        temp++;
+    }
+    else
+    {
+        start_copy = 0;
+        temp = 0;
+    }
+}
+
+void traces_into_memory(HDSL_Handle hdslHandle)
+{
+    int32_t i= 0;
+    uint32_t length;
+    length = HDSL_get_length(hdslHandle);
+
+    DebugP_log("\r\n sizeof(hdslInterface)_count = %u", length);
+    DebugP_log("\r\n Start address of memory trace location = %x", &gHdslInterfaceTrace[0]);
+    DebugP_log("\r\n End address of memory trace location = %x", &gHdslInterfaceTrace[NUM_RESOURCES-1]);
+    DebugP_log("\r\n No of HDSL-Interface-Register-Structure to copy = %u", trace_count);
+
+    start_copy = 1;
+
+    while(start_copy)
+    {
+        ClockP_sleep(1);
+    }
+
+    for(i=0; i< trace_count; i++)
+    {
+        DebugP_log("\r\n %u h_frame_count = %u ",i, h_frame_count_arr[i]);
+    }
+}
+
 #endif
 
 void sync_calculation(HDSL_Handle hdslHandle)
@@ -247,7 +444,8 @@ void sync_calculation(HDSL_Handle hdslHandle)
 
 }
 
-void process_request(HDSL_Handle hdslHandle,int menu){
+void process_request(HDSL_Handle hdslHandle,int32_t menu)
+{
     uint64_t ret_status=0;
     uint64_t val0, val1, val2;
     uint8_t ureg, ureg1;
@@ -361,6 +559,11 @@ void process_request(HDSL_Handle hdslHandle,int menu){
                 DebugP_log("\r\n RSSI: %u", ret_status);
             }
             break;
+#ifndef HDSL_MULTI_CHANNEL
+        case MENU_HDSL_REG_INTO_MEMORY:
+            traces_into_memory(hdslHandle);
+            break;
+#endif
         case MENU_PC_SHORT_MSG_WRITE:
             TC_write_pc_short_msg(hdslHandle);
             break;
@@ -388,6 +591,7 @@ void process_request(HDSL_Handle hdslHandle,int menu){
             break;
     }
 }
+
 void hdsl_pruss_init(void)
 {
         PRUICSS_disableCore(gPruIcss0Handle, gHdslHandleCh0->icssCore);
@@ -417,6 +621,7 @@ void hdsl_pruss_init(void)
         /* enable cycle counter */
         HW_WR_REG32((void *)((((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->baseAddr) + CSL_ICSS_G_PR1_PDSP1_IRAM_REGS_BASE), CTR_EN);
 }
+
 void hdsl_pruss_init_300m(void)
 {
         PRUICSS_disableCore(gPruIcss0Handle, gHdslHandleCh0->icssCore);
@@ -520,10 +725,23 @@ void hdsl_pruss_load_run_fw_300m(HDSL_Handle hdslHandle)
 
 void hdsl_init(void)
 {
-    uint8_t ES;
-    uint32_t period;
-
+    uint8_t         ES;
+    uint32_t        period;
+#ifndef HDSL_MULTI_CHANNEL
+    HwiP_Params     hwiPrms;
+    uint32_t        intrNum = HDSL_MEMORY_TRACE_R5F_IRQ_NUM;
+#endif
+    
     hdsl_pruss_init();
+    
+#ifndef HDSL_MULTI_CHANNEL
+    /* Register PRU interrupt */
+    HwiP_Params_init(&hwiPrms);
+    hwiPrms.intNum   = intrNum;
+    hwiPrms.callback = (void*)&HDSL_IsrFxn;
+    HwiP_construct(&gPRUHwiObject, &hwiPrms);
+#endif
+
     HDSL_iep_init(gHdslHandleCh0);
     ClockP_usleep(5000);
     if(CONFIG_HDSL0_MODE==0)
@@ -552,10 +770,23 @@ void hdsl_init(void)
 }
 void hdsl_init_300m(void)
 {
-    uint8_t ES;
-    uint32_t period;
+    uint8_t         ES;
+    uint32_t        period;
+#ifndef HDSL_MULTI_CHANNEL
+    HwiP_Params     hwiPrms;
+    uint32_t        intrNum = HDSL_MEMORY_TRACE_R5F_IRQ_NUM;
+#endif
 
     hdsl_pruss_init_300m();
+
+#ifndef HDSL_MULTI_CHANNEL
+    /* Register PRU interrupt */
+    HwiP_Params_init(&hwiPrms);
+    hwiPrms.intNum   = intrNum;
+    hwiPrms.callback = (void*)&HDSL_IsrFxn;
+    HwiP_construct(&gPRUHwiObject, &hwiPrms);
+#endif
+
     HDSL_iep_init(gHdslHandleCh0);
     ClockP_usleep(5000);
     if(CONFIG_HDSL0_MODE==0)
@@ -682,11 +913,19 @@ static void display_menu(void)
     DebugP_log("\r\n | %2d : RSSI                                                                    |", MENU_RSSI);
     DebugP_log("\r\n | %2d : Parameter Channel Short Message Write                                   |", MENU_PC_SHORT_MSG_WRITE);
     DebugP_log("\r\n | %2d : Parameter Channel Short Message Read                                    |", MENU_PC_SHORT_MSG_READ);
-    DebugP_log("\r\n | %2d : Access on RID 0h, direct read access with length 8                      |", MENU_DIRECT_READ_RID0_LENGTH8);
-    DebugP_log("\r\n | %2d : Access on RID 81h, direct read access with length 8                     |", MENU_DIRECT_READ_RID81_LENGTH8);
-    DebugP_log("\r\n | %2d : Access on RID 81h, direct read access with length 2                     |", MENU_DIRECT_READ_RID81_LENGTH2);
-    DebugP_log("\r\n | %2d : Access on RID 0h, indirect write, length 8, with offset 0               |", MENU_INDIRECT_WRITE_RID0_LENGTH8_OFFSET0);
-    DebugP_log("\r\n | %2d : Access on RID 0h; indirect write, length 8, without offset value        |", MENU_INDIRECT_WRITE_RID0_LENGTH8);
+    DebugP_log("\r\n | %2d : Parameter Channel Long Message Read                                     |", MENU_DIRECT_READ_RID0_LENGTH8);
+    DebugP_log("\r\n |      Access on RID 0h, direct read access with length 8                      |");
+    DebugP_log("\r\n | %2d : Parameter Channel Long Message Read                                     |", MENU_DIRECT_READ_RID81_LENGTH8);
+    DebugP_log("\r\n |      Access on RID 81h, direct read access with length 8                     |");
+    DebugP_log("\r\n | %2d : Parameter Channel Long Message Read                                     |", MENU_DIRECT_READ_RID81_LENGTH2);
+    DebugP_log("\r\n |      Access on RID 81h, direct read access with length 2                     |");
+    DebugP_log("\r\n | %2d : Parameter Channel Long Message Write                                    |", MENU_INDIRECT_WRITE_RID0_LENGTH8_OFFSET0);
+    DebugP_log("\r\n |      Access on RID 0h, indirect write, length 8, with offset 0               |");
+    DebugP_log("\r\n | %2d : Parameter Channel Long Message Write                                    |", MENU_INDIRECT_WRITE_RID0_LENGTH8);
+    DebugP_log("\r\n |      Access on RID 0h; indirect write, length 8, without offset value        |");
+#ifndef HDSL_MULTI_CHANNEL
+    DebugP_log("\r\n | %2d : HDSL registers into Memory                                              |", MENU_HDSL_REG_INTO_MEMORY);
+#endif
     DebugP_log("\r\n |------------------------------------------------------------------------------|\n");
     DebugP_log("\r\n Enter value: ");
 }
@@ -932,113 +1171,33 @@ void  indirect_write_rid0_length8(HDSL_Handle hdslHandle)
 
 static int get_menu(void)
 {
-    unsigned int cmd;
+    uint32_t cmd;
 
-
-    if(DebugP_scanf("%d\n", &cmd) < 0 || cmd >= MENU_LIMIT)
+#ifndef HDSL_MULTI_CHANNEL
+    if(DebugP_scanf("%d\n", &cmd) < 0 || (cmd >= MENU_LIMIT))
+#else
+    if(DebugP_scanf("%d\n", &cmd) < 0 || (cmd >= MENU_LIMIT) || (cmd == MENU_HDSL_REG_INTO_MEMORY))
+#endif
     {
         DebugP_log("\r\n WARNING: invalid option, Safe position selected");
         cmd = MENU_SAFE_POSITION;
-        DebugP_log( "\r\n Enter 0 :Fast Position \r\n Enter 1: Safe Position 1 \r\n Enter 2: Safe Position 2 \r");
-
-        if((DebugP_scanf("%d", &get_pos) < 0) || get_pos > 2)
-        {
-            DebugP_log("\r\n  WARNING: invalid position value");
-        }
     }
 
-    if (cmd == MENU_PC_LONG_MSG_WRITE)
+#ifndef HDSL_MULTI_CHANNEL
+
+    if (cmd == MENU_HDSL_REG_INTO_MEMORY)
     {
-
-        DebugP_log("\r\n Enter addgRess High (hex value): ");
-        if(DebugP_scanf("%x\n", &gPc_addrh) < 0 || gPc_addrh > 0x3f)
-        {
-            DebugP_log("\r\n WARNING: invalid addgRess High");
-            return MENU_INVALID;
-        }
-
-        DebugP_log("\r\n Enter addgRess Low (hex value): ");
-        if(DebugP_scanf("%x\n", &gPc_addrl) < 0 || gPc_addrl > 0x3f)
-        {
-            DebugP_log("\r\n WARNING: invalid addgRess Low");
-            return MENU_INVALID;
-        }
-
-        DebugP_log("\r\n Enter parameter channel offset high (hex value): ");
-        if(DebugP_scanf("%x\n", &gPc_offh) < 0 || gPc_offh > 0x3f)
-        {
-            DebugP_log("\r\n WARNING: invalid parameter channel offset high");
-            return MENU_INVALID;
-        }
-
-        DebugP_log("\r\n Enter parameter channel offset low (hex value): ");
-        if(DebugP_scanf("%x\n", &gPc_offl) < 0 || gPc_offl > 0x3f)
-        {
-            DebugP_log("\r\n WARNING: invalid parameter channel offset low");
-            return MENU_INVALID;
-        }
-
-        DebugP_log("\r\n Enter buffer 0 data (hex value): ");
-        if (DebugP_scanf("%x\n", &gPc_buf0) < 0 || gPc_buf0 > 0xff)
-        {
-            DebugP_log("\r\n WARNING: invalid buffer 0 data");
-            return MENU_INVALID;
-        }
-
-        DebugP_log("\r\n Enter buffer 1 data (hex value): ");
-        if (DebugP_scanf("%x\n", &gPc_buf1) < 0 || gPc_buf1 > 0xff)
-        {
-            DebugP_log("\r\n WARNING: invalid buffer 1 data");
-            return MENU_INVALID;
-        }
-
-        DebugP_log("\r\n Enter buffer 2 data (hex value): ");
-        if (DebugP_scanf("%x\n", &gPc_buf2) < 0 || gPc_buf2 > 0xff)
-        {
-            DebugP_log("\r\n WARNING: invalid buffer 2 data");
-            return MENU_INVALID;
-        }
-
-        DebugP_log("\r\n Enter buffer 3 data (hex value): ");
-        if (DebugP_scanf("%x\n", &gPc_buf3) < 0 || gPc_buf3 > 0xff)
-        {
-            DebugP_log("\r\n WARNING: invalid buffer 3 data");
-            return MENU_INVALID;
-        }
-
-        DebugP_log("\r\n Enter buffer 4 data (hex value): ");
-        if (DebugP_scanf("%x\n", &gPc_buf4) < 0 || gPc_buf4 > 0xff)
-        {
-            DebugP_log("\r\n WARNING: invalid buffer 4 data");
-            return MENU_INVALID;
-        }
-
-        DebugP_log("\r\n Enter buffer 5 data (hex value): ");
-        if (DebugP_scanf("%x\n", &gPc_buf5) < 0 || gPc_buf5 > 0xff)
-        {
-            DebugP_log("\r\n WARNING: invalid buffer 5 data");
-            return MENU_INVALID;
-        }
-
-        DebugP_log("\r\n Enter buffer 6 data (hex value): ");
-        if (DebugP_scanf("%x\n", &gPc_buf6) < 0 || gPc_buf6 > 0xff)
-        {
-            DebugP_log("\r\n WARNING: invalid buffer 6 data");
-            return MENU_INVALID;
-        }
-
-        DebugP_log("\r\n Enter buffer 7 data (hex value): ");
-        if (DebugP_scanf("%x\n", &gPc_buf7) < 0 || gPc_buf7 > 0xff)
-        {
-            DebugP_log("\r\n WARNING: invalid buffer 7 data");
-            return MENU_INVALID;
-        }
+       DebugP_log("\r\n| How many traces you want to copy : ");
+       if(DebugP_scanf("%u\n", &trace_count) < 0 || trace_count >= NUM_RESOURCES)
+       {
+           DebugP_log("\r\n| WARNING: invalid data\n|\n|\n");
+           return MENU_INVALID;
+       }
     }
+#endif
 
     return cmd;
 }
-
-
 
 #ifdef HDSL_AM64xE1_TRANSCEIVER
 static void hdsl_i2c_io_expander(void *args)
@@ -1086,12 +1245,25 @@ static void hdsl_i2c_io_expander(void *args)
 
 void hdsl_diagnostic_main(void *arg)
 {
-    uint32_t val, acc_bits, pos_bits;
-    uint8_t ureg;
+    uint32_t    val, acc_bits, pos_bits;
+    uint8_t     ureg;
+
+#ifndef HDSL_MULTI_CHANNEL
+    int32_t     retVal = UDMA_SOK;
+#endif
 
     /* Open drivers to open the UART driver for console */
     Drivers_open();
     Board_driversOpen();
+
+#ifndef HDSL_MULTI_CHANNEL
+    /* UDMA initialization */
+    chHandle = gConfigUdma0BlkCopyChHandle[0];  /* Has to be done after driver open */
+    /* Channel enable */
+    retVal = Udma_chEnable(chHandle);
+    DebugP_assert(UDMA_SOK == retVal);
+#endif
+
 /*C16 pin High for Enabling ch0 in booster pack */
     #if (CONFIG_HDSL0_BOOSTER_PACK)
         GPIO_setDirMode(ENC1_EN_BASE_ADDR, ENC1_EN_PIN, ENC1_EN_DIR);
@@ -1129,112 +1301,110 @@ void hdsl_diagnostic_main(void *arg)
     /*need some extra time for SYNC mode since frames are longer*/
     #if (CONFIG_HDSL0_CHANNEL0==1)
     //Channel 0 starts here:
-    ClockP_usleep(1000);
-    for (ureg = HDSL_get_master_qm(gHdslHandleCh0), val = 0; !(ureg & 0x80); ureg = HDSL_get_master_qm(gHdslHandleCh0), val++, ClockP_usleep(10))
-     {
-         if (val > 100)
-         { /* wait 1ms to detect, increase if reqd. */
-             DebugP_log( "\r\nHiperface DSL encoder not detected on gHdslHandleCh0 \n\n");
-             ClockP_usleep(5000);
-         }
-     }
+    while(1)
+    {
+        ureg = HDSL_get_master_qm(gHdslHandleCh0);
 
-     DebugP_log( "\r\n");
-     DebugP_log( "\r|------------------------------------------------------------------------------|\n");
-     DebugP_log( "\r|                            Hiperface DSL diagnostic                          |\n");
-     DebugP_log( "\r|------------------------------------------------------------------------------|\n");
-     DebugP_log( "\r|========Channel 0:                                                            |\n");
-     DebugP_log( "\r|\n");
-     DebugP_log( "\r| Quality monitoring value: %u\n", ureg & 0xF);
+        if((ureg & 0x80) != 0)
+            break;
 
-     ureg = HDSL_get_edges(gHdslHandleCh0);
-     DebugP_log( "\r| Edges: 0x%x\n", ureg);
+        DebugP_log( "\r\n Hiperface DSL encoder not detected\n");
+        ClockP_usleep(10000);
+    }
 
-     ureg = HDSL_get_delay(gHdslHandleCh0);
-     DebugP_log("\r\n | Cable delay: %u                                                                |", ureg & 0xF);
-     DebugP_log("\r\n | RSSI: %u                                                                       |", (ureg & 0xF0) >> 4);
-
-     val =HDSL_get_enc_id(gHdslHandleCh0, 0) | (HDSL_get_enc_id(gHdslHandleCh0, 1) << 8) |
-               (HDSL_get_enc_id(gHdslHandleCh0, 2) << 16);
-     acc_bits = val & 0xF;
-     acc_bits += 8;
-     pos_bits = (val & 0x3F0) >> 4;
-     pos_bits += acc_bits;
-     DebugP_log("\r\n | Encoder ID: 0x%x", val);
-     DebugP_log( "(");
-     DebugP_log( "Acceleration bits: %u ,", acc_bits);
-     DebugP_log( "Position bits: %u,", pos_bits);
-     DebugP_log( "%s", val & 0x400 ? " Bipolar position" : " Unipolar position");
-     DebugP_log(")|");
-     DebugP_log("\r\n |-------------------------------------------------------------------------------|");
-
-     DebugP_log("\r\n Enter single turn bits: ");
-     if((DebugP_scanf("%d\n", &gHdslHandleCh0->res) < 0) || gHdslHandleCh0->res > pos_bits)
-     {
-             DebugP_log( "\r| WARNING: invalid single turn bits, assuming single turn encoder\n");
-                         gHdslHandleCh0->res = pos_bits;
-     }
-     gHdslHandleCh0->multi_turn = pos_bits - gHdslHandleCh0->res;
-     gHdslHandleCh0->mask = pow(2, gHdslHandleCh0->res) - 1;
-     if (gHdslHandleCh0->multi_turn)
-     {
-         DebugP_log( "\r| Multi turn bits: %u\n", gHdslHandleCh0->multi_turn);
-     }
+    DebugP_log( "\r\n");
+    DebugP_log( "\r |-------------------------------------------------------------------------------|\n");
+    DebugP_log( "\r |            Hiperface DSL Diagnostic : Channel 0                               |\n");
+    DebugP_log( "\r |-------------------------------------------------------------------------------|\n");
+    DebugP_log( "\r |                                                                               |\n");
+    DebugP_log( "\r | Quality monitoring value: %u                                                  |\n", ureg & 0xF);
+    ureg = HDSL_get_edges(gHdslHandleCh0);
+    DebugP_log( "\r | Edges: 0x%x                                                                    |", ureg);
+    ureg = HDSL_get_delay(gHdslHandleCh0);
+    DebugP_log("\r\n | Cable delay: %u                                                                |", ureg & 0xF);
+    DebugP_log("\r\n | RSSI: %u                                                                       |", (ureg & 0xF0) >> 4);
+    val =HDSL_get_enc_id(gHdslHandleCh0, 0) | (HDSL_get_enc_id(gHdslHandleCh0, 1) << 8) |
+              (HDSL_get_enc_id(gHdslHandleCh0, 2) << 16);
+    acc_bits = val & 0xF;
+    acc_bits += 8;
+    pos_bits = (val & 0x3F0) >> 4;
+    pos_bits += acc_bits;
+    DebugP_log("\r\n | Encoder ID: 0x%x", val);
+    DebugP_log( "(");
+    DebugP_log( "Acceleration bits: %u ,", acc_bits);
+    DebugP_log( "Position bits: %u,", pos_bits);
+    DebugP_log( "%s", val & 0x400 ? " Bipolar position" : " Unipolar position");
+    DebugP_log(")|");
+    DebugP_log("\r\n |-------------------------------------------------------------------------------|");
+    DebugP_log("\r\n Enter single turn bits: ");
+    if((DebugP_scanf("%d\n", &gHdslHandleCh0->res) < 0) || gHdslHandleCh0->res > pos_bits)
+    {
+            DebugP_log( "\r| WARNING: invalid single turn bits, assuming single turn encoder\n");
+                        gHdslHandleCh0->res = pos_bits;
+    }
+    gHdslHandleCh0->multi_turn = pos_bits - gHdslHandleCh0->res;
+    gHdslHandleCh0->mask = pow(2, gHdslHandleCh0->res) - 1;
+    if (gHdslHandleCh0->multi_turn)
+    {
+        DebugP_log( "\r\n Multi turn bits: %u\n", gHdslHandleCh0->multi_turn);
+    }
     #endif
     #if (CONFIG_HDSL0_CHANNEL1==1)
 
-        //Channel 1 starts here:
-        ClockP_usleep(1000);
-        for (ureg = HDSL_get_master_qm(gHdslHandleCh1), val = 0; !(ureg & 0x80); ureg = HDSL_get_master_qm(gHdslHandleCh1), val++, ClockP_usleep(10))
-        {
-            if (val > 100)
-            { /* wait 1ms to detect, increase if reqd. */
-                DebugP_log( "\r\nHiperface DSL encoder not detected on gHdslHandleCh1 \n\n");
-                ClockP_usleep(5000);
-            }
-        }
-        DebugP_log( "\r\n");
-        DebugP_log( "\r|------------------------------------------------------------------------------|\n");
-        DebugP_log( "\r|                            Hiperface DSL diagnostic                          |\n");
-        DebugP_log( "\r|------------------------------------------------------------------------------|\n");
-        DebugP_log( "\r|========Channel 1:                                                            |\n");
-        DebugP_log( "\r|\n");
-        DebugP_log( "\r| Quality monitoring value: %u\n", ureg & 0xF);
-        ureg = HDSL_get_edges(gHdslHandleCh1);
-        DebugP_log( "\r| Edges: 0x%x\n", ureg);
-        ureg = HDSL_get_delay(gHdslHandleCh1);
-        DebugP_log("\r\n | Cable delay: %u                                                                |", ureg & 0xF);
-        DebugP_log("\r\n | RSSI: %u                                                                       |", (ureg & 0xF0) >> 4);
-        val =HDSL_get_enc_id(gHdslHandleCh1, 0) | (HDSL_get_enc_id(gHdslHandleCh1, 1) << 8) |
-                  (HDSL_get_enc_id(gHdslHandleCh1, 2) << 16);
-        acc_bits = val & 0xF;
-        acc_bits += 8;
-        pos_bits = (val & 0x3F0) >> 4;
-        pos_bits += acc_bits;
-        DebugP_log("\r\n | Encoder ID: 0x%x", val);
-        DebugP_log( "(");
-        DebugP_log( "Acceleration bits: %u ,", acc_bits);
-        DebugP_log( "Position bits: %u,", pos_bits);
-        DebugP_log( "%s", val & 0x400 ? " Bipolar position" : " Unipolar position");
-        DebugP_log(")|");
-        DebugP_log("\r\n |-------------------------------------------------------------------------------|");
-
-        DebugP_log("\r\n Enter single turn bits: ");
-        if((DebugP_scanf("%d\n", &gHdslHandleCh1->res) < 0) || gHdslHandleCh1->res > pos_bits)
-        {
-                DebugP_log( "\r| WARNING: invalid single turn bits, assuming single turn encoder\n");
-                            gHdslHandleCh1->res = pos_bits;
-        }
-        gHdslHandleCh1->multi_turn = pos_bits - gHdslHandleCh1->res;
-        gHdslHandleCh1->mask = pow(2, gHdslHandleCh1->res) - 1;
-        if (gHdslHandleCh1->multi_turn)
-        {
-            DebugP_log( "\r| Multi turn bits: %u\n", gHdslHandleCh1->multi_turn);
-        }
-    #endif
+    //Channel 1 starts here:
     while(1)
     {
-        int menu;
+        ureg = HDSL_get_master_qm(gHdslHandleCh1);
+
+        if((ureg & 0x80) != 0)
+            break;
+
+        DebugP_log( "\r\n Hiperface DSL encoder not detected\n");
+        ClockP_usleep(10000);
+    }
+
+    DebugP_log( "\r\n");
+    DebugP_log( "\r |-------------------------------------------------------------------------------|\n");
+    DebugP_log( "\r |            Hiperface DSL Diagnostic : Channel 1                               |\n");
+    DebugP_log( "\r |-------------------------------------------------------------------------------|\n");
+    DebugP_log( "\r |                                                                               |\n");
+    DebugP_log( "\r | Quality monitoring value: %u                                                  |\n", ureg & 0xF);
+    ureg = HDSL_get_edges(gHdslHandleCh1);
+    DebugP_log( "\r | Edges: 0x%x                                                                    |", ureg);
+    ureg = HDSL_get_delay(gHdslHandleCh1);
+    DebugP_log("\r\n | Cable delay: %u                                                                |", ureg & 0xF);
+    DebugP_log("\r\n | RSSI: %u                                                                       |", (ureg & 0xF0) >> 4);
+    val =HDSL_get_enc_id(gHdslHandleCh1, 0) | (HDSL_get_enc_id(gHdslHandleCh1, 1) << 8) |
+                (HDSL_get_enc_id(gHdslHandleCh1, 2) << 16);
+    acc_bits = val & 0xF;
+    acc_bits += 8;
+    pos_bits = (val & 0x3F0) >> 4;
+    pos_bits += acc_bits;
+    DebugP_log("\r\n | Encoder ID: 0x%x", val);
+    DebugP_log( "(");
+    DebugP_log( "Acceleration bits: %u ,", acc_bits);
+    DebugP_log( "Position bits: %u,", pos_bits);
+    DebugP_log( "%s", val & 0x400 ? " Bipolar position" : " Unipolar position");
+    DebugP_log(")|");
+    DebugP_log("\r\n |-------------------------------------------------------------------------------|");
+
+    DebugP_log("\r\n Enter single turn bits: ");
+    if((DebugP_scanf("%d\n", &gHdslHandleCh1->res) < 0) || gHdslHandleCh1->res > pos_bits)
+    {
+            DebugP_log( "\r| WARNING: invalid single turn bits, assuming single turn encoder\n");
+                        gHdslHandleCh1->res = pos_bits;
+    }
+    gHdslHandleCh1->multi_turn = pos_bits - gHdslHandleCh1->res;
+    gHdslHandleCh1->mask = pow(2, gHdslHandleCh1->res) - 1;
+    if (gHdslHandleCh1->multi_turn)
+    {
+        DebugP_log( "\r\n Multi turn bits: %u\n", gHdslHandleCh1->multi_turn);
+    }
+    #endif
+
+    while(1)
+    {
+        int32_t menu;
         display_menu();
         menu = get_menu();
         if (CONFIG_HDSL0_CHANNEL0==1)

@@ -19,7 +19,6 @@ const example_file_list = [
     "examples/position_sense/endat_diagnostic/multi_channel_single_pru/.project/project.js",
     "examples/position_sense/hdsl_diagnostic/multi_channel/.project/project.js",
     "examples/position_sense/hdsl_diagnostic/single_channel/.project/project.js",
-    "examples/position_sense/hdsl_diagnostic_with_traces/.project/project.js",
     "examples/position_sense/tamagawa_diagnostic/multi_channel/.project/project.js",
     "examples/position_sense/tamagawa_diagnostic/single_channel/.project/project.js",
     "examples/current_sense/icss_sdfm/.project/project.js",

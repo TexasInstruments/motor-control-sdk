@@ -1,8 +1,8 @@
 /**
  * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
  * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
- * @cliArgs --device "AM243x_ALX_beta" --package "ALX" --part "ALX" --context "r5fss0-0" --product "MCU_PLUS_SDK@07.03.01"
- * @versions {"tool":"1.14.0+2667"}
+ * @cliArgs --device "AM243x_ALX_beta" --package "ALX" --part "ALX" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@09.00.00"
+ * @versions {"tool":"1.17.0+3128"}
  */
 
 /**
@@ -15,6 +15,8 @@ const i2c        = scripting.addModule("/drivers/i2c/i2c", {}, false);
 const i2c1       = i2c.addInstance();
 const pruicss    = scripting.addModule("/drivers/pruicss/pruicss", {}, false);
 const pruicss1   = pruicss.addInstance();
+const udma       = scripting.addModule("/drivers/udma/udma", {}, false);
+const udma1      = udma.addInstance();
 const debug_log  = scripting.addModule("/kernel/dpl/debug_log");
 const mpu_armv7  = scripting.addModule("/kernel/dpl/mpu_armv7", {}, false);
 const mpu_armv71 = mpu_armv7.addInstance();
@@ -31,7 +33,7 @@ const hdsl1      = hdsl.addInstance();
 gpio1.$name                = "CONFIG_GPIO0";
 gpio1.pinDir               = "OUTPUT";
 gpio1.GPIO.gpioPin.rx      = false;
-gpio1.GPIO.gpioPin.$assign = "ball.R20";
+gpio1.GPIO.gpioPin.$assign = "GPMC0_AD1";
 
 i2c1.$name       = "CONFIG_I2C0";
 i2c1.I2C.$assign = "I2C1";
@@ -39,6 +41,11 @@ i2c1.I2C.$assign = "I2C1";
 pruicss1.$name                           = "CONFIG_PRU_ICSS1";
 pruicss1.instance                        = "ICSSG1";
 pruicss1.AdditionalICSSSettings[0].$name = "CONFIG_PRU_ICSS_IO1";
+
+udma1.$name                                     = "CONFIG_UDMA0";
+udma1.udmaBlkCopyChannel.create(1);
+udma1.udmaBlkCopyChannel[0].$name               = "CONFIG_UDMA_BLKCOPY_CH0";
+udma1.udmaBlkCopyChannel[0].transferCallbackFxn = "App_udmaEventCb";
 
 debug_log.enableUartLog        = true;
 debug_log.enableCssLog         = false;
@@ -72,6 +79,7 @@ mpu_armv75.accessPermissions = "Supervisor RD, User RD";
 
 hdsl1.$name                      = "CONFIG_HDSL0";
 hdsl1.Booster_Pack               = true;
+hdsl1.coreClk                    = 300000000;
 hdsl1.PRU_ICSSG0_PRU.$assign     = "PRU_ICSSG0_PRU1";
 hdsl1.PRU_ICSSG0_PRU.GPO5.$used  = false;
 hdsl1.PRU_ICSSG0_PRU.GPO4.$used  = false;
@@ -86,7 +94,7 @@ hdsl1.ENC1_EN              = gpio2;
 gpio2.$name                = "ENC1_EN";
 gpio2.GPIO.$assign         = "GPIO1";
 gpio2.GPIO.gpioPin.rx      = false;
-gpio2.GPIO.gpioPin.$assign = "ball.C16";
+gpio2.GPIO.gpioPin.$assign = "MMC1_SDWP";
 
 const pruicss2                           = pruicss.addInstance({}, false);
 pruicss2.$name                           = "CONFIG_PRU_ICSS0";
@@ -99,11 +107,11 @@ pruicss2.AdditionalICSSSettings[0].$name = "CONFIG_PRU_ICSS_IO0";
  * re-solve from scratch.
  */
 gpio1.GPIO.$suggestSolution                 = "GPIO0";
-i2c1.I2C.SCL.$suggestSolution               = "ball.A17";
-i2c1.I2C.SDA.$suggestSolution               = "ball.B18";
-debug_log.uartLog.UART.RXD.$suggestSolution = "ball.B10";
-debug_log.uartLog.UART.TXD.$suggestSolution = "ball.B11";
-hdsl1.PRU_ICSSG0_PRU.GPO2.$suggestSolution  = "ball.M2";
-hdsl1.PRU_ICSSG0_PRU.GPO1.$suggestSolution  = "ball.J2";
-hdsl1.PRU_ICSSG0_PRU.GPO0.$suggestSolution  = "ball.L5";
-hdsl1.PRU_ICSSG0_PRU.GPI13.$suggestSolution = "ball.T4";
+i2c1.I2C.SCL.$suggestSolution               = "I2C1_SCL";
+i2c1.I2C.SDA.$suggestSolution               = "I2C1_SDA";
+debug_log.uartLog.UART.RXD.$suggestSolution = "UART0_RXD";
+debug_log.uartLog.UART.TXD.$suggestSolution = "UART0_TXD";
+hdsl1.PRU_ICSSG0_PRU.GPO2.$suggestSolution  = "PRG0_PRU1_GPO2";
+hdsl1.PRU_ICSSG0_PRU.GPO1.$suggestSolution  = "PRG0_PRU1_GPO1";
+hdsl1.PRU_ICSSG0_PRU.GPO0.$suggestSolution  = "PRG0_PRU1_GPO0";
+hdsl1.PRU_ICSSG0_PRU.GPI13.$suggestSolution = "PRG0_PRU1_GPO13";
