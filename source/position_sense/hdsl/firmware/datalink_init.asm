@@ -268,11 +268,10 @@ datalink_learn:
 	NOP_2
     .endif
  	.if $defined("HDSL_MULTICHANNEL")
-    .if $defined("CHANNEL_0")
 	NOP_2
 	NOP_2
     .endif
-    .endif
+
 ; measured starting point at 0 cable length
 ; first 8 bits will be all ones is delay from encoder and transceiver
 ; second 8 bits is oversampled DSL bit which is 0 on test pattern
@@ -361,12 +360,13 @@ datalink_learn_skip_one_bit_1:
 ; pre-load register to save time on last bit
 ;	ldi			REG_TMP2, (74*CYCLES_BIT-9) ; 100 m
     .if $defined("FREERUN_300_MHZ")
-	ldi			r3, (74*CYCLES_BIT+9-2)
+	ldi			r3, (74*CYCLES_BIT+9)
     .else
     ldi			r3, (74*CYCLES_BIT+9)
     .endif
 
 datalink_learn_recv_loop_last_bit:
+
 	qbbc			datalink_learn_recv_loop_last_bit, r31, RX_VALID_FLAG
 
 ; now finisch with last bit sample and store
@@ -396,7 +396,6 @@ datalink_learn_recv_loop_final:
 	sub			REG_TMP11, r3, REG_TMP2
 	MOV			REG_TMP2.b0, REG_TMP11.b0
 ; WAIT subracts -1 from parameter before compare. On 0 it wraps around!!!
-
 	WAIT		REG_TMP11
 
 datalink_learn_skip_wait:
