@@ -1987,10 +1987,11 @@ wait_delay:
 	NOP_2
 	NOP_2
 	NOP_2
-	NOP_2
-	NOP_2
     .endif  ;HDSL_MULTICHANNEL
-
+	.if $defined(EXT_SYNC_ENABLE)
+	NOP_2
+	NOP_2
+	.endif ;EXT_SYNC_ENABLE
 ; same code as in learn
 ; with 4 or 3 bit encoder does not respond after time, starts working with 2 set it to 1
 wait_on_rx_transtion_in_wait_delay:
