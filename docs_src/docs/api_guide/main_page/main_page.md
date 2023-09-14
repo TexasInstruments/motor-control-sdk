@@ -23,7 +23,7 @@ Given below is a block diagram of the SW modules in this SDK
 
 The main software components in the block diagram specific to motor control are described below
 
-\cond SOC_AM64X || SOC_AM243X
+\cond SOC_AM64X
 
 <table>
 <tr>
@@ -52,6 +52,52 @@ The main software components in the block diagram specific to motor control are 
     <td> %SDFM
     <td>\ref SDFM
     <td> Driver and firmware for current sense using Sigma-Delta Filtering Module
+</tr>
+<tr><td colspan="3" bgcolor=#F0F0F0>**Examples and Demos**</td></tr>
+<tr>
+    <td>Examples and Demos
+    <td>\ref EXAMPLES
+    <td>Examples and demos showing usage of different SW libraries and APIs for motor control
+</tr>
+</table>
+
+\endcond
+
+\cond SOC_AM243X
+
+<table>
+<tr>
+    <th>Software Components
+    <th>Documentation Page
+    <th>Description
+</tr>
+<tr><td colspan="3" bgcolor=#F0F0F0>**Position Sense Encoders**</td></tr>
+<tr>
+    <td> EnDat
+    <td>\ref ENDAT
+    <td> Driver and PRU-ICSS firmware for EnDat encoder interface
+</tr>
+<tr>
+    <td> HDSL
+    <td>\ref HDSL
+    <td> Driver and PRU-ICSS firmware for Hiperface DSL encoder interface
+</tr>
+<tr>
+    <td> Tamagawa
+    <td>\ref TAMAGAWA
+    <td> Driver and PRU-ICSS firmware for Tamagawa encoder interface
+</tr>
+<tr><td colspan="3" bgcolor=#F0F0F0>**Current Sense**</td></tr>
+<tr>
+    <td> %SDFM
+    <td>\ref SDFM
+    <td> Driver and firmware for current sense using Sigma-Delta Filtering Module
+</tr>
+<tr><td colspan="3" bgcolor=#F0F0F0>**Real Time Libraries**</td></tr>
+<tr>
+    <td> Digital Control Library (DCL)
+    <td>\ref DCL
+    <td> Header-only library for digital control applications
 </tr>
 <tr><td colspan="3" bgcolor=#F0F0F0>**Examples and Demos**</td></tr>
 <tr>
