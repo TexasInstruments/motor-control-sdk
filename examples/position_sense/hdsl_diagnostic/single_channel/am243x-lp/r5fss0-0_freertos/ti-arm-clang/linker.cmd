@@ -106,7 +106,7 @@ SECTIONS
     /* General purpose non cacheable memory, used in some examples */
     .bss.nocache (NOLOAD) : {} > NON_CACHE_MEM
 
-	.hdslInterface_mem (NOLOAD) > DDR
+	.hdslInterface_mem (NOLOAD) > MSRAM
 }
 
 /*
@@ -135,9 +135,8 @@ MEMORY
     /* when using multi-core application's i.e more than one R5F/M4F active, make sure
      * this memory does not overlap with other R5F's
      */
-    MSRAM     : ORIGIN = 0x70080000 , LENGTH = 0x60000
-	/* DDR segment of memory */
-    DDR : ORIGIN = 0x80000000 , LENGTH = 0x3FFFFFFF
+    MSRAM     : ORIGIN = 0x70080000 , LENGTH = 0x00150000
+
     /* This section can be used to put XIP section of the application in flash, make sure this does not overlap with
      * other CPUs. Also make sure to add a MPU entry for this section and mark it as cached and code executable
      */
