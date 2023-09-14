@@ -107,7 +107,7 @@
 #define ENCODER_PING_REG_ADDRESS    (0x7F)
 
 
-#ifndef HDSL_MULTI_CHANNEL
+#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
 /* Memory Trace is triggered for each H-Frame. SYS_EVENT_21 is triggered for each
    H-Frame from PRU. SYS_EVENT_21 is mapped to PRU_ICSSG0_PR1_HOST_INTR_PEND_3 of R5F
    in INTC Mapping. */
@@ -143,7 +143,7 @@ uint8_t gPc_addrh, gPc_addrl, gPc_offh, gPc_offl, gPc_buf0, gPc_buf1, gPc_buf2, 
 static TCA6424_Config  gTCA6424_Config;
 #endif
 
-#ifndef HDSL_MULTI_CHANNEL
+#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
 
 Udma_ChHandle   chHandle;
 
@@ -165,7 +165,7 @@ HwiP_Object gPRUHwiObject;
 uint8_t gUdmaTestTrpdMem[UDMA_TEST_TRPD_SIZE] __attribute__((aligned(UDMA_CACHELINE_ALIGNMENT)));
 #endif
 
-#ifndef HDSL_MULTI_CHANNEL
+#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
 
 void App_udmaEventCb(Udma_EventHandle eventHandle, uint32_t eventType, void *appData);
 
@@ -556,7 +556,7 @@ void process_request(HDSL_Handle hdslHandle,int32_t menu)
                 DebugP_log("\r\n RSSI: %u", ret_status);
             }
             break;
-#ifndef HDSL_MULTI_CHANNEL
+#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
         case MENU_HDSL_REG_INTO_MEMORY:
             traces_into_memory(hdslHandle);
             break;
@@ -724,14 +724,14 @@ void hdsl_init(void)
 {
     uint8_t         ES;
     uint32_t        period;
-#ifndef HDSL_MULTI_CHANNEL
+#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
     HwiP_Params     hwiPrms;
     uint32_t        intrNum = HDSL_MEMORY_TRACE_R5F_IRQ_NUM;
 #endif
     
     hdsl_pruss_init();
     
-#ifndef HDSL_MULTI_CHANNEL
+#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
     /* Register PRU interrupt */
     HwiP_Params_init(&hwiPrms);
     hwiPrms.intNum   = intrNum;
@@ -769,14 +769,14 @@ void hdsl_init_300m(void)
 {
     uint8_t         ES;
     uint32_t        period;
-#ifndef HDSL_MULTI_CHANNEL
+#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
     HwiP_Params     hwiPrms;
     uint32_t        intrNum = HDSL_MEMORY_TRACE_R5F_IRQ_NUM;
 #endif
 
     hdsl_pruss_init_300m();
 
-#ifndef HDSL_MULTI_CHANNEL
+#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
     /* Register PRU interrupt */
     HwiP_Params_init(&hwiPrms);
     hwiPrms.intNum   = intrNum;
@@ -920,7 +920,7 @@ static void display_menu(void)
     DebugP_log("\r\n |      Access on RID 0h, indirect write, length 8, with offset 0               |");
     DebugP_log("\r\n | %2d : Parameter Channel Long Message Write                                    |", MENU_INDIRECT_WRITE_RID0_LENGTH8);
     DebugP_log("\r\n |      Access on RID 0h; indirect write, length 8, without offset value        |");
-#ifndef HDSL_MULTI_CHANNEL
+#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
     DebugP_log("\r\n | %2d : HDSL registers into Memory                                              |", MENU_HDSL_REG_INTO_MEMORY);
 #endif
     DebugP_log("\r\n |------------------------------------------------------------------------------|\n");
@@ -1170,7 +1170,7 @@ static int get_menu(void)
 {
     uint32_t cmd;
 
-#ifndef HDSL_MULTI_CHANNEL
+#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
     if(DebugP_scanf("%d\n", &cmd) < 0 || (cmd >= MENU_LIMIT))
 #else
     if(DebugP_scanf("%d\n", &cmd) < 0 || (cmd >= MENU_LIMIT) || (cmd == MENU_HDSL_REG_INTO_MEMORY))
@@ -1180,7 +1180,7 @@ static int get_menu(void)
         cmd = MENU_SAFE_POSITION;
     }
 
-#ifndef HDSL_MULTI_CHANNEL
+#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
 
     if (cmd == MENU_HDSL_REG_INTO_MEMORY)
     {
@@ -1245,7 +1245,7 @@ void hdsl_diagnostic_main(void *arg)
     uint32_t    val, acc_bits, pos_bits;
     uint8_t     ureg;
 
-#ifndef HDSL_MULTI_CHANNEL
+#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
     int32_t     retVal = UDMA_SOK;
 #endif
 
@@ -1253,7 +1253,7 @@ void hdsl_diagnostic_main(void *arg)
     Drivers_open();
     Board_driversOpen();
 
-#ifndef HDSL_MULTI_CHANNEL
+#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
     /* UDMA initialization */
     chHandle = gConfigUdma0BlkCopyChHandle[0];  /* Has to be done after driver open */
     /* Channel enable */
