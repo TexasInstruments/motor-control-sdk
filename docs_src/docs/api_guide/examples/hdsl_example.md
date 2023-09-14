@@ -5,7 +5,7 @@
 The HDSL diagnostic application described here interacts with the firmware interface.
 
 HDSL diagnostic application does below,
-- Configures pinmux, GPIO, ICSS clock to 225MHz,
+- Configures pinmux, GPIO, ICSS clock to 300MHz,
 - Initializes ICSS0-PRU1, ICSS0-IEP0 and IEP1(for SYNC mode support.Timesync router is used to latch the loopback.),
 - Loads lookup table for encoding/decoding of Hiperface data
 - Loads the initialization section of PRU firmware & executes it.
@@ -13,6 +13,15 @@ HDSL diagnostic application does below,
 Firmware is split to three sections, initialization, datalink and transport.
 At startup, the application displays details about encoder and status.
 It then presents the user with menu options, based on the option selected, application communicates with HDSL interface and the result is presented to the user.
+
+This example also allows the capability to save the HDSL register data into memory for the defined duration.
+
+\cond SOC_AM243X
+- For @VAR_BOARD_NAME_LOWER example, the data is stored in DDR.
+- For @VAR_LP_BOARD_NAME_LOWER example, the data is stored in MSRAM.
+\endcond
+
+\note The HDSL register trace option is only available with debug mode builds for single channel examples.
 
 ## Important files and directory structure
 
@@ -64,7 +73,7 @@ It then presents the user with menu options, based on the option selected, appli
  ICSSG          | ICSSG0
  PRU            | PRU1
  Toolchain      | ti-arm-clang
- Board          | @VAR_BOARD_NAME_LOWER, @VAR_LP_BOARD_NAME_LOWER
+ Board          | @VAR_BOARD_NAME_LOWER (2 channel and 1 channel examples), @VAR_LP_BOARD_NAME_LOWER (1 channel example)
  Example folder | examples/motorcontrol/hdsl_example
 
 \endcond
@@ -189,70 +198,26 @@ Other than the basic EVM setup mentioned in \htmllink{@VAR_MCU_SDK_DOCS_PATH/EVM
 - Launch a CCS debug session and run the executable, see \htmllink{@VAR_MCU_SDK_DOCS_PATH/CCS_LAUNCH_PAGE.html, CCS Launch\, Load and Run}
 - Refer to UART terminal for user interface menu options.
 
-# Sync Mode:
+# Mode, Channel(s) and Board Selection from sysconfig:
 
-- Note
-
-This is a test feature, in real application - PWM syncout will be connected to Latch input instead of IEP1 sync.
-
-## Synchronization with external Pulse
-According to the Hiperface DSL specification, the falling edge inside the EXTRA window should coincide with the external synchronization pulse.
-At the beginning of the startup phase, the firmware measures the time interval of the external pulse and calculates the required number of bits for the H-Frame.
-Based on this number the stuffing length and EXTRA window size is derived.
-Afterwards, the PRU waits to match its timing with the timing of the external synchronization pulse and starts the transmission.
-Since it is possible to use time intervals for the external pulse that are not multiples of the bit duration, the firmware needs to adjust the H-Frame size on the fly.
-Furthermore, during the EXTRA window the PRU transmits the data (sample edge) with a granularity of 13.3ns to increase the synchronization accuracy. Figure "Synchronization of External Pulse with Sample Edge in EXTRA Window" and "Illustration of Synchronization Algorithm" depict the concept.
-The EXTRA_TIME_WINDOW is a fixed value that is calculated at startup to match the external pulse frequency. The TIME_REST value gives the number of overclocked ‘1’ that needs to be sent during the last bit of the EXTRA window.
-
-\imageStyle{hdsl_external_sync.png,width:40%}
-\image html hdsl_external_sync.png "Synchronization of External Pulse with Sample Edge in EXTRA Window"
-
-In other words, the TIME_REST value represents the sample edge in a fine granularity dimension (13.3ns). While the sample edge can be send with a finer granularity, the granularity of the size of the EXTRA window is still in whole bit durations (106.67ns).
-Consequently, there is an overhead, if the external pulse period is not a multiple of the bit duration. This overhead is compensated in the next H-Frame by changing the size of the EXTRA window. As a result, the size of the H-Frame is varying over time.
-It is possible that these calculations lead to the excess of the maximum or minimum EXTRA window size. Therefore, the number of bits for the stuffing and EXTRA window is readjusted on a violation.
-
-\imageStyle{hdsl_sync_algo.png,width:40%}
-\image html hdsl_sync_algo.png "Illustration of Synchronization Algorithm"
-
-The algorithm is given as C code in the following:
-
-			/* EXTRA_SIZE equals the number of bits for the EXTRA window minus 1 */
-			if(EXTRA_EDGE == 0)
-				TIME_REST += 8;
-			short b = (EXTRA_SIZE << 3) + TIME_REST;
-			short overhead = (EXTRA_SIZE << 3) + 8 - TIME_EXTRA_WINDOW;
-			EXTRA_SIZE = (b - overhead) >> 3;
-			TIME_REST = (b - overhead) - (EXTRA_SIZE << 3);
-
-			if(EXTRA_SIZE < 3) {
-				EXTRA_SIZE += 6;
-				NUM_STUFFING -= 1;
-				TIME_EXTRA_WINDOW += (8*6);
-			}
-if(EXTRA_SIZE > 8) {
-				EXTRA_SIZE -= 6;
-				NUM_STUFFING += 1;
-				TIME_EXTRA_WINDOW -= (8*6);
-			}
-
-
-EXTRA_EDGE represents the TIME_REST value in a format that can be pushed to the TX FIFO for transmission. For instance, if TIME_REST is 4, EXTRA_EDGE is 0xf0. The edge would be in the middle of the bit duration. The value NUM_STUFFING gives the number of stuffing blocks (each block consist of 6 bits).
-
-
-For further improvement of the synchronization, the time difference (∆t) between the external pulse and the sample edge we transmit is measured (Figure "Time difference between External Pulse and Sample Edge").
-
-\imageStyle{hdsl_external_sync_sample_edge.png,width:40%}
-\image html hdsl_external_sync_sample_edge.png "Time difference between External Pulse and Sample Edge"
-
+- Select Mode from sysconfig menu (Freerun/sync mode).
+- Select Channel 0/channel 1 from sysconfig menu for channel selection.
+- Select Boosterpack option from sysconfig for running application on AM243x-LP.
+\imageStyle{hdsl_sysconfig_menu.png,width:60%}
+\image html hdsl_sysconfig_menu.png "HDSL SYSCONFIG Menu"
 
 # Sample Output
 
-Shown below is a sample output when the application is run:
+Shown below is a sample output when the application is run
 
-- Freerun mode:
-\imageStyle{hdsl_default_uart_menu.PNG,width:60%}
-\image html hdsl_default_uart_menu.PNG "HDSL DDR UART Default Menu"
+- Freerun mode
+\image html hdsl_freerun_menu.png "HDSL Freerun mode Menu"
+\image html hdsl_positional_commands_menu.png "HDSL Freerun mode Menu"
 
-- Sync Mode:
-\imageStyle{HDSL_SYNC.png,width:60%}
-\image html HDSL_SYNC.png "HDSL Diagnostic in SYNC mode"
+- Sync Mode
+This is a test feature. In real application, PWM syncout will be connected to Latch input instead of IEP1 sync.
+Enter 6000 as period in UART menu after loading application. Refer \ref HDSL_DESIGN_SYNC for more details about sync mode.
+
+\image html hdsl_sync_mode_menu1.png "HDSL Sync mode Menu"
+\image html hdsl_sync_mode_menu2.png "HDSL Sync mode Menu"
+\image html hdsl_positional_commands_menu.png "HDSL Sync mode Menu"
