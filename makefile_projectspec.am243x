@@ -7,6 +7,22 @@ include $(MOTOR_CONTROL_SDK_PATH)/imports.mak
 
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL =
 # Various Example Projectspec Build Targets
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += dcl_df22_am243x-evm_r5fss0-0_nortos_ti-arm-clang_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += dcl_df22_am243x-evm_r5fss0-0_freertos_ti-arm-clang_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += dcl_df22_am243x-evm_m4fss0-0_nortos_ti-arm-clang_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += dcl_df22_am243x-evm_m4fss0-0_freertos_ti-arm-clang_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += dcl_df22_am243x-lp_r5fss0-0_nortos_ti-arm-clang_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += dcl_df22_am243x-lp_r5fss0-0_freertos_ti-arm-clang_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += dcl_df22_am243x-lp_m4fss0-0_nortos_ti-arm-clang_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += dcl_df22_am243x-lp_m4fss0-0_freertos_ti-arm-clang_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += dcl_pi_am243x-evm_r5fss0-0_nortos_ti-arm-clang_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += dcl_pi_am243x-evm_r5fss0-0_freertos_ti-arm-clang_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += dcl_pi_am243x-evm_m4fss0-0_nortos_ti-arm-clang_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += dcl_pi_am243x-evm_m4fss0-0_freertos_ti-arm-clang_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += dcl_pi_am243x-lp_r5fss0-0_nortos_ti-arm-clang_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += dcl_pi_am243x-lp_r5fss0-0_freertos_ti-arm-clang_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += dcl_pi_am243x-lp_m4fss0-0_nortos_ti-arm-clang_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += dcl_pi_am243x-lp_m4fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += endat_diagnostic_single_channel_am243x-evm_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += endat_diagnostic_single_channel_am243x-lp_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += endat_diagnostic_multi_channel_load_share_am243x-evm_r5fss0-0_freertos_ti-arm-clang_build
@@ -43,6 +59,54 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += tamagawa_single_channel_am2
 all: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL)
 
 all-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL)
+
+ dcl_df22_am243x-evm_r5fss0-0_nortos_ti-arm-clang_build:
+	$(MAKE) -C examples/dcl/dcl_df22/am243x-evm/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec all
+
+ dcl_df22_am243x-evm_r5fss0-0_freertos_ti-arm-clang_build:
+	$(MAKE) -C examples/dcl/dcl_df22/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
+
+ dcl_df22_am243x-evm_m4fss0-0_nortos_ti-arm-clang_build:
+	$(MAKE) -C examples/dcl/dcl_df22/am243x-evm/m4fss0-0_nortos/ti-arm-clang -f makefile_projectspec all
+
+ dcl_df22_am243x-evm_m4fss0-0_freertos_ti-arm-clang_build:
+	$(MAKE) -C examples/dcl/dcl_df22/am243x-evm/m4fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
+
+ dcl_df22_am243x-lp_r5fss0-0_nortos_ti-arm-clang_build:
+	$(MAKE) -C examples/dcl/dcl_df22/am243x-lp/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec all
+
+ dcl_df22_am243x-lp_r5fss0-0_freertos_ti-arm-clang_build:
+	$(MAKE) -C examples/dcl/dcl_df22/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
+
+ dcl_df22_am243x-lp_m4fss0-0_nortos_ti-arm-clang_build:
+	$(MAKE) -C examples/dcl/dcl_df22/am243x-lp/m4fss0-0_nortos/ti-arm-clang -f makefile_projectspec all
+
+ dcl_df22_am243x-lp_m4fss0-0_freertos_ti-arm-clang_build:
+	$(MAKE) -C examples/dcl/dcl_df22/am243x-lp/m4fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
+
+ dcl_pi_am243x-evm_r5fss0-0_nortos_ti-arm-clang_build:
+	$(MAKE) -C examples/dcl/dcl_pi/am243x-evm/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec all
+
+ dcl_pi_am243x-evm_r5fss0-0_freertos_ti-arm-clang_build:
+	$(MAKE) -C examples/dcl/dcl_pi/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
+
+ dcl_pi_am243x-evm_m4fss0-0_nortos_ti-arm-clang_build:
+	$(MAKE) -C examples/dcl/dcl_pi/am243x-evm/m4fss0-0_nortos/ti-arm-clang -f makefile_projectspec all
+
+ dcl_pi_am243x-evm_m4fss0-0_freertos_ti-arm-clang_build:
+	$(MAKE) -C examples/dcl/dcl_pi/am243x-evm/m4fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
+
+ dcl_pi_am243x-lp_r5fss0-0_nortos_ti-arm-clang_build:
+	$(MAKE) -C examples/dcl/dcl_pi/am243x-lp/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec all
+
+ dcl_pi_am243x-lp_r5fss0-0_freertos_ti-arm-clang_build:
+	$(MAKE) -C examples/dcl/dcl_pi/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
+
+ dcl_pi_am243x-lp_m4fss0-0_nortos_ti-arm-clang_build:
+	$(MAKE) -C examples/dcl/dcl_pi/am243x-lp/m4fss0-0_nortos/ti-arm-clang -f makefile_projectspec all
+
+ dcl_pi_am243x-lp_m4fss0-0_freertos_ti-arm-clang_build:
+	$(MAKE) -C examples/dcl/dcl_pi/am243x-lp/m4fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
 
  endat_diagnostic_single_channel_am243x-evm_r5fss0-0_freertos_ti-arm-clang_build:
 	$(MAKE) -C examples/position_sense/endat_diagnostic/single_channel/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
@@ -129,6 +193,22 @@ all-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL)
 
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL =
 # Various Example Projectspec Clean Targets
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += dcl_df22_am243x-evm_r5fss0-0_nortos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += dcl_df22_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += dcl_df22_am243x-evm_m4fss0-0_nortos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += dcl_df22_am243x-evm_m4fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += dcl_df22_am243x-lp_r5fss0-0_nortos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += dcl_df22_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += dcl_df22_am243x-lp_m4fss0-0_nortos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += dcl_df22_am243x-lp_m4fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += dcl_pi_am243x-evm_r5fss0-0_nortos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += dcl_pi_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += dcl_pi_am243x-evm_m4fss0-0_nortos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += dcl_pi_am243x-evm_m4fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += dcl_pi_am243x-lp_r5fss0-0_nortos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += dcl_pi_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += dcl_pi_am243x-lp_m4fss0-0_nortos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += dcl_pi_am243x-lp_m4fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += endat_diagnostic_single_channel_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += endat_diagnostic_single_channel_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += endat_diagnostic_multi_channel_load_share_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean
@@ -165,6 +245,54 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += tamagawa_single_channel_am2
 clean: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL)
 
 clean-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL)
+
+ dcl_df22_am243x-evm_r5fss0-0_nortos_ti-arm-clang_clean:
+	$(MAKE) -C examples/dcl/dcl_df22/am243x-evm/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec clean
+
+ dcl_df22_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/dcl/dcl_df22/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
+
+ dcl_df22_am243x-evm_m4fss0-0_nortos_ti-arm-clang_clean:
+	$(MAKE) -C examples/dcl/dcl_df22/am243x-evm/m4fss0-0_nortos/ti-arm-clang -f makefile_projectspec clean
+
+ dcl_df22_am243x-evm_m4fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/dcl/dcl_df22/am243x-evm/m4fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
+
+ dcl_df22_am243x-lp_r5fss0-0_nortos_ti-arm-clang_clean:
+	$(MAKE) -C examples/dcl/dcl_df22/am243x-lp/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec clean
+
+ dcl_df22_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/dcl/dcl_df22/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
+
+ dcl_df22_am243x-lp_m4fss0-0_nortos_ti-arm-clang_clean:
+	$(MAKE) -C examples/dcl/dcl_df22/am243x-lp/m4fss0-0_nortos/ti-arm-clang -f makefile_projectspec clean
+
+ dcl_df22_am243x-lp_m4fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/dcl/dcl_df22/am243x-lp/m4fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
+
+ dcl_pi_am243x-evm_r5fss0-0_nortos_ti-arm-clang_clean:
+	$(MAKE) -C examples/dcl/dcl_pi/am243x-evm/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec clean
+
+ dcl_pi_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/dcl/dcl_pi/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
+
+ dcl_pi_am243x-evm_m4fss0-0_nortos_ti-arm-clang_clean:
+	$(MAKE) -C examples/dcl/dcl_pi/am243x-evm/m4fss0-0_nortos/ti-arm-clang -f makefile_projectspec clean
+
+ dcl_pi_am243x-evm_m4fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/dcl/dcl_pi/am243x-evm/m4fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
+
+ dcl_pi_am243x-lp_r5fss0-0_nortos_ti-arm-clang_clean:
+	$(MAKE) -C examples/dcl/dcl_pi/am243x-lp/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec clean
+
+ dcl_pi_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/dcl/dcl_pi/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
+
+ dcl_pi_am243x-lp_m4fss0-0_nortos_ti-arm-clang_clean:
+	$(MAKE) -C examples/dcl/dcl_pi/am243x-lp/m4fss0-0_nortos/ti-arm-clang -f makefile_projectspec clean
+
+ dcl_pi_am243x-lp_m4fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/dcl/dcl_pi/am243x-lp/m4fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
 
  endat_diagnostic_single_channel_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean:
 	$(MAKE) -C examples/position_sense/endat_diagnostic/single_channel/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
@@ -251,6 +379,22 @@ clean-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL)
 
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL =
 # Various Example Projectspec Export Targets
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += dcl_df22_am243x-evm_r5fss0-0_nortos_ti-arm-clang_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += dcl_df22_am243x-evm_r5fss0-0_freertos_ti-arm-clang_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += dcl_df22_am243x-evm_m4fss0-0_nortos_ti-arm-clang_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += dcl_df22_am243x-evm_m4fss0-0_freertos_ti-arm-clang_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += dcl_df22_am243x-lp_r5fss0-0_nortos_ti-arm-clang_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += dcl_df22_am243x-lp_r5fss0-0_freertos_ti-arm-clang_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += dcl_df22_am243x-lp_m4fss0-0_nortos_ti-arm-clang_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += dcl_df22_am243x-lp_m4fss0-0_freertos_ti-arm-clang_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += dcl_pi_am243x-evm_r5fss0-0_nortos_ti-arm-clang_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += dcl_pi_am243x-evm_r5fss0-0_freertos_ti-arm-clang_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += dcl_pi_am243x-evm_m4fss0-0_nortos_ti-arm-clang_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += dcl_pi_am243x-evm_m4fss0-0_freertos_ti-arm-clang_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += dcl_pi_am243x-lp_r5fss0-0_nortos_ti-arm-clang_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += dcl_pi_am243x-lp_r5fss0-0_freertos_ti-arm-clang_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += dcl_pi_am243x-lp_m4fss0-0_nortos_ti-arm-clang_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += dcl_pi_am243x-lp_m4fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += endat_diagnostic_single_channel_am243x-evm_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += endat_diagnostic_single_channel_am243x-lp_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += endat_diagnostic_multi_channel_load_share_am243x-evm_r5fss0-0_freertos_ti-arm-clang_export
@@ -287,6 +431,54 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += tamagawa_single_channel_am
 export: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL)
 
 export-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL)
+
+ dcl_df22_am243x-evm_r5fss0-0_nortos_ti-arm-clang_export:
+	$(MAKE) -C examples/dcl/dcl_df22/am243x-evm/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec export
+
+ dcl_df22_am243x-evm_r5fss0-0_freertos_ti-arm-clang_export:
+	$(MAKE) -C examples/dcl/dcl_df22/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
+
+ dcl_df22_am243x-evm_m4fss0-0_nortos_ti-arm-clang_export:
+	$(MAKE) -C examples/dcl/dcl_df22/am243x-evm/m4fss0-0_nortos/ti-arm-clang -f makefile_projectspec export
+
+ dcl_df22_am243x-evm_m4fss0-0_freertos_ti-arm-clang_export:
+	$(MAKE) -C examples/dcl/dcl_df22/am243x-evm/m4fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
+
+ dcl_df22_am243x-lp_r5fss0-0_nortos_ti-arm-clang_export:
+	$(MAKE) -C examples/dcl/dcl_df22/am243x-lp/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec export
+
+ dcl_df22_am243x-lp_r5fss0-0_freertos_ti-arm-clang_export:
+	$(MAKE) -C examples/dcl/dcl_df22/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
+
+ dcl_df22_am243x-lp_m4fss0-0_nortos_ti-arm-clang_export:
+	$(MAKE) -C examples/dcl/dcl_df22/am243x-lp/m4fss0-0_nortos/ti-arm-clang -f makefile_projectspec export
+
+ dcl_df22_am243x-lp_m4fss0-0_freertos_ti-arm-clang_export:
+	$(MAKE) -C examples/dcl/dcl_df22/am243x-lp/m4fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
+
+ dcl_pi_am243x-evm_r5fss0-0_nortos_ti-arm-clang_export:
+	$(MAKE) -C examples/dcl/dcl_pi/am243x-evm/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec export
+
+ dcl_pi_am243x-evm_r5fss0-0_freertos_ti-arm-clang_export:
+	$(MAKE) -C examples/dcl/dcl_pi/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
+
+ dcl_pi_am243x-evm_m4fss0-0_nortos_ti-arm-clang_export:
+	$(MAKE) -C examples/dcl/dcl_pi/am243x-evm/m4fss0-0_nortos/ti-arm-clang -f makefile_projectspec export
+
+ dcl_pi_am243x-evm_m4fss0-0_freertos_ti-arm-clang_export:
+	$(MAKE) -C examples/dcl/dcl_pi/am243x-evm/m4fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
+
+ dcl_pi_am243x-lp_r5fss0-0_nortos_ti-arm-clang_export:
+	$(MAKE) -C examples/dcl/dcl_pi/am243x-lp/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec export
+
+ dcl_pi_am243x-lp_r5fss0-0_freertos_ti-arm-clang_export:
+	$(MAKE) -C examples/dcl/dcl_pi/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
+
+ dcl_pi_am243x-lp_m4fss0-0_nortos_ti-arm-clang_export:
+	$(MAKE) -C examples/dcl/dcl_pi/am243x-lp/m4fss0-0_nortos/ti-arm-clang -f makefile_projectspec export
+
+ dcl_pi_am243x-lp_m4fss0-0_freertos_ti-arm-clang_export:
+	$(MAKE) -C examples/dcl/dcl_pi/am243x-lp/m4fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
 
  endat_diagnostic_single_channel_am243x-evm_r5fss0-0_freertos_ti-arm-clang_export:
 	$(MAKE) -C examples/position_sense/endat_diagnostic/single_channel/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
@@ -398,6 +590,22 @@ help:
 	@echo  .
 	@echo  Example ProjectSpec build targets,
 	@echo  ==================================
+	@echo  $(MAKE) -s -C examples/dcl/dcl_df22/am243x-evm/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C examples/dcl/dcl_df22/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C examples/dcl/dcl_df22/am243x-evm/m4fss0-0_nortos/ti-arm-clang -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C examples/dcl/dcl_df22/am243x-evm/m4fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C examples/dcl/dcl_df22/am243x-lp/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C examples/dcl/dcl_df22/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C examples/dcl/dcl_df22/am243x-lp/m4fss0-0_nortos/ti-arm-clang -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C examples/dcl/dcl_df22/am243x-lp/m4fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C examples/dcl/dcl_pi/am243x-evm/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C examples/dcl/dcl_pi/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C examples/dcl/dcl_pi/am243x-evm/m4fss0-0_nortos/ti-arm-clang -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C examples/dcl/dcl_pi/am243x-evm/m4fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C examples/dcl/dcl_pi/am243x-lp/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C examples/dcl/dcl_pi/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C examples/dcl/dcl_pi/am243x-lp/m4fss0-0_nortos/ti-arm-clang -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C examples/dcl/dcl_pi/am243x-lp/m4fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/position_sense/endat_diagnostic/single_channel/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/position_sense/endat_diagnostic/single_channel/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/position_sense/endat_diagnostic/multi_channel_load_share/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
