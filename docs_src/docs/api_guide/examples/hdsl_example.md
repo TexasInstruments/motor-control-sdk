@@ -30,7 +30,7 @@ This example also allows the capability to save the HDSL register data into memo
     <th>Folder/Files
     <th>Description
 </tr>
-<tr><td colspan="2" bgcolor=#F0F0F0> ${SDK_INSTALL_PATH}/examples/motor_control/hdsl_diagnostic</td></tr>
+<tr><td colspan="2" bgcolor=#F0F0F0> ${SDK_INSTALL_PATH}/examples/position_sense/hdsl_diagnostic</td></tr>
 <tr>
     <td>hdsl_diagnostic.c
     hdsl_diagnostic.h</td>
@@ -61,7 +61,7 @@ This example also allows the capability to save the HDSL register data into memo
  PRU            | PRU1
  Toolchain      | ti-arm-clang
  Board          | @VAR_BOARD_NAME_LOWER
- Example folder | examples/motorcontrol/hdsl_example
+ Example folder | examples/position_sense/hdsl_diagnostic
 
 \endcond
 
@@ -74,7 +74,7 @@ This example also allows the capability to save the HDSL register data into memo
  PRU            | PRU1
  Toolchain      | ti-arm-clang
  Board          | @VAR_BOARD_NAME_LOWER (2 channel and 1 channel examples), @VAR_LP_BOARD_NAME_LOWER (1 channel example)
- Example folder | examples/motorcontrol/hdsl_example
+ Example folder | examples/position_sense/hdsl_diagnostic
 
 \endcond
 
@@ -82,11 +82,11 @@ This example also allows the capability to save the HDSL register data into memo
 
 ## Hardware Prerequisites
 
-Other than the basic EVM setup mentioned in \htmllink{@VAR_MCU_SDK_DOCS_PATH/EVM_SETUP_PAGE.html, EVM Setup}, below additional HW is required to run this demo
+Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_SETUP_PAGE.html" target="_blank"> EVM Setup </a>, below additional HW is required to run this demo
 - HDSL encoder
 - Below are two options to connect encoder to AM64x/AM243x EVM.
     - **Option 1**
-        - TIDA-00179 Universal Digital Interface to Absolute Position Encoders, http://www.ti.com/tool/TIDA-00179
+        - <a href="http://www.ti.com/tool/TIDA-00179" target="_blank"> TIDA-00179 Universal Digital Interface to Absolute Position Encoders </a>
         - TIDEP-01015 3 Axis board
         - Interface card connecting EVM and TIDEP-01015 3 Axis board
         - Connect the Hiperface DSL encoder to HDSL+/-(Pin number 6 and 7) signals available on header J7 or Sub-D15 connector of the "Universal Digital Interface to Absolute Position Encoders" board.
@@ -95,14 +95,14 @@ Other than the basic EVM setup mentioned in \htmllink{@VAR_MCU_SDK_DOCS_PATH/EVM
         - Connect the Hiperface DSL encoder to J10.
 		- HDSL AM64xE1 Transceiver supports two channels that can be used to support HDSL safety, multi axis servo drives.
 		- Schematics are shared in the MCU+SDK package. For more design details of the transceiver card, please contact TI via E2E/FAE.
-		- \htmllink{../am64x_am243x/HDSL_AM64xE1_Schematics.pdf, HDSL Transceiver Card Schematics} document.
+		-  <a href="../HDSL_AM64xE1_Schematics.pdf" target="_blank">  HDSL Transceiver Card Schematics </a> document.
 
 \cond SOC_AM243X
 ### Hardware Prerequisities for Booster Pack
 
 - HDSL encoder
 - AM243x-LP board
-- BP-AM2BLDCSERVO, https://www.ti.com/tool/BP-AM2BLDCSERVO
+- <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
 \endcond
 
 
@@ -192,10 +192,10 @@ Other than the basic EVM setup mentioned in \htmllink{@VAR_MCU_SDK_DOCS_PATH/EVM
 \endcond
 ## Build, load and run
 
-- **When using CCS projects to build**, import the CCS project and build it using the CCS project menu (see \htmllink{@VAR_MCU_SDK_DOCS_PATH/CCS_PROJECTS_PAGE.html, Using SDK with CCS Projects}).
+- **When using CCS projects to build**, import the CCS project and build it using the CCS project menu (see <a href="@VAR_MCU_SDK_DOCS_PATH/CCS_PROJECTS_PAGE.html" target="_blank"> Using SDK with CCS Projects </a>).
 - **When using makefiles to build**, note the required combination and build using
-  make command (see \htmllink{@VAR_MCU_SDK_DOCS_PATH/MAKEFILE_BUILD_PAGE.html, Using SDK with Makefiles})
-- Launch a CCS debug session and run the executable, see \htmllink{@VAR_MCU_SDK_DOCS_PATH/CCS_LAUNCH_PAGE.html, CCS Launch\, Load and Run}
+  make command (see <a href="@VAR_MCU_SDK_DOCS_PATH/MAKEFILE_BUILD_PAGE.html" target="_blank"> Using SDK with Makefiles </a>)
+- Launch a CCS debug session and run the executable, see <a href="@VAR_MCU_SDK_DOCS_PATH/CCS_LAUNCH_PAGE.html" target="_blank">  CCS Launch, Load and Run </a>
 - Refer to UART terminal for user interface menu options.
 
 # Mode, Channel(s) and Board Selection from sysconfig:

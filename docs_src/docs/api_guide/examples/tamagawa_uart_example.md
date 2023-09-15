@@ -34,7 +34,7 @@ The tamagawa over uart example runs on R5 and communicates with tamagawa encoder
     <th>Folder/Files
     <th>Description
 </tr>
-<tr><td colspan="2" bgcolor=#F0F0F0> ${SDK_INSTALL_PATH}/examples/motor_control/tamagawa_diagnostic_over_soc_uart/uart_tamagawa.c</td></tr>
+<tr><td colspan="2" bgcolor=#F0F0F0> ${SDK_INSTALL_PATH}/examples/position_sense/tamagawa_diagnostic_over_soc_uart</td></tr>
 <tr>
     <td>uart_tamagawa.c</td>
     <td>Tamagawa UART application</td>
@@ -46,7 +46,7 @@ The tamagawa over uart example runs on R5 and communicates with tamagawa encoder
 </tr>
 <tr>
     <td>driver/</td>
-    <td>Tamagawa Uart driver.</td>
+    <td>Tamagawa uart driver</td>
 </tr>
 </table>
 
@@ -58,7 +58,7 @@ The tamagawa over uart example runs on R5 and communicates with tamagawa encoder
  CPU + OS       | r5fss0-0 freertos
  Toolchain      | ti-arm-clang
  Board          | @VAR_LP_BOARD_NAME_LOWER
- Example folder | examples/motor_control/tamagawa_diagnostic_over_soc_uart
+ Example folder | examples/position_sense/tamagawa_diagnostic_over_soc_uart
 
 \endcond
 
@@ -82,10 +82,10 @@ The tamagawa over uart example runs on R5 and communicates with tamagawa encoder
 
 ## Build, load and run
 
-- **When using CCS projects to build**, import the CCS project and build it using the CCS project menu (see \htmllink{@VAR_MCU_SDK_DOCS_PATH/CCS_PROJECTS_PAGE.html, Using SDK with CCS Projects}).
+- **When using CCS projects to build**, import the CCS project and build it using the CCS project menu (see <a href="@VAR_MCU_SDK_DOCS_PATH/CCS_PROJECTS_PAGE.html" target="_blank"> Using SDK with CCS Projects </a>).
 - **When using makefiles to build**, note the required combination and build using
-  make command (see \htmllink{@VAR_MCU_SDK_DOCS_PATH/MAKEFILE_BUILD_PAGE.html, Using SDK with Makefiles})
-- Launch a CCS debug session and run the executable, see \htmllink{@VAR_MCU_SDK_DOCS_PATH/CCS_LAUNCH_PAGE.html, CCS Launch\, Load and Run}
+  make command (see <a href="@VAR_MCU_SDK_DOCS_PATH/MAKEFILE_BUILD_PAGE.html" target="_blank"> Using SDK with Makefiles </a>)
+- Launch a CCS debug session and run the executable, see <a href="@VAR_MCU_SDK_DOCS_PATH/CCS_LAUNCH_PAGE.html" target="_blank">  CCS Launch, Load and Run </a>
 - Refer to UART terminal for user interface menu options.
 
 ### Sample Output

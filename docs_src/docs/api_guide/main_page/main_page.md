@@ -9,11 +9,11 @@ Real-time communication with encoders and current sensing is typically handled b
 
 Applications and PRU-ICSS firmwares for position sense and current sense are provided in the SDK.
 
-\attention This SDK also includes \htmllink{@VAR_IC_SDK_DOCS_PATH/index.html, @VAR_SOC_NAME Industrial Communications SDK} and \htmllink{@VAR_MCU_SDK_DOCS_PATH/index.html, @VAR_SOC_NAME MCU+ SDK}.
+\attention This SDK also includes <a href="@VAR_IC_SDK_DOCS_PATH/index.html" target="_blank">@VAR_SOC_NAME Industrial Communications SDK</a> and <a href="@VAR_MCU_SDK_DOCS_PATH/index.html" target="_blank">@VAR_SOC_NAME MCU+ SDK</a>.
 
 ## Getting Started
 
-To get started, see \htmllink{@VAR_MCU_SDK_DOCS_PATH/GETTING_STARTED.html, GETTING STARTED} page.
+To get started, see <a href="@VAR_MCU_SDK_DOCS_PATH/GETTING_STARTED.html" target="_blank"> GETTING STARTED </a> page.
 
 ## Block Diagram
 
@@ -132,7 +132,7 @@ The main software components in the block diagram specific to motor control are 
 
 \endcond
 
-For details on software components of Industrial Communications SDK and MCU+ SDK, please refer to \htmllink{@VAR_IC_SDK_DOCS_PATH/index.html, @VAR_SOC_NAME Industrial Communications SDK} and \htmllink{@VAR_MCU_SDK_DOCS_PATH/index.html, @VAR_SOC_NAME MCU+ SDK} respectively.
+For details on software components of Industrial Communications SDK and MCU+ SDK, please refer to <a href="@VAR_IC_SDK_DOCS_PATH/index.html" target="_blank">@VAR_SOC_NAME Industrial Communications SDK</a> and <a href="@VAR_MCU_SDK_DOCS_PATH/index.html" target="_blank">@VAR_SOC_NAME MCU+ SDK</a> respectively.
 
 ## Directory Structure
 
