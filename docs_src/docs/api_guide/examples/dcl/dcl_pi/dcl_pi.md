@@ -39,28 +39,13 @@ based on the test input and compare the output with the expected value.
 
 # Supported Combinations {#EXAMPLES_DCL_PI_COMBOS}
 
-\cond SOC_AM64X
-
- Parameter      | Value
- ---------------|-----------
- CPU + OS       | r5fss0-0 nortos
- ^              | m4fss0-0 nortos
- ^              | r5fss0-0 freertos
- ^              | m4fss0-0 freertos
- Toolchain      | ti-arm-clang
- Board          | @VAR_BOARD_NAME_LOWER, @VAR_SK_BOARD_NAME_LOWER
- Example folder | examples/dcl/dcl_pi
-
-\endcond
 
 \cond SOC_AM243X
 
  Parameter      | Value
  ---------------|-----------
  CPU + OS       | r5fss0-0 nortos
- ^              | m4fss0-0 nortos
  ^              | r5fss0-0 freertos
- ^              | m4fss0-0 freertos
  Toolchain      | ti-arm-clang
  Boards         | @VAR_BOARD_NAME_LOWER, @VAR_LP_BOARD_NAME_LOWER
  Example folder | examples/dcl/dcl_pi
