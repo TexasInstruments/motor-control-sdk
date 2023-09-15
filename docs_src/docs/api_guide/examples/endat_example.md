@@ -652,7 +652,7 @@ Shown below is a sample output when the application is run:
         <td> </td>
     </tr>
     <tr>
-        <td>2. Enter 10000 to select "clock frequency"</td>
+        <td>2. Enter 1000 to select "clock frequency"</td>
         <td> </td>
     </tr>
     <tr>
@@ -692,7 +692,7 @@ Shown below is a sample output when the application is run:
         <td> </td>
     </tr>
     <tr>
-        <td>2. Enter 0 to select channel 0(only for multi channel configuration) </td>
+        <td>2. Enter 0 to select channel 0 </td>
         <td> </td>
     </tr>
     <tr>
@@ -706,7 +706,7 @@ Shown below is a sample output when the application is run:
         <td> </td>
     </tr>
     <tr>
-        <td>2. Enter 0 to select channel 0(only for multi channel configuration)</td>
+        <td>2. Enter 0 to select channel 0</td>
         <td> </td>
     </tr>
     <tr>
@@ -720,7 +720,7 @@ Shown below is a sample output when the application is run:
         <td> </td>
     </tr>
     <tr>
-        <td>2. Enter 10000 to select "clock frequency"</td>
+        <td>2. Enter 1000 to select "clock frequency"</td>
         <td> </td>
     </tr>
     <tr>
@@ -734,7 +734,7 @@ Shown below is a sample output when the application is run:
         <td> </td>
     </tr>
     <tr>
-        <td>2. Enter 0 to select channel 0(only for multi channel configuration)</td>
+        <td>2. Enter 0 to select channel 0</td>
         <td> </td>
     </tr>
     <tr>

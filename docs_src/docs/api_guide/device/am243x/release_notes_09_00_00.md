@@ -16,8 +16,11 @@
 Feature                                                                                         | Module
 ------------------------------------------------------------------------------------------------|-----------------------------------
 SYNC Mode Support with 2 channels                                                               | Position Sense HDSL
+16 MHz EnDat clock frequency support                                                            | Position Sense EnDat
+Long cable support                                                                              | Position Sense EnDat
 Trigger based normal current sampling                                                           | Current Sense %SDFM
 Double sampling per PWM cycle                                                                   | Current Sense %SDFM
+Digital Control Library                                                                         | Real Time Libraries
 
 ## Device and Validation Information
 
@@ -63,16 +66,16 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
 
 Module       | Supported CPUs | SysConfig Support | OS Support        | Key features tested                                                                                                                                            | Key features not tested
 -------------|----------------|-------------------|-------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------
-EnDat        | R5F            | YES               | FreeRTOS, NORTOS  | Single channel, Multi channel, Continuous mode for single channel, Load share mode, Recovery Time for 2.2 command set, Boosterpack with AM243x-LP              |  16 MHz Baud Rate Different cable lengths, Continuous clock mode for multi channel
-HDSL         | R5F            | YES               | FreeRTOS, NORTOS  | Freerun mode(300MHz,225MHz), Sync mode(225MHz), Short Message Read & Write, Long Message Read & Write, Boosterpack with AM243x-LP                              |  Long cables
-Tamagawa     | R5F            | YES               | FreeRTOS, NORTOS  | Absolute position, Encoder ID, Reset, EEPROM Read, EEPROM Write, 2.5 Mbps and 5 Mbps Encoder Support, Boosterpack with AM243x-LP                               |  -
+EnDat        | R5F            | YES               | FreeRTOS, NORTOS  | Single channel, Multi channel, Continuous mode for single channel, Load share mode, Recovery Time for 2.2 command set, Boosterpack with AM243x-LP              | Encoder receive communication command
+HDSL         | R5F            | YES               | FreeRTOS, NORTOS  | Freerun mode(300MHz,225MHz), Sync mode(225MHz), Short Message Read & Write, Long Message Read & Write, Boosterpack with AM243x-LP                              | Long cables
+Tamagawa     | R5F            | YES               | FreeRTOS, NORTOS  | Absolute position, Encoder ID, Reset, EEPROM Read, EEPROM Write, 2.5 Mbps and 5 Mbps Encoder Support, Boosterpack with AM243x-LP                               | -
 
 ### Current Sense
 
 
 Module       | Supported CPUs | SysConfig Support | OS Support        | Key features tested                                                                                                                                            | Key features not tested
 -------------|----------------|-------------------|-------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------
-%SDFM        | R5F            | YES               | FreeRTOS, NORTOS  |                                                                                                                                                                | -
+%SDFM        | R5F            | YES               | FreeRTOS, NORTOS  | 3 %SDFM channels on single PRU core, %SDFM Sync with EPWM, Overcurrent, single normal current sampling per PWM cycle, Double normal current sampling per PWM cycle, High and Low threshold comparator, Tested with SDFM clock from ECAP, Tested with 5MHz Clock from EPWM                                                                                      | -
 
 
 ## Fixed Issues
@@ -182,6 +185,13 @@ Module       | Supported CPUs | SysConfig Support | OS Support        | Key feat
     <th> Workaround
 </tr>
 <tr>
+    <td> PINDSW-5690
+    <td> HDSL: EDGE register is not updated
+    <td> Position Sense HDSL
+    <td> 9.0 onwards
+    <td> -
+</tr>
+<tr>
     <td> PINDSW-5537
     <td> HDSL not working with 225 MHz PRU-ICSSG Core Clock Frequency
     <td> Position Sense HDSL
@@ -189,22 +199,22 @@ Module       | Supported CPUs | SysConfig Support | OS Support        | Key feat
     <td> Use 300 MHz frequency for PRU-ICSSG Core Clock
 </tr>
 <tr>
-    <td> PINDSW-6628
-    <td> HDSL: Reset value of PRST bit is not correct
+    <td> PINDSW-6486
+    <td> HDSL: RSSI register shows higher values than expected for a non-noisy setup
     <td> Position Sense HDSL
     <td> 9.0 onwards
     <td> -
 </tr>
 <tr>
-    <td> PINDSW-6608
+    <td> PINDSW-6544
     <td> %SDFM: Incorrect samples seen intermittently with EPWM as %SDFM clock
     <td> Current Sense %SDFM
     <td> 9.0 onwards
-    <td> -
+    <td> Use 5MHz %SDFM clock from EPWM1 (tested with 5MHz clock from EPWM) or use PRU-ICSSG ECAP as %SDFM clock source 
 </tr>
 <tr>
-    <td> PINDSW-6630
-    <td> HDSL: POS bit is not set during initial fast position alignment
+    <td> PINDSW-6628
+    <td> HDSL: Reset value of PRST bit is not correct
     <td> Position Sense HDSL
     <td> 9.0 onwards
     <td> -
@@ -217,15 +227,8 @@ Module       | Supported CPUs | SysConfig Support | OS Support        | Key feat
     <td> -
 </tr>
 <tr>
-    <td> PINDSW-5690
-    <td> HDSL: EDGE register is not updated
-    <td> Position Sense HDSL
-    <td> 9.0 onwards
-    <td> -
-</tr>
-<tr>
-    <td> PINDSW-6486
-    <td> HDSL: RSSI register shows higher values than expected for a non-noisy setup
+    <td> PINDSW-6630
+    <td> HDSL: POS bit is not set during initial fast position alignment
     <td> Position Sense HDSL
     <td> 9.0 onwards
     <td> -
@@ -352,9 +355,9 @@ earlier SDKs.
     <th> Additional Remarks
 </tr>
 <tr>
-    <td> 
-    <td> 
-    <td> 
+    <td>  Current Sense %SDFM
+    <td>  Structure `SdfmPrms_s`
+    <td>  Added variables `iep_clock`, `sd_clock`, `en_second_update`, `firstSampTrigTime` and `secondSampTrigTime`
     <td> 
 </tr>
 </table>
@@ -371,19 +374,55 @@ earlier SDKs.
 <tr>
     <td> Position Sense EnDat
     <td> \ref endat_init
-    <td> Added api parameter
-    <td> void* pruss_iep
+    <td> Added API parameter `pruss_iep`
+    <td> Needed for periodic mode
 </tr>
 <tr>
     <td> Position Sense EnDat
-    <td> Structure: endat_priv
-    <td> Added variables: pruss_iep, cmp3, cmp5 and cmp6
-    <td> 
+    <td> Structure \ref endat_priv
+    <td> Added variables `pruss_iep`, `cmp3`, `cmp5` and `cmp6`
+    <td> Needed for periodic mode
 </tr>
 <tr>
     <td> Position Sense EnDat
-    <td> Structure: cmd_supplement
-    <td> Added variables: cmp3, cmp5 and cmp6
-    <td> 
+    <td> Structure \ref cmd_supplement
+    <td> Added variables `cmp3`, `cmp5` and `cmp6`
+    <td> Needed for periodic mode
+</tr>
+<tr>
+    <td> Current Sense %SDFM
+    <td> `SDFM_setSampleReadingTime`
+    <td> Changed name of API \ref SDFM_setSampleTriggerTime and updated a parameter name `samp_trig_time`
+    <td> - 
+</tr>
+<tr>
+    <td> Current Sense %SDFM
+    <td> \ref SDFM_setFilterOverSamplingRatio
+    <td> Removed `oc_osr` parameter
+    <td> -
+</tr>
+<tr>
+    <td> Current Sense %SDFM
+    <td> \ref SDFM_setCompFilterOverSamplingRatio
+    <td> Changed type of osr parameter
+    <td> uint8_t to uint16_t 
+</tr>
+<tr>
+    <td> Current Sense %SDFM
+    <td> `SDFM_setAccOverSamplingRatio` 
+    <td> Removed this API
+    <td> -
+</tr>
+<tr>
+    <td> Current Sense %SDFM
+    <td> Structure \ref SDFM_Ctrl 
+    <td> Removed variables: `ctrl` and `stat`, and added variables `sdfm_en`, `sdfm_en_ack` and `sdfm_pru_id`  
+    <td> - 
+</tr>
+<tr>
+    <td> Current Sense %SDFM
+    <td> Structure \ref SDFM_CfgTrigger
+    <td> Removed variables `trig_samp_time`, `oc_prd_iep_cnt` and `sample_count`, and added variables `en_double_nc_sampling`, `first_samp_trig_time` and `second_samp_trig_time` 
+    <td> -
 </tr>
 </table>

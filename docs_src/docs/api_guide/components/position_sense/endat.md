@@ -22,14 +22,14 @@ EnDat is a bidirectional interface for position encoders. During EnDat operation
    -  Concurrent multi channel support (up-to 3 encoders with identical part number @ 8MHz maximum)
    -  "Multi Channel with Encoders of Different Make" using load share mode (Each of PRU, RTU-PRU, and TX-PRU from one PRU-ICSSG slice handles one channel)
    -  Safety Readiness: Recovery time
+   -  Clock up to 16MHz with single channel and load share mode (multi channel)
 
 ## Features Not Supported
 
 In general, peripherals or features not mentioned as part of "Features Supported" section are not
 supported in this release, including the below
--  Safety
--  Clock configuration up to 16MHz
 -  Independent clocks on multi channel mode.
+-  Continuous clock mode in Multi-channel single PRU mode
 
 ## SysConfig Features
 
