@@ -4,6 +4,9 @@ Components under Motor Control SDK were available in MCU+ SDK 7.x and 8.x releas
 
 If you are a user of MCU+ SDK, then items listed on this page that will assist you in migration to Motor Control SDK.
 
+
+- To build examples from Industrial Communications SDK and MCU+ SDK using CCS projects, user has to add <b>${SDK_INSTALL_PATH}/ind_comms_sdk</b> and <b>${SDK_INSTALL_PATH}/mcu_plus_sdk</b> to "Product discovery path" respectively in CCS.
+
 \cond SOC_AM64X || SOC_AM243X
 
 - The examples, drivers and PRU-ICSS firmwares for position sense encoders and current sense %SDFM (using PRU-ICSS) are moved from MCU+ SDK to Motor Control SDK. Folder location changes are also shown below.
@@ -12,7 +15,8 @@ If you are a user of MCU+ SDK, then items listed on this page that will assist y
    ----------------------------|------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------
    Position Sense EnDat        | `examples/motor_control/endat_diagnostic`                                                      | `examples/position_sense/endat_diagnostic`
    ^                           | `source/motor_control/position_sense/endat`                                                    | `source/position_sense/endat`
-   Position Sense HDSL         | `examples/motor_control/hdsl_diagnostic`\n `examples/motor_control/hdsl_diagnostic_with_traces`| `examples/position_sense/hdsl_diagnostic`\n `examples/position_sense/hdsl_diagnostic_with_traces`
+   Position Sense HDSL         | `examples/motor_control/hdsl_diagnostic`                                                       | `examples/position_sense/hdsl_diagnostic`
+   ^                           | `examples/motor_control/hdsl_diagnostic_with_traces`                                           | Merged with `hdsl_diagnostic` example
    ^                           | `source/motor_control/position_sense/hdsl`                                                     | `source/position_sense/hdsl`
    Position Sense Tamagawa     | `examples/motor_control/tamagawa_diagnostic`                                                   | `examples/position_sense/tamagawa_diagnostic`
    ^                           | `source/motor_control/position_sense/tamagawa`                                                 | `source/position_sense/tamagawa`

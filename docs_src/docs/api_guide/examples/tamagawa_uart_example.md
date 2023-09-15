@@ -34,7 +34,7 @@ The tamagawa over uart example runs on R5 and communicates with tamagawa encoder
     <th>Folder/Files
     <th>Description
 </tr>
-<tr><td colspan="2" bgcolor=#F0F0F0> ${SDK_INSTALL_PATH}/examples/motor_control/tamagawa_diagnostic_over_soc_uart/uart_tamagawa.c</td></tr>
+<tr><td colspan="2" bgcolor=#F0F0F0> ${SDK_INSTALL_PATH}/examples/position_sense/tamagawa_diagnostic_over_soc_uart</td></tr>
 <tr>
     <td>uart_tamagawa.c</td>
     <td>Tamagawa UART application</td>
@@ -46,7 +46,7 @@ The tamagawa over uart example runs on R5 and communicates with tamagawa encoder
 </tr>
 <tr>
     <td>driver/</td>
-    <td>Tamagawa Uart driver.</td>
+    <td>Tamagawa uart driver</td>
 </tr>
 </table>
 
@@ -58,7 +58,7 @@ The tamagawa over uart example runs on R5 and communicates with tamagawa encoder
  CPU + OS       | r5fss0-0 freertos
  Toolchain      | ti-arm-clang
  Board          | @VAR_LP_BOARD_NAME_LOWER
- Example folder | examples/motor_control/tamagawa_diagnostic_over_soc_uart
+ Example folder | examples/position_sense/tamagawa_diagnostic_over_soc_uart
 
 \endcond
 

@@ -5,7 +5,6 @@ This page lists all the examples and demos supported in this SDK.
 - Position Sense
     -# \subpage EXAMPLE_MOTORCONTROL_ENDAT
     -# \subpage EXAMPLE_MOTORCONTROL_HDSL
-    -# \subpage EXAMPLE_MOTORCONTROL_HDSL_TRACE
     -# \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA
 - Current Sense
     -# \subpage EXAMPLE_MOTORCONTROL_SDFM
@@ -15,7 +14,6 @@ This page lists all the examples and demos supported in this SDK.
 - Position Sense
     -# \subpage EXAMPLE_MOTORCONTROL_ENDAT
     -# \subpage EXAMPLE_MOTORCONTROL_HDSL
-    -# \subpage EXAMPLE_MOTORCONTROL_HDSL_TRACE
     -# \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA
 - Current Sense
     -# \subpage EXAMPLE_MOTORCONTROL_SDFM

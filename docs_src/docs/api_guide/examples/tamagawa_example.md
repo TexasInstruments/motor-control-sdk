@@ -37,7 +37,7 @@ The Tamagawa receiver firmware running on ICSS0-PRU1 provides a defined interfac
     <th>Folder/Files
     <th>Description
 </tr>
-<tr><td colspan="2" bgcolor=#F0F0F0> ${SDK_INSTALL_PATH}/examples/motor_control/tamagawa_diagnostic</td></tr>
+<tr><td colspan="2" bgcolor=#F0F0F0> ${SDK_INSTALL_PATH}/examples/position_sense/tamagawa_diagnostic</td></tr>
 <tr>
     <td>tamagawa_diagnostic.c</td>
     <td>Tamagawa diagnostic application</td>
@@ -64,7 +64,7 @@ The Tamagawa receiver firmware running on ICSS0-PRU1 provides a defined interfac
  PRU            | PRU1
  Toolchain      | ti-arm-clang
  Board          | @VAR_BOARD_NAME_LOWER
- Example folder | examples/motor_control/tamagawa_diagnostic
+ Example folder | examples/position_sense/tamagawa_diagnostic
 
 \endcond
 
@@ -77,7 +77,7 @@ The Tamagawa receiver firmware running on ICSS0-PRU1 provides a defined interfac
  PRU            | PRU1
  Toolchain      | ti-arm-clang
  Board          | @VAR_BOARD_NAME_LOWER, @VAR_LP_BOARD_NAME_LOWER (E3 Revision)
- Example folder | examples/motor_control/tamagawa_diagnostic
+ Example folder | examples/position_sense/tamagawa_diagnostic
 
 \endcond
 

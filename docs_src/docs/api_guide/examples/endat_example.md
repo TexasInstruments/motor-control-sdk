@@ -89,7 +89,7 @@ Following section describes the Example implementation of EnDat on ARM(R5F).
  PRU            | PRU1, TXPRU1 and RTUPRU1
  Toolchain      | ti-arm-clang
  Board          | @VAR_BOARD_NAME_LOWER
- Example folder | examples/motorcontrol/endat_example
+ Example folder | examples/position_sense/endat_diagnostic
 
 \endcond
 
@@ -102,7 +102,7 @@ Following section describes the Example implementation of EnDat on ARM(R5F).
  PRU            | PRU1, TXPRU1 and RTUPRU1
  Toolchain      | ti-arm-clang
  Board          | @VAR_BOARD_NAME_LOWER, @VAR_LP_BOARD_NAME_LOWER
- Example folder | examples/motorcontrol/endat_example
+ Example folder | examples/position_sense/endat_diagnostic
 
 \endcond
 

@@ -30,7 +30,7 @@ This example also allows the capability to save the HDSL register data into memo
     <th>Folder/Files
     <th>Description
 </tr>
-<tr><td colspan="2" bgcolor=#F0F0F0> ${SDK_INSTALL_PATH}/examples/motor_control/hdsl_diagnostic</td></tr>
+<tr><td colspan="2" bgcolor=#F0F0F0> ${SDK_INSTALL_PATH}/examples/position_sense/hdsl_diagnostic</td></tr>
 <tr>
     <td>hdsl_diagnostic.c
     hdsl_diagnostic.h</td>
@@ -61,7 +61,7 @@ This example also allows the capability to save the HDSL register data into memo
  PRU            | PRU1
  Toolchain      | ti-arm-clang
  Board          | @VAR_BOARD_NAME_LOWER
- Example folder | examples/motorcontrol/hdsl_example
+ Example folder | examples/position_sense/hdsl_diagnostic
 
 \endcond
 
@@ -74,7 +74,7 @@ This example also allows the capability to save the HDSL register data into memo
  PRU            | PRU1
  Toolchain      | ti-arm-clang
  Board          | @VAR_BOARD_NAME_LOWER (2 channel and 1 channel examples), @VAR_LP_BOARD_NAME_LOWER (1 channel example)
- Example folder | examples/motorcontrol/hdsl_example
+ Example folder | examples/position_sense/hdsl_diagnostic
 
 \endcond
 

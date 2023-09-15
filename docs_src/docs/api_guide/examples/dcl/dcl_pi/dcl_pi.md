@@ -17,7 +17,7 @@ based on the test input and compare the output with the expected value.
     <th>Folder/Files
     <th>Description
 </tr>
-<tr><td colspan="2" bgcolor=#F0F0F0> ${MOTOR_CONTROL_SDK_PATH}/examples/dcl/dcl_pi/</td></tr>
+<tr><td colspan="2" bgcolor=#F0F0F0> ${SDK_INSTALL_PATH}/examples/dcl/dcl_pi/</td></tr>
 <tr>
     <td>pi_test.c</td>
     <td>Main function for PI testing</td>
@@ -30,7 +30,7 @@ based on the test input and compare the output with the expected value.
     <td>data/</td>
     <td>Contains pre-generated data files result compares with</td>
 </tr>
-<tr><td colspan="2" bgcolor=#F0F0F0> ${MOTOR_CONTROL_SDK_PATH}/source/dcl</td></tr>
+<tr><td colspan="2" bgcolor=#F0F0F0> ${SDK_INSTALL_PATH}/source/dcl</td></tr>
 <tr>
     <td>dcl/</td>
     <td>Folder containing DCL library source</td>
