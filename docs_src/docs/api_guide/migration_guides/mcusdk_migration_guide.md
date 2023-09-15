@@ -36,6 +36,7 @@ If you are a user of MCU+ SDK, then items listed on this page that will assist y
 
 \endcond
 
-- Motor Control SDK also includes \htmllink{@VAR_IC_SDK_DOCS_PATH/index.html, @VAR_SOC_NAME Industrial Communications SDK} under `ind_comms_sdk` folder and \htmllink{@VAR_MCU_SDK_DOCS_PATH/index.html, @VAR_SOC_NAME MCU+ SDK} under `mcu_plus_sdk` folder. 
+- Motor Control SDK also includes <a href="@VAR_IC_SDK_DOCS_PATH/index.html" target="_blank">@VAR_SOC_NAME Industrial Communications SDK</a> under `ind_comms_sdk` folder and <a href="@VAR_MCU_SDK_DOCS_PATH/index.html" target="_blank">@VAR_SOC_NAME MCU+ SDK</a> under `mcu_plus_sdk` folder. 
 
 - \ref UPGRADE_AND_COMPATIBILITY_INFORMATION_9_0_0 has details on changes which can affect migration of applications based on MCU+ SDK 08.06.00 to Motor Control SDK 09.00.00.
+
