@@ -31,6 +31,11 @@ supported in this release, including the below
 -  Independent clocks on multi channel mode.
 -  Continuous clock mode in Multi-channel single PRU mode
 
+### Limitations 
+This section describes known limitations of the current implementation in multi-channel single PRU mode.
+- Clock above 8 MHz: it is not possible to over sample, downsample and store one bit for all three channels in one clock cycle time.
+- Reset command CRC failure: The encoder which takes more time in reset operation will show CRC failure because the reset time is not the same for each encoder so the acknowledgment will not arrive on same time for all encoders at the master end.   
+    
 ## SysConfig Features
 
 @VAR_SYSCFG_USAGE_NOTE
