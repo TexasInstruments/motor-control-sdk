@@ -49,7 +49,7 @@ extern "C" {
 
 //--- Linear PID controller --------------------------------------------------
 
-//! \brief          Defines the DCL_PID shadow parameter set
+//! \brief          Defines DCL_PID shadow parameter set
 //!                 used for updating controller parameter
 //!
 typedef struct dcl_pid_sps
@@ -68,7 +68,7 @@ typedef struct dcl_pid_sps
 //!
 #define PID_SPS_DEFAULTS { 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, -1.0f }
 
-//! \brief          PID object for storing PID specific parameters
+//! \brief          DCL_PID object for storing PID specific parameters
 //!
 typedef _DCL_VOLATILE struct dcl_pid
 {

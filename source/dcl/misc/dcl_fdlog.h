@@ -69,6 +69,8 @@ extern "C" {
 
 #include "../dcl_common.h"
 
+//! \brief          Defines the data logger strcture for 32-bit float
+//!
 typedef _DCL_VOLATILE struct dcl_fdlog 
 {
     float32_t *fptr;    //!< Pointer to first buffer element

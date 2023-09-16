@@ -49,7 +49,7 @@ extern "C" {
 
 //--- Error handling ---------------------------------------------------------
 
-//! \brief          Defines the library enumerated error codes
+//! \brief          Defines the library enumerated error codes.
 //!                 These will be applied as bit masks in the error handler
 //!
 typedef enum  

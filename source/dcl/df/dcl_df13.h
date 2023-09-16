@@ -66,7 +66,7 @@ typedef struct dcl_df13_sps {
 
 #define DF13_SPS_DEFAULTS { 0.25f, 0.25f, 0.25f, 0.25f, 0.0f, 0.0f, 0.0f }
 
-//! \brief          DF13 object for storing df13 specific parameters
+//! \brief          DCL_DF13 object for storing df13 specific parameters
 //!
 typedef _DCL_VOLATILE struct dcl_df13 
 {

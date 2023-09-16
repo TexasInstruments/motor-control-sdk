@@ -86,10 +86,10 @@ typedef struct dcl_css64 {
 //!                 CSS pointer must be configured first
 //!
 //! \param[in] p    Pointer to the controller structure
-//! \param[in] a    Sample period in seconds
+//! \param[in] T    Sample period in seconds
 //! \return         None
 //!
-#define DCL_setControllerPeriod(p,a)   ((p)->css->T = a)
+#define DCL_setControllerPeriod(p,T)   ((p)->css->t_sec = T)
 
 //--- Status word ------------------------------------------------------------
 
