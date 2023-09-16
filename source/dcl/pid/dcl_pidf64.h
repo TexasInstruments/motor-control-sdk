@@ -49,7 +49,7 @@ extern "C" {
 
 //--- Linear PID 64bit controller --------------------------------------------------
 
-//! \brief          Defines the shadow PID64 controller structure
+//! \brief          Defines DCL_PIDF64 shadow PID64 controller structure
 //!                 used for updating controller parameter
 //!
 typedef struct dcl_pid64_sps {
@@ -67,7 +67,7 @@ typedef struct dcl_pid64_sps {
 //!
 #define PIDF64_SPS_DEFAULTS { 1.0L, 0.0L, 0.0L, 1.0L, 1.0L, 0.0L, 1.0L, -1.0L }
 
-//! \brief          PID 64bit object for storing PID specific 64bit parameters
+//! \brief          DCL_PIDF64 object for storing 64bit PID specific parameters
 //!
 typedef _DCL_VOLATILE struct dcl_pidf64 {
     /* controller parameter */

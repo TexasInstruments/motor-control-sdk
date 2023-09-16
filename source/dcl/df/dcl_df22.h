@@ -51,7 +51,7 @@ extern "C" {
 
 //--- Direct Form 2 - 2nd order ----------------------------------------------
 
-//! \brief          Defines the DCL_DF22 shadow parameter set
+//! \brief          Defines DCL_DF22 shadow parameter set
 //!                 used for updating compensator parameter
 //!
 typedef struct dcl_df22_sps
@@ -65,7 +65,7 @@ typedef struct dcl_df22_sps
 
 #define DF22_SPS_DEFAULTS { 1.0f, 0.0f, 0.0f, 0.0f, 0.0f }
 
-//! \brief          DF22 object for storing df22 specific parameters
+//! \brief          DCL_DF22 object for storing df22 specific parameters
 //!
 typedef _DCL_VOLATILE struct dcl_df22
 {

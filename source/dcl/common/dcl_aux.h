@@ -84,7 +84,6 @@ extern "C" {
 //! \code
 //!                 float32_t s = DCL_rand(1.0f);
 //! \endcode
-//!
 #define DCL_rand(a)         (a * ((float32_t) rand() / (float32_t) (RAND_MAX >> 1) - 1.0f))
 #define DCL_randF64(a)      (a * ((float64_t) rand() / (float64_t) (RAND_MAX >> 1) - 1.0L))
 
@@ -94,7 +93,7 @@ extern "C" {
 #define DCL_c2Limit         ((2.0f - CONST_PI) / (2.0f + CONST_PI))
 #define DCL_c2LimitF64      ((2.0L - CONST_PI_F64) / (2.0L + CONST_PI_F64))
 
-/**  @} */
+/** @} */
 
 #ifdef __cplusplus
 }

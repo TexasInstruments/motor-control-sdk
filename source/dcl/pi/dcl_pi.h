@@ -49,7 +49,7 @@ extern "C" {
 
 //--- Linear PI controller ---------------------------------------------------
 
-//! \brief          Defines the DCL_PI shadow parameter set
+//! \brief          Defines DCL_PI shadow parameter set
 //!                 used for updating controller parameter
 //!
 typedef struct dcl_pi_sps
@@ -64,7 +64,7 @@ typedef struct dcl_pi_sps
 //!
 #define PI_SPS_DEFAULTS { 1.0f, 0.0f, 1.0f, -1.0f }
 
-//! \brief          PI object for storing PI specific parameters
+//! \brief          DCL_PI object for storing PI specific parameters
 //!
 typedef _DCL_VOLATILE struct dcl_pi
 {

@@ -56,7 +56,7 @@ extern "C" {
 //! \details        Allows controllers to be defined in terms of complex pole
 //!                 and zero frequencies.  The common structure consists of
 //!                 three complex zeros, three complex poles, and a real gain.
-//!                 All frequencies must be specified in radians/sec. <--- TODO: Conflicting units compared with the documentation,rad/s or hz?
+//!                 All frequencies must be specified in radians/sec.
 //!
 typedef struct dcl_zpk3 
 {

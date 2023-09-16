@@ -51,7 +51,7 @@ extern "C" {
 
 //--- Direct Form 1 - 1st order ----------------------------------------------
 
-//! \brief          Defines the DCL_DF11 shadow parameter set
+//! \brief          Defines DCL_DF11 shadow parameter set
 //!                 used for updating compensator parameter
 //!
 typedef struct dcl_df11_sps
@@ -63,7 +63,7 @@ typedef struct dcl_df11_sps
 
 #define DF11_SPS_DEFAULTS { 0.5f, 0.5f, 1.0f }
 
-//! \brief          DF11 object for storing df11 specific parameters
+//! \brief          DCL_DF11 object for storing df11 specific parameters
 //!
 typedef _DCL_VOLATILE struct dcl_df11
 {
