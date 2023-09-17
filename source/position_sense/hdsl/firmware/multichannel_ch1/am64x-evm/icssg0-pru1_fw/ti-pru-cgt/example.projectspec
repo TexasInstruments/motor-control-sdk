@@ -14,8 +14,8 @@
         name = "hdsl_master_multichannel_ch1_am64x-evm_icssg0-pru1_fw_ti-pru-cgt"
         products="com.ti.MOTOR_CONTROL_SDK_AMXXX;"
         configurations="
-                Debug,
                 Release,
+                Debug,
         "
         connection="TIXDS110_Connection.xml"
         toolChain="TI"
@@ -53,13 +53,13 @@
 
         description="A Hdsl Master Multichannel Ch1 FW project">
 
-        <configuration name="Debug"
+        <configuration name="Release"
             compilerBuildOptions="
             "
             linkerBuildOptions="
             "
         ></configuration>
-        <configuration name="Release"
+        <configuration name="Debug"
             compilerBuildOptions="
             "
             linkerBuildOptions="

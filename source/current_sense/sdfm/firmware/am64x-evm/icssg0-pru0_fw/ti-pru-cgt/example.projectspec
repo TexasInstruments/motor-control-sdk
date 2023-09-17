@@ -14,8 +14,8 @@
         name = "sdfm_firmware_am64x-evm_icssg0-pru0_fw_ti-pru-cgt"
         products="com.ti.MOTOR_CONTROL_SDK_AMXXX;"
         configurations="
-                Debug,
                 Release,
+                Debug,
         "
         connection="TIXDS110_Connection.xml"
         toolChain="TI"
@@ -61,16 +61,16 @@
 
         description="A Sdfm Firmware FW project">
 
-        <configuration name="Debug"
+        <configuration name="Release"
             compilerBuildOptions="
-                -D_DEBUG_=1
+                -O3
             "
             linkerBuildOptions="
             "
         ></configuration>
-        <configuration name="Release"
+        <configuration name="Debug"
             compilerBuildOptions="
-                -O3
+                -D_DEBUG_=1
             "
             linkerBuildOptions="
             "

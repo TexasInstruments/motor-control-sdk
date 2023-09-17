@@ -14,8 +14,8 @@
         name = "hdsl_master_sync_225_mhz_am64x-evm_icssg0-pru1_fw_ti-pru-cgt"
         products="com.ti.MOTOR_CONTROL_SDK_AMXXX;"
         configurations="
-                Debug,
                 Release,
+                Debug,
         "
         connection="TIXDS110_Connection.xml"
         toolChain="TI"
@@ -52,13 +52,13 @@
 
         description="A Hdsl Master Sync 225 Mhz FW project">
 
-        <configuration name="Debug"
+        <configuration name="Release"
             compilerBuildOptions="
             "
             linkerBuildOptions="
             "
         ></configuration>
-        <configuration name="Release"
+        <configuration name="Debug"
             compilerBuildOptions="
             "
             linkerBuildOptions="
