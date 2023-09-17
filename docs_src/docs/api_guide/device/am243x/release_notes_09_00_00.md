@@ -89,9 +89,23 @@ Module       | Supported CPUs | SysConfig Support | OS Support        | Key feat
     <th> Resolution/Comments
 </tr>
 <tr>
+    <td> PINDSW-5538
+    <td> HDSL: Long message not working with multi-channel application
+    <td> Position Sense HDSL
+    <td> -
+    <td> -
+</tr>
+<tr>
     <td> PINDSW-5651
     <td> HDSL: Multi-turn bits of fast position do not contain correct data
     <td> Position Sense HDSL
+    <td> -
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-5681
+    <td> EnDat: Recovery Time not correct for 2.1 commands
+    <td> Position Sense EnDat
     <td> -
     <td> -
 </tr>
@@ -117,8 +131,22 @@ Module       | Supported CPUs | SysConfig Support | OS Support        | Key feat
     <td> -
 </tr>
 <tr>
+    <td> PINDSW-6489
+    <td> HDSL: Offsets for ONLINE STATUS registers in C structure are not correct
+    <td> Position Sense HDSL
+    <td> -
+    <td> -
+</tr>
+<tr>
     <td> PINDSW-6492
     <td> HDSL: Protocol reset is not working
+    <td> Position Sense HDSL
+    <td> -
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-6526
+    <td> HDSL: FREL/FRES bits in EVENT/EVENT_S registers are not sticky
     <td> Position Sense HDSL
     <td> -
     <td> -
@@ -131,43 +159,8 @@ Module       | Supported CPUs | SysConfig Support | OS Support        | Key feat
     <td> -
 </tr>
 <tr>
-    <td> PINDSW-5538
-    <td> HDSL: Long message not working with multi-channel application
-    <td> Position Sense HDSL
-    <td> -
-    <td> -
-</tr>
-<tr>
-    <td> PINDSW-6489
-    <td> HDSL: Offsets for ONLINE STATUS registers in C structure are not correct
-    <td> Position Sense HDSL
-    <td> -
-    <td> -
-</tr>
-<tr>
     <td> PINDSW-6607
     <td> %SDFM: NULL pointer dereferenced in \ref SDFM_getFilterData
-    <td> Current Sense %SDFM
-    <td> -
-    <td> -
-</tr>
-<tr>
-    <td> PINDSW-6526
-    <td> HDSL: FREL/FRES bits in EVENT/EVENT_S registers are not sticky
-    <td> Position Sense HDSL
-    <td> -
-    <td> -
-</tr>
-<tr>
-    <td> PINDSW-5681
-    <td> EnDat: Recovery Time not correct for 2.1 commands
-    <td> Position Sense EnDat
-    <td> -
-    <td> -
-</tr>
-<tr>
-    <td> PINDSW-5681
-    <td> %SDFM: Sampling does not work with EPWM as %SDFM clock
     <td> Current Sense %SDFM
     <td> -
     <td> -
@@ -185,18 +178,18 @@ Module       | Supported CPUs | SysConfig Support | OS Support        | Key feat
     <th> Workaround
 </tr>
 <tr>
-    <td> PINDSW-5690
-    <td> HDSL: EDGE register is not updated
-    <td> Position Sense HDSL
-    <td> 9.0 onwards
-    <td> -
-</tr>
-<tr>
     <td> PINDSW-5537
     <td> HDSL not working with 225 MHz PRU-ICSSG Core Clock Frequency
     <td> Position Sense HDSL
     <td> 9.0 onwards
     <td> Use 300 MHz frequency for PRU-ICSSG Core Clock
+</tr>
+<tr>
+    <td> PINDSW-5690
+    <td> HDSL: EDGE register is not updated
+    <td> Position Sense HDSL
+    <td> 9.0 onwards
+    <td> -
 </tr>
 <tr>
     <td> PINDSW-6486
