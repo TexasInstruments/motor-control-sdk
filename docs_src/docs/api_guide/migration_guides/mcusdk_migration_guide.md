@@ -5,7 +5,7 @@ Components under Motor Control SDK were available in MCU+ SDK 7.x and 8.x releas
 If you are a user of MCU+ SDK, then items listed on this page that will assist you in migration to Motor Control SDK.
 
 
-- To build examples from Industrial Communications SDK and MCU+ SDK using CCS projects, user has to add <b>${SDK_INSTALL_PATH}/ind_comms_sdk</b> and <b>${SDK_INSTALL_PATH}/mcu_plus_sdk</b> to "Product discovery path" respectively in CCS.
+- To build examples from Industrial Communications SDK and MCU+ SDK using CCS projects, user has to add <b>${SDK_INSTALL_PATH}/ind_comms_sdk</b> path and <b>${SDK_INSTALL_PATH}/mcu_plus_sdk</b> path to "Product discovery path" respectively in CCS (from Window->Preferences->Code Composer Studio->Products). 
 
 \cond SOC_AM64X || SOC_AM243X
 

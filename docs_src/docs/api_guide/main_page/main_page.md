@@ -15,6 +15,8 @@ Applications and PRU-ICSS firmwares for position sense and current sense are pro
 
 To get started, see <a href="@VAR_MCU_SDK_DOCS_PATH/GETTING_STARTED.html" target="_blank"> GETTING STARTED </a> page.
 
+\note To build examples from Industrial Communications SDK and MCU+ SDK using CCS projects, user has to add <b>${SDK_INSTALL_PATH}/ind_comms_sdk</b> path and <b>${SDK_INSTALL_PATH}/mcu_plus_sdk</b> path to "Product discovery path" respectively in CCS (from Window->Preferences->Code Composer Studio->Products)
+
 ## Block Diagram
 
 Given below is a block diagram of the SW modules in this SDK
