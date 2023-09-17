@@ -38,8 +38,6 @@ TI ARM CLANG            | R5F, M4F       | @VAR_TI_ARM_CLANG_VERSION
 FreeRTOS Kernel         | R5F, M4F, A53  | @VAR_FREERTOS_KERNEL_VERSION
 FreeRTOS SMP Kernel     | A53            | @VAR_FREERTOS_SMP_KERNEL_VERSION
 
-\attention TI ARM CLANG @VAR_TI_ARM_CLANG_VERSION is not part of CCS by default, Follow steps at <a href="@VAR_MCU_SDK_DOCS_PATH/SDK_DOWNLOAD_PAGE.html#INSTALL_TIARMCLANG" target="_blank">TI CLANG Compiler Toolchain</a> to install the compiler.
-
 ## Key Features
 
 <!-- ### Experimental Features
