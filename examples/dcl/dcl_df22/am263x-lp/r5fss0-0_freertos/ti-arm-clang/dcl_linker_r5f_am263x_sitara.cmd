@@ -5,7 +5,7 @@
 */
 
 /* Define core & platform specific variables */
-#define FAST_RAM    R5F_TCMB0  /* R5F_TCMA also works */
+#define FAST_RAM    R5F_TCMB  /* R5F_TCMA also works */
 #define REG_RAM     OCRAM
 
 SECTIONS
