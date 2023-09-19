@@ -137,5 +137,6 @@ module.exports = {
     getDevToolTirex,
     getProperty,
     getLinuxFwName,
+    getProductNameProjectSpec,
     getFlashAddr,
 };
