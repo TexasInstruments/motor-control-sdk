@@ -14,8 +14,8 @@
         name = "endat_diagnostic_multi_channel_load_share_am243x-evm_r5fss0-0_freertos_ti-arm-clang"
         products="sysconfig;com.ti.MOTOR_CONTROL_SDK_AMXXX;"
         configurations="
-                Debug,
                 Release,
+                Debug,
         "
         connection="TIXDS110_Connection.xml"
         toolChain="TICLANG"
@@ -69,19 +69,6 @@
 
         description="A Endat Diagnostic Multi Channel Load Share FREERTOS project">
 
-        <configuration name="Debug"
-            compilerBuildOptions="
-                -D_DEBUG_=1
-            "
-            linkerBuildOptions="
-                -lfreertos.am243x.r5f.ti-arm-clang.debug.lib
-                -ldrivers.am243x.r5f.ti-arm-clang.debug.lib
-                -lboard.am243x.r5f.ti-arm-clang.debug.lib
-                -lmotorcontrol_endat.am243x.r5f.ti-arm-clang.debug.lib
-                -llibc.a
-                -llibsysbm.a
-            "
-        ></configuration>
         <configuration name="Release"
             compilerBuildOptions="
                 -Os
@@ -91,6 +78,19 @@
                 -ldrivers.am243x.r5f.ti-arm-clang.release.lib
                 -lboard.am243x.r5f.ti-arm-clang.release.lib
                 -lmotorcontrol_endat.am243x.r5f.ti-arm-clang.release.lib
+                -llibc.a
+                -llibsysbm.a
+            "
+        ></configuration>
+        <configuration name="Debug"
+            compilerBuildOptions="
+                -D_DEBUG_=1
+            "
+            linkerBuildOptions="
+                -lfreertos.am243x.r5f.ti-arm-clang.debug.lib
+                -ldrivers.am243x.r5f.ti-arm-clang.debug.lib
+                -lboard.am243x.r5f.ti-arm-clang.debug.lib
+                -lmotorcontrol_endat.am243x.r5f.ti-arm-clang.debug.lib
                 -llibc.a
                 -llibsysbm.a
             "

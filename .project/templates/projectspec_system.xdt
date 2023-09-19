@@ -12,8 +12,8 @@
         name="`args.project.name`_`args.project.board`_system_`args.project.tag`"
         products="`products`"
         configurations="
-            Debug,
             Release,
+            Debug,
         "
         connection="TIXDS110_Connection.xml"
         device="Cortex R.`args.device.getProjectSpecDevice(args.project.board)`"
