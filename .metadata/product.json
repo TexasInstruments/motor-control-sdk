@@ -12,11 +12,9 @@
         "/kernel/dpl",
         "/drivers/drivers",
         "/board/board",
-        "/fs/fs",
         "/networking/networking",
         "/security/security",
-        "/usb/usb",
-        "/pru_io/pru_io",
+        "/xbar/xbar",
     ],
     "devices": [
         "AM64x",
