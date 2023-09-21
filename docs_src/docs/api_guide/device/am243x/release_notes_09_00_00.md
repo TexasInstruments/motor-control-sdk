@@ -11,6 +11,8 @@
       Unless noted otherwise, the SW modules would work on any of the R5F's present on the SOC. \n
       Unless noted otherwise, the SW modules would work on all supported EVMs \n
 
+\note Tamagawa over SoC UART example is not supported for AM243x
+
 ## New in this Release
 
 Feature                                                                                         | Module
@@ -223,6 +225,13 @@ Module       | Supported CPUs | SysConfig Support | OS Support        | Key feat
     <td> Position Sense HDSL
     <td> 9.0 onwards
     <td> -
+</tr>
+<tr>
+    <td> PINDSW-6931
+    <td> Tamagawa: Firmware build failing 
+    <td> Position Sense Tamagawa
+    <td> 9.0 onwards
+    <td>1. Update include path of icss_regs.inc and icss_cfg_regs.inc files to `../../../../mcu_plus_sdk/source/pru_io/firmware/common/ ` path in `tamagawa_main.asm` and `tamagawa_icss_reg_defs.h` files.<br>2. Replace ED with ENDAT in symbol definitions in tamagawa_main.asm file's lines 101 to 122. (For example, update `ICSS_CFG_PRU0_ED_CH0_CFG1` to `ICSS_CFG_PRU0_ENDAT_CH0_CFG1` )</td>
 </tr>
 </table>
 
