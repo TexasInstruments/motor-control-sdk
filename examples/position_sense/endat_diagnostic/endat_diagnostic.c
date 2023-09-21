@@ -1088,7 +1088,7 @@ void endat_process_2_2_position_command(uint32_t a0)
     else if(gEndat_2_2_loop_mrs == MRS_POS_VAL2_WORD2)
     {
         gEndat_2_2_pos_val2[a0] &= 0xFFFFFFFFFFFF0000;
-        gEndat_2_2_pos_val2[a0] |= pos_word;
+        gEndat_2_2_pos_val2[a0] |= (uint64_t)pos_word;
         gEndat_2_2_loop_mrs = MRS_POS_VAL2_WORD3;
         /* WORD2 in addinfo1 */
     }
