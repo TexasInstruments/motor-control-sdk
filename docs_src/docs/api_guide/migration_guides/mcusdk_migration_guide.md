@@ -1,6 +1,12 @@
 # Migration Guide {#MIGRATION_GUIDES}
 
+\cond SOC_AM64X || SOC_AM243X
 Components under Motor Control SDK were available in MCU+ SDK 7.x and 8.x releases.
+\endcond
+
+\cond SOC_AM263X
+Components under Motor Control SDK were available in MCU+ SDK 8.x releases.
+\endcond
 
 If you are a user of MCU+ SDK, then items listed on this page that will assist you in migration to Motor Control SDK.
 
@@ -38,5 +44,7 @@ If you are a user of MCU+ SDK, then items listed on this page that will assist y
 
 - Motor Control SDK also includes <a href="@VAR_IC_SDK_DOCS_PATH/index.html" target="_blank">@VAR_SOC_NAME Industrial Communications SDK</a> under `ind_comms_sdk` folder and <a href="@VAR_MCU_SDK_DOCS_PATH/index.html" target="_blank">@VAR_SOC_NAME MCU+ SDK</a> under `mcu_plus_sdk` folder. 
 
+\cond SOC_AM64X || SOC_AM243X
 - \ref UPGRADE_AND_COMPATIBILITY_INFORMATION_9_0_0 has details on changes which can affect migration of applications based on MCU+ SDK 08.06.00 to Motor Control SDK 09.00.00.
+\endcond
 
