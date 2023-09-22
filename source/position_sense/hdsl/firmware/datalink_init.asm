@@ -101,30 +101,48 @@ datalink_reset:
 ;reset SAFE_CTRL register
     zero        &REG_TMP0.b0, 1
 	sbco        &REG_TMP0.b0, MASTER_REGS_CONST, SAFE_CTRL, 1
+; Set EVENT_PRST in EVENT_H register
+	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_H, 4
+	set		REG_TMP0.w0, REG_TMP0.w0, EVENT_PRST
+;save events
+	sbco		&REG_TMP0.w0, MASTER_REGS_CONST, EVENT_H, 2
+	qbbc		update_events_no_int15, REG_TMP0.w2, EVENT_PRST
+; generate interrupt
+	ldi		r31.w0, PRU0_ARM_IRQ
+update_events_no_int15:
+; Set EVENT_S_PRST in EVENT_S register
+	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_S, 2
+	set		REG_TMP0.b0, REG_TMP0.b0, EVENT_S_PRST
+;save events
+	sbco		&REG_TMP0.w0, MASTER_REGS_CONST, EVENT_S, 1
+	qbbc		update_events_no_int22, REG_TMP0.b1, EVENT_S_PRST
+; generate interrupt
+	ldi		r31.w0, PRU0_ARM_IRQ4
+update_events_no_int22:
 ; Initialize ONLINE_STATUS_D, ONLINE_STATUS_1 and ONLINE_STATUS_2
 ; In ONLINE_STATUS_D high, bit 2 is FIX0, bit 4 is FIX1 and bit 5 is FIX0
 ; In ONLINE_STATUS_D low, bit 0 is FIX0 and bit 3 is FIX0
 	lbco        &REG_TMP0.w0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 2
     ; clearing bits
     ldi        REG_TMP0.w0, 0
-    ; setting bits with fix1
-    or         REG_TMP0.w0, REG_TMP0.w0, (1<<ONLINE_STATUS_D_HIGH_BIT4_FIX1)
+    ; setting bits with fix1 and PRST bit
+    or         REG_TMP0.w0, REG_TMP0.w0, (1<<ONLINE_STATUS_D_HIGH_BIT4_FIX1) | (1<<ONLINE_STATUS_D_PRST)
 	sbco        &REG_TMP0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 2
 ; In ONLINE_STATUS_1 high, bit 1 is FIX0, bit 3 is FIX0 and bit 4 is FIX1
 ; In ONLINE_STATUS_1 low, bit 1 is FIX0, bit 3 is FIX0 and bit 4 is FIX0
 	lbco        &REG_TMP0.w0, MASTER_REGS_CONST, ONLINE_STATUS_1_H, 2
     ; clearing bits
     ldi        REG_TMP0.w0, 0
-    ; setting bits with fix1
-    or         REG_TMP0.w0, REG_TMP0.w0, (1<<ONLINE_STATUS_1_HIGH_BIT4_FIX1)
+    ; setting bits with fix1 and PRST bit
+    or         REG_TMP0.w0, REG_TMP0.w0, (1<<ONLINE_STATUS_1_HIGH_BIT4_FIX1) | (1<<ONLINE_STATUS_1_PRST)
 	sbco        &REG_TMP0, MASTER_REGS_CONST, ONLINE_STATUS_1_H, 2
 ; In ONLINE_STATUS_2 high, bit 1 is FIX0, bit 3 is FIX0, bit 4 is FIX1 and bit7 is FIX1
 ; In ONLINE_STATUS_2 low, bits 0, 1, 3, 4, 5 are FIX0
 	lbco        &REG_TMP0.w0, MASTER_REGS_CONST, ONLINE_STATUS_2_H, 2
     ; clearing bits
     ldi        REG_TMP0.w0, 0
-    ; setting bits with fix1
-    or         REG_TMP0.w0, REG_TMP0.w0, (1<<ONLINE_STATUS_2_HIGH_BIT4_FIX1)
+    ; setting bits with fix1 and PRST bit
+    or         REG_TMP0.w0, REG_TMP0.w0, (1<<ONLINE_STATUS_2_HIGH_BIT4_FIX1) | (1<<ONLINE_STATUS_2_PRST)
 	sbco        &REG_TMP0, MASTER_REGS_CONST, ONLINE_STATUS_2_H, 2
 ;check for SPOL and configure eCAP accordingly
 	ldi			REG_TMP1, (ECAP+ECAP_ECCTL1)
@@ -560,24 +578,6 @@ datalink_abort2_no_wait:
 	lbco			&REG_TMP0.b0, MASTER_REGS_CONST, NUM_RESETS, 1
 	add			REG_TMP0.b0, REG_TMP0.b0, 1
 	sbco			&REG_TMP0.b0, MASTER_REGS_CONST, NUM_RESETS, 1
-; Set EVENT_PRST in EVENT_H register
-	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_H, 4
-	set		REG_TMP0.w0, REG_TMP0.w0, EVENT_PRST
-;save events
-	sbco		&REG_TMP0.w0, MASTER_REGS_CONST, EVENT_H, 2
-	qbbc		update_events_no_int15, REG_TMP0.w2, EVENT_PRST
-; generate interrupt
-	ldi		r31.w0, PRU0_ARM_IRQ
-update_events_no_int15:
-; Set EVENT_S_PRST in EVENT_S register
-	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_S, 2
-	set		REG_TMP0.b0, REG_TMP0.b0, EVENT_S_PRST
-;save events
-	sbco		&REG_TMP0.w0, MASTER_REGS_CONST, EVENT_S, 1
-	qbbc		update_events_no_int22, REG_TMP0.b1, EVENT_S_PRST
-; generate interrupt
-	ldi		r31.w0, PRU0_ARM_IRQ4
-update_events_no_int22:
 ;we need rel. jump here
 	qba			datalink_reset
 ;--------------------------------------------------------------------------------------------------
@@ -627,6 +627,14 @@ datalink_line_check:
 	qblt			datalink_line_check, LOOP_CNT.b1, 0
 	;qba datalink_line_check
 datalink_line_check_end:
+
+; Clear PRST bits in ONLINE_STATUS registers
+	lbco		&REG_TMP0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 6
+    clr         REG_TMP0.w0, REG_TMP0.w0, ONLINE_STATUS_D_PRST
+    clr         REG_TMP0.w2, REG_TMP0.w2, ONLINE_STATUS_1_PRST
+    clr         REG_TMP1.w0, REG_TMP1.w0, ONLINE_STATUS_2_PRST
+	sbco		&REG_TMP0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 6
+
 ;--------------------------------------------------------------------------------------------------
 ;State ID REQ
 ;save delay to master registers after all checks were successful
