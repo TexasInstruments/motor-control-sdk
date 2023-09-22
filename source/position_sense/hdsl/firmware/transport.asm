@@ -285,16 +285,14 @@ transport_on_v_frame_2:
 ; set SCE2 bit in ONLINE_STATUS_2
 	set		    REG_TMP0.b0, REG_TMP0.w0, ONLINE_STATUS_2_SCE2
 	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, ONLINE_STATUS_2_H, 1
-	QM_SUB		6
+	QM_SUB		8
 transport_on_v_frame_dont_update_qm_secondary_channel:
 	qba		transport_on_v_frame_2_exit
 check_for_slave_error_on_secondary_channel:
 ; clear SCE2 bit in ONLINE_STATUS_2
 	clr		    REG_TMP0.b0, REG_TMP0.w0, ONLINE_STATUS_2_SCE2
 	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, ONLINE_STATUS_2_H, 1
-;CRC was correct -> add 1 to QM
-	QM_ADD		1
-; NOTE: QM_ADD uses REG_TMP0. Loading REG_TMP0 again here. It can be optimized.
+; No QM updates for CRC check success with safe channel 2
     lbco		&REG_TMP0.b0, MASTER_REGS_CONST, ONLINE_STATUS_2_H, 1
 ;check for special character: K29.7 is sent in first byte of secondary vertical channel if slave error occured
 ; assumption: r21.b3 contains the first byte of secondary vertical channel
