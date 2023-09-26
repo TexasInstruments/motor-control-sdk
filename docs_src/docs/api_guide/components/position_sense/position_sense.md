@@ -8,16 +8,16 @@ Real-time communication with encoders and current sensing is typically handled b
 
 Applications and PRU-ICSS firmwares for following position sense encoders are provided in the SDK.
 
-- \subpage ENDAT 
-- \subpage HDSL 
-- \subpage TAMAGAWA 
+- \subpage ENDAT
+- \subpage HDSL
+- \subpage TAMAGAWA
 
 \endcond
 
-\cond SOC_AM263X 
+\cond SOC_AM263X
 
-Applications and PRU-ICSS firmwares for following position sense encoder is provided in the SDK.
+Application for following position sense encoder is provided in the SDK.
 
-\subpage TAMAGAWA_OVER_UART 
+- \subpage TAMAGAWA_OVER_UART
 
 \endcond
