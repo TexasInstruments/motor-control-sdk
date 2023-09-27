@@ -2,12 +2,22 @@
 
 [TOC]
 
+\cond SOC_AM64X || SOC_AM243X
+
 Welcome to **@VAR_SDK_NAME for @VAR_SOC_NAME**. This SDK contains examples, libraries and tools to develop **RTOS and no-RTOS** based applications enabling real-time communication for position and current sense from motors, and real-time control libraries for **ARM R5F CPU** and related peripherals.
 
 
 Real-time communication with encoders and current sensing is typically handled by the Programmable Real-Time Unit Industrial Communication Subsystem (PRU-ICSS). The PRU-ICSS is a co-processor subsystem containing Programmable Real-Time (PRU) cores which implement the low level firmware. The PRU-ICSS frees up the main ARM cores in the device for other functions, such as control and data processing.
 
 Applications and PRU-ICSS firmwares for position sense and current sense are provided in the SDK.
+
+\endcond
+
+\cond SOC_AM263X
+
+Welcome to **@VAR_SDK_NAME for @VAR_SOC_NAME**. This SDK contains examples, libraries and tools to develop **RTOS and no-RTOS** based applications enabling real-time communication for position sense from motors, and real-time control libraries for **ARM R5F CPU** and related peripherals.
+
+\endcond
 
 \attention This SDK also includes <a href="@VAR_IC_SDK_DOCS_PATH/index.html" target="_blank">@VAR_SOC_NAME Industrial Communications SDK</a> and <a href="@VAR_MCU_SDK_DOCS_PATH/index.html" target="_blank">@VAR_SOC_NAME MCU+ SDK</a>.
 
@@ -123,6 +133,12 @@ The main software components in the block diagram specific to motor control are 
     <td> Tamagawa
     <td>\ref TAMAGAWA_OVER_UART
     <td> Driver for Tamagawa encoder interface
+</tr>
+<tr><td colspan="3" bgcolor=#F0F0F0>**Real Time Libraries**</td></tr>
+<tr>
+    <td> Digital Control Library (DCL)
+    <td>\ref DCL
+    <td> Header-only library for digital control applications
 </tr>
 <tr><td colspan="3" bgcolor=#F0F0F0>**Examples and Demos**</td></tr>
 <tr>
