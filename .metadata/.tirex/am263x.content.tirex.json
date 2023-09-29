@@ -5,6 +5,262 @@
             "example"
         ],
         "resourceSubClass": [
+            "example.gettingstarted"
+        ],
+        "description": "A Direct Form 2 2nd order example demonstrating the digital control library (DCL). CPU is R5FSS0-0 running NORTOS.",
+        "name": "dcl_df22",
+        "location": "../../examples/dcl/dcl_df22/am263x-cc/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "TMDSCNCD263"
+        ],
+        "kernel": [
+            "nortos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "dcl",
+            "dcl_df22",
+            "r5fss0-0_nortos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.gettingstarted"
+        ],
+        "description": "A Direct Form 2 2nd order example demonstrating the digital control library (DCL). CPU is R5FSS0-0 running FREERTOS.",
+        "name": "dcl_df22",
+        "location": "../../examples/dcl/dcl_df22/am263x-cc/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "TMDSCNCD263"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "dcl",
+            "dcl_df22",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.gettingstarted"
+        ],
+        "description": "A Direct Form 2 2nd order example demonstrating the digital control library (DCL). CPU is R5FSS0-0 running NORTOS.",
+        "name": "dcl_df22",
+        "location": "../../examples/dcl/dcl_df22/am263x-lp/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "LP-AM263"
+        ],
+        "kernel": [
+            "nortos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "dcl",
+            "dcl_df22",
+            "r5fss0-0_nortos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.gettingstarted"
+        ],
+        "description": "A Direct Form 2 2nd order example demonstrating the digital control library (DCL). CPU is R5FSS0-0 running FREERTOS.",
+        "name": "dcl_df22",
+        "location": "../../examples/dcl/dcl_df22/am263x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "LP-AM263"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "dcl",
+            "dcl_df22",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.gettingstarted"
+        ],
+        "description": "A PI controller example demonstrating the digital control library (DCL).  CPU is R5FSS0-0 running NORTOS.",
+        "name": "dcl_pi",
+        "location": "../../examples/dcl/dcl_pi/am263x-cc/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "TMDSCNCD263"
+        ],
+        "kernel": [
+            "nortos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "dcl",
+            "dcl_pi",
+            "r5fss0-0_nortos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.gettingstarted"
+        ],
+        "description": "A PI controller example demonstrating the digital control library (DCL).  CPU is R5FSS0-0 running FREERTOS.",
+        "name": "dcl_pi",
+        "location": "../../examples/dcl/dcl_pi/am263x-cc/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "TMDSCNCD263"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "dcl",
+            "dcl_pi",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.gettingstarted"
+        ],
+        "description": "A PI controller example demonstrating the digital control library (DCL).  CPU is R5FSS0-0 running NORTOS.",
+        "name": "dcl_pi",
+        "location": "../../examples/dcl/dcl_pi/am263x-lp/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "LP-AM263"
+        ],
+        "kernel": [
+            "nortos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "dcl",
+            "dcl_pi",
+            "r5fss0-0_nortos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.gettingstarted"
+        ],
+        "description": "A PI controller example demonstrating the digital control library (DCL).  CPU is R5FSS0-0 running FREERTOS.",
+        "name": "dcl_pi",
+        "location": "../../examples/dcl/dcl_pi/am263x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "LP-AM263"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "dcl",
+            "dcl_pi",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
             "example.general"
         ],
         "description": "An Example of tamagawa single channel with soc uart CPU is R5FSS0-0 running FREERTOS.",
@@ -39,6 +295,7 @@
         "name": "User Guide",
         "location": "../../docs/api_guide_am263x/index.html",
         "devtools": [
+            "TMDSCNCD263",
             "LP-AM263"
         ],
         "mainCategories": [

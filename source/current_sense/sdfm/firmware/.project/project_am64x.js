@@ -4,7 +4,7 @@ let device = "am64x";
 
 const files = {
     common: [
-        "sddf.asm",
+        "sdfm.asm",
         "icssg_pru.cmd",
     ],
 };
@@ -27,7 +27,7 @@ const readmeDoxygenPageTag = "SDFM_DESIGN";
 const cflags_pru = {
     common: [
         "-v4",
-        "-DSDDF_PRU_CORE",
+        "-DSDFM_PRU_CORE",
         "-o2",
         "--display_error_number",
         "--hardware_mac=on",
@@ -37,9 +37,9 @@ const cflags_pru = {
 const lflags_pru = {
     common: [
         "--disable_auto_rts",
-        "--define=SDDF_PRU_CORE=1",
+        "--define=SDFM_PRU_CORE=1",
         "--warn_sections",
-        "--entry_point=SDDF_ENTRY",
+        "--entry_point=SDFM_ENTRY",
         "--zero_init=off",
     ],
 };
@@ -53,7 +53,7 @@ const buildOptionCombos = [
 
 
 let postBuildStepsPru = [
-   "$(CG_TOOL_ROOT)/bin/hexpru.exe --diag_wrap=off --array --array:name_prefix=pru_SDDF_PRU0_image -o sdfm_firmware_am64x-evm_icssg0-pru0_fw_ti-pru-cgt.h sdfm_firmware_am64x-evm_icssg0-pru0_fw_ti-pru-cgt.out;  move sdfm_firmware_am64x-evm_icssg0-pru0_fw_ti-pru-cgt.h ${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware/sdfm_bin.h;"
+   "$(CG_TOOL_ROOT)/bin/hexpru.exe --diag_wrap=off --array --array:name_prefix=pru_SDFM_PRU0_image -o sdfm_firmware_am64x-evm_icssg0-pru0_fw_ti-pru-cgt.h sdfm_firmware_am64x-evm_icssg0-pru0_fw_ti-pru-cgt.out;  move sdfm_firmware_am64x-evm_icssg0-pru0_fw_ti-pru-cgt.h ${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware/sdfm_bin.h;"
 ];
 
 

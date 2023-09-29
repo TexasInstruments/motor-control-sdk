@@ -66,7 +66,7 @@ RET2	.macro
 
 	.include "tamagawa_icss_reg_defs.h"
 	.include "tamagawa_interface.h"
-	.include "..\..\..\..\pru_io\firmware\common\icss_regs.inc"
+	.include "..\..\..\..\mcu_plus_sdk\source\pru_io\firmware\common\icss_regs.inc"
 	.include "single_ch_receive_frames.h"
 	.include "multi_ch_receive_frames.h"
     .include "firmware_version.h"
@@ -98,28 +98,28 @@ TAMAGAWA_INIT:
     .if	$isdefed("PRU0")
     ;Data Memory address for PRU0 is loaded in PRUx_DMEM
     .asg	PRU0_DMEM,		PRUx_DMEM
-	.asg    ICSS_CFG_PRU0_ED_CH0_CFG1, ICSS_CFG_PRUx_ED_CH0_CFG1
-	.asg    ICSS_CFG_PRU0_ED_CH1_CFG1, ICSS_CFG_PRUx_ED_CH1_CFG1
-	.asg    ICSS_CFG_PRU0_ED_CH2_CFG1, ICSS_CFG_PRUx_ED_CH2_CFG1
-	.asg    ICSS_CFG_PRU0_ED_CH0_CFG0, ICSS_CFG_PRUx_ED_CH0_CFG0
-	.asg    ICSS_CFG_PRU0_ED_CH1_CFG0, ICSS_CFG_PRUx_ED_CH1_CFG0
-	.asg    ICSS_CFG_PRU0_ED_CH2_CFG0, ICSS_CFG_PRUx_ED_CH2_CFG0
-	.asg    ICSS_CFG_PRU0_ED_TXCFG,    ICSS_CFG_PRUx_ED_TXCFG
-	.asg    ICSS_CFG_PRU0_ED_RXCFG,    ICSS_CFG_PRUx_ED_RXCFG
+	.asg    ICSS_CFG_PRU0_ENDAT_CH0_CFG1, ICSS_CFG_PRUx_ED_CH0_CFG1
+	.asg    ICSS_CFG_PRU0_ENDAT_CH1_CFG1, ICSS_CFG_PRUx_ED_CH1_CFG1
+	.asg    ICSS_CFG_PRU0_ENDAT_CH2_CFG1, ICSS_CFG_PRUx_ED_CH2_CFG1
+	.asg    ICSS_CFG_PRU0_ENDAT_CH0_CFG0, ICSS_CFG_PRUx_ED_CH0_CFG0
+	.asg    ICSS_CFG_PRU0_ENDAT_CH1_CFG0, ICSS_CFG_PRUx_ED_CH1_CFG0
+	.asg    ICSS_CFG_PRU0_ENDAT_CH2_CFG0, ICSS_CFG_PRUx_ED_CH2_CFG0
+	.asg    ICSS_CFG_PRU0_ENDAT_TXCFG,    ICSS_CFG_PRUx_ED_TXCFG
+	.asg    ICSS_CFG_PRU0_ENDAT_RXCFG,    ICSS_CFG_PRUx_ED_RXCFG
 	.endif
 
     ;If PRU1 is defined in symbols, it will select all PRU1 CFG registers.
     .if	$isdefed("PRU1")
     ;Data Memory address for PRU1 is loaded in PRUx_DMEM
     .asg	PRU1_DMEM,		PRUx_DMEM
-	.asg    ICSS_CFG_PRU1_ED_CH0_CFG1, ICSS_CFG_PRUx_ED_CH0_CFG1
-	.asg    ICSS_CFG_PRU1_ED_CH1_CFG1, ICSS_CFG_PRUx_ED_CH1_CFG1
-	.asg    ICSS_CFG_PRU1_ED_CH2_CFG1, ICSS_CFG_PRUx_ED_CH2_CFG1
-	.asg    ICSS_CFG_PRU1_ED_CH0_CFG0, ICSS_CFG_PRUx_ED_CH0_CFG0
-	.asg    ICSS_CFG_PRU1_ED_CH1_CFG0, ICSS_CFG_PRUx_ED_CH1_CFG0
-	.asg    ICSS_CFG_PRU1_ED_CH2_CFG0, ICSS_CFG_PRUx_ED_CH2_CFG0
-	.asg    ICSS_CFG_PRU1_ED_TXCFG,    ICSS_CFG_PRUx_ED_TXCFG
-	.asg    ICSS_CFG_PRU1_ED_RXCFG,    ICSS_CFG_PRUx_ED_RXCFG
+	.asg    ICSS_CFG_PRU1_ENDAT_CH0_CFG1, ICSS_CFG_PRUx_ED_CH0_CFG1
+	.asg    ICSS_CFG_PRU1_ENDAT_CH1_CFG1, ICSS_CFG_PRUx_ED_CH1_CFG1
+	.asg    ICSS_CFG_PRU1_ENDAT_CH2_CFG1, ICSS_CFG_PRUx_ED_CH2_CFG1
+	.asg    ICSS_CFG_PRU1_ENDAT_CH0_CFG0, ICSS_CFG_PRUx_ED_CH0_CFG0
+	.asg    ICSS_CFG_PRU1_ENDAT_CH1_CFG0, ICSS_CFG_PRUx_ED_CH1_CFG0
+	.asg    ICSS_CFG_PRU1_ENDAT_CH2_CFG0, ICSS_CFG_PRUx_ED_CH2_CFG0
+	.asg    ICSS_CFG_PRU1_ENDAT_TXCFG,    ICSS_CFG_PRUx_ED_TXCFG
+	.asg    ICSS_CFG_PRU1_ENDAT_RXCFG,    ICSS_CFG_PRUx_ED_RXCFG
 	.endif
 
 	; Initalize ENDAT mode

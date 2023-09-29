@@ -35,7 +35,7 @@
 
 /**
  *  \defgroup HDSL_API_MODULE APIs for HDSL Encoder
- *  \ingroup MOTOR_CONTROL_API
+ *  \ingroup POSITION_SENSE_API
  *
  * Here is the list of APIs used for HDSL Encoder communication protocol
  *
@@ -92,6 +92,8 @@ extern "C" {
 /* ICSSG0_PR1_EDC1_LATCH0_IN PRU_ICSSG0 (4+(10*4)) */
 #define SYNCEVT_RTR_SYNC10_EVT 0x2C
 
+#define ONLINE_STATUS_1_L_FRES  (1<<0)
+
 enum {
     MENU_SAFE_POSITION,
     MENU_QUALITY_MONITORING,
@@ -101,15 +103,12 @@ enum {
     MENU_RSSI,
     MENU_PC_SHORT_MSG_WRITE,
     MENU_PC_SHORT_MSG_READ,
-    MENU_PC_LONG_MSG_WRITE,
-    MENU_HDSL_REG_INTO_DDR,
-    MENU_HDSL_REG_INTO_DDR_GPIO,
     MENU_DIRECT_READ_RID0_LENGTH8,
     MENU_DIRECT_READ_RID81_LENGTH8,
     MENU_DIRECT_READ_RID81_LENGTH2,
     MENU_INDIRECT_WRITE_RID0_LENGTH8_OFFSET0,
     MENU_INDIRECT_WRITE_RID0_LENGTH8,
-    MENU_DIRECT_READ_RID0_LENGTH8_OFFSET6,
+    MENU_HDSL_REG_INTO_MEMORY,
     MENU_LIMIT,
     MENU_INVALID,
 };
@@ -126,90 +125,94 @@ typedef struct HDSL_Config_s         *HDSL_Handle;
  * @{
  */
 typedef struct {
-    volatile uint8_t SYS_CTRL;    /**< System control */
-    volatile uint8_t SYNC_CTRL;   /**< Synchronization control */
-    volatile uint8_t resvd0;      /**< Reserved 0 */
-    volatile uint8_t MASTER_QM;   /**< Quality monitoring */
-    volatile uint8_t EVENT_H;     /**< High bytes event */
-    volatile uint8_t EVENT_L;     /**< Low bytes event */
-    volatile uint8_t MASK_H;      /**< High byte event mask */
-    volatile uint8_t MASK_L;      /**< Low byte event mask */
-    volatile uint8_t MASK_SUM;    /**< Summary mask */
-    volatile uint8_t EDGES;       /**< Cable bit sampling time control */
-    volatile uint8_t DELAY;       /**< Run time delay of system cable and signal strength */
-    volatile uint8_t VERSION;     /**< Version */
-    volatile uint8_t resvd1;      /**< Reserved 1 */
-    volatile uint8_t ENC_ID2;     /**< Encoder ID, byte 2 */
-    volatile uint8_t ENC_ID1;     /**< Encoder ID, byte 1 */
-    volatile uint8_t ENC_ID0;     /**< Encoder ID, byte 0 */
-    volatile uint8_t POS4;        /**< Fast position, byte 4 */
-    volatile uint8_t POS3;        /**< Fast position, byte 3 */
-    volatile uint8_t POS2;        /**< Fast position, byte 2 */
-    volatile uint8_t POS1;        /**< Fast position, byte 1 */
-    volatile uint8_t POS0;        /**< Fast position, byte 0 */
-    volatile uint8_t VEL2;        /**< Speed, byte 2 */
-    volatile uint8_t VEL1;        /**< Speed, byte 1 */
-    volatile uint8_t VEL0;        /**< Speed, byte 0 */
-    volatile uint8_t resvd2;      /**< Reserved 2 */
-    volatile uint8_t VPOS4;       /**< Safe position, byte 4 */
-    volatile uint8_t VPOS3;       /**< Safe position, byte 3 */
-    volatile uint8_t VPOS2;       /**< Safe position, byte 2 */
-    volatile uint8_t VPOS1;       /**< Safe position, byte 1 */
-    volatile uint8_t VPOS0;       /**< Safe position, byte 0 */
-    volatile uint8_t VPOSCRC_H;   /**< CRC of Safe position, byte 1 */
-    volatile uint8_t VPOSCRC_L;   /**< CRC of Safe position, byte 0 */
-    volatile uint8_t PC_BUFFER0;  /**< Parameters channel buffer, byte 0 */
-    volatile uint8_t PC_BUFFER1;  /**< Parameters channel buffer, byte 1 */
-    volatile uint8_t PC_BUFFER2;  /**< Parameters channel buffer, byte 2 */
-    volatile uint8_t PC_BUFFER3;  /**< Parameters channel buffer, byte 3 */
-    volatile uint8_t PC_BUFFER4;  /**< Parameters channel buffer, byte 4 */
-    volatile uint8_t PC_BUFFER5;  /**< Parameters channel buffer, byte 5 */
-    volatile uint8_t PC_BUFFER6;  /**< Parameters channel buffer, byte 6 */
-    volatile uint8_t PC_BUFFER7;  /**< Parameters channel buffer, byte 7 */
-    volatile uint8_t PC_ADD_H;    /**< Long message address, byte 1 */
-    volatile uint8_t PC_ADD_L;    /**< Long message address, byte 0 */
-    volatile uint8_t PC_OFF_H;    /**< Long message address offset, byte 1 */
-    volatile uint8_t PC_OFF_L;    /**< Long message address offset, byte 0 */
-    volatile uint8_t PC_CTRL;     /**< Parameters channel control */
-    volatile uint8_t PIPE_S;      /**< Sensor hub channel status */
-    volatile uint8_t PIPE_D;      /**< Sensor hub channel data */
-    volatile uint8_t PC_DATA;     /**< Short message parameters channel data */
-    volatile uint8_t resvd3;      /**< Reserved 3 */
-    volatile uint8_t resvd4;      /**< Reserved 4 */
-    volatile uint8_t resvd5;      /**< Reserved 5 */
-    volatile uint8_t resvd6;      /**< Reserved 6 */
-    volatile uint8_t resvd7;      /**< Reserved 7 */
-    volatile uint8_t resvd8;      /**< Reserved 8 */
-    volatile uint8_t SAFE_SUM;    /**< Summarized slave status */
-    volatile uint8_t S_PC_DATA;   /**< Response of Short message parameters channel Read for safe1 channel */
-    volatile uint8_t ACC_ERR_CNT; /**< Fast position error counter */
-    volatile uint8_t MAXACC;      /**< Fast position acceleration boundary */
-    volatile uint8_t MAXDEV_H;    /**< Fast position estimator deviation high byte */
-    volatile uint8_t MAXDEV_L;    /**< Fast position estimator deviation low byte */
-    volatile uint8_t resvd9;     /**< Reserved 9 */
-    volatile uint8_t EVENT_S;     /**< Safe Events */
-    volatile uint8_t resvd10;     /**< Reserved 10 */
-    volatile uint8_t DUMMY;       /**< Dummy, no data */
+    volatile uint8_t SYS_CTRL;          /**< System control */
+    volatile uint8_t SYNC_CTRL;         /**< Synchronization control */
+    volatile uint8_t resvd0;            /**< Reserved 0 */
+    volatile uint8_t MASTER_QM;         /**< Quality monitoring */
+    volatile uint8_t EVENT_H;           /**< High bytes event */
+    volatile uint8_t EVENT_L;           /**< Low bytes event */
+    volatile uint8_t MASK_H;            /**< High byte event mask */
+    volatile uint8_t MASK_L;            /**< Low byte event mask */
+    volatile uint8_t MASK_SUM;          /**< Summary mask */
+    volatile uint8_t EDGES;             /**< Cable bit sampling time control */
+    volatile uint8_t DELAY;             /**< Run time delay of system cable and signal strength */
+    volatile uint8_t VERSION;           /**< Version */
+    volatile uint8_t resvd1;            /**< Reserved 1 */
+    volatile uint8_t ENC_ID2;           /**< Encoder ID, byte 2 */
+    volatile uint8_t ENC_ID1;           /**< Encoder ID, byte 1 */
+    volatile uint8_t ENC_ID0;           /**< Encoder ID, byte 0 */
+    volatile uint8_t POS4;              /**< Fast position, byte 4 */
+    volatile uint8_t POS3;              /**< Fast position, byte 3 */
+    volatile uint8_t POS2;              /**< Fast position, byte 2 */
+    volatile uint8_t POS1;              /**< Fast position, byte 1 */
+    volatile uint8_t POS0;              /**< Fast position, byte 0 */
+    volatile uint8_t VEL2;              /**< Speed, byte 2 */
+    volatile uint8_t VEL1;              /**< Speed, byte 1 */
+    volatile uint8_t VEL0;              /**< Speed, byte 0 */
+    volatile uint8_t resvd2;            /**< Reserved 2 */
+    volatile uint8_t VPOS4;             /**< Safe position, byte 4 */
+    volatile uint8_t VPOS3;             /**< Safe position, byte 3 */
+    volatile uint8_t VPOS2;             /**< Safe position, byte 2 */
+    volatile uint8_t VPOS1;             /**< Safe position, byte 1 */
+    volatile uint8_t VPOS0;             /**< Safe position, byte 0 */
+    volatile uint8_t VPOSCRC_H;         /**< CRC of Safe position, byte 1 */
+    volatile uint8_t VPOSCRC_L;         /**< CRC of Safe position, byte 0 */
+    volatile uint8_t PC_BUFFER0;        /**< Parameters channel buffer, byte 0 */
+    volatile uint8_t PC_BUFFER1;        /**< Parameters channel buffer, byte 1 */
+    volatile uint8_t PC_BUFFER2;        /**< Parameters channel buffer, byte 2 */
+    volatile uint8_t PC_BUFFER3;        /**< Parameters channel buffer, byte 3 */
+    volatile uint8_t PC_BUFFER4;        /**< Parameters channel buffer, byte 4 */
+    volatile uint8_t PC_BUFFER5;        /**< Parameters channel buffer, byte 5 */
+    volatile uint8_t PC_BUFFER6;        /**< Parameters channel buffer, byte 6 */
+    volatile uint8_t PC_BUFFER7;        /**< Parameters channel buffer, byte 7 */
+    volatile uint8_t PC_ADD_H;          /**< Long message address, byte 1 */
+    volatile uint8_t PC_ADD_L;          /**< Long message address, byte 0 */
+    volatile uint8_t PC_OFF_H;          /**< Long message address offset, byte 1 */
+    volatile uint8_t PC_OFF_L;          /**< Long message address offset, byte 0 */
+    volatile uint8_t PC_CTRL;           /**< Parameters channel control */
+    volatile uint8_t PIPE_S;            /**< Sensor hub channel status */
+    volatile uint8_t PIPE_D;            /**< Sensor hub channel data */
+    volatile uint8_t PC_DATA;           /**< Short message parameters channel data */
+    volatile uint8_t resvd3;            /**< Reserved 3 */
+    volatile uint8_t resvd4;            /**< Reserved 4 */
+    volatile uint8_t resvd5;            /**< Reserved 5 */
+    volatile uint8_t resvd6;            /**< Reserved 6 */
+    volatile uint8_t resvd7;            /**< Reserved 7 */
+    volatile uint8_t SAFE_CTRL;         /**< Safe System Control */
+    volatile uint8_t SAFE_SUM;          /**< Summarized slave status */
+    volatile uint8_t S_PC_DATA;         /**< Response of Short message parameters channel Read for safe1 channel */
+    volatile uint8_t ACC_ERR_CNT;       /**< Fast position error counter */
+    volatile uint8_t resvd8;            /**< Reserved 8 */
+    volatile uint8_t resvd9;            /**< Reserved 9 */
+    volatile uint8_t resvd10;           /**< Reserved 10 */
+    volatile uint8_t resvd11;           /**< Reserved 11 */
+    volatile uint8_t EVENT_S;           /**< Safe Events */
+    volatile uint8_t MASK_S;            /**< Safe Event Mask */
+    volatile uint8_t DUMMY;             /**< Dummy, no data */
     volatile uint8_t SLAVE_REG_CTRL;    /**< Short message control */
-    volatile uint8_t ACC_ERR_CNT_THRES; /**< Fast position error counter threshold */
-    volatile uint8_t MAXDEV_H_THRES;    /**< Fast position estimator deviation high byte threshold */
-    volatile uint8_t MAXDEV_L_THRES;    /**< Fast position estimator deviation low byte threshold */
+    volatile uint8_t ACC_ERR_CNT_THRESH;/**< Fast position error counter threshold */
+    volatile uint8_t resvd12;           /**< Reserved 12 */
+    volatile uint8_t resvd13;           /**< Reserved 13 */
     /*Safe 2 Interface */
-    volatile uint8_t version;
-    volatile uint8_t ENC2_ID;
-    volatile uint8_t STATUS2;
-    volatile uint8_t VPOS24;
-    volatile uint8_t VPOS23;
-    volatile uint8_t VPOS22;
-    volatile uint8_t VPOS21;
-    volatile uint8_t VPOS20;
-    volatile uint8_t VPOSCRC2_H;
-    volatile uint8_t VPOSCRC2_L;
-    volatile uint8_t DUMMY2;
+    volatile uint8_t VERSION2;          /**< Version in Safe Channel 2 */
+    volatile uint8_t ENC2_ID;           /**< Encoder ID in Safe Channel 2 */
+    volatile uint8_t STATUS2;           /**< Safe Channel 2 Status */
+    volatile uint8_t VPOS24;            /**< Safe Position 2, byte 4 */
+    volatile uint8_t VPOS23;            /**< Safe Position 2, byte 3 */
+    volatile uint8_t VPOS22;            /**< Safe Position 2, byte 2 */
+    volatile uint8_t VPOS21;            /**< Safe Position 2, byte 1 */
+    volatile uint8_t VPOS20;            /**< Safe Position 2, byte 0 */
+    volatile uint8_t VPOSCRC2_H;        /**< CRC of Safe Position 2, byte 1 */
+    volatile uint8_t VPOSCRC2_L;        /**< CRC of Safe Position 2, byte 0 */
+    volatile uint8_t POSTX;             /**< Position transmission status */
+    volatile uint8_t resvd14;           /**< Reserved 14 */
 	/* Online Status*/
-	volatile uint16_t ONLINE_STATUS_D;
-	volatile uint16_t ONLINE_STATUS_1;
-	volatile uint16_t ONLINE_STATUS_2;
+	volatile uint8_t ONLINE_STATUS_D_H; /**< Online Status D, high byte*/
+    volatile uint8_t ONLINE_STATUS_D_L; /**< Online Status D, low byte*/
+	volatile uint8_t ONLINE_STATUS_1_H; /**< Online Status 1, high byte*/
+    volatile uint8_t ONLINE_STATUS_1_L; /**< Online Status 1, low byte*/
+	volatile uint8_t ONLINE_STATUS_2_H; /**< Online Status 2, high byte*/
+    volatile uint8_t ONLINE_STATUS_2_L; /**< Online Status 2, low byte*/
 } HDSL_Interface;
 /** @} */
 
@@ -223,7 +226,7 @@ typedef struct HDSL_Config_s {
     /**< PRUICSS_Handle for icssg0 or icssg1 instance*/
     uint32_t icssCore;
     /**< PRUICSS core identifier
-     * Check #PRUICSS_PRU0 and check other available macros
+     * Check PRUICSS_PRU0 and check other available macros
     */
     uint32_t *baseMemAddr; // icssgHandle->hwAttrs->baseAddr + PRUICSS_DATARAM(PRUICSS_PRUx)
     /**< Base Memory Address for HDSL channel configuration */
@@ -256,7 +259,7 @@ void hdsl_enable_load_share_mode(void *gPru_cfg ,uint32_t  PRU_SLICE);
  *  \brief      Open HDSL handle for the specified core
  *              (interrupt mapping should already be completed)
  *
- *  \param[in]  icssgHandle #PRUICSS_Handle for the ICSS instance
+ *  \param[in]  icssgHandle PRUICSS_Handle for the ICSS instance
  *  \param[in]  icssCore    Core to map in ICSSG instance
  *  \param[in]  PRU_mode    0 for dissabled load share mode, 1 for enabled load share mode
  *  \retval     HDSL_Handle
@@ -390,7 +393,7 @@ uint8_t HDSL_get_rssi(HDSL_Handle hdslHandle);
  *  \param[in]  data    Data
  *  \param[in]  timeout Timeout in microseconds
  *
- *  \return     #SystemP_SUCCESS in case of success, #SystemP_TIMEOUT in case of timeout
+ *  \return     SystemP_SUCCESS in case of success, SystemP_TIMEOUT in case of timeout
  *
  */
 int32_t HDSL_write_pc_short_msg(HDSL_Handle hdslHandle,uint8_t addr, uint8_t data, uint64_t timeout);
@@ -403,7 +406,7 @@ int32_t HDSL_write_pc_short_msg(HDSL_Handle hdslHandle,uint8_t addr, uint8_t dat
  *  \param[in]  data    Pointer to data buffer where read data will be stored
  *  \param[in]  timeout Timeout in microseconds
  *
- *  \return     #SystemP_SUCCESS in case of success, #SystemP_TIMEOUT in case of timeout
+ *  \return     SystemP_SUCCESS in case of success, SystemP_TIMEOUT in case of timeout
  *
  */
 int32_t HDSL_read_pc_short_msg(HDSL_Handle hdslHandle,uint8_t addr, uint8_t *data, uint64_t timeout);

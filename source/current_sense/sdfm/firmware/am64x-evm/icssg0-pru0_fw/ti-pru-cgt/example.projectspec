@@ -14,8 +14,8 @@
         name = "sdfm_firmware_am64x-evm_icssg0-pru0_fw_ti-pru-cgt"
         products="com.ti.MOTOR_CONTROL_SDK_AMXXX;"
         configurations="
-                Debug,
                 Release,
+                Debug,
         "
         connection="TIXDS110_Connection.xml"
         toolChain="TI"
@@ -38,7 +38,7 @@
             -DSLICE0
             -v4
             -v4
-            -DSDDF_PRU_CORE
+            -DSDFM_PRU_CORE
             -o2
             --display_error_number
             --hardware_mac=on
@@ -49,25 +49,18 @@
             -m=sdfm_firmware.${ConfigName}.map
             -llibc.a
             --disable_auto_rts
-            --define=SDDF_PRU_CORE=1
+            --define=SDFM_PRU_CORE=1
             --warn_sections
-            --entry_point=SDDF_ENTRY
+            --entry_point=SDFM_ENTRY
             --zero_init=off
         "
 
         postBuildStep="
-            $(CG_TOOL_ROOT)/bin/hexpru.exe --diag_wrap=off --array --array:name_prefix=pru_SDDF_PRU0_image -o sdfm_firmware_am64x-evm_icssg0-pru0_fw_ti-pru-cgt.h sdfm_firmware_am64x-evm_icssg0-pru0_fw_ti-pru-cgt.out;  move sdfm_firmware_am64x-evm_icssg0-pru0_fw_ti-pru-cgt.h ${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware/sdfm_bin.h;
+            $(CG_TOOL_ROOT)/bin/hexpru.exe --diag_wrap=off --array --array:name_prefix=pru_SDFM_PRU0_image -o sdfm_firmware_am64x-evm_icssg0-pru0_fw_ti-pru-cgt.h sdfm_firmware_am64x-evm_icssg0-pru0_fw_ti-pru-cgt.out;  move sdfm_firmware_am64x-evm_icssg0-pru0_fw_ti-pru-cgt.h ${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware/sdfm_bin.h;
         "
 
         description="A Sdfm Firmware FW project">
 
-        <configuration name="Debug"
-            compilerBuildOptions="
-                -D_DEBUG_=1
-            "
-            linkerBuildOptions="
-            "
-        ></configuration>
         <configuration name="Release"
             compilerBuildOptions="
                 -O3
@@ -75,8 +68,15 @@
             linkerBuildOptions="
             "
         ></configuration>
+        <configuration name="Debug"
+            compilerBuildOptions="
+                -D_DEBUG_=1
+            "
+            linkerBuildOptions="
+            "
+        ></configuration>
         <pathVariable name="MOTOR_CONTROL_SDK_PATH" path="${COM_TI_MOTOR_CONTROL_SDK_AMXXX_INSTALL_DIR}" scope="project" />
-        <file path="../../../sddf.asm" openOnCreation="false" excludeFromBuild="false" action="copy">
+        <file path="../../../sdfm.asm" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
         <file path="../../../icssg_pru.cmd" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>

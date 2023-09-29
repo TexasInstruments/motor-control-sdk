@@ -18,7 +18,7 @@
  *    from this software without specific prior written permission.
  *
  *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- *  "AS IS" AND ANY EXPgResS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  *  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
  *  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
@@ -30,162 +30,6 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * \par
- *
- *
- *    Example API usage (host trigger mode, single channel):
- *    ------------------------------------------------------
- *
- *    A. Obtain handle
- *
- *        struct endat_priv priv = endat_init(<interface base>);
- *                [AM437x: endat_init(0x54440000);]
- *
- *    B. Configure to host trigger mode
- *
- *        endat_config_host_trigger(priv);
- *
- *    C. Select channel
- *
- *        endat_config_channel(priv, <#channel>);
- *
- *    D. Load & run the firmware
- *
- *    E. Wait for firmware to initialize, clock frequency would be set to 8MHz by the end of the following command
- *
- *        endat_wait_initialization(priv, <timeout>);
- *
- *    F. Set 200KHz frequency to read encoder information so as to not to be affected by propagation delay
- *
- *        endat_config_clock(priv, clk_cfg);
- *
- *    G. Get encoder information
- *
- *        endat_get_encoder_info(priv);
- *
- *    H. Set operating frequency, say 8MHz
- *
- *        endat_config_clock(priv, &clk_cfg);
- *
- *    I. Get the propagation delay estimated by the firmware
- *
- *        prop_delay = endat_get_prop_delay(priv);
- *
- *    J. Handle propagation delay
- *
- *        endat_config_rx_arm_cnt(priv, <prop_delay (minimum 2T, T - period of operating frequency)>);
- *        endat_config_rx_clock_disable(priv, <prop_delay - 2T (if < 0, use 0)>);
- *
- *    K. Configure tST
- *
- *        endat_config_tst_delay(priv, <tST delay (if f > 1MHz, use 2000, else 0)>);
- *
- *    L. Process the EnDat command, transmit, this returns upon receive & command is complete,
- *
- *        endat_command_process(priv, cmd, cmd_supplement);
- *
- *    M. Process the received data
- *
- *        endat_recvd_process(priv, cmd, &endat_format_data);
- *
- *    N. Do CRC verification
- *
- *        endat_recvd_validate(priv, cmd, &endat_format_data);
- *
- *    O. Update additional information state tracking, if needed
- *
- *        endat_addinfo_track(priv, cmd, &cmd_supplement);
- *
- *    Result would be in union endat_format_data
- *
- *
- *    Example API usage [simplified] (periodic trigger mode, single channel):
- *    -----------------------------------------------------------------------
- *
- *    Note: IEP CMP2 is the trigger event in periodic trigger mode and has to be setup beforehand.
- *
- *    A. Get encoder info, follow steps A, B, C, D, E, G of host trigger mode, firmware defaults to 8MHz frequency
- *
- *    B. Switch to periodic trigger mode, this will take effect after the next command completes
- *
- *        endat_config_periodic_trigger(priv);
- *
- *    C. Setup & send the 2.2 position periodic command, needs to be done only once
- *
- *        endat_command_process(priv, 8, NULL);
- *
- *    D. After giving enough time to complete the command after periodic event, to read angle for rotary encoder quickly
- *
- *        endat_get_2_2_angle(priv);
- *
- *
- *    Example API usage (periodic trigger mode, single channel):
- *    ---------------------------------------------------------
- *
- *    Note: IEP CMP2 is the trigger event in periodic trigger mode and has to be setup beforehand.
- *
- *    A. Get encoder info & set desired timings for required frequency taking care of propagation delay, steps A-K of host trigger mode
- *
- *    B. Switch to periodic trigger mode, this will take effect after the next command completes
- *
- *        endat_config_periodic_trigger(priv);
- *
- *    C. Setup the command to be periodically sent
- *
- *        endat_command_build(priv, cmd, cmd_supplement);
- *
- *    D. Send the command
- *
- *        endat_command_send(priv);
- *
- *    E. Wait for the command to finish
- *
- *        endat_command_wait(priv);
- *
- *    F. Process the received data
- *
- *        endat_recvd_process(priv, cmd, &endat_format_data);
- *
- *    G. Do CRC verification
- *
- *        endat_recvd_validate(priv, cmd, &endat_format_data);
- *
- *    H. Update additional information state tracking, if needed
- *
- *        endat_addinfo_track(priv, cmd, &cmd_supplement);
- *
- *    Result would be in union endat_format_data
- *
- *    Repeat E-H to get periodic update after the next periodic event            <br>
- *    happens, this can be done in say ISR (which could be linked to the         <br>
- *    periodic event). For a new command to be executed periodically,            <br>
- *    endat_command_build() can invoked after step H, this will take effect      <br>
- *    from the next periodic event.
- *
- *    EnDat commands:
- *    ---------------
- *
- *    Command description of command numbers passed to endat_command_process()
- *     and endat_command_build() as follows,
- *
- *     1:  Encoder send position values                                          <br>
- *     2:  Selection of memory area                                              <br>
- *     3:  Encoder receive parameter                                             <br>
- *     4:  Encoder send parameter                                                <br>
- *     5:  Encoder receive reset                                                 <br>
- *     6:  Encoder send test values                                              <br>
- *     7:  Encoder receive test command                                          <br>
- *     8:  Encoder to send position + AI(s)                                      <br>
- *     9:  Encoder to send position + AI(s) and receive selection of memory area <br>
- *     10: Encoder to send position + AI(s) and receive parameter                <br>
- *     11: Encoder to send position + AI(s) and send parameter                   <br>
- *     12: Encoder to send position + AI(s) and receive error reset              <br>
- *     13: Encoder to send position + AI(s) and receive test command             <br>
- *     14: Encoder receive communication command                                 <br>
- *
- */
-
 #ifndef ENDAT_API_H_
 #define ENDAT_API_H_
 
@@ -194,14 +38,14 @@ extern "C" {
 #endif
 
  /**
- * \defgroup MOTOR_CONTROL_API APIs for Motor Control Encoders
+ * \defgroup POSITION_SENSE_API APIs for Position Sense
  *
- * This module contains APIs for device drivers for various motor control encoders supported in this SDK.
+ * This module contains APIs for device drivers for various position sense encoders supported in this SDK.
  */
 
 /**
  *  \defgroup ENDAT_API_MODULE APIs for ENDAT Encoder
- *  \ingroup MOTOR_CONTROL_API
+ *  \ingroup POSITION_SENSE_API
  *
  * Here is the list of APIs used for EnDAT encoder communication protocol
  *
@@ -500,13 +344,14 @@ int32_t endat_wait_initialization(struct endat_priv *priv, uint32_t timeout, uin
  *
  *  \param[in]  pruss_xchg      EnDat firmware interface address
  *  \param[in]  pruss_cfg       ICSS PRU config base address
+ *  \param[in]  pruss_iep       ICSS PRU iep base address
  *  \param[in]  slice           ICSS PRU SLICE
  *
  *  \retval     priv            pointer to struct endat_priv instance
  *
  */
 struct endat_priv *endat_init(struct endat_pruss_xchg *pruss_xchg,
-                              void *pruss_cfg, int32_t slice);
+                              void *pruss_cfg, void *pruss_iep, int32_t slice);
 
 /**
  *  \brief      Read EnDat 2.2 angular position in steps for rotary encoders      <br>

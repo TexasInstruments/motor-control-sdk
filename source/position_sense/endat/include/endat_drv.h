@@ -18,7 +18,7 @@
  *    from this software without specific prior written permission.
  *
  *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- *  "AS IS" AND ANY EXPgResS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  *  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
  *  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
@@ -46,7 +46,6 @@ extern "C" {
 #define ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU (0U)
 #define ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU (1U)
 #define ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU (2U)
-
 #define HWREG(x)                                                               \
         (*((volatile uint32_t *)(x)))
 #define HWREGB(x)                                                              \
@@ -152,6 +151,11 @@ struct endat_priv
     struct endat_pruss_xchg *pruss_xchg;
     int32_t has_safety;
     void *pruss_cfg;
+    void *pruss_iep;
+    uint64_t cmp3;
+    uint64_t cmp5;
+    uint64_t cmp6;
+
 };
 
 struct cmd_supplement
@@ -168,6 +172,9 @@ struct cmd_supplement
     uint32_t block;
     uint8_t has_block_address;
     uint32_t frequency;
+     uint64_t cmp3;
+    uint64_t cmp5;
+    uint64_t cmp6;
 };
 
 struct endat_data

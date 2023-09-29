@@ -1,5 +1,5 @@
 %%{
-    let profile_list = ["debug", "release"];
+    let profile_list = ["release", "debug"];
 
     products = "";
     if("syscfgfile" in args.project) {

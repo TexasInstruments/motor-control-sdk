@@ -21,7 +21,7 @@ MEMORY
     /* RAM */
     PRU_FWREGS          : org = 0x00000000 len = 0x00000080
     RTU_FWREGS          : org = 0x00000080 len = 0x00000080
-    PRU_DMEM_0_1_LOW    : org = 0x00000100 len = 0x00000F00         /* 4kB ICSSG Data RAM 0_1 for PRU*/
+    PRU_DMEM_0_1_LOW    : org = 0x00000200 len = 0x00000E00         /* 4kB ICSSG Data RAM 0_1 for PRU*/
     PRU_DMEM_0_1_HIGH   : org = 0x00001000 len = 0x00001000         /* 4kB ICSSG Data RAM 0_1 for RTU*/
     PRU_DMEM_1_0        : org = 0x00002000 len = 0x00002000         /* 8kB ICSSG Data RAM 1_0 */
 
@@ -80,7 +80,7 @@ SECTIONS {
     /* .fardata    >  PRU_DMEM_0_1_LOW, PAGE 1 */
 
     .text           >  PRU_IMEM, PAGE 0
-#if defined (SDDF_PRU_CORE)
+#if defined (SDFM_PRU_CORE)
     .fwRegs         >  PRU_FWREGS, PAGE 1
     .data           >  PRU_DMEM_0_1_LOW, PAGE 1
     .outSamps       >  PRU_DMEM_0_1_LOW, PAGE 1

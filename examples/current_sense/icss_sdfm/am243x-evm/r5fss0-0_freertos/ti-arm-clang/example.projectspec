@@ -14,8 +14,8 @@
         name = "icss_sdfm_am243x-evm_r5fss0-0_freertos_ti-arm-clang"
         products="sysconfig;com.ti.MOTOR_CONTROL_SDK_AMXXX;"
         configurations="
-                Debug,
                 Release,
+                Debug,
         "
         connection="TIXDS110_Connection.xml"
         toolChain="TICLANG"
@@ -36,7 +36,7 @@
             -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F
             -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/am243x/r5f
             -I${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/include
-            -I${MOTOR_CONTROL_SDK_PATH}/examples/icss_sdfm
+            -I${MOTOR_CONTROL_SDK_PATH}/examples/current_sense/icss_sdfm
             -mcpu=cortex-r5
             -mfloat-abi=hard
             -mfpu=vfpv3-d16
@@ -69,19 +69,6 @@
 
         description="A Icss Sdfm FREERTOS project">
 
-        <configuration name="Debug"
-            compilerBuildOptions="
-                -D_DEBUG_=1
-            "
-            linkerBuildOptions="
-                -lfreertos.am243x.r5f.ti-arm-clang.debug.lib
-                -ldrivers.am243x.r5f.ti-arm-clang.debug.lib
-                -lboard.am243x.r5f.ti-arm-clang.debug.lib
-                -lmotorcontrol_sdfm.am243x.r5f.ti-arm-clang.debug.lib
-                -llibc.a
-                -llibsysbm.a
-            "
-        ></configuration>
         <configuration name="Release"
             compilerBuildOptions="
                 -Os
@@ -95,8 +82,21 @@
                 -llibsysbm.a
             "
         ></configuration>
+        <configuration name="Debug"
+            compilerBuildOptions="
+                -D_DEBUG_=1
+            "
+            linkerBuildOptions="
+                -lfreertos.am243x.r5f.ti-arm-clang.debug.lib
+                -ldrivers.am243x.r5f.ti-arm-clang.debug.lib
+                -lboard.am243x.r5f.ti-arm-clang.debug.lib
+                -lmotorcontrol_sdfm.am243x.r5f.ti-arm-clang.debug.lib
+                -llibc.a
+                -llibsysbm.a
+            "
+        ></configuration>
         <pathVariable name="MOTOR_CONTROL_SDK_PATH" path="${COM_TI_MOTOR_CONTROL_SDK_AMXXX_INSTALL_DIR}" scope="project" />
-        <file path="../../../app_sddf.c" openOnCreation="false" excludeFromBuild="false" action="copy">
+        <file path="../../../app_sdfm.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
         <file path="../../../epwm_dc.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
@@ -104,7 +104,7 @@
         </file>
         <file path="../../../epwm_mod.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
-        <file path="../../../sddf.c" openOnCreation="false" excludeFromBuild="false" action="copy">
+        <file path="../../../sdfm.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
         <file path="../../../cfg_pad.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>

@@ -38,11 +38,11 @@ ifeq ($(DEVICE_TYPE), HS)
 endif
 
 FILES_common := \
-	app_sddf.c \
+	app_sdfm.c \
 	epwm_dc.c \
 	epwm_drv_aux.c \
 	epwm_mod.c \
-	sddf.c \
+	sdfm.c \
 	cfg_pad.c \
 	main.c \
 	ti_drivers_config.c \
@@ -66,7 +66,7 @@ INCLUDES_common := \
 	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F \
 	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/am243x/r5f \
 	-I${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/include \
-	-I${MOTOR_CONTROL_SDK_PATH}/examples/icss_sdfm \
+	-I${MOTOR_CONTROL_SDK_PATH}/examples/current_sense/icss_sdfm \
 	-Igenerated \
 
 DEFINES_common := \

@@ -105,8 +105,6 @@ SECTIONS
     .bss.ipc_vring_mem   (NOLOAD) : {} > RTOS_NORTOS_IPC_SHM_MEM
     /* General purpose non cacheable memory, used in some examples */
     .bss.nocache (NOLOAD) : {} > NON_CACHE_MEM
-
-	.hdslInterface_ddr_mem (NOLOAD) > DDR
 }
 
 /*

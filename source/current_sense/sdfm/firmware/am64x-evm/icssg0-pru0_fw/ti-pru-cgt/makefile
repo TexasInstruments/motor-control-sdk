@@ -56,7 +56,7 @@ ASM_SRCS__QUOTED += \
 main.obj: ${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware/main.asm $(GEN_OPTS) | $(GEN_FILES) $(GEN_MISC_FILES)
 	@echo 'Building file: "$<"'
 	@echo 'Invoking: PRU Compiler'
-	"$(CG_TOOL_ROOT)/bin/clpru" -DICSSG0 -DPRU0 -DSLICE0 -v4 -v4 -DSDDF_PRU_CORE -o2 --display_error_number --hardware_mac=on --define=SOC_AM64X --include_path="$(CCS_PATH)" --include_path="$(SYSCFG_DIR)" --include_path="${CG_TOOL_ROOT}/include" --include_path="${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source" --include_path="${MOTOR_CONTROL_SDK_PATH}/source" --include_path="${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware"  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little --preproc_with_compile --preproc_dependency="$(basename $(<F)).d_raw" $(GEN_OPTS__FLAG) "$<"
+	"$(CG_TOOL_ROOT)/bin/clpru" -DICSSG0 -DPRU0 -DSLICE0 -v4 -v4 -DSDFM_PRU_CORE -o2 --display_error_number --hardware_mac=on --define=SOC_AM64X --include_path="$(CCS_PATH)" --include_path="$(SYSCFG_DIR)" --include_path="${CG_TOOL_ROOT}/include" --include_path="${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source" --include_path="${MOTOR_CONTROL_SDK_PATH}/source" --include_path="${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware"  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little --preproc_with_compile --preproc_dependency="$(basename $(<F)).d_raw" $(GEN_OPTS__FLAG) "$<"
 	@echo 'Finished building: "$<"'
 	@echo ' '
 
@@ -86,7 +86,7 @@ all: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 sdfm_firmware_am64x-evm_icssg0-pru0_fw_ti-pru-cgt.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: PRU Linker'
-	"$(CG_TOOL_ROOT)/bin/clpru" -DICSSG0 -DPRU0 -DSLICE0 -v4 -v4 -DSDDF_PRU_CORE -o2 --display_error_number --hardware_mac=on --define=SOC_AM64X  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little -z -m"sdfm_firmware_am64x-evm_icssg0-pru0_fw_ti-pru-cgt.map" -i"$(CG_TOOL_ROOT)/lib" --diag_wrap=off --display_error_number --warn_sections --xml_link_info="sdfm_firmware_am64x-evm_icssg0-pru0_fw_ti-pru-cgt_linkInfo.xml" --rom_model -o "sdfm_firmware_am64x-evm_icssg0-pru0_fw_ti-pru-cgt.out" $(ORDERED_OBJS)
+	"$(CG_TOOL_ROOT)/bin/clpru" -DICSSG0 -DPRU0 -DSLICE0 -v4 -v4 -DSDFM_PRU_CORE -o2 --display_error_number --hardware_mac=on --define=SOC_AM64X  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little -z -m"sdfm_firmware_am64x-evm_icssg0-pru0_fw_ti-pru-cgt.map" -i"$(CG_TOOL_ROOT)/lib" --diag_wrap=off --display_error_number --warn_sections --xml_link_info="sdfm_firmware_am64x-evm_icssg0-pru0_fw_ti-pru-cgt_linkInfo.xml" --rom_model -o "sdfm_firmware_am64x-evm_icssg0-pru0_fw_ti-pru-cgt.out" $(ORDERED_OBJS)
 	@echo 'Finished building target: "$@"'
 	@echo ' '
 	@$(MAKE) --no-print-directory post-build
@@ -108,7 +108,7 @@ clean:
 	-@echo ' '
 
 post-build:
-	-$(CG_TOOL_ROOT)/bin/hexpru.exe --diag_wrap=off --array --array:name_prefix=pru_SDDF_PRU0_image -o sdfm_firmware_am64x-evm_icssg0-pru0_fw_ti-pru-cgt.h sdfm_firmware_am64x-evm_icssg0-pru0_fw_ti-pru-cgt.out;  move sdfm_firmware_am64x-evm_icssg0-pru0_fw_ti-pru-cgt.h ${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware/sdfm_bin.h
+	-$(CG_TOOL_ROOT)/bin/hexpru.exe --diag_wrap=off --array --array:name_prefix=pru_SDFM_PRU0_image -o sdfm_firmware_am64x-evm_icssg0-pru0_fw_ti-pru-cgt.h sdfm_firmware_am64x-evm_icssg0-pru0_fw_ti-pru-cgt.out;  move sdfm_firmware_am64x-evm_icssg0-pru0_fw_ti-pru-cgt.h ${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware/sdfm_bin.h
 	-@echo ' '
 
 .PHONY: all clean dependents

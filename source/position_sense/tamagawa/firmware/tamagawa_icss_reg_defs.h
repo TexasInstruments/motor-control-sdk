@@ -32,8 +32,8 @@
 	.if	!$isdefed("__tamagawa_icss_reg_defs_h")
 __tamagawa_icss_reg_defs_h	.set	1
 
-	.include "../../../../pru_io/firmware/common/icss_regs.inc"
-	.include "../../../../pru_io/firmware/common/icss_cfg_regs.inc"
+	.include "../../../../mcu_plus_sdk/source/pru_io/firmware/common/icss_regs.inc"
+	.include "../../../../mcu_plus_sdk/source/pru_io/firmware/common/icss_cfg_regs.inc"
 
 	.asg	R30.t24,	TAMAGAWA_CH0_RX_EN
 	.asg	R31.t27,	TAMAGAWA_CH0_RX_CLR_OVF

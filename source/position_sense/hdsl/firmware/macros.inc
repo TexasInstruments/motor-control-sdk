@@ -18,7 +18,7 @@
 ;   from this software without specific prior written permission.
 ;
 ; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-; "AS IS" AND ANY EXPgResS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+; "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 ; LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
 ; A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
 ; OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
@@ -158,13 +158,6 @@ l?:
 	qbbs		l?, r31, TX_GLOBAL_REINIT_ACTIVE
 	.endm
 
-;WAIT_TX_FIFO_CLEAR .macro
-;l?:
-;	qbbs		l?, r31, TX_GLOBAL_TX_GO
-;	qbbs		l?, r31, TX_GLOBAL_REINIT
-;	qbbs		l?, r31, TX_CHANNEL_GO
-;	.endm
-
 WAIT_TX_FIFO_FREE .macro
 l?:
 	.if $defined(CHANNEL_2)
@@ -234,8 +227,6 @@ PUSH_FIFO .macro dat
     .endm
     .if $defined(HDSL_MULTICHANNEL)
 PUSH_FIFO_8x .macro dat
-    ;sbco &dat,MASTER_REGS_CONST,0x90,1
-   ; mov dat,dat
     loop L1?, 4
     qbbs L2_0?, dat, 7 ; check bit 0
     WAIT_TX_FIFO_FREE
@@ -259,6 +250,30 @@ L3_1?:
 L1?:
     .endm
 
+PUSH_FIFO_8x_1 .macro dat
+    loop L1?, 4
+    qbbs L2_0?, dat, 7 ; check bit 0
+
+    ldi   r30.b0, 0x0 ; Push oversampled 0s on the wire
+    qba    L3_0?
+L2_0?:
+
+    ldi   r30.b0, 0xff ; Push oversampled 1s on the wire
+L3_0?:
+    lsl   dat,dat, 1 ; Drop least significant bit
+
+    qbbs L2_1?, dat, 7 ; check bit 0
+    WAIT_TX_FIFO_FREE
+    ldi   r30.b0, 0x0 ; Push oversampled 0s on the wire
+    qba    L3_1?
+L2_1?:
+    WAIT_TX_FIFO_FREE
+    ldi   r30.b0, 0xff ; Push oversampled 1s on the wire
+L3_1?:
+    lsl   dat,dat, 1 ; Drop least significant bit
+
+L1?:
+    .endm
 
 PUSH_FIFO_2B_8x .macro
     ;mov FIFO_L,dat
@@ -281,7 +296,6 @@ L3_1?:
     lsl   FIFO_L,FIFO_L, 1 ; Drop least significant bit
 
     .endm
-
 
 PUSH_FIFO_1_8x .macro
     ;mov FIFO_L,dat
@@ -332,7 +346,6 @@ L3_1?:
     lsl   FIFO_L,FIFO_L, 1 ; Drop least significant bit
 
     .endm
-
     .endif
 
 POP_FIFO .macro dst

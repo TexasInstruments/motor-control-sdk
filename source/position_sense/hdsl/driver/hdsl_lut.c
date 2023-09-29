@@ -1277,14 +1277,9 @@ static void hdsl_generate_extra_edge_lut(HDSL_Handle hdslHandle)
 
 static void hdsl_configure_register_if(HDSL_Handle hdslHandle)
 {
-    hdslHandle->hdslInterface->PC_ADD_H          = 0x80;
-    hdslHandle->hdslInterface->PC_OFF_H          = 0x80;
-    hdslHandle->hdslInterface->MAXDEV_H          = 0x0;
-    hdslHandle->hdslInterface->MAXDEV_L          = 0x0;
-    hdslHandle->hdslInterface->MAXDEV_H_THRES    = 0xFF;
-    hdslHandle->hdslInterface->MAXDEV_L_THRES    = 0xFF;
-    hdslHandle->hdslInterface->VERSION           = 0x41;
-    hdslHandle->hdslInterface->ACC_ERR_CNT_THRES = 0x1F;
+    hdslHandle->hdslInterface->PC_ADD_H             = 0x80;
+    hdslHandle->hdslInterface->PC_OFF_H             = 0x80;
+    hdslHandle->hdslInterface->ACC_ERR_CNT_THRESH   = 0x1F;
 
     HW_WR_REG32(((uint32_t)(hdslHandle->baseMemAddr) + 0xac), 0x4cc8115d);
     HW_WR_REG32(((uint32_t)(hdslHandle->baseMemAddr) + 0xac)+4, 0xfb334990);

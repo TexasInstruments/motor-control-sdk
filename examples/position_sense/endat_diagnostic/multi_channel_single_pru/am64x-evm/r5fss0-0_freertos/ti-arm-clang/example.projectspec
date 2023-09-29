@@ -14,8 +14,8 @@
         name = "endat_diagnostic_multi_channel_single_pru_am64x-evm_r5fss0-0_freertos_ti-arm-clang"
         products="sysconfig;com.ti.MOTOR_CONTROL_SDK_AMXXX;"
         configurations="
-                Debug,
                 Release,
+                Debug,
         "
         connection="TIXDS110_Connection.xml"
         toolChain="TICLANG"
@@ -35,6 +35,7 @@
             -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/FreeRTOS-Kernel/include
             -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F
             -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/am64x/r5f
+            -I${MOTOR_CONTROL_SDK_PATH}/examples/position_sense/endat_diagnostic
             -mcpu=cortex-r5
             -mfloat-abi=hard
             -mfpu=vfpv3-d16
@@ -68,19 +69,6 @@
 
         description="A Endat Diagnostic Multi Channel Single Pru FREERTOS project">
 
-        <configuration name="Debug"
-            compilerBuildOptions="
-                -D_DEBUG_=1
-            "
-            linkerBuildOptions="
-                -lfreertos.am64x.r5f.ti-arm-clang.debug.lib
-                -ldrivers.am64x.r5f.ti-arm-clang.debug.lib
-                -lboard.am64x.r5f.ti-arm-clang.debug.lib
-                -lmotorcontrol_endat.am64x.r5f.ti-arm-clang.debug.lib
-                -llibc.a
-                -llibsysbm.a
-            "
-        ></configuration>
         <configuration name="Release"
             compilerBuildOptions="
                 -Os
@@ -94,8 +82,23 @@
                 -llibsysbm.a
             "
         ></configuration>
+        <configuration name="Debug"
+            compilerBuildOptions="
+                -D_DEBUG_=1
+            "
+            linkerBuildOptions="
+                -lfreertos.am64x.r5f.ti-arm-clang.debug.lib
+                -ldrivers.am64x.r5f.ti-arm-clang.debug.lib
+                -lboard.am64x.r5f.ti-arm-clang.debug.lib
+                -lmotorcontrol_endat.am64x.r5f.ti-arm-clang.debug.lib
+                -llibc.a
+                -llibsysbm.a
+            "
+        ></configuration>
         <pathVariable name="MOTOR_CONTROL_SDK_PATH" path="${COM_TI_MOTOR_CONTROL_SDK_AMXXX_INSTALL_DIR}" scope="project" />
         <file path="../../../../endat_diagnostic.c" openOnCreation="false" excludeFromBuild="false" action="copy">
+        </file>
+        <file path="../../../../endat_periodic_trigger.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
         <file path="../main.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>

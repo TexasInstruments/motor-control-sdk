@@ -18,7 +18,7 @@
 ;   from this software without specific prior written permission.
 ;
 ; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-; "AS IS" AND ANY EXPgResS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+; "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 ; LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
 ; A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
 ; OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
@@ -202,7 +202,7 @@ LONG_MSG_RECV .sassign r28, long_msg_recv_s
 	.asg							r16.b3, BYTE_ERROR
 	.asg							r15, FAST_POSH
 	.asg							r14.b3, FAST_POSL
-	.asg							r14, SPEED
+	.asg							r14, SPEED ; NOTE: r14.b3 is used as FAST_POSL
 	.asg							r17.b0, DISPARITY
 	.asg							r17.b1, SEND_PARA
 	.asg							r29.w0, RET_ADDR0
@@ -216,11 +216,7 @@ LONG_MSG_RECV .sassign r28, long_msg_recv_s
 	.asg							r8.w2, DELTA_ACC3
 	.asg							r9.w0, DELTA_ACC4
 	.asg							r9.w2, LAST_ACC
-	;.asg							r10, EXTRA_POS
-	;.asg							r10.w0, TIME_COMP
-	;.asg							r10.w2, LAST_TIME_COMP
 	.asg							r10.w0, SYNC_DIFF0
-    .asg							r10.w2, LOOP_CNT_0
 	.asg							r12.b0, EXTRA_SIZE
 	.asg							r12.b1, NUM_STUFFING
 	.asg							r12.b2, EXTRA_EDGE
@@ -238,7 +234,7 @@ LONG_MSG_RECV .sassign r28, long_msg_recv_s
 	.asg							r24.w2, CRC_SEC
 	.asg							r24.b3, CRC_SEC_H
 	.asg							r24.b2, CRC_SEC_L
-
+    .asg							r28.b0, LOOP_CNT_0
 	.asg							r2.b0, EXTRA_SIZE_SELF ;take care! these are not persistent registers, r2 is actually temp reigister. these names are
 	.asg							r2.b1, EXTRA_EDGE_SELF ;given to temp register for ease of reading. they are used as temp.
 
@@ -302,9 +298,9 @@ SAFE_SUM	.set						0x36
 S_PC_DATA	.set						0x37
 
 ACC_ERR_CNT	.set						0x38
-MAXACC		.set						0x39
-MAXDEV_H	.set						0x3A
-MAXDEV_L	.set						0x3B
+MAXACC		.set						0x39 ; not implemented
+MAXDEV_H	.set						0x3A ; not implemented
+MAXDEV_L	.set						0x3B ; not implemented
 
 EVENT_S		.set						0x3D
 MASK_S		.set						0x3E
@@ -312,9 +308,9 @@ MASK_S		.set						0x3E
 DUMMY		.set						0x3F
 ;extra Master Registers as workaround for different access method depended behaviour (r/w)
 SLAVE_REG_CTRL	.set						0x40
-ACC_ERR_CNT_TRESH .set						0x41
-MAXDEV_TRESH_H	.set						0x42
-MAXDEV_TRESH_L	.set						0x43
+ACC_ERR_CNT_THRESH .set						0x41
+MAXDEV_THRESH_H	.set						0x42 ; not implemented
+MAXDEV_THRESH_L	.set						0x43 ; not implemented
 ;extra MASTER registers (not in the specification! little endian!)
 NUM_VERT_ERR0	.set						0x90
 NUM_VERT_ERR1	.set						0x91
@@ -494,9 +490,12 @@ VPOSCRC2_H  .set                        0x4C
 VPOSCRC2_L  .set                        0x4D
 POSTX       .set                        0x4E
 
-ONLINE_STATUS_D	.set					0x50
-ONLINE_STATUS_1	.set					0x52
-ONLINE_STATUS_2	.set					0x54
+ONLINE_STATUS_D_H	.set					0x50
+ONLINE_STATUS_D_L	.set					0x51
+ONLINE_STATUS_1_H	.set					0x52
+ONLINE_STATUS_1_L	.set					0x53
+ONLINE_STATUS_2_H	.set					0x54
+ONLINE_STATUS_2_L	.set					0x55
 
 H_FRAME_FLAGS_TEMP .set                 0x56 ; 2 bytes
 CRC_SEC_TEMP .set                       0x58 ; 2 bytes
