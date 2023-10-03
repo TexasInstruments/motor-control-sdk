@@ -156,10 +156,15 @@ SdfmPrms gTestSdfmPrms = {
     {{0,0},                /*clock sourse & clock inversion for all channels*/
     {0,0},
     {0,0}},
-     15,   /*Over current osr: The effect count is OSR + 1*/
-     128,   /*Normal current osr */
-     1,   /*comparator enable*/
-     (uint32_t)&gSdfm_sampleOutput /*Output samples base address*/
+    15,   /*Over current osr: The effect count is OSR + 1*/
+    128,   /*Normal current osr */
+    1,   /*comparator enable*/
+    (uint32_t)&gSdfm_sampleOutput, /*Output samples base address*/
+    1,
+    {{4, 18, 2},
+    {4, 18, 2},
+    {4, 18, 2}
+    }   /*Fast detect fields {Window size, zero count max, zero count min}*/
 };
 
 #define PRUICSS_G_MUX_EN    ( 0x1 ) /* ICSSG_SA_MX_REG:G_MUX_EN */
@@ -400,6 +405,7 @@ void pruSdfmIrqHandler(void *args)
         sdfm_ch1_idx = 0;
         sdfm_ch2_idx = 0;
     }
+    
 
 
 }

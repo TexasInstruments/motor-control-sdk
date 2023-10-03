@@ -100,11 +100,11 @@ __sdfm_h    .set    1
 ;Fast detect registers(using only in SDFM init)
 
         .asg R19.b0,  FAST_TZ_OUT_REG
-        .asg R19.b1,  FAST_window_REG
-        .asg R19.b2,  FAST_ONE_max_REG
-        .asg R19.b3,  FAST_ONE_min_REG
-        .asg R27.b0,  FAST_ZERO_max_REG
-        .asg R27.b1,  FAST_ZERO_min_REG
+        .asg R19.b1,  FAST_WINDOW_REG
+        .asg R19.b2,  FAST_ONE_MAX_REG
+        .asg R19.b3,  FAST_ONE_MIN_REG
+        .asg R27.b0,  FAST_ZERO_MAX_REG
+        .asg R27.b1,  FAST_ZERO_MIN_REG
 
 
 ;
@@ -151,7 +151,7 @@ ICSSG_CFG_GPCFG1                .set 0x000C ;  GP IO Configuration Register 1
 ICSSG_CFG_SPPC                  .set 0x0034 ;  Scratch PAD priority and config
 ICSSG_CFG_PRU0_SD0_CLK          .set 0x48
 ICSSG_CFG_PRU1_SD0_CLK          .set 0x94
-ICSSG_CFG_PWM1                   .set 0x134 ; PWM1 trip generation configuration
+ICSSG_CFG_PWM0                   .set 0x130 ; PWM0 configuration register offset 
 
 ;
 ; ICSSG_GPCFGn_REG:PR1_PRUn_GP_MUX_SEL, Controls the icss_wrap mux sel

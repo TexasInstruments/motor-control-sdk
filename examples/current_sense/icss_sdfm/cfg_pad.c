@@ -66,6 +66,13 @@ static Pinmux_PerCfg_t gPinMuxMainDomainCfgsdfm[] = {
         ( PIN_MODE(1) | PIN_INPUT_ENABLE | PIN_PULL_DISABLE )
     },
     
+    /* PWM0_TZ_OUT,
+       PRG0_PWM0_TZ_OUT, TZ_OUT,      R3, J2C:P6  */
+    {
+        PIN_PRG0_PRU0_GPO19,
+        ( PIN_MODE(3) | PIN_PULL_DISABLE )
+    },
+
     {PINMUX_END, PINMUX_END}
 };
 

@@ -39,6 +39,7 @@ extern "C" {
 #endif
 
 #include <drivers/soc.h>
+#include <drivers/pruicss.h>
 
 
 
@@ -201,8 +202,10 @@ typedef struct SDFM_ChCtrl_s
     volatile uint16_t    enable_comparator;
     /**< bit-field to set the output data format for individual SDFM channels, BitN:ChN */
     volatile uint16_t    output_data_format;
-    /**< reserved */
-    volatile uint16_t    reserved1;
+    /**< bit-field to enable fast detect  for individual SDFM channels, BitN:ChN, non-zero to enable */
+    volatile uint8_t    enFastDetect;
+     /**< reserved */
+     volatile uint8_t   reserved1;
     /**< reserved */
     volatile uint16_t    reserved2;
 
@@ -254,10 +257,16 @@ typedef struct SDFM_Cfg_s
     volatile uint8_t    osr;
     /**< sdfm threshold parms*/
     SDFM_ThresholdParms  sdfm_threshold_parms;
-    /**< Reserved*/
-    volatile uint32_t    reserved1;
-    /**< reserved */
-    volatile uint8_t    reserved2;
+    /**< Fast detect window size*/
+    volatile uint8_t   fd_window;
+    /**< Fast detect max count of zero*/
+    volatile uint8_t   fd_zero_max;
+    /**< Fast detect min count of zero*/
+    volatile uint8_t   fd_zero_min;
+    /**< Fast detect max count of one*/
+    volatile uint8_t   fd_one_max;
+    /**< Fast detect min count of one*/
+    volatile uint8_t   fd_one_min;
     /**< sdfm ch clock parms*/
     SDFM_ClkSourceParms  sdfm_clk_parms;
     /**< array to store the params for gpio toggle for different channels*/
@@ -318,6 +327,7 @@ typedef struct SDFM_s {
     uint8_t  iep_inc;
     SDFM_Interface * p_sdfm_interface;
     SDFM_SampleOutInterface *sampleOutputInterface;
+    void *pruss_cfg;
 } SDFM;
 
 

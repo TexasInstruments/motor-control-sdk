@@ -112,6 +112,7 @@
 #define SDFM_CFG_SD_CH_ID_OFFSET             ( 0x10 )
 #define SDFM_CFG_SD_EN_COMP_OFFSET           ( 0x14 )
 #define SDFM_CFG_SD_ZC_ENABLE_OFFSET         ( 0x16 )
+#define SDFM_CFG_SD_EN_FD_OFFSET             ( 0x18 )
 
 
 /*SDFM channel offsets*/

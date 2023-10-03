@@ -296,6 +296,38 @@ void SDFM_setFilterOverSamplingRatio(sdfm_handle h_sdfm, uint16_t nc_osr);
  *
  */
 uint64_t SDFM_getFirmwareVersion(sdfm_handle h_sdfm);
+ /* 
+ *  \brief  This API Configure Fast detect block fields.
+ *
+ *  \param[in]  h_sdfm          SDFM handle
+ *  \param[in]  ch           current ch number
+ *  \param[in]  fdParms   array of fast detect fields. {window size, zero max count, zero min count, one max count, one min count}
+ *
+ *
+ *
+ */
+void SDFM_configFastDetect(sdfm_handle h_sdfm, uint8_t ch, uint8_t *fdParms);
+/* 
+ *  \brief This API returns the Trip status for the PWM trip zone block specified by pwmIns variable.
+ *
+ *  \param[in]  h_sdfm       SDFM handle
+ *  \param[in]  pwm           current PWM instance
+ *
+ *  \retval     Status of PWM Trip status bit 
+ *
+ */
+uint32_t SDFM_getPwmTripStatus(sdfm_handle h_sdfm, uint8_t pwmIns); 
+/* 
+ *  \brief  Clear PWM trip status for the PWM trip zone block specified by pwmIns variable.
+ *
+ *  \param[in]  h_sdfm       SDFM handle
+ *  \param[in]  pwm           current PWM instance
+ *
+ *
+ */
+void SDFM_clearPwmTripStatus(sdfm_handle h_sdfm, uint8_t pwmIns); 
+
+
 /** @} */
 
 #ifdef __cplusplus
