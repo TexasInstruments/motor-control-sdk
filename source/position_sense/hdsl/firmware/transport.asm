@@ -1142,6 +1142,10 @@ calc_relpos_extend_vel:
 ; Set POSTX to 2
     ldi         REG_TMP0.b0, 0x2
     sbco		&REG_TMP0.b0, MASTER_REGS_CONST, POSTX, 1
+
+; Store PIPE data
+	sbco	&H_FRAME.pipe, MASTER_REGS_CONST, PIPE_D, 1
+
 ; signal event mst_intr[0] and PRU0_ARM_IRQ3
 	ldi     r31.w0, 32+0
 	ldi     r31.w0, PRU0_ARM_IRQ3
