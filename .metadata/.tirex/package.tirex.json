@@ -4,7 +4,7 @@
         "id": "com.ti.MOTOR_CONTROL_SDK_AMXXX",
         "name": "MOTOR CONTROL SDK for AMXXX",
         "rootCategory": [ "MOTOR CONTROL SDK", "MOTOR CONTROL SDK for AMXXX" ],
-        "version": "09.00.00.01",
+        "version": "09.01.00.01",
         "type": "software",
         "image": "./motor_control_sdk.png",
         "license": "../../license.txt",

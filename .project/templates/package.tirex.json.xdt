@@ -15,7 +15,7 @@
         "id": "com.ti.`productName`",
         "name": "MOTOR CONTROL SDK for `deviceName`",
         "rootCategory": [ "MOTOR CONTROL SDK", "MOTOR CONTROL SDK for `deviceName`" ],
-        "version": "09.00.00.01",
+        "version": "09.01.00.01",
         "type": "software",
         "image": "./motor_control_sdk.png",
         % if ((args.device == "am64x") || (args.device == "am243x") || (isDevelopmentMode)) {
