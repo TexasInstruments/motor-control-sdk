@@ -17,7 +17,7 @@
         "rootCategory": [ "MOTOR CONTROL SDK", "MOTOR CONTROL SDK for `deviceName`" ],
         "version": "09.00.00.01",
         "type": "software",
-        "image": "./mcu_plus_sdk.png",
+        "image": "./motor_control_sdk.png",
         % if ((args.device == "am64x") || (args.device == "am243x") || (isDevelopmentMode)) {
         "license": "../../license.txt",
         % }
