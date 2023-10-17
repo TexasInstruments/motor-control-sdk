@@ -1,5 +1,59 @@
+/* 
+ * 
+ * Copyright (c) 2021-2023, Texas Instruments Incorporated
+ * All rights reserved not granted herein.
+ *
+ * Limited License.
+ *
+ * Texas Instruments Incorporated grants a world-wide, royalty-free,
+ * non-exclusive license under copyrights and patents it now or hereafter
+ * owns or controls to make, have made, use, import, offer to sell and sell ("Utilize")
+ * this software subject to the terms herein.  With respect to the foregoing patent
+ * license, such license is granted  solely to the extent that any such patent
+ * is necessary  to Utilize the software alone.  The patent license shall not apply to any
+ * combinations which include this software, other than combinations with devices
+ * manufactured by or for TI ('TI Devices'). No hardware patent is licensed hereunder.
+ *
+ * Redistributions must preserve existing copyright notices and reproduce this license
+ * (including the above copyright notice and the disclaimer and (if applicable) source
+ * code license limitations below) in the documentation and/or other materials provided
+ * with the distribution
+ *
+ * Redistribution and use in binary form, without modification, are permitted provided 
+ * that the following conditions are met:
+ *       No reverse engineering, decompilation, or disassembly of this software is
+ *       permitted with respect to any software provided in binary form.
+ *       Any redistribution and use are licensed by TI for use only with TI Devices.
+ *       Nothing shall obligate TI to provide you with source code for the software
+ *   licensed and provided to you in object code.
+ *
+ * If software source code is provided to you, modification and redistribution of the
+ * source code are permitted provided that the following conditions are met:
+ *       Any redistribution and use of the source code, including any resulting derivative works,
+ *   are licensed by TI for use only with TI Devices.
+ *       Any redistribution and use of any object code compiled from the source code and
+ *   any resulting derivative works, are licensed by TI for use only with TI Devices.
+ *
+ * Neither the name of Texas Instruments Incorporated nor the names of its suppliers 
+ * may be used to endorse or  promote products derived from this software without 
+ * specific prior written permission.
+ *
+ * DISCLAIMER.
+ *
+ * THIS SOFTWARE IS PROVIDED BY TI AND TI'S LICENSORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL TI AND 
+ * TI'S LICENSORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
 const uint32_t Hiperface_DSL2_0_RTU_0[] = {
-0x21077c00,
+0x21077f00,
 0x2eff8f8e,
 0x24000725,
 0x24041e8d,
@@ -62,7 +116,7 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0x23032cd1,
 0x1d03c4c4,
 0x2302cbd1,
-0x23059a9d,
+0x23059c9d,
 0x05014545,
 0x51074514,
 0x49004502,
@@ -809,7 +863,7 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0x91a91800,
 0x01010000,
 0x81a91800,
-0x21062c00,
+0x21062f00,
 0x20d10000,
 0x117f6666,
 0xc9066604,
@@ -977,7 +1031,7 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0x686e5303,
 0x24000019,
 0x79000002,
-0x23060cd1,
+0x23060fd1,
 0x10535300,
 0x10333320,
 0x10131340,
@@ -1183,7 +1237,7 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0x24003001,
 0xd1066b0e,
 0x2400010d,
-0x23076ed1,
+0x230771d1,
 0x68ab8d45,
 0x13803b3b,
 0x913d1880,
@@ -1196,7 +1250,7 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0x81531800,
 0x7900003b,
 0x2400020d,
-0x23076ed1,
+0x230771d1,
 0x688b8d38,
 0x8137184b,
 0x13803b3b,
@@ -1239,7 +1293,7 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0x1d09c4c4,
 0x2400040d,
 0x24003001,
-0x23076ed1,
+0x230771d1,
 0x15ff8d9c,
 0x69005c34,
 0x51009c33,
@@ -1294,7 +1348,7 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0xc9027a02,
 0x01081b1b,
 0x2102b700,
-0xc901c460,
+0xc901c462,
 0x24001031,
 0x91001800,
 0xc9060007,
@@ -1303,7 +1357,7 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0x24001e31,
 0x2eff829a,
 0x1d09c4c4,
-0x79000057,
+0x79000059,
 0x91351800,
 0xc9060007,
 0x1d060000,
@@ -1311,7 +1365,7 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0x24001e31,
 0x2eff829a,
 0x1d09c4c4,
-0x7900004f,
+0x79000051,
 0xc909c41c,
 0x05041b1b,
 0x490c1b06,
@@ -1319,7 +1373,7 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0x110f3131,
 0x69001b02,
 0x1d09c4c4,
-0x79000047,
+0x79000049,
 0xc9077a08,
 0x905a1831,
 0xc9021b03,
@@ -1339,7 +1393,7 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0x14809a9a,
 0x69101b02,
 0x15ff1a1a,
-0x79000033,
+0x79000035,
 0x91401800,
 0x513f0013,
 0x91531840,
@@ -1359,9 +1413,9 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0x2400201b,
 0x2400403b,
 0x1f09c4c4,
-0x7900001f,
+0x79000021,
 0x912c1800,
-0xc900001d,
+0xc900001f,
 0x1d000000,
 0x812c1800,
 0x1f09c4c4,
@@ -1369,9 +1423,11 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0x1d010000,
 0x81511800,
 0x91283881,
+0x1f070101,
 0x1001017a,
 0x2400101b,
-0xc9050102,
+0xc9050103,
+0x1f074141,
 0x01101b1b,
 0x0b031b00,
 0x8fc4d801,
@@ -1480,7 +1536,7 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0xd703ffff,
 0x2400001e,
 0x2400001e,
-0x2305f3d1,
+0x2305f6d1,
 0x108b8b9d,
 0x91aa1800,
 0x1f018000,
@@ -1504,7 +1560,7 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0xd703ffff,
 0x2400001e,
 0x2400001e,
-0x2305f3d1,
+0x2305f6d1,
 0x91983880,
 0x10eeeee1,
 0x24000061,
@@ -1519,6 +1575,7 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0x81107880,
 0x24000200,
 0x814e1800,
+0x812e1843,
 0x2400209f,
 0x2400259f,
 0x209d0000,
@@ -1593,7 +1650,7 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0x81080580,
 0x240003c0,
 0x810605c0,
-0x24000600,
+0x24000700,
 0x810b1800,
 0x81441800,
 0x2eff8383,
@@ -1918,5 +1975,5 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0x91003c82,
 0x1308e2e2,
 0x81003c82,
-0x21062c00};
+0x21062f00};
 

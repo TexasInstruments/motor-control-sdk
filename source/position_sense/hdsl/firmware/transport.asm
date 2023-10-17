@@ -875,12 +875,16 @@ transport_layer_no_short_msg:
 	clr		    REG_TMP0.b0, REG_TMP0.b0, (ONLINE_STATUS_D_FREL-8)
     sbco		&REG_TMP0.b0, MASTER_REGS_CONST, (ONLINE_STATUS_D_L), 1
 	lbco		&REG_TMP1, MASTER_REGS_CONST, PC_ADD_H, 4
+; Bit 7 should be set for long message in PC_ADD_H
+	set			REG_TMP1.b0, REG_TMP1.b0, 7
 	mov		SHORT_MSG.addr, REG_TMP1.b0
 	ldi		SHORT_MSG.bits_left, 16
 
 
 ;using PC_OFF?
 	qbbc		transport_layer_assemble_long_msg_no_pc_off, REG_TMP1.b0, LOFF
+; Bit 7 should be set for long message in PC_OFF_H
+	set			REG_TMP1.b2, REG_TMP1.b2, 7
 	add		SHORT_MSG.bits_left, SHORT_MSG.bits_left, 16
 transport_layer_assemble_long_msg_no_pc_off:
 ;save ADDR(+OFF) to memory buffer

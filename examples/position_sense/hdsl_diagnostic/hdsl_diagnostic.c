@@ -105,8 +105,11 @@
 #define CTR_EN (1 << 3)
 #define MAX_WAIT 20000
 
-/*Timeout in micorseconds for short message read/write*/
+/*Timeout in micro-seconds for short message read/write*/
 #define SHORT_MSG_TIMEOUT (1000)
+
+/*Timeout in micro-seconds for long message read/write*/
+#define LONG_MSG_TIMEOUT (200000)
 
 /*Register Addresses for Short Messages (Parameter Channel)*/
 
@@ -184,6 +187,8 @@ static int get_menu(void);
 #ifdef HDSL_AM64xE1_TRANSCEIVER
 static void hdsl_i2c_io_expander(void *args);
 #endif
+
+uint32_t read_encoder_resolution(HDSL_Handle hdslHandle);
 
 /* ========================================================================== */
 /*                            Global Variables                                */
@@ -632,8 +637,8 @@ void process_request(HDSL_Handle hdslHandle,int32_t menu)
         case MENU_PC_SHORT_MSG_READ:
             TC_read_pc_short_msg(hdslHandle);
             break;
-        case MENU_DIRECT_READ_RID0_LENGTH8:
-            direct_read_rid0_length8(hdslHandle);
+        case MENU_DIRECT_READ_RID0_LENGTH4:
+            direct_read_rid0_length4(hdslHandle);
             break;
         case MENU_DIRECT_READ_RID81_LENGTH8:
             direct_read_rid81_length8(hdslHandle);
@@ -830,6 +835,7 @@ void hdsl_init(void)
         HDSL_generate_memory_image(gHdslHandleCh0);
     }
 }
+
 void hdsl_init_300m(void)
 {
     uint8_t         ES;
@@ -975,16 +981,16 @@ static void display_menu(void)
     DebugP_log("\r\n | %2d : RSSI                                                                    |", MENU_RSSI);
     DebugP_log("\r\n | %2d : Parameter Channel Short Message Write                                   |", MENU_PC_SHORT_MSG_WRITE);
     DebugP_log("\r\n | %2d : Parameter Channel Short Message Read                                    |", MENU_PC_SHORT_MSG_READ);
-    DebugP_log("\r\n | %2d : Parameter Channel Long Message Read                                     |", MENU_DIRECT_READ_RID0_LENGTH8);
-    DebugP_log("\r\n |      Access on RID 0h, direct read access with length 8                      |");
+    DebugP_log("\r\n | %2d : Parameter Channel Long Message Read                                     |", MENU_DIRECT_READ_RID0_LENGTH4);
+    DebugP_log("\r\n |      Access on RID 0x0, direct read access with length 4                     |");
     DebugP_log("\r\n | %2d : Parameter Channel Long Message Read                                     |", MENU_DIRECT_READ_RID81_LENGTH8);
-    DebugP_log("\r\n |      Access on RID 81h, direct read access with length 8                     |");
+    DebugP_log("\r\n |      Access on RID 0x81, direct read access with length 8                    |");
     DebugP_log("\r\n | %2d : Parameter Channel Long Message Read                                     |", MENU_DIRECT_READ_RID81_LENGTH2);
-    DebugP_log("\r\n |      Access on RID 81h, direct read access with length 2                     |");
+    DebugP_log("\r\n |      Access on RID 0x81, direct read access with length 2 and offset 3       |");
     DebugP_log("\r\n | %2d : Parameter Channel Long Message Write                                    |", MENU_INDIRECT_WRITE_RID0_LENGTH8_OFFSET0);
-    DebugP_log("\r\n |      Access on RID 0h, indirect write, length 8, with offset 0               |");
+    DebugP_log("\r\n |      Access on RID 0x0, indirect write, length 8, with offset 0              |");
     DebugP_log("\r\n | %2d : Parameter Channel Long Message Write                                    |", MENU_INDIRECT_WRITE_RID0_LENGTH8);
-    DebugP_log("\r\n |      Access on RID 0h; indirect write, length 8, without offset value        |");
+    DebugP_log("\r\n |      Access on RID 0x0; indirect write, length 8, without offset value       |");
 #if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
     DebugP_log("\r\n | %2d : HDSL registers into Memory                                              |", MENU_HDSL_REG_INTO_MEMORY);
 #endif
@@ -992,242 +998,246 @@ static void display_menu(void)
     DebugP_log("\r\n Enter value: ");
 }
 
-void  direct_read_rid0_length8(HDSL_Handle hdslHandle)
+void direct_read_rid0_length4(HDSL_Handle hdslHandle)
 {
-    uint8_t dir = 0x01;
+    int32_t status = SystemP_FAILURE;
 
-    gPc_addrh = 0xec;
-    gPc_addrl = 0x00;
-    gPc_offh = 0x80;
-    gPc_offl = 0x00;
+    DebugP_log("\r\n Parameter channel long message read : RID 0, Length 4");
 
-    HDSL_set_pc_addr(hdslHandle, gPc_addrh, gPc_addrl, gPc_offh, gPc_offl);
+    /* Set the parameter channel buffers to 0xff */
+    HDSL_write_pc_buffer(hdslHandle, 0, 0xff);
+    HDSL_write_pc_buffer(hdslHandle, 1, 0xff);
+    HDSL_write_pc_buffer(hdslHandle, 2, 0xff);
+    HDSL_write_pc_buffer(hdslHandle, 3, 0xff);
 
-    HDSL_set_pc_ctrl(hdslHandle,dir);
+    status = HDSL_read_pc_long_msg(hdslHandle, 0, HDSL_LONG_MSG_ADDR_WITHOUT_OFFSET, HDSL_LONG_MSG_ADDR_DIRECT, HDSL_LONG_MSG_LENGTH_4, 0, LONG_MSG_TIMEOUT);
 
-    ClockP_sleep(1);
-
-    gPc_buf0 = HDSL_read_pc_buffer(hdslHandle,0);
-
-    if(gPc_buf0 == 82)
+    if(SystemP_SUCCESS != status)
     {
-        gPc_buf1 = HDSL_read_pc_buffer(hdslHandle,1);
-        if(gPc_buf1 == 79)
+        DebugP_log("\r\n FAIL: HDSL_read_pc_long_msg() did not return success");
+        return;
+    }
+
+    gPc_buf0 = HDSL_read_pc_buffer(hdslHandle, 0);
+
+    if(gPc_buf0 == 'R')
+    {
+        gPc_buf1 = HDSL_read_pc_buffer(hdslHandle, 1);
+        if(gPc_buf1 == 'O')
         {
-            gPc_buf2 = HDSL_read_pc_buffer(hdslHandle,2);
-            if(gPc_buf2 == 79)
+            gPc_buf2 = HDSL_read_pc_buffer(hdslHandle, 2);
+            if(gPc_buf2 == 'O')
             {
-                gPc_buf3 = HDSL_read_pc_buffer(hdslHandle,3);
-                if(gPc_buf3 == 84)
+                gPc_buf3 = HDSL_read_pc_buffer(hdslHandle, 3);
+                if(gPc_buf3 == 'T')
                 {
-                    DebugP_log("\r\n PASS");
+                    DebugP_log("\r\n PASS : Read \"ROOT\"");
                 }
                 else
                 {
-                    DebugP_log("\r\n FAIL: gPc_buf3 != T = %u", gPc_buf3);
+                    DebugP_log("\r\n FAIL: PC_BUFFER3 != T (It is %u)", gPc_buf3);
                 }
             }
             else
             {
-                DebugP_log("\r\n FAIL: gPc_buf2 != O = %u", gPc_buf2);
+                DebugP_log("\r\n FAIL: PC_BUFFER2 != O (It is %u)", gPc_buf2);
             }
         }
         else
         {
-            DebugP_log("\r\n FAIL: gPc_buf1 != O = %u", gPc_buf1);
+            DebugP_log("\r\n FAIL: PC_BUFFER1 != O (It is %u)", gPc_buf1);
         }
     }
     else
     {
-        DebugP_log("\r\n FAIL: gPc_buf0 != R = %u", gPc_buf0);
+        DebugP_log("\r\n FAIL: PC_BUFFER0 != R (It is %u)", gPc_buf0);
     }
 }
 
-void  direct_read_rid81_length8(HDSL_Handle hdslHandle)
+void direct_read_rid81_length8(HDSL_Handle hdslHandle)
 {
-    uint8_t dir = 0x01;
-    gPc_addrh = 0xec;
-    gPc_addrl = 0x81;
-    gPc_offh = 0x80;
-    gPc_offl = 0x00;
+    int32_t status = SystemP_FAILURE;
 
-    HDSL_set_pc_addr( hdslHandle,gPc_addrh, gPc_addrl, gPc_offh, gPc_offl);
+    DebugP_log("\r\n Parameter channel long message read : RID 0x81, Length 8");
 
-    HDSL_set_pc_ctrl(hdslHandle,dir);
+    /* Set the parameter channel buffers to 0xff */
+    HDSL_write_pc_buffer(hdslHandle, 0, 0xff);
+    HDSL_write_pc_buffer(hdslHandle, 1, 0xff);
+    HDSL_write_pc_buffer(hdslHandle, 2, 0xff);
+    HDSL_write_pc_buffer(hdslHandle, 3, 0xff);
+    HDSL_write_pc_buffer(hdslHandle, 4, 0xff);
+    HDSL_write_pc_buffer(hdslHandle, 5, 0xff);
+    HDSL_write_pc_buffer(hdslHandle, 6, 0xff);
+    HDSL_write_pc_buffer(hdslHandle, 7, 0xff);
 
-    ClockP_sleep(1);
+    status = HDSL_read_pc_long_msg(hdslHandle, 0x81, HDSL_LONG_MSG_ADDR_WITHOUT_OFFSET, HDSL_LONG_MSG_ADDR_DIRECT, HDSL_LONG_MSG_LENGTH_8, 0, LONG_MSG_TIMEOUT);
 
-    gPc_buf0 = HDSL_read_pc_buffer(hdslHandle,0);
-    if(gPc_buf0 == 82)
+    if(SystemP_SUCCESS != status)
     {
-        gPc_buf1 = HDSL_read_pc_buffer(hdslHandle,1);
-        if(gPc_buf1 == 69)
+        DebugP_log("\r\n FAIL: HDSL_read_pc_long_msg() did not return success");
+        return;
+    }
+
+    gPc_buf0 = HDSL_read_pc_buffer(hdslHandle, 0);
+    if(gPc_buf0 == 'R')
+    {
+        gPc_buf1 = HDSL_read_pc_buffer(hdslHandle, 1);
+        if(gPc_buf1 == 'E')
         {
-            gPc_buf2 = HDSL_read_pc_buffer(hdslHandle,2);
-            if(gPc_buf2 == 83)
+            gPc_buf2 = HDSL_read_pc_buffer(hdslHandle, 2);
+            if(gPc_buf2 == 'S')
             {
-                gPc_buf3 = HDSL_read_pc_buffer(hdslHandle,3);
-                if(gPc_buf3 == 79)
+                gPc_buf3 = HDSL_read_pc_buffer(hdslHandle, 3);
+                if(gPc_buf3 == 'O')
                 {
-                    gPc_buf4 = HDSL_read_pc_buffer(hdslHandle,4);
-                    if(gPc_buf4 == 76)
+                    gPc_buf4 = HDSL_read_pc_buffer(hdslHandle, 4);
+                    if(gPc_buf4 == 'L')
                     {
-                        gPc_buf5 = HDSL_read_pc_buffer(hdslHandle,5);
-                        if(gPc_buf5 == 85)
+                        gPc_buf5 = HDSL_read_pc_buffer(hdslHandle, 5);
+                        if(gPc_buf5 == 'U')
                         {
-                            gPc_buf6 = HDSL_read_pc_buffer(hdslHandle,6);
-                            if(gPc_buf6 == 84)
+                            gPc_buf6 = HDSL_read_pc_buffer(hdslHandle, 6);
+                            if(gPc_buf6 == 'T')
                             {
-                                gPc_buf7 = HDSL_read_pc_buffer(hdslHandle,7);
-                                if(gPc_buf7 == 78)
+                                gPc_buf7 = HDSL_read_pc_buffer(hdslHandle, 7);
+                                if(gPc_buf7 == 'N')
                                 {
-                                    DebugP_log("\r\n PASS ");
+                                    DebugP_log("\r\n PASS : Read \"RESOLUTN\"");
                                 }
                                 else
                                 {
-                                    DebugP_log("\r\n FAIL: gPc_buf7 != N ", gPc_buf7);
+                                    DebugP_log("\r\n FAIL: PC_BUFFER7 != N (It is %u)", gPc_buf7);
                                 }
                             }
                             else
                             {
-                                DebugP_log("\r\n FAIL: gPc_buf6 != T ", gPc_buf6);
+                                DebugP_log("\r\n FAIL: PC_BUFFER6 != T (It is %u)", gPc_buf6);
                             }
                         }
                         else
                         {
-                            DebugP_log("\r\n FAIL: gPc_buf5 != U ", gPc_buf5);
+                            DebugP_log("\r\n FAIL: PC_BUFFER5 != U (It is %u)", gPc_buf5);
                         }
                     }
                     else
                     {
-                        DebugP_log("\r\n FAIL: gPc_buf4 != L ", gPc_buf4);
+                        DebugP_log("\r\n FAIL: PC_BUFFER4 != L (It is %u)", gPc_buf4);
                     }
 
                 }
                 else
                 {
-                    DebugP_log("\r\n FAIL: gPc_buf3 != O ", gPc_buf3);
+                    DebugP_log("\r\n FAIL: PC_BUFFER3 != O (It is %u)", gPc_buf3);
                 }
             }
             else
             {
-                DebugP_log("\r\n FAIL: gPc_buf2 != S = %u", gPc_buf2);
+                DebugP_log("\r\n FAIL: PC_BUFFER2 != S (It is %u)", gPc_buf2);
             }
         }
         else
         {
-            DebugP_log("\r\n FAIL: gPc_buf1 != E = %u", gPc_buf1);
+            DebugP_log("\r\n FAIL: PC_BUFFER1 != E (It is %u)", gPc_buf1);
         }
     }
     else
     {
-        DebugP_log("\r\n FAIL: gPc_buf0 != R = %u", gPc_buf0);
+        DebugP_log("\r\n FAIL: PC_BUFFER0 != R (It is %u)", gPc_buf0);
     }
 }
 
-void  direct_read_rid81_length2(HDSL_Handle hdslHandle)
+void direct_read_rid81_length2(HDSL_Handle hdslHandle)
 {
-    uint8_t dir = 0x01;
+    int32_t status = SystemP_FAILURE;
 
-    gPc_addrh = 0xe4;
-    gPc_addrl = 0x81;
-    gPc_offh = 0x80;
-    gPc_offl = 0x03;
+    DebugP_log("\r\n Parameter channel long message read : RID 0x81, Offset 3, Length 2");
 
-    HDSL_set_pc_addr(hdslHandle, gPc_addrh, gPc_addrl, gPc_offh, gPc_offl);
+    /* Set the parameter channel buffers to 0xaa */
+    HDSL_write_pc_buffer(hdslHandle, 0, 0xaa);
+    HDSL_write_pc_buffer(hdslHandle, 1, 0xaa);
 
-    HDSL_set_pc_ctrl(hdslHandle,dir);
+    status = HDSL_read_pc_long_msg(hdslHandle, 0x81, HDSL_LONG_MSG_ADDR_WITH_OFFSET, HDSL_LONG_MSG_ADDR_DIRECT, HDSL_LONG_MSG_LENGTH_2, 3, LONG_MSG_TIMEOUT);
 
-    ClockP_sleep(1);
+    if(SystemP_SUCCESS != status)
+    {
+        DebugP_log("\r\n FAIL: HDSL_read_pc_long_msg() did not return success");
+        return;
+    }
 
-    gPc_buf0 = HDSL_read_pc_buffer(hdslHandle,0);
+    gPc_buf0 = HDSL_read_pc_buffer(hdslHandle, 0);
 
     if(gPc_buf0 == 0x00)
     {
-        gPc_buf1 = HDSL_read_pc_buffer(hdslHandle,1);
+        gPc_buf1 = HDSL_read_pc_buffer(hdslHandle, 1);
         if(gPc_buf1 == 0x0f)
         {
-            DebugP_log("\r\n PASS ");
-
+            DebugP_log("\r\n PASS : Read 15");
         }
         else
         {
-            DebugP_log("\r\n FAIL: gPc_buf1 != 0x0f = %u", gPc_buf1);
+            DebugP_log("\r\n FAIL: PC_BUFFER1 != 0x0f (It is %u)", gPc_buf1);
         }
 
     }
     else
     {
-        DebugP_log("\r\n FAIL: gPc_buf0 != 0x00 = %u", gPc_buf0);
+        DebugP_log("\r\n FAIL: PC_BUFFER0 != 0x00 (It is %u)", gPc_buf0);
     }
 }
 
-void  indirect_write_rid0_length8_offset0(HDSL_Handle hdslHandle)
+void indirect_write_rid0_length8_offset0(HDSL_Handle hdslHandle)
 {
-    uint8_t dir = 0x01;
+    DebugP_log("\r\n Parameter channel long message write : RID 0x0, Offset 0, Length 8");
 
-    gPc_addrh = 0xbc;
-    gPc_addrl = 0x00;
-    gPc_offh = 0x80;
-    gPc_offl = 0x00;
+    HDSL_write_pc_long_msg(hdslHandle, 0x0, HDSL_LONG_MSG_ADDR_WITH_OFFSET, HDSL_LONG_MSG_ADDR_INDIRECT, HDSL_LONG_MSG_LENGTH_8, 0, LONG_MSG_TIMEOUT);
 
-    HDSL_set_pc_addr(hdslHandle, gPc_addrh, gPc_addrl, gPc_offh, gPc_offl);
+    /*FIXME: Add error check*/
 
-    HDSL_set_pc_ctrl(hdslHandle,dir);
-
-    ClockP_sleep(1);
-
-    gPc_buf0 = HDSL_read_pc_buffer(hdslHandle,0);
+    gPc_buf0 = HDSL_read_pc_buffer(hdslHandle, 0);
     if(gPc_buf0 == 0x41)
     {
-        gPc_buf1 = HDSL_read_pc_buffer(hdslHandle,1);
+        gPc_buf1 = HDSL_read_pc_buffer(hdslHandle, 1);
         if(gPc_buf1 == 0x10)
         {
             DebugP_log("\r\n PASS ");
         }
         else
         {
-            DebugP_log("\r\n FAIL: gPc_buf1 != 0x10 = %u", gPc_buf1);
+            DebugP_log("\r\n FAIL: PC_BUFFER1 != 0x10 (It is %u)", gPc_buf1);
         }
     }
     else
     {
-        DebugP_log("\r\n FAIL: gPc_buf0 != 0x41 = %u", gPc_buf0);
+        DebugP_log("\r\n FAIL: PC_BUFFER0 != 0x41 (It is %u)", gPc_buf0);
     }
 
 }
 
-void  indirect_write_rid0_length8(HDSL_Handle hdslHandle)
+void indirect_write_rid0_length8(HDSL_Handle hdslHandle)
 {
-    uint8_t dir = 0x01;
 
-    gPc_addrh = 0x9c;
-    gPc_addrl = 0x00;
-    gPc_offh = 0x80;
-    gPc_offl = 0x00;
+    DebugP_log("\r\n Parameter channel long message write : RID 0x0, Length 8");
 
-    HDSL_set_pc_addr(hdslHandle, gPc_addrh, gPc_addrl, gPc_offh, gPc_offl);
+    HDSL_write_pc_long_msg(hdslHandle, 0x0, HDSL_LONG_MSG_ADDR_WITHOUT_OFFSET, HDSL_LONG_MSG_ADDR_INDIRECT, HDSL_LONG_MSG_LENGTH_8, 0, LONG_MSG_TIMEOUT);
 
-    HDSL_set_pc_ctrl(hdslHandle,dir);
+    /*FIXME: Add error check*/
 
-    ClockP_sleep(1);
-
-    gPc_buf0 = HDSL_read_pc_buffer(hdslHandle,0);
+    gPc_buf0 = HDSL_read_pc_buffer(hdslHandle, 0);
     if(gPc_buf0 == 0x41)
     {
-        gPc_buf1 = HDSL_read_pc_buffer(hdslHandle,1);
+        gPc_buf1 = HDSL_read_pc_buffer(hdslHandle, 1);
         if(gPc_buf1 == 0x10)
         {
             DebugP_log("\r\n PASS ");
         }
         else
         {
-            DebugP_log("\r\n FAIL: gPc_buf1 != 0x10 = %u", gPc_buf1);
+            DebugP_log("\r\n FAIL: PC_BUFFER1 != 0x10 (It is %u)", gPc_buf1);
         }
     }
     else
     {
-        DebugP_log("\r\n FAIL: gPc_buf0 != 0x41 = %u", gPc_buf0);
+        DebugP_log("\r\n FAIL: PC_BUFFER0 != 0x41 (It is %u)", gPc_buf0);
     }
 }
 
@@ -1304,6 +1314,34 @@ static void hdsl_i2c_io_expander(void *args)
     TCA6424_close(&gTCA6424_Config);
 }
 #endif
+
+uint32_t read_encoder_resolution(HDSL_Handle hdslHandle)
+{
+    int32_t status = SystemP_FAILURE;
+    uint32_t resolution = 0;
+
+    /* Set the parameter channel buffers to 0xff */
+    HDSL_write_pc_buffer(hdslHandle, 0, 0xff);
+    HDSL_write_pc_buffer(hdslHandle, 1, 0xff);
+    HDSL_write_pc_buffer(hdslHandle, 2, 0xff);
+    HDSL_write_pc_buffer(hdslHandle, 3, 0xff);
+
+    /* Parameter channel long message read with RID 0x81, Offset 5, Length 4
+     * for reading resolution */
+
+    status = HDSL_read_pc_long_msg(hdslHandle, 0x81, HDSL_LONG_MSG_ADDR_WITHOUT_OFFSET, HDSL_LONG_MSG_ADDR_INDIRECT, HDSL_LONG_MSG_LENGTH_4, 0, LONG_MSG_TIMEOUT);
+
+    DebugP_assert(SystemP_SUCCESS == status);
+
+    gPc_buf0 = HDSL_read_pc_buffer(hdslHandle, 0);
+    gPc_buf1 = HDSL_read_pc_buffer(hdslHandle, 1);
+    gPc_buf2 = HDSL_read_pc_buffer(hdslHandle, 2);
+    gPc_buf3 = HDSL_read_pc_buffer(hdslHandle, 3);
+
+    resolution = log2((gPc_buf0 << 24) | (gPc_buf1 << 16) | (gPc_buf2 << 8) | (gPc_buf3));
+
+    return resolution;
+}
 
 void hdsl_diagnostic_main(void *arg)
 {
@@ -1393,23 +1431,24 @@ void hdsl_diagnostic_main(void *arg)
     pos_bits += acc_bits;
     DebugP_log("\r\n | Encoder ID: 0x%x", val);
     DebugP_log( "(");
-    DebugP_log( "Acceleration bits: %u ,", acc_bits);
+    DebugP_log( "Acceleration bits: %u, ", acc_bits);
     DebugP_log( "Position bits: %u,", pos_bits);
     DebugP_log( "%s", val & 0x400 ? " Bipolar position" : " Unipolar position");
     DebugP_log(")|");
-    DebugP_log("\r\n |-------------------------------------------------------------------------------|");
-    DebugP_log("\r\n Enter single turn bits: ");
-    if((DebugP_scanf("%d\n", &gHdslHandleCh0->res) < 0) || gHdslHandleCh0->res > pos_bits)
-    {
-            DebugP_log( "\r| WARNING: invalid single turn bits, assuming single turn encoder\n");
-                        gHdslHandleCh0->res = pos_bits;
-    }
+    gHdslHandleCh0->res = read_encoder_resolution(gHdslHandleCh0);
     gHdslHandleCh0->multi_turn = pos_bits - gHdslHandleCh0->res;
     gHdslHandleCh0->mask = pow(2, gHdslHandleCh0->res) - 1;
-    if (gHdslHandleCh0->multi_turn)
+    if(gHdslHandleCh0->multi_turn)
     {
-        DebugP_log( "\r\n Multi turn bits: %u\n", gHdslHandleCh0->multi_turn);
+        DebugP_log( "\r\n | Single-turn bits: %u, Multi-turn bits: %u                                     |", pos_bits - gHdslHandleCh0->multi_turn, gHdslHandleCh0->multi_turn);
     }
+    else
+    {
+        DebugP_log( "\r\n | Single-turn bits: %u                                                          |", pos_bits);
+    }
+    DebugP_log("\r\n |-------------------------------------------------------------------------------|");
+
+
     #endif
     #if (CONFIG_HDSL0_CHANNEL1==1)
 
@@ -1444,24 +1483,22 @@ void hdsl_diagnostic_main(void *arg)
     pos_bits += acc_bits;
     DebugP_log("\r\n | Encoder ID: 0x%x", val);
     DebugP_log( "(");
-    DebugP_log( "Acceleration bits: %u ,", acc_bits);
+    DebugP_log( "Acceleration bits: %u, ", acc_bits);
     DebugP_log( "Position bits: %u,", pos_bits);
     DebugP_log( "%s", val & 0x400 ? " Bipolar position" : " Unipolar position");
     DebugP_log(")|");
-    DebugP_log("\r\n |-------------------------------------------------------------------------------|");
-
-    DebugP_log("\r\n Enter single turn bits: ");
-    if((DebugP_scanf("%d\n", &gHdslHandleCh1->res) < 0) || gHdslHandleCh1->res > pos_bits)
-    {
-            DebugP_log( "\r| WARNING: invalid single turn bits, assuming single turn encoder\n");
-                        gHdslHandleCh1->res = pos_bits;
-    }
+    gHdslHandleCh1->res = read_encoder_resolution(gHdslHandleCh1);
     gHdslHandleCh1->multi_turn = pos_bits - gHdslHandleCh1->res;
     gHdslHandleCh1->mask = pow(2, gHdslHandleCh1->res) - 1;
-    if (gHdslHandleCh1->multi_turn)
+    if(gHdslHandleCh0->multi_turn)
     {
-        DebugP_log( "\r\n Multi turn bits: %u\n", gHdslHandleCh1->multi_turn);
+        DebugP_log( "\r\n | Single-turn bits: %u, Multi-turn bits: %u                                     |", pos_bits - gHdslHandleCh1->multi_turn, gHdslHandleCh1->multi_turn);
     }
+    else
+    {
+        DebugP_log( "\r\n | Single-turn bits: %u                                                          |", pos_bits);
+    }
+    DebugP_log("\r\n |-------------------------------------------------------------------------------|");
     #endif
 
     while(1)
