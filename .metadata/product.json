@@ -1,7 +1,7 @@
 {
     "name": "MOTOR_CONTROL_SDK",
     "displayName": "MOTOR CONTROL SDK",
-    "version": "09.00.00",
+    "version": "09.01.00",
     "documentationPath": "../docs",
     "includePaths": [
         "../source",
@@ -12,9 +12,11 @@
         "/kernel/dpl",
         "/drivers/drivers",
         "/board/board",
+        "/fs/fs",
         "/networking/networking",
         "/security/security",
-        "/xbar/xbar",
+        "/usb/usb",
+        "/pru_io/pru_io",
     ],
     "devices": [
         "AM64x",
@@ -60,5 +62,5 @@
         "showSignals": true,
         "showUsed": true
     },
-    "minToolVersion" : "1.17.0"
+    "minToolVersion" : "1.18.0"
 }
