@@ -18,6 +18,7 @@
     "includePaths": [
         "../source",
         "../mcu_plus_sdk/source",
+        "../ind_comms_sdk/source",
     ],
     "components": [
 % if((args.device == "am64x") || (args.device == "am243x")) {
