@@ -6,6 +6,7 @@
     "includePaths": [
         "../source",
         "../mcu_plus_sdk/source",
+        "../ind_comms_sdk/source",
     ],
     "components": [
         "/motor_control",
