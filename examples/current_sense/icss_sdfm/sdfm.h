@@ -145,6 +145,8 @@ typedef struct SdfmPrms_s {
     uint16_t FilterOsr;
     /**< over current enable field */
     uint8_t en_com;
+    /**< output samples base address*/
+    uint32_t samplesBaseAddress;
 } SdfmPrms;
 
 

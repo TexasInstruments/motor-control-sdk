@@ -113,6 +113,7 @@ extern "C" {
 #define IEP_DEFAULT_INC                 0x1
 
 
+
 /* SDFM output buffer size in 32-bit words */
 
 
@@ -293,10 +294,16 @@ typedef struct SDFM_Interface_s{
     SDFM_Cfg        sdfm_cfg_ptr[NUM_CH_SUPPORTED];
     /*<sdfm time sampling interface pointer */
     SDFM_CfgTrigger    sdfm_cfg_trigger;
-    /**< host output sample buffer */
-    volatile uint32_t   curr_out_samp_buf[NUM_CH_SUPPORTED];
+    /**< host output sample buffer base address */
+    volatile uint32_t   sampleBufferBaseAdd;
+    /**<firmware version */
+    volatile uint64_t  firmwareVersion;
 }SDFM_Interface;
 
+typedef struct SDFM_SampleOutInterface_s
+{
+   uint32_t sampleOutput[NUM_CH_SUPPORTED];
+}SDFM_SampleOutInterface;
 /**
  *    \brief    Structure defining SDFM interface
  *
@@ -310,6 +317,7 @@ typedef struct SDFM_s {
     uint32_t iep_clock;
     uint8_t  iep_inc;
     SDFM_Interface * p_sdfm_interface;
+    SDFM_SampleOutInterface *sampleOutputInterface;
 } SDFM;
 
 

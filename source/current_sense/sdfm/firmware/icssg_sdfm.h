@@ -198,12 +198,17 @@
 #define FW_REG_SDFM_CFG_SECOND_TRIG_SAMPLE_TIME     ( 0xF0 )
 #define SDFM_CFG_NC_PRD_IEP_CNT_OFFSET              ( 0xF4)
 
-/*Sample output offset*/
-#define SDFM_CFG_OUT_SAMP_BUF_OFFSET         ( 0xF8 )
+/* output sample buffer base address offset*/
+#define SDFM_CFG_OUT_SAMP_BUF_BASE_ADD_OFFSET         ( 0xF8 )
+
+/*Firmware version offset*/
+#define SDFM_FIRMWARE_VERSION_OFFSET                  (0xFC)
 
 /*Debug */
 #define SDFM_DUBUG_OFFSET         ( 0x104 )
 
+/*output sample offset*/
+#define SDFM_CFG_OUT_SAMP_BUF_OFFSET                   (0x00)
 /*
     Firmware register bit fields
 */

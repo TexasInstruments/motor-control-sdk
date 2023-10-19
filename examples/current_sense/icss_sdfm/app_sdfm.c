@@ -139,6 +139,8 @@ PRUICSS_Handle gPruIcssHandle;
 /* Test Sdfm handles */
 sdfm_handle gHPruSdfm;
 
+/* Sdfm output samples, written by PRU cores */
+__attribute__((section(".gSdfmSampleOutput"))) uint32_t gSdfm_sampleOutput[NUM_CH_SUPPORTED];
 
 /* Test Sdfm parameters */
 SdfmPrms gTestSdfmPrms = {
@@ -156,7 +158,8 @@ SdfmPrms gTestSdfmPrms = {
     {0,0}},
      15,   /*Over current osr: The effect count is OSR + 1*/
      128,   /*Normal current osr */
-     1   /*comparator enable*/
+     1,   /*comparator enable*/
+     (uint32_t)&gSdfm_sampleOutput /*Output samples base address*/
 };
 
 #define PRUICSS_G_MUX_EN    ( 0x1 ) /* ICSSG_SA_MX_REG:G_MUX_EN */
@@ -343,7 +346,7 @@ void sdfm_main(void *args)
      /* Configure SDFM */
     init_sdfm();
     DebugP_log("SDFM Configured!\r\n");
-
+    
     /* Start EPWM0 clock */
     CSL_REG32_WR(CSL_CTRL_MMR0_CFG0_BASE + CSL_MAIN_CTRL_MMR_CFG0_EPWM_TB_CLKEN, 1);
 
