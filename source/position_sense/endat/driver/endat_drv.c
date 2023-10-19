@@ -50,14 +50,13 @@ static int32_t endat_recvd_organize(int32_t cmd, struct endat_priv *priv,
 {
     uint32_t word0, word1, word2, word3;
     uint32_t pos_bits, shift;
-    struct endat_pruss_xchg *pruss_xchg = priv->pruss_xchg;
-
+    struct endatChRxInfo *endatChRxInfo = priv->endatChRxInfo;
     memset(endat_data, 0, sizeof(*endat_data));
 
-    word0 = pruss_xchg->ch[priv->channel].pos_word0;
-    word1 = pruss_xchg->ch[priv->channel].pos_word1;
-    word2 = pruss_xchg->ch[priv->channel].pos_word2;
-    word3 = pruss_xchg->ch[priv->channel].pos_word3;
+    word0 = endatChRxInfo->ch[priv->channel].posWord0;
+    word1 = endatChRxInfo->ch[priv->channel].posWord1;
+    word2 = endatChRxInfo->ch[priv->channel].posWord2;
+    word3 = endatChRxInfo->ch[priv->channel].posWord3;
 
     switch(cmd)
     {
@@ -404,7 +403,7 @@ uint32_t endat_recvd_validate(struct endat_priv *priv, int32_t cmd,
 #endif
 
 #ifdef ENDAT_USE_OTF_CRC_STATUS
-    val = priv->pruss_xchg->ch[priv->channel].crc.status;
+    val = priv->endatChRxInfo->ch[priv->channel].crcStatus;
 
     if(priv->flags.info2)
     {
@@ -1120,9 +1119,9 @@ void endat_command_wait(struct endat_priv *priv)
 void endat_recovery_time_conversion(struct endat_priv *priv)
 {
      /* RT: convert cycle to ns */
-    priv->pruss_xchg->endat_ch0_rt = priv->pruss_xchg->endat_ch0_rt * ((float)(1000000000)/priv->pruss_xchg->icssg_clk);
-    priv->pruss_xchg->endat_ch1_rt = priv->pruss_xchg->endat_ch1_rt * ((float)(1000000000)/priv->pruss_xchg->icssg_clk);
-    priv->pruss_xchg->endat_ch2_rt = priv->pruss_xchg->endat_ch2_rt * ((float)(1000000000)/priv->pruss_xchg->icssg_clk);
+    priv->endatChRxInfo->ch[0].recoveryTime = priv->endatChRxInfo->ch[0].recoveryTime * ((float)(1000000000)/priv->pruss_xchg->icssg_clk);
+    priv->endatChRxInfo->ch[1].recoveryTime = priv->endatChRxInfo->ch[1].recoveryTime * ((float)(1000000000)/priv->pruss_xchg->icssg_clk);
+    priv->endatChRxInfo->ch[2].recoveryTime = priv->endatChRxInfo->ch[2].recoveryTime * ((float)(1000000000)/priv->pruss_xchg->icssg_clk);
 
 }
 
@@ -1149,16 +1148,16 @@ int32_t endat_command_process(struct endat_priv *priv, int32_t cmd,
 int32_t endat_get_2_2_angle(struct endat_priv *priv)
 {
     int32_t pos;
-    struct endat_pruss_xchg *pruss_xchg = priv->pruss_xchg;
+    struct endatChRxInfo *endatChRxInfo = priv->endatChRxInfo;
     int32_t ch = priv->channel;
 
 
-    if(!(pruss_xchg->ch[ch].crc.status & ENDAT_CRC_DATA))
+    if(!(endatChRxInfo->ch[ch].crcStatus & ENDAT_CRC_DATA))
     {
         return -1;
     }
 
-    pos = pruss_xchg->ch[ch].pos_word0;
+    pos = endatChRxInfo->ch[ch].posWord0;
 
 #ifdef __TI_ARM__
     pos = __rbit(pos);
@@ -1186,7 +1185,7 @@ static int32_t endat_get_pos_res(struct endat_priv *priv)
     struct cmd_supplement cmd_supplement;
     uint32_t word;
     int32_t ch = priv->channel;
-    struct endat_pruss_xchg *pruss_xchg = priv->pruss_xchg;
+    struct endatChRxInfo *endatChRxInfo = priv->endatChRxInfo;
 
     /* select memory area encoder manufacturer page 0 */
     cmd = 2, cmd_supplement.address = MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE0;
@@ -1210,7 +1209,7 @@ static int32_t endat_get_pos_res(struct endat_priv *priv)
     /* delay copied from fw */
     ClockP_usleep(1000 * 2);
 
-    word = (pruss_xchg->ch[ch].pos_word0 >> (ENDAT_NUM_BITS_POSITION_CRC)) & ((
+    word = (endatChRxInfo->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC)) & ((
                 1 << ENDAT_NUM_BITS_PARAMETER) - 1);
     return word &= (1 << ENDAT_NUM_BITS_VALID_PAGE0_WORD13) - 1;
 }
@@ -1221,7 +1220,7 @@ static int32_t endat_get_multi_turn_res(struct endat_priv *priv)
     struct cmd_supplement cmd_supplement;
     uint32_t word;
     int32_t ch = priv->channel;
-    struct endat_pruss_xchg *pruss_xchg = priv->pruss_xchg;
+    struct endatChRxInfo *endatChRxInfo = priv->endatChRxInfo;
 
     /* select memory area encoder manufacturer page 0 */
     cmd = 2, cmd_supplement.address = MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE1;
@@ -1245,7 +1244,7 @@ static int32_t endat_get_multi_turn_res(struct endat_priv *priv)
     /* delay copied from fw */
     ClockP_usleep(1000 * 2);
 
-    word = (pruss_xchg->ch[ch].pos_word0 >> (ENDAT_NUM_BITS_POSITION_CRC)) & ((
+    word = (endatChRxInfo->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC)) & ((
                 1 << ENDAT_NUM_BITS_PARAMETER) - 1);
     return word &= (1 << ENDAT_NUM_BITS_VALID_PAGE1_WORD1) - 1;
 }
@@ -1256,7 +1255,7 @@ static int32_t endat_get_id(struct endat_priv *priv)
     struct cmd_supplement cmd_supplement;
     uint32_t word0, word1, word2;
     int32_t ch = priv->channel;
-    struct endat_pruss_xchg *pruss_xchg = priv->pruss_xchg;
+    struct endatChRxInfo *endatChRxInfo = priv->endatChRxInfo;
 
     /* select memory area encoder manufacturer page 1 */
     cmd = 2, cmd_supplement.address = MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE1;
@@ -1277,7 +1276,7 @@ static int32_t endat_get_id(struct endat_priv *priv)
         return -EINVAL;
     }
 
-    word0 = (pruss_xchg->ch[ch].pos_word0 >> (ENDAT_NUM_BITS_POSITION_CRC))
+    word0 = (endatChRxInfo->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC))
             & ((1 << ENDAT_NUM_BITS_PARAMETER) - 1);
     /* delay copied from fw */
     ClockP_usleep(1000 * 2);
@@ -1290,7 +1289,7 @@ static int32_t endat_get_id(struct endat_priv *priv)
         return -EINVAL;
     }
 
-    word1 = (pruss_xchg->ch[ch].pos_word0 >> (ENDAT_NUM_BITS_POSITION_CRC))
+    word1 = (endatChRxInfo->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC))
             & ((1 << ENDAT_NUM_BITS_PARAMETER) - 1);
     /* delay copied from fw */
     ClockP_usleep(1000 * 2);
@@ -1303,7 +1302,7 @@ static int32_t endat_get_id(struct endat_priv *priv)
         return -EINVAL;
     }
 
-    word2 = (pruss_xchg->ch[ch].pos_word0 >> (ENDAT_NUM_BITS_POSITION_CRC))
+    word2 = (endatChRxInfo->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC))
             & ((1 << ENDAT_NUM_BITS_PARAMETER) - 1);
     /* delay copied from fw */
     ClockP_usleep(1000 * 2);
@@ -1321,7 +1320,7 @@ static int32_t endat_get_sn(struct endat_priv *priv)
     struct cmd_supplement cmd_supplement;
     uint32_t word0, word1, word2;
     int32_t ch = priv->channel;
-    struct endat_pruss_xchg *pruss_xchg = priv->pruss_xchg;
+    struct endatChRxInfo *endatChRxInfo = priv->endatChRxInfo;
 
     /* select memory area encoder manufacturer page 1 */
     cmd = 2, cmd_supplement.address = MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE1;
@@ -1342,7 +1341,7 @@ static int32_t endat_get_sn(struct endat_priv *priv)
         return -EINVAL;
     }
 
-    word0 = (pruss_xchg->ch[ch].pos_word0 >> (ENDAT_NUM_BITS_POSITION_CRC))
+    word0 = (endatChRxInfo->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC))
             & ((1 << ENDAT_NUM_BITS_PARAMETER) - 1);
     /* delay copied from fw */
     ClockP_usleep(1000 * 2);
@@ -1355,7 +1354,7 @@ static int32_t endat_get_sn(struct endat_priv *priv)
         return -EINVAL;
     }
 
-    word1 = (pruss_xchg->ch[ch].pos_word0 >> (ENDAT_NUM_BITS_POSITION_CRC))
+    word1 = (endatChRxInfo->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC))
             & ((1 << ENDAT_NUM_BITS_PARAMETER) - 1);
     /* delay copied from fw */
     ClockP_usleep(1000 * 2);
@@ -1368,7 +1367,7 @@ static int32_t endat_get_sn(struct endat_priv *priv)
         return -EINVAL;
     }
 
-    word2 = (pruss_xchg->ch[ch].pos_word0 >> (ENDAT_NUM_BITS_POSITION_CRC))
+    word2 = (endatChRxInfo->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC))
             & ((1 << ENDAT_NUM_BITS_PARAMETER) - 1);
     /* delay copied from fw */
     ClockP_usleep(1000 * 2);
@@ -1387,7 +1386,7 @@ static int32_t endat_get_command_set(struct endat_priv *priv)
     struct cmd_supplement cmd_supplement;
     uint32_t word;
     int32_t ch = priv->channel;
-    struct endat_pruss_xchg *pruss_xchg = priv->pruss_xchg;
+    struct endatChRxInfo *endatChRxInfo = priv->endatChRxInfo;
 
     /* select memory area encoder manufacturer page 2 */
     cmd = 2, cmd_supplement.address = MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE2;
@@ -1411,7 +1410,7 @@ static int32_t endat_get_command_set(struct endat_priv *priv)
     /* delay copied from fw */
     ClockP_usleep(1000 * 2);
 
-    word = (pruss_xchg->ch[ch].pos_word0 >> (ENDAT_NUM_BITS_POSITION_CRC)) & ((
+    word = (endatChRxInfo->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC)) & ((
                 1 << ENDAT_NUM_BITS_PARAMETER) - 1);
     priv->cmd_set_2_2 = (word & 0x1) && !(word & 0x2);
     priv->has_safety = (word & 0x4) && !(word & 0x8);
@@ -1425,7 +1424,7 @@ static int32_t endat_get_type(struct endat_priv *priv)
     struct cmd_supplement cmd_supplement;
     uint32_t word;
     int32_t ch = priv->channel;
-    struct endat_pruss_xchg *pruss_xchg = priv->pruss_xchg;
+    struct endatChRxInfo *endatChRxInfo = priv->endatChRxInfo;
 
     /* select memory area encoder manufacturer page 0 */
     cmd = 2, cmd_supplement.address = MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE0;
@@ -1449,7 +1448,7 @@ static int32_t endat_get_type(struct endat_priv *priv)
     /* delay copied from fw */
     ClockP_usleep(1000 * 2);
 
-    word = (pruss_xchg->ch[ch].pos_word0 >> (ENDAT_NUM_BITS_POSITION_CRC)) & ((
+    word = (endatChRxInfo->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC)) & ((
                 1 << ENDAT_NUM_BITS_PARAMETER) - 1);
     priv->type = (word & (1 << 15)) ? rotary : linear;
 
@@ -1462,7 +1461,7 @@ static int32_t endat_get_step(struct endat_priv *priv)
     struct cmd_supplement cmd_supplement;
     uint32_t word;
     int32_t ch = priv->channel;
-    struct endat_pruss_xchg *pruss_xchg = priv->pruss_xchg;
+    struct endatChRxInfo *endatChRxInfo = priv->endatChRxInfo;
 
     /* select memory area encoder manufacturer page 0 */
     cmd = 2, cmd_supplement.address = MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE1;
@@ -1485,7 +1484,7 @@ static int32_t endat_get_step(struct endat_priv *priv)
 
     /* delay copied from fw */
     ClockP_usleep(1000 * 2);
-    word = (pruss_xchg->ch[ch].pos_word0 >> (ENDAT_NUM_BITS_POSITION_CRC)) & ((
+    word = (endatChRxInfo->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC)) & ((
                 1 << ENDAT_NUM_BITS_PARAMETER) - 1);
 
     /* send parameter for word5 */
@@ -1498,7 +1497,7 @@ static int32_t endat_get_step(struct endat_priv *priv)
 
     /* delay copied from fw */
     ClockP_usleep(1000 * 2);
-    word |= ((pruss_xchg->ch[ch].pos_word0 >> (ENDAT_NUM_BITS_POSITION_CRC))
+    word |= ((endatChRxInfo->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC))
              & ((1 << ENDAT_NUM_BITS_PARAMETER) - 1)) << 16;
 
     return word;
@@ -1598,7 +1597,7 @@ int32_t endat_get_encoder_info(struct endat_priv *priv)
 
 uint32_t endat_get_prop_delay(struct endat_priv *priv)
 {
-    return priv->pruss_xchg->ch[priv->channel].prop_delay;
+    return priv->pruss_xchg->ch[priv->channel].propDelay;
 }
 
 void endat_addinfo_track(struct endat_priv *priv, int32_t cmd,
@@ -1757,8 +1756,7 @@ void endat_config_rx_clock_disable(struct endat_priv *priv,
 {
     struct endat_pruss_xchg *pruss_xchg = priv->pruss_xchg;
     int32_t ch = priv->channel;
-
-    pruss_xchg->ch[ch].rx_clk_less = val;
+    pruss_xchg->ch[ch].rxClkLess = val;
 }
 
 static void endat_set_continuous_mode(struct endat_priv *priv)
@@ -2079,30 +2077,21 @@ static void endat_hw_init(struct endat_priv *priv)
     endat_config_clr_cfg0(priv);
 }
 
-struct endat_priv *endat_init(struct endat_pruss_xchg *pruss_xchg,
+struct endat_priv *endat_init(struct endat_pruss_xchg *pruss_xchg, struct endatChRxInfo *endatRxInfo, uint64_t endatChInfoGlobalAddr, 
                               void *pruss_cfg, void* pruss_iep, int32_t slice)
 {
-
     endat_priv.pruss_xchg = pruss_xchg;
     endat_priv.pruss_cfg = pruss_cfg;
     endat_priv.pruicss_slicex = slice;
     endat_priv.pruss_iep = pruss_iep;
+    endat_priv.endatChRxInfo = endatRxInfo;
+    /*Write Configured memory address to DMEM */
+    endat_priv.pruss_xchg->endatChInfoMemoryAdd = endatChInfoGlobalAddr;
     endat_hw_init(&endat_priv);
     return &endat_priv;
 }
 
 uint32_t endat_get_recovery_time(struct endat_priv *priv)
 {
-    if(priv->channel == 0)
-    {
-        return priv->pruss_xchg->endat_ch0_rt;
-    }
-    else if (priv->channel == 1)
-    {
-        return priv->pruss_xchg->endat_ch1_rt;
-    }
-    else
-    {
-        return priv->pruss_xchg->endat_ch2_rt;
-    }
+    return priv->endatChRxInfo->ch[priv->channel].recoveryTime;
 }

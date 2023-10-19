@@ -90,6 +90,7 @@ extern "C" {
 /**    \brief    additional info 1 CRC status mask (if both present) */
 #define ENDAT_CRC_ADDINFO1  (0x1 << 2)
 
+
 /* ========================================================================== */
 /*                         Structures                                         */
 /* ========================================================================== */
@@ -99,51 +100,72 @@ extern "C" {
  *
  *    \details  Firmware per channel CRC information interface
  */
-struct crc
+typedef struct Endat_CrcInfo_s
 {
-    volatile uint8_t  status;
-    /**< CRC status,
+     volatile uint8_t  errCntData;
+     /**< CRC position/data error count (will wraparound after 255) */
+     volatile uint8_t  errCntAddinfox;
+     /**< CRC additional info1/2 error count (will wraparound after 255) */
+     volatile uint8_t  errCntAddinfo1;
+     /**< CRC additional info1 error count (will wraparound after 255)     <br>
+          applicable only when both additional info's are present */
+     volatile uint8_t   resvdInt1;
+     /**< reserved */
+}Endat_CrcInfo;
+/**
+ *  \brief    Structure defining EnDat channel Info
+ *  \details  Firmware per channel interface 
+ * 
+ * 
+*/
+typedef struct Endat_ChInfo_s
+{
+     volatile uint8_t  numClkPulse;
+     /**< position bits excluding SB, error, CRC (updated upon initialization) */
+     volatile uint8_t  endat22Stat;
+     /**< encoder command set type, 1 - 2.2 supported, 0 - 2.2 not supported  */
+     volatile uint16_t rxClkLess;
+     /**< receive clocks to be reduced to handle propagation delay (to be  <br>
+          updated by host, if applicable) */
+     volatile uint32_t   propDelay;
+     /**< automatically estimated propagation delay */
+     Endat_CrcInfo crc;
+     /**<Crc information*/
+     volatile uint32_t   resvdInt0;
+     /**< reserved */
+
+}Endat_ChInfo;
+/**
+ * \brief    Structure defining EnDat channel Rx Info 
+ * \details  Firmware per channel interface for store Rx data (command response)
+ * 
+ * 
+ * 
+*/
+typedef struct Endat_ChRXInfo_s
+{
+     volatile uint32_t   posWord0;
+     /**< Initial (<=32) position bits received including error bits */
+     volatile uint32_t   posWord1;
+     /**< position bits received after the initial 32 bits (if applicable) */
+     volatile uint32_t   posWord2;
+     /**< additional info 1/2 (will be additional info 2 if both present) */
+     volatile uint32_t   posWord3;
+     /**< additional info 1 (if both additional 1 & 2 present) */
+     volatile uint8_t    crcStatus;
+     /**< CRC status,
          bit0: 1 - position/data success, 0 - position/data failure       <br>
          bit1: 1 - additional info1 success, 0 - additioanl info1 failure <br>
          bit2: 1 - additional info2 success, 0 - additioanl info2 failure */
-    volatile uint8_t  err_cnt_data;
-    /**< CRC position/data error count (will wraparound after 255) */
-    volatile uint8_t  err_cnt_addinfox;
-    /**< CRC additional info1/2 error count (will wraparound after 255) */
-    volatile uint8_t  err_cnt_addinfo1;
-    /**< CRC additional info1 error count (will wraparound after 255)     <br>
-         applicable only when both additional info's are present */
-};
+     volatile uint8_t resvdInt2;
+     /**< reserved */
+     volatile uint16_t resvdInt3;
+     /**< reserved */
+     volatile uint32_t   recoveryTime;
+     /*< Recovery Time */
+   
 
-/**
- *    \brief    Structure defining EnDat per channel interface
- *
- *    \details  Firmware per channel interface
- */
-struct endat_pruss_ch_info
-{
-    volatile uint32_t   pos_word0;
-    /**< Initial (<=32) position bits received including error bits */
-    volatile uint32_t   pos_word1;
-    /**< position bits received after the initial 32 bits (if applicable) */
-    volatile uint32_t   pos_word2;
-    /**< additional info 1/2 (will be additional info 2 if both present) */
-    volatile uint32_t   pos_word3;
-    /**< additional info 1 (if both additional 1 & 2 present) */
-    struct crc      crc;
-    /**< crc information */
-    volatile uint8_t  num_clk_pulse;
-    /**< position bits excluding SB, error, CRC (updated upon initialization) */
-    volatile uint8_t  endat22_stat;
-    /**< encoder command set type, 1 - 2.2 supported, 0 - 2.2 not supported  */
-    volatile uint16_t rx_clk_less;
-    /**< receive clocks to be reduced to handle propagation delay (to be  <br>
-         updated by host, if applicable) */
-    volatile uint32_t   prop_delay;
-    /**< automatically estimated propagation delay */
-    volatile uint32_t   resvd_int0;
-    /**< reserved */
-};
+}Endat_ChRxInfo;
 
 /**
  *    \brief    Structure defining EnDat command interface
@@ -205,39 +227,46 @@ struct endat_pruss_config
 /**
  *    \brief    Structure defining EnDat interface
  *
- *    \details  Firmware config, command and channel interface
+ *    \details  Firmware config, command interface
  *
  */
 struct endat_pruss_xchg
 {
-    struct endat_pruss_config   config[3];
-    /**< config interface */
-    struct endat_pruss_cmd      cmd[3];
-    /**< command interface */
-    struct endat_pruss_ch_info  ch[3];
-    /**< per channel interface */
-    uint16_t endat_rx_clk_config;
-    uint16_t endat_tx_clk_config;
-    uint32_t endat_rx_clk_cnten;
-    uint32_t endat_delay_125ns;
-    uint32_t endat_delay_5us;
-    uint32_t endat_delay_51us;
-    uint32_t endat_delay_1ms;
-    uint32_t endat_delay_2ms;
-    uint32_t endat_delay_12ms;
-    uint32_t endat_delay_50ms;
-    uint32_t endat_delay_380ms;
-    uint32_t endat_delay_900ms;
-    volatile uint8_t endat_primary_core_mask;
-    volatile uint8_t endat_ch0_syn_bit;
-    volatile uint8_t endat_ch1_syn_bit;
-    volatile uint8_t endat_ch2_syn_bit;
-    uint32_t endat_ch0_rt;
-    uint32_t endat_ch1_rt;
-    uint32_t endat_ch2_rt;
-    uint64_t icssg_clk;
+     struct endat_pruss_config   config[3];
+     /**< config interface */
+     struct endat_pruss_cmd      cmd[3];
+     /**< command interface */
+     Endat_ChInfo ch[3];
+     /**<channel interface */
+     uint64_t endatChInfoMemoryAdd;
+     uint16_t endat_rx_clk_config;
+     uint16_t endat_tx_clk_config;
+     uint32_t endat_rx_clk_cnten;
+     uint32_t endat_delay_125ns;
+     uint32_t endat_delay_5us;
+     uint32_t endat_delay_51us;
+     uint32_t endat_delay_1ms;
+     uint32_t endat_delay_2ms;
+     uint32_t endat_delay_12ms;
+     uint32_t endat_delay_50ms;
+     uint32_t endat_delay_380ms;
+     uint32_t endat_delay_900ms;
+     volatile uint8_t endat_primary_core_mask;
+     volatile uint8_t endat_ch0_syn_bit;
+     volatile uint8_t endat_ch1_syn_bit;
+     volatile uint8_t endat_ch2_syn_bit;
+     uint64_t icssg_clk;
 };
-
+/**
+ *    \brief    Structure defining EnDat channel Rx information 
+ *
+ *    \details   
+ *
+ */
+struct endatChRxInfo
+{
+    Endat_ChRxInfo ch[3];
+};
 #ifdef __cplusplus
 }
 #endif

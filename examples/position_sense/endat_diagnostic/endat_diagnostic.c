@@ -95,6 +95,12 @@
 #define MRS_POS_VAL2_WORD2  0x43
 #define MRS_POS_VAL2_WORD3  0x44
 
+/* Translate the TCM local view addr to SoC view addr */
+#define CPU0_ATCM_SOCVIEW(x) (CSL_R5FSS0_CORE0_ATCM_BASE+(x))
+#define CPU1_ATCM_SOCVIEW(x) (CSL_R5FSS1_CORE0_ATCM_BASE+(x))
+#define CPU0_BTCM_SOCVIEW(x) (CSL_R5FSS0_CORE0_BTCM_BASE+(x - CSL_R5FSS0_BTCM_BASE))
+#define CPU1_BTCM_SOCVIEW(x) (CSL_R5FSS1_CORE0_BTCM_BASE+(x - CSL_R5FSS1_BTCM_BASE))
+
 
 static union endat_format_data gEndat_format_data_mtrctrl[3];
 static uint32_t gEndat_mtrctrl_crc_err[3];
@@ -153,6 +159,9 @@ char gPrintf_dump_buffer[21];
  * variable tp a string as printf doesn't support
  * printing 64-bit variables
  */
+
+/* EnDat channel Info, written by PRU cores */
+__attribute__((section(".gEnDatChInfo"))) struct endatChRxInfo gEndatChInfo;
 char * uint64_to_str (uint64_t x)
 {
     char *b = gPrintf_dump_buffer + sizeof(gPrintf_dump_buffer);
@@ -191,6 +200,7 @@ static void endat_pruss_init(void)
         PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_TXPRUx);
     }
     PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_PRUx);
+
 
 }
 
@@ -523,7 +533,7 @@ static void endat_recvd_print(int32_t cmd, struct endat_priv *priv,
 static void endat_display_raw_data(int32_t cmd, struct endat_priv *priv)
 {
     int32_t ch = priv->channel;
-    struct endat_pruss_xchg *pruss_xchg = priv->pruss_xchg;
+    struct endatChRxInfo *endatChRxInfo = priv->endatChRxInfo;
 
     switch(cmd)
     {
@@ -542,8 +552,8 @@ static void endat_display_raw_data(int32_t cmd, struct endat_priv *priv)
         case 13:
         case 14:
             DebugP_log("\r|\n| raw data: %x %x %x %x\n|\n",
-                        pruss_xchg->ch[ch].pos_word0, pruss_xchg->ch[ch].pos_word1,
-                        pruss_xchg->ch[ch].pos_word2, pruss_xchg->ch[ch].pos_word3);
+                        endatChRxInfo->ch[ch].posWord0, endatChRxInfo->ch[ch].posWord1,
+                        endatChRxInfo->ch[ch].posWord2, endatChRxInfo->ch[ch].posWord3);
             break;
 
         default:
@@ -2133,16 +2143,20 @@ void endat_main(void *args)
 
     DebugP_log("\r\n\n");
 
+    /*Translate the TCM local view addr to globel view addr */
+    uint64_t gEndatChInfoGlobalAddr = CPU0_BTCM_SOCVIEW((uint64_t)&gEndatChInfo);
+
+
     pruss_cfg = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->cfgRegBase);
     pruss_iep  = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->iep0RegBase);
 
     #if PRU_ICSSGx_PRU_SLICE
         priv = endat_init((struct endat_pruss_xchg *)((PRUICSS_HwAttrs *)(
-                          gPruIcssXHandle->hwAttrs))->pru1DramBase, pruss_cfg, pruss_iep, PRUICSS_SLICEx);
+                          gPruIcssXHandle->hwAttrs))->pru1DramBase, &gEndatChInfo, gEndatChInfoGlobalAddr, pruss_cfg, pruss_iep, PRUICSS_SLICEx);
 
     #else
         priv = endat_init((struct endat_pruss_xchg *)((PRUICSS_HwAttrs *)(
-                          gPruIcssXHandle->hwAttrs))->pru0DramBase, pruss_cfg, pruss_iep, PRUICSS_SLICEx);
+                          gPruIcssXHandle->hwAttrs))->pru0DramBase, &gEndatChInfo, gEndatChInfoGlobalAddr,  pruss_cfg, pruss_iep, PRUICSS_SLICEx);
     #endif
 
 
@@ -2180,7 +2194,7 @@ void endat_main(void *args)
     priv->pruss_xchg->endat_delay_380ms = ((icssgclk/1000) * 380);
     priv->pruss_xchg->endat_delay_900ms = ((icssgclk/1000) * 900);
     priv->pruss_xchg->icssg_clk = icssgclk;
-
+    
 
     i = endat_pruss_load_run_fw(priv);
 

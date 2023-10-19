@@ -103,6 +103,9 @@ SECTIONS
     .bss.ipc_vring_mem   (NOLOAD) : {} > RTOS_NORTOS_IPC_SHM_MEM
     /* General purpose non cacheable memory, used in some examples */
     .bss.nocache (NOLOAD) : {} > NON_CACHE_MEM
+
+    /* TCM used by ICSS PRU to write endat channel Info */
+    .gEnDatChInfo       			: {} align(4) > R5F_TCMB0
 }
 
 /*
@@ -124,7 +127,7 @@ MEMORY
     R5F_VECS  : ORIGIN = 0x00000000 , LENGTH = 0x00000040
     R5F_TCMA  : ORIGIN = 0x00000040 , LENGTH = 0x00007FC0
     R5F_TCMB0 : ORIGIN = 0x41010000 , LENGTH = 0x00008000
-
+   
     /* memory segment used to hold CPU specific non-cached data, MAKE to add a MPU entry to mark this as non-cached */
     NON_CACHE_MEM : ORIGIN = 0x70060000 , LENGTH = 0x8000
 
