@@ -30,6 +30,10 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* ========================================================================== */
+/*                             Include Files                                  */
+/* ========================================================================== */
+
 #include <drivers/hw_include/hw_types.h>
 
 #include <stdio.h>
@@ -70,6 +74,10 @@
 #include <position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch1_bin.h>
 #include <position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch0_sync_mode_bin.h>
 #include <position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch1_sync_mode_bin.h>
+
+/* ========================================================================== */
+/*                           Macros & Typedefs                                */
+/* ========================================================================== */
 
 #if (CONFIG_HDSL0_CHANNEL0 + CONFIG_HDSL0_CHANNEL1 > 1)
 #define HDSL_MULTI_CHANNEL
@@ -119,6 +127,68 @@
 #define HDSL_MEMORY_TRACE_R5F_IRQ_NUM  (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_3)
 #endif
 
+/* ========================================================================== */
+/*                       Function Declarations                                */
+/* ========================================================================== */
+
+#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
+
+void App_udmaEventCb(Udma_EventHandle eventHandle, uint32_t eventType, void *appData);
+
+static void App_udmaTrpdInit(Udma_ChHandle chHandle,
+                             uint8_t *trpdMem,
+                             const void *destBuf,
+                             const void *srcBuf,
+                             uint32_t length);
+
+void udma_copy(uint8_t *srcBuf, uint8_t *destBuf, uint32_t length);
+
+static void HDSL_IsrFxn();
+
+#ifndef HDSL_MULTI_CHANNEL
+void traces_into_memory(HDSL_Handle hdslHandle);
+#endif
+
+void sync_calculation(HDSL_Handle hdslHandle);
+
+void process_request(HDSL_Handle hdslHandle,int32_t menu);
+
+void hdsl_pruss_init(void);
+
+void hdsl_pruss_init_300m(void);
+
+void hdsl_pruss_load_run_fw_300m(HDSL_Handle hdslHandle);
+
+void hdsl_init(void);
+
+void hdsl_init_300m(void);
+
+void TC_read_pc_short_msg(HDSL_Handle hdslHandle);
+
+void TC_write_pc_short_msg(HDSL_Handle hdslHandle);
+
+static void display_menu(void);
+
+void direct_read_rid0_length4(HDSL_Handle hdslHandle);
+
+void direct_read_rid81_length8(HDSL_Handle hdslHandle);
+
+void direct_read_rid81_length2(HDSL_Handle hdslHandle);
+
+void indirect_write_rid0_length8_offset0(HDSL_Handle hdslHandle);
+
+void indirect_write_rid0_length8(HDSL_Handle hdslHandle);
+
+static int get_menu(void);
+
+#ifdef HDSL_AM64xE1_TRANSCEIVER
+static void hdsl_i2c_io_expander(void *args);
+#endif
+
+/* ========================================================================== */
+/*                            Global Variables                                */
+/* ========================================================================== */
+
 HDSL_Handle     gHdslHandleCh0;
 HDSL_Handle     gHdslHandleCh1;
 
@@ -165,15 +235,10 @@ HwiP_Object gPRUHwiObject;
 uint8_t gUdmaTestTrpdMem[UDMA_TEST_TRPD_SIZE] __attribute__((aligned(UDMA_CACHELINE_ALIGNMENT)));
 #endif
 
-#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
+/* ========================================================================== */
+/*                          Function Definitions                              */
+/* ========================================================================== */
 
-void App_udmaEventCb(Udma_EventHandle eventHandle, uint32_t eventType, void *appData);
-
-static void App_udmaTrpdInit(Udma_ChHandle chHandle,
-                             uint8_t *trpdMem,
-                             const void *destBuf,
-                             const void *srcBuf,
-                             uint32_t length);
 
 static void App_udmaTrpdInit(Udma_ChHandle chHandle,
                              uint8_t *trpdMem,
