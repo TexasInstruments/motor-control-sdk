@@ -176,6 +176,12 @@ int32_t init_sdfm_pru_fw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm
 
     /* Initialize SDFM instance */
     hSdfm = SDFM_init(pruId);
+    
+    uint32_t i;
+    i = SDFM_getFirmwareVersion(hSdfm);
+    DebugP_log("\n\n\n");
+    DebugP_log("SDFM firmware version \t: %x.%x.%x (%s)\n\n", (i >> 24) & 0x7F,
+                (i >> 16) & 0xFF, i & 0xFFFF, i & (1 << 31) ? "internal" : "release");
     if (hSdfm == NULL)
     {
         return SDFM_ERR_INIT_SDFM;
@@ -184,6 +190,9 @@ int32_t init_sdfm_pru_fw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm
     uint8_t SDFM_CH;
     hSdfm->iep_clock = pSdfmPrms->iep_clock; 
     hSdfm->sdfm_clock = pSdfmPrms->sd_clock; 
+    hSdfm->sampleOutputInterface = (SDFM_SampleOutInterface *)(pSdfmPrms->samplesBaseAddress);
+    uint32_t sampleOutputInterfaceGlobalAddr = CPU0_BTCM_SOCVIEW(pSdfmPrms->samplesBaseAddress);
+    hSdfm->p_sdfm_interface->sampleBufferBaseAdd = sampleOutputInterfaceGlobalAddr;
     hSdfm->iep_inc = 1; /* Default IEP increment 1 */
 
 
@@ -198,6 +207,7 @@ int32_t init_sdfm_pru_fw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm
 
     /*set Noraml current OSR */
     SDFM_setFilterOverSamplingRatio(hSdfm, pSdfmPrms->FilterOsr);
+     
 
     /*below configuration for all three channel*/
     for(SDFM_CH = 0; SDFM_CH < NUM_CH_SUPPORTED; SDFM_CH++)
@@ -247,7 +257,6 @@ int32_t init_sdfm_pru_fw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm
 
  return SDFM_ERR_NERR;
 }
-
 /*
  *  ======== initPruSdfm ========
  */

@@ -41,6 +41,7 @@
 #include <drivers/gpio.h>
 #include <kernel/dpl/AddrTranslateP.h>
 
+
 //*****************************************************************************
 //
 // Defines for the API.
@@ -286,7 +287,7 @@ void SDFM_configComparatorGpioPins(sdfm_handle h_sdfm, uint8_t ch,uint32_t gpio_
 /* Get current (or latest) sample for the specified channel */
 uint32_t SDFM_getFilterData(sdfm_handle h_sdfm, uint8_t ch)
 {
-    return h_sdfm->p_sdfm_interface->curr_out_samp_buf[ch];
+    return h_sdfm->sampleOutputInterface->sampleOutput[ch];
 }
 
 /*Configure normal current OSR for data filter*/
@@ -299,6 +300,11 @@ void SDFM_setFilterOverSamplingRatio(sdfm_handle h_sdfm, uint16_t nc_osr)
     uint32_t sd_clock = h_sdfm->sdfm_clock;
     count = (int)((float)nc_osr*((float)iep_freq/(float)sd_clock));
     h_sdfm->p_sdfm_interface->sdfm_cfg_trigger.nc_prd_iep_cnt = count;
+}
+/*return firmware version */
+uint64_t SDFM_getFirmwareVersion(sdfm_handle h_sdfm)
+{
+   return h_sdfm->p_sdfm_interface->firmwareVersion;
 }
 /* SDFM global enable */
 void SDFM_enable(sdfm_handle h_sdfm)

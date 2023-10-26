@@ -36,6 +36,7 @@
 %}
         .include "sdfm.h"
         .include "sdfm_macros.h"
+        .include "firmware_version.h"
 
 
 
@@ -82,7 +83,9 @@ OUT_SAMP_BUF:   .usect  ".outSamps", ICSSG_NUM_SD_CH_FW*4, 4
 SDFM_ENTRY:
         ; Clear registers R0-R30
         ZERO    &R0, 124
-
+        LDI32  TEMP_REG0, ICSS_FIRMWARE_RELEASE_1
+        LDI32  TEMP_REG1, ICSS_FIRMWARE_RELEASE_2
+        SBCO   &TEMP_REG0, CT_PRU_ICSSG_LOC_DMEM, SDFM_FIRMWARE_VERSION_OFFSET, 8
         ; Disable Task Manager
         ;.word 0x32000000
         M_PRU_TM_DISABLE
@@ -490,7 +493,8 @@ comp_ch2_end:
         .if $isdefed("DEBUG_CODE")
          ; Write local interleaved output samples to Host buffer address
         LBBO    &TEMP_REG3, OUT_SAMP_BUF_REG, 0, ICSSG_NUM_SD_CH_FW*4
-        SBCO    &TEMP_REG3,  CT_PRU_ICSSG_LOC_DMEM,  SDFM_CFG_OUT_SAMP_BUF_OFFSET, ICSSG_NUM_SD_CH_FW*4
+        LBCO    &TEMP_REG0, CT_PRU_ICSSG_LOC_DMEM, SDFM_CFG_OUT_SAMP_BUF_BASE_ADD_OFFSET,4
+        SBBO    &TEMP_REG3,  TEMP_REG0,  SDFM_CFG_OUT_SAMP_BUF_OFFSET, ICSSG_NUM_SD_CH_FW*4
          ; Trigger interrupt
         LDI     R31.w0, TRIGGER_HOST_SDFM_IRQ
         .endif
@@ -623,7 +627,8 @@ END_RESET_NC_FRAME:
         LDI     SAMP_CNT_REG, 0 ; reset NC sample count
         ; Write local interleaved output samples to Host buffer address
         LBBO    &TEMP_REG3, OUT_SAMP_BUF_REG, 0, ICSSG_NUM_SD_CH_FW*4
-        SBCO    &TEMP_REG3,  CT_PRU_ICSSG_LOC_DMEM,  SDFM_CFG_OUT_SAMP_BUF_OFFSET, ICSSG_NUM_SD_CH_FW*4
+        LBCO    &TEMP_REG0, CT_PRU_ICSSG_LOC_DMEM, SDFM_CFG_OUT_SAMP_BUF_BASE_ADD_OFFSET,4
+        SBBO    &TEMP_REG3,  TEMP_REG0,  SDFM_CFG_OUT_SAMP_BUF_OFFSET, ICSSG_NUM_SD_CH_FW*4
         ;Trigger interrupt
         LDI     R31.w0, TRIGGER_HOST_SDFM_IRQ
         ;;SBCO    &NC_OUTPUT_SAMP,  CT_PRU_ICSSG_LOC_DMEM,  SDFM_DUBUG_OFFSET, 4

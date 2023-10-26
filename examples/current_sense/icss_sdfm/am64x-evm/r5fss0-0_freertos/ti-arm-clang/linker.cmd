@@ -103,6 +103,9 @@ SECTIONS
     .bss.ipc_vring_mem   (NOLOAD) : {} > RTOS_NORTOS_IPC_SHM_MEM
     /* General purpose non cacheable memory, used in some examples */
     .bss.nocache (NOLOAD) : {} > NON_CACHE_MEM
+
+    /* TCM used by ICSS PRU to write sdfm sample output */
+    .gSdfmSampleOutput       			: {} align(4) > R5F_TCMB0
 }
 
 /*

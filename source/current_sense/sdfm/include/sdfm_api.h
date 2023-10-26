@@ -286,8 +286,16 @@ uint32_t SDFM_getFilterData(sdfm_handle h_sdfm,uint8_t ch);
  *
  */
 void SDFM_setFilterOverSamplingRatio(sdfm_handle h_sdfm, uint16_t nc_osr);
-
-
+/**
+ *
+ *  \brief  Return Firmware version 
+ *
+ *  \param[in]  h_sdfm          SDFM handle
+ *  
+ *  \retval     firmwareVersion    release vesrion of firmware
+ *
+ */
+uint64_t SDFM_getFirmwareVersion(sdfm_handle h_sdfm);
 /** @} */
 
 #ifdef __cplusplus
