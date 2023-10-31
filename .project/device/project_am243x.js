@@ -16,6 +16,7 @@ const device_defines = {
 };
 
 const example_file_list = [
+    "examples/tidep_01032_dual_motor_drive/single_chip_servo/.project/mcsdk_project.js",
     "examples/dcl/dcl_df22/.project/mcsdk_project.js",
     "examples/dcl/dcl_pi/.project/mcsdk_project.js",
     "examples/transforms/transforms_test/.project/mcsdk_project.js",

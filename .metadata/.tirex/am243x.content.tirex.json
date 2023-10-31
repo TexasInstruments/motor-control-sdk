@@ -7,6 +7,102 @@
         "resourceSubClass": [
             "example.gettingstarted"
         ],
+        "description": "EtherCAT connected dual servo motor drive example CPU is R5FSS0-0 running NORTOS.",
+        "name": "single_chip_servo",
+        "location": "../../examples/tidep_01032_dual_motor_drive/single_chip_servo/am243x-lp/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "AM243x_LAUNCHPAD"
+        ],
+        "kernel": [
+            "nortos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "tidep_01032_dual_motor_drive",
+            "single_chip_servo",
+            "r5fss0-0_nortos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.gettingstarted"
+        ],
+        "description": "EtherCAT connected dual servo motor drive example CPU is R5FSS0-1 running NORTOS.",
+        "name": "single_chip_servo",
+        "location": "../../examples/tidep_01032_dual_motor_drive/single_chip_servo/am243x-lp/r5fss0-1_nortos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "AM243x_LAUNCHPAD"
+        ],
+        "kernel": [
+            "nortos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "tidep_01032_dual_motor_drive",
+            "single_chip_servo",
+            "r5fss0-1_nortos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.gettingstarted"
+        ],
+        "description": "EtherCAT connected dual servo motor drive example CPU is R5FSS1-0 running FREERTOS.",
+        "name": "single_chip_servo",
+        "location": "../../examples/tidep_01032_dual_motor_drive/single_chip_servo/am243x-lp/r5fss1-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "AM243x_LAUNCHPAD"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "tidep_01032_dual_motor_drive",
+            "single_chip_servo",
+            "r5fss1-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.gettingstarted"
+        ],
         "description": "A Direct Form 2 2nd order example demonstrating the digital control library (DCL). CPU is R5FSS0-0 running NORTOS.",
         "name": "dcl_df22",
         "location": "../../examples/dcl/dcl_df22/am243x-evm/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
@@ -1361,6 +1457,35 @@
         ]
     },
     {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.gettingstarted"
+        ],
+        "description": "EtherCAT connected dual servo motor drive example System project.",
+        "name": "single_chip_servo",
+        "location": "../../examples/tidep_01032_dual_motor_drive/single_chip_servo/am243x-lp/system_freertos_nortos/system.projectspec",
+        "devtools": [
+            "AM243x_LAUNCHPAD"
+        ],
+        "kernel": [
+            "nortos"
+        ],
+        "subCategories": [
+            "tidep_01032_dual_motor_drive",
+            "single_chip_servo",
+            "system_freertos_nortos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
         "resourceType": "web.page",
         "resourceClass": [
             "document"
@@ -1368,8 +1493,8 @@
         "name": "User Guide",
         "location": "../../docs/api_guide_am243x/index.html",
         "devtools": [
-            "AM243x_GP_EVM",
-            "AM243x_LAUNCHPAD"
+            "AM243x_LAUNCHPAD",
+            "AM243x_GP_EVM"
         ],
         "mainCategories": [
             [
