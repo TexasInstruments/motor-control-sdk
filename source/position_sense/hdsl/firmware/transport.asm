@@ -375,26 +375,28 @@ transport_skip_vpos_update:
 ; generate interrupt
 	ldi		r31.w0, PRU0_ARM_IRQ
 update_events_no_int7:
-;set event_s and generate interrupt_s
+summary_no_int:
+
+; Update SUM and SSUM bits in ONLINE_STATUS registers
+    lbco		&REG_TMP0.b0, MASTER_REGS_CONST, SAFE_SUM, 1
+	lbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 3
+	qbeq		online_status_sum_clear, REG_TMP0.b0, 0x00
+    set         REG_TMP2.b0, REG_TMP2.b0, ONLINE_STATUS_D_SUM
+    set         REG_TMP2.b2, REG_TMP2.b0, ONLINE_STATUS_1_SSUM
+;set SSUM in EVENT_S and generate interrupt_s
 	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S, 2
 	set         REG_TMP0.b0, REG_TMP0.b0, EVENT_S_SSUM
 ;save events
 	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S, 2
 	qbbc		update_events_no_int17, REG_TMP0.b1, EVENT_S_SSUM
 ; generate interrupt_s
-	ldi		r31.w0, PRU0_ARM_IRQ4
+	ldi			r31.w0, PRU0_ARM_IRQ4
 update_events_no_int17:
-summary_no_int:
-
-; Update SUM and SSUM bits in ONLINE_STATUS registers
-    lbco		&REG_TMP0.b0, MASTER_REGS_CONST, SAFE_SUM, 1
-	lbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 3
+	qba 		online_status_sum_save
+online_status_sum_clear:
     clr         REG_TMP2.b0, REG_TMP2.b0, ONLINE_STATUS_D_SUM
     clr         REG_TMP2.b2, REG_TMP2.b0, ONLINE_STATUS_1_SSUM
-	qbeq		online_status_sum_clear, REG_TMP0.b0, 0x00
-    set         REG_TMP2.b0, REG_TMP2.b0, ONLINE_STATUS_D_SUM
-    set         REG_TMP2.b2, REG_TMP2.b0, ONLINE_STATUS_1_SSUM
-online_status_sum_clear:
+online_status_sum_save:
     sbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 3
 
 ;restore REG_FNC.w0 content
