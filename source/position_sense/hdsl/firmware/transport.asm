@@ -119,7 +119,7 @@ transport_on_v_frame:
 	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_S, 2
 	set		REG_TMP0.b0, REG_TMP0.b0, EVENT_S_SCE
 ;save events
-	sbco		&REG_TMP0.w0, MASTER_REGS_CONST, EVENT_S, 1
+	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S, 1
 	qbbc		update_events_no_int4, REG_TMP0.b1, EVENT_S_SCE
 ; generate interrupt_s
 	ldi		r31.w0, PRU0_ARM_IRQ4
@@ -152,7 +152,7 @@ push_1B:
 	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_S, 2
 	set		REG_TMP0.b0, REG_TMP0.b0, EVENT_S_VPOS
 ;save events
-	sbco		&REG_TMP0.w0, MASTER_REGS_CONST, EVENT_S, 1
+	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S, 1
 	qbbc		update_events_no_int5, REG_TMP0.b1, EVENT_S_VPOS
 ; generate interrupt_s
 	ldi		r31.w0, PRU0_ARM_IRQ4
@@ -283,14 +283,14 @@ transport_on_v_frame_2:
     lbco        &REG_TMP0.w2, MASTER_REGS_CONST, CRC_SEC_TEMP, 2
 	qbeq		check_for_slave_error_on_secondary_channel, REG_TMP0.w2, 0
 ; set SCE2 bit in ONLINE_STATUS_2
-	set		    REG_TMP0.b0, REG_TMP0.w0, ONLINE_STATUS_2_SCE2
+	set		    REG_TMP0.b0, REG_TMP0.b0, ONLINE_STATUS_2_SCE2
 	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, ONLINE_STATUS_2_H, 1
 	QM_SUB		8
 transport_on_v_frame_dont_update_qm_secondary_channel:
 	qba		transport_on_v_frame_2_exit
 check_for_slave_error_on_secondary_channel:
 ; clear SCE2 bit in ONLINE_STATUS_2
-	clr		    REG_TMP0.b0, REG_TMP0.w0, ONLINE_STATUS_2_SCE2
+	clr		    REG_TMP0.b0, REG_TMP0.b0, ONLINE_STATUS_2_SCE2
 	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, ONLINE_STATUS_2_H, 1
 ; No QM updates for CRC check success with safe channel 2
     lbco		&REG_TMP0.b0, MASTER_REGS_CONST, ONLINE_STATUS_2_H, 1
@@ -298,11 +298,11 @@ check_for_slave_error_on_secondary_channel:
 ; assumption: r21.b3 contains the first byte of secondary vertical channel
 	qbne		transport_on_v_frame_no_vpos2_error, REG_TMP2.b3, K29_7
     ; set VPOS2 bit in ONLINE_STATUS_2
-	set		    REG_TMP0.b0, REG_TMP0.w0, ONLINE_STATUS_2_VPOS2
+	set		    REG_TMP0.b0, REG_TMP0.b0, ONLINE_STATUS_2_VPOS2
     sbco		&REG_TMP0.b0, MASTER_REGS_CONST, ONLINE_STATUS_2_H, 1
     qba         transport_on_v_frame_vpos2_error_exit
 transport_on_v_frame_no_vpos2_error:
-	clr		    REG_TMP0.b0, REG_TMP0.w0, ONLINE_STATUS_2_VPOS2
+	clr		    REG_TMP0.b0, REG_TMP0.b0, ONLINE_STATUS_2_VPOS2
 transport_on_v_frame_vpos2_error_exit:
 
 ; store the data from secondary channel
@@ -382,12 +382,12 @@ summary_no_int:
 	lbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 3
 	qbeq		online_status_sum_clear, REG_TMP0.b0, 0x00
     set         REG_TMP2.b0, REG_TMP2.b0, ONLINE_STATUS_D_SUM
-    set         REG_TMP2.b2, REG_TMP2.b0, ONLINE_STATUS_1_SSUM
+    set         REG_TMP2.b2, REG_TMP2.b2, ONLINE_STATUS_1_SSUM
 ;set SSUM in EVENT_S and generate interrupt_s
 	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S, 2
 	set         REG_TMP0.b0, REG_TMP0.b0, EVENT_S_SSUM
 ;save events
-	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S, 2
+	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S, 1
 	qbbc		update_events_no_int17, REG_TMP0.b1, EVENT_S_SSUM
 ; generate interrupt_s
 	ldi			r31.w0, PRU0_ARM_IRQ4
@@ -395,7 +395,7 @@ update_events_no_int17:
 	qba 		online_status_sum_save
 online_status_sum_clear:
     clr         REG_TMP2.b0, REG_TMP2.b0, ONLINE_STATUS_D_SUM
-    clr         REG_TMP2.b2, REG_TMP2.b0, ONLINE_STATUS_1_SSUM
+    clr         REG_TMP2.b2, REG_TMP2.b2, ONLINE_STATUS_1_SSUM
 online_status_sum_save:
     sbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 3
 
@@ -554,7 +554,7 @@ transport_layer_received_short_msg:
 	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_S, 2
 	set		REG_TMP0.w0, REG_TMP0.w0, EVENT_S_FRES
 ;save events
-	sbco		&REG_TMP0.w0, MASTER_REGS_CONST, EVENT_S, 1
+	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S, 1
 	qbbc		update_events_no_int100, REG_TMP0.b1, EVENT_S_FRES
 ; generate interrupt
 	ldi		r31.w0, PRU0_ARM_IRQ
@@ -578,7 +578,7 @@ transport_layer_short_msg_recv_read:
 	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_S, 2
 	set		REG_TMP0.w0, REG_TMP0.w0, EVENT_S_FRES
 ;save events
-	sbco		&REG_TMP0.w0, MASTER_REGS_CONST, EVENT_S, 1
+	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S, 1
 	qbbc		update_events_no_int10, REG_TMP0.b1, EVENT_S_FRES
 ; generate interrupt
 	ldi		r31.w0, PRU0_ARM_IRQ
@@ -702,7 +702,7 @@ update_events_no_int19:
 	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_S, 2
 	set		REG_TMP0.b0, REG_TMP0.b0, EVENT_S_MIN
 ;save events
-	sbco		&REG_TMP0.w0, MASTER_REGS_CONST, EVENT_S, 1
+	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S, 1
 	qbbc		update_events_no_int20, REG_TMP0.b1, EVENT_S_MIN
 ; generate interrupt
 	ldi		r31.w0, PRU0_ARM_IRQ4
@@ -935,7 +935,7 @@ update_events_no_int3:
 	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S, 2
 	set		    REG_TMP0.b0, REG_TMP0.b0, EVENT_S_QMLW
 ;save events
-	sbco		&REG_TMP0.w0, MASTER_REGS_CONST, EVENT_S, 1
+	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S, 1
 	qbbc		update_events_no_int16, REG_TMP0.b1, EVENT_S_QMLW
 ; generate interrupt_s
 	ldi		r31.w0, PRU0_ARM_IRQ4

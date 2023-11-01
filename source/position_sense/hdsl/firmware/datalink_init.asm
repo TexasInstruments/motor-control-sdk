@@ -114,7 +114,7 @@ update_events_no_int15:
 	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_S, 2
 	set		REG_TMP0.b0, REG_TMP0.b0, EVENT_S_PRST
 ;save events
-	sbco		&REG_TMP0.w0, MASTER_REGS_CONST, EVENT_S, 1
+	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S, 1
 	qbbc		update_events_no_int22, REG_TMP0.b1, EVENT_S_PRST
 ; generate interrupt
 	ldi		r31.w0, PRU0_ARM_IRQ4
