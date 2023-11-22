@@ -159,4 +159,6 @@ Notable exceptions in TI HDSL Solution when compared with SICK HDSL MASTER IP Co
 6. Reset values of registers are not same as SICK HDSL MASTER IP Core.
 7. As registers are implemented using Data Memory of Programmable Real-Time Unit and Industrial Communication Subsystem (PRU-ICSS), the application has a read-write access for all registers.
 8. When safe position is invalid (VPOS bit is set in EVENT_S), 0xFDFDFDFDFD value is not set in fast and safe position registers.
+9. For long message offset, only 15-bit wide offset is supported. If offset is enabled, then master will always send 2 bytes of offset.
+
 

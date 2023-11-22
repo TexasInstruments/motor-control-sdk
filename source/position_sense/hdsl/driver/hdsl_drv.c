@@ -34,6 +34,27 @@
 #include <kernel/dpl/ClockP.h>
 #include <drivers/hw_include/tistdtypes.h>
 
+#define ONLINE_STATUS_1_L_FRES          (1<<0)
+#define ONLINE_STATUS_D_L_FREL          (1)
+
+#define PC_ADD_H_LONG_MSG_ENABLE        (1<<7)
+#define PC_ADD_H_LONG_MSG_WRITE         (0<<6)
+#define PC_ADD_H_LONG_MSG_READ          (1<<6)
+#define PC_ADD_H_LONG_MSG_ERROR         (1<<5)
+#define PC_ADD_H_OFFSET_EN_SHIFT        (5)
+#define PC_ADD_H_ADDR_TYPE_SHIFT        (4)
+#define PC_ADD_H_LENGTH_SHIFT           (2)
+#define PC_ADD_H_ADDR_HIGH_MASK         (0x0300)
+
+#define PC_ADD_L_ADDR_LOW_MASK          (0x00FF)
+
+#define PC_OFF_H_LONG_MSG_ENABLE        (1<<7)
+#define PC_OFF_H_OFFSET_HIGH_MASK       (0x7F00)
+
+#define PC_OFF_L_OFFSET_LOW_MASK        (0x00FF)
+
+#define PC_CTRL_ENABLE                  (0x01)
+
 /* Should move the below to sysconfig  generated code */
     HDSL_Config hdslConfig0;
     HDSL_Config hdslConfig1;
@@ -309,50 +330,226 @@ int32_t HDSL_read_pc_short_msg(HDSL_Handle hdslHandle,uint8_t addr, uint8_t *dat
     return SystemP_SUCCESS;
 }
 
+int32_t HDSL_write_pc_long_msg(HDSL_Handle hdslHandle, uint16_t addr, uint8_t offsetEnable, uint8_t addrType, uint8_t length, uint16_t offset, uint64_t timeout)
+{
+    uint64_t end;
+    end = ClockP_getTimeUsec() + timeout;
+
+    while(!(hdslHandle->hdslInterface->ONLINE_STATUS_D_L & (1<<ONLINE_STATUS_D_L_FREL)))
+    {
+        if(ClockP_getTimeUsec() > end)
+        {
+            return SystemP_TIMEOUT;
+        }
+    }
+
+    /*
+        Setting PC_ADD_L
+        Bits 7:0 contain bits 7:0 of 10 bit address for long message
+    */
+    hdslHandle->hdslInterface->PC_ADD_L = (addr & PC_ADD_L_ADDR_LOW_MASK);
+
+    /*
+        Setting PC_ADD_H
+        Bit 7 should always be set for long message
+        Bit 6 is unset for write operation
+        Bit 5 is to enable/disable offset
+        Bit 4 is to select direct/indirect addressing
+        Bits 3:2 define the length of the message
+        Bits 1:0 contain bits 9:8 of 10 bit address for long message
+    */
+    hdslHandle->hdslInterface->PC_ADD_H = (PC_ADD_H_LONG_MSG_ENABLE) |
+                                          (PC_ADD_H_LONG_MSG_WRITE) |
+                                          (offsetEnable << PC_ADD_H_OFFSET_EN_SHIFT) |
+                                          (addrType << PC_ADD_H_ADDR_TYPE_SHIFT) |
+                                          (length << PC_ADD_H_LENGTH_SHIFT) |
+                                          ((addr & PC_ADD_H_ADDR_HIGH_MASK) >> 8);
+
+    /*
+        Setting PC_OFF_L
+        Bits 7:0 contain bits 7:0 of 15 bit offset value
+    */
+    hdslHandle->hdslInterface->PC_OFF_L = (offset & PC_OFF_L_OFFSET_LOW_MASK);
+
+    /*
+        Setting PC_OFF_H
+        Bit 7 should always be set for long message
+        Bits 6:0 contain bits 14:8 of 15 bit offset value
+    */
+    hdslHandle->hdslInterface->PC_OFF_H = (PC_OFF_H_LONG_MSG_ENABLE) |
+                                          ((offset & PC_OFF_H_OFFSET_HIGH_MASK) >> 8);
+
+    /* Setting PC_CTRL */
+    hdslHandle->hdslInterface->PC_CTRL =  PC_CTRL_ENABLE;
+
+    while((hdslHandle->hdslInterface->ONLINE_STATUS_D_L & (1<<ONLINE_STATUS_D_L_FREL)))
+    {
+        if(ClockP_getTimeUsec() > end)
+        {
+            return SystemP_TIMEOUT;
+        }
+    }
+
+    while(!(hdslHandle->hdslInterface->ONLINE_STATUS_D_L & (1<<ONLINE_STATUS_D_L_FREL)))
+    {
+        if(ClockP_getTimeUsec() > end)
+        {
+            return SystemP_TIMEOUT;
+        }
+    }
+
+    /* Checking for error */
+    if(hdslHandle->hdslInterface->PC_ADD_H & PC_ADD_H_LONG_MSG_ERROR)
+    {
+        return SystemP_FAILURE;
+    }
+
+    return SystemP_SUCCESS;
+}
+
+int32_t HDSL_read_pc_long_msg(HDSL_Handle hdslHandle, uint16_t addr, uint8_t offsetEnable, uint8_t addrType, uint8_t length, uint16_t offset, uint64_t timeout)
+{
+    uint64_t end;
+    end = ClockP_getTimeUsec() + timeout;
+
+    while(!(hdslHandle->hdslInterface->ONLINE_STATUS_D_L & (1<<ONLINE_STATUS_D_L_FREL)))
+    {
+        if(ClockP_getTimeUsec() > end)
+        {
+            return SystemP_TIMEOUT;
+        }
+    }
+
+    /*
+        Setting PC_ADD_L
+        Bits 7:0 contain bits 7:0 of 10 bit address for long message
+    */
+    hdslHandle->hdslInterface->PC_ADD_L = (addr & PC_ADD_L_ADDR_LOW_MASK);
+
+    /*
+        Setting PC_ADD_H
+        Bit 7 should always be set for long message
+        Bit 6 is set for read operation
+        Bit 5 is to enable/disable offset
+        Bit 4 is to select direct/indirect addressing
+        Bits 3:2 define the length of the message
+        Bits 1:0 contain bits 9:8 of 10 bit address for long message
+    */
+    hdslHandle->hdslInterface->PC_ADD_H = (PC_ADD_H_LONG_MSG_ENABLE) |
+                                          (PC_ADD_H_LONG_MSG_READ) |
+                                          (offsetEnable << PC_ADD_H_OFFSET_EN_SHIFT) |
+                                          (addrType << PC_ADD_H_ADDR_TYPE_SHIFT) |
+                                          (length << PC_ADD_H_LENGTH_SHIFT) |
+                                          ((addr & PC_ADD_H_ADDR_HIGH_MASK) >> 8);
+
+    /*
+        Setting PC_OFF_L
+        Bits 7:0 contain bits 7:0 of 15 bit offset value
+    */
+    hdslHandle->hdslInterface->PC_OFF_L = (offset & PC_OFF_L_OFFSET_LOW_MASK);
+
+    /*
+        Setting PC_OFF_H
+        Bit 7 should always be set for long message
+        Bits 6:0 contain bits 14:8 of 15 bit offset value
+    */
+    hdslHandle->hdslInterface->PC_OFF_H = (PC_OFF_H_LONG_MSG_ENABLE) |
+                                          ((offset & PC_OFF_H_OFFSET_HIGH_MASK) >> 8);
+
+    /* Setting PC_CTRL */
+    hdslHandle->hdslInterface->PC_CTRL =  PC_CTRL_ENABLE;
+
+    while((hdslHandle->hdslInterface->ONLINE_STATUS_D_L & (1<<ONLINE_STATUS_D_L_FREL)))
+    {
+        if(ClockP_getTimeUsec() > end)
+        {
+            return SystemP_TIMEOUT;
+        }
+    }
+
+    while(!(hdslHandle->hdslInterface->ONLINE_STATUS_D_L & (1<<ONLINE_STATUS_D_L_FREL)))
+    {
+        if(ClockP_getTimeUsec() > end)
+        {
+            return SystemP_TIMEOUT;
+        }
+    }
+
+    /* Checking for error */
+
+    if(hdslHandle->hdslInterface->PC_ADD_H & PC_ADD_H_LONG_MSG_ERROR)
+    {
+        return SystemP_FAILURE;
+    }
+
+    return SystemP_SUCCESS;
+}
+
+void HDSL_write_pc_buffer(HDSL_Handle hdslHandle, uint8_t buff_off, uint8_t data)
+{
+    switch(buff_off)
+    {
+        case 0:
+            hdslHandle->hdslInterface->PC_BUFFER0 = data;
+            break;
+        case 1:
+            hdslHandle->hdslInterface->PC_BUFFER1 = data;
+            break;
+        case 2:
+            hdslHandle->hdslInterface->PC_BUFFER2 = data;
+            break;
+        case 3:
+            hdslHandle->hdslInterface->PC_BUFFER3 = data;
+            break;
+        case 4:
+            hdslHandle->hdslInterface->PC_BUFFER4 = data;
+            break;
+        case 5:
+            hdslHandle->hdslInterface->PC_BUFFER5 = data;
+            break;
+        case 6:
+            hdslHandle->hdslInterface->PC_BUFFER6 = data;
+            break;
+        case 7:
+            hdslHandle->hdslInterface->PC_BUFFER7 = data;
+            break;
+        default:
+            break;
+    }
+}
+
 uint8_t HDSL_read_pc_buffer(HDSL_Handle hdslHandle, uint8_t buff_off)
 {
     switch(buff_off)
     {
-    case 0:
-        return (uint8_t) (hdslHandle->hdslInterface->PC_BUFFER0);
-        break;
-    case 1:
-        return (uint8_t) (hdslHandle->hdslInterface->PC_BUFFER1);
-        break;
-    case 2:
-        return (uint8_t) (hdslHandle->hdslInterface->PC_BUFFER2);
-        break;
-    case 3:
-        return (uint8_t) (hdslHandle->hdslInterface->PC_BUFFER3);
-        break;
-    case 4:
-        return (uint8_t) (hdslHandle->hdslInterface->PC_BUFFER4);
-        break;
-    case 5:
-        return (uint8_t) (hdslHandle->hdslInterface->PC_BUFFER5);
-        break;
-    case 6:
-        return (uint8_t) (hdslHandle->hdslInterface->PC_BUFFER6);
-        break;
-    case 7:
-        return (uint8_t) (hdslHandle->hdslInterface->PC_BUFFER7);
-        break;
-    default:
-        return 0;
-        break;
+        case 0:
+            return (uint8_t) (hdslHandle->hdslInterface->PC_BUFFER0);
+            break;
+        case 1:
+            return (uint8_t) (hdslHandle->hdslInterface->PC_BUFFER1);
+            break;
+        case 2:
+            return (uint8_t) (hdslHandle->hdslInterface->PC_BUFFER2);
+            break;
+        case 3:
+            return (uint8_t) (hdslHandle->hdslInterface->PC_BUFFER3);
+            break;
+        case 4:
+            return (uint8_t) (hdslHandle->hdslInterface->PC_BUFFER4);
+            break;
+        case 5:
+            return (uint8_t) (hdslHandle->hdslInterface->PC_BUFFER5);
+            break;
+        case 6:
+            return (uint8_t) (hdslHandle->hdslInterface->PC_BUFFER6);
+            break;
+        case 7:
+            return (uint8_t) (hdslHandle->hdslInterface->PC_BUFFER7);
+            break;
+        default:
+            return 0;
+            break;
     }
-}
-
-void HDSL_write_pc_buffer(HDSL_Handle hdslHandle, uint8_t pc_buf0, uint8_t pc_buf1, uint8_t pc_buf2, uint8_t pc_buf3, uint8_t pc_buf4, uint8_t pc_buf5, uint8_t pc_buf6, uint8_t pc_buf7)
-{
-    hdslHandle->hdslInterface->PC_BUFFER0 = pc_buf0;
-    hdslHandle->hdslInterface->PC_BUFFER1 = pc_buf1;
-    hdslHandle->hdslInterface->PC_BUFFER2 = pc_buf2;
-    hdslHandle->hdslInterface->PC_BUFFER3 = pc_buf3;
-    hdslHandle->hdslInterface->PC_BUFFER4 = pc_buf4;
-    hdslHandle->hdslInterface->PC_BUFFER5 = pc_buf5;
-    hdslHandle->hdslInterface->PC_BUFFER6 = pc_buf6;
-    hdslHandle->hdslInterface->PC_BUFFER7 = pc_buf7;
 }
 
 uint8_t HDSL_get_sync_ctrl(HDSL_Handle hdslHandle)

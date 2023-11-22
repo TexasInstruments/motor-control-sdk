@@ -116,7 +116,7 @@ datalink_wait_vsynch:
 	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_S, 2
 	set		REG_TMP0.b0, REG_TMP0.b0, EVENT_S_FRES
 ;save events
-	sbco		&REG_TMP0.w0, MASTER_REGS_CONST, EVENT_S, 1
+	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S, 1
 	qbbc		update_events_no_int0, REG_TMP0.b1, EVENT_S_FRES
 ; generate interrupt
 	ldi		r31.w0, PRU0_ARM_IRQ4
@@ -1470,23 +1470,23 @@ is_val_FC:
 	qba         adjustment_done
 is_val_F8:
 	qbne        is_val_F0, EXTRA_EDGE_SELF, 0xF8
-	sub         REG_TMP0, REG_TMP0, 12 
+	sub         REG_TMP0, REG_TMP0, 12
 	qba         adjustment_done
 is_val_F0:
 	qbne        is_val_E0, EXTRA_EDGE_SELF, 0xF0
-	sub         REG_TMP0, REG_TMP0, 16 
+	sub         REG_TMP0, REG_TMP0, 16
 	qba         adjustment_done
 is_val_E0:
 	qbne        is_val_C0, EXTRA_EDGE_SELF, 0xE0
-	sub         REG_TMP0, REG_TMP0, 20 
+	sub         REG_TMP0, REG_TMP0, 20
 	qba         adjustment_done
 is_val_C0:
 	qbne        is_val_80, EXTRA_EDGE_SELF, 0xC0
-	sub         REG_TMP0, REG_TMP0, 24 
+	sub         REG_TMP0, REG_TMP0, 24
 	qba         adjustment_done
 is_val_80:
 	qbne        adjustment_done,EXTRA_EDGE_SELF, 0x80
-	sub         REG_TMP0, REG_TMP0, 28 
+	sub         REG_TMP0, REG_TMP0, 28
 	qba         adjustment_done
 adjustment_done:
 	sbco		&REG_TMP0, MASTER_REGS_CONST, EXTRA_EDGE_TIMESTAMP, 4
@@ -1570,7 +1570,6 @@ log_done1:
 ;HINT: we have processing time here (~168 cycles)
 	;check if we reset protocol
 	lbco		&FIFO_L, MASTER_REGS_CONST, SYS_CTRL, 1
-;ERROR: qbbc datalink_abort2 is not working, though no compiler error
 	qbbc		SYS_CTRL_PRST_cleared,FIFO_L, SYS_CTRL_PRST
 	jmp		No_long_short_msg
 SYS_CTRL_PRST_cleared:
@@ -1879,31 +1878,6 @@ datalink_abort_no_wait:
 	lbco			&REG_TMP0.b0, MASTER_REGS_CONST, NUM_RESETS, 1
 	add			REG_TMP0.b0, REG_TMP0.b0, 1
 	sbco			&REG_TMP0.b0, MASTER_REGS_CONST, NUM_RESETS, 1
-; Set EVENT_PRST in EVENT register
-	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_H, 4
-	set		REG_TMP0.w0, REG_TMP0.w0, EVENT_PRST
-;save events
-	sbco		&REG_TMP0.w0, MASTER_REGS_CONST, EVENT_H, 2
-	qbbc		update_events_no_int2, REG_TMP0.w2, EVENT_PRST
-; generate interrupt
-	ldi		r31.w0, PRU0_ARM_IRQ
-update_events_no_int2:
-; Set EVENT_S_PRST in EVENT_S register
-	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_S, 2
-	set		REG_TMP0.b0, REG_TMP0.b0, EVENT_S_PRST
-;save events
-	sbco		&REG_TMP0.w0, MASTER_REGS_CONST, EVENT_S, 1
-	qbbc		update_events_no_int18, REG_TMP0.b1, EVENT_S_PRST
-; generate interrupt
-	ldi		r31.w0, PRU0_ARM_IRQ4
-update_events_no_int18:
-
-; Set PRST bits in ONLINE_STATUS registers
-	lbco		&REG_TMP0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 6
-    set         REG_TMP0.w0, REG_TMP0.w0, ONLINE_STATUS_D_PRST
-    set         REG_TMP0.w2, REG_TMP0.w2, ONLINE_STATUS_1_PRST
-    set         REG_TMP1.w0, REG_TMP1.w0, ONLINE_STATUS_2_PRST
-	sbco		&REG_TMP0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 6
 	jmp			datalink_reset
 ;--------------------------------------------------------------------------------------------------
 ;Function: switch_clk (RET_ADDR1)
