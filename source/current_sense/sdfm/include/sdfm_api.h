@@ -330,6 +330,39 @@ void SDFM_clearPwmTripStatus(sdfm_handle h_sdfm, uint8_t pwmIns);
 
 /**
  *
+ *  \brief  This API enbale continuous normal current sampling  
+ *
+ *  \param[in]  h_sdfm          SDFM handle
+ *  
+ *
+ */
+void SDFM_enableContinuousNormalCurrent(sdfm_handle h_sdfm);
+
+
+/**
+ *
+ *  \brief  This API enbale continuous normal current sampling  
+ *
+ *  \param[in]  h_sdfm          SDFM handle
+ *  
+ *
+ */
+void SDFM_enableContinuousNormalCurrent(sdfm_handle h_sdfm);
+
+
+/**
+ *
+ *  \brief  This API enbale continuous normal current sampling  
+ *
+ *  \param[in]  h_sdfm          SDFM handle
+ *  
+ *
+ */
+void SDFM_enableContinuousNormalCurrent(sdfm_handle h_sdfm);
+
+
+/**
+ *
  *  \brief  Measure Clock phase compensation 
  *
  *  \param[in]  h_sdfm          SDFM handle

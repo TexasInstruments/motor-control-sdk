@@ -196,7 +196,8 @@
 
 
 /*Sample timing offset*/
-#define SDFM_CFG_EN_DOUBLE_UPDATE                   ( 0xE8 )
+#define SDFM_CFG_EN_CONT_NC_MODE                    ( 0xE8 )
+#define SDFM_CFG_EN_DOUBLE_UPDATE                   ( 0xEA )
 #define FW_REG_SDFM_CFG_FIRST_TRIG_SAMPLE_TIME      ( 0xEC )
 #define FW_REG_SDFM_CFG_SECOND_TRIG_SAMPLE_TIME     ( 0xF0 )
 #define SDFM_CFG_NC_PRD_IEP_CNT_OFFSET              ( 0xF4)

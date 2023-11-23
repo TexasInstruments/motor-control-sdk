@@ -153,8 +153,9 @@ typedef struct SDFM_CfgSdClk_s
  */
 typedef struct SDFM_CfgTrigger_s
 {
+    volatile  uint8_t  en_continuous_mode;
     /**< bit-field for enable double update */
-    volatile uint16_t    en_double_nc_sampling;
+    volatile uint8_t    en_double_nc_sampling;
     /**< First sample starting point */
     volatile uint32_t first_samp_trig_time;
     /**<Second sample starting point*/

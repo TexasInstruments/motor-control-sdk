@@ -216,6 +216,11 @@ init_sdfm_cont:
         LDI32   OUT_SAMP_BUF_REG, OUT_SAMP_BUF
         LDI  SAMP_CNT_REG,  0
         LBCO  &EN_DOUBLE_UPDATE,  CT_PRU_ICSSG_LOC_DMEM, SDFM_CFG_EN_DOUBLE_UPDATE,  1
+        ;NC continuous mode status 
+        LBCO  &TEMP_REG0.b0, CT_PRU_ICSSG_LOC_DMEM,  SDFM_CFG_EN_CONT_NC_MODE,1
+        LSL   TEMP_REG0.b0, TEMP_REG0.b0,1 
+        OR    EN_DOUBLE_UPDATE, EN_DOUBLE_UPDATE, TEMP_REG0.b0
+
         LDI  SAMP_NAME, 0
 
 
@@ -605,7 +610,29 @@ wait_sample_count_incr_oc:
         M_ACC3_PROCESS ACC3_DN1_CH2, ACC3_DN3_CH2, ACC3_DN5_CH2
         ; Save output sample to local output sample buffer
         SBBO    &CN5, OUT_SAMP_BUF_REG, 8, 4
+        
+        ;continuous mode check
+        QBBC    TRIGGER_MODE, EN_DOUBLE_UPDATE, 1
 
+        ;update IEP0 CMP4
+        LBCO    &TEMP_REG0, CT_PRU_ICSSG_LOC_DMEM, SDFM_CFG_NC_PRD_IEP_CNT_OFFSET, 4
+        LBCO    &TEMP_REG1, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP4_REG0, 4 ;
+        ADD     TEMP_REG0, TEMP_REG1, TEMP_REG0
+        ;read iep counter maximum value
+        LDI     TEMP_REG1, 0
+        LBCO    &TEMP_REG1, CT_PRU_ICSSG_LOC_DMEM, SDFM_CFG_IEP_CFG_SIM_EPWM_PRD_OFFSET, 4
+        QBLE    UPDATE_CMP_FOR_IEP_RESET,  TEMP_REG0, TEMP_REG1
+        ;update Cmp4 with old value + next sample time value
+        SBCO    &TEMP_REG0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP4_REG0, 4
+        JMP     END_CMP_UPDATE
+UPDATE_CMP_FOR_IEP_RESET:
+        ;Update cmp4 according to iep reset
+        SUB      TEMP_REG0, TEMP_REG0, TEMP_REG1
+        SBCO    &TEMP_REG0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP4_REG0, 4
+END_CMP_UPDATE:
+        JMP  END_RESET_NC_FRAME
+
+TRIGGER_MODE:
        ;Check NC sample count
         QBLE    RESET_NC_FRAME, SAMP_CNT_REG, NC_SAMP_CNT-1
         ; NC sample count < NC_SAMP_CNT-1
@@ -619,7 +646,7 @@ wait_sample_count_incr_oc:
         ADD     SAMP_CNT_REG, SAMP_CNT_REG, 1   ; increment NC sample count
 
         QBA     NRESET_NC_FRAME
-
+        
 RESET_NC_FRAME:
         ; Set IEP CMP$ value: IEP_CMP4_REG1:REG0 = 0:TRIG_SAMPLE_TIME
          QBBS    FIRST_NC_SAMPLE, SAMP_NAME, 0

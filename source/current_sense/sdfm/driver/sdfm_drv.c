@@ -305,6 +305,11 @@ uint64_t SDFM_getFirmwareVersion(sdfm_handle h_sdfm)
 {
    return h_sdfm->p_sdfm_interface->firmwareVersion;
 }
+/*Enable free run NC */
+void SDFM_enableContinuousNormalCurrent(sdfm_handle h_sdfm)
+{
+    h_sdfm->p_sdfm_interface->sdfm_cfg_trigger.en_continuous_mode = 1;
+}
 /*FD block confiuration */
 void SDFM_configFastDetect(sdfm_handle h_sdfm, uint8_t ch, uint8_t *fdParms)
 {
