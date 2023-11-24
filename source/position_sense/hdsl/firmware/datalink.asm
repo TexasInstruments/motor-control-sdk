@@ -34,7 +34,6 @@
 	.include "defines.inc"
 	.include "macros.inc"
 	;.sect	".text"
-	.ref transport_init
 	.ref transport_on_h_frame
 	.ref transport_on_v_frame
 	.ref transport_on_v_frame_2
@@ -87,7 +86,9 @@
 ;Initialize connection and state machine here
 datalink_init:
 ;--------------------------------------------------------------------------------------------------
-	.sect ".text"
+	; part 2 code starts here
+
+	.sect ".text:part2"
 	jmp	main
 ;--------------------------------------------------------------------------------------------------
 ;--------------------------------------------------------------------------------------------------
@@ -264,6 +265,41 @@ hframe_7_fifo_push:
  	.endif ;Multichannel
 ;--------------------------------------------------------------------------------------------------
 
+;Reroute data link abort to avoid branching error.
+datalink_abort_jmp:
+    jmp datalink_abort
+;--------------------------------------------------------------------------------------------------
+
+;--------------------------------------------------------------------------------------------------
+;Function: switch_clk (RET_ADDR1)
+;
+;input:
+;	REG_FNC.w0: new clk_div
+;	REG_FNC.b2: #of cycles to wait before switching
+;output:
+;modifies:
+;	REG_TMP0, REG_FNC
+;--------------------------------------------------------------------------------------------------
+switch_clk:
+	.if !$defined("HDSL_MULTICHANNEL")
+	WAIT_CLK_LOW		REG_TMP0
+	WAIT_CLK_HIGH		REG_TMP0
+	sub			REG_FNC.b2, REG_FNC.b2, 1
+	qbne			switch_clk, REG_FNC.b2, 1
+	WAIT_CLK_LOW		REG_TMP0
+	;ldi     		REG_SCRATCH, P0EDTXCFG+2
+	sbco			&REG_FNC.w0, ICSS_CFGx, EDTXCFG+2, 2
+	WAIT_CLK_HIGH		REG_TMP0
+	.endif
+	RET1
+
+
+
+; common code starts here
+	.sect ".text"
+
+
+
 ;--------------------------------------------------------------------------------------------------
 ;Function: receive
 ;This functions receives data without deocoding.
@@ -328,70 +364,7 @@ receive_skip_wait:
 	CALL1			send_trailer
 	CALL1			send_stuffing
 	RET
-;--------------------------------------------------------------------------------------------------
-;Function: sync_pulse (RET_ADDR1)
-;functions bussy waits for sync pulse
-;input:
-;modifies:
-;--------------------------------------------------------------------------------------------------
-;stores sync pulse period in R20 in unit of cycles
-sync_pulse:
-	lbco        &REG_TMP1, c1, IEP_CAPR6_RISE, 4
-wait_next_pulse:
-	lbco        &R20, c1, IEP_CAPR6_RISE, 4
-	QBEQ		wait_next_pulse, R20, REG_TMP1
-	SUB         R20, R20, REG_TMP1
-	RET1
-;--------------------------------------------------------------------------------------------------
-;Function: int_div (RET_ADDR1)
-;integer divides
-;input:
-;	REG_FNC.w0: Number
-;	REG_FNC.w2: Divisor
-;output:
-;	REG_FNC.w2: Result
-;	REG_FNC.w0: Rest
-;modifies:
-;--------------------------------------------------------------------------------------------------
-int_div:
-	ldi			REG_TMP0, 0
-int_div_loop:
-	qbgt			int_div_end, REG_FNC.w0, REG_FNC.w2
-	sub			REG_FNC.w0, REG_FNC.w0, REG_FNC.w2
-	add			REG_TMP0, REG_TMP0, 1
-	qba			int_div_loop
-int_div_end:
-	mov			REG_FNC.w2, REG_TMP0
-	RET1
-;--------------------------------------------------------------------------------------------------
-;Function: check_test_pattern (RET_ADDR1)
-;This function checks if the test pattern was received
-;input:
-;	r18-r20: data
-;output:
-;	REG_FNC.b0: 1 if true
-;modifies:
-;	REG_TMP0, REG_FNC
-;--------------------------------------------------------------------------------------------------
-check_test_pattern:
-;load test pattern and mask from memory
 
-	lbco			&REG_TMP0, MASTER_REGS_CONST, TEST_PATTERN0, 12
-;rm switch bit
-	and			REG_TMP11, r19, REG_TMP2
-	ldi			REG_TMP2, 0xff8
-	and			REG_TMP2, r19, REG_TMP2
-	lsl			REG_TMP2, REG_TMP2, 1
-	or			REG_TMP11, REG_TMP2, REG_TMP11
-;if found go to next step
-	qbne			check_test_pattern_false, r20, REG_TMP0
-	qbne			check_test_pattern_false, REG_TMP11, REG_TMP1
-check_test_pattern_true:
-	ldi			REG_FNC.b0, 1
-	RET1
-check_test_pattern_false:
-	ldi			REG_FNC.b0, 0
-	RET1
 ;--------------------------------------------------------------------------------------------------
 ;Function: send_01 (RET_ADDR1)
 ;This function sends 01 pattern in RESET and SYNC state
@@ -469,10 +442,7 @@ aaa8:
 	RESET_CYCLCNT
 
 	RET1
-;Reroute data link abort to avoid branching error.
-datalink_abort_jmp:
-    jmp datalink_abort
-;--------------------------------------------------------------------------------------------------
+
 
 ;--------------------------------------------------------------------------------------------------
 ;Function: recv_dec_10b (RET_ADDR1)
@@ -1834,29 +1804,47 @@ datalink_abort_no_wait:
 	lbco			&REG_TMP0.b0, MASTER_REGS_CONST, NUM_RESETS, 1
 	add			REG_TMP0.b0, REG_TMP0.b0, 1
 	sbco			&REG_TMP0.b0, MASTER_REGS_CONST, NUM_RESETS, 1
-	jmp			datalink_reset
-;--------------------------------------------------------------------------------------------------
-;Function: switch_clk (RET_ADDR1)
-;
-;input:
-;	REG_FNC.w0: new clk_div
-;	REG_FNC.b2: #of cycles to wait before switching
-;output:
-;modifies:
-;	REG_TMP0, REG_FNC
-;--------------------------------------------------------------------------------------------------
-switch_clk:
-	.if !$defined("HDSL_MULTICHANNEL")
-	WAIT_CLK_LOW		REG_TMP0
-	WAIT_CLK_HIGH		REG_TMP0
-	sub			REG_FNC.b2, REG_FNC.b2, 1
-	qbne			switch_clk, REG_FNC.b2, 1
-	WAIT_CLK_LOW		REG_TMP0
-	;ldi     		REG_SCRATCH, P0EDTXCFG+2
-	sbco			&REG_FNC.w0, ICSS_CFGx, EDTXCFG+2, 2
-	WAIT_CLK_HIGH		REG_TMP0
+; Trigger a reset in all channels
+
+	.if $defined(CHANNEL_2)
+;reset PRST bit in SYS_CTRL
+	ldi 	REG_TMP1, DMEM_CH0_START
+	lbbo	&REG_TMP0, REG_TMP1, SYS_CTRL, 1
+	set		REG_TMP0.b0, REG_TMP0.b0, SYS_CTRL_PRST
+	sbbo	&REG_TMP0, REG_TMP1, SYS_CTRL, 1
+
+	ldi 	REG_TMP1, DMEM_CH1_START
+	lbbo	&REG_TMP0, REG_TMP1, SYS_CTRL, 1
+	set		REG_TMP0.b0, REG_TMP0.b0, SYS_CTRL_PRST
+	sbbo	&REG_TMP0, REG_TMP1, SYS_CTRL, 1
 	.endif
-	RET1
+
+	.if $defined(CHANNEL_1)
+	ldi 	REG_TMP1, DMEM_CH0_START
+	lbbo	&REG_TMP0, REG_TMP1, SYS_CTRL, 1
+	set		REG_TMP0.b0, REG_TMP0.b0, SYS_CTRL_PRST
+	sbbo	&REG_TMP0, REG_TMP1, SYS_CTRL, 1
+
+	ldi 	REG_TMP1, DMEM_CH2_START
+	lbbo	&REG_TMP0, REG_TMP1, SYS_CTRL, 1
+	set		REG_TMP0.b0, REG_TMP0.b0, SYS_CTRL_PRST
+	sbbo	&REG_TMP0, REG_TMP1, SYS_CTRL, 1
+	.endif
+
+	.if $defined(CHANNEL_0)
+	ldi 	REG_TMP1, DMEM_CH1_START
+	lbbo	&REG_TMP0, REG_TMP1, SYS_CTRL, 1
+	set		REG_TMP0.b0, REG_TMP0.b0, SYS_CTRL_PRST
+	sbbo	&REG_TMP0, REG_TMP1, SYS_CTRL, 1
+
+	ldi 	REG_TMP1, DMEM_CH2_START
+	lbbo	&REG_TMP0, REG_TMP1, SYS_CTRL, 1
+	set		REG_TMP0.b0, REG_TMP0.b0, SYS_CTRL_PRST
+	sbbo	&REG_TMP0, REG_TMP1, SYS_CTRL, 1
+	.endif
+
+	jmp			datalink_reset
+
 ;--------------------------------------------------------------------------------------------------
 ;Function: qm_add (RET_ADDR1)
 ;Adds value to Quality Monitor and resets connection if necessary
@@ -2228,3 +2216,25 @@ L3_15:
 
 L4_15:
     RET3
+
+;--------------------------------------------------------------------------------------------------
+;Function: int_div (RET_ADDR1)
+;integer divides
+;input:
+;	REG_FNC.w0: Number
+;	REG_FNC.w2: Divisor
+;output:
+;	REG_FNC.w2: Result
+;	REG_FNC.w0: Rest
+;modifies:
+;--------------------------------------------------------------------------------------------------
+int_div:
+	ldi			REG_TMP0, 0
+int_div_loop:
+	qbgt			int_div_end, REG_FNC.w0, REG_FNC.w2
+	sub			REG_FNC.w0, REG_FNC.w0, REG_FNC.w2
+	add			REG_TMP0, REG_TMP0, 1
+	qba			int_div_loop
+int_div_end:
+	mov			REG_FNC.w2, REG_TMP0
+	RET1

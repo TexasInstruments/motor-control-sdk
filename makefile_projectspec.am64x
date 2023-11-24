@@ -27,8 +27,10 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += endat_peripheral_interface_
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += hdsl_master_freerun_225_mhz_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += hdsl_master_multichannel_ch0_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += hdsl_master_multichannel_ch1_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += hdsl_master_multichannel_ch2_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += hdsl_master_multichannel_ch0_sync_mode_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += hdsl_master_multichannel_ch1_sync_mode_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += hdsl_master_multichannel_ch2_sync_mode_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += hdsl_master_sync_225_mhz_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += tamagawa_multi_channel_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += tamagawa_single_channel_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_build
@@ -86,11 +88,17 @@ all-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL)
  hdsl_master_multichannel_ch1_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_build:
 	$(MAKE) -C source/position_sense/hdsl/firmware/multichannel_ch1/am64x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec all
 
+ hdsl_master_multichannel_ch2_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_build:
+	$(MAKE) -C source/position_sense/hdsl/firmware/multichannel_ch2/am64x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec all
+
  hdsl_master_multichannel_ch0_sync_mode_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_build:
 	$(MAKE) -C source/position_sense/hdsl/firmware/multichannel_ch0_sync_mode/am64x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec all
 
  hdsl_master_multichannel_ch1_sync_mode_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_build:
 	$(MAKE) -C source/position_sense/hdsl/firmware/multichannel_ch1_sync_mode/am64x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec all
+
+ hdsl_master_multichannel_ch2_sync_mode_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_build:
+	$(MAKE) -C source/position_sense/hdsl/firmware/multichannel_ch2_sync_mode/am64x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec all
 
  hdsl_master_sync_225_mhz_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_build:
 	$(MAKE) -C source/position_sense/hdsl/firmware/sync_225_mhz/am64x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec all
@@ -125,8 +133,10 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += endat_peripheral_interface_
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += hdsl_master_freerun_225_mhz_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += hdsl_master_multichannel_ch0_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += hdsl_master_multichannel_ch1_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += hdsl_master_multichannel_ch2_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += hdsl_master_multichannel_ch0_sync_mode_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += hdsl_master_multichannel_ch1_sync_mode_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += hdsl_master_multichannel_ch2_sync_mode_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += hdsl_master_sync_225_mhz_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += tamagawa_multi_channel_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += tamagawa_single_channel_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_clean
@@ -184,11 +194,17 @@ clean-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL)
  hdsl_master_multichannel_ch1_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/hdsl/firmware/multichannel_ch1/am64x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec clean
 
+ hdsl_master_multichannel_ch2_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/position_sense/hdsl/firmware/multichannel_ch2/am64x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec clean
+
  hdsl_master_multichannel_ch0_sync_mode_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/hdsl/firmware/multichannel_ch0_sync_mode/am64x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec clean
 
  hdsl_master_multichannel_ch1_sync_mode_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/hdsl/firmware/multichannel_ch1_sync_mode/am64x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec clean
+
+ hdsl_master_multichannel_ch2_sync_mode_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/position_sense/hdsl/firmware/multichannel_ch2_sync_mode/am64x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec clean
 
  hdsl_master_sync_225_mhz_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/hdsl/firmware/sync_225_mhz/am64x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec clean
@@ -223,8 +239,10 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += endat_peripheral_interface
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += hdsl_master_freerun_225_mhz_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += hdsl_master_multichannel_ch0_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += hdsl_master_multichannel_ch1_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += hdsl_master_multichannel_ch2_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += hdsl_master_multichannel_ch0_sync_mode_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += hdsl_master_multichannel_ch1_sync_mode_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += hdsl_master_multichannel_ch2_sync_mode_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += hdsl_master_sync_225_mhz_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += tamagawa_multi_channel_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += tamagawa_single_channel_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_export
@@ -282,11 +300,17 @@ export-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL)
  hdsl_master_multichannel_ch1_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_export:
 	$(MAKE) -C source/position_sense/hdsl/firmware/multichannel_ch1/am64x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec export
 
+ hdsl_master_multichannel_ch2_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_export:
+	$(MAKE) -C source/position_sense/hdsl/firmware/multichannel_ch2/am64x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec export
+
  hdsl_master_multichannel_ch0_sync_mode_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_export:
 	$(MAKE) -C source/position_sense/hdsl/firmware/multichannel_ch0_sync_mode/am64x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec export
 
  hdsl_master_multichannel_ch1_sync_mode_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_export:
 	$(MAKE) -C source/position_sense/hdsl/firmware/multichannel_ch1_sync_mode/am64x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec export
+
+ hdsl_master_multichannel_ch2_sync_mode_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_export:
+	$(MAKE) -C source/position_sense/hdsl/firmware/multichannel_ch2_sync_mode/am64x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec export
 
  hdsl_master_sync_225_mhz_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_export:
 	$(MAKE) -C source/position_sense/hdsl/firmware/sync_225_mhz/am64x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec export
@@ -342,8 +366,10 @@ help:
 	@echo  $(MAKE) -s -C source/position_sense/hdsl/firmware/freerun_225_mhz/am64x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C source/position_sense/hdsl/firmware/multichannel_ch0/am64x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C source/position_sense/hdsl/firmware/multichannel_ch1/am64x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C source/position_sense/hdsl/firmware/multichannel_ch2/am64x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C source/position_sense/hdsl/firmware/multichannel_ch0_sync_mode/am64x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C source/position_sense/hdsl/firmware/multichannel_ch1_sync_mode/am64x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C source/position_sense/hdsl/firmware/multichannel_ch2_sync_mode/am64x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C source/position_sense/hdsl/firmware/sync_225_mhz/am64x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C source/position_sense/tamagawa/firmware/multi_channel/am64x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C source/position_sense/tamagawa/firmware/single_channel/am64x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec [export all clean]

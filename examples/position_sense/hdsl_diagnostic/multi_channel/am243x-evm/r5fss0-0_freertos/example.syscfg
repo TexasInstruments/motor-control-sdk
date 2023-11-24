@@ -45,6 +45,11 @@ debug_log.enableCssLog         = false;
 debug_log.uartLog.$name        = "CONFIG_UART0";
 debug_log.uartLog.UART.$assign = "USART0";
 
+const uart_v0_template  = scripting.addModule("/drivers/uart/v0/uart_v0_template", {}, false);
+const uart_v0_template1 = uart_v0_template.addInstance({}, false);
+uart_v0_template1.$name = "drivers_uart_v0_uart_v0_template0";
+debug_log.uartLog.child = uart_v0_template1;
+
 mpu_armv71.$name             = "CONFIG_MPU_REGION0";
 mpu_armv71.size              = 31;
 mpu_armv71.attributes        = "Device";
@@ -77,6 +82,7 @@ mpu_armv76.size     = 31;
 hdsl1.$name                  = "CONFIG_HDSL0";
 hdsl1.coreClk                = 300000000;
 hdsl1.channel_1              = true;
+hdsl1.channel_2              = true;
 hdsl1.PRU_ICSSG0_PRU.$assign = "PRU_ICSSG0_PRU1";
 
 const pruicss2                           = pruicss.addInstance({}, false);
@@ -102,3 +108,7 @@ hdsl1.PRU_ICSSG0_PRU.GPO5.$suggestSolution  = "PRG0_PRU1_GPO5";
 hdsl1.PRU_ICSSG0_PRU.GPO4.$suggestSolution  = "PRG0_PRU1_GPO4";
 hdsl1.PRU_ICSSG0_PRU.GPO3.$suggestSolution  = "PRG0_PRU1_GPO3";
 hdsl1.PRU_ICSSG0_PRU.GPI14.$suggestSolution = "PRG0_PRU1_GPO14";
+hdsl1.PRU_ICSSG0_PRU.GPO8.$suggestSolution  = "PRG0_PRU1_GPO8";
+hdsl1.PRU_ICSSG0_PRU.GPO12.$suggestSolution = "PRG0_PRU1_GPO12";
+hdsl1.PRU_ICSSG0_PRU.GPO6.$suggestSolution  = "PRG0_PRU1_GPO6";
+hdsl1.PRU_ICSSG0_PRU.GPI11.$suggestSolution = "PRG0_PRU1_GPO11";

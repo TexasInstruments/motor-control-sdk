@@ -63,6 +63,12 @@ extern "C" {
 /*                           Macros & Typedefs                                */
 /* ========================================================================== */
 
+
+#define HDSL_MAX_CHANNELS           (3U)
+#define CHANNEL_0_ENABLED           (1<<0)
+#define CHANNEL_1_ENABLED           (1<<1)
+#define CHANNEL_2_ENABLED           (1<<2)
+
 /**
  *  \anchor HDSL_LongMessageAddrTypes
  *  \name HDSL Long Message Addressing Types
@@ -286,29 +292,47 @@ typedef struct HDSL_Config_s {
 } HDSL_Config;
 /** @} */
 
+/**
+ * \anchor  HDSL_CopyTable
+ * \name    HDSL Copy Table for overlay scheme used when channel 2 is enabled.
+ * @{
+ */
+
+typedef struct HDSL_CopyTable_s {
+    uint32_t reserved1;
+    uint32_t loadAddr1; /**< Load Address of Part 1 of firmware */
+    uint32_t runAddr1;  /**< Run Address of Part 1 of firmware */
+    uint32_t size1;     /**< Size of Part 1 of firmware */
+    uint32_t reserved2;
+    uint32_t loadAddr2; /**< Load Address of Part 2 of firmware */
+    uint32_t runAddr2;  /**< Run Address of Part 2 of firmware */
+    uint32_t size2;     /**< Size of Part 2 of firmware */
+} HDSL_CopyTable;
+/** @} */
+
 /* ========================================================================== */
 /*                       Function Declarations                                */
 /* ========================================================================== */
 /**
  *  \brief     enable load share mode for multi-channel HDSL
  *
- *  \param[in]  gPru_cfg    Cfg base register address
- *  \param[in]  PRU_SLICE   PRU slice, 1 for PRU1 and 0 for PRU0
+ *  \param[in]  pruCfg    Cfg base register address
+ *  \param[in]  pruSlice   PRU slice, 1 for PRU1 and 0 for PRU0
  *
  */
-void hdsl_enable_load_share_mode(void *gPru_cfg ,uint32_t  PRU_SLICE);
+void hdsl_enable_load_share_mode(void *pruCfg ,uint32_t pruSlice);
+
 /**
  *  \brief      Open HDSL handle for the specified core
  *              (interrupt mapping should already be completed)
  *
  *  \param[in]  icssgHandle PRUICSS_Handle for the ICSS instance
  *  \param[in]  icssCore    Core to map in ICSSG instance
- *  \param[in]  PRU_mode    0 for dissabled load share mode, 1 for enabled load share mode
+ *  \param[in]  pruMode    0 for load share mode disabled, 1 for load share mode enabled
  *  \retval     HDSL_Handle
  *
  */
-// HDSL_ICSSG0_INST, HDSL_ICSSG1_INST
-HDSL_Handle HDSL_open(PRUICSS_Handle icssgHandle, uint32_t icssCore,uint8_t PRU_mode);
+HDSL_Handle HDSL_open(PRUICSS_Handle icssgHandle, uint32_t icssCore, uint8_t pruMode);
 
 /**
  *  \brief      Initialize IEP and Use OCP as IEP CLK src
@@ -587,6 +611,29 @@ void* HDSL_get_src_loc(HDSL_Handle hdslHandle);
  *
  */
 uint32_t HDSL_get_length(HDSL_Handle hdslHandle);
+
+/**
+ *  \brief      Configure the copy table entries for two overlayed firmware parts for channel 2
+ *
+ *  \param[in]  hdslHandle
+ *  \param[in]  copyTable
+ *
+ *  \return     SystemP_SUCCESS in case of success, SystemP_FAILURE in case of error
+ *
+ */
+int32_t HDSL_config_copy_table(HDSL_Handle hdslHandle, HDSL_CopyTable *copyTable);
+
+
+/**
+ *  \brief      Configure the channel mask
+ *
+ *  \param[in]  hdslHandle
+ *  \param[in]  channelMask
+ *
+ *  \return     SystemP_SUCCESS in case of success, SystemP_FAILURE in case of error
+ *
+ */
+int32_t HDSL_config_channel_mask(HDSL_Handle hdslHandle, uint8_t channelMask);
 
 #ifdef __cplusplus
 }

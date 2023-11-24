@@ -34,7 +34,6 @@
             -DPRU1
             -DSLICE1
             -DSOC_AM243X
-            -Dicss1
             -DPRU1
             -DCHANNEL_0
             -DICSS_G_V_1_0
@@ -75,8 +74,6 @@
         <file path="../../../../transport.asm" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
         <file path="../../../../utils.asm" openOnCreation="false" excludeFromBuild="false" action="copy">
-        </file>
-        <file path="../../../../hdsl_master_icssg_hexpru.cmd" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
         <file path="../../../../hdsl_master_icssg.cmd" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>

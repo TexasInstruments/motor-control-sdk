@@ -77,24 +77,27 @@
 #if (CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ==PRU_CLK_FREQ_300M)
 #include <position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch0_bin.h>
 #include <position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch1_bin.h>
+#include <position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch2_bin.h>
 #include <position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch0_sync_mode_bin.h>
 #include <position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch1_sync_mode_bin.h>
+#include <position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch2_sync_mode_bin.h>
+#endif
 
 /* ========================================================================== */
 /*                           Macros & Typedefs                                */
 /* ========================================================================== */
 
-#if (CONFIG_HDSL0_CHANNEL0 + CONFIG_HDSL0_CHANNEL1 > 1)
+#if (CONFIG_HDSL0_CHANNEL0 + CONFIG_HDSL0_CHANNEL1  + CONFIG_HDSL0_CHANNEL2 > 1)
 #define HDSL_MULTI_CHANNEL
 #endif
 
+#define TXPRU_IRAM_SIZE             (6*1024) /*6 kB*/
 #define SYNC_PULSE_WAIT_CLK_CYCLES  5505
 
 /* Divide factor for normal clock (default value for 300 MHz=31) */
 #define DIV_FACTOR_NORMAL 31
 /* Divide factor for oversampled clock (default value for 300 MHz=3) */
 #define DIV_FACTOR_OVERSAMPLED 3
-#endif
 
 #ifdef HDSL_AM64xE1_TRANSCEIVER
 #include <board/ioexp/ioexp_tca6424.h>
@@ -209,19 +212,21 @@ void traces_into_memory(HDSL_Handle hdslHandle);
 /*                            Global Variables                                */
 /* ========================================================================== */
 
-HDSL_Handle     gHdslHandleCh0;
-HDSL_Handle     gHdslHandleCh1;
+HDSL_Handle gHdslHandleCh[HDSL_MAX_CHANNELS];
 
 PRUICSS_Handle  gPruIcss0Handle;
 PRUICSS_IntcInitData gPruss0_intc_initdata = PRU_ICSS0_INTC_INITDATA;
 PRUICSS_Handle gPruIcss1Handle;
 PRUICSS_IntcInitData gPruss1_intc_initdata = PRU_ICSS1_INTC_INITDATA;
 
+HDSL_CopyTable *copyTable;
+
 static char gUart_buffer[256];
 static void *gPru_cfg;
 void *gPru_dramx;
 void *gPru_dramx_0;
 void *gPru_dramx_1;
+void *gPru_dramx_2;
 int32_t get_pos=1;
 
 uint32_t gMulti_turn, gRes;
@@ -365,8 +370,8 @@ static void HDSL_IsrFxn()
     uint8_t         *destBuf;
     uint32_t        length;
 
-    srcBuf = (uint8_t*)HDSL_get_src_loc(gHdslHandleCh0);
-    length = HDSL_get_length(gHdslHandleCh0);
+    srcBuf = (uint8_t*)HDSL_get_src_loc(gHdslHandleCh[0]);
+    length = HDSL_get_length(gHdslHandleCh[0]);
     PRUICSS_clearEvent(gPruIcss0Handle, HDSL_MEMORY_TRACE_ICSS_INTC_EVENT_NUM);
 
     /* No of h-frames count */
@@ -433,7 +438,8 @@ void sync_calculation(HDSL_Handle hdslHandle)
         uint32_t cycles_left, additional_bits, minm_cycles, time_gRest, extra_edge, extra_size, num_of_stuffing, extra_size_remainder, stuffing_remainder, bottom_up_cycles;
     #endif
     /*measure of SYNC period starts*/
-    ES =  HDSL_get_sync_ctrl(hdslHandle);
+
+    ES=HDSL_get_sync_ctrl(hdslHandle);
     volatile uint32_t* carp6_rise_addr =   (uint32_t*)(CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE + CSL_ICSS_G_PR1_IEP1_SLV_REGS_BASE + CSL_ICSS_G_PR1_IEP0_SLV_CAPR6_REG0);
     volatile uint32_t* carp6_fall_addr =   (uint32_t*)(CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE + CSL_ICSS_G_PR1_IEP1_SLV_REGS_BASE + CSL_ICSS_G_PR1_IEP0_SLV_CAPF6_REG0);
     cap6_rise0 = *(carp6_rise_addr);
@@ -676,70 +682,81 @@ void process_request(HDSL_Handle hdslHandle,int32_t menu)
 
 void hdsl_pruss_init(void)
 {
-        PRUICSS_disableCore(gPruIcss0Handle, gHdslHandleCh0->icssCore);
+    PRUICSS_disableCore(gPruIcss0Handle, gHdslHandleCh[0]->icssCore);
 
-        /* clear ICSS0 PRU data RAM */
-        gPru_dramx = (void *)((((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->baseAddr) + PRUICSS_DATARAM(PRUICSS_PRUx));
-        memset(gPru_dramx, 0, (4 * 1024));
+    /* clear ICSS0 PRU data RAM */
+    gPru_dramx = (void *)((((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->baseAddr) + PRUICSS_DATARAM(PRUICSS_PRUx));
+    memset(gPru_dramx, 0, (4 * 1024));
 
-        gPru_cfg = (void *)(((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->cfgRegBase);
+    gPru_cfg = (void *)(((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->cfgRegBase);
 
-        HW_WR_REG32(gPru_cfg + CSL_ICSSCFG_GPCFG1, HDSL_EN);
+    HW_WR_REG32(gPru_cfg + CSL_ICSSCFG_GPCFG1, HDSL_EN);
 
-        HW_WR_REG32(gPru_cfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER, HDSL_TX_CFG);
+    HW_WR_REG32(gPru_cfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER, HDSL_TX_CFG);
 
-        HW_WR_REG32(gPru_cfg + CSL_ICSSCFG_EDPRU1RXCFGREGISTER, HDSL_RX_CFG);
+    HW_WR_REG32(gPru_cfg + CSL_ICSSCFG_EDPRU1RXCFGREGISTER, HDSL_RX_CFG);
 
-        PRUICSS_intcInit(gPruIcss0Handle, &gPruss0_intc_initdata);
+    PRUICSS_intcInit(gPruIcss0Handle, &gPruss0_intc_initdata);
 
-        PRUICSS_intcInit(gPruIcss1Handle, &gPruss1_intc_initdata);
+    PRUICSS_intcInit(gPruIcss1Handle, &gPruss1_intc_initdata);
 
-        /* configure C28 to PRU_ICSS_CTRL and C29 to EDMA + 0x1000 */
-        /*6.4.14.1.1 ICSSG_PRU_CONTROL RegisterPRU_ICSSG0_PR1_PDSP0_IRAM 00B0 2400h*/
-        PRUICSS_setConstantTblEntry(gPruIcss0Handle, PRUICSS_PRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0x0240);
-        /*IEP1 base */
-        PRUICSS_setConstantTblEntry(gPruIcss0Handle, PRUICSS_PRUx, PRUICSS_CONST_TBL_ENTRY_C29, 0x0002F000);
+    /* configure C28 to PRU_ICSS_CTRL and C29 to EDMA + 0x1000 */
+    /*6.4.14.1.1 ICSSG_PRU_CONTROL RegisterPRU_ICSSG0_PR1_PDSP0_IRAM 00B0 2400h*/
+    PRUICSS_setConstantTblEntry(gPruIcss0Handle, PRUICSS_PRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0x0240);
+    /*IEP1 base */
+    PRUICSS_setConstantTblEntry(gPruIcss0Handle, PRUICSS_PRUx, PRUICSS_CONST_TBL_ENTRY_C29, 0x0002F000);
 
-        /* enable cycle counter */
-        HW_WR_REG32((void *)((((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->baseAddr) + CSL_ICSS_G_PR1_PDSP1_IRAM_REGS_BASE), CTR_EN);
+    /* enable cycle counter */
+    HW_WR_REG32((void *)((((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->baseAddr) + CSL_ICSS_G_PR1_PDSP1_IRAM_REGS_BASE), CTR_EN);
 }
 
 void hdsl_pruss_init_300m(void)
 {
-        PRUICSS_disableCore(gPruIcss0Handle, gHdslHandleCh0->icssCore);
-        PRUICSS_disableCore(gPruIcss0Handle, gHdslHandleCh1->icssCore);
-        /* Clear PRU_DRAM0 and PRU_DRAM1 memory */
+#if (CONFIG_HDSL0_CHANNEL0 == 1)
+    PRUICSS_disableCore(gPruIcss0Handle, PRUICSS_RTU_PRU1);    // ch0
+#endif
 
-        gPru_dramx_0 = (void *)((((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->baseAddr) + PRUICSS_DATARAM(PRUICSS_RTU_PRU1));
-        gPru_dramx_1 = (void *)((((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->baseAddr) + PRUICSS_DATARAM(PRUICSS_PRU1));
-        memset(gPru_dramx_0, 0, (4 * 1024));
-        memset(gPru_dramx_1, 0, (4 * 1024));
-        memset((void *) CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE, 0, (16 * 1024));
-        memset((void *) CSL_PRU_ICSSG0_DRAM1_SLV_RAM_BASE, 0, (16 * 1024));
+#if (CONFIG_HDSL0_CHANNEL1 == 1)
+    PRUICSS_disableCore(gPruIcss0Handle, PRUICSS_PRU1);        // ch1
+#endif
 
-        gPru_cfg = (void *)(((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->cfgRegBase);
+#if (CONFIG_HDSL0_CHANNEL2 == 1)
+    PRUICSS_disableCore(gPruIcss0Handle, PRUICSS_TX_PRU1);        // ch2
+#endif
+    /* Clear PRU_DRAM0 and PRU_DRAM1 memory */
 
-        HW_WR_REG32(gPru_cfg + CSL_ICSSCFG_GPCFG1, HDSL_EN);
-        HW_WR_REG32(gPru_cfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER, HDSL_TX_CFG);
-        HW_WR_REG32(gPru_cfg + CSL_ICSSCFG_EDPRU1RXCFGREGISTER, HDSL_RX_CFG);
-        PRUICSS_intcInit(gPruIcss0Handle, &gPruss0_intc_initdata);
+    gPru_dramx_0 = (void *)((((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->baseAddr) + PRUICSS_DATARAM(PRUICSS_RTU_PRU1));
+    gPru_dramx_1 = (void *)((((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->baseAddr) + PRUICSS_DATARAM(PRUICSS_PRU1));
+    gPru_dramx_2 = (void *)((((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->baseAddr) + PRUICSS_DATARAM(PRUICSS_TX_PRU1));
+    memset(gPru_dramx_0, 0, (4 * 1024));
+    memset(gPru_dramx_1, 0, (4 * 1024));
+    memset(gPru_dramx_2, 0, (4 * 1024));
+    memset((void *) CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE, 0, (16 * 1024));
+    memset((void *) CSL_PRU_ICSSG0_DRAM1_SLV_RAM_BASE, 0, (16 * 1024));
 
-        /* configure C28 to PRU_ICSS_CTRL and C29 to EDMA + 0x1000 */
-        /*6.4.14.1.1 ICSSG_PRU_CONTROL RegisterPRU_ICSSG0_PR1_PDSP0_IRAM 00B0 2400h*/
-        HWREG(CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE + CSL_ICSS_G_PR1_RTU1_PR1_RTU1_IRAM_REGS_BASE + CSL_ICSS_G_PR1_PDSP0_IRAM_CONSTANT_TABLE_PROG_PTR_0) = 0xF0000238; // Address = 0x30023828
-        PRUICSS_setConstantTblEntry(gPruIcss0Handle, PRUICSS_PRU1, PRUICSS_CONST_TBL_ENTRY_C28, 0x0240);
-        HWREG(CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE + CSL_ICSS_G_PR1_PDSP_TX1_IRAM_REGS_BASE + CSL_ICSS_G_PR1_PDSP0_IRAM_CONSTANT_TABLE_PROG_PTR_0) = 0xF0000258; // Address = 0x30025828
-        /*IEP1 base */
-        PRUICSS_setConstantTblEntry(gPruIcss0Handle, PRUICSS_PRU1, PRUICSS_CONST_TBL_ENTRY_C29, 0x0002F000);
+    gPru_cfg = (void *)(((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->cfgRegBase);
 
-        HWREG(CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE + CSL_ICSS_G_PR1_RTU1_PR1_RTU1_IRAM_REGS_BASE + CSL_ICSS_G_PR1_PDSP0_IRAM_CONSTANT_TABLE_BLOCK_INDEX_0) = 0x0000; // RTU Core
-        PRUICSS_setConstantTblEntry(gPruIcss0Handle, PRUICSS_PRU1, PRUICSS_CONST_TBL_ENTRY_C24, 0x0007);        // PRU Core
-        HWREG(CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE + CSL_ICSS_G_PR1_PDSP_TX1_IRAM_REGS_BASE + CSL_ICSS_G_PR1_PDSP0_IRAM_CONSTANT_TABLE_BLOCK_INDEX_0) = 0x000E; // TX_PRU Core
+    HW_WR_REG32(gPru_cfg + CSL_ICSSCFG_GPCFG1, HDSL_EN);
+    HW_WR_REG32(gPru_cfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER, HDSL_TX_CFG);
+    HW_WR_REG32(gPru_cfg + CSL_ICSSCFG_EDPRU1RXCFGREGISTER, HDSL_RX_CFG);
+    PRUICSS_intcInit(gPruIcss0Handle, &gPruss0_intc_initdata);
 
-        /* enable cycle counter */
-        HW_WR_REG32((void *)((((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->baseAddr) + CSL_ICSS_G_PR1_RTU1_PR1_RTU1_IRAM_REGS_BASE), CTR_EN);   // RTU_PRU Core
-        HW_WR_REG32((void *)((((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->baseAddr) + CSL_ICSS_G_PR1_PDSP1_IRAM_REGS_BASE), CTR_EN);
-        HW_WR_REG32((void *)((((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->baseAddr) + CSL_ICSS_G_PR1_PDSP_TX1_IRAM_REGS_BASE), CTR_EN);        // TX_PRU Core
+    /* configure C28 to PRU_ICSS_CTRL and C29 to EDMA + 0x1000 */
+    /*6.4.14.1.1 ICSSG_PRU_CONTROL RegisterPRU_ICSSG0_PR1_PDSP0_IRAM 00B0 2400h*/
+    HWREG(CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE + CSL_ICSS_G_PR1_RTU1_PR1_RTU1_IRAM_REGS_BASE + CSL_ICSS_G_PR1_PDSP0_IRAM_CONSTANT_TABLE_PROG_PTR_0) = 0xF0000238; // Address = 0x30023828
+    PRUICSS_setConstantTblEntry(gPruIcss0Handle, PRUICSS_PRU1, PRUICSS_CONST_TBL_ENTRY_C28, 0x0240);
+    HWREG(CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE + CSL_ICSS_G_PR1_PDSP_TX1_IRAM_REGS_BASE + CSL_ICSS_G_PR1_PDSP0_IRAM_CONSTANT_TABLE_PROG_PTR_0) = 0xF0000258; // Address = 0x30025828
+    /*IEP1 base */
+    PRUICSS_setConstantTblEntry(gPruIcss0Handle, PRUICSS_PRU1, PRUICSS_CONST_TBL_ENTRY_C29, 0x0002F000);
+
+    HWREG(CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE + CSL_ICSS_G_PR1_RTU1_PR1_RTU1_IRAM_REGS_BASE + CSL_ICSS_G_PR1_PDSP0_IRAM_CONSTANT_TABLE_BLOCK_INDEX_0) = 0x0000; // RTU Core
+    PRUICSS_setConstantTblEntry(gPruIcss0Handle, PRUICSS_PRU1, PRUICSS_CONST_TBL_ENTRY_C24, 0x0007);        // PRU Core
+    HWREG(CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE + CSL_ICSS_G_PR1_PDSP_TX1_IRAM_REGS_BASE + CSL_ICSS_G_PR1_PDSP0_IRAM_CONSTANT_TABLE_BLOCK_INDEX_0) = 0x000E; // TX_PRU Core
+
+    /* enable cycle counter */
+    HW_WR_REG32((void *)((((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->baseAddr) + CSL_ICSS_G_PR1_RTU1_PR1_RTU1_IRAM_REGS_BASE), CTR_EN);   // RTU_PRU Core
+    HW_WR_REG32((void *)((((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->baseAddr) + CSL_ICSS_G_PR1_PDSP1_IRAM_REGS_BASE), CTR_EN);
+    HW_WR_REG32((void *)((((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->baseAddr) + CSL_ICSS_G_PR1_PDSP_TX1_IRAM_REGS_BASE), CTR_EN);        // TX_PRU Core
 
 }
 
@@ -769,13 +786,25 @@ void hdsl_pruss_load_run_fw(HDSL_Handle hdslHandle)
 
 void hdsl_pruss_load_run_fw_300m(HDSL_Handle hdslHandle)
 {
+#if (CONFIG_HDSL0_CHANNEL2 == 1)
+    uint32_t txpruFwSize = 0;
+#endif
 #if (CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ==PRU_CLK_FREQ_300M)
-        PRUICSS_disableCore(gPruIcss0Handle, PRUICSS_RTU_PRU1);    // ch0
-        PRUICSS_disableCore(gPruIcss0Handle, PRUICSS_PRU1);        // ch1
+#if (CONFIG_HDSL0_CHANNEL0 == 1)
+    PRUICSS_disableCore(gPruIcss0Handle, PRUICSS_RTU_PRU1);    // ch0
+#endif
 
-        /* Enable Load Share mode */
-        gPru_cfg = (void *)(((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->cfgRegBase);
-        hdsl_enable_load_share_mode(gPru_cfg,PRUICSS_PRUx);
+#if (CONFIG_HDSL0_CHANNEL1 == 1)
+    PRUICSS_disableCore(gPruIcss0Handle, PRUICSS_PRU1);        // ch1
+#endif
+
+#if (CONFIG_HDSL0_CHANNEL2 == 1)
+    PRUICSS_disableCore(gPruIcss0Handle, PRUICSS_TX_PRU1);        // ch2
+#endif
+
+    /* Enable Load Share mode */
+    gPru_cfg = (void *)(((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->cfgRegBase);
+    hdsl_enable_load_share_mode(gPru_cfg,PRUICSS_PRUx);
 
     if(HDSL_get_sync_ctrl(hdslHandle) == 0)
     {
@@ -789,6 +818,31 @@ void hdsl_pruss_load_run_fw_300m(HDSL_Handle hdslHandle)
             PRUICSS_writeMemory(gPruIcss0Handle, PRUICSS_IRAM_PRU(1),
                         0, (uint32_t *) Hiperface_DSL2_0_PRU_0,
                         sizeof(Hiperface_DSL2_0_PRU_0));
+#endif
+#if (CONFIG_HDSL0_CHANNEL2 == 1)
+            PRUICSS_writeMemory(gPruIcss0Handle, PRUICSS_IRAM_TX_PRU(1),
+                        0, (uint32_t *) Hiperface_DSL2_0_TX_PRU_0,
+                        sizeof(Hiperface_DSL2_0_TX_PRU_0));
+
+            /*
+            NOTE: As this array is typecasted into a structure with 32-bit variables,
+            32b alignment is required. This is done using linker.
+            */
+            copyTable = (HDSL_CopyTable *)&Hiperface_DSL2_0_TX_PRU_2;
+            txpruFwSize = (copyTable->size1 > copyTable->size2)?(sizeof(Hiperface_DSL2_0_TX_PRU_0) + copyTable->size1):(sizeof(Hiperface_DSL2_0_TX_PRU_0) + copyTable->size2);
+            DebugP_assert(txpruFwSize <= TXPRU_IRAM_SIZE);
+
+            PRUICSS_writeMemory(gPruIcss0Handle, PRUICSS_DATARAM(1), 0x1500, (uint32_t *)Hiperface_DSL2_0_TX_PRU_1, copyTable->size1 + copyTable->size2);
+            if(copyTable->loadAddr1 < copyTable->loadAddr2)
+            {
+                PRUICSS_writeMemory(gPruIcss0Handle, PRUICSS_IRAM_TX_PRU(1), copyTable->runAddr1, (uint32_t *) ((uint8_t *)Hiperface_DSL2_0_TX_PRU_1), copyTable->size1);
+            }
+            else
+            {
+                PRUICSS_writeMemory(gPruIcss0Handle, PRUICSS_IRAM_TX_PRU(1), copyTable->runAddr1, (uint32_t *) ((uint8_t *)Hiperface_DSL2_0_TX_PRU_1 + copyTable->size2), copyTable->size1);
+            }
+
+            HDSL_config_copy_table(hdslHandle, copyTable);
 #endif
     }
     else
@@ -804,20 +858,54 @@ void hdsl_pruss_load_run_fw_300m(HDSL_Handle hdslHandle)
                         0, (uint32_t *) Hiperface_DSL_SYNC2_0_PRU_0,
                         sizeof(Hiperface_DSL_SYNC2_0_PRU_0));
 #endif
+#if (CONFIG_HDSL0_CHANNEL2 == 1)
+            PRUICSS_writeMemory(gPruIcss0Handle, PRUICSS_IRAM_TX_PRU(1),
+                       0, (uint32_t *) Hiperface_DSL_SYNC2_0_TX_PRU_0,
+                       sizeof(Hiperface_DSL_SYNC2_0_TX_PRU_0));
+
+            /*
+            NOTE: As this array is typecasted into a structure with 32-bit variables,
+            32b alignment is required. This is done using linker.
+            */
+            copyTable = (HDSL_CopyTable *)&Hiperface_DSL_SYNC2_0_TX_PRU_2;
+            txpruFwSize = (copyTable->size1 > copyTable->size2)?(sizeof(Hiperface_DSL_SYNC2_0_TX_PRU_0) + copyTable->size1):(sizeof(Hiperface_DSL_SYNC2_0_TX_PRU_0) + copyTable->size2);
+            DebugP_assert(txpruFwSize <= TXPRU_IRAM_SIZE);
+
+            PRUICSS_writeMemory(gPruIcss0Handle, PRUICSS_DATARAM(1), 0x1500, (uint32_t *)Hiperface_DSL_SYNC2_0_TX_PRU_1, copyTable->size1 + copyTable->size2);
+            if(copyTable->loadAddr1 < copyTable->loadAddr2)
+            {
+                PRUICSS_writeMemory(gPruIcss0Handle, PRUICSS_IRAM_TX_PRU(1), copyTable->runAddr1, (uint32_t *) ((uint8_t *)Hiperface_DSL_SYNC2_0_TX_PRU_1), copyTable->size1);
+            }
+            else
+            {
+                PRUICSS_writeMemory(gPruIcss0Handle, PRUICSS_IRAM_TX_PRU(1), copyTable->runAddr1, (uint32_t *) ((uint8_t *)Hiperface_DSL_SYNC2_0_TX_PRU_1 + copyTable->size2), copyTable->size1);
+            }
+
+            HDSL_config_copy_table(hdslHandle, copyTable);
+#endif
     }
 
-        /*Run firmware*/
+
+
+
 #if (CONFIG_HDSL0_CHANNEL0 == 1)
         PRUICSS_resetCore(gPruIcss0Handle, PRUICSS_RTU_PRU1);
 #endif
 #if (CONFIG_HDSL0_CHANNEL1 == 1)
         PRUICSS_resetCore(gPruIcss0Handle, PRUICSS_PRU1);
 #endif
+#if (CONFIG_HDSL0_CHANNEL2 == 1)
+        PRUICSS_resetCore(gPruIcss0Handle, PRUICSS_TX_PRU1);
+#endif
+        /*Run firmware*/
 #if (CONFIG_HDSL0_CHANNEL0 == 1)
         PRUICSS_enableCore(gPruIcss0Handle, PRUICSS_RTU_PRU1);
 #endif
 #if (CONFIG_HDSL0_CHANNEL1 == 1)
         PRUICSS_enableCore(gPruIcss0Handle, PRUICSS_PRU1);
+#endif
+#if (CONFIG_HDSL0_CHANNEL2 == 1)
+        PRUICSS_enableCore(gPruIcss0Handle, PRUICSS_TX_PRU1);
 #endif
 #endif
 }
@@ -830,9 +918,9 @@ void hdsl_init(void)
     HwiP_Params     hwiPrms;
     uint32_t        intrNum = HDSL_MEMORY_TRACE_R5F_IRQ_NUM;
 #endif
-    
+
     hdsl_pruss_init();
-    
+
 #if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
     /* Register PRU interrupt */
     HwiP_Params_init(&hwiPrms);
@@ -841,7 +929,7 @@ void hdsl_init(void)
     HwiP_construct(&gPRUHwiObject, &hwiPrms);
 #endif
 
-    HDSL_iep_init(gHdslHandleCh0);
+    HDSL_iep_init(gHdslHandleCh[0]);
     ClockP_usleep(5000);
     if(CONFIG_HDSL0_MODE==0)
     {
@@ -851,26 +939,27 @@ void hdsl_init(void)
     {
         ES=1;
     }
-    HDSL_set_sync_ctrl(gHdslHandleCh0, ES);
+    HDSL_set_sync_ctrl(gHdslHandleCh[0], ES);
     if(ES != 0)
     {
         DebugP_log("\r\nSYNC MODE\n");
         DebugP_log("\r\nEnter period for SYNC PULSE in unit of cycles(1 cycle = 4.44ns):");
         DebugP_scanf("%d",&period);
         HDSL_enable_sync_signal(ES,period);
-        HDSL_generate_memory_image(gHdslHandleCh0);
-        sync_calculation(gHdslHandleCh0);
+        HDSL_generate_memory_image(gHdslHandleCh[0]);
+        sync_calculation(gHdslHandleCh[0]);
     }
     else
     {
         DebugP_log( "\r\nFREE RUN MODE\n");
-        HDSL_generate_memory_image(gHdslHandleCh0);
+        ClockP_sleep(5);
+        HDSL_generate_memory_image(gHdslHandleCh[0]);
     }
 }
 
 void hdsl_init_300m(void)
 {
-    uint8_t         ES;
+    uint8_t         ES = 0;
     uint32_t        period;
 #if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
     HwiP_Params     hwiPrms;
@@ -887,34 +976,29 @@ void hdsl_init_300m(void)
     HwiP_construct(&gPRUHwiObject, &hwiPrms);
 #endif
 
-    HDSL_iep_init(gHdslHandleCh0);
+    HDSL_iep_init(gHdslHandleCh[0]);
     ClockP_usleep(5000);
-    if(CONFIG_HDSL0_MODE==0)
-    {
-        ES=0;
-    }
-    else
-    {
-        ES=1;
-    }
-    if (CONFIG_HDSL0_CHANNEL0==1)
-        {
-            HDSL_set_sync_ctrl(gHdslHandleCh0, ES);
-        }
-     if (CONFIG_HDSL0_CHANNEL1==1)
-        {
-            HDSL_set_sync_ctrl(gHdslHandleCh1, ES);
-        }
-    
-    if(ES != 0)
+
+    if(CONFIG_HDSL0_MODE == 1)
     {
         DebugP_log("\r\nSYNC MODE\n");
-        DebugP_log("\r\nEnter ES and period for SYNC PULSE in unit of cycles(1 cycle = 3.33ns):");
+        DebugP_log("\r\nEnter ES and period for SYNC PULSE in unit of cycles(1 cycle = 3.33ns):\r\n");
         DebugP_scanf("%d",&ES);
-
-        HDSL_set_sync_ctrl(gHdslHandleCh0,ES);
-        HDSL_set_sync_ctrl(gHdslHandleCh1,ES);
         DebugP_scanf("%d",&period);
+
+        if(CONFIG_HDSL0_CHANNEL0==1)
+        {
+            HDSL_set_sync_ctrl(gHdslHandleCh[0], ES);
+        }
+        if(CONFIG_HDSL0_CHANNEL1==1)
+        {
+            HDSL_set_sync_ctrl(gHdslHandleCh[1], ES);
+        }
+        if(CONFIG_HDSL0_CHANNEL2==1)
+        {
+            HDSL_set_sync_ctrl(gHdslHandleCh[2], ES);
+        }
+
         /*  Check Sync period condition
 
         (Tsync= Cycle time for input SYNC pulse signal ,
@@ -932,25 +1016,41 @@ void hdsl_init_300m(void)
         HDSL_enable_sync_signal(ES,period);
         if (CONFIG_HDSL0_CHANNEL0==1)
         {
-            HDSL_generate_memory_image(gHdslHandleCh0);
-            sync_calculation(gHdslHandleCh0);
+
+            HDSL_generate_memory_image(gHdslHandleCh[0]);
+            sync_calculation(gHdslHandleCh[0]);
         }
         if (CONFIG_HDSL0_CHANNEL1==1)
         {
-            HDSL_generate_memory_image(gHdslHandleCh1);
-            sync_calculation(gHdslHandleCh1);
+
+            HDSL_generate_memory_image(gHdslHandleCh[1]);
+            sync_calculation(gHdslHandleCh[1]);
+        }
+        if (CONFIG_HDSL0_CHANNEL2==1)
+        {
+
+            HDSL_generate_memory_image(gHdslHandleCh[2]);
+            sync_calculation(gHdslHandleCh[2]);
         }
     }
     else
     {
         DebugP_log( "\r\nFREE RUN MODE\n");
-        if (CONFIG_HDSL0_CHANNEL0==1)
+
+        if(CONFIG_HDSL0_CHANNEL0==1)
         {
-            HDSL_generate_memory_image(gHdslHandleCh0);
+            HDSL_set_sync_ctrl(gHdslHandleCh[0], ES);
+            HDSL_generate_memory_image(gHdslHandleCh[0]);
         }
-     if (CONFIG_HDSL0_CHANNEL1==1)
+        if(CONFIG_HDSL0_CHANNEL1==1)
         {
-            HDSL_generate_memory_image(gHdslHandleCh1);
+            HDSL_set_sync_ctrl(gHdslHandleCh[1], ES);
+            HDSL_generate_memory_image(gHdslHandleCh[1]);
+        }
+        if(CONFIG_HDSL0_CHANNEL2==1)
+        {
+            HDSL_set_sync_ctrl(gHdslHandleCh[2], ES);
+            HDSL_generate_memory_image(gHdslHandleCh[2]);
         }
     }
 }
@@ -1397,6 +1497,7 @@ void hdsl_diagnostic_main(void *arg)
 {
     uint32_t    val, acc_bits, pos_bits;
     uint8_t     ureg;
+    uint8_t     chMask = 0;
 
 #if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
     int32_t     retVal = UDMA_SOK;
@@ -1414,19 +1515,26 @@ void hdsl_diagnostic_main(void *arg)
     DebugP_assert(UDMA_SOK == retVal);
 #endif
 
-/*C16 pin High for Enabling ch0 in booster pack */
-    #if (CONFIG_HDSL0_BOOSTER_PACK)
-        GPIO_setDirMode(ENC1_EN_BASE_ADDR, ENC1_EN_PIN, ENC1_EN_DIR);
-        GPIO_pinWriteHigh(ENC1_EN_BASE_ADDR, ENC1_EN_PIN);
+    /*C16 pin High for Enabling ch0 in booster pack */
+    #if(CONFIG_HDSL0_BOOSTER_PACK && CONFIG_HDSL0_CHANNEL0)
+        GPIO_setDirMode(ENC0_EN_BASE_ADDR, ENC0_EN_PIN, ENC0_EN_DIR);
+        GPIO_pinWriteHigh(ENC0_EN_BASE_ADDR, ENC0_EN_PIN);
+    #endif
+    /*B17 pin High for Enabling ch2 in booster pack */
+    #if(CONFIG_HDSL0_BOOSTER_PACK && CONFIG_HDSL0_CHANNEL2)
+        GPIO_setDirMode(ENC2_EN_BASE_ADDR, ENC2_EN_PIN, ENC2_EN_DIR);
+        GPIO_pinWriteHigh(ENC2_EN_BASE_ADDR, ENC2_EN_PIN);
     #endif
 
     #ifndef HDSL_AM64xE1_TRANSCEIVER
         /* Configure g_mux_en to 1 in ICSSG_SA_MX_REG Register. This is required to remap EnDAT signals correctly via Interface card.*/
         HW_WR_REG32((CSL_PRU_ICSSG0_PR1_CFG_SLV_BASE+0x40), (0x80));
 
+    #if (CONFIG_HDSL0_BOOSTER_PACK == 0)
         /*Configure GPIO42 for HDSL mode.*/
         GPIO_setDirMode(CONFIG_GPIO0_BASE_ADDR, CONFIG_GPIO0_PIN, CONFIG_GPIO0_DIR);
         GPIO_pinWriteHigh(CONFIG_GPIO0_BASE_ADDR, CONFIG_GPIO0_PIN);
+    #endif
     #else
         /* Configure g_mux_en to 0 in ICSSG_SA_MX_REG Register. */
         HW_WR_REG32((CSL_PRU_ICSSG0_PR1_CFG_SLV_BASE+0x40), (0x00));
@@ -1438,14 +1546,36 @@ void hdsl_diagnostic_main(void *arg)
     // initialize hdsl handle
     DebugP_log( "\n\n Hiperface DSL diagnostic\n");
     #if (CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ==PRU_CLK_FREQ_225M)
-    gHdslHandleCh0 = HDSL_open(gPruIcss0Handle, PRUICSS_PRUx,0);
+    gHdslHandleCh[0] = HDSL_open(gPruIcss0Handle, PRUICSS_PRUx, 0);
     hdsl_init();
-    hdsl_pruss_load_run_fw(gHdslHandleCh0);
+    hdsl_pruss_load_run_fw(gHdslHandleCh[0]);
     #else
-    gHdslHandleCh0 = HDSL_open(gPruIcss0Handle, PRUICSS_RTU_PRU1,1);
-    gHdslHandleCh1 = HDSL_open(gPruIcss0Handle, PRUICSS_PRU1,1);
+#if (CONFIG_HDSL0_CHANNEL0==1)
+    gHdslHandleCh[0] = HDSL_open(gPruIcss0Handle, PRUICSS_RTU_PRU1, 1);
+    DebugP_assert(gHdslHandleCh[0] != NULL);
+    chMask |= CHANNEL_0_ENABLED;
+#endif
+#if (CONFIG_HDSL0_CHANNEL1==1)
+    gHdslHandleCh[1] = HDSL_open(gPruIcss0Handle, PRUICSS_PRU1, 1);
+    DebugP_assert(gHdslHandleCh[1] != NULL);
+    chMask |= CHANNEL_1_ENABLED;
+#endif
+#if (CONFIG_HDSL0_CHANNEL2==1)
+    gHdslHandleCh[2] = HDSL_open(gPruIcss0Handle, PRUICSS_TX_PRU1, 1);
+    DebugP_assert(gHdslHandleCh[2] != NULL);
+    chMask |= CHANNEL_2_ENABLED;
+#endif
     hdsl_init_300m();
-    hdsl_pruss_load_run_fw_300m(gHdslHandleCh0);
+#if (CONFIG_HDSL0_CHANNEL0==1)
+    HDSL_config_channel_mask(gHdslHandleCh[0], chMask);
+#endif
+#if (CONFIG_HDSL0_CHANNEL1==1)
+    HDSL_config_channel_mask(gHdslHandleCh[1], chMask);
+#endif
+#if (CONFIG_HDSL0_CHANNEL2==1)
+    HDSL_config_channel_mask(gHdslHandleCh[2], chMask);
+#endif
+    hdsl_pruss_load_run_fw_300m(gHdslHandleCh[0]);
     #endif
     DebugP_log( "\r\n HDSL setup finished\n");
 
@@ -1453,7 +1583,7 @@ void hdsl_diagnostic_main(void *arg)
     /* Channel 0 starts here */
     while(1)
     {
-        ureg = HDSL_get_master_qm(gHdslHandleCh0);
+        ureg = HDSL_get_master_qm(gHdslHandleCh[0]);
 
         if((ureg & QM_LINK_ESTABLISHED) != 0)
             break;
@@ -1465,7 +1595,7 @@ void hdsl_diagnostic_main(void *arg)
     /* Wait until QM is 15 */
     while(1)
     {
-        ureg = HDSL_get_master_qm(gHdslHandleCh0);
+        ureg = HDSL_get_master_qm(gHdslHandleCh[0]);
 
         if(ureg == QM_LINK_ESTABLISHED_AND_VALUE_15)
             break;
@@ -1480,13 +1610,13 @@ void hdsl_diagnostic_main(void *arg)
     DebugP_log( "\r |-------------------------------------------------------------------------------|\n");
     DebugP_log( "\r |                                                                               |\n");
     DebugP_log( "\r | Quality monitoring value: %u                                                  |\n", ureg & 0xF);
-    ureg = HDSL_get_edges(gHdslHandleCh0);
+    ureg = HDSL_get_edges(gHdslHandleCh[0]);
     DebugP_log( "\r | Edges: 0x%x                                                                    |", ureg);
-    ureg = HDSL_get_delay(gHdslHandleCh0);
+    ureg = HDSL_get_delay(gHdslHandleCh[0]);
     DebugP_log("\r\n | Cable delay: %u                                                                |", ureg & 0xF);
     DebugP_log("\r\n | RSSI: %u                                                                       |", (ureg & 0xF0) >> 4);
-    val =HDSL_get_enc_id(gHdslHandleCh0, 0) | (HDSL_get_enc_id(gHdslHandleCh0, 1) << 8) |
-              (HDSL_get_enc_id(gHdslHandleCh0, 2) << 16);
+    val =HDSL_get_enc_id(gHdslHandleCh[0], 0) | (HDSL_get_enc_id(gHdslHandleCh[0], 1) << 8) |
+              (HDSL_get_enc_id(gHdslHandleCh[0], 2) << 16);
     acc_bits = val & 0xF;
     acc_bits += 8;
     pos_bits = (val & 0x3F0) >> 4;
@@ -1497,12 +1627,12 @@ void hdsl_diagnostic_main(void *arg)
     DebugP_log( "Position bits: %u,", pos_bits);
     DebugP_log( "%s", val & 0x400 ? " Bipolar position" : " Unipolar position");
     DebugP_log(")|");
-    gHdslHandleCh0->res = read_encoder_resolution(gHdslHandleCh0);
-    gHdslHandleCh0->multi_turn = pos_bits - gHdslHandleCh0->res;
-    gHdslHandleCh0->mask = pow(2, gHdslHandleCh0->res) - 1;
-    if(gHdslHandleCh0->multi_turn)
+    gHdslHandleCh[0]->res = read_encoder_resolution(gHdslHandleCh[0]);
+    gHdslHandleCh[0]->multi_turn = pos_bits - gHdslHandleCh[0]->res;
+    gHdslHandleCh[0]->mask = pow(2, gHdslHandleCh[0]->res) - 1;
+    if(gHdslHandleCh[0]->multi_turn)
     {
-        DebugP_log( "\r\n | Single-turn bits: %u, Multi-turn bits: %u                                     |", pos_bits - gHdslHandleCh0->multi_turn, gHdslHandleCh0->multi_turn);
+        DebugP_log( "\r\n | Single-turn bits: %u, Multi-turn bits: %u                                     |", pos_bits - gHdslHandleCh[0]->multi_turn, gHdslHandleCh[0]->multi_turn);
     }
     else
     {
@@ -1517,7 +1647,7 @@ void hdsl_diagnostic_main(void *arg)
     /* Channel 1 starts here */
     while(1)
     {
-        ureg = HDSL_get_master_qm(gHdslHandleCh1);
+        ureg = HDSL_get_master_qm(gHdslHandleCh[1]);
 
         if((ureg & QM_LINK_ESTABLISHED) != 0)
             break;
@@ -1529,7 +1659,7 @@ void hdsl_diagnostic_main(void *arg)
     /* Wait until QM is 15 */
     while(1)
     {
-        ureg = HDSL_get_master_qm(gHdslHandleCh1);
+        ureg = HDSL_get_master_qm(gHdslHandleCh[1]);
 
         if(ureg == QM_LINK_ESTABLISHED_AND_VALUE_15)
             break;
@@ -1544,13 +1674,13 @@ void hdsl_diagnostic_main(void *arg)
     DebugP_log( "\r |-------------------------------------------------------------------------------|\n");
     DebugP_log( "\r |                                                                               |\n");
     DebugP_log( "\r | Quality monitoring value: %u                                                  |\n", ureg & 0xF);
-    ureg = HDSL_get_edges(gHdslHandleCh1);
+    ureg = HDSL_get_edges(gHdslHandleCh[1]);
     DebugP_log( "\r | Edges: 0x%x                                                                    |", ureg);
-    ureg = HDSL_get_delay(gHdslHandleCh1);
+    ureg = HDSL_get_delay(gHdslHandleCh[1]);
     DebugP_log("\r\n | Cable delay: %u                                                                |", ureg & 0xF);
     DebugP_log("\r\n | RSSI: %u                                                                       |", (ureg & 0xF0) >> 4);
-    val =HDSL_get_enc_id(gHdslHandleCh1, 0) | (HDSL_get_enc_id(gHdslHandleCh1, 1) << 8) |
-                (HDSL_get_enc_id(gHdslHandleCh1, 2) << 16);
+    val =HDSL_get_enc_id(gHdslHandleCh[1], 0) | (HDSL_get_enc_id(gHdslHandleCh[1], 1) << 8) |
+                (HDSL_get_enc_id(gHdslHandleCh[1], 2) << 16);
     acc_bits = val & 0xF;
     acc_bits += 8;
     pos_bits = (val & 0x3F0) >> 4;
@@ -1561,12 +1691,12 @@ void hdsl_diagnostic_main(void *arg)
     DebugP_log( "Position bits: %u,", pos_bits);
     DebugP_log( "%s", val & 0x400 ? " Bipolar position" : " Unipolar position");
     DebugP_log(")|");
-    gHdslHandleCh1->res = read_encoder_resolution(gHdslHandleCh1);
-    gHdslHandleCh1->multi_turn = pos_bits - gHdslHandleCh1->res;
-    gHdslHandleCh1->mask = pow(2, gHdslHandleCh1->res) - 1;
-    if(gHdslHandleCh0->multi_turn)
+    gHdslHandleCh[1]->res = read_encoder_resolution(gHdslHandleCh[1]);
+    gHdslHandleCh[1]->multi_turn = pos_bits - gHdslHandleCh[1]->res;
+    gHdslHandleCh[1]->mask = pow(2, gHdslHandleCh[1]->res) - 1;
+    if(gHdslHandleCh[1]->multi_turn)
     {
-        DebugP_log( "\r\n | Single-turn bits: %u, Multi-turn bits: %u                                     |", pos_bits - gHdslHandleCh1->multi_turn, gHdslHandleCh1->multi_turn);
+        DebugP_log( "\r\n | Single-turn bits: %u, Multi-turn bits: %u                                     |", pos_bits - gHdslHandleCh[1]->multi_turn, gHdslHandleCh[1]->multi_turn);
     }
     else
     {
@@ -1574,7 +1704,68 @@ void hdsl_diagnostic_main(void *arg)
     }
     DebugP_log("\r\n |-------------------------------------------------------------------------------|");
     #endif
+    #if (CONFIG_HDSL0_CHANNEL2==1)
 
+    /* Channel 2 starts here */
+    while(1)
+    {
+        ureg = HDSL_get_master_qm(gHdslHandleCh[2]);
+
+        if((ureg & QM_LINK_ESTABLISHED) != 0)
+            break;
+
+        DebugP_log( "\r\n Hiperface DSL encoder not detected\n");
+        ClockP_usleep(10000);
+    }
+
+    /* Wait until QM is 15 */
+    while(1)
+    {
+        ureg = HDSL_get_master_qm(gHdslHandleCh[2]);
+
+        if(ureg == QM_LINK_ESTABLISHED_AND_VALUE_15)
+            break;
+
+        DebugP_log( "\r\n QM is not 15 \n");
+        ClockP_usleep(10000);
+    }
+
+    DebugP_log( "\r\n");
+    DebugP_log( "\r |-------------------------------------------------------------------------------|\n");
+    DebugP_log( "\r |            Hiperface DSL Diagnostic : Channel 2                               |\n");
+    DebugP_log( "\r |-------------------------------------------------------------------------------|\n");
+    DebugP_log( "\r |                                                                               |\n");
+    DebugP_log( "\r | Quality monitoring value: %u                                                  |\n", ureg & 0xF);
+    ureg = HDSL_get_edges(gHdslHandleCh[2]);
+    DebugP_log( "\r | Edges: 0x%x                                                                    |", ureg);
+    ureg = HDSL_get_delay(gHdslHandleCh[2]);
+    DebugP_log("\r\n | Cable delay: %u                                                                |", ureg & 0xF);
+    DebugP_log("\r\n | RSSI: %u                                                                       |", (ureg & 0xF0) >> 4);
+    val =HDSL_get_enc_id(gHdslHandleCh[2], 0) | (HDSL_get_enc_id(gHdslHandleCh[2], 1) << 8) |
+                (HDSL_get_enc_id(gHdslHandleCh[2], 2) << 16);
+    acc_bits = val & 0xF;
+    acc_bits += 8;
+    pos_bits = (val & 0x3F0) >> 4;
+    pos_bits += acc_bits;
+    DebugP_log("\r\n | Encoder ID: 0x%x", val);
+    DebugP_log( "(");
+    DebugP_log( "Acceleration bits: %u, ", acc_bits);
+    DebugP_log( "Position bits: %u,", pos_bits);
+    DebugP_log( "%s", val & 0x400 ? " Bipolar position" : " Unipolar position");
+    DebugP_log(")|");
+    gHdslHandleCh[2]->res = read_encoder_resolution(gHdslHandleCh[2]);
+    gHdslHandleCh[2]->multi_turn = pos_bits - gHdslHandleCh[2]->res;
+    gHdslHandleCh[2]->mask = pow(2, gHdslHandleCh[2]->res) - 1;
+    if(gHdslHandleCh[2]->multi_turn)
+    {
+        DebugP_log( "\r\n | Single-turn bits: %u, Multi-turn bits: %u                                     |", pos_bits - gHdslHandleCh[2]->multi_turn, gHdslHandleCh[2]->multi_turn);
+    }
+    else
+    {
+        DebugP_log( "\r\n | Single-turn bits: %u                                                          |", pos_bits);
+    }
+    DebugP_log("\r\n |-------------------------------------------------------------------------------|");
+    #endif
     while(1)
     {
         int32_t menu;
@@ -1583,15 +1774,21 @@ void hdsl_diagnostic_main(void *arg)
         if (CONFIG_HDSL0_CHANNEL0==1)
         {
             DebugP_log( "|\r\n Channel 0 ");
-            process_request(gHdslHandleCh0, menu);
+            process_request(gHdslHandleCh[0], menu);
             DebugP_log( "\r%s", gUart_buffer);
         }
 
         if (CONFIG_HDSL0_CHANNEL1==1)
         {
             DebugP_log( "|\r\n Channel 1");
-            process_request(gHdslHandleCh1, menu);
+            process_request(gHdslHandleCh[1], menu);
             DebugP_log( "\r%s", gUart_buffer);
+        }
+        if (CONFIG_HDSL0_CHANNEL2==1)
+        {
+           DebugP_log( "|\r\n Channel 2");
+           process_request(gHdslHandleCh[2], menu);
+           DebugP_log( "\r%s", gUart_buffer);
         }
     }
     Board_driversClose();
