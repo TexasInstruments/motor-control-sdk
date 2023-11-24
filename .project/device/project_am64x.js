@@ -1,7 +1,6 @@
 const common = require("../common.js");
 
 const component_file_list = [
-    "source/current_sense/sdfm/.project/project.js",
     "source/position_sense/endat/.project/project.js",
     "source/position_sense/hdsl/.project/project.js",
     "source/position_sense/tamagawa/.project/project.js",
@@ -23,7 +22,6 @@ const example_file_list = [
     "examples/position_sense/tamagawa_diagnostic/multi_channel/.project/project.js",
     "examples/position_sense/tamagawa_diagnostic/single_channel/.project/project.js",   
     "examples/pruicss_pwm/pruicss_pwm_duty_cycle/.project/project.js",
-    "source/current_sense/sdfm/firmware/.project/project.js",
     "source/position_sense/endat/firmware/multi_channel_load_share/.project/project.js",
     "source/position_sense/endat/firmware/single_channel/.project/project.js",
     "source/position_sense/endat/firmware/multi_channel_single_pru/.project/project.js",

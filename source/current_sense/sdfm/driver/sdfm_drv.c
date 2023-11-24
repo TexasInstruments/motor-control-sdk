@@ -41,96 +41,39 @@
 #include <drivers/gpio.h>
 #include <kernel/dpl/AddrTranslateP.h>
 
-
-//*****************************************************************************
-//
-// Defines for the API.
-//
-//*****************************************************************************
-//! Macro to get the low threshold
-#define SDFM_GET_LOW_THRESHOLD(C)    ((uint16_t)(C))
-
-//! Macro to get the high threshold
-#define SDFM_GET_HIGH_THRESHOLD(C)   ((uint16_t)((uint32_t)(C) >> 16U))
-
-//! Macro to get the high threshold 1 & 2 to be passed as lowThreshold
-//! parameter to SDFM_setCompFilterLowThreshold().
-#define SDFM_GET_LOW_THRESHOLD_BOTH(C1, C2)                                   \
-                        ((((uint32_t)(SDFM_GET_LOW_THRESHOLD(C2))) << 16U) |  \
-                         ((uint32_t)(SDFM_GET_LOW_THRESHOLD(C1))))
-
-//! Macro to get the high threshold 1 & 2 to be passed as highThreshold
-//! parameter to SDFM_setCompFilterHighThreshold().
-#define SDFM_GET_HIGH_THRESHOLD_BOTH(C1, C2)                                  \
-                        ((((uint32_t)(SDFM_GET_HIGH_THRESHOLD(C2))) << 16U) | \
-                         ((uint32_t)(SDFM_GET_HIGH_THRESHOLD(C1))))
-
-//! Macro to convert comparator over sampling ratio to acceptable bit location
-#define SDFM_SET_OSR(X)    (((X) - 1) << 8U)
-
-//! Macro to convert the data shift bit values to acceptable bit location
-#define SDFM_SHIFT_VALUE(X)    ((X) << 2U)
-
-//! Macro to combine high threshold and low threshold values
-#define SDFM_THRESHOLD(H, L)    ((((uint32_t)(H)) << 16U) | (L))
-
-//! Macro to set the FIFO level to acceptable bit location
-#define SDFM_SET_FIFO_LEVEL(X)    ((X) << 7U)
-
-//! Macro to set and enable the zero cross threshold value.
-#define SDFM_SET_ZERO_CROSS_THRESH_VALUE(X)    (0x8000 | (X))
-
-//! Macros to enable or disable filter.
-#define SDFM_FILTER_DISABLE    (0x0U)
-#define SDFM_FILTER_ENABLE    (0x2U)
-
-//*****************************************************************************
-//
-//! Values that can be returned from SDFM_getThresholdStatus()
-//
-//*****************************************************************************
-#define SDFM_OUTPUT_WITHIN_THRESHOLD  (0)  //!< SDFM output is within threshold
-#define SDFM_OUTPUT_ABOVE_THRESHOLD  (1)  //!< SDFM output is above high threshold
-#define SDFM_OUTPUT_BELOW_THRESHOLD  (2)  //!< SDFM output is below low threshold
-
-//! Filter output is in 16 bits 2's complement format.
-#define SDFM_DATA_FORMAT_16_BIT    (0)
-//! Filter output is in 32 bits 2's complement format.
-#define SDFM_DATA_FORMAT_32_BIT    (1)
-
-//! Mask for Interrupt is generated if Modulator fails.
-//!
-#define SDFM_MODULATOR_FAILURE_INTERRUPT_MASK    ( 0 )
-//!  Mask for Interrupt on Comparator low-level threshold.
-//!
-#define SDFM_LOW_LEVEL_THRESHOLD_INTERRUPT_MASK  ( 1 )
-//!  Mask for Interrupt on Comparator high-level threshold.
-//!
-#define SDFM_HIGH_LEVEL_THRESHOLD_INTERRUPT_MASK ( 2 )
-//!  Mask for Interrupt on Acknowledge flag
-//!
-#define SDFM_DATA_FILTER_ACKNOWLEDGE_INTERRUPT_MASK ( 3 )
-
 /* Internal structure for managing each PRU SD */
 SDFM g_sdfm[NUM_PRU] = {
     {PRU_ID_0,0,0,0,0, NULL},
     {PRU_ID_1,0,0,0,0, NULL},
 };
 
-
 /* Initialize SDFM instance */
-sdfm_handle SDFM_init(uint8_t pru_id)
+sdfm_handle SDFM_init(uint8_t pru_id, uint8_t coreId)
 {
     SDFM *p_sdfm;
 
     if (pru_id == PRU_ID_0)
     {
         /* Initialize PRU 0 SD */
-
         p_sdfm = &g_sdfm[pru_id];
 
         /* Initialize SDFM control address */
-        p_sdfm->p_sdfm_interface = (SDFM_Interface *)(PRU_ICSSG_DRAM0_SLV_RAM + 0x0);
+        if(coreId == PRUICSS_RTU_PRU0)
+        {
+            p_sdfm->p_sdfm_interface = (SDFM_Interface *)(PRU_ICSSG_DRAM0_SLV_RAM + RTUx_DMEM_BASE_ADD);
+        }
+        else if (coreId == PRUICSS_PRU0)
+        {
+            p_sdfm->p_sdfm_interface = (SDFM_Interface *)(PRU_ICSSG_DRAM0_SLV_RAM + PRUx_DMEM_BASE_ADD);
+        }
+        else if (coreId == PRUICSS_TX_PRU0)
+        {
+            p_sdfm->p_sdfm_interface = (SDFM_Interface *)(PRU_ICSSG_DRAM0_SLV_RAM + TXPRUx_DMEM_BASE_ADD);
+        }
+        else
+        {
+            p_sdfm->p_sdfm_interface = NULL;
+        }
 
         /* Set FW PRU ID */
         p_sdfm->p_sdfm_interface->sdfm_ctrl.sdfm_pru_id = pru_id;
@@ -138,12 +81,25 @@ sdfm_handle SDFM_init(uint8_t pru_id)
     else if (pru_id == PRU_ID_1)
     {
         /* Initialize PRU 1 SD */
-
         p_sdfm = &g_sdfm[pru_id];
 
         /* Initialize SDFM control address */
-        p_sdfm->p_sdfm_interface = (SDFM_Interface *)(PRU_ICSSG_DRAM0_SLV_RAM + 0x0);
-
+        if(coreId == PRUICSS_RTU_PRU1)
+        {
+            p_sdfm->p_sdfm_interface = (SDFM_Interface *)(PRU_ICSSG_DRAM1_SLV_RAM + RTUx_DMEM_BASE_ADD);
+        }
+        else if (coreId == PRUICSS_PRU1)
+        {
+            p_sdfm->p_sdfm_interface = (SDFM_Interface *)(PRU_ICSSG_DRAM1_SLV_RAM + PRUx_DMEM_BASE_ADD);
+        }
+        else if (coreId == PRUICSS_TX_PRU1)
+        {
+            p_sdfm->p_sdfm_interface = (SDFM_Interface *)(PRU_ICSSG_DRAM1_SLV_RAM + TXPRUx_DMEM_BASE_ADD);
+        }
+        else
+        {
+            p_sdfm->p_sdfm_interface = NULL;
+        }
         /* Set FW PRU ID */
         p_sdfm->p_sdfm_interface->sdfm_ctrl.sdfm_pru_id = pru_id;
     }
@@ -226,21 +182,22 @@ void SDFM_disableDoubleSampling(sdfm_handle h_sdfm)
 /* Enable the channel specified by the channel number parameter*/
 void SDFM_setEnableChannel(sdfm_handle h_sdfm, uint8_t channel_number)
 {
-
-    if(channel_number == 0)
+    uint32_t temp;
+    temp  = 1<< channel_number;
+    if(temp & SDFM_CH_MASK_FOR_CH0_CH3_CH6)
     {
         h_sdfm->p_sdfm_interface->sdfm_ch_ctrl.sdfm_ch_id |= (channel_number << SDFM_CFG_BF_SD_CH0_ID_SHIFT);
-        h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[channel_number].ch_id = channel_number;
+        h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[0].ch_id = channel_number;
     }
-    else if(channel_number == 1)
+    else if(temp & SDFM_CH_MASK_FOR_CH1_CH4_CH7)
     {
         h_sdfm->p_sdfm_interface->sdfm_ch_ctrl.sdfm_ch_id |= (channel_number<< SDFM_CFG_BF_SD_CH1_ID_SHIFT);
-        h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[channel_number].ch_id = channel_number;
+        h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[1].ch_id = channel_number;
     }
-    else
+    else 
     {
         h_sdfm->p_sdfm_interface->sdfm_ch_ctrl.sdfm_ch_id |= (channel_number << SDFM_CFG_BF_SD_CH2_ID_SHIFT);
-        h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[channel_number].ch_id = channel_number;
+        h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[2].ch_id = channel_number;
     }
 }
 /* set SDFM channel acc source */
@@ -345,6 +302,26 @@ void SDFM_clearPwmTripStatus(sdfm_handle h_sdfm, uint8_t pwmIns)
     regval = HW_RD_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_PWM0 + pwmIns * 4);
     regval = regval & (~ CSL_ICSSCFG_PWM0_PWM0_TRIP_RESET_MASK);
     HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_PWM0 + pwmIns * 4, regval);
+
+}
+/*Enable Load share mode*/
+void SDFM_enableLoadShareMode(sdfm_handle h_sdfm, uint8_t sliceId)
+{
+    void *pruss_cfg = h_sdfm->pruss_cfg;
+   
+    uint32_t rgval;
+    if(sliceId)
+    {
+       rgval = HW_RD_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_SDPRU1CLKDIV);
+       rgval |= CSL_ICSSCFG_SDPRU1CLKDIV_PRU1_SD_SHARE_EN_MASK;
+       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_SDPRU1CLKDIV, rgval);
+    }
+    else
+    {
+        rgval = HW_RD_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_SDPRU0CLKDIV);
+        rgval |= CSL_ICSSCFG_SDPRU0CLKDIV_PRU0_SD_SHARE_EN_MASK;
+        HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_SDPRU0CLKDIV, rgval);
+    }
 
 }
 /*Measure Phase delay*/

@@ -122,7 +122,8 @@ typedef enum PRUICSS_MaxInstances_s
 } PRUICSS_MaxInstances;
 
 /* SDFM configuration parameters */
-typedef struct SdfmPrms_s {
+typedef struct SdfmPrms_s 
+{
     /**< PRU_CORE_CLOCK*/
     uint32_t pru_clock;
     /**< IEP clock value */

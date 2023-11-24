@@ -1,6 +1,3 @@
-;
-; sdfm_macros.h
-;
 ; Copyright (c) 2023, Texas Instruments Incorporated
 ; All rights reserved.
 ;
@@ -31,88 +28,158 @@
 ;  OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 ;  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;
-
-        .if !$defined("__sdfm_macros_h")
+;  file: sdfm_macros.h
+;
+;
+    .if !$defined("__sdfm_macros_h")
 __sdfm_macros_h .set    1
+   
+    .include "sdfm.h"
 
-        .include "sdfm.h"
-
+;************************************************************************************
 ;
-; Macros
+;   Macro: M_WRITE_C24_BLK_INDEX
 ;
+;   Write C24 block index for local PRU DMEM
+;   
+;   PEAK cycles:
+;        3 cycles
+;   Pseudo code:
+;       ICSSG_PRU_CTBIR0[0-7] = blk_index;
 ;
+;   Parameters:
+;      blk_ind : local DMEM base address for pru constant entry 24 block index 
+;
+;   Returns:
+;      None
+;
+;************************************************************************************
+M_WRITE_C24_BLK_INDEX .macro blk_index
+    ; Set DMEM (C24) block offset
+    LDI     TEMP_REG0.b0, blk_index
+    SBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_CTRL, PRUx_CNTLSELF_CONST_IDX0_REG, 1
+    ; delay for update to land?
+    NOP                                                                      
+    .endm
 
-WRITE_C24_BLK_INDEX .macro blk_index
-        ; Set DMEM (C24) block offset
-        LDI     TEMP_REG0.b0, blk_index
-        SBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_CTRL, PRUx_CNTLSELF_CONST_IDX0_REG, 1
-        NOP ; delay for update to land?
-        .endm
-
-
-; Set SD HW registers base pointer
-SET_SD_HW_REG_BASE_PTR  .macro  base_ptr
-        ; Load TR0.b0 <- FW_REG_SDFM_CTRL
-        LBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_LOC_DMEM, SDFM_PRU_ID_OFFSET,  SDFM_PRU_ID_SZ
-        ; Check PRU ID 0 or 1
-        QBEQ    pru_id1?, TEMP_REG0.b0, 1
+;************************************************************************************
+;
+;   Macro: M_SET_SD_HW_REG_BASE_PTR
+;
+;   Set SD HW registers base pointer
+;
+;   PEAK cycles:
+;        5 cycles
+;
+;   Pseudo code:
+;       (start code)
+;       if(slice_id==0)
+;       {
+;           base_ptr = PRUx_CFG_BASE + 0x48;
+;       }
+;       else
+;       {
+;           base_ptr = PRUx_CFG_BASE + 0x94;
+;       }
+;       (endcode) 
+;   Parameters:
+;      base_ptr : R24
+;
+;   Returns:
+;      None
+;
+;************************************************************************************
+M_SET_SD_HW_REG_BASE_PTR  .macro  base_ptr
+    ;load PRU slice number
+    LBBO    &TEMP_REG0.b0, SDFM_CFG_BASE_PTR_REG, SDFM_PRU_ID_OFFSET,  SDFM_PRU_ID_SZ
+    ; Check slice ID 0 or 1
+    QBEQ    pru_id1?, TEMP_REG0.b0, 1
 pru_id0?:
-        LDI32   base_ptr, PRUx_CFG_BASE+ICSSG_CFG_PRU0_SD0_CLK
-        QBA     set_sd_hw_reg_base_ptr_end?
+    LDI32   base_ptr, PRUx_CFG_BASE+ICSSG_CFG_PRU0_SD0_CLK
+    QBA     set_sd_hw_reg_base_ptr_end?
 pru_id1?:
-        LDI32   base_ptr, PRUx_CFG_BASE+ICSSG_CFG_PRU1_SD0_CLK
+    LDI32   base_ptr, PRUx_CFG_BASE+ICSSG_CFG_PRU1_SD0_CLK
 set_sd_hw_reg_base_ptr_end?:
-        .endm
+    .endm
 
-; Configure Triggered mode sample count
-;CFG_TRIG_MODE_SAMP_CNT  .macro  samp_cnt
-        ; Load samp_cnt <- SDFM_CFG_TRIG_SAMPLE_CNT
-  ;      LBCO    &samp_cnt, CT_PRU_ICSSG_LOC_DMEM, FW_REG_SDFM_CFG_TRIG_SAMPLE_CNT, FW_REG_SDFM_CFG_TRIG_SAMPLE_CNT_SZ
-   ;     .endm
-
-; Wait until shadow flag of the channel is set & clear the flag
-;   args    - ch_idx    : SD channel index {0...ICSSG_NUM_SD_CH-1}
-;;   updates - TEMP_REG0.w2  : channel sample buffer offset
+;************************************************************************************
+;   Macro: M_ACC3_PROCESS
 ;
-M_WAIT_SHADOW_FLAG_AND_CLR  .macro  ch_idx
-        ; Place ch_idx in R30[29-26], channel_select
-        LSL     TEMP_REG1.b0, ch_idx, 2
-        SET     TEMP_REG1.b0.t1
-        MOV     R30.b3, TEMP_REG1.b0
-        NOP
-
-wait_for_shadow_update_cont?:
-        ; R31[24], shadow_update_flag for ICSS
-        ; R31[28], shadow_update_flag for ICSSG
-        QBBC    wait_for_shadow_update_cont?, R31, 28
-        ; R31[24], shadow_update_flag_clr for ICSS/ICSSG
-        SET     R31, R31.t24
-        .endm
-
-        .endif  ; __sdfm_macros_h
-
-; Calculates Sinc3 sample value from ACC3 & Sinc3 variables
-;   args    - DN1, DN3, DN5 : Sinc3 differntiator state variables
-;   expects - ACC3 value in DN0, mask in MASK_REG
-;   uses    - CN3, CN4, CN5
-;   result  - CN5           : Output sample
+;   Calculates Sinc3 sample value from ACC3 & Sinc3 variables
+; 
+;   PEAK cycles:
+;        7 cycles
 ;
+;   Pseudo code:
+;       (start code)
+;       cn3 = dn0 - dn1;
+;       dn1 = dn0;
+;       cn4 = cn3 - dn3;
+;       dn3 = cn3;
+;       cn5 = cn4 - dn5
+;       dn5 = cn4
+;       cn5 = cn5 & 0x0FFFFFFF
+;       (endcode) 
+;   Parameters:
+;      DN1, DN3, DN5 : Sinc3 differntiator state variables
+;
+;   Result:
+;      CN5 : Output sample
+;
+;    Uses:
+;       CN3, CN4, CN5
+;
+;************************************************************************************
 M_ACC3_PROCESS  .macro  DN1, DN3, DN5
-        RSB     CN3, DN1, DN0
-        MOV     DN1, DN0
-        RSB     CN4, DN3, CN3
-        MOV     DN3, CN3
-        RSB     CN5, DN5, CN4
-        MOV     DN5, CN4
-        AND     CN5, CN5, MASK_REG  ; apply limit
-        .endm
+    RSB     CN3, DN1, DN0
+    MOV     DN1, DN0
+    RSB     CN4, DN3, CN3
+    MOV     DN3, CN3
+    RSB     CN5, DN5, CN4
+    MOV     DN5, CN4
+    AND     CN5, CN5, MASK_REG  ; apply limit
+    .endm
 
-;Enable task manager
+;************************************************************************************
+;
+;   Macro: M_PRU_TM_ENABLE
+;
+;   Enable task manager
+;
+;   PEAK cycles:
+;        1 cycle
+;
+;   Pseudo code:
+;      .word   0x32800000
+;   Parameters:
+;      None
+;
+;   Returns:
+;      None
+;
+;************************************************************************************
 M_PRU_TM_ENABLE .macro
     tsen 1
     .endm
 
-;Disable task manager
+;************************************************************************************
+;
+;   Macro: M_PRU_TM_DISABLE
+;
+;   Disable task manager
+;
+;   PEAK cycles:
+;        5 cycles
+;
+;   Pseudo code:
+;     .word 0x32000000
+;   Parameters:
+;      None
+;
+;   Returns:
+;      None
+;
+;************************************************************************************
 M_PRU_TM_DISABLE .macro
     tsen 0
     .endm
@@ -329,3 +396,5 @@ DELAY_16_PRU_CYCLE1:
 DELAY_DONE1:
         LDI  TEMP_REG1.b2, 1   ; status of edge is 1 means falling edge
        .endm
+
+   .endif  ; __sdfm_macros_h

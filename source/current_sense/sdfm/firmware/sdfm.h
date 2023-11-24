@@ -32,7 +32,7 @@
 ;  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;
 
-        .if !$defined("__sdfm_h")
+    .if !$defined("__sdfm_h")
 __sdfm_h    .set    1
 
 ;
@@ -151,7 +151,19 @@ ICSSG_CFG_GPCFG1                .set 0x000C ;  GP IO Configuration Register 1
 ICSSG_CFG_SPPC                  .set 0x0034 ;  Scratch PAD priority and config
 ICSSG_CFG_PRU0_SD0_CLK          .set 0x48
 ICSSG_CFG_PRU1_SD0_CLK          .set 0x94
-ICSSG_CFG_PWM0                   .set 0x130 ; PWM0 configuration register offset 
+
+    .if $isdefed("SDFM_LOAD_SHARE_MODE")
+    .if $isdefed("SDFM_RTU_CORE")
+ICSSG_CFG_PWMx                   .set 0x130 ; PWM0 configuration register offset 
+    .elseif $isdefed("SDFM_PRU_CORE")
+ICSSG_CFG_PWMx                   .set 0x134 ; PWM1 configuration register offset 
+    .elseif $isdefed("SDFM_TXPRU_CORE")
+ICSSG_CFG_PWMx                   .set 0x138 ; PWM2 configuration register offset 
+    .endif ; SDFM_TXPRU_CORE
+    .else
+ICSSG_CFG_PWMx                   .set 0x130 ; PWM0 configuration register offset 
+    .endif ;SDFM_LOAD_SHARE_MODE
+
 
 ;
 ; ICSSG_GPCFGn_REG:PR1_PRUn_GP_MUX_SEL, Controls the icss_wrap mux sel
@@ -279,4 +291,27 @@ TM_YIELD_XID                    .set 252
 ;IEP_CFG
 IEP_DEFAULT_INC                 .set 0x1
 
-    .endif  ; __sdfm_h
+;SD_CH_ID
+    .if $isdefed("SDFM_LOAD_SHARE_MODE")
+    .if $isdefed("SDFM_RTU_CORE")
+; Load Sharing: RTUn
+SD_CH0                       .set 0000b
+SD_CH1                       .set 0001b
+SD_CH2                       .set 0010b
+   .elseif $isdefed("SDFM_PRU_CORE")
+; Load Sharing: PRUn
+SD_CH0                      .set 0011b
+SD_CH1                       .set 0100b
+SD_CH2                       .set 0101b
+   .elseif $isdefed("SDFM_TXPRU_CORE")
+SD_CH0                      .set 00110b
+SD_CH1                       .set 0111b
+SD_CH2                       .set 1000b    
+   .endif
+   .else
+SD_CH0                       .set 0000b
+SD_CH1                       .set 0001b
+SD_CH2                       .set 0010b 
+   .endif
+
+   .endif  ; __sdfm_h
