@@ -60,7 +60,12 @@
 #include <position_sense/hdsl/include/hdsl_drv.h>
 #include <position_sense/hdsl/include/pruss_intc_mapping.h>
 
-#if (CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ==225000000)
+/* PRU clock frequency =225Mhz   */
+#define PRU_CLK_FREQ_225M 225000000
+/*  PRU clock frequency =300Mhz   */
+#define PRU_CLK_FREQ_300M 300000000
+
+#if (CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ==PRU_CLK_FREQ_225M)
 #include <position_sense/hdsl/firmware/hdsl_master_icssg_freerun_225_mhz_bin.h>
 #include <position_sense/hdsl/firmware/hdsl_master_icssg_sync_225_mhz_bin.h>
 /* Divide factor for normal clock (default value for 225 MHz=23) */
@@ -69,7 +74,7 @@
 #define DIV_FACTOR_OVERSAMPLED 2
 #endif
 
-#if (CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ==300000000)
+#if (CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ==PRU_CLK_FREQ_300M)
 #include <position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch0_bin.h>
 #include <position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch1_bin.h>
 #include <position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch0_sync_mode_bin.h>
@@ -82,6 +87,8 @@
 #if (CONFIG_HDSL0_CHANNEL0 + CONFIG_HDSL0_CHANNEL1 > 1)
 #define HDSL_MULTI_CHANNEL
 #endif
+
+#define SYNC_PULSE_WAIT_CLK_CYCLES  5505
 
 /* Divide factor for normal clock (default value for 300 MHz=31) */
 #define DIV_FACTOR_NORMAL 31
@@ -96,6 +103,12 @@
 #define PRUICSS_PRUx  PRUICSS_PRU1
 /* Oversample rate 8*/
 #define OVERSAMPLE_RATE 7
+
+/* max cycle time for transmission of dsl frame*/
+#define MAX_SYNC_CYCLE_TIME 27
+
+/* min cycle time for transmission of dsl frame*/
+#define MIN_SYNC_CYCLE_TIME 12
 
 #define HDSL_EN (0x1 << 26)
 /* OCP as clock, div 32 */
@@ -134,24 +147,6 @@
 /*                       Function Declarations                                */
 /* ========================================================================== */
 
-#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
-
-void App_udmaEventCb(Udma_EventHandle eventHandle, uint32_t eventType, void *appData);
-
-static void App_udmaTrpdInit(Udma_ChHandle chHandle,
-                             uint8_t *trpdMem,
-                             const void *destBuf,
-                             const void *srcBuf,
-                             uint32_t length);
-
-void udma_copy(uint8_t *srcBuf, uint8_t *destBuf, uint32_t length);
-
-static void HDSL_IsrFxn();
-
-#ifndef HDSL_MULTI_CHANNEL
-void traces_into_memory(HDSL_Handle hdslHandle);
-#endif
-
 void sync_calculation(HDSL_Handle hdslHandle);
 
 void process_request(HDSL_Handle hdslHandle,int32_t menu);
@@ -184,12 +179,28 @@ void indirect_write_rid0_length8(HDSL_Handle hdslHandle);
 
 static int get_menu(void);
 
+uint32_t read_encoder_resolution(HDSL_Handle hdslHandle);
+
 #ifdef HDSL_AM64xE1_TRANSCEIVER
 static void hdsl_i2c_io_expander(void *args);
 #endif
 
-uint32_t read_encoder_resolution(HDSL_Handle hdslHandle);
+#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
 
+void App_udmaEventCb(Udma_EventHandle eventHandle, uint32_t eventType, void *appData);
+
+static void App_udmaTrpdInit(Udma_ChHandle chHandle,
+                             uint8_t *trpdMem,
+                             const void *destBuf,
+                             const void *srcBuf,
+                             uint32_t length);
+
+void udma_copy(uint8_t *srcBuf, uint8_t *destBuf, uint32_t length);
+
+static void HDSL_IsrFxn();
+
+void traces_into_memory(HDSL_Handle hdslHandle);
+#endif
 /* ========================================================================== */
 /*                            Global Variables                                */
 /* ========================================================================== */
@@ -244,6 +255,7 @@ uint8_t gUdmaTestTrpdMem[UDMA_TEST_TRPD_SIZE] __attribute__((aligned(UDMA_CACHEL
 /*                          Function Definitions                              */
 /* ========================================================================== */
 
+#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
 
 static void App_udmaTrpdInit(Udma_ChHandle chHandle,
                              uint8_t *trpdMem,
@@ -408,11 +420,11 @@ void sync_calculation(HDSL_Handle hdslHandle)
     uint32_t counter, period, index;
     volatile uint32_t cap6_rise0, cap6_rise1, cap6_fall0, cap6_fall1;
     uint8_t EXTRA_EDGE_ARR[8] = {0x00 ,0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE};
-    #if (CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ==225000000)
+    #if (CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ==PRU_CLK_FREQ_225M)
         uint32_t minm_bits = 112, cycle_per_bit = 24, max_stuffing = 26, stuffing_size = 6, cycle_per_overclock_bit =3, minm_extra_size = 4, sync_param_mem_start = 0xDC;
         uint32_t cycles_left, additional_bits, minm_cycles, time_gRest, extra_edge, extra_size, num_of_stuffing, extra_size_remainder, stuffing_remainder, bottom_up_cycles;
     #endif
-    #if (CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ==300000000)
+    #if (CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ==PRU_CLK_FREQ_300M)
         uint32_t minm_bits = 112, cycle_per_bit = 32, max_stuffing = 26, stuffing_size = 6, cycle_per_overclock_bit =4, minm_extra_size = 4, sync_param_mem_start = 0xDC;
         uint32_t cycles_left, additional_bits, minm_cycles, time_gRest, extra_edge, extra_size, num_of_stuffing, extra_size_remainder, stuffing_remainder, bottom_up_cycles;
     #endif
@@ -445,7 +457,6 @@ void sync_calculation(HDSL_Handle hdslHandle)
 
     period = cap6_rise1 - cap6_rise0;
     /*measure of SYNC period ends*/
-
     minm_cycles = minm_bits * ES * cycle_per_bit;
     cycles_left = period - minm_cycles;
     time_gRest = (cycles_left % cycle_per_bit) / cycle_per_overclock_bit;
@@ -471,7 +482,7 @@ void sync_calculation(HDSL_Handle hdslHandle)
     {
         wait_before_start = wait_before_start+(stuffing_size * cycle_per_bit);
     }
-    wait_before_start = wait_before_start - 51;
+    wait_before_start=wait_before_start+SYNC_PULSE_WAIT_CLK_CYCLES;
     if(extra_size < 4 || extra_size > 9)
     {
         DebugP_log("\r\n ERROR: ES or period selected is Invalid ");
@@ -489,10 +500,10 @@ void sync_calculation(HDSL_Handle hdslHandle)
     DebugP_log("\r\n SYNC MODE: extra_size_remainder = %d", extra_size_remainder);
     DebugP_log("\r\n SYNC MODE: stuffing_remainder = %d", stuffing_remainder);
     DebugP_log("\r\n ********************************************************************");
-    #if (CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ==225000000)
+    #if (CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ==PRU_CLK_FREQ_225M)
         sync_param_mem_start =sync_param_mem_start + (uint32_t)gPru_dramx;
     #endif
-    #if (CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ==300000000)
+    #if (CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ==PRU_CLK_FREQ_300M)
         sync_param_mem_start =sync_param_mem_start + (uint32_t)hdslHandle->baseMemAddr;
     #endif
     HWREGB(sync_param_mem_start) = extra_size;
@@ -730,7 +741,7 @@ void hdsl_pruss_init_300m(void)
 
 void hdsl_pruss_load_run_fw(HDSL_Handle hdslHandle)
 {
-#if (CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ==225000000)
+#if (CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ==PRU_CLK_FREQ_225M)
         PRUICSS_disableCore(gPruIcss0Handle, PRUICSS_PRUx);
     if(HDSL_get_sync_ctrl(hdslHandle) == 0)
     {
@@ -754,7 +765,7 @@ void hdsl_pruss_load_run_fw(HDSL_Handle hdslHandle)
 
 void hdsl_pruss_load_run_fw_300m(HDSL_Handle hdslHandle)
 {
-#if (CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ==300000000)
+#if (CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ==PRU_CLK_FREQ_300M)
         PRUICSS_disableCore(gPruIcss0Handle, PRUICSS_RTU_PRU1);    // ch0
         PRUICSS_disableCore(gPruIcss0Handle, PRUICSS_PRU1);        // ch1
 
@@ -877,8 +888,26 @@ void hdsl_init_300m(void)
     if(ES != 0)
     {
         DebugP_log("\r\nSYNC MODE\n");
-        DebugP_log("\r\nEnter period for SYNC PULSE in unit of cycles(1 cycle = 3.33ns):");
+        DebugP_log("\r\nEnter ES and period for SYNC PULSE in unit of cycles(1 cycle = 3.33ns):");
+        DebugP_scanf("%d",&ES);
+
+        HDSL_set_sync_ctrl(gHdslHandleCh0,ES);
+        HDSL_set_sync_ctrl(gHdslHandleCh1,ES);
         DebugP_scanf("%d",&period);
+        /*  Check Sync period condition
+
+        (Tsync= Cycle time for input SYNC pulse signal ,
+        Tmin=MIN_SYNC_CYCLE_TIME, Tmax=MAX_SYNC_CYCLE_TIME
+        Tsync=period/(PRU clock freq)  =  period/300)
+
+        ES <= Tsync/Tmin  and  ES >= Tsync/Tmax     */
+
+        if ((ES > (period/(MIN_SYNC_CYCLE_TIME*300))) || (ES < (period/(MAX_SYNC_CYCLE_TIME*300))))
+        {
+            DebugP_log("\r\n FAIL: HDSL ES or period value you entered is not valid");
+            while(1)
+                ;
+        }
         HDSL_enable_sync_signal(ES,period);
         if (CONFIG_HDSL0_CHANNEL0==1)
         {
@@ -1387,7 +1416,7 @@ void hdsl_diagnostic_main(void *arg)
     gPruIcss0Handle = PRUICSS_open(CONFIG_PRU_ICSS0);
     // initialize hdsl handle
     DebugP_log( "\n\n Hiperface DSL diagnostic\n");
-    #if (CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ==225000000)
+    #if (CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ==PRU_CLK_FREQ_225M)
     gHdslHandleCh0 = HDSL_open(gPruIcss0Handle, PRUICSS_PRUx,0);
     hdsl_init();
     hdsl_pruss_load_run_fw(gHdslHandleCh0);

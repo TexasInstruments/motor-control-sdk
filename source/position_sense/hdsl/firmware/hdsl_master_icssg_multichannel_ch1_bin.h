@@ -51,6 +51,7 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
 const uint32_t Hiperface_DSL2_0_PRU_0[] = {
 0x21078100,
 0x2eff8f8e,
@@ -1651,7 +1652,7 @@ const uint32_t Hiperface_DSL2_0_PRU_0[] = {
 0x81100580,
 0x240003c0,
 0x810605c0,
-0x24000900,
+0x24000a00,
 0x810b1800,
 0x81441800,
 0x2eff8383,
