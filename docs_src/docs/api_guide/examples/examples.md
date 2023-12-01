@@ -15,6 +15,7 @@ This page lists all the examples and demos supported in this SDK.
     -# \subpage EXAMPLE_MOTORCONTROL_ENDAT
     -# \subpage EXAMPLE_MOTORCONTROL_HDSL
     -# \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA
+    -# \subpage EXAMPLE_MOTORCONTROL_BISSC
 - Current Sense
     -# \subpage EXAMPLE_MOTORCONTROL_SDFM
 - RTLibs
