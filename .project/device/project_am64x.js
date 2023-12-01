@@ -5,6 +5,7 @@ const component_file_list = [
     "source/position_sense/endat/.project/project.js",
     "source/position_sense/hdsl/.project/project.js",
     "source/position_sense/tamagawa/.project/project.js",
+    "source/pruicss_pwm/.project/project.js"
 ];
 
 const device_defines = {
