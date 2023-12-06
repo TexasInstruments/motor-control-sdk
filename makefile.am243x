@@ -73,6 +73,8 @@ help:
 	@echo  $(MAKE) -s -C examples/position_sense/bissc_diagnostic/multi_channel_single_pru/am243x-lp/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C examples/current_sense/icss_sdfm/am243x-evm/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C examples/current_sense/icss_sdfm/am243x-lp/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C examples/pruicss_pwm/am243x-evm/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C examples/pruicss_pwm/am243x-lp/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/current_sense/sdfm/firmware/am243x-evm/icssg0-pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/endat/firmware/multi_channel_load_share/am243x-evm/icssg0-pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/endat/firmware/multi_channel_load_share/am243x-evm/icssg0-rtupru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
@@ -103,17 +105,14 @@ BUILD_COMBO_motorcontrol_sdfm = motorcontrol_sdfm_r5f.ti-arm-clang
 BUILD_COMBO_motorcontrol_endat = motorcontrol_endat_r5f.ti-arm-clang
 BUILD_COMBO_motorcontrol_hdsl = motorcontrol_hdsl_r5f.ti-arm-clang
 BUILD_COMBO_motorcontrol_tamagawa = motorcontrol_tamagawa_r5f.ti-arm-clang
-<<<<<<< HEAD
 BUILD_COMBO_motorcontrol_bissc = motorcontrol_bissc_r5f.ti-arm-clang
 
 # Combine all Components
 BUILD_COMBO_ALL = $(BUILD_COMBO_motorcontrol_sdfm) $(BUILD_COMBO_motorcontrol_endat) $(BUILD_COMBO_motorcontrol_hdsl) $(BUILD_COMBO_motorcontrol_tamagawa) $(BUILD_COMBO_motorcontrol_bissc)
-=======
 BUILD_COMBO_pruicss_pwm = pruicss_pwm_r5f.ti-arm-clang
 
 # Combine all Components
 BUILD_COMBO_ALL = $(BUILD_COMBO_motorcontrol_sdfm) $(BUILD_COMBO_motorcontrol_endat) $(BUILD_COMBO_motorcontrol_hdsl) $(BUILD_COMBO_motorcontrol_tamagawa) $(BUILD_COMBO_pruicss_pwm)
->>>>>>> db822bd (am243x/am64x: pruio: add pwm driver)
 
 # Combine all Pre-built Components
 BUILD_COMBO_PREBUILT_ALL =
@@ -139,13 +138,10 @@ $(BUILD_COMBO_motorcontrol_hdsl):
 $(BUILD_COMBO_motorcontrol_tamagawa):
 	$(MAKE) -C source/position_sense/tamagawa -f makefile.am243x.$(subst motorcontrol_tamagawa_,,$@) all
 
-<<<<<<< HEAD
 $(BUILD_COMBO_motorcontrol_bissc):
 	$(MAKE) -C source/position_sense/bissc -f makefile.am243x.$(subst motorcontrol_bissc_,,$@) all
-=======
 $(BUILD_COMBO_pruicss_pwm):
 	$(MAKE) -C source/pruicss_pwm -f makefile.am243x.$(subst pruicss_pwm_,,$@) all
->>>>>>> db822bd (am243x/am64x: pruio: add pwm driver)
 
 
 # Various Component Clean Targets
@@ -153,17 +149,14 @@ BUILD_COMBO_CLEAN_motorcontrol_sdfm = motorcontrol_sdfm_r5f.ti-arm-clang_clean
 BUILD_COMBO_CLEAN_motorcontrol_endat = motorcontrol_endat_r5f.ti-arm-clang_clean
 BUILD_COMBO_CLEAN_motorcontrol_hdsl = motorcontrol_hdsl_r5f.ti-arm-clang_clean
 BUILD_COMBO_CLEAN_motorcontrol_tamagawa = motorcontrol_tamagawa_r5f.ti-arm-clang_clean
-<<<<<<< HEAD
 BUILD_COMBO_CLEAN_motorcontrol_bissc = motorcontrol_bissc_r5f.ti-arm-clang_clean
 
 # Combine all Components Clean
 BUILD_COMBO_CLEAN_ALL = $(BUILD_COMBO_CLEAN_motorcontrol_sdfm) $(BUILD_COMBO_CLEAN_motorcontrol_endat) $(BUILD_COMBO_CLEAN_motorcontrol_hdsl) $(BUILD_COMBO_CLEAN_motorcontrol_tamagawa) $(BUILD_COMBO_CLEAN_motorcontrol_bissc)
-=======
 BUILD_COMBO_CLEAN_pruicss_pwm = pruicss_pwm_r5f.ti-arm-clang_clean
 
 # Combine all Components Clean
 BUILD_COMBO_CLEAN_ALL = $(BUILD_COMBO_CLEAN_motorcontrol_sdfm) $(BUILD_COMBO_CLEAN_motorcontrol_endat) $(BUILD_COMBO_CLEAN_motorcontrol_hdsl) $(BUILD_COMBO_CLEAN_motorcontrol_tamagawa) $(BUILD_COMBO_CLEAN_pruicss_pwm)
->>>>>>> db822bd (am243x/am64x: pruio: add pwm driver)
 
 # Combine all Pre-built Components Clean
 BUILD_COMBO_PREBUILT_CLEAN_ALL =
@@ -184,13 +177,10 @@ $(BUILD_COMBO_CLEAN_motorcontrol_hdsl):
 $(BUILD_COMBO_CLEAN_motorcontrol_tamagawa):
 	$(MAKE) -C source/position_sense/tamagawa -f makefile.am243x.$(subst motorcontrol_tamagawa_,,$(subst _clean,,$@)) clean
 
-<<<<<<< HEAD
 $(BUILD_COMBO_CLEAN_motorcontrol_bissc):
 	$(MAKE) -C source/position_sense/bissc -f makefile.am243x.$(subst motorcontrol_bissc_,,$(subst _clean,,$@)) clean
-=======
 $(BUILD_COMBO_CLEAN_pruicss_pwm):
 	$(MAKE) -C source/pruicss_pwm -f makefile.am243x.$(subst pruicss_pwm_,,$(subst _clean,,$@)) clean
->>>>>>> db822bd (am243x/am64x: pruio: add pwm driver)
 
 
 # Various Component Scrub Targets
@@ -198,17 +188,14 @@ BUILD_COMBO_SCRUB_motorcontrol_sdfm = motorcontrol_sdfm_r5f.ti-arm-clang_scrub_s
 BUILD_COMBO_SCRUB_motorcontrol_endat = motorcontrol_endat_r5f.ti-arm-clang_scrub_scrub
 BUILD_COMBO_SCRUB_motorcontrol_hdsl = motorcontrol_hdsl_r5f.ti-arm-clang_scrub_scrub
 BUILD_COMBO_SCRUB_motorcontrol_tamagawa = motorcontrol_tamagawa_r5f.ti-arm-clang_scrub_scrub
-<<<<<<< HEAD
 BUILD_COMBO_SCRUB_motorcontrol_bissc = motorcontrol_bissc_r5f.ti-arm-clang_scrub_scrub
 
 # Combine all Components Scrub Targets
 BUILD_COMBO_SCRUB_ALL = $(BUILD_COMBO_SCRUB_motorcontrol_sdfm) $(BUILD_COMBO_SCRUB_motorcontrol_endat) $(BUILD_COMBO_SCRUB_motorcontrol_hdsl) $(BUILD_COMBO_SCRUB_motorcontrol_tamagawa) $(BUILD_COMBO_SCRUB_motorcontrol_bissc)
-=======
 BUILD_COMBO_SCRUB_pruicss_pwm = pruicss_pwm_r5f.ti-arm-clang_scrub_scrub
 
 # Combine all Components Scrub Targets
 BUILD_COMBO_SCRUB_ALL = $(BUILD_COMBO_SCRUB_motorcontrol_sdfm) $(BUILD_COMBO_SCRUB_motorcontrol_endat) $(BUILD_COMBO_SCRUB_motorcontrol_hdsl) $(BUILD_COMBO_SCRUB_motorcontrol_tamagawa) $(BUILD_COMBO_SCRUB_pruicss_pwm)
->>>>>>> db822bd (am243x/am64x: pruio: add pwm driver)
 
 # Combine all Pre-built Components Scrub Targets
 BUILD_COMBO_PREBUILT_SCRUB_ALL =
@@ -229,13 +216,10 @@ $(BUILD_COMBO_SCRUB_motorcontrol_hdsl):
 $(BUILD_COMBO_SCRUB_motorcontrol_tamagawa):
 	$(MAKE) -C source/position_sense/tamagawa -f makefile.am243x.$(subst motorcontrol_tamagawa_,,$(subst _scrub,,$@)) scrub
 
-<<<<<<< HEAD
 $(BUILD_COMBO_SCRUB_motorcontrol_bissc):
 	$(MAKE) -C source/position_sense/bissc -f makefile.am243x.$(subst motorcontrol_bissc_,,$(subst _scrub,,$@)) scrub
-=======
 $(BUILD_COMBO_SCRUB_pruicss_pwm):
 	$(MAKE) -C source/pruicss_pwm -f makefile.am243x.$(subst pruicss_pwm_,,$(subst _scrub,,$@)) scrub
->>>>>>> db822bd (am243x/am64x: pruio: add pwm driver)
 
 
 BUILD_COMBO_EXAMPLE_ALL =
@@ -263,6 +247,8 @@ BUILD_COMBO_EXAMPLE_ALL += bissc_diagnostic_multi_channel_load_share_am243x-lp_r
 BUILD_COMBO_EXAMPLE_ALL += bissc_diagnostic_multi_channel_single_pru_am243x-lp_r5fss0-0_freertos_ti-arm-clang
 BUILD_COMBO_EXAMPLE_ALL += icss_sdfm_am243x-evm_r5fss0-0_freertos_ti-arm-clang
 BUILD_COMBO_EXAMPLE_ALL += icss_sdfm_am243x-lp_r5fss0-0_freertos_ti-arm-clang
+BUILD_COMBO_EXAMPLE_ALL += pruicss_pwm_duty_cycle_am243x-evm_r5fss0-0_freertos_ti-arm-clang
+BUILD_COMBO_EXAMPLE_ALL += pruicss_pwm_duty_cycle_am243x-lp_r5fss0-0_freertos_ti-arm-clang
 # Various System Example Targets
 
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL =
@@ -362,6 +348,12 @@ examples-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_ALL)
  icss_sdfm_am243x-lp_r5fss0-0_freertos_ti-arm-clang:
 	$(MAKE) -C examples/current_sense/icss_sdfm/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile all
 
+ pruicss_pwm_duty_cycle_am243x-evm_r5fss0-0_freertos_ti-arm-clang:
+	$(MAKE) -C examples/pruicss_pwm/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile all
+
+ pruicss_pwm_duty_cycle_am243x-lp_r5fss0-0_freertos_ti-arm-clang:
+	$(MAKE) -C examples/pruicss_pwm/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile all
+
  sdfm_firmware_am243x-evm_icssg0-pru0_fw_ti-pru-cgt:
 	$(MAKE) -C source/current_sense/sdfm/firmware/am243x-evm/icssg0-pru0_fw/ti-pru-cgt -f makefile all
 
@@ -448,6 +440,8 @@ BUILD_COMBO_EXAMPLE_CLEAN_ALL += bissc_diagnostic_multi_channel_load_share_am243
 BUILD_COMBO_EXAMPLE_CLEAN_ALL += bissc_diagnostic_multi_channel_single_pru_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_CLEAN_ALL += icss_sdfm_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_CLEAN_ALL += icss_sdfm_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_CLEAN_ALL += pruicss_pwm_duty_cycle_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_CLEAN_ALL += pruicss_pwm_duty_cycle_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean
 # Various System Example Clean Targets
 
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL =
@@ -547,6 +541,12 @@ examples-private-clean: $(BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL)
  icss_sdfm_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
 	$(MAKE) -C examples/current_sense/icss_sdfm/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile clean
 
+ pruicss_pwm_duty_cycle_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/pruicss_pwm/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile clean
+
+ pruicss_pwm_duty_cycle_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/pruicss_pwm/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile clean
+
  sdfm_firmware_am243x-evm_icssg0-pru0_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/current_sense/sdfm/firmware/am243x-evm/icssg0-pru0_fw/ti-pru-cgt -f makefile clean
 
@@ -633,6 +633,8 @@ BUILD_COMBO_EXAMPLE_SCRUB_ALL += bissc_diagnostic_multi_channel_load_share_am243
 BUILD_COMBO_EXAMPLE_SCRUB_ALL += bissc_diagnostic_multi_channel_single_pru_am243x-lp_r5fss0-0_freertos_ti-arm-clang_scrub
 BUILD_COMBO_EXAMPLE_SCRUB_ALL += icss_sdfm_am243x-evm_r5fss0-0_freertos_ti-arm-clang_scrub
 BUILD_COMBO_EXAMPLE_SCRUB_ALL += icss_sdfm_am243x-lp_r5fss0-0_freertos_ti-arm-clang_scrub
+BUILD_COMBO_EXAMPLE_SCRUB_ALL += pruicss_pwm_duty_cycle_am243x-evm_r5fss0-0_freertos_ti-arm-clang_scrub
+BUILD_COMBO_EXAMPLE_SCRUB_ALL += pruicss_pwm_duty_cycle_am243x-lp_r5fss0-0_freertos_ti-arm-clang_scrub
 # Various System Example Scrub Targets
 
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL =
@@ -731,6 +733,12 @@ examples-scrub-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL)
 
  icss_sdfm_am243x-lp_r5fss0-0_freertos_ti-arm-clang_scrub:
 	$(MAKE) -C examples/current_sense/icss_sdfm/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile scrub
+
+ pruicss_pwm_duty_cycle_am243x-evm_r5fss0-0_freertos_ti-arm-clang_scrub:
+	$(MAKE) -C examples/pruicss_pwm/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile scrub
+
+ pruicss_pwm_duty_cycle_am243x-lp_r5fss0-0_freertos_ti-arm-clang_scrub:
+	$(MAKE) -C examples/pruicss_pwm/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile scrub
 
  sdfm_firmware_am243x-evm_icssg0-pru0_fw_ti-pru-cgt_scrub:
 	$(MAKE) -C source/current_sense/sdfm/firmware/am243x-evm/icssg0-pru0_fw/ti-pru-cgt -f makefile scrub

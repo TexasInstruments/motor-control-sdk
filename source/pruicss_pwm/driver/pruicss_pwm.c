@@ -45,7 +45,7 @@ int32_t PRUICSS_setIepCounterLower_32bitValue(PRUICSS_Handle handle, uint8_t iep
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (iepInstance < 2) && (value < 0xFFFFFFFF))
+    if ((handle != NULL) && (iepInstance < 2) && (value <= 0xFFFFFFFF))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)handle->hwAttrs;
@@ -70,7 +70,7 @@ int32_t PRUICSS_setIepCounterUpper_32bitValue(PRUICSS_Handle handle, uint8_t iep
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (iepInstance < 2) && (value < 0xFFFFFFFF))
+    if ((handle != NULL) && (iepInstance < 2) && (value <= 0xFFFFFFFF))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)handle->hwAttrs;
@@ -121,7 +121,7 @@ int32_t PRUICSS_configureIepCompareEnable(PRUICSS_Handle handle, uint8_t iepInst
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (iepInstance < 2) && (value < 0xFFFF))
+    if ((handle != NULL) && (iepInstance < 2) && (value <= 0xFFFF))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)handle->hwAttrs;
@@ -458,11 +458,11 @@ int32_t PRUICSS_setIepCompareEventUpper_32bitValue(PRUICSS_Handle handle, uint8_
     return retVal;    
 }
 
-int32_t PRUICSS_setPwmDebouceValue(PRUICSS_Handle handle, uint8_t pwmSet, uint8_t value){
+int32_t PRUICSS_setPwmDebounceValue(PRUICSS_Handle handle, uint8_t pwmSet, uint8_t value){
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (pwmSet < 4) && (value < 0xFF))
+    if ((handle != NULL) && (pwmSet < 4) && (value <= 0xFF))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)handle->hwAttrs;

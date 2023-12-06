@@ -37,9 +37,6 @@
  * 
  * PRUICSS has one pwm module, which has four pwm sets (PWM0, PWM1, PWM2, PWM3)
  * Each Set has six signals (A0,A1,A2,B0,B1,B2)
- * Each Set one trip zone output OR logic block, which has nine trip signals 
- * (trip_e1_[0:2], trip_e2, trip_e3[0:2], trip_e4, trip_e5) as input 
- * 
  * With Reference to Technical Reference Manual, Pwm six signals(A0,A1,A2,B0,B1,B2) Naming convention is slightly different
  * 
  *          PWMn==============>PWMn_0=========>PWMn_0_POS (alias signal A0)
@@ -54,6 +51,25 @@
  *                  |           
  *                  |=========>PWMn_2=========>PWMn_2_POS (alias signal B1)  
  *                                      |=====>PWMn_2_NEG (alias signal B2) 
+ * 
+ * Each Set has one trip zone output OR logic block
+ * Each trip zone block has nine trip_error signals (trip_e1_[0:2], trip_e2, trip_e3[0:2], trip_e4, trip_e5) as input 
+ * And one PWMn_TZ_OUT output signal which makes transition to safe or trip state from current state
+ *                                                                   ________________
+ *             tripn_e1_[2:0](Debounce Trip)----------------------->|                |
+ *                                                                  |                |
+ *             tripn_e2(Debounce Error Trip_in)-------------------->|                |              _____________
+ *                                                                  |                |              |           |
+ *             trip_e3[2:0](SD Fast detect Error Trip)------------->|   Tripzone     |------------->|PWMn_TZ_OUT|
+ *                                                                  |    output      |              |___________| 
+ *                                                                  |     logic      |
+ *             trip_e4(SD over current Error Trip)----------------->|                |
+ *                                                                  |                |
+ *             trip_e5(Position Error trip)------------------------>|                |
+ *                                                                  |________________|               
+ * 
+ * 
+ * 
  * @{
  */
 
@@ -95,7 +111,7 @@ extern "C" {
 /* ========================================================================== */
 
 /**
- * \brief  This API writes Lower_32bitValue of IEP counter in IEP module.
+ * \brief  This API writes Lower_32bit Value of IEP counter in IEP module.
  *      
  * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
  * \param   iepInstance 0 for IEP0, 1 for IEP1
@@ -106,7 +122,7 @@ extern "C" {
 int32_t PRUICSS_setIepCounterLower_32bitValue(PRUICSS_Handle handle, uint8_t iepInstance, uint32_t value);
 
 /**
- * \brief  This API writes Upper_32bitValue of IEP counter in IEP module.
+ * \brief  This API writes Upper_32bit Value of IEP counter in IEP module.
  *      
  * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
  * \param   iepInstance 0 for IEP0, 1 for IEP1
@@ -139,7 +155,7 @@ int32_t PRUICSS_configureIepCmp0ResetEnable(PRUICSS_Handle handle, uint8_t iepIn
 int32_t PRUICSS_configureIepCompareEnable(PRUICSS_Handle handle, uint8_t iepInstance, uint16_t value);
 
 /**
- * \brief  This API writes Lower_32bitValue of compare event in IEP module.
+ * \brief  This API writes Lower_32bit Value of compare event in IEP module.
  *      
  * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
  * \param   iepInstance 0 for IEP0, 1 for IEP1
@@ -151,7 +167,7 @@ int32_t PRUICSS_configureIepCompareEnable(PRUICSS_Handle handle, uint8_t iepInst
 int32_t PRUICSS_setIepCompareEventLower_32bitValue(PRUICSS_Handle handle, uint8_t iepInstance, uint8_t cmpEvent, uint32_t value);
 
 /**
- * \brief  This API writes Upper_32bitValue of compare event in IEP module.
+ * \brief  This API writes Upper_32bit Value of compare event in IEP module.
  *      
  * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
  * \param   iepInstance 0 for IEP0, 1 for IEP1
@@ -171,7 +187,7 @@ int32_t PRUICSS_setIepCompareEventUpper_32bitValue(PRUICSS_Handle handle, uint8_
  * \return  #SystemP_SUCCESS on success, #SystemP_FAILURE on error
  * 
 */
-int32_t PRUICSS_setPwmDebouceValue(PRUICSS_Handle handle, uint8_t pwmSet, uint8_t value);
+int32_t PRUICSS_setPwmDebounceValue(PRUICSS_Handle handle, uint8_t pwmSet, uint8_t value);
 
 /**
  * \brief  This API updates TripMask Value for specified pwm set
