@@ -99,6 +99,11 @@ The main software components in the block diagram specific to motor control are 
     <td>\ref TAMAGAWA
     <td> Driver and PRU-ICSS firmware for Tamagawa encoder interface
 </tr>
+<tr>
+    <td> BISS-C
+    <td>\ref BISS-C
+    <td> Driver and PRU-ICSS firmware for BISS-C encoder interface
+</tr>
 <tr><td colspan="3" bgcolor=#F0F0F0>**Current Sense**</td></tr>
 <tr>
     <td> %SDFM

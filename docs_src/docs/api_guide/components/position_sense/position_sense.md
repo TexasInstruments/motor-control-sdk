@@ -11,7 +11,9 @@ Applications and PRU-ICSS firmwares for following position sense encoders are pr
 - \subpage ENDAT
 - \subpage HDSL
 - \subpage TAMAGAWA
-
+\cond SOC_AM243X
+- \subpage BISS-C
+\endcond
 \endcond
 
 \cond SOC_AM263X

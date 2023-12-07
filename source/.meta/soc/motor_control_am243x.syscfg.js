@@ -5,6 +5,7 @@ const topModules_main = [
     "/position_sense/endat",
     "/position_sense/hdsl",
     "/position_sense/tamagawa",
+    "/position_sense/bissc",
 
 ];
 

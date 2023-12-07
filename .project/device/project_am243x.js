@@ -5,6 +5,7 @@ const component_file_list = [
     "source/position_sense/endat/.project/project.js",
     "source/position_sense/hdsl/.project/project.js",
     "source/position_sense/tamagawa/.project/project.js",
+    "source/position_sense/bissc/.project/project.js",
 ];
 
 const device_defines = {
@@ -23,6 +24,9 @@ const example_file_list = [
     "examples/position_sense/hdsl_diagnostic/single_channel/.project/project.js",
     "examples/position_sense/tamagawa_diagnostic/multi_channel/.project/project.js",
     "examples/position_sense/tamagawa_diagnostic/single_channel/.project/project.js",
+    "examples/position_sense/bissc_diagnostic/single_channel/.project/project.js",
+    "examples/position_sense/bissc_diagnostic/multi_channel_load_share/.project/project.js",
+    "examples/position_sense/bissc_diagnostic/multi_channel_single_pru/.project/project.js",
     "examples/current_sense/icss_sdfm/.project/project.js",
     "source/current_sense/sdfm/firmware/.project/project.js",
     "source/position_sense/endat/firmware/multi_channel_load_share/.project/project.js",
@@ -36,6 +40,9 @@ const example_file_list = [
     "source/position_sense/hdsl/firmware/sync_225_mhz/.project/project.js",
     "source/position_sense/tamagawa/firmware/multi_channel/.project/project.js",
     "source/position_sense/tamagawa/firmware/single_channel/.project/project.js",
+    "source/position_sense/bissc/firmware/single_channel/.project/project.js",
+    "source/position_sense/bissc/firmware/multi_channel_load_share/.project/project.js",
+    "source/position_sense/bissc/firmware/multi_channel_single_pru/.project/project.js",
 ];
 
 function getProjectSpecCpu(cpu) {
