@@ -306,6 +306,43 @@ uint64_t SDFM_getFirmwareVersion(sdfm_handle h_sdfm)
 {
    return h_sdfm->p_sdfm_interface->firmwareVersion;
 }
+/*FD block confiuration */
+void SDFM_configFastDetect(sdfm_handle h_sdfm, uint8_t ch, uint8_t *fdParms)
+{
+    h_sdfm->p_sdfm_interface->sdfm_ch_ctrl.enFastDetect |= 1<<ch;
+    h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[ch].fd_window = fdParms[0];
+    h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[ch].fd_zero_max = fdParms[1];
+    h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[ch].fd_zero_min = fdParms[2];
+      
+    /*Configure one max to window size + 1 and one min to 0, so they never get set*/
+    h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[ch].fd_one_max = (fdParms[0] + 1) * 4 + 1;
+    h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[ch].fd_one_min = 0;
+
+}
+
+/*return status of Trip status bit*/
+uint32_t SDFM_getPwmTripStatus(sdfm_handle h_sdfm, uint8_t pwmIns)
+{
+    void *pruss_cfg = h_sdfm->pruss_cfg;
+    uint32_t regval;
+    regval = HW_RD_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_PWM0 + pwmIns * 4);
+    regval  = regval & CSL_ICSSCFG_PWM0_PWM0_TRIP_S_MASK;
+    return regval>>CSL_ICSSCFG_PWM0_PWM0_TRIP_S_SHIFT;
+}
+
+/*Clear Trip status bit*/
+void SDFM_clearPwmTripStatus(sdfm_handle h_sdfm, uint8_t pwmIns)
+{
+    void *pruss_cfg = h_sdfm->pruss_cfg;
+    uint32_t regval;
+    regval = HW_RD_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_PWM0 + pwmIns * 4);
+    regval = regval | CSL_ICSSCFG_PWM0_PWM0_TRIP_RESET_MASK;
+    HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_PWM0 + pwmIns * 4, regval);
+    regval = HW_RD_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_PWM0 + pwmIns * 4);
+    regval = regval & (~ CSL_ICSSCFG_PWM0_PWM0_TRIP_RESET_MASK);
+    HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_PWM0 + pwmIns * 4, regval);
+
+}
 /* SDFM global enable */
 void SDFM_enable(sdfm_handle h_sdfm)
 {

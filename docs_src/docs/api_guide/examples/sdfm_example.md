@@ -15,6 +15,8 @@ The ICSS %SDFM example invokes these APIs to
 - Enable & disable double update
 - Inform firmware to enable %SDFM mode
 - Configure GPIO pins for high and low threshold
+- Configure fast detect block
+
 
 
 Once these steps are executed
@@ -258,9 +260,36 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
         <td>5. Observe resolution of raw data</td>
         <td></td>
 </tr>
+<tr>
+        <td>7. To check Fast detect</td>
+        <td>1. Set NC OSR to 64</td>
+        <td> Trip must be triggered for the respective  pwm trip zone block </td>
+</tr>
+<tr>
+        <td></td>
+        <td>2. Enable Fast detect</td>
+        <td></td>
+ </tr>
+<tr>
+        <td></td>
+        <td>3. Set Fast Detect fields with these values { window size = 4, Zero max = 18, Zero min = 2}</td>
+        <td>Zero max/min Threshold hit bits must be constantly unset and set </td>
+ </tr>
+
+<tr>
+        <td></td>
+        <td>4. Build and run example</td>
+        <td>One max/min threshold hit bits must be unset</td>
+</tr>
+<tr>
+        <td></td>
+        <td>5. 1) Observe TZ_OUT PIN. 
+               2) Check zero/one count max & zero/one count min threshold hit bits in memory map</td>
+        <td></td>
+</tr>
 \cond SOC_AM243X
 <tr>
-        <td>7.Testing with sdfm clock from EPWM </td>
+        <td>8.Testing with sdfm clock from EPWM </td>
         <td>1. Make hardware set up like attached image </td>
         <td>All test cases results should match with ECAP test case results</td>
  </tr>

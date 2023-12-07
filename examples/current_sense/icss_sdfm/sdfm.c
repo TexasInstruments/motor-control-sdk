@@ -170,7 +170,7 @@ void sdfm_configure_gpio_pin(sdfm_handle h_sdfm)
 
 }
 /* Initialize SDFM PRU FW */
-int32_t init_sdfm_pru_fw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm)
+int32_t init_sdfm_pru_fw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm, void *pruss_cfg)
 {
     sdfm_handle hSdfm;
 
@@ -194,6 +194,7 @@ int32_t init_sdfm_pru_fw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm
     uint32_t sampleOutputInterfaceGlobalAddr = CPU0_BTCM_SOCVIEW(pSdfmPrms->samplesBaseAddress);
     hSdfm->p_sdfm_interface->sampleBufferBaseAdd = sampleOutputInterfaceGlobalAddr;
     hSdfm->iep_inc = 1; /* Default IEP increment 1 */
+    hSdfm->pruss_cfg = pruss_cfg;
 
 
     uint8_t acc_filter = 0; //SINC3 filter
@@ -225,7 +226,11 @@ int32_t init_sdfm_pru_fw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm
 
         /*set threshold values */
         SDFM_setCompFilterThresholds(hSdfm, SDFM_CH, pSdfmPrms->threshold_parms[SDFM_CH]);
-        
+        if(pSdfmPrms->en_fd)
+        {
+            /*Fast detect configuration */
+            SDFM_configFastDetect(hSdfm, SDFM_CH, pSdfmPrms->fastDetect[SDFM_CH]);
+        }
         if(pSdfmPrms->en_com)
         {
             SDFM_enableComparator(hSdfm, SDFM_CH);       
@@ -236,7 +241,7 @@ int32_t init_sdfm_pru_fw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm
         }
 
     }
-
+    
     /*GPIO pin configuration for threshold measurment*/
     sdfm_configure_gpio_pin(hSdfm);
 
@@ -277,12 +282,15 @@ int32_t initPruSdfm(
     uint32_t byteLen;                   /* Total number of bytes to be written */
     uint8_t pruId;
     int32_t status;
+    void *pruss_cfg;
 
+    pruss_cfg = (void *)(((PRUICSS_HwAttrs *)(pruIcssHandle->hwAttrs))->cfgRegBase);
     /* Reset PRU */
     status = PRUICSS_resetCore(pruIcssHandle, pruInstId);
     if (status != SystemP_SUCCESS) {
         return SDFM_ERR_INIT_PRU_SDFM;
     }
+
 
     /* Calculate slice ID */
     sliceId = pruInstId - (uint8_t)pruInstId/ICSSG_NUM_SLICE * ICSSG_NUM_SLICE;
@@ -342,7 +350,7 @@ int32_t initPruSdfm(
     }
 
     /* Initialize SDFM PRU FW */
-    status = init_sdfm_pru_fw(pruId, pSdfmPrms, pHSdfm);
+    status = init_sdfm_pru_fw(pruId, pSdfmPrms, pHSdfm, pruss_cfg);
     if (status != SDFM_ERR_NERR) {
         return SDFM_ERR_INIT_PRU_SDFM;
     }

@@ -13,16 +13,22 @@ ICSS %SDFM is a sigma delta interface for phase current measurement in high perf
  - Normal current (NC) for data read:  SINC3 filter with OSR 16 to 256
  - Overcurrent (OC) for comparator: free running SINC3 filter with OSR 16 to 256
  - Event generation(ARM interrupt for data read from DMEM, GPIO toggle for high and low thresholds)
- - High and Low threshold comparator
+ - Single level High and Low threshold comparator
  - Trigger based normal current sampling
  - Double update: Double normal current sampling per EPWM cycle 
  - %SDFM Sync with EPWM 
+ - Fast detect 
+ - PWM Trip generation for overcurrent 
 
 ## Features Not Supported
 - Zero cross comparator
-- OSR below 16
 - Clock phase compensation 
-- Fast detect and trip generation
+- Multi-level threshold 
+
+## System design considerations
+### Over Sample Ratio 
+-  OSR Below 16 at SD_CLK greater than 20MHz. The normal current task takes 300ns to 400ns to complete and its execution is based on CMP event and task manager. When we configure OSR below 16 for greater than 20 MHz SD clock, the NC will not be able to complete its processing until the next sample is ready, this will cause the NC samples to be inaccurate.
+     
 
 ## ICSS SDFM Design
 \subpage SDFM_DESIGN explains the design in detail.

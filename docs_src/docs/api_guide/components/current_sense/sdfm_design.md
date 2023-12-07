@@ -103,6 +103,10 @@ The firmware initiates normal current sampling at the sample trigger point in ea
 Here ONE_SAMPLE_TIME is: OSR*(1/SD_CLK)  
 \image html SDFM_epwm_sync_and_trigger_timing.png "Sync with EPWM and trigger timing"
 
+#### Fast Detect and Trip generation
+The Fast Detect block is used for fast over current detection, it comparatively measures the number of zeros and ones presented in a programmable sliding window of 4 to 32 bits. It starts the comparison after the first 32 sample clocks. Based on the configured zero max/min count limits, it compares zero counter with these limits. If zero counter crosses limit then it sends a error signal to respective PWM Trip zone block.
+PWM TZ block receives this error signal and generates a Trip on TZ_OUT pin.
+
 #### AM64x/AM243x EVM Pin-Multiplexing
 <table>
 <tr>
@@ -234,6 +238,11 @@ Here ONE_SAMPLE_TIME is: OSR*(1/SD_CLK)
     <td>SD8_CLK
     <td>PIN_PRG0_PRU0_GPO16
 	<td>(J1.7)Comman %SDFM clock input pin
+</tr>
+<tr>
+    <td>PWM0_TZ_OUT
+    <td>PIN_PRG0_PRU0_GPO19
+	<td>(J5.45)TZ output pin for Axis-1
 </tr>
 </table>
 \endcond

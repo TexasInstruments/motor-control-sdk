@@ -192,9 +192,7 @@ init_sdfm_cont:
         SET     R30.t25 ; R30[25] channel_en = 1, all channels enabled
 
         ;Configure pwm TZ block
-        .if $isdefed("FD_CODE")
         JAL   RET_ADDR_REG, config_pwm_trip
-        .endif
 
         ; Initialize dedicated registers:
         ;   MASK register,
@@ -738,7 +736,8 @@ reset_sdfm_state:
 ;   SD_HW_BASE_PTR_REG: base address of SD HW configuration registers (&ICSSG_PRUn_SD_CLK_SEL_REG0)
 ;
 config_oc_osr:
-
+        ;Load fast detect enable bits
+        LBCO   &TEMP_REG3, CT_PRU_ICSSG_LOC_DMEM, SDFM_CFG_SD_EN_FD_OFFSET, 1
         LDI    TEMP_REG0, 0
         ; Load TR1.w0 <- SDFM_CFG_SD_CH_ID = ;LDI      TEMP_REG1.w0, 0x210 =001100010000
         LBCO    &TEMP_REG1.w0, CT_PRU_ICSSG_LOC_DMEM,  SDFM_CFG_SD_CH_ID_OFFSET,  SDFM_CFG_SD_CH_ID_SZ
@@ -749,19 +748,18 @@ config_oc_osr:
         ; Load TR0.b0 <-  SDFM_CFG_OSR load osr from DMEM for ch0
         LBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_LOC_DMEM,  SDFM_CFG_CH0_OSR_OFFSET,  SDFM_CFG_OSR_SZ
 
-        .if $isdefed("FD_CODE")
+        QBBC   SDFM_SKIP0_CH2, TEMP_REG3.b0, 0
        ;configure fast detect one count and enable fast detect
-        LBCO   &FAST_window_REG, CT_PRU_ICSSG_LOC_DMEM, SDFM_CFG_CH0_FD_WD_REG_OFFSET, 1
-        LBCO   &FAST_ONE_min_REG, CT_PRU_ICSSG_LOC_DMEM, SDFM_CFG_CH0_FD_ONE_MIN_REG_OFFSET, 1
-        LBCO   &FAST_ONE_max_REG, CT_PRU_ICSSG_LOC_DMEM, SDFM_CFG_CH0_FD_ONE_MAX_REG_OFFSET, 1
+        LBCO   &FAST_WINDOW_REG, CT_PRU_ICSSG_LOC_DMEM, SDFM_CFG_CH0_FD_WD_REG_OFFSET, 1
+        LBCO   &FAST_ONE_MIN_REG, CT_PRU_ICSSG_LOC_DMEM, SDFM_CFG_CH0_FD_ONE_MIN_REG_OFFSET, 1
+        LBCO   &FAST_ONE_MAX_REG, CT_PRU_ICSSG_LOC_DMEM, SDFM_CFG_CH0_FD_ONE_MAX_REG_OFFSET, 1
 
-        MOV     TEMP_REG0.b1, FAST_window_REG
-        LSL     TEMP_REG0.b2, FAST_ONE_min_REG, 3
+        MOV     TEMP_REG0.b1, FAST_WINDOW_REG
+        LSL     TEMP_REG0.b2, FAST_ONE_MIN_REG, 3
         OR      TEMP_REG0.b1, TEMP_REG0.b2, TEMP_REG0.b1
-        LSL     TEMP_REG0.b2, FAST_ONE_max_REG, 1
+        LSL     TEMP_REG0.b2, FAST_ONE_MAX_REG, 1
         OR      TEMP_REG0.b2, TEMP_REG0.b2, 0x41;clear max & min threshold hit
         OR      TEMP_REG0.b2, TEMP_REG0.b2, 0x80;enable fast detec
-        .endif
 
         JMP    SDFM_SKIP0_CH2
 SDFM_SKIP0_CH0:
@@ -769,41 +767,42 @@ SDFM_SKIP0_CH0:
         ; Load TR0.b0 <-  SDFM_CFG_OSR load osr from DMEM for ch1
         LBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_LOC_DMEM,  SDFM_CFG_CH1_OSR_OFFSET,  SDFM_CFG_OSR_SZ
 
-         .if $isdefed("FD_CODE")
+         
+        QBBC   SDFM_SKIP0_CH2, TEMP_REG3.b0, 1
         ;configure fast detect one count and enable fast detect
-        LBCO   &FAST_window_REG, CT_PRU_ICSSG_LOC_DMEM, SDFM_CFG_CH1_FD_WD_REG_OFFSET, 1
-        LBCO   &FAST_ONE_min_REG, CT_PRU_ICSSG_LOC_DMEM, SDFM_CFG_CH1_FD_ONE_MIN_REG_OFFSET, 1
-        LBCO   &FAST_ONE_max_REG, CT_PRU_ICSSG_LOC_DMEM, SDFM_CFG_CH1_FD_ONE_MAX_REG_OFFSET, 1
+        LBCO   &FAST_WINDOW_REG, CT_PRU_ICSSG_LOC_DMEM, SDFM_CFG_CH1_FD_WD_REG_OFFSET, 1
+        LBCO   &FAST_ONE_MIN_REG, CT_PRU_ICSSG_LOC_DMEM, SDFM_CFG_CH1_FD_ONE_MIN_REG_OFFSET, 1
+        LBCO   &FAST_ONE_MAX_REG, CT_PRU_ICSSG_LOC_DMEM, SDFM_CFG_CH1_FD_ONE_MAX_REG_OFFSET, 1
 
-        MOV     TEMP_REG0.b1, FAST_window_REG
-        LSL     TEMP_REG0.b2, FAST_ONE_min_REG, 3
+        MOV     TEMP_REG0.b1, FAST_WINDOW_REG
+        LSL     TEMP_REG0.b2, FAST_ONE_MIN_REG, 3
         OR      TEMP_REG0.b1, TEMP_REG0.b2, TEMP_REG0.b1
-        LSL     TEMP_REG0.b2, FAST_ONE_max_REG, 1
-        OR      TEMP_REG0.b2, TEMP_REG0.b2, 0x41;clear max & min threshold hit
+        LSL     TEMP_REG0.b2, FAST_ONE_MAX_REG, 1
+        OR      TEMP_REG0.b2, TEMP_REG0.b2, 0x41;clear max & MIN threshold hit
         OR      TEMP_REG0.b2, TEMP_REG0.b2, 0x80;enable fast detect
-        .endif
+    
 
         JMP    SDFM_SKIP0_CH2
 SDFM_SKIP0_CH1:
         QBNE            SDFM_SKIP0_CH2, TEMP_REG2.b0,	SD_CH2_ID
         ; Load TR0.b0 <-  SDFM_CFG_OSR load osr from DMEM for ch2
         LBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_LOC_DMEM,  SDFM_CFG_CH2_OSR_OFFSET,  SDFM_CFG_OSR_SZ
-
-        .if $isdefed("FD_CODE")
+        
+        QBBC   SDFM_SKIP0_CH2, TEMP_REG3.b0, 2
         ;configure fast detect one count and enable fast detect
-        LBCO   &FAST_window_REG, CT_PRU_ICSSG_LOC_DMEM, SDFM_CFG_CH2_FD_WD_REG_OFFSET, 1
-        LBCO   &FAST_ONE_min_REG, CT_PRU_ICSSG_LOC_DMEM, SDFM_CFG_CH2_FD_ONE_MIN_REG_OFFSET, 1
-        LBCO   &FAST_ONE_max_REG, CT_PRU_ICSSG_LOC_DMEM, SDFM_CFG_CH2_FD_ONE_MAX_REG_OFFSET, 1
+        LBCO   &FAST_WINDOW_REG, CT_PRU_ICSSG_LOC_DMEM, SDFM_CFG_CH2_FD_WD_REG_OFFSET, 1
+        LBCO   &FAST_ONE_MIN_REG, CT_PRU_ICSSG_LOC_DMEM, SDFM_CFG_CH2_FD_ONE_MIN_REG_OFFSET, 1
+        LBCO   &FAST_ONE_MAX_REG, CT_PRU_ICSSG_LOC_DMEM, SDFM_CFG_CH2_FD_ONE_MAX_REG_OFFSET, 1
 
-        MOV     TEMP_REG0.b1, FAST_window_REG
-        LSL     TEMP_REG0.b2, FAST_ONE_min_REG, 3
+        MOV     TEMP_REG0.b1, FAST_WINDOW_REG
+        LSL     TEMP_REG0.b2, FAST_ONE_MIN_REG, 3
         OR      TEMP_REG0.b1, TEMP_REG0.b2, TEMP_REG0.b1
-        LSL     TEMP_REG0.b2, FAST_ONE_max_REG, 1
+        LSL     TEMP_REG0.b2, FAST_ONE_MAX_REG, 1
         ;clear max & min threshold hit
         OR      TEMP_REG0.b2, TEMP_REG0.b2, 0x41
         ;fast detect is enabled at a later stage
         OR      TEMP_REG0.b2, TEMP_REG0.b2, 0x80
-        .endif
+        
 
 SDFM_SKIP0_CH2:
 
@@ -828,7 +827,9 @@ config_osr_loop_end:
 ;
 ;
 config_sd_ch:
-         LDI    TEMP_REG0, 0
+        ;load fast detect enable bit
+        LBCO   &TEMP_REG3, CT_PRU_ICSSG_LOC_DMEM, SDFM_CFG_SD_EN_FD_OFFSET, 1
+        LDI    TEMP_REG0, 0
         ; Load TR1.w0 <- SDFM_CFG_SD_CH_ID ;LDI      TEMP_REG1.w0, 0x210 =001100010000
 
         LBCO    &TEMP_REG1.w0, CT_PRU_ICSSG_LOC_DMEM,  SDFM_CFG_SD_CH_ID_OFFSET,  SDFM_CFG_SD_CH_ID_SZ
@@ -854,15 +855,15 @@ config_sd_ch:
         AND     TEMP_REG0.b2, TEMP_REG0.b2, PRUn_SD_ACC_SELi_MASK<<PRUn_SD_ACC_SELi_SHIFT
         OR      TEMP_REG0.b0, TEMP_REG0.b0, TEMP_REG0.b2
 
-        .if $isdefed("FD_CODE")
+        QBBC   SDFM_SKIP1_CH2, TEMP_REG3.b0, 0
         ; configure fast detect zero count
-        LBCO    &FAST_ZERO_min_REG, CT_PRU_ICSSG_LOC_DMEM,  SDFM_CFG_CH0_FD_ZERO_MIN_REG_OFFSET, 1
-        LBCO    &FAST_ZERO_max_REG, CT_PRU_ICSSG_LOC_DMEM,  SDFM_CFG_CH0_FD_ZERO_MAX_REG_OFFSET, 1
+        LBCO    &FAST_ZERO_MIN_REG, CT_PRU_ICSSG_LOC_DMEM,  SDFM_CFG_CH0_FD_ZERO_MIN_REG_OFFSET, 1
+        LBCO    &FAST_ZERO_MAX_REG, CT_PRU_ICSSG_LOC_DMEM,  SDFM_CFG_CH0_FD_ZERO_MAX_REG_OFFSET, 1
 
-        LSL     TEMP_REG0.b1, FAST_ZERO_min_REG, 3             ; r0.b1=120= 0111 1000
-        LSL     TEMP_REG0.b2, FAST_ZERO_max_REG, 1 ; r0.b2=30
+        LSL     TEMP_REG0.b1, FAST_ZERO_MIN_REG, 3             ; r0.b1=120= 0111 1000
+        LSL     TEMP_REG0.b2, FAST_ZERO_MAX_REG, 1 ; r0.b2=30
         OR      TEMP_REG0.b2, TEMP_REG0.b2, 0x41             ; clear hit flags; r0.b2 = 0101 1111 = 95
-        .endif
+        
 
         JMP    SDFM_SKIP1_CH2
 SDFM_SKIP1_CH0:
@@ -885,15 +886,15 @@ SDFM_SKIP1_CH0:
         AND     TEMP_REG0.b2, TEMP_REG0.b2, PRUn_SD_ACC_SELi_MASK<<PRUn_SD_ACC_SELi_SHIFT
         OR      TEMP_REG0.b0, TEMP_REG0.b0, TEMP_REG0.b2
 
-        .if $isdefed("FD_CODE")
+         QBBC   SDFM_SKIP1_CH2, TEMP_REG3.b0, 1
         ; configure fast detect zero count
-        LBCO    &FAST_ZERO_min_REG, CT_PRU_ICSSG_LOC_DMEM,  SDFM_CFG_CH1_FD_ZERO_MIN_REG_OFFSET, 1
-        LBCO    &FAST_ZERO_max_REG, CT_PRU_ICSSG_LOC_DMEM,  SDFM_CFG_CH1_FD_ZERO_MAX_REG_OFFSET, 1
+        LBCO    &FAST_ZERO_MIN_REG, CT_PRU_ICSSG_LOC_DMEM,  SDFM_CFG_CH1_FD_ZERO_MIN_REG_OFFSET, 1
+        LBCO    &FAST_ZERO_MAX_REG, CT_PRU_ICSSG_LOC_DMEM,  SDFM_CFG_CH1_FD_ZERO_MAX_REG_OFFSET, 1
 
-        LSL     TEMP_REG0.b1, FAST_ZERO_min_REG, 3             ; r0.b1=120= 0111 1000
-        LSL     TEMP_REG0.b2, FAST_ZERO_max_REG, 1 ; r0.b2=30
+        LSL     TEMP_REG0.b1, FAST_ZERO_MIN_REG, 3             ; r0.b1=120= 0111 1000
+        LSL     TEMP_REG0.b2, FAST_ZERO_MAX_REG, 1 ; r0.b2=30
         OR      TEMP_REG0.b2, TEMP_REG0.b2, 0x41             ; clear hit flags; r0.b2 = 0101 1111 = 95
-        .endif
+      
 
         JMP    SDFM_SKIP1_CH2
 SDFM_SKIP1_CH1:
@@ -916,15 +917,15 @@ SDFM_SKIP1_CH1:
         AND     TEMP_REG0.b2, TEMP_REG0.b2, PRUn_SD_ACC_SELi_MASK<<PRUn_SD_ACC_SELi_SHIFT
         OR      TEMP_REG0.b0, TEMP_REG0.b0, TEMP_REG0.b2
 
-        .if $isdefed("FD_CODE")
+        QBBC   SDFM_SKIP1_CH2, TEMP_REG3.b0, 2
         ; configure fast detect zero count
-        LBCO    &FAST_ZERO_min_REG, CT_PRU_ICSSG_LOC_DMEM,  SDFM_CFG_CH2_FD_ZERO_MIN_REG_OFFSET, 1
-        LBCO    &FAST_ZERO_max_REG, CT_PRU_ICSSG_LOC_DMEM,  SDFM_CFG_CH2_FD_ZERO_MAX_REG_OFFSET, 1
+        LBCO    &FAST_ZERO_MIN_REG, CT_PRU_ICSSG_LOC_DMEM,  SDFM_CFG_CH2_FD_ZERO_MIN_REG_OFFSET, 1
+        LBCO    &FAST_ZERO_MAX_REG, CT_PRU_ICSSG_LOC_DMEM,  SDFM_CFG_CH2_FD_ZERO_MAX_REG_OFFSET, 1
 
-        LSL     TEMP_REG0.b1, FAST_ZERO_min_REG, 3             ; r0.b1=120= 0111 1000
-        LSL     TEMP_REG0.b2, FAST_ZERO_max_REG, 1 ; r0.b2=30
+        LSL     TEMP_REG0.b1, FAST_ZERO_MIN_REG, 3             ; r0.b1=120= 0111 1000
+        LSL     TEMP_REG0.b2, FAST_ZERO_MAX_REG, 1 ; r0.b2=30
         OR      TEMP_REG0.b2, TEMP_REG0.b2, 0x41             ; clear hit flags; r0.b2 = 0101 1111 = 95
-        .endif
+      
 
 SDFM_SKIP1_CH2:
        ;configure source clock, clock inversion & ACC source for all connected channels
@@ -965,18 +966,27 @@ reset_sd_ch_hw_loop_end:
         JMP     RET_ADDR_REG
 
 
-      .if $isdefed("FD_CODE")
+    
 ;
-;EPWM trip generation configuration
+;PWM trip zone block configuration
 config_pwm_trip:
-       ;set trip mask
-       LDI    TEMP_REG1, 0x134
+       ;set trip mask       
+       ;PWM0 register offset 
+       LDI    TEMP_REG1, ICSSG_CFG_PWM0
        LBCO   &TEMP_REG0, CT_PRU_ICSSG_CFG, TEMP_REG1, 4
-       LDI  TEMP_REG0.b1, 0x02; trip mask
+       QBNE            SDFM_MASK_SKIP1_CH0,   SD_CH0_ID, 0
+       OR TEMP_REG0.b1, TEMP_REG0.b1, 1
+SDFM_MASK_SKIP1_CH0
+       QBNE            SDFM_MASK_SKIP1_CH1,   SD_CH1_ID, 1
+       OR TEMP_REG0.b1, TEMP_REG0.b1, 2
+SDFM_MASK_SKIP1_CH1       
+        QBNE            SDFM_MASK_SKIP1_CH2, SD_CH2_ID,	2
+        OR TEMP_REG0.b1, TEMP_REG0.b1, 4
+SDFM_MASK_SKIP1_CH2:           
        SBCO   &TEMP_REG0, CT_PRU_ICSSG_CFG, TEMP_REG1, 4
 
        JMP     RET_ADDR_REG
-      .endif
+      
 ;
 ; Initialize SD (eCAP PWM) clock
 ;

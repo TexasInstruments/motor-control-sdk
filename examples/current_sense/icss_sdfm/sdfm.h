@@ -110,7 +110,7 @@
 #define ICSSG_SLICE_ID_0   ( 0 )    /* ICSSG slide ID 0 */
 #define ICSSG_SLICE_ID_1   ( 1 )    /* ICSSG slide ID 1 */
 #define ICSSG_NUM_SLICE    ( 2 )    /* ICSSG number of slices */
-
+#define NUM_FD_FIELD   ( 3 )
 /*!
  *  @brief    PRUICSS Instance IDs
  */
@@ -147,6 +147,10 @@ typedef struct SdfmPrms_s {
     uint8_t en_com;
     /**< output samples base address*/
     uint32_t samplesBaseAddress;
+    /**<enable fast detect*/
+    uint8_t en_fd;
+    /**<Fast detect configuration field*/
+    uint8_t fastDetect[NUM_SD_CH][NUM_FD_FIELD];
 } SdfmPrms;
 
 
