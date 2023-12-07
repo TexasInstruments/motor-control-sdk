@@ -2177,9 +2177,12 @@ send_header_extra_not_too_small1:
 	qbge		extra_size_validation_done1, REG_TMP0.b0, 9  ;too large extra window
 	sub			EXTRA_SIZE_COMP, EXTRA_SIZE_COMP, 6
 	add			NUM_STUFFING_COMP, NUM_STUFFING_COMP, 1
-extra_size_validation_done1:
-num_pulses_is_not_one2:
+	jmp extra_size_validation_done1
 
+num_pulses_is_not_one2:
+	loop extra_size_validation_done1,2
+	PUSH_FIFO_2B_8x
+extra_size_validation_done1:
 	.if !$defined("HDSL_MULTICHANNEL")
 	jmp comp_logic_done_1
 	.endif
