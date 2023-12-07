@@ -55,6 +55,7 @@
  * Each Set has one trip zone output OR logic block
  * Each trip zone block has nine trip_error signals (trip_e1_[0:2], trip_e2, trip_e3[0:2], trip_e4, trip_e5) as input 
  * And one PWMn_TZ_OUT output signal which makes transition to safe or trip state from current state
+ *        
  *                                                                   ________________
  *             tripn_e1_[2:0](Debounce Trip)----------------------->|                |
  *                                                                  |                |
@@ -87,6 +88,7 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 #include <drivers/pruicss.h>
+#include <kernel/dpl/SystemP.h>
 #include <drivers/hw_include/cslr.h>
 #include <drivers/hw_include/hw_types.h>
 
@@ -95,14 +97,44 @@ extern "C" {
 /* ========================================================================== */
 
 /**
- * \brief  Return status when the API execution was successful
+ * \brief Number of PRUICSS IEP Instances
  */
-#define SystemP_SUCCESS   ((int32_t )0)
+#define PRUICSS_NUM_IEP_INSTANCES                           (0x2U)
 
 /**
- * \brief  Return status when the API execution was not successful due to a failure.
+ * \brief PRUICSS IEP count register maximum value
  */
-#define SystemP_FAILURE   ((int32_t)-1)
+#define PRUICSS_IEP_COUNT_REG_MAX                           (0xFFFFFFFFU)
+
+/**
+ * \brief Number of PRUICSS IEP compare events
+ */
+#define PRUICSS_NUM_IEP_CMP_EVENTS                          (0x10U)
+
+/**
+ * \brief Number of PRUICSS IEP compare events enable field maximum value 
+ */
+#define PRUICSS_IEP_CMP_EVENTS_ENABLE_MAX_VALUE             (0x0000FFFFU)
+
+/**
+ * \brief Number of PRUICSS PWM Sets
+ */
+#define PRUICSS_NUM_PWM_SETS                                (0x4U)
+
+/**
+ * \brief Number of PRUICSS PWM number of states
+ */
+#define PRUICSS_NUM_PWM_STATES                              (0x3U)
+
+/**
+ * \brief PRUICSS PWM Debounce maximum value
+ */
+#define PRUICSS_PWM_DEBOUNCE_MAX_VALUE                      (0xFFU)
+
+/**
+ * \brief Number of PRUICSS PWM Sets
+ */
+#define PRUICSS_PWM_TRIP_MASK_MAX_VALUE                     (0x000001FFU)
 
 
 
@@ -116,10 +148,10 @@ extern "C" {
  * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
  * \param   iepInstance 0 for IEP0, 1 for IEP1
  * \param   value       iep count register Lower 32bit Value
- * \return  #SystemP_SUCCESS on success, #SystemP_FAILURE on error
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  *
  */
-int32_t PRUICSS_setIepCounterLower_32bitValue(PRUICSS_Handle handle, uint8_t iepInstance, uint32_t value);
+int32_t PRUICSS_PWM_setIepCounterLower_32bitValue(PRUICSS_Handle handle, uint8_t iepInstance, uint32_t value);
 
 /**
  * \brief  This API writes Upper_32bit Value of IEP counter in IEP module.
@@ -127,21 +159,21 @@ int32_t PRUICSS_setIepCounterLower_32bitValue(PRUICSS_Handle handle, uint8_t iep
  * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
  * \param   iepInstance 0 for IEP0, 1 for IEP1
  * \param   value       iep count register Upper 32bit Value
- * \return  #SystemP_SUCCESS on success, #SystemP_FAILURE on error
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  *
  */
-int32_t PRUICSS_setIepCounterUpper_32bitValue(PRUICSS_Handle handle, uint8_t iepInstance, uint32_t value);
+int32_t PRUICSS_PWM_setIepCounterUpper_32bitValue(PRUICSS_Handle handle, uint8_t iepInstance, uint32_t value);
 
 /**
  * \brief  This API sets enables/disables of IEP counter reset on compare 0 event in IEP module.
  *      
  * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
  * \param   iepInstance 0 for IEP0, 1 for IEP1
- * \param   value       Value to store in compare enable field of compare config register
- * \return  #SystemP_SUCCESS on success, #SystemP_FAILURE on error
+ * \param   enable       enable      0 for disable, 1 for enable
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  *
  */
-int32_t PRUICSS_configureIepCmp0ResetEnable(PRUICSS_Handle handle, uint8_t iepInstance, uint8_t enable);
+int32_t PRUICSS_PWM_configureIepCmp0ResetEnable(PRUICSS_Handle handle, uint8_t iepInstance, uint8_t enable);
 
 /**
  * \brief  This API sets enables/disables compare events in IEP module.
@@ -149,10 +181,10 @@ int32_t PRUICSS_configureIepCmp0ResetEnable(PRUICSS_Handle handle, uint8_t iepIn
  * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
  * \param   iepInstance 0 for IEP0, 1 for IEP1
  * \param   value       Value to store in compare enable field of compare config register
- * \return  #SystemP_SUCCESS on success, #SystemP_FAILURE on error
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  *
  */
-int32_t PRUICSS_configureIepCompareEnable(PRUICSS_Handle handle, uint8_t iepInstance, uint16_t value);
+int32_t PRUICSS_PWM_configureIepCompareEnable(PRUICSS_Handle handle, uint8_t iepInstance, uint16_t value);
 
 /**
  * \brief  This API writes Lower_32bit Value of compare event in IEP module.
@@ -161,10 +193,10 @@ int32_t PRUICSS_configureIepCompareEnable(PRUICSS_Handle handle, uint8_t iepInst
  * \param   iepInstance 0 for IEP0, 1 for IEP1
  * \param   value       compare register Lower 32bit Value
  * \param   cmpEvent    compare Event number. Maximum value allowed is 15
- * \return  #SystemP_SUCCESS on success, #SystemP_FAILURE on error
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  *
  */
-int32_t PRUICSS_setIepCompareEventLower_32bitValue(PRUICSS_Handle handle, uint8_t iepInstance, uint8_t cmpEvent, uint32_t value);
+int32_t PRUICSS_PWM_setIepCompareEventLower_32bitValue(PRUICSS_Handle handle, uint8_t iepInstance, uint8_t cmpEvent, uint32_t value);
 
 /**
  * \brief  This API writes Upper_32bit Value of compare event in IEP module.
@@ -173,10 +205,10 @@ int32_t PRUICSS_setIepCompareEventLower_32bitValue(PRUICSS_Handle handle, uint8_
  * \param   iepInstance 0 for IEP0, 1 for IEP1
  * \param   value       compare register Upper 32bit Value
  * \param   cmpEvent    compare Event number. Maximum value allowed is 15
- * \return  #SystemP_SUCCESS on success, #SystemP_FAILURE on error
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  *
  */
-int32_t PRUICSS_setIepCompareEventUpper_32bitValue(PRUICSS_Handle handle, uint8_t iepInstance, uint8_t cmpEvent, uint32_t value);
+int32_t PRUICSS_PWM_setIepCompareEventUpper_32bitValue(PRUICSS_Handle handle, uint8_t iepInstance, uint8_t cmpEvent, uint32_t value);
 
 /**
  * \brief  This API updates Debounce Value for specified pwm set
@@ -184,10 +216,10 @@ int32_t PRUICSS_setIepCompareEventUpper_32bitValue(PRUICSS_Handle handle, uint8_
  * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
  * \param   pwmSet      0 for PWM0, 1 for PWM1, 2 for PWM2, 3 for PWM3
  * \param   value       pwmSet Debounce Value
- * \return  #SystemP_SUCCESS on success, #SystemP_FAILURE on error
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  * 
 */
-int32_t PRUICSS_setPwmDebounceValue(PRUICSS_Handle handle, uint8_t pwmSet, uint8_t value);
+int32_t PRUICSS_PWM_setPwmDebounceValue(PRUICSS_Handle handle, uint8_t pwmSet, uint8_t value);
 
 /**
  * \brief  This API updates TripMask Value for specified pwm set
@@ -206,101 +238,101 @@ int32_t PRUICSS_setPwmDebounceValue(PRUICSS_Handle handle, uint8_t pwmSet, uint8
  * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
  * \param   pwmSet      0 for PWM0, 1 for PWM1, 2 for PWM2, 3 for PWM3
  * \param   maskvalue   pwmSet maskValue
- * \return  #SystemP_SUCCESS on success, #SystemP_FAILURE on error
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  * 
 */
-int32_t PRUICSS_setPwmTripMask(PRUICSS_Handle handle, uint8_t pwmSet, uint16_t maskvalue);
+int32_t PRUICSS_PWM_setPwmTripMask(PRUICSS_Handle handle, uint8_t pwmSet, uint16_t maskvalue);
 
 /**
  * \brief  This API enables/disables TripReset on Compare_0 Event for specified pwm set
  * 
  * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
  * \param   pwmSet      0 for PWM0, 1 for PWM1, 2 for PWM2, 3 for PWM3
- * \param   value       0 for disable, 1 for enable
- * \return  #SystemP_SUCCESS on success, #SystemP_FAILURE on error
+ * \param   enable       0 for disable, 1 for enable
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  * 
 */
-int32_t PRUICSS_configurePwmCmp0TripResetEnable(PRUICSS_Handle handle, uint8_t pwmSet, uint8_t enable);
+int32_t PRUICSS_PWM_configurePwmCmp0TripResetEnable(PRUICSS_Handle handle, uint8_t pwmSet, uint8_t enable);
 
 /**
  * \brief  This API generates Software Trip Reset by writing 1 to bit field for specified pwm set 
  * 
  * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
  * \param   pwmSet      0 for PWM0, 1 for PWM1, 2 for PWM2, 3 for PWM3
- * \return  #SystemP_SUCCESS on success, #SystemP_FAILURE on error
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  * 
 */
-int32_t PRUICSS_generatePwmTripReset(PRUICSS_Handle handle, uint8_t pwmSet);
+int32_t PRUICSS_PWM_generatePwmTripReset(PRUICSS_Handle handle, uint8_t pwmSet);
 
 /**
  * \brief  This API generates Software Over current error trip by writing 1 to bit field for specified pwm set 
  * 
  * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
  * \param   pwmSet      0 for PWM0, 1 for PWM1, 2 for PWM2, 3 for PWM3
- * \return  #SystemP_SUCCESS on success, #SystemP_FAILURE on error
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  * 
 */
-int32_t PRUICSS_generatePwmOverCurrentErrorTrip(PRUICSS_Handle handle, uint8_t pwmSet);
+int32_t PRUICSS_PWM_generatePwmOverCurrentErrorTrip(PRUICSS_Handle handle, uint8_t pwmSet);
 
 /**
  * \brief  This API generates Software Position Feedback Error Trip by writing 1 to bit field for specified pwm set 
  * 
  * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
  * \param   pwmSet      0 for PWM0, 1 for PWM1, 2 for PWM2, 3 for PWM3
- * \return  #SystemP_SUCCESS on success, #SystemP_FAILURE on error
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  * 
 */
-int32_t PRUICSS_generatePwmPositionFeedbackErrorTrip(PRUICSS_Handle handle, uint8_t pwmSet);
+int32_t PRUICSS_PWM_generatePwmPositionFeedbackErrorTrip(PRUICSS_Handle handle, uint8_t pwmSet);
 
 /**
  * \brief  This API clears Software Trip Reset by writing 0 to bit field for specified pwm set 
  * 
  * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
  * \param   pwmSet      0 for PWM0, 1 for PWM1, 2 for PWM2, 3 for PWM3
- * \return  #SystemP_SUCCESS on success, #SystemP_FAILURE on error
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  * 
 */
-int32_t PRUICSS_clearPwmTripResetStatus(PRUICSS_Handle handle, uint8_t pwmSet);
+int32_t PRUICSS_PWM_clearPwmTripResetStatus(PRUICSS_Handle handle, uint8_t pwmSet);
 
 /**
  * \brief  This API clears Software Over current error trip by writing 0 to bit field for specified pwm set 
  * 
  * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
  * \param   pwmSet      0 for PWM0, 1 for PWM1, 2 for PWM2, 3 for PWM3
- * \return  #SystemP_SUCCESS on success, #SystemP_FAILURE on error
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  * 
 */
-int32_t PRUICSS_clearPwmOverCurrentErrorTrip(PRUICSS_Handle handle, uint8_t pwmSet);
+int32_t PRUICSS_PWM_clearPwmOverCurrentErrorTrip(PRUICSS_Handle handle, uint8_t pwmSet);
 
 /**
  * \brief  This API clears Software Position Feedback Error Trip by writing 0 to bit field for specified pwm set 
  * 
  * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
  * \param   pwmSet      0 for PWM0, 1 for PWM1, 2 for PWM2, 3 for PWM3
- * \return  #SystemP_SUCCESS on success, #SystemP_FAILURE on error
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  * 
 */
-int32_t PRUICSS_clearPwmPositionFeedbackErrorTrip(PRUICSS_Handle handle, uint8_t pwmSet);
+int32_t PRUICSS_PWM_clearPwmPositionFeedbackErrorTrip(PRUICSS_Handle handle, uint8_t pwmSet);
 
 /**
  * \brief  This API returns Trip trigger cause vector for specified pwm set 
  * 
  * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
  * \param   pwmSet      0 for PWM0, 1 for PWM1, 2 for PWM2, 3 for PWM3
- * \return  #Trip trigger cause vector on success, #SystemP_FAILURE on error
+ * \return  Trip trigger cause vector on success, SystemP_FAILURE on error
  * 
 */
-int32_t PRUICSS_getPwmTripTriggerCauseVector(PRUICSS_Handle handle, uint8_t pwmSet);
+int32_t PRUICSS_PWM_getPwmTripTriggerCauseVector(PRUICSS_Handle handle, uint8_t pwmSet);
 
 /**
  * \brief  This API returns Trip status for specified pwm set 
  * 
  * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
  * \param   pwmSet      0 for PWM0, 1 for PWM1, 2 for PWM2, 3 for PWM3
- * \return  #Trip status on success, #SystemP_FAILURE on error
+ * \return  Trip status on success, SystemP_FAILURE on error
  * 
 */
-int32_t PRUICSS_getPwmTripStatus(PRUICSS_Handle handle, uint8_t pwmSet);
+int32_t PRUICSS_PWM_getPwmTripStatus(PRUICSS_Handle handle, uint8_t pwmSet);
 
 /**
  * \brief  This API clears Trip status and makes state transition to Intial state as follows (Active->Intial) 
@@ -308,10 +340,10 @@ int32_t PRUICSS_getPwmTripStatus(PRUICSS_Handle handle, uint8_t pwmSet);
  * 
  * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
  * \param   pwmSet      0 for PWM0, 1 for PWM1, 2 for PWM2, 3 for PWM3
- * \return  #SystemP_SUCCESS on success, #SystemP_FAILURE on error
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  * 
 */
-int32_t PRUICSS_clearPwmTripStatus(PRUICSS_Handle handle, uint8_t pwmSet);
+int32_t PRUICSS_PWM_clearPwmTripStatus(PRUICSS_Handle handle, uint8_t pwmSet);
 
 /**
  * \brief  This API updates output action for specified state of A0 signal for specified PWM set 
@@ -320,10 +352,10 @@ int32_t PRUICSS_clearPwmTripStatus(PRUICSS_Handle handle, uint8_t pwmSet);
  * \param   pwmSet      0 for PWM0, 1 for PWM1, 2 for PWM2, 3 for PWM3
  * \param   state       0 for Intial, 1 for Active, 2 for Safe(alias Trip) state
  * \param   action      0 for Toggle, 1 for Low, 2 for High
- * \return  #SystemP_SUCCESS on success, #SystemP_FAILURE on error
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  * 
 */
-int32_t PRUICCS_actionOnOutputCfgPwmSignalA0(PRUICSS_Handle handle, uint8_t pwmSet, uint8_t state, uint8_t action);
+int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalA0(PRUICSS_Handle handle, uint8_t pwmSet, uint8_t state, uint8_t action);
 
 /**
  * \brief  This API updates output action for specified state of A1 signal for specified PWM set 
@@ -332,10 +364,10 @@ int32_t PRUICCS_actionOnOutputCfgPwmSignalA0(PRUICSS_Handle handle, uint8_t pwmS
  * \param   pwmSet      0 for PWM0, 1 for PWM1, 2 for PWM2, 3 for PWM3
  * \param   state       0 for Intial, 1 for Active, 2 for Safe(alias Trip) state
  * \param   action      0 for Toggle, 1 for Low, 2 for High
- * \return  #SystemP_SUCCESS on success, #SystemP_FAILURE on error
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  * 
 */
-int32_t PRUICCS_actionOnOutputCfgPwmSignalA1(PRUICSS_Handle handle, uint8_t pwmSet, uint8_t state, uint8_t action);
+int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalA1(PRUICSS_Handle handle, uint8_t pwmSet, uint8_t state, uint8_t action);
 
 /**
  * \brief  This API updates output action for specified state of A2 signal for specified PWM set 
@@ -344,10 +376,10 @@ int32_t PRUICCS_actionOnOutputCfgPwmSignalA1(PRUICSS_Handle handle, uint8_t pwmS
  * \param   pwmSet      0 for PWM0, 1 for PWM1, 2 for PWM2, 3 for PWM3
  * \param   state       0 for Intial, 1 for Active, 2 for Safe(alias Trip) state
  * \param   action      0 for Toggle, 1 for Low, 2 for High
- * \return  #SystemP_SUCCESS on success, #SystemP_FAILURE on error
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  * 
 */
-int32_t PRUICCS_actionOnOutputCfgPwmSignalA2(PRUICSS_Handle handle, uint8_t pwmSet, uint8_t state, uint8_t action);
+int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalA2(PRUICSS_Handle handle, uint8_t pwmSet, uint8_t state, uint8_t action);
 
 /**
  * \brief  This API updates output action for specified state of B0 signal for specified PWM set 
@@ -356,10 +388,10 @@ int32_t PRUICCS_actionOnOutputCfgPwmSignalA2(PRUICSS_Handle handle, uint8_t pwmS
  * \param   pwmSet      0 for PWM0, 1 for PWM1, 2 for PWM2, 3 for PWM3
  * \param   state       0 for Intial, 1 for Active, 2 for Safe(alias Trip) state
  * \param   action      0 for Toggle, 1 for Low, 2 for High
- * \return  #SystemP_SUCCESS on success, #SystemP_FAILURE on error
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  * 
 */
-int32_t PRUICCS_actionOnOutputCfgPwmSignalB0(PRUICSS_Handle handle, uint8_t pwmSet, uint8_t state, uint8_t action);
+int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalB0(PRUICSS_Handle handle, uint8_t pwmSet, uint8_t state, uint8_t action);
 
 /**
  * \brief  This API updates output action for specified state of B1 signal for specified PWM set 
@@ -368,10 +400,10 @@ int32_t PRUICCS_actionOnOutputCfgPwmSignalB0(PRUICSS_Handle handle, uint8_t pwmS
  * \param   pwmSet      0 for PWM0, 1 for PWM1, 2 for PWM2, 3 for PWM3
  * \param   state       0 for Intial, 1 for Active, 2 for Safe(alias Trip) state
  * \param   action      0 for Toggle, 1 for Low, 2 for High
- * \return  #SystemP_SUCCESS on success, #SystemP_FAILURE on error
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  * 
 */
-int32_t PRUICCS_actionOnOutputCfgPwmSignalB1(PRUICSS_Handle handle, uint8_t pwmSet, uint8_t state, uint8_t action);
+int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalB1(PRUICSS_Handle handle, uint8_t pwmSet, uint8_t state, uint8_t action);
 
 /**
  * \brief  This API updates output action for specified state of B2 signal for specified PWM set 
@@ -380,10 +412,10 @@ int32_t PRUICCS_actionOnOutputCfgPwmSignalB1(PRUICSS_Handle handle, uint8_t pwmS
  * \param   pwmSet      0 for PWM0, 1 for PWM1, 2 for PWM2, 3 for PWM3
  * \param   state       0 for Intial, 1 for Active, 2 for Safe(alias Trip) state
  * \param   action      0 for Toggle, 1 for Low, 2 for High
- * \return  #SystemP_SUCCESS on success, #SystemP_FAILURE on error
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  * 
 */
-int32_t PRUICCS_actionOnOutputCfgPwmSignalB2(PRUICSS_Handle handle, uint8_t pwmSet, uint8_t state, uint8_t action);
+int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalB2(PRUICSS_Handle handle, uint8_t pwmSet, uint8_t state, uint8_t action);
 
 /**
  * \brief  This API enables Efficiency mode
@@ -393,10 +425,22 @@ int32_t PRUICCS_actionOnOutputCfgPwmSignalB2(PRUICSS_Handle handle, uint8_t pwmS
  * 
  * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
  * \param   enable       0 for disable, 1 for enable
- * \return  #SystemP_SUCCESS on success, #SystemP_FAILURE on error
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  * 
 */
-int32_t PRUICSS_configurePwmEfficiencyModeEnable(PRUICSS_Handle handle, uint8_t enable);
+int32_t PRUICSS_PWM_configurePwmEfficiencyModeEnable(PRUICSS_Handle handle, uint8_t enable);
+
+/**
+ * \brief   This function enables IEP1 counter follow IEP0 counter
+ *  when Enabled IEP1 counter acts as slave
+ *  IEP1 counter[63:0] is from IEP0 during 64-bit mode
+ *  IEP1 counter[31:0] is from IEP0 during 32-bit mode
+ * 
+ * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
+ * \param   enable      0 for disable, 1 for enable
+ * \return  SystemP_SUCCESS in case of success, SystemP_FAILURE otherwise
+ */
+int32_t PRUICSS_PWM_enableIEP1Slave(PRUICSS_Handle handle, uint8_t enable);
 
 #ifdef __cplusplus
 }

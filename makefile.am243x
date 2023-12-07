@@ -106,13 +106,10 @@ BUILD_COMBO_motorcontrol_endat = motorcontrol_endat_r5f.ti-arm-clang
 BUILD_COMBO_motorcontrol_hdsl = motorcontrol_hdsl_r5f.ti-arm-clang
 BUILD_COMBO_motorcontrol_tamagawa = motorcontrol_tamagawa_r5f.ti-arm-clang
 BUILD_COMBO_motorcontrol_bissc = motorcontrol_bissc_r5f.ti-arm-clang
-
-# Combine all Components
-BUILD_COMBO_ALL = $(BUILD_COMBO_motorcontrol_sdfm) $(BUILD_COMBO_motorcontrol_endat) $(BUILD_COMBO_motorcontrol_hdsl) $(BUILD_COMBO_motorcontrol_tamagawa) $(BUILD_COMBO_motorcontrol_bissc)
 BUILD_COMBO_pruicss_pwm = pruicss_pwm_r5f.ti-arm-clang
 
 # Combine all Components
-BUILD_COMBO_ALL = $(BUILD_COMBO_motorcontrol_sdfm) $(BUILD_COMBO_motorcontrol_endat) $(BUILD_COMBO_motorcontrol_hdsl) $(BUILD_COMBO_motorcontrol_tamagawa) $(BUILD_COMBO_pruicss_pwm)
+BUILD_COMBO_ALL = $(BUILD_COMBO_motorcontrol_sdfm) $(BUILD_COMBO_motorcontrol_endat) $(BUILD_COMBO_motorcontrol_hdsl) $(BUILD_COMBO_motorcontrol_tamagawa) $(BUILD_COMBO_motorcontrol_bissc) $(BUILD_COMBO_pruicss_pwm)
 
 # Combine all Pre-built Components
 BUILD_COMBO_PREBUILT_ALL =
@@ -140,6 +137,7 @@ $(BUILD_COMBO_motorcontrol_tamagawa):
 
 $(BUILD_COMBO_motorcontrol_bissc):
 	$(MAKE) -C source/position_sense/bissc -f makefile.am243x.$(subst motorcontrol_bissc_,,$@) all
+
 $(BUILD_COMBO_pruicss_pwm):
 	$(MAKE) -C source/pruicss_pwm -f makefile.am243x.$(subst pruicss_pwm_,,$@) all
 
@@ -150,13 +148,10 @@ BUILD_COMBO_CLEAN_motorcontrol_endat = motorcontrol_endat_r5f.ti-arm-clang_clean
 BUILD_COMBO_CLEAN_motorcontrol_hdsl = motorcontrol_hdsl_r5f.ti-arm-clang_clean
 BUILD_COMBO_CLEAN_motorcontrol_tamagawa = motorcontrol_tamagawa_r5f.ti-arm-clang_clean
 BUILD_COMBO_CLEAN_motorcontrol_bissc = motorcontrol_bissc_r5f.ti-arm-clang_clean
-
-# Combine all Components Clean
-BUILD_COMBO_CLEAN_ALL = $(BUILD_COMBO_CLEAN_motorcontrol_sdfm) $(BUILD_COMBO_CLEAN_motorcontrol_endat) $(BUILD_COMBO_CLEAN_motorcontrol_hdsl) $(BUILD_COMBO_CLEAN_motorcontrol_tamagawa) $(BUILD_COMBO_CLEAN_motorcontrol_bissc)
 BUILD_COMBO_CLEAN_pruicss_pwm = pruicss_pwm_r5f.ti-arm-clang_clean
 
 # Combine all Components Clean
-BUILD_COMBO_CLEAN_ALL = $(BUILD_COMBO_CLEAN_motorcontrol_sdfm) $(BUILD_COMBO_CLEAN_motorcontrol_endat) $(BUILD_COMBO_CLEAN_motorcontrol_hdsl) $(BUILD_COMBO_CLEAN_motorcontrol_tamagawa) $(BUILD_COMBO_CLEAN_pruicss_pwm)
+BUILD_COMBO_CLEAN_ALL = $(BUILD_COMBO_CLEAN_motorcontrol_sdfm) $(BUILD_COMBO_CLEAN_motorcontrol_endat) $(BUILD_COMBO_CLEAN_motorcontrol_hdsl) $(BUILD_COMBO_CLEAN_motorcontrol_tamagawa) $(BUILD_COMBO_CLEAN_motorcontrol_bissc) $(BUILD_COMBO_CLEAN_pruicss_pwm)
 
 # Combine all Pre-built Components Clean
 BUILD_COMBO_PREBUILT_CLEAN_ALL =
@@ -179,6 +174,7 @@ $(BUILD_COMBO_CLEAN_motorcontrol_tamagawa):
 
 $(BUILD_COMBO_CLEAN_motorcontrol_bissc):
 	$(MAKE) -C source/position_sense/bissc -f makefile.am243x.$(subst motorcontrol_bissc_,,$(subst _clean,,$@)) clean
+
 $(BUILD_COMBO_CLEAN_pruicss_pwm):
 	$(MAKE) -C source/pruicss_pwm -f makefile.am243x.$(subst pruicss_pwm_,,$(subst _clean,,$@)) clean
 
@@ -189,13 +185,10 @@ BUILD_COMBO_SCRUB_motorcontrol_endat = motorcontrol_endat_r5f.ti-arm-clang_scrub
 BUILD_COMBO_SCRUB_motorcontrol_hdsl = motorcontrol_hdsl_r5f.ti-arm-clang_scrub_scrub
 BUILD_COMBO_SCRUB_motorcontrol_tamagawa = motorcontrol_tamagawa_r5f.ti-arm-clang_scrub_scrub
 BUILD_COMBO_SCRUB_motorcontrol_bissc = motorcontrol_bissc_r5f.ti-arm-clang_scrub_scrub
-
-# Combine all Components Scrub Targets
-BUILD_COMBO_SCRUB_ALL = $(BUILD_COMBO_SCRUB_motorcontrol_sdfm) $(BUILD_COMBO_SCRUB_motorcontrol_endat) $(BUILD_COMBO_SCRUB_motorcontrol_hdsl) $(BUILD_COMBO_SCRUB_motorcontrol_tamagawa) $(BUILD_COMBO_SCRUB_motorcontrol_bissc)
 BUILD_COMBO_SCRUB_pruicss_pwm = pruicss_pwm_r5f.ti-arm-clang_scrub_scrub
 
 # Combine all Components Scrub Targets
-BUILD_COMBO_SCRUB_ALL = $(BUILD_COMBO_SCRUB_motorcontrol_sdfm) $(BUILD_COMBO_SCRUB_motorcontrol_endat) $(BUILD_COMBO_SCRUB_motorcontrol_hdsl) $(BUILD_COMBO_SCRUB_motorcontrol_tamagawa) $(BUILD_COMBO_SCRUB_pruicss_pwm)
+BUILD_COMBO_SCRUB_ALL = $(BUILD_COMBO_SCRUB_motorcontrol_sdfm) $(BUILD_COMBO_SCRUB_motorcontrol_endat) $(BUILD_COMBO_SCRUB_motorcontrol_hdsl) $(BUILD_COMBO_SCRUB_motorcontrol_tamagawa) $(BUILD_COMBO_SCRUB_motorcontrol_bissc) $(BUILD_COMBO_SCRUB_pruicss_pwm)
 
 # Combine all Pre-built Components Scrub Targets
 BUILD_COMBO_PREBUILT_SCRUB_ALL =
@@ -218,6 +211,7 @@ $(BUILD_COMBO_SCRUB_motorcontrol_tamagawa):
 
 $(BUILD_COMBO_SCRUB_motorcontrol_bissc):
 	$(MAKE) -C source/position_sense/bissc -f makefile.am243x.$(subst motorcontrol_bissc_,,$(subst _scrub,,$@)) scrub
+
 $(BUILD_COMBO_SCRUB_pruicss_pwm):
 	$(MAKE) -C source/pruicss_pwm -f makefile.am243x.$(subst pruicss_pwm_,,$(subst _scrub,,$@)) scrub
 

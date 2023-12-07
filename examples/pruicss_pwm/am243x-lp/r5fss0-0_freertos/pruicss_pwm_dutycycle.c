@@ -39,9 +39,9 @@
 #include <drivers/pruicss.h>
 #include <drivers/pinmux.h>
 
-/** \brief Global Structure pointer holding PRUSS1 memory Map. */
+/** \brief Global Structure pointer holding PRUICSSG0 memory Map. */
 
-PRUICSS_Handle gPruIcss0Handle;
+PRUICSS_Handle gPruIcssHandle;
 
 /*
  * This example uses the PRUICSS PWM module to generate a signal
@@ -50,27 +50,36 @@ PRUICSS_Handle gPruIcss0Handle;
  * The default parameters are : Frequency : 1kHz, Duty cycle : 25%,
  * All these parameters are configurable.
  *
- * In this example PWM0_0_P0S(alias signal A0) is used to generate the signal, the user can also
+ * In this example PWM0_0_POS(alias signal PWM0_A0),PWM3_2_NEG(alias signal PWM3_B2) is used to generate the signal, the user can also
  * select a different one.
  *  
- * PWM0_0_P0S(alias signal A0) uses IEP0 CMP1 EVENT to control Duty cycle
+ * PWM0_0_POS(alias signal PWM0_A0) uses IEP0 CMP1 EVENT to control Duty cycle
  * & IEP0 CMP0 to control output Frequency
+ *
+ * PWM3_2_NEG(alias signal PWM3_B2) uses IEP1 CMP12 EVENT to control Duty cycle
+ * & IEP0 CMP0 to control output Frequency
+ *
  * This example also showcases how to configure and use the PRUICSS PWM module.
  */
 
 /*FIXME: IEP0_CLK_FREQ macro to be included in driver_config.h sysconfig generated file*/
-#define PRUICSS_IEP0_CLK_FREQ                  (200000000U)
+#define PRUICSS_IEP0_CLK_FREQ                      (200000000U)
 /* Modify this to change the IEP counter increment value*/
-#define PRUICSS_IEP_COUNT_INCREMENT_VALUE      (1U)
+#define PRUICSS_IEP_COUNT_INCREMENT_VALUE          (1U)
 /* Duty Cycle of PWM output signal in % - give value from 1 to 99 */
-#define APP_PRUICSS_PWM_DUTY_CYCLE             (25U)
+#define APP_PRUICSS_PWM3_B2_DUTY_CYCLE             (25U)
+/* Duty Cycle of PWM output signal in % - give value from 1 to 99 */
+#define APP_PRUICSS_PWM0_A0_DUTY_CYCLE             (25U)
 /* Frequency  of PWM output signal in Hz - 1 KHz is selected */
-#define APP_PRUICSS_PWM_OUTPUT_FREQ            (1U * 1000U)
+#define APP_PRUICSS_PWM_OUTPUT_FREQ                (1U * 1000U)
 /* PRD value - this determines the period */
-#define APP_PRUICSS_PWM_PRD_VAL                (((PRUICSS_IEP0_CLK_FREQ / APP_PRUICSS_PWM_OUTPUT_FREQ))*(PRUICSS_IEP_COUNT_INCREMENT_VALUE))
+#define APP_PRUICSS_PWM_PRD_VAL                    (((PRUICSS_IEP0_CLK_FREQ / APP_PRUICSS_PWM_OUTPUT_FREQ))*(PRUICSS_IEP_COUNT_INCREMENT_VALUE))
 /* DUTY CYCLE width - this determines width of PWM output signal duty cycle*/
-#define APP_PRUICSS_IEP0_COMP1_VAL              (APP_PRUICSS_PWM_PRD_VAL-((APP_PRUICSS_PWM_DUTY_CYCLE*APP_PRUICSS_PWM_PRD_VAL)/100))
+#define APP_PRUICSS_IEP0_COMP1_VAL                 (APP_PRUICSS_PWM_PRD_VAL-((APP_PRUICSS_PWM0_A0_DUTY_CYCLE*APP_PRUICSS_PWM_PRD_VAL)/100))
+/* DUTY CYCLE width - this determines width of PWM output signal duty cycle*/
+#define APP_PRUICSS_IEP1_COMP12_VAL                (APP_PRUICSS_PWM_PRD_VAL-((APP_PRUICSS_PWM3_B2_DUTY_CYCLE*APP_PRUICSS_PWM_PRD_VAL)/100))
 
+/*FIXME: Add pinmux in  sysconfig generated file*/
 Pinmux_PerCfg_t gPinMuxMainDomainCfg1[] = {
 
     /* PRU_ICSSG0_PWM0 pin config */
@@ -79,72 +88,113 @@ Pinmux_PerCfg_t gPinMuxMainDomainCfg1[] = {
         PIN_PRG0_PRU0_GPO12,
         ( PIN_MODE(3) | PIN_PULL_DISABLE )
     },
-
+    /* PRU_ICSSG0_PWM3 pin config */
+    /* PRG0_PWM3_B2 -> PRG0_PRU0_GPO5 (F2) */
+    {
+        PIN_PRG0_PRU0_GPO5,
+        ( PIN_MODE(3) | PIN_PULL_DISABLE )
+    },
     {PINMUX_END, PINMUX_END}
+
 };
+
+
 void pruicss_iep_init(void *args)
 {
+
     int status;
     /*Disable IEP0 counter*/
-    status= PRUICSS_controlIepCounter(gPruIcss0Handle,0,0);
+    status= PRUICSS_controlIepCounter(gPruIcssHandle,0,0);
     DebugP_assert(SystemP_SUCCESS == status);
 
-    Pinmux_config(gPinMuxMainDomainCfg1, PINMUX_DOMAIN_ID_MAIN);
+    /*Enable  IEP1 slave mode*/
+    status=PRUICSS_PWM_enableIEP1Slave(gPruIcssHandle,1);
+    DebugP_assert(SystemP_SUCCESS == status);
 
     /*Intialize IEP0 count value*/
-    PRUICSS_setIepCounterLower_32bitValue(gPruIcss0Handle,0,0xFFFFFFFF);
-    PRUICSS_setIepCounterUpper_32bitValue(gPruIcss0Handle,0,0xFFFFFFFF);
+    PRUICSS_PWM_setIepCounterLower_32bitValue(gPruIcssHandle,0,0xFFFFFFFF);
+    PRUICSS_PWM_setIepCounterUpper_32bitValue(gPruIcssHandle,0,0xFFFFFFFF);
 
-    /*configure cmp 0 value with APP_PRUICSS_PWM_PRD_VAL*/
-    status=PRUICSS_setIepCompareEventLower_32bitValue(gPruIcss0Handle,0,0,(APP_PRUICSS_PWM_PRD_VAL & 0xFFFFFFFF));
+    /*configure cmp 0 value of IEP0 with APP_PRUICSS_PWM_PRD_VAL*/
+    status=PRUICSS_PWM_setIepCompareEventLower_32bitValue(gPruIcssHandle,0,0,(APP_PRUICSS_PWM_PRD_VAL & 0xFFFFFFFF));
     DebugP_assert(SystemP_SUCCESS == status);
 
     /*configure cmp 1 value with APP_PRUICSS_IEP0_COMP1_VAL*/
-    status=PRUICSS_setIepCompareEventLower_32bitValue(gPruIcss0Handle,0,1,(APP_PRUICSS_IEP0_COMP1_VAL & 0xFFFFFFFF));
+    status=PRUICSS_PWM_setIepCompareEventLower_32bitValue(gPruIcssHandle,0,1,(APP_PRUICSS_IEP0_COMP1_VAL & 0xFFFFFFFF));
     DebugP_assert(SystemP_SUCCESS == status);
 
-    /*Enable cmp 0 and cmp 1*/                        
-    status=PRUICSS_configureIepCompareEnable(gPruIcss0Handle,0,0x3);
+    /*configure cmp 11 value with APP_PRUICSS_IEP1_COMP11_VAL*/
+    status=PRUICSS_PWM_setIepCompareEventLower_32bitValue(gPruIcssHandle,1,12,(APP_PRUICSS_IEP1_COMP12_VAL & 0xFFFFFFFF));
+    DebugP_assert(SystemP_SUCCESS == status);
+
+    /*Enable cmp 0 and cmp 1 of IEP0*/
+    status=PRUICSS_PWM_configureIepCompareEnable(gPruIcssHandle,0,0x3);
+    DebugP_assert(SystemP_SUCCESS == status);
+
+    /*Enable cmp12 of IEP1*/
+    status=PRUICSS_PWM_configureIepCompareEnable(gPruIcssHandle,1,0x1000);
     DebugP_assert(SystemP_SUCCESS == status);
 
     /*Set IEP0 counter Increment value*/
-    status=PRUICSS_setIepCounterIncrementValue(gPruIcss0Handle,0,PRUICSS_IEP_COUNT_INCREMENT_VALUE);
+    status=PRUICSS_setIepCounterIncrementValue(gPruIcssHandle,0,PRUICSS_IEP_COUNT_INCREMENT_VALUE);
     DebugP_assert(SystemP_SUCCESS == status);
 
-    /*Enable cmp 0 reset of counter*/
-    PRUICSS_configureIepCmp0ResetEnable(gPruIcss0Handle,0,0x1);
+    /*Enable cmp 0 reset of IEP0 counter*/
+    status=PRUICSS_PWM_configureIepCmp0ResetEnable(gPruIcssHandle,0,0x1);
+    DebugP_assert(SystemP_SUCCESS == status);
 
     /*Enable IEP0 counter*/
-    status=PRUICSS_controlIepCounter(gPruIcss0Handle,0,1);
+    status=PRUICSS_controlIepCounter(gPruIcssHandle,0,1);
     DebugP_assert(SystemP_SUCCESS == status);
     
 }
 
 void pruicss_pwm_init(void *args){
+
     int status;
     /*Enable IEP CMP flags to auto clear after state transition*/
-    status=PRUICSS_configurePwmEfficiencyModeEnable(gPruIcss0Handle, 1);
+    status=PRUICSS_PWM_configurePwmEfficiencyModeEnable(gPruIcssHandle, 1);
     DebugP_assert(SystemP_SUCCESS == status);
-    /*Enable compare0 trip reset */
-    PRUICSS_configurePwmCmp0TripResetEnable(gPruIcss0Handle,0,1);
-    /*configure PWM A0 signal of set 0, intial state to low*/
-    status=PRUICCS_actionOnOutputCfgPwmSignalA0(gPruIcss0Handle,0,0,1);
+
+    /*Enable compare0 trip reset of set 0*/
+    status=PRUICSS_PWM_configurePwmCmp0TripResetEnable(gPruIcssHandle,0,1);
     DebugP_assert(SystemP_SUCCESS == status);
-    /*configure PWM A0 signal of set 0, active state to high*/
-    status=PRUICCS_actionOnOutputCfgPwmSignalA0(gPruIcss0Handle,0,1,2);
+
+    /*Enable compare0 trip reset of set 3 */
+    status=PRUICSS_PWM_configurePwmCmp0TripResetEnable(gPruIcssHandle,3,1);
+    DebugP_assert(SystemP_SUCCESS == status);
+
+    /*configure PWM B2 signal of set 0, intial state to low*/
+    status=PRUICSS_PWM_actionOnOutputCfgPwmSignalA0(gPruIcssHandle,0,0,1);
+    DebugP_assert(SystemP_SUCCESS == status);
+
+    /*configure PWM B2 signal of set 0, active state to high*/
+    status=PRUICSS_PWM_actionOnOutputCfgPwmSignalA0(gPruIcssHandle,0,1,2);
+    DebugP_assert(SystemP_SUCCESS == status);
+
+    /*configure PWM B2 signal of set 0, intial state to low*/
+    status=PRUICSS_PWM_actionOnOutputCfgPwmSignalB2(gPruIcssHandle,3,0,1);
+    DebugP_assert(SystemP_SUCCESS == status);
+
+    /*configure PWM B2 signal of set 0, active state to high*/
+    status=PRUICSS_PWM_actionOnOutputCfgPwmSignalB2(gPruIcssHandle,3,1,2);
     DebugP_assert(SystemP_SUCCESS == status);
 }
 
 void pruicss_pwm_duty_cycle_main(void *args)
 {
+
+     int32_t status;
+
      Drivers_open(); // check return status
 
-     int status;
      status = Board_driversOpen();
      DebugP_assert(SystemP_SUCCESS == status);
 
-     gPruIcss0Handle = PRUICSS_open(CONFIG_PRU_ICSS0);
-     DebugP_assert(gPruIcss0Handle != NULL);
+     gPruIcssHandle = PRUICSS_open(CONFIG_PRU_ICSS0);
+     DebugP_assert(gPruIcssHandle != NULL);
+
+     Pinmux_config(gPinMuxMainDomainCfg1, PINMUX_DOMAIN_ID_MAIN);
 
      pruicss_pwm_init(NULL);
 
