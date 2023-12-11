@@ -328,6 +328,16 @@ uint32_t SDFM_getPwmTripStatus(sdfm_handle h_sdfm, uint8_t pwmIns);
 void SDFM_clearPwmTripStatus(sdfm_handle h_sdfm, uint8_t pwmIns); 
 
 
+/**
+ *
+ *  \brief  Measure Clock phase compensation 
+ *
+ *  \param[in]  h_sdfm          SDFM handle
+ *  \param[in]  clEdg           Clock polarity: 1 -> falling edge, 0 -> raising edge
+ *
+ *  \retval     Phase delay   in nano sec
+ */
+float SDFM_measureClockPhaseDelay(sdfm_handle h_sdfm, uint16_t clEdg);
 /** @} */
 
 #ifdef __cplusplus

@@ -19,10 +19,10 @@ ICSS %SDFM is a sigma delta interface for phase current measurement in high perf
  - %SDFM Sync with EPWM 
  - Fast detect 
  - PWM Trip generation for overcurrent 
+ - Clock Phase Compensation 
 
 ## Features Not Supported
 - Zero cross comparator
-- Clock phase compensation 
 - Multi-level threshold 
 
 ## System design considerations

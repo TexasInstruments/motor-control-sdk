@@ -107,6 +107,13 @@ Here ONE_SAMPLE_TIME is: OSR*(1/SD_CLK)
 The Fast Detect block is used for fast over current detection, it comparatively measures the number of zeros and ones presented in a programmable sliding window of 4 to 32 bits. It starts the comparison after the first 32 sample clocks. Based on the configured zero max/min count limits, it compares zero counter with these limits. If zero counter crosses limit then it sends a error signal to respective PWM Trip zone block.
 PWM TZ block receives this error signal and generates a Trip on TZ_OUT pin.
 
+#### Data/Clock Phase Compensation 
+Following points describe the process for measurement of phase difference between clock and data
+- Set PRU IO mode to GPIO mode (default) for direct capture of input data and clock pins 
+- First wait for rising edge on the SD data pin, then check the nearest upcoming edge to the SD clock pin. If the nearest edge of clock pin is falling, then it measures the time between the rising edge of the data pin and the falling edge of the SD clock. Otherwise it measures time between the rising edge of both data and clock pins.
+- Based on the clock polarity, phase delay is calculated. If clock polarity and upcoming nearest edge of clock pin for rising edge of data pin are same, then final phase delay will be half SD clock duty cycle time minus calculated time. Otherwise phase delay will be SD clock one cycle period time minus calculated time  
+
+
 #### AM64x/AM243x EVM Pin-Multiplexing
 <table>
 <tr>
@@ -243,6 +250,16 @@ PWM TZ block receives this error signal and generates a Trip on TZ_OUT pin.
     <td>PWM0_TZ_OUT
     <td>PIN_PRG0_PRU0_GPO19
 	<td>(J5.45)TZ output pin for Axis-1
+</tr>
+<tr>
+    <td>PRG1_IEP0_EDC_SYNC_OUT0
+    <td>PIN_PRG1_PRU0_GPO19
+	<td>(J7.63) SYNC_OUT0
+</tr>
+<tr>
+    <td>PRG1_IEP0_EDC_SYNC_OUT1
+    <td>PIN_PRG1_PRU0_GPO17
+	<td>(J7.65) SYNC_OUT1
 </tr>
 </table>
 \endcond

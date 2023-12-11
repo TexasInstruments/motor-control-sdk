@@ -271,6 +271,9 @@ TASKS_MGR_TS1_PC_S0             .set 0x08
 TASKS_MGR_TS1_PC_S1             .set 0x0C
 TASKS_MGR_TS1_GEN_CFG1          .set 0x38
 
+;MASK for phase delay
+SDFM_11_MASK                    .set  0x00010002
+SDFM_01_MASK                    .set  0x00000002
 TM_YIELD_XID                    .set 252
 
 ;IEP_CFG

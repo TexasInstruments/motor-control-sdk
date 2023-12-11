@@ -756,6 +756,70 @@
         "resourceSubClass": [
             "example.general"
         ],
+        "description": "A Icss Sdfm Three Channel With Phase Compensation Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "icss_sdfm_three_channel_with_phase_compensation",
+        "location": "../../examples/current_sense/icss_sdfm_three_channel_with_phase_compensation/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "AM243x_GP_EVM"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "current_sense",
+            "icss_sdfm_three_channel_with_phase_compensation",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "description": "A Icss Sdfm Three Channel With Phase Compensation Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "icss_sdfm_three_channel_with_phase_compensation",
+        "location": "../../examples/current_sense/icss_sdfm_three_channel_with_phase_compensation/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "AM243x_LAUNCHPAD"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "current_sense",
+            "icss_sdfm_three_channel_with_phase_compensation",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
         "description": "A Pruicss Pwm Duty Cycle Example. CPU is R5FSS0-0 running FREERTOS.",
         "name": "pruicss_pwm_duty_cycle",
         "location": "../../examples/pruicss_pwm/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",

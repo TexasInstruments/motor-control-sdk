@@ -1,6 +1,6 @@
 let path = require('path');
 
-let device = "am64x";
+let device = "am243x";
 
 const files = {
     common: [
@@ -11,6 +11,7 @@ const files = {
         "sdfm.c",
         "cfg_pad.c",
         "main.c",
+        "mclk_iep0_sync.c",
     ],
 };
 
@@ -37,21 +38,20 @@ const includes_freertos_r5f = {
     common: [
         "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/FreeRTOS-Kernel/include",
         "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F",
-        "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/am64x/r5f",
+        "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/am243x/r5f",
         "${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/include",
-        "${MOTOR_CONTROL_SDK_PATH}/examples/current_sense/icss_sdfm",
+        "${MOTOR_CONTROL_SDK_PATH}/examples/current_sense/icss_sdfm_three_channel_with_phase_compensation",
     ],
 };
 
 const libs_freertos_r5f = {
     common: [
-        "freertos.am64x.r5f.ti-arm-clang.${ConfigName}.lib",
-        "drivers.am64x.r5f.ti-arm-clang.${ConfigName}.lib",
-        "board.am64x.r5f.ti-arm-clang.${ConfigName}.lib",
-        "motorcontrol_sdfm.am64x.r5f.ti-arm-clang.${ConfigName}.lib",
+        "freertos.am243x.r5f.ti-arm-clang.${ConfigName}.lib",
+        "drivers.am243x.r5f.ti-arm-clang.${ConfigName}.lib",
+        "board.am243x.r5f.ti-arm-clang.${ConfigName}.lib",
+        "motorcontrol_sdfm.am243x.r5f.ti-arm-clang.${ConfigName}.lib",
     ],
 };
-
 
 
 const lnkfiles = {
@@ -67,7 +67,7 @@ const readmeDoxygenPageTag = "EXAMPLE_MOTORCONTROL_SDFM";
 const templates_freertos_r5f =
 [
     {
-        input: ".project/templates/am64x/freertos/main_freertos.c.xdt",
+        input: ".project/templates/am243x/freertos/main_freertos.c.xdt",
         output: "../main.c",
         options: {
             entryFunction: "sdfm_main",
@@ -76,7 +76,8 @@ const templates_freertos_r5f =
 ];
 
 const buildOptionCombos = [
-    { device: device, cpu: "r5fss0-0", cgt: "ti-arm-clang", board: "am64x-evm", os: "freertos"},
+    { device: device, cpu: "r5fss0-0", cgt: "ti-arm-clang", board: "am243x-evm", os: "freertos"},
+    { device: device, cpu: "r5fss0-0", cgt: "ti-arm-clang", board: "am243x-lp", os: "freertos"},
 ];
 
 function getComponentProperty() {
@@ -84,7 +85,7 @@ function getComponentProperty() {
 
     property.dirPath = path.resolve(__dirname, "..");
     property.type = "executable";
-    property.name = "icss_sdfm";
+    property.name = "icss_sdfm_three_channel_with_phase_compensation";
     property.isInternal = false;
     property.buildOptionCombos = buildOptionCombos;
     property.isSkipTopLevelBuild = false;

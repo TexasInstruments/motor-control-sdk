@@ -42,6 +42,7 @@
 #include "epwm_dc.h"
 #include "cfg_pad.h"
 #include "sdfm.h"
+#include "mclk_iep0_sync.h"
 
 /*EPWM1 configuration for sigma delta clock generation: */
 #define APP_EPWM1_ENABLE  0 /*make sure EPWM1 is added in sysconfig before making true this macro */
@@ -144,7 +145,9 @@ __attribute__((section(".gSdfmSampleOutput"))) uint32_t gSdfm_sampleOutput[NUM_C
 
 /* Test Sdfm parameters */
 SdfmPrms gTestSdfmPrms = {
-    300000000,   /*Value of IEP clock*/
+    300000000,    /*PRU Core clock*/
+    300000000,   /*Value of ICSSG0_IEP clock*/
+    300000000,   /*ICSSG1_IEP_CLOCK*/
     20000000,    /*Value of SD clock (It should be exact equal to sd clock value)*/
     0,                        /*enable double update*/
     FIRST_SAMPLE_TRIGGER_TIME,       /*first sample  trigger time*/
@@ -159,12 +162,12 @@ SdfmPrms gTestSdfmPrms = {
     15,   /*Over current osr: The effect count is OSR + 1*/
     128,   /*Normal current osr */
     1,   /*comparator enable*/
-    (uint32_t)&gSdfm_sampleOutput, /*Output samples base address*/
-    1,
+    (uint32_t)&gSdfm_sampleOutput,/*Output samples base address*/
+    0,    /*Fast detect enable*/
     {{4, 18, 2},
     {4, 18, 2},
-    {4, 18, 2}
-    }   /*Fast detect fields {Window size, zero count max, zero count min}*/
+    {4, 18, 2}},   /*Fast detect fields {Window size, zero count max, zero count min}*/
+    1, /*Phase delay enable*/
 };
 
 #define PRUICSS_G_MUX_EN    ( 0x1 ) /* ICSSG_SA_MX_REG:G_MUX_EN */
@@ -347,7 +350,17 @@ void sdfm_main(void *args)
        Normally handled via Pinmux_init(),
        but currently no way to pads for ICSSG from Sysconfig. */
     cfgPad();
+    
+    /*Configure IEP for SD clock when phase delay calculaton is enabled*/
+    if(gTestSdfmPrms.phase_delay)
+    {
+        /*config ICSSG1 IEP0 */
+        init_IEP0_SYNC();
+        /*start ICSSG1 IEP */
+        start_IEP0();
 
+    }
+    
      /* Configure SDFM */
     init_sdfm();
     DebugP_log("SDFM Configured!\r\n");
@@ -406,6 +419,7 @@ void pruSdfmIrqHandler(void *args)
     }
 }
 
+
 /* EPWM0 IRQ handler */
 static void epwmIrqHandler(void *args)
 {
@@ -415,7 +429,7 @@ static void epwmIrqHandler(void *args)
     gEpwmIsrCnt++;
 
     status = EPWM_etIntrStatus(gEpwm0BaseAddr);
-    if(status & EPWM_ETFLG_INT_MASK) 
+    if (status & EPWM_ETFLG_INT_MASK) 
     {
         EPWM_etIntrClear(gEpwm0BaseAddr);
     }

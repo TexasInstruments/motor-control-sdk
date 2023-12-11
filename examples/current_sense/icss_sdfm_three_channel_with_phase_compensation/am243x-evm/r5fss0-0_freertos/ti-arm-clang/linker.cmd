@@ -103,6 +103,9 @@ SECTIONS
     .bss.ipc_vring_mem   (NOLOAD) : {} > RTOS_NORTOS_IPC_SHM_MEM
     /* General purpose non cacheable memory, used in some examples */
     .bss.nocache (NOLOAD) : {} > NON_CACHE_MEM
+
+    /* TCM used by ICSS PRU to write sdfm sample output */
+    .gSdfmSampleOutput       			: {} align(4) > R5F_TCMB0
 }
 
 /*
@@ -142,7 +145,7 @@ MEMORY
     /* On R5F,
      * - make sure there is a MPU entry which maps below regions as non-cache
      */
-    USER_SHM_MEM            : ORIGIN = 0x701D0000, LENGTH = 0x80
-    LOG_SHM_MEM             : ORIGIN = 0x701D0000 + 0x80, LENGTH = 0x00004000 - 0x80
+    USER_SHM_MEM            : ORIGIN = 0x701D0000, LENGTH = 0x180
+    LOG_SHM_MEM             : ORIGIN = 0x701D0000 + 0x180, LENGTH = 0x00004000 - 0x180
     RTOS_NORTOS_IPC_SHM_MEM : ORIGIN = 0x701D4000, LENGTH = 0x0000C000
 }
