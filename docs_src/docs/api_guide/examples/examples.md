@@ -8,6 +8,8 @@ This page lists all the examples and demos supported in this SDK.
     -# \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA
 - Current Sense
     -# \subpage EXAMPLE_MOTORCONTROL_SDFM
+- PRUICSS PWM
+    -# \subpage EXAMPLE_PRUICSS_PWM_DUTY_CYCLE
 \endcond
 
 \cond SOC_AM243X
@@ -21,6 +23,8 @@ This page lists all the examples and demos supported in this SDK.
 - RTLibs
     -# \subpage EXAMPLES_DCL_PI
     -# \subpage EXAMPLES_DCL_DF22
+- PRUICSS PWM
+    -# \subpage EXAMPLE_PRUICSS_PWM_DUTY_CYCLE
 \endcond
 
 \cond SOC_AM263X

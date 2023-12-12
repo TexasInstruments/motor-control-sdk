@@ -104,7 +104,7 @@ void pruicss_iep_init(void *args)
 
     int status;
     /*Disable IEP0 counter*/
-    status= PRUICSS_controlIepCounter(gPruIcssHandle,0,0);
+    status= PRUICSS_controlIepCounter(gPruIcssHandle,PRUICSS_IEP_INST0,0);
     DebugP_assert(SystemP_SUCCESS == status);
 
     /*Enable  IEP1 slave mode*/
@@ -112,39 +112,39 @@ void pruicss_iep_init(void *args)
     DebugP_assert(SystemP_SUCCESS == status);
 
     /*Intialize IEP0 count value*/
-    PRUICSS_PWM_setIepCounterLower_32bitValue(gPruIcssHandle,0,0xFFFFFFFF);
-    PRUICSS_PWM_setIepCounterUpper_32bitValue(gPruIcssHandle,0,0xFFFFFFFF);
+    PRUICSS_PWM_setIepCounterLower_32bitValue(gPruIcssHandle,PRUICSS_IEP_INST0,0xFFFFFFFF);
+    PRUICSS_PWM_setIepCounterUpper_32bitValue(gPruIcssHandle,PRUICSS_IEP_INST0,0xFFFFFFFF);
 
     /*configure cmp 0 value of IEP0 with APP_PRUICSS_PWM_PRD_VAL*/
-    status=PRUICSS_PWM_setIepCompareEventLower_32bitValue(gPruIcssHandle,0,0,(APP_PRUICSS_PWM_PRD_VAL & 0xFFFFFFFF));
+    status=PRUICSS_PWM_setIepCompareEventLower_32bitValue(gPruIcssHandle,PRUICSS_IEP_INST0,CMP_EVENT0,(APP_PRUICSS_PWM_PRD_VAL & 0xFFFFFFFF));
     DebugP_assert(SystemP_SUCCESS == status);
 
     /*configure cmp 1 value with APP_PRUICSS_IEP0_COMP1_VAL*/
-    status=PRUICSS_PWM_setIepCompareEventLower_32bitValue(gPruIcssHandle,0,1,(APP_PRUICSS_IEP0_COMP1_VAL & 0xFFFFFFFF));
+    status=PRUICSS_PWM_setIepCompareEventLower_32bitValue(gPruIcssHandle,PRUICSS_IEP_INST0,CMP_EVENT1,(APP_PRUICSS_IEP0_COMP1_VAL & 0xFFFFFFFF));
     DebugP_assert(SystemP_SUCCESS == status);
 
-    /*configure cmp 11 value with APP_PRUICSS_IEP1_COMP11_VAL*/
-    status=PRUICSS_PWM_setIepCompareEventLower_32bitValue(gPruIcssHandle,1,12,(APP_PRUICSS_IEP1_COMP12_VAL & 0xFFFFFFFF));
+    /*configure cmp 12 value with APP_PRUICSS_IEP1_COMP12_VAL*/
+    status=PRUICSS_PWM_setIepCompareEventLower_32bitValue(gPruIcssHandle,PRUICSS_IEP_INST1,CMP_EVENT12,(APP_PRUICSS_IEP1_COMP12_VAL & 0xFFFFFFFF));
     DebugP_assert(SystemP_SUCCESS == status);
 
     /*Enable cmp 0 and cmp 1 of IEP0*/
-    status=PRUICSS_PWM_configureIepCompareEnable(gPruIcssHandle,0,0x3);
+    status=PRUICSS_PWM_configureIepCompareEnable(gPruIcssHandle,PRUICSS_IEP_INST0,0x3);
     DebugP_assert(SystemP_SUCCESS == status);
 
     /*Enable cmp12 of IEP1*/
-    status=PRUICSS_PWM_configureIepCompareEnable(gPruIcssHandle,1,0x1000);
+    status=PRUICSS_PWM_configureIepCompareEnable(gPruIcssHandle,PRUICSS_IEP_INST1,0x1000);
     DebugP_assert(SystemP_SUCCESS == status);
 
     /*Set IEP0 counter Increment value*/
-    status=PRUICSS_setIepCounterIncrementValue(gPruIcssHandle,0,PRUICSS_IEP_COUNT_INCREMENT_VALUE);
+    status=PRUICSS_setIepCounterIncrementValue(gPruIcssHandle,PRUICSS_IEP_INST0,PRUICSS_IEP_COUNT_INCREMENT_VALUE);
     DebugP_assert(SystemP_SUCCESS == status);
 
     /*Enable cmp 0 reset of IEP0 counter*/
-    status=PRUICSS_PWM_configureIepCmp0ResetEnable(gPruIcssHandle,0,0x1);
+    status=PRUICSS_PWM_configureIepCmp0ResetEnable(gPruIcssHandle,PRUICSS_IEP_INST0,0x1);
     DebugP_assert(SystemP_SUCCESS == status);
 
     /*Enable IEP0 counter*/
-    status=PRUICSS_controlIepCounter(gPruIcssHandle,0,1);
+    status=PRUICSS_controlIepCounter(gPruIcssHandle,PRUICSS_IEP_INST0,1);
     DebugP_assert(SystemP_SUCCESS == status);
     
 }
@@ -157,27 +157,27 @@ void pruicss_pwm_init(void *args){
     DebugP_assert(SystemP_SUCCESS == status);
 
     /*Enable compare0 trip reset of set 0*/
-    status=PRUICSS_PWM_configurePwmCmp0TripResetEnable(gPruIcssHandle,0,1);
+    status=PRUICSS_PWM_configurePwmCmp0TripResetEnable(gPruIcssHandle,PRUICSS_PWM_SET0,1);
     DebugP_assert(SystemP_SUCCESS == status);
 
     /*Enable compare0 trip reset of set 3 */
-    status=PRUICSS_PWM_configurePwmCmp0TripResetEnable(gPruIcssHandle,3,1);
+    status=PRUICSS_PWM_configurePwmCmp0TripResetEnable(gPruIcssHandle,PRUICSS_PWM_SET3,1);
     DebugP_assert(SystemP_SUCCESS == status);
 
     /*configure PWM B2 signal of set 0, intial state to low*/
-    status=PRUICSS_PWM_actionOnOutputCfgPwmSignalA0(gPruIcssHandle,0,0,1);
+    status=PRUICSS_PWM_actionOnOutputCfgPwmSignalA0(gPruIcssHandle,PRUICSS_PWM_SET0,PRUICSS_PWM_INTIAL_STATE,1);
     DebugP_assert(SystemP_SUCCESS == status);
 
     /*configure PWM B2 signal of set 0, active state to high*/
-    status=PRUICSS_PWM_actionOnOutputCfgPwmSignalA0(gPruIcssHandle,0,1,2);
+    status=PRUICSS_PWM_actionOnOutputCfgPwmSignalA0(gPruIcssHandle,PRUICSS_PWM_SET0,PRUICSS_PWM_ACTIVE_STATE,2);
     DebugP_assert(SystemP_SUCCESS == status);
 
     /*configure PWM B2 signal of set 0, intial state to low*/
-    status=PRUICSS_PWM_actionOnOutputCfgPwmSignalB2(gPruIcssHandle,3,0,1);
+    status=PRUICSS_PWM_actionOnOutputCfgPwmSignalB2(gPruIcssHandle,PRUICSS_PWM_SET3,PRUICSS_PWM_INTIAL_STATE,1);
     DebugP_assert(SystemP_SUCCESS == status);
 
     /*configure PWM B2 signal of set 0, active state to high*/
-    status=PRUICSS_PWM_actionOnOutputCfgPwmSignalB2(gPruIcssHandle,3,1,2);
+    status=PRUICSS_PWM_actionOnOutputCfgPwmSignalB2(gPruIcssHandle,PRUICSS_PWM_SET3,PRUICSS_PWM_ACTIVE_STATE,2);
     DebugP_assert(SystemP_SUCCESS == status);
 }
 
