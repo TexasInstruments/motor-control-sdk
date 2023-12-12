@@ -2,7 +2,7 @@
 # Auto generated makefile
 #
 
-export MOTOR_CONTROL_SDK_PATH?=$(abspath ../../../../..)
+export MOTOR_CONTROL_SDK_PATH?=$(abspath ../../../../../..)
 include $(MOTOR_CONTROL_SDK_PATH)/imports.mak
 include $(MOTOR_CONTROL_SDK_PATH)/devconfig/devconfig.mak
 

@@ -31,6 +31,7 @@ const example_file_list = [
     "examples/current_sense/icss_sdfm/.project/project.js",
     "examples/current_sense/icss_sdfm_three_channel_with_phase_compensation/.project/project.js",
     "examples/pruicss_pwm/.project/project.js",
+    "examples/pruicss_pwm/pruicss_pwm_duty_cycle/.project/project.js",
     "source/current_sense/sdfm/firmware/.project/project.js",
     "source/position_sense/endat/firmware/multi_channel_load_share/.project/project.js",
     "source/position_sense/endat/firmware/single_channel/.project/project.js",
