@@ -111,12 +111,14 @@
 /* SDFM Configuration*/
 #define SDFM_CFG_SD_CH_ID_OFFSET             ( 0x10 )
 #define SDFM_CFG_SD_EN_COMP_OFFSET           ( 0x14 )
-#define SDFM_CFG_SD_ZC_ENABLE_OFFSET         ( 0x16 )
-#define SDFM_CFG_SD_EN_FD_OFFSET             ( 0x18 )
+#define SDFM_CFG_SD_EN_FD_OFFSET             ( 0x16 )
+#define SDFM_CFG_SD_EN_PHASE_DELAY           ( 0x17 )
+#define SDFM_CFG_SD_CLOCK_PHASE_DELAY        ( 0x18 )
+
 
 
 /*SDFM channel offsets*/
-/*ch0 offset*/
+/*Ch0 offset*/
 #define SDFM_CFG_CH0_CH_ID_OFFSET            ( 0x1C )
 #define SDFM_CFG_CH0_FILTER_TYPE_OFFSET      ( 0x1D )
 #define SDFM_CFG_CH0_OSR_OFFSET              ( 0x1E )
@@ -141,7 +143,7 @@
 #define SDFM_CFG_LOW_THR_CH0_CLR_VAL_ADDR_OFFSET    ( 0x50 )
 
 
-/*ch1 offsets*/
+/*Ch1 offsets*/
 #define SDFM_CFG_CH1_CH_ID_OFFSET            ( 0x60 )
 #define SDFM_CFG_CH1_FILTER_TYPE_OFFSET      ( 0x61 )
 #define SDFM_CFG_CH1_OSR_OFFSET              ( 0x62 )
@@ -167,7 +169,7 @@
 
 
 
-/*ch2 offsets*/
+/*Ch2 offsets*/
 #define SDFM_CFG_CH2_CH_ID_OFFSET            ( 0xA4 )
 #define SDFM_CFG_CH2_FILTER_TYPE_OFFSET      ( 0xA5 )
 #define SDFM_CFG_CH2_OSR_OFFSET              ( 0xA6 )
@@ -193,22 +195,27 @@
 #define SDFM_CFG_LOW_THR_CH2_CLR_VAL_ADDR_OFFSET    ( 0xD8 )
 
 
-/*sample timing offset*/
+/*Sample timing offset*/
 #define SDFM_CFG_EN_DOUBLE_UPDATE                   ( 0xE8 )
 #define FW_REG_SDFM_CFG_FIRST_TRIG_SAMPLE_TIME      ( 0xEC )
 #define FW_REG_SDFM_CFG_SECOND_TRIG_SAMPLE_TIME     ( 0xF0 )
 #define SDFM_CFG_NC_PRD_IEP_CNT_OFFSET              ( 0xF4)
 
-/* output sample buffer base address offset*/
+/* Output sample buffer base address offset*/
 #define SDFM_CFG_OUT_SAMP_BUF_BASE_ADD_OFFSET         ( 0xF8 )
 
 /*Firmware version offset*/
 #define SDFM_FIRMWARE_VERSION_OFFSET                  (0xFC)
 
-/*Debug */
-#define SDFM_DUBUG_OFFSET         ( 0x104 )
+/*Local store offset for Phase delay: 2 byte */
+#define SDFM_CFG_DELAY_STORE_OFFSET                   ( 0x110 )
 
-/*output sample offset*/
+
+/*Phase delay offset */
+/*Debug */
+#define SDFM_DUBUG_OFFSET         ( 0x10F )
+
+/*Output sample offset*/
 #define SDFM_CFG_OUT_SAMP_BUF_OFFSET                   (0x00)
 /*
     Firmware register bit fields

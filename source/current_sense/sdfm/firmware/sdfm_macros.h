@@ -116,3 +116,216 @@ M_PRU_TM_ENABLE .macro
 M_PRU_TM_DISABLE .macro
     tsen 0
     .endm
+
+
+;************************************************************************************
+;
+;   Macro: M_SDFM_PHASE_DELAY_FOR_RAISING_EDGE
+;
+;   Calculate number of PRU cycles between data raising edge  and upcoming nearest clock raising edge 
+;
+;   Invokes:
+;       None
+;
+;   Parameters:
+;      None
+;
+;   Results: TEMP_REG1.w0 -> PRU cycles
+;            TEMP_REG1.w2 -> Raising Edge status 
+;            TEMP_REG2    -> MAX PRU cyles between clk & data edge 
+;
+;
+;************************************************************************************
+M_SDFM_PHASE_DELAY_FOR_RAISING_EDGE .macro
+; waiting for one on SD data line 
+        wbc  R31.b0, 1
+        ;waiting for rising edge of sd data
+        wbs  R31.b0, 1
+        QBBS   DELAY_1_PRU_CYCLE,  R31.b2, 0
+        QBBS   DELAY_2_PRU_CYCLE,  R31.b2, 0
+        QBBS   DELAY_3_PRU_CYCLE,  R31.b2, 0
+        QBBS   DELAY_4_PRU_CYCLE,  R31.b2, 0
+        QBBS   DELAY_5_PRU_CYCLE,  R31.b2, 0
+        QBBS   DELAY_6_PRU_CYCLE,  R31.b2, 0
+        QBBS   DELAY_7_PRU_CYCLE,  R31.b2, 0
+        QBBS   DELAY_8_PRU_CYCLE,  R31.b2, 0
+        QBBS   DELAY_9_PRU_CYCLE,  R31.b2, 0
+        QBBS   DELAY_10_PRU_CYCLE,  R31.b2, 0
+        QBBS   DELAY_11_PRU_CYCLE,  R31.b2, 0
+        QBBS   DELAY_12_PRU_CYCLE,  R31.b2, 0
+        QBBS   DELAY_13_PRU_CYCLE,  R31.b2, 0
+        QBBS   DELAY_14_PRU_CYCLE,  R31.b2, 0
+        QBBS   DELAY_15_PRU_CYCLE,  R31.b2, 0
+        QBBS   DELAY_16_PRU_CYCLE,  R31.b2, 0
+DELAY_1_PRU_CYCLE:
+        ADD  TEMP_REG1.w0,  TEMP_REG1.w0, 1 
+        MAX  TEMP_REG2, TEMP_REG2,   1
+        JMP  DELAY_DONE   
+DELAY_2_PRU_CYCLE:
+        ADD  TEMP_REG1.w0,  TEMP_REG1.w0, 2 
+        MAX  TEMP_REG2, TEMP_REG2,   2
+        JMP  DELAY_DONE   
+DELAY_3_PRU_CYCLE:
+        ADD  TEMP_REG1.w0,  TEMP_REG1.w0, 3 
+        MAX  TEMP_REG2, TEMP_REG2,   3
+        JMP  DELAY_DONE   
+DELAY_4_PRU_CYCLE:
+        ADD  TEMP_REG1.w0,  TEMP_REG1.w0, 4 
+        MAX  TEMP_REG2, TEMP_REG2,   4
+        JMP  DELAY_DONE   
+DELAY_5_PRU_CYCLE:
+        ADD  TEMP_REG1.w0,  TEMP_REG1.w0, 5 
+        MAX  TEMP_REG2, TEMP_REG2,   5
+        JMP  DELAY_DONE   
+DELAY_6_PRU_CYCLE:
+        ADD  TEMP_REG1.w0,  TEMP_REG1.w0, 6 
+        MAX  TEMP_REG2, TEMP_REG2,   6
+        JMP  DELAY_DONE   
+DELAY_7_PRU_CYCLE:
+        ADD  TEMP_REG1.w0,  TEMP_REG1.w0, 7 
+        MAX  TEMP_REG2, TEMP_REG2,   7
+        JMP  DELAY_DONE   
+DELAY_8_PRU_CYCLE:
+        ADD  TEMP_REG1.w0,  TEMP_REG1.w0, 8 
+        MAX  TEMP_REG2, TEMP_REG2,   8
+        JMP  DELAY_DONE   
+DELAY_9_PRU_CYCLE:
+        ADD  TEMP_REG1.w0,  TEMP_REG1.w0, 9 
+        MAX  TEMP_REG2, TEMP_REG2,   9
+        JMP  DELAY_DONE   
+DELAY_10_PRU_CYCLE:
+        ADD  TEMP_REG1.w0,  TEMP_REG1.w0, 10
+        MAX  TEMP_REG2, TEMP_REG2,   10 
+        JMP  DELAY_DONE   
+DELAY_11_PRU_CYCLE:
+        ADD  TEMP_REG1.w0,  TEMP_REG1.w0, 11 
+        MAX  TEMP_REG2, TEMP_REG2,   11
+        JMP  DELAY_DONE   
+DELAY_12_PRU_CYCLE:
+        ADD  TEMP_REG1.w0,  TEMP_REG1.w0, 12 
+        MAX  TEMP_REG2, TEMP_REG2,   12
+        JMP  DELAY_DONE   
+DELAY_13_PRU_CYCLE:
+        ADD  TEMP_REG1.w0,  TEMP_REG1.w0, 13
+        MAX  TEMP_REG2, TEMP_REG2,   13 
+        JMP  DELAY_DONE   
+DELAY_14_PRU_CYCLE:
+        ADD  TEMP_REG1.w0,  TEMP_REG1.w0, 14
+        MAX  TEMP_REG2, TEMP_REG2,   14 
+        JMP  DELAY_DONE   
+DELAY_15_PRU_CYCLE:
+        ADD  TEMP_REG1.w0,  TEMP_REG1.w0, 15
+        MAX  TEMP_REG2, TEMP_REG2,   15 
+        JMP  DELAY_DONE   
+DELAY_16_PRU_CYCLE:
+        ADD  TEMP_REG1.w0,  TEMP_REG1.w0, 16
+        MAX  TEMP_REG2, TEMP_REG2,   16  
+DELAY_DONE:
+        LDI  TEMP_REG1.b2, 0  ; status of edge is 0 means rising edge
+       .endm
+  
+;************************************************************************************
+;
+;   Macro: M_SDFM_PHASE_DELAY_FOR_FALLING_EDGE
+;
+;  Calculate number of PRU cycles between data raising edge  and upcoming nearest clock falling edge 
+;
+;   Invokes:
+;       None
+;
+;   Parameters:
+;      None
+;
+;   Results: TEMP_REG1.w0 -> PRU cycles
+;            TEMP_REG1.w2 -> falling edage status 
+;            TEMP_REG2    -> MAX PRU cyles between clk & data edge 
+;
+;
+;************************************************************************************ 
+M_SDFM_PHASE_DELAY_FOR_FALLING_EDGE .macro
+; waiting for one on SD data line 
+        wbc  R31.b0, 1
+        ;waiting for rising edge of sd data
+        wbs  R31.b0, 1
+        QBBC   DELAY_1_PRU_CYCLE1,  R31.b2, 0
+        QBBC   DELAY_2_PRU_CYCLE1,  R31.b2, 0
+        QBBC   DELAY_3_PRU_CYCLE1,  R31.b2, 0
+        QBBC   DELAY_4_PRU_CYCLE1,  R31.b2, 0
+        QBBC   DELAY_5_PRU_CYCLE1,  R31.b2, 0
+        QBBC   DELAY_6_PRU_CYCLE1,  R31.b2, 0
+        QBBC   DELAY_7_PRU_CYCLE1,  R31.b2, 0
+        QBBC   DELAY_8_PRU_CYCLE1,  R31.b2, 0
+        QBBC   DELAY_9_PRU_CYCLE1,  R31.b2, 0
+        QBBC   DELAY_10_PRU_CYCLE1,  R31.b2, 0
+        QBBC   DELAY_11_PRU_CYCLE1,  R31.b2, 0
+        QBBC   DELAY_12_PRU_CYCLE1,  R31.b2, 0
+        QBBC   DELAY_13_PRU_CYCLE1,  R31.b2, 0
+        QBBC   DELAY_14_PRU_CYCLE1,  R31.b2, 0
+        QBBC   DELAY_15_PRU_CYCLE1,  R31.b2, 0
+        QBBC   DELAY_16_PRU_CYCLE1,  R31.b2, 0
+DELAY_1_PRU_CYCLE1:
+        ADD  TEMP_REG1.w0,  TEMP_REG1.w0, 1 
+        MAX  TEMP_REG2, TEMP_REG2,   1
+        JMP  DELAY_DONE1   
+DELAY_2_PRU_CYCLE1:
+        ADD  TEMP_REG1.w0,  TEMP_REG1.w0, 2
+        MAX  TEMP_REG2, TEMP_REG2,   2 
+        JMP  DELAY_DONE1   
+DELAY_3_PRU_CYCLE1:
+        ADD  TEMP_REG1.w0,  TEMP_REG1.w0, 3
+        MAX  TEMP_REG2, TEMP_REG2,   3 
+        JMP  DELAY_DONE1   
+DELAY_4_PRU_CYCLE1:
+        ADD  TEMP_REG1.w0,  TEMP_REG1.w0, 4
+        MAX  TEMP_REG2, TEMP_REG2,   4 
+        JMP  DELAY_DONE1   
+DELAY_5_PRU_CYCLE1:
+        ADD  TEMP_REG1.w0,  TEMP_REG1.w0, 5
+        MAX  TEMP_REG2, TEMP_REG2,   5 
+        JMP  DELAY_DONE1   
+DELAY_6_PRU_CYCLE1:
+        ADD  TEMP_REG1.w0,  TEMP_REG1.w0, 6
+        MAX  TEMP_REG2, TEMP_REG2,   6 
+        JMP  DELAY_DONE1   
+DELAY_7_PRU_CYCLE1:
+        ADD  TEMP_REG1.w0,  TEMP_REG1.w0, 7
+        MAX  TEMP_REG2, TEMP_REG2,   7 
+        JMP  DELAY_DONE1   
+DELAY_8_PRU_CYCLE1:
+        ADD  TEMP_REG1.w0,  TEMP_REG1.w0, 8
+        MAX  TEMP_REG2, TEMP_REG2,   8 
+        JMP  DELAY_DONE1   
+DELAY_9_PRU_CYCLE1:
+        ADD  TEMP_REG1.w0,  TEMP_REG1.w0, 9
+        MAX  TEMP_REG2, TEMP_REG2,   9 
+        JMP  DELAY_DONE1   
+DELAY_10_PRU_CYCLE1:
+        ADD  TEMP_REG1.w0,  TEMP_REG1.w0, 10 
+        MAX  TEMP_REG2, TEMP_REG2,   10
+        JMP  DELAY_DONE1   
+DELAY_11_PRU_CYCLE1:
+        ADD  TEMP_REG1.w0,  TEMP_REG1.w0, 11
+        MAX  TEMP_REG2, TEMP_REG2,   11 
+        JMP  DELAY_DONE1   
+DELAY_12_PRU_CYCLE1:
+        ADD  TEMP_REG1.w0,  TEMP_REG1.w0, 12
+        MAX  TEMP_REG2, TEMP_REG2,   12 
+        JMP  DELAY_DONE1   
+DELAY_13_PRU_CYCLE1:
+        ADD  TEMP_REG1.w0,  TEMP_REG1.w0, 13
+        MAX  TEMP_REG2, TEMP_REG2,   13 
+        JMP  DELAY_DONE1   
+DELAY_14_PRU_CYCLE1:
+        ADD  TEMP_REG1.w0,  TEMP_REG1.w0, 14
+        MAX  TEMP_REG2, TEMP_REG2,   14 
+        JMP  DELAY_DONE1   
+DELAY_15_PRU_CYCLE1:
+        ADD  TEMP_REG1.w0,  TEMP_REG1.w0, 15
+        MAX  TEMP_REG2, TEMP_REG2,   15 
+        JMP  DELAY_DONE1   
+DELAY_16_PRU_CYCLE1:
+        ADD  TEMP_REG1.w0,  TEMP_REG1.w0, 16
+        MAX  TEMP_REG2, TEMP_REG2,   16  
+DELAY_DONE1:
+        LDI  TEMP_REG1.b2, 1   ; status of edge is 1 means falling edge
+       .endm

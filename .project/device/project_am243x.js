@@ -29,6 +29,7 @@ const example_file_list = [
     "examples/position_sense/bissc_diagnostic/multi_channel_load_share/.project/project.js",
     "examples/position_sense/bissc_diagnostic/multi_channel_single_pru/.project/project.js",
     "examples/current_sense/icss_sdfm/.project/project.js",
+    "examples/current_sense/icss_sdfm_three_channel_with_phase_compensation/.project/project.js",
     "examples/pruicss_pwm/.project/project.js",
     "source/current_sense/sdfm/firmware/.project/project.js",
     "source/position_sense/endat/firmware/multi_channel_load_share/.project/project.js",

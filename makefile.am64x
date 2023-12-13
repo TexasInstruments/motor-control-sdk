@@ -55,7 +55,6 @@ help:
 	@echo  $(MAKE) -s -C examples/position_sense/hdsl_diagnostic/single_channel/am64x-evm/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C examples/position_sense/tamagawa_diagnostic/multi_channel/am64x-evm/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C examples/position_sense/tamagawa_diagnostic/single_channel/am64x-evm/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
-	@echo  $(MAKE) -s -C examples/current_sense/icss_sdfm/am64x-evm/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C examples/pruicss_pwm/am64x-evm/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/current_sense/sdfm/firmware/am64x-evm/icssg0-pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/endat/firmware/multi_channel_load_share/am64x-evm/icssg0-pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
@@ -189,7 +188,6 @@ BUILD_COMBO_EXAMPLE_ALL += hdsl_diagnostic_multi_channel_am64x-evm_r5fss0-0_free
 BUILD_COMBO_EXAMPLE_ALL += hdsl_diagnostic_single_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang
 BUILD_COMBO_EXAMPLE_ALL += tamagawa_diagnostic_multi_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang
 BUILD_COMBO_EXAMPLE_ALL += tamagawa_diagnostic_single_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang
-BUILD_COMBO_EXAMPLE_ALL += icss_sdfm_am64x-evm_r5fss0-0_freertos_ti-arm-clang
 BUILD_COMBO_EXAMPLE_ALL += pruicss_pwm_duty_cycle_am64x-evm_r5fss0-0_freertos_ti-arm-clang
 # Various System Example Targets
 
@@ -235,9 +233,6 @@ examples-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_ALL)
 
  tamagawa_diagnostic_single_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang:
 	$(MAKE) -C examples/position_sense/tamagawa_diagnostic/single_channel/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile all
-
- icss_sdfm_am64x-evm_r5fss0-0_freertos_ti-arm-clang:
-	$(MAKE) -C examples/current_sense/icss_sdfm/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile all
 
  pruicss_pwm_duty_cycle_am64x-evm_r5fss0-0_freertos_ti-arm-clang:
 	$(MAKE) -C examples/pruicss_pwm/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile all
@@ -294,7 +289,6 @@ BUILD_COMBO_EXAMPLE_CLEAN_ALL += hdsl_diagnostic_multi_channel_am64x-evm_r5fss0-
 BUILD_COMBO_EXAMPLE_CLEAN_ALL += hdsl_diagnostic_single_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_CLEAN_ALL += tamagawa_diagnostic_multi_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_CLEAN_ALL += tamagawa_diagnostic_single_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang_clean
-BUILD_COMBO_EXAMPLE_CLEAN_ALL += icss_sdfm_am64x-evm_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_CLEAN_ALL += pruicss_pwm_duty_cycle_am64x-evm_r5fss0-0_freertos_ti-arm-clang_clean
 # Various System Example Clean Targets
 
@@ -340,9 +334,6 @@ examples-private-clean: $(BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL)
 
  tamagawa_diagnostic_single_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang_clean:
 	$(MAKE) -C examples/position_sense/tamagawa_diagnostic/single_channel/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile clean
-
- icss_sdfm_am64x-evm_r5fss0-0_freertos_ti-arm-clang_clean:
-	$(MAKE) -C examples/current_sense/icss_sdfm/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile clean
 
  pruicss_pwm_duty_cycle_am64x-evm_r5fss0-0_freertos_ti-arm-clang_clean:
 	$(MAKE) -C examples/pruicss_pwm/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile clean
@@ -399,7 +390,6 @@ BUILD_COMBO_EXAMPLE_SCRUB_ALL += hdsl_diagnostic_multi_channel_am64x-evm_r5fss0-
 BUILD_COMBO_EXAMPLE_SCRUB_ALL += hdsl_diagnostic_single_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang_scrub
 BUILD_COMBO_EXAMPLE_SCRUB_ALL += tamagawa_diagnostic_multi_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang_scrub
 BUILD_COMBO_EXAMPLE_SCRUB_ALL += tamagawa_diagnostic_single_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang_scrub
-BUILD_COMBO_EXAMPLE_SCRUB_ALL += icss_sdfm_am64x-evm_r5fss0-0_freertos_ti-arm-clang_scrub
 BUILD_COMBO_EXAMPLE_SCRUB_ALL += pruicss_pwm_duty_cycle_am64x-evm_r5fss0-0_freertos_ti-arm-clang_scrub
 # Various System Example Scrub Targets
 
@@ -445,9 +435,6 @@ examples-scrub-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL)
 
  tamagawa_diagnostic_single_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang_scrub:
 	$(MAKE) -C examples/position_sense/tamagawa_diagnostic/single_channel/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile scrub
-
- icss_sdfm_am64x-evm_r5fss0-0_freertos_ti-arm-clang_scrub:
-	$(MAKE) -C examples/current_sense/icss_sdfm/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile scrub
 
  pruicss_pwm_duty_cycle_am64x-evm_r5fss0-0_freertos_ti-arm-clang_scrub:
 	$(MAKE) -C examples/pruicss_pwm/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile scrub

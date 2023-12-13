@@ -112,12 +112,11 @@
 #define SDFM_DATA_FILTER_ACKNOWLEDGE_INTERRUPT_MASK ( 3 )
 
 /* Internal structure for managing each PRU SD */
-//static sdfm g_sdfm[NUM_PRU] = {
 SDFM g_sdfm[NUM_PRU] = {
-    {PRU_ID_0,0,0,0, NULL},
-    {PRU_ID_1,0,0,0, NULL},
+    {PRU_ID_0,0,0,0,0, NULL},
+    {PRU_ID_1,0,0,0,0, NULL},
 };
-// static sdfm g_sdfm[NUM_PRU];
+
 
 /* Initialize SDFM instance */
 sdfm_handle SDFM_init(uint8_t pru_id)
@@ -342,6 +341,41 @@ void SDFM_clearPwmTripStatus(sdfm_handle h_sdfm, uint8_t pwmIns)
     regval = regval & (~ CSL_ICSSCFG_PWM0_PWM0_TRIP_RESET_MASK);
     HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_PWM0 + pwmIns * 4, regval);
 
+}
+/*Measure Phase delay*/
+float SDFM_measureClockPhaseDelay(sdfm_handle h_sdfm, uint16_t clkEdg)
+{
+    /*enable phase delay measurement*/
+    h_sdfm->p_sdfm_interface->sdfm_ch_ctrl.en_phase_delay = 1;
+    /*waiting till measurment done */
+    uint8_t ack = h_sdfm->p_sdfm_interface->sdfm_ch_ctrl.en_phase_delay & SDFM_PHASE_DELAY_ACK_BIT_MASK;
+    while(ack)
+    {
+       ack = h_sdfm->p_sdfm_interface->sdfm_ch_ctrl.en_phase_delay & SDFM_PHASE_DELAY_ACK_BIT_MASK ;
+    }
+
+
+   uint16_t nEdge = h_sdfm->p_sdfm_interface->sdfm_ch_ctrl.clock_edge;
+   float temp = h_sdfm->p_sdfm_interface->sdfm_ch_ctrl.clock_phase_delay;
+   /*avg*/
+    temp = temp/SDFM_PHASE_DELAY_CAL_LOOP_SIZE;
+   /*check data reading edge(clk polarity) & nearest edge */
+   if(nEdge == clkEdg)
+   {
+      /*PRU cycles for half SD clock period*/
+      uint32_t pruCycles = ceil(((float)h_sdfm->pru_core_clk)/(2*h_sdfm->sdfm_clock));
+      h_sdfm->p_sdfm_interface->sdfm_ch_ctrl.clock_phase_delay = pruCycles - temp;
+   }
+   else
+   {
+      /*PRU cycles for one SD clock period*/
+      uint32_t pruCycles = ceil((float)(h_sdfm->pru_core_clk/(h_sdfm->sdfm_clock)));
+      h_sdfm->p_sdfm_interface->sdfm_ch_ctrl.clock_phase_delay = pruCycles - temp;
+
+   }
+    /*conversion from PRU cycle to ns */
+    float phaseDelay =  ((float)h_sdfm->p_sdfm_interface->sdfm_ch_ctrl.clock_phase_delay * 1000000000)/h_sdfm->pru_core_clk;
+    return phaseDelay;
 }
 /* SDFM global enable */
 void SDFM_enable(sdfm_handle h_sdfm)

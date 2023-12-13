@@ -40,6 +40,7 @@ extern "C" {
 
 #include <drivers/soc.h>
 #include <drivers/pruicss.h>
+#include  <math.h>
 
 
 
@@ -121,6 +122,9 @@ extern "C" {
 #define ICSSG_SD_SAMP_CH_BUF_SZ  ( 128 )
 #define NUM_CH_SUPPORTED        ( 3 )
 
+#define SDFM_PHASE_DELAY_ACK_BIT_MASK   (1)
+#define SDFM_PHASE_DELAY_CAL_LOOP_SIZE  (8)
+
 /* ========================================================================== */
 /*                         Structures                                         */
 /* ========================================================================== */
@@ -200,14 +204,14 @@ typedef struct SDFM_ChCtrl_s
     volatile uint32_t    sdfm_ch_id;
     /**< bit-field to enable comparators for individual SDFM channels, BitN:ChN, non-zero to enable */
     volatile uint16_t    enable_comparator;
-    /**< bit-field to set the output data format for individual SDFM channels, BitN:ChN */
-    volatile uint16_t    output_data_format;
     /**< bit-field to enable fast detect  for individual SDFM channels, BitN:ChN, non-zero to enable */
     volatile uint8_t    enFastDetect;
-     /**< reserved */
-     volatile uint8_t   reserved1;
-    /**< reserved */
-    volatile uint16_t    reserved2;
+     /**< enable phase delay calcualtion */
+    volatile uint8_t    en_phase_delay;
+    /**< Clock phase delay */
+     volatile uint16_t   clock_phase_delay;
+    /**<nearest clock edge status of data*/
+    volatile uint16_t    clock_edge;
 
 } SDFM_ChCtrl;
 
@@ -324,6 +328,7 @@ typedef struct SDFM_s {
     uint8_t pru_id;
     uint32_t sdfm_clock;
     uint32_t iep_clock;
+    uint32_t pru_core_clk;
     uint8_t  iep_inc;
     SDFM_Interface * p_sdfm_interface;
     SDFM_SampleOutInterface *sampleOutputInterface;

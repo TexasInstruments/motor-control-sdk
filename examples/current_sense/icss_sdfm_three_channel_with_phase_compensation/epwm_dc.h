@@ -96,7 +96,7 @@ typedef struct _EPwmObj_t
     uint32_t    epwmDutyCycle[EPWM_NUM_OUT_CH];
 
     uint32_t    epwmPrdVal;         /* EPWM period value */
-    
+
     /* For handling up-down count alternating period
        when period isn't divisible by 2 */
     Bool        toggleEpwmPrd;      /* Flag for EPWM in alternating period mode */

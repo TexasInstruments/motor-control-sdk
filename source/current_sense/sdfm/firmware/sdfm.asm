@@ -101,12 +101,26 @@ SDFM_ENTRY:
         ; Write C24 block index for access to FW registers
         WRITE_C24_BLK_INDEX C24_BLK_INDEX_FW_REGS_VAL
 
+PHASE_DELAY_CAL:
+        ;check phase delay measurment active
+        LBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_LOC_DMEM, SDFM_CFG_SD_EN_PHASE_DELAY, 1
+        QBBC    SKIP_PHASE_DELAY_CAL, TEMP_REG0.b0, 0
+        JAL     RET_ADDR_REG, SDFM_CLOCK_PHASE_COMPENSATION
+        ;acknowledge 
+        CLR     TEMP_REG0, TEMP_REG0, 0
+        SBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_LOC_DMEM, SDFM_CFG_SD_EN_PHASE_DELAY, 1       
+SKIP_PHASE_DELAY_CAL:
+
+
 
 ;
 ; Check SDFM global enable & set SDFM global enable acknowledge to inform R5 core.
 ; If SDFM global enable not set, wait for SDFM global enable from R5.
 ;
 check_sdfm_en:
+        ;Check for phase delay measurment
+        LBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_LOC_DMEM, SDFM_CFG_SD_EN_PHASE_DELAY, 1
+        QBBS    PHASE_DELAY_CAL, TEMP_REG0.b0, 0
         ; Check SDFM global enable
         LBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_LOC_DMEM, SDFM_EN_OFFSET, SDFM_EN_SZ
         QBBC    check_sdfm_en, TEMP_REG0.b0, 0                      ; If SDFM_EN not set, wait to set sdfm enable
@@ -203,7 +217,6 @@ init_sdfm_cont:
         LDI  SAMP_CNT_REG,  0
         LBCO  &EN_DOUBLE_UPDATE,  CT_PRU_ICSSG_LOC_DMEM, SDFM_CFG_EN_DOUBLE_UPDATE,  1
         LDI  SAMP_NAME, 0
-
 
 
 
@@ -987,6 +1000,49 @@ SDFM_MASK_SKIP1_CH2:
 
        JMP     RET_ADDR_REG
       
+
+;Phase delay measurement
+; Measure Phase Difference between MCLK and MDATA
+; PRU mode is GPI mode (default)
+;     1)Waits for rising edge of DATA using wbs instruction
+;        ->GPO1 for SD_D
+;     2)check status of sd clock pin when data line is high. 
+;        ->GPO16 for SD_clock
+;     3)if clock line is high then call falling edge macro otherwise raising edge macro
+;   -> macro calcultes time between rising edge of data and upcoming nearest clock edge (rising or falling)
+;   -> store 8 times calculted time into DMEM
+SDFM_CLOCK_PHASE_COMPENSATION:
+        ;decide mask 
+        LDI32 TEMP_REG1, SDFM_11_MASK
+        ; waiting zero
+        wbc  R31.b0, 1
+        ;waiting for rising edge of sd data
+        wbs  R31.b0, 1
+        ; check nereset clock edge from starting point of bit
+        AND  TEMP_REG0, R31, TEMP_REG1
+        ;Max value
+        LDI   TEMP_REG2, 0
+        QBEQ   DELAY_CAL_FOR_FALLING_EDGE, TEMP_REG0, TEMP_REG1
+        LDI TEMP_REG1, 0
+
+        LOOP    SDFM_CLOCK_PHASE_COMPENSATION_LOOP, 8
+        M_SDFM_PHASE_DELAY_FOR_RAISING_EDGE
+SDFM_CLOCK_PHASE_COMPENSATION_LOOP:
+        JMP  END_PHASE_DELAY
+DELAY_CAL_FOR_FALLING_EDGE:
+        LDI TEMP_REG1, 0
+        LOOP    SDFM_CLOCK_PHASE_COMPENSATION_LOOP1, 8
+        M_SDFM_PHASE_DELAY_FOR_FALLING_EDGE
+SDFM_CLOCK_PHASE_COMPENSATION_LOOP1:
+END_PHASE_DELAY:
+        ;storing phase delay (8 times) and edge status in DMEM 
+        ;final result in TEMP_REG1 register
+        LSR    TEMP_REG0, TEMP_REG1.w0, 3
+        SUB  TEMP_REG0, TEMP_REG2,TEMP_REG0
+        QBLT   SDFM_CLOCK_PHASE_COMPENSATION, TEMP_REG0, 1
+        SBCO  &TEMP_REG1, CT_PRU_ICSSG_LOC_DMEM, SDFM_CFG_SD_CLOCK_PHASE_DELAY, 4
+        JMP     RET_ADDR_REG
+
 ;
 ; Initialize SD (eCAP PWM) clock
 ;
@@ -1022,3 +1078,4 @@ init_sd_clock:
         SBCO    &TEMP_REG0, CT_PRU_ICSSG_ECAP, ICSSG_eCAP_ECCTL1, 4
 
         JMP     RET_ADDR_REG
+
