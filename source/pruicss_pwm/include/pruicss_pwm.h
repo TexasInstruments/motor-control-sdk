@@ -31,7 +31,7 @@
  */
 
  /**
- * \defgroup PRUICSS_PWM_API APIs for PruIcss_pwm
+ * \defgroup PRUICSS_PWM_API APIs for PRUICSS PWM
  *
  * This module contains APIs for device driver pruicss_pwm supported in this SDK.
  * 
@@ -96,10 +96,72 @@ extern "C" {
 /*                           Macros & Typedefs                                */
 /* ========================================================================== */
 
+
 /**
- * \brief Number of PRUICSS IEP Instances
+ *  
+ *  \anchor PRUICSS_PWM_SET
+ *  \name PRUICSS PWM SET
+ * 
+ * @{
+ */
+#define PRUICSS_NUM_PWM_SETS                                (0x4U)
+
+#define PRUICSS_PWM_SET0                                    (0x0U)
+
+#define PRUICSS_PWM_SET1                                    (0x1U)   
+
+#define PRUICSS_PWM_SET2                                    (0x2U)    
+
+#define PRUICSS_PWM_SET3                                    (0x3U)
+/** @} */
+
+
+/**
+ *  
+ *  \anchor PRUICSS_PWM_STATE
+ *  \name PRUICSS PWM STATE
+ * 
+ * @{
+ */
+#define PRUICSS_NUM_PWM_STATES                              (0x3U)
+
+#define PRUICSS_PWM_INTIAL_STATE                            (0x0U)
+
+#define PRUICSS_PWM_ACTIVE_STATE                            (0x1U)
+
+#define PRUICSS_PWM_TRIP_STATE                              (0x2U)
+/** @} */
+
+/**
+ *  
+ *  \anchor PRUICSS_PWM_OUTPUT_ACTION
+ *  \name PRUICSS PWM OUTPUT ACTION
+ * 
+ * @{
+ */
+#define PRUICSS_NUM_PWM_OUTPUT_ACTIONS                       (0x3U)
+
+#define PRUICSS_PWM_OUTPUT_TOGGLE                            (0x0U)
+
+#define PRUICSS_PWM_OUTPUT_LOW                               (0x1U)
+
+#define PRUICSS_PWM_OUTPUT_HIGH                              (0x2U)
+/** @} */
+
+/**
+ *  
+ *  \anchor PRUICSS_IEP_INSTANCE
+ *  \name PRUICSS IEP INSTANCE
+ * 
+ * @{
  */
 #define PRUICSS_NUM_IEP_INSTANCES                           (0x2U)
+
+#define PRUICSS_IEP_INST0                                   (0x0U)
+
+#define PRUICSS_IEP_INST1                                   (0x1U)
+/** @} */
+
 
 /**
  * \brief PRUICSS IEP count register maximum value
@@ -107,9 +169,46 @@ extern "C" {
 #define PRUICSS_IEP_COUNT_REG_MAX                           (0xFFFFFFFFU)
 
 /**
- * \brief Number of PRUICSS IEP compare events
+ *  
+ *  \anchor PRUICSS_IEP_COMPARE_EVENT
+ *  \name PRUICSS IEP COMPARE EVENT
+ * 
+ * @{
  */
 #define PRUICSS_NUM_IEP_CMP_EVENTS                          (0x10U)
+
+#define CMP_EVENT0                                          (0x0U)
+
+#define CMP_EVENT1                                          (0x1U)
+
+#define CMP_EVENT2                                          (0x2U)
+
+#define CMP_EVENT3                                          (0x3U)
+
+#define CMP_EVENT4                                          (0x4U)
+
+#define CMP_EVENT5                                          (0x5U)
+
+#define CMP_EVENT6                                          (0x6U)
+
+#define CMP_EVENT7                                          (0x7U)
+
+#define CMP_EVENT8                                          (0x8U)
+
+#define CMP_EVENT9                                          (0x9U)
+
+#define CMP_EVENT10                                         (0xAU)
+
+#define CMP_EVENT11                                         (0xBU)
+
+#define CMP_EVENT12                                         (0xCU)
+
+#define CMP_EVENT13                                         (0xDU)
+
+#define CMP_EVENT14                                         (0xEU)
+
+#define CMP_EVENT15                                         (0xFU)
+/** @} */
 
 /**
  * \brief Number of PRUICSS IEP compare events enable field maximum value 
@@ -117,22 +216,12 @@ extern "C" {
 #define PRUICSS_IEP_CMP_EVENTS_ENABLE_MAX_VALUE             (0x0000FFFFU)
 
 /**
- * \brief Number of PRUICSS PWM Sets
- */
-#define PRUICSS_NUM_PWM_SETS                                (0x4U)
-
-/**
- * \brief Number of PRUICSS PWM number of states
- */
-#define PRUICSS_NUM_PWM_STATES                              (0x3U)
-
-/**
  * \brief PRUICSS PWM Debounce maximum value
  */
 #define PRUICSS_PWM_DEBOUNCE_MAX_VALUE                      (0xFFU)
 
 /**
- * \brief Number of PRUICSS PWM Sets
+ * \brief PRUICSS PWM mask field maximum value
  */
 #define PRUICSS_PWM_TRIP_MASK_MAX_VALUE                     (0x000001FFU)
 
@@ -147,7 +236,7 @@ extern "C" {
  *      
  * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
  * \param   iepInstance 0 for IEP0, 1 for IEP1
- * \param   value       iep count register Lower 32bit Value
+ * \param   value       Iep count register lower 32bit value
  * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  *
  */
@@ -158,7 +247,7 @@ int32_t PRUICSS_PWM_setIepCounterLower_32bitValue(PRUICSS_Handle handle, uint8_t
  *      
  * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
  * \param   iepInstance 0 for IEP0, 1 for IEP1
- * \param   value       iep count register Upper 32bit Value
+ * \param   value       Iep count register upper 32bit value
  * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  *
  */
@@ -169,7 +258,7 @@ int32_t PRUICSS_PWM_setIepCounterUpper_32bitValue(PRUICSS_Handle handle, uint8_t
  *      
  * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
  * \param   iepInstance 0 for IEP0, 1 for IEP1
- * \param   enable       enable      0 for disable, 1 for enable
+ * \param   enable      0 for disable, 1 for enable
  * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  *
  */
@@ -191,8 +280,8 @@ int32_t PRUICSS_PWM_configureIepCompareEnable(PRUICSS_Handle handle, uint8_t iep
  *      
  * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
  * \param   iepInstance 0 for IEP0, 1 for IEP1
- * \param   value       compare register Lower 32bit Value
- * \param   cmpEvent    compare Event number. Maximum value allowed is 15
+ * \param   value       Compare register lower 32bit value
+ * \param   cmpEvent    Compare event number. maximum value allowed is 15
  * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  *
  */
@@ -203,8 +292,8 @@ int32_t PRUICSS_PWM_setIepCompareEventLower_32bitValue(PRUICSS_Handle handle, ui
  *      
  * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
  * \param   iepInstance 0 for IEP0, 1 for IEP1
- * \param   value       compare register Upper 32bit Value
- * \param   cmpEvent    compare Event number. Maximum value allowed is 15
+ * \param   value       Compare register upper 32bit Value
+ * \param   cmpEvent    Compare event number. maximum value allowed is 15
  * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  *
  */
@@ -215,7 +304,7 @@ int32_t PRUICSS_PWM_setIepCompareEventUpper_32bitValue(PRUICSS_Handle handle, ui
  * 
  * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
  * \param   pwmSet      0 for PWM0, 1 for PWM1, 2 for PWM2, 3 for PWM3
- * \param   value       pwmSet Debounce Value
+ * \param   value       Pwmset debounce value
  * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  * 
 */
@@ -237,7 +326,7 @@ int32_t PRUICSS_PWM_setPwmDebounceValue(PRUICSS_Handle handle, uint8_t pwmSet, u
  * 
  * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
  * \param   pwmSet      0 for PWM0, 1 for PWM1, 2 for PWM2, 3 for PWM3
- * \param   maskvalue   pwmSet maskValue
+ * \param   maskvalue   Pwmset maskvalue
  * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  * 
 */
@@ -248,7 +337,7 @@ int32_t PRUICSS_PWM_setPwmTripMask(PRUICSS_Handle handle, uint8_t pwmSet, uint16
  * 
  * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
  * \param   pwmSet      0 for PWM0, 1 for PWM1, 2 for PWM2, 3 for PWM3
- * \param   enable       0 for disable, 1 for enable
+ * \param   enable      0 for disable, 1 for enable
  * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  * 
 */
@@ -441,6 +530,30 @@ int32_t PRUICSS_PWM_configurePwmEfficiencyModeEnable(PRUICSS_Handle handle, uint
  * \return  SystemP_SUCCESS in case of success, SystemP_FAILURE otherwise
  */
 int32_t PRUICSS_PWM_enableIEP1Slave(PRUICSS_Handle handle, uint8_t enable);
+
+/**
+ * \brief  This API sets enables/disables of IEP counter reset on EPWM0 SYNC OUT event in IEP module.
+ *      
+ * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
+ * \param   iepInstance 0 for IEP0, 1 for IEP1
+ * \param   enable      0 for disable, 1 for enable
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *
+ */
+int32_t PRUICSS_PWM_enableIEPResetOnEPWM0SyncOut(PRUICSS_Handle handle, uint8_t iepInstance, uint8_t enable);
+
+/**
+ * \brief  This API sets enables/disables of IEP counter reset on EPWM3 SYNCOUT in IEP module.
+ *      
+ * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
+ * \param   iepInstance 0 for IEP0, 1 for IEP1
+ * \param   enable      0 for disable, 1 for enable
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *
+ */
+int32_t PRUICSS_PWM_enableIEPResetOnEPWM3SyncOut(PRUICSS_Handle handle, uint8_t iepInstance, uint8_t enable);
+
+/** @} */
 
 #ifdef __cplusplus
 }
