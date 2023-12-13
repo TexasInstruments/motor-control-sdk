@@ -1395,3 +1395,58 @@ int32_t PRUICSS_PWM_enableIEP1Slave(PRUICSS_Handle handle, uint8_t enable)
 
 }
 
+int32_t PRUICSS_PWM_enableIEPResetOnEPWM0SyncOut(PRUICSS_Handle handle, uint8_t iepInstance, uint8_t enable)
+{
+
+    PRUICSS_HwAttrs const   *hwAttrs;
+    int32_t                 retVal = SystemP_FAILURE;
+
+    if ((handle != NULL) && (iepInstance < PRUICSS_NUM_IEP_INSTANCES) && (enable < 2))
+    {
+        retVal = SystemP_SUCCESS;
+        hwAttrs = (PRUICSS_HwAttrs const *)handle->hwAttrs;
+
+        switch (iepInstance)
+        {
+            case 0:
+                HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_PWM_REG),
+                               CSL_ICSS_G_PR1_IEP0_SLV_PWM_REG_PWM0_RST_CNT_EN, enable);
+                break;
+            case 1:
+                HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_PWM_REG),
+                               CSL_ICSS_G_PR1_IEP1_SLV_PWM_REG_PWM0_RST_CNT_EN, enable);
+                break;
+        }
+    }
+
+    return retVal;
+
+}
+
+int32_t PRUICSS_PWM_enableIEPResetOnEPWM3SyncOut(PRUICSS_Handle handle, uint8_t iepInstance, uint8_t enable)
+{
+
+    PRUICSS_HwAttrs const   *hwAttrs;
+    int32_t                 retVal = SystemP_FAILURE;
+
+    if ((handle != NULL) && (iepInstance < PRUICSS_NUM_IEP_INSTANCES) && (enable < 2))
+    {
+        retVal = SystemP_SUCCESS;
+        hwAttrs = (PRUICSS_HwAttrs const *)handle->hwAttrs;
+
+        switch (iepInstance)
+        {
+            case 0:
+                HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_PWM_REG),
+                               CSL_ICSS_G_PR1_IEP0_SLV_PWM_REG_PWM3_RST_CNT_EN, enable);
+                break;
+            case 1:
+                HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_PWM_REG),
+                               CSL_ICSS_G_PR1_IEP1_SLV_PWM_REG_PWM3_RST_CNT_EN, enable);
+                break;
+        }
+    }
+
+    return retVal;
+
+}

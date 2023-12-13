@@ -17,6 +17,7 @@ The example Uses PRUICSSG1 PWM module and does below
 - PWM0_2_NEG(alias signal PWM0_B2) uses IEP0 CMP6 EVENT to control Duty cycle and IEP0 CMP0 to control output Frequency
 - Configures IEP0 CMP0 value with PWM0_2_NEG(alias signal PWM0_B2) output period value
 - Configures IEP0 CMP6 value with PWM0_2_NEG(alias signal PWM0_B2) output duty cycle value
+- Configures IEP counter reset on CMP0 event
 - PRG1_PWM0_B2 can be probed on J16 PIN1
 
 #### AM243X-EVM Probe Output 
@@ -31,8 +32,9 @@ The example Uses PRUICSSG0 PWM module and does below
 - PWM0_0_POS(alias signal PWM0_A0) uses IEP0 CMP1 EVENT to control Duty cycle and IEP0 CMP0 to control output Frequency
 - PWM3_2_NEG(alias signal PWM3_B2) uses IEP1 CMP12 EVENT to control Duty cycle and IEP0 CMP0 to control output Frequency
 - Configures IEP0 CMP0 value with PWM0_0_POS(alias signal PWM0_A0) and PWM3_2_NEG(alias signal PWM3_B2) output period value
+- Configures IEP counter reset on CMP0 event
 - Configures IEP0 CMP6 value with PWM0_0_POS(alias signal PWM0_A0) output duty cycle value
-- Configures IEP1 CMP12 value with PWM0_0_POS(alias signal PWM0_A0) output duty cycle value
+- Configures IEP1 CMP12 value with PWM3_2_NEG(alias signal PWM3_B2) output duty cycle value
 - PWM0_0_POS(alias signal PWM0_A0) and PWM3_2_NEG(alias signal PWM3_B2) will be in sync with respect to each other as IEP0 CMP0 value is used to control output period of these signals
 - PRG0_PWM0_A0 can be probed on J1.5
 - PRG0_PWM3_B2 can be probed on J2.8
@@ -52,6 +54,7 @@ The example Uses PRUICSSG1 PWM module and does below
 - PWM0_2_NEG(alias signal PWM0_B2) uses IEP0 CMP6 EVENT to control Duty cycle and IEP0 CMP0 to control output Frequency
 - Configures IEP0 CMP0 value with PWM0_2_NEG(alias signal PWM0_B2) output period value
 - Configures IEP0 CMP6 value with PWM0_2_NEG(alias signal PWM0_B2) output duty cycle value
+- Configures IEP counter reset on CMP0 event
 - PRG1_PWM0_B2 can be probed on J16 PIN1
 
 #### AM64X-EVM Probe Output 
@@ -61,7 +64,7 @@ The example Uses PRUICSSG1 PWM module and does below
 \endcond
 
 
-# Supported Combinations {#EXAMPLES_DRIVERS_EPWM_DUTY_CYCLE_COMBOS}
+# Supported Combinations
 
 \cond SOC_AM64X
 
@@ -70,7 +73,7 @@ The example Uses PRUICSSG1 PWM module and does below
  CPU + OS       | r5fss0-0 freertos
  Toolchain      | ti-arm-clang
  Board          | @VAR_BOARD_NAME_LOWER
- Example folder | examples/drivers/epwm/epwm_duty_cycle/
+ Example folder | examples/pruicss_pwm/pruicss_pwm_dutycycle
 
 \endcond
 
@@ -81,7 +84,7 @@ The example Uses PRUICSSG1 PWM module and does below
  CPU + OS       | r5fss0-0 freertos
  Toolchain      | ti-arm-clang
  Boards         | @VAR_BOARD_NAME_LOWER, @VAR_LP_BOARD_NAME_LOWER
- Example folder | examples/drivers/epwm/epwm_duty_cycle/
+ Example folder | examples/pruicss_pwm/pruicss_pwm_dutycycle
 
 \endcond
 

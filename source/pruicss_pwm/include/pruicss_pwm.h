@@ -531,6 +531,28 @@ int32_t PRUICSS_PWM_configurePwmEfficiencyModeEnable(PRUICSS_Handle handle, uint
  */
 int32_t PRUICSS_PWM_enableIEP1Slave(PRUICSS_Handle handle, uint8_t enable);
 
+/**
+ * \brief  This API sets enables/disables of IEP counter reset on EPWM0 SYNC OUT event in IEP module.
+ *      
+ * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
+ * \param   iepInstance 0 for IEP0, 1 for IEP1
+ * \param   enable      0 for disable, 1 for enable
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *
+ */
+int32_t PRUICSS_PWM_enableIEPResetOnEPWM0SyncOut(PRUICSS_Handle handle, uint8_t iepInstance, uint8_t enable);
+
+/**
+ * \brief  This API sets enables/disables of IEP counter reset on EPWM3 SYNCOUT in IEP module.
+ *      
+ * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
+ * \param   iepInstance 0 for IEP0, 1 for IEP1
+ * \param   enable      0 for disable, 1 for enable
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *
+ */
+int32_t PRUICSS_PWM_enableIEPResetOnEPWM3SyncOut(PRUICSS_Handle handle, uint8_t iepInstance, uint8_t enable);
+
 /** @} */
 
 #ifdef __cplusplus

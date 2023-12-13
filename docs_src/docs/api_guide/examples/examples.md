@@ -25,6 +25,7 @@ This page lists all the examples and demos supported in this SDK.
     -# \subpage EXAMPLES_DCL_DF22
 - PRUICSS PWM
     -# \subpage EXAMPLE_PRUICSS_PWM_DUTY_CYCLE
+    -# \subpage EXAMPLE_PRUICSS_PWM_EPWM_SYNC
 \endcond
 
 \cond SOC_AM263X
