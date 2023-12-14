@@ -4,7 +4,7 @@
 
 ## Introduction
 
-This design implements BISS-C Receiver (a.k.a subsequent electronics) using the EnDAT hardware interface available on the TI Sitara™ AM64x/AM243x EVM. The EnDat hardware interface is a digital bidirectional serial interface for position encoders, also suited fo safety related applications. Only four signal lines are required, differential pair each for clock and data.
+This design implements BISS-C Receiver (a.k.a subsequent electronics) using the 3 channel peripheral interface available on the TI Sitara™ AM64x/AM243x EVM. The 3 channel peripheral interface is a digital bidirectional serial interface for position encoders, also suited fo safety related applications. Only four signal lines are required, differential pair each for clock and data.
 In BISS-C, clock is provided by receiver and data is provided by the encoder. Data is transmitted in synchronism with clock.
 Transfer between receiver and encoder at the physical layer is in accordance with RS485, with transceiver at both ends.
 
@@ -13,15 +13,15 @@ Transfer between receiver and encoder at the physical layer is in accordance wit
 Position feedback system consists of a position encoder attached to a motor, up to 100 meter of cable which provides power and serial communication and the receiver interface for position encoder.
 In case of Sitara™ AM64x/AM243x processor the receiver interface for position encoder is just one function of a connected drive controller.
 The AM64x/AM243x provides in addition to the resources for Industrial Ethernet and motor control application including on-chip ADCs, Delta Sigma demodulator for current measurement.
-EnDat Receiver on Sitara™AM64x/AM243x processor uses one ICSSGx Slice.
+BISS-C Receiver on Sitara™AM64x/AM243x processor uses one ICSSGx Slice.
 Clock, data transmit, data receive and receive enable signals from PRU1 of ICSS_G is available in AM64x/AM243x EVM.
 
 ## Implementation
 
 The BISS-C receiver function is implemented on TI Sitara™ Devices.
 Encoder is connected to IDK via universal Digital Interface TIDA-00179(https://www.ti.com/tool/TIDA-00179), TIDEP-01015(3-axis board) and 3 Axis Interface card.
-Design is split into three parts – EnDat hardware interface support in PRU, firmware running in PRU and driver running in ARM.
-Application is supposed to use the BISS-C driver APIs to leverage EnDat hardware interface functionality.
+Design is split into three parts – 3 channel peripheral interface support in PRU, firmware running in PRU and driver running in ARM.
+Application is supposed to use the BISS-C driver APIs to leverage 3 channel peripheral interface functionality.
 SDK examples used the BISS-C hardware capability in Slice 1 (either 1 core or 3 cores based on the confiuration) of PRU-ICSSG0.
 Remaining PRUs in the AM64x/AM243x EVM are available for Industrial Ethernet communication and/or motor control interfaces.
 
@@ -66,7 +66,7 @@ Remaining PRUs in the AM64x/AM243x EVM are available for Industrial Ethernet com
 </tr>
 </table>
 
-### EnDat PRU hardware interface
+### 3 Channel Peripheral Interface PRU hardware interface
 
 Refer TRM for details
 
@@ -74,7 +74,7 @@ Refer TRM for details
 
 Following section describes the firmware implementation of BISS-C receiver on PRU-ICSS.
 Deterministic behavior of the 32 bit RISC core running upto 333MHz provides resolution on sampling external signals and generating external signals.
-It makes uses of EnDat hardware interface support in PRU for data transmission.
+It makes uses of 3 channel peripheral interface support in PRU for data transmission.
 
 There are three different variations of PRU-ICSS firmware.
 1. Single Channel
@@ -89,7 +89,7 @@ Single core of PRU-ICSSG slice is used in this configuration.
 #### Implementation for Multi Channel with Encoders of Different Make
 Each of PRU, TX-PRU and RTU-PRU handle one channel in this configuration Enbale load share mode in case of multi make encoders.
 
-\image html biss_multichannel_different_make.png "PRU, EnDat module Integration for 'Multi Channel with Encoders of Different Make' configuration"
+\image html biss_multichannel_different_make.png "PRU, BiSS-C module Integration for 'Multi Channel with Encoders of Different Make' configuration"
 
 ####	Firmware Architecture
 
@@ -99,12 +99,14 @@ Firmware first detects and estimates the processing delay of the encoder as part
 
 Then it reads the position data and check if a control communication is in process. It verifies the position data CRC by comparing it with the on-the-fly computation of CRC. In case of control communication mode, it backs up the CDS bit and transmits the CDM bit by overriding the clock pulse during the BISS-C cycle timeout phase.  If the control communication is in progress it goes back to read the position data for the next cycle. If the control communication is completed, it updates the control command status, position data status and returns to wait for the next trigger command from ARM.
 
+\note Firmware running on PRU-ICSS will be remain HALTED if encoder is not detected and application will wait for 5 seconds and exit with error code.
+
 #####	 Initialization
 \image html biss_initialization.png "Initilization for All Modes"
 
 Initialization is performed both on the ARM and PRU as shown in the figure above. During the initialization, based on the clock frequency selected the PRU detects the Encoder and estimates its processing delay in terms of clock cycles. The processing delay is measured 8 times and an average value is used for compensation. Note that whenever the user changes the clock frequency, the initialization routine on the PRU is executed to estimate the processing delay.
 
-If using "Multi Channel with Encoders of Different Make" configuration where load share mode is enabled, one of the cores among enabled cores will be set as the primary core for performing global configurations of PRU-ICSSG's EnDat interface. These global configurations include clock frequency configuration and TX global re-initialization.
+If using "Multi Channel with Encoders of Different Make" configuration where load share mode is enabled, one of the cores among enabled cores will be set as the primary core for performing global configurations of PRU-ICSSG's BISS-C interface. These global configurations include clock frequency configuration and TX global re-initialization.
 
 There needs to be a synchronization between PRUs before changing any global configuration. For this purpose, each active PRU core sets synchronization bit before any operation needing synchronization and clears the synchronization bit when it is ready. The assigned primary core will wait for all active channel's synchronization bits to be cleared and then perform the global configuration.
 
@@ -124,13 +126,13 @@ BISS-c control communication is performed over multiple cycles. Refer to the sta
 
 \image html bissc_hex_control_commands.png "BISS-C hex commands"
 
-### EnDat Hardware interface
+### 3 Channel Peripheral Interface
 
-The physical data transmission in EnDat is done using RS-485 standard. The data is transmitted as differential signals using the RS485 between the EnDat Receiver and the Encoder.
+The physical data transmission in 3 channel peripheral interface is done using RS-485 standard. The data is transmitted as differential signals using the RS485 between the 3 channel peripheral interface Receiver and the Encoder.
 
-The Receiver sends the clock to the EnDat encoder, data transmission in either direction (one at a time) occurs in synchronism with the clock. The design uses two differential signals for each of the lines (clock and data).
+The Receiver sends the clock to the BISS-C encoder, data transmission in either direction (one at a time) occurs in synchronism with the clock. The design uses two differential signals for each of the lines (clock and data).
 
-EnDat Receiver and the encoder is connected using the RS-485 transceiver. Data is transmitted differentially over RS-485. It has the advantages of high noise immunity and long distance transmission capabilities.
+BISS-C Receiver and the encoder is connected using the RS-485 transceiver. Data is transmitted differentially over RS-485. It has the advantages of high noise immunity and long distance transmission capabilities.
 
 \cond SOC_AM243X
 ##### AM243x-LP Booster Pack Pin-Multiplexing
@@ -142,12 +144,12 @@ EnDat Receiver and the encoder is connected using the RS-485 transceiver. Data i
 </tr>
 <tr>
     <td>PRG0_PRU1_GPO0
-    <td>pru1_endat0_clk
+    <td>pru1_bissc0_clk
 	<td>Channel 0 clock
 </tr>
 <tr>
     <td>PRG0_PRU1_GPO1
-    <td>pru1_endat0_out
+    <td>pru1_bissc0_out
 	<td>Channel 0 transmit
 </tr>
 <tr>
@@ -157,13 +159,13 @@ EnDat Receiver and the encoder is connected using the RS-485 transceiver. Data i
 </tr>
 <tr>
     <td>PRG0_PRU1_GPI13
-    <td>pru1_endat0_in
+    <td>pru1_bissc0_in
 	<td>Channel 0 receive
 </tr>
 <tr>
     <td>GPIO Pin(GPIO1_78)
     <td>ENC0_EN
-    <td>Enbale endat mode in Axis 1 of BP (C16 GPIO pin)
+    <td>Enbale 3 channel peripheral interface mode in Axis 1 of BP (C16 GPIO pin)
 </tr>
 </table>
 \endcond

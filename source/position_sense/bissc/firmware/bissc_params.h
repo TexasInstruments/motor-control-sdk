@@ -45,7 +45,7 @@
 	; R10 - flipflops for control communication otf crc.
 	; R11.b1 - holds 4-bit control communication crc, R11.b2 - holds cds data, R11.b3 - holds ctrl otf crc.
 	; R12.b0 - control command bit pointer, R12.b1 - control cycle counter.
-	; R12.b2 - holds the channel number for channel in use, R12.b3 - holds slave offset for encoder connected in daisy chain.
+	; R12.b2 - holds the channel number for channel in use, R12.b3 - holds encoder offset for encoder connected in daisy chain.
 	; R13-R14 - holds raw data for channel 0, R15-R16 - holds raw data for channel 1, R17-R18 - holds raw data for channel 2.
 	; R19 - holds cds backup for one biss-c cycle.
 	; R20 - Used as flag register.
@@ -81,7 +81,7 @@
 	.asg 	R12.b0, 	BISSC_CMD_BIT_PTR
 	.asg 	R12.b1, 	BISSC_CTRL_CYCLE_CNTR
 	.asg 	R12.b2,	 	BISSC_ENABLE_CHx_IN_USE
-	.asg 	R12.b3, 	SLAVE_OFFSET
+	.asg 	R12.b3, 	ENCODER_OFFSET
 	.asg	R13,		RAW_DATA1_0				;Includes Position data, ew and CRC
 	.asg	R14,		RAW_DATA2_0
 	.asg	R15,		RAW_DATA1_1				;Includes Position data, ew and CRC
@@ -103,30 +103,30 @@
 	.asg 	R29, 		LINK_REG
 
     
-BISSC_RX_CRCBITS 				.set    6
+BISSC_RX_CRCBITS 				.set    6			;Pos data CRC len
+BISSC_SB_CDS_LEN	            .set    2			;Start bit + CDS bit len
+BISSC_EW_LEN		            .set	2			;Error warning len
 
 ; Time units below in nano sec
 
-BISSC_MAX_TBiSS_Timeout 		.set 	40000	;max biss timeout
-BISSC_MIN_TBiSS_Timeout 		.set 	12500	;min biss timeout
-BISSC_TLineDelay  				.set 	40000	;max Line delay
+BISSC_MAX_TBISS_TIMEOUT 		.set 	40000		;max biss timeout
+BISSC_MIN_TBISS_TIMEOUT 		.set 	12500		;min biss timeout
+BISSC_TLINEDELAY  				.set 	40000		;max Line delay
 
-BISSC_BUSY_Tbust_s  			.set 	40000	 	;max processing time for single cycle data
-BISSC_BUSY_Tbust_r  			.set 	20000000	;max processing time for register access
+BISSC_BUSY_TBUSY_S  			.set 	40000	 	;max processing time for single cycle data
+BISSC_BUSY_TbUSY_R  			.set 	20000000	;max processing time for register access
 
-BISSC_CONFIG_CH0				.set	0x1
-BISSC_CONFIG_CH1				.set	(0x1 << 1)
-BISSC_CONFIG_CH2				.set	(0x1 << 2)
+BISSC_CONFIG_CH0				.set	0x1			;Config Endat channel 0
+BISSC_CONFIG_CH1				.set	(0x1 << 1)	;Config Endat channel 1
+BISSC_CONFIG_CH2				.set	(0x1 << 2)	;Config Endat channel 2
 
-BISSC_SB_CDS_LEN	            .set    2
-BISSC_EW_LEN		            .set	2
+BISSC_CH0_RX_VALID_BIT_OFFSET	.set	24			;RX valid bit offset channel 0
+BISSC_CH1_RX_VALID_BIT_OFFSET	.set	25			;RX valid bit offset channel 1
+BISSC_CH2_RX_VALID_BIT_OFFSET	.set	26			;RX valid bit offset channel 2
 
-BISSC_CH0_RX_VALID_BIT_OFFSET	.set	24
-BISSC_CH1_RX_VALID_BIT_OFFSET	.set	25
-BISSC_CH2_RX_VALID_BIT_OFFSET	.set	26
+BISSC_CH0_VALID_BIT_IDX			.set 	24			;RX valid bit index channel 0
+BISSC_CH1_VALID_BIT_IDX			.set 	25			;RX valid bit index channel 1
+BISSC_CH2_VALID_BIT_IDX			.set 	26			;RX valid bit index channel 2
 
-
-BISSC_CH0_VALID_BIT_IDX			.set 		24
-BISSC_CH1_VALID_BIT_IDX			.set 		25
-BISSC_CH2_VALID_BIT_IDX			.set 		26
-
+BISSC_MAX_FRAME_SIZE			.set	256			;Max frame size for Processing delay measurement
+BISSC_MAX_WAIT_FOR_ENC_DETECT	.set	10000		;Max wait count for encoder detected

@@ -36,12 +36,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
- /**
- * \defgroup POSITION_SENSE_API APIs for Position Sense
- *
- * This module contains APIs for device drivers for various position sense encoders supported in this SDK.
- */
+#include "bissc_drv.h"
 
 /**
  *  \defgroup BISSC_API_MODULE APIs for BiSSC Encoder
@@ -53,9 +48,9 @@ extern "C" {
  */
 
 /**
- *  \brief      send the BiSSC command and wait till firmware acknowledges
+ *  \brief      Send the BiSSC command and wait till firmware acknowledges
  *
- *  \param[in]  priv            cookie returned by bissc_init
+ *  \param[in]  priv            cookie returned by \ref bissc_init
  *
  *  \retval     SystemP_SUCCESS for success, SystemP_FAILURE for failure
  *
@@ -63,35 +58,35 @@ extern "C" {
 int32_t bissc_command_process(struct bissc_priv *priv);
 
 /**
- *  \brief      trigger sending the BiSSC command in PRU
+ *  \brief      Trigger sending the BiSSC command in PRU
  *
- *  \param[in]  priv     cookie returned by bissc_init
+ *  \param[in]  priv     cookie returned by \ref bissc_init
  *
  *
  */
 void bissc_command_send(struct bissc_priv *priv);
 
 /**
- *  \brief  wait till PRU finishes BiSSC transaction
+ *  \brief      Wait till PRU finishes BiSSC transaction
  *
- *  \param[in]  priv     cookie returned by bissc_init
+ *  \param[in]  priv     cookie returned by \ref bissc_init
  *
  *
  */
 int32_t bissc_command_wait(struct bissc_priv *priv);
 
 /**
- *  \brief  Get single cycle BiSS-C position data
+ *  \brief      Get single cycle BiSS-C position data
  *
- *  \param[in]  priv     cookie returned by bissc_init
+ *  \param[in]  priv     cookie returned by \ref bissc_init
  *
  */
-int32_t bissc_get_pos_res(struct bissc_priv *priv);
+int32_t bissc_get_pos(struct bissc_priv *priv);
 
 /**
- *  \brief  configure EnDat clock
+ *  \brief      Configure EnDat clock
  *
- *  \param[in]  priv    cookie returned by bissc_init
+ *  \param[in]  priv    cookie returned by \ref bissc_init
  *  \param[in]  clk_cfg pointer to structure containing clock configuration data
  *
  */
@@ -99,48 +94,56 @@ void bissc_config_clock(struct bissc_priv *priv,
                         struct bissc_clk_cfg *clk_cfg);
 
 /**
- *  \brief      select channel to be used by BiSSC master
+ *  \brief      Select channel to be used by BiSSC master
  *
- *  \param[in]  priv    cookie returned by bissc_init
+ *  \param[in]  priv    cookie returned by \ref bissc_init
  *  \param[in]  mask    channel mask
  *  \param[in]  totalch    total number of channels in use 
  *
  */
 void bissc_config_channel(struct bissc_priv *priv, int32_t mask, int32_t totalch);
 /**
- *  \brief      configure the channels to be used by BiSSC master
+ *  \brief      Configure the channels to be used by BiSSC master
  *
- *  \param[in]  priv    cookie returned by bissc_init
+ *  \param[in]  priv    cookie returned by \ref bissc_init
  *  \param[in]  mask    channel mask
- *  \param[in]  loadshare status for loadshare mode
  *
  */
-void bissc_config_load_share(struct bissc_priv *priv, int32_t mask, int32_t loadshare);
+void bissc_config_load_share(struct bissc_priv *priv, int32_t mask);
 /**
- *  \brief      enable load share mode for BiSSC master
+ *  \brief      Enable load share mode for BiSSC master
  *
- *  \param[in]  priv    cookie returned by bissc_init
+ *  \param[in]  priv    cookie returned by \ref bissc_init
  *
  */
 void bissc_enable_load_share_mode(struct bissc_priv *priv);
 /**
- *  \brief      configure the primary core for load share mode
+ *  \brief      Configure the primary core for load share mode
  *
- *  \param[in]  priv    cookie returned by bissc_init
+ *  \param[in]  priv    cookie returned by \ref bissc_init
  *  \param[in]  mask    channel mask
  *
  */
 void bissc_config_primary_core_mask(struct bissc_priv *priv, uint8_t mask);
 /**
- *  \brief      wait for BiSSC master firmware to initialize
+ *  \brief      Wait for BiSSC master firmware to initialize
  *
- *  \param[in]  priv    cookie returned by bissc_init
+ *  \param[in]  priv    cookie returned by \ref bissc_init
  *  \param[in]  timeout timeout to wait for initialization
  *  \param[in]  mask    channel mask
  *  \retval     SystemP_SUCCESS for success, SystemP_FAILURE for failure
  *
  */
 int32_t bissc_wait_for_fw_initialization(struct bissc_priv *priv, uint32_t timeout, uint8_t mask);
+
+/**
+ *  \brief      Initialize BiSSC hardware interface
+ *
+ *  \param[in]  priv    cookie returned by \ref bissc_init
+ *
+ */
+void bissc_hw_init(struct bissc_priv *priv);
+
 /**
  *  \brief      Initialize BiSSC firmware interface address and get the pointer
  *              to struct bissc_priv instance
@@ -148,23 +151,29 @@ int32_t bissc_wait_for_fw_initialization(struct bissc_priv *priv, uint32_t timeo
  *  \param[in]  gPruIcssXHandle      BiSSC firmware interface address
  *  \param[in]  slice                ICSS PRU SLICE
  *  \param[in]  frequency            Input frequency
+ *  \param[in]  core_clk_freq        Core clock frequency
+ *  \param[in]  uart_clk_freq        Uart clock frequency
  *
  *  \retval     priv            pointer to struct bissc_priv instance
  *
  */
-struct bissc_priv *bissc_init(PRUICSS_Handle gPruIcssXHandle, int32_t slice, uint32_t frequency);
+struct bissc_priv *bissc_init(PRUICSS_Handle gPruIcssXHandle, 
+                              int32_t slice, 
+                              uint32_t frequency,
+                              uint32_t core_clk_freq,
+                              uint32_t uart_clk_freq);
 
 /**
  *  \brief      Update max processing time and bit index to poll in fifo data
  *
- *  \param[in]  priv        cookie returned by bissc_init
- *  \param[in]  frequency   Input frequency 
- */
-void bissc_update_max_proc_delay(struct bissc_priv *priv,  uint32_t frequency); 
-/**
- *  \brief      wait for BiSSC master firmware to measure processing time
+ *  \param[in]  priv        cookie returned by \ref bissc_init
  *
- *  \param[in]  priv    cookie returned by bissc_init
+ */
+void bissc_update_max_proc_delay(struct bissc_priv *priv); 
+/**
+ *  \brief      Wait for BiSSC master firmware to measure processing time
+ *
+ *  \param[in]  priv    cookie returned by \ref bissc_init
  *  \param[in]  timeout timeout to wait for initialization
  *  \retval     SystemP_SUCCESS for success, SystemP_FAILURE for failure
  *
@@ -174,16 +183,15 @@ int32_t bissc_wait_measure_proc_delay(struct bissc_priv *priv, uint32_t timeout)
 /**
  *  \brief      Set default configuration parameters for BiSSC Master firmware
  *
- *  \param[in]  priv        cookie returned by bissc_init
- *  \param[in]  frequency   Input frequency 
+ *  \param[in]  priv        cookie returned by \ref bissc_init
  *  \param[in]  icssgclk    ICSSG core clock for firmware reference
  *
  */
-void bissc_set_default_initialization(struct bissc_priv *priv, uint32_t frequency, uint64_t icssgclk);
+void bissc_set_default_initialization(struct bissc_priv *priv, uint64_t icssgclk);
 /**
- *  \brief      update data length with encoder bit width for BiSSC Master firmware
+ *  \brief      Update data length with encoder bit width for BiSSC Master firmware
  *
- *  \param[in]  priv            cookie returned by bissc_init
+ *  \param[in]  priv            cookie returned by \ref bissc_init
  *  \param[in]  single_turn_len    Encoder's single turn resolution
  *  \param[in]  multi_turn_len     Encoder's multi turn resolution
  *  \param[in]  num_pru         number(index) of PRU in use
@@ -191,32 +199,38 @@ void bissc_set_default_initialization(struct bissc_priv *priv, uint32_t frequenc
 void bissc_update_data_len(struct bissc_priv *priv, uint32_t single_turn_len[], uint32_t multi_turn_len[], int32_t num_pru);
 
 /**
- *  \brief      set control command and process the ctrl communication read/write
+ *  \brief      Set control command and process the ctrl communication read/write
  *
- *  \param[in]  priv            cookie returned by bissc_init
+ *  \param[in]  priv            cookie returned by \ref bissc_init
  *  \param[in]  ctrl_cmd        Hex equivalent of control command 
  *  \retval     SystemP_SUCCESS for success, SystemP_FAILURE for failure
  */
 int32_t bissc_set_ctrl_cmd_and_process(struct bissc_priv *priv, uint32_t ctrl_cmd[]);
 /**
- *  \brief      configure the master for EnDat mode
+ *  \brief      Configure the master for EnDat mode
  *
- *  \param[in]  priv            cookie returned by bissc_init
+ *  \param[in]  priv            cookie returned by \ref bissc_init
  */
 void bissc_config_endat_mode(struct bissc_priv *priv);
 /**
- *  \brief      clear the channel specific frame size cfg registers.
+ *  \brief      Clear the channel specific frame size cfg registers.
  *
- *  \param[in]  priv            cookie returned by bissc_init
+ *  \param[in]  priv            cookie returned by \ref bissc_init
  */
 void bissc_config_clr_cfg0(struct bissc_priv *priv);
 /**
- *  \brief      calculate Rx and Tx divisors for given frequency.
+ *  \brief      Get measured processing delay of individual channel.
  *
- *  \param[in]  freq               frequecy specified by the user.
- *  \param[in]  clk_cfg            pointer to structure containing clock configuration data.
+ *  \param[in]  priv            cookie returned by \ref bissc_init
  */
-int32_t bissc_calc_clock(uint32_t freq, struct bissc_clk_cfg *clk_cfg);
+void bissc_get_enc_proc_delay(struct bissc_priv *priv);
+/**
+ *  \brief      Calculate Rx and Tx divisors for given frequency.
+ *
+ *  \param[in]  priv            cookie returned by \ref bissc_init
+ *  \param[in]  clk_cfg         pointer to structure containing clock configuration data.
+ */
+int32_t bissc_calc_clock(struct bissc_priv *priv, struct bissc_clk_cfg *clk_cfg);
 /** @} */
 
 #ifdef __cplusplus

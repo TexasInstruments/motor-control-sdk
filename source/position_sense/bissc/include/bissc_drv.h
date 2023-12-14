@@ -43,38 +43,47 @@ extern "C" {
 #include <math.h>
 #include <drivers/pruicss.h>
 #include <position_sense/bissc/include/bissc_interface.h>
+/* Single PRU - Single channel configuration */
 #define BISSC_MODE_SINGLE_CHANNEL_SINGLE_PRU (0U)
+/* Single PRU - Multichannel configuration */
 #define BISSC_MODE_MULTI_CHANNEL_SINGLE_PRU (1U)
+/* Multichannel - Load Share configuration */
 #define BISSC_MODE_MULTI_CHANNEL_MULTI_PRU (2U)
 
-#define BISSC_NUM_BITS_POSITION_CRC 6
-#define BISSC_NUM_BITS_EW           2
-#define BISSC_NUM_BITS_ADDRESS      8
-
-#define BISSC_MAX_CYCLE_TIMEOUT     5
-#define NUM_ED_CH_MAX               3
-#define NUM_SLAVE_MAX               3
-/* Max processing delay at 1 MHz is 40 us as per spec - values are in valid bits*/
+/*  Minimum and Maximum BiSSC cycle time depends on various params as below:
+    TCycle_min = TMA ∗ (5 + DLEN + CRCLEN) + tLineDelay + tbusy_max + busy_s_max + tTO
+    Instead wait for max of 5 ms as this can vary for different encoders and for daisy chain
+*/
+#define BISSC_MAX_CYCLE_TIMEOUT             5
+/* Maximum number of Endat Channels*/
+#define NUM_ED_CH_MAX                       3
+/* Maximum number of BiSS-C Encoders connected in Daisy chain*/
+#define NUM_ENCODERS_MAX                       3
+/* Max processing delay as per spec - values are in valid bits/clock cycles*/
 #define BISSC_MAX_PROC_DELAY_1MHZ           40
 #define BISSC_MAX_PROC_DELAY_2MHZ           80
 #define BISSC_MAX_PROC_DELAY_5MHZ           200
 #define BISSC_MAX_PROC_DELAY_8MHZ           320
 #define BISSC_MAX_PROC_DELAY_10MHZ          400
 
-#define BISSC_RX_SAMPLE_SIZE                7       /* 8x over clock */
-#define BISSC_RX_SAMPLE_SIZE_10MHZ          3       /* 4x over clock */
-#define BISSC_POS_CRC_LEN                   6
-#define BISSC_EW_LEN                        2
-#define BISSC_CTRL_CMD_CRC_LEN              4
-#define BISSC_POS_DATA_LEN_DEFAULT          12
+#define BISSC_RX_SAMPLE_SIZE                7   /* 8x over clock */
+#define BISSC_RX_SAMPLE_SIZE_10MHZ          3   /* 4x over clock */
+#define BISSC_POS_CRC_LEN                   6   /* Number of position data CRC bits */
+#define BISSC_EW_LEN                        2   /* Number of Error and Warning bits */
+#define BISSC_CTRL_CMD_CRC_LEN              4   /* Number of CTRL cmd CRC bits */
+#define BISSC_POS_DATA_LEN_DEFAULT          12  /* Default data length instead of garbage*/
 
-#define BISSC_INPUT_CLOCK_UART_FREQUENCY    192000000
-#define BISSC_INPUT_CLOCK_OCP_FREQUENCY    200000000
-#define BISSC_INPUT_CLOCK_FREQUENCY_UART    BISSC_INPUT_CLOCK_UART_FREQUENCY
+/* Allowed frequencies in MHz for BiSSC */
+#define BISSC_FREQ_1MHZ                     1
+#define BISSC_FREQ_2MHZ                     2
+#define BISSC_FREQ_5MHZ                     5
+#define BISSC_FREQ_8MHZ                     8
+#define BISSC_FREQ_10MHZ                    10
+
 /**
  *    \brief    Structure defining EnDat clock configuration for selected frequency
  *
- *    \details  Rx, Tx divisors for selected frequency, oversampling rate, ocp/uart clock source status. 
+ *    \details  Rx, Tx divisors for selected frequency, oversampling rate, core_clk/uart clock source status. 
  *
  */
 struct bissc_clk_cfg
@@ -85,8 +94,8 @@ struct bissc_clk_cfg
     /**< Tx divisor for selected frequency*/
     uint16_t  rx_div_attr;
     /**< Rx oversampling rate*/
-    uint16_t  is_ocp;
-    /**< status for ocp clock source*/
+    uint16_t  is_core_clk;
+    /**< Status for core_clk clock source*/
 };
 /**
  *    \brief    Structure defining BiSSC Position data results
@@ -95,17 +104,17 @@ struct bissc_clk_cfg
  */
 struct bissc_position_info
 {
-    uint64_t          position[NUM_SLAVE_MAX];
+    uint64_t          position[NUM_ENCODERS_MAX];
     /**< Position data results from each encoder connected in daisy chain*/
-    float             angle[NUM_SLAVE_MAX];
+    float             angle[NUM_ENCODERS_MAX];
     /**< Single turn result(Angle) for each encoder connected in daisy chain*/
-    uint32_t          num_of_turns[NUM_SLAVE_MAX];
+    uint32_t          num_of_turns[NUM_ENCODERS_MAX];
     /**< Multi turn result(No. of rotations) for each encoder connected in daisy chain*/
-    uint8_t           ew[NUM_SLAVE_MAX];
+    uint8_t           ew[NUM_ENCODERS_MAX];
     /**< Error and Warning result for each encoder connected in daisy chain*/
-    uint8_t           rcv_crc[NUM_SLAVE_MAX];
-    /**< received 6-bit crc for each encoder connected in daisy chain*/
-    uint8_t           otf_crc[NUM_SLAVE_MAX];
+    uint8_t           rcv_crc[NUM_ENCODERS_MAX];
+    /**< Received 6-bit crc for each encoder connected in daisy chain*/
+    uint8_t           otf_crc[NUM_ENCODERS_MAX];
     /**< Calculated otf 6-bit crc for each encoder connected in daisy chain*/
 };
 /**
@@ -135,18 +144,18 @@ struct bissc_priv
     /**< PRU ICSS slice number*/
     int32_t load_share;
     /**< Load share flag*/
-    int32_t data_len[NUM_ED_CH_MAX][NUM_SLAVE_MAX];
+    int32_t data_len[NUM_ED_CH_MAX][NUM_ENCODERS_MAX];
     /**< Resolution of each encoder connected in daisy chain config to each channel*/
-    int32_t single_turn_len[NUM_ED_CH_MAX][NUM_SLAVE_MAX];
+    int32_t single_turn_len[NUM_ED_CH_MAX][NUM_ENCODERS_MAX];
     /**< Single turn resolution of each encoder connected in daisy chain config to each channel*/
-    int32_t multi_turn_len[NUM_ED_CH_MAX][NUM_SLAVE_MAX];
+    int32_t multi_turn_len[NUM_ED_CH_MAX][NUM_ENCODERS_MAX];
     /**< Multi turn resolution of each encoder connected in daisy chain config to each channel*/
     int32_t channel[NUM_ED_CH_MAX];
     /**< Array of all configured channel*/
     struct bissc_pruicss_xchg *pruicss_xchg;
     /**< Structure defining BiSSC interface*/
     int32_t has_safety;
-    /**< status for safety support*/
+    /**< Status for safety support*/
     void *pruicss_cfg;
     /**< PRU-ICSS cfg registers base offset*/
     int64_t raw_data;
@@ -155,18 +164,23 @@ struct bissc_priv
     /**< Structure containing encoders position data results for each channel*/
     struct bissc_control_info enc_ctrl_data[NUM_ED_CH_MAX];
     /**< Structure containing encoders control communication results for each PRU*/
-    int32_t pd_crc_err_cnt[NUM_ED_CH_MAX][NUM_SLAVE_MAX];
-    /**< position data crc error count for each encoder connected in daisy chain to each channel*/
+    int32_t pd_crc_err_cnt[NUM_ED_CH_MAX][NUM_ENCODERS_MAX];
+    /**< Position data crc error count for each encoder connected in daisy chain to each channel*/
     int32_t ctrl_crc_err_cnt[NUM_ED_CH_MAX];
-    /**< control communication crc error count for each encoder connected to each PRU in load share*/
-    int32_t num_slaves[NUM_ED_CH_MAX];
-    /**< Number of slaves connected in daisy chain to each PRU in load share*/
+    /**< Control communication crc error count for each encoder connected to each PRU in load share*/
+    int32_t num_encoders[NUM_ED_CH_MAX];
+    /**< Number of encoders connected in daisy chain to each PRU in load share*/
     int32_t totalchannels;
     /**< Total number of channels configured*/
+    uint16_t  proc_delay[NUM_ED_CH_MAX];
+    /**< Measured Processing delay of individual channel*/
+    uint32_t baud_rate;
+    /**< Input baudrate*/
+    uint32_t core_clk_freq;
+    /**< Core clock frequency*/
+    uint32_t uart_clk_freq;
+    /**< UART clock frequency*/
 };
-
-
-#include "bissc_api.h"
 
 #ifdef __cplusplus
 }

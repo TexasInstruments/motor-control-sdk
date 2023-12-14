@@ -13,8 +13,6 @@ const gpio1      = gpio.addInstance();
 const gpio2      = gpio.addInstance();
 const gpio3      = gpio.addInstance();
 const gpio4      = gpio.addInstance();
-const gpio5      = gpio.addInstance();
-const gpio6      = gpio.addInstance();
 const debug_log  = scripting.addModule("/kernel/dpl/debug_log");
 const mpu_armv7  = scripting.addModule("/kernel/dpl/mpu_armv7", {}, false);
 const mpu_armv71 = mpu_armv7.addInstance();
@@ -59,45 +57,36 @@ mpu_armv75.size              = 28;
 mpu_armv75.accessPermissions = "Supervisor RD, User RD";
 
 bissc1.$name                      = "CONFIG_BISSC0";
+bissc1.Multi_Channel_Load_Share   = true;
 bissc1.Booster_Pack               = true;
 bissc1.channel_2                  = true;
-bissc1.Multi_Channel_Load_Share   = true;
 bissc1.PRU_ICSSG0_PRU.$assign     = "PRU_ICSSG0_PRU1";
 bissc1.PRU_ICSSG0_PRU.GPO4.$used  = false;
 bissc1.PRU_ICSSG0_PRU.GPO3.$used  = false;
 bissc1.PRU_ICSSG0_PRU.GPI14.$used = false;
 
-bissc1.ENC1_EN           = gpio1;
-gpio1.$name              = "ENC1_EN";
-gpio1.GPIO.$assign       = "GPIO1";
-gpio1.GPIO.gpioPin.pu_pd = "pu";
-gpio1.GPIO.gpioPin.rx    = false;
+gpio1.$name                = "BISSC_CH0_OUT_EN";
+bissc1.BISSC_CH0_OUT_EN    = gpio1;
+gpio1.GPIO.gpioPin.rx      = false;
+gpio1.GPIO.gpioPin.$assign = "PRG0_PRU1_GPO2";
 
-bissc1.BISSC_CH0_OUT_EN    = gpio2;
-gpio2.$name                = "BISSC_CH0_OUT_EN";
+gpio2.pinDir               = "OUTPUT";
+gpio2.$name                = "BISSC_CH2_OUT_EN";
+bissc1.BISSC_CH2_OUT_EN    = gpio2;
 gpio2.GPIO.gpioPin.rx      = false;
-gpio2.GPIO.gpioPin.$assign = "PRG0_PRU1_GPO2";
+gpio2.GPIO.gpioPin.$assign = "PRG0_PRU1_GPO8";
 
-bissc1.BISSC_CH2_OUT_EN    = gpio3;
-gpio3.$name                = "BISSC_CH2_OUT_EN";
+gpio3.pinDir               = "OUTPUT";
+gpio3.$name                = "ENC2_EN";
+bissc1.ENC2_EN             = gpio3;
+gpio3.GPIO.gpioPin.pu_pd   = "pu";
 gpio3.GPIO.gpioPin.rx      = false;
-gpio3.GPIO.gpioPin.$assign = "PRG0_PRU1_GPO8";
+gpio3.GPIO.gpioPin.$assign = "MMC1_SDCD";
 
-bissc1.ENC2_EN             = gpio4;
-gpio4.$name                = "ENC2_EN";
-gpio4.GPIO.gpioPin.pu_pd   = "pu";
-gpio4.GPIO.gpioPin.rx      = false;
-gpio4.GPIO.gpioPin.$assign = "MMC1_SDCD";
-
-bissc1.BISSC_CH1_OUT_EN    = gpio5;
-gpio5.$name                = "BISSC_CH1_OUT_EN";
-gpio5.GPIO.gpioPin.rx      = false;
-gpio5.GPIO.gpioPin.$assign = "PRG0_PRU1_GPO5";
-
-gpio6.$name                = "ENC0_EN";
-gpio6.pinDir               = "OUTPUT";
-bissc1.ENC0_EN             = gpio6;
-gpio6.GPIO.gpioPin.$assign = "MMC1_SDWP";
+gpio4.$name                = "ENC0_EN";
+gpio4.pinDir               = "OUTPUT";
+bissc1.ENC0_EN             = gpio4;
+gpio4.GPIO.gpioPin.$assign = "MMC1_SDWP";
 
 const pruicss                            = scripting.addModule("/drivers/pruicss/pruicss", {}, false);
 const pruicss1                           = pruicss.addInstance({}, false);
@@ -118,9 +107,7 @@ bissc1.PRU_ICSSG0_PRU.GPI13.$suggestSolution = "PRG0_PRU1_GPO13";
 bissc1.PRU_ICSSG0_PRU.GPO12.$suggestSolution = "PRG0_PRU1_GPO12";
 bissc1.PRU_ICSSG0_PRU.GPO6.$suggestSolution  = "PRG0_PRU1_GPO6";
 bissc1.PRU_ICSSG0_PRU.GPI11.$suggestSolution = "PRG0_PRU1_GPO11";
-gpio1.GPIO.gpioPin.$suggestSolution          = "PRG0_PRU0_GPO0";
+gpio1.GPIO.$suggestSolution                  = "GPIO1";
 gpio2.GPIO.$suggestSolution                  = "GPIO1";
 gpio3.GPIO.$suggestSolution                  = "GPIO1";
 gpio4.GPIO.$suggestSolution                  = "GPIO1";
-gpio5.GPIO.$suggestSolution                  = "GPIO1";
-gpio6.GPIO.$suggestSolution                  = "GPIO1";
