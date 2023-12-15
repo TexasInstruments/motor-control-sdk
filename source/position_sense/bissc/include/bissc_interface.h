@@ -49,7 +49,8 @@ extern "C" {
  *    \brief    Structure defining BiSSC Raw data received from encoder.
  *
  */
-struct  raw_data{
+struct  raw_data
+{
     volatile uint32_t   pos_data_word0;
     /**< Initial (<=32) position bits received */
     volatile uint32_t   pos_data_word1;
@@ -58,10 +59,11 @@ struct  raw_data{
 /**
  *    \brief    Structure defining BiSSC Position data lengths of conected encoder.
  *
- *    \details  number of slaves connected in daisy chain, and their position data lengths(resolution). 
+ *    \details  Number of encoders connected in daisy chain, and their position data lengths(resolution). 
  */
-struct  enc_len{
-    volatile uint8_t num_slaves;
+struct  enc_len
+{
+    volatile uint8_t num_encoders;
     /**< Number of Encoders connected */
     volatile uint8_t data_len[3];
     /**< Data length of individual encoder connected in daisy chain*/
@@ -71,7 +73,8 @@ struct  enc_len{
  *
  *    \details  raw data, position data crc error count, 6-bit otf crc. 
  */
-struct  pos_data_res{
+struct  pos_data_res
+{
     struct  raw_data raw_data[3];
     /**< Structure defining BiSSC Raw data received from encoder*/
     volatile uint32_t   pd_crc_err_cnt[3];

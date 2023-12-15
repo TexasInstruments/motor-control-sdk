@@ -234,18 +234,18 @@ BISSC_PROC_MEASURE_AGAIN?:
 	.endif	
     QBNE    BISSC_IS_CH1_SEL?, BISSC_ENABLE_CHx_IN_USE,	0
 	LDI		R30.w2,	(BISSC_TX_CLK_MODE_FREERUN_STOPHIGH | BISSC_TX_CH0_SEL)
-	LDI 	R30.b0, 0	;Not needed?
+	LDI 	R30.b0, 0
 BISSC_IS_CH1_SEL?:
     QBNE    BISSC_IS_CH2_SEL?, BISSC_ENABLE_CHx_IN_USE,	1
 	LDI		R30.w2,	(BISSC_TX_CLK_MODE_FREERUN_STOPHIGH | BISSC_TX_CH1_SEL)
-	LDI 	R30.b0, 0	;Not needed?
+	LDI 	R30.b0, 0
 BISSC_IS_CH2_SEL?:
     QBNE    BISSC_SKIP_CH_SEL?, BISSC_ENABLE_CHx_IN_USE,	2
 	LDI		R30.w2,	(BISSC_TX_CLK_MODE_FREERUN_STOPHIGH | BISSC_TX_CH2_SEL)
-	LDI 	R30.b0, 0	;Not needed?
+	LDI 	R30.b0, 0
 BISSC_SKIP_CH_SEL?:
 	; loading rx frame size to maximum bits we can receive from BiSSC encoder
-    LDI     SCRATCH3.w2, 256
+    LDI     SCRATCH3.w2, BISSC_MAX_FRAME_SIZE
 	LDI		SCRATCH3.w0, 0 
 	; store Rx and Tx frame size to ICSS_CFG_PRUx_ED_CHx for all configured channels
     SBCO	&SCRATCH3, ICSS_CFG, BISSC_ICSSG_CHx_CFG0,	4	
@@ -286,8 +286,10 @@ BISSC_PROC_WAIT_TILL_TX_CH_BUSY?
 	.endif
 BISSC_SKIP_TX_CH_BUSY?:
     SET     R30, R30, BISSC_RX_EN
-	LDI     SCRATCH.w0,10000
-	LDI     SCRATCH.w2,0
+	;Max number to come out of infinite loop of waiting for encoder detected.
+	;Using emperical number as spec did not mentioned about anything 
+	LDI     SCRATCH.w0, BISSC_MAX_WAIT_FOR_ENC_DETECT
+	LDI     SCRATCH.w2, 0
 
 BISSC_ACK_BIT?:
     ;  wait for valid bit
@@ -340,7 +342,7 @@ BISSC_PROC_WAIT_FOR_ALL_CORES?:
 	QBNE	BISSC_PROC_WAIT_FOR_ALL_CORES?, SCRATCH3.b0, 0
 	M_BISSC_LS_WAIT_FOR_SYNC
 	QBBC	BISSC_SKIP_GLOBAL_REINIT1?, PRIMARY_CORE, 0
-	SET 	R31, R31, 19 ;ENDAT_TX_GLOBAL_REINIT ; Set TX_EN low
+	SET 	R31, R31, 19 ;BISSC_TX_GLOBAL_REINIT ; Set TX_EN low
 	; rx_en = 0 : Disable RX mode
 	LDI 	R30.b3, 0
 BISSC_SKIP_GLOBAL_REINIT1?:
@@ -351,7 +353,7 @@ BISSC_SKIP_GLOBAL_REINIT1?:
 	QBNE	BISSC_PROC_WAIT_FOR_ALL_CORES?, SCRATCH3.b0, 0
 	M_BISSC_LS_WAIT_FOR_SYNC
 	QBBC	BISSC_SKIP_GLOBAL_REINIT1?, PRIMARY_CORE, 1
-	SET 	R31, R31, 19 ;ENDAT_TX_GLOBAL_REINIT ; Set TX_EN low
+	SET 	R31, R31, 19 ;BISSC_TX_GLOBAL_REINIT ; Set TX_EN low
 	; rx_en = 0 : Disable RX mode
 	LDI 	R30.b3, 0
 BISSC_SKIP_GLOBAL_REINIT1?:
@@ -362,14 +364,14 @@ BISSC_SKIP_GLOBAL_REINIT1?:
 	QBNE	BISSC_PROC_WAIT_FOR_ALL_CORES?, SCRATCH3.b0, 0
 	M_BISSC_LS_WAIT_FOR_SYNC
 	QBBC	BISSC_SKIP_GLOBAL_REINIT1?, PRIMARY_CORE, 2
-	SET 	R31, R31, 19 ;ENDAT_TX_GLOBAL_REINIT ; Set TX_EN low
+	SET 	R31, R31, 19 ;BISSC_TX_GLOBAL_REINIT ; Set TX_EN low
 	; rx_en = 0 : Disable RX mode
 	LDI 	R30.b3, 0
 BISSC_SKIP_GLOBAL_REINIT1?:
 	LBCO 	&SCRATCH2.b3, PRUx_DMEM, BISSC_RE_MEASURE_PROC_DELAY, 1
 	QBEQ	BISSC_PROC_MEASURE_AGAIN?, SCRATCH2.b3, 1
 	.else
-	SET 	R31, R31, 19 ;ENDAT_TX_GLOBAL_REINIT ; Set TX_EN low
+	SET 	R31, R31, 19 ;BISSC_TX_GLOBAL_REINIT ; Set TX_EN low
 	; rx_en = 0 : Disable RX mode
 	LDI 	R30.b3, 0
 	.endif
@@ -389,27 +391,28 @@ BISSC_END_PROC_ENC_NOT_DETECTED?:
 	.if $isdefed("ENABLE_MULTI_MAKE_RTU")
 	M_BISSC_LS_WAIT_FOR_SYNC
 	QBBC	BISSC_SKIP_GLOBAL_REINIT2?, PRIMARY_CORE, 0
-	SET 	R31, R31, 19 ;ENDAT_TX_GLOBAL_REINIT ; Set TX_EN low
+	SET 	R31, R31, 19 ;BISSC_TX_GLOBAL_REINIT ; Set TX_EN low
 	; rx_en = 0 : Disable RX mode
 	LDI 	R30.b3, 0
 	.elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
 	M_BISSC_LS_WAIT_FOR_SYNC
 	QBBC	BISSC_SKIP_GLOBAL_REINIT2?, PRIMARY_CORE, 1
-	SET 	R31, R31, 19 ;ENDAT_TX_GLOBAL_REINIT ; Set TX_EN low
+	SET 	R31, R31, 19 ;BISSC_TX_GLOBAL_REINIT ; Set TX_EN low
 	; rx_en = 0 : Disable RX mode
 	LDI 	R30.b3, 0
 	.elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
 	M_BISSC_LS_WAIT_FOR_SYNC
 	QBBC	BISSC_SKIP_GLOBAL_REINIT2?, PRIMARY_CORE, 2
-	SET 	R31, R31, 19 ;ENDAT_TX_GLOBAL_REINIT ; Set TX_EN low
+	SET 	R31, R31, 19 ;BISSC_TX_GLOBAL_REINIT ; Set TX_EN low
 	; rx_en = 0 : Disable RX mode
 	LDI 	R30.b3, 0
 	.else
-	SET 	R31, R31, 19 ;ENDAT_TX_GLOBAL_REINIT ; Set TX_EN low
+	SET 	R31, R31, 19 ;BISSC_TX_GLOBAL_REINIT ; Set TX_EN low
 	; rx_en = 0 : Disable RX mode
 	LDI 	R30.b3, 0
 	.endif
 BISSC_SKIP_GLOBAL_REINIT2?:
+	;Incase encoder is not detected you will reach here.
 	HALT
 
 BISSC_END_PROC_MAX_PROC_TIME_EXCEEDED?:
@@ -438,7 +441,7 @@ BISSC_DELAY_LOOP4?:
 	SBCO	&SCRATCH2.b3, PRUx_DMEM, BISSC_RE_MEASURE_PROC_DELAY, 1
 	QBA 	BISSC_PROC_WAIT_FOR_ALL_CORES?
 	.else
-	SET 	R31, R31, 19 ;ENDAT_TX_GLOBAL_REINIT ; Set TX_EN low
+	SET 	R31, R31, 19 ;BISSC_TX_GLOBAL_REINIT ; Set TX_EN low
 	; rx_en = 0 : Disable RX mode
 	LDI 	R30.b3, 0
 	LDI		SCRATCH2.w0, 0
@@ -616,7 +619,7 @@ BISSC_CRC_END?:
 ; REVISIT: More optimization may be required or can be done at least in M_INIT_CRC_FLIP_FLOPS - defer those till a requirement comes
 ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 
-M_OTF_RECEIVE	.macro	Ra, Rb, slave_offset
+M_OTF_RECEIVE	.macro	Ra, Rb, encoder_offset
 	ZERO	&FF0, 6
 	; initialize CRC flip-flops, i.e. ff[0-5] = 0
 	SUB		SCRATCH3.b3, RAW_DATA_LEN, 6						; pos data + e+ w
@@ -641,19 +644,19 @@ BISSC_RX_LE_32_BITS?:
 	M_OTF_RECEIVE_AND_DOWNSAMPLE	Rb, BISSC_RCV_CRC.b0, SCRATCH3.b3, FIFO_BIT_IDX
 	
 BISSC_RX_CRC?:
-	ADD 	SLAVE_OFFSET, SCRATCH2.b0, SCRATCH2.b3
-	SBCO	&Ra, PRUx_DMEM,	SLAVE_OFFSET,	8
-	ADD 	SLAVE_OFFSET, SCRATCH2.b0, SCRATCH2.b1
+	ADD 	ENCODER_OFFSET, SCRATCH2.b0, SCRATCH2.b3
+	SBCO	&Ra, PRUx_DMEM,	ENCODER_OFFSET,	8
+	ADD 	ENCODER_OFFSET, SCRATCH2.b0, SCRATCH2.b1
 	M_CALC_CRC	SCRATCH3.b3, FF0.b0, FF0.b1, FF0.b2, FF0.b3, FF1.b0, FF1.b1
 
 	QBEQ	BISSC_CRC_SUCCESS?,	SCRATCH3.b3,	BISSC_RCV_CRC.b0	; crc: calculated - SCRATCH3.b3, received - BISSC_RCV_CRC_0
-	LBCO	&SCRATCH, PRUx_DMEM, SLAVE_OFFSET, 4
+	LBCO	&SCRATCH, PRUx_DMEM, ENCODER_OFFSET, 4
 	ADD		SCRATCH, SCRATCH, 1
-	SBCO	&SCRATCH, PRUx_DMEM,	SLAVE_OFFSET , 4
+	SBCO	&SCRATCH, PRUx_DMEM,	ENCODER_OFFSET , 4
 
 BISSC_CRC_SUCCESS?:
-	ADD		SLAVE_OFFSET, SCRATCH2.b0, SCRATCH2.b2
-	SBCO	&SCRATCH3.b3,	PRUx_DMEM,	SLAVE_OFFSET , 1
+	ADD		ENCODER_OFFSET, SCRATCH2.b0, SCRATCH2.b2
+	SBCO	&SCRATCH3.b3,	PRUx_DMEM,	ENCODER_OFFSET , 1
 	.endm
 
 
@@ -779,7 +782,7 @@ BISSC_RX_RECEIVE_DOWNSAMPLE_LOOP?:
 
 
 ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
-; Macro: M_CALC_CRC
+; Macro: M_CALC_CRC_MC
 ; 	Store and return the calculated CRC for all channels.
 ; Registers: 
 ;	ff[0-5]: Holds calculated CRC bits separately for all channels.
@@ -859,7 +862,7 @@ BISSC_CRC_CH0_END?:
 ; REVISIT: More optimization may be required or can be done at least in M_INIT_CRC_FLIP_FLOPS - defer those till a requirement comes
 ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 
-M_OTF_RECEIVE_MC	.macro	Ra, Rb, Rc, Rd, Re, Rf, slave_offset
+M_OTF_RECEIVE_MC	.macro	Ra, Rb, Rc, Rd, Re, Rf, encoder_offset
 
 	; initialize CRC flip-flops, i.e. ff[0-5] = 0
 	ZERO	&FF0, 24
@@ -884,27 +887,27 @@ BISSC_RX_LE_32_BITS?:
 	M_OTF_RECEIVE_AND_DOWNSAMPLE_MC	Rb, Rd, Rf, BISSC_RCV_CRC, SCRATCH3.b3, FIFO_BIT_IDX
 	
 BISSC_RX_CRC?: 
-	SBCO	&Ra,	PRUx_DMEM,	slave_offset,	24
-	ADD		slave_offset, slave_offset, 24
+	SBCO	&Ra,	PRUx_DMEM,	encoder_offset,	24
+	ADD		encoder_offset, encoder_offset, 24
 	M_CALC_CRC_MC	SCRATCH, FF0, FF1, FF2, FF3, FF4, FF5
 
 	QBEQ	BISSC_CH0_CRC_SUCCESS?,	SCRATCH.b0, BISSC_RCV_CRC.b0	; crc: calculated - SCRATCH, received - BISSC_RCV_CRC
-	LBCO	&SCRATCH3, PRUx_DMEM, slave_offset, 4
+	LBCO	&SCRATCH3, PRUx_DMEM, encoder_offset, 4
 	ADD		SCRATCH3, SCRATCH3, 1
-	SBCO	&SCRATCH3, PRUx_DMEM,	slave_offset , 4
+	SBCO	&SCRATCH3, PRUx_DMEM,	encoder_offset , 4
 BISSC_CH0_CRC_SUCCESS?:
-	ADD		slave_offset, slave_offset, 4
+	ADD		encoder_offset, encoder_offset, 4
 	QBEQ	BISSC_CH2_CRC_SUCCESS?,	SCRATCH.b1, BISSC_RCV_CRC.b1	; crc: calculated - SCRATCH, received - BISSC_RCV_CRC
-	LBCO	&SCRATCH3, PRUx_DMEM, slave_offset, 4
+	LBCO	&SCRATCH3, PRUx_DMEM, encoder_offset, 4
 	ADD		SCRATCH3, SCRATCH3, 1
-	SBCO	&SCRATCH3, PRUx_DMEM,	slave_offset , 4
+	SBCO	&SCRATCH3, PRUx_DMEM,	encoder_offset , 4
 BISSC_CH2_CRC_SUCCESS?:
-	ADD		slave_offset, slave_offset, 4
+	ADD		encoder_offset, encoder_offset, 4
 	QBEQ	BISSC_CRC_SUCCESS?,	SCRATCH.b2, BISSC_RCV_CRC.b2	; crc: calculated - SCRATCH, received - BISSC_RCV_CRC
-	LBCO	&SCRATCH3, PRUx_DMEM, slave_offset, 4
+	LBCO	&SCRATCH3, PRUx_DMEM, encoder_offset, 4
 	ADD		SCRATCH3, SCRATCH3, 1
-	SBCO	&SCRATCH3, PRUx_DMEM,	slave_offset , 4
+	SBCO	&SCRATCH3, PRUx_DMEM,	encoder_offset , 4
 BISSC_CRC_SUCCESS?:
-	ADD		slave_offset, slave_offset, 4
-	SBCO	&SCRATCH,	PRUx_DMEM,	slave_offset , 4
+	ADD		encoder_offset, encoder_offset, 4
+	SBCO	&SCRATCH,	PRUx_DMEM,	encoder_offset , 4
 	.endm

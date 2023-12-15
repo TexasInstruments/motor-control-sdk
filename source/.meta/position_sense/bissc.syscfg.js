@@ -13,7 +13,10 @@ function onValidate(inst, validation) {
         if ((!instance.channel_0)&&(!instance.channel_1)&&(!instance.channel_2))
             validation.logError("Select atleast one channel",inst,"channel_0"
         );
-
+        if(is_am243x_lp_device && (instance.channel_1 ))
+        validation.logError(
+            "On AM243x-LP, Channel 1 is not supported",inst,"channel_1"
+        );
         /* validation for booster pack */
         if((device!="am243x-lp")&&(instance.Booster_Pack))
         {
@@ -145,14 +148,6 @@ function sharedModuleInstances(instance) {
             },
         });
         modInstances.push({
-            name: "ENC1_EN",
-            displayName: "Booster Pack Ch1 Enable Pin",
-            moduleName: "/drivers/gpio/gpio",
-            requiredArgs: {
-                pinDir: "OUTPUT"
-            },
-        });
-        modInstances.push({
             name: "ENC2_EN",
             displayName: "Booster Pack Ch2 Enable Pin",
             moduleName: "/drivers/gpio/gpio",
@@ -162,15 +157,7 @@ function sharedModuleInstances(instance) {
         });
         modInstances.push({
             name: "BISSC_CH0_OUT_EN",
-            displayName: "ENDAT Ch0 TX Enable Pin",
-            moduleName: "/drivers/gpio/gpio",
-            requiredArgs: {
-                pinDir: "OUTPUT"
-            },
-        });
-        modInstances.push({
-            name: "BISSC_CH1_OUT_EN",
-            displayName: "ENDAT Ch1 TX Enable Pin",
+            displayName: "BISSC Ch0 TX Enable Pin",
             moduleName: "/drivers/gpio/gpio",
             requiredArgs: {
                 pinDir: "OUTPUT"
@@ -178,7 +165,7 @@ function sharedModuleInstances(instance) {
         });
         modInstances.push({
             name: "BISSC_CH2_OUT_EN",
-            displayName: "ENDAT Ch2 TX Enable Pin",
+            displayName: "BISSC Ch2 TX Enable Pin",
             moduleName: "/drivers/gpio/gpio",
             requiredArgs: {
                 pinDir: "OUTPUT"

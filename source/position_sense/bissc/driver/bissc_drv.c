@@ -57,12 +57,17 @@ int32_t bissc_command_wait(struct bissc_priv *priv)
 {
     struct bissc_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
     uint32_t timeout;
-    /*Wait for max of 5 ms*/
+    /*  Minimum and Maximum BiSSC cycle time depends on various params as below:
+        TCycle_min = TMA ∗ (5 + DLEN + CRCLEN) + tLineDelay + tbusy_max + busy_s_max + tTO
+        Instead wait for max of 5 ms as this can vary for different encoders and for daisy chain
+    */
     timeout = BISSC_MAX_CYCLE_TIMEOUT;
     while(1)
     {
-        if(priv->load_share){
-            if((pruicss_xchg->cycle_trigger[0] == 0 ) && (pruicss_xchg->cycle_trigger[1] == 0) && (pruicss_xchg->cycle_trigger[2] == 0)){
+        if(priv->load_share)
+        {
+            if((pruicss_xchg->cycle_trigger[0] == 0 ) && (pruicss_xchg->cycle_trigger[1] == 0) && (pruicss_xchg->cycle_trigger[2] == 0))
+            {
                 break;
             }
         }
@@ -88,9 +93,54 @@ int32_t bissc_command_process(struct bissc_priv *priv)
     return ret;
 }
 
-int32_t bissc_get_pos_res(struct bissc_priv *priv)
+void bissc_enable_load_share_mode(struct bissc_priv *priv)
 {
-    uint32_t   raw_data0, raw_data1, shift, sl_num, max, ch_num, numslaves, ls_ch;
+   void *pruss_cfg = priv->pruicss_cfg;
+    uint32_t rgval;
+    if(priv->pruicss_slicex)
+    {
+        rgval = HW_RD_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER);
+        rgval |= CSL_ICSSCFG_EDPRU1TXCFGREGISTER_PRU1_ENDAT_SHARE_EN_MASK;
+        HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER, rgval);
+    }
+    else
+    {
+        rgval = HW_RD_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0TXCFGREGISTER);
+        rgval |= CSL_ICSSCFG_EDPRU0TXCFGREGISTER_PRU0_ENDAT_SHARE_EN_MASK;
+        HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0TXCFGREGISTER, rgval);
+    }
+}
+void bissc_config_primary_core_mask(struct bissc_priv *priv, uint8_t mask)
+{
+    switch (mask)
+    {
+        case 1: /*only channel0 connected*/
+            priv->pruicss_xchg->primary_core_mask=0x1;
+            break;
+        case 2: /*channel1 connected*/
+            priv->pruicss_xchg->primary_core_mask=0x2;
+            break;
+        case 3: /*channel0 and channel1 connected*/
+            priv->pruicss_xchg->primary_core_mask=0x1;
+            break;
+        case 4: /*channel2 connected*/
+            priv->pruicss_xchg->primary_core_mask=0x4;
+            break;
+        case 5: /*channel0 and channel2 connnected*/
+            priv->pruicss_xchg->primary_core_mask=0x4;
+            break;
+        case 6: /*channel1 and channel2 connected*/
+            priv->pruicss_xchg->primary_core_mask=0X4;
+            break;
+        case 7: /*all three channel connected*/
+            priv->pruicss_xchg->primary_core_mask=0x4;
+            break;
+    }
+}
+
+int32_t bissc_get_pos(struct bissc_priv *priv)
+{
+    uint32_t   raw_data0, raw_data1, shift, sl_num, max, ch_num, numencoders, ls_ch;
     int32_t    ch = 0;
     if(bissc_command_process(priv) < 0)
     {
@@ -101,15 +151,15 @@ int32_t bissc_get_pos_res(struct bissc_priv *priv)
         ch = priv->channel[ch_num];
         if(priv->load_share)
         {
-            numslaves = priv->num_slaves[ch];
+            numencoders = priv->num_encoders[ch];
             ls_ch = ch;
         }
         else
         {
-            numslaves = priv->num_slaves[0];
+            numencoders = priv->num_encoders[0];
             ls_ch = 0;
         }
-        for(sl_num = 0; sl_num < numslaves; sl_num++)
+        for(sl_num = 0; sl_num < numencoders; sl_num++)
         {
             raw_data0 = priv->pruicss_xchg->pos_data_res[sl_num].raw_data[ch].pos_data_word0;
             raw_data1 = priv->pruicss_xchg->pos_data_res[sl_num].raw_data[ch].pos_data_word1;
@@ -150,16 +200,16 @@ void bissc_config_clock(struct bissc_priv *priv,
     if(priv->pruicss_slicex)
     {
         HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU1RXCFGREGISTER, ((clk_cfg->rx_div << 16) | 
-            (clk_cfg->is_ocp << 4) | (clk_cfg->rx_div_attr)));
+            (clk_cfg->is_core_clk << 4) | (clk_cfg->rx_div_attr)));
         HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER, clk_cfg->tx_div << 16 | 
-            (clk_cfg->is_ocp << 4));
+            (clk_cfg->is_core_clk << 4));
     }
     else
     {
         HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU0RXCFGREGISTER, ((clk_cfg->rx_div << 16) | 
-            (clk_cfg->is_ocp << 4) | (clk_cfg->rx_div_attr)));
+            (clk_cfg->is_core_clk << 4) | (clk_cfg->rx_div_attr)));
         HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU0TXCFGREGISTER, clk_cfg->tx_div << 16 |
-                (clk_cfg->is_ocp << 4));
+                (clk_cfg->is_core_clk << 4));
     }
     if(priv->load_share)
         bissc_enable_load_share_mode(priv);
@@ -174,7 +224,18 @@ void bissc_config_channel(struct bissc_priv *priv, int32_t mask, int32_t totalch
     int32_t ch_num;
     pruicss_xchg->channel = mask;
     priv->totalchannels = totalch;
-    for(ch_num = 0; ch_num < totalch; ch_num++){
+    /*  Below for loop iterates for enabled channel number of times.
+        Updates channel in this manner:
+        if ch0 only selected --> priv->channel[0] = 0;
+        if ch1 only selected --> priv->channel[0] = 1;
+        if ch2 only selected --> priv->channel[0] = 2;
+        if ch0 & ch1 are selected --> priv->channel[0] = 0, priv->channel[1] = 1;
+        if ch0 & ch2 are selected --> priv->channel[0] = 0, priv->channel[1] = 2;
+        if ch1 & ch2 are selected --> priv->channel[0] = 1, priv->channel[1] = 2;
+        if ch0, ch1 & ch2 are selected --> priv->channel[0] = 0, priv->channel[1] = 1, priv->channel[1] = 2;
+    */
+    for(ch_num = 0; ch_num < totalch; ch_num++)
+    {
         if((mask & 1) && ch_num == 0)
             priv->channel[ch_num] = 0;
         else if((mask & 2) && (ch_num == 0 || ch_num == 1))
@@ -183,56 +244,11 @@ void bissc_config_channel(struct bissc_priv *priv, int32_t mask, int32_t totalch
             priv->channel[ch_num] = 2;
     }
 }
-void bissc_config_load_share(struct bissc_priv *priv, int32_t mask, int32_t loadshare)
+void bissc_config_load_share(struct bissc_priv *priv, int32_t mask)
 {
-    priv->load_share = loadshare;
+    priv->load_share = 1; /*Enable load-share*/
     bissc_config_primary_core_mask(priv, mask);
     bissc_enable_load_share_mode(priv);
-}
-void bissc_enable_load_share_mode(struct bissc_priv *priv)
-{
-   void *pruss_cfg = priv->pruicss_cfg;
-    //HW_WR_REG32(0x30026104) |= 0x0800;
-    uint32_t rgval;
-    if(priv->pruicss_slicex)
-    {
-       rgval = HW_RD_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER);
-       rgval |= CSL_ICSSCFG_EDPRU1TXCFGREGISTER_PRU1_ENDAT_SHARE_EN_MASK;
-      HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER, rgval);
-    }
-    else
-    {
-        rgval = HW_RD_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0TXCFGREGISTER);
-        rgval |= CSL_ICSSCFG_EDPRU0TXCFGREGISTER_PRU0_ENDAT_SHARE_EN_MASK;
-      HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0TXCFGREGISTER, rgval);
-    }
-}
-void bissc_config_primary_core_mask(struct bissc_priv *priv, uint8_t mask)
-{
-    switch (mask)
-    {
-        case 1: /*only channel0 connected*/
-            priv->pruicss_xchg->primary_core_mask=0x1;
-            break;
-        case 2: /*channel1 connected*/
-            priv->pruicss_xchg->primary_core_mask=0x2;
-            break;
-        case 3: /*channel0 and channel1 connected*/
-            priv->pruicss_xchg->primary_core_mask=0x1;
-            break;
-        case 4: /*channel2 connected*/
-            priv->pruicss_xchg->primary_core_mask=0x4;
-            break;
-        case 5: /*channel0 and channel2 connnected*/
-            priv->pruicss_xchg->primary_core_mask=0x4;
-            break;
-        case 6: /*channel1 and channel2 connected*/
-            priv->pruicss_xchg->primary_core_mask=0X4;
-            break;
-        case 7: /*all three channel connected*/
-            priv->pruicss_xchg->primary_core_mask=0x4;
-            break;
-    }
 }
 int32_t bissc_wait_for_fw_initialization(struct bissc_priv *priv, uint32_t timeout, uint8_t mask)
 {
@@ -243,7 +259,7 @@ int32_t bissc_wait_for_fw_initialization(struct bissc_priv *priv, uint32_t timeo
          if(priv->load_share)  /* for loadshare mode*/
         {
             switch (mask) {
-                case 1:  /*channel 0 connected*/
+                case 1: /*channel 0 connected*/
                     if((pruicss_xchg->status[0] & 1))
                         return SystemP_SUCCESS;
                     break;
@@ -251,23 +267,23 @@ int32_t bissc_wait_for_fw_initialization(struct bissc_priv *priv, uint32_t timeo
                     if((pruicss_xchg->status[1] & 1))
                         return SystemP_SUCCESS;
                     break;
-                case 3:               /*channel 0 and 1 connected*/
+                case 3: /*channel 0 and 1 connected*/
                     if((pruicss_xchg->status[0] & 1) && (pruicss_xchg->status[1] & 1))
                         return SystemP_SUCCESS;
                     break;
-                case 4:  /*channel 2 connected*/
+                case 4: /*channel 2 connected*/
                     if((pruicss_xchg->status[2] & 1))
                         return SystemP_SUCCESS;
                     break;
-                case 5:               /*channel 0 and 2 connnected*/
+                case 5: /*channel 0 and 2 connnected*/
                     if((pruicss_xchg->status[0] & 1) && (pruicss_xchg->status[2] & 1))
                         return SystemP_SUCCESS;
                     break;
-                case 6:                    /*channel 1 and 2 connected*/
+                case 6: /*channel 1 and 2 connected*/
                     if((pruicss_xchg->status[1] & 1) && (pruicss_xchg->status[2] & 1))
                         return SystemP_SUCCESS;
                     break;
-                case 7:                       /*all three channel connected*/
+                case 7: /*all three channel connected*/
                     if((pruicss_xchg->status[0] & 1) && (pruicss_xchg->status[1] & 1) && ( pruicss_xchg->status[2] & 1))
                         return SystemP_SUCCESS;
                     break;
@@ -278,7 +294,7 @@ int32_t bissc_wait_for_fw_initialization(struct bissc_priv *priv, uint32_t timeo
         {
             break;
         }
-       else
+        else
         {
             ClockP_usleep(1000 * 1);
         }
@@ -290,20 +306,30 @@ int32_t bissc_wait_for_fw_initialization(struct bissc_priv *priv, uint32_t timeo
     return SystemP_SUCCESS;
 }
 
+void bissc_get_enc_proc_delay(struct bissc_priv *priv)
+{
+    int32_t i;
+    struct bissc_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
+    for(i = 0; i < NUM_ED_CH_MAX; i++)
+    {
+        priv->proc_delay[i] = pruicss_xchg->proc_delay[i];
+    }
+}
+
 void bissc_config_clr_cfg0(struct bissc_priv *priv)
 {
     void *pruicss_cfg = priv->pruicss_cfg;
     if(priv->pruicss_slicex)
     {
-       HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU1CH0CFG0REGISTER, 0);
-       HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU1CH1CFG0REGISTER, 0);
-       HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU1CH2CFG0REGISTER, 0);
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU1CH0CFG0REGISTER, 0);
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU1CH1CFG0REGISTER, 0);
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU1CH2CFG0REGISTER, 0);
     }
     else
     {
-       HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU0CH0CFG0REGISTER, 0);
-       HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU0CH1CFG0REGISTER, 0);
-       HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU0CH2CFG0REGISTER, 0);
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU0CH0CFG0REGISTER, 0);
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU0CH1CFG0REGISTER, 0);
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU0CH2CFG0REGISTER, 0);
     }
 }
 
@@ -312,36 +338,37 @@ void bissc_config_endat_mode(struct bissc_priv *priv)
     void *pruicss_cfg = priv->pruicss_cfg;
     if(priv->pruicss_slicex)
     {
-       HW_WR_REG8((uint8_t *)pruicss_cfg + CSL_ICSSCFG_GPCFG1 + 3, 4);
+        HW_WR_REG8((uint8_t *)pruicss_cfg + CSL_ICSSCFG_GPCFG1 + 3, 4);
     }
     else
     {
-       HW_WR_REG8((uint8_t *)pruicss_cfg + CSL_ICSSCFG_GPCFG0 + 3, 4);
+        HW_WR_REG8((uint8_t *)pruicss_cfg + CSL_ICSSCFG_GPCFG0 + 3, 4);
     }
 }
-int32_t bissc_calc_clock(uint32_t freq, struct bissc_clk_cfg *clk_cfg)
+int32_t bissc_calc_clock(struct bissc_priv *priv, struct bissc_clk_cfg *clk_cfg)
 {
+    uint32_t freq = priv->baud_rate;
     clk_cfg->rx_div_attr = BISSC_RX_SAMPLE_SIZE;
-    if((freq == 1) || (freq == 5))
+    if((freq == BISSC_FREQ_1MHZ) || (freq == BISSC_FREQ_5MHZ))
     {
         freq = freq * 1000 * 1000;
-        clk_cfg->tx_div = (BISSC_INPUT_CLOCK_OCP_FREQUENCY / freq) - 1;
-        clk_cfg->rx_div = (BISSC_INPUT_CLOCK_OCP_FREQUENCY / (freq * 8)) - 1;
-        clk_cfg->is_ocp = 1;
+        clk_cfg->tx_div = (priv->core_clk_freq / freq) - 1;
+        clk_cfg->rx_div = (priv->core_clk_freq / (freq * 8)) - 1;
+        clk_cfg->is_core_clk = 1;
     }
-    else if((freq == 2) || (freq == 8))
+    else if((freq == BISSC_FREQ_2MHZ) || (freq == BISSC_FREQ_8MHZ))
     {
         freq = freq * 1000 * 1000;
-        clk_cfg->tx_div = (BISSC_INPUT_CLOCK_FREQUENCY_UART / freq) - 1;
-        clk_cfg->rx_div = (BISSC_INPUT_CLOCK_FREQUENCY_UART / (freq * 8)) - 1;
-        clk_cfg->is_ocp = 0;
+        clk_cfg->tx_div = (priv->uart_clk_freq / freq) - 1;
+        clk_cfg->rx_div = (priv->uart_clk_freq / (freq * 8)) - 1;
+        clk_cfg->is_core_clk = 0;
     }
-    else if(freq == 10)
+    else if(freq == BISSC_FREQ_10MHZ)
     {
         freq = freq* 1000 * 1000;
-        clk_cfg->tx_div = (BISSC_INPUT_CLOCK_OCP_FREQUENCY / freq) - 1;
-        clk_cfg->rx_div = (BISSC_INPUT_CLOCK_OCP_FREQUENCY / (freq * 4)) - 1;
-        clk_cfg->is_ocp = 1;
+        clk_cfg->tx_div = (priv->core_clk_freq / freq) - 1;
+        clk_cfg->rx_div = (priv->core_clk_freq / (freq * 4)) - 1;
+        clk_cfg->is_core_clk = 1;
         clk_cfg->rx_div_attr = BISSC_RX_SAMPLE_SIZE_10MHZ;
     }    
     else 
@@ -351,17 +378,21 @@ int32_t bissc_calc_clock(uint32_t freq, struct bissc_clk_cfg *clk_cfg)
     return SystemP_SUCCESS;
 }
 
-static void bissc_hw_init(struct bissc_priv *priv, uint32_t frequency)
+void bissc_hw_init(struct bissc_priv *priv)
 {
     struct bissc_clk_cfg clk_cfg;
-    bissc_calc_clock(frequency, &clk_cfg);
+    bissc_calc_clock(priv, &clk_cfg);
     bissc_config_endat_mode(priv);
     bissc_config_clock(priv, &clk_cfg);
     bissc_config_clr_cfg0(priv);
 }
 
 
-struct bissc_priv *bissc_init(PRUICSS_Handle gPruIcssXHandle, int32_t slice, uint32_t frequency)
+struct bissc_priv *bissc_init(PRUICSS_Handle gPruIcssXHandle, 
+                              int32_t slice, 
+                              uint32_t frequency, 
+                              uint32_t core_clk_freq,
+                              uint32_t uart_clk_freq)
 {
     struct bissc_pruicss_xchg *pruicss_xchg;
     void *pruicss_cfg;
@@ -369,27 +400,30 @@ struct bissc_priv *bissc_init(PRUICSS_Handle gPruIcssXHandle, int32_t slice, uin
     if(slice)
         pruicss_xchg =  (struct bissc_pruicss_xchg *)((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->pru1DramBase;
     else
-         pruicss_xchg =  (struct bissc_pruicss_xchg *)((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->pru0DramBase;
+        pruicss_xchg =  (struct bissc_pruicss_xchg *)((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->pru0DramBase;
     bissc_priv.pruicss_xchg = pruicss_xchg;
     bissc_priv.pruicss_cfg = pruicss_cfg;
     bissc_priv.pruicss_slicex = slice;
-    bissc_hw_init(&bissc_priv, frequency);
+    bissc_priv.baud_rate = frequency;
+    bissc_priv.core_clk_freq = core_clk_freq;
+    bissc_priv.uart_clk_freq = uart_clk_freq;
+    bissc_hw_init(&bissc_priv);
     return &bissc_priv;    
 }
 
-void bissc_update_max_proc_delay(struct bissc_priv *priv,  uint32_t frequency) 
+void bissc_update_max_proc_delay(struct bissc_priv *priv) 
 {
     struct bissc_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
     pruicss_xchg->fifo_bit_idx = 4;                          /* 8x over clock - middle bit*/
-    if(frequency == 1)
+    if(priv->baud_rate == BISSC_FREQ_1MHZ)
         pruicss_xchg->max_proc_delay = BISSC_MAX_PROC_DELAY_1MHZ;
-    else if(frequency == 2)
+    else if(priv->baud_rate == BISSC_FREQ_2MHZ)
         pruicss_xchg->max_proc_delay = BISSC_MAX_PROC_DELAY_2MHZ;
-    else if(frequency == 5)
+    else if(priv->baud_rate == BISSC_FREQ_5MHZ)
         pruicss_xchg->max_proc_delay = BISSC_MAX_PROC_DELAY_5MHZ;
-    else if(frequency == 8)
+    else if(priv->baud_rate == BISSC_FREQ_8MHZ)
         pruicss_xchg->max_proc_delay = BISSC_MAX_PROC_DELAY_8MHZ;
-    else if(frequency == 10)
+    else if(priv->baud_rate == BISSC_FREQ_10MHZ)
     {
         pruicss_xchg->max_proc_delay = BISSC_MAX_PROC_DELAY_10MHZ;
         pruicss_xchg->fifo_bit_idx = 2;                          /* 4x over clock - middle bit*/
@@ -418,7 +452,7 @@ int32_t bissc_wait_measure_proc_delay(struct bissc_priv *priv, uint32_t timeout)
     return SystemP_SUCCESS;
 }
 
-void bissc_set_default_initialization(struct bissc_priv *priv, uint32_t frequency, uint64_t icssgclk)
+void bissc_set_default_initialization(struct bissc_priv *priv, uint64_t icssgclk)
 {
     int8_t pru_num, totalprus, ls_ch;
     struct bissc_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
@@ -436,15 +470,15 @@ void bissc_set_default_initialization(struct bissc_priv *priv, uint32_t frequenc
         pruicss_xchg->enc_len[ls_ch].data_len[0]           = BISSC_POS_DATA_LEN_DEFAULT;
         priv->data_len[ls_ch][0]                           = BISSC_POS_DATA_LEN_DEFAULT;
         priv->single_turn_len[ls_ch][0]                    = BISSC_POS_DATA_LEN_DEFAULT;
-        pruicss_xchg->enc_len[ls_ch].num_slaves            = 1;
-        priv->num_slaves[ls_ch]                            = 1;
+        pruicss_xchg->enc_len[ls_ch].num_encoders            = 1;
+        priv->num_encoders[ls_ch]                            = 1;
         priv->multi_turn_len[ls_ch][0]                     = 0;
         pruicss_xchg->ctrl_cmd[ls_ch]                      = 0;
     }
     pruicss_xchg->pos_crc_len         = BISSC_POS_CRC_LEN;
     pruicss_xchg->ctrl_cmd_crc_len    = BISSC_CTRL_CMD_CRC_LEN;
-    pruicss_xchg->rx_clk_freq         = frequency;
-    bissc_update_max_proc_delay(priv, frequency); 
+    pruicss_xchg->rx_clk_freq         = priv->baud_rate;
+    bissc_update_max_proc_delay(priv); 
     pruicss_xchg->delay_40us          = ((icssgclk*40)/1000000);
     pruicss_xchg->delay_100ms         = (icssgclk / 10); /*((icssgclk*100000) / 1000000)*/   
     pruicss_xchg->icssg_clk           = icssgclk; 
@@ -463,7 +497,7 @@ void bissc_update_data_len(struct bissc_priv *priv, uint32_t single_turn_len[], 
         ls_ch = priv->channel[pru_num];
     else
         ls_ch = 0;
-    for( sl_num = 0; sl_num < NUM_SLAVE_MAX; sl_num++)
+    for( sl_num = 0; sl_num < NUM_ENCODERS_MAX; sl_num++)
     {
         if(single_turn_len[sl_num])
         {
@@ -471,12 +505,12 @@ void bissc_update_data_len(struct bissc_priv *priv, uint32_t single_turn_len[], 
             priv->multi_turn_len[ls_ch][sl_num] =  multi_turn_len[sl_num];
             priv->data_len[ls_ch][sl_num] = single_turn_len[sl_num] + multi_turn_len[sl_num]; 
             pruicss_xchg->enc_len[ls_ch].data_len[sl_num] = single_turn_len[sl_num] + multi_turn_len[sl_num];
-            priv->num_slaves[ls_ch]++;
+            priv->num_encoders[ls_ch]++;
         }
     }
-    pruicss_xchg->enc_len[0].num_slaves = priv->num_slaves[0];
-    pruicss_xchg->enc_len[1].num_slaves = priv->num_slaves[1];
-    pruicss_xchg->enc_len[2].num_slaves = priv->num_slaves[2];
+    pruicss_xchg->enc_len[0].num_encoders = priv->num_encoders[0];
+    pruicss_xchg->enc_len[1].num_encoders = priv->num_encoders[1];
+    pruicss_xchg->enc_len[2].num_encoders = priv->num_encoders[2];
 }
 
 int32_t bissc_set_ctrl_cmd_and_process(struct bissc_priv *priv, uint32_t ctrl_cmd[])
@@ -486,20 +520,22 @@ int32_t bissc_set_ctrl_cmd_and_process(struct bissc_priv *priv, uint32_t ctrl_cm
     pruicss_xchg->ctrl_cmd[1] = ctrl_cmd[1];
     pruicss_xchg->ctrl_cmd[2] = ctrl_cmd[2];
     int32_t ch = 0, ch_num;
-    if(priv->load_share){
+    if(priv->load_share)
+    {
         pruicss_xchg->ctrl_cmd_status[0] = (pruicss_xchg->channel & 0x1)?1:0;
         pruicss_xchg->ctrl_cmd_status[1] = (pruicss_xchg->channel & 0x2)?1:0;
         pruicss_xchg->ctrl_cmd_status[2] = (pruicss_xchg->channel & 0x4)?1:0;
-       while(pruicss_xchg->ctrl_cmd_status[0] + pruicss_xchg->ctrl_cmd_status[1] + pruicss_xchg->ctrl_cmd_status[2])
+        while(pruicss_xchg->ctrl_cmd_status[0] + pruicss_xchg->ctrl_cmd_status[1] + pruicss_xchg->ctrl_cmd_status[2])
         {
-        if(bissc_command_process(priv) < 0)
-        {
-            return SystemP_FAILURE;
-        }
-        ClockP_usleep(1000);
+            if(bissc_command_process(priv) < 0)
+            {
+                return SystemP_FAILURE;
+            }
+            ClockP_usleep(1000);
         }
     }
-    else{
+    else
+    {
         pruicss_xchg->ctrl_cmd_status[0] = 1;
         while(pruicss_xchg->ctrl_cmd_status[0] & 1)
         {
