@@ -460,7 +460,7 @@ SKIP_CLOCK_CONFIG1:
 
 	LOOP		PROP_DELAY_MULTI_END,	3
 
-	; # read position bits (offset ch[0,1,2]: [0x44, 0x64, 0x84])
+	; # read position bits (offset ch[0,1,2]: [0x30, 0x40, 0x50])
 	LBCO		&R2.b1,	PRUx_DMEM,	R8.b0,	1
 
 	; bypass prop delay estimation if encoder not detected for the ch, else would wait indefinitely in prop delay fn
@@ -470,13 +470,13 @@ SKIP_CLOCK_CONFIG1:
 	CALL		FN_PROP_DELAY_CALC
 
 ENDAT_SKIP_PROP_DELAY_CALC:
-	; write prop delay (offset ch[0,1,2]: [0x28, 0x48, 0x68])
+	; write prop delay (offset ch[0,1,2]: [0x34, 0x44, 0x48])
 	ADD		R8.b0,	R8.b0,	0x4
 	SBCO		&R9,	PRUx_DMEM,	R8.b0,	4
 
 	; update per ch variables for next channel
 	; 0x4 + 0x1C = 0x20, corresponds to i/f buffer of one channel
-	ADD		R8.b0,	R8.b0,	0x1C
+	ADD		R8.b0,	R8.b0,	0x0C
 	ADD		R3.b0,	R3.b0,	1 ; ENDAT_TX_CHx_SEL
 	ADD		R3.b1,	R3.b1,	1 ; ENDAT_CHx_CLK
 	ADD		R3.b2,	R3.b2,	1 ; ENDAT_CHx_SB
