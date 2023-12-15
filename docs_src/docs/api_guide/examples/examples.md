@@ -23,6 +23,7 @@ This page lists all the examples and demos supported in this SDK.
 - RTLibs
     -# \subpage EXAMPLES_DCL_PI
     -# \subpage EXAMPLES_DCL_DF22
+    -# \subpage EXAMPLES_TRANSFORMS_TEST
 - PRUICSS PWM
     -# \subpage EXAMPLE_PRUICSS_PWM_DUTY_CYCLE
     -# \subpage EXAMPLE_PRUICSS_PWM_EPWM_SYNC
@@ -34,4 +35,5 @@ This page lists all the examples and demos supported in this SDK.
 - RTLibs
     -# \subpage EXAMPLES_DCL_PI
     -# \subpage EXAMPLES_DCL_DF22
+    -# \subpage EXAMPLES_TRANSFORMS_TEST
 \endcond

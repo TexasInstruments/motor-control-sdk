@@ -13,6 +13,7 @@ const device_defines = {
 const example_file_list = [
     "examples/dcl/dcl_df22/.project/mcsdk_project.js",
     "examples/dcl/dcl_pi/.project/mcsdk_project.js",
+    "examples/transforms/transforms_test/.project/mcsdk_project.js",
     "examples/position_sense/tamagawa_diagnostic_over_soc_uart/.project/project.js",
 ];
 

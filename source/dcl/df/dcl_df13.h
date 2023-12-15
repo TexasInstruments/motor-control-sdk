@@ -45,7 +45,33 @@ extern "C" {
  *  \file       dcl_df13.h
  *  \brief      Contains direct form 1 3rd order DF13 compensator
  *              with its related structures and functions 
- */           
+ *
+ *  \details    Due to compatibility reason, this file maintains a copy
+ *              of legacy function DCL_runDF13_C5(), DCL_runDF13_C6(). 
+ *              It is advised to not use these legacy functions for new development.
+ *
+ *  \code       Previously, C28 version of DCL did not implement a function
+ *              to run DF13 with clamp. Instead, user had to implement a routine 
+ *              similar to the following: 
+ *
+ *              extern DCL_DF13 df;
+ *              extern float32_t ek, uk;
+ *              float32_t vk = 0;
+ *
+ *              float32_t uk = DCL_runDF13_C2/C5(df, ek, vk);
+ *              bool is_clamped = DCL_runClamp_C1/C2(&uk, Umax, Umin)
+ *              if (!is_clamped)
+ *              {
+ *                  vk = DCL_runDF13_C3/C6(df, ek, uk);
+ *              }     
+ *  
+ *              A new function DCL_runDF13Clamp() was implemented to replace it,
+ *              therefore, user may change the aformentioned routine to just:
+ *         
+ *              uk = DCL_runDF13Clamp(df, ek, Umax, Umin);
+ *  \endcode
+ *
+ */       
 
 #include "../dcl_common.h"
 
@@ -62,9 +88,10 @@ typedef struct dcl_df13_sps {
     float32_t a1;   //!< neg. coefficient to u(k-1)
     float32_t a2;   //!< neg. coefficient to u(k-2)
     float32_t a3;   //!< neg. coefficient to u(k-3)
+    float32_t a0;   //!< No Longer Needed
 } DCL_DF13_SPS;
 
-#define DF13_SPS_DEFAULTS { 0.25f, 0.25f, 0.25f, 0.25f, 0.0f, 0.0f, 0.0f }
+#define DF13_SPS_DEFAULTS { 0.25f, 0.25f, 0.25f, 0.25f, 0.0f, 0.0f, 0.0f, 0.0f }
 
 //! \brief          DCL_DF13 object for storing df13 specific parameters
 //!
@@ -87,6 +114,10 @@ typedef _DCL_VOLATILE struct dcl_df13
     float32_t d5;   //!< u(k-2)
     float32_t d6;   //!< u(k-3)
 
+    float32_t a0;   //!< No Longer Needed
+    float32_t d0;   //!< No Longer Needed
+    float32_t d7;   //!< No Longer Needed
+
     /* miscellaneous */
     DCL_DF13_SPS *sps; //!< updates compensator parameter
     DCL_CSS *css;      //!< configuration & debugging
@@ -95,7 +126,7 @@ typedef _DCL_VOLATILE struct dcl_df13
 //! \brief          Defines default values to initialize DCL_DF13
 //!
 #define DF13_DEFAULTS { 0.25f, 0.25f, 0.25f, 0.25f, 0.0f, 0.0f, 0.0f, \
-                        0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, \
+                        0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, \
             &(DCL_DF13_SPS)DF13_SPS_DEFAULTS, &(DCL_CSS)DCL_CSS_DEFAULTS }
 
 //! \brief          Macro for internal default values to initialize DCL_DF13
@@ -107,8 +138,8 @@ typedef _DCL_VOLATILE struct dcl_df13
 //!                                                 DF13_INT_DEFAULTS
 //!                                               };
 #define DF13_INT_DEFAULTS .d1=0.0f, .d2=0.0f, .d3=0.0f, .d4=0.0f, .d5=0.0f, \
-                         .d6=0.0f, .sps=&(DCL_DF13_SPS)DF13_SPS_DEFAULTS, \
-                         .css=&(DCL_CSS)DCL_CSS_DEFAULTS 
+                          .d6=0.0f, .a0=0.0f, .d0=0.0f, .d7=0.0f, \
+                          .sps=&(DCL_DF13_SPS)DF13_SPS_DEFAULTS, .css=&(DCL_CSS)DCL_CSS_DEFAULTS 
 
 //! \brief          Initialize DCL_DF13 struct with default parameters
 //!                 Example: DCL_DF13* df13_ctrl = DCL_initDF13();
@@ -143,8 +174,8 @@ typedef _DCL_VOLATILE struct dcl_df13
     if(sps_ptr)                                                                            \
     {                                                                                      \
         *new_df =(DCL_DF13){ (new_sps)->b0, (new_sps)->b1, (new_sps)->b2, (new_sps)->b3,   \
-        (new_sps)->a1, (new_sps)->a2, (new_sps)->a3, 0.0f, 0.0f, 0.0f, 0.0f,               \
-        0.0f, 0.0f, (DCL_DF13_SPS*)new_sps, &(DCL_CSS)DCL_CSS_DEFAULTS };                  \
+        (new_sps)->a1, (new_sps)->a2, (new_sps)->a3, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,   \
+        0.0f, 0.0f, 0.0f, (DCL_DF13_SPS*)new_sps, &(DCL_CSS)DCL_CSS_DEFAULTS };            \
     }                                                                                      \
     new_df;                                                                                \
 })
@@ -157,17 +188,18 @@ typedef _DCL_VOLATILE struct dcl_df13
 _DCL_CODE_ACCESS
 void DCL_resetDF13(DCL_DF13 *df)
 {
-    dcl_interrupt_t ints = DCL_disableInts();
+    dcl_interrupt_t ints;
+    ints = DCL_disableInts();
     df->d1 = df->d2 = df->d3 = df->d4 = df->d5 = df->d6 = 0.0f;
     DCL_restoreInts(ints);
 }
 
-//! \brief           Loads DF13 tuning parameter from its SPS parameter
+//! \brief           Loads DF13 tuning parameter from its SPS parameter without interrupt protection
 //!
 //! \param[in] df    Pointer to the active DCL_DF13 controller structure
 //!
 _DCL_CODE_ACCESS
-void DCL_fupdateDF13(DCL_DF13 *df)
+void DCL_forceUpdateDF13(DCL_DF13 *df)
 {
     df->b0 = df->sps->b0;
     df->b1 = df->sps->b1;
@@ -178,66 +210,43 @@ void DCL_fupdateDF13(DCL_DF13 *df)
     df->a3 = df->sps->a3;    
 }
 
-//! \brief           Updates DF13 parameter from its SPS parameter with interrupt protection
+//! \brief           Loads DF13 tuning parameter from its SPS parameter with interrupt protection
 //!
 //! \param[in] df    Pointer to the DCL_DF13 controller structure
-//! \return          'true' if update is successful, otherwise 'false'
 //!
 _DCL_CODE_ACCESS _DCL_CODE_SECTION
-bool DCL_updateDF13(DCL_DF13 *df)
+void DCL_updateDF13NoCheck(DCL_DF13 *df)
 {
-    if (!DCL_getUpdateStatus(df))
-    {
-        dcl_interrupt_t ints = DCL_disableInts();
-        DCL_setUpdateStatus(df);
-        df->b0 = df->sps->b0;
-        df->b1 = df->sps->b1;
-        df->b2 = df->sps->b2;
-        df->b3 = df->sps->b3;
-        df->a1 = df->sps->a1;
-        df->a2 = df->sps->a2;
-        df->a3 = df->sps->a3;
-        DCL_clearUpdateStatus(df);
-        DCL_restoreInts(ints);
-        return true;
-    }
-    return false;
+    dcl_interrupt_t ints;
+    ints = DCL_disableInts();
+    df->b0 = df->sps->b0;
+    df->b1 = df->sps->b1;
+    df->b2 = df->sps->b2;
+    df->b3 = df->sps->b3;
+    df->a1 = df->sps->a1;
+    df->a2 = df->sps->a2;
+    df->a3 = df->sps->a3;
+    DCL_restoreInts(ints);
 }
 
-//! \brief           A conditional update based on the pending-for-update flag.
-//!                  If the pending status is set, the function will update DF13
+//! \brief           A conditional update based on the update flag.
+//!                  If the update status is set, the function will update DF13
 //!                  parameter from its SPS parameter and clear the status flag on completion..
-//!                  Note: Use DCL_setPendingStatus(df) to set the pending status.
+//!                  Note: Use DCL_setUpdateStatus(df) to set the update status.
 //!     
 //! \param[in] df    Pointer to the DCL_DF13 controller structure
 //! \return          'true' if an update is applied, otherwise 'false'
 //!
 _DCL_CODE_ACCESS _DCL_CODE_SECTION
-bool DCL_pendingUpdateDF13(DCL_DF13 *df)
+bool DCL_updateDF13(DCL_DF13 *df)
 {
-    if (DCL_getPendingStatus(df) && DCL_updateDF13(df))
+    if (DCL_getUpdateStatus(df))
     {
-        DCL_clearPendingStatus(df);
+        DCL_updateDF13NoCheck(df);
+        DCL_clearUpdateStatus(df);
         return true;
     }
     return false;
-}
-
-//! \brief           Update SPS parameter with active param, userful when needing
-//!                  to update only few active param from SPS and keep rest the same   
-//!
-//! \param[in] df    Pointer to the active DCL_DF13 controller structure
-//!
-_DCL_CODE_ACCESS
-void DCL_updateDF13SPS(DCL_DF13 *df)
-{
-    df->sps->b0 = df->b0;
-    df->sps->b1 = df->b1;
-    df->sps->b2 = df->b2;
-    df->sps->b3 = df->b3;
-    df->sps->a1 = df->a1;
-    df->sps->a2 = df->a2;
-    df->sps->a3 = df->a3;
 }
 
 //! \brief           Determines stability of the shadow compensator
@@ -252,7 +261,7 @@ bool DCL_isStableDF13(DCL_DF13 *df)
 }
 
 //! \brief            Loads the DF13 shadow coefficients from a ZPK3 description.
-//!                   Note: Sampling period df->css->t_sec are used in the calculation.
+//!                   Note: Sampling period df->css->T are used in the calculation.
 //!                   New settings take effect after DCL_updateDF13().
 //!
 //! \param[in] df     Pointer to the DCL_DF13 controller structure
@@ -281,18 +290,18 @@ void DCL_loadDF13asZPK(DCL_DF13 *df, DCL_ZPK3 *zpk)
     float32_t alpha1 = (float32_t) crealf((zpk->p1 * zpk->p2) + (zpk->p2 * zpk->p3) + (zpk->p1 * zpk->p3));
     float32_t alpha0 = -(float32_t) crealf(zpk->p1 * zpk->p2 * zpk->p3);
 
-    float32_t t_sec = df->css->t_sec;
+    float32_t T = df->css->T;
 
-    float32_t a0p = 8.0f + (alpha2 * 4.0f * t_sec) + (alpha1 * 2.0f * t_sec * t_sec) + (alpha0 * t_sec * t_sec * t_sec);
+    float32_t a0p = 8.0f + (alpha2 * 4.0f * T) + (alpha1 * 2.0f * T * T) + (alpha0 * T * T * T);
 
-    df->sps->b0 = zpk->K * (8.0f + (beta2 * 4.0f * t_sec) + (beta1 * 2.0f * t_sec * t_sec) + (beta0 * t_sec * t_sec * t_sec)) / a0p;
-    df->sps->b1 = zpk->K * (-24.0f - (beta2 * 4.0f * t_sec) + (beta1 * 2.0f * t_sec * t_sec) + (3.0f * beta0 * t_sec * t_sec * t_sec)) / a0p;
-    df->sps->b2 = zpk->K * (24.0f - (beta2 * 4.0f * t_sec) - (beta1 * 2.0f * t_sec * t_sec) + (3.0f * beta0 * t_sec * t_sec * t_sec)) / a0p;
-    df->sps->b3 = zpk->K * (-8.0f + (beta2 * 4.0f * t_sec) - (beta1 * 2.0f * t_sec * t_sec) + (beta0 * t_sec * t_sec * t_sec)) / a0p;
+    df->sps->b0 = zpk->K * (8.0f + (beta2 * 4.0f * T) + (beta1 * 2.0f * T * T) + (beta0 * T * T * T)) / a0p;
+    df->sps->b1 = zpk->K * (-24.0f - (beta2 * 4.0f * T) + (beta1 * 2.0f * T * T) + (3.0f * beta0 * T * T * T)) / a0p;
+    df->sps->b2 = zpk->K * (24.0f - (beta2 * 4.0f * T) - (beta1 * 2.0f * T * T) + (3.0f * beta0 * T * T * T)) / a0p;
+    df->sps->b3 = zpk->K * (-8.0f + (beta2 * 4.0f * T) - (beta1 * 2.0f * T * T) + (beta0 * T * T * T)) / a0p;
 
-    df->sps->a1 = (-24.0f - (alpha2 * 4.0f * t_sec) + (alpha1 * 2.0f * t_sec * t_sec) + (3.0f * alpha0 * t_sec * t_sec * t_sec)) / a0p;
-    df->sps->a2 = (24.0f - (alpha2 * 4.0f * t_sec) - (alpha1 * 2.0f * t_sec * t_sec) + (3.0f * alpha0 * t_sec * t_sec * t_sec)) / a0p;
-    df->sps->a3 = (-8.0f + (alpha2 * 4.0f * t_sec) - (alpha1 * 2.0f * t_sec * t_sec) + (alpha0 * t_sec * t_sec * t_sec)) / a0p;
+    df->sps->a1 = (-24.0f - (alpha2 * 4.0f * T) + (alpha1 * 2.0f * T * T) + (3.0f * alpha0 * T * T * T)) / a0p;
+    df->sps->a2 = (24.0f - (alpha2 * 4.0f * T) - (alpha1 * 2.0f * T * T) + (3.0f * alpha0 * T * T * T)) / a0p;
+    df->sps->a3 = (-8.0f + (alpha2 * 4.0f * T) - (alpha1 * 2.0f * T * T) + (alpha0 * T * T * T)) / a0p;
 }
 
 //! \brief           Executes a 3rd order Direct Form 1 controller
@@ -361,6 +370,44 @@ float32_t DCL_runDF13Clamp(DCL_DF13 *df, float32_t ek, float32_t Umax, float32_t
     bool is_clamped = DCL_runClamp(&uk, Umax, Umin);
     if(!is_clamped) DCL_runDF13PartialUpdate(df, ek, uk);
     return(uk);
+}
+
+//! \brief          Legacy C28 Function for maintaining backwards compatibility.
+//!                 It Executes an immediate 3rd order Direct Form 1 controller
+//!
+//! \param[in] p    Pointer to the DCL_DF13 controller structure
+//! \param[in] ek   The servo error
+//! \param[in] vk   The partial pre-computed control effort
+//! \return    uk   The control effort
+//!
+_DCL_CODE_ACCESS 
+float32_t DCL_runDF13_C5(DCL_DF13 *p, float32_t ek, float32_t vk)
+{
+    p->d4 = (ek * p->b0) + vk;
+
+    return(p->d4);
+}
+
+//! \brief          Legacy C28 Function for maintaining backwards compatibility.
+//!                 It executes a partial pre-computed 3rd order Direct Form 1 controller
+//!                 
+//! \param[in] p    Pointer to the DCL_DF13 controller structure
+//! \param[in] ek   The servo error
+//! \param[in] uk   The controller output in the previous sample interval
+//! \return    vk   The control effort
+//!
+_DCL_CODE_ACCESS 
+float32_t DCL_runDF13_C6(DCL_DF13 *p, float32_t ek, float32_t uk)
+{
+    float32_t v9;
+
+    v9 = (ek * p->b1) + (p->d1 * p->b2) + (p->d2 * p->b3) - (uk * p->a1) - (p->d5 * p->a2) - (p->d6 * p->a3);
+    p->d2 = p->d1;
+    p->d1 = ek;
+    p->d6 = p->d5;
+    p->d5 = uk;
+
+    return(v9);
 }
 
 /** @} */

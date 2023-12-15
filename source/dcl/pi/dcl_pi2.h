@@ -18,7 +18,7 @@
  *    from this software without specific prior written permission.
  *
  *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- *  "AS IS" AND ANY EXPgResS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  *  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
  *  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
@@ -147,24 +147,25 @@ typedef _DCL_VOLATILE struct dcl_pi2
 _DCL_CODE_ACCESS
 void DCL_resetPI2(DCL_PI2 *pi2)
 {
-    dcl_interrupt_t ints = DCL_disableInts();
+    dcl_interrupt_t ints;
+    ints = DCL_disableInts();
     pi2->i6 = pi2->i9 = 0.0f;
     pi2->i12 = pi2->i13 = 1.0f;
     DCL_restoreInts(ints);
 }
 
-//! \brief            Loads PI2 tuning parameter from its SPS parameter 
+//! \brief            Loads PI2 tuning parameter from its SPS parameter without interrupt protection
 //!
 //! \param[in] pi2    Pointer to the  DCL_PI2 controller structure
 //!
 _DCL_CODE_ACCESS
-void DCL_fupdatePI2(DCL_PI2 *pi2)
+void DCL_forceUpdatePI2(DCL_PI2 *pi2)
 {
 
 #ifdef DCL_ERROR_HANDLING_ENABLED
     uint32_t err_code = dcl_none;
     err_code |= (pi2->sps->Umax <= pi2->sps->Umin) ? dcl_param_invalid_err : dcl_none;
-    err_code |= (pi2->css->t_sec <= 0.0f) ? dcl_param_range_err : dcl_none;
+    err_code |= (pi2->css->T <= 0.0f) ? dcl_param_range_err : dcl_none;
     err_code |= (pi2->sps->Kp < 0.0f) ? dcl_param_range_err : dcl_none;
     err_code |= (pi2->sps->Ki < 0.0f) ? dcl_param_range_err : dcl_none;
     if (err_code)
@@ -181,19 +182,18 @@ void DCL_fupdatePI2(DCL_PI2 *pi2)
     pi2->Umin = pi2->sps->Umin;
 }
 
-//! \brief          Updates PI2 parameter from its SPS parameter with interrupt protection
+//! \brief          Loads PI2 tuning parameter from its SPS parameter with interrupt protection
 //!
 //! \param[in] pi2  Pointer to the DCL_PI2 controller structure
-//! \return         'true' if update is successful, otherwise 'false'
 //!
 _DCL_CODE_ACCESS _DCL_CODE_SECTION
-bool DCL_updatePI2(DCL_PI2 *pi2)
+void DCL_updatePI2NoCheck(DCL_PI2 *pi2)
 {
 
 #ifdef DCL_ERROR_HANDLING_ENABLED
     uint32_t err_code = dcl_none;
     err_code |= (pi2->sps->Umax <= pi2->sps->Umin) ? dcl_param_invalid_err : dcl_none;
-    err_code |= (pi2->css->t_sec <= 0.0f) ? dcl_param_range_err : dcl_none;
+    err_code |= (pi2->css->T <= 0.0f) ? dcl_param_range_err : dcl_none;
     err_code |= (pi2->sps->Kp < 0.0f) ? dcl_param_range_err : dcl_none;
     err_code |= (pi2->sps->Ki < 0.0f) ? dcl_param_range_err : dcl_none;
     if (err_code)
@@ -204,52 +204,33 @@ bool DCL_updatePI2(DCL_PI2 *pi2)
     }
 #endif
 
-    if (!DCL_getUpdateStatus(pi2))
-    {
-        dcl_interrupt_t ints = DCL_disableInts();
-        DCL_setUpdateStatus(pi2);
-        pi2->Ki = pi2->sps->Ki;
-        pi2->Kp = pi2->sps->Kp;
-        pi2->Umax = pi2->sps->Umax;
-        pi2->Umin = pi2->sps->Umin;
-        DCL_clearUpdateStatus(pi2);
-        DCL_restoreInts(ints);
-        return true;
-    }
-    return false;
+    dcl_interrupt_t ints;
+    ints = DCL_disableInts();
+    pi2->Ki = pi2->sps->Ki;
+    pi2->Kp = pi2->sps->Kp;
+    pi2->Umax = pi2->sps->Umax;
+    pi2->Umin = pi2->sps->Umin;
+    DCL_restoreInts(ints);
 }
 
-//! \brief           A conditional update based on the pending-for-update flag.
-//!                  If the pending status is set, the function will update PI2
+//! \brief           A conditional update based on the update flag.
+//!                  If the update status is set, the function will update PI2
 //!                  parameter from its SPS parameter and clear the status flag on completion.
-//!                  Note: Use DCL_setPendingStatus(pi2) to set the pending status.
+//!                  Note: Use DCL_setUpdateStatus(pi2) to set the update status.
 //!     
 //! \param[in] pi2    Pointer to the DCL_PI2 controller structure
 //! \return          'true' if an update is applied, otherwise 'false'
 //!
 _DCL_CODE_ACCESS _DCL_CODE_SECTION
-bool DCL_pendingUpdatePI2(DCL_PI2 *pi2)
+bool DCL_updatePI2(DCL_PI2 *pi2)
 {
-    if (DCL_getPendingStatus(pi2) && DCL_updatePI2(pi2))
+    if (DCL_getUpdateStatus(pi2))
     {
-        DCL_clearPendingStatus(pi2);
+        DCL_updatePI2NoCheck(pi2);
+        DCL_clearUpdateStatus(pi2);
         return true;
     }
     return false;
-}
-
-//! \brief           Update SPS parameter with active param, userful when needing
-//!                  to update only few active param from SPS and keep rest the same   
-//!
-//! \param[in] pi2   Pointer to the active DCL_PI controller structure
-//!
-_DCL_CODE_ACCESS
-void DCL_updatePI2SPS(DCL_PI2 *pi2)
-{
-    pi2->sps->Kp = pi2->Kp;
-    pi2->sps->Ki = pi2->Ki;
-    pi2->sps->Umax = pi2->Umax;
-    pi2->sps->Umin = pi2->Umin;
 }
 
 //! \brief          Executes an inline series form PI2 controller on the FPU32

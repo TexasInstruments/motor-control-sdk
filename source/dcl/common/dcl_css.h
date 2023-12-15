@@ -56,7 +56,7 @@ extern "C" {
 //!
 typedef struct dcl_css {
     float32_t tpt;      //!< Test point
-    float32_t t_sec;    //!< Controller period in seconds
+    float32_t T;    //!< Controller period in seconds
     volatile uint32_t sts;      //!< Status word
     uint32_t err_line;          //!< Error location line (errno)
     uint32_t err;               //!< Error status code
@@ -71,7 +71,7 @@ typedef struct dcl_css {
 //!
 typedef struct dcl_css64 {
     float64_t tpt;      //!< Test point
-    float64_t t_sec;    //!< Controller period in seconds
+    float64_t T;    //!< Controller period in seconds
     volatile uint32_t sts;      //!< Status word
     uint32_t err_line;          //!< Error location line (errno)
     uint32_t err;               //!< Error status code
@@ -85,11 +85,11 @@ typedef struct dcl_css64 {
 //! \brief          Loads the controller period in the CSS
 //!                 CSS pointer must be configured first
 //!
-//! \param[in] p    Pointer to the controller structure
-//! \param[in] T    Sample period in seconds
-//! \return         None
+//! \param[in] p     Pointer to the controller structure
+//! \param[in] t_sec Controller period in seconds
+//! \return          None
 //!
-#define DCL_setControllerPeriod(p,T)   ((p)->css->t_sec = T)
+#define DCL_setControllerPeriod(p,t_sec)   ((p)->css->T = t_sec)
 
 //--- Status word ------------------------------------------------------------
 
@@ -107,7 +107,6 @@ typedef enum
 {
     dcl_sts_none = 0U,                     //!< Status empty
     dcl_sts_param_update =   (1U << 0),    //!< Parameter update-in-progress flag, high if ongoing parameter update
-    dcl_sts_param_pending =  (1U << 2),    //!< Parameter pending-for-update flag, high if parameter needs to be updated
     dcl_sts_ctrl_running =   (1U << 1)     //!< Controller operation-in-progress flag, high if operation is in progress
 } dcl_status_bits;
 
@@ -122,11 +121,6 @@ typedef enum
 //!
 #define DCL_getUpdateStatus(p)           (0U != ((p)->css->sts & dcl_sts_param_update))
 
-
-//! \brief          Macros to set and clear the pending-for-update flag
-//!                 
-#define DCL_setPendingStatus(p)          ((p)->css->sts |= dcl_sts_param_pending)
-#define DCL_clearPendingStatus(p)        ((p)->css->sts &= ~dcl_sts_param_pending)
 
 //! \brief          Determine whether a parameter pending-for-update flag is set 
 //!
