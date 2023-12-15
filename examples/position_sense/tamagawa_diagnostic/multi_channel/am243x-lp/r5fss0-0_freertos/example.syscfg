@@ -53,15 +53,20 @@ mpu_armv75.accessPermissions = "Supervisor RD, User RD";
 
 tamagawa1.$name                      = "CONFIG_TAMAGAWA0";
 tamagawa1.Booster_Pack               = true;
+tamagawa1.channel_2                  = true;
 tamagawa1.PRU_ICSSG0_PRU.$assign     = "PRU_ICSSG0_PRU1";
+tamagawa1.PRU_ICSSG0_PRU.GPO2.$assign  = "PRG0_PRU1_GPO2";
+tamagawa1.PRU_ICSSG0_PRU.GPO1.$assign  = "PRG0_PRU1_GPO1";
+tamagawa1.PRU_ICSSG0_PRU.GPO0.$assign  = "PRG0_PRU1_GPO0";
+tamagawa1.PRU_ICSSG0_PRU.GPI13.$assign = "PRG0_PRU1_GPO13";
+tamagawa1.PRU_ICSSG0_PRU.GPO8.$assign  = "PRG0_PRU1_GPO8";
+tamagawa1.PRU_ICSSG0_PRU.GPO12.$assign = "PRG0_PRU1_GPO12";
+tamagawa1.PRU_ICSSG0_PRU.GPO6.$assign  = "PRG0_PRU1_GPO6";
+tamagawa1.PRU_ICSSG0_PRU.GPI11.$assign = "PRG0_PRU1_GPO11";
 tamagawa1.PRU_ICSSG0_PRU.GPO5.$used  = false;
 tamagawa1.PRU_ICSSG0_PRU.GPO4.$used  = false;
 tamagawa1.PRU_ICSSG0_PRU.GPO3.$used  = false;
 tamagawa1.PRU_ICSSG0_PRU.GPI14.$used = false;
-tamagawa1.PRU_ICSSG0_PRU.GPO8.$used  = false;
-tamagawa1.PRU_ICSSG0_PRU.GPO12.$used = false;
-tamagawa1.PRU_ICSSG0_PRU.GPO6.$used  = false;
-tamagawa1.PRU_ICSSG0_PRU.GPI11.$used = false;
 
 tamagawa1.ENC1_EN.GPIO.$assign         = "GPIO1";
 tamagawa1.ENC1_EN.$name                = "ENC1_EN";
@@ -88,7 +93,4 @@ pruicss1.AdditionalICSSSettings[0].$name = "CONFIG_PRU_ICSS_IO0";
  */
 debug_log.uartLog.UART.RXD.$suggestSolution     = "ball.B10";
 debug_log.uartLog.UART.TXD.$suggestSolution     = "ball.B11";
-tamagawa1.PRU_ICSSG0_PRU.GPO2.$suggestSolution  = "ball.M2";
-tamagawa1.PRU_ICSSG0_PRU.GPO1.$suggestSolution  = "ball.J2";
-tamagawa1.PRU_ICSSG0_PRU.GPO0.$suggestSolution  = "ball.L5";
-tamagawa1.PRU_ICSSG0_PRU.GPI13.$suggestSolution = "ball.T4";
+
