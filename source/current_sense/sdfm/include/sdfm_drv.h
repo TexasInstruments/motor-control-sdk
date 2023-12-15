@@ -119,8 +119,12 @@ extern "C" {
 /* SDFM output buffer size in 32-bit words */
 
 
-#define ICSSG_SD_SAMP_CH_BUF_SZ  ( 128 )
-#define NUM_CH_SUPPORTED        ( 3 )
+#define ICSSG_SD_SAMP_CH_BUF_SZ          ( 128 )
+#define NUM_CH_SUPPORTED_PER_AXIS        ( 3 )
+#define SDFM_NINE_CH_MASK                ( 0x1FF )
+#define SDFM_CH_MASK_FOR_CH0_CH3_CH6     ( 0x49 )
+#define SDFM_CH_MASK_FOR_CH1_CH4_CH7     ( 0x92 )
+#define SDFM_CH_MASK_FOR_CH2_CH5_CH8     ( 0x124 )
 
 #define SDFM_PHASE_DELAY_ACK_BIT_MASK   (1)
 #define SDFM_PHASE_DELAY_CAL_LOOP_SIZE  (8)
@@ -153,8 +157,10 @@ typedef struct SDFM_CfgSdClk_s
  */
 typedef struct SDFM_CfgTrigger_s
 {
-    /**< bit-field for enable double update */
-    volatile uint16_t    en_double_nc_sampling;
+    /**< enable continuous mode */
+    volatile  uint8_t  en_continuous_mode;
+    /**< enable double update */
+    volatile uint8_t    en_double_nc_sampling;
     /**< First sample starting point */
     volatile uint32_t first_samp_trig_time;
     /**<Second sample starting point*/
@@ -304,7 +310,7 @@ typedef struct SDFM_Interface_s{
      /**< channel control interface */
     SDFM_ChCtrl    sdfm_ch_ctrl;
     /**< sdfm channel configuration interface pointer*/
-    SDFM_Cfg        sdfm_cfg_ptr[NUM_CH_SUPPORTED];
+    SDFM_Cfg        sdfm_cfg_ptr[NUM_CH_SUPPORTED_PER_AXIS];
     /*<sdfm time sampling interface pointer */
     SDFM_CfgTrigger    sdfm_cfg_trigger;
     /**< host output sample buffer base address */
@@ -315,7 +321,7 @@ typedef struct SDFM_Interface_s{
 
 typedef struct SDFM_SampleOutInterface_s
 {
-   uint32_t sampleOutput[NUM_CH_SUPPORTED];
+   uint32_t sampleOutput[NUM_CH_SUPPORTED_PER_AXIS];
 }SDFM_SampleOutInterface;
 /**
  *    \brief    Structure defining SDFM interface

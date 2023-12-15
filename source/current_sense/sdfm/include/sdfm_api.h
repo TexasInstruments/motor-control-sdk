@@ -41,6 +41,7 @@ extern "C" {
 #include <stdint.h>
 #include "../firmware/icssg_sdfm.h"
 #include <current_sense/sdfm/include/sdfm_drv.h>
+#include <drivers/pruicss.h>
 
  /**
  * \defgroup CURRENT_SENSE_API APIs for Current Sense
@@ -66,6 +67,9 @@ extern "C" {
 #define PRU_ID_0    ( 0 )   /* PRU 0 ID */
 #define PRU_ID_1    ( 1 )   /* PRU 1 ID */
 
+#define PRUx_DMEM_BASE_ADD     (0x00)
+#define RTUx_DMEM_BASE_ADD     (0x200)
+#define TXPRUx_DMEM_BASE_ADD   (0x400) 
 /* Number of SD channels */
 #define NUM_SD_CH   ( ICSSG_NUM_SD_CH )
 /* ICSSG INTC event */
@@ -83,7 +87,7 @@ typedef SDFM *sdfm_handle;
  *  \retval sdfm  SDFM instance handle
  *
  */
-sdfm_handle SDFM_init(uint8_t pru_id);
+sdfm_handle SDFM_init(uint8_t pru_id, uint8_t coreId);
 
 /**
  *
@@ -326,8 +330,24 @@ uint32_t SDFM_getPwmTripStatus(sdfm_handle h_sdfm, uint8_t pwmIns);
  *
  */
 void SDFM_clearPwmTripStatus(sdfm_handle h_sdfm, uint8_t pwmIns); 
-
-
+/**
+ *
+ *  \brief  This API enables continuous normal current sampling  
+ *
+ *  \param[in]  h_sdfm          SDFM handle
+ *  
+ *
+ */
+void SDFM_enableContinuousNormalCurrent(sdfm_handle h_sdfm);
+/**
+ *
+ *  \brief  This API enables load share mode  
+ *
+ *  \param[in]  h_sdfm          SDFM handle
+ *  \param[in]  sliceID         slice ID
+ *
+ */
+void SDFM_enableLoadShareMode(sdfm_handle h_sdfm, uint8_t sliceId);
 /**
  *
  *  \brief  Measure Clock phase compensation 

@@ -41,24 +41,31 @@
 /* ICSSG INTC events */
 /* Compile-time Host event for SDFM samples available.
    Ideally Host would provide this to FW via pseudo-register in DMEM. */
-#define PRU_TRIGGER_HOST_SDFM_EVT   ( 2+16 )    /* pr0_pru_mst_intr[2]_intr_req */
-#define RTU_TRIGGER_HOST_SDFM_EVT   ( 3+16 )    /* pr0_pru_mst_intr[3]_intr_req */
-
+#define PRU_TRIGGER_HOST_SDFM_EVT   ( 3+18 )    /* 18+3 (EVT) for 123 (INT#) pr0_pru_mst_intr[3]_intr_req */
+#define RTU_TRIGGER_HOST_SDFM_EVT   ( 4+18 )    /* 18+4 (EVT) for 124 (INT#) pr0_pru_mst_intr[4]_intr_req */
+#define TXPRU_TRIGGER_HOST_SDFM_EVT ( 5+18 )    /* 18+5 (EVT) for 125 (INT#) pr0_pru_mst_intr[5]_intr_req*/
 
 /*
     Firmware registers
 */
 
 /* FW register base addresses */
+
 #define PRU0_DMEM                                   ( 0x0000 )
+#define PRU0_DMEM_START_ADDRESS                     ( 0x0000 )
+#define RTU0_DMEM_START_ADDRESS                     ( 0x0200 )
+#define TXPRU0_DMEM_START_ADDRESS                   ( 0x0400 )
 
-
-
+#if defined (SDFM_PRU_CORE)
 /* Base address for SDFM control parameters in DMEM */
-#define ICSSG_SDFM_CTRL_BASE                        ( PRU0_DMEM )
-/* Base address for SDFM Configuration parameters in DMEM */
-#define ICSSG_SDFM_CFG_BASE                         ( PRU0_DMEM + 0x0002)
-
+#define ICSSG_SDFM_CTRL_BASE                        ( PRU0_DMEM + PRU0_DMEM_START_ADDRESS)
+#elif defined (SDFM_RTU_CORE)
+/* Base address for SDFM control parameters in DMEM */
+#define ICSSG_SDFM_CTRL_BASE                        ( PRU0_DMEM + RTU0_DMEM_START_ADDRESS)
+#elif defined (SDFM_TXPRU_CORE) 
+/* Base address for SDFM control parameters in DMEM */
+#define ICSSG_SDFM_CTRL_BASE                        ( PRU0_DMEM + TXPRU0_DMEM_START_ADDRESS)
+#endif
 
 /* FW register sizes (in bytes) */
 /* SDFM ENABLE   */
@@ -196,7 +203,8 @@
 
 
 /*Sample timing offset*/
-#define SDFM_CFG_EN_DOUBLE_UPDATE                   ( 0xE8 )
+#define SDFM_CFG_EN_CONT_NC_MODE                    ( 0xE8 )
+#define SDFM_CFG_EN_DOUBLE_UPDATE                   ( 0xEA )
 #define FW_REG_SDFM_CFG_FIRST_TRIG_SAMPLE_TIME      ( 0xEC )
 #define FW_REG_SDFM_CFG_SECOND_TRIG_SAMPLE_TIME     ( 0xF0 )
 #define SDFM_CFG_NC_PRD_IEP_CNT_OFFSET              ( 0xF4)
@@ -212,6 +220,8 @@
 
 
 /*Phase delay offset */
+/*Local output sample buffer offset */
+#define SDFM_LOCAL_OUTPUT_SAMPLE_BUFFER_OFFSET        (0x104)
 /*Debug */
 #define SDFM_DUBUG_OFFSET         ( 0x10F )
 

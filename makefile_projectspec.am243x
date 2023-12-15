@@ -34,8 +34,10 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += tamagawa_diagnostic_single_channel_
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += bissc_diagnostic_single_channel_am243x-lp_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += bissc_diagnostic_multi_channel_load_share_am243x-lp_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += bissc_diagnostic_multi_channel_single_pru_am243x-lp_r5fss0-0_freertos_ti-arm-clang_build
-BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += icss_sdfm_am243x-evm_r5fss0-0_freertos_ti-arm-clang_build
-BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += icss_sdfm_am243x-lp_r5fss0-0_freertos_ti-arm-clang_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += icss_sdfm_nine_channel_load_share_mode_am243x-evm_r5fss0-0_freertos_ti-arm-clang_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += icss_sdfm_nine_channel_load_share_mode_am243x-lp_r5fss0-0_freertos_ti-arm-clang_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += icss_sdfm_three_channel_single_pru_mode_am243x-evm_r5fss0-0_freertos_ti-arm-clang_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += icss_sdfm_three_channel_single_pru_mode_am243x-lp_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += icss_sdfm_three_channel_with_phase_compensation_am243x-evm_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += icss_sdfm_three_channel_with_phase_compensation_am243x-lp_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += pruicss_pwm_duty_cycle_am243x-evm_r5fss0-0_freertos_ti-arm-clang_build
@@ -45,6 +47,9 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += pruicss_pwm_epwm_sync_am243x-lp_r5f
 
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL =
 # Various Private Example Projectspec Build Targets
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-pru0_fw_ti-pru-cgt_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-rtupru0_fw_ti-pru-cgt_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-txpru0_fw_ti-pru-cgt_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += sdfm_firmware_am243x-evm_icssg0-pru0_fw_ti-pru-cgt_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += endat_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += endat_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-rtupru1_fw_ti-pru-cgt_build
@@ -152,11 +157,17 @@ all-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL)
  bissc_diagnostic_multi_channel_single_pru_am243x-lp_r5fss0-0_freertos_ti-arm-clang_build:
 	$(MAKE) -C examples/position_sense/bissc_diagnostic/multi_channel_single_pru/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
 
- icss_sdfm_am243x-evm_r5fss0-0_freertos_ti-arm-clang_build:
-	$(MAKE) -C examples/current_sense/icss_sdfm/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
+ icss_sdfm_nine_channel_load_share_mode_am243x-evm_r5fss0-0_freertos_ti-arm-clang_build:
+	$(MAKE) -C examples/current_sense/icss_sdfm_nine_channel_load_share_mode/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
 
- icss_sdfm_am243x-lp_r5fss0-0_freertos_ti-arm-clang_build:
-	$(MAKE) -C examples/current_sense/icss_sdfm/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
+ icss_sdfm_nine_channel_load_share_mode_am243x-lp_r5fss0-0_freertos_ti-arm-clang_build:
+	$(MAKE) -C examples/current_sense/icss_sdfm_nine_channel_load_share_mode/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
+
+ icss_sdfm_three_channel_single_pru_mode_am243x-evm_r5fss0-0_freertos_ti-arm-clang_build:
+	$(MAKE) -C examples/current_sense/icss_sdfm_three_channel_single_pru_mode/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
+
+ icss_sdfm_three_channel_single_pru_mode_am243x-lp_r5fss0-0_freertos_ti-arm-clang_build:
+	$(MAKE) -C examples/current_sense/icss_sdfm_three_channel_single_pru_mode/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
 
  icss_sdfm_three_channel_with_phase_compensation_am243x-evm_r5fss0-0_freertos_ti-arm-clang_build:
 	$(MAKE) -C examples/current_sense/icss_sdfm_three_channel_with_phase_compensation/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
@@ -173,8 +184,17 @@ all-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL)
  pruicss_pwm_epwm_sync_am243x-lp_r5fss0-0_freertos_ti-arm-clang_build:
 	$(MAKE) -C examples/pruicss_pwm/pruicss_pwm_epwm_sync/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
 
+ sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-pru0_fw_ti-pru-cgt_build:
+	$(MAKE) -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icssg0-pru0_fw/ti-pru-cgt -f makefile_projectspec all
+
+ sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-rtupru0_fw_ti-pru-cgt_build:
+	$(MAKE) -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icssg0-rtupru0_fw/ti-pru-cgt -f makefile_projectspec all
+
+ sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-txpru0_fw_ti-pru-cgt_build:
+	$(MAKE) -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icssg0-txpru0_fw/ti-pru-cgt -f makefile_projectspec all
+
  sdfm_firmware_am243x-evm_icssg0-pru0_fw_ti-pru-cgt_build:
-	$(MAKE) -C source/current_sense/sdfm/firmware/am243x-evm/icssg0-pru0_fw/ti-pru-cgt -f makefile_projectspec all
+	$(MAKE) -C source/current_sense/sdfm/firmware/single_axis_single_pru/am243x-evm/icssg0-pru0_fw/ti-pru-cgt -f makefile_projectspec all
 
  endat_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_build:
 	$(MAKE) -C source/position_sense/endat/firmware/multi_channel_load_share/am243x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec all
@@ -264,8 +284,10 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += tamagawa_diagnostic_single_channel_
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += bissc_diagnostic_single_channel_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += bissc_diagnostic_multi_channel_load_share_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += bissc_diagnostic_multi_channel_single_pru_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean
-BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += icss_sdfm_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean
-BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += icss_sdfm_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += icss_sdfm_nine_channel_load_share_mode_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += icss_sdfm_nine_channel_load_share_mode_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += icss_sdfm_three_channel_single_pru_mode_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += icss_sdfm_three_channel_single_pru_mode_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += icss_sdfm_three_channel_with_phase_compensation_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += icss_sdfm_three_channel_with_phase_compensation_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += pruicss_pwm_duty_cycle_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean
@@ -275,6 +297,9 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += pruicss_pwm_epwm_sync_am243x-lp_r5f
 
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL =
 # Various Private Example Projectspec Clean Targets
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-pru0_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-rtupru0_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-txpru0_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += sdfm_firmware_am243x-evm_icssg0-pru0_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += endat_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += endat_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-rtupru1_fw_ti-pru-cgt_clean
@@ -382,11 +407,17 @@ clean-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL)
  bissc_diagnostic_multi_channel_single_pru_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
 	$(MAKE) -C examples/position_sense/bissc_diagnostic/multi_channel_single_pru/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
 
- icss_sdfm_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean:
-	$(MAKE) -C examples/current_sense/icss_sdfm/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
+ icss_sdfm_nine_channel_load_share_mode_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/current_sense/icss_sdfm_nine_channel_load_share_mode/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
 
- icss_sdfm_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
-	$(MAKE) -C examples/current_sense/icss_sdfm/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
+ icss_sdfm_nine_channel_load_share_mode_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/current_sense/icss_sdfm_nine_channel_load_share_mode/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
+
+ icss_sdfm_three_channel_single_pru_mode_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/current_sense/icss_sdfm_three_channel_single_pru_mode/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
+
+ icss_sdfm_three_channel_single_pru_mode_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/current_sense/icss_sdfm_three_channel_single_pru_mode/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
 
  icss_sdfm_three_channel_with_phase_compensation_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean:
 	$(MAKE) -C examples/current_sense/icss_sdfm_three_channel_with_phase_compensation/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
@@ -403,8 +434,17 @@ clean-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL)
  pruicss_pwm_epwm_sync_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
 	$(MAKE) -C examples/pruicss_pwm/pruicss_pwm_epwm_sync/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
 
+ sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-pru0_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icssg0-pru0_fw/ti-pru-cgt -f makefile_projectspec clean
+
+ sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-rtupru0_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icssg0-rtupru0_fw/ti-pru-cgt -f makefile_projectspec clean
+
+ sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-txpru0_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icssg0-txpru0_fw/ti-pru-cgt -f makefile_projectspec clean
+
  sdfm_firmware_am243x-evm_icssg0-pru0_fw_ti-pru-cgt_clean:
-	$(MAKE) -C source/current_sense/sdfm/firmware/am243x-evm/icssg0-pru0_fw/ti-pru-cgt -f makefile_projectspec clean
+	$(MAKE) -C source/current_sense/sdfm/firmware/single_axis_single_pru/am243x-evm/icssg0-pru0_fw/ti-pru-cgt -f makefile_projectspec clean
 
  endat_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/endat/firmware/multi_channel_load_share/am243x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec clean
@@ -494,8 +534,10 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += tamagawa_diagnostic_single_channel
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += bissc_diagnostic_single_channel_am243x-lp_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += bissc_diagnostic_multi_channel_load_share_am243x-lp_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += bissc_diagnostic_multi_channel_single_pru_am243x-lp_r5fss0-0_freertos_ti-arm-clang_export
-BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += icss_sdfm_am243x-evm_r5fss0-0_freertos_ti-arm-clang_export
-BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += icss_sdfm_am243x-lp_r5fss0-0_freertos_ti-arm-clang_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += icss_sdfm_nine_channel_load_share_mode_am243x-evm_r5fss0-0_freertos_ti-arm-clang_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += icss_sdfm_nine_channel_load_share_mode_am243x-lp_r5fss0-0_freertos_ti-arm-clang_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += icss_sdfm_three_channel_single_pru_mode_am243x-evm_r5fss0-0_freertos_ti-arm-clang_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += icss_sdfm_three_channel_single_pru_mode_am243x-lp_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += icss_sdfm_three_channel_with_phase_compensation_am243x-evm_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += icss_sdfm_three_channel_with_phase_compensation_am243x-lp_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += pruicss_pwm_duty_cycle_am243x-evm_r5fss0-0_freertos_ti-arm-clang_export
@@ -505,6 +547,9 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += pruicss_pwm_epwm_sync_am243x-lp_r5
 
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL =
 # Various Private Example Projectspec Export Targets
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-pru0_fw_ti-pru-cgt_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-rtupru0_fw_ti-pru-cgt_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-txpru0_fw_ti-pru-cgt_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += sdfm_firmware_am243x-evm_icssg0-pru0_fw_ti-pru-cgt_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += endat_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += endat_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-rtupru1_fw_ti-pru-cgt_export
@@ -612,11 +657,17 @@ export-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL)
  bissc_diagnostic_multi_channel_single_pru_am243x-lp_r5fss0-0_freertos_ti-arm-clang_export:
 	$(MAKE) -C examples/position_sense/bissc_diagnostic/multi_channel_single_pru/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
 
- icss_sdfm_am243x-evm_r5fss0-0_freertos_ti-arm-clang_export:
-	$(MAKE) -C examples/current_sense/icss_sdfm/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
+ icss_sdfm_nine_channel_load_share_mode_am243x-evm_r5fss0-0_freertos_ti-arm-clang_export:
+	$(MAKE) -C examples/current_sense/icss_sdfm_nine_channel_load_share_mode/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
 
- icss_sdfm_am243x-lp_r5fss0-0_freertos_ti-arm-clang_export:
-	$(MAKE) -C examples/current_sense/icss_sdfm/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
+ icss_sdfm_nine_channel_load_share_mode_am243x-lp_r5fss0-0_freertos_ti-arm-clang_export:
+	$(MAKE) -C examples/current_sense/icss_sdfm_nine_channel_load_share_mode/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
+
+ icss_sdfm_three_channel_single_pru_mode_am243x-evm_r5fss0-0_freertos_ti-arm-clang_export:
+	$(MAKE) -C examples/current_sense/icss_sdfm_three_channel_single_pru_mode/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
+
+ icss_sdfm_three_channel_single_pru_mode_am243x-lp_r5fss0-0_freertos_ti-arm-clang_export:
+	$(MAKE) -C examples/current_sense/icss_sdfm_three_channel_single_pru_mode/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
 
  icss_sdfm_three_channel_with_phase_compensation_am243x-evm_r5fss0-0_freertos_ti-arm-clang_export:
 	$(MAKE) -C examples/current_sense/icss_sdfm_three_channel_with_phase_compensation/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
@@ -633,8 +684,17 @@ export-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL)
  pruicss_pwm_epwm_sync_am243x-lp_r5fss0-0_freertos_ti-arm-clang_export:
 	$(MAKE) -C examples/pruicss_pwm/pruicss_pwm_epwm_sync/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
 
+ sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-pru0_fw_ti-pru-cgt_export:
+	$(MAKE) -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icssg0-pru0_fw/ti-pru-cgt -f makefile_projectspec export
+
+ sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-rtupru0_fw_ti-pru-cgt_export:
+	$(MAKE) -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icssg0-rtupru0_fw/ti-pru-cgt -f makefile_projectspec export
+
+ sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-txpru0_fw_ti-pru-cgt_export:
+	$(MAKE) -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icssg0-txpru0_fw/ti-pru-cgt -f makefile_projectspec export
+
  sdfm_firmware_am243x-evm_icssg0-pru0_fw_ti-pru-cgt_export:
-	$(MAKE) -C source/current_sense/sdfm/firmware/am243x-evm/icssg0-pru0_fw/ti-pru-cgt -f makefile_projectspec export
+	$(MAKE) -C source/current_sense/sdfm/firmware/single_axis_single_pru/am243x-evm/icssg0-pru0_fw/ti-pru-cgt -f makefile_projectspec export
 
  endat_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_export:
 	$(MAKE) -C source/position_sense/endat/firmware/multi_channel_load_share/am243x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec export
@@ -749,14 +809,19 @@ help:
 	@echo  $(MAKE) -s -C examples/position_sense/bissc_diagnostic/single_channel/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/position_sense/bissc_diagnostic/multi_channel_load_share/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/position_sense/bissc_diagnostic/multi_channel_single_pru/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
-	@echo  $(MAKE) -s -C examples/current_sense/icss_sdfm/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
-	@echo  $(MAKE) -s -C examples/current_sense/icss_sdfm/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C examples/current_sense/icss_sdfm_nine_channel_load_share_mode/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C examples/current_sense/icss_sdfm_nine_channel_load_share_mode/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C examples/current_sense/icss_sdfm_three_channel_single_pru_mode/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C examples/current_sense/icss_sdfm_three_channel_single_pru_mode/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/current_sense/icss_sdfm_three_channel_with_phase_compensation/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/current_sense/icss_sdfm_three_channel_with_phase_compensation/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/pruicss_pwm/pruicss_pwm_duty_cycle/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/pruicss_pwm/pruicss_pwm_duty_cycle/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/pruicss_pwm/pruicss_pwm_epwm_sync/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
-	@echo  $(MAKE) -s -C source/current_sense/sdfm/firmware/am243x-evm/icssg0-pru0_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icssg0-pru0_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icssg0-rtupru0_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icssg0-txpru0_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C source/current_sense/sdfm/firmware/single_axis_single_pru/am243x-evm/icssg0-pru0_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C source/position_sense/endat/firmware/multi_channel_load_share/am243x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C source/position_sense/endat/firmware/multi_channel_load_share/am243x-evm/icssg0-rtupru1_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C source/position_sense/endat/firmware/multi_channel_load_share/am243x-evm/icssg0-txpru1_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
