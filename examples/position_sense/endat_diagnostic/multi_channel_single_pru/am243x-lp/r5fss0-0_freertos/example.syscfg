@@ -1,7 +1,7 @@
 /**
  * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
  * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
- * @cliArgs --device "AM243x_ALX_beta" --package "ALX" --part "ALX" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK_AM243X@09.01.00"
+ * @cliArgs --device "AM243x_ALX_beta" --package "ALX" --part "ALX" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@09.01.00"
  * @versions {"tool":"1.18.0+3266"}
  */
 
@@ -27,6 +27,11 @@ debug_log.enableUartLog        = true;
 debug_log.enableCssLog         = false;
 debug_log.uartLog.$name        = "CONFIG_UART_CONSOLE";
 debug_log.uartLog.UART.$assign = "USART0";
+
+const uart_v0_template  = scripting.addModule("/drivers/uart/v0/uart_v0_template", {}, false);
+const uart_v0_template1 = uart_v0_template.addInstance({}, false);
+uart_v0_template1.$name = "drivers_uart_v0_uart_v0_template0";
+debug_log.uartLog.child = uart_v0_template1;
 
 mpu_armv71.$name             = "CONFIG_MPU_REGION0";
 mpu_armv71.size              = 31;
@@ -60,19 +65,16 @@ timer1.TIMER.$assign = "DMTIMER0";
 
 endat1.$name                        = "CONFIG_ENDAT0";
 endat1.Booster_Pack                 = true;
+endat1.Channel_2                    = true;
 endat1.PRU_ICSSG0_PRU.$assign       = "PRU_ICSSG0_PRU1";
-endat1.PRU_ICSSG0_PRU.GPO2.$assign  = "ball.M2";
-endat1.PRU_ICSSG0_PRU.GPO1.$assign  = "ball.J2";
-endat1.PRU_ICSSG0_PRU.GPO0.$assign  = "ball.L5";
-endat1.PRU_ICSSG0_PRU.GPI13.$assign = "ball.T4";
-endat1.PRU_ICSSG0_PRU.GPO5.$used    = false;
-endat1.PRU_ICSSG0_PRU.GPO4.$used    = false;
-endat1.PRU_ICSSG0_PRU.GPO3.$used    = false;
-endat1.PRU_ICSSG0_PRU.GPI14.$used   = false;
-endat1.PRU_ICSSG0_PRU.GPO8.$used    = false;
-endat1.PRU_ICSSG0_PRU.GPO12.$used   = false;
-endat1.PRU_ICSSG0_PRU.GPO6.$used    = false;
-endat1.PRU_ICSSG0_PRU.GPI11.$used   = false;
+endat1.PRU_ICSSG0_PRU.GPO2.$assign  = "PRG0_PRU1_GPO2";
+endat1.PRU_ICSSG0_PRU.GPO1.$assign  = "PRG0_PRU1_GPO1";
+endat1.PRU_ICSSG0_PRU.GPO0.$assign  = "PRG0_PRU1_GPO0";
+endat1.PRU_ICSSG0_PRU.GPI13.$assign = "PRG0_PRU1_GPO13";
+endat1.PRU_ICSSG0_PRU.GPO8.$assign  = "PRG0_PRU1_GPO8";
+endat1.PRU_ICSSG0_PRU.GPO12.$assign = "PRG0_PRU1_GPO12";
+endat1.PRU_ICSSG0_PRU.GPO6.$assign  = "PRG0_PRU1_GPO6";
+endat1.PRU_ICSSG0_PRU.GPI11.$assign = "PRG0_PRU1_GPO11";
 
 endat1.ENC1_EN.GPIO.$assign         = "GPIO1";
 endat1.ENC1_EN.$name                = "ENC1_EN";
@@ -97,5 +99,5 @@ pruicss1.AdditionalICSSSettings[0].$name = "CONFIG_PRU_ICSS_IO0";
  * version of the tool will not impact the pinmux you originally saw.  These lines can be completely deleted in order to
  * re-solve from scratch.
  */
-debug_log.uartLog.UART.RXD.$suggestSolution = "ball.B10";
-debug_log.uartLog.UART.TXD.$suggestSolution = "ball.B11";
+debug_log.uartLog.UART.RXD.$suggestSolution = "UART0_RXD";
+debug_log.uartLog.UART.TXD.$suggestSolution = "UART0_TXD";

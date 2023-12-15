@@ -2091,9 +2091,14 @@ void endat_main(void *args)
     Board_driversOpen();
 
 /*C16 pin High for Enabling ch0 in booster pack */
-#if (CONFIG_ENDAT0_BOOSTER_PACK)
+#if(CONFIG_ENDAT0_BOOSTER_PACK && CONFIG_ENDAT0_CHANNEL0)
     GPIO_setDirMode(ENC1_EN_BASE_ADDR, ENC1_EN_PIN, ENC1_EN_DIR);
     GPIO_pinWriteHigh(ENC1_EN_BASE_ADDR, ENC1_EN_PIN);
+#endif
+/*B17 pin High for Enabling ch2 in booster pack */
+#if(CONFIG_ENDAT0_BOOSTER_PACK && CONFIG_ENDAT0_CHANNEL2)
+    GPIO_setDirMode(ENC2_EN_BASE_ADDR, ENC2_EN_PIN, ENC2_EN_DIR);
+    GPIO_pinWriteHigh(ENC2_EN_BASE_ADDR, ENC2_EN_PIN);
 #endif
 
     i = endat_get_fw_version();
