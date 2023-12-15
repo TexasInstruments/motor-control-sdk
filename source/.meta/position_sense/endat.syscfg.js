@@ -11,6 +11,13 @@ function onValidate(inst, validation) {
         /* select atleast one cahnnel */
         if ((!instance.Channel_0)&&(!instance.Channel_2)&&(!instance.Channel_1))
             validation.logError("Select atleast one channel",inst,"Channel_0");
+
+        /* channel 0 and channel 2 are supported on am243x-lp*/
+        if((device=="am243x-lp") && (instance.Channel_1))
+        {
+            validation.logError("Channel 1 is not supported on am243x-lp",inst,"Channel_1");
+        }
+
         /* validation for booster pack */
         if((device!="am243x-lp")&&(instance.Booster_Pack))
         {
@@ -93,9 +100,35 @@ let endat_module = {
     getInterfaceName: hdsl_endat_pins.getInterfaceName,
     getPeripheralPinNames: hdsl_endat_pins.getPeripheralPinNames,
     sharedModuleInstances: sharedModuleInstances,
+    moduleInstances: moduleInstances,
     validate: onValidate,
 
 };
+
+function moduleInstances(instance){
+    let modInstances = new Array();
+    if(device == "am243x-lp")
+    {
+       modInstances.push({
+            name: "ENC1_EN",
+            displayName: "Booster Pack Ch0 Enable Pin",
+            moduleName: "/drivers/gpio/gpio",
+            requiredArgs: {
+                pinDir: "OUTPUT",
+                
+            },
+        });
+        modInstances.push({
+            name: "ENC2_EN",
+            displayName: "Booster Pack Ch2 Enable Pin",
+            moduleName: "/drivers/gpio/gpio",
+            requiredArgs: {
+                pinDir: "OUTPUT",
+            },
+        });
+    }
+    return (modInstances);
+}
 
 function sharedModuleInstances(instance) {
     let modInstances = new Array();
@@ -109,19 +142,6 @@ function sharedModuleInstances(instance) {
 
         },
     });
-    if(device == "am243x-lp")
-    {
-       modInstances.push({
-            name: "ENC1_EN",
-            displayName: "Booster Pack Ch0 Enable Pin",
-            moduleName: "/drivers/gpio/gpio",
-            requiredArgs: {
-                pinDir: "OUTPUT"
-            },
-        });
-    }
-
-
     return (modInstances);
 }
 
