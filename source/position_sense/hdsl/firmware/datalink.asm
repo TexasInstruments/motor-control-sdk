@@ -453,7 +453,7 @@ push_2B_0:
     .else
     PUSH_FIFO_CONST		0x03
     .endif
-    .if $defined("FREERUN_300_MHZ")
+    .if $defined("FREERUN_300_MHZ") | $defined("SYNC_300_MHZ")
 	ldi			REG_TMP0, (6*(CLKDIV_FAST+1)-8+2)
     .else
     ldi			REG_TMP0, (6*(CLKDIV_FAST+1)-8)
@@ -1839,7 +1839,7 @@ send_trailer:
 	NOP_2
 	NOP_2
 	NOP_2
-    .if $defined("FREERUN_300_MHZ")
+    .if $defined("FREERUN_300_MHZ") | $defined("SYNC_300_MHZ")
 	NOP_2
 	NOP_2
 	NOP_2
@@ -1946,7 +1946,7 @@ qm_add_end:
 ;--------------------------------------------------------------------------------------------------
 wait_delay:
 	WAIT_TX_DONE
-    .if $defined("FREERUN_300_MHZ")
+    .if $defined("FREERUN_300_MHZ") | $defined("SYNC_300_MHZ")
     NOP_2
 	NOP_2
 	NOP_2
@@ -1954,6 +1954,10 @@ wait_delay:
 	NOP_2
 	NOP_2
 	NOP_2
+	NOP_2
+	NOP_2
+	.endif
+    .if $defined("FREERUN_300_MHZ")
 	NOP_2
 	NOP_2
 	.endif

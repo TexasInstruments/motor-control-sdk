@@ -275,7 +275,7 @@ datalink_learn:
 	.endif
 ; indication of TX_DONE comes about 53ns after wire timing
 	WAIT_TX_DONE
-    .if $defined("FREERUN_300_MHZ")
+    .if $defined("FREERUN_300_MHZ") | $defined("SYNC_300_MHZ")
 	NOP_2
 	NOP_2
 	NOP_2
@@ -377,7 +377,7 @@ datalink_learn_skip_one_bit_1:
 
 ; pre-load register to save time on last bit
 ;	ldi			REG_TMP2, (74*CYCLES_BIT-9) ; 100 m
-    .if $defined("FREERUN_300_MHZ")
+    .if $defined("FREERUN_300_MHZ") | $defined("SYNC_300_MHZ")
 	ldi			r3, (74*CYCLES_BIT+9)
     .else
     ldi			r3, (74*CYCLES_BIT+9)
@@ -451,7 +451,7 @@ push_3b_0:
 	NOP_2
 	NOP_2
 	NOP_2
-    .if $defined("FREERUN_300_MHZ")
+    .if $defined("FREERUN_300_MHZ") | $defined("SYNC_300_MHZ")
 	NOP_2
 	NOP_2
 	NOP_2
@@ -568,7 +568,7 @@ datalink_learn_end:
 datalink_abort2:
 	qbbs			datalink_abort2_no_wait, r30, RX_ENABLE						;changed here from 24 to 26
 	WAIT_TX_DONE
-    .if $defined("FREERUN_300_MHZ")
+    .if $defined("FREERUN_300_MHZ") | $defined("SYNC_300_MHZ")
 	LOOP no_operation_2cycle,9
 	NOP_2
 no_operation_2cycle:
