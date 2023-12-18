@@ -41,6 +41,6 @@ MEMORY
 
 SECTIONS
 {
-    .text			>	PRUIMEM, PAGE 0
     .text:main		>	0x0
+    .text			>	PRUIMEM, PAGE 0
 }
