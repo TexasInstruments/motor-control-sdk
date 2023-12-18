@@ -36,6 +36,7 @@
 #include <current_sense/sdfm/include/sdfm_drv.h>
 #include <current_sense/sdfm/include/sdfm_api.h>
 #include <current_sense/sdfm/firmware/icssg_sdfm.h>
+#include <pruicss_pwm/include/pruicss_pwm.h>
 #include <drivers/hw_include/am64x_am243x/cslr_soc_baseaddress.h>
 #include <drivers/soc.h>
 #include <drivers/gpio.h>
@@ -43,8 +44,8 @@
 
 /* Internal structure for managing each PRU SD */
 SDFM g_sdfm[NUM_PRU] = {
-    {PRU_ID_0,0,0,0,0, NULL},
-    {PRU_ID_1,0,0,0,0, NULL},
+    {NULL,PRU_ID_0,0,0,0,0, NULL},
+    {NULL,PRU_ID_1,0,0,0,0, NULL},
 };
 
 /* Initialize SDFM instance */
@@ -183,7 +184,7 @@ void SDFM_disableDoubleSampling(sdfm_handle h_sdfm)
 void SDFM_setEnableChannel(sdfm_handle h_sdfm, uint8_t channel_number)
 {
     uint32_t temp;
-    temp  = 1<< channel_number;
+    temp  = 1 << channel_number;
     if(temp & SDFM_CH_MASK_FOR_CH0_CH3_CH6)
     {
         h_sdfm->p_sdfm_interface->sdfm_ch_ctrl.sdfm_ch_id |= (channel_number << SDFM_CFG_BF_SD_CH0_ID_SHIFT);
@@ -281,28 +282,103 @@ void SDFM_configFastDetect(sdfm_handle h_sdfm, uint8_t ch, uint8_t *fdParms)
 
 }
 
-/*return status of Trip status bit*/
-uint32_t SDFM_getPwmTripStatus(sdfm_handle h_sdfm, uint8_t pwmIns)
+/*return status of PWM trip vector status bit*/
+int32_t SDFM_getFastDetectErrorStatus(sdfm_handle h_sdfm, uint8_t chNum) 
 {
-    void *pruss_cfg = h_sdfm->pruss_cfg;
-    uint32_t regval;
-    regval = HW_RD_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_PWM0 + pwmIns * 4);
-    regval  = regval & CSL_ICSSCFG_PWM0_PWM0_TRIP_S_MASK;
-    return regval>>CSL_ICSSCFG_PWM0_PWM0_TRIP_S_SHIFT;
+    uint8_t pwmSet;
+    int32_t                 retVal = SystemP_SUCCESS;
+    PRUICSS_Handle pruIcssHandle = h_sdfm->gPruIcssHandle;
+    if((chNum >= SDFM_CHANNEL0) && (chNum < SDFM_CHANNEL3))
+    {
+        pwmSet = 0;
+    }
+    else if (chNum > SDFM_CHANNEL2 && chNum < SDFM_CHANNEL6)
+    {
+        pwmSet = 1;
+    }
+    else if (chNum > SDFM_CHANNEL5 && chNum <= SDFM_CHANNEL8)
+    {
+        pwmSet = 2;
+    }
+    else
+    {
+        retVal = SystemP_FAILURE;
+    }
+    
+    if(retVal == SystemP_FAILURE)
+    {
+        return retVal;
+    }
+    
+    /*PWM trip vector */
+    retVal = PRUICSS_PWM_getPwmTripTriggerCauseVector(pruIcssHandle, pwmSet);
+    if(retVal == SystemP_FAILURE)
+    {
+        return retVal;
+    }
+    else
+    {
+
+        retVal =  retVal >> 2;
+        uint32_t temp;
+        temp  = 1 << chNum;
+        if(temp & SDFM_CH_MASK_FOR_CH0_CH3_CH6)
+        {
+            return ((retVal) & (1 << SDFM_CHANNEL0)) ? 1 : 0;
+        }
+        else if(temp & SDFM_CH_MASK_FOR_CH1_CH4_CH7)
+        {
+            return ((retVal) & (1 << SDFM_CHANNEL1))? 1 : 0;
+        }
+        else 
+        {
+            return ((retVal) & (1 << SDFM_CHANNEL2)) ? 1 : 0;
+        }
+        
+    }
+    
 }
 
 /*Clear Trip status bit*/
-void SDFM_clearPwmTripStatus(sdfm_handle h_sdfm, uint8_t pwmIns)
+int32_t SDFM_clearPwmTripStatus(sdfm_handle h_sdfm, uint8_t chNum)
 {
-    void *pruss_cfg = h_sdfm->pruss_cfg;
-    uint32_t regval;
-    regval = HW_RD_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_PWM0 + pwmIns * 4);
-    regval = regval | CSL_ICSSCFG_PWM0_PWM0_TRIP_RESET_MASK;
-    HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_PWM0 + pwmIns * 4, regval);
-    regval = HW_RD_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_PWM0 + pwmIns * 4);
-    regval = regval & (~ CSL_ICSSCFG_PWM0_PWM0_TRIP_RESET_MASK);
-    HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_PWM0 + pwmIns * 4, regval);
+    uint8_t pwmSet;
+    int32_t                 retVal = SystemP_SUCCESS;
+    PRUICSS_Handle pruIcssHandle = h_sdfm->gPruIcssHandle;
+    
+    if((chNum >= SDFM_CHANNEL0) && (chNum < SDFM_CHANNEL3))
+    {
+        pwmSet = 0;
+    }
+    else if (chNum > SDFM_CHANNEL2 && chNum < SDFM_CHANNEL6)
+    {
+        pwmSet = 1;
+    }
+    else if (chNum > SDFM_CHANNEL5 && chNum <= SDFM_CHANNEL8)
+    {
+        pwmSet = 2;
+    }
+    else
+    {
+        retVal = SystemP_FAILURE;
+    }
+    
+    if(retVal == SystemP_FAILURE)
+    {
+        return retVal;
+    }
 
+    /*clear trip status*/
+    retVal = PRUICSS_PWM_generatePwmTripReset(pruIcssHandle, pwmSet);
+    if(retVal == SystemP_FAILURE)
+    {
+        return retVal;
+    }
+
+    /*clear trip reset status*/
+    retVal = PRUICSS_PWM_clearPwmTripResetStatus(pruIcssHandle, pwmSet);
+
+    return retVal;
 }
 /*Enable Load share mode*/
 void SDFM_enableLoadShareMode(sdfm_handle h_sdfm, uint8_t sliceId)
@@ -358,6 +434,80 @@ float SDFM_measureClockPhaseDelay(sdfm_handle h_sdfm, uint16_t clkEdg)
     /*conversion from PRU cycle to ns */
     float phaseDelay =  ((float)h_sdfm->p_sdfm_interface->sdfm_ch_ctrl.clock_phase_delay * 1000000000)/h_sdfm->pru_core_clk;
     return phaseDelay;
+}
+uint8_t SDFM_getHighThresholdStatus(sdfm_handle h_sdfm, uint8_t chNum)
+{
+    uint32_t temp;
+    temp  = 1 << chNum;
+    if(temp & SDFM_CH_MASK_FOR_CH0_CH3_CH6)
+    {
+        return h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[0].sdfm_threshold_parms.highThStatus; 
+    }
+    else if(temp & SDFM_CH_MASK_FOR_CH1_CH4_CH7)
+    {
+        return h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[1].sdfm_threshold_parms.highThStatus;
+    }
+    else 
+    {
+        return h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[2].sdfm_threshold_parms.highThStatus;
+    }
+     
+}
+uint8_t SDFM_getLowThresholdStatus(sdfm_handle h_sdfm, uint8_t chNum)
+{
+    uint32_t temp;
+    temp  = 1 << chNum;
+    if(temp & SDFM_CH_MASK_FOR_CH0_CH3_CH6)
+    {
+        return h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[0].sdfm_threshold_parms.lowThStatus; 
+    }
+    else if(temp & SDFM_CH_MASK_FOR_CH1_CH4_CH7)
+    {
+        return h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[1].sdfm_threshold_parms.lowThStatus;
+    }
+    else 
+    {
+        return h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[2].sdfm_threshold_parms.lowThStatus;
+    }
+}
+
+int32_t SDFM_clearOverCurrentError(sdfm_handle h_sdfm, uint8_t chNum)
+{
+    uint8_t pwmSet;
+    int32_t                 retVal = SystemP_SUCCESS;
+    PRUICSS_Handle pruIcssHandle = h_sdfm->gPruIcssHandle;
+    if((chNum >= SDFM_CHANNEL0) && (chNum < SDFM_CHANNEL3))
+    {
+        pwmSet = 0;
+    }
+    else if (chNum > SDFM_CHANNEL2 && chNum < SDFM_CHANNEL6)
+    {
+        pwmSet = 1;
+    }
+    else if (chNum > SDFM_CHANNEL5 && chNum <= SDFM_CHANNEL8)
+    {
+        pwmSet = 2;
+    }
+    else
+    {
+        retVal = SystemP_FAILURE;
+    }
+    
+    if(retVal == SystemP_FAILURE)
+    {
+        return retVal;
+    }
+
+    /*Clear over current Error PWM trip*/
+    retVal = PRUICSS_PWM_clearPwmOverCurrentErrorTrip(pruIcssHandle, pwmSet);
+    if(retVal == SystemP_FAILURE)
+    {
+        return retVal;
+    }
+    
+    /*Clear PWM trip*/
+    retVal = SDFM_clearPwmTripStatus(h_sdfm, chNum);
+    return retVal;
 }
 /* SDFM global enable */
 void SDFM_enable(sdfm_handle h_sdfm)

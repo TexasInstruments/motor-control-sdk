@@ -311,25 +311,27 @@ uint64_t SDFM_getFirmwareVersion(sdfm_handle h_sdfm);
  *
  */
 void SDFM_configFastDetect(sdfm_handle h_sdfm, uint8_t ch, uint8_t *fdParms);
+
 /* 
- *  \brief This API returns the Trip status for the PWM trip zone block specified by pwmIns variable.
+ *  \brief This API returns the fast detect error status for specified SDFM channel number.
  *
  *  \param[in]  h_sdfm       SDFM handle
- *  \param[in]  pwm           current PWM instance
+ *  \param[in]  \param[in]  chNum           SDFM channel number : Channel0-Channel9
  *
- *  \retval     Status of PWM Trip status bit 
+ *  \retval    stauts of fd error: 1 means error available & 0 menas no error, SystemP_FAILURE on not expected API parameters 
  *
  */
-uint32_t SDFM_getPwmTripStatus(sdfm_handle h_sdfm, uint8_t pwmIns); 
+int32_t SDFM_getFastDetectErrorStatus(sdfm_handle h_sdfm, uint8_t chNum); 
+
 /* 
- *  \brief  Clear PWM trip status for the PWM trip zone block specified by pwmIns variable.
+ *  \brief  Clear PWM trip status of the corresponding PWM trip zone block for specified SDFM channel number.
  *
  *  \param[in]  h_sdfm       SDFM handle
- *  \param[in]  pwm           current PWM instance
+ *  \param[in]  chNum           SDFM channel number : Channel0-Channel9
  *
- *
+ *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE on error or not expected API parameters 
  */
-void SDFM_clearPwmTripStatus(sdfm_handle h_sdfm, uint8_t pwmIns); 
+int32_t SDFM_clearPwmTripStatus(sdfm_handle h_sdfm, uint8_t chNum); 
 /**
  *
  *  \brief  This API enables continuous normal current sampling  
@@ -358,6 +360,37 @@ void SDFM_enableLoadShareMode(sdfm_handle h_sdfm, uint8_t sliceId);
  *  \retval     Phase delay   in nano sec
  */
 float SDFM_measureClockPhaseDelay(sdfm_handle h_sdfm, uint16_t clEdg);
+
+/**
+ *
+ *  \brief  This API returns high threshold Status for specified SDFM channel number
+ *
+ *  \param[in]  h_sdfm          SDFM handle
+ *  \param[in]  chNum           SDFM channel number : Channel0-Channel9
+ *
+ *  \retval     Status of Over current error for High threshold
+ */
+uint8_t SDFM_getLowThresholdStatus(sdfm_handle h_sdfm, uint8_t chNum);
+
+/**
+ *
+ *  \brief  This API returns high threshold Status for specified SDFM channel number
+ *  \param[in]  h_sdfm          SDFM handle
+ *  \param[in]  chNum           SDFM channel number : Channel0-Channel9
+ *
+ *  \retval     Status of over current error for Low Threshold
+ */
+uint8_t SDFM_getHighThresholdStatus(sdfm_handle h_sdfm, uint8_t chNum);
+
+/**
+ *
+ *  \brief  This API clears Overcurrent error bit of corresponding PWM register for specified SDFM channel number
+ *  \param[in]  h_sdfm          SDFM handle
+ *  \param[in]  chNum           SDFM channel number : Channel0-Channel9
+ *
+ *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE on not expected API parameters 
+ */
+int32_t SDFM_clearOverCurrentError(sdfm_handle h_sdfm, uint8_t chNum);
 /** @} */
 
 #ifdef __cplusplus

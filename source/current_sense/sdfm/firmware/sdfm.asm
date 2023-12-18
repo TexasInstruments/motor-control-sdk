@@ -124,12 +124,12 @@ SDFM_ENTRY:
 
 PHASE_DELAY_CAL:
         ;check phase delay measurment active
-        LBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_LOC_DMEM, SDFM_CFG_SD_EN_PHASE_DELAY, 1
+        LBBO    &TEMP_REG0.b0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_SD_EN_PHASE_DELAY, 1
         QBBC    SKIP_PHASE_DELAY_CAL, TEMP_REG0.b0, 0
         JAL     RET_ADDR_REG, SDFM_CLOCK_PHASE_COMPENSATION
         ;acknowledge 
         CLR     TEMP_REG0, TEMP_REG0, 0
-        SBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_LOC_DMEM, SDFM_CFG_SD_EN_PHASE_DELAY, 1       
+        SBBO    &TEMP_REG0.b0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_SD_EN_PHASE_DELAY, 1
 SKIP_PHASE_DELAY_CAL:
 
 
@@ -287,6 +287,43 @@ TS0_OC_LOOP:
 
     ;Comparator for Ch0
     MOV     TEMP_REG2, CN5
+
+    ;Trip Zone based over current detection
+    ;Load the positive threshold value for current channel
+    LBBO    &OC_HIGH_THR, SDFM_CFG_BASE_PTR_REG,  SDFM_CFG_OC_HIGH_THR_CH0_OFFSET,  SDFM_CFG_OC_HIGH_THR_SZ
+    ;Load the positive threshold value for current channel
+    LBBO    &OC_LOW_THR,  SDFM_CFG_BASE_PTR_REG,  SDFM_CFG_OC_LOW_THR_CH0_OFFSET,  SDFM_CFG_OC_LOW_THR_SZ
+    ;PWM0 register offset 
+    LDI    TEMP_REG1, ICSSG_CFG_PWMx
+    LBCO   &TEMP_REG0, CT_PRU_ICSSG_CFG, TEMP_REG1, 4
+    ;Check if the sample value is greater than the high threshold
+    QBGE    OVER_CURRENT_HIGH_THRESHOLD_CH0, OC_HIGH_THR, TEMP_REG2
+    ;Unset in DMEM
+    LDI    TEMP_REG0.b0, 0
+    SBBO   &TEMP_REG0.b0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_OC_HIGH_THR_STATUS_CH0_OFFSET, 1
+    ;Check if the sample value is lower than the low threshold
+    QBLE    OVER_CURRENT_LOW_THRESHOLD_CH0, OC_LOW_THR, TEMP_REG2
+    LDI    TEMP_REG0.b0, 0
+    SBBO   &TEMP_REG0.b0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_OC_LOW_THR_STATUS_CH0_OFFSET, 1
+    JMP     END_OVER_CURRENT_DETECTION_CH0
+OVER_CURRENT_HIGH_THRESHOLD_CH0:
+    ;Generate PWM trip
+    SET   TEMP_REG0.b2.t3
+    SBCO   &TEMP_REG0, CT_PRU_ICSSG_CFG, TEMP_REG1, 4
+    ;Store in DMEM
+    LDI    TEMP_REG0.b0, 1
+    SBBO   &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_OC_HIGH_THR_STATUS_CH0_OFFSET, 1
+    JMP     END_OVER_CURRENT_DETECTION_CH0
+OVER_CURRENT_LOW_THRESHOLD_CH0:
+    ;Generate PWM trip
+    SET   TEMP_REG0.b2.t3
+    SBCO   &TEMP_REG0, CT_PRU_ICSSG_CFG, TEMP_REG1, 4
+    ;set bit store in DMEM
+    LDI    TEMP_REG0.b0, 1
+    SBBO   &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_OC_LOW_THR_STATUS_CH0_OFFSET, 1
+END_OVER_CURRENT_DETECTION_CH0:
+     
+    .if $isdefed("DEBUG_CODE")
     ;For the current channel, compare against the High threshold, Low threshold and ZC thresholds (if enabled)
     ;Load the positive threshold value for current channel
     LBBO    &OC_HIGH_THR, SDFM_CFG_BASE_PTR_REG,  SDFM_CFG_OC_HIGH_THR_CH0_OFFSET,  SDFM_CFG_OC_HIGH_THR_SZ
@@ -322,8 +359,10 @@ BELOW_THRESHOLD_START_CH0:
     LBBO    &GPIO_TGL_ADDR, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_LOW_THR_CH0_SET_VAL_ADDR_OFFSET,  SDFM_CFG_GPIO_CLR_ADDR_SZ
     LBBO    &TEMP_REG3, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_LOW_THR_CH0_WRITE_VAL_OFFSET,  SDFM_CFG_GPIO_VALUE_SZ
     SBBO    &TEMP_REG3, GPIO_TGL_ADDR, 0,  SDFM_CFG_GPIO_VALUE_SZ
-COMP_CH0_END:
+    .endif
 
+COMP_CH0_END:
+    
     .if $isdefed("DEBUG_CODE")
     ;GPIO LOW
     LBBO    &GPIO_TGL_ADDR, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_HIGH_THR_CH0_CLR_VAL_ADDR_OFFSET,  SDFM_CFG_GPIO_CLR_ADDR_SZ
@@ -365,7 +404,45 @@ COMP_CH0_END:
     .endif
 
     ;Comparator for Ch1
-    MOV     TEMP_REG2, CN5    
+    MOV     TEMP_REG2, CN5  
+
+    ;Trip Zone based over current detection
+    ;Load the positive threshold value for current channel
+    LBBO    &OC_HIGH_THR, SDFM_CFG_BASE_PTR_REG,  SDFM_CFG_OC_HIGH_THR_CH1_OFFSET,  SDFM_CFG_OC_HIGH_THR_SZ
+    ;Load the positive threshold value for current channel
+    LBBO    &OC_LOW_THR,  SDFM_CFG_BASE_PTR_REG,  SDFM_CFG_OC_LOW_THR_CH1_OFFSET,  SDFM_CFG_OC_LOW_THR_SZ
+    ;PWM0 register offset 
+    LDI    TEMP_REG1, ICSSG_CFG_PWMx
+    LBCO   &TEMP_REG0, CT_PRU_ICSSG_CFG, TEMP_REG1, 4
+    ;Check if the sample value is greater than the high threshold
+    QBGE    OVER_CURRENT_HIGH_THRESHOLD_CH1, OC_HIGH_THR, TEMP_REG2
+    ;Unset in DMEM
+    LDI    TEMP_REG0.b0, 0
+    SBBO   &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_OC_HIGH_THR_STATUS_CH1_OFFSET, 1
+    ;Check if the sample value is lower than the low threshold
+    QBLE    OVER_CURRENT_LOW_THRESHOLD_CH1, OC_LOW_THR, TEMP_REG2
+    LDI    TEMP_REG0.b0, 0
+    SBBO   &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_OC_LOW_THR_STATUS_CH1_OFFSET, 1
+    JMP     END_OVER_CURRENT_DETECTION_CH1
+OVER_CURRENT_HIGH_THRESHOLD_CH1:
+    ;Generate PWM trip
+    SET   TEMP_REG0.b2.t3
+    SBCO   &TEMP_REG0, CT_PRU_ICSSG_CFG, TEMP_REG1, 4
+    ;Store DMEM
+    LDI    TEMP_REG0.b0, 1
+    SBBO   &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_OC_HIGH_THR_STATUS_CH1_OFFSET, 1
+    JMP     END_OVER_CURRENT_DETECTION_CH1
+OVER_CURRENT_LOW_THRESHOLD_CH1:
+    ;Generate PWM trip
+    SET   TEMP_REG0.b2.t3
+    SBCO   &TEMP_REG0, CT_PRU_ICSSG_CFG, TEMP_REG1, 4
+    ;set bit store in DMEM
+    LDI    TEMP_REG0.b0, 1
+    SBBO   &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_OC_LOW_THR_STATUS_CH1_OFFSET, 1
+END_OVER_CURRENT_DETECTION_CH1:  
+
+
+    .if $isdefed("DEBUG_CODE")
     ;For the current channel, compare against the High threshold, Low threshold and ZC thresholds (if enabled)
     ;Load the positive threshold value for current channel
     LBBO    &OC_HIGH_THR, SDFM_CFG_BASE_PTR_REG,  SDFM_CFG_OC_HIGH_THR_CH1_OFFSET,  SDFM_CFG_OC_HIGH_THR_SZ
@@ -402,6 +479,8 @@ BELOW_THRESHOLD_START_CH1:
     LBBO    &GPIO_TGL_ADDR, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_LOW_THR_CH1_SET_VAL_ADDR_OFFSET,  SDFM_CFG_GPIO_SET_ADDR_SZ
     LBBO    &TEMP_REG3, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_LOW_THR_CH1_WRITE_VAL_OFFSET,  SDFM_CFG_GPIO_VALUE_SZ
     SBBO    &TEMP_REG3, GPIO_TGL_ADDR, 0,  SDFM_CFG_GPIO_VALUE_SZ
+    .endif
+
 COMP_CH1_END:
 
     .if $isdefed("DEBUG_CODE")
@@ -444,7 +523,44 @@ COMP_CH1_END:
     .endif
 
     ;Comparator for Ch2
-    MOV     TEMP_REG2, CN5    
+    MOV     TEMP_REG2, CN5   
+
+    ;Trip Zone based over current detection
+    ;Load the positive threshold value for current channel
+    LBBO    &OC_HIGH_THR, SDFM_CFG_BASE_PTR_REG,  SDFM_CFG_OC_HIGH_THR_CH2_OFFSET,  SDFM_CFG_OC_HIGH_THR_SZ
+    ;Load the positive threshold value for current channel
+    LBBO    &OC_LOW_THR,  SDFM_CFG_BASE_PTR_REG,  SDFM_CFG_OC_LOW_THR_CH2_OFFSET,  SDFM_CFG_OC_LOW_THR_SZ
+    ;PWM0 register offset 
+    LDI    TEMP_REG1, ICSSG_CFG_PWMx
+    LBCO   &TEMP_REG0, CT_PRU_ICSSG_CFG, TEMP_REG1, 4
+    ;Check if the sample value is greater than the high threshold
+    QBGE    OVER_CURRENT_HIGH_THRESHOLD_CH2, OC_HIGH_THR, TEMP_REG2
+    ;Unset in DMEM
+    LDI    TEMP_REG0.b0, 0
+    SBBO   &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_OC_HIGH_THR_STATUS_CH2_OFFSET, 1
+    ;Check if the sample value is lower than the low threshold
+    QBLE    OVER_CURRENT_LOW_THRESHOLD_CH2, OC_LOW_THR, TEMP_REG2
+    LDI    TEMP_REG0.b0, 0
+    SBBO   &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_OC_LOW_THR_STATUS_CH2_OFFSET, 1
+    JMP     END_OVER_CURRENT_DETECTION_CH2
+OVER_CURRENT_HIGH_THRESHOLD_CH2:
+    ;Generate PWM trip
+    SET   TEMP_REG0.b2.t3
+    SBCO   &TEMP_REG0, CT_PRU_ICSSG_CFG, TEMP_REG1, 4
+    ;Store in DMEM
+    LDI    TEMP_REG0.b0, 1
+    SBBO   &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_OC_HIGH_THR_STATUS_CH2_OFFSET, 1
+    JMP     END_OVER_CURRENT_DETECTION_CH2
+OVER_CURRENT_LOW_THRESHOLD_CH2:
+    ;Generate PWM trip
+    SET   TEMP_REG0.b2.t3
+    SBCO   &TEMP_REG0, CT_PRU_ICSSG_CFG, TEMP_REG1, 4
+    ;set bit store in DMEM
+    LDI    TEMP_REG0.b0, 1
+    SBBO   &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_OC_LOW_THR_STATUS_CH2_OFFSET, 1
+END_OVER_CURRENT_DETECTION_CH2:
+
+    .if $isdefed("DEBUG_CODE") 
     ;For the current channel, compare against the High threshold, Low threshold and ZC thresholds (if enabled)
     ;Load the positive threshold value for current channel
     LBBO    &OC_HIGH_THR, SDFM_CFG_BASE_PTR_REG,  SDFM_CFG_OC_HIGH_THR_CH2_OFFSET,  SDFM_CFG_OC_HIGH_THR_SZ
@@ -481,6 +597,7 @@ BELOW_THRESHOLD_START_CH2:
     LBBO    &GPIO_TGL_ADDR, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_LOW_THR_CH2_SET_VAL_ADDR_OFFSET,  SDFM_CFG_GPIO_CLR_ADDR_SZ
     LBBO    &TEMP_REG3, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_LOW_THR_CH2_WRITE_VAL_OFFSET,  SDFM_CFG_GPIO_VALUE_SZ
     SBBO    &TEMP_REG3, GPIO_TGL_ADDR, 0,  SDFM_CFG_GPIO_CLR_ADDR_SZ
+    .endif
 
 COMP_CH2_END:
 
@@ -963,20 +1080,37 @@ reset_sd_ch_hw_loop_end:
   
 ;
 ;PWM trip zone block configuration
-FN_CONFIG_PWM_REG:
-    ;set trip mask       
-    ;PWM0 register offset 
+FN_CONFIG_PWM_REG:    
+    ;PWMx register offset 
     LDI    TEMP_REG1, ICSSG_CFG_PWMx
     LBCO   &TEMP_REG0, CT_PRU_ICSSG_CFG, TEMP_REG1, 4
-    QBNE            SDFM_MASK_SKIP1_CH0,   SD_CH0_ID, 0
-    OR TEMP_REG0.b1, TEMP_REG0.b1, 1
-SDFM_MASK_SKIP1_CH0
-    QBNE            SDFM_MASK_SKIP1_CH1,   SD_CH1_ID, 1
-    OR TEMP_REG0.b1, TEMP_REG0.b1, 2
-SDFM_MASK_SKIP1_CH1       
-    QBNE            SDFM_MASK_SKIP1_CH2, SD_CH2_ID,	2
+    ;set trip mask for over current error
+    LBBO   &COMPARATOR_EN, SDFM_CFG_BASE_PTR_REG,  SDFM_CFG_SD_EN_COMP_OFFSET,  SDFM_CFG_EN_COMP_SZ
+    QBBC    SKIP_OVER_CURRENT_MASK, COMPARATOR_EN, SDFM_CFG_EN_COMP_BIT
+    SET TEMP_REG0.b1, TEMP_REG0.b1, 1
+SKIP_OVER_CURRENT_MASK:
+    ;set trip mask for fast detect block error 
+    ;Load fast detect enable bits
+    LBBO    &TEMP_REG2.w0, SDFM_CFG_BASE_PTR_REG,  SDFM_CFG_SD_CH_ID_OFFSET,  SDFM_CFG_SD_CH_ID_SZ
+    LBBO   &TEMP_REG3, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_SD_EN_FD_OFFSET, 1
+    QBBC   END_MASK_CONFIG,    TEMP_REG3, 0
+    AND     TEMP_REG1.b0, TEMP_REG2.b0, 0xF
+    QBNE            SDFM_MASK_SKIP1_CH0,  TEMP_REG1.b0, SD_CH0_ID 
     OR TEMP_REG0.b1, TEMP_REG0.b1, 4
-SDFM_MASK_SKIP1_CH2:           
+SDFM_MASK_SKIP1_CH0
+    LSR     TEMP_REG2, TEMP_REG2, 4
+    AND     TEMP_REG1.b0, TEMP_REG2.b0, 0xF
+    QBNE            SDFM_MASK_SKIP1_CH1,  TEMP_REG1.b0, SD_CH1_ID
+    OR TEMP_REG0.b1, TEMP_REG0.b1, 8
+SDFM_MASK_SKIP1_CH1 
+    LSR     TEMP_REG2, TEMP_REG2, 4 
+    AND     TEMP_REG1.b0, TEMP_REG2.b0, 0xF     
+    QBNE            SDFM_MASK_SKIP1_CH2, TEMP_REG1.b0, SD_CH2_ID
+    OR TEMP_REG0.b1, TEMP_REG0.b1, 16
+SDFM_MASK_SKIP1_CH2: 
+
+END_MASK_CONFIG:
+       LDI    TEMP_REG1, ICSSG_CFG_PWMx
        SBCO   &TEMP_REG0, CT_PRU_ICSSG_CFG, TEMP_REG1, 4
 
        JMP     RET_ADDR_REG
@@ -1021,7 +1155,7 @@ END_PHASE_DELAY:
         LSR    TEMP_REG0, TEMP_REG1.w0, 3
         SUB  TEMP_REG0, TEMP_REG2,TEMP_REG0
         QBLT   SDFM_CLOCK_PHASE_COMPENSATION, TEMP_REG0, 1
-        SBCO  &TEMP_REG1, CT_PRU_ICSSG_LOC_DMEM, SDFM_CFG_SD_CLOCK_PHASE_DELAY, 4
+        SBBO  &TEMP_REG1, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_SD_CLOCK_PHASE_DELAY, 4
         JMP     RET_ADDR_REG
 
 ;

@@ -224,14 +224,15 @@ void sdfm_configure_gpio_pin(sdfm_handle h_sdfm)
 
 }
 /* Initialize SDFM PRU FW */
-int32_t init_sdfm_pru_fw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm, void *pruss_cfg)
+int32_t init_sdfm_pru_fw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm, PRUICSS_Handle pruIcssHandle)
 {
     sdfm_handle hSdfm;    
     uint8_t SDFM_CH = 0;
     /* Initialize SDFM instance */
     hSdfm = SDFM_init(pruId, pSdfmPrms->pruInsId);
 
-    hSdfm->pruss_cfg = pruss_cfg;
+    hSdfm->gPruIcssHandle = pruIcssHandle;
+    hSdfm->pruss_cfg = (void *)(((PRUICSS_HwAttrs *)(pruIcssHandle->hwAttrs))->cfgRegBase);
 
     if( pSdfmPrms->loadShare )
     {
@@ -368,10 +369,7 @@ int32_t initPruSdfm(
     uint32_t byteLen;                   /* Total number of bytes to be written */
     uint8_t pruId;
     int32_t status;
-    void *pruss_cfg;
-
-    pruss_cfg = (void *)(((PRUICSS_HwAttrs *)(pruIcssHandle->hwAttrs))->cfgRegBase);
-
+    
     /* Reset PRU */
     status = PRUICSS_resetCore(pruIcssHandle, pruInstId);
     if (status != SystemP_SUCCESS) 
@@ -460,7 +458,7 @@ int32_t initPruSdfm(
     }
 
     /* Initialize SDFM PRU FW */
-    status = init_sdfm_pru_fw(pruId, pSdfmPrms, pHSdfm, pruss_cfg);
+    status = init_sdfm_pru_fw(pruId, pSdfmPrms, pHSdfm, pruIcssHandle);
     if (status != SDFM_ERR_NERR) 
     {
         return SDFM_ERR_INIT_PRU_SDFM;

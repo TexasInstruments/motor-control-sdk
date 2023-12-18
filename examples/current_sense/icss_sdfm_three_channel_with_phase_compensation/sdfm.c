@@ -185,12 +185,15 @@ void SDFM_measurePhaseCompensation(sdfm_handle h_sdfm, uint32_t iep_clk)
     
 }
 /* Initialize SDFM PRU FW */
-int32_t init_sdfm_pru_fw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm, void *pruss_cfg)
+int32_t init_sdfm_pru_fw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm,  PRUICSS_Handle pruIcssHandle)
 {
     sdfm_handle hSdfm;
 
     /* Initialize SDFM instance */
     hSdfm = SDFM_init(pruId);
+
+    hSdfm->gPruIcssHandle = pruIcssHandle;
+    hSdfm->pruss_cfg = (void *)(((PRUICSS_HwAttrs *)(pruIcssHandle->hwAttrs))->cfgRegBase);
     
     uint32_t i;
     i = SDFM_getFirmwareVersion(hSdfm);
@@ -210,8 +213,6 @@ int32_t init_sdfm_pru_fw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm
     uint32_t sampleOutputInterfaceGlobalAddr = CPU0_BTCM_SOCVIEW(pSdfmPrms->samplesBaseAddress);
     hSdfm->p_sdfm_interface->sampleBufferBaseAdd = sampleOutputInterfaceGlobalAddr;
     hSdfm->iep_inc = 1; /* Default IEP increment 1 */
-    hSdfm->pruss_cfg = pruss_cfg;
-
 
     uint8_t acc_filter = 0; //SINC3 filter
     uint8_t ecap_divider = 0x0F; //IEP at 300MHz: SD clock = 300/15=20Mhz
@@ -306,7 +307,6 @@ int32_t initPruSdfm(
     int32_t status;
     void *pruss_cfg;
 
-    pruss_cfg = (void *)(((PRUICSS_HwAttrs *)(pruIcssHandle->hwAttrs))->cfgRegBase);
     /* Reset PRU */
     status = PRUICSS_resetCore(pruIcssHandle, pruInstId);
     if (status != SystemP_SUCCESS) {
@@ -372,7 +372,7 @@ int32_t initPruSdfm(
     }
 
     /* Initialize SDFM PRU FW */
-    status = init_sdfm_pru_fw(pruId, pSdfmPrms, pHSdfm, pruss_cfg);
+    status = init_sdfm_pru_fw(pruId, pSdfmPrms, pHSdfm, pruIcssHandle);
     if (status != SDFM_ERR_NERR) {
         return SDFM_ERR_INIT_PRU_SDFM;
     }
