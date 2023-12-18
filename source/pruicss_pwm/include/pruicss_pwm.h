@@ -236,7 +236,7 @@ extern "C" {
  *      
  * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
  * \param   iepInstance 0 for IEP0, 1 for IEP1
- * \param   value       Iep count register lower 32bit value
+ * \param   value       IEP count register lower 32bit value
  * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  *
  */
@@ -247,7 +247,7 @@ int32_t PRUICSS_PWM_setIepCounterLower_32bitValue(PRUICSS_Handle handle, uint8_t
  *      
  * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
  * \param   iepInstance 0 for IEP0, 1 for IEP1
- * \param   value       Iep count register upper 32bit value
+ * \param   value       IEP count register upper 32bit value
  * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  *
  */
@@ -510,7 +510,7 @@ int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalB2(PRUICSS_Handle handle, uint8_t 
  * \brief  This API enables Efficiency mode
  * In Efficiency mode Pwm state machine will go from Idle to
  * Active and the same time Pwm output will get updated during this
- * state transition And Iep Cmp flags will get auto HW cleared
+ * state transition And IEP Cmp flags will get auto HW cleared
  * 
  * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
  * \param   enable       0 for disable, 1 for enable

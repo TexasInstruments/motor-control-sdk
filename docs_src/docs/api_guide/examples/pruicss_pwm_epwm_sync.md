@@ -4,8 +4,8 @@
 
 # Introduction
 
-This example generates a signal for a specified time and duty cycle using
-PRUICSS PWM and SOC EPWM. The time and duty cycle can be configured by the user.
+This example generates a signal for a specified period and duty cycle using
+PRUICSS PWM and SOC EPWM. The period and duty cycle can be configured by the user.
 
 \cond SOC_AM243X
 

@@ -26,7 +26,9 @@ SysConfig can be used to configure things mentioned below:
 
 ## Features NOT Supported
 
-Generate PWM outputs with distinct time period, which means all the PWM outputs will be in sync with respected to each other, without re-programming.
+- Generate PWM outputs with distinct time period, which means all the PWM outputs will be in sync with respected to each other, without re-programming.
+
+- Dead band(it will be added in future release) 
 
 ## Important Note
 
