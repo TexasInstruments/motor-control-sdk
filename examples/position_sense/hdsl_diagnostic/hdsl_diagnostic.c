@@ -130,6 +130,10 @@
 #define ENCODER_RSSI_REG_ADDRESS    (0x7C)
 #define ENCODER_PING_REG_ADDRESS    (0x7F)
 
+/*Bit 7 will be set in QM when link is establised*/
+#define QM_LINK_ESTABLISHED                 (0x80)
+#define QM_LINK_ESTABLISHED_AND_VALUE_15    (0x8F)
+
 
 #if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
 /* Memory Trace is triggered for each H-Frame. SYS_EVENT_21 is triggered for each
@@ -1444,17 +1448,29 @@ void hdsl_diagnostic_main(void *arg)
     hdsl_pruss_load_run_fw_300m(gHdslHandleCh0);
     #endif
     DebugP_log( "\r\n HDSL setup finished\n");
-    /*need some extra time for SYNC mode since frames are longer*/
+
     #if (CONFIG_HDSL0_CHANNEL0==1)
-    //Channel 0 starts here:
+    /* Channel 0 starts here */
     while(1)
     {
         ureg = HDSL_get_master_qm(gHdslHandleCh0);
 
-        if((ureg & 0x80) != 0)
+        if((ureg & QM_LINK_ESTABLISHED) != 0)
             break;
 
         DebugP_log( "\r\n Hiperface DSL encoder not detected\n");
+        ClockP_usleep(10000);
+    }
+
+    /* Wait until QM is 15 */
+    while(1)
+    {
+        ureg = HDSL_get_master_qm(gHdslHandleCh0);
+
+        if(ureg == QM_LINK_ESTABLISHED_AND_VALUE_15)
+            break;
+
+        DebugP_log( "\r\n QM is not 15 \n");
         ClockP_usleep(10000);
     }
 
@@ -1498,15 +1514,27 @@ void hdsl_diagnostic_main(void *arg)
     #endif
     #if (CONFIG_HDSL0_CHANNEL1==1)
 
-    //Channel 1 starts here:
+    /* Channel 1 starts here */
     while(1)
     {
         ureg = HDSL_get_master_qm(gHdslHandleCh1);
 
-        if((ureg & 0x80) != 0)
+        if((ureg & QM_LINK_ESTABLISHED) != 0)
             break;
 
         DebugP_log( "\r\n Hiperface DSL encoder not detected\n");
+        ClockP_usleep(10000);
+    }
+
+    /* Wait until QM is 15 */
+    while(1)
+    {
+        ureg = HDSL_get_master_qm(gHdslHandleCh1);
+
+        if(ureg == QM_LINK_ESTABLISHED_AND_VALUE_15)
+            break;
+
+        DebugP_log( "\r\n QM is not 15 \n");
         ClockP_usleep(10000);
     }
 
