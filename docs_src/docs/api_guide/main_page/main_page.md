@@ -116,6 +116,11 @@ The main software components in the block diagram specific to motor control are 
     <td>\ref DCL
     <td> Header-only library for digital control applications
 </tr>
+<tr>
+    <td> Transforms
+    <td>\ref Transforms
+    <td> Transformation including Clarke, Park, Space Vector Generation used in motor control applications.
+</tr>
 <tr><td colspan="3" bgcolor=#F0F0F0>**Examples and Demos**</td></tr>
 <tr>
     <td>Examples and Demos
@@ -144,6 +149,11 @@ The main software components in the block diagram specific to motor control are 
     <td> Digital Control Library (DCL)
     <td>\ref DCL
     <td> Header-only library for digital control applications
+</tr>
+<tr>
+    <td> Transforms
+    <td>\ref Transforms
+    <td> Transformation including Clarke, Park, Space Vector Generation used in motor control applications.
 </tr>
 <tr><td colspan="3" bgcolor=#F0F0F0>**Examples and Demos**</td></tr>
 <tr>
