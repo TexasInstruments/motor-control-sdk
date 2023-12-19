@@ -34,7 +34,7 @@
 ;  bit7..4		major number
 FIRMWARE_VERSION_MAJOR	.set			0x0
 ;  bit3..0		minor number
-FIRMWARE_VERSION_MINOR	.set			0xB
+FIRMWARE_VERSION_MINOR	.set			0xC
 
 ICSS_FIRMWARE_RELEASE	.set            ((FIRMWARE_VERSION_MAJOR << 4) | (FIRMWARE_VERSION_MINOR << 0))
 
