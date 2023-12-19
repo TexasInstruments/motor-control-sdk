@@ -37,7 +37,7 @@ const defines = {
         "PRU1",
         "CHANNEL_1",
         "ICSS_G_V_1_0",
-        "FREERUN_300_MHZ",
+        "SYNC_300_MHZ",
         "HDSL_MULTICHANNEL",
         "EXT_SYNC_ENABLE",
     ],

@@ -776,28 +776,45 @@ void hdsl_pruss_load_run_fw_300m(HDSL_Handle hdslHandle)
     if(HDSL_get_sync_ctrl(hdslHandle) == 0)
     {
         /*free run*/
+#if (CONFIG_HDSL0_CHANNEL0 == 1)
             PRUICSS_writeMemory(gPruIcss0Handle, PRUICSS_IRAM_RTU_PRU(1),
                         0, (uint32_t *) Hiperface_DSL2_0_RTU_0,
                         sizeof(Hiperface_DSL2_0_RTU_0));
+#endif
+#if (CONFIG_HDSL0_CHANNEL1 == 1)
             PRUICSS_writeMemory(gPruIcss0Handle, PRUICSS_IRAM_PRU(1),
                         0, (uint32_t *) Hiperface_DSL2_0_PRU_0,
                         sizeof(Hiperface_DSL2_0_PRU_0));
+#endif
     }
     else
     {
         /*Sync mode*/
+#if (CONFIG_HDSL0_CHANNEL0 == 1)
             PRUICSS_writeMemory(gPruIcss0Handle, PRUICSS_IRAM_RTU_PRU(1),
                         0, (uint32_t *) Hiperface_DSL_SYNC2_0_RTU_0,
                         sizeof(Hiperface_DSL_SYNC2_0_RTU_0));
+#endif
+#if (CONFIG_HDSL0_CHANNEL1 == 1)
             PRUICSS_writeMemory(gPruIcss0Handle, PRUICSS_IRAM_PRU(1),
                         0, (uint32_t *) Hiperface_DSL_SYNC2_0_PRU_0,
                         sizeof(Hiperface_DSL_SYNC2_0_PRU_0));
+#endif
     }
-        PRUICSS_resetCore(gPruIcss0Handle, PRUICSS_RTU_PRU1);
-        PRUICSS_resetCore(gPruIcss0Handle, PRUICSS_PRU1);
+
         /*Run firmware*/
+#if (CONFIG_HDSL0_CHANNEL0 == 1)
+        PRUICSS_resetCore(gPruIcss0Handle, PRUICSS_RTU_PRU1);
+#endif
+#if (CONFIG_HDSL0_CHANNEL1 == 1)
+        PRUICSS_resetCore(gPruIcss0Handle, PRUICSS_PRU1);
+#endif
+#if (CONFIG_HDSL0_CHANNEL0 == 1)
         PRUICSS_enableCore(gPruIcss0Handle, PRUICSS_RTU_PRU1);
+#endif
+#if (CONFIG_HDSL0_CHANNEL1 == 1)
         PRUICSS_enableCore(gPruIcss0Handle, PRUICSS_PRU1);
+#endif
 #endif
 }
 

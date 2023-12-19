@@ -34,12 +34,12 @@
 ;  bit7..4		major number
 FIRMWARE_VERSION_MAJOR	.set			0x0
 ;  bit3..0		minor number
-FIRMWARE_VERSION_MINOR	.set			0xA
+FIRMWARE_VERSION_MINOR	.set			0xB
 
 ICSS_FIRMWARE_RELEASE	.set            ((FIRMWARE_VERSION_MAJOR << 4) | (FIRMWARE_VERSION_MINOR << 0))
 
 ;number of cycles for 1 bit
-    .if $defined("FREERUN_300_MHZ")
+    .if $isdefed("FREERUN_300_MHZ") | $isdefed("SYNC_300_MHZ")
 ;number of cycles for 1 bit
 CYCLES_BIT .set							32
 ;clock divider

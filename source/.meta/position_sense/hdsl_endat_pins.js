@@ -42,7 +42,7 @@ function pinmuxRequirements(inst) {
 
         pinmux.setConfigurableDefault( pinResource, "rx", pin.rx );
 
-        if(inst["Channel_0"]==true){
+        if((inst["Channel_0"]==true) || (inst["channel_0"]==true)){
            if( (pin.pinName == "GPO2") || (pin.pinName == "GPO1") || (pin.pinName == "GPO0") || (pin.pinName == "GPI13")){
                 pinResource.used = true;
            }
@@ -52,7 +52,7 @@ function pinmuxRequirements(inst) {
             }    
         }
 
-        if(inst["Channel_1"]==true){
+        if((inst["Channel_1"]==true) || (inst["channel_1"]==true)){
             if( (pin.pinName == "GPO5") || (pin.pinName == "GPO4") || (pin.pinName == "GPO3") || (pin.pinName == "GPI14")){
                  pinResource.used = true;
             }
@@ -62,7 +62,7 @@ function pinmuxRequirements(inst) {
             }    
          }
 
-         if(inst["Channel_2"]==true){
+         if((inst["Channel_2"]==true) || (inst["channel_2"]==true)){
             if( (pin.pinName == "GPO8") || (pin.pinName == "GPO12") || (pin.pinName == "GPO6") || (pin.pinName == "GPI11")){
                  pinResource.used = true;
             }

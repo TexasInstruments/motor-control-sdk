@@ -453,7 +453,7 @@ push_2B_0:
     .else
     PUSH_FIFO_CONST		0x03
     .endif
-    .if $defined("FREERUN_300_MHZ")
+    .if $defined("FREERUN_300_MHZ") | $defined("SYNC_300_MHZ")
 	ldi			REG_TMP0, (6*(CLKDIV_FAST+1)-8+2)
     .else
     ldi			REG_TMP0, (6*(CLKDIV_FAST+1)-8)
@@ -1839,7 +1839,7 @@ send_trailer:
 	NOP_2
 	NOP_2
 	NOP_2
-    .if $defined("FREERUN_300_MHZ")
+    .if $defined("FREERUN_300_MHZ") | $defined("SYNC_300_MHZ")
 	NOP_2
 	NOP_2
 	NOP_2
@@ -1946,7 +1946,7 @@ qm_add_end:
 ;--------------------------------------------------------------------------------------------------
 wait_delay:
 	WAIT_TX_DONE
-    .if $defined("FREERUN_300_MHZ")
+    .if $defined("FREERUN_300_MHZ") | $defined("SYNC_300_MHZ")
     NOP_2
 	NOP_2
 	NOP_2
@@ -1954,6 +1954,10 @@ wait_delay:
 	NOP_2
 	NOP_2
 	NOP_2
+	NOP_2
+	NOP_2
+	.endif
+    .if $defined("FREERUN_300_MHZ")
 	NOP_2
 	NOP_2
 	.endif
@@ -2056,7 +2060,9 @@ comp_logic_starts:
 	.if $defined(EXT_SYNC_ENABLE)
 	;compensation logic for diff between sync signal and extra edge starts;
 	qbne        num_pulses_is_not_one2, NUM_PULSES, 1 ;not the last frame of period
+	.if $defined("HDSL_MULTICHANNEL")
 	PUSH_FIFO_2B_8x
+	.endif
 	mov         EXTRA_EDGE_COMP, EXTRA_EDGE
 	mov         EXTRA_SIZE_COMP, EXTRA_SIZE
 	mov         NUM_STUFFING_COMP, NUM_STUFFING
@@ -2181,7 +2187,9 @@ send_header_extra_not_too_small1:
 
 num_pulses_is_not_one2:
 	loop extra_size_validation_done1,2
+	.if $defined("HDSL_MULTICHANNEL")
 	PUSH_FIFO_2B_8x
+	.endif
 extra_size_validation_done1:
 	.if !$defined("HDSL_MULTICHANNEL")
 	jmp comp_logic_done_1
