@@ -46,6 +46,23 @@ RET1 .macro
     JMP     RET_ADDR1
     .endm
 
+CALL2 .macro func
+    jal     RET_ADDR2, func
+    .endm
+
+RET2 .macro
+    JMP     RET_ADDR2
+    .endm
+
+CALL3 .macro func
+    jal     RET_ADDR3, func
+    .endm
+
+RET3 .macro
+    JMP     RET_ADDR3
+    .endm
+
+
 QM_ADD .macro val
     ldi     REG_FNC.b0, (val & 0xff)
     add     QM, QM, REG_FNC.b0
@@ -158,21 +175,7 @@ l?:
 	qbbs		l?, r31, TX_GLOBAL_REINIT_ACTIVE
 	.endm
 
-WAIT_TX_FIFO_FREE .macro
-l?:
-	.if $defined(CHANNEL_2)
-	qbbs		l?, r31, TX_GLOBAL_TX_GO
-	qbbs		l?, r31, TX_GLOBAL_REINIT
-	.endif
-	.if $defined(CHANNEL_1)
-	qbbs		l?, r31, 12
-	qbbs		l?, r31, 11
-	.endif
-	.if $defined(CHANNEL_0)
-	qbbs		l?, r31, 4 ;fill level 4
-	qbbs		l?, r31, 3 ;fill level 2
-	.endif
-	.endm
+
 
 SET_TX_CH0 .macro
 	and				r30.b2, r30.b2, 0xfc ;clear the channel select bits
@@ -225,128 +228,6 @@ PUSH_FIFO_CONST .macro dat
 PUSH_FIFO .macro dat
     mov         r30.b0, dat
     .endm
-    .if $defined(HDSL_MULTICHANNEL)
-PUSH_FIFO_8x .macro dat
-    loop L1?, 4
-    qbbs L2_0?, dat, 7 ; check bit 0
-    WAIT_TX_FIFO_FREE
-    ldi   r30.b0, 0x0 ; Push oversampled 0s on the wire
-    qba    L3_0?
-L2_0?:
-    WAIT_TX_FIFO_FREE
-    ldi   r30.b0, 0xff ; Push oversampled 1s on the wire
-L3_0?:
-    lsl   dat,dat, 1 ; Drop least significant bit
-
-    qbbs L2_1?, dat, 7 ; check bit 0
-    ldi   r30.b0, 0x0 ; Push oversampled 0s on the wire
-    qba    L3_1?
-L2_1?:
-    ldi   r30.b0, 0xff ; Push oversampled 1s on the wire
-L3_1?:
-    lsl   dat,dat, 1 ; Drop least significant bit
-
-
-L1?:
-    .endm
-
-PUSH_FIFO_8x_1 .macro dat
-    loop L1?, 4
-    qbbs L2_0?, dat, 7 ; check bit 0
-
-    ldi   r30.b0, 0x0 ; Push oversampled 0s on the wire
-    qba    L3_0?
-L2_0?:
-
-    ldi   r30.b0, 0xff ; Push oversampled 1s on the wire
-L3_0?:
-    lsl   dat,dat, 1 ; Drop least significant bit
-
-    qbbs L2_1?, dat, 7 ; check bit 0
-    WAIT_TX_FIFO_FREE
-    ldi   r30.b0, 0x0 ; Push oversampled 0s on the wire
-    qba    L3_1?
-L2_1?:
-    WAIT_TX_FIFO_FREE
-    ldi   r30.b0, 0xff ; Push oversampled 1s on the wire
-L3_1?:
-    lsl   dat,dat, 1 ; Drop least significant bit
-
-L1?:
-    .endm
-
-PUSH_FIFO_2B_8x .macro
-    ;mov FIFO_L,dat
-    qbbs L2_0?, FIFO_L, 7 ; check bit 0
-    WAIT_TX_FIFO_FREE
-    ldi   r30.b0, 0x0 ; Push oversampled 0s on the wire
-    qba    L3_0?
-L2_0?:
-    WAIT_TX_FIFO_FREE
-    ldi   r30.b0, 0xff ; Push oversampled 1s on the wire
-L3_0?:
-    lsl   FIFO_L,FIFO_L, 1 ; Drop least significant bit
-
-    qbbs L2_1?, FIFO_L, 7 ; check bit 0
-    ldi   r30.b0, 0x0 ; Push oversampled 0s on the wire
-    qba    L3_1?
-L2_1?:
-    ldi   r30.b0, 0xff ; Push oversampled 1s on the wire
-L3_1?:
-    lsl   FIFO_L,FIFO_L, 1 ; Drop least significant bit
-
-    .endm
-
-PUSH_FIFO_1_8x .macro
-    ;mov FIFO_L,dat
-    qbbs L2_0?, FIFO_L, 7 ; check bit 0
-
-    ldi   r30.b0, 0x0 ; Push oversampled 0s on the wire
-    qba    L3_0?
-L2_0?:
-
-    ldi   r30.b0, 0xff ; Push oversampled 1s on the wire
-L3_0?:
-    lsl   FIFO_L,FIFO_L, 1 ; Drop least significant bit
-
-    qbbs L2_1?, FIFO_L, 7 ; check bit 0
-    WAIT_TX_FIFO_FREE
-    ldi   r30.b0, 0x0 ; Push oversampled 0s on the wire
-    qba    L3_1?
-L2_1?:
-    WAIT_TX_FIFO_FREE
-    ldi   r30.b0, 0xff ; Push oversampled 1s on the wire
-
-L3_1?:
-    lsl   FIFO_L,FIFO_L, 1 ; Drop least significant bit
-
-    .endm
-
-PUSH_FIFO_2_8x .macro
-   ; mov FIFO_L,dat
-    qbbs L2_0?, FIFO_L, 7 ; check bit 0
-
-    ldi   r30.b0, 0x0 ; Push oversampled 0s on the wire
-    qba    L3_0?
-L2_0?:
-
-    ldi   r30.b0, 0xff ; Push oversampled 1s on the wire
-L3_0?:
-    lsl   FIFO_L,FIFO_L, 1 ; Drop least significant bit
-
-    qbbs L2_1?, FIFO_L, 7 ; check bit 0
-
-    ldi   r30.b0, 0x0 ; Push oversampled 0s on the wire
-    qba    L3_1?
-L2_1?:
-
-    ldi   r30.b0, 0xff ; Push oversampled 1s on the wire
-
-L3_1?:
-    lsl   FIFO_L,FIFO_L, 1 ; Drop least significant bit
-
-    .endm
-    .endif
 
 POP_FIFO .macro dst
 	.if $defined(CHANNEL_2)
@@ -451,11 +332,8 @@ RESET_ECAP_INT .macro tmp0, tmp1
     sbco            &tmp1, PWMSS1_CONST, tmp0, 2
     .endm
 
-NOP .macro
+NOP_n .macro dat
+    loop lw?,dat
     and         r0, r0, r0
+lw?:
     .endm
-
-NOP_2 .macro
-    loop            l?, 2
-l?:
-	.endm
