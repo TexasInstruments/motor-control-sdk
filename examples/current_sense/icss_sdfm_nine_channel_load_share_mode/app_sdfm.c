@@ -175,7 +175,9 @@ SdfmPrms gTestSdfmPrms = {
     {{4, 18, 2},
     {4, 18, 2},
     {4, 18, 2}
-    }   /*Fast detect fields {Window size, zero count max, zero count min}*/
+    },   /*Fast detect fields {Window size, zero count max, zero count min}*/
+    0,   /*Enable zero cross*/
+    {1700, 1700, 1700}, /*Zero cross threshold*/
 };
 
 #define PRUICSS_G_MUX_EN    ( 0x1 ) /* ICSSG_SA_MX_REG:G_MUX_EN */

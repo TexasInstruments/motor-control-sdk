@@ -87,13 +87,9 @@
 #define TEST_ICSSG_INST_ID              ( CONFIG_PRU_ICSS0 )
 /* Test ICSSG slice ID */
 #define TEST_ICSSG_SLICE_ID             ( ICSSG_SLICE_ID_0 )
-/* Test PRU core instance IDs */
-#define TEST_PRU_INST_ID                ( PRUICSS_PRU0 )
-#define TEST_RTU_INST_ID                ( PRUICSS_RTU_PRU0 )
 
 /* R5F interrupt settings for ICSSG */
-#define ICSSG_PRU_SDFM_INT_NUM          ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_0 )  /* VIM interrupt number */
-#define ICSSG_RTU_SDFM_INT_NUM          ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_1 )  /* VIM interrupt number */
+#define ICSSG_PRU_SDFM_INT_NUM          ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_3 )  /* VIM interrupt number */
 
 /* EPWM0 IRQ handler */
 static void epwmIrqHandler(void *handle);
@@ -145,6 +141,8 @@ __attribute__((section(".gSdfmSampleOutput"))) uint32_t gSdfm_sampleOutput[NUM_C
 
 /* Test Sdfm parameters */
 SdfmPrms gTestSdfmPrms = {
+    PRUICSS_PRU0,          /*PRU core ID*/
+    TEST_ICSSG_SLICE_ID,   /*SLICE IDs*/
     300000000,    /*PRU Core clock*/
     300000000,   /*Value of ICSSG0_IEP clock*/
     300000000,   /*ICSSG1_IEP_CLOCK*/
@@ -168,6 +166,8 @@ SdfmPrms gTestSdfmPrms = {
     {4, 18, 2},
     {4, 18, 2}},   /*Fast detect fields {Window size, zero count max, zero count min}*/
     1, /*Phase delay enable*/
+    0,   /*Enable zero cross*/
+    {1700, 1700, 1700}, /*Zero cross threshold*/
 };
 
 #define PRUICSS_G_MUX_EN    ( 0x1 ) /* ICSSG_SA_MX_REG:G_MUX_EN */
@@ -184,15 +184,10 @@ volatile Bool gRunFlag = TRUE;
 /* SDFM Output sample for Channel 0 */
 /*Sample size*/
 #define MAX_SAMPLES (128)
-uint32_t sdfm_ch0_samples[MAX_SAMPLES] = {0};
-uint32_t sdfm_ch0_idx = 0;
-/* SDFM Output sample for Channel 1 */
-uint32_t sdfm_ch1_samples[MAX_SAMPLES] = {0};
-uint32_t sdfm_ch1_idx = 0;
-/* SDFM Output sample for Channel 2 */
-uint32_t sdfm_ch2_samples[MAX_SAMPLES] = {0};
-uint32_t sdfm_ch2_idx = 0;
 
+/* ICSS SDFM Output samples */
+uint32_t sdfm_ch_samples[NUM_CH_SUPPORTED][MAX_SAMPLES] = {0};
+uint32_t sdfmPruIdxCnt = 0;
 
 /* IRQ counters */
 volatile uint32_t gPruSdfmIrqCnt=0; /* PRU Sdfm FW IRQ count */
@@ -311,7 +306,7 @@ void init_sdfm()
     DebugP_assert(status == SystemP_SUCCESS);
 
     /* Initialize PRU core for SDFM */
-    status = initPruSdfm(gPruIcssHandle, TEST_PRU_INST_ID, &gTestSdfmPrms, &gHPruSdfm);
+    status = initPruSdfm(gPruIcssHandle, PRUICSS_PRU0, &gTestSdfmPrms, &gHPruSdfm);
     if (status != SDFM_ERR_NERR) 
     {
         DebugP_log("Error: initPruSdfm() fail.\r\n");
@@ -404,21 +399,19 @@ void pruSdfmIrqHandler(void *args)
     */
     PRUICSS_clearEvent(gPruIcssHandle, PRU_TRIGGER_HOST_SDFM_EVT);
 
-   /* SDFM Output sample for Channel 0 */
-    sdfm_ch0_samples[sdfm_ch0_idx++] = SDFM_getFilterData(gHPruSdfm, 0);
-    /* SDFM Output sample for Channel 1 */
-    sdfm_ch1_samples[sdfm_ch1_idx++] = SDFM_getFilterData(gHPruSdfm, 1);
-    /* SDFM Output sample for Channel 2 */
-    sdfm_ch2_samples[sdfm_ch2_idx++] = SDFM_getFilterData(gHPruSdfm, 2);
-
-    if(sdfm_ch0_idx >= MAX_SAMPLES)
+    if(sdfmPruIdxCnt >= MAX_SAMPLES)
     {
-        sdfm_ch0_idx = 0;
-        sdfm_ch1_idx = 0;
-        sdfm_ch2_idx = 0;
+        sdfmPruIdxCnt = 0;      
     }
-}
+    /* SDFM Output sample for Channel 0 */
+    sdfm_ch_samples[SDFM_CH0][sdfmPruIdxCnt] = SDFM_getFilterData(gHPruSdfm, 0);
+    /* SDFM Output sample for Channel 1 */
+    sdfm_ch_samples[SDFM_CH1][sdfmPruIdxCnt] = SDFM_getFilterData(gHPruSdfm, 1);
+    /* SDFM Output sample for Channel 2 */
+    sdfm_ch_samples[SDFM_CH2][sdfmPruIdxCnt] = SDFM_getFilterData(gHPruSdfm, 2);
 
+    sdfmPruIdxCnt++;
+}
 
 /* EPWM0 IRQ handler */
 static void epwmIrqHandler(void *args)

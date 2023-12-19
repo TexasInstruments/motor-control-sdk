@@ -100,6 +100,11 @@
 #define SDFM_CFG_GPIO_CLR_ADDR_SZ            ( 4 )
 #define SDFM_CFG_CURR_VAL_SZ                 ( 4 )
 
+/*Zero cross fields*/
+#define SDFM_CFG_BF_SD_CH0_ZC_EN_BIT         ( 0 )
+#define SDFM_CFG_BF_SD_CH1_ZC_EN_BIT         ( 1 )
+#define SDFM_CFG_BF_SD_CH2_ZC_EN_BIT         ( 2 )
+
 /* FW register offsets from base (in bytes) */
 /* SDFM Control */
 #define SDFM_EN_OFFSET                     ( 0x00 )
@@ -123,7 +128,6 @@
 #define SDFM_CFG_SD_CLOCK_PHASE_DELAY        ( 0x18 )
 
 
-
 /*SDFM channel offsets*/
 /*Ch0 offset*/
 #define SDFM_CFG_CH0_CH_ID_OFFSET            ( 0x1C )
@@ -134,102 +138,106 @@
 #define SDFM_CFG_OC_LOW_THR_CH0_OFFSET          ( 0x24 )
 #define SDFM_CFG_OC_HIGH_THR_STATUS_CH0_OFFSET  ( 0x28 )
 #define SDFM_CFG_OC_LOW_THR_STATUS_CH0_OFFSET   ( 0x29 )
+#define SDFM_CFG_ZC_THR_EN_CH0_OFFSET           ( 0x2A )
+#define SDFM_CFG_ZC_THR_STATUS_CH0_OFFSET       ( 0x2B )
+#define SDFM_CFG_ZC_THR_CH0_OFFSET              ( 0x2C )
 
-#define SDFM_CFG_CH0_FD_WD_REG_OFFSET        ( 0x2C)
-#define SDFM_CFG_CH0_FD_ZERO_MAX_REG_OFFSET  ( 0x2D)
-#define SDFM_CFG_CH0_FD_ZERO_MIN_REG_OFFSET  ( 0x2E)
-#define SDFM_CFG_CH0_FD_ONE_MAX_REG_OFFSET   ( 0x2F)
-#define SDFM_CFG_CH0_FD_ONE_MIN_REG_OFFSET   ( 0x30)
 
-#define SDFM_CFG_CH0_CLOCK_SOURCE_OFFSET     ( 0x34 )
-#define SDFM_CFG_CH0_CLOCK_INVERSION_OFFSET  ( 0x38 )
+#define SDFM_CFG_CH0_FD_WD_REG_OFFSET        ( 0x30)
+#define SDFM_CFG_CH0_FD_ZERO_MAX_REG_OFFSET  ( 0x31)
+#define SDFM_CFG_CH0_FD_ZERO_MIN_REG_OFFSET  ( 0x32)
+#define SDFM_CFG_CH0_FD_ONE_MAX_REG_OFFSET   ( 0x33)
+#define SDFM_CFG_CH0_FD_ONE_MIN_REG_OFFSET   ( 0x34)
 
-#define SDFM_CFG_HIGH_THR_CH0_WRITE_VAL_OFFSET      ( 0x3C )
-#define SDFM_CFG_HIGH_THR_CH0_SET_VAL_ADDR_OFFSET   ( 0x40 )
-#define SDFM_CFG_HIGH_THR_CH0_CLR_VAL_ADDR_OFFSET   ( 0x44 )
-#define SDFM_CFG_LOW_THR_CH0_WRITE_VAL_OFFSET       ( 0x48 )
-#define SDFM_CFG_LOW_THR_CH0_SET_VAL_ADDR_OFFSET    ( 0x4C )
-#define SDFM_CFG_LOW_THR_CH0_CLR_VAL_ADDR_OFFSET    ( 0x50 )
+#define SDFM_CFG_CH0_CLOCK_SOURCE_OFFSET     ( 0x38 )
+#define SDFM_CFG_CH0_CLOCK_INVERSION_OFFSET  ( 0x3C )
 
+#define SDFM_CFG_ZC_THR_CH0_WRITE_VAL_OFFSET      ( 0x40 )
+#define SDFM_CFG_ZC_THR_CH0_SET_VAL_ADDR_OFFSET   ( 0x44 )
+#define SDFM_CFG_ZC_THR_CH0_CLR_VAL_ADDR_OFFSET   ( 0x48 )
 
 /*Ch1 offsets*/
-#define SDFM_CFG_CH1_CH_ID_OFFSET            ( 0x60 )
-#define SDFM_CFG_CH1_FILTER_TYPE_OFFSET      ( 0x61 )
-#define SDFM_CFG_CH1_OSR_OFFSET              ( 0x62 )
+#define SDFM_CFG_CH1_CH_ID_OFFSET            ( 0x4C )
+#define SDFM_CFG_CH1_FILTER_TYPE_OFFSET      ( 0x4D )
+#define SDFM_CFG_CH1_OSR_OFFSET              ( 0x4E )
 
-#define SDFM_CFG_OC_HIGH_THR_CH1_OFFSET         ( 0x64 )
-#define SDFM_CFG_OC_LOW_THR_CH1_OFFSET          ( 0x68 )
-#define SDFM_CFG_OC_HIGH_THR_STATUS_CH1_OFFSET  ( 0x6C )
-#define SDFM_CFG_OC_LOW_THR_STATUS_CH1_OFFSET   ( 0x6D )
+#define SDFM_CFG_OC_HIGH_THR_CH1_OFFSET         ( 0x50 )
+#define SDFM_CFG_OC_LOW_THR_CH1_OFFSET          ( 0x54 )
+#define SDFM_CFG_OC_HIGH_THR_STATUS_CH1_OFFSET  ( 0x58 )
+#define SDFM_CFG_OC_LOW_THR_STATUS_CH1_OFFSET   ( 0x59 )
+#define SDFM_CFG_ZC_THR_EN_CH1_OFFSET           ( 0x5A )
+#define SDFM_CFG_ZC_THR_STATUS_CH1_OFFSET       ( 0x5B )
+#define SDFM_CFG_ZC_THR_CH1_OFFSET              ( 0x5C )
 
-#define SDFM_CFG_CH1_FD_WD_REG_OFFSET        ( 0x70 )
-#define SDFM_CFG_CH1_FD_ZERO_MAX_REG_OFFSET  ( 0x71 )
-#define SDFM_CFG_CH1_FD_ZERO_MIN_REG_OFFSET  ( 0x72 )
-#define SDFM_CFG_CH1_FD_ONE_MAX_REG_OFFSET   ( 0x73 )
-#define SDFM_CFG_CH1_FD_ONE_MIN_REG_OFFSET   ( 0x74 )
+#define SDFM_CFG_CH1_FD_WD_REG_OFFSET        ( 0x60 )
+#define SDFM_CFG_CH1_FD_ZERO_MAX_REG_OFFSET  ( 0x61 )
+#define SDFM_CFG_CH1_FD_ZERO_MIN_REG_OFFSET  ( 0x62 )
+#define SDFM_CFG_CH1_FD_ONE_MAX_REG_OFFSET   ( 0x63 )
+#define SDFM_CFG_CH1_FD_ONE_MIN_REG_OFFSET   ( 0x64 )
 
-#define SDFM_CFG_CH1_CLOCK_SOURCE_OFFSET     ( 0x78 )
-#define SDFM_CFG_CH1_CLOCK_INVERSION_OFFSET  ( 0x7C )
+#define SDFM_CFG_CH1_CLOCK_SOURCE_OFFSET     ( 0x68 )
+#define SDFM_CFG_CH1_CLOCK_INVERSION_OFFSET  ( 0x6C )
 
-#define SDFM_CFG_HIGH_THR_CH1_WRITE_VAL_OFFSET      ( 0x80 )
-#define SDFM_CFG_HIGH_THR_CH1_SET_VAL_ADDR_OFFSET   ( 0x84 )
-#define SDFM_CFG_HIGH_THR_CH1_CLR_VAL_ADDR_OFFSET   ( 0x88 )
-#define SDFM_CFG_LOW_THR_CH1_WRITE_VAL_OFFSET       ( 0x8C )
-#define SDFM_CFG_LOW_THR_CH1_SET_VAL_ADDR_OFFSET    ( 0x90 )
-#define SDFM_CFG_LOW_THR_CH1_CLR_VAL_ADDR_OFFSET    ( 0x94 )
-
+#define SDFM_CFG_ZC_THR_CH1_WRITE_VAL_OFFSET      ( 0x70 )
+#define SDFM_CFG_ZC_THR_CH1_SET_VAL_ADDR_OFFSET   ( 0x74 )
+#define SDFM_CFG_ZC_THR_CH1_CLR_VAL_ADDR_OFFSET   ( 0x78 )
 
 
 /*Ch2 offsets*/
-#define SDFM_CFG_CH2_CH_ID_OFFSET            ( 0xA4 )
-#define SDFM_CFG_CH2_FILTER_TYPE_OFFSET      ( 0xA5 )
-#define SDFM_CFG_CH2_OSR_OFFSET              ( 0xA6 )
+#define SDFM_CFG_CH2_CH_ID_OFFSET            ( 0x7C )
+#define SDFM_CFG_CH2_FILTER_TYPE_OFFSET      ( 0x7D )
+#define SDFM_CFG_CH2_OSR_OFFSET              ( 0x7E )
 
-#define SDFM_CFG_OC_HIGH_THR_CH2_OFFSET         ( 0xA8 )
-#define SDFM_CFG_OC_LOW_THR_CH2_OFFSET          ( 0xAC )
-#define SDFM_CFG_OC_HIGH_THR_STATUS_CH2_OFFSET  ( 0xB0 )
-#define SDFM_CFG_OC_LOW_THR_STATUS_CH2_OFFSET   ( 0xB1 )
-
-#define SDFM_CFG_CH2_FD_WD_REG_OFFSET        ( 0xB4 )
-#define SDFM_CFG_CH2_FD_ZERO_MAX_REG_OFFSET  ( 0xB5 )
-#define SDFM_CFG_CH2_FD_ZERO_MIN_REG_OFFSET  ( 0xB6 )
-#define SDFM_CFG_CH2_FD_ONE_MAX_REG_OFFSET   ( 0xB7 )
-#define SDFM_CFG_CH2_FD_ONE_MIN_REG_OFFSET   ( 0xB8 )
+#define SDFM_CFG_OC_HIGH_THR_CH2_OFFSET         ( 0x80 )
+#define SDFM_CFG_OC_LOW_THR_CH2_OFFSET          ( 0x84 )
+#define SDFM_CFG_OC_HIGH_THR_STATUS_CH2_OFFSET  ( 0x88 )
+#define SDFM_CFG_OC_LOW_THR_STATUS_CH2_OFFSET   ( 0x89 )
+#define SDFM_CFG_ZC_THR_EN_CH2_OFFSET           ( 0x8A )
+#define SDFM_CFG_ZC_THR_STATUS_CH2_OFFSET       ( 0x8B )
+#define SDFM_CFG_ZC_THR_CH2_OFFSET              ( 0x8C )
 
 
-#define SDFM_CFG_CH2_CLOCK_SOURCE_OFFSET     ( 0xBC )
-#define SDFM_CFG_CH2_CLOCK_INVERSION_OFFSET  ( 0xC0 )
+#define SDFM_CFG_CH2_FD_WD_REG_OFFSET        ( 0x90 )
+#define SDFM_CFG_CH2_FD_ZERO_MAX_REG_OFFSET  ( 0x91 )
+#define SDFM_CFG_CH2_FD_ZERO_MIN_REG_OFFSET  ( 0x92 )
+#define SDFM_CFG_CH2_FD_ONE_MAX_REG_OFFSET   ( 0x93 )
+#define SDFM_CFG_CH2_FD_ONE_MIN_REG_OFFSET   ( 0x94 )
 
-#define SDFM_CFG_HIGH_THR_CH2_WRITE_VAL_OFFSET      ( 0xC4 )
-#define SDFM_CFG_HIGH_THR_CH2_SET_VAL_ADDR_OFFSET   ( 0xC8 )
-#define SDFM_CFG_HIGH_THR_CH2_CLR_VAL_ADDR_OFFSET   ( 0xCC )
-#define SDFM_CFG_LOW_THR_CH2_WRITE_VAL_OFFSET       ( 0xD0 )
-#define SDFM_CFG_LOW_THR_CH2_SET_VAL_ADDR_OFFSET    ( 0xD4 )
-#define SDFM_CFG_LOW_THR_CH2_CLR_VAL_ADDR_OFFSET    ( 0xD8 )
+
+#define SDFM_CFG_CH2_CLOCK_SOURCE_OFFSET     ( 0x98 )
+#define SDFM_CFG_CH2_CLOCK_INVERSION_OFFSET  ( 0x9C )
+
+#define SDFM_CFG_ZC_THR_CH2_WRITE_VAL_OFFSET      ( 0xA0 )
+#define SDFM_CFG_ZC_THR_CH2_SET_VAL_ADDR_OFFSET   ( 0xA4 )
+#define SDFM_CFG_ZC_THR_CH2_CLR_VAL_ADDR_OFFSET   ( 0xA8 )
 
 
 /*Sample timing offset*/
-#define SDFM_CFG_EN_CONT_NC_MODE                    ( 0xE8 )
-#define SDFM_CFG_EN_DOUBLE_UPDATE                   ( 0xEA )
-#define FW_REG_SDFM_CFG_FIRST_TRIG_SAMPLE_TIME      ( 0xEC )
-#define FW_REG_SDFM_CFG_SECOND_TRIG_SAMPLE_TIME     ( 0xF0 )
-#define SDFM_CFG_NC_PRD_IEP_CNT_OFFSET              ( 0xF4)
+#define SDFM_CFG_EN_CONT_NC_MODE                    ( 0xAC )
+#define SDFM_CFG_EN_DOUBLE_UPDATE                   ( 0xAD )
+#define FW_REG_SDFM_CFG_FIRST_TRIG_SAMPLE_TIME      ( 0xB0 )
+#define FW_REG_SDFM_CFG_SECOND_TRIG_SAMPLE_TIME     ( 0xB4 )
+#define SDFM_CFG_NC_PRD_IEP_CNT_OFFSET              ( 0xB8)
 
 /* Output sample buffer base address offset*/
-#define SDFM_CFG_OUT_SAMP_BUF_BASE_ADD_OFFSET         ( 0xF8 )
+#define SDFM_CFG_OUT_SAMP_BUF_BASE_ADD_OFFSET         ( 0xBC )
 
 /*Firmware version offset*/
-#define SDFM_FIRMWARE_VERSION_OFFSET                  (0xFC)
+#define SDFM_FIRMWARE_VERSION_OFFSET                  (0xC0)
 
-/*Local store offset for Phase delay: 2 byte */
-#define SDFM_CFG_DELAY_STORE_OFFSET                   ( 0x110 )
+/*Zero cross local storage*/
+#define SDFM_CFG_BF_SD_CH0_ZC_START_OFFSET               (0xC8)
+#define SDFM_CFG_BF_SD_CH1_ZC_START_OFFSET               (0xC9)
+#define SDFM_CFG_BF_SD_CH2_ZC_START_OFFSET               (0xCA)
 
+#define SDFM_CFG_ZC_CH0_PREV_VAL_OFFSET               ( 0xCC)
+#define SDFM_CFG_ZC_CH1_PREV_VAL_OFFSET               ( 0xD0)
+#define SDFM_CFG_ZC_CH2_PREV_VAL_OFFSET               ( 0xD4)
 
-/*Phase delay offset */
 /*Local output sample buffer offset */
-#define SDFM_LOCAL_OUTPUT_SAMPLE_BUFFER_OFFSET        (0x104)
+#define SDFM_LOCAL_OUTPUT_SAMPLE_BUFFER_OFFSET        (0x118)
 /*Debug */
-#define SDFM_DUBUG_OFFSET         ( 0x10F )
+#define SDFM_DUBUG_OFFSET         ( 0x124 )
 
 /*Output sample offset*/
 #define SDFM_CFG_OUT_SAMP_BUF_OFFSET                   (0x00)

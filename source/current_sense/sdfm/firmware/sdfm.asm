@@ -123,13 +123,13 @@ SDFM_ENTRY:
 
 
 PHASE_DELAY_CAL:
-        ;check phase delay measurment active
-        LBBO    &TEMP_REG0.b0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_SD_EN_PHASE_DELAY, 1
-        QBBC    SKIP_PHASE_DELAY_CAL, TEMP_REG0.b0, 0
-        JAL     RET_ADDR_REG, SDFM_CLOCK_PHASE_COMPENSATION
-        ;acknowledge 
-        CLR     TEMP_REG0, TEMP_REG0, 0
-        SBBO    &TEMP_REG0.b0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_SD_EN_PHASE_DELAY, 1
+    ;check phase delay measurment active
+    LBBO    &TEMP_REG0.b0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_SD_EN_PHASE_DELAY, 1
+    QBBC    SKIP_PHASE_DELAY_CAL, TEMP_REG0.b0, 0
+    JAL     RET_ADDR_REG, SDFM_CLOCK_PHASE_COMPENSATION
+    ;acknowledge 
+    CLR     TEMP_REG0, TEMP_REG0, 0
+    SBBO    &TEMP_REG0.b0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_SD_EN_PHASE_DELAY, 1
 SKIP_PHASE_DELAY_CAL:
 
 
@@ -138,6 +138,9 @@ SKIP_PHASE_DELAY_CAL:
 ; If SDFM global enable not set, wait for SDFM global enable from R5.
 ;
 CHECK_SDFM_EN:
+    ;check phase delay measurment active
+    LBBO    &TEMP_REG0.b0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_SD_EN_PHASE_DELAY, 1
+    QBBS    PHASE_DELAY_CAL, TEMP_REG0.b0, 0
     ; Check SDFM global enable
     LBBO    &TEMP_REG0.b0, SDFM_CFG_BASE_PTR_REG, SDFM_EN_OFFSET, SDFM_EN_SZ
     QBBC    CHECK_SDFM_EN, TEMP_REG0.b0, 0                      ; If SDFM_EN not set, wait to set sdfm enable    
@@ -232,7 +235,19 @@ INIT_SDFM_CONT:
     LBBO  &TEMP_REG0.b0, SDFM_CFG_BASE_PTR_REG,  SDFM_CFG_EN_CONT_NC_MODE,1
     LSL   TEMP_REG0.b0, TEMP_REG0.b0,1 
     OR    EN_DOUBLE_UPDATE, EN_DOUBLE_UPDATE, TEMP_REG0.b0    
-    LDI  SAMP_NAME, 0    
+    LDI  SAMP_NAME, 0
+
+    ;Zero cross resgiter
+    LDI TEMP_REG0, 0
+    LBBO  &TEMP_REG0.b0,  SDFM_CFG_BASE_PTR_REG, SDFM_CFG_ZC_THR_EN_CH0_OFFSET,  1
+    OR    TEMP_REG0.w2, TEMP_REG0.w2, TEMP_REG0.w0
+    LBBO  &TEMP_REG0.b0,  SDFM_CFG_BASE_PTR_REG, SDFM_CFG_ZC_THR_EN_CH1_OFFSET,  1
+    LSL   TEMP_REG0.b0, TEMP_REG0.b0,  1
+    OR    TEMP_REG0.w2, TEMP_REG0.w2, TEMP_REG0.w0
+    LBBO  &TEMP_REG0.b0,  SDFM_CFG_BASE_PTR_REG, SDFM_CFG_ZC_THR_EN_CH2_OFFSET,  1
+    LSL   TEMP_REG0.b0, TEMP_REG0.b0,  2
+    OR    TEMP_REG0.w2, TEMP_REG0.w2, TEMP_REG0.w0
+    MOV   ZERO_CROSS_EN, TEMP_REG0.w2
 
     .if $isdefed("SDFM_PRU_CORE") 
     ; Start IEP
@@ -322,7 +337,53 @@ OVER_CURRENT_LOW_THRESHOLD_CH0:
     LDI    TEMP_REG0.b0, 1
     SBBO   &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_OC_LOW_THR_STATUS_CH0_OFFSET, 1
 END_OVER_CURRENT_DETECTION_CH0:
-     
+
+    ;zero cross for ch0
+    QBBC    SKIP_ZERO_CROSS_CH0, ZERO_CROSS_EN, SDFM_CFG_BF_SD_CH0_ZC_EN_BIT
+    ;Load the zero cross threshold value for current channel & store in OC_HIGH_THR register 
+    LBBO    &OC_HIGH_THR, SDFM_CFG_BASE_PTR_REG,  SDFM_CFG_ZC_THR_CH0_OFFSET,  4
+    ;Check if this is the first time after zero crossing is enabled
+    LBBO    &TEMP_REG0.b0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_BF_SD_CH0_ZC_START_OFFSET, 1
+    ;If this is the first time, simply store the current value in DMEM and skip the comparison
+    QBBS    ZERO_CROSS_STARTED_CH0, TEMP_REG0.b0, 0
+    SET     TEMP_REG0.t0
+    SBBO    &TEMP_REG0.b0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_BF_SD_CH0_ZC_START_OFFSET, 1
+    SBBO    &TEMP_REG2, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_ZC_CH0_PREV_VAL_OFFSET, 4
+    QBA     SKIP_ZERO_CROSS_CH0
+ZERO_CROSS_STARTED_CH0:
+    ;Load the previous value for zero cross comparison
+    LBBO    &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_ZC_CH0_PREV_VAL_OFFSET, 4
+    ;Store the current value in DMEM for the next zero cross comparison
+    SBBO    &TEMP_REG2, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_ZC_CH0_PREV_VAL_OFFSET, 4
+    ;Check if the previous sample value is greater than zero crossing threshold
+    ;If that is the case, check if the current sample value is smaller than the zero cross threshold
+    QBGE    CHECK_FOR_BELOW_THRESHOLD_CH0, OC_HIGH_THR, TEMP_REG0
+    ;Check if the sample value is greater than the zero crossing threshold
+    QBGE    OVER_ZC_THRESHOLD_CH0, OC_HIGH_THR, TEMP_REG2
+    QBA     SKIP_ZERO_CROSS_CH0
+CHECK_FOR_BELOW_THRESHOLD_CH0:
+    ;Check if the sample value is lower than the zero crossing threshold
+    QBLE    BELOW_ZC_THRESHOLD_CH0, OC_HIGH_THR, TEMP_REG2
+    QBA SKIP_ZERO_CROSS_CH0
+OVER_ZC_THRESHOLD_CH0:
+    ;Set the ZC trip status as high
+    LDI     TEMP_REG0, 1
+    SBBO    &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_ZC_THR_STATUS_CH0_OFFSET, 1
+    ;Set the associated GPIO pin as high
+    LBBO    &GPIO_TGL_ADDR, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_ZC_THR_CH0_SET_VAL_ADDR_OFFSET, SDFM_CFG_GPIO_SET_ADDR_SZ
+    LBBO    &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_ZC_THR_CH0_WRITE_VAL_OFFSET, SDFM_CFG_GPIO_VALUE_SZ
+    SBBO    &TEMP_REG0, GPIO_TGL_ADDR, 0, SDFM_CFG_GPIO_VALUE_SZ
+    QBA SKIP_ZERO_CROSS_CH0
+BELOW_ZC_THRESHOLD_CH0:
+    ;Set the ZC trip status as low
+    LDI     TEMP_REG0.b0, 0
+    SBBO    &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_ZC_THR_STATUS_CH0_OFFSET, 1
+    ;Set the associated GPIO pin as low
+    LBBO    &GPIO_TGL_ADDR, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_ZC_THR_CH0_CLR_VAL_ADDR_OFFSET, SDFM_CFG_GPIO_SET_ADDR_SZ
+    LBBO    &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_ZC_THR_CH0_WRITE_VAL_OFFSET, SDFM_CFG_GPIO_VALUE_SZ
+    SBBO    &TEMP_REG0, GPIO_TGL_ADDR, 0, SDFM_CFG_GPIO_VALUE_SZ
+SKIP_ZERO_CROSS_CH0:
+      
     .if $isdefed("DEBUG_CODE")
     ;For the current channel, compare against the High threshold, Low threshold and ZC thresholds (if enabled)
     ;Load the positive threshold value for current channel
@@ -442,6 +503,52 @@ OVER_CURRENT_LOW_THRESHOLD_CH1:
 END_OVER_CURRENT_DETECTION_CH1:  
 
 
+ ;zero cross for ch0
+    QBBC    SKIP_ZERO_CROSS_CH1, ZERO_CROSS_EN, SDFM_CFG_BF_SD_CH1_ZC_EN_BIT
+    ;Load the zero cross threshold value for current channel & store in OC_HIGH_THR register 
+    LBBO    &OC_HIGH_THR, SDFM_CFG_BASE_PTR_REG,  SDFM_CFG_ZC_THR_CH1_OFFSET,  4
+    ;Check if this is the first time after zero crossing is enabled
+    LBBO    &TEMP_REG0.b0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_BF_SD_CH1_ZC_START_OFFSET, 1
+    ;If this is the first time, simply store the current value in DMEM and skip the comparison
+    QBBS    ZERO_CROSS_STARTED_CH1, TEMP_REG0.b0, 0
+    SET     TEMP_REG0.t0
+    SBBO    &TEMP_REG0.b0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_BF_SD_CH1_ZC_START_OFFSET, 1
+    SBBO    &TEMP_REG2, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_ZC_CH1_PREV_VAL_OFFSET, 4
+    QBA     SKIP_ZERO_CROSS_CH1
+ZERO_CROSS_STARTED_CH1:
+    ;Load the previous value for zero cross comparison
+    LBBO    &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_ZC_CH1_PREV_VAL_OFFSET, 4
+    ;Store the current value in DMEM for the next zero cross comparison
+    SBBO    &TEMP_REG2, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_ZC_CH1_PREV_VAL_OFFSET, 4
+    ;Check if the previous sample value is greater than zero crossing threshold
+    ;If that is the case, check if the current sample value is smaller than the zero cross threshold
+    QBGE    CHECK_FOR_BELOW_THRESHOLD_CH1, OC_HIGH_THR, TEMP_REG0
+    ;Check if the sample value is greater than the zero crossing threshold
+    QBGE    OVER_ZC_THRESHOLD_CH1, OC_HIGH_THR, TEMP_REG2
+    QBA     SKIP_ZERO_CROSS_CH1
+CHECK_FOR_BELOW_THRESHOLD_CH1:
+    ;Check if the sample value is lower than the zero crossing threshold
+    QBLE    BELOW_ZC_THRESHOLD_CH1, OC_HIGH_THR, TEMP_REG2
+    QBA SKIP_ZERO_CROSS_CH1
+OVER_ZC_THRESHOLD_CH1:
+    ;Set the ZC trip status as high
+    LDI     TEMP_REG0, 1
+    SBBO    &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_ZC_THR_STATUS_CH1_OFFSET, 1
+    ;Set the associated GPIO pin as high
+    LBBO    &GPIO_TGL_ADDR, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_ZC_THR_CH1_SET_VAL_ADDR_OFFSET, SDFM_CFG_GPIO_SET_ADDR_SZ
+    LBBO    &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_ZC_THR_CH1_WRITE_VAL_OFFSET, SDFM_CFG_GPIO_VALUE_SZ
+    SBBO    &TEMP_REG0, GPIO_TGL_ADDR, 0, SDFM_CFG_GPIO_VALUE_SZ
+    QBA SKIP_ZERO_CROSS_CH1
+BELOW_ZC_THRESHOLD_CH1:
+    ;Set the ZC trip status as low
+    LDI     TEMP_REG0.b0, 0
+    SBBO    &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_ZC_THR_STATUS_CH1_OFFSET, 1
+    ;Set the associated GPIO pin as low
+    LBBO    &GPIO_TGL_ADDR, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_ZC_THR_CH1_CLR_VAL_ADDR_OFFSET, SDFM_CFG_GPIO_SET_ADDR_SZ
+    LBBO    &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_ZC_THR_CH1_WRITE_VAL_OFFSET, SDFM_CFG_GPIO_VALUE_SZ
+    SBBO    &TEMP_REG0, GPIO_TGL_ADDR, 0, SDFM_CFG_GPIO_VALUE_SZ
+SKIP_ZERO_CROSS_CH1:
+
     .if $isdefed("DEBUG_CODE")
     ;For the current channel, compare against the High threshold, Low threshold and ZC thresholds (if enabled)
     ;Load the positive threshold value for current channel
@@ -482,6 +589,7 @@ BELOW_THRESHOLD_START_CH1:
     .endif
 
 COMP_CH1_END:
+
 
     .if $isdefed("DEBUG_CODE")
     ;GPIO LOW
@@ -600,6 +708,52 @@ BELOW_THRESHOLD_START_CH2:
     .endif
 
 COMP_CH2_END:
+
+;zero cross for ch0
+    QBBC    SKIP_ZERO_CROSS_CH2, ZERO_CROSS_EN, SDFM_CFG_BF_SD_CH2_ZC_EN_BIT
+    ;Load the zero cross threshold value for current channel & store in OC_HIGH_THR register 
+    LBBO    &OC_HIGH_THR, SDFM_CFG_BASE_PTR_REG,  SDFM_CFG_ZC_THR_CH2_OFFSET,  4
+    ;Check if this is the first time after zero crossing is enabled
+    LBBO    &TEMP_REG0.b0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_BF_SD_CH2_ZC_START_OFFSET, 1
+    ;If this is the first time, simply store the current value in DMEM and skip the comparison
+    QBBS    ZERO_CROSS_STARTED_CH2, TEMP_REG0.b0, 0
+    SET     TEMP_REG0.t0
+    SBBO    &TEMP_REG0.b0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_BF_SD_CH2_ZC_START_OFFSET, 1
+    SBBO    &TEMP_REG2, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_ZC_CH2_PREV_VAL_OFFSET, 4
+    QBA     SKIP_ZERO_CROSS_CH2
+ZERO_CROSS_STARTED_CH2:
+    ;Load the previous value for zero cross comparison
+    LBBO    &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_ZC_CH2_PREV_VAL_OFFSET, 4
+    ;Store the current value in DMEM for the next zero cross comparison
+    SBBO    &TEMP_REG2, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_ZC_CH2_PREV_VAL_OFFSET, 4
+    ;Check if the previous sample value is greater than zero crossing threshold
+    ;If that is the case, check if the current sample value is smaller than the zero cross threshold
+    QBGE    CHECK_FOR_BELOW_THRESHOLD_CH2, OC_HIGH_THR, TEMP_REG0
+    ;Check if the sample value is greater than the zero crossing threshold
+    QBGE    OVER_ZC_THRESHOLD_CH2, OC_HIGH_THR, TEMP_REG2
+    QBA     SKIP_ZERO_CROSS_CH2
+CHECK_FOR_BELOW_THRESHOLD_CH2:
+    ;Check if the sample value is lower than the zero crossing threshold
+    QBLE    BELOW_ZC_THRESHOLD_CH2, OC_HIGH_THR, TEMP_REG2
+    QBA SKIP_ZERO_CROSS_CH2
+OVER_ZC_THRESHOLD_CH2:
+    ;Set the ZC trip status as high
+    LDI     TEMP_REG0, 1
+    SBBO    &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_ZC_THR_STATUS_CH2_OFFSET, 1
+    ;Set the associated GPIO pin as high
+    LBBO    &GPIO_TGL_ADDR, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_ZC_THR_CH2_SET_VAL_ADDR_OFFSET, SDFM_CFG_GPIO_SET_ADDR_SZ
+    LBBO    &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_ZC_THR_CH2_WRITE_VAL_OFFSET, SDFM_CFG_GPIO_VALUE_SZ
+    SBBO    &TEMP_REG0, GPIO_TGL_ADDR, 0, SDFM_CFG_GPIO_VALUE_SZ
+    QBA SKIP_ZERO_CROSS_CH2
+BELOW_ZC_THRESHOLD_CH2:
+    ;Set the ZC trip status as low
+    LDI     TEMP_REG0.b0, 0
+    SBBO    &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_ZC_THR_STATUS_CH2_OFFSET, 1
+    ;Set the associated GPIO pin as low
+    LBBO    &GPIO_TGL_ADDR, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_ZC_THR_CH2_CLR_VAL_ADDR_OFFSET, SDFM_CFG_GPIO_SET_ADDR_SZ
+    LBBO    &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_ZC_THR_CH2_WRITE_VAL_OFFSET, SDFM_CFG_GPIO_VALUE_SZ
+    SBBO    &TEMP_REG0, GPIO_TGL_ADDR, 0, SDFM_CFG_GPIO_VALUE_SZ
+SKIP_ZERO_CROSS_CH2:
 
     .if $isdefed("DEBUG_CODE")
     ; GPIO LOW

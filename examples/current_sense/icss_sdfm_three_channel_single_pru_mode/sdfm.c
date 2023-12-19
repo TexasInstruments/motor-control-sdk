@@ -136,47 +136,29 @@ int32_t initIcss(
 
     return SDFM_ERR_NERR;
 }
-void sdfm_configure_gpio_pin(sdfm_handle h_sdfm)
+void SDFM_configGpioPins(sdfm_handle h_sdfm)
 {
     /*ch0 GPIO configuration*/
-    uint32_t gpioBaseAddrCh0Hi = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_HIGH_TH_CH0_BASE_ADDR);
-    uint32_t pinNumCh0Hi       = GPIO_HIGH_TH_CH0_PIN;
-    GPIO_setDirMode(gpioBaseAddrCh0Hi, pinNumCh0Hi, GPIO_HIGH_TH_CH0_DIR);
-    SDFM_configComparatorGpioPins(h_sdfm, 0, gpioBaseAddrCh0Hi, pinNumCh0Hi, 0);
-
-    uint32_t gpioBaseAddrCh0Lo = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_LOW_TH_CH0_BASE_ADDR);
-    uint32_t pinNumCh0Lo       = GPIO_LOW_TH_CH0_PIN;
-    GPIO_setDirMode(gpioBaseAddrCh0Lo, pinNumCh0Lo, GPIO_LOW_TH_CH0_DIR);
-    SDFM_configComparatorGpioPins(h_sdfm, 0, gpioBaseAddrCh0Lo, pinNumCh0Lo, 1);
-
+    uint32_t gpioBaseAddrCh0 = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH0_BASE_ADDR);
+    uint32_t pinNumCh0       = GPIO_ZC_TH_CH0_PIN;
+    GPIO_setDirMode(gpioBaseAddrCh0, pinNumCh0, GPIO_ZC_TH_CH0_DIR);
+    SDFM_configComparatorGpioPins(h_sdfm, 0, gpioBaseAddrCh0, pinNumCh0);
 
     /*ch1 GPIO configuration*/
-    uint32_t gpioBaseAddrCh1Hi = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_HIGH_TH_CH1_BASE_ADDR);
-    uint32_t pinNumCh1Hi       = GPIO_HIGH_TH_CH1_PIN;
-    GPIO_setDirMode(gpioBaseAddrCh1Hi, pinNumCh1Hi, GPIO_HIGH_TH_CH1_DIR);
-    SDFM_configComparatorGpioPins(h_sdfm, 1, gpioBaseAddrCh1Hi, pinNumCh1Hi, 0);
-
-    uint32_t gpioBaseAddrCh1Lo = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_LOW_TH_CH1_BASE_ADDR);
-    uint32_t pinNumCh1Lo       = GPIO_LOW_TH_CH1_PIN;
-    GPIO_setDirMode(gpioBaseAddrCh1Lo, pinNumCh1Lo, GPIO_LOW_TH_CH1_DIR);
-    SDFM_configComparatorGpioPins(h_sdfm, 1, gpioBaseAddrCh1Lo, pinNumCh1Lo, 1);
-
+    uint32_t gpioBaseAddrCh1 = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH1_BASE_ADDR);
+    uint32_t pinNumCh1       = GPIO_ZC_TH_CH1_PIN;
+    GPIO_setDirMode(gpioBaseAddrCh1, pinNumCh1, GPIO_ZC_TH_CH1_DIR);
+    SDFM_configComparatorGpioPins(h_sdfm, 1, gpioBaseAddrCh1, pinNumCh1);
 
     /*ch2 GPIO configuration*/
-    uint32_t gpioBaseAddrCh2Hi = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_HIGH_TH_CH2_BASE_ADDR);
-    uint32_t pinNumCh2Hi       = GPIO_HIGH_TH_CH2_PIN;
-    GPIO_setDirMode(gpioBaseAddrCh2Hi, pinNumCh2Hi, GPIO_HIGH_TH_CH2_DIR);
-    SDFM_configComparatorGpioPins(h_sdfm, 2, gpioBaseAddrCh2Hi, pinNumCh2Hi, 0);
-
-    uint32_t gpioBaseAddrCh2Lo = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_LOW_TH_CH2_BASE_ADDR);
-    uint32_t pinNumCh2Lo       = GPIO_LOW_TH_CH2_PIN;
-    GPIO_setDirMode(gpioBaseAddrCh2Lo, pinNumCh2Lo, GPIO_LOW_TH_CH2_DIR);
-    SDFM_configComparatorGpioPins(h_sdfm, 2, gpioBaseAddrCh2Lo, pinNumCh2Lo, 1);
-
+    uint32_t gpioBaseAddrCh2 = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH2_BASE_ADDR);
+    uint32_t pinNumCh2       = GPIO_ZC_TH_CH2_PIN;
+    GPIO_setDirMode(gpioBaseAddrCh2, pinNumCh2, GPIO_ZC_TH_CH2_DIR);
+    SDFM_configComparatorGpioPins(h_sdfm, 2, gpioBaseAddrCh2, pinNumCh2);
 
 }
 /* Initialize SDFM PRU FW */
-int32_t init_sdfm_pru_fw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm,  PRUICSS_Handle pruIcssHandle)
+int32_t initSdfmFw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm,  PRUICSS_Handle pruIcssHandle)
 {
     sdfm_handle hSdfm;    
     uint8_t SDFM_CH = 0;
@@ -245,10 +227,15 @@ int32_t init_sdfm_pru_fw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm
             SDFM_disableComparator(hSdfm, SDFM_CH);
         }
 
+        if(pSdfmPrms->en_zc)
+        {
+            SDFM_enableZeroCrossDetection(hSdfm, SDFM_CH, pSdfmPrms->zcThr[SDFM_CH]);
+        }
+
     }
     
     /*GPIO pin configuration for threshold measurment*/
-    sdfm_configure_gpio_pin(hSdfm);
+    SDFM_configGpioPins(hSdfm);
 
     SDFM_setSampleTriggerTime(hSdfm, pSdfmPrms->firstSampTrigTime);
     if(pSdfmPrms->en_second_update)
@@ -347,7 +334,7 @@ int32_t initPruSdfm(
     }
 
     /* Initialize SDFM PRU FW */
-    status = init_sdfm_pru_fw(pruId, pSdfmPrms, pHSdfm, pruIcssHandle);
+    status = initSdfmFw(pruId, pSdfmPrms, pHSdfm, pruIcssHandle);
     if (status != SDFM_ERR_NERR) {
         return SDFM_ERR_INIT_PRU_SDFM;
     }

@@ -44,8 +44,8 @@
 
 /* Internal structure for managing each PRU SD */
 SDFM g_sdfm[NUM_PRU] = {
-    {NULL,PRU_ID_0,0,0,0,0, NULL},
-    {NULL,PRU_ID_1,0,0,0,0, NULL},
+    {NULL, PRU_ID_0, 0, 0, 0, 0, NULL},
+    {NULL, PRU_ID_1, 0, 0, 0, 0, NULL},
 };
 
 /* Initialize SDFM instance */
@@ -227,7 +227,7 @@ void SDFM_disableComparator(sdfm_handle h_sdfm, uint8_t ch)
     h_sdfm->p_sdfm_interface->sdfm_ch_ctrl.enable_comparator &= (0xFFFF ^ (1<<ch));
 }
 /*GPIO configuration*/
-void SDFM_configComparatorGpioPins(sdfm_handle h_sdfm, uint8_t ch,uint32_t gpio_base_addr, uint32_t pin_number, uint32_t threshold_type)
+void SDFM_configComparatorGpioPins(sdfm_handle h_sdfm, uint8_t ch,uint32_t gpio_base_addr, uint32_t pin_number)
 {
 
     volatile CSL_GpioRegs*  hGpio = (volatile CSL_GpioRegs*)((uintptr_t) gpio_base_addr);
@@ -236,9 +236,9 @@ void SDFM_configComparatorGpioPins(sdfm_handle h_sdfm, uint8_t ch,uint32_t gpio_
     uint32_t clr_data_addr = (uint32_t)&hGpio->BANK_REGISTERS[reg_index].CLR_DATA;
     uint32_t set_data_addr = (uint32_t)&hGpio->BANK_REGISTERS[reg_index].SET_DATA;
 
-    h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[ch].sdfm_gpio_params[threshold_type].write_val = reg_val;
-    h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[ch].sdfm_gpio_params[threshold_type].set_val_addr = set_data_addr;
-    h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[ch].sdfm_gpio_params[threshold_type].clr_val_addr = clr_data_addr;
+    h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[ch].sdfm_gpio_params.write_val = reg_val;
+    h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[ch].sdfm_gpio_params.set_val_addr = set_data_addr;
+    h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[ch].sdfm_gpio_params.clr_val_addr = clr_data_addr;
 }
 
 /* Get current (or latest) sample for the specified channel */
@@ -259,9 +259,9 @@ void SDFM_setFilterOverSamplingRatio(sdfm_handle h_sdfm, uint16_t nc_osr)
     h_sdfm->p_sdfm_interface->sdfm_cfg_trigger.nc_prd_iep_cnt = count;
 }
 /*return firmware version */
-uint64_t SDFM_getFirmwareVersion(sdfm_handle h_sdfm)
+uint32_t SDFM_getFirmwareVersion(sdfm_handle h_sdfm)
 {
-   return h_sdfm->p_sdfm_interface->firmwareVersion;
+   return h_sdfm->p_sdfm_interface->firmwareVersion >> SDFM_FW_VERSION_BIT_SHIFT;
 }
 /*Enable free run NC */
 void SDFM_enableContinuousNormalCurrent(sdfm_handle h_sdfm)
@@ -508,6 +508,63 @@ int32_t SDFM_clearOverCurrentError(sdfm_handle h_sdfm, uint8_t chNum)
     /*Clear PWM trip*/
     retVal = SDFM_clearPwmTripStatus(h_sdfm, chNum);
     return retVal;
+}
+void SDFM_enableZeroCrossDetection(sdfm_handle h_sdfm, uint8_t chNum, uint32_t zcThr)
+{
+    uint32_t temp;
+    temp  = 1 << chNum;
+    if(temp & SDFM_CH_MASK_FOR_CH0_CH3_CH6)
+    {
+        h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[0].sdfm_threshold_parms.zeroCrossEn = 1; 
+        h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[0].sdfm_threshold_parms.zeroCrossTh = zcThr; 
+    }
+    else if(temp & SDFM_CH_MASK_FOR_CH1_CH4_CH7)
+    {
+        h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[1].sdfm_threshold_parms.zeroCrossEn = 1; 
+        h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[1].sdfm_threshold_parms.zeroCrossTh = zcThr; 
+    }
+    else 
+    {
+        h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[2].sdfm_threshold_parms.zeroCrossEn = 1; 
+        h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[2].sdfm_threshold_parms.zeroCrossTh = zcThr; 
+    }
+   
+}
+uint8_t SDFM_getZeroCrossThresholdStatus(sdfm_handle h_sdfm, uint8_t chNum)
+{
+    uint32_t temp;
+    temp  = 1 << chNum;
+    if(temp & SDFM_CH_MASK_FOR_CH0_CH3_CH6)
+    {
+        return h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[0].sdfm_threshold_parms.zeroCrossThstatus; 
+    }
+    else if(temp & SDFM_CH_MASK_FOR_CH1_CH4_CH7)
+    {
+        return h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[1].sdfm_threshold_parms.zeroCrossThstatus; 
+    }
+    else 
+    {
+        return h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[2].sdfm_threshold_parms.zeroCrossThstatus;  
+    }
+
+}
+void SDFM_disableZeroCrossDetection(sdfm_handle h_sdfm, uint8_t chNum)
+{
+    uint32_t temp;
+    temp  = 1 << chNum;
+    if(temp & SDFM_CH_MASK_FOR_CH0_CH3_CH6)
+    {
+        h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[0].sdfm_threshold_parms.zeroCrossEn = 0; 
+    }
+    else if(temp & SDFM_CH_MASK_FOR_CH1_CH4_CH7)
+    {
+        h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[1].sdfm_threshold_parms.zeroCrossEn = 0; 
+    }
+    else 
+    {
+        h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[2].sdfm_threshold_parms.zeroCrossEn = 0; 
+    }
+   
 }
 /* SDFM global enable */
 void SDFM_enable(sdfm_handle h_sdfm)

@@ -82,8 +82,9 @@ typedef SDFM *sdfm_handle;
  *
  *  \brief  Initialize SDFM instance
  *
- *  \param[in]  pru_id          PRU (SD) ID
- *
+ *  \param[in]  pru_id          Pru slice id
+ *  \param[in]  coreId          Pru core id
+ * 
  *  \retval sdfm  SDFM instance handle
  *
  */
@@ -262,12 +263,11 @@ void SDFM_disableComparator(sdfm_handle h_sdfm, uint8_t ch);
  *  \param[in]  ch           current ch number
  *  \param[in]  gpio_base_addr  GPIO bas address
  *  \param[in]  pin_number      GPIO PIN number
- *  \param[in]  threshold_type  Threshold type: High(0), Low(1)
  *
  *
  *
  */
-void SDFM_configComparatorGpioPins(sdfm_handle h_sdfm, uint8_t ch,uint32_t gpio_base_addr, uint32_t pin_number, uint32_t threshold_type);
+void SDFM_configComparatorGpioPins(sdfm_handle h_sdfm, uint8_t ch,uint32_t gpio_base_addr, uint32_t pin_number);
 
 /**
  *
@@ -299,7 +299,7 @@ void SDFM_setFilterOverSamplingRatio(sdfm_handle h_sdfm, uint16_t nc_osr);
  *  \retval     firmwareVersion    release vesrion of firmware
  *
  */
-uint64_t SDFM_getFirmwareVersion(sdfm_handle h_sdfm);
+uint32_t SDFM_getFirmwareVersion(sdfm_handle h_sdfm);
  /* 
  *  \brief  This API Configure Fast detect block fields.
  *
@@ -316,9 +316,9 @@ void SDFM_configFastDetect(sdfm_handle h_sdfm, uint8_t ch, uint8_t *fdParms);
  *  \brief This API returns the fast detect error status for specified SDFM channel number.
  *
  *  \param[in]  h_sdfm       SDFM handle
- *  \param[in]  \param[in]  chNum           SDFM channel number : Channel0-Channel9
+ *  \param[in]  \param[in]  chNum           SDFM channel number : Channel0-Channel8
  *
- *  \retval    stauts of fd error: 1 means error available & 0 menas no error, SystemP_FAILURE on not expected API parameters 
+ *  \retval    stauts of fd error: 1 means error available & 0 means no error, SystemP_FAILURE on not expected API parameters 
  *
  */
 int32_t SDFM_getFastDetectErrorStatus(sdfm_handle h_sdfm, uint8_t chNum); 
@@ -327,7 +327,7 @@ int32_t SDFM_getFastDetectErrorStatus(sdfm_handle h_sdfm, uint8_t chNum);
  *  \brief  Clear PWM trip status of the corresponding PWM trip zone block for specified SDFM channel number.
  *
  *  \param[in]  h_sdfm       SDFM handle
- *  \param[in]  chNum           SDFM channel number : Channel0-Channel9
+ *  \param[in]  chNum           SDFM channel number : Channel0-Channel8
  *
  *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE on error or not expected API parameters 
  */
@@ -366,7 +366,7 @@ float SDFM_measureClockPhaseDelay(sdfm_handle h_sdfm, uint16_t clEdg);
  *  \brief  This API returns high threshold Status for specified SDFM channel number
  *
  *  \param[in]  h_sdfm          SDFM handle
- *  \param[in]  chNum           SDFM channel number : Channel0-Channel9
+ *  \param[in]  chNum           SDFM channel number : Channel0-Channel8
  *
  *  \retval     Status of Over current error for High threshold
  */
@@ -376,7 +376,7 @@ uint8_t SDFM_getLowThresholdStatus(sdfm_handle h_sdfm, uint8_t chNum);
  *
  *  \brief  This API returns high threshold Status for specified SDFM channel number
  *  \param[in]  h_sdfm          SDFM handle
- *  \param[in]  chNum           SDFM channel number : Channel0-Channel9
+ *  \param[in]  chNum           SDFM channel number : Channel0-Channel8
  *
  *  \retval     Status of over current error for Low Threshold
  */
@@ -386,11 +386,41 @@ uint8_t SDFM_getHighThresholdStatus(sdfm_handle h_sdfm, uint8_t chNum);
  *
  *  \brief  This API clears Overcurrent error bit of corresponding PWM register for specified SDFM channel number
  *  \param[in]  h_sdfm          SDFM handle
- *  \param[in]  chNum           SDFM channel number : Channel0-Channel9
+ *  \param[in]  chNum           SDFM channel number : Channel0-Channel8
  *
  *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE on not expected API parameters 
  */
 int32_t SDFM_clearOverCurrentError(sdfm_handle h_sdfm, uint8_t chNum);
+
+/**
+ *
+ *  \brief  This API enables zero cross detection for specified SDFM channel number
+ *  \param[in]  h_sdfm          SDFM handle
+ *  \param[in]  chNum           SDFM channel number : Channel0-Channel8
+ *  \param[in]  zcThr            zero cross threshold 
+ * 
+ */
+void SDFM_enableZeroCrossDetection(sdfm_handle h_sdfm, uint8_t chNum, uint32_t zcThr);
+
+/**
+ *
+ *  \brief  This API returns Zero cross Status for specified SDFM channel number
+ *  \param[in]  h_sdfm          SDFM handle
+ *  \param[in]  chNum           SDFM channel number : Channel0-Channel8
+ *
+ *  \retval     Status of zero cross 
+ */
+uint8_t SDFM_getZeroCrossThresholdStatus(sdfm_handle h_sdfm, uint8_t chNum);
+
+/**
+ *
+ *  \brief  This API disbales zero cross detection for specified SDFM channel number
+ *  \param[in]  h_sdfm          SDFM handle
+ *  \param[in]  chNum           SDFM channel number : Channel0-Channel8
+ * 
+ * 
+ */
+void SDFM_disableZeroCrossDetection(sdfm_handle h_sdfm, uint8_t chNum);
 /** @} */
 
 #ifdef __cplusplus

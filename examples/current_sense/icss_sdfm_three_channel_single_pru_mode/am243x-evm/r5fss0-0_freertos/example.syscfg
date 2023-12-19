@@ -1,7 +1,7 @@
 /**
  * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
  * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
- * @cliArgs --device "AM243x_ALV_beta" --package "ALV" --part "ALV" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK_AM243X@09.01.00"
+ * @cliArgs --device "AM243x_ALV_beta" --package "ALV" --part "ALV" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@09.01.00"
  * @versions {"tool":"1.18.0+3266"}
  */
 
@@ -15,9 +15,6 @@ const gpio1      = gpio.addInstance();
 const gpio2      = gpio.addInstance();
 const gpio3      = gpio.addInstance();
 const gpio4      = gpio.addInstance();
-const gpio5      = gpio.addInstance();
-const gpio6      = gpio.addInstance();
-const gpio7      = gpio.addInstance();
 const pruicss    = scripting.addModule("/drivers/pruicss/pruicss", {}, false);
 const pruicss1   = pruicss.addInstance();
 const debug_log  = scripting.addModule("/kernel/dpl/debug_log");
@@ -34,52 +31,34 @@ const mpu_armv76 = mpu_armv7.addInstance();
  */
 epwm1.$name              = "CONFIG_EPWM0";
 epwm1.EPWM.$assign       = "EHRPWM0";
-epwm1.EPWM.A.$assign     = "ball.U20";
-epwm1.EPWM.B.$assign     = "ball.U18";
-epwm1.EPWM.SYNCO.$assign = "ball.U21";
+epwm1.EPWM.A.$assign     = "GPMC0_AD3";
+epwm1.EPWM.B.$assign     = "GPMC0_AD4";
+epwm1.EPWM.SYNCO.$assign = "GPMC0_AD1";
 epwm1.EPWM.SYNCI.$used   = false;
 
 gpio1.$name                = "GPIO_MTR_1_PWM_EN";
 gpio1.pinDir               = "OUTPUT";
 gpio1.GPIO.$assign         = "GPIO0";
 gpio1.GPIO.gpioPin.rx      = false;
-gpio1.GPIO.gpioPin.$assign = "ball.Y20";
+gpio1.GPIO.gpioPin.$assign = "GPMC0_AD15";
 
-gpio2.$name                    = "GPIO_HIGH_TH_CH0";
 gpio2.pinDir                   = "OUTPUT";
 gpio2.useMcuDomainPeripherals  = true;
+gpio2.$name                    = "GPIO_ZC_TH_CH0";
 gpio2.MCU_GPIO.$assign         = "MCU_GPIO0";
 gpio2.MCU_GPIO.gpioPin.rx      = false;
-gpio2.MCU_GPIO.gpioPin.$assign = "ball.B6";
+gpio2.MCU_GPIO.gpioPin.$assign = "MCU_SPI0_D1";
 
-gpio3.$name                    = "GPIO_LOW_TH_CH0";
 gpio3.pinDir                   = "OUTPUT";
 gpio3.useMcuDomainPeripherals  = true;
+gpio3.$name                    = "GPIO_ZC_TH_CH1";
 gpio3.MCU_GPIO.gpioPin.rx      = false;
-gpio3.MCU_GPIO.gpioPin.$assign = "ball.C7";
+gpio3.MCU_GPIO.gpioPin.$assign = "MCU_SPI1_CS0";
 
-gpio4.$name                    = "GPIO_HIGH_TH_CH1";
 gpio4.pinDir                   = "OUTPUT";
 gpio4.useMcuDomainPeripherals  = true;
-gpio4.MCU_GPIO.gpioPin.rx      = false;
-gpio4.MCU_GPIO.gpioPin.$assign = "ball.A7";
-
-gpio5.$name                    = "GPIO_LOW_TH_CH1";
-gpio5.pinDir                   = "OUTPUT";
-gpio5.useMcuDomainPeripherals  = true;
-gpio5.MCU_GPIO.gpioPin.rx      = false;
-gpio5.MCU_GPIO.gpioPin.$assign = "ball.D7";
-
-gpio6.$name                    = "GPIO_HIGH_TH_CH2";
-gpio6.pinDir                   = "OUTPUT";
-gpio6.useMcuDomainPeripherals  = true;
-gpio6.MCU_GPIO.gpioPin.$assign = "ball.C8";
-
-gpio7.$name                    = "GPIO_LOW_TH_CH2";
-gpio7.pinDir                   = "OUTPUT";
-gpio7.useMcuDomainPeripherals  = true;
-gpio7.MCU_GPIO.gpioPin.rx      = false;
-gpio7.MCU_GPIO.gpioPin.$assign = "ball.E6";
+gpio4.$name                    = "GPIO_ZC_TH_CH2";
+gpio4.MCU_GPIO.gpioPin.$assign = "MCU_SPI1_D1";
 
 pruicss1.$name                           = "CONFIG_PRU_ICSS0";
 pruicss1.coreClk                         = 300000000;
@@ -126,8 +105,5 @@ mpu_armv76.size     = 31;
  */
 gpio3.MCU_GPIO.$suggestSolution             = "MCU_GPIO0";
 gpio4.MCU_GPIO.$suggestSolution             = "MCU_GPIO0";
-gpio5.MCU_GPIO.$suggestSolution             = "MCU_GPIO0";
-gpio6.MCU_GPIO.$suggestSolution             = "MCU_GPIO0";
-gpio7.MCU_GPIO.$suggestSolution             = "MCU_GPIO0";
-debug_log.uartLog.UART.RXD.$suggestSolution = "ball.D15";
-debug_log.uartLog.UART.TXD.$suggestSolution = "ball.C16";
+debug_log.uartLog.UART.RXD.$suggestSolution = "UART0_RXD";
+debug_log.uartLog.UART.TXD.$suggestSolution = "UART0_TXD";

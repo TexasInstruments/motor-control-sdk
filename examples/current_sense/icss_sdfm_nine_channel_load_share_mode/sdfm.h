@@ -170,6 +170,10 @@ typedef struct SdfmPrms_s
     uint8_t en_fd;
     /**<Fast detect configuration field*/
     uint8_t fastDetect[NUM_SD_CH][NUM_FD_FIELD];
+    /**<Zero Cross enable field*/
+    uint8_t en_zc;
+    /**<Zero cross threshold*/
+    uint32_t zcThr[NUM_CH_SUPPORTED_PER_AXIS];
 } SdfmPrms;
 
 

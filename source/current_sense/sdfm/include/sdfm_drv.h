@@ -134,6 +134,9 @@ extern "C" {
 #define SDFM_CHANNEL7    (7)
 #define SDFM_CHANNEL8    (8)
 
+/*SDFM firmware version mask*/
+#define SDFM_FW_VERSION_BIT_SHIFT       (32)
+
 /*Fast detect ERROR mask*/
 #define SDFM_FD_ERROR_MASK_FOR_TRIP_VEC      ( 0x3800000 )
 
@@ -262,8 +265,12 @@ typedef struct SDFM_ThresholdParms_s
     volatile uint8_t     highThStatus;
     /**<  High Threshold status*/
     volatile uint8_t     lowThStatus;
-    /**<  reserved */
-    volatile uint16_t    reserved3;
+    /**<  Zero cross enable bit*/
+    volatile uint8_t    zeroCrossEn;
+    /**<  Zero cross Threshold status */
+    volatile uint8_t    zeroCrossThstatus;
+    /**< Zero Cross Threshold*/
+    volatile uint32_t    zeroCrossTh;
 }SDFM_ThresholdParms;
 
 /**
@@ -294,8 +301,8 @@ typedef struct SDFM_Cfg_s
     volatile uint8_t   fd_one_min;
     /**< sdfm ch clock parms*/
     SDFM_ClkSourceParms  sdfm_clk_parms;
-    /**< array to store the params for gpio toggle for different channels*/
-    SDFM_GpioParams        sdfm_gpio_params[3];
+    /**< array to store the params of gpios for zero cross threshold*/
+    SDFM_GpioParams        sdfm_gpio_params;
 } SDFM_Cfg;
 
 /**
