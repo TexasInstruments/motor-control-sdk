@@ -173,11 +173,13 @@ TAMAGAWA_SKIP_INIT_SUCCESS:
     ;Initialization successful status update ends here
 	SBCO	&R0.b0,	PRUx_DMEM,	TAMAGAWA_INTFC_CMD_STATUS_OFFSET,	1
 
-HANDLE_PERIODIC_TRIGGER_MODE:
+CHECK_OPERATING_MODE:
 	LBCO	&R0.b0,	PRUx_DMEM,	TAMAGAWA_OPMODE_CONFIG_OFFSET,	1
     ;If opmode=1, Host trigger is done
 	;If opmode=0, Periodic trigger is done
 	QBNE	HANDLE_HOST_TRIGGER_MODE,	R0.b0,		0
+
+HANDLE_PERIODIC_TRIGGER_MODE:
     ;Get compare event status
     LBCO	&R0,	ICSS_IEP,	ICSS_IEP_CMP_STATUS_REG,	4
     ; wait till IEP CMP3 event
@@ -187,6 +189,7 @@ HANDLE_PERIODIC_TRIGGER_MODE:
     ; store compare event status
     SBCO	&R0,	ICSS_IEP,  ICSS_IEP_CMP_STATUS_REG,	4
     ; SET command TRIGGER
+    LDI		R0.b0,	1
     SBCO    &R0.b0,	PRUx_DMEM, TAMAGAWA_INTFC_CMD_TRIGGER_OFFSET,	1
 
 HANDLE_HOST_TRIGGER_MODE:
@@ -212,12 +215,15 @@ TAMAGAWA_HOST_CMD_END:
     ;check PRU host trigger for all three channels
     LBCO	&R3.b0,	PRUx_DMEM,	TAMAGAWA_OPMODE_CONFIG_OFFSET,	1 
     ;skip interrupt to R5F in host trigger
-    QBNE  SKIP_INTERRUPT_TRIGGER,  R3.b0,  0
+    QBNE    SKIP_INTERRUPT_TRIGGER,  R3.b0,  0
     ;Generate interrupt to R5F
-    LDI  R31.w0, 34;PRU_TRIGGER_HOST_TAMAGAWA_EVT0 ( pr0_pru_mst_intr[2]_intr_req )
-SKIP_INTERRUPT_TRIGGER:
+    LDI     R31.w0, 34;PRU_TRIGGER_HOST_TAMAGAWA_EVT0 ( pr0_pru_mst_intr[2]_intr_req )
+    ;Global reinit
+    set     R31, TAMAGAWA_TX_GLOBAL_REINIT
     ;Handle next Postition in periodic trigger
-    QBEQ		HANDLE_PERIODIC_TRIGGER_MODE,	R3.b0,		0
+    JMP		HANDLE_PERIODIC_TRIGGER_MODE
+
+SKIP_INTERRUPT_TRIGGER:
     ;Handle next Position request by user.
     JMP		HANDLE_HOST_TRIGGER_MODE
 
