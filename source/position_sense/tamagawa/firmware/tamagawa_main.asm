@@ -172,10 +172,22 @@ TAMAGAWA_SKIP_INIT_SUCCESS:
 	LDI     R0.b0,  1
     ;Initialization successful status update ends here
 	SBCO	&R0.b0,	PRUx_DMEM,	TAMAGAWA_INTFC_CMD_STATUS_OFFSET,	1
+
+HANDLE_PERIODIC_TRIGGER_MODE:
 	LBCO	&R0.b0,	PRUx_DMEM,	TAMAGAWA_OPMODE_CONFIG_OFFSET,	1
     ;If opmode=1, Host trigger is done
 	;If opmode=0, Periodic trigger is done
 	QBNE	HANDLE_HOST_TRIGGER_MODE,	R0.b0,		0
+    ;Get compare event status
+    LBCO	&R0,	ICSS_IEP,	ICSS_IEP_CMP_STATUS_REG,	4
+    ; wait till IEP CMP3 event
+	QBBC	HANDLE_PERIODIC_TRIGGER_MODE,	R0,	3
+	; Clear IEP CMP3 event
+	SET	R0,	R0,	3
+    ; store compare event status
+    SBCO	&R0,	ICSS_IEP,  ICSS_IEP_CMP_STATUS_REG,	4
+    ; SET command TRIGGER
+    SBCO    &R0.b0,	PRUx_DMEM, TAMAGAWA_INTFC_CMD_TRIGGER_OFFSET,	1
 
 HANDLE_HOST_TRIGGER_MODE:
     ;If Host Trigger=1, request made by R5F to Firmware, now Firmware do processing and when done set trigger to 0 so that R5F application can act further.
@@ -197,6 +209,15 @@ TAMAGAWA_HOST_CMD_END:
 	LDI		R3.w0,	0
     ;Clear Host Trigger
 	SBCO	&R3.b0,	PRUx_DMEM,	TAMAGAWA_INTFC_CMD_TRIGGER_OFFSET,	1
+    ;check PRU host trigger for all three channels
+    LBCO	&R3.b0,	PRUx_DMEM,	TAMAGAWA_OPMODE_CONFIG_OFFSET,	1 
+    ;skip interrupt to R5F in host trigger
+    QBNE  SKIP_INTERRUPT_TRIGGER,  R3.b0,  0
+    ;Generate interrupt to R5F
+    LDI  R31.w0, 34;PRU_TRIGGER_HOST_TAMAGAWA_EVT0 ( pr0_pru_mst_intr[2]_intr_req )
+SKIP_INTERRUPT_TRIGGER:
+    ;Handle next Postition in periodic trigger
+    QBEQ		HANDLE_PERIODIC_TRIGGER_MODE,	R3.b0,		0
     ;Handle next Position request by user.
     JMP		HANDLE_HOST_TRIGGER_MODE
 

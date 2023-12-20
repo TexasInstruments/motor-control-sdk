@@ -64,6 +64,10 @@ const pruicss1                           = pruicss.addInstance({}, false);
 pruicss1.$name                           = "CONFIG_PRU_ICSS0";
 tamagawa1.pru                            = pruicss1;
 pruicss1.AdditionalICSSSettings[0].$name = "CONFIG_PRU_ICSS_IO0";
+pruicss1.intcMapping.create(1);
+pruicss1.intcMapping[0].$name            = "CONFIG_ICSS0_INTC_MAPPING0";
+pruicss1.intcMapping[0].event            = "18";
+
 
 /**
  * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future

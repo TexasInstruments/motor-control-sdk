@@ -39,6 +39,8 @@ endif
 
 FILES_common := \
 	tamagawa_diagnostic.c \
+	tamagawa_periodic_trigger.h \
+	tamagawa_periodic_trigger.c \
 	main.c \
 	ti_drivers_config.c \
 	ti_drivers_open_close.c \

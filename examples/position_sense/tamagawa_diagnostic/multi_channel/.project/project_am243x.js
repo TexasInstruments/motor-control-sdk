@@ -5,6 +5,8 @@ let device = "am243x";
 const files = {
     common: [
         "tamagawa_diagnostic.c",
+        "tamagawa_periodic_trigger.h",
+        "tamagawa_periodic_trigger.c",
         "main.c",
     ],
 };

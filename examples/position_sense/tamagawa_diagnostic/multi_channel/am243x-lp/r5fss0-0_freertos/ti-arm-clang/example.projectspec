@@ -97,6 +97,10 @@
         <pathVariable name="MOTOR_CONTROL_SDK_PATH" path="${COM_TI_MOTOR_CONTROL_SDK_AMXXX_INSTALL_DIR}" scope="project" />
         <file path="../../../../tamagawa_diagnostic.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
+        <file path="../../../../tamagawa_periodic_trigger.h" openOnCreation="false" excludeFromBuild="false" action="copy">
+        </file>
+        <file path="../../../../tamagawa_periodic_trigger.c" openOnCreation="false" excludeFromBuild="false" action="copy">
+        </file>
         <file path="../main.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
         <file path="linker.cmd" openOnCreation="false" excludeFromBuild="false" action="copy">
