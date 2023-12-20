@@ -354,11 +354,11 @@ typedef struct SDFM_SampleOutInterface_s
 typedef struct SDFM_s {
     /**< PRU ID */
     PRUICSS_Handle gPruIcssHandle;
-    uint8_t pru_id;
-    uint32_t sdfm_clock;
-    uint32_t iep_clock;
-    uint32_t pru_core_clk;
-    uint8_t  iep_inc;
+    uint8_t pruId;
+    uint32_t sdfmClock;
+    uint32_t iepClock;
+    uint32_t pruCoreClk;
+    uint8_t  iepInc;
     SDFM_Interface * p_sdfm_interface;
     SDFM_SampleOutInterface *sampleOutputInterface;
     void *pruss_cfg;

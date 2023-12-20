@@ -178,24 +178,24 @@ int32_t initSdfmFw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm,  PRU
         return SDFM_ERR_INIT_SDFM;
     }
 
-    hSdfm->iep_clock = pSdfmPrms->iep_clock; 
-    hSdfm->sdfm_clock = pSdfmPrms->sd_clock; 
+    hSdfm->iepClock = pSdfmPrms->iepClock; 
+    hSdfm->sdfmClock = pSdfmPrms->sdClock; 
     hSdfm->sampleOutputInterface = (SDFM_SampleOutInterface *)(pSdfmPrms->samplesBaseAddress);
     uint32_t sampleOutputInterfaceGlobalAddr = CPU0_BTCM_SOCVIEW(pSdfmPrms->samplesBaseAddress);
     hSdfm->p_sdfm_interface->sampleBufferBaseAdd = sampleOutputInterfaceGlobalAddr;
-    hSdfm->iep_inc = 1; /* Default IEP increment 1 */
+    hSdfm->iepInc = 1; /* Default IEP increment 1 */
     
     uint8_t acc_filter = 0; //SINC3 filter
     uint8_t ecap_divider = 0x0F; //IEP at 300MHz: SD clock = 300/15=20Mhz
 
     /*configure IEP count for one epwm period*/
-    SDFM_configIepCount(hSdfm, pSdfmPrms->epwm_out_freq);
+    SDFM_configIepCount(hSdfm, pSdfmPrms->epwmOutFreq);
 
     /*configure ecap as PWM code for generate 20 MHz sdfm clock*/
     SDFM_configEcap(hSdfm, ecap_divider);
 
     /*set Noraml current OSR */
-    SDFM_setFilterOverSamplingRatio(hSdfm, pSdfmPrms->FilterOsr);
+    SDFM_setFilterOverSamplingRatio(hSdfm, pSdfmPrms->filterOsr);
      
     /*below configuration for all three channel*/
     for(SDFM_CH = 0; SDFM_CH < NUM_CH_SUPPORTED; SDFM_CH++)
@@ -203,7 +203,7 @@ int32_t initSdfmFw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm,  PRU
         SDFM_setEnableChannel(hSdfm, SDFM_CH);
 
         /*set comparator osr or Over current osr*/
-        SDFM_setCompFilterOverSamplingRatio(hSdfm, SDFM_CH, pSdfmPrms->ComFilterOsr);
+        SDFM_setCompFilterOverSamplingRatio(hSdfm, SDFM_CH, pSdfmPrms->comFilterOsr);
 
         /*set ACC source or filter type*/
         SDFM_configDataFilter(hSdfm, SDFM_CH, acc_filter);
@@ -212,13 +212,13 @@ int32_t initSdfmFw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm,  PRU
         SDFM_selectClockSource(hSdfm, SDFM_CH, pSdfmPrms->clkPrms[SDFM_CH]);
 
         /*set threshold values */
-        SDFM_setCompFilterThresholds(hSdfm, SDFM_CH, pSdfmPrms->threshold_parms[SDFM_CH]);
-        if(pSdfmPrms->en_fd)
+        SDFM_setCompFilterThresholds(hSdfm, SDFM_CH, pSdfmPrms->thresholdParms[SDFM_CH]);
+        if(pSdfmPrms->enFastDetect)
         {
             /*Fast detect configuration */
             SDFM_configFastDetect(hSdfm, SDFM_CH, pSdfmPrms->fastDetect[SDFM_CH]);
         }
-        if(pSdfmPrms->en_com)
+        if(pSdfmPrms->enComparator )
         {
             SDFM_enableComparator(hSdfm, SDFM_CH);       
         }
@@ -227,7 +227,7 @@ int32_t initSdfmFw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm,  PRU
             SDFM_disableComparator(hSdfm, SDFM_CH);
         }
 
-        if(pSdfmPrms->en_zc)
+        if(pSdfmPrms->enZeroCross)
         {
             SDFM_enableZeroCrossDetection(hSdfm, SDFM_CH, pSdfmPrms->zcThr[SDFM_CH]);
         }
@@ -238,7 +238,7 @@ int32_t initSdfmFw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm,  PRU
     SDFM_configGpioPins(hSdfm);
 
     SDFM_setSampleTriggerTime(hSdfm, pSdfmPrms->firstSampTrigTime);
-    if(pSdfmPrms->en_second_update)
+    if(pSdfmPrms->enSecondUpdate)
     {
         SDFM_enableDoubleSampling(hSdfm, pSdfmPrms->secondSampTrigTime);
     }

@@ -198,8 +198,12 @@ PRUn_FD_ZERO_MAX_LIMIT_i_SHIFT  .set 17
 PRUn_FD_ZERO_MAX_LIMIT_i_MASK   .set 0x1F
 
 ;MACRO FOR TASK MANAGER
-COMP4_EVENT_NUMBER        .set  20
-COMP_EVENT_FOUR_SIFT          .set  8
+CMP4_EVENT_NUMBER        .set  20
+CMP_EVENT_BIT_SHIFT          .set  8
+CMP7_EVENT_NUMBER        .set  23
+CMP8_EVENT_NUMBER        .set  24
+
+
 
 ; ICSSG_PRUn_SD_SAMPLE_SIZE_REGi
 ;   n: {0,1}, PRU ID
@@ -230,12 +234,16 @@ ICSSG_IEP_CMP0_REG0             .set 0x0078 ; Compare 0 Low Register
 ICSSG_IEP_CMP0_REG1             .set 0x007C ; Compare 0 High Register
 ICSSG_IEP_CMP1_REG0             .set 0x0080 ; Compare 1 Low Register
 ICSSG_IEP_CMP1_REG1             .set 0x0084 ; Compare 1 High Register
-ICSSG_IEP_CMP2_REG0             .set 0x0088 ; Compare 1 Low Register
-ICSSG_IEP_CMP2_REG1             .set 0x008C ; Compare 1 High Register
-ICSSG_IEP_CMP3_REG0             .set 0x0090 ; Compare 1 Low Register
-ICSSG_IEP_CMP3_REG1             .set 0x0094 ; Compare 1 High Register
+ICSSG_IEP_CMP2_REG0             .set 0x0088 ; Compare 2 Low Register
+ICSSG_IEP_CMP2_REG1             .set 0x008C ; Compare 2 High Register
+ICSSG_IEP_CMP3_REG0             .set 0x0090 ; Compare 3 Low Register
+ICSSG_IEP_CMP3_REG1             .set 0x0094 ; Compare 3 High Register
 ICSSG_IEP_CMP4_REG0             .set 0x0098 ; compare 4 low Register
 ICSSG_IEP_CMP4_REG1             .set 0x009C ; compare 4 High Register
+ICSSG_IEP_CMP7_REG0             .set 0x00B0 ; compare 7 low Register
+ICSSG_IEP_CMP7_REG1             .set 0x00B4 ; compare 7 High Register
+ICSSG_IEP_CMP8_REG0             .set 0x00C0 ; compare 4 low Register
+ICSSG_IEP_CMP8_REG1             .set 0x00C4 ; compare 4 High Register
 ICSSG_IEP_PWM_REG               .set 0x0008 ; PWM Sync Out Register, offset from 0x100
 ; ICSSG_IEP_GLOBAL_CFG_REG:CNT_ENABLE_BN
 CNT_ENABLE_BN                   .set 0

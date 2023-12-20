@@ -116,7 +116,7 @@ sdfm_handle SDFM_init(uint8_t pru_id, uint8_t coreId)
 void SDFM_configIepCount(sdfm_handle h_sdfm, uint32_t epwm_out_freq)
 {
     /*; IEP0 default increment=1*/
-    h_sdfm->p_sdfm_interface->sdfm_cfg_iep_ptr.iep_inc_value = h_sdfm->iep_inc;
+    h_sdfm->p_sdfm_interface->sdfm_cfg_iep_ptr.iep_inc_value = h_sdfm->iepInc;
     /*
      IEP0 CMP0 count to simulate EPWM (FOC loop) period:
      - IEP frequency = 300 MHz
@@ -124,7 +124,7 @@ void SDFM_configIepCount(sdfm_handle h_sdfm, uint32_t epwm_out_freq)
      - Simulated EPWM frequency = 8e3
      CMP0 = 300e6/1/8e3 = 37500 = 0x927C
     */
-    uint32_t cnt_epwm_prd = h_sdfm->iep_clock/epwm_out_freq;
+    uint32_t cnt_epwm_prd = h_sdfm->iepClock/epwm_out_freq;
     h_sdfm->p_sdfm_interface->sdfm_cfg_iep_ptr.cnt_epwm_prd = cnt_epwm_prd;
 
 }
@@ -158,7 +158,7 @@ void SDFM_setCompFilterThresholds(sdfm_handle h_sdfm, uint8_t ch_id, SDFM_Thresh
 void SDFM_setSampleTriggerTime(sdfm_handle h_sdfm, float samp_trig_time)
 {   /*convert sample time into IEP count*/
     /*samp time in us */
-    int32_t count = (h_sdfm->iep_clock /1000000)*((float)samp_trig_time);
+    int32_t count = (h_sdfm->iepClock /1000000)*((float)samp_trig_time);
     h_sdfm->p_sdfm_interface->sdfm_cfg_trigger.first_samp_trig_time = count;
 
 
@@ -170,7 +170,7 @@ void SDFM_enableDoubleSampling(sdfm_handle h_sdfm, float samp_trig_time)
     /*Enable double normal current sampling*/
     h_sdfm->p_sdfm_interface->sdfm_cfg_trigger.en_double_nc_sampling = 1;
     /*Second sample point*/
-    int32_t count = (h_sdfm->iep_clock /1000000)*((float)samp_trig_time);
+    int32_t count = (h_sdfm->iepClock /1000000)*((float)samp_trig_time);
     h_sdfm->p_sdfm_interface->sdfm_cfg_trigger.second_samp_trig_time = count;
 }
 
@@ -253,8 +253,8 @@ void SDFM_setFilterOverSamplingRatio(sdfm_handle h_sdfm, uint16_t nc_osr)
     
     /*IEP0 counts in normal current sampling period*/
     uint16_t count;
-    uint32_t iep_freq = h_sdfm->iep_clock;
-    uint32_t sd_clock = h_sdfm->sdfm_clock;
+    uint32_t iep_freq = h_sdfm->iepClock;
+    uint32_t sd_clock = h_sdfm->sdfmClock;
     count = (int)((float)nc_osr*((float)iep_freq/(float)sd_clock));
     h_sdfm->p_sdfm_interface->sdfm_cfg_trigger.nc_prd_iep_cnt = count;
 }
@@ -421,18 +421,18 @@ float SDFM_measureClockPhaseDelay(sdfm_handle h_sdfm, uint16_t clkEdg)
    if(nEdge == clkEdg)
    {
       /*PRU cycles for half SD clock period*/
-      uint32_t pruCycles = ceil(((float)h_sdfm->pru_core_clk)/(2*h_sdfm->sdfm_clock));
+      uint32_t pruCycles = ceil(((float)h_sdfm->pruCoreClk)/(2*h_sdfm->sdfmClock));
       h_sdfm->p_sdfm_interface->sdfm_ch_ctrl.clock_phase_delay = pruCycles - temp;
    }
    else
    {
       /*PRU cycles for one SD clock period*/
-      uint32_t pruCycles = ceil((float)(h_sdfm->pru_core_clk/(h_sdfm->sdfm_clock)));
+      uint32_t pruCycles = ceil((float)(h_sdfm->pruCoreClk/(h_sdfm->sdfmClock)));
       h_sdfm->p_sdfm_interface->sdfm_ch_ctrl.clock_phase_delay = pruCycles - temp;
 
    }
     /*conversion from PRU cycle to ns */
-    float phaseDelay =  ((float)h_sdfm->p_sdfm_interface->sdfm_ch_ctrl.clock_phase_delay * 1000000000)/h_sdfm->pru_core_clk;
+    float phaseDelay =  ((float)h_sdfm->p_sdfm_interface->sdfm_ch_ctrl.clock_phase_delay * 1000000000)/h_sdfm->pruCoreClk;
     return phaseDelay;
 }
 uint8_t SDFM_getHighThresholdStatus(sdfm_handle h_sdfm, uint8_t chNum)
