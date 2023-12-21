@@ -40,7 +40,6 @@
 #include "ti_board_open_close.h"
 
 #include "epwm_dc.h"
-#include "cfg_pad.h"
 #include "sdfm.h"
 #include "mclk_iep0_sync.h"
 
@@ -337,15 +336,7 @@ void sdfm_main(void *args)
      */
     init_pwm();
     DebugP_log("EPWM Configured!\r\n");
-    /*
-     *  Configure SDFM
-     */
-
-    /* Configure SOC pads for SDFM.
-       Normally handled via Pinmux_init(),
-       but currently no way to pads for ICSSG from Sysconfig. */
-    cfgPad();
-    
+     
     /*Configure IEP for SD clock when phase delay calculaton is enabled*/
     if(gTestSdfmPrms.phase_delay)
     {

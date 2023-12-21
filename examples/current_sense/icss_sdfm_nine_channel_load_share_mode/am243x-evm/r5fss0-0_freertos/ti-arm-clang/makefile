@@ -43,7 +43,6 @@ FILES_common := \
 	epwm_drv_aux.c \
 	epwm_mod.c \
 	sdfm.c \
-	cfg_pad.c \
 	main.c \
 	ti_drivers_config.c \
 	ti_drivers_open_close.c \
