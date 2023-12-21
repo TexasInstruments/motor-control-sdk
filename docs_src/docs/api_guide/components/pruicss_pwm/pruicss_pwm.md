@@ -1,8 +1,8 @@
-# PRUICSS PWM {#PRUICSS_PWM}
+# PRU-ICSS PWM {#PRUICSS_PWM}
 
 [TOC]
 
-The PRUICSS PWM driver provides API to program Intial, Trip, Active states of PWM outputs. 
+The PRU-ICSS PWM driver provides API to program Intial, Trip, Active states of PWM outputs.
 Below are the high level features supported by the driver.
 
 ## Features Supported
@@ -28,13 +28,13 @@ SysConfig can be used to configure things mentioned below:
 
 - Generate PWM outputs with distinct time period, which means all the PWM outputs will be in sync with respected to each other, without re-programming.
 
-- Dead band(it will be added in future release) 
+- Dead band(it will be added in future release)
 
 ## Important Note
 
 PRUICSS has one pwm module, which has four pwm sets (PWM0, PWM1, PWM2, PWM3)
-Each Set has six signals (A0,A1,A2,B0,B1,B2) With Reference to Technical Reference Manual, Pwm six signals(A0,A1,A2,B0,B1,B2) Naming convention is is slightly different as mentioned in \ref PRUICSS_PWM_API          
-   
+Each Set has six signals (A0,A1,A2,B0,B1,B2) With Reference to Technical Reference Manual, Pwm six signals(A0,A1,A2,B0,B1,B2) Naming convention is is slightly different as mentioned in \ref PRUICSS_PWM_API
+
 ## Example Usage
 
 \ref EXAMPLE_PRUICSS_PWM_DUTY_CYCLE

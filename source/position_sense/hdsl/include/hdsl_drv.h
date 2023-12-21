@@ -461,7 +461,7 @@ int32_t HDSL_read_pc_short_msg(HDSL_Handle hdslHandle, uint8_t addr, uint8_t *da
  *  \param[in]  addr            10 bit address for long message
  *  \param[in]  offsetEnable    Addressing with offset enable/disable from \ref HDSL_LongMessageAddrOffsetModes
  *  \param[in]  addrType        Addressing Type from \ref HDSL_LongMessageAddrTypes
- *  \param[in]  length          Length from \ref HDSL_LongMessageLength
+ *  \param[in]  length          Length from \ref HDSL_LongMessageLengths
  *  \param[in]  offset          15 bit address offset for long message (if offset is enabled in offsetEnable parameter)
  *  \param[in]  timeout         Timeout in microseconds
  *
@@ -477,7 +477,7 @@ int32_t HDSL_write_pc_long_msg(HDSL_Handle hdslHandle, uint16_t addr, uint8_t of
  *  \param[in]  addr            10 bit address for long message
  *  \param[in]  offsetEnable    Addressing with offset enable/disable from \ref HDSL_LongMessageAddrOffsetModes
  *  \param[in]  addrType        Addressing Type from \ref HDSL_LongMessageAddrTypes
- *  \param[in]  length          Length from \ref HDSL_LongMessageLength
+ *  \param[in]  length          Length from \ref HDSL_LongMessageLengths
  *  \param[in]  offset          15 bit address offset for long message
  *  \param[in]  timeout         Timeout in microseconds
  *
