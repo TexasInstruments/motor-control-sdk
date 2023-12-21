@@ -1,19 +1,9 @@
 let common = system.getScript("/common");
 let sdfm_pins = system.getScript("/current_sense/sdfm_pins.js");
 let device = common.getDeviceName();
-let is_am243x_lp_device = (device === "am243x-lp") ? true : false;
 
 let sdfm_module_name = "/current_sense/sdfm";
 
-/*function onValidate(inst, validation) {
-    for (let instance_index in inst.$module.$instances)
-    {
-       let instance = inst.$module.$instances[instance_index];
-        //if ((!instance.channel_0)&&(!instance.channel_1)&&(!instance.channel_2)&&(!instance.channel_3)&&(!instance.channel_4)&&(!instance.channel_5)&&(!instance.channel_6)&&(!instance.channel_7)&&(!instance.channel_8))
-        //    validation.logError("Select atleast one channel",inst,"channel_0"
-        //)
-    }
-}*/
 
 let sdfm_module = {
     displayName: "SDFM",
@@ -110,7 +100,6 @@ let sdfm_module = {
     getInterfaceName: sdfm_pins.getInterfaceName,
     getPeripheralPinNames: sdfm_pins.getPeripheralPinNames,
     sharedModuleInstances: sharedModuleInstances,
-    /*validate: onValidate,*/
 
 };
 

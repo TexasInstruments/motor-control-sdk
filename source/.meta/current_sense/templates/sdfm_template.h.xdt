@@ -37,5 +37,5 @@
 #define `instance.$name`_CHANNEL6         `instance.Channel_6 & 1`
 #define `instance.$name`_CHANNEL7         `instance.Channel_7 & 1`
 #define `instance.$name`_CHANNEL8         `instance.Channel_8 & 1`
-#define  PRU_ICSSGx_PRU_SLICE            `Slice`
+#define `instance.$name`_SLICE            `Slice`
 % }
