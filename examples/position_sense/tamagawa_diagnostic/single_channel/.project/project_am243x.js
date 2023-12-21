@@ -5,6 +5,7 @@ let device = "am243x";
 const files = {
     common: [
         "tamagawa_diagnostic.c",
+        "tamagawa_periodic_trigger.c",
         "main.c",
     ],
 };
@@ -34,6 +35,7 @@ const includes_freertos_r5f = {
         "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/FreeRTOS-Kernel/include",
         "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F",
         "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/am243x/r5f",
+        "${MOTOR_CONTROL_SDK_PATH}/examples/position_sense/tamagawa_diagnostic",
     ],
 };
 

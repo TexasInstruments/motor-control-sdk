@@ -52,6 +52,17 @@
 #include "ti_drivers_config.h"
 #include "ti_board_open_close.h"
 #include <position_sense/tamagawa/include/tamagawa_drv.h>
+#include "tamagawa_periodic_trigger.h"
+
+#define TASK_STACK_SIZE (4096)
+#define TASK_PRIORITY   (6)
+
+uint32_t gTaskFxnStack[TASK_STACK_SIZE/sizeof(uint32_t)] __attribute__((aligned(32)));
+TaskP_Object gTaskObject;
+
+#define TAMAGAWA_POSITION_LOOP_STOP    0
+#define TAMAGAWA_POSITION_LOOP_START   1
+
 #if ((CONFIG_TAMAGAWA0_CHANNEL0 + CONFIG_TAMAGAWA0_CHANNEL1 + CONFIG_TAMAGAWA0_CHANNEL2) == 1)
 #include <position_sense/tamagawa/firmware/tamagawa_master_single_channel_bin.h>
 #endif
@@ -188,6 +199,18 @@ static enum data_id tamagawa_get_command(uint8_t *adf, uint8_t *edf)
         cmd = DATA_ID_0;
         DebugP_log("\r\n| WARNING: invalid Data ID, Data readout Data ID 0 will be sent\n");
     }
+    /* If the command is 9, start periodic trigger with DATA ID as 0*/
+    if(cmd == PERIODIC_TRIGGER_CMD)
+    {
+        DebugP_log("\r| Enter IEP cycle count: ");
+        if(DebugP_scanf("%u\n", &priv->cmp3) >= 0)
+        {
+            return cmd;
+        }else{
+            cmd = DATA_ID_0;
+            DebugP_log("\r\n| WARNING: invalid value entered, Data readout Data ID 0 will be sent with host trigger mode\n");
+        }
+    }
     /* Check to make sure that the command issued is correct */
     if(cmd >= DATA_ID_NUM)
     {
@@ -281,6 +304,7 @@ static void tamagawa_display_menu(void)
     DebugP_log("\r\n| 6 : Reset (Data ID 8)                                                        |");
     DebugP_log("\r\n| 7 : Reset (Data ID C)                                                        |");
     DebugP_log("\r\n| 8 : Readout from EEPROM (Data ID D)                                          |");
+    DebugP_log("\r\n| 9 : Start periodic continuous mode                                           |");
     DebugP_log("\r\n|------------------------------------------------------------------------------|\n|\n");
     DebugP_log("\r\n| enter value: ");
 }
@@ -292,6 +316,119 @@ uint32_t tamagawa_get_fw_version(void)
     return *((uint32_t *)TamagawaFirmware + 1);
 }
 
+static int32_t tamagawa_position_loop_status;
+
+static void tamagawa_position_loop_decide_termination(void *args)
+{
+    char c;
+
+    while(1)
+    {
+        DebugP_scanf("%c", &c);
+        tamagawa_position_loop_status = TAMAGAWA_POSITION_LOOP_STOP;
+        break;
+    }
+    TaskP_exit();
+}
+
+
+static int32_t tamagawa_loop_task_create(void)
+{
+    uint32_t status;
+    TaskP_Params taskParams;
+
+    TaskP_Params_init(&taskParams);
+    taskParams.name = "tamagawa_position_loop_decide_termination";
+    taskParams.stackSize = TASK_STACK_SIZE;
+    taskParams.stack = (uint8_t *)gTaskFxnStack;
+    taskParams.priority = TASK_PRIORITY;
+    taskParams.taskMain = (TaskP_FxnMain)tamagawa_position_loop_decide_termination;
+    status = TaskP_construct(&gTaskObject, &taskParams);
+
+    if(status != SystemP_SUCCESS)
+    {
+        DebugP_log("\rTask2 creation failed\n");
+    }
+
+    return status ;
+}
+
+static void tamagawa_process_periodic_command(enum data_id process_dataid_cmd)
+{
+    int32_t status;
+
+    tamagawa_config_periodic_trigger(priv);
+
+    if(tamagawa_loop_task_create() != SystemP_SUCCESS)
+    {
+        DebugP_log("\r| ERROR: OS not allowing continuous mode as related Task creation failed\r\n|\r\n|\n");
+        DebugP_log("Task_create() failed!\n");
+        return;
+    }
+
+    struct tamagawa_periodic_interface tamagawa_periodic_interface;
+    tamagawa_periodic_interface.pruss_cfg = priv->pruss_cfg;
+    tamagawa_periodic_interface.pruss_iep = priv->pruss_iep;
+    tamagawa_periodic_interface.pruss_dmem = priv->tamagawa_xchg;
+    tamagawa_periodic_interface.cmp3 = priv->cmp3;
+    
+    status = tamagawa_config_periodic_mode(&tamagawa_periodic_interface, gPruIcssXHandle);
+    DebugP_assert(0 != status);
+    tamagawa_position_loop_status = TAMAGAWA_POSITION_LOOP_START;
+
+    DebugP_log("\r|\n\r| press enter to stop the continuous mode\r\n|\r\n|         position, f1\r\n| ");
+
+    while(1)
+    {
+        if(tamagawa_position_loop_status == TAMAGAWA_POSITION_LOOP_STOP)
+        {
+            tamagawa_stop_periodic_continuous_mode(&tamagawa_periodic_interface);
+            tamagawa_config_host_trigger(priv);
+            return;
+        }
+        else
+        {
+            tamagawa_update_data_id(priv, process_dataid_cmd);
+
+            /* In case of EEPROM commands, calculate the CRC for the different channels selected */
+            if((process_dataid_cmd == DATA_ID_6) || (process_dataid_cmd == DATA_ID_D))
+            {
+                uint32_t ch = 0;
+                for(ch = 0 ; ch < MAX_CHANNELS ; ch++)
+                {
+                    if(gTamagawa_multi_ch_mask & 1 << ch)
+                    {
+                        tamagawa_update_crc(priv, process_dataid_cmd, ch);
+                    }
+                }
+
+            }
+
+            tamagawa_command_process(priv, process_dataid_cmd, gTamagawa_multi_ch_mask);
+
+            if(gTamagawa_is_multi_ch)
+            {
+                DebugP_log("\r\n Multi-channel mode is enabled\n\n");
+
+                uint32_t ch;
+                for(ch = 0; ch < MAX_CHANNELS; ch++)
+                {
+                    if(gTamagawa_multi_ch_mask & 1 << ch)
+                    {
+                        tamagawa_multi_channel_set_cur(priv, ch);
+                        DebugP_log("\r\n\r|\n|\t\t\t\tCHANNEL %d\n", ch);
+                        tamagawa_handle_rx(priv, process_dataid_cmd);
+                    }
+                }
+            }
+            else
+            {
+                DebugP_log("\r\n Single-channel mode is enabled\n\n");
+                tamagawa_handle_rx(priv, process_dataid_cmd);
+            }
+        }    
+    }
+}
 
 void tamagawa_main(void *args)
 {
@@ -310,12 +447,14 @@ void tamagawa_main(void *args)
 #endif
 
     void *pruicss_cfg;
+    void *pruicss_iep;
     uint32_t slice_value = 1;
     uint32_t selected_ch;
 
     tamagawa_pruicss_init();
 
     pruicss_cfg = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->cfgRegBase);
+    pruicss_iep  = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->iep0RegBase);
 
     if(PRUICSS_PRUx == 0)
     {
@@ -323,9 +462,8 @@ void tamagawa_main(void *args)
     }
 
     /* Initialize the priv structure according to the PRUx slice selected */
-    priv = tamagawa_init((struct tamagawa_xchg *)((PRUICSS_HwAttrs *)(
-                          gPruIcssXHandle->hwAttrs))->pru1DramBase, pruicss_cfg, slice_value);
-
+    priv = tamagawa_init((struct tamagawa_xchg *)(
+        (PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->pru1DramBase, pruicss_cfg,pruicss_iep,slice_value);
 
     tamagawa_set_baudrate(priv, CONFIG_TAMAGAWA0_BAUDRATE);
 
@@ -393,6 +531,12 @@ void tamagawa_main(void *args)
         tamagawa_display_menu();
         cmd = tamagawa_get_command(&adf, &edf);
 
+        if(cmd == PERIODIC_TRIGGER_CMD)
+        {   
+            /*Takes which data_id to process in input arguments*/
+            tamagawa_process_periodic_command(DATA_ID_0);
+        }
+
         if(cmd >= DATA_ID_NUM)
         {
             continue;
@@ -436,8 +580,8 @@ void tamagawa_main(void *args)
             DebugP_log("\r\n Single-channel mode is enabled\n\n");
             tamagawa_handle_rx(priv, cmd);
         }
+    }
 
-}
     Board_driversClose();
     Drivers_close();
 }

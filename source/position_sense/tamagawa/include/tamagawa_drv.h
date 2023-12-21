@@ -105,6 +105,7 @@ enum data_id
     DATA_ID_8,  /**< Reset */
     DATA_ID_C,  /**< Reset */
     DATA_ID_D,  /**< EEPROM read */
+    PERIODIC_TRIGGER_CMD, /**< periodic trigger command */
     DATA_ID_NUM /**< Number of Data ID codes */
 };
 
@@ -280,6 +281,8 @@ struct tamagawa_priv
     void *pruss_cfg;    /**< ICSS PRU config base address*/
     int32_t slice_value;    /**< PRUx Slice being used*/
     struct register_offsets register_offset_val;    /**< Register offset values based on PRUx slice selection*/
+    void *pruss_iep; /**< ICSS IEP base address*/
+    uint64_t cmp3; /**< IEP CMP3 reg used in periodic trigger mode*/
 };
 
 /* ========================================================================== */
@@ -404,12 +407,13 @@ void tamagawa_multi_channel_set_cur(struct tamagawa_priv *priv, uint32_t ch);
  *
  *  \param[in]  tamagawa_xchg      tamagawa firmware interface address
  *  \param[in]  pruss_cfg       ICSS PRU config base address
+ *  \param[in]  pruss_iep       ICSS PRU IEP base address
  *  \param[in]  slice_value     PRUx slice value : 0 for PRU0 and 1 for PRU1
  *
  *  \retval     priv            pointer to struct tamagawa_priv instance
  *
  */
-struct tamagawa_priv *tamagawa_init(struct tamagawa_xchg *tamagawa_xchg, void *pruss_cfg, uint32_t slice_value);
+struct tamagawa_priv *tamagawa_init(struct tamagawa_xchg *tamagawa_xchg, void *pruss_cfg, void *pruss_iep, uint32_t slice_value);
 
 /**
  *  \brief      update the current requested command id in tamagawa interface.    <br>

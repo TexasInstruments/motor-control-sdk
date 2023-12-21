@@ -583,12 +583,13 @@ static inline void tamagawa_config_clr_cfg0(struct tamagawa_priv *priv)
     HW_WR_REG32((uint32_t)(pruss_cfg) + tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH2_CFG0, 0);
 }
 
-struct tamagawa_priv *tamagawa_init(struct tamagawa_xchg *tamagawa_xchg, void *pruss_cfg, uint32_t slice_value)
+struct tamagawa_priv *tamagawa_init(struct tamagawa_xchg *tamagawa_xchg, void *pruss_cfg, void *pruss_iep, uint32_t slice_value)
 {
     /* Initializes tamagawa firmware interface address and get the pointer to struct tamagawa_priv instance */
     tamagawa_priv.tamagawa_xchg = tamagawa_xchg;
     tamagawa_priv.pruss_cfg = pruss_cfg;
     tamagawa_priv.slice_value = slice_value;
+    tamagawa_priv.pruss_iep = pruss_iep;
 
     /* If the slice value is 0, it denotes that PRU0 is selected. Assign the register offsets for PRU0 */
     if(slice_value==0)
