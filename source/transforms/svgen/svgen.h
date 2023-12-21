@@ -40,7 +40,7 @@ extern "C"
 
 /**
  *  \addtogroup TRANSFORMS_API_MODULE APIs for motor transformations
- *  \@{
+ *  @{
  *
  *  \file       svgen.h
  *  \brief      Contains svpwm generation implementation
@@ -55,7 +55,7 @@ typedef float float32_t;
 
 
 //! \brief  Implements a SVM that subtracts common-mode term to achieve SV modulation.
-//! \param[in] oneOverDcBUS_invV    The inverse dc bus voltage scale factor, used to convert inputs to pu, use 1 if units are already in pu.
+//! \param[in] oneOverDcBus_invV    The inverse dc bus voltage scale factor, used to convert inputs to pu, use 1 if units are already in pu.
 //! \param[in] inValpha             Input voltage value in alpha-axis, V or pu
 //! \param[in] inVbeta              Input voltage value in beta-axis, V or pu
 //! \param[in] pVa                  Output pointer to voltage value in a-axis, pu
@@ -121,7 +121,7 @@ void SVGEN_runCom(const float32_t oneOverDcBus_invV, const float32_t inValpha, c
 }
 
 //! \brief  Implements a DPWM that uses maximum modulation.
-//! \param[in] oneOverDcBUS_invV    The inverse dc bus voltage scale factor, used to convert inputs to pu, use 1 if units are already in pu.
+//! \param[in] oneOverDcBus_invV    The inverse dc bus voltage scale factor, used to convert inputs to pu, use 1 if units are already in pu.
 //! \param[in] inValpha             Input voltage value in alpha-axis, V or pu
 //! \param[in] inVbeta              Input voltage value in beta-axis, V or pu
 //! \param[in] pVa                  Output pointer to voltage value in a-axis, pu
@@ -176,7 +176,7 @@ void SVGEN_runMax(const float32_t oneOverDcBus_invV, const float32_t inValpha, c
 }
 
 //! \brief  Implements a DPWM that uses minimum modulation.
-//! \param[in] oneOverDcBUS_invV    The inverse dc bus voltage scale factor, used to convert inputs to pu, use 1 if units are already in pu.
+//! \param[in] oneOverDcBus_invV    The inverse dc bus voltage scale factor, used to convert inputs to pu, use 1 if units are already in pu.
 //! \param[in] inValpha             Input voltage value in alpha-axis, V or pu
 //! \param[in] inVbeta              Input voltage value in beta-axis, V or pu
 //! \param[in] pVa                  Output pointer to voltage value in a-axis, pu
