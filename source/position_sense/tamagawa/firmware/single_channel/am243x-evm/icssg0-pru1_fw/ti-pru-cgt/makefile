@@ -2,12 +2,8 @@
 # Automatically-generated file. Do not edit!
 ################################################################################
 
-#   Required input arguments:
-#   MOTOR_CONTROL_SDK_PATH=${MOTOR_CONTROL_SDK_PATH}	sdk_dir_path
-#   CCS_INSTALL_DIR=${CCS_INSTALL_DIR}          		ccs_dir_path
-#   CCS_PROJECT_DEBUG=${CWD}       						project_debug_dir_path
-
 SHELL = cmd.exe
+export MOTOR_CONTROL_SDK_PATH?=$(abspath ../../../../../../../..)
 CCS_PATH?=$(CCS_INSTALL_DIR)/ccs_base/pru/include
 CG_TOOL_ROOT := C:/ti/ti-cgt-pru_2.3.3
 SYSCFG_DIR := $(CCS_PROJECT_DEBUG)/syscfg
@@ -15,52 +11,44 @@ SYSCFG_DIR := $(CCS_PROJECT_DEBUG)/syscfg
 GEN_OPTS__FLAG :=
 GEN_CMDS__FLAG :=
 
-ORDERED_OBJS += \
-"./main.obj" \
-"${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/single_channel/am243x-evm/icssg0-pru1_fw/ti-pru-cgt/linker.cmd" \
-$(GEN_CMDS__FLAG) \
--llibc.a \
-
 -include ../makefile.init
 
 RM := DEL /F
 RMDIR := RMDIR /S/Q
 
-# Every subdirectory with source files must be described here
-SUBDIRS := \
-. \
-
 # Add inputs and outputs from these tool invocations to the build variables
 CMD_SRCS += \
-${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/single_channel/am243x-evm/icssg0-pru1_fw/ti-pru-cgt/linker.cmd \
+tamagawa_diagnostic.cmd \
 
 ASM_SRCS += \
-${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/single_channel/main.asm
+tamagawa_main.asm
 
 OBJS += \
-./main.obj
+tamagawa_main.obj
 
 ASM_DEPS += \
-./main.d
+tamagawa_main.d
 
-OBJS__QUOTED += \
-"main.obj"
+OBJDIR := .
 
-ASM_DEPS__QUOTED += \
-"main.d"
+FILES_PATH_common = \
+	.. \
+	../../../.. \
 
-ASM_SRCS__QUOTED += \
-"${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/single_channel/main.asm"
+FILES_PATH := $(FILES_PATH_common)
+
+vpath %.asm $(FILES_PATH)
+vpath %.obj $(OBJDIR)
+vpath %.cmd $(FILES_PATH)
 
 # Each subdirectory must supply rules for building sources it contributes
-main.obj: ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/single_channel/main.asm $(GEN_OPTS) | $(GEN_FILES) $(GEN_MISC_FILES)
+$(OBJDIR)/$(OBJS): $(ASM_SRCS) 
 	@echo 'Building file: "$<"'
 	@echo 'Invoking: PRU Compiler'
 	"$(CG_TOOL_ROOT)/bin/clpru" -DICSSG0 -DPRU1 -DSLICE1 -v4 --define=SOC_AM243X --include_path="$(CCS_PATH)" --include_path="$(SYSCFG_DIR)" --include_path="${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware"  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little --preproc_with_compile --preproc_dependency="$(basename $(<F)).d_raw" $(GEN_OPTS__FLAG) "$<"
 	@echo 'Finished building: "$<"'
 	@echo ' '
 
-LIBS := -llibc.a
 
 -include ../makefile.defs
 
@@ -79,14 +67,14 @@ BIN_OUTPUTS__QUOTED += \
 
 
 # All Target
-all: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
+all: $(OBJS) $(CMD_SRCS)
 	@$(MAKE) --no-print-directory -Onone "tamagawa_single_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out"
 
 # Tool invocations
-tamagawa_single_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
+tamagawa_single_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out: $(OBJS) $(CMD_SRCS)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: PRU Linker'
-	"$(CG_TOOL_ROOT)/bin/clpru" -DICSSG0 -DPRU1 -DSLICE1 -v4 --define=SOC_AM243X  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little -z -m"tamagawa_single_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.map" -i"$(CG_TOOL_ROOT)/lib" --diag_wrap=off --display_error_number --warn_sections --xml_link_info="tamagawa_single_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_linkInfo.xml" --rom_model -o "tamagawa_single_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out" $(ORDERED_OBJS)
+	"$(CG_TOOL_ROOT)/bin/clpru" -DICSSG0 -DPRU1 -DSLICE1 -v4 --define=SOC_AM243X  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little -z -m"tamagawa_single_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.map" --disable_auto_rts   --diag_wrap=off --display_error_number --warn_sections --xml_link_info="tamagawa_single_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_linkInfo.xml" --rom_model -o "tamagawa_single_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out" $^
 	@echo 'Finished building target: "$@"'
 	@echo ' '
 	@$(MAKE) --no-print-directory post-build
@@ -102,13 +90,15 @@ tamagawa_single_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.hex: $(EXE_OUTPUTS)
 # Other Targets
 clean:
 	-$(RM) $(BIN_OUTPUTS__QUOTED)$(EXE_OUTPUTS__QUOTED)
-	-$(RM) "main.obj"
-	-$(RM) "main.d"
+	-$(RM) "tamagawa_main.obj"
+	-$(RM) "tamagawa_main.d"
 	-@echo 'Finished clean'
 	-@echo ' '
 
 post-build:
-	-$(CG_TOOL_ROOT)/bin/hexpru.exe ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/tamagawa_master_hexpru.cmd tamagawa_single_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out; ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/tools/bin2header/bin2header.exe tamagawa_single_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.b00 tamagawa_master_single_channel_bin.h TamagawaFirmware 4; move tamagawa_master_single_channel_bin.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/tamagawa_master_single_channel_bin.h 
+		-$(CG_TOOL_ROOT)/bin/hexpru.exe ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/tamagawa_master_hexpru.cmd tamagawa_single_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out
+		- ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/tools/bin2header/bin2header.exe tamagawa_single_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.b00 tamagawa_master_single_channel_bin.h TamagawaFirmware 4
+		- move tamagawa_master_single_channel_bin.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/tamagawa_master_single_channel_bin.h 
 	-@echo ' '
 
 .PHONY: all clean dependents
