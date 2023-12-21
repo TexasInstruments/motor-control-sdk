@@ -66,35 +66,35 @@ LIBS := -llibc.a
 
 # Add inputs and outputs from these tool invocations to the build variables
 EXE_OUTPUTS += \
-sdfm_firmware_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.out \
+sdfm_firmware_single_axis_single_pru_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.out \
 
 EXE_OUTPUTS__QUOTED += \
-"sdfm_firmware_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.out" \
+"sdfm_firmware_single_axis_single_pru_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.out" \
 
 BIN_OUTPUTS += \
-sdfm_firmware_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.hex \
+sdfm_firmware_single_axis_single_pru_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.hex \
 
 BIN_OUTPUTS__QUOTED += \
-"sdfm_firmware_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.hex" \
+"sdfm_firmware_single_axis_single_pru_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.hex" \
 
 
 # All Target
 all: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
-	@$(MAKE) --no-print-directory -Onone "sdfm_firmware_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.out"
+	@$(MAKE) --no-print-directory -Onone "sdfm_firmware_single_axis_single_pru_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.out"
 
 # Tool invocations
-sdfm_firmware_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
+sdfm_firmware_single_axis_single_pru_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: PRU Linker'
-	"$(CG_TOOL_ROOT)/bin/clpru" -DICSSG0 -DPRU0 -DSLICE0 -v4 -v4 -DSDFM_PRU_CORE -o2 --display_error_number --hardware_mac=on --define=SOC_AM243X  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little -z -m"sdfm_firmware_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.map" -i"$(CG_TOOL_ROOT)/lib" --diag_wrap=off --display_error_number --warn_sections --xml_link_info="sdfm_firmware_am243x-evm_icssg0-pru0_fw_ti-pru-cgt_linkInfo.xml" --rom_model -o "sdfm_firmware_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.out" $(ORDERED_OBJS)
+	"$(CG_TOOL_ROOT)/bin/clpru" -DICSSG0 -DPRU0 -DSLICE0 -v4 -v4 -DSDFM_PRU_CORE -o2 --display_error_number --hardware_mac=on --define=SOC_AM243X  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little -z -m"sdfm_firmware_single_axis_single_pru_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.map" -i"$(CG_TOOL_ROOT)/lib" --diag_wrap=off --display_error_number --warn_sections --xml_link_info="sdfm_firmware_single_axis_single_pru_am243x-evm_icssg0-pru0_fw_ti-pru-cgt_linkInfo.xml" --rom_model -o "sdfm_firmware_single_axis_single_pru_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.out" $(ORDERED_OBJS)
 	@echo 'Finished building target: "$@"'
 	@echo ' '
 	@$(MAKE) --no-print-directory post-build
 
-sdfm_firmware_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.hex: $(EXE_OUTPUTS)
+sdfm_firmware_single_axis_single_pru_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.hex: $(EXE_OUTPUTS)
 	@echo 'Building secondary target: "$@"'
 	@echo 'Invoking: PRU Hex Utility'
-	"$(CG_TOOL_ROOT)/bin/hexpru" -o "sdfm_firmware_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.hex" $(EXE_OUTPUTS__QUOTED)
+	"$(CG_TOOL_ROOT)/bin/hexpru" -o "sdfm_firmware_single_axis_single_pru_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.hex" $(EXE_OUTPUTS__QUOTED)
 	@echo 'Finished building secondary target: "$@"'
 	@echo ' '
 	@$(MAKE) --no-print-directory post-build
@@ -108,7 +108,7 @@ clean:
 	-@echo ' '
 
 post-build:
-	-$(CG_TOOL_ROOT)/bin/hexpru.exe --diag_wrap=off --array --array:name_prefix=SDFM_PRU0_image -o sdfm_firmware_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.h sdfm_firmware_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.out;  move sdfm_firmware_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.h ${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware/sdfm_bin.h
+	-$(CG_TOOL_ROOT)/bin/hexpru.exe --diag_wrap=off --array --array:name_prefix=SDFM_PRU0_image -o sdfm_firmware_single_axis_single_pru_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.h sdfm_firmware_single_axis_single_pru_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.out;  move sdfm_firmware_single_axis_single_pru_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.h ${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware/sdfm_bin.h
 	-@echo ' '
 
 .PHONY: all clean dependents

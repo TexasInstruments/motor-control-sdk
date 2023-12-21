@@ -67,6 +67,7 @@ INCLUDES_common := \
 	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/am243x/r5f \
 	-I${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/include \
 	-I${MOTOR_CONTROL_SDK_PATH}/examples/current_sense/icss_sdfm_three_channel_single_pru_mode \
+	-I${MOTOR_CONTROL_SDK_PATH}/source/pruicss_pwm/include \
 	-Igenerated \
 
 DEFINES_common := \
@@ -109,6 +110,7 @@ LIBS_PATH_common = \
 	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers/lib \
 	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/board/lib \
 	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/lib \
+	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/source/pruicss_pwm/lib \
 	-Wl,-i${CG_TOOL_ROOT}/lib \
 
 LIBS_common = \
@@ -116,6 +118,7 @@ LIBS_common = \
 	-ldrivers.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
 	-lboard.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
 	-lmotorcontrol_sdfm.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
+	-lpruicss_pwm.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
 	-llibc.a \
 	-llibsysbm.a \
 
@@ -130,6 +133,7 @@ LIBS_NAME = \
 	drivers.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
 	board.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
 	motorcontrol_sdfm.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
+	pruicss_pwm.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
 	libc.a \
 	libsysbm.a \
 
@@ -138,6 +142,7 @@ LIBS_PATH_NAME = \
 	${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers/lib \
 	${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/board/lib \
 	${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/lib \
+	${MOTOR_CONTROL_SDK_PATH}/source/pruicss_pwm/lib \
 	${CG_TOOL_ROOT}/lib \
 
 FILES := $(FILES_common) $(FILES_$(PROFILE))

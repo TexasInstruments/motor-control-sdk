@@ -10,8 +10,8 @@
     </applicability>
 
     <project
-        title="Sdfm Firmware"
-        name = "sdfm_firmware_am243x-evm_icssg0-pru0_fw_ti-pru-cgt"
+        title="Sdfm Firmware Single Axis Single Pru"
+        name = "sdfm_firmware_single_axis_single_pru_am243x-evm_icssg0-pru0_fw_ti-pru-cgt"
         products="com.ti.MOTOR_CONTROL_SDK_AMXXX;"
         configurations="
                 Release,
@@ -46,7 +46,7 @@
         "
         linkerBuildOptions="
             -i${CG_TOOL_ROOT}/lib
-            -m=sdfm_firmware.${ConfigName}.map
+            -m=sdfm_firmware_single_axis_single_pru.${ConfigName}.map
             -llibc.a
             --disable_auto_rts
             --define=SDFM_PRU_CORE=1
@@ -56,10 +56,10 @@
         "
 
         postBuildStep="
-            $(CG_TOOL_ROOT)/bin/hexpru.exe --diag_wrap=off --array --array:name_prefix=SDFM_PRU0_image -o sdfm_firmware_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.h sdfm_firmware_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.out;  move sdfm_firmware_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.h ${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware/sdfm_bin.h;
+            $(CG_TOOL_ROOT)/bin/hexpru.exe --diag_wrap=off --array --array:name_prefix=SDFM_PRU0_image -o sdfm_firmware_single_axis_single_pru_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.h sdfm_firmware_single_axis_single_pru_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.out;  move sdfm_firmware_single_axis_single_pru_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.h ${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware/sdfm_bin.h;
         "
 
-        description="A Sdfm Firmware FW project">
+        description="A Sdfm Firmware Single Axis Single Pru FW project">
 
         <configuration name="Release"
             compilerBuildOptions="

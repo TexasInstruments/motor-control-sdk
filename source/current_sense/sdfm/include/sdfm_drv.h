@@ -43,7 +43,6 @@ extern "C" {
 #include  <math.h>
 
 
-
 /* ========================================================================== */
 /*                           Macros                                           */
 /* ========================================================================== */
@@ -117,14 +116,29 @@ extern "C" {
 
 
 /* SDFM output buffer size in 32-bit words */
-
-
 #define ICSSG_SD_SAMP_CH_BUF_SZ          ( 128 )
 #define NUM_CH_SUPPORTED_PER_AXIS        ( 3 )
 #define SDFM_NINE_CH_MASK                ( 0x1FF )
 #define SDFM_CH_MASK_FOR_CH0_CH3_CH6     ( 0x49 )
 #define SDFM_CH_MASK_FOR_CH1_CH4_CH7     ( 0x92 )
 #define SDFM_CH_MASK_FOR_CH2_CH5_CH8     ( 0x124 )
+
+/*SDFM Channel IDs*/
+#define SDFM_CHANNEL0    (0)
+#define SDFM_CHANNEL1    (1)
+#define SDFM_CHANNEL2    (2)
+#define SDFM_CHANNEL3    (3)
+#define SDFM_CHANNEL4    (4)
+#define SDFM_CHANNEL5    (5)
+#define SDFM_CHANNEL6    (6)
+#define SDFM_CHANNEL7    (7)
+#define SDFM_CHANNEL8    (8)
+
+/*SDFM firmware version mask*/
+#define SDFM_FW_VERSION_BIT_SHIFT       (32)
+
+/*Fast detect ERROR mask*/
+#define SDFM_FD_ERROR_MASK_FOR_TRIP_VEC      ( 0x3800000 )
 
 #define SDFM_PHASE_DELAY_ACK_BIT_MASK   (1)
 #define SDFM_PHASE_DELAY_CAL_LOOP_SIZE  (8)
@@ -247,8 +261,16 @@ typedef struct SDFM_ThresholdParms_s
     volatile uint32_t    high_threshold;
     /**< Low threshold value */
     volatile uint32_t    low_threshold;
-    /**<  reserved for zero crossing*/
-    volatile uint32_t    reserved3;
+    /**<  High Threshold status*/
+    volatile uint8_t     highThStatus;
+    /**<  High Threshold status*/
+    volatile uint8_t     lowThStatus;
+    /**<  Zero cross enable bit*/
+    volatile uint8_t    zeroCrossEn;
+    /**<  Zero cross Threshold status */
+    volatile uint8_t    zeroCrossThstatus;
+    /**< Zero Cross Threshold*/
+    volatile uint32_t    zeroCrossTh;
 }SDFM_ThresholdParms;
 
 /**
@@ -279,8 +301,8 @@ typedef struct SDFM_Cfg_s
     volatile uint8_t   fd_one_min;
     /**< sdfm ch clock parms*/
     SDFM_ClkSourceParms  sdfm_clk_parms;
-    /**< array to store the params for gpio toggle for different channels*/
-    SDFM_GpioParams        sdfm_gpio_params[3];
+    /**< array to store the params of gpios for zero cross threshold*/
+    SDFM_GpioParams        sdfm_gpio_params;
 } SDFM_Cfg;
 
 /**
@@ -331,6 +353,7 @@ typedef struct SDFM_SampleOutInterface_s
  */
 typedef struct SDFM_s {
     /**< PRU ID */
+    PRUICSS_Handle gPruIcssHandle;
     uint8_t pru_id;
     uint32_t sdfm_clock;
     uint32_t iep_clock;

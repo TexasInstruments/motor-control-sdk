@@ -30,6 +30,7 @@ const libdirs_freertos = {
         "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers/lib",
         "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/board/lib",
         "${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/lib",
+        "${MOTOR_CONTROL_SDK_PATH}/source/pruicss_pwm/lib",
     ],
 };
 
@@ -40,6 +41,7 @@ const includes_freertos_r5f = {
         "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/am243x/r5f",
         "${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/include",
         "${MOTOR_CONTROL_SDK_PATH}/examples/current_sense/icss_sdfm_three_channel_single_pru_mode",
+        "${MOTOR_CONTROL_SDK_PATH}/source/pruicss_pwm/include"
     ],
 };
 
@@ -49,6 +51,7 @@ const libs_freertos_r5f = {
         "drivers.am243x.r5f.ti-arm-clang.${ConfigName}.lib",
         "board.am243x.r5f.ti-arm-clang.${ConfigName}.lib",
         "motorcontrol_sdfm.am243x.r5f.ti-arm-clang.${ConfigName}.lib",
+        "pruicss_pwm.am243x.r5f.ti-arm-clang.${ConfigName}.lib",
     ],
 };
 

@@ -111,6 +111,18 @@
 #define ICSSG_SLICE_ID_1   ( 1 )    /* ICSSG slide ID 1 */
 #define ICSSG_NUM_SLICE    ( 2 )    /* ICSSG number of slices */
 #define NUM_FD_FIELD   ( 3 )
+
+#define  NUM_CH_SUPPORTED      ( 3 )
+/* SDFM Channel IDs*/
+#define SDFM_CH0    (0)
+#define SDFM_CH1    (1)
+#define SDFM_CH2    (2)
+#define SDFM_CH3    (3)
+#define SDFM_CH4    (4)
+#define SDFM_CH5    (5)
+#define SDFM_CH6    (6)
+#define SDFM_CH7    (7)
+#define SDFM_CH8    (8)
 /*!
  *  @brief    PRUICSS Instance IDs
  */
@@ -124,6 +136,10 @@ typedef enum PRUICSS_MaxInstances_s
 /* SDFM configuration parameters */
 typedef struct SdfmPrms_s 
 {
+    /**<PRU core instance ID*/
+    uint8_t pruInsId;
+    /**<ICSSG pru Slice ID*/
+    uint8_t icssgSliceId;
     /**< PRU_CORE_CLOCK*/
     uint32_t pru_clock;
     /**< IEP clock value */
@@ -158,6 +174,10 @@ typedef struct SdfmPrms_s
     uint8_t fastDetect[NUM_SD_CH][NUM_FD_FIELD];
     /**<Phase delay enbale */
     uint8_t phase_delay;
+    /**<Zero Cross enable field*/
+    uint8_t en_zc;
+    /**<Zero cross threshold*/
+    uint32_t zcThr[NUM_CH_SUPPORTED];
 } SdfmPrms;
 
 

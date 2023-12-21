@@ -16,9 +16,6 @@ const gpio1      = gpio.addInstance();
 const gpio2      = gpio.addInstance();
 const gpio3      = gpio.addInstance();
 const gpio4      = gpio.addInstance();
-const gpio5      = gpio.addInstance();
-const gpio6      = gpio.addInstance();
-const gpio7      = gpio.addInstance();
 const pruicss    = scripting.addModule("/drivers/pruicss/pruicss", {}, false);
 const pruicss1   = pruicss.addInstance();
 const pruicss2   = pruicss.addInstance();
@@ -48,37 +45,21 @@ gpio1.useMcuDomainPeripherals  = true;
 gpio1.MCU_GPIO.gpioPin.$assign = "MCU_UART0_RXD";
 
 gpio2.pinDir               = "OUTPUT";
-gpio2.$name                = "GPIO_HIGH_TH_CH0";
+gpio2.$name                = "GPIO_ZC_TH_CH0";
 gpio2.GPIO.$assign         = "GPIO0";
 gpio2.GPIO.gpioPin.rx      = false;
 gpio2.GPIO.gpioPin.$assign = "PRG1_PRU0_GPO18";
 
-gpio3.$name                = "GPIO_LOW_TH_CH0";
 gpio3.pinDir               = "OUTPUT";
+gpio3.$name                = "GPIO_ZC_TH_CH1";
+gpio3.GPIO.$assign         = "GPIO0";
 gpio3.GPIO.gpioPin.rx      = false;
-gpio3.GPIO.gpioPin.$assign = "PRG0_PRU1_GPO11";
+gpio3.GPIO.gpioPin.$assign = "PRG1_PRU0_GPO17";
 
 gpio4.pinDir               = "OUTPUT";
-gpio4.$name                = "GPIO_HIGH_TH_CH1";
-gpio4.GPIO.$assign         = "GPIO0";
+gpio4.$name                = "GPIO_ZC_TH_CH2";
 gpio4.GPIO.gpioPin.rx      = false;
-gpio4.GPIO.gpioPin.$assign = "PRG1_PRU0_GPO17";
-
-gpio5.$name                = "GPIO_LOW_TH_CH1";
-gpio5.pinDir               = "OUTPUT";
-gpio5.GPIO.$assign         = "GPIO0";
-gpio5.GPIO.gpioPin.rx      = false;
-gpio5.GPIO.gpioPin.$assign = "PRG1_PRU0_GPO7";
-
-gpio6.pinDir               = "OUTPUT";
-gpio6.$name                = "GPIO_HIGH_TH_CH2";
-gpio6.GPIO.gpioPin.rx      = false;
-gpio6.GPIO.gpioPin.$assign = "PRG0_PRU1_GPO1";
-
-gpio7.$name                = "GPIO_LOW_TH_CH2";
-gpio7.pinDir               = "OUTPUT";
-gpio7.GPIO.gpioPin.rx      = false;
-gpio7.GPIO.gpioPin.$assign = "PRG0_PRU1_GPO2";
+gpio4.GPIO.gpioPin.$assign = "PRG0_PRU1_GPO1";
 
 pruicss1.$name                           = "CONFIG_PRU_ICSS0";
 pruicss1.coreClk                         = 300000000;
@@ -132,8 +113,6 @@ epwm2.EPWM.$suggestSolution                 = "EHRPWM1";
 epwm2.EPWM.A.$suggestSolution               = "GPMC0_AD5";
 epwm2.EPWM.B.$suggestSolution               = "GPMC0_AD6";
 gpio1.MCU_GPIO.$suggestSolution             = "MCU_GPIO0";
-gpio3.GPIO.$suggestSolution                 = "GPIO1";
-gpio6.GPIO.$suggestSolution                 = "GPIO1";
-gpio7.GPIO.$suggestSolution                 = "GPIO1";
+gpio4.GPIO.$suggestSolution                 = "GPIO1";
 debug_log.uartLog.UART.RXD.$suggestSolution = "UART0_RXD";
 debug_log.uartLog.UART.TXD.$suggestSolution = "UART0_TXD";

@@ -184,54 +184,73 @@ int32_t initIcss(
 
     return SDFM_ERR_NERR;
 }
-void sdfm_configure_gpio_pin(sdfm_handle h_sdfm)
+void SDFM_configGpioPins(sdfm_handle h_sdfm, uint8_t loadShare, uint8_t pruInsId)
 {
-    /*ch0 GPIO configuration*/
-    uint32_t gpioBaseAddrCh0Hi = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_HIGH_TH_CH0_BASE_ADDR);
-    uint32_t pinNumCh0Hi       = GPIO_HIGH_TH_CH0_PIN;
-    GPIO_setDirMode(gpioBaseAddrCh0Hi, pinNumCh0Hi, GPIO_HIGH_TH_CH0_DIR);
-    SDFM_configComparatorGpioPins(h_sdfm, 0, gpioBaseAddrCh0Hi, pinNumCh0Hi, 0);
+    if(loadShare)
+    {
+        uint32_t gpioBaseAddrCh;
+        uint32_t pinNumCh;
+        switch (pruInsId)
+        {
+            case PRUICSS_PRU0:
+            case PRUICSS_PRU1:
+                /*ch3 GPIO configuration*/
+                gpioBaseAddrCh = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH1_BASE_ADDR);
+                pinNumCh       = GPIO_ZC_TH_CH1_PIN;
+                GPIO_setDirMode(gpioBaseAddrCh, pinNumCh, GPIO_ZC_TH_CH1_DIR);
+                SDFM_configComparatorGpioPins(h_sdfm, 0, gpioBaseAddrCh, pinNumCh);
+                break;
+            case PRUICSS_RTU_PRU0:
+            case PRUICSS_RTU_PRU1:
+                /*ch0 GPIO configuration*/
+                gpioBaseAddrCh = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH0_BASE_ADDR);
+                pinNumCh       = GPIO_ZC_TH_CH0_PIN;
+                GPIO_setDirMode(gpioBaseAddrCh, pinNumCh, GPIO_ZC_TH_CH0_DIR);
+                SDFM_configComparatorGpioPins(h_sdfm, 0, gpioBaseAddrCh, pinNumCh);
+                break;
+            case PRUICSS_TX_PRU0:
+            case PRUICSS_TX_PRU1:
+                /*ch6 GPIO configuration*/
+                gpioBaseAddrCh = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH2_BASE_ADDR);
+                pinNumCh       = GPIO_ZC_TH_CH2_PIN;
+                GPIO_setDirMode(gpioBaseAddrCh, pinNumCh, GPIO_ZC_TH_CH2_DIR);
+                SDFM_configComparatorGpioPins(h_sdfm, 0, gpioBaseAddrCh, pinNumCh);
+                break;
+            default:
+                break;
+        }
+    }
+    else
+    {
+        /*ch0 GPIO configuration*/
+        uint32_t gpioBaseAddrCh0 = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH0_BASE_ADDR);
+        uint32_t pinNumCh0       = GPIO_ZC_TH_CH0_PIN;
+        GPIO_setDirMode(gpioBaseAddrCh0, pinNumCh0, GPIO_ZC_TH_CH0_DIR);
+        SDFM_configComparatorGpioPins(h_sdfm, 0, gpioBaseAddrCh0, pinNumCh0);
 
-    uint32_t gpioBaseAddrCh0Lo = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_LOW_TH_CH0_BASE_ADDR);
-    uint32_t pinNumCh0Lo       = GPIO_LOW_TH_CH0_PIN;
-    GPIO_setDirMode(gpioBaseAddrCh0Lo, pinNumCh0Lo, GPIO_LOW_TH_CH0_DIR);
-    SDFM_configComparatorGpioPins(h_sdfm, 0, gpioBaseAddrCh0Lo, pinNumCh0Lo, 1);
+        /*ch1 GPIO configuration*/
+        uint32_t gpioBaseAddrCh1 = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH1_BASE_ADDR);
+        uint32_t pinNumCh1       = GPIO_ZC_TH_CH1_PIN;
+        GPIO_setDirMode(gpioBaseAddrCh1, pinNumCh1, GPIO_ZC_TH_CH1_DIR);
+        SDFM_configComparatorGpioPins(h_sdfm, 1, gpioBaseAddrCh1, pinNumCh1);
 
-
-    /*ch1 GPIO configuration*/
-    uint32_t gpioBaseAddrCh1Hi = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_HIGH_TH_CH1_BASE_ADDR);
-    uint32_t pinNumCh1Hi       = GPIO_HIGH_TH_CH1_PIN;
-    GPIO_setDirMode(gpioBaseAddrCh1Hi, pinNumCh1Hi, GPIO_HIGH_TH_CH1_DIR);
-    SDFM_configComparatorGpioPins(h_sdfm, 1, gpioBaseAddrCh1Hi, pinNumCh1Hi, 0);
-
-    uint32_t gpioBaseAddrCh1Lo = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_LOW_TH_CH1_BASE_ADDR);
-    uint32_t pinNumCh1Lo       = GPIO_LOW_TH_CH1_PIN;
-    GPIO_setDirMode(gpioBaseAddrCh1Lo, pinNumCh1Lo, GPIO_LOW_TH_CH1_DIR);
-    SDFM_configComparatorGpioPins(h_sdfm, 1, gpioBaseAddrCh1Lo, pinNumCh1Lo, 1);
-
-
-    /*ch2 GPIO configuration*/
-    uint32_t gpioBaseAddrCh2Hi = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_HIGH_TH_CH2_BASE_ADDR);
-    uint32_t pinNumCh2Hi       = GPIO_HIGH_TH_CH2_PIN;
-    GPIO_setDirMode(gpioBaseAddrCh2Hi, pinNumCh2Hi, GPIO_HIGH_TH_CH2_DIR);
-    SDFM_configComparatorGpioPins(h_sdfm, 2, gpioBaseAddrCh2Hi, pinNumCh2Hi, 0);
-
-    uint32_t gpioBaseAddrCh2Lo = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_LOW_TH_CH2_BASE_ADDR);
-    uint32_t pinNumCh2Lo       = GPIO_LOW_TH_CH2_PIN;
-    GPIO_setDirMode(gpioBaseAddrCh2Lo, pinNumCh2Lo, GPIO_LOW_TH_CH2_DIR);
-    SDFM_configComparatorGpioPins(h_sdfm, 2, gpioBaseAddrCh2Lo, pinNumCh2Lo, 1);
-
-
+        /*ch2 GPIO configuration*/
+        uint32_t gpioBaseAddrCh2 = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH2_BASE_ADDR);
+        uint32_t pinNumCh2       = GPIO_ZC_TH_CH2_PIN;
+        GPIO_setDirMode(gpioBaseAddrCh2, pinNumCh2, GPIO_ZC_TH_CH2_DIR);
+        SDFM_configComparatorGpioPins(h_sdfm, 2, gpioBaseAddrCh2, pinNumCh2);
+    }
 }
 /* Initialize SDFM PRU FW */
-int32_t init_sdfm_pru_fw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm, void *pruss_cfg)
+int32_t initSdfmFw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm, PRUICSS_Handle pruIcssHandle)
 {
     sdfm_handle hSdfm;    
     uint8_t SDFM_CH = 0;
     /* Initialize SDFM instance */
     hSdfm = SDFM_init(pruId, pSdfmPrms->pruInsId);
 
-    hSdfm->pruss_cfg = pruss_cfg;
+    hSdfm->gPruIcssHandle = pruIcssHandle;
+    hSdfm->pruss_cfg = (void *)(((PRUICSS_HwAttrs *)(pruIcssHandle->hwAttrs))->cfgRegBase);
 
     if( pSdfmPrms->loadShare )
     {
@@ -325,11 +344,17 @@ int32_t init_sdfm_pru_fw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm
         {
             SDFM_disableComparator(hSdfm, SDFM_CH);
         }
+        
+        /*enabling Zero cross only for first channel of axis*/
+        if(pSdfmPrms->en_zc && SDFM_CH == 0)
+        {
+            SDFM_enableZeroCrossDetection(hSdfm, SDFM_CH, pSdfmPrms->zcThr[SDFM_CH]);
+        }
 
     }
     
     /*GPIO pin configuration for threshold measurment*/
-    sdfm_configure_gpio_pin(hSdfm);
+    SDFM_configGpioPins(hSdfm, pSdfmPrms->loadShare, pSdfmPrms->pruInsId);
 
     SDFM_setSampleTriggerTime(hSdfm, pSdfmPrms->firstSampTrigTime);
     if(pSdfmPrms->en_second_update)
@@ -368,10 +393,7 @@ int32_t initPruSdfm(
     uint32_t byteLen;                   /* Total number of bytes to be written */
     uint8_t pruId;
     int32_t status;
-    void *pruss_cfg;
-
-    pruss_cfg = (void *)(((PRUICSS_HwAttrs *)(pruIcssHandle->hwAttrs))->cfgRegBase);
-
+    
     /* Reset PRU */
     status = PRUICSS_resetCore(pruIcssHandle, pruInstId);
     if (status != SystemP_SUCCESS) 
@@ -460,7 +482,7 @@ int32_t initPruSdfm(
     }
 
     /* Initialize SDFM PRU FW */
-    status = init_sdfm_pru_fw(pruId, pSdfmPrms, pHSdfm, pruss_cfg);
+    status = initSdfmFw(pruId, pSdfmPrms, pHSdfm, pruIcssHandle);
     if (status != SDFM_ERR_NERR) 
     {
         return SDFM_ERR_INIT_PRU_SDFM;

@@ -15,9 +15,6 @@ const gpio1      = gpio.addInstance();
 const gpio2      = gpio.addInstance();
 const gpio3      = gpio.addInstance();
 const gpio4      = gpio.addInstance();
-const gpio5      = gpio.addInstance();
-const gpio6      = gpio.addInstance();
-const gpio7      = gpio.addInstance();
 const pruicss    = scripting.addModule("/drivers/pruicss/pruicss", {}, false);
 const pruicss1   = pruicss.addInstance();
 const pruicss2   = pruicss.addInstance();
@@ -46,41 +43,23 @@ gpio1.GPIO.$assign         = "GPIO0";
 gpio1.GPIO.gpioPin.rx      = false;
 gpio1.GPIO.gpioPin.$assign = "GPMC0_AD15";
 
-gpio2.$name                    = "GPIO_HIGH_TH_CH0";
 gpio2.pinDir                   = "OUTPUT";
 gpio2.useMcuDomainPeripherals  = true;
+gpio2.$name                    = "GPIO_ZC_TH_CH0";
 gpio2.MCU_GPIO.$assign         = "MCU_GPIO0";
 gpio2.MCU_GPIO.gpioPin.rx      = false;
 gpio2.MCU_GPIO.gpioPin.$assign = "MCU_SPI0_D1";
 
-gpio3.$name                    = "GPIO_LOW_TH_CH0";
 gpio3.pinDir                   = "OUTPUT";
 gpio3.useMcuDomainPeripherals  = true;
+gpio3.$name                    = "GPIO_ZC_TH_CH1";
 gpio3.MCU_GPIO.gpioPin.rx      = false;
-gpio3.MCU_GPIO.gpioPin.$assign = "MCU_SPI1_D0";
+gpio3.MCU_GPIO.gpioPin.$assign = "MCU_SPI1_CS0";
 
-gpio4.$name                    = "GPIO_HIGH_TH_CH1";
 gpio4.pinDir                   = "OUTPUT";
 gpio4.useMcuDomainPeripherals  = true;
-gpio4.MCU_GPIO.gpioPin.rx      = false;
-gpio4.MCU_GPIO.gpioPin.$assign = "MCU_SPI1_CS0";
-
-gpio5.$name                    = "GPIO_LOW_TH_CH1";
-gpio5.pinDir                   = "OUTPUT";
-gpio5.useMcuDomainPeripherals  = true;
-gpio5.MCU_GPIO.gpioPin.rx      = false;
-gpio5.MCU_GPIO.gpioPin.$assign = "MCU_SPI1_CLK";
-
-gpio6.$name                    = "GPIO_HIGH_TH_CH2";
-gpio6.pinDir                   = "OUTPUT";
-gpio6.useMcuDomainPeripherals  = true;
-gpio6.MCU_GPIO.gpioPin.$assign = "MCU_SPI1_D1";
-
-gpio7.$name                    = "GPIO_LOW_TH_CH2";
-gpio7.pinDir                   = "OUTPUT";
-gpio7.useMcuDomainPeripherals  = true;
-gpio7.MCU_GPIO.gpioPin.rx      = false;
-gpio7.MCU_GPIO.gpioPin.$assign = "MCU_SPI0_CLK";
+gpio4.$name                    = "GPIO_ZC_TH_CH2";
+gpio4.MCU_GPIO.gpioPin.$assign = "MCU_SPI1_D1";
 
 pruicss1.$name                           = "CONFIG_PRU_ICSS0";
 pruicss1.coreClk                         = 300000000;
@@ -133,8 +112,5 @@ mpu_armv76.size     = 31;
  */
 gpio3.MCU_GPIO.$suggestSolution             = "MCU_GPIO0";
 gpio4.MCU_GPIO.$suggestSolution             = "MCU_GPIO0";
-gpio5.MCU_GPIO.$suggestSolution             = "MCU_GPIO0";
-gpio6.MCU_GPIO.$suggestSolution             = "MCU_GPIO0";
-gpio7.MCU_GPIO.$suggestSolution             = "MCU_GPIO0";
 debug_log.uartLog.UART.RXD.$suggestSolution = "UART0_RXD";
 debug_log.uartLog.UART.TXD.$suggestSolution = "UART0_TXD";

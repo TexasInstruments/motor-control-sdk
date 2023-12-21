@@ -60,7 +60,7 @@ FIRMWARE_VERSION_INTERNAL	.set	1
 ;  bit30..24		version number
 FIRMWARE_VERSION_REVISION	.set		0x01
 ;  bit23..16		major number
-FIRMWARE_VERSION_MAJOR	.set			0x00
+FIRMWARE_VERSION_MAJOR	.set			0x01
 ;  bit15..0		minor number
 FIRMWARE_VERSION_MINOR	.set			0x0000
 

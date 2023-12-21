@@ -118,16 +118,17 @@ extern "C" {
 #define SYS_EVT_TYPE_EDGE           1
 
 #define PRUICSS_INTC_INITDATA {   \
-{   IEP_TIM_CAP_CMP_EVENT, PRU_ARM_EVENT02, PRU_ARM_EVENT03, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, /* initializing member [0-15] for Misra C standards */ \
+{   IEP_TIM_CAP_CMP_EVENT, PRU_ARM_EVENT02, PRU_ARM_EVENT03, PRU_ARM_EVENT04, PRU_ARM_EVENT05, PRU_ARM_EVENT06, \
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, /* initializing member [6-15] for Misra C standards */ \
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,     /* initializing member [16-31] for Misra C standards */ \
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,     /* initializing member [32-47] for Misra C standards */ \
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},    /* initializing member [48-63] for Misra C standards */ \
 { {IEP_TIM_CAP_CMP_EVENT,   CHANNEL1, SYS_EVT_POLARITY_HIGH, SYS_EVT_TYPE_PULSE},\
   {PRU_ARM_EVENT02,         CHANNEL2, SYS_EVT_POLARITY_HIGH, SYS_EVT_TYPE_PULSE},\
   {PRU_ARM_EVENT03,         CHANNEL3, SYS_EVT_POLARITY_HIGH, SYS_EVT_TYPE_PULSE},\
-  {0xFF,0xFF,0xFF,0xFF}, /* initializing member [3] for Misra C standards */ \
-  {0xFF,0xFF,0xFF,0xFF}, /* initializing member [4] for Misra C standards */ \
-  {0xFF,0xFF,0xFF,0xFF}, /* initializing member [5] for Misra C standards */ \
+  {PRU_ARM_EVENT04,         CHANNEL4, SYS_EVT_POLARITY_HIGH, SYS_EVT_TYPE_PULSE},\
+  {PRU_ARM_EVENT05,         CHANNEL5, SYS_EVT_POLARITY_HIGH, SYS_EVT_TYPE_PULSE},\
+  {PRU_ARM_EVENT06,         CHANNEL6, SYS_EVT_POLARITY_HIGH, SYS_EVT_TYPE_PULSE},\
   {0xFF,0xFF,0xFF,0xFF}, /* initializing member [6] for Misra C standards */ \
   {0xFF,0xFF,0xFF,0xFF}, /* initializing member [7] for Misra C standards */ \
   {0xFF,0xFF,0xFF,0xFF}, /* initializing member [8] for Misra C standards */ \
@@ -187,9 +188,9 @@ extern "C" {
   {0xFF,0xFF,0xFF,0xFF}, /* initializing member [62] for Misra C standards */ \
   {0xFF,0xFF,0xFF,0xFF}}, /* initializing member [63] for Misra C standards */ \
   { {CHANNEL1, PRU1}, {CHANNEL2, PRU_EVTOUT0}, {CHANNEL3, PRU_EVTOUT1},\
-    {0xFF, 0xFF}, {0xFF, 0xFF}, {0xFF, 0xFF}, /* Initializing members [3,4,5] of array for Misra C standards */ \
+    {CHANNEL4, PRU_EVTOUT2}, {CHANNEL5, PRU_EVTOUT3}, {CHANNEL6, PRU_EVTOUT4}, \
     {0xFF, 0xFF}, {0xFF, 0xFF}, {0xFF, 0xFF}, {0xFF, 0xFF} }, /* Initializing members [6,7,8,9] of array for Misra C standards */ \
-  (PRU1_HOSTEN_MASK | PRU_EVTOUT0_HOSTEN_MASK | PRU_EVTOUT1_HOSTEN_MASK) \
+  (PRU1_HOSTEN_MASK | PRU_EVTOUT0_HOSTEN_MASK | PRU_EVTOUT1_HOSTEN_MASK | PRU_EVTOUT2_HOSTEN_MASK | PRU_EVTOUT3_HOSTEN_MASK | PRU_EVTOUT4_HOSTEN_MASK) /* PRU_EVTOUT0 */ \
 }
 
 #ifdef __cplusplus
