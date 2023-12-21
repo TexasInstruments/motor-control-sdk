@@ -1,0 +1,41 @@
+%%{
+    let module = system.modules[args[0]];
+%%}
+/*
+ * SDFM
+ */
+
+/* SDFM Instance Macros */
+#define CONFIG_SDFM_NUM_INSTANCES               `module.$instances.length`
+%for(let i = 0; i < module.$instances.length; i++) {
+    % let instance = module.$instances[i];
+    % let Slice = 0 ;
+    %if(instance.instance === "ICSSG1")
+    %{
+       % if(instance.PRU_ICSSG1_PRU.$assign === "PRU_ICSSG1_PRU1")
+       %{
+          % Slice = 1;
+       %}
+
+    %}
+    %else
+    %{
+       %if(instance.PRU_ICSSG0_PRU.$assign === "PRU_ICSSG0_PRU1")
+       %{
+          % Slice = 1;
+       %}
+
+    %}
+    
+#define `instance.$name`                  `i`
+#define `instance.$name`_CHANNEL0         `instance.Channel_0 & 1`
+#define `instance.$name`_CHANNEL1         `instance.Channel_1 & 1`
+#define `instance.$name`_CHANNEL2         `instance.Channel_2 & 1`
+#define `instance.$name`_CHANNEL3         `instance.Channel_3 & 1`
+#define `instance.$name`_CHANNEL4         `instance.Channel_4 & 1`
+#define `instance.$name`_CHANNEL5         `instance.Channel_5 & 1`
+#define `instance.$name`_CHANNEL6         `instance.Channel_6 & 1`
+#define `instance.$name`_CHANNEL7         `instance.Channel_7 & 1`
+#define `instance.$name`_CHANNEL8         `instance.Channel_8 & 1`
+#define  PRU_ICSSGx_PRU_SLICE            `Slice`
+% }
