@@ -8,7 +8,7 @@ const files = {
         "epwm_dc.c",
         "epwm_drv_aux.c",
         "epwm_mod.c",
-        "sdfm.c",
+        "sdfm_example.c",
         "main.c",
     ],
 };
@@ -19,7 +19,8 @@ const files = {
 const filedirs = {
     common: [
         "..",       /* core_os_combo base */
-        "../../..", /* Example base */
+        "../../..",      
+        "../../../..",      
     ],
 };
 
@@ -40,6 +41,7 @@ const includes_freertos_r5f = {
         "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/am243x/r5f",
         "${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/include",
         "${MOTOR_CONTROL_SDK_PATH}/examples/current_sense/icss_sdfm_three_channel_single_pru_mode",
+        "${MOTOR_CONTROL_SDK_PATH}/examples/current_sense",
         "${MOTOR_CONTROL_SDK_PATH}/source/pruicss_pwm/include"
     ],
 };

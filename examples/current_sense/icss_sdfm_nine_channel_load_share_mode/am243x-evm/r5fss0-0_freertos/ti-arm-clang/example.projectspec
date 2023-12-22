@@ -37,6 +37,7 @@
             -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/am243x/r5f
             -I${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/include
             -I${MOTOR_CONTROL_SDK_PATH}/examples/current_sense/icss_sdfm_nine_channel_load_share_mode
+            -I${MOTOR_CONTROL_SDK_PATH}/examples/current_sense
             -I${MOTOR_CONTROL_SDK_PATH}/source/pruicss_pwm/include
             -mcpu=cortex-r5
             -mfloat-abi=hard
@@ -102,13 +103,13 @@
         <pathVariable name="MOTOR_CONTROL_SDK_PATH" path="${COM_TI_MOTOR_CONTROL_SDK_AMXXX_INSTALL_DIR}" scope="project" />
         <file path="../../../app_sdfm.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
-        <file path="../../../epwm_dc.c" openOnCreation="false" excludeFromBuild="false" action="copy">
+        <file path="../../../../epwm_dc.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
-        <file path="../../../epwm_drv_aux.c" openOnCreation="false" excludeFromBuild="false" action="copy">
+        <file path="../../../../epwm_drv_aux.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
-        <file path="../../../epwm_mod.c" openOnCreation="false" excludeFromBuild="false" action="copy">
+        <file path="../../../../epwm_mod.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
-        <file path="../../../sdfm.c" openOnCreation="false" excludeFromBuild="false" action="copy">
+        <file path="../../../../sdfm_example.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
         <file path="../main.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>

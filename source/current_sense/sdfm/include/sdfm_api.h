@@ -361,10 +361,20 @@ void SDFM_enableLoadShareMode(sdfm_handle h_sdfm, uint8_t sliceId);
  *  \param[in]  h_sdfm          SDFM handle
  *  \param[in]  clEdg           Clock polarity: 1 -> falling edge, 0 -> raising edge
  *
- *  \retval     Phase delay   in nano sec
+ * 
  */
-float SDFM_measureClockPhaseDelay(sdfm_handle h_sdfm, uint16_t clEdg);
+void SDFM_measureClockPhaseDelay(sdfm_handle h_sdfm, uint16_t clEdg);
 
+/**
+ *
+ *  \brief  This API returns Clock phase compensation
+ *
+ *  \param[in]  h_sdfm          SDFM handle
+ *
+ *  \retval    Phase delay      in nano sec
+ * 
+ */
+float SDFM_getClockPhaseDelay(sdfm_handle h_sdfm);
 /**
  *
  *  \brief  This API returns high threshold Status for specified SDFM channel number
