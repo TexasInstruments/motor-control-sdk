@@ -143,35 +143,35 @@ typedef struct SdfmPrms_s
     /**<ICSSG pru Slice ID*/
     uint8_t icssgSliceId;
     /**< IEP clock value */
-    uint32_t iep_clock;
+    uint32_t iepClock;
     /**< Sigma delta input clock value  */
-    uint32_t sd_clock;
+    uint32_t sdClock;
     /**< double update enable field  */
-    uint8_t en_second_update;
+    uint8_t enSecondUpdate;
     /**< First normal current sample trigger time  */
     float firstSampTrigTime;
     /**< First normal current sample trigger time  */
     float secondSampTrigTime;
     /**< output freq. of EPWM0  */
-    uint32_t epwm_out_freq;
+    uint32_t epwmOutFreq;
     /**< Over current threshold parameters  */
-    SDFM_ThresholdParms   threshold_parms[NUM_CH_SUPPORTED_PER_AXIS];
+    SDFM_ThresholdParms   thresholdParms[NUM_CH_SUPPORTED_PER_AXIS];
     /**< SD clock source and clock inversion  */
     SDFM_ClkSourceParms   clkPrms[3];
     /**< Over current OSR  */
-    uint16_t ComFilterOsr;
+    uint16_t comFilterOsr;
     /**< Normal current OSR  */
-    uint16_t FilterOsr;
+    uint16_t filterOsr;
     /**< over current enable field */
-    uint8_t en_com;
+    uint8_t enComparator ;
     /**< output samples base address*/
     uint32_t samplesBaseAddress;
     /**<enable fast detect*/
-    uint8_t en_fd;
+    uint8_t enFastDetect;
     /**<Fast detect configuration field*/
     uint8_t fastDetect[NUM_SD_CH][NUM_FD_FIELD];
     /**<Zero Cross enable field*/
-    uint8_t en_zc;
+    uint8_t enZeroCross;
     /**<Zero cross threshold*/
     uint32_t zcThr[NUM_CH_SUPPORTED_PER_AXIS];
 } SdfmPrms;

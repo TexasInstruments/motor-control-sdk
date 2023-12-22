@@ -152,15 +152,6 @@ CHECK_SDFM_EN:
 ; Perform initialization
 ;
 INIT_SDFM:
-    ; Enable XIN/XOUT shifting.
-    ; Used for context & SD state save/restore in TM tasks.
-    LBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_CFG, ICSSG_CFG_SPPC, 1
-    .if $isdefed("SDFM_PRU_CORE")
-    SET     TEMP_REG0, TEMP_REG0, XFR_SHIFT_EN_BN   ; ICSSG_SPP_REG:XFR_SHIFT_EN=1
-    .elseif $isdefed("SDFM_RTU_CORE")
-    SET     TEMP_REG0, TEMP_REG0, RTU_XFR_SHIFT_EN   ; ICSSG_SPP_REG:RTU_XFR_SHIFT_EN=1
-    .endif
-    SBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_CFG, ICSSG_CFG_SPPC, 1  
 
     ;Initialize Task Manager
     JAL     RET_ADDR_REG, FN_TM_INIT 
@@ -168,11 +159,9 @@ INIT_SDFM:
     ;Enable Task Manager
     M_PRU_TM_ENABLE  
 
-    .if $isdefed("SDFM_PRU_CORE") 
     ;Initialize IEP0
     JAL     RET_ADDR_REG, FN_IEP0_INIT
-    .endif
-
+   
     .if $isdefed("SDFM_PRU_CORE")
     ;Initialize SD mode
     LDI32   TEMP_REG1, PR1_PRUn_GP_MUX_SEL_VAL<<PR1_PRUn_GP_MUX_SEL_SHIFT
@@ -794,12 +783,23 @@ FN_NC_LOOP_TASK:
     MOV     R18.b0, R30.b3                  ; save T0 SD channel select
     xchg    BANK_CTXT_NC, &R1, 4*18     
 
-    .if $isdefed("SDFM_PRU_CORE") ; no IEP config on RTU
-    ; Clear IEP0 CMP4 event
-    LDI		TEMP_REG0.b0, 0x10
+    .if $isdefed("SDFM_RTU_CORE")
+    ; Clear IEP0 CMP7 event
+    LBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP_STATUS_REG, 1
+    SET		TEMP_REG0.t7
     SBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP_STATUS_REG, 1
-    .endif 
-
+    .elseif $isdefed("SDFM_PRU_CORE")
+    ; Clear IEP0 CMP4 event
+    LBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP_STATUS_REG, 1
+    SET		TEMP_REG0.t4
+    SBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP_STATUS_REG, 1
+    .elseif $isdefed("SDFM_TXPRU_CORE")
+    ; Clear IEP0 CMP8 event
+    LBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP_STATUS_REG, 1
+    SET		TEMP_REG0.t8
+    SBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP_STATUS_REG, 1
+    .endif ; SDFM_TXPRU_CORE
+    
     .if $isdefed("DEBUG_CODE")
     ;Debug code  :GPIO HIGH
     LBBO    &GPIO_TGL_ADDR, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_LOW_THR_CH0_SET_VAL_ADDR_OFFSET,  SDFM_CFG_GPIO_SET_ADDR_SZ
@@ -876,38 +876,69 @@ WAIT_SAMPLE_COUNT_INCR:
     ;continuous mode check
     QBBC    TRIGGER_MODE, EN_DOUBLE_UPDATE, 1
 
-    .if $isdefed("SDFM_PRU_CORE")
-    ;update IEP0 CMP4
+    ;update IEP0 CMP
     LBBO    &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_NC_PRD_IEP_CNT_OFFSET, 4
-    LBCO    &TEMP_REG1, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP4_REG0, 4 ;
+    .if $isdefed("SDFM_RTU_CORE")
+    ;update IEP0 CMP7
+    LBCO    &TEMP_REG1, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP7_REG0, 4 
+    .elseif $isdefed("SDFM_PRU_CORE")
+    ;update IEP0 CMP4
+    LBCO    &TEMP_REG1, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP4_REG0, 4 
+    .elseif $isdefed("SDFM_TXPRU_CORE")
+    ;update IEP0 CMP4
+    LBCO    &TEMP_REG1, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP8_REG0, 4   
+    .endif ; SDFM_TXPRU_CORE
     ADD     TEMP_REG0, TEMP_REG1, TEMP_REG0
     ;read iep counter maximum value
     LDI     TEMP_REG1, 0
     LBBO    &TEMP_REG1, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_IEP_CFG_SIM_EPWM_PRD_OFFSET, 4
     QBLE    UPDATE_CMP_FOR_IEP_RESET,  TEMP_REG0, TEMP_REG1
-    ;update Cmp4 with old value + next sample time value
-    SBCO    &TEMP_REG0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP4_REG0, 4
     JMP     END_CMP_UPDATE
 UPDATE_CMP_FOR_IEP_RESET:
     ;Update cmp4 according to iep reset
     SUB      TEMP_REG0, TEMP_REG0, TEMP_REG1
-    SBCO    &TEMP_REG0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP4_REG0, 4
 END_CMP_UPDATE:
-    .endif
+    .if $isdefed("SDFM_RTU_CORE")
+    ;update Cmp7 with old value + next sample time value
+    SBCO    &TEMP_REG0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP7_REG0, 4
+    .elseif $isdefed("SDFM_PRU_CORE")
+    ;update Cmp4 with old value + next sample time value
+    SBCO    &TEMP_REG0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP4_REG0, 4
+    .elseif $isdefed("SDFM_TXPRU_CORE")
+    ;update Cmp8 with old value + next sample time value
+    SBCO    &TEMP_REG0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP8_REG0, 4
+    .endif ; SDFM_TXPRU_CORE
+    
     JMP  END_RESET_NC_FRAME
 
 TRIGGER_MODE:
     ;Check NC sample count
     QBLE    RESET_NC_FRAME, SAMP_CNT_REG, NC_SAMP_CNT-1
-    .if $isdefed("SDFM_PRU_CORE") ; no IEP config on RTU
     ; NC sample count < NC_SAMP_CNT-1
     ; Add configured IEP count for NC OSR
     ; IEP0 CMP4_reg = cmp4_reg + NC_OSR*IEP_CLOCK* SD_cycle
     LBBO    &TEMP_REG0, SDFM_CFG_BASE_PTR_REG,  SDFM_CFG_NC_PRD_IEP_CNT_OFFSET,  4
-    LBCO    &TEMP_REG1, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP4_REG0, 4 ;
+    .if $isdefed("SDFM_RTU_CORE")
+    ;update IEP0 CMP7
+    LBCO    &TEMP_REG1, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP7_REG0, 4 
+    .elseif $isdefed("SDFM_PRU_CORE")
+    ;update IEP0 CMP4
+    LBCO    &TEMP_REG1, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP4_REG0, 4 
+    .elseif $isdefed("SDFM_TXPRU_CORE")
+    ;update IEP0 CMP4
+    LBCO    &TEMP_REG1, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP8_REG0, 4   
+    .endif ; SDFM_TXPRU_CORE
     ADD     TEMP_REG0, TEMP_REG1, TEMP_REG0
+    .if $isdefed("SDFM_RTU_CORE")
+    ;update Cmp7 with old value + next sample time value
+    SBCO    &TEMP_REG0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP7_REG0, 4
+    .elseif $isdefed("SDFM_PRU_CORE")
+    ;update Cmp4 with old value + next sample time value
     SBCO    &TEMP_REG0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP4_REG0, 4
-    .endif    
+    .elseif $isdefed("SDFM_TXPRU_CORE")
+    ;update Cmp8 with old value + next sample time value
+    SBCO    &TEMP_REG0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP8_REG0, 4
+    .endif ; SDFM_TXPRU_CORE    
     ADD     SAMP_CNT_REG, SAMP_CNT_REG, 1   ; increment NC sample count    
     QBA     NRESET_NC_FRAME
      
@@ -915,19 +946,33 @@ RESET_NC_FRAME:
     ; Set IEP CMP$ value: IEP_CMP4_REG1:REG0 = 0:TRIG_SAMPLE_TIME
     QBBS    FIRST_NC_SAMPLE, SAMP_NAME, 0
     QBBC    FIRST_NC_SAMPLE, EN_DOUBLE_UPDATE, 0 ;check double update is enable
-    .if $isdefed("SDFM_PRU_CORE") ; no IEP config on RTU
     LBBO    &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, FW_REG_SDFM_CFG_SECOND_TRIG_SAMPLE_TIME, 4
     SUB     TEMP_REG0, TEMP_REG0, IEP_DEFAULT_INC ; subtract IEP default increment since IEP counts 0...CMP4
+    .if $isdefed("SDFM_RTU_CORE")
+    ;update Cmp7 with old value + next sample time value
+    SBCO    &TEMP_REG0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP7_REG0, 4
+    .elseif $isdefed("SDFM_PRU_CORE")
+    ;update Cmp4 with old value + next sample time value
     SBCO    &TEMP_REG0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP4_REG0, 4
-    .endif
+    .elseif $isdefed("SDFM_TXPRU_CORE")
+    ;update Cmp8 with old value + next sample time value
+    SBCO    &TEMP_REG0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP8_REG0, 4
+    .endif ; SDFM_TXPRU_CORE   
     LDI    SAMP_NAME, 1 ;clear sample name for first sample
     QBA     END_RESET_NC_FRAME
 FIRST_NC_SAMPLE:
-    .if $isdefed("SDFM_PRU_CORE") ; no IEP config on RTU
     LBBO    &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, FW_REG_SDFM_CFG_FIRST_TRIG_SAMPLE_TIME, 4
     SUB     TEMP_REG0, TEMP_REG0, IEP_DEFAULT_INC ; subtract IEP default increment since IEP counts 0...CMP4
+    .if $isdefed("SDFM_RTU_CORE")
+    ;update Cmp7 with old value + next sample time value
+    SBCO    &TEMP_REG0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP7_REG0, 4
+    .elseif $isdefed("SDFM_PRU_CORE")
+    ;update Cmp4 with old value + next sample time value
     SBCO    &TEMP_REG0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP4_REG0, 4
-    .endif
+    .elseif $isdefed("SDFM_TXPRU_CORE")
+    ;update Cmp8 with old value + next sample time value
+    SBCO    &TEMP_REG0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP8_REG0, 4
+    .endif ; SDFM_TXPRU_CORE   
     LDI    SAMP_NAME, 0 ; update for Second sample
 END_RESET_NC_FRAME:
     LDI     SAMP_CNT_REG, 0 ; reset NC sample count
@@ -972,8 +1017,15 @@ FN_TM_INIT:
     .endif
 
     ; Set Task triggers
-    ; set T1_S1 trigger to IEP0 CMP4 event = 20
-    LDI     TEMP_REG0.w0, (COMP4_EVENT_NUMBER<<COMP_EVENT_FOUR_SIFT)
+    ; set T1_S1 trigger to IEP0 CMP4 event = 20, CMP7 = 23, CMP8 = 24
+    .if $isdefed("SDFM_RTU_CORE")
+    LDI     TEMP_REG0.w0, (CMP7_EVENT_NUMBER<<CMP_EVENT_BIT_SHIFT)
+    .elseif $isdefed("SDFM_PRU_CORE")
+    LDI     TEMP_REG0.w0, (CMP4_EVENT_NUMBER<<CMP_EVENT_BIT_SHIFT)
+    .elseif $isdefed("SDFM_TXPRU_CORE")
+    LDI     TEMP_REG0.w0, (CMP8_EVENT_NUMBER<<CMP_EVENT_BIT_SHIFT)
+    .endif ; SDFM_TXPRU_CORE   
+    
     .if $isdefed("SDFM_TXPRU_CORE")
     SBCO    &TEMP_REG0.w0, C28, TASKS_MGR_TS1_GEN_CFG1, 2
     .else
@@ -986,6 +1038,8 @@ FN_TM_INIT:
 ; Initialize IEP0.
 ;
 FN_IEP0_INIT:
+    
+    .if $isdefed("SDFM_PRU_CORE")
     ; Disable IEP0 counter
     LBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_GLOBAL_CFG_REG, 1
     AND     TEMP_REG0.b0, TEMP_REG0.b0, 0xFE
@@ -993,10 +1047,27 @@ FN_IEP0_INIT:
     ; Set IEP0 counter to zero
     LDI     TEMP_REG0, 0
     SBCO    &TEMP_REG0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_COUNT_REG1, 4
-    SBCO    &TEMP_REG0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_COUNT_REG0, 4    
-    ; Clear IEP0  CMP4 events
-    LDI		TEMP_REG0.b0, 0x10
-    SBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP_STATUS_REG, 1    
+    SBCO    &TEMP_REG0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_COUNT_REG0, 4  
+    .endif
+
+    .if $isdefed("SDFM_RTU_CORE")
+    ; Clear IEP0 CMP7 event
+    LBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP_STATUS_REG, 1
+    SET		TEMP_REG0.t7
+    SBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP_STATUS_REG, 1
+    .elseif $isdefed("SDFM_PRU_CORE")
+    ; Clear IEP0 CMP4 event
+    LBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP_STATUS_REG, 1
+    SET		TEMP_REG0.t4
+    SBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP_STATUS_REG, 1
+    .elseif $isdefed("SDFM_TXPRU_CORE")
+    ; Clear IEP0 CMP8 event
+    LBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP_STATUS_REG, 1
+    SET		TEMP_REG0.t8
+    SBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP_STATUS_REG, 1
+    .endif ; SDFM_TXPRU_CORE 
+    
+    .if $isdefed("SDFM_PRU_CORE")
     ; Write IEP0 default increment
     LBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_GLOBAL_CFG_REG, 1
     AND     TEMP_REG0.b0, TEMP_REG0.b0, 0x0F
@@ -1006,7 +1077,25 @@ FN_IEP0_INIT:
     LBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_IEP0_0x100, ICSSG_IEP_PWM_REG, 1
     SET     TEMP_REG0.b0.t0 ; IEP_PWM_REG:PWM0_RST_CNT_EN = 1, enable IEP0 counter reset on EPWM0 SYNCO event
     SBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_IEP0_0x100, ICSSG_IEP_PWM_REG, 1    
-    ; Initialize Trigger sample time for OC
+    .endif
+
+    
+    .if $isdefed("SDFM_RTU_CORE")
+    ; Initialize Trigger sample time for NC
+    ; Set IEP0 CMP7 value: IEP0_CMP7_REG1:REG0 = 0:TRIG_SAMPLE_TIME
+    LDI     TEMP_REG0, 0
+    SBCO    &TEMP_REG0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP7_REG1, 4
+    LBBO    &TEMP_REG0, SDFM_CFG_BASE_PTR_REG,  FW_REG_SDFM_CFG_FIRST_TRIG_SAMPLE_TIME,  4
+    LDI     TEMP_REG1, SDFM_CFG_TRIG_SAMP_TIME_BF_TRIG_SAMP_TIME_MASK
+    AND     TEMP_REG0, TEMP_REG1, TEMP_REG0
+    SUB     TEMP_REG0, TEMP_REG0, IEP_DEFAULT_INC ; subtract IEP default increment since IEP counts 0...CMP0
+    SBCO    &TEMP_REG0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP7_REG0, 4
+    ;Enable IEP0 CMP7
+    LBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP_CFG_REG, 2  ; TR0 <- Byte0 ICSSG_CMP_CFG_REG
+    SET     TEMP_REG0.t8    ; CMP_EN[8]=1 => CMP7 enabled
+    SBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP_CFG_REG, 2  ; TR0 -> ICSSG_CMP_CFG_REG Byte0 
+    .elseif $isdefed("SDFM_PRU_CORE")
+    ; Initialize Trigger sample time for NC
     ; Set IEP0 CMP4 value: IEP0_CMP4_REG1:REG0 = 0:TRIG_SAMPLE_TIME
     LDI     TEMP_REG0, 0
     SBCO    &TEMP_REG0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP4_REG1, 4
@@ -1019,6 +1108,21 @@ FN_IEP0_INIT:
     LBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP_CFG_REG, 1  ; TR0 <- Byte0 ICSSG_CMP_CFG_REG
     SET     TEMP_REG0.t5    ; CMP_EN[5]=1 => CMP4 enabled
     SBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP_CFG_REG, 1  ; TR0 -> ICSSG_CMP_CFG_REG Byte0  
+    .elseif $isdefed("SDFM_TXPRU_CORE")
+    ; Initialize Trigger sample time for NC
+    ; Set IEP0 CMP8 value: IEP0_CMP8_REG1:REG0 = 0:TRIG_SAMPLE_TIME
+    LDI     TEMP_REG0, 0
+    SBCO    &TEMP_REG0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP8_REG1, 4
+    LBBO    &TEMP_REG0, SDFM_CFG_BASE_PTR_REG,  FW_REG_SDFM_CFG_FIRST_TRIG_SAMPLE_TIME,  4
+    LDI     TEMP_REG1, SDFM_CFG_TRIG_SAMP_TIME_BF_TRIG_SAMP_TIME_MASK
+    AND     TEMP_REG0, TEMP_REG1, TEMP_REG0
+    SUB     TEMP_REG0, TEMP_REG0, IEP_DEFAULT_INC ; subtract IEP default increment since IEP counts 0...CMP0
+    SBCO    &TEMP_REG0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP8_REG0, 4
+    ; Enable IEP0 CMP4
+    LBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP_CFG_REG, 2  ; TR0 <- Byte0 ICSSG_CMP_CFG_REG
+    SET     TEMP_REG0.t9    ; CMP_EN[9]=1 => CMP4 enabled
+    SBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_CMP_CFG_REG, 2  ; TR0 -> ICSSG_CMP_CFG_REG Byte0 
+    .endif ; SDFM_TXPRU_CORE
 
     JMP     RET_ADDR_REG
 

@@ -338,7 +338,7 @@ void sdfm_main(void *args)
     DebugP_log("EPWM Configured!\r\n");
      
     /*Configure IEP for SD clock when phase delay calculaton is enabled*/
-    if(gTestSdfmPrms.phase_delay)
+    if(gTestSdfmPrms.phaseDelay)
     {
         /*config ICSSG1 IEP0 */
         init_IEP0_SYNC();
