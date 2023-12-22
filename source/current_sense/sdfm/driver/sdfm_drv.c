@@ -401,7 +401,7 @@ void SDFM_enableLoadShareMode(sdfm_handle h_sdfm, uint8_t sliceId)
 
 }
 /*Measure Phase delay*/
-float SDFM_measureClockPhaseDelay(sdfm_handle h_sdfm, uint16_t clkEdg)
+void SDFM_measureClockPhaseDelay(sdfm_handle h_sdfm, uint16_t clkEdg)
 {
     /*enable phase delay measurement*/
     h_sdfm->p_sdfm_interface->sdfm_ch_ctrl.en_phase_delay = 1;
@@ -429,8 +429,11 @@ float SDFM_measureClockPhaseDelay(sdfm_handle h_sdfm, uint16_t clkEdg)
       /*PRU cycles for one SD clock period*/
       uint32_t pruCycles = ceil((float)(h_sdfm->pruCoreClk/(h_sdfm->sdfmClock)));
       h_sdfm->p_sdfm_interface->sdfm_ch_ctrl.clock_phase_delay = pruCycles - temp;
-
    }
+
+}
+float SDFM_getClockPhaseDelay(sdfm_handle h_sdfm)
+{
     /*conversion from PRU cycle to ns */
     float phaseDelay =  ((float)h_sdfm->p_sdfm_interface->sdfm_ch_ctrl.clock_phase_delay * 1000000000)/h_sdfm->pruCoreClk;
     return phaseDelay;

@@ -40,7 +40,7 @@
 #include "ti_board_open_close.h"
 
 #include "epwm_dc.h"
-#include "sdfm.h"
+#include "sdfm_example.h"
 
 /*EPWM1 configuration for sigma delta clock generation: */
 #define APP_EPWM1_ENABLE  0 /*make sure EPWM1 is added in sysconfig before making true this macro */
@@ -154,7 +154,8 @@ SdfmPrms gTestSdfmPrms = {
     ICSSG_PRU_LOAD_SHARE_MODE,
     TEST_ICSSG_SLICE_ID,
     PRUICSS_PRU0,
-    300000000,   /*Value of IEP clock*/
+    300000000,
+    {300000000,0},  /*index[0]= IEP0 clock for G0, index[1] = reserved */
     20000000,    /*Value of SD clock (It should be exact equal to sd clock value)*/
     0,                        /*enable double update*/
     FIRST_SAMPLE_TRIGGER_TIME,       /*first sample  trigger time*/
@@ -175,6 +176,7 @@ SdfmPrms gTestSdfmPrms = {
     {4, 18, 2},
     {4, 18, 2}
     },   /*Fast detect fields {Window size, zero count max, zero count min}*/
+    0,  /*enable Phase delay measurment */
     0,   /*Enable zero cross*/
     {1700, 1700, 1700}, /*Zero cross threshold*/
 };

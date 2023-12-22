@@ -112,7 +112,6 @@
 #define ICSSG_NUM_SLICE    ( 2 )    /* ICSSG number of slices */
 #define NUM_FD_FIELD       ( 3 )
 
-#define  NUM_CH_SUPPORTED      ( 3 )
 /* SDFM Channel IDs*/
 #define SDFM_CH0    (0)
 #define SDFM_CH1    (1)
@@ -137,12 +136,15 @@ typedef enum PRUICSS_MaxInstances_s
 /* SDFM configuration parameters */
 typedef struct SdfmPrms_s 
 {
+    uint8_t loadShare;
     /**<PRU core instance ID*/
     uint8_t pruInsId;
     /**<ICSSG pru Slice ID*/
     uint8_t icssgSliceId;
+    /**< PRU_CORE_CLOCK*/
+    uint32_t pruClock;
     /**< IEP clock value */
-    uint32_t iepClock;
+    uint32_t iepClock[2];
     /**< Sigma delta input clock value  */
     uint32_t sdClock;
     /**< double update enable field  */
@@ -154,7 +156,7 @@ typedef struct SdfmPrms_s
     /**< output freq. of EPWM0  */
     uint32_t epwmOutFreq;
     /**< Over current threshold parameters  */
-    SDFM_ThresholdParms   thresholdParms[NUM_CH_SUPPORTED];
+    SDFM_ThresholdParms   thresholdParms[NUM_CH_SUPPORTED_PER_AXIS];
     /**< SD clock source and clock inversion  */
     SDFM_ClkSourceParms   clkPrms[3];
     /**< Over current OSR  */
@@ -169,10 +171,12 @@ typedef struct SdfmPrms_s
     uint8_t enFastDetect;
     /**<Fast detect configuration field*/
     uint8_t fastDetect[NUM_SD_CH][NUM_FD_FIELD];
+    /**<Phase delay enbale */
+    uint8_t phaseDelay;
     /**<Zero Cross enable field*/
     uint8_t enZeroCross;
     /**<Zero cross threshold*/
-    uint32_t zcThr[NUM_CH_SUPPORTED];
+    uint32_t zcThr[NUM_CH_SUPPORTED_PER_AXIS];
 } SdfmPrms;
 
 
@@ -181,6 +185,7 @@ int32_t initIcss(
     uint8_t icssInstId,
     uint8_t sliceId,
     uint8_t saMuxMode,
+    uint8_t loadShareMode,
     PRUICSS_Handle *pPruIcssHandle
 );
 

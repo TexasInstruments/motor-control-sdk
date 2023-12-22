@@ -40,13 +40,15 @@
 #include "ti_board_open_close.h"
 
 #include "epwm_dc.h"
-#include "sdfm.h"
+#include "sdfm_example.h"
 
 /*EPWM1 configuration for sigma delta clock generation: */
 #define APP_EPWM1_ENABLE  0 /*make sure EPWM1 is added in sysconfig before making true this macro */
 /* Output channel - A or B */
 #define APP_EPWM_OUT_CH_EN              ( 0x1 ) /* ChA enabled */
 
+#define  NUM_CH_SUPPORTED          ( 3 )
+#define ICSSG_PRU_LOAD_SHARE_MODE  ( 0 )
 /* EPWM functional clock */
 /* Functional clock is the same for all EPWMs */
 #define APP_EPWM_FCLK                   ( CONFIG_EPWM0_FCLK )
@@ -139,9 +141,11 @@ __attribute__((section(".gSdfmSampleOutput"))) uint32_t gSdfm_sampleOutput[NUM_C
 
 /* Test Sdfm parameters */
 SdfmPrms gTestSdfmPrms = {
+    0, /*Load share enable*/
     PRUICSS_PRU0,
     TEST_ICSSG_SLICE_ID,
-    300000000,   /*Value of IEP clock*/
+    300000000,   /*PRU core clock*/
+    {300000000, 0},   /*Value of G0IEP0,  second index reserved for G1IEP0 */
     20000000,    /*Value of SD clock (It should be exact equal to sd clock value)*/
     0,                        /*enable double update*/
     FIRST_SAMPLE_TRIGGER_TIME,       /*first sample  trigger time*/
@@ -162,6 +166,7 @@ SdfmPrms gTestSdfmPrms = {
     {4, 18, 2},
     {4, 18, 2}
     },   /*Fast detect fields {Window size, zero count max, zero count min}*/
+    0,   /*reserved for phase delay*/
     0,   /*Enable zero cross*/
     {1700, 1700, 1700}, /*Zero cross threshold*/
 };
@@ -286,7 +291,7 @@ void init_sdfm()
 {
     int32_t status;
     /* Initialize ICSSG */
-    status = initIcss(TEST_ICSSG_INST_ID, TEST_ICSSG_SLICE_ID, PRUICSS_G_MUX_EN, &gPruIcssHandle);
+    status = initIcss(TEST_ICSSG_INST_ID, TEST_ICSSG_SLICE_ID, PRUICSS_G_MUX_EN, ICSSG_PRU_LOAD_SHARE_MODE, &gPruIcssHandle);
     if (status != SDFM_ERR_NERR) {
         DebugP_log("Error: initIcss() fail.\r\n");
         return;

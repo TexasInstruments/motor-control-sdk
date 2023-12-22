@@ -42,7 +42,7 @@ FILES_common := \
 	epwm_dc.c \
 	epwm_drv_aux.c \
 	epwm_mod.c \
-	sdfm.c \
+	sdfm_example.c \
 	main.c \
 	ti_drivers_config.c \
 	ti_drivers_open_close.c \
@@ -55,6 +55,7 @@ FILES_common := \
 FILES_PATH_common = \
 	.. \
 	../../.. \
+	../../../.. \
 	generated \
 
 INCLUDES_common := \
@@ -66,6 +67,7 @@ INCLUDES_common := \
 	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/am243x/r5f \
 	-I${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/include \
 	-I${MOTOR_CONTROL_SDK_PATH}/examples/current_sense/icss_sdfm_nine_channel_load_share_mode \
+	-I${MOTOR_CONTROL_SDK_PATH}/examples/current_sense \
 	-I${MOTOR_CONTROL_SDK_PATH}/source/pruicss_pwm/include \
 	-Igenerated \
 

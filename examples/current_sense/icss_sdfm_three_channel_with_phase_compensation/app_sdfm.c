@@ -40,13 +40,16 @@
 #include "ti_board_open_close.h"
 
 #include "epwm_dc.h"
-#include "sdfm.h"
+#include "sdfm_example.h"
 #include "mclk_iep0_sync.h"
 
 /*EPWM1 configuration for sigma delta clock generation: */
 #define APP_EPWM1_ENABLE  0 /*make sure EPWM1 is added in sysconfig before making true this macro */
 /* Output channel - A or B */
 #define APP_EPWM_OUT_CH_EN              ( 0x1 ) /* ChA enabled */
+
+#define  NUM_CH_SUPPORTED          ( 3 )
+#define ICSSG_PRU_LOAD_SHARE_MODE  ( 0 )
 
 /* EPWM functional clock */
 /* Functional clock is the same for all EPWMs */
@@ -140,11 +143,12 @@ __attribute__((section(".gSdfmSampleOutput"))) uint32_t gSdfm_sampleOutput[NUM_C
 
 /* Test Sdfm parameters */
 SdfmPrms gTestSdfmPrms = {
+    ICSSG_PRU_LOAD_SHARE_MODE,
     PRUICSS_PRU0,          /*PRU core ID*/
     TEST_ICSSG_SLICE_ID,   /*SLICE IDs*/
     300000000,    /*PRU Core clock*/
-    300000000,   /*Value of ICSSG0_IEP clock*/
-    300000000,   /*ICSSG1_IEP_CLOCK*/
+    {300000000,   /*Value of ICSSG0_IEP clock*/
+    300000000},   /*ICSSG1_IEP_CLOCK*/
     20000000,    /*Value of SD clock (It should be exact equal to sd clock value)*/
     0,                        /*enable double update*/
     FIRST_SAMPLE_TRIGGER_TIME,       /*first sample  trigger time*/
@@ -288,7 +292,7 @@ void init_sdfm()
 {
     int32_t status;
     /* Initialize ICSSG */
-    status = initIcss(TEST_ICSSG_INST_ID, TEST_ICSSG_SLICE_ID, PRUICSS_G_MUX_EN, &gPruIcssHandle);
+    status = initIcss(TEST_ICSSG_INST_ID, TEST_ICSSG_SLICE_ID, PRUICSS_G_MUX_EN, ICSSG_PRU_LOAD_SHARE_MODE, &gPruIcssHandle);
     if (status != SDFM_ERR_NERR) {
         DebugP_log("Error: initIcss() fail.\r\n");
         return;
@@ -351,6 +355,14 @@ void sdfm_main(void *args)
     init_sdfm();
     DebugP_log("SDFM Configured!\r\n");
     
+    /*Read measured delay*/
+    float delay;
+    delay = SDFM_getClockPhaseDelay(gHPruSdfm);
+    /* Convert nenosec into IEP cycle count */
+    uint32_t iepCount = (delay*(gTestSdfmPrms.iepClock[1]))/1000000000;
+    /* Config IEP SYNC1 delay based on phase compensation  */
+    config_SYNC_DELAY(iepCount);
+
     /* Start EPWM0 clock */
     CSL_REG32_WR(CSL_CTRL_MMR0_CFG0_BASE + CSL_MAIN_CTRL_MMR_CFG0_EPWM_TB_CLKEN, 1);
 
