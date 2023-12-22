@@ -177,6 +177,8 @@ typedef struct SdfmPrms_s
     uint8_t enZeroCross;
     /**<Zero cross threshold*/
     uint32_t zcThr[NUM_CH_SUPPORTED_PER_AXIS];
+    /**<enable NC continuous mode*/
+    uint8_t  enableContinuousMode;
 } SdfmPrms;
 
 

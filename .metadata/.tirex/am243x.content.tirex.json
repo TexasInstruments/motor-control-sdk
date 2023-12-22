@@ -983,6 +983,70 @@
         "resourceSubClass": [
             "example.general"
         ],
+        "description": "A Icss Sdfm Nine Channel With Continuous Mode Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "icss_sdfm_nine_channel_with_continuous_mode",
+        "location": "../../examples/current_sense/icss_sdfm_nine_channel_with_continuous_mode/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "AM243x_GP_EVM"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "current_sense",
+            "icss_sdfm_nine_channel_with_continuous_mode",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "description": "A Icss Sdfm Nine Channel With Continuous Mode Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "icss_sdfm_nine_channel_with_continuous_mode",
+        "location": "../../examples/current_sense/icss_sdfm_nine_channel_with_continuous_mode/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "AM243x_LAUNCHPAD"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "current_sense",
+            "icss_sdfm_nine_channel_with_continuous_mode",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
         "description": "A Icss Sdfm Three Channel Single Pru Mode Example. CPU is R5FSS0-0 running FREERTOS.",
         "name": "icss_sdfm_three_channel_single_pru_mode",
         "location": "../../examples/current_sense/icss_sdfm_three_channel_single_pru_mode/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
@@ -1030,6 +1094,70 @@
         "subCategories": [
             "current_sense",
             "icss_sdfm_three_channel_single_pru_mode",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "description": "A Icss Sdfm Three Channel With Continuous Mode Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "icss_sdfm_three_channel_with_continuous_mode",
+        "location": "../../examples/current_sense/icss_sdfm_three_channel_with_continuous_mode/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "AM243x_GP_EVM"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "current_sense",
+            "icss_sdfm_three_channel_with_continuous_mode",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "description": "A Icss Sdfm Three Channel With Continuous Mode Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "icss_sdfm_three_channel_with_continuous_mode",
+        "location": "../../examples/current_sense/icss_sdfm_three_channel_with_continuous_mode/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "AM243x_LAUNCHPAD"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "current_sense",
+            "icss_sdfm_three_channel_with_continuous_mode",
             "r5fss0-0_freertos"
         ],
         "mainCategories": [

@@ -171,6 +171,7 @@ SdfmPrms gTestSdfmPrms = {
     1, /*Phase delay enable*/
     0,   /*Enable zero cross*/
     {1700, 1700, 1700}, /*Zero cross threshold*/
+    0, /*enable continuous mode*/
 };
 
 #define PRUICSS_G_MUX_EN    ( 0x1 ) /* ICSSG_SA_MX_REG:G_MUX_EN */

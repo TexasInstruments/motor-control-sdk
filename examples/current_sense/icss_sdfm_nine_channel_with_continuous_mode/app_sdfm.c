@@ -47,8 +47,6 @@
 /* Output channel - A or B */
 #define APP_EPWM_OUT_CH_EN              ( 0x1 ) /* ChA enabled */
 
-#define  NUM_CH_SUPPORTED          ( 3 )
-#define ICSSG_PRU_LOAD_SHARE_MODE  ( 0 )
 /* EPWM functional clock */
 /* Functional clock is the same for all EPWMs */
 #define APP_EPWM_FCLK                   ( CONFIG_EPWM0_FCLK )
@@ -90,6 +88,16 @@
 
 /* R5F interrupt settings for ICSSG */
 #define ICSSG_PRU_SDFM_INT_NUM          ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_3 )  /* VIM interrupt number */
+#define ICSSG_RTUPRU_SDFM_INT_NUM       ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_4 )  /* VIM interrupt number */
+#define ICSSG_TXPRU_SDFM_INT_NUM        ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_5 )
+/*Load share macro*/
+#define ICSSG_PRU_LOAD_SHARE_MODE       ( 1 )
+
+#if ICSSG_PRU_LOAD_SHARE_MODE
+#define  NUM_CH_SUPPORTED      ( 9 )
+#else
+#define  NUM_CH_SUPPORTED      ( 3 )
+#endif
 
 /* EPWM0 IRQ handler */
 static void epwmIrqHandler(void *handle);
@@ -128,7 +136,8 @@ volatile uint32_t gEpwmOutFreq = APP_EPWM_OUTPUT_FREQ; /* EPWM output frequency 
 
 /* ICSSG PRU SDFM FW IRQ handler */
 static void pruSdfmIrqHandler(void *handle);
-
+static void rtuPruSdfmIrqHandler(void *handle);
+static void txPruSdfmIrqHandler(void *handle);
 
 /* Test ICSSG handle */
 PRUICSS_Handle gPruIcssHandle;
@@ -136,16 +145,17 @@ PRUICSS_Handle gPruIcssHandle;
 /* Test Sdfm handles */
 sdfm_handle gHPruSdfm;
 
+
 /* Sdfm output samples, written by PRU cores */
 __attribute__((section(".gSdfmSampleOutput"))) uint32_t gSdfm_sampleOutput[NUM_CH_SUPPORTED];
 
 /* Test Sdfm parameters */
 SdfmPrms gTestSdfmPrms = {
-    0, /*Load share enable*/
-    PRUICSS_PRU0,
+    ICSSG_PRU_LOAD_SHARE_MODE,
     TEST_ICSSG_SLICE_ID,
-    300000000,   /*PRU core clock*/
-    {300000000, 0},   /*Value of G0IEP0,  second index reserved for G1IEP0 */
+    PRUICSS_PRU0,
+    300000000,
+    {300000000,0},  /*index[0]= IEP0 clock for G0, index[1] = reserved */
     20000000,    /*Value of SD clock (It should be exact equal to sd clock value)*/
     0,                        /*enable double update*/
     FIRST_SAMPLE_TRIGGER_TIME,       /*first sample  trigger time*/
@@ -159,17 +169,17 @@ SdfmPrms gTestSdfmPrms = {
     {0,0}},
     15,   /*Over current osr: The effect count is OSR + 1*/
     128,   /*Normal current osr */
-    1,   /*comparator enable*/
+    0,   /*comparator enable*/
     (uint32_t)&gSdfm_sampleOutput, /*Output samples base address*/
-    0,    /*Fast Detect enable */
+    0,
     {{4, 18, 2},
     {4, 18, 2},
     {4, 18, 2}
     },   /*Fast detect fields {Window size, zero count max, zero count min}*/
-    0,   /*reserved for phase delay*/
+    0,  /*enable Phase delay measurment */
     0,   /*Enable zero cross*/
     {1700, 1700, 1700}, /*Zero cross threshold*/
-    0, /*enable continuous mode*/
+    1, /*enable continuous mode*/
 };
 
 #define PRUICSS_G_MUX_EN    ( 0x1 ) /* ICSSG_SA_MX_REG:G_MUX_EN */
@@ -190,10 +200,13 @@ volatile Bool gRunFlag = TRUE;
 /* ICSS SDFM Output samples */
 uint32_t sdfm_ch_samples[NUM_CH_SUPPORTED][MAX_SAMPLES] = {0};
 uint32_t sdfmPruIdxCnt = 0;
+uint32_t sdfmRtuIdxCnt = 0;
+uint32_t sdfmTxPruIdxCnt = 0;
 
 /* IRQ counters */
 volatile uint32_t gPruSdfmIrqCnt=0; /* PRU ICSS SDFM FW IRQ count */
-
+volatile uint32_t gRtuPruSdfmIrqCnt=0; /* RTU PRU ICSS SDFM FW IRQ count */
+volatile uint32_t gTxPruSdfmIrqCnt=0; /* TX PRU ICSS SDFM FW IRQ count */
 volatile uint32_t gEpwmIsrCnt=0;    /* EPWM0 IRQ count */
 volatile uint32_t gEpwmIsrCnt1=0;
 /*PWM Parameters*/
@@ -298,6 +311,7 @@ void init_sdfm()
         return;
     }
      
+    gTestSdfmPrms.loadShare = ICSSG_PRU_LOAD_SHARE_MODE;
     /* Register & enable ICSSG PRU SDFM FW interrupt */
     HwiP_Params_init(&hwiPrms);
     hwiPrms.intNum      = ICSSG_PRU_SDFM_INT_NUM;
@@ -308,6 +322,28 @@ void init_sdfm()
     status              = HwiP_construct(&gIcssgPruSdfmHwiObject, &hwiPrms);
     DebugP_assert(status == SystemP_SUCCESS);
 
+#if ICSSG_PRU_LOAD_SHARE_MODE
+    /* Register & enable ICSSG  RTU PRU0 SDFM FW interrupt */
+    HwiP_Params_init(&hwiPrms);
+    hwiPrms.intNum      = ICSSG_RTUPRU_SDFM_INT_NUM;
+    hwiPrms.callback    = &rtuPruSdfmIrqHandler;
+    hwiPrms.args        = 0;
+    hwiPrms.isPulse     = FALSE;
+    hwiPrms.isFIQ       = FALSE;
+    status              = HwiP_construct(&gIcssgPruSdfmHwiObject, &hwiPrms);
+    DebugP_assert(status == SystemP_SUCCESS);
+
+     /* Register & enable ICSSG  TX PRU SDFM FW interrupt */
+    HwiP_Params_init(&hwiPrms);
+    hwiPrms.intNum      = ICSSG_TXPRU_SDFM_INT_NUM;
+    hwiPrms.callback    = &txPruSdfmIrqHandler;
+    hwiPrms.args        = 0;
+    hwiPrms.isPulse     = FALSE;
+    hwiPrms.isFIQ       = FALSE;
+    status              = HwiP_construct(&gIcssgPruSdfmHwiObject, &hwiPrms);
+    DebugP_assert(status == SystemP_SUCCESS);
+
+#endif
     /* Initialize PRU cores for SDFM */
     status = initPruSdfm(gPruIcssHandle, PRUICSS_PRU0, &gTestSdfmPrms, &gHPruSdfm);
     if (status != SDFM_ERR_NERR) 
@@ -315,6 +351,30 @@ void init_sdfm()
         DebugP_log("Error: initPruSdfm() fail.\r\n");
         return;
     }
+
+#if ICSSG_PRU_LOAD_SHARE_MODE
+   /*Update sdfm prams*/
+   gTestSdfmPrms.pruInsId = PRUICSS_RTU_PRU0 ;
+   gTestSdfmPrms.samplesBaseAddress = (uint32_t)&gSdfm_sampleOutput + 12;
+   /* Initialize RTU PRU cores for SDFM */
+   status = initPruSdfm(gPruIcssHandle, PRUICSS_RTU_PRU0, &gTestSdfmPrms, &gHPruSdfm);
+    if (status != SDFM_ERR_NERR) 
+    {
+        DebugP_log("Error: initPruSdfm() fail.\r\n");
+        return;
+    } 
+   /*Update sdfm prams */
+   gTestSdfmPrms.pruInsId = PRUICSS_TX_PRU0;
+   gTestSdfmPrms.samplesBaseAddress = (uint32_t)&gSdfm_sampleOutput + 24 ;
+   /* Initialize TX PRU cores for SDFM */
+   status = initPruSdfm(gPruIcssHandle, PRUICSS_TX_PRU0, &gTestSdfmPrms, &gHPruSdfm);
+    if (status != SDFM_ERR_NERR) 
+    {
+        DebugP_log("Error: initPruSdfm() fail.\r\n");
+        return;
+    } 
+
+#endif
 }
 void sdfm_main(void *args)
 {
@@ -339,7 +399,7 @@ void sdfm_main(void *args)
      */
     init_pwm();
     DebugP_log("EPWM Configured!\r\n");
-    
+   
     /* Configure SDFM */
     init_sdfm();
     DebugP_log("SDFM Configured!\r\n");
@@ -388,14 +448,86 @@ void pruSdfmIrqHandler(void *args)
         sdfmPruIdxCnt = 0;      
     }
 
+#if ICSSG_PRU_LOAD_SHARE_MODE
+    /*Select core */
+    gHPruSdfm->sampleOutputInterface =  (SDFM_SampleOutInterface *)((uint32_t)&gSdfm_sampleOutput);
+    /* SDFM Output sample for Channel 3 */
+    sdfm_ch_samples[SDFM_CH3][sdfmPruIdxCnt] = SDFM_getFilterData(gHPruSdfm, 0);
+    /* SDFM Output sample for Channel 4 */
+    sdfm_ch_samples[SDFM_CH4][sdfmPruIdxCnt] = SDFM_getFilterData(gHPruSdfm, 1);
+    /* SDFM Output sample for Channel 5 */
+    sdfm_ch_samples[SDFM_CH5][sdfmPruIdxCnt] = SDFM_getFilterData(gHPruSdfm, 2);
+
+#else
     /* SDFM Output sample for Channel 0 */
     sdfm_ch_samples[SDFM_CH0][sdfmPruIdxCnt] = SDFM_getFilterData(gHPruSdfm, 0);
     /* SDFM Output sample for Channel 1 */
     sdfm_ch_samples[SDFM_CH1][sdfmPruIdxCnt] = SDFM_getFilterData(gHPruSdfm, 1);
     /* SDFM Output sample for Channel 2 */
     sdfm_ch_samples[SDFM_CH2][sdfmPruIdxCnt] = SDFM_getFilterData(gHPruSdfm, 2);
+#endif
 
     sdfmPruIdxCnt++;
+}
+
+/* RTU PRU SDFM FW IRQ handler */
+void rtuPruSdfmIrqHandler(void *args)
+{
+    /* debug, inncrement PRU SDFM IRQ count */
+    gRtuPruSdfmIrqCnt++;
+    /* Clear interrupt at source */
+    /* Write 18 to ICSSG_STATUS_CLR_INDEX_REG
+        Firmware:   TRIGGER_HOST_SDFM_IRQ defined as 18
+        18 = 16+2, 2 is Host Interrupt Number. See AM64x TRM.
+    */
+    PRUICSS_clearEvent(gPruIcssHandle, RTU_TRIGGER_HOST_SDFM_EVT);
+
+    if(sdfmRtuIdxCnt >= MAX_SAMPLES)
+    {
+        sdfmRtuIdxCnt = 0;
+    }
+    
+    /*Select core */
+    gHPruSdfm->sampleOutputInterface =  (SDFM_SampleOutInterface *)((uint32_t)&gSdfm_sampleOutput + 12);
+   /* SDFM Output sample for Channel 0 */
+    sdfm_ch_samples[SDFM_CH0][sdfmRtuIdxCnt] = SDFM_getFilterData(gHPruSdfm, 0);
+    /* SDFM Output sample for Channel 1 */
+    sdfm_ch_samples[SDFM_CH1][sdfmRtuIdxCnt] = SDFM_getFilterData(gHPruSdfm, 1);
+    /* SDFM Output sample for Channel 2 */
+    sdfm_ch_samples[SDFM_CH2][sdfmRtuIdxCnt] = SDFM_getFilterData(gHPruSdfm, 2);
+    
+    sdfmRtuIdxCnt++;
+
+}
+
+/* PRU SDFM FW IRQ handler */
+void txPruSdfmIrqHandler(void *args)
+{
+    /* debug, inncrement PRU SDFM IRQ count */
+    gTxPruSdfmIrqCnt++;
+    /* Clear interrupt at source */
+    /* Write 18 to ICSSG_STATUS_CLR_INDEX_REG
+        Firmware:   TRIGGER_HOST_SDFM_IRQ defined as 18
+        18 = 16+2, 2 is Host Interrupt Number. See AM64x TRM.
+    */
+    PRUICSS_clearEvent(gPruIcssHandle, TXPRU_TRIGGER_HOST_SDFM_EVT);
+
+    if(sdfmTxPruIdxCnt >= MAX_SAMPLES)
+    {
+        sdfmTxPruIdxCnt = 0;
+    }
+   
+   /*Select core */
+    gHPruSdfm->sampleOutputInterface = (SDFM_SampleOutInterface *)((uint32_t)&gSdfm_sampleOutput + 24);
+
+   /* SDFM Output sample for Channel 6 */
+    sdfm_ch_samples[SDFM_CH6][sdfmTxPruIdxCnt] = SDFM_getFilterData(gHPruSdfm, 0);
+    /* SDFM Output sample for Channel 7 */
+    sdfm_ch_samples[SDFM_CH7][sdfmTxPruIdxCnt] = SDFM_getFilterData(gHPruSdfm, 1);
+    /* SDFM Output sample for Channel 8 */
+    sdfm_ch_samples[SDFM_CH8][sdfmTxPruIdxCnt] = SDFM_getFilterData(gHPruSdfm, 2);
+
+    sdfmTxPruIdxCnt++;
 }
 
 /* EPWM0 IRQ handler */
@@ -407,7 +539,7 @@ static void epwmIrqHandler(void *args)
     gEpwmIsrCnt++;
 
     status = EPWM_etIntrStatus(gEpwm0BaseAddr);
-    if(status & EPWM_ETFLG_INT_MASK) 
+    if (status & EPWM_ETFLG_INT_MASK) 
     {
         EPWM_etIntrClear(gEpwm0BaseAddr);
     }
