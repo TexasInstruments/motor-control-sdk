@@ -9,7 +9,6 @@ const files = {
         "epwm_drv_aux.c",
         "epwm_mod.c",
         "sdfm.c",
-        "cfg_pad.c",
         "main.c",
         "mclk_iep0_sync.c",
     ],

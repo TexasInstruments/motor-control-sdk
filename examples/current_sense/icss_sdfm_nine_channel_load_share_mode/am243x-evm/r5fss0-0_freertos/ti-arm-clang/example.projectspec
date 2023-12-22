@@ -110,8 +110,6 @@
         </file>
         <file path="../../../sdfm.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
-        <file path="../../../cfg_pad.c" openOnCreation="false" excludeFromBuild="false" action="copy">
-        </file>
         <file path="../main.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
         <file path="linker.cmd" openOnCreation="false" excludeFromBuild="false" action="copy">

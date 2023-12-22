@@ -8,6 +8,8 @@
 /**
  * Import the modules used in this configuration.
  */
+const sdfm       = scripting.addModule("/current_sense/sdfm", {}, false);
+const sdfm1      = sdfm.addInstance();
 const epwm       = scripting.addModule("/drivers/epwm/epwm", {}, false);
 const epwm1      = epwm.addInstance();
 const epwm2      = epwm.addInstance();
@@ -25,10 +27,14 @@ const mpu_armv72 = mpu_armv7.addInstance();
 const mpu_armv73 = mpu_armv7.addInstance();
 const mpu_armv74 = mpu_armv7.addInstance();
 const mpu_armv75 = mpu_armv7.addInstance();
+const pwm        = scripting.addModule("/pru_icssg/pwm", {}, false);
+const pwm1       = pwm.addInstance();
 
 /**
  * Write custom configuration values to the imported modules.
  */
+sdfm1.$name = "CONFIG_SDFM0";
+
 epwm1.$name            = "CONFIG_EPWM0";
 epwm1.EPWM.$assign     = "EHRPWM0";
 epwm1.EPWM.SYNCI.$used = false;
@@ -51,19 +57,22 @@ gpio2.GPIO.gpioPin.$assign = "PRG1_PRU0_GPO18";
 
 gpio3.pinDir               = "OUTPUT";
 gpio3.$name                = "GPIO_ZC_TH_CH1";
-gpio3.GPIO.$assign         = "GPIO0";
 gpio3.GPIO.gpioPin.rx      = false;
-gpio3.GPIO.gpioPin.$assign = "PRG1_PRU0_GPO17";
+gpio3.GPIO.gpioPin.$assign = "PRG0_PRU1_GPO2";
 
 gpio4.pinDir               = "OUTPUT";
 gpio4.$name                = "GPIO_ZC_TH_CH2";
 gpio4.GPIO.gpioPin.rx      = false;
 gpio4.GPIO.gpioPin.$assign = "PRG0_PRU1_GPO1";
 
-pruicss1.$name                           = "CONFIG_PRU_ICSS0";
-pruicss1.coreClk                         = 300000000;
-pruicss1.iepClk                          = 300000000;
-pruicss1.AdditionalICSSSettings[0].$name = "CONFIG_PRU_ICSS_IO0";
+pruicss1.$name                                                                    = "CONFIG_PRU_ICSS0";
+pruicss1.coreClk                                                                  = 300000000;
+pruicss1.iepClk                                                                   = 300000000;
+sdfm1.pru                                                                         = pruicss1;
+pruicss1.AdditionalICSSSettings[0].$name                                          = "CONFIG_PRU_ICSS_IO0";
+pruicss1.AdditionalICSSSettings[0].PruEcapIO.create(1);
+pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].$name                             = "CONFIG_PRU_ICSS_ECAP_IO0";
+pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].PRU_ICSSG0_ECAP.IN_APWM_OUT.$used = true;
 
 debug_log.enableUartLog        = true;
 debug_log.uartLog.$name        = "CONFIG_UART_CONSOLE";
@@ -94,18 +103,31 @@ mpu_armv75.baseAddr          = 0x60000000;
 mpu_armv75.size              = 28;
 mpu_armv75.accessPermissions = "Supervisor RD, User RD";
 
+pwm1.$name                       = "CONFIG_PRU_ICSS_PWM0";
+pwm1.PRU_ICSSG0_PWM.$assign      = "PRU_ICSSG0_PWM0";
+pwm1.PRU_ICSSG0_PWM.TZ_OUT.$used = true;
+
 /**
  * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future
  * version of the tool will not impact the pinmux you originally saw.  These lines can be completely deleted in order to
  * re-solve from scratch.
  */
-epwm1.EPWM.A.$suggestSolution               = "GPMC0_AD3";
-epwm1.EPWM.B.$suggestSolution               = "GPMC0_AD4";
-epwm1.EPWM.SYNCO.$suggestSolution           = "GPMC0_AD1";
-epwm2.EPWM.$suggestSolution                 = "EHRPWM1";
-epwm2.EPWM.A.$suggestSolution               = "GPMC0_AD5";
-epwm2.EPWM.B.$suggestSolution               = "GPMC0_AD6";
-gpio1.MCU_GPIO.$suggestSolution             = "MCU_GPIO0";
-gpio4.GPIO.$suggestSolution                 = "GPIO1";
-debug_log.uartLog.UART.RXD.$suggestSolution = "UART0_RXD";
-debug_log.uartLog.UART.TXD.$suggestSolution = "UART0_TXD";
+sdfm1.PRU_ICSSG0_PRU.$suggestSolution                                                        = "PRU_ICSSG0_PRU0";
+sdfm1.PRU_ICSSG0_PRU.GPI16.$suggestSolution                                                  = "PRG0_PRU0_GPO16";
+sdfm1.PRU_ICSSG0_PRU.GPI1.$suggestSolution                                                   = "PRG0_PRU0_GPO1";
+sdfm1.PRU_ICSSG0_PRU.GPI3.$suggestSolution                                                   = "PRG0_PRU0_GPO3";
+sdfm1.PRU_ICSSG0_PRU.GPI5.$suggestSolution                                                   = "PRG0_PRU0_GPO5";
+epwm1.EPWM.A.$suggestSolution                                                                = "GPMC0_AD3";
+epwm1.EPWM.B.$suggestSolution                                                                = "GPMC0_AD4";
+epwm1.EPWM.SYNCO.$suggestSolution                                                            = "GPMC0_AD1";
+epwm2.EPWM.$suggestSolution                                                                  = "EHRPWM1";
+epwm2.EPWM.A.$suggestSolution                                                                = "GPMC0_AD5";
+epwm2.EPWM.B.$suggestSolution                                                                = "GPMC0_AD6";
+gpio1.MCU_GPIO.$suggestSolution                                                              = "MCU_GPIO0";
+gpio3.GPIO.$suggestSolution                                                                  = "GPIO1";
+gpio4.GPIO.$suggestSolution                                                                  = "GPIO1";
+pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].PRU_ICSSG0_ECAP.$suggestSolution             = "PRU_ICSSG0_ECAP0";
+pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].PRU_ICSSG0_ECAP.IN_APWM_OUT.$suggestSolution = "PRG0_PRU1_GPO15";
+debug_log.uartLog.UART.RXD.$suggestSolution                                                  = "UART0_RXD";
+debug_log.uartLog.UART.TXD.$suggestSolution                                                  = "UART0_TXD";
+pwm1.PRU_ICSSG0_PWM.TZ_OUT.$suggestSolution                                                  = "PRG0_PRU0_GPO19";

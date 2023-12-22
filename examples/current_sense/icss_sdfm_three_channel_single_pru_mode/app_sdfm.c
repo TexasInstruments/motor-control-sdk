@@ -40,7 +40,6 @@
 #include "ti_board_open_close.h"
 
 #include "epwm_dc.h"
-#include "cfg_pad.h"
 #include "sdfm.h"
 
 /*EPWM1 configuration for sigma delta clock generation: */
@@ -334,16 +333,8 @@ void sdfm_main(void *args)
      */
     init_pwm();
     DebugP_log("EPWM Configured!\r\n");
-    /*
-     *  Configure SDFM
-     */
-
-    /* Configure SOC pads for SDFM.
-       Normally handled via Pinmux_init(),
-       but currently no way to pads for ICSSG from Sysconfig. */
-    cfgPad();
-
-     /* Configure SDFM */
+    
+    /* Configure SDFM */
     init_sdfm();
     DebugP_log("SDFM Configured!\r\n");
     

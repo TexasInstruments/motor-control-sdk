@@ -255,8 +255,8 @@ int32_t initSdfmFw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm, PRUI
     if( pSdfmPrms->loadShare )
     {
         if(pSdfmPrms->pruInsId == PRUICSS_PRU0)
-    {
-        SDFM_enableLoadShareMode(hSdfm, pSdfmPrms->icssgSliceId);
+        {
+            SDFM_enableLoadShareMode(hSdfm, pSdfmPrms->icssgSliceId);
         }
 
         switch (pSdfmPrms->pruInsId)
@@ -346,7 +346,7 @@ int32_t initSdfmFw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm, PRUI
         }
         
         /*enabling Zero cross only for first channel of axis*/
-        if(pSdfmPrms->en_zc && SDFM_CH == 0)
+        if(pSdfmPrms->en_zc && SDFM_CH == 2)
         {
             SDFM_enableZeroCrossDetection(hSdfm, SDFM_CH, pSdfmPrms->zcThr[SDFM_CH]);
         }
