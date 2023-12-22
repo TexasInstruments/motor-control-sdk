@@ -61,7 +61,6 @@ void tamagawa_config_iep(struct tamagawa_periodic_interface *tamagawa_periodic_i
 {
     /*reset iep timer*/
     void *pruss_iep = tamagawa_periodic_interface->pruss_iep;
-    struct tamagawa_pruss_xchg *pruss_xchg = tamagawa_periodic_interface->pruss_dmem;
     uint8_t temp;
     uint8_t event;
     uint32_t cmp_reg0;
@@ -122,7 +121,6 @@ void tamagawa_config_iep(struct tamagawa_periodic_interface *tamagawa_periodic_i
 
 void tamagawa_interrupt_config(struct tamagawa_periodic_interface *tamagawa_periodic_interface)
 {
-    struct tamagawa_pruss_xchg *pruss_xchg = tamagawa_periodic_interface->pruss_dmem;
     int32_t status;
     HwiP_Params hwiPrms;
     /* Register & enable ICSSG tamagawa PRU FW interrupt */
