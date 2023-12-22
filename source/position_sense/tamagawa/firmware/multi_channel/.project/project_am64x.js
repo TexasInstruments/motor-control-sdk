@@ -63,8 +63,8 @@ function getComponentProperty() {
     property.isInternal = false;
     property.description = "Tamagawa Peripheral Interface"
     property.buildOptionCombos = buildOptionCombos;
-    property.pru_main_file = "main";
-    property.pru_linker_file = "linker";
+    property.pru_main_file = "tamagawa_main";
+    property.pru_linker_file = "tamagawa_diagnostic";
     property.isSkipTopLevelBuild = true;
     property.skipUpdatingTirex = true;
     property.postBuildSteps = postBuildSteps;
