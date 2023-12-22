@@ -320,6 +320,12 @@ int32_t initSdfmFw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm,  PRU
 
     /*set Noraml current OSR */
     SDFM_setFilterOverSamplingRatio(hSdfm, pSdfmPrms->filterOsr);
+
+    /*Enable Continuous mode*/
+    if(pSdfmPrms->enableContinuousMode)
+    {
+        SDFM_enableContinuousNormalCurrent(hSdfm);
+    }
      
     /*below configuration for all three channel*/
     for(SDFM_CH = 0; SDFM_CH < NUM_CH_SUPPORTED_PER_AXIS; SDFM_CH++)

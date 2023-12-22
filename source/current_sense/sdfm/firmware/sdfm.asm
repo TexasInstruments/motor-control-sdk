@@ -159,9 +159,6 @@ INIT_SDFM:
     ;Enable Task Manager
     M_PRU_TM_ENABLE  
 
-    ;Initialize IEP0
-    JAL     RET_ADDR_REG, FN_IEP0_INIT
-   
     .if $isdefed("SDFM_PRU_CORE")
     ;Initialize SD mode
     LDI32   TEMP_REG1, PR1_PRUn_GP_MUX_SEL_VAL<<PR1_PRUn_GP_MUX_SEL_SHIFT
@@ -237,6 +234,9 @@ INIT_SDFM_CONT:
     LSL   TEMP_REG0.b0, TEMP_REG0.b0,  2
     OR    TEMP_REG0.w2, TEMP_REG0.w2, TEMP_REG0.w0
     MOV   ZERO_CROSS_EN, TEMP_REG0.w2
+
+    ;Initialize IEP0
+    JAL     RET_ADDR_REG, FN_IEP0_INIT
 
     .if $isdefed("SDFM_PRU_CORE") 
     ; Start IEP
