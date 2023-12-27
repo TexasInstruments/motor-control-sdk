@@ -35,6 +35,9 @@
 	.include "macros.inc"
 	;.sect	".text"
 	.ref transport_init_done
+	.ref PUSH_FIFO_2B_8x
+	.ref PUSH_FIFO_3_8x
+	.ref WAIT_TX_FIFO_FREE
 	.ref datalink_transport_on_v_frame_done
 	.ref datalink_transport_on_v_frame_done_2
 	.ref transport_layer_processing_1_done
@@ -79,6 +82,8 @@ transport_init:
 	sbco		&SPEED, MASTER_REGS_CONST, REL_POS0, 4
 transport_init_abs_err_loop:
 	zero		&DELTA_ACC0, 12
+	ldi 	REG_TMP0.b0, 0
+	sbco 	&REG_TMP0.b0, MASTER_REGS_CONST, ALIGN_PH, 1
 exit_transport_init:
 ;return back to datalink
 	RET
@@ -137,12 +142,7 @@ transport_on_v_frame_dont_update_qm:
 	.endif
 	qba		transport_on_v_frame_exit
 check_for_slave_error_on_v_frame:
-    .if $defined("HDSL_MULTICHANNEL")
-    WAIT_TX_FIFO_FREE
-    LOOP push_1B,3
-	PUSH_FIFO_CONST  0xff
-push_1B:
-    .endif
+
 ;CRC was correct -> add 1 to QM
 ;Note: QM_ADD uses REG_TMP1
 	QM_ADD		1
@@ -160,8 +160,15 @@ update_events_no_int5:
 ; Set ONLINE_STATUS_1_VPOS in ONLINE_STATUS_1 register
     set         REG_TMP2.b0, REG_TMP2.b0, ONLINE_STATUS_1_VPOS
     sbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H, 1
-	qba		no_first_push_for_exit
+	qba		transport_on_v_frame_exit
 transport_on_v_frame_check_pos:
+
+    .if $defined("HDSL_MULTICHANNEL")
+    CALL2 WAIT_TX_FIFO_FREE
+    LOOP push_1B,3
+	PUSH_FIFO_CONST  0xff
+push_1B:
+    .endif
 
 	sbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H, 1
 	lsl		REG_TMP2, CHANNEL.ch_verth, 8
@@ -191,7 +198,8 @@ transport_on_v_frame_diff_pos:
 	qbne		transport_on_v_frame_estimate, VERT_H.b2, FAST_POSL
 
 ;reset ALIGN_PH
-	ldi		ALIGN_PH, 0
+	ldi 	REG_TMP2.b0, 0
+	sbco 	&REG_TMP2.b0, MASTER_REGS_CONST, ALIGN_PH, 1
 	qba		transport_on_v_frame_no_pos_mismatch
 ; estimate/correct
 transport_on_v_frame_estimate:
@@ -227,7 +235,7 @@ transport_on_v_frame_exit:
 ;we are in RX0
 ;reset rel. pos
 	loop Wait_and_Push_2_byte,2
-   	WAIT_TX_FIFO_FREE
+   	CALL2 WAIT_TX_FIFO_FREE
 	PUSH_FIFO_CONST  0xff
 Wait_and_Push_2_byte:
 
@@ -236,7 +244,7 @@ Wait_and_Push_2_byte:
 no_first_push_for_exit:
     .if $defined("HDSL_MULTICHANNEL")
 	qbeq			free_run_mode1, EXTRA_SIZE, 0
-	WAIT_TX_FIFO_FREE
+	CALL2 WAIT_TX_FIFO_FREE
 	PUSH_FIFO_CONST		0xff
 	RESET_CYCLCNT
 free_run_mode1:
@@ -333,7 +341,7 @@ transport_on_v_frame_2_exit:
 	qbne			not_7th_hframe_0, LOOP_CNT.b2, 7
 	qbbc			not_7th_hframe_0, H_FRAME.flags, FLAG_NORMAL_FLOW
  	.if $defined("HDSL_MULTICHANNEL")
- 	WAIT_TX_FIFO_FREE
+ 	CALL2 WAIT_TX_FIFO_FREE
 	LOOP push_1B_0 ,2
 	PUSH_FIFO_CONST  0xff
 push_1B_0:
@@ -520,9 +528,8 @@ transport_layer_check_for_new_msg:
 	and		REG_TMP0.b0, REG_TMP0.b0, 0x0f
 	or		REG_TMP11.b3, REG_TMP11.b3, REG_TMP0.b0
 	.if $defined("HDSL_MULTICHANNEL")
-	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_1_8x
-	PUSH_FIFO_2_8x
+	CALL2 WAIT_TX_FIFO_FREE
+	CALL3 PUSH_FIFO_3_8x
 	.endif
 	mov		REG_TMP2, CHANNEL.ch_paral
 	ldi		REG_TMP1.b0, &REG_TMP11.b0
@@ -1079,17 +1086,18 @@ calc_speed_extend_acc1:
 	add		SPEED.w0, SPEED.w0, REG_TMP0.w0
 	adc		SPEED.b2, SPEED.b2, REG_TMP0.b2
 ;updating the delta acceleration regs
+	.if $defined("HDSL_MULTICHANNEL")
+	CALL2 WAIT_TX_FIFO_FREE
+	PUSH_FIFO_CONST  0x00
+	PUSH_FIFO_CONST  0x00
+	.endif
 	mov		DELTA_ACC4, DELTA_ACC3
 	mov		DELTA_ACC3, DELTA_ACC2
 	mov		DELTA_ACC2, DELTA_ACC1
 	mov		DELTA_ACC1, DELTA_ACC0
 	sub		DELTA_ACC0, REG_TMP0.w0, LAST_ACC
 	mov		LAST_ACC, REG_TMP0.w0
-	.if $defined("HDSL_MULTICHANNEL")
-	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_CONST  0x00
-	PUSH_FIFO_CONST  0x00
-	.endif
+
     CALL1		calc_fastpos
 ;restore return addr
 	mov		RET_ADDR0, REG_TMP11.w0
@@ -1116,17 +1124,18 @@ calc_speed_extend_acc0:
 	add		SPEED.w0, SPEED.w0, REG_TMP0.w0
 	adc		SPEED.b2, SPEED.b2, REG_TMP0.b2
 ;updating the delta acceleration regs
+	.if $defined("HDSL_MULTICHANNEL")
+	CALL2 WAIT_TX_FIFO_FREE
+	PUSH_FIFO_CONST  0x00
+	PUSH_FIFO_CONST  0x00
+	.endif
 	mov		DELTA_ACC4, DELTA_ACC3
 	mov		DELTA_ACC3, DELTA_ACC2
 	mov		DELTA_ACC2, DELTA_ACC1
 	mov		DELTA_ACC1, DELTA_ACC0
 	sub		DELTA_ACC0, REG_TMP0.w0, LAST_ACC
 	mov		LAST_ACC, REG_TMP0.w0
-	.if $defined("HDSL_MULTICHANNEL")
-	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_CONST  0x00
-	PUSH_FIFO_CONST  0x00
-	.endif
+
 	CALL1		calc_fastpos
 transport_on_h_frame_exit:
 ;calculate rel. pos and store
@@ -1232,7 +1241,8 @@ calc_speed_extend_acc:
 ;
 ;--------------------------------------------------------------------------------------------------
 estimator_fpos:
-	add		ALIGN_PH, ALIGN_PH, 1
+	lbco 		&REG_TMP2.b0, MASTER_REGS_CONST, ALIGN_PH, 1
+	add			REG_TMP2.b0, REG_TMP2.b0, 1
 ;pos=abspos+relpos
 	lbco		&REG_TMP0, MASTER_REGS_CONST, REL_POS0, 4
 	add		FAST_POSL, VERT_L.b2, REG_TMP0.b0
@@ -1245,7 +1255,7 @@ estimator_fpos:
 estimator_fpos_add_relpos_positive:
 	adc		FAST_POSH.b3, VERT_H.b2, 0
 estimator_fpos_add_relpos_done:
-	qbne		estimator_fpos_align_ph_not_2, ALIGN_PH, 2
+	qbne		estimator_fpos_align_ph_not_2, REG_TMP2.b0, 2
 ;vel = vel+acc/8
     ldi     REG_TMP0.b2, 0
 	qbbc	estimator_fpos_acc_pos, LAST_ACC, 15
@@ -1265,6 +1275,7 @@ estimator_fpos_acc_sing_check_end:
 	add		SPEED.w0, SPEED.w0, REG_TMP0.w0
 	adc		SPEED.b2, SPEED.b2, REG_TMP0.b2
 estimator_fpos_align_ph_not_2:
+	sbco 	&REG_TMP2.b0, MASTER_REGS_CONST, ALIGN_PH, 1
 	RET1
 ;--------------------------------------------------------------------------------------------------
 ;Function: store_error (RET_ADDR1)

@@ -34,6 +34,8 @@
 	.include "memory.inc"
 	.include "defines.inc"
 	.include "macros.inc"
+	.ref PUSH_FIFO_2B_8x
+	.ref WAIT_TX_FIFO_FREE
 	.ref transport_init
 	.ref qm_add
 	.ref calc_rssi
@@ -205,12 +207,10 @@ datalink_reset2:
 	PUSH_FIFO_CONST			0x00
 push_1b_0:
     TX_CHANNEL
-   	LOOP push_2b_0,6
-    WAIT_TX_FIFO_FREE
-	PUSH_FIFO_CONST		0x00
-	PUSH_FIFO_CONST		0x00
-push_2b_0:
-
+	ldi FIFO_L,0x0
+	loop aaa10,6
+	CALL3 PUSH_FIFO_2B_8x
+aaa10:
     .else
 	PUSH_FIFO_CONST		0x00
 	PUSH_FIFO_CONST		0x00
@@ -227,6 +227,7 @@ RESET_LOOP:
 	.else
 	CALL			send_header
 	.endif
+
 	CALL1			send_stuffing
 	add 			LOOP_CNT_0, LOOP_CNT_0, 1
 	qbne RESET_LOOP,LOOP_CNT_0,2
@@ -251,6 +252,7 @@ datalink_sync:
 datalink_sync_end:
 	add 			LOOP_CNT_0, LOOP_CNT_0, 1
 	qbne SYNC_LOOP,LOOP_CNT_0,16
+
 ;--------------------------------------------------------------------------------------------------
 ;State LEARN
 ; DLS response window is 1 switch bit + 61 slave answer and 12 delay bits
@@ -265,7 +267,6 @@ datalink_sync_end:
 	ldi			LOOP_CNT.b1, 9			;9
 
 datalink_learn:
-	;;WAIT_TX_FIFO_FREE
 ;send m_par_reset 8b/10b: 5b/6b and 3b/4b, first=0,vsync=0,reserved=0
 	ldi			REG_FNC.w0, (0x0000 | M_PAR_START)
 	.if $defined("HDSL_MULTICHANNEL")
@@ -275,21 +276,9 @@ datalink_learn:
 	.endif
 ; indication of TX_DONE comes about 53ns after wire timing
 	WAIT_TX_DONE
-    .if $defined("FREERUN_300_MHZ") | $defined("SYNC_300_MHZ")
-	NOP_2
-	NOP_2
-	NOP_2
-	NOP_2
-	NOP_2
-	NOP_2
-	NOP_2
-	NOP_2
-    .endif
- 	.if $defined("HDSL_MULTICHANNEL")
-	NOP_2
-	NOP_2
-    .endif
-
+	.if $defined("HDSL_MULTICHANNEL")
+	NOP_n 11
+   .endif
 ; measured starting point at 0 cable length
 ; first 8 bits will be all ones is delay from encoder and transceiver
 ; second 8 bits is oversampled DSL bit which is 0 on test pattern
@@ -387,7 +376,7 @@ datalink_learn_recv_loop_last_bit:
 
 	qbbc			datalink_learn_recv_loop_last_bit, r31, RX_VALID_FLAG
 
-; now finisch with last bit sample and store
+; now finish with last bit sample and store
 	POP_FIFO		REG_TMP0.b0
 	sub			LOOP_CNT.b2, LOOP_CNT.b2, 1
 	qbbc		datalink_learn_recv_loop_final, REG_TMP0.b0, SAMPLE_EDGE
@@ -419,16 +408,7 @@ datalink_learn_recv_loop_final:
 datalink_learn_skip_wait:
 	TX_EN
     .if $defined("HDSL_MULTICHANNEL")
-	NOP_2
-	NOP_2
-	NOP_2
-	NOP_2
-	NOP_2
-	NOP_2
-	NOP_2
-	NOP_2
-	NOP_2
-	nop
+	NOP_n 9
     .endif
 ;send TRAILER 0x03 (skipping first 2 bits of logic 0 to avoid some extra delays)
     .if $defined("HDSL_MULTICHANNEL")
@@ -436,7 +416,7 @@ datalink_learn_skip_wait:
 	TX_CHANNEL
 	LOOP push_3b_0,3
 	PUSH_FIFO_CONST		0x00
-	WAIT_TX_FIFO_FREE
+	CALL2 WAIT_TX_FIFO_FREE
 push_3b_0:
 	PUSH_FIFO_CONST		0xff
 	PUSH_FIFO_CONST		0xff
@@ -444,19 +424,10 @@ push_3b_0:
     PUSH_FIFO_CONST		0x03
 	TX_CHANNEL
     .endif
-;	2 dummy cycles
-	NOP_2
 ; test: we are in oversample mode (3 PRU clocks per bit)
 ; extra NOPs should make it shorter
-	NOP_2
-	NOP_2
-	NOP_2
-    .if $defined("FREERUN_300_MHZ") | $defined("SYNC_300_MHZ")
-	NOP_2
-	NOP_2
-	NOP_2
-	NOP_2
-	NOP_2
+    .if $defined("HDSL_MULTICHANNEL")
+	NOP_n 8
     .endif
     .if !$defined("HDSL_MULTICHANNEL")
     TX_CLK_DIV		CLKDIV_SLOW, REG_TMP2
@@ -464,7 +435,7 @@ push_3b_0:
 ;reset DISPARITY
 	ldi			DISPARITY, 0
 	;2 dummy cycles
-	NOP_2
+	nop
     .if !$defined("HDSL_MULTICHANNEL")
     TX_CLK_DIV		CLKDIV_NORMAL, REG_TMP2
     .endif
@@ -474,53 +445,31 @@ push_3b_0:
 datalink_learn_pattern:
 	.if $defined(EXT_SYNC_ENABLE)
 	.else
-    WAIT_TX_FIFO_FREE
+    CALL2 WAIT_TX_FIFO_FREE
     .if $defined("HDSL_MULTICHANNEL")
 ;add stuffing to gain processing time
 	;PUSH 8 bytes for 1 byte data (0x2c) in FIFO
-	PUSH_FIFO_CONST		0x00
-	PUSH_FIFO_CONST		0x00
-	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_CONST		0xff
-	PUSH_FIFO_CONST		0x00
-	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_CONST		0xff
-	PUSH_FIFO_CONST		0xff
-	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_CONST		0x00
-	PUSH_FIFO_CONST		0x00
+	ldi FIFO_L,0x2c
+	loop aaa1,4
+	CALL3 PUSH_FIFO_2B_8x
+aaa1:
 
 	;PUSH 8 bytes for 1 byte data (0xb2) in FIFO
-	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_CONST		0xff
-	PUSH_FIFO_CONST		0x00
-	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_CONST		0xff
-	PUSH_FIFO_CONST		0xff
-	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_CONST		0x00
-	PUSH_FIFO_CONST		0x00
-	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_CONST		0xff
-	PUSH_FIFO_CONST		0x00
+	ldi FIFO_L,0xb2
+	loop aaa2,4
+	CALL3 PUSH_FIFO_2B_8x
+aaa2:
 
 ;	PUSH 8 bytes for 1 byte data (0xcb) in FIFO
-	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_CONST		0xff
-	PUSH_FIFO_CONST		0xff
-	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_CONST		0x00
-	PUSH_FIFO_CONST		0x00
-	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_CONST		0xff
-	PUSH_FIFO_CONST		0x00
-	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_CONST		0xff
-	PUSH_FIFO_CONST		0xff
+	ldi FIFO_L,0xcb
+	loop aaa3,4
+	CALL3 PUSH_FIFO_2B_8x
+aaa3:
+
     .else
 ;add stuffing to gain processing time
 	PUSH_FIFO_CONST		0x2c
-	WAIT_TX_FIFO_FREE
+	CALL2 WAIT_TX_FIFO_FREE
 	PUSH_FIFO_CONST		0xb2
 	PUSH_FIFO_CONST		0xcb
     .endif  ;HDSL_MULTICHANNEL
@@ -568,11 +517,6 @@ datalink_learn_end:
 datalink_abort2:
 	qbbs			datalink_abort2_no_wait, r30, RX_ENABLE						;changed here from 24 to 26
 	WAIT_TX_DONE
-    .if $defined("FREERUN_300_MHZ") | $defined("SYNC_300_MHZ")
-	LOOP no_operation_2cycle,9
-	NOP_2
-no_operation_2cycle:
-    .endif
 datalink_abort3:
 datalink_abort2_no_wait:
 	lbco			&REG_TMP0.b0, MASTER_REGS_CONST, NUM_RESETS, 1
@@ -586,7 +530,7 @@ datalink_learn2_before:
 	ldi			LOOP_CNT.b1, 9; 16
 datalink_learn2:
     .if !$defined("HDSL_MULTICHANNEL")
-	WAIT_TX_FIFO_FREE
+	CALL2 WAIT_TX_FIFO_FREE
     .endif
 ;send m_par_reset 8b/10b: 5b/6b and 3b/4b, first=0,vsync=0,reserved=0
 	ldi			REG_FNC.w0, (0x0000 | M_PAR_LEARN)
@@ -690,6 +634,7 @@ datalink_id_compute:
 	ldi32			REG_TMP1, 0xffffffff
 	lsr			REG_TMP1, REG_TMP1, REG_TMP0.b0
 	sbco			&REG_TMP1, MASTER_REGS_CONST, MASK_POS, 4
+	ldi 		DELTA_ACC0, 0
 	;qba datalink_id_req
 	CALL1		send_stuffing
 	jmp         datalink_wait_vsynch
