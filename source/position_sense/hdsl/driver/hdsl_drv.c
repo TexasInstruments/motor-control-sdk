@@ -55,30 +55,39 @@
 
 #define PC_CTRL_ENABLE                  (0x01)
 
-/* Should move the below to sysconfig  generated code */
-    HDSL_Config hdslConfig0;
-    HDSL_Config hdslConfig1;
-    HDSL_Config hdslConfig2;
+#define PART1_LOAD_START_OFFSET		    (0x76)
+#define PART1_RUN_START_OFFSET		    (0x78)
+#define PART1_SIZE_OFFSET				(0x7A)
+#define PART2_LOAD_START_OFFSET		    (0x7C)
+#define PART2_RUN_START_OFFSET		    (0x7E)
+#define PART2_SIZE_OFFSET				(0x80)
 
-void hdsl_enable_load_share_mode(void *gPru_cfg ,uint32_t  PRU_SLICE)
+#define CHANNEL_MASK_OFFSET             (0x83)
+
+/* Should move the below to sysconfig  generated code */
+HDSL_Config hdslConfig0;
+HDSL_Config hdslConfig1;
+HDSL_Config hdslConfig2;
+
+void hdsl_enable_load_share_mode(void *pruCfg ,uint32_t pruSlice)
 {
-    //HW_WR_REG32(0x30026104) |= 0x0800;
-    uint32_t rgval;
-    if(PRU_SLICE==1)
+    uint32_t regVal;
+    if(pruSlice == 1)
     {
-       rgval = HW_RD_REG32((uint8_t *)gPru_cfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER);
-       rgval |= CSL_ICSSCFG_EDPRU1TXCFGREGISTER_PRU1_ENDAT_SHARE_EN_MASK;
-       HW_WR_REG32((uint8_t *)gPru_cfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER, rgval);
+       regVal = HW_RD_REG32((uint8_t *)pruCfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER);
+       regVal |= CSL_ICSSCFG_EDPRU1TXCFGREGISTER_PRU1_ENDAT_SHARE_EN_MASK;
+       HW_WR_REG32((uint8_t *)pruCfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER, regVal);
     }
     else
     {
-        rgval = HW_RD_REG32((uint8_t *)gPru_cfg + CSL_ICSSCFG_EDPRU0TXCFGREGISTER);
-        rgval |= CSL_ICSSCFG_EDPRU0TXCFGREGISTER_PRU0_ENDAT_SHARE_EN_MASK;
-      HW_WR_REG32((uint8_t *)gPru_cfg + CSL_ICSSCFG_EDPRU0TXCFGREGISTER, rgval);
+        regVal = HW_RD_REG32((uint8_t *)pruCfg + CSL_ICSSCFG_EDPRU0TXCFGREGISTER);
+        regVal |= CSL_ICSSCFG_EDPRU0TXCFGREGISTER_PRU0_ENDAT_SHARE_EN_MASK;
+        HW_WR_REG32((uint8_t *)pruCfg + CSL_ICSSCFG_EDPRU0TXCFGREGISTER, regVal);
     }
 
 }
-HDSL_Handle HDSL_open(PRUICSS_Handle icssgHandle, uint32_t icssCore,uint8_t PRU_mode)
+
+HDSL_Handle HDSL_open(PRUICSS_Handle icssgHandle, uint32_t icssCore, uint8_t pruMode)
 {
     /*
         HDSL memory map:
@@ -86,11 +95,12 @@ HDSL_Handle HDSL_open(PRUICSS_Handle icssgHandle, uint32_t icssCore,uint8_t PRU_
         PRU core:       0x0700 - 0x0DFF
         TX_PRU core:    0x0E00 - 0x1500
     */
-    uint32_t DMEM_BASE_OFFSET_RTU_PRU1=0;
-    uint32_t DMEM_BASE_OFFSET_PRU1=0x700;
-    uint32_t DMEM_BASE_OFFSET_TX_PRU1=0xE00;
+    uint32_t DMEM_BASE_OFFSET_RTU_PRU1 = 0;
+    uint32_t DMEM_BASE_OFFSET_PRU1 = 0x700;
+    uint32_t DMEM_BASE_OFFSET_TX_PRU1 = 0xE00;
     HDSL_Handle hdslHandle;
-    if (PRU_mode==0)
+
+    if (pruMode == 0)
     {
         hdslHandle = &hdslConfig0;
         hdslHandle->baseMemAddr = (uint32_t *)(((PRUICSS_HwAttrs *)(icssgHandle->hwAttrs))->pru1DramBase);
@@ -100,7 +110,7 @@ HDSL_Handle HDSL_open(PRUICSS_Handle icssgHandle, uint32_t icssCore,uint8_t PRU_
         if(icssCore == PRUICSS_RTU_PRU1)
         {
             hdslHandle = &hdslConfig0;
-            hdslHandle->baseMemAddr = (uint32_t *)((((PRUICSS_HwAttrs *)(icssgHandle->hwAttrs))->pru1DramBase)+DMEM_BASE_OFFSET_RTU_PRU1);
+            hdslHandle->baseMemAddr = (uint32_t *)((((PRUICSS_HwAttrs *)(icssgHandle->hwAttrs))->pru1DramBase) + DMEM_BASE_OFFSET_RTU_PRU1);
         }
         else if(icssCore == PRUICSS_PRU1)
         {
@@ -617,3 +627,22 @@ uint32_t HDSL_get_length(HDSL_Handle hdslHandle)
     return sizeof(*(hdslHandle->hdslInterface));
 }
 
+
+int32_t HDSL_config_copy_table(HDSL_Handle hdslHandle, HDSL_CopyTable *copyTable)
+{
+
+    HW_WR_REG16((uint8_t *)hdslHandle->baseMemAddr + PART1_LOAD_START_OFFSET, (uint16_t)copyTable->loadAddr1);
+    HW_WR_REG16((uint8_t *)hdslHandle->baseMemAddr + PART1_RUN_START_OFFSET, (uint16_t)copyTable->runAddr1);
+    HW_WR_REG16((uint8_t *)hdslHandle->baseMemAddr + PART1_SIZE_OFFSET, (uint16_t)copyTable->size1);
+    HW_WR_REG16((uint8_t *)hdslHandle->baseMemAddr + PART2_LOAD_START_OFFSET, (uint16_t)copyTable->loadAddr2);
+    HW_WR_REG16((uint8_t *)hdslHandle->baseMemAddr + PART2_RUN_START_OFFSET, (uint16_t)copyTable->runAddr2);
+    HW_WR_REG16((uint8_t *)hdslHandle->baseMemAddr + PART2_SIZE_OFFSET, (uint16_t)copyTable->size2);
+
+    return SystemP_SUCCESS;
+}
+
+int32_t HDSL_config_channel_mask(HDSL_Handle hdslHandle, uint8_t channelMask)
+{
+    HW_WR_REG8((uint8_t *)hdslHandle->baseMemAddr + CHANNEL_MASK_OFFSET, channelMask);
+    return SystemP_SUCCESS;
+}

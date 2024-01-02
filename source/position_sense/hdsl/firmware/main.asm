@@ -37,7 +37,6 @@
 	.retain 	; Required for building .out with assembly file
 	.retainrefs ; Required for building .out with assembly file
 	.ref datalink_init
-	.ref transport_init
 	.ref load_code
 	.ref datalink_init_start
 	.global	main

@@ -105,6 +105,12 @@ SECTIONS
     .bss.ipc_vring_mem   (NOLOAD) : {} > RTOS_NORTOS_IPC_SHM_MEM
     /* General purpose non cacheable memory, used in some examples */
     .bss.nocache (NOLOAD) : {} > NON_CACHE_MEM
+
+    /*
+    As this array is typecasted into a structure with 32-bit variables,
+    32b alignment is required
+    */
+	.rodata.Hiperface_DSL_SYNC2_0_TX_PRU_2:{} align(32) > MSRAM
 }
 
 /*

@@ -36,7 +36,6 @@
 	.include "macros.inc"
 	.ref PUSH_FIFO_2B_8x
 	.ref WAIT_TX_FIFO_FREE
-	.ref transport_init
 	.ref qm_add
 	.ref calc_rssi
 	.ref send_stuffing
@@ -52,8 +51,6 @@
 	.ref datalink_loadfw
 	.ref recv_dec
 	.ref transport_on_h_frame
-	.ref sync_pulse
-	.ref check_test_pattern
 	.ref datalink_abort_jmp
 	.ref receive
 	.ref datalink_abort
@@ -61,18 +58,150 @@
 	.global datalink_init_start
 
 
-	.sect	".text"
+	; part 1 code starts here
 
-relocatable0:
+	.sect	".text:part1"
+
+;--------------------------------------------------------------------------------------------------
+;Function: check_test_pattern (RET_ADDR1)
+;This function checks if the test pattern was received
+;input:
+;	r18-r20: data
+;output:
+;	REG_FNC.b0: 1 if true
+;modifies:
+;	REG_TMP0, REG_FNC
+;--------------------------------------------------------------------------------------------------
+check_test_pattern:
+;load test pattern and mask from memory
+
+	lbco			&REG_TMP0, MASTER_REGS_CONST, TEST_PATTERN0, 12
+;rm switch bit
+	and			REG_TMP11, r19, REG_TMP2
+	ldi			REG_TMP2, 0xff8
+	and			REG_TMP2, r19, REG_TMP2
+	lsl			REG_TMP2, REG_TMP2, 1
+	or			REG_TMP11, REG_TMP2, REG_TMP11
+;if found go to next step
+	qbne			check_test_pattern_false, r20, REG_TMP0
+	qbne			check_test_pattern_false, REG_TMP11, REG_TMP1
+check_test_pattern_true:
+	ldi			REG_FNC.b0, 1
+	RET1
+check_test_pattern_false:
+	ldi			REG_FNC.b0, 0
+	RET1
+
+;--------------------------------------------------------------------------------------------------
+;Function: sync_pulse (RET_ADDR1)
+;functions bussy waits for sync pulse
+;input:
+;modifies:
+;--------------------------------------------------------------------------------------------------
+;stores sync pulse period in R20 in unit of cycles
+sync_pulse:
+	lbco        &REG_TMP1, c1, IEP_CAPR6_RISE, 4
+wait_next_pulse:
+	lbco        &R20, c1, IEP_CAPR6_RISE, 4
+	QBEQ		wait_next_pulse, R20, REG_TMP1
+	SUB         R20, R20, REG_TMP1
+	RET1
+
+
+	; common code starts here
+
+	.sect	".text"
 
 datalink_init_start:
 datalink_reset:
+
+; Synchronization and loading overlaid part of firmware for TXPRU (Channel 2) is needed,
+; only if channel 0 and 2 are enabled
+
+
+	.if !$defined(CHANNEL_2)
+; For channel 2, we always need to check for synchronization, so this code is not needed
+	LBCO   	&REG_TMP0.b0, MASTER_REGS_CONST, CHANNEL_MASK, 1
+	qbne 	skip_overlay_load1, REG_TMP0.b0, ((1<<0) | (1<<2))
+	.endif
+
+; Set sync bit and wait for all channels
+	SET_SYNC_BIT REG_TMP0
+	CALL WAIT_SYNC_SET_ALL
+
+	.if $defined(CHANNEL_0)
+
+; Following part of code on channel 0 loads the part 1 of overlaid firmware for
+; TXPRU (Channel 2)
+
+; Disable TXPRU1 before writing into IMEM
+	LDI32	REG_TMP0, TXPRU1_CTRL
+	LBBO  	&REG_TMP1, REG_TMP0, 0, 4
+	clr   	REG_TMP1, REG_TMP1, 1
+	SBBO  	&REG_TMP1, REG_TMP0, 0, 4
+
+; Load the load address, run address and size of part 1 of overlaid firmware
+; for TXPRU (Channel 2)
+	ZERO 	&REG_TMP0, 12
+	LBCO   	&REG_TMP0.w0, MASTER_REGS_CONST, PART1_LOAD_START, 2
+	LBCO   	&REG_TMP1.w0, MASTER_REGS_CONST, PART1_RUN_START, 2
+	; Add IMEM base address to run address
+	LDI32	REG_TMP2, TXPRU1_IMEM_BASE
+	ADD		REG_TMP1.w0, REG_TMP1.w0, REG_TMP2.w0
+	ADC		REG_TMP1.w2, REG_TMP1.w2, REG_TMP2.w2
+	LBCO   	&REG_TMP2.w0, MASTER_REGS_CONST, PART1_SIZE, 2
+    LDI    	REG_TMP2.w2, 0x0
+memcpy_loop1:
+    LBBO	&SPEED.b0, REG_TMP0,  REG_TMP2.w2, 32
+    SBBO	&SPEED.b0, REG_TMP1,  REG_TMP2.w2, 32
+    ADD 	REG_TMP2.w2,  REG_TMP2.w2, 32
+    QBLE	memcpy_loop1,  REG_TMP2.w0, REG_TMP2.w2
+
+	ZERO	&SPEED, (4*8)
+
+; Enable TXPRU1 before writing into IMEM
+	LDI32	REG_TMP0, TXPRU1_CTRL
+	LBBO  	&REG_TMP1, REG_TMP0, 0, 4
+	set   	REG_TMP1, REG_TMP1, 1
+	SBBO  	&REG_TMP1, REG_TMP0, 0, 4
+
+; Clear sync bit on RTUPRU (Channel 0).
+; PRU (Channel 1) and TXPRU (Channel 2) will pend on this bit clear.
+	CLEAR_SYNC_BIT REG_TMP1
+
+	.endif
+
+	.if $defined(CHANNEL_1)
+; Wait for RTUPRU (Channel 0) to clear sync bit and clear sync bit on PRU (Channel 1)
+; which signals completion of overlay part 1 load
+	WAIT_SYNC_CLEAR_CH0 REG_TMP0, REG_TMP1
+	CLEAR_SYNC_BIT REG_TMP1
+	.endif
+
+	.if $defined(CHANNEL_2)
+; Wait for RTUPRU (Channel 0) to clear sync bit and clear sync bit on TXPRU (Channel 2)
+; which signals completion of overlay part 1 load
+	WAIT_SYNC_CLEAR_CH0 REG_TMP0, REG_TMP1
+	CLEAR_SYNC_BIT REG_TMP1
+	.endif
+
+skip_overlay_load1:
+
+	jmp datalink_reset_after_fw_load
+	; part 1 code starts here
+
+	.if $defined(CHANNEL_2)
+	.sect	".text:part1"
+	.else
+	.sect	".text"
+	.endif
+datalink_reset_after_fw_load:
 ;State RESET
+
+; Clear all registers
 	zero			&r0, 124
-;send 2 times
 
 ;setup ICSS encoder peripheral for Hiperface DSL
-	ldi			DISPARITY, 0x00
 	TX_EN
 	SET_TX_CH0
 	REINIT_TX
@@ -88,14 +217,23 @@ datalink_reset:
     sbco	&REG_TMP0.b0, MASTER_REGS_CONST, VERSION, 1
     sbco	&REG_TMP0.b0, MASTER_REGS_CONST, VERSION2, 1
 
-	zero			&H_FRAME, (4*2)
 ;init transport layer here
-	CALL			transport_init
+;Initialize transport layer here
+transport_init:
+;resert short msg ctrl
+	ldi		REG_TMP0.b0, 0x3f
+	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, SLAVE_REG_CTRL, 1
+;initialize acc_err_cnt to 0
+	sbco		&SPEED.b0, MASTER_REGS_CONST, ACC_ERR_CNT, 1
+	sbco		&SPEED.b0, MASTER_REGS_CONST, POS4, 8
+;reset rel. pos
+	sbco		&SPEED, MASTER_REGS_CONST, REL_POS0, 4
+transport_init_abs_err_loop:
+	ldi 	REG_TMP0.b0, 0
+	sbco 	&REG_TMP0.b0, MASTER_REGS_CONST, ALIGN_PH, 1
+exit_transport_init:
 ;QualityMonitor is initialized with 8
 	ldi			QM, 8
-;free running mode frame size is 108
-	ldi			EXTRA_SIZE, 0
-	ldi			NUM_STUFFING, 0
 ;reset PRST bit in SYS_CTRL
 	lbco			&REG_TMP0, MASTER_REGS_CONST, SYS_CTRL, 1
 	clr			REG_TMP0.b0, REG_TMP0.b0, SYS_CTRL_PRST
@@ -523,6 +661,44 @@ datalink_abort2_no_wait:
 	add			REG_TMP0.b0, REG_TMP0.b0, 1
 	sbco			&REG_TMP0.b0, MASTER_REGS_CONST, NUM_RESETS, 1
 ;we need rel. jump here
+
+	.if $defined(CHANNEL_2)
+;reset PRST bit in SYS_CTRL
+	ldi32 	REG_TMP1, DMEM_CH0_START
+	lbbo	&REG_TMP0, REG_TMP1, SYS_CTRL, 1
+	set		REG_TMP0.b0, REG_TMP0.b0, SYS_CTRL_PRST
+	sbbo	&REG_TMP0, REG_TMP1, SYS_CTRL, 1
+
+	ldi32 	REG_TMP1, DMEM_CH1_START
+	lbbo	&REG_TMP0, REG_TMP1, SYS_CTRL, 1
+	set		REG_TMP0.b0, REG_TMP0.b0, SYS_CTRL_PRST
+	sbbo	&REG_TMP0, REG_TMP1, SYS_CTRL, 1
+	.endif
+
+	.if $defined(CHANNEL_1)
+	ldi32 	REG_TMP1, DMEM_CH0_START
+	lbbo	&REG_TMP0, REG_TMP1, SYS_CTRL, 1
+	set		REG_TMP0.b0, REG_TMP0.b0, SYS_CTRL_PRST
+	sbbo	&REG_TMP0, REG_TMP1, SYS_CTRL, 1
+
+	ldi32 	REG_TMP1, DMEM_CH2_START
+	lbbo	&REG_TMP0, REG_TMP1, SYS_CTRL, 1
+	set		REG_TMP0.b0, REG_TMP0.b0, SYS_CTRL_PRST
+	sbbo	&REG_TMP0, REG_TMP1, SYS_CTRL, 1
+	.endif
+
+	.if $defined(CHANNEL_0)
+	ldi32 	REG_TMP1, DMEM_CH1_START
+	lbbo	&REG_TMP0, REG_TMP1, SYS_CTRL, 1
+	set		REG_TMP0.b0, REG_TMP0.b0, SYS_CTRL_PRST
+	sbbo	&REG_TMP0, REG_TMP1, SYS_CTRL, 1
+
+	ldi32 	REG_TMP1, DMEM_CH2_START
+	lbbo	&REG_TMP0, REG_TMP1, SYS_CTRL, 1
+	set		REG_TMP0.b0, REG_TMP0.b0, SYS_CTRL_PRST
+	sbbo	&REG_TMP0, REG_TMP1, SYS_CTRL, 1
+	.endif
+
 	qba			datalink_reset
 ;--------------------------------------------------------------------------------------------------
 ;M_PAR_LEARN does not seem to have further meaning...
@@ -637,5 +813,195 @@ datalink_id_compute:
 	ldi 		DELTA_ACC0, 0
 	;qba datalink_id_req
 	CALL1		send_stuffing
+
+; Synchronization and loading overlaid part of firmware for TXPRU (Channel 2) is needed,
+; only if channel 0 and 2 are enabled
+
+	.if !$defined(CHANNEL_2)
+; For channel 2, we always need to check for synchronization, so this code is not needed
+	LBCO   	&REG_TMP0.b0, MASTER_REGS_CONST, CHANNEL_MASK, 1
+	qbne 	datalink_wait_vsynch, REG_TMP0.b0, ((1<<0) | (1<<2))
+	.endif
+
+	.if $defined(CHANNEL_0)
+
+; Following part of code on channel 0 loads the part 2 of overlaid firmware for
+; TXPRU (Channel 2)
+datalink_loadfw_start:
+
+	ldi			REG_FNC.w0, (0x0000 | M_PAR_IDREQ)
+	.if $defined("HDSL_MULTICHANNEL")
+	CALL			send_header_300m
+	.else
+	CALL			send_header
+	.endif
+	WAIT_TX_DONE
+
+	READ_IEPCNT	REG_TMP1
+	LDI 		REG_TMP2, (74*CYCLES_BIT + 25)
+	ADD 		REG_TMP1, REG_TMP1, REG_TMP2
+
+	SBCO 		&REG_TMP1, MASTER_REGS_CONST, LOADFW_TIMESTAMP, 4
+
+; Set sync bit and wait for all channels
+	SET_SYNC_BIT REG_TMP0
+	CALL WAIT_SYNC_SET_ALL
+
+; Disable TXPRU1 before writing into IMEM
+	LDI32	REG_TMP0, TXPRU1_CTRL
+	LBBO  	&REG_TMP1, REG_TMP0, 0, 4
+	clr   	REG_TMP1, REG_TMP1, 1
+	SBBO  	&REG_TMP1, REG_TMP0, 0, 4
+
+	LBBO  &REG_TMP1, REG_TMP0, 0, 4
+	clr   REG_TMP1, REG_TMP1, 1
+	SBBO  &REG_TMP1, REG_TMP0, 0, 4
+
+; Load the load address, run address and size of part 2 of overlaid firmware
+; for TXPRU (Channel 2)
+	ZERO 	&REG_TMP0, 12
+	LBCO   	&REG_TMP0.w0, MASTER_REGS_CONST, PART2_LOAD_START, 2
+	LBCO   	&REG_TMP1.w0, MASTER_REGS_CONST, PART2_RUN_START, 2
+	; Add IMEM base address to run address
+	LDI32	REG_TMP2, TXPRU1_IMEM_BASE
+	ADD		REG_TMP1.w0, REG_TMP1.w0, REG_TMP2.w0
+	ADC		REG_TMP1.w2, REG_TMP1.w2, REG_TMP2.w2
+	LBCO   	&REG_TMP2.w0, MASTER_REGS_CONST, PART2_SIZE, 2
+    LDI    	REG_TMP2.w2, 0x0
+memcpy_loop2:
+    LBBO	&SPEED.b0, REG_TMP0,  REG_TMP2.w2, 32
+    SBBO	&SPEED.b0, REG_TMP1,  REG_TMP2.w2, 32
+    ADD 	REG_TMP2.w2,  REG_TMP2.w2, 32
+    QBLE	memcpy_loop2,  REG_TMP2.w0, REG_TMP2.w2
+
+	ZERO	&SPEED, (4*8)
+
+; Enable TXPRU1 before writing into IMEM
+	LDI32	REG_TMP0, TXPRU1_CTRL
+	LBBO  	&REG_TMP1, REG_TMP0, 0, 4
+	set   	REG_TMP1, REG_TMP1, 1
+	SBBO  	&REG_TMP1, REG_TMP0, 0, 4
+
+; Clear Synchronization bit on RTUPRU (Channel 0).
+; PRU (Channel 1) and TXPRU (Channel 2) will pend on this bit clear.
+	CLEAR_SYNC_BIT REG_TMP1
+
+	LBCO 		&REG_TMP1, MASTER_REGS_CONST, LOADFW_TIMESTAMP, 4
+
+datalink_loadfw_wait_for_rx_completion:
+	READ_IEPCNT	REG_TMP2
+	qble datalink_loadfw_wait_for_rx_completion, REG_TMP1, REG_TMP2
+
+	TX_EN
+;send TRAILER
+	CALL1			send_trailer
+	CALL1			send_stuffing
+
+	jmp         datalink_wait_vsynch
+	.endif
+
+	.if $defined(CHANNEL_1)
+datalink_loadfw_start:
+	ldi			REG_FNC.w0, (0x0000 | M_PAR_IDREQ)
+	.if $defined("HDSL_MULTICHANNEL")
+	CALL			send_header_300m
+	.else
+	CALL			send_header
+	.endif
+	WAIT_TX_DONE
+
+	READ_IEPCNT	REG_TMP1
+	LDI 		REG_TMP2, (74*CYCLES_BIT + 25)
+	ADD 		REG_TMP1, REG_TMP1, REG_TMP2
+
+	SBCO 		&REG_TMP1, MASTER_REGS_CONST, LOADFW_TIMESTAMP, 4
+
+; Set sync bit and wait for all channels
+	SET_SYNC_BIT REG_TMP0
+	CALL WAIT_SYNC_SET_ALL
+; Wait for RTUPRU (Channel 0) to clear sync bit and clear sync bit on PRU (Channel 1)
+; which signals completion of overlay part 2 load
+	WAIT_SYNC_CLEAR_CH0 REG_TMP0, REG_TMP1
+	CLEAR_SYNC_BIT REG_TMP1
+
+	LBCO 		&REG_TMP1, MASTER_REGS_CONST, LOADFW_TIMESTAMP, 4
+
+datalink_loadfw_wait_for_rx_completion:
+	READ_IEPCNT	REG_TMP2
+	qble datalink_loadfw_wait_for_rx_completion, REG_TMP1, REG_TMP2
+
+	TX_EN
+;send TRAILER
+	CALL1			send_trailer
+	CALL1			send_stuffing
+
 	jmp         datalink_wait_vsynch
 
+	.endif
+
+	.if $defined(CHANNEL_2)
+datalink_loadfw_start:
+	ldi			REG_FNC.w0, (0x0000 | M_PAR_IDREQ)
+	.if $defined("HDSL_MULTICHANNEL")
+	CALL			send_header_300m
+	.else
+	CALL			send_header
+	.endif
+	WAIT_TX_DONE
+
+	READ_IEPCNT	REG_TMP1
+	LDI 		REG_TMP2, (74*CYCLES_BIT + 25)
+	ADD 		REG_TMP1, REG_TMP1, REG_TMP2
+
+	SBCO 		&REG_TMP1, MASTER_REGS_CONST, LOADFW_TIMESTAMP, 4
+
+	jmp 		datalink_loadfw_continue
+
+;  Jumping to .text only for channel 2
+	.sect ".text"
+
+datalink_loadfw_continue:
+
+; Set sync bit and wait for all channels
+	SET_SYNC_BIT REG_TMP0
+	CALL WAIT_SYNC_SET_ALL
+
+; Wait for RTUPRU (Channel 0) to clear sync bit and clear sync bit on TXPRU (Channel 2)
+; which signals completion of overlay part 2 load
+	WAIT_SYNC_CLEAR_CH0 REG_TMP0, REG_TMP1
+	CLEAR_SYNC_BIT REG_TMP1
+
+	LBCO 		&REG_TMP1, MASTER_REGS_CONST, LOADFW_TIMESTAMP, 4
+
+datalink_loadfw_wait_for_rx_completion:
+	READ_IEPCNT	REG_TMP2
+	qble datalink_loadfw_wait_for_rx_completion, REG_TMP1, REG_TMP2
+
+	TX_EN
+;send TRAILER
+	CALL1			send_trailer
+	CALL1			send_stuffing
+
+	jmp         datalink_wait_vsynch
+
+	.endif
+
+WAIT_SYNC_SET_ALL:
+	LBCO   	&REG_TMP1.b1, MASTER_REGS_CONST, CHANNEL_MASK, 1
+	QBBC 	wait_for_channel1?, REG_TMP1.b1, 0
+wait_for_channel0?:
+	LDI 	REG_TMP0, DMEM_CH0_START
+	LBBO	&REG_TMP1.b0, REG_TMP0, CHANNEL_SYNC, 1
+    QBNE  	wait_for_channel0?, REG_TMP1.b0, 1
+wait_for_channel1?:
+	QBBC 	wait_for_channel2?, REG_TMP1.b1, 1
+	LDI 	REG_TMP0, DMEM_CH1_START
+	LBBO	&REG_TMP1.b0, REG_TMP0, CHANNEL_SYNC, 1
+    QBNE  	wait_for_channel1?, REG_TMP1.b0, 1
+wait_for_channel2?:
+	QBBC 	wait_sync_clear_all_end?, REG_TMP1.b1, 2
+	LDI 	REG_TMP0, DMEM_CH2_START
+	LBBO	&REG_TMP1.b0, REG_TMP0, CHANNEL_SYNC, 1
+    QBNE  	wait_for_channel2?, REG_TMP1.b0, 1
+wait_sync_clear_all_end?:
+	RET

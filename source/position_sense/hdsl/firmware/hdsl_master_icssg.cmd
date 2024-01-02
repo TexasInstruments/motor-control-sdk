@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2021 Texas Instruments Incorporated
+ *  Copyright (C) 2021-2023 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -43,4 +43,6 @@ SECTIONS
 {
     .text:main		>	0x0
     .text			>	PRUIMEM, PAGE 0
+    .text:part1		>	PRUIMEM, PAGE 0
+    .text:part2		>	PRUIMEM, PAGE 0
 }

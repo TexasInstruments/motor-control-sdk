@@ -84,7 +84,9 @@ EDCH2CFG1 .set                          P0EDCH2CFG1
 ; Each HDSL channel will use a portion of DMEM for HDSL shared/local data storage for that channel.
 ; CHANNEL_0: 0x0000 - 0x06FF
 ; CHANNEL_1: 0x0700 - 0x0DFF
-; CHANNEL_2: 0x0E00 - 0x0~FF
+; CHANNEL_2: 0x0E00 - 0x14FF
+
+; 0X1500 - 0X1FFF is used to store the overlay part of firmare for TXPRU (Channel 2)
 
     .if $defined(CHANNEL_2)   ; TX_PRU
 PDMEM00	                  .set					   0x0E00
@@ -95,6 +97,11 @@ PDMEM00		              .set					   0x0700
 	.if $defined(CHANNEL_0)   ; RTU_PRU
 PDMEM00			          .set					   0x0000
 	.endif
+
+DMEM_CH0_START .set 					0x0000
+DMEM_CH1_START .set 					0x0700
+DMEM_CH2_START .set 					0x0E00
+DMEM_CH_SIZE .set						0x0700
 
 PDMEM00_CONST .set						C24
 MASTER_REGS_CONST .set                  C24
@@ -388,32 +395,22 @@ ADDR .set 0x15ff
 ;--------------------------------------------------------------------------------------------------
 ;Memory offsets
 ;--------------------------------------------------------------------------------------------------
-PRU_CTRL_CONST	.set						C28
-;PRU_CTRL	.set						0x00022000
+PRU_CTRL_CONST	.set					C28
 PRU_CYCLCNT	.set						0x0c
-PWMSS1_CONST	.set						C19     ;AM437x specific for sync pule synchronization
-PWMSS1_ECAP	.set						0x48302100  ;AM437x specific for sync pule synchronization
-PWMSS2_CONST	.set						C20     ;AM437x specific for sync pule synchronization
-ECAP		.set						0x100       ;AM437x specific for sync pule synchronization
-ECAP_ECCLR	.set						0x30        ;AM437x specific for sync pule synchronization
-ECAP_ECEINT	.set						0x2c        ;AM437x specific for sync pule synchronization
-ECAP_CAP1	.set						0x08        ;AM437x specific for sync pule synchronization
-ECAP_ECCTL1	.set						0x28        ;AM437x specific for sync pule synchronization
-INTC_SICR	.set						0x24        ;AM437x specific for sync pule synchronization
-INTC_SECR1	.set						0x284       ;AM437x specific for sync pule synchronization
-INTC_SECR0	.set						0x280       ;AM437x specific for sync pule synchronization
-INTC_CONST	.set						C0          ;AM437x specific for sync pule synchronization
+PWMSS1_CONST	.set					C19
+PWMSS2_CONST	.set					C20
+ECAP		.set						0x100
+ECAP_ECCLR	.set						0x30
+ECAP_ECCTL1	.set						0x28
 IEP_CONST	.set						C26
 IEP1_CONST  .set                        0x2F000
-IEP_CNT		.set						0x14 ;todo TSmod check as 64bit now (old0x0c)
+IEP_CNT		.set						0x10
 IEP_CAPR6_RISE .set                     0x50
-SHARED_MEM_CONST  .set                  0x0b010000;0x54442000+0x10000
-;--------------------------------------------------------------------------------------------------
-;Memory offsets for dynamic loading of PRU code
-;--------------------------------------------------------------------------------------------------
-CODE_BASE	.set						(0x40300000);(0x54400000+0x00040000+0x2100)
-CODE_SIZE	.set						0x600
-DYNAMIC_CODE_OFFSET .set				0x1000 ;0x2100
+TXPRU1_CTRL .set 						0x00025800
+TXPRU1_IMEM_BASE .set 					0x0000C000
+
+; 0X1500 - 0X1FFF is used to store the overlay part of firmare for TXPRU (Channel 2)
+DYNAMIC_CODE_OFFSET .set				0x1500
 
 ;--------------------------------------------------------------------------------------------------
 ;R31 flags for RX
@@ -516,3 +513,12 @@ VPOS2_TEMP .set                         0x63 ; 5 bytes
 VPOSCRC2_TEMP .set                      0x68 ; 2 bytes
 SAFE_SUM_TEMP .set                      0x70 ; 1 byte
 ALIGN_PH .set                      		0x71 ; 1 byte
+LOADFW_TIMESTAMP .set 					0x72 ; 4 bytes
+PART1_LOAD_START .set					0x76 ; 2 bytes
+PART1_RUN_START .set					0x78 ; 2 bytes
+PART1_SIZE .set							0x7A ; 2 bytes
+PART2_LOAD_START .set					0x7C ; 2 bytes
+PART2_RUN_START .set					0x7E ; 2 bytes
+PART2_SIZE .set							0x80 ; 2 bytes
+CHANNEL_SYNC .set						0x82 ; 1 byte
+CHANNEL_MASK .set						0x83 ; 1 byte

@@ -45,7 +45,6 @@ CALL1 .macro func
 RET1 .macro
     JMP     RET_ADDR1
     .endm
-
 CALL2 .macro func
     jal     RET_ADDR2, func
     .endm
@@ -290,6 +289,7 @@ READ_CYCLCNT .macro dst
     lbco        &dst, PRU_CTRL_CONST, PRU_CYCLCNT, 4
     .endm
 
+; Reads lower 32 bits of IEP0 Timer
 READ_IEPCNT .macro dst
     lbco        &dst, IEP_CONST, IEP_CNT, 4
     .endm
@@ -337,3 +337,77 @@ NOP_n .macro dat
     and         r0, r0, r0
 lw?:
     .endm
+
+; Set Sync bit
+SET_SYNC_BIT .macro tmp0
+	LDI 	tmp0.b0, 0x1
+	SBCO	&tmp0.b0, MASTER_REGS_CONST, CHANNEL_SYNC, 1
+	.endm
+
+; Clear Sync bit
+CLEAR_SYNC_BIT .macro tmp0
+	LDI 	tmp0.b0, 0x0
+	SBCO	&tmp0.b0, MASTER_REGS_CONST, CHANNEL_SYNC, 1
+	.endm
+
+WAIT_SYNC_CH0 .macro tmp0, tmp1
+wait_for_channel0?:
+	LDI 	tmp0, DMEM_CH0_START
+	LBBO	&tmp1.b0, tmp0, CHANNEL_SYNC, 1
+    QBNE  	wait_for_channel0?, tmp1.b0, 1
+	.endm
+
+WAIT_SYNC_CH1 .macro tmp0, tmp1
+wait_for_channel1?:
+	LDI 	tmp0, DMEM_CH1_START
+	LBBO	&tmp1.b0, tmp0, CHANNEL_SYNC, 1
+    QBNE  	wait_for_channel1?, tmp1.b0, 1
+	.endm
+
+WAIT_SYNC_CH2 .macro tmp0, tmp1
+wait_for_channel2?:
+	LDI 	tmp0, DMEM_CH2_START
+	LBBO	&tmp1.b0, tmp0, CHANNEL_SYNC, 1
+    QBNE  	wait_for_channel2?, tmp1.b0, 1
+	.endm
+
+WAIT_SYNC_CLEAR_CH0 .macro tmp0, tmp1
+wait_for_channel0?:
+	LDI 	tmp0, DMEM_CH0_START
+	LBBO	&tmp1.b0, tmp0, CHANNEL_SYNC, 1
+    QBNE  	wait_for_channel0?, tmp1.b0, 0
+	.endm
+
+WAIT_SYNC_CLEAR_CH1 .macro tmp0, tmp1
+wait_for_channel1?:
+	LDI 	tmp0, DMEM_CH1_START
+	LBBO	&tmp1.b0, tmp0, CHANNEL_SYNC, 1
+    QBNE  	wait_for_channel1?, tmp1.b0, 0
+	.endm
+
+WAIT_SYNC_CLEAR_CH2 .macro tmp0, tmp1
+wait_for_channel2?:
+	LDI 	tmp0, DMEM_CH2_START
+	LBBO	&tmp1.b0, tmp0, CHANNEL_SYNC, 1
+    QBNE  	wait_for_channel2?, tmp1.b0, 0
+	.endm
+
+WAIT_SYNC_CLEAR_ALL .macro tmp0, tmp1
+	LBCO   	&tmp1.b1, MASTER_REGS_CONST, CHANNEL_MASK, 1
+	QBBC 	wait_for_channel1?, tmp1.b1, 0
+wait_for_channel0?:
+	LDI 	tmp0, DMEM_CH0_START
+	LBBO	&tmp1.b0, tmp0, CHANNEL_SYNC, 1
+    QBNE  	wait_for_channel0?, tmp1.b0, 0
+wait_for_channel1?:
+	QBBC 	wait_for_channel2?, tmp1.b1, 1
+	LDI 	tmp0, DMEM_CH1_START
+	LBBO	&tmp1.b0, tmp0, CHANNEL_SYNC, 1
+    QBNE  	wait_for_channel1?, tmp1.b0, 0
+wait_for_channel2?:
+	QBBC 	wait_sync_clear_all_end?, tmp1.b1, 2
+	LDI 	tmp0, DMEM_CH2_START
+	LBBO	&tmp1.b0, tmp0, CHANNEL_SYNC, 1
+    QBNE  	wait_for_channel2?, tmp1.b0, 0	
+wait_sync_clear_all_end?:	
+	.endm
