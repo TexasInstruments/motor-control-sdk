@@ -7,7 +7,7 @@ This page lists all the examples and demos supported in this SDK.
     -# \subpage EXAMPLE_MOTORCONTROL_HDSL
     -# \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA
 - Current Sense
-    -# \subpage EXAMPLE_MOTORCONTROL_SDFM
+    -# \subpage EXAMPLES_MOTORCONTROL_SDFM
 - PRUICSS PWM
     -# \subpage EXAMPLE_PRUICSS_PWM_DUTY_CYCLE
 \endcond
@@ -19,7 +19,10 @@ This page lists all the examples and demos supported in this SDK.
     -# \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA
     -# \subpage EXAMPLE_MOTORCONTROL_BISSC
 - Current Sense
-    -# \subpage EXAMPLE_MOTORCONTROL_SDFM
+    -# \subpage EXAMPLES_MOTORCONTROL_SDFM
+        -# \ref BASIC_SDFM_EXAMPLES
+        -# \ref BASIC_SDFM_EXAMPLES_WITH_CONTINUOUS_NC
+        -# \ref BASIC_SDFM_EXAMPLE_WITH_PHASE_DELAY
 - RTLibs
     -# \subpage EXAMPLES_DCL_PI
     -# \subpage EXAMPLES_DCL_DF22

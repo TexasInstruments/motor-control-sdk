@@ -377,12 +377,12 @@ void SDFM_measureClockPhaseDelay(sdfm_handle h_sdfm, uint16_t clEdg);
 float SDFM_getClockPhaseDelay(sdfm_handle h_sdfm);
 /**
  *
- *  \brief  This API returns high threshold Status for specified SDFM channel number
+ *  \brief  This API returns Low threshold Status for specified SDFM channel number
  *
  *  \param[in]  h_sdfm          SDFM handle
  *  \param[in]  chNum           SDFM channel number : Channel0-Channel8
  *
- *  \retval     Status of Over current error for High threshold
+ *  \retval     Status of Over current error for Low threshold
  */
 uint8_t SDFM_getLowThresholdStatus(sdfm_handle h_sdfm, uint8_t chNum);
 
@@ -392,7 +392,7 @@ uint8_t SDFM_getLowThresholdStatus(sdfm_handle h_sdfm, uint8_t chNum);
  *  \param[in]  h_sdfm          SDFM handle
  *  \param[in]  chNum           SDFM channel number : Channel0-Channel8
  *
- *  \retval     Status of over current error for Low Threshold
+ *  \retval     Status of over current error for High Threshold
  */
 uint8_t SDFM_getHighThresholdStatus(sdfm_handle h_sdfm, uint8_t chNum);
 

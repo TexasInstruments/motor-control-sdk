@@ -82,7 +82,7 @@ This example also allows the capability to save the HDSL register data into memo
 
 ## Hardware Prerequisites
 
-Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_SETUP_PAGE.html" target="_blank"> EVM Setup </a>, below additional HW is required to run this demo
+Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_SETUP_PAGE.html" target="_blank"> EVM Setup </a>, below additional hardware is required to run this demo
 - HDSL encoder
 - Below are two options to connect encoder to AM64x/AM243x EVM.
     - **Option 1**

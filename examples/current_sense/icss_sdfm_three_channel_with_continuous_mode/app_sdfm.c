@@ -159,7 +159,7 @@ SdfmPrms gTestSdfmPrms = {
     {0,0}},
     15,   /*Over current osr: The effect count is OSR + 1*/
     128,   /*Normal current osr */
-    1,   /*comparator enable*/
+    0,   /*comparator enable*/
     (uint32_t)&gSdfm_sampleOutput, /*Output samples base address*/
     0,    /*Fast Detect enable */
     {{4, 18, 2},
