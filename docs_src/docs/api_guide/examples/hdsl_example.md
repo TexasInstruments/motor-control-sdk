@@ -71,9 +71,9 @@ This example also allows the capability to save the HDSL register data into memo
  ---------------|-----------
  CPU + OS       | r5fss0-0 freertos
  ICSSG          | ICSSG0
- PRU            | PRU1
+ PRU            | RTU-PRU1, PRU1, TXPRU1 (based on number of channels enabled)
  Toolchain      | ti-arm-clang
- Board          | @VAR_BOARD_NAME_LOWER (2 channel and 1 channel examples), @VAR_LP_BOARD_NAME_LOWER (1 channel example)
+ Board          | @VAR_BOARD_NAME_LOWER (2 channel and 1 channel examples), @VAR_LP_BOARD_NAME_LOWER (2 channel and 1 channel examples)
  Example folder | examples/position_sense/hdsl_diagnostic
 
 \endcond

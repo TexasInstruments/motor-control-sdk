@@ -1063,7 +1063,7 @@ TI HDSL Solution's register map is compatible with SICK HDSL MASTER IP Core rele
     <td> 0x2E
     <td>
     <td> SensorHub Channel Data
-         <br/> **NOTE : Not available in TI HDSL Solution**
+         8 bit value of the SensorHub Channel Data
 </tr>
 <tr>
     <td> PC_DATA
