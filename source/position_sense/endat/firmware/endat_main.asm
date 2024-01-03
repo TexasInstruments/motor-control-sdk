@@ -659,30 +659,30 @@ HANDLE_PERIODIC_TRIGGER_MODE:
 
 
 	; Get pending events from IEP
-    LBCO	&R0,	ICSS_IEP,	ICSS_IEP_CMP_STATUS_REG,	4
+    LBCO	&R0,	ICSS_IEP,	ICSS_IEP_CMP_STATUS_REG,	1
     .if $isdefed("ENABLE_MULTI_MAKE_RTU")
 	; wait till IEP CMP3 event
 	QBBC	HANDLE_PERIODIC_TRIGGER_MODE,	R0,	3
 	; Clear IEP CMP3 event
-	SET	R0,	R0,	3
+	LDI R0.b0, 0x8
     .elseif $isdefed("ENABLE_MULTI_MAKE_PRU") ;Check PRU host trigger  for ch1
     ; wait till IEP CMP5 event
 	QBBC	HANDLE_PERIODIC_TRIGGER_MODE,	R0,	5
 	; Clear IEP CMP5 event
-	SET	R0,	R0,	5
+	LDI R0.b0, 0x20
     .elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
     ; wait till IEP CMP6 event
 	QBBC	HANDLE_PERIODIC_TRIGGER_MODE,	R0,	6
 	; Clear IEP CMP6 event
-	SET	R0,	R0,	6
+	LDI R0.b0, 0x40
     .else
     ; wait till IEP CMP3 event
 	QBBC	HANDLE_PERIODIC_TRIGGER_MODE,	R0,	3
 	; Clear IEP CMP3 event
-	SET	R0,	R0,	3
+	LDI R0.b0, 0x8
     .endif
 
-	SBCO	&R0,	ICSS_IEP,	ICSS_IEP_CMP_STATUS_REG,	4
+	SBCO	&R0,	ICSS_IEP,	ICSS_IEP_CMP_STATUS_REG,	1
 
 	; Let the fall thr' to trigger mode happen properly and trigger bit
 	; will be cleared after command processing
