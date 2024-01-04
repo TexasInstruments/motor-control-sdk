@@ -1,0 +1,247 @@
+/**
+ * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
+ * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
+ * @cliArgs --device "AM243x_ALX_beta" --package "ALX" --part "ALX" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK_AM243x@09.01.00"
+ * @versions {"tool":"1.18.0+3266"}
+ */
+
+/**
+ * Import the modules used in this configuration.
+ */
+const epwm        = scripting.addModule("/drivers/epwm/epwm", {}, false);
+const epwm1       = epwm.addInstance();
+const epwm2       = epwm.addInstance();
+const epwm3       = epwm.addInstance();
+const gpio        = scripting.addModule("/drivers/gpio/gpio", {}, false);
+const gpio1       = gpio.addInstance();
+const gpio2       = gpio.addInstance();
+const gpio3       = gpio.addInstance();
+const ipc         = scripting.addModule("/drivers/ipc/ipc");
+const mcspi       = scripting.addModule("/drivers/mcspi/mcspi", {}, false);
+const mcspi1      = mcspi.addInstance();
+const pruicss     = scripting.addModule("/drivers/pruicss/pruicss", {}, false);
+const pruicss1    = pruicss.addInstance();
+const debug_log   = scripting.addModule("/kernel/dpl/debug_log");
+const mpu_armv7   = scripting.addModule("/kernel/dpl/mpu_armv7", {}, false);
+const mpu_armv71  = mpu_armv7.addInstance();
+const mpu_armv72  = mpu_armv7.addInstance();
+const mpu_armv73  = mpu_armv7.addInstance();
+const mpu_armv74  = mpu_armv7.addInstance();
+const mpu_armv75  = mpu_armv7.addInstance();
+const mpu_armv76  = mpu_armv7.addInstance();
+const mpu_armv77  = mpu_armv7.addInstance();
+const mpu_armv78  = mpu_armv7.addInstance();
+const mpu_armv79  = mpu_armv7.addInstance();
+const mpu_armv710 = mpu_armv7.addInstance();
+const mpu_armv711 = mpu_armv7.addInstance();
+const mpu_armv712 = mpu_armv7.addInstance();
+const mpu_armv713 = mpu_armv7.addInstance();
+const endat       = scripting.addModule("/position_sense/endat", {}, false);
+const endat1      = endat.addInstance();
+const pru_ipc     = scripting.addModule("/pru_io/pru_ipc/pru_ipc", {}, false);
+const pru_ipc1    = pru_ipc.addInstance();
+
+/**
+ * Write custom configuration values to the imported modules.
+ */
+epwm1.$name            = "EPWM0";
+epwm1.EPWM.$assign     = "EHRPWM2";
+epwm1.EPWM.SYNCO.$used = false;
+epwm1.EPWM.SYNCI.$used = false;
+
+epwm2.$name            = "EPWM1";
+epwm2.EPWM.$assign     = "EHRPWM1";
+epwm2.EPWM.SYNCO.$used = false;
+epwm2.EPWM.SYNCI.$used = false;
+
+epwm3.$name            = "EPWM2";
+epwm3.EPWM.$assign     = "EHRPWM0";
+epwm3.EPWM.SYNCO.$used = false;
+epwm3.EPWM.SYNCI.$used = false;
+
+gpio1.$name                = "MTR_1_PWM_EN";
+gpio1.pinDir               = "OUTPUT";
+gpio1.GPIO.gpioPin.$assign = "I2C0_SCL";
+
+gpio2.$name                = "MTR_2_PWM_EN";
+gpio2.pinDir               = "OUTPUT";
+gpio2.GPIO.gpioPin.$assign = "I2C0_SDA";
+
+gpio3.$name                = "BP_MUX_SEL";
+gpio3.pinDir               = "OUTPUT";
+gpio3.GPIO.gpioPin.$assign = "GPMC0_AD11";
+
+
+ipc.r5fss0_1 = "notify";
+ipc.r5fss1_0 = "notify";
+ipc.r5fss1_1 = "NONE";
+ipc.m4fss0_0 = "notify";
+
+mcspi1.$name                 = "CONFIG_MCSPI0";
+mcspi1.pinMode               = 3;
+mcspi1.inputSelect           = "0";
+mcspi1.dpe0                  = "DISABLE";
+mcspi1.dpe1                  = "ENABLE";
+mcspi1.intrEnable            = "POLLED";
+mcspi1.SPI.$assign           = "SPI0";
+mcspi1.mcspiChannel[0].$name = "CONFIG_MCSPI_CH0";
+
+debug_log.enableCssLog = false;
+
+mpu_armv71.$name             = "CONFIG_MPU_REGION0";
+mpu_armv71.size              = 31;
+mpu_armv71.attributes        = "Device";
+mpu_armv71.accessPermissions = "Supervisor RD+WR, User RD";
+mpu_armv71.allowExecute      = false;
+
+mpu_armv72.$name             = "CONFIG_MPU_REGION1";
+mpu_armv72.accessPermissions = "Supervisor RD+WR, User RD";
+mpu_armv72.size              = 16;
+mpu_armv72.attributes        = "NonCached";
+
+mpu_armv73.$name             = "CONFIG_MPU_REGION2";
+mpu_armv73.baseAddr          = 0x41010000;
+mpu_armv73.accessPermissions = "Supervisor RD+WR, User RD";
+mpu_armv73.size              = 16;
+mpu_armv73.attributes        = "NonCached";
+
+mpu_armv74.$name             = "CONFIG_MPU_REGION3";
+mpu_armv74.accessPermissions = "Supervisor RD+WR, User RD";
+mpu_armv74.baseAddr          = 0x70000000;
+mpu_armv74.size              = 21;
+
+mpu_armv75.$name        = "CONFIG_MPU_REGION4";
+mpu_armv75.baseAddr     = 0x60000000;
+mpu_armv75.size         = 28;
+mpu_armv75.attributes   = "Device";
+mpu_armv75.allowExecute = false;
+
+mpu_armv76.$name        = "CONFIG_MPU_REGION5_GPIO";
+mpu_armv76.baseAddr     = 0x600000;
+mpu_armv76.size         = 19;
+mpu_armv76.attributes   = "Device";
+mpu_armv76.allowExecute = false;
+
+mpu_armv77.$name        = "CONFIG_MPU_REGION6_ICSSG0";
+mpu_armv77.baseAddr     = 0x30000000;
+mpu_armv77.size         = 19;
+mpu_armv77.allowExecute = false;
+mpu_armv77.attributes   = "NonCached";
+
+mpu_armv78.$name        = "CONFIG_MPU_REGION7_PWMs0_8";
+mpu_armv78.baseAddr     = 0x23000000;
+mpu_armv78.size         = 19;
+mpu_armv78.attributes   = "NonCached";
+mpu_armv78.allowExecute = false;
+
+mpu_armv79.$name      = "CONFIG_MPU_REGION8_PWM9";
+mpu_armv79.attributes = "NonCached";
+mpu_armv79.size       = 16;
+mpu_armv79.baseAddr   = 0x23080000;
+
+mpu_armv710.$name        = "CONFIG_MPU_REGION9_OTHER_R5F_TCMB";
+mpu_armv710.baseAddr     = 0x78500000;
+mpu_armv710.size         = 15;
+mpu_armv710.allowExecute = false;
+mpu_armv710.attributes   = "NonCached";
+
+mpu_armv711.$name        = "CONFIG_MPU_MSRAM_CTRLVARS";
+mpu_armv711.baseAddr     = 0x701BFF00;
+mpu_armv711.size         = 8;
+mpu_armv711.allowExecute = false;
+
+mpu_armv712.$name        = "CONFIG_MPU_MSRAM_NOCACHE";
+mpu_armv712.size         = 16;
+mpu_armv712.attributes   = "NonCached";
+mpu_armv712.allowExecute = false;
+mpu_armv712.baseAddr     = 0x701D0000;
+
+mpu_armv713.$name        = "CONFIG_MPU_MSRAM_NOCACHE0";
+mpu_armv713.baseAddr     = 0x701C0000;
+mpu_armv713.size         = 16;
+mpu_armv713.attributes   = "NonCached";
+mpu_armv713.allowExecute = false;
+
+endat1.$name                      = "CONFIG_ENDAT0";
+endat1.Channel_2                  = true;
+endat1.Booster_Pack               = true;
+endat1.Multi_Channel_Load_Share   = true;
+endat1.PRU_ICSSG0_PRU.$assign     = "PRU_ICSSG0_PRU1";
+endat1.PRU_ICSSG0_PRU.GPO5.$used  = false;
+endat1.PRU_ICSSG0_PRU.GPO4.$used  = false;
+endat1.PRU_ICSSG0_PRU.GPO3.$used  = false;
+endat1.PRU_ICSSG0_PRU.GPI14.$used = false;
+
+endat1.ENC1_EN.GPIO.$assign         = "GPIO1";
+endat1.ENC1_EN.$name                = "ENC1_EN";
+endat1.ENC1_EN.GPIO.gpioPin.pu_pd   = "pu";
+endat1.ENC1_EN.GPIO.gpioPin.rx      = false;
+endat1.ENC1_EN.GPIO.gpioPin.$assign = "MMC1_SDWP";
+
+endat1.ENC2_EN.$name                = "ENC2_EN";
+endat1.ENC2_EN.GPIO.gpioPin.pu_pd   = "pu";
+endat1.ENC2_EN.GPIO.gpioPin.rx      = false;
+endat1.ENC2_EN.GPIO.$assign         = "GPIO1";
+endat1.ENC2_EN.GPIO.gpioPin.$assign = "MMC1_SDCD";
+
+pruicss1.$name                                                                    = "CONFIG_PRU_ICSS0";
+endat1.pru                                                                        = pruicss1;
+pruicss1.coreClk                                                                  = 300000000;
+pruicss1.iepClk                                                                   = 300000000;
+pruicss1.AdditionalICSSSettings[0].$name                                          = "CONFIG_PRU_ICSS_IO0";
+pruicss1.AdditionalICSSSettings[0].PruGPIO.create(1);
+pruicss1.AdditionalICSSSettings[0].PruGPIO[0].$name                               = "CONFIG_PRU_ICSS_GPIO0";
+pruicss1.AdditionalICSSSettings[0].PruGPIO[0].PRU_ICSSG0_PRU.GPI1.$used           = true;
+pruicss1.AdditionalICSSSettings[0].PruGPIO[0].PRU_ICSSG0_PRU.GPI11.$used          = true;
+pruicss1.AdditionalICSSSettings[0].PruGPIO[0].PRU_ICSSG0_PRU.GPI16.$used          = true;
+pruicss1.AdditionalICSSSettings[0].PruGPIO[0].PRU_ICSSG0_PRU.GPI18.$used          = true;
+pruicss1.AdditionalICSSSettings[0].PruGPIO[0].PRU_ICSSG0_PRU.GPI19.rx             = false;
+pruicss1.AdditionalICSSSettings[0].PruGPIO[0].PRU_ICSSG0_PRU.GPI3.$used           = true;
+pruicss1.AdditionalICSSSettings[0].PruGPIO[0].PRU_ICSSG0_PRU.GPI5.$used           = true;
+pruicss1.AdditionalICSSSettings[0].PruGPIO[0].PRU_ICSSG0_PRU.GPI7.$used           = true;
+pruicss1.AdditionalICSSSettings[0].PruGPIO[0].PRU_ICSSG0_PRU.GPI8.$used           = true;
+pruicss1.AdditionalICSSSettings[0].PruIepIO.create(1);
+pruicss1.AdditionalICSSSettings[0].PruIepIO[0].$name                              = "CONFIG_PRU_ICSS_IEP_IO0";
+pruicss1.AdditionalICSSSettings[0].PruIepIO[0].PRU_ICSSG0_IEP.EDC_SYNC_OUT0.$used = true;
+pruicss1.AdditionalICSSSettings[0].PruIepIO[0].PRU_ICSSG0_IEP.EDC_SYNC_OUT1.$used = true;
+
+pru_ipc1.$name               = "CONFIG_PRU_IPC0";
+pru_ipc1.rxIntcMapping.$name = "CONFIG_ICSS0_INTC_MAPPING0";
+
+/**
+ * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future
+ * version of the tool will not impact the pinmux you originally saw.  These lines can be completely deleted in order to
+ * re-solve from scratch.
+ */
+epwm1.EPWM.A.$suggestSolution                                                                = "GPMC0_AD8";
+epwm1.EPWM.B.$suggestSolution                                                                = "GPMC0_AD9";
+epwm2.EPWM.A.$suggestSolution                                                                = "GPMC0_AD5";
+epwm2.EPWM.B.$suggestSolution                                                                = "GPMC0_AD6";
+epwm3.EPWM.A.$suggestSolution                                                                = "GPMC0_AD3";
+epwm3.EPWM.B.$suggestSolution                                                                = "GPMC0_AD4";
+gpio1.GPIO.$suggestSolution                                                                  = "GPIO1";
+gpio2.GPIO.$suggestSolution                                                                  = "GPIO1";
+gpio3.GPIO.$suggestSolution                                                                  = "GPIO0";
+mcspi1.SPI.CLK.$suggestSolution                                                              = "SPI0_CLK";
+mcspi1.SPI.D0.$suggestSolution                                                               = "SPI0_D0";
+mcspi1.SPI.D1.$suggestSolution                                                               = "SPI0_D1";
+endat1.PRU_ICSSG0_PRU.GPO2.$suggestSolution                                                  = "PRG0_PRU1_GPO2";
+endat1.PRU_ICSSG0_PRU.GPO1.$suggestSolution                                                  = "PRG0_PRU1_GPO1";
+endat1.PRU_ICSSG0_PRU.GPO0.$suggestSolution                                                  = "PRG0_PRU1_GPO0";
+endat1.PRU_ICSSG0_PRU.GPI13.$suggestSolution                                                 = "PRG0_PRU1_GPO13";
+endat1.PRU_ICSSG0_PRU.GPO8.$suggestSolution                                                  = "PRG0_PRU1_GPO8";
+endat1.PRU_ICSSG0_PRU.GPO12.$suggestSolution                                                 = "PRG0_PRU1_GPO12";
+endat1.PRU_ICSSG0_PRU.GPO6.$suggestSolution                                                  = "PRG0_PRU1_GPO6";
+endat1.PRU_ICSSG0_PRU.GPI11.$suggestSolution                                                 = "PRG0_PRU1_GPO11";
+pruicss1.AdditionalICSSSettings[0].PruGPIO[0].PRU_ICSSG0_PRU.$suggestSolution                = "PRU_ICSSG0_PRU0";
+pruicss1.AdditionalICSSSettings[0].PruGPIO[0].PRU_ICSSG0_PRU.GPI1.$suggestSolution           = "PRG0_PRU0_GPO1";
+pruicss1.AdditionalICSSSettings[0].PruGPIO[0].PRU_ICSSG0_PRU.GPI11.$suggestSolution          = "PRG0_PRU0_GPO11";
+pruicss1.AdditionalICSSSettings[0].PruGPIO[0].PRU_ICSSG0_PRU.GPI16.$suggestSolution          = "PRG0_PRU0_GPO16";
+pruicss1.AdditionalICSSSettings[0].PruGPIO[0].PRU_ICSSG0_PRU.GPI18.$suggestSolution          = "PRG0_PRU0_GPO18";
+pruicss1.AdditionalICSSSettings[0].PruGPIO[0].PRU_ICSSG0_PRU.GPI3.$suggestSolution           = "PRG0_PRU0_GPO3";
+pruicss1.AdditionalICSSSettings[0].PruGPIO[0].PRU_ICSSG0_PRU.GPI5.$suggestSolution           = "PRG0_PRU0_GPO5";
+pruicss1.AdditionalICSSSettings[0].PruGPIO[0].PRU_ICSSG0_PRU.GPI7.$suggestSolution           = "PRG0_PRU0_GPO7";
+pruicss1.AdditionalICSSSettings[0].PruGPIO[0].PRU_ICSSG0_PRU.GPI8.$suggestSolution           = "PRG0_PRU0_GPO8";
+pruicss1.AdditionalICSSSettings[0].PruIepIO[0].PRU_ICSSG0_IEP.$suggestSolution               = "PRU_ICSSG0_IEP0";
+pruicss1.AdditionalICSSSettings[0].PruIepIO[0].PRU_ICSSG0_IEP.EDC_SYNC_OUT0.$suggestSolution = "PRG0_PRU0_GPO19";
+pruicss1.AdditionalICSSSettings[0].PruIepIO[0].PRU_ICSSG0_IEP.EDC_SYNC_OUT1.$suggestSolution = "PRG0_PRU0_GPO17";
