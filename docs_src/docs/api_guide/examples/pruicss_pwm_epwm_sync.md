@@ -7,9 +7,6 @@
 This example generates a signal for a specified period and duty cycle using
 PRUICSS PWM and SOC EPWM. The period and duty cycle can be configured by the user.
 
-\cond SOC_AM243X
-
-## AM243X-LP
 The example Uses PRUICSSG0 PWM module and does below
 
 - Configures EPWM0_CHANNEL_A to generate a 1KHz signal with 25% duty cycle
@@ -23,15 +20,23 @@ The example Uses PRUICSSG0 PWM module and does below
 - Configures IEP1 CMP12 value with PWM3_2_NEG(alias signal PWM3_B2) output duty cycle value
 - Configures IEP0 CMP0 value with zero to make state transition to intial on IEP counter reset
 - PWM0_0_POS(alias signal PWM0_A0) and PWM3_2_NEG(alias signal PWM3_B2) and EPWM0_CHANNEL_A will be in sync with respect to each other as EPWM0_SYNC_OUT is used to  control output period of these signals
+
+
+#### AM243X-LP 
 - PRG0_PWM0_A0 can be probed on J1.5
 - PRG0_PWM3_B2 can be probed on J2.8
 - EPWM0_CHANNEL_A can be probed on J4.1
 
-#### AM243X-LP Probe Output 
-\imageStyle{am243x_lp_soc_epwm_pruicss_pwm_sync_probe_output.png,width:85%}
-\image html am243x_lp_soc_epwm_pruicss_pwm_sync_probe_output.png "PRUICSS PWM EPWM SYNC PROBE OUTPUT"
+#### AM64X-EVM and AM243X-EVM 
+An IO Breakout Board (BB) is required to probe the PWM outputs
+- PRG0_PWM0_A0 can be probed on J3.1 of IO Breakout Board
+- PRG0_PWM3_B2 can be probed on J2.11 of IO Breakout Board
+- EPWM0_CHANNEL_A can be probed on J6.1 of IO Breakout Board
 
-\endcond
+#### Probe Output
+
+\imageStyle{epwm_pruicss_pwm_sync_probe_output.png,width:85%}
+\image html epwm_pruicss_pwm_sync_probe_output.png "PRUICSS PWM EPWM SYNC PROBE OUTPUT"
 
 # Supported Combinations
 
@@ -42,6 +47,17 @@ The example Uses PRUICSSG0 PWM module and does below
  CPU + OS       | r5fss0-0 freertos
  Toolchain      | ti-arm-clang
  Boards         | @VAR_LP_BOARD_NAME_LOWER
+ Example folder | examples/pruicss_pwm/pruicss_pwm_epwm_sync
+
+\endcond
+
+\cond SOC_AM243X
+
+ Parameter      | Value
+ ---------------|-----------
+ CPU + OS       | r5fss0-0 freertos
+ Toolchain      | ti-arm-clang
+ Boards         | @VAR_BOARD_NAME_LOWER, @VAR_LP_BOARD_NAME_LOWER
  Example folder | examples/pruicss_pwm/pruicss_pwm_epwm_sync
 
 \endcond

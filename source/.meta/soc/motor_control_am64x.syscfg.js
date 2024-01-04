@@ -5,6 +5,7 @@ const topModules_main = [
     "/position_sense/endat",
     "/position_sense/hdsl",
     "/position_sense/tamagawa",
+    "/pru_icssg/pwm"
 ];
 
 const topModules_mcu = [

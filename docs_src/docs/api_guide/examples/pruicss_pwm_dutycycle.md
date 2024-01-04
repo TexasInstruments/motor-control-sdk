@@ -7,24 +7,6 @@
 This example generates a signal for a specified period and duty cycle using
 PRUICSS PWM. The period and duty cycle can be configured by the user.
 
-\cond SOC_AM243X
-
-## AM243X-EVM
-The example Uses PRUICSSG1 PWM module and does below
-
-- This example uses PRUICSSG1 PWM module as probing PRUICSSG0 PWM signals requires IO breakout board
-- Configures PWM0_2_NEG(alias signal PWM0_B2) to generate a 1KHz signal with 25% duty cycle 
-- PWM0_2_NEG(alias signal PWM0_B2) uses IEP0 CMP6 EVENT to control Duty cycle and IEP0 CMP0 to control output Frequency
-- Configures IEP0 CMP0 value with PWM0_2_NEG(alias signal PWM0_B2) output period value
-- Configures IEP0 CMP6 value with PWM0_2_NEG(alias signal PWM0_B2) output duty cycle value
-- Configures IEP counter reset on CMP0 event
-- PRG1_PWM0_B2 can be probed on J16 PIN1
-
-#### AM243X-EVM Probe Output 
-\imageStyle{am64x_am243x_evm_duty_example_probe_output.png,width:70%}
-\image html am64x_am243x_evm_duty_example_probe_output.png "PRUICSS PWM DUTY CYCLE PROBE OUTPUT"
-
-## AM243X-LP
 The example Uses PRUICSSG0 PWM module and does below
 
 - Configures PWM0_0_POS(alias signal PWM0_A0) to generate a 1KHz signal with 25% duty cycle 
@@ -36,33 +18,20 @@ The example Uses PRUICSSG0 PWM module and does below
 - Configures IEP0 CMP6 value with PWM0_0_POS(alias signal PWM0_A0) output duty cycle value
 - Configures IEP1 CMP12 value with PWM3_2_NEG(alias signal PWM3_B2) output duty cycle value
 - PWM0_0_POS(alias signal PWM0_A0) and PWM3_2_NEG(alias signal PWM3_B2) will be in sync with respect to each other as IEP0 CMP0 value is used to control output period of these signals
+
+#### AM243X-LP  
 - PRG0_PWM0_A0 can be probed on J1.5
 - PRG0_PWM3_B2 can be probed on J2.8
 
-#### AM243X-LP Probe Output 
-\image html am243x_lp_duty_example_probe_output.png "PRUICSS PWM DUTY CYCLE PROBE OUTPUT"
+#### AM64X-EVM and AM243X-EVM 
+An IO Breakout Board (BB) is required to probe the PWM outputs
+- PRG0_PWM0_A0 can be probed on J3.1 of IO Breakout Board
+- PRG0_PWM3_B2 can be probed on J2.11 of IO Breakout Board
 
-\endcond
+#### Probe Output
 
-\cond SOC_AM64X
-
-## AM64X-EVM
-The example Uses PRUICSSG1 PWM module and does below
-
-- This example uses PRUICSSG1 PWM module as probing PRUICSSG0 PWM signals requires IO breakout board
-- Configures PWM0_2_NEG(alias signal PWM0_B2) to generate a 1KHz signal with 25% duty cycle 
-- PWM0_2_NEG(alias signal PWM0_B2) uses IEP0 CMP6 EVENT to control Duty cycle and IEP0 CMP0 to control output Frequency
-- Configures IEP0 CMP0 value with PWM0_2_NEG(alias signal PWM0_B2) output period value
-- Configures IEP0 CMP6 value with PWM0_2_NEG(alias signal PWM0_B2) output duty cycle value
-- Configures IEP counter reset on CMP0 event
-- PRG1_PWM0_B2 can be probed on J16 PIN1
-
-#### AM64X-EVM Probe Output 
-\imageStyle{am64x_am243x_evm_duty_example_probe_output.png,width:70%}
-\image html am64x_am243x_evm_duty_example_probe_output.png "PRUICSS PWM DUTY CYCLE PROBE OUTPUT"
-
-\endcond
-
+\imageStyle{duty_example_probe_output.png,width:70%}
+\image html duty_example_probe_output.png "PRUICSS PWM DUTY CYCLE PROBE OUTPUT"
 
 # Supported Combinations
 

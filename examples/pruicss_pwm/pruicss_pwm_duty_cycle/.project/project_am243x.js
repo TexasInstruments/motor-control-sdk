@@ -48,7 +48,11 @@ const libs_freertos_r5f = {
     ],
 };
 
-
+const defines = {
+    common: [
+        "am243x_evm",
+    ],
+};
 
 const lnkfiles = {
     common: [
@@ -101,6 +105,10 @@ function getComponentBuildProperty(buildOption) {
     build_property.lnkfiles = lnkfiles;
     build_property.syscfgfile = syscfgfile;
     build_property.readmeDoxygenPageTag = readmeDoxygenPageTag;
+    
+    if(buildOption.board=="am243x-evm"){
+        build_property.defines = defines;
+    }
 
     if(buildOption.cpu.match(/r5f*/)) {
         if(buildOption.os.match(/freertos*/) )

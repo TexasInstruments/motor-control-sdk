@@ -263,6 +263,38 @@
         ]
     },
     {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "description": "A Pruicss Pwm Epwm Sync Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "pruicss_pwm_epwm_sync",
+        "location": "../../examples/pruicss_pwm/pruicss_pwm_epwm_sync/am64x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "AM64x_GP_EVM"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "pruicss_pwm",
+            "pruicss_pwm_epwm_sync",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
         "resourceType": "web.page",
         "resourceClass": [
             "document"

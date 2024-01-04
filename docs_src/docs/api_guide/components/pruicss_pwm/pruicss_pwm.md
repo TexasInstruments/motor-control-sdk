@@ -37,7 +37,8 @@ Each Set has six signals (A0,A1,A2,B0,B1,B2) With Reference to Technical Referen
 
 ## Example Usage
 
-\ref EXAMPLE_PRUICSS_PWM_DUTY_CYCLE
+- \ref EXAMPLE_PRUICSS_PWM_DUTY_CYCLE
+- \ref EXAMPLE_PRUICSS_PWM_EPWM_SYNC
 
 ## API
 
