@@ -19,6 +19,9 @@ const mpu_armv72 = mpu_armv7.addInstance();
 const mpu_armv73 = mpu_armv7.addInstance();
 const mpu_armv74 = mpu_armv7.addInstance();
 const mpu_armv75 = mpu_armv7.addInstance();
+const pwm        = scripting.addModule("/pru_icssg/pwm", {}, false);
+const pwm1       = pwm.addInstance();
+const pwm2       = pwm.addInstance();
 
 /**
  * Write custom configuration values to the imported modules.
@@ -65,6 +68,16 @@ mpu_armv75.$name             = "CONFIG_MPU_REGION4";
 mpu_armv75.baseAddr          = 0x60000000;
 mpu_armv75.size              = 28;
 mpu_armv75.accessPermissions = "Supervisor RD, User RD";
+
+pwm1.$name                     = "CONFIG_PRU_ICSS_PWM0";
+pwm1.PRU_ICSSG0_PWM.$assign    = "PRU_ICSSG0_PWM0";
+pwm1.PRU_ICSSG0_PWM.A0.$assign = "PRG0_PRU0_GPO12";
+pwm1.PRU_ICSSG0_PWM.A0.$used   = true;
+
+pwm2.$name                     = "CONFIG_PRU_ICSS_PWM1";
+pwm2.PRU_ICSSG0_PWM.$assign    = "PRU_ICSSG0_PWM3";
+pwm2.PRU_ICSSG0_PWM.B2.$assign = "PRG0_PRU0_GPO5";
+pwm2.PRU_ICSSG0_PWM.B2.$used   = true;
 
 /**
  * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future

@@ -21,17 +21,17 @@ endif
 PROFILE?=release
 ConfigName:=$(PROFILE)
 
-OUTNAME:=pruicss_pwm_duty_cycle.$(PROFILE).out
+OUTNAME:=pruicss_pwm_epwm_sync.$(PROFILE).out
 
 BOOTIMAGE_PATH=$(abspath .)
-BOOTIMAGE_NAME:=pruicss_pwm_duty_cycle.$(PROFILE).appimage
-BOOTIMAGE_NAME_XIP:=pruicss_pwm_duty_cycle.$(PROFILE).appimage_xip
-BOOTIMAGE_NAME_SIGNED:=pruicss_pwm_duty_cycle.$(PROFILE).appimage.signed
-BOOTIMAGE_RPRC_NAME:=pruicss_pwm_duty_cycle.$(PROFILE).rprc
-BOOTIMAGE_RPRC_NAME_XIP:=pruicss_pwm_duty_cycle.$(PROFILE).rprc_xip
-BOOTIMAGE_RPRC_NAME_TMP:=pruicss_pwm_duty_cycle.$(PROFILE).rprc_tmp
-BOOTIMAGE_NAME_HS:=pruicss_pwm_duty_cycle.$(PROFILE).appimage.hs
-BOOTIMAGE_NAME_HS_FS:=pruicss_pwm_duty_cycle.$(PROFILE).appimage.hs_fs
+BOOTIMAGE_NAME:=pruicss_pwm_epwm_sync.$(PROFILE).appimage
+BOOTIMAGE_NAME_XIP:=pruicss_pwm_epwm_sync.$(PROFILE).appimage_xip
+BOOTIMAGE_NAME_SIGNED:=pruicss_pwm_epwm_sync.$(PROFILE).appimage.signed
+BOOTIMAGE_RPRC_NAME:=pruicss_pwm_epwm_sync.$(PROFILE).rprc
+BOOTIMAGE_RPRC_NAME_XIP:=pruicss_pwm_epwm_sync.$(PROFILE).rprc_xip
+BOOTIMAGE_RPRC_NAME_TMP:=pruicss_pwm_epwm_sync.$(PROFILE).rprc_tmp
+BOOTIMAGE_NAME_HS:=pruicss_pwm_epwm_sync.$(PROFILE).appimage.hs
+BOOTIMAGE_NAME_HS_FS:=pruicss_pwm_epwm_sync.$(PROFILE).appimage.hs_fs
 TARGETS := $(BOOTIMAGE_NAME)
 ifeq ($(DEVICE_TYPE), HS)
    TARGETS += $(BOOTIMAGE_NAME_HS)
@@ -39,7 +39,7 @@ endif
 
 FILES_common := \
 	main.c \
-	pruicss_pwm_dutycycle.c \
+	pruicss_pwm_epwm_sync.c \
 	ti_drivers_config.c \
 	ti_drivers_open_close.c \
 	ti_board_config.c \
@@ -197,7 +197,7 @@ clean:
 	$(RMDIR) generated/
 
 scrub:
-	@echo  Scrubing: am64x:r5fss0-0:freertos:ti-arm-clang pruicss_pwm_duty_cycle ...
+	@echo  Scrubing: am64x:r5fss0-0:freertos:ti-arm-clang pruicss_pwm_epwm_sync ...
 	$(RMDIR) obj
 ifeq ($(OS),Windows_NT)
 	$(RM) \*.out

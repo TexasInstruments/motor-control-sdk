@@ -30,8 +30,11 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdio.h>
 #include <kernel/dpl/DebugP.h>
+#include <kernel/dpl/AddrTranslateP.h>
+#include <kernel/dpl/SemaphoreP.h>
+#include <kernel/dpl/HwiP.h>
+#include <drivers/epwm.h>
 #include "ti_drivers_config.h"
 #include "ti_drivers_open_close.h"
 #include "ti_board_open_close.h"
@@ -39,39 +42,59 @@
 #include <drivers/pruicss.h>
 #include <drivers/pinmux.h>
 
-/** \brief Global Structure pointer holding PRUICSSG0 memory Map. */
+#if defined(am243x_evm) || defined(am64x_evm)
+#include <board/ioexp/ioexp_tca6424.h>
 
-PRUICSS_Handle gPruIcssHandle;
+static TCA6424_Config  gTCA6424_Config;
 
-/*
- * This example uses the PRUICSS PWM module to generate a signal
- * with a specified duty cycle.
- *
- * The default parameters are : Frequency : 1kHz, Duty cycle : 25%,
- * All these parameters are configurable.
- *
- * In this example PWM0_0_POS(alias signal PWM0_A0),PWM3_2_NEG(alias signal PWM3_B2) is used to generate the signal, the user can also
- * select a different one.
- *  
- * PWM0_0_POS(alias signal PWM0_A0) uses IEP0 CMP1 EVENT to control Duty cycle
- * & IEP0 CMP0 to control output Frequency
- *
- * PWM3_2_NEG(alias signal PWM3_B2) uses IEP1 CMP12 EVENT to control Duty cycle
- * & IEP0 CMP0 to control output Frequency
- *
- * This example also showcases how to configure and use the PRUICSS PWM module.
- */
+static void i2c_io_expander(void *args)
+{
+    int32_t             status = SystemP_SUCCESS;
+    TCA6424_Params      tca6424Params;
+    TCA6424_Params_init(&tca6424Params);
+    status = TCA6424_open(&gTCA6424_Config, &tca6424Params);
+    uint32_t            ioIndex;
+
+    if(status == SystemP_SUCCESS)
+    {
+        /* set P12 high which controls CPSW_FET_SEL -> enable PRU1 and PRU0 GPIOs */
+        ioIndex = 0x0a;
+        status = TCA6424_setOutput(
+                     &gTCA6424_Config,
+                     ioIndex,
+                     TCA6424_OUT_STATE_HIGH);
+
+        /* Configure as output  */
+        status += TCA6424_config(
+                      &gTCA6424_Config,
+                      ioIndex,
+                      TCA6424_MODE_OUTPUT);
+    }
+    TCA6424_close(&gTCA6424_Config);
+}
+#endif
+
+/* Frequency of PWM output signal in Hz - 1 KHz is selected */
+#define SOC_EPWM_OUTPUT_FREQ                (1U * 1000U)
+/* TB frequency in Hz - so that /4 divider is used */
+#define SOC_EPWM_TB_FREQ                    (CONFIG_EPWM0_FCLK / 4U)
+/* PRD value - this determines the period */
+#define SOC_EPWM_PRD_VAL                    (SOC_EPWM_TB_FREQ / SOC_EPWM_OUTPUT_FREQ)
+/* Duty Cycle of PWM output signal in % - give value from 1 to 99 */
+#define SOC_EPWM_DUTY_CYCLE                 (25U)
+/* DUTY CYCLE width - this determines width of PWM output signal duty cycle*/
+#define SOC_EPWM_COMPA_VAL                  (SOC_EPWM_PRD_VAL - ((SOC_EPWM_DUTY_CYCLE *SOC_EPWM_PRD_VAL) / 100U))
 
 /*FIXME: IEP0_CLK_FREQ macro to be included in driver_config.h sysconfig generated file*/
 #define PRUICSS_IEP0_CLK_FREQ                      (200000000U)
 /* Modify this to change the IEP counter increment value*/
-#define PRUICSS_IEP_COUNT_INCREMENT_VALUE          (1U)
+#define PRUICSS_IEP_COUNT_INCREMENT_VALUE          (5U)
 /* Duty Cycle of PWM output signal in % - give value from 1 to 99 */
-#define APP_PRUICSS_PWM3_B2_DUTY_CYCLE             (25U)
+#define APP_PRUICSS_PWM0_A0_DUTY_CYCLE             (50U)
 /* Duty Cycle of PWM output signal in % - give value from 1 to 99 */
-#define APP_PRUICSS_PWM0_A0_DUTY_CYCLE             (25U)
+#define APP_PRUICSS_PWM3_B2_DUTY_CYCLE             (75U)
 /* Frequency  of PWM output signal in Hz - 1 KHz is selected */
-#define APP_PRUICSS_PWM_OUTPUT_FREQ                (1U * 1000U)
+#define APP_PRUICSS_PWM_OUTPUT_FREQ                (SOC_EPWM_OUTPUT_FREQ)
 /* PRD value - this determines the period */
 #define APP_PRUICSS_PWM_PRD_VAL                    (((PRUICSS_IEP0_CLK_FREQ / APP_PRUICSS_PWM_OUTPUT_FREQ))*(PRUICSS_IEP_COUNT_INCREMENT_VALUE))
 /* DUTY CYCLE width - this determines width of PWM output signal duty cycle*/
@@ -79,32 +102,98 @@ PRUICSS_Handle gPruIcssHandle;
 /* DUTY CYCLE width - this determines width of PWM output signal duty cycle*/
 #define APP_PRUICSS_IEP1_COMP12_VAL                (APP_PRUICSS_PWM_PRD_VAL-((APP_PRUICSS_PWM3_B2_DUTY_CYCLE*APP_PRUICSS_PWM_PRD_VAL)/100))
 
-/*FIXME: Add pinmux in  sysconfig generated file*/
-Pinmux_PerCfg_t gPinMuxMainDomainCfg1[] = {
+/* Function Prototypes */
+static void App_epwmConfig(uint32_t epwmBaseAddr, uint32_t epwmCh, uint32_t epwmFuncClk);
+static void pruicss_iep_init(void *args);
+static void pruicss_pwm_init(void *args);
 
-    /* PRU_ICSSG0_PWM0 pin config */
-    /* PRG0_PWM0_A0 -> PRG0_PRU0_GPO12 (K1) */
+/* variable to hold base address of EPWM that is used */
+uint32_t gEpwmBaseAddr;
+
+/* Global Structure pointer holding PRUICSSG0 memory Map. */
+PRUICSS_Handle gPruIcssHandle;
+
+void pruicss_pwm_epwm_sync_main(void *args)
+{
+
+    /* Open drivers to open the UART driver for console */
+    Drivers_open();
+    Board_driversOpen();
+
+    gPruIcssHandle = PRUICSS_open(CONFIG_PRU_ICSS0);
+    DebugP_assert(gPruIcssHandle != NULL);
+
+    #if defined(am243x_evm) || defined(am64x_evm)
+    /* Configure the IO Expander to connect the PRU IOs to HSE */
+    i2c_io_expander(NULL);
+    #endif
+    
+    pruicss_pwm_init(NULL);
+
+    pruicss_iep_init(NULL);
+
+    /* Address translate */
+    gEpwmBaseAddr = (uint32_t)AddrTranslateP_getLocalAddr(CONFIG_EPWM0_BASE_ADDR);
+
+    /* Configure SOC EPWM */
+    App_epwmConfig(gEpwmBaseAddr, EPWM_OUTPUT_CH_A, CONFIG_EPWM0_FCLK);
+
+    while (1)
     {
-        PIN_PRG0_PRU0_GPO12,
-        ( PIN_MODE(3) | PIN_PULL_DISABLE )
-    },
-    /* PRU_ICSSG0_PWM3 pin config */
-    /* PRG0_PWM3_B2 -> PRG0_PRU0_GPO5 (F2) */
-    {
-        PIN_PRG0_PRU0_GPO5,
-        ( PIN_MODE(3) | PIN_PULL_DISABLE )
-    },
-    {PINMUX_END, PINMUX_END}
+       ClockP_usleep(1);
+    }
 
-};
+    Board_driversClose();
+    Drivers_close();
+}
 
+static void App_epwmConfig(uint32_t epwmBaseAddr, uint32_t epwmCh, uint32_t epwmFuncClk)
+{
+    EPWM_AqActionCfg  aqConfig;
 
-void pruicss_iep_init(void *args)
+    /* Configure Time base submodule */
+    EPWM_tbTimebaseClkCfg(epwmBaseAddr, SOC_EPWM_TB_FREQ, epwmFuncClk);
+    EPWM_tbPwmFreqCfg(epwmBaseAddr, SOC_EPWM_TB_FREQ, SOC_EPWM_OUTPUT_FREQ, EPWM_TB_COUNTER_DIR_UP, EPWM_SHADOW_REG_CTRL_ENABLE);
+    EPWM_tbSyncDisable(epwmBaseAddr);
+    EPWM_tbSetSyncOutMode(epwmBaseAddr, EPWM_TB_SYNC_OUT_EVT_CNT_EQ_ZERO);
+    EPWM_tbSetEmulationMode(epwmBaseAddr, EPWM_TB_EMU_MODE_FREE_RUN);
+
+    /* Configure counter compare submodule */
+    EPWM_counterComparatorCfg(epwmBaseAddr, EPWM_CC_CMP_A, SOC_EPWM_COMPA_VAL, EPWM_SHADOW_REG_CTRL_ENABLE, EPWM_CC_CMP_LOAD_MODE_CNT_EQ_ZERO, TRUE);
+
+    /* Configure Action Qualifier Submodule */
+    aqConfig.zeroAction = EPWM_AQ_ACTION_LOW;
+    aqConfig.prdAction = EPWM_AQ_ACTION_DONOTHING;
+    aqConfig.cmpAUpAction = EPWM_AQ_ACTION_HIGH;
+    aqConfig.cmpADownAction = EPWM_AQ_ACTION_DONOTHING;
+    aqConfig.cmpBUpAction = EPWM_AQ_ACTION_DONOTHING;
+    aqConfig.cmpBDownAction = EPWM_AQ_ACTION_DONOTHING;
+    EPWM_aqActionOnOutputCfg(epwmBaseAddr, epwmCh, &aqConfig);
+
+    /* Configure Dead Band Submodule */
+    EPWM_deadbandBypass(epwmBaseAddr);
+
+    /* Configure Chopper Submodule */
+    EPWM_chopperEnable(epwmBaseAddr, FALSE);
+
+    /* Configure trip zone Submodule */
+    EPWM_tzTripEventDisable(epwmBaseAddr, EPWM_TZ_EVENT_ONE_SHOT, 0U);
+    EPWM_tzTripEventDisable(epwmBaseAddr, EPWM_TZ_EVENT_CYCLE_BY_CYCLE, 0U);
+
+    /* Configure event trigger Submodule */
+    EPWM_etIntrCfg(epwmBaseAddr, EPWM_ET_INTR_EVT_CNT_EQ_ZRO, EPWM_ET_INTR_PERIOD_FIRST_EVT);
+    EPWM_etIntrEnable(epwmBaseAddr);
+}
+
+static void pruicss_iep_init(void *args)
 {
 
     int status;
     /*Disable IEP0 counter*/
     status= PRUICSS_controlIepCounter(gPruIcssHandle, PRUICSS_IEP_INST0, 0);
+    DebugP_assert(SystemP_SUCCESS == status);
+
+    status = PRUICSS_PWM_enableIEPResetOnEPWM0SyncOut(gPruIcssHandle, PRUICSS_IEP_INST0, 1);
     DebugP_assert(SystemP_SUCCESS == status);
 
     /*Enable  IEP1 slave mode*/
@@ -115,8 +204,9 @@ void pruicss_iep_init(void *args)
     PRUICSS_PWM_setIepCounterLower_32bitValue(gPruIcssHandle, PRUICSS_IEP_INST0, 0xFFFFFFFF);
     PRUICSS_PWM_setIepCounterUpper_32bitValue(gPruIcssHandle, PRUICSS_IEP_INST0, 0xFFFFFFFF);
 
+    /*FIXME: Either compare event is not hit or no state transition when compare 0 configured with 0x00000000*/
     /*configure cmp 0 value of IEP0 with APP_PRUICSS_PWM_PRD_VAL*/
-    status = PRUICSS_PWM_setIepCompareEventLower_32bitValue(gPruIcssHandle, PRUICSS_IEP_INST0, CMP_EVENT0, (APP_PRUICSS_PWM_PRD_VAL & 0xFFFFFFFF));
+    status = PRUICSS_PWM_setIepCompareEventLower_32bitValue(gPruIcssHandle, PRUICSS_IEP_INST0, CMP_EVENT0, ((0x00000001) & 0xFFFFFFFF));
     DebugP_assert(SystemP_SUCCESS == status);
 
     /*configure cmp 1 value with APP_PRUICSS_IEP0_COMP1_VAL*/
@@ -139,17 +229,17 @@ void pruicss_iep_init(void *args)
     status = PRUICSS_setIepCounterIncrementValue(gPruIcssHandle, PRUICSS_IEP_INST0, PRUICSS_IEP_COUNT_INCREMENT_VALUE);
     DebugP_assert(SystemP_SUCCESS == status);
 
-    /*Enable cmp 0 reset of IEP0 counter*/
-    status = PRUICSS_PWM_configureIepCmp0ResetEnable(gPruIcssHandle, PRUICSS_IEP_INST0, 0x1);
+    /*Disable cmp 0 reset of IEP0 counter*/
+    status = PRUICSS_PWM_configureIepCmp0ResetEnable(gPruIcssHandle, PRUICSS_IEP_INST0, 0x0);
     DebugP_assert(SystemP_SUCCESS == status);
 
     /*Enable IEP0 counter*/
     status = PRUICSS_controlIepCounter(gPruIcssHandle, PRUICSS_IEP_INST0, 1);
     DebugP_assert(SystemP_SUCCESS == status);
-    
+
 }
 
-void pruicss_pwm_init(void *args){
+static void pruicss_pwm_init(void *args){
 
     int status;
     /*Enable IEP CMP flags to auto clear after state transition*/
@@ -181,30 +271,3 @@ void pruicss_pwm_init(void *args){
     DebugP_assert(SystemP_SUCCESS == status);
 }
 
-void pruicss_pwm_duty_cycle_main(void *args)
-{
-
-     int32_t status;
-
-     Drivers_open(); // check return status
-
-     status = Board_driversOpen();
-     DebugP_assert(SystemP_SUCCESS == status);
-
-     gPruIcssHandle = PRUICSS_open(CONFIG_PRU_ICSS0);
-     DebugP_assert(gPruIcssHandle != NULL);
-
-     Pinmux_config(gPinMuxMainDomainCfg1, PINMUX_DOMAIN_ID_MAIN);
-
-     pruicss_pwm_init(NULL);
-
-     pruicss_iep_init(NULL);
-    
-     while (1)
-     {
-        ClockP_usleep(1);
-     }
-
-     Board_driversClose();
-     Drivers_close();
-}

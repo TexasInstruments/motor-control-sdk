@@ -5,7 +5,7 @@ let device = "am64x";
 const files = {
     common: [
         "main.c",
-        "pruicss_pwm_dutycycle.c"
+        "pruicss_pwm_epwm_sync.c"
     ],
 };
 
@@ -48,7 +48,11 @@ const libs_freertos_r5f = {
     ],
 };
 
-
+const defines = {
+    common: [
+        "am64x_evm",
+    ],
+};
 
 const lnkfiles = {
     common: [
@@ -56,15 +60,9 @@ const lnkfiles = {
     ]
 };
 
-const defines = {
-    common: [
-        "am64x_evm",
-    ],
-};
-
 const syscfgfile = "../example.syscfg";
 
-const readmeDoxygenPageTag = "EXAMPLE_PRUICSS_PWM_DUTY_CYCLE";
+const readmeDoxygenPageTag = "EXAMPLE_PRUICSS_PWM_EPWM_SYNC";
 
 const templates_freertos_r5f =
 [
@@ -76,7 +74,7 @@ const templates_freertos_r5f =
         input: ".project/templates/am64x/freertos/main_freertos.c.xdt",
         output: "../main.c",
         options: {
-            entryFunction: "pruicss_pwm_duty_cycle_main",
+            entryFunction: "pruicss_pwm_epwm_sync_main",
         },
     }
 ];
@@ -90,7 +88,7 @@ function getComponentProperty() {
 
     property.dirPath = path.resolve(__dirname, "..");
     property.type = "executable";
-    property.name = "pruicss_pwm_duty_cycle";
+    property.name = "pruicss_pwm_epwm_sync";
     property.isInternal = false;
     property.buildOptionCombos = buildOptionCombos;
     property.isSkipTopLevelBuild = false;
@@ -109,8 +107,8 @@ function getComponentBuildProperty(buildOption) {
 
     if(buildOption.board=="am64x-evm"){
         build_property.defines = defines;
-    }    
-
+    } 
+    
     if(buildOption.cpu.match(/r5f*/)) {
         if(buildOption.os.match(/freertos*/) )
         {

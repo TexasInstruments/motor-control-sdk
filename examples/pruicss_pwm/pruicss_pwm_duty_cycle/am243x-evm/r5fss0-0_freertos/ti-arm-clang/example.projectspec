@@ -47,6 +47,7 @@
             -Wno-gnu-variable-sized-type-not-at-end
             -Wno-unused-function
             -DSOC_AM243X
+            -Dam243x_evm
         "
         linkerBuildOptions="
             -i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/lib
@@ -98,7 +99,7 @@
         <pathVariable name="MOTOR_CONTROL_SDK_PATH" path="${COM_TI_MOTOR_CONTROL_SDK_AMXXX_INSTALL_DIR}" scope="project" />
         <file path="../main.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
-        <file path="../pruicss_pwm_dutycycle.c" openOnCreation="false" excludeFromBuild="false" action="copy">
+        <file path="../../../pruicss_pwm_dutycycle.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
         <file path="linker.cmd" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>

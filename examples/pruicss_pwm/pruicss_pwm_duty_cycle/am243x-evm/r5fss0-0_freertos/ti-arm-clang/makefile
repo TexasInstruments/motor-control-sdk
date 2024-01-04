@@ -66,6 +66,7 @@ INCLUDES_common := \
 
 DEFINES_common := \
 	-DSOC_AM243X \
+	-Dam243x_evm \
 
 CFLAGS_common := \
 	-mcpu=cortex-r5 \

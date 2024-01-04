@@ -21,17 +21,17 @@ endif
 PROFILE?=release
 ConfigName:=$(PROFILE)
 
-OUTNAME:=pruicss_pwm_duty_cycle.$(PROFILE).out
+OUTNAME:=pruicss_pwm_epwm_sync.$(PROFILE).out
 
 BOOTIMAGE_PATH=$(abspath .)
-BOOTIMAGE_NAME:=pruicss_pwm_duty_cycle.$(PROFILE).appimage
-BOOTIMAGE_NAME_XIP:=pruicss_pwm_duty_cycle.$(PROFILE).appimage_xip
-BOOTIMAGE_NAME_SIGNED:=pruicss_pwm_duty_cycle.$(PROFILE).appimage.signed
-BOOTIMAGE_RPRC_NAME:=pruicss_pwm_duty_cycle.$(PROFILE).rprc
-BOOTIMAGE_RPRC_NAME_XIP:=pruicss_pwm_duty_cycle.$(PROFILE).rprc_xip
-BOOTIMAGE_RPRC_NAME_TMP:=pruicss_pwm_duty_cycle.$(PROFILE).rprc_tmp
-BOOTIMAGE_NAME_HS:=pruicss_pwm_duty_cycle.$(PROFILE).appimage.hs
-BOOTIMAGE_NAME_HS_FS:=pruicss_pwm_duty_cycle.$(PROFILE).appimage.hs_fs
+BOOTIMAGE_NAME:=pruicss_pwm_epwm_sync.$(PROFILE).appimage
+BOOTIMAGE_NAME_XIP:=pruicss_pwm_epwm_sync.$(PROFILE).appimage_xip
+BOOTIMAGE_NAME_SIGNED:=pruicss_pwm_epwm_sync.$(PROFILE).appimage.signed
+BOOTIMAGE_RPRC_NAME:=pruicss_pwm_epwm_sync.$(PROFILE).rprc
+BOOTIMAGE_RPRC_NAME_XIP:=pruicss_pwm_epwm_sync.$(PROFILE).rprc_xip
+BOOTIMAGE_RPRC_NAME_TMP:=pruicss_pwm_epwm_sync.$(PROFILE).rprc_tmp
+BOOTIMAGE_NAME_HS:=pruicss_pwm_epwm_sync.$(PROFILE).appimage.hs
+BOOTIMAGE_NAME_HS_FS:=pruicss_pwm_epwm_sync.$(PROFILE).appimage.hs_fs
 TARGETS := $(BOOTIMAGE_NAME)
 ifeq ($(DEVICE_TYPE), HS)
    TARGETS += $(BOOTIMAGE_NAME_HS)
@@ -39,7 +39,7 @@ endif
 
 FILES_common := \
 	main.c \
-	pruicss_pwm_dutycycle.c \
+	pruicss_pwm_epwm_sync.c \
 	ti_drivers_config.c \
 	ti_drivers_open_close.c \
 	ti_board_config.c \
@@ -59,14 +59,14 @@ INCLUDES_common := \
 	-I${MOTOR_CONTROL_SDK_PATH}/source \
 	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/FreeRTOS-Kernel/include \
 	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F \
-	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/am64x/r5f \
+	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/am243x/r5f \
 	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers/pruicss/g_v0 \
 	-I${MOTOR_CONTROL_SDK_PATH}/source/pruicss_pwm/include \
 	-Igenerated \
 
 DEFINES_common := \
-	-DSOC_AM64X \
-	-Dam64x_evm \
+	-DSOC_AM243X \
+	-Dam243x_evm \
 
 CFLAGS_common := \
 	-mcpu=cortex-r5 \
@@ -108,10 +108,10 @@ LIBS_PATH_common = \
 	-Wl,-i${CG_TOOL_ROOT}/lib \
 
 LIBS_common = \
-	-lfreertos.am64x.r5f.ti-arm-clang.${ConfigName}.lib \
-	-ldrivers.am64x.r5f.ti-arm-clang.${ConfigName}.lib \
-	-lboard.am64x.r5f.ti-arm-clang.${ConfigName}.lib \
-	-lpruicss_pwm.am64x.r5f.ti-arm-clang.${ConfigName}.lib \
+	-lfreertos.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
+	-ldrivers.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
+	-lboard.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
+	-lpruicss_pwm.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
 	-llibc.a \
 	-llibsysbm.a \
 
@@ -122,10 +122,10 @@ LFLAGS_common = \
 
 
 LIBS_NAME = \
-	freertos.am64x.r5f.ti-arm-clang.${ConfigName}.lib \
-	drivers.am64x.r5f.ti-arm-clang.${ConfigName}.lib \
-	board.am64x.r5f.ti-arm-clang.${ConfigName}.lib \
-	pruicss_pwm.am64x.r5f.ti-arm-clang.${ConfigName}.lib \
+	freertos.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
+	drivers.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
+	board.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
+	pruicss_pwm.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
 	libc.a \
 	libsysbm.a \
 
@@ -160,11 +160,11 @@ vpath %.lib $(LIBS_PATH_NAME)
 vpath %.a $(LIBS_PATH_NAME)
 
 $(OBJDIR)/%.obj %.obj: %.c
-	@echo  Compiling: am64x:r5fss0-0:freertos:ti-arm-clang $(OUTNAME): $<
+	@echo  Compiling: am243x:r5fss0-0:freertos:ti-arm-clang $(OUTNAME): $<
 	$(CC) -c $(CFLAGS) $(INCLUDES) $(DEFINES) -MMD -o $(OBJDIR)/$@ $<
 
 $(OBJDIR)/%.obj %.obj: %.S
-	@echo  Compiling: am64x:r5fss0-0:freertos:ti-arm-clang $(LIBNAME): $<
+	@echo  Compiling: am243x:r5fss0-0:freertos:ti-arm-clang $(LIBNAME): $<
 	$(CC) -c $(CFLAGS) -o $(OBJDIR)/$@ $<
 
 all: $(TARGETS)
@@ -178,13 +178,13 @@ SYSCFG_GEN_FILES+=generated/ti_board_open_close.c generated/ti_board_open_close.
 
 $(OUTNAME): syscfg $(SYSCFG_GEN_FILES) $(OBJS) $(LNK_FILES) $(LIBS_NAME)
 	@echo  .
-	@echo  Linking: am64x:r5fss0-0:freertos:ti-arm-clang $@ ...
+	@echo  Linking: am243x:r5fss0-0:freertos:ti-arm-clang $@ ...
 	$(LNK) $(LNKOPTFLAGS) $(LFLAGS) $(LIBS_PATH) -Wl,-m=$(basename $@).map -o $@ $(addprefix $(OBJDIR), $(OBJS)) $(LIBS) $(LNK_FILES)
-	@echo  Linking: am64x:r5fss0-0:freertos:ti-arm-clang $@ Done !!!
+	@echo  Linking: am243x:r5fss0-0:freertos:ti-arm-clang $@ Done !!!
 	@echo  .
 
 clean:
-	@echo  Cleaning: am64x:r5fss0-0:freertos:ti-arm-clang $(OUTNAME) ...
+	@echo  Cleaning: am243x:r5fss0-0:freertos:ti-arm-clang $(OUTNAME) ...
 	$(RMDIR) $(OBJDIR)
 	$(RM) $(OUTNAME)
 	$(RM) $(BOOTIMAGE_NAME)
@@ -197,7 +197,7 @@ clean:
 	$(RMDIR) generated/
 
 scrub:
-	@echo  Scrubing: am64x:r5fss0-0:freertos:ti-arm-clang pruicss_pwm_duty_cycle ...
+	@echo  Scrubing: am243x:r5fss0-0:freertos:ti-arm-clang pruicss_pwm_epwm_sync ...
 	$(RMDIR) obj
 ifeq ($(OS),Windows_NT)
 	$(RM) \*.out
@@ -229,10 +229,10 @@ $(SYSCFG_GEN_FILES): syscfg
 
 syscfg: ../example.syscfg
 	@echo Generating SysConfig files ...
-	$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/dist/cli.js --product $(SYSCFG_SDKPRODUCT) --context r5fss0-0 --part Default --package ALV --output generated/ ../example.syscfg
+	$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/dist/cli.js --product $(SYSCFG_SDKPRODUCT) --context r5fss0-0 --part ALV --package ALV --output generated/ ../example.syscfg
 
 syscfg-gui:
-	$(SYSCFG_NWJS) $(SYSCFG_PATH) --product $(SYSCFG_SDKPRODUCT) --device AM64x --context r5fss0-0 --part Default --package ALV --output generated/  ../example.syscfg
+	$(SYSCFG_NWJS) $(SYSCFG_PATH) --product $(SYSCFG_SDKPRODUCT) --device AM243x_ALV_beta --context r5fss0-0 --part ALV --package ALV --output generated/  ../example.syscfg
 
 #
 # Generation of boot image which can be loaded by Secondary Boot Loader (SBL)
@@ -249,7 +249,6 @@ BOOTIMAGE_TEMP_OUT_FILE=temp_stdout_$(PROFILE).txt
 
 BOOTIMAGE_CERT_KEY=$(APP_SIGNING_KEY)
 
-BOOTIMAGE_CORE_ID_a53ss0-0 = 0
 BOOTIMAGE_CORE_ID_r5fss0-0 = 4
 BOOTIMAGE_CORE_ID_r5fss0-1 = 5
 BOOTIMAGE_CORE_ID_r5fss1-0 = 6
@@ -275,7 +274,7 @@ MULTI_CORE_IMAGE_PARAMS_XIP = \
 	$(BOOTIMAGE_RPRC_NAME_XIP)@$(BOOTIMAGE_CORE_ID_r5fss0-0) \
 
 $(BOOTIMAGE_NAME): $(OUTNAME)
-	@echo  Boot image: am64x:r5fss0-0:freertos:ti-arm-clang $(BOOTIMAGE_PATH)/$@ ...
+	@echo  Boot image: am243x:r5fss0-0:freertos:ti-arm-clang $(BOOTIMAGE_PATH)/$@ ...
 ifneq ($(OS),Windows_NT)
 	$(CHMOD) a+x $(XIPGEN_CMD)
 endif
@@ -289,9 +288,9 @@ endif
 	$(PYTHON) $(APP_IMAGE_SIGN_CMD) --bin $(BOOTIMAGE_NAME) --authtype 1 --key $(APP_SIGNING_KEY) --output $(BOOTIMAGE_NAME_HS_FS)
 	$(RM) $(BOOTIMAGE_RPRC_NAME_TMP)
 	$(RM) $(BOOTIMAGE_TEMP_OUT_FILE)
-	@echo  Boot image: am64x:r5fss0-0:freertos:ti-arm-clang $(BOOTIMAGE_PATH)/$@ Done !!!
+	@echo  Boot image: am243x:r5fss0-0:freertos:ti-arm-clang $(BOOTIMAGE_PATH)/$@ Done !!!
 	@echo  .
-	@echo  Boot image: am64x:r5fss0-0:freertos:ti-arm-clang $(BOOTIMAGE_PATH)/$(BOOTIMAGE_NAME_HS_FS) Done !!!
+	@echo  Boot image: am243x:r5fss0-0:freertos:ti-arm-clang $(BOOTIMAGE_PATH)/$(BOOTIMAGE_NAME_HS_FS) Done !!!
 	@echo  .
 
 $(BOOTIMAGE_NAME_HS): $(BOOTIMAGE_NAME)
@@ -305,7 +304,7 @@ else
 	$(PYTHON) $(APP_IMAGE_SIGN_CMD) --bin $(BOOTIMAGE_NAME) --authtype 1 --key $(APP_SIGNING_KEY) --enc y --enckey $(APP_ENCRYPTION_KEY) --output $(BOOTIMAGE_NAME_HS)
 	$(RM) $(BOOTIMAGE_NAME)-enc
 endif
-	@echo  Boot image: am64x:r5fss0-0:freertos:ti-arm-clang $(BOOTIMAGE_PATH)/$(BOOTIMAGE_NAME_HS) Done !!!
+	@echo  Boot image: am243x:r5fss0-0:freertos:ti-arm-clang $(BOOTIMAGE_PATH)/$(BOOTIMAGE_NAME_HS) Done !!!
 	@echo  .
 endif
 -include $(addprefix $(OBJDIR)/, $(DEPS))
