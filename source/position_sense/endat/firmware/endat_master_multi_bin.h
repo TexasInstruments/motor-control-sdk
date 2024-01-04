@@ -54,7 +54,7 @@
 const uint32_t EnDatFirmwareMulti_0[] = {
 0x21000300,
 0x00000207,
-0x00020002,
+0x01000000,
 0x91002b8e,
 0x1f03eeee,
 0x81002b8e,
