@@ -43,7 +43,7 @@ FILES_common := \
 	ind_comms_sdk/examples/industrial_comms/custom_phy/src/CUST_PHY_dp83869.c \
 	ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/device_profiles/402_cia/ecSlvCiA402.c \
 	ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/device_profiles/402_cia/ESL_cia402Obd.c \
-	ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/device_profiles/402_cia/EtherCAT_Slave_CiA402.c \
+	EtherCAT_Slave_CiA402.c \
 	ESL_cia402Demo.c \
 	ESL_BOARD_OS_config.c \
 	ti_drivers_config.c \
@@ -139,8 +139,8 @@ LIBS_common = \
 	-lfreertos.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
 	-ldrivers.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
 	-lboard.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
-	-lethercat_slave.am243x_lp.r5f.ti-arm-clang.${ConfigName}.lib \
-	-lethercat_slave_bkhfSsc.am243x_lp.r5f.ti-arm-clang.${ConfigName}.lib \
+	-lethercat_slave.am243x_lp.r5f.ti-arm-clang.release.lib \
+	-lethercat_slave_bkhfSsc.am243x_lp.r5f.ti-arm-clang.release.lib \
 	-llibc.a \
 	-llibsysbm.a \
 
@@ -158,8 +158,8 @@ LIBS_NAME = \
 	freertos.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
 	drivers.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
 	board.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
-	ethercat_slave.am243x_lp.r5f.ti-arm-clang.${ConfigName}.lib \
-	ethercat_slave_bkhfSsc.am243x_lp.r5f.ti-arm-clang.${ConfigName}.lib \
+	ethercat_slave.am243x_lp.r5f.ti-arm-clang.release.lib \
+	ethercat_slave_bkhfSsc.am243x_lp.r5f.ti-arm-clang.release.lib \
 	libc.a \
 	libsysbm.a \
 

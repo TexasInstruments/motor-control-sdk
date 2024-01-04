@@ -117,8 +117,8 @@
                 -lfreertos.am243x.r5f.ti-arm-clang.debug.lib
                 -ldrivers.am243x.r5f.ti-arm-clang.debug.lib
                 -lboard.am243x.r5f.ti-arm-clang.debug.lib
-                -lethercat_slave.am243x_lp.r5f.ti-arm-clang.debug.lib
-                -lethercat_slave_bkhfSsc.am243x_lp.r5f.ti-arm-clang.debug.lib
+                -lethercat_slave.am243x_lp.r5f.ti-arm-clang.release.lib
+                -lethercat_slave_bkhfSsc.am243x_lp.r5f.ti-arm-clang.release.lib
                 -llibc.a
                 -llibsysbm.a
             "
@@ -146,7 +146,7 @@
         </file>
         <file path="../../../../../../ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/device_profiles/402_cia/ESL_cia402Obd.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
-        <file path="../../../../../../ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/device_profiles/402_cia/EtherCAT_Slave_CiA402.c" openOnCreation="false" excludeFromBuild="false" action="copy">
+        <file path="../EtherCAT_Slave_CiA402.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
         <file path="../ESL_cia402Demo.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
