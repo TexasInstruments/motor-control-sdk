@@ -146,11 +146,11 @@
         </file>
         <file path="../../../../../../ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/device_profiles/402_cia/ESL_cia402Obd.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
-        <file path="../EtherCAT_Slave_CiA402.c" openOnCreation="false" excludeFromBuild="false" action="copy">
+        <file path="../EtherCAT_Slave_CiA402_tidep_01032.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
-        <file path="../ESL_cia402Demo.c" openOnCreation="false" excludeFromBuild="false" action="copy">
+        <file path="../ESL_cia402Demo_tidep_01032.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
-        <file path="../ESL_BOARD_OS_config.c" openOnCreation="false" excludeFromBuild="false" action="copy">
+        <file path="../ESL_BOARD_OS_config_tidep_01032.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
         <file path="linker.cmd" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
