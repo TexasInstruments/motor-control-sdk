@@ -121,7 +121,7 @@ LIBS_common = \
 	-lboard.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
 	-lmotorcontrol_sdfm.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
 	-lmotorcontrol_endat.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
-	-lcmsis.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
+	-lcmsis.am243x.r5f.ti-arm-clang.release.lib \
 	-llibc.a \
 	-llibsysbm.a \
 
@@ -138,7 +138,7 @@ LIBS_NAME = \
 	board.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
 	motorcontrol_sdfm.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
 	motorcontrol_endat.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
-	cmsis.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
+	cmsis.am243x.r5f.ti-arm-clang.release.lib \
 	libc.a \
 	libsysbm.a \
 
