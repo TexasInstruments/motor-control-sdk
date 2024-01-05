@@ -73,7 +73,7 @@ sdfm_handle SDFM_init(uint8_t pru_id, uint8_t coreId)
         }
         else
         {
-            p_sdfm->p_sdfm_interface = NULL;
+           return NULL;
         }
 
         /* Set FW PRU ID */
@@ -99,14 +99,14 @@ sdfm_handle SDFM_init(uint8_t pru_id, uint8_t coreId)
         }
         else
         {
-            p_sdfm->p_sdfm_interface = NULL;
+           return NULL;
         }
         /* Set FW PRU ID */
         p_sdfm->p_sdfm_interface->sdfm_ctrl.sdfm_pru_id = pru_id;
     }
     else
     {
-        p_sdfm = NULL;
+        return NULL;
     }
 
     return (sdfm_handle)p_sdfm;
@@ -288,7 +288,7 @@ int32_t SDFM_getFastDetectErrorStatus(sdfm_handle h_sdfm, uint8_t chNum)
     uint8_t pwmSet;
     int32_t                 retVal = SystemP_SUCCESS;
     PRUICSS_Handle pruIcssHandle = h_sdfm->gPruIcssHandle;
-    if((chNum >= SDFM_CHANNEL0) && (chNum < SDFM_CHANNEL3))
+    if(chNum < SDFM_CHANNEL3)
     {
         pwmSet = 0;
     }
@@ -346,7 +346,7 @@ int32_t SDFM_clearPwmTripStatus(sdfm_handle h_sdfm, uint8_t chNum)
     int32_t                 retVal = SystemP_SUCCESS;
     PRUICSS_Handle pruIcssHandle = h_sdfm->gPruIcssHandle;
     
-    if((chNum >= SDFM_CHANNEL0) && (chNum < SDFM_CHANNEL3))
+    if(chNum < SDFM_CHANNEL3)
     {
         pwmSet = 0;
     }
@@ -479,7 +479,7 @@ int32_t SDFM_clearOverCurrentError(sdfm_handle h_sdfm, uint8_t chNum)
     uint8_t pwmSet;
     int32_t                 retVal = SystemP_SUCCESS;
     PRUICSS_Handle pruIcssHandle = h_sdfm->gPruIcssHandle;
-    if((chNum >= SDFM_CHANNEL0) && (chNum < SDFM_CHANNEL3))
+    if(chNum < SDFM_CHANNEL3)
     {
         pwmSet = 0;
     }
