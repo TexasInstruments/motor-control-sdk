@@ -32,20 +32,20 @@ BOOTIMAGE_RPRC_NAME_XIP:=single_chip_servo.$(PROFILE).rprc_xip
 BOOTIMAGE_RPRC_NAME_TMP:=single_chip_servo.$(PROFILE).rprc_tmp
 
 FILES_common := \
-	ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/common/ESL_version.c \
-	ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/common/os/freertos/ESL_OS_os.c \
-	ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/common/os/freertos/ESL_eeprom.c \
-	ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/common/os/freertos/ESL_fileHandling.c \
-	ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/common/os/freertos/ESL_foeDemo.c \
-	ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/common/os/freertos/ESL_soeDemo.c \
-	ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/common/os/freertos/ESL_gpioHelper.c \
-	ind_comms_sdk/examples/industrial_comms/custom_phy/src/CUST_PHY_base.c \
-	ind_comms_sdk/examples/industrial_comms/custom_phy/src/CUST_PHY_dp83869.c \
-	ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/device_profiles/402_cia/ecSlvCiA402.c \
-	ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/device_profiles/402_cia/ESL_cia402Obd.c \
-	EtherCAT_Slave_CiA402.c \
-	ESL_cia402Demo.c \
-	ESL_BOARD_OS_config.c \
+	ESL_version.c \
+	ESL_OS_os.c \
+	ESL_eeprom.c \
+	ESL_fileHandling.c \
+	ESL_foeDemo.c \
+	ESL_soeDemo.c \
+	ESL_gpioHelper.c \
+	CUST_PHY_base.c \
+	CUST_PHY_dp83869.c \
+	ecSlvCiA402.c \
+	ESL_cia402Obd.c \
+	EtherCAT_Slave_CiA402_tidep_01032.c \
+	ESL_cia402Demo_tidep_01032.c \
+	ESL_BOARD_OS_config_tidep_01032.c \
 	ti_drivers_config.c \
 	ti_drivers_open_close.c \
 	ti_board_config.c \
@@ -58,6 +58,10 @@ FILES_PATH_common = \
 	.. \
 	../../.. \
 	../../../../../.. \
+	../../../../../../ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/common \
+	../../../../../../ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/common/os/freertos \
+	../../../../../../ind_comms_sdk/examples/industrial_comms/custom_phy/src \
+	../../../../../../ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/device_profiles/402_cia \
 	generated \
 
 INCLUDES_common := \
