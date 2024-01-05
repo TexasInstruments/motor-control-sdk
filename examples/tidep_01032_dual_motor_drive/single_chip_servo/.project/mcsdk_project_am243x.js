@@ -201,7 +201,7 @@ const libs_r5f_0_0 = {
         "board.am243x.r5f.ti-arm-clang.${ConfigName}.lib",
         "motorcontrol_sdfm.am243x.r5f.ti-arm-clang.${ConfigName}.lib",
         "motorcontrol_endat.am243x.r5f.ti-arm-clang.${ConfigName}.lib",
-        "cmsis.am243x.r5f.ti-arm-clang.${ConfigName}.lib",
+        "cmsis.am243x.r5f.ti-arm-clang.release.lib",
     ],
 };
 
@@ -213,7 +213,7 @@ const libs_r5f_0_1 = {
         "board.am243x.r5f.ti-arm-clang.${ConfigName}.lib",
         "motorcontrol_sdfm.am243x.r5f.ti-arm-clang.${ConfigName}.lib",
         "motorcontrol_endat.am243x.r5f.ti-arm-clang.${ConfigName}.lib",
-        "cmsis.am243x.r5f.ti-arm-clang.${ConfigName}.lib",
+        "cmsis.am243x.r5f.ti-arm-clang.release.lib",
     ],
 };
 
