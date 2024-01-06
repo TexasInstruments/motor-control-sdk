@@ -110,7 +110,7 @@ Following section describes the Example implementation of EnDat on ARM(R5F).
 
 ## Hardware Prerequisites
 
-Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_SETUP_PAGE.html" target="_blank"> EVM Setup </a>, below additional HW is required to run this demo
+Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_SETUP_PAGE.html" target="_blank"> EVM Setup </a>, below additional hardware is required to run this demo
 - EnDAT encoder
 - <a href="http://www.ti.com/tool/TIDA-00179" target="_blank"> TIDA-00179 Universal Digital Interface to Absolute Position Encoders </a>
 - TIDEP-01015 3 Axis board
@@ -223,9 +223,9 @@ Shown below is a sample output when the application is run:
 <table>
     <tr>
         <th style="width:4%">S.No</th>
-        <th>Test detail
+        <th>Test Details
         <th>Steps
-        <th>Pass/fail crieteria
+        <th>Pass/Fail Criteria
     </tr>
     <tr>
         <td style="text-align: center">1.</td>

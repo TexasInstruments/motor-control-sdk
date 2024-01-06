@@ -1,92 +1,80 @@
-#  %SDFM {#EXAMPLE_MOTORCONTROL_SDFM}
+#  Basic ICSS %SDFM Examples {#BASIC_SDFM_EXAMPLES}
 
 [TOC]
 
+This example does trigger based normal current sampling. Normal current OSR, Over current OSR and Normal current trigger time can be configured by the user. There are two different examples based on number of %SDFM channels.
+
+# Three Channels
+
+Only one core - PRU is used for this example.
+
+The example does the below:
+- Set %SDFM channels: Channel 0 - Channel 2
+- Configure normal current sample trigger time (time for read sample) and OSR
+
+# Nine Channels
+
+Load share mode of PRU-ICSSG is enabled for this example and three cores - RTU-PRU, PRU and TX-PRU are used for this example.
+
+The example does the below
+ - Enable load share mode
+ - Set %SDFM channels: Channel 0 - Channel 8
+ - Configure normal current sample trigger time (time for read sample) and OSR
 
 
-The ICSS %SDFM driver provides a well defined set of APIs to expose sigma delta interface.
-
-The ICSS %SDFM example invokes these APIs to
-- Set %SDFM channels
-- Set ACC source, NC OSR, OC OSR, Clock source & Clock inversion
-- Enable & disable threshold comparators
-- Set high and low threshold values
-- configure normal current sample trigger time (time for read sample)
-- Enable & disable double update
-- Inform firmware to enable %SDFM mode
-- Configure GPIO pins for high and low threshold
-- Configure fast detect block
-
-
-
-Once these steps are executed
-- ICSS %SDFM example waits for a interrupt (trigger by %SDFM firmware) to read sample data
-- when interrupt occurs, example reads sample data from DMEM and again comes back to waiting loop
-
-### ICSS SDFM Example Implementation
-Following section describes the Example implementation of ICSS %SDFM on ARM(R5F).
-\image html SDFM_EXAMPLE_FLOWCHART.png "ICSS SDFM Example"
-
-## Important files and directory structure
+# Important files and directory structure
 
 <table>
 <tr>
     <th>Folder/Files
     <th>Description
 </tr>
-<tr><td colspan="2" bgcolor=#F0F0F0> ${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm</td></tr>
 <tr>
-    <td>app_sdfm.c & sdfm.c</td>
-    <td>ICSS %SDFM application</td>
+    <td> ${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_nine_channel_load_share_mode</td>
+    <td> Application specific sources for ICSS %SDFM for trigger based normal current sampling for nine channels </td>
+</tr>
+<tr>
+    <td> ${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_three_channel_single_pru_mode</td>
+    <td> Application specific sources for ICSS %SDFM for trigger based normal current sampling for three channels </td>
+</tr>
+<tr>
+    <td>${SDK_INSTALL_PATH}/examples/current_sense</td>
+    <td> Common source for ICSS %SDFM applications </td>
 </tr>
 <tr><td colspan="2" bgcolor=#F0F0F0> ${SDK_INSTALL_PATH}/source/current_sense/sdfm</td></tr>
 <tr>
     <td>firmware/</td>
-    <td>Folder containing %SDFM firmware sources</td>
+    <td>Folder containing ICSS %SDFM firmware sources</td>
 </tr>
 <tr>
     <td>driver/</td>
-    <td>ICSS %SDFM driver</td>
+    <td>ICSS %SDFM driver source</td>
 </tr>
 <tr>
     <td>include/</td>
-    <td>Folder containing ICSS %SDFM structures & APIs sources</td>
+    <td>Folder containing ICSS %SDFM structures and APIs declarations</td>
 </tr>
 </table>
 
-
-# Supported Combinations {#EXAMPLES_MOTORCONTROL_SDFM_COMBOS}
-
-\cond SOC_AM64X
-
- Parameter      | Value
- ---------------|-----------
- CPU + OS       | r5fss0-0 freertos
- ICSSG          | ICSSG0
- PRU            | PRU0
- Toolchain      | ti-arm-clang
- Board          | @VAR_BOARD_NAME_LOWER
- Example folder | examples/current_sense/icss_sdfm
-
-\endcond
+# Supported Combinations
 
 \cond SOC_AM243X
 
- Parameter      | Value
- ---------------|-----------
- CPU + OS       | r5fss0-0 freertos
- ICSSG          | ICSSG0
- PRU            | PRU0
- Toolchain      | ti-arm-clang
- Board          | @VAR_BOARD_NAME_LOWER, @VAR_LP_BOARD_NAME_LOWER
- Example folder | examples/current_sense/icss_sdfm
+ Parameter       | Value
+ ----------------|-----------
+ CPU + OS        | r5fss0-0 freertos
+ ICSSG           | ICSSG0
+ PRU             | PRU0
+ Toolchain       | ti-arm-clang
+ Board           | @VAR_BOARD_NAME_LOWER, @VAR_LP_BOARD_NAME_LOWER
+ Examples folder | examples/current_sense
 
 \endcond
 
 # Steps to Run the Example
 
 ## Hardware Prerequisites
-Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_SETUP_PAGE.html" target="_blank"> EVM Setup </a>, below additional HW is required to run this demo
+Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_SETUP_PAGE.html" target="_blank"> EVM Setup </a>, below additional hardware is required to run this demo
 - TIDEP-01015 3 Axis board
 - Interface card connecting EVM and TIDEP-01015 3 Axis board
 - Signal generator
@@ -97,11 +85,11 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 \image html SDFM_EVM_HW_setup.png  "SDFM: EVM and 3axis board setup view"
 \cond SOC_AM243X
 ### Hardware Prerequisities for LP
-- AMC1035EVM 
+- AMC1035EVM
 - AM243x-LP board
 - Signal generator
 
-#### LP Hardware set up
+#### LP Hardware Setup
 \image html SDFM_LpHwSetup_image.png  "LP Hardware setup"
 \image html SDFM_LpHwSetup.png  "SDFM: LP setup view"
 \endcond
@@ -113,19 +101,17 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 - Launch a CCS debug session and run the executable, see <a href="@VAR_MCU_SDK_DOCS_PATH/CCS_LAUNCH_PAGE.html" target="_blank">  CCS Launch, Load and Run </a>
 - Refer to UART terminal for user interface menu options.
 
-
-
 ### Test Case Description
 <table>
 <tr>
-        <th>Test detail
+        <th>Test Details
         <th>Steps
-        <th>Pass/fail crieteria
+        <th>Pass/Fail Criteria
 </tr>
 <tr>
         <td>1. Normal current sample data</td>
-        <td>1. Run icss sdfm example on am64x/am243x board</td>
-        <td>he drawn graph and raw data should look like the attached image</td>
+        <td>1. Run example on supported board</td>
+        <td>The drawn graph and raw data should look like the attached image</td>
 </tr>
 <tr>
         <td></td>
@@ -140,7 +126,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 </tr>
 <tr>
         <td></td>
-        <td>2. Set single update trigger time to half of epwm cycle time </td>
+        <td>2. Set single update trigger time to half of EPWM cycle time </td>
         <td></td>
  </tr>
  <tr>
@@ -150,7 +136,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 </tr>
 <tr>
         <td></td>
-        <td>3. Build and run icss sdfm example </td>
+        <td>3. Build and run example </td>
         <td></td>
 </tr>
 <tr>
@@ -162,7 +148,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 <tr>
         <td>3. To check Raw data for Double Update</td>
         <td>1. Set NC OSR to 64</td>
-        <td>drawn Graphs and raw data should look like attached image</td>
+        <td>The drawn graphs and raw data should look like attached image</td>
 </tr>
 <tr>
         <td></td>
@@ -171,17 +157,17 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 </tr>
 <tr>
         <td></td>
-        <td>3. Set single update trigger time to 1/4 of epwm cycle time</td>
+        <td>3. Set single update trigger time to 1/4 of EPWM cycle time</td>
         <td></td>
  </tr>
 <tr>
         <td></td>
-        <td>4. Set double update trigger time to 3/4 of epwm cycle time</td>
+        <td>4. Set double update trigger time to 3/4 of EPWM cycle time</td>
         <td></td>
  </tr>
  <tr>
         <td></td>
-        <td>5. Build and run icss sdfm example</td>
+        <td>5. Build and run example</td>
         <td></td>
  </tr>
 <tr>
@@ -198,27 +184,27 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 <tr>
         <td>4. To check Threshold comparator and Over current</td>
         <td>1. Set High Threshold to 3500 and low threshold to 2500</td>
-        <td>Logic analyzer capture for High & Low Thresholds  </td>
+        <td> Trip status bit must be set for the respective pwm trip zone block and TZ_OUT pin must be high</td>
 </tr>
 <tr>
         <td></td>
-        <td>2. Set Over current OSR to 32</td>
-        <td>\image html SDFM_threshold_comparator_salea_capture.png  "Logic analyzer Capture"</td>
+        <td>2. Set Over current OSR to 16</td>
+        <td>High Low Threshold status bits must be constantly unset and set</td>
 </tr>
 <tr>
         <td></td>
-        <td>3. Probe Ch0 high, low threshold GPIO pins & input signal </td>
+        <td>3. Probe PWMm_TZ_OUT pin </td>
         <td></td>
 </tr>
 <tr>
         <td></td>
-        <td>4. Build and run icss sdfm example</td>
+        <td>4. Build and run example</td>
         <td></td>
  </tr>
 <tr>
         <td></td>
         <td>5. Capture signal in Logic analyzer</td>
-        <td></td>
+        <td> </td>
  </tr>
 <tr>
         <td>5. To check NC Samples with Different NC OSR Values</td>
@@ -227,7 +213,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 </tr>
 <tr>
         <td></td>
-        <td>2. Build and run icss sdfm example</td>
+        <td>2. Build and run example</td>
         <td></td>
 </tr>
 <tr>
@@ -263,7 +249,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 <tr>
         <td>7. To check Fast detect</td>
         <td>1. Set NC OSR to 64</td>
-        <td> Trip must be triggered for the respective  pwm trip zone block </td>
+        <td> Trip must be triggered for the respective pwm trip zone block </td>
 </tr>
 <tr>
         <td></td>
@@ -283,13 +269,43 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 </tr>
 <tr>
         <td></td>
-        <td>5. 1) Observe TZ_OUT PIN. 
+        <td>5. 1) Observe TZ_OUT PIN.
                2) Check zero/one count max & zero/one count min threshold hit bits in memory map</td>
+        <td></td>
+</tr>
+<tr>
+        <td>8. To check Zero Cross</td>
+        <td>1. Set OC OSR to 16</td>
+        <td> Logic analyzer capture should match with this capture </td>
+</tr>
+<tr>
+        <td></td>
+        <td>2. Enable Zero cross detection</td>
+        <td></td>
+ </tr>
+<tr>
+        <td></td>
+        <td>3. Set zero cross threshold vales to 1700 {value should be between max sampled value and min sampled value for 16 OSR}</td>
+        <td>\image html SDFM_Zero_cross_GPIO_output.png "Zero cross GPIO behaviour" </td>
+ </tr>
+<tr>
+        <td></td>
+        <td>4. probe ch0 zero cross GPIO pins and input SD analog signal</td>
+        <td></td>
+</tr>
+<tr>
+        <td></td>
+        <td>5. Build and run example</td>
+        <td></td>
+</tr>
+<tr>
+        <td></td>
+        <td>6. Capture signals in logic analyzer</td>
         <td></td>
 </tr>
 \cond SOC_AM243X
 <tr>
-        <td>8.Testing with sdfm clock from EPWM </td>
+        <td>9.Testing with sdfm clock from EPWM </td>
         <td>1. Make hardware set up like attached image </td>
         <td>All test cases results should match with ECAP test case results</td>
  </tr>
@@ -315,7 +331,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
  </tr>
  <tr>
         <td></td>
-        <td>6. Build and run icss sdfm example</td>
+        <td>6. Build and run example</td>
         <td></td>
  </tr>
  <tr>

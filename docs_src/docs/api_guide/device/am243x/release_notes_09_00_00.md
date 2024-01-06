@@ -404,7 +404,7 @@ earlier SDKs.
 <tr>
     <td> Current Sense %SDFM
     <td> \ref SDFM_setCompFilterOverSamplingRatio
-    <td> Changed type of osr parameter
+    <td> Changed type of OSR parameter
     <td> uint8_t to uint16_t 
 </tr>
 <tr>

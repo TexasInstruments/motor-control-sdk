@@ -88,8 +88,7 @@ Single core of PRU-ICSSG slice used in this configuration.
 \image html endat_module_integration.png "ARM, PRU, EnDat module Integration for for "Single Channel" or "Multi Channel with Encoders of Same Make" configuration"
 
 #### Implementation for Multi Channel with Encoders of Different Make
-Each of PRU, TX-PRU and RTU-PRU handle one channel in this configuration
-Enbale load share mode in case of multi make encoders.
+Each of PRU, TX-PRU and RTU-PRU handle one channel in this configuration. Load share mode is enabled in case of multi make encoders.
 
 \image html Endat_load_share_mode.png "PRU, EnDat module Integration for "Multi Channel with Encoders of Different Make" configuration"
 
