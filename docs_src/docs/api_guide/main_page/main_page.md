@@ -118,8 +118,14 @@ The main software components in the block diagram specific to motor control are 
 </tr>
 <tr>
     <td> Transforms
-    <td>\ref Transforms
-    <td> Transformation including Clarke, Park, Space Vector Generation used in motor control applications.
+    <td>\ref TRANSFORMS
+    <td> Transformation including Clarke, Park, Space Vector Generation used in motor control applications
+</tr>
+<tr><td colspan="3" bgcolor=#F0F0F0>**PRU-ICSS PWM**</td></tr>
+<tr>
+    <td> PRU-ICSS PWM
+    <td>\ref PRUICSS_PWM
+    <td> Driver for using PRU-ICSS PWM Peripheral
 </tr>
 <tr><td colspan="3" bgcolor=#F0F0F0>**Examples and Demos**</td></tr>
 <tr>

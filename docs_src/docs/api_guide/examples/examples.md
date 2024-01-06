@@ -8,7 +8,7 @@ This page lists all the examples and demos supported in this SDK.
     -# \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA
 - Current Sense
     -# \subpage EXAMPLES_MOTORCONTROL_SDFM
-- PRUICSS PWM
+- PRU-ICSS PWM
     -# \subpage EXAMPLE_PRUICSS_PWM_DUTY_CYCLE
 \endcond
 
@@ -19,15 +19,17 @@ This page lists all the examples and demos supported in this SDK.
     -# \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA
     -# \subpage EXAMPLE_MOTORCONTROL_BISSC
 - Current Sense
-    -# \subpage EXAMPLES_MOTORCONTROL_SDFM
+    - \subpage EXAMPLES_MOTORCONTROL_SDFM
         -# \ref BASIC_SDFM_EXAMPLES
         -# \ref BASIC_SDFM_EXAMPLES_WITH_CONTINUOUS_NC
         -# \ref BASIC_SDFM_EXAMPLE_WITH_PHASE_DELAY
-- RTLibs
-    -# \subpage EXAMPLES_DCL_PI
-    -# \subpage EXAMPLES_DCL_DF22
-    -# \subpage EXAMPLES_TRANSFORMS_TEST
-- PRUICSS PWM
+- Real Time Libraries
+    - DCL
+        -# \subpage EXAMPLES_DCL_PI
+        -# \subpage EXAMPLES_DCL_DF22
+    - Transforms
+        -# \subpage EXAMPLES_TRANSFORMS_TEST
+- PRU-ICSS PWM
     -# \subpage EXAMPLE_PRUICSS_PWM_DUTY_CYCLE
     -# \subpage EXAMPLE_PRUICSS_PWM_EPWM_SYNC
 \endcond
@@ -35,8 +37,10 @@ This page lists all the examples and demos supported in this SDK.
 \cond SOC_AM263X
 - Position Sense
     -# \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA_OVER_UART
-- RTLibs
-    -# \subpage EXAMPLES_DCL_PI
-    -# \subpage EXAMPLES_DCL_DF22
-    -# \subpage EXAMPLES_TRANSFORMS_TEST
+- Real Time Libraries
+    - DCL
+        -# \subpage EXAMPLES_DCL_PI
+        -# \subpage EXAMPLES_DCL_DF22
+    - Transforms
+        -# \subpage EXAMPLES_TRANSFORMS_TEST
 \endcond

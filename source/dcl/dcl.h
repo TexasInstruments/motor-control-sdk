@@ -37,9 +37,15 @@
 extern "C" {
 #endif
 
+ /**
+ * \defgroup RTLIBS_API APIs for Real Time Libraries
+ *
+ * This module contains APIs for real time libraries supported in this SDK.
+ */
+
 /**
  *  \defgroup DCL_API_MODULE APIs for Digital Control Library
- *  \ingroup  MOTOR_CONTROL_API
+ *  \ingroup  RTLIBS_API
  *  
  *  Here is the list of APIs used for Digital Control Library
  *  @{

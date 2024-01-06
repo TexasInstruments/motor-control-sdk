@@ -17,7 +17,7 @@ BiSS is an open-source digital interface for sensors and actuators. BiSS stands 
    -  Support for multiple encoders connected via daisy-chain configuration (up-to 3 encoders)
    -  Support for concurrent multi-channel support on a single PRU (up-to 3 identical encoders)
    -  Support for multi-channel encoders of different make under load share model (each of PRU, RTU-PRU, and TX-PRU from one PRU-ICSSG slice handles one channel)
-   -  Support for up to 100 mtr cable
+   -  Support for up to 100 meter cable
 
 ## Features Not Supported
 

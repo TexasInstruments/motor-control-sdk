@@ -17,16 +17,36 @@
 
 Feature                                                                                         | Module
 ------------------------------------------------------------------------------------------------|-----------------------------------
+EtherCAT-Connected, Single-Chip, Dual-Servo Motor Drive Reference Design (TIDEP-01032)          | Reference Design
+Three channel BiSS-C with one PRU-ICSSG Slice                                                   | Position Sense BiSS-C
+Point-to-point and daisy chaining connection support for BiSS-C                                 | Position Sense BiSS-C
+Multi channel BiSS-C with daisy chaining                                                        | Position Sense BiSS-C
+Multiple interface speed support                                                                | Position Sense BiSS-C
+Long cable (upto 100 meters)                                                                    | Position Sense BiSS-C
+Nine Channel ICSS %SDFM Examples                                                                | Current Sense %SDFM
+ICSS %SDFM Example with Continuous Normal Current Sampling                                      | Current Sense %SDFM
+ICSS %SDFM Example with Phase Compensation                                                      | Current Sense %SDFM
+Fast Detect                                                                                     | Current Sense %SDFM
+Trip Generation using PRU-ICSS TripZone                                                         | Current Sense %SDFM
+Zero Crossing Detection                                                                         | Current Sense %SDFM
 Three channel support with one PRU-ICSSG Slice                                                  | Position Sense HDSL
 SYNC Mode support for 1 to 10 frames per cycle and 8 kHz to 50 kHz cycle frequency              | Position Sense HDSL
 API support for Parameter Channel Long Message Read and Write                                   | Position Sense HDSL
 Add support for PIPE_D register for SensorHub Channel                                           | Position Sense HDSL
+Add support for PIPE_D register for SensorHub Channel                                           | Position Sense HDSL
+Long cable (upto 100 meters)                                                                    | Position Sense HDSL
+Two channel example with LP-AM243 + BP-AM2BLDCSERVO                                             | Position Sense HDSL
+Compare event based command trigger support                                                     | Position Sense Tamagawa
+Two channel example with LP-AM243 + BP-AM2BLDCSERVO                                             | Position Sense Tamagawa
+Two channel example with LP-AM243 + BP-AM2BLDCSERVO                                             | Position Sense EnDAT
+Three channel PRU-ICSS PWM Example                                                              | PRU-ICSS PWM
+Transforms Library and Example                                                                  | Real Time Libraries
 
 ## Device and Validation Information
 
 SOC    | Supported CPUs  | Boards                                                                                                      | Host PC
 -------|-----------------|-------------------------------------------------------------------------------------------------------------|-----------------------------------
-AM243x | R5F             | AM243x GP EVM (referred to as am243x-evm in code), \n AM243x LAUNCHPAD (referred to as am243x-lp in code)   | Windows 10 64b or Ubuntu 18.04 64b
+AM243x | R5F             | AM243x EVM (referred to as am243x-evm in code), \n AM243x LAUNCHPAD (referred to as am243x-lp in code)      | Windows 10 64b or Ubuntu 18.04 64b
 
 ## Tools, Compiler and Other Open Source SW Module Information
 
@@ -62,19 +82,69 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
 
 ### Position Sense
 
-Module       | Supported CPUs | SysConfig Support | OS Support        | Key features tested                                                                                                                                            | Key features not tested
--------------|----------------|-------------------|-------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------
-EnDat        | R5F            | YES               | FreeRTOS, NORTOS  | Single channel, Multi channel, Continuous mode for single channel, Load share mode, Recovery Time for 2.2 command set, Boosterpack with AM243x-LP              | Encoder receive communication command
-HDSL         | R5F            | YES               | FreeRTOS, NORTOS  | Freerun mode(300MHz,225MHz), Sync mode(225MHz), Short Message Read & Write, Long Message Read & Write, Boosterpack with AM243x-LP                              | Long cables
-Tamagawa     | R5F            | YES               | FreeRTOS, NORTOS  | Absolute position, Encoder ID, Reset, EEPROM Read, EEPROM Write, 2.5 Mbps and 5 Mbps Encoder Support, Boosterpack with AM243x-LP                               | -
+<table>
+<tr>
+    <th> Module
+    <th> Supported CPUs
+    <th> SysConfig Support
+    <th> OS Support
+    <th> Key features tested 
+    <th> Key features not tested 
+</tr>
+<tr>
+    <td> EnDat
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Single channel, Multi channel using single PRU core and three PRU cores (load share mode), Continuous mode, Recovery Time for 2.2 command set, Long cable (upto 100 meters), Boosterpack with AM243x-LP
+    <td> Encoder receive communication command
+</tr>
+<tr>
+    <td> HDSL
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Single channel, Multi channel using three PRU cores (load share mode), Free Run mode, Sync mode, Short Message Read and Write, Long Message Read and Write, Pipeline Channel Data, Long cable (upto 100 meters), Boosterpack with AM243x-LP
+    <td> 225 MHz PRU-ICSSG Core Clock based firmware
+</tr>
+<tr>
+    <td> Tamagawa
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Absolute position, Encoder ID, Reset, EEPROM Read, EEPROM Write, 2.5 Mbps and 5 Mbps Encoder Support, Boosterpack with AM243x-LP
+    <td> -
+</tr>
+<tr>
+    <td> BiSS-C 
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Single channel, Multi channel using single PRU core and three PRU cores (load share mode), point-to-point connection, daisy chaining, control communication, automatic processing delay detection and compensation, interface speed of 1, 2, 5, 8, and 10 MHz, Long cable (upto 100 meters)
+    <td> 
+</tr>
+</table>
 
 ### Current Sense
 
-
-Module       | Supported CPUs | SysConfig Support | OS Support        | Key features tested                                                                                                                                            | Key features not tested
--------------|----------------|-------------------|-------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------
-%SDFM        | R5F            | YES               | FreeRTOS, NORTOS  | 3 %SDFM channels on single PRU core, %SDFM Sync with EPWM, Overcurrent, single normal current sampling per PWM cycle, Double normal current sampling per PWM cycle, High and Low threshold comparator, Tested with SDFM clock from ECAP, Tested with 5MHz Clock from EPWM                                                                                      | -
-
+<table>
+<tr>
+    <th> Module
+    <th> Supported CPUs
+    <th> SysConfig Support
+    <th> OS Support
+    <th> Key features tested 
+    <th> Key features not tested 
+</tr>
+<tr>
+    <td> ICSS %SDFM
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Three %SDFM channels on single PRU core, Nine %SDFM channels on three PRU cores (load share mode), %SDFM Sync with EPWM, Single/Double Normal Current Sampling per PWM cycle, Continuous Normal Current Sampling, High and Low Threshold Comparator (Over-current detction), Fast Detect, Phase Compensation, Zero Cross Detection, Trip Generation using PRU-ICSS TripZone, Tested with %SDFM clock from ECAP, Tested with 5MHz Clock from EPWM
+    <td> -
+</tr>
+</table>
 
 ## Fixed Issues
 

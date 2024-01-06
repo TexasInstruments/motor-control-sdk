@@ -1,13 +1,13 @@
-# PRUICSS PWM EPWM SYNC {#EXAMPLE_PRUICSS_PWM_EPWM_SYNC}
+# PRU-ICSS PWM EPWM SYNC {#EXAMPLE_PRUICSS_PWM_EPWM_SYNC}
 
 [TOC]
 
 # Introduction
 
 This example generates a signal for a specified period and duty cycle using
-PRUICSS PWM and SOC EPWM. The period and duty cycle can be configured by the user.
+PRU-ICSS PWM and SOC EPWM. The period and duty cycle can be configured by the user.
 
-The example Uses PRUICSSG0 PWM module and does below
+The example Uses PRU-ICSSG0 PWM module and does below
 
 - Configures EPWM0_CHANNEL_A to generate a 1KHz signal with 25% duty cycle
 - Configures EPWM0_SYNC_OUT to output high when SOC EPWM PERIOD VAL reaches zero
@@ -36,7 +36,7 @@ An IO Breakout Board (BB) is required to probe the PWM outputs
 #### Probe Output
 
 \imageStyle{epwm_pruicss_pwm_sync_probe_output.png,width:85%}
-\image html epwm_pruicss_pwm_sync_probe_output.png "PRUICSS PWM EPWM SYNC PROBE OUTPUT"
+\image html epwm_pruicss_pwm_sync_probe_output.png "PRU-ICSS PWM EPWM SYNC PROBE OUTPUT"
 
 # Supported Combinations
 

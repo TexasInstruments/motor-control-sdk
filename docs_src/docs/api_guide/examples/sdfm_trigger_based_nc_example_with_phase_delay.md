@@ -5,7 +5,7 @@
 # ICSS SDFM three channel with phase compensation
 
 This example measures phase compensation for %SDFM channel 0 in PRU GPIO mode
-during initialization. Normal current OSR, Over current OSR and Normal current trigger time can be configured by the user
+during initialization. Normal current Over-samping Ratio (OSR), Over current OSR and Normal current trigger time can be configured by the user
 
 Only one core - PRU is used for this example.
 
@@ -78,7 +78,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 \cond SOC_AM243X
 ### Hardware Prerequisities for LP
 - AMC1035EVM
-- AM243x-LP board
+- <a href="https://www.ti.com/tool/LP-AM243" target="_blank"> AM243x-LP Board </a>
 - Signal generator
 
 #### LP Hardware Setup
@@ -92,7 +92,6 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 - **When using makefiles to build**, note the required combination and build using
   make command (see <a href="@VAR_MCU_SDK_DOCS_PATH/MAKEFILE_BUILD_PAGE.html" target="_blank"> Using SDK with Makefiles </a>)
 - Launch a CCS debug session and run the executable, see <a href="@VAR_MCU_SDK_DOCS_PATH/CCS_LAUNCH_PAGE.html" target="_blank">  CCS Launch, Load and Run </a>
-- Refer to UART terminal for user interface menu options.
 
 ### Test Case Description
 <table>

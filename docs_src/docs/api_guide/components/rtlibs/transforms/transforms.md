@@ -1,4 +1,4 @@
-# Transformation Algorithm {#Transforms}
+# Transformation Algorithm {#TRANSFORMS}
 
 [TOC]
 

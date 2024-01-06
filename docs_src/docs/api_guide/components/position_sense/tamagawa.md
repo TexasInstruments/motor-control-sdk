@@ -7,7 +7,7 @@
 The Tamagawa receiver firmware running on PRU-ICSS provides a defined well interface to execute the Tamagawa protocol. The Tamagawa diagnostic application interacts with the Tamagawa receiver firmware interface.
 
 \note
-Tamagawa firmware and examples are based on EnDAT hardware interface from PRU-ICSSG.
+Tamagawa firmware and examples are based on 3 Channel Peripheral interface from PRU-ICSSG.
 
 ## Features Supported
 
