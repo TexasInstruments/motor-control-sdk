@@ -39,10 +39,10 @@ extern "C"
 #endif
 
 /**
- *  \defgroup TRANSFORMS_API_MODULE APIs for motor transformations
+ *  \defgroup TRANSFORMS_API_MODULE APIs for Transformation Algorithms
  *  \ingroup  MOTOR_CONTROL_API
  *
- *  Here is the list of transform function APIs
+ *  Here is the list of motor transformation function APIs
  *  @{
  *
  *  \file           clarke.h
