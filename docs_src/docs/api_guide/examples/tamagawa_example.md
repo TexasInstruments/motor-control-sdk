@@ -6,9 +6,9 @@ Starting with MCU+ SDK version 08.05.00, the Tamagawa firmware and examples are 
 
 Tamagawa diagnostic application does below,
 
-Configures pinmux, GPIO, UART, ICSS clock to 200MHz,
-Initializes ICSS0-PRU1,
-Loads the initialization section of PRU firmware & executes it.
+- Configures pinmux, GPIO, UART, ICSS clock to 200MHz
+- Initializes ICSS0-PRU1
+- Loads the initialization section of PRU firmware & executes it
 
 This application is controlled with a terminal interface using a serial over USB connection between the PC host and the EVM.
 Please connect a USB cable between the PC and the EVM/LP.
