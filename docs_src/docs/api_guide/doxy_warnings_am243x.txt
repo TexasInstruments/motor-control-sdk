@@ -1,0 +1,1 @@
+C:/ti/motor_control_sdk/docs_src/docs/api_guide/examples/bissc_example.md:71: warning: Found \endcond command without matching \cond

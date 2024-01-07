@@ -18,21 +18,37 @@ Refer PRU-ICSS chapter of AM64x/AM243x Technical Reference Manual
 
 ## Software Architecture
 
-The firmware consists of two layers .On the one hand, there is the datalink layer, which is responsible for establishing a communication link to the encoder, monitoring the connection quality and preparing the data.
-On the other hand, there is the transport layer that processes the data and determines what information is sent over the parameter channel. Figure "Layer Model" illustrates the relationship between the two layers.
-The datalink layer assembles the information from the different channels and puts the data symbol by symbol to the channel buffers. The channel buffers are large enough to carry the data of a whole V-Frame for each channel. .
-The transport layer controls the data sent over the parameter channel by setting the symbol to send for the next H-Frame in the parameter channel buffer. This buffer can carry only one symbol.
+The Hiperface DSL function is implemented on one PRU-ICSSG to leave the other PRU-ICSSG for Industrial Ethernet functions.
+
+The firmware consists of two layers
+
+1. Datalink Layer : It is responsible for establishing a communication link to the encoder, monitoring the connection quality and preparing the data. It assembles the information from the different channels and puts the data symbol by symbol to the channel buffers. The channel buffers are large enough to carry the data of a whole vertical frame for each channel.
+2. Transport Layer :  It processes the data and determines what information is sent over the parameter channel. It controls the data sent over the parameter channel by setting the symbol to send for the next horizontal frame in the parameter channel buffer. This buffer can carry only one symbol.
+
 Both layers have direct access to the register interface that is provided to the higher layers.
 
+Figure "Layer Model" illustrates the relationship between the two layers.
 
-\image html hdsl_layer_model.png "Layer Model "
 
-Hiperface DSL specifies a state machine for the Receiver. This implementation features an additional state for loading new firmware to the PRU. Figure "State Machine" depicts the modified state machine.
-Furthermore, this implementation exhibits three code sections in the firmware. The first one is for initializing the state machine up to the LOADFW state.
+\image html hdsl_layer_model.png "Layer Model"
+
+### Overlay Scheme for TX-PRU
+
+Each PRU-ICSSG has two slices, and each slice has three cores : PRU, RTU-PRU and TX-PRU. The instruction memory for PRU, RTU-PRU and TX-PRU coreS is 12 kB, 8 kB and 6 kB respctively. Multi-channel implementation of Hiperface DSL is achieved by enabling load share mode of PRU-ICSSG where one core is responsible for one channel. One PRU-ICSSG slice supports three peripheral interfaces for HDSL. Mapping is fixed to channel 0 with RTU-PRU, channel 1 with TX-PRU. To implement an equivalent data link layer and transport layer as the reference IP-core for the Hiperface DSL on FPGA, the instruction memory for TX-PRU is not enough. Hence a code overlay scheme is required only for TX-PRU core, which is only needed if channel 2 is enabled.
+
+For PRU and RTU-PRU, the firmware for Hiperface DSL fully fits into instruction memory. The firmware for TX-PRU is split into following three code sections based on initialization and normal operation:
+
+1. Initialization specific code
+2. Normal operation code
+3. Common code needed during initialization and normal operation
+
+Part 3 is loaded directly into instruction memory (IMEM) of TX-PRU by ARM core as it will be needed in all states. Part 1 and Part 2 of firmware for TX-PRU are stored in PRU-ICSS Data Memory (DMEM) by ARM core. During initialization (LOADFW1 state shown in next section), part 1 is copied into instruction memory (IMEM) of TX-PRU from Data Memory (DMEM) by RTU-PRU core. After initialization is complete (LOADFW2 state shown in next section), part 2 is copied into instruction memory (IMEM) of TX-PRU from Data Memory (DMEM) by RTU-PRU core.
+
+### State Machine
+
+Hiperface DSL specifies a state machine for the Receiver. This implementation features two additional states for loading firmware to the TX-PRU from RTU-PRU. Figure "State Machine" depicts the modified state machine.
 
 \image html hdsl_state_machine.png "State Machine"
-
-The second section contains datalink functionalities that are needed for the startup phase as well as for the normal workflow. The transport layer functionalities reside in the third section.
 
 ### Datalink Layer
 
@@ -68,7 +84,17 @@ The RSSI is calculated by determining the number of samples between two edges du
 
 A 16bit CRC verification of the data is used on multiple occasions. It is used for the vertical channel, secondary channel and messages. In order to distribute the computation load equally over all H-Frames, the firmware calculates a running CRC for those data (except for short messages). The algorithm uses a LUT with 256 entries and 2 bytes per entry, whereas each entry is the 16bit CRC for the corresponding LUT index. The basic approach for the calculation of the 16bit CRC is shown as C code in the following:
 
-uint16_t calc_crc(uint8_t *data, uint32_t size) { uint16_t crc = 0; uint32_t i; for(i = 0; i < size; ++i) { crc = ((*data) << 8) ^ crc; crc = lut[crc>>8] ^ (crc << 8); } return (crc ^ 0xff); }
+	uint16_t calc_crc(uint8_t *data, uint32_t size)
+	{
+		uint16_t crc = 0;
+		uint32_t i;
+		for(i = 0; i < size; ++i)
+		{
+			crc = ((*data) << 8) ^ crc;
+			crc = lut[crc>>8] ^ (crc << 8);
+		}
+		return (crc ^ 0xff);
+	}
 
 ### Transport Layer
 
@@ -110,24 +136,29 @@ It is possible that these calculations lead to the excess of the maximum or mini
 
 The algorithm is given as C code in the following:
 
-			/* EXTRA_SIZE equals the number of bits for the EXTRA window minus 1 */
-			if(EXTRA_EDGE == 0)
-				TIME_REST += 8;
-			short b = (EXTRA_SIZE << 3) + TIME_REST;
-			short overhead = (EXTRA_SIZE << 3) + 8 - TIME_EXTRA_WINDOW;
-			EXTRA_SIZE = (b - overhead) >> 3;
-			TIME_REST = (b - overhead) - (EXTRA_SIZE << 3);
+	/* EXTRA_SIZE equals the number of bits for the EXTRA window minus 1 */
+	if(EXTRA_EDGE == 0)
+	{
+		TIME_REST += 8;
+	}
 
-			if(EXTRA_SIZE < 3) {
-				EXTRA_SIZE += 6;
-				NUM_STUFFING -= 1;
-				TIME_EXTRA_WINDOW += (8*6);
-			}
-if(EXTRA_SIZE > 8) {
-				EXTRA_SIZE -= 6;
-				NUM_STUFFING += 1;
-				TIME_EXTRA_WINDOW -= (8*6);
-			}
+	short b = (EXTRA_SIZE << 3) + TIME_REST;
+	short overhead = (EXTRA_SIZE << 3) + 8 - TIME_EXTRA_WINDOW;
+	EXTRA_SIZE = (b - overhead) >> 3;
+	TIME_REST = (b - overhead) - (EXTRA_SIZE << 3);
+
+	if(EXTRA_SIZE < 3)
+	{
+		EXTRA_SIZE += 6;
+		NUM_STUFFING -= 1;
+		TIME_EXTRA_WINDOW += (8*6);
+	}
+	if(EXTRA_SIZE > 8)
+	{
+		EXTRA_SIZE -= 6;
+		NUM_STUFFING += 1;
+		TIME_EXTRA_WINDOW -= (8*6);
+	}
 
 
 EXTRA_EDGE represents the TIME_REST value in a format that can be pushed to the TX FIFO for transmission. For instance, if TIME_REST is 4, EXTRA_EDGE is 0xf0. The edge would be in the middle of the bit duration. The value NUM_STUFFING gives the number of stuffing blocks (each block consist of 6 bits).
@@ -137,7 +168,3 @@ For further improvement of the synchronization, the time difference (∆t) betwe
 
 \imageStyle{hdsl_external_sync_sample_edge.png,width:40%}
 \image html hdsl_external_sync_sample_edge.png "Time difference between External Pulse and Sample Edge"
-
-Sync pulse jitter is under 100ns. Please refer to the image below for jitter calculation waveforms.
-\image html hdsl_sync_mode_waveforms.png "HDSL Sync mode waveforms for 2 channels"
-\image html hdsl_sync_mode_jitter.jpg "HDSL Sync mode jitter analysis"

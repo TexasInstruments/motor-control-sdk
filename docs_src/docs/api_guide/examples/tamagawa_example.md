@@ -16,18 +16,6 @@ A serial terminal application (like teraterm/ hyperterminal/ minicom) is then ru
 To configure, select the serial port corresponding to the port emulated over USB by the EVM.
 The host serial port should be configured to 115200 baud, no parity, 1 stop bit and no flow control.
 
-Connect the Tamagawa encoders via TIDA-00179 cards on a 3 axis board (TIDEP-01015) to the EVM.
-On AM243x LP, a Tamagawa encoder can be directly connected using a TIDA-00179 card.
-\note
-Only single channel configuration with Channel 0 is supported as of now on LP.
-
-The connections between AM243x LP and TIDA-00179 for Channel 0 are:
-
-TAMAGAWA_CHANNEL0_TX -> PRG0_PRU1_GPO1,
-TAMAGAWA_CHANNEL0_TX_ENABLE -> PRG0_PRU1_GPO2,
-TAMAGAWA_CHANNEL0_RX -> PRG0_PRU1_GPO13,
-TAMAGAWA_CHANNEL0_CLK -> PRG0_PRU1_GPO0.
-
 The Tamagawa receiver firmware running on ICSS0-PRU1 provides a defined interface. The Tamagawa diagnostic application interacts with the Tamagawa receiver firmware interface. It then presents the user with menu options to select Data ID code (as defined by Tamagawa) to be sent to the encoder. The application collects the data entered by the user and configures the relevant interface. Then via the Tamagawa receiver interface, the command is triggered. Once the command completion is indicated by the interface, the status of the transaction is checked. If the Status indicates success, the result is presented to the user.
 
 ## Important files and directory structure
@@ -76,7 +64,7 @@ The Tamagawa receiver firmware running on ICSS0-PRU1 provides a defined interfac
  ICSSG          | ICSSG0
  PRU            | PRU1
  Toolchain      | ti-arm-clang
- Board          | @VAR_BOARD_NAME_LOWER, @VAR_LP_BOARD_NAME_LOWER (E3 Revision)
+ Board          | @VAR_BOARD_NAME_LOWER (3 channel and 1 channel examples), @VAR_LP_BOARD_NAME_LOWER (2 channel and 1 channel examples)
  Example folder | examples/position_sense/tamagawa_diagnostic
 
 \endcond
@@ -85,16 +73,19 @@ The Tamagawa receiver firmware running on ICSS0-PRU1 provides a defined interfac
 
 ## Hardware Prerequisites
 Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_SETUP_PAGE.html" target="_blank"> EVM Setup </a>, additional hardware required to run this demo is mentioned below
--  Tamagawa Encoders
+
+- Tamagawa Encoder(s)
 - <a href="http://www.ti.com/tool/TIDA-00179" target="_blank"> TIDA-00179 Universal Digital Interface to Absolute Position Encoders </a>
--  TIDEP-01015 3 Axis board
--  Interface card connecting EVM and TIDEP-01015 3 Axis board
+- <a href="../TIDEP-01015Rev E1.1(001)_Sch.pdf" target="_blank"> TIDEP-01015 3 Axis Board </a>
+- <a href="../MS_TI_AM64x_EVM_3-AXIS_INTERFACE_BOARD_SCH_REV_E1.pdf" target="_blank"> Interface card connecting EVM and TIDEP-01015 3 Axis </a>
+
+\note For more design details of the TIDEP-01015 3 Axis Board, or Interface card connecting EVM and TIDEP-01015 3 Axis, please contact TI via E2E/FAE.
 
 \cond SOC_AM243X
 ### Hardware Prerequisities for Booster Pack
 
-- Tamagawa encoder
-- AM243x-LP board
+- Tamagawa Encoder(s)
+- <a href="https://www.ti.com/tool/LP-AM243" target="_blank"> AM243x-LP Board </a>
 - <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
 \endcond
 

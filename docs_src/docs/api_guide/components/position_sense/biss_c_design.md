@@ -19,7 +19,6 @@ Clock, data transmit, data receive and receive enable signals from PRU1 of ICSS_
 ## Implementation
 
 The BISS-C receiver function is implemented on TI Sitara™ Devices.
-Encoder is connected to IDK via universal Digital Interface TIDA-00179(https://www.ti.com/tool/TIDA-00179), TIDEP-01015(3-axis board) and 3 Axis Interface card.
 Design is split into three parts – 3 channel peripheral interface support in PRU, firmware running in PRU and driver running in ARM.
 Application is supposed to use the BISS-C driver APIs to leverage 3 channel peripheral interface functionality.
 SDK examples used the BISS-C hardware capability in Slice 1 (either 1 core or 3 cores based on the confiuration) of PRU-ICSSG0.

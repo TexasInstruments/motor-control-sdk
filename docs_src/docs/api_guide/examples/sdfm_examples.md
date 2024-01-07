@@ -8,8 +8,8 @@ The ICSS %SDFM driver provides a well defined set of APIs to expose sigma delta 
 
 The ICSS %SDFM examples invoke these APIs to
 - Set %SDFM channels
-- Set ACC source, NC OSR, OC OSR, Clock source & Clock inversion
-- Enable & disable threshold comparators
+- Set Accumulator (ACC) source, Normal Current (NC) Over-samping Ratio (OSR), Over-current (OC) OSR, Clock source and Clock inversion
+- Enable/disable threshold comparators
 - Set high and low threshold values
 - Enable Zero Cross & set Zero cross threshold value
 - configure normal current sample trigger time (time for read sample)
@@ -83,7 +83,8 @@ Following section describes the flow of the examples.
  ----------------|-----------
  CPU + OS        | r5fss0-0 freertos
  ICSSG           | ICSSG0
- PRU             | PRU0
+ PRU             | PRU0 (single channel)
+ ^               | PRU0, RTU-PRU0, TXPRU0 (multi channel using three PRUs - load share mode)
  Toolchain       | ti-arm-clang
  Board           | @VAR_BOARD_NAME_LOWER, @VAR_LP_BOARD_NAME_LOWER
  Examples folder | examples/current_sense

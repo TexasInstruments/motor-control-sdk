@@ -40,7 +40,7 @@ extern "C"
 
 /**
  *  \defgroup TRANSFORMS_API_MODULE APIs for Transformation Algorithms
- *  \ingroup  MOTOR_CONTROL_API
+ *  \ingroup  RTLIBS_API
  *
  *  Here is the list of motor transformation function APIs
  *  @{

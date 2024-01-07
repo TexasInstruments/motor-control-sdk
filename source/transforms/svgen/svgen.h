@@ -39,7 +39,7 @@ extern "C"
 #endif
 
 /**
- *  \addtogroup TRANSFORMS_API_MODULE APIs for motor transformations
+ *  \addtogroup TRANSFORMS_API_MODULE
  *  @{
  *
  *  \file       svgen.h

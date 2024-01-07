@@ -1,13 +1,13 @@
-# PRUICSS PWM Duty Cycle {#EXAMPLE_PRUICSS_PWM_DUTY_CYCLE}
+# PRU-ICSS PWM Duty Cycle {#EXAMPLE_PRUICSS_PWM_DUTY_CYCLE}
 
 [TOC]
 
 # Introduction
 
 This example generates a signal for a specified period and duty cycle using
-PRUICSS PWM. The period and duty cycle can be configured by the user.
+PRU-ICSS PWM. The period and duty cycle can be configured by the user.
 
-The example Uses PRUICSSG0 PWM module and does below
+The example Uses PRU-ICSSG0 PWM module and does below
 
 - Configures PWM0_0_POS(alias signal PWM0_A0) to generate a 1KHz signal with 25% duty cycle 
 - Configures PWM3_2_NEG(alias signal PWM3_B2) to generate a 1KHz signal with 25% duty cycle 
@@ -31,7 +31,7 @@ An IO Breakout Board (BB) is required to probe the PWM outputs
 #### Probe Output
 
 \imageStyle{duty_example_probe_output.png,width:70%}
-\image html duty_example_probe_output.png "PRUICSS PWM DUTY CYCLE PROBE OUTPUT"
+\image html duty_example_probe_output.png "PRU-ICSS PWM DUTY CYCLE PROBE OUTPUT"
 
 # Supported Combinations
 

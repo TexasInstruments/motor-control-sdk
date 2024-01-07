@@ -2,7 +2,7 @@
 
 [TOC]
 
-This example does trigger based normal current sampling. Normal current OSR, Over current OSR and Normal current trigger time can be configured by the user. There are two different examples based on number of %SDFM channels.
+This example does trigger based normal current sampling. Normal current Over-samping Ratio (OSR), Over current OSR and Normal current trigger time can be configured by the user. There are two different examples based on number of %SDFM channels.
 
 # Three Channels
 
@@ -64,7 +64,8 @@ The example does the below
  ----------------|-----------
  CPU + OS        | r5fss0-0 freertos
  ICSSG           | ICSSG0
- PRU             | PRU0
+ PRU             | PRU0 (single channel)
+ ^               | PRU0, RTU-PRU0, TXPRU0 (multi channel using three PRUs - load share mode)
  Toolchain       | ti-arm-clang
  Board           | @VAR_BOARD_NAME_LOWER, @VAR_LP_BOARD_NAME_LOWER
  Examples folder | examples/current_sense
@@ -75,10 +76,11 @@ The example does the below
 
 ## Hardware Prerequisites
 Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_SETUP_PAGE.html" target="_blank"> EVM Setup </a>, below additional hardware is required to run this demo
-- TIDEP-01015 3 Axis board
-- Interface card connecting EVM and TIDEP-01015 3 Axis board
+- <a href="../TIDEP-01015Rev E1.1(001)_Sch.pdf" target="_blank"> TIDEP-01015 3 Axis Board </a>
+- <a href="../MS_TI_AM64x_EVM_3-AXIS_INTERFACE_BOARD_SCH_REV_E1.pdf" target="_blank"> Interface card connecting EVM and TIDEP-01015 3 Axis </a>
 - Signal generator
 
+\note For more design details of the TIDEP-01015 3 Axis Board, or Interface card connecting EVM and TIDEP-01015 3 Axis, please contact TI via E2E/FAE.
 
 ### Hardware Setup
 \image html SDFM_HwSetup_image.PNG  "Hardware Setup SDFM"
@@ -86,7 +88,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 \cond SOC_AM243X
 ### Hardware Prerequisities for LP
 - AMC1035EVM
-- AM243x-LP board
+- <a href="https://www.ti.com/tool/LP-AM243" target="_blank"> AM243x-LP Board </a>
 - Signal generator
 
 #### LP Hardware Setup
@@ -99,7 +101,6 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 - **When using makefiles to build**, note the required combination and build using
   make command (see <a href="@VAR_MCU_SDK_DOCS_PATH/MAKEFILE_BUILD_PAGE.html" target="_blank"> Using SDK with Makefiles </a>)
 - Launch a CCS debug session and run the executable, see <a href="@VAR_MCU_SDK_DOCS_PATH/CCS_LAUNCH_PAGE.html" target="_blank">  CCS Launch, Load and Run </a>
-- Refer to UART terminal for user interface menu options.
 
 ### Test Case Description
 <table>
@@ -120,7 +121,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
  </tr>
 
 <tr>
-        <td>2. To check raw data for Single Update (64 NC OSR)</td>
+        <td>2. To check raw data for Single Update (64 Normal Current (NC) OSR)</td>
         <td>1. Set NC OSR to 64</td>
         <td>The drawn graph and raw data should look like the attached image</td>
 </tr>
@@ -275,7 +276,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 </tr>
 <tr>
         <td>8. To check Zero Cross</td>
-        <td>1. Set OC OSR to 16</td>
+        <td>1. Set Overcurrent (OC) OSR to 16</td>
         <td> Logic analyzer capture should match with this capture </td>
 </tr>
 <tr>

@@ -28,12 +28,12 @@ SDK example uses the %SDFM hardware capability in Slice 1 of PRU-ICSSG0.
 	<th>Details
 </tr>
 <tr>
-    <td>Normal current OSR
+    <td>Normal Current Over-samping Ratio (OSR)
     <td>64
 	<td>Tested with 16, 32, 64, 128 and 256
 </tr>
 <tr>
-    <td>Over current OSR
+    <td>Over Current OSR
     <td>16
 	<td>Tested with 16, 32, 64, 128 and 256
 </tr>
@@ -77,12 +77,12 @@ Following section describes the firmware implementation of Sigma Delta Decimatio
 
 ##### Normal Curent (NC)
 
-This section describes normal current implementation. 
+This section describes normal current implementation.
 
 There are two different variations of normal current.
 - Trigger based: It starts execution when the trigger point is acquired (first time CMP event hits) and performs four continuous samplings to bring the accumulator and differntiator registers to stable state for the configured normal current OSR. Initially the CMP register is configured with the first sample trigger start time and then until the next third continuous normal current sample it is updated with the normal current OSR sampling time. At the end of the fourth normal current sample again, it is updated with the second sample start time if double update is enabled otherwise with the first sample trigger start time.
 
-- Continuous sampling: It starts execution when the first time CMP event hits. Every time it updates CMP event register with the normal current OSR sampling time for next continuous sample, store sample values in DMEM and trigger R5 intrrupt. 
+- Continuous sampling: It starts execution when the first time CMP event hits. Every time it updates CMP event register with the normal current OSR sampling time for next continuous sample, store sample values in DMEM and trigger R5 interrupt.
 
 \image html SDFM_NC_FLOW_CHART.png "Normal Current"
 
@@ -97,13 +97,13 @@ Normal current sampling is done twice in one EPWM cycle.
 
 \image html SDFM_Double_update.PNG "Double Update"
 
-##### Over Current (OC)/Threshold Comparator 
+##### Over Current (OC)/Threshold Comparator
 This section describes the over current implementation. It performs continuous sampling (free run) and when the sample value crosses the high or low threshold, the corresponding PWM trip status gets set and TZ_OUT pin goes high. It also stores high and low threshold status in DMEM for all channels, \ref SDFM_getHighThresholdStatus API returns high threshold status for specified SDFM channel number and \ref SDFM_getLowThresholdStatus API returns low threshold status for specified SDFM channel number.
 
 \image html SDFM_OC_Flow_Chart.png "Over current"
 \image html SDFM_OC_ERROR_MAPPING_WITH_PWM_TZ.png "Mapping between Over current errors and PWM TZ blocks"
 
-###### Zero Cross Comparator 
+###### Zero Cross Comparator
 This section describes the zero cross implementation. It compares the current sample and the previous sample values with zero cross threshold value.
 
 There are two cases:
@@ -117,7 +117,7 @@ There are two cases:
 #### Sync with EPWM and trigger timing
 This section describes the EPWM to %SDFM synchronization and trigger timing for each EPWM cycle. At the end of the every EPWM cycle, the EPWM generates a sync out event that resets the IEP timer.
 The firmware initiates normal current sampling at the sample trigger point in each EPWM cycle. It takes four consecutive samples to bring the accumulator and differentiator registers to stable state. It takes the first sample at the trigger point and the next three samples, each after ONE_SAMPLE_TIME.
-Here ONE_SAMPLE_TIME is: OSR*(1/SD_CLK)  
+Here ONE_SAMPLE_TIME is: OSR*(1/SD_CLK)
 \image html SDFM_epwm_sync_and_trigger_timing.png "Sync with EPWM and trigger timing"
 
 #### Fast Detect and Trip generation
@@ -128,12 +128,12 @@ Note: To identify the sigma delta fast detect error trip cause, \ref SDFM_getFas
 
 \image html SDFM_FD_ERROR_MAPPING_WITH_PWM_TZ.png "Mapping between Fast detect errors and PWM TZ blocks"
 
-#### Data/Clock Phase Compensation 
+#### Data/Clock Phase Compensation
 Following points describe the process for measurement of phase difference between clock and data
 - Set PRU IO mode to GPIO mode (default) for direct capture of input data and clock pins 
 - First wait for rising edge on the SD data pin, then check the nearest upcoming edge to the SD clock pin. If the nearest edge of clock pin is falling, then it measures the time between the rising edge of the data pin and the falling edge of the SD clock. Otherwise it measures time between the rising edge of both data and clock pins.
-- It measures delay 8 times and repeats the measurement until the get like 8 time the same or a max variation of 1 PRU cycle. 
-- Based on the clock polarity, phase delay is calculated. If clock polarity and upcoming nearest edge of clock pin for rising edge of data pin are same, then final phase delay will be half SD clock duty cycle time minus calculated time. Otherwise phase delay will be SD clock one cycle period time minus calculated time  
+- It measures delay 8 times and repeats the measurement until the get like 8 time the same or a max variation of 1 PRU cycle.
+- Based on the clock polarity, phase delay is calculated. If clock polarity and upcoming nearest edge of clock pin for rising edge of data pin are same, then final phase delay will be half SD clock duty cycle time minus calculated time. Otherwise phase delay will be SD clock one cycle period time minus calculated time
 \image html SDFM_Phase_delay_flowchart.png "Phase Compensation"
 #### AM64x/AM243x EVM Pin-Multiplexing
 <table>
@@ -175,7 +175,7 @@ Following points describe the process for measurement of phase difference betwee
 <tr>
     <td>PRG0_ECAP0_IN_APWM_OUT
     <td>PIN_PRG0_PRU1_GPO15
-	<td>ECAP output frequency 
+	<td>ECAP output frequency
 </tr>
 <tr>
     <td>GPIO_MTR_1_PWM_EN
@@ -200,7 +200,7 @@ Following points describe the process for measurement of phase difference betwee
 <tr>
     <td>GPIO_ZC_TH_CH0
     <td>PRG1_PRU0_GPO18
-	<td>(J7.64)Ch0 Zero cross output 
+	<td>(J7.64)Ch0 Zero cross output
 </tr>
 <tr>
     <td>GPIO_ZC_TH_CH1
@@ -230,7 +230,7 @@ Following points describe the process for measurement of phase difference betwee
 <tr>
     <td>PRG0_ECAP0_IN_APWM_OUT
     <td>PIN_PRG0_PRU1_GPO15
-	<td>(J6.59)ECAP output frequency 
+	<td>(J6.59)ECAP output frequency
 </tr>
 <tr>
     <td>SD8_CLK

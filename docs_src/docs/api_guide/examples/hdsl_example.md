@@ -58,7 +58,8 @@ This example also allows the capability to save the HDSL register data into memo
  ---------------|-----------
  CPU + OS       | r5fss0-0 freertos
  ICSSG          | ICSSG0
- PRU            | PRU1
+ PRU            | PRU1 (single channel)
+ ^              | PRU1, RTU-PRU1, TXPRU1 (multi channel using three PRUs - load share mode)
  Toolchain      | ti-arm-clang
  Board          | @VAR_BOARD_NAME_LOWER
  Example folder | examples/position_sense/hdsl_diagnostic
@@ -71,9 +72,10 @@ This example also allows the capability to save the HDSL register data into memo
  ---------------|-----------
  CPU + OS       | r5fss0-0 freertos
  ICSSG          | ICSSG0
- PRU            | PRU1
+ PRU            | PRU1 (single channel)
+ ^              | PRU1, RTU-PRU1, TXPRU1 (multi channel using three PRUs - load share mode)
  Toolchain      | ti-arm-clang
- Board          | @VAR_BOARD_NAME_LOWER (2 channel and 1 channel examples), @VAR_LP_BOARD_NAME_LOWER (1 channel example)
+ Board          | @VAR_BOARD_NAME_LOWER (2 channel and 1 channel examples), @VAR_LP_BOARD_NAME_LOWER (2 channel and 1 channel examples)
  Example folder | examples/position_sense/hdsl_diagnostic
 
 \endcond
@@ -83,25 +85,25 @@ This example also allows the capability to save the HDSL register data into memo
 ## Hardware Prerequisites
 
 Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_SETUP_PAGE.html" target="_blank"> EVM Setup </a>, below additional hardware is required to run this demo
-- HDSL encoder
+- HDSL Encoder(s)
 - Below are two options to connect encoder to AM64x/AM243x EVM.
     - **Option 1**
         - <a href="http://www.ti.com/tool/TIDA-00179" target="_blank"> TIDA-00179 Universal Digital Interface to Absolute Position Encoders </a>
-        - TIDEP-01015 3 Axis board
-        - Interface card connecting EVM and TIDEP-01015 3 Axis board
+        - <a href="../TIDEP-01015Rev E1.1(001)_Sch.pdf" target="_blank"> TIDEP-01015 3 Axis Board </a>
+        - <a href="../MS_TI_AM64x_EVM_3-AXIS_INTERFACE_BOARD_SCH_REV_E1.pdf" target="_blank"> Interface card connecting EVM and TIDEP-01015 3 Axis </a>
         - Connect the Hiperface DSL encoder to HDSL+/-(Pin number 6 and 7) signals available on header J7 or Sub-D15 connector of the "Universal Digital Interface to Absolute Position Encoders" board.
     - **Option 2**
-        - HDSL AM64xE1 Transceiver. If application is using this card, define the macro HDSL_AM64xE1_TRANSCEIVER in the CCS project/make file.
+        - <a href="../HDSL_AM64xE1_Schematics.pdf" target="_blank"> HDSL AM64xE1 Transceiver</a> (If application is using this card, define the macro HDSL_AM64xE1_TRANSCEIVER in the CCS project/make file)
         - Connect the Hiperface DSL encoder to J10.
 		- HDSL AM64xE1 Transceiver supports two channels that can be used to support HDSL safety, multi axis servo drives.
-		- Schematics are shared in the MCU+SDK package. For more design details of the transceiver card, please contact TI via E2E/FAE.
-		-  <a href="../HDSL_AM64xE1_Schematics.pdf" target="_blank">  HDSL Transceiver Card Schematics </a> document.
+
+\note For more design details of the TIDEP-01015 3 Axis Board, Interface card connecting EVM and TIDEP-01015 3 Axis, or HDSL AM64xE1 Transceiver card, please contact TI via E2E/FAE.
 
 \cond SOC_AM243X
 ### Hardware Prerequisities for Booster Pack
 
-- HDSL encoder
-- AM243x-LP board
+- HDSL Encoder(s)
+- <a href="https://www.ti.com/tool/LP-AM243" target="_blank"> AM243x-LP Board </a>
 - <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
 \endcond
 

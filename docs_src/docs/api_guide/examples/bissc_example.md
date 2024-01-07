@@ -13,22 +13,11 @@ A serial terminal application (like teraterm/ hyperterminal/ minicom) is then ru
 To configure, select the serial port corresponding to the port emulated over USB by the EVM.
 The host serial port should be configured to 115200 baud, no parity, 1 stop bit and no flow control.
 
-Connect the BISS-C encoder(s) via TIDA-00179 cards on a 3 axis board (TIDEP-01015) to the EVM.
-On AM243x LP, a BISS-C encoder can be directly connected using a TIDA-00179 card.
-
-The connections between AM243x LP and TIDA-00179 for Channel 0 are:
-
-BISSC_CHANNEL0_TX -> PRG0_PRU1_GPO1,
-BISSC_CHANNEL0_TX_ENABLE -> PRG0_PRU1_GPO2,
-BISSC_CHANNEL0_RX -> PRG0_PRU1_GPO13,
-BISSC_CHANNEL0_CLK -> PRG0_PRU1_GPO0.
-
 The BISS-C receiver firmware running on ICSS0-PRU1 provides a defined interface. The BISS-C diagnostic application interacts with the BISS-C receiver firmware interface. It then presents the user with menu options to select Data ID code. The application collects the data entered by the user and configures the relevant interface. Then via the BISS-C receiver interface, the command is triggered. Once the command completion is indicated by the interface, the status of the transaction is checked. If the Status indicates success, the result is presented to the user.
 
 ## Channel Selection In Sysconfig
 
 \image html bissc_syscfg_ch_sel.png      "Channel Selection In Sysconfig"
-
 
 \image html Endat_channel_selection_configuration.png     "BiSS-C configuration seletion between Single/Multi channel "
 
@@ -58,28 +47,16 @@ The BISS-C receiver firmware running on ICSS0-PRU1 provides a defined interface.
 
 # Supported Combinations {#EXAMPLES_MOTORCONTROL_BISSC_COMBOS}
 
-\cond SOC_AM64X
-
- Parameter      | Value
- ---------------|-----------
- CPU + OS       | r5fss0-0 freertos
- ICSSG          | ICSSG0
- PRU            | PRU1
- Toolchain      | ti-arm-clang
- Board          | @VAR_BOARD_NAME_LOWER
- Example folder | examples/motor_control/bissc_diagnostic
-
-\endcond
-
 \cond SOC_AM243X
 
  Parameter      | Value
  ---------------|-----------
  CPU + OS       | r5fss0-0 freertos
  ICSSG          | ICSSG0
- PRU            | PRU1
+ PRU            | PRU1 (single channel, multi channel using single PRU)
+ ^              | PRU1, RTU-PRU1, TXPRU1 (multi channel using three PRUs - load share mode)
  Toolchain      | ti-arm-clang
- Board          | @VAR_LP_BOARD_NAME_LOWER (E3 Revision)
+ Board          | @VAR_LP_BOARD_NAME_LOWER (2 channel and 1 channel examples)
  Example folder | examples/motor_control/bissc_diagnostic
 
 \endcond
@@ -87,20 +64,11 @@ The BISS-C receiver firmware running on ICSS0-PRU1 provides a defined interface.
 # Steps to Run the Example
 
 ## Hardware Prerequisites
-Other than the basic EVM setup mentioned in \htmllink{@VAR_MCU_SDK_DOCS_PATH/EVM_SETUP_PAGE.html, EVM Setup}, additional hardware required to run this demo is mentioned below
--  BISS-C Encoders
--  TIDA-00179 Universal Digital Interface to Absolute Position Encoders, http://www.ti.com/tool/TIDA-00179
--  TIDEP-01015 3 Axis board
--  Interface card connecting EVM and TIDEP-01015 3 Axis board
 
-\cond SOC_AM243X
-### Hardware Prerequisities for Booster Pack
-
-- BISS-C encoder
-- AM243x-LP board
-- BP-AM2BLDCSERVO
+- BISS-C Encoders
+- <a href="https://www.ti.com/tool/LP-AM243" target="_blank"> AM243x-LP Board </a>
+- <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
 \endcond
-
 
 ## Hardware Setup
 
@@ -180,15 +148,13 @@ Other than the basic EVM setup mentioned in \htmllink{@VAR_MCU_SDK_DOCS_PATH/EVM
 
 \endcond
 
-
 ## Build, load and run
 
-- **When using CCS projects to build**, import the CCS project and build it using the CCS project menu (see \htmllink{@VAR_MCU_SDK_DOCS_PATH/CCS_PROJECTS_PAGE.html, Using SDK with CCS Projects}).
+- **When using CCS projects to build**, import the CCS project and build it using the CCS project menu (see <a href="@VAR_MCU_SDK_DOCS_PATH/CCS_PROJECTS_PAGE.html" target="_blank"> Using SDK with CCS Projects </a>).
 - **When using makefiles to build**, note the required combination and build using
-  make command (see \htmllink{@VAR_MCU_SDK_DOCS_PATH/MAKEFILE_BUILD_PAGE.html, Using SDK with Makefiles})
-- Launch a CCS debug session and run the executable, see \htmllink{@VAR_MCU_SDK_DOCS_PATH/CCS_LAUNCH_PAGE.html, CCS Launch\, Load and Run}
+  make command (see <a href="@VAR_MCU_SDK_DOCS_PATH/MAKEFILE_BUILD_PAGE.html" target="_blank"> Using SDK with Makefiles </a>)
+- Launch a CCS debug session and run the executable, see <a href="@VAR_MCU_SDK_DOCS_PATH/CCS_LAUNCH_PAGE.html" target="_blank">  CCS Launch, Load and Run </a>
 - Refer to UART terminal for user interface menu options.
-
 
 ### Sample Output
 

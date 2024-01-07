@@ -32,7 +32,7 @@ SysConfig can be used to configure things mentioned below:
 
 ## Important Note
 
-PRUICSS has one pwm module, which has four pwm sets (PWM0, PWM1, PWM2, PWM3)
+PRU-ICSS has one PWM module, which has four PWM sets (PWM0, PWM1, PWM2, PWM3)
 Each Set has six signals (A0,A1,A2,B0,B1,B2) With Reference to Technical Reference Manual, Pwm six signals(A0,A1,A2,B0,B1,B2) Naming convention is is slightly different as mentioned in \ref PRUICSS_PWM_API
 
 ## Example Usage
