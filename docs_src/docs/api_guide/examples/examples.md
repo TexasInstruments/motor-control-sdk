@@ -13,6 +13,8 @@ This page lists all the examples and demos supported in this SDK.
 \endcond
 
 \cond SOC_AM243X
+- Reference Design
+    - \subpage EXAMPLE_TIDEP_01032_REFERENCE_DESIGN
 - Position Sense
     -# \subpage EXAMPLE_MOTORCONTROL_ENDAT
     -# \subpage EXAMPLE_MOTORCONTROL_HDSL
