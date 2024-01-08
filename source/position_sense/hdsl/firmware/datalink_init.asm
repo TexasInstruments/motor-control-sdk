@@ -597,12 +597,9 @@ aaa1:
 	loop aaa2,4
 	CALL3 PUSH_FIFO_2B_8x
 aaa2:
-
-;	PUSH 8 bytes for 1 byte data (0xcb) in FIFO
-	ldi FIFO_L,0xcb
-	loop aaa3,4
-	CALL3 PUSH_FIFO_2B_8x
-aaa3:
+	CALL2 WAIT_TX_FIFO_FREE
+	PUSH_FIFO_CONST		0xff
+	PUSH_FIFO_CONST		0xff
 
     .else
 ;add stuffing to gain processing time
@@ -638,6 +635,13 @@ datalink_learn_delay:
 
 	CALL1		check_test_pattern
 	qbeq		datalink_abort2, LOOP_CNT.b3, 14
+	.if !$defined(EXT_SYNC_ENABLE)
+	;	PUSH 6 bit stuffing in FIFO
+	ldi FIFO_L,0x2c
+	loop aaa3,3
+	CALL3 PUSH_FIFO_2B_8x
+aaa3:
+	.endif
 	qbne		datalink_learn_delay, REG_FNC.b0, 1
 datalink_learn_end_test:
 ; SLAVE_DELAY has no switch bit
