@@ -18,6 +18,7 @@
         "/security/security",
         "/usb/usb",
         "/pru_io/pru_io",
+        "/industrial_comms/industrial_comms",
     ],
     "devices": [
         "AM64x",

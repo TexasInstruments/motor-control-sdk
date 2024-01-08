@@ -31,6 +31,7 @@
         "/security/security",
         "/usb/usb",
         "/pru_io/pru_io",
+        "/industrial_comms/industrial_comms",
 % }
 % if(args.device == "am263x") {
         "/motor_control",
@@ -40,6 +41,7 @@
         "/networking/networking",
         "/security/security",
         "/xbar/xbar",
+        "/industrial_comms/industrial_comms",
 % }
     ],
     "devices": [
