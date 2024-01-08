@@ -99,11 +99,6 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 \image html Tamagawa_connections.JPG "Tamagawa Encoder Hardware Setup for 3 channels"
 
 \cond SOC_AM243X
-
-\imageStyle{Tamagawa_Setup_am243x_lp.jpeg,width:60%}
-\image html Tamagawa_Setup_am243x_lp.jpeg "Hardware Setup for 1 channel on AM243x Launchpad"
-
-
 ## Hardware Setup(Using Booster Pack & AM243x-LP)
 \imageStyle{Tamagawa_Booster_Pack.png,width:40%}
 \image html Tamagawa_Booster_Pack.png  "Hardware Setup of Booster Pack + LP for Tamagawa"
