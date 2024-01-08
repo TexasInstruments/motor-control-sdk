@@ -34,7 +34,7 @@ SYNC Mode support for 1 to 10 frames per cycle and 8 kHz to 50 kHz cycle frequen
 API support for Parameter Channel Long Message Read and Write                                   | Position Sense HDSL
 Add support for PIPE_D register for SensorHub Channel                                           | Position Sense HDSL
 Add support for PIPE_D register for SensorHub Channel                                           | Position Sense HDSL
-Long cable (upto 100 meters) with Free Run mode                                                  | Position Sense HDSL
+Long cable (upto 100 meters) with Free Run mode                                                 | Position Sense HDSL
 Two channel example with LP-AM243 + BP-AM2BLDCSERVO                                             | Position Sense HDSL
 Compare event based command trigger support                                                     | Position Sense Tamagawa
 Two channel example with LP-AM243 + BP-AM2BLDCSERVO                                             | Position Sense Tamagawa

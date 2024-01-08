@@ -277,7 +277,7 @@ const lnkfiles_r5f = {
 
 const syscfgfile = "../example.syscfg";
 
-const readmeDoxygenPageTag = "EXAMPLES_DUAL_MOTOR_DRIVE";
+const readmeDoxygenPageTag = "EXAMPLE_TIDEP_01032_REFERENCE_DESIGN";
 
 const templates_r5f_0_0 =
 [
