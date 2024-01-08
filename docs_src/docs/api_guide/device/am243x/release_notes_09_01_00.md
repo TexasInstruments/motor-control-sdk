@@ -34,7 +34,7 @@ SYNC Mode support for 1 to 10 frames per cycle and 8 kHz to 50 kHz cycle frequen
 API support for Parameter Channel Long Message Read and Write                                   | Position Sense HDSL
 Add support for PIPE_D register for SensorHub Channel                                           | Position Sense HDSL
 Add support for PIPE_D register for SensorHub Channel                                           | Position Sense HDSL
-Long cable (upto 100 meters)                                                                    | Position Sense HDSL
+Long cable (upto 100 meters) with Free Run mode                                                  | Position Sense HDSL
 Two channel example with LP-AM243 + BP-AM2BLDCSERVO                                             | Position Sense HDSL
 Compare event based command trigger support                                                     | Position Sense Tamagawa
 Two channel example with LP-AM243 + BP-AM2BLDCSERVO                                             | Position Sense Tamagawa
@@ -104,8 +104,8 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Single channel, Multi channel using three PRU cores (load share mode), Free Run mode, Sync mode, Short Message Read and Write, Long Message Read and Write, Pipeline Channel Data, Long cable (upto 100 meters), Boosterpack with AM243x-LP
-    <td> 225 MHz PRU-ICSSG Core Clock based firmware
+    <td> Single channel, Multi channel using three PRU cores (load share mode), Free Run mode, Sync mode, Short Message Read and Write, Long Message Read and Write, Pipeline Channel Data, Long cable (upto 100 meters) with single channel Free Run mode, Boosterpack with AM243x-LP
+    <td> 225 MHz PRU-ICSSG Core Clock based firmware, Multi-channel with long cables(100m length), Long cable (upto 100 meters) with sync mode
 </tr>
 <tr>
     <td> Tamagawa
@@ -212,6 +212,13 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> 9.0
     <td> -
 </tr>
+<tr>
+    <td> PINDSW-7473
+    <td> HDSL : 100 meter cable length does not work for Free Run mode in 300Mhz PRU clock
+    <td> Position Sense HDSL
+    <td> 9.0
+    <td> -
+</tr>
 </table>
 
 ## Known Issues
@@ -278,6 +285,13 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> HDSL: Trailer data contains 4 zeros instead of 5
     <td> Position Sense HDSL
     <td> 9.0 onwards
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-7474
+    <td> HDSL : 100 meter cable length does not work for sync mode in 300Mhz PRU clock
+    <td> Position Sense HDSL
+    <td> 9.0
     <td> -
 </tr>
 </table>
