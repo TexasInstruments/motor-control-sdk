@@ -68,7 +68,6 @@ The BISS-C receiver firmware running on ICSS0-PRU1 provides a defined interface.
 - BISS-C Encoders
 - <a href="https://www.ti.com/tool/LP-AM243" target="_blank"> AM243x-LP Board </a>
 - <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
-\endcond
 
 ## Hardware Setup
 

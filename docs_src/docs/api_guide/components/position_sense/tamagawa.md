@@ -40,3 +40,7 @@ SysConfig can be used to configure things mentioned below:
 ## Example
 
 - \ref EXAMPLE_MOTORCONTROL_TAMAGAWA
+
+## API
+
+\ref TAMAGAWA_API_MODULE

@@ -28,23 +28,25 @@ Refer PRU-ICSS chapter of AM64x/AM243x Technical Reference Manual
 
 At start-up, the application running on the ARM Cortex-R5 initializes the module clocks and configures the pinmux. The PRU is initialized and the PRU firmware is loaded on PRU slice of choice for a chosen ICSS instance (tested on PRU1 on ICSSG0). After the PRU1 starts executing, the Tamagawa interface is operational and the application can use it to communicate with an encoder. Use the Tamagawa diagnostic example to learn more about initialization and communication with the Tamagawa interface. This Tamagawa diagnostic example, also provides an easy way to validate the Tamagawa transactions. The diagnostic example provides menu options on the host PC in a serial terminal application, where the user can select the data ID code to be sent. Based on the data ID code, the application updates the Tamagwa interface with the data ID code and trigger transaction. The application then waits until it receives an indication of complete transaction by the firmware through the interface before displaying the result.
 
-### PRU Firmware Design
-The firmware first initializes the PRU hardware,Then It check whether it is host trigger mode or periodic trigger mode, 
-In host trigger mode it waits until a command has been triggered through the interface,In periodic trigger mode firmware sets host trigger bit based on compare 3 event configured, Upon triggering the transmit data is set up based on the data ID code and the data is transmitted. The data ID code then waits until receiving all the data that depends on the data ID. The parsing over the received data then commences, which is again based on the data ID, and the interface is updated with the result. The CRC verification occurs next and the interface indicates command completion. The firmware then waits for the next command trigger from the interface.
+### PRU Firmware Flow {#TAMAGAWA_DESIGN_FLOW}
+
+The firmware first initializes the PRU hardware. Then it checks whether it is host trigger mode or periodic trigger mode. In host trigger mode, it waits until a command has been triggered through the interface. In periodic trigger mode, the firmware sets host trigger bit based on compare 3 event configured. Upon triggering the transmit data is set up based on the data ID code and the data is transmitted. The data ID code then waits until receiving all the data that depends on the data ID. The parsing over the received data then commences, which is again based on the data ID, and the interface is updated with the result. The CRC verification occurs next and the interface indicates command completion. The firmware then waits for the next command trigger from the interface.
 
 \image html Tamagawa_flowchart.JPG "Overview Flow Chart"
 
-### Initialization
-PRU is set to EnDat mode first. The entire EnDat configuration MMR’s are cleared(CFG registers). Tx global reinit bit in R31 is set to put all channels in default mode. The clock source is selected (ICSSG clock is selected with 200MHZ frequency). In Tx mode, the output data is read from the Tx FIFO at this 1x clock rate. In Rx mode, the input data is sampled at the Oversampling (OS) clock rate. Hence, Tx clock(1x clock) and Rx clock(Oversampling (OS) clock) are setup by selecting oversampling factor(x8). At the end of the initialization status is updated and wait until trigger from user occurs for tamagawa commands.
+### Initialization {#TAMAGAWA_DESIGN_INITIALIZATION}
+
+PRU is set to EnDat mode first. The entire EnDat configuration MMRs are cleared(CFG registers). Tx global reinit bit in R31 is set to put all channels in default mode. The clock source is selected (ICSSG clock is selected with 200MHZ frequency). In Tx mode, the output data is read from the Tx FIFO at this 1x clock rate. In Rx mode, the input data is sampled at the Oversampling (OS) clock rate. Hence, Tx clock(1x clock) and Rx clock(Oversampling (OS) clock) are setup by selecting oversampling factor(x8). At the end of the initialization status is updated and wait until trigger from user occurs for tamagawa commands.
 
 \image html Tamagawa_initialization_flow_chart.JPG "Initialization Flow Chart"
 
-### Setup Transmit Data
+### Setup Transmit Data {#TAMAGAWA_DESIGN_TX}
 The transmit and receive sizes are determined based on the data ID in the interface.
 
 \image html Tamagawa_setup_tx_data.png "Setup Transmit Data Flow Chart"
 
-### Transmit and Receive
+### Transmit and Receive {#TAMAGAWA_DESIGN_TX_RX}
+
 In the current implementation, the Transmit data is loaded into the Tx FIFO byte wise. For data readout and reset commands, the requirement is to send 1 frame of 10 bits. So, 2 bytes of data is first loaded into the Tx FIFO and Tx frame size is set to 10 bits to send right data to Encoder. Similarly, for EEPROM Read command, the requirement is to send 3 frames of 10 bits each, so 30 bits in total. For this, 4 byes of data is first loaded into the Tx FIFO and then Tx frame size is set to 30 bits to send right data to Encoder. This is done by using the Tx - Single Shot mode.
 
 \image html Tamagawa_tx_flow_chart.png "Transmit Flow Chart for data readout, reset and EEPROM Read commands"
@@ -57,7 +59,7 @@ Once the Transmission is complete, the encoder starts sending the data and the f
 
 \image html Tamagawa_rx_flow_chart.png "Receive Flow Chart"
 
-### Receive Data Parse
+### Receive Data Parse {#TAMAGAWA_DESIGN_RX}
 Depending on the data ID used for initiating the transfer, the firmware parses the received data and copies it onto relevant fields in the interface, accordingly.
 
 \image html Tamagawa_parse_data.png "Receive Data Parse Flow Chart"
