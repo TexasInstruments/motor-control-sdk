@@ -976,7 +976,19 @@ void hdsl_init_300m(void)
     HwiP_construct(&gPRUHwiObject, &hwiPrms);
 #endif
 
-    HDSL_iep_init(gHdslHandleCh[0]);
+    if(CONFIG_HDSL0_CHANNEL0==1)
+    {
+        HDSL_iep_init(gHdslHandleCh[0]);
+    }
+    else if(CONFIG_HDSL0_CHANNEL1==1)
+    {
+        HDSL_iep_init(gHdslHandleCh[1]);
+    }
+    else if(CONFIG_HDSL0_CHANNEL2==1)
+    {
+        HDSL_iep_init(gHdslHandleCh[2]);
+    }
+
     ClockP_usleep(5000);
 
     if(CONFIG_HDSL0_MODE == 1)
@@ -1575,7 +1587,14 @@ void hdsl_diagnostic_main(void *arg)
 #if (CONFIG_HDSL0_CHANNEL2==1)
     HDSL_config_channel_mask(gHdslHandleCh[2], chMask);
 #endif
-    hdsl_pruss_load_run_fw_300m(gHdslHandleCh[0]);
+
+    #if (CONFIG_HDSL0_CHANNEL0==1)
+        hdsl_pruss_load_run_fw_300m(gHdslHandleCh[0]);
+    #elif (CONFIG_HDSL0_CHANNEL1==1)
+        hdsl_pruss_load_run_fw_300m(gHdslHandleCh[1]);
+    #elif (CONFIG_HDSL0_CHANNEL2==1)
+        hdsl_pruss_load_run_fw_300m(gHdslHandleCh[2]);
+    #endif
     #endif
     DebugP_log( "\r\n HDSL setup finished\n");
 
