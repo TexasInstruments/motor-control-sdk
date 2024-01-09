@@ -75,4 +75,57 @@ An IO Breakout Board (BB) is required to probe the PWM outputs
 
 \ref PRUICSS_PWM_API
 
+# Additional Details
 
+## Steps to sync PRUICSS PWM from SOC EPWM
+
+This example demonstrates synchronization of PRUICSS PWM with SOC EPWM. For synchronization of SOC EPWM with PRUICSS PWM, follow the steps below 
+
+- Compare 0 event which controls period of PRUICSS PWM is mapped to cmp_event_router_input_16
+- Configure compare event router to mux cmp_event_router_output_40 with cmp_event_router_input_16.
+- Select source of SOC EPWM sync input signal as cmp_event_router_output_40
+
+\code
+
+/* define the unlock and lock values */
+#define KICK_LOCK_VAL                           (0x00000000U)
+#define KICK0_UNLOCK_VAL                        (0x68EF3490U)
+#define KICK1_UNLOCK_VAL                        (0xD172BC5AU)
+
+void unlock_Partition_1_CTRLMMR()
+{
+    /* EPWMCTRL MMR is present at Proxy0 Offset Range 0x4000 t0 0x5FFF
+     * Refer 5.1.3.1.2 of TRM to find Lock register & its unlock value
+     * */
+    volatile uint32_t  *kickAddr;
+    kickAddr = (volatile uint32_t *) (0x43005008);
+    CSL_REG32_WR(kickAddr, KICK0_UNLOCK_VAL);   /* KICK 0 */
+    kickAddr++;
+    CSL_REG32_WR(kickAddr, KICK1_UNLOCK_VAL);   /* KICK 1 */
+}
+void lock_Partition_1_CTRLMMR()
+{
+    volatile uint32_t  *kickAddr;
+    kickAddr = (volatile uint32_t *) (0x43005008);
+    CSL_REG32_WR(kickAddr, KICK_LOCK_VAL);   /* KICK 0 */
+    kickAddr++;
+    CSL_REG32_WR(kickAddr, KICK_LOCK_VAL);   /* KICK 1 */
+}
+void EPWM_config_syncin_event()
+{
+    unlock_Partition_1_CTRLMMR();
+    CSL_REG32_WR(CSL_MAIN_CTRL_MMR_CFG0_EPWM0_CTRL+CSL_CTRL_MMR0_CFG0_BASE,0x300);
+    lock_Partition_1_CTRLMMR();
+}
+
+void config_compare_event_router_out()
+{
+    /*Configure compare event router to mux cmp_event_router_output_40 with cmp_event_router_input_16*/
+    volatile uint32_t  *Addr ;
+    uint32_t CMP_EVENT_INTROUTER_MUXCTRL_ADDR_OFFSET = 0x00000004;
+    uint32_t CMP_EVENT_INTROUTER0_OUTP_40_EPWM0_SYNC_IN_ADDR_OFFSET = 0x28 * 4 ;
+    Addr =(uint32_t *)( CSL_CMP_EVENT_INTROUTER0_CFG_BASE + CMP_EVENT_INTROUTER_MUXCTRL_ADDR_OFFSET + CMP_EVENT_INTROUTER0_OUTP_40_EPWM0_SYNC_IN_ADDR_OFFSET);
+    CSL_REG32_WR(Addr,0x10010);
+}
+
+\endcode
