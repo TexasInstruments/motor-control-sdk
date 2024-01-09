@@ -44,6 +44,25 @@ ICSS %SDFM is a sigma delta interface for phase current measurement in high perf
 
 \image html SDFM_PIN_CONFLICT.png "PIN routing for SD channels"
 
+## Datasheet
+### Fast Detect Latency 
+ - Fast Detect block starts comparison after the first 32 sample clocks.
+ - Latency measured for the 20MHz sigma delta clock is 1.632us.
+\image html SDFM_FD_Latency.png "FD latency"
+
+### Task Time for Normal Current at 300MHz PRU Core Clk
+Normal current processing time for its different execution flows
+- Task time when only single update is enabled
+  - 320ns, without R5 interrupt and samples store in TCM memory
+  - 328ns, With R5 intruppt and smaples store in TCM memory
+\image html SDFM_NC_Task_time_for_single_update.png "NC Task time for single update"
+- Task time when double update is enabled 
+  - 320ns, without R5 interrupt and samples store in TCM memory
+  - 336ns, With R5 intruppt and smaples store in TCM memory.
+  \image html SDFM_NC_Task_time_for_double_update.png "NC Task time for double update"
+- Task time for continuous mode is 360ns
+\image html SDFM_NC_Task_time_for_continuous_mode.png "NC Task time for continuous mode"
+- Worst case Normal current task time = 360ns + 3-4 pru cycles time(Task switch, task exit & scratch pas switch)
 ## ICSS SDFM Design
 \subpage SDFM_DESIGN explains the design in detail.
 
