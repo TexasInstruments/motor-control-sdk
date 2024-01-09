@@ -16,10 +16,13 @@ It then presents the user with menu options, based on the option selected, appli
 
 This example also allows the capability to save the HDSL register data into memory for the defined duration.
 
+
 \cond SOC_AM243X
 - For @VAR_BOARD_NAME_LOWER example, the data is stored in DDR.
 - For @VAR_LP_BOARD_NAME_LOWER example, the data is stored in MSRAM.
 \endcond
+
+\note Channel 2 can be enabled only if channel 0 is enabled because of code overlay scheme needed in TX-PRU. See \ref HDSL_DESIGN_TXPRU_OVERLAY for more details
 
 \note The HDSL register trace option is only available with debug mode builds for single channel examples.
 

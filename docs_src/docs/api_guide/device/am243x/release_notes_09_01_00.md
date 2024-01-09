@@ -88,8 +88,8 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <th> Supported CPUs
     <th> SysConfig Support
     <th> OS Support
-    <th> Key features tested 
-    <th> Key features not tested 
+    <th> Key features tested
+    <th> Key features not tested
 </tr>
 <tr>
     <td> EnDat
@@ -116,12 +116,12 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> -
 </tr>
 <tr>
-    <td> BiSS-C 
+    <td> BiSS-C
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
     <td> Single channel, Multi channel using single PRU core and three PRU cores (load share mode), point-to-point connection, daisy chaining, control communication, automatic processing delay detection and compensation, interface speed of 1, 2, 5, 8, and 10 MHz, Long cable (upto 100 meters)
-    <td> 
+    <td>
 </tr>
 </table>
 
@@ -133,8 +133,8 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <th> Supported CPUs
     <th> SysConfig Support
     <th> OS Support
-    <th> Key features tested 
-    <th> Key features not tested 
+    <th> Key features tested
+    <th> Key features not tested
 </tr>
 <tr>
     <td> ICSS %SDFM
@@ -185,9 +185,37 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> QM updates for Safe Channel 2 were incorrect.
 </tr>
 <tr>
+    <td> PINDSW-6973
+    <td> Flash addition in SysConfig of Industrial Communications and Motor control SDK fails to load flashconfig.json due to error in file path
+    <td> Motor Control SDK
+    <td> 9.0
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-6977
+    <td> Unable to build the examples of Industrial Communications SDK inside Motor Control SDK
+    <td> Motor Control SDK
+    <td> 9.0
+    <td> -
+</tr>
+<tr>
     <td> PINDSW-7048
     <td> HDSL: SCE bit in ONLINE STATUS 1 gets cleared before seeing a correct CRC in safe channel
     <td> Position Sense HDSL
+    <td> 9.0
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-7115
+    <td> Gmake based command for PRU empty project build fails in Motor Control SDK and Industrial Communications SDK
+    <td> Motor Control SDK
+    <td> 9.0
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-7125
+    <td> EnDat: Initialization is failing for multi-channel single pru example with LP
+    <td> Position Sense EnDat
     <td> 9.0
     <td> -
 </tr>
@@ -209,6 +237,13 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> PINDSW-7157
     <td> HDSL : Sync mode does not work for ES value greater than 1
     <td> Position Sense HDSL
+    <td> 9.0
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-7467
+    <td> Industrial Communications SDK modules are not visible in the SysConfig of Motor Control SDK
+    <td> Motor Control SDK
     <td> 9.0
     <td> -
 </tr>
@@ -290,6 +325,13 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
 <tr>
     <td> PINDSW-7474
     <td> HDSL : 100 meter cable length does not work for sync mode in 300Mhz PRU clock
+    <td> Position Sense HDSL
+    <td> 9.0
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-7480
+    <td> HDSL: Continuous short/long message requests cause PRU to get stuck
     <td> Position Sense HDSL
     <td> 9.0
     <td> -
@@ -465,7 +507,7 @@ earlier SDKs.
 </tr>
 <tr>
     <td> Current Sense %SDFM
-    <td> Structure: \ref SDFM_ThresholdParms 
+    <td> Structure: \ref SDFM_ThresholdParms
     <td> Added new variables: `zeroCrossTh`, `zeroCrossThstatus`, `zeroCrossEn`, `lowThStatus` and `highThStatus`.
     <td> -
 </tr>

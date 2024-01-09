@@ -25,6 +25,8 @@ The HDSL firmware running on ICSS-PRU provides a defined well interface to execu
 	- Two channel support on am243x-lp
 - Tested with three different encoder makes (EDM35, EKS36, EKM36)
 
+\note Channel 2 can be enabled only if channel 0 is enabled because of code overlay scheme needed in TX-PRU. See \ref HDSL_DESIGN_TXPRU_OVERLAY for more details
+
 ## Features Not Supported
 
 In general, peripherals or features not mentioned as part of "Features Supported" section are not

@@ -32,7 +32,7 @@ Figure "Layer Model" illustrates the relationship between the two layers.
 
 \image html hdsl_layer_model.png "Layer Model"
 
-### Overlay Scheme for TX-PRU
+### Overlay Scheme for TX-PRU {#HDSL_DESIGN_TXPRU_OVERLAY}
 
 Each PRU-ICSSG has two slices, and each slice has three cores : PRU, RTU-PRU and TX-PRU. The instruction memory for PRU, RTU-PRU and TX-PRU coreS is 12 kB, 8 kB and 6 kB respctively. Multi-channel implementation of Hiperface DSL is achieved by enabling load share mode of PRU-ICSSG where one core is responsible for one channel. One PRU-ICSSG slice supports three peripheral interfaces for HDSL. Mapping is fixed to channel 0 with RTU-PRU, channel 1 with TX-PRU. To implement an equivalent data link layer and transport layer as the reference IP-core for the Hiperface DSL on FPGA, the instruction memory for TX-PRU is not enough. Hence a code overlay scheme is required only for TX-PRU core, which is only needed if channel 2 is enabled.
 
