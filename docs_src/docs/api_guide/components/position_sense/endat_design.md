@@ -21,7 +21,7 @@ Clock, data transmit, data receive and receive enable signals from PRU1 of ICSS_
 ## Implementation
 
 The EnDat receiver function is implemented on TI Sitara™ Devices.
-Encoder is connected to IDK via <a href="http://www.ti.com/tool/TIDA-00179" target="_blank"> TIDA-00179 Universal Digital Interface to Absolute Position Encoders </a>, <a href="../TIDEP-01015Rev E1.1(001)_Sch.pdf" target="_blank"> TIDEP-01015 3 Axis Board </a> and <a href="../MS_TI_AM64x_EVM_3-AXIS_INTERFACE_BOARD_SCH_REV_E1.pdf" target="_blank"> Interface card connecting EVM and TIDEP-01015 3 Axis </a>.
+Encoder is connected to IDK via <a href="http://www.ti.com/tool/TIDA-00179" target="_blank"> TIDA-00179 Universal Digital Interface to Absolute Position Encoders </a>, <a href="../TIDEP-01015Rev E1.1(001)_Sch.pdf" target="_blank"> TIDEP-01015 3 Axis Board </a> and <a href="../MS_TI_EVM_3-AXIS_INTERFACE_BOARD_SCH_REV_E1.pdf" target="_blank"> Interface card connecting EVM and TIDEP-01015 3 Axis </a>.
 Design is split into three parts – EnDat hardware support in PRU, firmware running in PRU and driver running in ARM.
 Application is supposed to use the EnDat driver APIs to leverage EnDat functionality.
 SDK examples used the EnDat hardware capability in Slice 1 (either 1 core or 3 cores based ont the confiuration) of PRU-ICSSG0.
