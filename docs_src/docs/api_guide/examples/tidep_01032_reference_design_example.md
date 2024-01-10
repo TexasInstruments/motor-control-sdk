@@ -11,4 +11,8 @@ This reference design showcases the ability of the AM243x device to support a fu
 - Two axes (6 channels) of 3-phase current feedback through AMC1035D Sigma-Delta modulator and INA241A current sense path
 - Two axes of RS-485 based absolute encoder feedback supporting multiple industrial encoder standards
 
+## User Guide
+
+For more details on the design like system overview, hardware/software description, etc., please refer to  <a href="../TIDUF42.pdf" target="_blank"> TIDEP-01032 Design Guide </a>.
+
 \note Currently the FOC loop used for Closed Speed (Velocity) Control is based on the CMSIS library. We will switch to the RTLib functions and DCL functions in the near future.
