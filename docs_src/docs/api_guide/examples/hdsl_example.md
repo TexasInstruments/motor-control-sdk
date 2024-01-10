@@ -93,10 +93,10 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
     - **Option 1**
         - <a href="http://www.ti.com/tool/TIDA-00179" target="_blank"> TIDA-00179 Universal Digital Interface to Absolute Position Encoders </a>
         - <a href="../TIDEP-01015Rev E1.1(001)_Sch.pdf" target="_blank"> TIDEP-01015 3 Axis Board </a>
-        - <a href="../MS_TI_AM64x_EVM_3-AXIS_INTERFACE_BOARD_SCH_REV_E1.pdf" target="_blank"> Interface card connecting EVM and TIDEP-01015 3 Axis </a>
+        - <a href="../MS_TI_EVM_3-AXIS_INTERFACE_BOARD_SCH_REV_E1.pdf" target="_blank"> Interface card connecting EVM and TIDEP-01015 3 Axis </a>
         - Connect the Hiperface DSL encoder to HDSL+/-(Pin number 6 and 7) signals available on header J7 or Sub-D15 connector of the "Universal Digital Interface to Absolute Position Encoders" board.
     - **Option 2**
-        - <a href="../HDSL_AM64xE1_Schematics.pdf" target="_blank"> HDSL AM64xE1 Transceiver</a> (If application is using this card, define the macro HDSL_AM64xE1_TRANSCEIVER in the CCS project/make file)
+        - <a href="../HDSL_Transceiver_E1_Schematics.pdf" target="_blank"> HDSL AM64xE1 Transceiver</a> (If application is using this card, define the macro HDSL_AM64xE1_TRANSCEIVER in the CCS project/make file)
         - Connect the Hiperface DSL encoder to J10.
 		- HDSL AM64xE1 Transceiver supports two channels that can be used to support HDSL safety, multi axis servo drives.
 
