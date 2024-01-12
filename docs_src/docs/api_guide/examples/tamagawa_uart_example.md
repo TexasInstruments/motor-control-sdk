@@ -8,6 +8,7 @@ Tamagawa over uart application does below,
 
 - Configures pinmux, GPIO, UART (UART clock to 192MHz, Baud rate, etc.)
 - Initializes UART0 for debug log & UART1 for communication
+- Select UART LLD with polling mode for encoder communication
 - Load and executes tamagawa example on R5_0
 
 
@@ -18,7 +19,7 @@ UART RX Pin(UART1_RXD)->JMP1-R,
 UART TX Pin(UART1_TXD)->JMP4-D,
 GPIO Pin(GPIO62)->JM3-DE
 
-The tamagawa over uart example runs on R5 and communicates with tamagawa encoder by UART1. It presents the user with menu options to select Data ID code (as defined by Tamagawa) to be sent to the encoder. The application collects the data entered by the user and configures the relevant command. Then via the UART1 write API, the command is passed to encoder. Once the command is sent, the encoder starts to respond, and UART1 read API starts to read this response. Response is stored in the tamagawa interface, the status of the transaction is check by CRC calculation. If the status indicates success, the result is presented to the user otherwise print CRC failure.
+The tamagawa over uart example runs on R5 and communicates with tamagawa encoder by UART instance 1. It presents the user with menu options to select Data ID code (as defined by Tamagawa) to be sent to the encoder. The application collects the data entered by the user and configures the relevant command. Then via the UART LLD write API, the command is passed to encoder. Once the command is sent, the encoder starts to respond, and UART LLD read API starts to read this response. Response is stored in the tamagawa interface, the status of the transaction is check by CRC calculation. If the status indicates success, the result is presented to the user otherwise print CRC failure.
 
 
 

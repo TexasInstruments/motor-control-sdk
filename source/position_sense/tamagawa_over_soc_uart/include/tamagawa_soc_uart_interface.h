@@ -134,7 +134,7 @@ struct tamagawa_uart_interface
  *  \retval     -EINVAL failure
  *
  */
-int32_t tamagawa_command_process(volatile struct tamagawa_uart_interface *tamagawa_interface, UART_Handle *gUartHandle, int32_t cmd);
+int32_t tamagawa_command_process(volatile struct tamagawa_uart_interface *tamagawa_interface, UARTLLD_Handle *gUartHandle, int32_t cmd);
 /**
  *  \brief      Compare Received CRC and Calculated CRC
  *

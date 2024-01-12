@@ -38,13 +38,14 @@
 #include <string.h>
 #include <math.h>
 
+#include <drivers/uart.h>
 #include <kernel/dpl/DebugP.h>
 #include "ti_drivers_config.h"
 #include "ti_drivers_open_close.h"
 #include "ti_board_open_close.h"
 #include <position_sense/tamagawa_over_soc_uart/include/tamagawa_soc_uart_interface.h>
 
-extern UART_Handle gUartHandle[CONFIG_UART_NUM_INSTANCES];
+extern UARTLLD_Handle gUartHandleLld[CONFIG_UART_NUM_LLD_INSTANCES];
 volatile struct tamagawa_uart_interface TamagawaInterfaceInstance;
 
 volatile struct tamagawa_uart_interface *tamagawa_interface = &TamagawaInterfaceInstance;
@@ -210,7 +211,7 @@ void uart_tamagawa(void *args)
             continue;
         }
 
-        status = tamagawa_command_process(tamagawa_interface, gUartHandle, cmd);
+        status = tamagawa_command_process(tamagawa_interface, gUartHandleLld, cmd);
         /* Case of command process failure */
 
         if (status < 0)
