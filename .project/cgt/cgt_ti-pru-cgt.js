@@ -94,7 +94,7 @@ const cgt_common = {
     },
     lflags: {
         common: [
-            "-llibc.a"
+            
         ],
     },
     libdirs: {

@@ -50,7 +50,6 @@
         linkerBuildOptions="
             -i${CG_TOOL_ROOT}/lib
             -m=sdfm_firmware_multi_axis_load_share.${ConfigName}.map
-            -llibc.a
             --warn_sections
             --entry_point=SDFM_ENTRY
             --zero_init=off
