@@ -83,7 +83,7 @@ clean:
 
 post-build:
 		-$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=BiSSFirmwareMultiMakePRU -o bissc_master_multi_PRU_bin.h bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out
-		- mv bissc_master_multi_PRU_bin.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware/bissc_master_multi_PRU_bin.h
+		- $(COPY) bissc_master_multi_PRU_bin.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware/bissc_master_multi_PRU_bin.h
 	-@echo ' '
 
 .PHONY: all clean

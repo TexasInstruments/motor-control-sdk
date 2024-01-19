@@ -46,7 +46,7 @@
         "
 
         postBuildStep="
-            $(CG_TOOL_ROOT)/bin/hexpru.exe --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakeTXPRU -o endat_peripheral_interface_multi_ch_load_share_am64x-evm_icssg0-txpru1_fw_ti-pru-cgt.h endat_peripheral_interface_multi_ch_load_share_am64x-evm_icssg0-txpru1_fw_ti-pru-cgt.out;  move endat_peripheral_interface_multi_ch_load_share_am64x-evm_icssg0-txpru1_fw_ti-pru-cgt.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/endat_master_multi_TXPRU_bin.h
+            $(CG_TOOL_ROOT)/bin/hexpru.exe --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakeTXPRU -o endat_peripheral_interface_multi_ch_load_share_am64x-evm_icssg0-txpru1_fw_ti-pru-cgt.h endat_peripheral_interface_multi_ch_load_share_am64x-evm_icssg0-txpru1_fw_ti-pru-cgt.out;  $(COPY) endat_peripheral_interface_multi_ch_load_share_am64x-evm_icssg0-txpru1_fw_ti-pru-cgt.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/endat_master_multi_TXPRU_bin.h
         "
 
         description="A Endat Peripheral Interface Multi Ch Load Share FW project">
