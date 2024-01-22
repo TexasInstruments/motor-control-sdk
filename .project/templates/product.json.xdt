@@ -32,6 +32,7 @@
         "/usb/usb",
         "/pru_io/pru_io",
         "/industrial_comms/industrial_comms",
+        "/memory_configurator/components",
 % }
 % if(args.device == "am263x") {
         "/motor_control",
@@ -42,6 +43,7 @@
         "/security/security",
         "/xbar/xbar",
         "/industrial_comms/industrial_comms",
+        "/memory_configurator/components",
 % }
     ],
     "devices": [

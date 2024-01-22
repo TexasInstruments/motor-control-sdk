@@ -19,6 +19,7 @@
         "/usb/usb",
         "/pru_io/pru_io",
         "/industrial_comms/industrial_comms",
+        "/memory_configurator/components",
     ],
     "devices": [
         "AM64x",
