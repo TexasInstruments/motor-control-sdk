@@ -13,16 +13,17 @@ RMDIR := RMDIR /S/Q
 
 # Add inputs and outputs from these tool invocations to the build variables
 CMD_SRCS += \
-linker.cmd \
+	bissc_diagnostic.cmd \
+	bissc_master_hexpru.cmd \
 
 ASM_SRCS += \
-main.asm
+	bissc_main.asm \
 
 OBJS += \
-main.obj
+	bissc_main.obj \
 
 ASM_DEPS += \
-main.d
+	bissc_main.d \
 
 OBJDIR := .
 
@@ -56,18 +57,18 @@ all: $(OBJS) $(CMD_SRCS)
 	@$(MAKE) --no-print-directory -Onone "bissc_peripheral_interface_single_ch_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out"
 
 # Each subdirectory must supply rules for building sources it contributes
-$(OBJDIR)/$(OBJS): $(ASM_SRCS) 
-	@echo 'Building file: "$<"'
+$(OBJDIR)/$(OBJS) %.obj: $(ASM_SRCS) 
+	@echo 'Building file: "$^"'
 	@echo 'Invoking: PRU Compiler'
-	"$(CGT_TI_PRU_PATH)/bin/clpru" -DICSSG0 -DPRU1 -DSLICE1 -v4 --define=SOC_AM243X --include_path="$(SYSCFG_DIR)" --include_path="${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware"  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little --preproc_with_compile --preproc_dependency="$(basename $(<F)).d_raw" "$<"
-	@echo 'Finished building: "$<"'
+	"$(CGT_TI_PRU_PATH)/bin/clpru" -DICSSG0 -DPRU1 -DSLICE1 -v4 --define=SOC_AM243X --include_path="$(SYSCFG_DIR)" --include_path="${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware"  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little --preproc_with_compile --preproc_dependency="$(basename $(<F)).d_raw" $^
+	@echo 'Finished building: "$^"'
 	@echo ' '
 
 # Tool invocations
 bissc_peripheral_interface_single_ch_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out: $(OBJS) $(CMD_SRCS)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: PRU Linker'
-	"$(CGT_TI_PRU_PATH)/bin/clpru" -DICSSG0 -DPRU1 -DSLICE1 -v4 --define=SOC_AM243X  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little -z -m"bissc_peripheral_interface_single_ch_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.map" --disable_auto_rts   --diag_wrap=off --display_error_number --warn_sections --xml_link_info="bissc_peripheral_interface_single_ch_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_linkInfo.xml" --rom_model -o "bissc_peripheral_interface_single_ch_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out" $^
+	"$(CGT_TI_PRU_PATH)/bin/clpru" -DICSSG0 -DPRU1 -DSLICE1 -v4 --define=SOC_AM243X  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little -z -m"bissc_peripheral_interface_single_ch_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.map" --disable_auto_rts   --diag_wrap=off --display_error_number --warn_sections --xml_link_info="bissc_peripheral_interface_single_ch_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_linkInfo.xml" --entry_point=BISSC_INIT --disable_auto_rts  --rom_model -o "bissc_peripheral_interface_single_ch_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out" $^	
 	@echo 'Finished building target: "$@"'
 	@echo ' '
 	@$(MAKE) --no-print-directory post-build
@@ -75,14 +76,14 @@ bissc_peripheral_interface_single_ch_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out: $
 # To clean generated files
 clean:
 	-$(RM) $(BIN_OUTPUTS__QUOTED)$(EXE_OUTPUTS__QUOTED)
-	-$(RM) "main.obj"
-	-$(RM) "main.d"
+	-$(RM) $(OBJS)
+	-$(RM) $(ASM_DEPS)
 	-@echo 'Finished clean'
 	-@echo ' '
 
 post-build:
 		-$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=BiSSFirmware -o bissc_master_bin.h bissc_peripheral_interface_single_ch_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out
-		- mv bissc_master_bin.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware/bissc_master_bin.h
+		- $(COPY) bissc_master_bin.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware/bissc_master_bin.h
 	-@echo ' '
 
 .PHONY: all clean

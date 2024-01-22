@@ -16,16 +16,48 @@ RMDIR := RMDIR /S/Q
 
 # Add inputs and outputs from these tool invocations to the build variables
 CMD_SRCS += \
-`obj.pru_linker_file`.cmd \
+% for (prop in obj.files) {
+	% if ( obj.files.hasOwnProperty(prop) && Array.isArray(obj.files[prop]) ) {
+		% for(let val of obj.files[prop]) {
+			%if(val.includes(".cmd")){
+	`val` \
+			%}
+		% }
+	% }
+% }
 
 ASM_SRCS += \
-`obj.pru_main_file`.asm
+% for (prop in obj.files) {
+	% if ( obj.files.hasOwnProperty(prop) && Array.isArray(obj.files[prop]) ) {
+		% for(let val of obj.files[prop]) {
+			%if(val.includes(".asm")){
+	`val` \
+			%}
+		% }
+	% }
+% }
 
 OBJS += \
-`obj.pru_main_file`.obj
+% for (prop in obj.files) {
+	% if ( obj.files.hasOwnProperty(prop) && Array.isArray(obj.files[prop]) ) {
+		% for(let val of obj.files[prop]) {
+			%if(val.includes(".asm")){
+	`val.replace(".asm",".obj")` \
+			%}
+		% }
+	% }
+% }
 
 ASM_DEPS += \
-`obj.pru_main_file`.d
+% for (prop in obj.files) {
+	% if ( obj.files.hasOwnProperty(prop) && Array.isArray(obj.files[prop]) ) {
+		% for(let val of obj.files[prop]) {
+			%if(val.includes(".asm")){
+	`val.replace(".asm",".d")` \
+			%}
+		% }
+	% }
+% }
 
 OBJDIR := .
 
@@ -50,6 +82,15 @@ vpath %.cmd $(FILES_PATH)
     % if ( cflags.hasOwnProperty(prop) && Array.isArray(cflags[prop]) && prop == 'common') {
         % for(let val of cflags[prop]) {
             % commandString += `${val} `;
+        % }
+    % }
+% }
+% let lflags = obj.lflags;
+% let lflagsString = "";
+% for (let prop in lflags) {
+    % if ( lflags.hasOwnProperty(prop) && Array.isArray(lflags[prop]) && prop == 'common') {
+        % for(let val of lflags[prop]) {
+            % lflagsString += `${val} `;
         % }
     % }
 % }
@@ -92,11 +133,11 @@ all: $(OBJS) $(CMD_SRCS)
 	@$(MAKE) --no-print-directory -Onone "`projectName`.out"
 
 # Each subdirectory must supply rules for building sources it contributes
-$(OBJDIR)/$(OBJS): $(ASM_SRCS) 
-	@echo 'Building file: "$<"'
+$(OBJDIR)/$(OBJS) %.obj: $(ASM_SRCS) 
+	@echo 'Building file: "$^"'
 	@echo 'Invoking: PRU Compiler'
-	"$(CGT_TI_PRU_PATH)/bin/clpru" `commandString` --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little --preproc_with_compile --preproc_dependency="$(basename $(<F)).d_raw" "$<"
-	@echo 'Finished building: "$<"'
+	"$(CGT_TI_PRU_PATH)/bin/clpru" `commandString` --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little --preproc_with_compile --preproc_dependency="$(basename $(<F)).d_raw" $^
+	@echo 'Finished building: "$^"'
 	@echo ' '
 
 # Tool invocations
@@ -104,7 +145,11 @@ $(OBJDIR)/$(OBJS): $(ASM_SRCS)
 `projectName`.out: $(OBJS) $(CMD_SRCS)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: PRU Linker'
-	"$(CGT_TI_PRU_PATH)/bin/clpru" `cmdSubStr` --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little -z -m"`projectName`.map" --disable_auto_rts   --diag_wrap=off --display_error_number --warn_sections --xml_link_info="`projectName`_linkInfo.xml" --rom_model -o "`projectName`.out" $^
+	%if(lflagsString ){
+	"$(CGT_TI_PRU_PATH)/bin/clpru" `cmdSubStr` --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little -z -m"`projectName`.map" --disable_auto_rts   --diag_wrap=off --display_error_number --warn_sections --xml_link_info="`projectName`_linkInfo.xml" `lflagsString` --rom_model -o "`projectName`.out" $^	
+	%}else{
+	"$(CGT_TI_PRU_PATH)/bin/clpru" `cmdSubStr` --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little -z -m"`projectName`.map" --disable_auto_rts   --diag_wrap=off --display_error_number --warn_sections --xml_link_info="`projectName`_linkInfo.xml" --entry_point=main --rom_model -o "`projectName`.out" $^
+	%}
 	@echo 'Finished building target: "$@"'
 	@echo ' '
 	@$(MAKE) --no-print-directory post-build
@@ -112,8 +157,8 @@ $(OBJDIR)/$(OBJS): $(ASM_SRCS)
 # To clean generated files
 clean:
 	-$(RM) $(BIN_OUTPUTS__QUOTED)$(EXE_OUTPUTS__QUOTED)
-	-$(RM) "`obj.pru_main_file`.obj"
-	-$(RM) "`obj.pru_main_file`.d"
+	-$(RM) $(OBJS)
+	-$(RM) $(ASM_DEPS)
 	-@echo 'Finished clean'
 	-@echo ' '
 

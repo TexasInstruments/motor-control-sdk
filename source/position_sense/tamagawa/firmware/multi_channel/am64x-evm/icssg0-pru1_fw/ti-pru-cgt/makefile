@@ -13,16 +13,17 @@ RMDIR := RMDIR /S/Q
 
 # Add inputs and outputs from these tool invocations to the build variables
 CMD_SRCS += \
-tamagawa_diagnostic.cmd \
+	tamagawa_diagnostic.cmd \
+	tamagawa_master_hexpru.cmd \
 
 ASM_SRCS += \
-tamagawa_main.asm
+	tamagawa_main.asm \
 
 OBJS += \
-tamagawa_main.obj
+	tamagawa_main.obj \
 
 ASM_DEPS += \
-tamagawa_main.d
+	tamagawa_main.d \
 
 OBJDIR := .
 
@@ -55,18 +56,18 @@ all: $(OBJS) $(CMD_SRCS)
 	@$(MAKE) --no-print-directory -Onone "tamagawa_multi_channel_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.out"
 
 # Each subdirectory must supply rules for building sources it contributes
-$(OBJDIR)/$(OBJS): $(ASM_SRCS) 
-	@echo 'Building file: "$<"'
+$(OBJDIR)/$(OBJS) %.obj: $(ASM_SRCS) 
+	@echo 'Building file: "$^"'
 	@echo 'Invoking: PRU Compiler'
-	"$(CGT_TI_PRU_PATH)/bin/clpru" -DICSSG0 -DPRU1 -DSLICE1 -v4 --define=SOC_AM64X --define=ENABLE_MULTI_CHANNEL --include_path="$(SYSCFG_DIR)" --include_path="${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware"  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little --preproc_with_compile --preproc_dependency="$(basename $(<F)).d_raw" "$<"
-	@echo 'Finished building: "$<"'
+	"$(CGT_TI_PRU_PATH)/bin/clpru" -DICSSG0 -DPRU1 -DSLICE1 -v4 --define=SOC_AM64X --define=ENABLE_MULTI_CHANNEL --include_path="$(SYSCFG_DIR)" --include_path="${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware"  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little --preproc_with_compile --preproc_dependency="$(basename $(<F)).d_raw" $^
+	@echo 'Finished building: "$^"'
 	@echo ' '
 
 # Tool invocations
 tamagawa_multi_channel_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.out: $(OBJS) $(CMD_SRCS)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: PRU Linker'
-	"$(CGT_TI_PRU_PATH)/bin/clpru" -DICSSG0 -DPRU1 -DSLICE1 -v4 --define=SOC_AM64X --define=ENABLE_MULTI_CHANNEL  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little -z -m"tamagawa_multi_channel_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.map" --disable_auto_rts   --diag_wrap=off --display_error_number --warn_sections --xml_link_info="tamagawa_multi_channel_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_linkInfo.xml" --rom_model -o "tamagawa_multi_channel_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.out" $^
+	"$(CGT_TI_PRU_PATH)/bin/clpru" -DICSSG0 -DPRU1 -DSLICE1 -v4 --define=SOC_AM64X --define=ENABLE_MULTI_CHANNEL  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little -z -m"tamagawa_multi_channel_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.map" --disable_auto_rts   --diag_wrap=off --display_error_number --warn_sections --xml_link_info="tamagawa_multi_channel_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_linkInfo.xml" --entry_point=TAMAGAWA_INIT --disable_auto_rts  --rom_model -o "tamagawa_multi_channel_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.out" $^	
 	@echo 'Finished building target: "$@"'
 	@echo ' '
 	@$(MAKE) --no-print-directory post-build
@@ -74,15 +75,15 @@ tamagawa_multi_channel_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.out: $(OBJS) $(CMD_SR
 # To clean generated files
 clean:
 	-$(RM) $(BIN_OUTPUTS__QUOTED)$(EXE_OUTPUTS__QUOTED)
-	-$(RM) "tamagawa_main.obj"
-	-$(RM) "tamagawa_main.d"
+	-$(RM) $(OBJS)
+	-$(RM) $(ASM_DEPS)
 	-@echo 'Finished clean'
 	-@echo ' '
 
 post-build:
 		-$(CG_TOOL_ROOT)/bin/hexpru.exe ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/tamagawa_master_hexpru.cmd tamagawa_multi_channel_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.out
 		- ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/tools/bin2header/bin2header.exe tamagawa_multi_channel_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.b00 tamagawa_master_multi_channel_bin.h TamagawaFirmware 4
-		- move tamagawa_master_multi_channel_bin.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/tamagawa_master_multi_channel_bin.h 
+		- $(COPY) tamagawa_master_multi_channel_bin.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/tamagawa_master_multi_channel_bin.h 
 	-@echo ' '
 
 .PHONY: all clean
