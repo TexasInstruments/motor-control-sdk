@@ -53,22 +53,12 @@ const defines_r5f = {
     ],
 };
 
-const lnkfiles = {
-    common: [
-        "linker.cmd",
-    ]
-};
-
 const syscfgfile = "../example.syscfg";
 
 const readmeDoxygenPageTag = "EXAMPLE_MOTORCONTROL_TAMAGAWA_OVER_UART";
 
 const templates_freertos_r5f =
 [
-    {
-        input: ".project/templates/am263x/common/linker_r5f.cmd.xdt",
-        output: "linker.cmd",
-    },
     {
         input: ".project/templates/am263x/freertos/main_freertos.c.xdt",
         output: "../main.c",
@@ -104,7 +94,6 @@ function getComponentBuildProperty(buildOption) {
 
     build_property.files = files;
     build_property.filedirs = filedirs;
-    build_property.lnkfiles = lnkfiles;
     build_property.syscfgfile = syscfgfile;
     build_property.readmeDoxygenPageTag = readmeDoxygenPageTag;
     if(buildOption.cpu.match(/r5f*/)) {
