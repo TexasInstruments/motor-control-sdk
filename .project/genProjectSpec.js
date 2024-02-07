@@ -142,7 +142,6 @@ const utils = {
 
         return require(`./device/project_${device}`).getProductNameProjectSpec();
     },
-	
     /* default action for files in project spec, i.e copy or link */
     getDefaultActionProjectSpec: () => {
 

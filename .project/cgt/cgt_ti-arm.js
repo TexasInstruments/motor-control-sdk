@@ -7,7 +7,7 @@ const cgt = {
         common: [
             "$(CGT_TI_ARM_PATH)/include",
             ".",
-            "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source"
+            "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source",
             "${MOTOR_CONTROL_SDK_PATH}/source",
         ]
     },

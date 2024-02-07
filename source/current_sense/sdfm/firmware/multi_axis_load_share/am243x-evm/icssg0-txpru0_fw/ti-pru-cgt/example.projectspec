@@ -48,8 +48,8 @@
             -DSDFM_LOAD_SHARE_MODE
         "
         linkerBuildOptions="
-            -i${CG_TOOL_ROOT}/lib
             -m=sdfm_firmware_multi_axis_load_share.${ConfigName}.map
+            --disable_auto_rts
             --warn_sections
             --entry_point=SDFM_ENTRY
             --zero_init=off

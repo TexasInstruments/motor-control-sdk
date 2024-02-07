@@ -8,8 +8,6 @@ export MOTOR_CONTROL_SDK_PATH?=$(abspath ../../../../../../../..)
 include $(MOTOR_CONTROL_SDK_PATH)/imports.mak
 SYSCFG_DIR := $(CCS_PROJECT_DEBUG)/syscfg
 CG_TOOL_ROOT := $(CGT_TI_PRU_PATH)
-RM := DEL /F
-RMDIR := RMDIR /S/Q
 
 # Add inputs and outputs from these tool invocations to the build variables
 CMD_SRCS += \

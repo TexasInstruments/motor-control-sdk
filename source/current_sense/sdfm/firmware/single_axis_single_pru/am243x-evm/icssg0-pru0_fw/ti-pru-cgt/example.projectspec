@@ -45,8 +45,8 @@
             -DSOC_AM243X
         "
         linkerBuildOptions="
-            -i${CG_TOOL_ROOT}/lib
             -m=sdfm_firmware_single_axis_single_pru.${ConfigName}.map
+            --disable_auto_rts
             --disable_auto_rts
             --define=SDFM_PRU_CORE=1
             --warn_sections

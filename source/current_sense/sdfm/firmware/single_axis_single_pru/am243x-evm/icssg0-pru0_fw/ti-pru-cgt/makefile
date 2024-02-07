@@ -8,8 +8,6 @@ export MOTOR_CONTROL_SDK_PATH?=$(abspath ../../../../../../../..)
 include $(MOTOR_CONTROL_SDK_PATH)/imports.mak
 SYSCFG_DIR := $(CCS_PROJECT_DEBUG)/syscfg
 CG_TOOL_ROOT := $(CGT_TI_PRU_PATH)
-RM := DEL /F
-RMDIR := RMDIR /S/Q
 
 # Add inputs and outputs from these tool invocations to the build variables
 CMD_SRCS += \
@@ -67,7 +65,7 @@ $(OBJDIR)/$(OBJS) %.obj: $(ASM_SRCS)
 sdfm_firmware_single_axis_single_pru_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.out: $(OBJS) $(CMD_SRCS)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: PRU Linker'
-	"$(CGT_TI_PRU_PATH)/bin/clpru" -DICSSG0 -DPRU0 -DSLICE0 -v4 -v4 -DSDFM_PRU_CORE -o2 --display_error_number --hardware_mac=on --define=SOC_AM243X  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little -z -m"sdfm_firmware_single_axis_single_pru_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.map" --disable_auto_rts   --diag_wrap=off --display_error_number --warn_sections --xml_link_info="sdfm_firmware_single_axis_single_pru_am243x-evm_icssg0-pru0_fw_ti-pru-cgt_linkInfo.xml" --disable_auto_rts --define=SDFM_PRU_CORE=1 --warn_sections --entry_point=SDFM_ENTRY --zero_init=off  --rom_model -o "sdfm_firmware_single_axis_single_pru_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.out" $^	
+	"$(CGT_TI_PRU_PATH)/bin/clpru" -DICSSG0 -DPRU0 -DSLICE0 -v4 -v4 -DSDFM_PRU_CORE -o2 --display_error_number --hardware_mac=on --define=SOC_AM243X  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little -z -m"sdfm_firmware_single_axis_single_pru_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.map" --disable_auto_rts   --diag_wrap=off --display_error_number --warn_sections --xml_link_info="sdfm_firmware_single_axis_single_pru_am243x-evm_icssg0-pru0_fw_ti-pru-cgt_linkInfo.xml" --disable_auto_rts --disable_auto_rts --define=SDFM_PRU_CORE=1 --warn_sections --entry_point=SDFM_ENTRY --zero_init=off  --rom_model -o "sdfm_firmware_single_axis_single_pru_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.out" $^	
 	@echo 'Finished building target: "$@"'
 	@echo ' '
 	@$(MAKE) --no-print-directory post-build

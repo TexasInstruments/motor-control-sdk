@@ -37,10 +37,9 @@ else
 endif
 
 CGT_TI_PRU_PATH=$(TOOLS_PATH)/ti-cgt-pru_2.3.3
-CGT_TI_SMART_PLACEMENT_TOOL_PATH=$(TOOLS_PATH)/ti-cgt-armllvm_3.0.0.STS
 CGT_TI_ARM_CLANG_PATH=$(CCS_PATH)/tools/compiler/ti-cgt-armllvm_3.2.0.LTS
 ifeq ($(wildcard $(CGT_TI_ARM_CLANG_PATH)),)
-    CGT_TI_ARM_CLANG_PATH=$(TOOLS_PATH)/ti-cgt-armllvm_2.1.3.LTS
+    CGT_TI_ARM_CLANG_PATH=$(TOOLS_PATH)/ti-cgt-armllvm_3.2.0.LTS
 endif
 CGT_TI_C6000_PATH=$(CCS_PATH)/tools/compiler/ti-cgt-c6000_8.3.12
 DSPLIB_PATH=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/dsplib_c66x_3_4_0_0

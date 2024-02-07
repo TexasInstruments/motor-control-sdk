@@ -14,8 +14,8 @@
         name = "transforms_test_am263x-lp_r5fss0-0_freertos_ti-arm-clang"
         products="sysconfig;com.ti.MOTOR_CONTROL_SDK_AMXXX;"
         configurations="
-                Release,
-                Debug,
+            Debug,
+            Release,
         "
         connection="TIXDS110_Connection.xml"
         toolChain="TICLANG"
