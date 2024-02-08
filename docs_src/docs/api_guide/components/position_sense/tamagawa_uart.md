@@ -23,7 +23,7 @@ The Tamagawa over UART module provides a support for SoC UART instance to execut
 
 SysConfig can be used to configure things mentioned below:
 - Baud rate selection(2461538 bps for 2.5 Mbps encoder, 4923076 bps for 5Mbps encoder)
-- Communication mode selection (Tested on polling mode)
+- Communication mode selection (Tested using polling mode with UART LLD)
 - Configuring GPIO62 signal with J2 pin (RTSn pin for software based flow control)
 - UART instance selection
 

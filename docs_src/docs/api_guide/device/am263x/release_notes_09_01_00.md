@@ -196,3 +196,19 @@ earlier SDKs. -->
     <th> Additional Remarks
 </tr>
 </table> -->
+### Drivers
+
+<table>
+<tr>
+    <th> Module
+    <th> Affected API
+    <th> Change
+    <th> Additional Remarks
+</tr>
+<tr>
+    <td> Position Sense Tamagawa
+    <td> \ref tamagawa_command_process
+    <td> Updated parameter: UART LLD handle instead of UART handle.
+    <td> -
+</tr>
+</table>

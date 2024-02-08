@@ -203,13 +203,12 @@ int32_t tamagawa_command_build(volatile struct tamagawa_uart_interface *tamagawa
 }
 
 
-int32_t tamagawa_command_process(volatile struct tamagawa_uart_interface *tamagawa_interface, UART_Handle *gUartHandle, int32_t cmd)
+int32_t tamagawa_command_process(volatile struct tamagawa_uart_interface *tamagawa_interface, UARTLLD_Handle *gUartHandle, int32_t cmd)
 {
     int32_t          transferOK;
     UART_Transaction trans;
 
-    UART_Transaction_init(&trans);
-
+    UART_lld_Transaction_init(&trans);
     uint8_t tx[MAX_TX_FRAME];
     uint8_t rx[MAX_RX_FRAME];
     uint8_t tx_size = 0, rx_size = 0;
@@ -227,7 +226,7 @@ int32_t tamagawa_command_process(volatile struct tamagawa_uart_interface *tamaga
     trans.count = tx_size;
     /*configure GPIO pin high just before TX start (RTSn high)*/
     GPIO_pinWriteHigh(tamagawa_interface->gpio_base_address, tamagawa_interface->gpio_pin_number);
-    transferOK = UART_write(gUartHandle[tamagawa_interface->uart_instance], &trans);
+    transferOK = UART_lld_write(gUartHandle[tamagawa_interface->uart_instance], trans.buf, trans.count, trans.timeout, NULL);
     /*configure GPIO pin low just after TX complete (RTSn low)*/
     GPIO_pinWriteLow(tamagawa_interface->gpio_base_address, tamagawa_interface->gpio_pin_number);
     APP_UART_ASSERT_ON_FAILURE(transferOK, trans);
@@ -235,7 +234,7 @@ int32_t tamagawa_command_process(volatile struct tamagawa_uart_interface *tamaga
     /* Read data from Rx fifo */
     trans.buf   = &rx[0U];
     trans.count = rx_size + tx_size;
-    transferOK = UART_read(gUartHandle[tamagawa_interface->uart_instance], &trans);
+    transferOK = UART_lld_read(gUartHandle[tamagawa_interface->uart_instance], trans.buf, trans.count, trans.timeout, NULL);
     APP_UART_ASSERT_ON_FAILURE(transferOK, trans);
 
     /* parsing of recevied data*/
