@@ -81,7 +81,7 @@ clean:
 
 post-build:
 		-$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=BiSSFirmware -o bissc_master_bin.h bissc_peripheral_interface_single_ch_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out
-		- $(COPY) bissc_master_bin.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware/bissc_master_bin.h
+		- move bissc_master_bin.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware/bissc_master_bin.h
 	-@echo ' '
 
 .PHONY: all clean

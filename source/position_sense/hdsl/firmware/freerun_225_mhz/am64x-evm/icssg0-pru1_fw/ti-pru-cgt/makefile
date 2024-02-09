@@ -92,7 +92,7 @@ clean:
 
 post-build:
 		-$(CG_TOOL_ROOT)/bin/hexpru.exe --diag_wrap=off --array --array:name_prefix=Hiperface_DSL2_0_RTU -o hdsl_master_icssg_freerun_225_mhz_bin.h hdsl_master_freerun_225_mhz_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.out
-		-  $(COPY)  hdsl_master_icssg_freerun_225_mhz_bin.h  ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/hdsl_master_icssg_freerun_225_mhz_bin.h
+		-  move  hdsl_master_icssg_freerun_225_mhz_bin.h  ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/hdsl_master_icssg_freerun_225_mhz_bin.h
 	-@echo ' '
 
 .PHONY: all clean

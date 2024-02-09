@@ -55,7 +55,7 @@ const buildOptionCombos = [
 
 
 let postBuildStepsPru = [
-   "$(CG_TOOL_ROOT)/bin/hexpru.exe --diag_wrap=off --array --array:name_prefix=SDFM_PRU0_image -o sdfm_firmware_single_axis_single_pru_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.h sdfm_firmware_single_axis_single_pru_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.out;  $(COPY) sdfm_firmware_single_axis_single_pru_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.h ${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware/sdfm_bin.h;"
+   "$(CG_TOOL_ROOT)/bin/hexpru.exe --diag_wrap=off --array --array:name_prefix=SDFM_PRU0_image -o sdfm_firmware_single_axis_single_pru_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.h sdfm_firmware_single_axis_single_pru_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.out;  move sdfm_firmware_single_axis_single_pru_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.h ${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware/sdfm_bin.h;"
 ];
 
 
