@@ -62,6 +62,7 @@
 #include "park.h"
 #include "ipark.h"
 #include "svgen.h"
+#include "dcl.h"
 #endif
 
 #if PRU_ICSSGx_PRU_SLICE
@@ -272,10 +273,17 @@ __attribute__((section(".gEncChData"))) struct endat_pruss_xchg local_pruss_xchg
 
 volatile Bool gUpdOutIsr = FALSE;   /* Flag for updating PWM output in ISR */
 
+#if defined(USE_RTLIB_FOC)
+DCL_PI gPiSpd;
+DCL_PI gPiId;
+DCL_PI gPiIq;
+#else
 arm_pid_instance_f32 gPiId;
 arm_pid_instance_f32 gPiIq;
 arm_pid_instance_f32 gPiSpd;
 arm_pid_instance_f32 gPiPos;
+#endif
+
 volatile Bool gConstantsChanged = 0;
 
 /* ICSSG PRU SDDF FW IRQ handler */
@@ -907,7 +915,11 @@ __attribute__((section(".critical_code"))) void pruEncoderIrqHandler(void *args)
 
             // update the gCurActualVelocity[0] based on the gSpdSetPoint
             gCurActualVelocity[0] = (uint32_t)gSpdSetPoint;
-
+#if defined(USE_RTLIB_FOC)
+            gIqRef = -DCL_runPIParallel(&gPiSpd, gSpdSetPoint, speed);
+            parkIqOut = DCL_runPIParallel(&gPiIq, gIqRef, parkIqMeasured);
+            parkIdOut = DCL_runPIParallel(&gPiId, 0.0f, parkIdMeasured);
+#else
             gIqRef = arm_pi_f32(&gPiSpd, gSpdSetPoint - speed);
             parkIqOut = arm_pi_f32(&gPiIq, gIqRef - parkIqMeasured);
             parkIdOut = arm_pi_f32(&gPiId, 0.0 - parkIdMeasured);
@@ -915,6 +927,7 @@ __attribute__((section(".critical_code"))) void pruEncoderIrqHandler(void *args)
             if (parkIqOut<-1.0*IQ_TESTING) parkIqOut = -1.0*IQ_TESTING;
             if (parkIdOut>ID_TESTING) parkIdOut = ID_TESTING;
             if (parkIdOut<-1.0*ID_TESTING) parkIdOut = -1.0*ID_TESTING;
+#endif
 #endif
 
 //Closed loop CiA402 Data
@@ -982,7 +995,7 @@ __attribute__((section(".critical_code"))) void pruEncoderIrqHandler(void *args)
             /* Inverse Park transform */
             IPARK_run(elecThetaSinCos[0], elecThetaSinCos[1], parkIdOut, parkIqOut, &iparkAlphaOut, &iparkBetaOut);
             /* Space Vector Generation */
-            SVGEN_run(1.0f, iparkAlphaOut, iparkBetaOut, &spcVectAOut, &spcVectBOut, &spcVectCOut);
+            SVGEN_runCom(1.0f, iparkAlphaOut, iparkBetaOut, &spcVectAOut, &spcVectBOut, &spcVectCOut);
 #else
             /* Inverse Park transform */
             arm_inv_park_f32(parkIdOut, parkIqOut, &iparkAlphaOut, &iparkBetaOut, elecThetaSinCos[0], elecThetaSinCos[1]);
@@ -2570,10 +2583,17 @@ void init_pwms(){
     appEpwmCfg.tbSyncInCounterDir = EPWM_TB_COUNTER_DIR_DOWN;
     appEpwmCfg.cfgTbSyncOut = TRUE;
     appEpwmCfg.tbSyncOutMode = EPWM_TB_SYNC_OUT_EVT_CNT_EQ_ZERO;
+#if defined(USE_RTLIB_FOC)
     appEpwmCfg.aqCfg.zeroAction = EPWM_AQ_ACTION_DONOTHING;
     appEpwmCfg.aqCfg.prdAction = EPWM_AQ_ACTION_DONOTHING;
+    appEpwmCfg.aqCfg.cmpAUpAction = EPWM_AQ_ACTION_LOW;
+    appEpwmCfg.aqCfg.cmpADownAction = EPWM_AQ_ACTION_HIGH;
+#else
+    appEpwmCfg.aqCfg.zeroAction = EPWM_AQ_ACTION_LOW;
+    appEpwmCfg.aqCfg.prdAction = EPWM_AQ_ACTION_HIGH;
     appEpwmCfg.aqCfg.cmpAUpAction = EPWM_AQ_ACTION_HIGH;
     appEpwmCfg.aqCfg.cmpADownAction = EPWM_AQ_ACTION_LOW;
+#endif
     appEpwmCfg.aqCfg.cmpBUpAction = EPWM_AQ_ACTION_DONOTHING;
     appEpwmCfg.aqCfg.cmpBDownAction = EPWM_AQ_ACTION_DONOTHING;
     appEpwmCfg.cfgDb = TRUE;
@@ -2676,7 +2696,43 @@ void init_pwms(){
 
 void init_pids(){
     /* 50KHz PWM frequency PID constants */
-#if 1
+#if defined(USE_RTLIB_FOC)
+    gPiSpd.Kp = MAX_SPD_CHANGE;
+    gPiSpd.Ki = 0.0003;
+    gPiSpd.Umax = 1000;
+    gPiSpd.Umin = -1000;
+    gPiSpd.Imax = 0.0;
+    gPiSpd.Imin = 0.0;
+    gPiSpd.i6 = 1.0;
+    gPiSpd.i10 = 0.0;
+    gPiSpd.i11 = 0.0;
+    gPiSpd.sps = &(DCL_PI_SPS)PI_SPS_DEFAULTS;
+    gPiSpd.css = &(DCL_CSS)DCL_CSS_DEFAULTS;
+
+    gPiId.Kp = 0.2;
+    gPiId.Ki = 0.0001;
+    gPiId.Umax = ID_TESTING;
+    gPiId.Umin = -1.0*ID_TESTING;
+    gPiId.Imax = 0.0;
+    gPiId.Imin = 0.0;
+    gPiId.i6 = 1.0;
+    gPiId.i10 = 0.0;
+    gPiId.i11 = 0.0;
+    gPiId.sps = &(DCL_PI_SPS)PI_SPS_DEFAULTS;
+    gPiId.css = &(DCL_CSS)DCL_CSS_DEFAULTS;
+
+    gPiIq.Kp = 0.2;
+    gPiIq.Ki = 0.0001;
+    gPiIq.Umax = IQ_TESTING;
+    gPiIq.Umin = -1.0*IQ_TESTING;
+    gPiIq.Imax = 0.0;
+    gPiIq.Imin = 0.0;
+    gPiIq.i6 = 1.0;
+    gPiIq.i10 = 0.0;
+    gPiIq.i11 = 0.0;
+    gPiIq.sps = &(DCL_PI_SPS)PI_SPS_DEFAULTS;
+    gPiIq.css = &(DCL_CSS)DCL_CSS_DEFAULTS;
+#else
     gPiId.Kp = 0.2;
     gPiId.Ki = 0.0001;
     gPiId.Kd = 0;
