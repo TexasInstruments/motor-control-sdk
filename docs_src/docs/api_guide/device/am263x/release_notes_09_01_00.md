@@ -16,6 +16,7 @@
 Feature                                                                                         | Module
 ------------------------------------------------------------------------------------------------|-----------------------------------
 Re-baseline to MCU+ SDK 09.01.00 and Industrial Communications SDK 09.01.00                     | Motor Control SDK
+Transforms Library and Example                                                                  | Real Time Libraries
 
 ## Device and Validation Information
 
