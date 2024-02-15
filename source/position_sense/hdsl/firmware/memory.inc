@@ -145,6 +145,7 @@ LUT_EE_SIZE .set						9
 	.asg							r0, REG_TMP0
 	.asg							r1, REG_TMP1
 	.asg							r2, REG_TMP2
+	.asg                            r2.b2,ALIGN_PHASE
 	.asg							r2.b0, EXTRA_SIZE_SELF ;take care! these are not persistent registers, r2 is actually temp reigister. these names are
 	.asg							r2.b1, EXTRA_EDGE_SELF ;given to temp register for ease of reading. they are used as temp.
 
@@ -284,7 +285,10 @@ VEL2		.set						0x15
 VEL1		.set						0x16
 VEL0		.set						0x17
 ;SUMMARY/MIR_SUM is not supported
-;SUMMARY		.set						0x18
+;SUMMARY		.set					0x18
+	.if $defined("HDSL_CHECK_ALIGNMENT_PHASE")
+CURRENT_ALIGN_PHASE .set 				0x18 ; For debug only for checking current align phase
+	.endif   
 VPOS4		.set						0x19
 VPOS3		.set						0x1A
 VPOS2		.set						0x1B
@@ -522,3 +526,5 @@ PART2_RUN_START .set					0x7E ; 2 bytes
 PART2_SIZE .set							0x80 ; 2 bytes
 CHANNEL_SYNC .set						0x82 ; 1 byte
 CHANNEL_MASK .set						0x83 ; 1 byte
+XREG .set                               0x84 ; 5 bytes
+ONLINE_STATUS_1_H_TEMP .set 			0x89 ; 1byte
