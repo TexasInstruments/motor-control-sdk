@@ -18,7 +18,7 @@
  *    from this software without specific prior written permission.
  *
  *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- *  "AS IS" AND ANY EXPgResS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  *  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
  *  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
@@ -157,27 +157,28 @@ typedef _DCL_VOLATILE struct dcl_pid
 _DCL_CODE_ACCESS
 void DCL_resetPID(DCL_PID *pid)
 {
-    dcl_interrupt_t ints = DCL_disableInts();
+    dcl_interrupt_t ints;
+    ints = DCL_disableInts();
     pid->d2 = pid->d3 = pid->i10 = 0.0f;
     pid->i14 = 1.0f;
     DCL_restoreInts(ints);
 }
 
-//! \brief            Loads PID tuning parameter from its SPS parameter
+//! \brief            Loads PID tuning parameter from its SPS parameter without interrupt protection
 //!
 //! \param[in] pid    Pointer to the active DCL_PID controller structure
 //!
 _DCL_CODE_ACCESS
-void DCL_fupdatePID(DCL_PID *pid)
+void DCL_forceUpdatePID(DCL_PID *pid)
 {
 
 #ifdef DCL_ERROR_HANDLING_ENABLED
-    float32_t tau = (2.0f - pid->sps->c1 * pid->css->t_sec) / (2.0f * pid->sps->c1);
-    float32_t ec2 = pid->sps->c1 * (pid->css->t_sec - 2.0f * tau) / 2.0f;
+    float32_t tau = (2.0f - pid->sps->c1 * pid->css->T) / (2.0f * pid->sps->c1);
+    float32_t ec2 = pid->sps->c1 * (pid->css->T - 2.0f * tau) / 2.0f;
     uint32_t err_code = dcl_none;
     err_code |= DCL_isValue(pid->sps->c2, ec2) ? dcl_none : dcl_param_invalid_err;
     err_code |= (pid->sps->Umax > pid->sps->Umin) ? dcl_none : dcl_param_invalid_err;
-    err_code |= (pid->css->t_sec > 0.0f) ? dcl_none : dcl_param_range_err;
+    err_code |= (pid->css->T > 0.0f) ? dcl_none : dcl_param_range_err;
     err_code |= ((pid->sps->Kp > 0.0f) && (pid->sps->Ki > 0.0f) && (pid->sps->Kd > 0.0f) && (pid->sps->Kr > 0.0f)) ? dcl_none : dcl_param_range_err ;
     if (err_code)
     {
@@ -197,22 +198,21 @@ void DCL_fupdatePID(DCL_PID *pid)
     pid->Umin = pid->sps->Umin;
 }
 
-//! \brief            Updates PID parameter from its SPS parameter with interrupt protection
+//! \brief            Loads PID tuning parameter from its SPS parameter with interrupt protection
 //!
 //! \param[in] pid    Pointer to the active DCL_PID controller structure
-//! \return           'true' if update is successful, otherwise 'false'
 //!
 _DCL_CODE_ACCESS _DCL_CODE_SECTION
-bool DCL_updatePID(DCL_PID *pid)
+void DCL_updatePIDNoCheck(DCL_PID *pid)
 {
  
 #ifdef DCL_ERROR_HANDLING_ENABLED
-    float32_t tau = (2.0f - pid->sps->c1 * pid->css->t_sec) / (2.0f * pid->sps->c1);
-    float32_t ec2 = pid->sps->c1 * (pid->css->t_sec - 2.0f * tau) / 2.0f;
+    float32_t tau = (2.0f - pid->sps->c1 * pid->css->T) / (2.0f * pid->sps->c1);
+    float32_t ec2 = pid->sps->c1 * (pid->css->T - 2.0f * tau) / 2.0f;
     uint32_t err_code = dcl_none;
     err_code |= DCL_isValue(pid->sps->c2, ec2) ? dcl_none : dcl_param_invalid_err;
     err_code |= (pid->sps->Umax > pid->sps->Umin) ? dcl_none : dcl_param_invalid_err;
-    err_code |= (pid->css->t_sec > 0.0f) ? dcl_none : dcl_param_range_err;
+    err_code |= (pid->css->T > 0.0f) ? dcl_none : dcl_param_range_err;
     err_code |= ((pid->sps->Kp > 0.0f) && (pid->sps->Ki > 0.0f) && (pid->sps->Kd > 0.0f) && (pid->sps->Kr > 0.0f)) ? dcl_none : dcl_param_range_err ;
     if (err_code)
     {
@@ -222,64 +222,41 @@ bool DCL_updatePID(DCL_PID *pid)
     }
 #endif
 
-    if (!DCL_getUpdateStatus(pid))
-    {
-        dcl_interrupt_t ints = DCL_disableInts();
-        DCL_setUpdateStatus(pid);
-        pid->Kp = pid->sps->Kp;
-        pid->Ki = pid->sps->Ki;
-        pid->Kd = pid->sps->Kd;
-        pid->Kr = pid->sps->Kr;
-        pid->c1 = pid->sps->c1;
-        pid->c2 = pid->sps->c2;
-        pid->Umax = pid->sps->Umax;
-        pid->Umin = pid->sps->Umin;
-        DCL_clearUpdateStatus(pid);
-        DCL_restoreInts(ints);
-        return true;
-    }
-    return false;
+    dcl_interrupt_t ints;
+    ints = DCL_disableInts();
+    pid->Kp = pid->sps->Kp;
+    pid->Ki = pid->sps->Ki;
+    pid->Kd = pid->sps->Kd;
+    pid->Kr = pid->sps->Kr;
+    pid->c1 = pid->sps->c1;
+    pid->c2 = pid->sps->c2;
+    pid->Umax = pid->sps->Umax;
+    pid->Umin = pid->sps->Umin;
+    DCL_restoreInts(ints);
 }
 
-//! \brief           A conditional update based on the pending-for-update flag.
-//!                  If the pending status is set, the function will update PID
+//! \brief           A conditional update based on the update flag.
+//!                  If the update status is set, the function will update PID
 //!                  parameter from its SPS parameter and clear the status flag on completion.
-//!                  Note: Use DCL_setPendingStatus(pid) to set the pending status.
+//!                  Note: Use DCL_getUpdateStatus(pid) to set the update status.
 //!     
 //! \param[in] pid   Pointer to the DCL_PID controller structure
 //! \return          'true' if an update is applied, otherwise 'false'
 //!
 _DCL_CODE_ACCESS _DCL_CODE_SECTION
-bool DCL_pendingUpdatePID(DCL_PID *pid)
+bool DCL_updatePID(DCL_PID *pid)
 {
-    if (DCL_getPendingStatus(pid) && DCL_updatePID(pid))
+    if (DCL_getUpdateStatus(pid))
     {
-        DCL_clearPendingStatus(pid);
+        DCL_updatePIDNoCheck(pid);
+        DCL_clearUpdateStatus(pid);
         return true;
     }
     return false;
 }
 
-//! \brief           Update SPS parameter with active param, userful when needing
-//!                  to update only few active param from SPS and keep rest the same
-//!   
-//! \param[in] pid   Pointer to the active DCL_PID controller structure
-//!
-_DCL_CODE_ACCESS
-void DCL_updatePIDSPS(DCL_PID *pid)
-{
-    pid->sps->Kp = pid->Kp;
-    pid->sps->Ki = pid->Ki;
-    pid->sps->Kd = pid->Kd;
-    pid->sps->Kr = pid->Kr;
-    pid->sps->c1 = pid->c1;
-    pid->sps->c2 = pid->c2;
-    pid->sps->Umax = pid->Umax;
-    pid->sps->Umin = pid->Umin;
-}
-
 //! \brief            Loads the derivative path filter shadow coefficients.
-//!                   Note: Sampling period pid->css->t_sec are used in the calculation.
+//!                   Note: Sampling period pid->css->T are used in the calculation.
 //!                   New coefficients take effect when DCL_updatePID() is called.
 //!
 //! \param[in] pid    Pointer to the DCL_PID structure
@@ -291,7 +268,7 @@ void DCL_setPIDfilterBW(DCL_PID *pid, float32_t fc)
 
 #ifdef DCL_ERROR_HANDLING_ENABLED
     uint32_t err_code = dcl_none;
-    err_code |= ((fc >= 1.0f / (2.0f * pid->css->t_sec)) || (fc <= 0.0f)) ? dcl_param_range_err : dcl_none;
+    err_code |= ((fc >= 1.0f / (2.0f * pid->css->T)) || (fc <= 0.0f)) ? dcl_param_range_err : dcl_none;
     if (err_code)
     {
         DCL_setError(pid,err_code);
@@ -300,27 +277,27 @@ void DCL_setPIDfilterBW(DCL_PID *pid, float32_t fc)
     }
 #endif
 
-    float32_t t_sec = pid->css->t_sec;
+    float32_t T = pid->css->T;
     float32_t tau = 1.0f / (2.0f * CONST_PI * fc);
-    pid->sps->c1 = 2.0f / (t_sec + (2.0f * tau));
-    pid->sps->c2 = (t_sec - (2.0f * tau)) / (t_sec + (2.0f * tau));
+    pid->sps->c1 = 2.0f / (T + (2.0f * tau));
+    pid->sps->c2 = (T - (2.0f * tau)) / (T + (2.0f * tau));
 }
 
 //! \brief           Loads the PID derivative path filter active coefficients
-//!                  Note: Sampling period pid->css->t_sec are used in the calculation.
+//!                  Note: Sampling period pid->css->T are used in the calculation.
 //!                  New coefficients take effect immediately. SPS & CSS contents are unaffected.            
 //!
 //! \param[in] pid   Pointer to the DCL_PID structure
 //! \param[in] fc    The desired filter bandwidth in Hz
-//! \param[in] t_sec The controller update rate in seconds
+//! \param[in] T The controller update rate in seconds
 //!
 _DCL_CODE_ACCESS
-void DCL_setActivePIDfilterBW(DCL_PID *pid, float32_t fc, float32_t t_sec)
+void DCL_setActivePIDfilterBW(DCL_PID *pid, float32_t fc, float32_t T)
 {
     
 #ifdef DCL_ERROR_HANDLING_ENABLED
     uint32_t err_code = dcl_none;
-    err_code |= ((fc >= 1.0f / (2.0f * t_sec)) || (fc <= 0.0f)) ? dcl_param_range_err : dcl_none;
+    err_code |= ((fc >= 1.0f / (2.0f * T)) || (fc <= 0.0f)) ? dcl_param_range_err : dcl_none;
     if (err_code)
     {
         DCL_setError(pid,err_code);
@@ -330,24 +307,24 @@ void DCL_setActivePIDfilterBW(DCL_PID *pid, float32_t fc, float32_t t_sec)
 #endif
 
     float32_t tau = 1.0f / (2.0f * CONST_PI * fc);
-    pid->c1 = 2.0f / (t_sec + (2.0f * tau));
-    pid->c2 = (t_sec - (2.0f * tau)) / (t_sec + (2.0f * tau));
+    pid->c1 = 2.0f / (T + (2.0f * tau));
+    pid->c2 = (T - (2.0f * tau)) / (T + (2.0f * tau));
 }
 
 //! \brief          Calculates the active derivative path filter bandwidth in Hz.
-//!                 Note: Sampling period pid->css->t_sec are used in the calculation.
+//!                 Note: Sampling period pid->css->T are used in the calculation.
 //! \param[in] pid  Pointer to the DCL_PID structure
 //! \return         The filter bandwidth in Hz
 //!
 _DCL_CODE_ACCESS
 float32_t DCL_getPIDfilterBW(DCL_PID *pid)
 {
-    float32_t tau = ((2.0f - pid->c1 * pid->css->t_sec) / (2.0f * pid->c1));
+    float32_t tau = ((2.0f - pid->c1 * pid->css->T) / (2.0f * pid->c1));
     return(1.0f / (2.0f * CONST_PI * tau));
 }
 
 //! \brief          Configures a series PID controller parameter in ZPK form.
-//!                 Note: Sampling period pid->css->t_sec are used in the calculation.
+//!                 Note: Sampling period pid->css->T are used in the calculation.
 //!                 Parameters take effect after call to DCL_updatePID().
 //!                 Only z1, z2 & p2 considered, p1 = 0 assumed.
 //!
@@ -376,15 +353,15 @@ void DCL_loadSeriesPIDasZPK(DCL_PID *pid, DCL_ZPK3 *zpk)
     float32_t beta0 = (float32_t) crealf(zpk->z1 * zpk->z2);
     float32_t alpha1 = -(float32_t) crealf(zpk->p1 + zpk->p2);
     float32_t alpha0 = (float32_t) crealf(zpk->p1 * zpk->p2);
-    float32_t t_sec = pid->css->t_sec;
-    float32_t a0p = 4.0f + (alpha1 * 2.0f * t_sec) + (alpha0 * t_sec * t_sec);
-    float32_t b0 = zpk->K * (4.0f + (beta1 * 2.0f * t_sec) + (beta0 * t_sec *t_sec)) / a0p;
-    float32_t b1 = zpk->K * (-8.0f + (2.0f * beta0 * t_sec * t_sec)) / a0p;
-    float32_t b2 = zpk->K * (4.0f - (beta1 * 2.0f * t_sec) + (beta0 * t_sec * t_sec)) / a0p;
-    float32_t a2 = (4.0f - (alpha1 * 2.0f * t_sec) + (alpha0 * t_sec * t_sec)) / a0p;
+    float32_t T = pid->css->T;
+    float32_t a0p = 4.0f + (alpha1 * 2.0f * T) + (alpha0 * T * T);
+    float32_t b0 = zpk->K * (4.0f + (beta1 * 2.0f * T) + (beta0 * T *T)) / a0p;
+    float32_t b1 = zpk->K * (-8.0f + (2.0f * beta0 * T * T)) / a0p;
+    float32_t b2 = zpk->K * (4.0f - (beta1 * 2.0f * T) + (beta0 * T * T)) / a0p;
+    float32_t a2 = (4.0f - (alpha1 * 2.0f * T) + (alpha0 * T * T)) / a0p;
     float32_t c2 = -a2;
-    float32_t tau = (t_sec / 2.0f) * (1.0f - c2) / (1.0f + c2);
-    pid->sps->c1 = 2.0f / (t_sec + 2.0f * tau);
+    float32_t tau = (T / 2.0f) * (1.0f - c2) / (1.0f + c2);
+    pid->sps->c1 = 2.0f / (T + 2.0f * tau);
     pid->sps->c2 = c2;
     float32_t det = (c2 + 1.0f);
     det *= det;
@@ -414,7 +391,7 @@ void DCL_loadSeriesPIDasZPK(DCL_PID *pid, DCL_ZPK3 *zpk)
 }
 
 //! \brief            Configures a parallel PID controller in ZPK form.
-//!                   Note: Sampling period pid->css->t_sec are used in the calculation.
+//!                   Note: Sampling period pid->css->T are used in the calculation.
 //!                   Parameters take effect after call to DCL_updatePID().
 //!                   Only z1, z2 & p2 considered, p1 = 0 assumed.
 //!
@@ -442,15 +419,15 @@ void DCL_loadParallelPIDasZPK(DCL_PID *pid, DCL_ZPK3 *zpk)
     float32_t beta0 = (float32_t) crealf(zpk->z1 * zpk->z2);
     float32_t alpha1 = -(float32_t) crealf(zpk->p1 + zpk->p2);
     float32_t alpha0 = (float32_t) crealf(zpk->p1 * zpk->p2);
-    float32_t t_sec = pid->css->t_sec;
-    float32_t a0p = 4.0f + (alpha1 * 2.0f * t_sec) + (alpha0 * t_sec * t_sec);
-    float32_t b0 = zpk->K * (4.0f + (beta1 * 2.0f * t_sec) + (beta0 * t_sec * t_sec)) / a0p;
-    float32_t b1 = zpk->K * (-8.0f + (2.0f * beta0 * t_sec * t_sec)) / a0p;
-    float32_t b2 = zpk->K * (4.0f - (beta1 * 2.0f * t_sec) + (beta0 * t_sec * t_sec)) / a0p;
-    float32_t a2 = (4.0f - (alpha1 * 2.0f * t_sec) + (alpha0 * t_sec * t_sec)) / a0p;
+    float32_t T = pid->css->T;
+    float32_t a0p = 4.0f + (alpha1 * 2.0f * T) + (alpha0 * T * T);
+    float32_t b0 = zpk->K * (4.0f + (beta1 * 2.0f * T) + (beta0 * T * T)) / a0p;
+    float32_t b1 = zpk->K * (-8.0f + (2.0f * beta0 * T * T)) / a0p;
+    float32_t b2 = zpk->K * (4.0f - (beta1 * 2.0f * T) + (beta0 * T * T)) / a0p;
+    float32_t a2 = (4.0f - (alpha1 * 2.0f * T) + (alpha0 * T * T)) / a0p;
     float32_t c2 = -a2;
-    float32_t tau = (t_sec / 2.0f) * (1.0f - c2) / (1.0f + c2);
-    pid->sps->c1 = 2.0f / (t_sec + 2.0f * tau);
+    float32_t tau = (T / 2.0f) * (1.0f - c2) / (1.0f + c2);
+    pid->sps->c1 = 2.0f / (T + 2.0f * tau);
     pid->sps->c2 = c2;
     float32_t det = (c2 + 1.0f);
     det *= det;

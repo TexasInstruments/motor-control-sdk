@@ -276,12 +276,6 @@ void pruEnDatIrqHandler0(void *args)
     /* debug, inncrement PRU SDFM IRQ count */
     gPruEnDatIrqCnt0++;
 
-    /* clear Cmp3 event*/
-    uint32_t event_clear;
-    event_clear = HW_RD_REG8((uint8_t*)gPruss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP_STATUS_REG);
-    event_clear |= IEP_CMP3_EVNT;
-    HW_WR_REG8((uint8_t*)gPruss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP_STATUS_REG, event_clear);
-
     /* Clear interrupt at source */
     /* Write 18 to ICSSG_STATUS_CLR_INDEX_REG
         Firmware:   TRIGGER_HOST_SDFM_IRQ defined as 18
@@ -295,12 +289,6 @@ void pruEnDatIrqHandler1(void *args)
 {
     /* debug, inncrement PRU SDFM IRQ count */
     gPruEnDatIrqCnt1++;
-
-    /* clear Cmp5 event*/
-    uint32_t event_clear;
-    event_clear = HW_RD_REG8((uint8_t*)gPruss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP_STATUS_REG);
-    event_clear |= IEP_CMP5_EVNT;
-    HW_WR_REG8((uint8_t*)gPruss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP_STATUS_REG, event_clear);
 
     /* Clear interrupt at source */
     /* Write 18 to ICSSG_STATUS_CLR_INDEX_REG
@@ -317,12 +305,6 @@ void pruEnDatIrqHandler2(void *args)
 {
     /* debug, inncrement PRU SDFM IRQ count */
     gPruEnDatIrqCnt2++;
-
-    /* clear Cmp6 event*/
-    uint32_t event_clear;
-    event_clear = HW_RD_REG8((uint8_t*)gPruss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP_STATUS_REG);
-    event_clear |= IEP_CMP6_EVNT;
-    HW_WR_REG8((uint8_t*)gPruss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP_STATUS_REG, event_clear);
 
     /* Clear interrupt at source */
     /* Write 18 to ICSSG_STATUS_CLR_INDEX_REG

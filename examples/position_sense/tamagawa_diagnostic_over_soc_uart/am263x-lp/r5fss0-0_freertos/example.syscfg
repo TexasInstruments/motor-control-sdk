@@ -1,8 +1,8 @@
 /**
  * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
  * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
- * @cliArgs --device "AM263x_beta" --package "ZCZ" --part "AM263x" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@09.00.00"
- * @versions {"tool":"1.17.0+3128"}
+ * @cliArgs --device "AM263x_beta" --package "ZCZ" --part "AM263x" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@09.01.00"
+ * @versions {"tool":"1.18.0+3266"}
  */
 
 /**
@@ -31,18 +31,22 @@ uart1.$name            = "CONFIG_UART0";
 uart1.operMode         = "13X";
 uart1.intrEnable       = "DISABLE";
 uart1.inputClkFreq     = 192000000;
+uart1.sdkInfra         = "LLD";
 uart1.baudRate         = 2500000;
 uart1.UART.$assign     = "UART1";
 uart1.UART.RXD.$assign = "UART1_RXD";
 uart1.UART.TXD.$assign = "UART1_TXD";
+uart1.child.$name      = "drivers_uart_v2_uart_v2_template_lld0";
 
 debug_log.enableUartLog            = true;
 debug_log.enableCssLog             = false;
 debug_log.uartLog.$name            = "CONFIG_UART_CONSOLE";
 debug_log.uartLog.inputClkFreq     = 192000000;
+debug_log.uartLog.intrEnable       = "DISABLE";
 debug_log.uartLog.UART.$assign     = "UART0";
 debug_log.uartLog.UART.RXD.$assign = "UART0_RXD";
 debug_log.uartLog.UART.TXD.$assign = "UART0_TXD";
+debug_log.uartLog.child.$name      = "drivers_uart_v2_uart_v2_template1";
 
 mpu_armv71.$name             = "CONFIG_MPU_REGION0";
 mpu_armv71.size              = 31;

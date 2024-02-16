@@ -107,6 +107,13 @@ SECTIONS
     .bss.nocache (NOLOAD) : {} > NON_CACHE_MEM
 
 	.hdslInterface_mem (NOLOAD) > MSRAM
+
+    /*
+    As this array is typecasted into a structure with 32-bit variables,
+    32b alignment is required
+    */
+	.rodata.Hiperface_DSL_SYNC2_0_TX_PRU_2  :   {}  align(32) > MSRAM
+	.rodata.Hiperface_DSL2_0_TX_PRU_2       :   {}  align(32) > MSRAM
 }
 
 /*

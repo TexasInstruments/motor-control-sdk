@@ -1,10 +1,10 @@
 const common = require("../common.js");
 
 const component_file_list = [
-    "source/current_sense/sdfm/.project/project.js",
     "source/position_sense/endat/.project/project.js",
     "source/position_sense/hdsl/.project/project.js",
     "source/position_sense/tamagawa/.project/project.js",
+    "source/pruicss_pwm/.project/project.js"
 ];
 
 const device_defines = {
@@ -20,17 +20,19 @@ const example_file_list = [
     "examples/position_sense/hdsl_diagnostic/multi_channel/.project/project.js",
     "examples/position_sense/hdsl_diagnostic/single_channel/.project/project.js",
     "examples/position_sense/tamagawa_diagnostic/multi_channel/.project/project.js",
-    "examples/position_sense/tamagawa_diagnostic/single_channel/.project/project.js",
-    "examples/current_sense/icss_sdfm/.project/project.js",
-    "source/current_sense/sdfm/firmware/.project/project.js",
+    "examples/position_sense/tamagawa_diagnostic/single_channel/.project/project.js",   
+    "examples/pruicss_pwm/pruicss_pwm_duty_cycle/.project/project.js",
+    "examples/pruicss_pwm/pruicss_pwm_epwm_sync/.project/project.js",
     "source/position_sense/endat/firmware/multi_channel_load_share/.project/project.js",
     "source/position_sense/endat/firmware/single_channel/.project/project.js",
     "source/position_sense/endat/firmware/multi_channel_single_pru/.project/project.js",
     "source/position_sense/hdsl/firmware/freerun_225_mhz/.project/project.js",
     "source/position_sense/hdsl/firmware/multichannel_ch0/.project/project.js",
     "source/position_sense/hdsl/firmware/multichannel_ch1/.project/project.js",
+    "source/position_sense/hdsl/firmware/multichannel_ch2/.project/project.js",
     "source/position_sense/hdsl/firmware/multichannel_ch0_sync_mode/.project/project.js",
     "source/position_sense/hdsl/firmware/multichannel_ch1_sync_mode/.project/project.js",
+    "source/position_sense/hdsl/firmware/multichannel_ch2_sync_mode/.project/project.js",
     "source/position_sense/hdsl/firmware/sync_225_mhz/.project/project.js",
     "source/position_sense/tamagawa/firmware/multi_channel/.project/project.js",
     "source/position_sense/tamagawa/firmware/single_channel/.project/project.js",

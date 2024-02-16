@@ -14,12 +14,13 @@ function onValidate(inst, validation) {
             validation.logError(
                "Select atleast one channel",inst,"channel_0"
         );
-
-        if(is_am243x_lp_device && (instance.channel_1 || instance.channel_2))
-            validation.logError(
-                "On AM243x-LP, only Channel 0 is supported",inst,"channel_0"
-        );
-
+            
+        /* channel 0 and channel 2 are supported on am243x-lp*/
+        if((device=="am243x-lp") && (instance.channel_1))
+        {
+            validation.logError("Channel 1 is not supported on am243x-lp",inst,"channel_1");
+        }
+        
         /* validation for booster pack */
         if((device!="am243x-lp")&&(instance.Booster_Pack))
         {
@@ -110,8 +111,33 @@ let tamagawa_module = {
     getInterfaceName: tamagawa_pins.getInterfaceName,
     getPeripheralPinNames: tamagawa_pins.getPeripheralPinNames,
     sharedModuleInstances: sharedModuleInstances,
+    moduleInstances: moduleInstances,
     validate: onValidate,
 };
+
+function moduleInstances(instance){
+    let modInstances = new Array();
+    if(device == "am243x-lp")
+    {
+       modInstances.push({
+            name: "ENC1_EN",
+            displayName: "Booster Pack Ch0 Enable Pin",
+            moduleName: "/drivers/gpio/gpio",
+            requiredArgs: {
+                pinDir: "OUTPUT",
+            },
+        });
+        modInstances.push({
+            name: "ENC2_EN",
+            displayName: "Booster Pack Ch2 Enable Pin",
+            moduleName: "/drivers/gpio/gpio",
+            requiredArgs: {
+                pinDir: "OUTPUT",
+            },
+        });
+    }
+    return (modInstances);
+}
 
 function sharedModuleInstances(instance) {
     let modInstances = new Array();
@@ -125,17 +151,6 @@ function sharedModuleInstances(instance) {
             coreClk: 200*1000000,
         },
     });
-    if(device == "am243x-lp")
-    {
-       modInstances.push({
-            name: "ENC1_EN",
-            displayName: "Booster Pack Ch0 Enable Pin",
-            moduleName: "/drivers/gpio/gpio",
-            requiredArgs: {
-                pinDir: "OUTPUT"
-            },
-        });
-    }
     return (modInstances);
 }
 

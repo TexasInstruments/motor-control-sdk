@@ -9,7 +9,6 @@ const files = {
         "datalink_init.asm",
         "transport.asm",
         "utils.asm",
-        "hdsl_master_icssg_hexpru.cmd",
         "hdsl_master_icssg.cmd",
     ],
 };
@@ -33,7 +32,6 @@ const includes = {
 
 const defines = {
     common: [
-        "icss1",
         "PRU1",
         "CHANNEL_0",
         "EXT_SYNC_ENABLE",
@@ -49,7 +47,7 @@ const lflags = {
 };
 
 let postBuildSteps = [
-    "$(CG_TOOL_ROOT)/bin/hexpru.exe --diag_wrap=off --array --array:name_prefix=Hiperface_DSL_SYNC2_0_RTU -o hdsl_master_icssg_sync_225_mhz_bin.h hdsl_master_sync_225_mhz_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.out;  move  hdsl_master_icssg_sync_225_mhz_bin.h  ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/hdsl_master_icssg_sync_225_mhz_bin.h"
+    "$(CG_TOOL_ROOT)/bin/hexpru.exe --diag_wrap=off --array --array:name_prefix=Hiperface_DSL_SYNC2_0_RTU -o hdsl_master_icssg_sync_225_mhz_bin.h hdsl_master_sync_225_mhz_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.out;  $(COPY)  hdsl_master_icssg_sync_225_mhz_bin.h  ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/hdsl_master_icssg_sync_225_mhz_bin.h"
 ];
 const readmeDoxygenPageTag = "HDSL_DESIGN";
 

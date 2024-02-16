@@ -3,7 +3,7 @@
 Notable exceptions in TI HDSL Solution when compared with SICK HDSL MASTER IP Core release version 1.07 are described below:
 
 1. SPI interface is not available to access the HDSL Master. Registers are present in Data Memory of Programmable Real-Time Unit and Industrial Communication Subsystem (PRU-ICSS), which can be accessed directly by the ARM processor core.
-2. Pipeline for SensorHub Channel Data is not available.
+2. Pipeline Status for SensorHub Channel is not available. Pipeline data is updated for each horizontal frame.
 3. Control signals similar to SICK HDSL MASTER IP Core are not available, except SYNC signal. Instead of INTERRUPT signal, interrupts are triggered to ARM processor core.
 4. Test signals similar to SICK HDSL MASTER IP Core are not available.
 5. TI HDSL Solution's register map is register compatible with SICK HDSL MASTER IP Core release version 1.07, with few exceptions listed below:
@@ -49,7 +49,6 @@ Notable exceptions in TI HDSL Solution when compared with SICK HDSL MASTER IP Co
     </tr>
     <tr>
         <td> PIPE_S<br/>
-            PIPE_D
         <td> **Not available in TI HDSL Solution**
     </tr>
     <tr>
@@ -159,4 +158,6 @@ Notable exceptions in TI HDSL Solution when compared with SICK HDSL MASTER IP Co
 6. Reset values of registers are not same as SICK HDSL MASTER IP Core.
 7. As registers are implemented using Data Memory of Programmable Real-Time Unit and Industrial Communication Subsystem (PRU-ICSS), the application has a read-write access for all registers.
 8. When safe position is invalid (VPOS bit is set in EVENT_S), 0xFDFDFDFDFD value is not set in fast and safe position registers.
+9. For long message offset, only 15-bit wide offset is supported. If offset is enabled, then master will always send 2 bytes of offset.
+
 

@@ -35,6 +35,9 @@
 	.include "macros.inc"
 	;.sect	".text"
 	.ref transport_init_done
+	.ref PUSH_FIFO_2B_8x
+	.ref PUSH_FIFO_3_8x
+	.ref WAIT_TX_FIFO_FREE
 	.ref datalink_transport_on_v_frame_done
 	.ref datalink_transport_on_v_frame_done_2
 	.ref transport_layer_processing_1_done
@@ -49,7 +52,6 @@
 	.global transport_layer_send_msg
 	;.global transport_layer_assemble_msg
 	.global transport_layer_recv_msg
-	.global transport_init
 	.global transport_on_h_frame
 	.global transport_on_v_frame
 	.global transport_on_v_frame_2
@@ -60,202 +62,9 @@
 	.global calc_16bit_crc
 	.global calc_fastpos
 
+	; part 2 code starts here
 
-	.sect ".text"
-;Initialize transport layer here
-transport_init:
-;initialize velocity to 0
-;initializing fasp pos as (need to be replaced with first vertical position)
-	zero		&SPEED, (4*2)
-;resert short msg ctrl
-	ldi		REG_TMP0.b0, 0x3f
-	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, SLAVE_REG_CTRL, 1
-;initialize NUM_VERT_FRAMES, MEAN_MISMTACH, MISMATCH, NUM_VERT_ERR
-	;sbco		&SPEED, MASTER_REGS_CONST, MISMATCH0, 4
-;initialize acc_err_cnt to 0
-	sbco		&SPEED.b0, MASTER_REGS_CONST, ACC_ERR_CNT, 1
-	sbco		&SPEED.b0, MASTER_REGS_CONST, POS4, 8
-;reset rel. pos
-	sbco		&SPEED, MASTER_REGS_CONST, REL_POS0, 4
-transport_init_abs_err_loop:
-	zero		&DELTA_ACC0, 12
-exit_transport_init:
-;return back to datalink
-	RET
-;--------------------------------------------------
-;v_frame calculations
-;102+20=122 cycles
-;extracts safe position
-;verifies fast position
-;NOT allowed to use REG_TMP11
-;--------------------------------------------------
-transport_on_v_frame:
-;save REG_FNC.w0 content
-	mov		REG_TMP11.w1, REG_FNC.w0
-;inc NUM_VERT_FRAMES -> could be replaced with PA STATS on ICSS_G
-;Not required as it's not part of SICK IP requirement.
-    .if 0
-	lbco	&REG_TMP1, MASTER_REGS_CONST, NUM_VERT_FRAMES0, 4
-	add		REG_TMP1, REG_TMP1, 1
-	sbco	&REG_TMP1, MASTER_REGS_CONST, NUM_VERT_FRAMES0, 4
-    .endif
-; clear VPOS_VALID
-    zero    &REG_TMP0.b0, 1
-	sbco	&REG_TMP0.b0, MASTER_REGS_CONST, VPOS_VALID, 1
-
-;store CRC in Master  Registers
-	mov		REG_TMP1.b0, VERT_L.b1
-	mov		REG_TMP1.b1, VERT_L.b0
-; Store the required data for vertical channel in temporary memory.
-; It will be stored to DMEM in transport_on_v_frame_2
-	sbco		&REG_TMP1, MASTER_REGS_CONST, VPOSCRC_TEMP, 2
-;transmission error?
-	qbbs		transport_on_v_frame_dont_update_qm, H_FRAME.flags, FLAG_ERR_VERT
-    lbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H, 1
-    and         REG_TMP2.b0, REG_TMP2.b0, (~((1<<ONLINE_STATUS_1_SCE) | (1<<ONLINE_STATUS_1_VPOS)) & 0xFF)
-;checking for crc error
-	qbeq		check_for_slave_error_on_v_frame, CRC_VERT, 0
-; Set EVENT_S_SCE in EVENT register
-	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_S, 2
-	set		REG_TMP0.b0, REG_TMP0.b0, EVENT_S_SCE
-;save events
-	sbco		&REG_TMP0.w0, MASTER_REGS_CONST, EVENT_S, 1
-	qbbc		update_events_no_int4, REG_TMP0.b1, EVENT_S_SCE
-; generate interrupt_s
-	ldi		r31.w0, PRU0_ARM_IRQ4
-update_events_no_int4:
-; Set ONLINE_STATUS_1_SCE in ONLINE_STATUS_1 register
-    set         REG_TMP2.b0, REG_TMP2.b0, ONLINE_STATUS_1_SCE
-    sbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H, 1
-	QM_SUB		6
-transport_on_v_frame_dont_update_qm:
-;update CRC error count
-	.if 0
-	lbco		&REG_TMP1, MASTER_REGS_CONST, NUM_VERT_ERR0, 4
-	add		REG_TMP1, REG_TMP1, 1
-	sbco		&REG_TMP1, MASTER_REGS_CONST, NUM_VERT_ERR0, 4
-	.endif
-	qba		transport_on_v_frame_exit
-check_for_slave_error_on_v_frame:
-    .if $defined("HDSL_MULTICHANNEL")
-    WAIT_TX_FIFO_FREE
-    LOOP push_1B,3
-	PUSH_FIFO_CONST  0xff
-push_1B:
-    .endif
-;CRC was correct -> add 1 to QM
-;Note: QM_ADD uses REG_TMP1
-	QM_ADD		1
-;check for special character: K29.7 is sent in first byte of vertical channel if slave error occured
-	qbne		transport_on_v_frame_check_pos, VERT_H.b3, K29_7
-; Set EVENT_S_VPOS in EVENT register, due to encoder internal error
-	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_S, 2
-	set		REG_TMP0.b0, REG_TMP0.b0, EVENT_S_VPOS
-;save events
-	sbco		&REG_TMP0.w0, MASTER_REGS_CONST, EVENT_S, 1
-	qbbc		update_events_no_int5, REG_TMP0.b1, EVENT_S_VPOS
-; generate interrupt_s
-	ldi		r31.w0, PRU0_ARM_IRQ4
-update_events_no_int5:
-; Set ONLINE_STATUS_1_VPOS in ONLINE_STATUS_1 register
-    set         REG_TMP2.b0, REG_TMP2.b0, ONLINE_STATUS_1_VPOS
-    sbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H, 1
-	qba		no_first_push_for_exit
-transport_on_v_frame_check_pos:
-
-	sbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H, 1
-	lsl		REG_TMP2, CHANNEL.ch_verth, 8
-	mov		REG_TMP2.b0, VERT_L.b3
-;first V-Frame? -> update FAST POS with SAFE POS
-transport_on_v_frame_not_first:
-;check for LAST FAST POS and SAFE POS mismatch
-
-	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, LAST_FAST_POS0, SIZE_FAST_POS
-	sub		REG_TMP1.w0, VERT_L.w2, REG_TMP0.w0
-	sub		REG_TMP1.w2, VERT_H.w0, REG_TMP0.w2
-	qble 	no_sub_carry, VERT_L.w2, REG_TMP0.w0
-; if carry is needed, subtract 1 separately
-	sub		REG_TMP1.w2, REG_TMP1.w2, 1
-no_sub_carry:
-	mov		REG_TMP2, REG_TMP1
-;check if diff is neg,
-	qbbc		transport_on_v_frame_diff_pos, REG_TMP2, 31
-	not		REG_TMP2, REG_TMP2
-	add		REG_TMP2, REG_TMP2, 1
-transport_on_v_frame_diff_pos:
-
-
-
-;check for diff. is 0 -> estimate if not
-	qbne		transport_on_v_frame_estimate, REG_TMP1, 0
-	qbne		transport_on_v_frame_estimate, VERT_H.b2, FAST_POSL
-
-;reset ALIGN_PH
-	ldi		ALIGN_PH, 0
-	qba		transport_on_v_frame_no_pos_mismatch
-; estimate/correct
-transport_on_v_frame_estimate:
-	CALL1		estimator_fpos
-transport_on_v_frame_no_pos_mismatch:
-;store SAFE POS
-
-	mov		REG_TMP0.b0, VERT_H.b2
-	mov		REG_TMP0.b1, VERT_H.b1
-	mov		REG_TMP0.b2, VERT_H.b0
-	mov		REG_TMP0.b3, VERT_L.b3
-	mov		REG_TMP1.b0, VERT_L.b2
-
-; Store the required data for vertical channel in temporary memory.
-; It will be stored to DMEM in transport_on_v_frame_2
-	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, VPOS_TEMP, 5
-
-; set VPOS_VALID
-    ldi    REG_TMP0.b0, 0x1
-	sbco	&REG_TMP0.b0, MASTER_REGS_CONST, VPOS_VALID, 1
-
-; Store the required data for secondary channel in temporary memory.
-; It will be processed in transport_on_v_frame_2
-
-; store H_FRAME.flags
-	sbco	&H_FRAME.flags, MASTER_REGS_CONST, H_FRAME_FLAGS_TEMP, 2
-; store CRC_SEC
-	sbco	&CRC_SEC, MASTER_REGS_CONST, CRC_SEC_TEMP, 2
-; store the 8 bytes from secondary channel
-	sbco	&R20, MASTER_REGS_CONST, VPOS2_TEMP, 8
-	jmp no_first_push_for_exit
-transport_on_v_frame_exit:
-;we are in RX0
-;reset rel. pos
-	loop Wait_and_Push_2_byte,2
-   	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_CONST  0xff
-Wait_and_Push_2_byte:
-
-	PUSH_FIFO_CONST  0xff
-
-no_first_push_for_exit:
-    .if $defined("HDSL_MULTICHANNEL")
-	qbeq			free_run_mode1, EXTRA_SIZE, 0
-	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_CONST		0xff
-	RESET_CYCLCNT
-free_run_mode1:
-	.endif
-	ldi		REG_TMP0, 0
-	sbco		&REG_TMP0, MASTER_REGS_CONST, REL_POS0, 4
-;store last FAST_POS
-	sbco		&FAST_POSL, MASTER_REGS_CONST, LAST_FAST_POS0, SIZE_FAST_POS
-
-; Store summary
-    sbco    &VERT_H.b3, MASTER_REGS_CONST, SAFE_SUM_TEMP, 1
-
-;restore REG_FNC.w0 content
-	mov		REG_FNC.w0, REG_TMP11.w1
-;reset vertical/secondary channel crc
-	ldi		CRC, 0
-;reset flags
-	and		H_FRAME_flags_l, H_FRAME_flags_l, FLAG_ERRORS
-	jmp		datalink_transport_on_v_frame_done
+	.sect	".text:part2"
 
 ;----------------------------------------------------
 ;transport_on_v_frame_2
@@ -283,28 +92,26 @@ transport_on_v_frame_2:
     lbco        &REG_TMP0.w2, MASTER_REGS_CONST, CRC_SEC_TEMP, 2
 	qbeq		check_for_slave_error_on_secondary_channel, REG_TMP0.w2, 0
 ; set SCE2 bit in ONLINE_STATUS_2
-	set		    REG_TMP0.b0, REG_TMP0.w0, ONLINE_STATUS_2_SCE2
+	set		    REG_TMP0.b0, REG_TMP0.b0, ONLINE_STATUS_2_SCE2
 	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, ONLINE_STATUS_2_H, 1
-	QM_SUB		6
+	QM_SUB		8
 transport_on_v_frame_dont_update_qm_secondary_channel:
 	qba		transport_on_v_frame_2_exit
 check_for_slave_error_on_secondary_channel:
 ; clear SCE2 bit in ONLINE_STATUS_2
-	clr		    REG_TMP0.b0, REG_TMP0.w0, ONLINE_STATUS_2_SCE2
+	clr		    REG_TMP0.b0, REG_TMP0.b0, ONLINE_STATUS_2_SCE2
 	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, ONLINE_STATUS_2_H, 1
-;CRC was correct -> add 1 to QM
-	QM_ADD		1
-; NOTE: QM_ADD uses REG_TMP0. Loading REG_TMP0 again here. It can be optimized.
+; No QM updates for CRC check success with safe channel 2
     lbco		&REG_TMP0.b0, MASTER_REGS_CONST, ONLINE_STATUS_2_H, 1
 ;check for special character: K29.7 is sent in first byte of secondary vertical channel if slave error occured
 ; assumption: r21.b3 contains the first byte of secondary vertical channel
 	qbne		transport_on_v_frame_no_vpos2_error, REG_TMP2.b3, K29_7
     ; set VPOS2 bit in ONLINE_STATUS_2
-	set		    REG_TMP0.b0, REG_TMP0.w0, ONLINE_STATUS_2_VPOS2
+	set		    REG_TMP0.b0, REG_TMP0.b0, ONLINE_STATUS_2_VPOS2
     sbco		&REG_TMP0.b0, MASTER_REGS_CONST, ONLINE_STATUS_2_H, 1
     qba         transport_on_v_frame_vpos2_error_exit
 transport_on_v_frame_no_vpos2_error:
-	clr		    REG_TMP0.b0, REG_TMP0.w0, ONLINE_STATUS_2_VPOS2
+	clr		    REG_TMP0.b0, REG_TMP0.b0, ONLINE_STATUS_2_VPOS2
 transport_on_v_frame_vpos2_error_exit:
 
 ; store the data from secondary channel
@@ -335,7 +142,7 @@ transport_on_v_frame_2_exit:
 	qbne			not_7th_hframe_0, LOOP_CNT.b2, 7
 	qbbc			not_7th_hframe_0, H_FRAME.flags, FLAG_NORMAL_FLOW
  	.if $defined("HDSL_MULTICHANNEL")
- 	WAIT_TX_FIFO_FREE
+ 	CALL2 WAIT_TX_FIFO_FREE
 	LOOP push_1B_0 ,2
 	PUSH_FIFO_CONST  0xff
 push_1B_0:
@@ -377,32 +184,321 @@ transport_skip_vpos_update:
 ; generate interrupt
 	ldi		r31.w0, PRU0_ARM_IRQ
 update_events_no_int7:
-;set event_s and generate interrupt_s
-	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S, 2
-	set         REG_TMP0.b0, REG_TMP0.b0, EVENT_S_SSUM
-;save events
-	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S, 2
-	qbbc		update_events_no_int17, REG_TMP0.b1, EVENT_S_SSUM
-; generate interrupt_s
-	ldi		r31.w0, PRU0_ARM_IRQ4
-update_events_no_int17:
 summary_no_int:
 
 ; Update SUM and SSUM bits in ONLINE_STATUS registers
     lbco		&REG_TMP0.b0, MASTER_REGS_CONST, SAFE_SUM, 1
 	lbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 3
-    clr         REG_TMP2.b0, REG_TMP2.b0, ONLINE_STATUS_D_SUM
-    clr         REG_TMP2.b2, REG_TMP2.b0, ONLINE_STATUS_1_SSUM
 	qbeq		online_status_sum_clear, REG_TMP0.b0, 0x00
     set         REG_TMP2.b0, REG_TMP2.b0, ONLINE_STATUS_D_SUM
-    set         REG_TMP2.b2, REG_TMP2.b0, ONLINE_STATUS_1_SSUM
+    set         REG_TMP2.b2, REG_TMP2.b2, ONLINE_STATUS_1_SSUM
+;set SSUM in EVENT_S and generate interrupt_s
+	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S, 2
+	set         REG_TMP0.b0, REG_TMP0.b0, EVENT_S_SSUM
+;save events
+	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S, 1
+	qbbc		update_events_no_int17, REG_TMP0.b1, EVENT_S_SSUM
+; generate interrupt_s
+	ldi			r31.w0, PRU0_ARM_IRQ4
+update_events_no_int17:
+	qba 		online_status_sum_save
 online_status_sum_clear:
+    clr         REG_TMP2.b0, REG_TMP2.b0, ONLINE_STATUS_D_SUM
+    clr         REG_TMP2.b2, REG_TMP2.b2, ONLINE_STATUS_1_SSUM
+online_status_sum_save:
     sbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 3
 
 ;restore REG_FNC.w0 content
 	mov		REG_FNC.w0, REG_TMP11.w1
 
 	jmp		datalink_transport_on_v_frame_done_2
+
+;----------------------------------------------------
+;Function: transport_on_h_frame (RET_ADDR)
+;calculates the acceleration, velocity and fast position
+; 38+9+52 = 99 cycles
+;input:
+;output:
+;modifies:
+;----------------------------------------------------
+;TODO: reduce processing time by 24 cycles
+transport_on_h_frame:
+
+; Set POSTX to 0
+    ldi         REG_TMP0.b0, 0x0
+    sbco		&REG_TMP0.b0, MASTER_REGS_CONST, POSTX, 1
+
+;check for byte error in acceleration channel
+
+	qbbs		transport_acc_err_inc, H_FRAME.flags, FLAG_ERR_ACC
+;crc error verification
+	;CALL1		calc_acc_crc
+;5 bits CRC of acceleration channel are flipped -> flip back
+	xor		H_FRAME.acc, H_FRAME.acc, 0x1f
+	ldi		REG_TMP2, (LUT_CRC5+PDMEM00)
+	lbbo		&REG_TMP0.b1, REG_TMP2, H_FRAME_acc1, 1
+	lsl		REG_TMP0.b1, REG_TMP0.b1, 3
+	xor		REG_TMP0.b1, REG_TMP0.b1, H_FRAME_acc0
+	lbbo		&REG_FNC.b0, REG_TMP2, REG_TMP0.b1, 1
+	qbne		transport_acc_err_inc, REG_FNC.b0, 0
+;check for special character: K29.7 is sent two times if slave error occured
+	ldi		REG_TMP0.w0, DOUBLE_K29_7
+    qbne		delta_delta_position, H_FRAME.acc, REG_TMP0.w0
+transport_acc_err_inc:
+
+;update the acc_err_cnt register
+	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, ACC_ERR_CNT, 1
+	add		REG_TMP0.b0, REG_TMP0.b0, 1
+	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, ACC_ERR_CNT, 1
+;reset if it is too large
+	lbco		&REG_TMP0.b1, MASTER_REGS_CONST, ACC_ERR_CNT_THRESH, 1
+	qbgt		transport_on_h_frame_no_reset, REG_TMP0.b0, REG_TMP0.b1
+	jmp		datalink_abort
+transport_on_h_frame_no_reset:
+;save return addr
+
+	mov		REG_TMP11.w0, RET_ADDR0
+	;CALL		estimator_acc; Instead of calling the API, copy the code here to save PRU cycles.
+;----------------------------------------------------
+;Function: estimator_acc (RET_ADDR)
+;This function estimates the FPOS and VEL
+;15+15+22=52 cycles
+;input:
+;
+;output:
+;	FAST_POSH, FAST_POSL, SPEED
+;modifies:
+;	FAST_POSH, FAST_POSL, SPEED, REG_TMP1, REG_TMP0
+;----------------------------------------------------
+;Estimating the acceleration
+;ith acc = (delta_a4* 1 + delta_a3 * 2 + delta_a2 * 4 + delta_a1 * 8 + delta_a0 * 16) / 32
+	lsl	  	REG_TMP0.w0, DELTA_ACC3, 1
+	lsl		REG_TMP0.w2, DELTA_ACC2, 2
+	lsl		REG_TMP1.w0, DELTA_ACC1, 3
+	lsl		REG_TMP1.w2, DELTA_ACC0, 4
+	add		REG_TMP0.w0, REG_TMP0.w0, REG_TMP0.w2
+	add		REG_TMP1.w0, REG_TMP1.w2, REG_TMP1.w0
+	add		REG_TMP0.w0, REG_TMP0.w0, REG_TMP1.w0
+	add		REG_TMP0.w0, REG_TMP0.w0, DELTA_ACC4
+;divide with 32
+	lsr		REG_TMP0.w0, REG_TMP0.w0, 5
+;sign extend delta acceleration to 16 bit -> acc size
+	qbbc		estimator_acc_sign_extend_dacc1, REG_TMP0.w0, 10
+	or		REG_TMP0.b1, REG_TMP0.b1, 0xf8
+estimator_acc_sign_extend_dacc1:
+; TODO: calcuate MAXACC, cap acc
+;add estimated delta acc to LAST_ACC
+	add		REG_FNC.w0, LAST_ACC, REG_TMP0.w0
+;check if estimated acc is neg. or pos.
+	;CALL1		calc_speed; Instead of calling the API, copy the code here to save PRU cycles.
+;sign extend acceleration to  24 bit -> speed size
+	xor		REG_TMP0, REG_TMP0, REG_TMP0
+	qbbc		calc_speed_extend_acc1, REG_FNC.w0, 10
+	ldi		REG_TMP0.w1, 0xfff8
+calc_speed_extend_acc1:
+	or		REG_TMP0.w0, REG_TMP0.w0, REG_FNC.w0
+	add		SPEED.w0, SPEED.w0, REG_TMP0.w0
+	adc		SPEED.b2, SPEED.b2, REG_TMP0.b2
+;updating the delta acceleration regs
+	.if $defined("HDSL_MULTICHANNEL")
+	CALL2 WAIT_TX_FIFO_FREE
+	PUSH_FIFO_CONST  0x00
+	PUSH_FIFO_CONST  0x00
+	.endif
+	mov		DELTA_ACC4, DELTA_ACC3
+	mov		DELTA_ACC3, DELTA_ACC2
+	mov		DELTA_ACC2, DELTA_ACC1
+	mov		DELTA_ACC1, DELTA_ACC0
+	sub		DELTA_ACC0, REG_TMP0.w0, LAST_ACC
+	mov		LAST_ACC, REG_TMP0.w0
+
+    CALL1		calc_fastpos
+;restore return addr
+	mov		RET_ADDR0, REG_TMP11.w0
+; Moving the event and online register update during stuffing
+; Set EVENT_UPDATE_PENDING_POS to indicate a fast position data consistency error
+	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_UPDATE_PENDING, 1
+	set         REG_TMP0.b0, REG_TMP0.w0, EVENT_UPDATE_PENDING_POS
+	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_UPDATE_PENDING, 1
+	qba		transport_on_h_frame_exit
+delta_delta_position:
+
+;reset ACC_ERR_CNT
+	sbco		&REG_FNC.b0, MASTER_REGS_CONST, ACC_ERR_CNT, 1
+;shift out crc bits
+	lsr		REG_FNC.w0, H_FRAME.acc, 5
+; learn highest abs. acc
+	;CALL1		calc_speed; Instead of calling the API, copy the code here to save PRU cycles.
+;sign extend acceleration to  24 bit -> speed size
+	xor		REG_TMP0, REG_TMP0, REG_TMP0
+	qbbc		calc_speed_extend_acc0, REG_FNC.w0, 10
+	ldi		REG_TMP0.w1, 0xfff8
+calc_speed_extend_acc0:
+	or		REG_TMP0.w0, REG_TMP0.w0, REG_FNC.w0
+	add		SPEED.w0, SPEED.w0, REG_TMP0.w0
+	adc		SPEED.b2, SPEED.b2, REG_TMP0.b2
+;updating the delta acceleration regs
+	.if $defined("HDSL_MULTICHANNEL")
+	CALL2 WAIT_TX_FIFO_FREE
+	PUSH_FIFO_CONST  0x00
+	PUSH_FIFO_CONST  0x00
+	.endif
+	mov		DELTA_ACC4, DELTA_ACC3
+	mov		DELTA_ACC3, DELTA_ACC2
+	mov		DELTA_ACC2, DELTA_ACC1
+	mov		DELTA_ACC1, DELTA_ACC0
+	sub		DELTA_ACC0, REG_TMP0.w0, LAST_ACC
+	mov		LAST_ACC, REG_TMP0.w0
+
+	CALL1		calc_fastpos
+transport_on_h_frame_exit:
+;calculate rel. pos and store
+	lbco		&REG_TMP0, MASTER_REGS_CONST, REL_POS0, 4
+;sign extend speed to 32 bits and add it to REL_POS
+	mov		REG_TMP1, SPEED
+    ldi     REG_TMP1.b3, 0
+	qbbc	calc_relpos_extend_vel, SPEED, 23
+	ldi		REG_TMP1.b3, 0xff
+calc_relpos_extend_vel:
+	add		REG_TMP0.w0, REG_TMP0.w0, REG_TMP1.w0
+	adc		REG_TMP0.w2, REG_TMP0.w2, REG_TMP1.w2
+	sbco		&REG_TMP0, MASTER_REGS_CONST, REL_POS0, 4
+;store fast pos. and velocity
+    mov     REG_TMP0, FAST_POSH
+    mov     REG_TMP1, SPEED
+    xin     160, &REG_TMP0, 8
+	sbco	&REG_TMP0, MASTER_REGS_CONST, POS4, SIZE_FAST_POS+3
+; Set POSTX to 2
+    ldi         REG_TMP0.b0, 0x2
+    sbco		&REG_TMP0.b0, MASTER_REGS_CONST, POSTX, 1
+
+; Store PIPE data
+	sbco	&H_FRAME.pipe, MASTER_REGS_CONST, PIPE_D, 1
+
+; signal event mst_intr[0] and PRU0_ARM_IRQ3
+	ldi     r31.w0, 32+0
+	ldi     r31.w0, PRU0_ARM_IRQ3
+	RET
+
+;--------------------------------------------------------------------------------------------------
+;Function: calc_fastpos (RET_ADDR1)
+;This function sign extends speed and adds it to fast position
+;22 cycles
+;input:SPEED, FAST_POSH, FAST_POSL
+;
+;output: FAST_POSH, FAST_POSL
+;
+;modifies:FAST_POSH, FAST_POSL
+;
+;--------------------------------------------------------------------------------------------------
+calc_fastpos:
+;sign extend speed to NUM_POS_BITS=NUM_MT_BITS+NUM_ST_BITS and add it to FAST_POS
+	ldi		REG_TMP1.b0, 0
+	qbbc		calc_fastpos_extend_vel, SPEED, 23
+	ldi		REG_TMP1.b0, 0xff
+calc_fastpos_extend_vel:
+	mov		REG_TMP0, SPEED
+	mov		REG_TMP0.b3, REG_TMP1.b0
+;calculating fast position
+	add		FAST_POSL, FAST_POSL, REG_TMP0.b0
+	lsr		REG_TMP0, REG_TMP0, 8
+	mov		REG_TMP0.b3, REG_TMP1.b0
+	adc		FAST_POSH, FAST_POSH, REG_TMP0
+;load mask for fast position
+	lbco		&REG_TMP1, MASTER_REGS_CONST, MASK_POS, 4
+	and		FAST_POSH, FAST_POSH, REG_TMP1
+	RET1
+;--------------------------------------------------------------------------------------------------
+;Function: calc_speed (RET_ADDR1)
+;This function sign extends acceleration and adds it to speed
+;15 cycles
+;input:
+;	SPEED
+;	REG_FNC.w0: acceleration
+;
+;output: SPEED
+;
+;modifies: SPEED
+;
+;--------------------------------------------------------------------------------------------------
+calc_speed:
+;sign extend acceleration to  24 bit -> speed size
+	xor		REG_TMP0, REG_TMP0, REG_TMP0
+	qbbc		calc_speed_extend_acc, REG_FNC.w0, 10
+	ldi		REG_TMP0.w1, 0xfff8
+calc_speed_extend_acc:
+	or		REG_TMP0.w0, REG_TMP0.w0, REG_FNC.w0
+	add		SPEED.w0, SPEED.w0, REG_TMP0.w0
+	adc		SPEED.b2, SPEED.b2, REG_TMP0.b2
+;updating the delta acceleration regs
+	mov		DELTA_ACC4, DELTA_ACC3
+	mov		DELTA_ACC3, DELTA_ACC2
+	mov		DELTA_ACC2, DELTA_ACC1
+	mov		DELTA_ACC1, DELTA_ACC0
+	sub		DELTA_ACC0, REG_TMP0.w0, LAST_ACC
+	mov		LAST_ACC, REG_TMP0.w0
+	RET1
+
+;--------------------------------------------------------------------------------------------------
+;Function: store_error (RET_ADDR1)
+;Stores error in ring buffer
+;15 cycles
+;input:
+;	REG_FNC: error
+;output:
+;modifies:
+;--------------------------------------------------------------------------------------------------
+store_error:
+;load abs error ring buffer ptr.
+	;ldi		REG_TMP1, (PDMEM00+ABS_ERR_PTR)
+	;xor		REG_TMP0, REG_TMP0, REG_TMP0
+	;lbbo		&REG_TMP0, REG_TMP1, 0x00, ABS_ERR_PTR_SIZE
+;store error
+	;sbbo		&REG_FNC, REG_TMP0, 0x00, 4
+;update and store ptr
+	;add		REG_TMP0.w0, REG_TMP0.w0, 4
+	;ldi		REG_TMP0.w2, (PDMEM00+ABS_ERR_BUF+ABS_ERR_BUF_SIZE)
+	;qbgt		store_error_dont_reset_abs_err_ptr, REG_TMP0.w0, REG_TMP0.w2
+	;ldi		REG_TMP0.w0, (PDMEM00+ABS_ERR_BUF)
+store_error_dont_reset_abs_err_ptr:
+	;sbbo		&REG_TMP0.w0, REG_TMP1, 0x00, ABS_ERR_PTR_SIZE
+	;RET1
+;--------------------------------------------------------------------------------------------------
+;Function: calc_acc_crc (RET_ADD1)
+;This function checks the crc for the acceleration channel
+;11 cycles
+;input:
+;	H_frame.acc
+;output:
+;	REG_FNC.b0: 0 indicates that crc check was successfully
+;modifies:
+;	REG_TMP0, REG_FNC
+;--------------------------------------------------------------------------------------------------
+calc_acc_crc:
+;5 bits CRC of acceleration channel are flipped -> flip back
+	xor		H_FRAME.acc, H_FRAME.acc, 0x1f
+	ldi		REG_TMP2, (LUT_CRC5+PDMEM00)
+	lbbo		&REG_TMP0.b1, REG_TMP2, H_FRAME_acc1, 1
+	lsl		REG_TMP0.b1, REG_TMP0.b1, 3
+	xor		REG_TMP0.b1, REG_TMP0.b1, H_FRAME_acc0
+	lbbo		&REG_FNC.b0, REG_TMP2, REG_TMP0.b1, 1
+	RET1
+;--------------------------------------------------------------------------------------------------
+;Function: demp_data_symbols (RET_ADDR1)
+;Demaps data symbols (5bits) and converts them to data nibbles (4bits)
+;input:
+;	REG_FNC.b0: Number of data symbols
+;	r1.b1: source
+;	r1.b0: destination
+;output:
+;	*r1.b0[0:REG_FNC.b0]: demapped data
+;modifies:
+;--------------------------------------------------------------------------------------------------
+demap_data_symbols:
+
+; common code starts here
+	.sect ".text"
+
 ;----------------------------------------------------
 ;transport_layer_recv_msg
 ;Handles Hiperface DSL messages receiving
@@ -520,9 +616,8 @@ transport_layer_check_for_new_msg:
 	and		REG_TMP0.b0, REG_TMP0.b0, 0x0f
 	or		REG_TMP11.b3, REG_TMP11.b3, REG_TMP0.b0
 	.if $defined("HDSL_MULTICHANNEL")
-	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_1_8x
-	PUSH_FIFO_2_8x
+	CALL2 WAIT_TX_FIFO_FREE
+	CALL3 PUSH_FIFO_3_8x
 	.endif
 	mov		REG_TMP2, CHANNEL.ch_paral
 	ldi		REG_TMP1.b0, &REG_TMP11.b0
@@ -554,7 +649,7 @@ transport_layer_received_short_msg:
 	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_S, 2
 	set		REG_TMP0.w0, REG_TMP0.w0, EVENT_S_FRES
 ;save events
-	sbco		&REG_TMP0.w0, MASTER_REGS_CONST, EVENT_S, 1
+	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S, 1
 	qbbc		update_events_no_int100, REG_TMP0.b1, EVENT_S_FRES
 ; generate interrupt
 	ldi		r31.w0, PRU0_ARM_IRQ
@@ -578,7 +673,7 @@ transport_layer_short_msg_recv_read:
 	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_S, 2
 	set		REG_TMP0.w0, REG_TMP0.w0, EVENT_S_FRES
 ;save events
-	sbco		&REG_TMP0.w0, MASTER_REGS_CONST, EVENT_S, 1
+	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S, 1
 	qbbc		update_events_no_int10, REG_TMP0.b1, EVENT_S_FRES
 ; generate interrupt
 	ldi		r31.w0, PRU0_ARM_IRQ
@@ -702,7 +797,7 @@ update_events_no_int19:
 	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_S, 2
 	set		REG_TMP0.b0, REG_TMP0.b0, EVENT_S_MIN
 ;save events
-	sbco		&REG_TMP0.w0, MASTER_REGS_CONST, EVENT_S, 1
+	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S, 1
 	qbbc		update_events_no_int20, REG_TMP0.b1, EVENT_S_MIN
 ; generate interrupt
 	ldi		r31.w0, PRU0_ARM_IRQ4
@@ -877,12 +972,16 @@ transport_layer_no_short_msg:
 	clr		    REG_TMP0.b0, REG_TMP0.b0, (ONLINE_STATUS_D_FREL-8)
     sbco		&REG_TMP0.b0, MASTER_REGS_CONST, (ONLINE_STATUS_D_L), 1
 	lbco		&REG_TMP1, MASTER_REGS_CONST, PC_ADD_H, 4
+; Bit 7 should be set for long message in PC_ADD_H
+	set			REG_TMP1.b0, REG_TMP1.b0, 7
 	mov		SHORT_MSG.addr, REG_TMP1.b0
 	ldi		SHORT_MSG.bits_left, 16
 
 
 ;using PC_OFF?
 	qbbc		transport_layer_assemble_long_msg_no_pc_off, REG_TMP1.b0, LOFF
+; Bit 7 should be set for long message in PC_OFF_H
+	set			REG_TMP1.b2, REG_TMP1.b2, 7
 	add		SHORT_MSG.bits_left, SHORT_MSG.bits_left, 16
 transport_layer_assemble_long_msg_no_pc_off:
 ;save ADDR(+OFF) to memory buffer
@@ -931,7 +1030,7 @@ update_events_no_int3:
 	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S, 2
 	set		    REG_TMP0.b0, REG_TMP0.b0, EVENT_S_QMLW
 ;save events
-	sbco		&REG_TMP0.w0, MASTER_REGS_CONST, EVENT_S, 1
+	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S, 1
 	qbbc		update_events_no_int16, REG_TMP0.b1, EVENT_S_QMLW
 ; generate interrupt_s
 	ldi		r31.w0, PRU0_ARM_IRQ4
@@ -988,225 +1087,185 @@ transport_layer_pos_update_done:
     sbco        &REG_TMP1.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
 	jmp		transport_layer_send_msg_done
 
-;----------------------------------------------------
-;Function: transport_on_h_frame (RET_ADDR)
-;calculates the acceleration, velocity and fast position
-; 38+9+52 = 99 cycles
-;input:
-;output:
-;modifies:
-;----------------------------------------------------
-;TODO: reduce processing time by 24 cycles
-transport_on_h_frame:
 
-; Set POSTX to 0
-    ldi         REG_TMP0.b0, 0x0
-    sbco		&REG_TMP0.b0, MASTER_REGS_CONST, POSTX, 1
 
-;check for byte error in acceleration channel
+;--------------------------------------------------
+;v_frame calculations
+;102+20=122 cycles
+;extracts safe position
+;verifies fast position
+;NOT allowed to use REG_TMP11
+;--------------------------------------------------
+transport_on_v_frame:
+;save REG_FNC.w0 content
+	mov		REG_TMP11.w1, REG_FNC.w0
+;inc NUM_VERT_FRAMES -> could be replaced with PA STATS on ICSS_G
+    .if 0
+	lbco	&REG_TMP1, MASTER_REGS_CONST, NUM_VERT_FRAMES0, 4
+	add		REG_TMP1, REG_TMP1, 1
+	sbco	&REG_TMP1, MASTER_REGS_CONST, NUM_VERT_FRAMES0, 4
+    .endif
+; clear VPOS_VALID
+    zero    &REG_TMP0.b0, 1
+	sbco	&REG_TMP0.b0, MASTER_REGS_CONST, VPOS_VALID, 1
 
-	qbbs		transport_acc_err_inc, H_FRAME.flags, FLAG_ERR_ACC
-;crc error verification
-	;CALL1		calc_acc_crc
-;5 bits CRC of acceleration channel are flipped -> flip back
-	xor		H_FRAME.acc, H_FRAME.acc, 0x1f
-	ldi		REG_TMP2, (LUT_CRC5+PDMEM00)
-	lbbo		&REG_TMP0.b1, REG_TMP2, H_FRAME_acc1, 1
-	lsl		REG_TMP0.b1, REG_TMP0.b1, 3
-	xor		REG_TMP0.b1, REG_TMP0.b1, H_FRAME_acc0
-	lbbo		&REG_FNC.b0, REG_TMP2, REG_TMP0.b1, 1
-	qbne		transport_acc_err_inc, REG_FNC.b0, 0
-;check for special character: K29.7 is sent two times if slave error occured
-	ldi		REG_TMP0.w0, DOUBLE_K29_7
-    qbne		delta_delta_position, H_FRAME.acc, REG_TMP0.w0
-transport_acc_err_inc:
-
-;update the acc_err_cnt register
-	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, ACC_ERR_CNT, 1
-	add		REG_TMP0.b0, REG_TMP0.b0, 1
-	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, ACC_ERR_CNT, 1
-;reset if it is too large
-	lbco		&REG_TMP0.b1, MASTER_REGS_CONST, ACC_ERR_CNT_THRESH, 1
-	qbgt		transport_on_h_frame_no_reset, REG_TMP0.b0, REG_TMP0.b1
-	jmp		datalink_abort
-transport_on_h_frame_no_reset:
-;save return addr
-
-	mov		REG_TMP11.w0, RET_ADDR0
-	;CALL		estimator_acc; Instead of calling the API, copy the code here to save PRU cycles.
-;----------------------------------------------------
-;Function: estimator_acc (RET_ADDR)
-;This function estimates the FPOS and VEL
-;15+15+22=52 cycles
-;input:
-;
-;output:
-;	FAST_POSH, FAST_POSL, SPEED
-;modifies:
-;	FAST_POSH, FAST_POSL, SPEED, REG_TMP1, REG_TMP0
-;----------------------------------------------------
-;Estimating the acceleration
-;ith acc = (delta_a4* 1 + delta_a3 * 2 + delta_a2 * 4 + delta_a1 * 8 + delta_a0 * 16) / 32
-	lsl	  	REG_TMP0.w0, DELTA_ACC3, 1
-	lsl		REG_TMP0.w2, DELTA_ACC2, 2
-	lsl		REG_TMP1.w0, DELTA_ACC1, 3
-	lsl		REG_TMP1.w2, DELTA_ACC0, 4
-	add		REG_TMP0.w0, REG_TMP0.w0, REG_TMP0.w2
-	add		REG_TMP1.w0, REG_TMP1.w2, REG_TMP1.w0
-	add		REG_TMP0.w0, REG_TMP0.w0, REG_TMP1.w0
-	add		REG_TMP0.w0, REG_TMP0.w0, DELTA_ACC4
-;divide with 32
-	lsr		REG_TMP0.w0, REG_TMP0.w0, 5
-;sign extend delta acceleration to 16 bit -> acc size
-	qbbc		estimator_acc_sign_extend_dacc1, REG_TMP0.w0, 10
-	or		REG_TMP0.b1, REG_TMP0.b1, 0xf8
-estimator_acc_sign_extend_dacc1:
-; TODO: calcuate MAXACC, cap acc
-;add estimated delta acc to LAST_ACC
-	add		REG_FNC.w0, LAST_ACC, REG_TMP0.w0
-;check if estimated acc is neg. or pos.
-	;CALL1		calc_speed; Instead of calling the API, copy the code here to save PRU cycles.
-;sign extend acceleration to  24 bit -> speed size
-	xor		REG_TMP0, REG_TMP0, REG_TMP0
-	qbbc		calc_speed_extend_acc1, REG_FNC.w0, 10
-	ldi		REG_TMP0.w1, 0xfff8
-calc_speed_extend_acc1:
-	or		REG_TMP0.w0, REG_TMP0.w0, REG_FNC.w0
-	add		SPEED.w0, SPEED.w0, REG_TMP0.w0
-	adc		SPEED.b2, SPEED.b2, REG_TMP0.b2
-;updating the delta acceleration regs
-	mov		DELTA_ACC4, DELTA_ACC3
-	mov		DELTA_ACC3, DELTA_ACC2
-	mov		DELTA_ACC2, DELTA_ACC1
-	mov		DELTA_ACC1, DELTA_ACC0
-	sub		DELTA_ACC0, REG_TMP0.w0, LAST_ACC
-	mov		LAST_ACC, REG_TMP0.w0
-	.if $defined("HDSL_MULTICHANNEL")
-	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_CONST  0x00
-	PUSH_FIFO_CONST  0x00
+;store CRC in Master  Registers
+	mov		REG_TMP1.b0, VERT_L.b1
+	mov		REG_TMP1.b1, VERT_L.b0
+; Store the required data for vertical channel in temporary memory.
+; It will be stored to DMEM in transport_on_v_frame_2
+	sbco		&REG_TMP1, MASTER_REGS_CONST, VPOSCRC_TEMP, 2
+;transmission error?
+	qbbs		transport_on_v_frame_dont_update_qm, H_FRAME.flags, FLAG_ERR_VERT
+    lbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H, 1
+    and         REG_TMP2.b0, REG_TMP2.b0, (~((1<<ONLINE_STATUS_1_SCE) | (1<<ONLINE_STATUS_1_VPOS)) & 0xFF)
+;checking for crc error
+	qbeq		check_for_slave_error_on_v_frame, CRC_VERT, 0
+; Set EVENT_S_SCE in EVENT register
+	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_S, 2
+	set		REG_TMP0.b0, REG_TMP0.b0, EVENT_S_SCE
+;save events
+	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S, 1
+	qbbc		update_events_no_int4, REG_TMP0.b1, EVENT_S_SCE
+; generate interrupt_s
+	ldi		r31.w0, PRU0_ARM_IRQ4
+update_events_no_int4:
+; Set ONLINE_STATUS_1_SCE in ONLINE_STATUS_1 register
+    set         REG_TMP2.b0, REG_TMP2.b0, ONLINE_STATUS_1_SCE
+    sbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H, 1
+	QM_SUB		6
+transport_on_v_frame_dont_update_qm:
+;update CRC error count
+	.if 0
+	lbco		&REG_TMP1, MASTER_REGS_CONST, NUM_VERT_ERR0, 4
+	add		REG_TMP1, REG_TMP1, 1
+	sbco		&REG_TMP1, MASTER_REGS_CONST, NUM_VERT_ERR0, 4
 	.endif
-    CALL1		calc_fastpos
-;restore return addr
-	mov		RET_ADDR0, REG_TMP11.w0
-; Moving the event and online register update during stuffing
-; Set EVENT_UPDATE_PENDING_POS to indicate a fast position data consistency error
-	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_UPDATE_PENDING, 1
-	set         REG_TMP0.b0, REG_TMP0.w0, EVENT_UPDATE_PENDING_POS
-	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_UPDATE_PENDING, 1
-	qba		transport_on_h_frame_exit
-delta_delta_position:
+	qba		transport_on_v_frame_exit
+check_for_slave_error_on_v_frame:
 
-;reset ACC_ERR_CNT
-	sbco		&REG_FNC.b0, MASTER_REGS_CONST, ACC_ERR_CNT, 1
-;shift out crc bits
-	lsr		REG_FNC.w0, H_FRAME.acc, 5
-; learn highest abs. acc
-	;CALL1		calc_speed; Instead of calling the API, copy the code here to save PRU cycles.
-;sign extend acceleration to  24 bit -> speed size
-	xor		REG_TMP0, REG_TMP0, REG_TMP0
-	qbbc		calc_speed_extend_acc0, REG_FNC.w0, 10
-	ldi		REG_TMP0.w1, 0xfff8
-calc_speed_extend_acc0:
-	or		REG_TMP0.w0, REG_TMP0.w0, REG_FNC.w0
-	add		SPEED.w0, SPEED.w0, REG_TMP0.w0
-	adc		SPEED.b2, SPEED.b2, REG_TMP0.b2
-;updating the delta acceleration regs
-	mov		DELTA_ACC4, DELTA_ACC3
-	mov		DELTA_ACC3, DELTA_ACC2
-	mov		DELTA_ACC2, DELTA_ACC1
-	mov		DELTA_ACC1, DELTA_ACC0
-	sub		DELTA_ACC0, REG_TMP0.w0, LAST_ACC
-	mov		LAST_ACC, REG_TMP0.w0
-	.if $defined("HDSL_MULTICHANNEL")
-	WAIT_TX_FIFO_FREE
-	PUSH_FIFO_CONST  0x00
-	PUSH_FIFO_CONST  0x00
+;CRC was correct -> add 1 to QM
+;Note: QM_ADD uses REG_TMP1
+	QM_ADD		1
+;check for special character: K29.7 is sent in first byte of vertical channel if slave error occured
+	qbne		transport_on_v_frame_check_pos, VERT_H.b3, K29_7
+; Set EVENT_S_VPOS in EVENT register, due to encoder internal error
+	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_S, 2
+	set		REG_TMP0.b0, REG_TMP0.b0, EVENT_S_VPOS
+;save events
+	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S, 1
+	qbbc		update_events_no_int5, REG_TMP0.b1, EVENT_S_VPOS
+; generate interrupt_s
+	ldi		r31.w0, PRU0_ARM_IRQ4
+update_events_no_int5:
+; Set ONLINE_STATUS_1_VPOS in ONLINE_STATUS_1 register
+    set         REG_TMP2.b0, REG_TMP2.b0, ONLINE_STATUS_1_VPOS
+    sbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H, 1
+	qba		transport_on_v_frame_exit
+transport_on_v_frame_check_pos:
+
+    .if $defined("HDSL_MULTICHANNEL")
+    CALL2 WAIT_TX_FIFO_FREE
+    LOOP push_1B,3
+	PUSH_FIFO_CONST  0xff
+push_1B:
+    .endif
+
+	sbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H, 1
+	lsl		REG_TMP2, CHANNEL.ch_verth, 8
+	mov		REG_TMP2.b0, VERT_L.b3
+;first V-Frame? -> update FAST POS with SAFE POS
+transport_on_v_frame_not_first:
+;check for LAST FAST POS and SAFE POS mismatch
+
+	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, LAST_FAST_POS0, SIZE_FAST_POS
+	sub		REG_TMP1.w0, VERT_L.w2, REG_TMP0.w0
+	sub		REG_TMP1.w2, VERT_H.w0, REG_TMP0.w2
+	qble 	no_sub_carry, VERT_L.w2, REG_TMP0.w0
+; if carry is needed, subtract 1 separately
+	sub		REG_TMP1.w2, REG_TMP1.w2, 1
+no_sub_carry:
+	mov		REG_TMP2, REG_TMP1
+;check if diff is neg,
+	qbbc		transport_on_v_frame_diff_pos, REG_TMP2, 31
+	not		REG_TMP2, REG_TMP2
+	add		REG_TMP2, REG_TMP2, 1
+transport_on_v_frame_diff_pos:
+
+
+
+;check for diff. is 0 -> estimate if not
+	qbne		transport_on_v_frame_estimate, REG_TMP1, 0
+	qbne		transport_on_v_frame_estimate, VERT_H.b2, FAST_POSL
+
+;reset ALIGN_PH
+	ldi 	REG_TMP2.b0, 0
+	sbco 	&REG_TMP2.b0, MASTER_REGS_CONST, ALIGN_PH, 1
+	qba		transport_on_v_frame_no_pos_mismatch
+; estimate/correct
+transport_on_v_frame_estimate:
+	CALL1		estimator_fpos
+transport_on_v_frame_no_pos_mismatch:
+;store SAFE POS
+
+	mov		REG_TMP0.b0, VERT_H.b2
+	mov		REG_TMP0.b1, VERT_H.b1
+	mov		REG_TMP0.b2, VERT_H.b0
+	mov		REG_TMP0.b3, VERT_L.b3
+	mov		REG_TMP1.b0, VERT_L.b2
+
+; Store the required data for vertical channel in temporary memory.
+; It will be stored to DMEM in transport_on_v_frame_2
+	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, VPOS_TEMP, 5
+
+; set VPOS_VALID
+    ldi    REG_TMP0.b0, 0x1
+	sbco	&REG_TMP0.b0, MASTER_REGS_CONST, VPOS_VALID, 1
+
+; Store the required data for secondary channel in temporary memory.
+; It will be processed in transport_on_v_frame_2
+
+; store H_FRAME.flags
+	sbco	&H_FRAME.flags, MASTER_REGS_CONST, H_FRAME_FLAGS_TEMP, 2
+; store CRC_SEC
+	sbco	&CRC_SEC, MASTER_REGS_CONST, CRC_SEC_TEMP, 2
+; store the 8 bytes from secondary channel
+	sbco	&R20, MASTER_REGS_CONST, VPOS2_TEMP, 8
+	jmp no_first_push_for_exit
+transport_on_v_frame_exit:
+;we are in RX0
+;reset rel. pos
+	loop Wait_and_Push_2_byte,2
+   	CALL2 WAIT_TX_FIFO_FREE
+	PUSH_FIFO_CONST  0xff
+Wait_and_Push_2_byte:
+
+	PUSH_FIFO_CONST  0xff
+
+no_first_push_for_exit:
+    .if $defined("HDSL_MULTICHANNEL")
+	qbeq			free_run_mode1, EXTRA_SIZE, 0
+	CALL2 WAIT_TX_FIFO_FREE
+	PUSH_FIFO_CONST		0xff
+	RESET_CYCLCNT
+free_run_mode1:
 	.endif
-	CALL1		calc_fastpos
-transport_on_h_frame_exit:
-;calculate rel. pos and store
-	lbco		&REG_TMP0, MASTER_REGS_CONST, REL_POS0, 4
-;sign extend speed to 32 bits and add it to REL_POS
-	mov		REG_TMP1, SPEED
-    ldi     REG_TMP1.b3, 0
-	qbbc	calc_relpos_extend_vel, SPEED, 23
-	ldi		REG_TMP1.b3, 0xff
-calc_relpos_extend_vel:
-	add		REG_TMP0.w0, REG_TMP0.w0, REG_TMP1.w0
-	adc		REG_TMP0.w2, REG_TMP0.w2, REG_TMP1.w2
+	ldi		REG_TMP0, 0
 	sbco		&REG_TMP0, MASTER_REGS_CONST, REL_POS0, 4
-;store fast pos. and velocity
-    mov     REG_TMP0, FAST_POSH
-    mov     REG_TMP1, SPEED
-    xin     160, &REG_TMP0, 8
-	sbco	&REG_TMP0, MASTER_REGS_CONST, POS4, SIZE_FAST_POS+3
-; Set POSTX to 2
-    ldi         REG_TMP0.b0, 0x2
-    sbco		&REG_TMP0.b0, MASTER_REGS_CONST, POSTX, 1
-; signal event mst_intr[0] and PRU0_ARM_IRQ3
-	ldi     r31.w0, 32+0
-	ldi     r31.w0, PRU0_ARM_IRQ3
-	RET
+;store last FAST_POS
+	sbco		&FAST_POSL, MASTER_REGS_CONST, LAST_FAST_POS0, SIZE_FAST_POS
 
-;--------------------------------------------------------------------------------------------------
-;Function: calc_fastpos (RET_ADDR1)
-;This function sign extends speed and adds it to fast position
-;22 cycles
-;input:SPEED, FAST_POSH, FAST_POSL
-;
-;output: FAST_POSH, FAST_POSL
-;
-;modifies:FAST_POSH, FAST_POSL
-;
-;--------------------------------------------------------------------------------------------------
-calc_fastpos:
-;sign extend speed to NUM_POS_BITS=NUM_MT_BITS+NUM_ST_BITS and add it to FAST_POS
-	ldi		REG_TMP1.b0, 0
-	qbbc		calc_fastpos_extend_vel, SPEED, 23
-	ldi		REG_TMP1.b0, 0xff
-calc_fastpos_extend_vel:
-	mov		REG_TMP0, SPEED
-	mov		REG_TMP0.b3, REG_TMP1.b0
-;calculating fast position
-	add		FAST_POSL, FAST_POSL, REG_TMP0.b0
-	lsr		REG_TMP0, REG_TMP0, 8
-	mov		REG_TMP0.b3, REG_TMP1.b0
-	adc		FAST_POSH, FAST_POSH, REG_TMP0
-;load mask for fast position
-	lbco		&REG_TMP1, MASTER_REGS_CONST, MASK_POS, 4
-	and		FAST_POSH, FAST_POSH, REG_TMP1
-	RET1
-;--------------------------------------------------------------------------------------------------
-;Function: calc_speed (RET_ADDR1)
-;This function sign extends acceleration and adds it to speed
-;15 cycles
-;input:
-;	SPEED
-;	REG_FNC.w0: acceleration
-;
-;output: SPEED
-;
-;modifies: SPEED
-;
-;--------------------------------------------------------------------------------------------------
-calc_speed:
-;sign extend acceleration to  24 bit -> speed size
-	xor		REG_TMP0, REG_TMP0, REG_TMP0
-	qbbc		calc_speed_extend_acc, REG_FNC.w0, 10
-	ldi		REG_TMP0.w1, 0xfff8
-calc_speed_extend_acc:
-	or		REG_TMP0.w0, REG_TMP0.w0, REG_FNC.w0
-	add		SPEED.w0, SPEED.w0, REG_TMP0.w0
-	adc		SPEED.b2, SPEED.b2, REG_TMP0.b2
-;updating the delta acceleration regs
-	mov		DELTA_ACC4, DELTA_ACC3
-	mov		DELTA_ACC3, DELTA_ACC2
-	mov		DELTA_ACC2, DELTA_ACC1
-	mov		DELTA_ACC1, DELTA_ACC0
-	sub		DELTA_ACC0, REG_TMP0.w0, LAST_ACC
-	mov		LAST_ACC, REG_TMP0.w0
-	RET1
+; Store summary
+    sbco    &VERT_H.b3, MASTER_REGS_CONST, SAFE_SUM_TEMP, 1
+
+;restore REG_FNC.w0 content
+	mov		REG_FNC.w0, REG_TMP11.w1
+;reset vertical/secondary channel crc
+	ldi		CRC, 0
+;reset flags
+	and		H_FRAME_flags_l, H_FRAME_flags_l, FLAG_ERRORS
+	jmp		datalink_transport_on_v_frame_done
+
 ;--------------------------------------------------------------------------------------------------
 ;Function: estimator_fpos (RET_ADDR1)
 ;This function estimates fpos when vpos and fpos mismatch
@@ -1224,7 +1283,8 @@ calc_speed_extend_acc:
 ;
 ;--------------------------------------------------------------------------------------------------
 estimator_fpos:
-	add		ALIGN_PH, ALIGN_PH, 1
+	lbco 		&REG_TMP2.b0, MASTER_REGS_CONST, ALIGN_PH, 1
+	add			REG_TMP2.b0, REG_TMP2.b0, 1
 ;pos=abspos+relpos
 	lbco		&REG_TMP0, MASTER_REGS_CONST, REL_POS0, 4
 	add		FAST_POSL, VERT_L.b2, REG_TMP0.b0
@@ -1237,7 +1297,7 @@ estimator_fpos:
 estimator_fpos_add_relpos_positive:
 	adc		FAST_POSH.b3, VERT_H.b2, 0
 estimator_fpos_add_relpos_done:
-	qbne		estimator_fpos_align_ph_not_2, ALIGN_PH, 2
+	qbne		estimator_fpos_align_ph_not_2, REG_TMP2.b0, 2
 ;vel = vel+acc/8
     ldi     REG_TMP0.b2, 0
 	qbbc	estimator_fpos_acc_pos, LAST_ACC, 15
@@ -1257,60 +1317,5 @@ estimator_fpos_acc_sing_check_end:
 	add		SPEED.w0, SPEED.w0, REG_TMP0.w0
 	adc		SPEED.b2, SPEED.b2, REG_TMP0.b2
 estimator_fpos_align_ph_not_2:
+	sbco 	&REG_TMP2.b0, MASTER_REGS_CONST, ALIGN_PH, 1
 	RET1
-;--------------------------------------------------------------------------------------------------
-;Function: store_error (RET_ADDR1)
-;Stores error in ring buffer
-;15 cycles
-;input:
-;	REG_FNC: error
-;output:
-;modifies:
-;--------------------------------------------------------------------------------------------------
-store_error:
-;load abs error ring buffer ptr.
-	;ldi		REG_TMP1, (PDMEM00+ABS_ERR_PTR)
-	;xor		REG_TMP0, REG_TMP0, REG_TMP0
-	;lbbo		&REG_TMP0, REG_TMP1, 0x00, ABS_ERR_PTR_SIZE
-;store error
-	;sbbo		&REG_FNC, REG_TMP0, 0x00, 4
-;update and store ptr
-	;add		REG_TMP0.w0, REG_TMP0.w0, 4
-	;ldi		REG_TMP0.w2, (PDMEM00+ABS_ERR_BUF+ABS_ERR_BUF_SIZE)
-	;qbgt		store_error_dont_reset_abs_err_ptr, REG_TMP0.w0, REG_TMP0.w2
-	;ldi		REG_TMP0.w0, (PDMEM00+ABS_ERR_BUF)
-store_error_dont_reset_abs_err_ptr:
-	;sbbo		&REG_TMP0.w0, REG_TMP1, 0x00, ABS_ERR_PTR_SIZE
-	;RET1
-;--------------------------------------------------------------------------------------------------
-;Function: calc_acc_crc (RET_ADD1)
-;This function checks the crc for the acceleration channel
-;11 cycles
-;input:
-;	H_frame.acc
-;output:
-;	REG_FNC.b0: 0 indicates that crc check was successfully
-;modifies:
-;	REG_TMP0, REG_FNC
-;--------------------------------------------------------------------------------------------------
-calc_acc_crc:
-;5 bits CRC of acceleration channel are flipped -> flip back
-	xor		H_FRAME.acc, H_FRAME.acc, 0x1f
-	ldi		REG_TMP2, (LUT_CRC5+PDMEM00)
-	lbbo		&REG_TMP0.b1, REG_TMP2, H_FRAME_acc1, 1
-	lsl		REG_TMP0.b1, REG_TMP0.b1, 3
-	xor		REG_TMP0.b1, REG_TMP0.b1, H_FRAME_acc0
-	lbbo		&REG_FNC.b0, REG_TMP2, REG_TMP0.b1, 1
-	RET1
-;--------------------------------------------------------------------------------------------------
-;Function: demp_data_symbols (RET_ADDR1)
-;Demaps data symbols (5bits) and converts them to data nibbles (4bits)
-;input:
-;	REG_FNC.b0: Number of data symbols
-;	r1.b1: source
-;	r1.b0: destination
-;output:
-;	*r1.b0[0:REG_FNC.b0]: demapped data
-;modifies:
-;--------------------------------------------------------------------------------------------------
-demap_data_symbols:

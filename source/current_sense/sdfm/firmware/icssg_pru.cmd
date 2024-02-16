@@ -19,10 +19,12 @@ MEMORY
       PAGE 1:
 
     /* RAM */
-    PRU_FWREGS          : org = 0x00000000 len = 0x00000080
-    RTU_FWREGS          : org = 0x00000080 len = 0x00000080
-    PRU_DMEM_0_1_LOW    : org = 0x00000200 len = 0x00000E00         /* 4kB ICSSG Data RAM 0_1 for PRU*/
-    PRU_DMEM_0_1_HIGH   : org = 0x00001000 len = 0x00001000         /* 4kB ICSSG Data RAM 0_1 for RTU*/
+    PRU_FWREGS          : org = 0x00000000 len = 0x00000200         /*800 byte */
+    RTU_FWREGS          : org = 0x00000200 len = 0x00000200         /*800 byte */
+    TXPRU_FWREGS        : org = 0x00000400 len = 0x00000200         /*800 byte */
+    PRU_DMEM_0_1_LOW    : org = 0x00000600 len = 0x00000A00         /* 2.6kB ICSSG Data RAM 0_1 for PRU*/
+    PRU_DMEM_0_1_HIGH0  : org = 0x00001000 len = 0x0000800         /* 2kB ICSSG Data RAM 0_1 for RTU*/
+    PRU_DMEM_0_1_HIGH1  : org = 0x00001800 len = 0x0000800         /* 2KB ICSSG Data RAM 0_1 for TXPRU*/
     PRU_DMEM_1_0        : org = 0x00002000 len = 0x00002000         /* 8kB ICSSG Data RAM 1_0 */
 
       PAGE 2:
@@ -85,9 +87,17 @@ SECTIONS {
     .data           >  PRU_DMEM_0_1_LOW, PAGE 1
     .outSamps       >  PRU_DMEM_0_1_LOW, PAGE 1
 #else
+#if defined (SDFM_RTU_CORE)
     .fwRegs         >  RTU_FWREGS , PAGE 1
-    .data           >  PRU_DMEM_0_1_HIGH, PAGE 1
-    .outSamps       >  PRU_DMEM_0_1_HIGH, PAGE 1
+    .data           >  PRU_DMEM_0_1_HIGH0, PAGE 1
+    .outSamps       >  PRU_DMEM_0_1_HIGH0, PAGE 1
+#else
+#if defined (SDFM_TXPRU_CORE)
+    .fwRegs         >  TXPRU_FWREGS , PAGE 1
+    .data           >  PRU_DMEM_0_1_HIGH1, PAGE 1
+    .outSamps       >  PRU_DMEM_0_1_HIGH1, PAGE 1
+#endif
+#endif
 #endif
 
     .dbgBuf         > PRU_SHAREDMEM, PAGE 2

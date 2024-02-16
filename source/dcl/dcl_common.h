@@ -18,7 +18,7 @@
  *    from this software without specific prior written permission.
  *
  *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- *  "AS IS" AND ANY EXPgResS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  *  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
  *  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
@@ -45,6 +45,9 @@ extern "C" {
  *  \brief      Top level header that contains all DCL common strctures and functions
  */
 
+#include <stdint.h>
+#include <stdbool.h>
+
 //! \brief  Defines single,double precision data type.
 //!         Note: Assumes ABI to be __TI_EABI__, 
 //!         does not support legacy __TI_COFF__.
@@ -56,7 +59,7 @@ typedef double        float64_t;
 
 //! \brief  Defines dcl function section that users can specify in the linker file(.cmd) 
 //!         and to accelerate performance by mapping to faster memory
-//!         Note: only DCL_runXXX and DCL_updateXXX/pendingUpdateXXX are included by default
+//!         Note: only DCL_run and DCL_update are included by default
 #define _DCL_CODE_SECTION   __attribute__((section("dclfuncs")))
 
 //! \brief  Defines volatile for DCL strctures
@@ -97,8 +100,6 @@ typedef double        float64_t;
     #warning "DCL currently doesn't support interrupt operations for this architecture"
 #endif
 
-#include <stdint.h>
-#include <stdbool.h>
 #include "common/dcl_aux.h"
 #include "common/dcl_css.h"
 #include "common/dcl_zpk3.h"

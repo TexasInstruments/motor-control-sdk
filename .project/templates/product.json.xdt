@@ -13,11 +13,12 @@
     "name": "MOTOR_CONTROL_SDK_`deviceName`",
     "displayName": "MOTOR CONTROL SDK for `deviceName`",
 % }
-    "version": "09.00.00",
+    "version": "09.01.00",
     "documentationPath": "../docs",
     "includePaths": [
         "../source",
         "../mcu_plus_sdk/source",
+        "../ind_comms_sdk/source",
     ],
     "components": [
 % if((args.device == "am64x") || (args.device == "am243x")) {
@@ -30,6 +31,7 @@
         "/security/security",
         "/usb/usb",
         "/pru_io/pru_io",
+        "/industrial_comms/industrial_comms",
 % }
 % if(args.device == "am263x") {
         "/motor_control",
@@ -39,6 +41,7 @@
         "/networking/networking",
         "/security/security",
         "/xbar/xbar",
+        "/industrial_comms/industrial_comms",
 % }
     ],
     "devices": [

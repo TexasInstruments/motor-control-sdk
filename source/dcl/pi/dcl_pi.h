@@ -18,7 +18,7 @@
  *    from this software without specific prior written permission.
  *
  *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- *  "AS IS" AND ANY EXPgResS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  *  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
  *  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
@@ -58,11 +58,13 @@ typedef struct dcl_pi_sps
     float32_t Ki;       //!< Integral gain
     float32_t Umax;     //!< Upper saturation limit
     float32_t Umin;     //!< Lower saturation limit
+    float32_t Imax;     //!< Upper integrator saturation limit, only used in DCL_runPIParallelEnhanced()
+    float32_t Imin;     //!< Lower integrator saturation limit, only used in DCL_runPIParallelEnhanced()
 } DCL_PI_SPS;
 
 //! \brief          Defines default values to initialize DCL_PI_SPS
 //!
-#define PI_SPS_DEFAULTS { 1.0f, 0.0f, 1.0f, -1.0f }
+#define PI_SPS_DEFAULTS { 1.0f, 0.0f, 1.0f, -1.0f, 1.0f, -1.0f }
 
 //! \brief          DCL_PI object for storing PI specific parameters
 //!
@@ -73,6 +75,8 @@ typedef _DCL_VOLATILE struct dcl_pi
     float32_t Ki;       //!< Integral gain
     float32_t Umax;     //!< Upper control saturation limit
     float32_t Umin;     //!< Lower control saturation limit 
+    float32_t Imax;     //!< Upper integrator saturation limit, only used in DCL_runPIParallelEnhanced()
+    float32_t Imin;     //!< Lower integrator saturation limit, only used in DCL_runPIParallelEnhanced()
 
     /* internal storage */ 
     float32_t i6;       //!< Saturation storage
@@ -86,7 +90,7 @@ typedef _DCL_VOLATILE struct dcl_pi
 
 //! \brief          Defines default values to initialize DCL_PI
 //!
-#define PI_DEFAULTS { 1.0f, 0.0f, 1.0f, -1.0f, 1.0f, 0.0f, 0.0f, \
+#define PI_DEFAULTS { 1.0f, 0.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 0.0f, \
                     &(DCL_PI_SPS)PI_SPS_DEFAULTS, &(DCL_CSS)DCL_CSS_DEFAULTS }
 
 //! \brief          Macro for internal default values to initialize DCL_PI
@@ -95,6 +99,8 @@ typedef _DCL_VOLATILE struct dcl_pi
 //!                                             .Ki = 0.0f,
 //!                                             .Umax = 1.0f,
 //!                                             .Umin = -1.0f,
+//!                                             .Imax = 0.0f,
+//!                                             .Imin = 0.0f,
 //!                                             PI_INT_DEFAULTS
 //!                                           };
 #define PI_INT_DEFAULTS .i6=1.0f, .i10=0.0f, .i11=0.0f, \
@@ -133,7 +139,8 @@ typedef _DCL_VOLATILE struct dcl_pi
     if(sps_ptr)                                                                            \
     {                                                                                      \
         *new_pi = (DCL_PI){ (new_sps)->Kp, (new_sps)->Ki, (new_sps)->Umax, (new_sps)->Umin,\
-        1.0f, 0.0f, 0.0f, (DCL_PI_SPS*)new_sps, &(DCL_CSS)DCL_CSS_DEFAULTS };              \
+        (new_sps)->Imax, (new_sps)->Imin, 1.0f, 0.0f, 0.0f,                                \
+        (DCL_PI_SPS*)new_sps, &(DCL_CSS)DCL_CSS_DEFAULTS };                                \
     }                                                                                      \
     new_pi;                                                                                \
 })
@@ -145,24 +152,25 @@ typedef _DCL_VOLATILE struct dcl_pi
 _DCL_CODE_ACCESS
 void DCL_resetPI(DCL_PI *pi)
 {
-    dcl_interrupt_t ints = DCL_disableInts();
+    dcl_interrupt_t ints;
+    ints = DCL_disableInts();
     pi->i6 = 1.0f;
     pi->i10 = pi->i11 = 0.0f;
     DCL_restoreInts(ints);
 }
 
-//! \brief          Loads PI tuning parameter from its SPS parameter   
+//! \brief          Loads PI tuning parameter from its SPS parameter without interrupt protection   
 //!        
 //! \param[in] pi   Pointer to the DCL_PI controller structure
 //!
 _DCL_CODE_ACCESS
-void DCL_fupdatePI(DCL_PI *pi)
+void DCL_forceUpdatePI(DCL_PI *pi)
 {
 
 #ifdef DCL_ERROR_HANDLING_ENABLED
     uint32_t err_code = dcl_none;
     err_code |= (pi->sps->Umax <= pi->sps->Umin) ? dcl_param_invalid_err : dcl_none;
-    err_code |= (pi->css->t_sec <= 0.0f) ? dcl_param_range_err : dcl_none;
+    err_code |= (pi->css->T <= 0.0f) ? dcl_param_range_err : dcl_none;
     err_code |= (pi->sps->Kp < 0.0f) ? dcl_param_range_err : dcl_none;
     err_code |= (pi->sps->Ki < 0.0f) ? dcl_param_range_err : dcl_none;
     if (err_code)
@@ -177,21 +185,22 @@ void DCL_fupdatePI(DCL_PI *pi)
     pi->Ki = pi->sps->Ki;
     pi->Umax = pi->sps->Umax;
     pi->Umin = pi->sps->Umin;
+    pi->Imax = pi->sps->Imax;
+    pi->Imin = pi->sps->Imin;
 }
 
-//! \brief          Updates PI parameter from its SPS parameter with interrupt protection
+//! \brief          Loads PI tuning parameter from its SPS parameter with interrupt protection
 //!
 //! \param[in] pi   Pointer to the DCL_PI controller structure
-//! \return         'true' if update is successful, otherwise 'false'
 //!
 _DCL_CODE_ACCESS _DCL_CODE_SECTION
-bool DCL_updatePI(DCL_PI *pi)
+void DCL_updatePINoCheck(DCL_PI *pi)
 {
 
 #ifdef DCL_ERROR_HANDLING_ENABLED
     uint32_t err_code = dcl_none;
     err_code |= (pi->sps->Umax <= pi->sps->Umin) ? dcl_param_invalid_err : dcl_none;
-    err_code |= (pi->css->t_sec <= 0.0f) ? dcl_param_range_err : dcl_none;
+    err_code |= (pi->css->T <= 0.0f) ? dcl_param_range_err : dcl_none;
     err_code |= (pi->sps->Kp < 0.0f) ? dcl_param_range_err : dcl_none;
     err_code |= (pi->sps->Ki < 0.0f) ? dcl_param_range_err : dcl_none;
     if (err_code)
@@ -202,56 +211,39 @@ bool DCL_updatePI(DCL_PI *pi)
     }
 #endif
 
-    if (!DCL_getUpdateStatus(pi))
-    {
-        dcl_interrupt_t ints = DCL_disableInts();
-        DCL_setUpdateStatus(pi);
-        pi->Kp = pi->sps->Kp;
-        pi->Ki = pi->sps->Ki;
-        pi->Umax = pi->sps->Umax;
-        pi->Umin = pi->sps->Umin;
-        DCL_clearUpdateStatus(pi);
-        DCL_restoreInts(ints);
-        return true;
-    }
-    return false;
+    dcl_interrupt_t ints;
+    ints = DCL_disableInts();
+    pi->Kp = pi->sps->Kp;
+    pi->Ki = pi->sps->Ki;
+    pi->Umax = pi->sps->Umax;
+    pi->Umin = pi->sps->Umin;
+    pi->Imax = pi->sps->Imax;
+    pi->Imin = pi->sps->Imin;
+    DCL_restoreInts(ints);
 }
 
-//! \brief           A conditional update based on the pending-for-update flag.
-//!                  If the pending status is set, the function will update PI
+//! \brief           A conditional update based on the update flag.
+//!                  If the update status is set, the function will update PI
 //!                  parameter from its SPS parameter and clear the status flag on completion.
-//!                  Note: Use DCL_setPendingStatus(pi) to set the pending status.
+//!                  Note: Use DCL_setUpdateStatus(pi) to set the update status.
 //!     
 //! \param[in] pi    Pointer to the DCL_PI controller structure
 //! \return          'true' if an update is applied, otherwise 'false'
 //!
 _DCL_CODE_ACCESS _DCL_CODE_SECTION
-bool DCL_pendingUpdatePI(DCL_PI *pi)
+bool DCL_updatePI(DCL_PI *pi)
 {
-    if (DCL_getPendingStatus(pi) && DCL_updatePI(pi))
+    if (DCL_getUpdateStatus(pi))
     {
-        DCL_clearPendingStatus(pi);
+        DCL_updatePINoCheck(pi);
+        DCL_clearUpdateStatus(pi);
         return true;
     }
     return false;
 }
 
-//! \brief           Update SPS parameter with active param, userful when needing
-//!                  to update only few active param from SPS and keep rest the same   
-//!
-//! \param[in] pi    Pointer to the active DCL_PI controller structure
-//!
-_DCL_CODE_ACCESS
-void DCL_updatePISPS(DCL_PI *pi)
-{
-    pi->sps->Kp = pi->Kp;
-    pi->sps->Ki = pi->Ki;
-    pi->sps->Umax = pi->Umax;
-    pi->sps->Umin = pi->Umin;
-}
-
 //! \brief          Configures a series PI controller in "zero-pole-gain" form
-//!                 Note: Sampling period pi->css->t_sec are used in the calculation.
+//!                 Note: Sampling period pi->css->T are used in the calculation.
 //!                 New settings take effect after DCL_updatePI().
 //!                 Only z1 considered in DCL_ZPK3, other poles & zeros ignored.
 //!                 Zero frequency assumed to be in radians/sec.
@@ -265,7 +257,7 @@ void DCL_loadSeriesPIasZPK(DCL_PI *pi, DCL_ZPK3 *zpk)
 #ifdef DCL_ERROR_HANDLING_ENABLED
     uint32_t err_code = dcl_none;
     err_code |= (zpk->K < 0.0f) ? dcl_param_range_err : dcl_none;
-    err_code |= (crealf(zpk->z1) > (1.0f / (2.0f * pi->css->t_sec))) ? dcl_param_warn_err : dcl_none;
+    err_code |= (crealf(zpk->z1) > (1.0f / (2.0f * pi->css->T))) ? dcl_param_warn_err : dcl_none;
     if (err_code)
     {
         DCL_setError(pi,err_code);
@@ -274,15 +266,15 @@ void DCL_loadSeriesPIasZPK(DCL_PI *pi, DCL_ZPK3 *zpk)
     }
 #endif
 
-    float32_t t_sec = pi->css->t_sec;
+    float32_t T = pi->css->T;
     float32_t z1 = (float32_t) crealf(zpk->z1);
-    pi->sps->Kp = zpk->K * (1.0f + (t_sec * z1) / 2.0f);
-    pi->sps->Ki = (-2.0f * t_sec * z1) / (2.0f + (t_sec * z1));
+    pi->sps->Kp = zpk->K * (1.0f + (T * z1) / 2.0f);
+    pi->sps->Ki = (-2.0f * T * z1) / (2.0f + (T * z1));
 
 }
 
 //! \brief          Configures a parallel PI controller in "zero-pole-gain" form
-//!                 Note: Sampling period pi->css->t_sec are used in the calculation.
+//!                 Note: Sampling period pi->css->T are used in the calculation.
 //!                 New settings take effect after DCL_updatePI().
 //!                 Zero frequency assumed to be in radians/sec.
 //!
@@ -295,7 +287,7 @@ void DCL_loadParallelPIasZPK(DCL_PI *pi, DCL_ZPK3 *zpk)
 #ifdef DCL_ERROR_HANDLING_ENABLED
     uint32_t err_code = dcl_none;
     err_code |= (zpk->K < 0.0f) ? dcl_param_range_err : dcl_none;
-    err_code |= (crealf(zpk->z1) > (1.0f / (2.0f * pi->css->t_sec))) ? dcl_param_warn_err : dcl_none;
+    err_code |= (crealf(zpk->z1) > (1.0f / (2.0f * pi->css->T))) ? dcl_param_warn_err : dcl_none;
     if (err_code)
     {
         DCL_setError(pi,err_code);
@@ -304,10 +296,10 @@ void DCL_loadParallelPIasZPK(DCL_PI *pi, DCL_ZPK3 *zpk)
     }
 #endif
     
-    float32_t t_sec = pi->css->t_sec;
+    float32_t T = pi->css->T;
     float32_t z1 = (float32_t) crealf(zpk->z1);
-    pi->sps->Kp = zpk->K * (1.0f + (t_sec * z1) / 2.0f);
-    pi->sps->Ki = -zpk->K * t_sec * z1;
+    pi->sps->Kp = zpk->K * (1.0f + (T * z1) / 2.0f);
+    pi->sps->Ki = -zpk->K * T * z1;
 }
 
 //! \brief          Executes an inline series form PI controller
@@ -371,12 +363,10 @@ float32_t DCL_runPIParallel(DCL_PI *pi, float32_t rk, float32_t yk)
 //! \param[in] pi    Pointer to the DCL_PI structure
 //! \param[in] rk    The controller set-point reference
 //! \param[in] yk    The measured feedback value
-//! \param[in] Imax  Upper integrator saturation limit
-//! \param[in] Imin  Lower integrator saturation limit
 //! \return          The control effort
 //!
 _DCL_CODE_ACCESS _DCL_CODE_SECTION
-float32_t DCL_runPIParallelEnhanced(DCL_PI *pi, float32_t rk, float32_t yk, float32_t Imax, float32_t Imin)
+float32_t DCL_runPIParallelEnhanced(DCL_PI *pi, float32_t rk, float32_t yk)
 {
     float32_t v1, v5, v7, v8;
     bool l11, l14, l17, l18, l19;
@@ -387,7 +377,7 @@ float32_t DCL_runPIParallelEnhanced(DCL_PI *pi, float32_t rk, float32_t yk, floa
     v7 = (v1 * pi->Kp) + v5;
     v8 = DCL_runSat(v7, pi->Umax, pi->Umin);
     l17 = (v7 == v8) ? true : false;
-    l11 = (DCL_runSat(v5,Imax,Imin) == v5) ? true : false;
+    l11 = (DCL_runSat(v5, pi->Imax, pi->Imin) == v5) ? true : false;
     l19 = (v5 > 0) ? true : false;
     l14 = (v1 > 0) ? true : false;
     l18 = l17 && (!l11 || (l19 ^ l14));

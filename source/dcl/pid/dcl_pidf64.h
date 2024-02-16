@@ -154,27 +154,28 @@ typedef _DCL_VOLATILE struct dcl_pidf64 {
 _DCL_CODE_ACCESS
 void DCL_resetPIDF64(DCL_PIDF64 *pid)
 {
-    dcl_interrupt_t ints = DCL_disableInts();
+    dcl_interrupt_t ints;
+    ints = DCL_disableInts();
     pid->d2 = pid->d3 = pid->i10 = 0.0L;
     pid->i14 = 1.0L;
     DCL_restoreInts(ints);
 }
 
-//! \brief          Loads PIDF64 tuning parameter from its SPS parameter
+//! \brief          Loads PIDF64 tuning parameter from its SPS parameter without interrupt protection
 //!
 //! \param[in] pid  Pointer to the active DCL_PID64 controller structure
 //!
 _DCL_CODE_ACCESS
-void DCL_fupdatePIDF64(DCL_PIDF64 *pid)
+void DCL_forceUpdatePIDF64(DCL_PIDF64 *pid)
 {
 
 #ifdef DCL_ERROR_HANDLING_ENABLED
-    float64_t tau = (2.0L - pid->sps->c1 * p->css->t_sec) / (2.0L * pid->sps->c1);
-    float64_t ec2 = pid->sps->c1 * (pid->css->t_sec - 2.0L * tau) / 2.0L;
+    float64_t tau = (2.0L - pid->sps->c1 * p->css->T) / (2.0L * pid->sps->c1);
+    float64_t ec2 = pid->sps->c1 * (pid->css->T - 2.0L * tau) / 2.0L;
     uint32_t err_code = dcl_none;
     err_code |= DCL_isValue(pid->sps->c2, ec2) ? dcl_none : dcl_param_invalid_err;
     err_code |= (pid->sps->Umax > pid->sps->Umin) ? dcl_none : dcl_param_invalid_err;
-    err_code |= (pid->css->t_sec > 0.0L) ? dcl_none : dcl_param_range_err;
+    err_code |= (pid->css->T > 0.0L) ? dcl_none : dcl_param_range_err;
     err_code |= ((pid->sps->Kp > 0.0L) && (pid->sps->Ki > 0.0L) && (pid->sps->Kd > 0.0L) && (pid->sps->Kr > 0.0L)) ? dcl_none : dcl_param_range_err ;
     if (err_code)
     {
@@ -198,19 +199,18 @@ void DCL_fupdatePIDF64(DCL_PIDF64 *pid)
 //! \brief          Updates PID parameter from its SPS parameter with interrupt protection
 //!
 //! \param[in] pid  Pointer to the DCL_PID64 controller structure
-//! \return         'true' if update is successful, otherwise 'false'
 //!
 _DCL_CODE_ACCESS
-bool DCL_updatePIDF64(DCL_PIDF64 *pid)
+void DCL_updatePIDF64NoCheck(DCL_PIDF64 *pid)
 {
 
 #ifdef DCL_ERROR_HANDLING_ENABLED
-    float64_t tau = (2.0L - pid->sps->c1 * pid->css->t_sec) / (2.0L * pid->sps->c1);
-    float64_t ec2 = pid->sps->c1 * (pid->css->t_sec - 2.0L * tau) / 2.0L;
+    float64_t tau = (2.0L - pid->sps->c1 * pid->css->T) / (2.0L * pid->sps->c1);
+    float64_t ec2 = pid->sps->c1 * (pid->css->T - 2.0L * tau) / 2.0L;
     uint32_t err_code = dcl_none;
     err_code |= DCL_isValue(pid->sps->c2, ec2) ? dcl_none : dcl_param_invalid_err;
     err_code |= (pid->sps->Umax > pid->sps->Umin) ? dcl_none : dcl_param_invalid_err;
-    err_code |= (pid->css->t_sec > 0.0L) ? dcl_none : dcl_param_range_err;
+    err_code |= (pid->css->T > 0.0L) ? dcl_none : dcl_param_range_err;
     err_code |= ((pid->sps->Kp > 0.0L) && (pid->sps->Ki > 0.0L) && (pid->sps->Kd > 0.0L) && (pid->sps->Kr > 0.0L)) ? dcl_none : dcl_param_range_err ;
     if (err_code)
     {
@@ -220,64 +220,41 @@ bool DCL_updatePIDF64(DCL_PIDF64 *pid)
     }
 #endif
 
-    if (!DCL_getUpdateStatus(pid))
-    {
-        dcl_interrupt_t ints = DCL_disableInts();
-        DCL_setUpdateStatus(pid);
-        pid->Kp = pid->sps->Kp;
-        pid->Ki = pid->sps->Ki;
-        pid->Kd = pid->sps->Kd;
-        pid->Kr = pid->sps->Kr;
-        pid->c1 = pid->sps->c1;
-        pid->c2 = pid->sps->c2;
-        pid->Umax = pid->sps->Umax;
-        pid->Umin = pid->sps->Umin;
-        DCL_clearUpdateStatus(pid);
-        DCL_restoreInts(ints);
-        return true;
-    }
-    return false;
+    dcl_interrupt_t ints;
+    ints = DCL_disableInts();
+    pid->Kp = pid->sps->Kp;
+    pid->Ki = pid->sps->Ki;
+    pid->Kd = pid->sps->Kd;
+    pid->Kr = pid->sps->Kr;
+    pid->c1 = pid->sps->c1;
+    pid->c2 = pid->sps->c2;
+    pid->Umax = pid->sps->Umax;
+    pid->Umin = pid->sps->Umin;
+    DCL_restoreInts(ints);
 }
 
-//! \brief           A conditional update based on the pending-for-update flag.
-//!                  If the pending status is set, the function will update PIDF64
+//! \brief           A conditional update based on the update flag.
+//!                  If the update status is set, the function will update PIDF64
 //!                  parameter from its SPS parameter and clear the status flag on completion.
-//!                  Note: Use DCL_setPendingStatus(pid) to set the pending status.
+//!                  Note: Use DCL_setUpdateStatus(pid) to set the pending status.
 //!     
 //! \param[in] pid   Pointer to the DCL_PIDF64 controller structure
 //! \return          'true' if an update is applied, otherwise 'false'
 //!
 _DCL_CODE_ACCESS
-bool DCL_pendingUpdatePIDF64(DCL_PIDF64 *pid)
+bool DCL_updatePIDF64(DCL_PIDF64 *pid)
 {
-    if (DCL_getPendingStatus(pid) && DCL_updatePIDF64(pid))
+    if (DCL_getUpdateStatus(pid))
     {
-        DCL_clearPendingStatus(pid);
+        DCL_updatePIDF64NoCheck(pid);
+        DCL_clearUpdateStatus(pid);
         return true;
     }
     return false;
 }
 
-//! \brief           Update SPS parameter with active param, userful when needing
-//!                  to update only few active param from SPS and keep rest the same   
-//!
-//! \param[in] pid   Pointer to the active DCL_PIDF64 controller structure
-//!
-_DCL_CODE_ACCESS
-void DCL_updatePIDF64SPS(DCL_PIDF64 *pid)
-{
-    pid->sps->Kp = pid->Kp;
-    pid->sps->Ki = pid->Ki;
-    pid->sps->Kd = pid->Kd;
-    pid->sps->Kr = pid->Kr;
-    pid->sps->c1 = pid->c1;
-    pid->sps->c2 = pid->c2;
-    pid->sps->Umax = pid->Umax;
-    pid->sps->Umin = pid->Umin;
-}
-
 //! \brief          Loads the derivative path filter shadow coefficients
-//!                 Note: Sampling period pid->css->t_sec are used in the calculation
+//!                 Note: Sampling period pid->css->T are used in the calculation
 //!                 Note: new coefficients take effect when DCL_updatePID64() is called
 //!
 //! \param[in] pid  Pointer to the DCL_PID64 structure
@@ -289,7 +266,7 @@ void DCL_setPIDF64filterBW(DCL_PIDF64 *pid, float64_t fc)
 
 #ifdef DCL_ERROR_HANDLING_ENABLED
     uint32_t err_code;
-    err_code = ((fc >= 1.0L / (2.0L * pid->css->t_sec)) || (fc <= 0.0L)) ? dcl_param_range_err : dcl_none;
+    err_code = ((fc >= 1.0L / (2.0L * pid->css->T)) || (fc <= 0.0L)) ? dcl_param_range_err : dcl_none;
     if (err_code)
     {
         DCL_setError(pid,err_code);
@@ -298,28 +275,27 @@ void DCL_setPIDF64filterBW(DCL_PIDF64 *pid, float64_t fc)
     }
 #endif
 
-    float64_t t_sec = pid->css->t_sec;
+    float64_t T = pid->css->T;
     float64_t tau = 1.0L / (2.0L * CONST_PI_F64 * fc);
-    pid->sps->c1 = 2.0L / (t_sec + (2.0L * tau));
-    pid->sps->c2 = (t_sec - (2.0L * tau)) / (t_sec + (2.0L * tau));
+    pid->sps->c1 = 2.0L / (T + (2.0L * tau));
+    pid->sps->c2 = (T - (2.0L * tau)) / (T + (2.0L * tau));
 }
 
 //! \brief           Loads the PID64 derivative path filter active coefficients
-//!                  Note: Sampling period pid->css->t_sec are used in the calculation
 //!                  Note: new coefficients take effect immediately.  SPS &
 //!                  CSS contents are unaffected.
 //!
 //! \param[in] pid   Pointer to the DCL_PID64 structure
 //! \param[in] fc    The desired filter bandwidth in Hz
-//! \param[in] t_sec The controller update rate in seconds
+//! \param[in] T     The controller period in seconds
 //!
 _DCL_CODE_ACCESS
-void DCL_setActivePIDF64filterBW(DCL_PIDF64 *pid, float64_t fc, float64_t t_sec)
+void DCL_setActivePIDF64filterBW(DCL_PIDF64 *pid, float64_t fc, float64_t T)
 {
 
 #ifdef DCL_ERROR_HANDLING_ENABLED
     uint32_t err_code;
-    err_code = ((fc >= 1.0L / (2.0L * t_sec)) || (fc <= 0.0L)) ? dcl_param_range_err : dcl_none;
+    err_code = ((fc >= 1.0L / (2.0L * T)) || (fc <= 0.0L)) ? dcl_param_range_err : dcl_none;
     if (err_code)
     {
         DCL_setError(pid,err_code);
@@ -329,12 +305,12 @@ void DCL_setActivePIDF64filterBW(DCL_PIDF64 *pid, float64_t fc, float64_t t_sec)
 #endif
 
     float64_t tau = 1.0L / (2.0L * CONST_PI_F64 * fc);
-    pid->c1 = 2.0L / (t_sec + (2.0L * tau));
-    pid->c2 = (t_sec - (2.0L * tau)) / (t_sec + (2.0L * tau));
+    pid->c1 = 2.0L / (T + (2.0L * tau));
+    pid->c2 = (T - (2.0L * tau)) / (T + (2.0L * tau));
 }
 
 //! \brief          Returns the active derivative path filter bandwidth in Hz
-//!                 Note: Sampling period pid->css->t_sec are used in the calculation
+//!                 Note: Sampling period pid->css->T are used in the calculation
 //!
 //! \param[in] pid  Pointer to the DCL_PID64 structure
 //! \return         The filter bandwidth in Hz
@@ -342,7 +318,7 @@ void DCL_setActivePIDF64filterBW(DCL_PIDF64 *pid, float64_t fc, float64_t t_sec)
 _DCL_CODE_ACCESS
 float64_t DCL_getPIDF64filterBW(DCL_PIDF64 *pid)
 {
-    float64_t tau = ((2.0L - pid->c1 * pid->css->t_sec) / (2.0L * pid->c1));
+    float64_t tau = ((2.0L - pid->c1 * pid->css->T) / (2.0L * pid->c1));
     return(1.0L / (2.0L * CONST_PI_F64 * tau));
 }
 

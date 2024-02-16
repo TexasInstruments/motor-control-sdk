@@ -984,7 +984,7 @@ TI HDSL Solution's register map is compatible with SICK HDSL MASTER IP Core rele
     <td> Bits 9:8 of 10 bit address for a "long message" operation
 </tr>
 <tr>
-    <td> PC_ADD_H
+    <td> PC_ADD_L
     <td> 0x29
     <td>
     <td> Long message address (Low Byte)
@@ -1063,7 +1063,7 @@ TI HDSL Solution's register map is compatible with SICK HDSL MASTER IP Core rele
     <td> 0x2E
     <td>
     <td> SensorHub Channel Data
-         <br/> **NOTE : Not available in TI HDSL Solution**
+         8 bit value of the SensorHub Channel Data
 </tr>
 <tr>
     <td> PC_DATA

@@ -9,7 +9,6 @@ const files = {
         "datalink_init.asm",
         "transport.asm",
         "utils.asm",
-        "hdsl_master_icssg_hexpru.cmd",
         "hdsl_master_icssg.cmd",
     ],
 };
@@ -33,7 +32,6 @@ const includes = {
 
 const defines = {
     common: [
-        "icss1",
         "PRU1",
         "CHANNEL_1",
         "ICSS_G_V_1_0",
@@ -50,7 +48,7 @@ const lflags = {
 };
 
 let postBuildSteps = [
-    "$(CG_TOOL_ROOT)/bin/hexpru.exe --diag_wrap=off --array --array:name_prefix=Hiperface_DSL2_0_PRU -o hdsl_master_icssg_multichannel_ch1_bin.h hdsl_master_multichannel_ch1_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.out;  move  hdsl_master_icssg_multichannel_ch1_bin.h  ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch1_bin.h"
+    "$(CG_TOOL_ROOT)/bin/hexpru.exe --diag_wrap=off --array --array:name_prefix=Hiperface_DSL2_0_PRU -o hdsl_master_icssg_multichannel_ch1_bin.h hdsl_master_multichannel_ch1_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.out;  $(COPY)  hdsl_master_icssg_multichannel_ch1_bin.h  ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch1_bin.h"
 ];
 
 

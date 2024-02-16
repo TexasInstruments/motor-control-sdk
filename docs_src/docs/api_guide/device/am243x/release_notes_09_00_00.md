@@ -28,7 +28,7 @@ Digital Control Library                                                         
 
 SOC    | Supported CPUs  | Boards                                                                                                      | Host PC
 -------|-----------------|-------------------------------------------------------------------------------------------------------------|-----------------------------------
-AM243x | R5F             | AM243x GP EVM (referred to as am243x-evm in code), \n AM243x LAUNCHPAD (referred to as am243x-lp in code)   | Windows 10 64b or Ubuntu 18.04 64b
+AM243x | R5F             | AM243x EVM (referred to as am243x-evm in code), \n AM243x LAUNCHPAD (referred to as am243x-lp in code)      | Windows 10 64b or Ubuntu 18.04 64b
 
 ## Tools, Compiler and Other Open Source SW Module Information
 
@@ -203,7 +203,7 @@ Module       | Supported CPUs | SysConfig Support | OS Support        | Key feat
     <td> %SDFM: Incorrect samples seen intermittently with EPWM as %SDFM clock
     <td> Current Sense %SDFM
     <td> 9.0 onwards
-    <td> Use 5MHz %SDFM clock from EPWM1 (tested with 5MHz clock from EPWM) or use PRU-ICSSG ECAP as %SDFM clock source 
+    <td> Use 5MHz %SDFM clock from EPWM1 (tested with 5MHz clock from EPWM) or use PRU-ICSSG ECAP as %SDFM clock source
 </tr>
 <tr>
     <td> PINDSW-6628
@@ -228,7 +228,7 @@ Module       | Supported CPUs | SysConfig Support | OS Support        | Key feat
 </tr>
 <tr>
     <td> PINDSW-6931
-    <td> Tamagawa: Firmware build failing 
+    <td> Tamagawa: Firmware build failing
     <td> Position Sense Tamagawa
     <td> 9.0 onwards
     <td>1. Update include path of icss_regs.inc and icss_cfg_regs.inc files to `../../../../mcu_plus_sdk/source/pru_io/firmware/common/ ` path in `tamagawa_main.asm` and `tamagawa_icss_reg_defs.h` files.<br>2. Replace ED with ENDAT in symbol definitions in tamagawa_main.asm file's lines 101 to 122. (For example, update `ICSS_CFG_PRU0_ED_CH0_CFG1` to `ICSS_CFG_PRU0_ENDAT_CH0_CFG1` )</td>
@@ -338,10 +338,10 @@ earlier SDKs.
     <th> Additional Remarks
 </tr>
 <tr>
-    <td> 
-    <td> 
-    <td> 
-    <td> 
+    <td>
+    <td>
+    <td>
+    <td>
 </tr>
 </table> -->
 
@@ -358,7 +358,7 @@ earlier SDKs.
     <td>  Current Sense %SDFM
     <td>  Structure `SdfmPrms_s`
     <td>  Added variables `iep_clock`, `sd_clock`, `en_second_update`, `firstSampTrigTime` and `secondSampTrigTime`
-    <td> 
+    <td>
 </tr>
 </table>
 
@@ -393,7 +393,7 @@ earlier SDKs.
     <td> Current Sense %SDFM
     <td> `SDFM_setSampleReadingTime`
     <td> Changed name of API \ref SDFM_setSampleTriggerTime and updated a parameter name `samp_trig_time`
-    <td> - 
+    <td> -
 </tr>
 <tr>
     <td> Current Sense %SDFM
@@ -404,25 +404,25 @@ earlier SDKs.
 <tr>
     <td> Current Sense %SDFM
     <td> \ref SDFM_setCompFilterOverSamplingRatio
-    <td> Changed type of osr parameter
-    <td> uint8_t to uint16_t 
+    <td> Changed type of over-sampling Rate (OSR) parameter
+    <td> uint8_t to uint16_t
 </tr>
 <tr>
     <td> Current Sense %SDFM
-    <td> `SDFM_setAccOverSamplingRatio` 
+    <td> `SDFM_setAccOverSamplingRatio`
     <td> Removed this API
     <td> -
 </tr>
 <tr>
     <td> Current Sense %SDFM
-    <td> Structure \ref SDFM_Ctrl 
-    <td> Removed variables: `ctrl` and `stat`, and added variables `sdfm_en`, `sdfm_en_ack` and `sdfm_pru_id`  
-    <td> - 
+    <td> Structure \ref SDFM_Ctrl
+    <td> Removed variables: `ctrl` and `stat`, and added variables `sdfm_en`, `sdfm_en_ack` and `sdfm_pru_id`
+    <td> -
 </tr>
 <tr>
     <td> Current Sense %SDFM
     <td> Structure \ref SDFM_CfgTrigger
-    <td> Removed variables `trig_samp_time`, `oc_prd_iep_cnt` and `sample_count`, and added variables `en_double_nc_sampling`, `first_samp_trig_time` and `second_samp_trig_time` 
+    <td> Removed variables `trig_samp_time`, `oc_prd_iep_cnt` and `sample_count`, and added variables `en_double_nc_sampling`, `first_samp_trig_time` and `second_samp_trig_time`
     <td> -
 </tr>
 </table>

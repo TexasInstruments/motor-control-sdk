@@ -24,5 +24,6 @@
 #define `instance.$name`                  (`i`)
 #define `instance.$name`_CHANNEL0         (`instance.channel_0 & 1`)
 #define `instance.$name`_CHANNEL1         (`instance.channel_1 & 1`)
+#define `instance.$name`_CHANNEL2         (`instance.channel_2 & 1`)
 #define `instance.$name`_MODE             (`Mode`)
 % }

@@ -8,26 +8,32 @@ The HDSL firmware running on ICSS-PRU provides a defined well interface to execu
 
 ## Features Supported
 
--  Safe position
--  Fast position, speed
--  Communication status
--  External pulse synchronization
--  Register interface to be compatible with SICK HDSL FPGA IP Core (apart from the differences listed in \ref HDSL_EXCEPTIONS_LIST)
--  Parameter channel communication
+- Safe position
+- Fast position, speed
+- Communication status
+- External pulse synchronization
+	- 1 to 10 frames per cycle
+	- 8 kHz to 50 kHz cycle frequency
+- Register interface to be compatible with SICK HDSL FPGA IP Core (apart from the differences listed in \ref HDSL_EXCEPTIONS_LIST)
+- Parameter channel communication
 	- Short message
 	- Long message
-- 	Safety
--	Two channels support on am243x-evm
--	Single channel support on am243x-lp
--	Tested with three different encoder makes (EDM35, EKS36, EKM36)
+- Safety
+- Pipeline Channel Data
+- Three channel support using single PRU-ICSSG slice
+	- Three channel support on am243x-evm
+	- Two channel support on am243x-lp
+- Tested with three different encoder makes (EDM35, EKS36, EKM36)
+
+\note Channel 2 can be enabled only if channel 0 is enabled because of code overlay scheme needed in TX-PRU. See \ref HDSL_DESIGN_TXPRU_OVERLAY for more details
 
 ## Features Not Supported
 
 In general, peripherals or features not mentioned as part of "Features Supported" section are not
 supported, including the below
- -  100m cable
- -  Three channel support using single PRU-ICSSG slice
- -  Pipeline Channel
+ - 100m cable
+ - Pipeline Channel Status
+
  ## SysConfig Features
 
 @VAR_SYSCFG_USAGE_NOTE
@@ -50,6 +56,58 @@ SysConfig can be used to configure things mentioned below:
 ## Exceptions
 
 \subpage HDSL_EXCEPTIONS_LIST lists the exceptions TI's HDSL implementation when compared with SICK HDSL FPGA IP Core. Please note that all the corresponding register fields are not implemented.
+
+## Datasheet
+
+### Synchronization Pulse Jitter
+
+- Synchronization Pulse Jitter is under 100ns. Please refer to the image below for jitter calculation waveforms.
+
+\image html hdsl_sync_mode_waveforms.png "HDSL Sync mode waveforms for 2 channels"
+\image html hdsl_sync_mode_jitter.jpg "HDSL Sync mode jitter analysis"
+
+### Protocol Package Lengths with different ES and Sync Pulse Frequency values
+
+NOTE: Images below show TX_EN signal in "Red" and RX signal in "Yellow".
+
+<table>
+<tr>
+    <th> ES Value
+    <th> Cycle Time (in us)
+    <th> Cycle Frequency (in kHz)
+    <th> Observed Protocol Package Length (in us)
+</tr>
+<tr>
+    <td> 1
+    <td> 25
+    <td> 40
+    <td> 25.06
+</tr>
+<tr>
+    <td> 1
+    <td> 20
+    <td> 50
+    <td> 19.942
+</tr>
+<tr>
+    <td> 2
+    <td> 25
+    <td> 40
+    <td> Between 12.26 and 12.80
+</tr>
+<tr>
+    <td> 5
+    <td> 62.5
+    <td> 16
+    <td> Between 11.94 and 12.60
+</tr>
+<tr>
+    <td> 10
+    <td> 125
+    <td> 8
+    <td> Between 11.94 and 12.90
+</tr>
+</table>
 
 ## Example
 

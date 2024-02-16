@@ -146,17 +146,18 @@ typedef _DCL_VOLATILE struct dcl_df22
 _DCL_CODE_ACCESS
 void DCL_resetDF22(DCL_DF22 *df)
 {
-    dcl_interrupt_t ints = DCL_disableInts();
+    dcl_interrupt_t ints;
+    ints = DCL_disableInts();
     df->x1 = df->x2 = 0.0f;
     DCL_restoreInts(ints);
 }
 
-//! \brief           Loads DF22 tuning parameter from its SPS parameter
+//! \brief           Loads DF22 tuning parameter from its SPS parameter without interrupt protection
 //!
 //! \param[in] df    Pointer to the active DCL_DF22 controller structure
 //!
 _DCL_CODE_ACCESS
-void DCL_fupdateDF22(DCL_DF22 *df)
+void DCL_forceUpdateDF22(DCL_DF22 *df)
 {
     df->b0 = df->sps->b0;
     df->b1 = df->sps->b1;
@@ -165,64 +166,42 @@ void DCL_fupdateDF22(DCL_DF22 *df)
     df->a2 = df->sps->a2;
 }
 
-//! \brief           Updates DF22 parameter from its SPS parameter with interrupt protection
+//! \brief           Loads DF22 tuning parameter from its SPS parameter with interrupt protection
 //!
 //! \param[in] df    Pointer to the DCL_DF22 controller structure
-//! \return          'true' if update is successful, otherwise 'false'
 //!
 _DCL_CODE_ACCESS _DCL_CODE_SECTION
-bool DCL_updateDF22(DCL_DF22 *df)
+void DCL_updateDF22NoCheck(DCL_DF22 *df)
 {
-    if (!DCL_getUpdateStatus(df))
-    {
-        dcl_interrupt_t ints = DCL_disableInts();
-        DCL_setUpdateStatus(df);
-        df->b0 = df->sps->b0;
-        df->b1 = df->sps->b1;
-        df->b2 = df->sps->b2;
-        df->a1 = df->sps->a1;
-        df->a2 = df->sps->a2;
-        DCL_clearUpdateStatus(df);
-        DCL_restoreInts(ints);
-        return true;
-    }
-    return false;
+    dcl_interrupt_t ints;
+    ints = DCL_disableInts();
+    df->b0 = df->sps->b0;
+    df->b1 = df->sps->b1;
+    df->b2 = df->sps->b2;
+    df->a1 = df->sps->a1;
+    df->a2 = df->sps->a2;
+    DCL_restoreInts(ints);
 }
 
-//! \brief           A conditional update based on the pending-for-update flag.
-//!                  If the pending status is set, the function will update DF22
+//! \brief           A conditional update based on the update flag.
+//!                  If the update status is set, the function will update DF22
 //!                  parameter from its SPS parameter and clear the status flag on completion.
-//!                  Note: Use DCL_setPendingStatus(df) to set the pending status.
+//!                  Note: Use DCL_setUpdateStatus(df) to set the update status.
 //!     
 //! \param[in] df    Pointer to the DCL_DF22 controller structure
 //! \return          'true' if an update is applied, otherwise 'false'
 //!
 _DCL_CODE_ACCESS _DCL_CODE_SECTION
-bool DCL_pendingUpdateDF22(DCL_DF22 *df)
+bool DCL_updateDF22(DCL_DF22 *df)
 {
-    if (DCL_getPendingStatus(df) && DCL_updateDF22(df))
+    if (DCL_setUpdateStatus(df))
     {
-        DCL_clearPendingStatus(df);
+        DCL_updateDF22NoCheck(df);
+        DCL_clearUpdateStatus(df);
         return true;
     }
     return false;
 }
-
-//! \brief           Update SPS parameter with active param, userful when needing
-//!                  to update only few active param from SPS and keep rest the same   
-//!
-//! \param[in] df    Pointer to the active DCL_DF22 controller structure
-//!
-_DCL_CODE_ACCESS
-void DCL_updateDF22SPS(DCL_DF22 *df)
-{
-    df->sps->b0 = df->b0;
-    df->sps->b1 = df->b1;
-    df->sps->b2 = df->b2;
-    df->sps->a1 = df->a1;
-    df->sps->a2 = df->a2;
-}
-
 
 //! \brief           Determines stability of the shadow compensator
 //!
@@ -236,7 +215,7 @@ bool DCL_isStableDF22(DCL_DF22 *df)
 }
 
 //! \brief            Loads the DF22 shadow coefficients from a ZPK3 description
-//!                   Note: Sampling period df->css->t_sec are used in the calculation.
+//!                   Note: Sampling period df->css->T are used in the calculation.
 //!                   New settings take effect after DCL_updateDF22().
 //!                   Only z1, z2, p1 & p2 are considered, z3 & p3 are ignored.
 //!
@@ -264,19 +243,19 @@ void DCL_loadDF22asZPK(DCL_DF22 *df, DCL_ZPK3 *zpk)
     float32_t alpha1 = -(float32_t) crealf(zpk->p1 + zpk->p2);
     float32_t alpha0 = (float32_t) crealf(zpk->p1 * zpk->p2);
 
-    float32_t t_sec = df->css->t_sec;
-    float32_t a0p = 4.0f + (alpha1 * 2.0f * t_sec) + (alpha0 * t_sec * t_sec);
+    float32_t T = df->css->T;
+    float32_t a0p = 4.0f + (alpha1 * 2.0f * T) + (alpha0 * T * T);
 
-    df->sps->b0 = zpk->K * (4.0f + (beta1 * 2.0f * t_sec) + (beta0 * t_sec * t_sec)) / a0p;
-    df->sps->b1 = zpk->K * (-8.0f + (2.0f * beta0 * t_sec * t_sec)) / a0p;
-    df->sps->b2 = zpk->K * (4.0f - (beta1 * 2.0f * t_sec) + (beta0 * t_sec * t_sec)) / a0p;
-    df->sps->a1 = (-8.0f + (2.0f * alpha0 * t_sec * t_sec)) / a0p;
-    df->sps->a2 = (4.0f - (alpha1 * 2.0f * t_sec) + (alpha0 * t_sec * t_sec)) / a0p;
+    df->sps->b0 = zpk->K * (4.0f + (beta1 * 2.0f * T) + (beta0 * T * T)) / a0p;
+    df->sps->b1 = zpk->K * (-8.0f + (2.0f * beta0 * T * T)) / a0p;
+    df->sps->b2 = zpk->K * (4.0f - (beta1 * 2.0f * T) + (beta0 * T * T)) / a0p;
+    df->sps->a1 = (-8.0f + (2.0f * alpha0 * T * T)) / a0p;
+    df->sps->a2 = (4.0f - (alpha1 * 2.0f * T) + (alpha0 * T * T)) / a0p;
 }
 
 //! \brief           Loads the DF22 shadow coefficients from damping ratio and un-damped
 //!                  natural frequency using sample rate in CSS.
-//!                  Note: Sampling period df->css->t_sec are used in the calculation.
+//!                  Note: Sampling period df->css->T are used in the calculation.
 //!                  New settings take effect after DCL_updateDF22().
 //!
 //! \param[in] df    Pointer to the DCL_DF22 controller structure
@@ -299,18 +278,18 @@ void DCL_loadDF22asZwn(DCL_DF22 *df, float32_t z, float32_t wn)
     }
 #endif
 
-    float32_t t_sec = df->css->t_sec;
-    float32_t v1 = wn * wn * t_sec * t_sec;
-    float32_t a2p = 1.0f / (4.0f + (4.0f * z * wn * t_sec) + v1);
+    float32_t T = df->css->T;
+    float32_t v1 = wn * wn * T * T;
+    float32_t a2p = 1.0f / (4.0f + (4.0f * z * wn * T) + v1);
     df->sps->b0 = v1 * a2p;
     df->sps->b1 = 2.0f * df->sps->b0;
     df->sps->b2 = df->sps->b0;
     df->sps->a1 = ((2.0f * v1) - 8.0f) * a2p;
-    df->sps->a2 = (4.0f - (4.0f * z * wn * t_sec) + v1) * a2p;
+    df->sps->a2 = (4.0f - (4.0f * z * wn * T) + v1) * a2p;
 }
 
 //! \brief           Loads the shadow DF22 compensator coefficients to emulate a series form PID.
-//!                  Note: Sampling period df->css->t_sec are used in the calculation.
+//!                  Note: Sampling period df->css->T are used in the calculation.
 //!                  New settings take effect after DCL_updateDF22().
 //!
 //! \param[in] df    Pointer to the DCL_DF22 controller structure
@@ -337,10 +316,10 @@ void DCL_loadDF22asSeriesPID(DCL_DF22 *df, float32_t Kp, float32_t Ki, float32_t
     }
 #endif
 
-    float32_t t_sec = df->css->t_sec;
+    float32_t T = df->css->T;
     float32_t tau = 1 / (2.0f * CONST_PI * fc);
-    float32_t c1 = 2.0f / (t_sec + (2.0f * tau));
-    float32_t c2 = c1 * (t_sec - (2.0f * tau)) / 2.0f;
+    float32_t c1 = 2.0f / (T + (2.0f * tau));
+    float32_t c2 = c1 * (T - (2.0f * tau)) / 2.0f;
     float32_t Kdp = Kd * c1;
     df->sps->b0 = Kp * (1 + Ki + Kdp);
     df->sps->b1 = Kp * (c2 - 1 + Ki*c2 - 2*Kdp);
@@ -350,7 +329,7 @@ void DCL_loadDF22asSeriesPID(DCL_DF22 *df, float32_t Kp, float32_t Ki, float32_t
 }
 
 //! \brief           Loads the shadow DF22 compensator coefficients to emulate a parallel form PID.
-//!                  Note: Sampling period df->css->t_sec are used in the calculation.
+//!                  Note: Sampling period df->css->T are used in the calculation.
 //!                 New settings take effect after DCL_updateDF22().
 //!
 //! \param[in] df    Pointer to the DCL_DF22 controller structure
@@ -369,7 +348,7 @@ void DCL_loadDF22asParallelPID(DCL_DF22 *df, float32_t Kp, float32_t Ki, float32
     err_code |= (Ki < 0.0f) ? dcl_param_range_err : dcl_none;
     err_code |= (Kd < 0.0f) ? dcl_param_range_err : dcl_none;
     err_code |= (fc < 0.0f) ? dcl_param_range_err : dcl_none;
-    err_code |= (fc > (1.0f / (2.0f * df->css->t_sec))) ? dcl_param_warn_err : dcl_none;
+    err_code |= (fc > (1.0f / (2.0f * df->css->T))) ? dcl_param_warn_err : dcl_none;
     if (err_code)
     {
         DCL_setError(df,err_code);
@@ -378,10 +357,10 @@ void DCL_loadDF22asParallelPID(DCL_DF22 *df, float32_t Kp, float32_t Ki, float32
     }
 #endif
 
-    float32_t t_sec = df->css->t_sec;
+    float32_t T = df->css->T;
     float32_t tau = 1.0f / (2.0f * CONST_PI * fc);
-    float32_t c1 = 2.0f / (t_sec + (2.0f * tau));
-    float32_t c2 = c1 * (t_sec - (2.0f * tau)) / 2.0f;
+    float32_t c1 = 2.0f / (T + (2.0f * tau));
+    float32_t c2 = c1 * (T - (2.0f * tau)) / 2.0f;
     float32_t Kdp = Kd * c1;
     df->sps->b0 = Kp + Ki + Kdp;
     df->sps->b1 = (Kp * (c2 - 1)) + (Ki * c2) - (2.0f * Kdp);

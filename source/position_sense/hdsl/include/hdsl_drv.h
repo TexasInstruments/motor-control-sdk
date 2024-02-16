@@ -63,6 +63,56 @@ extern "C" {
 /*                           Macros & Typedefs                                */
 /* ========================================================================== */
 
+
+#define HDSL_MAX_CHANNELS           (3U)
+#define CHANNEL_0_ENABLED           (1<<0)
+#define CHANNEL_1_ENABLED           (1<<1)
+#define CHANNEL_2_ENABLED           (1<<2)
+
+/**
+ *  \anchor HDSL_LongMessageAddrTypes
+ *  \name HDSL Long Message Addressing Types
+ *
+ *
+ *  @{
+ */
+/** \brief Direct addressing of long messages */
+#define HDSL_LONG_MSG_ADDR_DIRECT   (0U)
+/** \brief Indirect addressing of long messages */
+#define HDSL_LONG_MSG_ADDR_INDIRECT (1U)
+/** @} */
+
+/**
+ *  \anchor HDSL_LongMessageAddrOffsetModes
+ *  \name HDSL Long Message Addressing with/without offset
+ *
+ *
+ *  @{
+ */
+/** \brief Addressing of long messages without offset */
+#define HDSL_LONG_MSG_ADDR_WITHOUT_OFFSET   (0U)
+/** \brief Addressing of long messages with offset */
+#define HDSL_LONG_MSG_ADDR_WITH_OFFSET (1U)
+/** @} */
+
+
+/**
+ *  \anchor HDSL_LongMessageLengths
+ *  \name HDSL Long Message Data Lengths
+ *
+ *
+ *  @{
+ */
+/** \brief No data bytes */
+#define HDSL_LONG_MSG_LENGTH_0   (0U)
+/** \brief 2 data bytes */
+#define HDSL_LONG_MSG_LENGTH_2   (1U)
+/** \brief 4 data bytes */
+#define HDSL_LONG_MSG_LENGTH_4   (2U)
+/** \brief 8 data bytes */
+#define HDSL_LONG_MSG_LENGTH_8   (3U)
+/** @} */
+
 #define MAX_WAIT 20000
 
 #define HDSL_ICSSG0_INST        0U
@@ -92,8 +142,6 @@ extern "C" {
 /* ICSSG0_PR1_EDC1_LATCH0_IN PRU_ICSSG0 (4+(10*4)) */
 #define SYNCEVT_RTR_SYNC10_EVT 0x2C
 
-#define ONLINE_STATUS_1_L_FRES  (1<<0)
-
 enum {
     MENU_SAFE_POSITION,
     MENU_QUALITY_MONITORING,
@@ -103,7 +151,7 @@ enum {
     MENU_RSSI,
     MENU_PC_SHORT_MSG_WRITE,
     MENU_PC_SHORT_MSG_READ,
-    MENU_DIRECT_READ_RID0_LENGTH8,
+    MENU_DIRECT_READ_RID0_LENGTH4,
     MENU_DIRECT_READ_RID81_LENGTH8,
     MENU_DIRECT_READ_RID81_LENGTH2,
     MENU_INDIRECT_WRITE_RID0_LENGTH8_OFFSET0,
@@ -244,29 +292,47 @@ typedef struct HDSL_Config_s {
 } HDSL_Config;
 /** @} */
 
+/**
+ * \anchor  HDSL_CopyTable
+ * \name    HDSL Copy Table for overlay scheme used when channel 2 is enabled.
+ * @{
+ */
+
+typedef struct HDSL_CopyTable_s {
+    uint32_t reserved1;
+    uint32_t loadAddr1; /**< Load Address of Part 1 of firmware */
+    uint32_t runAddr1;  /**< Run Address of Part 1 of firmware */
+    uint32_t size1;     /**< Size of Part 1 of firmware */
+    uint32_t reserved2;
+    uint32_t loadAddr2; /**< Load Address of Part 2 of firmware */
+    uint32_t runAddr2;  /**< Run Address of Part 2 of firmware */
+    uint32_t size2;     /**< Size of Part 2 of firmware */
+} HDSL_CopyTable;
+/** @} */
+
 /* ========================================================================== */
 /*                       Function Declarations                                */
 /* ========================================================================== */
 /**
  *  \brief     enable load share mode for multi-channel HDSL
  *
- *  \param[in]  gPru_cfg    Cfg base register address
- *  \param[in]  PRU_SLICE   PRU slice, 1 for PRU1 and 0 for PRU0
+ *  \param[in]  pruCfg    Cfg base register address
+ *  \param[in]  pruSlice   PRU slice, 1 for PRU1 and 0 for PRU0
  *
  */
-void hdsl_enable_load_share_mode(void *gPru_cfg ,uint32_t  PRU_SLICE);
+void hdsl_enable_load_share_mode(void *pruCfg ,uint32_t pruSlice);
+
 /**
  *  \brief      Open HDSL handle for the specified core
  *              (interrupt mapping should already be completed)
  *
  *  \param[in]  icssgHandle PRUICSS_Handle for the ICSS instance
  *  \param[in]  icssCore    Core to map in ICSSG instance
- *  \param[in]  PRU_mode    0 for dissabled load share mode, 1 for enabled load share mode
+ *  \param[in]  pruMode    0 for load share mode disabled, 1 for load share mode enabled
  *  \retval     HDSL_Handle
  *
  */
-// HDSL_ICSSG0_INST, HDSL_ICSSG1_INST
-HDSL_Handle HDSL_open(PRUICSS_Handle icssgHandle, uint32_t icssCore,uint8_t PRU_mode);
+HDSL_Handle HDSL_open(PRUICSS_Handle icssgHandle, uint32_t icssCore, uint8_t pruMode);
 
 /**
  *  \brief      Initialize IEP and Use OCP as IEP CLK src
@@ -386,7 +452,7 @@ uint8_t HDSL_get_acc_err_cnt(HDSL_Handle hdslHandle);
 uint8_t HDSL_get_rssi(HDSL_Handle hdslHandle);
 
 /**
- *  \brief  Write Response of Short message parameters channel Read for safe1 channel(S_PC_DATA) with gPc_data and Short message control value(SLAVE_REG_CTRL) in hdsl interface
+ *  \brief  Trigger a short message write operation using parameters channel
  *
  *  \param[in]  hdslHandle
  *  \param[in]  addr    Address
@@ -396,10 +462,10 @@ uint8_t HDSL_get_rssi(HDSL_Handle hdslHandle);
  *  \return     SystemP_SUCCESS in case of success, SystemP_TIMEOUT in case of timeout
  *
  */
-int32_t HDSL_write_pc_short_msg(HDSL_Handle hdslHandle,uint8_t addr, uint8_t data, uint64_t timeout);
+int32_t HDSL_write_pc_short_msg(HDSL_Handle hdslHandle, uint8_t addr, uint8_t data, uint64_t timeout);
 
 /**
- *  \brief      Read Response of Short message parameters channel Read for safe1 channel(S_PC_DATA) and write Short message control value(SLAVE_REG_CTRL) with gPc_addr in hdsl interface
+ *  \brief      Trigger a short message read operation using parameters channel
  *
  *  \param[in]  hdslHandle
  *  \param[in]  addr    Address
@@ -409,44 +475,50 @@ int32_t HDSL_write_pc_short_msg(HDSL_Handle hdslHandle,uint8_t addr, uint8_t dat
  *  \return     SystemP_SUCCESS in case of success, SystemP_TIMEOUT in case of timeout
  *
  */
-int32_t HDSL_read_pc_short_msg(HDSL_Handle hdslHandle,uint8_t addr, uint8_t *data, uint64_t timeout);
+int32_t HDSL_read_pc_short_msg(HDSL_Handle hdslHandle, uint8_t addr, uint8_t *data, uint64_t timeout);
 
 /**
- *  \brief      Write PC_AAD_L ,PC_ADD_H ,PC_OFF_L,PC_OFF_H and PC_CTRL values in hdsl interface
+ *  \brief  Trigger a long message write operation using parameters channel.
+ *          Call \ref HDSL_write_pc_buffer before this to write the data to be sent using long message.
  *
  *  \param[in]  hdslHandle
- *  \param[in]  pc_addrh
- *  \param[in]  pc_addrl
- *  \param[in]  pc_offh
- *  \param[in]  pc_offl
+ *  \param[in]  addr            10 bit address for long message
+ *  \param[in]  offsetEnable    Addressing with offset enable/disable from \ref HDSL_LongMessageAddrOffsetModes
+ *  \param[in]  addrType        Addressing Type from \ref HDSL_LongMessageAddrTypes
+ *  \param[in]  length          Length from \ref HDSL_LongMessageLengths
+ *  \param[in]  offset          15 bit address offset for long message (if offset is enabled in offsetEnable parameter)
+ *  \param[in]  timeout         Timeout in microseconds
+ *
+ *  \return     SystemP_SUCCESS in case of success, SystemP_FAILURE in case of error, SystemP_TIMEOUT in case of timeout
  *
  */
-void HDSL_set_pc_addr(HDSL_Handle hdslHandle, uint8_t pc_addrh, uint8_t pc_addrl, uint8_t pc_offh, uint8_t pc_offl);
+int32_t HDSL_write_pc_long_msg(HDSL_Handle hdslHandle, uint16_t addr, uint8_t offsetEnable, uint8_t addrType, uint8_t length, uint16_t offset, uint64_t timeout);
 
 /**
- *  \brief      To set the direction read/write for long message communication
- *
+ *  \brief      Trigger a long message read operation using parameters channel
+ *              If this API returns SystemP_SUCCESS, call \ref HDSL_read_pc_buffer after this to read the data received using long message.
  *  \param[in]  hdslHandle
- *  \param[in]  value
+ *  \param[in]  addr            10 bit address for long message
+ *  \param[in]  offsetEnable    Addressing with offset enable/disable from \ref HDSL_LongMessageAddrOffsetModes
+ *  \param[in]  addrType        Addressing Type from \ref HDSL_LongMessageAddrTypes
+ *  \param[in]  length          Length from \ref HDSL_LongMessageLengths
+ *  \param[in]  offset          15 bit address offset for long message
+ *  \param[in]  timeout         Timeout in microseconds
+ *
+ *  \return     SystemP_SUCCESS in case of success, SystemP_FAILURE in case of error, SystemP_TIMEOUT in case of timeout
  *
  */
-void HDSL_set_pc_ctrl(HDSL_Handle hdslHandle, uint8_t value);
+int32_t HDSL_read_pc_long_msg(HDSL_Handle hdslHandle, uint16_t addr, uint8_t offsetEnable, uint8_t addrType, uint8_t length, uint16_t offset, uint64_t timeout);
 
 /**
  *  \brief      Write Parameters channel buffer for different bytes(bytes 0-7)
  *
  *  \param[in]  hdslHandle
- *  \param[in]  pc_buf0
- *  \param[in]  pc_buf1
- *  \param[in]  pc_buf2
- *  \param[in]  pc_buf3
- *  \param[in]  pc_buf4
- *  \param[in]  pc_buf5
- *  \param[in]  pc_buf6
- *  \param[in]  pc_buf7
+ *  \param[in]  buff_off
+ *  \param[in]  data
  *
  */
-void HDSL_write_pc_buffer(HDSL_Handle hdslHandle, uint8_t pc_buf0, uint8_t pc_buf1, uint8_t pc_buf2, uint8_t pc_buf3, uint8_t pc_buf4, uint8_t pc_buf5, uint8_t pc_buf6, uint8_t pc_buf7);
+void HDSL_write_pc_buffer(HDSL_Handle hdslHandle, uint8_t buff_off, uint8_t data);
 
 /**
  *  \brief      Returns Parameters channel buffer for different bytes(bytes 0-7)
@@ -539,6 +611,29 @@ void* HDSL_get_src_loc(HDSL_Handle hdslHandle);
  *
  */
 uint32_t HDSL_get_length(HDSL_Handle hdslHandle);
+
+/**
+ *  \brief      Configure the copy table entries for two overlayed firmware parts for channel 2
+ *
+ *  \param[in]  hdslHandle
+ *  \param[in]  copyTable
+ *
+ *  \return     SystemP_SUCCESS in case of success, SystemP_FAILURE in case of error
+ *
+ */
+int32_t HDSL_config_copy_table(HDSL_Handle hdslHandle, HDSL_CopyTable *copyTable);
+
+
+/**
+ *  \brief      Configure the channel mask
+ *
+ *  \param[in]  hdslHandle
+ *  \param[in]  channelMask
+ *
+ *  \return     SystemP_SUCCESS in case of success, SystemP_FAILURE in case of error
+ *
+ */
+int32_t HDSL_config_channel_mask(HDSL_Handle hdslHandle, uint8_t channelMask);
 
 #ifdef __cplusplus
 }

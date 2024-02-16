@@ -153,17 +153,18 @@ typedef _DCL_VOLATILE struct dcl_df23
 _DCL_CODE_ACCESS
 void DCL_resetDF23(DCL_DF23 *df)
 {
-    dcl_interrupt_t ints = DCL_disableInts();
+    dcl_interrupt_t ints;
+    ints = DCL_disableInts();
     df->x1 = df->x2 = df->x3 = 0.0f;
     DCL_restoreInts(ints);
 }
 
-//! \brief           Loads DF23 tuning parameter from its SPS parameter
+//! \brief           Loads DF23 tuning parameter from its SPS parameter without interrupt protection
 //!
 //! \param[in] df    Pointer to the active DCL_DF23 controller structure
 //!
 _DCL_CODE_ACCESS
-void DCL_fupdateDF23(DCL_DF23 *df)
+void DCL_forceUpdateDF23(DCL_DF23 *df)
 {
     df->b0 = df->sps->b0;
     df->b1 = df->sps->b1;
@@ -177,63 +178,40 @@ void DCL_fupdateDF23(DCL_DF23 *df)
 //! \brief           Updates DF23 parameter from its SPS parameter with interrupt protection
 //!
 //! \param[in] df    Pointer to the DCL_DF23 controller structure
-//! \return          'true' if update is successful, otherwise 'false'
 //!
 _DCL_CODE_ACCESS _DCL_CODE_SECTION
-bool DCL_updateDF23(DCL_DF23 *df)
+void DCL_updateDF23NoCheck(DCL_DF23 *df)
 {
-    if (!DCL_getUpdateStatus(df))
-    {
-        dcl_interrupt_t ints = DCL_disableInts();
-        DCL_setUpdateStatus(df);
-        df->b0 = df->sps->b0;
-        df->b1 = df->sps->b1;
-        df->b2 = df->sps->b2;
-        df->b3 = df->sps->b3;
-        df->a1 = df->sps->a1;
-        df->a2 = df->sps->a2;
-        df->a3 = df->sps->a3;
-        DCL_clearUpdateStatus(df);
-        DCL_restoreInts(ints);
-        return true;
-    }
-    return false;
+    dcl_interrupt_t ints;
+    ints = DCL_disableInts();
+    df->b0 = df->sps->b0;
+    df->b1 = df->sps->b1;
+    df->b2 = df->sps->b2;
+    df->b3 = df->sps->b3;
+    df->a1 = df->sps->a1;
+    df->a2 = df->sps->a2;
+    df->a3 = df->sps->a3;
+    DCL_restoreInts(ints);
 }
 
-//! \brief           A conditional update based on the pending-for-update flag.
-//!                  If the pending status is set, the function will update DF23 
+//! \brief           A conditional update based on the update flag.
+//!                  If the update status is set, the function will update DF23 
 //!                  parameter from its SPS parameter and clear the status flag on completion.
-//!                  Note: Use DCL_setPendingStatus(df) to set the pending status.
+//!                  Note: Use DCL_setUpdateStatus(df) to set the update status.
 //!     
 //! \param[in] df    Pointer to the DCL_DF23 controller structure
 //! \return          'true' if an update is applied, otherwise 'false'
 //!
 _DCL_CODE_ACCESS _DCL_CODE_SECTION
-bool DCL_pendingUpdateDF23(DCL_DF23 *df)
+bool DCL_updateDF23(DCL_DF23 *df)
 {
-    if (DCL_getPendingStatus(df) && DCL_updateDF23(df))
+    if (DCL_setUpdateStatus(df))
     {
-        DCL_clearPendingStatus(df);
+        DCL_updateDF23NoCheck(df);
+        DCL_clearUpdateStatus(df);
         return true;
     }
     return false;
-}
-
-//! \brief           Update SPS parameter with active param, userful when needing
-//!                  to update only few active param from SPS and keep rest the same   
-//!
-//! \param[in] df    Pointer to the active DCL_DF23 controller structure
-//!
-_DCL_CODE_ACCESS
-void DCL_updateDF23SPS(DCL_DF23 *df)
-{
-    df->sps->b0 = df->b0;
-    df->sps->b1 = df->b1;
-    df->sps->b2 = df->b2;
-    df->sps->b3 = df->b3;
-    df->sps->a1 = df->a1;
-    df->sps->a2 = df->a2;
-    df->sps->a3 = df->a3;
 }
 
 //! \brief           Determines stability of the shadow compensator
@@ -248,7 +226,7 @@ bool DCL_isStableDF23(DCL_DF23 *df)
 }
 
 //! \brief            Loads the DF23 shadow coefficients from a ZPK3 description
-//!                   Note: Sampling period df->css->t_sec are used in the calculation.
+//!                   Note: Sampling period df->css->T are used in the calculation.
 //!                   New settings take effect after DCL_updateDF23().
 //!
 //! \param[in] df     Pointer to the DCL_DF23 controller structure
@@ -277,17 +255,17 @@ void DCL_loadDF23asZPK(DCL_DF23 *df, DCL_ZPK3 *zpk)
     float32_t alpha1 = (float32_t) crealf((zpk->p1 * zpk->p2) + (zpk->p2 * zpk->p3) + (zpk->p1 * zpk->p3));
     float32_t alpha0 = -(float32_t) crealf(zpk->p1 * zpk->p2 * zpk->p3);
 
-    float32_t t_sec = df->css->t_sec;
-    float32_t a0p = 8.0f + (alpha2 * 4.0f * t_sec) + (alpha1 * 2.0f * t_sec * t_sec) + (alpha0 * t_sec * t_sec * t_sec);
+    float32_t T = df->css->T;
+    float32_t a0p = 8.0f + (alpha2 * 4.0f * T) + (alpha1 * 2.0f * T * T) + (alpha0 * T * T * T);
 
-    df->sps->b0 = zpk->K * (8.0f + (beta2 * 4.0f * t_sec) + (beta1 * 2.0f * t_sec * t_sec) + (beta0 * t_sec * t_sec * t_sec)) / a0p;
-    df->sps->b1 = zpk->K * (-24.0f - (beta2 * 4.0f * t_sec) + (beta1 * 2.0f * t_sec * t_sec) + (3.0f * beta0 * t_sec * t_sec * t_sec)) / a0p;
-    df->sps->b2 = zpk->K * (24.0f - (beta2 * 4.0f * t_sec) - (beta1 * 2.0f * t_sec * t_sec) + (3.0f * beta0 * t_sec * t_sec * t_sec)) / a0p;
-    df->sps->b3 = zpk->K * (-8.0f + (beta2 * 4.0f * t_sec) - (beta1 * 2.0f * t_sec * t_sec) + (beta0 * t_sec * t_sec * t_sec)) / a0p;
+    df->sps->b0 = zpk->K * (8.0f + (beta2 * 4.0f * T) + (beta1 * 2.0f * T * T) + (beta0 * T * T * T)) / a0p;
+    df->sps->b1 = zpk->K * (-24.0f - (beta2 * 4.0f * T) + (beta1 * 2.0f * T * T) + (3.0f * beta0 * T * T * T)) / a0p;
+    df->sps->b2 = zpk->K * (24.0f - (beta2 * 4.0f * T) - (beta1 * 2.0f * T * T) + (3.0f * beta0 * T * T * T)) / a0p;
+    df->sps->b3 = zpk->K * (-8.0f + (beta2 * 4.0f * T) - (beta1 * 2.0f * T * T) + (beta0 * T * T * T)) / a0p;
 
-    df->sps->a1 = (-24.0f - (alpha2 * 4.0f * t_sec) + (alpha1 * 2.0f * t_sec * t_sec) + (3.0f * alpha0 * t_sec * t_sec * t_sec)) / a0p;
-    df->sps->a2 = (24.0f - (alpha2 * 4.0f * t_sec) - (alpha1 * 2.0f * t_sec * t_sec) + (3.0f * alpha0 * t_sec * t_sec * t_sec)) / a0p;
-    df->sps->a3 = (-8.0f + (alpha2 * 4.0f * t_sec) - (alpha1 * 2.0f * t_sec * t_sec) + (alpha0 * t_sec * t_sec * t_sec)) / a0p;
+    df->sps->a1 = (-24.0f - (alpha2 * 4.0f * T) + (alpha1 * 2.0f * T * T) + (3.0f * alpha0 * T * T * T)) / a0p;
+    df->sps->a2 = (24.0f - (alpha2 * 4.0f * T) - (alpha1 * 2.0f * T * T) + (3.0f * alpha0 * T * T * T)) / a0p;
+    df->sps->a3 = (-8.0f + (alpha2 * 4.0f * T) - (alpha1 * 2.0f * T * T) + (alpha0 * T * T * T)) / a0p;
 }
 
 //! \brief           Executes a 3rd order Direct Form 2 controller

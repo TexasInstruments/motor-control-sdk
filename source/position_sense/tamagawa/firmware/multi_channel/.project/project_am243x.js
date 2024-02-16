@@ -47,10 +47,15 @@ const lflags = {
 
 const buildOptionCombos = [
     { device: device, cpu: "icssg0-pru1", cgt: "ti-pru-cgt", board: "am243x-evm", os: "fw"},
+    { device: device, cpu: "icssg0-pru1", cgt: "ti-pru-cgt", board: "am243x-lp", os: "fw"},
 ];
 
-let postBuildSteps = [
-    "$(CG_TOOL_ROOT)/bin/hexpru.exe ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/tamagawa_master_hexpru.cmd tamagawa_multi_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out; ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/tools/bin2header/bin2header.exe tamagawa_multi_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.b00 tamagawa_master_multi_channel_bin.h TamagawaFirmware 4; move tamagawa_master_multi_channel_bin.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/tamagawa_master_multi_channel_bin.h ;"
+let postBuildStepsEVM = [
+    "$(CG_TOOL_ROOT)/bin/hexpru.exe ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/tamagawa_master_hexpru.cmd tamagawa_multi_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out; ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/tools/bin2header/bin2header.exe tamagawa_multi_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.b00 tamagawa_master_multi_channel_bin.h TamagawaFirmware 4; $(COPY) tamagawa_master_multi_channel_bin.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/tamagawa_master_multi_channel_bin.h ;"
+];
+
+let postBuildStepsLP = [
+    "$(CG_TOOL_ROOT)/bin/hexpru.exe ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/tamagawa_master_hexpru.cmd tamagawa_multi_channel_am243x-lp_icssg0-pru1_fw_ti-pru-cgt.out; ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/tools/bin2header/bin2header.exe tamagawa_multi_channel_am243x-lp_icssg0-pru1_fw_ti-pru-cgt.b00 tamagawa_master_multi_channel_bin.h TamagawaFirmware 4; $(COPY) tamagawa_master_multi_channel_bin.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/tamagawa_master_multi_channel_bin.h ;"
 ];
 
 function getComponentProperty() {
@@ -63,12 +68,10 @@ function getComponentProperty() {
     property.isInternal = false;
     property.description = "Tamagawa Peripheral Interface"
     property.buildOptionCombos = buildOptionCombos;
-    property.pru_main_file = "main";
-    property.pru_linker_file = "linker";
+    property.pru_main_file = "tamagawa_main";
+    property.pru_linker_file = "tamagawa_diagnostic";
     property.isSkipTopLevelBuild = true;
     property.skipUpdatingTirex = true;
-    property.postBuildSteps = postBuildSteps;
-
     return property;
 }
 
@@ -84,6 +87,16 @@ function getComponentBuildProperty(buildOption) {
     build_property.readmeDoxygenPageTag = readmeDoxygenPageTag;
     build_property.projecspecFileAction = "copy";
     build_property.skipMakefileCcsBootimageGen = true;
+
+    if(buildOption.board.match(/am243x-evm*/) )
+    {
+        build_property.postBuildSteps = postBuildStepsEVM;
+    }
+    else if(buildOption.board.match(/am243x-lp*/) )
+    {
+        build_property.postBuildSteps = postBuildStepsLP;
+
+    }
 
     return build_property;
 }

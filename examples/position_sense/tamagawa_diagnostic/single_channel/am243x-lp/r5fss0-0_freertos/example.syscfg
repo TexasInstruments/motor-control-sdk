@@ -1,15 +1,13 @@
 /**
  * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
  * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
- * @cliArgs --device "AM243x_ALX_beta" --package "ALX" --part "ALX" --context "r5fss0-0" --product "MCU_PLUS_SDK@07.03.01"
- * @versions {"tool":"1.14.0+2667"}
+ * @cliArgs --device "AM243x_ALX_beta" --package "ALX" --part "ALX" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK_AM243X@09.01.00"
+ * @versions {"tool":"1.18.0+3266"}
  */
 
 /**
  * Import the modules used in this configuration.
  */
-const gpio       = scripting.addModule("/drivers/gpio/gpio", {}, false);
-const gpio1      = gpio.addInstance();
 const debug_log  = scripting.addModule("/kernel/dpl/debug_log");
 const mpu_armv7  = scripting.addModule("/kernel/dpl/mpu_armv7", {}, false);
 const mpu_armv71 = mpu_armv7.addInstance();
@@ -65,17 +63,27 @@ tamagawa1.PRU_ICSSG0_PRU.GPO12.$used = false;
 tamagawa1.PRU_ICSSG0_PRU.GPO6.$used  = false;
 tamagawa1.PRU_ICSSG0_PRU.GPI11.$used = false;
 
-tamagawa1.ENC1_EN          = gpio1;
-gpio1.$name                = "ENC1_EN";
-gpio1.GPIO.$assign         = "GPIO1";
-gpio1.GPIO.gpioPin.rx      = false;
-gpio1.GPIO.gpioPin.$assign = "ball.C16";
+tamagawa1.ENC1_EN.GPIO.$assign         = "GPIO1";
+tamagawa1.ENC1_EN.$name                = "ENC1_EN";
+tamagawa1.ENC1_EN.GPIO.gpioPin.pu_pd   = "pu";
+tamagawa1.ENC1_EN.GPIO.gpioPin.rx      = false;
+tamagawa1.ENC1_EN.GPIO.gpioPin.$assign = "MMC1_SDWP";
+
+tamagawa1.ENC2_EN.$name                = "ENC2_EN";
+tamagawa1.ENC2_EN.GPIO.gpioPin.pu_pd   = "pu";
+tamagawa1.ENC2_EN.GPIO.gpioPin.rx      = false;
+tamagawa1.ENC2_EN.GPIO.$assign         = "GPIO1";
+tamagawa1.ENC2_EN.GPIO.gpioPin.$assign = "MMC1_SDCD";
 
 const pruicss                            = scripting.addModule("/drivers/pruicss/pruicss", {}, false);
 const pruicss1                           = pruicss.addInstance({}, false);
 pruicss1.$name                           = "CONFIG_PRU_ICSS0";
 tamagawa1.pru                            = pruicss1;
 pruicss1.AdditionalICSSSettings[0].$name = "CONFIG_PRU_ICSS_IO0";
+pruicss1.intcMapping.create(1);
+pruicss1.intcMapping[0].$name            = "CONFIG_ICSS0_INTC_MAPPING0";
+pruicss1.intcMapping[0].event            = "18";
+
 
 /**
  * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future

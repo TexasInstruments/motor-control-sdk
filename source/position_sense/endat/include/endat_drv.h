@@ -149,6 +149,7 @@ struct endat_priv
     int32_t channel;
     uint16_t rx_en_cnt;
     struct endat_pruss_xchg *pruss_xchg;
+    struct endatChRxInfo *endatChRxInfo;
     int32_t has_safety;
     void *pruss_cfg;
     void *pruss_iep;

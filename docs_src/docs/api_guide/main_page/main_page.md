@@ -99,6 +99,11 @@ The main software components in the block diagram specific to motor control are 
     <td>\ref TAMAGAWA
     <td> Driver and PRU-ICSS firmware for Tamagawa encoder interface
 </tr>
+<tr>
+    <td> BISS-C
+    <td>\ref BISS-C
+    <td> Driver and PRU-ICSS firmware for BISS-C encoder interface
+</tr>
 <tr><td colspan="3" bgcolor=#F0F0F0>**Current Sense**</td></tr>
 <tr>
     <td> %SDFM
@@ -110,6 +115,17 @@ The main software components in the block diagram specific to motor control are 
     <td> Digital Control Library (DCL)
     <td>\ref DCL
     <td> Header-only library for digital control applications
+</tr>
+<tr>
+    <td> Transforms
+    <td>\ref TRANSFORMS
+    <td> Transformation including Clarke, Park, Space Vector Generation used in motor control applications
+</tr>
+<tr><td colspan="3" bgcolor=#F0F0F0>**PRU-ICSS PWM**</td></tr>
+<tr>
+    <td> PRU-ICSS PWM
+    <td>\ref PRUICSS_PWM
+    <td> Driver for using PRU-ICSS PWM Peripheral
 </tr>
 <tr><td colspan="3" bgcolor=#F0F0F0>**Examples and Demos**</td></tr>
 <tr>
@@ -139,6 +155,11 @@ The main software components in the block diagram specific to motor control are 
     <td> Digital Control Library (DCL)
     <td>\ref DCL
     <td> Header-only library for digital control applications
+</tr>
+<tr>
+    <td> Transforms
+    <td>\ref TRANSFORMS
+    <td> Transformation including Clarke, Park, Space Vector Generation used in motor control applications.
 </tr>
 <tr><td colspan="3" bgcolor=#F0F0F0>**Examples and Demos**</td></tr>
 <tr>

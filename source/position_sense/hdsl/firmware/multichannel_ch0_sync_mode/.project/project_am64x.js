@@ -9,7 +9,6 @@ const files = {
         "datalink_init.asm",
         "transport.asm",
         "utils.asm",
-        "hdsl_master_icssg_hexpru.cmd",
         "hdsl_master_icssg.cmd",
     ],
 };
@@ -33,11 +32,10 @@ const includes = {
 
 const defines = {
     common: [
-        "icss1",
         "PRU1",
         "CHANNEL_0",
         "ICSS_G_V_1_0",
-        "FREERUN_300_MHZ",
+        "SYNC_300_MHZ",
         "HDSL_MULTICHANNEL",
         "EXT_SYNC_ENABLE",
     ],

@@ -32,7 +32,7 @@
 ;  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;
 
-        .if !$defined("__sdfm_h")
+    .if !$defined("__sdfm_h")
 __sdfm_h    .set    1
 
 ;
@@ -100,11 +100,11 @@ __sdfm_h    .set    1
 ;Fast detect registers(using only in SDFM init)
 
         .asg R19.b0,  FAST_TZ_OUT_REG
-        .asg R19.b1,  FAST_window_REG
-        .asg R19.b2,  FAST_ONE_max_REG
-        .asg R19.b3,  FAST_ONE_min_REG
-        .asg R27.b0,  FAST_ZERO_max_REG
-        .asg R27.b1,  FAST_ZERO_min_REG
+        .asg R19.b1,  FAST_WINDOW_REG
+        .asg R19.b2,  FAST_ONE_MAX_REG
+        .asg R19.b3,  FAST_ONE_MIN_REG
+        .asg R27.b0,  FAST_ZERO_MAX_REG
+        .asg R27.b1,  FAST_ZERO_MIN_REG
 
 
 ;
@@ -151,7 +151,19 @@ ICSSG_CFG_GPCFG1                .set 0x000C ;  GP IO Configuration Register 1
 ICSSG_CFG_SPPC                  .set 0x0034 ;  Scratch PAD priority and config
 ICSSG_CFG_PRU0_SD0_CLK          .set 0x48
 ICSSG_CFG_PRU1_SD0_CLK          .set 0x94
-ICSSG_CFG_PWM1                   .set 0x134 ; PWM1 trip generation configuration
+
+    .if $isdefed("SDFM_LOAD_SHARE_MODE")
+    .if $isdefed("SDFM_RTU_CORE")
+ICSSG_CFG_PWMx                   .set 0x130 ; PWM0 configuration register offset 
+    .elseif $isdefed("SDFM_PRU_CORE")
+ICSSG_CFG_PWMx                   .set 0x134 ; PWM1 configuration register offset 
+    .elseif $isdefed("SDFM_TXPRU_CORE")
+ICSSG_CFG_PWMx                   .set 0x138 ; PWM2 configuration register offset 
+    .endif ; SDFM_TXPRU_CORE
+    .else
+ICSSG_CFG_PWMx                   .set 0x130 ; PWM0 configuration register offset 
+    .endif ;SDFM_LOAD_SHARE_MODE
+
 
 ;
 ; ICSSG_GPCFGn_REG:PR1_PRUn_GP_MUX_SEL, Controls the icss_wrap mux sel
@@ -186,8 +198,12 @@ PRUn_FD_ZERO_MAX_LIMIT_i_SHIFT  .set 17
 PRUn_FD_ZERO_MAX_LIMIT_i_MASK   .set 0x1F
 
 ;MACRO FOR TASK MANAGER
-COMP4_EVENT_NUMBER        .set  20
-COMP_EVENT_FOUR_SIFT          .set  8
+CMP4_EVENT_NUMBER        .set  20
+CMP_EVENT_BIT_SHIFT          .set  8
+CMP7_EVENT_NUMBER        .set  23
+CMP8_EVENT_NUMBER        .set  24
+
+
 
 ; ICSSG_PRUn_SD_SAMPLE_SIZE_REGi
 ;   n: {0,1}, PRU ID
@@ -218,12 +234,16 @@ ICSSG_IEP_CMP0_REG0             .set 0x0078 ; Compare 0 Low Register
 ICSSG_IEP_CMP0_REG1             .set 0x007C ; Compare 0 High Register
 ICSSG_IEP_CMP1_REG0             .set 0x0080 ; Compare 1 Low Register
 ICSSG_IEP_CMP1_REG1             .set 0x0084 ; Compare 1 High Register
-ICSSG_IEP_CMP2_REG0             .set 0x0088 ; Compare 1 Low Register
-ICSSG_IEP_CMP2_REG1             .set 0x008C ; Compare 1 High Register
-ICSSG_IEP_CMP3_REG0             .set 0x0090 ; Compare 1 Low Register
-ICSSG_IEP_CMP3_REG1             .set 0x0094 ; Compare 1 High Register
+ICSSG_IEP_CMP2_REG0             .set 0x0088 ; Compare 2 Low Register
+ICSSG_IEP_CMP2_REG1             .set 0x008C ; Compare 2 High Register
+ICSSG_IEP_CMP3_REG0             .set 0x0090 ; Compare 3 Low Register
+ICSSG_IEP_CMP3_REG1             .set 0x0094 ; Compare 3 High Register
 ICSSG_IEP_CMP4_REG0             .set 0x0098 ; compare 4 low Register
 ICSSG_IEP_CMP4_REG1             .set 0x009C ; compare 4 High Register
+ICSSG_IEP_CMP7_REG0             .set 0x00B0 ; compare 7 low Register
+ICSSG_IEP_CMP7_REG1             .set 0x00B4 ; compare 7 High Register
+ICSSG_IEP_CMP8_REG0             .set 0x00C0 ; compare 4 low Register
+ICSSG_IEP_CMP8_REG1             .set 0x00C4 ; compare 4 High Register
 ICSSG_IEP_PWM_REG               .set 0x0008 ; PWM Sync Out Register, offset from 0x100
 ; ICSSG_IEP_GLOBAL_CFG_REG:CNT_ENABLE_BN
 CNT_ENABLE_BN                   .set 0
@@ -271,9 +291,35 @@ TASKS_MGR_TS1_PC_S0             .set 0x08
 TASKS_MGR_TS1_PC_S1             .set 0x0C
 TASKS_MGR_TS1_GEN_CFG1          .set 0x38
 
+;MASK for phase delay
+SDFM_11_MASK                    .set  0x00010002
+SDFM_01_MASK                    .set  0x00000002
 TM_YIELD_XID                    .set 252
 
 ;IEP_CFG
 IEP_DEFAULT_INC                 .set 0x1
 
-    .endif  ; __sdfm_h
+;SD_CH_ID
+    .if $isdefed("SDFM_LOAD_SHARE_MODE")
+    .if $isdefed("SDFM_RTU_CORE")
+; Load Sharing: RTUn
+SD_CH0                       .set 0000b
+SD_CH1                       .set 0001b
+SD_CH2                       .set 0010b
+   .elseif $isdefed("SDFM_PRU_CORE")
+; Load Sharing: PRUn
+SD_CH0                      .set 0011b
+SD_CH1                       .set 0100b
+SD_CH2                       .set 0101b
+   .elseif $isdefed("SDFM_TXPRU_CORE")
+SD_CH0                      .set 00110b
+SD_CH1                       .set 0111b
+SD_CH2                       .set 1000b    
+   .endif
+   .else
+SD_CH0                       .set 0000b
+SD_CH1                       .set 0001b
+SD_CH2                       .set 0010b 
+   .endif
+
+   .endif  ; __sdfm_h

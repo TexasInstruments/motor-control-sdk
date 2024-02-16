@@ -1,8 +1,8 @@
 /**
  * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
  * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
- * @cliArgs --device "AM64x_beta" --package "ALV" --part "Default" --context "r5fss0-0" --product "MCU_PLUS_SDK@07.03.01"
- * @versions {"tool":"1.14.0+2667"}
+ * @cliArgs --device "AM64x_beta" --package "ALV" --part "Default" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK_AM64X@09.01.00"
+ * @versions {"tool":"1.18.0+3266"}
  */
 
 /**
@@ -64,6 +64,10 @@ const pruicss1                           = pruicss.addInstance({}, false);
 pruicss1.$name                           = "CONFIG_PRU_ICSS0";
 tamagawa1.pru                            = pruicss1;
 pruicss1.AdditionalICSSSettings[0].$name = "CONFIG_PRU_ICSS_IO0";
+pruicss1.intcMapping.create(1);
+pruicss1.intcMapping[0].$name            = "CONFIG_ICSS0_INTC_MAPPING0";
+pruicss1.intcMapping[0].event            = "18";
+
 
 /**
  * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future

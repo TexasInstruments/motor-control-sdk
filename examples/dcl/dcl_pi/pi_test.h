@@ -64,10 +64,12 @@ int PI_runTest(DCL_PI *ctrl_handle, DCL_PI_FUNC dcl_pi_func);
 //!
 DCL_PI *pi_controller = &(DCL_PI)
 {
-    .Kp  = 2.50000f,
-    .Ki  = 0.01000f,
-    .Umax = 2.00000f,
-    .Umin = -2.00000f,
+    .Kp  = 2.5f,
+    .Ki  = 0.01f,
+    .Umax = 2.0f,
+    .Umin = -2.0f,
+    .Imax = 1.0f,
+    .Imin = -1.0f,
     PI_INT_DEFAULTS // macro for default values of internal attributes
 };
 

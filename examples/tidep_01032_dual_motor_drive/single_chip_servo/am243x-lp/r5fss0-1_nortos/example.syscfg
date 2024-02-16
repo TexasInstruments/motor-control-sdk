@@ -1,0 +1,149 @@
+/**
+ * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
+ * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
+ * @cliArgs --device "AM243x_ALX_beta" --package "ALX" --part "ALX" --context "r5fss0-1" --product "MOTOR_CONTROL_SDK_AM243x@09.01.00"
+ * @versions {"tool":"1.18.0+3266"}
+ */
+
+/**
+ * Import the modules used in this configuration.
+ */
+const epwm        = scripting.addModule("/drivers/epwm/epwm", {}, false);
+const epwm1       = epwm.addInstance();
+const epwm2       = epwm.addInstance();
+const epwm3       = epwm.addInstance();
+const epwm4       = epwm.addInstance();
+const ipc         = scripting.addModule("/drivers/ipc/ipc");
+const debug_log   = scripting.addModule("/kernel/dpl/debug_log");
+const mpu_armv7   = scripting.addModule("/kernel/dpl/mpu_armv7", {}, false);
+const mpu_armv71  = mpu_armv7.addInstance();
+const mpu_armv72  = mpu_armv7.addInstance();
+const mpu_armv73  = mpu_armv7.addInstance();
+const mpu_armv74  = mpu_armv7.addInstance();
+const mpu_armv75  = mpu_armv7.addInstance();
+const mpu_armv76  = mpu_armv7.addInstance();
+const mpu_armv77  = mpu_armv7.addInstance();
+const mpu_armv78  = mpu_armv7.addInstance();
+const mpu_armv79  = mpu_armv7.addInstance();
+const mpu_armv710 = mpu_armv7.addInstance();
+const mpu_armv711 = mpu_armv7.addInstance();
+const mpu_armv712 = mpu_armv7.addInstance();
+const mpu_armv713 = mpu_armv7.addInstance();
+
+/**
+ * Write custom configuration values to the imported modules.
+ */
+epwm1.$name            = "EPWM3_OUTA";
+epwm1.EPWM.$assign     = "EHRPWM5";
+epwm1.EPWM.A.$assign   = "GPMC0_BE1n";
+epwm1.EPWM.B.$used     = false;
+epwm1.EPWM.SYNCO.$used = false;
+epwm1.EPWM.SYNCI.$used = false;
+
+epwm2.$name            = "EPWM4";
+epwm2.EPWM.$assign     = "EHRPWM7";
+epwm2.EPWM.A.$assign   = "PRG0_PRU1_GPO18";
+epwm2.EPWM.B.$assign   = "PRG0_PRU1_GPO19";
+epwm2.EPWM.SYNCO.$used = false;
+epwm2.EPWM.SYNCI.$used = false;
+
+epwm3.$name            = "EPWM5";
+epwm3.EPWM.$assign     = "EHRPWM8";
+epwm3.EPWM.A.$assign   = "GPMC0_AD7";
+epwm3.EPWM.SYNCO.$used = false;
+epwm3.EPWM.SYNCI.$used = false;
+
+epwm4.$name            = "EPWM3_OUTB";
+epwm4.EPWM.$assign     = "EHRPWM3";
+epwm4.EPWM.A.$used     = false;
+epwm4.EPWM.SYNCO.$used = false;
+epwm4.EPWM.SYNCI.$used = false;
+
+ipc.r5fss0_0 = "notify";
+ipc.m4fss0_0 = "NONE";
+ipc.r5fss1_1 = "NONE";
+ipc.r5fss1_0 = "NONE";
+
+debug_log.enableCssLog = false;
+
+mpu_armv71.$name             = "CONFIG_MPU_REGION0";
+mpu_armv71.size              = 31;
+mpu_armv71.attributes        = "Device";
+mpu_armv71.accessPermissions = "Supervisor RD+WR, User RD";
+mpu_armv71.allowExecute      = false;
+
+mpu_armv72.$name             = "CONFIG_MPU_REGION1";
+mpu_armv72.accessPermissions = "Supervisor RD+WR, User RD";
+mpu_armv72.size              = 16;
+mpu_armv72.attributes        = "NonCached";
+
+mpu_armv73.$name             = "CONFIG_MPU_REGION2";
+mpu_armv73.baseAddr          = 0x41010000;
+mpu_armv73.accessPermissions = "Supervisor RD+WR, User RD";
+mpu_armv73.size              = 16;
+mpu_armv73.attributes        = "NonCached";
+
+mpu_armv74.$name             = "CONFIG_MPU_REGION3";
+mpu_armv74.accessPermissions = "Supervisor RD+WR, User RD";
+mpu_armv74.baseAddr          = 0x70000000;
+mpu_armv74.size              = 21;
+
+mpu_armv75.$name        = "CONFIG_MPU_REGION4";
+mpu_armv75.baseAddr     = 0x60000000;
+mpu_armv75.size         = 28;
+mpu_armv75.attributes   = "Device";
+mpu_armv75.allowExecute = false;
+
+mpu_armv76.$name        = "CONFIG_MPU_REGION5_GPIO";
+mpu_armv76.baseAddr     = 0x600000;
+mpu_armv76.size         = 19;
+mpu_armv76.attributes   = "Device";
+mpu_armv76.allowExecute = false;
+
+mpu_armv77.$name        = "CONFIG_MPU_REGION6_ICSSG0";
+mpu_armv77.baseAddr     = 0x30000000;
+mpu_armv77.size         = 19;
+mpu_armv77.allowExecute = false;
+mpu_armv77.attributes   = "NonCached";
+
+mpu_armv78.$name        = "CONFIG_MPU_REGION7_PWMs0_8";
+mpu_armv78.baseAddr     = 0x23000000;
+mpu_armv78.size         = 19;
+mpu_armv78.attributes   = "NonCached";
+mpu_armv78.allowExecute = false;
+
+mpu_armv79.$name      = "CONFIG_MPU_REGION8_PWM9";
+mpu_armv79.attributes = "NonCached";
+mpu_armv79.size       = 16;
+mpu_armv79.baseAddr   = 0x23080000;
+
+mpu_armv710.$name        = "CONFIG_MPU_REGION9_OTHER_R5F_TCMB";
+mpu_armv710.baseAddr     = 0x78500000;
+mpu_armv710.size         = 15;
+mpu_armv710.allowExecute = false;
+mpu_armv710.attributes   = "NonCached";
+
+mpu_armv711.$name        = "CONFIG_MPU_MSRAM_CTRLVARS";
+mpu_armv711.baseAddr     = 0x701BFF00;
+mpu_armv711.size         = 8;
+mpu_armv711.allowExecute = false;
+
+mpu_armv712.$name        = "CONFIG_MPU_MSRAM_NOCACHE";
+mpu_armv712.baseAddr     = 0x701D0000;
+mpu_armv712.size         = 16;
+mpu_armv712.attributes   = "NonCached";
+mpu_armv712.allowExecute = false;
+
+mpu_armv713.$name        = "CONFIG_MPU_MSRAM_NOCACHE0";
+mpu_armv713.baseAddr     = 0x701C0000;
+mpu_armv713.size         = 16;
+mpu_armv713.attributes   = "NonCached";
+mpu_armv713.allowExecute = false;
+
+/**
+ * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future
+ * version of the tool will not impact the pinmux you originally saw.  These lines can be completely deleted in order to
+ * re-solve from scratch.
+ */
+epwm3.EPWM.B.$suggestSolution = "GPMC0_AD10";
+epwm4.EPWM.B.$suggestSolution = "GPMC0_AD14";

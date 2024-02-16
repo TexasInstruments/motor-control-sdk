@@ -86,7 +86,8 @@ Following section describes the Example implementation of EnDat on ARM(R5F).
  ---------------|-----------
  CPU + OS       | r5fss0-0 freertos
  ICSSG          | ICSSG0
- PRU            | PRU1, TXPRU1 and RTUPRU1
+ PRU            | PRU1 (single channel, multi channel using single PRU)
+ ^              | PRU1, RTU-PRU1, TXPRU1 (multi channel using three PRUs - load share mode)
  Toolchain      | ti-arm-clang
  Board          | @VAR_BOARD_NAME_LOWER
  Example folder | examples/position_sense/endat_diagnostic
@@ -99,9 +100,10 @@ Following section describes the Example implementation of EnDat on ARM(R5F).
  ---------------|-----------
  CPU + OS       | r5fss0-0 freertos
  ICSSG          | ICSSG0
- PRU            | PRU1, TXPRU1 and RTUPRU1
+ PRU            | PRU1 (single channel, multi channel using single PRU)
+ ^              | PRU1, RTU-PRU1, TXPRU1 (multi channel using three PRUs - load share mode)
  Toolchain      | ti-arm-clang
- Board          | @VAR_BOARD_NAME_LOWER, @VAR_LP_BOARD_NAME_LOWER
+ Board          | @VAR_BOARD_NAME_LOWER (3 channel and 1 channel examples), @VAR_LP_BOARD_NAME_LOWER (2 channel and 1 channel examples)
  Example folder | examples/position_sense/endat_diagnostic
 
 \endcond
@@ -110,17 +112,19 @@ Following section describes the Example implementation of EnDat on ARM(R5F).
 
 ## Hardware Prerequisites
 
-Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_SETUP_PAGE.html" target="_blank"> EVM Setup </a>, below additional HW is required to run this demo
-- EnDAT encoder
+Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_SETUP_PAGE.html" target="_blank"> EVM Setup </a>, below additional hardware is required to run this demo
+- EnDAT Encoder(s)
 - <a href="http://www.ti.com/tool/TIDA-00179" target="_blank"> TIDA-00179 Universal Digital Interface to Absolute Position Encoders </a>
-- TIDEP-01015 3 Axis board
-- Interface card connecting EVM and TIDEP-01015 3 Axis board
+- <a href="../TIDEP-01015Rev E1.1(001)_Sch.pdf" target="_blank"> TIDEP-01015 3 Axis Board </a>
+- <a href="../MS_TI_EVM_3-AXIS_INTERFACE_BOARD_SCH_REV_E1.pdf" target="_blank"> Interface card connecting EVM and TIDEP-01015 3 Axis </a>
+
+\note For more design details of the TIDEP-01015 3 Axis Board, or Interface card connecting EVM and TIDEP-01015 3 Axis, please contact TI via E2E/FAE.
 
 \cond SOC_AM243X
 ### Hardware Prerequisities for Booster Pack
 
-- EnDat encoder
-- AM243x-LP board 
+- EnDAT Encoder(s)
+- <a href="https://www.ti.com/tool/LP-AM243" target="_blank"> AM243x-LP Board </a> 
 - <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
 \endcond
 
@@ -223,9 +227,9 @@ Shown below is a sample output when the application is run:
 <table>
     <tr>
         <th style="width:4%">S.No</th>
-        <th>Test detail
+        <th>Test Details
         <th>Steps
-        <th>Pass/fail crieteria
+        <th>Pass/Fail Criteria
     </tr>
     <tr>
         <td style="text-align: center">1.</td>

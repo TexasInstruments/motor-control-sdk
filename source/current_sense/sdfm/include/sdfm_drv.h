@@ -39,7 +39,8 @@ extern "C" {
 #endif
 
 #include <drivers/soc.h>
-
+#include <drivers/pruicss.h>
+#include  <math.h>
 
 
 /* ========================================================================== */
@@ -113,11 +114,34 @@ extern "C" {
 #define IEP_DEFAULT_INC                 0x1
 
 
+
 /* SDFM output buffer size in 32-bit words */
+#define ICSSG_SD_SAMP_CH_BUF_SZ          ( 128 )
+#define NUM_CH_SUPPORTED_PER_AXIS        ( 3 )
+#define SDFM_NINE_CH_MASK                ( 0x1FF )
+#define SDFM_CH_MASK_FOR_CH0_CH3_CH6     ( 0x49 )
+#define SDFM_CH_MASK_FOR_CH1_CH4_CH7     ( 0x92 )
+#define SDFM_CH_MASK_FOR_CH2_CH5_CH8     ( 0x124 )
 
+/*SDFM Channel IDs*/
+#define SDFM_CHANNEL0    (0)
+#define SDFM_CHANNEL1    (1)
+#define SDFM_CHANNEL2    (2)
+#define SDFM_CHANNEL3    (3)
+#define SDFM_CHANNEL4    (4)
+#define SDFM_CHANNEL5    (5)
+#define SDFM_CHANNEL6    (6)
+#define SDFM_CHANNEL7    (7)
+#define SDFM_CHANNEL8    (8)
 
-#define ICSSG_SD_SAMP_CH_BUF_SZ  ( 128 )
-#define NUM_CH_SUPPORTED        ( 3 )
+/*SDFM firmware version mask*/
+#define SDFM_FW_VERSION_BIT_SHIFT       (32)
+
+/*Fast detect ERROR mask*/
+#define SDFM_FD_ERROR_MASK_FOR_TRIP_VEC      ( 0x3800000 )
+
+#define SDFM_PHASE_DELAY_ACK_BIT_MASK   (1)
+#define SDFM_PHASE_DELAY_CAL_LOOP_SIZE  (8)
 
 /* ========================================================================== */
 /*                         Structures                                         */
@@ -147,8 +171,10 @@ typedef struct SDFM_CfgSdClk_s
  */
 typedef struct SDFM_CfgTrigger_s
 {
-    /**< bit-field for enable double update */
-    volatile uint16_t    en_double_nc_sampling;
+    /**< enable continuous mode */
+    volatile  uint8_t  en_continuous_mode;
+    /**< enable double update */
+    volatile uint8_t    en_double_nc_sampling;
     /**< First sample starting point */
     volatile uint32_t first_samp_trig_time;
     /**<Second sample starting point*/
@@ -198,12 +224,14 @@ typedef struct SDFM_ChCtrl_s
     volatile uint32_t    sdfm_ch_id;
     /**< bit-field to enable comparators for individual SDFM channels, BitN:ChN, non-zero to enable */
     volatile uint16_t    enable_comparator;
-    /**< bit-field to set the output data format for individual SDFM channels, BitN:ChN */
-    volatile uint16_t    output_data_format;
-    /**< reserved */
-    volatile uint16_t    reserved1;
-    /**< reserved */
-    volatile uint16_t    reserved2;
+    /**< bit-field to enable fast detect  for individual SDFM channels, BitN:ChN, non-zero to enable */
+    volatile uint8_t    enFastDetect;
+     /**< enable phase delay calcualtion */
+    volatile uint8_t    en_phase_delay;
+    /**< Clock phase delay */
+     volatile uint16_t   clock_phase_delay;
+    /**<nearest clock edge status of data*/
+    volatile uint16_t    clock_edge;
 
 } SDFM_ChCtrl;
 
@@ -233,8 +261,16 @@ typedef struct SDFM_ThresholdParms_s
     volatile uint32_t    high_threshold;
     /**< Low threshold value */
     volatile uint32_t    low_threshold;
-    /**<  reserved for zero crossing*/
-    volatile uint32_t    reserved3;
+    /**<  High Threshold status*/
+    volatile uint8_t     highThStatus;
+    /**<  High Threshold status*/
+    volatile uint8_t     lowThStatus;
+    /**<  Zero cross enable bit*/
+    volatile uint8_t    zeroCrossEn;
+    /**<  Zero cross Threshold status */
+    volatile uint8_t    zeroCrossThstatus;
+    /**< Zero Cross Threshold*/
+    volatile uint32_t    zeroCrossTh;
 }SDFM_ThresholdParms;
 
 /**
@@ -253,14 +289,20 @@ typedef struct SDFM_Cfg_s
     volatile uint8_t    osr;
     /**< sdfm threshold parms*/
     SDFM_ThresholdParms  sdfm_threshold_parms;
-    /**< Reserved*/
-    volatile uint32_t    reserved1;
-    /**< reserved */
-    volatile uint8_t    reserved2;
+    /**< Fast detect window size*/
+    volatile uint8_t   fd_window;
+    /**< Fast detect max count of zero*/
+    volatile uint8_t   fd_zero_max;
+    /**< Fast detect min count of zero*/
+    volatile uint8_t   fd_zero_min;
+    /**< Fast detect max count of one*/
+    volatile uint8_t   fd_one_max;
+    /**< Fast detect min count of one*/
+    volatile uint8_t   fd_one_min;
     /**< sdfm ch clock parms*/
     SDFM_ClkSourceParms  sdfm_clk_parms;
-    /**< array to store the params for gpio toggle for different channels*/
-    SDFM_GpioParams        sdfm_gpio_params[3];
+    /**< array to store the params of gpios for zero cross threshold*/
+    SDFM_GpioParams        sdfm_gpio_params;
 } SDFM_Cfg;
 
 /**
@@ -290,13 +332,19 @@ typedef struct SDFM_Interface_s{
      /**< channel control interface */
     SDFM_ChCtrl    sdfm_ch_ctrl;
     /**< sdfm channel configuration interface pointer*/
-    SDFM_Cfg        sdfm_cfg_ptr[NUM_CH_SUPPORTED];
+    SDFM_Cfg        sdfm_cfg_ptr[NUM_CH_SUPPORTED_PER_AXIS];
     /*<sdfm time sampling interface pointer */
     SDFM_CfgTrigger    sdfm_cfg_trigger;
-    /**< host output sample buffer */
-    volatile uint32_t   curr_out_samp_buf[NUM_CH_SUPPORTED];
+    /**< host output sample buffer base address */
+    volatile uint32_t   sampleBufferBaseAdd;
+    /**<firmware version */
+    volatile uint64_t  firmwareVersion;
 }SDFM_Interface;
 
+typedef struct SDFM_SampleOutInterface_s
+{
+   uint32_t sampleOutput[NUM_CH_SUPPORTED_PER_AXIS];
+}SDFM_SampleOutInterface;
 /**
  *    \brief    Structure defining SDFM interface
  *
@@ -305,11 +353,15 @@ typedef struct SDFM_Interface_s{
  */
 typedef struct SDFM_s {
     /**< PRU ID */
-    uint8_t pru_id;
-    uint32_t sdfm_clock;
-    uint32_t iep_clock;
-    uint8_t  iep_inc;
+    PRUICSS_Handle gPruIcssHandle;
+    uint8_t pruId;
+    uint32_t sdfmClock;
+    uint32_t iepClock;
+    uint32_t pruCoreClk;
+    uint8_t  iepInc;
     SDFM_Interface * p_sdfm_interface;
+    SDFM_SampleOutInterface *sampleOutputInterface;
+    void *pruss_cfg;
 } SDFM;
 
 

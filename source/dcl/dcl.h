@@ -18,7 +18,7 @@
  *    from this software without specific prior written permission.
  *
  *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- *  "AS IS" AND ANY EXPgResS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  *  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
  *  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
@@ -37,9 +37,15 @@
 extern "C" {
 #endif
 
+ /**
+ * \defgroup RTLIBS_API APIs for Real Time Libraries
+ *
+ * This module contains APIs for real time libraries supported in this SDK.
+ */
+
 /**
  *  \defgroup DCL_API_MODULE APIs for Digital Control Library
- *  \ingroup  MOTOR_CONTROL_API
+ *  \ingroup  RTLIBS_API
  *  
  *  Here is the list of APIs used for Digital Control Library
  *  @{
@@ -49,8 +55,8 @@ extern "C" {
  */
 
 //! \brief          Library version number formatted for numerical comparison
-//!                 v4.00.00.00
-#define DCL_VERSION 4000000
+//!                 v4.00.01.00
+#define DCL_VERSION 4000100
 
 //! \brief          Enable voltaile flag for dcl strcutures
 //!                 Only enable the flag if the controller can
@@ -73,7 +79,7 @@ extern "C" {
 #include "misc/dcl_fdlog.h"
 #include "misc/dcl_error.h"
 
-/* 32bit arthmetic */
+/* 32bit arithmetic */
 #include "pi/dcl_pi.h"
 #include "pi/dcl_pi2.h"
 #include "pid/dcl_pid.h"
@@ -83,7 +89,7 @@ extern "C" {
 #include "df/dcl_df22.h"
 #include "df/dcl_df23.h"
 
-/* 64bit arthmetic */
+/* 64bit arithmetic */
 #include "pid/dcl_pidf64.h"
 
 /** @} */

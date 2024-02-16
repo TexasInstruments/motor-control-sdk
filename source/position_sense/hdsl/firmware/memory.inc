@@ -84,7 +84,9 @@ EDCH2CFG1 .set                          P0EDCH2CFG1
 ; Each HDSL channel will use a portion of DMEM for HDSL shared/local data storage for that channel.
 ; CHANNEL_0: 0x0000 - 0x06FF
 ; CHANNEL_1: 0x0700 - 0x0DFF
-; CHANNEL_2: 0x0E00 - 0x0~FF
+; CHANNEL_2: 0x0E00 - 0x14FF
+
+; 0X1500 - 0X1FFF is used to store the overlay part of firmare for TXPRU (Channel 2)
 
     .if $defined(CHANNEL_2)   ; TX_PRU
 PDMEM00	                  .set					   0x0E00
@@ -95,6 +97,11 @@ PDMEM00		              .set					   0x0700
 	.if $defined(CHANNEL_0)   ; RTU_PRU
 PDMEM00			          .set					   0x0000
 	.endif
+
+DMEM_CH0_START .set 					0x0000
+DMEM_CH1_START .set 					0x0700
+DMEM_CH2_START .set 					0x0E00
+DMEM_CH_SIZE .set						0x0700
 
 PDMEM00_CONST .set						C24
 MASTER_REGS_CONST .set                  C24
@@ -134,6 +141,64 @@ LUT_EE_SIZE .set						9
 ;--------------------------------------------------------------------------------------------------
 ;Register Usage
 ;--------------------------------------------------------------------------------------------------
+
+	.asg							r0, REG_TMP0
+	.asg							r1, REG_TMP1
+	.asg							r2, REG_TMP2
+	.asg							r2.b0, EXTRA_SIZE_SELF ;take care! these are not persistent registers, r2 is actually temp reigister. these names are
+	.asg							r2.b1, EXTRA_EDGE_SELF ;given to temp register for ease of reading. they are used as temp.
+
+h_frame_s .struct
+vert		.byte
+s_par		.byte
+pipe		.byte
+secondary	.byte
+acc		.short
+flags		.short
+	.endstruct
+H_FRAME .sassign r3, h_frame_s
+	.asg							r4.b0, H_FRAME_acc0
+	.asg							r4.b1, H_FRAME_acc1
+	.asg							r4.b2, H_FRAME_flags_l
+	.asg							r4.b3, H_FRAME_flags_h
+; R3, R4 are used for h_frame_s
+
+	.asg							r5, LOOP_CNT
+
+	.asg							r6.b0, SAMPLE_EDGE
+	.asg							r6.b1, LAST_BIT_SENT
+	.asg							r6.b2, SLAVE_DELAY
+	.asg							r6.b3, QM
+; Reusing DELTA_ACC0 as and in initialization during datalink_id_compute state
+	.asg							r7.b0, NUM_ACC_BITS
+	.asg							r7.b1, NUM_ST_BITS
+	.asg							r7.w0, DELTA_ACC0
+	.asg							r7.w2, DELTA_ACC1
+	.asg 							r8.w0, DELTA_ACC2
+	.asg							r8.w2, DELTA_ACC3
+	.asg							r9.w0, DELTA_ACC4
+	.asg							r9.w2, LAST_ACC
+	.asg							r10.b0, EXTRA_EDGE_COMP
+	.asg							r10.b1, EXTRA_SIZE_COMP
+	.asg							r10.b2, TIME_REST_COMP
+	.asg							r10.b3, NUM_STUFFING_COMP
+	.asg							r11, REG_TMP11
+	.asg							r12.b0, EXTRA_SIZE
+	.asg							r12.b1, NUM_STUFFING
+	.asg							r12.b2, EXTRA_EDGE
+	.asg							r12.b3, TIME_REST
+	.asg							r13, REG_FNC
+	.asg							r14.b3, FAST_POSL
+	.asg							r14, SPEED ; NOTE: r14.b3 is used as FAST_POSL
+	.asg							r15, FAST_POSH
+	.asg							r16.b0, RSSI
+	.asg							r16.b1, CUR_EDGES
+	.asg							r16.b2, SPECIAL_CHARACTER
+	.asg							r16.b3, BYTE_ERROR
+	.asg							r17.b0, DISPARITY
+	.asg							r17.b1, SEND_PARA
+	.asg							r17.w2, RET_ADDR1
+
 ;channel structure
 channel_s .struct
 ch_vertl	.int
@@ -149,20 +214,16 @@ CHANNEL .sassign r18, channel_s
 	.asg	r19, VERT_H
 ; R18, R19, R20, R21, R22 and R23 are used for channel_s
 
-h_frame_s .struct
-vert		.byte
-s_par		.byte
-pipe		.byte
-secondary	.byte
-acc		.short
-flags		.short
-	.endstruct
-H_FRAME .sassign r3, h_frame_s
-	.asg							r4.b0, H_FRAME_acc0
-	.asg							r4.b1, H_FRAME_acc1
-	.asg							r4.b2, H_FRAME_flags_l
-	.asg							r4.b3, H_FRAME_flags_h
-
+	.asg							r24, CRC
+	.asg							r24.w0, CRC_VERT
+	.asg							r24.b0, CRC_VERT_L
+	.asg							r24.b1, CRC_VERT_H
+	.asg							r24.w2, CRC_SEC
+	.asg							r24.b2, CRC_SEC_L
+	.asg							r24.b3, CRC_SEC_H
+	.asg							r25.w0, RET_ADDR3
+	.asg							r25.b2, MODIFIED_HEADER_STARTED
+	.asg							r25.b3, FIFO_L ;load fifo
 
 short_msg_s .struct
 crc		.short
@@ -175,6 +236,10 @@ SHORT_MSG .sassign r26, short_msg_s
 	.asg							r26, SHORT_MSG32
 	.asg							r26.b0, SHORT_MSG_CRC_L
 	.asg							r26.b1, SHORT_MSG_CRC_H
+; R26 and R27.w0 is used for short_msg_s
+
+	.asg							r27.b2, NUM_PULSES
+	.asg							r27.b3, LEARN_STATE_STARTED
 
 long_msg_recv_s .struct
 crc		.short
@@ -185,63 +250,14 @@ LONG_MSG_RECV .sassign r28, long_msg_recv_s
 	.asg							r28.b1, LONG_MSG_RECV_CRC_H
 	.asg							r28.b0, LONG_MSG_RECV_CRC_L
 
+; R28 is used for LONG_MSG_RECV
 
-	.asg							r6.b3, QM
-	.asg							r6.b2, SLAVE_DELAY
-	.asg							r6.b1, LAST_BIT_SENT
-	.asg							r6.b0, SAMPLE_EDGE
-	.asg							r5, LOOP_CNT
-	.asg							r0, REG_TMP0
-	.asg							r1, REG_TMP1
-	.asg							r2, REG_TMP2
-	.asg							r20, REG_SCRATCH
-	.asg							r11, REG_TMP11
-	.asg							r16.b0, RSSI
-	.asg							r16.b1, CUR_EDGES
-	.asg							r16.b2, SPECIAL_CHARACTER
-	.asg							r16.b3, BYTE_ERROR
-	.asg							r15, FAST_POSH
-	.asg							r14.b3, FAST_POSL
-	.asg							r14, SPEED ; NOTE: r14.b3 is used as FAST_POSL
-	.asg							r17.b0, DISPARITY
-	.asg							r17.b1, SEND_PARA
-	.asg							r29.w0, RET_ADDR0
-	.asg							r17.w2, RET_ADDR1
-	.asg							r29.b2, NUM_ACC_BITS
-	.asg							r29.b3, NUM_ST_BITS
-	.asg							r13, REG_FNC
-	.asg							r7.w0, DELTA_ACC0
-	.asg							r7.w2, DELTA_ACC1
-	.asg 							r8.w0, DELTA_ACC2
-	.asg							r8.w2, DELTA_ACC3
-	.asg							r9.w0, DELTA_ACC4
-	.asg							r9.w2, LAST_ACC
-	.asg							r10.w0, SYNC_DIFF0
-	.asg							r12.b0, EXTRA_SIZE
-	.asg							r12.b1, NUM_STUFFING
-	.asg							r12.b2, EXTRA_EDGE
-	.asg							r12.b3, TIME_REST
-	.asg							r27.b2, NUM_PULSES
-	.asg							r25.b2, TIME_EXTRA_WINDOW ;free for am65xx use case
-	.asg							r25.b3,FIFO_L ;load fifo
-	.asg							r25.b2, MODIFIED_HEADER_STARTED
-	.asg							r27.b3, LEARN_STATE_STARTED
-	.asg							r25.b0, ALIGN_PH
-	.asg							r24, CRC
-	.asg							r24.w0, CRC_VERT
-	.asg							r24.b1, CRC_VERT_H
-	.asg							r24.b0, CRC_VERT_L
-	.asg							r24.w2, CRC_SEC
-	.asg							r24.b3, CRC_SEC_H
-	.asg							r24.b2, CRC_SEC_L
     .asg							r28.b0, LOOP_CNT_0
-	.asg							r2.b0, EXTRA_SIZE_SELF ;take care! these are not persistent registers, r2 is actually temp reigister. these names are
-	.asg							r2.b1, EXTRA_EDGE_SELF ;given to temp register for ease of reading. they are used as temp.
 
-	.asg							r10.b0, EXTRA_EDGE_COMP
-	.asg							r10.b1, EXTRA_SIZE_COMP
-	.asg							r10.b2, TIME_REST_COMP
-	.asg							r10.b3, NUM_STUFFING_COMP
+	.asg							r29.w0, RET_ADDR0
+	.asg 							r29.w2, RET_ADDR2
+	;.asg							r29.b2, NUM_ACC_BITS
+	;.asg							r29.b3, NUM_ST_BITS
 
 ;--------------------------------------------------------------------------------------------------
 ;DSL Master Register offsets
@@ -379,32 +395,22 @@ ADDR .set 0x15ff
 ;--------------------------------------------------------------------------------------------------
 ;Memory offsets
 ;--------------------------------------------------------------------------------------------------
-PRU_CTRL_CONST	.set						C28
-;PRU_CTRL	.set						0x00022000
+PRU_CTRL_CONST	.set					C28
 PRU_CYCLCNT	.set						0x0c
-PWMSS1_CONST	.set						C19     ;AM437x specific for sync pule synchronization
-PWMSS1_ECAP	.set						0x48302100  ;AM437x specific for sync pule synchronization
-PWMSS2_CONST	.set						C20     ;AM437x specific for sync pule synchronization
-ECAP		.set						0x100       ;AM437x specific for sync pule synchronization
-ECAP_ECCLR	.set						0x30        ;AM437x specific for sync pule synchronization
-ECAP_ECEINT	.set						0x2c        ;AM437x specific for sync pule synchronization
-ECAP_CAP1	.set						0x08        ;AM437x specific for sync pule synchronization
-ECAP_ECCTL1	.set						0x28        ;AM437x specific for sync pule synchronization
-INTC_SICR	.set						0x24        ;AM437x specific for sync pule synchronization
-INTC_SECR1	.set						0x284       ;AM437x specific for sync pule synchronization
-INTC_SECR0	.set						0x280       ;AM437x specific for sync pule synchronization
-INTC_CONST	.set						C0          ;AM437x specific for sync pule synchronization
+PWMSS1_CONST	.set					C19
+PWMSS2_CONST	.set					C20
+ECAP		.set						0x100
+ECAP_ECCLR	.set						0x30
+ECAP_ECCTL1	.set						0x28
 IEP_CONST	.set						C26
 IEP1_CONST  .set                        0x2F000
-IEP_CNT		.set						0x14 ;todo TSmod check as 64bit now (old0x0c)
+IEP_CNT		.set						0x10
 IEP_CAPR6_RISE .set                     0x50
-SHARED_MEM_CONST  .set                  0x0b010000;0x54442000+0x10000
-;--------------------------------------------------------------------------------------------------
-;Memory offsets for dynamic loading of PRU code
-;--------------------------------------------------------------------------------------------------
-CODE_BASE	.set						(0x40300000);(0x54400000+0x00040000+0x2100)
-CODE_SIZE	.set						0x600
-DYNAMIC_CODE_OFFSET .set				0x1000 ;0x2100
+TXPRU1_CTRL .set 						0x00025800
+TXPRU1_IMEM_BASE .set 					0x0000C000
+
+; 0X1500 - 0X1FFF is used to store the overlay part of firmare for TXPRU (Channel 2)
+DYNAMIC_CODE_OFFSET .set				0x1500
 
 ;--------------------------------------------------------------------------------------------------
 ;R31 flags for RX
@@ -506,3 +512,13 @@ STATUS2_TEMP .set                       0x62 ; 1 byte
 VPOS2_TEMP .set                         0x63 ; 5 bytes
 VPOSCRC2_TEMP .set                      0x68 ; 2 bytes
 SAFE_SUM_TEMP .set                      0x70 ; 1 byte
+ALIGN_PH .set                      		0x71 ; 1 byte
+LOADFW_TIMESTAMP .set 					0x72 ; 4 bytes
+PART1_LOAD_START .set					0x76 ; 2 bytes
+PART1_RUN_START .set					0x78 ; 2 bytes
+PART1_SIZE .set							0x7A ; 2 bytes
+PART2_LOAD_START .set					0x7C ; 2 bytes
+PART2_RUN_START .set					0x7E ; 2 bytes
+PART2_SIZE .set							0x80 ; 2 bytes
+CHANNEL_SYNC .set						0x82 ; 1 byte
+CHANNEL_MASK .set						0x83 ; 1 byte

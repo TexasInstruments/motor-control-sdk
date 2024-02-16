@@ -343,6 +343,8 @@ int32_t endat_wait_initialization(struct endat_priv *priv, uint32_t timeout, uin
  *              to struct endat_priv instance
  *
  *  \param[in]  pruss_xchg      EnDat firmware interface address
+ *  \param[in]  endatRxInfo     EnDat Rx interface
+ *  \param[in]  endatChInfoGlobalAddr        global address for endatRxInfo
  *  \param[in]  pruss_cfg       ICSS PRU config base address
  *  \param[in]  pruss_iep       ICSS PRU iep base address
  *  \param[in]  slice           ICSS PRU SLICE
@@ -350,7 +352,7 @@ int32_t endat_wait_initialization(struct endat_priv *priv, uint32_t timeout, uin
  *  \retval     priv            pointer to struct endat_priv instance
  *
  */
-struct endat_priv *endat_init(struct endat_pruss_xchg *pruss_xchg,
+struct endat_priv *endat_init(struct endat_pruss_xchg *pruss_xchg, struct endatChRxInfo *endatRxInfo, uint64_t endatChInfoGlobalAddr,
                               void *pruss_cfg, void *pruss_iep, int32_t slice);
 
 /**

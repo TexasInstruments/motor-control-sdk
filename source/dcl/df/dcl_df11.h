@@ -140,75 +140,57 @@ typedef _DCL_VOLATILE struct dcl_df11
 _DCL_CODE_ACCESS
 void DCL_resetDF11(DCL_DF11 *df)
 {
-    dcl_interrupt_t ints = DCL_disableInts();
+    dcl_interrupt_t ints;
+    ints = DCL_disableInts();
     df->d1 = df->d2 = 0.0f;
     DCL_restoreInts(ints);
 }
 
-//! \brief           Loads DF11 tuning parameter from its SPS parameter
+//! \brief           Loads DF11 tuning parameter from its SPS parameter without interrupt protection
 //!
 //! \param[in] df    Pointer to the active DCL_DF11 controller structure
 //!
 _DCL_CODE_ACCESS
-void DCL_fupdateDF11(DCL_DF11 *df)
+void DCL_forceUpdateDF11(DCL_DF11 *df)
 {
     df->b0 = df->sps->b0;
     df->b1 = df->sps->b1;
     df->a1 = df->sps->a1;
 }
 
-//! \brief           Updates DF11 parameter from its SPS parameter with interrupt protection
+//! \brief           Loads DF11 tuning parameter from its SPS parameter with interrupt protection
 //!
 //! \param[in] df    Pointer to the DCL_DF11 controller structure
-//! \return          'true' if update is successful, otherwise 'false'
 //!
 _DCL_CODE_ACCESS _DCL_CODE_SECTION
-bool DCL_updateDF11(DCL_DF11 *df)
+void DCL_updateDF11NoCheck(DCL_DF11 *df)
 {
-    if (!DCL_getUpdateStatus(df))
-    {
-        dcl_interrupt_t ints = DCL_disableInts();
-        DCL_setUpdateStatus(df);
-        df->b0 = df->sps->b0;
-        df->b1 = df->sps->b1;
-        df->a1 = df->sps->a1;
-        DCL_clearUpdateStatus(df);
-        DCL_restoreInts(ints);
-        return true;
-    }
-    return false;
+    dcl_interrupt_t ints;
+    ints = DCL_disableInts();
+    df->b0 = df->sps->b0;
+    df->b1 = df->sps->b1;
+    df->a1 = df->sps->a1;
+    DCL_restoreInts(ints);
 }
 
-//! \brief           A conditional update based on the pending-for-update flag.
-//!                  If the pending status is set, the function will update DF11
+//! \brief           A conditional update based on the update flag.
+//!                  If the update status is set, the function will update DF11
 //!                  parameter from its SPS parameter and clear the status flag on completion.
-//!                  Note: Use DCL_setPendingStatus(df) to set the pending status.
+//!                  Note: Use DCL_setUpdateStatus(df) to set the update status.
 //!     
 //! \param[in] df    Pointer to the DCL_DF11 controller structure
 //! \return          'true' if an update is applied, otherwise 'false'
 //!
 _DCL_CODE_ACCESS _DCL_CODE_SECTION
-bool DCL_pendingUpdateDF11(DCL_DF11 *df)
+bool DCL_updateDF11(DCL_DF11 *df)
 {
-    if (DCL_getPendingStatus(df) && DCL_updateDF11(df))
+    if (DCL_getUpdateStatus(df))
     {
-        DCL_clearPendingStatus(df);
+        DCL_updateDF11NoCheck(df);
+        DCL_clearUpdateStatus(df);
         return true;
     }
     return false;
-}
-
-//! \brief           Update SPS parameter with active param, userful when needing
-//!                  to update only few active param from SPS and keep rest the same  
-//! 
-//! \param[in] df    Pointer to the active DCL_DF11 controller structure
-//!
-_DCL_CODE_ACCESS
-void DCL_updateDF11SPS(DCL_DF11 *df)
-{
-    df->sps->b0 = df->b0;
-    df->sps->b1 = df->b1;
-    df->sps->a1 = df->a1;
 }
 
 //! \brief           Determines stability of the shadow DF11 compensator
@@ -223,7 +205,7 @@ bool DCL_isStableDF11(DCL_DF11 *df)
 }
 
 //! \brief            Loads the DF11 shadow coefficients from a ZPK3 description
-//!                   Note: Sampling period df->css->t_sec are used in the calculation.
+//!                   Note: Sampling period df->css->T are used in the calculation.
 //!                   New settings take effect after DCL_updateDF11().
 //!                   Only real z1 & p1 considered, all other roots ignored.
 //!
@@ -245,15 +227,15 @@ void DCL_loadDF11asZPK(DCL_DF11 *df, DCL_ZPK3 *zpk)
     }
 #endif
 
-    float32_t t_sec = df->css->t_sec;
-    float32_t a0p = 2.0f - (float32_t) crealf(zpk->p1) * t_sec;
-    df->sps->b0 = zpk->K * (2.0f - (float32_t) crealf(zpk->z1) * t_sec) / a0p;
-    df->sps->b1 = zpk->K * (-2.0f - (float32_t) crealf(zpk->z1) * t_sec) / a0p;
-    df->sps->a1 = (-2.0f - (float32_t) crealf(zpk->p1) * t_sec) / a0p;
+    float32_t T = df->css->T;
+    float32_t a0p = 2.0f - (float32_t) crealf(zpk->p1) * T;
+    df->sps->b0 = zpk->K * (2.0f - (float32_t) crealf(zpk->z1) * T) / a0p;
+    df->sps->b1 = zpk->K * (-2.0f - (float32_t) crealf(zpk->z1) * T) / a0p;
+    df->sps->a1 = (-2.0f - (float32_t) crealf(zpk->p1) * T) / a0p;
 }
 
 //! \brief           Loads compensator coefficients to emulate series form PI
-//!                  Note: Sampling period df->css->t_sec are used in the calculation.
+//!                  Note: Sampling period df->css->T are used in the calculation.
 //!                  New settings take effect after DCL_updateDF11().
 //!
 //! \param[in] df    Pointer to the DCL_DF11 controller structure
@@ -275,9 +257,9 @@ void DCL_loadDF11asPI(DCL_DF11 *df, float32_t Kp, float32_t Ki)
     }
 #endif
 
-    float32_t t_sec = df->css->t_sec;
-    df->sps->b0 = Kp * ((Ki * t_sec) + 2.0f) / 2.0f;
-    df->sps->b1 = Kp * ((Ki * t_sec) - 2.0f) / 2.0f;
+    float32_t T = df->css->T;
+    df->sps->b0 = Kp * ((Ki * T) + 2.0f) / 2.0f;
+    df->sps->b1 = Kp * ((Ki * T) - 2.0f) / 2.0f;
     df->sps->a1 = -1.0f;
 }
 

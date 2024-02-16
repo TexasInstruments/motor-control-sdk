@@ -37,11 +37,10 @@
 	.retain 	; Required for building .out with assembly file
 	.retainrefs ; Required for building .out with assembly file
 	.ref datalink_init
-	.ref transport_init
 	.ref load_code
 	.ref datalink_init_start
 	.global	main
-	.sect	".text"
+	.sect	".text:main"
 
 main:
 ;init code
@@ -50,4 +49,5 @@ main:
 	or		REG_TMP2, REG_TMP2, (1<<3)
 	sbco		&REG_TMP2, PRU_CTRL_CONST, 0x00, 4
 	;skip code loading since there is no edma overlay in ICSSG
+
 	jmp datalink_init_start
