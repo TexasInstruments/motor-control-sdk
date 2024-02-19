@@ -175,7 +175,7 @@ post-build:
 % }
 % if(obj["defaultPruPostBuildSteps"]) {
 post-build:
-	-$(CGT_TI_PRU_PATH)/bin/hexpru.exe --diag_wrap=off --array --array:name_prefix=PRUFirmware  -o pru_load_bin.h `projectName`.out
+	-$(CGT_TI_PRU_PATH)/bin/hexpru --diag_wrap=off --array --array:name_prefix=PRUFirmware  -o pru_load_bin.h `projectName`.out
 	-@echo ' '
 % }
 

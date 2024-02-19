@@ -115,10 +115,10 @@ clean:
 
 post-build:
 ifeq ($(CHANNELS),SINGLE)
-	$(CG_TOOL_ROOT)/bin/hexpru.exe endat_master_hexpru.cmd endat_master.out && $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/bin2header/bin2header.exe endat_master.b00 endat_master_bin.h EnDatFirmware 4
+	$(CG_TOOL_ROOT)/bin/hexpru endat_master_hexpru.cmd endat_master.out && $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/bin2header/bin2header.exe endat_master.b00 endat_master_bin.h EnDatFirmware 4
 endif
 ifeq ($(CHANNELS),MULTI)
-	$(CG_TOOL_ROOT)/bin/hexpru.exe endat_master_hexpru.cmd endat_master.out && $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/bin2header/bin2header.exe endat_master.b00 endat_master_multi_bin.h EnDatFirmwareMulti 4
+	$(CG_TOOL_ROOT)/bin/hexpru endat_master_hexpru.cmd endat_master.out && $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/bin2header/bin2header.exe endat_master.b00 endat_master_multi_bin.h EnDatFirmwareMulti 4
 endif
 	-
 	-@echo ' '

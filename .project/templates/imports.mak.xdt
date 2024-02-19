@@ -8,6 +8,7 @@ DEVICE ?= am64x
 ifeq ($(OS),Windows_NT)
     TOOLS_PATH?=C:/ti
     CCS_PATH?=$(TOOLS_PATH)/ccs1260/ccs
+    CCS_INSTALL_DIR=$(CCS_PATH)
     CCS_ECLIPSE=$(CCS_PATH)/eclipse/eclipsec
     CYGWIN_PATH?=$(CCS_PATH)/utils/cygwin
     MKDIR=$(CYGWIN_PATH)/mkdir -p
@@ -30,6 +31,7 @@ else
     ifeq ($(UNAME_S),Linux)
         export TOOLS_PATH?=$(HOME)/ti
         export CCS_PATH?=$(TOOLS_PATH)/ccs1260/ccs
+        export CCS_INSTALL_DIR=$(CCS_PATH)
         export CCS_ECLIPSE=$(CCS_PATH)/eclipse/eclipse
         export MKDIR=mkdir -p
         export RMDIR=rm -rf

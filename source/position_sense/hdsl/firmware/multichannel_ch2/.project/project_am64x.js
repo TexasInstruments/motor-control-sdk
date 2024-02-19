@@ -48,7 +48,7 @@ const lflags = {
 };
 
 let postBuildSteps = [
-    "$(CG_TOOL_ROOT)/bin/hexpru.exe --diag_wrap=off --array --array:name_prefix=Hiperface_DSL2_0_TX_PRU -o hdsl_master_icssg_multichannel_ch2_bin.h hdsl_master_multichannel_ch2_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.out;  move  hdsl_master_icssg_multichannel_ch2_bin.h  ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch2_bin.h"
+    "$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=Hiperface_DSL2_0_TX_PRU -o hdsl_master_icssg_multichannel_ch2_bin.h hdsl_master_multichannel_ch2_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.out;  $(CCS_INSTALL_DIR)/utils/cygwin/mv  hdsl_master_icssg_multichannel_ch2_bin.h  ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch2_bin.h"
 ];
 
 

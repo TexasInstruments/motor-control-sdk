@@ -56,7 +56,7 @@ const buildOptionCombos = [
 ];
 
 let postBuildSteps = [
-    "$(CG_TOOL_ROOT)/bin/hexpru.exe --diag_wrap=off --array --array:name_prefix=EnDatFirmware -o endat_peripheral_interface_single_ch_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.h endat_peripheral_interface_single_ch_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.out; move endat_peripheral_interface_single_ch_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/endat_master_bin.h"
+    "$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmware -o endat_peripheral_interface_single_ch_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.h endat_peripheral_interface_single_ch_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.out;  $(CCS_INSTALL_DIR)/utils/cygwin/mv endat_peripheral_interface_single_ch_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/endat_master_bin.h"
 ];
 function getComponentProperty() {
     let property = {};

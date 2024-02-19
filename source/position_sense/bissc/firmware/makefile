@@ -115,10 +115,10 @@ clean:
 
 post-build:
 ifeq ($(CHANNELS),SINGLE)
-	$(CG_TOOL_ROOT)/bin/hexpru.exe bissc_master_hexpru.cmd bissc_master.out && $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/bin2header/bin2header.exe bissc_master.b00 bissc_master_bin.h BiSSFirmware 4
+	$(CG_TOOL_ROOT)/bin/hexpru bissc_master_hexpru.cmd bissc_master.out && $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/bin2header/bin2header.exe bissc_master.b00 bissc_master_bin.h BiSSFirmware 4
 endif
 ifeq ($(CHANNELS),MULTI)
-	$(CG_TOOL_ROOT)/bin/hexpru.exe bissc_master_hexpru.cmd bissc_master.out && $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/bin2header/bin2header.exe bissc_master.b00 bissc_master_multi_bin.h BiSSFirmwareMulti 4
+	$(CG_TOOL_ROOT)/bin/hexpru bissc_master_hexpru.cmd bissc_master.out && $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/bin2header/bin2header.exe bissc_master.b00 bissc_master_multi_bin.h BiSSFirmwareMulti 4
 endif
 	-
 	-@echo ' '
