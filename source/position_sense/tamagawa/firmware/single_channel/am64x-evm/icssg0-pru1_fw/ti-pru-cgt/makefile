@@ -8,8 +8,6 @@ export MOTOR_CONTROL_SDK_PATH?=$(abspath ../../../../../../../..)
 include $(MOTOR_CONTROL_SDK_PATH)/imports.mak
 SYSCFG_DIR := $(CCS_PROJECT_DEBUG)/syscfg
 CG_TOOL_ROOT := $(CGT_TI_PRU_PATH)
-RM := DEL /F
-RMDIR := RMDIR /S/Q
 
 # Add inputs and outputs from these tool invocations to the build variables
 CMD_SRCS += \
@@ -83,7 +81,7 @@ clean:
 post-build:
 		-$(CG_TOOL_ROOT)/bin/hexpru.exe ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/tamagawa_master_hexpru.cmd tamagawa_single_channel_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.out
 		- ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/tools/bin2header/bin2header.exe tamagawa_single_channel_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.b00 tamagawa_master_single_channel_bin.h TamagawaFirmware 4
-		- $(COPY) tamagawa_master_single_channel_bin.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/tamagawa_master_single_channel_bin.h 
+		- move tamagawa_master_single_channel_bin.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/tamagawa_master_single_channel_bin.h 
 	-@echo ' '
 
 .PHONY: all clean

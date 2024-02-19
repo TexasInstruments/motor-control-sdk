@@ -8,8 +8,6 @@ export MOTOR_CONTROL_SDK_PATH?=$(abspath ../../../../../../../..)
 include $(MOTOR_CONTROL_SDK_PATH)/imports.mak
 SYSCFG_DIR := $(CCS_PROJECT_DEBUG)/syscfg
 CG_TOOL_ROOT := $(CGT_TI_PRU_PATH)
-RM := DEL /F
-RMDIR := RMDIR /S/Q
 
 # Add inputs and outputs from these tool invocations to the build variables
 CMD_SRCS += \
@@ -83,7 +81,7 @@ clean:
 
 post-build:
 		-$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=BiSSFirmwareMultiMakePRU -o bissc_master_multi_PRU_bin.h bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out
-		- $(COPY) bissc_master_multi_PRU_bin.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware/bissc_master_multi_PRU_bin.h
+		- move bissc_master_multi_PRU_bin.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware/bissc_master_multi_PRU_bin.h
 	-@echo ' '
 
 .PHONY: all clean

@@ -67,10 +67,6 @@ const readmeDoxygenPageTag = "EXAMPLE_PRUICSS_PWM_EPWM_SYNC";
 const templates_freertos_r5f =
 [
     {
-        input: ".project/templates/am64x/common/linker_r5f.cmd.xdt",
-        output: "linker.cmd",
-    },
-    {
         input: ".project/templates/am64x/freertos/main_freertos.c.xdt",
         output: "../main.c",
         options: {

@@ -8,8 +8,6 @@ export MOTOR_CONTROL_SDK_PATH?=$(abspath ../../../../../../../..)
 include $(MOTOR_CONTROL_SDK_PATH)/imports.mak
 SYSCFG_DIR := $(CCS_PROJECT_DEBUG)/syscfg
 CG_TOOL_ROOT := $(CGT_TI_PRU_PATH)
-RM := DEL /F
-RMDIR := RMDIR /S/Q
 
 # Add inputs and outputs from these tool invocations to the build variables
 CMD_SRCS += \
@@ -83,7 +81,7 @@ clean:
 
 post-build:
 		-$(CG_TOOL_ROOT)/bin/hexpru.exe --diag_wrap=off --array --array:name_prefix=EnDatFirmware -o endat_peripheral_interface_single_ch_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.h endat_peripheral_interface_single_ch_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out
-		-  $(COPY) endat_peripheral_interface_single_ch_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/endat_master_bin.h
+		-  move endat_peripheral_interface_single_ch_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/endat_master_bin.h
 	-@echo ' '
 
 .PHONY: all clean

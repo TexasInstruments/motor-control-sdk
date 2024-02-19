@@ -46,11 +46,11 @@ const buildOptionCombos = [
 
 
 let postBuildStepsEVM = [
-    "$(CG_TOOL_ROOT)/bin/hexpru.exe ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/tamagawa_master_hexpru.cmd tamagawa_single_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out; ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/tools/bin2header/bin2header.exe tamagawa_single_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.b00 tamagawa_master_single_channel_bin.h TamagawaFirmware 4; $(COPY) tamagawa_master_single_channel_bin.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/tamagawa_master_single_channel_bin.h ;"
+    "$(CG_TOOL_ROOT)/bin/hexpru.exe ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/tamagawa_master_hexpru.cmd tamagawa_single_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out; ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/tools/bin2header/bin2header.exe tamagawa_single_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.b00 tamagawa_master_single_channel_bin.h TamagawaFirmware 4; move tamagawa_master_single_channel_bin.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/tamagawa_master_single_channel_bin.h ;"
 ];
 
 let postBuildStepsLP = [
-    "$(CG_TOOL_ROOT)/bin/hexpru.exe ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/tamagawa_master_hexpru.cmd tamagawa_single_channel_am243x-lp_icssg0-pru1_fw_ti-pru-cgt.out; ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/tools/bin2header/bin2header.exe tamagawa_single_channel_am243x-lp_icssg0-pru1_fw_ti-pru-cgt.b00 tamagawa_master_single_channel_bin.h TamagawaFirmware 4; $(COPY) tamagawa_master_single_channel_bin.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/tamagawa_master_single_channel_bin.h ;"
+    "$(CG_TOOL_ROOT)/bin/hexpru.exe ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/tamagawa_master_hexpru.cmd tamagawa_single_channel_am243x-lp_icssg0-pru1_fw_ti-pru-cgt.out; ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/tools/bin2header/bin2header.exe tamagawa_single_channel_am243x-lp_icssg0-pru1_fw_ti-pru-cgt.b00 tamagawa_master_single_channel_bin.h TamagawaFirmware 4; move tamagawa_master_single_channel_bin.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/tamagawa_master_single_channel_bin.h ;"
 ];
 
 function getComponentProperty() {

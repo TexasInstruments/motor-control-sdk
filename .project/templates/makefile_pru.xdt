@@ -11,8 +11,6 @@ export `args.sdkPath`?=$(abspath `args.relPath`)
 include $(`args.sdkPath`)/imports.mak
 SYSCFG_DIR := $(CCS_PROJECT_DEBUG)/syscfg
 CG_TOOL_ROOT := $(CGT_TI_PRU_PATH)
-RM := DEL /F
-RMDIR := RMDIR /S/Q
 
 # Add inputs and outputs from these tool invocations to the build variables
 CMD_SRCS += \

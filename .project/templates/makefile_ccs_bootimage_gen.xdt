@@ -12,7 +12,7 @@
 
 CCS_PATH=$(CCS_INSTALL_DIR)
 include ${MOTOR_CONTROL_SDK_PATH}/imports.mak
-% if (["am243x", "am64x", "am263x", "am273x"].includes(args.project.device)) {
+% if (["am243x", "am64x", "am263x", "am263px", "am273x","awr294x"].includes(args.project.device)) {
 include ${MOTOR_CONTROL_SDK_PATH}/devconfig/devconfig.mak
 % }
 
@@ -27,14 +27,18 @@ endif
 OUTFILE=$(PROFILE)/$(OUTNAME).out
 BOOTIMAGE_PATH=$(abspath ${PROFILE})
 % if (args.project.isBootLoader) {
-% if (["am243x", "am64x", "am263x", "am273x"].includes(args.project.device)) {
+% if (["am243x", "am64x", "am263x", "am263px", "am273x","awr294x"].includes(args.project.device)) {
 BOOTIMAGE_NAME_GP:=$(BOOTIMAGE_PATH)/$(OUTNAME).tiimage
 BOOTIMAGE_NAME_HS:=`args.project.name`.$(PROFILE).hs.tiimage
 BOOTIMAGE_NAME_HS_FS:=`args.project.name`.$(PROFILE).hs_fs.tiimage
 ifeq ($(DEVICE_TYPE),HS)
 	BOOTIMAGE_NAME=$(BOOTIMAGE_NAME_HS)
 else
+% if ((args.project.device == "am64x") || (args.project.device == "am243x")) {
+	BOOTIMAGE_NAME=$(BOOTIMAGE_NAME_HS_FS)
+% } else {
 	BOOTIMAGE_NAME=$(BOOTIMAGE_NAME_GP)
+%}
 endif
 % } else {
 BOOTIMAGE_NAME:=$(BOOTIMAGE_PATH)/$(OUTNAME).tiimage
@@ -92,7 +96,7 @@ BOARDCFG_BLOB=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/drivers/sciclient/sc
 % }
 % }
 % }
-% if ((args.project.device == "am273x") || (args.project.device == "awr294x") || (args.project.device == "am263x")) {
+% if ((args.project.device == "am273x") || (args.project.device == "awr294x") || (args.project.device == "am263x") || (args.project.device == "am263px")) {
 ifeq ($(DEVICE_TYPE),HS)
 BOOTIMAGE_CERT_KEY=$(APP_SIGNING_KEY)
 else
@@ -103,7 +107,7 @@ BOOTIMAGE_CERT_GEN_CMD=$(PYTHON) $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/bo
 
 % if ((args.project.device == "am273x") || (args.project.device == "awr294x")) {
 SBL_RUN_ADDRESS=0x10200000
-% } else if (args.project.device == "am263x") {
+% } else if( (args.project.device == "am263x")  || (args.project.device == "am263px")){
 SBL_RUN_ADDRESS=0x70002000
 % } else {
 SBL_RUN_ADDRESS=0x70000000
@@ -116,49 +120,56 @@ ifeq ($(CCS_IDE_MODE),cloud)
 #	No post build steps
 else
 	@echo  Boot image: `args.project.device`:`args.project.cpu`:`args.project.os`:`args.project.cgt` $(BOOTIMAGE_NAME) ...
-	$(OBJCOPY) --strip-sections -O binary $(OUTFILE) $(BOOTIMAGE_BIN_NAME)
+	$(OBJCOPY) --strip-all -O binary $(OUTFILE) $(BOOTIMAGE_BIN_NAME)
 % if (args.project.device == "awr294x") {
-ifeq ($(DEVICE_TYPE),HS)
-ifeq ($(DBG_ENABLED),no)
-	$(BOOTIMAGE_CERT_GEN_CMD) --image-bin $(BOOTIMAGE_BIN_NAME) --core R5 --swrv 1 --loadaddr $(SBL_RUN_ADDRESS) --sign-key $(BOOTIMAGE_CERT_KEY) --out-image $(BOOTIMAGE_NAME) --debug DBG_SOC_DEFAULT
-else
-	$(BOOTIMAGE_CERT_GEN_CMD) --image-bin $(BOOTIMAGE_BIN_NAME) --core R5 --swrv 1 --loadaddr $(SBL_RUN_ADDRESS) --sign-key $(BOOTIMAGE_CERT_KEY) --out-image $(BOOTIMAGE_NAME) --debug DBG_PUBLIC_ENABLE
-endif
-else
-	$(BOOTIMAGE_CERT_GEN_CMD) --image-bin $(BOOTIMAGE_BIN_NAME) --core R5 --swrv 1 --loadaddr $(SBL_RUN_ADDRESS) --sign-key $(BOOTIMAGE_CERT_KEY) --out-image $(BOOTIMAGE_NAME) --debug DBG_SOC_DEFAULT
-endif
-% } else if ((args.project.device == "am263x") || (args.project.device == "am273x")) {
 ifeq ($(DEVICE_TYPE),HS)
 ifeq ($(DEBUG_TIFS), yes)
 ifeq ($(ENC_SBL_ENABLED),yes)
-	$(BOOTIMAGE_CERT_GEN_CMD) --sbl-enc --enc-key $(APP_ENCRYPTION_KEY) --image-bin $(BOOTIMAGE_BIN_NAME) --core R5 --swrv 1 --loadaddr $(SBL_RUN_ADDRESS) --sign-key $(BOOTIMAGE_CERT_KEY) --out-image $(BOOTIMAGE_NAME)
+	$(BOOTIMAGE_CERT_GEN_CMD) --sbl-enc --enc-key $(APP_ENCRYPTION_KEY) --image-bin $(BOOTIMAGE_BIN_NAME) --core R5 --swrv 1 --loadaddr $(SBL_RUN_ADDRESS) --sign-key $(BOOTIMAGE_CERT_KEY) --kd-salt $(KD_SALT) --out-image $(BOOTIMAGE_NAME)
 else
-    $(BOOTIMAGE_CERT_GEN_CMD) --image-bin $(BOOTIMAGE_BIN_NAME) --core R5 --swrv 1 --loadaddr $(SBL_RUN_ADDRESS) --sign-key $(BOOTIMAGE_CERT_KEY) --out-image $(BOOTIMAGE_NAME)
+	$(BOOTIMAGE_CERT_GEN_CMD) --image-bin $(BOOTIMAGE_BIN_NAME) --core R5 --swrv 1 --loadaddr $(SBL_RUN_ADDRESS) --sign-key $(BOOTIMAGE_CERT_KEY) --out-image $(BOOTIMAGE_NAME)
 endif
 else
 ifeq ($(ENC_SBL_ENABLED),yes)
-    $(BOOTIMAGE_CERT_GEN_CMD) --sbl-enc --enc-key $(APP_ENCRYPTION_KEY)  --image-bin $(BOOTIMAGE_BIN_NAME) --core R5 --swrv 1 --loadaddr $(SBL_RUN_ADDRESS) --sign-key $(BOOTIMAGE_CERT_KEY) --out-image $(BOOTIMAGE_NAME) --debug $(DEBUG_OPTION)
+	$(BOOTIMAGE_CERT_GEN_CMD) --sbl-enc --enc-key $(APP_ENCRYPTION_KEY)  --image-bin $(BOOTIMAGE_BIN_NAME) --core R5 --swrv 1 --loadaddr $(SBL_RUN_ADDRESS) --sign-key $(BOOTIMAGE_CERT_KEY) --kd-salt $(KD_SALT) --out-image $(BOOTIMAGE_NAME) --debug $(DEBUG_OPTION)
 else
-    $(BOOTIMAGE_CERT_GEN_CMD) --image-bin $(BOOTIMAGE_BIN_NAME) --core R5 --swrv 1 --loadaddr $(SBL_RUN_ADDRESS) --sign-key $(BOOTIMAGE_CERT_KEY) --out-image $(BOOTIMAGE_NAME) --debug $(DEBUG_OPTION)
+	$(BOOTIMAGE_CERT_GEN_CMD) --image-bin $(BOOTIMAGE_BIN_NAME) --core R5 --swrv 1 --loadaddr $(SBL_RUN_ADDRESS) --sign-key $(BOOTIMAGE_CERT_KEY) --out-image $(BOOTIMAGE_NAME) --debug $(DEBUG_OPTION)
 endif
 endif
 else
 	$(BOOTIMAGE_CERT_GEN_CMD) --image-bin $(BOOTIMAGE_BIN_NAME) --core R5 --swrv 1 --loadaddr $(SBL_RUN_ADDRESS) --sign-key $(BOOTIMAGE_CERT_KEY) --out-image $(BOOTIMAGE_NAME) --debug DBG_SOC_DEFAULT
 endif
+% } else if ((args.project.device == "am263x") || (args.project.device == "am273x") || (args.project.device == "am263px")) {
+ifeq ($(DEVICE_TYPE),HS)
+ifeq ($(DEBUG_TIFS), yes)
+ifeq ($(ENC_SBL_ENABLED),yes)
+	$(BOOTIMAGE_CERT_GEN_CMD) --sbl-enc --enc-key $(APP_ENCRYPTION_KEY) --image-bin $(BOOTIMAGE_BIN_NAME) --core R5 --swrv 1 --loadaddr $(SBL_RUN_ADDRESS) --sign-key $(BOOTIMAGE_CERT_KEY) --kd-salt $(KD_SALT) --out-image $(BOOTIMAGE_NAME)
+else
+	$(BOOTIMAGE_CERT_GEN_CMD) --image-bin $(BOOTIMAGE_BIN_NAME) --core R5 --swrv 1 --loadaddr $(SBL_RUN_ADDRESS) --sign-key $(BOOTIMAGE_CERT_KEY) --out-image $(BOOTIMAGE_NAME)
+endif
+else
+ifeq ($(ENC_SBL_ENABLED),yes)
+	$(BOOTIMAGE_CERT_GEN_CMD) --sbl-enc --enc-key $(APP_ENCRYPTION_KEY)  --image-bin $(BOOTIMAGE_BIN_NAME) --core R5 --swrv 1 --loadaddr $(SBL_RUN_ADDRESS) --sign-key $(BOOTIMAGE_CERT_KEY) --kd-salt $(KD_SALT) --out-image $(BOOTIMAGE_NAME) --debug $(DEBUG_OPTION)
+else
+	$(BOOTIMAGE_CERT_GEN_CMD) --image-bin $(BOOTIMAGE_BIN_NAME) --core R5 --swrv 1 --loadaddr $(SBL_RUN_ADDRESS) --sign-key $(BOOTIMAGE_CERT_KEY) --out-image $(BOOTIMAGE_NAME) --debug $(DEBUG_OPTION)
+endif
+endif
+else
+	$(BOOTIMAGE_CERT_GEN_CMD) --image-bin $(BOOTIMAGE_BIN_NAME) --core R5 --swrv 1 --loadaddr $(SBL_RUN_ADDRESS) --sign-key $(BOOTIMAGE_CERT_KEY) --out-image $(BOOTIMAGE_NAME) --debug DBG_SOC_DEFAULT
 % } else {
 ifeq ($(DEVICE_TYPE),HS)
-	$(BOOTIMAGE_CERT_GEN_CMD) --swrv 1 --sbl-bin $(BOOTIMAGE_BIN_NAME) --sysfw-bin $(SYSFW_PATH)/sysfw-hs-enc.bin --sysfw-inner-cert $(SYSFW_PATH)/sysfw-hs-enc-cert.bin --boardcfg-blob $(BOARDCFG_BLOB) --sbl-loadaddr $(SBL_RUN_ADDRESS) --sysfw-loadaddr $(SYSFW_LOAD_ADDR) --bcfg-loadaddr $(BOARDCFG_LOAD_ADDR) --key $(BOOTIMAGE_CERT_KEY) --debug DBG_FULL_ENABLE --rom-image $(BOOTIMAGE_NAME)
+ifeq ($(ENC_SBL_ENABLED),yes)
+	$(BOOTIMAGE_CERT_GEN_CMD) --swrv 1 --sbl-enc --enc-key $(APP_ENCRYPTION_KEY) --sbl-bin $(BOOTIMAGE_BIN_NAME) --sysfw-bin $(SYSFW_PATH)/sysfw-hs-enc.bin --sysfw-inner-cert $(SYSFW_PATH)/sysfw-hs-enc-cert.bin --boardcfg-blob $(BOARDCFG_BLOB) --sbl-loadaddr $(SBL_RUN_ADDRESS) --sysfw-loadaddr $(SYSFW_LOAD_ADDR) --bcfg-loadaddr $(BOARDCFG_LOAD_ADDR) --key $(BOOTIMAGE_CERT_KEY) --debug DBG_FULL_ENABLE --rom-image $(BOOTIMAGE_NAME)
 else
-	$(BOOTIMAGE_CERT_GEN_CMD) --swrv 1 --sbl-bin $(BOOTIMAGE_BIN_NAME) --sysfw-bin $(SYSFW_PATH)/sysfw-hs-fs-enc.bin --sysfw-inner-cert $(SYSFW_PATH)/sysfw-hs-fs-enc-cert.bin --boardcfg-blob $(BOARDCFG_BLOB) --sbl-loadaddr $(SBL_RUN_ADDRESS) --sysfw-loadaddr $(SYSFW_LOAD_ADDR) --bcfg-loadaddr $(BOARDCFG_LOAD_ADDR) --key $(BOOTIMAGE_CERT_KEY) --rom-image $(BOOTIMAGE_PATH)/$(BOOTIMAGE_NAME_HS_FS)
-	$(BOOTIMAGE_CERT_GEN_CMD) --swrv 1 --sbl-bin $(BOOTIMAGE_BIN_NAME) --sysfw-bin $(SYSFW_PATH)/sysfw.bin --boardcfg-blob $(BOARDCFG_BLOB) --sbl-loadaddr $(SBL_RUN_ADDRESS) --sysfw-loadaddr $(SYSFW_LOAD_ADDR) --bcfg-loadaddr $(BOARDCFG_LOAD_ADDR) --key $(BOOTIMAGE_CERT_KEY) --rom-image $(BOOTIMAGE_NAME)
+	$(BOOTIMAGE_CERT_GEN_CMD) --swrv 1 --sbl-bin $(BOOTIMAGE_BIN_NAME) --sysfw-bin $(SYSFW_PATH)/sysfw-hs-enc.bin --sysfw-inner-cert $(SYSFW_PATH)/sysfw-hs-enc-cert.bin --boardcfg-blob $(BOARDCFG_BLOB) --sbl-loadaddr $(SBL_RUN_ADDRESS) --sysfw-loadaddr $(SYSFW_LOAD_ADDR) --bcfg-loadaddr $(BOARDCFG_LOAD_ADDR) --key $(BOOTIMAGE_CERT_KEY) --debug DBG_FULL_ENABLE --rom-image $(BOOTIMAGE_NAME)
 endif
+else
+	$(BOOTIMAGE_CERT_GEN_CMD) --swrv 1 --sbl-bin $(BOOTIMAGE_BIN_NAME) --sysfw-bin $(SYSFW_PATH)/sysfw-hs-fs-enc.bin --sysfw-inner-cert $(SYSFW_PATH)/sysfw-hs-fs-enc-cert.bin --boardcfg-blob $(BOARDCFG_BLOB) --sbl-loadaddr $(SBL_RUN_ADDRESS) --sysfw-loadaddr $(SYSFW_LOAD_ADDR) --bcfg-loadaddr $(BOARDCFG_LOAD_ADDR) --key $(BOOTIMAGE_CERT_KEY) --rom-image $(BOOTIMAGE_NAME)
 	$(COPY) $(BOOTIMAGE_NAME) $(BOOTIMAGE_PATH)/tiboot3.bin
-ifeq ($(DEVICE_TYPE),GP)
-	@echo  Boot image: `args.project.device`:`args.project.cpu`:`args.project.os`:`args.project.cgt` $(BOOTIMAGE_PATH)/$(BOOTIMAGE_NAME_HS_FS) Done !!!
-endif
 % }
 	@echo  Boot image: `args.project.device`:`args.project.cpu`:`args.project.os`:`args.project.cgt` $(BOOTIMAGE_NAME) Done !!!
 	@echo  .
+endif
 endif
 % } else {
 % if (args.project.device == "am64x") {
@@ -183,7 +194,7 @@ BOOTIMAGE_CORE_ID_m4fss0-0 = 14
 SBL_RUN_ADDRESS=0x70000000
 SBL_DEV_ID=55
 % }
-% if (args.project.device == "am263x") {
+% if( (args.project.device == "am263x")  || (args.project.device == "am263px")){
 BOOTIMAGE_CORE_ID_r5fss0-0 = 0
 BOOTIMAGE_CORE_ID_r5fss0-1 = 1
 BOOTIMAGE_CORE_ID_r5fss1-0 = 2
@@ -215,7 +226,7 @@ SBL_DEV_ID=55
 
 MULTI_CORE_IMAGE_GEN = $(CCS_NODE) $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/multicoreImageGen/multicoreImageGen.js
 OUTRPRC_CMD = $(CCS_NODE) $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/out2rprc/elf2rprc.js
-% if (((args.project.device == "am243x") || (args.project.device == "am64x")) && (!args.project.isPartOfSystemProject)) {
+% if (((args.project.device == "am243x") || (args.project.device == "am64x"))) {
 APP_IMAGE_SIGN_CMD = $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/signing/appimage_x509_cert_gen.py
 % }
 
@@ -256,21 +267,22 @@ else
 % if (args.project.device == "awr294x") {
 	$(MULTI_CORE_IMAGE_GEN) --devID $(SBL_DEV_ID) --out $(BOOTIMAGE_NAME_QSPI) $(MULTI_CORE_IMAGE_PARAMS_QSPI) >> $(BOOTIMAGE_TEMP_OUT_FILE)
 % }
-% if (((args.project.device == "am243x") || (args.project.device == "am64x")) && (!args.project.isPartOfSystemProject)) {
-# Sign the appimage for HS-FS using appimage signing script
-	$(PYTHON) $(APP_IMAGE_SIGN_CMD) --bin $(BOOTIMAGE_NAME) --authtype 1 --key $(APP_SIGNING_KEY) --output $(BOOTIMAGE_NAME).hs_fs
-% }
-% if (((args.project.device == "am243x") || (args.project.device == "am64x")) && (!args.project.isPartOfSystemProject)) {
+% if (((args.project.device == "am243x") || (args.project.device == "am64x"))) {
 ifeq ($(DEVICE_TYPE),HS)
 # Sign the appimage using appimage signing script
 ifeq ($(ENC_ENABLED),no)
 	@echo Boot image signing: Encryption is disabled.
 	$(PYTHON) $(APP_IMAGE_SIGN_CMD) --bin $(BOOTIMAGE_NAME) --authtype 1 --key $(APP_SIGNING_KEY) --output $(BOOTIMAGE_NAME).hs
+	$(RM) $(BOOTIMAGE_NAME)
 else
 	@echo Boot image signing: Encryption is enabled.
 	$(PYTHON) $(APP_IMAGE_SIGN_CMD) --bin $(BOOTIMAGE_NAME) --authtype 1 --key $(APP_SIGNING_KEY) --enc y --enckey $(APP_ENCRYPTION_KEY) --output $(BOOTIMAGE_NAME).hs
 	$(RM) $(BOOTIMAGE_NAME)-enc
 endif
+else
+# Sign the appimage for HS-FS using appimage signing script
+	$(PYTHON) $(APP_IMAGE_SIGN_CMD) --bin $(BOOTIMAGE_NAME) --authtype 1 --key $(APP_SIGNING_KEY) --output $(BOOTIMAGE_NAME).hs_fs
+	$(RM) $(BOOTIMAGE_NAME)
 endif
 % }
 	$(RM) $(BOOTIMAGE_RPRC_NAME_TMP)
@@ -278,9 +290,11 @@ endif
 	$(RM) $(PROFILE)/`args.linuxFwName`
 	$(STRIP) -o=$(PROFILE)/`args.linuxFwName` $(OUTFILE)
 % }
+% if ((!["am64x", "am243x"].includes(args.project.device))) {
 	@echo  Boot image: `args.project.device`:`args.project.cpu`:`args.project.os`:`args.project.cgt` $(BOOTIMAGE_NAME) Done !!!
 	@echo  .
-% if (((args.project.device == "am243x") || (args.project.device == "am64x")) && (!args.project.isPartOfSystemProject)) {
+% }
+% if (((args.project.device == "am243x") || (args.project.device == "am64x"))) {
 ifeq ($(DEVICE_TYPE),HS)
 	@echo  Boot image: `args.project.device`:`args.project.cpu`:`args.project.os`:`args.project.cgt` $(BOOTIMAGE_NAME).hs Done !!!
 	@echo  .
