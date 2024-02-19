@@ -934,7 +934,7 @@ int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalA0(PRUICSS_Handle handle, uint8_t 
     return retVal; 
 }
 
-int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalA1(PRUICSS_Handle handle, uint8_t pwmSet, uint8_t state, uint8_t action)
+int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalB0(PRUICSS_Handle handle, uint8_t pwmSet, uint8_t state, uint8_t action)
 {
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
@@ -1021,7 +1021,7 @@ int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalA1(PRUICSS_Handle handle, uint8_t 
     return retVal;
 }
 
-int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalA2(PRUICSS_Handle handle, uint8_t pwmSet, uint8_t state, uint8_t action)
+int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalA1(PRUICSS_Handle handle, uint8_t pwmSet, uint8_t state, uint8_t action)
 {
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
@@ -1106,7 +1106,7 @@ int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalA2(PRUICSS_Handle handle, uint8_t 
     return retVal;
 }
 
-int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalB0(PRUICSS_Handle handle, uint8_t pwmSet, uint8_t state, uint8_t action)
+int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalB1(PRUICSS_Handle handle, uint8_t pwmSet, uint8_t state, uint8_t action)
 {
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
@@ -1191,7 +1191,7 @@ int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalB0(PRUICSS_Handle handle, uint8_t 
     return retVal;
 }
 
-int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalB1(PRUICSS_Handle handle, uint8_t pwmSet, uint8_t state, uint8_t action)
+int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalA2(PRUICSS_Handle handle, uint8_t pwmSet, uint8_t state, uint8_t action)
 {
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
