@@ -11,7 +11,7 @@
         "name": "single_chip_servo",
         "location": "../../examples/tidep_01032_dual_motor_drive/single_chip_servo/am243x-lp/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_LAUNCHPAD"
+            "LP-AM243"
         ],
         "kernel": [
             "nortos"
@@ -43,7 +43,7 @@
         "name": "single_chip_servo",
         "location": "../../examples/tidep_01032_dual_motor_drive/single_chip_servo/am243x-lp/r5fss0-1_nortos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_LAUNCHPAD"
+            "LP-AM243"
         ],
         "kernel": [
             "nortos"
@@ -75,7 +75,7 @@
         "name": "single_chip_servo",
         "location": "../../examples/tidep_01032_dual_motor_drive/single_chip_servo/am243x-lp/r5fss1-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_LAUNCHPAD"
+            "LP-AM243"
         ],
         "kernel": [
             "freertos"
@@ -107,7 +107,7 @@
         "name": "dcl_df22",
         "location": "../../examples/dcl/dcl_df22/am243x-evm/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_GP_EVM"
+            "TMDS243EVM"
         ],
         "kernel": [
             "nortos"
@@ -139,7 +139,7 @@
         "name": "dcl_df22",
         "location": "../../examples/dcl/dcl_df22/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_GP_EVM"
+            "TMDS243EVM"
         ],
         "kernel": [
             "freertos"
@@ -171,7 +171,7 @@
         "name": "dcl_df22",
         "location": "../../examples/dcl/dcl_df22/am243x-lp/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_LAUNCHPAD"
+            "LP-AM243"
         ],
         "kernel": [
             "nortos"
@@ -203,7 +203,7 @@
         "name": "dcl_df22",
         "location": "../../examples/dcl/dcl_df22/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_LAUNCHPAD"
+            "LP-AM243"
         ],
         "kernel": [
             "freertos"
@@ -235,7 +235,7 @@
         "name": "dcl_pi",
         "location": "../../examples/dcl/dcl_pi/am243x-evm/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_GP_EVM"
+            "TMDS243EVM"
         ],
         "kernel": [
             "nortos"
@@ -267,7 +267,7 @@
         "name": "dcl_pi",
         "location": "../../examples/dcl/dcl_pi/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_GP_EVM"
+            "TMDS243EVM"
         ],
         "kernel": [
             "freertos"
@@ -299,7 +299,7 @@
         "name": "dcl_pi",
         "location": "../../examples/dcl/dcl_pi/am243x-lp/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_LAUNCHPAD"
+            "LP-AM243"
         ],
         "kernel": [
             "nortos"
@@ -331,7 +331,7 @@
         "name": "dcl_pi",
         "location": "../../examples/dcl/dcl_pi/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_LAUNCHPAD"
+            "LP-AM243"
         ],
         "kernel": [
             "freertos"
@@ -363,7 +363,7 @@
         "name": "transforms_test",
         "location": "../../examples/transforms/transforms_test/am243x-evm/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_GP_EVM"
+            "TMDS243EVM"
         ],
         "kernel": [
             "nortos"
@@ -395,7 +395,7 @@
         "name": "transforms_test",
         "location": "../../examples/transforms/transforms_test/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_GP_EVM"
+            "TMDS243EVM"
         ],
         "kernel": [
             "freertos"
@@ -427,7 +427,7 @@
         "name": "transforms_test",
         "location": "../../examples/transforms/transforms_test/am243x-lp/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_LAUNCHPAD"
+            "LP-AM243"
         ],
         "kernel": [
             "nortos"
@@ -459,7 +459,7 @@
         "name": "transforms_test",
         "location": "../../examples/transforms/transforms_test/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_LAUNCHPAD"
+            "LP-AM243"
         ],
         "kernel": [
             "freertos"
@@ -491,7 +491,7 @@
         "name": "endat_diagnostic_single_channel",
         "location": "../../examples/position_sense/endat_diagnostic/single_channel/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_GP_EVM"
+            "TMDS243EVM"
         ],
         "kernel": [
             "freertos"
@@ -524,7 +524,7 @@
         "name": "endat_diagnostic_single_channel",
         "location": "../../examples/position_sense/endat_diagnostic/single_channel/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_LAUNCHPAD"
+            "LP-AM243"
         ],
         "kernel": [
             "freertos"
@@ -557,7 +557,7 @@
         "name": "endat_diagnostic_multi_channel_load_share",
         "location": "../../examples/position_sense/endat_diagnostic/multi_channel_load_share/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_GP_EVM"
+            "TMDS243EVM"
         ],
         "kernel": [
             "freertos"
@@ -590,7 +590,7 @@
         "name": "endat_diagnostic_multi_channel_load_share",
         "location": "../../examples/position_sense/endat_diagnostic/multi_channel_load_share/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_LAUNCHPAD"
+            "LP-AM243"
         ],
         "kernel": [
             "freertos"
@@ -623,7 +623,7 @@
         "name": "endat_diagnostic_multi_channel_single_pru",
         "location": "../../examples/position_sense/endat_diagnostic/multi_channel_single_pru/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_GP_EVM"
+            "TMDS243EVM"
         ],
         "kernel": [
             "freertos"
@@ -656,7 +656,7 @@
         "name": "endat_diagnostic_multi_channel_single_pru",
         "location": "../../examples/position_sense/endat_diagnostic/multi_channel_single_pru/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_LAUNCHPAD"
+            "LP-AM243"
         ],
         "kernel": [
             "freertos"
@@ -689,7 +689,7 @@
         "name": "hdsl_diagnostic_multi_channel",
         "location": "../../examples/position_sense/hdsl_diagnostic/multi_channel/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_GP_EVM"
+            "TMDS243EVM"
         ],
         "kernel": [
             "freertos"
@@ -722,7 +722,7 @@
         "name": "hdsl_diagnostic_multi_channel",
         "location": "../../examples/position_sense/hdsl_diagnostic/multi_channel/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_LAUNCHPAD"
+            "LP-AM243"
         ],
         "kernel": [
             "freertos"
@@ -755,7 +755,7 @@
         "name": "hdsl_diagnostic_single_channel",
         "location": "../../examples/position_sense/hdsl_diagnostic/single_channel/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_GP_EVM"
+            "TMDS243EVM"
         ],
         "kernel": [
             "freertos"
@@ -788,7 +788,7 @@
         "name": "hdsl_diagnostic_single_channel",
         "location": "../../examples/position_sense/hdsl_diagnostic/single_channel/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_LAUNCHPAD"
+            "LP-AM243"
         ],
         "kernel": [
             "freertos"
@@ -821,7 +821,7 @@
         "name": "tamagawa_diagnostic_multi_channel",
         "location": "../../examples/position_sense/tamagawa_diagnostic/multi_channel/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_GP_EVM"
+            "TMDS243EVM"
         ],
         "kernel": [
             "freertos"
@@ -854,7 +854,7 @@
         "name": "tamagawa_diagnostic_multi_channel",
         "location": "../../examples/position_sense/tamagawa_diagnostic/multi_channel/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_LAUNCHPAD"
+            "LP-AM243"
         ],
         "kernel": [
             "freertos"
@@ -887,7 +887,7 @@
         "name": "tamagawa_diagnostic_single_channel",
         "location": "../../examples/position_sense/tamagawa_diagnostic/single_channel/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_GP_EVM"
+            "TMDS243EVM"
         ],
         "kernel": [
             "freertos"
@@ -920,7 +920,7 @@
         "name": "tamagawa_diagnostic_single_channel",
         "location": "../../examples/position_sense/tamagawa_diagnostic/single_channel/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_LAUNCHPAD"
+            "LP-AM243"
         ],
         "kernel": [
             "freertos"
@@ -953,7 +953,7 @@
         "name": "bissc_diagnostic_single_channel",
         "location": "../../examples/position_sense/bissc_diagnostic/single_channel/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_LAUNCHPAD"
+            "LP-AM243"
         ],
         "kernel": [
             "freertos"
@@ -986,7 +986,7 @@
         "name": "bissc_diagnostic_multi_channel_load_share",
         "location": "../../examples/position_sense/bissc_diagnostic/multi_channel_load_share/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_LAUNCHPAD"
+            "LP-AM243"
         ],
         "kernel": [
             "freertos"
@@ -1019,7 +1019,7 @@
         "name": "bissc_diagnostic_multi_channel_single_pru",
         "location": "../../examples/position_sense/bissc_diagnostic/multi_channel_single_pru/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_LAUNCHPAD"
+            "LP-AM243"
         ],
         "kernel": [
             "freertos"
@@ -1052,7 +1052,7 @@
         "name": "icss_sdfm_nine_channel_load_share_mode",
         "location": "../../examples/current_sense/icss_sdfm_nine_channel_load_share_mode/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_GP_EVM"
+            "TMDS243EVM"
         ],
         "kernel": [
             "freertos"
@@ -1084,7 +1084,7 @@
         "name": "icss_sdfm_nine_channel_load_share_mode",
         "location": "../../examples/current_sense/icss_sdfm_nine_channel_load_share_mode/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_LAUNCHPAD"
+            "LP-AM243"
         ],
         "kernel": [
             "freertos"
@@ -1116,7 +1116,7 @@
         "name": "icss_sdfm_nine_channel_with_continuous_mode",
         "location": "../../examples/current_sense/icss_sdfm_nine_channel_with_continuous_mode/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_GP_EVM"
+            "TMDS243EVM"
         ],
         "kernel": [
             "freertos"
@@ -1148,7 +1148,7 @@
         "name": "icss_sdfm_nine_channel_with_continuous_mode",
         "location": "../../examples/current_sense/icss_sdfm_nine_channel_with_continuous_mode/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_LAUNCHPAD"
+            "LP-AM243"
         ],
         "kernel": [
             "freertos"
@@ -1180,7 +1180,7 @@
         "name": "icss_sdfm_three_channel_single_pru_mode",
         "location": "../../examples/current_sense/icss_sdfm_three_channel_single_pru_mode/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_GP_EVM"
+            "TMDS243EVM"
         ],
         "kernel": [
             "freertos"
@@ -1212,7 +1212,7 @@
         "name": "icss_sdfm_three_channel_single_pru_mode",
         "location": "../../examples/current_sense/icss_sdfm_three_channel_single_pru_mode/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_LAUNCHPAD"
+            "LP-AM243"
         ],
         "kernel": [
             "freertos"
@@ -1244,7 +1244,7 @@
         "name": "icss_sdfm_three_channel_with_continuous_mode",
         "location": "../../examples/current_sense/icss_sdfm_three_channel_with_continuous_mode/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_GP_EVM"
+            "TMDS243EVM"
         ],
         "kernel": [
             "freertos"
@@ -1276,7 +1276,7 @@
         "name": "icss_sdfm_three_channel_with_continuous_mode",
         "location": "../../examples/current_sense/icss_sdfm_three_channel_with_continuous_mode/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_LAUNCHPAD"
+            "LP-AM243"
         ],
         "kernel": [
             "freertos"
@@ -1308,7 +1308,7 @@
         "name": "icss_sdfm_three_channel_with_phase_compensation",
         "location": "../../examples/current_sense/icss_sdfm_three_channel_with_phase_compensation/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_GP_EVM"
+            "TMDS243EVM"
         ],
         "kernel": [
             "freertos"
@@ -1340,7 +1340,7 @@
         "name": "icss_sdfm_three_channel_with_phase_compensation",
         "location": "../../examples/current_sense/icss_sdfm_three_channel_with_phase_compensation/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_LAUNCHPAD"
+            "LP-AM243"
         ],
         "kernel": [
             "freertos"
@@ -1372,7 +1372,7 @@
         "name": "pruicss_pwm_duty_cycle",
         "location": "../../examples/pruicss_pwm/pruicss_pwm_duty_cycle/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_GP_EVM"
+            "TMDS243EVM"
         ],
         "kernel": [
             "freertos"
@@ -1404,7 +1404,7 @@
         "name": "pruicss_pwm_duty_cycle",
         "location": "../../examples/pruicss_pwm/pruicss_pwm_duty_cycle/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_LAUNCHPAD"
+            "LP-AM243"
         ],
         "kernel": [
             "freertos"
@@ -1436,7 +1436,7 @@
         "name": "pruicss_pwm_epwm_sync",
         "location": "../../examples/pruicss_pwm/pruicss_pwm_epwm_sync/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_LAUNCHPAD"
+            "LP-AM243"
         ],
         "kernel": [
             "freertos"
@@ -1468,7 +1468,7 @@
         "name": "pruicss_pwm_epwm_sync",
         "location": "../../examples/pruicss_pwm/pruicss_pwm_epwm_sync/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "AM243x_GP_EVM"
+            "TMDS243EVM"
         ],
         "kernel": [
             "freertos"
@@ -1500,7 +1500,7 @@
         "name": "single_chip_servo",
         "location": "../../examples/tidep_01032_dual_motor_drive/single_chip_servo/am243x-lp/system_freertos_nortos/system.projectspec",
         "devtools": [
-            "AM243x_LAUNCHPAD"
+            "LP-AM243"
         ],
         "kernel": [
             "nortos"
@@ -1525,8 +1525,8 @@
         "name": "User Guide",
         "location": "../../docs/api_guide_am243x/index.html",
         "devtools": [
-            "AM243x_LAUNCHPAD",
-            "AM243x_GP_EVM"
+            "LP-AM243",
+            "TMDS243EVM"
         ],
         "mainCategories": [
             [
