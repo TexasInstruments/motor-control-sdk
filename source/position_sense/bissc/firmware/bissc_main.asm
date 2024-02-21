@@ -138,6 +138,41 @@ BISSC_SKIP_GLOBAL_REINIT0?:
 	;ch0 status offset is the base status offset and only ch0 offset is going to be used in single ch or multi ch single pru
 	SBCO  	&STATUS_REG1, PRUx_DMEM, BISSC_STATUS_CH0_CONFIG_OFFSET, 1
 	.endif
+BISSC_CHECK_OPERATING_MODE:
+	.if $isdefed("ENABLE_MULTI_MAKE_RTU")
+	LBCO	&SCRATCH2.b0,	PRUx_DMEM, 	BISSC_OPMODE_CH0_CONFIG_OFFSET,	1
+	.elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
+	LBCO	&SCRATCH2.b0,	PRUx_DMEM, 	BISSC_OPMODE_CH1_CONFIG_OFFSET,	1
+	.elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
+	LBCO 	&SCRATCH2.b0, 	PRUx_DMEM, 	BISSC_OPMODE_CH2_CONFIG_OFFSET, 1
+	.else
+	LBCO 	&SCRATCH2.b0, 	PRUx_DMEM, 	BISSC_OPMODE_CH0_CONFIG_OFFSET, 1
+	.endif
+    ;If opmode=1, Host trigger
+	;If opmode=0, Periodic trigger 
+	QBNE	BISSC_HANDLE_HOST_TRIGGER,	SCRATCH2.b0,		0
+
+BISSC_HANDLE_PERIODIC_TRIGGER:
+    ;Get compare event status
+	LBCO	&SCRATCH1,	ICSS_IEP,	ICSS_IEP_CMP_STATUS_REG,	4
+    ; wait till IEP CMP3 event
+	QBBC	BISSC_CHECK_OPERATING_MODE,	SCRATCH1,	3
+	; Clear IEP CMP3 event
+	SET		SCRATCH1,	SCRATCH1,	3
+    ; store compare event status
+    SBCO	&SCRATCH1,	ICSS_IEP,  ICSS_IEP_CMP_STATUS_REG,	4
+BISSC_SKIP_IEP_CMP_STATUS?:
+    ; SET command TRIGGER
+    LDI		SCRATCH1.b0,	1
+	.if $isdefed("ENABLE_MULTI_MAKE_RTU")
+	SBCO    &SCRATCH1.b0,	PRUx_DMEM, BISSC_CYCLE_TRIGGER_CH0_STATUS_OFFSET,	1
+	.elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
+	SBCO    &SCRATCH1.b0,	PRUx_DMEM, BISSC_CYCLE_TRIGGER_CH1_STATUS_OFFSET,	1
+	.elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
+	SBCO    &SCRATCH1.b0,	PRUx_DMEM, BISSC_CYCLE_TRIGGER_CH2_STATUS_OFFSET,	1
+	.else
+	SBCO    &SCRATCH1.b0,	PRUx_DMEM, BISSC_CYCLE_TRIGGER_CH0_STATUS_OFFSET,	1
+	.endif
 BISSC_HANDLE_HOST_TRIGGER:
     ;If Host Trigger=1, request made by R5F to Firmware, now Firmware do processing and when done set trigger to 0 so that R5F application can act further.
 	.if $isdefed("ENABLE_MULTI_MAKE_RTU")
@@ -195,7 +230,7 @@ BISSC_CTRL_CMD_SKIP:
 	CLR		BISSC_FLAGS_REG, BISSC_FLAGS_REG, 0
 BISSC_CTRL_CMD_DONE:
 	;wait till host trigger is set to 1.
-	QBEQ	BISSC_HANDLE_HOST_TRIGGER, STATUS_REG1,	0
+	QBEQ	BISSC_CHECK_OPERATING_MODE, STATUS_REG1,	0
 	;BiSS-C position data/control communication loop start here
 	;clock mode in freerunning/stop low/stop high and ch0 is selected
 	QBBC    BISSC_IS_CH1?, CH_MASK,	0
@@ -617,31 +652,89 @@ BISSC_SKIP_RESET_BIT?:
 	ZERO	&SCRATCH1, 4
 	M_BISSC_CLK_CONFIG 	CH_MASK, SCRATCH1
 	.if $isdefed("ENABLE_MULTI_MAKE_RTU")
+	LBCO	&STATUS_REG1,	PRUx_DMEM, 	BISSC_OPMODE_CH0_CONFIG_OFFSET,	1
+	.elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
+	LBCO	&STATUS_REG1,	PRUx_DMEM, 	BISSC_OPMODE_CH1_CONFIG_OFFSET,	1
+	.elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
+	LBCO	&STATUS_REG1,	PRUx_DMEM, 	BISSC_OPMODE_CH2_CONFIG_OFFSET,	1
+	.else
+	LBCO 	&STATUS_REG1,	PRUx_DMEM,	BISSC_OPMODE_CH0_CONFIG_OFFSET, 1
+	.endif 
+	;skip interrupt to R5F in host trigger
+    QBNE    BISSC_SKIP_INTERRUPT_TRIGGER,  STATUS_REG1,  0
+	.if $isdefed("ENABLE_MULTI_MAKE_RTU")
+	M_BISSC_LS_WAIT_FOR_SYNC
+	QBBC	BISSC_SKIP_GLOBAL_REINIT3?, PRIMARY_CORE, 0
+	;Generate interrupt to R5F
+    LDI     R31.w0, BISSC_PRU_TRIGGER_HOST_EVT;PRU_TRIGGER_HOST_BISSC_EVT0 ( pr0_pru_mst_intr[2]_intr_req )
+    ;Global reinit
+    SET     R31, BISSC_TX_GLOBAL_REINIT
+    ;Handle next Postition in periodic trigger
+	LDI 	R30.b3, 0
+	.elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
+	M_BISSC_LS_WAIT_FOR_SYNC
+	QBBC	BISSC_SKIP_GLOBAL_REINIT3?, PRIMARY_CORE, 1
+	;Generate interrupt to R5F
+    LDI     R31.w0, BISSC_PRU_TRIGGER_HOST_EVT;PRU_TRIGGER_HOST_BISSC_EVT0 ( pr0_pru_mst_intr[2]_intr_req )
+    ;Global reinit
+    SET     R31, BISSC_TX_GLOBAL_REINIT
+    ;Handle next Postition in periodic trigger
+	LDI 	R30.b3, 0
+	.elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
+	M_BISSC_LS_WAIT_FOR_SYNC
+	QBBC	BISSC_SKIP_GLOBAL_REINIT3?, PRIMARY_CORE, 2
+	;Generate interrupt to R5F
+    LDI     R31.w0, BISSC_PRU_TRIGGER_HOST_EVT;PRU_TRIGGER_HOST_BISSC_EVT0 ( pr0_pru_mst_intr[2]_intr_req )
+    ;Global reinit
+    SET     R31, BISSC_TX_GLOBAL_REINIT
+    ;Handle next Postition in periodic trigger
+	LDI 	R30.b3, 0
+	.else
+	;Generate interrupt to R5F
+    LDI     R31.w0, BISSC_PRU_TRIGGER_HOST_EVT;PRU_TRIGGER_HOST_BISSC_EVT0 ( pr0_pru_mst_intr[2]_intr_req )
+    ;Global reinit
+    SET     R31, BISSC_TX_GLOBAL_REINIT
+    ;Handle next Postition in periodic trigger
+	LDI 	R30.b3, 0
+	.endif
+	
+BISSC_SKIP_GLOBAL_REINIT3?:
+	LDI		STATUS_REG1,	0
+    ;Clear Host Trigger
+	.if $isdefed("ENABLE_MULTI_MAKE_RTU")
+	SBCO	&STATUS_REG1, PRUx_DMEM, BISSC_CYCLE_TRIGGER_CH0_STATUS_OFFSET,	1
+	.elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
+	SBCO	&STATUS_REG1, PRUx_DMEM, BISSC_CYCLE_TRIGGER_CH1_STATUS_OFFSET,	1
+	.elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
+	SBCO	&STATUS_REG1, PRUx_DMEM, BISSC_CYCLE_TRIGGER_CH2_STATUS_OFFSET,	1
+	.else
+	;ch0 cycle trigger offset is the base cycle trigger offset and only ch0 offset is going to be used in single ch or multi ch single pru
+	SBCO	&STATUS_REG1, PRUx_DMEM, BISSC_CYCLE_TRIGGER_CH0_STATUS_OFFSET,	1
+	.endif
+    JMP		BISSC_CHECK_OPERATING_MODE
+
+BISSC_SKIP_INTERRUPT_TRIGGER:
+    ;Handle next Position request by user.
+	.if $isdefed("ENABLE_MULTI_MAKE_RTU")
 	M_BISSC_LS_WAIT_FOR_SYNC
 	QBBC	BISSC_SKIP_GLOBAL_REINIT?, PRIMARY_CORE, 0
-	NOP
-	NOP
-	SET 	R31, R31, 19 ;BISSC_TX_GLOBAL_REINIT ; Set TX_EN low
+	SET 	R31, BISSC_TX_GLOBAL_REINIT ; Set TX_EN low
 	; rx_en = 0 : Disable RX mode
 	LDI 	R30.b3, 0
 	.elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
 	M_BISSC_LS_WAIT_FOR_SYNC
 	QBBC	BISSC_SKIP_GLOBAL_REINIT?, PRIMARY_CORE, 1
-	NOP
-	NOP
-	SET 	R31, R31, 19 ;BISSC_TX_GLOBAL_REINIT ; Set TX_EN low
+	SET 	R31, BISSC_TX_GLOBAL_REINIT ; Set TX_EN low
 	; rx_en = 0 : Disable RX mode
 	LDI 	R30.b3, 0
 	.elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
 	M_BISSC_LS_WAIT_FOR_SYNC
 	QBBC	BISSC_SKIP_GLOBAL_REINIT?, PRIMARY_CORE, 2
-	NOP
-	NOP
-	SET 	R31, R31, 19 ;BISSC_TX_GLOBAL_REINIT ; Set TX_EN low
+	SET 	R31, BISSC_TX_GLOBAL_REINIT ; Set TX_EN low
 	; rx_en = 0 : Disable RX mode
 	LDI 	R30.b3, 0
 	.else
-	SET 	R31, R31, 19 ;BISSC_TX_GLOBAL_REINIT ; Set TX_EN low
+	SET 	R31, BISSC_TX_GLOBAL_REINIT ; Set TX_EN low
 	; rx_en = 0 : Disable RX mode
 	LDI 	R30.b3, 0
 	.endif
@@ -659,6 +752,6 @@ BISSC_SKIP_GLOBAL_REINIT?:
 	SBCO	&STATUS_REG1, PRUx_DMEM, BISSC_CYCLE_TRIGGER_CH0_STATUS_OFFSET,	1
 	.endif
     ;Handle next Position request by user.
-    JMP		BISSC_HANDLE_HOST_TRIGGER
+    JMP		BISSC_CHECK_OPERATING_MODE
 	;never reach here
 	HALT

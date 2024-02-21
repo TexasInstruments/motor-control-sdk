@@ -6,7 +6,6 @@ const files = {
     common: [
         "bissc_main.asm",
         "bissc_diagnostic.cmd",
-        "bissc_master_hexpru.cmd"
     ],
 };
 

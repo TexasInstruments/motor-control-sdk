@@ -124,6 +124,8 @@ struct bissc_pruicss_xchg
     /**< BiSSC cycle complete status */
     volatile uint8_t measure_proc_delay;
     /**< measure processing delay - do this for every config change */
+    volatile uint8_t opmode[3];
+    /**< operation mode status: '0' for periodic trigger and '1' for host trigger */
 
     struct  enc_len  enc_len[3];
     /**< position data lengths(resolution) of BiSSC encoders connected */
@@ -132,7 +134,7 @@ struct bissc_pruicss_xchg
     /**< channel Bit Index */
     volatile uint8_t   fifo_bit_idx;
     /**< Fifo Bit Index(middle bit) */
-     volatile uint8_t   ctrl_cmd_status[3];
+    volatile uint8_t   ctrl_cmd_status[3];
     /**< control communication status */
 
     volatile uint16_t  proc_delay[3];

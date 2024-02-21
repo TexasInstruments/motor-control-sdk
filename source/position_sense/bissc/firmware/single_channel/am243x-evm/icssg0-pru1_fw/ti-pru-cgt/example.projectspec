@@ -65,8 +65,6 @@
         </file>
         <file path="../../../../bissc_diagnostic.cmd" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
-        <file path="../../../../bissc_master_hexpru.cmd" openOnCreation="false" excludeFromBuild="false" action="copy">
-        </file>
         <file path="${MOTOR_CONTROL_SDK_PATH}/docs/api_guide_am243x/BISSC_DESIGN.html"
                 openOnCreation="false" excludeFromBuild="false" targetName="README.html" action="link">
         </file>

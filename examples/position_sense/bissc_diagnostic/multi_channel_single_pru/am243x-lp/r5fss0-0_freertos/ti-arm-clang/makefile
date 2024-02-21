@@ -39,6 +39,7 @@ TARGETS := $(BOOTIMAGE_NAME)
 
 FILES_common := \
 	bissc_diagnostic.c \
+	bissc_periodic_trigger.c \
 	main.c \
 	ti_drivers_config.c \
 	ti_drivers_open_close.c \
