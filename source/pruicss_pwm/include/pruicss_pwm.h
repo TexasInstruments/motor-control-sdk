@@ -40,16 +40,16 @@
  * With Reference to Technical Reference Manual, Pwm six signals(A0,A1,A2,B0,B1,B2) Naming convention is slightly different
  * 
  *          PWMn==============>PWMn_0=========>PWMn_0_POS (alias signal A0)
- *                  |                   |=====>PWMn_0_NEG (alias signal A1)
+ *                  |                   |=====>PWMn_0_NEG (alias signal B0)
  *                  |
  *                  | 
  *                  |   
- *                  |=========>PWMn_1=========>PWMn_1_POS (alias signal A2)
- *                  |                   |=====>PWMn_1_NEG (alias signal B0)
+ *                  |=========>PWMn_1=========>PWMn_1_POS (alias signal A1)
+ *                  |                   |=====>PWMn_1_NEG (alias signal B1)
  *                  |
  *                  | 
  *                  |           
- *                  |=========>PWMn_2=========>PWMn_2_POS (alias signal B1)  
+ *                  |=========>PWMn_2=========>PWMn_2_POS (alias signal A2)  
  *                                      |=====>PWMn_2_NEG (alias signal B2) 
  * 
  * Each Set has one trip zone output OR logic block
