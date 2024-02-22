@@ -97,7 +97,6 @@ CFLAGS_release := \
 
 LNK_FILES_common = \
 	generated/linker.cmd \
-	generated/dcl_linker_r5f_am263x_sitara.cmd \
 
 LIBS_PATH_common = \
 	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/nortos/lib \
