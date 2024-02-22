@@ -5,7 +5,7 @@ let device = "am243x";
 const files = {
     common: [
         /* Project Files */
-        "transforms_test.c",
+        "transforms_test.c",  
         "main.c",
         /* Dataset */
         /* Libraries */
@@ -16,7 +16,7 @@ const projectspec_files = {
     common: [
         "../../../transforms_test.h",
     ]
-}
+};
 
 /* Relative to where the makefile will be generated
  * Typically at <example_folder>/<BOARD>/<core_os_combo>/<compiler>
@@ -137,10 +137,6 @@ const readmeDoxygenPageTag = "EXAMPLES_TRANSFORMS_TEST";
 const templates_nortos_r5f =
 [
     {
-        input: ".project/templates/am243x/common/linker_r5f.cmd.xdt",
-        output: "linker.cmd",
-    },
-    {
         input: ".project/templates/am243x/nortos/main_nortos.c.xdt",
         output: "../main.c",
         options: {
@@ -151,10 +147,6 @@ const templates_nortos_r5f =
 
 const templates_freertos_r5f =
 [
-    {
-        input: ".project/templates/am243x/common/linker_r5f.cmd.xdt",
-        output: "linker.cmd",
-    },
     {
         input: ".project/templates/am243x/freertos/main_freertos.c.xdt",
         output: "../main.c",
@@ -168,10 +160,6 @@ const templates_freertos_r5f =
 const templates_nortos_m4f =
 [
     {
-        input: ".project/templates/am243x/common/linker_m4f.cmd.xdt",
-        output: "linker.cmd",
-    },
-    {
         input: ".project/templates/am243x/nortos/main_nortos.c.xdt",
         output: "../main.c",
         options: {
@@ -182,10 +170,6 @@ const templates_nortos_m4f =
 
 const templates_freertos_m4f =
 [
-    {
-        input: ".project/templates/am243x/common/linker_m4f.cmd.xdt",
-        output: "linker.cmd",
-    },
     {
         input: ".project/templates/am243x/freertos/main_freertos.c.xdt",
         output: "../main.c",
