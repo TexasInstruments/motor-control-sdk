@@ -57,6 +57,12 @@ const libs_freertos_r5f = {
     ],
 };
 
+const lnkfiles = {
+    common: [
+        "linker.cmd",
+    ]
+};
+
 const syscfgfile = "../example.syscfg";
 
 const readmeDoxygenPageTag = "BASIC_SDFM_EXAMPLE_WITH_PHASE_DELAY";
@@ -96,6 +102,7 @@ function getComponentBuildProperty(buildOption) {
     build_property.files = files;
     build_property.filedirs = filedirs;
     build_property.syscfgfile = syscfgfile;
+    build_property.lnkfiles = lnkfiles;
     build_property.readmeDoxygenPageTag = readmeDoxygenPageTag;
 
     if(buildOption.cpu.match(/r5f*/)) {
