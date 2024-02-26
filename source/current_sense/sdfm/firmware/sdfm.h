@@ -65,16 +65,13 @@ __sdfm_h    .set    1
         .asg    R21, MASK_REG                    ; integrator & differentiator output mask
 
         .asg    R26.w0, COMPARATOR_EN           ; SD comparator enable for different channels
-        .asg    R26.w2, ZERO_CROSS_EN           ; SD Zero Crossing enable for different channels
+        .asg    R26.b2, ZERO_CROSS_EN           ; SD Zero Crossing enable for different channels
+        .asg    R26.b3, NC_SINC_FILTER_TYPE             ; SINC filter type for NC 
         .asg    R19, OC_HIGH_THR              ; SD OC High threshold
         .asg    R27, OC_LOW_THR              ; SD OC Low threshold
 
 
         .asg    R29, GPIO_TGL_ADDR              ; Address to write to for the GPIO toggle
-
-
-       .asg    R1, T0_CTXT_BASE_REG            ; base PRU register for T0 context
-    .asg    R9, T1_S0_CTXT_BASE_REG         ; base PRU register for T1_S0 context
 
         .asg    R9, ACC3_DN1_CH0                ; Ch X (0...8), differentiator 1 state
         .asg    R10, ACC3_DN3_CH0               ; Ch X (0...8), differentiator 2 state
@@ -88,8 +85,8 @@ __sdfm_h    .set    1
 
         .asg    R22.b0, SD_CH0_ID                ; SD channel0 ID
         .asg    R22.b1, SD_CH1_ID                ; SD Channel1 ID
-        .asg    R22.b2, SD_CH2_ID                ; SD Channel2 ID
-
+        .asg    R22.b2, SD_CH2_ID                ; SD Channel2 ID  
+        .asg    R22.b3, NC_SAMPLE_COUNT          ; min no. of continuous sample for sin filter
         .asg    R20, OUT_SAMP_BUF_REG           ; address of local interleaved NC output sample buffer
 
         .asg    R28.b0,  SAMP_CNT_REG             ; NC sample count
