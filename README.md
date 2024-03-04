@@ -9,33 +9,29 @@
 
 ## Introduction
 
-The Motor Control SDK enables real-time communications with encoders for TI processors. Communication is typically handled by the Programmable Real-Time Unit Industrial Communication Subsystem (PRU-ICSS). The PRU-ICSS is a co-processor subsystem containing Programmable Real-Time (PRU) cores which implement the low level firmware
+Motor Control SDK enables real-time communication for position and current sense from motors, and real-time control libraries for ARM R5F CPU and related peripherals for TI processors.
 
-These devices currently include
+Real-time communication with encoders and current sensing is typically handled by the Programmable Real-Time Unit Industrial Communication Subsystem (PRU-ICSS). The PRU-ICSS is a co-processor subsystem containing Programmable Real-Time (PRU) cores which implement the low level firmware. The PRU-ICSS frees up the main ARM cores in the device for other functions, such as control and data processing.
+
+The devices supported by Motor Control SDK currently include
 
 - [AM2431](https://www.ti.com/product/AM2431), [AM2432](https://www.ti.com/product/AM2432), [AM2434](https://www.ti.com/product/AM2434)
-- [AM2634](https://www.ti.com/product/AM2634), [AM2634-Q1](https://www.ti.com/product/AM2634-Q1)
-- [AM6411](https://www.ti.com/product/AM6411), [AM6412](https://www.ti.com/product/AM6412), [AM6421](https://www.ti.com/product/AM6421), [AM6422](https://www.ti.com/product/AM6422), [AM6441](https://www.ti.com/product/AM6441), [AM6442](https://www.ti.com/product/AM6442)
+- [AM2631](https://www.ti.com/product/AM2631), [AM2632](https://www.ti.com/product/AM2632), [AM2634](https://www.ti.com/product/AM2634)
 
 ## Features
 
-- Out of Box peripheral and application Examples
-  - Application Level Examples: Motor Drives etc.
+- Out of Box Application Examples
+  - Position Sense Encoders
+  - Current Sense (SDFM)
+  - Real Time Libraries (Digital control Library, Transforms)
+  - PRUICSS PWM
 
 - Protocol stacks and middleware
   - Various Industrial Protocol Stacks
 
-- Fimrware
-  - Motor Drivers fimrware
+- Firmware
+  - Firmware for Position Sense Encoders and Current Sense
   - Industrial protocol firmware
-
-## Overview
-
-## Learn
-
-## Usage
-
-### Prerequisites
 
 #### Supported HOST environments
 
@@ -46,7 +42,7 @@ These devices currently include
 
 #### Repo Tool Setup
 
-Motor Control SDK has multiple components (in multiple repositories) and dependencies
+Motor Control SDK needs Industrial Communicaions SDK components and MCU+ SDK components (in multiple repositories) and dependencies
 (like compiler, CCS and other tools). We use repo tool from Google to manage these
 multiple repositories. Currently there is no support for native windows shells like
 CMD or Powershell. This will be added at a later point. Windows users can rely on
@@ -74,14 +70,30 @@ Make sure [python3 is installed](https://wiki.python.org/moin/BeginnersGuide/Dow
 
 #### Cloning The Repositories
 
-To clone the repositories using repo tool, do below in your workarea folder:
+To clone the repositories, do below in your workarea folder:
+
+1. Clone the Motor Control SDK repository
+
+```bash
+git clone https://github.com/TexasInstruments/motor-control-sdk.git motor_control_sdk
+```
+
+2. Clone the Industrial Communications SDK repository inside Motor Control SDK repository
+
+```bash
+cd motor_control_sdk
+git clone https://github.com/TexasInstruments/ind-comms-sdk.git ind_comms_sdk
+cd ..
+```
+
+3. Clone the MCU+ SDK component repositories inside Motor Control SDK repository using repo tool.
 
 Note that depending on the SoC you're working with, the components you clone might be
 slightly different. So please choose the manifest folder according to the SoC of your
 interest. For example, we are showing for am243x below.
 
 ```bash
-repo init -u https://github.com/TexasInstruments/motor-control-manifests.git -m am243x/dev.xml -b main
+repo init -u https://github.com/TexasInstruments/mcupsdk-manifests.git -m am243x/dev.xml -b main
 ```
 
 Note that repo uses symbolic links. So if you're on Windows and do not have permissions
@@ -90,7 +102,7 @@ to create symbolic links, the above command might fail for you. So you can eithe
 worktree feature of repo. To do this, initialize the repo like so:
 
 ```bash
-repo init --worktree -u https://github.com/TexasInstruments/motor-control-manifests.git -m am243x/dev.xml -b main
+repo init --worktree -u https://github.com/TexasInstruments/mcupsdk-manifests.git -m am243x/dev.xml -b main
 ```
 
 After the repo is initialized, do a
@@ -103,65 +115,27 @@ This should clone all the repositories required for Motor Control SDK developmen
 
 #### Downloading And Installing Dependencies
 
-Note that the dependencies are also soc specific, here we take an example of am243x.
-You can replace that with the SoC of your choice like the `repo init` step.
+**To download and install dependencies, follow the below steps**:
 
-**To download and install dependencies in linux, follow the below steps**:
+1. Download and install Code Composer Studio v12.6 from [here](https://www.ti.com/tool/download/CCSTUDIO "Code Composer Studio")
+   - Install at default folder
 
-Run the following from the same location where you have `motor_control_sdk` and `motor_control_setup`
-folders.
+2. Download and install SysConfig 1.19.0 from [here](https://www.ti.com/tool/download/SYSCONFIG "SYSCONFIG")
+   - Install at default folder
 
-```bash
-./motor_control_setup/am243x/download_components.sh
-```
-
-This will install all the required dependencies including Code Composer Studio (CCS).
-The script assumes that `motor_control_sdk` folder is in the same location from where
-you have invoked the script, and that dependencies are installed into `${HOME}/ti`
-location. If these defaults don't work for you, please pass these as arguments to
-the script like
-
-```bash
-./motor_control_setup/am243x/download_components.sh --install_dir=/path/to/tools
-
-OR
-
-./motor_control_setup/am243x/download_components.sh --motor_control_sdk_sdk_folder=/path/to/motor_control_sdk/folder
-```
-and so on. For a complete list of arguments you can pass to the script, please run
-
-```bash
-./motor_control_setup/am243x/download_components.sh -h
-```
-
-**In windows the dependencies has to be manually installed. Given below are the steps**:
-
-1. Download and install Code Composer Studio v12.1 from [here](https://www.ti.com/tool/download/CCSTUDIO "Code Composer Studio")
-   - Install at default folder, C:\ti
-
-2. Download and install SysConfig 1.14.0 from [here](https://www.ti.com/tool/download/SYSCONFIG/1.14.0.2667 "SYSCONFIG 1.14.0")
-   - Install at default folder, C:/ti
-
-3. Download and install GCC for Cortex A53 and ARM R5 from below link (only needed for AM64x developers)
-   - [GNU-A](https://developer.arm.com/-/media/Files/downloads/gnu-a/9.2-2019.12/binrel/gcc-arm-9.2-2019.12-mingw-w64-i686-aarch64-none-elf.tar.xz)
-   - [GNU-RM](https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2017q4/gcc-arm-none-eabi-7-2017-q4-major-win32.zip)
-   - Install at default folder, C:/ti
-
-4. Download and install Node.js v12.18.4 LTS
+3. Download and install Node.js v12.18.4 LTS
   - Go to the [NodeJS Website](https://nodejs.org/en/) and use the installer to
     download and install v12.18.4 of node. Install in the default directory.
   - After successful installation, run an `npm ci` inside the `motor_control_sdk` folder like so:
     ```bash
     $ cd motor_control_sdk/
     $ npm ci
-    $ cd ../
     ```
     This should install the node packages required for the SDK.
 
-1. Download and install doxygen,
+4. Download and install doxygen,
    - Tested with 1.8.20
-     - Download the correct version of doxygen for windows from [here](https://www.doxygen.nl/download.html)
-     - Install and add the install path, typically, C:/Program Files/doxygen/bin to your windows PATH
+     - Download the correct version of doxygen from [here](https://www.doxygen.nl/download.html)
    - Test by doing below on the command prompt
      ```
      $ doxygen -v
@@ -232,7 +206,7 @@ repo start dev --all
 - Use `gmake` in windows, add path to gmake present in CCS at `C:\ti\ccsxxxx\ccs\utils\bin` to your windows PATH. We have
   used `make` in below instructions.
 - Unless mentioned otherwise, all below commands are invoked from root folder of the "motor_control_sdk"  repository.
-- Current supported device names are am64x, am243x, am243x, am273x and awr294x
+- Current supported device names are am243x, and am263x
 - Pass one of these values to `"DEVICE="`
 - You can also build components (examples, tests or libraries) in `release` or `debug`
   profiles. To do this pass one of these values to `"PROFILE="`
@@ -253,18 +227,25 @@ repo start dev --all
    This should show you commands to build specific libraries, examples or tests.
 
 3. Make sure to build the libraries before attempting to build an example. For example,
-   to build a Hello World example for AM263x, run the following:
+   to build a Tamagawa Diagnostic Single Channel example for AM243x, run the following:
    ```bash
+   cd motor_control_sdk/mcu_plus_sdk
+   make -s -j4 libs DEVICE=am243x PROFILE=debug
+   cd ..
    make -s -j4 libs DEVICE=am243x PROFILE=debug
    ```
    Once the library build is complete, to build the example run:
    ```bash
-   make -s -C examples/hello_world/am243x-cc/r5fss0-0_nortos/ti-arm-clang all PROFILE=debug
+   make -s -C examples/position_sense/tamagawa_diagnostic/single_channel/am243x-evm/r5fss0-0_freertos/ti-arm-clang all PROFILE=debug
    ```
 
 4. Following are the commands to build **all libraries** and **all examples**. Valid PROFILE's are "release" or "debug"
 
    ```bash
+   cd motor_control_sdk/mcu_plus_sdk
+   make -s -j4 clean DEVICE=am243x PROFILE=debug
+   make -s -j4 all   DEVICE=am243x PROFILE=debug
+   cd ..
    make -s -j4 clean DEVICE=am243x PROFILE=debug
    make -s -j4 all   DEVICE=am243x PROFILE=debug
    ```
