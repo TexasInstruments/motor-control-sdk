@@ -156,6 +156,8 @@ struct bissc_priv
     /**< Structure defining BiSSC interface*/
     int32_t has_safety;
     /**< Status for safety support*/
+    int32_t is_continuous_mode;
+    /**< Continuous Mode is opted*/
     void *pruicss_cfg;
     /**< PRU-ICSS cfg registers base offset*/
     int64_t raw_data;
@@ -180,6 +182,10 @@ struct bissc_priv
     /**< Core clock frequency*/
     uint32_t uart_clk_freq;
     /**< UART clock frequency*/
+    void *pruicss_iep; 
+    /**< ICSS IEP base address*/
+    uint64_t cmp3; 
+    /**< IEP CMP3 reg used in periodic trigger mode*/
 };
 
 #ifdef __cplusplus

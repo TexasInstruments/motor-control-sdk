@@ -231,6 +231,19 @@ void bissc_get_enc_proc_delay(struct bissc_priv *priv);
  *  \param[in]  clk_cfg         pointer to structure containing clock configuration data.
  */
 int32_t bissc_calc_clock(struct bissc_priv *priv, struct bissc_clk_cfg *clk_cfg);
+/** 
+ *  \brief      Configure periodic trigger operation mode
+ * 
+ *  \param[in]  priv            cookie returned by \ref bissc_init
+ */
+void bissc_config_periodic_trigger(struct bissc_priv *priv);
+/** 
+ *  \brief      Configure host trigger operation mode
+ * 
+ *  \param[in]  priv            cookie returned by \ref bissc_init
+ */
+void bissc_config_host_trigger(struct bissc_priv *priv);
+
 /** @} */
 
 #ifdef __cplusplus

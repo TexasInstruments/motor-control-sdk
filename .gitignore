@@ -70,3 +70,4 @@ mcu_plus_sdk
 ind_comms_sdk
 .repo/*
 mcupsdk_setup
+*ti-pru-cgt_linkinfo.xml

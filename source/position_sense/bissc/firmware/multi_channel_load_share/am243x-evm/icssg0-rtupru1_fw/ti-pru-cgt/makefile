@@ -12,7 +12,6 @@ CG_TOOL_ROOT := $(CGT_TI_PRU_PATH)
 # Add inputs and outputs from these tool invocations to the build variables
 CMD_SRCS += \
 	bissc_diagnostic.cmd \
-	bissc_master_hexpru.cmd \
 
 ASM_SRCS += \
 	bissc_main.asm \

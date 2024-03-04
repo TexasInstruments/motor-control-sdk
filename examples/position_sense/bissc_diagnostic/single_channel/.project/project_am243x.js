@@ -5,7 +5,14 @@ let device = "am243x";
 const files = {
     common: [
         "bissc_diagnostic.c",
+        "bissc_periodic_trigger.c",
         "main.c",
+    ],
+};
+
+const projectspec_files = {
+    common: [
+        "../../../../bissc_periodic_trigger.h",
     ],
 };
 
@@ -64,10 +71,6 @@ const readmeDoxygenPageTag = "EXAMPLE_MOTORCONTROL_BISSC";
 const templates_freertos_r5f =
 [
     {
-        input: ".project/templates/am243x/common/linker_r5f.cmd.xdt",
-        output: "linker.cmd",
-    },
-    {
         input: ".project/templates/am243x/freertos/main_freertos.c.xdt",
         output: "../main.c",
         options: {
@@ -99,6 +102,7 @@ function getComponentBuildProperty(buildOption) {
     let build_property = {};
 
     build_property.files = files;
+    build_property.projectspec_files = projectspec_files;
     build_property.filedirs = filedirs;
     build_property.lnkfiles = lnkfiles;
     build_property.syscfgfile = syscfgfile;

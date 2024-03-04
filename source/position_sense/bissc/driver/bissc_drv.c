@@ -75,11 +75,14 @@ int32_t bissc_command_wait(struct bissc_priv *priv)
         {
             break;
         }
-        ClockP_usleep(1000);
-        timeout--;
-        if(timeout == 0)
+        if(!priv->is_continuous_mode)
         {
-            return SystemP_FAILURE;
+            ClockP_usleep(1000);
+            timeout--;
+            if(timeout == 0)
+            {
+                return SystemP_FAILURE;
+            }
         }
     }
     return SystemP_SUCCESS;
@@ -91,6 +94,39 @@ int32_t bissc_command_process(struct bissc_priv *priv)
     bissc_command_send(priv);
     ret = bissc_command_wait(priv);
     return ret;
+}
+void bissc_config_periodic_trigger(struct bissc_priv *priv)
+{
+    /* Configures bissc master in periodic trigger mode */
+    struct bissc_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
+    if(priv->load_share)
+    {
+        pruicss_xchg->opmode[0] = 0;
+        pruicss_xchg->opmode[1] = 0;
+        pruicss_xchg->opmode[2] = 0;
+    }
+    else 
+    {
+        pruicss_xchg->opmode[0] = 0;
+    }
+    priv->is_continuous_mode = 0x1;
+}
+void bissc_config_host_trigger(struct bissc_priv *priv)
+{
+    /* Configures bissc master in host trigger mode */
+    struct bissc_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
+
+    if(priv->load_share)
+    {
+        pruicss_xchg->opmode[0] = 0x1;      
+        pruicss_xchg->opmode[1] = 0x1;
+        pruicss_xchg->opmode[2] = 0x1;
+    }
+    else 
+    {
+        pruicss_xchg->opmode[0] = 0x1;
+    }
+    priv->is_continuous_mode = 0x0;
 }
 
 void bissc_enable_load_share_mode(struct bissc_priv *priv)
@@ -396,6 +432,8 @@ struct bissc_priv *bissc_init(PRUICSS_Handle gPruIcssXHandle,
 {
     struct bissc_pruicss_xchg *pruicss_xchg;
     void *pruicss_cfg;
+    void *pruicss_iep;
+    pruicss_iep = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->iep0RegBase);
     pruicss_cfg = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->cfgRegBase);
     if(slice)
         pruicss_xchg =  (struct bissc_pruicss_xchg *)((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->pru1DramBase;
@@ -403,6 +441,7 @@ struct bissc_priv *bissc_init(PRUICSS_Handle gPruIcssXHandle,
         pruicss_xchg =  (struct bissc_pruicss_xchg *)((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->pru0DramBase;
     bissc_priv.pruicss_xchg = pruicss_xchg;
     bissc_priv.pruicss_cfg = pruicss_cfg;
+    bissc_priv.pruicss_iep = pruicss_iep;
     bissc_priv.pruicss_slicex = slice;
     bissc_priv.baud_rate = frequency;
     bissc_priv.core_clk_freq = core_clk_freq;
@@ -416,13 +455,21 @@ void bissc_update_max_proc_delay(struct bissc_priv *priv)
     struct bissc_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
     pruicss_xchg->fifo_bit_idx = 4;                          /* 8x over clock - middle bit*/
     if(priv->baud_rate == BISSC_FREQ_1MHZ)
+    {
         pruicss_xchg->max_proc_delay = BISSC_MAX_PROC_DELAY_1MHZ;
+    }
     else if(priv->baud_rate == BISSC_FREQ_2MHZ)
+    {
         pruicss_xchg->max_proc_delay = BISSC_MAX_PROC_DELAY_2MHZ;
+    }
     else if(priv->baud_rate == BISSC_FREQ_5MHZ)
+    {
         pruicss_xchg->max_proc_delay = BISSC_MAX_PROC_DELAY_5MHZ;
+    }
     else if(priv->baud_rate == BISSC_FREQ_8MHZ)
+    {
         pruicss_xchg->max_proc_delay = BISSC_MAX_PROC_DELAY_8MHZ;
+    }
     else if(priv->baud_rate == BISSC_FREQ_10MHZ)
     {
         pruicss_xchg->max_proc_delay = BISSC_MAX_PROC_DELAY_10MHZ;
@@ -487,6 +534,10 @@ void bissc_set_default_initialization(struct bissc_priv *priv, uint64_t icssgclk
     pruicss_xchg->execution_state[0]  = 0;
     pruicss_xchg->execution_state[1]  = 0;
     pruicss_xchg->execution_state[2]  = 0;
+    pruicss_xchg->opmode[0]           = 1;
+    pruicss_xchg->opmode[1]           = 1;
+    pruicss_xchg->opmode[2]           = 1;
+    priv->cmp3                        = 20000;     /* 100usec delay */
 }
 
 void bissc_update_data_len(struct bissc_priv *priv, uint32_t single_turn_len[], uint32_t multi_turn_len[], int32_t pru_num)
@@ -522,9 +573,9 @@ int32_t bissc_set_ctrl_cmd_and_process(struct bissc_priv *priv, uint32_t ctrl_cm
     int32_t ch = 0, ch_num;
     if(priv->load_share)
     {
-        pruicss_xchg->ctrl_cmd_status[0] = (pruicss_xchg->channel & 0x1)?1:0;
-        pruicss_xchg->ctrl_cmd_status[1] = (pruicss_xchg->channel & 0x2)?1:0;
-        pruicss_xchg->ctrl_cmd_status[2] = (pruicss_xchg->channel & 0x4)?1:0;
+        pruicss_xchg->ctrl_cmd_status[0] = (pruicss_xchg->channel & 0x1) ? 1:0;
+        pruicss_xchg->ctrl_cmd_status[1] = (pruicss_xchg->channel & 0x2) ? 1:0;
+        pruicss_xchg->ctrl_cmd_status[2] = (pruicss_xchg->channel & 0x4) ? 1:0;
         while(pruicss_xchg->ctrl_cmd_status[0] + pruicss_xchg->ctrl_cmd_status[1] + pruicss_xchg->ctrl_cmd_status[2])
         {
             if(bissc_command_process(priv) < 0)
