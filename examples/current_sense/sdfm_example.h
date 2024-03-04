@@ -137,6 +137,8 @@ typedef enum PRUICSS_MaxInstances_s
 typedef struct SdfmPrms_s 
 {
     uint8_t loadShare;
+    /*icssg instance ID*/
+    uint8_t icssgInsId;
     /**<PRU core instance ID*/
     uint8_t pruInsId;
     /**<ICSSG pru Slice ID*/

@@ -249,10 +249,12 @@ int32_t initSdfmFw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm,  PRU
 {
     sdfm_handle hSdfm;    
     uint8_t SDFM_CH = 0;
-    /* Initialize SDFM instance */
-    hSdfm = SDFM_init(pruId, pSdfmPrms->pruInsId);
-  
+
     hSdfm->gPruIcssHandle = pruIcssHandle;
+    /* Initialize SDFM instance */
+    hSdfm = SDFM_init(hSdfm, pruId, pSdfmPrms->pruInsId);
+  
+   
     hSdfm->pruss_cfg = (void *)(((PRUICSS_HwAttrs *)(pruIcssHandle->hwAttrs))->cfgRegBase);
 
     if( pSdfmPrms->loadShare )

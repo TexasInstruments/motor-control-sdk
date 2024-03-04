@@ -152,8 +152,9 @@ __attribute__((section(".gSdfmSampleOutput"))) uint32_t gSdfm_sampleOutput[NUM_C
 /* Test Sdfm parameters */
 SdfmPrms gTestSdfmPrms = {
     ICSSG_PRU_LOAD_SHARE_MODE,
-    TEST_ICSSG_SLICE_ID,
+    TEST_ICSSG_INST_ID,    /*Icssg instance ID*/
     PRUICSS_PRU0,
+    TEST_ICSSG_SLICE_ID,
     300000000,
     {300000000,0},  /*index[0]= IEP0 clock for G0, index[1] = reserved */
     20000000,    /*Value of SD clock (It should be exact equal to sd clock value)*/

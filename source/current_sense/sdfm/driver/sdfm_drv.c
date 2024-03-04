@@ -49,66 +49,72 @@ SDFM g_sdfm[NUM_PRU] = {
 };
 
 /* Initialize SDFM instance */
-sdfm_handle SDFM_init(uint8_t pru_id, uint8_t coreId)
+sdfm_handle SDFM_init(sdfm_handle h_sdfm, uint8_t pruId, uint8_t coreId)
 {
     SDFM *p_sdfm;
+    PRUICSS_Handle PruIcssXHandle = h_sdfm->gPruIcssHandle;
+    
+    /* Initialize PRU 0 SD */
+    p_sdfm = &g_sdfm[pruId];
+    p_sdfm->gPruIcssHandle = h_sdfm->gPruIcssHandle;
 
-    if (pru_id == PRU_ID_0)
+    /* Initialize SDFM control address */
+    if(pruId == PRU_ID_0)
     {
-        /* Initialize PRU 0 SD */
-        p_sdfm = &g_sdfm[pru_id];
+        switch (coreId)
+        {
+            case PRUICSS_RTU_PRU0:
+            case PRUICSS_RTU_PRU1:               
+                p_sdfm->p_sdfm_interface = (void *)(((PRUICSS_HwAttrs *)(PruIcssXHandle->hwAttrs))->pru0DramBase) + RTUx_DMEM_BASE_ADD;
+            
+                break;
+            case PRUICSS_PRU0:
+            case PRUICSS_PRU1:
+                p_sdfm->p_sdfm_interface = (void *)(((PRUICSS_HwAttrs *)(PruIcssXHandle->hwAttrs))->pru0DramBase) + PRUx_DMEM_BASE_ADD;
+                
+                break;
+            case PRUICSS_TX_PRU0:
+            case PRUICSS_TX_PRU1:
+                p_sdfm->p_sdfm_interface = (void *)(((PRUICSS_HwAttrs *)(PruIcssXHandle->hwAttrs))->pru0DramBase) + TXPRUx_DMEM_BASE_ADD;
+                
+                break;
+            default:
+                return NULL;
+            break;
+        }
 
-        /* Initialize SDFM control address */
-        if(coreId == PRUICSS_RTU_PRU0)
-        {
-            p_sdfm->p_sdfm_interface = (SDFM_Interface *)(PRU_ICSSG_DRAM0_SLV_RAM + RTUx_DMEM_BASE_ADD);
-        }
-        else if (coreId == PRUICSS_PRU0)
-        {
-            p_sdfm->p_sdfm_interface = (SDFM_Interface *)(PRU_ICSSG_DRAM0_SLV_RAM + PRUx_DMEM_BASE_ADD);
-        }
-        else if (coreId == PRUICSS_TX_PRU0)
-        {
-            p_sdfm->p_sdfm_interface = (SDFM_Interface *)(PRU_ICSSG_DRAM0_SLV_RAM + TXPRUx_DMEM_BASE_ADD);
-        }
-        else
-        {
-           return NULL;
-        }
-
-        /* Set FW PRU ID */
-        p_sdfm->p_sdfm_interface->sdfm_ctrl.sdfm_pru_id = pru_id;
     }
-    else if (pru_id == PRU_ID_1)
-    {
-        /* Initialize PRU 1 SD */
-        p_sdfm = &g_sdfm[pru_id];
-
-        /* Initialize SDFM control address */
-        if(coreId == PRUICSS_RTU_PRU1)
+   else if (pruId == PRU_ID_1)
+   {
+        switch (coreId)
         {
-            p_sdfm->p_sdfm_interface = (SDFM_Interface *)(PRU_ICSSG_DRAM1_SLV_RAM + RTUx_DMEM_BASE_ADD);
+            case PRUICSS_RTU_PRU0:
+            case PRUICSS_RTU_PRU1:               
+                p_sdfm->p_sdfm_interface = (void *)(((PRUICSS_HwAttrs *)(PruIcssXHandle->hwAttrs))->pru1DramBase) + RTUx_DMEM_BASE_ADD;
+            
+                break;
+            case PRUICSS_PRU0:
+            case PRUICSS_PRU1:
+                p_sdfm->p_sdfm_interface = (void *)(((PRUICSS_HwAttrs *)(PruIcssXHandle->hwAttrs))->pru1DramBase) + PRUx_DMEM_BASE_ADD;
+                
+                break;
+            case PRUICSS_TX_PRU0:
+            case PRUICSS_TX_PRU1:
+                p_sdfm->p_sdfm_interface = (void *)(((PRUICSS_HwAttrs *)(PruIcssXHandle->hwAttrs))->pru1DramBase) + TXPRUx_DMEM_BASE_ADD;
+                
+                break;
+            default:
+                return NULL;
+            break;
         }
-        else if (coreId == PRUICSS_PRU1)
-        {
-            p_sdfm->p_sdfm_interface = (SDFM_Interface *)(PRU_ICSSG_DRAM1_SLV_RAM + PRUx_DMEM_BASE_ADD);
-        }
-        else if (coreId == PRUICSS_TX_PRU1)
-        {
-            p_sdfm->p_sdfm_interface = (SDFM_Interface *)(PRU_ICSSG_DRAM1_SLV_RAM + TXPRUx_DMEM_BASE_ADD);
-        }
-        else
-        {
-           return NULL;
-        }
-        /* Set FW PRU ID */
-        p_sdfm->p_sdfm_interface->sdfm_ctrl.sdfm_pru_id = pru_id;
-    }
-    else
-    {
+   }
+   else
+   {
         return NULL;
-    }
-
+   }
+ 
+    /* Set FW PRU ID */
+    p_sdfm->p_sdfm_interface->sdfm_ctrl.sdfm_pru_id = pruId;
     return (sdfm_handle)p_sdfm;
 }
 

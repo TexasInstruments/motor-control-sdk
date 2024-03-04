@@ -142,6 +142,7 @@ __attribute__((section(".gSdfmSampleOutput"))) uint32_t gSdfm_sampleOutput[NUM_C
 /* Test Sdfm parameters */
 SdfmPrms gTestSdfmPrms = {
     0, /*Load share enable*/
+    TEST_ICSSG_INST_ID,   /*Icssg instance ID*/
     PRUICSS_PRU0,
     TEST_ICSSG_SLICE_ID,
     300000000,   /*PRU core clock*/
