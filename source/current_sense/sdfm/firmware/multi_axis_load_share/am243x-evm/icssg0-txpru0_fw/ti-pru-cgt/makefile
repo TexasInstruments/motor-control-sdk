@@ -54,10 +54,10 @@ all: $(OBJS) $(CMD_SRCS)
 	@$(MAKE) --no-print-directory -Onone "sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-txpru0_fw_ti-pru-cgt.out"
 
 # Each subdirectory must supply rules for building sources it contributes
-$(OBJDIR)/$(OBJS) %.obj: $(ASM_SRCS) 
+$(OBJDIR)/%.obj %.obj: $(ASM_SRCS) 
 	@echo 'Building file: "$^"'
 	@echo 'Invoking: PRU Compiler'
-	"$(CGT_TI_PRU_PATH)/bin/clpru" -DICSSG0 -DTX_PRU0 -DSLICE0 -DPRU0 -DSLICE0 -v4 -v4 -o2 --display_error_number --hardware_mac=on --define=SOC_AM243X --define=SDFM_TXPRU_CORE --define=SDFM_LOAD_SHARE_MODE --include_path="$(SYSCFG_DIR)" --include_path="${CG_TOOL_ROOT}/include" --include_path="${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source" --include_path="${MOTOR_CONTROL_SDK_PATH}/source" --include_path="${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware"  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little --preproc_with_compile --preproc_dependency="$(basename $(<F)).d_raw" $^
+	"$(CGT_TI_PRU_PATH)/bin/clpru" -DICSSG0 -DTX_PRU0 -DSLICE0 -v4 -v4 -o2 --display_error_number --hardware_mac=on --define=SOC_AM243X --define=SDFM_TXPRU_CORE --define=SDFM_LOAD_SHARE_MODE --include_path="$(SYSCFG_DIR)" --include_path="${CG_TOOL_ROOT}/include" --include_path="${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source" --include_path="${MOTOR_CONTROL_SDK_PATH}/source" --include_path="${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware"  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little --preproc_with_compile --preproc_dependency="$(basename $(<F)).d_raw" $^
 	@echo 'Finished building: "$^"'
 	@echo ' '
 
@@ -65,7 +65,7 @@ $(OBJDIR)/$(OBJS) %.obj: $(ASM_SRCS)
 sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-txpru0_fw_ti-pru-cgt.out: $(OBJS) $(CMD_SRCS)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: PRU Linker'
-	"$(CGT_TI_PRU_PATH)/bin/clpru" -DICSSG0 -DTX_PRU0 -DSLICE0 -DPRU0 -DSLICE0 -v4 -v4 -o2 --display_error_number --hardware_mac=on --define=SOC_AM243X --define=SDFM_TXPRU_CORE --define=SDFM_LOAD_SHARE_MODE  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little -z -m"sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-txpru0_fw_ti-pru-cgt.map" --disable_auto_rts   --diag_wrap=off --display_error_number --warn_sections --xml_link_info="sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-txpru0_fw_ti-pru-cgt_linkInfo.xml" --disable_auto_rts --warn_sections --entry_point=SDFM_ENTRY --zero_init=off --disable_auto_rts --define=SDFM_LOAD_SHARE_MODE=1  --rom_model -o "sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-txpru0_fw_ti-pru-cgt.out" $^	
+	"$(CGT_TI_PRU_PATH)/bin/clpru" -DICSSG0 -DTX_PRU0 -DSLICE0 -v4 -v4 -o2 --display_error_number --hardware_mac=on --define=SOC_AM243X --define=SDFM_TXPRU_CORE --define=SDFM_LOAD_SHARE_MODE  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little -z -m"sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-txpru0_fw_ti-pru-cgt.map" --disable_auto_rts   --diag_wrap=off --display_error_number --warn_sections --xml_link_info="sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-txpru0_fw_ti-pru-cgt_linkInfo.xml" --disable_auto_rts --warn_sections --entry_point=SDFM_ENTRY --zero_init=off --disable_auto_rts --define=SDFM_LOAD_SHARE_MODE=1  --rom_model -o "sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-txpru0_fw_ti-pru-cgt.out" $^	
 	@echo 'Finished building target: "$@"'
 	@echo ' '
 	@$(MAKE) --no-print-directory post-build

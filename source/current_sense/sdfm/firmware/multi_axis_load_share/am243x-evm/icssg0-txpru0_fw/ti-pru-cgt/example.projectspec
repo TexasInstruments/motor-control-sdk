@@ -36,8 +36,6 @@
             -DICSSG0
             -DTX_PRU0
             -DSLICE0
-            -DPRU0
-            -DSLICE0
             -v4
             -v4
             -o2

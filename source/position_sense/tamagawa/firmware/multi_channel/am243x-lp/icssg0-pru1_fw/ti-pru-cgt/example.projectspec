@@ -29,16 +29,21 @@
         outputType="executable"
 
         compilerBuildOptions="
+            -I${CG_TOOL_ROOT}/include
+            -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source
+            -I${MOTOR_CONTROL_SDK_PATH}/source
             -I${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware
             -DICSSG0
             -DPRU1
             -DSLICE1
+            -v4
             -v4
             -DSOC_AM243X
             -DENABLE_MULTI_CHANNEL
         "
         linkerBuildOptions="
             -m=tamagawa_multi_channel.${ConfigName}.map
+            --disable_auto_rts
             --entry_point=TAMAGAWA_INIT
             --disable_auto_rts
         "
@@ -51,12 +56,14 @@
 
         <configuration name="Release"
             compilerBuildOptions="
+                -O3
             "
             linkerBuildOptions="
             "
         ></configuration>
         <configuration name="Debug"
             compilerBuildOptions="
+                -D_DEBUG_=1
             "
             linkerBuildOptions="
             "

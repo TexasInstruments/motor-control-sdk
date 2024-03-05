@@ -29,10 +29,14 @@
         outputType="executable"
 
         compilerBuildOptions="
+            -I${CG_TOOL_ROOT}/include
+            -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source
+            -I${MOTOR_CONTROL_SDK_PATH}/source
             -I${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware
             -DICSSG0
             -DPRU1
             -DSLICE1
+            -v4
             -DSOC_AM243X
             -DPRU1
             -DCHANNEL_1
@@ -42,6 +46,7 @@
         "
         linkerBuildOptions="
             -m=hdsl_master_multichannel_ch1.${ConfigName}.map
+            --disable_auto_rts
             --disable_auto_rts
             --entry_point=main
         "
@@ -54,12 +59,14 @@
 
         <configuration name="Release"
             compilerBuildOptions="
+                -O3
             "
             linkerBuildOptions="
             "
         ></configuration>
         <configuration name="Debug"
             compilerBuildOptions="
+                -D_DEBUG_=1
             "
             linkerBuildOptions="
             "

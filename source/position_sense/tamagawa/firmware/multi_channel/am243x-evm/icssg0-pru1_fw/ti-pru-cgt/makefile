@@ -54,10 +54,10 @@ all: $(OBJS) $(CMD_SRCS)
 	@$(MAKE) --no-print-directory -Onone "tamagawa_multi_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out"
 
 # Each subdirectory must supply rules for building sources it contributes
-$(OBJDIR)/$(OBJS) %.obj: $(ASM_SRCS) 
+$(OBJDIR)/%.obj %.obj: $(ASM_SRCS) 
 	@echo 'Building file: "$^"'
 	@echo 'Invoking: PRU Compiler'
-	"$(CGT_TI_PRU_PATH)/bin/clpru" -DICSSG0 -DPRU1 -DSLICE1 -v4 --define=SOC_AM243X --define=ENABLE_MULTI_CHANNEL --include_path="$(SYSCFG_DIR)" --include_path="${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware"  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little --preproc_with_compile --preproc_dependency="$(basename $(<F)).d_raw" $^
+	"$(CGT_TI_PRU_PATH)/bin/clpru" -DICSSG0 -DPRU1 -DSLICE1 -v4 -v4 --define=SOC_AM243X --define=ENABLE_MULTI_CHANNEL --include_path="$(SYSCFG_DIR)" --include_path="${CG_TOOL_ROOT}/include" --include_path="${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source" --include_path="${MOTOR_CONTROL_SDK_PATH}/source" --include_path="${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware"  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little --preproc_with_compile --preproc_dependency="$(basename $(<F)).d_raw" $^
 	@echo 'Finished building: "$^"'
 	@echo ' '
 
@@ -65,7 +65,7 @@ $(OBJDIR)/$(OBJS) %.obj: $(ASM_SRCS)
 tamagawa_multi_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out: $(OBJS) $(CMD_SRCS)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: PRU Linker'
-	"$(CGT_TI_PRU_PATH)/bin/clpru" -DICSSG0 -DPRU1 -DSLICE1 -v4 --define=SOC_AM243X --define=ENABLE_MULTI_CHANNEL  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little -z -m"tamagawa_multi_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.map" --disable_auto_rts   --diag_wrap=off --display_error_number --warn_sections --xml_link_info="tamagawa_multi_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_linkInfo.xml" --entry_point=TAMAGAWA_INIT --disable_auto_rts  --rom_model -o "tamagawa_multi_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out" $^	
+	"$(CGT_TI_PRU_PATH)/bin/clpru" -DICSSG0 -DPRU1 -DSLICE1 -v4 -v4 --define=SOC_AM243X --define=ENABLE_MULTI_CHANNEL  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little -z -m"tamagawa_multi_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.map" --disable_auto_rts   --diag_wrap=off --display_error_number --warn_sections --xml_link_info="tamagawa_multi_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_linkInfo.xml" --disable_auto_rts --entry_point=TAMAGAWA_INIT --disable_auto_rts  --rom_model -o "tamagawa_multi_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out" $^	
 	@echo 'Finished building target: "$@"'
 	@echo ' '
 	@$(MAKE) --no-print-directory post-build
