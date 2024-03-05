@@ -49,14 +49,14 @@ SDFM g_sdfm[NUM_PRU] = {
 };
 
 /* Initialize SDFM instance */
-sdfm_handle SDFM_init(sdfm_handle h_sdfm, uint8_t pruId, uint8_t coreId)
+sdfm_handle SDFM_init(PRUICSS_Handle pruIcssHandle, uint8_t pruId, uint8_t coreId)
 {
     SDFM *p_sdfm;
-    PRUICSS_Handle PruIcssXHandle = h_sdfm->gPruIcssHandle;
+    PRUICSS_Handle PruIcssXHandle = pruIcssHandle;
     
     /* Initialize PRU 0 SD */
     p_sdfm = &g_sdfm[pruId];
-    p_sdfm->gPruIcssHandle = h_sdfm->gPruIcssHandle;
+    p_sdfm->gPruIcssHandle = pruIcssHandle;
 
     /* Initialize SDFM control address */
     if(pruId == PRU_ID_0)

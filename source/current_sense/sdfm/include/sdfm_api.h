@@ -82,14 +82,14 @@ typedef SDFM *sdfm_handle;
  *
  *  \brief  Initialize SDFM instance
  *  
- *  \param[in]  h_sdfm          SDFM handle
- *  \param[in]  pru_id          Pru slice id
+ *  \param[in]  pruIcssHandle   PRU-ICSS handle 
+ *  \param[in]  pruId          Pru slice id
  *  \param[in]  coreId          Pru core id
  *
  *  \retval sdfm  SDFM instance handle
  *
  */
-sdfm_handle SDFM_init(sdfm_handle h_sdfm, uint8_t pruId, uint8_t coreId);
+sdfm_handle SDFM_init(PRUICSS_Handle pruIcssHandle, uint8_t pruId, uint8_t coreId);
 
 /**
  *

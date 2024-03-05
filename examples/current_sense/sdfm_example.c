@@ -250,16 +250,16 @@ int32_t initSdfmFw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm,  PRU
     sdfm_handle hSdfm;    
     uint8_t SDFM_CH = 0;
 
-    hSdfm->gPruIcssHandle = pruIcssHandle;
+    
     /* Initialize SDFM instance */
-    hSdfm = SDFM_init(hSdfm, pruId, pSdfmPrms->pruInsId);
-  
+    hSdfm = SDFM_init(pruIcssHandle, pruId, pSdfmPrms->pruInsId);
+    
    
     hSdfm->pruss_cfg = (void *)(((PRUICSS_HwAttrs *)(pruIcssHandle->hwAttrs))->cfgRegBase);
 
     if( pSdfmPrms->loadShare )
     {
-        if(pSdfmPrms->pruInsId == PRUICSS_PRU0)
+        if((pSdfmPrms->pruInsId == PRUICSS_PRU0)||(pSdfmPrms->pruInsId == PRUICSS_PRU1))
         {
             SDFM_enableLoadShareMode(hSdfm, pSdfmPrms->icssgSliceId);
         }
