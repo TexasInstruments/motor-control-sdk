@@ -15,7 +15,8 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += hdsl_diagnostic_single_channel_am64
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += tamagawa_diagnostic_multi_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += tamagawa_diagnostic_single_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += pruicss_pwm_duty_cycle_am64x-evm_r5fss0-0_freertos_ti-arm-clang_build
-BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += pruicss_pwm_epwm_sync_am64x-evm_r5fss0-0_freertos_ti-arm-clang_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += pruicss_pwm_deadband_epwm_sync_am64x-evm_r5fss0-0_freertos_ti-arm-clang_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += pruicss_pwm_deadband_epwm_sync_am64x-evm_r5fss0-0_nortos_ti-arm-clang_build
 # Various System Example Projectspec Build Targets
 
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL =
@@ -65,8 +66,11 @@ all-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL)
  pruicss_pwm_duty_cycle_am64x-evm_r5fss0-0_freertos_ti-arm-clang_build:
 	$(MAKE) -C examples/pruicss_pwm/pruicss_pwm_duty_cycle/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
 
- pruicss_pwm_epwm_sync_am64x-evm_r5fss0-0_freertos_ti-arm-clang_build:
-	$(MAKE) -C examples/pruicss_pwm/pruicss_pwm_epwm_sync/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
+ pruicss_pwm_deadband_epwm_sync_am64x-evm_r5fss0-0_freertos_ti-arm-clang_build:
+	$(MAKE) -C examples/pruicss_pwm/pruicss_pwm_dead_band_epwm_sync/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
+
+ pruicss_pwm_deadband_epwm_sync_am64x-evm_r5fss0-0_nortos_ti-arm-clang_build:
+	$(MAKE) -C examples/pruicss_pwm/pruicss_pwm_dead_band_epwm_sync/am64x-evm/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec all
 
  endat_peripheral_interface_multi_ch_load_share_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_build:
 	$(MAKE) -C source/position_sense/endat/firmware/multi_channel_load_share/am64x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec all
@@ -125,7 +129,8 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += hdsl_diagnostic_single_channel_am64
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += tamagawa_diagnostic_multi_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += tamagawa_diagnostic_single_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += pruicss_pwm_duty_cycle_am64x-evm_r5fss0-0_freertos_ti-arm-clang_clean
-BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += pruicss_pwm_epwm_sync_am64x-evm_r5fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += pruicss_pwm_deadband_epwm_sync_am64x-evm_r5fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += pruicss_pwm_deadband_epwm_sync_am64x-evm_r5fss0-0_nortos_ti-arm-clang_clean
 # Various System Example Projectspec Clean Targets
 
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL =
@@ -175,8 +180,11 @@ clean-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL)
  pruicss_pwm_duty_cycle_am64x-evm_r5fss0-0_freertos_ti-arm-clang_clean:
 	$(MAKE) -C examples/pruicss_pwm/pruicss_pwm_duty_cycle/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
 
- pruicss_pwm_epwm_sync_am64x-evm_r5fss0-0_freertos_ti-arm-clang_clean:
-	$(MAKE) -C examples/pruicss_pwm/pruicss_pwm_epwm_sync/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
+ pruicss_pwm_deadband_epwm_sync_am64x-evm_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/pruicss_pwm/pruicss_pwm_dead_band_epwm_sync/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
+
+ pruicss_pwm_deadband_epwm_sync_am64x-evm_r5fss0-0_nortos_ti-arm-clang_clean:
+	$(MAKE) -C examples/pruicss_pwm/pruicss_pwm_dead_band_epwm_sync/am64x-evm/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec clean
 
  endat_peripheral_interface_multi_ch_load_share_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/endat/firmware/multi_channel_load_share/am64x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec clean
@@ -235,7 +243,8 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += hdsl_diagnostic_single_channel_am6
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += tamagawa_diagnostic_multi_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += tamagawa_diagnostic_single_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += pruicss_pwm_duty_cycle_am64x-evm_r5fss0-0_freertos_ti-arm-clang_export
-BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += pruicss_pwm_epwm_sync_am64x-evm_r5fss0-0_freertos_ti-arm-clang_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += pruicss_pwm_deadband_epwm_sync_am64x-evm_r5fss0-0_freertos_ti-arm-clang_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += pruicss_pwm_deadband_epwm_sync_am64x-evm_r5fss0-0_nortos_ti-arm-clang_export
 # Various System Example Projectspec Export Targets
 
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL =
@@ -285,8 +294,11 @@ export-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL)
  pruicss_pwm_duty_cycle_am64x-evm_r5fss0-0_freertos_ti-arm-clang_export:
 	$(MAKE) -C examples/pruicss_pwm/pruicss_pwm_duty_cycle/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
 
- pruicss_pwm_epwm_sync_am64x-evm_r5fss0-0_freertos_ti-arm-clang_export:
-	$(MAKE) -C examples/pruicss_pwm/pruicss_pwm_epwm_sync/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
+ pruicss_pwm_deadband_epwm_sync_am64x-evm_r5fss0-0_freertos_ti-arm-clang_export:
+	$(MAKE) -C examples/pruicss_pwm/pruicss_pwm_dead_band_epwm_sync/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
+
+ pruicss_pwm_deadband_epwm_sync_am64x-evm_r5fss0-0_nortos_ti-arm-clang_export:
+	$(MAKE) -C examples/pruicss_pwm/pruicss_pwm_dead_band_epwm_sync/am64x-evm/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec export
 
  endat_peripheral_interface_multi_ch_load_share_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_export:
 	$(MAKE) -C source/position_sense/endat/firmware/multi_channel_load_share/am64x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec export
@@ -370,7 +382,8 @@ help:
 	@echo  $(MAKE) -s -C examples/position_sense/tamagawa_diagnostic/multi_channel/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/position_sense/tamagawa_diagnostic/single_channel/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/pruicss_pwm/pruicss_pwm_duty_cycle/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
-	@echo  $(MAKE) -s -C examples/pruicss_pwm/pruicss_pwm_epwm_sync/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C examples/pruicss_pwm/pruicss_pwm_dead_band_epwm_sync/am64x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C examples/pruicss_pwm/pruicss_pwm_dead_band_epwm_sync/am64x-evm/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C source/position_sense/endat/firmware/multi_channel_load_share/am64x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C source/position_sense/endat/firmware/multi_channel_load_share/am64x-evm/icssg0-rtupru1_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C source/position_sense/endat/firmware/multi_channel_load_share/am64x-evm/icssg0-txpru1_fw/ti-pru-cgt -f makefile_projectspec [export all clean]

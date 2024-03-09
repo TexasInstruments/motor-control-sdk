@@ -22,7 +22,7 @@ const example_file_list = [
     "examples/position_sense/tamagawa_diagnostic/multi_channel/.project/project.js",
     "examples/position_sense/tamagawa_diagnostic/single_channel/.project/project.js",   
     "examples/pruicss_pwm/pruicss_pwm_duty_cycle/.project/project.js",
-    "examples/pruicss_pwm/pruicss_pwm_epwm_sync/.project/project.js",
+    "examples/pruicss_pwm/pruicss_pwm_dead_band_epwm_sync/.project/project.js",
     "source/position_sense/endat/firmware/multi_channel_load_share/.project/project.js",
     "source/position_sense/endat/firmware/single_channel/.project/project.js",
     "source/position_sense/endat/firmware/multi_channel_single_pru/.project/project.js",

@@ -100,7 +100,7 @@ extern "C" {
 /**
  *  
  *  \anchor PRUICSS_PWM_SET
- *  \name PRUICSS PWM SET
+ *  \name PRUICSS PWM SET 
  * 
  * @{
  */
@@ -115,6 +115,27 @@ extern "C" {
 #define PRUICSS_PWM_SET3                                    (0x3U)
 /** @} */
 
+/**
+ *  
+ *  \anchor PRUICSS_PWM_SET_INSTANCE
+ *  \name PRUICSS PWM SET INSTANCE
+ * 
+ * @{
+ */
+#define PRUICSS_NUM_OF_PWMINSTANCES_PER_PWM_SET             (0x6U)
+
+#define PRUICSS_PWM_SET_INSTANCE_A0                         (0x0U)
+
+#define PRUICSS_PWM_SET_INSTANCE_B0                         (0x1U)
+
+#define PRUICSS_PWM_SET_INSTANCE_A1                         (0x2U)
+
+#define PRUICSS_PWM_SET_INSTANCE_B1                         (0x3U)
+
+#define PRUICSS_PWM_SET_INSTANCE_A2                         (0x4U)
+
+#define PRUICSS_PWM_SET_INSTANCE_B2                         (0x5U)
+ /** @} */
 
 /**
  *  
@@ -132,6 +153,7 @@ extern "C" {
 #define PRUICSS_PWM_TRIP_STATE                              (0x2U)
 /** @} */
 
+
 /**
  *  
  *  \anchor PRUICSS_PWM_OUTPUT_ACTION
@@ -147,6 +169,7 @@ extern "C" {
 
 #define PRUICSS_PWM_OUTPUT_HIGH                              (0x2U)
 /** @} */
+
 
 /**
  *  
@@ -252,6 +275,17 @@ int32_t PRUICSS_PWM_setIepCounterLower_32bitValue(PRUICSS_Handle handle, uint8_t
  *
  */
 int32_t PRUICSS_PWM_setIepCounterUpper_32bitValue(PRUICSS_Handle handle, uint8_t iepInstance, uint32_t value);
+
+/**
+ * \brief  This API sets enables/disables of IEP shadow mode
+ *      
+ * \param   handle      PRUICSS_Handle returned from PRUICSS_open()
+ * \param   iepInstance 0 for IEP0, 1 for IEP1
+ * \param   enable      0 for disable, 1 for enable
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *
+ */
+int32_t PRUICSS_PWM_configureIepShadowModeEnable(PRUICSS_Handle handle, uint8_t iepInstance, uint8_t enable);
 
 /**
  * \brief  This API sets enables/disables of IEP counter reset on compare 0 event in IEP module.

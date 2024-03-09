@@ -24,22 +24,23 @@ endif
 PROFILE?=release
 ConfigName:=$(PROFILE)
 
-OUTNAME:=transforms_test.$(PROFILE).out
+OUTNAME:=pruicss_pwm_deadband_epwm_sync.$(PROFILE).out
 
 BOOTIMAGE_PATH=$(abspath .)
-BOOTIMAGE_NAME:=transforms_test.$(PROFILE).appimage
-BOOTIMAGE_NAME_XIP:=transforms_test.$(PROFILE).appimage_xip
-BOOTIMAGE_NAME_SIGNED:=transforms_test.$(PROFILE).appimage.signed
-BOOTIMAGE_RPRC_NAME:=transforms_test.$(PROFILE).rprc
-BOOTIMAGE_RPRC_NAME_XIP:=transforms_test.$(PROFILE).rprc_xip
-BOOTIMAGE_RPRC_NAME_TMP:=transforms_test.$(PROFILE).rprc_tmp
-BOOTIMAGE_NAME_HS:=transforms_test.$(PROFILE).appimage.hs
-BOOTIMAGE_NAME_HS_FS:=transforms_test.$(PROFILE).appimage.hs_fs
+BOOTIMAGE_NAME:=pruicss_pwm_deadband_epwm_sync.$(PROFILE).appimage
+BOOTIMAGE_NAME_XIP:=pruicss_pwm_deadband_epwm_sync.$(PROFILE).appimage_xip
+BOOTIMAGE_NAME_SIGNED:=pruicss_pwm_deadband_epwm_sync.$(PROFILE).appimage.signed
+BOOTIMAGE_RPRC_NAME:=pruicss_pwm_deadband_epwm_sync.$(PROFILE).rprc
+BOOTIMAGE_RPRC_NAME_XIP:=pruicss_pwm_deadband_epwm_sync.$(PROFILE).rprc_xip
+BOOTIMAGE_RPRC_NAME_TMP:=pruicss_pwm_deadband_epwm_sync.$(PROFILE).rprc_tmp
+BOOTIMAGE_NAME_HS:=pruicss_pwm_deadband_epwm_sync.$(PROFILE).appimage.hs
+BOOTIMAGE_NAME_HS_FS:=pruicss_pwm_deadband_epwm_sync.$(PROFILE).appimage.hs_fs
 TARGETS := $(BOOTIMAGE_NAME)
 
 FILES_common := \
-	transforms_test.c \
 	main.c \
+	pruicss_pwm_deadband_epwm_sync.c \
+	app_pruicss_pwm_functions.c \
 	ti_drivers_config.c \
 	ti_drivers_open_close.c \
 	ti_board_config.c \
@@ -59,16 +60,15 @@ INCLUDES_common := \
 	-I${MOTOR_CONTROL_SDK_PATH}/source \
 	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/FreeRTOS-Kernel/include \
 	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F \
-	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/am243x/r5f \
-	-I${MOTOR_CONTROL_SDK_PATH}/source/transforms/clarke \
-	-I${MOTOR_CONTROL_SDK_PATH}/source/transforms/park \
-	-I${MOTOR_CONTROL_SDK_PATH}/source/transforms/ipark \
-	-I${MOTOR_CONTROL_SDK_PATH}/source/transforms/svgen \
-	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/mathlib/trig \
+	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/am64x/r5f \
+	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers/pruicss/g_v0 \
+	-I${MOTOR_CONTROL_SDK_PATH}/source/pruicss_pwm/include \
+	-I${MOTOR_CONTROL_SDK_PATH}/examples/pruicss_pwm/pruicss_pwm_dead_band_epwm_sync/include \
 	-Igenerated \
 
 DEFINES_common := \
 	-DSOC_AM243X \
+	-Dam243x_evm \
 
 CFLAGS_common := \
 	-mcpu=cortex-r5 \
@@ -106,14 +106,14 @@ LIBS_PATH_common = \
 	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/lib \
 	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers/lib \
 	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/board/lib \
-	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/mathlib/lib \
+	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/source/pruicss_pwm/lib \
 	-Wl,-i${CG_TOOL_ROOT}/lib \
 
 LIBS_common = \
-	-lfreertos.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
-	-ldrivers.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
-	-lboard.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
-	-lmathlib.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
+	-lfreertos.am64x.r5f.ti-arm-clang.${ConfigName}.lib \
+	-ldrivers.am64x.r5f.ti-arm-clang.${ConfigName}.lib \
+	-lboard.am64x.r5f.ti-arm-clang.${ConfigName}.lib \
+	-lpruicss_pwm.am64x.r5f.ti-arm-clang.${ConfigName}.lib \
 	-llibc.a \
 	-llibsysbm.a \
 
@@ -124,10 +124,10 @@ LFLAGS_common = \
 
 
 LIBS_NAME = \
-	freertos.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
-	drivers.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
-	board.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
-	mathlib.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
+	freertos.am64x.r5f.ti-arm-clang.${ConfigName}.lib \
+	drivers.am64x.r5f.ti-arm-clang.${ConfigName}.lib \
+	board.am64x.r5f.ti-arm-clang.${ConfigName}.lib \
+	pruicss_pwm.am64x.r5f.ti-arm-clang.${ConfigName}.lib \
 	libc.a \
 	libsysbm.a \
 
@@ -135,7 +135,7 @@ LIBS_PATH_NAME = \
 	${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/lib \
 	${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers/lib \
 	${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/board/lib \
-	${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/mathlib/lib \
+	${MOTOR_CONTROL_SDK_PATH}/source/pruicss_pwm/lib \
 	${CG_TOOL_ROOT}/lib \
 
 FILES := $(FILES_common) $(FILES_$(PROFILE))
@@ -210,7 +210,7 @@ clean:
 	$(RMDIR) generated/
 
 scrub:
-	@echo  Scrubing: am243x:r5fss0-0:freertos:ti-arm-clang transforms_test ...
+	@echo  Scrubing: am243x:r5fss0-0:freertos:ti-arm-clang pruicss_pwm_deadband_epwm_sync ...
 	$(RMDIR) obj
 ifeq ($(OS),Windows_NT)
 	$(RM) \*.out
@@ -242,10 +242,10 @@ $(SYSCFG_GEN_FILES): syscfg
 
 syscfg: ../example.syscfg
 	@echo Generating SysConfig files ...
-	$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/dist/cli.js --product $(SYSCFG_SDKPRODUCT) --context r5fss0-0 --part ALX --package ALX --output generated/ ../example.syscfg
+	$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/dist/cli.js --product $(SYSCFG_SDKPRODUCT) --context r5fss0-0 --part ALV --package ALV --output generated/ ../example.syscfg
 
 syscfg-gui:
-	$(SYSCFG_NWJS) $(SYSCFG_PATH) --product $(SYSCFG_SDKPRODUCT) --device AM243x_ALX_beta --context r5fss0-0 --part ALX --package ALX --output generated/  ../example.syscfg
+	$(SYSCFG_NWJS) $(SYSCFG_PATH) --product $(SYSCFG_SDKPRODUCT) --device AM243x_ALV_beta --context r5fss0-0 --part ALV --package ALV --output generated/  ../example.syscfg
 
 #
 # Generation of boot image which can be loaded by Secondary Boot Loader (SBL)
@@ -322,12 +322,12 @@ else
 endif
 .PHONY: coverage
 coverage:
-	@echo Creating Coverage Report for transforms_test.$(PROFILE) ...
+	@echo Creating Coverage Report for pruicss_pwm_deadband_epwm_sync.$(PROFILE) ...
 	$(MKDIR) coverage
-	$(PROFDATA) merge -sparse -obj-file=$(OUTNAME) $(OUTNAME).cnt -o transforms_test.$(PROFILE).profdata
-	$(COV) show --format=html --show-expansions --show-instantiations --show-branches=count --object=$(OUTNAME) -instr-profile=transforms_test.$(PROFILE).profdata --output-dir=$(COVERAGE_PATH)/coverage --ignore-filename-regex=build_jenkins
-	$(COV) export --format=text --object=$(OUTNAME) --instr-profile=transforms_test.$(PROFILE).profdata > coverage/transforms_test.$(PROFILE).profdata.json
-	node ${MOTOR_CONTROL_SDK_PATH}/docs_src/code_coverage/clang_coverage_analyse.js --input=coverage/transforms_test.$(PROFILE).profdata.json --output-json=coverage/transforms_test.$(PROFILE).analysis.json --output-lnk=linker_xip.cmd --top-function-count=500
+	$(PROFDATA) merge -sparse -obj-file=$(OUTNAME) $(OUTNAME).cnt -o pruicss_pwm_deadband_epwm_sync.$(PROFILE).profdata
+	$(COV) show --format=html --show-expansions --show-instantiations --show-branches=count --object=$(OUTNAME) -instr-profile=pruicss_pwm_deadband_epwm_sync.$(PROFILE).profdata --output-dir=$(COVERAGE_PATH)/coverage --ignore-filename-regex=build_jenkins
+	$(COV) export --format=text --object=$(OUTNAME) --instr-profile=pruicss_pwm_deadband_epwm_sync.$(PROFILE).profdata > coverage/pruicss_pwm_deadband_epwm_sync.$(PROFILE).profdata.json
+	node ${MOTOR_CONTROL_SDK_PATH}/docs_src/code_coverage/clang_coverage_analyse.js --input=coverage/pruicss_pwm_deadband_epwm_sync.$(PROFILE).profdata.json --output-json=coverage/pruicss_pwm_deadband_epwm_sync.$(PROFILE).analysis.json --output-lnk=linker_xip.cmd --top-function-count=500
 	@echo Coverage Report Generated at $(COVERAGE_PATH)/coverage folder !!!
 
 -include $(addprefix $(OBJDIR)/, $(DEPS))

@@ -93,6 +93,32 @@ int32_t PRUICSS_PWM_setIepCounterUpper_32bitValue(PRUICSS_Handle handle, uint8_t
     return retVal;    
 }
 
+int32_t PRUICSS_PWM_configureIepShadowModeEnable(PRUICSS_Handle handle, uint8_t iepInstance, uint8_t enable)
+{
+    PRUICSS_HwAttrs const   *hwAttrs;
+    int32_t                 retVal = SystemP_FAILURE;
+
+    if ((handle != NULL) && (iepInstance < PRUICSS_NUM_IEP_INSTANCES) && (enable < 2))
+    {
+        retVal = SystemP_SUCCESS;
+        hwAttrs = (PRUICSS_HwAttrs const *)handle->hwAttrs;
+
+        switch (iepInstance)
+        {
+            case 0:
+                HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP_CFG_REG ),
+                              CSL_ICSS_G_PR1_IEP0_SLV_CMP_CFG_REG_SHADOW_EN, enable);
+                break;
+            case 1:
+                HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP_CFG_REG ),
+                              CSL_ICSS_G_PR1_IEP1_SLV_CMP_CFG_REG_SHADOW_EN, enable);
+                break;
+        }
+    }
+
+    return retVal;
+}
+
 int32_t PRUICSS_PWM_configureIepCmp0ResetEnable(PRUICSS_Handle handle, uint8_t iepInstance, uint8_t enable)
 {
     PRUICSS_HwAttrs const   *hwAttrs;
@@ -156,150 +182,36 @@ int32_t PRUICSS_PWM_setIepCompareEventLower_32bitValue(PRUICSS_Handle handle, ui
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)handle->hwAttrs;
 
-        switch (iepInstance)
+        switch(iepInstance)
         {
             case 0:
-                switch (cmpEvent)
+                if(cmpEvent<8)
                 {
-                    case 0:
-                        HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP0_REG0),
+                    HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP0_REG0 + cmpEvent*8),
                                CSL_ICSS_G_PR1_IEP0_SLV_CMP0_REG0_CMP0_0,(uint32_t)value);
-                        break;
-                    case 1:
-                        HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP1_REG0),
-                               CSL_ICSS_G_PR1_IEP0_SLV_CMP1_REG0_CMP1_0,(uint32_t)value);
-                        break;
-                    case 2:
-                        HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP2_REG0),
-                               CSL_ICSS_G_PR1_IEP0_SLV_CMP2_REG0_CMP2_0,(uint32_t)value);
-                        break;
-                    case 3:
-                        HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP3_REG0),
-                               CSL_ICSS_G_PR1_IEP0_SLV_CMP3_REG0_CMP3_0,(uint32_t)value);
-                        break;
-                    case 4:
-                        HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP4_REG0),
-                               CSL_ICSS_G_PR1_IEP0_SLV_CMP4_REG0_CMP4_0,(uint32_t)value);
-                        break;
-                    case 5:
-                        HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP5_REG0),
-                               CSL_ICSS_G_PR1_IEP0_SLV_CMP5_REG0_CMP5_0,(uint32_t)value);
-                        break;
-                    case 6:
-                        HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP6_REG0),
-                               CSL_ICSS_G_PR1_IEP0_SLV_CMP6_REG0_CMP6_0,(uint32_t)value);
-                        break;
-                    case 7:
-                        HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP7_REG0),
-                               CSL_ICSS_G_PR1_IEP0_SLV_CMP7_REG0_CMP7_0,(uint32_t)value);
-                        break;
-                    case 8:
-                        HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP8_REG0),
-                               CSL_ICSS_G_PR1_IEP0_SLV_CMP8_REG0_CMP8_0,(uint32_t)value);
-                        break;
-                    case 9:
-                        HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP9_REG0),
-                               CSL_ICSS_G_PR1_IEP0_SLV_CMP9_REG0_CMP9_0,(uint32_t)value);
-                        break;
-                    case 10:
-                        HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP10_REG0),
-                               CSL_ICSS_G_PR1_IEP0_SLV_CMP10_REG0_CMP10_0,(uint32_t)value);
-                        break;
-                    case 11:
-                        HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP11_REG0),
-                               CSL_ICSS_G_PR1_IEP0_SLV_CMP11_REG0_CMP11_0,(uint32_t)value);
-                        break;
-                    case 12:
-                        HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP12_REG0),
-                               CSL_ICSS_G_PR1_IEP0_SLV_CMP12_REG0_CMP12_0,(uint32_t)value);
-                        break;
-                    case 13:
-                        HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP13_REG0),
-                               CSL_ICSS_G_PR1_IEP0_SLV_CMP13_REG0_CMP13_0,(uint32_t)value);
-                        break;
-                    case 14:
-                        HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP14_REG0),
-                               CSL_ICSS_G_PR1_IEP0_SLV_CMP14_REG0_CMP14_0,(uint32_t)value);
-                        break;
-                    case 15:
-                        HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP15_REG0),
-                               CSL_ICSS_G_PR1_IEP0_SLV_CMP15_REG0_CMP15_0,(uint32_t)value);
-                        break;
                 }
-                break; 
-            case 1:
-                switch (cmpEvent)
+                else
                 {
-                    case 0:
-                        HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP0_REG0),
-                               CSL_ICSS_G_PR1_IEP1_SLV_CMP0_REG0_CMP0_0,(uint32_t)value);
-                        break;
-                    case 1:
-                        HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP1_REG0),
-                               CSL_ICSS_G_PR1_IEP1_SLV_CMP1_REG0_CMP1_0,(uint32_t)value);
-                        break;
-                    case 2:
-                        HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP2_REG0),
-                               CSL_ICSS_G_PR1_IEP1_SLV_CMP2_REG0_CMP2_0,(uint32_t)value);
-                        break;
-                    case 3:
-                        HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP3_REG0),
-                               CSL_ICSS_G_PR1_IEP1_SLV_CMP3_REG0_CMP3_0,(uint32_t)value);
-                        break;
-                    case 4:
-                        HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP4_REG0),
-                               CSL_ICSS_G_PR1_IEP1_SLV_CMP4_REG0_CMP4_0,(uint32_t)value);
-                        break;
-                    case 5:
-                        HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP5_REG0),
-                               CSL_ICSS_G_PR1_IEP1_SLV_CMP5_REG0_CMP5_0,(uint32_t)value);
-                        break;
-                    case 6:
-                        HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP6_REG0),
-                               CSL_ICSS_G_PR1_IEP1_SLV_CMP6_REG0_CMP6_0,(uint32_t)value);
-                        break;
-                    case 7:
-                        HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP7_REG0),
-                               CSL_ICSS_G_PR1_IEP1_SLV_CMP7_REG0_CMP7_0,(uint32_t)value);
-                        break;
-                    case 8:
-                        HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP8_REG0),
-                               CSL_ICSS_G_PR1_IEP1_SLV_CMP8_REG0_CMP8_0,(uint32_t)value);
-                        break;
-                    case 9:
-                        HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP9_REG0),
-                               CSL_ICSS_G_PR1_IEP1_SLV_CMP9_REG0_CMP9_0,(uint32_t)value);
-                        break;
-                    case 10:
-                        HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP10_REG0),
-                               CSL_ICSS_G_PR1_IEP1_SLV_CMP10_REG0_CMP10_0,(uint32_t)value);
-                        break;
-                    case 11:
-                        HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP11_REG0),
-                               CSL_ICSS_G_PR1_IEP1_SLV_CMP11_REG0_CMP11_0,(uint32_t)value);
-                        break;
-                    case 12:
-                        HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP12_REG0),
-                               CSL_ICSS_G_PR1_IEP1_SLV_CMP12_REG0_CMP12_0,(uint32_t)value);
-                        break;
-                    case 13:
-                        HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP13_REG0),
-                               CSL_ICSS_G_PR1_IEP1_SLV_CMP13_REG0_CMP13_0,(uint32_t)value);
-                        break;
-                    case 14:
-                        HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP14_REG0),
-                               CSL_ICSS_G_PR1_IEP1_SLV_CMP14_REG0_CMP14_0,(uint32_t)value);
-                        break;
-                    case 15:
-                        HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP15_REG0),
-                               CSL_ICSS_G_PR1_IEP1_SLV_CMP15_REG0_CMP15_0,(uint32_t)value);
-                        break;
+                    HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP0_REG0 + cmpEvent*8 + 8),
+                               CSL_ICSS_G_PR1_IEP0_SLV_CMP0_REG0_CMP0_0,(uint32_t)value);
+                }
+                break;
+            case 1:
+                if(cmpEvent<8)
+                {
+                    HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP0_REG0 + cmpEvent*8),
+                               CSL_ICSS_G_PR1_IEP0_SLV_CMP0_REG0_CMP0_0,(uint32_t)value);
+                }
+                else
+                {
+                    HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP0_REG0 + cmpEvent*8 + 8),
+                               CSL_ICSS_G_PR1_IEP0_SLV_CMP0_REG0_CMP0_0,(uint32_t)value);
                 }
                 break;
         }
 
     } 
-
+    
     return retVal;
 }
 
@@ -316,144 +228,30 @@ int32_t PRUICSS_PWM_setIepCompareEventUpper_32bitValue(PRUICSS_Handle handle, ui
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)handle->hwAttrs;
 
-        switch (iepInstance)
+        switch(iepInstance)
         {
             case 0:
-                switch (cmpEvent)
+                if(cmpEvent<8)
                 {
-                    case 0:
-                        HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP0_REG1),
-                               CSL_ICSS_G_PR1_IEP0_SLV_CMP0_REG1_CMP0_1,(uint32_t)value);
-                        break;
-                    case 1:
-                        HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP1_REG1),
-                               CSL_ICSS_G_PR1_IEP0_SLV_CMP1_REG1_CMP1_1,(uint32_t)value);
-                        break;
-                    case 2:
-                        HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP2_REG1),
-                               CSL_ICSS_G_PR1_IEP0_SLV_CMP2_REG1_CMP2_1,(uint32_t)value);
-                        break;
-                    case 3:
-                        HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP3_REG1),
-                               CSL_ICSS_G_PR1_IEP0_SLV_CMP3_REG1_CMP3_1,(uint32_t)value);
-                        break;
-                    case 4:
-                        HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP4_REG1),
-                               CSL_ICSS_G_PR1_IEP0_SLV_CMP4_REG1_CMP4_1,(uint32_t)value);
-                        break;
-                    case 5:
-                        HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP5_REG1),
-                               CSL_ICSS_G_PR1_IEP0_SLV_CMP5_REG1_CMP5_1,(uint32_t)value);
-                        break;
-                    case 6:
-                        HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP6_REG1),
-                               CSL_ICSS_G_PR1_IEP0_SLV_CMP6_REG1_CMP6_1,(uint32_t)value);
-                        break;
-                    case 7:
-                        HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP7_REG1),
-                               CSL_ICSS_G_PR1_IEP0_SLV_CMP7_REG1_CMP7_1,(uint32_t)value);
-                        break;
-                    case 8:
-                        HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP8_REG1),
-                               CSL_ICSS_G_PR1_IEP0_SLV_CMP8_REG1_CMP8_1,(uint32_t)value);
-                        break;
-                    case 9:
-                        HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP9_REG1),
-                               CSL_ICSS_G_PR1_IEP0_SLV_CMP9_REG1_CMP9_1,(uint32_t)value);
-                        break;
-                    case 10:
-                        HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP10_REG1),
-                               CSL_ICSS_G_PR1_IEP0_SLV_CMP10_REG1_CMP10_1,(uint32_t)value);
-                        break;
-                    case 11:
-                        HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP11_REG1),
-                               CSL_ICSS_G_PR1_IEP0_SLV_CMP11_REG1_CMP11_1,(uint32_t)value);
-                        break;
-                    case 12:
-                        HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP12_REG1),
-                               CSL_ICSS_G_PR1_IEP0_SLV_CMP12_REG1_CMP12_1,(uint32_t)value);
-                        break;
-                    case 13:
-                        HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP13_REG1),
-                               CSL_ICSS_G_PR1_IEP0_SLV_CMP13_REG1_CMP13_1,(uint32_t)value);
-                        break;
-                    case 14:
-                        HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP14_REG1),
-                               CSL_ICSS_G_PR1_IEP0_SLV_CMP14_REG1_CMP14_1,(uint32_t)value);
-                        break;
-                    case 15:
-                        HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP15_REG1),
-                               CSL_ICSS_G_PR1_IEP0_SLV_CMP15_REG1_CMP15_1,(uint32_t)value);
-                        break;
+                    HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP0_REG1 + cmpEvent*8),
+                               CSL_ICSS_G_PR1_IEP0_SLV_CMP0_REG0_CMP0_0,(uint32_t)value);
                 }
-                break; 
-            case 1:
-                switch (cmpEvent)
+                else
                 {
-                    case 0:
-                        HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP0_REG1),
-                               CSL_ICSS_G_PR1_IEP1_SLV_CMP0_REG1_CMP0_1,(uint32_t)value);
-                        break;
-                    case 1:
-                        HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP1_REG1),
-                               CSL_ICSS_G_PR1_IEP1_SLV_CMP1_REG1_CMP1_1,(uint32_t)value);
-                        break;
-                    case 2:
-                        HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP2_REG1),
-                               CSL_ICSS_G_PR1_IEP1_SLV_CMP2_REG1_CMP2_1,(uint32_t)value);
-                        break;
-                    case 3:
-                        HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP3_REG1),
-                               CSL_ICSS_G_PR1_IEP1_SLV_CMP3_REG1_CMP3_1,(uint32_t)value);
-                        break;
-                    case 4:
-                        HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP4_REG1),
-                               CSL_ICSS_G_PR1_IEP1_SLV_CMP4_REG1_CMP4_1,(uint32_t)value);
-                        break;
-                    case 5:
-                        HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP5_REG1),
-                               CSL_ICSS_G_PR1_IEP1_SLV_CMP5_REG1_CMP5_1,(uint32_t)value);
-                        break;
-                    case 6:
-                        HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP6_REG1),
-                               CSL_ICSS_G_PR1_IEP1_SLV_CMP6_REG1_CMP6_1,(uint32_t)value);
-                        break;
-                    case 7:
-                        HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP7_REG1),
-                               CSL_ICSS_G_PR1_IEP1_SLV_CMP7_REG1_CMP7_1,(uint32_t)value);
-                        break;
-                    case 8:
-                        HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP8_REG1),
-                               CSL_ICSS_G_PR1_IEP1_SLV_CMP8_REG1_CMP8_1,(uint32_t)value);
-                        break;
-                    case 9:
-                        HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP9_REG1),
-                               CSL_ICSS_G_PR1_IEP1_SLV_CMP9_REG1_CMP9_1,(uint32_t)value);
-                        break;
-                    case 10:
-                        HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP10_REG1),
-                               CSL_ICSS_G_PR1_IEP1_SLV_CMP10_REG1_CMP10_1,(uint32_t)value);
-                        break;
-                    case 11:
-                        HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP11_REG1),
-                               CSL_ICSS_G_PR1_IEP1_SLV_CMP11_REG1_CMP11_1,(uint32_t)value);
-                        break;
-                    case 12:
-                        HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP12_REG1),
-                               CSL_ICSS_G_PR1_IEP1_SLV_CMP12_REG1_CMP12_1,(uint32_t)value);
-                        break;
-                    case 13:
-                        HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP13_REG1),
-                               CSL_ICSS_G_PR1_IEP1_SLV_CMP13_REG1_CMP13_1,(uint32_t)value);
-                        break;
-                    case 14:
-                        HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP14_REG1),
-                               CSL_ICSS_G_PR1_IEP1_SLV_CMP14_REG1_CMP14_1,(uint32_t)value);
-                        break;
-                    case 15:
-                        HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP15_REG1),
-                               CSL_ICSS_G_PR1_IEP1_SLV_CMP15_REG1_CMP15_1,(uint32_t)value);
-                        break;
+                    HW_WR_FIELD32((hwAttrs->iep0RegBase + CSL_ICSS_G_PR1_IEP0_SLV_CMP0_REG1 + cmpEvent*8 + 8),
+                               CSL_ICSS_G_PR1_IEP0_SLV_CMP0_REG0_CMP0_0,(uint32_t)value);
+                }
+                break;
+            case 1:
+                if(cmpEvent<8)
+                {
+                    HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP0_REG1 + cmpEvent*8),
+                               CSL_ICSS_G_PR1_IEP0_SLV_CMP0_REG0_CMP0_0,(uint32_t)value);
+                }
+                else
+                {
+                    HW_WR_FIELD32((hwAttrs->iep1RegBase + CSL_ICSS_G_PR1_IEP1_SLV_CMP0_REG1 + cmpEvent*8 + 8),
+                               CSL_ICSS_G_PR1_IEP0_SLV_CMP0_REG0_CMP0_0,(uint32_t)value);
                 }
                 break;
         }
