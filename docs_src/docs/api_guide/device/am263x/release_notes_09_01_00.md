@@ -27,12 +27,14 @@ AM263x| R5F             | AM263x LaunchPad Revision E2  (referred to as am263x-l
 
 ## Tools, Compiler and Other Open Source SW Module Information
 
-Tools                   | Supported CPUs | Version
-------------------------|----------------|--------------------------------------------------------------
-Code Composer Studio    | R5F            | @VAR_CCS_VERSION_AM263X
-SysConfig               | R5F            | @VAR_SYSCFG_VERSION_AM263X, build @VAR_SYSCFG_BUILD_AM263X
-TI ARM CLANG            | R5F            | @VAR_TI_ARM_CLANG_VERSION
-FreeRTOS Kernel         | R5F            | @VAR_FREERTOS_KERNEL_VERSION
+Tools / SW module       | Supported CPUs | Version
+------------------------|----------------|-----------------------
+Code Composer Studio    | R5F            | 12.5.0
+SysConfig               | R5F            | 1.18.0, build 3266
+TI ARM CLANG            | R5F            | 3.2.0.LTS
+FreeRTOS Kernel         | R5F            | 10.4.3
+LwIP                    | R5F            | STABLE-2_2_0_RELEASE
+Mbed-TLS                | R5F            | mbedtls-2.13.1
 
 ## Key Features
 
