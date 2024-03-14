@@ -52,11 +52,13 @@ AM243x | R5F             | AM243x EVM (referred to as am243x-evm in code), \n AM
 
 Tools / SW module       | Supported CPUs | Version
 ------------------------|----------------|-----------------------
-Code Composer Studio    | R5F, M4F, A53  | @VAR_CCS_VERSION
-SysConfig               | R5F, M4F, A53  | @VAR_SYSCFG_VERSION, build @VAR_SYSCFG_BUILD
-TI ARM CLANG            | R5F, M4F       | @VAR_TI_ARM_CLANG_VERSION
-FreeRTOS Kernel         | R5F, M4F, A53  | @VAR_FREERTOS_KERNEL_VERSION
-FreeRTOS SMP Kernel     | A53            | @VAR_FREERTOS_SMP_KERNEL_VERSION
+Code Composer Studio    | R5F, M4F       | 12.5.0
+SysConfig               | R5F, M4F       | 1.18.0, build 3266
+TI ARM CLANG            | R5F, M4F       | 3.2.0.LTS
+FreeRTOS Kernel         | R5F, M4F       | 10.4.3
+Tiny USB                | R5F            | 0.14.0
+LwIP                    | R5F            | STABLE-2_2_0_RELEASE
+Mbed-TLS                | R5F            | mbedtls-2.13.1
 
 ## Key Features
 
