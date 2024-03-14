@@ -141,6 +141,72 @@ M_ACC3_PROCESS  .macro  DN1, DN3, DN5
     .endm
 
 ;************************************************************************************
+;************************************************************************************
+;   Macro: M_ACC2_PROCESS
+;
+;   Calculates Sinc2 sample value from ACC2 & Sinc2 variables
+; 
+;   PEAK cycles:
+;        5 cycles
+;
+;   Pseudo code:
+;       (start code)
+;       cn3 = dn0 - dn1;
+;       dn1 = dn0;
+;       cn4 = cn3 - dn3;
+;       dn3 = cn3;
+;       cn5 = cn5 & 0x0FFFFFFF
+;       (endcode) 
+;   Parameters:
+;      DN1, DN3: Sinc2 differntiator state variables
+;
+;   Result:
+;      CN5 : Output sample
+;
+;    Uses:
+;       CN3, CN4, CN5
+;
+;************************************************************************************
+M_ACC2_PROCESS  .macro  DN1, DN3
+    RSB     CN3, DN1, DN0
+    MOV     DN1, DN0
+    RSB     CN4, DN3, CN3
+    MOV     DN3, CN3
+    AND     CN5, CN4, MASK_REG  ; apply limit
+    .endm
+
+;***********************************************************************************
+;************************************************************************************
+;   Macro: M_ACC1_PROCESS
+;
+;   Calculates Sinc1 sample value from ACC1 & Sinc1 variables
+; 
+;   PEAK cycles:
+;        3 cycles
+;
+;   Pseudo code:
+;       (start code)
+;       cn3 = dn0 - dn1;
+;       dn1 = dn0;
+;       cn5 = cn3 & 0x0FFFFFFF
+;       (endcode) 
+;   Parameters:
+;      DN1 : Sinc1 differntiator state variables
+;
+;   Result:
+;      CN5 : Output sample
+;
+;    Uses:
+;       CN3, CN5
+;
+;************************************************************************************
+M_ACC1_PROCESS  .macro  DN1
+    RSB     CN3, DN1, DN0
+    MOV     DN1, DN0
+    AND     CN5, CN3, MASK_REG  ; apply limit
+    .endm
+
+;***********************************************************************************
 ;
 ;   Macro: M_PRU_TM_ENABLE
 ;
