@@ -48,10 +48,6 @@ extern "C" {
 /* ========================================================================== */
 
 
-/** \brief ICSSG DMEM0/1 base addresses */
-#define PRU_ICSSG_DRAM0_SLV_RAM     ( CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE )
-#define PRU_ICSSG_DRAM1_SLV_RAM     ( CSL_PRU_ICSSG0_DRAM1_SLV_RAM_BASE )
-
 /** \brief SD channel control, channel disable/enable */
 #define DEF_SD_CH_CTRL_CH_EN        ( 0 )       /* default all chs disabled */
 #define BF_CH_EN_MASK               ( 0x1 )

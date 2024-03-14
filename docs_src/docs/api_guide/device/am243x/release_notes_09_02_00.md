@@ -99,6 +99,13 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> 9.1
     <td> -
 </tr>
+<tr>
+    <td> PINDSW-7595
+    <td> %SDFM: \ref SDFM_init API does not have support for icssg1
+    <td> Current Sense %SDFM
+    <td> -
+    <td> -
+</tr>
 </table>
 
 ## Known Issues
@@ -189,7 +196,7 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
 </tr>
 </table>
 
-## Upgrade and Compatibility Information {#UPGRADE_AND_COMPATIBILITY_INFORMATION_9_1_0}
+## Upgrade and Compatibility Information {#UPGRADE_AND_COMPATIBILITY_INFORMATION_9_2_0}
 
 <!-- \attention When migrating from MCU+ SDK, see \ref MIGRATION_GUIDES for more details -->
 
@@ -225,9 +232,9 @@ earlier SDKs.
     <th> Additional Remarks
 </tr>
 <tr>
-    <td>
-    <td>
-    <td>
+    <td>  Current Sense %SDFM
+    <td>  Structure `SdfmPrms_s`
+    <td>  Added a variable: `icssgInsId`
     <td>
 </tr>
 </table>
@@ -263,6 +270,12 @@ earlier SDKs.
     <td> PRUICSS PWM
     <td> \ref PRUICSS_PWM_actionOnOutputCfgPwmSignalA2
     <td> Updated definition to configure action of PWMn_m_2_POS signal in active, intial, trigger states
+    <td> -
+</tr>
+<tr>
+    <td> Current Sense %SDFM
+    <td> \ref SDFM_init
+    <td> Added new parameter: PRU-ICSSG handle.
     <td> -
 </tr>
 </table>

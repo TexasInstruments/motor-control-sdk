@@ -182,7 +182,8 @@ int32_t initPruSddf(
 int32_t initSddf(
     uint8_t pruId, uint8_t pruInstId, 
     SdfmPrms *pSddfPrms, 
-    sdfm_handle *pHSddf
+    sdfm_handle *pHSddf,
+    PRUICSS_Handle pruIcssHandle
 );
 
 

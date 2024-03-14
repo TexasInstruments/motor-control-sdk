@@ -517,7 +517,7 @@ int32_t initPruSddf(
     }
     
     /* Initialize SDDF PRU FW */
-    status = initSddf(pruId, pruInstId, pSddfPrms, pHSddf);
+    status = initSddf(pruId, pruInstId, pSddfPrms, pHSddf, pruIcssHandle);
     if (status != SDDF_ERR_NERR) {
         return SDDF_ERR_INIT_PRU_SDDF;
     }
@@ -528,13 +528,13 @@ int32_t initPruSddf(
 int32_t initSddf(
     uint8_t pruId, uint8_t pruInstId,
     SdfmPrms *pSdfmPrms, 
-    sdfm_handle *pHSdfm
+    sdfm_handle *pHSdfm, PRUICSS_Handle pruIcssHandle
 )
 {
     sdfm_handle hSdfm;
-   
+    
     /* Initialize SDFM instance */
-    hSdfm = SDFM_init(pruId, pruInstId);
+    hSdfm = SDFM_init(pruIcssHandle, pruId, pruInstId);
     if (hSdfm == NULL) {
         return SDDF_ERR_INIT_SDDF;
     }
