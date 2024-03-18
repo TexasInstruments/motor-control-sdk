@@ -12,7 +12,7 @@ function getInterfacePinList(inst)
     let pinList = [];
 
     /*SDFM SD8_CLK clock*/
-    pinList.push({ pinName: "GPI16", displayName: "SD_CLK8", rx: true});
+    pinList.push({ pinName: "GPI16", displayName: "SD8_CLK", rx: true});
     
     /*SD0_D*/
     pinList.push({ pinName: "GPI1", displayName: "SD_CHANNEL0_DATA", rx: true});
@@ -41,6 +41,23 @@ function getInterfacePinList(inst)
     /*SD8_D*/
     pinList.push({ pinName: "GPI17", displayName: "SD_CHANNEL8_DATA", rx: true});
 
+    /*SD0_CLK*/
+    pinList.push({ pinName: "GPI0", displayName: "SD0_CLK", rx: true});
+    /*SD1_CLK*/
+    pinList.push({ pinName: "GPI2", displayName: "SD1_CLK", rx: true});
+    /*SD2_CLK*/
+    pinList.push({ pinName: "GPI4", displayName: "SD2_CLK", rx: true});
+    /*SD3_CLK*/
+    pinList.push({ pinName: "GPI6", displayName: "SD3_CLK", rx: true});
+    /*SD4_CLK*/
+    pinList.push({ pinName: "GPI8", displayName: "SD4_CLK", rx: true});
+    /*SD5_CLK*/
+    pinList.push({ pinName: "GPI10", displayName: "SD5_CLK", rx: true});
+    /*SD6_CLK*/
+    pinList.push({ pinName: "GPI12", displayName: "SD6_CLK", rx: true});
+    /*SD7_CLK*/
+    pinList.push({ pinName: "GPI14", displayName: "SD7_CLK", rx: true});
+    
     return pinList;
 }
 
@@ -56,7 +73,7 @@ function pinmuxRequirements(inst) {
 
         pinmux.setConfigurableDefault( pinResource, "rx", pin.rx );
 
-        if(inst["Channel_0"] == true){
+        if(inst["Enable_Channel_0"] == true){
             if((pin.pinName == "GPI1")){
                 pinResource.used = true;
             }
@@ -65,7 +82,7 @@ function pinmuxRequirements(inst) {
                 pinResource.used = false;
             }    
          }
-         if(inst["Channel_1"] == true){
+         if(inst["Enable_Channel_1"] == true){
             if((pin.pinName == "GPI3")){
                 pinResource.used = true;
             }
@@ -74,7 +91,7 @@ function pinmuxRequirements(inst) {
                 pinResource.used = false;
             }    
          }
-         if(inst["Channel_2"]==true){
+         if(inst["Enable_Channel_2"]==true){
             if((pin.pinName == "GPI5")){
                 pinResource.used = true;
             }
@@ -83,7 +100,7 @@ function pinmuxRequirements(inst) {
                 pinResource.used = false;
             }    
          }
-         if(inst["Channel_3"]==true){
+         if(inst["Enable_Channel_3"]==true){
             if((pin.pinName == "GPI7")){
                 pinResource.used = true;
             }
@@ -92,7 +109,7 @@ function pinmuxRequirements(inst) {
                 pinResource.used = false;
             }    
          }
-         if(inst["Channel_4"]==true){
+         if(inst["Enable_Channel_4"]==true){
             if((pin.pinName == "GPI18")){
                 pinResource.used = true;
             }
@@ -101,7 +118,7 @@ function pinmuxRequirements(inst) {
                 pinResource.used = false;
             }    
          }
-         if(inst["Channel_5"]==true){
+         if(inst["Enable_Channel_5"]==true){
             if((pin.pinName == "GPI11")){
                 pinResource.used = true;
             }
@@ -110,7 +127,7 @@ function pinmuxRequirements(inst) {
                 pinResource.used = false;
             }    
          }
-         if(inst["Channel_6"]==true){
+         if(inst["Enable_Channel_6"]==true){
             if((pin.pinName == "GPI13")){
                 pinResource.used = true;
             }
@@ -119,7 +136,7 @@ function pinmuxRequirements(inst) {
                 pinResource.used = false;
             }    
          }
-         if(inst["Channel_7"]==true){
+         if(inst["Enable_Channel_7"]==true){
             if((pin.pinName == "GPI15")){
                 pinResource.used = true;
             }
@@ -128,7 +145,7 @@ function pinmuxRequirements(inst) {
                 pinResource.used = false;
             }    
          }
-         if(inst["Channel_8"]==true){
+         if(inst["Enable_Channel_8"]==true){
             if((pin.pinName == "GPI17")){
                 pinResource.used = true;
             }
