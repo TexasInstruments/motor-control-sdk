@@ -46,8 +46,6 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += icss_sdfm_three_channel_with_contin
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += icss_sdfm_three_channel_with_continuous_mode_am243x-lp_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += icss_sdfm_three_channel_with_phase_compensation_am243x-evm_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += icss_sdfm_three_channel_with_phase_compensation_am243x-lp_r5fss0-0_freertos_ti-arm-clang_build
-BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += pruicss_pwm_duty_cycle_am243x-evm_r5fss0-0_freertos_ti-arm-clang_build
-BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += pruicss_pwm_duty_cycle_am243x-lp_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += pruicss_pwm_deadband_epwm_sync_am243x-lp_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += pruicss_pwm_deadband_epwm_sync_am243x-evm_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += pruicss_pwm_deadband_epwm_sync_am243x-lp_r5fss0-0_nortos_ti-arm-clang_build
@@ -206,12 +204,6 @@ all-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL)
  icss_sdfm_three_channel_with_phase_compensation_am243x-lp_r5fss0-0_freertos_ti-arm-clang_build:
 	$(MAKE) -C examples/current_sense/icss_sdfm_three_channel_with_phase_compensation/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
 
- pruicss_pwm_duty_cycle_am243x-evm_r5fss0-0_freertos_ti-arm-clang_build:
-	$(MAKE) -C examples/pruicss_pwm/pruicss_pwm_duty_cycle/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
-
- pruicss_pwm_duty_cycle_am243x-lp_r5fss0-0_freertos_ti-arm-clang_build:
-	$(MAKE) -C examples/pruicss_pwm/pruicss_pwm_duty_cycle/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
-
  pruicss_pwm_deadband_epwm_sync_am243x-lp_r5fss0-0_freertos_ti-arm-clang_build:
 	$(MAKE) -C examples/pruicss_pwm/pruicss_pwm_dead_band_epwm_sync/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
 
@@ -348,8 +340,6 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += icss_sdfm_three_channel_with_contin
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += icss_sdfm_three_channel_with_continuous_mode_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += icss_sdfm_three_channel_with_phase_compensation_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += icss_sdfm_three_channel_with_phase_compensation_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean
-BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += pruicss_pwm_duty_cycle_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean
-BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += pruicss_pwm_duty_cycle_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += pruicss_pwm_deadband_epwm_sync_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += pruicss_pwm_deadband_epwm_sync_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += pruicss_pwm_deadband_epwm_sync_am243x-lp_r5fss0-0_nortos_ti-arm-clang_clean
@@ -508,12 +498,6 @@ clean-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL)
  icss_sdfm_three_channel_with_phase_compensation_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
 	$(MAKE) -C examples/current_sense/icss_sdfm_three_channel_with_phase_compensation/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
 
- pruicss_pwm_duty_cycle_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean:
-	$(MAKE) -C examples/pruicss_pwm/pruicss_pwm_duty_cycle/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
-
- pruicss_pwm_duty_cycle_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
-	$(MAKE) -C examples/pruicss_pwm/pruicss_pwm_duty_cycle/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
-
  pruicss_pwm_deadband_epwm_sync_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
 	$(MAKE) -C examples/pruicss_pwm/pruicss_pwm_dead_band_epwm_sync/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
 
@@ -650,8 +634,6 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += icss_sdfm_three_channel_with_conti
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += icss_sdfm_three_channel_with_continuous_mode_am243x-lp_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += icss_sdfm_three_channel_with_phase_compensation_am243x-evm_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += icss_sdfm_three_channel_with_phase_compensation_am243x-lp_r5fss0-0_freertos_ti-arm-clang_export
-BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += pruicss_pwm_duty_cycle_am243x-evm_r5fss0-0_freertos_ti-arm-clang_export
-BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += pruicss_pwm_duty_cycle_am243x-lp_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += pruicss_pwm_deadband_epwm_sync_am243x-lp_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += pruicss_pwm_deadband_epwm_sync_am243x-evm_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += pruicss_pwm_deadband_epwm_sync_am243x-lp_r5fss0-0_nortos_ti-arm-clang_export
@@ -809,12 +791,6 @@ export-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL)
 
  icss_sdfm_three_channel_with_phase_compensation_am243x-lp_r5fss0-0_freertos_ti-arm-clang_export:
 	$(MAKE) -C examples/current_sense/icss_sdfm_three_channel_with_phase_compensation/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
-
- pruicss_pwm_duty_cycle_am243x-evm_r5fss0-0_freertos_ti-arm-clang_export:
-	$(MAKE) -C examples/pruicss_pwm/pruicss_pwm_duty_cycle/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
-
- pruicss_pwm_duty_cycle_am243x-lp_r5fss0-0_freertos_ti-arm-clang_export:
-	$(MAKE) -C examples/pruicss_pwm/pruicss_pwm_duty_cycle/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
 
  pruicss_pwm_deadband_epwm_sync_am243x-lp_r5fss0-0_freertos_ti-arm-clang_export:
 	$(MAKE) -C examples/pruicss_pwm/pruicss_pwm_dead_band_epwm_sync/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
@@ -977,8 +953,6 @@ help:
 	@echo  $(MAKE) -s -C examples/current_sense/icss_sdfm_three_channel_with_continuous_mode/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/current_sense/icss_sdfm_three_channel_with_phase_compensation/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/current_sense/icss_sdfm_three_channel_with_phase_compensation/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
-	@echo  $(MAKE) -s -C examples/pruicss_pwm/pruicss_pwm_duty_cycle/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
-	@echo  $(MAKE) -s -C examples/pruicss_pwm/pruicss_pwm_duty_cycle/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/pruicss_pwm/pruicss_pwm_dead_band_epwm_sync/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/pruicss_pwm/pruicss_pwm_dead_band_epwm_sync/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/pruicss_pwm/pruicss_pwm_dead_band_epwm_sync/am243x-lp/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec [export all clean]

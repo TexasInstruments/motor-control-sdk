@@ -32,102 +32,59 @@
 
 #include <pruicss_pwm.h>
 
-typedef struct
-{
-    /*pwm frequency*/
-    uint32_t pruIcssPwmFrequency;
-    /*enable or disable IEP0*/
-    uint8_t  enableIep0;
-    /*enable or disable IEP0 reset on EPWM0_sync event*/
-    uint8_t  enableIep0ResetOnEpwm0_Sync;
-    /*enable or disable IEP0 reset on EPWM3_sync event*/
-    uint8_t  enableIep0ResetOnEpwm3_Sync;
-    /*enable or disable IEP0 reset on compare 0 event*/
-    uint8_t  enableIep0ResetOnCompare0;
-    /*enable or disable shadow mode of IEP*/
-    uint8_t  enableIEP0ShadowMode;
-    /*enable or disable slave mode, after enabling IEP1 counter follows IEP0*/
-    uint8_t  enableIep1SlaveMode;
-    /*enable or disable auto clear compare status of IEP0 and IEP1*/
-    uint8_t  enableAutoClearCompareStatus;
-    /*iep0 increment value*/
-    uint8_t  iep0IncrementValue;
+/*---------------------------------------------------------------------------------------*/
+/*TODO:                    sysconfig generation code starts here                         */
+/*---------------------------------------------------------------------------------------*/
 
-    /*
-     * Note : It is recommended to enable shadow mode , reset on compare0, iep1 slave mode, enable auto clear compare status
-     */
+/* IEP0_CLK_FREQ in hertz*/
+#define PRUICSS_IEP0_CLK_FREQ                               (200000000U)
+/* IEP CLK period in nano seconds*/
+#define PRUICSS_IEP0_CLK_PERIOD_IN_NANOSECONDS              (5U)
+/* Modify this to change the IEP counter increment value*/
+#define PRUICSS_IEP_COUNT_INCREMENT_VALUE                   (1U)
+/* PRUICSS PWM frequency in Hz*/
+#define PRUICSS_PWM_FREQUENCY                               (16000U)
+/* Macro's to configure duty cycle, rise edge & fall edge deadband of pwm signals*/
+#define PRUICSS_PWM_SET0_INSTANCE_A0_DUTY_CYCLE                   (25U)
+#define PRUICSS_PWM_SET0_INSTANCE_A0_RISE_EDGE_DELAY_IN_ns        (0U)
+#define PRUICSS_PWM_SET0_INSTANCE_A0_FALL_EDGE_DELAY_IN_ns        (0U)
 
-}AppPruIcssPwmIepCfg_t;
+#define PRUICSS_PWM_SET0_INSTANCE_B0_DUTY_CYCLE                   (25U)
+#define PRUICSS_PWM_SET0_INSTANCE_B0_RISE_EDGE_DELAY_IN_ns        (200U)
+#define PRUICSS_PWM_SET0_INSTANCE_B0_FALL_EDGE_DELAY_IN_ns        (400U)
 
-typedef struct
-{
+#define PRUICSS_PWM_SET2_INSTANCE_A0_DUTY_CYCLE                   (75U)
+#define PRUICSS_PWM_SET2_INSTANCE_A0_RISE_EDGE_DELAY_IN_ns        (0U)
+#define PRUICSS_PWM_SET2_INSTANCE_A0_FALL_EDGE_DELAY_IN_ns        (0U)
 
-    /*
-     *
-     * Note : This structure is placed as instance in multidimensional array of (4 X 6)
-     *
-     * Each entry in (PRUICSS_NUM_PWM_SETS X PRUICSS_NUM_OF_PWMINSTANCES_PER_SET) array maps to config parameters of one PWM signal.
-     *
-     */
+#define PRUICSS_PWM_SET2_INSTANCE_B0_DUTY_CYCLE                   (75U)
+#define PRUICSS_PWM_SET2_INSTANCE_B0_RISE_EDGE_DELAY_IN_ns        (600U)
+#define PRUICSS_PWM_SET2_INSTANCE_B0_FALL_EDGE_DELAY_IN_ns        (800U)
 
-    /*duty cycle of current pwm signal*/
-    uint32_t dutyCycle;
-    /*fall edge of current pwm signal*/
-    uint32_t fallEdgeDelay;
-    /*rise edge of current pwm signal*/
-    uint32_t riseEdgeDelay;
-    /*current pwm signal output in intial state*/
-    uint8_t  outputCfgInitialState;
-    /*current pwm signal output in active state*/
-    uint8_t  outputCfgActiveState;
-    /*current pwm signal output in trip state*/
-    uint8_t  outputCfgTripState;
-    /*enable or disable current pwm signal*/
-    uint8_t  enable;
+#define CONFIG_PRUICSS_PWM_IEP_INSTANCE     0
 
-    /*
-     * Below parameters(iepInstance, compareEvent) are configured on pwm init api call. 
-     */
-
-    /*iep instance mapped to current pwm signal*/
-    uint8_t  iepInstance;
-    /*compare event mapped to current pwm signal*/
-    uint8_t  compareEvent;
-
-}AppPruIcssPwmCfg_t;
+/*-----------------------------------------------------------------------------------------*/
+/*TODO:                    sysconfig generation code ends here                             */
+/*-----------------------------------------------------------------------------------------*/
 
 typedef struct{
-    PRUICSS_Handle pruIcssHandle;
-    AppPruIcssPwmCfg_t  (*pruIcssPwmCfg)[PRUICSS_NUM_OF_PWMINSTANCES_PER_PWM_SET];
-    AppPruIcssPwmIepCfg_t pruIcssPwmIepCfg;
+    PRUICSS_PWM_Handle handle; 
     uint32_t EpwmBaseAddr;
 }AppEpwmSync0IrqArgs_t;
 
 /* Configures SOC EPWM */
 void App_epwmConfig(uint32_t epwmBaseAddr, uint32_t epwmCh, uint32_t epwmFuncClk);
-/* Intializes the Iep parameters with default values*/
-void App_pruIcssPwmIepInit(AppPruIcssPwmIepCfg_t *pruIcssPwmIepCfg, uint32_t pruIcssPwmFrequency);
-/* Configures the Iep parameters defined in pruIcssPwmIepCfg*/
-void App_pruIcssPwmIepConfig(PRUICSS_Handle handle, AppPruIcssPwmIepCfg_t pruIcssPwmIepCfg);
-/* Intializes the pwm parameters output in intial, active, trip states with default values & maps compare events and disables all pwm signals*/
-void App_pruIcssPwmInit(AppPruIcssPwmCfg_t  pruIcssPwmCfg[PRUICSS_NUM_PWM_SETS][PRUICSS_NUM_OF_PWMINSTANCES_PER_PWM_SET]);
-/* Enables & configures pwm signal states & intializes pwm period & duty cycle,PruIcssPwmCfg function call can be used in motor control foc loop to update duty cycle of pwm*/
-void App_pruIcssPwmCfg(AppPruIcssPwmCfg_t  pruIcssPwmCfg[PRUICSS_NUM_PWM_SETS][PRUICSS_NUM_OF_PWMINSTANCES_PER_PWM_SET], uint8_t pwmSet, uint8_t instance,  uint32_t dutyCycle, uint32_t riseEdgeDelay, uint32_t fallEdgeDelay);
-/*If pwm signal is enabled ,Intializes the pwm output configuration of pwm states from the parameters specified */
-void App_pruIcssPwmStateInit(AppPruIcssPwmCfg_t  pruIcssPwmCfg[PRUICSS_NUM_PWM_SETS][PRUICSS_NUM_OF_PWMINSTANCES_PER_PWM_SET], uint8_t pwmSet, uint8_t instance, uint8_t outputCfgInitialState, uint8_t outputCfgActiveState, uint8_t outputCfgTripState);
-/* If pwm signal is enabled ,Configures output state defined in pruIcssPwmCfg*/
-void App_pruIcssPwmStateConfig(PRUICSS_Handle handle, AppPruIcssPwmCfg_t  pruIcssPwmCfg[PRUICSS_NUM_PWM_SETS][PRUICSS_NUM_OF_PWMINSTANCES_PER_PWM_SET], AppPruIcssPwmIepCfg_t pruIcssPwmIepCfg);
 /* This funtions configures App_pruIcssPwmHalfDoneIrq ISR which controls the duty cycle and dead band at fall edge of PWM signals*/
-void App_pruicssIep1Compare0IrqSet(PRUICSS_Handle handle);
-void App_pruIcssPwmHalfDoneIrq();
+int32_t App_pruicssIep1Compare0IrqSet(PRUICSS_PWM_Handle handle);
+void App_pruIcssPwmHalfDoneIrq(void *args);
 /* This funtions configures App_epwmSync0Irq ISR which controls the period of PRUICSS PWM signals, duty cycle and dead band at rise edge of PWM signals */
-void App_epwm0Sync0IrqSet(PRUICSS_Handle handle, AppPruIcssPwmCfg_t pruIcssPwmCfg[PRUICSS_NUM_PWM_SETS][PRUICSS_NUM_OF_PWMINSTANCES_PER_PWM_SET], AppPruIcssPwmIepCfg_t pruIcssPwmIepCfg, uint32_t epwmBaseAddr);
+int32_t App_epwm0Sync0IrqSet(PRUICSS_PWM_Handle handle, uint32_t epwmBaseAddr);
 void App_epwmSync0Irq(void *args);
 /* This function writes compare values which controls next rising edge of pwm signals from duty cycle & period configured*/
-void App_updateNextRisingEdgeCmpValue(PRUICSS_Handle handle, AppPruIcssPwmCfg_t pruIcssPwmCfg[PRUICSS_NUM_PWM_SETS][PRUICSS_NUM_OF_PWMINSTANCES_PER_PWM_SET], AppPruIcssPwmIepCfg_t pruIcssPwmIepCfg);
+int32_t App_updateNextRisingEdgeCmpValue(PRUICSS_PWM_Handle handle);
 /* Sciclient API calls are used in mapping interrupt request to destination id & index from source id & index specified
  * Refer : https://software-dl.ti.com/tisci/esd/latest/5_soc_doc/am64x/interrupt_cfg.html#cmp-event-introuter0-interrupt-router-input-sources
  *      : https://software-dl.ti.com/tisci/esd/latest/5_soc_doc/am64x/interrupt_cfg.html#cmp-event-introuter0-interrupt-router-output-destinations
  */
-void App_sciclientCmpEventRouterIrqset(PRUICSS_Handle handle);
-void App_sciclientCmpEventRouterIrqRelease(PRUICSS_Handle handle);
+int32_t App_sciclientCmpEventRouterIrqset(PRUICSS_PWM_Handle handle);
+int32_t App_sciclientCmpEventRouterIrqRelease(PRUICSS_PWM_Handle handle);
