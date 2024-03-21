@@ -12,8 +12,8 @@
         "tags": ["SDK", "Baremetal", "FreeRTOS"],
         "description": "Motor Control SDK contains examples, libraries and tools to develop RTOS and no-RTOS based applications enabling real-time communication for position and current sense from motors, and real-time control libraries for ARM R5F CPU and related peripherals.",
         "dependencies": [
-            { "packageId": "sysconfig", "version": "1.19.0", "require": "mandatory" },
-            { "packageId": "ti_cgt_tiarmclang", "version": "3.2.1", "require": "mandatory" },
+            { "packageId": "sysconfig", "version": "1.20.0", "require": "mandatory" },
+            { "packageId": "ti_cgt_tiarmclang", "version": "3.2.2", "require": "mandatory" },
             { "packageId": "arm.gnu.aarch64-none", "version": "9.2.1", "require": "mandatory" }
         ]
     }
