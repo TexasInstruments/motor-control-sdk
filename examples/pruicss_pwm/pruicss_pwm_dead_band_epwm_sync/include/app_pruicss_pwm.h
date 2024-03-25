@@ -32,41 +32,6 @@
 
 #include <pruicss_pwm.h>
 
-/*---------------------------------------------------------------------------------------*/
-/*TODO:                    sysconfig generation code starts here                         */
-/*---------------------------------------------------------------------------------------*/
-
-/* IEP0_CLK_FREQ in hertz*/
-#define PRUICSS_IEP0_CLK_FREQ                               (200000000U)
-/* IEP CLK period in nano seconds*/
-#define PRUICSS_IEP0_CLK_PERIOD_IN_NANOSECONDS              (5U)
-/* Modify this to change the IEP counter increment value*/
-#define PRUICSS_IEP_COUNT_INCREMENT_VALUE                   (1U)
-/* PRUICSS PWM frequency in Hz*/
-#define PRUICSS_PWM_FREQUENCY                               (16000U)
-/* Macro's to configure duty cycle, rise edge & fall edge deadband of pwm signals*/
-#define PRUICSS_PWM_SET0_INSTANCE_A0_DUTY_CYCLE                   (25U)
-#define PRUICSS_PWM_SET0_INSTANCE_A0_RISE_EDGE_DELAY_IN_ns        (0U)
-#define PRUICSS_PWM_SET0_INSTANCE_A0_FALL_EDGE_DELAY_IN_ns        (0U)
-
-#define PRUICSS_PWM_SET0_INSTANCE_B0_DUTY_CYCLE                   (25U)
-#define PRUICSS_PWM_SET0_INSTANCE_B0_RISE_EDGE_DELAY_IN_ns        (200U)
-#define PRUICSS_PWM_SET0_INSTANCE_B0_FALL_EDGE_DELAY_IN_ns        (400U)
-
-#define PRUICSS_PWM_SET2_INSTANCE_A0_DUTY_CYCLE                   (75U)
-#define PRUICSS_PWM_SET2_INSTANCE_A0_RISE_EDGE_DELAY_IN_ns        (0U)
-#define PRUICSS_PWM_SET2_INSTANCE_A0_FALL_EDGE_DELAY_IN_ns        (0U)
-
-#define PRUICSS_PWM_SET2_INSTANCE_B0_DUTY_CYCLE                   (75U)
-#define PRUICSS_PWM_SET2_INSTANCE_B0_RISE_EDGE_DELAY_IN_ns        (600U)
-#define PRUICSS_PWM_SET2_INSTANCE_B0_FALL_EDGE_DELAY_IN_ns        (800U)
-
-#define CONFIG_PRUICSS_PWM_IEP_INSTANCE     0
-
-/*-----------------------------------------------------------------------------------------*/
-/*TODO:                    sysconfig generation code ends here                             */
-/*-----------------------------------------------------------------------------------------*/
-
 typedef struct{
     PRUICSS_PWM_Handle handle; 
     uint32_t EpwmBaseAddr;

@@ -49,48 +49,6 @@
 /* Source Index of Icssg1 iep1 compare 0*/
 #define TISCI_PRU_ICSSG1_IEP1_CMP0_SRC_INDEX                (28U)
 
-/*---------------------------------------------------------------------------------------*/
-/* TODO:                   sysconfig generation code starts here                         */
-/*---------------------------------------------------------------------------------------*/
-
-extern PRUICSS_Config gPruIcssConfig[];
-
-uint32_t gPruIcssPwmConfigNum = 1;
-
-PRUICSS_PWM_IEP_Attrs iepAttrs[] =
-{
-    {     
-        .pruIcssIepClkFrequency = PRUICSS_IEP0_CLK_FREQ,
-        .pruIcssIepClkPeriod = PRUICSS_IEP0_CLK_PERIOD_IN_NANOSECONDS,
-        .iep0IncrementValue = PRUICSS_IEP_COUNT_INCREMENT_VALUE,
-        .enableIep0 = 1U,
-        .enableIEP0ShadowMode = 1U,
-        .enableIep0ResetOnEpwm0_Sync = 1U,
-        .enableIep0ResetOnEpwm3_Sync = 0U,
-        .enableIep0ResetOnCompare0 = 1U,
-        .enableIep1SlaveMode = 1U,
-        .enableAutoClearCompareStatus = 1U
-    }
-};
-
-
-
-/* PRUICSS driver configuration */
-PRUICSS_PWM_Config gPruIcssPwmConfig[] =
-{
-    {
-        .pruIcssHandle   = &gPruIcssConfig[CONFIG_PRU_ICSS0],
-        .pwmAttrs        = {0},
-        .iepAttrs        = &iepAttrs[CONFIG_PRUICSS_PWM_IEP_INSTANCE]
-    },
-};
-
-
-
-/*-----------------------------------------------------------------------------------------*/
-/*TODO:                    sysconfig generation code ends here                             */
-/*-----------------------------------------------------------------------------------------*/
-
 extern uint8_t gUpdateNextRisingEdgeCmpValue;
 
 int32_t App_updateNextRisingEdgeCmpValue(PRUICSS_PWM_Handle handle)
@@ -102,10 +60,10 @@ int32_t App_updateNextRisingEdgeCmpValue(PRUICSS_PWM_Handle handle)
     if((handle!=NULL))
     {
         /* compare0_val is calculated based on pwm period */
-        uint32_t compare0_val = ((((handle->iepAttrs)->pruIcssIepClkFrequency)/((handle->iepAttrs)->pruIcssPwmFrequency))*((handle->iepAttrs)->iep0IncrementValue));
+        uint32_t compare0_val = (float)((((handle->iepAttrs)->pruIcssIepClkFrequency *((handle->iepAttrs)->iep0IncrementValue)))/((handle->iepAttrs)->pruIcssPwmFrequency));
 
         /*div by 2 is done to update compare values half of the pwm period, as IEP cannot be configured in up-down mode*/
-        compare0_val = (compare0_val)/2;
+        compare0_val = (float)(compare0_val)/2;
 
         uint32_t compare_val;
         uint8_t  currentPwmInstance, currentPwmSet;
@@ -118,9 +76,9 @@ int32_t App_updateNextRisingEdgeCmpValue(PRUICSS_PWM_Handle handle)
             if(handle->pwmAttrs[currentPwmSet][currentPwmInstance].enable == 1 )
             {
 
-                    compare_val = compare0_val - (((handle->pwmAttrs[currentPwmSet][currentPwmInstance].dutyCycle)*(compare0_val))/100);
+                    compare_val = compare0_val - (float)(((handle->pwmAttrs[currentPwmSet][currentPwmInstance].dutyCycle)*(compare0_val))/100);
 
-                    compare_val = compare_val + (((handle->pwmAttrs[currentPwmSet][currentPwmInstance].riseEdgeDelay)*((handle->iepAttrs)->iep0IncrementValue))/((handle->iepAttrs)->pruIcssIepClkPeriod));
+                    compare_val = compare_val + (float)(((handle->pwmAttrs[currentPwmSet][currentPwmInstance].riseEdgeDelay)*((handle->iepAttrs)->iep0IncrementValue))/((handle->iepAttrs)->pruIcssIepClkPeriod));
 
                     /*configure cmp  value of current pwm*/
                     status = PRUICSS_PWM_setIepCompareEventUpper_32bitValue(handle, handle->pwmAttrs[currentPwmSet][currentPwmInstance].iepInstance, handle->pwmAttrs[currentPwmSet][currentPwmInstance].compareEvent, compare_val);
@@ -303,10 +261,10 @@ void App_epwmSync0Irq(void *args)
     PRUICSS_PWM_changePwmSetToIntialState(AppEpwmSync0IrqArgs->handle, 0xF);
 
     /* compare0_val is calculated based on pwm period */
-    uint32_t compare0_val = (((AppEpwmSync0IrqArgs->handle)->iepAttrs)->pruIcssIepClkFrequency)/((((AppEpwmSync0IrqArgs->handle)->iepAttrs)->pruIcssPwmFrequency)*((AppEpwmSync0IrqArgs->handle)->iepAttrs)->iep0IncrementValue);
+    uint32_t compare0_val = (float)((((AppEpwmSync0IrqArgs->handle)->iepAttrs)->pruIcssIepClkFrequency)*(((AppEpwmSync0IrqArgs->handle)->iepAttrs)->iep0IncrementValue))/(((AppEpwmSync0IrqArgs->handle)->iepAttrs)->pruIcssPwmFrequency);
 
     /*div by 2 is done to update compare values half of the pwm period, as IEP cannot be configured in up-down mode*/
-    compare0_val = (compare0_val)/2;
+    compare0_val = (float)(compare0_val)/2;
 
     uint32_t compare_val;
     uint8_t  currentPwmInstance, currentPwmSet;
@@ -319,9 +277,9 @@ void App_epwmSync0Irq(void *args)
            if(((AppEpwmSync0IrqArgs->handle)->pwmAttrs[currentPwmSet][currentPwmInstance]).enable == 1)
            {
 
-                compare_val = (((((AppEpwmSync0IrqArgs->handle)->pwmAttrs[currentPwmSet][currentPwmInstance]).dutyCycle)*(compare0_val))/100);
+                compare_val = (float)(((((AppEpwmSync0IrqArgs->handle)->pwmAttrs[currentPwmSet][currentPwmInstance]).dutyCycle)*(compare0_val))/100);
 
-                compare_val = compare_val + (((AppEpwmSync0IrqArgs->handle->pwmAttrs[currentPwmSet][currentPwmInstance].fallEdgeDelay)*(((AppEpwmSync0IrqArgs->handle->iepAttrs)->iep0IncrementValue)))/((AppEpwmSync0IrqArgs->handle->iepAttrs)->pruIcssIepClkPeriod));
+                compare_val = compare_val + (float)(((AppEpwmSync0IrqArgs->handle->pwmAttrs[currentPwmSet][currentPwmInstance].fallEdgeDelay)*(((AppEpwmSync0IrqArgs->handle->iepAttrs)->iep0IncrementValue)))/((AppEpwmSync0IrqArgs->handle->iepAttrs)->pruIcssIepClkPeriod));
 
                 /*configure cmp  value of current pwm*/
                 status = PRUICSS_PWM_setIepCompareEventUpper_32bitValue(AppEpwmSync0IrqArgs->handle, (AppEpwmSync0IrqArgs->handle->pwmAttrs[currentPwmSet][currentPwmInstance]).iepInstance, (AppEpwmSync0IrqArgs->handle->pwmAttrs[currentPwmSet][currentPwmInstance]).compareEvent, compare_val);

@@ -1533,7 +1533,7 @@ int32_t PRUICSS_PWM_iepConfig(PRUICSS_PWM_Handle handle)
     int32_t retVal = SystemP_FAILURE;
     if((handle!=NULL)){
         /* compare0_val is calculated based on pwm period */
-        uint32_t compare0_val = ((((handle->iepAttrs)->pruIcssIepClkFrequency)/((handle->iepAttrs)->pruIcssPwmFrequency))*((handle->iepAttrs)->iep0IncrementValue));
+        uint32_t compare0_val = (float)((((handle->iepAttrs)->pruIcssIepClkFrequency *((handle->iepAttrs)->iep0IncrementValue)))/((handle->iepAttrs)->pruIcssPwmFrequency));
 
         /*Disable IEP0 counter*/
         status= PRUICSS_controlIepCounter((handle->pruIcssHandle), PRUICSS_IEP_INST0, 0);

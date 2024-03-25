@@ -8,41 +8,38 @@
 /**
  * Import the modules used in this configuration.
  */
-const epwm            = scripting.addModule("/drivers/epwm/epwm", {}, false);
-const epwm1           = epwm.addInstance();
-const i2c             = scripting.addModule("/drivers/i2c/i2c", {}, false);
-const i2c1            = i2c.addInstance();
-const pruicss         = scripting.addModule("/drivers/pruicss/pruicss", {}, false);
-const pruicss1        = pruicss.addInstance();
-const debug_log       = scripting.addModule("/kernel/dpl/debug_log");
-const mpu_armv7       = scripting.addModule("/kernel/dpl/mpu_armv7", {}, false);
-const mpu_armv71      = mpu_armv7.addInstance();
-const mpu_armv72      = mpu_armv7.addInstance();
-const mpu_armv73      = mpu_armv7.addInstance();
-const mpu_armv74      = mpu_armv7.addInstance();
-const mpu_armv75      = mpu_armv7.addInstance();
-const mpu_armv76      = mpu_armv7.addInstance();
-const default_linker  = scripting.addModule("/memory_configurator/default_linker", {}, false);
-const default_linker1 = default_linker.addInstance();
-const general         = scripting.addModule("/memory_configurator/general", {}, false);
-const general1        = general.addInstance();
-const region          = scripting.addModule("/memory_configurator/region", {}, false);
-const region1         = region.addInstance();
-const section         = scripting.addModule("/memory_configurator/section", {}, false);
-const section1        = section.addInstance();
-const section2        = section.addInstance();
-const section3        = section.addInstance();
-const section4        = section.addInstance();
-const section5        = section.addInstance();
-const section6        = section.addInstance();
-const section7        = section.addInstance();
-const section8        = section.addInstance();
-const section9        = section.addInstance();
-const section10       = section.addInstance();
-const section11       = section.addInstance();
-const pwm             = scripting.addModule("/pru_icssg/pwm", {}, false);
-const pwm1            = pwm.addInstance();
-const pwm2            = pwm.addInstance();
+const epwm              = scripting.addModule("/drivers/epwm/epwm", {}, false);
+const epwm1             = epwm.addInstance();
+const i2c               = scripting.addModule("/drivers/i2c/i2c", {}, false);
+const i2c1              = i2c.addInstance();
+const debug_log         = scripting.addModule("/kernel/dpl/debug_log");
+const mpu_armv7         = scripting.addModule("/kernel/dpl/mpu_armv7", {}, false);
+const mpu_armv71        = mpu_armv7.addInstance();
+const mpu_armv72        = mpu_armv7.addInstance();
+const mpu_armv73        = mpu_armv7.addInstance();
+const mpu_armv74        = mpu_armv7.addInstance();
+const mpu_armv75        = mpu_armv7.addInstance();
+const mpu_armv76        = mpu_armv7.addInstance();
+const default_linker    = scripting.addModule("/memory_configurator/default_linker", {}, false);
+const default_linker1   = default_linker.addInstance();
+const general           = scripting.addModule("/memory_configurator/general", {}, false);
+const general1          = general.addInstance();
+const region            = scripting.addModule("/memory_configurator/region", {}, false);
+const region1           = region.addInstance();
+const section           = scripting.addModule("/memory_configurator/section", {}, false);
+const section1          = section.addInstance();
+const section2          = section.addInstance();
+const section3          = section.addInstance();
+const section4          = section.addInstance();
+const section5          = section.addInstance();
+const section6          = section.addInstance();
+const section7          = section.addInstance();
+const section8          = section.addInstance();
+const section9          = section.addInstance();
+const section10         = section.addInstance();
+const section11         = section.addInstance();
+const pruicss_g_v0_pwm  = scripting.addModule("/pruicss_g_v0_pwm/pruicss_g_v0_pwm", {}, false);
+const pruicss_g_v0_pwm1 = pruicss_g_v0_pwm.addInstance();
 
 /**
  * Write custom configuration values to the imported modules.
@@ -54,14 +51,16 @@ epwm1.EPWM.B.$used     = false;
 epwm1.EPWM.SYNCO.$used = false;
 epwm1.EPWM.SYNCI.$used = false;
 
-i2c1.$name = "CONFIG_I2C0";
+i2c1.$name           = "CONFIG_I2C0";
+i2c1.I2C.$assign     = "I2C0";
+i2c1.I2C.SCL.$assign = "I2C0_SCL";
+i2c1.I2C.SDA.$assign = "I2C0_SDA";
 
-pruicss1.$name                           = "CONFIG_PRU_ICSS0";
-pruicss1.AdditionalICSSSettings[0].$name = "CONFIG_PRU_ICSS_IO0";
-
-debug_log.enableUartLog        = true;
-debug_log.uartLog.$name        = "CONFIG_UART_CONSOLE";
-debug_log.uartLog.UART.$assign = "USART0";
+debug_log.enableUartLog            = true;
+debug_log.uartLog.$name            = "CONFIG_UART_CONSOLE";
+debug_log.uartLog.UART.$assign     = "USART0";
+debug_log.uartLog.UART.RXD.$assign = "UART0_RXD";
+debug_log.uartLog.UART.TXD.$assign = "UART0_TXD";
 
 const uart_v0_template  = scripting.addModule("/drivers/uart/v0/uart_v0_template", {}, false);
 const uart_v0_template1 = uart_v0_template.addInstance({}, false);
@@ -264,27 +263,33 @@ section11.output_section.create(1);
 section11.output_section[0].$name     = ".bss.nocache";
 section11.output_section[0].alignment = 0;
 
-pwm1.$name                   = "CONFIG_PRU_ICSS_PWM0";
-pwm1.PRU_ICSSG0_PWM.$assign  = "PRU_ICSSG0_PWM0";
-pwm1.PRU_ICSSG0_PWM.A0.$used = true;
-pwm1.PRU_ICSSG0_PWM.B0.$used = true;
-
-pwm2.$name                     = "CONFIG_PRU_ICSS_PWM1";
-pwm2.PRU_ICSSG0_PWM.$assign    = "PRU_ICSSG0_PWM2";
-pwm2.PRU_ICSSG0_PWM.A0.$assign = "PRG0_PRU0_GPO2";
-pwm2.PRU_ICSSG0_PWM.A0.$used   = true;
-pwm2.PRU_ICSSG0_PWM.B0.$used   = true;
-
-/**
- * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future
- * version of the tool will not impact the pinmux you originally saw.  These lines can be completely deleted in order to
- * re-solve from scratch.
- */
-i2c1.I2C.$suggestSolution                   = "I2C0";
-i2c1.I2C.SCL.$suggestSolution               = "I2C0_SCL";
-i2c1.I2C.SDA.$suggestSolution               = "I2C0_SDA";
-debug_log.uartLog.UART.RXD.$suggestSolution = "UART0_RXD";
-debug_log.uartLog.UART.TXD.$suggestSolution = "UART0_TXD";
-pwm1.PRU_ICSSG0_PWM.A0.$suggestSolution     = "PRG0_PRU0_GPO12";
-pwm1.PRU_ICSSG0_PWM.B0.$suggestSolution     = "PRG0_PRU0_GPO13";
-pwm2.PRU_ICSSG0_PWM.B0.$suggestSolution     = "GPMC0_AD4";
+pruicss_g_v0_pwm1.$name                                                = "CONFIG_PRUICSS_PWM0";
+pruicss_g_v0_pwm1.PRUICSS.$name                                        = "CONFIG_PRU_ICSS0";
+pruicss_g_v0_pwm1.PRUICSS.AdditionalICSSSettings[0].$name              = "CONFIG_PRU_ICSS_IO0";
+pruicss_g_v0_pwm1.PRUICSS_PWM_IEP.$name                                = "CONFIG_PRUICSS_PWM_IEP0";
+pruicss_g_v0_pwm1.PRUICSS_PWM_IEP.enableIEP0ShadowMode                 = true;
+pruicss_g_v0_pwm1.PRUICSS_PWM_IEP.enableIep0ResetOnEpwm0_Sync          = true;
+pruicss_g_v0_pwm1.PRUICSS_PWM_IEP.enableIep0ResetOnCompare0            = true;
+pruicss_g_v0_pwm1.PRUICSS_PWM_IEP.enableAutoClearCompareStatus         = true;
+pruicss_g_v0_pwm1.PRUICSS_PWM_IEP.enableIep0                           = true;
+pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL.create(4);
+pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[0].$name                         = "CONFIG_PRUICSS_PWM_CHANNEL0";
+pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[0].PRU_ICSSG0_PWM.$assign        = "PRU_ICSSG0_PWM0";
+pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[0].PRU_ICSSG0_PWM.pwmPin.$assign = "PRG0_PRU0_GPO12";
+pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[1].$name                         = "CONFIG_PRUICSS_PWM_CHANNEL1";
+pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[1].rise_edge_delay               = 200;
+pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[1].fall_edge_delay               = 400;
+pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[1].PRU_ICSSG0_PWM.$assign        = "PRU_ICSSG0_PWM0";
+pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[1].PRU_ICSSG0_PWM.pwmPin.$assign = "PRG0_PRU0_GPO13";
+pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[2].$name                         = "CONFIG_PRUICSS_PWM_CHANNEL2";
+pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[2].duty_cycle                    = 75;
+pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[2].PRU_ICSSG0_PWM.$assign        = "PRU_ICSSG0_PWM2";
+pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[2].PRU_ICSSG0_PWM.pwmPin.$assign = "PRG0_PRU0_GPO2";
+pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[3].$name                         = "CONFIG_PRUICSS_PWM_CHANNEL3";
+pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[3].duty_cycle                    = 75;
+pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[3].rise_edge_delay               = 600;
+pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[3].fall_edge_delay               = 800;
+pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[3].PRU_ICSSG0_PWM.$assign        = "PRU_ICSSG0_PWM2";
+pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[3].PRU_ICSSG0_PWM.pwmPin.$assign = "GPMC0_AD4";
+pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE[0].$name                        = "CONFIG_PRUICSS_PWM_TRIPZONE0";
+pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE[0].PRU_ICSSG0_PWM.$assign       = "PRU_ICSSG0_PWM2";
