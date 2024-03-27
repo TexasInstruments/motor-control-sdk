@@ -57,13 +57,11 @@
 
 #include <board/ioexp/ioexp_tca6424.h>
 
-#if defined(USE_RTLIB_FOC)
 #include "clarke.h"
 #include "park.h"
 #include "ipark.h"
 #include "svgen.h"
 #include "dcl.h"
-#endif
 
 #if PRU_ICSSGx_PRU_SLICE
 #define PRUICSS_PRUx PRUICSS_PRU1
@@ -273,16 +271,9 @@ __attribute__((section(".gEncChData"))) struct endat_pruss_xchg local_pruss_xchg
 
 volatile Bool gUpdOutIsr = FALSE;   /* Flag for updating PWM output in ISR */
 
-#if defined(USE_RTLIB_FOC)
 DCL_PI gPiSpd;
 DCL_PI gPiId;
 DCL_PI gPiIq;
-#else
-arm_pid_instance_f32 gPiId;
-arm_pid_instance_f32 gPiIq;
-arm_pid_instance_f32 gPiSpd;
-arm_pid_instance_f32 gPiPos;
-#endif
 
 volatile Bool gConstantsChanged = 0;
 
@@ -855,22 +846,12 @@ __attribute__((section(".critical_code"))) void pruEncoderIrqHandler(void *args)
                 fdbkCurPhB = (-((float)gSddfChSamps[1] - gSddfChOffsets[1] - SDDF_HALF_SCALE_FLT) / SDDF_HALF_SCALE_FLT) * 30.0;
             }
 
-#if defined(USE_RTLIB_FOC)
             CLARKE_run_twoInput(fdbkCurPhA, fdbkCurPhB, &gClarkeAlphaMeasured, &gClarkeBetaMeasured);
-#else
-            /* Clarke transform */
-            arm_clarke_f32(fdbkCurPhA, fdbkCurPhB, &gClarkeAlphaMeasured, &gClarkeBetaMeasured);
-#endif
 #endif
             /* Calculate sine and cosine of the electrical angle (elecTheta converted to radians) */
             ti_r5fmath_sincos((elecTheta * TI_R5FMATH_PIOVER180), ti_r5fmath_sincosPIconst, ti_r5fmath_sincosCoef, elecThetaSinCos);
-#if defined(USE_RTLIB_FOC)
             /* Park transform */
             PARK_run(elecThetaSinCos[0], elecThetaSinCos[1], gClarkeAlphaMeasured, gClarkeBetaMeasured, &parkIdMeasured, &parkIqMeasured);
-#else
-            /* Park transform */
-            arm_park_f32(gClarkeAlphaMeasured, gClarkeBetaMeasured, &parkIdMeasured, &parkIqMeasured, elecThetaSinCos[0], elecThetaSinCos[1]);
-#endif
 
 // Open loop Iq
 #if (BUILDLEVEL == OPEN_LOOP_IQ_ID)
@@ -915,19 +896,9 @@ __attribute__((section(".critical_code"))) void pruEncoderIrqHandler(void *args)
 
             // update the gCurActualVelocity[0] based on the gSpdSetPoint
             gCurActualVelocity[0] = (uint32_t)gSpdSetPoint;
-#if defined(USE_RTLIB_FOC)
             gIqRef = -DCL_runPIParallel(&gPiSpd, gSpdSetPoint, speed);
             parkIqOut = DCL_runPIParallel(&gPiIq, gIqRef, parkIqMeasured);
             parkIdOut = DCL_runPIParallel(&gPiId, 0.0f, parkIdMeasured);
-#else
-            gIqRef = arm_pi_f32(&gPiSpd, gSpdSetPoint - speed);
-            parkIqOut = arm_pi_f32(&gPiIq, gIqRef - parkIqMeasured);
-            parkIdOut = arm_pi_f32(&gPiId, 0.0 - parkIdMeasured);
-            if (parkIqOut>IQ_TESTING) parkIqOut = IQ_TESTING;
-            if (parkIqOut<-1.0*IQ_TESTING) parkIqOut = -1.0*IQ_TESTING;
-            if (parkIdOut>ID_TESTING) parkIdOut = ID_TESTING;
-            if (parkIdOut<-1.0*ID_TESTING) parkIdOut = -1.0*ID_TESTING;
-#endif
 #endif
 
 //Closed loop CiA402 Data
@@ -991,30 +962,17 @@ __attribute__((section(".critical_code"))) void pruEncoderIrqHandler(void *args)
             }
 #endif
 
-#if defined(USE_RTLIB_FOC)
             /* Inverse Park transform */
             IPARK_run(elecThetaSinCos[0], elecThetaSinCos[1], parkIdOut, parkIqOut, &iparkAlphaOut, &iparkBetaOut);
             /* Space Vector Generation */
             SVGEN_runCom(1.0f, iparkAlphaOut, iparkBetaOut, &spcVectAOut, &spcVectBOut, &spcVectCOut);
-#else
-            /* Inverse Park transform */
-            arm_inv_park_f32(parkIdOut, parkIqOut, &iparkAlphaOut, &iparkBetaOut, elecThetaSinCos[0], elecThetaSinCos[1]);
-            /* Space Vector Generation */
-            space_vector_f32(iparkAlphaOut, iparkBetaOut, &spcVectAOut, &spcVectBOut, &spcVectCOut);
-#endif
 
             /* Write next CMPA values. Swap cmp0 and cmp2 because the HW connect PWM0 to Phase C and PWM2 to Phase A */
             halfPeriod = (float)gEpwmPrdVal / 2.0;
 #if defined(SINGLE_AXLE_USE_M1)
-#if defined(USE_RTLIB_FOC)
             writeCmpA(gEpwm0BaseAddr, (uint16_t) ((1 + spcVectCOut) * halfPeriod));
             writeCmpA(gEpwm1BaseAddr, (uint16_t) ((1 + spcVectBOut) * halfPeriod));
             writeCmpA(gEpwm2BaseAddr, (uint16_t) ((1 + spcVectAOut) * halfPeriod));
-#else
-            writeCmpA(gEpwm0BaseAddr, (uint16_t) ((1 - spcVectCOut) * halfPeriod));
-            writeCmpA(gEpwm1BaseAddr, (uint16_t) ((1 - spcVectBOut) * halfPeriod));
-            writeCmpA(gEpwm2BaseAddr, (uint16_t) ((1 - spcVectAOut) * halfPeriod));
-#endif
 #endif
 #if defined(SINGLE_AXLE_USE_M2)
             writeCmpA(gEpwm0BaseAddr2A, (uint16_t) ((1 - spcVectCOut) * halfPeriod));
@@ -2583,17 +2541,10 @@ void init_pwms(){
     appEpwmCfg.tbSyncInCounterDir = EPWM_TB_COUNTER_DIR_DOWN;
     appEpwmCfg.cfgTbSyncOut = TRUE;
     appEpwmCfg.tbSyncOutMode = EPWM_TB_SYNC_OUT_EVT_CNT_EQ_ZERO;
-#if defined(USE_RTLIB_FOC)
     appEpwmCfg.aqCfg.zeroAction = EPWM_AQ_ACTION_DONOTHING;
     appEpwmCfg.aqCfg.prdAction = EPWM_AQ_ACTION_DONOTHING;
     appEpwmCfg.aqCfg.cmpAUpAction = EPWM_AQ_ACTION_LOW;
     appEpwmCfg.aqCfg.cmpADownAction = EPWM_AQ_ACTION_HIGH;
-#else
-    appEpwmCfg.aqCfg.zeroAction = EPWM_AQ_ACTION_LOW;
-    appEpwmCfg.aqCfg.prdAction = EPWM_AQ_ACTION_HIGH;
-    appEpwmCfg.aqCfg.cmpAUpAction = EPWM_AQ_ACTION_HIGH;
-    appEpwmCfg.aqCfg.cmpADownAction = EPWM_AQ_ACTION_LOW;
-#endif
     appEpwmCfg.aqCfg.cmpBUpAction = EPWM_AQ_ACTION_DONOTHING;
     appEpwmCfg.aqCfg.cmpBDownAction = EPWM_AQ_ACTION_DONOTHING;
     appEpwmCfg.cfgDb = TRUE;
@@ -2696,7 +2647,6 @@ void init_pwms(){
 
 void init_pids(){
     /* 50KHz PWM frequency PID constants */
-#if defined(USE_RTLIB_FOC)
     gPiSpd.Kp = MAX_SPD_CHANGE;
     gPiSpd.Ki = 0.0003;
     gPiSpd.Umax = 1000;
@@ -2732,29 +2682,6 @@ void init_pids(){
     gPiIq.i11 = 0.0;
     gPiIq.sps = &(DCL_PI_SPS)PI_SPS_DEFAULTS;
     gPiIq.css = &(DCL_CSS)DCL_CSS_DEFAULTS;
-#else
-    gPiId.Kp = 0.2;
-    gPiId.Ki = 0.0001;
-    gPiId.Kd = 0;
-    arm_pid_init_f32(&gPiId, 1);
-
-    gPiIq.Kp = 0.2;
-    gPiIq.Ki = 0.0001;
-    gPiIq.Kd = 0;
-    arm_pid_init_f32(&gPiIq, 1);
-
-    /* Mmax 0.12 RPM step between periods */
-    gPiSpd.Kp = MAX_SPD_CHANGE; ///0.06
-    gPiSpd.Ki = 0.0003;
-    gPiSpd.Kd = 0;
-    arm_pid_init_f32(&gPiSpd, 1);
-
-    /* Max 0.06 angle step between periods (500 RPM) */
-    gPiPos.Kp = MAX_POS_CHANGE*MAX_SPD_RPM; ///30;
-    gPiPos.Ki = 0;
-    gPiPos.Kd = 0;
-    arm_pid_init_f32(&gPiPos, 1);
-#endif
 
     /* 20KHz PWM frequency PID constants */
 #if 0
