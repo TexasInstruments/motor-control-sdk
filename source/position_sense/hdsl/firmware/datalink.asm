@@ -34,6 +34,7 @@
 	.include "defines.inc"
 	.include "macros.inc"
 	;.sect	".text"
+	.ref re_align_algo
 	.ref transport_on_h_frame
 	.ref transport_on_v_frame
 	.ref transport_on_v_frame_2
@@ -94,6 +95,8 @@ datalink_init:
 ;--------------------------------------------------------------------------------------------------
 ;State RX 0-7
 datalink_wait_vsynch:
+	ldi ALIGN_PHASE,0
+	sbco 		&ALIGN_PHASE, MASTER_REGS_CONST, ALIGN_PH, 1
 	zero			&SPEED, (4*8)
 	ldi			LOOP_CNT.b1, 7
 ;send m_par_reset 8b/10b: 5b/6b and 3b/4b, first=1,vsync=0,reserved=0
@@ -515,7 +518,6 @@ recv_dec_10b_4b_0_2_received_0:
 	qbeq			recv_dec_10b_special_character0, REG_TMP0.b0, 0x00
 	qba			recv_dec_10b_no_special_character0
 recv_dec_10b_special_character0:
-	ldi			REG_TMP1.b0, 0xe0
 	set			SPECIAL_CHARACTER, SPECIAL_CHARACTER, REG_FNC.b1
 recv_dec_10b_no_special_character0:
 	and			REG_TMP0.b0, REG_FNC.w2, 0x1f
@@ -551,7 +553,6 @@ recv_dec_10b_4b_not_last_byte:
 	qbeq			recv_dec_10b_special_character1, REG_TMP0.b0, 0x00
 	qba			recv_dec_10b_no_special_character1
 recv_dec_10b_special_character1:
-	ldi			REG_TMP1.b0, 0xe0
 	set			SPECIAL_CHARACTER, SPECIAL_CHARACTER, REG_FNC.b1
 recv_dec_10b_no_special_character1:
 	xor			REG_FNC.b0, REG_FNC.b0, REG_TMP1.b0
@@ -631,7 +632,6 @@ srecv_dec_10b_4b_0_2_received_0:
 	qbeq			srecv_dec_10b_special_character0, REG_TMP0.b0, 0x00
 	qba			srecv_dec_10b_no_special_character0
 srecv_dec_10b_special_character0:
-	ldi			REG_TMP1.b0, 0xe0
 	set			SPECIAL_CHARACTER, SPECIAL_CHARACTER, REG_FNC.b1
 srecv_dec_10b_no_special_character0:
 	and			REG_TMP0.b0, REG_FNC.w2, 0x1f
@@ -667,7 +667,6 @@ srecv_dec_10b_4b_not_last_byte:
 	qbeq			srecv_dec_10b_special_character1, REG_TMP0.b0, 0x00
 	qba			srecv_dec_10b_no_special_character1
 srecv_dec_10b_special_character1:
-	ldi			REG_TMP1.b0, 0xe0
 	set			SPECIAL_CHARACTER, SPECIAL_CHARACTER, REG_FNC.b1
 srecv_dec_10b_no_special_character1:
 	xor			REG_FNC.b0, REG_FNC.b0, REG_TMP1.b0
@@ -820,6 +819,7 @@ datalink_receive_signal_no_delay_wait_0:
 	qbbs			datalink_receive_signal_no_error_5, H_FRAME.flags, FLAG_ERR_SEC
 	set			H_FRAME.flags, H_FRAME.flags, FLAG_ERR_SEC
 	QM_SUB			8
+datalink_receive_signal_no_error_5:
 ;calc running crc for secondary channel
 	xor			CRC_SEC_H, CRC_SEC_H, H_FRAME.secondary
 	qbne			recv_dec_secondary_not_rx7, LOOP_CNT.b2, 1
@@ -831,7 +831,6 @@ recv_dec_secondary_not_rx7:
 	lbbo			&REG_TMP0.w0, REG_TMP0, REG_TMP1.w0, 2
 	xor			REG_TMP0.b1, REG_TMP0.b1, CRC_SEC_L
 	mov			CRC_SEC, REG_TMP0.w0
-datalink_receive_signal_no_error_5:
 	RET
 ;--------------------------------------------------------------------------------------------------
 ;Function: send_header (RET_ADDR)
