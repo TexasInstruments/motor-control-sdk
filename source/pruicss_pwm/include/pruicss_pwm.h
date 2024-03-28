@@ -362,9 +362,11 @@ typedef struct PRUICSS_PWM_Config_s
  *     
  * \param   index       Index of config to use in the *gPruIcssPwmConfig* array
  *
+ * \param   pruIcssHandle   PRUICSS_Handle returned from PRUICSS_open()
+ *
  * \return  PRUICSS_PWM_Handle on success, NULL on error
  */
-PRUICSS_PWM_Handle PRUICSS_PWM_open(uint32_t index);
+PRUICSS_PWM_Handle PRUICSS_PWM_open(uint32_t index, PRUICSS_Handle pruIcssHandle);
 
 /**
  * \brief  This API writes Lower_32bit Value of IEP counter in IEP module.

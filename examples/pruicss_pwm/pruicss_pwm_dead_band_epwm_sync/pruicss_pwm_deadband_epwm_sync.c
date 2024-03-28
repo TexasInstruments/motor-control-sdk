@@ -115,6 +115,7 @@ uint32_t gEpwmBaseAddr;
 
 /* Global Structure pointer holding PRUICSSG0 memory Map. */
 PRUICSS_PWM_Handle gPruIcssPwmHandle;
+PRUICSS_Handle     gpruIcssHandle;
 
 uint8_t gUpdateNextRisingEdgeCmpValue  = 0;
 
@@ -195,7 +196,10 @@ void App_pruIcssPwmDeadbandMain(void *args)
 
     int status;
 
-    gPruIcssPwmHandle = PRUICSS_PWM_open(CONFIG_PRUICSS_PWM0);
+    gpruIcssHandle = PRUICSS_open(CONFIG_PRU_ICSS0);
+    DebugP_assert(gpruIcssHandle != NULL);
+
+    gPruIcssPwmHandle = PRUICSS_PWM_open(CONFIG_PRUICSS_PWM0, gpruIcssHandle);
     DebugP_assert(gPruIcssPwmHandle != NULL);
     
     #if defined(am243x_evm) || defined(am64x_evm)

@@ -51,6 +51,13 @@
 
 extern uint8_t gUpdateNextRisingEdgeCmpValue;
 
+#if defined(ENABLE_PROFILING)
+
+uint32_t gCpuCyclesInNextRiseEdgeCmpValUpdate;
+
+uint32_t gCpuCyclesInNextFallEdgeCmpValUpdate;
+#endif
+
 int32_t App_updateNextRisingEdgeCmpValue(PRUICSS_PWM_Handle handle)
 {
 
@@ -97,6 +104,12 @@ int32_t App_updateNextRisingEdgeCmpValue(PRUICSS_PWM_Handle handle)
         
         retVal = SystemP_SUCCESS;
     }
+
+    #if defined(ENABLE_PROFILING)
+
+    /*Assuming there will not be overflow of 32 bit counter*/
+    gCpuCyclesInNextRiseEdgeCmpValUpdate = CycleCounterP_getCount32();
+    #endif
 
     return retVal;
 }
@@ -242,11 +255,20 @@ int32_t App_epwm0Sync0IrqSet(PRUICSS_PWM_Handle handle, uint32_t epwmBaseAddr)
 
 void App_pruIcssPwmHalfDoneIrq(void *args)
 {
+    /* enable and reset CPU cycle coutner */
+    #if defined(ENABLE_PROFILING)
+    CycleCounterP_reset();
+    #endif
+
     gUpdateNextRisingEdgeCmpValue  = 1;
 }
 
 void App_epwmSync0Irq(void *args)
 {
+    #if defined(ENABLE_PROFILING)
+    /* enable and reset CPU cycle coutner */
+    CycleCounterP_reset();
+    #endif
     volatile uint16_t status;
 
     AppEpwmSync0IrqArgs_t *AppEpwmSync0IrqArgs = (AppEpwmSync0IrqArgs_t *)args;
@@ -287,4 +309,9 @@ void App_epwmSync0Irq(void *args)
 
         }
     }
+    #if defined(ENABLE_PROFILING)
+    /*Assuming there will not be overflow of 32 bit counter*/
+    gCpuCyclesInNextFallEdgeCmpValUpdate = CycleCounterP_getCount32();
+    #endif
+    return;
 }

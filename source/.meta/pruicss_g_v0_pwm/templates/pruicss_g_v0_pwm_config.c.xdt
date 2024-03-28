@@ -77,9 +77,9 @@ PRUICSS_PWM_Config gPruIcssPwmConfig[] =
 {
 %for(let i=0; i<pwm_module.$instances.length; i++)
 %{
-    {
-        .pruIcssHandle   = &gPruIcssConfig[`pwm_module.$instances[i].PRUICSS.$name.toUpperCase()`],
+    { 
         %// Using direct indexing, assuming pwm_iep & pwm_channel modules being used by only pwm module.
+        /* pruIcssHandle will be intialized on application using PRUICSS_PWM_open call */
         .pwmAttrs        = {0},
         .iepAttrs        = &iepAttrs[0]
     }

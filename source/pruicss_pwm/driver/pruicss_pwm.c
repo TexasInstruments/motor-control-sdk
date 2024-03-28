@@ -54,18 +54,19 @@ extern PRUICSS_PWM_Config gPruIcssPwmConfig[];
 
 
 
-PRUICSS_PWM_Handle PRUICSS_PWM_open(uint32_t index)
+PRUICSS_PWM_Handle PRUICSS_PWM_open(uint32_t index, PRUICSS_Handle pruIcssHandle)
 {
     PRUICSS_PWM_Handle  handle = NULL;
 
     /* Check index */
-    if(index >= gPruIcssPwmConfigNum)
+    if(index >= gPruIcssPwmConfigNum || (pruIcssHandle == NULL))
     {
         return NULL;
     }
     else
     {
         handle = (PRUICSS_PWM_Handle)(&gPruIcssPwmConfig[index]);
+        handle->pruIcssHandle = pruIcssHandle;
     }
 
     return handle;
@@ -1374,7 +1375,8 @@ int32_t PRUICSS_PWM_stateConfig(PRUICSS_PWM_Handle handle)
 {
     int status;
     int32_t retVal = SystemP_FAILURE;
-    if((handle!=NULL)){
+    if((handle!=NULL))
+    {
         for(uint8_t currentPwmSet=0; currentPwmSet< PRUICSS_NUM_PWM_SETS; currentPwmSet++)
         {
             if((handle->pwmAttrs)[currentPwmSet][0].enable == 1)
@@ -1464,8 +1466,9 @@ int32_t PRUICSS_PWM_stateConfig(PRUICSS_PWM_Handle handle)
 int32_t PRUICSS_PWM_changePwmSetToIntialState(PRUICSS_PWM_Handle handle, uint8_t pwmSetMask)
 {
     int32_t retVal = SystemP_FAILURE;
-    if((handle!=NULL)){
-        if(pwmSetMask & 0x1)
+    if((handle!=NULL))
+    {
+        if(pwmSetMask & (1<<PRUICSS_PWM_SET0))
         {
             /*
             * generate trip reset status of pwm set 0
@@ -1477,7 +1480,7 @@ int32_t PRUICSS_PWM_changePwmSetToIntialState(PRUICSS_PWM_Handle handle, uint8_t
             PRUICSS_PWM_clearPwmTripResetStatus(handle, PRUICSS_PWM_SET0);
         }    
 
-        if(pwmSetMask & 0x2)
+        if(pwmSetMask & (1<<PRUICSS_PWM_SET1))
         {
             /*
             * generate trip reset status of pwm set 1
@@ -1489,7 +1492,7 @@ int32_t PRUICSS_PWM_changePwmSetToIntialState(PRUICSS_PWM_Handle handle, uint8_t
             PRUICSS_PWM_clearPwmTripResetStatus(handle, PRUICSS_PWM_SET1);
         }  
 
-        if(pwmSetMask & 0x4)
+        if(pwmSetMask & (1<<PRUICSS_PWM_SET2))
         {
             /*
             * generate trip reset status of pwm set 2
@@ -1501,7 +1504,7 @@ int32_t PRUICSS_PWM_changePwmSetToIntialState(PRUICSS_PWM_Handle handle, uint8_t
             PRUICSS_PWM_clearPwmTripResetStatus(handle, PRUICSS_PWM_SET2);
         } 
 
-        if(pwmSetMask & 0x8)
+        if(pwmSetMask & (1<<PRUICSS_PWM_SET3))
         {
             /*
             * generate trip reset status of pwm set 3
@@ -1520,7 +1523,8 @@ int32_t PRUICSS_PWM_changePwmSetToIntialState(PRUICSS_PWM_Handle handle, uint8_t
 int32_t PRUICSS_PWM_pruIcssPwmFrequencyInit(PRUICSS_PWM_Handle handle, uint32_t pruIcssPwmFrequency)
 {
     int32_t retVal = SystemP_FAILURE;
-    if((handle!=NULL)){
+    if((handle!=NULL))
+    {
         (handle->iepAttrs)->pruIcssPwmFrequency = pruIcssPwmFrequency;
         retVal = SystemP_SUCCESS;
     }
@@ -1531,7 +1535,8 @@ int32_t PRUICSS_PWM_iepConfig(PRUICSS_PWM_Handle handle)
 {
     int status;
     int32_t retVal = SystemP_FAILURE;
-    if((handle!=NULL)){
+    if((handle!=NULL))
+    {
         /* compare0_val is calculated based on pwm period */
         uint32_t compare0_val = (float)((((handle->iepAttrs)->pruIcssIepClkFrequency *((handle->iepAttrs)->iep0IncrementValue)))/((handle->iepAttrs)->pruIcssPwmFrequency));
 

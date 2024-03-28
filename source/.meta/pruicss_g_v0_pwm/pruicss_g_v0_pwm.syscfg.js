@@ -37,15 +37,6 @@ let pruicss_top_module = {
     moduleInstances: (inst) => {
         return[
             {
-                name: "PRUICSS",
-                displayName: "PRU ICSS",
-                moduleName:  "/drivers/pruicss/pruicss",
-                collapsed: true,
-                requiredArgs: {
-                    instance: inst["instance"]
-                },
-            },
-            {
                 name: "PRUICSS_PWM_IEP",
                 displayName: "PRU ICSS PWM IEP",
                 moduleName:  "/pruicss_g_v0_pwm/pruicss_g_v0_pwm_iep",
@@ -81,11 +72,26 @@ let pruicss_top_module = {
                 },
             }, 
         ]
+    },
+
+    sharedModuleInstances: (inst) => {
+        return[
+            {
+                name: "PRUICSS",
+                displayName: "PRU ICSS",
+                moduleName: '/drivers/pruicss/pruicss',
+                requiredArgs: {
+                    instance: inst["instance"],
+                },
+            }
+        ]
     }
 };
 
 function validate(inst, report) {
     common.validate.checkSameInstanceName(inst, report);
 }
+
+
 
 exports = pruicss_top_module
