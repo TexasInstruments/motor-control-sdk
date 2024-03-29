@@ -145,6 +145,8 @@ PRUICSS_Handle gPruIcssHandle;
 /* Test Sdfm handles */
 sdfm_handle gHPruSdfm;
 
+/* ICSSG PWM handle */
+PRUICSS_PWM_Handle gPruIcssPwmHandle;
 
 /* Sdfm output samples, written by PRU cores */
 __attribute__((section(".gSdfmSampleOutput"))) uint32_t gSdfm_sampleOutput[NUM_CH_SUPPORTED];
@@ -312,6 +314,14 @@ void init_sdfm()
         return;
     }
      
+    if(gTestSdfmPrms.enFastDetect || gTestSdfmPrms.enComparator)
+    {
+        gPruIcssPwmHandle = PRUICSS_PWM_open(CONFIG_PRUICSS_PWM0, gPruIcssHandle);
+        DebugP_assert(gPruIcssPwmHandle != NULL);
+    }
+    
+    gHPruSdfm->gPruPwmHandle = gPruIcssPwmHandle;
+
     gTestSdfmPrms.loadShare = ICSSG_PRU_LOAD_SHARE_MODE;
     /* Register & enable ICSSG PRU SDFM FW interrupt */
     HwiP_Params_init(&hwiPrms);

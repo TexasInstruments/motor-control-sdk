@@ -44,8 +44,8 @@
 
 /* Internal structure for managing each PRU SD */
 SDFM g_sdfm[NUM_PRU] = {
-    {NULL, PRU_ID_0, 0, 0, 0, 0, NULL},
-    {NULL, PRU_ID_1, 0, 0, 0, 0, NULL},
+    {NULL, NULL, PRU_ID_0, 0, 0, 0, 0, NULL},
+    {NULL, NULL, PRU_ID_1, 0, 0, 0, 0, NULL},
 };
 
 /* Initialize SDFM instance */
@@ -293,7 +293,7 @@ int32_t SDFM_getFastDetectErrorStatus(sdfm_handle h_sdfm, uint8_t chNum)
 {
     uint8_t pwmSet;
     int32_t                 retVal = SystemP_SUCCESS;
-    PRUICSS_Handle pruIcssHandle = h_sdfm->gPruIcssHandle;
+    PRUICSS_PWM_Handle pruPwmHandle = h_sdfm->gPruPwmHandle;
     if(chNum < SDFM_CHANNEL3)
     {
         pwmSet = 0;
@@ -317,7 +317,7 @@ int32_t SDFM_getFastDetectErrorStatus(sdfm_handle h_sdfm, uint8_t chNum)
     }
     
     /*PWM trip vector */
-    retVal = PRUICSS_PWM_getPwmTripTriggerCauseVector(pruIcssHandle, pwmSet);
+    retVal = PRUICSS_PWM_getPwmTripTriggerCauseVector(pruPwmHandle, pwmSet);
     if(retVal == SystemP_FAILURE)
     {
         return retVal;
@@ -350,7 +350,7 @@ int32_t SDFM_clearPwmTripStatus(sdfm_handle h_sdfm, uint8_t chNum)
 {
     uint8_t pwmSet;
     int32_t                 retVal = SystemP_SUCCESS;
-    PRUICSS_Handle pruIcssHandle = h_sdfm->gPruIcssHandle;
+    PRUICSS_PWM_Handle pruPwmHandle = h_sdfm->gPruPwmHandle;
     
     if(chNum < SDFM_CHANNEL3)
     {
@@ -375,14 +375,14 @@ int32_t SDFM_clearPwmTripStatus(sdfm_handle h_sdfm, uint8_t chNum)
     }
 
     /*clear trip status*/
-    retVal = PRUICSS_PWM_generatePwmTripReset(pruIcssHandle, pwmSet);
+    retVal = PRUICSS_PWM_generatePwmTripReset(pruPwmHandle, pwmSet);
     if(retVal == SystemP_FAILURE)
     {
         return retVal;
     }
 
     /*clear trip reset status*/
-    retVal = PRUICSS_PWM_clearPwmTripResetStatus(pruIcssHandle, pwmSet);
+    retVal = PRUICSS_PWM_clearPwmTripResetStatus(pruPwmHandle, pwmSet);
 
     return retVal;
 }
@@ -484,7 +484,7 @@ int32_t SDFM_clearOverCurrentError(sdfm_handle h_sdfm, uint8_t chNum)
 {
     uint8_t pwmSet;
     int32_t                 retVal = SystemP_SUCCESS;
-    PRUICSS_Handle pruIcssHandle = h_sdfm->gPruIcssHandle;
+    PRUICSS_PWM_Handle pruPwmHandle = h_sdfm->gPruPwmHandle;
     if(chNum < SDFM_CHANNEL3)
     {
         pwmSet = 0;
@@ -508,7 +508,7 @@ int32_t SDFM_clearOverCurrentError(sdfm_handle h_sdfm, uint8_t chNum)
     }
 
     /*Clear over current Error PWM trip*/
-    retVal = PRUICSS_PWM_clearPwmOverCurrentErrorTrip(pruIcssHandle, pwmSet);
+    retVal = PRUICSS_PWM_clearPwmOverCurrentErrorTrip(pruPwmHandle, pwmSet);
     if(retVal == SystemP_FAILURE)
     {
         return retVal;
