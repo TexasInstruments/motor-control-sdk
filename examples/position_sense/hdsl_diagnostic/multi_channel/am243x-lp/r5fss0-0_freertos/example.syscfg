@@ -2,7 +2,7 @@
  * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
  * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
  * @cliArgs --device "AM243x_ALX_beta" --package "ALX" --part "ALX" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@09.01.00"
- * @versions {"tool":"1.18.0+3266"}
+ * @versions {"tool":"1.19.0+3426"}
  */
 
 /**
@@ -46,17 +46,17 @@ const hdsl1           = hdsl.addInstance();
 /**
  * Write custom configuration values to the imported modules.
  */
-i2c1.$name       = "CONFIG_I2C0";
-i2c1.I2C.$assign = "I2C1";
+i2c1.$name           = "CONFIG_I2C0";
+i2c1.I2C.$assign     = "I2C1";
+i2c1.I2C_child.$name = "drivers_i2c_v0_i2c_v0_template0";
 
 pruicss1.$name                           = "CONFIG_PRU_ICSS1";
 pruicss1.instance                        = "ICSSG1";
 pruicss1.AdditionalICSSSettings[0].$name = "CONFIG_PRU_ICSS_IO1";
 
-udma1.$name                                     = "CONFIG_UDMA0";
+udma1.$name                       = "CONFIG_UDMA0";
 udma1.udmaBlkCopyChannel.create(1);
-udma1.udmaBlkCopyChannel[0].$name               = "CONFIG_UDMA_BLKCOPY_CH0";
-udma1.udmaBlkCopyChannel[0].transferCallbackFxn = "App_udmaEventCb";
+udma1.udmaBlkCopyChannel[0].$name = "CONFIG_UDMA_BLKCOPY_CH0";
 
 debug_log.enableUartLog        = true;
 debug_log.enableCssLog         = false;
@@ -99,7 +99,7 @@ general1.$name        = "CONFIG_GENERAL0";
 general1.linker.$name = "TIARMCLANG0";
 
 region1.$name                               = "MEMORY_REGION_CONFIGURATION0";
-region1.memory_region.create(10);
+region1.memory_region.create(9);
 region1.memory_region[0].type               = "TCMA_R5F";
 region1.memory_region[0].$name              = "R5F_VECS";
 region1.memory_region[0].size               = 0x40;
@@ -117,7 +117,7 @@ region1.memory_region[3].size               = 0x8000;
 region1.memory_region[4].$name              = "MSRAM";
 region1.memory_region[4].auto               = false;
 region1.memory_region[4].manualStartAddress = 0x70080000;
-region1.memory_region[4].size               = 0x60000;
+region1.memory_region[4].size               = 0x150000;
 region1.memory_region[5].type               = "FLASH";
 region1.memory_region[5].$name              = "FLASH";
 region1.memory_region[5].auto               = false;
@@ -140,9 +140,6 @@ region1.memory_region[8].size               = 0xC000;
 region1.memory_region[8].$name              = "RTOS_NORTOS_IPC_SHM_MEM";
 region1.memory_region[8].isShared           = true;
 region1.memory_region[8].shared_cores       = ["m4fss0-0","r5fss0-1","r5fss1-0","r5fss1-1"];
-region1.memory_region[9].type               = "DDR_ALL";
-region1.memory_region[9].$name              = "DDR";
-region1.memory_region[9].size               = 0x3FFFFFFF;
 
 section1.$name                        = "Vector Table";
 section1.load_memory                  = "R5F_VECS";
@@ -262,9 +259,9 @@ section11.output_section.create(1);
 section11.output_section[0].$name     = ".bss.nocache";
 section11.output_section[0].alignment = 0;
 
-section12.$name                       = "Command Response ";
 section12.group                       = false;
 section12.load_memory                 = "MSRAM";
+section12.$name                       = "Copy Table for TXPRU";
 section12.output_section.create(2);
 section12.output_section[0].alignment = 32;
 section12.output_section[0].$name     = ".rodata.Hiperface_DSL_SYNC2_0_TX_PRU_2";
