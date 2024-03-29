@@ -103,7 +103,7 @@
         </file>
         <file path="../example.syscfg" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
-        <file path="${MOTOR_CONTROL_SDK_PATH}/docs/api_guide_am64x/EXAMPLE_PRUICSS_PWM_EPWM_SYNC.html"
+        <file path="${MOTOR_CONTROL_SDK_PATH}/docs/api_guide_am64x/EXAMPLE_PRUICSS_PWM_DEADBAND_EPWM_SYNC.html"
                 openOnCreation="false" excludeFromBuild="false" targetName="README.html" action="link">
         </file>
         <file path="syscfg_c.rov.xs" openOnCreation="false" excludeFromBuild="false" action="copy">

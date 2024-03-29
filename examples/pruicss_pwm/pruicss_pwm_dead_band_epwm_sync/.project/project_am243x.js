@@ -92,7 +92,7 @@ const lnkfiles = {
 
 const syscfgfile = "../example.syscfg";
 
-const readmeDoxygenPageTag = "EXAMPLE_PRUICSS_PWM_EPWM_SYNC";
+const readmeDoxygenPageTag = "EXAMPLE_PRUICSS_PWM_DEADBAND_EPWM_SYNC";
 
 const templates_freertos_r5f =
 [
