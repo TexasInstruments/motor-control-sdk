@@ -42,7 +42,6 @@ endif
 
 FILES_common := \
 	transforms_test.c \
-	transforms_test.h \
 	main.c \
 	ti_drivers_config.c \
 	ti_drivers_open_close.c \
