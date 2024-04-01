@@ -251,7 +251,7 @@ typedef struct PRUICSS_PWM_IEP_Attrs_s
     /*pruIcssIepClk frequency*/
     uint32_t pruIcssIepClkFrequency;
     /*pruIcssIepClk period in nanoseconds*/
-    uint32_t pruIcssIepClkPeriod;
+    float pruIcssIepClkPeriod;
     /*iep0 increment value*/
     uint8_t  iep0IncrementValue;
     /*enable or disable IEP0*/
