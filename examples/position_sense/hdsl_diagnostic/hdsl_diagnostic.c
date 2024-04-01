@@ -194,8 +194,6 @@ static void hdsl_i2c_io_expander(void *args);
 
 #if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
 
-void App_udmaEventCb(Udma_EventHandle eventHandle, uint32_t eventType, void *appData);
-
 static void App_udmaTrpdInit(Udma_ChHandle chHandle,
                              uint8_t *trpdMem,
                              const void *destBuf,
