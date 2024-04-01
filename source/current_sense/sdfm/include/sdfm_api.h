@@ -458,6 +458,29 @@ int32_t SDFM_enableEpwmSync(sdfm_handle h_sdfm, uint8_t epwmIns);
  * 
 */
 int32_t SDFM_disableEpwmSync(sdfm_handle h_sdfm, uint8_t epwmIns);
+/***
+ *  \brief  This API configures PRU GPO mode as shift out mode (ICSSG_GPCFG0_REG[14] PRU<n>_GPO_MODE = 1h) and  
+ *          shift out mode's clock divisors to output the SD clock on PR<k>_PRUx_GPO1 pin.
+ *  \brief  PRU0_GPO_DIV0 and PRU0_GPO_DIV1 configuration values 
+ *  \brief  0x0:  for divisor 1
+ *  \brief  0x1:  for divisor 1.5
+ *  \brief  0x2:  for divisor 2
+ *  \brief  0x3:  for divisor 2.5
+ *       .
+ *       .
+ *       .
+ *  \brief  0xID: for divisor 15.5
+ *  \brief  0xIE: for divisor 16
+ *  \brief  0x1F: reserved
+ * 
+ *  \param[in]  h_sdfm          SDFM handle
+ *  \param[in]  div0            PRUx_GPO_DIV0 value
+ *  \param[in]  div1            PRUx_GPO_DIV1 value
+ * 
+ * \retval     SystemP_SUCCESS on success, SystemP_FAILURE on not expected API parameters
+*/
+int32_t SDFM_configClockFromGPO1(sdfm_handle h_sdfm, uint8_t div0, uint8_t div1);
+
 /** @} */
 
 #ifdef __cplusplus

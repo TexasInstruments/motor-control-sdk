@@ -160,14 +160,18 @@ INIT_SDFM:
     M_PRU_TM_ENABLE  
 
     .if $isdefed("SDFM_PRU_CORE")
-    ;Initialize SD mode
-    LDI32   TEMP_REG1, PR1_PRUn_GP_MUX_SEL_VAL<<PR1_PRUn_GP_MUX_SEL_SHIFT
+    ;Initialize SD mode   
+    LDI32   TEMP_REG1, PR1_PRUn_GP_MUX_SEL_VAL<<PR1_PRUn_GP_MUX_SEL_SHIFT   
     LBBO    &TEMP_REG0.b0, SDFM_CFG_BASE_PTR_REG, SDFM_PRU_ID_OFFSET,  SDFM_PRU_ID_SZ   ; Load TR0.b0 <-  PRU slice id from DMEM
     QBEQ    INIT_PRU_ID1, TEMP_REG0.b0, 1                          ; Check PRU ID 0 or 1
 INIT_PRU_ID0:
+    LBCO    &TEMP_REG2, CT_PRU_ICSSG_CFG, ICSSG_CFG_GPCFG0, 4
+    OR      TEMP_REG1, TEMP_REG1, TEMP_REG2
     SBCO    &TEMP_REG1, CT_PRU_ICSSG_CFG, ICSSG_CFG_GPCFG0, 4                           ; Initialize PRU0 SD mode
     QBA     INIT_SDFM_CONT
 INIT_PRU_ID1:
+    LBCO    &TEMP_REG2, CT_PRU_ICSSG_CFG, ICSSG_CFG_GPCFG1, 4
+    OR      TEMP_REG1, TEMP_REG1, TEMP_REG2
     SBCO    &TEMP_REG1, CT_PRU_ICSSG_CFG, ICSSG_CFG_GPCFG1, 4                           ; Initialize PRU1 SD mode
     .endif
 

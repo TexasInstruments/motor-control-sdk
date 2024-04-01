@@ -57,7 +57,9 @@ function getInterfacePinList(inst)
     pinList.push({ pinName: "GPI12", displayName: "SD6_CLK", rx: true});
     /*SD7_CLK*/
     pinList.push({ pinName: "GPI14", displayName: "SD7_CLK", rx: true});
-    
+    /*GPO1 for SD clk */
+    pinList.push({ pinName: "GPO1", displayName: "GPO1_CLK_OUT", rx: false});
+
     return pinList;
 }
 
@@ -77,6 +79,9 @@ function pinmuxRequirements(inst) {
            if((pin.pinName == "GPI1")){
                pinResource.used = true;
            }
+           if((pin.pinName == "GPO1")){
+            pinResource.used = false;
+        }
         }else{
            if( (pin.pinName == "GPI1")){
                pinResource.used = false;
@@ -244,6 +249,17 @@ function pinmuxRequirements(inst) {
             if((pin.pinName == "GPI12"))
             {
                 pinResource.used = false;
+            }
+        }
+        if((inst["SDFM_CLK_GEN"] == "1"))
+        {
+            if((pin.pinName == "GPI1"))
+            {
+                pinResource.used = false;
+            }
+            if(pin.pinName == "GPO1")
+            {    
+                pinResource.used = true;
             }
         }
      
