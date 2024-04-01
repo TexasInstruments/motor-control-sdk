@@ -360,6 +360,7 @@ typedef struct SDFM_s {
     SDFM_Interface * p_sdfm_interface;
     SDFM_SampleOutInterface *sampleOutputInterface;
     void *pruss_cfg;
+    void *prussIep;
 } SDFM;
 
 

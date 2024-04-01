@@ -575,6 +575,56 @@ void SDFM_disableZeroCrossDetection(sdfm_handle h_sdfm, uint8_t chNum)
     }
    
 }
+
+int32_t SDFM_enableEpwmSync(sdfm_handle h_sdfm, uint8_t epwmIns)
+{
+    void *pru_iep = h_sdfm->prussIep;
+    int32_t   retVal = SystemP_FAILURE;
+    
+    if(pru_iep != NULL && (epwmIns == 0 || epwmIns == 3))
+    {
+        retVal = SystemP_SUCCESS;
+
+        switch (epwmIns)
+        {
+            case 0:
+                HW_WR_FIELD32(((uint8_t *)pru_iep + CSL_ICSS_G_PR1_IEP0_SLV_PWM_REG),
+                               CSL_ICSS_G_PR1_IEP0_SLV_PWM_REG_PWM0_RST_CNT_EN, 1);
+                break;
+             case 3:
+                HW_WR_FIELD32(((uint8_t *)pru_iep + CSL_ICSS_G_PR1_IEP0_SLV_PWM_REG),
+                               CSL_ICSS_G_PR1_IEP0_SLV_PWM_REG_PWM3_RST_CNT_EN, 1);
+                break;
+        }
+    }
+    
+    return retVal;
+}
+
+int32_t SDFM_disableEpwmSync(sdfm_handle h_sdfm, uint8_t epwmIns)
+{
+    void *pru_iep = h_sdfm->prussIep;
+    int32_t   retVal = SystemP_FAILURE;
+    
+    if(pru_iep != NULL && (epwmIns == 0 || epwmIns == 3))
+    {
+        retVal = SystemP_SUCCESS;
+
+        switch (epwmIns)
+        {
+            case 0:
+                HW_WR_FIELD32(((uint8_t *)pru_iep + CSL_ICSS_G_PR1_IEP0_SLV_PWM_REG),
+                               CSL_ICSS_G_PR1_IEP0_SLV_PWM_REG_PWM0_RST_CNT_EN, 0);
+                break;
+             case 3:
+                HW_WR_FIELD32(((uint8_t *)pru_iep + CSL_ICSS_G_PR1_IEP0_SLV_PWM_REG),
+                               CSL_ICSS_G_PR1_IEP0_SLV_PWM_REG_PWM3_RST_CNT_EN, 0);
+                break;
+        }
+    }
+    
+    return retVal;
+}
 /* SDFM global enable */
 void SDFM_enable(sdfm_handle h_sdfm)
 {

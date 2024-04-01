@@ -326,12 +326,12 @@ int32_t PRUICSS_PWM_setPwmDebounceValue(PRUICSS_PWM_Handle handle, uint8_t pwmSe
     return retVal;    
 }
 
-int32_t PRUICSS_PWM_setPwmTripMask(PRUICSS_PWM_Handle handle, uint8_t pwmSet, uint16_t maskvalue)
+int32_t PRUICSS_PWM_setPwmTripMask(PRUICSS_PWM_Handle handle, uint8_t pwmSet, uint16_t maskValue)
 {
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (pwmSet < PRUICSS_NUM_PWM_SETS) && (maskvalue <= PRUICSS_PWM_TRIP_MASK_MAX_VALUE))
+    if ((handle != NULL) && (pwmSet < PRUICSS_NUM_PWM_SETS) && (maskValue <= PRUICSS_PWM_TRIP_MASK_MAX_VALUE))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)((handle->pruIcssHandle)->hwAttrs);
@@ -340,25 +340,61 @@ int32_t PRUICSS_PWM_setPwmTripMask(PRUICSS_PWM_Handle handle, uint8_t pwmSet, ui
         {
             case 0:
                 HW_WR_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_PWM0),
-                               CSL_ICSSCFG_PWM0_PWM0_TRIP_MASK, maskvalue);
+                               CSL_ICSSCFG_PWM0_PWM0_TRIP_MASK, maskValue);
                 break;
             case 1:
                 HW_WR_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_PWM1),
-                               CSL_ICSSCFG_PWM1_PWM1_TRIP_MASK, maskvalue);
+                               CSL_ICSSCFG_PWM1_PWM1_TRIP_MASK, maskValue);
                 break;
             case 2:
                 HW_WR_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_PWM2),
-                               CSL_ICSSCFG_PWM2_PWM2_TRIP_MASK, maskvalue);
+                               CSL_ICSSCFG_PWM2_PWM2_TRIP_MASK, maskValue);
                 break;
              case 3:
                 HW_WR_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_PWM3),
-                               CSL_ICSSCFG_PWM3_PWM3_TRIP_MASK, maskvalue);
+                               CSL_ICSSCFG_PWM3_PWM3_TRIP_MASK, maskValue);
                 break;
         }
     }
 
     return retVal;    
 }
+
+int32_t PRUICSS_PWM_getPwmTripMask(PRUICSS_PWM_Handle handle, uint8_t pwmSet, uint16_t *maskValuePtr)
+{
+    PRUICSS_HwAttrs const   *hwAttrs;
+    int32_t                 retVal = SystemP_FAILURE;
+
+    if ((handle != NULL) && (pwmSet < PRUICSS_NUM_PWM_SETS) && (maskValuePtr != NULL))
+    {
+        retVal = SystemP_SUCCESS;
+        hwAttrs = (PRUICSS_HwAttrs const *)((handle->pruIcssHandle)->hwAttrs);
+
+        switch (pwmSet)
+        {
+            case 0:
+                (*maskValuePtr) = HW_RD_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_PWM0),
+                               CSL_ICSSCFG_PWM0_PWM0_TRIP_MASK);
+                break;
+            case 1:
+                (*maskValuePtr) = HW_RD_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_PWM1),
+                               CSL_ICSSCFG_PWM1_PWM1_TRIP_MASK);
+                break;
+            case 2:
+                (*maskValuePtr) = HW_RD_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_PWM2),
+                               CSL_ICSSCFG_PWM2_PWM2_TRIP_MASK);
+                break;
+             case 3:
+                (*maskValuePtr) = HW_RD_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_PWM3),
+                               CSL_ICSSCFG_PWM3_PWM3_TRIP_MASK);
+                break;
+        }
+    }
+
+    return retVal;    
+}
+
+
 
 int32_t PRUICSS_PWM_configurePwmCmp0TripResetEnable(PRUICSS_PWM_Handle handle, uint8_t pwmSet, uint8_t enable)
 {

@@ -256,6 +256,9 @@ int32_t initSdfmFw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm,  PRU
     
    
     hSdfm->pruss_cfg = (void *)(((PRUICSS_HwAttrs *)(pruIcssHandle->hwAttrs))->cfgRegBase);
+    /*IEP base address*/
+    /*need to add condition for iep1*/
+    hSdfm->prussIep = (void *)(((PRUICSS_HwAttrs *)(pruIcssHandle->hwAttrs))->iep0RegBase);
 
     if( pSdfmPrms->loadShare )
     {
@@ -322,6 +325,10 @@ int32_t initSdfmFw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm,  PRU
 
     /*set Noraml current OSR */
     SDFM_setFilterOverSamplingRatio(hSdfm, pSdfmPrms->filterOsr);
+
+    /*Enable epwm sync*/
+
+    SDFM_enableEpwmSync(hSdfm, 0);
 
     /*Enable Continuous mode*/
     if(pSdfmPrms->enableContinuousMode)

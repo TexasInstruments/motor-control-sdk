@@ -146,7 +146,7 @@ const uint32_t pru_SDFM_TXPRU0_image_0[] = {
 0x1f18ffff,
 0x10f5ffe5,
 0xf11d1741,
-0xd100c109,
+0x6900c109,
 0x0ce5e9e6,
 0x10e5e5e9,
 0x0ce6eae7,
