@@ -34,7 +34,7 @@
             -I${MOTOR_CONTROL_SDK_PATH}/source
             -I${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware
             -DICSSG0
-            -DPRU1
+            -DRTU_PRU1
             -DSLICE1
             -v4
             -v4
