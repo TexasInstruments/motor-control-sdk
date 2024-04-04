@@ -156,6 +156,7 @@ const includes_r5f_0_0 = {
         "${MOTOR_CONTROL_SDK_PATH}/source/transforms/ipark",
         "${MOTOR_CONTROL_SDK_PATH}/source/transforms/park",
         "${MOTOR_CONTROL_SDK_PATH}/source/transforms/svgen",
+        "${MOTOR_CONTROL_SDK_PATH}/source/dcl",
     ],
 };
 
@@ -174,6 +175,7 @@ const includes_r5f_0_1 = {
         "${MOTOR_CONTROL_SDK_PATH}/source/transforms/ipark",
         "${MOTOR_CONTROL_SDK_PATH}/source/transforms/park",
         "${MOTOR_CONTROL_SDK_PATH}/source/transforms/svgen",
+        "${MOTOR_CONTROL_SDK_PATH}/source/dcl",
     ],
 };
 

@@ -73,6 +73,7 @@ INCLUDES_common := \
 	-I${MOTOR_CONTROL_SDK_PATH}/source/transforms/ipark \
 	-I${MOTOR_CONTROL_SDK_PATH}/source/transforms/park \
 	-I${MOTOR_CONTROL_SDK_PATH}/source/transforms/svgen \
+	-I${MOTOR_CONTROL_SDK_PATH}/source/dcl \
 	-Igenerated \
 
 DEFINES_common := \
