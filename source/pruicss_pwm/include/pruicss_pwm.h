@@ -474,11 +474,33 @@ int32_t PRUICSS_PWM_setPwmDebounceValue(PRUICSS_PWM_Handle handle, uint8_t pwmSe
  * 
  * \param   handle      #PRUICSS_PWM_Handle returned from #PRUICSS_PWM_open()
  * \param   pwmSet      0 for PWM0, 1 for PWM1, 2 for PWM2, 3 for PWM3
- * \param   maskvalue   Pwmset maskvalue
+ * \param   maskValue   Pwmset maskValue
  * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  * 
 */
-int32_t PRUICSS_PWM_setPwmTripMask(PRUICSS_PWM_Handle handle, uint8_t pwmSet, uint16_t maskvalue);
+int32_t PRUICSS_PWM_setPwmTripMask(PRUICSS_PWM_Handle handle, uint8_t pwmSet, uint16_t maskValue);
+
+/**
+ * \brief  Get trip mask Value for specified pwm set
+ * 
+ * \brief  Software TripMask
+ * \brief  0x0: PWM0_POS_ERR_TRIP (trip_e5)
+ * \brief  0x1: PWM0_OVER_ERR_TRIP (trip_e4)
+ * \brief  0x2: PWM0_0_SD_SHORT_ERR_TRIP (trip_e3_0)
+ * \brief  0x3: PWM0_1_SD_SHORT_ERR_TRIP (trip_e3_1)
+ * \brief  0x4: PWM0_2_SD_SHORT_ERR_TRIP (trip_e3_2)
+ * \brief  0x5: PWM0_DEBOUNCE_TRIP_IN (trip_e2)
+ * \brief  0x6: PWM0_0_DEBOUNCE_TRIP (trip_e1_0)
+ * \brief  0x7: PWM0_1_DEBOUNCE_TRIP (trip_e1_1)
+ * \brief  0x8: PWM0_2_DEBOUNCE_TRIP (trip_e1_2)
+ * 
+ * \param   handle      #PRUICSS_PWM_Handle returned from #PRUICSS_PWM_open()
+ * \param   pwmSet      0 for PWM0, 1 for PWM1, 2 for PWM2, 3 for PWM3
+ * \param   maskValuePtr [out]   Pwmset maskValue 
+ * \return  It returns SystemP_SUCCESS on success and stores mask value in maskValuePtr, SystemP_FAILURE on error
+ * 
+*/
+int32_t PRUICSS_PWM_getPwmTripMask(PRUICSS_PWM_Handle handle, uint8_t pwmSet, uint16_t *maskValuePtr);
 
 /**
  * \brief  This API enables/disables TripReset on Compare_0 Event for specified pwm set

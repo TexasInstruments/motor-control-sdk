@@ -135,6 +135,9 @@ static void pruSdfmIrqHandler(void *handle);
 /* Test ICSSG handle */
 PRUICSS_Handle gPruIcssHandle;
 
+/* ICSSG PWM handle */
+PRUICSS_PWM_Handle gPruIcssPwmHandle;
+
 /* Test Sdfm handles */
 sdfm_handle gHPruSdfm;
 
@@ -299,6 +302,15 @@ void init_sdfm()
         DebugP_log("Error: initIcss() fail.\r\n");
         return;
     }
+
+    if(gTestSdfmPrms.enFastDetect || gTestSdfmPrms.enComparator)
+    {
+        gPruIcssPwmHandle = PRUICSS_PWM_open(CONFIG_PRUICSS_PWM0, gPruIcssHandle);
+        DebugP_assert(gPruIcssPwmHandle != NULL);
+    }
+    
+    gHPruSdfm->gPruPwmHandle = gPruIcssPwmHandle;
+
 
     /* Register & enable ICSSG PRU SDFM FW interrupt */
     HwiP_Params_init(&hwiPrms);

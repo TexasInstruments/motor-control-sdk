@@ -40,6 +40,7 @@ extern "C" {
 
 #include <drivers/soc.h>
 #include <drivers/pruicss.h>
+#include <pruicss_pwm/include/pruicss_pwm.h>
 #include  <math.h>
 
 
@@ -350,6 +351,7 @@ typedef struct SDFM_SampleOutInterface_s
 typedef struct SDFM_s {
     /**< PRU ID */
     PRUICSS_Handle gPruIcssHandle;
+    PRUICSS_PWM_Handle gPruPwmHandle;
     uint8_t pruId;
     uint32_t sdfmClock;
     uint32_t iepClock;
@@ -358,6 +360,7 @@ typedef struct SDFM_s {
     SDFM_Interface * p_sdfm_interface;
     SDFM_SampleOutInterface *sampleOutputInterface;
     void *pruss_cfg;
+    void *prussIep;
 } SDFM;
 
 

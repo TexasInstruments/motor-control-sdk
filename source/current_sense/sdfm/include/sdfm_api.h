@@ -436,6 +436,28 @@ uint8_t SDFM_getZeroCrossThresholdStatus(sdfm_handle h_sdfm, uint8_t chNum);
  *
  */
 void SDFM_disableZeroCrossDetection(sdfm_handle h_sdfm, uint8_t chNum);
+
+/**
+ * 
+ * \brief This API enables EPWM synchronization with SDFM
+ * \param[in]  h_sdfm          SDFM handle
+ * \param[in]  epwmIns         epwm instance: Only epwm0/epwm3 support synchronization with sdfm 
+ * 
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
+ * 
+*/
+int32_t SDFM_enableEpwmSync(sdfm_handle h_sdfm, uint8_t epwmIns);
+
+/**
+ * 
+ * \brief This API disbale EPWM synchronization with SDFM
+ * \param[in]  h_sdfm          SDFM handle
+ * \param[in]  epwmIns         epwm instance: Only epwm0/epwm3 support synchronization with sdfm
+ * 
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
+ * 
+*/
+int32_t SDFM_disableEpwmSync(sdfm_handle h_sdfm, uint8_t epwmIns);
 /** @} */
 
 #ifdef __cplusplus

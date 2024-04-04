@@ -280,4 +280,16 @@ earlier SDKs.
     <td> Added new parameter: PRU-ICSSG handle.
     <td> -
 </tr>
+<tr>
+    <td>  Current Sense %SDFM
+    <td>  Structure `SDFM_s`
+    <td>  Added a variable: `gPruPwmHandle`
+    <td>
+</tr>
+<tr>
+    <td>  Current Sense %SDFM
+    <td>  Structure `SDFM_s`
+    <td>  Added a void pointer: `prussIep`
+    <td>
+</tr>
 </table>

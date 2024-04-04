@@ -44,8 +44,8 @@
 
 /* Internal structure for managing each PRU SD */
 SDFM g_sdfm[NUM_PRU] = {
-    {NULL, PRU_ID_0, 0, 0, 0, 0, NULL},
-    {NULL, PRU_ID_1, 0, 0, 0, 0, NULL},
+    {NULL, NULL, PRU_ID_0, 0, 0, 0, 0, NULL},
+    {NULL, NULL, PRU_ID_1, 0, 0, 0, 0, NULL},
 };
 
 /* Initialize SDFM instance */
@@ -293,7 +293,7 @@ int32_t SDFM_getFastDetectErrorStatus(sdfm_handle h_sdfm, uint8_t chNum)
 {
     uint8_t pwmSet;
     int32_t                 retVal = SystemP_SUCCESS;
-    PRUICSS_Handle pruIcssHandle = h_sdfm->gPruIcssHandle;
+    PRUICSS_PWM_Handle pruPwmHandle = h_sdfm->gPruPwmHandle;
     if(chNum < SDFM_CHANNEL3)
     {
         pwmSet = 0;
@@ -317,7 +317,7 @@ int32_t SDFM_getFastDetectErrorStatus(sdfm_handle h_sdfm, uint8_t chNum)
     }
     
     /*PWM trip vector */
-    retVal = PRUICSS_PWM_getPwmTripTriggerCauseVector(pruIcssHandle, pwmSet);
+    retVal = PRUICSS_PWM_getPwmTripTriggerCauseVector(pruPwmHandle, pwmSet);
     if(retVal == SystemP_FAILURE)
     {
         return retVal;
@@ -350,7 +350,7 @@ int32_t SDFM_clearPwmTripStatus(sdfm_handle h_sdfm, uint8_t chNum)
 {
     uint8_t pwmSet;
     int32_t                 retVal = SystemP_SUCCESS;
-    PRUICSS_Handle pruIcssHandle = h_sdfm->gPruIcssHandle;
+    PRUICSS_PWM_Handle pruPwmHandle = h_sdfm->gPruPwmHandle;
     
     if(chNum < SDFM_CHANNEL3)
     {
@@ -375,14 +375,14 @@ int32_t SDFM_clearPwmTripStatus(sdfm_handle h_sdfm, uint8_t chNum)
     }
 
     /*clear trip status*/
-    retVal = PRUICSS_PWM_generatePwmTripReset(pruIcssHandle, pwmSet);
+    retVal = PRUICSS_PWM_generatePwmTripReset(pruPwmHandle, pwmSet);
     if(retVal == SystemP_FAILURE)
     {
         return retVal;
     }
 
     /*clear trip reset status*/
-    retVal = PRUICSS_PWM_clearPwmTripResetStatus(pruIcssHandle, pwmSet);
+    retVal = PRUICSS_PWM_clearPwmTripResetStatus(pruPwmHandle, pwmSet);
 
     return retVal;
 }
@@ -484,7 +484,7 @@ int32_t SDFM_clearOverCurrentError(sdfm_handle h_sdfm, uint8_t chNum)
 {
     uint8_t pwmSet;
     int32_t                 retVal = SystemP_SUCCESS;
-    PRUICSS_Handle pruIcssHandle = h_sdfm->gPruIcssHandle;
+    PRUICSS_PWM_Handle pruPwmHandle = h_sdfm->gPruPwmHandle;
     if(chNum < SDFM_CHANNEL3)
     {
         pwmSet = 0;
@@ -508,7 +508,7 @@ int32_t SDFM_clearOverCurrentError(sdfm_handle h_sdfm, uint8_t chNum)
     }
 
     /*Clear over current Error PWM trip*/
-    retVal = PRUICSS_PWM_clearPwmOverCurrentErrorTrip(pruIcssHandle, pwmSet);
+    retVal = PRUICSS_PWM_clearPwmOverCurrentErrorTrip(pruPwmHandle, pwmSet);
     if(retVal == SystemP_FAILURE)
     {
         return retVal;
@@ -574,6 +574,56 @@ void SDFM_disableZeroCrossDetection(sdfm_handle h_sdfm, uint8_t chNum)
         h_sdfm->p_sdfm_interface->sdfm_cfg_ptr[2].sdfm_threshold_parms.zeroCrossEn = 0; 
     }
    
+}
+
+int32_t SDFM_enableEpwmSync(sdfm_handle h_sdfm, uint8_t epwmIns)
+{
+    void *pru_iep = h_sdfm->prussIep;
+    int32_t   retVal = SystemP_FAILURE;
+    
+    if(pru_iep != NULL && (epwmIns == 0 || epwmIns == 3))
+    {
+        retVal = SystemP_SUCCESS;
+
+        switch (epwmIns)
+        {
+            case 0:
+                HW_WR_FIELD32(((uint8_t *)pru_iep + CSL_ICSS_G_PR1_IEP0_SLV_PWM_REG),
+                               CSL_ICSS_G_PR1_IEP0_SLV_PWM_REG_PWM0_RST_CNT_EN, 1);
+                break;
+             case 3:
+                HW_WR_FIELD32(((uint8_t *)pru_iep + CSL_ICSS_G_PR1_IEP0_SLV_PWM_REG),
+                               CSL_ICSS_G_PR1_IEP0_SLV_PWM_REG_PWM3_RST_CNT_EN, 1);
+                break;
+        }
+    }
+    
+    return retVal;
+}
+
+int32_t SDFM_disableEpwmSync(sdfm_handle h_sdfm, uint8_t epwmIns)
+{
+    void *pru_iep = h_sdfm->prussIep;
+    int32_t   retVal = SystemP_FAILURE;
+    
+    if(pru_iep != NULL && (epwmIns == 0 || epwmIns == 3))
+    {
+        retVal = SystemP_SUCCESS;
+
+        switch (epwmIns)
+        {
+            case 0:
+                HW_WR_FIELD32(((uint8_t *)pru_iep + CSL_ICSS_G_PR1_IEP0_SLV_PWM_REG),
+                               CSL_ICSS_G_PR1_IEP0_SLV_PWM_REG_PWM0_RST_CNT_EN, 0);
+                break;
+             case 3:
+                HW_WR_FIELD32(((uint8_t *)pru_iep + CSL_ICSS_G_PR1_IEP0_SLV_PWM_REG),
+                               CSL_ICSS_G_PR1_IEP0_SLV_PWM_REG_PWM3_RST_CNT_EN, 0);
+                break;
+        }
+    }
+    
+    return retVal;
 }
 /* SDFM global enable */
 void SDFM_enable(sdfm_handle h_sdfm)
