@@ -1,9 +1,9 @@
 let common   = system.getScript("/common");
  
 let SDFM_ClockSource = [
-	{ name: "SDFM_CLK_SOURCE_SD8_CLK", displayName: "Source is SD8_CLK common for all nine channels" },
-	{ name: "SDFM_CLK_SOURCE_SDi_CLK", displayName: "Source is respective channel clock" },
-    { name: "SDFM_CLK_SOURCE_SDXi_CLK", displayName: "Source is common clock for group of 3 channels (SD0_CLK for 0-2, SD3_CLK for 3-5, SD6_CLK for 6-8" },
+	{ name: "0", displayName: "Source is SD8_CLK common for all nine channels" },
+	{ name: "1", displayName: "Source is respective channel clock" },
+    { name: "2", displayName: "Source is common clock for group of 3 channels (SD0_CLK for 0-2, SD3_CLK for 3-5, SD6_CLK for 6-8" },
 ]
 
 let ClockConfigs = [];
