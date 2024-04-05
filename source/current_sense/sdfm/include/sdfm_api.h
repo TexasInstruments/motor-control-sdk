@@ -163,7 +163,7 @@ void SDFM_enable(sdfm_handle h_sdfm);
  *
  *
  */
-void SDFM_setCompFilterThresholds(sdfm_handle h_sdfm, uint8_t ch_id, SDFM_ThresholdParms thresholdParms);
+void SDFM_setCompFilterThresholds(sdfm_handle h_sdfm, uint8_t ch_id, uint32_t *thresholdParms);
 
 /**
  *
@@ -219,16 +219,29 @@ void SDFM_configDataFilter(sdfm_handle h_sdfm, uint8_t ch_id, uint8_t filter);
 
 /**
  *
- *  \brief  configuration of SDFM channel clock source & clock inversion
+ *  \brief  configuration of SDFM channel clock source 
  *
  *  \param[in]  h_sdfm          SDFM handle
  *  \param[in]  ch_id           current ch number
- *  \param[in]  clkPrams        channel clock source type & clock inversion
+ *  \param[in]  clk_source       channel clock source type 
  *
  *
  *
  */
-void SDFM_selectClockSource(sdfm_handle h_sdfm, uint8_t ch_id, SDFM_ClkSourceParms clkPrams);
+void SDFM_selectClockSource(sdfm_handle h_sdfm, uint8_t ch_id, uint8_t clk_source);
+
+/**
+ *
+ *  \brief  configuration of SDFM channel clock inversion  
+ *
+ *  \param[in]  h_sdfm          SDFM handle
+ *  \param[in]  ch_id           current ch number
+ *  \param[in]  clk_source       channel clock inversion 
+ *
+ *
+ *
+ */
+void SDFM_setClockInversion(sdfm_handle h_sdfm, uint8_t ch_id, uint8_t clk_inv);
 
 /**
  *

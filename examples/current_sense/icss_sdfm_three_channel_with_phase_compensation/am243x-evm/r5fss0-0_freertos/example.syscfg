@@ -2,7 +2,7 @@
  * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
  * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
  * @cliArgs --device "AM243x_ALV_beta" --package "ALV" --part "ALV" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@09.01.00"
- * @versions {"tool":"1.19.0+3426"}
+ * @versions {"tool":"1.20.0+3587"}
  */
 
 /**
@@ -51,15 +51,16 @@ const section12       = section.addInstance();
 /**
  * Write custom configuration values to the imported modules.
  */
-sdfm1.$name                     = "CONFIG_SDFM0";
-sdfm1.Enable_Phase_Compensation = true;
-sdfm1.SDFM_CLK_GEN              = "3";
-sdfm1.Enable_Channel_0          = true;
-sdfm1.Enable_Channel_1          = true;
-sdfm1.Enable_Channel_2          = true;
-sdfm1.Ch0_EPWM_SYNC             = true;
-sdfm1.Ch1_EPWM_SYNC             = true;
-sdfm1.Ch2_EPWM_SYNC             = true;
+sdfm1.$name                      = "CONFIG_SDFM0";
+sdfm1.Enable_Phase_Compensation  = true;
+sdfm1.SDFM_CLK_GEN               = "3";
+sdfm1.Enable_Channel_0           = true;
+sdfm1.Enable_Channel_1           = true;
+sdfm1.Enable_Channel_2           = true;
+sdfm1.Ch0_EPWM_SYNC              = true;
+sdfm1.Ch1_EPWM_SYNC              = true;
+sdfm1.Ch2_EPWM_SYNC              = true;
+sdfm1.PRU_ICSSG0_PRU.GPI18.$used = false;
 
 epwm1.$name              = "CONFIG_EPWM0";
 epwm1.EPWM.$assign       = "EHRPWM0";
@@ -68,11 +69,9 @@ epwm1.EPWM.B.$assign     = "GPMC0_AD4";
 epwm1.EPWM.SYNCO.$assign = "GPMC0_AD1";
 epwm1.EPWM.SYNCI.$used   = false;
 
-gpio1.$name                = "GPIO_MTR_1_PWM_EN";
-gpio1.pinDir               = "OUTPUT";
-gpio1.GPIO.$assign         = "GPIO0";
-gpio1.GPIO.gpioPin.rx      = false;
-gpio1.GPIO.gpioPin.$assign = "GPMC0_AD15";
+gpio1.$name          = "GPIO_MTR_1_PWM_EN";
+gpio1.pinDir         = "OUTPUT";
+gpio1.GPIO_n.$assign = "GPMC0_AD15";
 
 gpio2.pinDir                   = "OUTPUT";
 gpio2.useMcuDomainPeripherals  = true;

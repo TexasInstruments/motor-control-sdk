@@ -50,7 +50,6 @@
 
 #define  NUM_CH_SUPPORTED          ( 3 )
 #define ICSSG_PRU_LOAD_SHARE_MODE  ( 0 )
-
 /* EPWM functional clock */
 /* Functional clock is the same for all EPWMs */
 #define APP_EPWM_FCLK                   ( CONFIG_EPWM0_FCLK )
@@ -88,7 +87,7 @@
 /* Test ICSSG instance ID */
 #define TEST_ICSSG_INST_ID              ( CONFIG_PRU_ICSS0 )
 /* Test ICSSG slice ID */
-#define TEST_ICSSG_SLICE_ID             ( ICSSG_SLICE_ID_0 )
+#define TEST_PRU_SLICE_ID             ( ICSSG_SLICE_ID_0 )
 
 /* R5F interrupt settings for ICSSG */
 #define ICSSG_PRU_SDFM_INT_NUM          ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_3 )  /* VIM interrupt number */
@@ -145,38 +144,7 @@ sdfm_handle gHPruSdfm;
 __attribute__((section(".gSdfmSampleOutput"))) uint32_t gSdfm_sampleOutput[NUM_CH_SUPPORTED];
 
 /* Test Sdfm parameters */
-SdfmPrms gTestSdfmPrms = {
-    ICSSG_PRU_LOAD_SHARE_MODE,
-    TEST_ICSSG_INST_ID,     /*Icssg instance ID*/
-    PRUICSS_PRU0,          /*PRU core ID*/
-    TEST_ICSSG_SLICE_ID,   /*SLICE IDs*/
-    300000000,    /*PRU Core clock*/
-    {300000000,   /*Value of ICSSG0_IEP clock*/
-    300000000},   /*ICSSG1_IEP_CLOCK*/
-    20000000,    /*Value of SD clock (It should be exact equal to sd clock value)*/
-    0,                        /*enable double update*/
-    FIRST_SAMPLE_TRIGGER_TIME,       /*first sample  trigger time*/
-    SECOND_SAMPLE_TRIGGER_TIME,       /*second sample trigger time*/
-    APP_EPWM_OUTPUT_FREQ,     /*PWM output frequency*/
-    {{3500, 1000,0},    /*threshold parameters(High, low & reserevd)*/
-    {3500, 1000,0},
-    {3500, 1000,0}},
-    {{0,0},                /*clock sourse & clock inversion for all channels*/
-    {0,0},
-    {0,0}},
-    15,   /*Over current osr: The effect count is OSR + 1*/
-    128,   /*Normal current osr */
-    1,   /*comparator enable*/
-    (uint32_t)&gSdfm_sampleOutput,/*Output samples base address*/
-    0,    /*Fast detect enable*/
-    {{4, 18, 2},
-    {4, 18, 2},
-    {4, 18, 2}},   /*Fast detect fields {Window size, zero count max, zero count min}*/
-    1, /*Phase delay enable*/
-    0,   /*Enable zero cross*/
-    {1700, 1700, 1700}, /*Zero cross threshold*/
-    0, /*enable continuous mode*/
-};
+SdfmPrms gTestSdfmPrms ;
 
 #define PRUICSS_G_MUX_EN    ( 0x1 ) /* ICSSG_SA_MX_REG:G_MUX_EN */
 
@@ -189,7 +157,7 @@ uint32_t gMtr1PwnEnGpioPinDir   = GPIO_MTR_1_PWM_EN_DIR;
 volatile Bool gRunFlag = TRUE;
 
 
-/* SDFM Output sample for Channel 0 */
+/* ICSS SDFM Output sample for Channel 0 */
 /*Sample size*/
 #define MAX_SAMPLES (128)
 
@@ -198,7 +166,8 @@ uint32_t sdfm_ch_samples[NUM_CH_SUPPORTED][MAX_SAMPLES] = {0};
 uint32_t sdfmPruIdxCnt = 0;
 
 /* IRQ counters */
-volatile uint32_t gPruSdfmIrqCnt=0; /* PRU Sdfm FW IRQ count */
+volatile uint32_t gPruSdfmIrqCnt=0; /* PRU ICSS SDFM FW IRQ count */
+
 volatile uint32_t gEpwmIsrCnt=0;    /* EPWM0 IRQ count */
 volatile uint32_t gEpwmIsrCnt1=0;
 /*PWM Parameters*/
@@ -297,15 +266,11 @@ void init_sdfm()
 {
     int32_t status;
     /* Initialize ICSSG */
-    status = initIcss(TEST_ICSSG_INST_ID, TEST_ICSSG_SLICE_ID, PRUICSS_G_MUX_EN, ICSSG_PRU_LOAD_SHARE_MODE, &gPruIcssHandle);
+    status = initIcss(TEST_ICSSG_INST_ID, TEST_PRU_SLICE_ID, PRUICSS_G_MUX_EN, ICSSG_PRU_LOAD_SHARE_MODE, &gPruIcssHandle);
     if (status != SDFM_ERR_NERR) {
         DebugP_log("Error: initIcss() fail.\r\n");
         return;
     }
-
-    
-    gHPruSdfm->gPruPwmHandle = gPruIcssPwmHandle;
-
 
     /* Register & enable ICSSG PRU SDFM FW interrupt */
     HwiP_Params_init(&hwiPrms);
@@ -317,14 +282,37 @@ void init_sdfm()
     status              = HwiP_construct(&gIcssgPruSdfmHwiObject, &hwiPrms);
     DebugP_assert(status == SystemP_SUCCESS);
 
-    /* Initialize PRU core for SDFM */
+   /* Configure  axis level Sdfm parameters */
+    sdfmGlobalParamsConfig(&gTestSdfmPrms);
+
+    gTestSdfmPrms.icssgInsId = TEST_ICSSG_INST_ID;
+    gTestSdfmPrms.pruInsId = PRUICSS_PRU0; 
+    gTestSdfmPrms.pruSliceId = TEST_PRU_SLICE_ID;
+
+    gTestSdfmPrms.epwmOutFreq = APP_EPWM_OUTPUT_FREQ;
+    
+
+#if (CONFIG_SDFM0_CHANNEL0 != 0)
+    sdfmParamsConfig(0, &gTestSdfmPrms);
+#endif
+#if (CONFIG_SDFM0_CHANNEL1 != 0)
+    sdfmParamsConfig(1, &gTestSdfmPrms);
+#endif
+#if (CONFIG_SDFM0_CHANNEL2 != 0)
+    sdfmParamsConfig(2, &gTestSdfmPrms);
+#endif
+
+    gHPruSdfm->gPruPwmHandle = gPruIcssPwmHandle;
+
+    /*sample output base address for all channel*/
+    gTestSdfmPrms.samplesBaseAddress = (uint32_t)&gSdfm_sampleOutput;
+    /* Initialize PRU cores for SDFM */
     status = initPruSdfm(gPruIcssHandle, PRUICSS_PRU0, &gTestSdfmPrms, &gHPruSdfm);
     if (status != SDFM_ERR_NERR) 
     {
         DebugP_log("Error: initPruSdfm() fail.\r\n");
         return;
     }
-
 }
 void sdfm_main(void *args)
 {
@@ -351,7 +339,7 @@ void sdfm_main(void *args)
     DebugP_log("EPWM Configured!\r\n");
      
     /*Configure IEP for SD clock when phase delay calculaton is enabled*/
-    if(gTestSdfmPrms.phaseDelay)
+#if (CONFIG_SDFM0_PHASE_DELAY != 0)
     {
         /*config ICSSG1 IEP0 */
         init_IEP0_SYNC();
@@ -359,18 +347,20 @@ void sdfm_main(void *args)
         start_IEP0();
 
     }
-    
-     /* Configure SDFM */
+#endif  
+    /* Configure SDFM */
     init_sdfm();
     DebugP_log("SDFM Configured!\r\n");
     
     /*Read measured delay*/
+#if (CONFIG_SDFM0_PHASE_DELAY != 0)
     float delay;
     delay = SDFM_getClockPhaseDelay(gHPruSdfm);
     /* Convert nenosec into IEP cycle count */
     uint32_t iepCount = (delay*(gTestSdfmPrms.iepClock[1]))/1000000000;
     /* Config IEP SYNC1 delay based on phase compensation  */
     config_SYNC_DELAY(iepCount);
+#endif
 
     /* Start EPWM0 clock */
     CSL_REG32_WR(CSL_CTRL_MMR0_CFG0_BASE + CSL_MAIN_CTRL_MMR_CFG0_EPWM_TB_CLKEN, 1);
@@ -415,6 +405,7 @@ void pruSdfmIrqHandler(void *args)
     {
         sdfmPruIdxCnt = 0;      
     }
+
     /* SDFM Output sample for Channel 0 */
     sdfm_ch_samples[SDFM_CH0][sdfmPruIdxCnt] = SDFM_getFilterData(gHPruSdfm, 0);
     /* SDFM Output sample for Channel 1 */
@@ -434,7 +425,7 @@ static void epwmIrqHandler(void *args)
     gEpwmIsrCnt++;
 
     status = EPWM_etIntrStatus(gEpwm0BaseAddr);
-    if (status & EPWM_ETFLG_INT_MASK) 
+    if(status & EPWM_ETFLG_INT_MASK) 
     {
         EPWM_etIntrClear(gEpwm0BaseAddr);
     }

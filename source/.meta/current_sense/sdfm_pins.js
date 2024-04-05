@@ -27,7 +27,7 @@ function getInterfacePinList(inst)
     pinList.push({ pinName: "GPI7", displayName: "SD_CHANNEL3_DATA", rx: true});
 
     /*SD4_D*/
-    pinList.push({ pinName: "GPI9", displayName: "SD_CHANNEL4_DATA", rx: true});
+    pinList.push({ pinName: "GPI18", displayName: "SD_CHANNEL4_DATA", rx: true});
 
     /*SD5_D*/
     pinList.push({ pinName: "GPI11", displayName: "SD_CHANNEL5_DATA", rx: true});

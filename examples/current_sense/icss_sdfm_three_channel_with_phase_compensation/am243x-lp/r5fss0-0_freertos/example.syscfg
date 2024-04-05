@@ -2,7 +2,7 @@
  * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
  * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
  * @cliArgs --device "AM243x_ALX_beta" --package "ALX" --part "ALX" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@09.01.00"
- * @versions {"tool":"1.19.0+3426"}
+ * @versions {"tool":"1.20.0+3587"}
  */
 
 /**
@@ -51,16 +51,17 @@ const section12       = section.addInstance();
 /**
  * Write custom configuration values to the imported modules.
  */
-sdfm1.$name                     = "CONFIG_SDFM0";
-sdfm1.Enable_Phase_Compensation = true;
-sdfm1.SDFM_CLK_GEN              = "3";
-sdfm1.Enable_Channel_0          = true;
-sdfm1.Enable_Channel_1          = true;
-sdfm1.Enable_Channel_2          = true;
-sdfm1.Ch0_EPWM_SYNC             = true;
-sdfm1.Ch1_EPWM_SYNC             = true;
-sdfm1.Ch2_EPWM_SYNC             = true;
-sdfm1.PRU_ICSSG0_PRU.$assign    = "PRU_ICSSG0_PRU0";
+sdfm1.$name                      = "CONFIG_SDFM0";
+sdfm1.Enable_Phase_Compensation  = true;
+sdfm1.SDFM_CLK_GEN               = "3";
+sdfm1.Enable_Channel_0           = true;
+sdfm1.Enable_Channel_1           = true;
+sdfm1.Enable_Channel_2           = true;
+sdfm1.Ch0_EPWM_SYNC              = true;
+sdfm1.Ch1_EPWM_SYNC              = true;
+sdfm1.Ch2_EPWM_SYNC              = true;
+sdfm1.PRU_ICSSG0_PRU.$assign     = "PRU_ICSSG0_PRU0";
+sdfm1.PRU_ICSSG0_PRU.GPI18.$used = false;
 
 epwm1.$name            = "CONFIG_EPWM0";
 epwm1.EPWM.$assign     = "EHRPWM0";
@@ -76,21 +77,17 @@ gpio1.pinDir                   = "OUTPUT";
 gpio1.useMcuDomainPeripherals  = true;
 gpio1.MCU_GPIO.gpioPin.$assign = "MCU_UART0_RXD";
 
-gpio2.pinDir               = "OUTPUT";
-gpio2.$name                = "GPIO_ZC_TH_CH0";
-gpio2.GPIO.$assign         = "GPIO0";
-gpio2.GPIO.gpioPin.rx      = false;
-gpio2.GPIO.gpioPin.$assign = "PRG1_PRU0_GPO18";
+gpio2.pinDir         = "OUTPUT";
+gpio2.$name          = "GPIO_ZC_TH_CH0";
+gpio2.GPIO_n.$assign = "PRG1_PRU0_GPO18";
 
-gpio3.pinDir               = "OUTPUT";
-gpio3.$name                = "GPIO_ZC_TH_CH1";
-gpio3.GPIO.gpioPin.rx      = false;
-gpio3.GPIO.gpioPin.$assign = "PRG0_PRU1_GPO2";
+gpio3.pinDir         = "OUTPUT";
+gpio3.$name          = "GPIO_ZC_TH_CH1";
+gpio3.GPIO_n.$assign = "PRG0_PRU1_GPO2";
 
-gpio4.pinDir               = "OUTPUT";
-gpio4.$name                = "GPIO_ZC_TH_CH2";
-gpio4.GPIO.gpioPin.rx      = false;
-gpio4.GPIO.gpioPin.$assign = "PRG0_PRU1_GPO1";
+gpio4.pinDir         = "OUTPUT";
+gpio4.$name          = "GPIO_ZC_TH_CH2";
+gpio4.GPIO_n.$assign = "PRG0_PRU1_GPO1";
 
 pruicss1.$name                                                                    = "CONFIG_PRU_ICSS0";
 pruicss1.coreClk                                                                  = 300000000;
@@ -340,8 +337,6 @@ epwm2.EPWM.$suggestSolution                                                     
 epwm2.EPWM.A.$suggestSolution                                                                = "GPMC0_AD5";
 epwm2.EPWM.B.$suggestSolution                                                                = "GPMC0_AD6";
 gpio1.MCU_GPIO.$suggestSolution                                                              = "MCU_GPIO0";
-gpio3.GPIO.$suggestSolution                                                                  = "GPIO1";
-gpio4.GPIO.$suggestSolution                                                                  = "GPIO1";
 pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].PRU_ICSSG0_ECAP.IN_APWM_OUT.$suggestSolution = "PRG0_PRU1_GPO15";
 debug_log.uartLog.UART.RXD.$suggestSolution                                                  = "UART0_RXD";
 debug_log.uartLog.UART.TXD.$suggestSolution                                                  = "UART0_TXD";
