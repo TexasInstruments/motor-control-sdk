@@ -77,7 +77,7 @@ transport_on_v_frame_2:
 ;save REG_FNC.w0 content
 	mov		REG_TMP11.w1, REG_FNC.w0
 
-; retrieve the 8 bytes for secondary channel from VPOS2_TEMP (
+; retrieve the 8 bytes for secondary channel from VPOS2_TEMP
     lbco        &REG_TMP1, MASTER_REGS_CONST, VPOS2_TEMP, 8
 
 ; error checks for secondary channel
@@ -138,8 +138,11 @@ online_status_2_sum2_not_set:
 	ldi	    r31.w0, PRU0_ARM_IRQ2
 
 transport_on_v_frame_2_exit:
-	qbne			not_7th_hframe_0, LOOP_CNT.b2, 7
-	qbbc			not_7th_hframe_0, H_FRAME.flags, FLAG_NORMAL_FLOW
+; update the position and crc to DMEM
+; and raise interrupt
+	;Update ONLINE_STATUS_1 to DMEM
+    lbco	&REG_TMP0.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H_TEMP, 1
+	sbco	&REG_TMP0.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H, 1
  	.if $defined("HDSL_MULTICHANNEL")
  	CALL2 WAIT_TX_FIFO_FREE
 	LOOP push_1B_0 ,2
@@ -150,13 +153,24 @@ push_1B_0:
 	RESET_CYCLCNT
 free_run_mode2:
 	.endif
-not_7th_hframe_0:
-; Check for VPOS_VALID, If it is valid, update the position and crc to DMEM
-; and raise interrupt
-	lbco	&REG_TMP0.b0, MASTER_REGS_CONST, VPOS_VALID, 1
-    qbne    transport_skip_vpos_update, REG_TMP0.b0, 1
-    lbco	&REG_TMP0.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H_TEMP, 1
-    sbco	&REG_TMP0.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H, 1
+	;Update EVENT_S in DMEM for EVENT_S_VPOS and EVENT_S_SCE events 
+	lbco	&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S_TEMP, 1
+	lbco	&REG_TMP0.w1, MASTER_REGS_CONST, EVENT_S, 2
+	qbbc	no_VPOS_update_in_event_reg,REG_TMP0.b0,EVENT_S_VPOS
+	set REG_TMP0.b1,REG_TMP0.b1,EVENT_S_VPOS
+no_VPOS_update_in_event_reg:
+	qbbc		update_events_no_int4_VPOS, REG_TMP0.b2, EVENT_S_VPOS
+; generate interrupt_s
+	ldi		r31.w0, PRU0_ARM_IRQ4
+update_events_no_int4_VPOS:
+	qbbc	no_SCE_update_in_event_reg,REG_TMP0.b0,EVENT_S_SCE
+	set REG_TMP0.b1,REG_TMP0.b1,EVENT_S_SCE
+no_SCE_update_in_event_reg:
+	qbbc		update_events_no_int4_SCE, REG_TMP0.b2, EVENT_S_SCE
+; generate interrupt_s
+	ldi		r31.w0, PRU0_ARM_IRQ4
+update_events_no_int4_SCE:
+	sbco	&REG_TMP0.b1, MASTER_REGS_CONST, EVENT_S, 1
 	lbco	&REG_TMP0.b0, MASTER_REGS_CONST, VPOS_TEMP, 7
     sbco	&REG_TMP0.b0, MASTER_REGS_CONST, VPOS4, 7
 ; generate interrupt PRU0_ARM_IRQ1
@@ -317,11 +331,10 @@ calc_speed_extend_acc1:
     CALL1		calc_fastpos
 ;restore return addr
 	mov		RET_ADDR0, REG_TMP11.w0
-; Moving the event and online register update during stuffing
-; Set EVENT_UPDATE_PENDING_POS to indicate a fast position data consistency error
-	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_UPDATE_PENDING, 1
-	set         REG_TMP0.b0, REG_TMP0.w0, EVENT_UPDATE_PENDING_POS
-	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_UPDATE_PENDING, 1
+; Update ONLINE_STATUS_D_H for POS error
+	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
+	set 		REG_TMP0,REG_TMP0,ONLINE_STATUS_D_POS
+	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
 	qba		transport_on_h_frame_exit
 delta_delta_position:
 
@@ -1063,11 +1076,21 @@ transport_layer_online_status_qm_not_low:
     clr         REG_TMP1.w0, REG_TMP1.w0, ONLINE_STATUS_2_QMLW
 	sbco		&REG_TMP0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 6
 transport_layer_online_status_qm_update_done:
-	lbco		&REG_TMP1.b0, MASTER_REGS_CONST, EVENT_UPDATE_PENDING, 1
-	qbbc		no_update_for_POS_bit,REG_TMP1.b0,EVENT_UPDATE_PENDING_POS
-	set REG_TMP0,REG_TMP0,ONLINE_STATUS_D_POS
-	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
+
+; update POS bits in ONLINE_STATUS_D and EVENT
+    lbco        &REG_TMP1.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
+	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_H, 4
+	qbbc		no_update_for_POS_bit,REG_TMP1.b0,ONLINE_STATUS_D_POS
+	; Set EVENT_POS in EVENT register
+	set		REG_TMP0.w0, REG_TMP0.w0, EVENT_POS
 no_update_for_POS_bit:
+;save events
+	sbco		&REG_TMP0.w0, MASTER_REGS_CONST, EVENT_H, 2
+	qbbc		update_events_no_int14, REG_TMP0.w2, EVENT_POS
+; generate interrupt
+	ldi		r31.w0, PRU0_ARM_IRQ
+update_events_no_int14:
+    sbco        &REG_TMP1.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
 	jmp		transport_layer_send_msg_done
 
 
@@ -1087,10 +1110,6 @@ transport_on_v_frame:
 	add		REG_TMP1, REG_TMP1, 1
 	sbco	&REG_TMP1, MASTER_REGS_CONST, NUM_VERT_FRAMES0, 4
     .endif
-; clear VPOS_VALID
-    zero    &REG_TMP0.b0, 1
-	sbco	&REG_TMP0.b0, MASTER_REGS_CONST, VPOS_VALID, 1
-
 ;store CRC in Master  Registers
 	mov		REG_TMP1.b0, VERT_L.b1
 	mov		REG_TMP1.b1, VERT_L.b0
@@ -1107,11 +1126,7 @@ transport_on_v_frame:
 	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_S, 2
 	set		REG_TMP0.b0, REG_TMP0.b0, EVENT_S_SCE
 ;save events
-	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S, 1
-	qbbc		update_events_no_int4, REG_TMP0.b1, EVENT_S_SCE
-; generate interrupt_s
-	ldi		r31.w0, PRU0_ARM_IRQ4
-update_events_no_int4:
+	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S_TEMP, 1
 ; Set ONLINE_STATUS_1_SCE in ONLINE_STATUS_1 register
     set         REG_TMP2.b0, REG_TMP2.b0, ONLINE_STATUS_1_SCE
     sbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H_TEMP, 1
@@ -1144,11 +1159,7 @@ check_for_slave_error_on_v_frame:
 	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_S, 2
 	set		REG_TMP0.b0, REG_TMP0.b0, EVENT_S_VPOS
 ;save events
-	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S, 1
-	qbbc		update_events_no_int5, REG_TMP0.b1, EVENT_S_VPOS
-; generate interrupt_s
-	ldi		r31.w0, PRU0_ARM_IRQ4
-update_events_no_int5:
+	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S_TEMP, 1
 ; Set ONLINE_STATUS_1_VPOS in ONLINE_STATUS_1 register
     set         REG_TMP2.b0, REG_TMP2.b0, ONLINE_STATUS_1_VPOS
     sbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H_TEMP, 1
@@ -1164,11 +1175,6 @@ transport_on_v_frame_realign:
 	PUSH_FIFO_CONST  0xff
 
 transport_on_v_frame_no_pos_mismatch:
-
-; set VPOS_VALID
-    ldi    REG_TMP0.b0, 0x1
-	sbco	&REG_TMP0.b0, MASTER_REGS_CONST, VPOS_VALID, 1
-
 ; Store the required data for secondary channel in temporary memory.
 ; It will be processed in transport_on_v_frame_2
 ; store H_FRAME.flags
@@ -1184,13 +1190,8 @@ transport_on_v_frame_exit:
 	CALL2 WAIT_TX_FIFO_FREE
 	PUSH_FIFO_CONST  0xff
 	PUSH_FIFO_CONST  0xff
-	CALL1 re_align_algo
 	PUSH_FIFO_CONST  0xff
 Wait_and_Push_2_byte:
-
-; set VPOS_VALID
-    ldi    REG_TMP0.b0, 0x1
-	sbco	&REG_TMP0.b0, MASTER_REGS_CONST, VPOS_VALID, 1
 no_first_push_for_exit:
     .if $defined("HDSL_MULTICHANNEL")
 	qbeq			free_run_mode1, EXTRA_SIZE, 0
@@ -1288,7 +1289,6 @@ re_align_algo:
 	jmp alignment_check_failed
 ;Align phase 0
 align_ph0:
-	CALL2 Update_online_status_D_for_POS_bit
 	;XREG= vpos_update+relpos
 	;FAST_POS=XREG
 	lbco		&REG_TMP0, MASTER_REGS_CONST, REL_POS0, 4
@@ -1377,10 +1377,6 @@ check_1st_byte:
 	and 	REG_TMP2,REG_TMP2,REG_TMP0
 	qbne 	alignment_check_failed,REG_TMP2,0
 update_online_status_D:
-	;On alignment success, clear EVENT_UPDATE_PENDING_POS bit from EVENT_UPDATE_PENDING
-	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_UPDATE_PENDING, 1
-	clr         REG_TMP0.b0, REG_TMP0.w0, EVENT_UPDATE_PENDING_POS
-	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_UPDATE_PENDING, 1
 ;Update ONLINE_STATUS_D_H for clearing ONLINE_STATUS_D_POS bit
     lbco        &REG_TMP1.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
 transport_layer_no_pos_event:
@@ -1395,28 +1391,9 @@ alignment_check_failed:
 	.if $defined("HDSL_CHECK_ALIGNMENT_PHASE")
 	sbco 		&ALIGN_PHASE, MASTER_REGS_CONST, CURRENT_ALIGN_PHASE, 1
 	.endif
-	CALL2 Update_online_status_D_for_POS_bit
+	lbco        &REG_TMP1.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
+    set REG_TMP1.b0,REG_TMP1.b0,ONLINE_STATUS_D_POS
+    sbco        &REG_TMP1.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
 align_done:
 not_7th_hframe:
 	RET1
-;--------------------------------------------------------------------------------------------------
-;Function: Update_online_status_D_for_POS_bit (RET_ADDR2)
-;Updating online status and EVENT register for POS bit
-;--------------------------------------------------------------------------------------------------
-Update_online_status_D_for_POS_bit:
-	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_UPDATE_PENDING, 1
-	qbbc no_OS_D_update,REG_TMP0.b0,EVENT_UPDATE_PENDING_POS
-    lbco        &REG_TMP1.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
-; Set EVENT_POS in EVENT register
-	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_H, 4
-	set		REG_TMP0.w0, REG_TMP0.w0, EVENT_POS
-;save events
-	sbco		&REG_TMP0.w0, MASTER_REGS_CONST, EVENT_H, 2
-	qbbc		update_events_no_int14, REG_TMP0.w2, EVENT_POS
-; generate interrupt
-	ldi		r31.w0, PRU0_ARM_IRQ
-update_events_no_int14:
-    set         REG_TMP1.b0, REG_TMP1.b0, ONLINE_STATUS_D_POS
-	sbco        &REG_TMP1.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
-no_OS_D_update:
-	RET2

@@ -394,6 +394,7 @@ MASK_POS	.set						0xe4;4bytes
 SYNC_JITTER	.set						0xe8;2bytes
 SYNC_DIFF_HIST_CNT	.set						0xea;2bytes
 SYNC_DIFF_HIST	.set						0xec;2*8bytes
+EVENT_S_TEMP	.set 					0xfd
 DUMMY_END	.set						0xff
 ADDR .set 0x15ff
 ;--------------------------------------------------------------------------------------------------
