@@ -11,7 +11,7 @@
 CCS_PATH=$(CCS_INSTALL_DIR)
 include $(`args.sdkName`)/imports.mak
 % if ((args.project.device == "am64x") || (args.project.device == "am243x")) {
-include $(`args.sdkName`)/devconfig/devconfig.mak
+include $(`args.sdkName`)/mcu_plus_sdk/devconfig/devconfig.mak
 % }
 
 % if ((args.project.device == "am64x") || (args.project.device == "am243x")) {

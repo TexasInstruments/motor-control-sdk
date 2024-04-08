@@ -4,7 +4,7 @@
 
 export MOTOR_CONTROL_SDK_PATH?=$(abspath ../../../../../..)
 include $(MOTOR_CONTROL_SDK_PATH)/imports.mak
-include $(MOTOR_CONTROL_SDK_PATH)/devconfig/devconfig.mak
+include $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/devconfig/devconfig.mak
 
 CG_TOOL_ROOT=$(CGT_TI_ARM_CLANG_PATH)
 

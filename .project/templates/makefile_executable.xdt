@@ -4,7 +4,7 @@
 
 export `args.sdkPath`?=$(abspath `args.relPath`)
 include $(`args.sdkPath`)/imports.mak
-include $(`args.sdkPath`)/devconfig/devconfig.mak
+include $(`args.sdkPath`)/mcu_plus_sdk/devconfig/devconfig.mak
 
 CG_TOOL_ROOT=$(`args.cgtOptions.path`)
 
