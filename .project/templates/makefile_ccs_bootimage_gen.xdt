@@ -13,7 +13,7 @@
 CCS_PATH=$(CCS_INSTALL_DIR)
 include ${MOTOR_CONTROL_SDK_PATH}/imports.mak
 % if (["am243x", "am64x", "am263x", "am263px", "am273x","awr294x"].includes(args.project.device)) {
-include ${MOTOR_CONTROL_SDK_PATH}/devconfig/devconfig.mak
+include ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/devconfig/devconfig.mak
 % }
 
 STRIP=$(CG_TOOL_ROOT)/bin/`args.cgtOptions.strip`

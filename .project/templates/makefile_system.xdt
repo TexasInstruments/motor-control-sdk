@@ -5,7 +5,7 @@
 export `args.sdkName`?=$(abspath `args.relPath`)
 include $(`args.sdkName`)/imports.mak
 % if ((args.project.device == "am64x") || (args.project.device == "am243x") || (args.project.device == "am263x")    ||   (args.project.device == "am263px")  || (args.project.device == "am273x") || (args.project.device == "awr294x")) {
-include $(`args.sdkName`)/devconfig/devconfig.mak
+include $(`args.sdkName`)/mcu_plus_sdk/devconfig/devconfig.mak
 % }
 
 % if ((args.project.device == "am64x") || (args.project.device == "am243x") || (args.project.device == "am263x") || (args.project.device == "am263px")  ||  (args.project.device == "am273x") || (args.project.device == "awr294x")) {
