@@ -2,7 +2,6 @@
 let common = system.getScript("/common");
 let bissc_pins = system.getScript("/position_sense/bissc_pins.js");
 let device = common.getDeviceName();
-let is_am243x_lp_device = (device === "am243x-lp") ? true : false;
 
 let bissc_module_name = "/position_sense/bissc";
 
@@ -13,7 +12,7 @@ function onValidate(inst, validation) {
         if ((!instance.channel_0)&&(!instance.channel_1)&&(!instance.channel_2))
             validation.logError("Select atleast one channel",inst,"channel_0"
         );
-        if(is_am243x_lp_device && (instance.channel_1 ))
+        if((device === "am243x-lp") && (instance.channel_1 ))
         validation.logError(
             "On AM243x-LP, Channel 1 is not supported",inst,"channel_1"
         );

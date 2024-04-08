@@ -12,6 +12,7 @@ BiSS is an open-source digital interface for sensors and actuators. BiSS stands 
    -  Support for single channel implementation with one encoder
    -  Receive on-the-fly CRC verification of position and control data
    -  Interface speed of 1, 2, 5, 8, and 10 MHz
+   -  Two modes of operation - host trigger and periodic trigger
    -  Support for control communication
    -  Support for automatic processing delay detection and compensation
    -  Support for multiple encoders connected via daisy-chain configuration (up-to 3 encoders)

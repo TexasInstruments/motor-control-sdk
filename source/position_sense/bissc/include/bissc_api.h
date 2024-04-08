@@ -94,16 +94,16 @@ void bissc_config_clock(struct bissc_priv *priv,
                         struct bissc_clk_cfg *clk_cfg);
 
 /**
- *  \brief      Select channel to be used by BiSSC master
+ *  \brief      Select channel to be used by BiSSC receiver
  *
  *  \param[in]  priv    cookie returned by \ref bissc_init
  *  \param[in]  mask    channel mask
- *  \param[in]  totalch    total number of channels in use 
+ *  \param[in]  totalch    total number of channels in use
  *
  */
 void bissc_config_channel(struct bissc_priv *priv, int32_t mask, int32_t totalch);
 /**
- *  \brief      Configure the channels to be used by BiSSC master
+ *  \brief      Configure the channels to be used by BiSSC receiver
  *
  *  \param[in]  priv    cookie returned by \ref bissc_init
  *  \param[in]  mask    channel mask
@@ -111,7 +111,7 @@ void bissc_config_channel(struct bissc_priv *priv, int32_t mask, int32_t totalch
  */
 void bissc_config_load_share(struct bissc_priv *priv, int32_t mask);
 /**
- *  \brief      Enable load share mode for BiSSC master
+ *  \brief      Enable load share mode for BiSSC receiver
  *
  *  \param[in]  priv    cookie returned by \ref bissc_init
  *
@@ -126,7 +126,7 @@ void bissc_enable_load_share_mode(struct bissc_priv *priv);
  */
 void bissc_config_primary_core_mask(struct bissc_priv *priv, uint8_t mask);
 /**
- *  \brief      Wait for BiSSC master firmware to initialize
+ *  \brief      Wait for BiSSC receiver firmware to initialize
  *
  *  \param[in]  priv    cookie returned by \ref bissc_init
  *  \param[in]  timeout timeout to wait for initialization
@@ -157,8 +157,8 @@ void bissc_hw_init(struct bissc_priv *priv);
  *  \retval     priv            pointer to struct bissc_priv instance
  *
  */
-struct bissc_priv *bissc_init(PRUICSS_Handle gPruIcssXHandle, 
-                              int32_t slice, 
+struct bissc_priv *bissc_init(PRUICSS_Handle gPruIcssXHandle,
+                              int32_t slice,
                               uint32_t frequency,
                               uint32_t core_clk_freq,
                               uint32_t uart_clk_freq);
@@ -169,9 +169,9 @@ struct bissc_priv *bissc_init(PRUICSS_Handle gPruIcssXHandle,
  *  \param[in]  priv        cookie returned by \ref bissc_init
  *
  */
-void bissc_update_max_proc_delay(struct bissc_priv *priv); 
+void bissc_update_max_proc_delay(struct bissc_priv *priv);
 /**
- *  \brief      Wait for BiSSC master firmware to measure processing time
+ *  \brief      Wait for BiSSC receiver firmware to measure processing time
  *
  *  \param[in]  priv    cookie returned by \ref bissc_init
  *  \param[in]  timeout timeout to wait for initialization
@@ -181,7 +181,7 @@ void bissc_update_max_proc_delay(struct bissc_priv *priv);
 int32_t bissc_wait_measure_proc_delay(struct bissc_priv *priv, uint32_t timeout);
 
 /**
- *  \brief      Set default configuration parameters for BiSSC Master firmware
+ *  \brief      Set default configuration parameters for BiSSC receiver firmware
  *
  *  \param[in]  priv        cookie returned by \ref bissc_init
  *  \param[in]  icssgclk    ICSSG core clock for firmware reference
@@ -189,25 +189,25 @@ int32_t bissc_wait_measure_proc_delay(struct bissc_priv *priv, uint32_t timeout)
  */
 void bissc_set_default_initialization(struct bissc_priv *priv, uint64_t icssgclk);
 /**
- *  \brief      Update data length with encoder bit width for BiSSC Master firmware
+ *  \brief      Update data length with encoder bit width for BiSSC receiver firmware
  *
  *  \param[in]  priv            cookie returned by \ref bissc_init
  *  \param[in]  single_turn_len    Encoder's single turn resolution
  *  \param[in]  multi_turn_len     Encoder's multi turn resolution
- *  \param[in]  num_pru         number(index) of PRU in use
+ *  \param[in]  ch_num         number(index) of PRU in use
  */
-void bissc_update_data_len(struct bissc_priv *priv, uint32_t single_turn_len[], uint32_t multi_turn_len[], int32_t num_pru);
+void bissc_update_data_len(struct bissc_priv *priv, uint32_t single_turn_len[], uint32_t multi_turn_len[], int32_t ch_num);
 
 /**
  *  \brief      Set control command and process the ctrl communication read/write
  *
  *  \param[in]  priv            cookie returned by \ref bissc_init
- *  \param[in]  ctrl_cmd        Hex equivalent of control command 
+ *  \param[in]  ctrl_cmd        Hex equivalent of control command
  *  \retval     SystemP_SUCCESS for success, SystemP_FAILURE for failure
  */
 int32_t bissc_set_ctrl_cmd_and_process(struct bissc_priv *priv, uint32_t ctrl_cmd[]);
 /**
- *  \brief      Configure the master for EnDat mode
+ *  \brief      Configure the receiver for EnDat mode
  *
  *  \param[in]  priv            cookie returned by \ref bissc_init
  */
@@ -231,18 +231,26 @@ void bissc_get_enc_proc_delay(struct bissc_priv *priv);
  *  \param[in]  clk_cfg         pointer to structure containing clock configuration data.
  */
 int32_t bissc_calc_clock(struct bissc_priv *priv, struct bissc_clk_cfg *clk_cfg);
-/** 
+/**
  *  \brief      Configure periodic trigger operation mode
- * 
+ *
  *  \param[in]  priv            cookie returned by \ref bissc_init
  */
 void bissc_config_periodic_trigger(struct bissc_priv *priv);
-/** 
+/**
  *  \brief      Configure host trigger operation mode
- * 
+ *
  *  \param[in]  priv            cookie returned by \ref bissc_init
  */
 void bissc_config_host_trigger(struct bissc_priv *priv);
+/**
+ *  \brief      Generate control communication Hex equivalent command
+ *
+ *  \param[in]  priv            cookie returned by \ref bissc_init
+ *  \param[in]  ls_ch           channel in use for load share
+ *  \retval     ctrl_cmd        Hex equivalent control communication 32 bit command
+ */
+uint32_t bissc_generate_ctrl_cmd(struct bissc_priv *priv, int8_t ls_ch);
 
 /** @} */
 

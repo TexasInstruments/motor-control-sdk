@@ -37,8 +37,8 @@
 ;*	 Brief: Macros for calculating On the Fly CRC of position data and returning	*
 ;*	 		the CRC status with RAW data											*
 ;*	       	Macros for call and return(branching) 									*
-;*          Macro for enabling pru cycle counter 									*
-;*	       	Macro for Measuring processing delay 	
+;*          Macros for enabling pru cycle counter and disabling pru cycle counter 	*
+;*	       	Macro for Measuring processing delay 									*
 ;*			Macro for synchronizing PRUs in load share.								*
 ;************************************************************************************
 
@@ -48,12 +48,12 @@
 	.include "bissc_interface.h"
 	.include "firmware_version.h"
 
-; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
+; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 ; Macros: CALL, CALL2
 ; 	Branch to defined function and stores the return address.
 ; Macros: RET, RET2
 ;	Returns to address stored in defined registers.
-; Registers: 
+; Registers:
 ;	LINK_REG.w0: Holds the address of function specified in CALL macro.
 ;	LINK_REG.w2: Holds the address of function specified in CALL2 macro.
 ;
@@ -66,7 +66,7 @@
 ;
 ;	 Worst case peak cycle usage: 1
 ;
-; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; 
+; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 CALL	.macro function
 	JAL	LINK_REG.w0,	function
 	.endm
@@ -80,10 +80,10 @@ CALL2	.macro function
 RET2	.macro
 	JMP	LINK_REG.w2
 	.endm
-; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
+; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 ; Macro: M_ENABLE_PRU_CYCLE_COUNTER
 ; 	Enable PRU cycle counter.
-; Registers: 
+; Registers:
 ;	SCRATCH2: Holds PRU control configurations.
 ;
 ;  PseudoCode:
@@ -94,7 +94,7 @@ RET2	.macro
 ;
 ;	 Worst case peak cycle usage: 13
 ;
-; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
+; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 
 M_ENABLE_PRU_CYCLE_COUNTER .macro
 	LBCO	&SCRATCH2, ICSS_PRU_CTRL_CONST, 0, 4
@@ -102,10 +102,10 @@ M_ENABLE_PRU_CYCLE_COUNTER .macro
 	SBCO	&SCRATCH2, ICSS_PRU_CTRL_CONST, 0, 4
   .endm
 
-; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
+; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 ; Macro: M_BISSC_LS_WAIT_FOR_SYNC
 ; 	Loop till all channels are synchronized in load share mode.
-; Registers: 
+; Registers:
 ;	LS_SYNC_STATE: Holds the execution status of individual PRU in load share.
 ;	SCRATCH1.b1: Holds the combine execution status of all PRUs in load share.
 ;	SCRATCH2.b0: Holds channel mask.
@@ -121,7 +121,7 @@ M_ENABLE_PRU_CYCLE_COUNTER .macro
 ;
 ;	 Worst case peak cycle usage: 14
 ;
-; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
+; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 M_BISSC_LS_WAIT_FOR_SYNC 	.macro
 	.if $isdefed("ENABLE_MULTI_MAKE_RTU")
 	LDI 	LS_SYNC_STATE, 1
@@ -146,7 +146,7 @@ BISSC_IS_SYNCED?:
 ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 ; Macro: M_BISSC_CLK_CONFIG
 ; 	Configure Rx, Tx frame sizes at ICSS_CFG_PRUx_BISSC_CHx_CFGx offset specific to channels in use.
-; Registers: 
+; Registers:
 ;	mask: Holds the channel mask.
 ;	reg: Holds the frame sizes.
 ;	BISSC_ICSSG_CHx_CFG0: Holds the confiugation register offset as per channel.
@@ -165,25 +165,25 @@ BISSC_IS_SYNCED?:
 M_BISSC_CLK_CONFIG .macro mask, reg
 	QBBC	BISSC_CLK_CFG_CH1?, mask, 0
 	LDI 	BISSC_ICSSG_CHx_CFG0, ICSS_CFG_PRUx_BISSC_CH0_CFG0
-	SBCO 	&reg, ICSS_CFG, BISSC_ICSSG_CHx_CFG0,  4 	
+	SBCO 	&reg, ICSS_CFG, BISSC_ICSSG_CHx_CFG0,  4
 BISSC_CLK_CFG_CH1?:
 	QBBC	BISSC_CLK_CFG_CH2?, mask, 1
 	LDI 	BISSC_ICSSG_CHx_CFG0, ICSS_CFG_PRUx_BISSC_CH1_CFG0
-	SBCO 	&reg, ICSS_CFG, BISSC_ICSSG_CHx_CFG0,  4 	
+	SBCO 	&reg, ICSS_CFG, BISSC_ICSSG_CHx_CFG0,  4
 BISSC_CLK_CFG_CH2?:
 	QBBC	BISSC_SKIP_CLK_CFG?, mask, 2
 	LDI 	BISSC_ICSSG_CHx_CFG0, ICSS_CFG_PRUx_BISSC_CH2_CFG0
-	SBCO 	&reg, ICSS_CFG, BISSC_ICSSG_CHx_CFG0,  4 
+	SBCO 	&reg, ICSS_CFG, BISSC_ICSSG_CHx_CFG0,  4
 BISSC_SKIP_CLK_CFG?:
 	.endm
-;*************************************************************************************************************************************
+;*******************************************************************************************************************************************
 ;	 Macro: M_MEASURE_MAX_PROC_TIME
 ;			 Measure the Processing Delay and compensate in the Rx frame size.
 ;	 Registers:
 ;			SCRATCH3.w2 - Holds Rx frame size
 ;			SCRATCH3.w0 - Holds Tx frame size
 ;			SCRATCH.w2  - Holds Processing delay for one BissC Cycle
-;			SCRATCH.w0  - Holds Maximum time to wait for encoder to respond then holds maximum processing delay acceptable. 
+;			SCRATCH.w0  - Holds Maximum time to wait for encoder to respond then holds maximum processing delay acceptable.
 ;			SCRATCH2.w0 - Stores the average processing delay for 8 BissC cycles
 ;			SCRATCH3.b0 - Holds processing delay remeasurement status
 ;	PseudoCode:
@@ -192,13 +192,13 @@ BISSC_SKIP_CLK_CFG?:
 ;		2.Load the clock mode for selected channels by writing to R30.w2
 ;		3.Load the Rx frame size to maximum and decrement upon detecting the valid bits and Tx frame size to 0.
 ;		4.Increment the SCRATCH.w2 until start bit is detected then add it to SCRATCH2.w0.
-;		5.If it exceeds the maximum processing delay allowed, then set proc delay remeasure flag and restart the loop from first iteration. 
+;		5.If it exceeds the maximum processing delay allowed, then set proc delay remeasure flag and restart the loop from first iteration.
 ;		6.Loop the steps 1-4 for 8 times and compensate the average in Rx frame size.
 ;		7.If step 5 is encountered the repeat step 6.
 ;		(end code)
-;	
+;
 ;   Worst case peak cycle usage:
-;**************************************************************************************************************************************
+;*******************************************************************************************************************************************
 
 M_MEASURE_MAX_PROC_TIME .macro
 	QBBC	BISSC_IS_CH1_IN_USE?, CH_MASK, 0
@@ -231,7 +231,7 @@ BISSC_PROC_MEASURE_AGAIN?:
 	M_BISSC_LS_WAIT_FOR_SYNC
 	.elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
 	M_BISSC_LS_WAIT_FOR_SYNC
-	.endif	
+	.endif
     QBNE    BISSC_IS_CH1_SEL?, BISSC_ENABLE_CHx_IN_USE,	0
 	LDI		R30.w2,	(BISSC_TX_CLK_MODE_FREERUN_STOPHIGH | BISSC_TX_CH0_SEL)
 	LDI 	R30.b0, 0
@@ -246,14 +246,14 @@ BISSC_IS_CH2_SEL?:
 BISSC_SKIP_CH_SEL?:
 	; loading rx frame size to maximum bits we can receive from BiSSC encoder
     LDI     SCRATCH3.w2, BISSC_MAX_FRAME_SIZE
-	LDI		SCRATCH3.w0, 0 
+	LDI		SCRATCH3.w0, 0
 	; store Rx and Tx frame size to ICSS_CFG_PRUx_ED_CHx for all configured channels
-    SBCO	&SCRATCH3, ICSS_CFG, BISSC_ICSSG_CHx_CFG0,	4	
+    SBCO	&SCRATCH3, ICSS_CFG, BISSC_ICSSG_CHx_CFG0,	4
 BISSC_PROC_WAIT_TILL_TX_CH_BUSY?
 	.if $isdefed("ENABLE_MULTI_MAKE_RTU")
 	QBBC 	BISSC_SKIP_TX_CH_BUSY?, PRIMARY_CORE, 0
 	LDI     SCRATCH1.w0, ICSS_CFG_PRUx_BISSC_TXCFG
-	LBCO	&SCRATCH3.b0, ICSS_CFG,	SCRATCH1.w0, 1	
+	LBCO	&SCRATCH3.b0, ICSS_CFG,	SCRATCH1.w0, 1
 	QBBS	BISSC_PROC_WAIT_TILL_TX_CH_BUSY?, SCRATCH3.b0,	5
 	LDI		SCRATCH3.b0, 0
 	SBCO	&SCRATCH3.b0, PRUx_DMEM, BISSC_RE_MEASURE_PROC_DELAY, 1
@@ -287,7 +287,7 @@ BISSC_PROC_WAIT_TILL_TX_CH_BUSY?
 BISSC_SKIP_TX_CH_BUSY?:
     SET     R30, R30, BISSC_RX_EN
 	;Max number to come out of infinite loop of waiting for encoder detected.
-	;Using emperical number as spec did not mentioned about anything 
+	;Using emperical number as spec did not mentioned about anything
 	LDI     SCRATCH.w0, BISSC_MAX_WAIT_FOR_ENC_DETECT
 	LDI     SCRATCH.w2, 0
 
@@ -379,13 +379,13 @@ BISSC_SKIP_GLOBAL_REINIT1?:
 	LBCO     &SCRATCH3, PRUx_DMEM, BISSC_CONFIG_DELAY_100MS_OFFSET, 4
 BISSC_DELAY_LOOP?:
 	SUB		SCRATCH3, SCRATCH3, 1
-	QBNE	BISSC_DELAY_LOOP?, SCRATCH3, 0	
+	QBNE	BISSC_DELAY_LOOP?, SCRATCH3, 0
 	NOP
 BISSC_PROC_DELAY_END?:
 	LSR		SCRATCH2.w0, SCRATCH2.w0, 3
 	QBA		BISSC_END_PROC_MEASURE?
 BISSC_END_PROC_ENC_NOT_DETECTED?:
-	
+
 	ZERO 	&SCRATCH1, 4
 	SBCO	&SCRATCH1, PRUx_DMEM, BISSC_LS_EXEC_RTU_STATE, 4
 	.if $isdefed("ENABLE_MULTI_MAKE_RTU")
@@ -468,15 +468,13 @@ BISSC_END_PROC_MEASURE_PER_CH?:
 	SBCO	&SCRATCH1.b1, PRUx_DMEM, BISSC_MEAS_PROC_DELAY_OFFSET, 1
 	.endm
 
-
-
-; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
+; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 ; Macro: M_OTF_RECEIVE_DOWNSAMPLE_AND_CRC
 ; 	Receive and Downample the position data and do not invoke for CRC bits.
-; Registers: 
+; Registers:
 ;	Rx: Holds the raw data received - caller has to zero or provide value to continue
 ;	valid_bit: Holds the valid bit for selected channel.
-; 	bit_idx: Holds the bit index(middle bit of oversampled data) of rx fifo. 
+; 	bit_idx: Holds the bit index(middle bit of oversampled data) of rx fifo.
 ;	cnt: Number of bits to receive which should be less than less than 32 as we are returning only one register Rx
 ;	ex: Temporary variable
 ;
@@ -489,7 +487,7 @@ BISSC_END_PROC_MEASURE_PER_CH?:
 ;
 ;	 Worst case peak cycle usage: 14(each iteration)
 ;
-; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
+; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 
 M_OTF_RECEIVE_DOWNSAMPLE_AND_CRC	.macro	Rx, cnt, bit_idx, ff0, ff1, ff2, ff3, ff4, ff5, ex
 
@@ -515,26 +513,26 @@ BISSC_SKIP_POS_BIT_CHx?:
 BISSC_RX_RECEIVE_DOWNSAMPLE_CRC_LOOP?:
 	.endm
 
-; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
+; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 ; Macro: M_OTF_RECEIVE_DOWNSAMPLE
 ; 	Receive and Downample the CRC bits.
-; Registers: 
+; Registers:
 ;	Rx: Holds the raw data received - caller has to zero or provide value to continue
 ;	Ry: Holds received CRC
 ;	valid_bit: Holds the valid bit for selected channel.
-; 	bit_idx: Holds the bit index(middle bit of oversampled data) of rx fifo. 
+; 	bit_idx: Holds the bit index(middle bit of oversampled data) of rx fifo.
 ;	cnt: Number of bits to receive which should be 6 as we are receiving the CRC.
 ;
 ;  PseudoCode:
 ;	 (start code)
 ;		1.Left shift Rx, Ry and Wait for valid bit then check the Middle Bit of Rx fifo and store the same in Rx and Ry.
-;		2.Clear the valid bit 
+;		2.Clear the valid bit
 ;		3.Loop through the steps 1-2 for cnt iterations.
 ;	 (end code)
 ;
 ;	 Worst case peak cycle usage: 10(each iteration)
-; 
-; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
+;
+; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 
 M_OTF_RECEIVE_AND_DOWNSAMPLE	.macro	Rx, Ry, cnt, bit_idx
 	LOOP    BISSC_RX_RECEIVE_DOWNSAMPLE_LOOP?,	cnt ;  Run loop for receive bits
@@ -556,9 +554,9 @@ BISSC_RX_RECEIVE_DOWNSAMPLE_LOOP?:
 ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 ; Macro: M_CALC_CRC
 ; 	Store and return the calculated CRC.
-; Registers: 
+; Registers:
 ;	ff[0-5]: Holds calculated CRC bits separately
-;	crc: Returns the overall CRC computation value. 
+;	crc: Returns the overall CRC computation value.
 ;
 ;  	PseudoCode:
 ;      (start code)
@@ -569,8 +567,8 @@ BISSC_RX_RECEIVE_DOWNSAMPLE_LOOP?:
 ;       (end code)
 ;
 ;	Worst case peak cycle usage: 13
-; 
- ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
+;
+; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 
 M_CALC_CRC	.macro	crc, ff0, ff1, ff2, ff3, ff4, ff5
 	LDI		crc,	0
@@ -590,24 +588,24 @@ BISSC_CRC_BIT4?:
 	SET		crc,	crc,	4
 BISSC_CRC_BIT5?:
 	QBBS	BISSC_CRC_END?,		ff5,	0
-	SET		crc,	crc,	5 
+	SET		crc,	crc,	5
 BISSC_CRC_END?:
 	.endm
 
-; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
+; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 ; Macro: M_OTF_RECEIVE
 ; 	Receive and downsaple the raw data then calculate the CRC.
-; Registers: 
+; Registers:
 ;	Ra, Rb: Holds the raw data received - caller has to zero or provide value to continue
-;	SCRATCH3.b3: rx_size 
+;	SCRATCH3.b3: rx_size
 ;	RAW_DATA_LEN: position data length with crc and error warning length
-;	ff[0-5]: FF0to3_0, FF4_0, FF5_0 - otf crc calculation. 
+;	ff[0-5]: FF0to3_0, FF4_0, FF5_0 - otf crc calculation.
 ;	BISSC_RCV_CRC: used for ex and returns the otf crc results.
 ;
 ;  PseudoCode:
 ;	(start code)
 ;       1.Load ff[0-5] to 0 .
-;       2.Receive position data Ra and Rb with respect to the data length and Register length by calling onto 
+;       2.Receive position data Ra and Rb with respect to the data length and Register length by calling onto
 ;		  M_OTF_RECEIVE_DOWNSAMPLE_AND_CRC.
 ;		3.Receive CRC bits into Rb and BISSC_RCV_CRC_0.
 ;		4.Load the Calculated CRC result in SCRATCH3.b3 by calling onto M_CALC_CRC.
@@ -617,7 +615,7 @@ BISSC_CRC_END?:
 ;
 ;	 Worst case peak cycle usage: 920
 ; REVISIT: More optimization may be required or can be done at least in M_INIT_CRC_FLIP_FLOPS - defer those till a requirement comes
-; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
+; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 
 M_OTF_RECEIVE	.macro	Ra, Rb, encoder_offset
 	ZERO	&FF0, 6
@@ -642,7 +640,7 @@ BISSC_RX_LE_32_BITS?:
 	QBEQ	BISSC_RX_CRC?,	SCRATCH3.b3,	6
 	RSB		SCRATCH3.b3,	SCRATCH3.b3,	6	; CRC length, assuming 6 bit crc
 	M_OTF_RECEIVE_AND_DOWNSAMPLE	Rb, BISSC_RCV_CRC.b0, SCRATCH3.b3, FIFO_BIT_IDX
-	
+
 BISSC_RX_CRC?:
 	ADD 	ENCODER_OFFSET, SCRATCH2.b0, SCRATCH2.b3
 	SBCO	&Ra, PRUx_DMEM,	ENCODER_OFFSET,	8
@@ -659,14 +657,13 @@ BISSC_CRC_SUCCESS?:
 	SBCO	&SCRATCH3.b3,	PRUx_DMEM,	ENCODER_OFFSET , 1
 	.endm
 
-
-; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
+; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 ; Macro: M_OTF_RECEIVE_DOWNSAMPLE_AND_CRC_MC
 ; 	Receive and Downample the position data for multi channel and do not invoke for CRC bits.
-; Registers: 
+; Registers:
 ;	Rx, Ry, Rz: Holds the raw data received for all channels- caller has to zero or provide value to continue.
 ;	ff0 - ff5: flip flops for otf crc calculation.
-; 	bit_idx: Holds the bit index(middle bit of oversampled data) of rx fifo. 
+; 	bit_idx: Holds the bit index(middle bit of oversampled data) of rx fifo.
 ;	cnt: Number of bits to receive which should be less than less than 32 as we are returning only one register per channel.
 ;	ex: Temporary variable.
 ;
@@ -679,7 +676,7 @@ BISSC_CRC_SUCCESS?:
 ;
 ;	 Worst case peak cycle usage: 22(each iteration)
 ;
-; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
+; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 
 M_OTF_RECEIVE_DOWNSAMPLE_AND_CRC_MC	.macro	Rx, Ry, Rz, cnt, bit_idx, ff0, ff1, ff2, ff3, ff4, ff5, ex
 	LOOP    BISSC_RX_RECEIVE_DOWNSAMPLE_CRC_LOOP?,	cnt ;  Run loop for receive bits
@@ -691,26 +688,26 @@ WB1?:
 	QBNE	WB1?,	SCRATCH.b0,	CH_MASK ;  wait for valid
 
 	QBBS	BISSC_SET_POS_BIT_CH0?,	R31.b0, bit_idx ;  Check the Mid bit of received oversampled data
-	MOV		ex.b0,	ff5.b0	; if code[i] = 0, ex = ff5 (ex = ff4 ^ 0)
+	MOV		ex.b0,	ff5.b0	; if code[i] = 0, ex = ff5 (ex = ff5 ^ 0)
 	JMP		BISSC_SKIP_POS_BIT_CH0?
 BISSC_SET_POS_BIT_CH0?:
-	NOT		ex.b0,	ff5.b0	; if code[i] = 1, ex = !ff4 (ex = ff4 ^ 1)
+	NOT		ex.b0,	ff5.b0	; if code[i] = 1, ex = !ff5 (ex = ff5 ^ 1)
 	OR		Rx,	Rx,	1
 BISSC_SKIP_POS_BIT_CH0?:
 
 	QBBS	BISSC_SET_POS_BIT_CH1?,	R31.b1,	bit_idx ;  Check the Mid bit of received oversampled data
-	MOV		ex.b1,	ff5.b1	; if code[i] = 0, ex = ff4 (ex = ff4 ^ 0)
+	MOV		ex.b1,	ff5.b1	; if code[i] = 0, ex = ff5 (ex = ff5 ^ 0)
 	JMP		BISSC_SKIP_POS_BIT_CH1?
 BISSC_SET_POS_BIT_CH1?:
-	NOT		ex.b1,	ff5.b1	; if code[i] = 1, ex = !ff4 (ex = ff4 ^ 1)
+	NOT		ex.b1,	ff5.b1	; if code[i] = 1, ex = !ff5 (ex = ff5 ^ 1)
 	OR		Ry,	Ry,	1
 BISSC_SKIP_POS_BIT_CH1?:
 
 	QBBS	BISSC_SET_POS_BIT_CH2?,	R31.b2,	bit_idx ;  Check the Mid bit of received oversampled data
-	MOV		ex.b2,	ff5.b2	; if code[i] = 0, ex = ff4 (ex = ff4 ^ 0)
+	MOV		ex.b2,	ff5.b2	; if code[i] = 0, ex = ff5 (ex = ff5 ^ 0)
 	JMP		BISSC_SKIP_POS_BIT_CH2?
 BISSC_SET_POS_BIT_CH2?:
-	NOT		ex.b2,	ff5.b2	; if code[i] = 1, ex = !ff4 (ex = ff4 ^ 1)
+	NOT		ex.b2,	ff5.b2	; if code[i] = 1, ex = !ff5 (ex = ff5 ^ 1)
 	OR		Rz,	Rz,	1
 BISSC_SKIP_POS_BIT_CH2?:
 
@@ -724,26 +721,25 @@ BISSC_SKIP_POS_BIT_CH2?:
 BISSC_RX_RECEIVE_DOWNSAMPLE_CRC_LOOP?:
 	.endm
 
-; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
+; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 ; Macro: M_OTF_RECEIVE_DOWNSAMPLE_MC
 ; 	Receive and Downample the CRC bits for multi channel.
-; Registers: 
+; Registers:
 ;	Rx, Ry, Rz: Holds the raw data received for all channels - caller has to zero or provide value to continue
 ;	Ra: Holds received CRC for all channels.
-; 	bit_idx: Holds the bit index(middle bit of oversampled data) of rx fifo. 
+; 	bit_idx: Holds the bit index(middle bit of oversampled data) of rx fifo.
 ;	cnt: Number of bits to receive which should be 6 as we are receiving the CRC.
 ;
 ;  PseudoCode:
 ;	 (start code)
 ;		1.Left shift Rx, Ry, Rz, Ra and Wait for valid bit then check the Middle Bit of Rx fifo for all channels and store the same in Rx, Ry, Rz and Ra.
-;		2.Clear the valid bit 
+;		2.Clear the valid bit
 ;		3.Loop through the steps 1-2 for cnt iterations.
 ;	 (end code)
 ;
 ;	 Worst case peak cycle usage: 18(each iteration)
-; 
-; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
-
+;
+; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 M_OTF_RECEIVE_AND_DOWNSAMPLE_MC	.macro	Rx, Ry, Rz, Ra, cnt, bit_idx
 	LOOP    BISSC_RX_RECEIVE_DOWNSAMPLE_LOOP?,	cnt ;  Run loop for receive bits
 	LSL		Rx,	Rx,	1
@@ -779,14 +775,12 @@ BISSC_SKIP_CRC_BIT_CH2?:
 BISSC_RX_RECEIVE_DOWNSAMPLE_LOOP?:
 	.endm
 
-
-
 ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 ; Macro: M_CALC_CRC_MC
 ; 	Store and return the calculated CRC for all channels.
-; Registers: 
+; Registers:
 ;	ff[0-5]: Holds calculated CRC bits separately for all channels.
-;	crc: Returns the overall CRC computation value. 
+;	crc: Returns the overall CRC computation value.
 ;
 ;  	PseudoCode:
 ;      (start code)
@@ -799,8 +793,8 @@ BISSC_RX_RECEIVE_DOWNSAMPLE_LOOP?:
 ;       (end code)
 ;
 ;	Worst case peak cycle usage:1+20(each iteration)
-; 
- ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
+;
+; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 
 M_CALC_CRC_MC	.macro	crc, ff0, ff1, ff2, ff3, ff4, ff5
 	ZERO	&crc,	4
@@ -837,20 +831,21 @@ BISSC_CRC_CH0_BIT5?:
 	SET		crc.b0,	crc.b0,	5
 BISSC_CRC_CH0_END?:
 	.endm
-; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
+
+; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 ; Macro: M_OTF_RECEIVE_MC
 ; 	Receive and downsaple the raw data then calculate the CRC for multichannel.
-; Registers: 
+; Registers:
 ;	Ra, Rb, Rc, Rd, Re, Rf: Holds the raw data received - caller has to zero or provide value to continue
-;	SCRATCH3.b3: rx_size 
+;	SCRATCH3.b3: rx_size
 ;	RAW_DATA_LEN: position data length with crc and error warning length
-;	ff[0-5]: FF0to3_0, FF4_0, FF5_0 - otf crc calculation. 
+;	ff[0-5]: FF0to3_0, FF4_0, FF5_0 - otf crc calculation.
 ;	BISSC_RCV_CRC_0: used for ex and returns the otf crc results.
 ;
 ;  PseudoCode:
 ;	(start code)
 ;       1.Load ff[0-5] to 0 .
-;       2.Receive position data Ra and Rb with respect to the data length and Register length by calling onto 
+;       2.Receive position data Ra and Rb with respect to the data length and Register length by calling onto
 ;		  M_OTF_RECEIVE_DOWNSAMPLE_AND_CRC.
 ;		3.Receive CRC bits into Rb and BISSC_RCV_CRC_0.
 ;		4.Load the Calculated CRC result in SCRATCH3.b3 by calling onto M_CALC_CRC.
@@ -860,7 +855,7 @@ BISSC_CRC_CH0_END?:
 ;
 ;	 Worst case peak cycle usage: 1530
 ; REVISIT: More optimization may be required or can be done at least in M_INIT_CRC_FLIP_FLOPS - defer those till a requirement comes
-; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
+; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 
 M_OTF_RECEIVE_MC	.macro	Ra, Rb, Rc, Rd, Re, Rf, encoder_offset
 
@@ -885,8 +880,8 @@ BISSC_RX_LE_32_BITS?:
 	QBEQ	BISSC_RX_CRC?,	SCRATCH3.b3,	6
 	RSB		SCRATCH3.b3,	SCRATCH3.b3,	6	; CRC length, assuming 6 bit crc
 	M_OTF_RECEIVE_AND_DOWNSAMPLE_MC	Rb, Rd, Rf, BISSC_RCV_CRC, SCRATCH3.b3, FIFO_BIT_IDX
-	
-BISSC_RX_CRC?: 
+
+BISSC_RX_CRC?:
 	SBCO	&Ra,	PRUx_DMEM,	encoder_offset,	24
 	ADD		encoder_offset, encoder_offset, 24
 	M_CALC_CRC_MC	SCRATCH, FF0, FF1, FF2, FF3, FF4, FF5

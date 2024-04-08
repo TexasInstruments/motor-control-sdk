@@ -50,12 +50,12 @@ static HwiP_Object gIcssgEncoderHwiObject0;  /* ICSSG BiSS-C PRU FW HWI */
 uint32_t gPrubisscIrqCnt0;
 
 /*global variable */
-void *gPruIcss_iep; 
+void *gPruIcss_iep;
 
 PRUICSS_Handle gPruIcssXHandle;
 
 /* ICSS INTC configuration */
-extern PRUICSS_IntcInitData icss0_intc_initdata; 
+extern PRUICSS_IntcInitData icss0_intc_initdata;
 
 void bissc_config_iep(struct bissc_periodic_interface *bissc_periodic_interface)
 {
@@ -132,7 +132,7 @@ void bissc_interrupt_config(struct bissc_periodic_interface *bissc_periodic_inte
     status              = HwiP_construct(&gIcssgEncoderHwiObject0, &hwiPrms);
     DebugP_assert(status == SystemP_SUCCESS);
 
-}    
+}
 uint32_t bissc_config_periodic_mode(struct bissc_periodic_interface *bissc_periodic_interface, PRUICSS_Handle handle)
 {
     int32_t  status;
@@ -166,7 +166,7 @@ void bissc_stop_periodic_mode(struct bissc_periodic_interface *bissc_periodic_in
 /* PRU bissc FW IRQ handler */
 void prubisscIrqHandler0(void *args)
 {
-    
+
     /* debug, inncrement PRU SDFM IRQ count */
     gPrubisscIrqCnt0++;
 
@@ -182,5 +182,5 @@ void prubisscIrqHandler0(void *args)
         18 = 16+2, 2 is Host Interrupt Number. See AM64x TRM.
     */
     PRUICSS_clearEvent(gPruIcssXHandle, PRU_TRIGGER_HOST_BISSC_EVT0);
-    
+
 }

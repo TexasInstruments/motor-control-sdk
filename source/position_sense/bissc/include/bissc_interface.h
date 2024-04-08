@@ -54,12 +54,12 @@ struct  raw_data
     volatile uint32_t   pos_data_word0;
     /**< Initial (<=32) position bits received */
     volatile uint32_t   pos_data_word1;
-    /**< position bits received after the initial 32 bits (if applicable) */ 
+    /**< position bits received after the initial 32 bits (if applicable) */
 };
 /**
  *    \brief    Structure defining BiSSC Position data lengths of conected encoder.
  *
- *    \details  Number of encoders connected in daisy chain, and their position data lengths(resolution). 
+ *    \details  Number of encoders connected in daisy chain, and their position data lengths(resolution).
  */
 struct  enc_len
 {
@@ -71,7 +71,7 @@ struct  enc_len
 /**
  *    \brief    Structure defining BiSSC Position data results.
  *
- *    \details  raw data, position data crc error count, 6-bit otf crc. 
+ *    \details  raw data, position data crc error count, 6-bit otf crc.
  */
 struct  pos_data_res
 {
@@ -85,12 +85,12 @@ struct  pos_data_res
 /**
  *    \brief    Structure defining BiSSC Channel specific control communication(ctrl) results
  *
- *    \details  ctrl crc error count,cds results, ctrl 4 bit received crc and ctrl otf crc. 
+ *    \details  ctrl crc error count,cds results, ctrl 4 bit received crc and ctrl otf crc.
  *
  */
 struct ctrl_res
 {
-    volatile uint32_t ctrl_crc_err_cnt; 
+    volatile uint32_t ctrl_crc_err_cnt;
     /**< control communication CRC error count */
     volatile uint8_t ctrl_cds_res;
      /**< control communication result*/
@@ -111,7 +111,7 @@ struct bissc_pruicss_xchg
     /**< Position data CRC length */
     volatile uint8_t rx_clk_freq;
     /**< Clock frequency */
-    volatile uint8_t ctrl_cmd_crc_len;    
+    volatile uint8_t ctrl_cmd_crc_len;
     /**< Control command CRC length */
     volatile uint8_t  channel;
     /**< Channel configuration */
@@ -143,7 +143,7 @@ struct bissc_pruicss_xchg
 
     volatile uint32_t ctrl_cmd[3];
     /**< Hex equivalent Control command */
-    
+
     volatile uint32_t max_proc_delay;
     /**< maximum processing delay for selected frequency  */
 
@@ -152,21 +152,22 @@ struct bissc_pruicss_xchg
 
     struct ctrl_res ctrl_res[3];
     /**< Channel specific control communication results*/
-    
+
     volatile uint8_t   execution_state[3];
     /**< Execution state for different channels in load share   */
-    
+
     volatile uint64_t  register_backup[3];
     /**< Backup registers for ch0 - ch2 */
 
     volatile uint8_t   bissc_re_measure_proc_delay;
-    
+    /**< Flag for measuring processing delay again */
+
     volatile uint32_t delay_40us;
     /**< BiSS-C Timeout delay  */
-    
+
     volatile uint32_t delay_100ms;
     /**< BiSS-C max interframe delay  */
-    
+
     volatile uint64_t icssg_clk;
     /**< ICSSG core clock frequency  */
 };

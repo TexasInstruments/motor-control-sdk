@@ -65,14 +65,25 @@ extern "C" {
 #define BISSC_MAX_PROC_DELAY_5MHZ           200
 #define BISSC_MAX_PROC_DELAY_8MHZ           320
 #define BISSC_MAX_PROC_DELAY_10MHZ          400
-
+#define BISSC_CTS_BIT                       1   /* CTS bit for control communication */
+#define BISSC_ENC_ID_LEN                    3   /* Number of Encoder ID bits */
+#define BISSC_ENC_ID_MASK                   0x7 /* Mask for encoder ID*/
+#define BISSC_REG_ADDR_LEN                  7   /* Number of bits for Register address */
+#define BISSC_REG_ADDR_MASK                 0x7F/* Mask for Register address */
+#define BISSC_RWS_LEN                       3   /* Number of RWS bits */
+#define BISSC_RWS_MASK                      0x7 /* Mask for RWS bits */
+#define BISSC_CTRL_READ_ACCESS              0x5 /* RWS = "101" for read access of register */
+#define BISSC_CTRL_WRITE_ACCESS             0x3 /* RWS = "011" for write access of register */
+#define BISSC_REG_DATA_LEN                  8   /* Number of Register data bits */
+#define BISSC_REG_DATA_MASK                 0xFF/* Mask for Register data */
+#define BISSC_CTRL_STOP_LEN                 2   /* Number of stop bits PS, P: stop bit for one frame, S: stop bit for sequential control communication */
 #define BISSC_RX_SAMPLE_SIZE                7   /* 8x over clock */
 #define BISSC_RX_SAMPLE_SIZE_10MHZ          3   /* 4x over clock */
 #define BISSC_POS_CRC_LEN                   6   /* Number of position data CRC bits */
 #define BISSC_EW_LEN                        2   /* Number of Error and Warning bits */
 #define BISSC_CTRL_CMD_CRC_LEN              4   /* Number of CTRL cmd CRC bits */
+#define BISSC_CTRL_CMD_CRC_MASK             0xF /* Mask for CTRL cmd CRC bits */
 #define BISSC_POS_DATA_LEN_DEFAULT          12  /* Default data length instead of garbage*/
-
 /* Allowed frequencies in MHz for BiSSC */
 #define BISSC_FREQ_1MHZ                     1
 #define BISSC_FREQ_2MHZ                     2
@@ -83,7 +94,7 @@ extern "C" {
 /**
  *    \brief    Structure defining EnDat clock configuration for selected frequency
  *
- *    \details  Rx, Tx divisors for selected frequency, oversampling rate, core_clk/uart clock source status. 
+ *    \details  Rx, Tx divisors for selected frequency, oversampling rate, core_clk/uart clock source status.
  *
  */
 struct bissc_clk_cfg
@@ -100,7 +111,7 @@ struct bissc_clk_cfg
 /**
  *    \brief    Structure defining BiSSC Position data results
  *
- *    \details  position data result(raw data, angle and number of turns), error-warning, 6-bit received crc, 6-bit otf crc. 
+ *    \details  position data result(raw data, angle and number of turns), error-warning, 6-bit received crc, 6-bit otf crc.
  */
 struct bissc_position_info
 {
@@ -120,7 +131,7 @@ struct bissc_position_info
 /**
  *    \brief    Structure defining BiSSC Channel specific control communication(ctrl) results
  *
- *    \details  cds results, ctrl 4 bit received crc and ctrl otf crc. 
+ *    \details  cds results, ctrl 4 bit received crc and ctrl otf crc.
  *
  */
 struct bissc_control_info
@@ -135,11 +146,11 @@ struct bissc_control_info
 /**
  *    \brief    Initialize BiSS-C firmware interface address and get the pointer to struct bissc_priv instance
  *
- *    \details  contains ICSS slice, load share, data lengths, channel, safety specific information and a pointer to bissc_pruicss_xchg structure. 
+ *    \details  contains ICSS slice, load share, data lengths, channel, safety specific information and a pointer to bissc_pruicss_xchg structure.
  *
  */
 struct bissc_priv
-{   
+{
     int32_t pruicss_slicex;
     /**< PRU ICSS slice number*/
     int32_t load_share;
@@ -172,6 +183,14 @@ struct bissc_priv
     /**< Control communication crc error count for each encoder connected to each PRU in load share*/
     int32_t num_encoders[NUM_ED_CH_MAX];
     /**< Number of encoders connected in daisy chain to each PRU in load share*/
+    int8_t ctrl_write_status[NUM_ED_CH_MAX];
+    /**< Control communication Read or Write status*/
+    uint32_t ctrl_reg_address[NUM_ED_CH_MAX];
+    /**< Control communication register address*/
+    uint32_t ctrl_reg_data[NUM_ED_CH_MAX];
+    /**< Control communication register data*/
+    uint32_t ctrl_enc_id[NUM_ED_CH_MAX];
+    /**< Encoder ID for control communication*/
     int32_t totalchannels;
     /**< Total number of channels configured*/
     uint16_t  proc_delay[NUM_ED_CH_MAX];
@@ -182,9 +201,9 @@ struct bissc_priv
     /**< Core clock frequency*/
     uint32_t uart_clk_freq;
     /**< UART clock frequency*/
-    void *pruicss_iep; 
+    void *pruicss_iep;
     /**< ICSS IEP base address*/
-    uint64_t cmp3; 
+    int64_t cmp3;
     /**< IEP CMP3 reg used in periodic trigger mode*/
 };
 
