@@ -136,15 +136,15 @@ function epwmSettings(channel)
 			displayName : "Source of SD SYNC Event",
 			description : 'Source of SD SYNC Event',
 			hidden      : true,
-			default     : "EPWM0",
+			default     : "0",
 			options     :
 			[
 				{
-					name: "EPWM0",
+					name: "0",
 					displayName: "SDFM SYNC source is EPWM0 SYNC out event",
 				},
 				{
-					name:"EPWM3",
+					name:"3",
 					displayName: "SDFM SYNC source is EPWM3 SYNC out event",
 				},
 			]

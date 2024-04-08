@@ -27,7 +27,7 @@ function getInterfacePinList(inst)
     pinList.push({ pinName: "GPI7", displayName: "SD_CHANNEL3_DATA", rx: true});
 
     /*SD4_D*/
-    pinList.push({ pinName: "GPI18", displayName: "SD_CHANNEL4_DATA", rx: true});
+    pinList.push({ pinName: "GPI9", displayName: "SD_CHANNEL4_DATA", rx: true});
 
     /*SD5_D*/
     pinList.push({ pinName: "GPI11", displayName: "SD_CHANNEL5_DATA", rx: true});
@@ -74,87 +74,179 @@ function pinmuxRequirements(inst) {
         pinmux.setConfigurableDefault( pinResource, "rx", pin.rx );
 
         if(inst["Enable_Channel_0"] == true){
-            if((pin.pinName == "GPI1")){
+           if((pin.pinName == "GPI1")){
+               pinResource.used = true;
+           }
+        }else{
+           if( (pin.pinName == "GPI1")){
+               pinResource.used = false;
+           }    
+        }
+        if(inst["Enable_Channel_1"] == true){
+           if((pin.pinName == "GPI3")){
+               pinResource.used = true;
+           }
+           if((inst["Ch1_SDCLKSEL"]== "1")){
+                if((pin.pinName == "GPI2")){
+                    pinResource.used = true;
+                }
+           }
+           else{
+                if((pin.pinName == "GPI2")){
+                        pinResource.used = false;
+                }
+           }
+        }else{
+           if( (pin.pinName == "GPI3")||(pin.pinName == "GPI2")){
+               pinResource.used = false;
+           }  
+        }
+        if(inst["Enable_Channel_2"]==true){
+           if((pin.pinName == "GPI5")){
+               pinResource.used = true;
+           }
+           if((inst["Ch2_SDCLKSEL"]== "1")){
+                if((pin.pinName == "GPI4")){
+                    pinResource.used = true;
+                }
+            }
+            else{
+                if((pin.pinName == "GPI4")){
+                    pinResource.used = false;
+                }
+            }
+        }else{
+           if( (pin.pinName == "GPI5")||(pin.pinName == "GPI4")){
+               pinResource.used = false;
+            }  
+        }
+        if(inst["Enable_Channel_3"]==true){
+           if((pin.pinName == "GPI7")){
+               pinResource.used = true;
+           }
+        }else{
+           if( (pin.pinName == "GPI7")){
+               pinResource.used = false;
+           }    
+        }
+        if(inst["Enable_Channel_4"]==true){
+           if((pin.pinName == "GPI9")){
+               pinResource.used = true;
+           }
+           if((inst["Ch4_SDCLKSEL"]== "1")){
+                if((pin.pinName == "GPI8")){
+                    pinResource.used = true;
+                }
+            }
+            else{
+                if((pin.pinName == "GPI8")){
+                    pinResource.used = false;
+                }
+            }
+        }else{
+           if( (pin.pinName == "GPI9")||(pin.pinName == "GPI8")){
+               pinResource.used = false;
+            } 
+        }
+        if(inst["Enable_Channel_5"]==true){
+           if((pin.pinName == "GPI11")){
+               pinResource.used = true;
+           }
+           if((inst["Ch5_SDCLKSEL"]== "1")){
+                if((pin.pinName == "GPI10")){
+                    pinResource.used = true;
+                }
+            }
+            else{
+                if((pin.pinName == "GPI10")){
+                    pinResource.used = false;
+                }
+            }
+        }else{
+           if( (pin.pinName == "GPI11") ||((pin.pinName == "GPI10"))){
+               pinResource.used = false;
+           } 
+        }
+        if(inst["Enable_Channel_6"]==true){
+           if((pin.pinName == "GPI13")){
+               pinResource.used = true;
+           }
+        }else{
+           if( (pin.pinName == "GPI13")){
+               pinResource.used = false;
+           }    
+        }
+        if(inst["Enable_Channel_7"]==true){
+           if((pin.pinName == "GPI15")){
+               pinResource.used = true;
+           }
+           if((inst["Ch7_SDCLKSEL"]== "1")){
+                if((pin.pinName == "GPI14")){
+                    pinResource.used = true;
+                }
+            }
+            else{
+                if((pin.pinName == "GPI14")){
+                    pinResource.used = false;
+                }
+            }
+        }else{
+           if( (pin.pinName == "GPI15")||(pin.pinName == "GPI14")){
+               pinResource.used = false;
+            }    
+        }
+        if(inst["Enable_Channel_8"]==true){
+           if((pin.pinName == "GPI17")){
+               pinResource.used = true;
+           }
+        }else{
+           if((pin.pinName == "GPI17")){
+               pinResource.used = false;
+           }    
+        }  
+        if((inst["Ch0_SDCLKSEL"]== "1") ||(inst["Ch0_SDCLKSEL"]== "2")||((inst["Ch1_SDCLKSEL"]== "2"))||((inst["Ch2_SDCLKSEL"]== "2")))
+        {
+            if((pin.pinName == "GPI0"))
+            {
                 pinResource.used = true;
             }
-         }else{
-            if( (pin.pinName == "GPI1")){
+        }
+        else
+        {
+            if((pin.pinName == "GPI0"))
+            {
                 pinResource.used = false;
-            }    
-         }
-         if(inst["Enable_Channel_1"] == true){
-            if((pin.pinName == "GPI3")){
+            }
+        }  
+        if((inst["Ch3_SDCLKSEL"]== "1") ||(inst["Ch3_SDCLKSEL"]== "2")||((inst["Ch4_SDCLKSEL"]== "2"))||((inst["Ch5_SDCLKSEL"]== "2")))
+        {
+            if((pin.pinName == "GPI6"))
+            {
                 pinResource.used = true;
             }
-         }else{
-            if( (pin.pinName == "GPI3")){
+        }
+        else
+        {
+            if((pin.pinName == "GPI6"))
+            {
                 pinResource.used = false;
-            }    
-         }
-         if(inst["Enable_Channel_2"]==true){
-            if((pin.pinName == "GPI5")){
+            }
+        }
+        if((inst["Ch6_SDCLKSEL"]== "1") ||(inst["Ch6_SDCLKSEL"]== "2")||((inst["Ch7_SDCLKSEL"]== "2"))||((inst["Ch8_SDCLKSEL"]== "2")))
+        {
+            if((pin.pinName == "GPI12"))
+            {
                 pinResource.used = true;
             }
-         }else{
-            if( (pin.pinName == "GPI5")){
+        }
+        else
+        {
+            if((pin.pinName == "GPI12"))
+            {
                 pinResource.used = false;
-            }    
-         }
-         if(inst["Enable_Channel_3"]==true){
-            if((pin.pinName == "GPI7")){
-                pinResource.used = true;
             }
-         }else{
-            if( (pin.pinName == "GPI7")){
-                pinResource.used = false;
-            }    
-         }
-         if(inst["Enable_Channel_4"]==true){
-            if((pin.pinName == "GPI18")){
-                pinResource.used = true;
-            }
-         }else{
-            if( (pin.pinName == "GPI18")){
-                pinResource.used = false;
-            }    
-         }
-         if(inst["Enable_Channel_5"]==true){
-            if((pin.pinName == "GPI11")){
-                pinResource.used = true;
-            }
-         }else{
-            if( (pin.pinName == "GPI11")){
-                pinResource.used = false;
-            }    
-         }
-         if(inst["Enable_Channel_6"]==true){
-            if((pin.pinName == "GPI13")){
-                pinResource.used = true;
-            }
-         }else{
-            if( (pin.pinName == "GPI13")){
-                pinResource.used = false;
-            }    
-         }
-         if(inst["Enable_Channel_7"]==true){
-            if((pin.pinName == "GPI15")){
-                pinResource.used = true;
-            }
-         }else{
-            if( (pin.pinName == "GPI15")){
-                pinResource.used = false;
-            }    
-         }
-         if(inst["Enable_Channel_8"]==true){
-            if((pin.pinName == "GPI17")){
-                pinResource.used = true;
-            }
-         }else{
-            if( (pin.pinName == "GPI17")){
-                pinResource.used = false;
-            }    
-         }
-
+        }
+     
         resources.push( pinResource );
     }
 

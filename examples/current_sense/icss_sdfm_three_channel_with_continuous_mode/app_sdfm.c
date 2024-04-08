@@ -302,11 +302,6 @@ void init_sdfm()
         return;
     }
 
-    if(gTestSdfmPrms.enFastDetect || gTestSdfmPrms.enComparator)
-    {
-        gPruIcssPwmHandle = PRUICSS_PWM_open(CONFIG_PRUICSS_PWM0, gPruIcssHandle);
-        DebugP_assert(gPruIcssPwmHandle != NULL);
-    }
     
     gHPruSdfm->gPruPwmHandle = gPruIcssPwmHandle;
 

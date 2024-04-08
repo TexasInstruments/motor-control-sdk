@@ -61,7 +61,7 @@ config = config.concat([
                 },
                 {
                     name: "3",
-                    displayName: "IEP0"
+                    displayName: "IEP"
                 },
         ]
         },
