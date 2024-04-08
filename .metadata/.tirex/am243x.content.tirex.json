@@ -1012,6 +1012,105 @@
         "resourceSubClass": [
             "example.general"
         ],
+        "description": "A Nikon Diagnostic Multi Channel Load Share Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "nikon_diagnostic_multi_channel_load_share",
+        "location": "../../examples/position_sense/nikon_diagnostic/multi_channel_load_share/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "LP-AM243"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "position_sense",
+            "nikon_diagnostic",
+            "multi_channel_load_share",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "description": "A Nikon Diagnostic Multi Channel Single Pru Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "nikon_diagnostic_multi_channel_single_pru",
+        "location": "../../examples/position_sense/nikon_diagnostic/multi_channel_single_pru/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "LP-AM243"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "position_sense",
+            "nikon_diagnostic",
+            "multi_channel_single_pru",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "description": "A Nikon Diagnostic Single Channel Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "nikon_diagnostic_single_channel",
+        "location": "../../examples/position_sense/nikon_diagnostic/single_channel/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "LP-AM243"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "position_sense",
+            "nikon_diagnostic",
+            "single_channel",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
         "description": "A Tamagawa Diagnostic Multi Channel Example. CPU is R5FSS0-0 running FREERTOS.",
         "name": "tamagawa_diagnostic_multi_channel",
         "location": "../../examples/position_sense/tamagawa_diagnostic/multi_channel/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",

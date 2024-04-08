@@ -20,6 +20,7 @@ This page lists all the examples and demos supported in this SDK.
     -# \subpage EXAMPLE_MOTORCONTROL_HDSL
     -# \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA
     -# \subpage EXAMPLE_MOTORCONTROL_BISSC
+    -# \subpage EXAMPLE_MOTORCONTROL_NIKON
 - Current Sense
     - \subpage EXAMPLES_MOTORCONTROL_SDFM
         -# \ref BASIC_SDFM_EXAMPLES

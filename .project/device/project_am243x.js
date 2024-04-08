@@ -5,6 +5,7 @@ const component_file_list = [
     "source/position_sense/bissc/.project/project.js",
     "source/position_sense/endat/.project/project.js",
     "source/position_sense/hdsl/.project/project.js",
+    "source/position_sense/nikon/.project/project.js",
     "source/position_sense/tamagawa/.project/project.js",
     "source/pruicss_pwm/.project/project.js"
 ];
@@ -31,6 +32,9 @@ const example_file_list = [
     "examples/position_sense/endat_diagnostic/single_channel/.project/project.js",
     "examples/position_sense/hdsl_diagnostic/multi_channel/.project/project.js",
     "examples/position_sense/hdsl_diagnostic/single_channel/.project/project.js",
+    "examples/position_sense/nikon_diagnostic/multi_channel_load_share/.project/project.js",
+    "examples/position_sense/nikon_diagnostic/multi_channel_single_pru/.project/project.js",
+    "examples/position_sense/nikon_diagnostic/single_channel/.project/project.js",
     "examples/position_sense/tamagawa_diagnostic/multi_channel/.project/project.js",
     "examples/position_sense/tamagawa_diagnostic/single_channel/.project/project.js",
     "examples/pruicss_pwm/pruicss_pwm_dead_band_epwm_sync/.project/project.js",
@@ -52,6 +56,9 @@ const example_file_list = [
     "source/position_sense/hdsl/firmware/multichannel_ch2/.project/project.js",
     "source/position_sense/hdsl/firmware/multichannel_ch2_sync_mode/.project/project.js",
     "source/position_sense/hdsl/firmware/sync_225_mhz/.project/project.js",
+    "source/position_sense/nikon/firmware/multi_channel_load_share/.project/project.js",
+    "source/position_sense/nikon/firmware/multi_channel_single_pru/.project/project.js",
+    "source/position_sense/nikon/firmware/single_channel/.project/project.js",
     "source/position_sense/tamagawa/firmware/multi_channel/.project/project.js",
     "source/position_sense/tamagawa/firmware/single_channel/.project/project.js",
 ];

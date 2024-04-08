@@ -104,6 +104,11 @@ The main software components in the block diagram specific to motor control are 
     <td>\ref BISS-C
     <td> Driver and PRU-ICSS firmware for BISS-C encoder interface
 </tr>
+<tr>
+    <td> NIKON
+    <td>\ref NIKON
+    <td> Driver and PRU-ICSS firmware for Nikon encoder interface
+</tr>
 <tr><td colspan="3" bgcolor=#F0F0F0>**Current Sense**</td></tr>
 <tr>
     <td> %SDFM

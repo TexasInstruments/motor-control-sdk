@@ -13,6 +13,7 @@ Applications and PRU-ICSS firmwares for following position sense encoders are pr
 - \subpage TAMAGAWA
 \cond SOC_AM243X
 - \subpage BISS-C
+- \subpage NIKON
 \endcond
 \endcond
 
