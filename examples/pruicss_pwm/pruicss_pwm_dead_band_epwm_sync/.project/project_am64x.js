@@ -71,7 +71,7 @@ const libs_freertos_r5f = {
 
 const libs_nortos_r5f = {
     common: [
-        "nortos.am243x.r5f.ti-arm-clang.${ConfigName}.lib",
+        "nortos.am64x.r5f.ti-arm-clang.${ConfigName}.lib",
         "drivers.am64x.r5f.ti-arm-clang.${ConfigName}.lib",
         "board.am64x.r5f.ti-arm-clang.${ConfigName}.lib",
         "pruicss_pwm.am64x.r5f.ti-arm-clang.${ConfigName}.lib",
