@@ -9,7 +9,7 @@ This page lists all the examples and demos supported in this SDK.
 - Current Sense
     -# \subpage EXAMPLES_MOTORCONTROL_SDFM
 - PRU-ICSS PWM
-    -# \subpage EXAMPLE_PRUICSS_PWM_DUTY_CYCLE
+   -# \subpage EXAMPLE_PRUICSS_PWM_DEADBAND_EPWM_SYNC
 \endcond
 
 \cond SOC_AM243X
@@ -32,8 +32,7 @@ This page lists all the examples and demos supported in this SDK.
     - Transforms
         -# \subpage EXAMPLES_TRANSFORMS_TEST
 - PRU-ICSS PWM
-    -# \subpage EXAMPLE_PRUICSS_PWM_DUTY_CYCLE
-    -# \subpage EXAMPLE_PRUICSS_PWM_EPWM_SYNC
+    -# \subpage EXAMPLE_PRUICSS_PWM_DEADBAND_EPWM_SYNC
 \endcond
 
 \cond SOC_AM263X

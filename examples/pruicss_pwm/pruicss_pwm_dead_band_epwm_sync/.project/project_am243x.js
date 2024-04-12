@@ -43,7 +43,7 @@ const includes_freertos_r5f = {
     common: [
         "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/FreeRTOS-Kernel/include",
         "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F",
-        "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/am64x/r5f",
+        "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/am243x/r5f",
         "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers/pruicss/g_v0",
         "${MOTOR_CONTROL_SDK_PATH}/source/pruicss_pwm/include",
         "${MOTOR_CONTROL_SDK_PATH}/examples/pruicss_pwm/pruicss_pwm_dead_band_epwm_sync/include"
@@ -62,19 +62,19 @@ const includes_nortos_r5f = {
 
 const libs_freertos_r5f = {
     common: [
-        "freertos.am64x.r5f.ti-arm-clang.${ConfigName}.lib",
-        "drivers.am64x.r5f.ti-arm-clang.${ConfigName}.lib",
-        "board.am64x.r5f.ti-arm-clang.${ConfigName}.lib",
-        "pruicss_pwm.am64x.r5f.ti-arm-clang.${ConfigName}.lib",
+        "freertos.am243x.r5f.ti-arm-clang.${ConfigName}.lib",
+        "drivers.am243x.r5f.ti-arm-clang.${ConfigName}.lib",
+        "board.am243x.r5f.ti-arm-clang.${ConfigName}.lib",
+        "pruicss_pwm.am243x.r5f.ti-arm-clang.${ConfigName}.lib",
     ],
 };
 
 const libs_nortos_r5f = {
     common: [
         "nortos.am243x.r5f.ti-arm-clang.${ConfigName}.lib",
-        "drivers.am64x.r5f.ti-arm-clang.${ConfigName}.lib",
-        "board.am64x.r5f.ti-arm-clang.${ConfigName}.lib",
-        "pruicss_pwm.am64x.r5f.ti-arm-clang.${ConfigName}.lib",
+        "drivers.am243x.r5f.ti-arm-clang.${ConfigName}.lib",
+        "board.am243x.r5f.ti-arm-clang.${ConfigName}.lib",
+        "pruicss_pwm.am243x.r5f.ti-arm-clang.${ConfigName}.lib",
     ],
 };
 
@@ -92,7 +92,7 @@ const lnkfiles = {
 
 const syscfgfile = "../example.syscfg";
 
-const readmeDoxygenPageTag = "EXAMPLE_PRUICSS_PWM_EPWM_SYNC";
+const readmeDoxygenPageTag = "EXAMPLE_PRUICSS_PWM_DEADBAND_EPWM_SYNC";
 
 const templates_freertos_r5f =
 [
@@ -108,7 +108,7 @@ const templates_freertos_r5f =
 const templates_nortos_r5f =
 [
     {
-        input: ".project/templates/am64x/nortos/main_nortos.c.xdt",
+        input: ".project/templates/am243x/nortos/main_nortos.c.xdt",
         output: "../main.c",
         options: {
             entryFunction: "App_pruIcssPwmDeadbandMain",

@@ -107,7 +107,7 @@ LIBS_PATH_common = \
 	-Wl,-i${CG_TOOL_ROOT}/lib \
 
 LIBS_common = \
-	-lnortos.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
+	-lnortos.am64x.r5f.ti-arm-clang.${ConfigName}.lib \
 	-ldrivers.am64x.r5f.ti-arm-clang.${ConfigName}.lib \
 	-lboard.am64x.r5f.ti-arm-clang.${ConfigName}.lib \
 	-lpruicss_pwm.am64x.r5f.ti-arm-clang.${ConfigName}.lib \
@@ -121,7 +121,7 @@ LFLAGS_common = \
 
 
 LIBS_NAME = \
-	nortos.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
+	nortos.am64x.r5f.ti-arm-clang.${ConfigName}.lib \
 	drivers.am64x.r5f.ti-arm-clang.${ConfigName}.lib \
 	board.am64x.r5f.ti-arm-clang.${ConfigName}.lib \
 	pruicss_pwm.am64x.r5f.ti-arm-clang.${ConfigName}.lib \
