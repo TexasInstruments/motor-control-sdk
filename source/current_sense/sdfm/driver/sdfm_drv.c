@@ -141,6 +141,35 @@ void SDFM_configEcap(sdfm_handle h_sdfm, uint8_t ecap_divider)
     /* SD_PRD_CLOCKS divider = 15; SDFM_CLOCK = IEP freq./SD_PRD_CLOCKS; 300/15  => 20 MHz, SD_CLK_INV==0 => No clock inversion*/
     h_sdfm->p_sdfm_interface->sd_clk.sd_prd_clocks = ecap_divider;
     h_sdfm->p_sdfm_interface->sd_clk.sd_clk_inv = 0;
+
+    void *prussEcap = h_sdfm->prussEcap;
+    uint32_t rgval;
+    uint32_t count;
+    
+    /*Set eCAP APWM mode*/ 
+    rgval = HW_RD_REG32((uint8_t *)prussEcap + CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_ECCTL2_ECCTL1);
+    rgval |= (0<<CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_ECCTL2_ECCTL1_SYNCI_EN_SHIFT) | (2<<CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_ECCTL2_ECCTL1_SYNCO_SEL_SHIFT) | (1<<CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_ECCTL2_ECCTL1_CAP_APWM_SHIFT) | (0<<CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_ECCTL2_ECCTL1_APWMPOL_SHIFT);
+    HW_WR_REG32((uint8_t *)prussEcap + CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_ECCTL2_ECCTL1, rgval);
+
+    /*Set period count*/
+    count = ecap_divider - 1;
+    HW_WR_REG32((uint8_t *)prussEcap + CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_CAP1, count);
+
+    /*Compute & set Duty Cycle count.
+    Divide period count by 2, biased rounding.*/
+    count = count + 1;
+    count = count/2;
+    HW_WR_REG32((uint8_t *)prussEcap + CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_CAP2, count);
+
+    /*Clear counter phase and Reset eCAP PWM Counter  */
+    HW_WR_REG32((uint8_t *)prussEcap + CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_CNTPHS, 0);
+    HW_WR_REG32((uint8_t *)prussEcap + CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_TSCNT, 0);
+
+    /* Enable eCAP APWM*/
+    rgval = HW_RD_REG32((uint8_t *)prussEcap + CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_ECCTL2_ECCTL1);
+    rgval |=  (1 << CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_ECCTL2_ECCTL1_TSCNTSTP_SHIFT);
+    HW_WR_REG32((uint8_t *)prussEcap + CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_ECCTL2_ECCTL1, rgval);
+
 }
 
 /*sdfm Hw osr configuration */
@@ -625,6 +654,9 @@ int32_t SDFM_disableEpwmSync(sdfm_handle h_sdfm, uint8_t epwmIns)
     
     return retVal;
 }
+
+
+
 /* SDFM global enable */
 void SDFM_enable(sdfm_handle h_sdfm)
 {

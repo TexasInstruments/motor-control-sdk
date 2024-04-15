@@ -361,6 +361,7 @@ typedef struct SDFM_s {
     SDFM_SampleOutInterface *sampleOutputInterface;
     void *pruss_cfg;
     void *prussIep;
+    void *prussEcap;
 } SDFM;
 
 

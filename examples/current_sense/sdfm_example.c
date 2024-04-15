@@ -256,9 +256,12 @@ int32_t initSdfmFw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm,  PRU
     
    
     hSdfm->pruss_cfg = (void *)(((PRUICSS_HwAttrs *)(pruIcssHandle->hwAttrs))->cfgRegBase);
+
     /*IEP base address*/
-    /*need to add condition for iep1*/
     hSdfm->prussIep = (void *)(((PRUICSS_HwAttrs *)(pruIcssHandle->hwAttrs))->iep0RegBase);
+
+    /*eCap base address*/
+    hSdfm->prussEcap = (void *)(((PRUICSS_HwAttrs *)(pruIcssHandle->hwAttrs))->ecapRegBase);
 
     if( pSdfmPrms->loadShare )
     {
@@ -309,7 +312,6 @@ int32_t initSdfmFw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm,  PRU
     hSdfm->iepInc = 1; /* Default IEP increment 1 */
     
     uint8_t acc_filter = 0; //SINC3 filter
-    uint8_t ecap_divider = 0x0F; //IEP at 300MHz: SD clock = 300/15=20Mhz
    
     /*Phase delay calculation for ch0*/
     if(pSdfmPrms->phaseDelay)
@@ -321,8 +323,10 @@ int32_t initSdfmFw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm,  PRU
     SDFM_configIepCount(hSdfm, pSdfmPrms->epwmOutFreq);
 
     /*configure ecap as PWM code for generate 20 MHz sdfm clock*/
+#if (CONFIG_SDFM0_CLK_FROM_ECAP != 0)
+    uint8_t ecap_divider = 0x0F; /*PRU clock at 300MHz: SD clock = 300/15=20Mhz*/
     SDFM_configEcap(hSdfm, ecap_divider);
-
+#endif
     /*set Noraml current OSR */
     SDFM_setFilterOverSamplingRatio(hSdfm, pSdfmPrms->filterOsr);
 
