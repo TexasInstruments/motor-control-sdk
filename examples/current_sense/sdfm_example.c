@@ -314,7 +314,17 @@ int32_t initSdfmFw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm,  PRU
     hSdfm->pSdfmInterface->sampleBufferBaseAdd = sampleOutputInterfaceGlobalAddr;
     hSdfm->iepInc = 1; /* Default IEP increment 1 */
     
-    
+
+#if (CONFIG_SDFM0_CLK_FROM_IEP != 0)
+    /* IEP clock 300MHz, SD clk = 20Mhz
+      Div = 300/20 = 15, one period time = 15 IEP cycles, high plus time = 7 IEP cycles  */
+    uint32_t highPulseWidth = 6; /*7 - 1*/
+    uint32_t periodTime = 14;  /* 15 - 1*/
+    uint32_t syncStartTime = 0; /*clock generation start time.*/
+    SDFM_configIepSyncMode(hSdfm, highPulseWidth, periodTime, syncStartTime);
+    SDFM_enableIep(hSdfm);   
+#endif
+     
     /*configure ecap as PWM code for generate 20 MHz sdfm clock*/
 #if (CONFIG_SDFM0_CLK_FROM_ECAP != 0)
     uint8_t ecap_divider = 0x0F; /*PRU clock at 300MHz: SD clock = 300/15=20Mhz*/

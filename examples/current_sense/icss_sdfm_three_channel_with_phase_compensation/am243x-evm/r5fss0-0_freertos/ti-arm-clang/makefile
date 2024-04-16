@@ -44,7 +44,6 @@ FILES_common := \
 	epwm_mod.c \
 	sdfm_example.c \
 	main.c \
-	mclk_iep0_sync.c \
 	ti_drivers_config.c \
 	ti_drivers_open_close.c \
 	ti_board_config.c \

@@ -10,7 +10,6 @@ const files = {
         "epwm_mod.c",
         "sdfm_example.c",
         "main.c",
-        "mclk_iep0_sync.c",
     ],
 };
 

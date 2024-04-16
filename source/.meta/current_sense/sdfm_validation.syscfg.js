@@ -62,12 +62,6 @@ function onValidate(inst, validation)
   inst_name = "SDFM_CLK_GEN";
   let clock_gen = inst[inst_name];
 
-  if(clock_gen == "3" && (!Phase_Delay))
-  {
-    validation.logWarning(
-        "In sdk example, SDFM clock generation from IEP0 is only supported with Phase Compensation",
-        inst, inst_name);
-  }
   if(((clock_gen != "3") && Phase_Delay))
   {
     validation.logError(

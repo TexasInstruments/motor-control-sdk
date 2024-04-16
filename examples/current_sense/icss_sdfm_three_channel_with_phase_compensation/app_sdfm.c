@@ -41,7 +41,6 @@
 
 #include "epwm_dc.h"
 #include "sdfm_example.h"
-#include "mclk_iep0_sync.h"
 
 /*EPWM1 configuration for sigma delta clock generation: */
 #define APP_EPWM1_ENABLE  0 /*make sure EPWM1 is added in sysconfig before making true this macro */
@@ -338,16 +337,6 @@ void sdfm_main(void *args)
     init_pwm();
     DebugP_log("EPWM Configured!\r\n");
      
-    /*Configure IEP for SD clock when phase delay calculaton is enabled*/
-#if (CONFIG_SDFM0_PHASE_DELAY != 0)
-    {
-        /*config ICSSG1 IEP0 */
-        init_IEP0_SYNC();
-        /*start ICSSG1 IEP */
-        start_IEP0();
-
-    }
-#endif  
     /* Configure SDFM */
     init_sdfm();
     DebugP_log("SDFM Configured!\r\n");
@@ -359,9 +348,8 @@ void sdfm_main(void *args)
     /* Convert nenosec into IEP cycle count */
     uint32_t iepCount = (delay*(gTestSdfmPrms.iepClock[1]))/1000000000;
     /* Config IEP SYNC1 delay based on phase compensation  */
-    config_SYNC_DELAY(iepCount);
+    SDFM_configSync1Delay(gHPruSdfm, iepCount);
 #endif
-
     /* Start EPWM0 clock */
     CSL_REG32_WR(CSL_CTRL_MMR0_CFG0_BASE + CSL_MAIN_CTRL_MMR_CFG0_EPWM_TB_CLKEN, 1);
 

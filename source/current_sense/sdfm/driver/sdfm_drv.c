@@ -659,6 +659,89 @@ int32_t SDFM_disableEpwmSync(sdfm_handle h_sdfm, uint8_t epwmIns)
     return retVal;
 }
 
+int32_t SDFM_configIepSyncMode(sdfm_handle h_sdfm, uint32_t highPulseWidth, uint32_t periodTime, uint32_t syncStartTime)
+{
+
+    void        *pruIep = h_sdfm->pruicssIep;
+    int32_t     retVal = SystemP_FAILURE;
+    uint32_t    regVal ;
+
+    if(pruIep != NULL)
+    {
+       
+        /*Set CMP1 period - SYNC0 trigger */
+        HW_WR_REG32((uint8_t *)pruIep + CSL_ICSS_G_PR1_IEP0_SLV_CMP1_REG0, syncStartTime);
+
+        /*Set CMP2 period - SYNC1 trigger */
+        HW_WR_REG32((uint8_t *)pruIep + CSL_ICSS_G_PR1_IEP0_SLV_CMP2_REG0, syncStartTime);
+               
+        /*Set sync ctrl register: SYNC1 dependent, cyclic generation , SYNC0 and SYNC1 enable, SYNC enable*/
+        regVal = HW_RD_REG8((uint8_t *)pruIep + CSL_ICSS_G_PR1_IEP0_SLV_SYNC_CTRL_REG);
+        regVal |= (1<<CSL_ICSS_G_PR1_IEP0_SLV_SYNC_CTRL_REG_SYNC_EN_SHIFT) | (1<<CSL_ICSS_G_PR1_IEP0_SLV_SYNC_CTRL_REG_SYNC0_EN_SHIFT)|(1<<CSL_ICSS_G_PR1_IEP0_SLV_SYNC_CTRL_REG_SYNC1_EN_SHIFT);
+        regVal |= (1<<CSL_ICSS_G_PR1_IEP0_SLV_SYNC_CTRL_REG_SYNC0_CYCLIC_EN_SHIFT) | (1<<CSL_ICSS_G_PR1_IEP0_SLV_SYNC_CTRL_REG_SYNC1_CYCLIC_EN_SHIFT) | (0<<CSL_ICSS_G_PR1_IEP0_SLV_SYNC_CTRL_REG_SYNC1_IND_EN_SHIFT);
+        HW_WR_REG32((uint8_t *)pruIep + CSL_ICSS_G_PR1_IEP0_SLV_SYNC_CTRL_REG, regVal);
+
+        /*Set SYNC0/1 high pulse time in iep clok cycles  */
+        HW_WR_REG32((uint8_t *)pruIep + CSL_ICSS_G_PR1_IEP0_SLV_SYNC_PWIDTH_REG, highPulseWidth);
+
+        /*Set SYNC0/1 period*/
+        HW_WR_REG32((uint8_t *)pruIep + CSL_ICSS_G_PR1_IEP0_SLV_SYNC0_PERIOD_REG, periodTime);
+
+        /*Set offset from cpm hit*/
+        HW_WR_REG32( (uint8_t *)pruIep + CSL_ICSS_G_PR1_IEP0_SLV_SYNC_START_REG, 0);
+
+        /*Enable cmp1 and cmp2 for sync start trigger generation*/
+        regVal = HW_RD_REG8((uint8_t *)pruIep + CSL_ICSS_G_PR1_IEP0_SLV_CMP_CFG_REG);
+        regVal |= (1<<SDFM_IEP_CMP1_EN_SHIFT)|(1<<SDFM_IEP_CMP2_EN_SHIFT);
+        HW_WR_REG32((uint8_t *)pruIep + CSL_ICSS_G_PR1_IEP0_SLV_CMP_CFG_REG, regVal);
+       
+        /*Set default and compensation increment to 1*/
+        regVal = HW_RD_REG32((uint8_t *)pruIep + CSL_ICSS_G_PR1_IEP0_SLV_GLOBAL_CFG_REG);
+        regVal |= (1<<CSL_ICSS_G_PR1_IEP0_SLV_GLOBAL_CFG_REG_DEFAULT_INC_SHIFT)|(1<<CSL_ICSS_G_PR1_IEP0_SLV_GLOBAL_CFG_REG_CMP_INC_SHIFT );
+        HW_WR_REG8((uint8_t *)pruIep + CSL_ICSS_G_PR1_IEP0_SLV_GLOBAL_CFG_REG, regVal);
+
+        retVal = SystemP_SUCCESS;
+
+    }
+    
+    return retVal;
+}
+
+int32_t SDFM_enableIep(sdfm_handle h_sdfm)
+{
+    void       *pruIep = h_sdfm->pruicssIep;
+    int32_t    retVal = SystemP_FAILURE;
+    uint32_t   regVal ;
+
+    if(pruIep != NULL)
+    {
+        /*start iep0_timer*/
+        regVal = HW_RD_REG8((uint8_t *)pruIep + CSL_ICSS_G_PR1_IEP0_SLV_GLOBAL_CFG_REG);
+        regVal |= 0x1;
+        HW_WR_REG8((uint8_t *)pruIep + CSL_ICSS_G_PR1_IEP0_SLV_GLOBAL_CFG_REG, regVal);
+
+        retVal = SystemP_SUCCESS;
+    }
+
+    return retVal;
+}
+
+int32_t SDFM_configSync1Delay(sdfm_handle h_sdfm, uint32_t delay)
+{
+    void      *pruIep = h_sdfm->pruicssIep;
+    int32_t   retVal = SystemP_FAILURE;
+
+    if(pruIep != NULL)
+    {
+        /*Set delay between SYNC0 and SYNC1 in clock cycles */
+        HW_WR_REG32((uint8_t *)pruIep + CSL_ICSS_G_PR1_IEP0_SLV_SYNC1_DELAY_REG, delay);
+
+        retVal = SystemP_SUCCESS;
+    }
+
+    return retVal;
+}
+
 
 
 int32_t SDFM_configClockFromGPO1(sdfm_handle h_sdfm, uint8_t div0, uint8_t div1)

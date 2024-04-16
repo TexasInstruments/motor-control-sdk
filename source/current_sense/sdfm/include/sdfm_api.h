@@ -471,6 +471,47 @@ int32_t SDFM_enableEpwmSync(sdfm_handle h_sdfm, uint8_t epwmIns);
  * 
 */
 int32_t SDFM_disableEpwmSync(sdfm_handle h_sdfm, uint8_t epwmIns);
+
+/**
+ * 
+ * \brief     This API configures IEP SYNC0 and SYNC1 registers to generate free running clock
+ * \param[in]  h_sdfm          SDFM handle
+ * \param[in]  highPulseWidth   Number of clock cycles SYNC0/1 will be high.
+ *                             0h = 1 clock cycle.
+ *                             1h = 2 clock cycles.
+ *                             Nh: N+1 clock cycles.
+ * \param[in]  periodTime      Period between the rising edges of SYNC0
+ *                             1h = 2 clk cycles period
+ *                             Nh = N+1 clk cycles period
+ * \param[in]  syncStartTime  SYNC0 and SYNC1 activation time
+ * 
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
+ * 
+ * 
+*/
+int32_t SDFM_configIepSyncMode(sdfm_handle h_sdfm, uint32_t highPulseWidth, uint32_t periodTime, uint32_t syncStartTime);
+
+/**
+ * 
+ * \brief This API enables IEP counter
+ * 
+ * \param[in]  h_sdfm          SDFM handle
+ * 
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
+ * 
+*/
+int32_t SDFM_enableIep(sdfm_handle h_sdfm);
+
+/**
+ *  \brief  Defines clock cycles from the start of SYNC0 to the start of SYNC1
+ *  \param[in]  h_sdfm          SDFM handle
+ *  \param[in]  delay           Delay before the start of SYNC1
+ *                          
+ *  \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
+ * 
+*/
+int32_t SDFM_configSync1Delay(sdfm_handle h_sdfm, uint32_t delay);
+
 /***
  *  \brief  This API configures PRU GPO mode as shift out mode (ICSSG_GPCFG0_REG[14] PRU<n>_GPO_MODE = 1h) and  
  *          shift out mode's clock divisors to output the SD clock on PR<k>_PRUx_GPO1 pin.

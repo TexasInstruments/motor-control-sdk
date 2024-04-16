@@ -140,6 +140,9 @@ extern "C" {
 #define SDFM_PHASE_DELAY_ACK_BIT_MASK   (1)
 #define SDFM_PHASE_DELAY_CAL_LOOP_SIZE  (8)
 
+#define SDFM_IEP_CMP1_EN_SHIFT     (2)
+#define SDFM_IEP_CMP2_EN_SHIFT     (3)
+
 /* ========================================================================== */
 /*                         Structures                                         */
 /* ========================================================================== */
