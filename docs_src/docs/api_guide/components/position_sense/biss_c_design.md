@@ -125,6 +125,14 @@ BISS-c control communication is performed over multiple cycles. Refer to the sta
 
 \image html bissc_hex_control_commands.png "BISS-C hex commands"
 
+###### Continuous mode
+
+\image html bissc_continuous_mode.png "Continuous Mode"
+
+BiSS-C receiver application has the support for continuous mode in which periodically clock is supplied to encoder and its position data is read and computed the CRC.
+User can stop continuous mode by hitting any key in UART console.
+Input cycle time shold be greater than or equal to the BiSS cycle time considering position data bits, E, W, CRC and timeout.
+
 ### 3 Channel Peripheral Interface
 
 The physical data transmission in 3 channel peripheral interface is done using RS-485 standard. The data is transmitted as differential signals using the RS485 between the 3 channel peripheral interface Receiver and the Encoder.

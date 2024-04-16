@@ -44,13 +44,11 @@ void bissc_command_send(struct bissc_priv *priv)
         pruicss_xchg->cycle_trigger[0] = (pruicss_xchg->channel & 0x1)?0x1:0;
         pruicss_xchg->cycle_trigger[1] = (pruicss_xchg->channel & 0x2)?0x1:0;
         pruicss_xchg->cycle_trigger[2] = (pruicss_xchg->channel & 0x4)?0x1:0;
-
     }
     else
     {
        pruicss_xchg->cycle_trigger[0] = 0x1;
     }
-
 }
 
 int32_t bissc_command_wait(struct bissc_priv *priv)
@@ -95,9 +93,10 @@ int32_t bissc_command_process(struct bissc_priv *priv)
     ret = bissc_command_wait(priv);
     return ret;
 }
+
 void bissc_config_periodic_trigger(struct bissc_priv *priv)
 {
-    /* Configures bissc master in periodic trigger mode */
+    /* Configures bissc receiver in periodic trigger mode */
     struct bissc_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
     if(priv->load_share)
     {
@@ -105,24 +104,25 @@ void bissc_config_periodic_trigger(struct bissc_priv *priv)
         pruicss_xchg->opmode[1] = 0;
         pruicss_xchg->opmode[2] = 0;
     }
-    else 
+    else
     {
         pruicss_xchg->opmode[0] = 0;
     }
     priv->is_continuous_mode = 0x1;
 }
+
 void bissc_config_host_trigger(struct bissc_priv *priv)
 {
-    /* Configures bissc master in host trigger mode */
+    /* Configures bissc receiver in host trigger mode */
     struct bissc_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
 
     if(priv->load_share)
     {
-        pruicss_xchg->opmode[0] = 0x1;      
+        pruicss_xchg->opmode[0] = 0x1;
         pruicss_xchg->opmode[1] = 0x1;
         pruicss_xchg->opmode[2] = 0x1;
     }
-    else 
+    else
     {
         pruicss_xchg->opmode[0] = 0x1;
     }
@@ -131,21 +131,22 @@ void bissc_config_host_trigger(struct bissc_priv *priv)
 
 void bissc_enable_load_share_mode(struct bissc_priv *priv)
 {
-   void *pruss_cfg = priv->pruicss_cfg;
+   void *pruicss_cfg = priv->pruicss_cfg;
     uint32_t rgval;
     if(priv->pruicss_slicex)
     {
-        rgval = HW_RD_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER);
+        rgval = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER);
         rgval |= CSL_ICSSCFG_EDPRU1TXCFGREGISTER_PRU1_ENDAT_SHARE_EN_MASK;
-        HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER, rgval);
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER, rgval);
     }
     else
     {
-        rgval = HW_RD_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0TXCFGREGISTER);
+        rgval = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU0TXCFGREGISTER);
         rgval |= CSL_ICSSCFG_EDPRU0TXCFGREGISTER_PRU0_ENDAT_SHARE_EN_MASK;
-        HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0TXCFGREGISTER, rgval);
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU0TXCFGREGISTER, rgval);
     }
 }
+
 void bissc_config_primary_core_mask(struct bissc_priv *priv, uint8_t mask)
 {
     switch (mask)
@@ -227,6 +228,7 @@ int32_t bissc_get_pos(struct bissc_priv *priv)
     }
     return SystemP_SUCCESS;
 }
+
 void bissc_config_clock(struct bissc_priv *priv,
                         struct bissc_clk_cfg *clk_cfg)
 {
@@ -235,14 +237,14 @@ void bissc_config_clock(struct bissc_priv *priv,
     /* Set PRU1_ED_RX_SB_POL polarity bit to 0 for bissc, required for ICSSG (don't care for ICSSM) */
     if(priv->pruicss_slicex)
     {
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU1RXCFGREGISTER, ((clk_cfg->rx_div << 16) | 
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU1RXCFGREGISTER, ((clk_cfg->rx_div << 16) |
             (clk_cfg->is_core_clk << 4) | (clk_cfg->rx_div_attr)));
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER, clk_cfg->tx_div << 16 | 
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER, clk_cfg->tx_div << 16 |
             (clk_cfg->is_core_clk << 4));
     }
     else
     {
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU0RXCFGREGISTER, ((clk_cfg->rx_div << 16) | 
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU0RXCFGREGISTER, ((clk_cfg->rx_div << 16) |
             (clk_cfg->is_core_clk << 4) | (clk_cfg->rx_div_attr)));
         HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU0TXCFGREGISTER, clk_cfg->tx_div << 16 |
                 (clk_cfg->is_core_clk << 4));
@@ -280,12 +282,14 @@ void bissc_config_channel(struct bissc_priv *priv, int32_t mask, int32_t totalch
             priv->channel[ch_num] = 2;
     }
 }
+
 void bissc_config_load_share(struct bissc_priv *priv, int32_t mask)
 {
     priv->load_share = 1; /*Enable load-share*/
     bissc_config_primary_core_mask(priv, mask);
     bissc_enable_load_share_mode(priv);
 }
+
 int32_t bissc_wait_for_fw_initialization(struct bissc_priv *priv, uint32_t timeout, uint8_t mask)
 {
     int32_t i;
@@ -381,6 +385,7 @@ void bissc_config_endat_mode(struct bissc_priv *priv)
         HW_WR_REG8((uint8_t *)pruicss_cfg + CSL_ICSSCFG_GPCFG0 + 3, 4);
     }
 }
+
 int32_t bissc_calc_clock(struct bissc_priv *priv, struct bissc_clk_cfg *clk_cfg)
 {
     uint32_t freq = priv->baud_rate;
@@ -406,8 +411,8 @@ int32_t bissc_calc_clock(struct bissc_priv *priv, struct bissc_clk_cfg *clk_cfg)
         clk_cfg->rx_div = (priv->core_clk_freq / (freq * 4)) - 1;
         clk_cfg->is_core_clk = 1;
         clk_cfg->rx_div_attr = BISSC_RX_SAMPLE_SIZE_10MHZ;
-    }    
-    else 
+    }
+    else
     {
         return SystemP_FAILURE;
     }
@@ -424,9 +429,9 @@ void bissc_hw_init(struct bissc_priv *priv)
 }
 
 
-struct bissc_priv *bissc_init(PRUICSS_Handle gPruIcssXHandle, 
-                              int32_t slice, 
-                              uint32_t frequency, 
+struct bissc_priv *bissc_init(PRUICSS_Handle gPruIcssXHandle,
+                              int32_t slice,
+                              uint32_t frequency,
                               uint32_t core_clk_freq,
                               uint32_t uart_clk_freq)
 {
@@ -447,10 +452,10 @@ struct bissc_priv *bissc_init(PRUICSS_Handle gPruIcssXHandle,
     bissc_priv.core_clk_freq = core_clk_freq;
     bissc_priv.uart_clk_freq = uart_clk_freq;
     bissc_hw_init(&bissc_priv);
-    return &bissc_priv;    
+    return &bissc_priv;
 }
 
-void bissc_update_max_proc_delay(struct bissc_priv *priv) 
+void bissc_update_max_proc_delay(struct bissc_priv *priv)
 {
     struct bissc_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
     pruicss_xchg->fifo_bit_idx = 4;                          /* 8x over clock - middle bit*/
@@ -501,51 +506,111 @@ int32_t bissc_wait_measure_proc_delay(struct bissc_priv *priv, uint32_t timeout)
 
 void bissc_set_default_initialization(struct bissc_priv *priv, uint64_t icssgclk)
 {
-    int8_t pru_num, totalprus, ls_ch;
+    int8_t ch_num, totalchns, ls_ch;
     struct bissc_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
     /* Initialize parameters to default values */
     if(priv->load_share)
-        totalprus = priv->totalchannels;
+        totalchns = priv->totalchannels;
     else
-        totalprus = 1;
-    for( pru_num = 0; pru_num < totalprus; pru_num++)
+        totalchns = 1;
+    for( ch_num = 0; ch_num < totalchns; ch_num++)
     {
         if(priv->load_share)
-            ls_ch = priv->channel[pru_num];
+            ls_ch = priv->channel[ch_num];
         else
             ls_ch = 0;
         pruicss_xchg->enc_len[ls_ch].data_len[0]           = BISSC_POS_DATA_LEN_DEFAULT;
         priv->data_len[ls_ch][0]                           = BISSC_POS_DATA_LEN_DEFAULT;
         priv->single_turn_len[ls_ch][0]                    = BISSC_POS_DATA_LEN_DEFAULT;
-        pruicss_xchg->enc_len[ls_ch].num_encoders            = 1;
-        priv->num_encoders[ls_ch]                            = 1;
+        pruicss_xchg->enc_len[ls_ch].num_encoders          = 1;
+        priv->num_encoders[ls_ch]                          = 1;
         priv->multi_turn_len[ls_ch][0]                     = 0;
         pruicss_xchg->ctrl_cmd[ls_ch]                      = 0;
+        priv->ctrl_enc_id[ls_ch]                           = 0;
+        priv->ctrl_reg_data[ls_ch]                         = 0;
     }
     pruicss_xchg->pos_crc_len         = BISSC_POS_CRC_LEN;
     pruicss_xchg->ctrl_cmd_crc_len    = BISSC_CTRL_CMD_CRC_LEN;
     pruicss_xchg->rx_clk_freq         = priv->baud_rate;
-    bissc_update_max_proc_delay(priv); 
+    bissc_update_max_proc_delay(priv);
     pruicss_xchg->delay_40us          = ((icssgclk*40)/1000000);
-    pruicss_xchg->delay_100ms         = (icssgclk / 10); /*((icssgclk*100000) / 1000000)*/   
-    pruicss_xchg->icssg_clk           = icssgclk; 
-    pruicss_xchg->valid_bit_idx       = 24;            
-    pruicss_xchg->measure_proc_delay  = 1; 
+    pruicss_xchg->delay_100ms         = (icssgclk / 10); /*((icssgclk*100000) / 1000000)*/
+    pruicss_xchg->icssg_clk           = icssgclk;
+    pruicss_xchg->valid_bit_idx       = 24;
+    pruicss_xchg->measure_proc_delay  = 1;
     pruicss_xchg->execution_state[0]  = 0;
     pruicss_xchg->execution_state[1]  = 0;
     pruicss_xchg->execution_state[2]  = 0;
     pruicss_xchg->opmode[0]           = 1;
     pruicss_xchg->opmode[1]           = 1;
     pruicss_xchg->opmode[2]           = 1;
-    priv->cmp3                        = 20000;     /* 100usec delay */
+    priv->is_continuous_mode          = 0;
+    priv->cmp3                        = ((icssgclk*100)/1000000);     /* 100usec delay */
 }
 
-void bissc_update_data_len(struct bissc_priv *priv, uint32_t single_turn_len[], uint32_t multi_turn_len[], int32_t pru_num)
+static uint8_t bissc_calc_ctrl_crc(uint32_t ctrl_cmd, uint8_t num_bits)
+{
+    uint8_t ff0 = 0, ff1 = 0, ff2 = 0, ff3 = 0, crc;
+    uint32_t msb, ex, i;
+    msb = pow(2, (num_bits - 1));
+    for(i = 0; i < num_bits; i++)
+    {
+        if( ctrl_cmd & msb)          /*Check for the MSB(11th in this case)*/
+            ex = ff3 ^ 1;
+        else
+            ex = ff3 ^ 0;
+        ff3 = ff2;
+        ff2 = ff1;
+        ff1 = ff0 ^ ex;            /*4 bit CRC algorithm*/
+        ff0 = ex;
+        ctrl_cmd = ctrl_cmd << 1;
+    }
+    crc = ff3 << 3 | ff2 << 2 | ff1 << 1 | ff0;
+    crc = ~ crc;
+    return crc;
+}
+
+uint32_t bissc_generate_ctrl_cmd(struct bissc_priv *priv, int8_t ls_ch)
+{
+    uint32_t ctrl_cmd = 0;
+    uint8_t crc;
+    /* CTS bit is 1 for control communication followed by 3-bit encoder ID which describes position of encoder in daisy chain*/
+    ctrl_cmd = (BISSC_CTS_BIT << BISSC_ENC_ID_LEN) | (priv->ctrl_enc_id[ls_ch] & BISSC_ENC_ID_MASK);
+    /* 7-bit register address given by user*/
+    ctrl_cmd = (ctrl_cmd << BISSC_REG_ADDR_LEN) | (priv->ctrl_reg_address[ls_ch] & BISSC_REG_ADDR_MASK);
+    /* 4-bit CRC over CTS + enc ID + reg address bits */
+    crc = bissc_calc_ctrl_crc(ctrl_cmd, (BISSC_CTS_BIT + BISSC_ENC_ID_LEN + BISSC_REG_ADDR_LEN));
+    ctrl_cmd = (ctrl_cmd << BISSC_CTRL_CMD_CRC_LEN) | (crc & BISSC_CTRL_CMD_CRC_MASK);
+    if(priv->ctrl_write_status[ls_ch])
+    {
+        /* RWS bits Write Access*/
+        ctrl_cmd = (ctrl_cmd << BISSC_RWS_LEN) | BISSC_CTRL_WRITE_ACCESS;
+        /* calculate 4-bit CRC over 8-bit register data*/
+        crc = bissc_calc_ctrl_crc(priv->ctrl_reg_data[ls_ch], BISSC_REG_DATA_LEN);
+        /* 8-bit data, user wants to write at given register address*/
+        ctrl_cmd = (ctrl_cmd << BISSC_REG_DATA_LEN) | (priv->ctrl_reg_data[ls_ch] & BISSC_REG_DATA_MASK);
+        /* 4-bit CRC for given register data */
+        ctrl_cmd = (ctrl_cmd << BISSC_CTRL_CMD_CRC_LEN) | (crc & BISSC_CTRL_CMD_CRC_MASK);
+        /* 2-stop bits "SP" S: stop bit for one control communication command, P: stop bit for series of comtrol communication*/
+        ctrl_cmd = ctrl_cmd << BISSC_CTRL_STOP_LEN;
+    }
+    else
+    {
+        /* RWS bits for Read Access*/
+        ctrl_cmd = (ctrl_cmd << BISSC_RWS_LEN) | BISSC_CTRL_READ_ACCESS;
+        /* Append 14 '0's at the end to receive CDS response*/
+        ctrl_cmd = ctrl_cmd << (BISSC_REG_DATA_LEN + BISSC_CTRL_CMD_CRC_LEN + BISSC_CTRL_STOP_LEN);
+    }
+    priv->ctrl_enc_id[ls_ch] = 0;
+    return ctrl_cmd;
+}
+
+void bissc_update_data_len(struct bissc_priv *priv, uint32_t single_turn_len[], uint32_t multi_turn_len[], int32_t ch_num)
 {
     struct bissc_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
     uint32_t sl_num, ls_ch;
     if(priv->load_share)
-        ls_ch = priv->channel[pru_num];
+        ls_ch = priv->channel[ch_num];
     else
         ls_ch = 0;
     for( sl_num = 0; sl_num < NUM_ENCODERS_MAX; sl_num++)
@@ -554,7 +619,7 @@ void bissc_update_data_len(struct bissc_priv *priv, uint32_t single_turn_len[], 
         {
             priv->single_turn_len[ls_ch][sl_num] =  single_turn_len[sl_num];
             priv->multi_turn_len[ls_ch][sl_num] =  multi_turn_len[sl_num];
-            priv->data_len[ls_ch][sl_num] = single_turn_len[sl_num] + multi_turn_len[sl_num]; 
+            priv->data_len[ls_ch][sl_num] = single_turn_len[sl_num] + multi_turn_len[sl_num];
             pruicss_xchg->enc_len[ls_ch].data_len[sl_num] = single_turn_len[sl_num] + multi_turn_len[sl_num];
             priv->num_encoders[ls_ch]++;
         }

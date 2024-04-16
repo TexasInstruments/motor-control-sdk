@@ -94,7 +94,7 @@
 #define BISSC_CMD_ENC_SEND_POS              (3)
 #define BISSC_CMD_ENC_CTRL_CMD              (4)
 #define BISSC_CMD_ENC_LOOP_OVER_CYC         (5)
-#define BISSC_CMD_PERIODIC_TRIGGER   (6)   
+#define BISSC_CMD_PERIODIC_TRIGGER          (6)
 
 #define BISSC_INPUT_CLOCK_UART_FREQUENCY    192000000
 #define BISSC_POSITION_LOOP_STOP            0
@@ -225,8 +225,7 @@ static int32_t bissc_clock_config(uint32_t frequency, struct bissc_priv *priv)
     }
     DebugP_logInfo("\r| clock config values - tx_div: %u\trx_div: %u\trx_div_attr: %x\n",
                     clk_cfg.tx_div, clk_cfg.rx_div, clk_cfg.rx_div_attr);
-
-    bissc_update_max_proc_delay(priv);    
+    bissc_update_max_proc_delay(priv);
     bissc_hw_init(priv);
     status = bissc_wait_measure_proc_delay(priv, WAIT_5_SECOND);
     return status;
@@ -250,20 +249,26 @@ static void bissc_display_menu(void)
 
 void bissc_get_enc_data_len(struct bissc_priv *priv)
 {
-    int32_t pru_num, totalprus;
+    int32_t ch_num, totalchns, enc_num;
     uint32_t  single_turn_len[3] = {0}, multi_turn_len[3] = {0};
-    priv->num_encoders[0] = 0;
-    priv->num_encoders[1] = 0;
-    priv->num_encoders[2] = 0;
-    
-    if(priv->load_share)
-        totalprus = priv->totalchannels;
-    else
-        totalprus = 1;
-
-    for(pru_num = 0; pru_num < totalprus; pru_num++)
+    for(ch_num = 0; ch_num < NUM_ED_CH_MAX; ch_num++)
     {
-        DebugP_log("\r\nPlease enter encoder lengths connected to Channel %d:\n", priv->channel[pru_num]); 
+        priv->num_encoders[ch_num] = 0;
+        for(enc_num = 0; enc_num < NUM_ENCODERS_MAX; enc_num++)
+        {
+            priv->single_turn_len[ch_num][enc_num] = 0;
+            priv->multi_turn_len[ch_num][enc_num] = 0;
+            priv->data_len[ch_num][enc_num] = 0;
+        }
+    }
+    if(priv->load_share)
+        totalchns = priv->totalchannels;
+    else
+        totalchns = 1;
+
+    for(ch_num = 0; ch_num < totalchns; ch_num++)
+    {
+        DebugP_log("\r\nPlease enter encoder lengths connected to Channel %d:\n", priv->channel[ch_num]);
         DebugP_log("\r\nPlease enter 1st encoder single turn length\n");
         DebugP_scanf("%u\n", &single_turn_len[0]);
         if(single_turn_len[0])
@@ -289,13 +294,13 @@ void bissc_get_enc_data_len(struct bissc_priv *priv)
                 DebugP_scanf("%u\n", &multi_turn_len[2]);
             }
         }
-        bissc_update_data_len(priv, single_turn_len, multi_turn_len, pru_num);
+        bissc_update_data_len(priv, single_turn_len, multi_turn_len, ch_num);
     }
 }
 
 static void bissc_print_res(struct bissc_priv *priv)
 {
-    int32_t ch_num, ch, ls_ch; 
+    int32_t ch_num, ch, ls_ch;
     for( ch_num = 0; ch_num < totalchannels; ch_num++)
     {
         ch = priv->channel[ch_num];
@@ -398,6 +403,7 @@ static int32_t bissc_loop_task_create(void)
 
     return status ;
 }
+
 static void bissc_process_periodic_command(struct bissc_priv *priv)
 {
     int32_t status, ret;
@@ -417,13 +423,12 @@ static void bissc_process_periodic_command(struct bissc_priv *priv)
     bissc_periodic_interface.pruicss_iep = priv->pruicss_iep;
     bissc_periodic_interface.pruicss_dmem = priv->pruicss_xchg;
     bissc_periodic_interface.cmp3 = priv->cmp3;
-    
+
     status = bissc_config_periodic_mode(&bissc_periodic_interface, gPruIcssXHandle);
     DebugP_assert(0 != status);
     bissc_position_loop_status = BISSC_POSITION_LOOP_START;
 
     DebugP_log("\r|\n\r| press enter to stop the continuous mode\r\n|");
-
 
     while(1)
     {
@@ -445,12 +450,12 @@ static void bissc_process_periodic_command(struct bissc_priv *priv)
                 continue;
             }
             bissc_print_res(priv);
-        }    
+        }
     }
 }
 void bissc_main(void *args)
 {
-    int32_t i, totalprus, ch_num, ls_ch = 0, pru_num;
+    int32_t i, totalchns, ch_num, ls_ch = 0;
     uint64_t icssgclk;
     int32_t ch = 0;
 
@@ -488,13 +493,13 @@ void bissc_main(void *args)
         DebugP_log("\r\nWARNING: invalid channel selected, defaulting to Channel 0\n");
         i = 0;
     }
-    
+
     mask = CONFIG_BISSC0_CHANNEL0<<0 | CONFIG_BISSC0_CHANNEL1<<1 | CONFIG_BISSC0_CHANNEL2<<2;
 
     totalchannels = (CONFIG_BISSC0_CHANNEL0 + CONFIG_BISSC0_CHANNEL1 + CONFIG_BISSC0_CHANNEL2);
 
     DebugP_log("\r\n");
-    
+
     /* Read the ICSSG configured clock frequency. */
     if(gPruIcssXHandle->hwAttrs->instance)
     {
@@ -516,9 +521,9 @@ void bissc_main(void *args)
     if(CONFIG_BISSC0_MODE == BISSC_MODE_MULTI_CHANNEL_MULTI_PRU)
     {
         DebugP_log("\r\nBiSS-C Load Share Demo application is running......\n");
-        for(pru_num = 0; pru_num < totalchannels; pru_num++)
+        for(ch_num = 0; ch_num < totalchannels; ch_num++)
         {
-            DebugP_log("\r\nChannel %d is enabled\n", priv->channel[pru_num]);
+            DebugP_log("\r\nChannel %d is enabled\n", priv->channel[ch_num]);
         }
     }
     else if(CONFIG_BISSC0_MODE == BISSC_MODE_MULTI_CHANNEL_SINGLE_PRU)
@@ -534,6 +539,7 @@ void bissc_main(void *args)
         DebugP_log("\r\nBiSS-C Single channel, Single PRU Demo application is running......\n");
         DebugP_log("\r\nChannel %d is enabled\n", priv->channel[0]);
     }
+
     bissc_get_enc_data_len(priv);
     i = bissc_pruicss_load_run_fw(priv, mask);
     if(i < 0)
@@ -630,27 +636,27 @@ void bissc_main(void *args)
                 DebugP_log("\r\n Channel %d:\n", ch);
                 if(priv->multi_turn_len[ls_ch][0])
                 {
-                    DebugP_log("\r\n Encoder-1 Multiturn rev: %u, Angle:  %.12f, crc: %x, otf crc: %x, e_w: %x\n", priv->enc_pos_data[ch].num_of_turns[0], 
+                    DebugP_log("\r\n Encoder-1 Multiturn rev: %u, Angle:  %.12f, crc: %x, otf crc: %x, e_w: %x\n", priv->enc_pos_data[ch].num_of_turns[0],
                     priv->enc_pos_data[ch].angle[0], priv->enc_pos_data[ch].rcv_crc[0], priv->enc_pos_data[ch].otf_crc[0], priv->enc_pos_data[ch].ew[0]);
                 }
                 else
                 {
-                    DebugP_log("\r\n Encoder-1 Singleturn Angle:  %.12f, crc: %x, otf crc: %x, e_w: %x\n", priv->enc_pos_data[ch].angle[0], priv->enc_pos_data[ch].rcv_crc[0], 
+                    DebugP_log("\r\n Encoder-1 Singleturn Angle:  %.12f, crc: %x, otf crc: %x, e_w: %x\n", priv->enc_pos_data[ch].angle[0], priv->enc_pos_data[ch].rcv_crc[0],
                     priv->enc_pos_data[ch].otf_crc[0], priv->enc_pos_data[ch].ew[0]);
                 }
                 DebugP_log("\r\n CRC Status: %s, crc error count: %u\n", (priv->enc_pos_data[ch].rcv_crc[0] == priv->enc_pos_data[ch].otf_crc[0]) ? "success" : "failure" ,
                 priv->pd_crc_err_cnt[ch][0]);
 
                 if(priv->data_len[ls_ch][1])
-                {    
+                {
                     if(priv->multi_turn_len[ls_ch][1])
                     {
-                        DebugP_log("\r\n Encoder-2 Multiturn rev: %u, Angle:  %.12f, crc: %x, otf crc: %x, e_w: %x\n", priv->enc_pos_data[ch].num_of_turns[1], 
+                        DebugP_log("\r\n Encoder-2 Multiturn rev: %u, Angle:  %.12f, crc: %x, otf crc: %x, e_w: %x\n", priv->enc_pos_data[ch].num_of_turns[1],
                         priv->enc_pos_data[ch].angle[1], priv->enc_pos_data[ch].rcv_crc[1], priv->enc_pos_data[ch].otf_crc[1], priv->enc_pos_data[ch].ew[1]);
                     }
                     else
                     {
-                        DebugP_log("\r\n Encoder-2 Singleturn Angle:  %.12f, crc: %x, otf crc: %x, e_w: %x\n", priv->enc_pos_data[ch].angle[1], priv->enc_pos_data[ch].rcv_crc[1], 
+                        DebugP_log("\r\n Encoder-2 Singleturn Angle:  %.12f, crc: %x, otf crc: %x, e_w: %x\n", priv->enc_pos_data[ch].angle[1], priv->enc_pos_data[ch].rcv_crc[1],
                         priv->enc_pos_data[ch].otf_crc[1], priv->enc_pos_data[ch].ew[1]);
                     }
                     DebugP_log("\r\n CRC Status: %s, crc error count: %u\n", (priv->enc_pos_data[ch].rcv_crc[1] == priv->enc_pos_data[ch].otf_crc[1]) ? "success" : "failure" ,
@@ -660,12 +666,12 @@ void bissc_main(void *args)
                     {
                         if(priv->multi_turn_len[ls_ch][2])
                         {
-                            DebugP_log("\r\n Encoder-3 Multiturn rev: %u, Angle:  %.12f, crc: %x, otf crc: %x, e_w: %x\n", priv->enc_pos_data[ch].num_of_turns[2], 
+                            DebugP_log("\r\n Encoder-3 Multiturn rev: %u, Angle:  %.12f, crc: %x, otf crc: %x, e_w: %x\n", priv->enc_pos_data[ch].num_of_turns[2],
                             priv->enc_pos_data[ch].angle[2], priv->enc_pos_data[ch].rcv_crc[2], priv->enc_pos_data[ch].otf_crc[2], priv->enc_pos_data[ch].ew[2]);
                         }
                         else
                         {
-                            DebugP_log("\r\n Encoder-3 Singleturn Angle:  %.12f, crc: %x, otf crc: %x, e_w: %x\n", priv->enc_pos_data[ch].angle[2], priv->enc_pos_data[ch].rcv_crc[2], 
+                            DebugP_log("\r\n Encoder-3 Singleturn Angle:  %.12f, crc: %x, otf crc: %x, e_w: %x\n", priv->enc_pos_data[ch].angle[2], priv->enc_pos_data[ch].rcv_crc[2],
                             priv->enc_pos_data[ch].otf_crc[2], priv->enc_pos_data[ch].ew[2]);
                         }
                         DebugP_log("\r\n CRC Status: %s, crc error count: %u\n", (priv->enc_pos_data[ch].rcv_crc[2] == priv->enc_pos_data[ch].otf_crc[2]) ? "success" : "failure" ,
@@ -676,20 +682,42 @@ void bissc_main(void *args)
         }
         else if(cmd == BISSC_CMD_ENC_CTRL_CMD)
         {
-            DebugP_log("\r\nPlease enter control command in Hex:\n");
-            if(CONFIG_BISSC0_MODE == BISSC_MODE_MULTI_CHANNEL_MULTI_PRU)
+            DebugP_log("\r\nPlease enter control communication details:\n");
+            totalchns = priv->totalchannels;
+            for(ch_num = 0; ch_num < totalchns; ch_num++)
             {
-                totalprus = priv->totalchannels;
-                for(pru_num = 0; pru_num < totalprus; pru_num++)
+                if(CONFIG_BISSC0_MODE == BISSC_MODE_MULTI_CHANNEL_MULTI_PRU)
                 {
-                    ls_ch = priv->channel[pru_num];
+                    ls_ch = priv->channel[ch_num];
                     DebugP_log("\r\n Channel %d: ",ls_ch);
-                    DebugP_scanf("%x\n", &ctrl_cmd[ls_ch]);
                 }
-            }
-            else
-            {
-                DebugP_scanf("%x\n", &ctrl_cmd[0]);
+                else
+                {
+                    ls_ch = 0;
+                    totalchns = 1;
+                }
+                DebugP_log("\r\n Enter type of access(0: Read & 1: Write): ");
+                DebugP_scanf("%x\n", &priv->ctrl_write_status[ls_ch]);
+                while(1)
+                {
+                    DebugP_log("\r\n Enter Register Address: ");
+                    DebugP_scanf("%x\n", &priv->ctrl_reg_address[ls_ch]);
+                    if(priv->ctrl_reg_address[ls_ch] > 0x7F)
+                        DebugP_log("\r\n Please enter a 7-bit address\n");
+                    else
+                        break;
+                }
+                if(priv->ctrl_write_status[ls_ch])
+                {
+                    DebugP_log("\r\n Enter Data to write at 0x%x Register\n", priv->ctrl_reg_address[ls_ch]);
+                    DebugP_scanf("%x\n", &priv->ctrl_reg_data[ls_ch]);
+                }
+                if(priv->num_encoders[ls_ch] > 1)
+                {
+                    DebugP_log("\r\n Enter Encoder ID\n");
+                    DebugP_scanf("%x\n", &priv->ctrl_enc_id[ls_ch]);
+                }
+                ctrl_cmd[ls_ch] = bissc_generate_ctrl_cmd(priv, ls_ch);
             }
             ret = bissc_set_ctrl_cmd_and_process(priv, ctrl_cmd);
             if(ret < 0)
@@ -701,15 +729,15 @@ void bissc_main(void *args)
                 ch = priv->channel[ch_num];
                 DebugP_log("\r\n Channel %d:\n", ch);
                 DebugP_log("\r\n Control communication result: %x, crc: %x, otf crc: %x, status: %s\n",priv->enc_ctrl_data[ch].cmd_result,
-                    priv->enc_ctrl_data[ch].cmd_rcv_crc, priv->enc_ctrl_data[ch].cmd_otf_crc,
-                    (priv->enc_ctrl_data[ch].cmd_rcv_crc == priv->enc_ctrl_data[ch].cmd_otf_crc) ? "success" : "failure");
+                priv->enc_ctrl_data[ch].cmd_rcv_crc, priv->enc_ctrl_data[ch].cmd_otf_crc,
+                (priv->enc_ctrl_data[ch].cmd_rcv_crc == priv->enc_ctrl_data[ch].cmd_otf_crc) ? "success" : "failure");
 
                 DebugP_log("\r\n CTRL CRC error count: %u\n", priv->ctrl_crc_err_cnt[ch]);
             }
         }
         else if(cmd == BISSC_CMD_ENC_LOOP_OVER_CYC)
         {
-            DebugP_log("\r\nEnter number of BiSS-C cycles:\n");
+            DebugP_log("\r\n Enter number of BiSS-C cycles:\n");
             DebugP_scanf("%u\n", &loop_cnt);
             if(loop_cnt)
             {
@@ -732,7 +760,8 @@ void bissc_main(void *args)
         else if(cmd == BISSC_CMD_PERIODIC_TRIGGER)
         {
             DebugP_log("\r| Enter IEP cycle count(must be greater than BiSS cycle time including timeout period, in PRU cycles): ");
-            if(DebugP_scanf("%u\n", &priv->cmp3) < 0)
+            DebugP_scanf("%lld\n", &priv->cmp3);
+            if(priv->cmp3 < 0)
             {
                 DebugP_log("\r\n| WARNING: invalid value entered\n");
                 continue;
@@ -746,4 +775,3 @@ deinit:
     Drivers_close();
     return;
 }
-

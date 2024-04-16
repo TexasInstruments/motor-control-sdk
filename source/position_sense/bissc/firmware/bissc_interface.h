@@ -52,10 +52,10 @@ BISSC_CYCLE_TRIGGER_CH2_STATUS_OFFSET               .set        0xA     ;Status 
 BISSC_MEAS_PROC_DELAY_OFFSET	                    .set	    0xB     ;Measure proc delay and line delay, set when there is a change in config
 
 BISSC_OPMODE_CH0_CONFIG_OFFSET                      .set        0xC     ;operation mode of ch0 offset
-BISSC_OPMODE_CH1_CONFIG_OFFSET                      .set        0xD     ;operation mode of ch1 offset 
+BISSC_OPMODE_CH1_CONFIG_OFFSET                      .set        0xD     ;operation mode of ch1 offset
 BISSC_OPMODE_CH2_CONFIG_OFFSET                      .set        0xE     ;operation mode of ch2 offset
 
-BISSC_NUM_ENCODER_CH0_CONFIG_OFFSET                 .set        0xF    ;number of encoders connected in daisy chain
+BISSC_NUM_ENCODER_CH0_CONFIG_OFFSET                 .set        0xF     ;number of encoders connected in daisy chain
 BISSC_DATA_LEN_CH0_CONFIG_OFFSET	                .set		0x10	;encoder 0 data length
 BISSC_DATA_LEN_ENCODER1_CH0_CONFIG_OFFSET           .set        0x11    ;encoder 1 data length
 BISSC_DATA_LEN_ENCODER2_CH0_CONFIG_OFFSET           .set        0x12    ;encoder 2 data length
@@ -71,7 +71,7 @@ BISSC_DATA_LEN_ENCODER1_CH2_CONFIG_OFFSET           .set        0x19    ;encoder
 BISSC_DATA_LEN_ENCODER2_CH2_CONFIG_OFFSET           .set        0x1A    ;encoder 2 data length
 
 BISSC_VALID_BIT_IDX_OFFSET                          .set        0x1B    ;offset for valid bit index
-BISSC_FIFO_BIT_IDX_OFFSET                           .set        0x1C    ;offset for fifo bit index  
+BISSC_FIFO_BIT_IDX_OFFSET                           .set        0x1C    ;offset for fifo bit index
 BISSC_CTRL_CMD_CH0_STATUS_OFFSET                    .set	    0x1D    ;control command complete status; 1 - pending; 0 - completed
 BISSC_CTRL_CMD_CH1_STATUS_OFFSET                    .set	    0x1E    ;control command complete status; 1 - pending; 0 - completed
 BISSC_CTRL_CMD_CH2_STATUS_OFFSET                    .set	    0x1F    ;control command complete status; 1 - pending; 0 - completed
