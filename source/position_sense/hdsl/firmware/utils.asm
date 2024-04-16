@@ -42,26 +42,6 @@
 	.global load_code
 
 ;--------------------------------------------------------------------------------------------------
-;Function: update_events (RET_ADDR1)
-;Updates event register and generates interrupts if necessary
-; 9 cycles
-;input:
-;	REG_FNC.b0: event number
-;output:
-;modifies:
-;--------------------------------------------------------------------------------------------------
-update_events:
-;read events and masks
-	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_H, 4
-	set		REG_TMP0.w0, REG_TMP0.w0, REG_FNC.b0
-;save events
-	sbco		&REG_TMP0.w0, MASTER_REGS_CONST, EVENT_H, 2
-	qbbc		update_events_no_int, REG_TMP0.w2, REG_FNC.b0
-;generate interrupt
-	ldi		r31.w0, PRU0_ARM_IRQ
-update_events_no_int:
-	RET1
-;--------------------------------------------------------------------------------------------------
 ;Function: calc_16bit_crc (RET_ADD1)
 ;This function checks the crc for the acceleration channel (polynomial is x^5 + x^2 + 1)
 ;11*REG_FNC.b2+3 cycles -> 69 cycles for 6 bytes data

@@ -249,22 +249,26 @@ push_2b_0_0:
 	PUSH_FIFO_CONST		0xff
 free_run_mode_0:
 	RESET_CYCLCNT
-	qba			datalink_rx0_7
+	qba			generate_h_frame_interrupt
 ;V-Frame ends here
 ;reset BYTE_ERROR
 Vframe_fifo_push:
+	PUSH_FIFO_CONST  0xff
 	ldi			BYTE_ERROR, 0x00
 	ldi			LOOP_CNT.b2, 8
 	set			H_FRAME.flags, H_FRAME.flags, FLAG_NORMAL_FLOW
-	PUSH_FIFO_CONST  0xff
-	qba			datalink_rx0_7
+	qba			generate_h_frame_interrupt
 hframe_7_fifo_push:
 	qbbc			Hframe_fifo_push, H_FRAME.flags, FLAG_NORMAL_FLOW
 	CALL2 WAIT_TX_FIFO_FREE
 	PUSH_FIFO_CONST  0xff
 	PUSH_FIFO_CONST  0x00
-	qba			datalink_rx0_7
+generate_h_frame_interrupt:
 
+; signal event mst_intr[0] and PRU0_ARM_IRQ3
+	ldi     r31.w0, 32+0
+	ldi     r31.w0, PRU0_ARM_IRQ3
+	qba datalink_rx0_7
  	.endif ;Multichannel
 ;--------------------------------------------------------------------------------------------------
 
@@ -729,6 +733,8 @@ recv_dec_vertical_not_rx7:
 	ldi			LOOP_CNT.b0, 6
 	CALL1			recv_dec_10b
 	mov			H_FRAME.pipe, REG_FNC.b0
+	; Store PIPE data
+	sbco	&H_FRAME.pipe, MASTER_REGS_CONST, PIPE_D, 1
 ;receive acceleration channel
 	ldi			REG_FNC.b1, 3
 	ldi			LOOP_CNT.b0, 6
@@ -1418,35 +1424,9 @@ send_header_no_wait_after_synch:
 	lbco        &REG_TMP0, c1, 0x10, 4
 	add         REG_TMP0, REG_TMP0, 12   ;read offset
 
-	qbeq        adjustment_done, EXTRA_EDGE_SELF, 0xFF
-is_val_FE:
-	qbne        is_val_FC, EXTRA_EDGE_SELF, 0xFE
-	sub         REG_TMP0, REG_TMP0, 4
-	qba         adjustment_done
-is_val_FC:
-	qbne        is_val_F8, EXTRA_EDGE_SELF, 0xFC
-	sub         REG_TMP0, REG_TMP0, 8
-	qba         adjustment_done
-is_val_F8:
-	qbne        is_val_F0, EXTRA_EDGE_SELF, 0xF8
-	sub         REG_TMP0, REG_TMP0, 12
-	qba         adjustment_done
-is_val_F0:
-	qbne        is_val_E0, EXTRA_EDGE_SELF, 0xF0
-	sub         REG_TMP0, REG_TMP0, 16
-	qba         adjustment_done
-is_val_E0:
-	qbne        is_val_C0, EXTRA_EDGE_SELF, 0xE0
-	sub         REG_TMP0, REG_TMP0, 20
-	qba         adjustment_done
-is_val_C0:
-	qbne        is_val_80, EXTRA_EDGE_SELF, 0xC0
-	sub         REG_TMP0, REG_TMP0, 24
-	qba         adjustment_done
-is_val_80:
-	qbne        adjustment_done,EXTRA_EDGE_SELF, 0x80
-	sub         REG_TMP0, REG_TMP0, 28
-	qba         adjustment_done
+	ldi			REG_TMP11, (PDMEM00+LUT_EE)
+	lbbo			&REG_TMP11.b0, REG_TMP11, EXTRA_EDGE_SELF, 1
+	sub			REG_TMP0, REG_TMP0, REG_TMP11.b0
 adjustment_done:
 	sbco		&REG_TMP0, MASTER_REGS_CONST, EXTRA_EDGE_TIMESTAMP, 4
 num_pulses_is_not_one1:
@@ -1574,11 +1554,7 @@ send_header_dont_send_01_send_1:
 	PUSH_FIFO_CONST		0xff
 send_header_dont_send_01_send_next:
 	RESET_CYCLCNT
-
 	READ_CYCLCNT		REG_TMP1
-	ldi			REG_TMP0, (9*(CLKDIV_NORMAL+1)-9)
-	sub			REG_TMP0, REG_TMP0, REG_TMP1
-	TX_CLK_DIV_WAIT		CLKDIV_FAST, r0
 	qbbs			send_header_dont_send_01_send_11, REG_FNC.b2, 6
 	PUSH_FIFO_CONST		0x00
 	ldi			LAST_BIT_SENT, 0

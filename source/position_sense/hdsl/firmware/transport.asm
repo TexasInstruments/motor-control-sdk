@@ -153,7 +153,7 @@ push_1B_0:
 	RESET_CYCLCNT
 free_run_mode2:
 	.endif
-	;Update EVENT_S in DMEM for EVENT_S_VPOS and EVENT_S_SCE events 
+;Update EVENT_S in DMEM for EVENT_S_VPOS and EVENT_S_SCE events
 	lbco	&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S_TEMP, 1
 	lbco	&REG_TMP0.w1, MASTER_REGS_CONST, EVENT_S, 2
 	qbbc	no_VPOS_update_in_event_reg,REG_TMP0.b0,EVENT_S_VPOS
@@ -312,15 +312,15 @@ estimator_acc_sign_extend_dacc1:
 	qbbc		calc_speed_extend_acc1, REG_FNC.w0, 10
 	ldi		REG_TMP0.w1, 0xfff8
 calc_speed_extend_acc1:
-	or		REG_TMP0.w0, REG_TMP0.w0, REG_FNC.w0
-	add		SPEED.w0, SPEED.w0, REG_TMP0.w0
-	adc		SPEED.b2, SPEED.b2, REG_TMP0.b2
-;updating the delta acceleration regs
 	.if $defined("HDSL_MULTICHANNEL")
 	CALL2 WAIT_TX_FIFO_FREE
 	PUSH_FIFO_CONST  0x00
 	PUSH_FIFO_CONST  0x00
 	.endif
+	or		REG_TMP0.w0, REG_TMP0.w0, REG_FNC.w0
+	add		SPEED.w0, SPEED.w0, REG_TMP0.w0
+	adc		SPEED.b2, SPEED.b2, REG_TMP0.b2
+;updating the delta acceleration regs
 	mov		DELTA_ACC4, DELTA_ACC3
 	mov		DELTA_ACC3, DELTA_ACC2
 	mov		DELTA_ACC2, DELTA_ACC1
@@ -349,15 +349,15 @@ delta_delta_position:
 	qbbc		calc_speed_extend_acc0, REG_FNC.w0, 10
 	ldi		REG_TMP0.w1, 0xfff8
 calc_speed_extend_acc0:
-	or		REG_TMP0.w0, REG_TMP0.w0, REG_FNC.w0
-	add		SPEED.w0, SPEED.w0, REG_TMP0.w0
-	adc		SPEED.b2, SPEED.b2, REG_TMP0.b2
-;updating the delta acceleration regs
 	.if $defined("HDSL_MULTICHANNEL")
 	CALL2 WAIT_TX_FIFO_FREE
 	PUSH_FIFO_CONST  0x00
 	PUSH_FIFO_CONST  0x00
 	.endif
+	or		REG_TMP0.w0, REG_TMP0.w0, REG_FNC.w0
+	add		SPEED.w0, SPEED.w0, REG_TMP0.w0
+	adc		SPEED.b2, SPEED.b2, REG_TMP0.b2
+;updating the delta acceleration regs
 	mov		DELTA_ACC4, DELTA_ACC3
 	mov		DELTA_ACC3, DELTA_ACC2
 	mov		DELTA_ACC2, DELTA_ACC1
@@ -386,14 +386,9 @@ calc_relpos_extend_vel:
 ; Set POSTX to 2
     ldi         REG_TMP0.b0, 0x2
     sbco		&REG_TMP0.b0, MASTER_REGS_CONST, POSTX, 1
-; Store PIPE data
-	sbco	&H_FRAME.pipe, MASTER_REGS_CONST, PIPE_D, 1
 ;store last FAST_POS
 	sbco		&FAST_POSL, MASTER_REGS_CONST, LAST_FAST_POS0, SIZE_FAST_POS
 
-; signal event mst_intr[0] and PRU0_ARM_IRQ3
-	ldi     r31.w0, 32+0
-	ldi     r31.w0, PRU0_ARM_IRQ3
 	RET
 
 ;--------------------------------------------------------------------------------------------------
@@ -455,30 +450,6 @@ calc_speed_extend_acc:
 	mov		LAST_ACC, REG_TMP0.w0
 	RET1
 
-;--------------------------------------------------------------------------------------------------
-;Function: store_error (RET_ADDR1)
-;Stores error in ring buffer
-;15 cycles
-;input:
-;	REG_FNC: error
-;output:
-;modifies:
-;--------------------------------------------------------------------------------------------------
-store_error:
-;load abs error ring buffer ptr.
-	;ldi		REG_TMP1, (PDMEM00+ABS_ERR_PTR)
-	;xor		REG_TMP0, REG_TMP0, REG_TMP0
-	;lbbo		&REG_TMP0, REG_TMP1, 0x00, ABS_ERR_PTR_SIZE
-;store error
-	;sbbo		&REG_FNC, REG_TMP0, 0x00, 4
-;update and store ptr
-	;add		REG_TMP0.w0, REG_TMP0.w0, 4
-	;ldi		REG_TMP0.w2, (PDMEM00+ABS_ERR_BUF+ABS_ERR_BUF_SIZE)
-	;qbgt		store_error_dont_reset_abs_err_ptr, REG_TMP0.w0, REG_TMP0.w2
-	;ldi		REG_TMP0.w0, (PDMEM00+ABS_ERR_BUF)
-store_error_dont_reset_abs_err_ptr:
-	;sbbo		&REG_TMP0.w0, REG_TMP1, 0x00, ABS_ERR_PTR_SIZE
-	;RET1
 ;--------------------------------------------------------------------------------------------------
 ;Function: calc_acc_crc (RET_ADD1)
 ;This function checks the crc for the acceleration channel
@@ -1307,8 +1278,7 @@ estimator_vpos_add_relpos_done:
 	;Store XREG
 	ldi ALIGN_PHASE,1
 	sbco	&FAST_POSL,MASTER_REGS_CONST,XREG,5
-	sbco 		&ALIGN_PHASE, MASTER_REGS_CONST, ALIGN_PH, 1
-	jmp 	align_done
+	jmp 	phase_completed
 ;Align phase 1
 align_ph1:
 	ldi ALIGN_PHASE,2
@@ -1346,13 +1316,11 @@ xreg_shift_complete:
 	adc		FAST_POSH.b1, FAST_POSH.b1, REG_TMP0.b2
 	adc		FAST_POSH.b2, FAST_POSH.b2, REG_TMP0.b3
 	adc		FAST_POSH.b3, FAST_POSH.b3, REG_TMP1.b0
-	sbco 		&ALIGN_PHASE, MASTER_REGS_CONST, ALIGN_PH, 1
-	jmp 	align_done
+	jmp 	phase_completed
 ;Align phase 2
 align_ph2:
 	ldi ALIGN_PHASE,3
-	sbco 		&ALIGN_PHASE, MASTER_REGS_CONST, ALIGN_PH, 1
-	jmp 	align_done
+	jmp 	phase_completed
 ;Align phase 3
 align_ph3:
 ;;;relpos+vpos_update
@@ -1383,17 +1351,18 @@ transport_layer_no_pos_event:
     clr         REG_TMP1.b0, REG_TMP1.b0, ONLINE_STATUS_D_POS
 transport_layer_pos_update_done:
     sbco        &REG_TMP1.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
-	qba 		align_done
-
+	qba 		alignment_done
 alignment_check_failed:
 	ldi ALIGN_PHASE,0
-	sbco 		&ALIGN_PHASE, MASTER_REGS_CONST, ALIGN_PH, 1
+	;sbco 		&ALIGN_PHASE, MASTER_REGS_CONST, ALIGN_PH, 1
 	.if $defined("HDSL_CHECK_ALIGNMENT_PHASE")
 	sbco 		&ALIGN_PHASE, MASTER_REGS_CONST, CURRENT_ALIGN_PHASE, 1
 	.endif
 	lbco        &REG_TMP1.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
-    set REG_TMP1.b0,REG_TMP1.b0,ONLINE_STATUS_D_POS
+    set 		REG_TMP1.b0,REG_TMP1.b0,ONLINE_STATUS_D_POS
     sbco        &REG_TMP1.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
-align_done:
+phase_completed:
+	sbco 		&ALIGN_PHASE, MASTER_REGS_CONST, ALIGN_PH, 1
+alignment_done:
 not_7th_hframe:
 	RET1

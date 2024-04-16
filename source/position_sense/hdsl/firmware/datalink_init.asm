@@ -214,8 +214,10 @@ datalink_reset_after_fw_load:
 
 ; set the VERSION and VERSION2 register
     ldi     REG_TMP0.b0, ICSS_FIRMWARE_RELEASE
+    ldi     REG_TMP0.b1, ICSS_BUILD_VERSION
     sbco	&REG_TMP0.b0, MASTER_REGS_CONST, VERSION, 1
     sbco	&REG_TMP0.b0, MASTER_REGS_CONST, VERSION2, 1
+    sbco	&REG_TMP0.b1, MASTER_REGS_CONST, BUILD_VERSION, 1
 
 ;init transport layer here
 ;Initialize transport layer here
@@ -552,10 +554,11 @@ datalink_learn_skip_wait:
     .if $defined("HDSL_MULTICHANNEL")
 	PUSH_FIFO_CONST		0x00
 	TX_CHANNEL
-	LOOP push_3b_0,3
+	LOOP push_3b_0,2
 	PUSH_FIFO_CONST		0x00
 	CALL2 WAIT_TX_FIFO_FREE
 push_3b_0:
+	PUSH_FIFO_CONST		0x00
 	PUSH_FIFO_CONST		0xff
 	PUSH_FIFO_CONST		0xff
     .else
