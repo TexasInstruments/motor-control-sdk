@@ -190,11 +190,6 @@ INIT_SDFM_CONT:
     ; Reset SDFM state
     JAL     RET_ADDR_REG, FN_RESET_SDFM_STATE
 
-    .if $isdefed("SDFM_PRU_CORE") 
-    ; Initialize ecap for sigma delta clock 
-    JAL     RET_ADDR_REG, FN_INIT_SD_CLOCK
-    .endif
-
     ; Configure FD and OSR Register for all three SD channel 
     JAL     RET_ADDR_REG, FN_CONFIG_SD_SAMPLE_SIZE_REG
 
@@ -1476,32 +1471,3 @@ END_PHASE_DELAY:
         SBBO  &TEMP_REG1, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_SD_CLOCK_PHASE_DELAY, 4
         JMP     RET_ADDR_REG
 
-;
-; Initialize SD (eCAP PWM) clock
-;
-; Arguments:
-; SDFM_CFG_BASE_PTR_REG: base address of SD Configuration registers (&IEP_CFG_EPWM_PRD)
-;
-FN_INIT_SD_CLOCK:
-     ; Set eCAP PWM mode
-     LDI32   TEMP_REG0, (SYNCI_EN_VAL<<SYNCI_EN_SHIFT) | (SYNCO_SEL_VAL<<SYNCO_SEL_SHIFT) | (CAP_APWM_VAL<<CAP_APWM_SHIFT) | (APWMPOL_VAL<<APWMPOL_SHIFT)
-     SBCO    &TEMP_REG0, CT_PRU_ICSSG_ECAP, ICSSG_eCAP_ECCTL1, 4     
-     ; Load TR0.w0 <-  SDFM_CFG_SD_CLK
-     ; Load PWM devider for SD clock from DMEM
-     LBBO    &TEMP_REG0.w0, SDFM_CFG_BASE_PTR_REG,  SDFM_CFG_SD_CLK_OFFSET,  SDFM_CFG_SD_CLK_SZ     
-     ; Set period count
-     SUB     TEMP_REG1, TEMP_REG0.b0, 1  ; TR1 = SD_PRD_CLOCKS - 1
-     SBCO    &TEMP_REG1, CT_PRU_ICSSG_ECAP, ICSSG_eCAP_CAP1, 4     
-     ; Compute & set Duty Cycle count.
-     ; Divide period count by 2, biased rounding.
-     ADD     TEMP_REG1, TEMP_REG0.b0, 1  ; TR1 = SD_PRD_CLOCKS + 1
-     LSR     TEMP_REG1, TEMP_REG1, 1     ; TR1 = (SD_PRD_CLOCKS+1)/2
-     SBCO    &TEMP_REG1, CT_PRU_ICSSG_ECAP, ICSSG_eCAP_CAP2, 4     
-     LDI     TEMP_REG0, 0x0
-     SBCO    &TEMP_REG0, CT_PRU_ICSSG_ECAP, ICSSG_eCAP_CNTPHS, 4 ; clear counter phase
-     SBCO    &TEMP_REG0, CT_PRU_ICSSG_ECAP, ICSSG_eCAP_TSCNT, 4  ; reset eCAP PWM Counter     
-     ; Enable eCAP PWM
-     LBCO    &TEMP_REG0, CT_PRU_ICSSG_ECAP, ICSSG_eCAP_ECCTL1, 4
-     SET     TEMP_REG0, TEMP_REG0, TSCNTSTP_BN   ; ICSSG_ECCTL2_ECCTL1:TSCNTSTP=1
-     SBCO    &TEMP_REG0, CT_PRU_ICSSG_ECAP, ICSSG_eCAP_ECCTL1, 4     
-     JMP     RET_ADDR_REG     

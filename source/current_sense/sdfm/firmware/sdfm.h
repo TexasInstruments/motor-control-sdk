@@ -249,33 +249,6 @@ DEFAULT_INC_BN                  .set 4
 ; ICSSG_IEP_CMP_STATUS_REG:CMP_STATUS
 CMP_STATUS_CMP1_BN              .set 1
 
-; PRU_ICSSG_ECAP
-;
-ICSSG_eCAP_TSCNT                .set 0x0000 ; 32b time stamp counter
-ICSSG_eCAP_CNTPHS               .set 0x0004 ; counter phase offset value
-ICSSG_eCAP_CAP1                 .set 0x0008 ; 32b capture 1 reg
-ICSSG_eCAP_CAP2                 .set 0x000C ; 32b capture 2 reg
-ICSSG_eCAP_ECCTL1               .set 0x0028 ; capture control reg 1
-; ICSSG_ECCTL2_ECCTL1
-; ICSSG_ECCTL2_ECCTL1:APWMPOL
-APWMPOL_SHIFT                   .set 26
-APWMPOL_MASK                    .set 1b
-APWMPOL_VAL                     .set 0b
-; ICSSG_ECCTL2_ECCTL1:CAP_APWM
-CAP_APWM_SHIFT                  .set 25
-CAP_APWM_MASK                   .set 1b
-CAP_APWM_VAL                    .set 1b
-; ICSSG_ECCTL2_ECCTL1:SYNCO_SEL
-SYNCO_SEL_SHIFT                 .set 22
-SYNCO_SEL_MASK                  .set 11b
-SYNCO_SEL_VAL                   .set 10b
-; ICSSG_ECCTL2_ECCTL1:SYNCI_EN
-SYNCI_EN_SHIFT                  .set 21
-SYNCI_EN_MASK                   .set 1b
-SYNCI_EN_VAL                    .set 0b
-; ICSSG_ECCTL2_ECCTL1:TSCNTSTP
-TSCNTSTP_BN                     .set 20
-
 ; PRU_ICSSG Tasks Manager
 ;
 TM_CFG_PRU0_BASE                .set 0x0002A000
