@@ -357,11 +357,11 @@ typedef struct SDFM_s {
     uint32_t iepClock;
     uint32_t pruCoreClk;
     uint8_t  iepInc;
-    SDFM_Interface * p_sdfm_interface;
+    SDFM_Interface * pSdfmInterface;
     SDFM_SampleOutInterface *sampleOutputInterface;
-    void *pruss_cfg;
-    void *prussIep;
-    void *prussEcap;
+    void *pruicssCfg;
+    void *pruicssIep;
+    void *pruicssEcap;
 } SDFM;
 
 

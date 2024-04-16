@@ -255,13 +255,13 @@ int32_t initSdfmFw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm,  PRU
     hSdfm = SDFM_init(pruIcssHandle, pruId, pSdfmPrms->pruInsId);
     
    
-    hSdfm->pruss_cfg = (void *)(((PRUICSS_HwAttrs *)(pruIcssHandle->hwAttrs))->cfgRegBase);
+    hSdfm->pruicssCfg = (void *)(((PRUICSS_HwAttrs *)(pruIcssHandle->hwAttrs))->cfgRegBase);
 
     /*IEP base address*/
-    hSdfm->prussIep = (void *)(((PRUICSS_HwAttrs *)(pruIcssHandle->hwAttrs))->iep0RegBase);
+    hSdfm->pruicssIep = (void *)(((PRUICSS_HwAttrs *)(pruIcssHandle->hwAttrs))->iep0RegBase);
 
     /*eCap base address*/
-    hSdfm->prussEcap = (void *)(((PRUICSS_HwAttrs *)(pruIcssHandle->hwAttrs))->ecapRegBase);
+    hSdfm->pruicssEcap = (void *)(((PRUICSS_HwAttrs *)(pruIcssHandle->hwAttrs))->ecapRegBase);
 
     if( pSdfmPrms->loadShare )
     {
@@ -308,7 +308,7 @@ int32_t initSdfmFw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm,  PRU
     hSdfm->sdfmClock = pSdfmPrms->sdClock; 
     hSdfm->sampleOutputInterface = (SDFM_SampleOutInterface *)(pSdfmPrms->samplesBaseAddress);
     uint32_t sampleOutputInterfaceGlobalAddr = CPU0_BTCM_SOCVIEW(pSdfmPrms->samplesBaseAddress);
-    hSdfm->p_sdfm_interface->sampleBufferBaseAdd = sampleOutputInterfaceGlobalAddr;
+    hSdfm->pSdfmInterface->sampleBufferBaseAdd = sampleOutputInterfaceGlobalAddr;
     hSdfm->iepInc = 1; /* Default IEP increment 1 */
     
     uint8_t acc_filter = 0; //SINC3 filter
