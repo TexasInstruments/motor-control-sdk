@@ -330,6 +330,20 @@ int32_t initSdfmFw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm,  PRU
     /*set Noraml current OSR */
     SDFM_setFilterOverSamplingRatio(hSdfm, pSdfmPrms->filterOsr);
 
+    /*SD clk configuration from GPO1 */
+#if (CONFIG_SDFM0_CLK_FROM_GPIO1 != 0)
+   /*Setting divisor values for 20MHz, @300Mhz PRU core. two divisors 15 and 1.
+    15*1 = 300/20
+    PRU0_GPO_DIV0 = 1Ch when divisor value 15
+    PRU0_GPO_DIV1 = 0h when divisor value 1
+    */
+   uint8_t div0 = 0x1C;
+   uint8_t div1 = 0x0;
+
+   SDFM_configClockFromGPO1(hSdfm, div0, div1);
+
+#endif
+
     /*Enable epwm sync*/
 
     SDFM_enableEpwmSync(hSdfm, 0);
