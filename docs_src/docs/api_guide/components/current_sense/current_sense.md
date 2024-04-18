@@ -10,7 +10,7 @@ ICSS %SDFM is a sigma delta interface for phase current measurement in high perf
 
 ## Features Supported
  - 3 %SDFM channels on single PRU core
- - Normal Current (NC) for data read:  SINC3 filter with Over-samping Ratio (OSR) 16 to 256
+ - Normal Current (NC) for data read:  SINC3 filter with Over-sampling Ratio (OSR) 16 to 256
  - Over-current (OC) for comparator: free running SINC3 filter with OSR 16 to 256
  - Event generation(ARM interrupt for data read from DMEM, GPIO toggle for high and low thresholds)
  - Single level High and Low threshold comparator
@@ -37,7 +37,7 @@ ICSS %SDFM is a sigma delta interface for phase current measurement in high perf
    - Axis 1 (Channel0 - Channel2) mapped with PWM0
    - Axis 2 (Channel3 - Channel5) mapped with PWM1
    - Axis 3 (Channel6 - Channel8) mapped with PWM2
- - PWM1 and PWM2 TZ output pins are only valiable on am243x-lp in servo BP signal mode
+ - PWM1 and PWM2 TZ output pins are only available on am243x-lp in servo BP signal mode
 
 ### SDFM Data Pin Conflicts on AM243x LaunchPad(LP)
 - In default signal mode, all 9 SD data pins are available on LP jumpers. But in servo BP signal mode the routing for 4 SD data pins (SD4_D, SD5_D, SD6_D and SD7_D) is changing. Out of the 4 pins, two pins are available on board jumpers (sd4_d and sd5_d) and two are not available (sd6_d and sd7_d9). For more details on pinmux with LP, please see <a href="https://www.ti.com/lit/ug/spruj12e/spruj12e.pdf" target="_blank">AM243x LaunchPad Development Kit User's Guide</a>
@@ -54,11 +54,11 @@ ICSS %SDFM is a sigma delta interface for phase current measurement in high perf
 Normal current processing time for its different execution flows
 - Task time when only single update is enabled
   - 320ns, without R5 interrupt and samples store in TCM memory
-  - 328ns, With R5 intruppt and smaples store in TCM memory
+  - 328ns, With R5 interrupt and samples store in TCM memory
 \image html SDFM_NC_Task_time_for_single_update.png "NC Task time for single update"
 - Task time when double update is enabled 
   - 320ns, without R5 interrupt and samples store in TCM memory
-  - 336ns, With R5 intruppt and smaples store in TCM memory.
+  - 336ns, With R5 interrupt and samples store in TCM memory.
   \image html SDFM_NC_Task_time_for_double_update.png "NC Task time for double update"
 - Task time for continuous mode is 360ns
 \image html SDFM_NC_Task_time_for_continuous_mode.png "NC Task time for continuous mode"

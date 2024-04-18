@@ -42,7 +42,7 @@ This section describes known limitations of the current implementation in multi-
 
 SysConfig can be used to configure things mentioned below:
 - Selecting the ICSSG instance. (Tested on ICSSG0)
-- Selecting the ICSSG0PRUx instance.(Tested on ICSSG0-PRU1)
+- Selecting the ICSSG PRU slice.(Tested on ICSSG0-PRU1)
 - Configuring PINMUX.
 - Channel selection.
 - Selecting Multi Channel with Encoders of Different Make" using load share mode.

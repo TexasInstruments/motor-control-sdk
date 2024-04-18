@@ -39,7 +39,7 @@ supported, including the below
 @VAR_SYSCFG_USAGE_NOTE
 
 SysConfig can be used to configure things mentioned below:
-- Selecting the ICSSG0PRUx instance.(Tested on ICSSG0-PRU1)
+- Selecting the ICSSG PRU slice instance.(Tested on ICSSG0-PRU1)
 - Configuring PINMUX
 - Channel selection
 - Mode Selection (Free run/Sync mode)
