@@ -180,12 +180,12 @@ void SDFM_configEcap(sdfm_handle h_sdfm, uint8_t ecap_divider)
  }
 
 /*sdfm high, low  threshold config */
-void SDFM_setCompFilterThresholds(sdfm_handle h_sdfm, uint8_t ch_id, SDFM_ThresholdParms thresholdParms)
+void SDFM_setCompFilterThresholds(sdfm_handle h_sdfm, uint8_t ch_id, uint32_t *thresholdParms)
 {
-   /* SD Over current high threshold = (Over current OSR)^(Over current SINC ORDER) = 14^3 = 2744*/
-    h_sdfm->pSdfmInterface->sdfm_cfg_ptr[ch_id].sdfm_threshold_parms.high_threshold = thresholdParms.high_threshold;
+   /* SD Over current high threshold */
+    h_sdfm->pSdfmInterface->sdfm_cfg_ptr[ch_id].sdfm_threshold_parms.high_threshold = thresholdParms[0];
     /* SD Over current low threshold */
-    h_sdfm->pSdfmInterface->sdfm_cfg_ptr[ch_id].sdfm_threshold_parms.low_threshold = thresholdParms.low_threshold;
+    h_sdfm->pSdfmInterface->sdfm_cfg_ptr[ch_id].sdfm_threshold_parms.low_threshold = thresholdParms[1];
 
 }
 
@@ -242,13 +242,17 @@ void SDFM_configDataFilter(sdfm_handle h_sdfm, uint8_t ch_id, uint8_t filter)
     h_sdfm->pSdfmInterface->sdfm_cfg_ptr[ch_id].filter_type = filter;
 }
 
-/*set  clock source & clock inversion for SDFM channel*/
-void SDFM_selectClockSource(sdfm_handle h_sdfm, uint8_t ch_id, SDFM_ClkSourceParms clkPrams)
+/*set  clock source for SDFM channel*/
+void SDFM_selectClockSource(sdfm_handle h_sdfm, uint8_t ch_id, uint8_t clk_source)
 {
-    h_sdfm->pSdfmInterface->sdfm_cfg_ptr[ch_id].sdfm_clk_parms.clk_source = clkPrams.clk_source;
-    h_sdfm->pSdfmInterface->sdfm_cfg_ptr[ch_id].sdfm_clk_parms.clk_inv = clkPrams.clk_inv;
+    h_sdfm->pSdfmInterface->sdfm_cfg_ptr[ch_id].sdfm_clk_parms.clk_source = clk_source;
+   
 }
-
+/* set clock inversion for SDFM channel*/
+void SDFM_setClockInversion(sdfm_handle h_sdfm, uint8_t ch_id, uint8_t clk_inv)
+{
+    h_sdfm->pSdfmInterface->sdfm_cfg_ptr[ch_id].sdfm_clk_parms.clk_inv = clk_inv;
+}
 /* Enable the comparator feature for a specified filter/channel */
 void SDFM_enableComparator(sdfm_handle h_sdfm, uint8_t ch)
 {
@@ -306,13 +310,13 @@ void SDFM_enableContinuousNormalCurrent(sdfm_handle h_sdfm)
 /*FD block confiuration */
 void SDFM_configFastDetect(sdfm_handle h_sdfm, uint8_t ch, uint8_t *fdParms)
 {
-    h_sdfm->pSdfmInterface->sdfm_ch_ctrl.enFastDetect |= 1<<ch;
-    h_sdfm->pSdfmInterface->sdfm_cfg_ptr[ch].fd_window = fdParms[0];
-    h_sdfm->pSdfmInterface->sdfm_cfg_ptr[ch].fd_zero_max = fdParms[1];
-    h_sdfm->pSdfmInterface->sdfm_cfg_ptr[ch].fd_zero_min = fdParms[2];
+    h_sdfm->pSdfmInterface->sdfm_ch_ctrl.enFastDetect |= fdParms[0]<<ch;
+    h_sdfm->pSdfmInterface->sdfm_cfg_ptr[ch].fd_window = fdParms[1];
+    h_sdfm->pSdfmInterface->sdfm_cfg_ptr[ch].fd_zero_max = fdParms[2];
+    h_sdfm->pSdfmInterface->sdfm_cfg_ptr[ch].fd_zero_min = fdParms[3];
       
     /*Configure one max to window size + 1 and one min to 0, so they never get set*/
-    h_sdfm->pSdfmInterface->sdfm_cfg_ptr[ch].fd_one_max = (fdParms[0] + 1) * 4 + 1;
+    h_sdfm->pSdfmInterface->sdfm_cfg_ptr[ch].fd_one_max = (fdParms[1] + 1) * 4 + 1;
     h_sdfm->pSdfmInterface->sdfm_cfg_ptr[ch].fd_one_min = 0;
 
 }

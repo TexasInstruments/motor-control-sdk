@@ -107,10 +107,13 @@
 #define CPU0_BTCM_SOCVIEW(x) (CSL_R5FSS0_CORE0_BTCM_BASE+(x - CSL_R5FSS0_BTCM_BASE))
 #define CPU1_BTCM_SOCVIEW(x) (CSL_R5FSS1_CORE0_BTCM_BASE+(x - CSL_R5FSS1_BTCM_BASE))
 
-#define ICSSG_SLICE_ID_0   ( 0 )    /* ICSSG slide ID 0 */
-#define ICSSG_SLICE_ID_1   ( 1 )    /* ICSSG slide ID 1 */
+#define ICSSG_SLICE_ID_0   ( 0 )    /* ICSSG pru slide ID 0 */
+#define ICSSG_SLICE_ID_1   ( 1 )    /* ICSSG pru slide ID 1 */
 #define ICSSG_NUM_SLICE    ( 2 )    /* ICSSG number of slices */
-#define NUM_FD_FIELD       ( 3 )
+#define NUM_FD_FIELD       ( 4 )
+
+#define ICSSG0_ID          ( 0 )  /*ICSSG0 instance*/
+#define ICSSG1_ID          ( 1 )  /*ICSSG1 instance*/
 
 /* SDFM Channel IDs*/
 #define SDFM_CH0    (0)
@@ -134,6 +137,53 @@ typedef enum PRUICSS_MaxInstances_s
 } PRUICSS_MaxInstances;
 
 /* SDFM configuration parameters */
+
+typedef struct SdfmClkPrms_s
+{
+    /**< Sigma delta input clock value  */
+    uint32_t sdClock;
+    /**< SDFM clock source */
+    uint8_t clkSource;
+    /**< SDFM clock inversion */
+    uint8_t  clkInv;
+
+}SdfmClkPrms;
+
+typedef struct SdfmCompFilterPrms_s
+{
+    /**< over current enable  */
+    uint8_t enComparator;
+    /**< Over current OSR  */
+    uint16_t comFilterOsr;
+    /**< High & Low thresholds value. comThresholds[0] = high threshold,  omThresholds[1] = low threshold*/
+    uint32_t    comThresholds[2];
+    /**< Zero cross enable */
+    uint8_t    zeroCrossEn;
+    /**< Zero Cross Threshold*/
+    volatile uint32_t    zeroCrossTh;
+
+} SdfmCompFilterPrms;
+
+typedef struct SdfmChannelPrms_s
+{
+    /**< Normal current OSR  */
+    uint16_t filterOsr;
+    /**< SINC filter type*/
+    uint8_t accSource;
+    /**<enable NC continuous mode*/
+    uint8_t  enableContinuousMode;
+    /**< First normal current sample trigger time  */
+    float firstSampTrigTime;
+    /**< double update enable field  */
+    uint8_t enSecondUpdate;
+    /**< second normal current sample trigger time  */
+    float secondSampTrigTime;
+    /**<enable epwm sync*/
+    uint8_t  enableEpwmSync;
+    /**< epwm sync sorce*/
+    uint8_t  epwmSyncSource;
+
+}SdfmChannelPrms;
 typedef struct SdfmPrms_s 
 {
     uint8_t loadShare;
@@ -142,45 +192,25 @@ typedef struct SdfmPrms_s
     /**<PRU core instance ID*/
     uint8_t pruInsId;
     /**<ICSSG pru Slice ID*/
-    uint8_t icssgSliceId;
+    uint8_t pruSliceId;
     /**< PRU_CORE_CLOCK*/
-    uint32_t pruClock;
+    uint64_t pruClock;
     /**< IEP clock value */
-    uint32_t iepClock[2];
-    /**< Sigma delta input clock value  */
-    uint32_t sdClock;
-    /**< double update enable field  */
-    uint8_t enSecondUpdate;
-    /**< First normal current sample trigger time  */
-    float firstSampTrigTime;
-    /**< First normal current sample trigger time  */
-    float secondSampTrigTime;
+    uint64_t iepClock[2];
     /**< output freq. of EPWM0  */
     uint32_t epwmOutFreq;
-    /**< Over current threshold parameters  */
-    SDFM_ThresholdParms   thresholdParms[NUM_CH_SUPPORTED_PER_AXIS];
-    /**< SD clock source and clock inversion  */
-    SDFM_ClkSourceParms   clkPrms[3];
-    /**< Over current OSR  */
-    uint16_t comFilterOsr;
-    /**< Normal current OSR  */
-    uint16_t filterOsr;
-    /**< over current enable field */
-    uint8_t enComparator;
-    /**< output samples base address*/
-    uint32_t samplesBaseAddress;
-    /**<enable fast detect*/
-    uint8_t enFastDetect;
-    /**<Fast detect configuration field*/
-    uint8_t fastDetect[NUM_SD_CH][NUM_FD_FIELD];
     /**<Phase delay enbale */
     uint8_t phaseDelay;
-    /**<Zero Cross enable field*/
-    uint8_t enZeroCross;
-    /**<Zero cross threshold*/
-    uint32_t zcThr[NUM_CH_SUPPORTED_PER_AXIS];
-    /**<enable NC continuous mode*/
-    uint8_t  enableContinuousMode;
+    /**< SDFM clock parameters */
+    SdfmClkPrms clkPrms[NUM_CH_SUPPORTED_PER_AXIS];
+    /**< SDFM Over current parameters */
+    SdfmCompFilterPrms compFilterPrms[NUM_CH_SUPPORTED_PER_AXIS];
+    /**< SDFM fast detect parameters.  idx: fd enable, idx1: windowsize, idx2: zero max count, idx3: zero min count*/
+    uint8_t fastDetectPrms[NUM_CH_SUPPORTED_PER_AXIS][NUM_FD_FIELD];
+    /**< SDFM channel parameters*/
+    SdfmChannelPrms channelPrms[NUM_CH_SUPPORTED_PER_AXIS];
+    /**< output samples base address*/
+    uint32_t samplesBaseAddress;
 } SdfmPrms;
 
 
@@ -201,5 +231,9 @@ int32_t initPruSdfm(
     sdfm_handle *pHSdfm
 );
 
+/* Initialize SDFM parameters */
+void sdfmParamsConfig(uint8_t channel, SdfmPrms *gSdfmPrms);
+
+void sdfmGlobalParamsConfig(SdfmPrms *gSdfmPrms);
 
 #endif /* _SDFM_H_ */

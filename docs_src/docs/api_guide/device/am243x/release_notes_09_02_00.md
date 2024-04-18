@@ -239,6 +239,11 @@ earlier SDKs.
     <td>  Added a variable: `icssgInsId`
     <td>
 </tr>
+<tr>
+    <td>  Current Sense %SDFM
+    <td>  Structure `SdfmPrms_s`
+    <td>  Added sub structures for sdfm parameters: `SdfmClkPrms_s`, `SdfmCompFilterPrms_s`, `SdfmChannelPrms_s`
+    <td>  Split SDFM parameters into multiple structures
 </table>
 
 ### Drivers
@@ -290,6 +295,18 @@ earlier SDKs.
     <td>  Current Sense %SDFM
     <td>  Structure `SDFM_s`
     <td>  Added a void pointer: `prussIep`
+    <td>
+</tr>
+<tr>
+    <td>  Current Sense %SDFM
+    <td>  \ref SDFM_setCompFilterThresholds
+    <td>  Updated parameter type 
+    <td>
+</tr>
+<tr>
+    <td>  Current Sense %SDFM
+    <td>  \ref SDFM_selectClockSource
+    <td>  Updated parameter name and type 
     <td>
 </tr>
 </table>

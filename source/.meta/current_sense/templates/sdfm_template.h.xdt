@@ -13,12 +13,14 @@
 %for(let i = 0; i < module.$instances.length; i++) {
    % let instance = module.$instances[i];
    % let Slice = 0 ;
+   % let IcssgIns = 0;
    %if(instance.instance === "ICSSG1")
    %{
       % if(instance.PRU_ICSSG1_PRU.$assign === "PRU_ICSSG1_PRU1")
       %{
          % Slice = 1;
       %}
+      %IcssgIns = 1;
    %}
    %else
    %{
@@ -30,6 +32,7 @@
    
 #define `instance.$name`                  `i`
 #define `instance.$name`_SLICE            `Slice`
+#define `instance.$name`_ICSSGx           `IcssgIns`
 #define `instance.$name`_LOAD_SHARE       `instance["Enable_Load_Share"] & 1`
 #define `instance.$name`_PHASE_DELAY      `instance["Enable_Phase_Compensation"] & 1`
 #define `instance.$name`_CLK_FROM_IEP     `instance["SDFM_CLK_GEN"] == 3 ? 1 : 0`
