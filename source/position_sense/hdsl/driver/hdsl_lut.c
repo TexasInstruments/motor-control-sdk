@@ -1264,15 +1264,14 @@ static void hdsl_generate_extra_edge_lut(HDSL_Handle hdslHandle)
 {
     void *lut_ee = (void *)((uint32_t)(hdslHandle->baseMemAddr) + LUT_EE_OFFS);
 
-    HW_WR_REG8((uint32_t)lut_ee + 0, 0x00);
-    HW_WR_REG8((uint32_t)lut_ee + 1, 0x80);
-    HW_WR_REG8((uint32_t)lut_ee + 2, 0xc0);
-    HW_WR_REG8((uint32_t)lut_ee + 3, 0xe0);
-    HW_WR_REG8((uint32_t)lut_ee + 4, 0xf0);
-    HW_WR_REG8((uint32_t)lut_ee + 5, 0xf8);
-    HW_WR_REG8((uint32_t)lut_ee + 6, 0xfc);
-    HW_WR_REG8((uint32_t)lut_ee + 7, 0xfe);
-    HW_WR_REG8((uint32_t)lut_ee + 8, 0xff);
+    HW_WR_REG8((uint32_t)lut_ee + 0xff, 0);
+    HW_WR_REG8((uint32_t)lut_ee + 0xfe, 3);
+    HW_WR_REG8((uint32_t)lut_ee + 0xfc, 6);
+    HW_WR_REG8((uint32_t)lut_ee + 0xf8, 9);
+    HW_WR_REG8((uint32_t)lut_ee + 0xf0, 12);
+    HW_WR_REG8((uint32_t)lut_ee + 0xe0, 15);
+    HW_WR_REG8((uint32_t)lut_ee + 0xc0, 18);
+    HW_WR_REG8((uint32_t)lut_ee + 0x80, 21);
 }
 
 static void hdsl_configure_register_if(HDSL_Handle hdslHandle)

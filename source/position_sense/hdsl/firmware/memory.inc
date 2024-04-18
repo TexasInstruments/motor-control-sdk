@@ -273,6 +273,7 @@ MASK_SUM	.set						0x08
 EDGES		.set						0x09
 DELAY		.set						0x0A
 VERSION		.set						0x0B
+BUILD_VERSION .set 						0x0C
 ENC_ID2		.set						0x0D
 ENC_ID1		.set						0x0E
 ENC_ID0		.set						0x0F
