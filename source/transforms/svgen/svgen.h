@@ -39,7 +39,7 @@ extern "C"
 #endif
 
 /**
- *  \addtogroup TRANSFORMS_API_MODULE
+ *  \addtogroup TRANSFORMS_API_MODULE APIs for Transformation Algorithms
  *  @{
  *
  *  \file       svgen.h
@@ -48,7 +48,11 @@ extern "C"
 
 #include <stdint.h>
 
-typedef float float32_t;
+#ifndef IEEE754_TYPES
+#define IEEE754_TYPES
+typedef float   float32_t;
+typedef double  float64_t;
+#endif // IEEE754_TYPES
 
 #define SQRT_THREE_OVER_TWO 0.8660254037844f
 #define TWO_OVER_SQRT_THREE 1.15470053837926f

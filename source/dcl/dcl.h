@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023 Texas Instruments Incorporated
+ *  Copyright (C) 2024 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -37,12 +37,6 @@
 extern "C" {
 #endif
 
- /**
- * \defgroup RTLIBS_API APIs for Real Time Libraries
- *
- * This module contains APIs for real time libraries supported in this SDK.
- */
-
 /**
  *  \defgroup DCL_API_MODULE APIs for Digital Control Library
  *  \ingroup  RTLIBS_API
@@ -51,17 +45,18 @@ extern "C" {
  *  @{
  *
  *  \file     dcl.h
- *  \brief    Top level header that contains all Digital Controller Library functions
+ *  \brief    Top level header that contains all collections of Digital Controller Library functions
+ *  
+ *  \details  To use this library, simply use
+ *  \code     #include "dcl.h" \endcode
+ *            while making sure the path to this file is added as a compiler include path
  */
 
 //! \brief          Library version number formatted for numerical comparison
-//!                 v4.00.01.00
-#define DCL_VERSION 4000100
+//!                 v4.02.00.00
+#define DCL_VERSION 4020000
 
 //! \brief          Enable voltaile flag for dcl strcutures
-//!                 Only enable the flag if the controller can
-//!                 execute across different cores/threads
-//!                 (update parameter funcs does not count)
 //!                 Disabled by default
 //#define DCL_VOLATILE_ENABLED
 
@@ -76,15 +71,21 @@ extern "C" {
 //!                 Disabled by default
 //#define DCL_TESTPOINTS_ENABLED
 
-#include "misc/dcl_fdlog.h"
+/* utilities */
 #include "misc/dcl_error.h"
+#include "misc/dcl_fdlog.h"
+#include "misc/dcl_mlog.h"
+#include "misc/dcl_refgen.h"
+#include "misc/dcl_tcm.h"
 
 /* 32bit arithmetic */
 #include "pi/dcl_pi.h"
 #include "pi/dcl_pi2.h"
 #include "pid/dcl_pid.h"
+#include "pid/dcl_nlpid.h"
 
 #include "df/dcl_df11.h"
+#include "df/dcl_df12.h"
 #include "df/dcl_df13.h"
 #include "df/dcl_df22.h"
 #include "df/dcl_df23.h"

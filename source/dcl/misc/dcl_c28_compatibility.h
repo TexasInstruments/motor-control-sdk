@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023 Texas Instruments Incorporated
+ *  Copyright (C) 2024 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -39,7 +39,7 @@
  *  
  *  \file       dcl_c28_compatibility.h
  *  \brief      Contains backward compatbility mapping to C28 DCL's naming scheme
- *              Not included in dcl.h by default, be sure to include this file seperately when using.
+ *  \note       Not included in dcl.h by default, be sure to include this file seperately when needed.
  *
  *              Note:
  *              All C28 ASM functions will be alias into its equivalent C functions
@@ -95,6 +95,20 @@ extern "C" {
 */
 
 //*****************************************************************************
+// NLPID
+//*****************************************************************************
+#define DCL_runNLPID_C1   DCL_runNLPIDParallel
+#define DCL_runNLPID_C2   DCL_runNLPIDSeries 
+#define DCL_runNLPID_C3   DCL_runNLPIDSeries 
+#define DCL_runNLF_C1     DCL_runNLF 
+#define DCL_calcGamma     DCL_getNLPIDgamma
+
+//*****************************************************************************
+// PID64 - 64 bit
+//*****************************************************************************
+#define DCL_runPIDF64_S1            DCL_runPIDF64Series
+
+//*****************************************************************************
 // DF11
 //*****************************************************************************
 #define DCL_runDF11_C1    DCL_runDF11           // C28 ASM function
@@ -113,7 +127,7 @@ extern "C" {
  *  implementation for both DCL_runDF13_C5 and DCL_runDF13_C6 are still included. 
  *  
  *  It is advised to use the new function DCL_runDF13Clamp() for running DF13 w/ Clamp.
- *  For more info, refer to \details section of dcl_df13.h
+ *  For more info, refer to \details section of DCL_runDF13Clamp() in dcl_df13.h 
 */
 #define DCL_runDF13_C1    DCL_runDF13           // C28 ASM function
 #define DCL_runDF13_C2    DCL_runDF13_C5        // Alias into local implementation of legacy function C5
@@ -180,13 +194,13 @@ extern "C" {
 // Macro Functions
 //*****************************************************************************
 #define F32_IS_VALUE       DCL_isValue 
-#define F64_IS_VALUE       DCL_isValue64
+#define F64_IS_VALUE       DCL_isValueF64
 #define F32_IS_ZERO        DCL_isZero
-#define F64_IS_ZERO        DCL_isZero64
+#define F64_IS_ZERO        DCL_isZeroF64
 #define DCL_randf          DCL_rand
 #define DCL_randf64        DCL_rand64
 #define DCL_C2_LIMIT_32    DCL_c2Limit
-#define DCL_C2_LIMIT_64    DCL_c2Limit64
+#define DCL_C2_LIMIT_64    DCL_c2LimitF64
 #define DCL_BREAK_POINT    DCL_setBreakPoint  
 #define DCL_DISABLE_INTS   DCL_disableInts 
 #define DCL_RESTORE_INTS   DCL_restoreInts 
@@ -219,18 +233,21 @@ extern "C" {
 //*****************************************************************************
 // FDLOG
 //*****************************************************************************
-#define FDLOG              DCL_FDLOG
 #define DCL_createLog      DCL_initLog
 #define FDLOG_SPACE        DCL_getLogRemain
 #define FDLOG_SIZE         DCL_getLogSize
 #define FDLOG_ELEMENT      DCL_getLogIndex
-#define FDLOG_DEFAULTS     {0,0,0}
 #define FDLOG_DEFAULT_SIZE 0x0400
 
 //*****************************************************************************
-// PID64 - 64 bit
+// TCM
 //*****************************************************************************
-#define DCL_runPIDF64_S1            DCL_runPIDF64Series
+#define DCL_runITAE_C1     DCL_runITAE
+#define DCL_runITAE_C2     DCL_runITAE
+#define DCL_runIAE_C1      DCL_runIAE
+#define DCL_runIAE_C2      DCL_runIAE
+#define DCL_runIES_C1      DCL_runIES
+#define DCL_runIES_C2      DCL_runIES
 
 /** @} */
 

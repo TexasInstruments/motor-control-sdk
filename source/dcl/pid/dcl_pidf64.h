@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023 Texas Instruments Incorporated
+ *  Copyright (C) 2024 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -57,8 +57,8 @@ typedef struct dcl_pid64_sps {
     float64_t Ki;       //!< Integral gain
     float64_t Kd;       //!< Derivative gain
     float64_t Kr;       //!< Set point weight, default is 1
-    float64_t c1;       //!< D-term filter coefficient 1, default is 1
-    float64_t c2;       //!< D-term filter coefficient 2, default is 0
+    float64_t c1;       //!< D path low-pass filter coefficient 1, default is 1
+    float64_t c2;       //!< D path low-pass filter coefficient 2, default is 0
     float64_t Umax;     //!< Upper saturation limit
     float64_t Umin;     //!< Lower saturation limit
 } DCL_PIDF64_SPS;
@@ -75,16 +75,16 @@ typedef _DCL_VOLATILE struct dcl_pidf64 {
     float64_t Ki;       //!< Integral gain
     float64_t Kd;       //!< Derivative gain
     float64_t Kr;       //!< Set point weight, default is 1
-    float64_t c1;       //!< D-term filter coefficient 1, default is 1
-    float64_t c2;       //!< D-term filter coefficient 2, default is 0
+    float64_t c1;       //!< D path low-pass filter coefficient 1, default is 1
+    float64_t c2;       //!< D path low-pass filter coefficient 2, default is 0
     float64_t Umax;     //!< Upper saturation limit
     float64_t Umin;     //!< Lower saturation limit
 
     /* internal storage */ 
-    float64_t d2;       //!< D path feedback value (Kd * c1)
-    float64_t d3;       //!< D path feedback value (c2)
-    float64_t i10;      //!< I path feedback value
-    float64_t i14;      //!< I path saturation storage 
+    float64_t d2;       //!< D path low-pass filter storage (Kd * c1)
+    float64_t d3;       //!< D path low-pass filter storage (c2)
+    float64_t i10;      //!< I path feedback storage
+    float64_t i14;      //!< Saturation multiplier, ranges between 1*lk ~ 0, where 0 means fully saturated
     
     /* miscellaneous */
     DCL_PIDF64_SPS *sps;  //!< updates controller parameter
@@ -117,7 +117,7 @@ typedef _DCL_VOLATILE struct dcl_pidf64 {
 
 //! \brief          Initialize DCL_PIDF64 struct with input controller parameters
 //!                 Example: DCL_PIDF64* pid_ctrl = DCL_initPIDF64asParam(1.0L,0.0L,0.0L,1.0L,1.0L,0.0L,1.0L,-1.0L);
-//!                 Note: input parameter needs to be in the same order as listed in PIDF64_SPS struct
+//! \note           Note: input parameter needs to be in the same order as listed in PIDF64_SPS struct
 //!
 //! \return         A DCL_PID* pointer
 //!
@@ -170,7 +170,7 @@ void DCL_forceUpdatePIDF64(DCL_PIDF64 *pid)
 {
 
 #ifdef DCL_ERROR_HANDLING_ENABLED
-    float64_t tau = (2.0L - pid->sps->c1 * p->css->T) / (2.0L * pid->sps->c1);
+    float64_t tau = (2.0L - pid->sps->c1 * pid->css->T) / (2.0L * pid->sps->c1);
     float64_t ec2 = pid->sps->c1 * (pid->css->T - 2.0L * tau) / 2.0L;
     uint32_t err_code = dcl_none;
     err_code |= DCL_isValue(pid->sps->c2, ec2) ? dcl_none : dcl_param_invalid_err;
@@ -236,7 +236,7 @@ void DCL_updatePIDF64NoCheck(DCL_PIDF64 *pid)
 //! \brief           A conditional update based on the update flag.
 //!                  If the update status is set, the function will update PIDF64
 //!                  parameter from its SPS parameter and clear the status flag on completion.
-//!                  Note: Use DCL_setUpdateStatus(pid) to set the pending status.
+//! \note            Note: Use DCL_setUpdateStatus(pid) to set the pending status.
 //!     
 //! \param[in] pid   Pointer to the DCL_PIDF64 controller structure
 //! \return          'true' if an update is applied, otherwise 'false'
@@ -254,8 +254,8 @@ bool DCL_updatePIDF64(DCL_PIDF64 *pid)
 }
 
 //! \brief          Loads the derivative path filter shadow coefficients
-//!                 Note: Sampling period pid->css->T are used in the calculation
-//!                 Note: new coefficients take effect when DCL_updatePID64() is called
+//! \note           Note: Sampling period pid->css->T are used in the calculation.
+//!                 new coefficients take effect when DCL_updatePID64() is called
 //!
 //! \param[in] pid  Pointer to the DCL_PID64 structure
 //! \param[in] fc   The desired filter bandwidth in Hz
@@ -282,7 +282,7 @@ void DCL_setPIDF64filterBW(DCL_PIDF64 *pid, float64_t fc)
 }
 
 //! \brief           Loads the PID64 derivative path filter active coefficients
-//!                  Note: new coefficients take effect immediately.  SPS &
+//! \note            Note: new coefficients take effect immediately. SPS &
 //!                  CSS contents are unaffected.
 //!
 //! \param[in] pid   Pointer to the DCL_PID64 structure
@@ -310,7 +310,7 @@ void DCL_setActivePIDF64filterBW(DCL_PIDF64 *pid, float64_t fc, float64_t T)
 }
 
 //! \brief          Returns the active derivative path filter bandwidth in Hz
-//!                 Note: Sampling period pid->css->T are used in the calculation
+//! \note           Note: Sampling period pid->css->T are used in the calculation
 //!
 //! \param[in] pid  Pointer to the DCL_PID64 structure
 //! \return         The filter bandwidth in Hz
@@ -322,6 +322,135 @@ float64_t DCL_getPIDF64filterBW(DCL_PIDF64 *pid)
     return(1.0L / (2.0L * CONST_PI_F64 * tau));
 }
 
+//! \brief          Configures a series PID controller parameter in ZPK form.
+//! \note           Note: Sampling period pid->css->T are used in the calculation.
+//!                 Parameters take effect after call to DCL_updatePIDF64().
+//!                 Only z1, z2 & p2 considered, p1 = 0 assumed.
+//!
+//! \param[in] pid  Pointer to the active DCL_PIDF64 controller structure
+//! \param[in] zpk  Pointer to the DCL_ZPK3F64 structure
+//!
+_DCL_CODE_ACCESS
+void DCL_loadSeriesPIDF64asZPK(DCL_PIDF64 *pid, DCL_ZPK3F64 *zpk)
+{
+
+#ifdef DCL_ERROR_HANDLING_ENABLED
+    uint32_t err_code = dcl_none;
+    err_code |= DCL_isZero(cimag(zpk->z1) + cimag(zpk->z2)) ? dcl_none : dcl_param_invalid_err;
+    err_code |= DCL_isZero(cimag(zpk->p2)) ? dcl_none : dcl_param_invalid_err;
+    err_code |= (creal(zpk->p2) <= DCL_c2LimitF64) ? dcl_none :dcl_param_invalid_err;
+    err_code |= (zpk->K >= 0.0f) ? dcl_none : dcl_param_range_err;
+    if (err_code)
+    {
+        DCL_setError(pid,err_code);
+        DCL_getErrorInfo(pid);
+        DCL_runErrorHandler(pid);
+    }
+#endif
+
+    float64_t beta1 = -(float64_t) creal(zpk->z1 + zpk->z2);
+    float64_t beta0 = (float64_t) creal(zpk->z1 * zpk->z2);
+    float64_t alpha1 = -(float64_t) creal(zpk->p1 + zpk->p2);
+    float64_t alpha0 = (float64_t) creal(zpk->p1 * zpk->p2);
+    float64_t T = pid->css->T;
+    float64_t a0p = 4.0L + (alpha1 * 2.0L * T) + (alpha0 * T * T);
+    float64_t b0 = zpk->K * (4.0L + (beta1 * 2.0L * T) + (beta0 * T *T)) / a0p;
+    float64_t b1 = zpk->K * (-8.0L + (2.0f * beta0 * T * T)) / a0p;
+    float64_t b2 = zpk->K * (4.0L - (beta1 * 2.0L * T) + (beta0 * T * T)) / a0p;
+    float64_t a2 = (4.0L - (alpha1 * 2.0L * T) + (alpha0 * T * T)) / a0p;
+    float64_t c2 = -a2;
+    float64_t tau = (T / 2.0L) * (1.0L - c2) / (1.0L + c2);
+    pid->sps->c1 = 2.0L / (T + 2.0L * tau);
+    pid->sps->c2 = c2;
+    float64_t det = (c2 + 1.0L);
+    det *= det;
+
+#ifdef DCL_ERROR_HANDLING_ENABLED
+    err_code = dcl_none;
+    err_code |= (DCL_isZero(det)) ? dcl_param_invalid_err : dcl_none;
+    if (err_code)
+    {
+        DCL_setError(pid,err_code);
+        DCL_getErrorInfo(pid);
+        DCL_runErrorHandler(pid);
+    }
+#endif
+
+    float64_t k1 = ((c2 * b0) - b1 - ((2.0L + c2) * b2)) / det;
+    float64_t k2 = (c2 + 1.0L) * (b0 + b1 + b2) / det;
+    float64_t k3 = ((c2 * c2 * b0) - (c2 * b1) + b2) / det;
+    pid->sps->Kp = k1;
+    pid->sps->Ki = k2 / k1;
+    pid->sps->Kd = k3 / (k1 * pid->sps->c1);
+
+#ifdef DCL_TESTPOINTS_ENABLED
+    pid->css->tpt = det;
+#endif
+
+}
+
+//! \brief            Configures a parallel PID controller in ZPK form.
+//! \note             Note: Sampling period pid->css->T are used in the calculation.
+//!                   Parameters take effect after call to DCL_updatePIDF64().
+//!                   Only z1, z2 & p2 considered, p1 = 0 assumed.
+//!
+//! \param[in] pid    Pointer to the active DCL_PIDF64 controller structure
+//! \param[in] zpk    Pointer to the DCL_ZPK3 structure
+//!
+_DCL_CODE_ACCESS
+void DCL_loadParallelPIDF64asZPK(DCL_PIDF64 *pid, DCL_ZPK3 *zpk)
+{
+#ifdef DCL_ERROR_HANDLING_ENABLED
+    uint32_t err_code = dcl_none;
+    err_code |= DCL_isZero(cimag(zpk->z1) + cimag(zpk->z2)) ? dcl_none : dcl_param_invalid_err;
+    err_code |= DCL_isZero(cimag(zpk->p2)) ? dcl_none : dcl_param_invalid_err;
+    err_code |= (creal(zpk->p2) <= DCL_c2LimitF64) ? dcl_none : dcl_param_invalid_err;
+    err_code |= (zpk->K >= 0.0f) ? dcl_none : dcl_param_range_err;
+    if (err_code)
+    {
+        DCL_setError(pid,err_code);
+        DCL_getErrorInfo(pid);
+        DCL_runErrorHandler(pid);
+    }
+#endif
+
+    float64_t beta1 = -(float64_t) creal(zpk->z1 + zpk->z2);
+    float64_t beta0 = (float64_t) creal(zpk->z1 * zpk->z2);
+    float64_t alpha1 = -(float64_t) creal(zpk->p1 + zpk->p2);
+    float64_t alpha0 = (float64_t) creal(zpk->p1 * zpk->p2);
+    float64_t T = pid->css->T;
+    float64_t a0p = 4.0L + (alpha1 * 2.0L * T) + (alpha0 * T * T);
+    float64_t b0 = zpk->K * (4.0L + (beta1 * 2.0L * T) + (beta0 * T * T)) / a0p;
+    float64_t b1 = zpk->K * (-8.0L + (2.0L * beta0 * T * T)) / a0p;
+    float64_t b2 = zpk->K * (4.0L - (beta1 * 2.0L * T) + (beta0 * T * T)) / a0p;
+    float64_t a2 = (4.0L - (alpha1 * 2.0L * T) + (alpha0 * T * T)) / a0p;
+    float64_t c2 = -a2;
+    float64_t tau = (T / 2.0L) * (1.0L - c2) / (1.0L + c2);
+    pid->sps->c1 = 2.0L / (T + 2.0L * tau);
+    pid->sps->c2 = c2;
+    float64_t det = (c2 + 1.0L);
+    det *= det;
+
+#ifdef DCL_ERROR_HANDLING_ENABLED
+    err_code = (DCL_isZero(det)) ? dcl_param_invalid_err : dcl_none;
+    if (err_code)
+    {
+        DCL_setError(pid,err_code);
+        DCL_getErrorInfo(pid);
+        DCL_runErrorHandler(pid);
+    }
+#endif
+
+    pid->sps->Kp = ((c2 * b0) - b1 - ((2.0L + c2) * b2)) / det;
+    pid->sps->Ki = (c2 + 1.0L) * (b0 + b1 + b2) / det;
+    pid->sps->Kd = ((c2 * c2 * b0) - (c2 * b1) + b2) / (det * pid->sps->c1);
+
+#ifdef DCL_TESTPOINTS_ENABLED
+    pid->css->tpt = det;
+#endif
+
+}
+
 //! \brief          Executes an ideal form PID64 controller
 //!
 //! \param[in] pid  Pointer to the DCL_PID64 structure
@@ -330,7 +459,7 @@ float64_t DCL_getPIDF64filterBW(DCL_PIDF64 *pid)
 //! \param[in] lk   External output clamp flag
 //! \return         The control effort
 //!
-_DCL_CODE_ACCESS
+_DCL_CRIT_ACCESS
 float64_t DCL_runPIDF64Series(DCL_PIDF64 *pid, float64_t rk, float64_t yk, float64_t lk)
 {
     float64_t v1, v4, v5, v8, v9, v10, v12;
@@ -344,7 +473,7 @@ float64_t DCL_runPIDF64Series(DCL_PIDF64 *pid, float64_t rk, float64_t yk, float
     pid->d3 = v4 * pid->c2;
     v9 = ((v5 - v4) * pid->Kp) + v8;
     v10 = DCL_runSat(v9, pid->Umax, pid->Umin);
-    v12 = (v10 == v9) ? 1.0 : 0.0;
+    v12 = (v10 == v9) ? 1.0L : 0.0L;
     pid->i14 = v12 * lk;
 
 #ifdef DCL_TESTPOINTS_ENABLED
@@ -362,7 +491,7 @@ float64_t DCL_runPIDF64Series(DCL_PIDF64 *pid, float64_t rk, float64_t yk, float
 //! \param[in] lk   External output clamp flag
 //! \return         The control effort
 //!
-_DCL_CODE_ACCESS
+_DCL_CRIT_ACCESS
 float64_t DCL_runPIDF64Parallel(DCL_PIDF64 *pid, float64_t rk, float64_t yk, float64_t lk)
 {
     float64_t v1, v4, v5, v6, v8, v9, v10, v12;
@@ -377,7 +506,7 @@ float64_t DCL_runPIDF64Parallel(DCL_PIDF64 *pid, float64_t rk, float64_t yk, flo
     pid->d3 = v4 * pid->c2;
     v9 = v6 + v8 + v4;
     v10 = DCL_runSat(v9, pid->Umax, pid->Umin);
-    v12 = (v10 == v9) ? 1.0f : 0.0f;
+    v12 = (v10 == v9) ? 1.0L : 0.0L;
     pid->i14 = v12 * lk;
 
 #ifdef DCL_TESTPOINTS_ENABLED

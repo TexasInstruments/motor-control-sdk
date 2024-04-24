@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023 Texas Instruments Incorporated
+ *  Copyright (C) 2024 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -76,10 +76,10 @@ typedef _DCL_VOLATILE struct dcl_pi2
     float32_t Umin;     //!< Lower saturation limit 
 
     /* internal storage */    
-    float32_t i6;       //!< Integrator 1 storage
-    float32_t i9;       //!< Integrator 2 storage
-    float32_t i12;      //!< Saturation 1 storage
-    float32_t i13;      //!< Saturation 2 storage
+    float32_t i6;       //!< Integrator 1 feedback storage
+    float32_t i9;       //!< Integrator 2 feedback storage
+    float32_t i12;      //!< Saturation 1 multiplier, 1 means no saturation and 0 means fully saturated
+    float32_t i13;      //!< Saturation 2 multiplier, 1 means no saturation and 0 means fully saturated
 
     /* miscellaneous */
     DCL_PI2_SPS *sps;   //!< updates controller parameter
@@ -111,7 +111,7 @@ typedef _DCL_VOLATILE struct dcl_pi2
 
 //! \brief          Initialize DCL_PI2 struct with input controller parameters
 //!                 Example: DCL_PI2* pi2_ctrl = DCL_initPI2asParam(1.0f,0.0f,1.0f,-1.0f);
-//!                 Note: input parameter needs to be in the same order as listed in PI2_SPS struct
+//! \note           Note: input parameter needs to be in the same order as listed in PI2_SPS struct
 //!
 //! \return         A DCL_PI2* pointer
 //!
@@ -186,7 +186,7 @@ void DCL_forceUpdatePI2(DCL_PI2 *pi2)
 //!
 //! \param[in] pi2  Pointer to the DCL_PI2 controller structure
 //!
-_DCL_CODE_ACCESS _DCL_CODE_SECTION
+_DCL_CODE_ACCESS
 void DCL_updatePI2NoCheck(DCL_PI2 *pi2)
 {
 
@@ -216,12 +216,12 @@ void DCL_updatePI2NoCheck(DCL_PI2 *pi2)
 //! \brief           A conditional update based on the update flag.
 //!                  If the update status is set, the function will update PI2
 //!                  parameter from its SPS parameter and clear the status flag on completion.
-//!                  Note: Use DCL_setUpdateStatus(pi2) to set the update status.
+//! \note            Note: Use DCL_setUpdateStatus(pi2) to set the update status.
 //!     
 //! \param[in] pi2    Pointer to the DCL_PI2 controller structure
 //! \return          'true' if an update is applied, otherwise 'false'
 //!
-_DCL_CODE_ACCESS _DCL_CODE_SECTION
+_DCL_CODE_ACCESS
 bool DCL_updatePI2(DCL_PI2 *pi2)
 {
     if (DCL_getUpdateStatus(pi2))
@@ -240,7 +240,7 @@ bool DCL_updatePI2(DCL_PI2 *pi2)
 //! \param[in] yk   The measured feedback
 //! \return         The control effort
 //!
-_DCL_CODE_ACCESS _DCL_CODE_SECTION
+_DCL_CRIT_ACCESS
 float32_t DCL_runPI2Series(DCL_PI2 *pi2, float32_t rk, float32_t yk)
 {
     float32_t v1, v2, v5, v8, v10, v11, v14;

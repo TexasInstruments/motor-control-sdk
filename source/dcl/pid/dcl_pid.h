@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023 Texas Instruments Incorporated
+ *  Copyright (C) 2024 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -58,8 +58,8 @@ typedef struct dcl_pid_sps
     float32_t Ki;       //!< Integral gain
     float32_t Kd;       //!< Derivative gain
     float32_t Kr;       //!< Set point weight, default is 1
-    float32_t c1;       //!< D path filter coefficient 1, default is 1
-    float32_t c2;       //!< D path filter coefficient 2, default is 0
+    float32_t c1;       //!< D path low-pass filter coefficient 1, default is 1
+    float32_t c2;       //!< D path low-pass filter coefficient 2, default is 0
     float32_t Umax;     //!< Upper saturation limit
     float32_t Umin;     //!< Lower saturation limit
 } DCL_PID_SPS;
@@ -83,10 +83,10 @@ typedef _DCL_VOLATILE struct dcl_pid
     float32_t Umin;     //!< Lower saturation limit  
 
     /* internal storage */ 
-    float32_t d2;       //!< D path feedback value (Kd * c1)
-    float32_t d3;       //!< D path feedback value (c2)
-    float32_t i10;      //!< I path feedback value
-    float32_t i14;      //!< I path saturation storage 
+    float32_t d2;       //!< D path low-pass filter storage (Kd * c1)
+    float32_t d3;       //!< D path low-pass filter storage (c2)
+    float32_t i10;      //!< I path feedback storage
+    float32_t i14;      //!< Saturation multiplier, ranges between 1*lk ~ 0, where 0 means fully saturated
     
     /* miscellaneous */
     DCL_PID_SPS *sps;   //!< updates controller parameter
@@ -119,7 +119,7 @@ typedef _DCL_VOLATILE struct dcl_pid
 
 //! \brief          Initialize DCL_PID struct with input controller parameters
 //!                 Example: DCL_PID* pid_ctrl = DCL_initPIDasParam(1.0f,0.0f,0.0f,1.0f,1.0f,0.0f,1.0f,-1.0f);
-//!                 Note: input parameter needs to be in the same order as listed in PID_SPS struct
+//! \note           Note: input parameter needs to be in the same order as listed in PID_SPS struct
 //!
 //! \return         A DCL_PID* pointer
 //!
@@ -130,7 +130,7 @@ typedef _DCL_VOLATILE struct dcl_pid
 //!                     Example: DCL_PID_SPS pid_sps = { .Kp = , .Ki = , ...}; //initial parameter
 //!                              DCL_PID pid_ctrl;
 //!                              DCL_initPIasSPS(&pid_ctrl,&pid_sps);
-//!                     Note: The newly declared DCL_PID structure will use the SPS input parameter as its attribute for sps.
+//! \note               Note: The newly declared DCL_PID structure will use the SPS input parameter as its attribute for sps.
 //!
 //! \param[in] pid_ptr  DCL_PID* pointer that needs to be initialized
 //! \param[in] sps_ptr  DCL_PID_SPS* pointer with assigned parameters
@@ -202,7 +202,7 @@ void DCL_forceUpdatePID(DCL_PID *pid)
 //!
 //! \param[in] pid    Pointer to the active DCL_PID controller structure
 //!
-_DCL_CODE_ACCESS _DCL_CODE_SECTION
+_DCL_CODE_ACCESS
 void DCL_updatePIDNoCheck(DCL_PID *pid)
 {
  
@@ -238,12 +238,12 @@ void DCL_updatePIDNoCheck(DCL_PID *pid)
 //! \brief           A conditional update based on the update flag.
 //!                  If the update status is set, the function will update PID
 //!                  parameter from its SPS parameter and clear the status flag on completion.
-//!                  Note: Use DCL_getUpdateStatus(pid) to set the update status.
+//! \note            Note: Use DCL_getUpdateStatus(pid) to set the update status.
 //!     
 //! \param[in] pid   Pointer to the DCL_PID controller structure
 //! \return          'true' if an update is applied, otherwise 'false'
 //!
-_DCL_CODE_ACCESS _DCL_CODE_SECTION
+_DCL_CODE_ACCESS
 bool DCL_updatePID(DCL_PID *pid)
 {
     if (DCL_getUpdateStatus(pid))
@@ -256,7 +256,7 @@ bool DCL_updatePID(DCL_PID *pid)
 }
 
 //! \brief            Loads the derivative path filter shadow coefficients.
-//!                   Note: Sampling period pid->css->T are used in the calculation.
+//! \note             Note: Sampling period pid->css->T are used in the calculation.
 //!                   New coefficients take effect when DCL_updatePID() is called.
 //!
 //! \param[in] pid    Pointer to the DCL_PID structure
@@ -284,7 +284,7 @@ void DCL_setPIDfilterBW(DCL_PID *pid, float32_t fc)
 }
 
 //! \brief           Loads the PID derivative path filter active coefficients
-//!                  Note: Sampling period pid->css->T are used in the calculation.
+//! \note            Note: Sampling period pid->css->T are used in the calculation.
 //!                  New coefficients take effect immediately. SPS & CSS contents are unaffected.            
 //!
 //! \param[in] pid   Pointer to the DCL_PID structure
@@ -312,7 +312,8 @@ void DCL_setActivePIDfilterBW(DCL_PID *pid, float32_t fc, float32_t T)
 }
 
 //! \brief          Calculates the active derivative path filter bandwidth in Hz.
-//!                 Note: Sampling period pid->css->T are used in the calculation.
+//! \note           Note: Sampling period pid->css->T are used in the calculation.
+//!
 //! \param[in] pid  Pointer to the DCL_PID structure
 //! \return         The filter bandwidth in Hz
 //!
@@ -324,7 +325,7 @@ float32_t DCL_getPIDfilterBW(DCL_PID *pid)
 }
 
 //! \brief          Configures a series PID controller parameter in ZPK form.
-//!                 Note: Sampling period pid->css->T are used in the calculation.
+//! \note           Note: Sampling period pid->css->T are used in the calculation.
 //!                 Parameters take effect after call to DCL_updatePID().
 //!                 Only z1, z2 & p2 considered, p1 = 0 assumed.
 //!
@@ -391,7 +392,7 @@ void DCL_loadSeriesPIDasZPK(DCL_PID *pid, DCL_ZPK3 *zpk)
 }
 
 //! \brief            Configures a parallel PID controller in ZPK form.
-//!                   Note: Sampling period pid->css->T are used in the calculation.
+//! \note             Note: Sampling period pid->css->T are used in the calculation.
 //!                   Parameters take effect after call to DCL_updatePID().
 //!                   Only z1, z2 & p2 considered, p1 = 0 assumed.
 //!
@@ -460,7 +461,7 @@ void DCL_loadParallelPIDasZPK(DCL_PID *pid, DCL_ZPK3 *zpk)
 //! \param[in] lk     External output clamp flag
 //! \return           The control effort
 //!
-_DCL_CODE_ACCESS _DCL_CODE_SECTION
+_DCL_CRIT_ACCESS
 float32_t DCL_runPIDSeries(DCL_PID *pid, float32_t rk, float32_t yk, float32_t lk)
 {
     float32_t v1, v4, v5, v8, v9, v10, v12;
@@ -492,7 +493,7 @@ float32_t DCL_runPIDSeries(DCL_PID *pid, float32_t rk, float32_t yk, float32_t l
 //! \param[in] lk     External output clamp flag
 //! \return           The control effort
 //!
-_DCL_CODE_ACCESS _DCL_CODE_SECTION
+_DCL_CRIT_ACCESS
 float32_t DCL_runPIDParallel(DCL_PID *pid, float32_t rk, float32_t yk, float32_t lk)
 {
     float32_t v1, v4, v5, v6, v8, v9, v10, v12;
