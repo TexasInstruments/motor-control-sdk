@@ -160,7 +160,20 @@ clean:
 	-@echo 'Finished clean'
 	-@echo ' '
 
-% if("postBuildSteps" in obj) {
+% if("makefilePruPostBuildSteps" in obj) {
+post-build:
+	% steps = obj.makefilePruPostBuildSteps;
+	% for (let step of steps) {
+		%let commands = step.split(";");
+	%for(let command of commands){
+		%if(command.length !== 0){
+		-`command`
+		%}
+	%}
+	% }
+	-@echo ' '
+% }
+% else if("postBuildSteps" in obj) {
 post-build:
 	% steps = obj.postBuildSteps;
 	% for (let step of steps) {
@@ -176,6 +189,7 @@ post-build:
 % if(obj["defaultPruPostBuildSteps"]) {
 post-build:
 	-$(CGT_TI_PRU_PATH)/bin/hexpru --diag_wrap=off --array --array:name_prefix=PRUFirmware  -o pru_load_bin.h `projectName`.out
+        -$(SED) -i '0r ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h' pru_load_bin.h
 	-@echo ' '
 % }
 

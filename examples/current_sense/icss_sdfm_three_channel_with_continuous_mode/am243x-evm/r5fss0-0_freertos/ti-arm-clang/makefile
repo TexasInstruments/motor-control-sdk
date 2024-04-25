@@ -335,7 +335,7 @@ coverage:
 	$(PROFDATA) merge -sparse -obj-file=$(OUTNAME) $(OUTNAME).cnt -o icss_sdfm_three_channel_with_continuous_mode.$(PROFILE).profdata
 	$(COV) show --format=html --show-expansions --show-instantiations --show-branches=count --object=$(OUTNAME) -instr-profile=icss_sdfm_three_channel_with_continuous_mode.$(PROFILE).profdata --output-dir=$(COVERAGE_PATH)/coverage --ignore-filename-regex=build_jenkins
 	$(COV) export --format=text --object=$(OUTNAME) --instr-profile=icss_sdfm_three_channel_with_continuous_mode.$(PROFILE).profdata > coverage/icss_sdfm_three_channel_with_continuous_mode.$(PROFILE).profdata.json
-	node ${MOTOR_CONTROL_SDK_PATH}/docs_src/code_coverage/clang_coverage_analyse.js --input=coverage/icss_sdfm_three_channel_with_continuous_mode.$(PROFILE).profdata.json --output-json=coverage/icss_sdfm_three_channel_with_continuous_mode.$(PROFILE).analysis.json --output-lnk=linker_xip.cmd --top-function-count=500
+	node $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/smart_placement/clang_coverage_analyse.js --input=coverage/icss_sdfm_three_channel_with_continuous_mode.$(PROFILE).profdata.json --output-json=coverage/icss_sdfm_three_channel_with_continuous_mode.$(PROFILE).analysis.json --output=../icss_sdfm_three_channel_with_continuous_mode.annotations.$(PROFILE).S --top-function-count=500
 	@echo Coverage Report Generated at $(COVERAGE_PATH)/coverage folder !!!
 
 -include $(addprefix $(OBJDIR)/, $(DEPS))

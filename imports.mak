@@ -4,13 +4,15 @@ DEVICE ?= am64x
 ifeq ($(OS),Windows_NT)
     TOOLS_PATH?=C:/ti
     CCS_PATH?=$(TOOLS_PATH)/ccs1270/ccs
-    CCS_INSTALL_DIR=$(CCS_PATH)
     CCS_ECLIPSE=$(CCS_PATH)/eclipse/eclipsec
     CYGWIN_PATH?=$(CCS_PATH)/utils/cygwin
     MKDIR=$(CYGWIN_PATH)/mkdir -p
     RMDIR=$(CYGWIN_PATH)/rm -rf
     RM=$(CYGWIN_PATH)/rm -f
     COPY=$(CYGWIN_PATH)/cp
+    MOVE=$(CYGWIN_PATH)/mv
+    CAT=$(CYGWIN_PATH)/cat
+    SED=$(CYGWIN_PATH)/sed
     TOUCH=$(CYGWIN_PATH)/touch
     PATHSEP=\\
     CHMOD=$(CYGWIN_PATH)/echo
@@ -23,12 +25,14 @@ else
     ifeq ($(UNAME_S),Linux)
         export TOOLS_PATH?=$(HOME)/ti
         export CCS_PATH?=$(TOOLS_PATH)/ccs1270/ccs
-        export CCS_INSTALL_DIR=$(CCS_PATH)
         export CCS_ECLIPSE=$(CCS_PATH)/eclipse/eclipse
         export MKDIR=mkdir -p
         export RMDIR=rm -rf
         export RM=rm -f
         export COPY=cp
+        export MOVE=mv
+        export CAT=cat
+        export SED=sed
         export TOUCH=touch
         export PATHSEP=/
         export CHMOD=chmod
