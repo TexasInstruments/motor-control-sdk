@@ -324,7 +324,7 @@ coverage:
 	$(PROFDATA) merge -sparse -obj-file=$(OUTNAME) $(OUTNAME).cnt -o transforms_test.$(PROFILE).profdata
 	$(COV) show --format=html --show-expansions --show-instantiations --show-branches=count --object=$(OUTNAME) -instr-profile=transforms_test.$(PROFILE).profdata --output-dir=$(COVERAGE_PATH)/coverage --ignore-filename-regex=build_jenkins
 	$(COV) export --format=text --object=$(OUTNAME) --instr-profile=transforms_test.$(PROFILE).profdata > coverage/transforms_test.$(PROFILE).profdata.json
-	node ${MOTOR_CONTROL_SDK_PATH}/docs_src/code_coverage/clang_coverage_analyse.js --input=coverage/transforms_test.$(PROFILE).profdata.json --output-json=coverage/transforms_test.$(PROFILE).analysis.json --output-lnk=linker_xip.cmd --top-function-count=500
+	node $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/smart_placement/clang_coverage_analyse.js --input=coverage/transforms_test.$(PROFILE).profdata.json --output-json=coverage/transforms_test.$(PROFILE).analysis.json --output=../transforms_test.annotations.$(PROFILE).S --top-function-count=500
 	@echo Coverage Report Generated at $(COVERAGE_PATH)/coverage folder !!!
 
 -include $(addprefix $(OBJDIR)/, $(DEPS))

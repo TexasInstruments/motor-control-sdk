@@ -169,6 +169,14 @@
         % }
         "
         % } else if (args.project.cpu.includes("pru")) {
+        % if("ccsPruPostBuildSteps" in args.project) {
+        postBuildStep="
+        % steps = args.project.ccsPruPostBuildSteps;
+        % for (let step of steps) {
+            `step`
+        % }
+        "
+        % }
         % } else {
         postBuildStep="$(MAKE) -C ${CCS_PROJECT_DIR} -f makefile_ccs_bootimage_gen OUTNAME=${BuildArtifactFileBaseName} PROFILE=${ConfigName} MOTOR_CONTROL_SDK_PATH=${MOTOR_CONTROL_SDK_PATH} CG_TOOL_ROOT=${CG_TOOL_ROOT} CCS_INSTALL_DIR=${CCS_INSTALL_DIR} CCS_IDE_MODE=${CCS_IDE_MODE} DEVICE=`args.project.device`"
         % }
