@@ -627,17 +627,7 @@ srecv_dec_10b_4b_0_2_received_0:
 	xor			CUR_EDGES, REG_TMP1.b0, REG_TMP0.b0
 	CALL1			calc_rssi
 	qbne			srecv_dec_10b_4b_0_2, LOOP_CNT.b0, 0
-;check for errors / special character
-	ldi			REG_TMP1.b0, 0
-	clr			SPECIAL_CHARACTER, SPECIAL_CHARACTER, REG_FNC.b1
-;K=(c==d==e==i)
-	and			REG_TMP0.b0, REG_FNC.w2, 0x78
-	qbeq			srecv_dec_10b_special_character0, REG_TMP0.b0, 0x78
-	qbeq			srecv_dec_10b_special_character0, REG_TMP0.b0, 0x00
-	qba			srecv_dec_10b_no_special_character0
-srecv_dec_10b_special_character0:
-	set			SPECIAL_CHARACTER, SPECIAL_CHARACTER, REG_FNC.b1
-srecv_dec_10b_no_special_character0:
+
 	and			REG_TMP0.b0, REG_FNC.w2, 0x1f
 	qbeq			srecv_dec_10b_eifgh_error, REG_TMP0.b0, 0x1f
 	qbeq			srecv_dec_10b_eifgh_error, REG_TMP0.b0, 0x00
@@ -663,19 +653,21 @@ srecv_dec_10b_4b_not_last_byte:
 	ldi			REG_TMP11, (PDMEM00+LUT_3b4b_DEC)
 	lbbo			&REG_TMP0.b0, REG_TMP11, REG_TMP0.w2, 1
 	or			REG_FNC.b0, REG_FNC.b0, REG_TMP0.b0
-;check for special character and flip
-;K=(c==d==e==i) v (P13*e'*i*g*h*j) v (P31*e*i'*g'*h'*j')
-	and			REG_TMP0.b0, REG_FNC.w2, 0x37
-	xor			REG_TMP0.b0, REG_TMP0.b0, 0x20
-	qbeq			srecv_dec_10b_special_character1, REG_TMP0.b0, 0x37
-	qbeq			srecv_dec_10b_special_character1, REG_TMP0.b0, 0x00
-	qba			srecv_dec_10b_no_special_character1
-srecv_dec_10b_special_character1:
-	set			SPECIAL_CHARACTER, SPECIAL_CHARACTER, REG_FNC.b1
-srecv_dec_10b_no_special_character1:
-	xor			REG_FNC.b0, REG_FNC.b0, REG_TMP1.b0
 ;restore RET1
 	mov			RET_ADDR1, REG_TMP2.w0
+;;check for special character and flip for 4 cases (when 6b==110000 and 4b= 0110,1010,0101,1001)
+	and REG_TMP0.b2,REG_FNC.w2,0xf      ;REG_FNC.w2 stores 10b encoded data
+	lsr			REG_TMP0.b0,REG_FNC.w2,4
+	and			REG_TMP0.b0,REG_TMP0.b0,0x3f
+	qbne		check_for_special_character_done,	REG_TMP0.b0,0x30
+	qbeq 		flip_first_3bits_of_STATUS2, REG_TMP0.b2,0x6
+	qbeq 		flip_first_3bits_of_STATUS2, REG_TMP0.b2,0xa
+	qbeq 		flip_first_3bits_of_STATUS2, REG_TMP0.b2,0x5
+	qbeq 		flip_first_3bits_of_STATUS2, REG_TMP0.b2,0x9
+	qba 		check_for_special_character_done
+flip_first_3bits_of_STATUS2:
+	xor REG_FNC.b0,REG_FNC.b0,0xe0
+check_for_special_character_done:
 	RET1
 
 ;--------------------------------------------------------------------------------------------------
@@ -1554,7 +1546,6 @@ send_header_dont_send_01_send_1:
 	PUSH_FIFO_CONST		0xff
 send_header_dont_send_01_send_next:
 	RESET_CYCLCNT
-	READ_CYCLCNT		REG_TMP1
 	qbbs			send_header_dont_send_01_send_11, REG_FNC.b2, 6
 	PUSH_FIFO_CONST		0x00
 	ldi			LAST_BIT_SENT, 0
