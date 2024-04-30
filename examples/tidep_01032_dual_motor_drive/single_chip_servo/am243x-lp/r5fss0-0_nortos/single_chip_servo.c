@@ -1728,9 +1728,9 @@ SdfmPrms gTestSdfmPrms = {
      10,       /*first sample  trigger time*/
      0,       /*second sample trigger time*/
     APP_EPWM_OUTPUT_FREQ,     /*PWM output frequency*/
-    {{3500, 1000,0},    /*threshold parameters(High, low & reserevd)*/
-    {3500, 1000,0},
-    {3500, 1000,0}},
+    {{3500, 1000},    /*threshold parameters(High, low )*/
+    {3500, 1000},
+    {3500, 1000}},
     {{0,0},                /*clock sourse & clock inversion for all channels*/
     {0,0},
     {0,0}},
