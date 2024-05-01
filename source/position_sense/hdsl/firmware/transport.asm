@@ -79,7 +79,6 @@ transport_on_v_frame_2:
 
 ; retrieve the 8 bytes for secondary channel from VPOS2_TEMP
     lbco        &REG_TMP1, MASTER_REGS_CONST, VPOS2_TEMP, 8
-
 ; error checks for secondary channel
 	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, ONLINE_STATUS_2_H, 1
 ; retrieve H_FRAME.flags from H_FRAME_FLAGS_TEMP
@@ -91,11 +90,9 @@ transport_on_v_frame_2:
 
     lbco        &REG_TMP0.w2, MASTER_REGS_CONST, CRC_SEC_TEMP, 2
 	qbeq		check_for_slave_error_on_secondary_channel, REG_TMP0.w2, 0
-	qbbs		check_for_slave_error_on_secondary_channel, REG_TMP0.b0, ONLINE_STATUS_2_VPOS2
 ; set SCE2 bit in ONLINE_STATUS_2
 	set		    REG_TMP0.b0, REG_TMP0.b0, ONLINE_STATUS_2_SCE2
 	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, ONLINE_STATUS_2_H, 1
-	QM_SUB		8
 transport_on_v_frame_dont_update_qm_secondary_channel:
 	qba		transport_on_v_frame_2_exit
 check_for_slave_error_on_secondary_channel:
@@ -114,10 +111,8 @@ check_for_slave_error_on_secondary_channel:
 transport_on_v_frame_no_vpos2_error:
 	clr		    REG_TMP0.b0, REG_TMP0.b0, ONLINE_STATUS_2_VPOS2
 transport_on_v_frame_vpos2_error_exit:
-
+transport_on_v_frame_2_exit:
 ; store the data from secondary channel
-; invert the bits for STATUS2
-	xor			REG_TMP2.b3, REG_TMP2.b3, 0xe0
 ; swap bytes in each 32 bit register REG_TMP1 and REG_TMP2
 	xin     160, &REG_TMP1, 8
 
@@ -134,10 +129,11 @@ online_status_2_sum2_not_set:
 	sbco	&REG_TMP2.b0, MASTER_REGS_CONST, STATUS2, 4
 ; Store VPOS21, VPOS20, VPOSCRC2_H and VPOSCRC2_L
 	sbco	&REG_TMP1.b0, MASTER_REGS_CONST, VPOS21, 4
+	qbbc        no_qm_sub, REG_TMP2.b0, STATUS2_TEST2
+	QM_SUB		8
+no_qm_sub:
 ; generate interrupt PRU0_ARM_IRQ2
 	ldi	    r31.w0, PRU0_ARM_IRQ2
-
-transport_on_v_frame_2_exit:
 ; update the position and crc to DMEM
 ; and raise interrupt
 	;Update ONLINE_STATUS_1 to DMEM
@@ -378,7 +374,7 @@ calc_relpos_extend_vel:
 	add		REG_TMP0.w0, REG_TMP0.w0, REG_TMP1.w0
 	adc		REG_TMP0.w2, REG_TMP0.w2, REG_TMP1.w2
 	sbco		&REG_TMP0, MASTER_REGS_CONST, REL_POS0, 4
-;store fast pos. and velocity
+	;store fast pos. and velocity
     mov     REG_TMP0, FAST_POSH
     mov     REG_TMP1, SPEED
     xin     160, &REG_TMP0, 8
@@ -1161,6 +1157,7 @@ transport_on_v_frame_exit:
 	CALL2 WAIT_TX_FIFO_FREE
 	PUSH_FIFO_CONST  0xff
 	PUSH_FIFO_CONST  0xff
+	CALL1 re_align_algo
 	PUSH_FIFO_CONST  0xff
 Wait_and_Push_2_byte:
 no_first_push_for_exit:
