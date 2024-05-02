@@ -1,7 +1,8 @@
 %let pwm_module = system.modules['/pruicss_g_v0_pwm/pruicss_g_v0_pwm'];
 %let pwm_channel_module = system.modules['/pruicss_g_v0_pwm/pruicss_g_v0_pwm_channel'];
 
-
+%if(pwm_module && pwm_channel_module)
+%{
 /*
  * PRUICSS PWM
  */
@@ -45,4 +46,5 @@
             %}
         %}
     %}
+%}
 %}

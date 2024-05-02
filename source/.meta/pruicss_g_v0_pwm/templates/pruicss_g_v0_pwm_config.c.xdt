@@ -1,5 +1,7 @@
 %let pwm_module = system.modules['/pruicss_g_v0_pwm/pruicss_g_v0_pwm'];
 
+%if(pwm_module)
+%{
 extern PRUICSS_Config gPruIcssConfig[];
 
 uint32_t gPruIcssPwmConfigNum = CONFIG_PRUICSS_PWM_NUM_INSTANCES;
@@ -85,4 +87,4 @@ PRUICSS_PWM_Config gPruIcssPwmConfig[] =
     }
 %}
 };
-
+%}
