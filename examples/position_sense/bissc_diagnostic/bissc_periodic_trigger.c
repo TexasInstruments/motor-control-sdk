@@ -95,7 +95,7 @@ void bissc_config_iep(struct bissc_periodic_interface *bissc_periodic_interface)
     HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP3_REG0,  cmp_reg0);
     HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP3_REG1,  cmp_reg1);
 
-    cmp0 = bissc_periodic_interface->cmp3;
+    cmp0 = bissc_periodic_interface->cmp0;
 
     /*clear event*/
     HW_WR_REG8((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP_STATUS_REG, event_clear);
@@ -183,4 +183,11 @@ void prubisscIrqHandler0(void *args)
     */
     PRUICSS_clearEvent(gPruIcssXHandle, PRU_TRIGGER_HOST_BISSC_EVT0);
 
+}
+
+void bissc_periodic_interface_init(struct bissc_priv *priv, struct bissc_periodic_interface *bissc_periodic_interface, int64_t cmp3, int64_t cmp0)
+{
+    bissc_periodic_interface->pruicss_iep = priv->pruicss_iep;
+    bissc_periodic_interface->cmp3 = cmp3;
+    bissc_periodic_interface->cmp0 = cmp0;
 }

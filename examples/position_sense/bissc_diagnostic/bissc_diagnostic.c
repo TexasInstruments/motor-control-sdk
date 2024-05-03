@@ -52,34 +52,25 @@
 #include "bissc_periodic_trigger.h"
 
 #define PRUICSS_SLICEx PRUICSS_PRUx
-#if PRUICSS_SLICEx
-#define PRUICSS_TXPRUx PRUICSS_TX_PRU1
-#define PRUICSS_RTUPRUx PRUICSS_RTU_PRU1
-#else
-#define PRUICSS_TXPRUx PRUICSS_TX_PRU0
-#define PRUICSS_RTUPRUx PRUICSS_RTU_PRU0
-#endif
-
-
 
 #if (CONFIG_BISSC0_MODE == BISSC_MODE_MULTI_CHANNEL_SINGLE_PRU)
-#include  <position_sense/bissc/firmware/bissc_master_multi_bin.h>
+#include  <position_sense/bissc/firmware/bissc_receiver_multi_bin.h>
 #endif
 
 #if (CONFIG_BISSC0_CHANNEL0) && (CONFIG_BISSC0_LOAD_SHARE_MODE)
-#include <position_sense/bissc/firmware/bissc_master_multi_RTU_bin.h>
+#include <position_sense/bissc/firmware/bissc_receiver_multi_RTU_bin.h>
 #endif
 
 #if (CONFIG_BISSC0_CHANNEL1) && (CONFIG_BISSC0_LOAD_SHARE_MODE)
-#include <position_sense/bissc/firmware/bissc_master_multi_PRU_bin.h>
+#include <position_sense/bissc/firmware/bissc_receiver_multi_PRU_bin.h>
 #endif
 
 #if (CONFIG_BISSC0_CHANNEL2) && (CONFIG_BISSC0_LOAD_SHARE_MODE)
-#include <position_sense/bissc/firmware/bissc_master_multi_TXPRU_bin.h>
+#include <position_sense/bissc/firmware/bissc_receiver_multi_TXPRU_bin.h>
 #endif
 
 #if (CONFIG_BISSC0_MODE == BISSC_MODE_SINGLE_CHANNEL_SINGLE_PRU)
-#include <position_sense/bissc/firmware/bissc_master_bin.h>
+#include <position_sense/bissc/firmware/bissc_receiver_bin.h>
 #endif
 
 #define WAIT_5_SECOND                       (5000)
@@ -96,7 +87,6 @@
 #define BISSC_CMD_ENC_LOOP_OVER_CYC         (5)
 #define BISSC_CMD_PERIODIC_TRIGGER          (6)
 
-#define BISSC_INPUT_CLOCK_UART_FREQUENCY    192000000
 #define BISSC_POSITION_LOOP_STOP            0
 #define BISSC_POSITION_LOOP_START           1
 
@@ -218,7 +208,7 @@ static int32_t bissc_clock_config(uint32_t frequency, struct bissc_priv *priv)
 {
     struct bissc_clk_cfg clk_cfg;
     int32_t status = SystemP_FAILURE;
-    priv->baud_rate = frequency;
+    bissc_update_clock_freq(priv, frequency);
     if(bissc_calc_clock(priv, &clk_cfg) < 0)
     {
         return SystemP_FAILURE;
@@ -239,7 +229,7 @@ static void bissc_display_menu(void)
     DebugP_log("\r\n| 1 : Number of position data bits                                             |");
     DebugP_log("\r\n| 2 : Select clock frequency in MHz(1/2/5/8/10)                                |");
     DebugP_log("\r\n| 3 : Encoder send position values                                             |");
-    DebugP_log("\r\n| 4 : Hex equivalent of control command(in hex)                                |");
+    DebugP_log("\r\n| 4 : Control Communication - Register Read/Write                              |");
     DebugP_log("\r\n| 5 : Loop over BiSS-C cycles                                                  |");
     DebugP_log("\r\n| 6 : Start continuous mode                                                    |");
     DebugP_log("\r\n| 0 : Exit the application                                                     |");
@@ -249,20 +239,11 @@ static void bissc_display_menu(void)
 
 void bissc_get_enc_data_len(struct bissc_priv *priv)
 {
-    int32_t ch_num, totalchns, enc_num;
+    int32_t ch_num, totalchns;
     uint32_t  single_turn_len[3] = {0}, multi_turn_len[3] = {0};
-    for(ch_num = 0; ch_num < NUM_ED_CH_MAX; ch_num++)
-    {
-        priv->num_encoders[ch_num] = 0;
-        for(enc_num = 0; enc_num < NUM_ENCODERS_MAX; enc_num++)
-        {
-            priv->single_turn_len[ch_num][enc_num] = 0;
-            priv->multi_turn_len[ch_num][enc_num] = 0;
-            priv->data_len[ch_num][enc_num] = 0;
-        }
-    }
+    bissc_clear_data_len(priv);
     if(priv->load_share)
-        totalchns = priv->totalchannels;
+        totalchns = bissc_get_totalchannels(priv);
     else
         totalchns = 1;
 
@@ -303,7 +284,7 @@ static void bissc_print_res(struct bissc_priv *priv)
     int32_t ch_num, ch, ls_ch;
     for( ch_num = 0; ch_num < totalchannels; ch_num++)
     {
-        ch = priv->channel[ch_num];
+        ch = bissc_get_current_channel(priv, ch_num);
         if(CONFIG_BISSC0_MODE == BISSC_MODE_MULTI_CHANNEL_MULTI_PRU)
             ls_ch = ch;
         else
@@ -404,12 +385,11 @@ static int32_t bissc_loop_task_create(void)
     return status ;
 }
 
-static void bissc_process_periodic_command(struct bissc_priv *priv)
+static void bissc_process_periodic_command(struct bissc_priv *priv, int64_t cmp3, int64_t cmp0)
 {
     int32_t status, ret;
     uint32_t pos_fail_cnt = 0, pos_total_cnt = 0;
     struct bissc_periodic_interface bissc_periodic_interface;
-
     bissc_config_periodic_trigger(priv);
 
     if(bissc_loop_task_create() != SystemP_SUCCESS)
@@ -418,11 +398,7 @@ static void bissc_process_periodic_command(struct bissc_priv *priv)
         DebugP_log("Task_create() failed!\n");
         return;
     }
-
-    bissc_periodic_interface.pruicss_iep = priv->pruicss_iep;
-    bissc_periodic_interface.pruicss_dmem = priv->pruicss_xchg;
-    bissc_periodic_interface.cmp3 = priv->cmp3;
-
+    bissc_periodic_interface_init(priv, &bissc_periodic_interface, cmp3, cmp0);
     status = bissc_config_periodic_mode(&bissc_periodic_interface, gPruIcssXHandle);
     DebugP_assert(0 != status);
     bissc_position_loop_status = BISSC_POSITION_LOOP_START;
@@ -456,6 +432,7 @@ void bissc_main(void *args)
 {
     int32_t i, totalchns, ch_num, ls_ch = 0;
     uint64_t icssgclk;
+    uint64_t uartclk;
     int32_t ch = 0;
 
     /* Open drivers to open the UART driver for console */
@@ -503,13 +480,15 @@ void bissc_main(void *args)
     if(gPruIcssXHandle->hwAttrs->instance)
     {
         SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG1, TISCI_DEV_PRU_ICSSG1_CORE_CLK, &icssgclk);
+        SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG1, TISCI_DEV_PRU_ICSSG1_UCLK_CLK, &uartclk);
     }
     else
     {
         SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG0, TISCI_DEV_PRU_ICSSG0_CORE_CLK, &icssgclk);
+        SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG0, TISCI_DEV_PRU_ICSSG0_UCLK_CLK, &uartclk);
     }
 
-    priv = bissc_init(gPruIcssXHandle, PRUICSS_PRUx, CONFIG_BISSC0_BAUDRATE, (uint32_t)icssgclk, BISSC_INPUT_CLOCK_UART_FREQUENCY);
+    priv = bissc_init(gPruIcssXHandle, PRUICSS_PRUx, CONFIG_BISSC0_BAUDRATE, (uint32_t)icssgclk, (uint32_t)uartclk);
     bissc_config_channel(priv, mask, totalchannels);
     if(CONFIG_BISSC0_MODE == BISSC_MODE_MULTI_CHANNEL_MULTI_PRU)
     {
@@ -582,8 +561,10 @@ void bissc_main(void *args)
     while(1)
     {
         int32_t cmd, ret;
+        int64_t cmp3, cmp0;
         uint32_t freq, ctrl_cmd[3]={0};
         uint32_t loop_cnt;
+        uint32_t ctrl_write_status, ctrl_reg_address, ctrl_reg_data = 0, ctrl_enc_id = 0;
         bissc_display_menu();
         cmd = bissc_get_command();
         if(cmd < BISSC_CMD_EXIT_APP)
@@ -627,7 +608,7 @@ void bissc_main(void *args)
             }
             for(ch_num = 0; ch_num < priv->totalchannels; ch_num++)
             {
-                ch = priv->channel[ch_num];
+                ch = bissc_get_current_channel(priv, ch_num);
                 if(CONFIG_BISSC0_MODE == BISSC_MODE_MULTI_CHANNEL_MULTI_PRU)
                     ls_ch = ch;
                 else
@@ -682,12 +663,14 @@ void bissc_main(void *args)
         else if(cmd == BISSC_CMD_ENC_CTRL_CMD)
         {
             DebugP_log("\r\nPlease enter control communication details:\n");
-            totalchns = priv->totalchannels;
+            totalchns = bissc_get_totalchannels(priv);
             for(ch_num = 0; ch_num < totalchns; ch_num++)
             {
+                ctrl_reg_data = 0;
+                ctrl_enc_id = 0;
                 if(CONFIG_BISSC0_MODE == BISSC_MODE_MULTI_CHANNEL_MULTI_PRU)
                 {
-                    ls_ch = priv->channel[ch_num];
+                    ls_ch = bissc_get_current_channel(priv, ch_num);
                     DebugP_log("\r\n Channel %d: ",ls_ch);
                 }
                 else
@@ -696,27 +679,27 @@ void bissc_main(void *args)
                     totalchns = 1;
                 }
                 DebugP_log("\r\n Enter type of access(0: Read & 1: Write): ");
-                DebugP_scanf("%x\n", &priv->ctrl_write_status[ls_ch]);
+                DebugP_scanf("%x\n", &ctrl_write_status);
                 while(1)
                 {
                     DebugP_log("\r\n Enter Register Address: ");
-                    DebugP_scanf("%x\n", &priv->ctrl_reg_address[ls_ch]);
-                    if(priv->ctrl_reg_address[ls_ch] > 0x7F)
+                    DebugP_scanf("%x\n", &ctrl_reg_address);
+                    if(ctrl_reg_address > 0x7F)
                         DebugP_log("\r\n Please enter a 7-bit address\n");
                     else
                         break;
                 }
-                if(priv->ctrl_write_status[ls_ch])
+                if(ctrl_write_status == 1)
                 {
-                    DebugP_log("\r\n Enter Data to write at 0x%x Register\n", priv->ctrl_reg_address[ls_ch]);
-                    DebugP_scanf("%x\n", &priv->ctrl_reg_data[ls_ch]);
+                    DebugP_log("\r\n Enter Data to write at 0x%x Register\n", ctrl_reg_address);
+                    DebugP_scanf("%x\n", &ctrl_reg_data);
                 }
                 if(priv->num_encoders[ls_ch] > 1)
                 {
                     DebugP_log("\r\n Enter Encoder ID\n");
-                    DebugP_scanf("%x\n", &priv->ctrl_enc_id[ls_ch]);
+                    DebugP_scanf("%x\n", &ctrl_enc_id);
                 }
-                ctrl_cmd[ls_ch] = bissc_generate_ctrl_cmd(priv, ls_ch);
+                ctrl_cmd[ls_ch] = bissc_generate_ctrl_cmd(priv, ls_ch, ctrl_write_status, ctrl_reg_address, ctrl_reg_data, ctrl_enc_id);
             }
             ret = bissc_set_ctrl_cmd_and_process(priv, ctrl_cmd);
             if(ret < 0)
@@ -725,7 +708,7 @@ void bissc_main(void *args)
             }
             for(ch_num = 0; ch_num < priv->totalchannels; ch_num++)
             {
-                ch = priv->channel[ch_num];
+                ch = bissc_get_current_channel(priv, ch_num);
                 DebugP_log("\r\n Channel %d:\n", ch);
                 DebugP_log("\r\n Control communication result: %x, crc: %x, otf crc: %x, status: %s\n",priv->enc_ctrl_data[ch].cmd_result,
                 priv->enc_ctrl_data[ch].cmd_rcv_crc, priv->enc_ctrl_data[ch].cmd_otf_crc,
@@ -758,14 +741,21 @@ void bissc_main(void *args)
         }
         else if(cmd == BISSC_CMD_PERIODIC_TRIGGER)
         {
-            DebugP_log("\r| Enter IEP cycle count(must be greater than BiSS cycle time including timeout period, in PRU cycles): ");
-            DebugP_scanf("%lld\n", &priv->cmp3);
-            if(priv->cmp3 < 0)
+            DebugP_log("\r| Enter IEP cycle count(must be greater than BiSS cycle time including timeout period, in IEP cycles): ");
+            DebugP_scanf("%lld\n", &cmp0);
+            if(cmp0 <= IEP_DEFAULT_INC)
             {
                 DebugP_log("\r\n| WARNING: invalid value entered\n");
                 continue;
             }
-            bissc_process_periodic_command(priv);
+            DebugP_log("\r| Enter IEP trigger time(must be less than or equal to IEP cycle count, in IEP cycles): ");
+            DebugP_scanf("%lld\n", &cmp3);
+            if((cmp3 > cmp0) || (cmp3 <= IEP_DEFAULT_INC))
+            {
+                DebugP_log("\r\n| WARNING: invalid value entered\n");
+                continue;
+            }
+            bissc_process_periodic_command(priv, cmp3, cmp0);
         }
     }
 deinit:

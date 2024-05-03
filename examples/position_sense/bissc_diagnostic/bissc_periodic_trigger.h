@@ -34,19 +34,20 @@
 #define _BISSC_H_
 
 #include<stdint.h>
+#include <position_sense/bissc/include/bissc_drv.h>
 
 struct bissc_periodic_interface
 {
   void *pruicss_iep;
-  void *pruicss_dmem;
   uint64_t cmp3;
+  uint64_t cmp0;
 };
 
-#define IEP_DEFAULT_INC    0x1;
-#define IEP_DEFAULT_INC_EN  0x4;
-#define IEP_COUNTER_EN      0x1;
-#define IEP_RST_CNT_EN      0x1;
-#define IEP_CMP0_ENABLE     0x1 << 1;
+#define IEP_DEFAULT_INC     0x1
+#define IEP_DEFAULT_INC_EN  0x4
+#define IEP_COUNTER_EN      0x1
+#define IEP_RST_CNT_EN      0x1
+#define IEP_CMP0_ENABLE     (0x1 << 1)
 #define IEP_CMP3_EVNT       (0x1 << 3)
 
 #define PRU_TRIGGER_HOST_BISSC_EVT0   ( 2+16 )    /* pr0_pru_mst_intr[2]_intr_req */
@@ -56,6 +57,8 @@ uint32_t bissc_config_periodic_mode(struct bissc_periodic_interface *bissc_perio
 void bissc_stop_periodic_mode(struct bissc_periodic_interface *bissc_periodic_interface);
 
 static void prubisscIrqHandler0(void *handle);
+
+void bissc_periodic_interface_init(struct bissc_priv *priv, struct bissc_periodic_interface *bissc_periodic_interface, int64_t cmp3, int64_t cmp0);
 
 
 #endif /* _BISSC_H_ */

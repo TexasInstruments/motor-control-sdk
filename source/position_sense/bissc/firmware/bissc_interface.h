@@ -169,4 +169,3 @@ BISSC_CONFIG_DELAY_40US_OFFSET                      .set        0xEC    ;40 micr
 BISSC_CONFIG_DELAY_100MS_OFFSET                     .set        0xF0    ;100 milli second delay offset
 
 BISSC_CONFIG_ICSSG_CLK_OFFSET                       .set        0xF8    ;icssg clock configuration offset
-

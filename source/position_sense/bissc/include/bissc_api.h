@@ -248,10 +248,46 @@ void bissc_config_host_trigger(struct bissc_priv *priv);
  *
  *  \param[in]  priv            cookie returned by \ref bissc_init
  *  \param[in]  ls_ch           channel in use for load share
+ *  \param[in]  ctrl_write_status   status for control commmunication write access
+ *  \param[in]  ctrl_reg_address    address of encoder's register for control commuincation access
+ *  \param[in]  ctrl_reg_data   data to write in encoder's register in control communication
+ *  \param[in]  ctrl_enc_id     ID of encoder based on it's place in daisy chain
  *  \retval     ctrl_cmd        Hex equivalent control communication 32 bit command
  */
-uint32_t bissc_generate_ctrl_cmd(struct bissc_priv *priv, int8_t ls_ch);
-
+uint32_t bissc_generate_ctrl_cmd(struct bissc_priv *priv,
+                                 int8_t ls_ch,
+                                 uint32_t ctrl_write_status,
+                                 uint32_t ctrl_reg_address,
+                                 uint32_t ctrl_reg_data,
+                                 uint32_t ctrl_enc_id);
+/**
+ *  \brief      Retrives the current channel in use
+ *
+ *  \param[in]  priv            cookie returned by \ref bissc_init
+ *  \param[in]  ch_idx          index of current channel to be selected
+ *  \retval     channel[ch_idx] current channel in use
+ */
+uint32_t bissc_get_current_channel(struct bissc_priv *priv, uint32_t ch_idx);
+/**
+ *  \brief      Retrives total number of channels configured
+ *
+ *  \param[in]  priv            cookie returned by \ref bissc_init
+ *  \retval     totalchannels   total number of channels configured
+ */
+uint32_t bissc_get_totalchannels(struct bissc_priv *priv);
+/**
+ *  \brief      Clears all the encoder resolution parameters
+ *
+ *  \param[in]  priv            cookie returned by \ref bissc_init
+ */
+void bissc_clear_data_len(struct bissc_priv *priv);
+/**
+ *  \brief      Update the operating bud rate as specified by the user
+ *
+ *  \param[in]  priv            cookie returned by \ref bissc_init
+ *  \param[in]  frequency       frequency specified by the user through UART menu
+ */
+void bissc_update_clock_freq(struct bissc_priv *priv, uint32_t frequency);
 /** @} */
 
 #ifdef __cplusplus

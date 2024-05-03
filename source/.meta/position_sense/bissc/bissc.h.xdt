@@ -11,6 +11,8 @@
     % let instance = module.$instances[i];
     % let Mode = 0;
     % let sliceVal = 1;
+    % let rtuPru = 3;
+    % let txPru = 5;
     % let icssValue = 0;
     % if(instance.instance === "ICSSG0")
     % {
@@ -27,6 +29,11 @@
             % sliceVal = 0;
         % }
     % }
+    %if(!(sliceVal & 1))
+    %{
+        % rtuPru = 2;
+        % txPru = 4;
+    %}
     %if(((instance.channel_0 & 1)&&(instance.channel_1 & 1))||((instance.channel_1 & 1)&&(instance.channel_2 & 1))||((instance.channel_2 & 1)&&(instance.channel_0 & 1)))
     %{
         % Mode = 1;
@@ -46,4 +53,6 @@
 #define `instance.$name`_BOOSTER_PACK     (`instance.Booster_Pack & 1`)
 #define PRUICSS_PRUx                      (`sliceVal`)
 #define PRUICSSx                          (`icssValue`)
+#define PRUICSS_TXPRUx                    (`txPru`)
+#define PRUICSS_RTUPRUx                   (`rtuPru`)
 % }
