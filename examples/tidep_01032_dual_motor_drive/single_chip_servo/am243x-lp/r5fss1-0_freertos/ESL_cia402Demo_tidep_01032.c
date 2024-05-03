@@ -11,7 +11,7 @@
  *  Copyright (c) 2020, KUNBUS GmbH<br /><br />
  *  SPDX-License-Identifier: BSD-3-Clause
  *
- *  Copyright (c) 2023 KUNBUS GmbH.
+ *  Copyright (c) 2024 KUNBUS GmbH.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
@@ -261,7 +261,7 @@ static uint32_t EC_SLV_APP_setCiA402ObjectValue(EC_SLV_APP_CIA_Application_t*  p
         }
     }
 
-    err = EC_API_SLV_CoE_setObjectData(pApplication_p->ptEcSlvApi, pObject, length_p, pValue_p);
+    err = EC_API_SLV_CoE_setObjectData(pApplication_p->ptEcSlvApi, pObject, 0, length_p, pValue_p);
 
 Exit:
     return  err;
@@ -997,7 +997,6 @@ void EC_SLV_APP_cia402Application(void* ctxt)
     /* cppcheck-suppress threadsafety-threadsafety */
     static bool gotInOffset = false;
     static bool gotOutOffset = false;
-    bool gotOffsets = false;
     uint8_t                     axisNo;
 
     uint16_t controlWord = 0;
@@ -1062,7 +1061,6 @@ void EC_SLV_APP_cia402Application(void* ctxt)
 
     if ((EC_API_SLV_eESM_op == curState) && !gotOutOffset)
     {
-        gotOffsets = (gotInOffset && gotOutOffset);
         (void)EC_SLV_APP_CiA_fetchPDOffsets(pApplication_p);
 
         EC_API_SLV_getOutputProcDataLength(pApplication_p->ptEcSlvApi, &pApplication_p->pdoOutLen);

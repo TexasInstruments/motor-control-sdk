@@ -45,7 +45,12 @@
             -I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/common/board/am243lp
             -I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/common/board/am243lp/freertos
             -I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/custom_phy/inc
+            -I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/nvm/app/inc
+            -I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/nvm/drv/inc
             -I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/source/industrial_comms/ethercat_slave/stack/inc
+            -I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/source/industrial_comms/ethercat_slave/stack/inc/defines
+            -I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/source/industrial_comms/ethercat_slave/stack/inc/ext
+            -I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/source/industrial_comms/ethercat_slave/stack/inc/profiles
             -I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/source/industrial_comms/common/inc
             -mcpu=cortex-r5
             -mfloat-abi=hard
@@ -128,7 +133,7 @@
         </file>
         <file path="../../../../../../ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/common/os/freertos/ESL_OS_os.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
-        <file path="../../../../../../ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/common/os/freertos/ESL_eeprom.c" openOnCreation="false" excludeFromBuild="false" action="copy">
+        <file path="../ESL_eeprom_tidep_01032.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
         <file path="../../../../../../ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/common/os/freertos/ESL_fileHandling.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
@@ -151,6 +156,12 @@
         <file path="../ESL_cia402Demo_tidep_01032.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
         <file path="../ESL_BOARD_OS_config_tidep_01032.c" openOnCreation="false" excludeFromBuild="false" action="copy">
+        </file>
+        <file path="../../../../../../ind_comms_sdk/examples/industrial_comms/nvm/app/src/nvm.c" openOnCreation="false" excludeFromBuild="false" action="copy">
+        </file>
+        <file path="../nvm_drv_eeprom_tidep_01032.c" openOnCreation="false" excludeFromBuild="false" action="copy">
+        </file>
+        <file path="../../../../../../ind_comms_sdk/examples/industrial_comms/nvm/drv/src/nvm_drv_flash.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
         <file path="../example.syscfg" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>

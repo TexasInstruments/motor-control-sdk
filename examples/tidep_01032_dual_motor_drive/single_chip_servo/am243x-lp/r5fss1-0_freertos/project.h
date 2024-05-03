@@ -11,7 +11,7 @@
  *  Copyright (c) 2021, KUNBUS GmbH<br /><br />
  *  SPDX-License-Identifier: BSD-3-Clause
  *
- *  Copyright (c) 2023 KUNBUS GmbH.
+ *  Copyright (c) 2024 KUNBUS GmbH.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
@@ -109,8 +109,8 @@
 #define KBECSLV_PRIO_EOE                    OSAL_TASK_Prio_ECEoE
 #define KBECSLV_PRIO_LED                    OSAL_TASK_Prio_ECLED
 
-#define OSPIFLASH_APP_STARTMAGIC \
-/* @cppcheck_justify{misra-c2012-11.6} void cast required for signature */ \
+#define EEPROM_MAGIC_KEY \
+    /* @cppcheck_justify{misra-c2012-11.6} void cast required for signature */ \
     /* cppcheck-suppress misra-c2012-11.6 */ \
     ((void*)0xEE11AA44u)
 
