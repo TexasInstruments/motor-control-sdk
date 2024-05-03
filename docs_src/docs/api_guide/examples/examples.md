@@ -45,4 +45,8 @@ This page lists all the examples and demos supported in this SDK.
         -# \subpage EXAMPLES_DCL_DF22
     - Transforms
         -# \subpage EXAMPLES_TRANSFORMS_TEST
+    - SFRA
+        -# \subpage EXAMPLES_SFRA_TEST
+    - DATALOG
+        -# \subpage EXAMPLES_DATALOG_TEST
 \endcond

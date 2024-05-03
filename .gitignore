@@ -1,4 +1,5 @@
 lib/
+!source/sfra/lib*
 obj/
 node_modules/
 coverage/
