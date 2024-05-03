@@ -236,7 +236,7 @@ void SDFM_selectClockSource(sdfm_handle h_sdfm, uint8_t ch_id, uint8_t clk_sourc
  *
  *  \param[in]  h_sdfm          SDFM handle
  *  \param[in]  ch_id           current ch number
- *  \param[in]  clk_source       channel clock inversion 
+ *  \param[in]  clk_inv      channel clock inversion 
  *
  *
  *
