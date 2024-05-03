@@ -22,25 +22,25 @@ Supported controller modules (floating-point)
 
 - Linear PI
 - Linear PID
-- Linear PI with double integrator
+- Linear PI with double integrator (PI2)
 - Direct Form 1 (first order)
+- Direct Form 1 (second order)
 - Direct Form 1 (third order)
 - Direct Form 2 (second order)
 - Direct Form 2 (third order)
-
+- Non-linear PID controller
+  
 Other utility modules:
   
 - Error Handling 
 - Testpoints
 - Data Logging
-
+- Multi-channel data logs
+- Reference Generator and performance index
+  
 ## Features Not Supported
 
-(Compared with C2000Ware's DCL)
-- Fix-point controller modules
-- Non-linear PID controller
-- Reference Generator and performance index
-- Multi-channel data logs
+N/A
 
 ## Benchmark Results
 

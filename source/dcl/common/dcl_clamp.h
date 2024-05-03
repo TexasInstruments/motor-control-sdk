@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (C) 2024 Texas Instruments Incorporated - http://www.ti.com/
  *
  *
  * Redistribution and use in source and binary forms, with or without
@@ -58,10 +58,10 @@ extern "C" {
 _DCL_CODE_ACCESS
 bool DCL_runClamp(float32_t *data, float32_t Umax, float32_t Umin)
 {   
-    float32_t iv = *(data);
+    float32_t orig = *(data);
     *(data) = (*(data) > Umax) ? Umax : *(data);
     *(data) = (*(data) < Umin) ? Umin : *(data);
-    return(((iv < Umax) && (iv > Umin)) ? false : true);
+    return(((orig < Umax) && (orig > Umin)) ? false : true);
 }
 
 //! \brief          Saturates a control variable and returns true if either limit is exceeded 
@@ -74,10 +74,10 @@ bool DCL_runClamp(float32_t *data, float32_t Umax, float32_t Umin)
 _DCL_CODE_ACCESS
 bool DCL_runClampF64(float64_t *data, float64_t Umax, float64_t Umin)
 {
-    float64_t iv = *(data);
+    float64_t orig = *(data);
     *(data) = (*(data) > Umax) ? Umax : *(data);
     *(data) = (*(data) < Umin) ? Umin : *(data);
-    return(((iv < Umax) && (iv > Umin)) ? false : true);
+    return(((orig < Umax) && (orig > Umin)) ? false : true);
 }
 
 //! \brief          Macro to saturate a control variable but does not change the data itself unlike runClamp() 

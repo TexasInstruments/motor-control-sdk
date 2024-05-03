@@ -40,7 +40,7 @@ extern "C"
 
 /**
  *  \defgroup TRANSFORMS_API_MODULE APIs for Transformation Algorithms
- *  \ingroup  RTLIBS_API
+ *  \ingroup  MOTOR_CONTROL_API
  *
  *  Here is the list of motor transformation function APIs
  *  @{
@@ -51,7 +51,11 @@ extern "C"
 
 #include <stdint.h>
 
-typedef float float32_t;
+#ifndef IEEE754_TYPES
+#define IEEE754_TYPES
+typedef float   float32_t;
+typedef double  float64_t;
+#endif // IEEE754_TYPES
 
 #define ONE_OVER_THREE      0.33333333333333f
 #define ONE_OVER_SQRT_THREE 0.57735026918963f

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (C) 2024 Texas Instruments Incorporated - http://www.ti.com/
  *
  *
  * Redistribution and use in source and binary forms, with or without
@@ -103,44 +103,37 @@ typedef struct dcl_css64 {
 //!                 
 //!                 Both DCL_update() and DCL_pendingUpdate() disables global interrupts to ensure a safe update. 
 //!
-typedef enum
+typedef enum dcl_status_bits
 {
-    dcl_sts_none = 0U,                     //!< Status empty
-    dcl_sts_param_update =   (1U << 0),    //!< Parameter update-in-progress flag, high if ongoing parameter update
-    dcl_sts_ctrl_running =   (1U << 1)     //!< Controller operation-in-progress flag, high if operation is in progress
-} dcl_status_bits;
+    DCL_STS_NONE = 0U,                     //!< Status empty
+    DCL_STS_PARAM_UPDATE =   (1U << 0),    //!< Parameter update-in-progress flag, high if ongoing parameter update
+    DCL_STS_CTRL_RUNNING =   (1U << 1),    //!< Controller operation-in-progress flag, high if operation is in progress
+} DCL_status_bits;
 
 //! \brief          Macros to set and clear the update-in-progress flag
 //!
-#define DCL_setUpdateStatus(p)           ((p)->css->sts |= dcl_sts_param_update)
-#define DCL_clearUpdateStatus(p)         ((p)->css->sts &= ~dcl_sts_param_update)
+#define DCL_setUpdateStatus(p)           ((p)->css->sts |= DCL_STS_PARAM_UPDATE)
+#define DCL_clearUpdateStatus(p)         ((p)->css->sts &= ~DCL_STS_PARAM_UPDATE)
 
 //! \brief          Determine whether a parameter update-in-progress flag is set 
 //!
 //! \return         'true' if update status is set, otherwise false
 //!
-#define DCL_getUpdateStatus(p)           (0U != ((p)->css->sts & dcl_sts_param_update))
-
-
-//! \brief          Determine whether a parameter pending-for-update flag is set 
-//!
-//! \return         'true' if pending status is set, otherwise false
-//!
-#define DCL_getPendingStatus(p)          (0U != ((p)->css->sts & dcl_sts_param_pending))
+#define DCL_getUpdateStatus(p)           (0U != ((p)->css->sts & DCL_STS_PARAM_UPDATE))
 
 //! \brief          Macros placed at the beginning and end of the controller
 //!                 so that other functions know a control operation is in
 //!                 progress. Typically only used with complex controllers
 //!                 which may not be atomic.
 //!
-#define DCL_setControllerStatus(p)       ((p)->css->sts |= dcl_sts_ctrl_running)
-#define DCL_clearControllerStatus(p)     ((p)->css->sts &= ~dcl_sts_ctrl_running)
+#define DCL_setControllerStatus(p)       ((p)->css->sts |= DCL_STS_CTRL_RUNNING)
+#define DCL_clearControllerStatus(p)     ((p)->css->sts &= ~DCL_STS_CTRL_RUNNING)
 
 //! \brief          Determine whether a controller operation-in-progress flag is set
 //!
 //! \return         'true' if controller running flag is set, otherwise false
 //!
-#define DCL_getControllerStatus(p)       (0U != ((p)->css->sts & dcl_sts_ctrl_running))
+#define DCL_getControllerStatus(p)       (0U != ((p)->css->sts & DCL_STS_CTRL_RUNNING))
 
 /** @} */
 

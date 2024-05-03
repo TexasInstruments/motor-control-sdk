@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023 Texas Instruments Incorporated
+ *  Copyright (C) 2024 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -52,7 +52,7 @@ extern "C" {
 //! \brief          Defines the library enumerated error codes.
 //!                 These will be applied as bit masks in the error handler
 //!
-typedef enum  
+typedef enum dcl_error_codes
 {
     dcl_none = 0U,                         //!< No error
     dcl_param_range_err =   (1U << 0),     //!< Parameter range exceeded
@@ -62,8 +62,9 @@ typedef enum
     dcl_overflow_err =      (1U << 4),     //!< Numerical overflow
     dcl_underflow_err =     (1U << 5),     //!< Numerical underflow  
     dcl_controller_err =    (1U << 6),     //!< Controller operation not completed
-    dcl_timing_err =        (1U << 7)      //!< Timing error
-} dcl_error_codes;
+    dcl_timing_err =        (1U << 7),     //!< Timing error
+    dcl_comp_err =          (1U << 8)      //!< Computation error
+} DCL_error_codes;
 
 //! \brief            Macro to clear stored error code in CSS
 //!
@@ -106,7 +107,7 @@ typedef enum
 //!
 #define DCL_runErrorHandler(ptr) \
 {                                \
-    if(dcl_none != ptr->css->err)\
+    if(ptr->css->err != dcl_none)\
     {                            \
         DCL_setBreakPoint();     \
         DCL_clearError(ptr);     \
