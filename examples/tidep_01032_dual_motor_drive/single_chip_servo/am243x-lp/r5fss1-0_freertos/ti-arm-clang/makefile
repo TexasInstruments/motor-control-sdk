@@ -40,7 +40,7 @@ TARGETS := $(BOOTIMAGE_NAME)
 FILES_common := \
 	ESL_version.c \
 	ESL_OS_os.c \
-	ESL_eeprom.c \
+	ESL_eeprom_tidep_01032.c \
 	ESL_fileHandling.c \
 	ESL_foeDemo.c \
 	ESL_soeDemo.c \
@@ -52,6 +52,9 @@ FILES_common := \
 	EtherCAT_Slave_CiA402_tidep_01032.c \
 	ESL_cia402Demo_tidep_01032.c \
 	ESL_BOARD_OS_config_tidep_01032.c \
+	nvm.c \
+	nvm_drv_eeprom_tidep_01032.c \
+	nvm_drv_flash.c \
 	ti_drivers_config.c \
 	ti_drivers_open_close.c \
 	ti_board_config.c \
@@ -68,6 +71,11 @@ FILES_PATH_common = \
 	../../../../../../ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/common/os/freertos \
 	../../../../../../ind_comms_sdk/examples/industrial_comms/custom_phy/src \
 	../../../../../../ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/device_profiles/402_cia \
+	../../../../../../ind_comms_sdk/examples/industrial_comms/nvm \
+	../../../../../../ind_comms_sdk/examples/industrial_comms/nvm/app/src \
+	../../../../../../ind_comms_sdk/examples/industrial_comms/nvm/app/inc \
+	../../../../../../ind_comms_sdk/examples/industrial_comms/nvm/drv/src \
+	../../../../../../ind_comms_sdk/examples/industrial_comms/nvm/drv/inc \
 	generated \
 
 INCLUDES_common := \
@@ -87,7 +95,12 @@ INCLUDES_common := \
 	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/common/board/am243lp \
 	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/common/board/am243lp/freertos \
 	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/custom_phy/inc \
+	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/nvm/app/inc \
+	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/nvm/drv/inc \
 	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/source/industrial_comms/ethercat_slave/stack/inc \
+	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/source/industrial_comms/ethercat_slave/stack/inc/defines \
+	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/source/industrial_comms/ethercat_slave/stack/inc/ext \
+	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/source/industrial_comms/ethercat_slave/stack/inc/profiles \
 	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/source/industrial_comms/common/inc \
 	-Igenerated \
 

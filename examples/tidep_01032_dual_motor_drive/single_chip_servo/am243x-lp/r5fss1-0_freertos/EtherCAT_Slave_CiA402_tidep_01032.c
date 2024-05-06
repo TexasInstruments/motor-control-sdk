@@ -11,7 +11,7 @@
  *  Copyright (c) 2021, KUNBUS GmbH<br /><br />
  *  SPDX-License-Identifier: BSD-3-Clause
  *
- *  Copyright (c) 2023 KUNBUS GmbH.
+ *  Copyright (c) 2024 KUNBUS GmbH.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
@@ -367,7 +367,7 @@ static void EC_SLV_APP_CIA_mainTask(void *pArg_p)
 
     if (EC_API_eERR_NONE == retVal)
     {
-        EC_API_SLV_prepareTasks(KBECSLV_PRIO_PDI, KBECSLV_PRIO_LED, KBECSLV_PRIO_SYNC0, KBECSLV_PRIO_SYNC1, KBECSLV_PRIO_EOE);
+        EC_API_SLV_prepareTasks(KBECSLV_PRIO_PDI, KBECSLV_PRIO_LED, KBECSLV_PRIO_SYNC0, KBECSLV_PRIO_SYNC1);
 
         applicationInstance->loopThreadHandle = OSAL_SCHED_startTask(EC_SLV_APP_CIA_loopTask
                                                                     ,applicationInstance
