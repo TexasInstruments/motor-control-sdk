@@ -28,7 +28,7 @@ In general, peripherals or features not mentioned as part of "Features Supported
 
 SysConfig can be used to configure things mentioned below:
 - Selecting the ICSSG instance
-- Selecting the PRUx slice (Tested on ICSSG0-PRU1)
+- Selecting the ICSSG PRU slice (Tested on ICSSG0-PRU1)
 - Configuring PINMUX, GPIO and ICSS clock to 200MHz
 - Channel selection
 - Baud rate selection

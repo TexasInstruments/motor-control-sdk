@@ -105,7 +105,7 @@ void SDFM_configIepCount(sdfm_handle h_sdfm, uint32_t epwm_out_freq);
 
 /**
  *
- *  \brief  Configure ecap parameters for generate 20MHz SD clock
+ *  \brief  Configure ecap parameters for generate SD clock
  *
  *  \param[in]  h_sdfm          SDFM handle
  *  \param[in]  ecap_divider    ecap divider for sdfm clock

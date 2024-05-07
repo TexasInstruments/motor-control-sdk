@@ -5,14 +5,14 @@
 # ICSS SDFM three channel with phase compensation
 
 This example measures phase compensation for %SDFM channel 0 in PRU GPIO mode
-during initialization. Normal current Over-samping Ratio (OSR), Over current OSR and Normal current trigger time can be configured by the user
+during initialization. Normal current Over-sampling Ratio (OSR), Over current OSR and Normal current trigger time can be configured by the user
 
 Only one core - PRU is used for this example.
 
 The example does the below:
 - Configure ICSSG1 IEP0 for generating clock for %SDFM
 - Enable Phase Compensation Measurement
-- Configure SYNC1 Delay register based on the easured phase delay
+- Configure SYNC1 Delay register based on the measured phase delay
 - Set %SDFM channels: Channel 0 - Channel 2
 - Configure normal current sample trigger time (time for read sample) and OSR
 
@@ -123,6 +123,6 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 <tr>
         <td></td>
         <td>5. Compare this time with measured delay(stored in DMEM at offset 0x18)</td>
-        <td>Both value should be same or have a maxumum variation of 1 PRU cycle</td>
+        <td>Both value should be same or have a maximum variation of 1 PRU cycle</td>
 </tr>
 </table>

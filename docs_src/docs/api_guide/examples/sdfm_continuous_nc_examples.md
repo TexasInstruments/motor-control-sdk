@@ -2,7 +2,7 @@
 
 [TOC]
 
-This example does continuous normal current sampling. Normal current over-samping Ratio (OSR) can be configured by the user. There are two different examples based on number of %SDFM channels.
+This example does continuous normal current sampling. Normal current over-sampling Ratio (OSR) can be configured by the user. There are two different examples based on number of %SDFM channels.
 
 # Three Channels with Continuous Mode
 
@@ -224,7 +224,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
  </tr>
  <tr>
         <td></td>
-        <td>7. Test all tese cases from 1 to 5 with EPWM clock</td>
+        <td>7. Test all test cases from 1 to 5 with EPWM clock</td>
         <td></td>
  </tr>
  \endcond
