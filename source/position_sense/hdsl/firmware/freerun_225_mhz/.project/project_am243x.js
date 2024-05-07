@@ -45,9 +45,25 @@ const lflags = {
     ],
 };
 
-let postBuildSteps = [
-    "$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=Hiperface_DSL2_0_RTU -o hdsl_master_icssg_freerun_225_mhz_bin.h hdsl_master_freerun_225_mhz_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out;  $(CCS_INSTALL_DIR)/utils/cygwin/mv  hdsl_master_icssg_freerun_225_mhz_bin.h  ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/hdsl_master_icssg_freerun_225_mhz_bin.h"
-];
+function getmakefilePruPostBuildSteps(cpu, board)
+{
+    return  [
+        "$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=Hiperface_DSL2_0_RTU -o hdsl_master_icssg_freerun_225_mhz_bin.h  hdsl_master_freerun_225_mhz_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+        "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h hdsl_master_icssg_freerun_225_mhz_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/hdsl_master_icssg_freerun_225_mhz_bin.h;"+ 
+        "$(RM) hdsl_master_icssg_freerun_225_mhz_bin.h;"
+    ];
+}
+
+function getccsPruPostBuildSteps(cpu, board)
+{
+    return  [
+        "$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=Hiperface_DSL2_0_RTU -o hdsl_master_icssg_freerun_225_mhz_bin.h  hdsl_master_freerun_225_mhz_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+        "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h hdsl_master_icssg_freerun_225_mhz_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/ hdsl/firmware/hdsl_master_icssg_freerun_225_mhz_bin.h;"+ 
+        "if ${CCS_HOST_OS} == linux rm hdsl_master_icssg_freerun_225_mhz_bin.h;"+
+        "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h hdsl_master_icssg_freerun_225_mhz_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/hdsl_master_icssg_freerun_225_mhz_bin.h;"+ 
+        "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm hdsl_master_icssg_freerun_225_mhz_bin.h;"
+    ];
+}
 
 
 const readmeDoxygenPageTag = "HDSL_DESIGN";
@@ -83,7 +99,8 @@ function getComponentBuildProperty(buildOption) {
     build_property.defines = defines;
     build_property.lflags = lflags;
     build_property.readmeDoxygenPageTag = readmeDoxygenPageTag;
-    build_property.postBuildSteps = postBuildSteps;
+    build_property.ccsPruPostBuildSteps = getccsPruPostBuildSteps(buildOption.cpu, buildOption.board);
+    build_property.makefilePruPostBuildSteps = getmakefilePruPostBuildSteps(buildOption.cpu, buildOption.board);
     build_property.projecspecFileAction = "copy";
     build_property.skipMakefileCcsBootimageGen = true;
 

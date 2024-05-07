@@ -91,7 +91,7 @@ void tamagawa_pruicss_load_run_fw(void)
 {
     PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_PRUx);
     /*Load firmware. Set buffer = write to Pru memory */
-    PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_PRUx),0, (uint32_t *) TamagawaFirmware,sizeof(TamagawaFirmware));
+    PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_PRUx),0, (uint32_t *) TamagawaFirmware_0,sizeof(TamagawaFirmware_0));
     PRUICSS_resetCore(gPruIcssXHandle, PRUICSS_PRUx);
     /*Run firmware */
     PRUICSS_enableCore(gPruIcssXHandle, PRUICSS_PRUx);
@@ -319,7 +319,7 @@ static void tamagawa_display_menu(void)
 uint32_t tamagawa_get_fw_version(void)
 {
     /* Returns the firmware version, depending on Single or Multi-channel configuration */
-    return *((uint32_t *)TamagawaFirmware + 1);
+    return *((uint32_t *)TamagawaFirmware_0 + 1);
 }
 
 static int32_t tamagawa_position_loop_status;
