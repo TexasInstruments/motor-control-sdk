@@ -31,8 +31,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DCL_AUX_H_
-#define _DCL_AUX_H_
+#ifndef _DCL_MACRO_H_
+#define _DCL_MACRO_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,7 +42,7 @@ extern "C" {
  *  \addtogroup DCL_API_MODULE APIs for Digital Control Library
  *  @{
  *  
- *  \file       dcl_aux.h
+ *  \file       dcl_macro.h
  *  \brief      Defines all the auxiliary macros for DCL
  */
 
@@ -99,4 +99,4 @@ extern "C" {
 }
 #endif // extern "C"
 
-#endif // _DCL_AUX_H_
+#endif // _DCL_MACRO_H_
