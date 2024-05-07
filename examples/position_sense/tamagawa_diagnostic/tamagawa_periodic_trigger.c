@@ -66,7 +66,6 @@ void tamagawa_config_iep(struct tamagawa_periodic_interface *tamagawa_periodic_i
     uint32_t cmp_reg0;
     uint32_t cmp_reg1;
     uint32_t event_clear;
-    uint64_t cmp0 = 0;
 
     /*clear IEP*/
     temp = HW_RD_REG8((uint8_t*)pruss_iep + CSL_ICSS_G_PR1_IEP1_SLV_GLOBAL_CFG_REG );
@@ -95,7 +94,6 @@ void tamagawa_config_iep(struct tamagawa_periodic_interface *tamagawa_periodic_i
     HW_WR_REG32((uint8_t*)pruss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP3_REG0,  cmp_reg0);
     HW_WR_REG32((uint8_t*)pruss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP3_REG1,  cmp_reg1);
 
-    cmp0 = tamagawa_periodic_interface->cmp3;
 
     /*clear event*/
     HW_WR_REG8((uint8_t*)pruss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP_STATUS_REG, event_clear);
@@ -103,9 +101,8 @@ void tamagawa_config_iep(struct tamagawa_periodic_interface *tamagawa_periodic_i
     HW_WR_REG8((uint8_t*)pruss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP_CFG_REG, event);
 
     /*configure cmp0 registers*/
-    cmp0 = 2*cmp0;
-    cmp_reg0 = (cmp0 & 0xffffffff) - IEP_DEFAULT_INC;
-    cmp_reg1 = (cmp0>>32 & 0xffffffff);
+    cmp_reg0 = (tamagawa_periodic_interface->cmp0 & 0xffffffff) - IEP_DEFAULT_INC;
+    cmp_reg1 = (tamagawa_periodic_interface->cmp0>>32 & 0xffffffff);
     HW_WR_REG32((uint8_t*)pruss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP0_REG0,  cmp_reg0);
     HW_WR_REG32((uint8_t*)pruss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP0_REG1,  cmp_reg1);
 

@@ -283,6 +283,7 @@ struct tamagawa_priv
     struct register_offsets register_offset_val;    /**< Register offset values based on PRUx slice selection*/
     void *pruss_iep; /**< ICSS IEP base address*/
     uint64_t cmp3; /**< IEP CMP3 reg used in periodic trigger mode*/
+    uint64_t cmp0; /**<IEP CMP0 reg used in periodic trigger mode to reset IEP*/
 };
 
 /* ========================================================================== */

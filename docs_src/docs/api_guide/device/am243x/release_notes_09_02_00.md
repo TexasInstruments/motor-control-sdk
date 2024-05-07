@@ -108,6 +108,13 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> -
     <td> -
 </tr>
+<tr>
+    <td> PINDSW-7756
+    <td> Tamagawa: After stopping periodic trigger mode, firmware gets stuck
+    <td> Position Sense Tamagawa
+    <td> -
+    <td> -
+</tr>
 </table>
 
 ## Known Issues
@@ -244,6 +251,24 @@ earlier SDKs.
     <td>  Structure `SdfmPrms_s`
     <td>  Added sub structures for sdfm parameters: `SdfmClkPrms_s`, `SdfmCompFilterPrms_s`, `SdfmChannelPrms_s`
     <td>  Split SDFM parameters into multiple structures
+</tr>
+<tr>
+    <td>  Position Sense EnDat
+    <td>  Structure `endat_periodic_interface`
+    <td>  Removed `pruicss_cfg` variable, Added a variable: cmp0
+    <td>  
+</tr>
+<tr>
+    <td>  Position Sense Tamagawa
+    <td>  Structure `tamagawa_periodic_interface`
+    <td>  Removed `pruicss_cfg` variable, Added variable: cmp0
+    <td> 
+<tr>
+    <td>  Position Sense BiSS-C
+    <td>  Structure `bissc_periodic_interface`
+    <td>  Removed `pruicss_cfg` variable
+    <td>  Unused variable
+</tr>
 </table>
 
 ### Drivers
@@ -308,5 +333,23 @@ earlier SDKs.
     <td>  \ref SDFM_selectClockSource
     <td>  Updated parameter name and type 
     <td>
+</tr>
+<tr>
+    <td>  Position Sense EnDat
+    <td>  Structure `cmd_supplement`
+    <td>  Added a variable: cmp0
+    <td>  
+</tr>
+<tr>
+    <td>  Position Sense EnDat
+    <td>  Structure `endat_priv`
+    <td>  Added a variable: cmp0
+    <td>  
+</tr>
+<tr>
+    <td>  Position Sense Tamagawa
+    <td>  Structure `tamagawa_priv`
+    <td>  Added a variable: cmp0
+    <td>  
 </tr>
 </table>
