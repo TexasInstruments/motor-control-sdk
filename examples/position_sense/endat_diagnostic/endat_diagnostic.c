@@ -867,12 +867,21 @@ static int32_t endat_get_command_supplement(int32_t cmd,
 
             break;
         case 200:
+        
+           
+            DebugP_log("\r| Enter IEP reset cycle count (must be greater than EnDat cycle time including timeout period, in IEP cycles): ");
+            if(DebugP_scanf("%u\n", &cmd_supplement->cmp0))
+            {
+                DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                return -EINVAL;
+            }
            
             if(gEndat_is_load_share_mode)
-            {   
+            {
+   
                 if(gEndat_multi_ch_mask & (1<<0))
                 {
-                    DebugP_log("\r| Enter IEP cycle count for Channel0: \n");
+                    DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) Channel0: \n");
                     if(DebugP_scanf("%u\n", &cmd_supplement->cmp3) < 0)
                     {
                         DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
@@ -882,7 +891,7 @@ static int32_t endat_get_command_supplement(int32_t cmd,
 
                 if(gEndat_multi_ch_mask & (1<<1))
                 {
-                    DebugP_log("\r| Enter IEP cycle count for Channel1: \n");
+                    DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) Channel1: \n");
                     if(DebugP_scanf("%u\n", &cmd_supplement->cmp5) < 0)
                     {
                         DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
@@ -891,7 +900,7 @@ static int32_t endat_get_command_supplement(int32_t cmd,
                 }
                 if(gEndat_multi_ch_mask & (1<<2))
                 {
-                    DebugP_log("\r| Enter IEP cycle count for Channel2: \n");
+                    DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) Channel2: \n");
                     if(DebugP_scanf("%u\n", &cmd_supplement->cmp6) < 0)
                     {
                         DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
@@ -902,7 +911,7 @@ static int32_t endat_get_command_supplement(int32_t cmd,
             }
             else
             {
-                DebugP_log("\r| Enter IEP cycle count: ");
+                DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles): ");
                 if(DebugP_scanf("%u\n", &cmd_supplement->cmp3) < 0)
                 {
                     DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
@@ -1319,6 +1328,7 @@ static void endat_process_periodic_command(int32_t cmd,
         int32_t status;
         int32_t pos_cmd = 1;
         DebugP_assert(endat_command_process(priv, pos_cmd, NULL) >= 0);
+        priv->cmp0 = cmd_supplement->cmp0;
         if(gEndat_is_load_share_mode)
         {
             priv->cmp3 = gEndat_multi_ch_mask & (1<<0) ? cmd_supplement->cmp3 : 0;
@@ -1338,13 +1348,13 @@ static void endat_process_periodic_command(int32_t cmd,
         }
 
         struct endat_periodic_interface endat_periodic_interface;
-        endat_periodic_interface.pruss_cfg = priv->pruss_cfg;
         endat_periodic_interface.pruss_iep = priv->pruss_iep;
         endat_periodic_interface.pruss_dmem = priv->pruss_xchg;
         endat_periodic_interface.load_share = priv->load_share;
         endat_periodic_interface.cmp3 = priv->cmp3;
         endat_periodic_interface.cmp5 = priv->cmp5;
         endat_periodic_interface.cmp6 = priv->cmp6;
+        endat_periodic_interface.cmp0 = priv->cmp0;
         
         status = endat_config_periodic_mode(&endat_periodic_interface, gPruIcssXHandle);
         DebugP_assert(0 != status);

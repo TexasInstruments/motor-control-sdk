@@ -39,7 +39,6 @@ struct bissc_periodic_interface
 {
   void *pruicss_iep;
   void *pruicss_dmem;
-  void *pruicss_cfg;
   uint64_t cmp3;
 };
 

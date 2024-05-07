@@ -39,8 +39,8 @@ struct endat_periodic_interface
 {
   void *pruss_iep;
   void *pruss_dmem;
-  void *pruss_cfg;
   uint8_t load_share;
+  uint64_t cmp0;
   uint64_t cmp3;
   uint64_t cmp5;
   uint64_t cmp6;

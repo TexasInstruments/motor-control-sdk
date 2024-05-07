@@ -153,6 +153,7 @@ struct endat_priv
     int32_t has_safety;
     void *pruss_cfg;
     void *pruss_iep;
+    uint64_t cmp0;
     uint64_t cmp3;
     uint64_t cmp5;
     uint64_t cmp6;
@@ -173,7 +174,8 @@ struct cmd_supplement
     uint32_t block;
     uint8_t has_block_address;
     uint32_t frequency;
-     uint64_t cmp3;
+    uint64_t cmp0;
+    uint64_t cmp3;
     uint64_t cmp5;
     uint64_t cmp6;
 };

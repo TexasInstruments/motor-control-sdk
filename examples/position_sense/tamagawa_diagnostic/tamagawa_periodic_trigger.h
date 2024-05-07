@@ -41,6 +41,7 @@ struct tamagawa_periodic_interface
   void *pruss_dmem;
   void *pruss_cfg;
   uint64_t cmp3;
+  uint64_t cmp0;
 };
 
 #define IEP_DEFAULT_INC    0x1;

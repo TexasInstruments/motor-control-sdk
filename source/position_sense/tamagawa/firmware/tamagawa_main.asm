@@ -183,7 +183,7 @@ HANDLE_PERIODIC_TRIGGER_MODE:
     ;Get compare event status
     LBCO	&R0,	ICSS_IEP,	ICSS_IEP_CMP_STATUS_REG,	4
     ; wait till IEP CMP3 event
-	QBBC	HANDLE_PERIODIC_TRIGGER_MODE,	R0,	3
+	QBBC	CHECK_OPERATING_MODE,	R0,	3
 	; Clear IEP CMP3 event
 	SET	R0,	R0,	3
     ; store compare event status

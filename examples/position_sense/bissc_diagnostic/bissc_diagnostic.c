@@ -419,7 +419,6 @@ static void bissc_process_periodic_command(struct bissc_priv *priv)
         return;
     }
 
-    bissc_periodic_interface.pruicss_cfg = priv->pruicss_cfg;
     bissc_periodic_interface.pruicss_iep = priv->pruicss_iep;
     bissc_periodic_interface.pruicss_dmem = priv->pruicss_xchg;
     bissc_periodic_interface.cmp3 = priv->cmp3;

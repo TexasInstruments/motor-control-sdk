@@ -56,7 +56,7 @@
 
 const unsigned int TamagawaFirmware[]= {
 0x00000208,
-0x00010000,
+0x00010001,
 0x24000400,
 0x810f0400,
 0x2eff8180,
@@ -82,7 +82,7 @@ const unsigned int TamagawaFirmware[]= {
 0x91001800,
 0x69000007,
 0x91743a80,
-0xcf03e0ff,
+0xcf03e0fd,
 0x1f03e0e0,
 0x81743a80,
 0x24000100,
