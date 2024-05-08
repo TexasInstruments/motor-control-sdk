@@ -244,7 +244,25 @@ earlier SDKs.
     <td>  Current Sense %SDFM
     <td>  Structure `SdfmPrms_s`
     <td>  Added a variable: `icssgInsId`
-    <td>
+    <td>  -
+</tr>
+<tr>
+    <td>  Position Sense BiSS-C
+    <td>  \ref bissc_update_data_len
+    <td>  Changed API parameter: `pru_num` to `ch_num`
+    <td>  -
+</tr>
+<tr>
+    <td>  Position Sense BiSS-C
+    <td>  \ref bissc_generate_ctrl_cmd
+    <td>  Added an API: bissc_generate_ctrl_cmd
+    <td>  Needed to generate Hex equivalent command
+</tr>
+<tr>
+    <td>  Position Sense BiSS-C
+    <td>  Structure `bissc_periodic_interface`
+    <td>  Removed `pruicss_cfg` and `pruicss_dmem` variables, and added variable `cmp0`
+    <td>  Needed for time trigger
 </tr>
 <tr>
     <td>  Current Sense %SDFM
@@ -255,19 +273,14 @@ earlier SDKs.
 <tr>
     <td>  Position Sense EnDat
     <td>  Structure `endat_periodic_interface`
-    <td>  Removed `pruicss_cfg` variable, Added a variable: cmp0
-    <td>  
+    <td>  Removed `pruicss_cfg` variable and added variable `cmp0`
+    <td>  -
 </tr>
 <tr>
     <td>  Position Sense Tamagawa
     <td>  Structure `tamagawa_periodic_interface`
-    <td>  Removed `pruicss_cfg` variable, Added variable: cmp0
-    <td> 
-<tr>
-    <td>  Position Sense BiSS-C
-    <td>  Structure `bissc_periodic_interface`
-    <td>  Removed `pruicss_cfg` variable
-    <td>  Unused variable
+    <td>  Removed `pruicss_cfg` variable and added variable `cmp0`
+    <td>  -
 </tr>
 </table>
 
@@ -309,6 +322,42 @@ earlier SDKs.
     <td> \ref SDFM_init
     <td> Added new parameter: PRU-ICSSG handle.
     <td> -
+</tr>
+<tr>
+    <td> Position Sense BiSS-C
+    <td> Structure `bissc_priv`
+    <td> Added variables: `is_continuous_mode`, `ctrl_write_status[NUM_ED_CH_MAX]`, `ctrl_reg_address[NUM_ED_CH_MAX]`, `ctrl_reg_data[NUM_ED_CH_MAX]`, `ctrl_enc_id[NUM_ED_CH_MAX]`.
+    <td> Required to generate Hex equivalent control command and continuous mode
+</tr>
+<tr>
+    <td> Position Sense BiSS-C
+    <td> \ref bissc_generate_ctrl_cmd
+    <td> Added API: bissc_generate_ctrl_cmd.
+    <td> Required to generate Hex equivalent control command
+</tr>
+<tr>
+    <td> Position Sense BiSS-C
+    <td> \ref bissc_get_totalchannels, \ref bissc_get_current_channel, \ref bissc_clear_data_len
+    <td> Added API: bissc_get_totalchannels, bissc_get_current_channel, bissc_clear_data_len.
+    <td> Required to offload priv variable assignments from examples
+</tr>
+<tr>
+    <td> Position Sense BiSS-C
+    <td> \ref bissc_config_host_trigger, \ref bissc_config_periodic_trigger
+    <td> Updating priv->is_continuous_mode
+    <td> Required for continuous mode
+</tr>
+<tr>
+    <td> Position Sense BiSS-C
+    <td> \ref bissc_command_wait
+    <td> Checking for priv->is_continuous_mode
+    <td> Required for continuous mode
+</tr>
+<tr>
+    <td> Position Sense BiSS-C
+    <td> \ref bissc_set_default_initialization
+    <td> Updating Structure variables: `is_continuous_mode`, `ctrl_reg_address`, `ctrl_enc_id`
+    <td> Required for continuous mode and control command generation
 </tr>
 <tr>
     <td>  Current Sense %SDFM

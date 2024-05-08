@@ -4,7 +4,7 @@
 
 ## Introduction
 
-This design implements BISS-C Receiver (a.k.a subsequent electronics) using the 3 channel peripheral interface available on the TI Sitara™ AM64x/AM243x EVM. The 3 channel peripheral interface is a digital bidirectional serial interface for position encoders, also suited fo safety related applications. Only four signal lines are required, differential pair each for clock and data.
+This design implements BISS-C Receiver (a.k.a subsequent electronics) using the 3 channel peripheral interface available on the TI Sitara™ AM64x/AM243x EVM. The 3 channel peripheral interface is a digital bidirectional serial interface for position encoders, also suited for safety related applications. Only four signal lines are required, differential pair each for clock and data.
 In BISS-C, clock is provided by receiver and data is provided by the encoder. Data is transmitted in synchronism with clock.
 Transfer between receiver and encoder at the physical layer is in accordance with RS485, with transceiver at both ends.
 

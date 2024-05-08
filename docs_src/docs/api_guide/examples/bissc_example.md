@@ -29,12 +29,12 @@ The BISS-C receiver firmware running on ICSS0-PRU1 provides a defined interface.
     <th>Folder/Files
     <th>Description
 </tr>
-<tr><td colspan="2" bgcolor=#F0F0F0> ${SDK_INSTALL_PATH}/examples/motor_control/bissc_diagnostic</td></tr>
+<tr><td colspan="2" bgcolor=#F0F0F0> ${SDK_INSTALL_PATH}/examples/position_sense/bissc_diagnostic</td></tr>
 <tr>
     <td>bissc_diagnostic.c</td>
     <td>BISS-C diagnostic application</td>
 </tr>
-<tr><td colspan="2" bgcolor=#F0F0F0> ${SDK_INSTALL_PATH}/source/motor_control/position_sense/bissc</td></tr>
+<tr><td colspan="2" bgcolor=#F0F0F0> ${SDK_INSTALL_PATH}/source/position_sense/bissc</td></tr>
 <tr>
     <td>firmware/</td>
     <td>Folder containing BISS-C PRU firmware sources.</td>
@@ -57,7 +57,7 @@ The BISS-C receiver firmware running on ICSS0-PRU1 provides a defined interface.
  ^              | PRU1, RTU-PRU1, TXPRU1 (multi channel using three PRUs - load share mode)
  Toolchain      | ti-arm-clang
  Board          | @VAR_LP_BOARD_NAME_LOWER (2 channel and 1 channel examples)
- Example folder | examples/motor_control/bissc_diagnostic
+ Example folder | examples/position_sense/bissc_diagnostic
 
 \endcond
 
@@ -188,6 +188,15 @@ Shown below is a sample output when the application is run:
 		errors, and warnings, along with the result of the control
         communication command.
 		</td>
-        <td>CRC success with ABS, E, W and CRC values of position data along with the control communication result printed in the terminal.</td>
+        <td>CRC success with ABS position value, E, W and CRC values of position data along with the control communication result printed in the terminal.</td>
+    </tr>
+        <tr>
+        <td>3</td>
+        <td>Start periodic continuous mode</td>
+        <td>In this command we will receive:
+		Absolute rotor position value, errors, and warnings periodically.
+        Rotate the rotor of motor and see the changes in Position value on UART. 
+		</td>
+        <td>0 CRC errors with ABS position value, E, W and CRC values printed in the terminal.</td>
     </tr>
 </table>

@@ -175,6 +175,36 @@ void bissc_config_primary_core_mask(struct bissc_priv *priv, uint8_t mask)
     }
 }
 
+uint32_t bissc_get_totalchannels(struct bissc_priv *priv)
+{
+    return priv->totalchannels;
+}
+
+uint32_t bissc_get_current_channel(struct bissc_priv *priv, uint32_t ch_idx)
+{
+    return priv->channel[ch_idx];
+}
+
+void bissc_update_clock_freq(struct bissc_priv *priv, uint32_t frequency)
+{
+    priv->baud_rate = frequency;
+}
+
+void bissc_clear_data_len(struct bissc_priv *priv)
+{
+    uint32_t ch_num, enc_num;
+    for(ch_num = 0; ch_num < NUM_ED_CH_MAX; ch_num++)
+    {
+        priv->num_encoders[ch_num] = 0;
+        for(enc_num = 0; enc_num < NUM_ENCODERS_MAX; enc_num++)
+        {
+            priv->single_turn_len[ch_num][enc_num] = 0;
+            priv->multi_turn_len[ch_num][enc_num] = 0;
+            priv->data_len[ch_num][enc_num] = 0;
+        }
+    }
+}
+
 int32_t bissc_get_pos(struct bissc_priv *priv)
 {
     uint32_t   raw_data0, raw_data1, shift, sl_num, max, ch_num, numencoders, ls_ch;
@@ -570,10 +600,19 @@ static uint8_t bissc_calc_ctrl_crc(uint32_t ctrl_cmd, uint8_t num_bits)
     return crc;
 }
 
-uint32_t bissc_generate_ctrl_cmd(struct bissc_priv *priv, int8_t ls_ch)
+uint32_t bissc_generate_ctrl_cmd(struct bissc_priv *priv,
+                                 int8_t ls_ch,
+                                 uint32_t ctrl_write_status,
+                                 uint32_t ctrl_reg_address,
+                                 uint32_t ctrl_reg_data,
+                                 uint32_t ctrl_enc_id)
 {
     uint32_t ctrl_cmd = 0;
     uint8_t crc;
+    priv->ctrl_write_status[ls_ch] = ctrl_write_status;
+    priv->ctrl_reg_address[ls_ch] = ctrl_reg_address;
+    priv->ctrl_reg_data[ls_ch] = ctrl_reg_data;
+    priv->ctrl_enc_id[ls_ch] = ctrl_enc_id;
     /* CTS bit is 1 for control communication followed by 3-bit encoder ID which describes position of encoder in daisy chain*/
     ctrl_cmd = (BISSC_CTS_BIT << BISSC_ENC_ID_LEN) | (priv->ctrl_enc_id[ls_ch] & BISSC_ENC_ID_MASK);
     /* 7-bit register address given by user*/
@@ -581,7 +620,7 @@ uint32_t bissc_generate_ctrl_cmd(struct bissc_priv *priv, int8_t ls_ch)
     /* 4-bit CRC over CTS + enc ID + reg address bits */
     crc = bissc_calc_ctrl_crc(ctrl_cmd, (BISSC_CTS_BIT + BISSC_ENC_ID_LEN + BISSC_REG_ADDR_LEN));
     ctrl_cmd = (ctrl_cmd << BISSC_CTRL_CMD_CRC_LEN) | (crc & BISSC_CTRL_CMD_CRC_MASK);
-    if(priv->ctrl_write_status[ls_ch])
+    if(priv->ctrl_write_status[ls_ch] == 1)
     {
         /* RWS bits Write Access*/
         ctrl_cmd = (ctrl_cmd << BISSC_RWS_LEN) | BISSC_CTRL_WRITE_ACCESS;
