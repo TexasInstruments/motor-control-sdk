@@ -65,25 +65,26 @@ extern "C" {
 #define BISSC_MAX_PROC_DELAY_5MHZ           200
 #define BISSC_MAX_PROC_DELAY_8MHZ           320
 #define BISSC_MAX_PROC_DELAY_10MHZ          400
-#define BISSC_CTS_BIT                       1   /* CTS bit for control communication */
-#define BISSC_ENC_ID_LEN                    3   /* Number of Encoder ID bits */
-#define BISSC_ENC_ID_MASK                   0x7 /* Mask for encoder ID*/
-#define BISSC_REG_ADDR_LEN                  7   /* Number of bits for Register address */
-#define BISSC_REG_ADDR_MASK                 0x7F/* Mask for Register address */
-#define BISSC_RWS_LEN                       3   /* Number of RWS bits */
-#define BISSC_RWS_MASK                      0x7 /* Mask for RWS bits */
-#define BISSC_CTRL_READ_ACCESS              0x5 /* RWS = "101" for read access of register */
-#define BISSC_CTRL_WRITE_ACCESS             0x3 /* RWS = "011" for write access of register */
-#define BISSC_REG_DATA_LEN                  8   /* Number of Register data bits */
-#define BISSC_REG_DATA_MASK                 0xFF/* Mask for Register data */
-#define BISSC_CTRL_STOP_LEN                 2   /* Number of stop bits PS, P: stop bit for one frame, S: stop bit for sequential control communication */
-#define BISSC_RX_SAMPLE_SIZE                7   /* 8x over clock */
-#define BISSC_RX_SAMPLE_SIZE_10MHZ          3   /* 4x over clock */
-#define BISSC_POS_CRC_LEN                   6   /* Number of position data CRC bits */
-#define BISSC_EW_LEN                        2   /* Number of Error and Warning bits */
-#define BISSC_CTRL_CMD_CRC_LEN              4   /* Number of CTRL cmd CRC bits */
-#define BISSC_CTRL_CMD_CRC_MASK             0xF /* Mask for CTRL cmd CRC bits */
-#define BISSC_POS_DATA_LEN_DEFAULT          12  /* Default data length instead of garbage*/
+#define BISSC_CTS_BIT                       1       /* CTS bit for control communication */
+#define BISSC_ENC_ID_LEN                    3       /* Number of Encoder ID bits */
+#define BISSC_ENC_ID_MASK                   0x7     /* Mask for encoder ID*/
+#define BISSC_REG_ADDR_LEN                  7       /* Number of bits for Register address */
+#define BISSC_REG_ADDR_MASK                 0x7F    /* Mask for Register address */
+#define BISSC_RWS_LEN                       3       /* Number of RWS bits */
+#define BISSC_RWS_MASK                      0x7     /* Mask for RWS bits */
+#define BISSC_CTRL_READ_ACCESS              0x5     /* RWS = "101" for read access of register */
+#define BISSC_CTRL_WRITE_ACCESS             0x3     /* RWS = "011" for write access of register */
+#define BISSC_REG_DATA_LEN                  8       /* Number of Register data bits */
+#define BISSC_REG_DATA_MASK                 0xFF    /* Mask for Register data */
+#define BISSC_CTRL_STOP_LEN                 2       /* Number of stop bits PS, P: stop bit for one frame, S: stop bit for sequential control communication */
+#define BISSC_RX_ENABLE_FRACTIONAL_DIV      (1<<15) /* Enable fractional divider 1.5 for RX */
+#define BISSC_RX_SAMPLE_SIZE                7       /* 8x over clock */
+#define BISSC_RX_SAMPLE_SIZE_10MHZ          3       /* 4x over clock */
+#define BISSC_POS_CRC_LEN                   6       /* Number of position data CRC bits */
+#define BISSC_EW_LEN                        2       /* Number of Error and Warning bits */
+#define BISSC_CTRL_CMD_CRC_LEN              4       /* Number of CTRL cmd CRC bits */
+#define BISSC_CTRL_CMD_CRC_MASK             0xF     /* Mask for CTRL cmd CRC bits */
+#define BISSC_POS_DATA_LEN_DEFAULT          12      /* Default data length instead of garbage*/
 /* Allowed frequencies in MHz for BiSSC */
 #define BISSC_FREQ_1MHZ                     1
 #define BISSC_FREQ_2MHZ                     2

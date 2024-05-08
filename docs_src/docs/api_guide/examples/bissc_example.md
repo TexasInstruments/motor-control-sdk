@@ -3,8 +3,8 @@
 
 BISS-C diagnostic application does the following:
 
-- Configures pinmux, GPIO, UART, ICSS clock to 200MHz,
-- Initializes ICSS0-PRU1,
+- Configures pinmux, GPIO, UART, ICSS clock to 200MHz (default is 200 MHz, 300 MHz can also be used)
+- Initializes ICSS0-PRU1
 - Initializes defalt parameters, loads the PRU firmware & executes it.
 
 This application is controlled with a terminal interface using a serial over USB connection between the PC host and the EVM.
@@ -14,6 +14,8 @@ To configure, select the serial port corresponding to the port emulated over USB
 The host serial port should be configured to 115200 baud, no parity, 1 stop bit and no flow control.
 
 The BISS-C receiver firmware running on ICSS0-PRU1 provides a defined interface. The BISS-C diagnostic application interacts with the BISS-C receiver firmware interface. It then presents the user with menu options to select Data ID code. The application collects the data entered by the user and configures the relevant interface. Then via the BISS-C receiver interface, the command is triggered. Once the command completion is indicated by the interface, the status of the transaction is checked. If the Status indicates success, the result is presented to the user.
+
+\note BiSS-C firmware will only run with ICSSG Core Clock running at 200 MHz or 300 MHz frequency. 225/250/333 MHz values are not supported due to clock divider requirements.
 
 ## Channel Selection In Sysconfig
 

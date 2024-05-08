@@ -420,27 +420,46 @@ int32_t bissc_calc_clock(struct bissc_priv *priv, struct bissc_clk_cfg *clk_cfg)
 {
     uint32_t freq = priv->baud_rate;
     clk_cfg->rx_div_attr = BISSC_RX_SAMPLE_SIZE;
-    if((freq == BISSC_FREQ_1MHZ) || (freq == BISSC_FREQ_5MHZ))
-    {
-        freq = freq * 1000 * 1000;
-        clk_cfg->tx_div = (priv->core_clk_freq / freq) - 1;
-        clk_cfg->rx_div = (priv->core_clk_freq / (freq * 8)) - 1;
-        clk_cfg->is_core_clk = 1;
-    }
-    else if((freq == BISSC_FREQ_2MHZ) || (freq == BISSC_FREQ_8MHZ))
+
+    if((freq == BISSC_FREQ_1MHZ) || (freq == BISSC_FREQ_2MHZ) || (freq == BISSC_FREQ_8MHZ))
     {
         freq = freq * 1000 * 1000;
         clk_cfg->tx_div = (priv->uart_clk_freq / freq) - 1;
         clk_cfg->rx_div = (priv->uart_clk_freq / (freq * 8)) - 1;
         clk_cfg->is_core_clk = 0;
     }
+    else if(freq == BISSC_FREQ_5MHZ)
+    {
+        freq = freq * 1000 * 1000;
+        clk_cfg->tx_div = (priv->core_clk_freq / freq) - 1;
+        clk_cfg->is_core_clk = 1;
+        if(priv->core_clk_freq == (300 * 1000 * 1000))
+        {
+            /* For 300MHz using fraction factor */
+            clk_cfg->rx_div = ((priv->core_clk_freq / (freq * 8 * 1.5)) - 1);
+            clk_cfg->rx_div_attr = clk_cfg->rx_div_attr | BISSC_RX_ENABLE_FRACTIONAL_DIV;
+        }
+        else
+        {
+            clk_cfg->rx_div = ((priv->core_clk_freq / (freq * 8)) - 1);
+        }
+    }
     else if(freq == BISSC_FREQ_10MHZ)
     {
         freq = freq* 1000 * 1000;
         clk_cfg->tx_div = (priv->core_clk_freq / freq) - 1;
-        clk_cfg->rx_div = (priv->core_clk_freq / (freq * 4)) - 1;
         clk_cfg->is_core_clk = 1;
         clk_cfg->rx_div_attr = BISSC_RX_SAMPLE_SIZE_10MHZ;
+        if(priv->core_clk_freq == (300 * 1000 * 1000))
+        {
+            /* For 300MHz using fraction factor */
+            clk_cfg->rx_div = ((priv->core_clk_freq / (freq * 4 * 1.5)) - 1);
+            clk_cfg->rx_div_attr = clk_cfg->rx_div_attr | BISSC_RX_ENABLE_FRACTIONAL_DIV;
+        }
+        else
+        {
+            clk_cfg->rx_div = ((priv->core_clk_freq / (freq * 4)) - 1);
+        }
     }
     else
     {
