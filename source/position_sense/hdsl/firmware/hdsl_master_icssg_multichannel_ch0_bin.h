@@ -1,56 +1,35 @@
 /*
+ *  Copyright (C) 2024 Texas Instruments Incorporated
  *
- * Copyright (c) 2021-2024, Texas Instruments Incorporated
- * All rights reserved not granted herein.
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
  *
- * Limited License.
+ *    Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
  *
- * Texas Instruments Incorporated grants a world-wide, royalty-free,
- * non-exclusive license under copyrights and patents it now or hereafter
- * owns or controls to make, have made, use, import, offer to sell and sell ("Utilize")
- * this software subject to the terms herein.  With respect to the foregoing patent
- * license, such license is granted  solely to the extent that any such patent
- * is necessary  to Utilize the software alone.  The patent license shall not apply to any
- * combinations which include this software, other than combinations with devices
- * manufactured by or for TI ('TI Devices'). No hardware patent is licensed hereunder.
+ *    Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the
+ *    distribution.
  *
- * Redistributions must preserve existing copyright notices and reproduce this license
- * (including the above copyright notice and the disclaimer and (if applicable) source
- * code license limitations below) in the documentation and/or other materials provided
- * with the distribution
+ *    Neither the name of Texas Instruments Incorporated nor the names of
+ *    its contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * Redistribution and use in binary form, without modification, are permitted provided
- * that the following conditions are met:
- *       No reverse engineering, decompilation, or disassembly of this software is
- *       permitted with respect to any software provided in binary form.
- *       Any redistribution and use are licensed by TI for use only with TI Devices.
- *       Nothing shall obligate TI to provide you with source code for the software
- *   licensed and provided to you in object code.
- *
- * If software source code is provided to you, modification and redistribution of the
- * source code are permitted provided that the following conditions are met:
- *       Any redistribution and use of the source code, including any resulting derivative works,
- *   are licensed by TI for use only with TI Devices.
- *       Any redistribution and use of any object code compiled from the source code and
- *   any resulting derivative works, are licensed by TI for use only with TI Devices.
- *
- * Neither the name of Texas Instruments Incorporated nor the names of its suppliers
- * may be used to endorse or  promote products derived from this software without
- * specific prior written permission.
- *
- * DISCLAIMER.
- *
- * THIS SOFTWARE IS PROVIDED BY TI AND TI'S LICENSORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL TI AND
- * TI'S LICENSORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
- * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ *  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ *  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ *  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0x91003c82,
 0x1308e2e2,
@@ -418,7 +397,7 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0x23024add,
 0x2400ff1e,
 0x2400ff1e,
-0x2105a900,
+0x2105a300,
 0x51000c1e,
 0x51015b04,
 0x100c0c02,
@@ -739,7 +718,7 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0x24003001,
 0xd1066b0e,
 0x2400010d,
-0x23059bd1,
+0x230595d1,
 0x68ab8d45,
 0x13803b3b,
 0x913d1880,
@@ -752,7 +731,7 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0x81531800,
 0x7900003b,
 0x2400020d,
-0x23059bd1,
+0x230595d1,
 0x688b8d38,
 0x8137184b,
 0x13803b3b,
@@ -795,7 +774,7 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0x1d09c4c4,
 0x2400040d,
 0x24003001,
-0x23059bd1,
+0x230595d1,
 0x15ff8d9c,
 0x69005c34,
 0x51009c33,
@@ -1213,7 +1192,7 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0x9101185b,
 0x51005b0e,
 0x7900000d,
-0x2306ddd1,
+0x2306d7d1,
 0x91dc388c,
 0x240000e2,
 0x91e21882,
@@ -1221,7 +1200,7 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0x100c0c2a,
 0x106c6c4a,
 0x102c2c6a,
-0x2306ddd1,
+0x2306d7d1,
 0x0b01e2e2,
 0x0501e2e2,
 0x4f00e2ff,
@@ -1339,7 +1318,7 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0x0b077200,
 0x12001313,
 0x0901f2f2,
-0x2306d1d1,
+0x2306cbd1,
 0x510e6509,
 0x24002c79,
 0x31020002,
@@ -1369,7 +1348,7 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0x24001b8d,
 0x2301449d,
 0x2300049d,
-0x2306d1d1,
+0x2306cbd1,
 0x6f010ded,
 0x05012525,
 0x4f0025fa,
@@ -1377,7 +1356,7 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0x24001c8d,
 0x2301449d,
 0x2300049d,
-0x2306d1d1,
+0x2306cbd1,
 0x6f010de3,
 0x05012525,
 0x4f0025fa,
@@ -1420,7 +1399,7 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0x24000087,
 0x2301d5d1,
 0x91831800,
-0x6b05001c,
+0x6b050016,
 0x24001d8d,
 0x2301449d,
 0xd105ff00,
@@ -1466,7 +1445,7 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0x1d007e7e,
 0x2301e9d1,
 0x2301d5d1,
-0x21067400,
+0x21066e00,
 0x91831821,
 0xc9002104,
 0x240000e0,
@@ -1481,12 +1460,6 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0xf1820001,
 0x6f0101fd,
 0x209d0000,
-0x91043880,
-0x1e0d8080,
-0x81041880,
-0xc80dc002,
-0x2400229f,
-0x20d10000,
 0x240278e2,
 0x100d0d40,
 0x2400008d,
@@ -1631,7 +1604,7 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0x108787c7,
 0x04c98087,
 0x108080c9,
-0x230653d1,
+0x23064dd1,
 0x108b8b9d,
 0x91501800,
 0x1f03e0e0,
@@ -1654,7 +1627,7 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0x108787c7,
 0x04c98087,
 0x108080c9,
-0x230653d1,
+0x23064dd1,
 0x91983880,
 0x10eeeee1,
 0x24000061,
@@ -1768,11 +1741,11 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0x230210d1,
 0x1d03c4c4,
 0x2301d5d1,
-0x2305fb9d,
+0x2305f59d,
 0x05014545,
 0x51074512,
 0x49004502,
-0x2106c300,
+0x2106bd00,
 0x23024add,
 0x2400ff1e,
 0x2400001e,
@@ -1814,3 +1787,4 @@ const uint32_t Hiperface_DSL2_0_RTU_0[] = {
 0x56e1f4ff,
 0x04e1f4f4,
 0x20d10000};
+

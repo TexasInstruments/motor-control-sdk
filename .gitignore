@@ -24,6 +24,7 @@ docs/datasheet*
 *.tiimage
 *.tiimage.hs
 *-fw
+*.obj
 *.vscode/
 temp_stdout_*.txt
 ccs_projects/

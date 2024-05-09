@@ -55,10 +55,27 @@ const buildOptionCombos = [
     { device: device, cpu: "icssg0-pru1", cgt: "ti-pru-cgt", board: "am243x-evm", os: "fw"},
 ];
 
-let postBuildSteps = [
-    "$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=BiSSFirmwareMulti -o bissc_receiver_multi_bin.h bissc_peripheral_interface_multi_ch_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out; mv bissc_receiver_multi_bin.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware/bissc_receiver_multi_bin.h;"
+function getmakefilePruPostBuildSteps(cpu, board)
+{
+    return  [
+        "$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=BiSSFirmwareMulti -o bissc_receiver_multi_bin.h bissc_peripheral_interface_multi_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+        "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h bissc_receiver_multi_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware/bissc_receiver_multi_bin.h;"+ 
+        "$(RM) bissc_receiver_multi_bin.h;"
+    ];
+}
 
-];
+function getccsPruPostBuildSteps(cpu, board)
+{
+    return  [
+        "$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=BiSSFirmwareMulti -o bissc_receiver_multi_bin.h bissc_peripheral_interface_multi_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+        "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h bissc_receiver_multi_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware/bissc_receiver_multi_bin.h;"+ 
+        "if ${CCS_HOST_OS} == linux rm bissc_receiver_multi_bin.h;"+
+        "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h bissc_receiver_multi_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware/bissc_receiver_multi_bin.h;"+ 
+        "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm bissc_receiver_multi_bin.h;"
+    ];
+}
+
+
 function getComponentProperty() {
     let property = {};
 
@@ -73,7 +90,6 @@ function getComponentProperty() {
     property.pru_linker_file = "linker";
     property.isSkipTopLevelBuild = true;
     property.skipUpdatingTirex = true;
-    property.postBuildSteps = postBuildSteps;
     return property;
 }
 
@@ -89,6 +105,8 @@ function getComponentBuildProperty(buildOption) {
     build_property.readmeDoxygenPageTag = readmeDoxygenPageTag;
     build_property.projecspecFileAction = "copy";
     build_property.skipMakefileCcsBootimageGen = true;
+    build_property.ccsPruPostBuildSteps = getccsPruPostBuildSteps(buildOption.cpu, buildOption.board);
+    build_property.makefilePruPostBuildSteps = getmakefilePruPostBuildSteps(buildOption.cpu, buildOption.board);
 
     return build_property;
 }
