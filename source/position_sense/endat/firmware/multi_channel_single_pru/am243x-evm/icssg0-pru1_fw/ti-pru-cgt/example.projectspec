@@ -44,6 +44,7 @@
         linkerBuildOptions="
             -m=endat_peripheral_interface_multi_ch.${ConfigName}.map
             --disable_auto_rts
+            --diag_suppress=10063-D
             --entry_point=ENDAT_INIT
             --disable_auto_rts
         "

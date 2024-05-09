@@ -261,6 +261,38 @@
             "example"
         ],
         "resourceSubClass": [
+            "example.general"
+        ],
+        "description": "An Example of tamagawa single channel with soc uart CPU is R5FSS0-0 running FREERTOS.",
+        "name": "tamagawa_diagnostic_soc_uart",
+        "location": "../../examples/position_sense/tamagawa_diagnostic_over_soc_uart/am263x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "LP-AM263"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "position_sense",
+            "tamagawa_diagnostic_over_soc_uart",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
             "example.gettingstarted"
         ],
         "description": "A simple test vector of ClARKE-PARK-IPARK-SVGEN data verification CPU is R5FSS0-0 running NORTOS.",
@@ -374,38 +406,6 @@
         "subCategories": [
             "transforms",
             "transforms_test",
-            "r5fss0-0_freertos"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ]
-    },
-    {
-        "resourceType": "project.ccs",
-        "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
-        ],
-        "description": "An Example of tamagawa single channel with soc uart CPU is R5FSS0-0 running FREERTOS.",
-        "name": "tamagawa_diagnostic_soc_uart",
-        "location": "../../examples/position_sense/tamagawa_diagnostic_over_soc_uart/am263x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
-        "devtools": [
-            "LP-AM263"
-        ],
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
-        "subCategories": [
-            "position_sense",
-            "tamagawa_diagnostic_over_soc_uart",
             "r5fss0-0_freertos"
         ],
         "mainCategories": [

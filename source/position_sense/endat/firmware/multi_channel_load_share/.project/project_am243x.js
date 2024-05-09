@@ -60,6 +60,7 @@ const cflags = {
 
 const lflags = {
     common: [
+        "--diag_suppress=10063-D", /* Added to suppress entry_point related warning */
         "--entry_point=ENDAT_INIT",
         "--disable_auto_rts",
     ],
