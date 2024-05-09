@@ -64,7 +64,7 @@ $(OBJDIR)/%.obj %.obj: $(ASM_SRCS)
 tamagawa_multi_channel_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.out: $(OBJS) $(CMD_SRCS)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: PRU Linker'
-	"$(CGT_TI_PRU_PATH)/bin/clpru" -DICSSG0 -DPRU1 -DSLICE1 -v4 -v4 --define=SOC_AM64X --define=ENABLE_MULTI_CHANNEL  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little -z -m"tamagawa_multi_channel_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.map" --disable_auto_rts   --diag_wrap=off --display_error_number --warn_sections --xml_link_info="tamagawa_multi_channel_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_linkInfo.xml" --disable_auto_rts --entry_point=TAMAGAWA_INIT --disable_auto_rts  --rom_model -o "tamagawa_multi_channel_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.out" $^
+	"$(CGT_TI_PRU_PATH)/bin/clpru" -DICSSG0 -DPRU1 -DSLICE1 -v4 -v4 --define=SOC_AM64X --define=ENABLE_MULTI_CHANNEL  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little -z -m"tamagawa_multi_channel_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.map" --disable_auto_rts   --diag_wrap=off --display_error_number --warn_sections --xml_link_info="tamagawa_multi_channel_am64x-evm_icssg0-pru1_fw_ti-pru-cgt_linkInfo.xml" --disable_auto_rts --diag_suppress=10063-D --entry_point=TAMAGAWA_INIT --disable_auto_rts  --rom_model -o "tamagawa_multi_channel_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.out" $^
 	@echo 'Finished building target: "$@"'
 	@echo ' '
 	@$(MAKE) --no-print-directory post-build

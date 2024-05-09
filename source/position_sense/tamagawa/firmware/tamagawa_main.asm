@@ -66,7 +66,7 @@ RET2	.macro
 
 	.include "tamagawa_icss_reg_defs.h"
 	.include "tamagawa_interface.h"
-	.include "..\..\..\..\mcu_plus_sdk\source\pru_io\firmware\common\icss_regs.inc"
+	.include "../../../../mcu_plus_sdk/source/pru_io/firmware/common/icss_regs.inc"
 	.include "single_ch_receive_frames.h"
 	.include "multi_ch_receive_frames.h"
     .include "firmware_version.h"
