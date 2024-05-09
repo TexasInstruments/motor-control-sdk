@@ -103,17 +103,24 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
 </tr>
 <tr>
     <td> PINDSW-7595
-    <td> %SDFM: \ref SDFM_init API does not have support for icssg1
+    <td> %SDFM: \ref SDFM_init API does not have support for ICSSG1
     <td> Current Sense %SDFM
-    <td> -
+    <td> 9.0 onwards
     <td> -
 </tr>
 <tr>
     <td> PINDSW-7756
     <td> Tamagawa: After stopping periodic trigger mode, firmware gets stuck
     <td> Position Sense Tamagawa
+    <td> 9.1
     <td> -
-    <td> -
+</tr>
+<tr>
+    <td> PINDSW-7758
+    <td> BiSS-C: Firmware does not work when changing ICSSG Core Clock Frequency to 300 MHz
+    <td> Position Sense BiSS-C
+    <td> 9.1
+    <td> Clock dividers for Three Channel Peripheral Interface were not being set correctly for 300 MHz
 </tr>
 </table>
 

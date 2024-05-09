@@ -40,6 +40,7 @@ SysConfig can be used to configure things mentioned below:
 - Channel selection.
 - Selecting Multi Channel with Encoders of Different Make using load share mode.
 
+\note BiSS-C firmware will only run with ICSSG Core Clock running at 200 MHz or 300 MHz frequency. 225/250/333 MHz values are not supported due to clock divider requirements.
 
 ## BISS-C Design
 
