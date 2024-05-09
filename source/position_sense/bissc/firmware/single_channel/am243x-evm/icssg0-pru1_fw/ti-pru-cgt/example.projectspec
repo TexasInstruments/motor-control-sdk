@@ -43,6 +43,7 @@
         linkerBuildOptions="
             -m=bissc_peripheral_interface_single_ch.${ConfigName}.map
             --disable_auto_rts
+            --diag_suppress=10063-D
             --entry_point=BISSC_INIT
             --disable_auto_rts
         "

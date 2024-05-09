@@ -29,15 +29,12 @@ const includes = {
 const defines_rtu = {
     common: [
         "ENABLE_MULTI_MAKE_RTU",
-
     ],
 
 };
 const defines_pru = {
     common: [
-
         "ENABLE_MULTI_MAKE_PRU",
-
     ],
 
 };
@@ -45,10 +42,7 @@ const defines_txpru = {
     common: [
         "ENABLE_MULTI_MAKE_TXPRU",
     ],
-
 };
-
-
 
 const readmeDoxygenPageTag = "BISSC_DESIGN";
 
@@ -60,11 +54,11 @@ const cflags = {
 
 const lflags = {
     common: [
+        "--diag_suppress=10063-D", /* Added to suppress entry_point related warning */
         "--entry_point=BISSC_INIT",
         "--disable_auto_rts",
     ],
 };
-
 
 const buildOptionCombos = [
     { device: device, cpu: "icssg0-pru1", cgt: "ti-pru-cgt", board: "am243x-evm", os: "fw"},
