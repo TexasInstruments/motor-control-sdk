@@ -48,6 +48,7 @@
             -m=hdsl_master_multichannel_ch1.${ConfigName}.map
             --disable_auto_rts
             --disable_auto_rts
+            --diag_suppress=10063-D
             --entry_point=main
         "
 

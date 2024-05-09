@@ -41,6 +41,7 @@ const defines = {
 const lflags = {
     common: [
         "--disable_auto_rts",
+        "--diag_suppress=10063-D", /* Added to suppress entry_point related warning */
         "--entry_point=main",
     ],
 };
