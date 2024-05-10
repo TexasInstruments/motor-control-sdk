@@ -1,0 +1,808 @@
+/**
+ * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
+ * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
+ * @cliArgs --device "AM263x_beta" --package "ZCZ" --part "AM263x" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@09.01.00"
+ * @versions {"tool":"1.20.0+3587"}
+ */
+
+/**
+ * Import the modules used in this configuration.
+ */
+const adc             = scripting.addModule("/drivers/adc/adc", {}, false);
+const adc1            = adc.addInstance();
+const adc2            = adc.addInstance();
+const adc3            = adc.addInstance();
+const adc4            = adc.addInstance();
+const adc5            = adc.addInstance();
+const cmpss           = scripting.addModule("/drivers/cmpss/cmpss", {}, false);
+const cmpss1          = cmpss.addInstance();
+const cmpss2          = cmpss.addInstance();
+const cmpss3          = cmpss.addInstance();
+const ecap            = scripting.addModule("/drivers/ecap/ecap", {}, false);
+const ecap1           = ecap.addInstance();
+const ecap2           = ecap.addInstance();
+const ecap3           = ecap.addInstance();
+const edma            = scripting.addModule("/drivers/edma/edma", {}, false);
+const edma1           = edma.addInstance();
+const epwm            = scripting.addModule("/drivers/epwm/epwm", {}, false);
+const epwm1           = epwm.addInstance();
+const epwm2           = epwm.addInstance();
+const epwm3           = epwm.addInstance();
+const eqep            = scripting.addModule("/drivers/eqep/eqep", {}, false);
+const eqep1           = eqep.addInstance();
+const gpio            = scripting.addModule("/drivers/gpio/gpio", {}, false);
+const gpio1           = gpio.addInstance();
+const gpio2           = gpio.addInstance();
+const gpio3           = gpio.addInstance();
+const gpio4           = gpio.addInstance();
+const gpio5           = gpio.addInstance();
+const gpio6           = gpio.addInstance();
+const gpio7           = gpio.addInstance();
+const gpio8           = gpio.addInstance();
+const i2c             = scripting.addModule("/drivers/i2c/i2c", {}, false);
+const i2c1            = i2c.addInstance();
+const mcan            = scripting.addModule("/drivers/mcan/mcan", {}, false);
+const mcan1           = mcan.addInstance();
+const mcspi           = scripting.addModule("/drivers/mcspi/mcspi", {}, false);
+const mcspi1          = mcspi.addInstance();
+const mcspi2          = mcspi.addInstance();
+const uart            = scripting.addModule("/drivers/uart/uart", {}, false);
+const uart1           = uart.addInstance();
+const debug_log       = scripting.addModule("/kernel/dpl/debug_log");
+const mpu_armv7       = scripting.addModule("/kernel/dpl/mpu_armv7", {}, false);
+const mpu_armv71      = mpu_armv7.addInstance();
+const mpu_armv72      = mpu_armv7.addInstance();
+const mpu_armv73      = mpu_armv7.addInstance();
+const mpu_armv74      = mpu_armv7.addInstance();
+const mpu_armv75      = mpu_armv7.addInstance();
+const mpu_armv76      = mpu_armv7.addInstance();
+const timer           = scripting.addModule("/kernel/dpl/timer", {}, false);
+const timer1          = timer.addInstance();
+const default_linker  = scripting.addModule("/memory_configurator/default_linker", {}, false);
+const default_linker1 = default_linker.addInstance();
+const general         = scripting.addModule("/memory_configurator/general", {}, false);
+const general1        = general.addInstance();
+const region          = scripting.addModule("/memory_configurator/region", {}, false);
+const region1         = region.addInstance();
+const section         = scripting.addModule("/memory_configurator/section", {}, false);
+const section1        = section.addInstance();
+const section2        = section.addInstance();
+const section3        = section.addInstance();
+const section4        = section.addInstance();
+const section5        = section.addInstance();
+const section6        = section.addInstance();
+const section7        = section.addInstance();
+const section8        = section.addInstance();
+const section9        = section.addInstance();
+const section10       = section.addInstance();
+const section11       = section.addInstance();
+const section12       = section.addInstance();
+const section13       = section.addInstance();
+const section14       = section.addInstance();
+const section15       = section.addInstance();
+const epwm_xbar       = scripting.addModule("/xbar/epwm_xbar/epwm_xbar", {}, false);
+const epwm_xbar1      = epwm_xbar.addInstance();
+const input_xbar      = scripting.addModule("/xbar/input_xbar/input_xbar", {}, false);
+const input_xbar1     = input_xbar.addInstance();
+const input_xbar2     = input_xbar.addInstance();
+const input_xbar3     = input_xbar.addInstance();
+const int_xbar        = scripting.addModule("/xbar/int_xbar/int_xbar", {}, false);
+const int_xbar1       = int_xbar.addInstance();
+
+/**
+ * Write custom configuration values to the imported modules.
+ */
+adc1.$name               = "CONFIG_ADC0";
+adc1.adcClockPrescaler   = "ADC_CLK_DIV_2_0";
+adc1.enableConverter     = true;
+adc1.socHighPriorityMode = "ADC_PRI_ALL_HIPRI";
+adc1.soc0Trigger         = "ADC_TRIGGER_EPWM3_SOCA";
+adc1.soc1Channel         = "ADC_CH_ADCIN2";
+adc1.soc1Trigger         = "ADC_TRIGGER_EPWM3_SOCA";
+adc1.interruptPulseMode  = "ADC_PULSE_END_OF_CONV";
+adc1.ppb1SOCNumber       = "ADC_SOC_NUMBER2";
+adc1.ppb2SOCNumber       = "ADC_SOC_NUMBER2";
+adc1.ppb3SOCNumber       = "ADC_SOC_NUMBER2";
+adc1.ppb4SOCNumber       = "ADC_SOC_NUMBER2";
+adc1.enableInterrupt1    = true;
+adc1.interrupt1SOCSource = "ADC_SOC_NUMBER1";
+adc1.ADC.$assign         = "ADC0";
+adc1.ADC.AIN0.$used      = false;
+adc1.ADC.AIN1.$used      = false;
+adc1.ADC.AIN2.$assign    = "ADC0_AIN2";
+adc1.ADC.AIN3.$used      = false;
+adc1.ADC.AIN4.$used      = false;
+adc1.ADC.AIN5.$used      = false;
+
+adc2.$name               = "CONFIG_ADC1";
+adc2.adcClockPrescaler   = "ADC_CLK_DIV_2_0";
+adc2.enableConverter     = true;
+adc2.socHighPriorityMode = "ADC_PRI_ALL_HIPRI";
+adc2.soc0Channel         = "ADC_CH_ADCIN2";
+adc2.soc0Trigger         = "ADC_TRIGGER_EPWM3_SOCA";
+adc2.ppb2SOCNumber       = "ADC_SOC_NUMBER2";
+adc2.ppb3SOCNumber       = "ADC_SOC_NUMBER2";
+adc2.ppb4SOCNumber       = "ADC_SOC_NUMBER2";
+adc2.interruptPulseMode  = "ADC_PULSE_END_OF_CONV";
+adc2.ADC.$assign         = "ADC1";
+adc2.ADC.AIN0.$used      = false;
+adc2.ADC.AIN1.$used      = false;
+adc2.ADC.AIN2.$assign    = "ADC1_AIN2";
+adc2.ADC.AIN3.$used      = false;
+adc2.ADC.AIN4.$used      = false;
+adc2.ADC.AIN5.$used      = false;
+
+adc3.$name               = "CONFIG_ADC2";
+adc3.adcClockPrescaler   = "ADC_CLK_DIV_2_0";
+adc3.socHighPriorityMode = "ADC_PRI_ALL_HIPRI";
+adc3.enableConverter     = true;
+adc3.soc0Channel         = "ADC_CH_ADCIN2";
+adc3.soc0Trigger         = "ADC_TRIGGER_EPWM3_SOCA";
+adc3.soc1Channel         = "ADC_CH_ADCIN1";
+adc3.soc1Trigger         = "ADC_TRIGGER_EPWM3_SOCA";
+adc3.ppb2SOCNumber       = "ADC_SOC_NUMBER2";
+adc3.ppb3SOCNumber       = "ADC_SOC_NUMBER2";
+adc3.ppb4SOCNumber       = "ADC_SOC_NUMBER2";
+adc3.ADC.$assign         = "ADC2";
+adc3.ADC.AIN0.$used      = false;
+adc3.ADC.AIN1.$assign    = "ADC2_AIN1";
+adc3.ADC.AIN2.$assign    = "ADC2_AIN2";
+adc3.ADC.AIN3.$used      = false;
+adc3.ADC.AIN4.$used      = false;
+adc3.ADC.AIN5.$used      = false;
+
+adc4.$name               = "CONFIG_ADC3";
+adc4.adcClockPrescaler   = "ADC_CLK_DIV_2_0";
+adc4.socHighPriorityMode = "ADC_PRI_ALL_HIPRI";
+adc4.enableConverter     = true;
+adc4.soc3Channel         = "ADC_CH_ADCIN2";
+adc4.soc0Channel         = "ADC_CH_ADCIN2";
+adc4.soc0Trigger         = "ADC_TRIGGER_EPWM3_SOCA";
+adc4.soc1Trigger         = "ADC_TRIGGER_EPWM3_SOCA";
+adc4.soc1Channel         = "ADC_CH_ADCIN1";
+adc4.ppb2SOCNumber       = "ADC_SOC_NUMBER2";
+adc4.ppb3SOCNumber       = "ADC_SOC_NUMBER2";
+adc4.ppb4SOCNumber       = "ADC_SOC_NUMBER2";
+adc4.ADC.$assign         = "ADC3";
+adc4.ADC.AIN0.$used      = false;
+adc4.ADC.AIN1.$assign    = "ADC3_AIN1";
+adc4.ADC.AIN2.$assign    = "ADC3_AIN2";
+adc4.ADC.AIN3.$used      = false;
+adc4.ADC.AIN4.$used      = false;
+adc4.ADC.AIN5.$used      = false;
+
+adc5.$name               = "CONFIG_ADC4";
+adc5.adcClockPrescaler   = "ADC_CLK_DIV_2_0";
+adc5.socHighPriorityMode = "ADC_PRI_ALL_HIPRI";
+adc5.enableConverter     = true;
+adc5.soc0Trigger         = "ADC_TRIGGER_EPWM3_SOCA";
+adc5.soc1Channel         = "ADC_CH_ADCIN1";
+adc5.soc1Trigger         = "ADC_TRIGGER_EPWM3_SOCA";
+adc5.ppb1SOCNumber       = "ADC_SOC_NUMBER2";
+adc5.ppb2SOCNumber       = "ADC_SOC_NUMBER2";
+adc5.ppb3SOCNumber       = "ADC_SOC_NUMBER2";
+adc5.ppb4SOCNumber       = "ADC_SOC_NUMBER2";
+adc5.ADC.$assign         = "ADC4";
+adc5.ADC.AIN0.$used      = false;
+adc5.ADC.AIN1.$assign    = "ADC4_AIN1";
+adc5.ADC.AIN2.$used      = false;
+adc5.ADC.AIN3.$used      = false;
+adc5.ADC.AIN4.$used      = false;
+adc5.ADC.AIN5.$used      = false;
+
+cmpss1.initFilterLow        = true;
+cmpss1.clearFilterLatchLow  = true;
+cmpss1.samplePrescaleLow    = 32;
+cmpss1.sampleWindowLow      = 32;
+cmpss1.thresholdLow         = 30;
+cmpss1.$name                = "CONFIG_CMPSS_IU";
+cmpss1.enableModule         = true;
+cmpss1.dacValLow            = 512;
+cmpss1.cmpssBase            = "CSL_CONTROLSS_CMPSSA3_U_BASE";
+cmpss1.lowCompPositive      = "CMPSS_INSRC_PIN_INH";
+cmpss1.clearFilterLatchHigh = true;
+cmpss1.initFilterHigh       = true;
+cmpss1.lowCompInvert        = true;
+cmpss1.lowCTRIPOUT          = "CMPSS_TRIPOUT_FILTER";
+cmpss1.lowCTRIP             = "CMPSS_TRIP_FILTER";
+cmpss1.highCTRIPOUT         = "CMPSS_TRIPOUT_FILTER";
+cmpss1.highCTRIP            = "CMPSS_TRIP_FILTER";
+cmpss1.samplePrescaleHigh   = 32;
+cmpss1.sampleWindowHigh     = 32;
+cmpss1.thresholdHigh        = 30;
+cmpss1.dacValHigh           = 3584;
+
+cmpss2.enableModule         = true;
+cmpss2.highCTRIPOUT         = "CMPSS_TRIPOUT_FILTER";
+cmpss2.highCTRIP            = "CMPSS_TRIP_FILTER";
+cmpss2.initFilterHigh       = true;
+cmpss2.clearFilterLatchHigh = true;
+cmpss2.samplePrescaleHigh   = 32;
+cmpss2.sampleWindowHigh     = 32;
+cmpss2.thresholdHigh        = 30;
+cmpss2.lowCTRIPOUT          = "CMPSS_TRIPOUT_FILTER";
+cmpss2.lowCTRIP             = "CMPSS_TRIP_FILTER";
+cmpss2.initFilterLow        = true;
+cmpss2.clearFilterLatchLow  = true;
+cmpss2.samplePrescaleLow    = 32;
+cmpss2.sampleWindowLow      = 32;
+cmpss2.thresholdLow         = 30;
+cmpss2.lowCompInvert        = true;
+cmpss2.$name                = "CONFIG_CMPSS_IV";
+cmpss2.dacValHigh           = 3584;
+cmpss2.dacValLow            = 512;
+cmpss2.cmpssBase            = "CSL_CONTROLSS_CMPSSA5_U_BASE";
+cmpss2.lowCompPositive      = "CMPSS_INSRC_PIN_INH";
+
+cmpss3.enableModule         = true;
+cmpss3.highCTRIPOUT         = "CMPSS_TRIPOUT_FILTER";
+cmpss3.highCTRIP            = "CMPSS_TRIP_FILTER";
+cmpss3.initFilterHigh       = true;
+cmpss3.clearFilterLatchHigh = true;
+cmpss3.samplePrescaleHigh   = 32;
+cmpss3.sampleWindowHigh     = 32;
+cmpss3.thresholdHigh        = 30;
+cmpss3.lowCTRIPOUT          = "CMPSS_TRIPOUT_FILTER";
+cmpss3.lowCTRIP             = "CMPSS_TRIP_FILTER";
+cmpss3.initFilterLow        = true;
+cmpss3.clearFilterLatchLow  = true;
+cmpss3.samplePrescaleLow    = 32;
+cmpss3.sampleWindowLow      = 32;
+cmpss3.thresholdLow         = 30;
+cmpss3.lowCompInvert        = true;
+cmpss3.dacValHigh           = 3584;
+cmpss3.$name                = "CONFIG_CMPSS_IW";
+cmpss3.dacValLow            = 512;
+cmpss3.cmpssBase            = "CSL_CONTROLSS_CMPSSA7_U_BASE";
+cmpss3.lowCompPositive      = "CMPSS_INSRC_PIN_INH";
+
+ecap1.$name     = "CONFIG_ECAP0";
+ecap1.ecapInput = "ECAP_INPUT_INPUTXBAR4";
+
+ecap2.$name     = "CONFIG_ECAP1";
+ecap2.ecapBase  = "CSL_CONTROLSS_ECAP1_U_BASE";
+ecap2.ecapInput = "ECAP_INPUT_INPUTXBAR5";
+
+ecap3.$name     = "CONFIG_ECAP2";
+ecap3.ecapBase  = "CSL_CONTROLSS_ECAP2_U_BASE";
+ecap3.ecapInput = "ECAP_INPUT_INPUTXBAR6";
+
+epwm1.epwmTimebase_emulationMode                                      = "EPWM_EMULATION_FREE_RUN";
+epwm1.epwmTimebase_counterMode                                        = "EPWM_COUNTER_MODE_UP_DOWN";
+epwm1.epwmTimebase_counterModeAfterSync                               = "EPWM_COUNT_MODE_UP_AFTER_SYNC";
+epwm1.epwmCounterCompare_cmpD                                         = 5;
+epwm1.epwmCounterCompare_cmpC                                         = 5;
+epwm1.epwmActionQualifier_EPWM_AQ_OUTPUT_A_shadowMode                 = true;
+epwm1.epwmActionQualifier_EPWM_AQ_OUTPUT_A_ON_TIMEBASE_UP_CMPA        = "EPWM_AQ_OUTPUT_HIGH";
+epwm1.epwmActionQualifier_EPWM_AQ_OUTPUT_A_ON_TIMEBASE_DOWN_CMPA      = "EPWM_AQ_OUTPUT_LOW";
+epwm1.epwmActionQualifier_EPWM_AQ_OUTPUT_B_shadowMode                 = true;
+epwm1.epwmDeadband_polarityFED                                        = "EPWM_DB_POLARITY_ACTIVE_LOW";
+epwm1.epwmDeadband_enableRED                                          = true;
+epwm1.epwmDeadband_delayRED                                           = 10;
+epwm1.epwmDeadband_enableFED                                          = true;
+epwm1.epwmDeadband_delayFED                                           = 10;
+epwm1.epwmDigitalCompare_EPWM_TZ_DC_OUTPUT_A1                         = "EPWM_TZ_EVENT_DCXH_HIGH";
+epwm1.epwmEventTrigger_EPWM_SOC_A_triggerEnable                       = true;
+epwm1.epwmEventTrigger_EPWM_SOC_A_triggerSource                       = "EPWM_SOC_TBCTR_U_CMPC";
+epwm1.epwmEventTrigger_EPWM_SOC_A_triggerEventPrescalar               = "1";
+epwm1.epwmEventTrigger_EPWM_SOC_B_triggerEnable                       = true;
+epwm1.epwmEventTrigger_EPWM_SOC_B_triggerSource                       = "EPWM_SOC_TBCTR_U_CMPD";
+epwm1.epwmEventTrigger_EPWM_SOC_B_triggerEventPrescalar               = "1";
+epwm1.epwmDigitalCompare_EPWM_DC_MODULE_A_EPWM_DC_EVENT_1_eventSync   = "EPWM_DC_EVENT_INPUT_NOT_SYNCED";
+epwm1.epwmActionQualifier_EPWM_AQ_OUTPUT_A_ON_TIMEBASE_ZERO           = "EPWM_AQ_OUTPUT_LOW";
+epwm1.epwmActionQualifier_EPWM_AQ_OUTPUT_A_ON_TIMEBASE_PERIOD         = "EPWM_AQ_OUTPUT_HIGH";
+epwm1.epwmTripZone_EPWM_TZ_ACTION_EVENT_TZA                           = "EPWM_TZ_ACTION_LOW";
+epwm1.epwmTripZone_EPWM_TZ_ACTION_EVENT_TZB                           = "EPWM_TZ_ACTION_LOW";
+epwm1.epwmTimebase_periodLoadMode                                     = "EPWM_PERIOD_DIRECT_LOAD";
+epwm1.epwmTimebase_syncOutPulseMode                                   = ["EPWM_SYNC_OUT_PULSE_ON_CNTR_ZERO"];
+epwm1.$name                                                           = "CONFIG_EPWM3";
+epwm1.epwmTimebase_syncInPulseSource                                  = "EPWM_SYNC_IN_PULSE_SRC_SYNCOUT_EPWM3";
+epwm1.epwmDeadband_outputSwapOutA                                     = true;
+epwm1.epwmDeadband_outputSwapOutB                                     = true;
+epwm1.epwmDigitalCompare_EPWM_DC_MODULE_A_EPWM_DC_EVENT_2_eventSync   = "EPWM_DC_EVENT_INPUT_NOT_SYNCED";
+epwm1.epwmDigitalCompare_EPWM_DC_MODULE_A_EPWM_DC_EVENT_2_eventSource = "EPWM_DC_EVENT_SOURCE_FILT_SIGNAL";
+epwm1.epwmTripZone_EPWM_TZ_ACTION_EVENT_DCAEVT1                       = "EPWM_TZ_ACTION_DISABLE";
+epwm1.epwmTripZone_EPWM_TZ_ACTION_EVENT_DCAEVT2                       = "EPWM_TZ_ACTION_DISABLE";
+epwm1.epwmTripZone_EPWM_TZ_ACTION_EVENT_DCBEVT1                       = "EPWM_TZ_ACTION_DISABLE";
+epwm1.epwmTripZone_EPWM_TZ_ACTION_EVENT_DCBEVT2                       = "EPWM_TZ_ACTION_DISABLE";
+epwm1.epwmTripZone_oneShotSource                                      = ["EPWM_TZ_SIGNAL_DCAEVT1"];
+epwm1.epwmDigitalCompare_EPWM_DC_TYPE_DCAH                            = "EPWM_DC_TRIP_TRIPIN7";
+epwm1.epwmDigitalCompare_EPWM_DC_MODULE_A_EPWM_DC_EVENT_1_eventSource = "EPWM_DC_EVENT_SOURCE_FILT_SIGNAL";
+epwm1.EPWM.$assign                                                    = "EPWM3";
+
+epwm2.epwmTimebase_emulationMode                                      = "EPWM_EMULATION_FREE_RUN";
+epwm2.epwmTimebase_counterMode                                        = "EPWM_COUNTER_MODE_UP_DOWN";
+epwm2.epwmTimebase_counterModeAfterSync                               = "EPWM_COUNT_MODE_UP_AFTER_SYNC";
+epwm2.epwmCounterCompare_cmpD                                         = 5;
+epwm2.epwmCounterCompare_cmpC                                         = 5;
+epwm2.epwmActionQualifier_EPWM_AQ_OUTPUT_A_shadowMode                 = true;
+epwm2.epwmActionQualifier_EPWM_AQ_OUTPUT_B_shadowMode                 = true;
+epwm2.epwmDeadband_polarityFED                                        = "EPWM_DB_POLARITY_ACTIVE_LOW";
+epwm2.epwmDeadband_enableRED                                          = true;
+epwm2.epwmDeadband_delayRED                                           = 10;
+epwm2.epwmDeadband_enableFED                                          = true;
+epwm2.epwmDeadband_delayFED                                           = 10;
+epwm2.epwmDigitalCompare_EPWM_DC_MODULE_A_EPWM_DC_EVENT_1_eventSource = "EPWM_DC_EVENT_SOURCE_FILT_SIGNAL";
+epwm2.epwmEventTrigger_EPWM_SOC_A_triggerEnable                       = true;
+epwm2.epwmEventTrigger_EPWM_SOC_A_triggerSource                       = "EPWM_SOC_TBCTR_U_CMPC";
+epwm2.epwmEventTrigger_EPWM_SOC_A_triggerEventPrescalar               = "1";
+epwm2.epwmEventTrigger_EPWM_SOC_B_triggerEnable                       = true;
+epwm2.epwmEventTrigger_EPWM_SOC_B_triggerSource                       = "EPWM_SOC_TBCTR_U_CMPD";
+epwm2.epwmEventTrigger_EPWM_SOC_B_triggerEventPrescalar               = "1";
+epwm2.epwmDigitalCompare_EPWM_DC_MODULE_A_EPWM_DC_EVENT_1_eventSync   = "EPWM_DC_EVENT_INPUT_NOT_SYNCED";
+epwm2.epwmActionQualifier_EPWM_AQ_OUTPUT_A_ON_TIMEBASE_UP_CMPA        = "EPWM_AQ_OUTPUT_HIGH";
+epwm2.epwmActionQualifier_EPWM_AQ_OUTPUT_A_ON_TIMEBASE_DOWN_CMPA      = "EPWM_AQ_OUTPUT_LOW";
+epwm2.epwmActionQualifier_EPWM_AQ_OUTPUT_A_ON_TIMEBASE_ZERO           = "EPWM_AQ_OUTPUT_LOW";
+epwm2.epwmActionQualifier_EPWM_AQ_OUTPUT_A_ON_TIMEBASE_PERIOD         = "EPWM_AQ_OUTPUT_HIGH";
+epwm2.epwmTripZone_EPWM_TZ_ACTION_EVENT_TZA                           = "EPWM_TZ_ACTION_LOW";
+epwm2.epwmTripZone_EPWM_TZ_ACTION_EVENT_TZB                           = "EPWM_TZ_ACTION_LOW";
+epwm2.epwmDigitalCompare_EPWM_TZ_DC_OUTPUT_A1                         = "EPWM_TZ_EVENT_DCXH_HIGH";
+epwm2.epwmDigitalCompare_EPWM_DC_MODULE_B_EPWM_DC_EVENT_1_eventSource = "EPWM_DC_EVENT_SOURCE_FILT_SIGNAL";
+epwm2.epwmTimebase_periodLoadMode                                     = "EPWM_PERIOD_DIRECT_LOAD";
+epwm2.epwmTimebase_syncOutPulseMode                                   = ["EPWM_SYNC_OUT_PULSE_ON_CNTR_ZERO"];
+epwm2.$name                                                           = "CONFIG_EPWM13";
+epwm2.epwmTimebase_syncInPulseSource                                  = "EPWM_SYNC_IN_PULSE_SRC_SYNCOUT_EPWM3";
+epwm2.epwmDeadband_outputSwapOutA                                     = true;
+epwm2.epwmDeadband_outputSwapOutB                                     = true;
+epwm2.epwmEventTrigger_enableInterrupt                                = true;
+epwm2.epwmEventTrigger_interruptEventCount                            = "1";
+epwm2.epwmDigitalCompare_EPWM_DC_MODULE_B_EPWM_DC_EVENT_1_eventSync   = "EPWM_DC_EVENT_INPUT_NOT_SYNCED";
+epwm2.epwmDigitalCompare_EPWM_DC_MODULE_B_EPWM_DC_EVENT_2_eventSync   = "EPWM_DC_EVENT_INPUT_NOT_SYNCED";
+epwm2.epwmDigitalCompare_EPWM_DC_MODULE_A_EPWM_DC_EVENT_2_eventSync   = "EPWM_DC_EVENT_INPUT_NOT_SYNCED";
+epwm2.epwmTripZone_EPWM_TZ_ACTION_EVENT_DCAEVT1                       = "EPWM_TZ_ACTION_DISABLE";
+epwm2.epwmTripZone_EPWM_TZ_ACTION_EVENT_DCAEVT2                       = "EPWM_TZ_ACTION_DISABLE";
+epwm2.epwmTripZone_EPWM_TZ_ACTION_EVENT_DCBEVT1                       = "EPWM_TZ_ACTION_DISABLE";
+epwm2.epwmTripZone_EPWM_TZ_ACTION_EVENT_DCBEVT2                       = "EPWM_TZ_ACTION_DISABLE";
+epwm2.epwmTripZone_oneShotSource                                      = ["EPWM_TZ_SIGNAL_DCAEVT1"];
+epwm2.epwmDigitalCompare_EPWM_DC_TYPE_DCAH                            = "EPWM_DC_TRIP_TRIPIN7";
+epwm2.EPWM.$assign                                                    = "EPWM13";
+
+epwm3.epwmTimebase_emulationMode                                      = "EPWM_EMULATION_FREE_RUN";
+epwm3.epwmTimebase_counterMode                                        = "EPWM_COUNTER_MODE_UP_DOWN";
+epwm3.epwmTimebase_counterModeAfterSync                               = "EPWM_COUNT_MODE_UP_AFTER_SYNC";
+epwm3.epwmCounterCompare_cmpD                                         = 5;
+epwm3.epwmCounterCompare_cmpC                                         = 5;
+epwm3.epwmActionQualifier_EPWM_AQ_OUTPUT_A_shadowMode                 = true;
+epwm3.epwmActionQualifier_EPWM_AQ_OUTPUT_A_ON_TIMEBASE_UP_CMPA        = "EPWM_AQ_OUTPUT_HIGH";
+epwm3.epwmActionQualifier_EPWM_AQ_OUTPUT_A_ON_TIMEBASE_DOWN_CMPA      = "EPWM_AQ_OUTPUT_LOW";
+epwm3.epwmActionQualifier_EPWM_AQ_OUTPUT_B_shadowMode                 = true;
+epwm3.epwmDeadband_polarityFED                                        = "EPWM_DB_POLARITY_ACTIVE_LOW";
+epwm3.epwmDeadband_enableRED                                          = true;
+epwm3.epwmDeadband_delayRED                                           = 10;
+epwm3.epwmDeadband_enableFED                                          = true;
+epwm3.epwmDeadband_delayFED                                           = 10;
+epwm3.epwmDigitalCompare_EPWM_DC_MODULE_A_EPWM_DC_EVENT_1_eventSource = "EPWM_DC_EVENT_SOURCE_FILT_SIGNAL";
+epwm3.epwmEventTrigger_EPWM_SOC_A_triggerEnable                       = true;
+epwm3.epwmEventTrigger_EPWM_SOC_A_triggerSource                       = "EPWM_SOC_TBCTR_U_CMPC";
+epwm3.epwmEventTrigger_EPWM_SOC_A_triggerEventPrescalar               = "1";
+epwm3.epwmEventTrigger_EPWM_SOC_B_triggerEnable                       = true;
+epwm3.epwmEventTrigger_EPWM_SOC_B_triggerSource                       = "EPWM_SOC_TBCTR_U_CMPD";
+epwm3.epwmEventTrigger_EPWM_SOC_B_triggerEventPrescalar               = "1";
+epwm3.epwmDigitalCompare_EPWM_DC_MODULE_A_EPWM_DC_EVENT_1_eventSync   = "EPWM_DC_EVENT_INPUT_NOT_SYNCED";
+epwm3.epwmActionQualifier_EPWM_AQ_OUTPUT_A_ON_TIMEBASE_ZERO           = "EPWM_AQ_OUTPUT_LOW";
+epwm3.epwmActionQualifier_EPWM_AQ_OUTPUT_A_ON_TIMEBASE_PERIOD         = "EPWM_AQ_OUTPUT_HIGH";
+epwm3.epwmDigitalCompare_EPWM_TZ_DC_OUTPUT_A1                         = "EPWM_TZ_EVENT_DCXH_HIGH";
+epwm3.epwmTimebase_periodLoadMode                                     = "EPWM_PERIOD_DIRECT_LOAD";
+epwm3.epwmTimebase_syncOutPulseMode                                   = ["EPWM_SYNC_OUT_PULSE_ON_CNTR_ZERO"];
+epwm3.$name                                                           = "CONFIG_EPWM9";
+epwm3.epwmTimebase_syncInPulseSource                                  = "EPWM_SYNC_IN_PULSE_SRC_SYNCOUT_EPWM3";
+epwm3.epwmDeadband_outputSwapOutA                                     = true;
+epwm3.epwmDeadband_outputSwapOutB                                     = true;
+epwm3.epwmDigitalCompare_EPWM_DC_MODULE_A_EPWM_DC_EVENT_2_eventSync   = "EPWM_DC_EVENT_INPUT_NOT_SYNCED";
+epwm3.epwmDigitalCompare_EPWM_DC_MODULE_B_EPWM_DC_EVENT_1_eventSync   = "EPWM_DC_EVENT_INPUT_NOT_SYNCED";
+epwm3.epwmDigitalCompare_EPWM_DC_MODULE_B_EPWM_DC_EVENT_2_eventSync   = "EPWM_DC_EVENT_INPUT_NOT_SYNCED";
+epwm3.epwmTripZone_EPWM_TZ_ACTION_EVENT_TZA                           = "EPWM_TZ_ACTION_LOW";
+epwm3.epwmTripZone_EPWM_TZ_ACTION_EVENT_TZB                           = "EPWM_TZ_ACTION_LOW";
+epwm3.epwmTripZone_EPWM_TZ_ACTION_EVENT_DCAEVT1                       = "EPWM_TZ_ACTION_DISABLE";
+epwm3.epwmTripZone_EPWM_TZ_ACTION_EVENT_DCAEVT2                       = "EPWM_TZ_ACTION_DISABLE";
+epwm3.epwmTripZone_EPWM_TZ_ACTION_EVENT_DCBEVT1                       = "EPWM_TZ_ACTION_DISABLE";
+epwm3.epwmTripZone_EPWM_TZ_ACTION_EVENT_DCBEVT2                       = "EPWM_TZ_ACTION_DISABLE";
+epwm3.epwmTripZone_oneShotSource                                      = ["EPWM_TZ_SIGNAL_DCAEVT1"];
+epwm3.epwmDigitalCompare_EPWM_DC_TYPE_DCAH                            = "EPWM_DC_TRIP_TRIPIN7";
+epwm3.EPWM.$assign                                                    = "EPWM9";
+
+eqep1.emulationMode        = "EQEP_EMULATIONMODE_RUNFREE";
+eqep1.latchPositionCounter = "EQEP_LATCH_UNIT_TIME_OUT";
+eqep1.positionIndexEvents  = "EQEP_INIT_RISING_INDEX";
+eqep1.positionCounterMode  = "EQEP_POSITION_RESET_MAX_POS";
+eqep1.enableUnitTimer      = true;
+eqep1.capPrescale          = "EQEP_CAPTURE_CLK_DIV_128";
+eqep1.evntPrescale         = "EQEP_UNIT_POS_EVNT_DIV_32";
+eqep1.captureConfig        = true;
+eqep1.enableCapture        = true;
+eqep1.enableInterrupt      = true;
+eqep1.interruptSources     = ["EQEP_INT_UNIT_TIME_OUT"];
+eqep1.selectSourceA        = "EQEP_SOURCE_DEVICE_PIN";
+eqep1.selectSourceB        = "EQEP_SOURCE_DEVICE_PIN";
+eqep1.selectSourceIndex    = "EQEP_SOURCE_DEVICE_PIN";
+eqep1.swPositionInit       = true;
+eqep1.enableModule         = true;
+eqep1.unitTimerPeriod      = 6665;
+eqep1.positionCounterMax   = 4000;
+eqep1.$name                = "CONFIG_EQEP";
+eqep1.EQEP.$assign         = "EQEP0";
+eqep1.EQEP.A.qualSel       = "3sample";
+eqep1.EQEP.A.$assign       = "EQEP0_A";
+eqep1.EQEP.B.qualSel       = "3sample";
+eqep1.EQEP.B.$assign       = "EQEP0_B";
+eqep1.EQEP.STROBE.$assign  = "EQEP0_STROBE";
+eqep1.EQEP.STROBE.$used    = false;
+eqep1.EQEP.INDEX.qualSel   = "3sample";
+eqep1.EQEP.INDEX.$assign   = "EQEP0_INDEX";
+
+gpio1.pinDir         = "OUTPUT";
+gpio1.$name          = "CONFIG_LED1C";
+gpio1.rx             = true;
+gpio1.GPIO_n.$assign = "UART0_CTSn";
+
+gpio2.pinDir         = "OUTPUT";
+gpio2.$name          = "CONFIG_LED1B";
+gpio2.rx             = true;
+gpio2.GPIO_n.$assign = "PR0_PRU0_GPIO0";
+
+gpio3.pinDir         = "OUTPUT";
+gpio3.$name          = "CONFIG_LED2B";
+gpio3.rx             = true;
+gpio3.GPIO_n.$assign = "SDFM0_D1";
+
+gpio4.$name          = "CONFIG_HALL_U_GPIO";
+gpio4.qualSel        = "3sample";
+gpio4.rx             = true;
+gpio4.GPIO_n.$assign = "I2C0_SDA";
+
+gpio5.$name          = "CONFIG_HALL_V_GPIO";
+gpio5.qualSel        = "3sample";
+gpio5.rx             = true;
+gpio5.GPIO_n.$assign = "I2C0_SCL";
+
+gpio6.$name          = "CONFIG_HALL_W_GPIO";
+gpio6.qualSel        = "3sample";
+gpio6.rx             = true;
+gpio6.GPIO_n.$assign = "MCAN2_RX";
+
+gpio7.pinDir         = "OUTPUT";
+gpio7.$name          = "CONFIG_GATE_EN_GPIO";
+gpio7.pu_pd          = "pu";
+gpio7.rx             = true;
+gpio7.GPIO_n.$assign = "EPWM12_A";
+
+gpio8.$name          = "MCAN_ENABLE";
+gpio8.pinDir         = "OUTPUT";
+gpio8.rx             = true;
+gpio8.GPIO_n.$assign = "EPWM4_A";
+
+i2c1.$name           = "CONFIG_I2C0";
+i2c1.enableIntr      = false;
+i2c1.I2C.$assign     = "I2C2";
+i2c1.I2C.SCL.$assign = "UART0_RTSn";
+i2c1.I2C.SCL.$used   = false;
+i2c1.I2C.SDA.$assign = "UART0_CTSn";
+i2c1.I2C.SDA.$used   = false;
+i2c1.I2C_child.$name = "drivers_i2c_v1_i2c_v1_template0";
+
+mcan1.$name = "CONFIG_MCAN0";
+
+mcspi1.$name                       = "CONFIG_MCSPI0";
+mcspi1.intrEnable                  = "POLLED";
+mcspi1.SPI.$assign                 = "SPI0";
+mcspi1.SPI.CLK.$assign             = "SPI0_CLK";
+mcspi1.SPI.D0.$assign              = "SPI0_D0";
+mcspi1.SPI.D1.$assign              = "SPI0_D1";
+mcspi1.mcspiChannel[0].$name       = "CONFIG_MCSPI_CH0";
+mcspi1.mcspiChannel[0].frameFormat = "POL0_PHA1";
+mcspi1.mcspiChannel[0].bitRate     = 4000000;
+mcspi1.mcspiChannel[0].CSn.$assign = "SPI0_CS0";
+mcspi1.child.$name                 = "drivers_mcspi_v1_mcspi_v1_template0";
+
+mcspi2.$name                       = "CONFIG_MCSPI1";
+mcspi2.intrEnable                  = "POLLED";
+mcspi2.SPI.$assign                 = "SPI1";
+mcspi2.SPI.CLK.$assign             = "SPI1_CLK";
+mcspi2.SPI.D0.$assign              = "SPI1_D0";
+mcspi2.SPI.D1.$assign              = "SPI1_D1";
+mcspi2.mcspiChannel[0].$name       = "CONFIG_MCSPI_CH1";
+mcspi2.mcspiChannel[0].bitRate     = 4000000;
+mcspi2.mcspiChannel[0].CSn.$assign = "SPI1_CS0";
+mcspi2.child.$name                 = "drivers_mcspi_v1_mcspi_v1_template1";
+
+edma1.$name                 = "CONFIG_EDMA0";
+mcspi1.edmaDriver           = edma1;
+mcspi2.edmaDriver           = edma1;
+edma1.edmaRmDmaCh[0].$name  = "CONFIG_EDMA_RM0";
+edma1.edmaRmQdmaCh[0].$name = "CONFIG_EDMA_RM1";
+edma1.edmaRmTcc[0].$name    = "CONFIG_EDMA_RM2";
+edma1.edmaRmParam[0].$name  = "CONFIG_EDMA_RM3";
+
+uart1.$name            = "CONFIG_UART2";
+uart1.UART.$assign     = "UART2";
+uart1.UART.RXD.$assign = "LIN2_RXD";
+uart1.UART.TXD.$assign = "LIN2_TXD";
+uart1.child.$name      = "drivers_uart_v2_uart_v2_template0";
+
+debug_log.enableUartLog            = true;
+debug_log.uartLog.$name            = "CONFIG_UART1";
+debug_log.uartLog.UART.$assign     = "UART1";
+debug_log.uartLog.UART.RXD.$assign = "UART1_RXD";
+debug_log.uartLog.UART.TXD.$assign = "UART1_TXD";
+debug_log.uartLog.child.$name      = "drivers_uart_v2_uart_v2_template1";
+
+mpu_armv71.$name             = "CONFIG_MPU_REGION0";
+mpu_armv71.size              = 31;
+mpu_armv71.attributes        = "Device";
+mpu_armv71.accessPermissions = "Supervisor RD+WR, User RD";
+mpu_armv71.allowExecute      = false;
+
+mpu_armv72.$name             = "CONFIG_MPU_REGION1";
+mpu_armv72.size              = 15;
+mpu_armv72.accessPermissions = "Supervisor RD+WR, User RD";
+
+mpu_armv73.$name             = "CONFIG_MPU_REGION2";
+mpu_armv73.baseAddr          = 0x80000;
+mpu_armv73.size              = 15;
+mpu_armv73.accessPermissions = "Supervisor RD+WR, User RD";
+
+mpu_armv74.$name             = "CONFIG_MPU_REGION3";
+mpu_armv74.accessPermissions = "Supervisor RD+WR, User RD";
+mpu_armv74.baseAddr          = 0x70000000;
+mpu_armv74.size              = 21;
+
+mpu_armv75.$name        = "CONFIG_MPU_REGION4";
+mpu_armv75.baseAddr     = 0x50D00000;
+mpu_armv75.size         = 14;
+mpu_armv75.allowExecute = false;
+mpu_armv75.attributes   = "Device";
+
+mpu_armv76.$name        = "CONFIG_MPU_REGION5";
+mpu_armv76.baseAddr     = 0x72000000;
+mpu_armv76.size         = 14;
+mpu_armv76.allowExecute = false;
+mpu_armv76.attributes   = "NonCached";
+
+timer1.startTimer  = true;
+timer1.$name       = "CPU_DIAGNOSTICS_TIMER0";
+timer1.enableIntr  = false;
+timer1.RTI.$assign = "RTI1";
+
+default_linker1.$name = "memory_configurator_default_linker0";
+
+general1.$name        = "CONFIG_GENERAL0";
+general1.linker.$name = "TIARMCLANG0";
+
+region1.$name                                = "MEMORY_REGION_CONFIGURATION0";
+region1.memory_region.create(11);
+region1.memory_region[0].type                = "TCMA";
+region1.memory_region[0].$name               = "R5F_VECS";
+region1.memory_region[0].size                = 0x40;
+region1.memory_region[0].auto                = false;
+region1.memory_region[1].type                = "TCMA";
+region1.memory_region[1].$name               = "R5F_TCMA";
+region1.memory_region[1].size                = 0x7FC0;
+region1.memory_region[2].type                = "TCMB";
+region1.memory_region[2].size                = 0x8000;
+region1.memory_region[2].$name               = "R5F_TCMB";
+region1.memory_region[3].$name               = "SBL";
+region1.memory_region[3].auto                = false;
+region1.memory_region[3].size                = 0x40000;
+region1.memory_region[4].$name               = "OCRAM";
+region1.memory_region[4].auto                = false;
+region1.memory_region[4].manualStartAddress  = 0x70040000;
+region1.memory_region[4].size                = 0x40000;
+region1.memory_region[5].type                = "FLASH";
+region1.memory_region[5].auto                = false;
+region1.memory_region[5].size                = 0x80000;
+region1.memory_region[5].$name               = "FLASH";
+region1.memory_region[6].$name               = "USER_SHM_MEM";
+region1.memory_region[6].auto                = false;
+region1.memory_region[6].manualStartAddress  = 0x701D0000;
+region1.memory_region[6].size                = 0x4000;
+region1.memory_region[6].isShared            = true;
+region1.memory_region[6].shared_cores        = ["r5fss0-1","r5fss1-0","r5fss1-1"];
+region1.memory_region[7].$name               = "LOG_SHM_MEM";
+region1.memory_region[7].auto                = false;
+region1.memory_region[7].manualStartAddress  = 0x701D4000;
+region1.memory_region[7].size                = 0x4000;
+region1.memory_region[7].isShared            = true;
+region1.memory_region[7].shared_cores        = ["r5fss0-1","r5fss1-0","r5fss1-1"];
+region1.memory_region[8].type                = "CUSTOM";
+region1.memory_region[8].$name               = "RTOS_NORTOS_IPC_SHM_MEM";
+region1.memory_region[8].auto                = false;
+region1.memory_region[8].manualStartAddress  = 0x72000000;
+region1.memory_region[8].size                = 0x3E80;
+region1.memory_region[8].isShared            = true;
+region1.memory_region[8].shared_cores        = ["r5fss0-1","r5fss1-0","r5fss1-1"];
+region1.memory_region[9].type                = "CUSTOM";
+region1.memory_region[9].$name               = "MAILBOX_HSM";
+region1.memory_region[9].auto                = false;
+region1.memory_region[9].manualStartAddress  = 0x44000000;
+region1.memory_region[9].size                = 0x3CE;
+region1.memory_region[9].isShared            = true;
+region1.memory_region[9].shared_cores        = ["r5fss0-1","r5fss1-0","r5fss1-1"];
+region1.memory_region[10].type               = "CUSTOM";
+region1.memory_region[10].$name              = "MAILBOX_R5F";
+region1.memory_region[10].auto               = false;
+region1.memory_region[10].manualStartAddress = 0x44000400;
+region1.memory_region[10].size               = 0x3CE;
+region1.memory_region[10].isShared           = true;
+region1.memory_region[10].shared_cores       = ["r5fss0-1","r5fss1-0","r5fss1-1"];
+
+section1.load_memory                  = "R5F_VECS";
+section1.group                        = false;
+section1.$name                        = "Vector Table";
+section1.output_section.create(1);
+section1.output_section[0].$name      = ".vectors";
+section1.output_section[0].palignment = true;
+
+section2.load_memory                  = "OCRAM";
+section2.$name                        = "Text Segments";
+section2.output_section.create(5);
+section2.output_section[0].$name      = ".text.hwi";
+section2.output_section[0].palignment = true;
+section2.output_section[1].$name      = ".text.cache";
+section2.output_section[1].palignment = true;
+section2.output_section[2].$name      = ".text.mpu";
+section2.output_section[2].palignment = true;
+section2.output_section[3].$name      = ".text.boot";
+section2.output_section[3].palignment = true;
+section2.output_section[4].$name      = ".text:abort";
+section2.output_section[4].palignment = true;
+
+section3.load_memory                  = "OCRAM";
+section3.$name                        = "Code and Read-Only Data";
+section3.output_section.create(2);
+section3.output_section[0].$name      = ".text";
+section3.output_section[0].palignment = true;
+section3.output_section[1].$name      = ".rodata";
+section3.output_section[1].palignment = true;
+
+section4.load_memory                  = "OCRAM";
+section4.$name                        = "Data Segment";
+section4.output_section.create(1);
+section4.output_section[0].$name      = ".data";
+section4.output_section[0].palignment = true;
+
+section5.load_memory                             = "OCRAM";
+section5.$name                                   = "Memory Segments";
+section5.output_section.create(3);
+section5.output_section[0].$name                 = ".bss";
+section5.output_section[0].output_sections_start = "__BSS_START";
+section5.output_section[0].output_sections_end   = "__BSS_END";
+section5.output_section[0].palignment            = true;
+section5.output_section[1].$name                 = ".sysmem";
+section5.output_section[1].palignment            = true;
+section5.output_section[2].$name                 = ".stack";
+section5.output_section[2].palignment            = true;
+
+section6.load_memory                              = "OCRAM";
+section6.$name                                    = "Stack Segments";
+section6.output_section.create(5);
+section6.output_section[0].$name                  = ".irqstack";
+section6.output_section[0].output_sections_start  = "__IRQ_STACK_START";
+section6.output_section[0].output_sections_end    = "__IRQ_STACK_END";
+section6.output_section[0].input_section.create(1);
+section6.output_section[0].input_section[0].$name = ". = . + __IRQ_STACK_SIZE;";
+section6.output_section[1].$name                  = ".fiqstack";
+section6.output_section[1].output_sections_start  = "__FIQ_STACK_START";
+section6.output_section[1].output_sections_end    = "__FIQ_STACK_END";
+section6.output_section[1].input_section.create(1);
+section6.output_section[1].input_section[0].$name = ". = . + __FIQ_STACK_SIZE;";
+section6.output_section[2].$name                  = ".svcstack";
+section6.output_section[2].output_sections_start  = "__SVC_STACK_START";
+section6.output_section[2].output_sections_end    = "__SVC_STACK_END";
+section6.output_section[2].input_section.create(1);
+section6.output_section[2].input_section[0].$name = ". = . + __SVC_STACK_SIZE;";
+section6.output_section[3].$name                  = ".abortstack";
+section6.output_section[3].output_sections_start  = "__ABORT_STACK_START";
+section6.output_section[3].output_sections_end    = "__ABORT_STACK_END";
+section6.output_section[3].input_section.create(1);
+section6.output_section[3].input_section[0].$name = ". = . + __ABORT_STACK_SIZE;";
+section6.output_section[4].$name                  = ".undefinedstack";
+section6.output_section[4].output_sections_start  = "__UNDEFINED_STACK_START";
+section6.output_section[4].output_sections_end    = "__UNDEFINED_STACK_END";
+section6.output_section[4].input_section.create(1);
+section6.output_section[4].input_section[0].$name = ". = . + __UNDEFINED_STACK_SIZE;";
+
+section7.load_memory                  = "OCRAM";
+section7.$name                        = "Initialization and Exception Handling";
+section7.output_section.create(3);
+section7.output_section[0].$name      = ".ARM.exidx";
+section7.output_section[0].palignment = true;
+section7.output_section[1].$name      = ".init_array";
+section7.output_section[1].palignment = true;
+section7.output_section[2].$name      = ".fini_array";
+section7.output_section[2].palignment = true;
+
+section8.load_memory                 = "USER_SHM_MEM";
+section8.type                        = "NOLOAD";
+section8.$name                       = "User Shared Memory";
+section8.group                       = false;
+section8.output_section.create(1);
+section8.output_section[0].$name     = ".bss.user_shared_mem";
+section8.output_section[0].alignment = 0;
+
+section9.load_memory                 = "LOG_SHM_MEM";
+section9.$name                       = "Log Shared Memory";
+section9.group                       = false;
+section9.type                        = "NOLOAD";
+section9.output_section.create(1);
+section9.output_section[0].$name     = ".bss.log_shared_mem";
+section9.output_section[0].alignment = 0;
+
+section10.load_memory                 = "RTOS_NORTOS_IPC_SHM_MEM";
+section10.type                        = "NOLOAD";
+section10.$name                       = "IPC Shared Memory";
+section10.group                       = false;
+section10.output_section.create(1);
+section10.output_section[0].$name     = ".bss.ipc_vring_mem";
+section10.output_section[0].alignment = 0;
+
+section11.load_memory                 = "MAILBOX_HSM";
+section11.type                        = "NOLOAD";
+section11.$name                       = "SIPC HSM Queue Memory";
+section11.group                       = false;
+section11.output_section.create(1);
+section11.output_section[0].$name     = ".bss.sipc_hsm_queue_mem";
+section11.output_section[0].alignment = 0;
+
+section12.load_memory                 = "MAILBOX_R5F";
+section12.$name                       = "SIPC R5F Queue Memory";
+section12.group                       = false;
+section12.type                        = "NOLOAD";
+section12.output_section.create(1);
+section12.output_section[0].$name     = ".bss.sipc_r5f_queue_mem";
+section12.output_section[0].alignment = 0;
+
+section13.$name                   = "UMC_TCMA";
+section13.load_memory             = "R5F_TCMA";
+section13.output_section.create(1);
+section13.output_section[0].$name = ".tcm_code";
+
+section14.$name                   = "UMC_TCMB";
+section14.load_memory             = "R5F_TCMB";
+section14.output_section.create(7);
+section14.output_section[0].$name = ".tcm_data";
+section14.output_section[1].$name = "hal_data";
+section14.output_section[2].$name = "user_data";
+section14.output_section[3].$name = "foc_data";
+section14.output_section[4].$name = "motor_data";
+section14.output_section[5].$name = "sys_data";
+section14.output_section[6].$name = ".sfradata";
+
+section15.$name                   = "UMC_OCRAM";
+section15.load_memory             = "OCRAM";
+section15.output_section.create(2);
+section15.output_section[0].$name = ".trigData";
+section15.output_section[1].$name = ".datalog_data";
+
+epwm_xbar1.$name      = "MTR1_IS_TRIP_CMPSS";
+epwm_xbar1.instance   = "EPWM_XBAR_6";
+epwm_xbar1.xbarOutput = ["CMPSSA3_CTRIPH","CMPSSA3_CTRIPL","CMPSSA5_CTRIPH","CMPSSA5_CTRIPL","CMPSSA7_CTRIPH","CMPSSA7_CTRIPL"];
+
+input_xbar1.$name      = "CONFIG_CAP_U_XBAR";
+input_xbar1.instance   = "INPUT_XBAR_4";
+input_xbar1.xbarOutput = "GPIO137";
+
+input_xbar2.$name      = "CONFIG_CAP_V_XBAR";
+input_xbar2.instance   = "INPUT_XBAR_5";
+input_xbar2.xbarOutput = "GPIO135";
+
+input_xbar3.$name      = "CONFIG_CAP_W_XBAR";
+input_xbar3.instance   = "INPUT_XBAR_6";
+input_xbar3.xbarOutput = "GPIO134";
+
+int_xbar1.$name      = "CONFIG_INT_XBAR0";
+int_xbar1.xbarOutput = ["ADC0_INT1"];
+
+/**
+ * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future
+ * version of the tool will not impact the pinmux you originally saw.  These lines can be completely deleted in order to
+ * re-solve from scratch.
+ */
+epwm1.EPWM.A.$suggestSolution  = "EPWM3_A";
+epwm1.EPWM.B.$suggestSolution  = "EPWM3_B";
+epwm2.EPWM.A.$suggestSolution  = "EPWM13_A";
+epwm2.EPWM.B.$suggestSolution  = "EPWM13_B";
+epwm3.EPWM.A.$suggestSolution  = "EPWM9_A";
+epwm3.EPWM.B.$suggestSolution  = "EPWM9_B";
+mcan1.MCAN.$suggestSolution    = "MCAN0";
+mcan1.MCAN.RX.$suggestSolution = "MCAN0_RX";
+mcan1.MCAN.TX.$suggestSolution = "MCAN0_TX";
