@@ -54,7 +54,7 @@ all: $(OBJS) $(CMD_SRCS)
 	@$(MAKE) --no-print-directory -Onone "bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-txpru1_fw_ti-pru-cgt.out"
 
 # Each subdirectory must supply rules for building sources it contributes
-$(OBJDIR)/%.obj %.obj: $(ASM_SRCS)
+$(OBJDIR)/%.obj %.obj: %.asm
 	@echo 'Building file: "$^"'
 	@echo 'Invoking: PRU Compiler'
 	"$(CGT_TI_PRU_PATH)/bin/clpru" -DICSSG0 -DTX_PRU1 -DSLICE1 -v4 -v4 --define=SOC_AM243X --define=ENABLE_MULTI_MAKE_TXPRU --include_path="${CG_TOOL_ROOT}/include" --include_path="${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source" --include_path="${MOTOR_CONTROL_SDK_PATH}/source" --include_path="${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware"  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little --preproc_with_compile --preproc_dependency="$(basename $(<F)).d_raw" $^
