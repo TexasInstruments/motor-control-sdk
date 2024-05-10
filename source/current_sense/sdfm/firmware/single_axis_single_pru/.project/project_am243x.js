@@ -39,9 +39,10 @@ const cflags_pru = {
 const lflags_pru = {
     common: [
         "--disable_auto_rts",
+        "--diag_suppress=10063-D", /* Added to suppress entry_point related warning */
+        "--entry_point=SDFM_ENTRY",
         "--define=SDFM_PRU_CORE=1",
         "--warn_sections",
-        "--entry_point=SDFM_ENTRY",
         "--zero_init=off",
     ],
 };

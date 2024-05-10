@@ -49,9 +49,11 @@
             -m=sdfm_firmware_multi_axis_load_share.${ConfigName}.map
             --disable_auto_rts
             --warn_sections
+            --diag_suppress=10063-D
             --entry_point=SDFM_ENTRY
             --zero_init=off
             --disable_auto_rts
+            --define=SDFM_RTU_CORE=1
             --define=SDFM_LOAD_SHARE_MODE=1
         "
 

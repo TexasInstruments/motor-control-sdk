@@ -44,6 +44,7 @@
         linkerBuildOptions="
             -m=tamagawa_multi_channel.${ConfigName}.map
             --disable_auto_rts
+            --diag_suppress=10063-D
             --entry_point=TAMAGAWA_INIT
             --disable_auto_rts
         "

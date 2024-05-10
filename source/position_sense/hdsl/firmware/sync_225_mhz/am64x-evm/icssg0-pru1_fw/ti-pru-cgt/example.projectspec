@@ -47,6 +47,7 @@
             -m=hdsl_master_sync_225_mhz.${ConfigName}.map
             --disable_auto_rts
             --disable_auto_rts
+            --diag_suppress=10063-D
             --entry_point=main
         "
 

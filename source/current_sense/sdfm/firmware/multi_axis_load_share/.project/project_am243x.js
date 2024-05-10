@@ -63,16 +63,41 @@ const cflags = {
     ],
 };
 
-const lflags = {
+const lflags_rtu = {
     common: [
         "--warn_sections",
+        "--diag_suppress=10063-D", /* Added to suppress entry_point related warning */
         "--entry_point=SDFM_ENTRY",
         "--zero_init=off",
         "--disable_auto_rts",
+        "--define=SDFM_RTU_CORE=1",
         "--define=SDFM_LOAD_SHARE_MODE=1",
     ],
 };
 
+const lflags_pru = {
+    common: [
+        "--warn_sections",
+        "--diag_suppress=10063-D", /* Added to suppress entry_point related warning */
+        "--entry_point=SDFM_ENTRY",
+        "--zero_init=off",
+        "--disable_auto_rts",
+        "--define=SDFM_PRU_CORE=1",
+        "--define=SDFM_LOAD_SHARE_MODE=1",
+    ],
+};
+
+const lflags_txpru = {
+    common: [
+        "--warn_sections",
+        "--diag_suppress=10063-D", /* Added to suppress entry_point related warning */
+        "--entry_point=SDFM_ENTRY",
+        "--zero_init=off",
+        "--disable_auto_rts",
+        "--define=SDFM_TXPRU_CORE=1",
+        "--define=SDFM_LOAD_SHARE_MODE=1",
+    ],
+};
 
 const buildOptionCombos = [
     { device: device, cpu: "icssg0-pru0", cgt: "ti-pru-cgt", board: "am243x-evm", os: "fw"},
@@ -162,19 +187,22 @@ function getComponentBuildProperty(buildOption) {
     if(buildOption.cpu.match("icssg0-pru0"))
     {
         build_property.defines = defines_pru;
+        build_property.lflags = lflags_pru;
+
     }
     if(buildOption.cpu.match("icssg0-rtupru0"))
     {
         build_property.defines = defines_rtu;
+        build_property.lflags = lflags_rtu;
     }
     if(buildOption.cpu.match("icssg0-txpru0"))
     {
         build_property.defines = defines_txpru;
+        build_property.lflags = lflags_txpru;
     }
     build_property.ccsPruPostBuildSteps = getccsPruPostBuildSteps(buildOption.cpu, buildOption.board);
     build_property.makefilePruPostBuildSteps = getmakefilePruPostBuildSteps(buildOption.cpu, buildOption.board);
     build_property.cflags = cflags;
-    build_property.lflags = lflags;
     build_property.readmeDoxygenPageTag = readmeDoxygenPageTag;
     build_property.projecspecFileAction = "copy";
     build_property.skipMakefileCcsBootimageGen = true;
