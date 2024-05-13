@@ -36,6 +36,7 @@ help:
 	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_bissc_r5f.ti-arm-clang
 	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_endat_r5f.ti-arm-clang
 	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_hdsl_r5f.ti-arm-clang
+	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_nikon_r5f.ti-arm-clang
 	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_tamagawa_r5f.ti-arm-clang
 	@echo  $(MAKE) -s -f makefile.am243x pruicss_pwm_r5f.ti-arm-clang
 	@echo  .
@@ -45,6 +46,7 @@ help:
 	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_bissc_r5f.ti-arm-clang_clean
 	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_endat_r5f.ti-arm-clang_clean
 	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_hdsl_r5f.ti-arm-clang_clean
+	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_nikon_r5f.ti-arm-clang_clean
 	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_tamagawa_r5f.ti-arm-clang_clean
 	@echo  $(MAKE) -s -f makefile.am243x pruicss_pwm_r5f.ti-arm-clang_clean
 	@echo  .
@@ -81,6 +83,9 @@ help:
 	@echo  $(MAKE) -s -C examples/position_sense/hdsl_diagnostic/multi_channel/am243x-lp/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C examples/position_sense/hdsl_diagnostic/single_channel/am243x-evm/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C examples/position_sense/hdsl_diagnostic/single_channel/am243x-lp/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C examples/position_sense/nikon_diagnostic/multi_channel_load_share/am243x-lp/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C examples/position_sense/nikon_diagnostic/multi_channel_single_pru/am243x-lp/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C examples/position_sense/nikon_diagnostic/single_channel/am243x-lp/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C examples/position_sense/tamagawa_diagnostic/multi_channel/am243x-evm/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C examples/position_sense/tamagawa_diagnostic/multi_channel/am243x-lp/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C examples/position_sense/tamagawa_diagnostic/single_channel/am243x-evm/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
@@ -115,6 +120,11 @@ help:
 	@echo  $(MAKE) -s -C source/position_sense/hdsl/firmware/multichannel_ch2/am243x-evm/icssg0-pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/hdsl/firmware/multichannel_ch2_sync_mode/am243x-evm/icssg0-pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/hdsl/firmware/sync_225_mhz/am243x-evm/icssg0-pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C source/position_sense/nikon/firmware/multi_channel_load_share/am243x-evm/icssg0-pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C source/position_sense/nikon/firmware/multi_channel_load_share/am243x-evm/icssg0-rtupru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C source/position_sense/nikon/firmware/multi_channel_load_share/am243x-evm/icssg0-txpru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C source/position_sense/nikon/firmware/multi_channel_single_pru/am243x-evm/icssg0-pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C source/position_sense/nikon/firmware/single_channel/am243x-evm/icssg0-pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/tamagawa/firmware/multi_channel/am243x-evm/icssg0-pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/tamagawa/firmware/multi_channel/am243x-lp/icssg0-pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/tamagawa/firmware/single_channel/am243x-evm/icssg0-pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
@@ -130,11 +140,12 @@ BUILD_COMBO_motorcontrol_sdfm = motorcontrol_sdfm_r5f.ti-arm-clang
 BUILD_COMBO_motorcontrol_bissc = motorcontrol_bissc_r5f.ti-arm-clang
 BUILD_COMBO_motorcontrol_endat = motorcontrol_endat_r5f.ti-arm-clang
 BUILD_COMBO_motorcontrol_hdsl = motorcontrol_hdsl_r5f.ti-arm-clang
+BUILD_COMBO_motorcontrol_nikon = motorcontrol_nikon_r5f.ti-arm-clang
 BUILD_COMBO_motorcontrol_tamagawa = motorcontrol_tamagawa_r5f.ti-arm-clang
 BUILD_COMBO_pruicss_pwm = pruicss_pwm_r5f.ti-arm-clang
 
 # Combine all Components
-BUILD_COMBO_ALL = $(BUILD_COMBO_motorcontrol_sdfm) $(BUILD_COMBO_motorcontrol_bissc) $(BUILD_COMBO_motorcontrol_endat) $(BUILD_COMBO_motorcontrol_hdsl) $(BUILD_COMBO_motorcontrol_tamagawa) $(BUILD_COMBO_pruicss_pwm)
+BUILD_COMBO_ALL = $(BUILD_COMBO_motorcontrol_sdfm) $(BUILD_COMBO_motorcontrol_bissc) $(BUILD_COMBO_motorcontrol_endat) $(BUILD_COMBO_motorcontrol_hdsl) $(BUILD_COMBO_motorcontrol_nikon) $(BUILD_COMBO_motorcontrol_tamagawa) $(BUILD_COMBO_pruicss_pwm)
 
 # Combine all Pre-built Components
 BUILD_COMBO_PREBUILT_ALL =
@@ -160,6 +171,9 @@ $(BUILD_COMBO_motorcontrol_endat):
 $(BUILD_COMBO_motorcontrol_hdsl):
 	$(MAKE) -C source/position_sense/hdsl -f makefile.am243x.$(subst motorcontrol_hdsl_,,$@) all
 
+$(BUILD_COMBO_motorcontrol_nikon):
+	$(MAKE) -C source/position_sense/nikon -f makefile.am243x.$(subst motorcontrol_nikon_,,$@) all
+
 $(BUILD_COMBO_motorcontrol_tamagawa):
 	$(MAKE) -C source/position_sense/tamagawa -f makefile.am243x.$(subst motorcontrol_tamagawa_,,$@) all
 
@@ -172,11 +186,12 @@ BUILD_COMBO_CLEAN_motorcontrol_sdfm = motorcontrol_sdfm_r5f.ti-arm-clang_clean
 BUILD_COMBO_CLEAN_motorcontrol_bissc = motorcontrol_bissc_r5f.ti-arm-clang_clean
 BUILD_COMBO_CLEAN_motorcontrol_endat = motorcontrol_endat_r5f.ti-arm-clang_clean
 BUILD_COMBO_CLEAN_motorcontrol_hdsl = motorcontrol_hdsl_r5f.ti-arm-clang_clean
+BUILD_COMBO_CLEAN_motorcontrol_nikon = motorcontrol_nikon_r5f.ti-arm-clang_clean
 BUILD_COMBO_CLEAN_motorcontrol_tamagawa = motorcontrol_tamagawa_r5f.ti-arm-clang_clean
 BUILD_COMBO_CLEAN_pruicss_pwm = pruicss_pwm_r5f.ti-arm-clang_clean
 
 # Combine all Components Clean
-BUILD_COMBO_CLEAN_ALL = $(BUILD_COMBO_CLEAN_motorcontrol_sdfm) $(BUILD_COMBO_CLEAN_motorcontrol_bissc) $(BUILD_COMBO_CLEAN_motorcontrol_endat) $(BUILD_COMBO_CLEAN_motorcontrol_hdsl) $(BUILD_COMBO_CLEAN_motorcontrol_tamagawa) $(BUILD_COMBO_CLEAN_pruicss_pwm)
+BUILD_COMBO_CLEAN_ALL = $(BUILD_COMBO_CLEAN_motorcontrol_sdfm) $(BUILD_COMBO_CLEAN_motorcontrol_bissc) $(BUILD_COMBO_CLEAN_motorcontrol_endat) $(BUILD_COMBO_CLEAN_motorcontrol_hdsl) $(BUILD_COMBO_CLEAN_motorcontrol_nikon) $(BUILD_COMBO_CLEAN_motorcontrol_tamagawa) $(BUILD_COMBO_CLEAN_pruicss_pwm)
 
 # Combine all Pre-built Components Clean
 BUILD_COMBO_PREBUILT_CLEAN_ALL =
@@ -197,6 +212,9 @@ $(BUILD_COMBO_CLEAN_motorcontrol_endat):
 $(BUILD_COMBO_CLEAN_motorcontrol_hdsl):
 	$(MAKE) -C source/position_sense/hdsl -f makefile.am243x.$(subst motorcontrol_hdsl_,,$(subst _clean,,$@)) clean
 
+$(BUILD_COMBO_CLEAN_motorcontrol_nikon):
+	$(MAKE) -C source/position_sense/nikon -f makefile.am243x.$(subst motorcontrol_nikon_,,$(subst _clean,,$@)) clean
+
 $(BUILD_COMBO_CLEAN_motorcontrol_tamagawa):
 	$(MAKE) -C source/position_sense/tamagawa -f makefile.am243x.$(subst motorcontrol_tamagawa_,,$(subst _clean,,$@)) clean
 
@@ -209,11 +227,12 @@ BUILD_COMBO_SCRUB_motorcontrol_sdfm = motorcontrol_sdfm_r5f.ti-arm-clang_scrub_s
 BUILD_COMBO_SCRUB_motorcontrol_bissc = motorcontrol_bissc_r5f.ti-arm-clang_scrub_scrub
 BUILD_COMBO_SCRUB_motorcontrol_endat = motorcontrol_endat_r5f.ti-arm-clang_scrub_scrub
 BUILD_COMBO_SCRUB_motorcontrol_hdsl = motorcontrol_hdsl_r5f.ti-arm-clang_scrub_scrub
+BUILD_COMBO_SCRUB_motorcontrol_nikon = motorcontrol_nikon_r5f.ti-arm-clang_scrub_scrub
 BUILD_COMBO_SCRUB_motorcontrol_tamagawa = motorcontrol_tamagawa_r5f.ti-arm-clang_scrub_scrub
 BUILD_COMBO_SCRUB_pruicss_pwm = pruicss_pwm_r5f.ti-arm-clang_scrub_scrub
 
 # Combine all Components Scrub Targets
-BUILD_COMBO_SCRUB_ALL = $(BUILD_COMBO_SCRUB_motorcontrol_sdfm) $(BUILD_COMBO_SCRUB_motorcontrol_bissc) $(BUILD_COMBO_SCRUB_motorcontrol_endat) $(BUILD_COMBO_SCRUB_motorcontrol_hdsl) $(BUILD_COMBO_SCRUB_motorcontrol_tamagawa) $(BUILD_COMBO_SCRUB_pruicss_pwm)
+BUILD_COMBO_SCRUB_ALL = $(BUILD_COMBO_SCRUB_motorcontrol_sdfm) $(BUILD_COMBO_SCRUB_motorcontrol_bissc) $(BUILD_COMBO_SCRUB_motorcontrol_endat) $(BUILD_COMBO_SCRUB_motorcontrol_hdsl) $(BUILD_COMBO_SCRUB_motorcontrol_nikon) $(BUILD_COMBO_SCRUB_motorcontrol_tamagawa) $(BUILD_COMBO_SCRUB_pruicss_pwm)
 
 # Combine all Pre-built Components Scrub Targets
 BUILD_COMBO_PREBUILT_SCRUB_ALL =
@@ -233,6 +252,9 @@ $(BUILD_COMBO_SCRUB_motorcontrol_endat):
 
 $(BUILD_COMBO_SCRUB_motorcontrol_hdsl):
 	$(MAKE) -C source/position_sense/hdsl -f makefile.am243x.$(subst motorcontrol_hdsl_,,$(subst _scrub,,$@)) scrub
+
+$(BUILD_COMBO_SCRUB_motorcontrol_nikon):
+	$(MAKE) -C source/position_sense/nikon -f makefile.am243x.$(subst motorcontrol_nikon_,,$(subst _scrub,,$@)) scrub
 
 $(BUILD_COMBO_SCRUB_motorcontrol_tamagawa):
 	$(MAKE) -C source/position_sense/tamagawa -f makefile.am243x.$(subst motorcontrol_tamagawa_,,$(subst _scrub,,$@)) scrub
@@ -274,6 +296,9 @@ BUILD_COMBO_EXAMPLE_ALL += hdsl_diagnostic_multi_channel_am243x-evm_r5fss0-0_fre
 BUILD_COMBO_EXAMPLE_ALL += hdsl_diagnostic_multi_channel_am243x-lp_r5fss0-0_freertos_ti-arm-clang
 BUILD_COMBO_EXAMPLE_ALL += hdsl_diagnostic_single_channel_am243x-evm_r5fss0-0_freertos_ti-arm-clang
 BUILD_COMBO_EXAMPLE_ALL += hdsl_diagnostic_single_channel_am243x-lp_r5fss0-0_freertos_ti-arm-clang
+BUILD_COMBO_EXAMPLE_ALL += nikon_diagnostic_multi_channel_load_share_am243x-lp_r5fss0-0_freertos_ti-arm-clang
+BUILD_COMBO_EXAMPLE_ALL += nikon_diagnostic_multi_channel_single_pru_am243x-lp_r5fss0-0_freertos_ti-arm-clang
+BUILD_COMBO_EXAMPLE_ALL += nikon_diagnostic_single_channel_am243x-lp_r5fss0-0_freertos_ti-arm-clang
 BUILD_COMBO_EXAMPLE_ALL += tamagawa_diagnostic_multi_channel_am243x-evm_r5fss0-0_freertos_ti-arm-clang
 BUILD_COMBO_EXAMPLE_ALL += tamagawa_diagnostic_multi_channel_am243x-lp_r5fss0-0_freertos_ti-arm-clang
 BUILD_COMBO_EXAMPLE_ALL += tamagawa_diagnostic_single_channel_am243x-evm_r5fss0-0_freertos_ti-arm-clang
@@ -313,6 +338,11 @@ BUILD_COMBO_EXAMPLE_PRIVATE_ALL += hdsl_master_multichannel_ch1_sync_mode_am243x
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += hdsl_master_multichannel_ch2_am243x-evm_icssg0-pru1_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += hdsl_master_multichannel_ch2_sync_mode_am243x-evm_icssg0-pru1_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += hdsl_master_sync_225_mhz_am243x-evm_icssg0-pru1_fw_ti-pru-cgt
+BUILD_COMBO_EXAMPLE_PRIVATE_ALL += nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-pru1_fw_ti-pru-cgt
+BUILD_COMBO_EXAMPLE_PRIVATE_ALL += nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-rtupru1_fw_ti-pru-cgt
+BUILD_COMBO_EXAMPLE_PRIVATE_ALL += nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-txpru1_fw_ti-pru-cgt
+BUILD_COMBO_EXAMPLE_PRIVATE_ALL += nikon_peripheral_interface_multi_ch_am243x-evm_icssg0-pru1_fw_ti-pru-cgt
+BUILD_COMBO_EXAMPLE_PRIVATE_ALL += nikon_peripheral_interface_single_ch_am243x-evm_icssg0-pru1_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += tamagawa_multi_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += tamagawa_multi_channel_am243x-lp_icssg0-pru1_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += tamagawa_single_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt
@@ -416,6 +446,15 @@ examples-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_ALL)
  hdsl_diagnostic_single_channel_am243x-lp_r5fss0-0_freertos_ti-arm-clang:
 	$(MAKE) -C examples/position_sense/hdsl_diagnostic/single_channel/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile all
 
+ nikon_diagnostic_multi_channel_load_share_am243x-lp_r5fss0-0_freertos_ti-arm-clang:
+	$(MAKE) -C examples/position_sense/nikon_diagnostic/multi_channel_load_share/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile all
+
+ nikon_diagnostic_multi_channel_single_pru_am243x-lp_r5fss0-0_freertos_ti-arm-clang:
+	$(MAKE) -C examples/position_sense/nikon_diagnostic/multi_channel_single_pru/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile all
+
+ nikon_diagnostic_single_channel_am243x-lp_r5fss0-0_freertos_ti-arm-clang:
+	$(MAKE) -C examples/position_sense/nikon_diagnostic/single_channel/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile all
+
  tamagawa_diagnostic_multi_channel_am243x-evm_r5fss0-0_freertos_ti-arm-clang:
 	$(MAKE) -C examples/position_sense/tamagawa_diagnostic/multi_channel/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile all
 
@@ -518,6 +557,21 @@ examples-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_ALL)
  hdsl_master_sync_225_mhz_am243x-evm_icssg0-pru1_fw_ti-pru-cgt:
 	$(MAKE) -C source/position_sense/hdsl/firmware/sync_225_mhz/am243x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile all
 
+ nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-pru1_fw_ti-pru-cgt:
+	$(MAKE) -C source/position_sense/nikon/firmware/multi_channel_load_share/am243x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile all
+
+ nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-rtupru1_fw_ti-pru-cgt:
+	$(MAKE) -C source/position_sense/nikon/firmware/multi_channel_load_share/am243x-evm/icssg0-rtupru1_fw/ti-pru-cgt -f makefile all
+
+ nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-txpru1_fw_ti-pru-cgt:
+	$(MAKE) -C source/position_sense/nikon/firmware/multi_channel_load_share/am243x-evm/icssg0-txpru1_fw/ti-pru-cgt -f makefile all
+
+ nikon_peripheral_interface_multi_ch_am243x-evm_icssg0-pru1_fw_ti-pru-cgt:
+	$(MAKE) -C source/position_sense/nikon/firmware/multi_channel_single_pru/am243x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile all
+
+ nikon_peripheral_interface_single_ch_am243x-evm_icssg0-pru1_fw_ti-pru-cgt:
+	$(MAKE) -C source/position_sense/nikon/firmware/single_channel/am243x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile all
+
  tamagawa_multi_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt:
 	$(MAKE) -C source/position_sense/tamagawa/firmware/multi_channel/am243x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile all
 
@@ -567,6 +621,9 @@ BUILD_COMBO_EXAMPLE_CLEAN_ALL += hdsl_diagnostic_multi_channel_am243x-evm_r5fss0
 BUILD_COMBO_EXAMPLE_CLEAN_ALL += hdsl_diagnostic_multi_channel_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_CLEAN_ALL += hdsl_diagnostic_single_channel_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_CLEAN_ALL += hdsl_diagnostic_single_channel_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_CLEAN_ALL += nikon_diagnostic_multi_channel_load_share_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_CLEAN_ALL += nikon_diagnostic_multi_channel_single_pru_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_CLEAN_ALL += nikon_diagnostic_single_channel_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_CLEAN_ALL += tamagawa_diagnostic_multi_channel_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_CLEAN_ALL += tamagawa_diagnostic_multi_channel_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_CLEAN_ALL += tamagawa_diagnostic_single_channel_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean
@@ -606,6 +663,11 @@ BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += hdsl_master_multichannel_ch1_sync_mode_
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += hdsl_master_multichannel_ch2_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += hdsl_master_multichannel_ch2_sync_mode_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += hdsl_master_sync_225_mhz_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-rtupru1_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-txpru1_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += nikon_peripheral_interface_multi_ch_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += nikon_peripheral_interface_single_ch_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += tamagawa_multi_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += tamagawa_multi_channel_am243x-lp_icssg0-pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += tamagawa_single_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_clean
@@ -709,6 +771,15 @@ examples-private-clean: $(BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL)
  hdsl_diagnostic_single_channel_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
 	$(MAKE) -C examples/position_sense/hdsl_diagnostic/single_channel/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile clean
 
+ nikon_diagnostic_multi_channel_load_share_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/position_sense/nikon_diagnostic/multi_channel_load_share/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile clean
+
+ nikon_diagnostic_multi_channel_single_pru_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/position_sense/nikon_diagnostic/multi_channel_single_pru/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile clean
+
+ nikon_diagnostic_single_channel_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/position_sense/nikon_diagnostic/single_channel/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile clean
+
  tamagawa_diagnostic_multi_channel_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean:
 	$(MAKE) -C examples/position_sense/tamagawa_diagnostic/multi_channel/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile clean
 
@@ -811,6 +882,21 @@ examples-private-clean: $(BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL)
  hdsl_master_sync_225_mhz_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/hdsl/firmware/sync_225_mhz/am243x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile clean
 
+ nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/position_sense/nikon/firmware/multi_channel_load_share/am243x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile clean
+
+ nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-rtupru1_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/position_sense/nikon/firmware/multi_channel_load_share/am243x-evm/icssg0-rtupru1_fw/ti-pru-cgt -f makefile clean
+
+ nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-txpru1_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/position_sense/nikon/firmware/multi_channel_load_share/am243x-evm/icssg0-txpru1_fw/ti-pru-cgt -f makefile clean
+
+ nikon_peripheral_interface_multi_ch_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/position_sense/nikon/firmware/multi_channel_single_pru/am243x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile clean
+
+ nikon_peripheral_interface_single_ch_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/position_sense/nikon/firmware/single_channel/am243x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile clean
+
  tamagawa_multi_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/tamagawa/firmware/multi_channel/am243x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile clean
 
@@ -860,6 +946,9 @@ BUILD_COMBO_EXAMPLE_SCRUB_ALL += hdsl_diagnostic_multi_channel_am243x-evm_r5fss0
 BUILD_COMBO_EXAMPLE_SCRUB_ALL += hdsl_diagnostic_multi_channel_am243x-lp_r5fss0-0_freertos_ti-arm-clang_scrub
 BUILD_COMBO_EXAMPLE_SCRUB_ALL += hdsl_diagnostic_single_channel_am243x-evm_r5fss0-0_freertos_ti-arm-clang_scrub
 BUILD_COMBO_EXAMPLE_SCRUB_ALL += hdsl_diagnostic_single_channel_am243x-lp_r5fss0-0_freertos_ti-arm-clang_scrub
+BUILD_COMBO_EXAMPLE_SCRUB_ALL += nikon_diagnostic_multi_channel_load_share_am243x-lp_r5fss0-0_freertos_ti-arm-clang_scrub
+BUILD_COMBO_EXAMPLE_SCRUB_ALL += nikon_diagnostic_multi_channel_single_pru_am243x-lp_r5fss0-0_freertos_ti-arm-clang_scrub
+BUILD_COMBO_EXAMPLE_SCRUB_ALL += nikon_diagnostic_single_channel_am243x-lp_r5fss0-0_freertos_ti-arm-clang_scrub
 BUILD_COMBO_EXAMPLE_SCRUB_ALL += tamagawa_diagnostic_multi_channel_am243x-evm_r5fss0-0_freertos_ti-arm-clang_scrub
 BUILD_COMBO_EXAMPLE_SCRUB_ALL += tamagawa_diagnostic_multi_channel_am243x-lp_r5fss0-0_freertos_ti-arm-clang_scrub
 BUILD_COMBO_EXAMPLE_SCRUB_ALL += tamagawa_diagnostic_single_channel_am243x-evm_r5fss0-0_freertos_ti-arm-clang_scrub
@@ -899,6 +988,11 @@ BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += hdsl_master_multichannel_ch1_sync_mode_
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += hdsl_master_multichannel_ch2_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += hdsl_master_multichannel_ch2_sync_mode_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += hdsl_master_sync_225_mhz_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_scrub
+BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_scrub
+BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-rtupru1_fw_ti-pru-cgt_scrub
+BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-txpru1_fw_ti-pru-cgt_scrub
+BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += nikon_peripheral_interface_multi_ch_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_scrub
+BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += nikon_peripheral_interface_single_ch_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += tamagawa_multi_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += tamagawa_multi_channel_am243x-lp_icssg0-pru1_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += tamagawa_single_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_scrub
@@ -1002,6 +1096,15 @@ examples-scrub-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL)
  hdsl_diagnostic_single_channel_am243x-lp_r5fss0-0_freertos_ti-arm-clang_scrub:
 	$(MAKE) -C examples/position_sense/hdsl_diagnostic/single_channel/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile scrub
 
+ nikon_diagnostic_multi_channel_load_share_am243x-lp_r5fss0-0_freertos_ti-arm-clang_scrub:
+	$(MAKE) -C examples/position_sense/nikon_diagnostic/multi_channel_load_share/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile scrub
+
+ nikon_diagnostic_multi_channel_single_pru_am243x-lp_r5fss0-0_freertos_ti-arm-clang_scrub:
+	$(MAKE) -C examples/position_sense/nikon_diagnostic/multi_channel_single_pru/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile scrub
+
+ nikon_diagnostic_single_channel_am243x-lp_r5fss0-0_freertos_ti-arm-clang_scrub:
+	$(MAKE) -C examples/position_sense/nikon_diagnostic/single_channel/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile scrub
+
  tamagawa_diagnostic_multi_channel_am243x-evm_r5fss0-0_freertos_ti-arm-clang_scrub:
 	$(MAKE) -C examples/position_sense/tamagawa_diagnostic/multi_channel/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile scrub
 
@@ -1103,6 +1206,21 @@ examples-scrub-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL)
 
  hdsl_master_sync_225_mhz_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_scrub:
 	$(MAKE) -C source/position_sense/hdsl/firmware/sync_225_mhz/am243x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile scrub
+
+ nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_scrub:
+	$(MAKE) -C source/position_sense/nikon/firmware/multi_channel_load_share/am243x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile scrub
+
+ nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-rtupru1_fw_ti-pru-cgt_scrub:
+	$(MAKE) -C source/position_sense/nikon/firmware/multi_channel_load_share/am243x-evm/icssg0-rtupru1_fw/ti-pru-cgt -f makefile scrub
+
+ nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-txpru1_fw_ti-pru-cgt_scrub:
+	$(MAKE) -C source/position_sense/nikon/firmware/multi_channel_load_share/am243x-evm/icssg0-txpru1_fw/ti-pru-cgt -f makefile scrub
+
+ nikon_peripheral_interface_multi_ch_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_scrub:
+	$(MAKE) -C source/position_sense/nikon/firmware/multi_channel_single_pru/am243x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile scrub
+
+ nikon_peripheral_interface_single_ch_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_scrub:
+	$(MAKE) -C source/position_sense/nikon/firmware/single_channel/am243x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile scrub
 
  tamagawa_multi_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_scrub:
 	$(MAKE) -C source/position_sense/tamagawa/firmware/multi_channel/am243x-evm/icssg0-pru1_fw/ti-pru-cgt -f makefile scrub
