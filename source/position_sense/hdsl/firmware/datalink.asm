@@ -1476,7 +1476,6 @@ send_header_encode_sec_subblock_end:
 transport_layer_send_msg_done:
 ;encoding end
 
-	CALL3 PUSH_FIFO_2B_8x
 	;check if we receive or send 01 pattern
 	qbeq			send_header_send_01_pattern, REG_FNC.b0, M_PAR_RESET
 	qbeq			send_header_send_01_pattern, REG_FNC.b0, M_PAR_SYNC
