@@ -1043,7 +1043,9 @@ transport_layer_online_status_qm_not_low:
     clr         REG_TMP1.w0, REG_TMP1.w0, ONLINE_STATUS_2_QMLW
 	sbco		&REG_TMP0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 6
 transport_layer_online_status_qm_update_done:
-
+	.if $defined("HDSL_MULTICHANNEL")
+	CALL3 PUSH_FIFO_2B_8x
+	.endif
 ; update POS bits in ONLINE_STATUS_D and EVENT
     lbco        &REG_TMP1.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
 	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_H, 4
