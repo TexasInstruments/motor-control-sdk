@@ -176,7 +176,7 @@ void SDFM_configEcap(sdfm_handle h_sdfm, uint8_t ecap_divider)
  void SDFM_setCompFilterOverSamplingRatio(sdfm_handle h_sdfm, uint8_t ch_id, uint16_t osr)
  {
     /*Over current OSR*/
-    h_sdfm->pSdfmInterface->sdfm_cfg_ptr[ch_id].osr = osr;
+    h_sdfm->pSdfmInterface->sdfm_cfg_ptr[ch_id].osr = osr - 1;
  }
 
 /*sdfm high, low  threshold config */

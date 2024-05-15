@@ -325,16 +325,16 @@ void init_sdfm()
     
     gTestSdfmPrms.epwmOutFreq = APP_EPWM_OUTPUT_FREQ;
 
-#if (CONFIG_SDFM0_CHANNEL0 != 0)
-    sdfmParamsConfig(0, &gTestSdfmPrms);
+#if (CONFIG_SDFM0_CHANNEL3 != 0)
+    sdfmParamsConfig(3, &gTestSdfmPrms);
 #endif
-#if (CONFIG_SDFM0_CHANNEL1 != 0)
-    sdfmParamsConfig(1, &gTestSdfmPrms);
+#if (CONFIG_SDFM0_CHANNEL4 != 0)
+    sdfmParamsConfig(4, &gTestSdfmPrms);
 #endif
-#if (CONFIG_SDFM0_CHANNEL2 != 0)
-    sdfmParamsConfig(2, &gTestSdfmPrms);
+#if (CONFIG_SDFM0_CHANNEL5 != 0)
+    sdfmParamsConfig(5, &gTestSdfmPrms);
 #endif
-    
+ 
     if((gTestSdfmPrms.fastDetectPrms[0][0] || gTestSdfmPrms.compFilterPrms[0].enComparator ) || (gTestSdfmPrms.fastDetectPrms[1][0] || gTestSdfmPrms.compFilterPrms[1].enComparator )|| (gTestSdfmPrms.fastDetectPrms[2][0] || gTestSdfmPrms.compFilterPrms[2].enComparator))
     {
         gPruIcssPwmHandle = PRUICSS_PWM_open(CONFIG_PRUICSS_PWM0, gPruIcssHandle);
@@ -355,14 +355,14 @@ void init_sdfm()
     }
 
 #if (CONFIG_SDFM0_LOAD_SHARE != 0)
-#if (CONFIG_SDFM0_CHANNEL3 != 0)
-    sdfmParamsConfig(3, &gTestSdfmPrms);
+#if (CONFIG_SDFM0_CHANNEL0 != 0)
+    sdfmParamsConfig(0, &gTestSdfmPrms);
 #endif
-#if (CONFIG_SDFM0_CHANNEL4 != 0)
-    sdfmParamsConfig(4, &gTestSdfmPrms);
+#if (CONFIG_SDFM0_CHANNEL1 != 0)
+    sdfmParamsConfig(1, &gTestSdfmPrms);
 #endif
-#if (CONFIG_SDFM0_CHANNEL5 != 0)
-    sdfmParamsConfig(5, &gTestSdfmPrms);
+#if (CONFIG_SDFM0_CHANNEL2 != 0)
+    sdfmParamsConfig(2, &gTestSdfmPrms);
 #endif
    /*Update sdfm prams*/
    gTestSdfmPrms.pruInsId = PRUICSS_RTU_PRU0 ;
