@@ -99,7 +99,7 @@ The PRG<k>_PRU1/0_GPI1 signal (muxed with SD0_D) can be used as SD_CLKOUT when P
 
 ### ICSSG eCAP 
 ICSSG eCAP can be used for %SDFM clock generation. Based on divider value API \ref SDFM_configEcap does configuration of eCAP registers and enables eCAP to generate output clock on PRGx_ECAP0_IN_APWM_OUT pin.
-- Generated clock comes out on PRG<k>_PRU1/0_GPI1 signal that can be fed externally to modulator and SD_CLK pins 
+- Generated clock comes out on PRGx_ECAP0_IN_APWM_OUT signal that can be fed externally to modulator and SD_CLK pins 
 - Divider value settings for given PRU core clock and SD clock values
 <table>
 <tr>

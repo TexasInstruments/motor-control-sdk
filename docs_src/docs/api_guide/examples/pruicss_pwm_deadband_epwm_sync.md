@@ -60,7 +60,7 @@ This example uses EPWM0 sync out to reset IEP at the PWM period, PRUICSS IEP CMP
 - PRG0_PWM0_A0 can be probed on J1.5
 - PRG0_PWM0_B0 can be probed on J2.15
 - PRG0_PWM2_A0 can be probed on J4.31
-- PRG0_PWM2_B0 can be probed on J2.39
+- PRG0_PWM2_B0 can be probed on J4.39
 - EPWM0_CHANNEL_A can be probed on J4.40
 
 #### AM64X-EVM and AM243X-EVM 
@@ -68,8 +68,8 @@ This example uses EPWM0 sync out to reset IEP at the PWM period, PRUICSS IEP CMP
 - PRG0_PWM0_A0 can be probed on J3.1
 - PRG0_PWM0_B0 can be probed on J3.3
 - PRG0_PWM2_A0 can be probed on J2.5
-- PRG0_PWM2_B0 can be probed on J5.9
-- EPWM0_CHANNEL_A can be probed on J5.7
+- PRG0_PWM2_B0 can be probed on J6.9
+- EPWM0_CHANNEL_A can be probed on J6.7
 
 #### Probe Output
 

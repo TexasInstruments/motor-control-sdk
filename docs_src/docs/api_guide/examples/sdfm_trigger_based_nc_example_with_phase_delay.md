@@ -10,7 +10,7 @@ during initialization. Normal current Over-sampling Ratio (OSR), Over current OS
 Only one core - PRU is used for this example.
 
 The example does the below:
-- Configure ICSSG1 IEP0 for generating clock for %SDFM
+- Configure ICSSG0 IEP0 for generating clock for %SDFM
 - Enable Phase Compensation Measurement
 - Configure SYNC1 Delay register based on the measured phase delay
 - Set %SDFM channels: Channel 0 - Channel 2
