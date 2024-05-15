@@ -8,3 +8,5 @@ Real Time Libraries module contains following components:
 - \subpage CONTROL
 - \subpage OBSERVERS
 - \subpage TRANSFORMS
+- \subpage SFRA
+- \subpage DATALOG
