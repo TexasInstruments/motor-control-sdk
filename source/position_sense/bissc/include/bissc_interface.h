@@ -140,7 +140,6 @@ struct bissc_pruicss_xchg
     volatile uint16_t  proc_delay[3];
     /**< automatically estimated processing delay */
 
-
     volatile uint32_t ctrl_cmd[3];
     /**< Hex equivalent Control command */
 
@@ -162,6 +161,12 @@ struct bissc_pruicss_xchg
     volatile uint8_t   bissc_re_measure_proc_delay;
     /**< Flag for measuring processing delay again */
 
+    volatile uint8_t   has_safety[3];
+    /**< Flag for BiSS-C safety mode */
+
+    volatile uint16_t safety_crc[3][3];
+    /**< 16-bit CRC calculated for safety */
+
     volatile uint32_t delay_40us;
     /**< BiSS-C Timeout delay  */
 
@@ -170,6 +175,7 @@ struct bissc_pruicss_xchg
 
     volatile uint64_t icssg_clk;
     /**< ICSSG core clock frequency  */
+
 };
 
 #ifdef __cplusplus

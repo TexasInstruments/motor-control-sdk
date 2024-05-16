@@ -80,7 +80,6 @@ BISSC_CH0_PROC_DELAY_OFFSET	                        .set	    0x20    ;Measured P
 BISSC_CH1_PROC_DELAY_OFFSET	                        .set	    0x22    ;Measured Processing delay for ch1
 BISSC_CH2_PROC_DELAY_OFFSET	                        .set	    0x24    ;Measured Processing delay for ch2
 
-
 BISSC_CTRL_CMD_CH0_CONFIG_OFFSET                    .set		0x28	;register access commad
 
 BISSC_CTRL_CMD_CH1_CONFIG_OFFSET                    .set		0x2C	;register access commad
@@ -163,9 +162,32 @@ BISSC_LS_EXEC_TXPRU_STATE                           .set        0xCA    ;TXPRU e
 BISSC_REG_BACKUP                                    .set        0xD0    ;register backup for different channels
 
 BISSC_RE_MEASURE_PROC_DELAY                         .set        0xE8    ;Flag used to indicate remeasure proc delay
+BISSC_CH0_SAFETY_OFFSET                             .set        0xE9    ;Flag used to indicate safety mode in ch0
+BISSC_CH1_SAFETY_OFFSET                             .set        0xEA    ;Flag used to indicate safety mode in ch1
+BISSC_CH2_SAFETY_OFFSET                             .set        0xEB    ;Flag used to indicate safety mode in ch2
 
-BISSC_CONFIG_DELAY_40US_OFFSET                      .set        0xEC    ;40 micro second delay offest
+BISSC_ENC0_SAFETY_CRC_OFFSET                        .set        0xEC    ;16-bit safety CRC enc0 offset
+BISSC_ENC1_SAFETY_CRC_OFFSET                        .set        0xF2    ;16-bit safety CRC enc1 offset
+BISSC_ENC2_SAFETY_CRC_OFFSET                        .set        0xF8    ;16-bit safety CRC enc2 offset
 
-BISSC_CONFIG_DELAY_100MS_OFFSET                     .set        0xF0    ;100 milli second delay offset
+BISSC_CH0_SAFETY_CRC_OFFSET                         .set        0x00    ;16-bit safety CRC ch0 offset
+BISSC_CH1_SAFETY_CRC_OFFSET                         .set        0x02    ;16-bit safety CRC ch1 offset
+BISSC_CH2_SAFETY_CRC_OFFSET                         .set        0x04    ;16-bit safety CRC ch2 offset
 
-BISSC_CONFIG_ICSSG_CLK_OFFSET                       .set        0xF8    ;icssg clock configuration offset
+BISSC_ENC0_CH0_SAFETY_CRC_OFFSET                    .set        0xEC    ;16-bit safety CRC enc0 ch0 offset
+BISSC_ENC0_CH1_SAFETY_CRC_OFFSET                    .set        0xEE    ;16-bit safety CRC enc0 ch1 offset
+BISSC_ENC0_CH2_SAFETY_CRC_OFFSET                    .set        0xF0    ;16-bit safety CRC enc0 ch2 offset
+
+BISSC_ENC1_CH0_SAFETY_CRC_OFFSET                    .set        0xF2    ;16-bit safety CRC enc1 ch0 offset
+BISSC_ENC1_CH1_SAFETY_CRC_OFFSET                    .set        0xF4    ;16-bit safety CRC enc1 ch1 offset
+BISSC_ENC1_CH2_SAFETY_CRC_OFFSET                    .set        0xF6    ;16-bit safety CRC enc1 ch2 offset
+
+BISSC_ENC2_CH0_SAFETY_CRC_OFFSET                    .set        0xF8    ;16-bit safety CRC enc2 ch0 offset
+BISSC_ENC2_CH1_SAFETY_CRC_OFFSET                    .set        0xFA    ;16-bit safety CRC enc2 ch1 offset
+BISSC_ENC2_CH2_SAFETY_CRC_OFFSET                    .set        0xFC    ;16-bit safety CRC enc2 ch2 offset
+
+BISSC_CONFIG_DELAY_40US_OFFSET                      .set        0x100   ;40 micro second delay offest
+
+BISSC_CONFIG_DELAY_100MS_OFFSET                     .set        0x104   ;100 milli second delay offset
+
+BISSC_CONFIG_ICSSG_CLK_OFFSET                       .set        0x108   ;icssg clock configuration offset

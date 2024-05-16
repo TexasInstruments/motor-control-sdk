@@ -58,7 +58,7 @@ extern "C" {
 /* Maximum number of Endat Channels*/
 #define NUM_ED_CH_MAX                       3
 /* Maximum number of BiSS-C Encoders connected in Daisy chain*/
-#define NUM_ENCODERS_MAX                       3
+#define NUM_ENCODERS_MAX                    3
 /* Max processing delay as per spec - values are in valid bits/clock cycles*/
 #define BISSC_MAX_PROC_DELAY_1MHZ           40
 #define BISSC_MAX_PROC_DELAY_2MHZ           80
@@ -77,7 +77,6 @@ extern "C" {
 #define BISSC_REG_DATA_LEN                  8       /* Number of Register data bits */
 #define BISSC_REG_DATA_MASK                 0xFF    /* Mask for Register data */
 #define BISSC_CTRL_STOP_LEN                 2       /* Number of stop bits PS, P: stop bit for one frame, S: stop bit for sequential control communication */
-#define BISSC_RX_ENABLE_FRACTIONAL_DIV      (1<<15) /* Enable fractional divider 1.5 for RX */
 #define BISSC_RX_SAMPLE_SIZE                7       /* 8x over clock */
 #define BISSC_RX_SAMPLE_SIZE_10MHZ          3       /* 4x over clock */
 #define BISSC_POS_CRC_LEN                   6       /* Number of position data CRC bits */
@@ -85,6 +84,8 @@ extern "C" {
 #define BISSC_CTRL_CMD_CRC_LEN              4       /* Number of CTRL cmd CRC bits */
 #define BISSC_CTRL_CMD_CRC_MASK             0xF     /* Mask for CTRL cmd CRC bits */
 #define BISSC_POS_DATA_LEN_DEFAULT          12      /* Default data length instead of garbage*/
+#define BISSC_SAFETY_CRC_LEN                16      /* Number of Safety CRC bits */
+#define BISSC_RX_ENABLE_FRACTIONAL_DIV      (1<<15) /* Enable fractional divider 1.5 for RX */
 /* Allowed frequencies in MHz for BiSSC */
 #define BISSC_FREQ_1MHZ                     1
 #define BISSC_FREQ_2MHZ                     2
@@ -166,8 +167,14 @@ struct bissc_priv
     /**< Array of all configured channel*/
     struct bissc_pruicss_xchg *pruicss_xchg;
     /**< Structure defining BiSSC interface*/
-    int32_t has_safety;
+    int32_t has_safety[NUM_ED_CH_MAX][NUM_ENCODERS_MAX];
     /**< Status for safety support*/
+    int32_t sign_of_life_cnt[NUM_ED_CH_MAX][NUM_ENCODERS_MAX];
+    /**< 6-bit sign of life counter, it'll give number of cycles triggered since power on*/
+    int32_t rcv_safety_crc[NUM_ED_CH_MAX][NUM_ENCODERS_MAX];
+    /**< Received 16-bit safety crc*/
+    int32_t calc_safety_crc[NUM_ED_CH_MAX][NUM_ENCODERS_MAX];
+    /**< Calculated 16-bit safety crc*/
     int32_t is_continuous_mode;
     /**< Continuous Mode is opted*/
     void *pruicss_cfg;

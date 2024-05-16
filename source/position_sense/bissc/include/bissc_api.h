@@ -288,6 +288,20 @@ void bissc_clear_data_len(struct bissc_priv *priv);
  *  \param[in]  frequency       frequency specified by the user through UART menu
  */
 void bissc_update_clock_freq(struct bissc_priv *priv, uint32_t frequency);
+/**
+ *  \brief      Enable Safety for connected BiSS-C encoder
+ *
+ *  \param[in]  priv            cookie returned by \ref bissc_init
+ *  \param[in]  enc_num         number(index) of encoder in use
+ *  \param[in]  ch_num          number(index) of PRU in use
+ */
+void bissc_enable_safety(struct bissc_priv *priv, uint32_t enc_num, uint32_t ch_num);
+/**
+ *  \brief      Disable Safety for connected BiSS-C encoder
+ *
+ *  \param[in]  priv            cookie returned by \ref bissc_init
+ */
+void bissc_disable_safety(struct bissc_priv *priv);
 /** @} */
 
 #ifdef __cplusplus
