@@ -17,7 +17,7 @@
 
 Feature                                                                                         | Module
 ------------------------------------------------------------------------------------------------|-----------------------------------
-
+Updated HDSL position realignment algorithm                                                     | Position Sense HDSL
 ## Device and Validation Information
 
 SOC    | Supported CPUs  | Boards                                                                                                      | Host PC
@@ -117,15 +117,87 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
 </tr>
 <tr>
     <td> PINDSW-7758
-    <td> BiSS-C: Firmware does not work when changing ICSSG Core Clock Frequency to 300 MHz
+    <td> BiSS-C: Firmware does not work when changing ICSSG Core Clock Frequency to 300MHz 
     <td> Position Sense BiSS-C
     <td> 9.1
-    <td> Clock dividers for Three Channel Peripheral Interface were not being set correctly for 300 MHz
+    <td> Clock dividers for Three Channel Peripheral Interface were not being set correctly for 300MHz 
+</tr>
+<tr>
+    <td> PINDSW-7480
+    <td> HDSL: Continuous short/long message requests cause PRU to get stuck
+    <td> Position Sense HDSL
+    <td> 9.0
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-6630
+    <td> HDSL: POS bit is not set during initial fast position alignment
+    <td> Position Sense HDSL
+    <td> 9.0
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-7158
+    <td> HDSL: Reset Value of SSUM bit is not correct
+    <td> Position Sense HDSL
+    <td> 9.0 onwards
+    <td> -
 </tr>
 </table>
 
 ## Known Issues
+<table>
+<tr>
+    <th> ID
+    <th> Head Line
+    <th> Module
+    <th> Applicable Releases
+    <th> Workaround
+</tr>
+<tr>
+    <td> PINDSW-5537
+    <td> HDSL not working with 225 MHz PRU-ICSSG Core Clock Frequency
+    <td> Position Sense HDSL
+    <td> 9.0 onwards
+    <td> Use 300 MHz frequency for PRU-ICSSG Core Clock
+</tr>
+<tr>
+    <td> PINDSW-5690
+    <td> HDSL: EDGE register is not updated
+    <td> Position Sense HDSL
+    <td> 9.0 onwards
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-6486
+    <td> HDSL: RSSI register shows higher values than expected for a non-noisy setup
+    <td> Position Sense HDSL
+    <td> 9.0 onwards
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-7130
+    <td> HDSL: Few protocol resets seen during initialization with Free Run mode on AM243x-LP
+    <td> Position Sense HDSL
+    <td> 9.0 onwards
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-7163
+    <td> HDSL: Trailer data contains 4 zeros instead of 5
+    <td> Position Sense HDSL
+    <td> 9.0 onwards
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-7474
+    <td> HDSL : 100 meter cable length does not work for sync mode in 300MHz PRU clock
+    <td> Position Sense HDSL
+    <td> 9.0
+    <td> -
+</tr>
 
+</table>
 <table>
 <tr>
     <th> ID
