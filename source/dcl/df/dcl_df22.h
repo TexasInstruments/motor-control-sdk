@@ -83,7 +83,7 @@ typedef _DCL_VOLATILE struct dcl_df22
     /* miscellaneous */
     DCL_DF22_SPS *sps; //!< updates compensator parameter
     DCL_CSS *css;      //!< configuration & debugging
-} DCL_DF22, *DF22_Handle;
+} DCL_DF22;
 
 //! \brief          Defines default values to initialize DCL_DF22
 //!

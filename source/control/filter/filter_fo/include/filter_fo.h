@@ -58,7 +58,7 @@ extern "C"
 
 #define _FILTER_FO_Obj_  dcl_df11
 typedef DCL_DF11         FILTER_FO_Obj;
-typedef DF11_Handle      FILTER_FO_Handle;
+typedef DCL_DF11     *FILTER_FO_Handle;
 
 //*****************************************************************************
 //

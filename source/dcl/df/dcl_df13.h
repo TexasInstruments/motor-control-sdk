@@ -99,7 +99,7 @@ typedef _DCL_VOLATILE struct dcl_df13
     /* miscellaneous */
     DCL_DF13_SPS *sps; //!< updates compensator parameter
     DCL_CSS *css;      //!< configuration & debugging
-} DCL_DF13, *DF13_Handle;
+} DCL_DF13;
 
 //! \brief          Defines default values to initialize DCL_DF13
 //!

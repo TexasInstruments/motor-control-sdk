@@ -133,7 +133,7 @@ void ESMO_updatePLLParams(ESMO_Handle handle)
 {
 	ESMO_Obj *obj = (ESMO_Obj *)handle;
 
-	float32_t speedRefAbs = ti_arm_abs(obj->speedRef);
+	float32_t speedRefAbs = fasbf(obj->speedRef);
 
 	obj->pll_Kp = obj->pll_KpMin + obj->pll_KpSF * speedRefAbs;
 	obj->pll_Kp = MATH_sat(obj->pll_Kp, obj->pll_KpMax, obj->pll_KpMin);

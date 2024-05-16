@@ -84,7 +84,7 @@ typedef _DCL_VOLATILE struct dcl_pi2
     /* miscellaneous */
     DCL_PI2_SPS *sps;   //!< updates controller parameter
     DCL_CSS *css;       //!< configuration & debugging
-} DCL_PI2, *PI2_Handle;
+} DCL_PI2;
 
 //! \brief  Defines default values to initialize DCL_PI2
 //!

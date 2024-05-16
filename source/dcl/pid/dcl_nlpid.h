@@ -121,7 +121,7 @@ typedef _DCL_VOLATILE struct dcl_nlpid
     /* miscellaneous */
     DCL_NLPID_SPS *sps; //!< Pointer to shadow parameter structure
     DCL_CSS *css;       //!< Pointer to controller support structure
-} DCL_NLPID, *NLPID_Handle;
+} DCL_NLPID;
 
 //! \brief          Defines default values to initialize the DCL_NLPID structure
 //!

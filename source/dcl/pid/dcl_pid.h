@@ -91,7 +91,7 @@ typedef _DCL_VOLATILE struct dcl_pid
     /* miscellaneous */
     DCL_PID_SPS *sps;   //!< updates controller parameter
     DCL_CSS *css;       //!< configuration & debugging
-} DCL_PID, *PID_Handle;
+} DCL_PID;
 
 //! \brief          Defines default values to initialize the DCL_PID structure
 //!
