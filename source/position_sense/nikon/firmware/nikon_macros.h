@@ -1191,7 +1191,7 @@ NIKON_LMBD_IS_0?:
 	LBCO 	&RAW_DATA.w0, PRUx_DMEM, RAW_DATA_OFFSET, 2 ;load next frame into lower word (RAW_DATA.w0)
 	ADD 	RAW_DATA_OFFSET, RAW_DATA_OFFSET, 6			;Increment the offset to next frame dmem offset
 	SUB 	NUM_FRAMES, NUM_FRAMES, 1					;decrement number of frames
-	QBNE 	NIKON_SKIP_NEXT_WORD?, NUM_FRAMES, 0			;if current frame is last frame then clear crc bits
+	QBNE 	NIKON_SKIP_NEXT_WORD?, NUM_FRAMES, 0		;if current frame is last frame then clear crc bits
 	MOV 	NIKON_RCV_CRC.b0, RAW_DATA.b0				;store received crc in local register
 	LDI 	RAW_DATA.b0, 0								;clear the crc byte
 NIKON_SKIP_NEXT_WORD?:
