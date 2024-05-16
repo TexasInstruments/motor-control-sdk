@@ -295,6 +295,37 @@
         "resourceSubClass": [
             "example.gettingstarted"
         ],
+        "description": "Verification of SFRA Library for PI Controller.  CPU is R5FSS0-0 running NORTOS.",
+        "name": "sfralib",
+        "location": "../../examples/sfra/am263x-cc/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "TMDSCNCD263"
+        ],
+        "kernel": [
+            "nortos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "sfra",
+            "r5fss0-0_nortos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.gettingstarted"
+        ],
         "description": "A simple test vector of ClARKE-PARK-IPARK-SVGEN data verification CPU is R5FSS0-0 running NORTOS.",
         "name": "transforms_test",
         "location": "../../examples/transforms/transforms_test/am263x-cc/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
@@ -407,6 +438,38 @@
             "transforms",
             "transforms_test",
             "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.gettingstarted"
+        ],
+        "description": "Verifying data logging after triggering using Data log Library.  CPU is R5FSS0-0 running NORTOS.",
+        "name": "dlog4ch_lib",
+        "location": "../../examples/utilities/datalog/am263x-cc/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "TMDSCNCD263"
+        ],
+        "kernel": [
+            "nortos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "utilities",
+            "datalog",
+            "r5fss0-0_nortos"
         ],
         "mainCategories": [
             [
