@@ -266,13 +266,13 @@ void App_pruIcssPwmDeadbandMain(void *args)
     if(((gPruIcssPwmHandle->iepAttrs)->enableIep0) == 1U)
     {
         /*Enable IEP0 CMP0/CMP1 compare events*/
-        status = PRUICSS_PWM_configureIepCompareEnable(gPruIcssPwmHandle, PRUICSS_IEP_INST0, 0x07);
+        status = PRUICSS_PWM_configureIepCompareEnable(gPruIcssPwmHandle, PRUICSS_IEP_INST0,  0xFFFF);
         DebugP_assert(SystemP_SUCCESS == status);
 
         if((gPruIcssPwmHandle->iepAttrs)->enableIep1SlaveMode == 1U)
         {
             /*Enable IEP1 CMP0/CMP1 compare events*/
-            status = PRUICSS_PWM_configureIepCompareEnable(gPruIcssPwmHandle, PRUICSS_IEP_INST1, 0x07);
+            status = PRUICSS_PWM_configureIepCompareEnable(gPruIcssPwmHandle, PRUICSS_IEP_INST1,  0xFFFF);
             DebugP_assert(SystemP_SUCCESS == status);
         }
 
