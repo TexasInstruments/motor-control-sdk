@@ -86,6 +86,7 @@
 #define BISSC_CMD_ENC_CTRL_CMD              (4)
 #define BISSC_CMD_ENC_LOOP_OVER_CYC         (5)
 #define BISSC_CMD_PERIODIC_TRIGGER          (6)
+#define BISSC_ENABLE_SAFETY                 (7)
 
 #define BISSC_POSITION_LOOP_STOP            0
 #define BISSC_POSITION_LOOP_START           1
@@ -213,7 +214,7 @@ static int32_t bissc_clock_config(uint32_t frequency, struct bissc_priv *priv)
     {
         return SystemP_FAILURE;
     }
-    DebugP_logInfo("\r| clock config values - tx_div: %u\trx_div: %u\trx_div_attr: %x\n",
+    DebugP_logInfo("\r| clock config values - tx_div: %u\trx_div: %u\trx_div_attr:0x%x\n",
                     clk_cfg.tx_div, clk_cfg.rx_div, clk_cfg.rx_div_attr);
     bissc_update_max_proc_delay(priv);
     bissc_hw_init(priv);
@@ -232,6 +233,7 @@ static void bissc_display_menu(void)
     DebugP_log("\r\n| 4 : Control Communication - Register Read/Write                              |");
     DebugP_log("\r\n| 5 : Loop over BiSS-C cycles                                                  |");
     DebugP_log("\r\n| 6 : Start continuous mode                                                    |");
+    DebugP_log("\r\n| 7 : Enable safety mode                                                       |");
     DebugP_log("\r\n| 0 : Exit the application                                                     |");
     DebugP_log("\r\n|------------------------------------------------------------------------------|");
     DebugP_log("\r\n| enter value:\r\n");
@@ -240,7 +242,7 @@ static void bissc_display_menu(void)
 void bissc_get_enc_data_len(struct bissc_priv *priv)
 {
     int32_t ch_num, totalchns;
-    uint32_t  single_turn_len[3] = {0}, multi_turn_len[3] = {0};
+    uint32_t  single_turn_len[3], multi_turn_len[3], enc_num = 0;
     bissc_clear_data_len(priv);
     if(priv->load_share)
         totalchns = bissc_get_totalchannels(priv);
@@ -249,6 +251,11 @@ void bissc_get_enc_data_len(struct bissc_priv *priv)
 
     for(ch_num = 0; ch_num < totalchns; ch_num++)
     {
+        for(enc_num = 0; enc_num < NUM_ENCODERS_MAX; enc_num++)
+        {
+            single_turn_len[enc_num] = 0;
+            multi_turn_len[enc_num] = 0;
+        }
         DebugP_log("\r\nPlease enter encoder lengths connected to Channel %d:\n", priv->channel[ch_num]);
         DebugP_log("\r\nPlease enter 1st encoder single turn length\n");
         DebugP_scanf("%u\n", &single_turn_len[0]);
@@ -343,7 +350,7 @@ static int bissc_get_command()
     uint32_t cmd;
     DebugP_scanf("%d\n", &cmd);
     /* Check to make sure that the command issued is correct */
-    if( cmd < BISSC_CMD_EXIT_APP || cmd > BISSC_CMD_PERIODIC_TRIGGER)
+    if( cmd < BISSC_CMD_EXIT_APP || cmd > BISSC_ENABLE_SAFETY )
     {
         DebugP_log("\r\n| WARNING: invalid option try again\n");
         return SystemP_FAILURE;
@@ -430,7 +437,7 @@ static void bissc_process_periodic_command(struct bissc_priv *priv, int64_t cmp3
 }
 void bissc_main(void *args)
 {
-    int32_t i, totalchns, ch_num, ls_ch = 0;
+    int32_t i, totalchns, ch_num, ls_ch = 0, enc_num = 0;
     uint64_t icssgclk;
     uint64_t uartclk;
     int32_t ch = 0;
@@ -564,6 +571,7 @@ void bissc_main(void *args)
         int64_t cmp3, cmp0;
         uint32_t freq, ctrl_cmd[3]={0};
         uint32_t loop_cnt;
+        uint32_t safety = 0;
         uint32_t ctrl_write_status, ctrl_reg_address, ctrl_reg_data = 0, ctrl_enc_id = 0;
         bissc_display_menu();
         cmd = bissc_get_command();
@@ -616,46 +624,113 @@ void bissc_main(void *args)
                 DebugP_log("\r\n Channel %d:\n", ch);
                 if(priv->multi_turn_len[ls_ch][0])
                 {
-                    DebugP_log("\r\n Encoder-1 Multiturn rev: %u, Angle:  %.12f, crc: %x, otf crc: %x, e_w: %x\n", priv->enc_pos_data[ch].num_of_turns[0],
-                    priv->enc_pos_data[ch].angle[0], priv->enc_pos_data[ch].rcv_crc[0], priv->enc_pos_data[ch].otf_crc[0], priv->enc_pos_data[ch].ew[0]);
+                    if(priv->has_safety[ls_ch][0])
+                    {
+                        DebugP_log("\r\n Encoder-1 Multiturn rev: %u, Angle:  %.12f, received safety crc:0x%x, calculated safety crc:0x%x, e_w:0x%x, sign-of-life counter: %d\n", priv->enc_pos_data[ch].num_of_turns[0],
+                        priv->enc_pos_data[ch].angle[0], priv->rcv_safety_crc[ch][0], priv->calc_safety_crc[ch][0], priv->enc_pos_data[ch].ew[0], priv->sign_of_life_cnt[ch][0]);
+                    }
+                    else
+                    {
+                        DebugP_log("\r\n Encoder-1 Multiturn rev: %u, Angle:  %.12f, crc:0x%x, otf crc:0x%x, e_w:0x%x\n", priv->enc_pos_data[ch].num_of_turns[0],
+                        priv->enc_pos_data[ch].angle[0], priv->enc_pos_data[ch].rcv_crc[0], priv->enc_pos_data[ch].otf_crc[0], priv->enc_pos_data[ch].ew[0]);
+                    }
                 }
                 else
                 {
-                    DebugP_log("\r\n Encoder-1 Singleturn Angle:  %.12f, crc: %x, otf crc: %x, e_w: %x\n", priv->enc_pos_data[ch].angle[0], priv->enc_pos_data[ch].rcv_crc[0],
-                    priv->enc_pos_data[ch].otf_crc[0], priv->enc_pos_data[ch].ew[0]);
+                    if(priv->has_safety[ls_ch][0])
+                    {
+                        DebugP_log("\r\n Encoder-1 Singleturn Angle:  %.12f, received safety crc:0x%x, calculated safety crc:0x%x, e_w:0x%x, sign-of-life counter: %d\n",
+                        priv->enc_pos_data[ch].angle[0], priv->rcv_safety_crc[ch][0], priv->calc_safety_crc[ch][0], priv->enc_pos_data[ch].ew[0], priv->sign_of_life_cnt[ch][0]);
+                    }
+                    else
+                    {
+                        DebugP_log("\r\n Encoder-1 Singleturn Angle:  %.12f, crc:0x%x, otf crc:0x%x, e_w:0x%x\n", priv->enc_pos_data[ch].angle[0], priv->enc_pos_data[ch].rcv_crc[0],
+                        priv->enc_pos_data[ch].otf_crc[0], priv->enc_pos_data[ch].ew[0]);
+                    }
                 }
-                DebugP_log("\r\n CRC Status: %s, crc error count: %u\n", (priv->enc_pos_data[ch].rcv_crc[0] == priv->enc_pos_data[ch].otf_crc[0]) ? "success" : "failure" ,
-                priv->pd_crc_err_cnt[ch][0]);
-
+                if(priv->has_safety[ls_ch][0])
+                {
+                    DebugP_log("\r\n CRC Status: %s, crc error count: %u\n", (priv->rcv_safety_crc[ch][0] == priv->calc_safety_crc[ch][0]) ? "success" : "failure",priv->pd_crc_err_cnt[ch][0]);
+                }
+                else
+                {
+                    DebugP_log("\r\n CRC Status: %s, crc error count: %u\n", (priv->enc_pos_data[ch].rcv_crc[0] == priv->enc_pos_data[ch].otf_crc[0]) ? "success" : "failure" ,
+                    priv->pd_crc_err_cnt[ch][0]);
+                }
                 if(priv->data_len[ls_ch][1])
                 {
                     if(priv->multi_turn_len[ls_ch][1])
                     {
-                        DebugP_log("\r\n Encoder-2 Multiturn rev: %u, Angle:  %.12f, crc: %x, otf crc: %x, e_w: %x\n", priv->enc_pos_data[ch].num_of_turns[1],
-                        priv->enc_pos_data[ch].angle[1], priv->enc_pos_data[ch].rcv_crc[1], priv->enc_pos_data[ch].otf_crc[1], priv->enc_pos_data[ch].ew[1]);
+                        if(priv->has_safety[ls_ch][1])
+                        {
+                            DebugP_log("\r\n Encoder-2 Multiturn rev: %u, Angle:  %.12f, received safety crc:0x%x, calculated safety crc:0x%x, e_w:0x%x, sign-of-life counter: %d\n", priv->enc_pos_data[ch].num_of_turns[1],
+                            priv->enc_pos_data[ch].angle[1], priv->rcv_safety_crc[ch][1], priv->calc_safety_crc[ch][1], priv->enc_pos_data[ch].ew[1], priv->sign_of_life_cnt[ch][1]);
+                        }
+                        else
+                        {
+                            DebugP_log("\r\n Encoder-2 Multiturn rev: %u, Angle:  %.12f, crc:0x%x, otf crc:0x%x, e_w:0x%x\n", priv->enc_pos_data[ch].num_of_turns[1],
+                            priv->enc_pos_data[ch].angle[1], priv->enc_pos_data[ch].rcv_crc[1], priv->enc_pos_data[ch].otf_crc[1], priv->enc_pos_data[ch].ew[1]);
+                        }
                     }
                     else
                     {
-                        DebugP_log("\r\n Encoder-2 Singleturn Angle:  %.12f, crc: %x, otf crc: %x, e_w: %x\n", priv->enc_pos_data[ch].angle[1], priv->enc_pos_data[ch].rcv_crc[1],
-                        priv->enc_pos_data[ch].otf_crc[1], priv->enc_pos_data[ch].ew[1]);
+                        if(priv->has_safety[ls_ch][1])
+                        {
+                            DebugP_log("\r\n Encoder-2 Singleturn Angle:  %.12f, received safety crc:0x%x, calculated safety crc:0x%x, e_w:0x%x, sign-of-life counter: %d\n",
+                            priv->enc_pos_data[ch].angle[1], priv->rcv_safety_crc[ch][1], priv->calc_safety_crc[ch][1], priv->enc_pos_data[ch].ew[1], priv->sign_of_life_cnt[ch][1]);
+                        }
+                        else
+                        {
+                            DebugP_log("\r\n Encoder-2 Singleturn Angle:  %.12f, crc:0x%x, otf crc:0x%x, e_w:0x%x\n", priv->enc_pos_data[ch].angle[1], priv->enc_pos_data[ch].rcv_crc[1],
+                            priv->enc_pos_data[ch].otf_crc[1], priv->enc_pos_data[ch].ew[1]);
+                        }
                     }
-                    DebugP_log("\r\n CRC Status: %s, crc error count: %u\n", (priv->enc_pos_data[ch].rcv_crc[1] == priv->enc_pos_data[ch].otf_crc[1]) ? "success" : "failure" ,
-                    priv->pd_crc_err_cnt[ch][1]);
-
+                    if(priv->has_safety[ls_ch][1])
+                    {
+                        DebugP_log("\r\n CRC Status: %s, crc error count: %u\n", (priv->rcv_safety_crc[ch][1] == priv->calc_safety_crc[ch][1]) ? "success" : "failure",priv->pd_crc_err_cnt[ch][1]);
+                    }
+                    else
+                    {
+                        DebugP_log("\r\n CRC Status: %s, crc error count: %u\n", (priv->enc_pos_data[ch].rcv_crc[1] == priv->enc_pos_data[ch].otf_crc[1]) ? "success" : "failure" ,
+                        priv->pd_crc_err_cnt[ch][1]);
+                    }
                     if(priv->data_len[ls_ch][2])
                     {
                         if(priv->multi_turn_len[ls_ch][2])
                         {
-                            DebugP_log("\r\n Encoder-3 Multiturn rev: %u, Angle:  %.12f, crc: %x, otf crc: %x, e_w: %x\n", priv->enc_pos_data[ch].num_of_turns[2],
-                            priv->enc_pos_data[ch].angle[2], priv->enc_pos_data[ch].rcv_crc[2], priv->enc_pos_data[ch].otf_crc[2], priv->enc_pos_data[ch].ew[2]);
+                            if(priv->has_safety[ls_ch][2])
+                            {
+                                DebugP_log("\r\n Encoder-3 Multiturn rev: %u, Angle:  %.12f, received safety crc: 0x%x, calculated safety crc: 0x%x, e_w: 0x%x, sign-of-life counter: %d\n", priv->enc_pos_data[ch].num_of_turns[2],
+                                priv->enc_pos_data[ch].angle[2], priv->rcv_safety_crc[ch][2], priv->calc_safety_crc[ch][2], priv->enc_pos_data[ch].ew[2], priv->sign_of_life_cnt[ch][2]);
+                            }
+                            else
+                            {
+                                DebugP_log("\r\n Encoder-3 Multiturn rev: %u, Angle:  %.12f, crc: 0x%x, otf crc: 0x%x, e_w: 0x%x\n", priv->enc_pos_data[ch].num_of_turns[2],
+                                priv->enc_pos_data[ch].angle[2], priv->enc_pos_data[ch].rcv_crc[2], priv->enc_pos_data[ch].otf_crc[2], priv->enc_pos_data[ch].ew[2]);
+                            }
                         }
                         else
                         {
-                            DebugP_log("\r\n Encoder-3 Singleturn Angle:  %.12f, crc: %x, otf crc: %x, e_w: %x\n", priv->enc_pos_data[ch].angle[2], priv->enc_pos_data[ch].rcv_crc[2],
-                            priv->enc_pos_data[ch].otf_crc[2], priv->enc_pos_data[ch].ew[2]);
+                            if(priv->has_safety[ls_ch][2])
+                            {
+                                DebugP_log("\r\n Encoder-3 Singleturn Angle:  %.12f, received safety crc:0x%x, calculated safety crc:0x%x, e_w:0x%x, sign-of-life counter: %d\n",
+                                priv->enc_pos_data[ch].angle[2], priv->rcv_safety_crc[ch][2], priv->calc_safety_crc[ch][2], priv->enc_pos_data[ch].ew[2], priv->sign_of_life_cnt[ch][2]);
+                            }
+                            else
+                            {
+                                DebugP_log("\r\n Encoder-3 Singleturn Angle:  %.12f, crc:0x%x, otf crc:0x%x, e_w:0x%x\n", priv->enc_pos_data[ch].angle[2], priv->enc_pos_data[ch].rcv_crc[2],
+                                priv->enc_pos_data[ch].otf_crc[2], priv->enc_pos_data[ch].ew[2]);
+                            }
                         }
-                        DebugP_log("\r\n CRC Status: %s, crc error count: %u\n", (priv->enc_pos_data[ch].rcv_crc[2] == priv->enc_pos_data[ch].otf_crc[2]) ? "success" : "failure" ,
-                        priv->pd_crc_err_cnt[ch][2]);
+                        if(priv->has_safety[ls_ch][2])
+                        {
+                            DebugP_log("\r\n CRC Status: %s, crc error count: %u\n", (priv->rcv_safety_crc[ch][2] == priv->calc_safety_crc[ch][2]) ? "success" : "failure",priv->pd_crc_err_cnt[ch][2]);
+                        }
+                        else
+                        {
+                            DebugP_log("\r\n CRC Status: %s, crc error count: %u\n", (priv->enc_pos_data[ch].rcv_crc[2] == priv->enc_pos_data[ch].otf_crc[2]) ? "success" : "failure" ,
+                            priv->pd_crc_err_cnt[ch][2]);
+                        }
                     }
                 }
             }
@@ -682,7 +757,7 @@ void bissc_main(void *args)
                 DebugP_scanf("%x\n", &ctrl_write_status);
                 while(1)
                 {
-                    DebugP_log("\r\n Enter Register Address: ");
+                    DebugP_log("\r\n Enter Register Address(in hex): ");
                     DebugP_scanf("%x\n", &ctrl_reg_address);
                     if(ctrl_reg_address > 0x7F)
                         DebugP_log("\r\n Please enter a 7-bit address\n");
@@ -691,14 +766,11 @@ void bissc_main(void *args)
                 }
                 if(ctrl_write_status == 1)
                 {
-                    DebugP_log("\r\n Enter Data to write at 0x%x Register\n", ctrl_reg_address);
+                    DebugP_log("\r\n Enter Data(in hex) to write at 0x%x Register\n", ctrl_reg_address);
                     DebugP_scanf("%x\n", &ctrl_reg_data);
                 }
-                if(priv->num_encoders[ls_ch] > 1)
-                {
-                    DebugP_log("\r\n Enter Encoder ID\n");
-                    DebugP_scanf("%x\n", &ctrl_enc_id);
-                }
+                DebugP_log("\r\n Enter Encoder ID(0: if daisy chain is not in use)\n");
+                DebugP_scanf("%x\n", &ctrl_enc_id);
                 ctrl_cmd[ls_ch] = bissc_generate_ctrl_cmd(priv, ls_ch, ctrl_write_status, ctrl_reg_address, ctrl_reg_data, ctrl_enc_id);
             }
             ret = bissc_set_ctrl_cmd_and_process(priv, ctrl_cmd);
@@ -710,7 +782,7 @@ void bissc_main(void *args)
             {
                 ch = bissc_get_current_channel(priv, ch_num);
                 DebugP_log("\r\n Channel %d:\n", ch);
-                DebugP_log("\r\n Control communication result: %x, crc: %x, otf crc: %x, status: %s\n",priv->enc_ctrl_data[ch].cmd_result,
+                DebugP_log("\r\n Control communication result: 0x%x, crc: 0x%x, otf crc: 0x%x, status: %s\n",priv->enc_ctrl_data[ch].cmd_result,
                 priv->enc_ctrl_data[ch].cmd_rcv_crc, priv->enc_ctrl_data[ch].cmd_otf_crc,
                 (priv->enc_ctrl_data[ch].cmd_rcv_crc == priv->enc_ctrl_data[ch].cmd_otf_crc) ? "success" : "failure");
 
@@ -756,6 +828,34 @@ void bissc_main(void *args)
                 continue;
             }
             bissc_process_periodic_command(priv, cmp3, cmp0);
+        }
+        else if(cmd == BISSC_ENABLE_SAFETY)
+        {
+            /* Clear all previously enabled safety flags */
+            bissc_disable_safety(priv);
+            totalchns = bissc_get_totalchannels(priv);
+            for(ch_num = 0; ch_num < totalchns; ch_num++)
+            {
+                if(priv->load_share)
+                {
+                    ls_ch = bissc_get_current_channel(priv, ch_num);
+                }
+                else
+                {
+                    totalchns = 1;
+                    ls_ch = 0;
+                }
+                DebugP_log("\r\n Enter 0 to Disable Safety or 1 to Enable Safety for Channel %d:\n", priv->channel[ch_num]);
+                for(enc_num = 0; enc_num < priv->num_encoders[ls_ch]; enc_num++)
+                {
+                    DebugP_log("\r\nPlease enter encoder %d safety status\n", enc_num);
+                    DebugP_scanf("%d", &safety);
+                    if(safety == 1)
+                    {
+                        bissc_enable_safety(priv, enc_num, ls_ch);
+                    }
+                }
+            }
         }
     }
 deinit:

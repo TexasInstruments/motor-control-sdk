@@ -59,6 +59,7 @@
 	; unused Register: R11.b0, R28
 
 	.asg	R1, 		FF0
+	.asg 	R1, 		SAFETY_ENCODER
 	.asg	R2, 		FF1
 	.asg 	R3, 		FF2
 	.asg 	R4, 		FF3
@@ -131,3 +132,5 @@ BISSC_MAX_FRAME_SIZE			.set	256			;Max frame size for Processing delay measureme
 BISSC_MAX_WAIT_FOR_ENC_DETECT	.set	10000		;Max wait count for encoder detected
 
 BISSC_PRU_TRIGGER_HOST_EVT		.set 	34			;event 0 trigger
+BISSC_SAFETY_CRC_POLY			.set 	0x190D9		;polynomial for 16-bit crc safety support
+BISSC_SAFETY_CRC_LEN 			.set 	16			;number of safety crc bits received

@@ -231,26 +231,41 @@ int32_t bissc_get_pos(struct bissc_priv *priv)
             raw_data0 = priv->pruicss_xchg->pos_data_res[sl_num].raw_data[ch].pos_data_word0;
             raw_data1 = priv->pruicss_xchg->pos_data_res[sl_num].raw_data[ch].pos_data_word1;
             max = pow(2, priv->single_turn_len[ls_ch][sl_num]);
+            if(priv->has_safety[ch_num][sl_num])
+            {
+                priv->raw_data                            = (uint64_t) raw_data0 << 32 | raw_data1;
+                priv->enc_pos_data[ch].position[sl_num]   = (uint64_t) (priv->raw_data >> (BISSC_POS_CRC_LEN + BISSC_EW_LEN + BISSC_SAFETY_CRC_LEN));
+                priv->enc_pos_data[ch].ew[sl_num]         = (priv->raw_data >> (BISSC_POS_CRC_LEN + BISSC_SAFETY_CRC_LEN)) & 0x03;
+                priv->sign_of_life_cnt[ch][sl_num]        = (priv->raw_data >> (BISSC_SAFETY_CRC_LEN)) & 0x3F;
+                priv->rcv_safety_crc[ch][sl_num]          = priv->raw_data & 0xFFFF;
+                priv->calc_safety_crc[ch][sl_num]         = priv->pruicss_xchg->safety_crc[sl_num][ch];
+            }
             if((priv->data_len[ls_ch][sl_num] + BISSC_POS_CRC_LEN + BISSC_EW_LEN)  <= 32)
             {
-                priv->raw_data                                = (uint64_t) raw_data0;
-                priv->enc_pos_data[ch].position[sl_num]       = (uint64_t) (raw_data0 >> (BISSC_POS_CRC_LEN + BISSC_EW_LEN));
-                priv->enc_pos_data[ch].ew[sl_num]             = ((raw_data0 >> (BISSC_POS_CRC_LEN )) & 0x03);
+                if(!(priv->has_safety[ch_num][sl_num]))
+                {
+                    priv->raw_data                                = (uint64_t) raw_data0;
+                    priv->enc_pos_data[ch].position[sl_num]       = (uint64_t) (raw_data0 >> (BISSC_POS_CRC_LEN + BISSC_EW_LEN));
+                    priv->enc_pos_data[ch].ew[sl_num]             = ((raw_data0 >> (BISSC_POS_CRC_LEN )) & 0x03);
+                    priv->enc_pos_data[ch].rcv_crc[sl_num]        = raw_data0 & 0x3F;
+                }
                 priv->enc_pos_data[ch].num_of_turns[sl_num]   = priv->enc_pos_data[ch].position[sl_num] >> priv->single_turn_len[ls_ch][sl_num];
                 priv->enc_pos_data[ch].angle[sl_num]          = (float)(priv->enc_pos_data[ch].position[sl_num] & (max - 1)) / max * (float)360;
-                priv->enc_pos_data[ch].rcv_crc[sl_num]        = raw_data0 & 0x3F;
                 priv->enc_pos_data[ch].otf_crc[sl_num]        = priv->pruicss_xchg->pos_data_res[sl_num].pos_data_otf_crc[ch];
                 priv->pd_crc_err_cnt[ch][sl_num]              = priv->pruicss_xchg->pos_data_res[sl_num].pd_crc_err_cnt[ch];
             }
             else
             {
-                shift = ((priv->data_len[ls_ch][sl_num] + BISSC_POS_CRC_LEN + BISSC_EW_LEN) - 32);
-                priv->raw_data                                = (uint64_t) raw_data0 <<  shift | raw_data1;
-                priv->enc_pos_data[ch].position[sl_num]       = (uint64_t) (priv->raw_data >> (BISSC_POS_CRC_LEN + BISSC_EW_LEN));
-                priv->enc_pos_data[ch].ew[sl_num]             = ((priv->raw_data >> (BISSC_POS_CRC_LEN )) & 0x03);
+                if(!(priv->has_safety[ch_num][sl_num]))
+                {
+                    shift = ((priv->data_len[ls_ch][sl_num] + BISSC_POS_CRC_LEN + BISSC_EW_LEN) - 32);
+                    priv->raw_data                                = (uint64_t) raw_data0 <<  shift | raw_data1;
+                    priv->enc_pos_data[ch].position[sl_num]       = (uint64_t) (priv->raw_data >> (BISSC_POS_CRC_LEN + BISSC_EW_LEN));
+                    priv->enc_pos_data[ch].ew[sl_num]             = ((priv->raw_data >> (BISSC_POS_CRC_LEN )) & 0x03);
+                    priv->enc_pos_data[ch].rcv_crc[sl_num]        = priv->raw_data & 0x3F;
+                }
                 priv->enc_pos_data[ch].num_of_turns[sl_num]   = priv->enc_pos_data[ch].position[sl_num] >> priv->single_turn_len[ls_ch][sl_num];
                 priv->enc_pos_data[ch].angle[sl_num]          = (float)(priv->enc_pos_data[ch].position[sl_num] & (max - 1)) / max * (float)360;
-                priv->enc_pos_data[ch].rcv_crc[sl_num]        = priv->raw_data & 0x3F;
                 priv->enc_pos_data[ch].otf_crc[sl_num]        = priv->pruicss_xchg->pos_data_res[sl_num].pos_data_otf_crc[ch];
                 priv->pd_crc_err_cnt[ch][sl_num]              = priv->pruicss_xchg->pos_data_res[sl_num].pd_crc_err_cnt[ch];
             }
@@ -420,7 +435,6 @@ int32_t bissc_calc_clock(struct bissc_priv *priv, struct bissc_clk_cfg *clk_cfg)
 {
     uint32_t freq = priv->baud_rate;
     clk_cfg->rx_div_attr = BISSC_RX_SAMPLE_SIZE;
-
     if((freq == BISSC_FREQ_1MHZ) || (freq == BISSC_FREQ_2MHZ) || (freq == BISSC_FREQ_8MHZ))
     {
         freq = freq * 1000 * 1000;
@@ -551,6 +565,26 @@ int32_t bissc_wait_measure_proc_delay(struct bissc_priv *priv, uint32_t timeout)
         return SystemP_FAILURE;
     }
     return SystemP_SUCCESS;
+}
+
+void bissc_enable_safety(struct bissc_priv *priv, uint32_t enc_num, uint32_t ls_ch)
+{
+    priv->has_safety[ls_ch][enc_num] = 1;
+    priv->pruicss_xchg->has_safety[ls_ch] |= (1 << enc_num);
+}
+
+void bissc_disable_safety(struct bissc_priv *priv)
+{
+    uint32_t enc_num;
+    uint32_t ch_num;
+    for(ch_num = 0; ch_num < NUM_ED_CH_MAX; ch_num++)
+    {
+        for(enc_num = 0; enc_num < NUM_ENCODERS_MAX; enc_num++)
+        {
+            priv->has_safety[ch_num][enc_num] = 0;
+        }
+        priv->pruicss_xchg->has_safety[ch_num] = 0;
+    }
 }
 
 void bissc_set_default_initialization(struct bissc_priv *priv, uint64_t icssgclk)
@@ -690,10 +724,10 @@ void bissc_update_data_len(struct bissc_priv *priv, uint32_t single_turn_len[], 
 int32_t bissc_set_ctrl_cmd_and_process(struct bissc_priv *priv, uint32_t ctrl_cmd[])
 {
     struct bissc_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
+    int32_t ch = 0, ch_num;
     pruicss_xchg->ctrl_cmd[0] = ctrl_cmd[0];
     pruicss_xchg->ctrl_cmd[1] = ctrl_cmd[1];
     pruicss_xchg->ctrl_cmd[2] = ctrl_cmd[2];
-    int32_t ch = 0, ch_num;
     if(priv->load_share)
     {
         pruicss_xchg->ctrl_cmd_status[0] = (pruicss_xchg->channel & 0x1) ? 1:0;

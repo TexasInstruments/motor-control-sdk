@@ -201,23 +201,23 @@ void nikon_get_enc_data_len(struct nikon_priv *priv)
         }
         ch = nikon_get_current_channel(priv, ch_num);
         DebugP_log("\r\nPlease enter encoder length connected to Channel %d:\n", ch);
-        DebugP_log("\r\nPlease enter 1st encoder single turn length\n");
+        DebugP_log("\r\nPlease enter 1st encoder single turn length: ");
         DebugP_scanf("%u\n", &single_turn_len[0]);
         num_encoders = 1;
-        DebugP_log("\r\nPlease enter 1st encoder multi turn length (zero if not a multi turn encoder)\n");
+        DebugP_log("\r\nPlease enter 1st encoder multi turn length (zero if not a multi turn encoder): ");
         DebugP_scanf("%u\n", &multi_turn_len[0]);
-        DebugP_log("\r\nPlease enter 2nd encoder single turn length (zero if not connected)\n");
+        DebugP_log("\r\nPlease enter 2nd encoder single turn length (zero if not connected): ");
         DebugP_scanf("%u\n", &single_turn_len[1]);
         if(single_turn_len[1])
         {
-            DebugP_log("\r\nPlease enter 2nd encoder multi turn length (zero if not a multi turn encoder)\n");
+            DebugP_log("\r\nPlease enter 2nd encoder multi turn length (zero if not a multi turn encoder): ");
             DebugP_scanf("%u\n", &multi_turn_len[1]);
             num_encoders = 2;
-            DebugP_log("\r\nPlease enter 3rd encoder single turn length (zero if not connected)\n");
+            DebugP_log("\r\nPlease enter 3rd encoder single turn length (zero if not connected): ");
             DebugP_scanf("%u\n", &single_turn_len[2]);
             if(single_turn_len[2])
             {
-                DebugP_log("Please enter 3rd encoder multi turn length (zero if not a multi turn encoder)\n");
+                DebugP_log("Please enter 3rd encoder multi turn length (zero if not a multi turn encoder): ");
                 DebugP_scanf("%u\n", &multi_turn_len[2]);
                 num_encoders = 3;
             }
@@ -331,7 +331,7 @@ static int32_t nikon_loop_task_create(void)
 
     return status ;
 }
-static void nikon_process_periodic_command(struct nikon_priv *priv, int64_t cmp3)
+static void nikon_process_periodic_command(struct nikon_priv *priv, int64_t cmp0, int64_t cmp3)
 {
     int32_t status;
     int32_t ret;
@@ -350,7 +350,7 @@ static void nikon_process_periodic_command(struct nikon_priv *priv, int64_t cmp3
         return;
     }
 
-    nikon_periodic_interface_init(priv, &nikon_periodic_interface, cmp3);
+    nikon_periodic_interface_init(priv, &nikon_periodic_interface, cmp0, cmp3);
 
     status = nikon_config_periodic_mode(&nikon_periodic_interface, gPruIcssXHandle);
     DebugP_assert(0 != status);
@@ -427,6 +427,7 @@ void nikon_main(void *args)
     int32_t ls_ch;
     float_t freq;
     int64_t cmp3;
+    int64_t cmp0;
     uint64_t icssgclk;
     uint64_t uartclk;
     /* Open drivers to open the UART driver for console */
@@ -667,7 +668,7 @@ void nikon_main(void *args)
             case CMD_13:
                 while(1)
                 {
-                    DebugP_log("\r\n Enter Memory location to read(00h to FFh are available): ");
+                    DebugP_log("\r\n Enter Memory location(in hex) to read(00h to FFh are available): ");
                     DebugP_scanf("%x", &addr);
                     if(addr > 0xFF)
                     {
@@ -703,11 +704,11 @@ void nikon_main(void *args)
             case CMD_14:
                 while(1)
                 {
-                    DebugP_log("\r\n Enter Memory location to write(00h to EFh are available): ");
+                    DebugP_log("\r\n Enter Memory location(in hex) to write(00h to EFh are available): ");
                     DebugP_scanf("%x", &addr);
-                    DebugP_log("\r\n Enter upper byte of data to write at Memory location 0x%x: ", addr);
+                    DebugP_log("\r\n Enter upper byte of data(in hex) to write at Memory location 0x%x: ", addr);
                     DebugP_scanf("%x", &data_high);
-                    DebugP_log("\r\n Enter lower byte of data to write in Memory location 0x%x: ", addr);
+                    DebugP_log("\r\n Enter lower byte of data(in hex) to write in Memory location 0x%x: ", addr);
                     DebugP_scanf("%x", &data_low);
                     if((data_high > 0xFF) || (data_low > 0xFF) || (addr > 0xEF))
                     {
@@ -779,11 +780,11 @@ void nikon_main(void *args)
             case CMD_20:
                 while(1)
                 {
-                    DebugP_log("\r\n Enter upper byte of data to assign as identification code: ");
+                    DebugP_log("\r\n Enter upper byte of data(in hex) to assign as identification code: ");
                     DebugP_scanf("%x", &data_high);
-                    DebugP_log("\r\n Enter middle byte of data to assign as identification code: ");
+                    DebugP_log("\r\n Enter middle byte of data(in hex) to assign as identification code: ");
                     DebugP_scanf("%x", &data_mid);
-                    DebugP_log("\r\n Enter lower byte of data to assign as identification code: ");
+                    DebugP_log("\r\n Enter lower byte of data(in hex) to assign as identification code: ");
                     DebugP_scanf("%x", &data_low);
                     if((data_high > 0xFF) || (data_mid > 0xFF) || (data_low > 0xFF))
                     {
@@ -960,12 +961,19 @@ void nikon_main(void *args)
 
             case START_CONTINUOUS_MODE:
                 DebugP_log("\r| Enter IEP cycle count(must be greater than Nikon cycle time in nano seconds): ");
-                if(DebugP_scanf("%lld\n", &cmp3) < 0)
+                if(DebugP_scanf("%lld\n", &cmp0) < 0)
                 {
                     DebugP_log("\r\n| WARNING: invalid value entered\n");
                     continue;
                 }
-                nikon_process_periodic_command(priv, cmp3);
+                DebugP_log("\r| Enter IEP trigger time(must be less than or equal to IEP cycle count, in nano seconds): ");
+                DebugP_scanf("%lld\n", &cmp3);
+                if((cmp3 > cmp0) || (cmp3 <= IEP_DEFAULT_INC))
+                {
+                    DebugP_log("\r\n| WARNING: invalid value entered\n");
+                    continue;
+                }
+                nikon_process_periodic_command(priv, cmp0, cmp3);
                 nikon_command_wait(priv);
                 break;
 

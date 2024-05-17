@@ -40,6 +40,7 @@ struct nikon_periodic_interface
 {
   void *pruicss_iep;
   uint64_t cmp3;
+  uint64_t cmp0;
 };
 
 #define IEP_DEFAULT_INC     0x1
@@ -57,6 +58,6 @@ void nikon_stop_periodic_mode(struct nikon_periodic_interface *nikon_periodic_in
 
 static void pru_nikon_irq_handler0(void *handle);
 
-void nikon_periodic_interface_init(struct nikon_priv *priv, struct nikon_periodic_interface *nikon_periodic_interface, int64_t cmp3);
+void nikon_periodic_interface_init(struct nikon_priv *priv, struct nikon_periodic_interface *nikon_periodic_interface,int64_t cmp0, int64_t cmp3);
 
 #endif /* _NIKON_H_ */
