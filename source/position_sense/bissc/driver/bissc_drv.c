@@ -231,7 +231,7 @@ int32_t bissc_get_pos(struct bissc_priv *priv)
             raw_data0 = priv->pruicss_xchg->pos_data_res[sl_num].raw_data[ch].pos_data_word0;
             raw_data1 = priv->pruicss_xchg->pos_data_res[sl_num].raw_data[ch].pos_data_word1;
             max = pow(2, priv->single_turn_len[ls_ch][sl_num]);
-            if(priv->has_safety[ch_num][sl_num])
+            if(priv->has_safety[ls_ch][sl_num])
             {
                 priv->raw_data                            = (uint64_t) raw_data0 << 32 | raw_data1;
                 priv->enc_pos_data[ch].position[sl_num]   = (uint64_t) (priv->raw_data >> (BISSC_POS_CRC_LEN + BISSC_EW_LEN + BISSC_SAFETY_CRC_LEN));
@@ -242,7 +242,7 @@ int32_t bissc_get_pos(struct bissc_priv *priv)
             }
             if((priv->data_len[ls_ch][sl_num] + BISSC_POS_CRC_LEN + BISSC_EW_LEN)  <= 32)
             {
-                if(!(priv->has_safety[ch_num][sl_num]))
+                if(!(priv->has_safety[ls_ch][sl_num]))
                 {
                     priv->raw_data                                = (uint64_t) raw_data0;
                     priv->enc_pos_data[ch].position[sl_num]       = (uint64_t) (raw_data0 >> (BISSC_POS_CRC_LEN + BISSC_EW_LEN));
@@ -256,7 +256,7 @@ int32_t bissc_get_pos(struct bissc_priv *priv)
             }
             else
             {
-                if(!(priv->has_safety[ch_num][sl_num]))
+                if(!(priv->has_safety[ls_ch][sl_num]))
                 {
                     shift = ((priv->data_len[ls_ch][sl_num] + BISSC_POS_CRC_LEN + BISSC_EW_LEN) - 32);
                     priv->raw_data                                = (uint64_t) raw_data0 <<  shift | raw_data1;

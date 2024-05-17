@@ -67,7 +67,7 @@ int32_t nikon_command_wait(struct nikon_priv *priv);
 int32_t nikon_get_pos(struct nikon_priv *priv, int8_t cmd);
 
 /**
- *  \brief      Configure EnDat clock
+ *  \brief      Configure Nikon clock
  *
  *  \param[in]  priv    cookie returned by \ref nikon_init
  *  \param[in]  clk_cfg pointer to structure containing clock configuration data
