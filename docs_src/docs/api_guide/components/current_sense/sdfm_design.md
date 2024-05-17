@@ -253,14 +253,14 @@ Following points describe the process for measurement of phase difference betwee
 	<td>(J6.57)TZ output pin for Axis-3
 </tr>
 <tr>
-    <td>PRG1_IEP0_EDC_SYNC_OUT0
-    <td>PIN_PRG1_PRU0_GPO19
-	<td>(J7.63) SYNC_OUT0
+    <td>PRG0_IEP0_EDC_SYNC_OUT0
+    <td>PIN_PRG0_PRU0_GPO19
+	<td>(J5.45)SYNC_OUT0
 </tr>
 <tr>
-    <td>PRG1_IEP0_EDC_SYNC_OUT1
-    <td>PIN_PRG1_PRU0_GPO17
-	<td>(J7.65) SYNC_OUT1
+    <td>PRG0_IEP0_EDC_SYNC_OUT1
+    <td>PIN_PRG0_PRU0_GPO17
+	<td>(J2.18) SYNC_OUT1
 </tr>
 </table>
 \endcond

@@ -130,11 +130,6 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
         <td>2. Set single update trigger time to half of EPWM cycle time </td>
         <td></td>
  </tr>
- <tr>
-        <td></td>
-        <td>3. Disable double update</td>
-        <td></td>
-</tr>
 <tr>
         <td></td>
         <td>3. Build and run example </td>
@@ -183,32 +178,56 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 </tr>
 
 <tr>
-        <td>4. To check Threshold comparator and Over current</td>
-        <td>1. Set High Threshold to 3500 and low threshold to 2500</td>
+        <td>4. To test SINC1/SINC2/SINC3 filter</td>
+        <td>1. Set NC OSR to 64 </td>
+        <td> Raw data should have different resolution for different SINC filter </td>
+</tr>
+<tr>
+        <td></td>
+        <td>2. Set accumulator source to SINC1/SINC2/SINC3 </td>
+        <td> SINC3 raw data resolution = OSR *(SINC2 raw data resolution) = OSR*OSR*(SINC1 raw data resolution)</td>
+</tr>
+<tr>
+        <td></td>
+        <td>3. Build and run example </td>
+        <td></td>
+</tr>
+
+
+<tr>
+        <td>5. To check Threshold comparator and Over current</td>
+        <td>1. Enable Comparator filter  </td>
         <td> Trip status bit must be set for the respective pwm trip zone block and TZ_OUT pin must be high</td>
 </tr>
 <tr>
         <td></td>
-        <td>2. Set Over current OSR to 16</td>
+        <td>2. Set High Threshold to 3500 and low threshold to 2500 (low and high threshold value should be configured based on raw data resolution for 16 OSR) </td>
+        <td></td>
+</tr>
+
+<tr>
+        <td></td>
+        <td>3. Set Over current OSR to 16</td>
         <td>High Low Threshold status bits must be constantly unset and set</td>
 </tr>
 <tr>
         <td></td>
-        <td>3. Probe PWMm_TZ_OUT pin </td>
+        <td>4. Probe PWMm_TZ_OUT pin </td>
         <td></td>
 </tr>
 <tr>
         <td></td>
-        <td>4. Build and run example</td>
+        <td>5. Build and run example</td>
         <td></td>
  </tr>
 <tr>
         <td></td>
-        <td>5. Capture signal in Logic analyzer</td>
+        <td>6. Capture signal in Logic analyzer</td>
         <td> </td>
  </tr>
+
 <tr>
-        <td>5. To check NC Samples with Different NC OSR Values</td>
+        <td>6. To check NC Samples with Different NC OSR Values</td>
         <td>1. Set NC OSR values between 16 to 255 </td>
         <td>Raw data should have different resolution for different OSR values </td>
 </tr>
@@ -223,13 +242,13 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
         <td></td>
 </tr>
 <tr>
-        <td>6. To check NC samples with different sdfm clock values</td>
+        <td>7. To check NC samples with different sdfm clock values</td>
         <td>1. Set NC OSR to 64</td>
         <td> Raw data should have different resolution for different sdfm clock values  </td>
 </tr>
 <tr>
         <td></td>
-        <td>2. Set ecap_divider variable in sdfm.c file for different sd clock generation</td>
+        <td>2. Set ecap_divider variable in sdfm_example.c file for different sd clock generation</td>
         <td></td>
  </tr>
  <tr>
@@ -248,13 +267,13 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
         <td></td>
 </tr>
 <tr>
-        <td>7. To check Fast detect</td>
+        <td>8. To check Fast detect</td>
         <td>1. Set NC OSR to 64</td>
         <td> Trip must be triggered for the respective pwm trip zone block </td>
 </tr>
 <tr>
         <td></td>
-        <td>2. Enable Fast detect</td>
+        <td>2. Enable Fast detect and disable Comparator </td>
         <td></td>
  </tr>
 <tr>
@@ -274,39 +293,46 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
                2) Check zero/one count max & zero/one count min threshold hit bits in memory map</td>
         <td></td>
 </tr>
+
 <tr>
-        <td>8. To check Zero Cross</td>
-        <td>1. Set Overcurrent (OC) OSR to 16</td>
+        <td>9. To check Zero Cross</td>
+        <td>1. Enable Comparator filter </td>
         <td> Logic analyzer capture should match with this capture </td>
 </tr>
 <tr>
         <td></td>
-        <td>2. Enable Zero cross detection</td>
+        <td>2. Set Overcurrent (OC) OSR to 16 </td>
+        <td></td>
+ </tr>
+ <tr>
+        <td></td>
+        <td>3. Enable Zero cross detection</td>
         <td></td>
  </tr>
 <tr>
         <td></td>
-        <td>3. Set zero cross threshold vales to 1700 {value should be between max sampled value and min sampled value for 16 OSR}</td>
+        <td>4. Set zero cross threshold vales to 1700 {value should be between max sampled value and min sampled value for 16 OSR}</td>
         <td>\image html SDFM_Zero_cross_GPIO_output.png "Zero cross GPIO behaviour" </td>
  </tr>
 <tr>
         <td></td>
-        <td>4. probe ch0 zero cross GPIO pins and input SD analog signal</td>
+        <td>5. probe ch0 zero cross GPIO pins and input SD analog signal</td>
         <td></td>
 </tr>
 <tr>
         <td></td>
-        <td>5. Build and run example</td>
+        <td>6. Build and run example</td>
         <td></td>
 </tr>
 <tr>
         <td></td>
-        <td>6. Capture signals in logic analyzer</td>
+        <td>7. Capture signals in logic analyzer</td>
         <td></td>
 </tr>
 \cond SOC_AM243X
+
 <tr>
-        <td>9.Testing with sdfm clock from EPWM </td>
+        <td>10.Testing with sdfm clock from EPWM </td>
         <td>1. Make hardware set up like attached image </td>
         <td>All test cases results should match with ECAP test case results</td>
  </tr>
@@ -341,4 +367,93 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
         <td></td>
  </tr>
  \endcond
+
+ <tr>
+        <td>11. To test EPWM Synchronization source</td>
+        <td>1. Set synchronization source to EPWM3 </td>
+        <td> All test cases sh </td>
+</tr>
+<tr>
+        <td></td>
+        <td>2. Set NC OSR to 64</td>
+        <td>The drawn graph and raw data should look like the attached image</td>
+</tr>
+<tr>
+        <td></td>
+        <td>3. Set single update trigger time to half of EPWM cycle time </td>
+        <td></td>
+ </tr>
+ <tr>
+        <td></td>
+        <td>4. Add and configure EPWM3 instance in SysConfig</td>
+        <td></td>
+</tr>
+<tr>
+        <td></td>
+        <td>5. Build and run example </td>
+        <td></td>
+</tr>
+<tr>
+        <td></td>
+        <td>6. Draw graph for Raw data</td>
+        <td>\image html SDFM_Single_update_64OSR.PNG "Single Update Raw data"</td>
+</tr>
+
+<tr>
+        <td>12. To test %SDFM clock generation from eCAP</td>
+        <td>1. Set SDCLK Generation From to eCAP </td>
+        <td> </td>
+</tr>
+<tr>
+        <td></td>
+        <td>2. %SDFM Clock to 20MHz </td>
+        <td> Generated clock should come out on PRGx_ECAP0_IN_APWM_OUT signal </td>
+</tr>
+<tr>
+        <td></td>
+        <td>3. Configure PRGx_ECAP0_IN_APWM_OUT pin inside PRU ICSSG ECAP SysConfig module </td>
+        <td> </td>
+</tr>
+<tr>
+        <td></td>
+        <td>4. Build and run example </td>
+        <td></td>
+</tr>
+
+<tr>
+        <td>13. To test S%DFM clock generation from ICSSG PRU GPO1</td>
+        <td>1. Set `SDCLK Generation From` to PRU-ICSSG (PRG<k>_PRU1/0_GPI1) </td>
+        <td></td>
+</tr>
+<tr>
+        <td></td>
+        <td>2. %SDFM Clock to 20MHz </td>
+        <td> Generated clock should come out on PRG<k>_PRU1/0_GPI1 signal </td>
+</tr>
+<tr>
+        <td></td>
+        <td>3. Build and run example </td>
+        <td></td>
+</tr>
+
+<tr>
+        <td>14. To test %SDFM clock generation from IEP</td>
+        <td>1. Set `SDCLK Generation From` to IEP </td>
+        <td> </td>
+</tr>
+<tr>
+        <td></td>
+        <td>2. %SDFM Clock to 20MHz </td>
+        <td> Generated clock should come out on two pins corresponding SYNC0 and SYNC1</td>
+</tr>  
+<tr>
+        <td></td>
+        <td>3. Configure SYNC_OUT0 and SYNC_OUT0 pins inside PRU ICSSG IEP SysConfig module </td>
+        <td> </td>
+</tr>
+<tr>
+        <td></td>
+        <td>4. Build and run example </td>
+        <td></td>
+</tr>
 </table>
