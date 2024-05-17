@@ -384,7 +384,7 @@ int32_t initIcss(
     instance = hwAttrs->instance;
     
     /* Determine ICSSG instance */
-    if (icssInstId == PRUICSS_INSTANCE_ONE)
+    if (instance == PRUICSS_INSTANCE_ONE)
     {
         pIcssCfgRegs = (CSL_IcssCfgRegs *)CSL_PRU_ICSSG0_PR1_CFG_SLV_BASE;
     }
