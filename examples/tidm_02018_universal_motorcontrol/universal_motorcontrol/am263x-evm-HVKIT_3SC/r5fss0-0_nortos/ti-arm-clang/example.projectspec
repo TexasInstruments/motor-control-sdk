@@ -11,11 +11,11 @@
 
     <project
         title="Universal Motorcontrol"
-        name = "universal_motorcontrol_am263x_r5fss0-0_nortos_ti-arm-clang"
+        name = "universal_motorcontrol_am263x_r5fss0-0_nortos_ti-arm-clang_HVKIT"
         products="sysconfig;com.ti.MOTOR_CONTROL_SDK_AMXXX;"
         configurations="
-            3phGaN_3SC,
-            HVKIT_3SC,
+                Release,
+                Debug,
         "
         connection="TIXDS110_Connection.xml"
         toolChain="TICLANG"
@@ -28,6 +28,91 @@
         outputFormat="ELF"
         outputType="executable"
 
+        compilerBuildOptions="
+                        -I${SYSCONFIG_TOOL_INCLUDE_PATH}
+                        -I${CG_TOOL_ROOT}/include/c
+                        -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source
+                        -I${MOTOR_CONTROL_SDK_PATH}/source
+                        -I${PROJECT_ROOT}/
+                        -I${PROJECT_ROOT}/libraries/control/fwc
+                        -I${PROJECT_ROOT}/libraries/control/mtpa
+                        -I${PROJECT_ROOT}/libraries/control/pi
+                        -I${PROJECT_ROOT}/libraries/control/vs_freq
+                        -I${PROJECT_ROOT}/libraries/filter/filter_fo
+                        -I${PROJECT_ROOT}/libraries/dcl
+                        -I${PROJECT_ROOT}/libraries/math/
+                        -I${PROJECT_ROOT}/libraries/math/include
+                        -I${PROJECT_ROOT}/libraries/math/fastrts
+                        -I${PROJECT_ROOT}/libraries/observers/encoder
+                        -I${PROJECT_ROOT}/libraries/observers/esmo
+                        -I${PROJECT_ROOT}/libraries/observers/est
+                        -I${PROJECT_ROOT}/libraries/observers/hall
+                        -I${PROJECT_ROOT}/libraries/observers/speedfr
+                        -I${PROJECT_ROOT}/libraries/observers/speedcalc
+                        -I${PROJECT_ROOT}/libraries/sfra
+                        -I${PROJECT_ROOT}/libraries/transforms/clarke
+                        -I${PROJECT_ROOT}/libraries/transforms/ipark
+                        -I${PROJECT_ROOT}/libraries/transforms/park
+                        -I${PROJECT_ROOT}/libraries/transforms/svgen
+                        -I${PROJECT_ROOT}/libraries/transforms/volts
+                        -I${PROJECT_ROOT}/libraries/utilities/angle_gen
+                        -I${PROJECT_ROOT}/libraries/utilities/datalog
+                        -I${PROJECT_ROOT}/libraries/utilities/step_response
+                        -I${PROJECT_ROOT}/libraries/utilities/traj/
+                        -I${PROJECT_ROOT}/src_board
+                        -I${PROJECT_ROOT}/src_control
+                        -I${PROJECT_ROOT}/src_control/CAN
+                        -I${PROJECT_ROOT}/src_control/PWMDAC
+                        -mcpu=cortex-r5
+                        -mfloat-abi=hard
+                        -mfpu=vfpv3-d16
+                        -mthumb
+                        -Wall
+                        -Werror
+                        -g
+                        -Wno-gnu-variable-sized-type-not-at-end
+                        -Wno-unused-function
+                        -O=2
+                        -ffast-math
+                        -flto
+                        -finline-functions
+                        -DSOC_AM263X
+                        -DSYSCONFIG_EN
+                        -D_INLINE
+                        -D_AM263x
+                        -DAM263_CC
+                        -DHVMTRPFC_REV1P1
+                        -DMOTOR1_ESMO
+                        -DMOTOR1_ENC
+                        -DMOTOR1_HALL_N
+                        -DHALL_CAL
+                        -DMOTOR1_OVM_N
+                        -DMOTOR1_FWC_N
+                        -DMOTOR1_MTPA_N
+                        -DMOTOR1_PI_TUNE_N
+                        -DMOTOR1_RPM_CMD_N
+                        -DMOTOR1_FILTERIS_N
+                        -DMOTOR1_FILTERVS_N
+                        -DBRAKE_ENABLE_N
+                        -DDATALOG_EN
+                        -DSFRA_ENABLE_N
+                        -DSTEP_RP_EN_N
+                        -DCPUTIME_ENABLE_N
+                        -DEPWMDAC_MODE_N
+                        -DCMD_CAN_N
+                    "
+                    linkerBuildOptions="
+                        -i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/nortos/lib
+                        -i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers/lib
+                        -i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/board/lib
+                        -i${MOTOR_CONTROL_SDK_PATH}/source/sfra/lib
+                        -i${CG_TOOL_ROOT}/lib
+                        -m=universal_motorcontrol.${ConfigName}.map
+                        --diag_suppress=10063
+                        --ram_model
+                        --reread_libs
+                    "
+
         postBuildStep="$(MAKE) -C ${CCS_PROJECT_DIR} -f makefile_ccs_bootimage_gen OUTNAME=${BuildArtifactFileBaseName} PROFILE=${ConfigName} MOTOR_CONTROL_SDK_PATH=${MOTOR_CONTROL_SDK_PATH} CG_TOOL_ROOT=${CG_TOOL_ROOT} CCS_INSTALL_DIR=${CCS_INSTALL_DIR} CCS_IDE_MODE=${CCS_IDE_MODE} DEVICE=am263x"
 
         enableSysConfigTool="true"
@@ -37,92 +122,11 @@
 
         description="A Universal Motorcontrol NORTOS project">
 
-<!-- BOOSTXL-3PHGANINV + LVSERVOMTR + LP-AM263 -->
-        <configuration name="3phGaN_3SC"
+        <configuration name="Release"
             compilerBuildOptions="
-                -I${SYSCONFIG_TOOL_INCLUDE_PATH}
-                -I${CG_TOOL_ROOT}/include/c
-                -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source
-                -I${MOTOR_CONTROL_SDK_PATH}/source
-                -I${PROJECT_ROOT}/
-                -I${PROJECT_ROOT}/libraries/control/fwc
-                -I${PROJECT_ROOT}/libraries/control/mtpa
-                -I${PROJECT_ROOT}/libraries/control/pi
-                -I${PROJECT_ROOT}/libraries/control/vs_freq
-                -I${PROJECT_ROOT}/libraries/filter/filter_fo
-                -I${PROJECT_ROOT}/libraries/dcl
-                -I${PROJECT_ROOT}/libraries/math/
-                -I${PROJECT_ROOT}/libraries/math/include
-                -I${PROJECT_ROOT}/libraries/math/fastrts
-                -I${PROJECT_ROOT}/libraries/observers/encoder
-                -I${PROJECT_ROOT}/libraries/observers/esmo
-                -I${PROJECT_ROOT}/libraries/observers/est
-                -I${PROJECT_ROOT}/libraries/observers/hall
-                -I${PROJECT_ROOT}/libraries/observers/speedfr
-                -I${PROJECT_ROOT}/libraries/observers/speedcalc
-                -I${PROJECT_ROOT}/libraries/sfra
-                -I${PROJECT_ROOT}/libraries/transforms/clarke
-                -I${PROJECT_ROOT}/libraries/transforms/ipark
-                -I${PROJECT_ROOT}/libraries/transforms/park
-                -I${PROJECT_ROOT}/libraries/transforms/svgen
-                -I${PROJECT_ROOT}/libraries/transforms/volts
-                -I${PROJECT_ROOT}/libraries/utilities/angle_gen
-                -I${PROJECT_ROOT}/libraries/utilities/datalog
-                -I${PROJECT_ROOT}/libraries/utilities/step_response
-                -I${PROJECT_ROOT}/libraries/utilities/traj/
-                -I${PROJECT_ROOT}/src_board
-                -I${PROJECT_ROOT}/src_control
-                -I${PROJECT_ROOT}/src_control/CAN
-                -I${PROJECT_ROOT}/src_control/PWMDAC
-                -mcpu=cortex-r5
-                -mfloat-abi=hard
-                -mfpu=vfpv3-d16
-                -mthumb
-                -Wall
-                -Werror
-                -g
-                -Wno-gnu-variable-sized-type-not-at-end
-                -Wno-unused-function
-                -O=2
-                -ffast-math
-                -flto
-                -finline-functions
-                -DSOC_AM263X
-                -DSYSCONFIG_EN
-                -D_DEBUG_=1
-                -D_INLINE
-                -D_AM263x
-                -DAM263_LP
-                -DBSXL3PHGAN_REVA
-                -DMOTOR1_ESMO
-                -DMOTOR1_ENC
-                -DMOTOR1_HALL_N
-                -DHALL_CAL
-                -DMOTOR1_OVM_N
-                -DMOTOR1_FWC_N
-                -DMOTOR1_MTPA_N
-                -DMOTOR1_PI_TUNE_N
-                -DMOTOR1_RPM_CMD_N
-                -DMOTOR1_FILTERIS_N
-                -DMOTOR1_FILTERVS_N
-                -DBRAKE_ENABLE_N
-                -DDATALOG_EN
-                -DSFRA_ENABLE_N
-                -DSTEP_RP_EN_N
-                -DCPUTIME_ENABLE_N
-                -DEPWMDAC_MODE_N
-                -DCMD_CAN_N
+                -Os
             "
             linkerBuildOptions="
-                -i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/nortos/lib
-                -i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers/lib
-                -i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/board/lib
-                -i${MOTOR_CONTROL_SDK_PATH}/source/sfra/lib_am263x
-                -i${CG_TOOL_ROOT}/lib
-                -m=universal_motorcontrol.${ConfigName}.map
-                --diag_suppress=10063
-                --ram_model
-                --reread_libs
                 -lnortos.am263x.r5f.ti-arm-clang.release.lib
                 -ldrivers.am263x.r5f.ti-arm-clang.release.lib
                 -lboard.am263x.r5f.ti-arm-clang.release.lib
@@ -131,97 +135,15 @@
                 -llibsysbm.a
             "
         ></configuration>
-
-<!-- TMDSHVMTRINSPIN + HVPMSMMTR + TMDSCNCD263 -->
-        <configuration name="HVKIT_3SC"
+        <configuration name="Debug"
             compilerBuildOptions="
-                -I${SYSCONFIG_TOOL_INCLUDE_PATH}
-                -I${CG_TOOL_ROOT}/include/c
-                -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source
-                -I${MOTOR_CONTROL_SDK_PATH}/source
-                -I${PROJECT_ROOT}/
-                -I${PROJECT_ROOT}/libraries/control/fwc
-                -I${PROJECT_ROOT}/libraries/control/mtpa
-                -I${PROJECT_ROOT}/libraries/control/pi
-                -I${PROJECT_ROOT}/libraries/control/vs_freq
-                -I${PROJECT_ROOT}/libraries/filter/filter_fo
-                -I${PROJECT_ROOT}/libraries/dcl
-                -I${PROJECT_ROOT}/libraries/math/
-                -I${PROJECT_ROOT}/libraries/math/include
-                -I${PROJECT_ROOT}/libraries/math/fastrts
-                -I${PROJECT_ROOT}/libraries/observers/encoder
-                -I${PROJECT_ROOT}/libraries/observers/esmo
-                -I${PROJECT_ROOT}/libraries/observers/est
-                -I${PROJECT_ROOT}/libraries/observers/hall
-                -I${PROJECT_ROOT}/libraries/observers/speedfr
-                -I${PROJECT_ROOT}/libraries/observers/speedcalc
-                -I${PROJECT_ROOT}/libraries/sfra
-                -I${PROJECT_ROOT}/libraries/transforms/clarke
-                -I${PROJECT_ROOT}/libraries/transforms/ipark
-                -I${PROJECT_ROOT}/libraries/transforms/park
-                -I${PROJECT_ROOT}/libraries/transforms/svgen
-                -I${PROJECT_ROOT}/libraries/transforms/volts
-                -I${PROJECT_ROOT}/libraries/utilities/angle_gen
-                -I${PROJECT_ROOT}/libraries/utilities/datalog
-                -I${PROJECT_ROOT}/libraries/utilities/step_response
-                -I${PROJECT_ROOT}/libraries/utilities/traj/
-                -I${PROJECT_ROOT}/src_board
-                -I${PROJECT_ROOT}/src_control
-                -I${PROJECT_ROOT}/src_control/CAN
-                -I${PROJECT_ROOT}/src_control/PWMDAC
-                -mcpu=cortex-r5
-                -mfloat-abi=hard
-                -mfpu=vfpv3-d16
-                -mthumb
-                -Wall
-                -Werror
-                -g
-                -Wno-gnu-variable-sized-type-not-at-end
-                -Wno-unused-function
-                -O=2
-                -ffast-math
-                -flto
-                -finline-functions
-                -DSOC_AM263X
-                -DSYSCONFIG_EN
                 -D_DEBUG_=1
-                -D_INLINE
-                -D_AM263x
-                -DAM263_CC
-                -DHVMTRPFC_REV1P1
-                -DMOTOR1_ESMO
-                -DMOTOR1_ENC
-                -DMOTOR1_HALL_N
-                -DHALL_CAL
-                -DMOTOR1_OVM_N
-                -DMOTOR1_FWC_N
-                -DMOTOR1_MTPA_N
-                -DMOTOR1_PI_TUNE_N
-                -DMOTOR1_RPM_CMD_N
-                -DMOTOR1_FILTERIS_N
-                -DMOTOR1_FILTERVS_N
-                -DBRAKE_ENABLE_N
-                -DDATALOG_EN
-                -DSFRA_ENABLE_N
-                -DSTEP_RP_EN_N
-                -DCPUTIME_ENABLE_N
-                -DEPWMDAC_MODE_N
-                -DCMD_CAN_N
             "
             linkerBuildOptions="
-                -i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/nortos/lib
-                -i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers/lib
-                -i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/board/lib
-                -i${MOTOR_CONTROL_SDK_PATH}/source/sfra/lib_am263x
-                -i${CG_TOOL_ROOT}/lib
-                -m=universal_motorcontrol.${ConfigName}.map
-                --diag_suppress=10063
-                --ram_model
-                --reread_libs
-                -lnortos.am263x.r5f.ti-arm-clang.release.lib
-                -ldrivers.am263x.r5f.ti-arm-clang.release.lib
-                -lboard.am263x.r5f.ti-arm-clang.release.lib
-                -lsfra.am263x.r5f.ti-arm-clang.release.lib
+                -lnortos.am263x.r5f.ti-arm-clang.debug.lib
+                -ldrivers.am263x.r5f.ti-arm-clang.debug.lib
+                -lboard.am263x.r5f.ti-arm-clang.debug.lib
+                -lsfra.am263x.r5f.ti-arm-clang.debug.lib
                 -llibc.a
                 -llibsysbm.a
             "
@@ -275,9 +197,7 @@
         </file>
         <file path="MC_SDK_ROOT/source/utilities/traj/source/traj.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/utilities/traj/">
         </file>
-        <file path="PROJ_ROOT/src_board/AM263_3phGaN_3SC.syscfg" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="src_board/">
-        </file>
-        <file path="PROJ_ROOT/src_board/AM263_HVMTRPFC.syscfg" openOnCreation="false" excludeFromBuild="true" action="copy" targetDirectory="src_board/">
+        <file path="PROJ_ROOT/src_board/AM263_HVMTRPFC.syscfg" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="src_board/">
         </file>
         <file path="PROJ_ROOT/src_board/hal.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="src_board/">
         </file>

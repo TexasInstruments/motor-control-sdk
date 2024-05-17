@@ -30,6 +30,10 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  \file           sfra.c
+ *  \brief          Contains SFRA configuration function implementation
+*/
 
 #include "sfra_settings.h"
 

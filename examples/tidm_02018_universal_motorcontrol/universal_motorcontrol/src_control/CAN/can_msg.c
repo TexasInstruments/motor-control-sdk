@@ -29,13 +29,11 @@
  *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-//#############################################################################
-//
-// FILE:  can_msg.c
-//
-// TITLE: source file for can message
-//
-//#############################################################################
+
+/*
+ *  \file           can_msg.c
+ *  \brief          This file contains source file for CAN message initialization, packing and mapping
+*/
 
 #include "can_msg.h"
 

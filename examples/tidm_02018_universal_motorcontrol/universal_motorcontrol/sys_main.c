@@ -29,22 +29,18 @@
  *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-//! 
-//!
-//! \brief  This project is used to implement motor control with sensored FOC with
-//!         different position (Incremental encoder, Hall sensor) and sensorless
-//!         FOC (eSMO).
-//!         Supports multiple TI EVM boards.
-//!
 
+/*
+ *  \file           sys_main.c
+ *  \brief          This project is used to implement motor control with sensored FOC with
+ *                  different position (Incremental encoder, Hall sensor) and sensorless
+ *                  FOC (eSMO).
+ *                  Supports multiple TI EVM boards.
+*/
 
-//#############################################################################
-//! Make sure to include the right .syscfg file in the project based on the selected hardware kit.
-
-
-//
-// include the related header files
-//
+/*
+*  include the related header files
+*/
 #include <stdio.h>
 #include <kernel/dpl/DebugP.h>
 #include "ti_drivers_config.h"
@@ -195,29 +191,18 @@ void universal_motorcontrol_main(void *args)
             PWMDAC_getPeriod(halHandle->pwmDACHandle[PWMDAC_NUMBER_1]);
 
     pwmDACData.ptrData[0] = &motorVars_M1.angleFOC_rad;               // PWMDAC1
-//    pwmDACData.ptrData[0] = &motorVars_M1.anglePLL_rad;             // PWMDAC1
-//    pwmDACData.ptrData[1] = &motorVars_M1.angleENC_rad;             // PWMDAC1
-//    pwmDACData.ptrData[1] = &motorVars_M1.angleHall_rad;            // PWMDAC1
-//    pwmDACData.ptrData[1] = &motorVars_M1.angleGen_rad;             // PWMDAC2
-//    pwmDACData.ptrData[1] = &motorVars_M1.adcData.I_A.value[0];     // PWMDAC2
     pwmDACData.ptrData[1] = &motorVars_M1.speedAbs_Hz;                // PWMDAC2
     pwmDACData.ptrData[2] = &motorVars_M1.speedAbs_Hz;                // PWMDAC3
-//    pwmDACData.ptrData[2] = &motorVars_M1.adcData.I_A.value[1];     // PWMDAC3
     pwmDACData.ptrData[3] = &motorVars_M1.adcData.I_A.value[1];       // PWMDAC4
 
     pwmDACData.offset[0] = 0.5f;    // PWMDAC1
-//    pwmDACData.offset[1] = 0.5f;    // PWMDAC2
     pwmDACData.offset[1] = 0.0f;    // PWMDAC2
     pwmDACData.offset[1] = 0.0f;    // PWMDAC3
-//    pwmDACData.offset[2] = 0.5f;    // PWMDAC3
     pwmDACData.offset[3] = 0.5f;    // PWMDAC4
 
     pwmDACData.gain[0] = 1.0f / MATH_TWO_PI;                          // PWMDAC1
-//    pwmDACData.gain[1] = 1.0f / MATH_TWO_PI;                        // PWMDAC2
-//    pwmDACData.gain[1] = 1.0f / USER_M1_ADC_FULL_SCALE_CURRENT_A;   // PWMDAC2
     pwmDACData.gain[1] = 1.0f / USER_MOTOR1_FREQ_MAX_Hz;              // PWMDAC2
     pwmDACData.gain[2] = 1.0f / USER_MOTOR1_FREQ_MAX_Hz;              // PWMDAC3
-//    pwmDACData.gain[2] = 1.0f / USER_M1_ADC_FULL_SCALE_CURRENT_A;   // PWMDAC3
     pwmDACData.gain[3] = 2.0f / USER_M1_ADC_FULL_SCALE_CURRENT_A;     // PWMDAC4
 #endif  // EPWMDAC_MODE
 
@@ -421,7 +406,7 @@ void universal_motorcontrol_main(void *args)
 
         runMotor1Control(motorHandle_M1);
 
-} // end of while() loop
+    } // end of while() loop
 
 // disable the PWM
 HAL_disablePWM(motorHandle_M1->halMtrHandle);

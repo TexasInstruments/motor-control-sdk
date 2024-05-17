@@ -360,33 +360,6 @@ void initMotor1CtrlParameters(MOTOR_Handle handle)
 #endif  // MOTOR1_MTPA
 
 
-#if defined(MOTOR1_DCLINKSS)
-    obj->dclinkHandle = DCLINK_SS_init(&dclink_M1, sizeof(dclink_M1));
-
-    DCLINK_SS_setInitialConditions(obj->dclinkHandle,
-                                   HAL_getTimeBasePeriod(obj->halMtrHandle), 0.5f);
-
-    //disable full sampling
-//    DCLINK_SS_setFlag_enableFullSampling(obj->dclinkHandle, FALSE);     // default
-    DCLINK_SS_setFlag_enableFullSampling(obj->dclinkHandle, TRUE);    // test, not recommend in most cases
-
-    //enable sequence control
-//    DCLINK_SS_setFlag_enableSequenceControl(obj->dclinkHandle, FALSE);  // default
-    DCLINK_SS_setFlag_enableSequenceControl(obj->dclinkHandle, TRUE); // test, not recommend in most cases
-
-    // Tdt  =  55 ns (Dead-time between top and bottom switch)
-    // Tpd  = 140 ns (Gate driver propagation delay)
-    // Tr   = 136 ns (Rise time of amplifier including power switches turn on time)
-    // Ts   = 800 ns (Settling time of amplifier)
-    // Ts&h = 100 ns (ADC sample&holder = 1+(9)+2 = 12 SYSCLK)
-    // T_MinAVDuration = Tdt+Tr+Tpd+Ts+Ts&h
-    //                 = 55+140+136+800+100 = 1231(ns) => 148 SYSCLK cycles
-    // T_SampleDelay   = Tdt+Tpd+Tr+Ts
-    //                 = 55+140+136+800     = 1131(ns) => 136 SYSCLK cycles
-    DCLINK_SS_setMinAVDuration(obj->dclinkHandle, USER_M1_DCLINKSS_MIN_DURATION);
-    DCLINK_SS_setSampleDelay(obj->dclinkHandle, USER_M1_DCLINKSS_SAMPLE_DELAY);
-#endif   // MOTOR1_DCLINKSS
-
 #ifdef MOTOR1_VOLRECT
     // initialize the Voltage reconstruction
     obj->volrecHandle = VOLREC_init(&volrec_M1, sizeof(volrec_M1));

@@ -30,6 +30,11 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  \file           mcan_transceiver.c
+ *  \brief          This file contains CAN-related GPIO enabling for AM263x Launch Pad and Control Card
+*/
+
 /* ========================================================================== */
 /*                             Include Files                                  */
 /* ========================================================================== */

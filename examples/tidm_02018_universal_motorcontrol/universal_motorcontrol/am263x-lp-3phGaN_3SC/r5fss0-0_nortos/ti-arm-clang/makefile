@@ -24,17 +24,17 @@ endif
 PROFILE?=release
 ConfigName:=$(PROFILE)
 
-OUTNAME:=universal_motorcontrol_HVKIT_3SC.$(PROFILE).out
+OUTNAME:=universal_motorcontrol_3phGaN_3SC.$(PROFILE).out
 
 BOOTIMAGE_PATH=$(abspath .)
-BOOTIMAGE_NAME:=universal_motorcontrol_HVKIT_3SC.$(PROFILE).appimage
-BOOTIMAGE_NAME_XIP:=universal_motorcontrol_HVKIT_3SC.$(PROFILE).appimage_xip
-BOOTIMAGE_NAME_SIGNED:=universal_motorcontrol_HVKIT_3SC.$(PROFILE).appimage.signed
-BOOTIMAGE_RPRC_NAME:=universal_motorcontrol_HVKIT_3SC.$(PROFILE).rprc
-BOOTIMAGE_RPRC_NAME_XIP:=universal_motorcontrol_HVKIT_3SC.$(PROFILE).rprc_xip
-BOOTIMAGE_RPRC_NAME_TMP:=universal_motorcontrol_HVKIT_3SC.$(PROFILE).rprc_tmp
-BOOTIMAGE_NAME_HS:=universal_motorcontrol_HVKIT_3SC.$(PROFILE).appimage.hs
-BOOTIMAGE_NAME_HS_FS:=universal_motorcontrol_HVKIT_3SC.$(PROFILE).appimage.hs_fs
+BOOTIMAGE_NAME:=universal_motorcontrol_3phGaN_3SC.$(PROFILE).appimage
+BOOTIMAGE_NAME_XIP:=universal_motorcontrol_3phGaN_3SC.$(PROFILE).appimage_xip
+BOOTIMAGE_NAME_SIGNED:=universal_motorcontrol_3phGaN_3SC.$(PROFILE).appimage.signed
+BOOTIMAGE_RPRC_NAME:=universal_motorcontrol_3phGaN_3SC.$(PROFILE).rprc
+BOOTIMAGE_RPRC_NAME_XIP:=universal_motorcontrol_3phGaN_3SC.$(PROFILE).rprc_xip
+BOOTIMAGE_RPRC_NAME_TMP:=universal_motorcontrol_3phGaN_3SC.$(PROFILE).rprc_tmp
+BOOTIMAGE_NAME_HS:=universal_motorcontrol_3phGaN_3SC.$(PROFILE).appimage.hs
+BOOTIMAGE_NAME_HS_FS:=universal_motorcontrol_3phGaN_3SC.$(PROFILE).appimage.hs_fs
 TARGETS := $(BOOTIMAGE_NAME)
 
 FILES_common := \
@@ -141,8 +141,8 @@ DEFINES_common := \
 	-DSYSCONFIG_EN \
 	-D_INLINE \
 	-D_AM263x \
-	-DAM263_CC \
-	-DHVMTRPFC_REV1P1 \
+	-DAM263_LP \
+	-DBSXL3PHGAN_REVA \
 	-DMOTOR1_ESMO \
 	-DMOTOR1_ENC \
 	-DMOTOR1_HALL_N \
@@ -199,7 +199,7 @@ LIBS_PATH_common = \
 	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/nortos/lib \
 	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers/lib \
 	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/board/lib \
-	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/source/sfra/lib_am263x \
+	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/source/sfra/lib \
 	-Wl,-i${CG_TOOL_ROOT}/lib \
 
 LIBS_common = \
@@ -229,7 +229,7 @@ LIBS_PATH_NAME = \
 	${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/nortos/lib \
 	${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers/lib \
 	${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/board/lib \
-	${MOTOR_CONTROL_SDK_PATH}/source/sfra/lib_am263x \
+	${MOTOR_CONTROL_SDK_PATH}/source/sfra/lib \
 	${CG_TOOL_ROOT}/lib \
 
 FILES := $(FILES_common) $(FILES_$(PROFILE))
@@ -304,7 +304,7 @@ clean:
 	$(RMDIR) generated/
 
 scrub:
-	@echo  Scrubing: am263x:r5fss0-0:nortos:ti-arm-clang universal_motorcontrol_HVKIT_3SC ...
+	@echo  Scrubing: am263x:r5fss0-0:nortos:ti-arm-clang universal_motorcontrol_3phGaN_3SC ...
 	$(RMDIR) obj
 ifeq ($(OS),Windows_NT)
 	$(RM) \*.out
@@ -421,12 +421,12 @@ endif
 endif
 .PHONY: coverage
 coverage:
-	@echo Creating Coverage Report for universal_motorcontrol_HVKIT_3SC.$(PROFILE) ...
+	@echo Creating Coverage Report for universal_motorcontrol_3phGaN_3SC.$(PROFILE) ...
 	$(MKDIR) coverage
-	$(PROFDATA) merge -sparse -obj-file=$(OUTNAME) $(OUTNAME).cnt -o universal_motorcontrol_HVKIT_3SC.$(PROFILE).profdata
-	$(COV) show --format=html --show-expansions --show-instantiations --show-branches=count --object=$(OUTNAME) -instr-profile=universal_motorcontrol_HVKIT_3SC.$(PROFILE).profdata --output-dir=$(COVERAGE_PATH)/coverage --ignore-filename-regex=build_jenkins
-	$(COV) export --format=text --object=$(OUTNAME) --instr-profile=universal_motorcontrol_HVKIT_3SC.$(PROFILE).profdata > coverage/universal_motorcontrol_HVKIT_3SC.$(PROFILE).profdata.json
-	node $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/smart_placement/clang_coverage_analyse.js --input=coverage/universal_motorcontrol_HVKIT_3SC.$(PROFILE).profdata.json --output-json=coverage/universal_motorcontrol_HVKIT_3SC.$(PROFILE).analysis.json --output=../universal_motorcontrol_HVKIT_3SC.annotations.$(PROFILE).S --top-function-count=500
+	$(PROFDATA) merge -sparse -obj-file=$(OUTNAME) $(OUTNAME).cnt -o universal_motorcontrol_3phGaN_3SC.$(PROFILE).profdata
+	$(COV) show --format=html --show-expansions --show-instantiations --show-branches=count --object=$(OUTNAME) -instr-profile=universal_motorcontrol_3phGaN_3SC.$(PROFILE).profdata --output-dir=$(COVERAGE_PATH)/coverage --ignore-filename-regex=build_jenkins
+	$(COV) export --format=text --object=$(OUTNAME) --instr-profile=universal_motorcontrol_3phGaN_3SC.$(PROFILE).profdata > coverage/universal_motorcontrol_3phGaN_3SC.$(PROFILE).profdata.json
+	node $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/smart_placement/clang_coverage_analyse.js --input=coverage/universal_motorcontrol_3phGaN_3SC.$(PROFILE).profdata.json --output-json=coverage/universal_motorcontrol_3phGaN_3SC.$(PROFILE).analysis.json --output=../universal_motorcontrol_3phGaN_3SC.annotations.$(PROFILE).S --top-function-count=500
 	@echo Coverage Report Generated at $(COVERAGE_PATH)/coverage folder !!!
 
 -include $(addprefix $(OBJDIR)/, $(DEPS))

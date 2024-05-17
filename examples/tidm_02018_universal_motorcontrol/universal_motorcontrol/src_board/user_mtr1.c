@@ -30,6 +30,11 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  \file           user_mtr1.c
+ *  \brief          This file sets up control parameters for motor 1 function operation
+*/
+
 #include "user.h"
 
 #include "hal.h"

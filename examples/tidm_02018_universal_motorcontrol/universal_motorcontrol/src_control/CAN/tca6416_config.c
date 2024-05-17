@@ -30,6 +30,11 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ *  \file           tca6416_config.c
+ *  \brief          This file contains CAN-related GPIO muxing using TCA6416 for AM263x Control Card
+*/
+
 /* ========================================================================== */
 /*                             Include Files                                  */
 /* ========================================================================== */

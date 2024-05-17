@@ -30,11 +30,10 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-//
-// FILE:    sfra_settings.h
-//
-// TITLE:   SFRA settings definition
-//
+/*
+ *  \file           sfra_settings.h
+ *  \brief          Contains SFRA settings definition
+*/
 
 #ifndef SFRA_SETTINGS_H
 #define SFRA_SETTINGS_H
