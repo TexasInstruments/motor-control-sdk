@@ -1609,10 +1609,6 @@ int32_t PRUICSS_PWM_iepConfig(PRUICSS_PWM_Handle handle)
             status = PRUICSS_setIepCounterIncrementValue((handle->pruIcssHandle), PRUICSS_IEP_INST0, (handle->iepAttrs)->iep0IncrementValue);
             DebugP_assert(SystemP_SUCCESS == status);
 
-                /*Enable IEP0 compare events*/
-            status = PRUICSS_PWM_configureIepCompareEnable(handle, PRUICSS_IEP_INST0, 0xFFFF);
-            DebugP_assert(SystemP_SUCCESS == status);
-
             /*Configure IEP0 compare 0 event to reset on (pruicss pwm period/2) with one clock cycle delay*/
             status = PRUICSS_PWM_setIepCompareEventUpper_32bitValue(handle, PRUICSS_IEP_INST0, CMP_EVENT0, ((compare0_val/2) +1));
             DebugP_assert(SystemP_SUCCESS == status);
@@ -1645,9 +1641,6 @@ int32_t PRUICSS_PWM_iepConfig(PRUICSS_PWM_Handle handle)
                 status = PRUICSS_PWM_configureIepCmp0ResetEnable(handle, PRUICSS_IEP_INST1, (handle->iepAttrs)->enableIep0ResetOnCompare0);
                 DebugP_assert(SystemP_SUCCESS == status);
 
-                /*Enable IEP1 compare events*/
-                status = PRUICSS_PWM_configureIepCompareEnable(handle, PRUICSS_IEP_INST1, 0xFFFF);
-                DebugP_assert(SystemP_SUCCESS == status);
             }
 
             /*Enable IEP CMP flags to auto clear after state transition*/

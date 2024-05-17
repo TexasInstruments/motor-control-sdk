@@ -261,7 +261,24 @@ void App_pruIcssPwmDeadbandMain(void *args)
     /*Configures the Iep parameters defined in gPruIcssPwmIepCfg*/
     status = PRUICSS_PWM_iepConfig(gPruIcssPwmHandle);
     DebugP_assert(SystemP_SUCCESS == status);
+
+    /*Enable IEP CMP0/CMP1 compare events*/
+    if(((gPruIcssPwmHandle->iepAttrs)->enableIep0) == 1U)
+    {
+        /*Enable IEP0 CMP0/CMP1 compare events*/
+        status = PRUICSS_PWM_configureIepCompareEnable(gPruIcssPwmHandle, PRUICSS_IEP_INST0, 0x07);
+        DebugP_assert(SystemP_SUCCESS == status);
+
+        if((gPruIcssPwmHandle->iepAttrs)->enableIep1SlaveMode == 1U)
+        {
+            /*Enable IEP1 CMP0/CMP1 compare events*/
+            status = PRUICSS_PWM_configureIepCompareEnable(gPruIcssPwmHandle, PRUICSS_IEP_INST1, 0x07);
+            DebugP_assert(SystemP_SUCCESS == status);
+        }
+
+    }
     
+
     /* This IEP1 CMP0 ISR controls the duty cycle and dead band at fall edge of PWM signals*/
     status = App_pruicssIep1Compare0IrqSet(gPruIcssPwmHandle);
     DebugP_assert(SystemP_SUCCESS == status);
