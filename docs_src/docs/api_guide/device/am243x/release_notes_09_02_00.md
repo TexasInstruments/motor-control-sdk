@@ -408,4 +408,10 @@ earlier SDKs.
     <td>  Added a variable: cmp0
     <td>  
 </tr>
+<tr>
+    <td> PRUICSS PWM
+    <td> \ref PRUICSS_PWM_iepConfig
+    <td> \ref PRUICSS_PWM_configureIepCompareEnable API call is removed from the \ref PRUICSS_PWM_iepConfig function
+    <td> \ref PRUICSS_PWM_configureIepCompareEnable needs to be called separately to enable IEP cmp events  
+</tr>
 </table>
