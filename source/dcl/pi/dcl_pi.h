@@ -358,7 +358,7 @@ float32_t DCL_runPIParallel(DCL_PI *pi, float32_t rk, float32_t yk)
 
 //! \brief           Executes a parallel form PI controller with
 //!                  enhanced anti-windup logic incorporating an
-//!                  addintional integrator saturation clamp
+//!                  additional integrator saturation clamp
 //!
 //! \param[in] pi    Pointer to the DCL_PI structure
 //! \param[in] rk    The controller set-point reference

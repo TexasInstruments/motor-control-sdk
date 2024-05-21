@@ -7,6 +7,10 @@ include $(MOTOR_CONTROL_SDK_PATH)/imports.mak
 
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL =
 # Various Example Projectspec Build Targets
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += benchmark_control_am243x-evm_r5fss0-0_nortos_ti-arm-clang_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += benchmark_control_am243x-evm_r5fss0-0_freertos_ti-arm-clang_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += benchmark_control_am243x-lp_r5fss0-0_nortos_ti-arm-clang_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += benchmark_control_am243x-lp_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += icss_sdfm_nine_channel_load_share_mode_am243x-evm_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += icss_sdfm_nine_channel_load_share_mode_am243x-lp_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += icss_sdfm_nine_channel_with_continuous_mode_am243x-evm_r5fss0-0_freertos_ti-arm-clang_build
@@ -94,6 +98,18 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += tamagawa_single_channel_am2
 all: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL)
 
 all-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL)
+
+ benchmark_control_am243x-evm_r5fss0-0_nortos_ti-arm-clang_build:
+	$(MAKE) -C examples/benchmarks/control_benchmark/am243x-evm/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec all
+
+ benchmark_control_am243x-evm_r5fss0-0_freertos_ti-arm-clang_build:
+	$(MAKE) -C examples/benchmarks/control_benchmark/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
+
+ benchmark_control_am243x-lp_r5fss0-0_nortos_ti-arm-clang_build:
+	$(MAKE) -C examples/benchmarks/control_benchmark/am243x-lp/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec all
+
+ benchmark_control_am243x-lp_r5fss0-0_freertos_ti-arm-clang_build:
+	$(MAKE) -C examples/benchmarks/control_benchmark/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
 
  icss_sdfm_nine_channel_load_share_mode_am243x-evm_r5fss0-0_freertos_ti-arm-clang_build:
 	$(MAKE) -C examples/current_sense/icss_sdfm_nine_channel_load_share_mode/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
@@ -333,6 +349,10 @@ all-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL)
 
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL =
 # Various Example Projectspec Clean Targets
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += benchmark_control_am243x-evm_r5fss0-0_nortos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += benchmark_control_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += benchmark_control_am243x-lp_r5fss0-0_nortos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += benchmark_control_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += icss_sdfm_nine_channel_load_share_mode_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += icss_sdfm_nine_channel_load_share_mode_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += icss_sdfm_nine_channel_with_continuous_mode_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean
@@ -420,6 +440,18 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += tamagawa_single_channel_am2
 clean: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL)
 
 clean-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL)
+
+ benchmark_control_am243x-evm_r5fss0-0_nortos_ti-arm-clang_clean:
+	$(MAKE) -C examples/benchmarks/control_benchmark/am243x-evm/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec clean
+
+ benchmark_control_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/benchmarks/control_benchmark/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
+
+ benchmark_control_am243x-lp_r5fss0-0_nortos_ti-arm-clang_clean:
+	$(MAKE) -C examples/benchmarks/control_benchmark/am243x-lp/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec clean
+
+ benchmark_control_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/benchmarks/control_benchmark/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
 
  icss_sdfm_nine_channel_load_share_mode_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean:
 	$(MAKE) -C examples/current_sense/icss_sdfm_nine_channel_load_share_mode/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
@@ -659,6 +691,10 @@ clean-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL)
 
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL =
 # Various Example Projectspec Export Targets
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += benchmark_control_am243x-evm_r5fss0-0_nortos_ti-arm-clang_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += benchmark_control_am243x-evm_r5fss0-0_freertos_ti-arm-clang_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += benchmark_control_am243x-lp_r5fss0-0_nortos_ti-arm-clang_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += benchmark_control_am243x-lp_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += icss_sdfm_nine_channel_load_share_mode_am243x-evm_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += icss_sdfm_nine_channel_load_share_mode_am243x-lp_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += icss_sdfm_nine_channel_with_continuous_mode_am243x-evm_r5fss0-0_freertos_ti-arm-clang_export
@@ -746,6 +782,18 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += tamagawa_single_channel_am
 export: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL)
 
 export-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL)
+
+ benchmark_control_am243x-evm_r5fss0-0_nortos_ti-arm-clang_export:
+	$(MAKE) -C examples/benchmarks/control_benchmark/am243x-evm/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec export
+
+ benchmark_control_am243x-evm_r5fss0-0_freertos_ti-arm-clang_export:
+	$(MAKE) -C examples/benchmarks/control_benchmark/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
+
+ benchmark_control_am243x-lp_r5fss0-0_nortos_ti-arm-clang_export:
+	$(MAKE) -C examples/benchmarks/control_benchmark/am243x-lp/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec export
+
+ benchmark_control_am243x-lp_r5fss0-0_freertos_ti-arm-clang_export:
+	$(MAKE) -C examples/benchmarks/control_benchmark/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
 
  icss_sdfm_nine_channel_load_share_mode_am243x-evm_r5fss0-0_freertos_ti-arm-clang_export:
 	$(MAKE) -C examples/current_sense/icss_sdfm_nine_channel_load_share_mode/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
@@ -1010,6 +1058,10 @@ help:
 	@echo  .
 	@echo  Example ProjectSpec build targets,
 	@echo  ==================================
+	@echo  $(MAKE) -s -C examples/benchmarks/control_benchmark/am243x-evm/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C examples/benchmarks/control_benchmark/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C examples/benchmarks/control_benchmark/am243x-lp/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C examples/benchmarks/control_benchmark/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/current_sense/icss_sdfm_nine_channel_load_share_mode/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/current_sense/icss_sdfm_nine_channel_load_share_mode/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/current_sense/icss_sdfm_nine_channel_with_continuous_mode/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]

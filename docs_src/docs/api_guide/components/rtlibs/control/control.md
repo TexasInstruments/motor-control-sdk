@@ -13,7 +13,6 @@ Supported algorithms:
 - Field weakening control (FWC)
 - Maximum torque per ampere (MTPA)
 - Strator voltage frequency generator (VS_FREQ)
-- Phase voltage reconstruction (VOLREC)
   
 
 ## Field Weakening Control 
@@ -72,15 +71,6 @@ A benchmark on R5F core has been conducted to observe the following results when
 <tr>
     <td>VS_FREQ_run</td>
     <td>29</td>
-</tr>
-<tr><td colspan="2" bgcolor=#F0F0F0> Phase voltage reconstruction </td></tr>
-<tr>
-    <td>VOLREC_calcVolSF</td>
-    <td>30</td>
-</tr>
-<tr>
-    <td>VOLREC_run</td>
-    <td>90</td>
 </tr>
 </table>
 
