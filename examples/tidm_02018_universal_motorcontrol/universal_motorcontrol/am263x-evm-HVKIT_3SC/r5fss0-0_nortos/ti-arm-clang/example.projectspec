@@ -197,7 +197,7 @@
         </file>
         <file path="MC_SDK_ROOT/source/utilities/traj/source/traj.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/utilities/traj/">
         </file>
-        <file path="PROJ_ROOT/src_board/AM263_HVMTRPFC.syscfg" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="src_board/">
+        <file path="PROJ_ROOT/am263x-evm-HVKIT_3SC/r5fss0-0_nortos/AM263_HVMTRPFC.syscfg" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="src_board/">
         </file>
         <file path="PROJ_ROOT/src_board/hal.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="src_board/">
         </file>

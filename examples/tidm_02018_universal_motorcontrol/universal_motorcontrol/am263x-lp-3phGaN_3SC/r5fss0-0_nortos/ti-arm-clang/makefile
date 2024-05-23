@@ -334,12 +334,12 @@ $(OBJDIR):
 .INTERMEDIATE: syscfg
 $(SYSCFG_GEN_FILES): syscfg
 
-syscfg: ../../../src_board/AM263_3phGaN_3SC.syscfg
+syscfg: ../AM263_3phGaN_3SC.syscfg
 	@echo Generating SysConfig files ...
-	$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/dist/cli.js --product $(SYSCFG_SDKPRODUCT) --context r5fss0-0 --part AM263x --package ZCZ --output generated/ ../../../src_board/AM263_3phGaN_3SC.syscfg
+	$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/dist/cli.js --product $(SYSCFG_SDKPRODUCT) --context r5fss0-0 --part AM263x --package ZCZ --output generated/ ../AM263_3phGaN_3SC.syscfg
 
 syscfg-gui:
-	$(SYSCFG_NWJS) $(SYSCFG_PATH) --product $(SYSCFG_SDKPRODUCT) --device AM263x_beta --context r5fss0-0 --part AM263x --package ZCZ --output generated/  ../../../src_board/AM263_3phGaN_3SC.syscfg
+	$(SYSCFG_NWJS) $(SYSCFG_PATH) --product $(SYSCFG_SDKPRODUCT) --device AM263x_beta --context r5fss0-0 --part AM263x --package ZCZ --output generated/  ../AM263_3phGaN_3SC.syscfg
 
 #
 # Generation of boot image which can be loaded by Secondary Boot Loader (SBL)
