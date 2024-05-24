@@ -408,11 +408,11 @@ void universal_motorcontrol_main(void *args)
 
     } // end of while() loop
 
-// disable the PWM
-HAL_disablePWM(motorHandle_M1->halMtrHandle);
+    // disable the PWM
+    HAL_disablePWM(motorHandle_M1->halMtrHandle);
 
-DebugP_log("end of main!!\r\n");
+    DebugP_log("end of main!!\r\n");
 
-Board_driversClose();
-Drivers_close();
+    Board_driversClose();
+    Drivers_close();
 }

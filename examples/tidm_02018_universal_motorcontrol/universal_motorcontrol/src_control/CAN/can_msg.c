@@ -136,9 +136,6 @@ static void App_mcanInitMsgRamConfigParams(MCAN_MsgRAMConfigParams
     msgRAMConfigParams->lss = APP_MCAN_STD_ID_FILTER_CNT;
     msgRAMConfigParams->lse = APP_MCAN_EXT_ID_FILTER_CNT;
     msgRAMConfigParams->txBufCnt = APP_MCAN_TX_BUFF_CNT;
-
-//    msgRAMConfigParams->txBufElemSize        = MCAN_ELEM_SIZE_8BYTES;
-
     msgRAMConfigParams->txFIFOCnt = APP_MCAN_TX_FIFO_CNT;
     /* Buffer/FIFO mode is selected */
     msgRAMConfigParams->txBufMode = MCAN_TX_MEM_TYPE_BUF;
@@ -169,7 +166,6 @@ static void App_mcanConfig(Bool enableInternalLpbk)
     /* CAN FD Mode and Bit Rate Switch Enabled */
     initParams.fdMode          = TRUE;
     initParams.brsEnable       = TRUE;
-//    initParams.brsEnable       = FALSE;//TRUE;
 
     /* Initialize MCAN module Global Filter Params */
     MCAN_initGlobalFilterConfigParams(&configParams);
