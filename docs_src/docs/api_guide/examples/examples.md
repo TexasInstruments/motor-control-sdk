@@ -37,6 +37,8 @@ This page lists all the examples and demos supported in this SDK.
 \endcond
 
 \cond SOC_AM263X
+- Reference Design
+    - \subpage  EXAMPLE_TIDM_02018_REFERENCE_DESIGN
 - Position Sense
     -# \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA_OVER_UART
 - Real Time Libraries
