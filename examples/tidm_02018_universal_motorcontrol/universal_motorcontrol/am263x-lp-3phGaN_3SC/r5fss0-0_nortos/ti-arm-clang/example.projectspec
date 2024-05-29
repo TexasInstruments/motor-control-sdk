@@ -217,7 +217,7 @@
         <file path="../main.c" openOnCreation="true" excludeFromBuild="false" action="copy" targetDirectory="">
         </file>
 
-        <file path="${MOTOR_CONTROL_SDK_PATH}/docs/api_guide_am263x/EXAMPLES_UNIVERSAL_MOTORCONTROL.html"
+        <file path="${MOTOR_CONTROL_SDK_PATH}/docs/api_guide_am263x/EXAMPLE_TIDM_02018_REFERENCE_DESIGN.html"
                 openOnCreation="false" excludeFromBuild="false" targetName="README.html" action="link">
         </file>
         

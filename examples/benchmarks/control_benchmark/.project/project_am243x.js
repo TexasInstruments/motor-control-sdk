@@ -144,7 +144,7 @@ const lnkfiles_m4f = {
 
 const syscfgfile = "../example.syscfg";
 
-const readmeDoxygenPageTag = "BENCHMARKS_CONTROL";
+const readmeDoxygenPageTag = "CONTROL";
 
 const templates_nortos_r5f =
 [
