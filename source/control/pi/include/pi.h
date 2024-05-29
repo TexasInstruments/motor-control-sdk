@@ -56,8 +56,55 @@ extern "C"
  *  located in SDK's source/dcl folder.
  */
 
-#define _PI_Obj_ dcl_pi;
-typedef DCL_PI PI_Obj;
+//*****************************************************************************
+//
+//! \brief Defines the PI controller object
+//
+//*****************************************************************************
+typedef struct _PI_Obj_
+{
+    DCL_PI cntlr;                //!< The PI controller object
+    float32_t refValue;          //!< the reference input value
+    float32_t fbackValue;        //!< the feedback input value
+    float32_t ffwdValue;         //!< the feedforward input value
+} PI_Obj;
+
+//*****************************************************************************
+//
+//! \brief Defines the PI handle
+//
+//*****************************************************************************
+typedef struct _PI_Obj_ *PI_Handle;
+
+//*****************************************************************************
+//
+//! \brief     Gets the feedback value in the PI controller
+//!
+//! \param[in] handle  The PI controller handle
+//!
+//! \return    The feedback value in the PI controller
+//
+//*****************************************************************************
+static inline float32_t
+PI_getFbackValue(PI_Handle handle)
+{
+    return(handle->fbackValue);
+} // end of PI_getFbackValue() function
+
+//*****************************************************************************
+//
+//! \brief     Gets the feedforward value in the PI controller
+//!
+//! \param[in] handle  The PI controller handle
+//!
+//! \return    The feedforward value in the PI controller
+//
+//*****************************************************************************
+static inline float32_t
+PI_getFfwdValue(PI_Handle handle)
+{
+    return(handle->ffwdValue);
+} // end of PI_getFfwdValue() function
 
 //*****************************************************************************
 //
@@ -73,8 +120,8 @@ typedef DCL_PI PI_Obj;
 static inline void
 PI_getGains(PI_Handle handle, float32_t *pKp, float32_t *pKi)
 {
-    *pKp = handle->Kp;
-    *pKi = handle->Ki;
+    *pKp = handle->cntlr.Kp;
+    *pKi = handle->cntlr.Ki;
 } // end of PI_getGains() function
 
 //*****************************************************************************
@@ -89,7 +136,7 @@ PI_getGains(PI_Handle handle, float32_t *pKp, float32_t *pKi)
 static inline float32_t
 PI_getKi(PI_Handle handle)
 {
-    return(handle->Ki);
+    return(handle->cntlr.Ki);
 } // end of PI_getKi() function
 
 //*****************************************************************************
@@ -104,7 +151,7 @@ PI_getKi(PI_Handle handle)
 static inline float32_t
 PI_getKp(PI_Handle handle)
 {
-    return(handle->Kp);
+    return(handle->cntlr.Kp);
 } // end of PI_getKp() function
 
 //*****************************************************************************
@@ -122,8 +169,8 @@ PI_getKp(PI_Handle handle)
 static inline void
 PI_getMinMax(PI_Handle handle, float32_t *pOutMin, float32_t *pOutMax)
 {
-    *pOutMin = handle->Umin;
-    *pOutMax = handle->Umax;
+    *pOutMin = handle->cntlr.Umin;
+    *pOutMax = handle->cntlr.Umax;
 } // end of PI_getMinMax() function
 
 //*****************************************************************************
@@ -138,7 +185,7 @@ PI_getMinMax(PI_Handle handle, float32_t *pOutMin, float32_t *pOutMax)
 static inline float32_t
 PI_getOutMax(PI_Handle handle)
 {
-    return(handle->Umax);
+    return(handle->cntlr.Umax);
 } // end of PI_getOutMax() function
 
 //*****************************************************************************
@@ -153,8 +200,23 @@ PI_getOutMax(PI_Handle handle)
 static inline float32_t
 PI_getOutMin(PI_Handle handle)
 {
-    return(handle->Umin);
+    return(handle->cntlr.Umin);
 } // end of PI_getOutMin() function
+
+//*****************************************************************************
+//
+//! \brief     Gets the reference value in the PI controller
+//!
+//! \param[in] handle  The PI controller handle
+//!
+//! \return    The reference value in the PI controller
+//
+//*****************************************************************************
+static inline float32_t
+PI_getRefValue(PI_Handle handle)
+{
+    return(handle->refValue);
+} // end of PI_getRefValue() function
 
 //*****************************************************************************
 //
@@ -168,7 +230,7 @@ PI_getOutMin(PI_Handle handle)
 static inline float32_t
 PI_getUi(PI_Handle handle)
 {
-    return(handle->i10);
+    return(handle->cntlr.i10);
 } // end of PI_getUi() function
 
 //*****************************************************************************
@@ -183,8 +245,42 @@ PI_getUi(PI_Handle handle)
 //! \return    The PI controller (PI) object handle
 //
 //*****************************************************************************
-extern PI_Handle
+extern PI_Obj*
 PI_init(void *pMemory, const size_t numBytes);
+
+//*****************************************************************************
+//
+//! \brief     Sets the feedback value in the PI controller
+//!
+//! \param[in] handle      The PI controller handle
+//!
+//! \param[in] fbackValue  The feedback value
+//
+//*****************************************************************************
+static inline void
+PI_setFbackValue(PI_Handle handle, const float32_t fbackValue)
+{
+    handle->fbackValue = fbackValue;
+
+    return;
+} // end of PI_setFbackValue() function
+
+//*****************************************************************************
+//
+//! \brief     Sets the feedforward value in the PI controller
+//!
+//! \param[in] handle     The PI controller handle
+//!
+//! \param[in] ffwdValue  The feedforward value
+//
+//*****************************************************************************
+static inline void
+PI_setFfwdValue(PI_Handle handle, const float32_t ffwdValue)
+{
+    handle->ffwdValue = ffwdValue;
+
+    return;
+} // end of PI_setFfwdValue() function
 
 //*****************************************************************************
 //
@@ -200,8 +296,8 @@ PI_init(void *pMemory, const size_t numBytes);
 static inline void
 PI_setGains(PI_Handle handle, const float32_t Kp, const float32_t Ki)
 {
-    handle->Kp = Kp;
-    handle->Ki = Ki;
+    handle->cntlr.Kp = Kp;
+    handle->cntlr.Ki = Ki;
 } // end of PI_setGains() function
 
 //*****************************************************************************
@@ -216,7 +312,7 @@ PI_setGains(PI_Handle handle, const float32_t Kp, const float32_t Ki)
 static inline void
 PI_setKi(PI_Handle handle, const float32_t Ki)
 {
-    handle->Ki = Ki;
+    handle->cntlr.Ki = Ki;
 } // end of PI_setKi() function
 
 //*****************************************************************************
@@ -231,7 +327,7 @@ PI_setKi(PI_Handle handle, const float32_t Ki)
 static inline void
 PI_setKp(PI_Handle handle, const float32_t Kp)
 {
-    handle->Kp = Kp;
+    handle->cntlr.Kp = Kp;
 } // end of PI_setKp() function
 
 //*****************************************************************************
@@ -249,8 +345,8 @@ PI_setKp(PI_Handle handle, const float32_t Kp)
 static inline void
 PI_setMinMax(PI_Handle handle, const float32_t outMin, const float32_t outMax)
 {
-    handle->Umin = outMin;
-    handle->Umax = outMax;
+    handle->cntlr.Umin = outMin;
+    handle->cntlr.Umax = outMax;
 } // end of PI_setMinMax() function
 
 //*****************************************************************************
@@ -265,7 +361,7 @@ PI_setMinMax(PI_Handle handle, const float32_t outMin, const float32_t outMax)
 static inline void
 PI_setOutMax(PI_Handle handle, const float32_t outMax)
 {
-    handle->Umax = outMax;
+    handle->cntlr.Umax = outMax;
 } // end of PI_setOutMax() function
 
 //*****************************************************************************
@@ -280,8 +376,25 @@ PI_setOutMax(PI_Handle handle, const float32_t outMax)
 static inline void
 PI_setOutMin(PI_Handle handle, const float32_t outMin)
 {
-    handle->Umin = outMin;
+    handle->cntlr.Umin = outMin;
 } // end of PI_setOutMin() function
+
+//*****************************************************************************
+//
+//! \brief     Sets the reference value in the PI controller
+//!
+//! \param[in] handle    The PI controller handle
+//!
+//! \param[in] refValue  The reference value
+//
+//*****************************************************************************
+static inline void
+PI_setRefValue(PI_Handle handle, const float32_t refValue)
+{
+    handle->refValue = refValue;
+
+    return;
+} // end of PI_setRefValue() function
 
 //*****************************************************************************
 //
@@ -295,7 +408,7 @@ PI_setOutMin(PI_Handle handle, const float32_t outMin)
 static inline void
 PI_setUi(PI_Handle handle, const float32_t Ui)
 {
-    handle->i10 = Ui;
+    handle->cntlr.i10 = Ui;
 } // end of PI_setUi() function
 
 //*****************************************************************************
@@ -318,9 +431,12 @@ PI_run_parallel(PI_Handle handle, const float32_t refValue,
                 const float32_t fbackValue, const float32_t ffwdValue,
                 float32_t *pOutValue)
 {
-    handle->i10 += ffwdValue;
-    *pOutValue = DCL_runPIParallel(handle, refValue, fbackValue);
-    
+    handle->cntlr.i10 += ffwdValue;
+    *pOutValue = DCL_runPIParallel(&handle->cntlr, refValue, fbackValue);
+
+    PI_setRefValue(handle,refValue);
+    PI_setFbackValue(handle,fbackValue);
+    PI_setFfwdValue(handle,ffwdValue);
 } // end of PI_run_parallel() function
 
 //*****************************************************************************
@@ -343,15 +459,18 @@ PI_run_series(PI_Handle handle, const float32_t refValue,
               const float32_t fbackValue, const float32_t ffwdValue,
               float32_t *pOutValue)
 {
-    handle->i10 += ffwdValue;
-    *pOutValue = DCL_runPISeries(handle, refValue, fbackValue);
+    handle->cntlr.i10 += ffwdValue;
+    *pOutValue = DCL_runPISeries(&handle->cntlr, refValue, fbackValue);
 
+    PI_setRefValue(handle,refValue);
+    PI_setFbackValue(handle,fbackValue);
+    PI_setFfwdValue(handle,ffwdValue);
 } // end of PI_run_series() function
 
 
 //*****************************************************************************
 //
-//! \brief     Runs the series form of the PI controller
+//! \brief     Runs the series form of the PI controller without updating the data strcture
 //!
 //! \param[in] handle      The PI controller handle
 //!
@@ -366,7 +485,7 @@ static inline void
 PI_run(PI_Handle handle, const float32_t refValue,
        const float32_t fbackValue, float32_t *pOutValue)
 {
-    *pOutValue = DCL_runPISeries(handle, refValue, fbackValue);
+    *pOutValue = DCL_runPISeries(&handle->cntlr, refValue, fbackValue);
 } // end of PI_run_series() function
 
 /** @} */

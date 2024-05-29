@@ -79,7 +79,7 @@ typedef _DCL_VOLATILE struct dcl_df11
     /* miscellaneous */
     DCL_DF11_SPS *sps; //!< Pointer to the shadow parameter set
     DCL_CSS *css;      //!< Pointer to the common support structure
-} DCL_DF11, *DF11_Handle;
+} DCL_DF11;
 
 //! \brief          Defines default values to initialize DCL_DF11
 //!

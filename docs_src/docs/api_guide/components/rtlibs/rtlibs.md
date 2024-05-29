@@ -4,11 +4,22 @@
 
 Real Time Libraries module contains following components:
 
+\cond SOC_AM243X
+
 - \subpage DCL
 - \subpage CONTROL
 - \subpage OBSERVERS
 - \subpage TRANSFORMS
+
+\endcond
+
 \cond SOC_AM263X
+
+- \subpage DCL
+- \subpage CONTROL
+- \subpage OBSERVERS
+- \subpage TRANSFORMS
 - \subpage SFRA
 - \subpage DATALOG
+
 \endcond

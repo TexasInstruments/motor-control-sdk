@@ -17,6 +17,7 @@ const device_defines = {
 };
 
 const example_file_list = [
+    "examples/benchmarks/control_benchmark/.project/project.js",
     "examples/current_sense/icss_sdfm_nine_channel_load_share_mode/.project/project.js",
     "examples/current_sense/icss_sdfm_nine_channel_with_continuous_mode/.project/project.js",
     "examples/current_sense/icss_sdfm_three_channel_single_pru_mode/.project/project.js",
@@ -61,6 +62,7 @@ const example_file_list = [
     "source/position_sense/nikon/firmware/single_channel/.project/project.js",
     "source/position_sense/tamagawa/firmware/multi_channel/.project/project.js",
     "source/position_sense/tamagawa/firmware/single_channel/.project/project.js",
+
 ];
 
 function getProjectSpecCpu(cpu) {

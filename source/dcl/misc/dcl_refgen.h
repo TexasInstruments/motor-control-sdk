@@ -45,7 +45,6 @@ extern "C" {
  *  \brief      Defines the interface to reference generator module (REFGEN)
  */
 
-#include <math.h>
 #include "dcl_fdlog.h"
 #include "../dcl_common.h"
 

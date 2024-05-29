@@ -85,7 +85,7 @@ typedef _DCL_VOLATILE struct dcl_df12
     /* miscellaneous */
     DCL_DF12_SPS *sps; //!< updates compensator parameter
     DCL_CSS *css;      //!< configuration & debugging
-} DCL_DF12, *DF12_Handle;
+} DCL_DF12;
 
 //! \brief          Defines default values to initialize DCL_DF12
 //!

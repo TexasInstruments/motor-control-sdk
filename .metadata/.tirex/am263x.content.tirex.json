@@ -7,6 +7,134 @@
         "resourceSubClass": [
             "example.gettingstarted"
         ],
+        "description": "Benchmark for the controls library CPU is R5FSS0-0 running NORTOS.",
+        "name": "benchmark_control",
+        "location": "../../examples/benchmarks/control_benchmark/am263x-cc/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "TMDSCNCD263"
+        ],
+        "kernel": [
+            "nortos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "benchmarks",
+            "control_benchmark",
+            "r5fss0-0_nortos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.gettingstarted"
+        ],
+        "description": "Benchmark for the controls library CPU is R5FSS0-0 running FREERTOS.",
+        "name": "benchmark_control",
+        "location": "../../examples/benchmarks/control_benchmark/am263x-cc/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "TMDSCNCD263"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "benchmarks",
+            "control_benchmark",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.gettingstarted"
+        ],
+        "description": "Benchmark for the controls library CPU is R5FSS0-0 running NORTOS.",
+        "name": "benchmark_control",
+        "location": "../../examples/benchmarks/control_benchmark/am263x-lp/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "LP-AM263"
+        ],
+        "kernel": [
+            "nortos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "benchmarks",
+            "control_benchmark",
+            "r5fss0-0_nortos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.gettingstarted"
+        ],
+        "description": "Benchmark for the controls library CPU is R5FSS0-0 running FREERTOS.",
+        "name": "benchmark_control",
+        "location": "../../examples/benchmarks/control_benchmark/am263x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "LP-AM263"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "benchmarks",
+            "control_benchmark",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.gettingstarted"
+        ],
         "description": "A Direct Form 2 2nd order example demonstrating the digital control library (DCL). CPU is R5FSS0-0 running NORTOS.",
         "name": "dcl_df22",
         "location": "../../examples/dcl/dcl_df22/am263x-cc/r5fss0-0_nortos/ti-arm-clang/example.projectspec",

@@ -36,7 +36,7 @@
 
 #if defined(STEP_RP_EN)
 // global variables
-__attribute__ ((section("datalog_data"))) GRAPH_StepVars_t stepRPVars;
+__attribute__ ((section(".datalog_data"))) GRAPH_StepVars_t stepRPVars;
 #endif  // STEP_RP_EN
 
 // **************************************************************************

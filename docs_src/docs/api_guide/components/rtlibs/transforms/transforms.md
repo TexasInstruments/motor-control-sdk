@@ -67,10 +67,19 @@ A benchmark on R5F core has been conducted to observe the following results when
     <td>SVGEN_runMin</td>
     <td>36</td>
 </tr>
+<tr><td colspan="2" bgcolor=#F0F0F0> Phase voltage reconstruction </td></tr>
+<tr>
+    <td>VOLREC_calcVolSF</td>
+    <td>30</td>
+</tr>
+<tr>
+    <td>VOLREC_run</td>
+    <td>90</td>
+</tr>
 </table>
 
   \note both PARK and IPARK does not include trigonometric calculations of phasor. For R5F core, it's recommened to leverage the fast ti_arm_sincos/FastRTS_sincos function found in mathlib of MCU+ SDK.
-- Ran with TI Clang Compiler v3.2.0.LTS, with -Os flag and functions force-inlined onto the benchmarking function placed in TCM memory. Obtained the average result from 600 consecutive loops of running transform functions with DPL CycleCountP, mimicking the usage of a control loop.
+- Ran with TI Clang Compiler v3.2.0.LTS, with -Os flag and the benchmarking function placed in TCM memory. Obtained the average result from 600 consecutive loops of running transform functions with DPL CycleCountP, mimicking the usage of a control loop.
 - Actual result may vary depending on provided datasets and memory configuration. For R5F, it is recommended for users to map control loops to TCM for the best performance.
 
 ## Provided Examples 

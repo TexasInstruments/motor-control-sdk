@@ -40,6 +40,10 @@ help:
 	@echo  .
 	@echo  Example build targets,
 	@echo  ======================
+	@echo  $(MAKE) -s -C examples/benchmarks/control_benchmark/am263x-cc/r5fss0-0_nortos/ti-arm-clang [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C examples/benchmarks/control_benchmark/am263x-cc/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C examples/benchmarks/control_benchmark/am263x-lp/r5fss0-0_nortos/ti-arm-clang [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C examples/benchmarks/control_benchmark/am263x-lp/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C examples/dcl/dcl_df22/am263x-cc/r5fss0-0_nortos/ti-arm-clang [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C examples/dcl/dcl_df22/am263x-cc/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C examples/dcl/dcl_df22/am263x-lp/r5fss0-0_nortos/ti-arm-clang [all clean syscfg-gui syscfg]
@@ -118,6 +122,10 @@ $(BUILD_COMBO_SCRUB_motorcontrol_tamagawa_over_soc_uart):
 
 BUILD_COMBO_EXAMPLE_ALL =
 # Various Example Targets
+BUILD_COMBO_EXAMPLE_ALL += benchmark_control_am263x-cc_r5fss0-0_nortos_ti-arm-clang
+BUILD_COMBO_EXAMPLE_ALL += benchmark_control_am263x-cc_r5fss0-0_freertos_ti-arm-clang
+BUILD_COMBO_EXAMPLE_ALL += benchmark_control_am263x-lp_r5fss0-0_nortos_ti-arm-clang
+BUILD_COMBO_EXAMPLE_ALL += benchmark_control_am263x-lp_r5fss0-0_freertos_ti-arm-clang
 BUILD_COMBO_EXAMPLE_ALL += dcl_df22_am263x-cc_r5fss0-0_nortos_ti-arm-clang
 BUILD_COMBO_EXAMPLE_ALL += dcl_df22_am263x-cc_r5fss0-0_freertos_ti-arm-clang
 BUILD_COMBO_EXAMPLE_ALL += dcl_df22_am263x-lp_r5fss0-0_nortos_ti-arm-clang
@@ -142,6 +150,18 @@ BUILD_COMBO_EXAMPLE_PRIVATE_ALL =
 examples: $(BUILD_COMBO_EXAMPLE_ALL)
 
 examples-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_ALL)
+
+ benchmark_control_am263x-cc_r5fss0-0_nortos_ti-arm-clang:
+	$(MAKE) -C examples/benchmarks/control_benchmark/am263x-cc/r5fss0-0_nortos/ti-arm-clang -f makefile all
+
+ benchmark_control_am263x-cc_r5fss0-0_freertos_ti-arm-clang:
+	$(MAKE) -C examples/benchmarks/control_benchmark/am263x-cc/r5fss0-0_freertos/ti-arm-clang -f makefile all
+
+ benchmark_control_am263x-lp_r5fss0-0_nortos_ti-arm-clang:
+	$(MAKE) -C examples/benchmarks/control_benchmark/am263x-lp/r5fss0-0_nortos/ti-arm-clang -f makefile all
+
+ benchmark_control_am263x-lp_r5fss0-0_freertos_ti-arm-clang:
+	$(MAKE) -C examples/benchmarks/control_benchmark/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile all
 
  dcl_df22_am263x-cc_r5fss0-0_nortos_ti-arm-clang:
 	$(MAKE) -C examples/dcl/dcl_df22/am263x-cc/r5fss0-0_nortos/ti-arm-clang -f makefile all
@@ -191,6 +211,10 @@ examples-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_ALL)
 
 BUILD_COMBO_EXAMPLE_CLEAN_ALL =
 # Various Example Clean Targets
+BUILD_COMBO_EXAMPLE_CLEAN_ALL += benchmark_control_am263x-cc_r5fss0-0_nortos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_CLEAN_ALL += benchmark_control_am263x-cc_r5fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_CLEAN_ALL += benchmark_control_am263x-lp_r5fss0-0_nortos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_CLEAN_ALL += benchmark_control_am263x-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_CLEAN_ALL += dcl_df22_am263x-cc_r5fss0-0_nortos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_CLEAN_ALL += dcl_df22_am263x-cc_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_CLEAN_ALL += dcl_df22_am263x-lp_r5fss0-0_nortos_ti-arm-clang_clean
@@ -215,6 +239,18 @@ BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL =
 examples-clean: $(BUILD_COMBO_EXAMPLE_CLEAN_ALL)
 
 examples-private-clean: $(BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL)
+
+ benchmark_control_am263x-cc_r5fss0-0_nortos_ti-arm-clang_clean:
+	$(MAKE) -C examples/benchmarks/control_benchmark/am263x-cc/r5fss0-0_nortos/ti-arm-clang -f makefile clean
+
+ benchmark_control_am263x-cc_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/benchmarks/control_benchmark/am263x-cc/r5fss0-0_freertos/ti-arm-clang -f makefile clean
+
+ benchmark_control_am263x-lp_r5fss0-0_nortos_ti-arm-clang_clean:
+	$(MAKE) -C examples/benchmarks/control_benchmark/am263x-lp/r5fss0-0_nortos/ti-arm-clang -f makefile clean
+
+ benchmark_control_am263x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/benchmarks/control_benchmark/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile clean
 
  dcl_df22_am263x-cc_r5fss0-0_nortos_ti-arm-clang_clean:
 	$(MAKE) -C examples/dcl/dcl_df22/am263x-cc/r5fss0-0_nortos/ti-arm-clang -f makefile clean
@@ -264,6 +300,10 @@ examples-private-clean: $(BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL)
 
 BUILD_COMBO_EXAMPLE_SCRUB_ALL =
 # Various Example Scrub Targets
+BUILD_COMBO_EXAMPLE_SCRUB_ALL += benchmark_control_am263x-cc_r5fss0-0_nortos_ti-arm-clang_scrub
+BUILD_COMBO_EXAMPLE_SCRUB_ALL += benchmark_control_am263x-cc_r5fss0-0_freertos_ti-arm-clang_scrub
+BUILD_COMBO_EXAMPLE_SCRUB_ALL += benchmark_control_am263x-lp_r5fss0-0_nortos_ti-arm-clang_scrub
+BUILD_COMBO_EXAMPLE_SCRUB_ALL += benchmark_control_am263x-lp_r5fss0-0_freertos_ti-arm-clang_scrub
 BUILD_COMBO_EXAMPLE_SCRUB_ALL += dcl_df22_am263x-cc_r5fss0-0_nortos_ti-arm-clang_scrub
 BUILD_COMBO_EXAMPLE_SCRUB_ALL += dcl_df22_am263x-cc_r5fss0-0_freertos_ti-arm-clang_scrub
 BUILD_COMBO_EXAMPLE_SCRUB_ALL += dcl_df22_am263x-lp_r5fss0-0_nortos_ti-arm-clang_scrub
@@ -288,6 +328,18 @@ BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL =
 examples-scrub: $(BUILD_COMBO_EXAMPLE_SCRUB_ALL)
 
 examples-scrub-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL)
+
+ benchmark_control_am263x-cc_r5fss0-0_nortos_ti-arm-clang_scrub:
+	$(MAKE) -C examples/benchmarks/control_benchmark/am263x-cc/r5fss0-0_nortos/ti-arm-clang -f makefile scrub
+
+ benchmark_control_am263x-cc_r5fss0-0_freertos_ti-arm-clang_scrub:
+	$(MAKE) -C examples/benchmarks/control_benchmark/am263x-cc/r5fss0-0_freertos/ti-arm-clang -f makefile scrub
+
+ benchmark_control_am263x-lp_r5fss0-0_nortos_ti-arm-clang_scrub:
+	$(MAKE) -C examples/benchmarks/control_benchmark/am263x-lp/r5fss0-0_nortos/ti-arm-clang -f makefile scrub
+
+ benchmark_control_am263x-lp_r5fss0-0_freertos_ti-arm-clang_scrub:
+	$(MAKE) -C examples/benchmarks/control_benchmark/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile scrub
 
  dcl_df22_am263x-cc_r5fss0-0_nortos_ti-arm-clang_scrub:
 	$(MAKE) -C examples/dcl/dcl_df22/am263x-cc/r5fss0-0_nortos/ti-arm-clang -f makefile scrub

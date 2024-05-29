@@ -86,7 +86,7 @@ typedef _DCL_VOLATILE struct dcl_pi
     /* miscellaneous */
     DCL_PI_SPS *sps;    //!< updates controller parameter
     DCL_CSS *css;       //!< configuration & debugging
-} DCL_PI, *PI_Handle;
+} DCL_PI;
 
 //! \brief          Defines default values to initialize DCL_PI
 //!
@@ -358,7 +358,7 @@ float32_t DCL_runPIParallel(DCL_PI *pi, float32_t rk, float32_t yk)
 
 //! \brief           Executes a parallel form PI controller with
 //!                  enhanced anti-windup logic incorporating an
-//!                  addintional integrator saturation clamp
+//!                  additional integrator saturation clamp
 //!
 //! \param[in] pi    Pointer to the DCL_PI structure
 //! \param[in] rk    The controller set-point reference

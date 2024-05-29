@@ -54,7 +54,7 @@ PI_init(void *pMemory, const size_t numBytes)
     //
     handle = (PI_Handle)pMemory;
 
-    *handle = (DCL_PI)PI_DEFAULTS;
+    handle->cntlr = (DCL_PI)PI_DEFAULTS;
 
     return(handle);
 } // end of PI_init() function

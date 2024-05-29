@@ -51,6 +51,7 @@ extern "C"
 
 #include <stdbool.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include "math_types.h"
 

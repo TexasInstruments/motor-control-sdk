@@ -89,7 +89,7 @@ typedef _DCL_VOLATILE struct dcl_pidf64 {
     /* miscellaneous */
     DCL_PIDF64_SPS *sps;  //!< updates controller parameter
     DCL_CSSF64 *css;      //!< configuration & debugging
-} DCL_PIDF64, *PIDF64_Handle;
+} DCL_PIDF64;
 
 //! \brief          Defines default values to initialize the DCL_PID64 active structure
 //!

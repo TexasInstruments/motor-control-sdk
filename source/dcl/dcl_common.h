@@ -47,6 +47,7 @@ extern "C" {
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <math.h>
 
 //! \brief  Defines single,double precision data type.
 //!
