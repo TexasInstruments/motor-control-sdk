@@ -1,1 +1,0 @@
-/* Boilerplate code for mtpa.c */
