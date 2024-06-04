@@ -257,6 +257,11 @@ int32_t initSdfmFw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm,  PRU
     /* Initialize SDFM instance */
     hSdfm = SDFM_init(pruIcssHandle, pruId, pSdfmPrms->pruInsId);
     
+    if (hSdfm == NULL)
+    {
+        return SDFM_ERR_INIT_SDFM;
+    }
+
     hSdfm->pruicssCfg = (void *)(((PRUICSS_HwAttrs *)(pruIcssHandle->hwAttrs))->cfgRegBase);
 
 
@@ -301,10 +306,7 @@ int32_t initSdfmFw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm,  PRU
     DebugP_log("\n\n\n");
     DebugP_log("SDFM firmware version \t: %x.%x.%x (%s)\n\n", (i >> 24) & 0x7F,
                 (i >> 16) & 0xFF, i & 0xFFFF, i & (1 << 31) ? "internal" : "release");
-    if (hSdfm == NULL)
-    {
-        return SDFM_ERR_INIT_SDFM;
-    }
+
 
     hSdfm->pruCoreClk = pSdfmPrms->pruClock;
     hSdfm->iepClock = pSdfmPrms->iepClock[0]; 
