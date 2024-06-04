@@ -14,8 +14,8 @@
         name = "hdsl_master_multichannel_ch2_sync_mode_am243x-evm_icssg0-pru1_fw_ti-pru-cgt"
         products="com.ti.MOTOR_CONTROL_SDK_AMXXX;"
         configurations="
-                Release,
-                Debug,
+            Release,
+            Debug,
         "
         connection="TIXDS110_Connection.xml"
         toolChain="TI"

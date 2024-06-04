@@ -14,8 +14,8 @@
         name = "bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-pru1_fw_ti-pru-cgt"
         products="com.ti.MOTOR_CONTROL_SDK_AMXXX;"
         configurations="
-                Release,
-                Debug,
+            Release,
+            Debug,
         "
         connection="TIXDS110_Connection.xml"
         toolChain="TI"
