@@ -6,8 +6,8 @@ Real Time Libraries module contains following components:
 
 \cond SOC_AM243X
 
-- \subpage DCL
 - \subpage CONTROL
+- \subpage DCL
 - \subpage OBSERVERS
 - \subpage TRANSFORMS
 
@@ -15,11 +15,11 @@ Real Time Libraries module contains following components:
 
 \cond SOC_AM263X
 
-- \subpage DCL
 - \subpage CONTROL
-- \subpage OBSERVERS
-- \subpage TRANSFORMS
-- \subpage SFRA
 - \subpage DATALOG
+- \subpage DCL
+- \subpage OBSERVERS
+- \subpage SFRA
+- \subpage TRANSFORMS
 
 \endcond

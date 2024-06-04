@@ -1,10 +1,10 @@
-# Release Notes 09.00.00 {#RELEASE_NOTES_09_00_00_PAGE}
+# Release Notes 09.02.00 {#RELEASE_NOTES_09_02_00_PAGE}
 
 [TOC]
 
 \attention Also refer to individual module pages for more details on each feature, unsupported features, important usage guidelines.
 
-\attention For release notes of Industrial Communications SDK and MCU+ SDK, please refer to <a href="@VAR_IC_SDK_DOCS_PATH/RELEASE_NOTES_09_00_00_PAGE.html" target="_blank"> @VAR_SOC_NAME Industrial Communications SDK Release Notes 09.00.00</a> and <a href="@VAR_MCU_SDK_DOCS_PATH/RELEASE_NOTES_09_00_00_PAGE.html" target="_blank"> @VAR_SOC_NAME MCU+ SDK Release Notes 09.00.00</a> respectively.
+\attention For release notes of Industrial Communications SDK and MCU+ SDK, please refer to <a href="@VAR_IC_SDK_DOCS_PATH/RELEASE_NOTES_09_02_00_PAGE.html" target="_blank"> @VAR_SOC_NAME Industrial Communications SDK Release Notes 09.02.00</a> and <a href="@VAR_MCU_SDK_DOCS_PATH/RELEASE_NOTES_09_02_00_PAGE.html" target="_blank"> @VAR_SOC_NAME MCU+ SDK Release Notes 09.02.00</a> respectively.
 
 \note The examples will show usage of SW modules and APIs on a specific CPU instance and OS combination. \n
       Unless noted otherwise, the SW modules would work in both FreeRTOS and NORTOS environment. \n
@@ -15,7 +15,11 @@
 
 Feature                                                                                         | Module
 ------------------------------------------------------------------------------------------------|-----------------------------------
-Digital Control Library                                                                         | Real Time Libraries
+TIDM-02018 Universal Motor Control Reference Design                                             | Reference Design
+SFRA Library and Example                                                                        | Real Time Libraries
+Datalog Library and Example                                                                     | Real Time Libraries
+Control Library                                                                                 | Real Time Libraries
+Observer Library                                                                                | Real Time Libraries
 
 ## Device and Validation Information
 
@@ -28,9 +32,9 @@ AM263x| R5F             | AM263x LaunchPad Revision E2  (referred to as am263x-l
 
 Tools / SW module       | Supported CPUs | Version
 ------------------------|----------------|-----------------------
-Code Composer Studio    | R5F            | 12.4.0
-SysConfig               | R5F            | 1.17.0, build 3128
-TI ARM CLANG            | R5F            | 2.1.3.LTS
+Code Composer Studio    | R5F            | 12.7.0
+SysConfig               | R5F            | 1.20.0, build 3587
+TI ARM CLANG            | R5F            | 3.2.2.LTS
 FreeRTOS Kernel         | R5F            | 10.4.3
 LwIP                    | R5F            | STABLE-2_2_0_RELEASE
 Mbed-TLS                | R5F            | mbedtls-2.13.1
@@ -43,7 +47,28 @@ Module       | Supported CPUs | SysConfig Support | OS Support        | Key feat
 -------------|----------------|-------------------|-------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------
 Tamagawa     | R5F            | YES               | FreeRTOS          | Absolute position, Encoder ID, Reset, EEPROM Read, EEPROM Write, 2.5 Mbps and 5 Mbps Encoder Support                                                           | -
 
-<!-- ## Fixed Issues
+### Real Time Libraries
+
+<table>
+<tr>
+    <th> Module
+    <th> Supported CPUs
+    <th> SysConfig Support
+    <th> OS Support
+    <th> Key features tested
+    <th> Key features not tested
+</tr>
+<tr>
+    <td>
+    <td>
+    <td>
+    <td>
+    <td>
+    <td>
+</tr>
+</table>
+
+## Fixed Issues
 
 <table>
 <tr>
@@ -53,7 +78,35 @@ Tamagawa     | R5F            | YES               | FreeRTOS          | Absolute
     <th> Applicable Releases
     <th> Resolution/Comments
 </tr>
-</table> -->
+<tr>
+    <td> PINDSW-7498
+    <td> ROV is not working for the Industrial Communication SDK Examples which are part of Motor Control SDK
+    <td> Examples
+    <td> 9.1
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-7642
+    <td> Docs: The tool versions of older releases in Release Notes are not correct
+    <td> Documentation
+    <td> 9.1
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-7696
+    <td> Unable to use SBL OSPI boot mode for all the demo applications of Motor Control SDK
+    <td> Examples
+    <td> 9.1
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-7940
+    <td> Transforms: UART Log does not work in transforms_test example
+    <td> Real Time Libraries
+    <td> 9.1
+    <td> -
+</tr>
+</table>
 
 <!-- ## Known Issues
 
@@ -151,7 +204,7 @@ Tamagawa     | R5F            | YES               | FreeRTOS          | Absolute
 </tr>
 </table>
 
-## Upgrade and Compatibility Information for Motor Control SDK 09.00.00 {#UPGRADE_AND_COMPATIBILITY_INFORMATION_9_0_0}
+## Upgrade and Compatibility Information for Motor Control SDK 09.02.00 {#UPGRADE_AND_COMPATIBILITY_INFORMATION_9_2_0}
 
 \attention When migrating from MCU+ SDK, see \ref MIGRATION_GUIDES for more details.
 
@@ -198,3 +251,4 @@ earlier SDKs. -->
     <th> Additional Remarks
 </tr>
 </table> -->
+

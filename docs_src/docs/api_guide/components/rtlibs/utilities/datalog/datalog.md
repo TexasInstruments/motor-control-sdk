@@ -4,7 +4,7 @@
 
 ## Introduction
 
-The Datalog library module commonly found in both digital control and motor-control applications. This module stores the real time values of user selctable variables. User configurable, "n" number of variables are selected by configuring "n" module inputs, iptr[0], iptr[1], ... iptr[n-1], point to the address of "n" variables. Data values are stored in datalog buffers, datalogBuff[0], datalogBuff[1], ... datalogBuff[n-1].
+The Datalog library module commonly found in both digital control and motor-control applications. This module stores the real time values of user selectable variables. User configurable, "n" number of variables are selected by configuring "n" module inputs, iptr[0], iptr[1], ... iptr[n-1], point to the address of "n" variables. Data values are stored in datalog buffers, datalogBuff[0], datalogBuff[1], ... datalogBuff[n-1].
 
 Number of datalog channels, buffer size and data type are configurable by user with "${SDK_INSTALL_PATH}/source/utilities/datalog/include/datalog_input.h" file update.
 

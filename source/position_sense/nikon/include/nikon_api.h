@@ -39,10 +39,10 @@ extern "C" {
 #include "nikon_drv.h"
 
 /**
- *  \defgroup NIKON_API_MODULE APIs for Nikon Encoder
+ *  \defgroup NIKON_API_MODULE APIs for Nikon A-Format Encoder
  *  \ingroup POSITION_SENSE_API
  *
- * Here is the list of APIs used for Nikon encoder communication protocol
+ * Here is the list of APIs used for Nikon A-Format encoder communication protocol
  *
  *  @{
  */

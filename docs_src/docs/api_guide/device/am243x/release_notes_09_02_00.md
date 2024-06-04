@@ -17,7 +17,19 @@
 
 Feature                                                                                         | Module
 ------------------------------------------------------------------------------------------------|-----------------------------------
+Three channel Nikon A-Format with one PRU-ICSSG Slice                                           | Position Sense Nikon A-Format
+Point-to-point and bus connection support for Nikon A-Format                                    | Position Sense Nikon A-Format
+Multiple baud rate support : 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz                        | Position Sense Nikon A-Format
+Long cable (upto 100 meters)                                                                    | Position Sense Nikon A-Format
 Updated HDSL position realignment algorithm                                                     | Position Sense HDSL
+Support for safety CRC and sign-of-life counter                                                 | Position Sense BiSS-C
+Compare event based command trigger support                                                     | Position Sense BiSS-C
+SysConfig Enhancements                                                                          | Current Sense %SDFM
+SINC1 and SINC2 Filtering                                                                       | Current Sense %SDFM
+Deadband Configuration                                                                          | PRU-ICSS PWM
+Control Library                                                                                 | Real Time Libraries
+Observer Library                                                                                | Real Time Libraries
+
 ## Device and Validation Information
 
 SOC    | Supported CPUs  | Boards                                                                                                      | Host PC
@@ -28,9 +40,9 @@ AM243x | R5F             | AM243x EVM (referred to as am243x-evm in code), \n AM
 
 Tools / SW module       | Supported CPUs | Version
 ------------------------|----------------|-----------------------
-Code Composer Studio    | R5F, M4F       | 12.6.0
-SysConfig               | R5F, M4F       | 1.19.0, build 3426
-TI ARM CLANG            | R5F, M4F       | 3.2.1.LTS
+Code Composer Studio    | R5F, M4F       | 12.7.0
+SysConfig               | R5F, M4F       | 1.20.0, build 3587
+TI ARM CLANG            | R5F, M4F       | 3.2.2.LTS
 FreeRTOS Kernel         | R5F, M4F       | 10.4.3
 Tiny USB                | R5F            | 0.14.0
 LwIP                    | R5F            | STABLE-2_2_0_RELEASE
@@ -58,19 +70,6 @@ Feature                                                             | Module
 Below features are not support on AM243X LAUNCHPAD due to SOC or board constraints, -->
 
 
-### Position Sense
-
-<table>
-<tr>
-    <th> Module
-    <th> Supported CPUs
-    <th> SysConfig Support
-    <th> OS Support
-    <th> Key features tested 
-    <th> Key features not tested 
-</tr>
-</table>
-
 ### Current Sense
 
 <table>
@@ -79,8 +78,90 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <th> Supported CPUs
     <th> SysConfig Support
     <th> OS Support
-    <th> Key features tested 
-    <th> Key features not tested 
+    <th> Key features tested
+    <th> Key features not tested
+</tr>
+<tr>
+    <td> ICSS %SDFM
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Three %SDFM channels on single PRU core, Nine %SDFM channels on three PRU cores (load share mode), %SDFM Sync with EPWM, Single/Double Normal Current Sampling per PWM cycle, Continuous Normal Current Sampling, High and Low Threshold Comparator (Over-current detction), Fast Detect, Phase Compensation, Zero Cross Detection, Trip Generation using PRU-ICSS TripZone, Tested with %SDFM clock from ECAP, Tested with 5MHz Clock from EPWM
+    <td> -
+</tr>
+</table>
+
+### Position Sense
+
+<table>
+<tr>
+    <th> Module
+    <th> Supported CPUs
+    <th> SysConfig Support
+    <th> OS Support
+    <th> Key features tested
+    <th> Key features not tested
+</tr>
+<tr>
+    <td> BiSS-C
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Single channel, Multi channel using single PRU core and three PRU cores (load share mode), point-to-point connection, daisy chaining, control communication, automatic processing delay detection and compensation, interface speed of 1, 2, 5, 8, and 10 MHz, Long cable (upto 100 meters), safety CRC, sign-of-life counter, Boosterpack with AM243x-LP
+    <td> -
+</tr>
+<tr>
+    <td> EnDat
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Single channel, Multi channel using single PRU core and three PRU cores (load share mode), Continuous mode, Recovery Time for 2.2 command set, Long cable (upto 100 meters), Boosterpack with AM243x-LP
+    <td> Encoder receive communication command
+</tr>
+<tr>
+    <td> HDSL
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Single channel, Multi channel using three PRU cores (load share mode), Free Run mode, Sync mode, Short Message Read and Write, Long Message Read and Write, Pipeline Channel Data, Long cable (upto 100 meters) with single channel Free Run mode, Boosterpack with AM243x-LP
+    <td> 225 MHz PRU-ICSSG Core Clock based firmware, Multi-channel with long cables(100m length), Long cable (upto 100 meters) with sync mode
+</tr>
+<tr>
+    <td> Nikon A-Format
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Single channel, Multi channel using single PRU core and three PRU cores (load share mode), point-to-point connection, bus connection, ndividual and multiple transmission mode with encoder addresses ranging between ENC1-ENC8, baud rates from 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz, up to 40-bit absolute position (single turn + multi turn) data with additional information, long cable (upto 100 meters), Boosterpack with AM243x-LP
+    <td> -
+</tr>
+<tr>
+    <td> Tamagawa
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Absolute position, Encoder ID, Reset, EEPROM Read, EEPROM Write, 2.5 Mbps and 5 Mbps Encoder Support, Boosterpack with AM243x-LP
+    <td> -
+</tr>
+</table>
+
+### Real Time Libraries
+
+<table>
+<tr>
+    <th> Module
+    <th> Supported CPUs
+    <th> SysConfig Support
+    <th> OS Support
+    <th> Key features tested
+    <th> Key features not tested
+</tr>
+<tr>
+    <td>
+    <td>
+    <td>
+    <td>
+    <td>
+    <td>
 </tr>
 </table>
 
@@ -95,41 +176,6 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <th> Resolution/Comments
 </tr>
 <tr>
-    <td> PINDSW-7567
-    <td> PRUICSS PWM : Mapping of pwm signals PWMm_0_NEG to PWMm_A1, PWMm_1_POS to PWMm_A2, PWMm_1_NEG to PWMm_B0, PWMm_2_POS to PWMm_B1 is not correct
-    <td> PRUICSS PWM 
-    <td> 9.1
-    <td> -
-</tr>
-<tr>
-    <td> PINDSW-7595
-    <td> %SDFM: \ref SDFM_init API does not have support for ICSSG1
-    <td> Current Sense %SDFM
-    <td> 9.0 onwards
-    <td> -
-</tr>
-<tr>
-    <td> PINDSW-7756
-    <td> Tamagawa: After stopping periodic trigger mode, firmware gets stuck
-    <td> Position Sense Tamagawa
-    <td> 9.1
-    <td> -
-</tr>
-<tr>
-    <td> PINDSW-7758
-    <td> BiSS-C: Firmware does not work when changing ICSSG Core Clock Frequency to 300MHz 
-    <td> Position Sense BiSS-C
-    <td> 9.1
-    <td> Clock dividers for Three Channel Peripheral Interface were not being set correctly for 300MHz 
-</tr>
-<tr>
-    <td> PINDSW-7480
-    <td> HDSL: Continuous short/long message requests cause PRU to get stuck
-    <td> Position Sense HDSL
-    <td> 9.0
-    <td> -
-</tr>
-<tr>
     <td> PINDSW-6630
     <td> HDSL: POS bit is not set during initial fast position alignment
     <td> Position Sense HDSL
@@ -141,6 +187,76 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> HDSL: Reset Value of SSUM bit is not correct
     <td> Position Sense HDSL
     <td> 9.0 onwards
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-7480
+    <td> HDSL: Continuous short/long message requests cause PRU to get stuck
+    <td> Position Sense HDSL
+    <td> 9.0
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-7498
+    <td> ROV is not working for the Industrial Communication SDK Examples which are part of Motor Control SDK
+    <td> Examples
+    <td> 9.1
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-7560
+    <td> PRU firmware build in Motor Control SDK is failing in Linux environment
+    <td> Examples
+    <td> 9.1
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-7567
+    <td> PRUICSS PWM : Mapping of pwm signals PWMm_0_NEG to PWMm_A1, PWMm_1_POS to PWMm_A2, PWMm_1_NEG to PWMm_B0, PWMm_2_POS to PWMm_B1 is not correct
+    <td> PRUICSS PWM
+    <td> 9.1
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-7595
+    <td> %SDFM: \ref SDFM_init API does not have support for ICSSG1
+    <td> Current Sense %SDFM
+    <td> 9.0 onwards
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-7642
+    <td> Docs: The tool versions of older releases in Release Notes are not correct
+    <td> Documentation
+    <td> 9.1
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-7696
+    <td> Unable to use SBL OSPI boot mode for all the demo applications of Motor Control SDK
+    <td> Examples
+    <td> 9.1
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-7756
+    <td> Tamagawa: After stopping periodic trigger mode, firmware gets stuck
+    <td> Position Sense Tamagawa
+    <td> 9.1
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-7758
+    <td> BiSS-C: Firmware does not work when changing ICSSG Core Clock Frequency to 300MHz
+    <td> Position Sense BiSS-C
+    <td> 9.1
+    <td> Clock dividers for Three Channel Peripheral Interface were not being set correctly for 300MHz
+</tr>
+<tr>
+    <td> PINDSW-7940
+    <td> Transforms: UART Log does not work in transforms_test example
+    <td> Real Time Libraries
+    <td> 9.1
     <td> -
 </tr>
 </table>
@@ -176,6 +292,13 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> -
 </tr>
 <tr>
+    <td> PINDSW-6544
+    <td> %SDFM: Incorrect samples seen intermittently with EPWM as %SDFM clock
+    <td> Current Sense %SDFM
+    <td> 9.0 onwards
+    <td> Use 5MHz %SDFM clock from EPWM1 (tested with 5MHz clock from EPWM) or use PRU-ICSSG ECAP as %SDFM clock source
+</tr>
+<tr>
     <td> PINDSW-7130
     <td> HDSL: Few protocol resets seen during initialization with Free Run mode on AM243x-LP
     <td> Position Sense HDSL
@@ -196,17 +319,8 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> 9.0
     <td> -
 </tr>
+</table>
 
-</table>
-<table>
-<tr>
-    <th> ID
-    <th> Head Line
-    <th> Module
-    <th> Applicable Releases
-    <th> Workaround
-</tr>
-</table>
 
 <!-- ## Errata
 <table>
@@ -282,16 +396,21 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <th> Applicable Devices
     <th> Workaround
 </tr>
+<tr>
+    <td> MCUSDK-208
+    <td> gmake with -j can sometimes lock up Windows command prompt
+    <td> Build
+    <td> 7.3.0
+    <td> AM64x, AM243x
+    <td> Use bash for windows as part of git for windows or don't use -j option
+</tr>
 </table>
 
-## Upgrade and Compatibility Information {#UPGRADE_AND_COMPATIBILITY_INFORMATION_9_2_0}
+## Upgrade and Compatibility Information for Motor Control SDK 09.02.00 {#UPGRADE_AND_COMPATIBILITY_INFORMATION_9_2_0}
 
-<!-- \attention When migrating from MCU+ SDK, see \ref MIGRATION_GUIDES for more details -->
+\attention When migrating from MCU+ SDK, see \ref MIGRATION_GUIDES for more details.
 
-This section lists changes which could affect user applications developed using older SDK versions.
-Read this carefully to see if you need to do any changes in your existing application when migrating to this SDK version relative to
-previous SDK version. Also refer to older SDK version release notes to see changes in
-earlier SDKs.
+This section lists changes which could affect user applications developed using Motor Control SDK 09.01.00. Read this carefully to see if you need to do any changes in your existing application when migrating to this SDK version relative to previous SDK version. Also refer to older SDK version release notes to see changes in earlier SDKs.
 
 <!-- ### Compiler Options
 
@@ -453,37 +572,37 @@ earlier SDKs.
 <tr>
     <td>  Current Sense %SDFM
     <td>  \ref SDFM_setCompFilterThresholds
-    <td>  Updated parameter type 
+    <td>  Updated parameter type
     <td>
 </tr>
 <tr>
     <td>  Current Sense %SDFM
     <td>  \ref SDFM_selectClockSource
-    <td>  Updated parameter name and type 
+    <td>  Updated parameter name and type
     <td>
 </tr>
 <tr>
     <td>  Position Sense EnDat
     <td>  Structure `cmd_supplement`
     <td>  Added a variable: cmp0
-    <td>  
+    <td>
 </tr>
 <tr>
     <td>  Position Sense EnDat
     <td>  Structure `endat_priv`
     <td>  Added a variable: cmp0
-    <td>  
+    <td>
 </tr>
 <tr>
     <td>  Position Sense Tamagawa
     <td>  Structure `tamagawa_priv`
     <td>  Added a variable: cmp0
-    <td>  
+    <td>
 </tr>
 <tr>
     <td> PRUICSS PWM
     <td> \ref PRUICSS_PWM_iepConfig
     <td> \ref PRUICSS_PWM_configureIepCompareEnable API call is removed from the \ref PRUICSS_PWM_iepConfig function
-    <td> \ref PRUICSS_PWM_configureIepCompareEnable needs to be called separately to enable IEP cmp events  
+    <td> \ref PRUICSS_PWM_configureIepCompareEnable needs to be called separately to enable IEP cmp events
 </tr>
 </table>

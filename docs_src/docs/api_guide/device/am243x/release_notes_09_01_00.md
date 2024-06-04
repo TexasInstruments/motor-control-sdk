@@ -424,14 +424,11 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
 </tr>
 </table>
 
-## Upgrade and Compatibility Information {#UPGRADE_AND_COMPATIBILITY_INFORMATION_9_1_0}
+## Upgrade and Compatibility Information for Motor Control SDK 09.01.00 {#UPGRADE_AND_COMPATIBILITY_INFORMATION_9_1_0}
 
-<!-- \attention When migrating from MCU+ SDK, see \ref MIGRATION_GUIDES for more details -->
+\attention When migrating from MCU+ SDK, see \ref MIGRATION_GUIDES for more details.
 
-This section lists changes which could affect user applications developed using older SDK versions.
-Read this carefully to see if you need to do any changes in your existing application when migrating to this SDK version relative to
-previous SDK version. Also refer to older SDK version release notes to see changes in
-earlier SDKs.
+This section lists changes which could affect user applications developed using Motor Control SDK 09.00.00. Read this carefully to see if you need to do any changes in your existing application when migrating to this SDK version relative to previous SDK version. Also refer to older SDK version release notes to see changes in earlier SDKs.
 
 <!-- ### Compiler Options
 
