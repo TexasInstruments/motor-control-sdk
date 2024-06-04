@@ -201,7 +201,7 @@ void App_pruIcssPwmDeadbandMain(void *args)
 
     gPruIcssPwmHandle = PRUICSS_PWM_open(CONFIG_PRUICSS_PWM0, gpruIcssHandle);
     DebugP_assert(gPruIcssPwmHandle != NULL);
-    
+
     #if defined(am243x_evm) || defined(am64x_evm)
     /* Configure the IO Expander to connect the PRU IOs to HSE */
     i2c_io_expander(NULL);
@@ -262,22 +262,16 @@ void App_pruIcssPwmDeadbandMain(void *args)
     status = PRUICSS_PWM_iepConfig(gPruIcssPwmHandle);
     DebugP_assert(SystemP_SUCCESS == status);
 
-    /*Enable IEP CMP0/CMP1 compare events*/
-    if((gPruIcssPwmHandle != NULL) && (gPruIcssPwmHandle->iepAttrs != NULL) && ((gPruIcssPwmHandle->iepAttrs)->enableIep0) == 1U)
+    /*Enable IEP0 CMP0/CMP1 compare events*/
+    status = PRUICSS_PWM_configureIepCompareEnable(gPruIcssPwmHandle, PRUICSS_IEP_INST0,  0xFFFF);
+    DebugP_assert(SystemP_SUCCESS == status);
+
+    if(gPruIcssPwmHandle != NULL && gPruIcssPwmHandle->iepAttrs != NULL && (gPruIcssPwmHandle->iepAttrs)->enableIep1SlaveMode == 1U)
     {
-        /*Enable IEP0 CMP0/CMP1 compare events*/
-        status = PRUICSS_PWM_configureIepCompareEnable(gPruIcssPwmHandle, PRUICSS_IEP_INST0,  0xFFFF);
+        /*Enable IEP1 CMP0/CMP1 compare events*/
+        status = PRUICSS_PWM_configureIepCompareEnable(gPruIcssPwmHandle, PRUICSS_IEP_INST1,  0xFFFF);
         DebugP_assert(SystemP_SUCCESS == status);
-
-        if((gPruIcssPwmHandle->iepAttrs)->enableIep1SlaveMode == 1U)
-        {
-            /*Enable IEP1 CMP0/CMP1 compare events*/
-            status = PRUICSS_PWM_configureIepCompareEnable(gPruIcssPwmHandle, PRUICSS_IEP_INST1,  0xFFFF);
-            DebugP_assert(SystemP_SUCCESS == status);
-        }
-
     }
-    
 
     /* This IEP1 CMP0 ISR controls the duty cycle and dead band at fall edge of PWM signals*/
     status = App_pruicssIep1Compare0IrqSet(gPruIcssPwmHandle);
@@ -293,9 +287,12 @@ void App_pruIcssPwmDeadbandMain(void *args)
     /*Configure SOC EPWM */
     App_epwmConfig(gEpwmBaseAddr, EPWM_OUTPUT_CH_A, CONFIG_EPWM0_FCLK);
 
-    /*Enable IEP counter*/
-    status = PRUICSS_controlIepCounter(gPruIcssPwmHandle->pruIcssHandle, PRUICSS_IEP_INST0, 1);
-    DebugP_assert(SystemP_SUCCESS == status);
+    if(gPruIcssPwmHandle != NULL && gPruIcssPwmHandle->pruIcssHandle != NULL)
+    {
+        /*Enable IEP counter*/
+        status = PRUICSS_controlIepCounter(gPruIcssPwmHandle->pruIcssHandle, PRUICSS_IEP_INST0, 1);
+        DebugP_assert(SystemP_SUCCESS == status);
+    }
 
     while(1)
     {
