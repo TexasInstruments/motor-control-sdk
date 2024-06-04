@@ -453,6 +453,8 @@ uint8_t HDSL_get_rssi(HDSL_Handle hdslHandle);
 
 /**
  *  \brief  Trigger a short message write operation using parameters channel
+ *          After the required registers are written for write operation, the firmware takes < 250 us
+ *          for completing short message write operation, i.e. FRES bit will be unset for < 250 us.
  *
  *  \param[in]  hdslHandle
  *  \param[in]  addr    Address
@@ -465,7 +467,9 @@ uint8_t HDSL_get_rssi(HDSL_Handle hdslHandle);
 int32_t HDSL_write_pc_short_msg(HDSL_Handle hdslHandle, uint8_t addr, uint8_t data, uint64_t timeout);
 
 /**
- *  \brief      Trigger a short message read operation using parameters channel
+ *  \brief      Trigger a short message read operation using parameters channel.
+ *              After the required registers are written for read operation, the firmware takes < 250 us
+ *              for completing short message read operation, i.e. FRES bit will be unset for < 250 us.
  *
  *  \param[in]  hdslHandle
  *  \param[in]  addr    Address
@@ -480,6 +484,8 @@ int32_t HDSL_read_pc_short_msg(HDSL_Handle hdslHandle, uint8_t addr, uint8_t *da
 /**
  *  \brief  Trigger a long message write operation using parameters channel.
  *          Call \ref HDSL_write_pc_buffer before this to write the data to be sent using long message.
+ *          After the required registers are written for write operation, the firmware takes < 3.5 ms
+ *          for completing short message write operation, i.e. FREL bit will be unset for < 3.5 ms.
  *
  *  \param[in]  hdslHandle
  *  \param[in]  addr            10 bit address for long message
@@ -497,6 +503,8 @@ int32_t HDSL_write_pc_long_msg(HDSL_Handle hdslHandle, uint16_t addr, uint8_t of
 /**
  *  \brief      Trigger a long message read operation using parameters channel
  *              If this API returns SystemP_SUCCESS, call \ref HDSL_read_pc_buffer after this to read the data received using long message.
+ *              After the required registers are written for read operation, the firmware takes < 3.5 ms
+ *              for completing short message read operation, i.e. FREL bit will be unset for < 3.5 ms.
  *  \param[in]  hdslHandle
  *  \param[in]  addr            10 bit address for long message
  *  \param[in]  offsetEnable    Addressing with offset enable/disable from \ref HDSL_LongMessageAddrOffsetModes
