@@ -14,8 +14,8 @@
         name = "tamagawa_diagnostic_single_channel_am64x-evm_r5fss0-0_freertos_ti-arm-clang"
         products="sysconfig;com.ti.MOTOR_CONTROL_SDK_AMXXX;"
         configurations="
-                Release,
-                Debug,
+            Release,
+            Debug,
         "
         connection="TIXDS110_Connection.xml"
         toolChain="TICLANG"
