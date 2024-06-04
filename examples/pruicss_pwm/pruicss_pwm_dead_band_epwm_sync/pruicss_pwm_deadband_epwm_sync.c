@@ -263,7 +263,7 @@ void App_pruIcssPwmDeadbandMain(void *args)
     DebugP_assert(SystemP_SUCCESS == status);
 
     /*Enable IEP CMP0/CMP1 compare events*/
-    if(((gPruIcssPwmHandle->iepAttrs)->enableIep0) == 1U)
+    if((gPruIcssPwmHandle != NULL) && (gPruIcssPwmHandle->iepAttrs != NULL) && ((gPruIcssPwmHandle->iepAttrs)->enableIep0) == 1U)
     {
         /*Enable IEP0 CMP0/CMP1 compare events*/
         status = PRUICSS_PWM_configureIepCompareEnable(gPruIcssPwmHandle, PRUICSS_IEP_INST0,  0xFFFF);

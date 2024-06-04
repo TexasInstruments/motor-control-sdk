@@ -347,7 +347,7 @@ static void bissc_print_res(struct bissc_priv *priv)
 
 static int bissc_get_command()
 {
-    uint32_t cmd;
+    int32_t cmd;
     DebugP_scanf("%d\n", &cmd);
     /* Check to make sure that the command issued is correct */
     if( cmd < BISSC_CMD_EXIT_APP || cmd > BISSC_ENABLE_SAFETY )

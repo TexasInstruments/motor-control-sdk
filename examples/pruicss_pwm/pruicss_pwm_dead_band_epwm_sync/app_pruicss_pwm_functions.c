@@ -229,15 +229,14 @@ int32_t App_epwm0Sync0IrqSet(PRUICSS_PWM_Handle handle, uint32_t epwmBaseAddr)
     HwiP_Params     hwiPrms;
     HwiP_Object     compHwiObject;
 
-    AppEpwmSync0IrqArgs_t *AppEpwmSync0IrqArgs;
-
-    AppEpwmSync0IrqArgs = (AppEpwmSync0IrqArgs_t*)malloc(sizeof(AppEpwmSync0IrqArgs_t));
+    static AppEpwmSync0IrqArgs_t AppEpwmSync0IrqArgs;
 
     int32_t retVal = SystemP_FAILURE;
+
     if((handle!=NULL))
     {
-        AppEpwmSync0IrqArgs->EpwmBaseAddr = epwmBaseAddr;
-        AppEpwmSync0IrqArgs->handle = handle;
+        AppEpwmSync0IrqArgs.EpwmBaseAddr = epwmBaseAddr;
+        AppEpwmSync0IrqArgs.handle = handle;
     }
     else
     {
@@ -247,7 +246,7 @@ int32_t App_epwm0Sync0IrqSet(PRUICSS_PWM_Handle handle, uint32_t epwmBaseAddr)
     HwiP_Params_init(&hwiPrms);
     hwiPrms.intNum   = CONFIG_EPWM0_INTR;
     hwiPrms.callback = &App_epwmSync0Irq;
-    hwiPrms.args     = (void *)(AppEpwmSync0IrqArgs);
+    hwiPrms.args     = (void *)(&AppEpwmSync0IrqArgs);
     hwiPrms.isPulse     = CONFIG_EPWM0_INTR_IS_PULSE;
     retVal = HwiP_construct(&compHwiObject, &hwiPrms);
     return retVal; 
