@@ -59,12 +59,52 @@ Tamagawa     | R5F            | YES               | FreeRTOS          | Absolute
     <th> Key features not tested
 </tr>
 <tr>
-    <td>
-    <td>
-    <td>
-    <td>
-    <td>
-    <td>
+    <td> Control
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Field Weakening Control, Maximum Torque Per Ampere, Strator voltage frequency generator support
+    <td> -
+</tr>
+<tr>
+    <td> Digital Control Library (DCL)
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Linear PI, Linear PID, Linear PI with double integrator (PI2), Direct Form 1 (first order), Direct Form 1 (second order), Direct Form 1 (third order), Direct Form 2 (second order), Direct Form 2 (third order), Non-linear PID controller
+    <td> -
+</tr>
+<tr>
+    <td> Observer
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Sensored eQEP-based encoder, Hall sensor, Sensorless Enhanced Sliding Mode Observer, both speed measurement for sensored (speedcalc) and sensorless (speedfr)
+    <td> -
+</tr>
+<tr>
+    <td> SFRA
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Software Frequency Response Analyzer support
+    <td> -
+</tr>
+<tr>
+    <td> Transforms
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Clarke transformation, Park transformation, Inverse Park transformation, Space Vector Generation (SVGEN), Common-mode subtraction approach, DPWM Generation (Part of SVGEN), Maximum Modulation, Minimum Modulation, SVGEN current reconstruction for single-shunt (SVGENCURRENT), Phase voltage reconstruction in overmodulation (VOLTS_RECON)
+    <td> -
+</tr>
+<tr>
+    <td> Utilities
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Angle Compensation Generator, Step Response, Datalog, Trapezoid generator
+    <td> -
 </tr>
 </table>
 
