@@ -5,7 +5,7 @@ Nikon diagnostic application does the following:
 
 - Configures pinmux, GPIO, UART, ICSS clock to 200MHz,
 - Initializes ICSS0-PRU1,
-- Initializes defalt parameters, loads the PRU firmware & executes it.
+- Initializes default parameters, loads the PRU firmware & executes it.
 
 This application is controlled with a terminal interface using a serial over USB connection between the PC host and the EVM.
 Please connect a USB cable between the PC and the EVM/LP.
@@ -19,7 +19,7 @@ The Nikon receiver firmware running on ICSS0-PRU1 provides a defined interface. 
 
 \image html nikon_syscfg_ch_sel.png      "Channel Selection In Sysconfig"
 
-\image html Endat_channel_selection_configuration.png     "Nikon configuration seletion between Single/Multi channel "
+\image html Endat_channel_selection_configuration.png     "Nikon configuration selection between Single/Multi channel "
 
 
 ## Important files and directory structure
@@ -65,7 +65,7 @@ The Nikon receiver firmware running on ICSS0-PRU1 provides a defined interface. 
 
 ## Hardware Prerequisites
 
-- Nikon Encoders
+- Nikon A-Format encoders
 - <a href="https://www.ti.com/tool/LP-AM243" target="_blank"> AM243x-LP Board </a>
 - <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
 
@@ -167,7 +167,7 @@ Shown below is a sample output when the application is run:
 <table>
     <tr>
         <th>CMD_ID
-        <th>CMD 
+        <th>CMD
         <th>Description
         <th>Pass/fail Criteria
     </tr>
@@ -186,25 +186,25 @@ Shown below is a sample output when the application is run:
         <td>In this command we will receive:
         Absolute lower 24 bit data for Single encoder with status information.
 		</td>
-        <td>CRC success with Rotor angle, num rotations and CRC values printed in the terminal.	
+        <td>CRC success with Rotor angle, num rotations and CRC values printed in the terminal.
         </td>
     </tr>
     <tr>
         <td>2</td>
         <td>ABS upper 24bit data request</td>
         <td>In this command we will receive:
-		Absolute upper 24 bit data for Single encoder with status information. 
+		Absolute upper 24 bit data for Single encoder with status information.
 		</td>
-        <td>CRC success with Rotor angle, num rotations and CRC values printed in the terminal.	
+        <td>CRC success with Rotor angle, num rotations and CRC values printed in the terminal.
         </td>
     </tr>
     <tr>
         <td>3</td>
         <td>Encoder status Request</td>
         <td>In this command we will receive:
-		Encoder will send status information, Alarm bits and additional information. 
+		Encoder will send status information, Alarm bits and additional information.
 		</td>
-        <td>Alarm bits, Encoder status bits printed in the terminal along with CRC success.	
+        <td>Alarm bits, Encoder status bits printed in the terminal along with CRC success.
         </td>
     </tr>
     <tr>
@@ -222,7 +222,7 @@ Shown below is a sample output when the application is run:
         <td>In this command we will receive:
         Absolute lower 24 bit data for Multiple encoders connected in bus with status information.
 		</td>
-        <td>CRC success with Rotor angle, num rotations and CRC values printed in the terminal.	
+        <td>CRC success with Rotor angle, num rotations and CRC values printed in the terminal.
         </td>
     </tr>
     <tr>
@@ -231,115 +231,115 @@ Shown below is a sample output when the application is run:
         <td>In this command we will receive:
 		Absolute upper 24 bit data for Multiple encoders connected in bus with status information.
 		</td>
-        <td>CRC success with Rotor angle, num rotations and CRC values printed in the terminal.	
+        <td>CRC success with Rotor angle, num rotations and CRC values printed in the terminal.
         </td>
     </tr>
     <tr>
         <td>7</td>
         <td>Encoder status Request(MT)</td>
         <td>In this command we will receive:
-		Encoder will send status information, Alarm bits and additional information for all encoders connected in bus. 
+		Encoder will send status information, Alarm bits and additional information for all encoders connected in bus.
 		</td>
-        <td>Alarm bits, Encoder status bits printed in the terminal along with CRC success.	
+        <td>Alarm bits, Encoder status bits printed in the terminal along with CRC success.
         </td>
     </tr>
     <tr>
         <td>8</td>
         <td>Status flag clear request</td>
         <td>In this command we will receive:
-		Encoder will send status information, Alarm bits and additional information after clearing the status flags. 
+		Encoder will send status information, Alarm bits and additional information after clearing the status flags.
 		</td>
-        <td>Alarm bits, Encoder status bits printed in the terminal along with CRC success.	
+        <td>Alarm bits, Encoder status bits printed in the terminal along with CRC success.
         </td>
     </tr>
     <tr>
         <td>9</td>
         <td>Multiple turn data clear request</td>
         <td>In this command we will receive:
-		Encoder will send status information, Alarm bits and additional information after clearing the Multiple turn data bits. 
+		Encoder will send status information, Alarm bits and additional information after clearing the Multiple turn data bits.
 		</td>
-        <td>Alarm bits, Encoder status bits printed in the terminal along with CRC success.	
+        <td>Alarm bits, Encoder status bits printed in the terminal along with CRC success.
         </td>
     </tr>
     <tr>
         <td>10</td>
         <td>Status+ Multiple turn data clear request</td>
         <td>In this command we will receive:
-		Encoder will send status information, Alarm bits and additional information after clearing the Status and Multiple turn data bits. 
+		Encoder will send status information, Alarm bits and additional information after clearing the Status and Multiple turn data bits.
 		</td>
-        <td>Alarm bits, Encoder status bits printed in the terminal along with CRC success.	
+        <td>Alarm bits, Encoder status bits printed in the terminal along with CRC success.
         </td>
     </tr>
     <tr>
         <td>11</td>
         <td>Encoder address setting I (one-to-one connection)</td>
         <td>In this command we will receive:
-		Encoder address setting will be performed and status will be returned with ALM bits. 
+		Encoder address setting will be performed and status will be returned with ALM bits.
 		</td>
-        <td>Alarm bits, Encoder status bits printed in the terminal along with CRC success.	
+        <td>Alarm bits, Encoder status bits printed in the terminal along with CRC success.
         </td>
     </tr>
     <tr>
         <td>12</td>
         <td>Single turn data zero preset</td>
         <td>In this command we will receive:
-		Encoder will set single turn data bits to zero and returns status bits along with ALM bits. 
+		Encoder will set single turn data bits to zero and returns status bits along with ALM bits.
 		</td>
-        <td>Alarm bits, Encoder status bits printed in the terminal along with CRC success.	
+        <td>Alarm bits, Encoder status bits printed in the terminal along with CRC success.
         </td>
     </tr>
     <tr>
         <td>13</td>
         <td>EEPROM read request</td>
         <td>In this command we will receive:
-		Encoder will send EEPROM register data along with the requested address information. 
+		Encoder will send EEPROM register data along with the requested address information.
 		</td>
-        <td>Received data CRC should match with calculated CRC and CRC success printed in the terminal.	
+        <td>Received data CRC should match with calculated CRC and CRC success printed in the terminal.
         </td>
     </tr>
     <tr>
         <td>14</td>
         <td>EEPROM write request</td>
         <td>In this command we will receive:
-		Encoder will perform EEPROM register write the data specified by user in the specified address. 
+		Encoder will perform EEPROM register write the data specified by user in the specified address.
 		</td>
-        <td>Received data CRC should match with calculated CRC and CRC success printed in the terminal.	
+        <td>Received data CRC should match with calculated CRC and CRC success printed in the terminal.
         </td>
     </tr>
     <tr>
         <td>15</td>
         <td>Temperature data request</td>
         <td>In this command we will receive:
-		Encoder will send temperature information along with status. 
+		Encoder will send temperature information along with status.
 		</td>
-        <td>Encoder Temperature and status bits printed in the terminal along with CRC success.	
+        <td>Encoder Temperature and status bits printed in the terminal along with CRC success.
         </td>
     </tr>
     <tr>
         <td>16</td>
         <td>Identification code read I</td>
         <td>In this command we will receive:
-		Encoder will send identification code. 
+		Encoder will send identification code.
 		</td>
-        <td>Encoder identification code will be printed in the terminal along with CRC success.	
+        <td>Encoder identification code will be printed in the terminal along with CRC success.
         </td>
     </tr>
     <tr>
         <td>17</td>
         <td>Identification code read II(one-to-one connection)</td>
         <td>In this command we will receive:
-		Encoder will send identification code irrespective of encoder address. 
+		Encoder will send identification code irrespective of encoder address.
 		</td>
-        <td>Encoder identification code will be printed in the terminal along with CRC success.	
+        <td>Encoder identification code will be printed in the terminal along with CRC success.
         </td>
     </tr>
     <tr>
         <td>18</td>
         <td>Identification code write I</td>
         <td>In this command we will receive:
-		Encoder will update identification code provide by user in its local register. 
+		Encoder will update identification code provide by user in its local register.
 		</td>
-        <td>Encoder identification code will be printed in the terminal along with CRC success.	
+        <td>Encoder identification code will be printed in the terminal along with CRC success.
         </td>
     </tr>
     <tr>
@@ -348,7 +348,7 @@ Shown below is a sample output when the application is run:
         <td>In this command we will receive:
 		Encoder will update identification code provide by user in its local register irrespective of encoder address.
 		</td>
-        <td>Encoder identification code will be printed in the terminal along with CRC success.	
+        <td>Encoder identification code will be printed in the terminal along with CRC success.
         </td>
     </tr>
     <tr>
@@ -357,7 +357,7 @@ Shown below is a sample output when the application is run:
         <td>In this command we will receive:
 		Encoder will update its own address field based on identification code provide by user.
 		</td>
-        <td>Encoder identification code and updated address will be printed in the terminal along with CRC success.	
+        <td>Encoder identification code and updated address will be printed in the terminal along with CRC success.
         </td>
     </tr>
 	<tr>
@@ -366,7 +366,7 @@ Shown below is a sample output when the application is run:
         <td>In this command we will receive:
         Absolute lower 17 bit data for Single encoder with status information.
 		</td>
-        <td>CRC success with Rotor angle, num rotations and CRC values printed in the terminal.	
+        <td>CRC success with Rotor angle, num rotations and CRC values printed in the terminal.
         </td>
     </tr>
 	<tr>
@@ -375,7 +375,7 @@ Shown below is a sample output when the application is run:
         <td>In this command we will receive:
         Absolute lower 17 bit data for encoders connected in bus with status information.
 		</td>
-        <td>CRC success with Rotor angle, num rotations and CRC values printed in the terminal.	
+        <td>CRC success with Rotor angle, num rotations and CRC values printed in the terminal.
         </td>
     </tr>
 	<tr>
@@ -384,7 +384,7 @@ Shown below is a sample output when the application is run:
         <td>In this command we will receive:
         Absolute lower 24 bit data for Single encoder with status and alarm bits information.
 		</td>
-        <td>CRC success with Rotor angle, num rotations, alm and CRC values printed in the terminal.	
+        <td>CRC success with Rotor angle, num rotations, alm and CRC values printed in the terminal.
         </td>
     </tr>
 	<tr>
@@ -393,7 +393,7 @@ Shown below is a sample output when the application is run:
         <td>In this command we will receive:
         Absolute lower 24 bit data for encoders connected in bus with status and alarm bits information.
 		</td>
-        <td>CRC success with Rotor angle, num rotations, alm and CRC values printed in the terminal.	
+        <td>CRC success with Rotor angle, num rotations, alm and CRC values printed in the terminal.
         </td>
     </tr>
 	<tr>
@@ -402,7 +402,7 @@ Shown below is a sample output when the application is run:
         <td>In this command we will receive:
         Absolute lower 24 bit data for Single encoder with Temperature information.
 		</td>
-        <td>CRC success with Rotor angle, num rotations, Temperature and CRC values printed in the terminal.	
+        <td>CRC success with Rotor angle, num rotations, Temperature and CRC values printed in the terminal.
         </td>
     </tr>
 	<tr>
@@ -411,7 +411,7 @@ Shown below is a sample output when the application is run:
         <td>In this command we will receive:
         Absolute lower 24 bit data for encoders connected in bus with Temperature information.
 		</td>
-        <td>CRC success with Rotor angle, num rotations, Temperature and CRC values printed in the terminal.	
+        <td>CRC success with Rotor angle, num rotations, Temperature and CRC values printed in the terminal.
         </td>
     </tr>
 	<tr>
@@ -420,7 +420,7 @@ Shown below is a sample output when the application is run:
         <td>In this command we will receive:
         Absolute lower 40 bit data for encoders connected in point to point / bus.
 		</td>
-        <td>CRC success with Rotor angle, num rotations and CRC stats printed in the terminal.	
+        <td>CRC success with Rotor angle, num rotations and CRC stats printed in the terminal.
         </td>
     </tr>
 </table>

@@ -116,7 +116,7 @@ EnDat driver provides API to achieve this.
 ###### Initialization for "Single Channel" and "Multi Channel with Encoders of Different Make" configuration
 \image html endat_load_share_mode_initialization.png "Initilization for Load share mode"
 
-Before executing the firmware, the ARM (R5) core needs to enable EnDat mode in PRU-ICSSG first, then configure the clock to 200KHz, with oversample ratio of 8 (hence receive clock would be 200 * 8 KHz).
+Before executing the firmware, the ARM (R5) core needs to enable 3 channel peripheral interface in PRU-ICSSG first, then configure the clock to 200KHz, with oversample ratio of 8 (hence receive clock would be 200 * 8 KHz).
 The entire EnDat configuration MMRs are cleared. Through the defined interface (PRU RAM location), user requested channel is determined in Single pru configuration.
 Then power-on-init as per specification is implemented, after which encoder is reset by sending reset command.
 Firmware setups the command and it’s attribute for all the commands that are sent during initialization. Alarms, errors and warning are cleared.
@@ -344,7 +344,7 @@ EnDat Receiver and the encoder is connected using the RS-485 transceiver. Data i
 <tr>
     <td>GPIO Pin(GPIO1_78)
     <td>ENC1_EN
-    <td>Enbale endat mode in Axis 1 of BP (C16 GPIO pin)
+    <td>Enable 3 channel peripheral interface in Axis 1 of BP (C16 GPIO pin)
 </tr>
 </table>
 \endcond
