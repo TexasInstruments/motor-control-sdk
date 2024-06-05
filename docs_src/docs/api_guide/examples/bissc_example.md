@@ -102,12 +102,12 @@ The BISS-C receiver firmware running on ICSS0-PRU1 provides a defined interface.
 </tr>
 <tr>
     <td>J18/J19</td>
-    <td>J18 OFF & J19 ON</td>
+    <td>J19 installed: sets VSENSOR1 to 5.0V</td>
     <td>Axis 1: Encoder/Resolver Voltage Select</td>
 </tr>
 <tr>
     <td>J20/J21</td>
-    <td>J20 ON & J21 OFF</td>
+    <td>J21 installed: sets VSENSOR2 to 5.0V</td>
     <td>Axis 2: Encoder/Resolver Voltage Select</td>
 </tr>
 <tr>

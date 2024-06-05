@@ -150,12 +150,12 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 </tr>
 <tr>
     <td>J18/J19</td>
-    <td>J18 OFF & J19 ON</td>
+    <td>J18 installed: sets VSENSOR1 to 12 V</td>
     <td>Axis 1: Encoder/Resolver Voltage Select</td>
 </tr>
 <tr>
     <td>J20/J21</td>
-    <td>J20 ON & J21 OFF</td>
+    <td>J20 installed: sets VSENSOR2 to 12V</td>
     <td>Axis 2: Encoder/Resolver Voltage Select</td>
 </tr>
 <tr>
