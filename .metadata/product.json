@@ -1,7 +1,7 @@
 {
     "name": "MOTOR_CONTROL_SDK",
     "displayName": "MOTOR CONTROL SDK",
-    "version": "09.01.00",
+    "version": "09.02.00",
     "documentationPath": "../docs",
     "includePaths": [
         "../source",
