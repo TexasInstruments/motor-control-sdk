@@ -438,31 +438,25 @@ void sync_calculation(HDSL_Handle hdslHandle)
     /*measure of SYNC period starts*/
 
     ES=HDSL_get_sync_ctrl(hdslHandle);
-    volatile uint32_t* carp6_rise_addr =   (uint32_t*)(CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE + CSL_ICSS_G_PR1_IEP1_SLV_REGS_BASE + CSL_ICSS_G_PR1_IEP0_SLV_CAPR6_REG0);
-    volatile uint32_t* carp6_fall_addr =   (uint32_t*)(CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE + CSL_ICSS_G_PR1_IEP1_SLV_REGS_BASE + CSL_ICSS_G_PR1_IEP0_SLV_CAPF6_REG0);
-    cap6_rise0 = *(carp6_rise_addr);
-    cap6_fall0 = *(carp6_fall_addr);
+    uint32_t CAPR6_REG0 = CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE + CSL_ICSS_G_PR1_IEP1_SLV_REGS_BASE + CSL_ICSS_G_PR1_IEP0_SLV_CAPR6_REG0;
+    uint32_t CAPF6_REG0 = CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE + CSL_ICSS_G_PR1_IEP1_SLV_REGS_BASE + CSL_ICSS_G_PR1_IEP0_SLV_CAPF6_REG0;
+    cap6_rise0 = HW_RD_REG32(CAPR6_REG0);
+    cap6_fall0 = HW_RD_REG32(CAPF6_REG0);
     cap6_rise1 = cap6_rise0;
     cap6_fall1 = cap6_fall0;
     counter = 0;
-
     for(index = 0 ; index <2 ; index++)
     {
         cap6_rise0 = cap6_rise1;
         cap6_fall0 = cap6_fall1;
-        while((cap6_fall0 == cap6_fall1) || (cap6_rise0 == cap6_rise1))
+        while(((cap6_fall0 == cap6_fall1) || (cap6_rise0 == cap6_rise1)) && (counter <= MAX_WAIT))
         {
-            cap6_rise1 = *(carp6_rise_addr);
-            cap6_fall1 = *(carp6_fall_addr);
+            cap6_rise1 = HW_RD_REG32(CAPR6_REG0);
+            cap6_fall1 = HW_RD_REG32(CAPF6_REG0);
             counter++;
-            if(counter > MAX_WAIT)
-            {
-                DebugP_log("\r\n SYNC PULSE NOT FOUND, WAITING FOR SYNC PULSE");
-                counter = 0;
-            }
         }
     }
-
+    DebugP_assert(counter <= MAX_WAIT);
     period = cap6_rise1 - cap6_rise0;
     /*measure of SYNC period ends*/
     minm_cycles = minm_bits * ES * cycle_per_bit;
