@@ -44,11 +44,6 @@ extern "C" {
 #endif
 
 /**
-* \defgroup RTLIBS_API APIs for Real Time Library
-*/
-
-
-/**
  *  \defgroup SFRA_API_MODULE APIs for Software Frequency Response Analyzer Library
  *  \ingroup  RTLIBS_API
  *  

@@ -40,6 +40,7 @@ extern "C"
 
 /**
  *  \defgroup OBSERVERS_MODULE APIs for Observers and Encoders
+ *  \ingroup  RTLIBS_API
  *  \defgroup ENCODER_API_MODULE APIs for encoder object
  *  \ingroup  OBSERVERS_MODULE
  *

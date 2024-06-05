@@ -56,10 +56,6 @@ typedef double float64_t;
 #endif //IEEE754_TYPES
 
 /**
-* \defgroup RTLIBS_API APIs for Real Time Library
-*/
-
-/**
  *  \defgroup DATALOG_API_MODULE APIs for Data Log Library
  *  \ingroup  RTLIBS_API
  *  

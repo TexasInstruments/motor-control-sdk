@@ -37,6 +37,12 @@
 extern "C" {
 #endif
 
+ /**
+ * \defgroup RTLIBS_API APIs for Real Time Libraries
+ *
+ * This module contains APIs for real time libraries in this SDK.
+ */
+
 /**
  *  \defgroup DCL_API_MODULE APIs for Digital Control Library
  *  \ingroup  RTLIBS_API

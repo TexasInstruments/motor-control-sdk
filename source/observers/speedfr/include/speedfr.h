@@ -39,7 +39,7 @@ extern "C"
 #endif
 
 /**
- *  \defgroup SPEEDFR_API_MODULE APIs
+ *  \defgroup SPEEDFR_API_MODULE APIs for speed frequency function
  *  \ingroup  OBSERVERS_MODULE
  *
  *  Here is the list of speed frequency function APIs sensored speed calculation

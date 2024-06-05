@@ -203,7 +203,7 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> PINDSW-6630
     <td> HDSL: POS bit is not set during initial fast position alignment
     <td> Position Sense HDSL
-    <td> 9.0
+    <td> 9.0 onwards
     <td> -
 </tr>
 <tr>
@@ -217,28 +217,28 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> PINDSW-7480
     <td> HDSL: Continuous short/long message requests cause PRU to get stuck
     <td> Position Sense HDSL
-    <td> 9.0
+    <td> 9.0 onwards
     <td> -
 </tr>
 <tr>
     <td> PINDSW-7498
     <td> ROV is not working for the Industrial Communication SDK Examples which are part of Motor Control SDK
     <td> Examples
-    <td> 9.1
+    <td> 9.1 onwards
     <td> -
 </tr>
 <tr>
     <td> PINDSW-7560
     <td> PRU firmware build in Motor Control SDK is failing in Linux environment
     <td> Examples
-    <td> 9.1
+    <td> 9.1 onwards
     <td> -
 </tr>
 <tr>
     <td> PINDSW-7567
     <td> PRUICSS PWM : Mapping of pwm signals PWMm_0_NEG to PWMm_A1, PWMm_1_POS to PWMm_A2, PWMm_1_NEG to PWMm_B0, PWMm_2_POS to PWMm_B1 is not correct
     <td> PRUICSS PWM
-    <td> 9.1
+    <td> 9.1 onwards
     <td> -
 </tr>
 <tr>
@@ -252,35 +252,35 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> PINDSW-7642
     <td> Docs: The tool versions of older releases in Release Notes are not correct
     <td> Documentation
-    <td> 9.1
+    <td> 9.1 onwards
     <td> -
 </tr>
 <tr>
     <td> PINDSW-7696
     <td> Unable to use SBL OSPI boot mode for all the demo applications of Motor Control SDK
     <td> Examples
-    <td> 9.1
+    <td> 9.1 onwards
     <td> -
 </tr>
 <tr>
     <td> PINDSW-7756
     <td> Tamagawa: After stopping periodic trigger mode, firmware gets stuck
     <td> Position Sense Tamagawa
-    <td> 9.1
+    <td> 9.1 onwards
     <td> -
 </tr>
 <tr>
     <td> PINDSW-7758
     <td> BiSS-C: Firmware does not work when changing ICSSG Core Clock Frequency to 300MHz
     <td> Position Sense BiSS-C
-    <td> 9.1
+    <td> 9.1 onwards
     <td> Clock dividers for Three Channel Peripheral Interface were not being set correctly for 300MHz
 </tr>
 <tr>
     <td> PINDSW-7940
     <td> Transforms: UART Log does not work in transforms_test example
     <td> Real Time Libraries
-    <td> 9.1
+    <td> 9.1 onwards
     <td> -
 </tr>
 </table>
@@ -340,7 +340,7 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> PINDSW-7474
     <td> HDSL : 100 meter cable length does not work for sync mode in 300MHz PRU clock
     <td> Position Sense HDSL
-    <td> 9.0
+    <td> 9.0 onwards
     <td> -
 </tr>
 </table>

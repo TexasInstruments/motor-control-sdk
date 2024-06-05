@@ -40,7 +40,7 @@ extern "C"
 
 /**
  *  \defgroup VOLTRECONS_API_MODULE APIs for Phase Voltage Calculation (VOLREC)
- *  \ingroup  MOTOR_CONTROL_API
+ *  \ingroup  TRANSFORMS_API_MODULE
  *
  *  Here is the list of VOLREC function APIs
  *  @{
