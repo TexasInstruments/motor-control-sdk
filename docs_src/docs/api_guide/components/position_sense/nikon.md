@@ -4,7 +4,7 @@
 
 ## Introduction
 
-Nikon A-Format absolute encoder receiver implementation on the TI PRU-ICSS interfaces with the Nikon encoders either via point-to-point communication or up to 3 Nikon encoders connected on a bus. Nikon encoders use a proprietary asynchronous serial bi-directional half-duplex communication protocol compliant with the RS-485. The encoder can generate either single- or multi-turn absolute position data and can operate at a baud rate of up to 16 MHz. Besides position data, the encoder can also send status and diagnostic information well. Reliability is ensured by using a 3-bit CRC by the receiver and an 8-bit CRC by the encoder. Another interesting feature of the Nikon A-Format encoders is the optional battery backup circuit, which can be used in case of power failure. Nikon encoders are widely used in industrial machinery, including industrial robots in automobile production lines and machine tools, and are highly valued as the next-generation standard for sensors that can detect the absolute rotational displacement values of robot arms.
+Nikon A-Format absolute encoder receiver implementation on the TI PRU-ICSS interfaces with the Nikon A-Format encoders either via point-to-point communication or up to 3 Nikon A-Format encoders connected on a bus. Nikon A-Format encoders use a proprietary asynchronous serial bi-directional half-duplex communication protocol compliant with the RS-485. The encoder can generate either single- or multi-turn absolute position data and can operate at a baud rate of up to 16 Mhz. Besides position data, the encoder can also send status and diagnostic information well. Reliability is ensured by using a 3-bit CRC by the receiver and an 8-bit CRC by the encoder. Another interesting feature of the Nikon-A encoders is the optional battery backup circuit, which can be used in case of power failure. Nikon A-Format encoders are widely used in industrial machinery, including industrial robots in automobile production lines and machine tools, and are highly valued as the next-generation standard for sensors that can detect the absolute rotational displacement values of robot arms.
 
 ## Features Supported
 
@@ -17,7 +17,7 @@ Nikon A-Format absolute encoder receiver implementation on the TI PRU-ICSS inter
    -  Support for encoder address setting.
    -  Support for individual and multiple transmission mode with encoder addresses ranging between ENC1-ENC8.
    -  Support for concurrent multi-channel support on a single PRU (up-to 3 channels with identical number of encoders of same frequency connected to all configured channels).
-   -  Support for multi-channel with different communication modes and different number of encoders connected accross channels under load share model (each of PRU, RTU-PRU, and TX-PRU from one PRU-ICSSG slice handles all 3 channels).
+   -  Support for multi-channel with different communication modes and different number of encoders connected across channels under load share model (each of PRU, RTU-PRU, and TX-PRU from one PRU-ICSSG slice handles all 3 channels).
 
 ## Features Not Supported
 

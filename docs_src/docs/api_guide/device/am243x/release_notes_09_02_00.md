@@ -22,7 +22,7 @@ Point-to-point and bus connection support for Nikon A-Format                    
 Multiple baud rate support : 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz                        | Position Sense Nikon A-Format
 Long cable (upto 100 meters)                                                                    | Position Sense Nikon A-Format
 Updated HDSL position realignment algorithm                                                     | Position Sense HDSL
-Support for safety CRC and sign-of-life counter                                                 | Position Sense BiSS-C
+Readiness for BiSS Safety profile by supporting 16 bit CRC and sign-of-life counter             | Position Sense BiSS-C
 Compare event based command trigger support                                                     | Position Sense BiSS-C
 SysConfig Enhancements                                                                          | Current Sense %SDFM
 SINC1 and SINC2 Filtering                                                                       | Current Sense %SDFM

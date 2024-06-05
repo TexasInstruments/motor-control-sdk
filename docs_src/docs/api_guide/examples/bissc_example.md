@@ -5,7 +5,7 @@ BISS-C diagnostic application does the following:
 
 - Configures pinmux, GPIO, UART, ICSS clock to 200MHz (default is 200 MHz, 300 MHz can also be used)
 - Initializes ICSS0-PRU1
-- Initializes defalt parameters, loads the PRU firmware & executes it.
+- Initializes default parameters, loads the PRU firmware & executes it.
 
 This application is controlled with a terminal interface using a serial over USB connection between the PC host and the EVM.
 Please connect a USB cable between the PC and the EVM/LP.
@@ -21,7 +21,7 @@ The BISS-C receiver firmware running on ICSS0-PRU1 provides a defined interface.
 
 \image html bissc_syscfg_ch_sel.png      "Channel Selection In Sysconfig"
 
-\image html Endat_channel_selection_configuration.png     "BiSS-C configuration seletion between Single/Multi channel "
+\image html Endat_channel_selection_configuration.png     "BiSS-C configuration selection between Single/Multi channel "
 
 
 ## Important files and directory structure
@@ -164,6 +164,10 @@ Shown below is a sample output when the application is run:
 \imageStyle{bissc_sample_output.png,width:60%}
 \image html bissc_sample_output.png "BISS-C Sample Output"
 
+Shown below is a sample output to enable safety and the safety encoder results:
+\imageStyle{bissc_safety_sample_output.png,width:60%}
+\image html bissc_safety_sample_output.png "BISS-C Sample Output when safety is enabled"
+
 ### Test Case Description
 
 <table>
@@ -192,13 +196,20 @@ Shown below is a sample output when the application is run:
 		</td>
         <td>CRC success with ABS position value, E, W and CRC values of position data along with the control communication result printed in the terminal.</td>
     </tr>
-        <tr>
+    <tr>
         <td>3</td>
         <td>Start periodic continuous mode</td>
         <td>In this command we will receive:
 		Absolute rotor position value, errors, and warnings periodically.
-        Rotate the rotor of motor and see the changes in Position value on UART. 
+        Rotate the rotor of motor and see the changes in Position value on UART.
 		</td>
         <td>0 CRC errors with ABS position value, E, W and CRC values printed in the terminal.</td>
+    </tr>
+    <tr>
+        <td>4</td>
+        <td>Enable safety mode</td>
+        <td>In this command we will enable Safety mode by using control communication:
+		</td>
+        <td>Safety should be enabled and CRC and Sign of Life counters will displayed from next position data request</td>
     </tr>
 </table>
