@@ -39,7 +39,8 @@ extern "C"
 #endif
 
 /**
- *  \defgroup CONTROLS_MODULE Modules for control algorithms
+ *  \defgroup CONTROLS_MODULE APIs for Control algorithms
+ *  \ingroup  RTLIBS_API
  *  \defgroup FWC_API_MODULE APIs for Field Weakening Control (FWC)
  *  \ingroup  CONTROLS_MODULE
  *

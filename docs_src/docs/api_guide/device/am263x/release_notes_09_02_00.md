@@ -122,28 +122,28 @@ Tamagawa     | R5F            | YES               | FreeRTOS          | Absolute
     <td> PINDSW-7498
     <td> ROV is not working for the Industrial Communication SDK Examples which are part of Motor Control SDK
     <td> Examples
-    <td> 9.1
+    <td> 9.1 onwards
     <td> -
 </tr>
 <tr>
     <td> PINDSW-7642
     <td> Docs: The tool versions of older releases in Release Notes are not correct
     <td> Documentation
-    <td> 9.1
+    <td> 9.1 onwards
     <td> -
 </tr>
 <tr>
     <td> PINDSW-7696
     <td> Unable to use SBL OSPI boot mode for all the demo applications of Motor Control SDK
     <td> Examples
-    <td> 9.1
+    <td> 9.1 onwards
     <td> -
 </tr>
 <tr>
     <td> PINDSW-7940
     <td> Transforms: UART Log does not work in transforms_test example
     <td> Real Time Libraries
-    <td> 9.1
+    <td> 9.1 onwards
     <td> -
 </tr>
 </table>

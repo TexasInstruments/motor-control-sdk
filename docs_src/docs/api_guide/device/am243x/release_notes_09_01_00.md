@@ -162,98 +162,98 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> PINDSW-6628
     <td> HDSL: Reset value of PRST bit is not correct
     <td> Position Sense HDSL
-    <td> 9.0
+    <td> 9.0 onwards
     <td> -
 </tr>
 <tr>
     <td> PINDSW-6629
     <td> HDSL: SSUM bit in EVENT_S is not set when SUMMARY is non-zero
     <td> Position Sense HDSL
-    <td> 9.0
+    <td> 9.0 onwards
     <td> SSUM bit in EVENT_S was masked with MASK_SUM which was incorrect.
 </tr>
 <tr>
     <td> PINDSW-6931
     <td> Tamagawa: Firmware build failing
     <td> Position Sense Tamagawa
-    <td> 9.0
+    <td> 9.0 onwards
     <td> -
 </tr>
 <tr>
     <td> PINDSW-6944
     <td> HDSL: QM increment is not correct
     <td> Position Sense HDSL
-    <td> 9.0
+    <td> 9.0 onwards
     <td> QM updates for Safe Channel 2 were incorrect.
 </tr>
 <tr>
     <td> PINDSW-6973
     <td> Flash addition in SysConfig of Industrial Communications and Motor control SDK fails to load flashconfig.json due to error in file path
     <td> Motor Control SDK
-    <td> 9.0
+    <td> 9.0 onwards
     <td> -
 </tr>
 <tr>
     <td> PINDSW-6977
     <td> Unable to build the examples of Industrial Communications SDK inside Motor Control SDK
     <td> Motor Control SDK
-    <td> 9.0
+    <td> 9.0 onwards
     <td> -
 </tr>
 <tr>
     <td> PINDSW-7048
     <td> HDSL: SCE bit in ONLINE STATUS 1 gets cleared before seeing a correct CRC in safe channel
     <td> Position Sense HDSL
-    <td> 9.0
+    <td> 9.0 onwards
     <td> -
 </tr>
 <tr>
     <td> PINDSW-7115
     <td> Gmake based command for PRU empty project build fails in Motor Control SDK and Industrial Communications SDK
     <td> Motor Control SDK
-    <td> 9.0
+    <td> 9.0 onwards
     <td> -
 </tr>
 <tr>
     <td> PINDSW-7125
     <td> EnDat: Initialization is failing for multi-channel single pru example with LP
     <td> Position Sense EnDat
-    <td> 9.0
+    <td> 9.0 onwards
     <td> -
 </tr>
 <tr>
     <td> PINDSW-7126
     <td> HDSL: Protocol reset is seen multiple times with certain encoders
     <td> Position Sense HDSL
-    <td> 9.0
+    <td> 9.0 onwards
     <td> -
 </tr>
 <tr>
     <td> PINDSW-7129
     <td> HDSL: Stuffing Data in Learn state is incorrect with Free Run Mode
     <td> Position Sense HDSL
-    <td> 9.0
+    <td> 9.0 onwards
     <td> -
 </tr>
 <tr>
     <td> PINDSW-7157
     <td> HDSL : Sync mode does not work for ES value greater than 1
     <td> Position Sense HDSL
-    <td> 9.0
+    <td> 9.0 onwards
     <td> -
 </tr>
 <tr>
     <td> PINDSW-7467
     <td> Industrial Communications SDK modules are not visible in the SysConfig of Motor Control SDK
     <td> Motor Control SDK
-    <td> 9.0
+    <td> 9.0 onwards
     <td> -
 </tr>
 <tr>
     <td> PINDSW-7473
     <td> HDSL : 100 meter cable length does not work for Free Run mode in 300Mhz PRU clock
     <td> Position Sense HDSL
-    <td> 9.0
+    <td> 9.0 onwards
     <td> -
 </tr>
 </table>
@@ -328,14 +328,14 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> PINDSW-7474
     <td> HDSL : 100 meter cable length does not work for sync mode in 300Mhz PRU clock
     <td> Position Sense HDSL
-    <td> 9.0
+    <td> 9.0 onwards
     <td> -
 </tr>
 <tr>
     <td> PINDSW-7480
     <td> HDSL: Continuous short/long message requests cause PRU to get stuck
     <td> Position Sense HDSL
-    <td> 9.0
+    <td> 9.0 onwards
     <td> -
 </tr>
 </table>
