@@ -60,15 +60,18 @@ This example demonstrates usage of SFRA library. PI controller is designed for p
 - **When using CCS projects to build**, import the CCS project for the required combination and build it using the CCS project menu (see <a href="@VAR_MCU_SDK_DOCS_PATH/CCS_PROJECTS_PAGE.html" target="_blank"> Using SDK with CCS Projects </a>).
 - **When using makefiles to build**, note the required combination and build using make command (see <a href="@VAR_MCU_SDK_DOCS_PATH/MAKEFILE_BUILD_PAGE.html" target="_blank"> Using SDK with Makefiles </a>).
 - Launch a CCS debug session and run the executable, see <a href="@VAR_MCU_SDK_DOCS_PATH/CCS_LAUNCH_PAGE.html" target="_blank">  CCS Launch, Load and Run </a>
+- Halt R5F core. Open "Expressions" window and add "sfra1.start" global variable. Set the value of "sfra1.start" to "1".
 
 ## Sample Output
 
 Shown below is a sample output when the application is run:
 
-Magnitude and phase vector data values after SFRA initiated by providing "1" to sfra1.start is shown in figure-
+Magnitude and phase vector data values after SFRA initiated by providing "1" to sfra1.start is shown in figure.
 
 \imageStyle{sfra_test.png,width:50%}
 \image html sfra_test.png "Data values of calculated magnitude and phase vector in expression window"
+
+You should see following message after the processing is done for 100 samples, which takes around two minutes.
 
 \code
 Test passed
