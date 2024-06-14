@@ -252,6 +252,7 @@ typedef struct PRUICSS_PWM_IEP_Attrs_s
     uint32_t pruIcssIepClkFrequency;
     /*pruIcssIepClk period in nanoseconds*/
     float pruIcssIepClkPeriod;
+    
     /*iep0 increment value*/
     uint8_t  iep0IncrementValue;
     /*enable or disable IEP0*/
@@ -264,6 +265,20 @@ typedef struct PRUICSS_PWM_IEP_Attrs_s
     uint8_t  enableIep0ResetOnCompare0;
     /*enable or disable shadow mode of IEP*/
     uint8_t  enableIEP0ShadowMode;
+
+    /*iep1 increment value*/
+    uint8_t  iep1IncrementValue;
+    /*enable or disable IEP1*/
+    uint8_t  enableIep1;
+    /*enable or disable IEP1 reset on EPWM0_sync event*/
+    uint8_t  enableIep1ResetOnEpwm0_Sync;
+    /*enable or disable IEP1 reset on EPWM3_sync event*/
+    uint8_t  enableIep1ResetOnEpwm3_Sync;
+    /*enable or disable IEP1 reset on compare 0 event*/
+    uint8_t  enableIep1ResetOnCompare0;
+    /*enable or disable shadow mode of IEP*/
+    uint8_t  enableIEP1ShadowMode;
+
     /*enable or disable slave mode, after enabling IEP1 counter follows IEP0*/
     uint8_t  enableIep1SlaveMode;
     /*enable or disable auto clear compare status of IEP0 and IEP1*/

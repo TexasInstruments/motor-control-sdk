@@ -2,7 +2,7 @@
  * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
  * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
  * @cliArgs --device "AM243x_ALX_beta" --package "ALX" --part "ALX" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@09.01.00"
- * @versions {"tool":"1.19.0+3426"}
+ * @versions {"tool":"1.20.0+3587"}
  */
 
 /**
@@ -252,14 +252,16 @@ section11.output_section[0].$name     = ".bss.nocache";
 section11.output_section[0].alignment = 0;
 
 pruicss_g_v0_pwm1.$name                                                = "CONFIG_PRUICSS_PWM0";
-pruicss_g_v0_pwm1.PRUICSS.$name                                        = "CONFIG_PRU_ICSS0";
-pruicss_g_v0_pwm1.PRUICSS.AdditionalICSSSettings[0].$name              = "CONFIG_PRU_ICSS_IO0";
 pruicss_g_v0_pwm1.PRUICSS_PWM_IEP.$name                                = "CONFIG_PRUICSS_PWM_IEP0";
 pruicss_g_v0_pwm1.PRUICSS_PWM_IEP.enableIEP0ShadowMode                 = true;
 pruicss_g_v0_pwm1.PRUICSS_PWM_IEP.enableIep0ResetOnEpwm0_Sync          = true;
 pruicss_g_v0_pwm1.PRUICSS_PWM_IEP.enableIep0ResetOnCompare0            = true;
 pruicss_g_v0_pwm1.PRUICSS_PWM_IEP.enableAutoClearCompareStatus         = true;
 pruicss_g_v0_pwm1.PRUICSS_PWM_IEP.enableIep0                           = true;
+pruicss_g_v0_pwm1.PRUICSS_PWM_IEP.enableIEP1ShadowMode                 = true;
+pruicss_g_v0_pwm1.PRUICSS_PWM_IEP.enableIep1ResetOnCompare0            = true;
+pruicss_g_v0_pwm1.PRUICSS_PWM_IEP.enableIep1ResetOnEpwm0_Sync          = true;
+pruicss_g_v0_pwm1.PRUICSS_PWM_IEP.enableIep1SlaveMode                  = true;
 pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL.create(4);
 pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[0].$name                         = "CONFIG_PRUICSS_PWM_CHANNEL0";
 pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[0].PRU_ICSSG0_PWM.$assign        = "PRU_ICSSG0_PWM0";
@@ -281,3 +283,9 @@ pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[3].PRU_ICSSG0_PWM.$assign        = "PRU_IC
 pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[3].PRU_ICSSG0_PWM.pwmPin.$assign = "GPMC0_AD4";
 pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE[0].$name                        = "CONFIG_PRUICSS_PWM_TRIPZONE0";
 pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE[0].PRU_ICSSG0_PWM.$assign       = "PRU_ICSSG0_PWM2";
+
+const pruicss                            = scripting.addModule("/drivers/pruicss/pruicss", {}, false);
+const pruicss1                           = pruicss.addInstance({}, false);
+pruicss1.$name                           = "CONFIG_PRU_ICSS0";
+pruicss_g_v0_pwm1.PRUICSS                = pruicss1;
+pruicss1.AdditionalICSSSettings[0].$name = "CONFIG_PRU_ICSS_IO0";

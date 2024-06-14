@@ -89,11 +89,39 @@ let pruicss_top_module = {
     ],
     pinmuxRequirements,
     getInterfaceNameList,
-    getPeripheralPinNames
+    getPeripheralPinNames,
+    validate: onValidate,
 };
 
-function validate(inst, report) {
-    common.validate.checkSameInstanceName(inst, report);
+function onValidate(inst, report) {
+    let icssg0 = 0;
+    let icssg1 = 0;
+    for (let instance_index in inst.$module.$instances)
+    {
+        let moduleInstance = inst.$module.$instances[instance_index];
+        if(moduleInstance.instance == "ICSSG0")
+        {
+            if(icssg0 < 4)
+            {
+                icssg0 = icssg0 + 1;    
+            }
+            else
+            {
+                report.logError("Maximum number of PWM Trip zone blocks that can be added are 4 (4 Sets, Each set has 1 Trip zone block)",inst);
+            }
+        }
+        else if(moduleInstance.instance == "ICSSG1")
+        {
+            if(icssg1 < 4)
+            {
+                icssg1 = icssg1 + 1;    
+            }
+            else
+            {
+                report.logError("Maximum number of PWM Trip zone blocks that can be added are 4 (4 Sets, Each set has 1 Trip zone block)",inst);
+            }
+        }
+    }
 }
 
 exports = pruicss_top_module;
