@@ -141,6 +141,35 @@ function genTirexExampleContentList(example_file_list, device) {
         }
     }
 
+    /* Add Universal Motor Control project in TIREX */
+    if(device == "am263x")
+    {
+        let tirex_content = {};
+        tirex_content.resourceType = `project.ccs`;
+        tirex_content.resourceClass = [ `example` ];
+        tirex_content.resourceSubClass = [ "example.general" ];
+        tirex_content.description = "This project provides the project for TIDM-02018 reference design, which offers a universal motor control design for TI’s AM263x Arm® based microcontrollers (MCUs). The design shows how to use AM263x MCUs for various kinds of FOC motor control techniques, such as sensorless (eSMO) and sensored (incremental encoder, Hall sensor). The project supports a high-voltage setup using AM263x controlCARD™ with TMDSHVMTRINSPIN motor control kit. CPU is R5FSS0-0 running NORTOS."
+        tirex_content.name = "universal_motorcontrol";
+        tirex_content.location = "../../examples/tidm_02018_universal_motorcontrol/universal_motorcontrol/am263x-cc-HVKIT_3SC/r5fss0-0_nortos/ti-arm-clang/example.projectspec";
+        let devtools = deviceData.getDevToolTirex("am263x-cc");
+        tirex_content.devtools = [ devtools ];
+        devtools_list.push(devtools);
+        tirex_content.kernel = [];
+        tirex_content.compiler = [];
+        tirex_content.kernel.push("nortos");
+        tirex_content.compiler.push("ticlang");
+        tirex_content.subCategories = ["tidm_02018_universal_motorcontrol", "universal_motorcontrol", "r5fss0-0_nortos"];
+        tirex_content.mainCategories = [[ `Examples`, `Development Tools` ]];
+        tirex_content_list.push(tirex_content);
+
+        devtools = deviceData.getDevToolTirex("am263x-lp");
+        tirex_content.devtools = [ devtools ];
+        devtools_list.push(devtools);
+        tirex_content.description = "This project provides the project for TIDM-02018 reference design, which offers a universal motor control design for TI’s AM263x Arm® based microcontrollers (MCUs). The design shows how to use AM263x MCUs for various kinds of FOC motor control techniques, such as sensorless (eSMO) and sensored (incremental encoder, Hall sensor). The design supports a low-voltage setup using AM263x LaunchPad™ with 3PHGANINV BoosterPack™. CPU is R5FSS0-0 running NORTOS."
+        tirex_content_list.push(tirex_content);
+
+    }
+
     for(example of example_file_list) {
         let tirex_content = {};
 
