@@ -486,11 +486,11 @@
         "resourceSubClass": [
             "example.general"
         ],
-        "description": "This project provides the project for TIDM-02018 reference design, which offers a universal motor control design for TI’s AM263x Arm® based microcontrollers (MCUs). The design shows how to use AM263x MCUs for various kinds of FOC motor control techniques, such as sensorless (eSMO) and sensored (incremental encoder, Hall sensor). The design supports a low-voltage setup using AM263x LaunchPad™ with 3PHGANINV BoosterPack™. CPU is R5FSS0-0 running NORTOS.",
+        "description": "This project provides the project for TIDM-02018 reference design, which offers a universal motor control design for TI’s AM263x Arm® based microcontrollers (MCUs). The design shows how to use AM263x MCUs for various kinds of FOC motor control techniques, such as sensorless (eSMO) and sensored (incremental encoder, Hall sensor). The project supports a high-voltage setup using AM263x controlCARD™ with TMDSHVMTRINSPIN motor control kit. CPU is R5FSS0-0 running NORTOS.",
         "name": "universal_motorcontrol",
         "location": "../../examples/tidm_02018_universal_motorcontrol/universal_motorcontrol/am263x-cc-HVKIT_3SC/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "LP-AM263"
+            "TMDSCNCD263"
         ],
         "kernel": [
             "nortos"
@@ -518,9 +518,9 @@
         "resourceSubClass": [
             "example.general"
         ],
-        "description": "This project provides the project for TIDM-02018 reference design, which offers a universal motor control design for TI’s AM263x Arm® based microcontrollers (MCUs). The design shows how to use AM263x MCUs for various kinds of FOC motor control techniques, such as sensorless (eSMO) and sensored (incremental encoder, Hall sensor). The design supports a low-voltage setup using AM263x LaunchPad™ with 3PHGANINV BoosterPack™. CPU is R5FSS0-0 running NORTOS.",
+        "description": "This project provides the project for TIDM-02018 reference design, which offers a universal motor control design for TI’s AM263x Arm® based microcontrollers (MCUs). The design shows how to use AM263x MCUs for various kinds of FOC motor control techniques, such as sensorless (eSMO) and sensored (incremental encoder, Hall sensor). The project supports a low-voltage setup using AM263x LaunchPad™ with 3PHGANINV BoosterPack™. CPU is R5FSS0-0 running NORTOS.",
         "name": "universal_motorcontrol",
-        "location": "../../examples/tidm_02018_universal_motorcontrol/universal_motorcontrol/am263x-cc-HVKIT_3SC/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
+        "location": "../../examples/tidm_02018_universal_motorcontrol/universal_motorcontrol/am263x-lp-3phGaN_3SC/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
         "devtools": [
             "LP-AM263"
         ],
