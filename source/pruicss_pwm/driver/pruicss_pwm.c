@@ -1409,10 +1409,10 @@ int32_t PRUICSS_PWM_config(PRUICSS_PWM_Handle handle, uint8_t pwmSet, uint8_t in
 
 int32_t PRUICSS_PWM_stateConfig(PRUICSS_PWM_Handle handle)
 {
-    int status = SystemP_SUCCESS;
-    int32_t retVal = SystemP_FAILURE;
+    int32_t status = SystemP_FAILURE;
     if((handle!=NULL))
     {
+        status = SystemP_SUCCESS;
         for(uint8_t currentPwmSet=0; currentPwmSet< PRUICSS_NUM_PWM_SETS; currentPwmSet++)
         {
             if((handle->pwmAttrs)[currentPwmSet][0].enable == 1 && (SystemP_SUCCESS == status))
@@ -1506,12 +1506,8 @@ int32_t PRUICSS_PWM_stateConfig(PRUICSS_PWM_Handle handle)
                 }
             }
         }
-        if(SystemP_SUCCESS == status)
-        {
-            retVal = SystemP_SUCCESS;
-        }
     }
-    return retVal;
+    return status;
 }
 
 int32_t PRUICSS_PWM_changePwmSetToIntialState(PRUICSS_PWM_Handle handle, uint8_t pwmSetMask)
@@ -1584,10 +1580,10 @@ int32_t PRUICSS_PWM_pruIcssPwmFrequencyInit(PRUICSS_PWM_Handle handle, uint32_t 
 
 int32_t PRUICSS_PWM_iepConfig(PRUICSS_PWM_Handle handle)
 {
-    int status = SystemP_SUCCESS;
-    int32_t retVal = SystemP_FAILURE;
+    int32_t status = SystemP_FAILURE;
     if((handle!=NULL))
     {
+        status = SystemP_SUCCESS;
         /* compare0_val is calculated based on pwm period */
         uint32_t compare0_val = (float)((((handle->iepAttrs)->pruIcssIepClkFrequency *((handle->iepAttrs)->iep0IncrementValue)))/((handle->iepAttrs)->pruIcssPwmFrequency));
 
@@ -1792,11 +1788,6 @@ int32_t PRUICSS_PWM_iepConfig(PRUICSS_PWM_Handle handle)
             /*Enable IEP CMP flags to auto clear after state transition*/
             status = PRUICSS_PWM_configurePwmEfficiencyModeEnable(handle, (handle->iepAttrs)->enableAutoClearCompareStatus);
         }
-
-        if(SystemP_SUCCESS == status)
-        {
-            retVal = SystemP_SUCCESS;
-        } 
     }
-    return retVal;
+    return status;
 }
