@@ -1,3 +1,4 @@
+let common = system.getScript("/common");
 let pruicss_top_module_name = "/pruicss_g_v0_pwm/pruicss_g_v0_pwm";
 
 let pruicss_top_module = {
@@ -52,7 +53,7 @@ let pruicss_top_module = {
                 useArray: true,
                 defaultInstanceCount: 1,
                 // 4 sets, each with 6 instances
-                maxInstanceCount: 24,
+                // maxInstanceCount: 24,
                 collapsed: true,
                 requiredArgs: {
                     instance: inst["instance"],
@@ -65,7 +66,7 @@ let pruicss_top_module = {
                 useArray: true,
                 defaultInstanceCount: 1,
                 // 4 sets, each with 1 tripzone block
-                maxInstanceCount: 4,
+                // maxInstanceCount: 4,
                 collapsed: true,
                 requiredArgs: {
                     instance: inst["instance"],
@@ -85,10 +86,11 @@ let pruicss_top_module = {
                 },
             }
         ]
-    }
+    },
+    validate: onValidate,
 };
 
-function validate(inst, report) {
+function onValidate(inst, report) {
     common.validate.checkSameInstanceName(inst, report);
 }
 
