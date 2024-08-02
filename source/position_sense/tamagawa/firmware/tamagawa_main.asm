@@ -106,6 +106,7 @@ TAMAGAWA_INIT:
 	.asg    ICSS_CFG_PRU0_ENDAT_CH2_CFG0, ICSS_CFG_PRUx_ED_CH2_CFG0
 	.asg    ICSS_CFG_PRU0_ENDAT_TXCFG,    ICSS_CFG_PRUx_ED_TXCFG
 	.asg    ICSS_CFG_PRU0_ENDAT_RXCFG,    ICSS_CFG_PRUx_ED_RXCFG
+    .asg    ICSS_CFG_GPCFG0,              ICSS_CFG_PRUx_GPCFG
 	.endif
 
     ;If PRU1 is defined in symbols, it will select all PRU1 CFG registers.
@@ -120,13 +121,14 @@ TAMAGAWA_INIT:
 	.asg    ICSS_CFG_PRU1_ENDAT_CH2_CFG0, ICSS_CFG_PRUx_ED_CH2_CFG0
 	.asg    ICSS_CFG_PRU1_ENDAT_TXCFG,    ICSS_CFG_PRUx_ED_TXCFG
 	.asg    ICSS_CFG_PRU1_ENDAT_RXCFG,    ICSS_CFG_PRUx_ED_RXCFG
+    .asg    ICSS_CFG_GPCFG1,              ICSS_CFG_PRUx_GPCFG
 	.endif
 
 	; Initalize ENDAT mode
 	; 	ICSS_CFG.GPCFG1[27:26] = 1
 	LDI		R0.b0,	4
     ;It will initialize Endat Mode for PRU1
-	SBCO	&R0.b0,	ICSS_CFG,	ICSS_CFG_GPCFG1+3,	1
+	SBCO	&R0.b0,	ICSS_CFG,	ICSS_CFG_PRUx_GPCFG+3,	1
 
 	; Initialize PRUx_TAMAGAWA_CH0_CFG0/1 by clearing all channel CFG registers
 	ZERO	&R0,	4
@@ -577,9 +579,14 @@ FN_SET_TX_CLK:
     SBCO	&R0.w2,	ICSS_CFG, SCRATCH1.w0, 2
 	LDI     SCRATCH1.w0, ICSS_CFG_PRUx_ED_RXCFG
 
-	; For using ICSSG clock(200Mhz)
+	; Select PRU core clock as source clock
     SET		R1.t4
-
 	; Update ICSSG clock and oversampling value
     SBCO	&R1.b0,	ICSS_CFG, SCRATCH1.w0, 1
+
+    LDI     SCRATCH1.w0, ICSS_CFG_PRUx_ED_TXCFG
+    LBCO  &R0.b0, ICSS_CFG, SCRATCH1.w0, 1
+    SET   R0.t4
+    SBCO  &R0.b0, ICSS_CFG, SCRATCH1.w0, 1
+
 	RET

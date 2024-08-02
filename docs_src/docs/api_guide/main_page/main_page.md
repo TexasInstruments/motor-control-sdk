@@ -27,6 +27,7 @@ To get started, see <a href="@VAR_MCU_SDK_DOCS_PATH/GETTING_STARTED.html" target
 
 \note To build examples from Industrial Communications SDK and MCU+ SDK using CCS projects, user has to add <b>${SDK_INSTALL_PATH}/ind_comms_sdk</b> path and <b>${SDK_INSTALL_PATH}/mcu_plus_sdk</b> path to "Product discovery path" respectively in CCS (from Window->Preferences->Code Composer Studio->Products)
 
+\cond !SOC_AM261X
 ## Block Diagram
 
 Given below is a block diagram of the SW modules in this SDK
@@ -208,6 +209,7 @@ The main software components in the block diagram specific to motor control are 
 
 For details on software components of Industrial Communications SDK and MCU+ SDK, please refer to <a href="@VAR_IC_SDK_DOCS_PATH/index.html" target="_blank">@VAR_SOC_NAME Industrial Communications SDK</a> and <a href="@VAR_MCU_SDK_DOCS_PATH/index.html" target="_blank">@VAR_SOC_NAME MCU+ SDK</a> respectively.
 
+\endcond
 ## Directory Structure
 
 Given below is a overview of the directory structure to help you navigate the SDK and related tools.

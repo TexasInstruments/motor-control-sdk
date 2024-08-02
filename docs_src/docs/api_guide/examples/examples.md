@@ -41,6 +41,7 @@ This page lists all the examples and demos supported in this SDK.
     - \subpage  EXAMPLE_TIDM_02018_REFERENCE_DESIGN
 - Position Sense
     - \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA_OVER_UART
+    - \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA
 - Real Time Libraries
     - DCL
         - \subpage EXAMPLES_DCL_PI
@@ -51,4 +52,9 @@ This page lists all the examples and demos supported in this SDK.
         - \subpage EXAMPLES_SFRA_TEST
     - DATALOG
         - \subpage EXAMPLES_DATALOG_TEST
+\endcond
+
+\cond SOC_AM261X
+- Position Sense
+    - \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA
 \endcond

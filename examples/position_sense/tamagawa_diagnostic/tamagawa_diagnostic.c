@@ -57,11 +57,42 @@
 #define TASK_STACK_SIZE (4096)
 #define TASK_PRIORITY   (6)
 
+/*Use soc driver instead it when available */
+#if SOC_AM261X
+/**
+ *  \anchor TCA6408_Mode
+ *  \name IO pin mode - Input or Output
+ *  @{
+ */
+/** \brief Configure IO pin as input */
+#define TCA6408_MODE_INPUT              (0U)
+/** \brief Configure IO pin as output */
+#define TCA6408_MODE_OUTPUT             (1U)
+/** @} */
+
+/**
+ *  \anchor TCA6408_OutState
+ *  \name IO pin output state - HIGH or LOW
+ *  @{
+ */
+/** \brief Configure IO pin output as LOW */
+#define TCA6408_OUT_STATE_LOW           (0U)
+/** \brief Configure IO pin output as HIGH */
+#define TCA6408_OUT_STATE_HIGH          (1U)
+/** @} */
+
+#define TCA6408_REG_INPUT_PORT_0        (0x00U)
+#define TCA6408_REG_OUTPUT_PORT_0       (0x01U)
+#define TCA6408_REG_POL_INV_PORT_0      (0x02U)
+#define TCA6408_REG_CONFIG_PORT_0       (0x03U)
+#endif
 uint32_t gTaskFxnStack[TASK_STACK_SIZE/sizeof(uint32_t)] __attribute__((aligned(32)));
 TaskP_Object gTaskObject;
 
 #define TAMAGAWA_POSITION_LOOP_STOP    0
 #define TAMAGAWA_POSITION_LOOP_START   1
+
+#define  ICSSM_PRU_CORE_CLOCK 200000000
 
 #if ((CONFIG_TAMAGAWA0_CHANNEL0 + CONFIG_TAMAGAWA0_CHANNEL1 + CONFIG_TAMAGAWA0_CHANNEL2) == 1)
 #include <position_sense/tamagawa/firmware/tamagawa_master_single_channel_bin.h>
@@ -78,13 +109,156 @@ struct tamagawa_priv *priv;
 PRUICSS_Handle gPruIcssXHandle;
 void *gPru_dramx;
 
+#if SOC_AM261X
+I2C_Handle          i2cHandle;
+
+int32_t TCA6408_open()
+{
+    int32_t status = SystemP_SUCCESS;
+
+    i2cHandle = I2C_getHandle(CONFIG_I2C0);
+
+    return (status);
+}
+
+int32_t TCA6408_config(uint32_t ioIndex, uint32_t mode)
+{
+
+    int32_t         status = SystemP_SUCCESS;
+    I2C_Transaction i2cTransaction;
+    uint32_t        port, portPin, i2cAddress;
+    uint8_t         buffer[2U] = {0};
+
+    i2cAddress  = 0x20;
+
+    if(status == SystemP_SUCCESS)
+    {
+        /* Each port contains 8 IOs */
+        port        = 0;
+        portPin     = ioIndex;
+
+        /* Set config register address - needed for next read */
+        I2C_Transaction_init(&i2cTransaction);
+        buffer[0] = TCA6408_REG_CONFIG_PORT_0 + port;
+        i2cTransaction.writeBuf     = buffer;
+        i2cTransaction.writeCount   = 1U;
+        i2cTransaction.targetAddress = i2cAddress;
+        status += I2C_transfer(i2cHandle, &i2cTransaction);
+
+        /* Read config register value */
+        I2C_Transaction_init(&i2cTransaction);
+        i2cTransaction.readBuf      = buffer;
+        i2cTransaction.readCount    = 1;
+        i2cTransaction.targetAddress = i2cAddress;
+        status += I2C_transfer(i2cHandle, &i2cTransaction);
+
+        /* Set output or input mode to particular IO pin - read/modify/write */
+        I2C_Transaction_init(&i2cTransaction);
+        if(TCA6408_MODE_INPUT == mode)
+        {
+            buffer[1] = buffer[0] | (0x01 << portPin);
+        }
+        else
+        {
+            buffer[1] = buffer[0] & ~(0x01 << portPin);
+        }
+        buffer[0] = TCA6408_REG_CONFIG_PORT_0 + port;
+        i2cTransaction.writeBuf     = buffer;
+        i2cTransaction.writeCount   = 2;
+        i2cTransaction.targetAddress = i2cAddress;
+        status += I2C_transfer(i2cHandle, &i2cTransaction);
+    }
+
+    return (status);
+}
+
+int32_t TCA6408_setOutput(uint32_t ioIndex, uint32_t state)
+{
+    int32_t         status = SystemP_SUCCESS;
+    I2C_Transaction i2cTransaction;
+    uint32_t        port, portPin, i2cAddress;
+    uint8_t         buffer[2U] = {0};
+
+    i2cAddress  = 0x20;
+
+    if(status == SystemP_SUCCESS)
+    {
+        /* Each port contains 8 IOs */
+        port        = 0;
+        portPin     = ioIndex;
+
+        /* Set output prt register address - needed for next read */
+        I2C_Transaction_init(&i2cTransaction);
+        buffer[0] = TCA6408_REG_OUTPUT_PORT_0 + port;
+        i2cTransaction.writeBuf     = buffer;
+        i2cTransaction.writeCount   = 1U;
+        i2cTransaction.targetAddress = i2cAddress;
+        status += I2C_transfer(i2cHandle, &i2cTransaction);
+
+        /* Read config register value */
+        I2C_Transaction_init(&i2cTransaction);
+        i2cTransaction.readBuf      = buffer;
+        i2cTransaction.readCount    = 1;
+        i2cTransaction.targetAddress = i2cAddress;
+        status += I2C_transfer(i2cHandle, &i2cTransaction);
+
+        /* Set output or input mode to particular IO pin - read/modify/write */
+        I2C_Transaction_init(&i2cTransaction);
+        if(TCA6408_OUT_STATE_HIGH == state)
+        {
+            buffer[1] = buffer[0] | (0x01 << portPin);
+        }
+        else
+        {
+            buffer[1] = buffer[0] & ~(0x01 << portPin);
+        }
+        buffer[0] = TCA6408_REG_OUTPUT_PORT_0 + port;
+        i2cTransaction.writeBuf     = buffer;
+        i2cTransaction.writeCount   = 2;
+        i2cTransaction.targetAddress = i2cAddress;
+        status += I2C_transfer(i2cHandle, &i2cTransaction);
+    }
+
+    return (status);
+}
+
+void lp_bp_mux_mode_config()
+{
+    int32_t status = SystemP_FAILURE;
+    status = TCA6408_open();
+    DebugP_assert(status == SystemP_SUCCESS);
+
+    /* Configure pins 4, 5 and 7 as outputs */
+    status = TCA6408_config(4, TCA6408_MODE_OUTPUT);
+    DebugP_assert(status == SystemP_SUCCESS);
+    status = TCA6408_config(5, TCA6408_MODE_OUTPUT);
+    DebugP_assert(status == SystemP_SUCCESS);
+    status = TCA6408_config(7, TCA6408_MODE_OUTPUT);
+    DebugP_assert(status == SystemP_SUCCESS);
+
+    /* Set value 1 in pin 7 - BP Mux 0 */
+    status = TCA6408_setOutput(7, TCA6408_OUT_STATE_HIGH);
+    DebugP_assert(status == SystemP_SUCCESS);
+
+     /* Set value 0 in pin 5 - BP Mux 1 */
+    status = TCA6408_setOutput(5, TCA6408_OUT_STATE_LOW);
+    DebugP_assert(status == SystemP_SUCCESS);
+
+    /* Set value 1 in pin 4 - Mux Enable */
+    status = TCA6408_setOutput(4, TCA6408_OUT_STATE_HIGH);
+    DebugP_assert(status == SystemP_SUCCESS);
+
+}
+#endif
 void tamagawa_pruicss_init(void)
 {
     gPruIcssXHandle = PRUICSS_open(CONFIG_PRU_ICSS0);
     /* PRUICSS_PRUx holds value 0 or 1 depending on whether we are using PRU0 or PRU1 slice */
     PRUICSS_initMemory(gPruIcssXHandle, PRUICSS_DATARAM(PRUICSS_PRUx));
     PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_PRUx);
+#if(SOC_AM243X || SOC_AM64X)
     PRUICSS_setSaMuxMode(gPruIcssXHandle, PRUICSS_SA_MUX_MODE_SD_ENDAT);
+#endif
 }
 
 void tamagawa_pruicss_load_run_fw(void)
@@ -378,7 +552,7 @@ static void tamagawa_process_periodic_command(enum data_id process_dataid_cmd)
     tamagawa_periodic_interface.pruss_dmem = priv->tamagawa_xchg;
     tamagawa_periodic_interface.cmp3 = priv->cmp3;
      tamagawa_periodic_interface.cmp0 = priv->cmp0;
-    
+
     status = tamagawa_config_periodic_mode(&tamagawa_periodic_interface, gPruIcssXHandle);
     DebugP_assert(0 != status);
     tamagawa_position_loop_status = TAMAGAWA_POSITION_LOOP_START;
@@ -433,7 +607,7 @@ static void tamagawa_process_periodic_command(enum data_id process_dataid_cmd)
                 DebugP_log("\r\n Single-channel mode is enabled\n\n");
                 tamagawa_handle_rx(priv, process_dataid_cmd);
             }
-        }    
+        }
     }
 }
 
@@ -442,6 +616,15 @@ void tamagawa_main(void *args)
     /* Open drivers to open the UART driver for console */
     Drivers_open();
     Board_driversOpen();
+
+#ifdef SOC_AM261X
+    lp_bp_mux_mode_config();
+
+    /* Set bits for input pins in ICSSM_PRU0_GPIO_OUT_CTRL and ICSSM_PRU1_GPIO_OUT_CTRL registers */
+    HW_WR_REG32(CSL_MSS_CTRL_U_BASE + CSL_MSS_CTRL_ICSSM1_PRU0_GPIO_OUT_CTRL, 0x200);
+    
+#endif
+
 /*C16 pin High for Enabling ch0 in booster pack */
 #if (CONFIG_TAMAGAWA0_BOOSTER_PACK && CONFIG_TAMAGAWA0_CHANNEL0)
     GPIO_setDirMode(ENC1_EN_BASE_ADDR, ENC1_EN_PIN, ENC1_EN_DIR);
@@ -469,9 +652,28 @@ void tamagawa_main(void *args)
     }
 
     /* Initialize the priv structure according to the PRUx slice selected */
+#if PRUICSS_PRUx
     priv = tamagawa_init((struct tamagawa_xchg *)(
         (PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->pru1DramBase, pruicss_cfg,pruicss_iep,slice_value);
+#else
+    priv = tamagawa_init((struct tamagawa_xchg *)(
+        (PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->pru0DramBase, pruicss_cfg, pruicss_iep, slice_value);
+#endif
 
+/* Get core clock value */
+#if defined(SOC_AM263X) || defined(SOC_AM261X)
+    /* fixed 200MHz pru core clock for ICSSM*/
+    priv->pru_clock = ICSSM_PRU_CORE_CLOCK;
+#else
+    uint32_t status;
+#if(PRUICSSx)
+    status = SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG1, TISCI_DEV_PRU_ICSSG1_CORE_CLK, &priv->pru_clock);
+    DebugP_assert(status == SystemP_SUCCESS);
+#else
+    status = SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG0, TISCI_DEV_PRU_ICSSG0_CORE_CLK, &priv->pru_clock);
+    DebugP_assert(status == SystemP_SUCCESS);
+#endif
+#endif
     tamagawa_set_baudrate(priv, CONFIG_TAMAGAWA0_BAUDRATE);
 
     DebugP_log("\r\n\nTamagawa PRU-ICSS init done\n\n");
@@ -537,9 +739,10 @@ void tamagawa_main(void *args)
 
         tamagawa_display_menu();
         cmd = tamagawa_get_command(&adf, &edf);
+      
 
         if(cmd == PERIODIC_TRIGGER_CMD)
-        {   
+        {
             /*Takes which data_id to process in input arguments*/
             tamagawa_process_periodic_command(DATA_ID_0);
         }

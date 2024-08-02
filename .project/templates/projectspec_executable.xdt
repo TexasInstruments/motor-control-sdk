@@ -5,7 +5,9 @@
     if("syscfgfile" in args.project) {
         products+=`sysconfig;`
     }
-    products+=`com.ti.${args.utils.getProductNameProjectSpec(args.project.device)};`
+
+    products+=`com.ti.${args.utils.getProductNameProjectSpec(args.project.device)}`
+
     productName = args.utils.getProductNameProjectSpec(args.project.device);
     if(args.project.projecspecFileAction)  // should be renamed to projectspecFileAction
     {
@@ -14,6 +16,20 @@
     else
     {
         defaultAction = args.utils.getDefaultActionProjectSpec();
+    }
+    indCommRequired = 0
+    obj = args.project.libdirs;
+    for (prop in obj) {
+        if ( obj.hasOwnProperty(prop) && Array.isArray(obj[prop]) && prop == 'common') {
+            for(let val of obj[prop]) {
+                if (val.includes("MCU_PLUS_SDK_IND_COMMS_LIBS_PATH")) {
+                      indCommRequired = 1;
+                }
+            }
+        }
+    }
+    if (indCommRequired == 1) {
+        products+=";com.ti.MCU_PLUS_IND_COMMS_LIBS";
     }
 %%}
 <?xml version="1.0" encoding="UTF-8"?>
@@ -170,7 +186,7 @@
         "
         % }
         % } else {
-        postBuildStep="$(MAKE) -C ${CCS_PROJECT_DIR} -f makefile_ccs_bootimage_gen OUTNAME=${BuildArtifactFileBaseName} PROFILE=${ConfigName} MOTOR_CONTROL_SDK_PATH=${MOTOR_CONTROL_SDK_PATH} CG_TOOL_ROOT=${CG_TOOL_ROOT} CCS_INSTALL_DIR=${CCS_INSTALL_DIR} CCS_IDE_MODE=${CCS_IDE_MODE} DEVICE=`args.project.device`"
+        postBuildStep="$(MAKE) -C ${CCS_PROJECT_DIR} -f makefile_ccs_bootimage_gen OUTNAME=${BuildArtifactFileBaseName} PROFILE=${ConfigName} MOTOR_CONTROL_SDK_PATH=${MOTOR_CONTROL_SDK_PATH} MCU_PLUS_SDK_PATH=${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk CG_TOOL_ROOT=${CG_TOOL_ROOT} CCS_INSTALL_DIR=${CCS_INSTALL_DIR} CCS_IDE_MODE=${CCS_IDE_MODE} DEVICE=`args.project.device`"
         % }
 
         % if("syscfgfile" in args.project) {
@@ -250,6 +266,9 @@
         <pathVariable name="DSPLIB_PATH" path="${COM_TI_`productName`_INSTALL_DIR}/source/dsplib_c66x_3_4_0_0" scope="project" />
         % }
         <pathVariable name="`args.sdkName`" path="${COM_TI_`productName`_INSTALL_DIR}" scope="project" />
+        % if (indCommRequired == 1) {
+        <pathVariable name="MCU_PLUS_SDK_IND_COMMS_LIBS_PATH" path="${COM_TI_MCU_PLUS_IND_COMMS_LIBS}" scope="project" />
+        % }
         % filelist = args.utils.getFileListProjectSpec(args.project.files, args.project.filedirs, args.project.dirPath)
         % for (file of filelist) {
         <file path="`file`" openOnCreation="false" excludeFromBuild="false" action="`defaultAction`">
@@ -265,7 +284,7 @@
         % for (prop in obj) {
             % if ( obj.hasOwnProperty(prop) && Array.isArray(obj[prop]) && prop == 'common') {
                 % for(let val of obj[prop]) {
-            % if ( (val == "../linker.cmd") || ! (["am263x", "am263px", "am273x", "am243x", "am64x"].includes(proj.device)) ) {
+            % if ( (val == "../linker.cmd") || ! (["am263x", "am263px", "am261x", "am273x", "am243x", "am64x"].includes(proj.device)) ) {
         <file path="linker.cmd" openOnCreation="false" excludeFromBuild="false" action="`defaultAction`">
         </file>
         %}

@@ -90,6 +90,13 @@ extern "C" {
  */
 #define MAX_EEPROM_WRITE_DATA (255)
 
+/**
+ * 
+ * \brief  Used to set the Rx oversampling rate
+ * 
+*/
+#define TAMAGAWA_RX_OVERSAMPLING_RATE    (8)
+
 
 /**
 *    \brief    Data ID codes
@@ -284,6 +291,7 @@ struct tamagawa_priv
     void *pruss_iep; /**< ICSS IEP base address*/
     uint64_t cmp3; /**< IEP CMP3 reg used in periodic trigger mode*/
     uint64_t cmp0; /**<IEP CMP0 reg used in periodic trigger mode to reset IEP*/
+    uint64_t pru_clock; /**<PRU CORE Clock*/
 };
 
 /* ========================================================================== */

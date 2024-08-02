@@ -7,7 +7,7 @@
 The Tamagawa receiver firmware running on PRU-ICSS provides a defined well interface to execute the Tamagawa protocol. The Tamagawa diagnostic application interacts with the Tamagawa receiver firmware interface.
 
 \note
-Tamagawa firmware and examples are based on 3 Channel Peripheral interface from PRU-ICSSG.
+Tamagawa firmware and examples are based on 3 Channel Peripheral interface from \if ( SOC_AM263X || SOC_AM261X)  PRU-ICSSM \else PRU-ICSSG \endif.
 
 ## Features Supported
 
@@ -27,9 +27,19 @@ In general, peripherals or features not mentioned as part of "Features Supported
 @VAR_SYSCFG_USAGE_NOTE
 
 SysConfig can be used to configure things mentioned below:
+\if SOC_AM263X 
+- Selecting the ICSSM PRU slice (Tested on ICSSM-PRU0)
+- Configuring PINMUX and GPIO
+\else
+\if SOC_AM261X 
+- Selecting the ICSSM PRU slice (Tested on ICSSM1-PRU0)
+- Configuring PINMUX and GPIO
+\else
 - Selecting the ICSSG instance
 - Selecting the ICSSG PRU slice (Tested on ICSSG0-PRU1)
 - Configuring PINMUX, GPIO and ICSS clock to 200MHz
+\endif
+\endif
 - Channel selection
 - Baud rate selection
 
