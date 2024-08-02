@@ -137,7 +137,7 @@ typedef struct SdfmPrms_s {
     /**< output freq. of EPWM0  */
     uint32_t epwm_out_freq;
     /**< Over current threshold parameters  */
-    SDFM_ThresholdParms   threshold_parms[NUM_CH_SUPPORTED_PER_AXIS];
+    uint32_t    comThresholds[3][2];
     /**< SD clock source and clock inversion  */
     SDFM_ClkSourceParms   clkPrms[3];
     /**< Over current OSR  */
@@ -182,7 +182,8 @@ int32_t initPruSddf(
 int32_t initSddf(
     uint8_t pruId, uint8_t pruInstId, 
     SdfmPrms *pSddfPrms, 
-    sdfm_handle *pHSddf
+    sdfm_handle *pHSddf,
+    PRUICSS_Handle pruIcssHandle
 );
 
 

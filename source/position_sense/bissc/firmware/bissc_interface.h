@@ -51,43 +51,46 @@ BISSC_CYCLE_TRIGGER_CH1_STATUS_OFFSET               .set        0x9     ;Status 
 BISSC_CYCLE_TRIGGER_CH2_STATUS_OFFSET               .set        0xA     ;Status of current cycle for TXPRU
 BISSC_MEAS_PROC_DELAY_OFFSET	                    .set	    0xB     ;Measure proc delay and line delay, set when there is a change in config
 
-BISSC_NUM_ENCODER_CH0_CONFIG_OFFSET                 .set        0xC     ;number of encoders connected in daisy chain
-BISSC_DATA_LEN_CH0_CONFIG_OFFSET	                .set		0xD	    ;encoder 0 data length
-BISSC_DATA_LEN_ENCODER1_CH0_CONFIG_OFFSET           .set        0xE     ;encoder 1 data length
-BISSC_DATA_LEN_ENCODER2_CH0_CONFIG_OFFSET           .set        0xF     ;encoder 2 data length
+BISSC_OPMODE_CH0_CONFIG_OFFSET                      .set        0xC     ;operation mode of ch0 offset
+BISSC_OPMODE_CH1_CONFIG_OFFSET                      .set        0xD     ;operation mode of ch1 offset
+BISSC_OPMODE_CH2_CONFIG_OFFSET                      .set        0xE     ;operation mode of ch2 offset
 
-BISSC_NUM_ENCODER_CH1_CONFIG_OFFSET                 .set        0x10    ;number of encoders connected in daisy chain
-BISSC_DATA_LEN_CH1_CONFIG_OFFSET	                .set		0x11	;encoder 0 data length
-BISSC_DATA_LEN_ENCODER1_CH1_CONFIG_OFFSET           .set        0x12    ;encoder 1 data length
-BISSC_DATA_LEN_ENCODER2_CH1_CONFIG_OFFSET           .set        0x13    ;encoder 2 data length
+BISSC_NUM_ENCODER_CH0_CONFIG_OFFSET                 .set        0xF     ;number of encoders connected in daisy chain
+BISSC_DATA_LEN_CH0_CONFIG_OFFSET	                .set		0x10	;encoder 0 data length
+BISSC_DATA_LEN_ENCODER1_CH0_CONFIG_OFFSET           .set        0x11    ;encoder 1 data length
+BISSC_DATA_LEN_ENCODER2_CH0_CONFIG_OFFSET           .set        0x12    ;encoder 2 data length
 
-BISSC_NUM_ENCODER_CH2_CONFIG_OFFSET                 .set        0x14    ;number of encoders connected in daisy chain
-BISSC_DATA_LEN_CH2_CONFIG_OFFSET	                .set		0x15	;encoder 0 data length
-BISSC_DATA_LEN_ENCODER1_CH2_CONFIG_OFFSET           .set        0x16    ;encoder 1 data length
-BISSC_DATA_LEN_ENCODER2_CH2_CONFIG_OFFSET           .set        0x17    ;encoder 2 data length
+BISSC_NUM_ENCODER_CH1_CONFIG_OFFSET                 .set        0x13    ;number of encoders connected in daisy chain
+BISSC_DATA_LEN_CH1_CONFIG_OFFSET	                .set		0x14	;encoder 0 data length
+BISSC_DATA_LEN_ENCODER1_CH1_CONFIG_OFFSET           .set        0x15    ;encoder 1 data length
+BISSC_DATA_LEN_ENCODER2_CH1_CONFIG_OFFSET           .set        0x16    ;encoder 2 data length
 
-BISSC_VALID_BIT_IDX_OFFSET                          .set        0x18    ;offset for valid bit index
-BISSC_FIFO_BIT_IDX_OFFSET                           .set        0x19    ;offset for fifo bit index  
-BISSC_CTRL_CMD_CH0_STATUS_OFFSET                    .set	    0x1A    ;control command complete status; 1 - pending; 0 - completed
-BISSC_CTRL_CMD_CH1_STATUS_OFFSET                    .set	    0x1B    ;control command complete status; 1 - pending; 0 - completed
-BISSC_CTRL_CMD_CH2_STATUS_OFFSET                    .set	    0x1C    ;control command complete status; 1 - pending; 0 - completed
-    
-BISSC_CH0_PROC_DELAY_OFFSET	                        .set	    0x1E    ;Measured Processing delay for ch0
-BISSC_CH1_PROC_DELAY_OFFSET	                        .set	    0x20    ;Measured Processing delay for ch1
-BISSC_CH2_PROC_DELAY_OFFSET	                        .set	    0x22    ;Measured Processing delay for ch2
+BISSC_NUM_ENCODER_CH2_CONFIG_OFFSET                 .set        0x17    ;number of encoders connected in daisy chain
+BISSC_DATA_LEN_CH2_CONFIG_OFFSET	                .set		0x18	;encoder 0 data length
+BISSC_DATA_LEN_ENCODER1_CH2_CONFIG_OFFSET           .set        0x19    ;encoder 1 data length
+BISSC_DATA_LEN_ENCODER2_CH2_CONFIG_OFFSET           .set        0x1A    ;encoder 2 data length
 
+BISSC_VALID_BIT_IDX_OFFSET                          .set        0x1B    ;offset for valid bit index
+BISSC_FIFO_BIT_IDX_OFFSET                           .set        0x1C    ;offset for fifo bit index
+BISSC_CTRL_CMD_CH0_STATUS_OFFSET                    .set	    0x1D    ;control command complete status; 1 - pending; 0 - completed
+BISSC_CTRL_CMD_CH1_STATUS_OFFSET                    .set	    0x1E    ;control command complete status; 1 - pending; 0 - completed
+BISSC_CTRL_CMD_CH2_STATUS_OFFSET                    .set	    0x1F    ;control command complete status; 1 - pending; 0 - completed
 
-BISSC_CTRL_CMD_CH0_CONFIG_OFFSET                    .set		0x24	;register access commad
+BISSC_CH0_PROC_DELAY_OFFSET	                        .set	    0x20    ;Measured Processing delay for ch0
+BISSC_CH1_PROC_DELAY_OFFSET	                        .set	    0x22    ;Measured Processing delay for ch1
+BISSC_CH2_PROC_DELAY_OFFSET	                        .set	    0x24    ;Measured Processing delay for ch2
 
-BISSC_CTRL_CMD_CH1_CONFIG_OFFSET                    .set		0x28	;register access commad
+BISSC_CTRL_CMD_CH0_CONFIG_OFFSET                    .set		0x28	;register access commad
 
-BISSC_CTRL_CMD_CH2_CONFIG_OFFSET                    .set		0x2C	;register access commad
+BISSC_CTRL_CMD_CH1_CONFIG_OFFSET                    .set		0x2C	;register access commad
 
-BISSC_MAX_PROC_DELAY_OFFSET	                        .set	    0x30    ;Max Processing delay
+BISSC_CTRL_CMD_CH2_CONFIG_OFFSET                    .set		0x30	;register access commad
 
-BISSC_POS_DATA_RES_ENCODER0_OFFSET                  .set        0x34    ;position data results offset for encoder 0
-BISSC_POS_DATA_RES_ENCODER1_OFFSET                  .set        0x5C    ;position data results offset for encoder 1
-BISSC_POS_DATA_RES_ENCODER2_OFFSET                  .set        0X84    ;position data results offset for encoder 2
+BISSC_MAX_PROC_DELAY_OFFSET	                        .set	    0x34    ;Max Processing delay
+
+BISSC_POS_DATA_RES_ENCODER0_OFFSET                  .set        0x38    ;position data results offset for encoder 0
+BISSC_POS_DATA_RES_ENCODER1_OFFSET                  .set        0x60    ;position data results offset for encoder 1
+BISSC_POS_DATA_RES_ENCODER2_OFFSET                  .set        0X88    ;position data results offset for encoder 2
 
 BISSC_POS_DATA_WORD_CH0_OFFSET                      .set        0x0     ;position data results offset for ch 0
 BISSC_POS_DATA_WORD_CH1_OFFSET                      .set        0x8     ;position data results offset for ch 1
@@ -100,47 +103,47 @@ BISSC_POS_OTF_CRC_CH1_OFFSET                        .set        0x25    ;positio
 BISSC_POS_OTF_CRC_CH2_OFFSET                        .set        0x26    ;position data otf crc for ch 2
 
 
-BISSC_POSITION_DATA_WORD0_CH0_ENCODER0_OFFSET       .set	    0X34    ;Lower word of position data from ch0 encoder 0
-BISSC_POSITION_DATA_WORD1_CH0_ENCODER0_OFFSET	    .set	    0x38    ;Upper word of position data(0 if length < 32) from ch0 encoder 0
-BISSC_POSITION_DATA_WORD0_CH1_ENCODER0_OFFSET       .set	    0X3C    ;Lower word of position data from ch1 encoder 0
-BISSC_POSITION_DATA_WORD1_CH1_ENCODER0_OFFSET	    .set	    0x40    ;Upper word of position data(0 if length < 32) from ch1 encoder 0
-BISSC_POSITION_DATA_WORD0_CH2_ENCODER0_OFFSET       .set	    0X44    ;Lower word of position data from ch2 encoder 0
-BISSC_POSITION_DATA_WORD1_CH2_ENCODER0_OFFSET	    .set	    0x48    ;Upper word of position data(0 if length < 32) from ch2 encoder 0
-BISSC_POS_DATA_CRC_ERROR_COUNT_CH0_ENCODER0_OFFSET  .set        0x4C    ;offset for position data crc errors of ch0 encoder 0
-BISSC_POS_DATA_CRC_ERROR_COUNT_CH1_ENCODER0_OFFSET  .set        0x50    ;offset for position data crc errors of ch1 encoder 0
-BISSC_POS_DATA_CRC_ERROR_COUNT_CH2_ENCODER0_OFFSET  .set        0x54    ;offset for position data crc errors of ch2 encoder 0
-BISSC_POS_DATA_OTF_CRC_CH0_ENCODER0_OFFSET          .set		0x58    ;6-bit calculated otf pos data CRC of ch0 encoder 0
-BISSC_POS_DATA_OTF_CRC_CH1_ENCODER0_OFFSET          .set		0x59    ;6-bit calculated otf pos data CRC of ch1 encoder 0
-BISSC_POS_DATA_OTF_CRC_CH2_ENCODER0_OFFSET          .set		0x5A    ;6-bit calculated otf pos data CRC of ch2 encoder 0
+BISSC_POSITION_DATA_WORD0_CH0_ENCODER0_OFFSET       .set	    0X38    ;Lower word of position data from ch0 encoder 0
+BISSC_POSITION_DATA_WORD1_CH0_ENCODER0_OFFSET	    .set	    0x3C    ;Upper word of position data(0 if length < 32) from ch0 encoder 0
+BISSC_POSITION_DATA_WORD0_CH1_ENCODER0_OFFSET       .set	    0X40    ;Lower word of position data from ch1 encoder 0
+BISSC_POSITION_DATA_WORD1_CH1_ENCODER0_OFFSET	    .set	    0x44    ;Upper word of position data(0 if length < 32) from ch1 encoder 0
+BISSC_POSITION_DATA_WORD0_CH2_ENCODER0_OFFSET       .set	    0X48    ;Lower word of position data from ch2 encoder 0
+BISSC_POSITION_DATA_WORD1_CH2_ENCODER0_OFFSET	    .set	    0x4C    ;Upper word of position data(0 if length < 32) from ch2 encoder 0
+BISSC_POS_DATA_CRC_ERROR_COUNT_CH0_ENCODER0_OFFSET  .set        0x50    ;offset for position data crc errors of ch0 encoder 0
+BISSC_POS_DATA_CRC_ERROR_COUNT_CH1_ENCODER0_OFFSET  .set        0x54    ;offset for position data crc errors of ch1 encoder 0
+BISSC_POS_DATA_CRC_ERROR_COUNT_CH2_ENCODER0_OFFSET  .set        0x58    ;offset for position data crc errors of ch2 encoder 0
+BISSC_POS_DATA_OTF_CRC_CH0_ENCODER0_OFFSET          .set		0x5C    ;6-bit calculated otf pos data CRC of ch0 encoder 0
+BISSC_POS_DATA_OTF_CRC_CH1_ENCODER0_OFFSET          .set		0x5D    ;6-bit calculated otf pos data CRC of ch1 encoder 0
+BISSC_POS_DATA_OTF_CRC_CH2_ENCODER0_OFFSET          .set		0x5E    ;6-bit calculated otf pos data CRC of ch2 encoder 0
 
-BISSC_POSITION_DATA_WORD0_CH0_ENCODER1_OFFSET       .set	    0X5C    ;Lower word of position data from ch0 encoder 1
-BISSC_POSITION_DATA_WORD1_CH0_ENCODER1_OFFSET	    .set	    0x60    ;Upper word of position data(0 if length < 32) from ch0 encoder 1
-BISSC_POSITION_DATA_WORD0_CH1_ENCODER1_OFFSET       .set	    0X64    ;Lower word of position data from ch1 encoder 1
-BISSC_POSITION_DATA_WORD1_CH1_ENCODER1_OFFSET	    .set	    0x68    ;Upper word of position data(0 if length < 32) from ch1 encoder 1
-BISSC_POSITION_DATA_WORD0_CH2_ENCODER1_OFFSET       .set	    0X6C    ;Lower word of position data from ch2 encoder 1
-BISSC_POSITION_DATA_WORD1_CH2_ENCODER1_OFFSET	    .set	    0x70    ;Upper word of position data(0 if length < 32) from ch2 encoder 1
-BISSC_POS_DATA_CRC_ERROR_COUNT_CH0_ENCODER1_OFFSET  .set        0x74    ;offset for position data crc errors of ch0 encoder 1
-BISSC_POS_DATA_CRC_ERROR_COUNT_CH1_ENCODER1_OFFSET  .set        0x78    ;offset for position data crc errors of ch1 encoder 1
-BISSC_POS_DATA_CRC_ERROR_COUNT_CH2_ENCODER1_OFFSET  .set        0x7C    ;offset for position data crc errors of ch2 encoder 1
-BISSC_POS_DATA_OTF_CRC_CH0_ENCODER1_OFFSET          .set		0x80    ;6-bit calculated otf pos data CRC of ch0 encoder 1
-BISSC_POS_DATA_OTF_CRC_CH1_ENCODER1_OFFSET          .set		0x81    ;6-bit calculated otf pos data CRC of ch1 encoder 1
-BISSC_POS_DATA_OTF_CRC_CH2_ENCODER1_OFFSET          .set		0x82    ;6-bit calculated otf pos data CRC of ch2 encoder 1
+BISSC_POSITION_DATA_WORD0_CH0_ENCODER1_OFFSET       .set	    0X60    ;Lower word of position data from ch0 encoder 1
+BISSC_POSITION_DATA_WORD1_CH0_ENCODER1_OFFSET	    .set	    0x64    ;Upper word of position data(0 if length < 32) from ch0 encoder 1
+BISSC_POSITION_DATA_WORD0_CH1_ENCODER1_OFFSET       .set	    0X68    ;Lower word of position data from ch1 encoder 1
+BISSC_POSITION_DATA_WORD1_CH1_ENCODER1_OFFSET	    .set	    0x6C    ;Upper word of position data(0 if length < 32) from ch1 encoder 1
+BISSC_POSITION_DATA_WORD0_CH2_ENCODER1_OFFSET       .set	    0X70    ;Lower word of position data from ch2 encoder 1
+BISSC_POSITION_DATA_WORD1_CH2_ENCODER1_OFFSET	    .set	    0x74    ;Upper word of position data(0 if length < 32) from ch2 encoder 1
+BISSC_POS_DATA_CRC_ERROR_COUNT_CH0_ENCODER1_OFFSET  .set        0x78    ;offset for position data crc errors of ch0 encoder 1
+BISSC_POS_DATA_CRC_ERROR_COUNT_CH1_ENCODER1_OFFSET  .set        0x7C    ;offset for position data crc errors of ch1 encoder 1
+BISSC_POS_DATA_CRC_ERROR_COUNT_CH2_ENCODER1_OFFSET  .set        0x80    ;offset for position data crc errors of ch2 encoder 1
+BISSC_POS_DATA_OTF_CRC_CH0_ENCODER1_OFFSET          .set		0x84    ;6-bit calculated otf pos data CRC of ch0 encoder 1
+BISSC_POS_DATA_OTF_CRC_CH1_ENCODER1_OFFSET          .set		0x85    ;6-bit calculated otf pos data CRC of ch1 encoder 1
+BISSC_POS_DATA_OTF_CRC_CH2_ENCODER1_OFFSET          .set		0x86    ;6-bit calculated otf pos data CRC of ch2 encoder 1
 
 
-BISSC_POSITION_DATA_WORD0_CH0_ENCODER2_OFFSET       .set	    0X84    ;Lower word of position data from ch0 encoder 2
-BISSC_POSITION_DATA_WORD1_CH0_ENCODER2_OFFSET	    .set	    0x88    ;Upper word of position data(0 if length < 32) from ch0 encoder 2
-BISSC_POSITION_DATA_WORD0_CH1_ENCODER2_OFFSET       .set	    0X8C    ;Lower word of position data from ch1 encoder 2
-BISSC_POSITION_DATA_WORD1_CH1_ENCODER2_OFFSET	    .set	    0x90    ;Upper word of position data(0 if length < 32) from ch1 encoder 2
-BISSC_POSITION_DATA_WORD0_CH2_ENCODER2_OFFSET       .set	    0X94    ;Lower word of position data from ch2 encoder 2
-BISSC_POSITION_DATA_WORD1_CH2_ENCODER2_OFFSET	    .set	    0x98    ;Upper word of position data(0 if length < 32) from ch2 encoder 2
-BISSC_POS_DATA_CRC_ERROR_COUNT_CH0_ENCODER2_OFFSET  .set        0x9C    ;offset for position data crc errors of ch0 encoder 2
-BISSC_POS_DATA_CRC_ERROR_COUNT_CH1_ENCODER2_OFFSET  .set        0xA0    ;offset for position data crc errors of ch1 encoder 2
-BISSC_POS_DATA_CRC_ERROR_COUNT_CH2_ENCODER2_OFFSET  .set        0xA4    ;offset for position data crc errors of ch2 encoder 2
-BISSC_POS_DATA_OTF_CRC_CH0_ENCODER2_OFFSET          .set		0xA8    ;6-bit calculated otf pos data CRC of ch0 encoder 2
-BISSC_POS_DATA_OTF_CRC_CH1_ENCODER2_OFFSET          .set		0xA9    ;6-bit calculated otf pos data CRC of ch1 encoder 2
-BISSC_POS_DATA_OTF_CRC_CH2_ENCODER2_OFFSET          .set		0xAA    ;6-bit calculated otf pos data CRC of ch2 encoder 2
+BISSC_POSITION_DATA_WORD0_CH0_ENCODER2_OFFSET       .set	    0X88    ;Lower word of position data from ch0 encoder 2
+BISSC_POSITION_DATA_WORD1_CH0_ENCODER2_OFFSET	    .set	    0x8C    ;Upper word of position data(0 if length < 32) from ch0 encoder 2
+BISSC_POSITION_DATA_WORD0_CH1_ENCODER2_OFFSET       .set	    0X90    ;Lower word of position data from ch1 encoder 2
+BISSC_POSITION_DATA_WORD1_CH1_ENCODER2_OFFSET	    .set	    0x94    ;Upper word of position data(0 if length < 32) from ch1 encoder 2
+BISSC_POSITION_DATA_WORD0_CH2_ENCODER2_OFFSET       .set	    0X98    ;Lower word of position data from ch2 encoder 2
+BISSC_POSITION_DATA_WORD1_CH2_ENCODER2_OFFSET	    .set	    0x9C    ;Upper word of position data(0 if length < 32) from ch2 encoder 2
+BISSC_POS_DATA_CRC_ERROR_COUNT_CH0_ENCODER2_OFFSET  .set        0xA0    ;offset for position data crc errors of ch0 encoder 2
+BISSC_POS_DATA_CRC_ERROR_COUNT_CH1_ENCODER2_OFFSET  .set        0xA4    ;offset for position data crc errors of ch1 encoder 2
+BISSC_POS_DATA_CRC_ERROR_COUNT_CH2_ENCODER2_OFFSET  .set        0xA8    ;offset for position data crc errors of ch2 encoder 2
+BISSC_POS_DATA_OTF_CRC_CH0_ENCODER2_OFFSET          .set		0xAC    ;6-bit calculated otf pos data CRC of ch0 encoder 2
+BISSC_POS_DATA_OTF_CRC_CH1_ENCODER2_OFFSET          .set		0xAD    ;6-bit calculated otf pos data CRC of ch1 encoder 2
+BISSC_POS_DATA_OTF_CRC_CH2_ENCODER2_OFFSET          .set		0xAE    ;6-bit calculated otf pos data CRC of ch2 encoder 2
 
-BISSC_CH0_CTRL_BASE_OFFSET                          .set        0xAC    ;channel 0 control communication base offset
+BISSC_CH0_CTRL_BASE_OFFSET                          .set        0xB0    ;channel 0 control communication base offset
 
 BISSC_CTRL_CMD_CRC_ERROR_COUNT_OFFSET               .set        0x00    ;offset for control command crc errors
 
@@ -148,20 +151,43 @@ BISSC_CTRL_CMD_RESULT_OFFSET	                    .set		0x04    ;8-bit control co
 BISSC_CTRL_CMD_DATA_CRC_OFFSET	                    .set		0x05    ;4-bit control communication CRC received
 BISSC_CTRL_CMD_OTF_CRC_OFFSET                       .set		0x06    ;4-bit otf control communication CRC calculated
 
-BISSC_CH1_CTRL_BASE_OFFSET                          .set        0xB4    ;channel 1 control communication base offset(ch0 base offset + last defined offset)
+BISSC_CH1_CTRL_BASE_OFFSET                          .set        0xB8    ;channel 1 control communication base offset(ch0 base offset + last defined offset)
 
-BISSC_CH2_CTRL_BASE_OFFSET                          .set        0xBC    ;channel 2 control communication base offset(ch1 base offset + last defined offset)
+BISSC_CH2_CTRL_BASE_OFFSET                          .set        0xC0    ;channel 2 control communication base offset(ch1 base offset + last defined offset)
 
-BISSC_LS_EXEC_RTU_STATE                             .set        0xC4    ;RTU execution state offset
-BISSC_LS_EXEC_PRU_STATE                             .set        0xC5    ;PRU execution state offset
-BISSC_LS_EXEC_TXPRU_STATE                           .set        0xC6    ;TXPRU execution state offset
+BISSC_LS_EXEC_RTU_STATE                             .set        0xC8    ;RTU execution state offset
+BISSC_LS_EXEC_PRU_STATE                             .set        0xC9    ;PRU execution state offset
+BISSC_LS_EXEC_TXPRU_STATE                           .set        0xCA    ;TXPRU execution state offset
 
-BISSC_REG_BACKUP                                    .set        0xC8    ;register backup for different channels
+BISSC_REG_BACKUP                                    .set        0xD0    ;register backup for different channels
 
-BISSC_RE_MEASURE_PROC_DELAY                         .set        0xE0    ;Flag used to indicate remeasure proc delay
+BISSC_RE_MEASURE_PROC_DELAY                         .set        0xE8    ;Flag used to indicate remeasure proc delay
+BISSC_CH0_SAFETY_OFFSET                             .set        0xE9    ;Flag used to indicate safety mode in ch0
+BISSC_CH1_SAFETY_OFFSET                             .set        0xEA    ;Flag used to indicate safety mode in ch1
+BISSC_CH2_SAFETY_OFFSET                             .set        0xEB    ;Flag used to indicate safety mode in ch2
 
-BISSC_CONFIG_DELAY_40US_OFFSET                      .set        0xE4    ;40 micro second delay offest
+BISSC_ENC0_SAFETY_CRC_OFFSET                        .set        0xEC    ;16-bit safety CRC enc0 offset
+BISSC_ENC1_SAFETY_CRC_OFFSET                        .set        0xF2    ;16-bit safety CRC enc1 offset
+BISSC_ENC2_SAFETY_CRC_OFFSET                        .set        0xF8    ;16-bit safety CRC enc2 offset
 
-BISSC_CONFIG_DELAY_100MS_OFFSET                     .set        0xE8    ;100 milli second delay offset
+BISSC_CH0_SAFETY_CRC_OFFSET                         .set        0x00    ;16-bit safety CRC ch0 offset
+BISSC_CH1_SAFETY_CRC_OFFSET                         .set        0x02    ;16-bit safety CRC ch1 offset
+BISSC_CH2_SAFETY_CRC_OFFSET                         .set        0x04    ;16-bit safety CRC ch2 offset
 
-BISSC_CONFIG_ICSSG_CLK_OFFSET                       .set        0xF0    ;icssg clock configuration offset
+BISSC_ENC0_CH0_SAFETY_CRC_OFFSET                    .set        0xEC    ;16-bit safety CRC enc0 ch0 offset
+BISSC_ENC0_CH1_SAFETY_CRC_OFFSET                    .set        0xEE    ;16-bit safety CRC enc0 ch1 offset
+BISSC_ENC0_CH2_SAFETY_CRC_OFFSET                    .set        0xF0    ;16-bit safety CRC enc0 ch2 offset
+
+BISSC_ENC1_CH0_SAFETY_CRC_OFFSET                    .set        0xF2    ;16-bit safety CRC enc1 ch0 offset
+BISSC_ENC1_CH1_SAFETY_CRC_OFFSET                    .set        0xF4    ;16-bit safety CRC enc1 ch1 offset
+BISSC_ENC1_CH2_SAFETY_CRC_OFFSET                    .set        0xF6    ;16-bit safety CRC enc1 ch2 offset
+
+BISSC_ENC2_CH0_SAFETY_CRC_OFFSET                    .set        0xF8    ;16-bit safety CRC enc2 ch0 offset
+BISSC_ENC2_CH1_SAFETY_CRC_OFFSET                    .set        0xFA    ;16-bit safety CRC enc2 ch1 offset
+BISSC_ENC2_CH2_SAFETY_CRC_OFFSET                    .set        0xFC    ;16-bit safety CRC enc2 ch2 offset
+
+BISSC_CONFIG_DELAY_40US_OFFSET                      .set        0x100   ;40 micro second delay offest
+
+BISSC_CONFIG_DELAY_100MS_OFFSET                     .set        0x104   ;100 milli second delay offset
+
+BISSC_CONFIG_ICSSG_CLK_OFFSET                       .set        0x108   ;icssg clock configuration offset

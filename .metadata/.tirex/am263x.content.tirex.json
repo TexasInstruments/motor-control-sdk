@@ -261,6 +261,69 @@
             "example"
         ],
         "resourceSubClass": [
+            "example.general"
+        ],
+        "description": "An Example of tamagawa single channel with soc uart CPU is R5FSS0-0 running FREERTOS.",
+        "name": "tamagawa_diagnostic_soc_uart",
+        "location": "../../examples/position_sense/tamagawa_diagnostic_over_soc_uart/am263x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "LP-AM263"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "position_sense",
+            "tamagawa_diagnostic_over_soc_uart",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.gettingstarted"
+        ],
+        "description": "Verification of SFRA Library for PI Controller.  CPU is R5FSS0-0 running NORTOS.",
+        "name": "sfralib",
+        "location": "../../examples/sfra/am263x-cc/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "TMDSCNCD263"
+        ],
+        "kernel": [
+            "nortos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "sfra",
+            "r5fss0-0_nortos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
             "example.gettingstarted"
         ],
         "description": "A simple test vector of ClARKE-PARK-IPARK-SVGEN data verification CPU is R5FSS0-0 running NORTOS.",
@@ -389,24 +452,88 @@
             "example"
         ],
         "resourceSubClass": [
-            "example.general"
+            "example.gettingstarted"
         ],
-        "description": "An Example of tamagawa single channel with soc uart CPU is R5FSS0-0 running FREERTOS.",
-        "name": "tamagawa_diagnostic_soc_uart",
-        "location": "../../examples/position_sense/tamagawa_diagnostic_over_soc_uart/am263x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "description": "Verifying data logging after triggering using Data log Library.  CPU is R5FSS0-0 running NORTOS.",
+        "name": "dlog4ch_lib",
+        "location": "../../examples/utilities/datalog/am263x-cc/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "LP-AM263"
+            "TMDSCNCD263"
         ],
         "kernel": [
-            "freertos"
+            "nortos"
         ],
         "compiler": [
             "ticlang"
         ],
         "subCategories": [
-            "position_sense",
-            "tamagawa_diagnostic_over_soc_uart",
-            "r5fss0-0_freertos"
+            "utilities",
+            "datalog",
+            "r5fss0-0_nortos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "description": "This project provides the project for TIDM-02018 reference design, which offers a universal motor control design for TI’s AM263x Arm® based microcontrollers (MCUs). The design shows how to use AM263x MCUs for various kinds of FOC motor control techniques, such as sensorless (eSMO) and sensored (incremental encoder, Hall sensor). The project supports a high-voltage setup using AM263x controlCARD™ with TMDSHVMTRINSPIN motor control kit. CPU is R5FSS0-0 running NORTOS.",
+        "name": "universal_motorcontrol",
+        "location": "../../examples/tidm_02018_universal_motorcontrol/universal_motorcontrol/am263x-cc-HVKIT_3SC/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "TMDSCNCD263"
+        ],
+        "kernel": [
+            "nortos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "tidm_02018_universal_motorcontrol",
+            "universal_motorcontrol",
+            "r5fss0-0_nortos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "description": "This project provides the project for TIDM-02018 reference design, which offers a universal motor control design for TI’s AM263x Arm® based microcontrollers (MCUs). The design shows how to use AM263x MCUs for various kinds of FOC motor control techniques, such as sensorless (eSMO) and sensored (incremental encoder, Hall sensor). The project supports a low-voltage setup using AM263x LaunchPad™ with 3PHGANINV BoosterPack™. CPU is R5FSS0-0 running NORTOS.",
+        "name": "universal_motorcontrol",
+        "location": "../../examples/tidm_02018_universal_motorcontrol/universal_motorcontrol/am263x-lp-3phGaN_3SC/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "LP-AM263"
+        ],
+        "kernel": [
+            "nortos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "tidm_02018_universal_motorcontrol",
+            "universal_motorcontrol",
+            "r5fss0-0_nortos"
         ],
         "mainCategories": [
             [

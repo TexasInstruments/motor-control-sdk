@@ -28,7 +28,7 @@ SDK example uses the %SDFM hardware capability in Slice 1 of PRU-ICSSG0.
 	<th>Details
 </tr>
 <tr>
-    <td>Normal Current Over-samping Ratio (OSR)
+    <td>Normal Current Over-sampling Ratio (OSR)
     <td>64
 	<td>Tested with 16, 32, 64, 128 and 256
 </tr>
@@ -70,17 +70,17 @@ Following section describes the firmware implementation of Sigma Delta Decimatio
 - Next if phase compensation is enabled, it measures phase delay
 - Then it waits for the ARM core to set %SDFM enable bit. After the enable bit is set, it sends an acknowledgement to ARM core.
 - After this, the firmware does initialization of PRU-ICSSG's %SDFM hardware interface, task manager and IEP0.
-- If threshold comparator is enabled, then a free run over current loop is setup, else it sets up an infinite waiting loop. In over current loop, the firmware reads sample data from the shadow copy register and does low and high theshold compersion with sample data, and depending on the configuration it generates over current trip in PWM trip zone block. Also if zero cross detection is enabled, it detects zero cross.
+- If threshold comparator is enabled, then a free run over current loop is setup, else it sets up an infinite waiting loop. In over current loop, the firmware reads sample data from the shadow copy register and does low and high threshold comparison with sample data, and depending on the configuration it generates over current trip in PWM trip zone block. Also if zero cross detection is enabled, it detects zero cross.
 - Time triggered normal current task is configured to be triggered based on IEP CMP event. When the CMP event hits, the task manager sets the program counter to normal current task. In normal current task, firmware reads sample data from accumulator and it checks for fourth normal current sample (for SINC3 filtering). If the current normal current sample belongs to fourth normal current sample, then it stores the same in data memory DMEM as normal current row data and trigger interrupt.
 - At the end of normal current firmware task, execution flow comes into infinite waiting loop or over current loop.
 
 
-##### Normal Curent (NC)
+##### Normal Current (NC)
 
 This section describes normal current implementation.
 
 There are two different variations of normal current.
-- Trigger based: It starts execution when the trigger point is acquired (first time CMP event hits) and performs four continuous samplings to bring the accumulator and differntiator registers to stable state for the configured normal current OSR. Initially the CMP register is configured with the first sample trigger start time and then until the next third continuous normal current sample it is updated with the normal current OSR sampling time. At the end of the fourth normal current sample again, it is updated with the second sample start time if double update is enabled otherwise with the first sample trigger start time.
+- Trigger based: It starts execution when the trigger point is acquired (first time CMP event hits) and performs four continuous samplings to bring the accumulator and differentiator registers to stable state for the configured normal current OSR. Initially the CMP register is configured with the first sample trigger start time and then until the next third continuous normal current sample it is updated with the normal current OSR sampling time. At the end of the fourth normal current sample again, it is updated with the second sample start time if double update is enabled otherwise with the first sample trigger start time.
 
 - Continuous sampling: It starts execution when the first time CMP event hits. Every time it updates CMP event register with the normal current OSR sampling time for next continuous sample, store sample values in DMEM and trigger R5 interrupt.
 
@@ -109,7 +109,7 @@ This section describes the zero cross implementation. It compares the current sa
 There are two cases:
 
  - Current sample value is greater than zero cross threshold value: If the latest previous sample value is less than the zc threshold value, it changes the direction of the corresponding GPIO pin from low to high otherwise keeps the GPIO in the same direction.
- - Current sample value is less than zero cross threshold value: If the latest previous sample value is grather than the zc threshold value, it changes the direction of the corresponding GPIO pin from High to low otherwise keeps the GPIO in the same direction.
+ - Current sample value is less than zero cross threshold value: If the latest previous sample value is greater than the zc threshold value, it changes the direction of the corresponding GPIO pin from High to low otherwise keeps the GPIO in the same direction.
 
 \image html SDFM_Zero_cross_flow_chart.png "Zero cross"
 
@@ -253,14 +253,14 @@ Following points describe the process for measurement of phase difference betwee
 	<td>(J6.57)TZ output pin for Axis-3
 </tr>
 <tr>
-    <td>PRG1_IEP0_EDC_SYNC_OUT0
-    <td>PIN_PRG1_PRU0_GPO19
-	<td>(J7.63) SYNC_OUT0
+    <td>PRG0_IEP0_EDC_SYNC_OUT0
+    <td>PIN_PRG0_PRU0_GPO19
+	<td>(J5.45)SYNC_OUT0
 </tr>
 <tr>
-    <td>PRG1_IEP0_EDC_SYNC_OUT1
-    <td>PIN_PRG1_PRU0_GPO17
-	<td>(J7.65) SYNC_OUT1
+    <td>PRG0_IEP0_EDC_SYNC_OUT1
+    <td>PIN_PRG0_PRU0_GPO17
+	<td>(J2.18) SYNC_OUT1
 </tr>
 </table>
 \endcond

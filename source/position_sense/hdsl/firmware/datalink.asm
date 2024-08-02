@@ -34,6 +34,7 @@
 	.include "defines.inc"
 	.include "macros.inc"
 	;.sect	".text"
+	.ref re_align_algo
 	.ref transport_on_h_frame
 	.ref transport_on_v_frame
 	.ref transport_on_v_frame_2
@@ -94,6 +95,8 @@ datalink_init:
 ;--------------------------------------------------------------------------------------------------
 ;State RX 0-7
 datalink_wait_vsynch:
+	ldi ALIGN_PHASE,0
+	sbco 		&ALIGN_PHASE, MASTER_REGS_CONST, ALIGN_PH, 1
 	zero			&SPEED, (4*8)
 	ldi			LOOP_CNT.b1, 7
 ;send m_par_reset 8b/10b: 5b/6b and 3b/4b, first=1,vsync=0,reserved=0
@@ -246,22 +249,26 @@ push_2b_0_0:
 	PUSH_FIFO_CONST		0xff
 free_run_mode_0:
 	RESET_CYCLCNT
-	qba			datalink_rx0_7
+	qba			generate_h_frame_interrupt
 ;V-Frame ends here
 ;reset BYTE_ERROR
 Vframe_fifo_push:
+	PUSH_FIFO_CONST  0xff
 	ldi			BYTE_ERROR, 0x00
 	ldi			LOOP_CNT.b2, 8
 	set			H_FRAME.flags, H_FRAME.flags, FLAG_NORMAL_FLOW
-	PUSH_FIFO_CONST  0xff
-	qba			datalink_rx0_7
+	qba			generate_h_frame_interrupt
 hframe_7_fifo_push:
 	qbbc			Hframe_fifo_push, H_FRAME.flags, FLAG_NORMAL_FLOW
 	CALL2 WAIT_TX_FIFO_FREE
 	PUSH_FIFO_CONST  0xff
 	PUSH_FIFO_CONST  0x00
-	qba			datalink_rx0_7
+generate_h_frame_interrupt:
 
+; signal event mst_intr[0] and PRU0_ARM_IRQ3
+	ldi     r31.w0, 32+0
+	ldi     r31.w0, PRU0_ARM_IRQ3
+	qba datalink_rx0_7
  	.endif ;Multichannel
 ;--------------------------------------------------------------------------------------------------
 
@@ -515,7 +522,6 @@ recv_dec_10b_4b_0_2_received_0:
 	qbeq			recv_dec_10b_special_character0, REG_TMP0.b0, 0x00
 	qba			recv_dec_10b_no_special_character0
 recv_dec_10b_special_character0:
-	ldi			REG_TMP1.b0, 0xe0
 	set			SPECIAL_CHARACTER, SPECIAL_CHARACTER, REG_FNC.b1
 recv_dec_10b_no_special_character0:
 	and			REG_TMP0.b0, REG_FNC.w2, 0x1f
@@ -551,7 +557,6 @@ recv_dec_10b_4b_not_last_byte:
 	qbeq			recv_dec_10b_special_character1, REG_TMP0.b0, 0x00
 	qba			recv_dec_10b_no_special_character1
 recv_dec_10b_special_character1:
-	ldi			REG_TMP1.b0, 0xe0
 	set			SPECIAL_CHARACTER, SPECIAL_CHARACTER, REG_FNC.b1
 recv_dec_10b_no_special_character1:
 	xor			REG_FNC.b0, REG_FNC.b0, REG_TMP1.b0
@@ -622,18 +627,7 @@ srecv_dec_10b_4b_0_2_received_0:
 	xor			CUR_EDGES, REG_TMP1.b0, REG_TMP0.b0
 	CALL1			calc_rssi
 	qbne			srecv_dec_10b_4b_0_2, LOOP_CNT.b0, 0
-;check for errors / special character
-	ldi			REG_TMP1.b0, 0
-	clr			SPECIAL_CHARACTER, SPECIAL_CHARACTER, REG_FNC.b1
-;K=(c==d==e==i)
-	and			REG_TMP0.b0, REG_FNC.w2, 0x78
-	qbeq			srecv_dec_10b_special_character0, REG_TMP0.b0, 0x78
-	qbeq			srecv_dec_10b_special_character0, REG_TMP0.b0, 0x00
-	qba			srecv_dec_10b_no_special_character0
-srecv_dec_10b_special_character0:
-	ldi			REG_TMP1.b0, 0xe0
-	set			SPECIAL_CHARACTER, SPECIAL_CHARACTER, REG_FNC.b1
-srecv_dec_10b_no_special_character0:
+
 	and			REG_TMP0.b0, REG_FNC.w2, 0x1f
 	qbeq			srecv_dec_10b_eifgh_error, REG_TMP0.b0, 0x1f
 	qbeq			srecv_dec_10b_eifgh_error, REG_TMP0.b0, 0x00
@@ -659,20 +653,21 @@ srecv_dec_10b_4b_not_last_byte:
 	ldi			REG_TMP11, (PDMEM00+LUT_3b4b_DEC)
 	lbbo			&REG_TMP0.b0, REG_TMP11, REG_TMP0.w2, 1
 	or			REG_FNC.b0, REG_FNC.b0, REG_TMP0.b0
-;check for special character and flip
-;K=(c==d==e==i) v (P13*e'*i*g*h*j) v (P31*e*i'*g'*h'*j')
-	and			REG_TMP0.b0, REG_FNC.w2, 0x37
-	xor			REG_TMP0.b0, REG_TMP0.b0, 0x20
-	qbeq			srecv_dec_10b_special_character1, REG_TMP0.b0, 0x37
-	qbeq			srecv_dec_10b_special_character1, REG_TMP0.b0, 0x00
-	qba			srecv_dec_10b_no_special_character1
-srecv_dec_10b_special_character1:
-	ldi			REG_TMP1.b0, 0xe0
-	set			SPECIAL_CHARACTER, SPECIAL_CHARACTER, REG_FNC.b1
-srecv_dec_10b_no_special_character1:
-	xor			REG_FNC.b0, REG_FNC.b0, REG_TMP1.b0
 ;restore RET1
 	mov			RET_ADDR1, REG_TMP2.w0
+;;check for special character and flip for 4 cases (when 6b==110000 and 4b= 0110,1010,0101,1001)
+	and REG_TMP0.b2,REG_FNC.w2,0xf      ;REG_FNC.w2 stores 10b encoded data
+	lsr			REG_TMP0.b0,REG_FNC.w2,4
+	and			REG_TMP0.b0,REG_TMP0.b0,0x3f
+	qbne		check_for_special_character_done,	REG_TMP0.b0,0x30
+	qbeq 		flip_first_3bits_of_STATUS2, REG_TMP0.b2,0x6
+	qbeq 		flip_first_3bits_of_STATUS2, REG_TMP0.b2,0xa
+	qbeq 		flip_first_3bits_of_STATUS2, REG_TMP0.b2,0x5
+	qbeq 		flip_first_3bits_of_STATUS2, REG_TMP0.b2,0x9
+	qba 		check_for_special_character_done
+flip_first_3bits_of_STATUS2:
+	xor REG_FNC.b0,REG_FNC.b0,0xe0
+check_for_special_character_done:
 	RET1
 
 ;--------------------------------------------------------------------------------------------------
@@ -730,6 +725,8 @@ recv_dec_vertical_not_rx7:
 	ldi			LOOP_CNT.b0, 6
 	CALL1			recv_dec_10b
 	mov			H_FRAME.pipe, REG_FNC.b0
+	; Store PIPE data
+	sbco	&H_FRAME.pipe, MASTER_REGS_CONST, PIPE_D, 1
 ;receive acceleration channel
 	ldi			REG_FNC.b1, 3
 	ldi			LOOP_CNT.b0, 6
@@ -820,6 +817,7 @@ datalink_receive_signal_no_delay_wait_0:
 	qbbs			datalink_receive_signal_no_error_5, H_FRAME.flags, FLAG_ERR_SEC
 	set			H_FRAME.flags, H_FRAME.flags, FLAG_ERR_SEC
 	QM_SUB			8
+datalink_receive_signal_no_error_5:
 ;calc running crc for secondary channel
 	xor			CRC_SEC_H, CRC_SEC_H, H_FRAME.secondary
 	qbne			recv_dec_secondary_not_rx7, LOOP_CNT.b2, 1
@@ -831,7 +829,6 @@ recv_dec_secondary_not_rx7:
 	lbbo			&REG_TMP0.w0, REG_TMP0, REG_TMP1.w0, 2
 	xor			REG_TMP0.b1, REG_TMP0.b1, CRC_SEC_L
 	mov			CRC_SEC, REG_TMP0.w0
-datalink_receive_signal_no_error_5:
 	RET
 ;--------------------------------------------------------------------------------------------------
 ;Function: send_header (RET_ADDR)
@@ -1419,35 +1416,9 @@ send_header_no_wait_after_synch:
 	lbco        &REG_TMP0, c1, 0x10, 4
 	add         REG_TMP0, REG_TMP0, 12   ;read offset
 
-	qbeq        adjustment_done, EXTRA_EDGE_SELF, 0xFF
-is_val_FE:
-	qbne        is_val_FC, EXTRA_EDGE_SELF, 0xFE
-	sub         REG_TMP0, REG_TMP0, 4
-	qba         adjustment_done
-is_val_FC:
-	qbne        is_val_F8, EXTRA_EDGE_SELF, 0xFC
-	sub         REG_TMP0, REG_TMP0, 8
-	qba         adjustment_done
-is_val_F8:
-	qbne        is_val_F0, EXTRA_EDGE_SELF, 0xF8
-	sub         REG_TMP0, REG_TMP0, 12
-	qba         adjustment_done
-is_val_F0:
-	qbne        is_val_E0, EXTRA_EDGE_SELF, 0xF0
-	sub         REG_TMP0, REG_TMP0, 16
-	qba         adjustment_done
-is_val_E0:
-	qbne        is_val_C0, EXTRA_EDGE_SELF, 0xE0
-	sub         REG_TMP0, REG_TMP0, 20
-	qba         adjustment_done
-is_val_C0:
-	qbne        is_val_80, EXTRA_EDGE_SELF, 0xC0
-	sub         REG_TMP0, REG_TMP0, 24
-	qba         adjustment_done
-is_val_80:
-	qbne        adjustment_done,EXTRA_EDGE_SELF, 0x80
-	sub         REG_TMP0, REG_TMP0, 28
-	qba         adjustment_done
+	ldi			REG_TMP11, (PDMEM00+LUT_EE)
+	lbbo			&REG_TMP11.b0, REG_TMP11, EXTRA_EDGE_SELF, 1
+	sub			REG_TMP0, REG_TMP0, REG_TMP11.b0
 adjustment_done:
 	sbco		&REG_TMP0, MASTER_REGS_CONST, EXTRA_EDGE_TIMESTAMP, 4
 num_pulses_is_not_one1:
@@ -1505,7 +1476,6 @@ send_header_encode_sec_subblock_end:
 transport_layer_send_msg_done:
 ;encoding end
 
-	CALL3 PUSH_FIFO_2B_8x
 	;check if we receive or send 01 pattern
 	qbeq			send_header_send_01_pattern, REG_FNC.b0, M_PAR_RESET
 	qbeq			send_header_send_01_pattern, REG_FNC.b0, M_PAR_SYNC
@@ -1575,11 +1545,6 @@ send_header_dont_send_01_send_1:
 	PUSH_FIFO_CONST		0xff
 send_header_dont_send_01_send_next:
 	RESET_CYCLCNT
-
-	READ_CYCLCNT		REG_TMP1
-	ldi			REG_TMP0, (9*(CLKDIV_NORMAL+1)-9)
-	sub			REG_TMP0, REG_TMP0, REG_TMP1
-	TX_CLK_DIV_WAIT		CLKDIV_FAST, r0
 	qbbs			send_header_dont_send_01_send_11, REG_FNC.b2, 6
 	PUSH_FIFO_CONST		0x00
 	ldi			LAST_BIT_SENT, 0

@@ -34,11 +34,13 @@ AM243x | R5F             | AM243x EVM (referred to as am243x-evm in code), \n AM
 
 Tools / SW module       | Supported CPUs | Version
 ------------------------|----------------|-----------------------
-Code Composer Studio    | R5F, M4F, A53  | @VAR_CCS_VERSION
-SysConfig               | R5F, M4F, A53  | @VAR_SYSCFG_VERSION, build @VAR_SYSCFG_BUILD
-TI ARM CLANG            | R5F, M4F       | @VAR_TI_ARM_CLANG_VERSION
-FreeRTOS Kernel         | R5F, M4F, A53  | @VAR_FREERTOS_KERNEL_VERSION
-FreeRTOS SMP Kernel     | A53            | @VAR_FREERTOS_SMP_KERNEL_VERSION
+Code Composer Studio    | R5F, M4F       | 12.4.0
+SysConfig               | R5F, M4F       | 1.17.0, build 3128
+TI ARM CLANG            | R5F, M4F       | 2.1.3.LTS
+FreeRTOS Kernel         | R5F, M4F       | 10.4.3
+Tiny USB                | R5F            | 0.14.0
+LwIP                    | R5F            | STABLE-2_2_0_RELEASE
+Mbed-TLS                | R5F            | mbedtls-2.13.1
 
 ## Key Features
 
@@ -319,14 +321,11 @@ Module       | Supported CPUs | SysConfig Support | OS Support        | Key feat
 </tr>
 </table>
 
-## Upgrade and Compatibility Information {#UPGRADE_AND_COMPATIBILITY_INFORMATION_9_0_0}
+## Upgrade and Compatibility Information for Motor Control SDK 09.00.00 {#UPGRADE_AND_COMPATIBILITY_INFORMATION_9_0_0}
 
-<!-- \attention When migrating from MCU+ SDK, see \ref MIGRATION_GUIDES for more details -->
+\attention When migrating from MCU+ SDK, see \ref MIGRATION_GUIDES for more details.
 
-This section lists changes which could affect user applications developed using older SDK versions.
-Read this carefully to see if you need to do any changes in your existing application when migrating to this SDK version relative to
-previous SDK version. Also refer to older SDK version release notes to see changes in
-earlier SDKs.
+This section lists changes which could affect user applications developed using older MCU+ SDK versions. Read this carefully to see if you need to do any changes in your existing application when migrating to this SDK version relative to previous SDK version. Also refer to older SDK version release notes to see changes in earlier SDKs.
 
 <!-- ### Compiler Options
 

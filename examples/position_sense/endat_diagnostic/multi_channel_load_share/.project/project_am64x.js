@@ -97,8 +97,8 @@ function getComponentBuildProperty(buildOption) {
 
     build_property.files = files;
     build_property.filedirs = filedirs;
-    build_property.lnkfiles = lnkfiles;
     build_property.syscfgfile = syscfgfile;
+    build_property.lnkfiles = lnkfiles;
     build_property.readmeDoxygenPageTag = readmeDoxygenPageTag;
 
     if(buildOption.cpu.match(/r5f*/)) {

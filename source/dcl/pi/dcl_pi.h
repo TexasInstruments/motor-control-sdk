@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023 Texas Instruments Incorporated
+ *  Copyright (C) 2024 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -79,14 +79,14 @@ typedef _DCL_VOLATILE struct dcl_pi
     float32_t Imin;     //!< Lower integrator saturation limit, only used in DCL_runPIParallelEnhanced()
 
     /* internal storage */ 
-    float32_t i6;       //!< Saturation storage
-    float32_t i10;      //!< I path feedback value
-    float32_t i11;      //!< Tustin integrator storage
+    float32_t i6;       //!< Saturation multiplier, 1 means no saturation and 0 means fully saturated
+    float32_t i10;      //!< Integrator feedback storage
+    float32_t i11;      //!< Tustin integrator storage, only used in DCL_runPISeriesTustin()
     
     /* miscellaneous */
     DCL_PI_SPS *sps;    //!< updates controller parameter
     DCL_CSS *css;       //!< configuration & debugging
-} DCL_PI, *PI_Handle;
+} DCL_PI;
 
 //! \brief          Defines default values to initialize DCL_PI
 //!
@@ -115,7 +115,7 @@ typedef _DCL_VOLATILE struct dcl_pi
 
 //! \brief          Initialize DCL_PI struct with input controller parameters
 //!                 Example: DCL_PI* pi_ctrl = DCL_initPIasParam(1.0f,0.0f,1.0f,-1.0f);
-//!                 Note: input parameter needs to be in the same order as listed in PI_SPS struct
+//! \note           Note: input parameter needs to be in the same order as listed in PI_SPS struct
 //!
 //! \return         A DCL_PI* pointer
 //!
@@ -193,7 +193,7 @@ void DCL_forceUpdatePI(DCL_PI *pi)
 //!
 //! \param[in] pi   Pointer to the DCL_PI controller structure
 //!
-_DCL_CODE_ACCESS _DCL_CODE_SECTION
+_DCL_CODE_ACCESS
 void DCL_updatePINoCheck(DCL_PI *pi)
 {
 
@@ -225,12 +225,12 @@ void DCL_updatePINoCheck(DCL_PI *pi)
 //! \brief           A conditional update based on the update flag.
 //!                  If the update status is set, the function will update PI
 //!                  parameter from its SPS parameter and clear the status flag on completion.
-//!                  Note: Use DCL_setUpdateStatus(pi) to set the update status.
+//! \note            Note: Use DCL_setUpdateStatus(pi) to set the update status.
 //!     
 //! \param[in] pi    Pointer to the DCL_PI controller structure
 //! \return          'true' if an update is applied, otherwise 'false'
 //!
-_DCL_CODE_ACCESS _DCL_CODE_SECTION
+_DCL_CODE_ACCESS
 bool DCL_updatePI(DCL_PI *pi)
 {
     if (DCL_getUpdateStatus(pi))
@@ -243,7 +243,7 @@ bool DCL_updatePI(DCL_PI *pi)
 }
 
 //! \brief          Configures a series PI controller in "zero-pole-gain" form
-//!                 Note: Sampling period pi->css->T are used in the calculation.
+//! \note           Note: Sampling period pi->css->T are used in the calculation.
 //!                 New settings take effect after DCL_updatePI().
 //!                 Only z1 considered in DCL_ZPK3, other poles & zeros ignored.
 //!                 Zero frequency assumed to be in radians/sec.
@@ -274,7 +274,7 @@ void DCL_loadSeriesPIasZPK(DCL_PI *pi, DCL_ZPK3 *zpk)
 }
 
 //! \brief          Configures a parallel PI controller in "zero-pole-gain" form
-//!                 Note: Sampling period pi->css->T are used in the calculation.
+//! \note           Note: Sampling period pi->css->T are used in the calculation.
 //!                 New settings take effect after DCL_updatePI().
 //!                 Zero frequency assumed to be in radians/sec.
 //!
@@ -309,7 +309,7 @@ void DCL_loadParallelPIasZPK(DCL_PI *pi, DCL_ZPK3 *zpk)
 //! \param[in] yk   The measured feedback value
 //! \return         The control effort
 //!
-_DCL_CODE_ACCESS _DCL_CODE_SECTION
+_DCL_CRIT_ACCESS
 float32_t DCL_runPISeries(DCL_PI *pi, float32_t rk, float32_t yk)
 {
     float32_t v2, v4, v5, v9;
@@ -336,7 +336,7 @@ float32_t DCL_runPISeries(DCL_PI *pi, float32_t rk, float32_t yk)
 //! \param[in] yk    The measured feedback value
 //! \return          The control effort
 //!
-_DCL_CODE_ACCESS _DCL_CODE_SECTION
+_DCL_CRIT_ACCESS
 float32_t DCL_runPIParallel(DCL_PI *pi, float32_t rk, float32_t yk)
 {
     float32_t v1, v2, v4, v5, v9;
@@ -358,14 +358,14 @@ float32_t DCL_runPIParallel(DCL_PI *pi, float32_t rk, float32_t yk)
 
 //! \brief           Executes a parallel form PI controller with
 //!                  enhanced anti-windup logic incorporating an
-//!                  addintional integrator saturation clamp
+//!                  additional integrator saturation clamp
 //!
 //! \param[in] pi    Pointer to the DCL_PI structure
 //! \param[in] rk    The controller set-point reference
 //! \param[in] yk    The measured feedback value
 //! \return          The control effort
 //!
-_DCL_CODE_ACCESS _DCL_CODE_SECTION
+_DCL_CRIT_ACCESS
 float32_t DCL_runPIParallelEnhanced(DCL_PI *pi, float32_t rk, float32_t yk)
 {
     float32_t v1, v5, v7, v8;
@@ -397,7 +397,7 @@ float32_t DCL_runPIParallelEnhanced(DCL_PI *pi, float32_t rk, float32_t yk)
 //! \param[in] yk    The measured feedback value
 //! \return          The control effort
 //!
-_DCL_CODE_ACCESS _DCL_CODE_SECTION
+_DCL_CRIT_ACCESS
 float32_t DCL_runPISeriesTustin(DCL_PI *pi, float32_t rk, float32_t yk)
 {
     float32_t v2, v4, v5, v8, v9;

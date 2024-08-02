@@ -40,6 +40,7 @@ extern "C" {
 
 #include <drivers/soc.h>
 #include <drivers/pruicss.h>
+#include <pruicss_pwm/include/pruicss_pwm.h>
 #include  <math.h>
 
 
@@ -47,10 +48,6 @@ extern "C" {
 /*                           Macros                                           */
 /* ========================================================================== */
 
-
-/** \brief ICSSG DMEM0/1 base addresses */
-#define PRU_ICSSG_DRAM0_SLV_RAM     ( CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE )
-#define PRU_ICSSG_DRAM1_SLV_RAM     ( CSL_PRU_ICSSG0_DRAM1_SLV_RAM_BASE )
 
 /** \brief SD channel control, channel disable/enable */
 #define DEF_SD_CH_CTRL_CH_EN        ( 0 )       /* default all chs disabled */
@@ -142,6 +139,9 @@ extern "C" {
 
 #define SDFM_PHASE_DELAY_ACK_BIT_MASK   (1)
 #define SDFM_PHASE_DELAY_CAL_LOOP_SIZE  (8)
+
+#define SDFM_IEP_CMP1_EN_SHIFT     (2)
+#define SDFM_IEP_CMP2_EN_SHIFT     (3)
 
 /* ========================================================================== */
 /*                         Structures                                         */
@@ -354,14 +354,17 @@ typedef struct SDFM_SampleOutInterface_s
 typedef struct SDFM_s {
     /**< PRU ID */
     PRUICSS_Handle gPruIcssHandle;
+    PRUICSS_PWM_Handle gPruPwmHandle;
     uint8_t pruId;
     uint32_t sdfmClock;
     uint32_t iepClock;
     uint32_t pruCoreClk;
     uint8_t  iepInc;
-    SDFM_Interface * p_sdfm_interface;
+    SDFM_Interface * pSdfmInterface;
     SDFM_SampleOutInterface *sampleOutputInterface;
-    void *pruss_cfg;
+    void *pruicssCfg;
+    void *pruicssIep;
+    void *pruicssEcap;
 } SDFM;
 
 

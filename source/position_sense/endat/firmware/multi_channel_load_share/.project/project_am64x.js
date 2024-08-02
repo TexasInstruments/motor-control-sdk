@@ -5,8 +5,7 @@ let device = "am64x";
 const files = {
     common: [
         "endat_main.asm",
-        "endat_diagnostic.cmd",
-        "endat_master_hexpru.cmd"
+        "endat_diagnostic.cmd"
     ],
 };
 
@@ -61,6 +60,7 @@ const cflags = {
 
 const lflags = {
     common: [
+        "--diag_suppress=10063-D", /* Added to suppress entry_point related warning */
         "--entry_point=ENDAT_INIT",
         "--disable_auto_rts",
     ],
@@ -73,17 +73,62 @@ const buildOptionCombos = [
     { device: device, cpu: "icssg0-txpru1", cgt: "ti-pru-cgt", board: "am64x-evm", os: "fw"},
 ];
 
-let postBuildStepsPru1 = [
-    "$(CG_TOOL_ROOT)/bin/hexpru.exe --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakePRU -o endat_peripheral_interface_multi_ch_load_share_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.h endat_peripheral_interface_multi_ch_load_share_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.out;  $(COPY) endat_peripheral_interface_multi_ch_load_share_am64x-evm_icssg0-pru1_fw_ti-pru-cgt.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/endat_master_multi_PRU_bin.h"
+function getmakefilePruPostBuildSteps(cpu, board)
+{
+    let postBuildSteps
 
-];
-let postBuildStepsRtupru1 = [
-    "$(CG_TOOL_ROOT)/bin/hexpru.exe --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakeRTU -o endat_peripheral_interface_multi_ch_load_share_am64x-evm_icssg0-rtupru1_fw_ti-pru-cgt.h endat_peripheral_interface_multi_ch_load_share_am64x-evm_icssg0-rtupru1_fw_ti-pru-cgt.out;  $(COPY) endat_peripheral_interface_multi_ch_load_share_am64x-evm_icssg0-rtupru1_fw_ti-pru-cgt.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/endat_master_multi_RTU_bin.h"
-   
-];
-let postBuildStepsTxpru1 = [
-    "$(CG_TOOL_ROOT)/bin/hexpru.exe --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakeTXPRU -o endat_peripheral_interface_multi_ch_load_share_am64x-evm_icssg0-txpru1_fw_ti-pru-cgt.h endat_peripheral_interface_multi_ch_load_share_am64x-evm_icssg0-txpru1_fw_ti-pru-cgt.out;  $(COPY) endat_peripheral_interface_multi_ch_load_share_am64x-evm_icssg0-txpru1_fw_ti-pru-cgt.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/endat_master_multi_TXPRU_bin.h"
-];
+    switch(cpu)
+    {
+        case "icssg0-pru1":
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakePRU -o endat_master_multi_PRU_bin.h  endat_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_master_multi_PRU_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/endat_master_multi_PRU_bin.h;"+ 
+            "$(RM)  endat_master_multi_PRU_bin.h;"]
+            break;
+        case "icssg0-rtupru1":
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakeRTU -o endat_master_multi_RTU_bin.h  endat_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_master_multi_RTU_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/endat_master_multi_RTU_bin.h;"+ 
+            "$(RM)  endat_master_multi_RTU_bin.h;"]
+            break;
+        case "icssg0-txpru1":
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakeTXPRU -o endat_master_multi_TXPRU_bin.h  endat_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_master_multi_TXPRU_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/endat_master_multi_TXPRU_bin.h;"+ 
+            "$(RM)  endat_master_multi_TXPRU_bin.h;"]
+            break;
+    }
+
+    return postBuildSteps
+}
+
+function getccsPruPostBuildSteps(cpu, board)
+{
+    let postBuildSteps
+
+    switch(cpu)
+    {
+        case "icssg0-pru1":
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakePRU -o endat_master_multi_PRU_bin.h  endat_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_master_multi_PRU_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/endat_master_multi_PRU_bin.h;"+ 
+            "if ${CCS_HOST_OS} == linux rm endat_master_multi_PRU_bin.h;"+
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_master_multi_PRU_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/endat_master_multi_PRU_bin.h;"+ 
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm endat_master_multi_PRU_bin.h;"]
+            break;
+        case "icssg0-rtupru1":
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakeRTU -o endat_master_multi_RTU_bin.h  endat_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_master_multi_RTU_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/endat_master_multi_RTU_bin.h;"+ 
+            "if ${CCS_HOST_OS} == linux rm endat_master_multi_RTU_bin.h;"+
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_master_multi_RTU_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/endat_master_multi_RTU_bin.h;"+ 
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm endat_master_multi_RTU_bin.h;"]
+            break;
+        case "icssg0-txpru1":
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakeTXPRU -o endat_master_multi_TXPRU_bin.h  endat_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_master_multi_TXPRU_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/endat_master_multi_TXPRU_bin.h;"+ 
+            "if ${CCS_HOST_OS} == linux rm endat_master_multi_TXPRU_bin.h;"+
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_master_multi_TXPRU_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/endat_master_multi_TXPRU_bin.h;"+ 
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm endat_master_multi_TXPRU_bin.h;"]
+            break;
+    }
+    return postBuildSteps
+}
 
 function getComponentProperty() {
     let property = {};
@@ -109,20 +154,18 @@ function getComponentBuildProperty(buildOption) {
     build_property.includes = includes;
     if(buildOption.cpu.match("icssg0-pru1"))
     {
-        build_property.postBuildSteps = postBuildStepsPru1;
         build_property.defines = defines_pru;
     }
     if(buildOption.cpu.match("icssg0-rtupru1"))
     {
-        build_property.postBuildSteps = postBuildStepsRtupru1;
         build_property.defines = defines_rtu;
     }
     if(buildOption.cpu.match("icssg0-txpru1"))
     {
-        build_property.postBuildSteps = postBuildStepsTxpru1;
         build_property.defines = defines_txpru;
     }
-
+    build_property.ccsPruPostBuildSteps = getccsPruPostBuildSteps(buildOption.cpu, buildOption.board);
+    build_property.makefilePruPostBuildSteps = getmakefilePruPostBuildSteps(buildOption.cpu, buildOption.board);
     build_property.cflags = cflags;
     build_property.lflags = lflags;
     build_property.readmeDoxygenPageTag = readmeDoxygenPageTag;

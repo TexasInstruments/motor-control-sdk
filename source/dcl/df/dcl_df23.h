@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (C) 2024 Texas Instruments Incorporated - http://www.ti.com/
  *
  *
  * Redistribution and use in source and binary forms, with or without
@@ -88,7 +88,7 @@ typedef _DCL_VOLATILE struct dcl_df23
     /* miscellaneous */
     DCL_DF23_SPS *sps; //!< updates compensator parameter
     DCL_CSS *css;      //!< configuration & debugging
-} DCL_DF23, *DF23_Handle;
+} DCL_DF23;
 
 //! \brief          Defines default values to initialize DCL_DF23
 //!
@@ -116,7 +116,7 @@ typedef _DCL_VOLATILE struct dcl_df23
 
 //! \brief          Initialize DCL_DF23 struct with input compensator parameters
 //!                 Example: DCL_DF23* DF23_ctrl = DCL_initDF23asParam(1.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f);
-//!                 Note: input parameter needs to be in the same order as listed in DF23_SPS struct.
+//! \note           Note: input parameter needs to be in the same order as listed in DF23_SPS struct.
 //!
 //! \return         A DCL_DF23* pointer
 //!
@@ -179,7 +179,7 @@ void DCL_forceUpdateDF23(DCL_DF23 *df)
 //!
 //! \param[in] df    Pointer to the DCL_DF23 controller structure
 //!
-_DCL_CODE_ACCESS _DCL_CODE_SECTION
+_DCL_CODE_ACCESS
 void DCL_updateDF23NoCheck(DCL_DF23 *df)
 {
     dcl_interrupt_t ints;
@@ -197,12 +197,12 @@ void DCL_updateDF23NoCheck(DCL_DF23 *df)
 //! \brief           A conditional update based on the update flag.
 //!                  If the update status is set, the function will update DF23 
 //!                  parameter from its SPS parameter and clear the status flag on completion.
-//!                  Note: Use DCL_setUpdateStatus(df) to set the update status.
+//! \note            Note: Use DCL_setUpdateStatus(df) to set the update status.
 //!     
 //! \param[in] df    Pointer to the DCL_DF23 controller structure
 //! \return          'true' if an update is applied, otherwise 'false'
 //!
-_DCL_CODE_ACCESS _DCL_CODE_SECTION
+_DCL_CODE_ACCESS
 bool DCL_updateDF23(DCL_DF23 *df)
 {
     if (DCL_setUpdateStatus(df))
@@ -226,7 +226,7 @@ bool DCL_isStableDF23(DCL_DF23 *df)
 }
 
 //! \brief            Loads the DF23 shadow coefficients from a ZPK3 description
-//!                   Note: Sampling period df->css->T are used in the calculation.
+//! \note             Note: Sampling period df->css->T are used in the calculation.
 //!                   New settings take effect after DCL_updateDF23().
 //!
 //! \param[in] df     Pointer to the DCL_DF23 controller structure
@@ -274,7 +274,7 @@ void DCL_loadDF23asZPK(DCL_DF23 *df, DCL_ZPK3 *zpk)
 //! \param[in] ek    The servo error
 //! \return          The control effort
 //!
-_DCL_CODE_ACCESS _DCL_CODE_SECTION
+_DCL_CRIT_ACCESS
 float32_t DCL_runDF23(DCL_DF23 *df, float32_t ek)
 {
     float32_t v7 = (ek * df->b0) + df->x1;
@@ -291,7 +291,7 @@ float32_t DCL_runDF23(DCL_DF23 *df, float32_t ek)
 //! \param[in] ek    The servo error
 //! \return          The control effort
 //!
-_DCL_CODE_ACCESS
+_DCL_CRIT_ACCESS
 float32_t DCL_runDF23PartialCompute(DCL_DF23 *df, float32_t ek)
 {
     return((ek * df->b0) + df->x1);
@@ -303,7 +303,7 @@ float32_t DCL_runDF23PartialCompute(DCL_DF23 *df, float32_t ek)
 //! \param[in] ek   The servo error
 //! \param[in] uk   The controller output in the previous sample interval
 //!
-_DCL_CODE_ACCESS
+_DCL_CRIT_ACCESS
 void DCL_runDF23PartialUpdate(DCL_DF23 *df, float32_t ek, float32_t uk)
 {
     df->x1 = (ek * df->b1) + df->x2 - (uk * df->a1);
@@ -319,7 +319,7 @@ void DCL_runDF23PartialUpdate(DCL_DF23 *df, float32_t ek, float32_t uk)
 //! \param[in] Umin   Lower saturation limit  
 //! \return    uk     The control effort
 //!
-_DCL_CODE_ACCESS _DCL_CODE_SECTION
+_DCL_CRIT_ACCESS
 float32_t DCL_runDF23Clamp(DCL_DF23 *df, float32_t ek, float32_t Umax, float32_t Umin)
 {
     float32_t uk = DCL_runDF23PartialCompute(df, ek);

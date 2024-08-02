@@ -8,12 +8,11 @@ Real-time communication with encoders and current sensing is typically handled b
 
 Applications and PRU-ICSS firmwares for following position sense encoders are provided in the SDK.
 
+- \subpage BISS-C
 - \subpage ENDAT
 - \subpage HDSL
+- \subpage NIKON
 - \subpage TAMAGAWA
-\cond SOC_AM243X
-- \subpage BISS-C
-\endcond
 \endcond
 
 \cond SOC_AM263X

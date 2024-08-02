@@ -1,0 +1,90 @@
+%let pwm_module = system.modules['/pruicss_g_v0_pwm/pruicss_g_v0_pwm'];
+
+%if(pwm_module)
+%{
+extern PRUICSS_Config gPruIcssConfig[];
+
+uint32_t gPruIcssPwmConfigNum = CONFIG_PRUICSS_PWM_NUM_INSTANCES;
+
+PRUICSS_PWM_IEP_Attrs iepAttrs[] =
+{
+%for(let i=0; i<pwm_module.$instances.length; i++)
+%{
+    {
+        .pruIcssIepClkFrequency = `pwm_module.$instances[i].PRUICSS.$name.toUpperCase() + "_IEP_CLK_FREQ_HZ"`,
+        .pruIcssIepClkPeriod = `pwm_module.$instances[i].PRUICSS.$name.toUpperCase() + "_IEP_CLK_PERIOD_NSEC"`,
+        .iep0IncrementValue = `pwm_module.$instances[i].PRUICSS_PWM_IEP.iep0IncrementValue`U,
+        %if(pwm_module.$instances[i].PRUICSS_PWM_IEP.enableIep0)
+        %{
+        .enableIep0 = 1U,
+        %}
+        %else
+        %{
+        .enableIep0 = 0U,
+        %}
+        %if(pwm_module.$instances[i].PRUICSS_PWM_IEP.enableIEP0ShadowMode)
+        %{
+        .enableIEP0ShadowMode = 1U,
+        %}
+        %else
+        %{
+        .enableIEP0ShadowMode = 0U,
+        %}
+        %if(pwm_module.$instances[i].PRUICSS_PWM_IEP.enableIep0ResetOnEpwm0_Sync)
+        %{
+        .enableIep0ResetOnEpwm0_Sync = 1U,
+        %}
+        %else
+        %{
+        .enableIep0ResetOnEpwm0_Sync = 0U,
+        %}
+        %if(pwm_module.$instances[i].PRUICSS_PWM_IEP.enableIep0ResetOnEpwm3_Sync)
+        %{
+        .enableIep0ResetOnEpwm3_Sync = 1U,
+        %}
+        %else
+        %{
+        .enableIep0ResetOnEpwm3_Sync = 0U,
+        %}
+        %if(pwm_module.$instances[i].PRUICSS_PWM_IEP.enableIep0ResetOnCompare0)
+        %{
+        .enableIep0ResetOnCompare0 = 1U,
+        %}
+        %else
+        %{
+        .enableIep0ResetOnCompare0 = 0U,
+        %}
+        %if(pwm_module.$instances[i].PRUICSS_PWM_IEP.enableIep1SlaveMode)
+        %{
+        .enableIep1SlaveMode = 1U,
+        %}
+        %else
+        %{
+        .enableIep1SlaveMode = 0U,
+        %}
+        %if(pwm_module.$instances[i].PRUICSS_PWM_IEP.enableAutoClearCompareStatus)
+        %{
+        .enableAutoClearCompareStatus = 1U,
+        %}
+        %else
+        %{
+        .enableAutoClearCompareStatus = 0U,
+        %}
+    },
+%}
+};
+
+/* PRUICSS PWM driver configuration */
+PRUICSS_PWM_Config gPruIcssPwmConfig[] =
+{
+%for(let i=0; i<pwm_module.$instances.length; i++)
+%{
+    { 
+        %// Using direct indexing, assuming pwm_iep & pwm_channel modules being used by only pwm module.
+        /* pruIcssHandle will be intialized on application using PRUICSS_PWM_open call */
+        .pwmAttrs        = {0},
+        .iepAttrs        = &iepAttrs[0]
+    }
+%}
+};
+%}

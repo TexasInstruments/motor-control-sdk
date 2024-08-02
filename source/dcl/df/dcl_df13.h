@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (C) 2024 Texas Instruments Incorporated - http://www.ti.com/
  *
  *
  * Redistribution and use in source and binary forms, with or without
@@ -46,31 +46,9 @@ extern "C" {
  *  \brief      Contains direct form 1 3rd order DF13 compensator
  *              with its related structures and functions 
  *
- *  \details    Due to compatibility reason, this file maintains a copy
+ *  \note       Due to compatibility reason, this file maintains a copy
  *              of legacy function DCL_runDF13_C5(), DCL_runDF13_C6(). 
  *              It is advised to not use these legacy functions for new development.
- *
- *  \code       Previously, C28 version of DCL did not implement a function
- *              to run DF13 with clamp. Instead, user had to implement a routine 
- *              similar to the following: 
- *
- *              extern DCL_DF13 df;
- *              extern float32_t ek, uk;
- *              float32_t vk = 0;
- *
- *              float32_t uk = DCL_runDF13_C2/C5(df, ek, vk);
- *              bool is_clamped = DCL_runClamp_C1/C2(&uk, Umax, Umin)
- *              if (!is_clamped)
- *              {
- *                  vk = DCL_runDF13_C3/C6(df, ek, uk);
- *              }     
- *  
- *              A new function DCL_runDF13Clamp() was implemented to replace it,
- *              therefore, user may change the aformentioned routine to just:
- *         
- *              uk = DCL_runDF13Clamp(df, ek, Umax, Umin);
- *  \endcode
- *
  */       
 
 #include "../dcl_common.h"
@@ -114,14 +92,14 @@ typedef _DCL_VOLATILE struct dcl_df13
     float32_t d5;   //!< u(k-2)
     float32_t d6;   //!< u(k-3)
 
-    float32_t a0;   //!< No Longer Needed
-    float32_t d0;   //!< No Longer Needed
-    float32_t d7;   //!< No Longer Needed
+    float32_t a0;   //!< No longer needed
+    float32_t d0;   //!< No longer needed
+    float32_t d7;   //!< No longer needed
 
     /* miscellaneous */
     DCL_DF13_SPS *sps; //!< updates compensator parameter
     DCL_CSS *css;      //!< configuration & debugging
-} DCL_DF13, *DF13_Handle;
+} DCL_DF13;
 
 //! \brief          Defines default values to initialize DCL_DF13
 //!
@@ -150,7 +128,7 @@ typedef _DCL_VOLATILE struct dcl_df13
 
 //! \brief          Initialize DCL_DF13 struct with input compensator parameters
 //!                 Example: DCL_DF13* DF13_ctrl = DCL_initDF13asParam(0.25f,0.25f,0.25f,0.25f,0.0f,0.0f,0.0f);
-//!                 Note: input parameter needs to be in the same order as listed in DF13_SPS struct
+//! \note           Note: input parameter needs to be in the same order as listed in DF13_SPS struct
 //!
 //! \return         A DCL_DF13* pointer
 //!
@@ -214,7 +192,7 @@ void DCL_forceUpdateDF13(DCL_DF13 *df)
 //!
 //! \param[in] df    Pointer to the DCL_DF13 controller structure
 //!
-_DCL_CODE_ACCESS _DCL_CODE_SECTION
+_DCL_CODE_ACCESS
 void DCL_updateDF13NoCheck(DCL_DF13 *df)
 {
     dcl_interrupt_t ints;
@@ -232,12 +210,12 @@ void DCL_updateDF13NoCheck(DCL_DF13 *df)
 //! \brief           A conditional update based on the update flag.
 //!                  If the update status is set, the function will update DF13
 //!                  parameter from its SPS parameter and clear the status flag on completion..
-//!                  Note: Use DCL_setUpdateStatus(df) to set the update status.
+//! \note            Note: Use DCL_setUpdateStatus(df) to set the update status.
 //!     
 //! \param[in] df    Pointer to the DCL_DF13 controller structure
 //! \return          'true' if an update is applied, otherwise 'false'
 //!
-_DCL_CODE_ACCESS _DCL_CODE_SECTION
+_DCL_CODE_ACCESS
 bool DCL_updateDF13(DCL_DF13 *df)
 {
     if (DCL_getUpdateStatus(df))
@@ -261,7 +239,7 @@ bool DCL_isStableDF13(DCL_DF13 *df)
 }
 
 //! \brief            Loads the DF13 shadow coefficients from a ZPK3 description.
-//!                   Note: Sampling period df->css->T are used in the calculation.
+//! \note             Note: Sampling period df->css->T are used in the calculation.
 //!                   New settings take effect after DCL_updateDF13().
 //!
 //! \param[in] df     Pointer to the DCL_DF13 controller structure
@@ -310,7 +288,7 @@ void DCL_loadDF13asZPK(DCL_DF13 *df, DCL_ZPK3 *zpk)
 //! \param[in] ek    The servo error
 //! \return          The control effort
 //!
-_DCL_CODE_ACCESS _DCL_CODE_SECTION
+_DCL_CRIT_ACCESS
 float32_t DCL_runDF13(DCL_DF13 *df, float32_t ek)
 {
     float32_t v4 = (ek * df->b0) + (df->d1 * df->b1) + (df->d2 * df->b2) + (df->d3 * df->b3) - (df->d4 * df->a1) - (df->d5 * df->a2) - (df->d6 * df->a3);
@@ -331,7 +309,7 @@ float32_t DCL_runDF13(DCL_DF13 *df, float32_t ek)
 //! \param[in] ek    The servo error
 //! \return          The control effort
 //!
-_DCL_CODE_ACCESS
+_DCL_CRIT_ACCESS
 float32_t DCL_runDF13PartialCompute(DCL_DF13 *df, float32_t ek)
 {
     float32_t v4 = (ek * df->b0) + (df->d1 * df->b1) + (df->d2 * df->b2) + (df->d3 * df->b3) - (df->d4 * df->a1) - (df->d5 * df->a2) - (df->d6 * df->a3);
@@ -344,7 +322,7 @@ float32_t DCL_runDF13PartialCompute(DCL_DF13 *df, float32_t ek)
 //! \param[in] ek    The servo error
 //! \param[in] uk    The controller output in the previous sample interval
 //!
-_DCL_CODE_ACCESS
+_DCL_CRIT_ACCESS
 void DCL_runDF13PartialUpdate(DCL_DF13 *df, float32_t ek, float32_t uk)
 {
     df->d3 = df->d2;
@@ -363,7 +341,28 @@ void DCL_runDF13PartialUpdate(DCL_DF13 *df, float32_t ek, float32_t uk)
 //! \param[in] Umin   Lower saturation limit
 //! \return    uk     The control effort
 //!
-_DCL_CODE_ACCESS _DCL_CODE_SECTION
+/*  
+ *  \details    Previously, C28 version of DCL did not implement a function
+ *              to run DF13 with clamp. Instead, user had to implement a routine 
+ *              similar to the following: 
+ *
+ *  \code{.c}   extern DCL_DF13 df;
+ *              extern float32_t ek, uk;
+ *              float32_t vk = 0;
+ *
+ *              float32_t uk = DCL_runDF13_C2/C5(df, ek, vk);
+ *              bool is_clamped = DCL_runClamp_C1/C2(&uk, Umax, Umin)
+ *              if (!is_clamped)
+ *              {
+ *                  vk = DCL_runDF13_C3/C6(df, ek, uk);
+ *              }     
+ *  
+ *              // A new function DCL_runDF13Clamp() was implemented to replace it,
+ *              // therefore, user may change the aformentioned routine to just:
+ *              uk = DCL_runDF13Clamp(df, ek, Umax, Umin);
+ *  \endcode
+ */
+_DCL_CRIT_ACCESS
 float32_t DCL_runDF13Clamp(DCL_DF13 *df, float32_t ek, float32_t Umax, float32_t Umin)
 {
     float32_t uk = DCL_runDF13PartialCompute(df, ek);
@@ -380,7 +379,7 @@ float32_t DCL_runDF13Clamp(DCL_DF13 *df, float32_t ek, float32_t Umax, float32_t
 //! \param[in] vk   The partial pre-computed control effort
 //! \return    uk   The control effort
 //!
-_DCL_CODE_ACCESS 
+_DCL_CRIT_ACCESS 
 float32_t DCL_runDF13_C5(DCL_DF13 *p, float32_t ek, float32_t vk)
 {
     p->d4 = (ek * p->b0) + vk;
@@ -396,7 +395,7 @@ float32_t DCL_runDF13_C5(DCL_DF13 *p, float32_t ek, float32_t vk)
 //! \param[in] uk   The controller output in the previous sample interval
 //! \return    vk   The control effort
 //!
-_DCL_CODE_ACCESS 
+_DCL_CRIT_ACCESS 
 float32_t DCL_runDF13_C6(DCL_DF13 *p, float32_t ek, float32_t uk)
 {
     float32_t v9;

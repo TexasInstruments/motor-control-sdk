@@ -85,6 +85,11 @@ The main software components in the block diagram specific to motor control are 
 </tr>
 <tr><td colspan="3" bgcolor=#F0F0F0>**Position Sense Encoders**</td></tr>
 <tr>
+    <td> BISS-C
+    <td>\ref BISS-C
+    <td> Driver and PRU-ICSS firmware for BISS-C encoder interface
+</tr>
+<tr>
     <td> EnDat
     <td>\ref ENDAT
     <td> Driver and PRU-ICSS firmware for EnDat encoder interface
@@ -95,14 +100,14 @@ The main software components in the block diagram specific to motor control are 
     <td> Driver and PRU-ICSS firmware for Hiperface DSL encoder interface
 </tr>
 <tr>
+    <td> Nikon A-Format
+    <td>\ref NIKON
+    <td> Driver and PRU-ICSS firmware for Nikon A-Format encoder interface
+</tr>
+<tr>
     <td> Tamagawa
     <td>\ref TAMAGAWA
     <td> Driver and PRU-ICSS firmware for Tamagawa encoder interface
-</tr>
-<tr>
-    <td> BISS-C
-    <td>\ref BISS-C
-    <td> Driver and PRU-ICSS firmware for BISS-C encoder interface
 </tr>
 <tr><td colspan="3" bgcolor=#F0F0F0>**Current Sense**</td></tr>
 <tr>
@@ -112,14 +117,24 @@ The main software components in the block diagram specific to motor control are 
 </tr>
 <tr><td colspan="3" bgcolor=#F0F0F0>**Real Time Libraries**</td></tr>
 <tr>
+    <td> Control algorithms
+    <td> \ref CONTROL
+    <td> Library for control algorithms and techniques used in motors such as PMSM and BLDC
+</tr>
+<tr>
     <td> Digital Control Library (DCL)
     <td>\ref DCL
     <td> Header-only library for digital control applications
 </tr>
 <tr>
+    <td> Observer algorithms
+    <td>\ref OBSERVERS
+    <td> Header-only library for encoder/observer algorithms used in both sensored/sensorless field oriented control (FOC)
+</tr>
+<tr>
     <td> Transforms
     <td>\ref TRANSFORMS
-    <td> Transformation including Clarke, Park, Space Vector Generation used in motor control applications
+    <td> Transformation including Clarke, Park, Space Vector Generation used in motor control applications.
 </tr>
 <tr><td colspan="3" bgcolor=#F0F0F0>**PRU-ICSS PWM**</td></tr>
 <tr>
@@ -152,9 +167,29 @@ The main software components in the block diagram specific to motor control are 
 </tr>
 <tr><td colspan="3" bgcolor=#F0F0F0>**Real Time Libraries**</td></tr>
 <tr>
+    <td> Control algorithms
+    <td> \ref CONTROL
+    <td> Library for control algorithms and techniques used in motors such as PMSM and BLDC
+</tr>
+<tr>
+    <td> Datalog
+    <td>\ref DATALOG
+    <td> Library for storing the real time values of user selectable variables
+</tr>
+<tr>
     <td> Digital Control Library (DCL)
     <td>\ref DCL
     <td> Header-only library for digital control applications
+</tr>
+<tr>
+    <td> Observer algorithms
+    <td>\ref OBSERVERS
+    <td> Header-only library for encoder/observer algorithms used in both sensored/sensorless field oriented control (FOC)
+</tr>
+<tr>
+    <td> Software Frequency Response Analyzer
+    <td>\ref SFRA
+    <td> Library that enables developers to quickly measure the frequency response of their digital power converter.
 </tr>
 <tr>
     <td> Transforms

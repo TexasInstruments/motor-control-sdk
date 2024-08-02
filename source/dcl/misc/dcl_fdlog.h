@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023 Texas Instruments Incorporated
+ *  Copyright (C) 2024 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -55,7 +55,7 @@ extern "C" {
  *  \code       An example of initialization and use is shown below:
  *
  *              uint32_t fdlog_size = 400;
- *              #pragma DATA_SECTION(r_Array, "DataLogSection") //Not unnecessary but helpful for debugging
+ *              #pragma DATA_SECTION(r_Array, "DataLogSection") //Not necessary but helpful for debugging
  *              float32_t r_Array[fdlog_size];
  *              DCL_FDLOG rBuf;
  *
@@ -74,11 +74,15 @@ extern "C" {
 typedef _DCL_VOLATILE struct dcl_fdlog 
 {
     float32_t *fptr;    //!< Pointer to first buffer element
+    float32_t *lptr;    //!< Pointer to last buffer element
     float32_t *dptr;    //!< Current data index pointer 
     uint32_t size;      //!< The size of buffer
-} DCL_FDLOG;
+} DCL_FDLOG, FDLOG;
 
 /******************** macro definitions ********************/
+//! \brief          Default initialization of DCL_FDLOG
+//!
+#define FDLOG_DEFAULTS     {0x0,0x0,0x0,0}
 
 //! \brief          Obtain the total size of buffer
 //!
@@ -97,9 +101,11 @@ typedef _DCL_VOLATILE struct dcl_fdlog
 //! \brief          Remaining space left from indexed pointer to end of buffer
 //!
 //! \param[in] buf  Pointer to DCL_FDLOG
-//! \return         uint32_t remain   
+//! \return         int32_t remain   
 //!
-#define DCL_getLogRemain(buf)       ((buf)->size - DCL_getLogIndex(buf))
+#define DCL_getLogRemain(buf)       ((int32_t)((buf)->lptr - (buf)->dptr))
+
+/******************** inline functions ********************/
 
 //! \brief          Sets index of the current pointer (zero-indexed) 
 //!
@@ -115,14 +121,12 @@ void DCL_setLogIndex(DCL_FDLOG *buf, uint32_t idx)
     } 
 }    
 
-/******************** inline functions ********************/
-
 //! \brief          Resets all structure pointers to null value
 //!
 //! \param[in] buf  The DCL_FDLOG structure
 //!
 _DCL_CODE_ACCESS
-void DCL_deleteLog(DCL_FDLOG *buf)  { buf->dptr = buf->fptr = NULL; buf->size = 0; }
+void DCL_deleteLog(DCL_FDLOG *buf)  { buf->dptr = buf->fptr = buf->lptr = NULL; buf->size = 0; }
 
 //! \brief          Resets the data index pointer to start of buffer 
 //! \param[in] buf  The DCL_FDLOG structure
@@ -139,16 +143,16 @@ void DCL_resetLog(DCL_FDLOG *buf)   { buf->dptr = buf->fptr; }
 _DCL_CODE_ACCESS
 void DCL_fillLog(DCL_FDLOG *buf, float32_t data)
 {
-    uint32_t length = DCL_getLogSize(buf);
+    uint32_t size = DCL_getLogSize(buf);
     float32_t* mem = buf->fptr;
     DCL_resetLog(buf);
-    while (length--) *mem++ = data;
+    while (size--) *mem++ = data;
 }
 
 //! \brief          Clears the buffer contents by writing 0 to all elements and
 //!                 resets the data index pointer to the start of the buffer.
 //!
-#define DCL_clearLog(buf)       DCL_fillLog(buf,0)
+#define DCL_clearLog(buf)       DCL_fillLog(buf,0.0f)
 
 //! \brief          Assigns the buffer pointers to a memory block or array and
 //!                 sets the data index pointer to the first address
@@ -160,8 +164,9 @@ void DCL_fillLog(DCL_FDLOG *buf, float32_t data)
 _DCL_CODE_ACCESS
 void DCL_initLog(DCL_FDLOG *buf, float32_t *addr, uint32_t size)
 {
-    buf->fptr = addr;
     buf->size = size;
+    buf->fptr = addr;
+    buf->lptr = addr + size - 1;
     DCL_resetLog(buf);
 }
 
@@ -184,7 +189,7 @@ float32_t DCL_writeLog(DCL_FDLOG *buf, float32_t data)
     *(buf->dptr++) = data;
 
     // check for end of buffer & wrap if necessary
-    if (DCL_getLogIndex(buf) > (buf->size - 1)) DCL_resetLog(buf);
+    if (buf->dptr > buf->lptr) DCL_resetLog(buf);
 
     return(rv);
 }
@@ -201,13 +206,13 @@ float32_t DCL_readLog(DCL_FDLOG *buf)
     float32_t rv = *(buf->dptr++);
 
     // check for end of buffer & wrap if necessary
-    if (DCL_getLogIndex(buf) > (buf->size - 1)) DCL_resetLog(buf);
+    if (buf->dptr > buf->lptr) DCL_resetLog(buf);
 
     return(rv);
 }
 
 //! \brief          Copies the contents of one log (src) into another (dst).  
-//!                 Both logs must have the same length.
+//!                 Both logs must have the same size.
 //!
 //! \param[in] src  The destination DCL_FDLOG structure
 //! \param[in] dst  The source DCL_FDLOG structure
@@ -215,15 +220,15 @@ float32_t DCL_readLog(DCL_FDLOG *buf)
 _DCL_CODE_ACCESS
 void DCL_copyLog(DCL_FDLOG *src, DCL_FDLOG *dst)
 {
-    uint32_t length = DCL_getLogSize(src);
-    if (length != DCL_getLogSize(dst))
+    uint32_t size = DCL_getLogSize(src);
+    if (size != DCL_getLogSize(dst))
     {
         return;
     }
 
     float32_t* src_ptr = src->fptr;
     float32_t* dst_ptr = dst->fptr;
-    while (length--)  *(dst_ptr++) = *(src_ptr++);
+    while (size--)  *(dst_ptr++) = *(src_ptr++);
     DCL_setLogIndex(dst, DCL_getLogIndex(src));
 }
 
@@ -235,4 +240,3 @@ void DCL_copyLog(DCL_FDLOG *src, DCL_FDLOG *dst)
 
 #endif // _DCL_FDLOG_H_
 
-/* end of file */

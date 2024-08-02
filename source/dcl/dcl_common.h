@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023 Texas Instruments Incorporated
+ *  Copyright (C) 2024 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -47,24 +47,32 @@ extern "C" {
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <math.h>
 
 //! \brief  Defines single,double precision data type.
-//!         Note: Assumes ABI to be __TI_EABI__, 
+//!
+//! \note   Note: Assumes ABI to be __TI_EABI__, 
 //!         does not support legacy __TI_COFF__.
+#ifndef IEEE754_TYPES
+#define IEEE754_TYPES
 typedef float         float32_t;
 typedef double        float64_t;
+#endif // IEEE754_TYPES
 
-//! \brief  Defines the scope of dcl functions (static inline/extern inline/none)
-#define _DCL_CODE_ACCESS    static inline
+//! \brief  Defines the scope of dcl functions
+#define _DCL_CODE_ACCESS   static inline
 
-//! \brief  Defines dcl function section that users can specify in the linker file(.cmd) 
-//!         and to accelerate performance by mapping to faster memory
-//!         Note: only DCL_run and DCL_update are included by default
-#define _DCL_CODE_SECTION   __attribute__((section("dclfuncs")))
+//! \brief  Defines the scope of critical dcl functions
+//!
+//! \note   For users wanting to map critial functions in a specific memory region, 
+//!         uncomment "__attribute__((section("dclfuncs")))" and map 
+//!         the memory directive "dclfuncs" in the .cmd linker script
+#define _DCL_CRIT_ACCESS   static __attribute__((always_inline)) //__attribute__((section("dclfuncs")))
 
 //! \brief  Defines volatile for DCL strctures
-//!         Flags can be defined in dcl.h or 
-//!         user files before including DCL lib
+//!
+//! \note   Define "DCL_VOLATILE_ENABLED" to enable violatile 
+//!         (either in in dcl.h or user files that includes dcl.h)
 #ifdef DCL_VOLATILE_ENABLED
     #define _DCL_VOLATILE volatile
 #else
@@ -100,7 +108,7 @@ typedef double        float64_t;
     #warning "DCL currently doesn't support interrupt operations for this architecture"
 #endif
 
-#include "common/dcl_aux.h"
+#include "common/dcl_macro.h"
 #include "common/dcl_css.h"
 #include "common/dcl_zpk3.h"
 #include "common/dcl_clamp.h"

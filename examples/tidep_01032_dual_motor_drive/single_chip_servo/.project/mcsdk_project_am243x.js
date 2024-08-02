@@ -32,7 +32,7 @@ const files_r5f_1_0 = {
         /* Project Files */
         "ESL_version.c",
         "ESL_OS_os.c",
-        "ESL_eeprom.c",
+        "ESL_eeprom_tidep_01032.c",
         "ESL_fileHandling.c",
         "ESL_foeDemo.c",
         "ESL_soeDemo.c",
@@ -44,6 +44,9 @@ const files_r5f_1_0 = {
         "EtherCAT_Slave_CiA402_tidep_01032.c",
         "ESL_cia402Demo_tidep_01032.c",
         "ESL_BOARD_OS_config_tidep_01032.c",
+        "nvm.c",
+        "nvm_drv_eeprom_tidep_01032.c",
+        "nvm_drv_flash.c",
     ],
 };
 
@@ -104,6 +107,11 @@ const filedirs_r5f_1_0 = {
         "../../../../../../ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/common/os/freertos",
         "../../../../../../ind_comms_sdk/examples/industrial_comms/custom_phy/src",
         "../../../../../../ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/device_profiles/402_cia",
+        "../../../../../../ind_comms_sdk/examples/industrial_comms/nvm",
+        "../../../../../../ind_comms_sdk/examples/industrial_comms/nvm/app/src",
+        "../../../../../../ind_comms_sdk/examples/industrial_comms/nvm/app/inc",
+        "../../../../../../ind_comms_sdk/examples/industrial_comms/nvm/drv/src",
+        "../../../../../../ind_comms_sdk/examples/industrial_comms/nvm/drv/inc",
     ],
 };
 
@@ -156,6 +164,7 @@ const includes_r5f_0_0 = {
         "${MOTOR_CONTROL_SDK_PATH}/source/transforms/ipark",
         "${MOTOR_CONTROL_SDK_PATH}/source/transforms/park",
         "${MOTOR_CONTROL_SDK_PATH}/source/transforms/svgen",
+        "${MOTOR_CONTROL_SDK_PATH}/source/dcl",
     ],
 };
 
@@ -174,6 +183,7 @@ const includes_r5f_0_1 = {
         "${MOTOR_CONTROL_SDK_PATH}/source/transforms/ipark",
         "${MOTOR_CONTROL_SDK_PATH}/source/transforms/park",
         "${MOTOR_CONTROL_SDK_PATH}/source/transforms/svgen",
+        "${MOTOR_CONTROL_SDK_PATH}/source/dcl",
     ],
 };
 
@@ -192,7 +202,12 @@ const includes_r5f_1_0 = {
         "${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/common/board/am243lp",
         "${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/common/board/am243lp/freertos",
         "${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/custom_phy/inc",
+        "${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/nvm/app/inc",
+        "${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/nvm/drv/inc",
         "${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/source/industrial_comms/ethercat_slave/stack/inc",
+        "${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/source/industrial_comms/ethercat_slave/stack/inc/defines",
+        "${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/source/industrial_comms/ethercat_slave/stack/inc/ext",
+        "${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/source/industrial_comms/ethercat_slave/stack/inc/profiles",
         "${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/source/industrial_comms/common/inc",
     ],
 };
@@ -235,7 +250,7 @@ const libs_r5f_1_0 = {
 
 const defines_r5f_1_0 = {
     common: [
-       
+
         "SOC_AM243X=1",
         "OSAL_FREERTOS=1",
         "core0",
@@ -243,29 +258,29 @@ const defines_r5f_1_0 = {
         "am243x_lp",
         "SSC_CHECKTIMER=1",
         "USE_ECAT_TIMER=1",
-    
+
     ],
 };
 
 const cflags_r5f_1_0 = {
     common: [
-       
+
         "-Wno-unused-but-set-variable",
-     
+
     ],
     debug: [
-       
+
         "-O0",
-     
+
     ],
 };
 
 const lflags_r5f_1_0 = {
     common: [
-        
+
         "--use_memcpy=fast",
         "--use_memset=fast",
-    
+
     ],
 };
 const lnkfiles_r5f = {

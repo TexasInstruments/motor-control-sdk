@@ -1,4 +1,5 @@
 lib/
+!source/sfra/lib*
 obj/
 node_modules/
 coverage/
@@ -24,6 +25,7 @@ docs/datasheet*
 *.tiimage
 *.tiimage.hs
 *-fw
+*.obj
 *.vscode/
 temp_stdout_*.txt
 ccs_projects/
@@ -70,3 +72,4 @@ mcu_plus_sdk
 ind_comms_sdk
 .repo/*
 mcupsdk_setup
+*ti-pru-cgt_linkinfo.xml

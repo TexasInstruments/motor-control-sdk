@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectSpec>
+    <applicability>
+        <when>
+            <context
+                deviceFamily="PRU"
+                deviceId="AM243x_GP_EVM"
+            />
+        </when>
+    </applicability>
+
+    <project
+        title="Nikon Peripheral Interface Multi Ch Load Share"
+        name = "nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-txpru1_fw_ti-pru-cgt"
+        products="com.ti.MOTOR_CONTROL_SDK_AMXXX;"
+        configurations="
+            Release,
+            Debug,
+        "
+        connection="TIXDS110_Connection.xml"
+        toolChain="TI"
+        cgtVersion="2.3.3"
+        device="AM243x_GP_EVM"
+        deviceCore="ICSS_G0_TX_PRU_1"
+        ignoreDefaultDeviceSettings="true"
+        ignoreDefaultCCSSettings="true"
+        endianness="little"
+        outputFormat="ELF"
+        outputType="executable"
+
+        compilerBuildOptions="
+            -I${CG_TOOL_ROOT}/include
+            -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source
+            -I${MOTOR_CONTROL_SDK_PATH}/source
+            -I${MOTOR_CONTROL_SDK_PATH}/source/position_sense/nikon/firmware
+            -DICSSG0
+            -DTX_PRU1
+            -DSLICE1
+            -v4
+            -v4
+            -DSOC_AM243X
+            -DENABLE_MULTI_MAKE_TXPRU
+        "
+        linkerBuildOptions="
+            -m=nikon_peripheral_interface_multi_ch_load_share.${ConfigName}.map
+            --disable_auto_rts
+            --diag_suppress=10063-D
+            --entry_point=NIKON_INIT
+            --disable_auto_rts
+        "
+
+        postBuildStep="
+            $(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=NikonFirmwareMultiMakeTXPRU -o nikon_receiver_multi_TXPRU_bin.h  nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-txpru1_fw_ti-pru-cgt.out;if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h nikon_receiver_multi_TXPRU_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/nikon/firmware/nikon_receiver_multi_TXPRU_bin.h;if ${CCS_HOST_OS} == linux rm nikon_receiver_multi_TXPRU_bin.h;if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h nikon_receiver_multi_TXPRU_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/nikon/firmware/nikon_receiver_multi_TXPRU_bin.h;if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm nikon_receiver_multi_TXPRU_bin.h;
+        "
+
+        description="A Nikon Peripheral Interface Multi Ch Load Share FW project">
+
+        <configuration name="Release"
+            compilerBuildOptions="
+                -O3
+            "
+            linkerBuildOptions="
+            "
+        ></configuration>
+        <configuration name="Debug"
+            compilerBuildOptions="
+                -D_DEBUG_=1
+            "
+            linkerBuildOptions="
+            "
+        ></configuration>
+        <pathVariable name="MOTOR_CONTROL_SDK_PATH" path="${COM_TI_MOTOR_CONTROL_SDK_AMXXX_INSTALL_DIR}" scope="project" />
+        <file path="../../../../nikon_main.asm" openOnCreation="false" excludeFromBuild="false" action="copy">
+        </file>
+        <file path="../../../../nikon_diagnostic.cmd" openOnCreation="false" excludeFromBuild="false" action="copy">
+        </file>
+        <file path="${MOTOR_CONTROL_SDK_PATH}/docs/api_guide_am243x/NIKON_DESIGN.html"
+                openOnCreation="false" excludeFromBuild="false" targetName="README.html" action="link">
+        </file>
+    </project>
+</projectSpec>

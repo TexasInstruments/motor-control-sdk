@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (C) 2024 Texas Instruments Incorporated - http://www.ti.com/
  *
  *
  * Redistribution and use in source and binary forms, with or without
@@ -79,7 +79,7 @@ typedef _DCL_VOLATILE struct dcl_df11
     /* miscellaneous */
     DCL_DF11_SPS *sps; //!< Pointer to the shadow parameter set
     DCL_CSS *css;      //!< Pointer to the common support structure
-} DCL_DF11, *DF11_Handle;
+} DCL_DF11;
 
 //! \brief          Defines default values to initialize DCL_DF11
 //!
@@ -104,7 +104,7 @@ typedef _DCL_VOLATILE struct dcl_df11
 
 //! \brief          Initialize DCL_DF11 struct with input compensator parameters
 //!                 Example: DCL_DF11* DF11_ctrl = DCL_initDF11asParam(0.5f,0.5f,1.0f);
-//!                 Note: input parameter needs to be in the same order as listed in DF11_SPS struct
+//! \note           Note: input parameter needs to be in the same order as listed in DF11_SPS struct
 //!
 //! \return         A DCL_DF11* pointer
 //!
@@ -162,7 +162,7 @@ void DCL_forceUpdateDF11(DCL_DF11 *df)
 //!
 //! \param[in] df    Pointer to the DCL_DF11 controller structure
 //!
-_DCL_CODE_ACCESS _DCL_CODE_SECTION
+_DCL_CODE_ACCESS
 void DCL_updateDF11NoCheck(DCL_DF11 *df)
 {
     dcl_interrupt_t ints;
@@ -176,12 +176,12 @@ void DCL_updateDF11NoCheck(DCL_DF11 *df)
 //! \brief           A conditional update based on the update flag.
 //!                  If the update status is set, the function will update DF11
 //!                  parameter from its SPS parameter and clear the status flag on completion.
-//!                  Note: Use DCL_setUpdateStatus(df) to set the update status.
+//! \note            Note: Use DCL_setUpdateStatus(df) to set the update status.
 //!     
 //! \param[in] df    Pointer to the DCL_DF11 controller structure
 //! \return          'true' if an update is applied, otherwise 'false'
 //!
-_DCL_CODE_ACCESS _DCL_CODE_SECTION
+_DCL_CODE_ACCESS
 bool DCL_updateDF11(DCL_DF11 *df)
 {
     if (DCL_getUpdateStatus(df))
@@ -205,7 +205,7 @@ bool DCL_isStableDF11(DCL_DF11 *df)
 }
 
 //! \brief            Loads the DF11 shadow coefficients from a ZPK3 description
-//!                   Note: Sampling period df->css->T are used in the calculation.
+//! \note             Note: Sampling period df->css->T are used in the calculation.
 //!                   New settings take effect after DCL_updateDF11().
 //!                   Only real z1 & p1 considered, all other roots ignored.
 //!
@@ -235,7 +235,7 @@ void DCL_loadDF11asZPK(DCL_DF11 *df, DCL_ZPK3 *zpk)
 }
 
 //! \brief           Loads compensator coefficients to emulate series form PI
-//!                  Note: Sampling period df->css->T are used in the calculation.
+//! \note            Note: Sampling period df->css->T are used in the calculation.
 //!                  New settings take effect after DCL_updateDF11().
 //!
 //! \param[in] df    Pointer to the DCL_DF11 controller structure
@@ -269,7 +269,7 @@ void DCL_loadDF11asPI(DCL_DF11 *df, float32_t Kp, float32_t Ki)
 //! \param[in] ek    The servo error
 //! \return    uk    The control effort
 //!
-_DCL_CODE_ACCESS _DCL_CODE_SECTION
+_DCL_CRIT_ACCESS 
 float32_t DCL_runDF11(DCL_DF11 *df, float32_t ek)
 {
     df->d2 = (ek * df->b0) + (df->d1 * df->b1) - (df->d2 * df->a1);

@@ -65,16 +65,13 @@ __sdfm_h    .set    1
         .asg    R21, MASK_REG                    ; integrator & differentiator output mask
 
         .asg    R26.w0, COMPARATOR_EN           ; SD comparator enable for different channels
-        .asg    R26.w2, ZERO_CROSS_EN           ; SD Zero Crossing enable for different channels
+        .asg    R26.b2, ZERO_CROSS_EN           ; SD Zero Crossing enable for different channels
+        .asg    R26.b3, NC_SINC_FILTER_TYPE             ; SINC filter type for NC 
         .asg    R19, OC_HIGH_THR              ; SD OC High threshold
         .asg    R27, OC_LOW_THR              ; SD OC Low threshold
 
 
         .asg    R29, GPIO_TGL_ADDR              ; Address to write to for the GPIO toggle
-
-
-       .asg    R1, T0_CTXT_BASE_REG            ; base PRU register for T0 context
-    .asg    R9, T1_S0_CTXT_BASE_REG         ; base PRU register for T1_S0 context
 
         .asg    R9, ACC3_DN1_CH0                ; Ch X (0...8), differentiator 1 state
         .asg    R10, ACC3_DN3_CH0               ; Ch X (0...8), differentiator 2 state
@@ -88,8 +85,8 @@ __sdfm_h    .set    1
 
         .asg    R22.b0, SD_CH0_ID                ; SD channel0 ID
         .asg    R22.b1, SD_CH1_ID                ; SD Channel1 ID
-        .asg    R22.b2, SD_CH2_ID                ; SD Channel2 ID
-
+        .asg    R22.b2, SD_CH2_ID                ; SD Channel2 ID  
+        .asg    R22.b3, NC_SAMPLE_COUNT          ; min no. of continuous sample for sin filter
         .asg    R20, OUT_SAMP_BUF_REG           ; address of local interleaved NC output sample buffer
 
         .asg    R28.b0,  SAMP_CNT_REG             ; NC sample count
@@ -251,33 +248,6 @@ CNT_ENABLE_BN                   .set 0
 DEFAULT_INC_BN                  .set 4
 ; ICSSG_IEP_CMP_STATUS_REG:CMP_STATUS
 CMP_STATUS_CMP1_BN              .set 1
-
-; PRU_ICSSG_ECAP
-;
-ICSSG_eCAP_TSCNT                .set 0x0000 ; 32b time stamp counter
-ICSSG_eCAP_CNTPHS               .set 0x0004 ; counter phase offset value
-ICSSG_eCAP_CAP1                 .set 0x0008 ; 32b capture 1 reg
-ICSSG_eCAP_CAP2                 .set 0x000C ; 32b capture 2 reg
-ICSSG_eCAP_ECCTL1               .set 0x0028 ; capture control reg 1
-; ICSSG_ECCTL2_ECCTL1
-; ICSSG_ECCTL2_ECCTL1:APWMPOL
-APWMPOL_SHIFT                   .set 26
-APWMPOL_MASK                    .set 1b
-APWMPOL_VAL                     .set 0b
-; ICSSG_ECCTL2_ECCTL1:CAP_APWM
-CAP_APWM_SHIFT                  .set 25
-CAP_APWM_MASK                   .set 1b
-CAP_APWM_VAL                    .set 1b
-; ICSSG_ECCTL2_ECCTL1:SYNCO_SEL
-SYNCO_SEL_SHIFT                 .set 22
-SYNCO_SEL_MASK                  .set 11b
-SYNCO_SEL_VAL                   .set 10b
-; ICSSG_ECCTL2_ECCTL1:SYNCI_EN
-SYNCI_EN_SHIFT                  .set 21
-SYNCI_EN_MASK                   .set 1b
-SYNCI_EN_VAL                    .set 0b
-; ICSSG_ECCTL2_ECCTL1:TSCNTSTP
-TSCNTSTP_BN                     .set 20
 
 ; PRU_ICSSG Tasks Manager
 ;

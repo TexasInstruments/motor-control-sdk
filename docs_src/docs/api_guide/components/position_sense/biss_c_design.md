@@ -4,7 +4,7 @@
 
 ## Introduction
 
-This design implements BISS-C Receiver (a.k.a subsequent electronics) using the 3 channel peripheral interface available on the TI Sitara™ AM64x/AM243x EVM. The 3 channel peripheral interface is a digital bidirectional serial interface for position encoders, also suited fo safety related applications. Only four signal lines are required, differential pair each for clock and data.
+This design implements BISS-C Receiver (a.k.a subsequent electronics) using the 3 channel peripheral interface available on the TI Sitara™ AM64x/AM243x EVM. The 3 channel peripheral interface is a digital bidirectional serial interface for position encoders, also suited for safety related applications. Only four signal lines are required, differential pair each for clock and data.
 In BISS-C, clock is provided by receiver and data is provided by the encoder. Data is transmitted in synchronism with clock.
 Transfer between receiver and encoder at the physical layer is in accordance with RS485, with transceiver at both ends.
 
@@ -21,7 +21,7 @@ Clock, data transmit, data receive and receive enable signals from PRU1 of ICSS_
 The BISS-C receiver function is implemented on TI Sitara™ Devices.
 Design is split into three parts – 3 channel peripheral interface support in PRU, firmware running in PRU and driver running in ARM.
 Application is supposed to use the BISS-C driver APIs to leverage 3 channel peripheral interface functionality.
-SDK examples used the BISS-C hardware capability in Slice 1 (either 1 core or 3 cores based on the confiuration) of PRU-ICSSG0.
+SDK examples used the BISS-C hardware capability in Slice 1 (either 1 core or 3 cores based on the configuration) of PRU-ICSSG0.
 Remaining PRUs in the AM64x/AM243x EVM are available for Industrial Ethernet communication and/or motor control interfaces.
 
 
@@ -86,7 +86,7 @@ Single core of PRU-ICSSG slice is used in this configuration.
 \image html biss_multichannel_same_make.png "ARM, PRU, BISS-C module Integration for 'Single Channel' or 'Multi Channel with Encoders of Same Make' configuration"
 
 #### Implementation for Multi Channel with Encoders of Different Make
-Each of PRU, TX-PRU and RTU-PRU handle one channel in this configuration Enbale load share mode in case of multi make encoders.
+Each of PRU, TX-PRU and RTU-PRU handle one channel in this configuration. Load share mode for three channel peripheral interface is enabled.
 
 \image html biss_multichannel_different_make.png "PRU, BiSS-C module Integration for 'Multi Channel with Encoders of Different Make' configuration"
 
@@ -98,10 +98,22 @@ Firmware first detects and estimates the processing delay of the encoder as part
 
 Then it reads the position data and check if a control communication is in process. It verifies the position data CRC by comparing it with the on-the-fly computation of CRC. In case of control communication mode, it backs up the CDS bit and transmits the CDM bit by overriding the clock pulse during the BISS-C cycle timeout phase.  If the control communication is in progress it goes back to read the position data for the next cycle. If the control communication is completed, it updates the control command status, position data status and returns to wait for the next trigger command from ARM.
 
+In case of Safety mode enabled, firmware will be executed as explained below:
+
+\image html bissc_safety_rx_flow.png "RX flow when Safety is enabled "
+
+Firmware will perform configuration as usually and then before entering into RX it checks whether safety is enabled for that particular encoder or not. If enabled, firmware will perform receive and downsample and CRC computation is excluded, after all the encoders data bits are read successfully, before going into timeout firmware will perform post processing to compute the 16 bit CRC for safety enabled encoders. Please note that Post processing will be applicable only for the encoders which we have enabled safety using control communication. Please find below is the image explains CPW and SPW as per BiSSC safety specifications.
+
+\image html bissc_safety_frame.png "BiSS Frame according to the BiSS Safety profile"
+
+Above image is taken from <a href="https://biss-interface.com/download/biss-safety-concept-english/" target="_blank">BiSS Safety Concept Document</a>.
+
+\note BiSS safety is implemented by assuming 2 encoders connected in Daisy chain, one will send CPW and another one will send SPW. CRC errors are expected while enabling Safety using control communication. Because control communication will need multiple BiSS cycles to confirm and the safety may be enabled in the encoder before control communication is completed and encoder may send 16-bit CRC in some of the BiSS cycles.
+
 \note Firmware running on PRU-ICSS will be remain HALTED if encoder is not detected and application will wait for 5 seconds and exit with error code.
 
 #####	 Initialization
-\image html biss_initialization.png "Initilization for All Modes"
+\image html biss_initialization.png "Initialization for All Modes"
 
 Initialization is performed both on the ARM and PRU as shown in the figure above. During the initialization, based on the clock frequency selected the PRU detects the Encoder and estimates its processing delay in terms of clock cycles. The processing delay is measured 8 times and an average value is used for compensation. Note that whenever the user changes the clock frequency, the initialization routine on the PRU is executed to estimate the processing delay.
 
@@ -114,7 +126,7 @@ There needs to be a synchronization between PRUs before changing any global conf
 
 Once the firmware receives the trigger from ARM, it will first calculate the RX frame size and check if there is a change in the clock frequency from the previous run. If yes, it will recalculate the processing delay of the encoder for the given clock frequency.
 
-Next, it will start the clock signal to wait for the acknowledgement bit followed by the start bit. If the program is in control mode, it will back up the CDS bit for subsequent processing. Next it will read the position data bits, error and warning bits while computing the CRC on the fly. Finally, it will read the 6-bit CRC. If the program is in control mode, it will overide the clock signal to transmit the CDM bit to the encoder.
+Next, it will start the clock signal to wait for the acknowledgement bit followed by the start bit. If the program is in control mode, it will back up the CDS bit for subsequent processing. Next it will read the position data bits, error and warning bits while computing the CRC on the fly. Finally, it will read the 6-bit CRC. If the program is in control mode, it will override the clock signal to transmit the CDM bit to the encoder.
 
 The program will then wait for the timeout period and verify CRC of the position data bits. If the program is in control mode, it will check if the control command cycle is completed. If yes, it will update the results and the status bits before returning to the starting point.
 
@@ -124,6 +136,19 @@ The program will then wait for the timeout period and verify CRC of the position
 BISS-c control communication is performed over multiple cycles. Refer to the standard for more details on control communication. The firmware expects a control command as a 16-bit hex value. Once a control communication is started, the program will first transmit 14 0's as CDM bit during the timeout period at the end of the BISS-C cycle. This is then followed by a start bit to indicate to the encoder that control communication is in progress. The figure shown above explains the flow for a register read access. The register write access and control commands follows similar steps. Example commands for the register read access is given in the table below.
 
 \image html bissc_hex_control_commands.png "BISS-C hex commands"
+
+#####   Post Processing for 16-bit Safety CRC
+\image html bissc_safety_postprocessing_16_bit_crc.png "BISS-C Safety Post Processing for 16-bit Safety CRC"
+
+In case if safety is enabled we will only perform receive and downsample for the RX bits and CRC computation will be performed during timeout in the Postprocessing section. We will loop for all encoders across channels and perform 16-bit CRC computation using XOR based approach with the provided polynomial from the BiSS specifications. The 16 bit CRC is computed and compared with the received CRC and the error statistics are updated.
+
+###### Continuous mode
+
+\image html bissc_continuous_mode.png "Continuous Mode"
+
+BiSS-C receiver application has the support for continuous mode in which periodically clock is supplied to encoder and its position data is read and computed the CRC.
+User can stop continuous mode by hitting any key in UART console.
+Input cycle time should be greater than or equal to the BiSS cycle time considering position data bits, E, W, CRC and timeout.
 
 ### 3 Channel Peripheral Interface
 
@@ -164,7 +189,7 @@ BISS-C Receiver and the encoder is connected using the RS-485 transceiver. Data 
 <tr>
     <td>GPIO Pin(GPIO1_78)
     <td>ENC0_EN
-    <td>Enbale 3 channel peripheral interface mode in Axis 1 of BP (C16 GPIO pin)
+    <td>Enable 3 channel peripheral interface mode in Axis 1 of BP (C16 GPIO pin)
 </tr>
 </table>
 \endcond

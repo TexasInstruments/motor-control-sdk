@@ -86,7 +86,7 @@
 /* Test ICSSG instance ID */
 #define TEST_ICSSG_INST_ID              ( CONFIG_PRU_ICSS0 )
 /* Test ICSSG slice ID */
-#define TEST_ICSSG_SLICE_ID             ( ICSSG_SLICE_ID_0 )
+#define TEST_PRU_SLICE_ID             ( ICSSG_SLICE_ID_0 )
 
 /* R5F interrupt settings for ICSSG */
 #define ICSSG_PRU_SDFM_INT_NUM          ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_3 )  /* VIM interrupt number */
@@ -133,6 +133,9 @@ static void pruSdfmIrqHandler(void *handle);
 /* Test ICSSG handle */
 PRUICSS_Handle gPruIcssHandle;
 
+/* ICSSG PWM handle */
+PRUICSS_PWM_Handle gPruIcssPwmHandle;
+
 /* Test Sdfm handles */
 sdfm_handle gHPruSdfm;
 
@@ -140,37 +143,7 @@ sdfm_handle gHPruSdfm;
 __attribute__((section(".gSdfmSampleOutput"))) uint32_t gSdfm_sampleOutput[NUM_CH_SUPPORTED];
 
 /* Test Sdfm parameters */
-SdfmPrms gTestSdfmPrms = {
-    0, /*Load share enable*/
-    PRUICSS_PRU0,
-    TEST_ICSSG_SLICE_ID,
-    300000000,   /*PRU core clock*/
-    {300000000, 0},   /*Value of G0IEP0,  second index reserved for G1IEP0 */
-    20000000,    /*Value of SD clock (It should be exact equal to sd clock value)*/
-    0,                        /*enable double update*/
-    FIRST_SAMPLE_TRIGGER_TIME,       /*first sample  trigger time*/
-    SECOND_SAMPLE_TRIGGER_TIME,       /*second sample trigger time*/
-    APP_EPWM_OUTPUT_FREQ,     /*PWM output frequency*/
-    {{3500, 1000,0},    /*threshold parameters(High, low & reserevd)*/
-    {3500, 1000,0},
-    {3500, 1000,0}},
-    {{0,0},                /*clock sourse & clock inversion for all channels*/
-    {0,0},
-    {0,0}},
-    15,   /*Over current osr: The effect count is OSR + 1*/
-    128,   /*Normal current osr */
-    1,   /*comparator enable*/
-    (uint32_t)&gSdfm_sampleOutput, /*Output samples base address*/
-    0,    /*Fast Detect enable */
-    {{4, 18, 2},
-    {4, 18, 2},
-    {4, 18, 2}
-    },   /*Fast detect fields {Window size, zero count max, zero count min}*/
-    0,   /*reserved for phase delay*/
-    0,   /*Enable zero cross*/
-    {1700, 1700, 1700}, /*Zero cross threshold*/
-    0, /*enable continuous mode*/
-};
+SdfmPrms gTestSdfmPrms ;
 
 #define PRUICSS_G_MUX_EN    ( 0x1 ) /* ICSSG_SA_MX_REG:G_MUX_EN */
 
@@ -287,12 +260,11 @@ void init_pwm()
     DebugP_assert(hEpwm1 != NULL);
 #endif 
 }
-
 void init_sdfm()
 {
     int32_t status;
     /* Initialize ICSSG */
-    status = initIcss(TEST_ICSSG_INST_ID, TEST_ICSSG_SLICE_ID, PRUICSS_G_MUX_EN, ICSSG_PRU_LOAD_SHARE_MODE, &gPruIcssHandle);
+    status = initIcss(TEST_ICSSG_INST_ID, TEST_PRU_SLICE_ID, PRUICSS_G_MUX_EN, ICSSG_PRU_LOAD_SHARE_MODE, &gPruIcssHandle);
     if (status != SDFM_ERR_NERR) {
         DebugP_log("Error: initIcss() fail.\r\n");
         return;
@@ -308,6 +280,35 @@ void init_sdfm()
     status              = HwiP_construct(&gIcssgPruSdfmHwiObject, &hwiPrms);
     DebugP_assert(status == SystemP_SUCCESS);
 
+   /* Configure axis level Sdfm  parameters */
+    sdfmGlobalParamsConfig(&gTestSdfmPrms);
+
+    gTestSdfmPrms.icssgInsId = TEST_ICSSG_INST_ID;
+    gTestSdfmPrms.pruInsId = PRUICSS_PRU0; 
+    gTestSdfmPrms.pruSliceId = TEST_PRU_SLICE_ID;
+
+    gTestSdfmPrms.epwmOutFreq = APP_EPWM_OUTPUT_FREQ;
+
+#if (CONFIG_SDFM0_CHANNEL0 != 0)
+    sdfmParamsConfig(0, &gTestSdfmPrms);
+#endif
+#if (CONFIG_SDFM0_CHANNEL1 != 0)
+    sdfmParamsConfig(1, &gTestSdfmPrms);
+#endif
+#if (CONFIG_SDFM0_CHANNEL2 != 0)
+    sdfmParamsConfig(2, &gTestSdfmPrms);
+#endif
+
+    if((gTestSdfmPrms.fastDetectPrms[0][0] || gTestSdfmPrms.compFilterPrms[0].enComparator ) || (gTestSdfmPrms.fastDetectPrms[1][0] || gTestSdfmPrms.compFilterPrms[1].enComparator )|| (gTestSdfmPrms.fastDetectPrms[2][0] || gTestSdfmPrms.compFilterPrms[2].enComparator))
+    {
+        gPruIcssPwmHandle = PRUICSS_PWM_open(CONFIG_PRUICSS_PWM0, gPruIcssHandle);
+        DebugP_assert(gPruIcssPwmHandle != NULL);
+    }
+
+    gHPruSdfm->gPruPwmHandle = gPruIcssPwmHandle;
+
+    /*sample output base address for all channel*/
+    gTestSdfmPrms.samplesBaseAddress = (uint32_t)&gSdfm_sampleOutput;
     /* Initialize PRU cores for SDFM */
     status = initPruSdfm(gPruIcssHandle, PRUICSS_PRU0, &gTestSdfmPrms, &gHPruSdfm);
     if (status != SDFM_ERR_NERR) 

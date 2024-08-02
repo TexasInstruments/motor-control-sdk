@@ -40,7 +40,7 @@
     ; register usage
 	; R1-R6 - flipflops for otf crc.
 	; R7 - holds received crc for position data and used as ex for otf calculation.
-	; R8.b0 - valid bit,rx enable, rx valid, R8.b1 - holds channel mask, R8.w2 - stores raw data length (pos_data_length + ew_length + pos_crc_length). 
+	; R8.b0 - valid bit,rx enable, rx valid, R8.b1 - holds channel mask, R8.w2 - stores raw data length (pos_data_length + ew_length + pos_crc_length).
 	; R9.b0 - holds fifo bit index(middle bit) of oversampled data, R9.b1 - holds base offset for channel in use, R9.w2 - holds CFG0 offset for channel in use.
 	; R10 - flipflops for control communication otf crc.
 	; R11.b1 - holds 4-bit control communication crc, R11.b2 - holds cds data, R11.b3 - holds ctrl otf crc.
@@ -55,14 +55,15 @@
 	; R23.w2 -it is used as status register.
 	; R24-R27 - scratch.
 	; R29 - holds call and return (branch) address.
-	
+
 	; unused Register: R11.b0, R28
 
 	.asg	R1, 		FF0
-	.asg	R2, 		FF1 
+	.asg 	R1, 		SAFETY_ENCODER
+	.asg	R2, 		FF1
 	.asg 	R3, 		FF2
-	.asg 	R4, 		FF3 
-	.asg 	R5, 		FF4 
+	.asg 	R4, 		FF3
+	.asg 	R5, 		FF4
 	.asg 	R6, 		FF5
 	.asg 	R7, 		EX
 	.asg 	R7, 		BISSC_RCV_CRC
@@ -74,7 +75,7 @@
 	.asg 	R9.b0, 		FIFO_BIT_IDX
 	.asg	R9.b1, 		BASE_OFFSET
 	.asg	R9.w2, 		BISSC_ICSSG_CHx_CFG0
-	.asg	R10,		BISSC_CTRL_FF		
+	.asg	R10,		BISSC_CTRL_FF
 	.asg 	R11.b1, 	BISSC_CTRL_CRC
 	.asg 	R11.b2, 	BISSC_CTRL_CMD_RES
 	.asg	R11.b3,		BISSC_CTRL_OTF_CRC
@@ -91,9 +92,9 @@
 	.asg	R19, 		BISSC_CDS_BACKUP
 	.asg	R20,		BISSC_FLAGS_REG
 	.asg	R21, 		BISSC_CTRL_CMD
-	.asg 	R22, 		DAISY_CHAIN	
+	.asg 	R22, 		DAISY_CHAIN
 	.asg	R23.b0, 	LS_SYNC_STATE
-	.asg 	R23.b1, 	PRIMARY_CORE			
+	.asg 	R23.b1, 	PRIMARY_CORE
 	.asg	R23.b2, 	STATUS_REG1
 	.asg	R23.b3, 	STATUS_REG2
 	.asg	R24,		SCRATCH
@@ -102,7 +103,6 @@
 	.asg 	R27, 		SCRATCH3
 	.asg 	R29, 		LINK_REG
 
-    
 BISSC_RX_CRCBITS 				.set    6			;Pos data CRC len
 BISSC_SB_CDS_LEN	            .set    2			;Start bit + CDS bit len
 BISSC_EW_LEN		            .set	2			;Error warning len
@@ -130,3 +130,7 @@ BISSC_CH2_VALID_BIT_IDX			.set 	26			;RX valid bit index channel 2
 
 BISSC_MAX_FRAME_SIZE			.set	256			;Max frame size for Processing delay measurement
 BISSC_MAX_WAIT_FOR_ENC_DETECT	.set	10000		;Max wait count for encoder detected
+
+BISSC_PRU_TRIGGER_HOST_EVT		.set 	34			;event 0 trigger
+BISSC_SAFETY_CRC_POLY			.set 	0x190D9		;polynomial for 16-bit crc safety support
+BISSC_SAFETY_CRC_LEN 			.set 	16			;number of safety crc bits received

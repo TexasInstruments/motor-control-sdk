@@ -64,6 +64,9 @@ void transforms_test_main()
     int testSize = sizeof(testParams)/sizeof(*testParams);
     int error = 0;
 
+    /* Open drivers to open the UART driver for console */
+    Drivers_open();
+    Board_driversOpen();
 
     for (int idx = 0; idx < testSize; idx++) 
     {
@@ -85,6 +88,8 @@ void transforms_test_main()
         error += verify_output(idx, &alphaBetaI[0], &dqI[0], &alphaBetaV[0], &abcOutput[0]);
     }
 
-    DebugP_log("Transforms test produced %d error",error);
+    DebugP_log("Transforms test produced %d error\n",error);
 
+    Board_driversClose();
+    Drivers_close();
 }

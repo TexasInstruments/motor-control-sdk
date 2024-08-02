@@ -63,16 +63,41 @@ const cflags = {
     ],
 };
 
-const lflags = {
+const lflags_rtu = {
     common: [
         "--warn_sections",
+        "--diag_suppress=10063-D", /* Added to suppress entry_point related warning */
         "--entry_point=SDFM_ENTRY",
         "--zero_init=off",
         "--disable_auto_rts",
+        "--define=SDFM_RTU_CORE=1",
         "--define=SDFM_LOAD_SHARE_MODE=1",
     ],
 };
 
+const lflags_pru = {
+    common: [
+        "--warn_sections",
+        "--diag_suppress=10063-D", /* Added to suppress entry_point related warning */
+        "--entry_point=SDFM_ENTRY",
+        "--zero_init=off",
+        "--disable_auto_rts",
+        "--define=SDFM_PRU_CORE=1",
+        "--define=SDFM_LOAD_SHARE_MODE=1",
+    ],
+};
+
+const lflags_txpru = {
+    common: [
+        "--warn_sections",
+        "--diag_suppress=10063-D", /* Added to suppress entry_point related warning */
+        "--entry_point=SDFM_ENTRY",
+        "--zero_init=off",
+        "--disable_auto_rts",
+        "--define=SDFM_TXPRU_CORE=1",
+        "--define=SDFM_LOAD_SHARE_MODE=1",
+    ],
+};
 
 const buildOptionCombos = [
     { device: device, cpu: "icssg0-pru0", cgt: "ti-pru-cgt", board: "am243x-evm", os: "fw"},
@@ -80,17 +105,62 @@ const buildOptionCombos = [
     { device: device, cpu: "icssg0-txpru0", cgt: "ti-pru-cgt", board: "am243x-evm", os: "fw"},
 ];
 
-let postBuildStepsPru0 = [
-    "$(CG_TOOL_ROOT)/bin/hexpru.exe --diag_wrap=off --array --array:name_prefix=pru_SDFM_PRU0_image -o sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.h sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.out;  $(COPY) sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-pru0_fw_ti-pru-cgt.h ${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware/sdfm_pru_bin.h;"
-];
-let postBuildStepsRtupru0 = [
-    "$(CG_TOOL_ROOT)/bin/hexpru.exe --diag_wrap=off --array --array:name_prefix=pru_SDFM_RTU0_image -o sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-rtupru0_fw_ti-pru-cgt.h sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-rtupru0_fw_ti-pru-cgt.out;  $(COPY) sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-rtupru0_fw_ti-pru-cgt.h ${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware/sdfm_rtu_bin.h;"
+function getmakefilePruPostBuildSteps(cpu, board)
+{
+    let postBuildSteps
 
-];
-let postBuildStepsTxpru0 = [
-    "$(CG_TOOL_ROOT)/bin/hexpru.exe --diag_wrap=off --array --array:name_prefix=pru_SDFM_TXPRU0_image -o sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-txpru0_fw_ti-pru-cgt.h sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-txpru0_fw_ti-pru-cgt.out;  $(COPY) sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-txpru0_fw_ti-pru-cgt.h ${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware/sdfm_txpru_bin.h;"
+    switch(cpu)
+    {
+        case "icssg0-pru0":
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=pru_SDFM_PRU0_image -o sdfm_pru_bin.h  sdfm_firmware_multi_axis_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h sdfm_pru_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware/sdfm_pru_bin.h;"+ 
+            "$(RM)  sdfm_pru_bin.h;"]
+            break;
+        case "icssg0-rtupru0":
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=pru_SDFM_RTU0_image -o sdfm_rtu_bin.h  sdfm_firmware_multi_axis_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h sdfm_rtu_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware/sdfm_rtu_bin.h;"+ 
+            "$(RM)  sdfm_rtu_bin.h;"]
+            break;
+        case "icssg0-txpru0":
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=pru_SDFM_TXPRU0_image -o sdfm_txpru_bin.h  sdfm_firmware_multi_axis_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h sdfm_txpru_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware/sdfm_txpru_bin.h;"+ 
+            "$(RM)  sdfm_txpru_bin.h;"]
+            break;
+    }
 
-];
+    return postBuildSteps
+}
+
+function getccsPruPostBuildSteps(cpu, board)
+{
+    let postBuildSteps
+
+    switch(cpu)
+    {
+        case "icssg0-pru0":
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=pru_SDFM_PRU0_image -o sdfm_pru_bin.h  sdfm_firmware_multi_axis_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h sdfm_pru_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware/sdfm_pru_bin.h;"+ 
+            "if ${CCS_HOST_OS} == linux rm sdfm_pru_bin.h;"+
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h sdfm_pru_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware/sdfm_pru_bin.h;"+ 
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm sdfm_pru_bin.h;"]
+            break;
+        case "icssg0-rtupru0":
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=pru_SDFM_RTU0_image -o sdfm_rtu_bin.h  sdfm_firmware_multi_axis_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h sdfm_rtu_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware/sdfm_rtu_bin.h;"+ 
+            "if ${CCS_HOST_OS} == linux rm sdfm_rtu_bin.h;"+
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h sdfm_rtu_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware/sdfm_rtu_bin.h;"+ 
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm sdfm_rtu_bin.h;"]
+            break;
+        case "icssg0-txpru0":
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=pru_SDFM_TXPRU0_image -o sdfm_txpru_bin.h  sdfm_firmware_multi_axis_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h sdfm_txpru_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware/sdfm_txpru_bin.h;"+ 
+            "if ${CCS_HOST_OS} == linux rm sdfm_txpru_bin.h;"+
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h sdfm_txpru_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware/sdfm_txpru_bin.h;"+ 
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm sdfm_txpru_bin.h;"]
+            break;
+    }
+    return postBuildSteps
+}
 
 function getComponentProperty() {
     let property = {};
@@ -116,22 +186,23 @@ function getComponentBuildProperty(buildOption) {
     build_property.includes = includes;
     if(buildOption.cpu.match("icssg0-pru0"))
     {
-        build_property.postBuildSteps = postBuildStepsPru0;
         build_property.defines = defines_pru;
+        build_property.lflags = lflags_pru;
+
     }
     if(buildOption.cpu.match("icssg0-rtupru0"))
     {
-        build_property.postBuildSteps = postBuildStepsRtupru0;
         build_property.defines = defines_rtu;
+        build_property.lflags = lflags_rtu;
     }
     if(buildOption.cpu.match("icssg0-txpru0"))
     {
-        build_property.postBuildSteps = postBuildStepsTxpru0;
         build_property.defines = defines_txpru;
+        build_property.lflags = lflags_txpru;
     }
-
+    build_property.ccsPruPostBuildSteps = getccsPruPostBuildSteps(buildOption.cpu, buildOption.board);
+    build_property.makefilePruPostBuildSteps = getmakefilePruPostBuildSteps(buildOption.cpu, buildOption.board);
     build_property.cflags = cflags;
-    build_property.lflags = lflags;
     build_property.readmeDoxygenPageTag = readmeDoxygenPageTag;
     build_property.projecspecFileAction = "copy";
     build_property.skipMakefileCcsBootimageGen = true;

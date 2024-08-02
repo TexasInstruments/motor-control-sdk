@@ -384,7 +384,7 @@ int32_t initIcss(
     instance = hwAttrs->instance;
     
     /* Determine ICSSG instance */
-    if (icssInstId == PRUICSS_INSTANCE_ONE)
+    if (instance == PRUICSS_INSTANCE_ONE)
     {
         pIcssCfgRegs = (CSL_IcssCfgRegs *)CSL_PRU_ICSSG0_PR1_CFG_SLV_BASE;
     }
@@ -517,7 +517,7 @@ int32_t initPruSddf(
     }
     
     /* Initialize SDDF PRU FW */
-    status = initSddf(pruId, pruInstId, pSddfPrms, pHSddf);
+    status = initSddf(pruId, pruInstId, pSddfPrms, pHSddf, pruIcssHandle);
     if (status != SDDF_ERR_NERR) {
         return SDDF_ERR_INIT_PRU_SDDF;
     }
@@ -528,13 +528,13 @@ int32_t initPruSddf(
 int32_t initSddf(
     uint8_t pruId, uint8_t pruInstId,
     SdfmPrms *pSdfmPrms, 
-    sdfm_handle *pHSdfm
+    sdfm_handle *pHSdfm, PRUICSS_Handle pruIcssHandle
 )
 {
     sdfm_handle hSdfm;
-   
+    
     /* Initialize SDFM instance */
-    hSdfm = SDFM_init(pruId, pruInstId);
+    hSdfm = SDFM_init(pruIcssHandle, pruId, pruInstId);
     if (hSdfm == NULL) {
         return SDDF_ERR_INIT_SDDF;
     }
@@ -553,12 +553,15 @@ int32_t initSddf(
     hSdfm->sdfmClock = pSdfmPrms->sd_clock;
     hSdfm->sampleOutputInterface = (SDFM_SampleOutInterface *)(pSdfmPrms->samplesBaseAddress);
     uint32_t sampleOutputInterfaceGlobalAddr = CPU0_BTCM_SOCVIEW(pSdfmPrms->samplesBaseAddress);
-    hSdfm->p_sdfm_interface->sampleBufferBaseAdd = sampleOutputInterfaceGlobalAddr;
+    hSdfm->pSdfmInterface->sampleBufferBaseAdd = sampleOutputInterfaceGlobalAddr;
     hSdfm->iepInc = 1; /* Default IEP increment 1 */
 
 
     uint8_t acc_filter = 0; //SINC3 filter
     uint8_t ecap_divider = 0x0F; //IEP at 300MHz: SD clock = 300/15=20Mhz
+
+    /*IEP base address*/
+    hSdfm->pruicssIep = (void *)(((PRUICSS_HwAttrs *)(pruIcssHandle->hwAttrs))->iep0RegBase);
 
     /*configure IEP count for one epwm period*/
     SDFM_configIepCount(hSdfm, pSdfmPrms->epwm_out_freq);
@@ -590,26 +593,29 @@ int32_t initSddf(
             break;
     }
        
-       for(int i = SDFM_CH; i< SDFM_CH + NUM_CH_SUPPORTED_PER_AXIS; i++)
-       {
-         SDFM_setEnableChannel(hSdfm, i);
-       }
+    for(int i = SDFM_CH; i< SDFM_CH + NUM_CH_SUPPORTED_PER_AXIS; i++)
+    {
+      SDFM_setEnableChannel(hSdfm, i);
+    }
+
+    SDFM_enableEpwmSync(hSdfm, 0);
 
     for(SDFM_CH = 0; SDFM_CH < NUM_CH_SUPPORTED_PER_AXIS; SDFM_CH++)
     {
-       
-
         /*set comparator osr or Over current osr*/
         SDFM_setCompFilterOverSamplingRatio(hSdfm, SDFM_CH, pSdfmPrms->ComFilterOsr);
 
         /*set ACC source or filter type*/
         SDFM_configDataFilter(hSdfm, SDFM_CH, acc_filter);
 
-        /*set clock inversion & clock source for all three channel*/
-        SDFM_selectClockSource(hSdfm, SDFM_CH, pSdfmPrms->clkPrms[SDFM_CH]);
+        /*set  clock source for all three channel*/
+        SDFM_selectClockSource(hSdfm, SDFM_CH, pSdfmPrms->clkPrms[SDFM_CH].clk_source);
+
+        /*set clock inversion */
+        SDFM_setClockInversion(hSdfm, SDFM_CH, pSdfmPrms->clkPrms[SDFM_CH].clk_inv);
 
         /*set threshold values */
-        SDFM_setCompFilterThresholds(hSdfm, SDFM_CH, pSdfmPrms->threshold_parms[SDFM_CH]);
+        SDFM_setCompFilterThresholds(hSdfm, SDFM_CH, pSdfmPrms->comThresholds[SDFM_CH]);
         
         if(pSdfmPrms->en_com)
         {

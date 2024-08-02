@@ -1,0 +1,50 @@
+%let pwm_module = system.modules['/pruicss_g_v0_pwm/pruicss_g_v0_pwm'];
+%let pwm_channel_module = system.modules['/pruicss_g_v0_pwm/pruicss_g_v0_pwm_channel'];
+
+%if(pwm_module && pwm_channel_module)
+%{
+/*
+ * PRUICSS PWM
+ */
+#include <pruicss_pwm/include/pruicss_pwm.h>
+
+#define CONFIG_PRUICSS_PWM_NUM_INSTANCES (`pwm_module.$instances.length`U)
+
+/* 
+ * PRUICSS PWM Instance Macros 
+ */
+
+%for(let i=0; i<pwm_module.$instances.length; i++)
+%{
+    % let instance = pwm_module.$instances[i];
+#define `instance.$name.toUpperCase()` (`i`U)
+#define CONFIG_PRUICSS_PWM_INSTANCE`i`_FREQ_HZ   (`pwm_module.$instances[i].pwmFrequency`U)
+%}
+
+/*
+ * PRUICSS PWM Channel or PWM Set Instance Macros
+ */
+%for(let i=0; i<pwm_channel_module.$instances.length; i++)
+%{
+    % let instance = pwm_channel_module.$instances[i]; 
+    % if (pwm_channel_module.getInterfaceNameList) {
+        %let interfaceNameList = pwm_channel_module.getInterfaceNameList(instance);
+        % for(let interfaceName of interfaceNameList) {
+        %        let peripheral = instance[interfaceName];
+        %        let pinNames = pwm_channel_module.getPeripheralPinNames(instance);
+            %for (let pinName of pinNames) {
+                % let peripheralPin = peripheral[pinName];
+                % if (peripheralPin && peripheralPin.$solution.peripheralPinName) {
+                    %let pwm_channel_name = peripheralPin.$solution.peripheralPinName;
+/*Macros of `peripheralPin.$solution.peripheralPinName` owned by `instance["$ownedBy"].$name` */
+                    %let pwm_channel_macro = instance["$ownedBy"].$name + "_PWM_SET" + pwm_channel_name.substring(8,9) + "_INSTANCE_" + pwm_channel_name.substring(10,12)
+#define `pwm_channel_macro + "_DUTY_CYCLE"`                  (`instance["duty_cycle"]`U) 
+#define `pwm_channel_macro + "_RISE_EDGE_DELAY_IN_NSEC"`     (`instance["rise_edge_delay"]`U) 
+#define `pwm_channel_macro + "_FALL_EDGE_DELAY_IN_NSEC"`     (`instance["fall_edge_delay"]`U)  
+                     
+                % }
+            %}
+        %}
+    %}
+%}
+%}

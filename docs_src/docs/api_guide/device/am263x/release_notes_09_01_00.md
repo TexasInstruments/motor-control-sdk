@@ -27,12 +27,14 @@ AM263x| R5F             | AM263x LaunchPad Revision E2  (referred to as am263x-l
 
 ## Tools, Compiler and Other Open Source SW Module Information
 
-Tools                   | Supported CPUs | Version
-------------------------|----------------|--------------------------------------------------------------
-Code Composer Studio    | R5F            | @VAR_CCS_VERSION_AM263X
-SysConfig               | R5F            | @VAR_SYSCFG_VERSION_AM263X, build @VAR_SYSCFG_BUILD_AM263X
-TI ARM CLANG            | R5F            | @VAR_TI_ARM_CLANG_VERSION
-FreeRTOS Kernel         | R5F            | @VAR_FREERTOS_KERNEL_VERSION
+Tools / SW module       | Supported CPUs | Version
+------------------------|----------------|-----------------------
+Code Composer Studio    | R5F            | 12.5.0
+SysConfig               | R5F            | 1.18.0, build 3266
+TI ARM CLANG            | R5F            | 3.2.0.LTS
+FreeRTOS Kernel         | R5F            | 10.4.3
+LwIP                    | R5F            | STABLE-2_2_0_RELEASE
+Mbed-TLS                | R5F            | mbedtls-2.13.1
 
 ## Key Features
 
@@ -150,14 +152,11 @@ Tamagawa     | R5F            | YES               | FreeRTOS          | Absolute
 </tr>
 </table>
 
-<!-- ## Upgrade and Compatibility Information {#UPGRADE_AND_COMPATIBILITY_INFORMATION_9_1_0} -->
+## Upgrade and Compatibility Information for Motor Control SDK 09.01.00 {#UPGRADE_AND_COMPATIBILITY_INFORMATION_9_1_0}
 
-<!-- \attention When migrating from MCU+ SDK, see \ref MIGRATION_GUIDES for more details -->
+\attention When migrating from MCU+ SDK, see \ref MIGRATION_GUIDES for more details.
 
-<!-- This section lists changes which could affect user applications developed using older SDK versions.
-Read this carefully to see if you need to do any changes in your existing application when migrating to this SDK version relative to
-previous SDK version. Also refer to older SDK version release notes to see changes in
-earlier SDKs. -->
+This section lists changes which could affect user applications developed using Motor Control SDK 09.00.00. Read this carefully to see if you need to do any changes in your existing application when migrating to this SDK version relative to previous SDK version. Also refer to older SDK version release notes to see changes in earlier SDKs.
 
 <!-- ### Compiler Options
 

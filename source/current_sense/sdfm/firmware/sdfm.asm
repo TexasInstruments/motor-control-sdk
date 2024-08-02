@@ -160,14 +160,18 @@ INIT_SDFM:
     M_PRU_TM_ENABLE  
 
     .if $isdefed("SDFM_PRU_CORE")
-    ;Initialize SD mode
-    LDI32   TEMP_REG1, PR1_PRUn_GP_MUX_SEL_VAL<<PR1_PRUn_GP_MUX_SEL_SHIFT
+    ;Initialize SD mode   
+    LDI32   TEMP_REG1, PR1_PRUn_GP_MUX_SEL_VAL<<PR1_PRUn_GP_MUX_SEL_SHIFT   
     LBBO    &TEMP_REG0.b0, SDFM_CFG_BASE_PTR_REG, SDFM_PRU_ID_OFFSET,  SDFM_PRU_ID_SZ   ; Load TR0.b0 <-  PRU slice id from DMEM
     QBEQ    INIT_PRU_ID1, TEMP_REG0.b0, 1                          ; Check PRU ID 0 or 1
 INIT_PRU_ID0:
+    LBCO    &TEMP_REG2, CT_PRU_ICSSG_CFG, ICSSG_CFG_GPCFG0, 4
+    OR      TEMP_REG1, TEMP_REG1, TEMP_REG2
     SBCO    &TEMP_REG1, CT_PRU_ICSSG_CFG, ICSSG_CFG_GPCFG0, 4                           ; Initialize PRU0 SD mode
     QBA     INIT_SDFM_CONT
 INIT_PRU_ID1:
+    LBCO    &TEMP_REG2, CT_PRU_ICSSG_CFG, ICSSG_CFG_GPCFG1, 4
+    OR      TEMP_REG1, TEMP_REG1, TEMP_REG2
     SBCO    &TEMP_REG1, CT_PRU_ICSSG_CFG, ICSSG_CFG_GPCFG1, 4                           ; Initialize PRU1 SD mode
     .endif
 
@@ -190,15 +194,10 @@ INIT_SDFM_CONT:
     ; Reset SDFM state
     JAL     RET_ADDR_REG, FN_RESET_SDFM_STATE
 
-    .if $isdefed("SDFM_PRU_CORE") 
-    ; Initialize ecap for sigma delta clock 
-    JAL     RET_ADDR_REG, FN_INIT_SD_CLOCK
-    .endif
-
     ; Configure FD and OSR Register for all three SD channel 
     JAL     RET_ADDR_REG, FN_CONFIG_SD_SAMPLE_SIZE_REG
 
-    ; Configure FD, ACC3 and Clock selection Register for all three SD channel 
+    ; Configure FD, ACC3/ACC2/ACC1 and Clock selection Register for all three SD channel 
     JAL     RET_ADDR_REG, FN_CONFIG_SD_CLK_SEL_REG   
 
     ; Global enable SD HW,
@@ -226,14 +225,30 @@ INIT_SDFM_CONT:
     ;Zero cross resgiter
     LDI TEMP_REG0, 0
     LBBO  &TEMP_REG0.b0,  SDFM_CFG_BASE_PTR_REG, SDFM_CFG_ZC_THR_EN_CH0_OFFSET,  1
-    OR    TEMP_REG0.w2, TEMP_REG0.w2, TEMP_REG0.w0
+    MOV    TEMP_REG0.b2, TEMP_REG0.b0
     LBBO  &TEMP_REG0.b0,  SDFM_CFG_BASE_PTR_REG, SDFM_CFG_ZC_THR_EN_CH1_OFFSET,  1
     LSL   TEMP_REG0.b0, TEMP_REG0.b0,  1
-    OR    TEMP_REG0.w2, TEMP_REG0.w2, TEMP_REG0.w0
+    OR    TEMP_REG0.b2, TEMP_REG0.b2, TEMP_REG0.b0
     LBBO  &TEMP_REG0.b0,  SDFM_CFG_BASE_PTR_REG, SDFM_CFG_ZC_THR_EN_CH2_OFFSET,  1
     LSL   TEMP_REG0.b0, TEMP_REG0.b0,  2
-    OR    TEMP_REG0.w2, TEMP_REG0.w2, TEMP_REG0.w0
-    MOV   ZERO_CROSS_EN, TEMP_REG0.w2
+    OR    TEMP_REG0.b2, TEMP_REG0.b2, TEMP_REG0.w0
+    MOV   ZERO_CROSS_EN, TEMP_REG0.b2
+
+    ;NC sinc filter, Same for all three channel 
+    LBBO    &NC_SINC_FILTER_TYPE, SDFM_CFG_BASE_PTR_REG,  SDFM_CFG_CH0_FILTER_TYPE_OFFSET, 1
+
+    ;min number of NC continuous sample for sinc filter 
+    LDI   NC_SAMPLE_COUNT, NC_SAMP_CNT
+    QBNE    SKIP_ACC3, NC_SINC_FILTER_TYPE, 0
+    SUB   NC_SAMPLE_COUNT, NC_SAMPLE_COUNT, 1
+    JMP    END_NC_SAMPLE_COUNT
+SKIP_ACC3:
+    QBNE    SKIP_ACC2, NC_SINC_FILTER_TYPE, 1
+    SUB   NC_SAMPLE_COUNT, NC_SAMPLE_COUNT, 2
+    JMP  END_NC_SAMPLE_COUNT
+SKIP_ACC2:
+    SUB   NC_SAMPLE_COUNT, NC_SAMPLE_COUNT, 3
+END_NC_SAMPLE_COUNT:
 
     ;Initialize IEP0
     JAL     RET_ADDR_REG, FN_IEP0_INIT
@@ -278,10 +293,22 @@ TS0_OC_LOOP:
 
     ;R31[24], ; clear shadow update flag for ch0
     SET     R31, R31.t24
-    ; Load reg R31[0-27] SD HW ACC3 output sample
+    ; Load reg R31[0-27] SD HW ACC3/ACC2/ACC1 output sample
     AND     DN0, R31, MASK_REG
-    ;Execute Sinc3 Differentiation
+    
+    ;Execute Sinc3/Sinc2/Sinc1 Differentiation
+    LBBO    &TEMP_REG0.b2, SDFM_CFG_BASE_PTR_REG,  SDFM_CFG_CH0_FILTER_TYPE_OFFSET, 1
+    QBNE    SKIP_OC_ACC3_CH0, TEMP_REG0.b2, 0
     M_ACC3_PROCESS ACC3_DN1_CH0, ACC3_DN3_CH0, ACC3_DN5_CH0
+    JMP  END_OC_ACC_CH0
+SKIP_OC_ACC3_CH0:
+    QBNE    SKIP_OC_ACC2_CH0, TEMP_REG0.b2, 1
+    M_ACC2_PROCESS ACC3_DN1_CH0, ACC3_DN3_CH0
+    JMP  END_OC_ACC_CH0
+SKIP_OC_ACC2_CH0:
+    M_ACC1_PROCESS ACC3_DN1_CH0
+END_OC_ACC_CH0:
+    
 
     .if $isdefed("DEBUG_CODE")
     ;store data
@@ -441,10 +468,22 @@ COMP_CH0_END:
 
     ; R31[24], shadow_update_flag_clr for ch1
     SET     R31, R31.t24
-    ; Load reg R31[0-27] SD HW ACC3 output sample
+    ; Load reg R31[0-27] SD HW ACC3/ACC2/ACC1 output sample
     AND     DN0, R31, MASK_REG
-    ;Execute Sinc3 Differentiation
+
+    ;Execute Sinc3/Sinc2/Sinc1 Differentiation
+    LBBO    &TEMP_REG0.b2, SDFM_CFG_BASE_PTR_REG,  SDFM_CFG_CH1_FILTER_TYPE_OFFSET, 1
+    QBNE    SKIP_OC_ACC3_CH1, TEMP_REG0.b2, 0
     M_ACC3_PROCESS ACC3_DN1_CH1, ACC3_DN3_CH1, ACC3_DN5_CH1
+    JMP  END_OC_ACC_CH1
+SKIP_OC_ACC3_CH1:
+    QBNE    SKIP_OC_ACC2_CH1, TEMP_REG0.b2, 1
+    M_ACC2_PROCESS ACC3_DN1_CH1, ACC3_DN3_CH1
+    JMP  END_OC_ACC_CH1
+SKIP_OC_ACC2_CH1:
+    M_ACC1_PROCESS ACC3_DN1_CH1
+END_OC_ACC_CH1:
+    
 
     .if $isdefed("DEBUG_CODE")
     ;store data
@@ -607,10 +646,21 @@ COMP_CH1_END:
 
     ; R31[24], shadow_update_flag_clr for Ch2
     SET     R31, R31.t24
-    ; Load reg R31[0-27] SD HW ACC3 output sample
+    ; Load reg R31[0-27] SD HW ACC3/ACC2/ACC1 output sample
     AND     DN0, R31, MASK_REG
-    ; Execute Sinc3 Differentiation
+    
+    ;Execute Sinc3/Sinc2/Sinc1 Differentiation
+    LBBO    &TEMP_REG0.b2, SDFM_CFG_BASE_PTR_REG,  SDFM_CFG_CH2_FILTER_TYPE_OFFSET, 1
+    QBNE    SKIP_OC_ACC3_CH2, TEMP_REG0.b2, 0
     M_ACC3_PROCESS ACC3_DN1_CH2, ACC3_DN3_CH2, ACC3_DN5_CH2
+    JMP  END_OC_ACC_CH2
+SKIP_OC_ACC3_CH2:
+    QBNE    SKIP_OC_ACC2_CH2, TEMP_REG0.b2, 1
+    M_ACC2_PROCESS ACC3_DN1_CH2, ACC3_DN3_CH2
+    JMP  END_OC_ACC_CH2
+SKIP_OC_ACC2_CH2:
+    M_ACC1_PROCESS ACC3_DN1_CH2
+END_OC_ACC_CH2:
 
     .if $isdefed("DEBUG_CODE")
     ;store data
@@ -814,43 +864,76 @@ WAIT_SAMPLE_COUNT_INCR:
     SBBO    &TEMP_REG2, SDFM_CFG_BASE_PTR_REG, TEMP_REG1, 1
     .endif
 
-    ;Snoop read Ch0 ACC3
+    ;Snoop read Ch0 ACC3/ACC2/ACC1
     CLR     R30.t21                 ; set SD sample_counter_select=0
     NOP
-    AND     DN0, R31, MASK_REG      ; DN0 = Ch0 SD HW ACC3 output sample
+    AND     DN0, R31, MASK_REG      ; DN0 = Ch0 SD HW ACC3/ACC2/ACC1 output sample
     CLR     R30.t22                 ; set SD snoop=0    
 
     ;select ch1, enable all channel & set SD snoop=1
     LDI     R30.w2, (SD_CH1<<10 | 1<<9 | 1<<6)
     NOP
-    ; Snoop read ACC3 for SD Ch1
-    AND     TEMP_REG1, R31, MASK_REG    ; TEMP_REG0 = Ch1 SD HW ACC3 output sample
+    ; Snoop read ACC3/ACC2/ACC1 for SD Ch1
+    AND     TEMP_REG1, R31, MASK_REG    ; TEMP_REG1 = Ch1 SD HW ACC3/ACC2/ACC1 output sample
     CLR     R30.t22                     ; set SD snoop=0
 
     ;select ch2, enable all channel & set SD snoop=1
     LDI     R30.w2, (SD_CH2<<10 | 1<<9 | 1<<6)
     NOP
-    ; Snoop read ACC3 for SD Ch2
-    AND     TEMP_REG2, R31, MASK_REG    ; TEMP_REG1 = Ch2 SD HW ACC3 output sample
+    ; Snoop read ACC3/ACC2/ACC1 for SD Ch2
+    AND     TEMP_REG2, R31, MASK_REG    ; TEMP_REG0 = Ch2 SD HW ACC3/ACC2/ACC1 output sample
     CLR     R30.t22                     ; set SD snoop=0 
 
-    ; Execute SINC3 differentiation for Ch0
+    ;Execute SINC3/SINC2/SINC1 differentiation for Ch0 ; 0h = acc3, 1h =acc2 & 2h = acc1
+    QBNE    SKIP_ACC3_CH0, NC_SINC_FILTER_TYPE, 0
     M_ACC3_PROCESS ACC3_DN1_CH0, ACC3_DN3_CH0, ACC3_DN5_CH0
-    ; Save NC output sample to local output sample buffer
+    JMP  END_ACC_CH0
+SKIP_ACC3_CH0:
+    QBNE    SKIP_ACC2_CH0, NC_SINC_FILTER_TYPE, 1
+    M_ACC2_PROCESS ACC3_DN1_CH0, ACC3_DN3_CH0
+    JMP  END_ACC_CH0
+SKIP_ACC2_CH0:
+    M_ACC1_PROCESS ACC3_DN1_CH0
+END_ACC_CH0:
+
+    ;Save NC output sample to local output sample buffer
     ADD  TEMP_REG0, OUT_SAMP_BUF_REG, 0
     SBBO    &CN5, SDFM_CFG_BASE_PTR_REG, TEMP_REG0, 4   
 
-     ; Execute SINC3 differentiation for Ch1
-    MOV     DN0, TEMP_REG1 ; DN0 = Ch1 SD HW ACC3 output sample
+    ;Execute SINC3/SINC2/SINC1 differentiation for Ch1 ; 0h = acc3, 1h =acc2 & 2h = acc1
+    MOV     DN0, TEMP_REG1 ; DN0 = Ch1 SD HW ACC3/ACC2/ACC1 output sample
+
+    QBNE    SKIP_ACC3_CH1, NC_SINC_FILTER_TYPE, 0
     M_ACC3_PROCESS ACC3_DN1_CH1, ACC3_DN3_CH1, ACC3_DN5_CH1
+    JMP  END_ACC_CH1
+SKIP_ACC3_CH1:
+    QBNE    SKIP_ACC2_CH1, NC_SINC_FILTER_TYPE, 1
+    M_ACC2_PROCESS ACC3_DN1_CH1, ACC3_DN3_CH1
+    JMP  END_ACC_CH1
+SKIP_ACC2_CH1:
+    M_ACC1_PROCESS ACC3_DN1_CH1
+END_ACC_CH1:
+
     ; Save output sample to local output sample buffer
     ADD  TEMP_REG0, OUT_SAMP_BUF_REG, 4
     SBBO    &CN5, SDFM_CFG_BASE_PTR_REG, TEMP_REG0, 4
     ;SBBO    &CN5, OUT_SAMP_BUF_REG, 4, 4
 
-    ; Execute SINC3 differentiation for Ch2
-    MOV     DN0, TEMP_REG2 ; DN0 = Ch2 SD HW ACC3 output sample
+    ; Execute SINC3/SINC2/SINC1 differentiation for Ch2: 0h = acc3, 1h =acc2 & 2h = acc1
+    MOV     DN0, TEMP_REG2 ; DN0 = Ch2 SD HW ACC3/ACC2/ACC1 output sample
+
+    QBNE    SKIP_ACC3_CH2, NC_SINC_FILTER_TYPE, 0
     M_ACC3_PROCESS ACC3_DN1_CH2, ACC3_DN3_CH2, ACC3_DN5_CH2
+    JMP  END_ACC_CH2
+SKIP_ACC3_CH2
+    QBNE    SKIP_ACC2_CH2, NC_SINC_FILTER_TYPE, 1
+    M_ACC2_PROCESS ACC3_DN1_CH2, ACC3_DN3_CH2
+    JMP  END_ACC_CH2
+SKIP_ACC2_CH2:
+    M_ACC1_PROCESS ACC3_DN1_CH2
+END_ACC_CH2:
+
+
     ; Save output sample to local output sample buffer
     ADD  TEMP_REG0, OUT_SAMP_BUF_REG, 8
     SBBO    &CN5, SDFM_CFG_BASE_PTR_REG, TEMP_REG0, 4
@@ -896,7 +979,7 @@ END_CMP_UPDATE:
 
 TRIGGER_MODE:
     ;Check NC sample count
-    QBLE    RESET_NC_FRAME, SAMP_CNT_REG, NC_SAMP_CNT-1
+    QBLE    RESET_NC_FRAME, SAMP_CNT_REG, NC_SAMPLE_COUNT
     ; NC sample count < NC_SAMP_CNT-1
     ; Add configured IEP count for NC OSR
     ; IEP0 CMP4_reg = cmp4_reg + NC_OSR*IEP_CLOCK* SD_cycle
@@ -1053,10 +1136,6 @@ FN_IEP0_INIT:
     AND     TEMP_REG0.b0, TEMP_REG0.b0, 0x0F
     OR      TEMP_REG0.b0, TEMP_REG0.b0, IEP_DEFAULT_INC<<DEFAULT_INC_BN
     SBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_GLOBAL_CFG_REG, 1    
-    ;Enable IEP0 counter on EPWM0 SYNC0 event    
-    LBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_IEP0_0x100, ICSSG_IEP_PWM_REG, 1
-    SET     TEMP_REG0.b0.t0 ; IEP_PWM_REG:PWM0_RST_CNT_EN = 1, enable IEP0 counter reset on EPWM0 SYNCO event
-    SBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_IEP0_0x100, ICSSG_IEP_PWM_REG, 1    
     .endif
 
     
@@ -1192,7 +1271,7 @@ config_osr_loop_end:
 
 ;
 ; Configure SD channels. For SD channels, initialize:
-;   ACC select = ACC3
+;   ACC select = ACC3/ACC2/ACC1
 ;   Clock inversion
 ;   Clock source: pr1_pru<n>_pru_r31_in[16] Primary Input
 ;   FD: fast detect zero count
@@ -1396,32 +1475,3 @@ END_PHASE_DELAY:
         SBBO  &TEMP_REG1, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_SD_CLOCK_PHASE_DELAY, 4
         JMP     RET_ADDR_REG
 
-;
-; Initialize SD (eCAP PWM) clock
-;
-; Arguments:
-; SDFM_CFG_BASE_PTR_REG: base address of SD Configuration registers (&IEP_CFG_EPWM_PRD)
-;
-FN_INIT_SD_CLOCK:
-     ; Set eCAP PWM mode
-     LDI32   TEMP_REG0, (SYNCI_EN_VAL<<SYNCI_EN_SHIFT) | (SYNCO_SEL_VAL<<SYNCO_SEL_SHIFT) | (CAP_APWM_VAL<<CAP_APWM_SHIFT) | (APWMPOL_VAL<<APWMPOL_SHIFT)
-     SBCO    &TEMP_REG0, CT_PRU_ICSSG_ECAP, ICSSG_eCAP_ECCTL1, 4     
-     ; Load TR0.w0 <-  SDFM_CFG_SD_CLK
-     ; Load PWM devider for SD clock from DMEM
-     LBBO    &TEMP_REG0.w0, SDFM_CFG_BASE_PTR_REG,  SDFM_CFG_SD_CLK_OFFSET,  SDFM_CFG_SD_CLK_SZ     
-     ; Set period count
-     SUB     TEMP_REG1, TEMP_REG0.b0, 1  ; TR1 = SD_PRD_CLOCKS - 1
-     SBCO    &TEMP_REG1, CT_PRU_ICSSG_ECAP, ICSSG_eCAP_CAP1, 4     
-     ; Compute & set Duty Cycle count.
-     ; Divide period count by 2, biased rounding.
-     ADD     TEMP_REG1, TEMP_REG0.b0, 1  ; TR1 = SD_PRD_CLOCKS + 1
-     LSR     TEMP_REG1, TEMP_REG1, 1     ; TR1 = (SD_PRD_CLOCKS+1)/2
-     SBCO    &TEMP_REG1, CT_PRU_ICSSG_ECAP, ICSSG_eCAP_CAP2, 4     
-     LDI     TEMP_REG0, 0x0
-     SBCO    &TEMP_REG0, CT_PRU_ICSSG_ECAP, ICSSG_eCAP_CNTPHS, 4 ; clear counter phase
-     SBCO    &TEMP_REG0, CT_PRU_ICSSG_ECAP, ICSSG_eCAP_TSCNT, 4  ; reset eCAP PWM Counter     
-     ; Enable eCAP PWM
-     LBCO    &TEMP_REG0, CT_PRU_ICSSG_ECAP, ICSSG_eCAP_ECCTL1, 4
-     SET     TEMP_REG0, TEMP_REG0, TSCNTSTP_BN   ; ICSSG_ECCTL2_ECCTL1:TSCNTSTP=1
-     SBCO    &TEMP_REG0, CT_PRU_ICSSG_ECAP, ICSSG_eCAP_ECCTL1, 4     
-     JMP     RET_ADDR_REG     

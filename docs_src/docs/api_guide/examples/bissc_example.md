@@ -3,9 +3,9 @@
 
 BISS-C diagnostic application does the following:
 
-- Configures pinmux, GPIO, UART, ICSS clock to 200MHz,
-- Initializes ICSS0-PRU1,
-- Initializes defalt parameters, loads the PRU firmware & executes it.
+- Configures pinmux, GPIO, UART, ICSS clock to 200MHz (default is 200 MHz, 300 MHz can also be used)
+- Initializes ICSS0-PRU1
+- Initializes default parameters, loads the PRU firmware & executes it.
 
 This application is controlled with a terminal interface using a serial over USB connection between the PC host and the EVM.
 Please connect a USB cable between the PC and the EVM/LP.
@@ -15,11 +15,13 @@ The host serial port should be configured to 115200 baud, no parity, 1 stop bit 
 
 The BISS-C receiver firmware running on ICSS0-PRU1 provides a defined interface. The BISS-C diagnostic application interacts with the BISS-C receiver firmware interface. It then presents the user with menu options to select Data ID code. The application collects the data entered by the user and configures the relevant interface. Then via the BISS-C receiver interface, the command is triggered. Once the command completion is indicated by the interface, the status of the transaction is checked. If the Status indicates success, the result is presented to the user.
 
+\note BiSS-C firmware will only run with ICSSG Core Clock running at 200 MHz or 300 MHz frequency. 225/250/333 MHz values are not supported due to clock divider requirements.
+
 ## Channel Selection In Sysconfig
 
 \image html bissc_syscfg_ch_sel.png      "Channel Selection In Sysconfig"
 
-\image html Endat_channel_selection_configuration.png     "BiSS-C configuration seletion between Single/Multi channel "
+\image html Endat_channel_selection_configuration.png     "BiSS-C configuration selection between Single/Multi channel "
 
 
 ## Important files and directory structure
@@ -29,12 +31,12 @@ The BISS-C receiver firmware running on ICSS0-PRU1 provides a defined interface.
     <th>Folder/Files
     <th>Description
 </tr>
-<tr><td colspan="2" bgcolor=#F0F0F0> ${SDK_INSTALL_PATH}/examples/motor_control/bissc_diagnostic</td></tr>
+<tr><td colspan="2" bgcolor=#F0F0F0> ${SDK_INSTALL_PATH}/examples/position_sense/bissc_diagnostic</td></tr>
 <tr>
     <td>bissc_diagnostic.c</td>
     <td>BISS-C diagnostic application</td>
 </tr>
-<tr><td colspan="2" bgcolor=#F0F0F0> ${SDK_INSTALL_PATH}/source/motor_control/position_sense/bissc</td></tr>
+<tr><td colspan="2" bgcolor=#F0F0F0> ${SDK_INSTALL_PATH}/source/position_sense/bissc</td></tr>
 <tr>
     <td>firmware/</td>
     <td>Folder containing BISS-C PRU firmware sources.</td>
@@ -57,7 +59,7 @@ The BISS-C receiver firmware running on ICSS0-PRU1 provides a defined interface.
  ^              | PRU1, RTU-PRU1, TXPRU1 (multi channel using three PRUs - load share mode)
  Toolchain      | ti-arm-clang
  Board          | @VAR_LP_BOARD_NAME_LOWER (2 channel and 1 channel examples)
- Example folder | examples/motor_control/bissc_diagnostic
+ Example folder | examples/position_sense/bissc_diagnostic
 
 \endcond
 
@@ -100,12 +102,12 @@ The BISS-C receiver firmware running on ICSS0-PRU1 provides a defined interface.
 </tr>
 <tr>
     <td>J18/J19</td>
-    <td>J18 OFF & J19 ON</td>
+    <td>J19 installed: sets VSENSOR1 to 5.0V</td>
     <td>Axis 1: Encoder/Resolver Voltage Select</td>
 </tr>
 <tr>
     <td>J20/J21</td>
-    <td>J20 ON & J21 OFF</td>
+    <td>J21 installed: sets VSENSOR2 to 5.0V</td>
     <td>Axis 2: Encoder/Resolver Voltage Select</td>
 </tr>
 <tr>
@@ -162,6 +164,10 @@ Shown below is a sample output when the application is run:
 \imageStyle{bissc_sample_output.png,width:60%}
 \image html bissc_sample_output.png "BISS-C Sample Output"
 
+Shown below is a sample output to enable safety and the safety encoder results:
+\imageStyle{bissc_safety_sample_output.png,width:60%}
+\image html bissc_safety_sample_output.png "BISS-C Sample Output when safety is enabled"
+
 ### Test Case Description
 
 <table>
@@ -188,6 +194,22 @@ Shown below is a sample output when the application is run:
 		errors, and warnings, along with the result of the control
         communication command.
 		</td>
-        <td>CRC success with ABS, E, W and CRC values of position data along with the control communication result printed in the terminal.</td>
+        <td>CRC success with ABS position value, E, W and CRC values of position data along with the control communication result printed in the terminal.</td>
+    </tr>
+    <tr>
+        <td>3</td>
+        <td>Start periodic continuous mode</td>
+        <td>In this command we will receive:
+		Absolute rotor position value, errors, and warnings periodically.
+        Rotate the rotor of motor and see the changes in Position value on UART.
+		</td>
+        <td>0 CRC errors with ABS position value, E, W and CRC values printed in the terminal.</td>
+    </tr>
+    <tr>
+        <td>4</td>
+        <td>Enable safety mode</td>
+        <td>In this command we will enable Safety mode by using control communication:
+		</td>
+        <td>Safety should be enabled and CRC and Sign of Life counters will displayed from next position data request</td>
     </tr>
 </table>

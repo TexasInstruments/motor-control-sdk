@@ -1,6 +1,9 @@
 %%{
     let module = system.modules[args[0]];
 %%}
+% let common   = system.getScript("/common");
+% let sd_definition = system.getScript("/current_sense/sdfm_math.syscfg.js");
+
 /*
  * SDFM
  */
@@ -8,34 +11,88 @@
 /* SDFM Instance Macros */
 #define CONFIG_SDFM_NUM_INSTANCES               `module.$instances.length`
 %for(let i = 0; i < module.$instances.length; i++) {
-    % let instance = module.$instances[i];
-    % let Slice = 0 ;
-    %if(instance.instance === "ICSSG1")
-    %{
-       % if(instance.PRU_ICSSG1_PRU.$assign === "PRU_ICSSG1_PRU1")
-       %{
-          % Slice = 1;
-       %}
-
-    %}
-    %else
-    %{
-       %if(instance.PRU_ICSSG0_PRU.$assign === "PRU_ICSSG0_PRU1")
-       %{
-          % Slice = 1;
-       %}
-
-    %}
-    
+   % let instance = module.$instances[i];
+   % let Slice = 0 ;
+   % let IcssgIns = 0;
+   %if(instance.instance === "ICSSG1")
+   %{
+      % if(instance.PRU_ICSSG1_PRU.$assign === "PRU_ICSSG1_PRU1")
+      %{
+         % Slice = 1;
+      %}
+      %IcssgIns = 1;
+   %}
+   %else
+   %{
+      %if(instance.PRU_ICSSG0_PRU.$assign === "PRU_ICSSG0_PRU1")
+      %{
+         % Slice = 1;
+      %}
+   %}
+   
 #define `instance.$name`                  `i`
-#define `instance.$name`_CHANNEL0         `instance.Channel_0 & 1`
-#define `instance.$name`_CHANNEL1         `instance.Channel_1 & 1`
-#define `instance.$name`_CHANNEL2         `instance.Channel_2 & 1`
-#define `instance.$name`_CHANNEL3         `instance.Channel_3 & 1`
-#define `instance.$name`_CHANNEL4         `instance.Channel_4 & 1`
-#define `instance.$name`_CHANNEL5         `instance.Channel_5 & 1`
-#define `instance.$name`_CHANNEL6         `instance.Channel_6 & 1`
-#define `instance.$name`_CHANNEL7         `instance.Channel_7 & 1`
-#define `instance.$name`_CHANNEL8         `instance.Channel_8 & 1`
 #define `instance.$name`_SLICE            `Slice`
+#define `instance.$name`_ICSSGx           `IcssgIns`
+#define `instance.$name`_LOAD_SHARE       `instance["Enable_Load_Share"] & 1`
+#define `instance.$name`_PHASE_DELAY      `instance["Enable_Phase_Compensation"] & 1`
+#define `instance.$name`_CLK_FROM_IEP     `instance["SDFM_CLK_GEN"] == 3 ? 1 : 0`
+#define `instance.$name`_CLK_FROM_ECAP    `instance["SDFM_CLK_GEN"] == 2 ? 1 : 0`
+#define `instance.$name`_CLK_FROM_GPIO1   `instance["SDFM_CLK_GEN"] == 1 ? 1 : 0`
+
+   %for(let channel = 0; channel < 9; channel++)
+   %{     
+#define `instance.$name`_CHANNEL`channel`         `instance["Enable_Channel_" + channel.toString()] & 1`      
+   %}
+   
+   %/////////////////////
+	   // SDFM Channel macros 
+	%/////////////////////
+   %for(let channel = 0; channel < 9; channel++)
+   %{ 
+      %if(instance["Enable_Channel_" + channel.toString()])
+      %{
+#define `instance.$name`_CHANNEL`channel`_CLK_SOURCE        `instance["Ch" + channel.toString() + "_SDCLKSEL"]`	 
+#define `instance.$name`_CHANNEL`channel`_MCLK              `instance["Ch" + channel.toString() + "_SDFM Clock"]`
+#define `instance.$name`_CHANNEL`channel`_EN_CLK_INV        `instance["Ch" + channel.toString() + "_CLKINV"] & 1`
+#define `instance.$name`_CHANNEL`channel`_ACC_SOURCE        `instance["Ch" + channel.toString() + "_AccSource"]`	 
+#define `instance.$name`_CHANNEL`channel`_EN_COMP           `instance["Ch" + channel.toString() + "_ComparatorEnable"] & 1`
+#define `instance.$name`_CHANNEL`channel`_EN_FD             `instance["Ch" + channel.toString() + "_FastDetect"] & 1`
+#define `instance.$name`_CHANNEL`channel`_NC_OSR            `instance["Ch" + channel.toString() + "_NC_OSR"]`
+#define `instance.$name`_CHANNEL`channel`_EN_CONT_MODE      `instance["Ch" + channel.toString() + "_EnableContinuousMode"] & 1`
+#define `instance.$name`_CHANNEL`channel`_EN_EPWM_SYNC      `instance["Ch" + channel.toString() + "_EPWM_SYNC"] & 1`
+         %if(!instance["Ch" + channel.toString() + "_EnableContinuousMode"])
+         %{
+#define `instance.$name`_CHANNEL`channel`_FIRST_TRIGGER_POINT       `instance["Ch" + channel.toString() + "_FirstTriggerPoint"]`
+#define `instance.$name`_CHANNEL`channel`_EN_DOUBLE_UPDATE          `instance["Ch" + channel.toString() + "_EnableDoubleUpdate"] & 1`
+            %if(instance["Ch" + channel.toString() + "_EnableDoubleUpdate"])
+            %{
+#define `instance.$name`_CHANNEL`channel`_SECOND_TRIGGER_POINT          `instance["Ch" + channel.toString() + "_SecondTriggerPoint"]`
+            %}
+         %} 
+         %if(instance["Ch" + channel.toString() + "_EPWM_SYNC"])
+         %{
+#define `instance.$name`_CHANNEL`channel`_EPWM_SOURCE                `instance["Ch" + channel.toString() + "_Epwm_Source"]`           
+         %}
+         %if(instance["Ch" + channel.toString() + "_ComparatorEnable"])
+         %{
+#define `instance.$name`_CHANNEL`channel`_OC_OSR                     `instance["Ch" + channel.toString() + "_OC_OSR"]`
+#define `instance.$name`_CHANNEL`channel`_OC_HIGH_TH                 `instance["Ch" + channel.toString() + "_HLT"]`
+#define `instance.$name`_CHANNEL`channel`_OC_LOW_TH                  `instance["Ch" + channel.toString() + "_LLT"]`
+#define `instance.$name`_CHANNEL`channel`_OC_EN_ZERO_CROSS           `instance["Ch" + channel.toString() + "_ZeroCross_Enable"] & 1`
+            %if(instance["Ch" + channel.toString() + "_ZeroCross_Enable"])
+            %{
+#define `instance.$name`_CHANNEL`channel`_OC_ZC_TH                      `instance["Ch" + channel.toString() + "_ZCT"]`
+            %}
+         %}
+         %if(instance["Ch" + channel.toString() + "_FastDetect"])
+         %{
+#define `instance.$name`_CHANNEL`channel`_FD_WINDOW_SIZE             `instance["Ch" + channel.toString() + "_FD_SIZE"]`
+#define `instance.$name`_CHANNEL`channel`_FD_MAX_ZERO_COUNT          `instance["Ch" + channel.toString() + "_ZeroMaxTh"]`
+#define `instance.$name`_CHANNEL`channel`_FD_MIN_ZERO_COUNT          `instance["Ch" + channel.toString() + "_ZeroMinTh"]`
+         %}
+
+      %}
+
+	%}
+
 % }

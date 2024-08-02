@@ -66,7 +66,7 @@ RET2	.macro
 
 	.include "tamagawa_icss_reg_defs.h"
 	.include "tamagawa_interface.h"
-	.include "..\..\..\..\mcu_plus_sdk\source\pru_io\firmware\common\icss_regs.inc"
+	.include "../../../../mcu_plus_sdk/source/pru_io/firmware/common/icss_regs.inc"
 	.include "single_ch_receive_frames.h"
 	.include "multi_ch_receive_frames.h"
     .include "firmware_version.h"
@@ -183,7 +183,7 @@ HANDLE_PERIODIC_TRIGGER_MODE:
     ;Get compare event status
     LBCO	&R0,	ICSS_IEP,	ICSS_IEP_CMP_STATUS_REG,	4
     ; wait till IEP CMP3 event
-	QBBC	HANDLE_PERIODIC_TRIGGER_MODE,	R0,	3
+	QBBC	CHECK_OPERATING_MODE,	R0,	3
 	; Clear IEP CMP3 event
 	SET	R0,	R0,	3
     ; store compare event status

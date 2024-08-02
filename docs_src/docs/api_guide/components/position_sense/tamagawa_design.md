@@ -36,7 +36,7 @@ The firmware first initializes the PRU hardware. Then it checks whether it is ho
 
 ### Initialization {#TAMAGAWA_DESIGN_INITIALIZATION}
 
-PRU is set to EnDat mode first. The entire EnDat configuration MMRs are cleared(CFG registers). Tx global reinit bit in R31 is set to put all channels in default mode. The clock source is selected (ICSSG clock is selected with 200MHZ frequency). In Tx mode, the output data is read from the Tx FIFO at this 1x clock rate. In Rx mode, the input data is sampled at the Oversampling (OS) clock rate. Hence, Tx clock(1x clock) and Rx clock(Oversampling (OS) clock) are setup by selecting oversampling factor(x8). At the end of the initialization status is updated and wait until trigger from user occurs for tamagawa commands.
+PRU is set to 3 channel peripheral interface first. The entire EnDat configuration MMRs are cleared(CFG registers). Tx global reinit bit in R31 is set to put all channels in default mode. The clock source is selected (ICSSG clock is selected with 200MHZ frequency). In Tx mode, the output data is read from the Tx FIFO at this 1x clock rate. In Rx mode, the input data is sampled at the Oversampling (OS) clock rate. Hence, Tx clock(1x clock) and Rx clock(Oversampling (OS) clock) are setup by selecting oversampling factor(x8). At the end of the initialization status is updated and wait until trigger from user occurs for tamagawa commands.
 
 \image html Tamagawa_initialization_flow_chart.JPG "Initialization Flow Chart"
 
@@ -55,7 +55,7 @@ In case of EEPROM Write command, the requirement is to send 4 frames of 10 bits 
 
 \image html Tamagawa_eeprom_write_flow_chart.png "Transmit Flow Chart for EEPROM Write command"
 
-Once the Transmission is complete, the encoder starts sending the data and the firmware copies the receive FIFO contents onto the receive buffer, individually, until all the data has been received.
+Once the transmission is complete, the encoder starts sending the data and the firmware copies the receive FIFO contents onto the receive buffer, individually, until all the data has been received.
 
 \image html Tamagawa_rx_flow_chart.png "Receive Flow Chart"
 

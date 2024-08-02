@@ -14,12 +14,12 @@
         name = "dcl_pi_am243x-evm_r5fss0-0_nortos_ti-arm-clang"
         products="sysconfig;com.ti.MOTOR_CONTROL_SDK_AMXXX;"
         configurations="
-                Release,
-                Debug,
+            Release,
+            Debug,
         "
         connection="TIXDS110_Connection.xml"
         toolChain="TICLANG"
-        cgtVersion="3.2.0"
+        cgtVersion="3.2.2"
         device="Cortex R.AM2434_ALV"
         deviceCore="MAIN_PULSAR_Cortex_R5_0_0"
         ignoreDefaultDeviceSettings="true"
@@ -92,10 +92,6 @@
         <file path="../../../pi_test.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
         <file path="../main.c" openOnCreation="false" excludeFromBuild="false" action="copy">
-        </file>
-        <file path="linker.cmd" openOnCreation="false" excludeFromBuild="false" action="copy">
-        </file>
-        <file path="dcl_linker_r5f_am243x_sitara.cmd" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
         <file path="../example.syscfg" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>

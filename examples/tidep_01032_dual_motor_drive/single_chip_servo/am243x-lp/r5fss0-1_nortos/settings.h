@@ -104,5 +104,4 @@
 ///#define USE_PURE_OPEN_LOOP
 ///#define USE_OPEN_LOOP_WITH_SDDF
 
-///#define USE_RTLIB_FOC
 

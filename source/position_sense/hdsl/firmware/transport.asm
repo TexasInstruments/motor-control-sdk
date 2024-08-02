@@ -74,13 +74,11 @@
 ; NOT allowed to use REG_TMP11
 ;----------------------------------------------------
 transport_on_v_frame_2:
-
 ;save REG_FNC.w0 content
 	mov		REG_TMP11.w1, REG_FNC.w0
 
 ; retrieve the 8 bytes for secondary channel from VPOS2_TEMP
     lbco        &REG_TMP1, MASTER_REGS_CONST, VPOS2_TEMP, 8
-
 ; error checks for secondary channel
 	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, ONLINE_STATUS_2_H, 1
 ; retrieve H_FRAME.flags from H_FRAME_FLAGS_TEMP
@@ -89,12 +87,12 @@ transport_on_v_frame_2:
 	qbbs	    transport_on_v_frame_dont_update_qm_secondary_channel, REG_TMP0.w2, FLAG_ERR_SEC
 ;checking for crc error in channel 2
 ; retrieve CRC_SEC from CRC_SEC_TEMP
+
     lbco        &REG_TMP0.w2, MASTER_REGS_CONST, CRC_SEC_TEMP, 2
 	qbeq		check_for_slave_error_on_secondary_channel, REG_TMP0.w2, 0
 ; set SCE2 bit in ONLINE_STATUS_2
 	set		    REG_TMP0.b0, REG_TMP0.b0, ONLINE_STATUS_2_SCE2
 	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, ONLINE_STATUS_2_H, 1
-	QM_SUB		8
 transport_on_v_frame_dont_update_qm_secondary_channel:
 	qba		transport_on_v_frame_2_exit
 check_for_slave_error_on_secondary_channel:
@@ -103,9 +101,9 @@ check_for_slave_error_on_secondary_channel:
 	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, ONLINE_STATUS_2_H, 1
 ; No QM updates for CRC check success with safe channel 2
     lbco		&REG_TMP0.b0, MASTER_REGS_CONST, ONLINE_STATUS_2_H, 1
-;check for special character: K29.7 is sent in first byte of secondary vertical channel if slave error occured
-; assumption: r21.b3 contains the first byte of secondary vertical channel
-	qbne		transport_on_v_frame_no_vpos2_error, REG_TMP2.b3, K29_7
+;check for special character: K27.7 is sent in first byte of secondary vertical channel if slave error occured
+; assumption: r21.b2 or CHANNEL.ch_sech.b2 contains the first byte of secondary vertical channel
+	qbne		transport_on_v_frame_no_vpos2_error, REG_TMP2.b2, K27_7
     ; set VPOS2 bit in ONLINE_STATUS_2
 	set		    REG_TMP0.b0, REG_TMP0.b0, ONLINE_STATUS_2_VPOS2
     sbco		&REG_TMP0.b0, MASTER_REGS_CONST, ONLINE_STATUS_2_H, 1
@@ -113,10 +111,8 @@ check_for_slave_error_on_secondary_channel:
 transport_on_v_frame_no_vpos2_error:
 	clr		    REG_TMP0.b0, REG_TMP0.b0, ONLINE_STATUS_2_VPOS2
 transport_on_v_frame_vpos2_error_exit:
-
+transport_on_v_frame_2_exit:
 ; store the data from secondary channel
-; invert the bits for STATUS2
-	xor			REG_TMP2.b3, REG_TMP2.b3, 0xe0
 ; swap bytes in each 32 bit register REG_TMP1 and REG_TMP2
 	xin     160, &REG_TMP1, 8
 
@@ -129,18 +125,20 @@ online_status_2_sum2_set:
     set         REG_TMP0.b0, REG_TMP0.b0, ONLINE_STATUS_2_SUM2
 online_status_2_sum2_not_set:
 	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, ONLINE_STATUS_2_H, 1
-
-
 ; Store STATUS2, VPOS24, VPOS23 and VPOS22
 	sbco	&REG_TMP2.b0, MASTER_REGS_CONST, STATUS2, 4
 ; Store VPOS21, VPOS20, VPOSCRC2_H and VPOSCRC2_L
 	sbco	&REG_TMP1.b0, MASTER_REGS_CONST, VPOS21, 4
+	qbbc        no_qm_sub, REG_TMP2.b0, STATUS2_TEST2
+	QM_SUB		8
+no_qm_sub:
 ; generate interrupt PRU0_ARM_IRQ2
 	ldi	    r31.w0, PRU0_ARM_IRQ2
-
-transport_on_v_frame_2_exit:
-	qbne			not_7th_hframe_0, LOOP_CNT.b2, 7
-	qbbc			not_7th_hframe_0, H_FRAME.flags, FLAG_NORMAL_FLOW
+; update the position and crc to DMEM
+; and raise interrupt
+	;Update ONLINE_STATUS_1 to DMEM
+    lbco	&REG_TMP0.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H_TEMP, 1
+	sbco	&REG_TMP0.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H, 1
  	.if $defined("HDSL_MULTICHANNEL")
  	CALL2 WAIT_TX_FIFO_FREE
 	LOOP push_1B_0 ,2
@@ -151,17 +149,29 @@ push_1B_0:
 	RESET_CYCLCNT
 free_run_mode2:
 	.endif
-not_7th_hframe_0:
-; Check for VPOS_VALID, If it is valid, update the position and crc to DMEM
-; and raise interrupt
-	lbco	&REG_TMP0.b0, MASTER_REGS_CONST, VPOS_VALID, 1
-    qbne    transport_skip_vpos_update, REG_TMP0.b0, 1
+;Update EVENT_S in DMEM for EVENT_S_VPOS and EVENT_S_SCE events
+	lbco	&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S_TEMP, 1
+	lbco	&REG_TMP0.w1, MASTER_REGS_CONST, EVENT_S, 2
+	qbbc	no_VPOS_update_in_event_reg,REG_TMP0.b0,EVENT_S_VPOS
+	set REG_TMP0.b1,REG_TMP0.b1,EVENT_S_VPOS
+no_VPOS_update_in_event_reg:
+	qbbc		update_events_no_int4_VPOS, REG_TMP0.b2, EVENT_S_VPOS
+; generate interrupt_s
+	ldi		r31.w0, PRU0_ARM_IRQ4
+update_events_no_int4_VPOS:
+	qbbc	no_SCE_update_in_event_reg,REG_TMP0.b0,EVENT_S_SCE
+	set REG_TMP0.b1,REG_TMP0.b1,EVENT_S_SCE
+no_SCE_update_in_event_reg:
+	qbbc		update_events_no_int4_SCE, REG_TMP0.b2, EVENT_S_SCE
+; generate interrupt_s
+	ldi		r31.w0, PRU0_ARM_IRQ4
+update_events_no_int4_SCE:
+	sbco	&REG_TMP0.b1, MASTER_REGS_CONST, EVENT_S, 1
 	lbco	&REG_TMP0.b0, MASTER_REGS_CONST, VPOS_TEMP, 7
     sbco	&REG_TMP0.b0, MASTER_REGS_CONST, VPOS4, 7
 ; generate interrupt PRU0_ARM_IRQ1
 	ldi		    r31.w0, PRU0_ARM_IRQ1
 transport_skip_vpos_update:
-
 
 ; Set POSTX to 3
     ldi         REG_TMP0.b0, 0x3
@@ -210,7 +220,6 @@ online_status_sum_save:
 
 ;restore REG_FNC.w0 content
 	mov		REG_FNC.w0, REG_TMP11.w1
-
 	jmp		datalink_transport_on_v_frame_done_2
 
 ;----------------------------------------------------
@@ -229,7 +238,6 @@ transport_on_h_frame:
     sbco		&REG_TMP0.b0, MASTER_REGS_CONST, POSTX, 1
 
 ;check for byte error in acceleration channel
-
 	qbbs		transport_acc_err_inc, H_FRAME.flags, FLAG_ERR_ACC
 ;crc error verification
 	;CALL1		calc_acc_crc
@@ -245,18 +253,22 @@ transport_on_h_frame:
 	ldi		REG_TMP0.w0, DOUBLE_K29_7
     qbne		delta_delta_position, H_FRAME.acc, REG_TMP0.w0
 transport_acc_err_inc:
-
 ;update the acc_err_cnt register
 	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, ACC_ERR_CNT, 1
 	add		REG_TMP0.b0, REG_TMP0.b0, 1
 	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, ACC_ERR_CNT, 1
+;update align phase:
+	ldi ALIGN_PHASE,0
+	sbco 		&ALIGN_PHASE, MASTER_REGS_CONST, ALIGN_PH, 1
+	.if $defined("HDSL_CHECK_ALIGNMENT_PHASE")
+	sbco 		&ALIGN_PHASE, MASTER_REGS_CONST,CURRENT_ALIGN_PHASE, 1
+	.endif
 ;reset if it is too large
 	lbco		&REG_TMP0.b1, MASTER_REGS_CONST, ACC_ERR_CNT_THRESH, 1
 	qbgt		transport_on_h_frame_no_reset, REG_TMP0.b0, REG_TMP0.b1
 	jmp		datalink_abort
 transport_on_h_frame_no_reset:
 ;save return addr
-
 	mov		REG_TMP11.w0, RET_ADDR0
 	;CALL		estimator_acc; Instead of calling the API, copy the code here to save PRU cycles.
 ;----------------------------------------------------
@@ -296,15 +308,15 @@ estimator_acc_sign_extend_dacc1:
 	qbbc		calc_speed_extend_acc1, REG_FNC.w0, 10
 	ldi		REG_TMP0.w1, 0xfff8
 calc_speed_extend_acc1:
-	or		REG_TMP0.w0, REG_TMP0.w0, REG_FNC.w0
-	add		SPEED.w0, SPEED.w0, REG_TMP0.w0
-	adc		SPEED.b2, SPEED.b2, REG_TMP0.b2
-;updating the delta acceleration regs
 	.if $defined("HDSL_MULTICHANNEL")
 	CALL2 WAIT_TX_FIFO_FREE
 	PUSH_FIFO_CONST  0x00
 	PUSH_FIFO_CONST  0x00
 	.endif
+	or		REG_TMP0.w0, REG_TMP0.w0, REG_FNC.w0
+	add		SPEED.w0, SPEED.w0, REG_TMP0.w0
+	adc		SPEED.b2, SPEED.b2, REG_TMP0.b2
+;updating the delta acceleration regs
 	mov		DELTA_ACC4, DELTA_ACC3
 	mov		DELTA_ACC3, DELTA_ACC2
 	mov		DELTA_ACC2, DELTA_ACC1
@@ -315,11 +327,10 @@ calc_speed_extend_acc1:
     CALL1		calc_fastpos
 ;restore return addr
 	mov		RET_ADDR0, REG_TMP11.w0
-; Moving the event and online register update during stuffing
-; Set EVENT_UPDATE_PENDING_POS to indicate a fast position data consistency error
-	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_UPDATE_PENDING, 1
-	set         REG_TMP0.b0, REG_TMP0.w0, EVENT_UPDATE_PENDING_POS
-	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_UPDATE_PENDING, 1
+; Update ONLINE_STATUS_D_H for POS error
+	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
+	set 		REG_TMP0,REG_TMP0,ONLINE_STATUS_D_POS
+	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
 	qba		transport_on_h_frame_exit
 delta_delta_position:
 
@@ -334,15 +345,15 @@ delta_delta_position:
 	qbbc		calc_speed_extend_acc0, REG_FNC.w0, 10
 	ldi		REG_TMP0.w1, 0xfff8
 calc_speed_extend_acc0:
-	or		REG_TMP0.w0, REG_TMP0.w0, REG_FNC.w0
-	add		SPEED.w0, SPEED.w0, REG_TMP0.w0
-	adc		SPEED.b2, SPEED.b2, REG_TMP0.b2
-;updating the delta acceleration regs
 	.if $defined("HDSL_MULTICHANNEL")
 	CALL2 WAIT_TX_FIFO_FREE
 	PUSH_FIFO_CONST  0x00
 	PUSH_FIFO_CONST  0x00
 	.endif
+	or		REG_TMP0.w0, REG_TMP0.w0, REG_FNC.w0
+	add		SPEED.w0, SPEED.w0, REG_TMP0.w0
+	adc		SPEED.b2, SPEED.b2, REG_TMP0.b2
+;updating the delta acceleration regs
 	mov		DELTA_ACC4, DELTA_ACC3
 	mov		DELTA_ACC3, DELTA_ACC2
 	mov		DELTA_ACC2, DELTA_ACC1
@@ -363,7 +374,7 @@ calc_relpos_extend_vel:
 	add		REG_TMP0.w0, REG_TMP0.w0, REG_TMP1.w0
 	adc		REG_TMP0.w2, REG_TMP0.w2, REG_TMP1.w2
 	sbco		&REG_TMP0, MASTER_REGS_CONST, REL_POS0, 4
-;store fast pos. and velocity
+	;store fast pos. and velocity
     mov     REG_TMP0, FAST_POSH
     mov     REG_TMP1, SPEED
     xin     160, &REG_TMP0, 8
@@ -371,13 +382,9 @@ calc_relpos_extend_vel:
 ; Set POSTX to 2
     ldi         REG_TMP0.b0, 0x2
     sbco		&REG_TMP0.b0, MASTER_REGS_CONST, POSTX, 1
+;store last FAST_POS
+	sbco		&FAST_POSL, MASTER_REGS_CONST, LAST_FAST_POS0, SIZE_FAST_POS
 
-; Store PIPE data
-	sbco	&H_FRAME.pipe, MASTER_REGS_CONST, PIPE_D, 1
-
-; signal event mst_intr[0] and PRU0_ARM_IRQ3
-	ldi     r31.w0, 32+0
-	ldi     r31.w0, PRU0_ARM_IRQ3
 	RET
 
 ;--------------------------------------------------------------------------------------------------
@@ -439,30 +446,6 @@ calc_speed_extend_acc:
 	mov		LAST_ACC, REG_TMP0.w0
 	RET1
 
-;--------------------------------------------------------------------------------------------------
-;Function: store_error (RET_ADDR1)
-;Stores error in ring buffer
-;15 cycles
-;input:
-;	REG_FNC: error
-;output:
-;modifies:
-;--------------------------------------------------------------------------------------------------
-store_error:
-;load abs error ring buffer ptr.
-	;ldi		REG_TMP1, (PDMEM00+ABS_ERR_PTR)
-	;xor		REG_TMP0, REG_TMP0, REG_TMP0
-	;lbbo		&REG_TMP0, REG_TMP1, 0x00, ABS_ERR_PTR_SIZE
-;store error
-	;sbbo		&REG_FNC, REG_TMP0, 0x00, 4
-;update and store ptr
-	;add		REG_TMP0.w0, REG_TMP0.w0, 4
-	;ldi		REG_TMP0.w2, (PDMEM00+ABS_ERR_BUF+ABS_ERR_BUF_SIZE)
-	;qbgt		store_error_dont_reset_abs_err_ptr, REG_TMP0.w0, REG_TMP0.w2
-	;ldi		REG_TMP0.w0, (PDMEM00+ABS_ERR_BUF)
-store_error_dont_reset_abs_err_ptr:
-	;sbbo		&REG_TMP0.w0, REG_TMP1, 0x00, ABS_ERR_PTR_SIZE
-	;RET1
 ;--------------------------------------------------------------------------------------------------
 ;Function: calc_acc_crc (RET_ADD1)
 ;This function checks the crc for the acceleration channel
@@ -1060,33 +1043,24 @@ transport_layer_online_status_qm_not_low:
     clr         REG_TMP1.w0, REG_TMP1.w0, ONLINE_STATUS_2_QMLW
 	sbco		&REG_TMP0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 6
 transport_layer_online_status_qm_update_done:
-
+	.if $defined("HDSL_MULTICHANNEL")
+	CALL3 PUSH_FIFO_2B_8x
+	.endif
 ; update POS bits in ONLINE_STATUS_D and EVENT
     lbco        &REG_TMP1.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
-; Check EVENT_UPDATE_PENDING_POS to process a pending POS set
-	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_UPDATE_PENDING, 1
-    qbbc        transport_layer_no_pos_event, REG_TMP0.b0, EVENT_UPDATE_PENDING_POS
-; Clear EVENT_UPDATE_PENDING_POS
-	clr         REG_TMP0.w0, REG_TMP0.w0, EVENT_UPDATE_PENDING_POS
-	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_UPDATE_PENDING, 1
-
-; Set EVENT_POS in EVENT register
 	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_H, 4
+	qbbc		no_update_for_POS_bit,REG_TMP1.b0,ONLINE_STATUS_D_POS
+	; Set EVENT_POS in EVENT register
 	set		REG_TMP0.w0, REG_TMP0.w0, EVENT_POS
+no_update_for_POS_bit:
 ;save events
 	sbco		&REG_TMP0.w0, MASTER_REGS_CONST, EVENT_H, 2
 	qbbc		update_events_no_int14, REG_TMP0.w2, EVENT_POS
 ; generate interrupt
 	ldi		r31.w0, PRU0_ARM_IRQ
 update_events_no_int14:
-    set         REG_TMP1.b0, REG_TMP1.b0, ONLINE_STATUS_D_POS
-    qba         transport_layer_pos_update_done
-transport_layer_no_pos_event:
-    clr         REG_TMP1.b0, REG_TMP1.b0, ONLINE_STATUS_D_POS
-transport_layer_pos_update_done:
     sbco        &REG_TMP1.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
 	jmp		transport_layer_send_msg_done
-
 
 
 ;--------------------------------------------------
@@ -1105,10 +1079,6 @@ transport_on_v_frame:
 	add		REG_TMP1, REG_TMP1, 1
 	sbco	&REG_TMP1, MASTER_REGS_CONST, NUM_VERT_FRAMES0, 4
     .endif
-; clear VPOS_VALID
-    zero    &REG_TMP0.b0, 1
-	sbco	&REG_TMP0.b0, MASTER_REGS_CONST, VPOS_VALID, 1
-
 ;store CRC in Master  Registers
 	mov		REG_TMP1.b0, VERT_L.b1
 	mov		REG_TMP1.b1, VERT_L.b0
@@ -1125,14 +1095,10 @@ transport_on_v_frame:
 	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_S, 2
 	set		REG_TMP0.b0, REG_TMP0.b0, EVENT_S_SCE
 ;save events
-	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S, 1
-	qbbc		update_events_no_int4, REG_TMP0.b1, EVENT_S_SCE
-; generate interrupt_s
-	ldi		r31.w0, PRU0_ARM_IRQ4
-update_events_no_int4:
+	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S_TEMP, 1
 ; Set ONLINE_STATUS_1_SCE in ONLINE_STATUS_1 register
     set         REG_TMP2.b0, REG_TMP2.b0, ONLINE_STATUS_1_SCE
-    sbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H, 1
+    sbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H_TEMP, 1
 	QM_SUB		6
 transport_on_v_frame_dont_update_qm:
 ;update CRC error count
@@ -1147,101 +1113,55 @@ check_for_slave_error_on_v_frame:
 ;CRC was correct -> add 1 to QM
 ;Note: QM_ADD uses REG_TMP1
 	QM_ADD		1
+
 ;check for special character: K29.7 is sent in first byte of vertical channel if slave error occured
-	qbne		transport_on_v_frame_check_pos, VERT_H.b3, K29_7
-; Set EVENT_S_VPOS in EVENT register, due to encoder internal error
-	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_S, 2
-	set		REG_TMP0.b0, REG_TMP0.b0, EVENT_S_VPOS
-;save events
-	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S, 1
-	qbbc		update_events_no_int5, REG_TMP0.b1, EVENT_S_VPOS
-; generate interrupt_s
-	ldi		r31.w0, PRU0_ARM_IRQ4
-update_events_no_int5:
-; Set ONLINE_STATUS_1_VPOS in ONLINE_STATUS_1 register
-    set         REG_TMP2.b0, REG_TMP2.b0, ONLINE_STATUS_1_VPOS
-    sbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H, 1
-	qba		transport_on_v_frame_exit
-transport_on_v_frame_check_pos:
-
-    .if $defined("HDSL_MULTICHANNEL")
-    CALL2 WAIT_TX_FIFO_FREE
-    LOOP push_1B,3
-	PUSH_FIFO_CONST  0xff
-push_1B:
-    .endif
-
-	sbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H, 1
-	lsl		REG_TMP2, CHANNEL.ch_verth, 8
-	mov		REG_TMP2.b0, VERT_L.b3
-;first V-Frame? -> update FAST POS with SAFE POS
-transport_on_v_frame_not_first:
-;check for LAST FAST POS and SAFE POS mismatch
-
-	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, LAST_FAST_POS0, SIZE_FAST_POS
-	sub		REG_TMP1.w0, VERT_L.w2, REG_TMP0.w0
-	sub		REG_TMP1.w2, VERT_H.w0, REG_TMP0.w2
-	qble 	no_sub_carry, VERT_L.w2, REG_TMP0.w0
-; if carry is needed, subtract 1 separately
-	sub		REG_TMP1.w2, REG_TMP1.w2, 1
-no_sub_carry:
-	mov		REG_TMP2, REG_TMP1
-;check if diff is neg,
-	qbbc		transport_on_v_frame_diff_pos, REG_TMP2, 31
-	not		REG_TMP2, REG_TMP2
-	add		REG_TMP2, REG_TMP2, 1
-transport_on_v_frame_diff_pos:
-
-
-
-;check for diff. is 0 -> estimate if not
-	qbne		transport_on_v_frame_estimate, REG_TMP1, 0
-	qbne		transport_on_v_frame_estimate, VERT_H.b2, FAST_POSL
-
-;reset ALIGN_PH
-	ldi 	REG_TMP2.b0, 0
-	sbco 	&REG_TMP2.b0, MASTER_REGS_CONST, ALIGN_PH, 1
-	qba		transport_on_v_frame_no_pos_mismatch
-; estimate/correct
-transport_on_v_frame_estimate:
-	CALL1		estimator_fpos
-transport_on_v_frame_no_pos_mismatch:
-;store SAFE POS
-
-	mov		REG_TMP0.b0, VERT_H.b2
+    mov		REG_TMP0.b0, VERT_H.b2
 	mov		REG_TMP0.b1, VERT_H.b1
 	mov		REG_TMP0.b2, VERT_H.b0
 	mov		REG_TMP0.b3, VERT_L.b3
 	mov		REG_TMP1.b0, VERT_L.b2
-
-; Store the required data for vertical channel in temporary memory.
-; It will be stored to DMEM in transport_on_v_frame_2
+; Store the required data for vertical channel in memory
 	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, VPOS_TEMP, 5
+	;VPOS data stored from high to low byte in order of VERT_H.b2,VERT_H.b1,VERT_H.b0,VERT_L.b3,VERT_L.b2
+	qbne		transport_on_v_frame_check_pos, VERT_H.b2, K29_7
+; Set EVENT_S_VPOS in EVENT register, due to encoder internal error
+	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_S, 2
+	set		REG_TMP0.b0, REG_TMP0.b0, EVENT_S_VPOS
+;save events
+	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_S_TEMP, 1
+; Set ONLINE_STATUS_1_VPOS in ONLINE_STATUS_1 register
+    set         REG_TMP2.b0, REG_TMP2.b0, ONLINE_STATUS_1_VPOS
+    sbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H_TEMP, 1
+	qba		transport_on_v_frame_exit
+transport_on_v_frame_check_pos:
+	sbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H_TEMP, 1
 
-; set VPOS_VALID
-    ldi    REG_TMP0.b0, 0x1
-	sbco	&REG_TMP0.b0, MASTER_REGS_CONST, VPOS_VALID, 1
+transport_on_v_frame_realign:
+	CALL2 WAIT_TX_FIFO_FREE
+	PUSH_FIFO_CONST  0xff
+	PUSH_FIFO_CONST  0xff
+	CALL1 re_align_algo
+	PUSH_FIFO_CONST  0xff
 
+transport_on_v_frame_no_pos_mismatch:
 ; Store the required data for secondary channel in temporary memory.
 ; It will be processed in transport_on_v_frame_2
-
 ; store H_FRAME.flags
 	sbco	&H_FRAME.flags, MASTER_REGS_CONST, H_FRAME_FLAGS_TEMP, 2
 ; store CRC_SEC
 	sbco	&CRC_SEC, MASTER_REGS_CONST, CRC_SEC_TEMP, 2
 ; store the 8 bytes from secondary channel
-	sbco	&R20, MASTER_REGS_CONST, VPOS2_TEMP, 8
+	sbco	&CHANNEL.ch_secl, MASTER_REGS_CONST, VPOS2_TEMP, 8
 	jmp no_first_push_for_exit
 transport_on_v_frame_exit:
 ;we are in RX0
 ;reset rel. pos
-	loop Wait_and_Push_2_byte,2
-   	CALL2 WAIT_TX_FIFO_FREE
+	CALL2 WAIT_TX_FIFO_FREE
+	PUSH_FIFO_CONST  0xff
+	PUSH_FIFO_CONST  0xff
+	CALL1 re_align_algo
 	PUSH_FIFO_CONST  0xff
 Wait_and_Push_2_byte:
-
-	PUSH_FIFO_CONST  0xff
-
 no_first_push_for_exit:
     .if $defined("HDSL_MULTICHANNEL")
 	qbeq			free_run_mode1, EXTRA_SIZE, 0
@@ -1254,10 +1174,8 @@ free_run_mode1:
 	sbco		&REG_TMP0, MASTER_REGS_CONST, REL_POS0, 4
 ;store last FAST_POS
 	sbco		&FAST_POSL, MASTER_REGS_CONST, LAST_FAST_POS0, SIZE_FAST_POS
-
 ; Store summary
     sbco    &VERT_H.b3, MASTER_REGS_CONST, SAFE_SUM_TEMP, 1
-
 ;restore REG_FNC.w0 content
 	mov		REG_FNC.w0, REG_TMP11.w1
 ;reset vertical/secondary channel crc
@@ -1266,56 +1184,184 @@ free_run_mode1:
 	and		H_FRAME_flags_l, H_FRAME_flags_l, FLAG_ERRORS
 	jmp		datalink_transport_on_v_frame_done
 
-;--------------------------------------------------------------------------------------------------
-;Function: estimator_fpos (RET_ADDR1)
-;This function estimates fpos when vpos and fpos mismatch
-;The FAST_POS will oscillate with a small error around the SAFE_POS
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; The actual realignment algorithm pseudocode
+;;This is a simplified version without the estimator and without handling invalid acc values
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;     global fastpos, vel, relpos, xreg, ALIGN_PHASE, uvel, upos, avel, epos, oldvpos, curvpos, dvpos, pq_state
+
+;    if acc_valid == 1:
+;        vel = vel + acc_update
+;    else:
+;        # restart alignment process
+;        ALIGN_PHASE = 0
 ;
-;19 cycles
+;    fastpos = fastpos + vel
 ;
-;input:
-;	REG_TMP1: vpos - last fpos
+;    # Start of a new VPOS cycle, reset relpos
+;    if vpos_part == 0:
+;        relpos = vel
+;    else:
+;        relpos = relpos + vel
 ;
-;output: FAST_POSH, FAST_POSL, SPEED
+;    uvel = uvel + maxacc
+;    upos = upos + uvel
 ;
-;modifies:FAST_POSH, FAST_POSL, SPEED
-;NOT allowed to use REG_TMP11
+;    avel = avel + dvpos
+;    epos = curvpos + (avel>>3)
 ;
-;--------------------------------------------------------------------------------------------------
-estimator_fpos:
-	lbco 		&REG_TMP2.b0, MASTER_REGS_CONST, ALIGN_PH, 1
-	add			REG_TMP2.b0, REG_TMP2.b0, 1
-;pos=abspos+relpos
+;    # End of a VPOS cycle, we have a new complete VPOS
+;    if vpos_part == 7:
+;        if ALIGN_PHASE == 0:
+;            print("Executing Align Phase 0.")
+;            if vpos_valid == True:
+;                xreg = vpos_update + relpos
+;                fastpos = xreg
+;                ALIGN_PHASE = 1
+;        else :
+;            if ALIGN_PHASE == 1:
+;                print("Executing Align Phase 1.")
+;                ALIGN_PHASE = 2
+;                xreg = vpos_update - xreg
+;                vel = vel + (xreg>>3)
+;                xreg = xreg*2
+;                fastpos = fastpos + xreg
+;            if ALIGN_PHASE == 2:
+;                print("Executing Align Phase 2.")
+;                ALIGN_PHASE = 3
+;            else:
+;                if ALIGN_PHASE == 3:
+;                    if relpos+vpos_update != fastpos:
+;                        print("Check Align Phase 3: failed", relpos+vpos_update, '!=', fastpos)
+;                        ALIGN_PHASE = 0
+;                    else:
+;                        print("Check Align Phase 3: succeeded", relpos+vpos_update, '==', fastpos, "whole last 8 packets were synchronous")
+;
+;    if ALIGN_PHASE == 3:
+;        print("Aligned Fastpos:", fastpos, "\tVel:", vel, "\tMaxdev:", "0")
+;    else:
+;        print("Estimated Fastpos:", epos, "\tVel:", dvpos>>3, "\tMaxdev:", upos>>8)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+re_align_algo:
+	lbco 		&r0.b0, MASTER_REGS_CONST,VPOS_TEMP, 1
+	qbeq		alignment_check_failed,r0.b0,K29_7
+	lbco 		&ALIGN_PHASE, MASTER_REGS_CONST, ALIGN_PH, 1
+	.if $defined("HDSL_CHECK_ALIGNMENT_PHASE")
+	sbco 		&ALIGN_PHASE, MASTER_REGS_CONST, CURRENT_ALIGN_PHASE, 1
+	.endif
+	qbeq		align_ph0,ALIGN_PHASE,0
+	qbeq		align_ph1,ALIGN_PHASE,1
+	qbeq		align_ph2,ALIGN_PHASE,2
+	qbeq		align_ph3,ALIGN_PHASE,3
+	jmp alignment_check_failed
+;Align phase 0
+align_ph0:
+	;XREG= vpos_update+relpos
+	;FAST_POS=XREG
 	lbco		&REG_TMP0, MASTER_REGS_CONST, REL_POS0, 4
-	add		FAST_POSL, VERT_L.b2, REG_TMP0.b0
-	adc		FAST_POSH.b0, VERT_L.b3, REG_TMP0.b1
-	adc		FAST_POSH.w1, VERT_H.w0, REG_TMP0.w2
+	lbco		&REG_TMP1, MASTER_REGS_CONST, VPOS_TEMP, 5
+	add		FAST_POSL, REG_TMP2.b0, REG_TMP0.b0
+	adc		FAST_POSH.b0, REG_TMP1.b3, REG_TMP0.b1
+	adc		FAST_POSH.b1, REG_TMP1.b2, REG_TMP0.b2
+	adc		FAST_POSH.b2, REG_TMP1.b1, REG_TMP0.b3
 ;sign extend relative position to 40 bits
-	qbbc	estimator_fpos_add_relpos_positive, REG_TMP0, 31
-	adc		FAST_POSH.b3, VERT_H.b2, 0xFF
-    qba     estimator_fpos_add_relpos_done
-estimator_fpos_add_relpos_positive:
-	adc		FAST_POSH.b3, VERT_H.b2, 0
-estimator_fpos_add_relpos_done:
-	qbne		estimator_fpos_align_ph_not_2, REG_TMP2.b0, 2
-;vel = vel+acc/8
-    ldi     REG_TMP0.b2, 0
-	qbbc	estimator_fpos_acc_pos, LAST_ACC, 15
-	not		REG_TMP0.w0, LAST_ACC
-	add		REG_TMP0.w0, REG_TMP0.w0, 1
-	lsr		REG_TMP0.w0, REG_TMP0.w0, 3
-	not		REG_TMP0.w0, REG_TMP0.w0
-	add		REG_TMP0.w0, REG_TMP0.w0, 1
-;sign extend acceleration to  24 bit -> speed size
-	qbeq    estimator_fpos_acc_sing_check_end, REG_TMP0.w0, 0
-    or      REG_TMP0.b2, REG_TMP0.b2, 0xFF
-	qba		estimator_fpos_acc_sing_check_end
-estimator_fpos_acc_pos:
-	mov		REG_TMP0.w0, LAST_ACC
-	lsr		REG_TMP0.w0, REG_TMP0.w0, 3
-estimator_fpos_acc_sing_check_end:
+	qbbc	estimator_vpos_add_relpos_positive, REG_TMP0, 31
+	adc		FAST_POSH.b3, REG_TMP1.b0, 0xFF
+    qba     estimator_vpos_add_relpos_done
+estimator_vpos_add_relpos_positive:
+	adc		FAST_POSH.b3, REG_TMP1.b0, 0
+estimator_vpos_add_relpos_done:
+	;Store XREG
+	ldi ALIGN_PHASE,1
+	sbco	&FAST_POSL,MASTER_REGS_CONST,XREG,5
+	jmp 	phase_completed
+;Align phase 1
+align_ph1:
+	ldi ALIGN_PHASE,2
+	lbco		&REG_TMP0, MASTER_REGS_CONST, XREG, 5
+	lbco		&REG_TMP1.b1, MASTER_REGS_CONST, VPOS_TEMP, 5
+	;;XREG=vpos_update-XREG
+	sub		REG_TMP0.b0, REG_TMP2.b1, REG_TMP0.b0
+	suc		REG_TMP0.b1, REG_TMP2.b0, REG_TMP0.b1
+	suc		REG_TMP0.b2, REG_TMP1.b3, REG_TMP0.b2
+	suc		REG_TMP0.b3, REG_TMP1.b2, REG_TMP0.b3
+	suc		REG_TMP1.b0, REG_TMP1.b1, REG_TMP1.b0
+	sbco	&REG_TMP0,MASTER_REGS_CONST,XREG,5
+;;vel = vel + (xreg>>3)
+;we use only first 3 bytes of XREG as vel is of 3 bytes and XREG will be of 3 byte order in this state.
+	lsr REG_TMP0,REG_TMP0,3
 	add		SPEED.w0, SPEED.w0, REG_TMP0.w0
 	adc		SPEED.b2, SPEED.b2, REG_TMP0.b2
-estimator_fpos_align_ph_not_2:
-	sbco 	&REG_TMP2.b0, MASTER_REGS_CONST, ALIGN_PH, 1
+	lbco	&REG_TMP0,MASTER_REGS_CONST,XREG,5
+;; xreg=xreg<<1
+;;1. Perform left shift of 5th byte of XREG by 1
+;;2. copy XREG's 7th bit of 4th byte to 0th bit of 5th byte
+;;3. Perform left shift on first 4 bytes of XREG
+	lsl REG_TMP1.b0,REG_TMP1.b0,1
+	qbbs xreg_31_bit_set,REG_TMP0,31
+	clr REG_TMP1,REG_TMP1,0
+	qba xreg_shift_complete
+xreg_31_bit_set:
+	set REG_TMP1,REG_TMP1,0
+xreg_shift_complete:
+	lsl REG_TMP0,REG_TMP0,1
+	sbco	&REG_TMP0,MASTER_REGS_CONST,XREG,5
+;;FPOS=FPOS+XREG
+	add		FAST_POSL, FAST_POSL, REG_TMP0.b0
+	adc		FAST_POSH.b0, FAST_POSH.b0, REG_TMP0.b1
+	adc		FAST_POSH.b1, FAST_POSH.b1, REG_TMP0.b2
+	adc		FAST_POSH.b2, FAST_POSH.b2, REG_TMP0.b3
+	adc		FAST_POSH.b3, FAST_POSH.b3, REG_TMP1.b0
+	jmp 	phase_completed
+;Align phase 2
+align_ph2:
+	ldi ALIGN_PHASE,3
+	jmp 	phase_completed
+;Align phase 3
+align_ph3:
+;;;relpos+vpos_update
+	lbco		&REG_TMP0, MASTER_REGS_CONST, REL_POS0, 4
+	lbco		&REG_TMP1.b1, MASTER_REGS_CONST, VPOS_TEMP, 5
+	add		REG_TMP1.b0, REG_TMP2.b1, REG_TMP0.b0
+	adc		REG_TMP0.b0, REG_TMP2.b0, REG_TMP0.b1
+	adc		REG_TMP0.b1, REG_TMP1.b3, REG_TMP0.b2
+	adc		REG_TMP0.b2, REG_TMP1.b2, REG_TMP0.b3
+;sign extend relative position to 40 bits
+	qbbc	estimator_vpos_add_relpos_positive_1, REG_TMP0, 31
+	adc		REG_TMP0.b3, REG_TMP1.b1, 0xFF
+    qba     estimator_vpos_add_relpos_done_1
+estimator_vpos_add_relpos_positive_1:
+	adc		REG_TMP0.b3, REG_TMP1.b1, 0
+estimator_vpos_add_relpos_done_1:
+	lbco		&REG_TMP2, MASTER_REGS_CONST, MASK_POS, 4
+check_1st_byte:
+;if relpos+vpos_update != fastpos:
+	qbne		alignment_check_failed, REG_TMP1.b0, FAST_POSL
+	xor 	REG_TMP0,REG_TMP0,FAST_POSH
+	and 	REG_TMP2,REG_TMP2,REG_TMP0
+	qbne 	alignment_check_failed,REG_TMP2,0
+update_online_status_D:
+;Update ONLINE_STATUS_D_H for clearing ONLINE_STATUS_D_POS bit
+    lbco        &REG_TMP1.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
+transport_layer_no_pos_event:
+    clr         REG_TMP1.b0, REG_TMP1.b0, ONLINE_STATUS_D_POS
+transport_layer_pos_update_done:
+    sbco        &REG_TMP1.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
+	qba 		alignment_done
+alignment_check_failed:
+	ldi ALIGN_PHASE,0
+	;sbco 		&ALIGN_PHASE, MASTER_REGS_CONST, ALIGN_PH, 1
+	.if $defined("HDSL_CHECK_ALIGNMENT_PHASE")
+	sbco 		&ALIGN_PHASE, MASTER_REGS_CONST, CURRENT_ALIGN_PHASE, 1
+	.endif
+	lbco        &REG_TMP1.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
+    set 		REG_TMP1.b0,REG_TMP1.b0,ONLINE_STATUS_D_POS
+    sbco        &REG_TMP1.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
+phase_completed:
+	sbco 		&ALIGN_PHASE, MASTER_REGS_CONST, ALIGN_PH, 1
+alignment_done:
+not_7th_hframe:
 	RET1

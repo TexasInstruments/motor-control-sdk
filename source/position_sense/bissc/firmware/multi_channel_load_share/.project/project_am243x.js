@@ -6,7 +6,6 @@ const files = {
     common: [
         "bissc_main.asm",
         "bissc_diagnostic.cmd",
-        "bissc_master_hexpru.cmd"
     ],
 };
 
@@ -30,15 +29,12 @@ const includes = {
 const defines_rtu = {
     common: [
         "ENABLE_MULTI_MAKE_RTU",
-
     ],
 
 };
 const defines_pru = {
     common: [
-
         "ENABLE_MULTI_MAKE_PRU",
-
     ],
 
 };
@@ -46,10 +42,7 @@ const defines_txpru = {
     common: [
         "ENABLE_MULTI_MAKE_TXPRU",
     ],
-
 };
-
-
 
 const readmeDoxygenPageTag = "BISSC_DESIGN";
 
@@ -61,11 +54,11 @@ const cflags = {
 
 const lflags = {
     common: [
+        "--diag_suppress=10063-D", /* Added to suppress entry_point related warning */
         "--entry_point=BISSC_INIT",
         "--disable_auto_rts",
     ],
 };
-
 
 const buildOptionCombos = [
     { device: device, cpu: "icssg0-pru1", cgt: "ti-pru-cgt", board: "am243x-evm", os: "fw"},
@@ -73,18 +66,62 @@ const buildOptionCombos = [
     { device: device, cpu: "icssg0-txpru1", cgt: "ti-pru-cgt", board: "am243x-evm", os: "fw"},
 ];
 
-let postBuildStepsPru1 = [
-    "$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=BiSSFirmwareMultiMakePRU -o bissc_master_multi_PRU_bin.h bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-pru1_fw_ti-pru-cgt.out; $(COPY) bissc_master_multi_PRU_bin.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware/bissc_master_multi_PRU_bin.h;"
+function getmakefilePruPostBuildSteps(cpu, board)
+{
+    let postBuildSteps
 
-];
-let postBuildStepsRtupru1 = [
-    "$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=BiSSFirmwareMultiMakeRTU -o bissc_master_multi_RTU_bin.h bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-rtupru1_fw_ti-pru-cgt.out; $(COPY) bissc_master_multi_RTU_bin.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware/bissc_master_multi_RTU_bin.h;"
+    switch(cpu)
+    {
+        case "icssg0-pru1":
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=BiSSFirmwareMultiMakePRU -o bissc_receiver_multi_PRU_bin.h  bissc_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h bissc_receiver_multi_PRU_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware/bissc_receiver_multi_PRU_bin.h;"+ 
+            "$(RM)  bissc_receiver_multi_PRU_bin.h;"]
+            break;
+        case "icssg0-rtupru1":
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=BiSSFirmwareMultiMakeRTU -o bissc_receiver_multi_RTU_bin.h  bissc_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h bissc_receiver_multi_RTU_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware/bissc_receiver_multi_RTU_bin.h;"+ 
+            "$(RM)  bissc_receiver_multi_RTU_bin.h;"]
+            break;
+        case "icssg0-txpru1":
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=BiSSFirmwareMultiMakeTXPRU -o bissc_receiver_multi_TXPRU_bin.h  bissc_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h bissc_receiver_multi_TXPRU_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware/bissc_receiver_multi_TXPRU_bin.h;"+ 
+            "$(RM)  bissc_receiver_multi_TXPRU_bin.h;"]
+            break;
+    }
 
-];
-let postBuildStepsTxpru1 = [
-    "$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=BiSSFirmwareMultiMakeTXPRU -o bissc_master_multi_TXPRU_bin.h bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-txpru1_fw_ti-pru-cgt.out; $(COPY) bissc_master_multi_TXPRU_bin.h ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware/bissc_master_multi_TXPRU_bin.h;"
+    return postBuildSteps
+}
 
-];
+function getccsPruPostBuildSteps(cpu, board)
+{
+    let postBuildSteps
+
+    switch(cpu)
+    {
+        case "icssg0-pru1":
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=BiSSFirmwareMultiMakePRU -o bissc_receiver_multi_PRU_bin.h  bissc_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h bissc_receiver_multi_PRU_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware/bissc_receiver_multi_PRU_bin.h;"+ 
+            "if ${CCS_HOST_OS} == linux rm bissc_receiver_multi_PRU_bin.h;"+
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h bissc_receiver_multi_PRU_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware/bissc_receiver_multi_PRU_bin.h;"+ 
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm bissc_receiver_multi_PRU_bin.h;"]
+            break;
+        case "icssg0-rtupru1":
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=BiSSFirmwareMultiMakeRTU -o bissc_receiver_multi_RTU_bin.h  bissc_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h bissc_receiver_multi_RTU_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware/bissc_receiver_multi_RTU_bin.h;"+ 
+            "if ${CCS_HOST_OS} == linux rm bissc_receiver_multi_RTU_bin.h;"+
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h bissc_receiver_multi_RTU_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware/bissc_receiver_multi_RTU_bin.h;"+ 
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm bissc_receiver_multi_RTU_bin.h;"]
+            break;
+        case "icssg0-txpru1":
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=BiSSFirmwareMultiMakeTXPRU -o bissc_receiver_multi_TXPRU_bin.h  bissc_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h bissc_receiver_multi_TXPRU_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware/bissc_receiver_multi_TXPRU_bin.h;"+ 
+            "if ${CCS_HOST_OS} == linux rm bissc_receiver_multi_TXPRU_bin.h;"+
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h bissc_receiver_multi_TXPRU_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware/bissc_receiver_multi_TXPRU_bin.h;"+ 
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm bissc_receiver_multi_TXPRU_bin.h;"]
+            break;
+    }
+    return postBuildSteps
+}
 
 function getComponentProperty() {
     let property = {};
@@ -112,19 +149,18 @@ function getComponentBuildProperty(buildOption) {
     if(buildOption.cpu.match("icssg0-pru1"))
     {
         build_property.defines = defines_pru;
-        build_property.postBuildSteps = postBuildStepsPru1;
     }
     if(buildOption.cpu.match("icssg0-rtupru1"))
     {
         build_property.defines = defines_rtu;
-        build_property.postBuildSteps = postBuildStepsRtupru1;
     }
     if(buildOption.cpu.match("icssg0-txpru1"))
     {
         build_property.defines = defines_txpru;
-        build_property.postBuildSteps = postBuildStepsTxpru1;
     }
 
+    build_property.ccsPruPostBuildSteps = getccsPruPostBuildSteps(buildOption.cpu, buildOption.board);
+    build_property.makefilePruPostBuildSteps = getmakefilePruPostBuildSteps(buildOption.cpu, buildOption.board);
     build_property.cflags = cflags;
     build_property.lflags = lflags;
     build_property.readmeDoxygenPageTag = readmeDoxygenPageTag;

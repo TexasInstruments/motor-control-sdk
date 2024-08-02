@@ -1,62 +1,38 @@
-/* 
- * tamagawa_master_multi_channel_bin.h
- * 
- * 
- * Copyright (c) 2015 - 2016, Texas Instruments Incorporated
- * All rights reserved not granted herein.
+/*
+ *  Copyright (C) 2024 Texas Instruments Incorporated
  *
- * Limited License.
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
  *
- * Texas Instruments Incorporated grants a world-wide, royalty-free,
- * non-exclusive license under copyrights and patents it now or hereafter
- * owns or controls to make, have made, use, import, offer to sell and sell ("Utilize")
- * this software subject to the terms herein.  With respect to the foregoing patent
- * license, such license is granted  solely to the extent that any such patent
- * is necessary  to Utilize the software alone.  The patent license shall not apply to any
- * combinations which include this software, other than combinations with devices
- * manufactured by or for TI ('TI Devices'). No hardware patent is licensed hereunder.
+ *    Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
  *
- * Redistributions must preserve existing copyright notices and reproduce this license
- * (including the above copyright notice and the disclaimer and (if applicable) source
- * code license limitations below) in the documentation and/or other materials provided
- * with the distribution
+ *    Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the
+ *    distribution.
  *
- * Redistribution and use in binary form, without modification, are permitted provided 
- * that the following conditions are met:
- *       No reverse engineering, decompilation, or disassembly of this software is
- *       permitted with respect to any software provided in binary form.
- *       Any redistribution and use are licensed by TI for use only with TI Devices.
- *       Nothing shall obligate TI to provide you with source code for the software
- *   licensed and provided to you in object code.
+ *    Neither the name of Texas Instruments Incorporated nor the names of
+ *    its contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * If software source code is provided to you, modification and redistribution of the
- * source code are permitted provided that the following conditions are met:
- *       Any redistribution and use of the source code, including any resulting derivative works,
- *   are licensed by TI for use only with TI Devices.
- *       Any redistribution and use of any object code compiled from the source code and
- *   any resulting derivative works, are licensed by TI for use only with TI Devices.
- *
- * Neither the name of Texas Instruments Incorporated nor the names of its suppliers 
- * may be used to endorse or  promote products derived from this software without 
- * specific prior written permission.
- *
- * DISCLAIMER.
- *
- * THIS SOFTWARE IS PROVIDED BY TI AND TI'S LICENSORS "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL TI AND 
- * TI'S LICENSORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
- * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ *  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ *  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ *  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-const unsigned int TamagawaFirmware[]= {
+const uint32_t TamagawaFirmware_0[] = {
 0x00000208,
-0x00010000,
+0x00010001,
 0x24000400,
 0x810f0400,
 0x2eff8180,
@@ -71,15 +47,16 @@ const unsigned int TamagawaFirmware[]= {
 0x91401880,
 0x914418c0,
 0x91481801,
-0x23014188,
+0x23014388,
 0x24000100,
 0x81031800,
 0x91001800,
-0x69000006,
+0x69000007,
 0x91743a80,
 0xcf03e0fd,
 0x1f03e0e0,
 0x81743a80,
+0x24000100,
 0x81021800,
 0x91021800,
 0x570000ff,
@@ -87,14 +64,15 @@ const unsigned int TamagawaFirmware[]= {
 0x9105183b,
 0x91081821,
 0x91091806,
-0x23002888,
+0x23002a88,
 0x24000083,
 0x81021803,
 0x91001803,
-0x69000302,
+0x69000304,
 0x2400229f,
-0x570003ed,
-0x21001a00,
+0x1f13ffff,
+0x21001500,
+0x21001b00,
 0xc9000702,
 0x240000de,
 0xc9010702,
@@ -111,32 +89,32 @@ const unsigned int TamagawaFirmware[]= {
 0x101b1b1e,
 0x103b3b1e,
 0x05015e5e,
-0x230107c8,
-0x21009800,
+0x230109c8,
+0x21009a00,
 0x31020016,
 0xc9000705,
 0x11035e1a,
 0x69001a03,
 0x2400881a,
-0x21004a00,
+0x21004c00,
 0xc9010705,
 0x11035e1a,
 0x69011a03,
 0x2400b01a,
-0x21004a00,
+0x21004c00,
 0xc9020705,
 0x11035e1a,
 0x69021a03,
 0x2400d81a,
-0x21004a00,
+0x21004c00,
 0x901a3899,
 0x1079791e,
 0x1059591e,
 0x1039391e,
 0x1019191e,
 0x05015e5e,
-0x230107c8,
-0x21009800,
+0x230109c8,
+0x21009a00,
 0x31020026,
 0xc900070c,
 0x11035e1a,
@@ -149,7 +127,7 @@ const unsigned int TamagawaFirmware[]= {
 0x1079791e,
 0x1059591e,
 0x1039391e,
-0x21007700,
+0x21007900,
 0xc901070c,
 0x11035e1a,
 0x69011a0a,
@@ -161,7 +139,7 @@ const unsigned int TamagawaFirmware[]= {
 0x1079791e,
 0x1059591e,
 0x1039391e,
-0x21007700,
+0x21007900,
 0xc902070c,
 0x11035e1a,
 0x69021a0a,
@@ -173,9 +151,9 @@ const unsigned int TamagawaFirmware[]= {
 0x1079791e,
 0x1059591e,
 0x1039391e,
-0x21007700,
+0x21007900,
 0x05015e5e,
-0x230107c8,
+0x230109c8,
 0x2eff819a,
 0x100a0a5e,
 0x3102001d,
@@ -187,7 +165,7 @@ const unsigned int TamagawaFirmware[]= {
 0x2400881a,
 0x901a1819,
 0x1019191e,
-0x21009700,
+0x21009900,
 0xc9010709,
 0x11035e1a,
 0x69011a07,
@@ -196,7 +174,7 @@ const unsigned int TamagawaFirmware[]= {
 0x2400b01a,
 0x901a1819,
 0x1019191e,
-0x21009700,
+0x21009900,
 0xc9020709,
 0x11035e1a,
 0x69021a07,
@@ -205,7 +183,7 @@ const unsigned int TamagawaFirmware[]= {
 0x2400d81a,
 0x901a1819,
 0x1019191e,
-0x21009700,
+0x21009900,
 0x05015e5e,
 0x2eff9d8b,
 0x2eff8183,
@@ -231,13 +209,13 @@ const unsigned int TamagawaFirmware[]= {
 0x10077f1c,
 0x6e071cff,
 0xd104ff02,
-0x2100b200,
+0x2100b400,
 0x1f070b0b,
 0xd10cff02,
-0x2100b500,
+0x2100b700,
 0x1f072b2b,
 0xd114ff02,
-0x2100b800,
+0x2100ba00,
 0x1f074b4b,
 0x101c1c7f,
 0x100b0b0c,
@@ -263,18 +241,18 @@ const unsigned int TamagawaFirmware[]= {
 0x09012727,
 0x09014b4b,
 0x12262727,
-0x2100e000,
+0x2100e200,
 0x24000003,
 0x24000023,
 0x24000043,
 0x50460b04,
 0x50662b05,
 0x50274b06,
-0x2100dd00,
+0x2100df00,
 0x24000103,
-0x2100d500,
+0x2100d700,
 0x24000123,
-0x2100d600,
+0x2100d800,
 0x24000143,
 0x81183883,
 0x812838a3,
@@ -288,25 +266,25 @@ const unsigned int TamagawaFirmware[]= {
 0x5108240a,
 0x510c240f,
 0x51000614,
-0x2100a300,
+0x2100a500,
 0x10ececf0,
 0x10ededf3,
 0x10eeeef6,
 0x2eff858c,
 0x51004412,
-0x2100e800,
+0x2100ea00,
 0x10ececf1,
 0x10ededf4,
 0x10eeeef7,
 0x2eff858c,
 0x5100440c,
-0x2100e800,
+0x2100ea00,
 0x10ececf2,
 0x10ededf5,
 0x10eeeef8,
 0x2eff858c,
 0x51004406,
-0x2100e800,
+0x2100ea00,
 0x24000044,
 0x670424ed,
 0x670824f2,
@@ -327,9 +305,9 @@ const unsigned int TamagawaFirmware[]= {
 0x51087a04,
 0x51047a05,
 0x13500202,
-0x21011400,
+0x21011600,
 0x13f00202,
-0x21011400,
+0x21011600,
 0x11000202,
 0x2401099d,
 0x809d0402,
@@ -344,9 +322,9 @@ const unsigned int TamagawaFirmware[]= {
 0x51087a04,
 0x51047a05,
 0x13500202,
-0x21012500,
+0x21012700,
 0x13f00202,
-0x21012500,
+0x21012700,
 0x11000202,
 0x2401119d,
 0x809d0402,
@@ -361,9 +339,9 @@ const unsigned int TamagawaFirmware[]= {
 0x51087a04,
 0x51047a05,
 0x13500202,
-0x21013600,
+0x21013800,
 0x13f00202,
-0x21013600,
+0x21013800,
 0x11000202,
 0x2401199d,
 0x809d0402,
@@ -383,4 +361,5 @@ const unsigned int TamagawaFirmware[]= {
 0x2401009d,
 0x1f04e1e1,
 0x809d0401,
-0x20880000 };
+0x20880000};
+

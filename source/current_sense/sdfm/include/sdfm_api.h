@@ -81,14 +81,15 @@ typedef SDFM *sdfm_handle;
 /**
  *
  *  \brief  Initialize SDFM instance
- *
- *  \param[in]  pru_id          Pru slice id
+ *  
+ *  \param[in]  pruIcssHandle   PRU-ICSS handle 
+ *  \param[in]  pruId          Pru slice id
  *  \param[in]  coreId          Pru core id
  *
  *  \retval sdfm  SDFM instance handle
  *
  */
-sdfm_handle SDFM_init(uint8_t pru_id, uint8_t coreId);
+sdfm_handle SDFM_init(PRUICSS_Handle pruIcssHandle, uint8_t pruId, uint8_t coreId);
 
 /**
  *
@@ -104,7 +105,7 @@ void SDFM_configIepCount(sdfm_handle h_sdfm, uint32_t epwm_out_freq);
 
 /**
  *
- *  \brief  Configure ecap parameters for generate 20MHz SD clock
+ *  \brief  Configure ecap parameters for generate SD clock
  *
  *  \param[in]  h_sdfm          SDFM handle
  *  \param[in]  ecap_divider    ecap divider for sdfm clock
@@ -162,7 +163,7 @@ void SDFM_enable(sdfm_handle h_sdfm);
  *
  *
  */
-void SDFM_setCompFilterThresholds(sdfm_handle h_sdfm, uint8_t ch_id, SDFM_ThresholdParms thresholdParms);
+void SDFM_setCompFilterThresholds(sdfm_handle h_sdfm, uint8_t ch_id, uint32_t *thresholdParms);
 
 /**
  *
@@ -218,16 +219,29 @@ void SDFM_configDataFilter(sdfm_handle h_sdfm, uint8_t ch_id, uint8_t filter);
 
 /**
  *
- *  \brief  configuration of SDFM channel clock source & clock inversion
+ *  \brief  configuration of SDFM channel clock source 
  *
  *  \param[in]  h_sdfm          SDFM handle
  *  \param[in]  ch_id           current ch number
- *  \param[in]  clkPrams        channel clock source type & clock inversion
+ *  \param[in]  clk_source       channel clock source type 
  *
  *
  *
  */
-void SDFM_selectClockSource(sdfm_handle h_sdfm, uint8_t ch_id, SDFM_ClkSourceParms clkPrams);
+void SDFM_selectClockSource(sdfm_handle h_sdfm, uint8_t ch_id, uint8_t clk_source);
+
+/**
+ *
+ *  \brief  configuration of SDFM channel clock inversion  
+ *
+ *  \param[in]  h_sdfm          SDFM handle
+ *  \param[in]  ch_id           current ch number
+ *  \param[in]  clk_inv      channel clock inversion 
+ *
+ *
+ *
+ */
+void SDFM_setClockInversion(sdfm_handle h_sdfm, uint8_t ch_id, uint8_t clk_inv);
 
 /**
  *
@@ -435,6 +449,92 @@ uint8_t SDFM_getZeroCrossThresholdStatus(sdfm_handle h_sdfm, uint8_t chNum);
  *
  */
 void SDFM_disableZeroCrossDetection(sdfm_handle h_sdfm, uint8_t chNum);
+
+/**
+ * 
+ * \brief This API enables EPWM synchronization with SDFM
+ * \param[in]  h_sdfm          SDFM handle
+ * \param[in]  epwmIns         epwm instance: Only epwm0/epwm3 support synchronization with sdfm 
+ * 
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
+ * 
+*/
+int32_t SDFM_enableEpwmSync(sdfm_handle h_sdfm, uint8_t epwmIns);
+
+/**
+ * 
+ * \brief This API disbale EPWM synchronization with SDFM
+ * \param[in]  h_sdfm          SDFM handle
+ * \param[in]  epwmIns         epwm instance: Only epwm0/epwm3 support synchronization with sdfm
+ * 
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
+ * 
+*/
+int32_t SDFM_disableEpwmSync(sdfm_handle h_sdfm, uint8_t epwmIns);
+
+/**
+ * 
+ * \brief     This API configures IEP SYNC0 and SYNC1 registers to generate free running clock
+ * \param[in]  h_sdfm          SDFM handle
+ * \param[in]  highPulseWidth   Number of clock cycles SYNC0/1 will be high.
+ *                             0h = 1 clock cycle.
+ *                             1h = 2 clock cycles.
+ *                             Nh: N+1 clock cycles.
+ * \param[in]  periodTime      Period between the rising edges of SYNC0
+ *                             1h = 2 clk cycles period
+ *                             Nh = N+1 clk cycles period
+ * \param[in]  syncStartTime  SYNC0 and SYNC1 activation time
+ * 
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
+ * 
+ * 
+*/
+int32_t SDFM_configIepSyncMode(sdfm_handle h_sdfm, uint32_t highPulseWidth, uint32_t periodTime, uint32_t syncStartTime);
+
+/**
+ * 
+ * \brief This API enables IEP counter
+ * 
+ * \param[in]  h_sdfm          SDFM handle
+ * 
+ * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
+ * 
+*/
+int32_t SDFM_enableIep(sdfm_handle h_sdfm);
+
+/**
+ *  \brief  Defines clock cycles from the start of SYNC0 to the start of SYNC1
+ *  \param[in]  h_sdfm          SDFM handle
+ *  \param[in]  delay           Delay before the start of SYNC1
+ *                          
+ *  \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
+ * 
+*/
+int32_t SDFM_configSync1Delay(sdfm_handle h_sdfm, uint32_t delay);
+
+/***
+ *  \brief  This API configures PRU GPO mode as shift out mode (ICSSG_GPCFG0_REG[14] PRU<n>_GPO_MODE = 1h) and  
+ *          shift out mode's clock divisors to output the SD clock on PR<k>_PRUx_GPO1 pin.
+ *  \brief  PRU0_GPO_DIV0 and PRU0_GPO_DIV1 configuration values 
+ *  \brief  0x0:  for divisor 1
+ *  \brief  0x1:  for divisor 1.5
+ *  \brief  0x2:  for divisor 2
+ *  \brief  0x3:  for divisor 2.5
+ *       .
+ *       .
+ *       .
+ *  \brief  0xID: for divisor 15.5
+ *  \brief  0xIE: for divisor 16
+ *  \brief  0x1F: reserved
+ * 
+ *  \param[in]  h_sdfm          SDFM handle
+ *  \param[in]  div0            PRUx_GPO_DIV0 value
+ *  \param[in]  div1            PRUx_GPO_DIV1 value
+ * 
+ * \retval     SystemP_SUCCESS on success, SystemP_FAILURE on not expected API parameters
+*/
+int32_t SDFM_configClockFromGPO1(sdfm_handle h_sdfm, uint8_t div0, uint8_t div1);
+
 /** @} */
 
 #ifdef __cplusplus

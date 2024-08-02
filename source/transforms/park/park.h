@@ -39,7 +39,7 @@ extern "C"
 #endif
 
 /**
- *  \addtogroup TRANSFORMS_API_MODULE
+ *  \addtogroup TRANSFORMS_API_MODULE APIs for Transformation Algorithms
  *  @{
  *
  *  \file           park.h
@@ -48,7 +48,11 @@ extern "C"
 
 #include <stdint.h>
 
-typedef float float32_t;
+#ifndef IEEE754_TYPES
+#define IEEE754_TYPES
+typedef float   float32_t;
+typedef double  float64_t;
+#endif // IEEE754_TYPES
 
 //! \brief     Runs the Park transform module
 //! \param[in] sinTh    Sine value in radians

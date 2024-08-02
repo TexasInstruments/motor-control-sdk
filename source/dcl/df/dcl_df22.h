@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (C) 2024 Texas Instruments Incorporated - http://www.ti.com/
  *
  *
  * Redistribution and use in source and binary forms, with or without
@@ -83,7 +83,7 @@ typedef _DCL_VOLATILE struct dcl_df22
     /* miscellaneous */
     DCL_DF22_SPS *sps; //!< updates compensator parameter
     DCL_CSS *css;      //!< configuration & debugging
-} DCL_DF22, *DF22_Handle;
+} DCL_DF22;
 
 //! \brief          Defines default values to initialize DCL_DF22
 //!
@@ -110,7 +110,7 @@ typedef _DCL_VOLATILE struct dcl_df22
 
 //! \brief          Initialize DCL_DF22 struct with input compensator parameters
 //!                 Example: DCL_DF22 DF22_ctrl = DCL_initD22asParam(1.0f,0.0f,0.0f,0.0f,0.0f);
-//!                 Note: input parameter needs to be in the same order as listed in DF22_SPS struct.
+//! \note           Note: input parameter needs to be in the same order as listed in DF22_SPS struct.
 //!
 //! \return         A DCL_DF22* pointer
 //!
@@ -170,7 +170,7 @@ void DCL_forceUpdateDF22(DCL_DF22 *df)
 //!
 //! \param[in] df    Pointer to the DCL_DF22 controller structure
 //!
-_DCL_CODE_ACCESS _DCL_CODE_SECTION
+_DCL_CODE_ACCESS
 void DCL_updateDF22NoCheck(DCL_DF22 *df)
 {
     dcl_interrupt_t ints;
@@ -186,12 +186,12 @@ void DCL_updateDF22NoCheck(DCL_DF22 *df)
 //! \brief           A conditional update based on the update flag.
 //!                  If the update status is set, the function will update DF22
 //!                  parameter from its SPS parameter and clear the status flag on completion.
-//!                  Note: Use DCL_setUpdateStatus(df) to set the update status.
+//! \note            Note: Use DCL_setUpdateStatus(df) to set the update status.
 //!     
 //! \param[in] df    Pointer to the DCL_DF22 controller structure
 //! \return          'true' if an update is applied, otherwise 'false'
 //!
-_DCL_CODE_ACCESS _DCL_CODE_SECTION
+_DCL_CODE_ACCESS
 bool DCL_updateDF22(DCL_DF22 *df)
 {
     if (DCL_setUpdateStatus(df))
@@ -215,7 +215,7 @@ bool DCL_isStableDF22(DCL_DF22 *df)
 }
 
 //! \brief            Loads the DF22 shadow coefficients from a ZPK3 description
-//!                   Note: Sampling period df->css->T are used in the calculation.
+//! \note             Note: Sampling period df->css->T are used in the calculation.
 //!                   New settings take effect after DCL_updateDF22().
 //!                   Only z1, z2, p1 & p2 are considered, z3 & p3 are ignored.
 //!
@@ -230,9 +230,9 @@ void DCL_loadDF22asZPK(DCL_DF22 *df, DCL_ZPK3 *zpk)
     uint32_t err_code = dcl_none;
     err_code |= DCL_isZero(cimagf(zpk->z1) + cimagf(zpk->z2)) ? dcl_none : dcl_param_invalid_err;
     err_code |= DCL_isZero(cimagf(zpk->p1) + cimagf(zpk->p2)) ? dcl_none : dcl_param_invalid_err;
-    DCL_setError(df,err_code);
     if (err_code)
     {
+        DCL_setError(df,err_code);
         DCL_getErrorInfo(df);
         DCL_runErrorHandler(df);
     }
@@ -255,7 +255,7 @@ void DCL_loadDF22asZPK(DCL_DF22 *df, DCL_ZPK3 *zpk)
 
 //! \brief           Loads the DF22 shadow coefficients from damping ratio and un-damped
 //!                  natural frequency using sample rate in CSS.
-//!                  Note: Sampling period df->css->T are used in the calculation.
+//! \note            Note: Sampling period df->css->T are used in the calculation.
 //!                  New settings take effect after DCL_updateDF22().
 //!
 //! \param[in] df    Pointer to the DCL_DF22 controller structure
@@ -289,7 +289,7 @@ void DCL_loadDF22asZwn(DCL_DF22 *df, float32_t z, float32_t wn)
 }
 
 //! \brief           Loads the shadow DF22 compensator coefficients to emulate a series form PID.
-//!                  Note: Sampling period df->css->T are used in the calculation.
+//! \note            Note: Sampling period df->css->T are used in the calculation.
 //!                  New settings take effect after DCL_updateDF22().
 //!
 //! \param[in] df    Pointer to the DCL_DF22 controller structure
@@ -329,8 +329,8 @@ void DCL_loadDF22asSeriesPID(DCL_DF22 *df, float32_t Kp, float32_t Ki, float32_t
 }
 
 //! \brief           Loads the shadow DF22 compensator coefficients to emulate a parallel form PID.
-//!                  Note: Sampling period df->css->T are used in the calculation.
-//!                 New settings take effect after DCL_updateDF22().
+//! \note            Note: Sampling period df->css->T are used in the calculation.
+//!                  New settings take effect after DCL_updateDF22().
 //!
 //! \param[in] df    Pointer to the DCL_DF22 controller structure
 //! \param[in] Kp    Proportional gain
@@ -375,7 +375,7 @@ void DCL_loadDF22asParallelPID(DCL_DF22 *df, float32_t Kp, float32_t Ki, float32
 //! \param[in] ek    The servo error
 //! \return          The control effort
 //!
-_DCL_CODE_ACCESS _DCL_CODE_SECTION
+_DCL_CRIT_ACCESS
 float32_t DCL_runDF22(DCL_DF22 *df, float32_t ek)
 {
     float32_t v7 = (ek * df->b0) + df->x1;
@@ -392,7 +392,7 @@ float32_t DCL_runDF22(DCL_DF22 *df, float32_t ek)
 //! \param[in] ek    The servo error
 //! \return          The control effort
 //!
-_DCL_CODE_ACCESS
+_DCL_CRIT_ACCESS
 float32_t DCL_runDF22PartialCompute(DCL_DF22 *df, float32_t ek)
 {
     return((ek * df->b0) + df->x1);
@@ -404,7 +404,7 @@ float32_t DCL_runDF22PartialCompute(DCL_DF22 *df, float32_t ek)
 //! \param[in] ek    The servo error
 //! \param[in] uk    The controller output in the previous sample interval
 //!
-_DCL_CODE_ACCESS
+_DCL_CRIT_ACCESS
 void DCL_runDF22PartialUpdate(DCL_DF22 *df, float32_t ek, float32_t uk)
 {
     df->x1 = (ek * df->b1) + df->x2 - (uk * df->a1);
@@ -419,7 +419,7 @@ void DCL_runDF22PartialUpdate(DCL_DF22 *df, float32_t ek, float32_t uk)
 //! \param[in] Umin Lower saturation limit  
 //! \return         The control effort
 //!
-_DCL_CODE_ACCESS _DCL_CODE_SECTION
+_DCL_CRIT_ACCESS
 float32_t DCL_runDF22Clamp(DCL_DF22 *df, float32_t ek, float32_t Umax, float32_t Umin)
 {
     float32_t uk = DCL_runDF22PartialCompute(df, ek);
