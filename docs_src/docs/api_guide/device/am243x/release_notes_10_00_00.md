@@ -318,4 +318,10 @@ This section lists changes which could affect user applications developed using 
     <td> Updated definition enabling configuration of IEP1 independently
     <td> -
 </tr>
+<tr>
+    <td> Position Sense Tamagawa
+    <td> \ref tamagawa_priv
+    <td> Added new variable: `pru_clock`
+    <td> -
+</tr>
 </table>

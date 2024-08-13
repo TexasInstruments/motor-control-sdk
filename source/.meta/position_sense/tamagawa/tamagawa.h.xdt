@@ -26,6 +26,18 @@
             % sliceVal = 0;
         % }
     % }
+    /*Macro for am263x/am261x */
+    % if(instance.instance === "ICSSM" || instance.instance === "ICSSM0" || instance.instance === "ICSSM1")
+    % {
+        % if(instance.PRU_Slice == "PRU0")
+        % {
+            % sliceVal = 0;
+        % }
+
+    % }
+
+
+
 #define `instance.$name`                  (`i`)
 #define `instance.$name`_CHANNEL0         (`instance.channel_0 & 1`)
 #define `instance.$name`_CHANNEL1         (`instance.channel_1 & 1`)

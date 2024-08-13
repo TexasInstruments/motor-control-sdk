@@ -1,8 +1,6 @@
 %%{
     isDevelopmentMode = args.common.isDevelopmentMode();
     deviceName = args.utils.getProjectSpecDevice(args.device);
-    if(args.device == "am62x")
-        deviceName = "AM62x"
     sysCfgVersion = args.utils.getSysCfgVersionProjectSpec();
 %%}
 {
@@ -13,16 +11,17 @@
     "name": "MOTOR_CONTROL_SDK_`deviceName`",
     "displayName": "MOTOR CONTROL SDK for `deviceName`",
 % }
-    "version": "09.02.00",
+    "version": "07.03.01",
     "documentationPath": "../docs",
     "includePaths": [
         "../source",
-        "../mcu_plus_sdk/source",
         "../ind_comms_sdk/source",
+        "../mcu_plus_sdk/source/sysconfig",
     ],
     "components": [
 % if((args.device == "am64x") || (args.device == "am243x")) {
         "/motor_control",
+        "/industrial_comms/industrial_comms",
         "/kernel/dpl",
         "/drivers/drivers",
         "/board/board",
@@ -31,11 +30,11 @@
         "/security/security",
         "/usb/usb",
         "/pru_io/pru_io",
-        "/industrial_comms/industrial_comms",
         "/memory_configurator/components"
 % }
-% if(args.device == "am263x") {
+% if(args.device == "am263x"){
         "/motor_control",
+        "/industrial_comms/industrial_comms",
         "/kernel/dpl",
         "/drivers/drivers",
         "/board/board",
@@ -43,33 +42,23 @@
         "/networking/networking",
         "/security/security",
         "/xbar/xbar",
-        "/industrial_comms/industrial_comms",
         "/memory_configurator/components",
 % }
-% if(args.device == "am263px"){
+% if((args.device == "am261x")){
+        "/motor_control",
+        "/industrial_comms/industrial_comms",
         "/kernel/dpl",
         "/drivers/drivers",
         "/board/board",
         "/fs/fs",
         "/networking/networking",
         "/security/security",
+        "/usb/usb",
         "/xbar/xbar",
         "/memory_configurator/components",
         "/optiflash/optiflash"
 % }
-% if((args.device == "am273x") || (args.device == "awr294x")) {
-        "/kernel/dpl",
-        "/drivers/drivers",
-        "/board/board",
-        "/networking/networking",
-        "/memory_configurator/components",
-        "/security/security",
-% }
-% if(args.device == "am62x") {
-        "/kernel/dpl",
-        "/drivers/drivers",
-        "/board/board",
-% }
+
     ],
     "devices": [
 % if((args.device == "am64x") || (isDevelopmentMode)) {
@@ -79,20 +68,12 @@
         "AM243x_ALV_beta",
         "AM243x_ALX_beta",
 % }
-% if((args.device == "am273x") || (isDevelopmentMode)) {
-        "AM273x",
-% }
-% if((args.device == "awr294x") || (isDevelopmentMode)) {
-        "AWR294X",
-% }
 % if((args.device == "am263x") || (isDevelopmentMode)) {
         "AM263x_beta",
 % }
-% if((args.device == "am263px") || (isDevelopmentMode)) {
-        "AM263Px",
-% }
-% if((args.device == "am62x") || (isDevelopmentMode)) {
-        "AM62x",
+% if((args.device == "am261x") || (isDevelopmentMode)) {
+        "AM261x_ZCZ",
+        "AM261x_ZFG",
 % }
     ],
     "contexts": {
@@ -115,6 +96,42 @@
         }, {
             "name": "a53ss0-0",
             "targetdbId": "a53ss0-0"
+        },{
+            "name": "icss_g0_pru0",
+            "targetdbId": "icss_g0_pru0"
+        },{
+            "name": "icss_g0_pru1",
+            "targetdbId": "icss_g0_pru1"
+        },{
+            "name": "icss_g1_pru0",
+            "targetdbId": "icss_g1_pru0"
+        },{
+            "name": "icss_g1_pru1",
+            "targetdbId": "icss_g1_pru1"
+        },{
+            "name": "icss_g0_rtu_pru0",
+            "targetdbId": "icss_g0_rtu_pru0"
+        },{
+            "name": "icss_g0_rtu_pru1",
+            "targetdbId": "icss_g0_rtu_pru1"
+        },{
+            "name": "icss_g1_rtu_pru0",
+            "targetdbId": "icss_g1_rtu_pru0"
+        },{
+            "name": "icss_g1_rtu_pru1",
+            "targetdbId": "icss_g1_rtu_pru1"
+        },{
+            "name": "icss_g0_tx_pru0",
+            "targetdbId": "icss_g0_tx_pru0"
+        },{
+            "name": "icss_g0_tx_pru1",
+            "targetdbId": "icss_g0_tx_pru1"
+        },{
+            "name": "icss_g1_tx_pru0",
+            "targetdbId": "icss_g1_tx_pru0"
+        },{
+            "name": "icss_g1_tx_pru1",
+            "targetdbId": "icss_g1_tx_pru1"
         }],
 % }
 % if((args.device == "am243x") || (isDevelopmentMode)) {
@@ -133,6 +150,42 @@
         }, {
             "name": "m4fss0-0",
             "targetdbId": "m4fss0-0"
+        },{
+            "name": "icss_g0_pru0",
+            "targetdbId": "icss_g0_pru0"
+        },{
+            "name": "icss_g0_pru1",
+            "targetdbId": "icss_g0_pru1"
+        },{
+            "name": "icss_g1_pru0",
+            "targetdbId": "icss_g1_pru0"
+        },{
+            "name": "icss_g1_pru1",
+            "targetdbId": "icss_g1_pru1"
+        },{
+            "name": "icss_g0_rtu_pru0",
+            "targetdbId": "icss_g0_rtu_pru0"
+        },{
+            "name": "icss_g0_rtu_pru1",
+            "targetdbId": "icss_g0_rtu_pru1"
+        },{
+            "name": "icss_g1_rtu_pru0",
+            "targetdbId": "icss_g1_rtu_pru0"
+        },{
+            "name": "icss_g1_rtu_pru1",
+            "targetdbId": "icss_g1_rtu_pru1"
+        },{
+            "name": "icss_g0_tx_pru0",
+            "targetdbId": "icss_g0_tx_pru0"
+        },{
+            "name": "icss_g0_tx_pru1",
+            "targetdbId": "icss_g0_tx_pru1"
+        },{
+            "name": "icss_g1_tx_pru0",
+            "targetdbId": "icss_g1_tx_pru0"
+        },{
+            "name": "icss_g1_tx_pru1",
+            "targetdbId": "icss_g1_tx_pru1"
         }],
         "AM243x_ALX_beta": [{
             "name": "r5fss0-0",
@@ -149,78 +202,88 @@
         }, {
             "name": "m4fss0-0",
             "targetdbId": "m4fss0-0"
-        }],
-% }
-% if((args.device == "am273x") || (isDevelopmentMode)) {
-        "AM273x": [{
-            "name": "r5fss0-0",
-            "targetdbId": "r5fss0-0"
-        }, {
-            "name": "r5fss0-1",
-            "targetdbId": "r5fss0-1"
-        }, {
-            "name": "c66ss0",
-            "targetdbId": "c66ss0"
-        }, {
-            "name": "hsm0-0",
-            "targetdbId": "hsm0-0"
-        }],
-% }
-% if((args.device == "awr294x") || (isDevelopmentMode)) {
-        "AWR294X": [{
-            "name": "r5fss0-0",
-            "targetdbId": "r5fss0-0"
-        }, {
-            "name": "r5fss0-1",
-            "targetdbId": "r5fss0-1"
-        }, {
-            "name": "c66ss0",
-            "targetdbId": "c66ss0"
-        }, {
-            "name": "hsm0-0",
-            "targetdbId": "hsm0-0"
+        },{
+            "name": "icss_g0_pru0",
+            "targetdbId": "icss_g0_pru0"
+        },{
+            "name": "icss_g0_pru1",
+            "targetdbId": "icss_g0_pru1"
+        },{
+            "name": "icss_g1_pru0",
+            "targetdbId": "icss_g1_pru0"
+        },{
+            "name": "icss_g1_pru1",
+            "targetdbId": "icss_g1_pru1"
+        },{
+            "name": "icss_g0_rtu_pru0",
+            "targetdbId": "icss_g0_rtu_pru0"
+        },{
+            "name": "icss_g0_rtu_pru1",
+            "targetdbId": "icss_g0_rtu_pru1"
+        },{
+            "name": "icss_g1_rtu_pru0",
+            "targetdbId": "icss_g1_rtu_pru0"
+        },{
+            "name": "icss_g1_rtu_pru1",
+            "targetdbId": "icss_g1_rtu_pru1"
+        },{
+            "name": "icss_g0_tx_pru0",
+            "targetdbId": "icss_g0_tx_pru0"
+        },{
+            "name": "icss_g0_tx_pru1",
+            "targetdbId": "icss_g0_tx_pru1"
+        },{
+            "name": "icss_g1_tx_pru0",
+            "targetdbId": "icss_g1_tx_pru0"
+        },{
+            "name": "icss_g1_tx_pru1",
+            "targetdbId": "icss_g1_tx_pru1"
         }],
 % }
 % if((args.device == "am263x") || (isDevelopmentMode)) {
         "AM263x_beta": [{
             "name": "r5fss0-0",
-            "targetdbId": "r5fss0-0"
+            "targetdbId": "Cortex_R5_0"
         }, {
             "name": "r5fss0-1",
-            "targetdbId": "r5fss0-1"
+            "targetdbId": "Cortex_R5_1"
         },{
             "name": "r5fss1-0",
-            "targetdbId": "r5fss1-0"
+            "targetdbId": "Cortex_R5_2"
         }, {
             "name": "r5fss1-1",
-            "targetdbId": "r5fss1-1"
+            "targetdbId": "Cortex_R5_3"
         }, {
             "name": "hsm0-0",
-            "targetdbId": "hsm0-0"
+            "targetdbId": "Cortex_M4_0"
+        },{
+            "name": "icss_m0_pru0",
+            "targetdbId": "icss_m0_pru0"
+        },{
+            "name": "icss_m0_pru1",
+            "targetdbId": "icss_m0_pru1"
         }],
 % }
-% if((args.device == "am263px") || (isDevelopmentMode)) {
-        "AM263Px": [{
+% if((args.device == "am261x") || (isDevelopmentMode)) {
+        "AM261x_ZCZ": [{
             "name": "r5fss0-0",
-            "targetdbId": "r5fss0-0"
+            "targetdbId": "Cortex_R5_0"
         }, {
             "name": "r5fss0-1",
-            "targetdbId": "r5fss0-1"
+            "targetdbId": "Cortex_R5_1"
         },{
-            "name": "r5fss1-0",
-            "targetdbId": "r5fss1-0"
-        }, {
-            "name": "r5fss1-1",
-            "targetdbId": "r5fss1-1"
-        }, {
             "name": "hsm0-0",
-            "targetdbId": "hsm0-0"
+            "targetdbId": "Cortex_M4_0"
         }],
-% }
-% if((args.device == "am62x") || (isDevelopmentMode)) {
-        "AM62x": [{
-            "name": "m4fss0-0",
-            "targetdbId": "m4fss0-0"
+        "AM261x_ZFG": [{
+            "name": "r5fss0-0",
+            "targetdbId": "Cortex_R5_0"
+        }, {
+            "name": "r5fss0-1",
+            "targetdbId": "Cortex_R5_1"
+        },{
+            "name": "hsm0-0",
+            "targetdbId": "Cortex_M4_0"
         }],
 % }
     },

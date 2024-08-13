@@ -20,5 +20,14 @@ Applications and PRU-ICSS firmwares for following position sense encoders are pr
 Application for following position sense encoder is provided in the SDK.
 
 - \subpage TAMAGAWA_OVER_UART
+- \subpage TAMAGAWA
+
+\endcond
+
+\cond SOC_AM261X
+
+Application for following position sense encoder is provided in the SDK.
+
+- \subpage TAMAGAWA
 
 \endcond

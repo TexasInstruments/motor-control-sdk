@@ -12,7 +12,7 @@
     <project
         title="Sdfm Firmware Multi Axis Load Share"
         name = "sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-rtupru0_fw_ti-pru-cgt"
-        products="com.ti.MOTOR_CONTROL_SDK_AMXXX;"
+        products="com.ti.MOTOR_CONTROL_SDK_AMXXX"
         configurations="
             Release,
             Debug,

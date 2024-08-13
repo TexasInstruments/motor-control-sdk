@@ -12,7 +12,7 @@
     <project
         title="Hdsl Master Freerun 225 Mhz"
         name = "hdsl_master_freerun_225_mhz_am64x-evm_icssg0-pru1_fw_ti-pru-cgt"
-        products="com.ti.MOTOR_CONTROL_SDK_AMXXX;"
+        products="com.ti.MOTOR_CONTROL_SDK_AMXXX"
         configurations="
             Release,
             Debug,

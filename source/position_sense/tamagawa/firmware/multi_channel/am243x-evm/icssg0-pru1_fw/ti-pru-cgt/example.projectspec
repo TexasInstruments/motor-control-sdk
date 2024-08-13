@@ -12,7 +12,7 @@
     <project
         title="Tamagawa Multi Channel"
         name = "tamagawa_multi_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt"
-        products="com.ti.MOTOR_CONTROL_SDK_AMXXX;"
+        products="com.ti.MOTOR_CONTROL_SDK_AMXXX"
         configurations="
             Release,
             Debug,
