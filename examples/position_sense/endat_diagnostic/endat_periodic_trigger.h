@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023 Texas Instruments Incorporated
+ *  Copyright (C) 2023-24 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -37,8 +37,8 @@
 
 struct endat_periodic_interface
 {
-  void *pruss_iep;
-  void *pruss_dmem;
+  void *pruicss_iep;
+  void *pruicss_dmem;
   uint8_t load_share;
   uint64_t cmp0;
   uint64_t cmp3;

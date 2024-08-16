@@ -7,6 +7,39 @@
         "resourceSubClass": [
             "example.general"
         ],
+        "description": "A Endat Diagnostic Single Channel Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "endat_diagnostic_single_channel",
+        "location": "../../examples/position_sense/endat_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "LP-AM263P"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "position_sense",
+            "endat_diagnostic",
+            "single_channel",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
         "description": "A Tamagawa Diagnostic Single Channel Example. CPU is R5FSS0-0 running FREERTOS.",
         "name": "tamagawa_diagnostic_single_channel",
         "location": "../../examples/position_sense/tamagawa_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",

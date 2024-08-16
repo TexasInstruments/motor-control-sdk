@@ -1,8 +1,10 @@
 
 let common = system.getScript("/common");
-let hdsl_endat_pins = system.getScript("/position_sense/hdsl_endat_pins.js");
 let endat_module_name = "/position_sense/endat";
 let device = common.getDeviceName();
+let is_am261x_soc = (device === "am261x-lp") ? true : false;
+let hdsl_endat_pins = (is_am261x_soc) ? system.getScript("/position_sense/endat/am26x_pins.js") : system.getScript("/position_sense/hdsl_endat_pins.js");
+
 function onValidate(inst, validation) {
 
     for (let instance_index in inst.$module.$instances)
@@ -19,9 +21,18 @@ function onValidate(inst, validation) {
         }
 
         /* validation for booster pack */
-        if((device!="am243x-lp")&&(instance.Booster_Pack))
+        if((device!="am243x-lp" && device!="am261x-lp")&&(instance.Booster_Pack))
         {
             validation.logError("Select only when using Booster Pack with LP",inst,"Booster_Pack");
+        }
+
+        if(is_am261x_soc)
+        {
+            
+            if((instance.Channel_2 || instance.Channel_1)&&(instance.Booster_Pack))
+            {
+                validation.logError("Channel1 and Channel2 are not supported on Booster Pack",inst,"Booster_Pack");
+            }
         }
     }
 
@@ -33,7 +44,7 @@ let endat_module = {
     displayName: "EnDat Position Encoder",
     templates: {
         "/drivers/system/system_config.h.xdt": {
-            driver_config:"/.meta/position_sense/templates/endat_templates.h.xdt",
+            driver_config:"/.meta/position_sense/endat/endat_templates.h.xdt",
             moduleName: endat_module_name,
         },
         "/drivers/pinmux/pinmux_config.c.xdt": {
@@ -45,15 +56,25 @@ let endat_module = {
         {
             name: "instance",
             displayName: "Instance",
-            default: "ICSSG0",
-            options: [
-                {
-                    name: "ICSSG0",
-                },
-                {
-                    name: "ICSSG1",
-                }
-            ],
+            default: (is_am261x_soc) ? "ICSSM1"  : "ICSSG0",
+            options: (is_am261x_soc) ?
+                        [
+                            {
+                                name: "ICSSM0",
+                            },
+                            {
+                                name: "ICSSM1",
+                            }
+                        ]
+                        :
+                        [
+                            {
+                                name: "ICSSG0",
+                            },
+                            {
+                                name: "ICSSG1",
+                            }
+                        ]
         },
         {
             name: "Channel_0",
@@ -87,6 +108,21 @@ let endat_module = {
             default: false,
         },
 
+        {
+            name: "PRU_Slice",
+            displayName: "Select PRU Slice",
+            description: "ICSSM PRU Slice",
+            hidden :(is_am261x_soc) ? false : true,
+            default: "PRU1",
+            options: [
+                {
+                    name: "PRU0",
+                },
+                {
+                    name: "PRU1",
+                },
+            ],
+        },
     ],
     moduleStatic: {
         modules: function(inst) {
@@ -107,25 +143,33 @@ let endat_module = {
 
 function moduleInstances(instance){
     let modInstances = new Array();
-    if(device == "am243x-lp")
+    let BoosterPack = instance["Booster_Pack"];
+    if(device == "am243x-lp" || is_am261x_soc)
     {
-       modInstances.push({
-            name: "ENC1_EN",
-            displayName: "Booster Pack Ch0 Enable Pin",
-            moduleName: "/drivers/gpio/gpio",
-            requiredArgs: {
-                pinDir: "OUTPUT",
-                
-            },
-        });
-        modInstances.push({
-            name: "ENC2_EN",
-            displayName: "Booster Pack Ch2 Enable Pin",
-            moduleName: "/drivers/gpio/gpio",
-            requiredArgs: {
-                pinDir: "OUTPUT",
-            },
-        });
+        if(BoosterPack)
+        {
+            modInstances.push({
+                name: "ENC1_EN",
+                displayName: "Booster Pack Axis1 Power Enable Pin",
+                moduleName: "/drivers/gpio/gpio",
+                requiredArgs: {
+                    pinDir: "OUTPUT",
+                    defaultValue: "1",
+                    },
+                });
+            if(device == "am243x-lp")
+            {
+                modInstances.push({
+                    name: "ENC2_EN",
+                    displayName: "Booster Pack Axis2 Power Enable Pin",
+                    moduleName: "/drivers/gpio/gpio",
+                    requiredArgs: {
+                        pinDir: "OUTPUT",
+                        defaultValue: "1",
+                        },
+            });
+           }
+        }
     }
     return (modInstances);
 }

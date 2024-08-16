@@ -1657,15 +1657,15 @@ static void endat_config_global_rx_arm_cnt(struct endat_priv *priv,
     void *pruss_cfg = priv->pruss_cfg;
     if(priv->pruicss_slicex)
     {
-       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1CH0CFG1REGISTER + 2, val);
-       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1CH1CFG1REGISTER + 2, val);
-       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1CH2CFG1REGISTER + 2, val);
+       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG1_REG + 2, val);
+       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH1_CFG1_REG + 2, val);
+       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH2_CFG1_REG + 2, val);
     }
     else
     {
-       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0CH0CFG1REGISTER + 2, val);
-       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0CH1CFG1REGISTER + 2, val);
-       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0CH2CFG1REGISTER + 2, val);
+       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG1_REG + 2, val);
+       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH1_CFG1_REG + 2, val);
+       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH2_CFG1_REG + 2, val);
     }
 }
 
@@ -1675,11 +1675,11 @@ void endat_config_rx_arm_cnt(struct endat_priv *priv, uint16_t val)
     int32_t ch = priv->channel;
     if(priv->pruicss_slicex)
     {
-       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1CH0CFG1REGISTER + ch * 8 + 2, val);
+       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG1_REG + ch * 8 + 2, val);
     }
     else
     {
-       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0CH0CFG1REGISTER + ch * 8 + 2, val);
+       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG1_REG + ch * 8 + 2, val);
     }
 }
 
@@ -1690,12 +1690,12 @@ void endat_config_wire_delay(struct endat_priv *priv, uint16_t val)
     uint16_t regval;
     if(priv->pruicss_slicex)
     {
-        regval = HW_RD_REG16((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1CH0CFG0REGISTER + ch *
+        regval = HW_RD_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG0_REG + ch *
                                    8);
     }
     else
     {
-        regval = HW_RD_REG16((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0CH0CFG0REGISTER + ch *
+        regval = HW_RD_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG0_REG + ch *
                                    8);
     }
 
@@ -1706,11 +1706,11 @@ void endat_config_wire_delay(struct endat_priv *priv, uint16_t val)
     regval |= val;
     if(priv->pruicss_slicex)
     {
-       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1CH0CFG0REGISTER + ch * 8, regval);
+       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG0_REG + ch * 8, regval);
     }
     else
     {
-        HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0CH0CFG0REGISTER + ch * 8, regval);
+        HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG0_REG + ch * 8, regval);
     }
 }
 
@@ -1721,15 +1721,15 @@ void endat_config_clock(struct endat_priv *priv,
     /* Set PRU1_ED_RX_SB_POL polarity bit, required for ICSSG (don't care for ICSSM) */
     if(priv->pruicss_slicex)
     {
-        HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1RXCFGREGISTER, clk_cfg->rx_div << 16 | 0x8 |
+        HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG, clk_cfg->rx_div << 16 | 0x8 |
             clk_cfg->rx_div_attr);
-        HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER + 2, clk_cfg->tx_div);
+        HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG + 2, clk_cfg->tx_div);
     }
     else
     {
-       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0RXCFGREGISTER, clk_cfg->rx_div << 16 | 0x8 |
+       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG, clk_cfg->rx_div << 16 | 0x8 |
             clk_cfg->rx_div_attr);
-       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0TXCFGREGISTER + 2, clk_cfg->tx_div);
+       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG + 2, clk_cfg->tx_div);
     }
 
 
@@ -1742,11 +1742,11 @@ void endat_config_tst_delay(struct endat_priv *priv, uint16_t delay)
     int32_t ch = priv->channel;
     if(priv->pruicss_slicex==1)
     {
-       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1CH0CFG1REGISTER + ch * 8, delay);
+       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG1_REG + ch * 8, delay);
     }
     else
     {
-      HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0CH0CFG1REGISTER + ch * 8, delay);
+      HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG1_REG + ch * 8, delay);
     }
 
 }
@@ -1888,15 +1888,15 @@ void endat_enable_load_share_mode(struct endat_priv *priv)
     uint32_t rgval;
     if(priv->pruicss_slicex)
     {
-       rgval = HW_RD_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER);
-       rgval |= CSL_ICSSCFG_EDPRU1TXCFGREGISTER_PRU1_ENDAT_SHARE_EN_MASK;
-      HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER, rgval);
+       rgval = HW_RD_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG);
+       rgval |= ENDAT_LOAD_SHARE_EN_MASK;
+      HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG, rgval);
     }
     else
     {
-        rgval = HW_RD_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0TXCFGREGISTER);
-        rgval |= CSL_ICSSCFG_EDPRU0TXCFGREGISTER_PRU0_ENDAT_SHARE_EN_MASK;
-      HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0TXCFGREGISTER, rgval);
+        rgval = HW_RD_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG);
+        rgval |= ENDAT_LOAD_SHARE_EN_MASK;
+      HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG, rgval);
     }
 
 }
@@ -2032,15 +2032,15 @@ static inline void endat_config_clr_cfg0(struct endat_priv *priv)
     void *pruss_cfg = priv->pruss_cfg;
     if(priv->pruicss_slicex)
     {
-       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1CH0CFG0REGISTER, 0);
-       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1CH1CFG0REGISTER, 0);
-       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1CH2CFG0REGISTER, 0);
+       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG0_REG, 0);
+       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH1_CFG0_REG, 0);
+       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH2_CFG0_REG, 0);
     }
     else
     {
-       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0CH0CFG0REGISTER, 0);
-       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0CH1CFG0REGISTER, 0);
-       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0CH2CFG0REGISTER, 0);
+       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG0_REG, 0);
+       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH1_CFG0_REG, 0);
+       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH2_CFG0_REG, 0);
     }
 }
 
@@ -2049,11 +2049,11 @@ static inline void endat_config_endat_mode(struct endat_priv *priv)
     void *pruss_cfg = priv->pruss_cfg;
     if(priv->pruicss_slicex)
     {
-       HW_WR_REG8((uint8_t *)pruss_cfg + CSL_ICSSCFG_GPCFG1 + 3, 4);
+       HW_WR_REG8((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_GPCFG1_REG + 3, 4);
     }
     else
     {
-       HW_WR_REG8((uint8_t *)pruss_cfg + CSL_ICSSCFG_GPCFG0 + 3, 4);
+       HW_WR_REG8((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_GPCFG0_REG + 3, 4);
     }
 }
 
