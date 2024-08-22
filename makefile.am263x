@@ -68,14 +68,11 @@ help:
 BUILD_COMBO_motorcontrol_tamagawa_over_soc_uart = motorcontrol_tamagawa_over_soc_uart_r5f.ti-arm-clang
 BUILD_COMBO_motorcontrol_tamagawa = motorcontrol_tamagawa_r5f.ti-arm-clang
 
-
 # Combine all Components
 BUILD_COMBO_ALL = $(BUILD_COMBO_motorcontrol_tamagawa_over_soc_uart) $(BUILD_COMBO_motorcontrol_tamagawa)
 
-
 # Combine all Pre-built Components
 BUILD_COMBO_PREBUILT_ALL =
-
 
 # Combine all Private Components
 BUILD_COMBO_PRIVATE_ALL =
@@ -86,7 +83,6 @@ libs-prebuilt: $(BUILD_COMBO_PREBUILT_ALL)
 
 libs-private: $(BUILD_COMBO_PRIVATE_ALL)
 
-
 $(BUILD_COMBO_motorcontrol_tamagawa_over_soc_uart):
 	$(MAKE) -C source/position_sense/tamagawa_over_soc_uart -f makefile.am263x.$(subst motorcontrol_tamagawa_over_soc_uart_,,$@) all
 
@@ -94,23 +90,19 @@ $(BUILD_COMBO_motorcontrol_tamagawa):
 	$(MAKE) -C source/position_sense/tamagawa -f makefile.am263x.$(subst motorcontrol_tamagawa_,,$@) all
 
 
-
 # Various Component Clean Targets
 BUILD_COMBO_CLEAN_motorcontrol_tamagawa_over_soc_uart = motorcontrol_tamagawa_over_soc_uart_r5f.ti-arm-clang_clean
 BUILD_COMBO_CLEAN_motorcontrol_tamagawa = motorcontrol_tamagawa_r5f.ti-arm-clang_clean
 
-
 # Combine all Components Clean
 BUILD_COMBO_CLEAN_ALL = $(BUILD_COMBO_CLEAN_motorcontrol_tamagawa_over_soc_uart) $(BUILD_COMBO_CLEAN_motorcontrol_tamagawa)
-
 
 # Combine all Pre-built Components Clean
 BUILD_COMBO_PREBUILT_CLEAN_ALL =
 
-
 libs-clean: $(BUILD_COMBO_CLEAN_ALL)
-libs-prebuilt-clean: $(BUILD_COMBO_PREBUILT_CLEAN_ALL)
 
+libs-prebuilt-clean: $(BUILD_COMBO_PREBUILT_CLEAN_ALL)
 
 $(BUILD_COMBO_CLEAN_motorcontrol_tamagawa_over_soc_uart):
 	$(MAKE) -C source/position_sense/tamagawa_over_soc_uart -f makefile.am263x.$(subst motorcontrol_tamagawa_over_soc_uart_,,$(subst _clean,,$@)) clean
@@ -119,11 +111,9 @@ $(BUILD_COMBO_CLEAN_motorcontrol_tamagawa):
 	$(MAKE) -C source/position_sense/tamagawa -f makefile.am263x.$(subst motorcontrol_tamagawa_,,$(subst _clean,,$@)) clean
 
 
-
 # Various Component Scrub Targets
 BUILD_COMBO_SCRUB_motorcontrol_tamagawa_over_soc_uart = motorcontrol_tamagawa_over_soc_uart_r5f.ti-arm-clang_scrub_scrub
 BUILD_COMBO_SCRUB_motorcontrol_tamagawa = motorcontrol_tamagawa_r5f.ti-arm-clang_scrub_scrub
-
 
 # Combine all Components Scrub Targets
 BUILD_COMBO_SCRUB_ALL = $(BUILD_COMBO_SCRUB_motorcontrol_tamagawa_over_soc_uart) $(BUILD_COMBO_SCRUB_motorcontrol_tamagawa)
@@ -131,10 +121,9 @@ BUILD_COMBO_SCRUB_ALL = $(BUILD_COMBO_SCRUB_motorcontrol_tamagawa_over_soc_uart)
 # Combine all Pre-built Components Scrub Targets
 BUILD_COMBO_PREBUILT_SCRUB_ALL =
 
-
 libs-scrub: $(BUILD_COMBO_SCRUB_ALL)
-libs-prebuilt-scrub: $(BUILD_COMBO_PREBUILT_SCRUB_ALL)
 
+libs-prebuilt-scrub: $(BUILD_COMBO_PREBUILT_SCRUB_ALL)
 
 $(BUILD_COMBO_SCRUB_motorcontrol_tamagawa_over_soc_uart):
 	$(MAKE) -C source/position_sense/tamagawa_over_soc_uart -f makefile.am263x.$(subst motorcontrol_tamagawa_over_soc_uart_,,$(subst _scrub,,$@)) scrub
@@ -161,20 +150,14 @@ BUILD_COMBO_EXAMPLE_ALL += transforms_test_am263x-cc_r5fss0-0_freertos_ti-arm-cl
 BUILD_COMBO_EXAMPLE_ALL += transforms_test_am263x-lp_r5fss0-0_nortos_ti-arm-clang
 BUILD_COMBO_EXAMPLE_ALL += transforms_test_am263x-lp_r5fss0-0_freertos_ti-arm-clang
 BUILD_COMBO_EXAMPLE_ALL += dlog4ch_lib_am263x-cc_r5fss0-0_nortos_ti-arm-clang
-
 # Various System Example Targets
-
-
 
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL =
 # Various Private Example Targets
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += tamagawa_single_channel_am263x-lp_icssm-pru0_fw_ti-pru-cgt
 # Various Private System Example Targets
 
-
 examples: $(BUILD_COMBO_EXAMPLE_ALL)
-
-
 
 examples-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_ALL)
 
@@ -249,7 +232,6 @@ BUILD_COMBO_EXAMPLE_CLEAN_ALL += transforms_test_am263x-lp_r5fss0-0_nortos_ti-ar
 BUILD_COMBO_EXAMPLE_CLEAN_ALL += transforms_test_am263x-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_CLEAN_ALL += dlog4ch_lib_am263x-cc_r5fss0-0_nortos_ti-arm-clang_clean
 # Various System Example Clean Targets
-
 
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL =
 # Various Private Example Targets
@@ -331,7 +313,6 @@ BUILD_COMBO_EXAMPLE_SCRUB_ALL += transforms_test_am263x-lp_r5fss0-0_nortos_ti-ar
 BUILD_COMBO_EXAMPLE_SCRUB_ALL += transforms_test_am263x-lp_r5fss0-0_freertos_ti-arm-clang_scrub
 BUILD_COMBO_EXAMPLE_SCRUB_ALL += dlog4ch_lib_am263x-cc_r5fss0-0_nortos_ti-arm-clang_scrub
 # Various System Example Scrub Targets
-
 
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL =
 # Various Private Example Targets
