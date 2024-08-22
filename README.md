@@ -117,10 +117,10 @@ This should clone all the repositories required for Motor Control SDK developmen
 
 **To download and install dependencies, follow the below steps**:
 
-1. Download and install Code Composer Studio v12.6 from [here](https://www.ti.com/tool/download/CCSTUDIO "Code Composer Studio")
+1. Download and install Code Composer Studio v12.8 from [here](https://www.ti.com/tool/download/CCSTUDIO "Code Composer Studio")
    - Install at default folder
 
-2. Download and install SysConfig 1.19.0 from [here](https://www.ti.com/tool/download/SYSCONFIG "SYSCONFIG")
+2. Download and install SysConfig 1.21.0 from [here](https://www.ti.com/tool/download/SYSCONFIG "SYSCONFIG 1.21.0")
    - Install at default folder
 
 3. Download and install Node.js v12.18.4 LTS
