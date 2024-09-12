@@ -54,26 +54,48 @@ const lflags = {
 
 const buildOptionCombos = [
     { device: device, cpu: "icssg0-pru1", cgt: "ti-pru-cgt", board: "am243x-evm", os: "fw"},
+    { device: device, cpu: "icssg0-pru0", cgt: "ti-pru-cgt", board: "am243x-evm", os: "fw"},
 ];
 
 function getmakefilePruPostBuildSteps(cpu, board)
 {
-    return  [
-        "$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMulti -o endat_master_multi_bin.h endat_peripheral_interface_multi_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
-        "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_master_multi_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/endat_master_multi_bin.h;"+ 
-        "$(RM) endat_master_multi_bin.h;"
-    ];
+    let postBuildSteps
+    switch(cpu)
+    {
+        case "icssg0-pru1":
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMulti -o endat_master_multi_pru1_bin.h endat_peripheral_interface_multi_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_master_multi_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/multi_channel_single_pru/endat_master_multi_pru1_bin.h;"+ 
+            "$(RM) endat_master_multi_pru1_bin.h;"]
+            break;
+        case "icssg0-pru0":
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMulti -o endat_master_multi_pru0_bin.h endat_peripheral_interface_multi_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_master_multi_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/multi_channel_single_pru/endat_master_multi_pru0_bin.h;"+ 
+            "$(RM) endat_master_multi_pru0_bin.h;"]        
+    }
+
+    return postBuildSteps
 }
 
 function getccsPruPostBuildSteps(cpu, board)
 {
-    return  [
-        "$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMulti -o endat_master_multi_bin.h endat_peripheral_interface_multi_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
-        "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_master_multi_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/endat_master_multi_bin.h;"+ 
-        "if ${CCS_HOST_OS} == linux rm endat_master_multi_bin.h;"+
-        "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_master_multi_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/endat_master_multi_bin.h;"+ 
-        "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm endat_master_multi_bin.h;"
-    ];
+    let postBuildSteps
+    switch(cpu)
+    {
+        case "icssg0-pru1":
+            postBuildSteps = [ "$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMulti -o endat_master_multi_pru1_bin.h endat_peripheral_interface_multi_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_master_multi_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/multi_channel_single_pru/endat_master_multi_pru1_bin.h;"+ 
+            "if ${CCS_HOST_OS} == linux rm endat_master_multi_pru1_bin.h;"+
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_master_multi_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/multi_channel_single_pru/endat_master_multi_pru1_bin.h;"+ 
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm endat_master_multi_pru1_bin.h;"]
+            break;
+        case "icssg0-pru0":
+            postBuildSteps = [ "$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMulti -o endat_master_multi_pru0_bin.h endat_peripheral_interface_multi_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_master_multi_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/multi_channel_single_pru/endat_master_multi_pru0_bin.h;"+ 
+            "if ${CCS_HOST_OS} == linux rm endat_master_multi_pru0_bin.h;"+
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_master_multi_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/multi_channel_single_pru/endat_master_multi_pru0_bin.h;"+ 
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm endat_master_multi_pru0_bin.h;"]
+    }
+    return postBuildSteps
 }
 
 

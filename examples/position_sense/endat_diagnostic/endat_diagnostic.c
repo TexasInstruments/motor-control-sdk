@@ -70,24 +70,32 @@
 
 #define PRUICSS_SLICEx PRU_ICSSGx_PRU_SLICE
 
-#if (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU)
-#include  <position_sense/endat/firmware/endat_master_multi_bin.h>
+#if CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU
+#if PRU_ICSSGx_PRU_SLICE == 1
+#include <endat_master_multi_pru1_bin.h>
+#else
+#include <endat_master_multi_pru0_bin.h>
+#endif
 #endif
 
 #if (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
-#include <position_sense/endat/firmware/endat_master_multi_RTU_bin.h>
+#if PRU_ICSSGx_PRU_SLICE == 1
+#include <endat_master_multi_rtu1_bin.h>
+#include <endat_master_multi_pru1_bin.h>
+#include <endat_master_multi_txpru1_bin.h>
+#else
+#include <endat_master_multi_rtu0_bin.h>
+#include <endat_master_multi_pru0_bin.h>
+#include <endat_master_multi_txpru0_bin.h>
 #endif
-
-#if (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
-#include <position_sense/endat/firmware/endat_master_multi_PRU_bin.h>
-#endif
-
-#if (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
-#include <position_sense/endat/firmware/endat_master_multi_TXPRU_bin.h>
 #endif
 
 #if CONFIG_ENDAT0_MODE == ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU
-#include <position_sense/endat/firmware/endat_master_bin.h>
+#if PRU_ICSSGx_PRU_SLICE == 1
+#include <endat_master_pru1_bin.h>
+#else
+#include <endat_master_pru0_bin.h>
+#endif
 #endif
 
 #define WAIT_5_SECOND  (5000)

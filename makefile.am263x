@@ -63,6 +63,7 @@ help:
 	@echo  $(MAKE) -s -C examples/utilities/datalog/am263x-cc/r5fss0-0_nortos/ti-arm-clang [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/endat/firmware/single_channel/am263x-lp/icssm_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/tamagawa/firmware/single_channel/am263x-lp/icssm-pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C source/position_sense/tamagawa/firmware/single_channel/am263x-lp/icssm-pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  .
 	@echo  System Example build targets,
 	@echo  =============================
@@ -173,6 +174,7 @@ BUILD_COMBO_EXAMPLE_PRIVATE_ALL =
 # Various Private Example Targets
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += endat_peripheral_interface_single_ch_am263x-lp_icssm_pru0_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += tamagawa_single_channel_am263x-lp_icssm-pru0_fw_ti-pru-cgt
+BUILD_COMBO_EXAMPLE_PRIVATE_ALL += tamagawa_single_channel_am263x-lp_icssm-pru1_fw_ti-pru-cgt
 # Various Private System Example Targets
 
 examples: $(BUILD_COMBO_EXAMPLE_ALL)
@@ -236,6 +238,9 @@ examples-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_ALL)
  tamagawa_single_channel_am263x-lp_icssm-pru0_fw_ti-pru-cgt:
 	$(MAKE) -C source/position_sense/tamagawa/firmware/single_channel/am263x-lp/icssm-pru0_fw/ti-pru-cgt -f makefile all
 
+ tamagawa_single_channel_am263x-lp_icssm-pru1_fw_ti-pru-cgt:
+	$(MAKE) -C source/position_sense/tamagawa/firmware/single_channel/am263x-lp/icssm-pru1_fw/ti-pru-cgt -f makefile all
+
 
 BUILD_COMBO_EXAMPLE_CLEAN_ALL =
 # Various Example Clean Targets
@@ -262,6 +267,7 @@ BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL =
 # Various Private Example Targets
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += endat_peripheral_interface_single_ch_am263x-lp_icssm_pru0_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += tamagawa_single_channel_am263x-lp_icssm-pru0_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += tamagawa_single_channel_am263x-lp_icssm-pru1_fw_ti-pru-cgt_clean
 # Various Private System Example Targets
 
 examples-clean: $(BUILD_COMBO_EXAMPLE_CLEAN_ALL)
@@ -325,6 +331,9 @@ examples-private-clean: $(BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL)
  tamagawa_single_channel_am263x-lp_icssm-pru0_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/tamagawa/firmware/single_channel/am263x-lp/icssm-pru0_fw/ti-pru-cgt -f makefile clean
 
+ tamagawa_single_channel_am263x-lp_icssm-pru1_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/position_sense/tamagawa/firmware/single_channel/am263x-lp/icssm-pru1_fw/ti-pru-cgt -f makefile clean
+
 
 BUILD_COMBO_EXAMPLE_SCRUB_ALL =
 # Various Example Scrub Targets
@@ -351,6 +360,7 @@ BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL =
 # Various Private Example Targets
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += endat_peripheral_interface_single_ch_am263x-lp_icssm_pru0_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += tamagawa_single_channel_am263x-lp_icssm-pru0_fw_ti-pru-cgt_scrub
+BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += tamagawa_single_channel_am263x-lp_icssm-pru1_fw_ti-pru-cgt_scrub
 # Various Private System Example Targets
 
 examples-scrub: $(BUILD_COMBO_EXAMPLE_SCRUB_ALL)
@@ -413,6 +423,9 @@ examples-scrub-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL)
 
  tamagawa_single_channel_am263x-lp_icssm-pru0_fw_ti-pru-cgt_scrub:
 	$(MAKE) -C source/position_sense/tamagawa/firmware/single_channel/am263x-lp/icssm-pru0_fw/ti-pru-cgt -f makefile scrub
+
+ tamagawa_single_channel_am263x-lp_icssm-pru1_fw_ti-pru-cgt_scrub:
+	$(MAKE) -C source/position_sense/tamagawa/firmware/single_channel/am263x-lp/icssm-pru1_fw/ti-pru-cgt -f makefile scrub
 
 
 .PHONY: all clean scrub help

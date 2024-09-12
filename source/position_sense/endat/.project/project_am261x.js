@@ -42,8 +42,7 @@ function getComponentBuildProperty(buildOption) {
     build_property.files = files;
     build_property.filedirs = filedirs;
     build_property.includes = includes;
-    build_property.projecspecFileAction = "link";
-
+    
     return build_property;
 }
 
