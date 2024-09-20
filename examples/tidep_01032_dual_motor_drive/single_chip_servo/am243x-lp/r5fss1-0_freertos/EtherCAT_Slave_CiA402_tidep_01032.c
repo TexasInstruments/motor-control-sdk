@@ -74,9 +74,25 @@
 /* stack */
 #include <ecSlvApi.h>
 
+#define FrameProc   ECAT_FrameProcAPP
+// FREERTOS contained FW #include <source/networking/ethercat_slave/icss_fwhal/ecat_frame_handler_bin.h>
+#include <industrial_comms/ethercat_slave/icss_fwhal/firmware/g_v1.3/ecat_frame_handler_bin.h>
+#define HostProc   ECAT_HostProcAPP
+// FREERTOS contained FW #include <source/networking/ethercat_slave/icss_fwhal/ecat_host_interface_bin.h>
+#include <industrial_comms/ethercat_slave/icss_fwhal/firmware/g_v1.3/ecat_host_interface_bin.h>
+
+#if (defined INCLUDE_MDIO_MANUAL_MODE_WORKAROUND) && (!defined SOC_AM263X)
+#define PRUFirmware   PRUMDIOFirmwareECATAPP
+#include <industrial_comms/ethercat_slave/icss_fwhal/firmware/g_v1.3/mdio_fw_bin.h>
+#endif
+
+#define TIESC_HW	0
+#define PRU_200MHZ  1
+
+#define THREAD_IDLE_TIMEOUT   (100U)     /* 100msec idle timeout */
+
 /* @cppcheck_justify{misra-c2012-8.9} prefer module global over threadsafety */
 /* cppcheck-suppress misra-c2012-8.9 */
-static OSAL_PJumpBuf_t  farJumpBuf_cia;
 
 static uint32_t EC_SLV_APP_CIA_remoteInit(EC_SLV_APP_CIA_Application_t *applicationInstance);
 
@@ -230,7 +246,7 @@ void System_init_modified(void)
  *
  *  <!-- Parameters and return values: -->
  *
- *  \param[in]  pArg_p      Task Parm.
+ *  \param[in]  pArg_p      Application Parameter.
  *
  *  <!-- Example: -->
  *
@@ -270,6 +286,26 @@ static void EC_SLV_APP_CIA_loopTask(void *pArg_p)
 
     EC_SLV_APP_CIA_initBoardFunctions(pApplicationInstance);
     EC_SLV_APP_CIA_registerStacklessBoardFunctions(pApplicationInstance);
+
+#if !(defined FBTL_REMOTE) && !(defined DPRAM_REMOTE)
+    /* inject firmware */
+    error = EC_API_SLV_stackInsertPruFirmware((uint32_t*)ECAT_FrameProcAPP, sizeof(ECAT_FrameProcAPP),
+                                              (uint32_t*)ECAT_HostProcAPP, sizeof(ECAT_HostProcAPP));
+    if (error != EC_API_eERR_NONE)
+    {
+        OSAL_printf("%s:%d Error code: 0x%08x\r\n", __func__, __LINE__, error);
+        OSAL_error(__func__, __LINE__, OSAL_STACK_INIT_ERROR, true, 0);
+    }
+
+#if (defined INCLUDE_MDIO_MANUAL_MODE_WORKAROUND) && (!defined SOC_AM263X)
+    error = EC_API_SLV_stackInsertMdioManualFirmware((uint32_t*)PRUMDIOFirmwareECATAPP, sizeof(PRUMDIOFirmwareECATAPP));
+    if (error != EC_API_eERR_NONE)
+    {
+        OSAL_printf("%s:%d Error code: 0x%08x\r\n", __func__, __LINE__, error);
+        OSAL_error(__func__, __LINE__, OSAL_STACK_INIT_ERROR, true, 0);
+    }
+#endif
+#endif
 
     error = EC_API_SLV_stackInit(); // EtherCAT stack init
     if (error != EC_API_eERR_NONE)
@@ -332,6 +368,35 @@ Exit:
     return;
 }
 
+/*!
+ *  <!-- Description: -->
+ *
+ *  \brief
+ *  Main routine
+ *
+ *  <!-- Parameters and return values: -->
+ *
+ *  \param[in]  pArg_p		Application instance.
+ *
+ *  <!-- Example: -->
+ *
+ *  \par Example
+ *  \code{.c}
+ *  #include <theHeader.h>
+ *
+ *  // required variables
+ *  uint32_t retVal = 0;
+ *  void* pApp;
+ *
+ *  // the Call
+ *  retVal = EC_SLV_APP_CIA_mainTask(pApp);
+ *  \endcode
+ *
+ *  <!-- Group: -->
+ *
+ *  \ingroup EC_SLV_APP_CIA
+ *
+ * */
 static void EC_SLV_APP_CIA_mainTask(void *pArg_p)
 {
     /* @cppcheck_justify{misra-c2012-11.5} generic API requires cast */
@@ -351,6 +416,14 @@ static void EC_SLV_APP_CIA_mainTask(void *pArg_p)
         OSAL_error(__func__, __LINE__, retVal, true, 1, "OS Board init error\r\n");
     }
 
+    retVal = ESL_OS_printfMutexInit();
+    if (OSAL_ERR_NoError != retVal)
+    {
+      // @cppcheck_justify{misra-c2012-15.1} use goto Exit for single point of return
+      //cppcheck-suppress misra-c2012-15.1
+      goto Exit;
+    }
+
     OSAL_registerPrintOut(NULL, ESL_OS_printf);
 
     retVal = EC_SLV_APP_CIA_remoteInit(applicationInstance);
@@ -363,11 +436,13 @@ static void EC_SLV_APP_CIA_mainTask(void *pArg_p)
         goto Exit;
     }
 
-    retVal = EC_API_SLV_load(&farJumpBuf_cia, NULL /* &applErrHandler*/, applicationInstance->selectedPruInstance);
+    retVal = EC_API_SLV_load(NULL /* &applErrHandler*/, applicationInstance->selectedPruInstance);
 
     if (EC_API_eERR_NONE == retVal)
     {
-        EC_API_SLV_prepareTasks(KBECSLV_PRIO_PDI, KBECSLV_PRIO_LED, KBECSLV_PRIO_SYNC0, KBECSLV_PRIO_SYNC1);
+        EC_API_SLV_prepareTasks(KBECSLV_PRIO_PDI, KBECSLV_PRIO_LED, KBECSLV_PRIO_SYNC0, KBECSLV_PRIO_SYNC1,
+                                KBECSLV_STACKSIZE_PDI, KBECSLV_STACKSIZE_LED, KBECSLV_STACKSIZE_SYNC0,
+                                KBECSLV_STACKSIZE_SYNC1);
 
         applicationInstance->loopThreadHandle = OSAL_SCHED_startTask(EC_SLV_APP_CIA_loopTask
                                                                     ,applicationInstance
@@ -504,6 +579,34 @@ int main(int argc, char *argv[])
     return error;
 }
 
+/*!
+ *  <!-- Description: -->
+ *
+ *  \brief
+ *  Initialize remote interface (FBTL)
+ *
+ *  <!-- Parameters and return values: -->
+ *
+ *  \param[in]  applicationInstance  Application instance handle
+ *  \return     ErrorCode
+ *
+ *  <!-- Example: -->
+ *
+ *  \par Example
+ *  \code{.c}
+ *  // required variables
+ *  uint32_t retVal = 0;
+ *  EC_SLV_APP_CIA_Application_t *pApplicationInstance_p;
+ *
+ *  // the Call
+ *  retVal = EC_SLV_APP_CIA_remoteInit(*applicationInstance);
+ *  \endcode
+ *
+ *  <!-- Group: -->
+ *
+ *  \ingroup EC_SLV_APP_CIA
+ *
+ * */
 static uint32_t EC_SLV_APP_CIA_remoteInit(EC_SLV_APP_CIA_Application_t *applicationInstance)
 {
     uint32_t retVal = OSAL_CONTAINER_LOCALIMPLEMENTATION;

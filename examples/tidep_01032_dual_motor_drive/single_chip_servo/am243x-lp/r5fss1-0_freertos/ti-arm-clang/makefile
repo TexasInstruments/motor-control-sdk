@@ -113,6 +113,7 @@ DEFINES_common := \
 	-Dam243x_lp \
 	-DSSC_CHECKTIMER=1 \
 	-DUSE_ECAT_TIMER=1 \
+	-DCUST_PHY_DP83869=1 \
 
 CFLAGS_common := \
 	-mcpu=cortex-r5 \

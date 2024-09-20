@@ -71,8 +71,7 @@ uint32_t NVM_DRV_EEPROM_read(
     void * const pData)
 {
     uint32_t error = NVM_ERR_SUCCESS;
-    /*README: Following ifdef check is added for TIDEP-01032 as I2C0 EEPROM can not be used because of pin unavailability*/
-#ifdef CONFIG_EEPROM_NUM_INSTANCES
+#if defined(CONFIG_EEPROM_NUM_INSTANCES) && CONFIG_EEPROM_NUM_INSTANCES > 0
     int32_t status = SystemP_SUCCESS;
     if(id < CONFIG_EEPROM_NUM_INSTANCES)
     {
@@ -83,11 +82,16 @@ uint32_t NVM_DRV_EEPROM_read(
         }
     }
     else
-#endif
     {
         error = NVM_ERR_REJECT;
     }
-
+#else
+    (void)id;
+    (void)offset;
+    (void)length;
+    (void)pData;
+    error = NVM_ERR_REJECT;
+#endif
     return error;
 }
 
@@ -116,9 +120,7 @@ uint32_t NVM_DRV_EEPROM_write(
     const void * const pData)
 {
     uint32_t error = NVM_ERR_SUCCESS;
-
-    /*README: Following ifdef check is added for TIDEP-01032 as I2C0 EEPROM can not be used because of pin unavailability*/
-#ifdef CONFIG_EEPROM_NUM_INSTANCES
+#if defined(CONFIG_EEPROM_NUM_INSTANCES) && CONFIG_EEPROM_NUM_INSTANCES > 0
     int32_t status = SystemP_SUCCESS;
     if(id < CONFIG_EEPROM_NUM_INSTANCES)
     {
@@ -129,9 +131,15 @@ uint32_t NVM_DRV_EEPROM_write(
         }
     }
     else
-#endif
     {
         error = NVM_ERR_REJECT;
     }
+#else
+    (void)id;
+    (void)offset;
+    (void)length;
+    (void)pData;
+    error = NVM_ERR_REJECT;
+#endif
     return error;
 }
