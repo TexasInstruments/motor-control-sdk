@@ -76,7 +76,6 @@
 
 /* @cppcheck_justify{misra-c2012-8.9} prefer module global over threadsafety */
 /* cppcheck-suppress misra-c2012-8.9 */
-static OSAL_PJumpBuf_t  farJumpBuf_cia;
 
 static uint32_t EC_SLV_APP_CIA_remoteInit(EC_SLV_APP_CIA_Application_t *applicationInstance);
 
@@ -363,11 +362,13 @@ static void EC_SLV_APP_CIA_mainTask(void *pArg_p)
         goto Exit;
     }
 
-    retVal = EC_API_SLV_load(&farJumpBuf_cia, NULL /* &applErrHandler*/, applicationInstance->selectedPruInstance);
+    retVal = EC_API_SLV_load(NULL /* &applErrHandler*/, applicationInstance->selectedPruInstance);
 
     if (EC_API_eERR_NONE == retVal)
     {
-        EC_API_SLV_prepareTasks(KBECSLV_PRIO_PDI, KBECSLV_PRIO_LED, KBECSLV_PRIO_SYNC0, KBECSLV_PRIO_SYNC1);
+        EC_API_SLV_prepareTasks(KBECSLV_PRIO_PDI, KBECSLV_PRIO_LED, KBECSLV_PRIO_SYNC0, KBECSLV_PRIO_SYNC1,
+                                KBECSLV_STACKSIZE_PDI, KBECSLV_STACKSIZE_LED, KBECSLV_STACKSIZE_SYNC0,
+                                KBECSLV_STACKSIZE_SYNC1);
 
         applicationInstance->loopThreadHandle = OSAL_SCHED_startTask(EC_SLV_APP_CIA_loopTask
                                                                     ,applicationInstance

@@ -109,6 +109,12 @@
 #define KBECSLV_PRIO_EOE                    OSAL_TASK_Prio_ECEoE
 #define KBECSLV_PRIO_LED                    OSAL_TASK_Prio_ECLED
 
+/* task stack sizes in bytes */
+#define KBECSLV_STACKSIZE_PDI               0x0800
+#define KBECSLV_STACKSIZE_LED               0x0400
+#define KBECSLV_STACKSIZE_SYNC0             0x0800
+#define KBECSLV_STACKSIZE_SYNC1             0x0800
+
 #define EEPROM_MAGIC_KEY \
     /* @cppcheck_justify{misra-c2012-11.6} void cast required for signature */ \
     /* cppcheck-suppress misra-c2012-11.6 */ \
