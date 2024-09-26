@@ -11,15 +11,18 @@
     % let instance = module.$instances[i];
     % let Mode = 0;
     % let Slice = 0 ;
+    % let icssInst = 0;
+    % let isIcssm = 0;
     %if(instance.instance === "ICSSG1")
     %{
        % if(instance.PRU_ICSSG1_PRU.$assign === "PRU_ICSSG1_PRU1")
        %{
           % Slice = 1;
        %}
+        % icssInst = 1;
 
     %}
-    %else
+    %else if(instance.instance === "ICSSG0")
     %{
        %if(instance.PRU_ICSSG0_PRU.$assign === "PRU_ICSSG0_PRU1")
        %{
@@ -27,6 +30,19 @@
        %}
 
     %}
+     /*Macro for am263x/am261x */
+    % if(instance.instance === "ICSSM" || instance.instance === "ICSSM0" || instance.instance === "ICSSM1")
+    % {
+        % if(instance.PRU_Slice == "PRU1")
+        % {
+            % Slice = 1;
+        % }
+#define  PRUICSSM                        1      
+        %if(instance.instance === "ICSSM1")
+        %{
+        % icssInst = 1;
+        %}
+    % }
     %if(((instance.Channel_0 & 1)&&(instance.Channel_1 & 1))||((instance.Channel_1 & 1)&&(instance.Channel_2 & 1))||((instance.Channel_2 & 1)&&(instance.Channel_0 & 1)))
     %{
         % Mode = 1;
@@ -40,10 +56,17 @@
 #define `instance.$name`_CHANNEL0         `instance.Channel_0 & 1`
 #define `instance.$name`_CHANNEL1         `instance.Channel_1 & 1`
 #define `instance.$name`_CHANNEL2         `instance.Channel_2 & 1`
-#define `instance.$name`_load_share_mode  `instance.Multi_Channel_Load_Share & 1`
+
+    %if(instance.Multi_Channel_Load_Share)
+    %{
+#define `instance.$name`_LOAD_SHARE_MODE  `instance.Multi_Channel_Load_Share & 1`
+    %}
+
 #define  `instance.$name`_MODE             `Mode`
 #define `instance.$name`_BOOSTER_PACK     `instance.Booster_Pack & 1`
 #define  PRU_ICSSGx_PRU_SLICE            `Slice`
+#define  PRUICSSx                          (`icssInst`)
+
 % }
 
 

@@ -1,7 +1,7 @@
 /**
  * tamagawa_diagnostic.c
  *
- * Copyright (c) 2022, Texas Instruments Incorporated
+ * Copyright (c) 2022-24, Texas Instruments Incorporated
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -85,6 +85,8 @@
 #define TCA6408_REG_OUTPUT_PORT_0       (0x01U)
 #define TCA6408_REG_POL_INV_PORT_0      (0x02U)
 #define TCA6408_REG_CONFIG_PORT_0       (0x03U)
+
+#define GPIO9_BIT_FOR_INPUT  (0x200)
 #endif
 uint32_t gTaskFxnStack[TASK_STACK_SIZE/sizeof(uint32_t)] __attribute__((aligned(32)));
 TaskP_Object gTaskObject;
@@ -258,6 +260,19 @@ void tamagawa_pruicss_init(void)
     PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_PRUx);
 #if(SOC_AM243X || SOC_AM64X)
     PRUICSS_setSaMuxMode(gPruIcssXHandle, PRUICSS_SA_MUX_MODE_SD_ENDAT);
+#endif
+
+#ifdef SOC_AM261X
+    lp_bp_mux_mode_config();
+
+    /* Set bits for input pins in ICSSM_PRU0_GPIO_OUT_CTRL and ICSSM_PRU1_GPIO_OUT_CTRL registers */
+#if (PRUICSS_PRUx == 1)
+    HW_WR_REG32(CSL_MSS_CTRL_U_BASE + CSL_MSS_CTRL_ICSSM1_PRU0_GPIO_OUT_CTRL, GPIO9_BIT_FOR_INPUT);
+#else
+    HW_WR_REG32(CSL_MSS_CTRL_U_BASE + CSL_MSS_CTRL_ICSSM0_PRU0_GPIO_OUT_CTRL, GPIO9_BIT_FOR_INPUT);
+#endif
+
+    
 #endif
 }
 
@@ -616,14 +631,6 @@ void tamagawa_main(void *args)
     /* Open drivers to open the UART driver for console */
     Drivers_open();
     Board_driversOpen();
-
-#ifdef SOC_AM261X
-    lp_bp_mux_mode_config();
-
-    /* Set bits for input pins in ICSSM_PRU0_GPIO_OUT_CTRL and ICSSM_PRU1_GPIO_OUT_CTRL registers */
-    HW_WR_REG32(CSL_MSS_CTRL_U_BASE + CSL_MSS_CTRL_ICSSM1_PRU0_GPIO_OUT_CTRL, 0x200);
-    
-#endif
 
 /*C16 pin High for Enabling ch0 in booster pack */
 #if (CONFIG_TAMAGAWA0_BOOSTER_PACK && CONFIG_TAMAGAWA0_CHANNEL0)

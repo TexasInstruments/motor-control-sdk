@@ -61,6 +61,8 @@ extern "C" {
 /*16 words*/
 #define MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE2   0xA5
 
+#define ENDAT_LOAD_SHARE_EN_MASK  (0x00000800U)
+
 /* Adjust 1-bit as we transmit early */
 #define     ENDAT_TX_30BITS (30 + 1)
 /*Adjust 1-bit as we transmit early */

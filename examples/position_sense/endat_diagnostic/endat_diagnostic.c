@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2021-23 Texas Instruments Incorporated
+ *  Copyright (C) 2021-24 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -51,15 +51,20 @@
 
 #include "endat_periodic_trigger.h"
 
-#if PRU_ICSSGx_PRU_SLICE
+#if (PRU_ICSSGx_PRU_SLICE == 1)
 #define PRUICSS_PRUx PRUICSS_PRU1
+#ifndef PRUICSSM
 #define PRUICSS_TXPRUx PRUICSS_TX_PRU1
 #define PRUICSS_RTUPRUx PRUICSS_RTU_PRU1
+#endif
 #else
 #define PRUICSS_PRUx PRUICSS_PRU0
+#ifndef PRUICSSM
 #define PRUICSS_TXPRUx PRUICSS_TX_PRU0
 #define PRUICSS_RTUPRUx PRUICSS_RTU_PRU0
 #endif
+#endif
+
 #define PRUICSS_SLICEx PRU_ICSSGx_PRU_SLICE
 
 #if CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU
@@ -82,8 +87,6 @@
 #include <position_sense/endat/firmware/endat_master_bin.h>
 #endif
 
-
-
 #define WAIT_5_SECOND  (5000)
 #define TASK_STACK_SIZE (4096)
 #define TASK_PRIORITY   (6)
@@ -95,12 +98,17 @@
 #define MRS_POS_VAL2_WORD2  0x43
 #define MRS_POS_VAL2_WORD3  0x44
 
+#ifdef SOC_AM261X
+/* Translate the TCM local view addr to SoC view addr */
+#define CPU0_BTCM_SOCVIEW(x) (CSL_R5SS0_CORE0_TCMB_U_BASE+(x - CSL_MSS_TCMB_RAM_BASE))
+#define GPIO9_BIT_FOR_INPUT  (0x200)
+#else
 /* Translate the TCM local view addr to SoC view addr */
 #define CPU0_ATCM_SOCVIEW(x) (CSL_R5FSS0_CORE0_ATCM_BASE+(x))
 #define CPU1_ATCM_SOCVIEW(x) (CSL_R5FSS1_CORE0_ATCM_BASE+(x))
 #define CPU0_BTCM_SOCVIEW(x) (CSL_R5FSS0_CORE0_BTCM_BASE+(x - CSL_R5FSS0_BTCM_BASE))
 #define CPU1_BTCM_SOCVIEW(x) (CSL_R5FSS1_CORE0_BTCM_BASE+(x - CSL_R5FSS1_BTCM_BASE))
-
+#endif
 
 static union endat_format_data gEndat_format_data_mtrctrl[3];
 static uint32_t gEndat_mtrctrl_crc_err[3];
@@ -122,6 +130,11 @@ TaskP_Object gTaskObject;
                                     ((x) == 100) || ((x) == 101) || ((x)== 103) || ((x) == 105) || ((x) == 106) || ((x) == 107) || ((x) == 108) || ((x) == 109)  || ((x) == 200))
 
 #define ENDAT_INPUT_CLOCK_UART_FREQUENCY 192000000
+
+#ifdef SOC_AM261X
+/*Fix hardcoding, use API to read frequency instead of hard-coding*/
+#define  ICSSM_PRU_CORE_CLOCK 225000000
+#endif
 /* use uart clock only to start with */
 #define ENDAT_INPUT_CLOCK_FREQUENCY ENDAT_INPUT_CLOCK_UART_FREQUENCY
 
@@ -175,30 +188,39 @@ char * uint64_to_str (uint64_t x)
     return b;
 }
 
-
-static void endat_pruss_init(void)
+static void endat_pruicss_init(void)
 {
+
+#ifdef SOC_AM261X
+    /* Set bits for input pins (EnDAT RX) in ICSSM_PRU0_GPIO_OUT_CTRL and ICSSM_PRU1_GPIO_OUT_CTRL registers */
+#if (PRUICSSx == 1)
+    HW_WR_REG32(CSL_MSS_CTRL_U_BASE + CSL_MSS_CTRL_ICSSM1_PRU0_GPIO_OUT_CTRL, GPIO9_BIT_FOR_INPUT);
+#else
+    HW_WR_REG32(CSL_MSS_CTRL_U_BASE + CSL_MSS_CTRL_ICSSM0_PRU0_GPIO_OUT_CTRL, GPIO9_BIT_FOR_INPUT);
+#endif 
+#endif
+
     gPruIcssXHandle = PRUICSS_open(CONFIG_PRU_ICSS0);
      /* Configure g_mux_en to 1 in ICSSG_SA_MX_REG Register. */
+#ifndef PRUICSSM
     PRUICSS_setSaMuxMode(gPruIcssXHandle, PRUICSS_SA_MUX_MODE_SD_ENDAT);
-
+#endif
     /* Set in constant table C30 to shared RAM 0x40300000 */
     PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_PRUx, PRUICSS_CONST_TBL_ENTRY_C30, ((0x40300000 & 0x00FFFF00) >> 8));
-    if(gEndat_is_load_share_mode)
-    {
+#ifdef CONFIG_ENDAT0_LOAD_SHARE_MODE
+        
         PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C30, ((0x40300000 & 0x00FFFF00) >> 8));
         PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_RTUPRUx, PRUICSS_CONST_TBL_ENTRY_C30, ((0x40300000 & 0x00FFFF00) >> 8));
         /*Set in constant table C29 for  tx pru*/
         PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0x258);
-
-    }
+#endif
+    
      /* clear ICSS0 PRU1 data RAM */
     PRUICSS_initMemory(gPruIcssXHandle, PRUICSS_DATARAM(PRUICSS_SLICEx));
-    if(gEndat_is_load_share_mode)
-    {
+#ifdef CONFIG_ENDAT0_LOAD_SHARE_MODE
         PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_RTUPRUx);
         PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_TXPRUx);
-    }
+#endif
     PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_PRUx);
 
 
@@ -206,10 +228,10 @@ static void endat_pruss_init(void)
 
 void endat_pre_init(void)
 {
-    endat_pruss_init();
+    endat_pruicss_init();
 }
 
-uint32_t endat_pruss_load_run_fw(struct endat_priv *priv)
+uint32_t endat_pruicss_load_run_fw(struct endat_priv *priv)
 {
 
     uint32_t status = SystemP_FAILURE;
@@ -1348,8 +1370,8 @@ static void endat_process_periodic_command(int32_t cmd,
         }
 
         struct endat_periodic_interface endat_periodic_interface;
-        endat_periodic_interface.pruss_iep = priv->pruss_iep;
-        endat_periodic_interface.pruss_dmem = priv->pruss_xchg;
+        endat_periodic_interface.pruicss_iep = priv->pruss_iep;
+        endat_periodic_interface.pruicss_dmem = priv->pruss_xchg;
         endat_periodic_interface.load_share = priv->load_share;
         endat_periodic_interface.cmp3 = priv->cmp3;
         endat_periodic_interface.cmp5 = priv->cmp5;
@@ -2091,10 +2113,10 @@ void endat_main(void *args)
     int32_t i;
     struct cmd_supplement cmd_supplement;
 
-    uint64_t icssgclk;
+    uint64_t icssClk;
 
-    void *pruss_cfg;
-    void *pruss_iep;
+    void *pruicss_cfg;
+    void *pruicss_iep;
 
     /* Open drivers to open the UART driver for console */
     Drivers_open();
@@ -2162,16 +2184,16 @@ void endat_main(void *args)
     uint64_t gEndatChInfoGlobalAddr = CPU0_BTCM_SOCVIEW((uint64_t)&gEndatChInfo);
 
 
-    pruss_cfg = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->cfgRegBase);
-    pruss_iep  = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->iep0RegBase);
+    pruicss_cfg = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->cfgRegBase);
+    pruicss_iep  = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->iep0RegBase);
 
-    #if PRU_ICSSGx_PRU_SLICE
+    #if (PRU_ICSSGx_PRU_SLICE == 1)
         priv = endat_init((struct endat_pruss_xchg *)((PRUICSS_HwAttrs *)(
-                          gPruIcssXHandle->hwAttrs))->pru1DramBase, &gEndatChInfo, gEndatChInfoGlobalAddr, pruss_cfg, pruss_iep, PRUICSS_SLICEx);
+                          gPruIcssXHandle->hwAttrs))->pru1DramBase, &gEndatChInfo, gEndatChInfoGlobalAddr, pruicss_cfg, pruicss_iep, PRUICSS_SLICEx);
 
     #else
         priv = endat_init((struct endat_pruss_xchg *)((PRUICSS_HwAttrs *)(
-                          gPruIcssXHandle->hwAttrs))->pru0DramBase, &gEndatChInfo, gEndatChInfoGlobalAddr,  pruss_cfg, pruss_iep, PRUICSS_SLICEx);
+                          gPruIcssXHandle->hwAttrs))->pru0DramBase, &gEndatChInfo, gEndatChInfoGlobalAddr,  pruicss_cfg, pruicss_iep, PRUICSS_SLICEx);
     #endif
 
 
@@ -2188,30 +2210,33 @@ void endat_main(void *args)
 
     endat_config_host_trigger(priv);
     /* Read the ICSSG configured clock frequency. */
+#ifdef SOC_AM261X
+    icssClk = ICSSM_PRU_CORE_CLOCK;
+#else
     if(gPruIcssXHandle->hwAttrs->instance)
     {
-        SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG1, TISCI_DEV_PRU_ICSSG1_CORE_CLK, &icssgclk);
+        SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG1, TISCI_DEV_PRU_ICSSG1_CORE_CLK, &icssClk);
     }
     else
     {
-        SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG0, TISCI_DEV_PRU_ICSSG0_CORE_CLK, &icssgclk);
+        SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG0, TISCI_DEV_PRU_ICSSG0_CORE_CLK, &icssClk);
     }
-
+#endif
     /* Configure Delays based on the ICSSG frequency*/
-    /* Count = ((required delay * icssgclk)/1000) */
-    priv->pruss_xchg->endat_delay_125ns = ((icssgclk*125)/1000000000);
-    priv->pruss_xchg->endat_delay_51us = ((icssgclk*51)/1000000 );
-    priv->pruss_xchg->endat_delay_5us = ((icssgclk*5)/1000000);
-    priv->pruss_xchg->endat_delay_1ms = ((icssgclk/1000) * 1);
-    priv->pruss_xchg->endat_delay_2ms = ((icssgclk/1000) * 2);
-    priv->pruss_xchg->endat_delay_12ms = ((icssgclk/1000) * 12);
-    priv->pruss_xchg->endat_delay_50ms = ((icssgclk/1000) * 50);
-    priv->pruss_xchg->endat_delay_380ms = ((icssgclk/1000) * 380);
-    priv->pruss_xchg->endat_delay_900ms = ((icssgclk/1000) * 900);
-    priv->pruss_xchg->icssg_clk = icssgclk;
+    /* Count = ((required delay * icssClk)/1000) */
+    priv->pruss_xchg->endat_delay_125ns = ((icssClk*125)/1000000000);
+    priv->pruss_xchg->endat_delay_51us = ((icssClk*51)/1000000 );
+    priv->pruss_xchg->endat_delay_5us = ((icssClk*5)/1000000);
+    priv->pruss_xchg->endat_delay_1ms = ((icssClk/1000) * 1);
+    priv->pruss_xchg->endat_delay_2ms = ((icssClk/1000) * 2);
+    priv->pruss_xchg->endat_delay_12ms = ((icssClk/1000) * 12);
+    priv->pruss_xchg->endat_delay_50ms = ((icssClk/1000) * 50);
+    priv->pruss_xchg->endat_delay_380ms = ((icssClk/1000) * 380);
+    priv->pruss_xchg->endat_delay_900ms = ((icssClk/1000) * 900);
+    priv->pruss_xchg->icssg_clk = icssClk;
     
 
-    i = endat_pruss_load_run_fw(priv);
+    i = endat_pruicss_load_run_fw(priv);
 
     if(i < 0)
     {
@@ -2256,8 +2281,8 @@ void endat_main(void *args)
                     DebugP_log("\rexit %s due to failed initialization\n", __func__);
                     return;
                 }
-                /*convert cnt to time in ns ((cnt*1000000000)/icssgclk) before use*/
-                gEndat_prop_delay[priv->channel] = endat_get_prop_delay(priv)*((float)(1000000000)/icssgclk);
+                /*convert cnt to time in ns ((cnt*1000000000)/icssClk) before use*/
+                gEndat_prop_delay[priv->channel] = endat_get_prop_delay(priv)*((float)(1000000000)/icssClk);
                 DebugP_log("\n\t\t\t\tCHANNEL %d\n\n", j);
                 endat_print_encoder_info(priv);
             }
@@ -2277,8 +2302,8 @@ void endat_main(void *args)
             DebugP_log("\rexit %s due to failed initialization\n", __func__);
             return;
         }
-        /*convert cnt to time in ns ((cnt*1000000000)/icssgclk) before use*/
-        gEndat_prop_delay[priv->channel] = endat_get_prop_delay(priv)*((float)(1000000000)/icssgclk);
+        /*convert cnt to time in ns ((cnt*1000000000)/icssClk) before use*/
+        gEndat_prop_delay[priv->channel] = endat_get_prop_delay(priv)*((float)(1000000000)/icssClk);
 
         endat_print_encoder_info(priv);
     }

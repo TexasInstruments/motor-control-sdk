@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectSpec>
+    <applicability>
+        <when>
+            <context
+                deviceFamily="PRU"
+                deviceId="AM261x_LP"
+            />
+        </when>
+    </applicability>
+
+    <project
+        title="Endat Peripheral Interface Single Ch"
+        name = "endat_peripheral_interface_single_ch_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt"
+        products="com.ti.MOTOR_CONTROL_SDK_AMXXX"
+        configurations="
+            Release,
+            Debug,
+        "
+        connection="TIXDS110_Connection.xml"
+        toolChain="TI"
+        cgtVersion="2.3.3"
+        device="AM261x_LP"
+        deviceCore="ICSSM1_PRU_0"
+        ignoreDefaultDeviceSettings="true"
+        ignoreDefaultCCSSettings="true"
+        endianness="little"
+        outputFormat="ELF"
+        outputType="executable"
+
+        compilerBuildOptions="
+            -I${CG_TOOL_ROOT}/include
+            -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source
+            -I${MOTOR_CONTROL_SDK_PATH}/source
+            -I${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware
+            -DPRU0
+            -DSLICE0
+            -v4
+            -v4
+            -DSOC_AM261X
+        "
+        linkerBuildOptions="
+            -m=endat_peripheral_interface_single_ch.${ConfigName}.map
+            --disable_auto_rts
+            --diag_suppress=10063-D
+            --entry_point=ENDAT_INIT
+            --disable_auto_rts
+        "
+
+        postBuildStep="
+            $(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmware -o endat_master_bin.h endat_peripheral_interface_single_ch_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt.out;if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_master_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/endat_master_bin.h;if ${CCS_HOST_OS} == linux rm endat_master_bin.h;if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_master_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/endat_master_bin.h;if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm endat_master_bin.h;
+        "
+
+        description="A Endat Peripheral Interface Single Ch FW project">
+
+        <configuration name="Release"
+            compilerBuildOptions="
+                -O3
+            "
+            linkerBuildOptions="
+            "
+        ></configuration>
+        <configuration name="Debug"
+            compilerBuildOptions="
+                -D_DEBUG_=1
+            "
+            linkerBuildOptions="
+            "
+        ></configuration>
+        <pathVariable name="MOTOR_CONTROL_SDK_PATH" path="${COM_TI_MOTOR_CONTROL_SDK_AMXXX_INSTALL_DIR}" scope="project" />
+        <file path="../../../../endat_main.asm" openOnCreation="false" excludeFromBuild="false" action="copy">
+        </file>
+        <file path="../../../../endat_diagnostic.cmd" openOnCreation="false" excludeFromBuild="false" action="copy">
+        </file>
+        <file path="${MOTOR_CONTROL_SDK_PATH}/docs/api_guide_am261x/ENDAT_DESIGN.html"
+                openOnCreation="false" excludeFromBuild="false" targetName="README.html" action="link">
+        </file>
+    </project>
+</projectSpec>
