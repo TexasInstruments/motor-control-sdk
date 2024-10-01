@@ -28,6 +28,7 @@ Application for following position sense encoder is provided in the SDK.
 
 Application for following position sense encoder is provided in the SDK.
 
+- \subpage ENDAT
 - \subpage TAMAGAWA
 
 \endcond

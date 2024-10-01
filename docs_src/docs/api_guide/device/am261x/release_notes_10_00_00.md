@@ -15,7 +15,8 @@
 
 Feature                                                                                         | Module
 ------------------------------------------------------------------------------------------------|-----------------------------------
-Tamagawa over PRU 3-channel interface                                                                  | Position Sense
+Tamagawa over PRU 3-channel interface                                                           | Position Sense
+EnDat 2.2                                                                                       | Position Sense
 
 
 ## Device and Validation Information
@@ -26,23 +27,45 @@ AM261x| R5F             | AM261x LaunchPad Revision E1  (referred to as am261x-l
 
 ## Tools, Compiler and Other Open Source SW Module Information
 
-Tools / SW module       | Supported CPUs | Version
+Tools                   | Supported CPUs | Version
 ------------------------|----------------|-----------------------
-Code Composer Studio    | R5F            | 12.7.0
-SysConfig               | R5F            | 1.21.999
-TI ARM CLANG            | R5F            | 3.2.2.LTS
+Code Composer Studio    | R5F            | 12.8.0
+SysConfig               | R5F            | 1.21.0 build, build 3721
+TI ARM CLANG            | R5F            | 4.0.0.LTS
 FreeRTOS Kernel         | R5F            | 10.4.3
 LwIP                    | R5F            | STABLE-2_2_0_RELEASE
-Mbed-TLS                | R5F            | mbedtls-2.13.1
+Mbed-TLS                | R5F            | mbedtls-3.0.0
 
 ## Key Features
 
 ### Position Sense
 
-Module       | Supported CPUs | SysConfig Support | OS Support        | Key features tested                                                                                                                                            | Key features not tested
--------------|----------------|-------------------|-------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------
-Tamagawa over PRU 3-channel interface    | R5F            | YES               | FreeRTOS          | Absolute position, Encoder ID, Reset, EEPROM Read, EEPROM Write, 2.5 Mbps and 5 Mbps Encoder Support                                                           | -
-
+<table>
+<tr>
+    <th> Module
+    <th> Supported CPUs
+    <th> SysConfig Support
+    <th> OS Support
+    <th> Key features tested
+    <th> Key features not tested
+</tr>
+<tr>
+    <td> EnDat
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Single channel, Continuous mode, Recovery Time for 2.2 command set, Boosterpack with AM261x-LP
+    <td> Encoder receive communication command
+</tr>
+<tr>
+    <td> Tamagawa
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Absolute position, Encoder ID, Reset, EEPROM Read, EEPROM Write, 2.5 Mbps and 5 Mbps Encoder Support, Boosterpack with AM261x-LP
+    <td> -
+</tr>
+</table>
 
 ## Fixed Issues
 
@@ -146,9 +169,9 @@ Tamagawa over PRU 3-channel interface    | R5F            | YES               | 
 
 </table>
 
-## Upgrade and Compatibility Information for Motor Control SDK 10.00.00 {#UPGRADE_AND_COMPATIBILITY_INFORMATION_10_0_0}
+<!-- ## Upgrade and Compatibility Information for Motor Control SDK 10.00.00 {#UPGRADE_AND_COMPATIBILITY_INFORMATION_10_0_0}
 
-\attention When migrating from MCU+ SDK, see \ref MIGRATION_GUIDES for more details.
+\attention When migrating from MCU+ SDK, see \ref MIGRATION_GUIDES for more details. -->
 
 <!-- This section lists changes which could affect user applications developed using older SDK versions.
 Read this carefully to see if you need to do any changes in your existing application when migrating to this SDK version relative to

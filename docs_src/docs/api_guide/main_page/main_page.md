@@ -19,6 +19,12 @@ Welcome to **@VAR_SDK_NAME for @VAR_SOC_NAME**. This SDK contains examples, libr
 
 \endcond
 
+\cond SOC_AM261X
+
+Welcome to **@VAR_SDK_NAME for @VAR_SOC_NAME**. This SDK contains examples, libraries and tools to develop **RTOS and no-RTOS** based applications enabling real-time communication for position sense from motors for **ARM R5F CPU** and related peripherals.
+
+\endcond
+
 \attention This SDK also includes <a href="@VAR_IC_SDK_DOCS_PATH/index.html" target="_blank">@VAR_SOC_NAME Industrial Communications SDK</a> and <a href="@VAR_MCU_SDK_DOCS_PATH/index.html" target="_blank">@VAR_SOC_NAME MCU+ SDK</a>.
 
 ## Getting Started
@@ -27,7 +33,6 @@ To get started, see <a href="@VAR_MCU_SDK_DOCS_PATH/GETTING_STARTED.html" target
 
 \note To build examples from Industrial Communications SDK and MCU+ SDK using CCS projects, user has to add <b>${SDK_INSTALL_PATH}/ind_comms_sdk</b> path and <b>${SDK_INSTALL_PATH}/mcu_plus_sdk</b> path to "Product discovery path" respectively in CCS (from Window->Preferences->Code Composer Studio->Products)
 
-\cond !SOC_AM261X
 ## Block Diagram
 
 Given below is a block diagram of the SW modules in this SDK
@@ -207,9 +212,36 @@ The main software components in the block diagram specific to motor control are 
 
 \endcond
 
-For details on software components of Industrial Communications SDK and MCU+ SDK, please refer to <a href="@VAR_IC_SDK_DOCS_PATH/index.html" target="_blank">@VAR_SOC_NAME Industrial Communications SDK</a> and <a href="@VAR_MCU_SDK_DOCS_PATH/index.html" target="_blank">@VAR_SOC_NAME MCU+ SDK</a> respectively.
+\cond SOC_AM261X
+<table>
+<tr>
+    <th>Software Components
+    <th>Documentation Page
+    <th>Description
+</tr>
+<tr><td colspan="3" bgcolor=#F0F0F0>**Position Sense Encoders**</td></tr>
+<tr>
+    <td> EnDat
+    <td>\ref ENDAT
+    <td> Driver and PRU-ICSS firmware for EnDat encoder interface
+</tr>
+<tr>
+    <td> Tamagawa
+    <td>\ref TAMAGAWA
+    <td> Driver and PRU-ICSS firmware for Tamagawa encoder interface
+</tr>
+<tr><td colspan="3" bgcolor=#F0F0F0>**Examples and Demos**</td></tr>
+<tr>
+    <td>Examples and Demos
+    <td>\ref EXAMPLES
+    <td>Examples and demos showing usage of different SW libraries and APIs for motor control
+</tr>
+</table>
 
 \endcond
+
+For details on software components of Industrial Communications SDK and MCU+ SDK, please refer to <a href="@VAR_IC_SDK_DOCS_PATH/index.html" target="_blank">@VAR_SOC_NAME Industrial Communications SDK</a> and <a href="@VAR_MCU_SDK_DOCS_PATH/index.html" target="_blank">@VAR_SOC_NAME MCU+ SDK</a> respectively.
+
 ## Directory Structure
 
 Given below is a overview of the directory structure to help you navigate the SDK and related tools.
