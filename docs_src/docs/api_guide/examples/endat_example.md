@@ -8,8 +8,6 @@ demonstrates the EnDat receiver operation.
 The EnDat driver provides a well defined set of APIs to expose EnDat
 receiver interface.
 
-
-
 The diagnostic invokes these APIs to
 - initialize EnDat,
 - select one configuration among concurrent multi channel with Encoders of Same make, multi channel with Encoders of Different Make and single channel configuration based on SysConfig.
@@ -108,11 +106,27 @@ Following section describes the Example implementation of EnDat on ARM(R5F).
 
 \endcond
 
+\cond SOC_AM261X
+
+ Parameter      | Value
+ ---------------|-----------
+ CPU + OS       | r5fss0-0 freertos
+ ICSSM          | ICSSM1
+ PRU            | PRU0
+ Toolchain      | ti-arm-clang
+ Board          |  @VAR_LP_BOARD_NAME_LOWER (Single channel example)
+ Example folder | examples/position_sense/endat_diagnostic
+
+\endcond
+
 # Steps to Run the Example
 
-## Hardware Prerequisites
-
 Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_SETUP_PAGE.html" target="_blank"> EVM Setup </a>, below additional hardware is required to run this demo
+
+
+\cond SOC_AM243X
+
+## Hardware Prerequisites with TMDS243EVM
 - EnDAT Encoder(s)
 - <a href="http://www.ti.com/tool/TIDA-00179" target="_blank"> TIDA-00179 Universal Digital Interface to Absolute Position Encoders </a>
 - <a href="../TIDEP-01015Rev E1.1(001)_Sch.pdf" target="_blank"> TIDEP-01015 3 Axis Board </a>
@@ -120,23 +134,33 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 
 \note For more design details of the TIDEP-01015 3 Axis Board, or Interface card connecting EVM and TIDEP-01015 3 Axis, please contact TI via E2E/FAE.
 
-\cond SOC_AM243X
-### Hardware Prerequisities for Booster Pack
+## Hardware Prerequisities with LP-AM243
 
 - EnDAT Encoder(s)
 - <a href="https://www.ti.com/tool/LP-AM243" target="_blank"> AM243x-LP Board </a> 
 - <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
 \endcond
 
-## Hardware Setup
+\cond SOC_AM261X
 
-\imageStyle{EnDAT_Connections.png,width:40%}
-\image html EnDAT_Connections.png "Hardware Setup"
+## Hardware Prerequisities with LP-AM261
+
+- EnDAT Encoder(s)
+-  AM261x-LP Board
+- <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
+\endcond
+
 
 \cond SOC_AM243X
-## Hardware Setup(Using Booster Pack & AM243x-LP)
+
+## Hardware Setup with TMDS243EVM
+\imageStyle{EnDAT_Connections.png,width:40%}
+\image html EnDAT_Connections.png "Hardware Setup with TMDS243EVM"
+
+## Hardware Setup with LP-AM243
 \imageStyle{EnDat_Booster_Pack.png,width:40%}
-\image html EnDat_Booster_Pack.png  "Hardware Setup of Booster Pack + LP for EnDat"
+\image html EnDat_Booster_Pack.png  "Hardware Setup with LP-AM243"
+
 
 #### Booster Pack Jumper Configuration
 <table>
@@ -207,6 +231,85 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 </tr>
 </table>
 \endcond
+
+\cond SOC_AM261X
+
+
+## Hardware Setup with LP-AM261
+<!-- \imageStyle{EnDat_Booster_Pack.png,width:40%} -->
+<!-- \image html EnDat_Booster_Pack.png  "Hardware Setup with LP-AM261" -->
+
+
+#### Booster Pack Jumper Configuration
+<table>
+<tr>
+    <th>Designator</th>
+    <th>ON/OFF</th>
+    <th>Description</th>
+</tr>
+<tr>
+    <td>J11</td>
+    <td>OFF</td>
+    <td>VSENSE/ISENSE select</td>
+</tr>
+<tr>
+    <td>J13</td>
+    <td>OFF</td>
+    <td>VSENSE/ISENSE select</td>
+</tr>
+<tr>
+    <td>J17</td>
+    <td>Pin 1-2 Connected</td>
+    <td>%SDFM Clock Feedback Select</td>
+</tr>
+<tr>
+    <td>J18/J19</td>
+    <td>J19 installed: sets VSENSOR1 to 5.0V</td>
+    <td>Axis 1: Encoder/Resolver Voltage Select</td>
+</tr>
+<tr>
+    <td>J20/J21</td>
+    <td>J21 installed: sets VSENSOR2 to 5.0V</td>
+    <td>Axis 2: Encoder/Resolver Voltage Select</td>
+</tr>
+<tr>
+    <td>J22</td>
+    <td>OFF</td>
+    <td>Axis 1: Manchester Encoding Select</td>
+</tr>
+<tr>
+    <td>J23</td>
+    <td>OFF</td>
+    <td>Axis 2: Manchester Encoding Select</td>
+</tr>
+<tr>
+    <td>J24</td>
+    <td>OFF</td>
+    <td>Axis 1: RS485/DSL MUX</td>
+</tr>
+<tr>
+    <td>J25</td>
+    <td>OFF</td>
+    <td>Axis 2: RS485/DSL MUX</td>
+</tr>
+<tr>
+    <td>J26</td>
+    <td>OFF</td>
+    <td>VSENSE/ISENSE Select</td>
+</tr>
+<tr>
+    <td>J27</td>
+    <td>ON</td>
+    <td>3WIRE/%SDFM MUX</td>
+</tr>
+<tr>
+    <td>J28</td>
+    <td>OFF</td>
+    <td>3WIRE MUX</td>
+</tr>
+</table>
+\endcond
+
 ## Build, load and run
 
 - **When using CCS projects to build**, import the CCS project and build it using the CCS project menu (see <a href="@VAR_MCU_SDK_DOCS_PATH/CCS_PROJECTS_PAGE.html" target="_blank"> Using SDK with CCS Projects </a>).
