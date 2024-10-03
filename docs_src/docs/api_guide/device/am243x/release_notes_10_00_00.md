@@ -84,6 +84,14 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <th> Key features tested
     <th> Key features not tested
 </tr>
+<tr>
+    <td> HDSL
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Single channel, Multi channel using three PRU cores (load share mode), Free Run mode, Sync mode, Short Message Read and Write, Long Message Read and Write, Pipeline Channel Data, Long cable (upto 100 meters) with single channel Free Run mode, Boosterpack with AM243x-LP, 225/300 MHz PRU firmware
+    <td> Multi-channel with long cables(100m length), Long cable (upto 100 meters) with sync mode
+</tr>
 </table>
 
 ### Real Time Libraries
@@ -116,6 +124,13 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> 9.1 onwards
     <td> -
 </tr>
+<tr>
+    <td> PINDSW-5537
+    <td> HDSL not working with 225 MHz PRU-ICSSG Core Clock Frequency
+    <td> Position Sense HDSL
+    <td> 9.0 onwards
+    <td> -
+</tr>
 </table>
 
 ## Known Issues
@@ -126,13 +141,6 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <th> Module
     <th> Applicable Releases
     <th> Workaround
-</tr>
-<tr>
-    <td> PINDSW-5537
-    <td> HDSL not working with 225 MHz PRU-ICSSG Core Clock Frequency
-    <td> Position Sense HDSL
-    <td> 9.0 onwards
-    <td> Use 300 MHz frequency for PRU-ICSSG Core Clock
 </tr>
 <tr>
     <td> PINDSW-5690

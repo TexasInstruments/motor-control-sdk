@@ -564,18 +564,24 @@ push_3b_0:
     .else
     PUSH_FIFO_CONST		0x03
 	TX_CHANNEL
+; we are in oversample mode (3 PRU clocks per bit)
+; extra NOPs should make it shorter
+	NOP_n 2
+	NOP_n 2
     .endif
-; test: we are in oversample mode (3 PRU clocks per bit)
+; we are in oversample mode (4 PRU clocks per bit)
 ; extra NOPs should make it shorter
     .if $defined("HDSL_MULTICHANNEL")
 	NOP_n 8
     .endif
     .if !$defined("HDSL_MULTICHANNEL")
     TX_CLK_DIV		CLKDIV_SLOW, REG_TMP2
+;2 dummy cycles
+	NOP_n 2
     .endif
 ;reset DISPARITY
 	ldi			DISPARITY, 0
-	;2 dummy cycles
+;1 dummy cycles
 	nop
     .if !$defined("HDSL_MULTICHANNEL")
     TX_CLK_DIV		CLKDIV_NORMAL, REG_TMP2
@@ -638,13 +644,15 @@ datalink_learn_delay:
 
 	CALL1		check_test_pattern
 	qbeq		datalink_abort2, LOOP_CNT.b3, 14
+	.if $defined("HDSL_MULTICHANNEL")
 	.if !$defined(EXT_SYNC_ENABLE)
 	;	PUSH 6 bit stuffing in FIFO
 	ldi FIFO_L,0x2c
-	loop aaa3,3
+	loop push_2_bit,3
 	CALL3 PUSH_FIFO_2B_8x
-aaa3:
-	.endif
+push_2_bit:
+	.endif;;EXT_SYNC_ENABLE
+	.endif ;;HDSL_MULTICHANNEL
 	qbne		datalink_learn_delay, REG_FNC.b0, 1
 datalink_learn_end_test:
 ; SLAVE_DELAY has no switch bit

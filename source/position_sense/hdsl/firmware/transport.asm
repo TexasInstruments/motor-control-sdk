@@ -1137,12 +1137,15 @@ transport_on_v_frame_check_pos:
 	sbco		&REG_TMP2.b0, MASTER_REGS_CONST, ONLINE_STATUS_1_H_TEMP, 1
 
 transport_on_v_frame_realign:
+	.if $defined("HDSL_MULTICHANNEL")
 	CALL2 WAIT_TX_FIFO_FREE
 	PUSH_FIFO_CONST  0xff
 	PUSH_FIFO_CONST  0xff
+	.endif
 	CALL1 re_align_algo
+	.if $defined("HDSL_MULTICHANNEL")
 	PUSH_FIFO_CONST  0xff
-
+	.endif
 transport_on_v_frame_no_pos_mismatch:
 ; Store the required data for secondary channel in temporary memory.
 ; It will be processed in transport_on_v_frame_2
@@ -1156,11 +1159,15 @@ transport_on_v_frame_no_pos_mismatch:
 transport_on_v_frame_exit:
 ;we are in RX0
 ;reset rel. pos
+	.if $defined("HDSL_MULTICHANNEL")
 	CALL2 WAIT_TX_FIFO_FREE
 	PUSH_FIFO_CONST  0xff
 	PUSH_FIFO_CONST  0xff
+	.endif
 	CALL1 re_align_algo
+	.if $defined("HDSL_MULTICHANNEL")
 	PUSH_FIFO_CONST  0xff
+	.endif
 Wait_and_Push_2_byte:
 no_first_push_for_exit:
     .if $defined("HDSL_MULTICHANNEL")
