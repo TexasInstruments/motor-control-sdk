@@ -8,6 +8,12 @@ demonstrates the EnDat receiver operation.
 The EnDat driver provides a well defined set of APIs to expose EnDat
 receiver interface.
 
+\cond SOC_AM261X
+\note ICSSM1 UART clock set to 160 MHz is used to drive the EnDat interface. Receive (Rx) is oversampled at 8x of send(Tx). Therefore, the encoder interface frequency "f" should such that 160 Mhz is divisible by "f" and "8 times f".
+
+\note ICSSM1 PRU Core clock is set to 225 MHz.
+\endcond
+
 The diagnostic invokes these APIs to
 - initialize EnDat,
 - select one configuration among concurrent multi channel with Encoders of Same make, multi channel with Encoders of Different Make and single channel configuration based on SysConfig.
@@ -137,7 +143,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 ## Hardware Prerequisities with LP-AM243
 
 - EnDAT Encoder(s)
-- <a href="https://www.ti.com/tool/LP-AM243" target="_blank"> AM243x-LP Board </a> 
+- <a href="https://www.ti.com/tool/LP-AM243" target="_blank"> AM243x-LP Board </a>
 - <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
 \endcond
 
@@ -239,6 +245,10 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 <!-- \imageStyle{EnDat_Booster_Pack.png,width:40%} -->
 <!-- \image html EnDat_Booster_Pack.png  "Hardware Setup with LP-AM261" -->
 
+
+#### LaunchPad Jumper Configuration
+
+Connect the jumpers J13 and J26 for providing 3.3V and 5V to boosterpack.
 
 #### Booster Pack Jumper Configuration
 <table>
@@ -593,7 +603,7 @@ Shown below is a sample output when the application is run:
     </tr>
     <tr>
         <td rowspan="5" style="text-align: center">14.</td>
-        <td rowspan="5" style="text-align: center">To acknowledge MRS code for Endat 2.2 
+        <td rowspan="5" style="text-align: center">To acknowledge MRS code for Endat 2.2
         <td>1. Enter 9 to select "Encoder send position values + Additional Information(s) and Selection of memory area"</td>
         <td> </td>
     </tr>

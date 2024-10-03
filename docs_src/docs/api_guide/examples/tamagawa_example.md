@@ -1,11 +1,13 @@
 # Tamagawa Diagnostic {#EXAMPLE_MOTORCONTROL_TAMAGAWA}
 [TOC]
 \note
-\if (SOC_AM263X || SOC_AM261X)
-Starting with MC + SDK version 10.00.00, the Tamagawa firmware and examples are based on EnDAT hardware interface from PRU-ICSSM.
-\else
+\if (SOC_AM243X || SOC_AM64X)
 Starting with MCU+ SDK version 08.05.00, the Tamagawa firmware and examples are based on EnDAT hardware interface from PRU-ICSSG.
 \endif
+
+\cond SOC_AM261X
+\note ICSSM1 PRU Core clock is set to 225 MHz.
+\endcond
 
 ## Introduction
 
@@ -14,8 +16,8 @@ Tamagawa diagnostic application does below,
 - Configures pinmux, GPIO, UART, ICSS clock to 200MHz
 - Initializes ICSS0-PRU1
 \endcond
-\cond (SOC_AM263X || SOC_AM261X) 
-- Configures pinmux, GPIO, UART, ICSSM 
+\cond (SOC_AM263X || SOC_AM261X)
+- Configures pinmux, GPIO, UART, ICSSM
 - Initializes ICSSM-PRU0
 \endcond
 - Loads the initialization section of PRU firmware & executes it
@@ -141,7 +143,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 - <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
 \endcond
 
-\cond SOC_AM243X 
+\cond SOC_AM243X
 
 ## Hardware Setup with TMDS243EVM
 \imageStyle{Tamagawa_setup.jpg,width:60%}
@@ -225,7 +227,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 
 \endcond
 
-\cond SOC_AM263X 
+\cond SOC_AM263X
 ## Hardware Setup with LP-AM263
 \imageStyle{Tamagawa_am263x_hw_Setup.jpeg,width:60%}
 \image html Tamagawa_am263x_hw_Setup.jpeg "Hardware Setup for single channel on LP-AM263 + BP"
@@ -298,14 +300,18 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 </tr>
 </table>
 
-\endcond 
+\endcond
 
-\cond SOC_AM261X 
+\cond SOC_AM261X
 
 ## Hardware Setup with LP-AM261
 
 \imageStyle{Tamagawa_am261x_hw_Setup.jpeg,width:60%}
 \image html Tamagawa_am261x_hw_Setup.jpeg "Hardware Setup with LP-AM261"
+
+#### LaunchPad Jumper Configuration
+
+Connect the jumpers J13 and J26 for providing 3.3V and 5V to boosterpack.
 
 #### Booster Pack Jumper Configuration
 <table>

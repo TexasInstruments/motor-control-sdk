@@ -247,11 +247,33 @@ void tamagawa_set_baudrate(struct tamagawa_priv *priv, double baudrate)
     uint16_t rx_div;
     uint16_t tx_div;
     uint16_t oversample_rate;
+    struct tamagawa_clk_cfg clk_cfg;
+    if(priv->rx_clock_source == 1)
+    {
+        rx_div = priv->pru_clock/(TAMAGAWA_RX_OVERSAMPLING_RATE*(baudrate));
+    }
+    else
+    {
+        rx_div = priv->pru_uart_clock/(TAMAGAWA_RX_OVERSAMPLING_RATE*(baudrate));
+    }
 
-    tx_div = priv->pru_clock/baudrate;
-    rx_div = tx_div/TAMAGAWA_RX_OVERSAMPLING_RATE;
+    if(priv->rx_clock_source == 1)
+    {
+        tx_div = priv->pru_clock/baudrate;
+    }
+    else
+    {
+        tx_div = priv->pru_uart_clock/baudrate;
+    }
     oversample_rate = TAMAGAWA_RX_OVERSAMPLING_RATE;
-   
+
+    clk_cfg.rx_clk_source = priv->rx_clock_source;
+    clk_cfg.tx_clk_source = priv->tx_clock_source;
+    clk_cfg.tx_div = tx_div - 1;
+    clk_cfg.rx_div = rx_div - 1;
+    clk_cfg.rx_os_rate = oversample_rate - 1;
+
+    tamagawa_config_clock(priv, &clk_cfg);
     /*write in DMEM*/
     priv->tamagawa_xchg->tamagawa_interface.rx_div_factor = rx_div - 1;
     priv->tamagawa_xchg->tamagawa_interface.tx_div_factor = tx_div - 1;
@@ -487,9 +509,9 @@ void tamagawa_config_clock(struct tamagawa_priv *priv, struct tamagawa_clk_cfg *
     /* Configures the tamagawa clock */
     void *pruss_cfg = priv->pruss_cfg;
     /* Configure the PRUx Rx CFG register by writing the Rx Divide Factor and Oversampling rate */
-    HW_WR_REG32((uint32_t)(pruss_cfg) + tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_RXCFG, (uint32_t)(clk_cfg->rx_div << 16 | 0x8 | clk_cfg->rx_div_attr));
+    HW_WR_REG32((uint32_t)(pruss_cfg) + tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_RXCFG, (uint32_t)(clk_cfg->rx_div << 16 | clk_cfg->rx_clk_source << 4 | clk_cfg->rx_os_rate));
     /* Configure the PRUx Tx CFG register by writing the Tx Divide Factor  */
-    HW_WR_REG16((uint32_t)(pruss_cfg) + tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_TXCFG + 2, (uint16_t)(clk_cfg->tx_div));
+    HW_WR_REG32((uint32_t)(pruss_cfg) + tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_TXCFG , (uint32_t)(clk_cfg->tx_div << 16 | clk_cfg->tx_clk_source << 4));
 }
 
 void tamagawa_config_host_trigger(struct tamagawa_priv *priv)

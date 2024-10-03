@@ -33,6 +33,10 @@
         % {
             % sliceVal = 0;
         % }
+         % if(instance.instance === "ICSSM1")
+        % {
+            %  icssValue = 1;
+        % }
 
     % }
 

@@ -132,11 +132,13 @@ TaskP_Object gTaskObject;
                                     ((x) == 9) || ((x) == 10) || ((x) == 11) || ((x) == 13) || ((x) == 14) || \
                                     ((x) == 100) || ((x) == 101) || ((x)== 103) || ((x) == 105) || ((x) == 106) || ((x) == 107) || ((x) == 108) || ((x) == 109)  || ((x) == 200))
 
-#define ENDAT_INPUT_CLOCK_UART_FREQUENCY 192000000
 
 #ifdef SOC_AM261X
 /*Fix hardcoding, use API to read frequency instead of hard-coding*/
-#define  ICSSM_PRU_CORE_CLOCK 225000000
+#define ICSSM_PRU_CORE_CLOCK 225000000
+#define ENDAT_INPUT_CLOCK_UART_FREQUENCY 160000000
+#else
+#define ENDAT_INPUT_CLOCK_UART_FREQUENCY 192000000
 #endif
 /* use uart clock only to start with */
 #define ENDAT_INPUT_CLOCK_FREQUENCY ENDAT_INPUT_CLOCK_UART_FREQUENCY
@@ -144,7 +146,7 @@ TaskP_Object gTaskObject;
 #define ENDAT_POSITION_LOOP_STOP    0
 #define ENDAT_POSITION_LOOP_START   1
 
-   
+
 union position
 {
     float angle;
@@ -200,7 +202,7 @@ static void endat_pruicss_init(void)
     HW_WR_REG32(CSL_MSS_CTRL_U_BASE + CSL_MSS_CTRL_ICSSM1_PRU0_GPIO_OUT_CTRL, GPIO9_BIT_FOR_INPUT);
 #else
     HW_WR_REG32(CSL_MSS_CTRL_U_BASE + CSL_MSS_CTRL_ICSSM0_PRU0_GPIO_OUT_CTRL, GPIO9_BIT_FOR_INPUT);
-#endif 
+#endif
 #endif
 
     gPruIcssXHandle = PRUICSS_open(CONFIG_PRU_ICSS0);
@@ -211,13 +213,13 @@ static void endat_pruicss_init(void)
     /* Set in constant table C30 to shared RAM 0x40300000 */
     PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_PRUx, PRUICSS_CONST_TBL_ENTRY_C30, ((0x40300000 & 0x00FFFF00) >> 8));
 #ifdef CONFIG_ENDAT0_LOAD_SHARE_MODE
-        
+
         PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C30, ((0x40300000 & 0x00FFFF00) >> 8));
         PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_RTUPRUx, PRUICSS_CONST_TBL_ENTRY_C30, ((0x40300000 & 0x00FFFF00) >> 8));
         /*Set in constant table C29 for  tx pru*/
         PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0x258);
 #endif
-    
+
      /* clear ICSS0 PRU1 data RAM */
     PRUICSS_initMemory(gPruIcssXHandle, PRUICSS_DATARAM(PRUICSS_SLICEx));
 #ifdef CONFIG_ENDAT0_LOAD_SHARE_MODE
@@ -892,18 +894,18 @@ static int32_t endat_get_command_supplement(int32_t cmd,
 
             break;
         case 200:
-        
-           
+
+
             DebugP_log("\r| Enter IEP reset cycle count (must be greater than EnDat cycle time including timeout period, in IEP cycles): ");
             if(DebugP_scanf("%u\n", &cmd_supplement->cmp0))
             {
                 DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
                 return -EINVAL;
             }
-           
+
             if(gEndat_is_load_share_mode)
             {
-   
+
                 if(gEndat_multi_ch_mask & (1<<0))
                 {
                     DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) Channel0: \n");
@@ -932,7 +934,7 @@ static int32_t endat_get_command_supplement(int32_t cmd,
                         return -EINVAL;
                     }
                 }
-                
+
             }
             else
             {
@@ -1362,7 +1364,7 @@ static void endat_process_periodic_command(int32_t cmd,
         }
         else
         {
-            priv->cmp3 = cmd_supplement->cmp3; 
+            priv->cmp3 = cmd_supplement->cmp3;
         }
 
         if(endat_loop_task_create() != SystemP_SUCCESS)
@@ -1380,11 +1382,11 @@ static void endat_process_periodic_command(int32_t cmd,
         endat_periodic_interface.cmp5 = priv->cmp5;
         endat_periodic_interface.cmp6 = priv->cmp6;
         endat_periodic_interface.cmp0 = priv->cmp0;
-        
+
         status = endat_config_periodic_mode(&endat_periodic_interface, gPruIcssXHandle);
         DebugP_assert(0 != status);
         endat_position_loop_status = ENDAT_POSITION_LOOP_START;
-    
+
         if(priv->multi_turn_res)
         {
             DebugP_log("\r|\n\r| press enter to stop the continuous mode\r\n|\r\n|         position,       revolution, f1\r\n| ");
@@ -1393,7 +1395,7 @@ static void endat_process_periodic_command(int32_t cmd,
         {
             DebugP_log("\r|\n\r| press enter to stop the continuous mode\r\n|\r\n|         position, f1\r\n| ");
         }
-    
+
         while(1)
             if(endat_position_loop_status == ENDAT_POSITION_LOOP_STOP)
             {
@@ -1425,7 +1427,7 @@ static void endat_process_periodic_command(int32_t cmd,
                     }
                 }
                 else
-                {        
+                {
                     endat_recvd_process(priv, 1, &gEndat_format_data_mtrctrl[0]);
 
                     i = endat_get_position_loop_chars(priv, 1, 0);
@@ -1439,8 +1441,8 @@ static void endat_process_periodic_command(int32_t cmd,
                     DebugP_log("%c", 8);
                 }
             }
-    
-    
+
+
     }
 }
 static void endat_process_host_command(int32_t cmd,
@@ -1706,7 +1708,7 @@ static void endat_process_host_command(int32_t cmd,
                     }
                 }
                 else
-                {        
+                {
                     endat_recvd_process(priv, 1, &gEndat_format_data_mtrctrl[0]);
 
                     i = endat_get_position_loop_chars(priv, 1, 0);
@@ -1994,7 +1996,7 @@ static void endat_process_host_command(int32_t cmd,
 
     }
     else if(cmd == 111)
-    {   
+    {
         DebugP_log("\r|press enter to stop the long time continuous mode\n|");
         if(endat_loop_task_create() != SystemP_SUCCESS)
         {
@@ -2036,7 +2038,7 @@ static void endat_process_host_command(int32_t cmd,
                     DebugP_log(" ");
                     DebugP_log("\r");
                 }
-                
+
                 return;
             }
             else
@@ -2214,7 +2216,32 @@ void endat_main(void *args)
     endat_config_host_trigger(priv);
     /* Read the ICSSG configured clock frequency. */
 #ifdef SOC_AM261X
+    /* Set ICSSM1 PRU Core Clock to 225 MHz and ICSSM1 UART Clock to 160 MHz */
+    CSL_mss_rcmRegs     *ptrMSSRCMRegs;
+    uint32_t            baseAddr;
+    volatile uint32_t   *kickAddr;
+
     icssClk = ICSSM_PRU_CORE_CLOCK;
+    SOC_moduleSetClockFrequency(SOC_RcmPeripheralId_ICSSM1_UART0, SOC_RcmPeripheralClockSource_DPLL_PER_HSDIV0_CLKOUT2, 160000000);
+
+    /*Unlock MSS_RCM*/
+    baseAddr = (uint32_t) CSL_MSS_RCM_U_BASE;
+    kickAddr = (volatile uint32_t *) (baseAddr + CSL_MSS_RCM_LOCK0_KICK0);
+    CSL_REG32_WR(kickAddr, KICK0_UNLOCK_VAL);      /* KICK 0 */
+    kickAddr = (volatile uint32_t *) (baseAddr + CSL_MSS_RCM_LOCK0_KICK1);
+    CSL_REG32_WR(kickAddr, KICK1_UNLOCK_VAL);      /* KICK 1 */
+
+    ptrMSSRCMRegs = (CSL_mss_rcmRegs*) CSL_MSS_RCM_U_BASE;
+    ptrMSSRCMRegs->ICSSM1_CORE_CLK_SRC_SEL = 0x333;
+    ptrMSSRCMRegs->ICSSM1_CORE_CLK_DIV_VAL = 0x111;
+
+    /*Lock MSS_RCM*/
+    baseAddr = (uint32_t) CSL_MSS_RCM_U_BASE;
+    kickAddr = (volatile uint32_t *) (baseAddr + CSL_MSS_RCM_LOCK0_KICK0);
+    CSL_REG32_WR(kickAddr, KICK_LOCK_VAL);      /* KICK 0 */
+    kickAddr = (volatile uint32_t *) (baseAddr + CSL_MSS_RCM_LOCK0_KICK1);
+    CSL_REG32_WR(kickAddr, KICK_LOCK_VAL);      /* KICK 1 */
+
 #else
     if(gPruIcssXHandle->hwAttrs->instance)
     {
@@ -2237,7 +2264,7 @@ void endat_main(void *args)
     priv->pruss_xchg->endat_delay_380ms = ((icssClk/1000) * 380);
     priv->pruss_xchg->endat_delay_900ms = ((icssClk/1000) * 900);
     priv->pruss_xchg->icssg_clk = icssClk;
-    
+
 
     i = endat_pruicss_load_run_fw(priv);
 
@@ -2314,7 +2341,12 @@ void endat_main(void *args)
     /* default frequency - 8MHz for 2.2 encoders, 1MHz for 2.1 encoders */
     if(priv->cmd_set_2_2)
     {
+    #if ENDAT_INPUT_CLOCK_UART_FREQUENCY  == 160000000
+        cmd_supplement.frequency = 5 * 1000 * 1000;
+    #else
         cmd_supplement.frequency = 8 * 1000 * 1000;
+    #endif
+
     }
     else
     {
