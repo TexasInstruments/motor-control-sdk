@@ -97,7 +97,13 @@ TaskP_Object gTaskObject;
 #define TAMAGAWA_POSITION_LOOP_STOP    0
 #define TAMAGAWA_POSITION_LOOP_START   1
 
-#define  ICSSM_PRU_CORE_CLOCK 200000000
+#ifdef SOC_AM261X
+#define ICSSM_PRU_CORE_CLOCK 225000000
+#define ICSS_PRU_UART_CLOCK 160000000
+#else
+#define ICSSM_PRU_CORE_CLOCK 200000000
+#define ICSS_PRU_UART_CLOCK 192000000
+#endif
 
 #if ((CONFIG_TAMAGAWA0_CHANNEL0 + CONFIG_TAMAGAWA0_CHANNEL1 + CONFIG_TAMAGAWA0_CHANNEL2) == 1)
 #include <position_sense/tamagawa/firmware/tamagawa_master_single_channel_bin.h>
@@ -269,13 +275,13 @@ void tamagawa_pruicss_init(void)
     lp_bp_mux_mode_config();
 
     /* Set bits for input pins in ICSSM_PRU0_GPIO_OUT_CTRL and ICSSM_PRU1_GPIO_OUT_CTRL registers */
-#if (PRUICSS_PRUx == 1)
+#if (PRUICSSx == 1)
     HW_WR_REG32(CSL_MSS_CTRL_U_BASE + CSL_MSS_CTRL_ICSSM1_PRU0_GPIO_OUT_CTRL, GPIO9_BIT_FOR_INPUT);
 #else
     HW_WR_REG32(CSL_MSS_CTRL_U_BASE + CSL_MSS_CTRL_ICSSM0_PRU0_GPIO_OUT_CTRL, GPIO9_BIT_FOR_INPUT);
 #endif
 
-    
+
 #endif
 }
 
@@ -674,6 +680,32 @@ void tamagawa_main(void *args)
 #if defined(SOC_AM263X) || defined(SOC_AM261X)
     /* fixed 200MHz pru core clock for ICSSM*/
     priv->pru_clock = ICSSM_PRU_CORE_CLOCK;
+#ifdef SOC_AM261X
+    /* Set ICSSM1 PRU Core Clock to 225 MHz and ICSSM1 UART Clock to 160 MHz */
+    CSL_mss_rcmRegs     *ptrMSSRCMRegs;
+    uint32_t            baseAddr;
+    volatile uint32_t   *kickAddr;
+
+    SOC_moduleSetClockFrequency(SOC_RcmPeripheralId_ICSSM1_UART0, SOC_RcmPeripheralClockSource_DPLL_PER_HSDIV0_CLKOUT2, ICSS_PRU_UART_CLOCK);
+
+    /*Unlock MSS_RCM*/
+    baseAddr = (uint32_t) CSL_MSS_RCM_U_BASE;
+    kickAddr = (volatile uint32_t *) (baseAddr + CSL_MSS_RCM_LOCK0_KICK0);
+    CSL_REG32_WR(kickAddr, KICK0_UNLOCK_VAL);      /* KICK 0 */
+    kickAddr = (volatile uint32_t *) (baseAddr + CSL_MSS_RCM_LOCK0_KICK1);
+    CSL_REG32_WR(kickAddr, KICK1_UNLOCK_VAL);      /* KICK 1 */
+
+    ptrMSSRCMRegs = (CSL_mss_rcmRegs*) CSL_MSS_RCM_U_BASE;
+    ptrMSSRCMRegs->ICSSM1_CORE_CLK_SRC_SEL = 0x333;
+    ptrMSSRCMRegs->ICSSM1_CORE_CLK_DIV_VAL = 0x111;
+
+    /*Lock MSS_RCM*/
+    baseAddr = (uint32_t) CSL_MSS_RCM_U_BASE;
+    kickAddr = (volatile uint32_t *) (baseAddr + CSL_MSS_RCM_LOCK0_KICK0);
+    CSL_REG32_WR(kickAddr, KICK_LOCK_VAL);      /* KICK 0 */
+    kickAddr = (volatile uint32_t *) (baseAddr + CSL_MSS_RCM_LOCK0_KICK1);
+    CSL_REG32_WR(kickAddr, KICK_LOCK_VAL);      /* KICK 1 */
+#endif
 #else
     uint32_t status;
 #if(PRUICSSx)
@@ -684,7 +716,16 @@ void tamagawa_main(void *args)
     DebugP_assert(status == SystemP_SUCCESS);
 #endif
 #endif
-    tamagawa_set_baudrate(priv, CONFIG_TAMAGAWA0_BAUDRATE);
+    priv->pru_uart_clock = ICSS_PRU_UART_CLOCK;
+#ifdef SOC_AM261X
+    /*Selecting UART as clock source for 3 channel peripheral */
+    priv->rx_clock_source = PRU_UART_CLOCK_SOURCE; 
+    priv->tx_clock_source = PRU_UART_CLOCK_SOURCE; 
+#else
+  /*Selecting PRU as clock source for 3 channel peripheral */ 
+   priv->rx_clock_source = PRU_CORE_CLOCK_SOURCE;
+   priv->tx_clock_source = PRU_CORE_CLOCK_SOURCE;  
+#endif
 
     DebugP_log("\r\n\nTamagawa PRU-ICSS init done\n\n");
 
@@ -739,6 +780,8 @@ void tamagawa_main(void *args)
     tamagawa_pruicss_load_run_fw();
     DebugP_log("\r\nTamagawa PRU-ICSS firmware loaded and running\n\n\n");
 
+    tamagawa_set_baudrate(priv, CONFIG_TAMAGAWA0_BAUDRATE);
+
     while(1)
     {
         /*
@@ -749,7 +792,7 @@ void tamagawa_main(void *args)
 
         tamagawa_display_menu();
         cmd = tamagawa_get_command(&adf, &edf);
-      
+
 
         if(cmd == PERIODIC_TRIGGER_CMD)
         {

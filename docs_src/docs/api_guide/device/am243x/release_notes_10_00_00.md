@@ -324,4 +324,16 @@ This section lists changes which could affect user applications developed using 
     <td> Added new variable: `pru_clock`
     <td> -
 </tr>
+<tr>
+    <td> Position Sense Tamagawa
+    <td> \ref tamagawa_clk_cfg
+    <td> Added new variables: `rx_clk_source`, `tx_clk_source` and `rx_os_rate`
+    <td> -
+</tr>
+<tr>
+    <td> Position Sense Tamagawa
+    <td> \ref tamagawa_priv
+    <td> Added new variables: `pru_uart_clock`, `rx_clock_source" and `tx_clock_source`
+    <td> -
+</tr>
 </table>

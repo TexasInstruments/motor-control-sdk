@@ -157,18 +157,6 @@ TAMAGAWA_DEFAULT_CH:
         LDI     TAMAGAWA_ENABLE_CHx, 0x1
 TAMAGAWA_SKIP_DEFAULT_CH:
 	.endif
- ;setting Rx and Tx clocks
-TAMAGAWA_SET_CLOCK:
-    ;Set the TX Div Factor value based on the value of RX_CLK
-    ;div factor = 10 for RX_CLK: 8*2.5 MHz and div factor = 5 for RX_CLK: 8*5 MHz
-	LBCO	&R0.w0,	PRUx_DMEM,	TAMAGAWA_RX_DIV_FACTOR_OFFSET,	2
-    ;Set the RX Div Factor value based on the value of TX_CLK
-    ;div factor = 80 for TX_CLK: 2.5 MHz and div factor = 40 for TX_CLK: 5 Mhz
-	LBCO	&R0.w2,	PRUx_DMEM,	TAMAGAWA_TX_DIV_FACTOR_OFFSET ,	2
-    ;8x oversample rate
-	LBCO	&R1.b0,	PRUx_DMEM,	TAMAGAWA_OVERSAMPLE_RATE_OFFSET ,	1
-	;Set clock to 2.5Mhz or 5MHz
-    CALL	FN_SET_TX_CLK
 
 TAMAGAWA_SKIP_INIT_SUCCESS:
 	LDI     R0.b0,  1
@@ -556,37 +544,3 @@ TAMAGAWA_SKIP17_CH2:
 
 	RET2
 
-;****************************************************************************************************
-;	Function: FN_SET_TX_CLK
-;
-;	Brief:	Setting clock/baud rate for Tx and Rx  (currently set for 2.5MHZ/2.5Mbps)
-;	Registers:
-;			ICSS_CFG_PRUx_ED_RXCFG -for setting rx clock, selecting ICSSG clock(200Mhz)
-;			ICSS_CFG_PRUx_ED_TXCFG - for setting tx clock
-;	Parameters:
-; 			R0.w0 - DIV for RX_CLK
-; 			R0.w2 - DIV for TX_CLK
-; 			R1.b0 - Oversample rate for RX
-;
-; ***************************************************************************************************
-
-FN_SET_TX_CLK:
-	LDI     SCRATCH1.w0, ICSS_CFG_PRUx_ED_RXCFG+2
-	;div factor for rx = 10 or 5 based on the baud rate (value written in register is 9 or 4 respectively)
-    SBCO	&R0.w0,	ICSS_CFG, SCRATCH1.w0, 2
-	LDI     SCRATCH1.w0, ICSS_CFG_PRUx_ED_TXCFG+2
-	;div factor for tx =80 or 40 based on the baud rate(value written in register is 79 or 40 respectively)
-    SBCO	&R0.w2,	ICSS_CFG, SCRATCH1.w0, 2
-	LDI     SCRATCH1.w0, ICSS_CFG_PRUx_ED_RXCFG
-
-	; Select PRU core clock as source clock
-    SET		R1.t4
-	; Update ICSSG clock and oversampling value
-    SBCO	&R1.b0,	ICSS_CFG, SCRATCH1.w0, 1
-
-    LDI     SCRATCH1.w0, ICSS_CFG_PRUx_ED_TXCFG
-    LBCO  &R0.b0, ICSS_CFG, SCRATCH1.w0, 1
-    SET   R0.t4
-    SBCO  &R0.b0, ICSS_CFG, SCRATCH1.w0, 1
-
-	RET

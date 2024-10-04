@@ -61,6 +61,12 @@ extern "C" {
 /* ========================================================================== */
 
 /**
+ *  \brief 3 channel Peripheral clock Source 
+ */
+#define PRU_UART_CLOCK_SOURCE  (0)
+#define PRU_CORE_CLOCK_SOURCE  (1)
+
+/**
  *  \brief  Used to set the value of Tamagawa multi-channel mask based on the whether the Channel 0 is selected or not
  */
 #define TAMAGAWA_MULTI_CH0 (1 << 0)
@@ -254,8 +260,9 @@ struct tamagawa_clk_cfg
 {
     uint16_t  rx_div;   /**< Rx Div factor*/
     uint16_t  tx_div;   /**< Tx Div factor*/
-    uint16_t  rx_en_cnt;
-    uint16_t  rx_div_attr;
+    uint16_t  rx_os_rate; /*rx oversample rate*/
+    uint8_t   rx_clk_source; /*rx clock source*/
+    uint8_t   tx_clk_source; /*tx clock source*/
 };
 
 
@@ -292,6 +299,9 @@ struct tamagawa_priv
     uint64_t cmp3; /**< IEP CMP3 reg used in periodic trigger mode*/
     uint64_t cmp0; /**<IEP CMP0 reg used in periodic trigger mode to reset IEP*/
     uint64_t pru_clock; /**<PRU CORE Clock*/
+    uint64_t pru_uart_clock; /*ICSS PRU UART clock value*/
+    uint8_t rx_clock_source; /*3 channel Peripheral RX clock source*/
+    uint8_t tx_clock_source; /*3 channel Peripheral TX clock source*/
 };
 
 /* ========================================================================== */
