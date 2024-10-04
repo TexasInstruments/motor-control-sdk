@@ -1,7 +1,11 @@
 %%{
     products = "";
 
-    products+=`com.ti.${args.utils.getProductNameProjectSpec(args.project.projects[0].device)}`
+    if(((args.project.device == "am263px") || (args.project.device == "am261x")) && (args.utils.getProductNameProjectSpec(args.project.device) != "MOTOR_CONTROL_SDK_AMXXX")) {
+        products+="MOTOR-CONTROL-SDK-"+args.project.device.toUpperCase()
+    } else {
+        products+=`com.ti.${args.utils.getProductNameProjectSpec(args.project.projects[0].device)}`
+    }
 
     productName = args.utils.getProductNameProjectSpec(args.project.projects[0].device);
 %%}
