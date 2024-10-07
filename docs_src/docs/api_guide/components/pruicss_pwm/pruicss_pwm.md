@@ -14,6 +14,7 @@ Below are the high level features supported by the driver.
 - Configuration of  PWM outputs behaviour in Active state
 - Configuration of  PWM outputs behaviour in Trip   state
 - Configuration of  PWM Glitch Filter with Debounce Value
+- Configuration of  PWM Deadband
 - Configuration of  Tripzone output block to mask trip errors inputs
 
 ## SysConfig Features
@@ -22,13 +23,14 @@ Below are the high level features supported by the driver.
 
 SysConfig can be used to configure things mentioned below:
 
-- Syscfg based customization will be supported in future releases.
+- Configuration of  IEP counter
+- Configuration of  PWM frequency
+- Configuration of  Duty cycle to each of the PWM outputs
+- Configuration of  Fall edge and Rise edge delay which inserts deadband
 
 ## Features NOT Supported
 
-- Generate PWM outputs with distinct time period, which means all the PWM outputs will be in sync with respected to each other, without re-programming.
-
-- Dead band(it will be added in future release)
+- Generate PWM outputs with distinct time period, which means all PRUICSS PWM outputs are generated with same frequency controlled by IEP compare 0 event.
 
 ## Important Note
 
