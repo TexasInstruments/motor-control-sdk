@@ -63,6 +63,13 @@ extern "C" {
 
 #define ENDAT_LOAD_SHARE_EN_MASK  (0x00000800U)
 
+/**
+ * 
+ * \brief  Used to set the Rx oversampling rate
+ * 
+*/
+#define ENDAT_RX_OVERSAMPLING_RATE    (8)
+
 /* Adjust 1-bit as we transmit early */
 #define     ENDAT_TX_30BITS (30 + 1)
 /*Adjust 1-bit as we transmit early */
@@ -97,6 +104,8 @@ extern "C" {
 #define ENDAT_NUM_BITS_F2       1
 #define ENDAT_NUM_BITS_PARAMETER    16
 #define ENDAT_NUM_BITS_ADDRESS      8
+
+#define ENDAT_INIT_FREQ    200000
 
 #define EINVAL  1
 
@@ -159,6 +168,10 @@ struct endat_priv
     uint64_t cmp3;
     uint64_t cmp5;
     uint64_t cmp6;
+    uint64_t pru_clock; /**<PRU CORE Clock*/
+    uint64_t pru_uart_clock; /*ICSS PRU UART clock value*/
+    uint8_t rx_clock_source; /*3 channel Peripheral RX clock source*/
+    uint8_t tx_clock_source; /*3 channel Peripheral TX clock source*/
 
 };
 
@@ -233,6 +246,23 @@ union endat_format_data
     struct endat_addr_params    addr_params;
     struct endat_test_values    test;
 };
+
+
+/**
+ *    \brief    Structure defining 3 Channel clock configuration parameters.
+ *
+ */
+typedef struct endat_clock_config_s
+{
+    /**< 3 channel Peripheral RX clock source */
+    volatile uint8_t  rx_clock_source;
+    /**< *3 channel Peripheral TX clock source  */
+    volatile uint8_t  tx_clock_source;
+    /**< ICSS Core clock value */
+     volatile uint64_t  pru_clock;
+    /**<ICSS UART clock value */
+     volatile uint64_t  pru_uart_clock;
+} endat_clock_config;
 
 #define VALID_2_1_CMD(x) (((x) == 1) || ((x) == 2) || ((x) == 3) || ((x) == 4) || ((x) == 5) || ((x) == 6) || ((x) == 7) )
 #define VALID_2_2_CMD(x) (((x) == 8) || ((x) == 9) || ((x) == 10) || ((x) == 11) || ((x) == 12) || ((x) == 13) || ((x) == 14))

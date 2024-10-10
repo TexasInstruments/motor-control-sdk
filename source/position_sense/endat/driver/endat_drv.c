@@ -2060,16 +2060,28 @@ static inline void endat_config_endat_mode(struct endat_priv *priv)
 static void endat_hw_init(struct endat_priv *priv)
 {
     struct endat_clk_cfg clk_cfg;
-
     /* set initial clock to 200KHz */
-    /* 192MHz / 200KHz - 1 */
-    clk_cfg.tx_div = 959;
-    /* 192MHz / 200KHz / 8 - 1 */
-    clk_cfg.rx_div = 119;
+    if(priv->rx_clock_source == 1)
+    {
+        clk_cfg.rx_div = priv->pru_clock/(ENDAT_RX_OVERSAMPLING_RATE*(ENDAT_INIT_FREQ)) - 1;
+    }
+    else
+    {
+        clk_cfg.rx_div = priv->pru_uart_clock/(ENDAT_RX_OVERSAMPLING_RATE*(ENDAT_INIT_FREQ)) - 1;
+    }
+
+    if(priv->rx_clock_source == 1)
+    {
+        clk_cfg.tx_div = priv->pru_clock/ENDAT_INIT_FREQ - 1;
+    }
+    else
+    {
+        clk_cfg.tx_div = priv->pru_uart_clock/ENDAT_INIT_FREQ - 1;
+    }
     /* 2T */
     clk_cfg.rx_en_cnt = 10000;
     /* sample size 8 */
-    clk_cfg.rx_div_attr = 7;
+    clk_cfg.rx_div_attr = ENDAT_RX_OVERSAMPLING_RATE - 1;
 
     endat_config_endat_mode(priv);
     endat_config_clock(priv, &clk_cfg);
@@ -2078,13 +2090,17 @@ static void endat_hw_init(struct endat_priv *priv)
 }
 
 struct endat_priv *endat_init(struct endat_pruss_xchg *pruss_xchg, struct endatChRxInfo *endatRxInfo, uint64_t endatChInfoGlobalAddr, 
-                              void *pruss_cfg, void* pruss_iep, int32_t slice)
+                              void *pruss_cfg, void* pruss_iep, int32_t slice, endat_clock_config *endat_clk_config)
 {
     endat_priv.pruss_xchg = pruss_xchg;
     endat_priv.pruss_cfg = pruss_cfg;
     endat_priv.pruicss_slicex = slice;
     endat_priv.pruss_iep = pruss_iep;
     endat_priv.endatChRxInfo = endatRxInfo;
+    endat_priv.tx_clock_source = endat_clk_config->tx_clock_source;
+    endat_priv.rx_clock_source = endat_clk_config->rx_clock_source;
+    endat_priv.pru_clock = endat_clk_config->pru_clock;
+    endat_priv.pru_uart_clock = endat_clk_config->pru_uart_clock;
     /*Write Configured memory address to DMEM */
     endat_priv.pruss_xchg->endatChInfoMemoryAdd = endatChInfoGlobalAddr;
     endat_hw_init(&endat_priv);

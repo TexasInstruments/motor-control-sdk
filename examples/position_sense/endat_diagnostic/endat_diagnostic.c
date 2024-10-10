@@ -140,8 +140,26 @@ TaskP_Object gTaskObject;
 #else
 #define ENDAT_INPUT_CLOCK_UART_FREQUENCY 192000000
 #endif
-/* use uart clock only to start with */
-#define ENDAT_INPUT_CLOCK_FREQUENCY ENDAT_INPUT_CLOCK_UART_FREQUENCY
+
+#if RX_FIFO_CLOCK_SOURCE == 1
+#ifdef SOC_AM261X
+#define ENDAT_RX_INPUT_CLOCK_FREQUENCY ICSSM_PRU_CORE_CLOCK
+#else
+#define ENDAT_RX_INPUT_CLOCK_FREQUENCY CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ
+#endif
+#else
+#define ENDAT_RX_INPUT_CLOCK_FREQUENCY ENDAT_INPUT_CLOCK_UART_FREQUENCY
+#endif
+
+#if TX_FIFO_CLOCK_SOURCE == 1
+#ifdef SOC_AM261X
+#define ENDAT_TX_INPUT_CLOCK_FREQUENCY ICSSM_PRU_CORE_CLOCK
+#else
+#define ENDAT_TX_INPUT_CLOCK_FREQUENCY CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ
+#endif
+#else
+#define ENDAT_TX_INPUT_CLOCK_FREQUENCY ENDAT_INPUT_CLOCK_UART_FREQUENCY
+#endif
 
 #define ENDAT_POSITION_LOOP_STOP    0
 #define ENDAT_POSITION_LOOP_START   1
@@ -981,10 +999,10 @@ static int32_t endat_calc_clock(uint32_t freq, struct endat_clk_cfg *clk_cfg)
         return -1;
     }
 
-    if((freq != 16000000) && (ENDAT_INPUT_CLOCK_FREQUENCY % (freq * 8)))
+    if((freq != 16000000) && (ENDAT_RX_INPUT_CLOCK_FREQUENCY % (freq * 8))&&(ENDAT_TX_INPUT_CLOCK_FREQUENCY % (freq)))
         DebugP_log("\r| WARNING: exact clock divider is not possible, frequencies set would be tx: %u\trx: %u\n",
-                    ENDAT_INPUT_CLOCK_FREQUENCY / (ENDAT_INPUT_CLOCK_FREQUENCY / freq),
-                    ENDAT_INPUT_CLOCK_FREQUENCY / (ENDAT_INPUT_CLOCK_FREQUENCY / (freq * 8)));
+                    ENDAT_TX_INPUT_CLOCK_FREQUENCY / (ENDAT_TX_INPUT_CLOCK_FREQUENCY / freq),
+                    ENDAT_RX_INPUT_CLOCK_FREQUENCY / (ENDAT_RX_INPUT_CLOCK_FREQUENCY / (freq * 8)));
 
     ns = 2 * 1000000000 / freq; /* rx arm >= 2 clock */
 
@@ -994,8 +1012,8 @@ static int32_t endat_calc_clock(uint32_t freq, struct endat_clk_cfg *clk_cfg)
         ns /= 5, ns += 1,  ns *= 5;
     }
 
-    clk_cfg->tx_div = ENDAT_INPUT_CLOCK_FREQUENCY / freq - 1;
-    clk_cfg->rx_div = ENDAT_INPUT_CLOCK_FREQUENCY / (freq * 8) - 1;
+    clk_cfg->tx_div = ENDAT_TX_INPUT_CLOCK_FREQUENCY / freq - 1;
+    clk_cfg->rx_div = ENDAT_RX_INPUT_CLOCK_FREQUENCY / (freq * 8) - 1;
     clk_cfg->rx_en_cnt = ns;
     clk_cfg->rx_div_attr = ENDAT_RX_SAMPLE_SIZE;
 
@@ -2123,6 +2141,8 @@ void endat_main(void *args)
     void *pruicss_cfg;
     void *pruicss_iep;
 
+    endat_clock_config endat_clk_config;
+
     /* Open drivers to open the UART driver for console */
     Drivers_open();
     Board_driversOpen();
@@ -2192,29 +2212,8 @@ void endat_main(void *args)
     pruicss_cfg = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->cfgRegBase);
     pruicss_iep  = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->iep0RegBase);
 
-    #if (PRU_ICSSGx_PRU_SLICE == 1)
-        priv = endat_init((struct endat_pruss_xchg *)((PRUICSS_HwAttrs *)(
-                          gPruIcssXHandle->hwAttrs))->pru1DramBase, &gEndatChInfo, gEndatChInfoGlobalAddr, pruicss_cfg, pruicss_iep, PRUICSS_SLICEx);
-
-    #else
-        priv = endat_init((struct endat_pruss_xchg *)((PRUICSS_HwAttrs *)(
-                          gPruIcssXHandle->hwAttrs))->pru0DramBase, &gEndatChInfo, gEndatChInfoGlobalAddr,  pruicss_cfg, pruicss_iep, PRUICSS_SLICEx);
-    #endif
-
-
-
-
-    if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
-    {
-        endat_config_multi_channel_mask(priv, gEndat_multi_ch_mask, gEndat_is_load_share_mode);
-    }
-    else
-    {
-        endat_config_channel(priv, i);
-    }
-
-    endat_config_host_trigger(priv);
-    /* Read the ICSSG configured clock frequency. */
+    
+    /* Read the PRU-ICSS configured clock frequency. */
 #ifdef SOC_AM261X
     /* Set ICSSM1 PRU Core Clock to 225 MHz and ICSSM1 UART Clock to 160 MHz */
     CSL_mss_rcmRegs     *ptrMSSRCMRegs;
@@ -2252,6 +2251,37 @@ void endat_main(void *args)
         SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG0, TISCI_DEV_PRU_ICSSG0_CORE_CLK, &icssClk);
     }
 #endif
+
+    /*3 channel pheripheral clock configuration*/
+    endat_clk_config.pru_clock = icssClk;
+    endat_clk_config.pru_uart_clock = ENDAT_INPUT_CLOCK_UART_FREQUENCY;
+    endat_clk_config.rx_clock_source = RX_FIFO_CLOCK_SOURCE;
+    endat_clk_config. tx_clock_source = TX_FIFO_CLOCK_SOURCE;
+
+
+    #if (PRU_ICSSGx_PRU_SLICE == 1)
+        priv = endat_init((struct endat_pruss_xchg *)((PRUICSS_HwAttrs *)(
+                          gPruIcssXHandle->hwAttrs))->pru1DramBase, &gEndatChInfo, gEndatChInfoGlobalAddr, pruicss_cfg, pruicss_iep, PRUICSS_SLICEx, &endat_clk_config);
+
+    #else
+        priv = endat_init((struct endat_pruss_xchg *)((PRUICSS_HwAttrs *)(
+                          gPruIcssXHandle->hwAttrs))->pru0DramBase, &gEndatChInfo, gEndatChInfoGlobalAddr,  pruicss_cfg, pruicss_iep, PRUICSS_SLICEx, &endat_clk_config);
+    #endif
+
+
+
+
+    if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
+    {
+        endat_config_multi_channel_mask(priv, gEndat_multi_ch_mask, gEndat_is_load_share_mode);
+    }
+    else
+    {
+        endat_config_channel(priv, i);
+    }
+
+    endat_config_host_trigger(priv);
+
     /* Configure Delays based on the ICSSG frequency*/
     /* Count = ((required delay * icssClk)/1000) */
     priv->pruss_xchg->endat_delay_125ns = ((icssClk*125)/1000000000);

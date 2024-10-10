@@ -336,4 +336,16 @@ This section lists changes which could affect user applications developed using 
     <td> Added new variables: `pru_uart_clock`, `rx_clock_source" and `tx_clock_source`
     <td> -
 </tr>
+<tr>
+    <td> Position Sense Endat
+    <td> \ref endat_priv
+    <td> Added new variables: `pru_uart_clock`, `pru_clock`, `rx_clock_source" and `tx_clock_source`
+    <td> -
+</tr>
+<tr>
+    <td> Position Sense Endat
+    <td> \ref endat_init
+    <td> Added new parameter: \ref endat_clock_config 
+    <td> -
+</tr>
 </table>
