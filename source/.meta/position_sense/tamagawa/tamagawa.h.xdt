@@ -50,4 +50,9 @@
 #define `instance.$name`_BOOSTER_PACK     (`instance.Booster_Pack & 1`)
 #define PRUICSS_PRUx                      (`sliceVal`)
 #define PRUICSSx                          (`icssValue`)
+
+ %if ((instance.instance === "ICSSG1" || instance.instance === "ICSSG0") && (instance.G_MUX_EN))
+    %{
+#define `instance.$name`_G_MUX_EN          `instance["G_MUX_EN"] & 1`
+    %}
 % }

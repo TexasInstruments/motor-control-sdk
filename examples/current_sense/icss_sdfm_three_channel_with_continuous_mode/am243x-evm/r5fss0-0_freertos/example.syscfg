@@ -1,8 +1,9 @@
 /**
  * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
  * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
- * @cliArgs --device "AM243x_ALV_beta" --package "ALV" --part "ALV" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@09.01.00"
- * @versions {"tool":"1.20.0+3587"}
+ * @cliArgs --device "AM243x_ALV_beta" --part "ALV" --package "ALV" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@07.03.01"
+ * @v2CliArgs --device "AM2434" --package "FCBGA (ALV)" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@07.03.01"
+ * @versions {"tool":"1.21.0+3721"}
  */
 
 /**
@@ -62,6 +63,7 @@ sdfm1.Ch1_EnableContinuousMode   = true;
 sdfm1.Ch1_EPWM_SYNC              = true;
 sdfm1.Ch2_EnableContinuousMode   = true;
 sdfm1.Ch2_EPWM_SYNC              = true;
+sdfm1.G_MUX_EN                   = true;
 sdfm1.PRU_ICSSG0_PRU.$assign     = "PRU_ICSSG0_PRU0";
 sdfm1.PRU_ICSSG0_PRU.GPI18.$used = false;
 

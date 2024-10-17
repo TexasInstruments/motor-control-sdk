@@ -267,7 +267,7 @@ void tamagawa_pruicss_init(void)
     /* PRUICSS_PRUx holds value 0 or 1 depending on whether we are using PRU0 or PRU1 slice */
     PRUICSS_initMemory(gPruIcssXHandle, PRUICSS_DATARAM(PRUICSS_PRUx));
     PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_PRUx);
-#if(SOC_AM243X || SOC_AM64X)
+#ifdef CONFIG_TAMAGAWA0_G_MUX_EN
     PRUICSS_setSaMuxMode(gPruIcssXHandle, PRUICSS_SA_MUX_MODE_SD_ENDAT);
 #endif
 

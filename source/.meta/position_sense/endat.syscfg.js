@@ -34,6 +34,7 @@ function onValidate(inst, validation) {
                 validation.logError("Channel1 and Channel2 are not supported on Booster Pack",inst,"Booster_Pack");
             }
         }
+       
     }
 
 }
@@ -75,6 +76,13 @@ let endat_module = {
                                 name: "ICSSG1",
                             }
                         ]
+        },
+        {
+            name: "G_MUX_EN",
+            displayName: "Enable G MUX ",
+            description: "Enable G mux in ICSSG_SA_MX_REG Register, Few 3 channel Peripheral pins get remapped to enable different usecase",
+            default: false,
+            hidden:  (device == "am243x-lp" ||device == "am243x-evm" ||device == "am64x-evm") ? false : true,
         },
         {
             name: "Rx_Clk_Source",
