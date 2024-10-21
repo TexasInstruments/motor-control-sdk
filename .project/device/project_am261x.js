@@ -3,6 +3,7 @@ const common = require("../common.js");
 const component_file_list = [
     "source/position_sense/bissc/.project/project.js",
     "source/position_sense/endat/.project/project.js",
+    "source/position_sense/hdsl/.project/project.js",
     "source/position_sense/nikon/.project/project.js",
     "source/position_sense/tamagawa/.project/project.js",
 ];
@@ -16,12 +17,16 @@ const device_defines = {
 const example_file_list = [
     "examples/position_sense/bissc_diagnostic/single_channel/.project/project.js",
     "examples/position_sense/endat_diagnostic/single_channel/.project/project.js",
+    "examples/position_sense/hdsl_diagnostic/single_channel/.project/project.js",
     "examples/position_sense/nikon_diagnostic/single_channel/.project/project.js",
     "examples/position_sense/tamagawa_diagnostic/single_channel/.project/project.js",
     "source/position_sense/bissc/firmware/single_channel/.project/project.js",
     "source/position_sense/endat/firmware/single_channel/.project/project.js",
+    "source/position_sense/hdsl/firmware/freerun_225_mhz/.project/project.js",
+    "source/position_sense/hdsl/firmware/sync_225_mhz/.project/project.js",
     "source/position_sense/nikon/firmware/single_channel/.project/project.js",
     "source/position_sense/tamagawa/firmware/single_channel/.project/project.js",
+   
 ];
 
 function getProjectSpecCpu(cpu) {

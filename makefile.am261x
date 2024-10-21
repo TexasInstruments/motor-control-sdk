@@ -34,6 +34,7 @@ help:
 	@echo  ======================
 	@echo  $(MAKE) -s -f makefile.am261x motorcontrol_bissc_r5f.ti-arm-clang
 	@echo  $(MAKE) -s -f makefile.am261x motorcontrol_endat_r5f.ti-arm-clang
+	@echo  $(MAKE) -s -f makefile.am261x motorcontrol_hdsl_r5f.ti-arm-clang
 	@echo  $(MAKE) -s -f makefile.am261x motorcontrol_nikon_r5f.ti-arm-clang
 	@echo  $(MAKE) -s -f makefile.am261x motorcontrol_tamagawa_r5f.ti-arm-clang
 	@echo  .
@@ -41,6 +42,7 @@ help:
 	@echo  ======================
 	@echo  $(MAKE) -s -f makefile.am261x motorcontrol_bissc_r5f.ti-arm-clang_clean
 	@echo  $(MAKE) -s -f makefile.am261x motorcontrol_endat_r5f.ti-arm-clang_clean
+	@echo  $(MAKE) -s -f makefile.am261x motorcontrol_hdsl_r5f.ti-arm-clang_clean
 	@echo  $(MAKE) -s -f makefile.am261x motorcontrol_nikon_r5f.ti-arm-clang_clean
 	@echo  $(MAKE) -s -f makefile.am261x motorcontrol_tamagawa_r5f.ti-arm-clang_clean
 	@echo  .
@@ -48,11 +50,14 @@ help:
 	@echo  ======================
 	@echo  $(MAKE) -s -C examples/position_sense/bissc_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C examples/position_sense/endat_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C examples/position_sense/hdsl_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C examples/position_sense/nikon_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C examples/position_sense/tamagawa_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/bissc/firmware/single_channel/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/endat/firmware/single_channel/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/endat/firmware/single_channel/am261x-lp/icss_m1_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C source/position_sense/hdsl/firmware/freerun_225_mhz/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C source/position_sense/hdsl/firmware/sync_225_mhz/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/nikon/firmware/single_channel/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/tamagawa/firmware/single_channel/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/tamagawa/firmware/single_channel/am261x-lp/icss_m1_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
@@ -64,11 +69,12 @@ help:
 # Various Component Targets
 BUILD_COMBO_motorcontrol_bissc = motorcontrol_bissc_r5f.ti-arm-clang
 BUILD_COMBO_motorcontrol_endat = motorcontrol_endat_r5f.ti-arm-clang
+BUILD_COMBO_motorcontrol_hdsl = motorcontrol_hdsl_r5f.ti-arm-clang
 BUILD_COMBO_motorcontrol_nikon = motorcontrol_nikon_r5f.ti-arm-clang
 BUILD_COMBO_motorcontrol_tamagawa = motorcontrol_tamagawa_r5f.ti-arm-clang
 
 # Combine all Components
-BUILD_COMBO_ALL = $(BUILD_COMBO_motorcontrol_bissc) $(BUILD_COMBO_motorcontrol_endat) $(BUILD_COMBO_motorcontrol_nikon) $(BUILD_COMBO_motorcontrol_tamagawa)
+BUILD_COMBO_ALL = $(BUILD_COMBO_motorcontrol_bissc) $(BUILD_COMBO_motorcontrol_endat) $(BUILD_COMBO_motorcontrol_hdsl) $(BUILD_COMBO_motorcontrol_nikon) $(BUILD_COMBO_motorcontrol_tamagawa)
 
 # Combine all Pre-built Components
 BUILD_COMBO_PREBUILT_ALL =
@@ -88,6 +94,9 @@ $(BUILD_COMBO_motorcontrol_bissc):
 $(BUILD_COMBO_motorcontrol_endat):
 	$(MAKE) -C source/position_sense/endat -f makefile.am261x.$(subst motorcontrol_endat_,,$@) all
 
+$(BUILD_COMBO_motorcontrol_hdsl):
+	$(MAKE) -C source/position_sense/hdsl -f makefile.am261x.$(subst motorcontrol_hdsl_,,$@) all
+
 $(BUILD_COMBO_motorcontrol_nikon):
 	$(MAKE) -C source/position_sense/nikon -f makefile.am261x.$(subst motorcontrol_nikon_,,$@) all
 
@@ -98,11 +107,12 @@ $(BUILD_COMBO_motorcontrol_tamagawa):
 # Various Component Clean Targets
 BUILD_COMBO_CLEAN_motorcontrol_bissc = motorcontrol_bissc_r5f.ti-arm-clang_clean
 BUILD_COMBO_CLEAN_motorcontrol_endat = motorcontrol_endat_r5f.ti-arm-clang_clean
+BUILD_COMBO_CLEAN_motorcontrol_hdsl = motorcontrol_hdsl_r5f.ti-arm-clang_clean
 BUILD_COMBO_CLEAN_motorcontrol_nikon = motorcontrol_nikon_r5f.ti-arm-clang_clean
 BUILD_COMBO_CLEAN_motorcontrol_tamagawa = motorcontrol_tamagawa_r5f.ti-arm-clang_clean
 
 # Combine all Components Clean
-BUILD_COMBO_CLEAN_ALL = $(BUILD_COMBO_CLEAN_motorcontrol_bissc) $(BUILD_COMBO_CLEAN_motorcontrol_endat) $(BUILD_COMBO_CLEAN_motorcontrol_nikon) $(BUILD_COMBO_CLEAN_motorcontrol_tamagawa)
+BUILD_COMBO_CLEAN_ALL = $(BUILD_COMBO_CLEAN_motorcontrol_bissc) $(BUILD_COMBO_CLEAN_motorcontrol_endat) $(BUILD_COMBO_CLEAN_motorcontrol_hdsl) $(BUILD_COMBO_CLEAN_motorcontrol_nikon) $(BUILD_COMBO_CLEAN_motorcontrol_tamagawa)
 
 # Combine all Pre-built Components Clean
 BUILD_COMBO_PREBUILT_CLEAN_ALL =
@@ -117,6 +127,9 @@ $(BUILD_COMBO_CLEAN_motorcontrol_bissc):
 $(BUILD_COMBO_CLEAN_motorcontrol_endat):
 	$(MAKE) -C source/position_sense/endat -f makefile.am261x.$(subst motorcontrol_endat_,,$(subst _clean,,$@)) clean
 
+$(BUILD_COMBO_CLEAN_motorcontrol_hdsl):
+	$(MAKE) -C source/position_sense/hdsl -f makefile.am261x.$(subst motorcontrol_hdsl_,,$(subst _clean,,$@)) clean
+
 $(BUILD_COMBO_CLEAN_motorcontrol_nikon):
 	$(MAKE) -C source/position_sense/nikon -f makefile.am261x.$(subst motorcontrol_nikon_,,$(subst _clean,,$@)) clean
 
@@ -127,11 +140,12 @@ $(BUILD_COMBO_CLEAN_motorcontrol_tamagawa):
 # Various Component Scrub Targets
 BUILD_COMBO_SCRUB_motorcontrol_bissc = motorcontrol_bissc_r5f.ti-arm-clang_scrub_scrub
 BUILD_COMBO_SCRUB_motorcontrol_endat = motorcontrol_endat_r5f.ti-arm-clang_scrub_scrub
+BUILD_COMBO_SCRUB_motorcontrol_hdsl = motorcontrol_hdsl_r5f.ti-arm-clang_scrub_scrub
 BUILD_COMBO_SCRUB_motorcontrol_nikon = motorcontrol_nikon_r5f.ti-arm-clang_scrub_scrub
 BUILD_COMBO_SCRUB_motorcontrol_tamagawa = motorcontrol_tamagawa_r5f.ti-arm-clang_scrub_scrub
 
 # Combine all Components Scrub Targets
-BUILD_COMBO_SCRUB_ALL = $(BUILD_COMBO_SCRUB_motorcontrol_bissc) $(BUILD_COMBO_SCRUB_motorcontrol_endat) $(BUILD_COMBO_SCRUB_motorcontrol_nikon) $(BUILD_COMBO_SCRUB_motorcontrol_tamagawa)
+BUILD_COMBO_SCRUB_ALL = $(BUILD_COMBO_SCRUB_motorcontrol_bissc) $(BUILD_COMBO_SCRUB_motorcontrol_endat) $(BUILD_COMBO_SCRUB_motorcontrol_hdsl) $(BUILD_COMBO_SCRUB_motorcontrol_nikon) $(BUILD_COMBO_SCRUB_motorcontrol_tamagawa)
 
 # Combine all Pre-built Components Scrub Targets
 BUILD_COMBO_PREBUILT_SCRUB_ALL =
@@ -146,6 +160,9 @@ $(BUILD_COMBO_SCRUB_motorcontrol_bissc):
 $(BUILD_COMBO_SCRUB_motorcontrol_endat):
 	$(MAKE) -C source/position_sense/endat -f makefile.am261x.$(subst motorcontrol_endat_,,$(subst _scrub,,$@)) scrub
 
+$(BUILD_COMBO_SCRUB_motorcontrol_hdsl):
+	$(MAKE) -C source/position_sense/hdsl -f makefile.am261x.$(subst motorcontrol_hdsl_,,$(subst _scrub,,$@)) scrub
+
 $(BUILD_COMBO_SCRUB_motorcontrol_nikon):
 	$(MAKE) -C source/position_sense/nikon -f makefile.am261x.$(subst motorcontrol_nikon_,,$(subst _scrub,,$@)) scrub
 
@@ -157,6 +174,7 @@ BUILD_COMBO_EXAMPLE_ALL =
 # Various Example Targets
 BUILD_COMBO_EXAMPLE_ALL += bissc_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang
 BUILD_COMBO_EXAMPLE_ALL += endat_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang
+BUILD_COMBO_EXAMPLE_ALL += hdsl_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang
 BUILD_COMBO_EXAMPLE_ALL += nikon_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang
 BUILD_COMBO_EXAMPLE_ALL += tamagawa_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang
 # Various System Example Targets
@@ -166,6 +184,8 @@ BUILD_COMBO_EXAMPLE_PRIVATE_ALL =
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += bissc_peripheral_interface_single_ch_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += endat_peripheral_interface_single_ch_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += endat_peripheral_interface_single_ch_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt
+BUILD_COMBO_EXAMPLE_PRIVATE_ALL += hdsl_master_freerun_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt
+BUILD_COMBO_EXAMPLE_PRIVATE_ALL += hdsl_master_sync_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += nikon_peripheral_interface_single_ch_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += tamagawa_single_channel_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += tamagawa_single_channel_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt
@@ -180,6 +200,9 @@ examples-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_ALL)
 
  endat_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang:
 	$(MAKE) -C examples/position_sense/endat_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile all
+
+ hdsl_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang:
+	$(MAKE) -C examples/position_sense/hdsl_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile all
 
  nikon_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang:
 	$(MAKE) -C examples/position_sense/nikon_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile all
@@ -196,6 +219,12 @@ examples-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_ALL)
  endat_peripheral_interface_single_ch_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt:
 	$(MAKE) -C source/position_sense/endat/firmware/single_channel/am261x-lp/icss_m1_pru1_fw/ti-pru-cgt -f makefile all
 
+ hdsl_master_freerun_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt:
+	$(MAKE) -C source/position_sense/hdsl/firmware/freerun_225_mhz/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt -f makefile all
+
+ hdsl_master_sync_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt:
+	$(MAKE) -C source/position_sense/hdsl/firmware/sync_225_mhz/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt -f makefile all
+
  nikon_peripheral_interface_single_ch_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt:
 	$(MAKE) -C source/position_sense/nikon/firmware/single_channel/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt -f makefile all
 
@@ -210,6 +239,7 @@ BUILD_COMBO_EXAMPLE_CLEAN_ALL =
 # Various Example Clean Targets
 BUILD_COMBO_EXAMPLE_CLEAN_ALL += bissc_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_CLEAN_ALL += endat_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_CLEAN_ALL += hdsl_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_CLEAN_ALL += nikon_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_CLEAN_ALL += tamagawa_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_clean
 # Various System Example Clean Targets
@@ -219,6 +249,8 @@ BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL =
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += bissc_peripheral_interface_single_ch_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += endat_peripheral_interface_single_ch_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += endat_peripheral_interface_single_ch_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += hdsl_master_freerun_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += hdsl_master_sync_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += nikon_peripheral_interface_single_ch_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += tamagawa_single_channel_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += tamagawa_single_channel_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_clean
@@ -233,6 +265,9 @@ examples-private-clean: $(BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL)
 
  endat_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
 	$(MAKE) -C examples/position_sense/endat_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile clean
+
+ hdsl_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/position_sense/hdsl_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile clean
 
  nikon_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
 	$(MAKE) -C examples/position_sense/nikon_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile clean
@@ -249,6 +284,12 @@ examples-private-clean: $(BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL)
  endat_peripheral_interface_single_ch_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/endat/firmware/single_channel/am261x-lp/icss_m1_pru1_fw/ti-pru-cgt -f makefile clean
 
+ hdsl_master_freerun_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/position_sense/hdsl/firmware/freerun_225_mhz/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt -f makefile clean
+
+ hdsl_master_sync_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/position_sense/hdsl/firmware/sync_225_mhz/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt -f makefile clean
+
  nikon_peripheral_interface_single_ch_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/nikon/firmware/single_channel/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt -f makefile clean
 
@@ -263,6 +304,7 @@ BUILD_COMBO_EXAMPLE_SCRUB_ALL =
 # Various Example Scrub Targets
 BUILD_COMBO_EXAMPLE_SCRUB_ALL += bissc_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_scrub
 BUILD_COMBO_EXAMPLE_SCRUB_ALL += endat_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_scrub
+BUILD_COMBO_EXAMPLE_SCRUB_ALL += hdsl_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_scrub
 BUILD_COMBO_EXAMPLE_SCRUB_ALL += nikon_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_scrub
 BUILD_COMBO_EXAMPLE_SCRUB_ALL += tamagawa_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_scrub
 # Various System Example Scrub Targets
@@ -272,6 +314,8 @@ BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL =
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += bissc_peripheral_interface_single_ch_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += endat_peripheral_interface_single_ch_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += endat_peripheral_interface_single_ch_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_scrub
+BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += hdsl_master_freerun_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_scrub
+BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += hdsl_master_sync_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += nikon_peripheral_interface_single_ch_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += tamagawa_single_channel_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += tamagawa_single_channel_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_scrub
@@ -287,6 +331,9 @@ examples-scrub-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL)
  endat_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_scrub:
 	$(MAKE) -C examples/position_sense/endat_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile scrub
 
+ hdsl_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_scrub:
+	$(MAKE) -C examples/position_sense/hdsl_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile scrub
+
  nikon_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_scrub:
 	$(MAKE) -C examples/position_sense/nikon_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile scrub
 
@@ -301,6 +348,12 @@ examples-scrub-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL)
 
  endat_peripheral_interface_single_ch_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_scrub:
 	$(MAKE) -C source/position_sense/endat/firmware/single_channel/am261x-lp/icss_m1_pru1_fw/ti-pru-cgt -f makefile scrub
+
+ hdsl_master_freerun_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_scrub:
+	$(MAKE) -C source/position_sense/hdsl/firmware/freerun_225_mhz/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt -f makefile scrub
+
+ hdsl_master_sync_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_scrub:
+	$(MAKE) -C source/position_sense/hdsl/firmware/sync_225_mhz/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt -f makefile scrub
 
  nikon_peripheral_interface_single_ch_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_scrub:
 	$(MAKE) -C source/position_sense/nikon/firmware/single_channel/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt -f makefile scrub

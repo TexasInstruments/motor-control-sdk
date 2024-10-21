@@ -9,7 +9,7 @@ const files = {
         "datalink_init.asm",
         "transport.asm",
         "utils.asm",
-        "hdsl_master_icssg.cmd",
+        "hdsl_diagnostic.cmd",
     ],
 };
 
