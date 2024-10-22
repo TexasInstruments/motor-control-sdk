@@ -75,8 +75,19 @@
 
 #define TASK_STACK_SIZE                     (4096)
 #define TASK_PRIORITY                       (6)
+
 #define NIKON_POSITION_LOOP_STOP            0
 #define NIKON_POSITION_LOOP_START           1
+
+#ifdef SOC_AM261X
+#define ICSSM_PRU_CORE_CLOCK 225000000
+#define ICSS_PRU_UART_CLOCK 160000000
+#endif
+#ifdef SOC_AM263X
+#define ICSSM_PRU_CORE_CLOCK 200000000
+#define ICSS_PRU_UART_CLOCK 160000000
+#endif
+
 struct nikon_priv *priv;
 /** \brief Global Structure pointer holding PRU-ICSSG memory Map. */
 uint32_t gTaskFxnStack[TASK_STACK_SIZE/sizeof(uint32_t)] __attribute__((aligned(32)));
@@ -93,7 +104,7 @@ static void nikon_pruicss_init(void)
     int32_t status = SystemP_FAILURE;
     int32_t size;
     gPruIcssXHandle = PRUICSS_open(CONFIG_PRU_ICSS0);
-     /* Configure g_mux_en to 1 in ICSSG_SA_MX_REG Register. */
+    /* Configure g_mux_en to 1 in ICSSG_SA_MX_REG Register. */
 #ifdef CONFIG_NIKON0_G_MUX_EN
     status = PRUICSS_setSaMuxMode(gPruIcssXHandle, PRUICSS_SA_MUX_MODE_SD_ENDAT);
     DebugP_assert(SystemP_SUCCESS == status);
@@ -430,8 +441,8 @@ void nikon_main(void *args)
     float_t freq;
     int64_t cmp3;
     int64_t cmp0;
-    uint64_t icssgclk;
-    uint64_t uartclk;
+    uint64_t icssClk;
+    uint64_t uartClk;
     /* Open drivers to open the UART driver for console */
     Drivers_open();
     Board_driversOpen();
@@ -473,19 +484,51 @@ void nikon_main(void *args)
 
     DebugP_log("\r\n");
 
-    /* Read the ICSSG configured clock frequency. */
-    if(gPruIcssXHandle->hwAttrs->instance)
-    {
-        SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG1, TISCI_DEV_PRU_ICSSG1_CORE_CLK, &icssgclk);
-        SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG1, TISCI_DEV_PRU_ICSSG1_UCLK_CLK, &uartclk);
-    }
-    else
-    {
-        SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG0, TISCI_DEV_PRU_ICSSG0_CORE_CLK, &icssgclk);
-        SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG0, TISCI_DEV_PRU_ICSSG0_UCLK_CLK, &uartclk);
-    }
+#if defined(SOC_AM263X) || defined(SOC_AM261X)
+        
+    icssClk = ICSSM_PRU_CORE_CLOCK;
+    uartClk = ICSS_PRU_UART_CLOCK;
+#ifdef SOC_AM261X
+        /* Set ICSSM1 PRU Core Clock to 225 MHz and ICSSM1 UART Clock to 160 MHz */
+    CSL_mss_rcmRegs     *ptrMSSRCMRegs;
+    uint32_t            baseAddr;
+    volatile uint32_t   *kickAddr;
 
-    priv = nikon_init(gPruIcssXHandle, PRUICSS_PRUx, CONFIG_NIKON0_BAUDRATE, (uint32_t)icssgclk, (uint32_t)uartclk, mask, totalchannels);
+    SOC_moduleSetClockFrequency(SOC_RcmPeripheralId_ICSSM1_UART0, SOC_RcmPeripheralClockSource_DPLL_PER_HSDIV0_CLKOUT2, ICSS_PRU_UART_CLOCK);
+
+     /*Unlock MSS_RCM*/
+    baseAddr = (uint32_t) CSL_MSS_RCM_U_BASE;
+    kickAddr = (volatile uint32_t *) (baseAddr + CSL_MSS_RCM_LOCK0_KICK0);
+    CSL_REG32_WR(kickAddr, KICK0_UNLOCK_VAL);      /* KICK 0 */
+    kickAddr = (volatile uint32_t *) (baseAddr + CSL_MSS_RCM_LOCK0_KICK1);
+    CSL_REG32_WR(kickAddr, KICK1_UNLOCK_VAL);      /* KICK 1 */
+
+    ptrMSSRCMRegs = (CSL_mss_rcmRegs*) CSL_MSS_RCM_U_BASE;
+    ptrMSSRCMRegs->ICSSM1_CORE_CLK_SRC_SEL = 0x333;
+    ptrMSSRCMRegs->ICSSM1_CORE_CLK_DIV_VAL = 0x111;
+
+    /*Lock MSS_RCM*/
+    baseAddr = (uint32_t) CSL_MSS_RCM_U_BASE;
+    kickAddr = (volatile uint32_t *) (baseAddr + CSL_MSS_RCM_LOCK0_KICK0);
+    CSL_REG32_WR(kickAddr, KICK_LOCK_VAL);      /* KICK 0 */
+    kickAddr = (volatile uint32_t *) (baseAddr + CSL_MSS_RCM_LOCK0_KICK1);
+    CSL_REG32_WR(kickAddr, KICK_LOCK_VAL);      /* KICK 1 */
+#endif
+#else
+#if(PRUICSSx)
+{
+    SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG1, TISCI_DEV_PRU_ICSSG1_CORE_CLK, &icssClk);
+    SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG1, TISCI_DEV_PRU_ICSSG1_UCLK_CLK, &uartClk);
+}
+#else
+{
+    SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG0, TISCI_DEV_PRU_ICSSG0_CORE_CLK, &icssClk);
+    SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG0, TISCI_DEV_PRU_ICSSG0_UCLK_CLK, &uartClk);
+}
+#endif
+#endif
+
+    priv = nikon_init(gPruIcssXHandle, PRUICSS_PRUx, CONFIG_NIKON0_BAUDRATE, (uint32_t)icssClk, (uint32_t)uartClk, TX_RX_FIFO_CLOCK_SOURCE, mask, totalchannels);
 
     if(CONFIG_NIKON0_MODE == NIKON_MODE_MULTI_CHANNEL_MULTI_PRU)
     {

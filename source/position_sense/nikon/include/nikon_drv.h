@@ -71,15 +71,21 @@ between two cycles in memory access commands) */
 /* Maximum number of Memory Data Frames to be sent on Tx*/
 #define NUM_MDF_CMD_MAX                     3
 
-#define NIKON_RX_SAMPLE_SIZE_16MHZ          3       /* 4x over sample rate */
-#define NIKON_RX_SAMPLE_SIZE_6_67MHZ        5       /* 6x over sample rate */
+#define NIKON_RX_SAMPLE_SIZE_4X             3      /* 4x over sample rate */
+#define NIKON_RX_SAMPLE_SIZE_6X             5      /* 6x over sample rate */
 #define NIKON_RX_SAMPLE_SIZE                7       /* 8x over sample rate */
+#define NIKON_RX_ENABLE_FRACTIONAL_DIV      (1<<15) /* Enable fractional divider 1.5 for RX */
 /* Allowed frequencies in MHz for NIKON */
 #define NIKON_FREQ_2_5MHZ                   2.5     /* 2.5 MHz frequency */
 #define NIKON_FREQ_4MHZ                     4       /* 4 MHz frequency */
 #define NIKON_FREQ_6_67MHZ                  6       /* 6.67 MHz frequency */
 #define NIKON_FREQ_8MHZ                     8       /* 8 MHz frequency */
 #define NIKON_FREQ_16MHZ                    16      /* 16 MHz frequency */
+/* Allowed PRU Clock  frequencies*/
+#define PRU_CORE_CLK_FREQ_200MHZ            200
+#define PRU_CORE_CLK_FREQ_300MHZ            300
+#define PRU_UART_CLK_FREQ_160MHZ            160
+#define PRU_UART_CLK_FREQ_192MHZ            192
 /* Number of Rx data CRC bits */
 #define NIKON_POS_CRC_LEN                   8
 /* Default data length instead of garbage*/
@@ -338,6 +344,8 @@ struct nikon_priv
     /**< Core clock frequency*/
     uint32_t uart_clk_freq;
     /**< UART clock frequency*/
+    uint32_t tx_rx_clock_source;
+    /**< clock source for RX and TX*/
     uint32_t eax[NUM_ED_CH_MAX];
     /**<Encoder address from the user*/
     uint32_t fc;
