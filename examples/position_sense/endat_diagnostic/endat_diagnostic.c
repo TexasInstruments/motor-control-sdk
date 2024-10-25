@@ -70,7 +70,7 @@
 
 #define PRUICSS_SLICEx PRU_ICSSGx_PRU_SLICE
 
-#if CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU
+#if (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU)
 #include  <position_sense/endat/firmware/endat_master_multi_bin.h>
 #endif
 
@@ -101,7 +101,7 @@
 #define MRS_POS_VAL2_WORD2  0x43
 #define MRS_POS_VAL2_WORD3  0x44
 
-#ifdef SOC_AM261X
+#if defined(SOC_AM261X) || defined(SOC_AM263X)
 /* Translate the TCM local view addr to SoC view addr */
 #define CPU0_BTCM_SOCVIEW(x) (CSL_R5SS0_CORE0_TCMB_U_BASE+(x - CSL_MSS_TCMB_RAM_BASE))
 #define GPIO9_BIT_FOR_INPUT  (0x200)
@@ -138,7 +138,8 @@ TaskP_Object gTaskObject;
 #define ICSSM_PRU_CORE_CLOCK 225000000
 #define ENDAT_INPUT_CLOCK_UART_FREQUENCY 160000000
 #else
-#define ENDAT_INPUT_CLOCK_UART_FREQUENCY 192000000
+#define ENDAT_INPUT_CLOCK_UART_FREQUENCY 160000000
+#define ICSSM_PRU_CORE_CLOCK 200000000
 #endif
 
 #if RX_FIFO_CLOCK_SOURCE == 1
@@ -2212,7 +2213,8 @@ void endat_main(void *args)
     pruicss_cfg = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->cfgRegBase);
     pruicss_iep  = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->iep0RegBase);
 
-    
+#if ( SOC_AM261X || SOC_AM263X)
+    icssClk = ICSSM_PRU_CORE_CLOCK;
     /* Read the PRU-ICSS configured clock frequency. */
 #ifdef SOC_AM261X
     /* Set ICSSM1 PRU Core Clock to 225 MHz and ICSSM1 UART Clock to 160 MHz */
@@ -2220,7 +2222,6 @@ void endat_main(void *args)
     uint32_t            baseAddr;
     volatile uint32_t   *kickAddr;
 
-    icssClk = ICSSM_PRU_CORE_CLOCK;
     SOC_moduleSetClockFrequency(SOC_RcmPeripheralId_ICSSM1_UART0, SOC_RcmPeripheralClockSource_DPLL_PER_HSDIV0_CLKOUT2, 160000000);
 
     /*Unlock MSS_RCM*/
@@ -2240,7 +2241,7 @@ void endat_main(void *args)
     CSL_REG32_WR(kickAddr, KICK_LOCK_VAL);      /* KICK 0 */
     kickAddr = (volatile uint32_t *) (baseAddr + CSL_MSS_RCM_LOCK0_KICK1);
     CSL_REG32_WR(kickAddr, KICK_LOCK_VAL);      /* KICK 1 */
-
+#endif
 #else
     if(gPruIcssXHandle->hwAttrs->instance)
     {
@@ -2371,7 +2372,7 @@ void endat_main(void *args)
     /* default frequency - 8MHz for 2.2 encoders, 1MHz for 2.1 encoders */
     if(priv->cmd_set_2_2)
     {
-    #if ENDAT_INPUT_CLOCK_UART_FREQUENCY  == 160000000
+    #if (ENDAT_INPUT_CLOCK_UART_FREQUENCY == 160000000) || (ENDAT_INPUT_CLOCK_FREQUENCY == 200000000)
         cmd_supplement.frequency = 5 * 1000 * 1000;
     #else
         cmd_supplement.frequency = 8 * 1000 * 1000;

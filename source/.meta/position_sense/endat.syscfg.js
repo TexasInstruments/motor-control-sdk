@@ -2,11 +2,12 @@
 let common = system.getScript("/common");
 let endat_module_name = "/position_sense/endat";
 let device = common.getDeviceName();
+let is_am26x_soc = (device === "am263x-cc" || device === "am261x-lp") ? true : false;
+let is_am263x_soc = (device === "am263x-cc") ? true : false;
 let is_am261x_soc = (device === "am261x-lp") ? true : false;
-let hdsl_endat_pins = (is_am261x_soc) ? system.getScript("/position_sense/endat/am26x_pins.js") : system.getScript("/position_sense/hdsl_endat_pins.js");
+let hdsl_endat_pins = (is_am26x_soc) ? system.getScript("/position_sense/endat/am26x_pins.js") : system.getScript("/position_sense/hdsl_endat_pins.js");
 
 function onValidate(inst, validation) {
-
     for (let instance_index in inst.$module.$instances)
     {
         let instance = inst.$module.$instances[instance_index];
@@ -21,24 +22,35 @@ function onValidate(inst, validation) {
         }
 
         /* validation for booster pack */
-        if((device!="am243x-lp" && device!="am261x-lp")&&(instance.Booster_Pack))
+        if((device!="am243x-lp" && device != "am263x-cc" && device!="am261x-lp")&&(instance.Booster_Pack))
         {
             validation.logError("Select only when using Booster Pack with LP",inst,"Booster_Pack");
         }
-
-        if(is_am261x_soc)
+        if(is_am26x_soc)
         {
-            
-            if((instance.Channel_2 || instance.Channel_1)&&(instance.Booster_Pack))
+            if(is_am263x_soc)
             {
-                validation.logError("Channel1 and Channel2 are not supported on Booster Pack",inst,"Booster_Pack");
+                if(instance.PRU_Slice == "PRU0" && instance.Channel_2)
+                {
+                    validation.logWarning("Channel2 TX EN signal is not pinned out at the device level", inst, "Channel_2");
+                }
+                
+                if((instance.Channel_2 || instance.Channel_0)&&(instance.Booster_Pack))
+                {
+                    validation.logError("Channel0 and Channel2 are not supported on Booster Pack",inst,"Booster_Pack");
+                }
+            }
+            if(is_am261x_soc)
+            {
+                
+                if((instance.Channel_2 || instance.Channel_1)&&(instance.Booster_Pack))
+                {
+                    validation.logError("Channel1 and Channel2 are not supported on Booster Pack",inst,"Booster_Pack");
+                }
             }
         }
     }
-
 }
-
-
 
 let endat_module = {
     displayName: "EnDat Position Encoder",
@@ -56,7 +68,7 @@ let endat_module = {
         {
             name: "instance",
             displayName: "Instance",
-            default: (is_am261x_soc) ? "ICSSM1"  : "ICSSG0",
+            default: (is_am261x_soc) ? "ICSSM1" : ((is_am263x_soc) ? "ICSSM" : "ICSSG0"),
             options: (is_am261x_soc) ?
                         [
                             {
@@ -67,6 +79,14 @@ let endat_module = {
                             }
                         ]
                         :
+                        ((is_am263x_soc) ?
+                        [
+                            {
+                            name: "ICSSM",
+                            displayName:"ICSSM0"
+                            }
+                        ]
+                        :
                         [
                             {
                                 name: "ICSSG0",
@@ -74,7 +94,7 @@ let endat_module = {
                             {
                                 name: "ICSSG1",
                             }
-                        ]
+                        ])
         },
         {
             name: "Rx_Clk_Source",
@@ -144,7 +164,7 @@ let endat_module = {
             name: "PRU_Slice",
             displayName: "Select PRU Slice",
             description: "ICSSM PRU Slice",
-            hidden :(is_am261x_soc) ? false : true,
+            hidden :(is_am26x_soc) ? false : true,
             default: "PRU1",
             options: [
                 {
@@ -176,7 +196,7 @@ let endat_module = {
 function moduleInstances(instance){
     let modInstances = new Array();
     let BoosterPack = instance["Booster_Pack"];
-    if(device == "am243x-lp" || is_am261x_soc)
+    if((device == "am243x-lp") || is_am26x_soc)
     {
         if(BoosterPack)
         {
@@ -202,21 +222,40 @@ function moduleInstances(instance){
             });
            }
         }
+        if(is_am263x_soc)
+        {
+            modInstances.push({
+                name: "PRU_MUX_SEL_GPIO64",
+                displayName: "Select line for PRU MUX",
+                moduleName: "/drivers/gpio/gpio",
+                requiredArgs: {
+                    pinDir: "OUTPUT",
+                    defaultValue: "1",
+
+                },
+            });
+            modInstances.push({
+                name: "MUX_EN_GPIO58",
+                displayName: "MUX Enable Pin",
+                moduleName: "/drivers/gpio/gpio",
+                requiredArgs: {
+                    pinDir: "OUTPUT",
+                    defaultValue: "1",
+                },
+            });
+        }
     }
     return (modInstances);
 }
 
 function sharedModuleInstances(instance) {
     let modInstances = new Array();
-
+    let requiredArgs = (is_am263x_soc) ? {instance:`${instance.instance}0`} : {instance: instance.instance};
     modInstances.push({
         name: "pru",
         displayName: "PRU ICSS Configuration",
         moduleName: '/drivers/pruicss/pruicss',
-        requiredArgs: {
-            instance: instance.instance,
-
-        },
+        requiredArgs
     });
     return (modInstances);
 }

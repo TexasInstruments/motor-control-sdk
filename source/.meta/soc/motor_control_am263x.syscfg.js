@@ -3,6 +3,7 @@ let common = system.getScript("/common");
 
 const topModules_main = [
     "/position_sense/tamagawa",
+    "/position_sense/endat",
 ];
 
 const topModules_mcu = [
