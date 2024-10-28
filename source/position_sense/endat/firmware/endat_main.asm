@@ -164,7 +164,7 @@ ENDAT_MAIN:
 	LDI		R0.w2,	959 ; TX_CLK: 200 KHz
 	LDI		R1.w0,	10000 ; Enable receiver after 2 clocks => 2us
 	; Initialize ENDAT clocks
-	CALL	FN_SET_TX_CLK
+    CALL	FN_SET_TX_CLK
 
 	; Initialize PRU0_ENDAT_CH0_CFG0/1
 	ZERO	&R0,	4
@@ -386,7 +386,9 @@ ENDAT_SKIP4_CH1:
 ENDAT_SKIP4_CH2:
     .endif
 	.endif	; ENABLE_MULTI_CHANNEL
+    
 
+    .if	$isdefed("ENDAT_FW_HW_INIT")
        ;set syn_bits of all channels for clock configuration
      .if $isdefed("ENABLE_MULTI_MAKE_RTU")
 	    LDI    R14.b0, 0x1 ; set syn_bit bit for ch0
@@ -398,6 +400,7 @@ ENDAT_SKIP4_CH2:
 	    LDI R14.b0, 0x4 ; set syn_bit bit for ch2
 	    SBCO	&R14.b0,	PRUx_DMEM,	ENDAT_CH2_CONFIG_SYN_BIT,	1
     .endif
+    .endif ;;ENDAT_FW_HW_INIT
 
 	LBCO	&R0,	PRUx_DMEM,	ENDAT_CONFIG_DELAY_12MS_OFFSET, 4
 	CALL2 	FN_DELAY_CYCLES ; Wait 12ms
@@ -405,7 +408,9 @@ ENDAT_SKIP4_CH2:
 	; Perform propagation delay compensation
 	; Create a function to support per channel delay computation
 	.if	$isdefed("ENABLE_PROPDELAY_MESUREMENT")
-
+    
+	
+	 .if	$isdefed("ENDAT_FW_HW_INIT")
      ; tx 200KHz, rx 8*12MHz
 	LDI		R0.w0,	1 ;  RX_CLK: 8*12MHz
 	LDI		R0.w2,	959 ; TX_CLK: 200 KHz
@@ -437,9 +442,10 @@ ENDAT_SKIP4_CH2:
     .else
         CALL	FN_SET_TX_CLK ;When load share mode is not used, that is single channel or multi channel using single PRU
     .endif
+	.endif ;;ENDAT_FW_HW_INIT
 
 SKIP_CLOCK_CONFIG1:
-
+      
 ;set syn_bits of all channels for delay calculation
      .if $isdefed("ENABLE_MULTI_MAKE_RTU")
 	    LDI R14.b0, 0x1 ;set  syn_bit  bit for ch0
@@ -451,6 +457,7 @@ SKIP_CLOCK_CONFIG1:
 	    LDI R14.b0, 0x4 ; set syn_bit bit for ch2
 	    SBCO	&R14.b0,	PRUx_DMEM,	ENDAT_CH2_CONFIG_SYN_BIT,	1
     .endif
+	
 
 	.if	$isdefed("ENABLE_MULTI_CHANNEL")
 
@@ -542,8 +549,9 @@ ENDAT_SKIP7_CH2:
 	.endif	; ENABLE_MULTI_CHANNEL
 	.endif	; ENABLE_PROPDELAY_MESUREMENT
 
+    .if	$isdefed("ENDAT_FW_HW_INIT")
 	LBCO	&R0,	PRUx_DMEM,	ENDAT_CONFIG_CLOCK_RX_OFFSET,           6
-        QBNE            ENDAT_SKIP_DEFAULT_CLOCK,       R0,                     0
+    QBNE            ENDAT_SKIP_DEFAULT_CLOCK,       R0,                     0
 	LDI		R0.w0,	2 ;  RX_CLK: 8*8MHz
 	LDI		R0.w2,	23 ;  TX_CLK: 8 MHz
 	LDI		R1.w0,	250 ; Enable receiver after 2 clocks => 2us
@@ -574,6 +582,7 @@ ENDAT_SKIP_DEFAULT_CLOCK:
     .else
         CALL	FN_SET_TX_CLK ;When load share mode is not used, that is single channel or multi channel using single PRU
     .endif
+    .endif ;ENDAT_FW_HW_INIT
 
 SKIP_CLOCK_CONFIG2:
 
@@ -2874,6 +2883,7 @@ FN_ECAP_INIT:
 	SBCO    &R1.w0, ICSS_ECAP, ICSS_eCAP_ECEINT, 2
 	RET
 
+   .if	$isdefed("ENDAT_FW_HW_INIT")
 ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 ; Send EnDat master clock
 ; Args:R0.w0, R0.w2, R1.w0
@@ -2895,6 +2905,8 @@ FN_SET_TX_CLK:
 	LDI     SCRATCH1.w0, ICSS_CFG_PRUx_ENDAT_CH2_CFG1+2
 	SBCO	&R1.w0,	ICSS_CFG,	SCRATCH1.w0,	2
 	RET
+    .endif  ;;ENDAT_FW_HW_INIT
+
 
 	.if	$isdefed("ENABLE_PROPDELAY_MESUREMENT")
 ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;

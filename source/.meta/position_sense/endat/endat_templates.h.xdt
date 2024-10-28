@@ -67,6 +67,9 @@
 #define  PRU_ICSSGx_PRU_SLICE            `Slice`
 #define  PRUICSSx                          (`icssInst`)
 
+#define RX_FIFO_CLOCK_SOURCE             `instance.Rx_Clk_Source`
+#define TX_FIFO_CLOCK_SOURCE             `instance.Tx_Clk_Source`
+
 % }
 
 
