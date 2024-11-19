@@ -1,6 +1,6 @@
 let path = require('path');
 
-let device = "am243x";
+let device = "am261x";
 
 const files = {
     common: [

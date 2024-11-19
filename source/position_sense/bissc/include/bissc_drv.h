@@ -78,7 +78,8 @@ extern "C" {
 #define BISSC_REG_DATA_MASK                 0xFF    /* Mask for Register data */
 #define BISSC_CTRL_STOP_LEN                 2       /* Number of stop bits PS, P: stop bit for one frame, S: stop bit for sequential control communication */
 #define BISSC_RX_SAMPLE_SIZE                7       /* 8x over clock */
-#define BISSC_RX_SAMPLE_SIZE_10MHZ          3       /* 4x over clock */
+#define BISSC_RX_SAMPLE_SIZE_6X             5       /* 6x over clock */
+#define BISSC_RX_SAMPLE_SIZE_4X             3      /* 6x over clock */
 #define BISSC_POS_CRC_LEN                   6       /* Number of position data CRC bits */
 #define BISSC_EW_LEN                        2       /* Number of Error and Warning bits */
 #define BISSC_CTRL_CMD_CRC_LEN              4       /* Number of CTRL cmd CRC bits */
@@ -92,6 +93,19 @@ extern "C" {
 #define BISSC_FREQ_5MHZ                     5
 #define BISSC_FREQ_8MHZ                     8
 #define BISSC_FREQ_10MHZ                    10
+/* Middle bit indexes for Given Oversampling rates */
+#define BISSC_FIFO_BIT_IDX_8X_OS            4       /* 8x Oversampling */
+#define BISSC_FIFO_BIT_IDX_6X_OS            3       /* 6x Oversampling */
+#define BISSC_FIFO_BIT_IDX_4X_OS            2       /* 4x Oversampling */
+/* General Macro for clearing any status flag */
+#define BISSC_CLEAR_STATUS_FLAG             0x0
+/* General Macro for setting any status flag */
+#define BISSC_SET_STATUS_FLAG               0x1
+/* Allowed PRU Clock  frequencies*/
+#define PRU_CORE_CLK_FREQ_200MHZ            200
+#define PRU_CORE_CLK_FREQ_300MHZ            300
+#define PRU_UART_CLK_FREQ_160MHZ            160
+#define PRU_UART_CLK_FREQ_192MHZ            192
 
 /**
  *    \brief    Structure defining EnDat clock configuration for selected frequency
@@ -209,6 +223,8 @@ struct bissc_priv
     /**< Core clock frequency*/
     uint32_t uart_clk_freq;
     /**< UART clock frequency*/
+     uint32_t tx_rx_clock_source;
+    /**< clock source for RX and TX*/
     void *pruicss_iep;
     /**< ICSS IEP base address*/
     int64_t cmp3;
