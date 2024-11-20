@@ -16,13 +16,27 @@ function getInterfacePinList(inst)
     /*pinList.push({ pinName: "GPO2", displayName: "BISSC_CHANNEL0_TX_ENABLE", rx: false});*/
     pinList.push({ pinName: "GPO1", displayName: "BISSC_CHANNEL0_TX", rx: false});
     pinList.push({ pinName: "GPO0", displayName: "BISSC_CHANNEL0_CLK", rx: false});
-    pinList.push({ pinName: "GPI13", displayName: "BISSC_CHANNEL0_RX", rx: true});
+    if(inst.G_MUX_EN)
+    {
+        pinList.push({ pinName: "GPI13", displayName: "BISSC_CHANNEL0_RX", rx: true});
+    }
+    else
+    {
+        pinList.push({ pinName: "GPI9", displayName: "BISSC_CHANNEL0_RX", rx: true});
+    }
 
     /* BISSC_CHANNEL1_TX_ENABLE - is configured as soc gpio and kept low forever */
     /*pinList.push({ pinName: "GPO5", displayName: "BISSC_CHANNEL1_TX_ENABLE", rx: false});*/
     pinList.push({ pinName: "GPO4", displayName: "BISSC_CHANNEL1_TX", rx: false});
     pinList.push({ pinName: "GPO3", displayName: "BISSC_CHANNEL1_CLK", rx: false});
-    pinList.push({ pinName: "GPI14", displayName: "BISSC_CHANNEL1_RX", rx: true});
+    if(inst.G_MUX_EN)
+    {
+        pinList.push({ pinName: "GPI14", displayName: "BISSC_CHANNEL1_RX", rx: true});
+    }
+    else
+    {
+        pinList.push({ pinName: "GPI10", displayName: "BISSC_CHANNEL1_RX", rx: true});
+    }
 
     /* BISSC_CHANNEL2_TX_ENABLE - is configured as soc gpio and kept low forever */
     /*pinList.push({ pinName: "GPO8", displayName: "BISSC_CHANNEL2_TX_ENABLE", rx: false});*/
@@ -46,21 +60,21 @@ function pinmuxRequirements(inst) {
         pinmux.setConfigurableDefault( pinResource, "rx", pin.rx );
 
         if(inst["channel_0"]==true){
-            if( (pin.pinName == "GPO1") || (pin.pinName == "GPO0") || (pin.pinName == "GPI13")){
+            if( (pin.pinName == "GPO1") || (pin.pinName == "GPO0") || (pin.pinName == "GPI13") || (pin.pinName == "GPI9")){
                  pinResource.used = true;
             }
         }else{
-            if( (pin.pinName == "GPO1") || (pin.pinName == "GPO0") || (pin.pinName == "GPI13")){
+            if( (pin.pinName == "GPO1") || (pin.pinName == "GPO0") || (pin.pinName == "GPI13") || (pin.pinName == "GPI9") ){
                 pinResource.used = false;
             }    
         }
  
         if(inst["channel_1"]==true){
-             if( (pin.pinName == "GPO4") || (pin.pinName == "GPO3") || (pin.pinName == "GPI14")){
+             if( (pin.pinName == "GPO4") || (pin.pinName == "GPO3") || (pin.pinName == "GPI14") || (pin.pinName == "GPI10")){
                   pinResource.used = true;
              }
         }else{
-            if( (pin.pinName == "GPO4") || (pin.pinName == "GPO3") || (pin.pinName == "GPI14")){
+            if( (pin.pinName == "GPO4") || (pin.pinName == "GPO3") || (pin.pinName == "GPI14") || (pin.pinName == "GPI10")){
                 pinResource.used = false;
             }    
         }

@@ -225,7 +225,7 @@ static void endat_pruicss_init(void)
 
     gPruIcssXHandle = PRUICSS_open(CONFIG_PRU_ICSS0);
      /* Configure g_mux_en to 1 in ICSSG_SA_MX_REG Register. */
-#ifndef PRUICSSM
+#ifdef CONFIG_ENDAT0_G_MUX_EN
     PRUICSS_setSaMuxMode(gPruIcssXHandle, PRUICSS_SA_MUX_MODE_SD_ENDAT);
 #endif
     /* Set in constant table C30 to shared RAM 0x40300000 */

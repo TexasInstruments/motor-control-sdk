@@ -94,8 +94,10 @@ static void nikon_pruicss_init(void)
     int32_t size;
     gPruIcssXHandle = PRUICSS_open(CONFIG_PRU_ICSS0);
      /* Configure g_mux_en to 1 in ICSSG_SA_MX_REG Register. */
+#ifdef CONFIG_NIKON0_G_MUX_EN
     status = PRUICSS_setSaMuxMode(gPruIcssXHandle, PRUICSS_SA_MUX_MODE_SD_ENDAT);
     DebugP_assert(SystemP_SUCCESS == status);
+#endif
     /* clear ICSS0 PRUx data RAM */
     size = PRUICSS_initMemory(gPruIcssXHandle, PRUICSS_DATARAM(PRUICSS_PRUx));
     DebugP_assert(size);

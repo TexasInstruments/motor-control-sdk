@@ -38,6 +38,10 @@
 #define `instance.$name`_CLK_FROM_IEP     `instance["SDFM_CLK_GEN"] == 3 ? 1 : 0`
 #define `instance.$name`_CLK_FROM_ECAP    `instance["SDFM_CLK_GEN"] == 2 ? 1 : 0`
 #define `instance.$name`_CLK_FROM_GPIO1   `instance["SDFM_CLK_GEN"] == 1 ? 1 : 0`
+%if ((instance.instance === "ICSSG1" || instance.instance === "ICSSG0") && (instance.G_MUX_EN))
+%{
+#define `instance.$name`_G_MUX_EN          `instance["G_MUX_EN"] & 1`
+%}
 
    %for(let channel = 0; channel < 9; channel++)
    %{     

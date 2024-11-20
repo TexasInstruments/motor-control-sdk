@@ -54,6 +54,13 @@ let nikon_module = {
             ],
         },
         {
+            name: "G_MUX_EN",
+            displayName: "Enable G MUX ",
+            description: "Enable G mux in ICSSG_SA_MX_REG Register, Few 3 channel Peripheral pins get remapped to enable different usecase",
+            default: false,
+            hidden:  (device == "am243x-lp" ||device == "am243x-evm" ||device == "am64x-evm") ? false : true,
+        },
+        {
             name: "channel_0",
             displayName: "Select Channel 0",
             description: "Channel 0 Selection ",

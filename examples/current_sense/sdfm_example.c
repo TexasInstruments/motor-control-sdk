@@ -178,8 +178,9 @@ int32_t initIcss(
     }
 
     /* Set ICSS pin mux */
+#ifdef CONFIG_SDFM0_G_MUX_EN
     PRUICSS_setSaMuxMode(pruIcssHandle, saMuxMode);
-
+#endif
     /* Initialize ICSS INTC */
     status = PRUICSS_intcInit(pruIcssHandle, &gPruicssIntcInitdata);
     if (status != SystemP_SUCCESS) {

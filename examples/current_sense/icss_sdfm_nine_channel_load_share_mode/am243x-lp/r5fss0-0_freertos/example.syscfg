@@ -1,8 +1,9 @@
 /**
  * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
  * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
- * @cliArgs --device "AM243x_ALX_beta" --package "ALX" --part "ALX" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@09.01.00"
- * @versions {"tool":"1.19.0+3426"}
+ * @cliArgs --device "AM243x_ALX_beta" --part "ALX" --package "ALX" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@07.03.01"
+ * @v2CliArgs --device "AM2434" --package "FCCSP (ALX)" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@07.03.01"
+ * @versions {"tool":"1.21.0+3721"}
  */
 
 /**
@@ -72,6 +73,7 @@ sdfm1.Ch5_EPWM_SYNC     = true;
 sdfm1.Ch6_EPWM_SYNC     = true;
 sdfm1.Ch7_EPWM_SYNC     = true;
 sdfm1.Ch8_EPWM_SYNC     = true;
+sdfm1.G_MUX_EN          = true;
 
 epwm1.$name            = "CONFIG_EPWM0";
 epwm1.EPWM.$assign     = "EHRPWM0";
