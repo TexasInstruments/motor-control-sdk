@@ -79,9 +79,9 @@ clean:
 	-@echo ' '
 
 post-build:
-		-$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakeTXPRU -o endat_master_multi_txpru0_bin.h  endat_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-txpru0_fw_ti-pru-cgt.out
-		-$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_master_multi_txpru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/multi_channel_load_share/endat_master_multi_txpru0_bin.h
-		-$(RM)  endat_master_multi_txpru0_bin.h
+		-$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakeTXPRU -o endat_controller_multi_txpru0_bin.h  endat_peripheral_interface_multi_ch_load_share_am243x-evm_icssg0-txpru0_fw_ti-pru-cgt.out
+		-$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_controller_multi_txpru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/multi_channel_load_share/endat_controller_multi_txpru0_bin.h
+		-$(RM)  endat_controller_multi_txpru0_bin.h
 	-@echo ' '
 
 .PHONY: all clean

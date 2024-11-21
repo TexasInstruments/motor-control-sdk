@@ -107,16 +107,16 @@ TaskP_Object gTaskObject;
 
 #if ((CONFIG_TAMAGAWA0_CHANNEL0 + CONFIG_TAMAGAWA0_CHANNEL1 + CONFIG_TAMAGAWA0_CHANNEL2) == 1)
 #if PRUICSS_PRUx == 1
-#include <tamagawa_master_single_channel_pru1_bin.h>
+#include <tamagawa_controller_single_channel_pru1_bin.h>
 #else
-#include <tamagawa_master_single_channel_pru0_bin.h>
+#include <tamagawa_controller_single_channel_pru0_bin.h>
 #endif
 #endif
 #if ((CONFIG_TAMAGAWA0_CHANNEL0 + CONFIG_TAMAGAWA0_CHANNEL1 + CONFIG_TAMAGAWA0_CHANNEL2) > 1)
 #if PRUICSS_PRUx == 1
-#include <tamagawa_master_multi_channel_pru1_bin.h>
+#include <tamagawa_controller_multi_channel_pru1_bin.h>
 #else
-#include <tamagawa_master_multi_channel_pru0_bin.h>
+#include <tamagawa_controller_multi_channel_pru0_bin.h>
 #endif
 #endif
 

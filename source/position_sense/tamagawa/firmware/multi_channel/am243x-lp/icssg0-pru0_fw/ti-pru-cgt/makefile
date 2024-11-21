@@ -78,9 +78,9 @@ clean:
 	-@echo ' '
 
 post-build:
-		-$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=TamagawaFirmware -o tamagawa_master_multi_channel_pru0_bin.h tamagawa_multi_channel_am243x-lp_icssg0-pru0_fw_ti-pru-cgt.out
-		-$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h tamagawa_master_multi_channel_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/multi_channel/tamagawa_master_multi_channel_pru0_bin.h
-		-$(RM) tamagawa_master_multi_channel_pru0_bin.h
+		-$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=TamagawaFirmware -o tamagawa_controller_multi_channel_pru0_bin.h tamagawa_multi_channel_am243x-lp_icssg0-pru0_fw_ti-pru-cgt.out
+		-$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h tamagawa_controller_multi_channel_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/multi_channel/tamagawa_controller_multi_channel_pru0_bin.h
+		-$(RM) tamagawa_controller_multi_channel_pru0_bin.h
 	-@echo ' '
 
 .PHONY: all clean

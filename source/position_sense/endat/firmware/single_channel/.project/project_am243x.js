@@ -66,14 +66,14 @@ function getmakefilePruPostBuildSteps(cpu, board)
     switch(cpu)
     {
         case "icssg0-pru1":
-            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmware -o endat_master_pru1_bin.h endat_peripheral_interface_single_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
-            "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_master_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/single_channel/endat_master_pru1_bin.h;"+ 
-            "$(RM) endat_master_pru1_bin.h;"]
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmware -o endat_controller_pru1_bin.h endat_peripheral_interface_single_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_controller_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/single_channel/endat_controller_pru1_bin.h;"+ 
+            "$(RM) endat_controller_pru1_bin.h;"]
             break;
         case "icssg0-pru0":
-            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmware -o endat_master_pru0_bin.h endat_peripheral_interface_single_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
-            "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_master_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/single_channel/endat_master_pru0_bin.h;"+ 
-            "$(RM) endat_master_pru0_bin.h;"]
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmware -o endat_controller_pru0_bin.h endat_peripheral_interface_single_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_controller_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/single_channel/endat_controller_pru0_bin.h;"+ 
+            "$(RM) endat_controller_pru0_bin.h;"]
             break;
     }
     return postBuildSteps
@@ -85,18 +85,18 @@ function getccsPruPostBuildSteps(cpu, board)
     switch(cpu)
     {
         case "icssg0-pru1":
-            postBuildSteps =["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmware -o endat_master_pru1_bin.h endat_peripheral_interface_single_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
-            "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_master_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/single_channel/endat_master_pru1_bin.h;"+ 
-            "if ${CCS_HOST_OS} == linux rm endat_master_pru1_bin.h;"+
-            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_master_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/single_channel/endat_master_pru1_bin.h;"+ 
-            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm endat_master_pru1_bin.h;"]
+            postBuildSteps =["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmware -o endat_controller_pru1_bin.h endat_peripheral_interface_single_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_controller_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/single_channel/endat_controller_pru1_bin.h;"+ 
+            "if ${CCS_HOST_OS} == linux rm endat_controller_pru1_bin.h;"+
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_controller_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/single_channel/endat_controller_pru1_bin.h;"+ 
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm endat_controller_pru1_bin.h;"]
             break;
         case "icssg0-pru0":
-            postBuildSteps =["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmware -o endat_master_pru0_bin.h endat_peripheral_interface_single_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
-            "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_master_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/single_channel/endat_master_pru0_bin.h;"+ 
-            "if ${CCS_HOST_OS} == linux rm endat_master_pru0_bin.h;"+
-            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_master_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/single_channel/endat_master_pru0_bin.h;"+ 
-            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm endat_master_pru0_bin.h;"]
+            postBuildSteps =["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmware -o endat_controller_pru0_bin.h endat_peripheral_interface_single_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_controller_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/single_channel/endat_controller_pru0_bin.h;"+ 
+            "if ${CCS_HOST_OS} == linux rm endat_controller_pru0_bin.h;"+
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_controller_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/single_channel/endat_controller_pru0_bin.h;"+ 
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm endat_controller_pru0_bin.h;"]
             break;
     }
     return postBuildSteps
