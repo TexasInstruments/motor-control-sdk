@@ -41,27 +41,52 @@ const lflags = {
 
 const buildOptionCombos = [
     { device: device, cpu: "icssm-pru0", cgt: "ti-pru-cgt", board: "am263x-lp", os: "fw"},
+    { device: device, cpu: "icssm-pru1", cgt: "ti-pru-cgt", board: "am263x-lp", os: "fw"},
 ];
 
 
 function getmakefilePruPostBuildSteps(cpu, board)
 {
-    return  [
-        "$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=TamagawaFirmware -o tamagawa_master_single_channel_bin.h tamagawa_single_channel_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
-        "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h tamagawa_master_single_channel_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/tamagawa_master_single_channel_bin.h;"+ 
-        "$(RM) tamagawa_master_single_channel_bin.h;"
-    ];
+    let postBuildSteps
+
+    switch(cpu)
+    {
+        case "icssm-pru0":
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=TamagawaFirmware -o tamagawa_controller_single_channel_pru0_bin.h tamagawa_single_channel_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h tamagawa_controller_single_channel_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/single_channel/tamagawa_controller_single_channel_pru0_bin.h;"+ 
+            "$(RM) tamagawa_controller_single_channel_pru0_bin.h;"]
+            break;
+        case "icssm-pru1":
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=TamagawaFirmware -o tamagawa_controller_single_channel_pru1_bin.h tamagawa_single_channel_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h tamagawa_controller_single_channel_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/single_channel/tamagawa_controller_single_channel_pru1_bin.h;"+ 
+            "$(RM) tamagawa_controller_single_channel_pru1_bin.h;"]
+            break;
+    }
+    return postBuildSteps
 }
 
 function getccsPruPostBuildSteps(cpu, board)
 {
-    return  [
-        "$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=TamagawaFirmware -o tamagawa_master_single_channel_bin.h tamagawa_single_channel_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
-        "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h tamagawa_master_single_channel_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/tamagawa_master_single_channel_bin.h;"+ 
-        "if ${CCS_HOST_OS} == linux rm tamagawa_master_single_channel_bin.h;"+
-        "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h tamagawa_master_single_channel_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/tamagawa_master_single_channel_bin.h;"+ 
-        "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm tamagawa_master_single_channel_bin.h;"
-    ];
+    let postBuildSteps
+
+    switch(cpu)
+    {
+        case "icssm-pru0":
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=TamagawaFirmware -o tamagawa_controller_single_channel_pru0_bin.h tamagawa_single_channel_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h tamagawa_controller_single_channel_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/single_channel/tamagawa_controller_single_channel_pru0_bin.h;"+ 
+            "if ${CCS_HOST_OS} == linux rm tamagawa_controller_single_channel_pru0_bin.h;"+
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h tamagawa_controller_single_channel_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/single_channel/tamagawa_controller_single_channel_pru0_bin.h;"+ 
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm tamagawa_controller_single_channel_pru0_bin.h;"]
+            break;
+        case "icssm-pru1":
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=TamagawaFirmware -o tamagawa_controller_single_channel_pru1_bin.h tamagawa_single_channel_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h tamagawa_controller_single_channel_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/single_channel/tamagawa_controller_single_channel_pru1_bin.h;"+ 
+            "if ${CCS_HOST_OS} == linux rm tamagawa_controller_single_channel_pru1_bin.h;"+
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h tamagawa_controller_single_channel_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/single_channel/tamagawa_controller_single_channel_pru1_bin.h;"+ 
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm tamagawa_controller_single_channel_pru1_bin.h;"]
+            break;
+    }
+    return postBuildSteps
 }
 
 function getComponentProperty() {
