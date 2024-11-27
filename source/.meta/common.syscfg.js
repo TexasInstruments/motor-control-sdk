@@ -24,6 +24,8 @@ function getSelfSysCfgCoreName() {
             return "m4fss0-0";
         case "am65x":
             return system.context;
+        case "f29h85x":
+            return system.context;
     }
 };
 
@@ -47,6 +49,37 @@ function getNodePath() {
     return system.getNodePath()
 }
 
+function getSocPackage() {
+    return system.deviceData.package;
+}
+
+// Added in common file to simplify access from other modules.
+// Will be removed once clock tree support is added for AM261x.
+function getDefaultR5Freq()
+{
+    let defaultVal = "400MHz";
+    if(getSocName() == "am261x" && getSocPackage() == "ZFG")
+    {
+        defaultVal = "500MHz";
+    }
+    return defaultVal;
+}
+
+function getR5Freq()
+{
+    let r5Freq = "";
+    let module = system.modules['/kernel/dpl/clock'];
+
+    if(module && getSocName() == "am261x")
+    {
+        let instance = module.$static;
+        let config = module.getInstanceConfig(instance);
+        r5Freq = config.r5ClockFreq;
+    }
+
+    return r5Freq;
+}
+
 function getSocName() {
     if(system.deviceData.device == "AM64x")
         return "am64x";
@@ -66,6 +99,8 @@ function getSocName() {
         return "awr294x";
     if(system.deviceData.device == "AM62x")
         return "am62x";
+    if(system.deviceData.device == "F29H85x")
+        return "f29h85x";
 };
 
 function getDeviceName() {
@@ -400,6 +435,9 @@ exports = {
     getSelfSysCfgCoreName,
     isSciClientSupported,
     getSocName,
+    getSocPackage,
+    getR5Freq,
+    getDefaultR5Freq,
     getDeviceName,
     camelSentence,
     getStaticModuleForCore,

@@ -7,6 +7,7 @@
         "../source",
         "../ind_comms_sdk/source",
         "../mcu_plus_sdk/source/sysconfig",
+        "../mcu_plus_sdk/source/networking/enet/core/sysconfig",
     ],
     "components": [
         "/motor_control",
@@ -18,9 +19,10 @@
         "/networking/networking",
         "/security/security",
         "/usb/usb",
+        "/pru_io/pru_io",
         "/xbar/xbar",
         "/memory_configurator/components",
-        "/optiflash/optiflash"
+        "/optiflash/optiflash",
 
     ],
     "devices": [
