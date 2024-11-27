@@ -81,6 +81,10 @@
 #include <position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch0_sync_mode_bin.h>
 #include <position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch1_sync_mode_bin.h>
 #include <position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch2_sync_mode_bin.h>
+/* Divide factor for normal clock (default value for 300 MHz=31) */
+#define DIV_FACTOR_NORMAL 31
+/* Divide factor for oversampled clock (default value for 300 MHz=3) */
+#define DIV_FACTOR_OVERSAMPLED 3
 #endif
 
 /* ========================================================================== */
@@ -93,11 +97,6 @@
 
 #define TXPRU_IRAM_SIZE             (6*1024) /*6 kB*/
 #define SYNC_PULSE_WAIT_CLK_CYCLES  5505
-
-/* Divide factor for normal clock (default value for 300 MHz=31) */
-#define DIV_FACTOR_NORMAL 31
-/* Divide factor for oversampled clock (default value for 300 MHz=3) */
-#define DIV_FACTOR_OVERSAMPLED 3
 
 #ifdef HDSL_AM64xE1_TRANSCEIVER
 #include <board/ioexp/ioexp_tca6424.h>
