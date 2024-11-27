@@ -48,9 +48,17 @@ static HwiP_Object gIcssgEncoderHwiObject0;  /* ICSSG Tamagawa PRU FW HWI */
 
 /* ICSSG Interrupt settings */
 #if (SOC_AM261X || SOC_AM263X)
-#define ICSSG_PRU_TAMAGAWA_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_0 )
+#if (PRUICSSx == 1)
+#define ICSS_PRU_TAMAGAWA_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_0 )
 #else
-#define ICSSG_PRU_TAMAGAWA_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_0 )
+#define ICSS_PRU_TAMAGAWA_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_0 )
+#endif
+#else
+#if (PRUICSSx == 1)
+#define ICSS_PRU_TAMAGAWA_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_0 )
+#else
+#define ICSS_PRU_TAMAGAWA_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_0 )
+#endif
 #endif
 uint32_t gPrutamagawaIrqCnt0;
 
@@ -59,11 +67,8 @@ void *gPruss_iep;
 
 PRUICSS_Handle gPruIcssXHandle;
 
-/*am261x does not support periodic mode*/
-#if(!SOC_AM261X) 
 /* ICSS INTC configuration */
-extern PRUICSS_IntcInitData icss0_intc_initdata;
-#endif
+extern PRUICSS_IntcInitData icss_intc_initdata;
 
 void tamagawa_config_iep(struct tamagawa_periodic_interface *tamagawa_periodic_interface)
 {
@@ -130,7 +135,7 @@ void tamagawa_interrupt_config(struct tamagawa_periodic_interface *tamagawa_peri
     HwiP_Params hwiPrms;
     /* Register & enable ICSSG tamagawa PRU FW interrupt */
     HwiP_Params_init(&hwiPrms);
-    hwiPrms.intNum      = ICSSG_PRU_TAMAGAWA_INT_NUM;
+    hwiPrms.intNum      = ICSS_PRU_TAMAGAWA_INT_NUM;
     hwiPrms.callback    = &prutamagawaIrqHandler0;
     hwiPrms.args        = 0;
     hwiPrms.isPulse     = FALSE;
@@ -150,7 +155,7 @@ uint32_t  tamagawa_config_periodic_mode(struct tamagawa_periodic_interface *tama
     /*am261x does not support periodic mode*/
 #if(!SOC_AM261X) 
     int32_t  status;
-    status = PRUICSS_intcInit(gPruIcssXHandle, &icss0_intc_initdata);
+    status = PRUICSS_intcInit(gPruIcssXHandle, &icss_intc_initdata);
     if (status != SystemP_SUCCESS)
     {
         return 0;
