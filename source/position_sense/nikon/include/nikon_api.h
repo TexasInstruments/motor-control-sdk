@@ -85,6 +85,7 @@ void nikon_config_clock(struct nikon_priv *priv,
  *  \param[in]  frequency            Input frequency
  *  \param[in]  core_clk_freq        Core clock frequency
  *  \param[in]  uart_clk_freq        Uart clock frequency
+ *  \param[in]  tx_rx_clock_source   Clock Source Selection
  *  \param[in]  mask                 Mask for the selected channels
  *  \param[in]  totalch              Total number of selected channels
  *  \retval     priv            pointer to struct nikon_priv instance
@@ -95,6 +96,7 @@ struct nikon_priv *nikon_init(PRUICSS_Handle gPruIcssXHandle,
                               float_t frequency,
                               uint32_t core_clk_freq,
                               uint32_t uart_clk_freq,
+                              uint32_t tx_rx_clock_source,
                               uint32_t mask,
                               uint32_t totalch);
 

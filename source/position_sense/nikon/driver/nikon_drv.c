@@ -34,6 +34,14 @@
 #include <kernel/dpl/ClockP.h>
 #include <drivers/hw_include/tistdtypes.h>
 #include <drivers/hw_include/hw_types.h>
+#if defined(SOC_AM243X)
+#include <source/include/g_v0/cslr_icss_common.h>
+#endif
+#if defined(SOC_AM261X) || defined(SOC_AM263X)
+#include <source/include/m_v0/cslr_icss_common.h>
+#endif
+
+
 static struct nikon_priv nikon_priv;
 
 void nikon_command_send(struct nikon_priv *priv)
@@ -303,15 +311,15 @@ static void nikon_config_clr_cfg0(struct nikon_priv *priv)
     void *pruicss_cfg = priv->pruicss_cfg;
     if(priv->pruicss_slicex)
     {
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU1CH0CFG0REGISTER, 0);
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU1CH1CFG0REGISTER, 0);
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU1CH2CFG0REGISTER, 0);
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG0_REG , 0);
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH1_CFG0_REG , 0);
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH2_CFG0_REG , 0);
     }
     else
     {
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU0CH0CFG0REGISTER, 0);
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU0CH1CFG0REGISTER, 0);
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU0CH2CFG0REGISTER, 0);
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG0_REG , 0);
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH1_CFG0_REG , 0);
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH2_CFG0_REG , 0);
     }
 }
 
@@ -322,65 +330,94 @@ static void nikon_config_clock(struct nikon_priv *priv,
     /* Set PRU1_ED_RX_SB_POL polarity bit to 0 for nikon, required for ICSSG (don't care for ICSSM) */
     if(priv->pruicss_slicex)
     {
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU1RXCFGREGISTER, 
-            ((clk_cfg->rx_div << CSL_ICSSCFG_EDPRU1RXCFGREGISTER_PRU1_ED_RX_DIV_FACTOR_SHIFT) |
-            (clk_cfg->is_core_clk << CSL_ICSSCFG_EDPRU1RXCFGREGISTER_PRU1_ED_RX_CLK_SEL_SHIFT) | (clk_cfg->rx_div_attr)));
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER, 
-            clk_cfg->tx_div << CSL_ICSSCFG_EDPRU1TXCFGREGISTER_PRU1_ED_TX_DIV_FACTOR_SHIFT |
-            (clk_cfg->is_core_clk << CSL_ICSSCFG_EDPRU1TXCFGREGISTER_PRU1_ED_TX_CLK_SEL_SHIFT));
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG,
+            ((clk_cfg->rx_div << CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_DIV_FACTOR_SHIFT) |
+            (clk_cfg->is_core_clk << CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_CLK_SEL_SHIFT) | (clk_cfg->rx_div_attr)));
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG,
+            clk_cfg->tx_div << CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG_PRU1_ED_TX_DIV_FACTOR_SHIFT |
+            (clk_cfg->is_core_clk << CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG_PRU1_ED_TX_CLK_SEL_SHIFT));
     }
     else
     {
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU0RXCFGREGISTER, 
-            ((clk_cfg->rx_div << CSL_ICSSCFG_EDPRU0RXCFGREGISTER_PRU0_ED_RX_DIV_FACTOR_SHIFT) |
-            (clk_cfg->is_core_clk << CSL_ICSSCFG_EDPRU0RXCFGREGISTER_PRU0_ED_RX_CLK_SEL_SHIFT) | (clk_cfg->rx_div_attr)));
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU0TXCFGREGISTER, 
-            clk_cfg->tx_div << CSL_ICSSCFG_EDPRU0TXCFGREGISTER_PRU0_ED_TX_DIV_FACTOR_SHIFT |
-            (clk_cfg->is_core_clk << CSL_ICSSCFG_EDPRU0TXCFGREGISTER_PRU0_ED_TX_CLK_SEL_SHIFT));
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG,
+            ((clk_cfg->rx_div << CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_DIV_FACTOR_SHIFT) |
+            (clk_cfg->is_core_clk << CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_CLK_SEL_SHIFT) | (clk_cfg->rx_div_attr)));
+        HW_WR_REG32((uint8_t *)pruicss_cfg +  CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG,
+            clk_cfg->tx_div << CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG_PRU0_ED_TX_DIV_FACTOR_SHIFT |
+            (clk_cfg->is_core_clk <<  CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG_PRU0_ED_TX_CLK_SEL_SHIFT));
     }
 }
 
 static int32_t nikon_calc_clock(struct nikon_priv *priv, struct nikon_clk_cfg *clk_cfg)
 {
     double freq = priv->baud_rate;
+    struct nikon_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
+    freq = freq * 1000 * 1000;
     clk_cfg->rx_div_attr = NIKON_RX_SAMPLE_SIZE;
-    if(freq == NIKON_FREQ_2_5MHZ)
+    pruicss_xchg->fifo_bit_idx = NIKON_FIFO_BIT_IDX_8X_OS; 
+    if(priv->tx_rx_clock_source == NIKON_SET_STATUS_FLAG)
     {
-        freq = freq * 1000 * 1000;
         clk_cfg->tx_div = (priv->core_clk_freq / freq) - 1;
-        clk_cfg->rx_div = (priv->core_clk_freq / (freq * 8)) - 1;
+        clk_cfg->rx_div = (priv->core_clk_freq / (freq * (NIKON_RX_SAMPLE_SIZE + 1))) - 1;
         clk_cfg->is_core_clk = NIKON_SET_STATUS_FLAG;
-        priv->pruicss_xchg->fifo_bit_idx = NIKON_FIFO_BIT_IDX_8X_OS;   /* Middle bit for 8x oversampling */
-        priv->pruicss_xchg->multi_transmission_delay = ((freq*3)/1000000);
+        if(priv->core_clk_freq == PRU_CORE_CLK_FREQ_200MHZ * 1000 * 1000)
+        {
+            if(((uint8_t)freq % NIKON_FREQ_6_67MHZ * 1000 *1000) < 1)
+            {
+                clk_cfg->rx_div_attr = NIKON_RX_SAMPLE_SIZE_6X;
+                clk_cfg->rx_div = (priv->core_clk_freq / (freq * (NIKON_RX_SAMPLE_SIZE_6X + 1))) - 1;
+                pruicss_xchg->fifo_bit_idx = NIKON_FIFO_BIT_IDX_6X_OS;
+            }
+        }
+        else if(priv->core_clk_freq == PRU_CORE_CLK_FREQ_300MHZ * 1000 * 1000)
+        {
+            if(((uint8_t)freq % NIKON_FREQ_6_67MHZ * 1000 * 1000) < 1)
+            {
+                clk_cfg->rx_div_attr = NIKON_RX_SAMPLE_SIZE_6X | NIKON_RX_ENABLE_FRACTIONAL_DIV;
+                clk_cfg->rx_div = (priv->core_clk_freq / (freq * (NIKON_RX_SAMPLE_SIZE_6X + 1))) - 1;
+                pruicss_xchg->fifo_bit_idx = NIKON_FIFO_BIT_IDX_6X_OS;
+            }
+        }
     }
-    else if((freq == NIKON_FREQ_4MHZ) || (freq == NIKON_FREQ_8MHZ))
+    else
     {
-        freq = freq * 1000 * 1000;
         clk_cfg->tx_div = (priv->uart_clk_freq / freq) - 1;
-        clk_cfg->rx_div = (priv->uart_clk_freq / (freq * 8)) - 1;
+        clk_cfg->rx_div = (priv->uart_clk_freq / (freq * (NIKON_RX_SAMPLE_SIZE + 1))) - 1;
         clk_cfg->is_core_clk = NIKON_CLEAR_STATUS_FLAG;
-        priv->pruicss_xchg->fifo_bit_idx = NIKON_FIFO_BIT_IDX_8X_OS;   /* Middle bit for 8x oversampling */
-        priv->pruicss_xchg->multi_transmission_delay = (freq == NIKON_FREQ_8MHZ) ? ((freq*1.5)/1000000) : ((freq*2)/1000000);
+        if(priv->uart_clk_freq == PRU_UART_CLK_FREQ_160MHZ * 1000 * 1000)
+        {
+            if(freq == NIKON_FREQ_8MHZ * 1000 * 1000)
+            {
+                clk_cfg->rx_div_attr = NIKON_RX_SAMPLE_SIZE_4X;
+                clk_cfg->rx_div = (priv->uart_clk_freq / (freq * (NIKON_RX_SAMPLE_SIZE_4X + 1))) - 1;
+                pruicss_xchg->fifo_bit_idx = NIKON_FIFO_BIT_IDX_4X_OS;
+            }
+        }
+        else if(priv->uart_clk_freq == PRU_UART_CLK_FREQ_192MHZ * 1000 * 1000)
+        {
+            if(freq == NIKON_FREQ_16MHZ * 1000 * 1000)
+            {
+                clk_cfg->rx_div_attr = NIKON_RX_SAMPLE_SIZE | NIKON_RX_ENABLE_FRACTIONAL_DIV;
+                clk_cfg->rx_div = (priv->uart_clk_freq / (freq * (NIKON_RX_SAMPLE_SIZE + 1)* 1.5)) - 1;
+                pruicss_xchg->fifo_bit_idx = NIKON_FIFO_BIT_IDX_8X_OS;
+            }
+        }
     }
-    else if(freq == NIKON_FREQ_16MHZ)
+    if(freq == NIKON_FREQ_2_5MHZ *1000 * 1000)
     {
-        clk_cfg->rx_div_attr = NIKON_RX_SAMPLE_SIZE_16MHZ;
-        freq = freq * 1000 * 1000;
-        clk_cfg->tx_div = (priv->uart_clk_freq / freq) - 1;
-        clk_cfg->rx_div = (priv->uart_clk_freq / (freq * 4)) - 1;
-        clk_cfg->is_core_clk = NIKON_CLEAR_STATUS_FLAG;
-        priv->pruicss_xchg->fifo_bit_idx = NIKON_FIFO_BIT_IDX_4X_OS;    /* Middle bit for 4x oversampling */
-        priv->pruicss_xchg->multi_transmission_delay = ((freq*1.5)/1000000);
+       priv->pruicss_xchg->multi_transmission_delay = ((freq*3)/1000000);
+    }
+    else if(freq == NIKON_FREQ_4MHZ *1000 *1000)
+    {
+       priv->pruicss_xchg->multi_transmission_delay = ((freq*2)/1000000);
+    }
+    else if((freq == NIKON_FREQ_16MHZ * 1000 * 1000 ) || (freq == NIKON_FREQ_8MHZ * 1000 * 1000))
+    {
+       priv->pruicss_xchg->multi_transmission_delay = ((freq*1.5)/1000000);
     }
     else if(((uint8_t)freq % NIKON_FREQ_6_67MHZ) < 1)
     {
-        clk_cfg->rx_div_attr = NIKON_RX_SAMPLE_SIZE_6_67MHZ;
-        freq = freq * 1000 * 1000;
-        clk_cfg->tx_div = (priv->core_clk_freq / freq) - 1;
-        clk_cfg->rx_div = (priv->core_clk_freq / (freq * 6)) - 1;
-        clk_cfg->is_core_clk = NIKON_SET_STATUS_FLAG;
-        priv->pruicss_xchg->fifo_bit_idx = NIKON_FIFO_BIT_IDX_6X_OS;   /* Middle bit for 6x oversampling */
-        priv->pruicss_xchg->multi_transmission_delay = ((priv->core_clk_freq*2)/1000000);
+       priv->pruicss_xchg->multi_transmission_delay = ((priv->core_clk_freq*2)/1000000);
     }
     else
     {
@@ -395,15 +432,15 @@ static void nikon_enable_load_share_mode(struct nikon_priv *priv)
     uint32_t rgval;
     if(priv->pruicss_slicex)
     {
-        rgval = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER);
-        rgval |= CSL_ICSSCFG_EDPRU1TXCFGREGISTER_PRU1_ENDAT_SHARE_EN_MASK;
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER, rgval);
+        rgval = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG);
+        rgval |= CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG_PRU1_ENDAT_SHARE_EN_MASK;
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG, rgval);
     }
     else
     {
-        rgval = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU0TXCFGREGISTER);
-        rgval |= CSL_ICSSCFG_EDPRU0TXCFGREGISTER_PRU0_ENDAT_SHARE_EN_MASK;
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU0TXCFGREGISTER, rgval);
+        rgval = HW_RD_REG32((uint8_t *)pruicss_cfg +  CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG);
+        rgval |=  CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG_PRU0_ENDAT_SHARE_EN_MASK;
+        HW_WR_REG32((uint8_t *)pruicss_cfg +  CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG, rgval);
     }
 }
 
@@ -458,17 +495,17 @@ void nikon_update_clock_freq(struct nikon_priv *priv, float_t frequency)
     }
 }
 
-static void nikon_set_default_initialization(struct nikon_priv *priv, uint64_t icssgclk)
+static void nikon_set_default_initialization(struct nikon_priv *priv, uint64_t icssClk)
 {
     struct nikon_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
     int8_t pru_num;
     /* Initialize parameters to default values */
     pruicss_xchg->pos_crc_len         = NIKON_POS_CRC_LEN;
     pruicss_xchg->rx_clk_freq         = priv->baud_rate;
-    pruicss_xchg->delay_10us          = ((icssgclk*10) / 1000000);
-    pruicss_xchg->delay_300us         = ((icssgclk*300) / 1000000);
-    pruicss_xchg->delay_30ms          = ((icssgclk*3) / 100); /*((icssgclk*30000) / 1000000)*/
-    pruicss_xchg->icssg_clk           = icssgclk;
+    pruicss_xchg->delay_10us          = ((icssClk*10) / 1000000);
+    pruicss_xchg->delay_300us         = ((icssClk*300) / 1000000);
+    pruicss_xchg->delay_30ms          = ((icssClk*3) / 100); /*((icssClk*30000) / 1000000)*/
+    pruicss_xchg->icssg_clk           = icssClk;
     pruicss_xchg->valid_bit_idx       = NIKON_BASE_VALID_BIT_IDX;
     for(pru_num = 0; pru_num < NUM_ED_CH_MAX; pru_num++)
     {
@@ -477,7 +514,7 @@ static void nikon_set_default_initialization(struct nikon_priv *priv, uint64_t i
         pruicss_xchg->opmode[pru_num]              = NIKON_CONFIG_HOST_TRIGGER_MODE;
     }
     priv->is_continuous_mode          = NIKON_CLEAR_STATUS_FLAG;
-    priv->cmp3                        = ((icssgclk*100) / 1000000);   /* 100usec delay */
+    priv->cmp3                        = ((icssClk*100) / 1000000);   /* 100usec delay */
     priv->sync_code                   = 2;                  /*Syn code for Rx is 010*/
     priv->fc                          = 0;                  /*Frame code for CDF is 00*/
 }
@@ -520,6 +557,7 @@ struct nikon_priv *nikon_init(PRUICSS_Handle gPruIcssXHandle,
                               float_t frequency,
                               uint32_t core_clk_freq,
                               uint32_t uart_clk_freq,
+                              uint32_t tx_rx_clock_source,
                               uint32_t mask,
                               uint32_t totalch)
 {
@@ -543,6 +581,7 @@ struct nikon_priv *nikon_init(PRUICSS_Handle gPruIcssXHandle,
     nikon_priv.baud_rate = frequency;
     nikon_priv.core_clk_freq = core_clk_freq;
     nikon_priv.uart_clk_freq = uart_clk_freq;
+    nikon_priv.tx_rx_clock_source = tx_rx_clock_source;
     PRUICSS_setGpMuxSelect(gPruIcssXHandle, slice, PRUICSS_GP_MUX_SEL_MODE_ENDAT);
     nikon_hw_init(&nikon_priv);
     nikon_config_channel(&nikon_priv, mask, totalch);

@@ -42,11 +42,25 @@
 #include "nikon_periodic_trigger.h"
 #include <drivers/soc.h>
 #include <position_sense/nikon/include/nikon_drv.h>
+#include "ti_drivers_open_close.h"
+#include "ti_board_open_close.h"
 
 static HwiP_Object gIcssgEncoderHwiObject0;  /* ICSSG NIKON PRU FW HWI */
 struct nikon_priv *priv;
 /* ICSSG Interrupt settings */
-#define ICSSG_PRU_NIKON_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_0 )
+#ifdef PRUICSSM
+#if (PRUICSSx == 1)
+#define ICSS_PRU_NIKON_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_0 )
+#else
+#define ICSS_PRU_NIKON_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_0 )
+#endif
+#else
+#if (PRUICSSx == 1)
+#define ICSS_PRU_NIKON_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_0 )
+#else
+#define ICSS_PRU_NIKON_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_0 )
+#endif
+#endif
 uint32_t gPrunikonIrqCnt0;
 
 /*global variable */
@@ -55,7 +69,11 @@ void *gPruIcss_iep;
 PRUICSS_Handle gPruIcssXHandle;
 
 /* ICSS INTC configuration */
+#if(PRUICSSx == 1)
+extern PRUICSS_IntcInitData icss1_intc_initdata;
+#else
 extern PRUICSS_IntcInitData icss0_intc_initdata;
+#endif
 
 void nikon_config_iep(struct nikon_periodic_interface *nikon_periodic_interface)
 {
@@ -69,13 +87,13 @@ void nikon_config_iep(struct nikon_periodic_interface *nikon_periodic_interface)
     uint64_t cmp0 = 0;
 
     /*clear IEP*/
-    temp = HW_RD_REG8((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_GLOBAL_CFG_REG );
+    temp = HW_RD_REG8((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG );
     temp &= 0xFE;
-    HW_WR_REG8((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_GLOBAL_CFG_REG, temp);
+    HW_WR_REG8((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG, temp);
 
     /* cmp cfg reg */
-    event = HW_RD_REG8((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP_CFG_REG);
-    event_clear = HW_RD_REG8((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP_STATUS_REG);
+    event = HW_RD_REG8((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG);
+    event_clear = HW_RD_REG8((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
 
     /*enable IEP reset by cmp0 event*/
     event |= IEP_CMP0_ENABLE;
@@ -83,8 +101,8 @@ void nikon_config_iep(struct nikon_periodic_interface *nikon_periodic_interface)
     event_clear |= 1;
 
     /*set IEP counter to ZERO*/
-    HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_COUNT_REG0, 0);
-    HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_COUNT_REG1, 0);
+    HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG0, 0);
+    HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG1, 0);
 
     /*configure cmp3 registers*/
     event |= (0x1 << 4 );
@@ -92,29 +110,29 @@ void nikon_config_iep(struct nikon_periodic_interface *nikon_periodic_interface)
     cmp_reg0 = (nikon_periodic_interface->cmp3 & 0xffffffff) - IEP_DEFAULT_INC;
     cmp_reg1 = (nikon_periodic_interface->cmp3>>32 & 0xffffffff);
 
-    HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP3_REG0,  cmp_reg0);
-    HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP3_REG1,  cmp_reg1);
+    HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP3_REG0,  cmp_reg0);
+    HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP3_REG1,  cmp_reg1);
 
     cmp0 = nikon_periodic_interface->cmp0;
 
     /*clear event*/
-    HW_WR_REG8((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP_STATUS_REG, event_clear);
+    HW_WR_REG8((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
     /*enable  event*/
-    HW_WR_REG8((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP_CFG_REG, event);
+    HW_WR_REG8((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG, event);
 
     /*configure cmp0 registers*/
     cmp_reg0 = (cmp0 & 0xffffffff) - IEP_DEFAULT_INC;
     cmp_reg1 = (cmp0>>32 & 0xffffffff);
-    HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP0_REG0,  cmp_reg0);
-    HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP0_REG1,  cmp_reg1);
+    HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0,  cmp_reg0);
+    HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1,  cmp_reg1);
 
 
     /*write IEP default increment & IEP start*/
-    temp = HW_RD_REG8((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_GLOBAL_CFG_REG );
+    temp = HW_RD_REG8((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG );
     temp &= 0x0F;
     temp |= 0x10;
     temp |= IEP_COUNTER_EN;
-    HW_WR_REG8((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_GLOBAL_CFG_REG, temp);
+    HW_WR_REG8((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG, temp);
 }
 
 
@@ -124,7 +142,7 @@ void nikon_interrupt_config(struct nikon_periodic_interface *nikon_periodic_inte
     HwiP_Params hwiPrms;
     /* Register & enable ICSSG nikon PRU FW interrupt */
     HwiP_Params_init(&hwiPrms);
-    hwiPrms.intNum      = ICSSG_PRU_NIKON_INT_NUM;
+    hwiPrms.intNum      = ICSS_PRU_NIKON_INT_NUM;
     hwiPrms.callback    = &pru_nikon_irq_handler0;
     hwiPrms.args        = 0;
     hwiPrms.isPulse     = FALSE;
@@ -141,11 +159,19 @@ uint32_t nikon_config_periodic_mode(struct nikon_periodic_interface *nikon_perio
     /*configure IEP*/
     nikon_config_iep(nikon_periodic_interface);
     /* Initialize ICSS INTC */
+#if(PRUICSSx == 1)
+    status = PRUICSS_intcInit(gPruIcssXHandle, &icss1_intc_initdata);
+    if (status != SystemP_SUCCESS)
+    {
+        return 0;
+    }
+#else
     status = PRUICSS_intcInit(gPruIcssXHandle, &icss0_intc_initdata);
-        if (status != SystemP_SUCCESS)
-        {
-            return 0;
-        }
+    if (status != SystemP_SUCCESS)
+    {
+        return 0;
+    }
+#endif
     /*config Interrupt*/
     nikon_interrupt_config(nikon_periodic_interface);
     return 1;
@@ -158,9 +184,9 @@ void nikon_stop_periodic_mode(struct nikon_periodic_interface *nikon_periodic_in
     void *pruicss_iep = nikon_periodic_interface->pruicss_iep;
     uint8_t temp;
     /*clear IEP*/
-    temp = HW_RD_REG8((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_GLOBAL_CFG_REG );
+    temp = HW_RD_REG8((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG );
     temp &= 0xFE;
-    HW_WR_REG8((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_GLOBAL_CFG_REG, temp);
+    HW_WR_REG8((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG, temp);
 }
 
 /* PRU nikon FW IRQ handler */
@@ -172,9 +198,9 @@ void pru_nikon_irq_handler0(void *args)
 
     /* clear Cmp3 event*/
     uint32_t event_clear;
-    event_clear = HW_RD_REG8((uint8_t*)gPruIcss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP_STATUS_REG);
+    event_clear = HW_RD_REG8((uint8_t*)gPruIcss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
     event_clear |= IEP_CMP3_EVNT;
-    HW_WR_REG8((uint8_t*)gPruIcss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP_STATUS_REG, event_clear);
+    HW_WR_REG8((uint8_t*)gPruIcss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
 
     /* Clear interrupt at source */
     /* Write 18 to ICSSG_STATUS_CLR_INDEX_REG

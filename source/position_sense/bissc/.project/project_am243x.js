@@ -17,6 +17,7 @@ const filedirs = {
 const includes = {
     common: [
         "${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/include",
+        "${MOTOR_CONTROL_SDK_PATH}",
     ],
 };
 

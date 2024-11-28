@@ -9,11 +9,6 @@
 /**
  * Import the modules used in this configuration.
  */
-const gpio            = scripting.addModule("/drivers/gpio/gpio", {}, false);
-const gpio1           = gpio.addInstance();
-const gpio2           = gpio.addInstance();
-const gpio3           = gpio.addInstance();
-const gpio4           = gpio.addInstance();
 const pruicss         = scripting.addModule("/drivers/pruicss/pruicss", {}, false);
 const pruicss1        = pruicss.addInstance();
 const debug_log       = scripting.addModule("/kernel/dpl/debug_log");
@@ -50,6 +45,7 @@ const bissc1          = bissc.addInstance();
 debug_log.enableUartLog        = true;
 debug_log.enableCssLog         = false;
 debug_log.uartLog.$name        = "CONFIG_UART_CONSOLE";
+debug_log.uartLog.inputClkFreq = 192000000;
 debug_log.uartLog.UART.$assign = "USART0";
 
 const uart_v0_template  = scripting.addModule("/drivers/uart/v0/uart_v0_template", {}, false);
@@ -249,36 +245,18 @@ section11.output_section.create(1);
 section11.output_section[0].$name     = ".bss.nocache";
 section11.output_section[0].alignment = 0;
 
-bissc1.$name                      = "CONFIG_BISSC0";
-bissc1.Booster_Pack               = true;
-bissc1.G_MUX_EN                   = true;
-bissc1.PRU_ICSSG0_PRU.$assign     = "PRU_ICSSG0_PRU1";
-bissc1.PRU_ICSSG0_PRU.GPO4.$used  = false;
-bissc1.PRU_ICSSG0_PRU.GPO3.$used  = false;
-bissc1.PRU_ICSSG0_PRU.GPI14.$used = false;
-
-gpio1.$name                = "BISSC_CH0_OUT_EN";
-bissc1.BISSC_CH0_OUT_EN    = gpio1;
-gpio1.GPIO.gpioPin.rx      = false;
-gpio1.GPIO.gpioPin.$assign = "PRG0_PRU1_GPO2";
-
-gpio2.pinDir               = "OUTPUT";
-gpio2.$name                = "BISSC_CH2_OUT_EN";
-bissc1.BISSC_CH2_OUT_EN    = gpio2;
-gpio2.GPIO.gpioPin.rx      = false;
-gpio2.GPIO.gpioPin.$assign = "PRG0_PRU1_GPO8";
-
-gpio3.pinDir               = "OUTPUT";
-gpio3.$name                = "ENC2_EN";
-bissc1.ENC2_EN             = gpio3;
-gpio3.GPIO.gpioPin.pu_pd   = "pu";
-gpio3.GPIO.gpioPin.rx      = false;
-gpio3.GPIO.gpioPin.$assign = "MMC1_SDCD";
-
-gpio4.$name                = "ENC0_EN";
-gpio4.pinDir               = "OUTPUT";
-bissc1.ENC0_EN             = gpio4;
-gpio4.GPIO.gpioPin.$assign = "MMC1_SDWP";
+bissc1.$name                           = "CONFIG_BISSC0";
+bissc1.Booster_Pack                    = true;
+bissc1.G_MUX_EN                        = true;
+bissc1.PRU_ICSSG0_PRU.$assign          = "PRU_ICSSG0_PRU1";
+bissc1.ENC0_EN.$name                   = "ENC0_EN";
+bissc1.ENC0_EN.GPIO_n.$assign          = "MMC1_SDWP";
+bissc1.ENC2_EN.$name                   = "ENC2_EN";
+bissc1.ENC2_EN.GPIO_n.$assign          = "MMC1_SDCD";
+bissc1.BISSC_CH0_OUT_EN.$name          = "BISSC_CH0_OUT_EN";
+bissc1.BISSC_CH0_OUT_EN.GPIO_n.$assign = "PRG0_PRU1_GPO2";
+bissc1.BISSC_CH2_OUT_EN.$name          = "BISSC_CH2_OUT_EN";
+bissc1.BISSC_CH2_OUT_EN.GPIO_n.$assign = "PRG0_PRU1_GPO8";
 
 pruicss1.$name                           = "CONFIG_PRU_ICSS0";
 bissc1.pru                               = pruicss1;
@@ -297,10 +275,3 @@ debug_log.uartLog.UART.TXD.$suggestSolution  = "UART0_TXD";
 bissc1.PRU_ICSSG0_PRU.GPO1.$suggestSolution  = "PRG0_PRU1_GPO1";
 bissc1.PRU_ICSSG0_PRU.GPO0.$suggestSolution  = "PRG0_PRU1_GPO0";
 bissc1.PRU_ICSSG0_PRU.GPI13.$suggestSolution = "PRG0_PRU1_GPO13";
-bissc1.PRU_ICSSG0_PRU.GPO12.$suggestSolution = "PRG0_PRU1_GPO12";
-bissc1.PRU_ICSSG0_PRU.GPO6.$suggestSolution  = "PRG0_PRU1_GPO6";
-bissc1.PRU_ICSSG0_PRU.GPI11.$suggestSolution = "PRG0_PRU1_GPO11";
-gpio1.GPIO.$suggestSolution                  = "GPIO1";
-gpio2.GPIO.$suggestSolution                  = "GPIO1";
-gpio3.GPIO.$suggestSolution                  = "GPIO1";
-gpio4.GPIO.$suggestSolution                  = "GPIO1";

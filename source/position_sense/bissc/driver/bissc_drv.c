@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023 Texas Instruments Incorporated
+ *  Copyright (C) 2024 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -34,6 +34,12 @@
 #include <kernel/dpl/ClockP.h>
 #include <drivers/hw_include/tistdtypes.h>
 #include <drivers/hw_include/hw_types.h>
+#if defined(SOC_AM243X)
+#include <source/include/g_v0/cslr_icss_common.h>
+#endif
+#if defined(SOC_AM261X) || defined(SOC_AM263X)
+#include <source/include/m_v0/cslr_icss_common.h>
+#endif
 static struct bissc_priv bissc_priv;
 
 void bissc_command_send(struct bissc_priv *priv)
@@ -135,15 +141,15 @@ void bissc_enable_load_share_mode(struct bissc_priv *priv)
     uint32_t rgval;
     if(priv->pruicss_slicex)
     {
-        rgval = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER);
-        rgval |= CSL_ICSSCFG_EDPRU1TXCFGREGISTER_PRU1_ENDAT_SHARE_EN_MASK;
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER, rgval);
+        rgval = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG);
+        rgval |= CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG_PRU1_ENDAT_SHARE_EN_MASK;
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG, rgval);
     }
     else
     {
-        rgval = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU0TXCFGREGISTER);
-        rgval |= CSL_ICSSCFG_EDPRU0TXCFGREGISTER_PRU0_ENDAT_SHARE_EN_MASK;
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU0TXCFGREGISTER, rgval);
+        rgval = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG);
+        rgval |= CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG_PRU0_ENDAT_SHARE_EN_MASK;
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG, rgval);
     }
 }
 
@@ -282,17 +288,17 @@ void bissc_config_clock(struct bissc_priv *priv,
     /* Set PRU1_ED_RX_SB_POL polarity bit to 0 for bissc, required for ICSSG (don't care for ICSSM) */
     if(priv->pruicss_slicex)
     {
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU1RXCFGREGISTER, ((clk_cfg->rx_div << 16) |
-            (clk_cfg->is_core_clk << 4) | (clk_cfg->rx_div_attr)));
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER, clk_cfg->tx_div << 16 |
-            (clk_cfg->is_core_clk << 4));
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG,
+        ((clk_cfg->rx_div << 16) | (clk_cfg->is_core_clk << 4) | (clk_cfg->rx_div_attr)));
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG,
+        clk_cfg->tx_div << 16 | (clk_cfg->is_core_clk << 4));
     }
     else
     {
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU0RXCFGREGISTER, ((clk_cfg->rx_div << 16) |
-            (clk_cfg->is_core_clk << 4) | (clk_cfg->rx_div_attr)));
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU0TXCFGREGISTER, clk_cfg->tx_div << 16 |
-                (clk_cfg->is_core_clk << 4));
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG,
+        ((clk_cfg->rx_div << 16) | (clk_cfg->is_core_clk << 4) | (clk_cfg->rx_div_attr)));
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG,
+        clk_cfg->tx_div << 16 | (clk_cfg->is_core_clk << 4));
     }
     if(priv->load_share)
         bissc_enable_load_share_mode(priv);
@@ -406,15 +412,15 @@ void bissc_config_clr_cfg0(struct bissc_priv *priv)
     void *pruicss_cfg = priv->pruicss_cfg;
     if(priv->pruicss_slicex)
     {
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU1CH0CFG0REGISTER, 0);
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU1CH1CFG0REGISTER, 0);
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU1CH2CFG0REGISTER, 0);
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG0_REG , 0);
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH1_CFG0_REG , 0);
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH2_CFG0_REG , 0);
     }
     else
     {
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU0CH0CFG0REGISTER, 0);
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU0CH1CFG0REGISTER, 0);
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_EDPRU0CH2CFG0REGISTER, 0);
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG0_REG , 0);
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH1_CFG0_REG , 0);
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH2_CFG0_REG , 0);
     }
 }
 
@@ -423,58 +429,66 @@ void bissc_config_endat_mode(struct bissc_priv *priv)
     void *pruicss_cfg = priv->pruicss_cfg;
     if(priv->pruicss_slicex)
     {
-        HW_WR_REG8((uint8_t *)pruicss_cfg + CSL_ICSSCFG_GPCFG1 + 3, 4);
+        HW_WR_REG8((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_GPCFG1_REG + 3, 4);
     }
     else
     {
-        HW_WR_REG8((uint8_t *)pruicss_cfg + CSL_ICSSCFG_GPCFG0 + 3, 4);
+        HW_WR_REG8((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_GPCFG0_REG + 3, 4);
     }
 }
 
 int32_t bissc_calc_clock(struct bissc_priv *priv, struct bissc_clk_cfg *clk_cfg)
 {
     uint32_t freq = priv->baud_rate;
+    struct bissc_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
     clk_cfg->rx_div_attr = BISSC_RX_SAMPLE_SIZE;
-    if((freq == BISSC_FREQ_1MHZ) || (freq == BISSC_FREQ_2MHZ) || (freq == BISSC_FREQ_8MHZ))
+    freq = freq * 1000 * 1000;
+    pruicss_xchg->fifo_bit_idx = BISSC_FIFO_BIT_IDX_8X_OS;
+    if(priv->tx_rx_clock_source == BISSC_SET_STATUS_FLAG)
     {
-        freq = freq * 1000 * 1000;
+        clk_cfg->tx_div = (priv->core_clk_freq / freq) - 1;
+        clk_cfg->rx_div = (priv->core_clk_freq / (freq * (BISSC_RX_SAMPLE_SIZE + 1))) - 1;
+        clk_cfg->is_core_clk = BISSC_SET_STATUS_FLAG;
+        if(priv->core_clk_freq == PRU_CORE_CLK_FREQ_200MHZ * 1000 * 1000)
+        {
+            if(freq == BISSC_FREQ_10MHZ * 1000 *1000)
+            {
+                clk_cfg->rx_div_attr = BISSC_RX_SAMPLE_SIZE_4X;
+                clk_cfg->rx_div = (priv->core_clk_freq / (freq * (BISSC_RX_SAMPLE_SIZE_4X + 1))) - 1;
+                pruicss_xchg->fifo_bit_idx = BISSC_FIFO_BIT_IDX_4X_OS;
+            }
+        }
+        else if(priv->core_clk_freq == PRU_CORE_CLK_FREQ_300MHZ * 1000 * 1000)
+        {
+            if(freq == BISSC_FREQ_5MHZ * 1000 *1000)
+            {
+                clk_cfg->rx_div_attr =  BISSC_RX_SAMPLE_SIZE | BISSC_RX_ENABLE_FRACTIONAL_DIV;
+                clk_cfg->rx_div = (priv->core_clk_freq / (freq * (BISSC_RX_SAMPLE_SIZE + 1) * 1.5 )) - 1;
+                pruicss_xchg->fifo_bit_idx = BISSC_FIFO_BIT_IDX_8X_OS;
+            }
+            else if(freq == BISSC_FREQ_10MHZ * 1000 *1000)
+            {
+                clk_cfg->rx_div_attr =  BISSC_RX_SAMPLE_SIZE_4X | BISSC_RX_ENABLE_FRACTIONAL_DIV;
+                clk_cfg->rx_div = (priv->core_clk_freq / (freq * (BISSC_RX_SAMPLE_SIZE_4X + 1) * 1.5 )) - 1;
+                pruicss_xchg->fifo_bit_idx = BISSC_FIFO_BIT_IDX_4X_OS;
+            }
+        }
+    }
+    else if(priv->tx_rx_clock_source == BISSC_CLEAR_STATUS_FLAG)
+    {
         clk_cfg->tx_div = (priv->uart_clk_freq / freq) - 1;
-        clk_cfg->rx_div = (priv->uart_clk_freq / (freq * 8)) - 1;
-        clk_cfg->is_core_clk = 0;
-    }
-    else if(freq == BISSC_FREQ_5MHZ)
-    {
-        freq = freq * 1000 * 1000;
-        clk_cfg->tx_div = (priv->core_clk_freq / freq) - 1;
-        clk_cfg->is_core_clk = 1;
-        if(priv->core_clk_freq == (300 * 1000 * 1000))
+        clk_cfg->rx_div = (priv->uart_clk_freq / (freq * (BISSC_RX_SAMPLE_SIZE + 1))) - 1;
+        clk_cfg->is_core_clk = BISSC_CLEAR_STATUS_FLAG;
+        if(priv->uart_clk_freq == PRU_UART_CLK_FREQ_160MHZ * 1000 * 1000)
         {
-            /* For 300MHz using fraction factor */
-            clk_cfg->rx_div = ((priv->core_clk_freq / (freq * 8 * 1.5)) - 1);
-            clk_cfg->rx_div_attr = clk_cfg->rx_div_attr | BISSC_RX_ENABLE_FRACTIONAL_DIV;
+            if(freq == BISSC_FREQ_8MHZ * 1000 * 1000)
+            {
+                clk_cfg->rx_div_attr = BISSC_RX_SAMPLE_SIZE_4X;
+                clk_cfg->rx_div = (priv->uart_clk_freq / (freq * (BISSC_RX_SAMPLE_SIZE_4X + 1))) - 1;
+                pruicss_xchg->fifo_bit_idx = BISSC_FIFO_BIT_IDX_4X_OS;
+            }
         }
-        else
-        {
-            clk_cfg->rx_div = ((priv->core_clk_freq / (freq * 8)) - 1);
-        }
-    }
-    else if(freq == BISSC_FREQ_10MHZ)
-    {
-        freq = freq* 1000 * 1000;
-        clk_cfg->tx_div = (priv->core_clk_freq / freq) - 1;
-        clk_cfg->is_core_clk = 1;
-        clk_cfg->rx_div_attr = BISSC_RX_SAMPLE_SIZE_10MHZ;
-        if(priv->core_clk_freq == (300 * 1000 * 1000))
-        {
-            /* For 300MHz using fraction factor */
-            clk_cfg->rx_div = ((priv->core_clk_freq / (freq * 4 * 1.5)) - 1);
-            clk_cfg->rx_div_attr = clk_cfg->rx_div_attr | BISSC_RX_ENABLE_FRACTIONAL_DIV;
-        }
-        else
-        {
-            clk_cfg->rx_div = ((priv->core_clk_freq / (freq * 4)) - 1);
-        }
-    }
+       }
     else
     {
         return SystemP_FAILURE;
@@ -496,7 +510,8 @@ struct bissc_priv *bissc_init(PRUICSS_Handle gPruIcssXHandle,
                               int32_t slice,
                               uint32_t frequency,
                               uint32_t core_clk_freq,
-                              uint32_t uart_clk_freq)
+                              uint32_t uart_clk_freq,
+                              int32_t tx_rx_clock_source)
 {
     struct bissc_pruicss_xchg *pruicss_xchg;
     void *pruicss_cfg;
@@ -514,6 +529,7 @@ struct bissc_priv *bissc_init(PRUICSS_Handle gPruIcssXHandle,
     bissc_priv.baud_rate = frequency;
     bissc_priv.core_clk_freq = core_clk_freq;
     bissc_priv.uart_clk_freq = uart_clk_freq;
+    bissc_priv.tx_rx_clock_source = tx_rx_clock_source;
     bissc_hw_init(&bissc_priv);
     return &bissc_priv;
 }
@@ -521,7 +537,6 @@ struct bissc_priv *bissc_init(PRUICSS_Handle gPruIcssXHandle,
 void bissc_update_max_proc_delay(struct bissc_priv *priv)
 {
     struct bissc_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
-    pruicss_xchg->fifo_bit_idx = 4;                          /* 8x over clock - middle bit*/
     if(priv->baud_rate == BISSC_FREQ_1MHZ)
     {
         pruicss_xchg->max_proc_delay = BISSC_MAX_PROC_DELAY_1MHZ;
@@ -541,7 +556,6 @@ void bissc_update_max_proc_delay(struct bissc_priv *priv)
     else if(priv->baud_rate == BISSC_FREQ_10MHZ)
     {
         pruicss_xchg->max_proc_delay = BISSC_MAX_PROC_DELAY_10MHZ;
-        pruicss_xchg->fifo_bit_idx = 2;                          /* 4x over clock - middle bit*/
     }
 }
 
@@ -587,7 +601,7 @@ void bissc_disable_safety(struct bissc_priv *priv)
     }
 }
 
-void bissc_set_default_initialization(struct bissc_priv *priv, uint64_t icssgclk)
+void bissc_set_default_initialization(struct bissc_priv *priv, uint64_t icssClk)
 {
     int8_t ch_num, totalchns, ls_ch;
     struct bissc_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
@@ -616,9 +630,9 @@ void bissc_set_default_initialization(struct bissc_priv *priv, uint64_t icssgclk
     pruicss_xchg->ctrl_cmd_crc_len    = BISSC_CTRL_CMD_CRC_LEN;
     pruicss_xchg->rx_clk_freq         = priv->baud_rate;
     bissc_update_max_proc_delay(priv);
-    pruicss_xchg->delay_40us          = ((icssgclk*40)/1000000);
-    pruicss_xchg->delay_100ms         = (icssgclk / 10); /*((icssgclk*100000) / 1000000)*/
-    pruicss_xchg->icssg_clk           = icssgclk;
+    pruicss_xchg->delay_40us          = ((icssClk*40)/1000000);
+    pruicss_xchg->delay_100ms         = (icssClk / 10); /*((icssClk*100000) / 1000000)*/
+    pruicss_xchg->icssg_clk           = icssClk;
     pruicss_xchg->valid_bit_idx       = 24;
     pruicss_xchg->measure_proc_delay  = 1;
     pruicss_xchg->execution_state[0]  = 0;
@@ -628,7 +642,7 @@ void bissc_set_default_initialization(struct bissc_priv *priv, uint64_t icssgclk
     pruicss_xchg->opmode[1]           = 1;
     pruicss_xchg->opmode[2]           = 1;
     priv->is_continuous_mode          = 0;
-    priv->cmp3                        = ((icssgclk*100)/1000000);     /* 100usec delay */
+    priv->cmp3                        = ((icssClk*100)/1000000);     /* 100usec delay */
 }
 
 static uint8_t bissc_calc_ctrl_crc(uint32_t ctrl_cmd, uint8_t num_bits)

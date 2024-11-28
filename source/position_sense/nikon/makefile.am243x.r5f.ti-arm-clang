@@ -26,6 +26,7 @@ INCLUDES_common := \
     -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source \
     -I${MOTOR_CONTROL_SDK_PATH}/source \
     -I${MOTOR_CONTROL_SDK_PATH}/source/position_sense/nikon/include \
+    -I${MOTOR_CONTROL_SDK_PATH} \
 
 DEFINES_common := \
     -DSOC_AM243X \
