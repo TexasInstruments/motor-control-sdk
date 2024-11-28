@@ -163,37 +163,6 @@ let bissc_module = {
                 },
             ],
         },
-        (is_am243x_lp_device) ?
-        {
-            name: "coreClk",
-            displayName: "PRU-ICSS Core Clk (Hz)",
-            default: 200*1000000,
-            options: [
-                {
-                    name: 200*1000000,
-                },
-
-                {
-                    name: 300*1000000,
-                },
-
-                {
-                    name: 333.333333*1000000,
-                },
-            ],
-        }
-        :
-        {
-            name: "coreClk",
-            displayName: "PRU-ICSS Core Clk (Hz)",
-            default: 200*1000000,
-            options: [
-                {
-                    name: 200*1000000,
-                }
-            ],
-            hidden: true,
-        },
         {
             name: "Multi_Channel_Load_Share",
             displayName: "Multi Channel Load Share",
@@ -317,7 +286,7 @@ function moduleInstances(instance){
 
 function sharedModuleInstances(instance) {
     let modInstances = new Array();
-    let requiredArgs = (is_am263x_soc) ? {instance:`${instance.instance}0`} : (is_am261x_soc) ? {instance:`${instance.instance}`} : {instance: instance.instance ,coreClk:instance.coreClk};
+    let requiredArgs = (is_am263x_soc) ? {instance:`${instance.instance}0`} : (is_am261x_soc) ? {instance:`${instance.instance}`} : {instance: instance.instance};
 
     modInstances.push({
         name: "pru",
