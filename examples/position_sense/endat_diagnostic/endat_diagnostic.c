@@ -112,7 +112,6 @@
 #if defined(SOC_AM261X) || defined(SOC_AM263X)
 /* Translate the TCM local view addr to SoC view addr */
 #define CPU0_BTCM_SOCVIEW(x) (CSL_R5SS0_CORE0_TCMB_U_BASE+(x - CSL_MSS_TCMB_RAM_BASE))
-#define GPIO9_BIT_FOR_INPUT  (0x200)
 #else
 /* Translate the TCM local view addr to SoC view addr */
 #define CPU0_ATCM_SOCVIEW(x) (CSL_R5FSS0_CORE0_ATCM_BASE+(x))
@@ -222,15 +221,6 @@ char * uint64_to_str (uint64_t x)
 
 static void endat_pruicss_init(void)
 {
-
-#ifdef SOC_AM261X
-    /* Set bits for input pins (EnDAT RX) in ICSSM_PRU0_GPIO_OUT_CTRL and ICSSM_PRU1_GPIO_OUT_CTRL registers */
-#if (PRUICSSx == 1)
-    HW_WR_REG32(CSL_MSS_CTRL_U_BASE + CSL_MSS_CTRL_ICSSM1_PRU0_GPIO_OUT_CTRL, GPIO9_BIT_FOR_INPUT);
-#else
-    HW_WR_REG32(CSL_MSS_CTRL_U_BASE + CSL_MSS_CTRL_ICSSM0_PRU0_GPIO_OUT_CTRL, GPIO9_BIT_FOR_INPUT);
-#endif
-#endif
 
     gPruIcssXHandle = PRUICSS_open(CONFIG_PRU_ICSS0);
      /* Configure g_mux_en to 1 in ICSSG_SA_MX_REG Register. */
