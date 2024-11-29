@@ -4,19 +4,33 @@
 
 ## Introduction
 
-This design implements BISS-C Receiver (a.k.a subsequent electronics) using the 3 channel peripheral interface available on the TI Sitara™ AM64x/AM243x EVM. The 3 channel peripheral interface is a digital bidirectional serial interface for position encoders, also suited for safety related applications. Only four signal lines are required, differential pair each for clock and data.
+\cond SOC_AM243X
+
+This design implements BISS-C Receiver (a.k.a subsequent electronics) using the 3 channel peripheral interface available on the TI Sitara™ AM64x/AM243x. The 3 channel peripheral interface is a digital bidirectional serial interface for position encoders, also suited for safety related applications. Only four signal lines are required, differential pair each for clock and data.
 In BISS-C, clock is provided by receiver and data is provided by the encoder. Data is transmitted in synchronism with clock.
 Transfer between receiver and encoder at the physical layer is in accordance with RS485, with transceiver at both ends.
+
+\endcond
+
+\cond SOC_AM261X
+
+This design implements BISS-C Receiver (a.k.a subsequent electronics) using the 3 channel peripheral interface available on the TI Sitara™ AM261x. The 3 channel peripheral interface is a digital bidirectional serial interface for position encoders, also suited for safety related applications. Only four signal lines are required, differential pair each for clock and data.
+In BISS-C, clock is provided by receiver and data is provided by the encoder. Data is transmitted in synchronism with clock.
+Transfer between receiver and encoder at the physical layer is in accordance with RS485, with transceiver at both ends.
+
+\endcond
 
 ## System Overview
 
 Position feedback system consists of a position encoder attached to a motor, up to 100 meter of cable which provides power and serial communication and the receiver interface for position encoder.
-In case of Sitara™ AM64x/AM243x processor the receiver interface for position encoder is just one function of a connected drive controller.
-The AM64x/AM243x provides in addition to the resources for Industrial Ethernet and motor control application including on-chip ADCs, Delta Sigma demodulator for current measurement.
-BISS-C Receiver on Sitara™AM64x/AM243x processor uses one ICSSGx Slice.
-Clock, data transmit, data receive and receive enable signals from PRU1 of ICSS_G is available in AM64x/AM243x EVM.
+In case of Sitara™ processor the receiver interface for position encoder is just one function of a connected drive controller.
+The Sitara™ processor provides in addition to the resources for Industrial Ethernet and motor control application including on-chip ADCs, Delta Sigma demodulator for current measurement.
+BISS-C Receiver on processor uses one ICSSx Slice.
+Clock, data transmit, data receive and receive enable signals from PRU of ICSS is available in Sitara™ processor.
 
 ## Implementation
+
+\cond SOC_AM243X
 
 The BISS-C receiver function is implemented on TI Sitara™ Devices.
 Design is split into three parts – 3 channel peripheral interface support in PRU, firmware running in PRU and driver running in ARM.
@@ -24,7 +38,17 @@ Application is supposed to use the BISS-C driver APIs to leverage 3 channel peri
 SDK examples used the BISS-C hardware capability in Slice 1 (either 1 core or 3 cores based on the configuration) of PRU-ICSSG0.
 Remaining PRUs in the AM64x/AM243x EVM are available for Industrial Ethernet communication and/or motor control interfaces.
 
+\endcond
 
+\cond SOC_AM261X
+
+The BISS-C receiver function is implemented on TI Sitara™ Devices.
+Design is split into three parts – 3 channel peripheral interface support in PRU, firmware running in PRU and driver running in ARM.
+Application is supposed to use the BISS-C driver APIs to leverage 3 channel peripheral interface functionality.
+SDK examples used the BISS-C hardware capability in Slice 0 of PRU-ICSSM1.
+Remaining PRUs in the AM261x-LP are available for Industrial Ethernet communication and/or motor control interfaces.
+
+\endcond
 ###  Specifications
 
 <table>
@@ -60,8 +84,8 @@ Remaining PRUs in the AM64x/AM243x EVM are available for Industrial Ethernet com
 </tr>
 <tr>
     <td>Receive oversample ratio
-    <td>8 or 4
-	<td>Oversample of 4 needs to be used for 10 MHz.
+    <td>1x to 8x
+	<td>tested with 4x,6x & 8x(frequency specific)
 </tr>
 </table>
 
@@ -70,6 +94,8 @@ Remaining PRUs in the AM64x/AM243x EVM are available for Industrial Ethernet com
 Refer TRM for details
 
 ### BISS-C Firmware Implementation
+
+\cond SOC_AM243X
 
 Following section describes the firmware implementation of BISS-C receiver on PRU-ICSS.
 Deterministic behavior of the 32 bit RISC core running upto 333MHz provides resolution on sampling external signals and generating external signals.
@@ -90,6 +116,23 @@ Each of PRU, TX-PRU and RTU-PRU handle one channel in this configuration. Load s
 
 \image html biss_multichannel_different_make.png "PRU, BiSS-C module Integration for 'Multi Channel with Encoders of Different Make' configuration"
 
+\endcond
+
+\cond SOC_AM261X
+
+Following section describes the firmware implementation of BISS-C receiver on PRU-ICSS.
+Deterministic behavior of the 32 bit RISC core running upto 333MHz provides resolution on sampling external signals and generating external signals.
+It makes uses of 3 channel peripheral interface support in PRU for data transmission.
+
+The PRU-ICSS firmware supports following configuration.
+1. Single Channel
+
+#### Implementation for Single Channel
+Single core of PRU-ICSSG slice is used in this configuration.
+
+\image html biss_multichannel_same_make.png "ARM, PRU, BISS-C module Integration for Single Channel "
+
+\endcond
 ####	Firmware Architecture
 
 \image html bissc_overall_firmware.png "Overall Block Diagram"

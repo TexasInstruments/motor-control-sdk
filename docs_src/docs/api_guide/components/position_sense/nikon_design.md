@@ -4,8 +4,19 @@
 
 ## Introduction
 
-This design implements Nikon Receiver (a.k.a subsequent electronics) using the 3 channel peripheral interface available on the TI Sitara™ AM64x/AM243x EVM. The 3 channel peripheral interface is a digital bidirectional serial interface for position encoders.
+\cond SOC_AM243X
+
+This design implements Nikon Receiver (a.k.a subsequent electronics) using the 3 channel peripheral interface available on the TI Sitara™ AM64x/AM243x. The 3 channel peripheral interface is a digital bidirectional serial interface for position encoders.
 Transfer between receiver and encoder at the physical layer is in accordance with RS485, with transceiver at both ends.
+
+\endcond
+
+\cond SOC_AM261X
+
+This design implements Nikon Receiver (a.k.a subsequent electronics) using the 3 channel peripheral interface available on the TI Sitara™ AM261x. The 3 channel peripheral interface is a digital bidirectional serial interface for position encoders.
+Transfer between receiver and encoder at the physical layer is in accordance with RS485, with transceiver at both ends.
+
+\endcond
 
 ## Nikon A-Format encoder receiver
 
@@ -15,9 +26,21 @@ Each field is 18-bits long, beginning with a start bit and ending with a delimit
 
 ## System Overview
 
+\cond SOC_AM243X
+
 ### Sitara™ AM64x/AM243x Processor
 
 Refer TRM for details
+
+\endcond
+
+\cond SOC_AM261X
+
+### Sitara™ AM261x Processor
+
+Refer TRM for details
+
+\endcond
 
 #### 3 Channel Peripheral Interface PRU hardware interface
 
@@ -25,11 +48,31 @@ Refer TRM for details
 
 #### PRU-ICSS
 
+\cond SOC_AM243X
+
 Refer PRU-ICSS chapter of AM64x/AM243x Technical Reference Manual.
+
+\endcond
+
+\cond SOC_AM261X
+
+Refer PRU-ICSS chapter of AM261x Technical Reference Manual.
+
+\endcond
 
 ## Software Description
 
+\cond SOC_AM243X
+
 At start-up, the application running on the ARM Cortex-R5 initializes the module clocks and configures the pinmux. The PRU is initialized and the PRU firmware is loaded on PRU slice of choice for a chosen ICSS instance (tested on PRU1 on ICSSG0). After the PRU1 starts executing, the Nikon interface is operational and the application can use it to communicate with an encoder. Use the Nikon diagnostic example to learn more about initialization and communication with the Nikon interface. This Nikon diagnostic example, also provides an easy way to validate the Nikon transactions. The diagnostic example provides menu options on the host PC in a serial terminal application, where the user can select the Command code to be sent. User can assign a 24-bit Identification code to the encoder and can change Encoder's Address.  User can also enter EEPROM address(incase of EEPROM Read) and EEPROM data(incase of EEPROM Write). Based on the command code, the application updates the Nikon interface with the Command data frame and Memory data frame (incase of EEPROM access) and trigger transaction. The application then waits until it receives an indication of complete transaction by the firmware through the interface before displaying the result.
+
+\endcond
+
+\cond SOC_AM261X
+
+At start-up, the application running on the ARM Cortex-R5 initializes the module clocks and configures the pinmux. The PRU is initialized and the PRU firmware is loaded on PRU slice of choice for a chosen ICSS instance (tested on PRU0 on ICSSM1). After the PRU0 starts executing, the Nikon interface is operational and the application can use it to communicate with an encoder. Use the Nikon diagnostic example to learn more about initialization and communication with the Nikon interface. This Nikon diagnostic example, also provides an easy way to validate the Nikon transactions. The diagnostic example provides menu options on the host PC in a serial terminal application, where the user can select the Command code to be sent. User can assign a 24-bit Identification code to the encoder and can change Encoder's Address.  User can also enter EEPROM address(incase of EEPROM Read) and EEPROM data(incase of EEPROM Write). Based on the command code, the application updates the Nikon interface with the Command data frame and Memory data frame (incase of EEPROM access) and trigger transaction. The application then waits until it receives an indication of complete transaction by the firmware through the interface before displaying the result.
+
+\endcond
 
 ### Firmware Architecture {#NIKON_DESIGN_FLOW}
 
