@@ -33,7 +33,12 @@
 #include <position_sense/hdsl/include/hdsl_drv.h>
 #include <kernel/dpl/ClockP.h>
 #include <drivers/hw_include/tistdtypes.h>
-
+#if defined (SOC_AM243X) || (SOC_AM64X)
+#include <source/include/g_v0/cslr_icss_common.h>
+#endif
+#if defined (SOC_AM261X)
+#include <source/include/m_v0/cslr_icss_common.h>
+#endif
 #define ONLINE_STATUS_1_L_FRES          (1<<0)
 #define ONLINE_STATUS_D_L_FREL          (1)
 
@@ -63,7 +68,6 @@
 #define PART2_SIZE_OFFSET				(0x80)
 
 #define CHANNEL_MASK_OFFSET             (0x83)
-
 /* Should move the below to sysconfig  generated code */
 HDSL_Config hdslConfig0;
 HDSL_Config hdslConfig1;
@@ -71,120 +75,91 @@ HDSL_Config hdslConfig2;
 
 void hdsl_enable_load_share_mode(void *pruCfg ,uint32_t pruSlice)
 {
+    
     uint32_t regVal;
     if(pruSlice == 1)
     {
-       regVal = HW_RD_REG32((uint8_t *)pruCfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER);
-       regVal |= CSL_ICSSCFG_EDPRU1TXCFGREGISTER_PRU1_ENDAT_SHARE_EN_MASK;
-       HW_WR_REG32((uint8_t *)pruCfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER, regVal);
+       regVal = HW_RD_REG32((uint8_t *)pruCfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG);
+       regVal |= CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG_PRU1_ENDAT_SHARE_EN_MASK;
+       HW_WR_REG32((uint8_t *)pruCfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG, regVal);
     }
     else
     {
-        regVal = HW_RD_REG32((uint8_t *)pruCfg + CSL_ICSSCFG_EDPRU0TXCFGREGISTER);
-        regVal |= CSL_ICSSCFG_EDPRU0TXCFGREGISTER_PRU0_ENDAT_SHARE_EN_MASK;
-        HW_WR_REG32((uint8_t *)pruCfg + CSL_ICSSCFG_EDPRU0TXCFGREGISTER, regVal);
+        regVal = HW_RD_REG32((uint8_t *)pruCfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG);
+        regVal |= CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG_PRU0_ENDAT_SHARE_EN_MASK;
+        HW_WR_REG32((uint8_t *)pruCfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG, regVal);
     }
 
 }
 
-HDSL_Handle HDSL_open(PRUICSS_Handle icssgHandle, uint32_t icssCore, uint8_t pruMode)
+HDSL_Handle HDSL_open(PRUICSS_Handle icssHandle, uint32_t icssCore, uint8_t pruMode)
 {
-    /*
+    
+    HDSL_Handle hdslHandle;
+#ifdef SOC_AM261X
+    hdslHandle = &hdslConfig0;
+    if (icssCore==0)
+        {
+            hdslHandle->baseMemAddr = (uint32_t *)(((PRUICSS_HwAttrs *)(icssHandle->hwAttrs))->pru0DramBase);
+        }
+        else
+        {
+            hdslHandle->baseMemAddr = (uint32_t *)(((PRUICSS_HwAttrs *)(icssHandle->hwAttrs))->pru1DramBase);
+        }
+#else
+    if (pruMode == 0)
+    {
+        hdslHandle = &hdslConfig0;
+        if (icssCore==0)
+        {
+            hdslHandle->baseMemAddr = (uint32_t *)(((PRUICSS_HwAttrs *)(icssHandle->hwAttrs))->pru0DramBase);
+        }
+        else
+        {
+            hdslHandle->baseMemAddr = (uint32_t *)(((PRUICSS_HwAttrs *)(icssHandle->hwAttrs))->pru1DramBase);
+        }
+    }
+    else
+    {
+        /*
         HDSL memory map:
         RTU_PRU core:   0x0000 - 0x06FF
         PRU core:       0x0700 - 0x0DFF
         TX_PRU core:    0x0E00 - 0x1500
     */
-    uint32_t DMEM_BASE_OFFSET_RTU_PRU1 = 0;
-    uint32_t DMEM_BASE_OFFSET_PRU1 = 0x700;
-    uint32_t DMEM_BASE_OFFSET_TX_PRU1 = 0xE00;
-    HDSL_Handle hdslHandle;
-
-    if (pruMode == 0)
-    {
-        hdslHandle = &hdslConfig0;
-        hdslHandle->baseMemAddr = (uint32_t *)(((PRUICSS_HwAttrs *)(icssgHandle->hwAttrs))->pru1DramBase);
-    }
-    else
-    {
+        uint32_t DMEM_BASE_OFFSET_RTU_PRU1 = 0;
+        uint32_t DMEM_BASE_OFFSET_PRU1 = 0x700;
+        uint32_t DMEM_BASE_OFFSET_TX_PRU1 = 0xE00;
         if(icssCore == PRUICSS_RTU_PRU1)
         {
             hdslHandle = &hdslConfig0;
-            hdslHandle->baseMemAddr = (uint32_t *)((((PRUICSS_HwAttrs *)(icssgHandle->hwAttrs))->pru1DramBase) + DMEM_BASE_OFFSET_RTU_PRU1);
+            hdslHandle->baseMemAddr = (uint32_t *)((((PRUICSS_HwAttrs *)(icssHandle->hwAttrs))->pru1DramBase) + DMEM_BASE_OFFSET_RTU_PRU1);
         }
         else if(icssCore == PRUICSS_PRU1)
         {
             hdslHandle = &hdslConfig1;
-            hdslHandle->baseMemAddr = (uint32_t *)((((PRUICSS_HwAttrs *)(icssgHandle->hwAttrs))->pru1DramBase) + DMEM_BASE_OFFSET_PRU1);
+            hdslHandle->baseMemAddr = (uint32_t *)((((PRUICSS_HwAttrs *)(icssHandle->hwAttrs))->pru1DramBase) + DMEM_BASE_OFFSET_PRU1);
         }
         else if(icssCore == PRUICSS_TX_PRU1)
         {
             hdslHandle = &hdslConfig2;
-            hdslHandle->baseMemAddr = (uint32_t *)((((PRUICSS_HwAttrs *)(icssgHandle->hwAttrs))->pru1DramBase) + DMEM_BASE_OFFSET_TX_PRU1);
+            hdslHandle->baseMemAddr = (uint32_t *)((((PRUICSS_HwAttrs *)(icssHandle->hwAttrs))->pru1DramBase) + DMEM_BASE_OFFSET_TX_PRU1);
         }
         else
         {
             hdslHandle = NULL;
         }
     }
-
+#endif
     if (hdslHandle != NULL)
     {
-        hdslHandle->icssgHandle   = icssgHandle;
+        hdslHandle->icssHandle   = icssHandle;
         hdslHandle->icssCore      = icssCore;
         hdslHandle->hdslInterface = (HDSL_Interface *) hdslHandle->baseMemAddr;
         hdslHandle->multi_turn    = 0;
     }
 
     return hdslHandle;
-}
-
-void HDSL_iep_init(HDSL_Handle hdslHandle)
-{
-    HW_WR_REG32((uint32_t)(((PRUICSS_HwAttrs *)(hdslHandle->icssgHandle->hwAttrs))->iep0RegBase) + CSL_ICSS_G_PR1_IEP1_SLV_GLOBAL_CFG_REG,
-                (CSL_ICSS_G_PR1_IEP1_SLV_GLOBAL_CFG_REG_CNT_ENABLE_MASK | (1 << CSL_ICSS_G_PR1_IEP1_SLV_GLOBAL_CFG_REG_DEFAULT_INC_SHIFT)));
-    /* Use OCP as IEP CLK src */
-    HW_WR_REG32((uint32_t)(((PRUICSS_HwAttrs *)(hdslHandle->icssgHandle->hwAttrs))->cfgRegBase) + CSL_ICSSCFG_IEPCLK, CSL_ICSSCFG_IEPCLK_OCP_EN_MASK);
-}
-
-int HDSL_enable_sync_signal(uint8_t ES, uint32_t period)
-{
-    /*program here*/
-    uint32_t start_time = 10000;
-
-    uint32_t inEvent;
-    uint32_t outEvent_latch;
-    uint32_t outEvent_gpio;
-    uint32_t iep_base = CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE + CSL_ICSS_G_PR1_IEP1_SLV_REGS_BASE;
-
-    /*Enable IEP. Enable the Counter and set the DEFAULT_INC and CMP_INC to 1.*/
-    HWREG(CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE + CSL_ICSS_G_PR1_IEP1_SLV_REGS_BASE + CSL_ICSS_G_PR1_IEP1_SLV_GLOBAL_CFG_REG) = 0x111;
-
-    /*Enable SYNC0 and program pulse width*/
-    /*Enable SYNC and SYNC0*/
-    HWREG(iep_base + CSL_ICSS_G_PR1_IEP1_SLV_SYNC_CTRL_REG) |= 0x03;
-    /*Enable cyclic mod*/
-    HWREG(iep_base + CSL_ICSS_G_PR1_IEP1_SLV_SYNC_CTRL_REG) |= 0x20;
-    /*32504 4500 = num_of_cycles, 50Khz signals, 20us time period//(pulse_width / 4) - 1; */
-    HWREG(iep_base + CSL_ICSS_G_PR1_IEP1_SLV_SYNC_PWIDTH_REG) = (period)/2;
-    /* (period / 4) - 1; */
-    HWREG(iep_base + CSL_ICSS_G_PR1_IEP1_SLV_SYNC0_PERIOD_REG) =(period);
-
-    /*Program CMP1*/
-    HWREG(iep_base + CSL_ICSS_G_PR1_IEP1_SLV_CMP_CFG_REG) |= 0x00000004;
-    /*<start time>; Ensure this start time is in future*/
-    HWREG(iep_base + CSL_ICSS_G_PR1_IEP1_SLV_CMP1_REG0) = start_time;
-
-    /*TSR configuration:*/
-    inEvent = SYNCEVENT_INTRTR_IN_27;
-    outEvent_latch = SYNCEVT_RTR_SYNC10_EVT;
-    outEvent_gpio = SYNCEVT_RTR_SYNC30_EVT;
-
-    HWREG(CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + outEvent_latch) = inEvent | 0x10000;
-    HWREG(CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + outEvent_gpio) = inEvent | 0x10000;
-    HWREG(CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + SYNCEVT_RTR_SYNC28_EVT) = inEvent | 0x10000;
-
-    return 1;
 }
 
 uint64_t HDSL_get_pos(HDSL_Handle hdslHandle, int position_id)

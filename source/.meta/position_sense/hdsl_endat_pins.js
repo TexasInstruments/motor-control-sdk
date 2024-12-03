@@ -21,7 +21,7 @@ function getInterfacePinList(inst)
     }
     else
     {
-        pinList.push({ pinName: "GPI10", displayName: "ENDAT0_IN", rx: true});
+        pinList.push({ pinName: "GPI9", displayName: "ENDAT0_IN", rx: true});
     }
 
     pinList.push({ pinName: "GPO5", displayName: "ENDAT1_OUT_EN", rx: false});

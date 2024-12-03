@@ -11,7 +11,7 @@ CG_TOOL_ROOT := $(CGT_TI_PRU_PATH)
 
 # Add inputs and outputs from these tool invocations to the build variables
 CMD_SRCS += \
-	hdsl_master_icssg.cmd \
+	hdsl_diagnostic.cmd \
 
 ASM_SRCS += \
 	main.asm \

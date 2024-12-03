@@ -886,11 +886,6 @@ send_header_disp_neg1:
 	ldi			REG_TMP11.b0, 0x6f
 	add			DISPARITY, DISPARITY, 4
 send_header_end_disp:
-;reset eCAP1 INT
-	ldi			REG_TMP1.w0, (ECAP+ECAP_ECCLR)
-	ldi			REG_TMP1.w2, 0xffff
-	sbco			&REG_TMP1.w2, PWMSS1_CONST, REG_TMP1.w0, 2
-	;sbco			&REG_TMP1.w2, PWMSS2_CONST, REG_TMP1.w0, 2
 ;HINT: we have some processing time here (140 cycles)
 ;go to V-Frame callback on transport layer
 	qbbc			datalink_transport_no_v_frame_2, H_FRAME.flags, FLAG_NORMAL_FLOW
