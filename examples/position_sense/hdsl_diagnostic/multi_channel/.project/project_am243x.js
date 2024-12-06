@@ -34,6 +34,12 @@ const includes_freertos_r5f = {
         "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/FreeRTOS-Kernel/include",
         "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F",
         "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/am243x/r5f",
+        "${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/multichannel_ch0",
+        "${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/multichannel_ch1",
+        "${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/multichannel_ch2",
+        "${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/multichannel_ch0_sync_mode",
+        "${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/multichannel_ch1_sync_mode",
+        "${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/multichannel_ch2_sync_mode",
     ],
 };
 

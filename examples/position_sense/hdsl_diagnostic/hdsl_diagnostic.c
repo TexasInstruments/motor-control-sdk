@@ -69,12 +69,12 @@
 #define PRU_CORE_CLK CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ
 
 #if (PRU_CORE_CLK==PRU_CLK_FREQ_225M)
-#ifdef SOC_AM261X
-#include <position_sense/hdsl/firmware/hdsl_master_icssm_freerun_225_mhz_bin.h>
-#include <position_sense/hdsl/firmware/hdsl_master_icssm_sync_225_mhz_bin.h>
+#if PRU_ICSSGx_PRU_SLICE == 1
+#include <position_sense/hdsl/firmware/freerun_225_mhz/hdsl_receiver_freerun_225_mhz_pru1_bin.h>
+#include <position_sense/hdsl/firmware/sync_225_mhz/hdsl_receiver_sync_225_mhz_pru1_bin.h>
 #else
-#include <position_sense/hdsl/firmware/hdsl_master_icssg_freerun_225_mhz_bin.h>
-#include <position_sense/hdsl/firmware/hdsl_master_icssg_sync_225_mhz_bin.h>
+#include <position_sense/hdsl/firmware/freerun_225_mhz/hdsl_receiver_freerun_225_mhz_pru0_bin.h>
+#include <position_sense/hdsl/firmware/sync_225_mhz/hdsl_receiver_sync_225_mhz_pru0_bin.h>
 #endif
 
 /* Divide factor for normal clock (default value for 225 MHz=23) */
@@ -86,12 +86,21 @@
 #define DIV_FACTOR_NORMAL 31
 /* Divide factor for oversampled clock (default value for 300 MHz=3) */
 #define DIV_FACTOR_OVERSAMPLED 3
-#include <position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch0_bin.h>
-#include <position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch1_bin.h>
-#include <position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch2_bin.h>
-#include <position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch0_sync_mode_bin.h>
-#include <position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch1_sync_mode_bin.h>
-#include <position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch2_sync_mode_bin.h>
+#if PRU_ICSSGx_PRU_SLICE == 1
+#include <position_sense/hdsl/firmware/multichannel_ch0/hdsl_receiver_multichannel_ch0_pru1_bin.h>
+#include <position_sense/hdsl/firmware/multichannel_ch0_sync_mode/hdsl_receiver_multichannel_ch1_pru1_bin.h>
+#include <position_sense/hdsl/firmware/multichannel_ch1/hdsl_receiver_multichannel_ch2_pru1_bin.h>
+#include <position_sense/hdsl/firmware/multichannel_ch1_sync_mode/hdsl_receiver_multichannel_ch0_sync_mode_pru1_bin.h>
+#include <position_sense/hdsl/firmware/multichannel_ch2/hdsl_receiver_multichannel_ch1_sync_mode_pru1_bin.h>
+#include <position_sense/hdsl/firmware/multichannel_ch2_sync_mode/hdsl_receiver_multichannel_ch2_sync_mode_pru1_bin.h>
+#else
+#include <position_sense/hdsl/firmware/multichannel_ch0/hdsl_receiver_multichannel_ch0_pru0_bin.h>
+#include <position_sense/hdsl/firmware/multichannel_ch0_sync_mode/hdsl_receiver_multichannel_ch1_pru0_bin.h>
+#include <position_sense/hdsl/firmware/multichannel_ch1/hdsl_receiver_multichannel_ch2_pru0_bin.h>
+#include <position_sense/hdsl/firmware/multichannel_ch1_sync_mode/hdsl_receiver_multichannel_ch0_sync_mode_pru0_bin.h>
+#include <position_sense/hdsl/firmware/multichannel_ch2/hdsl_receiver_multichannel_ch1_sync_mode_pru0_bin.h>
+#include <position_sense/hdsl/firmware/multichannel_ch2_sync_mode/hdsl_receiver_multichannel_ch2_sync_mode_pru0_bin.h>
+#endif
 /* Divide factor for normal clock (default value for 300 MHz=31) */
 #define DIV_FACTOR_NORMAL 31
 /* Divide factor for oversampled clock (default value for 300 MHz=3) */
@@ -780,18 +789,22 @@ void hdsl_pruss_init(void)
     HW_WR_REG32(gPru_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG, HDSL_RX_CFG);
 #endif
     PRUICSS_intcInit(gPruIcssXHandle, &gPruss0_intc_initdata);
-
-    /* configure C28 to PRU_ICSS_CTRL and C29 to EDMA + 0x1000 */
+    /*configure C28 to IEP depending upon IEP instance usage */
+#ifdef SOC_AM261X
+    /*IEP0 base is used for AM261x SoCs*/
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_PRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0x02e0);
+#else
+    /*IEP1 base is used for AM243x SoCs*/
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_PRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0x02f0);
+#endif
+    /* configure C29 to EDMA + 0x1000 */
     /*6.4.14.1.1 ICSSG_PRU_CONTROL RegisterPRU_ICSSG0_PR1_PDSP0_IRAM 00B0 2400h*/
 #if (PRUICSS_PRUx==PRUICSS_PRU0)
-    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_PRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0x0220);
-    /*IEP1 base */
     PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_PRUx, PRUICSS_CONST_TBL_ENTRY_C29, 0x0002F000);
     /* enable cycle counter */
     HW_WR_REG32((void *)((((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->baseAddr) + CSL_ICSS_M_PR1_PDSP0_IRAM_REGS_BASE), CTR_EN);
+
 #else
-    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_PRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0x0240);
-        /*IEP1 base */
     PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_PRUx, PRUICSS_CONST_TBL_ENTRY_C29, 0x0002F000);
         /* enable cycle counter */
     HW_WR_REG32((void *)((((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->baseAddr) + CSL_ICSS_G_PR1_PDSP1_IRAM_REGS_BASE), CTR_EN);
@@ -830,10 +843,10 @@ void hdsl_pruss_init_300m(void)
     HW_WR_REG32(gPru_cfg + CSL_ICSSCFG_EDPRU1RXCFGREGISTER, HDSL_RX_CFG);
     PRUICSS_intcInit(gPruIcssXHandle, &gPruss0_intc_initdata);
 
-    /* configure C28 to PRU_ICSS_CTRL and C29 to EDMA + 0x1000 */
+    /* configure C28 to IEP1 base and C29 to EDMA + 0x1000 */
     /*6.4.14.1.1 ICSSG_PRU_CONTROL RegisterPRU_ICSSG0_PR1_PDSP0_IRAM 00B0 2400h*/
     HW_WR_REG32(CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE + CSL_ICSS_G_PR1_RTU1_PR1_RTU1_IRAM_REGS_BASE + CSL_ICSS_G_PR1_PDSP0_IRAM_CONSTANT_TABLE_PROG_PTR_0, 0xF0000238); // Address = 0x30023828
-    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_PRU1, PRUICSS_CONST_TBL_ENTRY_C28, 0x0240);
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_PRU1, PRUICSS_CONST_TBL_ENTRY_C28, 0x02f0);
     HW_WR_REG32(CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE + CSL_ICSS_G_PR1_PDSP_TX1_IRAM_REGS_BASE + CSL_ICSS_G_PR1_PDSP0_IRAM_CONSTANT_TABLE_PROG_PTR_0, 0xF0000258); // Address = 0x30025828
     /*IEP1 base */
     PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_PRU1, PRUICSS_CONST_TBL_ENTRY_C29, 0x0002F000);
@@ -865,8 +878,8 @@ void hdsl_pruss_load_run_fw(HDSL_Handle hdslHandle)
     {
         /*sync_mode*/
             PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_PRUx),
-                        0, (uint32_t *) Hiperface_DSL_SYNC2_0_RTU_0_0,
-                        sizeof(Hiperface_DSL_SYNC2_0_RTU_0_0));
+                        0, (uint32_t *) Hiperface_DSL_SYNC2_0_RTU_0,
+                        sizeof(Hiperface_DSL_SYNC2_0_RTU_0));
     }
         PRUICSS_resetCore(gPruIcssXHandle, PRUICSS_PRUx);
         /*Run firmware*/

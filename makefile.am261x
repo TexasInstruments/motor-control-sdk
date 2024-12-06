@@ -58,7 +58,9 @@ help:
 	@echo  $(MAKE) -s -C source/position_sense/endat/firmware/single_channel/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/endat/firmware/single_channel/am261x-lp/icss_m1_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/hdsl/firmware/freerun_225_mhz/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C source/position_sense/hdsl/firmware/freerun_225_mhz/am261x-lp/icss_m1_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/hdsl/firmware/sync_225_mhz/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C source/position_sense/hdsl/firmware/sync_225_mhz/am261x-lp/icss_m1_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/nikon/firmware/single_channel/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/nikon/firmware/single_channel/am261x-lp/icss_m1_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/tamagawa/firmware/single_channel/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
@@ -187,8 +189,10 @@ BUILD_COMBO_EXAMPLE_PRIVATE_ALL += bissc_peripheral_interface_single_ch_am261x-l
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += bissc_peripheral_interface_single_ch_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += endat_peripheral_interface_single_ch_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += endat_peripheral_interface_single_ch_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt
-BUILD_COMBO_EXAMPLE_PRIVATE_ALL += hdsl_master_freerun_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt
-BUILD_COMBO_EXAMPLE_PRIVATE_ALL += hdsl_master_sync_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt
+BUILD_COMBO_EXAMPLE_PRIVATE_ALL += hdsl_receiver_freerun_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt
+BUILD_COMBO_EXAMPLE_PRIVATE_ALL += hdsl_receiver_freerun_225_mhz_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt
+BUILD_COMBO_EXAMPLE_PRIVATE_ALL += hdsl_receiver_sync_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt
+BUILD_COMBO_EXAMPLE_PRIVATE_ALL += hdsl_receiver_sync_225_mhz_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += nikon_peripheral_interface_single_ch_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += nikon_peripheral_interface_single_ch_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += tamagawa_single_channel_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt
@@ -226,11 +230,17 @@ examples-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_ALL)
  endat_peripheral_interface_single_ch_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt:
 	$(MAKE) -C source/position_sense/endat/firmware/single_channel/am261x-lp/icss_m1_pru1_fw/ti-pru-cgt -f makefile all
 
- hdsl_master_freerun_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt:
+ hdsl_receiver_freerun_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt:
 	$(MAKE) -C source/position_sense/hdsl/firmware/freerun_225_mhz/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt -f makefile all
 
- hdsl_master_sync_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt:
+ hdsl_receiver_freerun_225_mhz_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt:
+	$(MAKE) -C source/position_sense/hdsl/firmware/freerun_225_mhz/am261x-lp/icss_m1_pru1_fw/ti-pru-cgt -f makefile all
+
+ hdsl_receiver_sync_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt:
 	$(MAKE) -C source/position_sense/hdsl/firmware/sync_225_mhz/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt -f makefile all
+
+ hdsl_receiver_sync_225_mhz_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt:
+	$(MAKE) -C source/position_sense/hdsl/firmware/sync_225_mhz/am261x-lp/icss_m1_pru1_fw/ti-pru-cgt -f makefile all
 
  nikon_peripheral_interface_single_ch_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt:
 	$(MAKE) -C source/position_sense/nikon/firmware/single_channel/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt -f makefile all
@@ -260,8 +270,10 @@ BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += bissc_peripheral_interface_single_ch_am
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += bissc_peripheral_interface_single_ch_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += endat_peripheral_interface_single_ch_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += endat_peripheral_interface_single_ch_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_clean
-BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += hdsl_master_freerun_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_clean
-BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += hdsl_master_sync_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += hdsl_receiver_freerun_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += hdsl_receiver_freerun_225_mhz_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += hdsl_receiver_sync_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += hdsl_receiver_sync_225_mhz_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += nikon_peripheral_interface_single_ch_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += nikon_peripheral_interface_single_ch_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += tamagawa_single_channel_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_clean
@@ -299,11 +311,17 @@ examples-private-clean: $(BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL)
  endat_peripheral_interface_single_ch_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/endat/firmware/single_channel/am261x-lp/icss_m1_pru1_fw/ti-pru-cgt -f makefile clean
 
- hdsl_master_freerun_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_clean:
+ hdsl_receiver_freerun_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/hdsl/firmware/freerun_225_mhz/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt -f makefile clean
 
- hdsl_master_sync_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_clean:
+ hdsl_receiver_freerun_225_mhz_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/position_sense/hdsl/firmware/freerun_225_mhz/am261x-lp/icss_m1_pru1_fw/ti-pru-cgt -f makefile clean
+
+ hdsl_receiver_sync_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/hdsl/firmware/sync_225_mhz/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt -f makefile clean
+
+ hdsl_receiver_sync_225_mhz_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/position_sense/hdsl/firmware/sync_225_mhz/am261x-lp/icss_m1_pru1_fw/ti-pru-cgt -f makefile clean
 
  nikon_peripheral_interface_single_ch_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/nikon/firmware/single_channel/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt -f makefile clean
@@ -333,8 +351,10 @@ BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += bissc_peripheral_interface_single_ch_am
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += bissc_peripheral_interface_single_ch_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += endat_peripheral_interface_single_ch_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += endat_peripheral_interface_single_ch_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_scrub
-BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += hdsl_master_freerun_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_scrub
-BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += hdsl_master_sync_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_scrub
+BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += hdsl_receiver_freerun_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_scrub
+BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += hdsl_receiver_freerun_225_mhz_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_scrub
+BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += hdsl_receiver_sync_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_scrub
+BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += hdsl_receiver_sync_225_mhz_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += nikon_peripheral_interface_single_ch_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += nikon_peripheral_interface_single_ch_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += tamagawa_single_channel_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_scrub
@@ -372,11 +392,17 @@ examples-scrub-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL)
  endat_peripheral_interface_single_ch_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_scrub:
 	$(MAKE) -C source/position_sense/endat/firmware/single_channel/am261x-lp/icss_m1_pru1_fw/ti-pru-cgt -f makefile scrub
 
- hdsl_master_freerun_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_scrub:
+ hdsl_receiver_freerun_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_scrub:
 	$(MAKE) -C source/position_sense/hdsl/firmware/freerun_225_mhz/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt -f makefile scrub
 
- hdsl_master_sync_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_scrub:
+ hdsl_receiver_freerun_225_mhz_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_scrub:
+	$(MAKE) -C source/position_sense/hdsl/firmware/freerun_225_mhz/am261x-lp/icss_m1_pru1_fw/ti-pru-cgt -f makefile scrub
+
+ hdsl_receiver_sync_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_scrub:
 	$(MAKE) -C source/position_sense/hdsl/firmware/sync_225_mhz/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt -f makefile scrub
+
+ hdsl_receiver_sync_225_mhz_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_scrub:
+	$(MAKE) -C source/position_sense/hdsl/firmware/sync_225_mhz/am261x-lp/icss_m1_pru1_fw/ti-pru-cgt -f makefile scrub
 
  nikon_peripheral_interface_single_ch_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_scrub:
 	$(MAKE) -C source/position_sense/nikon/firmware/single_channel/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt -f makefile scrub

@@ -100,14 +100,12 @@ check_test_pattern_false:
 ;--------------------------------------------------------------------------------------------------
 ;stores sync pulse period in R20 in unit of cycles
 sync_pulse:
-	lbco        &REG_TMP1, c1, IEP_CAPR6_RISE, 4
+	lbco        &REG_TMP1, IEP_CONST, IEP_CAPR6_RISE, 4
 wait_next_pulse:
-	lbco        &R20, c1, IEP_CAPR6_RISE, 4
+	lbco        &R20, IEP_CONST, IEP_CAPR6_RISE, 4
 	QBEQ		wait_next_pulse, R20, REG_TMP1
 	SUB         R20, R20, REG_TMP1
 	RET1
-
-
 	; common code starts here
 
 	.sect	".text"
@@ -117,7 +115,6 @@ datalink_reset:
 
 ; Synchronization and loading overlaid part of firmware for TXPRU (Channel 2) is needed,
 ; only if channel 0 and 2 are enabled
-
 
 	.if !$defined(CHANNEL_2)
 ; For channel 2, we always need to check for synchronization, so this code is not needed
