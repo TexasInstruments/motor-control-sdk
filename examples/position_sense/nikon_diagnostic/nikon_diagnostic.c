@@ -41,7 +41,10 @@
 #include <kernel/dpl/DebugP.h>
 #include <drivers/soc.h>
 
+#if defined(SOC_AM243X) || defined(SOC_AM64X)
 #include <drivers/sciclient.h>
+#endif
+
 #include <kernel/dpl/TaskP.h>
 #include <drivers/pinmux.h>
 #include <drivers/hw_include/hw_types.h>
