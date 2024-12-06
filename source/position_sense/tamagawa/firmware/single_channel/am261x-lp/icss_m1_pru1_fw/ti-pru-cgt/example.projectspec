@@ -4,7 +4,7 @@
         <when>
             <context
                 deviceFamily="PRU"
-                deviceId="AM261x_LP"
+                deviceId="AM261x"
             />
         </when>
     </applicability>
@@ -20,8 +20,8 @@
         connection="TIXDS110_Connection.xml"
         toolChain="TI"
         cgtVersion="2.3.3"
-        device="AM261x_LP"
-        deviceCore="ICSSM1_PRU_1"
+        device="AM261x"
+        deviceCore="ICSS_M1_PRU_1"
         ignoreDefaultDeviceSettings="true"
         ignoreDefaultCCSSettings="true"
         endianness="little"

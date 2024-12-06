@@ -59,7 +59,7 @@ function getDefaultR5Freq()
 {
     let defaultVal = "400MHz";
     if(getSocName() == "am261x" && getSocPackage() == "ZFG")
-    {
+    {   
         defaultVal = "500MHz";
     }
     return defaultVal;
@@ -74,6 +74,7 @@ function getR5Freq()
     {
         let instance = module.$static;
         let config = module.getInstanceConfig(instance);
+        
         r5Freq = config.r5ClockFreq;
     }
 

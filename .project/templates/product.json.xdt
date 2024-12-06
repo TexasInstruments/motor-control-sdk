@@ -11,7 +11,7 @@
     "name": "MOTOR_CONTROL_SDK_`deviceName`",
     "displayName": "MOTOR CONTROL SDK for `deviceName`",
 % }
-    "version": "07.03.01",
+    "version": "10.00.01",
     "documentationPath": "../docs",
     "includePaths": [
         "../source",
@@ -31,9 +31,7 @@
         "/security/security",
         "/usb/usb",
         "/pru_io/pru_io",
-        "/xbar/xbar",
-        "/memory_configurator/components",
-        "/optiflash/optiflash",
+        "/memory_configurator/components"
 % }
 % if(args.device == "am263x"){
         "/motor_control",
@@ -46,6 +44,19 @@
         "/security/security",
         "/xbar/xbar",
         "/memory_configurator/components",
+% }
+% if((args.device == "am263px")){
+        "/motor_control",
+        "/industrial_comms/industrial_comms",
+        "/kernel/dpl",
+        "/drivers/drivers",
+        "/board/board",
+        "/fs/fs",
+        "/networking/networking",
+        "/security/security",
+        "/xbar/xbar",
+        "/memory_configurator/components",
+        "/optiflash/optiflash"
 % }
 % if((args.device == "am261x")){
         "/motor_control",
@@ -61,7 +72,6 @@
         "/memory_configurator/components",
         "/optiflash/optiflash"
 % }
-
     ],
     "devices": [
 % if((args.device == "am64x") || (isDevelopmentMode)) {
@@ -73,6 +83,9 @@
 % }
 % if((args.device == "am263x") || (isDevelopmentMode)) {
         "AM263x_beta",
+% }
+% if((args.device == "am263px") || (isDevelopmentMode)) {
+        "AM263Px",
 % }
 % if((args.device == "am261x") || (isDevelopmentMode)) {
         "AM261x_ZCZ",
@@ -99,6 +112,9 @@
         }, {
             "name": "a53ss0-0",
             "targetdbId": "a53ss0-0"
+        },{
+            "name": "a53ss0-1",
+            "targetdbId": "a53ss0-1"
         },{
             "name": "icss_g0_pru0",
             "targetdbId": "icss_g0_pru0"
@@ -245,6 +261,30 @@
 % }
 % if((args.device == "am263x") || (isDevelopmentMode)) {
         "AM263x_beta": [{
+            "name": "r5fss0-0",
+            "targetdbId": "Cortex_R5_0"
+        }, {
+            "name": "r5fss0-1",
+            "targetdbId": "Cortex_R5_1"
+        },{
+            "name": "r5fss1-0",
+            "targetdbId": "Cortex_R5_2"
+        }, {
+            "name": "r5fss1-1",
+            "targetdbId": "Cortex_R5_3"
+        }, {
+            "name": "hsm0-0",
+            "targetdbId": "Cortex_M4_0"
+        },{
+            "name": "icss_m0_pru0",
+            "targetdbId": "icss_m0_pru0"
+        },{
+            "name": "icss_m0_pru1",
+            "targetdbId": "icss_m0_pru1"
+        }],
+% }
+% if((args.device == "am263px") || (isDevelopmentMode)) {
+        "AM263Px": [{
             "name": "r5fss0-0",
             "targetdbId": "Cortex_R5_0"
         }, {

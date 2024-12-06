@@ -50,7 +50,7 @@ const lflags = {
 };
 
 const buildOptionCombos = [
-    { device: device, cpu: "icssg0-pru1", cgt: "ti-pru-cgt", board: "am243x-evm", os: "fw"},
+    { device: device, cpu: "icss_g0_pru1", cgt: "ti-pru-cgt", board: "am243x-evm", os: "fw"},
 ];
 
 function getmakefilePruPostBuildSteps(cpu, board)
