@@ -49,7 +49,7 @@ const lflags_pru = {
 
 
 const buildOptionCombos = [
-    { device: device, cpu: "icssg0-pru0", cgt: "ti-pru-cgt", board: "am243x-evm", os: "fw"},
+    { device: device, cpu: "icss_g0_pru0", cgt: "ti-pru-cgt", board: "am243x-evm", os: "fw"},
 
 ];
 

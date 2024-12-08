@@ -6,7 +6,6 @@
     } else {
         products+=`com.ti.${args.utils.getProductNameProjectSpec(args.project.projects[0].device)}`
     }
-
     productName = args.utils.getProductNameProjectSpec(args.project.projects[0].device);
 %%}
 <?xml version="1.0" encoding="UTF-8"?>

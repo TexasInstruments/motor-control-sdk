@@ -72,18 +72,19 @@ function getProjectSpecCpu(cpu) {
         "r5fss1-0": "MAIN_PULSAR_Cortex_R5_1_0",
         "r5fss1-1": "MAIN_PULSAR_Cortex_R5_1_1",
         "m4fss0-0": "Cortex_M4F_0",
-        "icssg0-pru0": "ICSS_G0_PRU_0",
-        "icssg0-pru1": "ICSS_G0_PRU_1",
-        "icssg0-rtupru0": "ICSS_G0_RTU_PRU_0",
-        "icssg0-rtupru1": "ICSS_G0_RTU_PRU_1",
-        "icssg0-txpru0": "ICSS_G0_TX_PRU_0",
-        "icssg0-txpru1": "ICSS_G0_TX_PRU_1",
-        "icssg1-pru0": "ICSS_G1_PRU_0",
-        "icssg1-pru1": "ICSS_G1_PRU_1",
-        "icssg1-rtupru0": "ICSS_G1_RTU_PRU_0",
-        "icssg1-rtupru1": "ICSS_G1_RTU_PRU_1",
-        "icssg1-txpru0": "ICSS_G1_TX_PRU_0",
-        "icssg1-txpru1": "ICSS_G1_TX_PRU_1",
+        "a53ss0-0": "CortexA53_0",
+        "icss_g0_pru0": "ICSS_G0_PRU_0",
+        "icss_g0_pru1": "ICSS_G0_PRU_1",
+        "icss_g0_rtu_pru0": "ICSS_G0_RTU_PRU_0",
+        "icss_g0_rtu_pru1": "ICSS_G0_RTU_PRU_1",
+        "icss_g0_tx_pru0": "ICSS_G0_TX_PRU_0",
+        "icss_g0_tx_pru1": "ICSS_G0_TX_PRU_1",
+        "icss_g1_pru0": "ICSS_G1_PRU_0",
+        "icss_g1_pru1": "ICSS_G1_PRU_1",
+        "icss_g1_rtu_pru0": "ICSS_G1_RTU_PRU_0",
+        "icss_g1_rtu_pru1": "ICSS_G1_RTU_PRU_1",
+        "icss_g1_tx_pru0": "ICSS_G1_TX_PRU_0",
+        "icss_g1_tx_pru1": "ICSS_G1_TX_PRU_1",
     }
 
     return projectSpecCpu[cpu];
@@ -186,6 +187,11 @@ function getFlashAddr() {
     return 0x60000000;
 }
 
+function getEnableGccBuild() {
+    const IsGccBuildEnabled = 0;
+    return IsGccBuildEnabled;
+}
+
 module.exports = {
     getComponentList,
     getExampleList,
@@ -200,4 +206,5 @@ module.exports = {
     getLinuxFwName,
     getProductNameProjectSpec,
     getFlashAddr,
+    getEnableGccBuild,
 };

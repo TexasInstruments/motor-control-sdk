@@ -1,6 +1,3 @@
-#
-# Auto generated makefile
-#
 
 export MOTOR_CONTROL_SDK_PATH?=$(abspath ../..)
 include $(MOTOR_CONTROL_SDK_PATH)/imports.mak

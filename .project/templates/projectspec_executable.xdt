@@ -11,7 +11,6 @@
     } else {
         products+=`com.ti.${args.utils.getProductNameProjectSpec(args.project.device)}`
     }
-
     productName = args.utils.getProductNameProjectSpec(args.project.device);
     if(args.project.projecspecFileAction)  // should be renamed to projectspecFileAction
     {

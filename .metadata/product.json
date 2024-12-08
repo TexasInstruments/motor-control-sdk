@@ -1,7 +1,7 @@
 {
     "name": "MOTOR_CONTROL_SDK",
     "displayName": "MOTOR CONTROL SDK",
-    "version": "07.03.01",
+    "version": "10.00.01",
     "documentationPath": "../docs",
     "includePaths": [
         "../source",
@@ -20,16 +20,14 @@
         "/security/security",
         "/usb/usb",
         "/pru_io/pru_io",
-        "/xbar/xbar",
-        "/memory_configurator/components",
-        "/optiflash/optiflash",
-
+        "/memory_configurator/components"
     ],
     "devices": [
         "AM64x",
         "AM243x_ALV_beta",
         "AM243x_ALX_beta",
         "AM263x_beta",
+        "AM263Px",
         "AM261x_ZCZ",
         "AM261x_ZFG",
     ],
@@ -52,6 +50,9 @@
         }, {
             "name": "a53ss0-0",
             "targetdbId": "a53ss0-0"
+        },{
+            "name": "a53ss0-1",
+            "targetdbId": "a53ss0-1"
         },{
             "name": "icss_g0_pru0",
             "targetdbId": "icss_g0_pru0"
@@ -215,6 +216,28 @@
             "name": "icss_m0_pru1",
             "targetdbId": "icss_m0_pru1"
         }],
+        "AM263Px": [{
+            "name": "r5fss0-0",
+            "targetdbId": "Cortex_R5_0"
+        }, {
+            "name": "r5fss0-1",
+            "targetdbId": "Cortex_R5_1"
+        },{
+            "name": "r5fss1-0",
+            "targetdbId": "Cortex_R5_2"
+        }, {
+            "name": "r5fss1-1",
+            "targetdbId": "Cortex_R5_3"
+        }, {
+            "name": "hsm0-0",
+            "targetdbId": "Cortex_M4_0"
+        },{
+            "name": "icss_m0_pru0",
+            "targetdbId": "icss_m0_pru0"
+        },{
+            "name": "icss_m0_pru1",
+            "targetdbId": "icss_m0_pru1"
+        }],
         "AM261x_ZCZ": [{
             "name": "r5fss0-0",
             "targetdbId": "Cortex_R5_0"
@@ -243,5 +266,5 @@
         "showSignals": true,
         "showUsed": true
     },
-    "minToolVersion" : "1.21.0"
+    "minToolVersion" : "1.21.2"
 }

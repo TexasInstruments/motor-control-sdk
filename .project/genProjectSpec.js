@@ -80,8 +80,14 @@ const utils = {
                 return "AM263x_CC";
             } else if (board == "am263x-lp") {
                 return "AM263x_LAUNCHPAD";
+            }else if (board == "am263px-cc") {
+                return "AM263px";
+            } else if (board == "am263px-lp") {
+                return "AM263px";
             } else if (board == "am261x-lp"){
-                return "AM261x_LP";
+                return "AM261x";
+            }else if (board == "am261x-som"){
+                return "AM261x";
             }
         }
 
@@ -157,7 +163,7 @@ const utils = {
 
         switch(cgt) {
             case 'ti-arm-clang':
-                toolchainVersion = '4.0.0'
+                toolchainVersion = '4.0.1'
                 break;
             case 'gcc-aarch64':
                 toolchainVersion = '9.2'
@@ -177,15 +183,15 @@ const utils = {
     },
 
     getSysCfgVersionProjectSpec: () => {
-        return "1.21.0";
+        return "1.21.2";
     },
 
     getCCSVersionProjectSpec: () => {
-        return "1280";
+        return "1281";
     },
 
     getTiClangVersionProjectSpec: () => {
-        return "4.0.0";
+        return "4.0.1";
     },
 
     getGCCAarch64NoneVersionProjectSpec: () => {

@@ -356,4 +356,28 @@ This section lists changes which could affect user applications developed using 
     <td> Added new parameter: \ref endat_clock_config 
     <td> -
 </tr>
+<tr>
+    <td> Position Sense Nikon A-Format
+    <td> struct nikon_priv
+    <td> Added variable tx_rx_clock_source
+    <td> Needed for configuring clock source selection
+</tr>
+<tr>
+    <td> Position Sense Nikon A-Format
+    <td> API nikon_init
+    <td> Added input parameter tx_rx_clock_source
+    <td> Needed for configuring clock source selection
+</tr>
+<tr>
+    <td> Position Sense BiSS-C
+    <td> struct bissc_priv
+    <td> Added variable tx_rx_clock_source
+    <td> Needed for configuring clock source selection
+</tr>
+<tr>
+    <td> Position Sense BiSS-C
+    <td> API bissc_init
+    <td> Added input parameter tx_rx_clock_source
+    <td> Needed for configuring clock source selection
+</tr>
 </table>

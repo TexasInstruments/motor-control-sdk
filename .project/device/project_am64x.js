@@ -1,10 +1,6 @@
 const common = require("../common.js");
 
 const component_file_list = [
-    "source/position_sense/endat/.project/project.js",
-    "source/position_sense/hdsl/.project/project.js",
-    "source/position_sense/tamagawa/.project/project.js",
-    "source/pruicss_pwm/.project/project.js"
 ];
 
 const device_defines = {
@@ -14,27 +10,6 @@ const device_defines = {
 };
 
 const example_file_list = [
-    "examples/position_sense/endat_diagnostic/single_channel/.project/project.js",
-    "examples/position_sense/endat_diagnostic/multi_channel_load_share/.project/project.js",
-    "examples/position_sense/endat_diagnostic/multi_channel_single_pru/.project/project.js",
-    "examples/position_sense/hdsl_diagnostic/multi_channel/.project/project.js",
-    "examples/position_sense/hdsl_diagnostic/single_channel/.project/project.js",
-    "examples/position_sense/tamagawa_diagnostic/multi_channel/.project/project.js",
-    "examples/position_sense/tamagawa_diagnostic/single_channel/.project/project.js",   
-    "examples/pruicss_pwm/pruicss_pwm_dead_band_epwm_sync/.project/project.js",
-    "source/position_sense/endat/firmware/multi_channel_load_share/.project/project.js",
-    "source/position_sense/endat/firmware/single_channel/.project/project.js",
-    "source/position_sense/endat/firmware/multi_channel_single_pru/.project/project.js",
-    "source/position_sense/hdsl/firmware/freerun_225_mhz/.project/project.js",
-    "source/position_sense/hdsl/firmware/multichannel_ch0/.project/project.js",
-    "source/position_sense/hdsl/firmware/multichannel_ch1/.project/project.js",
-    "source/position_sense/hdsl/firmware/multichannel_ch2/.project/project.js",
-    "source/position_sense/hdsl/firmware/multichannel_ch0_sync_mode/.project/project.js",
-    "source/position_sense/hdsl/firmware/multichannel_ch1_sync_mode/.project/project.js",
-    "source/position_sense/hdsl/firmware/multichannel_ch2_sync_mode/.project/project.js",
-    "source/position_sense/hdsl/firmware/sync_225_mhz/.project/project.js",
-    "source/position_sense/tamagawa/firmware/multi_channel/.project/project.js",
-    "source/position_sense/tamagawa/firmware/single_channel/.project/project.js",
 ];
 
 function getProjectSpecCpu(cpu) {
@@ -46,18 +21,19 @@ function getProjectSpecCpu(cpu) {
         "r5fss1-1": "MAIN_PULSAR_Cortex_R5_1_1",
         "m4fss0-0": "Cortex_M4F_0",
         "a53ss0-0": "CortexA53_0",
-        "icssg0-pru0": "ICSS_G0_PRU_0",
-        "icssg0-pru1": "ICSS_G0_PRU_1",
-        "icssg0-rtupru0": "ICSS_G0_RTU_PRU_0",
-        "icssg0-rtupru1": "ICSS_G0_RTU_PRU_1",
-        "icssg0-txpru0": "ICSS_G0_TX_PRU_0",
-        "icssg0-txpru1": "ICSS_G0_TX_PRU_1",
-        "icssg1-pru0": "ICSS_G1_PRU_0",
-        "icssg1-pru1": "ICSS_G1_PRU_1",
-        "icssg1-rtupru0": "ICSS_G1_RTU_PRU_0",
-        "icssg1-rtupru1": "ICSS_G1_RTU_PRU_1",
-        "icssg1-txpru0": "ICSS_G1_TX_PRU_0",
-        "icssg1-txpru1": "ICSS_G1_TX_PRU_1",
+        "a53ss0-1": "CortexA53_1",
+        "icss_g0_pru0": "ICSS_G0_PRU_0",
+        "icss_g0_pru1": "ICSS_G0_PRU_1",
+        "icss_g0_rtu_pru0": "ICSS_G0_RTU_PRU_0",
+        "icss_g0_rtu_pru1": "ICSS_G0_RTU_PRU_1",
+        "icss_g0_tx_pru0": "ICSS_G0_TX_PRU_0",
+        "icss_g0_tx_pru1": "ICSS_G0_TX_PRU_1",
+        "icss_g1_pru0": "ICSS_G1_PRU_0",
+        "icss_g1_pru1": "ICSS_G1_PRU_1",
+        "icss_g1_rtu_pru0": "ICSS_G1_RTU_PRU_0",
+        "icss_g1_rtu_pru1": "ICSS_G1_RTU_PRU_1",
+        "icss_g1_tx_pru0": "ICSS_G1_TX_PRU_0",
+        "icss_g1_tx_pru1": "ICSS_G1_TX_PRU_1",
     }
 
     return projectSpecCpu[cpu];
@@ -94,10 +70,10 @@ function getSysCfgPart(board) {
 function getDevToolTirex(board) {
     switch (board) {
         case "am64x-sk":
-            return "AM64x_SK_EVM";
+            return "SK-AM64B";
         default:
         case "am64x-evm":
-            return "AM64x_GP_EVM";
+            return "TMDS64EVM";
     }
 }
 
@@ -134,6 +110,11 @@ function getFlashAddr() {
     return 0x60000000;
 }
 
+function getEnableGccBuild() {
+    const IsGccBuildEnabled = 0;
+    return IsGccBuildEnabled;
+}
+
 module.exports = {
     getComponentList,
     getExampleList,
@@ -148,4 +129,5 @@ module.exports = {
     getLinuxFwName,
     getProductNameProjectSpec,
     getFlashAddr,
+    getEnableGccBuild,
 };

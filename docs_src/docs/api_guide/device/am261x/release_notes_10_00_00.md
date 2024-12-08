@@ -17,7 +17,12 @@ Feature                                                                         
 ------------------------------------------------------------------------------------------------|-----------------------------------
 Tamagawa over PRU 3-channel interface                                                           | Position Sense
 EnDat 2.2                                                                                       | Position Sense
-
+Nikon A-Format Single Channel Support                                                           | Position Sense Nikon A-Format
+Multiple baud rate support : 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz                        | Position Sense Nikon A-Format
+Long cable (upto 100 meters)                                                                    | Position Sense Nikon A-Format
+BiSS-C Single Channel Support                                                                   | Position Sense BiSS-C
+Multiple baud rate support : 1 MHz, 2 MHz, 5 MHz, 8 MHz, and 10 MHz                             | Position Sense BiSS-C
+Long cable (upto 100 meters)                                                                    | Position Sense BiSS-C
 
 ## Device and Validation Information
 
@@ -64,6 +69,22 @@ Mbed-TLS                | R5F            | mbedtls-3.0.0
     <td> FreeRTOS, NORTOS
     <td> Absolute position, Encoder ID, Reset, EEPROM Read, EEPROM Write, 2.5 Mbps and 5 Mbps Encoder Support, Boosterpack with AM261x-LP
     <td> -
+</tr>
+<tr>
+    <td> Nikon A-Format
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Single channel, point-to-point connection, baud rates from 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz, up to 40-bit absolute position (single turn + multi turn) data with additional information, long cable (upto 100 meters), Boosterpack with AM261x-LP
+    <td> Daisy Chain Testing
+</tr>
+<tr>
+    <td> BiSS-C
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Single channel, point-to-point connection, daisy chaining, control communication, automatic processing delay detection and compensation, interface speed of 1, 2, 5, 8, and 10 MHz, Long cable (upto 100 meters), Boosterpack with AM261x-LP
+    <td> Multi Transmission Mode
 </tr>
 </table>
 
@@ -171,12 +192,12 @@ Mbed-TLS                | R5F            | mbedtls-3.0.0
 
 <!-- ## Upgrade and Compatibility Information for Motor Control SDK 10.00.00 {#UPGRADE_AND_COMPATIBILITY_INFORMATION_10_0_0}
 
-\attention When migrating from MCU+ SDK, see \ref MIGRATION_GUIDES for more details. -->
+\attention When migrating from MCU+ SDK, see \ref MIGRATION_GUIDES for more details.
 
-<!-- This section lists changes which could affect user applications developed using older SDK versions.
+This section lists changes which could affect user applications developed using older SDK versions.
 Read this carefully to see if you need to do any changes in your existing application when migrating to this SDK version relative to
 previous SDK version. Also refer to older SDK version release notes to see changes in
-earlier SDKs. -->
+earlier SDKs.
 
 <!-- ### Compiler Options
 
@@ -193,9 +214,9 @@ earlier SDKs. -->
     <td>
     <td>
 </tr>
-</table> -->
+</table>
 
-<!-- ### Examples
+### Examples
 
 <table>
 <tr>

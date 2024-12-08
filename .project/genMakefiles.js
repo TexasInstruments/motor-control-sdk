@@ -173,6 +173,7 @@ function genMakefileDeviceTop(component_file_list, example_file_list, device, is
         example_list: example_make_list,
         system_example_list: system_example_make_list,
         device: device,
+        ...(require(`./device/project_${device}.js`).getEnableGccBuild ? { isGccBuildEnabled:require(`./device/project_${device}.js`).getEnableGccBuild() } : 0),
     };
 
     common.convertTemplateToFile(
@@ -185,7 +186,8 @@ function genMakefileDeviceTop(component_file_list, example_file_list, device, is
         system_example_list: system_example_make_projectspec_list,
         device: device,
         sdkPath: "MOTOR_CONTROL_SDK_PATH",
-        relPath: relPath
+        relPath: relPath,
+        ...(require(`./device/project_${device}.js`).getEnableGccBuild ? { isGccBuildEnabled:require(`./device/project_${device}.js`).getEnableGccBuild() } : 0),
     };
 
     common.convertTemplateToFile(

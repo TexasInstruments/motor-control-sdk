@@ -9,11 +9,51 @@ BiSS is an open-source digital interface for sensors and actuators. BiSS stands 
 BiSS Safety is a profile definition for BiSS that has been certified by TÜV Rheinland for safety-critical applications up to SIL3 according to IEC61508:2010. BiSS Safety uses the concept of a "Black Channel" transmission and specifies the data channel contents in order to ensure failure mode detection as defined in IEC61784-3 using redundant position words, different CRC polynomials and a sign-of-life counter. BiSS Safety is fully compatible with BiSS and all of its features including line delay compensation, processing times. BiSS Safety is implemented by assuming 2 encoders connected in daisy chain one will send CPW and another one will send SPW. Daisy chaining is also possible on top of safety (2 encoders dedicated safety - one for CPW and another one for SPW) up to 3 encoders per channel.
 
 ## Features Supported
+\cond SOC_AM243X
 
    -  BiSS-C Interface Master for point-to-point communication
    -  Support for single channel implementation with one encoder
    -  Receive on-the-fly CRC verification of position and control data
    -  Interface speed of 1, 2, 5, 8, and 10 MHz
+   -  Supported oversampling Ratio with different interface speed
+<table>
+<tr>
+    <th rowspan="2">Clock Source
+    <th rowspan="1" colspan="5">Interface Speed
+</tr>
+<tr>
+    <th>1 MHz
+    <th>2 MHz
+    <th>5 MHz
+    <th>8 MHz
+    <th>10 MHz
+</tr>
+<tr>
+    <td>PRU UART Clock (192 MHz)
+    <td>8x
+	 <td>8x
+    <td>Not tested
+	 <td>8x
+    <td>Not tested
+</tr>
+<tr>
+    <td>PRU Core Clock (200 MHz)
+    <td>Not tested
+	 <td>Not tested
+    <td>8x
+	 <td>Not tested
+    <td>4x
+</tr>
+<tr>
+    <td>PRU Core Clock (300 MHz)
+    <td>Not tested
+	 <td>Not tested
+    <td>8x with fractional div
+	 <td>Not tested
+    <td>4x with Fractional div
+</tr>
+</table>
+
    -  Two modes of operation - host trigger and periodic trigger
    -  Support for control communication
    -  Support for automatic processing delay detection and compensation
@@ -23,6 +63,47 @@ BiSS Safety is a profile definition for BiSS that has been certified by TÜV Rhe
    -  Support for up to 100 meter cable
    -  Readiness for BiSS Safety profile by supporting 16 bit CRC and sign-of-life counter
 
+\endcond
+
+\cond SOC_AM261X
+
+   -  BiSS-C Interface Master for point-to-point communication
+   -  Support for single channel implementation with one encoder
+   -  Receive on-the-fly CRC verification of position and control data
+   -  Interface speed of 1, 2, 5, 8, and 10 MHz
+<table>
+<tr>
+    <th rowspan="2">Clock Source
+    <th rowspan="1" colspan="5">Interface Speed
+</tr>
+<tr>
+    <th>1 MHz
+    <th>2 MHz
+    <th>5 MHz
+    <th>8 MHz
+    <th>10 MHz
+</tr>
+<tr>
+    <td>PRU UART Clock (160 MHz)
+    <td>8x
+	 <td>8x
+    <td>8x
+	 <td>4x
+    <td>8x
+</tr>
+
+</table>
+   -  Two modes of operation - host trigger and periodic trigger
+   -  Support for control communication
+   -  Support for automatic processing delay detection and compensation
+   -  Support for multiple encoders connected via daisy-chain configuration (up-to 3 encoders)
+   -  Support for concurrent multi-channel support on a single PRU (up-to 3 identical encoders)
+   -  Support for up to 100 meter cable
+   -  Readiness for BiSS Safety profile by supporting 16 bit CRC and sign-of-life counter
+
+\endcond
+
+
 ## Features Not Supported
 
 In general, peripherals or features not mentioned as part of "Features Supported" section are not
@@ -31,6 +112,8 @@ supported in this release, including the below
 -  Independent clocks on multi channel mode.
 
 ## SysConfig Features
+
+\cond SOC_AM243X
 
 @VAR_SYSCFG_USAGE_NOTE
 
@@ -43,6 +126,24 @@ SysConfig can be used to configure things mentioned below:
 - Selecting Multi Channel with Encoders of Different Make using load share mode.
 
 \note BiSS-C firmware will only run with ICSSG Core Clock running at 200 MHz or 300 MHz frequency. 225/250/333 MHz values are not supported due to clock divider requirements.
+
+\endcond
+
+\cond SOC_AM261X
+
+@VAR_SYSCFG_USAGE_NOTE
+
+SysConfig can be used to configure things mentioned below:
+- Selecting the ICSSG instance. (Tested on ICSSM1)
+- Selecting the ICSSG PRU slice. (Tested on ICSSM1-PRU0)
+- Configuring PINMUX.
+- Frequency selection.
+
+\note BiSS-C firmware will only run with ICSSG Core Clock running at 200 MHz or 300 MHz frequency. 225/250/333 MHz values are not supported due to clock divider requirements.
+
+\endcond
+
+
 
 ## BISS-C Design
 

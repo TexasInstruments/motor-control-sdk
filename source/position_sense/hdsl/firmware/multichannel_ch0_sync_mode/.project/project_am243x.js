@@ -72,7 +72,7 @@ function getccsPruPostBuildSteps(cpu, board)
 const readmeDoxygenPageTag = "HDSL_DESIGN";
 
 const buildOptionCombos = [
-    { device: device, cpu: "icssg0-pru1", cgt: "ti-pru-cgt", board: "am243x-evm", os: "fw"},
+    { device: device, cpu: "icss_g0_pru1", cgt: "ti-pru-cgt", board: "am243x-evm", os: "fw"},
 ];
 
 function getComponentProperty() {
