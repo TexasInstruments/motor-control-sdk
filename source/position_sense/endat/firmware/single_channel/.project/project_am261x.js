@@ -67,7 +67,7 @@ function getmakefilePruPostBuildSteps(cpu, board)
             break;
     }
 
-    return postBuildSteps
+    return postBuildSteps;
 }
 
 function getccsPruPostBuildSteps(cpu, board)
@@ -91,7 +91,7 @@ function getccsPruPostBuildSteps(cpu, board)
             break;
 
     }
-    return postBuildSteps
+    return postBuildSteps;
 }
 
 function getComponentProperty() {

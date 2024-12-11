@@ -80,13 +80,13 @@
 
 #if (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
 #if PRU_ICSSGx_PRU_SLICE == 1
-#include <endat_controller_multi_rtu1_bin.h>
+#include <endat_controller_multi_rtu_pru1_bin.h>
 #include <endat_controller_multi_pru1_bin.h>
-#include <endat_controller_multi_txpru1_bin.h>
+#include <endat_controller_multi_tx_pru1_bin.h>
 #else
-#include <endat_controller_multi_rtu0_bin.h>
+#include <endat_controller_multi_rtu_pru0_bin.h>
 #include <endat_controller_multi_pru0_bin.h>
-#include <endat_controller_multi_txpru0_bin.h>
+#include <endat_controller_multi_tx_pru0_bin.h>
 #endif
 #endif
 

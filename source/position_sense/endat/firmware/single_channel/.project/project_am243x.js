@@ -76,7 +76,7 @@ function getmakefilePruPostBuildSteps(cpu, board)
             "$(RM) endat_controller_pru0_bin.h;"]
             break;
     }
-    return postBuildSteps
+    return postBuildSteps;
 }
 
 function getccsPruPostBuildSteps(cpu, board)
@@ -99,7 +99,7 @@ function getccsPruPostBuildSteps(cpu, board)
             "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm endat_controller_pru0_bin.h;"]
             break;
     }
-    return postBuildSteps
+    return postBuildSteps;
 }
 
 function getComponentProperty() {
