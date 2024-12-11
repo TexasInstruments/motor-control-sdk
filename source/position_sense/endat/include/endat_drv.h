@@ -46,13 +46,6 @@ extern "C" {
 #define ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU (0U)
 #define ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU (1U)
 #define ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU (2U)
-#define HWREG(x)                                                               \
-        (*((volatile uint32_t *)(x)))
-#define HWREGB(x)                                                              \
-        (*((volatile uint8_t *)(x)))
-#define HWREGH(x)                                                              \
-        (*((volatile uint16_t *)(x)))
-
 
 /*12 words */
 #define MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE0   0xA1

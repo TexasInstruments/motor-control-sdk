@@ -1,9 +1,9 @@
 /**
  * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
  * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
- * @cliArgs --device "AM261x_ZFG" --part "AM2612" --package "ZFG" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@07.03.01"
- * @v2CliArgs --device "AM2612" --package "NFBGA (ZFG)" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@07.03.01"
- * @versions {"tool":"1.21.999+161"}
+ * @cliArgs --device "AM261x_ZFG" --part "AM2612" --package "ZFG" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@10.00.01"
+ * @v2CliArgs --device "AM2612" --package "NFBGA (ZFG)" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@10.00.01"
+ * @versions {"tool":"1.21.2+3837"}
  */
 
 /**
@@ -301,14 +301,15 @@ hdsl1["PRU-ICSS1"].PR1_PRU0_GPIO9.$used   = true;
 hdsl1.ENC1_EN.$name                       = "ENC1_EN";
 hdsl1.ENC1_EN.GPIO_n.$assign              = "GPIO21";
 
-const pruicss  = scripting.addModule("/drivers/pruicss/pruicss", {}, false);
-const pruicss1 = pruicss.addInstance({}, false);
-pruicss1.$name = "CONFIG_PRU_ICSS0";
-hdsl1.pru      = pruicss1;
+const pruicss                            = scripting.addModule("/drivers/pruicss/pruicss", {}, false);
+const pruicss1                           = pruicss.addInstance({}, false);
+pruicss1.$name                           = "CONFIG_PRU_ICSS0";
+hdsl1.pru                                = pruicss1;
+pruicss1.AdditionalICSSSettings[0].$name = "CONFIG_PRU_ICSS_IO1";
 
 soc_timesync_xbar11.$name      = "CONFIG_SOC_TIMESYNC_XBAR1_0";
-soc_timesync_xbar11.xbarOutput = "SOC_TIMESYNC_XBAR1_ICSSM0_EDC0_SYNC_OUT_0";
 soc_timesync_xbar11.instance   = "SOC_TIMESYNC_XBAR1_ICSS_MODULE_0";
+soc_timesync_xbar11.xbarOutput = "SOC_TIMESYNC_XBAR1_ICSSM0_EDC0_SYNC_OUT_0";
 
 /**
  * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future
