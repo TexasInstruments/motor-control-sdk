@@ -40,13 +40,6 @@ extern "C" {
 
 #include <drivers/hw_include/hw_types.h>
 
-#define HWREG(x)                                                               \
-        (*((volatile uint32_t *)(x)))
-#define HWREGB(x)                                                              \
-        (*((volatile uint8_t *)(x)))
-#define HWREGH(x)                                                              \
-        (*((volatile uint16_t *)(x)))
-
 /* for DDR trace*/
 #define DDR_START_OFFSET 0x80000000
 #define DDR_LIMIT 0x3FFFFFFF

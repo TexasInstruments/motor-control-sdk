@@ -115,15 +115,6 @@ extern "C" {
 
 #define MAX_WAIT 20000
 
-#define HDSL_ICSSG0_INST        0U
-#define HDSL_ICSSG1_INST        1U
-
-#define HWREG(x)                                                               \
-        (*((volatile uint32_t *)(x)))
-#define HWREGB(x)                                                              \
-        (*((volatile uint8_t *)(x)))
-#define HWREGH(x)                                                              \
-        (*((volatile uint16_t *)(x)))
 /*TSR configuration:*/
 
 /*inEvent value:*/
