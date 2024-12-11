@@ -57,25 +57,32 @@
 #define PRUICSS_SLICEx PRUICSS_PRUx
 
 #if (CONFIG_NIKON0_MODE == NIKON_MODE_MULTI_CHANNEL_SINGLE_PRU)
-#include  <position_sense/nikon/firmware/nikon_receiver_multi_bin.h>
+#if (PRUICSS_PRUx == 1)
+#include  <nikon_receiver_multi_pru1_bin.h>
+#else
+#include  <nikon_receiver_multi_pru0_bin.h>
+#endif
 #endif
 
-#if (CONFIG_NIKON0_CHANNEL0) && (CONFIG_NIKON0_LOAD_SHARE_MODE)
-#include <position_sense/nikon/firmware/nikon_receiver_multi_RTU_bin.h>
+#if (CONFIG_NIKON0_MODE == NIKON_MODE_MULTI_CHANNEL_MULTI_PRU )
+#if (PRUICSS_PRUx == 1)
+#include <nikon_receiver_multi_rtu_pru1_bin.h>
+#include <nikon_receiver_multi_pru1_bin.h>
+#include <nikon_receiver_multi_tx_pru1_bin.h>
+#else
+#include <nikon_receiver_multi_rtu_pru0_bin.h>
+#include <nikon_receiver_multi_pru0_bin.h>
+#include <nikon_receiver_multi_tx_pru0_bin.h>
 #endif
-
-#if (CONFIG_NIKON0_CHANNEL1) && (CONFIG_NIKON0_LOAD_SHARE_MODE)
-#include <position_sense/nikon/firmware/nikon_receiver_multi_PRU_bin.h>
-#endif
-
-#if (CONFIG_NIKON0_CHANNEL2) && (CONFIG_NIKON0_LOAD_SHARE_MODE)
-#include <position_sense/nikon/firmware/nikon_receiver_multi_TXPRU_bin.h>
 #endif
 
 #if (CONFIG_NIKON0_MODE == NIKON_MODE_SINGLE_CHANNEL_SINGLE_PRU)
-#include <position_sense/nikon/firmware/nikon_receiver_bin.h>
+#if (PRUICSS_PRUx == 1)
+#include  <nikon_receiver_pru1_bin.h>
+#else
+#include  <nikon_receiver_pru0_bin.h>
 #endif
-
+#endif
 #define TASK_STACK_SIZE                     (4096)
 #define TASK_PRIORITY                       (6)
 

@@ -105,8 +105,13 @@ help:
 	@echo  $(MAKE) -s -C source/position_sense/bissc/firmware/multi_channel_load_share/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/bissc/firmware/multi_channel_load_share/am243x-evm/icss_g0_rtu_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/bissc/firmware/multi_channel_load_share/am243x-evm/icss_g0_tx_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C source/position_sense/bissc/firmware/multi_channel_load_share/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C source/position_sense/bissc/firmware/multi_channel_load_share/am243x-evm/icss_g0_rtu_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C source/position_sense/bissc/firmware/multi_channel_load_share/am243x-evm/icss_g0_tx_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/bissc/firmware/multi_channel_single_pru/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C source/position_sense/bissc/firmware/multi_channel_single_pru/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/bissc/firmware/single_channel/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C source/position_sense/bissc/firmware/single_channel/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/endat/firmware/multi_channel_load_share/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/endat/firmware/multi_channel_load_share/am243x-evm/icss_g0_rtu_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/endat/firmware/multi_channel_load_share/am243x-evm/icss_g0_tx_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
@@ -128,8 +133,13 @@ help:
 	@echo  $(MAKE) -s -C source/position_sense/nikon/firmware/multi_channel_load_share/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/nikon/firmware/multi_channel_load_share/am243x-evm/icss_g0_rtu_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/nikon/firmware/multi_channel_load_share/am243x-evm/icss_g0_tx_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C source/position_sense/nikon/firmware/multi_channel_load_share/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C source/position_sense/nikon/firmware/multi_channel_load_share/am243x-evm/icss_g0_rtu_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C source/position_sense/nikon/firmware/multi_channel_load_share/am243x-evm/icss_g0_tx_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/nikon/firmware/multi_channel_single_pru/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C source/position_sense/nikon/firmware/multi_channel_single_pru/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/nikon/firmware/single_channel/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C source/position_sense/nikon/firmware/single_channel/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/tamagawa/firmware/multi_channel/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/tamagawa/firmware/multi_channel/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/tamagawa/firmware/single_channel/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
@@ -328,8 +338,13 @@ BUILD_COMBO_EXAMPLE_PRIVATE_ALL += sdfm_firmware_single_axis_single_pru_am243x-e
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru1_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru1_fw_ti-pru-cgt
+BUILD_COMBO_EXAMPLE_PRIVATE_ALL += bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt
+BUILD_COMBO_EXAMPLE_PRIVATE_ALL += bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru0_fw_ti-pru-cgt
+BUILD_COMBO_EXAMPLE_PRIVATE_ALL += bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru0_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += bissc_peripheral_interface_multi_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt
+BUILD_COMBO_EXAMPLE_PRIVATE_ALL += bissc_peripheral_interface_multi_ch_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += bissc_peripheral_interface_single_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt
+BUILD_COMBO_EXAMPLE_PRIVATE_ALL += bissc_peripheral_interface_single_ch_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += endat_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += endat_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru1_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += endat_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru1_fw_ti-pru-cgt
@@ -351,8 +366,13 @@ BUILD_COMBO_EXAMPLE_PRIVATE_ALL += hdsl_master_sync_225_mhz_am243x-evm_icss_g0_p
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru1_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru1_fw_ti-pru-cgt
+BUILD_COMBO_EXAMPLE_PRIVATE_ALL += nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt
+BUILD_COMBO_EXAMPLE_PRIVATE_ALL += nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru0_fw_ti-pru-cgt
+BUILD_COMBO_EXAMPLE_PRIVATE_ALL += nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru0_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += nikon_peripheral_interface_multi_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt
+BUILD_COMBO_EXAMPLE_PRIVATE_ALL += nikon_peripheral_interface_multi_ch_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += nikon_peripheral_interface_single_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt
+BUILD_COMBO_EXAMPLE_PRIVATE_ALL += nikon_peripheral_interface_single_ch_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += tamagawa_multi_channel_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += tamagawa_multi_channel_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += tamagawa_single_channel_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt
@@ -522,11 +542,26 @@ examples-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_ALL)
  bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru1_fw_ti-pru-cgt:
 	$(MAKE) -C source/position_sense/bissc/firmware/multi_channel_load_share/am243x-evm/icss_g0_tx_pru1_fw/ti-pru-cgt -f makefile all
 
+ bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt:
+	$(MAKE) -C source/position_sense/bissc/firmware/multi_channel_load_share/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt -f makefile all
+
+ bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru0_fw_ti-pru-cgt:
+	$(MAKE) -C source/position_sense/bissc/firmware/multi_channel_load_share/am243x-evm/icss_g0_rtu_pru0_fw/ti-pru-cgt -f makefile all
+
+ bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru0_fw_ti-pru-cgt:
+	$(MAKE) -C source/position_sense/bissc/firmware/multi_channel_load_share/am243x-evm/icss_g0_tx_pru0_fw/ti-pru-cgt -f makefile all
+
  bissc_peripheral_interface_multi_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt:
 	$(MAKE) -C source/position_sense/bissc/firmware/multi_channel_single_pru/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile all
 
+ bissc_peripheral_interface_multi_ch_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt:
+	$(MAKE) -C source/position_sense/bissc/firmware/multi_channel_single_pru/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt -f makefile all
+
  bissc_peripheral_interface_single_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt:
 	$(MAKE) -C source/position_sense/bissc/firmware/single_channel/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile all
+
+ bissc_peripheral_interface_single_ch_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt:
+	$(MAKE) -C source/position_sense/bissc/firmware/single_channel/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt -f makefile all
 
  endat_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt:
 	$(MAKE) -C source/position_sense/endat/firmware/multi_channel_load_share/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile all
@@ -591,11 +626,26 @@ examples-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_ALL)
  nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru1_fw_ti-pru-cgt:
 	$(MAKE) -C source/position_sense/nikon/firmware/multi_channel_load_share/am243x-evm/icss_g0_tx_pru1_fw/ti-pru-cgt -f makefile all
 
+ nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt:
+	$(MAKE) -C source/position_sense/nikon/firmware/multi_channel_load_share/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt -f makefile all
+
+ nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru0_fw_ti-pru-cgt:
+	$(MAKE) -C source/position_sense/nikon/firmware/multi_channel_load_share/am243x-evm/icss_g0_rtu_pru0_fw/ti-pru-cgt -f makefile all
+
+ nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru0_fw_ti-pru-cgt:
+	$(MAKE) -C source/position_sense/nikon/firmware/multi_channel_load_share/am243x-evm/icss_g0_tx_pru0_fw/ti-pru-cgt -f makefile all
+
  nikon_peripheral_interface_multi_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt:
 	$(MAKE) -C source/position_sense/nikon/firmware/multi_channel_single_pru/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile all
 
+ nikon_peripheral_interface_multi_ch_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt:
+	$(MAKE) -C source/position_sense/nikon/firmware/multi_channel_single_pru/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt -f makefile all
+
  nikon_peripheral_interface_single_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt:
 	$(MAKE) -C source/position_sense/nikon/firmware/single_channel/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile all
+
+ nikon_peripheral_interface_single_ch_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt:
+	$(MAKE) -C source/position_sense/nikon/firmware/single_channel/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt -f makefile all
 
  tamagawa_multi_channel_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt:
 	$(MAKE) -C source/position_sense/tamagawa/firmware/multi_channel/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile all
@@ -673,8 +723,13 @@ BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += sdfm_firmware_single_axis_single_pru_am
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru1_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru0_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru0_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += bissc_peripheral_interface_multi_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += bissc_peripheral_interface_multi_ch_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += bissc_peripheral_interface_single_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += bissc_peripheral_interface_single_ch_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += endat_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += endat_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += endat_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru1_fw_ti-pru-cgt_clean
@@ -696,8 +751,13 @@ BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += hdsl_master_sync_225_mhz_am243x-evm_ics
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru1_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru0_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru0_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += nikon_peripheral_interface_multi_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += nikon_peripheral_interface_multi_ch_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += nikon_peripheral_interface_single_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += nikon_peripheral_interface_single_ch_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += tamagawa_multi_channel_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += tamagawa_multi_channel_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += tamagawa_single_channel_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_clean
@@ -867,11 +927,26 @@ examples-private-clean: $(BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL)
  bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru1_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/bissc/firmware/multi_channel_load_share/am243x-evm/icss_g0_tx_pru1_fw/ti-pru-cgt -f makefile clean
 
+ bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/position_sense/bissc/firmware/multi_channel_load_share/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt -f makefile clean
+
+ bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru0_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/position_sense/bissc/firmware/multi_channel_load_share/am243x-evm/icss_g0_rtu_pru0_fw/ti-pru-cgt -f makefile clean
+
+ bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru0_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/position_sense/bissc/firmware/multi_channel_load_share/am243x-evm/icss_g0_tx_pru0_fw/ti-pru-cgt -f makefile clean
+
  bissc_peripheral_interface_multi_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/bissc/firmware/multi_channel_single_pru/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile clean
 
+ bissc_peripheral_interface_multi_ch_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/position_sense/bissc/firmware/multi_channel_single_pru/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt -f makefile clean
+
  bissc_peripheral_interface_single_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/bissc/firmware/single_channel/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile clean
+
+ bissc_peripheral_interface_single_ch_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/position_sense/bissc/firmware/single_channel/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt -f makefile clean
 
  endat_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/endat/firmware/multi_channel_load_share/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile clean
@@ -936,11 +1011,26 @@ examples-private-clean: $(BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL)
  nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru1_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/nikon/firmware/multi_channel_load_share/am243x-evm/icss_g0_tx_pru1_fw/ti-pru-cgt -f makefile clean
 
+ nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/position_sense/nikon/firmware/multi_channel_load_share/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt -f makefile clean
+
+ nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru0_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/position_sense/nikon/firmware/multi_channel_load_share/am243x-evm/icss_g0_rtu_pru0_fw/ti-pru-cgt -f makefile clean
+
+ nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru0_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/position_sense/nikon/firmware/multi_channel_load_share/am243x-evm/icss_g0_tx_pru0_fw/ti-pru-cgt -f makefile clean
+
  nikon_peripheral_interface_multi_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/nikon/firmware/multi_channel_single_pru/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile clean
 
+ nikon_peripheral_interface_multi_ch_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/position_sense/nikon/firmware/multi_channel_single_pru/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt -f makefile clean
+
  nikon_peripheral_interface_single_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/nikon/firmware/single_channel/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile clean
+
+ nikon_peripheral_interface_single_ch_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/position_sense/nikon/firmware/single_channel/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt -f makefile clean
 
  tamagawa_multi_channel_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/tamagawa/firmware/multi_channel/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile clean
@@ -1018,8 +1108,13 @@ BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += sdfm_firmware_single_axis_single_pru_am
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru1_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru1_fw_ti-pru-cgt_scrub
+BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_scrub
+BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru0_fw_ti-pru-cgt_scrub
+BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru0_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += bissc_peripheral_interface_multi_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_scrub
+BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += bissc_peripheral_interface_multi_ch_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += bissc_peripheral_interface_single_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_scrub
+BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += bissc_peripheral_interface_single_ch_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += endat_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += endat_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru1_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += endat_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru1_fw_ti-pru-cgt_scrub
@@ -1041,8 +1136,13 @@ BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += hdsl_master_sync_225_mhz_am243x-evm_ics
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru1_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru1_fw_ti-pru-cgt_scrub
+BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_scrub
+BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru0_fw_ti-pru-cgt_scrub
+BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru0_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += nikon_peripheral_interface_multi_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_scrub
+BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += nikon_peripheral_interface_multi_ch_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += nikon_peripheral_interface_single_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_scrub
+BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += nikon_peripheral_interface_single_ch_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += tamagawa_multi_channel_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += tamagawa_multi_channel_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += tamagawa_single_channel_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_scrub
@@ -1212,11 +1312,26 @@ examples-scrub-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL)
  bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru1_fw_ti-pru-cgt_scrub:
 	$(MAKE) -C source/position_sense/bissc/firmware/multi_channel_load_share/am243x-evm/icss_g0_tx_pru1_fw/ti-pru-cgt -f makefile scrub
 
+ bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_scrub:
+	$(MAKE) -C source/position_sense/bissc/firmware/multi_channel_load_share/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt -f makefile scrub
+
+ bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru0_fw_ti-pru-cgt_scrub:
+	$(MAKE) -C source/position_sense/bissc/firmware/multi_channel_load_share/am243x-evm/icss_g0_rtu_pru0_fw/ti-pru-cgt -f makefile scrub
+
+ bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru0_fw_ti-pru-cgt_scrub:
+	$(MAKE) -C source/position_sense/bissc/firmware/multi_channel_load_share/am243x-evm/icss_g0_tx_pru0_fw/ti-pru-cgt -f makefile scrub
+
  bissc_peripheral_interface_multi_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_scrub:
 	$(MAKE) -C source/position_sense/bissc/firmware/multi_channel_single_pru/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile scrub
 
+ bissc_peripheral_interface_multi_ch_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_scrub:
+	$(MAKE) -C source/position_sense/bissc/firmware/multi_channel_single_pru/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt -f makefile scrub
+
  bissc_peripheral_interface_single_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_scrub:
 	$(MAKE) -C source/position_sense/bissc/firmware/single_channel/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile scrub
+
+ bissc_peripheral_interface_single_ch_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_scrub:
+	$(MAKE) -C source/position_sense/bissc/firmware/single_channel/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt -f makefile scrub
 
  endat_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_scrub:
 	$(MAKE) -C source/position_sense/endat/firmware/multi_channel_load_share/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile scrub
@@ -1281,11 +1396,26 @@ examples-scrub-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL)
  nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru1_fw_ti-pru-cgt_scrub:
 	$(MAKE) -C source/position_sense/nikon/firmware/multi_channel_load_share/am243x-evm/icss_g0_tx_pru1_fw/ti-pru-cgt -f makefile scrub
 
+ nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_scrub:
+	$(MAKE) -C source/position_sense/nikon/firmware/multi_channel_load_share/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt -f makefile scrub
+
+ nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru0_fw_ti-pru-cgt_scrub:
+	$(MAKE) -C source/position_sense/nikon/firmware/multi_channel_load_share/am243x-evm/icss_g0_rtu_pru0_fw/ti-pru-cgt -f makefile scrub
+
+ nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru0_fw_ti-pru-cgt_scrub:
+	$(MAKE) -C source/position_sense/nikon/firmware/multi_channel_load_share/am243x-evm/icss_g0_tx_pru0_fw/ti-pru-cgt -f makefile scrub
+
  nikon_peripheral_interface_multi_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_scrub:
 	$(MAKE) -C source/position_sense/nikon/firmware/multi_channel_single_pru/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile scrub
 
+ nikon_peripheral_interface_multi_ch_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_scrub:
+	$(MAKE) -C source/position_sense/nikon/firmware/multi_channel_single_pru/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt -f makefile scrub
+
  nikon_peripheral_interface_single_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_scrub:
 	$(MAKE) -C source/position_sense/nikon/firmware/single_channel/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile scrub
+
+ nikon_peripheral_interface_single_ch_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_scrub:
+	$(MAKE) -C source/position_sense/nikon/firmware/single_channel/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt -f makefile scrub
 
  tamagawa_multi_channel_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_scrub:
 	$(MAKE) -C source/position_sense/tamagawa/firmware/multi_channel/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile scrub

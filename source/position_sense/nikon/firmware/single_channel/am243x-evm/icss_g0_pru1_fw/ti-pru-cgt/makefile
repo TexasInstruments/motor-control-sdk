@@ -79,9 +79,9 @@ clean:
 	-@echo ' '
 
 post-build:
-		-$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=NikonFirmware -o nikon_receiver_bin.h nikon_peripheral_interface_single_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt.out
-		-$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h nikon_receiver_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/nikon/firmware/nikon_receiver_bin.h
-		-$(RM) nikon_receiver_bin.h
+		-$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=NikonFirmware -o nikon_receiver_pru1_bin.h nikon_peripheral_interface_single_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt.out
+		-$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h nikon_receiver_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/nikon/firmware/single_channel/nikon_receiver_pru1_bin.h
+		-$(RM) nikon_receiver_pru1_bin.h
 	-@echo ' '
 
 .PHONY: all clean

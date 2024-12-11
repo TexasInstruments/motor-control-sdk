@@ -57,23 +57,31 @@
 #define PRUICSS_SLICEx PRUICSS_PRUx
 
 #if (CONFIG_BISSC0_MODE == BISSC_MODE_MULTI_CHANNEL_SINGLE_PRU)
-#include  <position_sense/bissc/firmware/bissc_receiver_multi_bin.h>
+#if (PRUICSS_PRUx == 1)
+#include  <bissc_receiver_multi_pru1_bin.h>
+#else
+#include  <bissc_receiver_multi_pru0_bin.h>
+#endif
 #endif
 
-#if (CONFIG_BISSC0_CHANNEL0) && (CONFIG_BISSC0_LOAD_SHARE_MODE)
-#include <position_sense/bissc/firmware/bissc_receiver_multi_RTU_bin.h>
+#if (CONFIG_BISSC0_MODE == BISSC_MODE_MULTI_CHANNEL_MULTI_PRU )
+#if (PRUICSS_PRUx == 1)
+#include <bissc_receiver_multi_rtu_pru1_bin.h>
+#include <bissc_receiver_multi_pru1_bin.h>
+#include <bissc_receiver_multi_tx_pru1_bin.h>
+#else
+#include <bissc_receiver_multi_rtu_pru0_bin.h>
+#include <bissc_receiver_multi_pru0_bin.h>
+#include <bissc_receiver_multi_tx_pru0_bin.h>
 #endif
-
-#if (CONFIG_BISSC0_CHANNEL1) && (CONFIG_BISSC0_LOAD_SHARE_MODE)
-#include <position_sense/bissc/firmware/bissc_receiver_multi_PRU_bin.h>
-#endif
-
-#if (CONFIG_BISSC0_CHANNEL2) && (CONFIG_BISSC0_LOAD_SHARE_MODE)
-#include <position_sense/bissc/firmware/bissc_receiver_multi_TXPRU_bin.h>
 #endif
 
 #if (CONFIG_BISSC0_MODE == BISSC_MODE_SINGLE_CHANNEL_SINGLE_PRU)
-#include <position_sense/bissc/firmware/bissc_receiver_bin.h>
+#if (PRUICSS_PRUx == 1)
+#include  <bissc_receiver_pru1_bin.h>
+#else
+#include  <bissc_receiver_pru0_bin.h>
+#endif
 #endif
 
 #define WAIT_5_SECOND                       (5000)
