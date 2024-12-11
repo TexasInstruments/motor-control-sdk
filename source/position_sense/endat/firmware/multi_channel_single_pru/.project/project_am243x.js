@@ -73,7 +73,7 @@ function getmakefilePruPostBuildSteps(cpu, board)
             "$(RM) endat_controller_multi_pru0_bin.h;"]        
     }
 
-    return postBuildSteps
+    return postBuildSteps;
 }
 
 function getccsPruPostBuildSteps(cpu, board)
@@ -95,7 +95,7 @@ function getccsPruPostBuildSteps(cpu, board)
             "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_controller_multi_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/multi_channel_single_pru/endat_controller_multi_pru0_bin.h;"+ 
             "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm endat_controller_multi_pru0_bin.h;"]
     }
-    return postBuildSteps
+    return postBuildSteps;
 }
 
 

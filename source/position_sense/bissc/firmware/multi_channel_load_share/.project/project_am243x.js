@@ -89,7 +89,7 @@ function getmakefilePruPostBuildSteps(cpu, board)
             break;
     }
 
-    return postBuildSteps
+    return postBuildSteps;
 }
 
 function getccsPruPostBuildSteps(cpu, board)
@@ -120,7 +120,7 @@ function getccsPruPostBuildSteps(cpu, board)
             "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm bissc_receiver_multi_TXPRU_bin.h;"]
             break;
     }
-    return postBuildSteps
+    return postBuildSteps;
 }
 
 function getComponentProperty() {
