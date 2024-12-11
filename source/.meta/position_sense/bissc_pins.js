@@ -40,7 +40,15 @@ function getInterfacePinList(inst)
 
     /* BISSC_CHANNEL2_TX_ENABLE - is configured as soc gpio and kept low forever */
     /*pinList.push({ pinName: "GPO8", displayName: "BISSC_CHANNEL2_TX_ENABLE", rx: false});*/
-    pinList.push({ pinName: "GPO12", displayName: "BISSC_CHANNEL2_TX", rx: false});
+    if(inst.G_MUX_EN)
+    {
+        pinList.push({ pinName: "GPO12", displayName: "BISSC_CHANNEL2_TX", rx: false});
+    }
+    else
+    {
+        pinList.push({ pinName: "GPO7", displayName: "BISSC_CHANNEL2_TX", rx: false});
+    }
+    
     pinList.push({ pinName: "GPO6", displayName: "BISSC_CHANNEL2_CLK", rx: false});
     pinList.push({ pinName: "GPI11", displayName: "BISSC_CHANNEL2_RX", rx: true});
 
@@ -80,11 +88,11 @@ function pinmuxRequirements(inst) {
         }
  
         if(inst["channel_2"]==true){
-            if( (pin.pinName == "GPO12") || (pin.pinName == "GPO6") || (pin.pinName == "GPI11")){
+            if( (pin.pinName == "GPO12") || (pin.pinName == "GPO6") || (pin.pinName == "GPI11") || (pin.pinName == "GPO7")){
                 pinResource.used = true;
             }
         }else{
-            if( (pin.pinName == "GPO12") || (pin.pinName == "GPO6") || (pin.pinName == "GPI11")){
+            if( (pin.pinName == "GPO12") || (pin.pinName == "GPO6") || (pin.pinName == "GPI11") || (pin.pinName == "GPO7")){
                 pinResource.used = false;
             }    
         }
