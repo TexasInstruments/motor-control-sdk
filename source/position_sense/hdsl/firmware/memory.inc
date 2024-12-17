@@ -105,7 +105,6 @@ DMEM_CH_SIZE .set						0x0700
 
 PDMEM00_CONST .set						C24
 MASTER_REGS_CONST .set                  C24
-IEP1_BASE_CONST .set					C1
 ;Hiperface DSL Master Registers
 MASTER_REGS .set						0x00
 MASTER_REGS_SIZE .set						(DUMMY_END + 1)
@@ -401,15 +400,14 @@ ADDR .set 0x15ff
 ;--------------------------------------------------------------------------------------------------
 ;Memory offsets
 ;--------------------------------------------------------------------------------------------------
-PRU_CTRL_CONST	.set					C28
+PRU_CTRL_CONST	.set					c11
 PRU_CYCLCNT	.set						0x0c
 PWMSS1_CONST	.set					C19
 PWMSS2_CONST	.set					C20
 ECAP		.set						0x100
 ECAP_ECCLR	.set						0x30
 ECAP_ECCTL1	.set						0x28
-IEP_CONST	.set						C26
-IEP1_CONST  .set                        0x2F000
+IEP_CONST	.set						C28
 IEP_CNT		.set						0x10
 IEP_CAPR6_RISE .set                     0x50
 TXPRU1_CTRL .set 						0x00025800

@@ -4,7 +4,7 @@ include $(MOTOR_CONTROL_SDK_PATH)/imports.mak
 
 PROFILE?=Release
 
-PROJECT_NAME=hdsl_master_multichannel_ch2_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt
+PROJECT_NAME=hdsl_receiver_multichannel_ch2_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt
 
 all:
 	$(CCS_ECLIPSE) -noSplash -data $(MOTOR_CONTROL_SDK_PATH)/ccs_projects -application com.ti.ccstudio.apps.projectBuild -ccs.projects $(PROJECT_NAME) -ccs.configuration $(PROFILE)

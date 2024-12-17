@@ -886,6 +886,12 @@ send_header_disp_neg1:
 	ldi			REG_TMP11.b0, 0x6f
 	add			DISPARITY, DISPARITY, 4
 send_header_end_disp:
+	.if $defined("EXT_SYNC_ENABLE")
+;reset eCAP1 INT
+	ldi			REG_TMP1.w0, (ECAP+ECAP_ECCLR)
+	ldi			REG_TMP1.w2, 0xffff
+	sbco			&REG_TMP1.w2, PWMSS1_CONST, REG_TMP1.w0, 2
+	.endif
 ;HINT: we have some processing time here (140 cycles)
 ;go to V-Frame callback on transport layer
 	qbbc			datalink_transport_no_v_frame_2, H_FRAME.flags, FLAG_NORMAL_FLOW
@@ -1051,35 +1057,9 @@ send_header_no_wait_after_synch:
 	lbco        &REG_TMP0, c1, 0x10, 4
 	add         REG_TMP0, REG_TMP0, 12  ;read offset
 
-	qbeq        adjustment_done, EXTRA_EDGE_SELF, 0xFF
-is_val_FE:
-	qbne        is_val_FC, EXTRA_EDGE_SELF, 0xFE
-	sub         REG_TMP0, REG_TMP0, 3
-	qba         adjustment_done
-is_val_FC:
-	qbne        is_val_F8, EXTRA_EDGE_SELF, 0xFC
-	sub         REG_TMP0, REG_TMP0, 6
-	qba         adjustment_done
-is_val_F8:
-	qbne        is_val_F0, EXTRA_EDGE_SELF, 0xF8
-	sub         REG_TMP0, REG_TMP0, 9
-	qba         adjustment_done
-is_val_F0:
-	qbne        is_val_E0, EXTRA_EDGE_SELF, 0xF0
-	sub         REG_TMP0, REG_TMP0, 12
-	qba         adjustment_done
-is_val_E0:
-	qbne        is_val_C0, EXTRA_EDGE_SELF, 0xE0
-	sub         REG_TMP0, REG_TMP0, 15
-	qba         adjustment_done
-is_val_C0:
-	qbne        is_val_80, EXTRA_EDGE_SELF, 0xC0
-	sub         REG_TMP0, REG_TMP0, 18
-	qba         adjustment_done
-is_val_80:
-	qbne        adjustment_done,EXTRA_EDGE_SELF, 0x80
-	sub         REG_TMP0, REG_TMP0, 21
-	qba         adjustment_done
+	ldi			REG_TMP11, (PDMEM00+LUT_EE)
+	lbbo			&REG_TMP11.b0, REG_TMP11, EXTRA_EDGE_SELF, 1
+	sub			REG_TMP0, REG_TMP0, REG_TMP11.b0
 adjustment_done:
 	sbco		&REG_TMP0, MASTER_REGS_CONST, EXTRA_EDGE_TIMESTAMP, 4
 num_pulses_is_not_one1:
@@ -1978,7 +1958,7 @@ comp_logic_starts:
 	mov         NUM_STUFFING_COMP, NUM_STUFFING
 
 	lbco		&REG_TMP0, MASTER_REGS_CONST, EXTRA_EDGE_TIMESTAMP, 4
-	lbco        &REG_TMP1, IEP1_BASE_CONST, 0x50, 4
+	lbco        &REG_TMP1, IEP_CONST, 0x50, 4
 	qbge        extra_edge_ahead, REG_TMP1 ,REG_TMP0
 	mov         REG_TMP2, REG_TMP0
 	sub         REG_TMP0, REG_TMP1, REG_TMP0
