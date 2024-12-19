@@ -75,8 +75,8 @@ Mbed-TLS                | R5F            | mbedtls-3.0.0
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Single channel, point-to-point connection, baud rates from 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz, up to 40-bit absolute position (single turn + multi turn) data with additional information, long cable (upto 100 meters), Boosterpack with AM261x-LP
-    <td> Daisy Chain Testing
+    <td> Single channel, point-to-point connection, baud rates from 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz, up to 40-bit absolute position (single turn + multi turn) data with additional information, Boosterpack with AM261x-LP
+    <td> Daisy Chain Testing, long cable (upto 100 meters)
 </tr>
 <tr>
     <td> BiSS-C
@@ -190,7 +190,7 @@ Mbed-TLS                | R5F            | mbedtls-3.0.0
 
 </table>
 
-<!-- ## Upgrade and Compatibility Information for Motor Control SDK 10.00.00 {#UPGRADE_AND_COMPATIBILITY_INFORMATION_10_0_0}
+## Upgrade and Compatibility Information for Motor Control SDK 10.00.00 {#UPGRADE_AND_COMPATIBILITY_INFORMATION_10_0_0}
 
 \attention When migrating from MCU+ SDK, see \ref MIGRATION_GUIDES for more details.
 

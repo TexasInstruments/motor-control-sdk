@@ -11,7 +11,7 @@ Nikon A-Format absolute encoder receiver implementation on the TI PRU-ICSS inter
 
    -  Support for point-to-point and bus communication.
    -  Support for baud rates from 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz.
-   -  Supported oversampling Ratio with different baud rates.
+   -  Support for oversampling ratio with different baud rates.
 <table>
 <tr>
     <th rowspan="2">Clock Source
@@ -63,6 +63,7 @@ Nikon A-Format absolute encoder receiver implementation on the TI PRU-ICSS inter
 \cond SOC_AM261X
    -  Support for point-to-point and bus communication.
    -  Support for baud rates from 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz.
+   -  Support for oversampling ratio with different baud rates.
 <table>
 <tr>
     <th rowspan="2">Clock Source
@@ -112,19 +113,94 @@ SysConfig can be used to configure things mentioned below:
 - Frequency selection.
 - Channel selection.
 - Selecting Multi Channel with Encoders connected in Different Configurations (bus or one-to-one) using load share mode.
+- Enabling SA Mux mode.
+- Selecting source clock.
 
 \endcond
 
 \cond SOC_AM261X
 
 SysConfig can be used to configure things mentioned below:
-- Selecting the ICSSG instance. (Tested on ICSSM1)
-- Selecting the ICSSG0PRUx instance.(Tested on ICSSM1-PRU0)
+- Selecting the ICSS instance. (Tested on ICSSM1)
+- Selecting the ICSS PRU slice.(Tested on ICSSM1-PRU0)
 - Configuring PINMUX.
 - Frequency selection.
 - Channel selection.
+- Selecting source clock.
+
+\note Nikon firmware will only run with ICSS UART Clock running at 160 MHz(when ICSS Core Clock is 225 MHz).
 
 \endcond
+## ICSS PRU Resource Usage
+\cond SOC_AM243X
+<table>
+<tr>
+    <th> Configuration
+    <th> PRU Core
+    <th> Memory Usage
+    <th> IEP Usage
+    <th> Other Peripheral Usage
+    <th> Description
+</tr>
+<tr>
+    <td> Single Channel Mode
+    <td> PRUx
+    <td> DMEM: 196 Bytes <br>  IMEM: 1468 Bytes
+	<td> IEP0: CMP0 and CMP3
+    <td> INTC Signal host interrupt 2 is used to trigger a R5 interrupt
+    <td> IEP, CMP events and INTC signal are used only in periodic continuous mode.
+</tr>
+<tr>
+    <td> Multi Channel Single PRU Mode
+    <td> PRUx
+    <td> DMEM: 196 Bytes <br>  IMEM: 1700 Bytes
+	<td> IEP0: CMP0 and CMP3
+    <td> INTC Signal host interrupt 2 is used to trigger a R5 interrupt
+    <td> IEP, CMP events and INTC signal are used only in periodic continuous mode.
+</tr>
+<tr>
+    <td rowspan="3"> Multi Channel Load Share Mode
+    <td> PRUx
+    <td rowspan="3"> DMEM: 196 Bytes <br>  IMEM: 1604 Bytes
+	<td rowspan="3">IEP0: CMP0, CMP3, CMP5 and CMP6 </td>
+    <td rowspan="3">INTC Signal host interrupt 2,3 & 4 is used to trigger a R5 interrupt</td>
+    <td rowspan="3">IEP, CMP events and INTC signals are used only in periodic continuous mode.</td>
+</tr>
+<tr>
+    <td> RTU_PRUx
+</tr>
+<tr>
+    <td> TX_PRUx
+</tr>
+</table>
+
+\note For pin usage see \ref NIKON_PIN_USAGE  page.
+
+\endcond
+
+\cond SOC_AM261X
+<table>
+<tr>
+    <th> Configuration
+    <th> PRU Core
+    <th> Memory Usage
+    <th> IEP Usage
+    <th> Other Peripheral Usage
+    <th> Description
+</tr>
+<tr>
+    <td> Single Channel Mode
+    <td> PRUx
+    <td> DMEM: 196 Bytes <br>  IMEM: 1468 Bytes
+	<td> IEP0: CMP0 and CMP3
+    <td> INTC Signal host interrupt 2 is used to trigger a R5 interrupt
+    <td> IEP, CMP events and INTC signal are
+</tr>
+</table>
+\note For pin usage see \ref NIKON_PIN_USAGE page.
+
+\endcond
+
 ## NIKON Design
 
 \subpage NIKON_DESIGN explains the design in detail.

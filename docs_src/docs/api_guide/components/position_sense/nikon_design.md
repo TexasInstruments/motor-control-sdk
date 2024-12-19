@@ -82,7 +82,7 @@ The firmware first initializes the local variables. Then it checks whether it is
 
 ### Initialization {#NIKON_DESIGN_INITIALIZATION}
 
-The 3 channel peripheral interface configuration MMRs are set as per protocol needs. Tx global reinit bit in R31 is set to put all channels in default mode. The clock source is selected (ICSSG clock is selected with 200MHZ frequency). In Tx Singleshot mode or Continuous mode (incase of EEPROM Access or Identification code Write), the output command data is loaded into Tx FIFO at 1x clock rate. In Rx mode, the input data is oversampled based on the selected baud rate. Hence, Tx clock(1x clock) and Rx clock(Oversampling (OS/UART) clock) are setup by selecting oversampling factor(x8 or x6 or x4) from application. At the end of the initialization status is updated and wait until trigger from user occurs for Nikon commands.
+The 3 channel peripheral interface configuration MMRs are set as per protocol needs. Tx global reinit bit in R31 is set to put all channels in default mode. The clock source is selected (ICSS clock is selected with 200MHZ frequency). In Tx Singleshot mode or Continuous mode (incase of EEPROM Access or Identification code Write), the output command data is loaded into Tx FIFO at 1x clock rate. In Rx mode, the input data is oversampled based on the selected baud rate. Hence, Tx clock(1x clock) and Rx clock(Oversampling (OS/UART) clock) are setup by selecting oversampling factor(x8 or x6 or x4) from application. At the end of the initialization status is updated and wait until trigger from user occurs for Nikon commands.
 
 \image html nikon_initialization.png "Initialization Flow Chart"
 
@@ -123,3 +123,178 @@ The CRC is the last byte of the last received data frame. The firmware then stor
 
 \image html nikon_verify_crc.png "Verify CRC Flow Chart"
 
+#### Pin-Multiplexing {#NIKON_PIN_USAGE}
+\note
+    - k = 0,1 (PRU-ICSS Instance) for AM243/AM261/AM64 and k = 0 for AM263
+    - n = 0,1 (PRU-ICSS Slice)
+
+<table>
+<tr>
+    <th>Pin name
+    <th>Signal name
+	<th>Function
+</tr>
+<tr>
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO0 \else PRG<%k>_PRU<n>_GPO0 \endif
+    <td>pru<n>_nikon0_clk
+	<td>Channel 0 clock
+</tr>
+<tr>
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO1 \else PRG<%k>_PRU<n>_GPO1 \endif
+    <td>pru<n>_nikon0_out
+	<td>Channel 0 transmit
+</tr>
+<tr>
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO2 \else PRG<%k>_PRU<n>_GPO2 \endif
+    <td>pru<n>_nikon0_outen
+	<td>Channel 0 transmit enable
+</tr>
+<tr>
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPI9 \else PRG<%k>_PRU<n>_GPI13/PRG<%k>_PRU<n>_GPI9 \endif
+    <td>pru<n>_nikon0_in
+	<td>Channel 0 receive
+</tr>
+<tr>
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO3 \else PRG<%k>_PRU<n>_GPO3 \endif
+    <td>pru<n>_nikon1_clk
+	<td>Channel 1 clock
+</tr>
+<tr>
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO4 \else PRG<%k>_PRU<n>_GPO4 \endif
+    <td>pru<n>_nikon1_out
+	<td>Channel 1 transmit
+</tr>
+<tr>
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO5 \else PRG<%k>_PRU<n>_GPO5 \endif
+    <td>pru<n>_nikon1_outen
+	<td>Channel 1 transmit enable
+</tr>
+<tr>
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPI10 \else PRG<%k>_PRU<n>_GPI14/PRG<%k>_PRU<n>_GPI10 \endif
+    <td>pru<n>_nikon1_in
+	<td>Channel 1 receive
+</tr>
+<tr>
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO6 \else PRG<%k>_PRU<n>_GPO6 \endif
+    <td>pru<n>_nikon2_clk
+	<td>Channel 2 clock
+</tr>
+<tr>
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO7 \else PRG<%k>_PRU<n>_GPO12/PRG<%k>_PRU<n>_GPO7 \endif
+    <td>pru<n>_nikon2_out
+	<td>Channel 2 transmit
+</tr>
+<tr>
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO8 \else PRG<%k>_PRU<n>_GPO8 \endif
+    <td>pru<n>_nikon2_outen
+	<td>Channel 2 transmit enable
+</tr>
+<tr>
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPI11 \else PRG<%k>_PRU<n>_GPI11 \endif
+    <td>pru<n>_nikon2_in
+	<td>Channel 2 receive
+</tr>
+</table>
+
+\cond SOC_AM243X
+##### LP-AM243 Booster Pack Pin-Multiplexing
+<table>
+<tr>
+    <th>Pin name
+    <th>Signal name
+	<th>Function
+</tr>
+<tr>
+    <td>PRG0_PRU1_GPO0
+    <td>pru1_nikon0_clk
+	<td>Channel 0 clock
+</tr>
+<tr>
+    <td>PRG0_PRU1_GPO1
+    <td>pru1_nikon0_out
+	<td>Channel 0 transmit
+</tr>
+<tr>
+    <td>PRG0_PRU1_GPO2
+    <td>pru1_nikon0_out_en
+	<td>Channel 0 transmit enable
+</tr>
+<tr>
+    <td>PRG0_PRU1_GPI9
+    <td>pru1_nikon0_in
+	<td>Channel 0 receive (if(G_MUX_EN==0))
+</tr>
+<tr>
+    <td>PRG0_PRU1_GPI13
+    <td>pru1_nikon0_in
+	<td>Channel 0 receive (if(G_MUX_EN==1))
+</tr>
+<tr>
+    <td>PRG0_PRU1_GPO6
+    <td>pru1_nikon2_clk
+	<td>Channel 2 clock
+</tr>
+<tr>
+    <td>PRG0_PRU1_GPO12
+    <td>pru1_nikon2_out
+	<td>Channel 2 transmit
+</tr>
+<tr>
+    <td>PRG0_PRU1_GPO8
+    <td>pru1_nikon2_out_en
+	<td>Channel 2 transmit enable
+</tr>
+<tr>
+    <td>PRG0_PRU1_GPI11
+    <td>pru1_nikon2_in
+	<td>Channel 2 receive
+</tr>
+<tr>
+    <td>GPIO Pin(GPIO1_78)
+    <td>ENC0_EN
+    <td>Enable 3 channel peripheral interface mode in Axis 1 of BP (C16 GPIO pin)
+</tr>
+<tr>
+    <td>GPIO Pin(GPIO1_77)
+    <td>ENC2_EN
+    <td>Enable 3 channel peripheral interface mode in Axis 2 of BP (B17 GPIO pin)
+</tr>
+</table>
+
+\endcond
+
+\cond  SOC_AM261X
+##### LP-AM261 Booster Pack Pin-Multiplexing
+<table>
+<tr>
+    <th>Pin name
+    <th>Signal name
+    <th>Function
+</tr>
+<tr>
+    <td>PR1_PRU0_GPIO0
+    <td>pru1_nikon0_clk
+    <td>Channel 0 clock
+</tr>
+<tr>
+    <td>PR1_PRU0_GPIO1
+    <td>pru1_nikon0_out
+    <td>Channel 0 transmit
+</tr>
+<tr>
+    <td>PR1_PRU0_GPIO2
+    <td>pru1_nikon0_out_en
+    <td>Channel 0 transmit enable
+</tr>
+<tr>
+    <td>PR1_PRU0_GPI9
+    <td>pru1_nikon0_in
+    <td>Channel 0 receive
+</tr>
+<tr>
+    <td>GPIO Pin (GPIO_21)
+    <td>ENC0_EN
+    <td>Enable 3 channel peripheral interface in Axis 1 of BP (B10 GPIO pin)
+</tr>
+</table>
+\endcond

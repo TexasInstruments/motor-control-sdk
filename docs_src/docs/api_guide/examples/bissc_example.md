@@ -108,7 +108,7 @@ The BISS-C receiver firmware running on ICSSM1-PRU0 provides a defined interface
 \cond SOC_A243X
 
 - BISS-C Encoders
-- <a href="https://www.ti.com/tool/LP-AM243" target="_blank"> AM243x-LP Board </a>
+- <a href="https://www.ti.com/tool/LP-AM243" target="_blank"> LP-AM243</a>
 - <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
 
 \endcond
@@ -116,7 +116,7 @@ The BISS-C receiver firmware running on ICSSM1-PRU0 provides a defined interface
 \cond SOC_AM261X
 
 - BISS-C Encoders
-- <a href="https://www.ti.com/product/AM2612" target="_blank"> AM261x-LP Board </a>
+- <a href="https://www.ti.com/tool/LP-AM261" target="_blank"> LP-AM261 </a>
 - <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
 
 \endcond
@@ -126,9 +126,13 @@ The BISS-C receiver firmware running on ICSSM1-PRU0 provides a defined interface
 
 \cond SOC_AM243X
 
-### Hardware Setup(Using Booster Pack & AM243x-LP)
+### Hardware Setup(Using Booster Pack & LP-AM243)
 \imageStyle{AM243x_lp_bp_bissc_encoder_setup.png,width:40%}
 \image html AM243x_lp_bp_bissc_encoder_setup.png  "Hardware Setup of Booster Pack + LP for BISS-C"
+
+\note
+    - The PROC109A version of LP supports two channels
+    - To enable the second channel on LP, SW6 needs to be turn OFF
 
 #### Booster Pack Jumper Configuration
 <table>
@@ -203,11 +207,11 @@ The BISS-C receiver firmware running on ICSSM1-PRU0 provides a defined interface
 
 \cond SOC_AM261X
 
-### Hardware Setup(Using Booster Pack & AM243x-LP)
+### Hardware Setup(Using Booster Pack & LP-261)
 \imageStyle{AM261x_lp_bp_bissc_encoder_setup.png,width:40%}
 \image html AM261x_lp_bp_bissc_encoder_setup.png  "Hardware Setup of Booster Pack + LP for BISS-C"
 
-#### AM261x-LP Jumper Configuration
+#### LP-AM261 Jumper Configuration
 
 <table>
 <tr>
