@@ -3,9 +3,8 @@
 [TOC]
 
 ## Introduction
-
-This document presents the firmware implementation details of the Hiperface DSL protocol (SICK STEGMANN, 2010) for the PRU0 in ICSS0 on the AM64x/AM243x EVM.
-
+This document presents the firmware implementation details of the Hiperface DSL protocol (SICK STEGMANN, 2010).
+\cond SOC_AM243X
 ## System Overview
 
 ### Sitara™ AM64x/AM243x Processor
@@ -15,10 +14,23 @@ Refer TRM for details
 #### PRU-ICSS
 
 Refer PRU-ICSS chapter of AM64x/AM243x Technical Reference Manual
+\endcond
+
+\cond SOC_AM261X
+## System Overview
+
+### Sitara™ AM261x Processor
+
+Refer TRM for details
+
+#### PRU-ICSS
+
+Refer PRU-ICSS chapter of AM261x Technical Reference Manual
+\endcond
 
 ## Software Architecture
 
-The Hiperface DSL function is implemented on one PRU-ICSSG to leave the other PRU-ICSSG for Industrial Ethernet functions.
+The Hiperface DSL function is implemented on one instance of PRU-ICSS and leave the other PRU-ICSS instance for Industrial Ethernet functions.
 
 The firmware consists of two layers
 
@@ -31,10 +43,11 @@ Figure "Layer Model" illustrates the relationship between the two layers.
 
 
 \image html hdsl_layer_model.png "Layer Model"
+\cond SOC_AM243X
 
 ### Overlay Scheme for TX-PRU {#HDSL_DESIGN_TXPRU_OVERLAY}
 
-Each PRU-ICSSG has two slices, and each slice has three cores : PRU, RTU-PRU and TX-PRU. The instruction memory for PRU, RTU-PRU and TX-PRU coreS is 12 kB, 8 kB and 6 kB respctively. Multi-channel implementation of Hiperface DSL is achieved by enabling load share mode of PRU-ICSSG where one core is responsible for one channel. One PRU-ICSSG slice supports three peripheral interfaces for HDSL. Mapping is fixed to channel 0 with RTU-PRU, channel 1 with TX-PRU. To implement an equivalent data link layer and transport layer as the reference IP-core for the Hiperface DSL on FPGA, the instruction memory for TX-PRU is not enough. Hence a code overlay scheme is required only for TX-PRU core, which is only needed if channel 2 is enabled.
+Each PRU-ICSS instance has two slices, and each slice has three cores : PRU, RTU-PRU and TX-PRU. The instruction memory for PRU, RTU-PRU and TX-PRU coreS is 12 kB, 8 kB and 6 kB respctively. Multi-channel implementation of Hiperface DSL is achieved by enabling load share mode of PRU-ICSS where one core is responsible for one channel. One PRU-ICSS slice supports three peripheral interfaces for HDSL. Mapping is fixed to channel 0 with RTU-PRU, channel 1 with TX-PRU. To implement an equivalent data link layer and transport layer as the reference IP-core for the Hiperface DSL on FPGA, the instruction memory for TX-PRU is not enough. Hence a code overlay scheme is required only for TX-PRU core, which is only needed if channel 2 is enabled.
 
 For PRU and RTU-PRU, the firmware for Hiperface DSL fully fits into instruction memory. The firmware for TX-PRU is split into following three code sections based on initialization and normal operation:
 
@@ -44,6 +57,7 @@ For PRU and RTU-PRU, the firmware for Hiperface DSL fully fits into instruction 
 
 Part 3 is loaded directly into instruction memory (IMEM) of TX-PRU by ARM core as it will be needed in all states. Part 1 and Part 2 of firmware for TX-PRU are stored in PRU-ICSS Data Memory (DMEM) by ARM core. During initialization (LOADFW1 state shown in next section), part 1 is copied into instruction memory (IMEM) of TX-PRU from Data Memory (DMEM) by RTU-PRU core. After initialization is complete (LOADFW2 state shown in next section), part 2 is copied into instruction memory (IMEM) of TX-PRU from Data Memory (DMEM) by RTU-PRU core.
 
+\endcond
 ### State Machine
 
 Hiperface DSL specifies a state machine for the Receiver. This implementation features two additional states for loading firmware to the TX-PRU from RTU-PRU. Figure "State Machine" depicts the modified state machine.
@@ -168,3 +182,180 @@ For further improvement of the synchronization, the time difference (∆t) betwe
 
 \imageStyle{hdsl_external_sync_sample_edge.png,width:40%}
 \image html hdsl_external_sync_sample_edge.png "Time difference between External Pulse and Sample Edge"
+
+## Pin-Multiplexing {#HDSL_PIN_USAGE}
+
+\note
+    - k = 0,1 (PRU-ICSS Instance) for AM243/AM261/AM64
+    - n = 0,1 (PRU-ICSS Slice)
+
+<table>
+<tr>
+    <th>Pin name
+    <th>Signal name
+	<th>Function
+</tr>
+<tr>
+    <td>\if (SOC_AM261X) PR<%k>_PRU<n>_GPO0 \else PRG<%k>_PRU<n>_GPO0 \endif
+    <td>pru<n>_hdsl0_clk
+	<td>Channel 0 clock
+</tr>
+<tr>
+    <td>\if (SOC_AM261X) PR<%k>_PRU<n>_GPO1 \else PRG<%k>_PRU<n>_GPO1 \endif
+    <td>pru<n>_hdsl0_out
+	<td>Channel 0 transmit
+</tr>
+<tr>
+    <td>\if (SOC_AM261X) PR<%k>_PRU<n>_GPO2 \else PRG<%k>_PRU<n>_GPO2 \endif
+    <td>pru<n>_hdsl0_outen
+	<td>Channel 0 transmit enable
+</tr>
+<tr>
+    <td>\if (SOC_AM261X) PR<%k>_PRU<n>_GPI9 \else PRG<%k>_PRU<n>_GPI13/PRG<%k>_PRU<n>_GPI9 \endif
+    <td>pru<n>_hdsl0_in
+	<td>Channel 0 receive
+</tr>
+<tr>
+    <td>\if (SOC_AM261X) PR<%k>_PRU<n>_GPO3 \else PRG<%k>_PRU<n>_GPO3 \endif
+    <td>pru<n>_hdsl1_clk
+	<td>Channel 1 clock
+</tr>
+<tr>
+    <td>\if (SOC_AM261X) PR<%k>_PRU<n>_GPO4 \else PRG<%k>_PRU<n>_GPO4 \endif
+    <td>pru<n>_hdsl1_out
+	<td>Channel 1 transmit
+</tr>
+<tr>
+    <td>\if (SOC_AM261X) PR<%k>_PRU<n>_GPO5 \else PRG<%k>_PRU<n>_GPO5 \endif
+    <td>pru<n>_hdsl1_outen
+	<td>Channel 1 transmit enable
+</tr>
+<tr>
+    <td>\if (SOC_AM261X) PR<%k>_PRU<n>_GPI10 \else PRG<%k>_PRU<n>_GPI14/PRG<%k>_PRU<n>_GPI10 \endif
+    <td>pru<n>_hdsl1_in
+	<td>Channel 1 receive
+</tr>
+<tr>
+    <td>\if (SOC_AM261X) PR<%k>_PRU<n>_GPO6 \else PRG<%k>_PRU<n>_GPO6 \endif
+    <td>pru<n>_hdsl2_clk
+	<td>Channel 2 clock
+</tr>
+<tr>
+    <td>\if (SOC_AM261X) PR<%k>_PRU<n>_GPO7 \else PRG<%k>_PRU<n>_GPO12/PRG<%k>_PRU<n>_GPO7 \endif
+    <td>pru<n>_hdsl2_out
+	<td>Channel 2 transmit
+</tr>
+<tr>
+    <td>\if (SOC_AM261X) PR<%k>_PRU<n>_GPO8 \else PRG<%k>_PRU<n>_GPO8 \endif
+    <td>pru<n>_hdsl2_outen
+	<td>Channel 2 transmit enable
+</tr>
+<tr>
+    <td>\if (SOC_AM261X) PR<%k>_PRU<n>_GPI11 \else PRG<%k>_PRU<n>_GPI11 \endif
+    <td>pru<n>_hdsl2_in
+	<td>Channel 2 receive
+</tr>
+</table>
+
+\cond SOC_AM243X
+### LP-AM243 Booster Pack Pin-Multiplexing
+<table>
+<tr>
+    <th>Pin name
+    <th>Signal name
+	<th>Function
+</tr>
+<tr>
+    <td>PRG0_PRU1_GPO0
+    <td>pru1_hdsl0_clk
+	<td>Channel 0 clock
+</tr>
+<tr>
+    <td>PRG0_PRU1_GPO1
+    <td>pru1_hdsl0_out
+	<td>Channel 0 transmit
+</tr>
+<tr>
+    <td>PRG0_PRU1_GPO2
+    <td>pru1_hdsl0_out_en
+	<td>Channel 0 transmit enable
+</tr>
+<tr>
+    <td>PRG0_PRU1_GPI9
+    <td>pru1_hdsl0_in
+	<td>Channel 0 receive (if(G_MUX_EN==0))
+</tr>
+<tr>
+    <td>PRG0_PRU1_GPI13
+    <td>pru1_hdsl0_in
+	<td>Channel 0 receive (if(G_MUX_EN==1))
+</tr>
+<tr>
+    <td>PRG0_PRU1_GPO6
+    <td>pru1_hdsl2_clk
+	<td>Channel 2 clock
+</tr>
+<tr>
+    <td>PRG0_PRU1_GPO12
+    <td>pru1_hdsl2_out
+	<td>Channel 2 transmit
+</tr>
+<tr>
+    <td>PRG0_PRU1_GPO8
+    <td>pru1_hdsl2_out_en
+	<td>Channel 2 transmit enable
+</tr>
+<tr>
+    <td>PRG0_PRU1_GPI11
+    <td>pru1_hdsl2_in
+	<td>Channel 2 receive
+</tr>
+<tr>
+    <td>GPIO Pin(GPIO1_78)
+    <td>ENC0_EN
+    <td>Enable 3 channel peripheral interface mode in Axis 1 of BP (C16 GPIO pin)
+</tr>
+<tr>
+    <td>GPIO Pin(GPIO1_77)
+    <td>ENC2_EN
+    <td>Enable 3 channel peripheral interface mode in Axis 2 of BP (B17 GPIO pin)
+</tr>
+</table>
+
+\endcond
+
+\cond  SOC_AM261X
+### LP-AM261 Booster Pack Pin-Multiplexing
+<table>
+<tr>
+    <th>Pin name
+    <th>Signal name
+    <th>Function
+</tr>
+<tr>
+    <td>PR1_PRU0_GPIO0
+    <td>pru1_hdsl0_clk
+    <td>Channel 0 clock
+</tr>
+<tr>
+    <td>PR1_PRU0_GPIO1
+    <td>pru1_hdsl0_out
+    <td>Channel 0 transmit
+</tr>
+<tr>
+    <td>PR1_PRU0_GPIO2
+    <td>pru1_hdsl0_out_en
+    <td>Channel 0 transmit enable
+</tr>
+<tr>
+    <td>PR1_PRU0_GPI9
+    <td>pru1_hdsl0_in
+    <td>Channel 0 receive
+</tr>
+<tr>
+    <td>GPIO Pin (GPIO_21)
+    <td>ENC0_EN
+    <td>Enable 3 channel peripheral interface in Axis 1 of BP (B10 GPIO pin)
+</tr>
+</table>
+\endcond

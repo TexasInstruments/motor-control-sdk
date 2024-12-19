@@ -17,6 +17,7 @@ Feature                                                                         
 ------------------------------------------------------------------------------------------------|-----------------------------------
 Tamagawa over PRU 3-channel interface                                                           | Position Sense
 EnDat 2.2                                                                                       | Position Sense
+HDSL Single Channel Support                                                                     | Position Sense HDSL
 Nikon A-Format Single Channel Support                                                           | Position Sense Nikon A-Format
 Multiple baud rate support : 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz                        | Position Sense Nikon A-Format
 Long cable (upto 100 meters)                                                                    | Position Sense Nikon A-Format
@@ -63,6 +64,14 @@ Mbed-TLS                | R5F            | mbedtls-3.0.0
     <td> Encoder receive communication command
 </tr>
 <tr>
+    <td> HDSL
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Single channel, Free Run mode, Sync mode, Short Message Read and Write, Long Message Read and Write, Pipeline Channel Data, Long cable (upto 100 meters) with single channel Free Run mode, Boosterpack with AM261x-LP, 225 MHz PRU firmware
+    <td> Multi-channel, Multi-channel with long cables(100m length), Long cable (upto 100 meters) with sync mode
+</tr>
+<tr>
     <td> Tamagawa
     <td> R5F
     <td> YES
@@ -101,7 +110,7 @@ Mbed-TLS                | R5F            | mbedtls-3.0.0
 
 </table>
 
-<!-- ## Known Issues
+## Known Issues
 
 <table>
 <tr>
@@ -110,6 +119,13 @@ Mbed-TLS                | R5F            | mbedtls-3.0.0
     <th> Module
     <th> Applicable Releases
     <th> Workaround
+</tr>
+<tr>
+    <td> PINDSW-8353
+    <td> AM261x: HDSL Long message UART Commands (8,9 and 10) issue
+    <td> Position Sense HDSL
+    <td> 10.0 onwards
+    <td> 
 </tr>
 </table> -->
 
