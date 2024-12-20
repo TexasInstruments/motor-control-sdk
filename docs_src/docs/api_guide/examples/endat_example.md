@@ -8,23 +8,25 @@ demonstrates the EnDat receiver operation.
 The EnDat driver provides a well defined set of APIs to expose EnDat
 receiver interface.
 
-\cond SOC_AM261X
+\cond (SOC_AM261X || SOC_AM263X)
 \note ICSSM1 UART clock set to 160 MHz is used to drive the EnDat interface. Receive (Rx) is oversampled at 8x of send(Tx). Therefore, the encoder interface frequency "f" should such that 160 Mhz is divisible by "f" and "8 times f".
-
-\note ICSSM1 PRU Core clock is set to 225 MHz.
 \endcond
+
 
 The diagnostic invokes these APIs to
 - initialize EnDat,
+\cond (SOC_AM243X || SOC_AM64X)
 - select one configuration among concurrent multi channel with Encoders of Same make, multi channel with Encoders of Different Make and single channel configuration based on SysConfig.
 - select the channel (channels in the case of concurrent multi channel with encoders of same make or multi channel with Encoders of Different Make),
+\endcond
 - configure the host trigger mode,
 - and run the firmware.
+\cond (SOC_AM243X || SOC_AM64X)
 - If using "Multi Channel with Encoders of Different Make" configuration is selected" :
     - enable load share mode.
     - select primary core for global configuration.
     - configuration of synchronization bits.
-
+\endcond
 
 Once these steps are executed,
 - the driver waits for the EnDat to be initialized.
@@ -32,27 +34,42 @@ Once these steps are executed,
 - and obtains the encoder details including serial number, position resolution etc, and displays on the console/UART.
 - Based on the whether encoder is 2.2 or 2.1 type, it sets clock to either 8MHz or 1MHz respectively.
 - While configuring clock, propagation delay is taken care using the automatically estimated propagation delay (user can override it too).
+\cond (SOC_AM243X || SOC_AM64X)
 - In the case of concurrent Multi Channel with Encoders of Same Make or Multi Channel with Encoders of Different Make, if propagation delay between various channels are different, that too is automatically taken care.
+\endcond
 
 Once initial setup is over,
 - the diagnostic provides the user with a self explanatory menu.
 - Two types of menu options are presented. One type (1-14) will send an EnDat command as per EnDat 2.2 specification.
 - The other type (100-108) allows the user to configure clock frequency, various timing parameters, simulate motor control loop using 2.1 command as well as 2.2 command with safety (redundant position information), switch to continuous clock mode and monitor raw data.
+\cond (SOC_AM243X || SOC_AM64X)
 - Concurrent multi channel with Encoder of Same Make configuration can work simultaneously for up-to three encoders with identical part number, all variants of 2.2 position commands as well as the 2.1 position command is supported and an additional option (109) to configure wire delay (useful when propagation delay in each channel is different) is available.
 - Single PRU core handles enabled channels in single channel and Multi Channel with Encoders of Same Make configuration.
+\endcond
 - Application by default, handles wire delay as required, the menu option provides a way to override it.
 
 After the user selects an EnDat command,
 - the diagnostic asks for more details to frame the command and performs a basic sanity check on the user entered values.
-- Then the EnDat APIs are invoked to process the command set, set the host trigger bit and waiting until the host trigger bit cleared, If multi-channel with Encoders of Different make is used, these operations are done for each channel".
+- Then the EnDat APIs are invoked to process the command set, set the host trigger bit and waiting until the host trigger bit cleared, \if (SOC_AM243X || SOC_AM64X) If multi-channel with Encoders of Different make is used, these operations are done for each channel".\endif
 - The received EnDat is processed & validated using the defined APIs. The result is then presented to the user.
 
 ### Channel Selection In Sysconfig
 
+\cond SOC_AM243X || SOC_AM64X
 \image html EnDat_channel_selection_In_sysconfig.PNG      "Channel Selection In Sysconfig"
+\endcond
 
+\cond SOC_AM261X
+\image html EnDat_channel_selection_In_sysconfig_for_am261x.PNG   "Channel Selection In Sysconfig"
+\endcond
 
+\cond  SOC_AM263X
+\image html EnDat_channel_selection_In_sysconfig_for_am263x.PNG   "Channel Selection In Sysconfig"
+\endcond
+
+\cond SOC_AM243X || SOC_AM64X
 \image html Endat_channel_selection_configuration.png     "EnDAT configuration seletion between Single/Multi channel "
+\endcond
 
 ### Endat Example Implementation
 
@@ -125,6 +142,19 @@ Following section describes the Example implementation of EnDat on ARM(R5F).
 
 \endcond
 
+\cond SOC_AM263X
+
+ Parameter      | Value
+ ---------------|-----------
+ CPU + OS       | r5fss0-0 freertos
+ ICSSM          | ICSSM0
+ PRU            | PRU0
+ Toolchain      | ti-arm-clang
+ Board          |  @VAR_LP_BOARD_NAME_LOWER (Single channel example)
+ Example folder | examples/position_sense/endat_diagnostic
+
+\endcond
+
 # Steps to Run the Example
 
 Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_SETUP_PAGE.html" target="_blank"> EVM Setup </a>, below additional hardware is required to run this demo
@@ -152,7 +182,16 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 ## Hardware Prerequisities with LP-AM261
 
 - EnDAT Encoder(s)
--  AM261x-LP Board
+- AM261x-LP Board
+- <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
+\endcond
+
+\cond SOC_AM263X
+
+## Hardware Prerequisities with LP-AM263
+
+- EnDAT Encoder(s)
+- AM263x-LP Board
 - <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
 \endcond
 
@@ -166,7 +205,10 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 ## Hardware Setup with LP-AM243
 \imageStyle{EnDat_Booster_Pack.png,width:40%}
 \image html EnDat_Booster_Pack.png  "Hardware Setup with LP-AM243"
-
+\note 
+    - The PROC109A version of LP supports two channels
+    - To enable the second channel on LP, SW6 needs to be turn OFF 
+   
 
 #### Booster Pack Jumper Configuration
 <table>
@@ -238,12 +280,86 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 </table>
 \endcond
 
+\cond SOC_AM263X
+## Hardware Setup with LP-AM263
+\imageStyle{EnDat_am263x_hw_Setup.jpeg,width:60%}
+\image html EnDat_am263x_hw_Setup.jpeg "Hardware Setup for single channel on LP-AM263 + BP" s
+#### Booster Pack Jumper Configuration
+<table>
+<tr>
+    <th>Designator</th>
+    <th>ON/OFF</th>
+    <th>Description</th>
+</tr>
+<tr>
+    <td>J11</td>
+    <td>OFF</td>
+    <td>VSENSE/ISENSE select</td>
+</tr>
+<tr>
+    <td>J13</td>
+    <td>OFF</td>
+    <td>VSENSE/ISENSE select</td>
+</tr>
+<tr>
+    <td>J17</td>
+    <td>Pin 1-2 Connected</td>
+    <td>%SDFM Clock Feedback Select</td>
+</tr>
+<tr>
+    <td>J18/J19</td>
+    <td>J19 installed: sets VSENSOR1 to 5.0V</td>
+    <td>Axis 1: Encoder/Resolver Voltage Select</td>
+</tr>
+<tr>
+    <td>J20/J21</td>
+    <td>J21 installed: sets VSENSOR2 to 5.0V</td>
+    <td>Axis 2: Encoder/Resolver Voltage Select</td>
+</tr>
+<tr>
+    <td>J22</td>
+    <td>OFF</td>
+    <td>Axis 1: Manchester Encoding Select</td>
+</tr>
+<tr>
+    <td>J23</td>
+    <td>OFF</td>
+    <td>Axis 2: Manchester Encoding Select</td>
+</tr>
+<tr>
+    <td>J24</td>
+    <td>OFF</td>
+    <td>Axis 1: RS485/DSL MUX</td>
+</tr>
+<tr>
+    <td>J25</td>
+    <td>OFF</td>
+    <td>Axis 2: RS485/DSL MUX</td>
+</tr>
+<tr>
+    <td>J26</td>
+    <td>OFF</td>
+    <td>VSENSE/ISENSE Select</td>
+</tr>
+<tr>
+    <td>J27</td>
+    <td>ON</td>
+    <td>3WIRE/%SDFM MUX</td>
+</tr>
+<tr>
+    <td>J28</td>
+    <td>ON</td>
+    <td>Am243/Am263 Mode</td>
+</tr>
+</table>
+
+\endcond
 \cond SOC_AM261X
 
 
 ## Hardware Setup with LP-AM261
-<!-- \imageStyle{EnDat_Booster_Pack.png,width:40%} -->
-<!-- \image html EnDat_Booster_Pack.png  "Hardware Setup with LP-AM261" -->
+\imageStyle{EnDat_am261x_hw_Setup.jpeg,width:40%}
+\image html EnDat_am261x_hw_Setup.jpeg  "Hardware Setup with LP-AM261"
 
 
 #### LaunchPad Jumper Configuration

@@ -155,6 +155,9 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 ## Hardware Setup with LP-AM243
 \imageStyle{Tamagawa_Booster_Pack.png,width:40%}
 \image html Tamagawa_Booster_Pack.png  "Hardware Setup with LP-AM243"
+\note 
+    - The PROC109A version of LP supports two channels
+    - To enable the second channel on LP, SW6 needs to be turn OFF 
 
 #### Booster Pack Jumper Configuration
 <table>
