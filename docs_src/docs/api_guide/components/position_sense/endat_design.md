@@ -4,7 +4,7 @@
 
 ## Introduction
 
-This design implements EnDat Receiver (a.k.a subsequent electronics) on TI Sitara™ AM64x/AM243x EVM.
+This design implements EnDat Receiver (a.k.a subsequent electronics) on TI Sitara™ AM64x/AM243x/AM26x SoCs.
 EnDat is a digital bidirectional serial interface for position encoders, also suited fo safety related applications.
 Only four signal lines are required, differential pair each for clock and data.
 Clock is provided by receiver and data is bidirectional. Data is transmitted in synchronism with clock.
@@ -13,19 +13,19 @@ Transfer between receiver and encoder at the physical layer is in accordance wit
 ## System Overview
 
 Position feedback system consists of a position encoder attached to a motor, up to 100 meter of cable which provides power and serial communication and the receiver interface for position encoder.
-In case of Sitara™ AM64x/AM243x processor the receiver interface for position encoder is just one function of a connected drive controller.
-The AM64x/AM243x provides in addition to the resources for Industrial Ethernet and motor control application including on-chip ADCs, Delta Sigma demodulator for current measurement.
-EnDat Receiver on Sitara™AM64x/AM243x processor uses one ICSSGx Slice.
-Clock, data transmit, data receive and receive enable signals from PRU1 of ICSS_G is available in AM64x/AM243x EVM.
+In case of Sitara™ AM64x/AM243x/AM26x processor the receiver interface for position encoder is just one function of a connected drive controller.
+The AM64x/AM243x/AM26x provides in addition to the resources for Industrial Ethernet and motor control application including on-chip ADCs, Delta Sigma demodulator for current measurement.
+EnDat Receiver on Sitara™ \if (SOC_AM263X ||SOC_AM261X) AM261x/Am263x \else AM64x/AM243x \endif processor uses one PRU-ICSS slice.
+Clock, data transmit, data receive and receive enable signals from PRU of ICSS is available in AM64x/AM243x/AM26x SoCs.
 
 ## Implementation
 
 The EnDat receiver function is implemented on TI Sitara™ Devices.
-Encoder is connected to IDK via <a href="http://www.ti.com/tool/TIDA-00179" target="_blank"> TIDA-00179 Universal Digital Interface to Absolute Position Encoders </a>, <a href="../TIDEP-01015RevE1.1(001)_Sch.pdf" target="_blank"> TIDEP-01015 3 Axis Board </a> and <a href="../MS_TI_EVM_3-AXIS_INTERFACE_BOARD_SCH_REV_E1.pdf" target="_blank"> Interface card connecting EVM and TIDEP-01015 3 Axis </a>.
+ \if (SOC_AM243X ||SOC_AM64X) Encoder is connected to board via <a href="http://www.ti.com/tool/TIDA-00179" target="_blank"> TIDA-00179 Universal Digital Interface to Absolute Position Encoders </a>, <a href="../TIDEP-01015RevE1.1(001)_Sch.pdf" target="_blank"> TIDEP-01015 3 Axis Board </a> and <a href="../MS_TI_EVM_3-AXIS_INTERFACE_BOARD_SCH_REV_E1.pdf" target="_blank"> Interface card connecting EVM and TIDEP-01015 3 Axis </a>.\endif
 Design is split into three parts – EnDat hardware support in PRU, firmware running in PRU and driver running in ARM.
 Application is supposed to use the EnDat driver APIs to leverage EnDat functionality.
-SDK examples used the EnDat hardware capability in Slice 1 (either 1 core or 3 cores based ont the confiuration) of PRU-ICSSG0.
-Remaining PRUs in the AM64x/AM243x EVM are available for Industrial Ethernet communication and/or motor control interfaces.
+SDK examples used the EnDat hardware capability in \if (SOC_AM263X ||SOC_AM261X) Slice 0 of PRU-ICSSM \else Slice 1 (either 1 core or 3 cores based ont the confiuration) of PRU-ICSSG0 \endif.
+Remaining PRUs in the AM64x/AM243x/AM26x are available for Industrial Ethernet communication and/or motor control interfaces.
 
 ###  Specifications
 
@@ -74,29 +74,32 @@ Refer TRM for details
 ### EnDat Firmware Implementation
 
 Following section describes the firmware implementation of EnDat receiver on PRU-ICSS.
-Deterministic behavior of the 32 bit RISC core running upto 333MHz provides resolution on sampling external signals and generating external signals.
+Deterministic behavior of the 32 bit RISC core provides resolution on sampling external signals and generating external signals.
 It makes uses of EnDat hardware support in PRU for data transmission.
 
+\if (SOC_AM243X ||SOC_AM64X)
 There are three different variations of PRU-ICSS firmware.
 1. Single Channel
 2. Multi Channel with Encoders of Same Make
 3. Multi Channel with Encoders of Different Make
-#### Implementation for Single Channel and Multi Channel with Encoders of Same Make
-Single core of PRU-ICSSG slice used in this configuration.
+\endif
+#### Implementation for Single PRU
+Single core of PRU-ICSS slice used in this configuration.
 
-\image html endat_module_integration.png "ARM, PRU, EnDat module Integration for for "Single Channel" or "Multi Channel with Encoders of Same Make" configuration"
+\image html endat_module_integration.png "ARM, PRU, EnDat module Integration for Single PRU configuration"
 
+\if (SOC_AM243X ||SOC_AM64X)
 #### Implementation for Multi Channel with Encoders of Different Make
 Each of PRU, TX-PRU and RTU-PRU handle one channel in this configuration. Load share mode is enabled in case of multi make encoders.
 
 \image html Endat_load_share_mode.png "PRU, EnDat module Integration for "Multi Channel with Encoders of Different Make" configuration"
 
-
+\endif
 ####	Firmware Architecture
 
 \image html endat_overall_block_diagram.png "Overall Block Diagram"
 
-Firmware first does initialization of PRU-ICSSG's EnDat hardware interface and EnDat encoder.
+Firmware first does initialization of PRU-ICSS's Three Channel Peripheral Interface and EnDat encoder.
 Then it waits for the user to provide command (user after setting up the command, sets command trigger bit), upon detecting trigger, first it checks whether the command requested is a continuous mode or a normal command.
 
 If it is a normal command, reads command, it’s attribute like transmit bits, receive bits etc., then it transmits the data and collected the data sent by the encoder stored onto a buffer with one byte representing a bit (since oversample ration of 8 is used).
@@ -110,25 +113,28 @@ User can wait on this bit to know that the command has been completed.
 EnDat driver provides API to achieve this.
 
 #####	 Initialization
-######  Initialization for "Single Channel" and "Multi Channel with Encoders of Same Make" configurations
+######  Initialization for "Single Channel" \if (SOC_AM243X ||SOC_AM64X)  and "Multi Channel with Encoders of Same Make" \endif configurations
 \image html endat_initialization.png "Initilization for Single PRU mode"
 
+\if (SOC_AM243X ||SOC_AM64X) 
 ###### Initialization for "Single Channel" and "Multi Channel with Encoders of Different Make" configuration
 \image html endat_load_share_mode_initialization.png "Initilization for Load share mode"
 
-Before executing the firmware, the ARM (R5) core needs to enable 3 channel peripheral interface in PRU-ICSSG first, then configure the clock to 200KHz, with oversample ratio of 8 (hence receive clock would be 200 * 8 KHz).
+\endif
+Before executing the firmware, the ARM (R5) core needs to enable 3 channel peripheral interface in PRU-ICSS first, then configure the clock to 200KHz, with oversample ratio of 8 (hence receive clock would be 200 * 8 KHz).
 The entire EnDat configuration MMRs are cleared. Through the defined interface (PRU RAM location), user requested channel is determined in Single pru configuration.
 Then power-on-init as per specification is implemented, after which encoder is reset by sending reset command.
 Firmware setups the command and it’s attribute for all the commands that are sent during initialization. Alarms, errors and warning are cleared.
 Firmware then determines number of clock pulses for position and whether encoder supports EnDat 2.2. Propagation delay is then estimated.
 If user has required for clock to be configured, it is obeyed, else it defaults to 8MHz. At the end of the initialization status is updated.
 
+\if (SOC_AM243X ||SOC_AM64X) 
 ###### Synchronization among PRU cores for "Multi Channel with Encoders of Different Make" configuration
 
-If using "Multi Channel with Encoders of Different Make" configuration where load share mode is enabled, one of the cores among enabled cores will be set as the primary core for performing global configurations of PRU-ICSSG's EnDat interface. These global configurations include clock frequency configuration and TX global re-initialization.
+If using "Multi Channel with Encoders of Different Make" configuration where load share mode is enabled, one of the cores among enabled cores will be set as the primary core for performing global configurations of PRU-ICSS's EnDat interface. These global configurations include clock frequency configuration and TX global re-initialization.
 
 There needs to be a synchronization between PRUs before changing any global configuration. For this purpose, each active PRU core sets synchronization bit before any operation needing synchronization and clears the synchronization bit when it is ready. The assigned primary core will wait for all active channel's synchronization bits to be cleared and then perform the global configuration.
-
+\endif
 
 #####	Send and Receive
 
@@ -225,12 +231,13 @@ The User can set the function parameters in word 3 at "0xB9" memory area for RT 
 5. Wait for falling edge of the data from encoder (RX).
 6. Read the PRU cycle counter which gives the value of Recovery Time in PRU Clock Cycle units and store it to DMEM.
 
+\if (SOC_AM243X ||SOC_AM64X) 
 ##### NOTE for Multi-channel Single PRU Mode
  We can not measure the recovery time as accurately as single channel or multi channel load share, because same PRU has to poll for 3 channels. So we are doing a sequential polling for each channel.
 1. Wait for rising edge in clock for all connected channels
 2. Start the measurement of Recovery Time using PRU cycle counter (The cycle counter is set to zero).
 3. Wait for RX completion on all connected channels. We start checking completion for all connected channels one by one. Whenever completion is detected for a channel, we save the PRU cycle counter value and continue the wait for remaining channels.
-
+\endif
 ### EnDat Hardware interface
 
 The physical data transmission in EnDat is done using RS-485 standard. The data is transmitted as differential signals using the RS485 between the EnDat Receiver and the Encoder.
@@ -239,7 +246,10 @@ The Receiver sends the clock to the EnDat encoder, data transmission in either d
 
 EnDat Receiver and the encoder is connected using the RS-485 transceiver. Data is transmitted differentially over RS-485. It has the advantages of high noise immunity and long distance transmission capabilities.
 
-#### AM64x/AM243x EVM Pin-Multiplexing
+#### Pin-Multiplexing {#ENDAT_PIN_USAGE}
+\note
+    - k = 0,1 (PRU-ICSS Instance)" for AM243/AM261/AM64 and k = 0 for AM263
+    - n = 0,1 (PRU-ICSS Slice)
 
 <table>
 <tr>
@@ -248,72 +258,68 @@ EnDat Receiver and the encoder is connected using the RS-485 transceiver. Data i
 	<th>Function
 </tr>
 <tr>
-    <td>PRG0_PRU1_GPO0
-    <td>pru1_endat0_clk
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO0 \else PRG<%k>_PRU<n>_GPO0 \endif
+    <td>pru<n>_endat0_clk
 	<td>Channel 0 clock
 </tr>
 <tr>
-    <td>PRG0_PRU1_GPO1
-    <td>pru1_endat0_out
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO1 \else PRG<%k>_PRU<n>_GPO1 \endif
+    <td>pru<n>_endat0_out
 	<td>Channel 0 transmit
 </tr>
 <tr>
-    <td>PRG0_PRU1_GPO2
-    <td>pru1_endat0_outen
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO2 \else PRG<%k>_PRU<n>_GPO2 \endif
+    <td>pru<n>_endat0_outen
 	<td>Channel 0 transmit enable
 </tr>
 <tr>
-    <td>PRG0_PRU1_GPI13
-    <td>pru1_endat0_in
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPI9 \else PRG<%k>_PRU<n>_GPI13/PRG<%k>_PRU<n>_GPI9 \endif
+    <td>pru<n>_endat0_in
 	<td>Channel 0 receive
 </tr>
 <tr>
-    <td>PRG0_PRU1_GPO3
-    <td>pru1_endat1_clk
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO3 \else PRG<%k>_PRU<n>_GPO3 \endif
+    <td>pru<n>_endat1_clk
 	<td>Channel 1 clock
 </tr>
 <tr>
-    <td>PRG0_PRU1_GPO4
-    <td>pru1_endat1_out
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO4 \else PRG<%k>_PRU<n>_GPO4 \endif
+    <td>pru<n>_endat1_out
 	<td>Channel 1 transmit
 </tr>
 <tr>
-    <td>PRG0_PRU1_GPO5
-    <td>pru1_endat1_outen
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO5 \else PRG<%k>_PRU<n>_GPO5 \endif
+    <td>pru<n>_endat1_outen
 	<td>Channel 1 transmit enable
 </tr>
 <tr>
-    <td>PRG0_PRU1_GPI14
-    <td>pru1_endat1_in
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPI10 \else PRG<%k>_PRU<n>_GPI14/PRG<%k>_PRU<n>_GPI10 \endif
+    <td>pru<n>_endat1_in
 	<td>Channel 1 receive
 </tr>
 <tr>
-    <td>PRG0_PRU1_GPO6
-    <td>pru1_endat2_clk
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO6 \else PRG<%k>_PRU<n>_GPO6 \endif
+    <td>pru<n>_endat2_clk
 	<td>Channel 2 clock
 </tr>
 <tr>
-    <td>PRG0_PRU1_GPO12
-    <td>pru1_endat2_out
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO7 \else PRG<%k>_PRU<n>_GPO12/PRG<%k>_PRU<n>_GPO7 \endif
+    <td>pru<n>_endat2_out
 	<td>Channel 2 transmit
 </tr>
 <tr>
-    <td>PRG0_PRU1_GPO8
-    <td>pru1_endat2_outen
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO8 \else PRG<%k>_PRU<n>_GPO8 \endif
+    <td>pru<n>_endat2_outen
 	<td>Channel 2 transmit enable
 </tr>
 <tr>
-    <td>PRG0_PRU1_GPI11
-    <td>pru1_endat2_in
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPI11 \else PRG<%k>_PRU<n>_GPI11 \endif
+    <td>pru<n>_endat2_in
 	<td>Channel 2 receive
-</tr>
-<tr>
-    <td>GPIO42
-    <td>endat_en
-	<td>Onboard RS485 receive enable
 </tr>
 </table>
 \cond SOC_AM243X
+
 ##### AM243x-LP Booster Pack Pin-Multiplexing
 <table>
 <tr>
@@ -342,9 +348,106 @@ EnDat Receiver and the encoder is connected using the RS-485 transceiver. Data i
 	<td>Channel 0 receive
 </tr>
 <tr>
-    <td>GPIO Pin(GPIO1_78)
-    <td>ENC1_EN
+    <td>GPIO1_78 Pin (J8.73)
+    <td>ENC1_EN (J8.73)
     <td>Enable 3 channel peripheral interface in Axis 1 of BP (C16 GPIO pin)
+</tr>
+<tr>
+    <td>PRG0_PRU1_GPO6
+    <td>pru1_endat2_clk
+	<td>Channel 2 clock
+</tr>
+<tr>
+    <td>PRG0_PRU1_GPO12
+    <td>pru1_endat2_out
+	<td>Channel 2 transmit
+</tr>
+<tr>
+    <td>PRG0_PRU1_GPO8
+    <td>pru1_endat2_outen
+	<td>Channel 2 transmit enable
+</tr>
+<tr>
+    <td>PRG0_PRU1_GPI11
+    <td>pru1_endat2_in
+	<td>Channel 2 receive
+</tr>
+<tr>
+    <td>GPIO1_77 Pin (J8.74)
+    <td>ENC2_EN 
+    <td>Enable 3 channel peripheral interface in Axis 2 of BP (B17 GPIO pin)
+</tr>
+</table>
+\endcond
+
+\cond  SOC_AM261X
+##### AM261x-LP Booster Pack Pin-Multiplexing
+<table>
+<tr>
+    <th>Pin name
+    <th>Signal name
+	<th>Function
+</tr>
+<tr>
+    <td>PR1_PRU0_GPIO0
+    <td>pru1_endat0_clk
+	<td>Channel 0 clock
+</tr>
+<tr>
+    <td>PR1_PRU0_GPIO1
+    <td>pru1_endat0_out
+	<td>Channel 0 transmit
+</tr>
+<tr>
+    <td>PR1_PRU0_GPIO3
+    <td>pru1_endat0_outen
+	<td>Channel 0 transmit enable
+</tr>
+<tr>
+    <td>PR1_PRU0_GPI9
+    <td>pru1_endat0_in
+	<td>Channel 0 receive
+</tr>
+<tr>
+    <td>GPIO21 Pin (J8.73)
+    <td>ENC1_EN 
+    <td>Enable 3 channel peripheral interface in Axis 1 of BP (B10 GPIO pin)
+</tr>
+</table>
+\endcond
+\cond SOC_AM263X
+
+##### AM263x-LP Booster Pack Pin-Multiplexing
+<table>
+<tr>
+    <th>Pin name
+    <th>Signal name
+	<th>Function
+</tr>
+<tr>
+    <td>PR0_PRU0_GPIO3
+    <td>pru1_endat1_clk
+	<td>Channel 1 clock
+</tr>
+<tr>
+    <td>PR0_PRU0_GPO4
+    <td>pru1_endat1_out
+	<td>Channel 1 transmit
+</tr>
+<tr>
+    <td>PR0_PRU0_GPO5
+    <td>pru1_endat1_outen
+	<td>Channel 1 transmit enable
+</tr>
+<tr>
+    <td>PR0_PRU0_GPI10
+    <td>pru1_endat1_in
+	<td>Channel 1 receive
+</tr>
+<tr>
+    <td>SDFM0_D1 Pin (J8.73)
+    <td>ENC1_EN 
+    <td>Enable 3 channel peripheral interface in Axis 1 of BP (D13 GPIO pin)
 </tr>
 </table>
 \endcond

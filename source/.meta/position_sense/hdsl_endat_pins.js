@@ -37,7 +37,14 @@ function getInterfacePinList(inst)
     }
 
     pinList.push({ pinName: "GPO8", displayName: "ENDAT2_OUT_EN", rx: false});
-    pinList.push({ pinName: "GPO12", displayName: "ENDAT2_OUT", rx: false});
+    if(inst.G_MUX_EN)
+    {
+        pinList.push({ pinName: "GPO12", displayName: "ENDAT2_OUT", rx: false});
+    }
+    else
+    {
+        pinList.push({ pinName: "GPO7", displayName: "ENDAT2_OUT", rx: false});
+    }
     pinList.push({ pinName: "GPO6", displayName: "ENDAT2_CLK", rx: false});
     pinList.push({ pinName: "GPI11", displayName: "ENDAT2_IN", rx: true});
 
@@ -77,11 +84,11 @@ function pinmuxRequirements(inst) {
          }
 
          if((inst["Channel_2"]==true) || (inst["channel_2"]==true)){
-            if( (pin.pinName == "GPO8") || (pin.pinName == "GPO12") || (pin.pinName == "GPO6") || (pin.pinName == "GPI11")){
+            if( (pin.pinName == "GPO8") || (pin.pinName == "GPO12") || (pin.pinName == "GPO6") || (pin.pinName == "GPI11") ||  (pin.pinName == "GPO7")){
                  pinResource.used = true;
             }
          }else{
-            if( (pin.pinName == "GPO8") || (pin.pinName == "GPO12") || (pin.pinName == "GPO6") || (pin.pinName == "GPI11")){
+            if( (pin.pinName == "GPO8") || (pin.pinName == "GPO12") || (pin.pinName == "GPO6") || (pin.pinName == "GPI11") ||  (pin.pinName == "GPO7")){
                 pinResource.used = false;
             }    
          }

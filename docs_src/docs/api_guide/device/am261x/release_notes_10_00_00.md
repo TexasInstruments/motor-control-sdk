@@ -67,8 +67,8 @@ Mbed-TLS                | R5F            | mbedtls-3.0.0
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Absolute position, Encoder ID, Reset, EEPROM Read, EEPROM Write, 2.5 Mbps and 5 Mbps Encoder Support, Boosterpack with AM261x-LP
-    <td> -
+    <td> Absolute position, Encoder ID, Reset, EEPROM Read, EEPROM Write, 2.5 Mbps Encoder, Boosterpack with AM261x-LP
+    <td> 5 Mbps encoder 
 </tr>
 <tr>
     <td> Nikon A-Format

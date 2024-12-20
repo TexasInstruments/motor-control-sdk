@@ -303,6 +303,18 @@ This section lists changes which could affect user applications developed using 
     <th> Change
     <th> Additional Remarks
 </tr>
+<tr>
+    <td> Position Sense Endat
+    <td> Firmware binary files 
+    <td> Renamed the all binary files 
+    <td> Used encoder_receiver inclusive term
+</tr>
+<tr>
+    <td> Position Sense Tamagawa
+    <td> Firmware binary files 
+    <td> Renamed the all binary files
+    <td> Used encoder_receiver inclusive term
+</tr>
 </table>
 
 ### Drivers

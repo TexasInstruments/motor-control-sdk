@@ -48,6 +48,8 @@ function onValidate(inst, validation) {
                     validation.logError("Channel1 and Channel2 are not supported on Booster Pack",inst,"Booster_Pack");
                 }
             }
+
+
         }
        
     }
@@ -159,6 +161,7 @@ let endat_module = {
             name: "Multi_Channel_Load_Share",
             displayName: "Multi Channel Load Share",
             description: "Selected Channels have different make",
+            hidden :(is_am26x_soc) ? true : false,
             default: false,
         },
         {
