@@ -72,29 +72,29 @@
 
 #if CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU
 #if PRU_ICSSGx_PRU_SLICE == 1
-#include <endat_controller_multi_pru1_bin.h>
+#include <endat_receiver_multi_pru1_bin.h>
 #else
-#include <endat_controller_multi_pru0_bin.h>
+#include <endat_receiver_multi_pru0_bin.h>
 #endif
 #endif
 
 #if (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
 #if PRU_ICSSGx_PRU_SLICE == 1
-#include <endat_controller_multi_rtu_pru1_bin.h>
-#include <endat_controller_multi_pru1_bin.h>
-#include <endat_controller_multi_tx_pru1_bin.h>
+#include <endat_receiver_multi_rtu_pru1_bin.h>
+#include <endat_receiver_multi_pru1_bin.h>
+#include <endat_receiver_multi_tx_pru1_bin.h>
 #else
-#include <endat_controller_multi_rtu_pru0_bin.h>
-#include <endat_controller_multi_pru0_bin.h>
-#include <endat_controller_multi_tx_pru0_bin.h>
+#include <endat_receiver_multi_rtu_pru0_bin.h>
+#include <endat_receiver_multi_pru0_bin.h>
+#include <endat_receiver_multi_tx_pru0_bin.h>
 #endif
 #endif
 
 #if CONFIG_ENDAT0_MODE == ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU
 #if PRU_ICSSGx_PRU_SLICE == 1
-#include <endat_controller_pru1_bin.h>
+#include <endat_receiver_pru1_bin.h>
 #else
-#include <endat_controller_pru0_bin.h>
+#include <endat_receiver_pru0_bin.h>
 #endif
 #endif
 
