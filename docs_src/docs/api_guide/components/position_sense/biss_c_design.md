@@ -4,21 +4,9 @@
 
 ## Introduction
 
-\cond SOC_AM243X
-
-This design implements BISS-C Receiver (a.k.a subsequent electronics) using the 3 channel peripheral interface available on the TI Sitara™ AM64x/AM243x. The 3 channel peripheral interface is a digital bidirectional serial interface for position encoders, also suited for safety related applications. Only four signal lines are required, differential pair each for clock and data.
+This design implements BISS-C Receiver (a.k.a subsequent electronics) using the 3 channel peripheral interface available on the TI Sitara™ AM64x/AM243x/AM26x SoCs. The 3 channel peripheral interface is a digital bidirectional serial interface for position encoders, also suited for safety related applications. Only four signal lines are required, differential pair each for clock and data.
 In BISS-C, clock is provided by receiver and data is provided by the encoder. Data is transmitted in synchronism with clock.
 Transfer between receiver and encoder at the physical layer is in accordance with RS485, with transceiver at both ends.
-
-\endcond
-
-\cond SOC_AM261X
-
-This design implements BISS-C Receiver (a.k.a subsequent electronics) using the 3 channel peripheral interface available on the TI Sitara™ AM261x. The 3 channel peripheral interface is a digital bidirectional serial interface for position encoders, also suited for safety related applications. Only four signal lines are required, differential pair each for clock and data.
-In BISS-C, clock is provided by receiver and data is provided by the encoder. Data is transmitted in synchronism with clock.
-Transfer between receiver and encoder at the physical layer is in accordance with RS485, with transceiver at both ends.
-
-\endcond
 
 ## System Overview
 
@@ -46,7 +34,7 @@ The BISS-C receiver function is implemented on TI Sitara™ Devices.
 Design is split into three parts – 3 channel peripheral interface support in PRU, firmware running in PRU and driver running in ARM.
 Application is supposed to use the BISS-C driver APIs to leverage 3 channel peripheral interface functionality.
 SDK examples used the BISS-C hardware capability in Slice 0 of PRU-ICSSM1.
-Remaining PRUs in the AM261x-LP are available for Industrial Ethernet communication and/or motor control interfaces.
+Remaining PRUs in the LP-AM261 are available for Industrial Ethernet communication and/or motor control interfaces.
 
 \endcond
 ###  Specifications
@@ -85,7 +73,7 @@ Remaining PRUs in the AM261x-LP are available for Industrial Ethernet communicat
 <tr>
     <td>Receive oversample ratio
     <td>1x to 8x
-	<td>tested with 4x,6x & 8x(frequency specific)
+	<td>Tested with 4x,6x & 8x(Frequency specific)
 </tr>
 </table>
 
@@ -128,7 +116,7 @@ The PRU-ICSS firmware supports following configuration.
 1. Single Channel
 
 #### Implementation for Single Channel
-Single core of PRU-ICSSG slice is used in this configuration.
+Single core of PRU-ICSS slice is used in this configuration.
 
 \image html biss_multichannel_same_make.png "ARM, PRU, BISS-C module Integration for Single Channel "
 
@@ -160,7 +148,7 @@ Above image is taken from <a href="https://biss-interface.com/download/biss-safe
 
 Initialization is performed both on the ARM and PRU as shown in the figure above. During the initialization, based on the clock frequency selected the PRU detects the Encoder and estimates its processing delay in terms of clock cycles. The processing delay is measured 8 times and an average value is used for compensation. Note that whenever the user changes the clock frequency, the initialization routine on the PRU is executed to estimate the processing delay.
 
-If using "Multi Channel with Encoders of Different Make" configuration where load share mode is enabled, one of the cores among enabled cores will be set as the primary core for performing global configurations of PRU-ICSSG's BISS-C interface. These global configurations include clock frequency configuration and TX global re-initialization.
+If using "Multi Channel with Encoders of Different Make" configuration where load share mode is enabled, one of the cores among enabled cores will be set as the primary core for performing global configurations of PRU-ICSS's BISS-C interface. These global configurations include clock frequency configuration and TX global re-initialization.
 
 There needs to be a synchronization between PRUs before changing any global configuration. For this purpose, each active PRU core sets synchronization bit before any operation needing synchronization and clears the synchronization bit when it is ready. The assigned primary core will wait for all active channel's synchronization bits to be cleared and then perform the global configuration.
 
@@ -201,8 +189,82 @@ The Receiver sends the clock to the BISS-C encoder, data transmission in either 
 
 BISS-C Receiver and the encoder is connected using the RS-485 transceiver. Data is transmitted differentially over RS-485. It has the advantages of high noise immunity and long distance transmission capabilities.
 
+#### Pin-Multiplexing {#BISSC_PIN_USAGE}
+\note
+    - k = 0,1 (PRU-ICSS Instance) for AM243/AM261/AM64 and k = 0 for AM263
+    - n = 0,1 (PRU-ICSS Slice)
+
+<table>
+<tr>
+    <th>Pin name
+    <th>Signal name
+	<th>Function
+</tr>
+<tr>
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO0 \else PRG<%k>_PRU<n>_GPO0 \endif
+    <td>pru<n>_bissc0_clk
+	<td>Channel 0 clock
+</tr>
+<tr>
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO1 \else PRG<%k>_PRU<n>_GPO1 \endif
+    <td>pru<n>_bissc0_out
+	<td>Channel 0 transmit
+</tr>
+<tr>
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO2 \else PRG<%k>_PRU<n>_GPO2 \endif
+    <td>pru<n>_bissc0_outen
+	<td>Channel 0 transmit disable
+</tr>
+<tr>
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPI9 \else PRG<%k>_PRU<n>_GPI13/PRG<%k>_PRU<n>_GPI9 \endif
+    <td>pru<n>_bissc0_in
+	<td>Channel 0 receive
+</tr>
+<tr>
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO3 \else PRG<%k>_PRU<n>_GPO3 \endif
+    <td>pru<n>_bissc1_clk
+	<td>Channel 1 clock
+</tr>
+<tr>
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO4 \else PRG<%k>_PRU<n>_GPO4 \endif
+    <td>pru<n>_bissc1_out
+	<td>Channel 1 transmit
+</tr>
+<tr>
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO5 \else PRG<%k>_PRU<n>_GPO5 \endif
+    <td>pru<n>_bissc1_outen
+	<td>Channel 1 transmit disable
+</tr>
+<tr>
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPI10 \else PRG<%k>_PRU<n>_GPI14/PRG<%k>_PRU<n>_GPI10 \endif
+    <td>pru<n>_bissc1_in
+	<td>Channel 1 receive
+</tr>
+<tr>
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO6 \else PRG<%k>_PRU<n>_GPO6 \endif
+    <td>pru<n>_bissc2_clk
+	<td>Channel 2 clock
+</tr>
+<tr>
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO7 \else PRG<%k>_PRU<n>_GPO12/PRG<%k>_PRU<n>_GPO7 \endif
+    <td>pru<n>_bissc2_out
+	<td>Channel 2 transmit
+</tr>
+<tr>
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO8 \else PRG<%k>_PRU<n>_GPO8 \endif
+    <td>pru<n>_bissc2_outen
+	<td>Channel 2 transmit disable
+</tr>
+<tr>
+    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPI11 \else PRG<%k>_PRU<n>_GPI11 \endif
+    <td>pru<n>_bissc2_in
+	<td>Channel 2 receive
+</tr>
+</table>
+
+
 \cond SOC_AM243X
-##### AM243x-LP Booster Pack Pin-Multiplexing
+##### LP-AM243 Booster Pack Pin-Multiplexing
 <table>
 <tr>
     <th>Pin name
@@ -220,19 +282,88 @@ BISS-C Receiver and the encoder is connected using the RS-485 transceiver. Data 
 	<td>Channel 0 transmit
 </tr>
 <tr>
-    <td>GPIO Pin(GPIO1_22)
+    <td>GPIO Pin(GPIO_22)
     <td>BISSC_CH0_OUT_EN
 	<td>Channel 0 transmit disable
 </tr>
 <tr>
+    <td>PRG0_PRU1_GPI9
+    <td>pru1_bissc0_in
+	<td>Channel 0 receive (if(G_MUX_EN==0))
+</tr>
+<tr>
     <td>PRG0_PRU1_GPI13
     <td>pru1_bissc0_in
-	<td>Channel 0 receive
+	<td>Channel 0 receive (if(G_MUX_EN==1))
+</tr>
+<tr>
+    <td>PRG0_PRU1_GPO6
+    <td>pru1_bissc2_clk
+	<td>Channel 2 clock
+</tr>
+<tr>
+    <td>PRG0_PRU1_GPO12
+    <td>pru1_bissc2_out
+	<td>Channel 2 transmit
+</tr>
+<tr>
+    <td>GPIO Pin(GPIO_28)
+    <td>BISSC_CH2_OUT_EN
+	<td>Channel 2 transmit disable
+</tr>
+<tr>
+    <td>PRG0_PRU1_GPI11
+    <td>pru1_bissc2_in
+	<td>Channel 2 receive
 </tr>
 <tr>
     <td>GPIO Pin(GPIO1_78)
     <td>ENC0_EN
     <td>Enable 3 channel peripheral interface mode in Axis 1 of BP (C16 GPIO pin)
 </tr>
+<tr>
+    <td>GPIO Pin(GPIO1_77)
+    <td>ENC2_EN
+    <td>Enable 3 channel peripheral interface mode in Axis 2 of BP (B17 GPIO pin)
+</tr>
 </table>
+
+\endcond
+
+\cond  SOC_AM261X
+#### LP-AM261 Booster Pack Pin-Multiplexing
+
+<table>
+<tr>
+    <th>Pin name
+    <th>Signal name
+    <th>Function
+</tr>
+<tr>
+    <td>PR1_PRU0_GPIO0
+    <td>pru1_bissc0_clk
+    <td>Channel 0 clock
+</tr>
+<tr>
+    <td>PR1_PRU0_GPIO1
+    <td>pru1_bissc0_out
+    <td>Channel 0 transmit
+</tr>
+<tr>
+    <td>GPIO Pin(GPIO_83)
+    <td>BISSC_CH0_OUT_EN
+    <td>Channel 0 transmit disable
+</tr>
+<tr>
+    <td>PR1_PRU0_GPI9
+    <td>pru1_bissc0_in
+    <td>Channel 0 receive
+</tr>
+<tr>
+    <td>GPIO Pin (GPIO_21)
+    <td>ENC0_EN
+    <td>Enable 3 channel peripheral interface in Axis 1 of BP (B10 GPIO pin)
+</tr>
+</table>
+
 \endcond

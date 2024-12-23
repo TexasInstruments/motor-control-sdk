@@ -15,7 +15,7 @@ BiSS Safety is a profile definition for BiSS that has been certified by TÜV Rhe
    -  Support for single channel implementation with one encoder
    -  Receive on-the-fly CRC verification of position and control data
    -  Interface speed of 1, 2, 5, 8, and 10 MHz
-   -  Supported oversampling Ratio with different interface speed
+   -  Support for oversampling ratio with different interface speeds
 <table>
 <tr>
     <th rowspan="2">Clock Source
@@ -71,6 +71,7 @@ BiSS Safety is a profile definition for BiSS that has been certified by TÜV Rhe
    -  Support for single channel implementation with one encoder
    -  Receive on-the-fly CRC verification of position and control data
    -  Interface speed of 1, 2, 5, 8, and 10 MHz
+   -  Support for oversampling ratio with different interface speeds
 <table>
 <tr>
     <th rowspan="2">Clock Source
@@ -124,6 +125,8 @@ SysConfig can be used to configure things mentioned below:
 - Frequency selection.
 - Channel selection.
 - Selecting Multi Channel with Encoders of Different Make using load share mode.
+- Enabling SA Mux mode
+- Selecting clock source
 
 \note BiSS-C firmware will only run with ICSSG Core Clock running at 200 MHz or 300 MHz frequency. 225/250/333 MHz values are not supported due to clock divider requirements.
 
@@ -134,16 +137,85 @@ SysConfig can be used to configure things mentioned below:
 @VAR_SYSCFG_USAGE_NOTE
 
 SysConfig can be used to configure things mentioned below:
-- Selecting the ICSSG instance. (Tested on ICSSM1)
-- Selecting the ICSSG PRU slice. (Tested on ICSSM1-PRU0)
+- Selecting the ICSS instance. (Tested on ICSSM1)
+- Selecting the ICSS PRU slice. (Tested on ICSSM1-PRU0)
 - Configuring PINMUX.
 - Frequency selection.
+- Selecting clock source
 
-\note BiSS-C firmware will only run with ICSSG Core Clock running at 200 MHz or 300 MHz frequency. 225/250/333 MHz values are not supported due to clock divider requirements.
+\note BiSS-C firmware will only run with ICSS UART Clock running at 160 MHz(when ICSS Core Clock is 225 MHz). 
 
 \endcond
 
+## ICSS PRU Resource Usage
+\cond SOC_AM243X
+<table>
+<tr>
+    <th> Configuration
+    <th> PRU Core
+    <th> Memory Usage
+    <th> IEP Usage
+    <th> Other Peripheral Usage
+    <th> Description
+</tr>
+<tr>
+    <td> Single Channel Mode
+    <td> PRUx
+    <td> DMEM: 264 Bytes <br>  IMEM: 3080 Bytes
+	<td> IEP0: CMP0 and CMP3
+    <td> INTC Signal host interrupt 2 is used to trigger a R5 interrupt
+    <td> IEP, CMP events and INTC signal are used only in periodic continuous mode.
+</tr>
+<tr>
+    <td> Multi Channel Single PRU Mode
+    <td> PRUx
+    <td> DMEM: 264 Bytes <br>  IMEM: 3380 Bytes
+	<td> IEP0: CMP0 and CMP3
+    <td> INTC Signal host interrupt 2 is used to trigger a R5 interrupt
+    <td> IEP, CMP events and INTC signal are used only in periodic continuous mode.
+</tr>
+<tr>
+    <td rowspan="3"> Multi Channel Load Share Mode
+    <td> PRUx
+    <td rowspan="3"> DMEM: 264 Bytes <br>  IMEM: 3484 Bytes
+	<td rowspan="3">IEP0: CMP0, CMP3, CMP5 and CMP6 </td>
+    <td rowspan="3">INTC Signal host interrupt 2,3 & 4 is used to trigger a R5 interrupt</td>
+    <td rowspan="3">IEP, CMP events and INTC signals are used only in periodic continuous mode.</td>
+</tr>
+<tr>
+    <td> RTU_PRUx
+</tr>
+<tr>
+    <td> TX_PRUx
+</tr>
+</table>
 
+\note For pin usage see \ref BISSC_PIN_USAGE page.
+
+\endcond
+
+\cond SOC_AM261X
+<table>
+<tr>
+    <th> Configuration
+    <th> PRU Core
+    <th> Memory Usage
+    <th> IEP Usage
+    <th> Other Peripheral Usage
+    <th> Description
+</tr>
+<tr>
+    <td> Single Channel Mode
+    <td> PRUx
+    <td> DMEM: 264 Bytes <br>  IMEM: 3080 Bytes
+	<td> IEP0: CMP0 and CMP3
+    <td> INTC Signal host interrupt 2 is used to trigger a R5 interrupt
+    <td> IEP, CMP events and INTC signal are
+</tr>
+</table>
+\note For pin usage see \ref BISSC_PIN_USAGE page.
+
+\endcond
 
 ## BISS-C Design
 
