@@ -12,8 +12,8 @@ Tamagawa over uart application does below,
 - Load and executes tamagawa example on R5_0
 
 
-Connect the Tamagawa encoder via RS-485 Half-Duplex EVM to Am263x-LP.
-The connections between AM263x LP and RS-485
+Connect the Tamagawa encoder via RS-485 Half-Duplex EVM to LP-AM263.
+The connections between LP-AM263 and RS-485
 
 UART RX Pin(UART1_RXD)->JMP1-R,
 UART TX Pin(UART1_TXD)->JMP4-D,
@@ -68,7 +68,7 @@ The tamagawa over uart example runs on R5 and communicates with tamagawa encoder
 
 ## Hardware Prerequisites
 -  Tamagawa Encoders
--  AM263x LP
+-  LP-AM263
 -  RS-485 Half Duplex EVM
 -  5V and 3.3V power supplier
 
@@ -78,7 +78,7 @@ The tamagawa over uart example runs on R5 and communicates with tamagawa encoder
 \image html Tamagawa_Uart_Hw_Setup.PNG "Tamagawa Encoder Hardware Setup with AM263x"
 
 \imageStyle{Tamagawa_Setup_image.jpg,width:60%}
-\image html Tamagawa_Setup_image.jpg "Hardware Setup For AM263x-LP"
+\image html Tamagawa_Setup_image.jpg "Hardware Setup For LP-AM263"
 
 
 ## Build, load and run

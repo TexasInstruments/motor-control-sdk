@@ -21,10 +21,10 @@ The HDSL firmware running on ICSS-PRU provides a defined well interface to execu
 - Safety
 - Pipeline Channel Data
 \cond SOC_AM243X
-- Three channel support on am243x-evm and 2 channel support on am243x-lp (tested on ICSSG0 instance and PRU1 slice).
+- Three channel support on TMDS243EVM and 2 channel support on LP-AM243 (tested on ICSSG0 instance and PRU1 slice).
 \endcond
 \cond SOC_AM261X
-- Single channel support on am261x-lp (tested on ICSSM1 instance and PRU0 slice).
+- Single channel support on LP-AM261 (tested on ICSSM1 instance and PRU0 slice).
 \endcond
 - Tested with three different encoder makes (EDM35, EKS36, EKM36)
 \cond SOC_AM243X
@@ -46,7 +46,7 @@ SysConfig can be used to configure things mentioned below:
 - Configuring PINMUX
 - Channel selection
 - Mode Selection (Free run/Sync mode)
-- Hardware selection (Booster Pack for am243x-lp and am261x-lp)
+- Hardware selection (Booster Pack for LP-AM243 and LP-AM261)
 ## ICSS PRU Resource Usage
 \cond SOC_AM243X
 <table>
@@ -105,7 +105,7 @@ SysConfig can be used to configure things mentioned below:
     <td> IEP, CMP events and INTC signal are used only in periodic continuous mode.
 </tr>
 </table>
-\note For pin usage see \ref HDSL_PIN_USAGE page.
+\note For pin usage, see \ref HDSL_PIN_USAGE section.
 
 \endcond
 ## HDSL Design

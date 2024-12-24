@@ -207,7 +207,7 @@ The BISS-C receiver firmware running on ICSSM1-PRU0 provides a defined interface
 
 \cond SOC_AM261X
 
-### Hardware Setup(Using Booster Pack & LP-261)
+### Hardware Setup(Using Booster Pack & LP-AM261)
 \imageStyle{AM261x_lp_bp_bissc_encoder_setup.png,width:40%}
 \image html AM261x_lp_bp_bissc_encoder_setup.png  "Hardware Setup of Booster Pack + LP for BISS-C"
 

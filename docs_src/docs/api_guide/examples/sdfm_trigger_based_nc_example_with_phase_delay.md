@@ -67,7 +67,7 @@ The example does the below:
 Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_SETUP_PAGE.html" target="_blank"> EVM Setup </a>, below additional hardware is required to run this demo
 - TMDS64DC01EVM IO Link/Breakout Board
 - AMC1035EVM
-- AM243x-EVM
+- TMDS243EVM
 - Signal generator
 
 
@@ -78,7 +78,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 \cond SOC_AM243X
 ### Hardware Prerequisities for LP
 - AMC1035EVM
-- <a href="https://www.ti.com/tool/LP-AM243" target="_blank"> AM243x-LP Board </a>
+- <a href="https://www.ti.com/tool/LP-AM243" target="_blank"> LP-AM243 Board </a>
 - Signal generator
 
 #### LP Hardware Setup

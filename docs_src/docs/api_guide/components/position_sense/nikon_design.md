@@ -123,9 +123,9 @@ The CRC is the last byte of the last received data frame. The firmware then stor
 
 \image html nikon_verify_crc.png "Verify CRC Flow Chart"
 
-#### Pin-Multiplexing {#NIKON_PIN_USAGE}
+#### Pin Multiplexing {#NIKON_PIN_USAGE}
 \note
-    - k = 0,1 (PRU-ICSS Instance) for AM243/AM261/AM64 and k = 0 for AM263
+    - k = 0,1 (PRU-ICSS Instance) for AM243x/AM261x/AM64x and k = 0 for AM263x
     - n = 0,1 (PRU-ICSS Slice)
 
 <table>
@@ -197,7 +197,7 @@ The CRC is the last byte of the last received data frame. The firmware then stor
 </table>
 
 \cond SOC_AM243X
-##### LP-AM243 Booster Pack Pin-Multiplexing
+##### LP-AM243 Booster Pack Pin Multiplexing
 <table>
 <tr>
     <th>Pin name
@@ -264,7 +264,7 @@ The CRC is the last byte of the last received data frame. The firmware then stor
 \endcond
 
 \cond  SOC_AM261X
-##### LP-AM261 Booster Pack Pin-Multiplexing
+##### LP-AM261 Booster Pack Pin Multiplexing
 <table>
 <tr>
     <th>Pin name

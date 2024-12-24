@@ -183,10 +183,10 @@ For further improvement of the synchronization, the time difference (∆t) betwe
 \imageStyle{hdsl_external_sync_sample_edge.png,width:40%}
 \image html hdsl_external_sync_sample_edge.png "Time difference between External Pulse and Sample Edge"
 
-## Pin-Multiplexing {#HDSL_PIN_USAGE}
+## Pin Multiplexing {#HDSL_PIN_USAGE}
 
 \note
-    - k = 0,1 (PRU-ICSS Instance) for AM243/AM261/AM64
+    - k = 0,1 (PRU-ICSS Instance) for AM243x/AM261x/AM64x
     - n = 0,1 (PRU-ICSS Slice)
 
 <table>
@@ -258,7 +258,7 @@ For further improvement of the synchronization, the time difference (∆t) betwe
 </table>
 
 \cond SOC_AM243X
-### LP-AM243 Booster Pack Pin-Multiplexing
+### LP-AM243 Booster Pack Pin Multiplexing
 <table>
 <tr>
     <th>Pin name
@@ -325,7 +325,7 @@ For further improvement of the synchronization, the time difference (∆t) betwe
 \endcond
 
 \cond  SOC_AM261X
-### LP-AM261 Booster Pack Pin-Multiplexing
+### LP-AM261 Booster Pack Pin Multiplexing
 <table>
 <tr>
     <th>Pin name

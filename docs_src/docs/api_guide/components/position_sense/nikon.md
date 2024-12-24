@@ -27,25 +27,25 @@ Nikon A-Format absolute encoder receiver implementation on the TI PRU-ICSS inter
 <tr>
     <td>PRU UART Clock (192 MHz)
     <td>Not tested
-	 <td>8x
+	<td>8x
     <td>Not tested
-	 <td>8x
+	<td>8x
     <td>8x with fractional div
 </tr>
 <tr>
     <td>PRU Core Clock (200 MHz)
     <td>8x
-	 <td>Not tested
+	<td>Not tested
     <td>6x
-	 <td>Not tested
+	<td>Not tested
     <td>Not tested
 </tr>
 <tr>
     <td>PRU Core Clock (300 MHz)
     <td>8x
-	 <td>Not tested
+	<td>Not tested
     <td>6x with fractional div
-	 <td>Not tested
+	<td>Not tested
     <td>Not tested
 </tr>
 </table>
@@ -194,10 +194,10 @@ SysConfig can be used to configure things mentioned below:
     <td> DMEM: 196 Bytes <br>  IMEM: 1468 Bytes
 	<td> IEP0: CMP0 and CMP3
     <td> INTC Signal host interrupt 2 is used to trigger a R5 interrupt
-    <td> IEP, CMP events and INTC signal are
+    <td> IEP, CMP events and INTC signal are used only in periodic continuous mode.
 </tr>
 </table>
-\note For pin usage see \ref NIKON_PIN_USAGE page.
+\note For pin usage, see \ref NIKON_PIN_USAGE section.
 
 \endcond
 

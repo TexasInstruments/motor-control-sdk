@@ -21,10 +21,10 @@ EnDat is a bidirectional interface for position encoders. During EnDat operation
 \cond SOC_AM243X || SOC_AM64X
    -  Concurrent multi channel support (up-to 3 encoders with identical part number @ 8MHz maximum)
    -  "Multi Channel with Encoders of Different Make" using load share mode (Each of PRU, RTU-PRU, and TX-PRU from one PRU-ICSSG slice handles one channel)
-   \endcond
+\endcond
    -  Safety Readiness: Recovery time
-   -  Clock up to 16MHz with single channel \if (SOC_AM243X ||SOC_AM64X) and load share mode (multi channel) \endif
-      - \note Receive (Rx) is oversampled at 8x of send(Tx). Therefore, the encoder interface frequency "f" should such that Tx source clock value is divisible by "f" and Rx source clock value is divisible by "8*f".
+   -  Clock up to 16MHz with single channel \if (SOC_AM243X || SOC_AM64X) and load share mode (multi channel) \endif
+      \note Receive (Rx) is oversampled at 8x of send(Tx). Therefore, the encoder interface frequency "f" should such that Tx source clock value is divisible by "f" and Rx source clock value is divisible by "8*f".
    - Possible interface speeds with different source clock combinations.
 <table>
 <tr>
@@ -110,8 +110,8 @@ SysConfig can be used to configure things mentioned below:
 </tr>
 <tr>
    <td>Single Channel Configuration</td>
-   <td> PRUx </td>
-   <td>DEME: 152 B <br>  IMEM: 5 KB </td>
+   <td>PRUx</td>
+   <td>DMEM: 152 Bytes <br>  IMEM: 5 KB </td>
    <td>IEP0: CMP0 and CMP3 </td>
    <td>INTC Signal No. 18 is used to trigger a R5 interrupt </td>
    <td>IEP, CMP events and INTC signal are used only in periodic continuous mode.</td>
@@ -120,7 +120,7 @@ SysConfig can be used to configure things mentioned below:
 <tr>
    <td>Multi Channel Configuration with single PRU core</td>
    <td>PRUx</td>
-   <td>DEME: 152 B <br>  IMEM: 6.2 KB </td>
+   <td>DMEM: 152 Bytes <br>  IMEM: 6.2 KB </td>
    <td>IEP0: CMP0 and CMP3 </td>
    <td>INTC Signal No. 18 is used to trigger a R5 interrupt</td>
    <td>IEP, CMP events and INTC signal are used only in periodic continuous mode</td>
@@ -128,7 +128,7 @@ SysConfig can be used to configure things mentioned below:
 <tr>
    <td>Multi Channel Configuration with load share</td>
    <td>PRUx, TXPRUx, RTUPRUx</td>
-   <td>DEME: 152 B <br>  PRU_IMEM: 4 KB <br>  RTU_IMEM: 4 KB <br>  TX_IMEM: 4 KB</td>
+   <td>DMEM: 152 Bytes <br>  PRU_IMEM: 4 KB <br>  RTU_IMEM: 4 KB <br>  TX_IMEM: 4 KB</td>
    <td>IEP0: CMP0, CMP3, CMP5 and CMP6 </td>
    <td>INTC Signal No. 18, 19 and 20 are used to trigger R5 interrupts.</td>
    <td>IEP, CMP events and INTC signals are used only in periodic continuous mode.</td>
@@ -136,7 +136,7 @@ SysConfig can be used to configure things mentioned below:
 \endcond
 </table>
 
-\note For pin usage see \ref ENDAT_PIN_USAGE page.
+\note For pin usage, see \ref ENDAT_PIN_USAGE section.
 
 ## ENDAT Design
 

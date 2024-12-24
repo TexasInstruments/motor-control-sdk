@@ -135,7 +135,7 @@ Following points describe the process for measurement of phase difference betwee
 - It measures delay 8 times and repeats the measurement until the get like 8 time the same or a max variation of 1 PRU cycle.
 - Based on the clock polarity, phase delay is calculated. If clock polarity and upcoming nearest edge of clock pin for rising edge of data pin are same, then final phase delay will be half SD clock duty cycle time minus calculated time. Otherwise phase delay will be SD clock one cycle period time minus calculated time
 \image html SDFM_Phase_delay_flowchart.png "Phase Compensation"
-#### AM64x/AM243x EVM Pin-Multiplexing
+#### AM64x/AM243x EVM Pin Multiplexing
 <table>
 <tr>
     <th>Pin name
@@ -190,7 +190,7 @@ Following points describe the process for measurement of phase difference betwee
 </table>
 
 \cond SOC_AM243X
-#### AM243x LP Pin-Multiplexing
+#### LP-AM243 Pin Multiplexing
 <table>
 <tr>
     <th>Pin name

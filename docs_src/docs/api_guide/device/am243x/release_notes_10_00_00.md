@@ -89,7 +89,7 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Single channel, Multi channel using three PRU cores (load share mode), Free Run mode, Sync mode, Short Message Read and Write, Long Message Read and Write, Pipeline Channel Data, Long cable (upto 100 meters) with single channel Free Run mode, Boosterpack with AM243x-LP, 225/300 MHz PRU firmware
+    <td> Single channel, Multi channel using three PRU cores (load share mode), Free Run mode, Sync mode, Short Message Read and Write, Long Message Read and Write, Pipeline Channel Data, Long cable (upto 100 meters) with single channel Free Run mode, Boosterpack with LP-AM243, 225/300 MHz PRU firmware
     <td> Multi-channel with long cables(100m length), Long cable (upto 100 meters) with sync mode
 </tr>
 </table>
@@ -165,7 +165,7 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
 </tr>
 <tr>
     <td> PINDSW-7130
-    <td> HDSL: Few protocol resets seen during initialization with Free Run mode on AM243x-LP
+    <td> HDSL: Few protocol resets seen during initialization with Free Run mode on LP-AM243
     <td> Position Sense HDSL
     <td> 9.0 onwards
     <td> -
