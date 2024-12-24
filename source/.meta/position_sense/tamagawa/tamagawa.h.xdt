@@ -50,6 +50,8 @@
 #define `instance.$name`_BOOSTER_PACK     (`instance.Booster_Pack & 1`)
 #define PRUICSS_PRUx                      (`sliceVal`)
 #define PRUICSSx                          (`icssValue`)
+#define RX_FIFO_CLOCK_SOURCE             `instance.Rx_Clk_Source`
+#define TX_FIFO_CLOCK_SOURCE             `instance.Tx_Clk_Source`
 
  %if ((instance.instance === "ICSSG1" || instance.instance === "ICSSG0") && (instance.G_MUX_EN))
     %{

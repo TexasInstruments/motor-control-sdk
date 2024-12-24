@@ -112,6 +112,38 @@ let tamagawa_module = {
             hidden:  (device == "am243x-lp" ||device == "am243x-evm" ||device == "am64x-evm") ? false : true,
         },
         {
+            name: "Rx_Clk_Source",
+            displayName: "RX FIFO Clock Source",
+            description: "RX FIFO Clock Source Options",
+            default: "0",
+            options: [
+                {
+                    name: "0",
+                    displayName: "ICSS UART Clock",
+                },
+                {
+                    name: "1",
+                    displayName: "ICSS Core Clock",
+                },
+            ],
+        },
+        {
+            name: "Tx_Clk_Source",
+            displayName: "TX FIFO Clock Source",
+            description: "TX FIFO Clock Source Options",
+            default: "0",
+            options: [
+                {
+                    name: "0",
+                    displayName: "ICSS UART Clock",
+                },
+                {
+                    name: "1",
+                    displayName: "ICSS Core Clock",
+                },
+            ],
+        },
+        {
             name: "channel_0",
             displayName: "Select Channel 0",
             description: "Channel 0 Selection ",
