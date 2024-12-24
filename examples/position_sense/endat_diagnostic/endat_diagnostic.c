@@ -140,31 +140,19 @@ TaskP_Object gTaskObject;
                                     ((x) == 100) || ((x) == 101) || ((x)== 103) || ((x) == 105) || ((x) == 106) || ((x) == 107) || ((x) == 108) || ((x) == 109)  || ((x) == 200))
 
 
-#ifdef SOC_AM261X
-/*Fix hardcoding, use API to read frequency instead of hard-coding*/
-#define ICSSM_PRU_CORE_CLOCK 225000000
-#define ENDAT_INPUT_CLOCK_UART_FREQUENCY 160000000
-#else
-#define ENDAT_INPUT_CLOCK_UART_FREQUENCY 160000000
-#define ICSSM_PRU_CORE_CLOCK 200000000
-#endif
+
+#define ICSS_PRU_CORE_CLOCK CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ
+#define ENDAT_INPUT_CLOCK_UART_FREQUENCY CONFIG_PRU_ICSS0_UART_CLK_FREQ_HZ
+
 
 #if RX_FIFO_CLOCK_SOURCE == 1
-#ifdef SOC_AM261X
-#define ENDAT_RX_INPUT_CLOCK_FREQUENCY ICSSM_PRU_CORE_CLOCK
-#else
-#define ENDAT_RX_INPUT_CLOCK_FREQUENCY CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ
-#endif
+#define ENDAT_RX_INPUT_CLOCK_FREQUENCY ICSS_PRU_CORE_CLOCK
 #else
 #define ENDAT_RX_INPUT_CLOCK_FREQUENCY ENDAT_INPUT_CLOCK_UART_FREQUENCY
 #endif
 
 #if TX_FIFO_CLOCK_SOURCE == 1
-#ifdef SOC_AM261X
-#define ENDAT_TX_INPUT_CLOCK_FREQUENCY ICSSM_PRU_CORE_CLOCK
-#else
-#define ENDAT_TX_INPUT_CLOCK_FREQUENCY CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ
-#endif
+#define ENDAT_TX_INPUT_CLOCK_FREQUENCY ICSS_PRU_CORE_CLOCK
 #else
 #define ENDAT_TX_INPUT_CLOCK_FREQUENCY ENDAT_INPUT_CLOCK_UART_FREQUENCY
 #endif
@@ -2211,46 +2199,8 @@ void endat_main(void *args)
     pruicss_cfg = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->cfgRegBase);
     pruicss_iep  = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->iep0RegBase);
 
-#if ( SOC_AM261X || SOC_AM263X)
-    icssClk = ICSSM_PRU_CORE_CLOCK;
-    /* Read the PRU-ICSS configured clock frequency. */
-#ifdef SOC_AM261X
-    /* Set ICSSM1 PRU Core Clock to 225 MHz and ICSSM1 UART Clock to 160 MHz */
-    CSL_mss_rcmRegs     *ptrMSSRCMRegs;
-    uint32_t            baseAddr;
-    volatile uint32_t   *kickAddr;
-
-    SOC_moduleSetClockFrequency(SOC_RcmPeripheralId_ICSSM1_UART0, SOC_RcmPeripheralClockSource_DPLL_PER_HSDIV0_CLKOUT2, 160000000);
-
-    /*Unlock MSS_RCM*/
-    baseAddr = (uint32_t) CSL_MSS_RCM_U_BASE;
-    kickAddr = (volatile uint32_t *) (baseAddr + CSL_MSS_RCM_LOCK0_KICK0);
-    CSL_REG32_WR(kickAddr, KICK0_UNLOCK_VAL);      /* KICK 0 */
-    kickAddr = (volatile uint32_t *) (baseAddr + CSL_MSS_RCM_LOCK0_KICK1);
-    CSL_REG32_WR(kickAddr, KICK1_UNLOCK_VAL);      /* KICK 1 */
-
-    ptrMSSRCMRegs = (CSL_mss_rcmRegs*) CSL_MSS_RCM_U_BASE;
-    ptrMSSRCMRegs->ICSSM1_CORE_CLK_SRC_SEL = 0x333;
-    ptrMSSRCMRegs->ICSSM1_CORE_CLK_DIV_VAL = 0x111;
-
-    /*Lock MSS_RCM*/
-    baseAddr = (uint32_t) CSL_MSS_RCM_U_BASE;
-    kickAddr = (volatile uint32_t *) (baseAddr + CSL_MSS_RCM_LOCK0_KICK0);
-    CSL_REG32_WR(kickAddr, KICK_LOCK_VAL);      /* KICK 0 */
-    kickAddr = (volatile uint32_t *) (baseAddr + CSL_MSS_RCM_LOCK0_KICK1);
-    CSL_REG32_WR(kickAddr, KICK_LOCK_VAL);      /* KICK 1 */
-#endif
-#else
-    if(gPruIcssXHandle->hwAttrs->instance)
-    {
-        SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG1, TISCI_DEV_PRU_ICSSG1_CORE_CLK, &icssClk);
-    }
-    else
-    {
-        SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG0, TISCI_DEV_PRU_ICSSG0_CORE_CLK, &icssClk);
-    }
-#endif
-
+    icssClk = ICSS_PRU_CORE_CLOCK;
+    
     /*3 channel pheripheral clock configuration*/
     endat_clk_config.pru_clock = icssClk;
     endat_clk_config.pru_uart_clock = ENDAT_INPUT_CLOCK_UART_FREQUENCY;

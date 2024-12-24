@@ -42,6 +42,8 @@
 #include "tamagawa_periodic_trigger.h"
 #include <drivers/soc.h>
 #include <position_sense/tamagawa/include/tamagawa_drv.h>
+#include "ti_drivers_open_close.h"
+#include "ti_board_open_close.h"
 
 
 static HwiP_Object gIcssgEncoderHwiObject0;  /* ICSSG Tamagawa PRU FW HWI */
@@ -68,7 +70,11 @@ void *gPruss_iep;
 PRUICSS_Handle gPruIcssXHandle;
 
 /* ICSS INTC configuration */
-extern PRUICSS_IntcInitData icss_intc_initdata;
+#if (PRUICSSx == 1)
+    extern PRUICSS_IntcInitData icss1_intc_initdata;
+#else
+    extern PRUICSS_IntcInitData icss0_intc_initdata;
+#endif
 
 void tamagawa_config_iep(struct tamagawa_periodic_interface *tamagawa_periodic_interface)
 {
@@ -146,16 +152,21 @@ void tamagawa_interrupt_config(struct tamagawa_periodic_interface *tamagawa_peri
 }
 uint32_t  tamagawa_config_periodic_mode(struct tamagawa_periodic_interface *tamagawa_periodic_interface, PRUICSS_Handle handle)
 {
-
+    int32_t  status;
     gPruIcssXHandle = handle;
     gPruss_iep = tamagawa_periodic_interface->pruss_iep;
     /*configure IEP*/
     tamagawa_config_iep(tamagawa_periodic_interface);
     /* Initialize ICSS INTC */
     /*am261x does not support periodic mode*/
-#if(!SOC_AM261X) 
-    int32_t  status;
-    status = PRUICSS_intcInit(gPruIcssXHandle, &icss_intc_initdata);
+#if (PRUICSSx == 1)
+    status = PRUICSS_intcInit(gPruIcssXHandle, &icss1_intc_initdata);
+    if (status != SystemP_SUCCESS)
+    {
+        return 0;
+    }
+#else
+    status = PRUICSS_intcInit(gPruIcssXHandle, &icss0_intc_initdata);
     if (status != SystemP_SUCCESS)
     {
         return 0;

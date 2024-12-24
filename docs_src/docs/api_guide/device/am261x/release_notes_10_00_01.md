@@ -157,21 +157,21 @@ Mbed-TLS                | R5F            | 2.13.1
     <td> HDSL: Incorrect SAFE_SUM value is seen
     <td> Position Sense HDSL
     <td> 10.00.01 onwards
-    <td>
+    <td> -
 </tr>
 <tr>
     <td> PINDSW-8353
     <td> AM261x: HDSL Long message UART Commands (8, 9 and 10) not working
     <td> Position Sense HDSL
     <td> 10.00.01 onwards
-    <td>
+    <td> -
 </tr>
 <tr>
     <td> PINDSW-8358
     <td> BiSS-C/Nikon/EnDat/Tamagawa: Exiting Periodic Trigger mode UART option does not work
     <td> Position Sense BiSS-C, Position Sense EnDat, Position Sense Nikon A-Format, Position Sense Tamagawa
     <td> 10.00.01 onwards
-    <td>
+    <td> -
 </tr>
 </table>
 

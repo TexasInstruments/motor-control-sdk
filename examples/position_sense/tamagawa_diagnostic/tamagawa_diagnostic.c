@@ -67,13 +67,8 @@ TaskP_Object gTaskObject;
 #define TAMAGAWA_POSITION_LOOP_STOP    0
 #define TAMAGAWA_POSITION_LOOP_START   1
 
-#ifdef SOC_AM261X
-#define ICSSM_PRU_CORE_CLOCK 225000000
-#define ICSS_PRU_UART_CLOCK 160000000
-#else
-#define ICSSM_PRU_CORE_CLOCK 200000000
-#define ICSS_PRU_UART_CLOCK 192000000
-#endif
+#define ICSS_PRU_CORE_CLOCK CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ
+#define ICSS_PRU_UART_CLOCK CONFIG_PRU_ICSS0_UART_CLK_FREQ_HZ
 
 #if ((CONFIG_TAMAGAWA0_CHANNEL0 + CONFIG_TAMAGAWA0_CHANNEL1 + CONFIG_TAMAGAWA0_CHANNEL2) == 1)
 #if PRUICSS_PRUx == 1
@@ -501,56 +496,14 @@ void tamagawa_main(void *args)
         (PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->pru0DramBase, pruicss_cfg, pruicss_iep, slice_value);
 #endif
 
-/* Get core clock value */
-#if defined(SOC_AM263X) || defined(SOC_AM261X)
-    /* fixed 200MHz pru core clock for ICSSM*/
-    priv->pru_clock = ICSSM_PRU_CORE_CLOCK;
-#ifdef SOC_AM261X
-    /* Set ICSSM1 PRU Core Clock to 225 MHz and ICSSM1 UART Clock to 160 MHz */
-    CSL_mss_rcmRegs     *ptrMSSRCMRegs;
-    uint32_t            baseAddr;
-    volatile uint32_t   *kickAddr;
 
-    SOC_moduleSetClockFrequency(SOC_RcmPeripheralId_ICSSM1_UART0, SOC_RcmPeripheralClockSource_DPLL_PER_HSDIV0_CLKOUT2, ICSS_PRU_UART_CLOCK);
-
-    /*Unlock MSS_RCM*/
-    baseAddr = (uint32_t) CSL_MSS_RCM_U_BASE;
-    kickAddr = (volatile uint32_t *) (baseAddr + CSL_MSS_RCM_LOCK0_KICK0);
-    CSL_REG32_WR(kickAddr, KICK0_UNLOCK_VAL);      /* KICK 0 */
-    kickAddr = (volatile uint32_t *) (baseAddr + CSL_MSS_RCM_LOCK0_KICK1);
-    CSL_REG32_WR(kickAddr, KICK1_UNLOCK_VAL);      /* KICK 1 */
-
-    ptrMSSRCMRegs = (CSL_mss_rcmRegs*) CSL_MSS_RCM_U_BASE;
-    ptrMSSRCMRegs->ICSSM1_CORE_CLK_SRC_SEL = 0x333;
-    ptrMSSRCMRegs->ICSSM1_CORE_CLK_DIV_VAL = 0x111;
-
-    /*Lock MSS_RCM*/
-    baseAddr = (uint32_t) CSL_MSS_RCM_U_BASE;
-    kickAddr = (volatile uint32_t *) (baseAddr + CSL_MSS_RCM_LOCK0_KICK0);
-    CSL_REG32_WR(kickAddr, KICK_LOCK_VAL);      /* KICK 0 */
-    kickAddr = (volatile uint32_t *) (baseAddr + CSL_MSS_RCM_LOCK0_KICK1);
-    CSL_REG32_WR(kickAddr, KICK_LOCK_VAL);      /* KICK 1 */
-#endif
-#else
-    uint32_t status;
-#if(PRUICSSx)
-    status = SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG1, TISCI_DEV_PRU_ICSSG1_CORE_CLK, &priv->pru_clock);
-    DebugP_assert(status == SystemP_SUCCESS);
-#else
-    status = SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG0, TISCI_DEV_PRU_ICSSG0_CORE_CLK, &priv->pru_clock);
-    DebugP_assert(status == SystemP_SUCCESS);
-#endif
-#endif
+    priv->pru_clock = ICSS_PRU_CORE_CLOCK;
     priv->pru_uart_clock = ICSS_PRU_UART_CLOCK;
-#ifdef SOC_AM261X
-    /*Selecting UART as clock source for 3 channel peripheral */
-    priv->rx_clock_source = PRU_UART_CLOCK_SOURCE; 
-    priv->tx_clock_source = PRU_UART_CLOCK_SOURCE; 
-#else
-  /*Selecting PRU as clock source for 3 channel peripheral */ 
-   priv->rx_clock_source = PRU_CORE_CLOCK_SOURCE;
-   priv->tx_clock_source = PRU_CORE_CLOCK_SOURCE;  
-#endif
+
+
+    priv->rx_clock_source = RX_FIFO_CLOCK_SOURCE;
+    priv->tx_clock_source = TX_FIFO_CLOCK_SOURCE;
+
 
     DebugP_log("\r\n\nTamagawa PRU-ICSS init done\n\n");
 
