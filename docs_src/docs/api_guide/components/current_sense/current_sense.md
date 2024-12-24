@@ -37,9 +37,9 @@ ICSS %SDFM is a sigma delta interface for phase current measurement in high perf
    - Axis 1 (Channel0 - Channel2) mapped with PWM0
    - Axis 2 (Channel3 - Channel5) mapped with PWM1
    - Axis 3 (Channel6 - Channel8) mapped with PWM2
- - PWM1 and PWM2 TZ output pins are only available on am243x-lp in servo BP signal mode
+ - PWM1 and PWM2 TZ output pins are only available on LP-AM243 in servo BP signal mode
 
-### SDFM Data Pin Conflicts on AM243x LaunchPad(LP)
+### SDFM Data Pin Conflicts on LP-AM243 Board
 - In default signal mode, all 9 SD data pins are available on LP jumpers. But in servo BP signal mode the routing for 4 SD data pins (SD4_D, SD5_D, SD6_D and SD7_D) is changing. Out of the 4 pins, two pins are available on board jumpers (sd4_d and sd5_d) and two are not available (sd6_d and sd7_d9). For more details on pinmux with LP, please see <a href="https://www.ti.com/lit/ug/spruj12e/spruj12e.pdf" target="_blank">AM243x LaunchPad Development Kit User's Guide</a>
 
 \image html SDFM_PIN_CONFLICT.png "PIN routing for SD channels"

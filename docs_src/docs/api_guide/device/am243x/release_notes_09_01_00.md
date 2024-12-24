@@ -98,7 +98,7 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Single channel, Multi channel using single PRU core and three PRU cores (load share mode), Continuous mode, Recovery Time for 2.2 command set, Long cable (upto 100 meters), Boosterpack with AM243x-LP
+    <td> Single channel, Multi channel using single PRU core and three PRU cores (load share mode), Continuous mode, Recovery Time for 2.2 command set, Long cable (upto 100 meters), Boosterpack with LP-AM243
     <td> Encoder receive communication command
 </tr>
 <tr>
@@ -106,7 +106,7 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Single channel, Multi channel using three PRU cores (load share mode), Free Run mode, Sync mode, Short Message Read and Write, Long Message Read and Write, Pipeline Channel Data, Long cable (upto 100 meters) with single channel Free Run mode, Boosterpack with AM243x-LP
+    <td> Single channel, Multi channel using three PRU cores (load share mode), Free Run mode, Sync mode, Short Message Read and Write, Long Message Read and Write, Pipeline Channel Data, Long cable (upto 100 meters) with single channel Free Run mode, Boosterpack with LP-AM243
     <td> 225 MHz PRU-ICSSG Core Clock based firmware, Multi-channel with long cables(100m length), Long cable (upto 100 meters) with sync mode
 </tr>
 <tr>
@@ -114,7 +114,7 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Absolute position, Encoder ID, Reset, EEPROM Read, EEPROM Write, 2.5 Mbps and 5 Mbps Encoder Support, Boosterpack with AM243x-LP
+    <td> Absolute position, Encoder ID, Reset, EEPROM Read, EEPROM Write, 2.5 Mbps and 5 Mbps Encoder Support, Boosterpack with LP-AM243
     <td> -
 </tr>
 <tr>
@@ -305,7 +305,7 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
 </tr>
 <tr>
     <td> PINDSW-7130
-    <td> HDSL: Few protocol resets seen during initialization with Free Run mode on AM243x-LP
+    <td> HDSL: Few protocol resets seen during initialization with Free Run mode on LP-AM243
     <td> Position Sense HDSL
     <td> 9.0 onwards
     <td> -

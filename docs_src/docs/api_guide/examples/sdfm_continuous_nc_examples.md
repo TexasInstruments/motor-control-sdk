@@ -92,7 +92,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 \cond SOC_AM243X
 ### Hardware Prerequisities for LP
 - AMC1035EVM
-- <a href="https://www.ti.com/tool/LP-AM243" target="_blank"> AM243x-LP Board </a>
+- <a href="https://www.ti.com/tool/LP-AM243" target="_blank"> LP-AM243 Board </a>
 - Signal generator
 
 #### LP Hardware Setup

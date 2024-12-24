@@ -55,15 +55,15 @@ The pruicss PWM signal generated is similar to EPWM signal when EPWM counter is 
 This example uses EPWM0 sync out to reset IEP at the PWM period, PRUICSS IEP CMP0 can also be used to do this when EPWM sync out signal is disabled.
 
 
-#### AM243X-LP 
-- When AM243X-LP PROC109A revision is used to test this example, SW6 should be in open state to probe PRG0_PWM0_B0 on J2.15, Refer <a href="https://www.ti.com/lit/ug/spruj12f/spruj12f.pdf?ts=1711526744464&ref_url=https%253A%252F%252Fwww.ti.com%252Ftool%252FLP-AM243" target="_blank"> AM243X-LP User Guide </a>  Section 4.2.1
+#### LP-AM243 
+- When LP-AM243 PROC109A revision is used to test this example, SW6 should be in open state to probe PRG0_PWM0_B0 on J2.15, Refer <a href="https://www.ti.com/lit/ug/spruj12f/spruj12f.pdf?ts=1711526744464&ref_url=https%253A%252F%252Fwww.ti.com%252Ftool%252FLP-AM243" target="_blank"> LP-AM243 User Guide </a>  Section 4.2.1
 - PRG0_PWM0_A0 can be probed on J1.5
 - PRG0_PWM0_B0 can be probed on J2.15
 - PRG0_PWM2_A0 can be probed on J4.31
 - PRG0_PWM2_B0 can be probed on J4.39
 - EPWM0_CHANNEL_A can be probed on J4.40
 
-#### AM64X-EVM and AM243X-EVM 
+#### TMDS243EVM 
 <a href="https://www.ti.com/tool/TMDS64DC01EVM" target="_blank"> An IO Breakout Board </a> is required to probe the PWM outputs
 - PRG0_PWM0_A0 can be probed on J3.1
 - PRG0_PWM0_B0 can be probed on J3.3

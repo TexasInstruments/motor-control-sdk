@@ -16,13 +16,12 @@ Tamagawa firmware and examples are based on 3 Channel Peripheral interface from 
 -  Baud rate selection
 -  Supports all Data Readout, Reset and EEPROM commands
 -  2.5 Mbps and 5 Mbps encoder support
-    - \note Receive (Rx) is oversampled at 8x of send(Tx). Therefore, the encoder interface frequency "f" should such that Tx source clock value is divisible by "f" and Rx source clock value is divisible by "(8*f)".
+   \note Receive (Rx) is oversampled at 8x of send(Tx). Therefore, the encoder interface frequency "f" should such that Tx source clock value is divisible by "f" and Rx source clock value is divisible by "(8*f)".
 - Possible interface speeds with different source clock combinations.
 <table>
 <tr>
     <th>Clock Source
     <th>Interface Speed
-    <th>
 </tr>
 \cond SOC_AM261X
 <tr>
@@ -94,7 +93,7 @@ SysConfig can be used to configure things mentioned below:
 <tr>
    <td>Single Channel Configuration</td>
    <td>PRUx</td>
-   <td>DEME: 220 B <br> IMEM: 1.8 KB</td>
+   <td>DMEM: 220 Bytes <br> IMEM: 1.8 KB</td>
    <td>IEP0: CMP0 and CMP3 </td>
    <td>INTC Signal No. 18 is used to trigger a R5 interrupt </td>
    <td>IEP, CMP events and INTC signal are used only in periodic continuous mode</td>
@@ -103,7 +102,7 @@ SysConfig can be used to configure things mentioned below:
 <tr>
    <td>Multi Channel Configuration with single PRU core</td>
    <td>PRUx</td>
-   <td>DEME: 220 B <br> IMEM: 1.5 KB</td>
+   <td>DMEM: 220 Bytes <br> IMEM: 1.5 KB</td>
    <td>IEP0: CMP0 and CMP3 </td>
    <td>INTC Signal No. 18 is used to trigger a R5 interrupt</td>
    <td>IEP, CMP events and INTC signal are used only in periodic continuous mode</td>
@@ -111,7 +110,7 @@ SysConfig can be used to configure things mentioned below:
 \endcond
 </table>
 
-\note For pin usage see \ref TAMAGAWA_PIN_USAGE page.
+\note For pin usage, see \ref TAMAGAWA_PIN_USAGE section.
 
 ## Tamagawa Design
 

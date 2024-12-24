@@ -164,6 +164,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 
 ## Hardware Prerequisites with TMDS243EVM
 - EnDAT Encoder(s)
+- <a href="https://www.ti.com/tool/TMDS243EVM" target="_blank"> TMDS243EVM Board </a>
 - <a href="http://www.ti.com/tool/TIDA-00179" target="_blank"> TIDA-00179 Universal Digital Interface to Absolute Position Encoders </a>
 - <a href="../TIDEP-01015RevE1.1(001)_Sch.pdf" target="_blank"> TIDEP-01015 3 Axis Board </a>
 - <a href="../MS_TI_EVM_3-AXIS_INTERFACE_BOARD_SCH_REV_E1.pdf" target="_blank"> Interface card connecting EVM and TIDEP-01015 3 Axis </a>
@@ -173,7 +174,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 ## Hardware Prerequisities with LP-AM243
 
 - EnDAT Encoder(s)
-- <a href="https://www.ti.com/tool/LP-AM243" target="_blank"> AM243x-LP Board </a>
+- <a href="https://www.ti.com/tool/LP-AM243" target="_blank"> LP-AM243 Board </a>
 - <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
 \endcond
 
@@ -182,7 +183,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 ## Hardware Prerequisities with LP-AM261
 
 - EnDAT Encoder(s)
-- AM261x-LP Board
+- <a href="https://www.ti.com/tool/LP-AM261" target="_blank"> LP-AM261 Board </a>
 - <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
 \endcond
 
@@ -191,7 +192,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 ## Hardware Prerequisities with LP-AM263
 
 - EnDAT Encoder(s)
-- AM263x-LP Board
+- <a href="https://www.ti.com/tool/LP-AM263" target="_blank"> LP-AM263 Board </a>
 - <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
 \endcond
 

@@ -246,9 +246,9 @@ The Receiver sends the clock to the EnDat encoder, data transmission in either d
 
 EnDat Receiver and the encoder is connected using the RS-485 transceiver. Data is transmitted differentially over RS-485. It has the advantages of high noise immunity and long distance transmission capabilities.
 
-#### Pin-Multiplexing {#ENDAT_PIN_USAGE}
+#### Pin Multiplexing {#ENDAT_PIN_USAGE}
 \note
-    - k = 0,1 (PRU-ICSS Instance)" for AM243/AM261/AM64 and k = 0 for AM263
+    - k = 0,1 (PRU-ICSS Instance) for AM243x/AM261x/AM64x and k = 0 for AM263x
     - n = 0,1 (PRU-ICSS Slice)
 
 <table>
@@ -320,7 +320,7 @@ EnDat Receiver and the encoder is connected using the RS-485 transceiver. Data i
 </table>
 \cond SOC_AM243X
 
-##### AM243x-LP Booster Pack Pin-Multiplexing
+##### LP-AM243 Booster Pack Pin Multiplexing
 <table>
 <tr>
     <th>Pin name
@@ -381,7 +381,7 @@ EnDat Receiver and the encoder is connected using the RS-485 transceiver. Data i
 \endcond
 
 \cond  SOC_AM261X
-##### AM261x-LP Booster Pack Pin-Multiplexing
+##### LP-AM261 Booster Pack Pin Multiplexing
 <table>
 <tr>
     <th>Pin name
@@ -417,7 +417,7 @@ EnDat Receiver and the encoder is connected using the RS-485 transceiver. Data i
 \endcond
 \cond SOC_AM263X
 
-##### AM263x-LP Booster Pack Pin-Multiplexing
+##### LP-AM263 Booster Pack Pin Multiplexing
 <table>
 <tr>
     <th>Pin name

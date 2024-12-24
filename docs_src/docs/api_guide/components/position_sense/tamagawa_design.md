@@ -69,9 +69,9 @@ The CRC is the last byte of the received data. The firmware then calculates the 
 
 \image html Tamagawa_verify_crc.png "Verify CRC Flow Chart"
 
-#### Pin-Multiplexing {#TAMAGAWA_PIN_USAGE}
+#### Pin Multiplexing {#TAMAGAWA_PIN_USAGE}
 \note
-    - k = 0,1 (PRU-ICSS Instance)" for AM243/AM261/AM64 and k = 0 for AM263
+    - k = 0,1 (PRU-ICSS Instance)" for AM243x/AM261x/AM64x and k = 0 for AM263x
     - n = 0,1 (PRU-ICSS Slice)
 
 <table>
@@ -143,7 +143,7 @@ The CRC is the last byte of the received data. The firmware then calculates the 
 </table>
 \cond SOC_AM243X
 
-##### AM243x-LP Booster Pack Pin-Multiplexing
+##### LP-AM243 Booster Pack Pin Multiplexing
 <table>
 <tr>
     <th>Pin name
@@ -204,7 +204,7 @@ The CRC is the last byte of the received data. The firmware then calculates the 
 \endcond
 
 \cond  SOC_AM261X
-##### AM261x-LP Booster Pack Pin-Multiplexing
+##### LP-AM261 Booster Pack Pin Multiplexing
 <table>
 <tr>
     <th>Pin name
@@ -240,7 +240,7 @@ The CRC is the last byte of the received data. The firmware then calculates the 
 \endcond
 \cond SOC_AM263X
 
-##### AM263x-LP Booster Pack Pin-Multiplexing
+##### LP-AM263 Booster Pack Pin Multiplexing
 <table>
 <tr>
     <th>Pin name

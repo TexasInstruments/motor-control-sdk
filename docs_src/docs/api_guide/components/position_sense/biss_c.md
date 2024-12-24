@@ -31,25 +31,25 @@ BiSS Safety is a profile definition for BiSS that has been certified by TÜV Rhe
 <tr>
     <td>PRU UART Clock (192 MHz)
     <td>8x
-	 <td>8x
+	<td>8x
     <td>Not tested
-	 <td>8x
+	<td>8x
     <td>Not tested
 </tr>
 <tr>
     <td>PRU Core Clock (200 MHz)
     <td>Not tested
-	 <td>Not tested
+	<td>Not tested
     <td>8x
-	 <td>Not tested
+	<td>Not tested
     <td>4x
 </tr>
 <tr>
     <td>PRU Core Clock (300 MHz)
     <td>Not tested
-	 <td>Not tested
+	<td>Not tested
     <td>8x with fractional div
-	 <td>Not tested
+	<td>Not tested
     <td>4x with Fractional div
 </tr>
 </table>
@@ -87,9 +87,9 @@ BiSS Safety is a profile definition for BiSS that has been certified by TÜV Rhe
 <tr>
     <td>PRU UART Clock (160 MHz)
     <td>8x
-	 <td>8x
+	<td>8x
     <td>8x
-	 <td>4x
+	<td>4x
     <td>8x
 </tr>
 
@@ -143,7 +143,7 @@ SysConfig can be used to configure things mentioned below:
 - Frequency selection.
 - Selecting clock source
 
-\note BiSS-C firmware will only run with ICSS UART Clock running at 160 MHz(when ICSS Core Clock is 225 MHz). 
+\note BiSS-C firmware will only run with ICSS UART Clock running at 160 MHz(when ICSS Core Clock is 225 MHz).
 
 \endcond
 
@@ -190,7 +190,7 @@ SysConfig can be used to configure things mentioned below:
 </tr>
 </table>
 
-\note For pin usage see \ref BISSC_PIN_USAGE page.
+\note For pin usage, see \ref BISSC_PIN_USAGE section.
 
 \endcond
 
@@ -210,10 +210,10 @@ SysConfig can be used to configure things mentioned below:
     <td> DMEM: 264 Bytes <br>  IMEM: 3080 Bytes
 	<td> IEP0: CMP0 and CMP3
     <td> INTC Signal host interrupt 2 is used to trigger a R5 interrupt
-    <td> IEP, CMP events and INTC signal are
+    <td> IEP, CMP events and INTC signal are used only in periodic continuous mode.
 </tr>
 </table>
-\note For pin usage see \ref BISSC_PIN_USAGE page.
+\note For pin usage, see \ref BISSC_PIN_USAGE section.
 
 \endcond
 

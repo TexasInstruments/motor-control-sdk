@@ -127,9 +127,10 @@ Parameter      | Value
 \cond SOC_AM243X
 
 # Steps to Run the Example
-## Hardware Prerequisites for AM243x-EVM
+## Hardware Prerequisites for TMDS243EVM
 Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_SETUP_PAGE.html" target="_blank"> EVM Setup </a>, below additional hardware is required to run this demo
 - HDSL Encoder(s)
+- <a href="https://www.ti.com/tool/TMDS243EVM" target="_blank"> TMDS243EVM Board </a>
 - Below are two options to connect encoder to AM64x/AM243x EVM.
     - **Option 1**
         - <a href="http://www.ti.com/tool/TIDA-00179" target="_blank"> TIDA-00179 Universal Digital Interface to Absolute Position Encoders </a>
@@ -144,10 +145,10 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 \note For more design details of the TIDEP-01015 3 Axis Board, Interface card connecting EVM and TIDEP-01015 3 Axis, or HDSL AM64xE1 Transceiver card, please contact TI via E2E/FAE.
 
 
-### Hardware Prerequisities for Booster Pack & AM243x-LP
+### Hardware Prerequisities for Booster Pack & LP-AM243
 
 - HDSL Encoder(s)
-- <a href="https://www.ti.com/tool/LP-AM243" target="_blank"> AM243x-LP Board </a>
+- <a href="https://www.ti.com/tool/LP-AM243" target="_blank"> LP-AM243 Board </a>
 - <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
 ## Hardware Setup(Using TIDA-00179, TIDEP-01015 and Interface board)
 
@@ -158,7 +159,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 
 \imageStyle{HDSL_AM64xE1.png,width:60%}
 \image html HDSL_AM64xE1.png "Hardware Setup"
-## Hardware Setup(Using Booster Pack & AM243x-LP)
+## Hardware Setup(Using Booster Pack & LP-AM243)
 \imageStyle{HDSL_Booster_Pack.png,width:40%}
 \image html HDSL_Booster_Pack.png  "Hardware Setup of Booster Pack + LP for HDSL"
 
@@ -333,7 +334,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 
 - Select Mode from sysconfig menu (Freerun/sync mode).
 - Select Channel 0/channel 1 from sysconfig menu for channel selection.
-- Select Boosterpack option from sysconfig for running application on AM243x-LP.
+- Select Boosterpack option from sysconfig for running application on LP-AM243.
 \imageStyle{hdsl_sysconfig_menu.png,width:60%}
 \image html hdsl_sysconfig_menu.png "HDSL SYSCONFIG Menu"
 

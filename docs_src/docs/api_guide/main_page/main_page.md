@@ -221,9 +221,24 @@ The main software components in the block diagram specific to motor control are 
 </tr>
 <tr><td colspan="3" bgcolor=#F0F0F0>**Position Sense Encoders**</td></tr>
 <tr>
+    <td> BISS-C
+    <td>\ref BISS-C
+    <td> Driver and PRU-ICSS firmware for BISS-C encoder interface
+</tr>
+<tr>
     <td> EnDat
     <td>\ref ENDAT
     <td> Driver and PRU-ICSS firmware for EnDat encoder interface
+</tr>
+<tr>
+    <td> HDSL
+    <td>\ref HDSL
+    <td> Driver and PRU-ICSS firmware for Hiperface DSL encoder interface
+</tr>
+<tr>
+    <td> Nikon A-Format
+    <td>\ref NIKON
+    <td> Driver and PRU-ICSS firmware for Nikon A-Format encoder interface
 </tr>
 <tr>
     <td> Tamagawa

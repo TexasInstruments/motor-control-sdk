@@ -189,9 +189,9 @@ The Receiver sends the clock to the BISS-C encoder, data transmission in either 
 
 BISS-C Receiver and the encoder is connected using the RS-485 transceiver. Data is transmitted differentially over RS-485. It has the advantages of high noise immunity and long distance transmission capabilities.
 
-#### Pin-Multiplexing {#BISSC_PIN_USAGE}
+#### Pin Multiplexing {#BISSC_PIN_USAGE}
 \note
-    - k = 0,1 (PRU-ICSS Instance) for AM243/AM261/AM64 and k = 0 for AM263
+    - k = 0,1 (PRU-ICSS Instance) for AM243x/AM261x/AM64x and k = 0 for AM263x
     - n = 0,1 (PRU-ICSS Slice)
 
 <table>
@@ -264,7 +264,7 @@ BISS-C Receiver and the encoder is connected using the RS-485 transceiver. Data 
 
 
 \cond SOC_AM243X
-##### LP-AM243 Booster Pack Pin-Multiplexing
+##### LP-AM243 Booster Pack Pin Multiplexing
 <table>
 <tr>
     <th>Pin name
@@ -331,7 +331,7 @@ BISS-C Receiver and the encoder is connected using the RS-485 transceiver. Data 
 \endcond
 
 \cond  SOC_AM261X
-#### LP-AM261 Booster Pack Pin-Multiplexing
+#### LP-AM261 Booster Pack Pin Multiplexing
 
 <table>
 <tr>

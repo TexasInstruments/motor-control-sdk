@@ -120,7 +120,7 @@ The Nikon receiver firmware running on ICSSM1-PRU0 provides a defined interface.
 ## Hardware Setup
 
 \cond SOC_AM243X
-### Hardware Setup(Using Booster Pack & AM243x-LP)
+### Hardware Setup(Using Booster Pack & LP-AM243)
 \imageStyle{AM243x_lp_bp_nikon_encoder_setup.png,width:40%}
 \image html AM243x_lp_bp_nikon_encoder_setup.png  "Hardware Setup of Booster Pack + LP for Nikon"
 
