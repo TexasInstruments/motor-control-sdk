@@ -88,6 +88,19 @@ The BISS-C receiver firmware running on ICSSM1-PRU0 provides a defined interface
 
 \endcond
 
+\cond (SOC_AM263X || SOC_AM263PX)
+
+ Parameter      | Value
+ ---------------|-----------
+ CPU + OS       | r5fss0-0 freertos
+ ICSSM          | ICSSM
+ PRU            | PRU0
+ Toolchain      | ti-arm-clang
+ Board          | @VAR_LP_BOARD_NAME_LOWER (Single channel example)
+ Example folder | examples/position_sense/bissc_diagnostic
+
+\endcond
+
 \cond SOC_AM261X
 
  Parameter      | Value

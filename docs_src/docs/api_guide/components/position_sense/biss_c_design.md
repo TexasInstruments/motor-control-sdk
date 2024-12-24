@@ -18,25 +18,22 @@ Clock, data transmit, data receive and receive enable signals from PRU of ICSS i
 
 ## Implementation
 
+The BISS-C receiver function is implemented on TI Sitara™ Devices.
+Design is split into three parts – 3 channel peripheral interface support in PRU, firmware running in PRU and driver running in ARM.
+Application is supposed to use the BISS-C driver APIs to leverage 3 channel peripheral interface functionality.
+
 \cond SOC_AM243X
-
-The BISS-C receiver function is implemented on TI Sitara™ Devices.
-Design is split into three parts – 3 channel peripheral interface support in PRU, firmware running in PRU and driver running in ARM.
-Application is supposed to use the BISS-C driver APIs to leverage 3 channel peripheral interface functionality.
-SDK examples used the BISS-C hardware capability in Slice 1 (either 1 core or 3 cores based on the configuration) of PRU-ICSSG0.
-Remaining PRUs in the AM64x/AM243x EVM are available for Industrial Ethernet communication and/or motor control interfaces.
-
+SDK examples used the BISS-C hardware capability in Slice 1 (either 1 PRU core or 3 PRU cores based on the configuration) of PRU-ICSSG0.
 \endcond
-
+\cond (SOC_AM263X || SOC_AM263PX)
+SDK examples used the BISS-C hardware capability in PRU0 of PRU-ICSSM.
+\endcond
 \cond SOC_AM261X
-
-The BISS-C receiver function is implemented on TI Sitara™ Devices.
-Design is split into three parts – 3 channel peripheral interface support in PRU, firmware running in PRU and driver running in ARM.
-Application is supposed to use the BISS-C driver APIs to leverage 3 channel peripheral interface functionality.
-SDK examples used the BISS-C hardware capability in Slice 0 of PRU-ICSSM1.
-Remaining PRUs in the LP-AM261 are available for Industrial Ethernet communication and/or motor control interfaces.
-
+SDK examples used the BISS-C hardware capability in PRU0 of PRU-ICSSM1.
 \endcond
+
+Remaining PRUs are available for Industrial Ethernet communication and/or motor control interfaces.
+
 ###  Specifications
 
 <table>
@@ -86,7 +83,7 @@ Refer TRM for details
 \cond SOC_AM243X
 
 Following section describes the firmware implementation of BISS-C receiver on PRU-ICSS.
-Deterministic behavior of the 32 bit RISC core running upto 333MHz provides resolution on sampling external signals and generating external signals.
+Deterministic behavior of the 32 bit RISC core running upto 333 MHz provides resolution on sampling external signals and generating external signals.
 It makes uses of 3 channel peripheral interface support in PRU for data transmission.
 
 There are three different variations of PRU-ICSS firmware.
@@ -109,7 +106,7 @@ Each of PRU, TX-PRU and RTU-PRU handle one channel in this configuration. Load s
 \cond SOC_AM261X
 
 Following section describes the firmware implementation of BISS-C receiver on PRU-ICSS.
-Deterministic behavior of the 32 bit RISC core running upto 333MHz provides resolution on sampling external signals and generating external signals.
+Deterministic behavior of the 32 bit RISC core running upto 225 MHz provides resolution on sampling external signals and generating external signals.
 It makes uses of 3 channel peripheral interface support in PRU for data transmission.
 
 The PRU-ICSS firmware supports following configuration.
@@ -121,6 +118,23 @@ Single core of PRU-ICSS slice is used in this configuration.
 \image html biss_multichannel_same_make.png "ARM, PRU, BISS-C module Integration for Single Channel "
 
 \endcond
+
+\cond (SOC_AM263X || SOC_AM263PX)
+
+Following section describes the firmware implementation of BISS-C receiver on PRU-ICSS.
+Deterministic behavior of the 32 bit RISC core running upto 200 MHz provides resolution on sampling external signals and generating external signals.
+It makes uses of 3 channel peripheral interface support in PRU for data transmission.
+
+The PRU-ICSS firmware supports following configuration.
+1. Single Channel
+
+#### Implementation for Single Channel
+Single core of PRU-ICSS slice is used in this configuration.
+
+\image html biss_multichannel_same_make.png "ARM, PRU, BISS-C module Integration for Single Channel "
+
+\endcond
+
 ####	Firmware Architecture
 
 \image html bissc_overall_firmware.png "Overall Block Diagram"
@@ -191,7 +205,7 @@ BISS-C Receiver and the encoder is connected using the RS-485 transceiver. Data 
 
 #### Pin Multiplexing {#BISSC_PIN_USAGE}
 \note
-    - k = 0,1 (PRU-ICSS Instance) for AM243x/AM261x/AM64x and k = 0 for AM263x
+    - k = 0,1 (PRU-ICSS Instance) for AM243x/AM261x/AM64x and k = 0 for AM263x/AM263Px
     - n = 0,1 (PRU-ICSS Slice)
 
 <table>
@@ -201,62 +215,62 @@ BISS-C Receiver and the encoder is connected using the RS-485 transceiver. Data 
 	<th>Function
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO0 \else PRG<%k>_PRU<n>_GPO0 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO0 \else PRG<%k>_PRU<n>_GPO0 \endif
     <td>pru<n>_bissc0_clk
 	<td>Channel 0 clock
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO1 \else PRG<%k>_PRU<n>_GPO1 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO1 \else PRG<%k>_PRU<n>_GPO1 \endif
     <td>pru<n>_bissc0_out
 	<td>Channel 0 transmit
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO2 \else PRG<%k>_PRU<n>_GPO2 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO2 \else PRG<%k>_PRU<n>_GPO2 \endif
     <td>pru<n>_bissc0_outen
 	<td>Channel 0 transmit disable
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPI9 \else PRG<%k>_PRU<n>_GPI13/PRG<%k>_PRU<n>_GPI9 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPI9 \else PRG<%k>_PRU<n>_GPI13/PRG<%k>_PRU<n>_GPI9 \endif
     <td>pru<n>_bissc0_in
 	<td>Channel 0 receive
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO3 \else PRG<%k>_PRU<n>_GPO3 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO3 \else PRG<%k>_PRU<n>_GPO3 \endif
     <td>pru<n>_bissc1_clk
 	<td>Channel 1 clock
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO4 \else PRG<%k>_PRU<n>_GPO4 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO4 \else PRG<%k>_PRU<n>_GPO4 \endif
     <td>pru<n>_bissc1_out
 	<td>Channel 1 transmit
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO5 \else PRG<%k>_PRU<n>_GPO5 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO5 \else PRG<%k>_PRU<n>_GPO5 \endif
     <td>pru<n>_bissc1_outen
 	<td>Channel 1 transmit disable
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPI10 \else PRG<%k>_PRU<n>_GPI14/PRG<%k>_PRU<n>_GPI10 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPI10 \else PRG<%k>_PRU<n>_GPI14/PRG<%k>_PRU<n>_GPI10 \endif
     <td>pru<n>_bissc1_in
 	<td>Channel 1 receive
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO6 \else PRG<%k>_PRU<n>_GPO6 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO6 \else PRG<%k>_PRU<n>_GPO6 \endif
     <td>pru<n>_bissc2_clk
 	<td>Channel 2 clock
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO7 \else PRG<%k>_PRU<n>_GPO12/PRG<%k>_PRU<n>_GPO7 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO7 \else PRG<%k>_PRU<n>_GPO12/PRG<%k>_PRU<n>_GPO7 \endif
     <td>pru<n>_bissc2_out
 	<td>Channel 2 transmit
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO8 \else PRG<%k>_PRU<n>_GPO8 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO8 \else PRG<%k>_PRU<n>_GPO8 \endif
     <td>pru<n>_bissc2_outen
 	<td>Channel 2 transmit disable
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPI11 \else PRG<%k>_PRU<n>_GPI11 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPI11 \else PRG<%k>_PRU<n>_GPI11 \endif
     <td>pru<n>_bissc2_in
 	<td>Channel 2 receive
 </tr>
@@ -366,4 +380,41 @@ BISS-C Receiver and the encoder is connected using the RS-485 transceiver. Data 
 </tr>
 </table>
 
+\endcond
+
+\cond (SOC_AM263X || SOC_AM263PX)
+
+##### @VAR_LP_BOARD_NAME Booster Pack Pin Multiplexing
+<table>
+<tr>
+    <th>Pin name
+    <th>Signal name
+	<th>Function
+</tr>
+<tr>
+    <td>PR0_PRU0_GPIO3
+    <td>pru1_endat1_clk
+	<td>Channel 1 clock
+</tr>
+<tr>
+    <td>PR0_PRU0_GPO4
+    <td>pru1_endat1_out
+	<td>Channel 1 transmit
+</tr>
+<tr>
+    <td>PR0_PRU0_GPO5
+    <td>pru1_endat1_outen
+	<td>Channel 1 transmit enable
+</tr>
+<tr>
+    <td>PR0_PRU0_GPI10
+    <td>pru1_endat1_in
+	<td>Channel 1 receive
+</tr>
+<tr>
+    <td>SDFM0_D1 Pin (J8.73)
+    <td>ENC1_EN
+    <td>Enable 3 channel peripheral interface in Axis 1 of BP (D13 GPIO pin)
+</tr>
+</table>
 \endcond

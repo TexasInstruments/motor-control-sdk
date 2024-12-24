@@ -118,7 +118,7 @@
 #define MRS_POS_VAL2_WORD2  0x43
 #define MRS_POS_VAL2_WORD3  0x44
 
-#if defined(SOC_AM261X) || defined(SOC_AM263X)
+#if defined(SOC_AM261X) || defined(SOC_AM263X) || defined(SOC_AM263PX)
 /* Translate the TCM local view addr to SoC view addr */
 #define CPU0_BTCM_SOCVIEW(x) (CSL_R5SS0_CORE0_TCMB_U_BASE+(x - CSL_MSS_TCMB_RAM_BASE))
 #else

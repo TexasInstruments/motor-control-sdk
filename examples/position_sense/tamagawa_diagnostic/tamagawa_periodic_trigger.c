@@ -49,7 +49,7 @@
 static HwiP_Object gIcssgEncoderHwiObject0;  /* ICSSG Tamagawa PRU FW HWI */
 
 /* ICSSG Interrupt settings */
-#if (SOC_AM261X || SOC_AM263X)
+#if (SOC_AM261X || SOC_AM263PX || SOC_AM263X)
 #if (PRUICSSx == 1)
 #define ICSS_PRU_TAMAGAWA_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_0 )
 #else

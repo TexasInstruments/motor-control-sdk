@@ -13,7 +13,7 @@ Applications and PRU-ICSS firmwares for position sense and current sense are pro
 
 \endcond
 
-\cond SOC_AM263X
+\cond (SOC_AM263X || SOC_AM263PX)
 
 Welcome to **@VAR_SDK_NAME for @VAR_SOC_NAME**. This SDK contains examples, libraries and tools to develop **RTOS and no-RTOS** based applications enabling real-time communication for position sense from motors, and real-time control libraries for **ARM R5F CPU** and related peripherals.
 
@@ -158,7 +158,7 @@ The main software components in the block diagram specific to motor control are 
 
 \endcond
 
-\cond SOC_AM263X
+\cond (SOC_AM263X || SOC_AM263PX)
 <table>
 <tr>
     <th>Software Components
@@ -167,9 +167,29 @@ The main software components in the block diagram specific to motor control are 
 </tr>
 <tr><td colspan="3" bgcolor=#F0F0F0>**Position Sense Encoders**</td></tr>
 <tr>
+    <td> BISS-C
+    <td>\ref BISS-C
+    <td> Driver and PRU-ICSS firmware for BISS-C encoder interface
+</tr>
+<tr>
+    <td> EnDat
+    <td>\ref ENDAT
+    <td> Driver and PRU-ICSS firmware for EnDat encoder interface
+</tr>
+<tr>
+    <td> Nikon A-Format
+    <td>\ref NIKON
+    <td> Driver and PRU-ICSS firmware for Nikon A-Format encoder interface
+</tr>
+<tr>
     <td> Tamagawa
+    <td>\ref TAMAGAWA
+    <td> Driver and PRU-ICSS firmware for Tamagawa encoder interface
+</tr>
+<tr>
+    <td> Tamagawa (Over UART)
     <td>\ref TAMAGAWA_OVER_UART
-    <td> Driver for Tamagawa encoder interface
+    <td> Driver for Tamagawa encoder interface using SoC UART
 </tr>
 <tr><td colspan="3" bgcolor=#F0F0F0>**Real Time Libraries**</td></tr>
 <tr>

@@ -26,7 +26,19 @@ Refer PRU-ICSS chapter of @VAR_SOC_NAME Technical Reference Manual
 
 ## Software Description
 
-At start-up, the application running on the ARM Cortex-R5 initializes the module clocks and configures the pinmux. The PRU is initialized and the PRU firmware is loaded on PRU slice of choice for a chosen ICSS instance ( \if (SOC_AM263X ||SOC_AM261X) tested on PRU0 on ICSSM \else tested on PRU1 on ICSSG0 \endif. ). After the PRU starts executing, the Tamagawa interface is operational and the application can use it to communicate with an encoder. Use the Tamagawa diagnostic example to learn more about initialization and communication with the Tamagawa interface. This Tamagawa diagnostic example, also provides an easy way to validate the Tamagawa transactions. The diagnostic example provides menu options on the host PC in a serial terminal application, where the user can select the data ID code to be sent. Based on the data ID code, the application updates the Tamagwa interface with the data ID code and trigger transaction. The application then waits until it receives an indication of complete transaction by the firmware through the interface before displaying the result.
+\if (SOC_AM243X || SOC_AM64X)
+At start-up, the application running on the ARM Cortex-R5 initializes the module clocks and configures the pinmux. The PRU is initialized and the PRU firmware is loaded on PRU slice of choice for a chosen ICSS instance (tested on PRU1 on ICSSG0).
+\endif
+
+\if (SOC_AM263X || SOC_AM263PX)
+At start-up, the application running on the ARM Cortex-R5 initializes the module clocks and configures the pinmux. The PRU is initialized and the PRU firmware is loaded on PRU slice of choice for a chosen ICSS instance (tested on PRU0 on ICSSM).
+\endif
+
+\if (SOC_AM261X)
+At start-up, the application running on the ARM Cortex-R5 initializes the module clocks and configures the pinmux. The PRU is initialized and the PRU firmware is loaded on PRU slice of choice for a chosen ICSS instance (tested on PRU0 on ICSSM1).
+\endif
+
+After the PRU starts executing, the Tamagawa interface is operational and the application can use it to communicate with an encoder. Use the Tamagawa diagnostic example to learn more about initialization and communication with the Tamagawa interface. This Tamagawa diagnostic example, also provides an easy way to validate the Tamagawa transactions. The diagnostic example provides menu options on the host PC in a serial terminal application, where the user can select the data ID code to be sent. Based on the data ID code, the application updates the Tamagwa interface with the data ID code and trigger transaction. The application then waits until it receives an indication of complete transaction by the firmware through the interface before displaying the result.
 
 ### PRU Firmware Flow {#TAMAGAWA_DESIGN_FLOW}
 
@@ -71,7 +83,7 @@ The CRC is the last byte of the received data. The firmware then calculates the 
 
 #### Pin Multiplexing {#TAMAGAWA_PIN_USAGE}
 \note
-    - k = 0,1 (PRU-ICSS Instance)" for AM243x/AM261x/AM64x and k = 0 for AM263x
+    - k = 0,1 (PRU-ICSS Instance) for AM243x/AM261x/AM64x and k = 0 for AM263x/AM263Px
     - n = 0,1 (PRU-ICSS Slice)
 
 <table>
@@ -81,62 +93,62 @@ The CRC is the last byte of the received data. The firmware then calculates the 
 	<th>Function
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO0 \else PRG<%k>_PRU<n>_GPO0 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO0 \else PRG<%k>_PRU<n>_GPO0 \endif
     <td>pru<n>_endat0_clk
 	<td>Channel 0 clock
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO1 \else PRG<%k>_PRU<n>_GPO1 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO1 \else PRG<%k>_PRU<n>_GPO1 \endif
     <td>pru<n>_endat0_out
 	<td>Channel 0 transmit
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO2 \else PRG<%k>_PRU<n>_GPO2 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO2 \else PRG<%k>_PRU<n>_GPO2 \endif
     <td>pru<n>_endat0_outen
 	<td>Channel 0 transmit enable
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPI9 \else PRG<%k>_PRU<n>_GPI13/PRG<%k>_PRU<n>_GPI9 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPI9 \else PRG<%k>_PRU<n>_GPI13/PRG<%k>_PRU<n>_GPI9 \endif
     <td>pru<n>_endat0_in
 	<td>Channel 0 receive
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO3 \else PRG<%k>_PRU<n>_GPO3 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO3 \else PRG<%k>_PRU<n>_GPO3 \endif
     <td>pru<n>_endat1_clk
 	<td>Channel 1 clock
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO4 \else PRG<%k>_PRU<n>_GPO4 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO4 \else PRG<%k>_PRU<n>_GPO4 \endif
     <td>pru<n>_endat1_out
 	<td>Channel 1 transmit
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO5 \else PRG<%k>_PRU<n>_GPO5 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO5 \else PRG<%k>_PRU<n>_GPO5 \endif
     <td>pru<n>_endat1_outen
 	<td>Channel 1 transmit enable
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPI10 \else PRG<%k>_PRU<n>_GPI14/PRG<%k>_PRU<n>_GPI10 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPI10 \else PRG<%k>_PRU<n>_GPI14/PRG<%k>_PRU<n>_GPI10 \endif
     <td>pru<n>_endat1_in
 	<td>Channel 1 receive
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO6 \else PRG<%k>_PRU<n>_GPO6 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO6 \else PRG<%k>_PRU<n>_GPO6 \endif
     <td>pru<n>_endat2_clk
 	<td>Channel 2 clock
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO7 \else PRG<%k>_PRU<n>_GPO12/PRG<%k>_PRU<n>_GPO7 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO7 \else PRG<%k>_PRU<n>_GPO12/PRG<%k>_PRU<n>_GPO7 \endif
     <td>pru<n>_endat2_out
 	<td>Channel 2 transmit
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO8 \else PRG<%k>_PRU<n>_GPO8 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO8 \else PRG<%k>_PRU<n>_GPO8 \endif
     <td>pru<n>_endat2_outen
 	<td>Channel 2 transmit enable
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPI11 \else PRG<%k>_PRU<n>_GPI11 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPI11 \else PRG<%k>_PRU<n>_GPI11 \endif
     <td>pru<n>_endat2_in
 	<td>Channel 2 receive
 </tr>
@@ -197,7 +209,7 @@ The CRC is the last byte of the received data. The firmware then calculates the 
 </tr>
 <tr>
     <td>GPIO1_77 Pin (J8.74)
-    <td>ENC2_EN 
+    <td>ENC2_EN
     <td>Enable 3 channel peripheral interface in Axis 2 of BP (B17 GPIO pin)
 </tr>
 </table>
@@ -233,14 +245,15 @@ The CRC is the last byte of the received data. The firmware then calculates the 
 </tr>
 <tr>
     <td>GPIO21 Pin (J8.73)
-    <td>ENC1_EN 
+    <td>ENC1_EN
     <td>Enable 3 channel peripheral interface in Axis 1 of BP (B10 GPIO pin)
 </tr>
 </table>
 \endcond
-\cond SOC_AM263X
 
-##### LP-AM263 Booster Pack Pin Multiplexing
+\cond (SOC_AM263X || SOC_AM263PX)
+
+##### @VAR_LP_BOARD_NAME Booster Pack Pin Multiplexing
 <table>
 <tr>
     <th>Pin name
@@ -269,7 +282,7 @@ The CRC is the last byte of the received data. The firmware then calculates the 
 </tr>
 <tr>
     <td>SDFM0_D1 Pin (J8.73)
-    <td>ENC1_EN 
+    <td>ENC1_EN
     <td>Enable 3 channel peripheral interface in Axis 1 of BP (D13 GPIO pin)
 </tr>
 </table>

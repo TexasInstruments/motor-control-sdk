@@ -359,7 +359,7 @@ Shown below is a sample output when the application is run
 \image html hdsl_positional_commands_menu.png "HDSL Freerun mode Menu"
 
 - Sync Mode
-This is a test feature. In real application, PWM syncout will be connected to Latch input instead of IEP1 sync. Select ES value from 1 to 10. 
+This is a test feature. In real application, PWM syncout will be connected to Latch input instead of IEP1 sync. Select ES value from 1 to 10.
 Enter period (which can be calculated with the formula= Cycle Time (in us) * PRU Core frequency (MHz)) in UART menu after loading application. Refer \ref HDSL_DESIGN_SYNC for more details about sync mode.
 
 \image html hdsl_sync_mode_menu1.png "HDSL Sync mode Menu"

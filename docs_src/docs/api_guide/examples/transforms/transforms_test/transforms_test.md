@@ -82,7 +82,7 @@ The test vector then compares the PARK, SVGEN results to ensure the integraty of
 
 \endcond
 
-\cond SOC_AM263X
+\cond (SOC_AM263X || SOC_AM263PX)
 
  Parameter      | Value
  ---------------|-----------
