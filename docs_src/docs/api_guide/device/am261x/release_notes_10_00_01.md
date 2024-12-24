@@ -166,6 +166,13 @@ Mbed-TLS                | R5F            | 2.13.1
     <td> 10.00.01 onwards
     <td>
 </tr>
+<tr>
+    <td> PINDSW-8358
+    <td> BiSS-C/Nikon/EnDat/Tamagawa: Exiting Periodic Trigger mode UART option does not work
+    <td> Position Sense BiSS-C, Position Sense EnDat, Position Sense Nikon A-Format, Position Sense Tamagawa
+    <td> 10.00.01 onwards
+    <td>
+</tr>
 </table>
 
 <!-- ## Errata
