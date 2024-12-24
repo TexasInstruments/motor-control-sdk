@@ -20,13 +20,16 @@ The HDSL firmware running on ICSS-PRU provides a defined well interface to execu
 	- Long message
 - Safety
 - Pipeline Channel Data
-- Three channel support using single PRU-ICSSG slice
-	- Three channel support on am243x-evm
-	- Two channel support on am243x-lp
+\cond SOC_AM243X
+- Three channel support on am243x-evm and 2 channel support on am243x-lp (tested on ICSSG0 instance and PRU1 slice).
+\endcond
+\cond SOC_AM261X
+- Single channel support on am261x-lp (tested on ICSSM1 instance and PRU0 slice).
+\endcond
 - Tested with three different encoder makes (EDM35, EKS36, EKM36)
-
+\cond SOC_AM243X
 \note Channel 2 can be enabled only if channel 0 is enabled because of code overlay scheme needed in TX-PRU. See \ref HDSL_DESIGN_TXPRU_OVERLAY for more details
-
+\endcond
 ## Features Not Supported
 
 In general, peripherals or features not mentioned as part of "Features Supported" section are not
@@ -39,12 +42,72 @@ supported, including the below
 @VAR_SYSCFG_USAGE_NOTE
 
 SysConfig can be used to configure things mentioned below:
-- Selecting the ICSSG PRU slice instance.(Tested on ICSSG0-PRU1)
+- Selecting the ICSS PRU slice instance.(Tested on ICSSG0-PRU1 for AM243x (EVM, LP) and ICSSM1-PRU0 for LP-AM261)
 - Configuring PINMUX
 - Channel selection
 - Mode Selection (Free run/Sync mode)
-- Hardware selection (Booster Pack for am243x-lp)
+- Hardware selection (Booster Pack for am243x-lp and am261x-lp)
+## ICSS PRU Resource Usage
+\cond SOC_AM243X
+<table>
+<tr>
+    <th> Configuration
+    <th> PRU Core
+    <th> Memory Usage
+    <th> IEP Usage
+    <th> Other Peripheral Usage
+    <th> Description
+</tr>
+<tr>
+    <td> Single Channel Mode
+    <td> PRUx
+    <td> DMEM: 1773 Bytes (256B for HDSL Registers per channel + 1517B for LUTs) <br>  IMEM: 7284 Bytes
+	<td> IEP1: CMP1
+    <td> INTC Signal host interrupt event 19 is used to trigger a R5 interrupt
+    <td> IEP, CMP events and INTC signal are used only in periodic continuous mode.
+</tr>
+<tr>
+    <td rowspan="3"> Multi Channel Load Share Mode
+    <td> PRUx
+    <td rowspan="3"> DMEM: 2285 Bytes ((256B for HDSL Registers per channel)*3 + 1517B for LUTs) <br>  IMEM: 7428 Bytes
+	<td rowspan="3"> IEP1: CMP1 </td>
+    <td rowspan="3">INTC Signal host interrupt event 19 is used to trigger a R5 interrupt</td>
+    <td rowspan="3">IEP, CMP events and INTC signal are used only in periodic continuous mode.</td>
+</tr>
+<tr>
+    <td> RTU_PRUx
+</tr>
+<tr>
+    <td> TX_PRUx
+</tr>
+</table>
 
+\note For pin usage see \ref HDSL_PIN_USAGE page.
+
+\endcond
+
+\cond SOC_AM261X
+<table>
+<tr>
+    <th> Configuration
+    <th> PRU Core
+    <th> Memory Usage
+    <th> IEP Usage
+    <th> Other Peripheral Usage
+    <th> Description
+</tr>
+<tr>
+    <td> Single Channel Mode
+    <td> PRUx
+    <td> DMEM: 1773 Bytes (256B for HDSL Registers per channel + 1517B for LUTs) <br>  IMEM: 7284 Bytes
+	<td> IEP0: CMP1
+    <td> INTC Signal host interrupt event 19 is used to trigger a R5 interrupt
+    <td> IEP, CMP events and INTC signal are used only in periodic continuous mode.
+</tr>
+</table>
+\note For pin usage see \ref HDSL_PIN_USAGE page.
+
+\endcond
 ## HDSL Design
 
 \subpage HDSL_DESIGN explains the design in detail.

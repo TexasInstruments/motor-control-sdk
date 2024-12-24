@@ -58,6 +58,7 @@ This page lists all the examples and demos supported in this SDK.
 - Position Sense
     - \subpage EXAMPLE_MOTORCONTROL_BISSC
     - \subpage EXAMPLE_MOTORCONTROL_ENDAT
+    - \subpage EXAMPLE_MOTORCONTROL_HDSL
     - \subpage EXAMPLE_MOTORCONTROL_NIKON
     - \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA
 \endcond

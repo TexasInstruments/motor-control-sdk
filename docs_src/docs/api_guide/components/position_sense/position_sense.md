@@ -30,6 +30,7 @@ Application for following position sense encoder is provided in the SDK.
 
 - \subpage BISS-C
 - \subpage ENDAT
+- \subpage HDSL
 - \subpage NIKON
 - \subpage TAMAGAWA
 
