@@ -96,7 +96,7 @@ typedef double        float64_t;
     #define DCL_disableInts()   __disable_interrupts()
     #define DCL_restoreInts(v)  if (0U == (v & 0x1)) __enable_interrupts()   
     typedef uint16_t            dcl_interrupt_t;
-#elif defined (SOC_AM64X) || defined (SOC_AM243X) || defined (SOC_AM263X)
+#elif defined (SOC_AM64X) || defined (SOC_AM243X) || defined (SOC_AM263X) || defined (SOC_AM263PX)
     #include <kernel/dpl/HwiP.h>
     #define DCL_disableInts()   HwiP_disable()
     #define DCL_restoreInts(v)  HwiP_restore(v)

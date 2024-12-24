@@ -40,8 +40,30 @@ This page lists all the examples and demos supported in this SDK.
 - Reference Design
     - \subpage  EXAMPLE_TIDM_02018_REFERENCE_DESIGN
 - Position Sense
-    - \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA_OVER_UART
+    - \subpage EXAMPLE_MOTORCONTROL_BISSC
+    - \subpage EXAMPLE_MOTORCONTROL_ENDAT
+    - \subpage EXAMPLE_MOTORCONTROL_NIKON
     - \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA
+    - \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA_OVER_UART
+- Real Time Libraries
+    - DCL
+        - \subpage EXAMPLES_DCL_PI
+        - \subpage EXAMPLES_DCL_DF22
+    - Transforms
+        - \subpage EXAMPLES_TRANSFORMS_TEST
+    - SFRA
+        - \subpage EXAMPLES_SFRA_TEST
+    - DATALOG
+        - \subpage EXAMPLES_DATALOG_TEST
+\endcond
+
+\cond SOC_AM263PX
+- Position Sense
+    - \subpage EXAMPLE_MOTORCONTROL_BISSC
+    - \subpage EXAMPLE_MOTORCONTROL_ENDAT
+    - \subpage EXAMPLE_MOTORCONTROL_NIKON
+    - \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA
+    - \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA_OVER_UART
 - Real Time Libraries
     - DCL
         - \subpage EXAMPLES_DCL_PI

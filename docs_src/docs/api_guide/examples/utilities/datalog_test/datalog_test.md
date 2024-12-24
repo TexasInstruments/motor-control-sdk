@@ -118,7 +118,7 @@ In datalog_input.h, user can use following defines as per data type:
 
 # Supported Combinations {#EXAMPLES_DATALOG_TEST_COMBO}
 
-\cond SOC_AM263X
+\cond (SOC_AM263X || SOC_AM263PX)
 
  Parameter      | Value
  ---------------|-----------

@@ -13,7 +13,7 @@ Real Time Libraries module contains following components:
 
 \endcond
 
-\cond SOC_AM263X
+\cond (SOC_AM263X || SOC_AM263PX)
 
 - \subpage CONTROL
 - \subpage DATALOG

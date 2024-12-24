@@ -43,7 +43,7 @@ This example demonstrates usage of SFRA library. PI controller is designed for p
 
 # Supported Combinations {#EXAMPLES_SFRA_TEST_COMBO}
 
-\cond SOC_AM263X
+\cond (SOC_AM263X || SOC_AM263PX)
 
  Parameter      | Value
  ---------------|-----------

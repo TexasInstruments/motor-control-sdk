@@ -8,7 +8,7 @@ demonstrates the EnDat receiver operation.
 The EnDat driver provides a well defined set of APIs to expose EnDat
 receiver interface.
 
-\cond (SOC_AM261X || SOC_AM263X)
+\cond (SOC_AM263X || SOC_AM263PX ||  SOC_AM261X)
 \note ICSSM1 UART clock set to 160 MHz is used to drive the EnDat interface. Receive (Rx) is oversampled at 8x of send(Tx). Therefore, the encoder interface frequency "f" should such that 160 Mhz is divisible by "f" and "8 times f".
 \endcond
 
@@ -63,11 +63,11 @@ After the user selects an EnDat command,
 \image html EnDat_channel_selection_In_sysconfig_for_am261x.PNG   "Channel Selection In Sysconfig"
 \endcond
 
-\cond  SOC_AM263X
+\cond (SOC_AM263X || SOC_AM263PX ||  SOC_AM261X)
 \image html EnDat_channel_selection_In_sysconfig_for_am263x.PNG   "Channel Selection In Sysconfig"
 \endcond
 
-\cond SOC_AM243X || SOC_AM64X
+\cond (SOC_AM243X || SOC_AM64X)
 \image html Endat_channel_selection_configuration.png     "EnDAT configuration seletion between Single/Multi channel "
 \endcond
 
@@ -142,15 +142,15 @@ Following section describes the Example implementation of EnDat on ARM(R5F).
 
 \endcond
 
-\cond SOC_AM263X
+\cond (SOC_AM263X || SOC_AM263PX)
 
  Parameter      | Value
  ---------------|-----------
  CPU + OS       | r5fss0-0 freertos
- ICSSM          | ICSSM0
+ ICSSM          | ICSSM
  PRU            | PRU0
  Toolchain      | ti-arm-clang
- Board          |  @VAR_LP_BOARD_NAME_LOWER (Single channel example)
+ Board          | @VAR_LP_BOARD_NAME_LOWER (Single channel example)
  Example folder | examples/position_sense/endat_diagnostic
 
 \endcond
@@ -196,6 +196,14 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 - <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
 \endcond
 
+\cond SOC_AM263PX
+
+## Hardware Prerequisities with LP-AM263P
+
+- EnDAT Encoder(s)
+- <a href="https://www.ti.com/tool/LP-AM263P" target="_blank"> LP-AM263P Board </a>
+- <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
+\endcond
 
 \cond SOC_AM243X
 
@@ -206,10 +214,10 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 ## Hardware Setup with LP-AM243
 \imageStyle{EnDat_Booster_Pack.png,width:40%}
 \image html EnDat_Booster_Pack.png  "Hardware Setup with LP-AM243"
-\note 
+\note
     - The PROC109A version of LP supports two channels
-    - To enable the second channel on LP, SW6 needs to be turn OFF 
-   
+    - To enable the second channel on LP, SW6 needs to be turn OFF
+
 
 #### Booster Pack Jumper Configuration
 <table>
@@ -281,7 +289,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 </table>
 \endcond
 
-\cond SOC_AM263X
+\cond (SOC_AM263X || SOC_AM263PX)
 ## Hardware Setup with LP-AM263
 \imageStyle{EnDat_am263x_hw_Setup.jpeg,width:60%}
 \image html EnDat_am263x_hw_Setup.jpeg "Hardware Setup for single channel on LP-AM263 + BP" s

@@ -4,19 +4,8 @@
 
 ## Introduction
 
-\cond SOC_AM243X
-
-This design implements Nikon Receiver (a.k.a subsequent electronics) using the 3 channel peripheral interface available on the TI Sitara™ AM64x/AM243x. The 3 channel peripheral interface is a digital bidirectional serial interface for position encoders.
+This design implements Nikon Receiver (a.k.a subsequent electronics) using the 3 channel peripheral interface available on the TI Sitara™ SoCs. The 3 channel peripheral interface is a digital bidirectional serial interface for position encoders.
 Transfer between receiver and encoder at the physical layer is in accordance with RS485, with transceiver at both ends.
-
-\endcond
-
-\cond SOC_AM261X
-
-This design implements Nikon Receiver (a.k.a subsequent electronics) using the 3 channel peripheral interface available on the TI Sitara™ AM261x. The 3 channel peripheral interface is a digital bidirectional serial interface for position encoders.
-Transfer between receiver and encoder at the physical layer is in accordance with RS485, with transceiver at both ends.
-
-\endcond
 
 ## Nikon A-Format encoder receiver
 
@@ -42,6 +31,22 @@ Refer TRM for details
 
 \endcond
 
+\cond SOC_AM263X
+
+### Sitara™ AM263x Processor
+
+Refer TRM for details
+
+\endcond
+
+\cond SOC_AM263PX
+
+### Sitara™ AM263Px Processor
+
+Refer TRM for details
+
+\endcond
+
 #### 3 Channel Peripheral Interface PRU hardware interface
 
 Refer TRM for details
@@ -60,19 +65,32 @@ Refer PRU-ICSS chapter of AM261x Technical Reference Manual.
 
 \endcond
 
+\cond SOC_AM263X
+
+Refer PRU-ICSS chapter of AM263x Technical Reference Manual.
+
+\endcond
+
+\cond SOC_AM263PX
+
+Refer PRU-ICSS chapter of AM263Px Technical Reference Manual.
+
+\endcond
 ## Software Description
 
 \cond SOC_AM243X
-
-At start-up, the application running on the ARM Cortex-R5 initializes the module clocks and configures the pinmux. The PRU is initialized and the PRU firmware is loaded on PRU slice of choice for a chosen ICSS instance (tested on PRU1 on ICSSG0). After the PRU1 starts executing, the Nikon interface is operational and the application can use it to communicate with an encoder. Use the Nikon diagnostic example to learn more about initialization and communication with the Nikon interface. This Nikon diagnostic example, also provides an easy way to validate the Nikon transactions. The diagnostic example provides menu options on the host PC in a serial terminal application, where the user can select the Command code to be sent. User can assign a 24-bit Identification code to the encoder and can change Encoder's Address.  User can also enter EEPROM address(incase of EEPROM Read) and EEPROM data(incase of EEPROM Write). Based on the command code, the application updates the Nikon interface with the Command data frame and Memory data frame (incase of EEPROM access) and trigger transaction. The application then waits until it receives an indication of complete transaction by the firmware through the interface before displaying the result.
-
+At start-up, the application running on the ARM Cortex-R5 initializes the module clocks and configures the pinmux. The PRU is initialized and the PRU firmware is loaded on PRU slice of choice for a chosen ICSS instance (tested on PRU1 on ICSSG0).
 \endcond
 
 \cond SOC_AM261X
-
-At start-up, the application running on the ARM Cortex-R5 initializes the module clocks and configures the pinmux. The PRU is initialized and the PRU firmware is loaded on PRU slice of choice for a chosen ICSS instance (tested on PRU0 on ICSSM1). After the PRU0 starts executing, the Nikon interface is operational and the application can use it to communicate with an encoder. Use the Nikon diagnostic example to learn more about initialization and communication with the Nikon interface. This Nikon diagnostic example, also provides an easy way to validate the Nikon transactions. The diagnostic example provides menu options on the host PC in a serial terminal application, where the user can select the Command code to be sent. User can assign a 24-bit Identification code to the encoder and can change Encoder's Address.  User can also enter EEPROM address(incase of EEPROM Read) and EEPROM data(incase of EEPROM Write). Based on the command code, the application updates the Nikon interface with the Command data frame and Memory data frame (incase of EEPROM access) and trigger transaction. The application then waits until it receives an indication of complete transaction by the firmware through the interface before displaying the result.
-
+At start-up, the application running on the ARM Cortex-R5 initializes the module clocks and configures the pinmux. The PRU is initialized and the PRU firmware is loaded on PRU slice of choice for a chosen ICSS instance (tested on PRU0 on ICSSM1).
 \endcond
+
+\cond (SOC_AM263X || SOC_AM263PX)
+At start-up, the application running on the ARM Cortex-R5 initializes the module clocks and configures the pinmux. The PRU is initialized and the PRU firmware is loaded on PRU slice of choice for a chosen ICSS instance (tested on PRU0 on ICSSM).
+\endcond
+
+After the PRU starts executing, the Nikon interface is operational and the application can use it to communicate with an encoder. Use the Nikon diagnostic example to learn more about initialization and communication with the Nikon interface. This Nikon diagnostic example, also provides an easy way to validate the Nikon transactions. The diagnostic example provides menu options on the host PC in a serial terminal application, where the user can select the Command code to be sent. User can assign a 24-bit Identification code to the encoder and can change Encoder's Address.  User can also enter EEPROM address(incase of EEPROM Read) and EEPROM data(incase of EEPROM Write). Based on the command code, the application updates the Nikon interface with the Command data frame and Memory data frame (incase of EEPROM access) and trigger transaction. The application then waits until it receives an indication of complete transaction by the firmware through the interface before displaying the result.
 
 ### Firmware Architecture {#NIKON_DESIGN_FLOW}
 
@@ -125,7 +143,7 @@ The CRC is the last byte of the last received data frame. The firmware then stor
 
 #### Pin Multiplexing {#NIKON_PIN_USAGE}
 \note
-    - k = 0,1 (PRU-ICSS Instance) for AM243x/AM261x/AM64x and k = 0 for AM263x
+    - k = 0,1 (PRU-ICSS Instance) for AM243x/AM261x/AM64x and k = 0 for AM263x/AM263Px
     - n = 0,1 (PRU-ICSS Slice)
 
 <table>
@@ -135,62 +153,62 @@ The CRC is the last byte of the last received data frame. The firmware then stor
 	<th>Function
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO0 \else PRG<%k>_PRU<n>_GPO0 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO0 \else PRG<%k>_PRU<n>_GPO0 \endif
     <td>pru<n>_nikon0_clk
 	<td>Channel 0 clock
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO1 \else PRG<%k>_PRU<n>_GPO1 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO1 \else PRG<%k>_PRU<n>_GPO1 \endif
     <td>pru<n>_nikon0_out
 	<td>Channel 0 transmit
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO2 \else PRG<%k>_PRU<n>_GPO2 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO2 \else PRG<%k>_PRU<n>_GPO2 \endif
     <td>pru<n>_nikon0_outen
 	<td>Channel 0 transmit enable
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPI9 \else PRG<%k>_PRU<n>_GPI13/PRG<%k>_PRU<n>_GPI9 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPI9 \else PRG<%k>_PRU<n>_GPI13/PRG<%k>_PRU<n>_GPI9 \endif
     <td>pru<n>_nikon0_in
 	<td>Channel 0 receive
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO3 \else PRG<%k>_PRU<n>_GPO3 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO3 \else PRG<%k>_PRU<n>_GPO3 \endif
     <td>pru<n>_nikon1_clk
 	<td>Channel 1 clock
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO4 \else PRG<%k>_PRU<n>_GPO4 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO4 \else PRG<%k>_PRU<n>_GPO4 \endif
     <td>pru<n>_nikon1_out
 	<td>Channel 1 transmit
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO5 \else PRG<%k>_PRU<n>_GPO5 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO5 \else PRG<%k>_PRU<n>_GPO5 \endif
     <td>pru<n>_nikon1_outen
 	<td>Channel 1 transmit enable
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPI10 \else PRG<%k>_PRU<n>_GPI14/PRG<%k>_PRU<n>_GPI10 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPI10 \else PRG<%k>_PRU<n>_GPI14/PRG<%k>_PRU<n>_GPI10 \endif
     <td>pru<n>_nikon1_in
 	<td>Channel 1 receive
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO6 \else PRG<%k>_PRU<n>_GPO6 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO6 \else PRG<%k>_PRU<n>_GPO6 \endif
     <td>pru<n>_nikon2_clk
 	<td>Channel 2 clock
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO7 \else PRG<%k>_PRU<n>_GPO12/PRG<%k>_PRU<n>_GPO7 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO7 \else PRG<%k>_PRU<n>_GPO12/PRG<%k>_PRU<n>_GPO7 \endif
     <td>pru<n>_nikon2_out
 	<td>Channel 2 transmit
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPO8 \else PRG<%k>_PRU<n>_GPO8 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO8 \else PRG<%k>_PRU<n>_GPO8 \endif
     <td>pru<n>_nikon2_outen
 	<td>Channel 2 transmit enable
 </tr>
 <tr>
-    <td>\if (SOC_AM263X ||SOC_AM261X) PR<%k>_PRU<n>_GPI11 \else PRG<%k>_PRU<n>_GPI11 \endif
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPI11 \else PRG<%k>_PRU<n>_GPI11 \endif
     <td>pru<n>_nikon2_in
 	<td>Channel 2 receive
 </tr>
@@ -295,6 +313,43 @@ The CRC is the last byte of the last received data frame. The firmware then stor
     <td>GPIO Pin (GPIO_21)
     <td>ENC0_EN
     <td>Enable 3 channel peripheral interface in Axis 1 of BP (B10 GPIO pin)
+</tr>
+</table>
+\endcond
+
+\cond (SOC_AM263X || SOC_AM263PX)
+
+##### @VAR_LP_BOARD_NAME Booster Pack Pin Multiplexing
+<table>
+<tr>
+    <th>Pin name
+    <th>Signal name
+	<th>Function
+</tr>
+<tr>
+    <td>PR0_PRU0_GPIO3
+    <td>pru1_endat1_clk
+	<td>Channel 1 clock
+</tr>
+<tr>
+    <td>PR0_PRU0_GPO4
+    <td>pru1_endat1_out
+	<td>Channel 1 transmit
+</tr>
+<tr>
+    <td>PR0_PRU0_GPO5
+    <td>pru1_endat1_outen
+	<td>Channel 1 transmit enable
+</tr>
+<tr>
+    <td>PR0_PRU0_GPI10
+    <td>pru1_endat1_in
+	<td>Channel 1 receive
+</tr>
+<tr>
+    <td>SDFM0_D1 Pin (J8.73)
+    <td>ENC1_EN
+    <td>Enable 3 channel peripheral interface in Axis 1 of BP (D13 GPIO pin)
 </tr>
 </table>
 \endcond
