@@ -1,7 +1,7 @@
 {
     "name": "MOTOR_CONTROL_SDK",
     "displayName": "MOTOR CONTROL SDK",
-    "version": "10.00.01",
+    "version": "10.00.00",
     "documentationPath": "../docs",
     "includePaths": [
         "../source",
@@ -18,10 +18,8 @@
         "/fs/fs",
         "/networking/networking",
         "/security/security",
-        "/usb/usb",
         "/xbar/xbar",
         "/memory_configurator/components",
-        "/optiflash/optiflash"
     ],
     "devices": [
         "AM64x",
@@ -267,5 +265,5 @@
         "showSignals": true,
         "showUsed": true
     },
-    "minToolVersion" : "1.21.2"
+    "minToolVersion" : "1.21.0"
 }

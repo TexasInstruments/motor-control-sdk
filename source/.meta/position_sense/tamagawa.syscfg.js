@@ -2,9 +2,10 @@
 let common = system.getScript("/common");
 let device = common.getDeviceName();
 let is_am243x_lp_device = (device === "am243x-lp") ? true : false;
-let is_am26x_soc = (device === "am263x-cc" || device === "am261x-lp") ? true : false;
+let is_am26x_soc = (device === "am263x-cc" || device === "am261x-lp" || device === "am263px-cc") ? true : false;
 let is_am263x_soc = (device === "am263x-cc") ? true : false;
 let is_am261x_soc = (device === "am261x-lp") ? true : false;
+let is_am263px_soc = (device === "am263px-cc") ? true : false;
 let tamagawa_pins = (is_am26x_soc) ? system.getScript("/position_sense/tamagawa/am26x_pins.js") : system.getScript("/position_sense/tamagawa/am24x_pins.js");
 
 let tamagawa_module_name = "/position_sense/tamagawa";
@@ -25,14 +26,14 @@ function onValidate(inst, validation) {
         }
 
         /* validation for booster pack */
-        if((device!="am243x-lp" && device != "am263x-cc" &&  device != "am261x-lp")&&(instance.Booster_Pack))
+        if((device!="am243x-lp" && device != "am263x-cc" &&  device != "am261x-lp" && device != "am263px-cc")&&(instance.Booster_Pack))
         {
             validation.logError("Select only when using Booster Pack with LP",inst,"Booster_Pack");
         }
 
         if(is_am26x_soc)
         {
-            if(is_am263x_soc)
+            if(is_am263x_soc || is_am263px_soc)
             {
                 if(instance.PRU_Slice == "PRU0" && instance.channel_2)
                 {
@@ -76,7 +77,7 @@ let tamagawa_module = {
         {
             name: "instance",
             displayName: "Instance",
-            default: (is_am261x_soc) ? "ICSSM1" : ((is_am263x_soc) ? "ICSSM" : "ICSSG0"),
+            default: (is_am261x_soc) ? "ICSSM1" : ((is_am263x_soc || is_am263px_soc) ? "ICSSM" : "ICSSG0"),
             options: (is_am261x_soc) ?
                         [
                             {
@@ -87,7 +88,7 @@ let tamagawa_module = {
                             }
                         ]
                         :
-                        ((is_am263x_soc) ?
+                        ((is_am263x_soc || is_am263px_soc) ?
                         [
                             {
                             name: "ICSSM",
@@ -248,7 +249,7 @@ function moduleInstances(instance){
                 });
             }
         }
-        if(is_am263x_soc)
+        if(is_am263x_soc || is_am263px_soc)
         {
             modInstances.push({
                 name: "PRU_MUX_SEL_GPIO64",
@@ -278,7 +279,7 @@ function moduleInstances(instance){
 
 function sharedModuleInstances(instance) {
     let modInstances = new Array();
-    let requiredArgs = (is_am263x_soc) ? {instance:`${instance.instance}0`} : {instance: instance.instance};
+    let requiredArgs = (is_am263x_soc || is_am263px_soc) ? {instance:`${instance.instance}0`} : {instance: instance.instance};
 
     modInstances.push({
         name: "pru",

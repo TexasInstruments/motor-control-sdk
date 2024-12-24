@@ -11,7 +11,7 @@
     "name": "MOTOR_CONTROL_SDK_`deviceName`",
     "displayName": "MOTOR CONTROL SDK for `deviceName`",
 % }
-    "version": "10.00.01",
+    "version": "10.00.00",
     "documentationPath": "../docs",
     "includePaths": [
         "../source",

@@ -22,19 +22,20 @@ Tamagawa over PRU 3-channel interface                                           
 
 SOC   | Supported CPUs  | EVM                                                                          | Host PC
 ------|-----------------|------------------------------------------------------------------------------|-----------------------------------------
-AM263x| R5F             | AM263x ControlCard Revision E1  (referred to as am263x-cc in code). \n       | Windows 10 64b or Ubuntu 18.04 64b
+AM263x| R5F             | AM263x ControlCard Revision E2  (referred to as am263x-cc in code). \n       | Windows 10 64b or Ubuntu 18.04 64b
 AM263x| R5F             | AM263x LaunchPad Revision E2  (referred to as am263x-lp in code)             | Windows 10 64b or Ubuntu 18.04 64b
 
-## Tools, Compiler and Other Open Source SW Module Information
 
-Tools / SW module       | Supported CPUs | Version
+## Dependent Tools and Compiler Information
+
+Tools                   | Supported CPUs | Version
 ------------------------|----------------|-----------------------
-Code Composer Studio    | R5F            | 12.7.0
-SysConfig               | R5F            | 1.20.0, build 3587
-TI ARM CLANG            | R5F            | 3.2.2.LTS
+Code Composer Studio    | R5F            | 12.8.0
+SysConfig               | R5F            | 1.21.0 build, build 3721
+TI ARM CLANG            | R5F            | 4.0.0.LTS
 FreeRTOS Kernel         | R5F            | 10.4.3
 LwIP                    | R5F            | STABLE-2_2_0_RELEASE
-Mbed-TLS                | R5F            | mbedtls-2.13.1
+Mbed-TLS                | R5F            | mbedtls-3.0.0
 
 ## Key Features
 

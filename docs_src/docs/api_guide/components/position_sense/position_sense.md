@@ -15,12 +15,15 @@ Applications and PRU-ICSS firmwares for following position sense encoders are pr
 - \subpage TAMAGAWA
 \endcond
 
-\cond SOC_AM263X
+\cond (SOC_AM263X || SOC_AM263PX)
 
 Application for following position sense encoder is provided in the SDK.
 
-- \subpage TAMAGAWA_OVER_UART
+- \subpage BISS-C
+- \subpage ENDAT
+- \subpage NIKON
 - \subpage TAMAGAWA
+- \subpage TAMAGAWA_OVER_UART
 
 \endcond
 

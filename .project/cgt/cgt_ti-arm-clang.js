@@ -84,7 +84,6 @@ const cgt_common = {
         common: [
             "--ram_model",
             "--reread_libs",
-            "--gen_xml_func_hash"
         ],
     },
     libdirs: {

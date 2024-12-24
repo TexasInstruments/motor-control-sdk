@@ -32,33 +32,33 @@ SysConfig is used to configure things mentioned below:
 - Selecting the ICSSG PRU slice.(Tested on ICSSG0-PRU0)
 - Configuring PINMUX.
 - Channel selection.
-- %SDFM Channel parameters initialization 
-    \image html SDFM_Channel_params_config.PNG "SDFM Channel parameters SysConfig view" 
-    - Clock parameters Configuration 
+- %SDFM Channel parameters initialization
+    \image html SDFM_Channel_params_config.PNG "SDFM Channel parameters SysConfig view"
+    - Clock parameters Configuration
         \image html  SDFM_Channel_clk_params_configuration.PNG "SDFM Channel clk parameters SysConfig view"
     - Normal Current Configuration
-        \image html  SDFM_Channel_NC_syscfg.PNG "SDFM Channel Normal Current parameters"  
-    - Comparator configuration 
-        \image html  SDFM_Channel_OC_params_syscfg.PNG "SDFM Channel Over Current parameters"  
-    - Fast Detect Configuration 
-        \image html SDFM_Channel_FD_params_syscfg.PNG "SDFM Channel Fast Detect parameters"  
-    - SD modulator Settings 
-        \image html  SDFM_Channel_SD_modulator_params_syscfg.PNG "SDFM Channel SD modulator parameters"  
+        \image html  SDFM_Channel_NC_syscfg.PNG "SDFM Channel Normal Current parameters"
+    - Comparator configuration
+        \image html  SDFM_Channel_OC_params_syscfg.PNG "SDFM Channel Over Current parameters"
+    - Fast Detect Configuration
+        \image html SDFM_Channel_FD_params_syscfg.PNG "SDFM Channel Fast Detect parameters"
+    - SD modulator Settings
+        \image html  SDFM_Channel_SD_modulator_params_syscfg.PNG "SDFM Channel SD modulator parameters"
 
 ## SDFM SysConfig Features
 ## SD Clock Options {#SDCLK_GEN_FROM}
 
 ICSSG %SDFM driver supports three methods to generate clock which can be fed externally to modulator and SD_CLK pins. All %SDFM sdk examples are using %SDFM clock generated from eCAP, other two options has some trade-off as you will lose SD channel due to pin conflict.
 - Clock form ICSSG PRU GPO1
-- Clock from ICSSG eCAP 
+- Clock from ICSSG eCAP
 - Clock from ICSSG IEP
 
-Note: SysConfig only provides the clock selection option. Dividers have to be configured via API calls.  
+Note: SysConfig only provides the clock selection option. Dividers have to be configured via API calls.
 
 ### ICSSG PRU GPO1
 The PRG<k>_PRU1/0_GPI1 signal (muxed with SD0_D) can be used as SD_CLKOUT when PRU ICSSG generates clock. This is a trade-off as PRU application will lose one SD channel. Based on dividers value API \ref SDFM_configClockFromGPO1 does configuration of PRU registers and enables pru to generate clock.
-- Generated clock comes out on PRG<k>_PRU1/0_GPI1 signal that can be fed externally to modulator and SD_CLK pins 
-- Dividers value settings for given PRU core clock and SD clock values 
+- Generated clock comes out on PRG<k>_PRU1/0_GPI1 signal that can be fed externally to modulator and SD_CLK pins
+- Dividers value settings for given PRU core clock and SD clock values
  <table>
 <tr>
     <th>SD clock (MHz)
@@ -86,7 +86,7 @@ The PRG<k>_PRU1/0_GPI1 signal (muxed with SD0_D) can be used as SD_CLKOUT when P
     <td>300
 	<td>15 (0x1C)
     <td>2 (0x01)
-    <td>10 = 300/(15*2) 
+    <td>10 = 300/(15*2)
 </tr>
 <tr>
     <td>5
@@ -95,11 +95,11 @@ The PRG<k>_PRU1/0_GPI1 signal (muxed with SD0_D) can be used as SD_CLKOUT when P
     <td>4 (0x01)
     <td>5 = 200/(10*4)
 </tr>
-</table> 
+</table>
 
-### ICSSG eCAP 
+### ICSSG eCAP
 ICSSG eCAP can be used for %SDFM clock generation. Based on divider value API \ref SDFM_configEcap does configuration of eCAP registers and enables eCAP to generate output clock on PRGx_ECAP0_IN_APWM_OUT pin.
-- Generated clock comes out on PRGx_ECAP0_IN_APWM_OUT signal that can be fed externally to modulator and SD_CLK pins 
+- Generated clock comes out on PRGx_ECAP0_IN_APWM_OUT signal that can be fed externally to modulator and SD_CLK pins
 - Divider value settings for given PRU core clock and SD clock values
 <table>
 <tr>
@@ -110,29 +110,29 @@ ICSSG eCAP can be used for %SDFM clock generation. Based on divider value API \r
 <tr>
     <td>20
     <td>300
-	<td>15 
+	<td>15
 </tr>
 <tr>
     <td>15
     <td>300
-    <td>20 
+    <td>20
 </tr>
 <tr>
     <td>10
     <td>200
-	<td>20 
+	<td>20
 </tr>
-</table> 
+</table>
 
 
 ### ICSSG IEP
-ICSSG IEP has Sync0/Sync1 cyclic generation mode to generate clock which can be used for %SDFM clock. The generated clock comes out on two pin corresponding SYNC0 and SYNC1. IEP also has SYNC1 delay feature which can be used to define delay between SYNC1 and SYNC0 output. 
--  APIs related to IEP SYNC0 and SYNC1 configuration 
+ICSSG IEP has Sync0/Sync1 cyclic generation mode to generate clock which can be used for %SDFM clock. The generated clock comes out on two pin corresponding SYNC0 and SYNC1. IEP also has SYNC1 delay feature which can be used to define delay between SYNC1 and SYNC0 output.
+-  APIs related to IEP SYNC0 and SYNC1 configuration
 <table>
 <tr>
     <th>API
-    <th>Description 
-	<th>Parameters 
+    <th>Description
+	<th>Parameters
 </tr>
 <tr>
     <td> \ref SDFM_configIepSyncMode
@@ -142,21 +142,21 @@ ICSSG IEP has Sync0/Sync1 cyclic generation mode to generate clock which can be 
 <tr>
     <td> \ref SDFM_enableIep
     <td> Enables IEP timer
-    <td>20 
+    <td>20
 </tr>
 <tr>
     <td> \ref SDFM_configSync1Delay
     <td>  Defines clock cycles from the start of SYNC0 to the start of SYNC1
 	<td>  delay: Delay before the start of SYNC1
 </tr>
-</table> 
+</table>
 
 -  \ref SDFM_configIepSyncMode params value configuration for given PRU core clock and SD clock values
 <table>
 <tr>
     <th>SD clock (MHz)
     <th>IEP clock (MHz)
-	<th>`highPulseWidth` 
+	<th>`highPulseWidth`
     <th>`periodTime`
     <th>`syncStartTime`
     <th>Description
@@ -167,7 +167,7 @@ ICSSG IEP has Sync0/Sync1 cyclic generation mode to generate clock which can be 
 	<td> 6  (7-1)
     <td> 14 (15-1)
     <td> Any unsigned integer value
-    <td> IEP clock 300MHz, SD clk = 20Mhz, Div = 300/20 = 15, one period time = 15 IEP cycles, high plus time = 7 IEP cycles 
+    <td> IEP clock 300MHz, SD clk = 20Mhz, Div = 300/20 = 15, one period time = 15 IEP cycles, high plus time = 7 IEP cycles
 </tr>
 <tr>
     <td>10
@@ -177,7 +177,7 @@ ICSSG IEP has Sync0/Sync1 cyclic generation mode to generate clock which can be 
     <td> Any unsigned integer value
     <td> IEP clock 300MHz, SD clk = 10Mhz, Div = 200/10 = 20, one period time = 20 IEP cycles, high plus time = 10 IEP cycles (50% duty cycle)
 </tr>
-</table> 
+</table>
 
 
 It is a better clock option to handle phase compensation. SDK has an example `icss_sdfm_three_channel_with_phase_compensation` for showing phase compensation.
@@ -185,26 +185,26 @@ It is a better clock option to handle phase compensation. SDK has an example `ic
 Note : There is pin conflict between %SDFM channel 8 data PIN and IEP0 SYNC_OUT1
 
 
-## SDFM Channel Clock Configuration 
+## SDFM Channel Clock Configuration
 Three parameters needs to configure for each %SDFM channel.
 - Clock source: Option to source clock on %sdfm channel
 - Clock value: %SDFM input clock value
 - Clock inversion: It is a board specific feature that is used to configure the accumulator input clock polarity. Enable this if the input %sdfm clock is reverse otherwise keep it inactive
 
-## SDFM Channel SINC filter 
-PRU ICSSG %SDFM interface supports three SINC filters to filter SD bit streams. 
-- SINC1/SINC2/SINC3  
+## SDFM Channel SINC filter
+PRU ICSSG %SDFM interface supports three SINC filters to filter SD bit streams.
+- SINC1/SINC2/SINC3
 - Current %SDFM firmware uses common SINC filter for comparator as well as data filter.(Different sinc filters for data filter and comparator filter are not supported)
-## SDFM Channel Normal Current 
+## SDFM Channel Normal Current
 Normal current is used for %SDFM data filter. It has features mentioned below
 - OSR
-- Trigger points: Sampling points in each EPWM cycle 
-    - First sample point: One time sampling in each EPWM cycle 
+- Trigger points: Sampling points in each EPWM cycle
+    - First sample point: One time sampling in each EPWM cycle
     - Second sample point: If double update is enabled then %SDFM firmware does two times %SDFM sampling in each EPWM cycle
-- Continuous mode: %SDFM firmware does continuous sampling of SD data once it started. 
+- Continuous mode: %SDFM firmware does continuous sampling of SD data once it started.
 - EPWM Synchronization: Synchronization between %SDFM and EPWM.
 
-Note: 
+Note:
     - All SDK examples have EPWM synchronization enabled
     - The current PRU firmware imposes certain restrictions, which effectively means that certain normal current features are specific to one axis, so they have to be same for all three SD channels of one axis.
         - Normal current OSR
@@ -213,7 +213,7 @@ Note:
 
 ## SDFM Channel Comparator
 Over current is used for comparator filter to detect low threshold, high threshold and zero cross and generate PWM trips. It has features mentioned below
-- OSR 
+- OSR
 - High threshold
 - Low threshold
 - Zero Cross detection

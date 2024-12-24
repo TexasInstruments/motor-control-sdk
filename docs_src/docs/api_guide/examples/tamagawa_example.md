@@ -14,20 +14,38 @@ Starting with MCU+ SDK version 08.05.00, the Tamagawa firmware and examples are 
 Tamagawa diagnostic application does below,
 \cond (SOC_AM243X || SOC_AM64X)
 - Configures pinmux, GPIO, UART, ICSS clock to 200MHz
-- Initializes ICSS0-PRU1
+- Initializes ICSSG0-PRU1
 \endcond
-\cond (SOC_AM263X || SOC_AM261X)
+\cond (SOC_AM263X || SOC_AM263PX)
 - Configures pinmux, GPIO, UART, ICSSM
 - Initializes ICSSM-PRU0
 \endcond
-- Loads the initialization section of PRU firmware & executes it
+\cond (SOC_AM261X)
+- Configures pinmux, GPIO, UART, ICSSM
+- Initializes ICSSM1-PRU0
+\endcond
+- Loads the initialization section of PRU firmware and executes it
 
 This application is controlled with a terminal interface using a serial over USB connection between the PC host and the EVM.
 Please connect a USB cable between the PC and the EVM/LP.
 A serial terminal application (like teraterm/ hyperterminal/ minicom) is then run on the host.
 To configure, select the serial port corresponding to the port emulated over USB by the EVM.
 The host serial port should be configured to 115200 baud, no parity, 1 stop bit and no flow control.
-The Tamagawa receiver firmware running on \if ( SOC_AM263X || SOC_AM261X)  ICSSM-PRU0 \else  ICSS0-PRU1 \endif provides a defined interface. The Tamagawa diagnostic application interacts with the Tamagawa receiver firmware interface. It then presents the user with menu options to select Data ID code (as defined by Tamagawa) to be sent to the encoder. The application collects the data entered by the user and configures the relevant interface. Then via the Tamagawa receiver interface, the command is triggered. Once the command completion is indicated by the interface, the status of the transaction is checked. If the Status indicates success, the result is presented to the user.
+
+\if (SOC_AM243X || SOC_AM64X)
+The Tamagawa receiver firmware running on ICSSG0-PRU1 provides a defined interface.
+\endif
+
+\if (SOC_AM263X || SOC_AM263PX)
+The Tamagawa receiver firmware running on ICSSM-PRU0 provides a defined interface.
+\endif
+
+\if (SOC_AM261X)
+The Tamagawa receiver firmware running on ICSSM1-PRU0 provides a defined interface.
+\endif
+
+The Tamagawa diagnostic application interacts with the Tamagawa receiver firmware interface. It then presents the user with menu options to select Data ID code (as defined by Tamagawa) to be sent to the encoder. The application collects the data entered by the user and configures the relevant interface. Then via the Tamagawa receiver interface, the command is triggered. Once the command completion is indicated by the interface, the status of the transaction is checked. If the Status indicates success, the result is presented to the user.
+
 ## Important files and directory structure
 
 <table>
@@ -79,25 +97,25 @@ The Tamagawa receiver firmware running on \if ( SOC_AM263X || SOC_AM261X)  ICSS
 
 \endcond
 
+\cond (SOC_AM263X || SOC_AM263PX)
+
+ Parameter      | Value
+ ---------------|-----------
+ CPU + OS       | r5fss0-0 freertos
+ ICSS           | ICSSM
+ PRU            | PRU0
+ Toolchain      | ti-arm-clang
+ Board          | @VAR_LP_BOARD_NAME_LOWER (Single channel example)
+ Example folder | examples/position_sense/tamagawa_diagnostic
+
+\endcond
+
 \cond SOC_AM261X
 
  Parameter      | Value
  ---------------|-----------
  CPU + OS       | r5fss0-0 freertos
  ICSSM          | ICSSM1
- PRU            | PRU0
- Toolchain      | ti-arm-clang
- Board          |  @VAR_LP_BOARD_NAME_LOWER (Single channel example)
- Example folder | examples/position_sense/tamagawa_diagnostic
-
-\endcond
-
-\cond SOC_AM263X
-
- Parameter      | Value
- ---------------|-----------
- CPU + OS       | r5fss0-0 freertos
- ICSS           | ICSSM
  PRU            | PRU0
  Toolchain      | ti-arm-clang
  Board          |  @VAR_LP_BOARD_NAME_LOWER (Single channel example)
@@ -130,11 +148,18 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 \endcond
 
 \cond SOC_AM263X
+
 ## Hardware Prerequisities with LP-AM263
 - Tamagawa Encoder(s)
 - <a href="https://www.ti.com/tool/LP-AM263" target="_blank"> LP-AM263 Board </a>
 - <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
+\endcond
 
+\cond SOC_AM263PX
+## Hardware Prerequisities with LP-AM263P
+- Tamagawa Encoder(s)
+- <a href="https://www.ti.com/tool/LP-AM263P" target="_blank"> LP-AM263P Board </a>
+- <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
 \endcond
 
 \cond SOC_AM261X
@@ -156,9 +181,9 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 ## Hardware Setup with LP-AM243
 \imageStyle{Tamagawa_Booster_Pack.png,width:40%}
 \image html Tamagawa_Booster_Pack.png  "Hardware Setup with LP-AM243"
-\note 
+\note
     - The PROC109A version of LP supports two channels
-    - To enable the second channel on LP, SW6 needs to be turn OFF 
+    - To enable the second channel on LP, SW6 needs to be turn OFF
 
 #### Booster Pack Jumper Configuration
 <table>
@@ -231,10 +256,20 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 
 \endcond
 
-\cond SOC_AM263X
+\cond (SOC_AM263X || SOC_AM263PX)
+
+\cond (SOC_AM263X)
 ## Hardware Setup with LP-AM263
 \imageStyle{Tamagawa_am263x_hw_Setup.jpeg,width:60%}
 \image html Tamagawa_am263x_hw_Setup.jpeg "Hardware Setup for single channel on LP-AM263 + BP"
+\endcond
+
+\cond (SOC_AM263PX)
+## Hardware Setup with LP-AM263P
+\imageStyle{Tamagawa_am263px_hw_Setup.jpeg,width:60%}
+\image html Tamagawa_am263px_hw_Setup.jpeg "Hardware Setup for single channel on LP-AM263P + BP"
+\endcond
+
 #### Booster Pack Jumper Configuration
 <table>
 <tr>

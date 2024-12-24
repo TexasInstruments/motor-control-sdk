@@ -15,18 +15,16 @@ endif
 
 PROFILE?=release
 
-SYSTEM_PROJECT_NAME:=`args.project.name`_system
-
 MULTI_CORE_BOOTIMAGE_PATH=$(abspath .)
-MULTI_CORE_BOOTIMAGE_NAME:=$(SYSTEM_PROJECT_NAME).$(PROFILE).appimage
+MULTI_CORE_BOOTIMAGE_NAME:=`args.project.name`_system.$(PROFILE).appimage
 MULTI_CORE_BOOTIMAGE_NAME_SIGNED:=$(MULTI_CORE_BOOTIMAGE_NAME).signed
-MULTI_CORE_BOOTIMAGE_NAME_XIP:=$(SYSTEM_PROJECT_NAME).$(PROFILE).appimage_xip
+MULTI_CORE_BOOTIMAGE_NAME_XIP:=`args.project.name`_system.$(PROFILE).appimage_xip
 % if ((args.project.device == "am263x") || (args.project.device == "am263px") || (args.project.device == "am261x")) {
-MULTI_CORE_BOOTIMAGE_NAME_MCELF:=$(SYSTEM_PROJECT_NAME).$(PROFILE).mcelf
-MULTI_CORE_BOOTIMAGE_NAME_MCELF_HS:=$(SYSTEM_PROJECT_NAME).$(PROFILE).mcelf.hs
+MULTI_CORE_BOOTIMAGE_NAME_MCELF:=`args.project.name`_system.$(PROFILE).mcelf
+MULTI_CORE_BOOTIMAGE_NAME_MCELF_HS:=`args.project.name`_system.$(PROFILE).mcelf.hs
 % }
 % if (args.project.device == "awr294x") {
-MULTI_CORE_BOOTIMAGE_NAME_QSPI:=$(SYSTEM_PROJECT_NAME).$(PROFILE).appimage_qspi
+MULTI_CORE_BOOTIMAGE_NAME_QSPI:=`args.project.name`_system.$(PROFILE).appimage_qspi
 MULTI_CORE_BOOTIMAGE_NAME_QSPI_HS:=$(MULTI_CORE_BOOTIMAGE_NAME_QSPI).hs
 % }
 % if ((args.project.device == "am65x") || (args.project.device == "am64x") || (args.project.device == "am243x") || (args.project.device == "am263x") || (args.project.device == "am263px") || (args.project.device == "am261x")  || (args.project.device == "am273x") || (args.project.device == "awr294x")) {
@@ -50,34 +48,7 @@ CORES = \
 CORE_`numProjects`_IMG=../`project.cpu`_`project.os`/`project.cgt`/`args.project.name`.$(PROFILE).out
     % numProjects = numProjects + 1;
 % }
-
-CORE_IMG_ARGS :=
-% for (let i = 0; i<numProjects; i++) {
-CORE_IMG_ARGS +=--core-img=`i`:$(CORE_`i`_IMG)
 % }
-%}
-% if ((args.project.device == "am263px") || (args.project.device == "am261x")) {
-MULTI_CORE_BOOTIMAGE_NAME_MCELF_OPTISHARE:=$(SYSTEM_PROJECT_NAME).$(PROFILE).optishare.mcelf
-% numProjects = 0;
-
-% for (let project of args.project.projects) {
-CORE_`numProjects`_OPTISHARE_IMG=../`project.cpu`_`project.os`/`project.cgt`/`args.project.name`.$(PROFILE).optishare.out
-    % numProjects = numProjects + 1;
-% }
-
-
-CORE_IMG_OPTISHARE_ARGS :=
-% for (let i = 0; i<numProjects; i++) {
-CORE_IMG_OPTISHARE_ARGS +=--core-img=`i`:$(CORE_`i`_OPTISHARE_IMG)
-% }
-
-% }
-
-COREXMLS = \
-% for (let project of args.project.projects) {
-	../`project.cpu`_`project.os`/`project.cgt`/`args.project.name`.$(PROFILE).lnkxml\
-% }
-
 SYSTEM_FLAG := true
 
 all: postBuild
@@ -86,8 +57,6 @@ corebuild: syscfg
 % for (let project of args.project.projects) {
 	$(MAKE) -C ../`project.cpu`_`project.os`/`project.cgt`/ all SYSTEM_FLAG=${SYSTEM_FLAG}
 % }
-
-
 postBuild: corebuild
 	$(MAKE) $(MULTI_CORE_BOOTIMAGE_NAME)
 % if ((args.project.device == "am263x") || (args.project.device == "am263px") || (args.project.device == "am261x")) {
@@ -105,51 +74,6 @@ endif
 % if (project.isLinuxFwGen) {
 	$(COPY) ../`project.cpu`_`project.os`/`project.cgt`/`args.device.getLinuxFwName(project.cpu)` .
 % }
-% }
-
-%if(args.project.device == "am263px" || args.project.device == "am261x"){
-
-CG_TOOL_ROOT=$(CGT_TI_ARM_CLANG_PATH)
-CC=$(CG_TOOL_ROOT)/bin/tiarmclang
-LNK=$(CG_TOOL_ROOT)/bin/tiarmclang
-
-sso: optisave
-
-coreout: sso.out
-	@echo .
-	@echo generating files with sso
-% for (let project of args.project.projects) {
-	$(MAKE) -C ../`project.cpu`_`project.os`/`project.cgt`/ coreout SYSTEM_FLAG=${SYSTEM_FLAG} SSO_PATH=../../system_`args.project.tag`/sso.out
-% }
-	@echo generating files with sso done!
-	@echo .
-
-sso.out: sso.cmd
-	@echo .
-	@echo generating sso.out
-	$(CC) -Wl,sso.cmd.tmp -o sso.out -Wl,--xml_link_info=sso.lnkxml -Wl,--gen_xml_func_hash
-	@echo done
-	@echo .
-
-sso.cmd: all $(COREXMLS)
-	@echo .
-	@echo generating sso.cmd.tmp
-	$(OPTISHARE) -o sso.cmd.tmp $(COREXMLS) -s sso.info.tmp --mem_spec `args.project.optishare_memspecs`
-	@echo generating sso.cmd done
-	@echo .
-
-optisave: buildmcelfsso
-% for (let core_project of args.project.projects) {
-	$(OPTISAVE) ../`core_project.cpu`_`core_project.os`/`core_project.cgt`/`args.project.name`.$(PROFILE).lnkxml ../`core_project.cpu`_`core_project.os`/`core_project.cgt`/`args.project.name`.$(PROFILE).optishare.lnkxml > ../`core_project.cpu`_`core_project.os`/`core_project.cgt`/`args.project.name`.$(PROFILE).ossr
-% }
-
-buildmcelfsso: coreout
-	@echo .
-	@echo generating mcelf with sso 
-	$(PYTHON) $(MCELF_IMAGE_GEN) $(CORE_IMG_OPTISHARE_ARGS) --output=$(MULTI_CORE_BOOTIMAGE_NAME_MCELF_OPTISHARE) --merge-segments=$(MCELF_MERGE_SEGMENTS_FLAG) --tolerance-limit=$(MCELF_MERGE_SEGMENTS_TOLERANCE_LIMIT) --ignore-context=$(MCELF_IGNORE_CONTEXT_FLAG) --xip=$(MCELF_XIP_RANGE) --xlat=$(MCELF_ADDR_TRANSLATION_PATH) --max_segment_size=$(MCELF_MAX_SEGMENT_SIZE) --sso=sso.out
-	@echo  Boot multi-core ELF image: $(MULTI_CORE_BOOTIMAGE_PATH)/$@ Done !!!
-	@echo  .
-
 % }
 
 clean:
@@ -191,10 +115,6 @@ ifeq ($(OS),Windows_NT)
 % if (args.project.device == "awr294x"){
 	$(RM) \*.appimage*
 % }
-	$(RM) \*.tmp
-	$(RM) \*.out
-	$(RM) \*.map
-	$(RM) \*.lnkxml
 	$(RM) \*.appimage_xip
 % if ((args.project.device == "am263x") || (args.project.device == "am263px") || (args.project.device == "am261x")) {
 	$(RM) \*.mcelf
@@ -203,10 +123,6 @@ ifeq ($(OS),Windows_NT)
 	$(RM) \*.mcelf.hs
 % }
 else
-	$(RM) *.tmp
-	$(RM) *.out
-	$(RM) *.map
-	$(RM) *.lnkxml
 	$(RM) *.appimage
 	$(RM) *.appimage.signed
 % if ((args.project.device == "am65x") || (args.project.device == "am64x") || (args.project.device == "am243x") || (args.project.device == "am263x") ||  (args.project.device == "am263px") || (args.project.device == "am261x")  || (args.project.device == "am273x") || (args.project.device == "awr294x")) {
@@ -241,7 +157,6 @@ BOOTIMAGE_TEMP_OUT_FILE=temp_stdout_$(PROFILE).txt
 
 % if (args.project.device == "am64x") {
 BOOTIMAGE_CORE_ID_a53ss0-0 = 0
-BOOTIMAGE_CORE_ID_a53ss0-1 = 1
 BOOTIMAGE_CORE_ID_r5fss0-0 = 4
 BOOTIMAGE_CORE_ID_r5fss0-1 = 5
 BOOTIMAGE_CORE_ID_r5fss1-0 = 6
@@ -341,11 +256,16 @@ $(MULTI_CORE_BOOTIMAGE_NAME): $(MULTI_CORE_BOOTIMAGE_DEPENDENCY)
 	@echo  .
 % }
 % if ((args.project.device == "am263x") || (args.project.device == "am263px") || (args.project.device == "am261x")) {
-oeconfig?=None
+
+CORE_IMG_ARGS :=
+% for (let i = 0; i<numProjects; i++) {
+CORE_IMG_ARGS +=--core-img=`i`:$(CORE_`i`_IMG)
+% }
+
 $(MULTI_CORE_BOOTIMAGE_NAME_MCELF):
 	@echo  Boot multi-core ELF image: $@ ...
 
-	$(PYTHON) $(MCELF_IMAGE_GEN) $(CORE_IMG_ARGS) --output=$(MULTI_CORE_BOOTIMAGE_NAME_MCELF) --merge-segments=$(MCELF_MERGE_SEGMENTS_FLAG) --tolerance-limit=$(MCELF_MERGE_SEGMENTS_TOLERANCE_LIMIT) --ignore-context=$(MCELF_IGNORE_CONTEXT_FLAG) --xip=$(MCELF_XIP_RANGE) --xlat=$(MCELF_ADDR_TRANSLATION_PATH) --max_segment_size=$(MCELF_MAX_SEGMENT_SIZE)  --otfaConfigFile=$(oeconfig)
+	$(PYTHON) $(MCELF_IMAGE_GEN) $(CORE_IMG_ARGS) --output=$(MULTI_CORE_BOOTIMAGE_NAME_MCELF) --merge-segments=$(MCELF_MERGE_SEGMENTS_FLAG) --tolerance-limit=$(MCELF_MERGE_SEGMENTS_TOLERANCE_LIMIT) --ignore-context=$(MCELF_IGNORE_CONTEXT_FLAG) --xip=$(MCELF_XIP_RANGE) --xlat=$(MCELF_ADDR_TRANSLATION_PATH) --max_segment_size=$(MCELF_MAX_SEGMENT_SIZE)
 
 	@echo  Boot multi-core ELF image: $(MULTI_CORE_BOOTIMAGE_PATH)/$@ Done !!!
 	@echo  .
@@ -375,7 +295,7 @@ endif
 % }
 % if (args.project.device == "am65x") {
 $(MULTI_CORE_BOOTIMAGE_NAME_HS): $(MULTI_CORE_BOOTIMAGE_NAME)
-ifeq ($(DEVICE_TYPE),HS)
+ifeq ($(DEVICE_TYPE), HS)
 # Sign the appimage using appimage signing script
 ifeq ($(ENC_ENABLED),no)
 	@echo Boot image signing: Encryption is disabled.

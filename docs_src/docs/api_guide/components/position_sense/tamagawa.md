@@ -33,7 +33,7 @@ Tamagawa firmware and examples are based on 3 Channel Peripheral interface from 
     <td> 2.5MHz, 5MHz
 </tr>
 \endcond
-\cond SOC_AM263X
+\cond (SOC_AM263X || SOC_AM263PX)
 <tr>
     <td> PRU UART Clock (160 MHz)
     <td> 2.5MHz, 5MHz
@@ -62,11 +62,11 @@ In general, peripherals or features not mentioned as part of "Features Supported
 @VAR_SYSCFG_USAGE_NOTE
 
 SysConfig can be used to configure things mentioned below:
-\if SOC_AM263X 
+\if SOC_AM263X
 - Selecting the ICSSM PRU slice (Tested on ICSSM-PRU0)
 - Configuring PINMUX and GPIO
 \else
-\if SOC_AM261X 
+\if SOC_AM261X
 - Selecting the ICSSM PRU slice (Tested on ICSSM1-PRU0)
 - Configuring PINMUX and GPIO
 \else
@@ -78,9 +78,9 @@ SysConfig can be used to configure things mentioned below:
 \endif
 - Channel selection
 - Baud rate selection
-- Selecting RX and TX source clock 
+- Selecting RX and TX source clock
 
-## ICSS PRU Resource Usage 
+## ICSS PRU Resource Usage
 <table>
 <tr>
    <th>Configuration</th>

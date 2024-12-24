@@ -307,7 +307,7 @@ void SDFM_enableContinuousNormalCurrent(sdfm_handle h_sdfm)
 {
     h_sdfm->pSdfmInterface->sdfm_cfg_trigger.en_continuous_mode = 1;
 }
-/*FD block confiuration */
+/*FD block configuration */
 void SDFM_configFastDetect(sdfm_handle h_sdfm, uint8_t ch, uint8_t *fdParms)
 {
     h_sdfm->pSdfmInterface->sdfm_ch_ctrl.enFastDetect |= fdParms[0]<<ch;

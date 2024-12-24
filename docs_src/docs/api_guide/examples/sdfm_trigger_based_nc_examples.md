@@ -445,7 +445,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
         <td></td>
         <td>2. %SDFM Clock to 20MHz </td>
         <td> Generated clock should come out on two pins corresponding SYNC0 and SYNC1</td>
-</tr>  
+</tr>
 <tr>
         <td></td>
         <td>3. Configure SYNC_OUT0 and SYNC_OUT0 pins inside PRU ICSSG IEP SysConfig module </td>

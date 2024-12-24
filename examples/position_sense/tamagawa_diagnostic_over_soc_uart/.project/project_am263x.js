@@ -47,12 +47,6 @@ const libs_freertos_r5f = {
     ],
 };
 
-const defines_r5f = {
-    common: [
-        "SOC_AM263X",
-    ],
-};
-
 const lnkfiles = {
     common: [
         "linker.cmd",
