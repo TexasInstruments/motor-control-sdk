@@ -22,14 +22,11 @@ PROFILE?=release
 ConfigName:=$(PROFILE)
 
 OUTNAME:=dlog4ch_lib.$(PROFILE).out
-COREOUTNAME:=dlog4ch_lib.$(PROFILE).optishare.out
 
 BOOTIMAGE_PATH=$(abspath .)
 BOOTIMAGE_NAME:=dlog4ch_lib.$(PROFILE).appimage
 BOOTIMAGE_NAME_XIP:=dlog4ch_lib.$(PROFILE).appimage_xip
 BOOTIMAGE_NAME_SIGNED:=dlog4ch_lib.$(PROFILE).appimage.signed
-oeconfig?=None
-
 BOOTIMAGE_NAME_MCELF:=dlog4ch_lib.$(PROFILE).mcelf
 BOOTIMAGE_NAME_MCELF_HS:=dlog4ch_lib.$(PROFILE).mcelf.hs
 BOOTIMAGE_RPRC_NAME:=dlog4ch_lib.$(PROFILE).rprc
@@ -38,7 +35,6 @@ BOOTIMAGE_RPRC_NAME_TMP:=dlog4ch_lib.$(PROFILE).rprc_tmp
 BOOTIMAGE_NAME_HS:=dlog4ch_lib.$(PROFILE).appimage.hs
 BOOTIMAGE_NAME_HS_FS:=dlog4ch_lib.$(PROFILE).appimage.hs_fs
 TARGETS := $(BOOTIMAGE_NAME)
-
 ifeq ($(DEVICE_TYPE), HS)
    TARGETS += $(BOOTIMAGE_NAME_HS)
 endif
@@ -122,7 +118,6 @@ LFLAGS_common = \
 	-Wl,--diag_suppress=10063 \
 	-Wl,--ram_model \
 	-Wl,--reread_libs \
-	-Wl,--gen_xml_func_hash \
 
 
 LIBS_NAME = \
@@ -192,16 +187,8 @@ endif
 $(OUTNAME):  $(SYSTEM_COMMAND)
 	@echo  .
 	@echo  Linking: am263x:r5fss0-0:nortos:ti-arm-clang $@ ...
-	$(LNK) $(LNKOPTFLAGS) $(LFLAGS) $(LIBS_PATH) -Wl,-m=$(basename $@).map -o $@ $(addprefix $(OBJDIR), $(OBJS)) $(LIBS) $(LNK_FILES) -Wl,--xml_link_info=$(basename $@).lnkxml
+	$(LNK) $(LNKOPTFLAGS) $(LFLAGS) $(LIBS_PATH) -Wl,-m=$(basename $@).map -o $@ $(addprefix $(OBJDIR), $(OBJS)) $(LIBS) $(LNK_FILES)
 	@echo  Linking: am263x:r5fss0-0:nortos:ti-arm-clang $@ Done !!!
-	@echo  .
-
-coreout: $(COREOUTNAME)
-$(COREOUTNAME):  $(SYSTEM_COMMAND)
-	@echo  .
-	@echo  Relinking Linking: am263x:r5fss0-0:nortos:ti-arm-clang $@ with OptiShare SSO..
-	$(LNK) $(LNKOPTFLAGS) $(LFLAGS) $(LIBS_PATH) -Wl,-m=$(basename $@).map -o $@ $(addprefix $(OBJDIR), $(OBJS)) $(LIBS) $(LNK_FILES) -Wl,--xml_link_info=$(basename $@).lnkxml -Wl,--import_sso=$(SSO_PATH)
-	@echo  Relinking with optishare: am263x:r5fss0-0:freertos:ti-arm-clang $@ Done !!!
 	@echo  .
 
 clean:
@@ -226,8 +213,6 @@ ifeq ($(OS),Windows_NT)
 	$(RM) \*.rprc*
 	$(RM) \*.tiimage*
 	$(RM) \*.bin
-	$(RM) \*.lnkxml
-	$(RM) \*.ossr
 	$(RM) \*.mcelf
 	$(RM) \*.mcelf_xip
 	$(RM) \*.mcelf-enc
@@ -239,8 +224,6 @@ else
 	$(RM) *.rprc*
 	$(RM) *.tiimage*
 	$(RM) *.bin
-	$(RM) *.lnkxml
-	$(RM) *.ossr
 	$(RM) *.mcelf
 	$(RM) *.mcelf_xip
 	$(RM) *.mcelf-enc
@@ -326,7 +309,7 @@ endif
 	$(RM) $(BOOTIMAGE_TEMP_OUT_FILE)
 	@echo  Boot image: am263x:r5fss0-0:nortos:ti-arm-clang $(BOOTIMAGE_PATH)/$@ Done !!!
 	@echo  Boot MulticoreELF image: $(BOOTIMAGE_PATH)/$(BOOTIMAGE_NAME_MCELF) ...
-	$(PYTHON) $(MCELF_IMAGE_GEN) --core-img=$(BOOTIMAGE_CORE_ID_r5fss0-0):$(OUTNAME) --output=$(BOOTIMAGE_NAME_MCELF) --merge-segments=$(MCELF_MERGE_SEGMENTS_FLAG) --tolerance-limit=$(MCELF_MERGE_SEGMENTS_TOLERANCE_LIMIT) --ignore-context=$(MCELF_IGNORE_CONTEXT_FLAG) --xip=$(MCELF_XIP_RANGE) --xlat=$(MCELF_ADDR_TRANSLATION_PATH) --max_segment_size=$(MCELF_MAX_SEGMENT_SIZE) --otfaConfigFile=$(oeconfig)
+	$(PYTHON) $(MCELF_IMAGE_GEN) --core-img=$(BOOTIMAGE_CORE_ID_r5fss0-0):$(OUTNAME) --output=$(BOOTIMAGE_NAME_MCELF) --merge-segments=$(MCELF_MERGE_SEGMENTS_FLAG) --tolerance-limit=$(MCELF_MERGE_SEGMENTS_TOLERANCE_LIMIT) --ignore-context=$(MCELF_IGNORE_CONTEXT_FLAG) --xip=$(MCELF_XIP_RANGE) --xlat=$(MCELF_ADDR_TRANSLATION_PATH) --max_segment_size=$(MCELF_MAX_SEGMENT_SIZE)
 	@echo  Boot MulticoreELF ELF image: $(BOOTIMAGE_PATH)/$(BOOTIMAGE_NAME_MCELF) Done !!!
 	@echo  .
 
@@ -362,9 +345,6 @@ endif
 	@echo  Boot image: am263x:r5fss0-0:nortos:ti-arm-clang $(BOOTIMAGE_PATH)/$(BOOTIMAGE_NAME_MCELF_HS) Done !!!
 	@echo  .
 endif
-
-
-
 .PHONY: coverage
 coverage:
 	@echo Creating Coverage Report for dlog4ch_lib.$(PROFILE) ...
