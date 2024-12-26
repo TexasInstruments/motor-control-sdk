@@ -73,6 +73,8 @@ DATALOG_Handle DATALOG_init(void *pMemory, const size_t numBytes, Trigger_type t
     obj->preScalar = scale;
     obj->status = 1;
     obj->trigValue = trig_value;
+    obj->flag_enableLogOneShot = 0;
+    obj->flag_enableLogData = 0;
 
     return(handle);
 } // end of DATALOG_init() function
