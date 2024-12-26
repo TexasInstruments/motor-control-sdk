@@ -48,11 +48,25 @@ help:
 	@echo  .
 	@echo  Example build targets,
 	@echo  ======================
+	@echo  $(MAKE) -s -C examples/dcl/dcl_df22/am263px-cc/r5fss0-0_nortos/ti-arm-clang [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C examples/dcl/dcl_df22/am263px-cc/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C examples/dcl/dcl_df22/am263px-lp/r5fss0-0_nortos/ti-arm-clang [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C examples/dcl/dcl_df22/am263px-lp/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C examples/dcl/dcl_pi/am263px-cc/r5fss0-0_nortos/ti-arm-clang [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C examples/dcl/dcl_pi/am263px-cc/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C examples/dcl/dcl_pi/am263px-lp/r5fss0-0_nortos/ti-arm-clang [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C examples/dcl/dcl_pi/am263px-lp/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C examples/position_sense/bissc_diagnostic/single_channel/am263px-lp/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C examples/position_sense/endat_diagnostic/single_channel/am263px-lp/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C examples/position_sense/nikon_diagnostic/single_channel/am263px-lp/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C examples/position_sense/tamagawa_diagnostic/single_channel/am263px-lp/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C examples/position_sense/tamagawa_diagnostic_over_soc_uart/am263px-lp/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C examples/sfra/am263px-cc/r5fss0-0_nortos/ti-arm-clang [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C examples/transforms/transforms_test/am263px-cc/r5fss0-0_nortos/ti-arm-clang [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C examples/transforms/transforms_test/am263px-cc/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C examples/transforms/transforms_test/am263px-lp/r5fss0-0_nortos/ti-arm-clang [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C examples/transforms/transforms_test/am263px-lp/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C examples/utilities/datalog/am263px-cc/r5fss0-0_nortos/ti-arm-clang [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/bissc/firmware/single_channel/am263px-lp/icss_m0_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/bissc/firmware/single_channel/am263px-lp/icss_m0_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/endat/firmware/single_channel/am263px-lp/icss_m0_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
@@ -172,11 +186,25 @@ $(BUILD_COMBO_SCRUB_motorcontrol_tamagawa_over_soc_uart):
 
 BUILD_COMBO_EXAMPLE_ALL =
 # Various Example Targets
+BUILD_COMBO_EXAMPLE_ALL += dcl_df22_am263px-cc_r5fss0-0_nortos_ti-arm-clang
+BUILD_COMBO_EXAMPLE_ALL += dcl_df22_am263px-cc_r5fss0-0_freertos_ti-arm-clang
+BUILD_COMBO_EXAMPLE_ALL += dcl_df22_am263px-lp_r5fss0-0_nortos_ti-arm-clang
+BUILD_COMBO_EXAMPLE_ALL += dcl_df22_am263px-lp_r5fss0-0_freertos_ti-arm-clang
+BUILD_COMBO_EXAMPLE_ALL += dcl_pi_am263px-cc_r5fss0-0_nortos_ti-arm-clang
+BUILD_COMBO_EXAMPLE_ALL += dcl_pi_am263px-cc_r5fss0-0_freertos_ti-arm-clang
+BUILD_COMBO_EXAMPLE_ALL += dcl_pi_am263px-lp_r5fss0-0_nortos_ti-arm-clang
+BUILD_COMBO_EXAMPLE_ALL += dcl_pi_am263px-lp_r5fss0-0_freertos_ti-arm-clang
 BUILD_COMBO_EXAMPLE_ALL += bissc_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang
 BUILD_COMBO_EXAMPLE_ALL += endat_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang
 BUILD_COMBO_EXAMPLE_ALL += nikon_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang
 BUILD_COMBO_EXAMPLE_ALL += tamagawa_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang
 BUILD_COMBO_EXAMPLE_ALL += tamagawa_diagnostic_soc_uart_am263px-lp_r5fss0-0_freertos_ti-arm-clang
+BUILD_COMBO_EXAMPLE_ALL += sfralib_am263px-cc_r5fss0-0_nortos_ti-arm-clang
+BUILD_COMBO_EXAMPLE_ALL += transforms_test_am263px-cc_r5fss0-0_nortos_ti-arm-clang
+BUILD_COMBO_EXAMPLE_ALL += transforms_test_am263px-cc_r5fss0-0_freertos_ti-arm-clang
+BUILD_COMBO_EXAMPLE_ALL += transforms_test_am263px-lp_r5fss0-0_nortos_ti-arm-clang
+BUILD_COMBO_EXAMPLE_ALL += transforms_test_am263px-lp_r5fss0-0_freertos_ti-arm-clang
+BUILD_COMBO_EXAMPLE_ALL += dlog4ch_lib_am263px-cc_r5fss0-0_nortos_ti-arm-clang
 # Various System Example Targets
 
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL =
@@ -195,6 +223,30 @@ examples: $(BUILD_COMBO_EXAMPLE_ALL)
 
 examples-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_ALL)
 
+ dcl_df22_am263px-cc_r5fss0-0_nortos_ti-arm-clang:
+	$(MAKE) -C examples/dcl/dcl_df22/am263px-cc/r5fss0-0_nortos/ti-arm-clang -f makefile all
+
+ dcl_df22_am263px-cc_r5fss0-0_freertos_ti-arm-clang:
+	$(MAKE) -C examples/dcl/dcl_df22/am263px-cc/r5fss0-0_freertos/ti-arm-clang -f makefile all
+
+ dcl_df22_am263px-lp_r5fss0-0_nortos_ti-arm-clang:
+	$(MAKE) -C examples/dcl/dcl_df22/am263px-lp/r5fss0-0_nortos/ti-arm-clang -f makefile all
+
+ dcl_df22_am263px-lp_r5fss0-0_freertos_ti-arm-clang:
+	$(MAKE) -C examples/dcl/dcl_df22/am263px-lp/r5fss0-0_freertos/ti-arm-clang -f makefile all
+
+ dcl_pi_am263px-cc_r5fss0-0_nortos_ti-arm-clang:
+	$(MAKE) -C examples/dcl/dcl_pi/am263px-cc/r5fss0-0_nortos/ti-arm-clang -f makefile all
+
+ dcl_pi_am263px-cc_r5fss0-0_freertos_ti-arm-clang:
+	$(MAKE) -C examples/dcl/dcl_pi/am263px-cc/r5fss0-0_freertos/ti-arm-clang -f makefile all
+
+ dcl_pi_am263px-lp_r5fss0-0_nortos_ti-arm-clang:
+	$(MAKE) -C examples/dcl/dcl_pi/am263px-lp/r5fss0-0_nortos/ti-arm-clang -f makefile all
+
+ dcl_pi_am263px-lp_r5fss0-0_freertos_ti-arm-clang:
+	$(MAKE) -C examples/dcl/dcl_pi/am263px-lp/r5fss0-0_freertos/ti-arm-clang -f makefile all
+
  bissc_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang:
 	$(MAKE) -C examples/position_sense/bissc_diagnostic/single_channel/am263px-lp/r5fss0-0_freertos/ti-arm-clang -f makefile all
 
@@ -209,6 +261,24 @@ examples-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_ALL)
 
  tamagawa_diagnostic_soc_uart_am263px-lp_r5fss0-0_freertos_ti-arm-clang:
 	$(MAKE) -C examples/position_sense/tamagawa_diagnostic_over_soc_uart/am263px-lp/r5fss0-0_freertos/ti-arm-clang -f makefile all
+
+ sfralib_am263px-cc_r5fss0-0_nortos_ti-arm-clang:
+	$(MAKE) -C examples/sfra/am263px-cc/r5fss0-0_nortos/ti-arm-clang -f makefile all
+
+ transforms_test_am263px-cc_r5fss0-0_nortos_ti-arm-clang:
+	$(MAKE) -C examples/transforms/transforms_test/am263px-cc/r5fss0-0_nortos/ti-arm-clang -f makefile all
+
+ transforms_test_am263px-cc_r5fss0-0_freertos_ti-arm-clang:
+	$(MAKE) -C examples/transforms/transforms_test/am263px-cc/r5fss0-0_freertos/ti-arm-clang -f makefile all
+
+ transforms_test_am263px-lp_r5fss0-0_nortos_ti-arm-clang:
+	$(MAKE) -C examples/transforms/transforms_test/am263px-lp/r5fss0-0_nortos/ti-arm-clang -f makefile all
+
+ transforms_test_am263px-lp_r5fss0-0_freertos_ti-arm-clang:
+	$(MAKE) -C examples/transforms/transforms_test/am263px-lp/r5fss0-0_freertos/ti-arm-clang -f makefile all
+
+ dlog4ch_lib_am263px-cc_r5fss0-0_nortos_ti-arm-clang:
+	$(MAKE) -C examples/utilities/datalog/am263px-cc/r5fss0-0_nortos/ti-arm-clang -f makefile all
 
  bissc_peripheral_interface_single_ch_am263px-lp_icss_m0_pru0_fw_ti-pru-cgt:
 	$(MAKE) -C source/position_sense/bissc/firmware/single_channel/am263px-lp/icss_m0_pru0_fw/ti-pru-cgt -f makefile all
@@ -237,11 +307,25 @@ examples-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_ALL)
 
 BUILD_COMBO_EXAMPLE_CLEAN_ALL =
 # Various Example Clean Targets
+BUILD_COMBO_EXAMPLE_CLEAN_ALL += dcl_df22_am263px-cc_r5fss0-0_nortos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_CLEAN_ALL += dcl_df22_am263px-cc_r5fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_CLEAN_ALL += dcl_df22_am263px-lp_r5fss0-0_nortos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_CLEAN_ALL += dcl_df22_am263px-lp_r5fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_CLEAN_ALL += dcl_pi_am263px-cc_r5fss0-0_nortos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_CLEAN_ALL += dcl_pi_am263px-cc_r5fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_CLEAN_ALL += dcl_pi_am263px-lp_r5fss0-0_nortos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_CLEAN_ALL += dcl_pi_am263px-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_CLEAN_ALL += bissc_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_CLEAN_ALL += endat_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_CLEAN_ALL += nikon_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_CLEAN_ALL += tamagawa_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_CLEAN_ALL += tamagawa_diagnostic_soc_uart_am263px-lp_r5fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_CLEAN_ALL += sfralib_am263px-cc_r5fss0-0_nortos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_CLEAN_ALL += transforms_test_am263px-cc_r5fss0-0_nortos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_CLEAN_ALL += transforms_test_am263px-cc_r5fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_CLEAN_ALL += transforms_test_am263px-lp_r5fss0-0_nortos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_CLEAN_ALL += transforms_test_am263px-lp_r5fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_CLEAN_ALL += dlog4ch_lib_am263px-cc_r5fss0-0_nortos_ti-arm-clang_clean
 # Various System Example Clean Targets
 
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL =
@@ -260,6 +344,30 @@ examples-clean: $(BUILD_COMBO_EXAMPLE_CLEAN_ALL)
 
 examples-private-clean: $(BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL)
 
+ dcl_df22_am263px-cc_r5fss0-0_nortos_ti-arm-clang_clean:
+	$(MAKE) -C examples/dcl/dcl_df22/am263px-cc/r5fss0-0_nortos/ti-arm-clang -f makefile clean
+
+ dcl_df22_am263px-cc_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/dcl/dcl_df22/am263px-cc/r5fss0-0_freertos/ti-arm-clang -f makefile clean
+
+ dcl_df22_am263px-lp_r5fss0-0_nortos_ti-arm-clang_clean:
+	$(MAKE) -C examples/dcl/dcl_df22/am263px-lp/r5fss0-0_nortos/ti-arm-clang -f makefile clean
+
+ dcl_df22_am263px-lp_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/dcl/dcl_df22/am263px-lp/r5fss0-0_freertos/ti-arm-clang -f makefile clean
+
+ dcl_pi_am263px-cc_r5fss0-0_nortos_ti-arm-clang_clean:
+	$(MAKE) -C examples/dcl/dcl_pi/am263px-cc/r5fss0-0_nortos/ti-arm-clang -f makefile clean
+
+ dcl_pi_am263px-cc_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/dcl/dcl_pi/am263px-cc/r5fss0-0_freertos/ti-arm-clang -f makefile clean
+
+ dcl_pi_am263px-lp_r5fss0-0_nortos_ti-arm-clang_clean:
+	$(MAKE) -C examples/dcl/dcl_pi/am263px-lp/r5fss0-0_nortos/ti-arm-clang -f makefile clean
+
+ dcl_pi_am263px-lp_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/dcl/dcl_pi/am263px-lp/r5fss0-0_freertos/ti-arm-clang -f makefile clean
+
  bissc_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_clean:
 	$(MAKE) -C examples/position_sense/bissc_diagnostic/single_channel/am263px-lp/r5fss0-0_freertos/ti-arm-clang -f makefile clean
 
@@ -274,6 +382,24 @@ examples-private-clean: $(BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL)
 
  tamagawa_diagnostic_soc_uart_am263px-lp_r5fss0-0_freertos_ti-arm-clang_clean:
 	$(MAKE) -C examples/position_sense/tamagawa_diagnostic_over_soc_uart/am263px-lp/r5fss0-0_freertos/ti-arm-clang -f makefile clean
+
+ sfralib_am263px-cc_r5fss0-0_nortos_ti-arm-clang_clean:
+	$(MAKE) -C examples/sfra/am263px-cc/r5fss0-0_nortos/ti-arm-clang -f makefile clean
+
+ transforms_test_am263px-cc_r5fss0-0_nortos_ti-arm-clang_clean:
+	$(MAKE) -C examples/transforms/transforms_test/am263px-cc/r5fss0-0_nortos/ti-arm-clang -f makefile clean
+
+ transforms_test_am263px-cc_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/transforms/transforms_test/am263px-cc/r5fss0-0_freertos/ti-arm-clang -f makefile clean
+
+ transforms_test_am263px-lp_r5fss0-0_nortos_ti-arm-clang_clean:
+	$(MAKE) -C examples/transforms/transforms_test/am263px-lp/r5fss0-0_nortos/ti-arm-clang -f makefile clean
+
+ transforms_test_am263px-lp_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/transforms/transforms_test/am263px-lp/r5fss0-0_freertos/ti-arm-clang -f makefile clean
+
+ dlog4ch_lib_am263px-cc_r5fss0-0_nortos_ti-arm-clang_clean:
+	$(MAKE) -C examples/utilities/datalog/am263px-cc/r5fss0-0_nortos/ti-arm-clang -f makefile clean
 
  bissc_peripheral_interface_single_ch_am263px-lp_icss_m0_pru0_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/bissc/firmware/single_channel/am263px-lp/icss_m0_pru0_fw/ti-pru-cgt -f makefile clean
@@ -302,11 +428,25 @@ examples-private-clean: $(BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL)
 
 BUILD_COMBO_EXAMPLE_SCRUB_ALL =
 # Various Example Scrub Targets
+BUILD_COMBO_EXAMPLE_SCRUB_ALL += dcl_df22_am263px-cc_r5fss0-0_nortos_ti-arm-clang_scrub
+BUILD_COMBO_EXAMPLE_SCRUB_ALL += dcl_df22_am263px-cc_r5fss0-0_freertos_ti-arm-clang_scrub
+BUILD_COMBO_EXAMPLE_SCRUB_ALL += dcl_df22_am263px-lp_r5fss0-0_nortos_ti-arm-clang_scrub
+BUILD_COMBO_EXAMPLE_SCRUB_ALL += dcl_df22_am263px-lp_r5fss0-0_freertos_ti-arm-clang_scrub
+BUILD_COMBO_EXAMPLE_SCRUB_ALL += dcl_pi_am263px-cc_r5fss0-0_nortos_ti-arm-clang_scrub
+BUILD_COMBO_EXAMPLE_SCRUB_ALL += dcl_pi_am263px-cc_r5fss0-0_freertos_ti-arm-clang_scrub
+BUILD_COMBO_EXAMPLE_SCRUB_ALL += dcl_pi_am263px-lp_r5fss0-0_nortos_ti-arm-clang_scrub
+BUILD_COMBO_EXAMPLE_SCRUB_ALL += dcl_pi_am263px-lp_r5fss0-0_freertos_ti-arm-clang_scrub
 BUILD_COMBO_EXAMPLE_SCRUB_ALL += bissc_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_scrub
 BUILD_COMBO_EXAMPLE_SCRUB_ALL += endat_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_scrub
 BUILD_COMBO_EXAMPLE_SCRUB_ALL += nikon_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_scrub
 BUILD_COMBO_EXAMPLE_SCRUB_ALL += tamagawa_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_scrub
 BUILD_COMBO_EXAMPLE_SCRUB_ALL += tamagawa_diagnostic_soc_uart_am263px-lp_r5fss0-0_freertos_ti-arm-clang_scrub
+BUILD_COMBO_EXAMPLE_SCRUB_ALL += sfralib_am263px-cc_r5fss0-0_nortos_ti-arm-clang_scrub
+BUILD_COMBO_EXAMPLE_SCRUB_ALL += transforms_test_am263px-cc_r5fss0-0_nortos_ti-arm-clang_scrub
+BUILD_COMBO_EXAMPLE_SCRUB_ALL += transforms_test_am263px-cc_r5fss0-0_freertos_ti-arm-clang_scrub
+BUILD_COMBO_EXAMPLE_SCRUB_ALL += transforms_test_am263px-lp_r5fss0-0_nortos_ti-arm-clang_scrub
+BUILD_COMBO_EXAMPLE_SCRUB_ALL += transforms_test_am263px-lp_r5fss0-0_freertos_ti-arm-clang_scrub
+BUILD_COMBO_EXAMPLE_SCRUB_ALL += dlog4ch_lib_am263px-cc_r5fss0-0_nortos_ti-arm-clang_scrub
 # Various System Example Scrub Targets
 
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL =
@@ -325,6 +465,30 @@ examples-scrub: $(BUILD_COMBO_EXAMPLE_SCRUB_ALL)
 
 examples-scrub-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL)
 
+ dcl_df22_am263px-cc_r5fss0-0_nortos_ti-arm-clang_scrub:
+	$(MAKE) -C examples/dcl/dcl_df22/am263px-cc/r5fss0-0_nortos/ti-arm-clang -f makefile scrub
+
+ dcl_df22_am263px-cc_r5fss0-0_freertos_ti-arm-clang_scrub:
+	$(MAKE) -C examples/dcl/dcl_df22/am263px-cc/r5fss0-0_freertos/ti-arm-clang -f makefile scrub
+
+ dcl_df22_am263px-lp_r5fss0-0_nortos_ti-arm-clang_scrub:
+	$(MAKE) -C examples/dcl/dcl_df22/am263px-lp/r5fss0-0_nortos/ti-arm-clang -f makefile scrub
+
+ dcl_df22_am263px-lp_r5fss0-0_freertos_ti-arm-clang_scrub:
+	$(MAKE) -C examples/dcl/dcl_df22/am263px-lp/r5fss0-0_freertos/ti-arm-clang -f makefile scrub
+
+ dcl_pi_am263px-cc_r5fss0-0_nortos_ti-arm-clang_scrub:
+	$(MAKE) -C examples/dcl/dcl_pi/am263px-cc/r5fss0-0_nortos/ti-arm-clang -f makefile scrub
+
+ dcl_pi_am263px-cc_r5fss0-0_freertos_ti-arm-clang_scrub:
+	$(MAKE) -C examples/dcl/dcl_pi/am263px-cc/r5fss0-0_freertos/ti-arm-clang -f makefile scrub
+
+ dcl_pi_am263px-lp_r5fss0-0_nortos_ti-arm-clang_scrub:
+	$(MAKE) -C examples/dcl/dcl_pi/am263px-lp/r5fss0-0_nortos/ti-arm-clang -f makefile scrub
+
+ dcl_pi_am263px-lp_r5fss0-0_freertos_ti-arm-clang_scrub:
+	$(MAKE) -C examples/dcl/dcl_pi/am263px-lp/r5fss0-0_freertos/ti-arm-clang -f makefile scrub
+
  bissc_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_scrub:
 	$(MAKE) -C examples/position_sense/bissc_diagnostic/single_channel/am263px-lp/r5fss0-0_freertos/ti-arm-clang -f makefile scrub
 
@@ -339,6 +503,24 @@ examples-scrub-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL)
 
  tamagawa_diagnostic_soc_uart_am263px-lp_r5fss0-0_freertos_ti-arm-clang_scrub:
 	$(MAKE) -C examples/position_sense/tamagawa_diagnostic_over_soc_uart/am263px-lp/r5fss0-0_freertos/ti-arm-clang -f makefile scrub
+
+ sfralib_am263px-cc_r5fss0-0_nortos_ti-arm-clang_scrub:
+	$(MAKE) -C examples/sfra/am263px-cc/r5fss0-0_nortos/ti-arm-clang -f makefile scrub
+
+ transforms_test_am263px-cc_r5fss0-0_nortos_ti-arm-clang_scrub:
+	$(MAKE) -C examples/transforms/transforms_test/am263px-cc/r5fss0-0_nortos/ti-arm-clang -f makefile scrub
+
+ transforms_test_am263px-cc_r5fss0-0_freertos_ti-arm-clang_scrub:
+	$(MAKE) -C examples/transforms/transforms_test/am263px-cc/r5fss0-0_freertos/ti-arm-clang -f makefile scrub
+
+ transforms_test_am263px-lp_r5fss0-0_nortos_ti-arm-clang_scrub:
+	$(MAKE) -C examples/transforms/transforms_test/am263px-lp/r5fss0-0_nortos/ti-arm-clang -f makefile scrub
+
+ transforms_test_am263px-lp_r5fss0-0_freertos_ti-arm-clang_scrub:
+	$(MAKE) -C examples/transforms/transforms_test/am263px-lp/r5fss0-0_freertos/ti-arm-clang -f makefile scrub
+
+ dlog4ch_lib_am263px-cc_r5fss0-0_nortos_ti-arm-clang_scrub:
+	$(MAKE) -C examples/utilities/datalog/am263px-cc/r5fss0-0_nortos/ti-arm-clang -f makefile scrub
 
  bissc_peripheral_interface_single_ch_am263px-lp_icss_m0_pru0_fw_ti-pru-cgt_scrub:
 	$(MAKE) -C source/position_sense/bissc/firmware/single_channel/am263px-lp/icss_m0_pru0_fw/ti-pru-cgt -f makefile scrub

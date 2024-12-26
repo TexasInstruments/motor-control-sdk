@@ -59,7 +59,7 @@ const lnkfiles = {
     ]
 };
 
-const syscfgfile = "../../../data_log.syscfg";
+const syscfgfile = "../data_log.syscfg";
 
 const readmeDoxygenPageTag = "EXAMPLES_DATALOG_TEST";
 
