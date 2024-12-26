@@ -96,7 +96,7 @@
         </file>
         <file path="../../../../../../source/utilities/datalog/source/datalog.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
-        <file path="../../../data_log.syscfg" openOnCreation="false" excludeFromBuild="false" action="copy">
+        <file path="../data_log.syscfg" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
         <file path="${MOTOR_CONTROL_SDK_PATH}/docs/api_guide_am263x/EXAMPLES_DATALOG_TEST.html"
                 openOnCreation="false" excludeFromBuild="false" targetName="README.html" action="link">

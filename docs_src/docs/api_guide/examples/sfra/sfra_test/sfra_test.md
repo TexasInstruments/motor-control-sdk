@@ -57,6 +57,18 @@ This example demonstrates usage of SFRA library. PI controller is designed for p
 
 # Steps to Run the Example
 
+\cond (SOC_AM263PX)
+## Hardware Setup
+
+\imageStyle{am263px_sfra_setup.jpeg,width:40%}
+\image html am263px_sfra_setup.jpeg "Hardware Setup with @VAR_BOARD_NAME"
+
+- Ensure that the SW9 dual switches are positioned towards dot.
+
+\endcond
+
+## Build, load and run
+
 - **When using CCS projects to build**, import the CCS project for the required combination and build it using the CCS project menu (see <a href="@VAR_MCU_SDK_DOCS_PATH/CCS_PROJECTS_PAGE.html" target="_blank"> Using SDK with CCS Projects </a>).
 - **When using makefiles to build**, note the required combination and build using make command (see <a href="@VAR_MCU_SDK_DOCS_PATH/MAKEFILE_BUILD_PAGE.html" target="_blank"> Using SDK with Makefiles </a>).
 - Launch a CCS debug session and run the executable, see <a href="@VAR_MCU_SDK_DOCS_PATH/CCS_LAUNCH_PAGE.html" target="_blank">  CCS Launch, Load and Run </a>

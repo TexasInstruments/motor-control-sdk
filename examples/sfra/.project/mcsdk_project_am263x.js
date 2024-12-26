@@ -63,7 +63,7 @@ const lnkfiles = {
     ]
 };
 
-const syscfgfile = "../../../sfra.syscfg";
+const syscfgfile = "../sfra.syscfg";
 
 const readmeDoxygenPageTag = "EXAMPLES_SFRA_TEST";
 

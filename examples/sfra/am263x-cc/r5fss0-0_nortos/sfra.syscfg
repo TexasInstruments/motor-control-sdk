@@ -1,8 +1,9 @@
 /**
  * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
  * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
- * @cliArgs --device "AM263x_beta" --package "ZCZ" --part "AM263x" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@09.02.00"
- * @versions {"tool":"1.20.0+3587"}
+ * @cliArgs --device "AM263x_beta" --part "AM263x" --package "ZCZ" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@10.00.00"
+ * @v2CliArgs --device "AM2634" --package "NFBGA (ZCZ)" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@10.00.00"
+ * @versions {"tool":"1.21.0+3721"}
  */
 
 /**
@@ -18,6 +19,7 @@ const gpio            = scripting.addModule("/drivers/gpio/gpio", {}, false);
 const gpio1           = gpio.addInstance();
 const gpio2           = gpio.addInstance();
 const debug_log       = scripting.addModule("/kernel/dpl/debug_log");
+const dpl_cfg         = scripting.addModule("/kernel/dpl/dpl_cfg");
 const mpu_armv7       = scripting.addModule("/kernel/dpl/mpu_armv7", {}, false);
 const mpu_armv71      = mpu_armv7.addInstance();
 const mpu_armv72      = mpu_armv7.addInstance();
@@ -64,26 +66,49 @@ adc2.adcClockPrescaler = "ADC_CLK_DIV_4_0";
 adc3.$name             = "ADCC";
 adc3.adcClockPrescaler = "ADC_CLK_DIV_4_0";
 
-epwm1.epwmTimebase_periodLoadMode   = "EPWM_PERIOD_DIRECT_LOAD";
 epwm1.$name                         = "EPWM0";
-epwm1.epwmTimebase_syncOutPulseMode = ["EPWM_SYNC_OUT_PULSE_ON_CNTR_ZERO"];
 epwm1.epwmTimebase_counterMode      = "EPWM_COUNTER_MODE_UP_DOWN";
+epwm1.epwmTimebase_syncOutPulseMode = ["EPWM_SYNC_OUT_PULSE_ON_CNTR_ZERO"];
+epwm1.epwmTimebase_periodLoadMode   = "EPWM_PERIOD_DIRECT_LOAD";
 epwm1.EPWM.$assign                  = "EPWM0";
 
-gpio1.pinDir         = "OUTPUT";
 gpio1.$name          = "GPIO_PROFILING1";
-gpio1.rx             = true;
+gpio1.pinDir         = "OUTPUT";
 gpio1.GPIO_n.$assign = "SPI0_D0";
 
 gpio2.$name          = "GPIO_PROFILING2";
 gpio2.pinDir         = "OUTPUT";
-gpio2.rx             = true;
 gpio2.GPIO_n.$assign = "SPI0_D1";
 
-debug_log.enableUartLog        = true;
-debug_log.uartLog.$name        = "CONFIG_UART0";
-debug_log.uartLog.UART.$assign = "UART0";
-debug_log.uartLog.child.$name  = "drivers_uart_v2_uart_v2_template0";
+const soc_ctrl_adc    = scripting.addModule("/drivers/soc_ctrl/v0/subModules/soc_ctrl_adc", {}, false);
+const soc_ctrl_adc1   = soc_ctrl_adc.addInstance({}, false);
+soc_ctrl_adc1.$name   = "soc_ctrl_adc0";
+adc.ADCreferences     = soc_ctrl_adc1;
+const soc_ctrl        = scripting.addModule("/drivers/soc_ctrl/soc_ctrl", {}, false);
+soc_ctrl.soc_ctrl_adc = soc_ctrl_adc1;
+
+const soc_ctrl_cmpss    = scripting.addModule("/drivers/soc_ctrl/v0/subModules/soc_ctrl_cmpss", {}, false);
+const soc_ctrl_cmpss1   = soc_ctrl_cmpss.addInstance({}, false);
+soc_ctrl_cmpss1.$name   = "soc_ctrl_cmpss0";
+soc_ctrl.soc_ctrl_cmpss = soc_ctrl_cmpss1;
+
+const soc_ctrl_epwm    = scripting.addModule("/drivers/soc_ctrl/v0/subModules/soc_ctrl_epwm", {}, false);
+const soc_ctrl_epwm1   = soc_ctrl_epwm.addInstance({}, false);
+soc_ctrl_epwm1.$name   = "soc_ctrl_epwm0";
+soc_ctrl.soc_ctrl_epwm = soc_ctrl_epwm1;
+epwm.epwmTbClkSync     = soc_ctrl_epwm1;
+
+const soc_ctrl_sdfm    = scripting.addModule("/drivers/soc_ctrl/v0/subModules/soc_ctrl_sdfm", {}, false);
+const soc_ctrl_sdfm1   = soc_ctrl_sdfm.addInstance({}, false);
+soc_ctrl_sdfm1.$name   = "soc_ctrl_sdfm0";
+soc_ctrl.soc_ctrl_sdfm = soc_ctrl_sdfm1;
+
+debug_log.enableUartLog            = true;
+debug_log.uartLog.$name            = "CONFIG_UART0";
+debug_log.uartLog.UART.$assign     = "UART0";
+debug_log.uartLog.UART.RXD.$assign = "UART0_RXD";
+debug_log.uartLog.UART.TXD.$assign = "UART0_TXD";
+debug_log.uartLog.child.$name      = "drivers_uart_v2_uart_v2_template0";
 
 mpu_armv71.$name             = "CONFIG_MPU_REGION0";
 mpu_armv71.size              = 31;
@@ -106,32 +131,32 @@ mpu_armv74.baseAddr          = 0x70000000;
 mpu_armv74.size              = 21;
 
 mpu_armv75.$name        = "CONFIG_MPU_REGION4";
-mpu_armv75.size         = 14;
 mpu_armv75.baseAddr     = 0x50D00000;
+mpu_armv75.size         = 14;
 mpu_armv75.allowExecute = false;
 mpu_armv75.attributes   = "Device";
 
 mpu_armv76.$name        = "CONFIG_MPU_REGION5";
+mpu_armv76.baseAddr     = 0x72000000;
 mpu_armv76.size         = 14;
 mpu_armv76.allowExecute = false;
 mpu_armv76.attributes   = "NonCached";
-mpu_armv76.baseAddr     = 0x72000000;
 
-timer1.$name       = "CPUTIMER0";
+timer1.usecPerTick = 10000;
 timer1.startTimer  = true;
 timer1.enableIntr  = false;
-timer1.usecPerTick = 10000;
+timer1.$name       = "CPUTIMER0";
 timer1.RTI.$assign = "RTI1";
 
 timer2.$name       = "CPUTIMER1";
+timer2.usecPerTick = 100000;
 timer2.startTimer  = true;
 timer2.enableIntr  = false;
-timer2.usecPerTick = 100000;
 timer2.RTI.$assign = "RTI2";
 
 timer3.$name       = "CPUTIMER2";
-timer3.startTimer  = true;
 timer3.usecPerTick = 100;
+timer3.startTimer  = true;
 timer3.RTI.$assign = "RTI3";
 
 default_linker1.$name = "memory_configurator_default_linker0";
@@ -319,11 +344,11 @@ section12.$name                       = "SIPC R5F Queue Memory";
 section12.group                       = false;
 section12.type                        = "NOLOAD";
 section12.output_section.create(1);
-section12.output_section[0].$name     = ".bss.sipc_r5f_queue_mem";
+section12.output_section[0].$name     = ".bss.sipc_secure_host_queue_mem";
 section12.output_section[0].alignment = 0;
 
-section13.load_memory             = "R5F_TCMB";
 section13.$name                   = "SFRADATA";
+section13.load_memory             = "R5F_TCMB";
 section13.output_section.create(1);
 section13.output_section[0].$name = ".sfradata";
 
@@ -335,28 +360,26 @@ int_xbar1.xbarOutput = ["EPWM0_INT"];
  * version of the tool will not impact the pinmux you originally saw.  These lines can be completely deleted in order to
  * re-solve from scratch.
  */
-adc1.ADC.$suggestSolution                   = "ADC2";
-adc1.ADC.AIN0.$suggestSolution              = "ADC2_AIN0";
-adc1.ADC.AIN1.$suggestSolution              = "ADC2_AIN1";
-adc1.ADC.AIN2.$suggestSolution              = "ADC2_AIN2";
-adc1.ADC.AIN3.$suggestSolution              = "ADC2_AIN3";
-adc1.ADC.AIN4.$suggestSolution              = "ADC2_AIN4";
-adc1.ADC.AIN5.$suggestSolution              = "ADC2_AIN5";
-adc2.ADC.$suggestSolution                   = "ADC1";
-adc2.ADC.AIN0.$suggestSolution              = "ADC1_AIN0";
-adc2.ADC.AIN1.$suggestSolution              = "ADC1_AIN1";
-adc2.ADC.AIN2.$suggestSolution              = "ADC1_AIN2";
-adc2.ADC.AIN3.$suggestSolution              = "ADC1_AIN3";
-adc2.ADC.AIN4.$suggestSolution              = "ADC1_AIN4";
-adc2.ADC.AIN5.$suggestSolution              = "ADC1_AIN5";
-adc3.ADC.$suggestSolution                   = "ADC0";
-adc3.ADC.AIN0.$suggestSolution              = "ADC0_AIN0";
-adc3.ADC.AIN1.$suggestSolution              = "ADC0_AIN1";
-adc3.ADC.AIN2.$suggestSolution              = "ADC0_AIN2";
-adc3.ADC.AIN3.$suggestSolution              = "ADC0_AIN3";
-adc3.ADC.AIN4.$suggestSolution              = "ADC0_AIN4";
-adc3.ADC.AIN5.$suggestSolution              = "ADC0_AIN5";
-epwm1.EPWM.A.$suggestSolution               = "EPWM0_A";
-epwm1.EPWM.B.$suggestSolution               = "EPWM0_B";
-debug_log.uartLog.UART.RXD.$suggestSolution = "MMC_CLK";
-debug_log.uartLog.UART.TXD.$suggestSolution = "MMC_CMD";
+adc1.ADC.$suggestSolution      = "ADC2";
+adc1.ADC.AIN0.$suggestSolution = "ADC2_AIN0";
+adc1.ADC.AIN1.$suggestSolution = "ADC2_AIN1";
+adc1.ADC.AIN2.$suggestSolution = "ADC2_AIN2";
+adc1.ADC.AIN3.$suggestSolution = "ADC2_AIN3";
+adc1.ADC.AIN4.$suggestSolution = "ADC2_AIN4";
+adc1.ADC.AIN5.$suggestSolution = "ADC2_AIN5";
+adc2.ADC.$suggestSolution      = "ADC1";
+adc2.ADC.AIN0.$suggestSolution = "ADC1_AIN0";
+adc2.ADC.AIN1.$suggestSolution = "ADC1_AIN1";
+adc2.ADC.AIN2.$suggestSolution = "ADC1_AIN2";
+adc2.ADC.AIN3.$suggestSolution = "ADC1_AIN3";
+adc2.ADC.AIN4.$suggestSolution = "ADC1_AIN4";
+adc2.ADC.AIN5.$suggestSolution = "ADC1_AIN5";
+adc3.ADC.$suggestSolution      = "ADC0";
+adc3.ADC.AIN0.$suggestSolution = "ADC0_AIN0";
+adc3.ADC.AIN1.$suggestSolution = "ADC0_AIN1";
+adc3.ADC.AIN2.$suggestSolution = "ADC0_AIN2";
+adc3.ADC.AIN3.$suggestSolution = "ADC0_AIN3";
+adc3.ADC.AIN4.$suggestSolution = "ADC0_AIN4";
+adc3.ADC.AIN5.$suggestSolution = "ADC0_AIN5";
+epwm1.EPWM.A.$suggestSolution  = "EPWM0_A";
+epwm1.EPWM.B.$suggestSolution  = "EPWM0_B";
