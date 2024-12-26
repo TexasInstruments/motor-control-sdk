@@ -22,7 +22,6 @@ PROFILE?=release
 ConfigName:=$(PROFILE)
 
 OUTNAME:=tamagawa_diagnostic_single_channel.$(PROFILE).out
-COREOUTNAME:=tamagawa_diagnostic_single_channel.$(PROFILE).optishare.out
 
 BOOTIMAGE_PATH=$(abspath .)
 BOOTIMAGE_NAME:=tamagawa_diagnostic_single_channel.$(PROFILE).appimage
@@ -34,7 +33,6 @@ BOOTIMAGE_RPRC_NAME_TMP:=tamagawa_diagnostic_single_channel.$(PROFILE).rprc_tmp
 BOOTIMAGE_NAME_HS:=tamagawa_diagnostic_single_channel.$(PROFILE).appimage.hs
 BOOTIMAGE_NAME_HS_FS:=tamagawa_diagnostic_single_channel.$(PROFILE).appimage.hs_fs
 TARGETS := $(BOOTIMAGE_NAME)
-
 
 FILES_common := \
 	tamagawa_diagnostic.c \
@@ -121,7 +119,6 @@ LFLAGS_common = \
 	-Wl,--diag_suppress=10063 \
 	-Wl,--ram_model \
 	-Wl,--reread_libs \
-	-Wl,--gen_xml_func_hash \
 
 
 LIBS_NAME = \
@@ -193,16 +190,8 @@ endif
 $(OUTNAME):  $(SYSTEM_COMMAND)
 	@echo  .
 	@echo  Linking: am243x:r5fss0-0:freertos:ti-arm-clang $@ ...
-	$(LNK) $(LNKOPTFLAGS) $(LFLAGS) $(LIBS_PATH) -Wl,-m=$(basename $@).map -o $@ $(addprefix $(OBJDIR), $(OBJS)) $(LIBS) $(LNK_FILES) -Wl,--xml_link_info=$(basename $@).lnkxml
+	$(LNK) $(LNKOPTFLAGS) $(LFLAGS) $(LIBS_PATH) -Wl,-m=$(basename $@).map -o $@ $(addprefix $(OBJDIR), $(OBJS)) $(LIBS) $(LNK_FILES)
 	@echo  Linking: am243x:r5fss0-0:freertos:ti-arm-clang $@ Done !!!
-	@echo  .
-
-coreout: $(COREOUTNAME)
-$(COREOUTNAME):  $(SYSTEM_COMMAND)
-	@echo  .
-	@echo  Relinking Linking: am243x:r5fss0-0:freertos:ti-arm-clang $@ with OptiShare SSO..
-	$(LNK) $(LNKOPTFLAGS) $(LFLAGS) $(LIBS_PATH) -Wl,-m=$(basename $@).map -o $@ $(addprefix $(OBJDIR), $(OBJS)) $(LIBS) $(LNK_FILES) -Wl,--xml_link_info=$(basename $@).lnkxml -Wl,--import_sso=$(SSO_PATH)
-	@echo  Relinking with optishare: am243x:r5fss0-0:freertos:ti-arm-clang $@ Done !!!
 	@echo  .
 
 clean:
@@ -228,8 +217,6 @@ ifeq ($(OS),Windows_NT)
 	$(RM) \*.rprc*
 	$(RM) \*.tiimage*
 	$(RM) \*.bin
-	$(RM) \*.lnkxml
-	$(RM) \*.ossr
 else
 	$(RM) *.out
 	$(RM) *.map
@@ -237,8 +224,6 @@ else
 	$(RM) *.rprc*
 	$(RM) *.tiimage*
 	$(RM) *.bin
-	$(RM) *.lnkxml
-	$(RM) *.ossr
 endif
 	$(RMDIR) generated
 
@@ -319,6 +304,7 @@ endif
 	$(MULTI_CORE_IMAGE_GEN) --devID $(SBL_DEV_ID) --out $(BOOTIMAGE_NAME_XIP) $(MULTI_CORE_IMAGE_PARAMS_XIP) >> $(BOOTIMAGE_TEMP_OUT_FILE)
 	$(RM) $(BOOTIMAGE_RPRC_NAME_TMP)
 	$(RM) $(BOOTIMAGE_TEMP_OUT_FILE)
+
 ifeq ($(DEVICE_TYPE), HS)
 # Sign the appimage using appimage signing script
 ifeq ($(ENC_ENABLED),no)
@@ -339,9 +325,6 @@ else
 	@echo  Boot image: am243x:r5fss0-0:freertos:ti-arm-clang $(BOOTIMAGE_PATH)/$(BOOTIMAGE_NAME_HS_FS) Done !!!
 	@echo  .
 endif
-
-
-
 .PHONY: coverage
 coverage:
 	@echo Creating Coverage Report for tamagawa_diagnostic_single_channel.$(PROFILE) ...
