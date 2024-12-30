@@ -249,7 +249,7 @@ function moduleInstances(instance){
                 });
             }
         }
-        if(is_am263x_soc || is_am263px_soc)
+        if(is_am263x_soc)
         {
             modInstances.push({
                 name: "PRU_MUX_SEL_GPIO64",

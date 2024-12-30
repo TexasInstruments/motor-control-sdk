@@ -3,12 +3,14 @@
  * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
  * @cliArgs --device "AM263Px" --part "AM263P4" --package "ZCZ_C" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@10.00.01"
  * @v2CliArgs --device "AM263P4" --package "NFBGA (ZCZ-C)" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@10.00.01"
- * @versions {"tool":"1.21.999+161"}
+ * @versions {"tool":"1.21.2+3837"}
  */
 
 /**
  * Import the modules used in this configuration.
  */
+const i2c             = scripting.addModule("/drivers/i2c/i2c", {}, false);
+const i2c1            = i2c.addInstance();
 const pruicss         = scripting.addModule("/drivers/pruicss/pruicss", {}, false);
 const pruicss1        = pruicss.addInstance();
 const debug_log       = scripting.addModule("/kernel/dpl/debug_log");
@@ -44,6 +46,10 @@ const bissc1          = bissc.addInstance();
 /**
  * Write custom configuration values to the imported modules.
  */
+i2c1.$name           = "CONFIG_I2C0";
+i2c1.I2C.$assign     = "I2C1";
+i2c1.I2C_child.$name = "drivers_i2c_v1_i2c_v1_template0";
+
 debug_log.enableUartLog            = true;
 debug_log.enableCssLog             = false;
 debug_log.uartLog.$name            = "CONFIG_UART0";
@@ -279,17 +285,13 @@ bissc1.Booster_Pack                      = true;
 bissc1.channel_0                         = false;
 bissc1.channel_1                         = true;
 bissc1.PRU_Slice                         = "PRU0";
-bissc1["PRU-ICSS"].PR0_PRU0_GPIO9.rx     = false;
 bissc1["PRU-ICSS"].PR0_PRU0_GPIO4.$used  = true;
 bissc1["PRU-ICSS"].PR0_PRU0_GPIO3.$used  = true;
 bissc1["PRU-ICSS"].PR0_PRU0_GPIO10.$used = true;
-bissc1["PRU-ICSS"].PR0_PRU0_GPIO11.rx    = false;
-bissc1.PRU_MUX_SEL_GPIO64.$name          = "PRU_MUX_SEL_GPIO64";
-bissc1.MUX_EN_GPIO58.$name               = "MUX_EN_GPIO58";
-bissc1.MUX_EN_GPIO58.GPIO_n.$assign      = "EPWM10_B";
 bissc1.ENC0_EN.$name                     = "ENC1_EN";
 bissc1.ENC0_EN.GPIO_n.$assign            = "SDFM0_D1";
 bissc1.BISSC_CH0_OUT_EN.$name            = "CONFIG_GPIO3";
+bissc1.BISSC_CH0_OUT_EN.GPIO_n.$assign   = "PR0_PRU0_GPIO5";
 
 pruicss1.$name                           = "CONFIG_PRU_ICSS0";
 bissc1.pru                               = pruicss1;
@@ -303,9 +305,9 @@ pruicss1.intcMapping[0].event            = "18";
  * version of the tool will not impact the pinmux you originally saw.  These lines can be completely deleted in order to
  * re-solve from scratch.
  */
+i2c1.I2C.SCL.$suggestSolution                       = "I2C1_SCL";
+i2c1.I2C.SDA.$suggestSolution                       = "I2C1_SDA";
 bissc1["PRU-ICSS"].$suggestSolution                 = "PRU-ICSS";
 bissc1["PRU-ICSS"].PR0_PRU0_GPIO4.$suggestSolution  = "PR0_PRU0_GPIO4";
 bissc1["PRU-ICSS"].PR0_PRU0_GPIO3.$suggestSolution  = "PR0_PRU0_GPIO3";
 bissc1["PRU-ICSS"].PR0_PRU0_GPIO10.$suggestSolution = "PR0_PRU0_GPIO10";
-bissc1.PRU_MUX_SEL_GPIO64.GPIO_n.$suggestSolution   = "OSPI0_CSn0";
-bissc1.BISSC_CH0_OUT_EN.GPIO_n.$suggestSolution     = "OSPI0_CSn1";

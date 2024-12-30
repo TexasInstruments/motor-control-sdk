@@ -120,6 +120,41 @@
 #define CPU1_BTCM_SOCVIEW(x) (CSL_R5FSS1_CORE0_BTCM_BASE+(x - CSL_R5FSS1_BTCM_BASE))
 #endif
 
+/*Use soc driver instead it when available */
+#if SOC_AM263PX
+/**
+ *  \anchor TCA6416_Mode
+ *  \name IO pin mode - Input or Output
+ *  @{
+ */
+/** \brief Configure IO pin as input */
+#define TCA6416_MODE_INPUT              (0U)
+/** \brief Configure IO pin as output */
+#define TCA6416_MODE_OUTPUT             (1U)
+/** @} */
+
+/**
+ *  \anchor TCA6416_OutState
+ *  \name IO pin output state - HIGH or LOW
+ *  @{
+ */
+/** \brief Configure IO pin output as LOW */
+#define TCA6416_OUT_STATE_LOW           (0U)
+/** \brief Configure IO pin output as HIGH */
+#define TCA6416_OUT_STATE_HIGH          (1U)
+/** @} */
+
+
+#define TCA6416_REG_INPUT_PORT_0        (0x00U)
+#define TCA6416_REG_INPUT_PORT_1        (0x01U)
+#define TCA6416_REG_OUTPUT_PORT_0       (0x02U)
+#define TCA6416_REG_OUTPUT_PORT_1       (0x03U)
+#define TCA6416_REG_POL_INV_PORT_0      (0x04U)
+#define TCA6416_REG_POL_INV_PORT_1      (0x05U)
+#define TCA6416_REG_CONFIG_PORT_0       (0x06U)
+#define TCA6416_REG_CONFIG_PORT_1       (0x07U)
+#endif
+
 static union endat_format_data gEndat_format_data_mtrctrl[3];
 static uint32_t gEndat_mtrctrl_crc_err[3];
 static uint32_t gEndat_2_2_crc_position_err_cnt[3];
@@ -140,10 +175,14 @@ TaskP_Object gTaskObject;
                                     ((x) == 100) || ((x) == 101) || ((x)== 103) || ((x) == 105) || ((x) == 106) || ((x) == 107) || ((x) == 108) || ((x) == 109)  || ((x) == 200))
 
 
-
+#if defined(SOC_AM263PX) || defined(SOC_AM263X)
+#define ICSS_PRU_CORE_CLOCK 200000000
+#define ENDAT_INPUT_CLOCK_UART_FREQUENCY 192000000
+#define ENDAT_CH1_RX_GPIO_NUM   0x400
+#else
 #define ICSS_PRU_CORE_CLOCK CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ
 #define ENDAT_INPUT_CLOCK_UART_FREQUENCY CONFIG_PRU_ICSS0_UART_CLK_FREQ_HZ
-
+#endif
 
 #if RX_FIFO_CLOCK_SOURCE == 1
 #define ENDAT_RX_INPUT_CLOCK_FREQUENCY ICSS_PRU_CORE_CLOCK
@@ -207,6 +246,141 @@ char * uint64_to_str (uint64_t x)
     return b;
 }
 
+#if defined(SOC_AM263PX)
+I2C_Handle          i2cHandle;
+
+int32_t TCA6416_open()
+{
+    int32_t status = SystemP_SUCCESS;
+
+    i2cHandle = I2C_getHandle(CONFIG_I2C0);
+
+    return (status);
+}
+
+int32_t TCA6416_config(uint32_t ioIndex, uint32_t mode)
+{
+
+    int32_t         status = SystemP_SUCCESS;
+    I2C_Transaction i2cTransaction;
+    uint32_t        port, portPin, i2cAddress;
+    uint8_t         buffer[2U] = {0};
+
+    i2cAddress  = 0x20;
+
+    if(status == SystemP_SUCCESS)
+    {
+        /* Each port contains 8 IOs */
+        port        = 0;
+        portPin     = ioIndex;
+
+        /* Set config register address - needed for next read */
+        I2C_Transaction_init(&i2cTransaction);
+        buffer[0] = TCA6416_REG_CONFIG_PORT_0 + port;
+        i2cTransaction.writeBuf     = buffer;
+        i2cTransaction.writeCount   = 1U;
+        i2cTransaction.targetAddress = i2cAddress;
+        status += I2C_transfer(i2cHandle, &i2cTransaction);
+
+        /* Read config register value */
+        I2C_Transaction_init(&i2cTransaction);
+        i2cTransaction.readBuf      = buffer;
+        i2cTransaction.readCount    = 1;
+        i2cTransaction.targetAddress = i2cAddress;
+        status += I2C_transfer(i2cHandle, &i2cTransaction);
+
+        /* Set output or input mode to particular IO pin - read/modify/write */
+        I2C_Transaction_init(&i2cTransaction);
+        if(TCA6416_MODE_INPUT == mode)
+        {
+            buffer[1] = buffer[0] | (0x01 << portPin);
+        }
+        else
+        {
+            buffer[1] = buffer[0] & ~(0x01 << portPin);
+        }
+        buffer[0] = TCA6416_REG_CONFIG_PORT_0 + port;
+        i2cTransaction.writeBuf     = buffer;
+        i2cTransaction.writeCount   = 2;
+        i2cTransaction.targetAddress = i2cAddress;
+        status += I2C_transfer(i2cHandle, &i2cTransaction);
+    }
+
+    return (status);
+}
+
+int32_t TCA6416_setOutput(uint32_t ioIndex, uint32_t state)
+{
+    int32_t         status = SystemP_SUCCESS;
+    I2C_Transaction i2cTransaction;
+    uint32_t        port, portPin, i2cAddress;
+    uint8_t         buffer[2U] = {0};
+
+    i2cAddress  = 0x20;
+
+    if(status == SystemP_SUCCESS)
+    {
+        /* Each port contains 8 IOs */
+        port        = 0;
+        portPin     = ioIndex;
+
+        /* Set output prt register address - needed for next read */
+        I2C_Transaction_init(&i2cTransaction);
+        buffer[0] = TCA6416_REG_OUTPUT_PORT_0 + port;
+        i2cTransaction.writeBuf     = buffer;
+        i2cTransaction.writeCount   = 1U;
+        i2cTransaction.targetAddress = i2cAddress;
+        status += I2C_transfer(i2cHandle, &i2cTransaction);
+
+        /* Read config register value */
+        I2C_Transaction_init(&i2cTransaction);
+        i2cTransaction.readBuf      = buffer;
+        i2cTransaction.readCount    = 1;
+        i2cTransaction.targetAddress = i2cAddress;
+        status += I2C_transfer(i2cHandle, &i2cTransaction);
+
+        /* Set output or input mode to particular IO pin - read/modify/write */
+        I2C_Transaction_init(&i2cTransaction);
+        if(TCA6416_OUT_STATE_HIGH == state)
+        {
+            buffer[1] = buffer[0] | (0x01 << portPin);
+        }
+        else
+        {
+            buffer[1] = buffer[0] & ~(0x01 << portPin);
+        }
+        buffer[0] = TCA6416_REG_OUTPUT_PORT_0 + port;
+        i2cTransaction.writeBuf     = buffer;
+        i2cTransaction.writeCount   = 2;
+        i2cTransaction.targetAddress = i2cAddress;
+        status += I2C_transfer(i2cHandle, &i2cTransaction);
+    }
+
+    return (status);
+}
+
+void lp_bp_mux_mode_config()
+{
+    int32_t status = SystemP_FAILURE;
+    status = TCA6416_open();
+    DebugP_assert(status == SystemP_SUCCESS);
+
+    /* Configure pins 6 and 7 as outputs */
+    status = TCA6416_config(6, TCA6416_MODE_OUTPUT);
+    DebugP_assert(status == SystemP_SUCCESS);
+    status = TCA6416_config(7, TCA6416_MODE_OUTPUT);
+    DebugP_assert(status == SystemP_SUCCESS);
+
+    /* Set value 1 in pin 7 - BP Mux 0 */
+    status = TCA6416_setOutput(7, TCA6416_OUT_STATE_HIGH);
+    DebugP_assert(status == SystemP_SUCCESS);
+
+     /* Set value 1 in pin 6 - BP Mux 1 */
+    status = TCA6416_setOutput(6, TCA6416_OUT_STATE_HIGH);
+    DebugP_assert(status == SystemP_SUCCESS);
+}
+#endif
+
 static void endat_pruicss_init(void)
 {
 
@@ -239,6 +413,18 @@ static void endat_pruicss_init(void)
 void endat_pre_init(void)
 {
     endat_pruicss_init();
+#if defined(SOC_AM263PX) ||  defined(SOC_AM263X)
+#if defined(SOC_AM263PX)
+    lp_bp_mux_mode_config();
+#endif
+    /* Set bits for input pins in ICSSM_PRU0_GPIO_OUT_CTRL register */
+    HW_WR_REG32(CSL_MSS_CTRL_U_BASE + CSL_MSS_CTRL_ICSSM_PRU0_GPIO_OUT_CTRL, ENDAT_CH1_RX_GPIO_NUM);
+    int32_t status;
+
+    /* Set PRU UART Clock Frequency to 192 MHz */
+    status = SOC_moduleSetClockFrequency(SOC_RcmPeripheralId_ICSSM0_UART0, SOC_RcmPeripheralClockSource_DPLL_PER_HSDIV0_CLKOUT1, ENDAT_INPUT_CLOCK_UART_FREQUENCY);
+    DebugP_assertNoLog(status == SystemP_SUCCESS);
+#endif
 }
 
 uint32_t endat_pruicss_load_run_fw(struct endat_priv *priv)
@@ -2195,12 +2381,11 @@ void endat_main(void *args)
     /*Translate the TCM local view addr to globel view addr */
     uint64_t gEndatChInfoGlobalAddr = CPU0_BTCM_SOCVIEW((uint64_t)&gEndatChInfo);
 
-
     pruicss_cfg = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->cfgRegBase);
     pruicss_iep  = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->iep0RegBase);
 
     icssClk = ICSS_PRU_CORE_CLOCK;
-    
+
     /*3 channel pheripheral clock configuration*/
     endat_clk_config.pru_clock = icssClk;
     endat_clk_config.pru_uart_clock = ENDAT_INPUT_CLOCK_UART_FREQUENCY;
