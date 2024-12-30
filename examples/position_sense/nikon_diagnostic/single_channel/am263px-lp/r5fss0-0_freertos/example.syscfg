@@ -9,6 +9,8 @@
 /**
  * Import the modules used in this configuration.
  */
+const i2c             = scripting.addModule("/drivers/i2c/i2c", {}, false);
+const i2c1            = i2c.addInstance();
 const pruicss         = scripting.addModule("/drivers/pruicss/pruicss", {}, false);
 const pruicss1        = pruicss.addInstance();
 const debug_log       = scripting.addModule("/kernel/dpl/debug_log");
@@ -44,6 +46,10 @@ const nikon1          = nikon.addInstance();
 /**
  * Write custom configuration values to the imported modules.
  */
+i2c1.$name           = "CONFIG_I2C0";
+i2c1.I2C.$assign     = "I2C1";
+i2c1.I2C_child.$name = "drivers_i2c_v1_i2c_v1_template0";
+
 debug_log.enableUartLog            = true;
 debug_log.enableCssLog             = false;
 debug_log.uartLog.$name            = "CONFIG_UART0";
@@ -278,16 +284,10 @@ nikon1.channel_1                         = true;
 nikon1.channel_0                         = false;
 nikon1.Booster_Pack                      = true;
 nikon1.PRU_Slice                         = "PRU0";
-nikon1["PRU-ICSS"].PR0_PRU0_GPIO9.rx     = false;
 nikon1["PRU-ICSS"].PR0_PRU0_GPIO5.$used  = true;
 nikon1["PRU-ICSS"].PR0_PRU0_GPIO4.$used  = true;
 nikon1["PRU-ICSS"].PR0_PRU0_GPIO3.$used  = true;
 nikon1["PRU-ICSS"].PR0_PRU0_GPIO10.$used = true;
-nikon1["PRU-ICSS"].PR0_PRU0_GPIO11.rx    = false;
-nikon1.PRU_MUX_SEL_GPIO64.$name          = "PRU_MUX_SEL_GPIO64";
-nikon1.PRU_MUX_SEL_GPIO64.GPIO_n.$assign = "EPWM7_B";
-nikon1.MUX_EN_GPIO58.$name               = "MUX_EN_GPIO58";
-nikon1.MUX_EN_GPIO58.GPIO_n.$assign      = "EPWM10_B";
 nikon1.ENC0_EN.$name                     = "ENC1_EN";
 nikon1.ENC0_EN.GPIO_n.$assign            = "SDFM0_D1";
 
@@ -303,6 +303,8 @@ pruicss1.intcMapping[0].event            = "18";
  * version of the tool will not impact the pinmux you originally saw.  These lines can be completely deleted in order to
  * re-solve from scratch.
  */
+i2c1.I2C.SCL.$suggestSolution                       = "I2C1_SCL";
+i2c1.I2C.SDA.$suggestSolution                       = "I2C1_SDA";
 nikon1["PRU-ICSS"].$suggestSolution                 = "PRU-ICSS";
 nikon1["PRU-ICSS"].PR0_PRU0_GPIO5.$suggestSolution  = "PR0_PRU0_GPIO5";
 nikon1["PRU-ICSS"].PR0_PRU0_GPIO4.$suggestSolution  = "PR0_PRU0_GPIO4";
