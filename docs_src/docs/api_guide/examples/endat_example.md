@@ -8,7 +8,7 @@ demonstrates the EnDat receiver operation.
 The EnDat driver provides a well defined set of APIs to expose EnDat
 receiver interface.
 
-\cond (SOC_AM263X || SOC_AM263PX ||  SOC_AM261X)
+\cond (SOC_AM261X)
 \note ICSSM1 UART clock set to 160 MHz is used to drive the EnDat interface. Receive (Rx) is oversampled at 8x of send(Tx). Therefore, the encoder interface frequency "f" should such that 160 Mhz is divisible by "f" and "8 times f".
 \endcond
 
@@ -32,7 +32,7 @@ Once these steps are executed,
 - the driver waits for the EnDat to be initialized.
 - It then sets clock frequency to 200KHz (as propagation delay is not yet compensated)
 - and obtains the encoder details including serial number, position resolution etc, and displays on the console/UART.
-- Based on the whether encoder is 2.2 or 2.1 type, it sets clock to either 8MHz or 1MHz respectively.
+- Based on the whether encoder is 2.2 or 2.1 type, it sets clock to either \if (SOC_AM261X) 5MHz \else 8MHz \endif or 1MHz respectively.
 - While configuring clock, propagation delay is taken care using the automatically estimated propagation delay (user can override it too).
 \cond (SOC_AM243X || SOC_AM64X)
 - In the case of concurrent Multi Channel with Encoders of Same Make or Multi Channel with Encoders of Different Make, if propagation delay between various channels are different, that too is automatically taken care.
@@ -63,7 +63,7 @@ After the user selects an EnDat command,
 \image html EnDat_channel_selection_In_sysconfig_for_am261x.PNG   "Channel Selection In Sysconfig"
 \endcond
 
-\cond (SOC_AM263X || SOC_AM263PX ||  SOC_AM261X)
+\cond (SOC_AM263X || SOC_AM263PX )
 \image html EnDat_channel_selection_In_sysconfig_for_am263x.PNG   "Channel Selection In Sysconfig"
 \endcond
 
@@ -279,20 +279,27 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 <tr>
     <td>J27</td>
     <td>ON</td>
-    <td>3WIRE/%SDFM MUX</td>
+    <td>Encoder and %SDFM Paths Select</td>
 </tr>
 <tr>
     <td>J28</td>
     <td>OFF</td>
-    <td>3WIRE MUX</td>
+    <td>AM243/AM263 Mode</td>
 </tr>
 </table>
 \endcond
 
 \cond (SOC_AM263X || SOC_AM263PX)
+
+\if SOC_AM263X
 ## Hardware Setup with LP-AM263
 \imageStyle{EnDat_am263x_hw_Setup.jpeg,width:60%}
-\image html EnDat_am263x_hw_Setup.jpeg "Hardware Setup for single channel on LP-AM263 + BP" s
+\image html EnDat_am263x_hw_Setup.jpeg "Hardware Setup for single channel on LP-AM263 + BP"
+\else
+## Hardware Setup with LP-AM263PX
+\imageStyle{EnDat_am263px_hw_Setup.jpeg,width:60%}
+\image html EnDat_am263px_hw_Setup.jpeg "Hardware Setup for single channel on LP-AM263P + BP"
+\endif
 #### Booster Pack Jumper Configuration
 <table>
 <tr>
@@ -352,13 +359,13 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 </tr>
 <tr>
     <td>J27</td>
-    <td>ON</td>
-    <td>3WIRE/%SDFM MUX</td>
+    <td>OFF</td>
+    <td>Encoder and %SDFM Paths Select</td>
 </tr>
 <tr>
     <td>J28</td>
     <td>ON</td>
-    <td>Am243/Am263 Mode</td>
+    <td>AM243/AM263 Mode</td>
 </tr>
 </table>
 
@@ -435,12 +442,12 @@ Connect the jumpers J13 and J26 for providing 3.3V and 5V to boosterpack.
 <tr>
     <td>J27</td>
     <td>ON</td>
-    <td>3WIRE/%SDFM MUX</td>
+    <td>Encoder and %SDFM Paths Select</td>
 </tr>
 <tr>
     <td>J28</td>
     <td>OFF</td>
-    <td>3WIRE MUX</td>
+    <td>AM243/AM263 Mode</td>
 </tr>
 </table>
 \endcond

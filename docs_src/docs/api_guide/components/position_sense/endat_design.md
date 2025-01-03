@@ -47,17 +47,12 @@ Remaining PRUs in the AM64x/AM243x/AM26x are available for Industrial Ethernet c
 <tr>
     <td>Maximum Frequency
     <td>16 MHz
-	<td>Supports up-to 20m cable
+	<td>Supports up-to 20m cable \if (SOC_AM243X ||SOC_AM64X) \note Tested up to 8MHz in multi-channel single PRU mode \endif 
 </tr>
 <tr>
     <td>Startup/Initialization Frequency
     <td>200 KHz
 	<td>After power on or reset
-</tr>
-<tr>
-    <td>Frequencies supported
-    <td>Upto 8 MHz
-	<td>Changeable at run-time
 </tr>
 <tr>
     <td>CRC

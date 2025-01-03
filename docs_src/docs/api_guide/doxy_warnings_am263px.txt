@@ -1,2 +1,0 @@
-C:/ti/motor_control_sdk/docs_src/docs/api_guide/examples/tamagawa_example.md:266: warning: image file Tamagawa_am263px_hw_Setup.jpeg is not found in IMAGE_PATH: assuming external image.
-C:/ti/motor_control_sdk/docs_src/docs/api_guide/examples/tamagawa_example.md:266: warning: image file Tamagawa_am263px_hw_Setup.jpeg is not found in IMAGE_PATH: assuming external image.
