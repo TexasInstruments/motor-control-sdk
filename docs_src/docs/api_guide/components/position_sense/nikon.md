@@ -84,7 +84,6 @@ Nikon A-Format absolute encoder receiver implementation on the TI PRU-ICSS inter
 	 <td>4x
     <td>Not tested
 </tr>
-
 </table>
    -  Support for up to 40-bit absolute position (single turn + multi turn) data with additional information.
    -  Support for position preset, temperature information and alarms.
@@ -94,6 +93,49 @@ Nikon A-Format absolute encoder receiver implementation on the TI PRU-ICSS inter
    -  Support for individual and multiple transmission mode with encoder addresses ranging between ENC1-ENC8.
 
 \endcond
+
+\cond (SOC_AM263X || SOC_AM263PX)
+   -  Support for point-to-point and bus communication.
+   -  Support for baud rates from 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz.
+   -  Support for oversampling ratio with different baud rates.
+<table>
+<tr>
+    <th rowspan="2">Clock Source
+    <th rowspan="1" colspan="5">Interface Speed
+</tr>
+<tr>
+    <th>2.5 MHz
+    <th>4 MHz
+    <th>6.67 MHz
+    <th>8 MHz
+    <th>16 MHz
+</tr>
+<tr>
+    <td>PRU UART Clock (192 MHz)
+    <td>Not tested
+	<td>8x
+    <td>Not tested
+	<td>8x
+    <td>8x with fractional div
+</tr>
+<tr>
+    <td>PRU Core Clock (200 MHz)
+    <td>8x
+	<td>Not tested
+    <td>6x
+	<td>Not tested
+    <td>Not tested
+</tr>
+</table>
+   -  Support for up to 40-bit absolute position (single turn + multi turn) data with additional information.
+   -  Support for position preset, temperature information and alarms.
+   -  Support for non-volatile (EEPROM) read and write access.
+   -  Support for identification code read and write process.
+   -  Support for encoder address setting.
+   -  Support for individual and multiple transmission mode with encoder addresses ranging between ENC1-ENC8.
+
+\endcond
+
 ## Features Not Supported
 
 In general, peripherals or features not mentioned as part of "Features Supported" section are not
@@ -129,6 +171,18 @@ SysConfig can be used to configure things mentioned below:
 - Selecting source clock.
 
 \note Nikon firmware will only run with ICSS UART Clock running at 160 MHz(when ICSS Core Clock is 225 MHz).
+
+\endcond
+
+\cond  (SOC_AM263X || SOC_AM263PX)
+
+SysConfig can be used to configure things mentioned below:
+- Selecting the ICSS instance. (Tested on ICSSM)
+- Selecting the ICSS PRU slice.(Tested on ICSSM-PRU0)
+- Configuring PINMUX.
+- Frequency selection.
+- Channel selection.
+- Selecting source clock.
 
 \endcond
 ## ICSS PRU Resource Usage
@@ -178,7 +232,7 @@ SysConfig can be used to configure things mentioned below:
 
 \endcond
 
-\cond SOC_AM261X
+\cond (SOC_AM261X || SOC_AM263X || SOC_AM263PX)
 <table>
 <tr>
     <th> Configuration

@@ -104,6 +104,52 @@ BiSS Safety is a profile definition for BiSS that has been certified by TÜV Rhe
 
 \endcond
 
+\cond (SOC_AM263X || SOC_AM263PX)
+
+   -  BiSS-C Interface Master for point-to-point communication
+   -  Support for single channel implementation with one encoder
+   -  Receive on-the-fly CRC verification of position and control data
+   -  Interface speed of 1, 2, 5, 8, and 10 MHz
+   -  Support for oversampling ratio with different interface speeds
+<table>
+<tr>
+    <th rowspan="2">Clock Source
+    <th rowspan="1" colspan="5">Interface Speed
+</tr>
+<tr>
+    <th>1 MHz
+    <th>2 MHz
+    <th>5 MHz
+    <th>8 MHz
+    <th>10 MHz
+</tr>
+<tr>
+    <td>PRU UART Clock (192 MHz)
+    <td>8x
+	<td>8x
+    <td>Not tested
+	<td>8x
+    <td>Not tested
+</tr>
+<tr>
+    <td>PRU Core Clock (200 MHz)
+    <td>Not tested
+	<td>Not tested
+    <td>8x
+	<td>Not tested
+    <td>4x
+</tr>
+
+</table>
+   -  Two modes of operation - host trigger and periodic trigger
+   -  Support for control communication
+   -  Support for automatic processing delay detection and compensation
+   -  Support for multiple encoders connected via daisy-chain configuration (up-to 3 encoders)
+   -  Support for concurrent multi-channel support on a single PRU (up-to 3 identical encoders)
+   -  Support for up to 100 meter cable
+   -  Readiness for BiSS Safety profile by supporting 16 bit CRC and sign-of-life counter
+
+\endcond
 
 ## Features Not Supported
 
@@ -144,6 +190,19 @@ SysConfig can be used to configure things mentioned below:
 - Selecting clock source
 
 \note BiSS-C firmware will only run with ICSS UART Clock running at 160 MHz(when ICSS Core Clock is 225 MHz).
+
+\endcond
+
+\cond (SOC_AM263X || SOC_AM263PX)
+
+@VAR_SYSCFG_USAGE_NOTE
+
+SysConfig can be used to configure things mentioned below:
+- Selecting the ICSS instance. (Tested on ICSSM)
+- Selecting the ICSS PRU slice. (Tested on ICSSM-PRU0)
+- Configuring PINMUX.
+- Frequency selection.
+- Selecting clock source
 
 \endcond
 
@@ -194,7 +253,7 @@ SysConfig can be used to configure things mentioned below:
 
 \endcond
 
-\cond SOC_AM261X
+\cond (SOC_AM261X || SOC_AM263X || SOC_AM263PX)
 <table>
 <tr>
     <th> Configuration
