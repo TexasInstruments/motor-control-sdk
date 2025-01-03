@@ -43,6 +43,10 @@ EnDat is a bidirectional interface for position encoders. During EnDat operation
 \endcond
 \cond (SOC_AM263X || SOC_AM263PX)
 <tr>
+   <td> PRU UART Clock (192 MHz)
+   <td> 1MHz, 2MHz, 4MHz, 6MHz, 8MHz, 12MHz, 16MHz
+</tr>
+<tr>
    <td> PRU UART Clock (160 MHz)
    <td> 1MHz, 2MHz, 4MHz, 5MHz, 10MHz
 </tr>
