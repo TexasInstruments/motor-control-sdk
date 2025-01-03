@@ -245,12 +245,12 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 <tr>
     <td>J27</td>
     <td>ON</td>
-    <td>3WIRE/%SDFM MUX</td>
+    <td>Encoder and %SDFM Paths Select</td>
 </tr>
 <tr>
     <td>J28</td>
     <td>OFF</td>
-    <td>3WIRE MUX</td>
+    <td>AM243/AM263 Mode</td>
 </tr>
 </table>
 
@@ -329,13 +329,13 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 </tr>
 <tr>
     <td>J27</td>
-    <td>ON</td>
-    <td>3WIRE/%SDFM MUX</td>
+    <td>OFF</td>
+    <td>Encoder and %SDFM Paths Select</td>
 </tr>
 <tr>
     <td>J28</td>
     <td>ON</td>
-    <td>Am243/Am263 Mode</td>
+    <td>AM243/AM263 Mode</td>
 </tr>
 </table>
 
@@ -412,12 +412,12 @@ Connect the jumpers J13 and J26 for providing 3.3V and 5V to boosterpack.
 <tr>
     <td>J27</td>
     <td>ON</td>
-    <td>3WIRE/%SDFM MUX</td>
+    <td>Encoder and %SDFM Paths Select</td>
 </tr>
 <tr>
     <td>J28</td>
     <td>OFF</td>
-    <td>3WIRE MUX</td>
+    <td>AM243/AM263 Mode</td>
 </tr>
 </table>
 

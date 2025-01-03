@@ -40,10 +40,40 @@ Mbed-TLS                | R5F            | mbedtls-3.0.0
 
 ### Position Sense
 
-Module       | Supported CPUs | SysConfig Support | OS Support        | Key features tested                                                                                                                                            | Key features not tested
--------------|----------------|-------------------|-------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------
-Tamagawa over SOC UART   | R5F            | YES               | FreeRTOS          | Absolute position, Encoder ID, Reset, EEPROM Read, EEPROM Write, 2.5 Mbps and 5 Mbps Encoder Support                                                           | -
-Tamagawa over PRU 3-channel interface    | R5F            | YES               | FreeRTOS          | Absolute position, Encoder ID, Reset, EEPROM Read, EEPROM Write, 2.5 Mbps and 5 Mbps Encoder Support                                                           | -
+<table>
+<tr>
+    <th> Module
+    <th> Supported CPUs
+    <th> SysConfig Support
+    <th> OS Support
+    <th> Key features tested
+    <th> Key features not tested
+</tr>
+<tr>
+    <td> Tamagawa over SOC UART
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Absolute position, Encoder ID, Reset, EEPROM Read, EEPROM Write, 2.5 Mbps Encoder
+    <td> 5 Mbps Encoder
+</tr>
+<tr>
+    <td> EnDat
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Single channel, Continuous mode, Recovery Time for 2.2 command set, Long cable (upto 100 meters), Boosterpack with LP-AM263P
+    <td> Encoder receive communication command
+</tr>
+<tr>
+    <td> Tamagawa over PRU 3-channel interface 
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Absolute position, Encoder ID, Reset, EEPROM Read, EEPROM Write, 2.5 Mbps Encoder, Boosterpack with LP-AM263P
+    <td> 5 Mbps Encoder
+</tr>
+</table>
 
 ### Real Time Libraries
 
