@@ -15,7 +15,11 @@
 
 Feature                                                                                         | Module
 ------------------------------------------------------------------------------------------------|-----------------------------------
-Tamagawa over PRU 3-channel interface                                                                  | Position Sense
+Tamagawa over PRU 3-channel interface                                                           | Position Sense
+Nikon A-Format Single Channel Support                                                           | Position Sense Nikon A-Format
+Multiple baud rate support : 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz                        | Position Sense Nikon A-Format
+BiSS-C Single Channel Support                                                                   | Position Sense BiSS-C
+Multiple baud rate support : 1 MHz, 2 MHz, 5 MHz, 8 MHz, and 10 MHz                             | Position Sense BiSS-C
 
 
 ## Device and Validation Information
@@ -48,6 +52,22 @@ Mbed-TLS                | R5F            | mbedtls-3.0.0
     <th> OS Support
     <th> Key features tested
     <th> Key features not tested
+</tr>
+<tr>
+    <td> BiSS-C
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Single channel, point-to-point connection,control communication, automatic processing delay detection and compensation, Interface speed of 1, 2, 5, 8, and 10 MHz, Boosterpack with LP-AM261
+    <td> Multi Transmission Mode, Long cable (upto 100 meters)
+</tr>
+<tr>
+    <td> Nikon A-Format
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Single channel, point-to-point connection, baud rates from 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz, up to 40-bit absolute position (single turn + multi turn) data with additional information, Boosterpack with LP-AM261
+    <td> Daisy Chain Testing, Long cable (upto 100 meters)
 </tr>
 <tr>
     <td> Tamagawa over SOC UART
