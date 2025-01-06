@@ -1721,15 +1721,15 @@ void endat_config_clock(struct endat_priv *priv,
     /* Set PRU1_ED_RX_SB_POL polarity bit, required for ICSSG (don't care for ICSSM) */
     if(priv->pruicss_slicex)
     {
-        HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG, clk_cfg->rx_div << 16 | 0x8 |
+        HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG, clk_cfg->rx_div << 16 | priv->rx_clock_source << 4| 0x8 |
             clk_cfg->rx_div_attr);
-        HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG + 2, clk_cfg->tx_div);
+        HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG, clk_cfg->tx_div << 16 | priv->tx_clock_source << 4);
     }
     else
     {
-       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG, clk_cfg->rx_div << 16 | 0x8 |
+       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG, clk_cfg->rx_div << 16 |priv->rx_clock_source << 4 | 0x8 |
             clk_cfg->rx_div_attr);
-       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG + 2, clk_cfg->tx_div);
+       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG, clk_cfg->tx_div << 16 | priv->tx_clock_source << 4);
     }
 
 
