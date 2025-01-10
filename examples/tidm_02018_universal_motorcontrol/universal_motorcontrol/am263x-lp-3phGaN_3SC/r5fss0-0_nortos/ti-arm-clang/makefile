@@ -81,22 +81,22 @@ FILES_PATH_common = \
 	../../../src_board \
 	../../../src_control \
 	../../../src_control/CAN \
-	${MOTOR_CONTROL_SDK_PATH}/source/utilities/traj/source \
-	${MOTOR_CONTROL_SDK_PATH}/source/utilities/step_response/source \
-	${MOTOR_CONTROL_SDK_PATH}/source/utilities/datalog/source \
-	${MOTOR_CONTROL_SDK_PATH}/source/utilities/angle_gen/source \
-	${MOTOR_CONTROL_SDK_PATH}/source/transforms/volts/source \
-	${MOTOR_CONTROL_SDK_PATH}/source/transforms/svgen \
-	${MOTOR_CONTROL_SDK_PATH}/source/observers/speedfr/source \
-	${MOTOR_CONTROL_SDK_PATH}/source/observers/speedcalc/source \
-	${MOTOR_CONTROL_SDK_PATH}/source/observers/hall/source \
-	${MOTOR_CONTROL_SDK_PATH}/source/observers/esmo/source \
-	${MOTOR_CONTROL_SDK_PATH}/source/observers/encoder/source \
-	${MOTOR_CONTROL_SDK_PATH}/source/control/filter/filter_fo/source \
-	${MOTOR_CONTROL_SDK_PATH}/source/control/vs_freq/source \
-	${MOTOR_CONTROL_SDK_PATH}/source/control/pi/source \
-	${MOTOR_CONTROL_SDK_PATH}/source/control/mtpa/source \
-	${MOTOR_CONTROL_SDK_PATH}/source/control/fwc/source \
+	${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/utilities/traj/source \
+	${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/utilities/step_response/source \
+	${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/utilities/datalog/source \
+	${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/utilities/angle_gen/source \
+	${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/transforms/volts/source \
+	${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/transforms/svgen \
+	${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/observers/speedfr/source \
+	${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/observers/speedcalc/source \
+	${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/observers/hall/source \
+	${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/observers/esmo/source \
+	${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/observers/encoder/source \
+	${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/control/filter/filter_fo/source \
+	${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/control/vs_freq/source \
+	${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/control/pi/source \
+	${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/control/mtpa/source \
+	${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/control/fwc/source \
 	${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/mathlib/fastrts \
 	generated \
 
@@ -105,29 +105,29 @@ INCLUDES_common := \
 	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source \
 	-I${MOTOR_CONTROL_SDK_PATH}/source \
 	-I${CG_TOOL_ROOT}/include/c \
-    -I${MOTOR_CONTROL_SDK_PATH}/source/control/fwc/include \
-    -I${MOTOR_CONTROL_SDK_PATH}/source/control/mtpa/include \
-    -I${MOTOR_CONTROL_SDK_PATH}/source/control/pi/include \
-    -I${MOTOR_CONTROL_SDK_PATH}/source/control/vs_freq/include \
-    -I${MOTOR_CONTROL_SDK_PATH}/source/control/filter/filter_fo/include \
-    -I${MOTOR_CONTROL_SDK_PATH}/source/dcl \
-    -I${MOTOR_CONTROL_SDK_PATH}/source/observers/encoder/include \
-    -I${MOTOR_CONTROL_SDK_PATH}/source/observers/esmo/include \
-    -I${MOTOR_CONTROL_SDK_PATH}/source/observers/est/include \
-    -I${MOTOR_CONTROL_SDK_PATH}/source/observers/hall/include \
-    -I${MOTOR_CONTROL_SDK_PATH}/source/observers/speedfr/include \
-    -I${MOTOR_CONTROL_SDK_PATH}/source/observers/speedcalc/include \
-    -I${MOTOR_CONTROL_SDK_PATH}/source/sfra \
-    -I${MOTOR_CONTROL_SDK_PATH}/source/transforms/clarke \
-    -I${MOTOR_CONTROL_SDK_PATH}/source/transforms/ipark \
-    -I${MOTOR_CONTROL_SDK_PATH}/source/transforms/park \
-    -I${MOTOR_CONTROL_SDK_PATH}/source/transforms/svgen \
-    -I${MOTOR_CONTROL_SDK_PATH}/source/transforms/volts/include \
-	-I${MOTOR_CONTROL_SDK_PATH}/source/utilities \
-    -I${MOTOR_CONTROL_SDK_PATH}/source/utilities/angle_gen/include \
-    -I${MOTOR_CONTROL_SDK_PATH}/source/utilities/datalog/include \
-    -I${MOTOR_CONTROL_SDK_PATH}/source/utilities/step_response/include \
-    -I${MOTOR_CONTROL_SDK_PATH}/source/utilities/traj/include \
+    -I${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/control/fwc/include \
+    -I${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/control/mtpa/include \
+    -I${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/control/pi/include \
+    -I${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/control/vs_freq/include \
+    -I${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/control/filter/filter_fo/include \
+    -I${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/dcl \
+    -I${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/observers/encoder/include \
+    -I${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/observers/esmo/include \
+    -I${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/observers/est/include \
+    -I${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/observers/hall/include \
+    -I${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/observers/speedfr/include \
+    -I${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/observers/speedcalc/include \
+    -I${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/sfra \
+    -I${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/transforms/clarke \
+    -I${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/transforms/ipark \
+    -I${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/transforms/park \
+    -I${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/transforms/svgen \
+    -I${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/transforms/volts/include \
+	-I${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/utilities \
+    -I${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/utilities/angle_gen/include \
+    -I${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/utilities/datalog/include \
+    -I${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/utilities/step_response/include \
+    -I${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/utilities/traj/include \
 	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/mathlib/fastrts \
 	-I${MOTOR_CONTROL_SDK_PATH}/examples/tidm_02018_universal_motorcontrol/universal_motorcontrol \
     -I${MOTOR_CONTROL_SDK_PATH}/examples/tidm_02018_universal_motorcontrol/universal_motorcontrol/src_board \
@@ -199,7 +199,7 @@ LIBS_PATH_common = \
 	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/nortos/lib \
 	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers/lib \
 	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/board/lib \
-	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/source/sfra/lib \
+	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/sfra/lib \
 	-Wl,-i${CG_TOOL_ROOT}/lib \
 
 LIBS_common = \
@@ -229,7 +229,7 @@ LIBS_PATH_NAME = \
 	${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/nortos/lib \
 	${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers/lib \
 	${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/board/lib \
-	${MOTOR_CONTROL_SDK_PATH}/source/sfra/lib \
+	${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/sfra/lib \
 	${CG_TOOL_ROOT}/lib \
 
 FILES := $(FILES_common) $(FILES_$(PROFILE))

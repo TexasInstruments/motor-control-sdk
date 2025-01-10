@@ -87,7 +87,7 @@ Mbed-TLS                | R5F            | mbedtls-3.0.0
     <td> Encoder receive communication command
 </tr>
 <tr>
-    <td> Tamagawa over PRU 3-channel interface 
+    <td> Tamagawa over PRU 3-channel interface
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
@@ -285,7 +285,7 @@ earlier SDKs. -->
 </tr>
 </table> -->
 
-<!-- ### Examples
+### Examples
 
 <table>
 <tr>
@@ -293,6 +293,12 @@ earlier SDKs. -->
     <th> Affected API
     <th> Change
     <th> Additional Remarks
+</tr>
+<tr>
+    <td> Real Time Libraries
+    <td> -
+    <td> Moved examples/dcl, examples/sfra, examples/transforms, examples/utilities to examples/rtlibs folder
+    <td> All exammples using Real Time Libraries are updated to use new path
 </tr>
 </table>
 
@@ -305,5 +311,11 @@ earlier SDKs. -->
     <th> Change
     <th> Additional Remarks
 </tr>
-</table> -->
+<tr>
+    <td> Real Time Libraries
+    <td> -
+    <td> Moved source/control, source/dcl, source/observers, source/sfra, source/transforms, source/utilities to source/rtlibs folder
+    <td> All exammples using Real Time Libraries are updated to use new path
+</tr>
+</table>
 
