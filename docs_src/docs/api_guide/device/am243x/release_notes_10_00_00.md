@@ -119,7 +119,7 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
 </tr>
 <tr>
     <td> PINDSW-7976
-    <td> PRUICSS PWM : validation of number of pwm channels and pwm trip zone blocks are not correct in sysconfig 
+    <td> PRUICSS PWM : validation of number of pwm channels and pwm trip zone blocks are not correct in sysconfig
     <td> PRUICSS PWM
     <td> 9.1 onwards
     <td> -
@@ -305,15 +305,21 @@ This section lists changes which could affect user applications developed using 
 </tr>
 <tr>
     <td> Position Sense Endat
-    <td> Firmware binary files 
-    <td> Renamed the all binary files 
+    <td> Firmware binary files
+    <td> Renamed the all binary files
     <td> Used encoder_receiver inclusive term
 </tr>
 <tr>
     <td> Position Sense Tamagawa
-    <td> Firmware binary files 
+    <td> Firmware binary files
     <td> Renamed the all binary files
     <td> Used encoder_receiver inclusive term
+</tr>
+<tr>
+    <td> Real Time Libraries
+    <td> -
+    <td> Moved examples/dcl, examples/sfra, examples/transforms, examples/utilities to examples/rtlibs folder
+    <td> All exammples using Real Time Libraries are updated to use new path
 </tr>
 </table>
 
@@ -329,7 +335,7 @@ This section lists changes which could affect user applications developed using 
 <tr>
     <td> PRUICSS PWM
     <td> structure `PRUICSS_PWM_IEP_Attrs_s`
-    <td> Added variables : `iep1IncrementValue`, `enableIep1`, `enableIep1ResetOnEpwm0_Sync`, `enableIep1ResetOnEpwm3_Sync`, `enableIep1ResetOnCompare0`, `enableIEP1ShadowMode` 
+    <td> Added variables : `iep1IncrementValue`, `enableIep1`, `enableIep1ResetOnEpwm0_Sync`, `enableIep1ResetOnEpwm3_Sync`, `enableIep1ResetOnCompare0`, `enableIEP1ShadowMode`
     <td> -
 </tr>
 <tr>
@@ -365,7 +371,7 @@ This section lists changes which could affect user applications developed using 
 <tr>
     <td> Position Sense Endat
     <td> \ref endat_init
-    <td> Added new parameter: \ref endat_clock_config 
+    <td> Added new parameter: \ref endat_clock_config
     <td> -
 </tr>
 <tr>
@@ -391,5 +397,11 @@ This section lists changes which could affect user applications developed using 
     <td> API bissc_init
     <td> Added input parameter tx_rx_clock_source
     <td> Needed for configuring clock source selection
+</tr>
+<tr>
+    <td> Real Time Libraries
+    <td> -
+    <td> Moved source/control, source/dcl, source/observers, source/sfra, source/transforms, source/utilities to source/rtlibs folder
+    <td> All exammples using Real Time Libraries are updated to use new path
 </tr>
 </table>

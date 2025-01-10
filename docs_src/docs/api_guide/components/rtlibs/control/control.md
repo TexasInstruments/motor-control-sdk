@@ -4,7 +4,7 @@
 
 ## Introduction
 
-This section goes over a collection of control algorithms and techniques used in motors such as PMSM and BLDC. The library source code can be found in motor_control_sdk/source/control.
+This section goes over a collection of control algorithms and techniques used in motors such as PMSM and BLDC. The library source code can be found in motor_control_sdk/source/rtlibs/control.
 
 ## Features Supported
 
