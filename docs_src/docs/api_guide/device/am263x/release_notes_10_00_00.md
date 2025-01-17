@@ -15,10 +15,12 @@
 
 Feature                                                                                         | Module
 ------------------------------------------------------------------------------------------------|-----------------------------------
-Tamagawa over PRU 3-channel interface                                                           | Position Sense
-Nikon A-Format Single Channel Support                                                           | Position Sense Nikon A-Format
+Tamagawa over PRU 3-channel interface                                                           | Position Sense Tamagawa
+Multiple baud rate support : 2.5 Mbps, and 5 Mbps                                               | Position Sense Tamagawa
+EnDat 2.2                                                                                       | Position Sense EnDat
+Nikon A-Format Single Channel                                                                   | Position Sense Nikon A-Format
 Multiple baud rate support : 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz                        | Position Sense Nikon A-Format
-BiSS-C Single Channel Support                                                                   | Position Sense BiSS-C
+BiSS-C Single Channel                                                                           | Position Sense BiSS-C
 Multiple baud rate support : 1 MHz, 2 MHz, 5 MHz, 8 MHz, and 10 MHz                             | Position Sense BiSS-C
 
 
@@ -63,22 +65,6 @@ Mbed-TLS                | R5F            | mbedtls-3.0.0
     <td> Multi Transmission Mode, Long cable (upto 100 meters)
 </tr>
 <tr>
-    <td> Nikon A-Format
-    <td> R5F
-    <td> YES
-    <td> FreeRTOS, NORTOS
-    <td> Single channel, point-to-point connection, baud rates from 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz, up to 40-bit absolute position (single turn + multi turn) data with additional information, Boosterpack with LP-AM261
-    <td> Daisy Chain Testing, Long cable (upto 100 meters)
-</tr>
-<tr>
-    <td> Tamagawa over SOC UART
-    <td> R5F
-    <td> YES
-    <td> FreeRTOS, NORTOS
-    <td> Absolute position, Encoder ID, Reset, EEPROM Read, EEPROM Write, 2.5 Mbps Encoder
-    <td> 5 Mbps Encoder
-</tr>
-<tr>
     <td> EnDat
     <td> R5F
     <td> YES
@@ -87,11 +73,27 @@ Mbed-TLS                | R5F            | mbedtls-3.0.0
     <td> Encoder receive communication command
 </tr>
 <tr>
+    <td> Nikon A-Format
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Single channel, point-to-point connection, baud rates from 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz, up to 40-bit absolute position (single turn + multi turn) data with additional information, Boosterpack with LP-AM261
+    <td> Daisy Chain Testing, Long cable (upto 100 meters)
+</tr>
+<tr>
     <td> Tamagawa over PRU 3-channel interface
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
     <td> Absolute position, Encoder ID, Reset, EEPROM Read, EEPROM Write, 2.5 Mbps Encoder, Boosterpack with LP-AM263
+    <td> 5 Mbps Encoder
+</tr>
+<tr>
+    <td> Tamagawa over SOC UART
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Absolute position, Encoder ID, Reset, EEPROM Read, EEPROM Write, 2.5 Mbps Encoder
     <td> 5 Mbps Encoder
 </tr>
 </table>
@@ -157,7 +159,7 @@ Mbed-TLS                | R5F            | mbedtls-3.0.0
 </tr>
 </table>
 
-## Fixed Issues
+<!-- ## Fixed Issues
 
 <table>
 <tr>
@@ -168,9 +170,9 @@ Mbed-TLS                | R5F            | mbedtls-3.0.0
     <th> Resolution/Comments
 </tr>
 
-</table>
+</table> -->
 
-<!-- ## Known Issues
+## Known Issues
 
 <table>
 <tr>
@@ -180,7 +182,14 @@ Mbed-TLS                | R5F            | mbedtls-3.0.0
     <th> Applicable Releases
     <th> Workaround
 </tr>
-</table> -->
+<tr>
+    <td> PINDSW-8358
+    <td> BiSS-C/Nikon/EnDat/Tamagawa: Exiting Periodic Trigger mode UART option does not work
+    <td> Position Sense BiSS-C, Position Sense EnDat, Position Sense Nikon A-Format, Position Sense Tamagawa
+    <td> 10.00.00 onwards
+    <td> -
+</tr>
+</table>
 
 <!-- ## Errata
 <table>
@@ -246,7 +255,7 @@ Mbed-TLS                | R5F            | mbedtls-3.0.0
 </tr>
 </table> -->
 
-## Limitations
+<!-- ## Limitations
 <table>
 <tr>
     <th> ID
@@ -257,7 +266,7 @@ Mbed-TLS                | R5F            | mbedtls-3.0.0
     <th> Workaround
 </tr>
 
-</table>
+</table> -->
 
 ## Upgrade and Compatibility Information for Motor Control SDK 10.00.00 {#UPGRADE_AND_COMPATIBILITY_INFORMATION_10_0_0}
 
