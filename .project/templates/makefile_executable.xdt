@@ -35,7 +35,6 @@ PROFILE?=release
 ConfigName:=$(PROFILE)
 
 OUTNAME:=`args.project.name`.$(PROFILE).out
-COREOUTNAME:=`args.project.name`.$(PROFILE).optishare.out
 
 BOOTIMAGE_PATH=$(abspath .)
 % if (args.project.isBootLoader) {
@@ -70,8 +69,6 @@ BOOTIMAGE_NAME_QSPI:=`args.project.name`.$(PROFILE).appimage_qspi
 % }
 BOOTIMAGE_NAME_SIGNED:=`args.project.name`.$(PROFILE).appimage.signed
 % if ((args.project.device == "am263x") || (args.project.device == "am263px") || (args.project.device == "am261x")) {
-oeconfig?=None
-
 BOOTIMAGE_NAME_MCELF:=`args.project.name`.$(PROFILE).mcelf
 BOOTIMAGE_NAME_MCELF_HS:=`args.project.name`.$(PROFILE).mcelf.hs
 % }
@@ -87,7 +84,6 @@ BOOTIMAGE_NAME_QSPI_HS:=`args.project.name`.$(PROFILE).appimage_qspi.hs
 BOOTIMAGE_NAME_HS_FS:=`args.project.name`.$(PROFILE).appimage.hs_fs
 % }
 TARGETS := $(BOOTIMAGE_NAME)
-
 %if (!["am64x", "am243x"].includes(args.project.device)) {
 ifeq ($(DEVICE_TYPE), HS)
    TARGETS += $(BOOTIMAGE_NAME_HS)
@@ -445,7 +441,7 @@ $(OUTNAME): $(OBJS) $(LNK_FILES) $(LIBS_NAME)
 	@echo  Linking: `args.project.device`:`args.project.cpu`:`args.project.os`:`args.project.cgt` $@ ...
 % if (args.project.cgt == "ti-arm-clang" || args.project.cgt == "ti-c6000") {
 % if (args.project.cgt == "ti-arm-clang") {
-	$(LNK) $(LNKOPTFLAGS) $(LFLAGS) $(LIBS_PATH) `linker_option_prefix`-m=$(basename $@).map -o $@ $(addprefix $(OBJDIR), $(OBJS)) $(LIBS) $(LNK_FILES) -Wl,--xml_link_info=$(basename $@).lnkxml
+	$(LNK) $(LNKOPTFLAGS) $(LFLAGS) $(LIBS_PATH) `linker_option_prefix`-m=$(basename $@).map -o $@ $(addprefix $(OBJDIR), $(OBJS)) $(LIBS) $(LNK_FILES)
 % } else {
 	$(LNK) $(LFLAGS) $(LIBS_PATH) `linker_option_prefix`-m=$(basename $@).map -o $@ $(addprefix $(OBJDIR), $(OBJS)) $(LIBS) $(LNK_FILES)
 % }
@@ -455,12 +451,6 @@ $(OUTNAME): $(OBJS) $(LNK_FILES) $(LIBS_NAME)
 	$(RM) `args.linuxFwName`
 	$(STRIP) -o=`args.linuxFwName` $@
 % }
-% if (args.project.cgt == "ti-arm-clang") {
-% if (args.project.stripOutFile) {
-	$(RM) `args.project.name`.$(PROFILE).strip.out
-	$(STRIP) -o=`args.project.name`.$(PROFILE).strip.out $@
-% }
-% }
 % }
 % }
 % if ((args.project.cgt == 'gcc-aarch64') || (args.project.cgt == 'gcc-armv7')) {
@@ -468,20 +458,6 @@ $(OUTNAME): $(OBJS) $(LNK_FILES) $(LIBS_NAME)
 % }
 	@echo  Linking: `args.project.device`:`args.project.cpu`:`args.project.os`:`args.project.cgt` $@ Done !!!
 	@echo  .
-
-% if (args.project.cgt == "ti-arm-clang") {
-coreout: $(COREOUTNAME)
-% if ( args.project.syscfgfile ) {
-$(COREOUTNAME):  $(SYSTEM_COMMAND)
-% } else {
-$(COREOUTNAME): $(OBJS) $(LNK_FILES) $(LIBS_NAME)
-% }
-	@echo  .
-	@echo  Relinking Linking: `args.project.device`:`args.project.cpu`:`args.project.os`:`args.project.cgt` $@ with OptiShare SSO..
-	$(LNK) $(LNKOPTFLAGS) $(LFLAGS) $(LIBS_PATH) `linker_option_prefix`-m=$(basename $@).map -o $@ $(addprefix $(OBJDIR), $(OBJS)) $(LIBS) $(LNK_FILES) -Wl,--xml_link_info=$(basename $@).lnkxml -Wl,--import_sso=$(SSO_PATH)
-	@echo  Relinking with optishare: `args.project.device`:r5fss0-0:freertos:ti-arm-clang $@ Done !!!
-	@echo  .
-%}
 
 clean:
 	@echo  Cleaning: `args.project.device`:`args.project.cpu`:`args.project.os`:`args.project.cgt` $(OUTNAME) ...
@@ -491,11 +467,6 @@ clean:
 % } else {
 % if (args.project.isLinuxFwGen) {
 	$(RM) `args.linuxFwName`
-% }
-% if (args.project.cgt == "ti-arm-clang") {
-% if (args.project.stripOutFile) {
-	$(RM) `args.project.name`.$(PROFILE).strip.out
-% }
 % }
 % }
 % if (args.project.isBootLoader) {
@@ -537,11 +508,6 @@ scrub:
 % if (args.project.isLinuxFwGen) {
 	$(RM) `args.linuxFwName`
 % }
-% if (args.project.cgt == "ti-arm-clang") {
-% if (args.project.stripOutFile) {
-	$(RM) `args.project.name`.$(PROFILE).strip.out
-% }
-% }
 % }
 ifeq ($(OS),Windows_NT)
 	$(RM) \*.out
@@ -550,8 +516,6 @@ ifeq ($(OS),Windows_NT)
 	$(RM) \*.rprc*
 	$(RM) \*.tiimage*
 	$(RM) \*.bin
-	$(RM) \*.lnkxml
-	$(RM) \*.ossr
 % if ((args.project.device == "am263x") || (args.project.device == "am263px") || (args.project.device == "am261x")) {
 	% if( !args.project.isBootLoader) {
 	$(RM) \*.mcelf
@@ -567,8 +531,6 @@ else
 	$(RM) *.rprc*
 	$(RM) *.tiimage*
 	$(RM) *.bin
-	$(RM) *.lnkxml
-	$(RM) *.ossr
 % if ((args.project.device == "am263x") || (args.project.device == "am263px") || (args.project.device == "am261x")) {
 	% if( !args.project.isBootLoader) {
 	$(RM) *.mcelf
@@ -766,7 +728,9 @@ endif
 % } else {
 % if (args.project.device == "am64x") {
 BOOTIMAGE_CORE_ID_a53ss0-0 = 0
+% if((args.project.os == "freertos-smp") && (args.project.cpu == "a53ss0-0")) {
 BOOTIMAGE_CORE_ID_a53ss0-1 = 1
+% }
 BOOTIMAGE_CORE_ID_r5fss0-0 = 4
 BOOTIMAGE_CORE_ID_r5fss0-1 = 5
 BOOTIMAGE_CORE_ID_r5fss1-0 = 6
@@ -880,11 +844,11 @@ endif
 % }
 % if ((args.project.device == "am263x") || (args.project.device == "am263px") || (args.project.device == "am261x")) {
 	@echo  Boot MulticoreELF image: $(BOOTIMAGE_PATH)/$(BOOTIMAGE_NAME_MCELF) ...
-	$(PYTHON) $(MCELF_IMAGE_GEN) --core-img=$(BOOTIMAGE_CORE_ID_`args.project.cpu`):$(OUTNAME) --output=$(BOOTIMAGE_NAME_MCELF) --merge-segments=$(MCELF_MERGE_SEGMENTS_FLAG) --tolerance-limit=$(MCELF_MERGE_SEGMENTS_TOLERANCE_LIMIT) --ignore-context=$(MCELF_IGNORE_CONTEXT_FLAG) --xip=$(MCELF_XIP_RANGE) --xlat=$(MCELF_ADDR_TRANSLATION_PATH) --max_segment_size=$(MCELF_MAX_SEGMENT_SIZE) --otfaConfigFile=$(oeconfig)
+	$(PYTHON) $(MCELF_IMAGE_GEN) --core-img=$(BOOTIMAGE_CORE_ID_`args.project.cpu`):$(OUTNAME) --output=$(BOOTIMAGE_NAME_MCELF) --merge-segments=$(MCELF_MERGE_SEGMENTS_FLAG) --tolerance-limit=$(MCELF_MERGE_SEGMENTS_TOLERANCE_LIMIT) --ignore-context=$(MCELF_IGNORE_CONTEXT_FLAG) --xip=$(MCELF_XIP_RANGE) --xlat=$(MCELF_ADDR_TRANSLATION_PATH) --max_segment_size=$(MCELF_MAX_SEGMENT_SIZE)
 	@echo  Boot MulticoreELF ELF image: $(BOOTIMAGE_PATH)/$(BOOTIMAGE_NAME_MCELF) Done !!!
 	@echo  .
-
 % }
+
 % if (((args.project.device == "am243x") || (args.project.device == "am64x"))) {
 ifeq ($(DEVICE_TYPE), HS)
 # Sign the appimage using appimage signing script
@@ -939,7 +903,7 @@ ifeq ($(RSASSAPSS_ENABLED),no)
 else
 	@echo Boot image signing: Encryption is disabled. RSASSAPSS is enabled.
 	$(PYTHON) $(APP_IMAGE_SIGN_CMD) --bin $(BOOTIMAGE_NAME) --key $(APP_SIGNING_KEY) --sign_key_id $(APP_SIGNING_KEY_KEYRING_ID) --hash_algo $(APP_SIGNING_HASH_ALGO) --pss_saltlen $(APP_SIGNING_SALT_LENGTH) --output $(BOOTIMAGE_NAME_HS) --rsassa_pss
-% if ((args.project.device == "am263x") || (args.project.device == "am263px") || (args.project.device == "am261x")) {	
+% if ((args.project.device == "am263x") || (args.project.device == "am263px") || (args.project.device == "am261x")) {
 	$(PYTHON) $(APP_IMAGE_SIGN_CMD) --bin $(BOOTIMAGE_NAME_MCELF) --key $(APP_SIGNING_KEY) --sign_key_id $(APP_SIGNING_KEY_KEYRING_ID) --hash_algo $(APP_SIGNING_HASH_ALGO) --pss_saltlen $(APP_SIGNING_SALT_LENGTH) --output $(BOOTIMAGE_NAME_MCELF_HS) --rsassa_pss
 % }
 endif
@@ -991,9 +955,6 @@ endif
 endif
 % }
 % }
-
-
-
 % if (args.project.cgt == "ti-arm-clang") {
 .PHONY: coverage
 coverage:
