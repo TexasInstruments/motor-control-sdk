@@ -208,17 +208,30 @@ Thereafter for every valid flag set, 4th bit in the received byte is checked to 
 After all the bits for a position command is received, receive is disabled and is activated only after 2T clock cycles – this is to prevent falsely detecting SB immediately (upon calling this routine back-to-back as mentioned in previous section) after encoder has finished sending data as it can pull data line high for 2T more clock cycles.
 
 ####  Recovery Time Measurement
-Recovery Time is measured only for Type 2.2 commands.
+The recovery time is defined as the high period of the EnDat data signal at the end of every transmission. This high period is a key metric because it is related to the encoder’s internal clock frequency and a parameter stored within the encoder.
 The factory default settings for the Recovery Time is programmed to 10us <= RT <= 30us. It can only be changed to 1.25us <= RT <=3.75us for type 2.2 mode commands. For clock pulse frequence <= 1MHz, RT must be set to 10us <= RT <= 30us.
 The User can set the function parameters in word 3 at "0xB9" memory area for RT range. If bit 0th is unset and 1st bit is set of word3 then RT will belong to large range(10us-30us) and if 0th bit is set and 1st bit is unset of word3 then RT will belong to short range(1.25us to 3.75us).
 
+##### Counter for Measuring Recovery time 
+This is a free-run counter, clocked by the PRU cycle counter. If the counted value deviates from an expected tolerance range, it signals an issue with the encoder’s clock frequency. 
+This section outlines how the counter measures recovery time.
+Measurement Process: Recovery time is measured by calculating the time difference between two key events in the EnDat protocol:
+- Start Trigger: The rising edge of the EnDat clock (positive signal).
+- Stop Trigger: The falling edge of the EnDat data signal (negative signal).
+
+Counter Operation: The counter value is stored in a 32-bit RT register in memory. This value is dynamic and changes during normal operation to detect any “stuck-at” errors. 
+The expected recovery time is derived from the difference between the last and current counter values.
+
+Multi-Channel Load Share Mode (Multi-master configuration): In this mode, counters for different axes are initialized with different starting values.
+To enhance fault detection, especially in systems with multiple masters, the counters for different axes are initialized with distinct starting values. The difference between these starting values is kept greater than twice the expected tolerance range for the recovery time. 
 ##### Method for measuring the recovery time for position command
 \image html Endat_Recovery_Time_For_Position.png "Endat Recovery time for Endat 2.2 position command "
 \image html Endat_RT_FlowChart_for_position.png "Endat Recovery time flow-chart for Endat 2.2 position command"
 1. After the CRC bits are received, there is a wait for rising clock edge.
 2. Start the measurement of Recovery Time using PRU cycle counter (The cycle counter is set to zero).
 3. Wait for falling edge of the data from encoder (RX).
-4. Read the PRU cycle counter which gives the value of Recovery Time in PRU Clock Cycle units and store it to DMEM.
+4. Read the PRU cycle counter which gives the value of Recovery Time in PRU Clock Cycle units
+5. Update RT counters 
 
 
 ##### Method for measuring the recovery time for supplement command
@@ -229,7 +242,8 @@ The User can set the function parameters in word 3 at "0xB9" memory area for RT 
 3. After the CRC bits are received, there is a wait for rising clock edge.
 4. Start the measurement of Recovery Time using PRU cycle counter (The cycle counter is set to zero).
 5. Wait for falling edge of the data from encoder (RX).
-6. Read the PRU cycle counter which gives the value of Recovery Time in PRU Clock Cycle units and store it to DMEM.
+6. Read the PRU cycle counter which gives the value of Recovery Time in PRU Clock Cycle units 
+6. Update the RT counters
 
 \if (SOC_AM243X ||SOC_AM64X) 
 ##### NOTE for Multi-channel Single PRU Mode

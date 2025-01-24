@@ -1986,17 +1986,22 @@ static void endat_process_host_command(int32_t cmd,
                     endat_multi_channel_set_cur(priv, j);
                     DebugP_log("channel: %d",priv->channel);
                     DebugP_log("\t");
+                    
                     recovery_time = endat_get_recovery_time(priv);
-                    DebugP_log("Recovery Time: %d ns", recovery_time);
-                    DebugP_log("\n");
+                    DebugP_log("\r Recovery Time: %10u ns \n", recovery_time);
+                    DebugP_log("\r Current value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.currentCounterValue);
+                    DebugP_log("\r Previous value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.lastCounterValue);
+                    DebugP_log("\r Starting value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.startingValue);
                 }
             }
         }
         else
         {
             recovery_time = endat_get_recovery_time(priv);
-            DebugP_log("Recovery Time: %d ns", recovery_time);
-            DebugP_log("\n");
+            DebugP_log("\r Recovery Time: %10u ns \n", recovery_time);
+            DebugP_log("\r Current value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.currentCounterValue);
+            DebugP_log("\r Previous value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.lastCounterValue);
+            DebugP_log("\r Starting value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.startingValue);
         }
 
     }
@@ -2230,7 +2235,7 @@ void endat_main(void *args)
     }
 
     endat_config_host_trigger(priv);
-
+    
     /* Configure Delays based on the ICSSG frequency*/
     /* Count = ((required delay * icssClk)/1000) */
     priv->pruss_xchg->endat_delay_125ns = ((icssClk*125)/1000000000);
@@ -2317,6 +2322,9 @@ void endat_main(void *args)
         endat_print_encoder_info(priv);
     }
 
+    /*Initialization of RT parameters*/
+     endat_init_rt_measurement(priv);
+
     /* default frequency - 8MHz for 2.2 encoders, 1MHz for 2.1 encoders */
     if(priv->cmd_set_2_2)
     {
@@ -2367,6 +2375,7 @@ void endat_main(void *args)
         if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
         {
             int32_t j;
+            int8_t rt_error;
 
             DebugP_log("\r|\n");
 
@@ -2377,12 +2386,33 @@ void endat_main(void *args)
                     endat_multi_channel_set_cur(priv, j);
                     DebugP_log("\r|\n|\t\t\t\tCHANNEL %d\n", j);
                     endat_handle_rx(priv, cmd);
+                    /* Recovery Time validation */
+                    rt_error =  endat_check_rt_error(priv);
+                    if(rt_error != RT_NO_ERROR)
+                    {
+                        DebugP_log("\r Error: Channel %d - Recovery time out of expected range. \n", priv->channel);
+                        if(rt_error == RT_COUNTER_STUCK_ERROR)
+                        {
+                            DebugP_log("\r Error: Counter for Channel %d is stuck.\n", priv->channel);
+                        }
+                    }
                 }
             }
         }
         else
         {
+            int8_t rt_error;
             endat_handle_rx(priv, cmd);
+            /* Recovery Time validation */
+            rt_error =  endat_check_rt_error(priv);
+            if(rt_error == RT_COUNTER_STUCK_ERROR)
+            {
+                DebugP_log("\r Error: Channel %d - Recovery time out of expected range. \n", priv->channel);
+                if(priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.isCounterStuck == 1)
+                {
+                    DebugP_log("\r Error: Counter for Channel %d is stuck. \n", priv->channel);
+                }
+            }
         }
 
         /* this cannot be done except as last in loop; additional info becomes applicable from next command onwards only */

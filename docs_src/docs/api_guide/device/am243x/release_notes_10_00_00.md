@@ -131,6 +131,13 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> 9.0 onwards
     <td> -
 </tr>
+<tr>
+    <td> PINDSW-8399
+    <td> EnDat: Align the implementation of Recovery time with the Heidenhain RT method
+    <td> Position Sense EnDat
+    <td> 9.0 onwards
+    <td> -
+</tr>
 </table>
 
 ## Known Issues
@@ -366,6 +373,12 @@ This section lists changes which could affect user applications developed using 
     <td> Position Sense Endat
     <td> \ref endat_init
     <td> Added new parameter: \ref endat_clock_config 
+    <td> -
+</tr>
+<tr>
+    <td> Position Sense Endat
+    <td> struct `Endat_ChRxInfo`
+    <td> Added new variables: struct `Endat_ChRTInfo` and Removed variables: `resvdInt2`, `resvdInt3" and `recoveryTime`
     <td> -
 </tr>
 <tr>

@@ -1000,7 +1000,7 @@ Shown below is a sample output when the application is run:
         <td style="text-align: center">CRC Success </td>
     </tr>
     <tr>
-        <td>2. Enter 110 for read recovery time from DMEM </td>
+        <td>2. Enter 110 for read recovery time information </td>
         <td style="text-align: center">Recovery Time is set to 1.25 us <= RT <= 3.75us or  10 us <= RT <= 30 us</td>
     </tr>
     <tr>

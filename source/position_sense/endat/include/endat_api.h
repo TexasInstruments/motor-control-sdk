@@ -130,7 +130,7 @@ void endat_command_wait(struct endat_priv *priv);
 
 
 /**
- *  \brief  read RT from DMEM
+ *  \brief  read RT parameters from TCM
  *
  *  \param[in]  priv     cookie returned by endat_init
  *
@@ -373,6 +373,23 @@ struct endat_priv *endat_init(struct endat_pruss_xchg *pruss_xchg, struct endatC
  *
  */
 int32_t endat_get_2_2_angle(struct endat_priv *priv);
+/**
+ *  \brief      Initialize the RT parameters 
+ *             
+ *   \param[in]  priv    cookie returned by endat_init
+ *
+ */
+
+void endat_init_rt_measurement (struct endat_priv *priv); 
+/**
+ *  \brief      Validate the RT parameters 
+ *             
+ *  \param[in]  priv  cookie returned by endat_init
+ * 
+ *  \retval  return 0 if measured recovery time is within the recovery time range else return error 
+ */
+
+int8_t endat_check_rt_error(struct endat_priv *priv);
 
 /** @} */
 

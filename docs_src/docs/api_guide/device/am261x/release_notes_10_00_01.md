@@ -94,7 +94,7 @@ Mbed-TLS                | R5F            | 2.13.1
 </tr>
 </table>
 
-<!-- ## Fixed Issues
+## Fixed Issues
 
 <table>
 <tr>
@@ -104,8 +104,15 @@ Mbed-TLS                | R5F            | 2.13.1
     <th> Applicable Releases
     <th> Resolution/Comments
 </tr>
+<tr>
+    <td> PINDSW-8399
+    <td> EnDat: Align the implementation of Recovery time with the Heidenhain RT method
+    <td> Position Sense EnDat
+    <td> 9.0 onwards
+    <td> -
+</tr>
 
-</table> -->
+</table> 
 
 ## Known Issues
 
@@ -261,7 +268,7 @@ Read this carefully to see if you need to do any changes in your existing applic
 previous SDK version. Also refer to older SDK version release notes to see changes in
 earlier SDKs. -->
 
-<!-- ### Compiler Options
+ ### Compiler Options
 
 <table>
 <tr>
@@ -298,5 +305,11 @@ earlier SDKs. -->
     <th> Change
     <th> Additional Remarks
 </tr>
-</table> -->
+<tr>
+    <td> Position Sense Endat
+    <td> struct `Endat_ChRxInfo`
+    <td> Added new variables: `Endat_ChRTInfo` and Removed variables: `resvdInt2`, `resvdInt3" and `recoveryTime`
+    <td> -
+</tr>
+</table> 
 
