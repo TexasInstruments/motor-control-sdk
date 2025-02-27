@@ -41,7 +41,7 @@ const files_r5f_1_0 = {
         "CUST_PHY_dp83869.c",
         "ecSubDeviceCiA402.c",
         "ESL_cia402Obd.c",
-        "EtherCAT_Slave_CiA402_tidep_01032.c",
+        "EtherCAT_SubDevice_CiA402_tidep_01032.c",
         "ESL_cia402Demo_tidep_01032.c",
         "ESL_BOARD_OS_config_tidep_01032.c",
         "nvm.c",

@@ -129,8 +129,9 @@ endat_receiver_multi_pru0_bin.h
 
 #define  NUM_CH_SUPPORTED      ( 3 )
 
-#define ICSS_PRU_CORE_CLOCK CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ
-#define ENDAT_INPUT_CLOCK_UART_FREQUENCY   CONFIG_PRU_ICSS0_UART_CLK_FREQ_HZ
+/*Using same frequency which used in r5fss0_0 project*/
+#define ICSS_PRU_CORE_CLOCK 300000000
+#define ENDAT_INPUT_CLOCK_UART_FREQUENCY   192000000
 
 /* EPWM ISR information */
 typedef struct _AppEPwmIsrInfo_t

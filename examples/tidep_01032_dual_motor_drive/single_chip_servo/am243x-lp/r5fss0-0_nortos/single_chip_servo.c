@@ -547,7 +547,7 @@ static void endat_print_encoder_info(struct endat_priv *priv)
     DebugP_log("[resolution: %d %s]", priv->step[priv->current_channel],
                 priv->type[priv->current_channel] == rotary ? "M/rev" : "nm");
     DebugP_log("\r\n\nPropagation delay: %dns",
-                gEndat_prop_delay[priv->channel]);
+                gEndat_prop_delay[priv->current_channel]);
     DebugP_log("\n\n\n");
 }
 
