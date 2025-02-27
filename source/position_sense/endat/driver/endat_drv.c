@@ -2133,19 +2133,27 @@ int8_t endat_check_rt_error(struct endat_priv *priv)
     rtDiff = rtDiff*((float)(1000000000)/priv->pru_clock);
     /* Check if the recovery time is within the short or long recovery time range */
     if ((rtDiff >= SHORT_RECOVERY_TIME_MIN) && (rtDiff <= SHORT_RECOVERY_TIME_MAX)) {
-        return RT_NO_ERROR;  // Valid short recovery time
+        return RT_NO_ERROR;  /* Valid short recovery time */
     }
     if ((rtDiff >= LONG_RECOVERY_TIME_MIN) && (rtDiff <= LONG_RECOVERY_TIME_MAX)) {
-        return RT_NO_ERROR;  // Valid long recovery time
+        return RT_NO_ERROR;  /* Valid long recovery time */
     }
-    return RT_OUT_OF_RANGE_ERROR;  // Error: out of expected range
+    return RT_OUT_OF_RANGE_ERROR;  /*Error: out of expected range*/
 }
 
 void endat_init_rt_measurement (struct endat_priv *priv) 
 {
     priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.recoveryTime = 0;
     priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.lastCounterValue = 0;
-    priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.startingValue = 100 + 100*(priv->channel); /* Assign a unique starting value for each channel; */
+    priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.startingValue = RT_COUNTER_STARTING_VALUE + 100*(priv->channel); /* Assign a unique starting value for each channel; */
     priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.currentCounterValue = priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.startingValue;
     priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.isCounterStuck = 0;
+}
+void endat_enable_rt_measurement (struct endat_priv *priv)
+{
+    priv->pruss_xchg->ch[priv->channel].enableRTM = 1;
+}
+void endat_disable_rt_measurement (struct endat_priv *priv)
+{
+    priv->pruss_xchg->ch[priv->channel].enableRTM = 0;
 }

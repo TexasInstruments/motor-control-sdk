@@ -196,8 +196,8 @@ In the loop, as the number of bits reaches word boundary, it will start saving r
 \image html endat_continuous_mode.png "Continuous Mode"
 
 2.1 position command as well as it’s attribute that been setup by the user is read first. Clock is configured for free run mode. Position command is written fifo and send routine is invoked.
-Then receive is done along with on-the-fly downsampling, this is required as time between receipt of successive position data is less than the time that dowsampling routine (mentioned earlier) takes.
-Once data is read and dowsampled on-the-fly, command trigger interface is read to see if user wants to stop continuous mode, if so, do transmit re-init, disable receive and wait till the end of re-init.
+Then receive is done along with on-the-fly downsampling, this is required as time between receipt of successive position data is less than the time that downsampling routine (mentioned earlier) takes.
+Once data is read and downsampled on-the-fly, command trigger interface is read to see if user wants to stop continuous mode, if so, do transmit re-init, disable receive and wait till the end of re-init.
 
 ###### Receive and On-The-Fly Downsample
 
@@ -209,8 +209,8 @@ After all the bits for a position command is received, receive is disabled and i
 
 ####  Recovery Time Measurement
 The recovery time is defined as the high period of the EnDat data signal at the end of every transmission. This high period is a key metric because it is related to the encoder’s internal clock frequency and a parameter stored within the encoder.
-The factory default settings for the Recovery Time is programmed to 10us <= RT <= 30us. It can only be changed to 1.25us <= RT <=3.75us for type 2.2 mode commands. For clock pulse frequence <= 1MHz, RT must be set to 10us <= RT <= 30us.
-The User can set the function parameters in word 3 at "0xB9" memory area for RT range. If bit 0th is unset and 1st bit is set of word3 then RT will belong to large range(10us-30us) and if 0th bit is set and 1st bit is unset of word3 then RT will belong to short range(1.25us to 3.75us).
+The factory default settings for the Recovery Time is programmed to 10us <= recovery time <= 30us. It can only be changed to 1.25us <= recovery time <=3.75us for type 2.2 mode commands. For clock pulse frequence <= 1MHz, recovery time must be set to 10us <= recovery time <= 30us.
+The User can set the function parameters in word 3 at "0xB9" memory area for recovery time range. If bit 0th is unset and 1st bit is set of word3 then recovery time will belong to large range(10us-30us) and if 0th bit is set and 1st bit is unset of word3 then recovery time will belong to short range(1.25us to 3.75us).
 
 ##### Counter for Measuring Recovery time 
 This is a free-run counter, clocked by the PRU cycle counter. If the counted value deviates from an expected tolerance range, it signals an issue with the encoder’s clock frequency. 
@@ -219,7 +219,7 @@ Measurement Process: Recovery time is measured by calculating the time differenc
 - Start Trigger: The rising edge of the EnDat clock (positive signal).
 - Stop Trigger: The falling edge of the EnDat data signal (negative signal).
 
-Counter Operation: The counter value is stored in a 32-bit RT register in memory. This value is dynamic and changes during normal operation to detect any “stuck-at” errors. 
+Counter Operation: The counter value is stored in a 32-bit recovery time register in memory. This value is dynamic and changes during normal operation to detect any “stuck-at” errors. 
 The expected recovery time is derived from the difference between the last and current counter values.
 
 Multi-Channel Load Share Mode (Multi-master configuration): In this mode, counters for different axes are initialized with different starting values.
@@ -231,7 +231,7 @@ To enhance fault detection, especially in systems with multiple masters, the cou
 2. Start the measurement of Recovery Time using PRU cycle counter (The cycle counter is set to zero).
 3. Wait for falling edge of the data from encoder (RX).
 4. Read the PRU cycle counter which gives the value of Recovery Time in PRU Clock Cycle units
-5. Update RT counters 
+5. Update recovery time counters 
 
 
 ##### Method for measuring the recovery time for supplement command
@@ -243,7 +243,7 @@ To enhance fault detection, especially in systems with multiple masters, the cou
 4. Start the measurement of Recovery Time using PRU cycle counter (The cycle counter is set to zero).
 5. Wait for falling edge of the data from encoder (RX).
 6. Read the PRU cycle counter which gives the value of Recovery Time in PRU Clock Cycle units 
-6. Update the RT counters
+6. Update the recovery time counters
 
 \if (SOC_AM243X ||SOC_AM64X) 
 ##### NOTE for Multi-channel Single PRU Mode

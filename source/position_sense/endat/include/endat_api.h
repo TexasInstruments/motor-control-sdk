@@ -130,7 +130,7 @@ void endat_command_wait(struct endat_priv *priv);
 
 
 /**
- *  \brief  read RT parameters from TCM
+ *  \brief  read recovery time parameters from memory
  *
  *  \param[in]  priv     cookie returned by endat_init
  *
@@ -374,7 +374,7 @@ struct endat_priv *endat_init(struct endat_pruss_xchg *pruss_xchg, struct endatC
  */
 int32_t endat_get_2_2_angle(struct endat_priv *priv);
 /**
- *  \brief      Initialize the RT parameters 
+ *  \brief      Initialize the recovery time parameters 
  *             
  *   \param[in]  priv    cookie returned by endat_init
  *
@@ -382,7 +382,7 @@ int32_t endat_get_2_2_angle(struct endat_priv *priv);
 
 void endat_init_rt_measurement (struct endat_priv *priv); 
 /**
- *  \brief      Validate the RT parameters 
+ *  \brief      Validate the recovery time parameters 
  *             
  *  \param[in]  priv  cookie returned by endat_init
  * 
@@ -390,7 +390,20 @@ void endat_init_rt_measurement (struct endat_priv *priv);
  */
 
 int8_t endat_check_rt_error(struct endat_priv *priv);
-
+/**
+ *  \brief      Disable the recovery time measurement 
+ *             
+ *  \param[in]  priv  cookie returned by endat_init
+ * 
+ */
+void endat_disable_rt_measurement (struct endat_priv *priv);
+/**
+ *  \brief      Enable the recovery time measurement 
+ *             
+ *  \param[in]  priv  cookie returned by endat_init
+ * 
+ */
+void endat_enable_rt_measurement (struct endat_priv *priv);
 /** @} */
 
 #ifdef __cplusplus

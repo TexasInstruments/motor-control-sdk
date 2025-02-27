@@ -100,17 +100,18 @@ extern "C" {
 
 #define ENDAT_INIT_FREQ    200000
 
-// Define constants for recovery time ranges
-#define SHORT_RECOVERY_TIME_MIN 2450 // 2.45 μs
-#define SHORT_RECOVERY_TIME_MAX 3750 // 3.75 μs
-#define LONG_RECOVERY_TIME_MIN 18500 // 18.5 μs
-#define LONG_RECOVERY_TIME_MAX 30000 // 30 μs
+/*Define constants for recovery time ranges*/
+#define SHORT_RECOVERY_TIME_MIN 2450 /* 2.45 μs */ 
+#define SHORT_RECOVERY_TIME_MAX 3750 /* 3.75 μs */ 
+#define LONG_RECOVERY_TIME_MIN 18500 /* 18.5 μs */ 
+#define LONG_RECOVERY_TIME_MAX 30000 /* 30.0 μs */ 
 
-#define MAX_RT_COUNTER_VALUE 0xFFFFFFF // Maximum valid counter value
-
+#define MAX_RT_COUNTER_VALUE 0xFFFFFFFF /* Maximum valid counter value - 2^32 - 1*/
 #define RT_OUT_OF_RANGE_ERROR 0x1
 #define RT_COUNTER_STUCK_ERROR 0x2 
 #define RT_NO_ERROR 0x0 
+
+#define RT_COUNTER_STARTING_VALUE  100
 
 
 #define EINVAL  1

@@ -1,10 +1,10 @@
-# Release Notes 10.00.00 {#RELEASE_NOTES_10_00_01_PAGE}
+# Release Notes 10.00.00 {#RELEASE_NOTES_10_01_00_PAGE}
 
 [TOC]
 
 \attention Also refer to individual module pages for more details on each feature, unsupported features, important usage guidelines.
 
-\attention For release notes of Industrial Communications SDK and MCU+ SDK, please refer to <a href="@VAR_IC_SDK_DOCS_PATH/RELEASE_NOTES_10_00_01_PAGE.html" target="_blank"> @VAR_SOC_NAME Industrial Communications SDK Release Notes 10.00.00</a> and <a href="@VAR_MCU_SDK_DOCS_PATH/RELEASE_NOTES_10_00_01_PAGE.html" target="_blank"> @VAR_SOC_NAME MCU+ SDK Release Notes 10.00.00</a> respectively.
+\attention For release notes of Industrial Communications SDK and MCU+ SDK, please refer to <a href="@VAR_IC_SDK_DOCS_PATH/RELEASE_NOTES_10_01_00_PAGE.html" target="_blank"> @VAR_SOC_NAME Industrial Communications SDK Release Notes 10.00.00</a> and <a href="@VAR_MCU_SDK_DOCS_PATH/RELEASE_NOTES_10_01_00_PAGE.html" target="_blank"> @VAR_SOC_NAME MCU+ SDK Release Notes 10.00.00</a> respectively.
 
 \note The examples will show usage of SW modules and APIs on a specific CPU instance and OS combination. \n
       Unless noted otherwise, the SW modules would work in both FreeRTOS and NORTOS environment. \n
@@ -15,7 +15,6 @@
 
 Feature                                                                                         | Module
 ------------------------------------------------------------------------------------------------|-----------------------------------
-Tamagawa over PRU 3-channel interface                                                                  | Position Sense
 
 
 ## Device and Validation Information
@@ -56,54 +55,6 @@ Tamagawa over PRU 3-channel interface    | R5F            | YES               | 
     <th> Key features tested
     <th> Key features not tested
 </tr>
-<tr>
-    <td> Control
-    <td> R5F
-    <td> YES
-    <td> FreeRTOS, NORTOS
-    <td> Field Weakening Control, Maximum Torque Per Ampere, Strator voltage frequency generator support
-    <td> -
-</tr>
-<tr>
-    <td> Digital Control Library (DCL)
-    <td> R5F
-    <td> YES
-    <td> FreeRTOS, NORTOS
-    <td> Linear PI, Linear PID, Linear PI with double integrator (PI2), Direct Form 1 (first order), Direct Form 1 (second order), Direct Form 1 (third order), Direct Form 2 (second order), Direct Form 2 (third order), Non-linear PID controller
-    <td> -
-</tr>
-<tr>
-    <td> Observer
-    <td> R5F
-    <td> YES
-    <td> FreeRTOS, NORTOS
-    <td> Sensored eQEP-based encoder, Hall sensor, Sensorless Enhanced Sliding Mode Observer, both speed measurement for sensored (speedcalc) and sensorless (speedfr)
-    <td> -
-</tr>
-<tr>
-    <td> SFRA
-    <td> R5F
-    <td> YES
-    <td> FreeRTOS, NORTOS
-    <td> Software Frequency Response Analyzer support
-    <td> -
-</tr>
-<tr>
-    <td> Transforms
-    <td> R5F
-    <td> YES
-    <td> FreeRTOS, NORTOS
-    <td> Clarke transformation, Park transformation, Inverse Park transformation, Space Vector Generation (SVGEN), Common-mode subtraction approach, DPWM Generation (Part of SVGEN), Maximum Modulation, Minimum Modulation, SVGEN current reconstruction for single-shunt (SVGENCURRENT), Phase voltage reconstruction in overmodulation (VOLTS_RECON)
-    <td> -
-</tr>
-<tr>
-    <td> Utilities
-    <td> R5F
-    <td> YES
-    <td> FreeRTOS, NORTOS
-    <td> Angle Compensation Generator, Step Response, Datalog, Trapezoid generator
-    <td> -
-</tr>
 </table>
 
 ## Fixed Issues
@@ -118,7 +69,7 @@ Tamagawa over PRU 3-channel interface    | R5F            | YES               | 
 </tr>
 <tr>
     <td> PINDSW-8399
-    <td> EnDat: Align the implementation of Recovery time with the Heidenhain RT method
+    <td> EnDat: Implement the recovery time as specified in section 3.3 of "Heidenhain Document D1128897-03-A-02.8: Safety with EnDat 2.2 and Non-Safe EnDat Master"
     <td> Position Sense EnDat
     <td> 9.0 onwards
     <td> -
@@ -264,6 +215,12 @@ earlier SDKs. -->
     <td> Position Sense Endat
     <td> `Endat_ChRxInfo`
     <td> Added new variables: `Endat_ChRTInfo` and Removed variables: `resvdInt2`, `resvdInt3" and `recoveryTime`
+    <td> -
+</tr>
+<tr>
+    <td> Position Sense Endat
+    <td> struct `pruss_xchg`
+    <td> Added new variables: `enableRTM`
     <td> -
 </tr>
 </table> 

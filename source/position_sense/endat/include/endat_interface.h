@@ -131,8 +131,8 @@ typedef struct Endat_ChInfo_s
      /**< automatically estimated propagation delay */
      Endat_CrcInfo crc;
      /**<Crc information*/
-     volatile uint32_t   resvdInt0;
-     /**< reserved */
+     volatile uint32_t   enableRTM;
+     /**< enable Recovery Time Measurement  */
 
 }Endat_ChInfo;
 /**
