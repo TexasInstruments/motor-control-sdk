@@ -37,6 +37,9 @@
 #include <drivers/pruicss.h>
 #include "current_sense/sdfm/include/sdfm_api.h"
 
+/* Shadow based normal current sampling*/
+#define SDFM_SHADOW_REG_BASED_NC     ( 0 )
+
 /* Status codes */
 #define SDFM_ERR_NERR               (  0 )  /* no error */
 #define SDFM_ERR_CFG_PIN_MUX        ( -1 )  /* pin mux configuration error */
@@ -166,6 +169,8 @@ typedef struct SdfmCompFilterPrms_s
 
 typedef struct SdfmChannelPrms_s
 {
+    /**< Current Channel Enable  */
+    uint16_t chEnable;
     /**< Normal current OSR  */
     uint16_t filterOsr;
     /**< SINC filter type*/

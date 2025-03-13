@@ -282,7 +282,9 @@ void init_sdfm()
         DebugP_log("Error: initIcss() fail.\r\n");
         return;
     }
-     
+
+
+#if ((CONFIG_SDFM0_LOAD_SHARE == 0) ||((CONFIG_SDFM0_CHANNEL3)||(CONFIG_SDFM0_CHANNEL4)||(CONFIG_SDFM0_CHANNEL5)))
     /* Register & enable ICSSG PRU SDFM FW interrupt */
     HwiP_Params_init(&hwiPrms);
     hwiPrms.intNum      = ICSSG_PRU_SDFM_INT_NUM;
@@ -292,8 +294,10 @@ void init_sdfm()
     hwiPrms.isFIQ       = FALSE;
     status              = HwiP_construct(&gIcssgPruSdfmHwiObject, &hwiPrms);
     DebugP_assert(status == SystemP_SUCCESS);
+#endif
 
 #if (CONFIG_SDFM0_LOAD_SHARE != 0)
+#if ((CONFIG_SDFM0_CHANNEL0)||(CONFIG_SDFM0_CHANNEL1)||(CONFIG_SDFM0_CHANNEL2))
     /* Register & enable ICSSG  RTU PRU0 SDFM FW interrupt */
     HwiP_Params_init(&hwiPrms);
     hwiPrms.intNum      = ICSSG_RTUPRU_SDFM_INT_NUM;
@@ -303,7 +307,8 @@ void init_sdfm()
     hwiPrms.isFIQ       = FALSE;
     status              = HwiP_construct(&gIcssgPruSdfmHwiObject, &hwiPrms);
     DebugP_assert(status == SystemP_SUCCESS);
-
+#endif
+#if ((CONFIG_SDFM0_CHANNEL6)||(CONFIG_SDFM0_CHANNEL7)||(CONFIG_SDFM0_CHANNEL8))
      /* Register & enable ICSSG  TX PRU SDFM FW interrupt */
     HwiP_Params_init(&hwiPrms);
     hwiPrms.intNum      = ICSSG_TXPRU_SDFM_INT_NUM;
@@ -313,7 +318,7 @@ void init_sdfm()
     hwiPrms.isFIQ       = FALSE;
     status              = HwiP_construct(&gIcssgPruSdfmHwiObject, &hwiPrms);
     DebugP_assert(status == SystemP_SUCCESS);
-
+#endif
 #endif
     
     /* Configure axis level Sdfm  parameters */
@@ -325,14 +330,15 @@ void init_sdfm()
     
     gTestSdfmPrms.epwmOutFreq = APP_EPWM_OUTPUT_FREQ;
 
-#if (CONFIG_SDFM0_CHANNEL3 != 0)
+#if (CONFIG_SDFM0_LOAD_SHARE != 0)
+    /* PRU Channel 3, 4 and 5*/
     sdfmParamsConfig(3, &gTestSdfmPrms);
-#endif
-#if (CONFIG_SDFM0_CHANNEL4 != 0)
     sdfmParamsConfig(4, &gTestSdfmPrms);
-#endif
-#if (CONFIG_SDFM0_CHANNEL5 != 0)
     sdfmParamsConfig(5, &gTestSdfmPrms);
+#else
+    sdfmParamsConfig(0, &gTestSdfmPrms);
+    sdfmParamsConfig(1, &gTestSdfmPrms);
+    sdfmParamsConfig(2, &gTestSdfmPrms);
 #endif
  
     if((gTestSdfmPrms.fastDetectPrms[0][0] || gTestSdfmPrms.compFilterPrms[0].enComparator ) || (gTestSdfmPrms.fastDetectPrms[1][0] || gTestSdfmPrms.compFilterPrms[1].enComparator )|| (gTestSdfmPrms.fastDetectPrms[2][0] || gTestSdfmPrms.compFilterPrms[2].enComparator))
@@ -355,15 +361,12 @@ void init_sdfm()
     }
 
 #if (CONFIG_SDFM0_LOAD_SHARE != 0)
-#if (CONFIG_SDFM0_CHANNEL0 != 0)
+    /* RTU PRU Channel 0, 1 and 2 */
     sdfmParamsConfig(0, &gTestSdfmPrms);
-#endif
-#if (CONFIG_SDFM0_CHANNEL1 != 0)
     sdfmParamsConfig(1, &gTestSdfmPrms);
-#endif
-#if (CONFIG_SDFM0_CHANNEL2 != 0)
     sdfmParamsConfig(2, &gTestSdfmPrms);
-#endif
+
+#if ((CONFIG_SDFM0_CHANNEL0)||(CONFIG_SDFM0_CHANNEL1)||(CONFIG_SDFM0_CHANNEL2))
    /*Update sdfm prams*/
    gTestSdfmPrms.pruInsId = PRUICSS_RTU_PRU0 ;
    gTestSdfmPrms.samplesBaseAddress = (uint32_t)&gSdfm_sampleOutput + 12;
@@ -374,16 +377,15 @@ void init_sdfm()
         DebugP_log("Error: initPruSdfm() fail.\r\n");
         return;
     } 
+#endif
 
-#if (CONFIG_SDFM0_CHANNEL6 != 0)
+
+    /* TX PRU Channel 6, 7 and 8 */
     sdfmParamsConfig(6, &gTestSdfmPrms);
-#endif
-#if (CONFIG_SDFM0_CHANNEL7 != 0)
     sdfmParamsConfig(7, &gTestSdfmPrms);
-#endif
-#if (CONFIG_SDFM0_CHANNEL8 != 0)
     sdfmParamsConfig(8, &gTestSdfmPrms);
-#endif
+
+#if ((CONFIG_SDFM0_CHANNEL6)||(CONFIG_SDFM0_CHANNEL7)||(CONFIG_SDFM0_CHANNEL8))
    /*Update sdfm prams */
    gTestSdfmPrms.pruInsId = PRUICSS_TX_PRU0;
    gTestSdfmPrms.samplesBaseAddress = (uint32_t)&gSdfm_sampleOutput + 24 ;
@@ -394,6 +396,7 @@ void init_sdfm()
         DebugP_log("Error: initPruSdfm() fail.\r\n");
         return;
     } 
+#endif
 
 #endif
 }
@@ -540,14 +543,14 @@ void txPruSdfmIrqHandler(void *args)
    
    /*Select core */
     gHPruSdfm->sampleOutputInterface = (SDFM_SampleOutInterface *)((uint32_t)&gSdfm_sampleOutput + 24);
-
+#if (CONFIG_SDFM0_LOAD_SHARE != 0)
    /* SDFM Output sample for Channel 6 */
     sdfm_ch_samples[SDFM_CH6][sdfmTxPruIdxCnt] = SDFM_getFilterData(gHPruSdfm, 0);
     /* SDFM Output sample for Channel 7 */
     sdfm_ch_samples[SDFM_CH7][sdfmTxPruIdxCnt] = SDFM_getFilterData(gHPruSdfm, 1);
     /* SDFM Output sample for Channel 8 */
     sdfm_ch_samples[SDFM_CH8][sdfmTxPruIdxCnt] = SDFM_getFilterData(gHPruSdfm, 2);
-
+#endif
     sdfmTxPruIdxCnt++;
 }
 

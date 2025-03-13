@@ -535,6 +535,19 @@ int32_t SDFM_configSync1Delay(sdfm_handle h_sdfm, uint32_t delay);
 */
 int32_t SDFM_configClockFromGPO1(sdfm_handle h_sdfm, uint8_t div0, uint8_t div1);
 
+/**
+ *  \brief  Enable shadow register based normal current sampling
+ *  \param[in]  h_sdfm          SDFM handle
+ * 
+*/
+void SDFM_enableShadowRegBasedNC(sdfm_handle h_sdfm);
+/**
+ *  \brief  disable shadow register based normal current sampling
+ *  \param[in]  h_sdfm          SDFM handle
+ * 
+*/
+void SDFM_disableShadowRegBasedNC(sdfm_handle h_sdfm);
+
 /** @} */
 
 #ifdef __cplusplus

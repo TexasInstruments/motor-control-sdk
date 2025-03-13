@@ -254,6 +254,7 @@ int32_t initSdfmFw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm,  PRU
 {
     sdfm_handle hSdfm;    
     uint8_t SDFM_CH = 0;
+    uint8_t enChannel = 0;
 
     /* Initialize SDFM instance */
     hSdfm = SDFM_init(pruIcssHandle, pruId, pSdfmPrms->pruInsId);
@@ -300,7 +301,12 @@ int32_t initSdfmFw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm,  PRU
     }
     for(int i = SDFM_CH; i<SDFM_CH + NUM_CH_SUPPORTED_PER_AXIS; i++)
     {
-        SDFM_setEnableChannel(hSdfm, i);
+        if(pSdfmPrms->channelPrms[i% NUM_CH_SUPPORTED_PER_AXIS].chEnable)
+        {
+            SDFM_setEnableChannel(hSdfm, i);
+            enChannel = i% NUM_CH_SUPPORTED_PER_AXIS;
+        }
+
     }
     uint32_t i;
     i = SDFM_getFirmwareVersion(hSdfm);
@@ -348,39 +354,44 @@ int32_t initSdfmFw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm,  PRU
 
 #endif
    
+#if (SDFM_SHADOW_REG_BASED_NC)
+    /*Enable shadow register based normal current sampling */
+    SDFM_enableShadowRegBasedNC(hSdfm);
+#endif
+
    /*configure IEP count for one epwm period*/
     SDFM_configIepCount(hSdfm, pSdfmPrms->epwmOutFreq);
 
-   /*configuration of sdfm parameters which are supported per axis, not for invidual channels.
-    Channel0 perametrs value are used for all 3 channels of axis*/
+   /*Configuration of sdfm parameters which are supported per axis, not for individual channels. 
+    Channel0 parameters value is used for all three channels of the axis.
 
     /*Phase delay calculation for ch0. With Load share mode also, phase delay calculation is enabled only for channel0 */
-    if(pSdfmPrms->phaseDelay)
+    if(pSdfmPrms->phaseDelay && (SDFM_CH == 0))
     {
         SDFM_measureClockPhaseDelay(hSdfm, pSdfmPrms->clkPrms[0].clkInv);
     }
 
-    /*set Noraml current OSR */
-    SDFM_setFilterOverSamplingRatio(hSdfm, pSdfmPrms->channelPrms[0].filterOsr);
+    /*set Normal current OSR */
+    SDFM_setFilterOverSamplingRatio(hSdfm, pSdfmPrms->channelPrms[enChannel].filterOsr);
 
 
     /*Enable Continuous mode*/
-    if(pSdfmPrms->channelPrms[0].enableContinuousMode)
+    if(pSdfmPrms->channelPrms[enChannel].enableContinuousMode)
     {
         SDFM_enableContinuousNormalCurrent(hSdfm);
         /*When Continuous mode is enabled, configure the first sample starting point. 
         Sampling starts with some delay after IEP counter starts because there will be delay due to sdfm register configuration so we cannot trigger CMP event immediately
         triggring cmp event 5us late*/
-        pSdfmPrms->channelPrms[0].firstSampTrigTime = 5;
+        pSdfmPrms->channelPrms[enChannel].firstSampTrigTime = 5;
     }
 
     /*GPIO pin configuration for zero cross*/
     SDFM_configGpioPins(hSdfm, pSdfmPrms->loadShare, pSdfmPrms->pruInsId);
 
-    SDFM_setSampleTriggerTime(hSdfm, pSdfmPrms->channelPrms[0].firstSampTrigTime);
-    if(pSdfmPrms->channelPrms[0].enSecondUpdate)
+    SDFM_setSampleTriggerTime(hSdfm, pSdfmPrms->channelPrms[enChannel].firstSampTrigTime);
+    if(pSdfmPrms->channelPrms[enChannel].enSecondUpdate)
     {
-        SDFM_enableDoubleSampling(hSdfm, pSdfmPrms->channelPrms[0].secondSampTrigTime);
+        SDFM_enableDoubleSampling(hSdfm, pSdfmPrms->channelPrms[enChannel].secondSampTrigTime);
     }
     else
     {
@@ -388,19 +399,22 @@ int32_t initSdfmFw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm,  PRU
     }
     
     /*enable epwm sync*/
-    if(pSdfmPrms->channelPrms[0].enableEpwmSync)
+    if(pSdfmPrms->channelPrms[enChannel].enableEpwmSync)
     {
-        SDFM_enableEpwmSync(hSdfm, pSdfmPrms->channelPrms[0].epwmSyncSource);
+        SDFM_enableEpwmSync(hSdfm, pSdfmPrms->channelPrms[enChannel].epwmSyncSource);
     }
      
 
     /*below configuration for all three channel*/
     for(SDFM_CH = 0; SDFM_CH < NUM_CH_SUPPORTED_PER_AXIS; SDFM_CH++)
     {
-
+#if (!SDFM_SHADOW_REG_BASED_NC)
         /*set comparator osr or Over current osr*/
-        SDFM_setCompFilterOverSamplingRatio(hSdfm, SDFM_CH, pSdfmPrms->compFilterPrms[SDFM_CH].comFilterOsr);
-
+                SDFM_setCompFilterOverSamplingRatio(hSdfm, SDFM_CH, pSdfmPrms->compFilterPrms[SDFM_CH].comFilterOsr);
+#else
+        /*Use normal current osr to configure the accumulator osr */
+        SDFM_setCompFilterOverSamplingRatio(hSdfm, SDFM_CH, pSdfmPrms->channelPrms[SDFM_CH].filterOsr);
+#endif
         /*set ACC source or filter type*/
         SDFM_configDataFilter(hSdfm, SDFM_CH, pSdfmPrms->channelPrms[SDFM_CH].accSource);
 
@@ -569,6 +583,7 @@ int32_t initPruSdfm(
     switch(channel)
     {
         case 0:
+            gTestSdfmPrms.channelPrms[channel].chEnable  =  CONFIG_SDFM0_CHANNEL0;
 #if (CONFIG_SDFM0_CHANNEL0 != 0)
             /*Clock parameters*/
             gTestSdfmPrms.clkPrms[channel].sdClock = CONFIG_SDFM0_CHANNEL0_MCLK;
@@ -613,6 +628,7 @@ int32_t initPruSdfm(
 #endif
             break;
         case 1:
+            gTestSdfmPrms.channelPrms[channel].chEnable  =  CONFIG_SDFM0_CHANNEL1;
 #if (CONFIG_SDFM0_CHANNEL1 != 0)
             /*Clock parameters*/
             gTestSdfmPrms.clkPrms[channel].sdClock = CONFIG_SDFM0_CHANNEL1_MCLK;
@@ -657,6 +673,7 @@ int32_t initPruSdfm(
 #endif
             break;
         case 2:
+            gTestSdfmPrms.channelPrms[channel].chEnable  =  CONFIG_SDFM0_CHANNEL2;
 #if (CONFIG_SDFM0_CHANNEL2 != 0)
             /*Clock parameters*/
             gTestSdfmPrms.clkPrms[channel].sdClock = CONFIG_SDFM0_CHANNEL2_MCLK;
@@ -701,6 +718,7 @@ int32_t initPruSdfm(
 #endif
             break;
         case 3:
+            gTestSdfmPrms.channelPrms[0].chEnable  =  CONFIG_SDFM0_CHANNEL3;
 #if (CONFIG_SDFM0_CHANNEL3 != 0)
             /*Clock parameters*/
             gTestSdfmPrms.clkPrms[0].sdClock = CONFIG_SDFM0_CHANNEL3_MCLK;
@@ -745,6 +763,7 @@ int32_t initPruSdfm(
 #endif
             break;
         case 4:
+            gTestSdfmPrms.channelPrms[1].chEnable  =  CONFIG_SDFM0_CHANNEL4;
 #if (CONFIG_SDFM0_CHANNEL4 != 0)
             /*Clock parameters*/
             gTestSdfmPrms.clkPrms[1].sdClock = CONFIG_SDFM0_CHANNEL4_MCLK;
@@ -789,6 +808,7 @@ int32_t initPruSdfm(
 #endif
             break;
         case 5:
+            gTestSdfmPrms.channelPrms[2].chEnable  =  CONFIG_SDFM0_CHANNEL5;
 #if (CONFIG_SDFM0_CHANNEL5 != 0)
             /*Clock parameters*/
             gTestSdfmPrms.clkPrms[2].sdClock = CONFIG_SDFM0_CHANNEL5_MCLK;
@@ -833,6 +853,7 @@ int32_t initPruSdfm(
 #endif
             break;
         case 6:
+            gTestSdfmPrms.channelPrms[0].chEnable  =  CONFIG_SDFM0_CHANNEL6;
 #if (CONFIG_SDFM0_CHANNEL6 != 0)
             /*Clock parameters*/
             gTestSdfmPrms.clkPrms[0].sdClock = CONFIG_SDFM0_CHANNEL6_MCLK;
@@ -877,6 +898,7 @@ int32_t initPruSdfm(
 #endif
             break;
         case 7:
+            gTestSdfmPrms.channelPrms[1].chEnable  =  CONFIG_SDFM0_CHANNEL7;
 #if (CONFIG_SDFM0_CHANNEL7 != 0)
             /*Clock parameters*/
             gTestSdfmPrms.clkPrms[1].sdClock = CONFIG_SDFM0_CHANNEL7_MCLK;
@@ -921,6 +943,7 @@ int32_t initPruSdfm(
 #endif
             break;
         case 8: 
+            gTestSdfmPrms.channelPrms[2].chEnable  =  CONFIG_SDFM0_CHANNEL8;
 #if (CONFIG_SDFM0_CHANNEL8 !=0 )
             /*Clock parameters*/
             gTestSdfmPrms.clkPrms[2].sdClock = CONFIG_SDFM0_CHANNEL8_MCLK;
