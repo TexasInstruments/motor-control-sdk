@@ -1116,14 +1116,6 @@ void endat_command_wait(struct endat_priv *priv)
            ;
     }
 }
-void endat_recovery_time_conversion(struct endat_priv *priv)
-{
-     /* RT: convert cycle to ns */
-    priv->endatChRxInfo->ch[0].recoveryTime = priv->endatChRxInfo->ch[0].recoveryTime * ((float)(1000000000)/priv->pruss_xchg->icssg_clk);
-    priv->endatChRxInfo->ch[1].recoveryTime = priv->endatChRxInfo->ch[1].recoveryTime * ((float)(1000000000)/priv->pruss_xchg->icssg_clk);
-    priv->endatChRxInfo->ch[2].recoveryTime = priv->endatChRxInfo->ch[2].recoveryTime * ((float)(1000000000)/priv->pruss_xchg->icssg_clk);
-
-}
 
 int32_t endat_command_process(struct endat_priv *priv, int32_t cmd,
                           struct cmd_supplement *cmd_supplement)
@@ -1137,11 +1129,6 @@ int32_t endat_command_process(struct endat_priv *priv, int32_t cmd,
 
     endat_command_send(priv);
     endat_command_wait(priv);
-    /* RT configuration(convert cycle to ns time ) for command 2.2*/
-    if( cmd > 7 && cmd < 15 )
-    {
-        endat_recovery_time_conversion(priv);
-    }
     return cmd;
 }
 
@@ -2109,5 +2096,64 @@ struct endat_priv *endat_init(struct endat_pruss_xchg *pruss_xchg, struct endatC
 
 uint32_t endat_get_recovery_time(struct endat_priv *priv)
 {
-    return priv->endatChRxInfo->ch[priv->channel].recoveryTime;
+    return priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.recoveryTime*((float)(1000000000)/priv->pru_clock);
+}
+
+int8_t endat_check_rt_error(struct endat_priv *priv)
+{
+    uint32_t rtDiff;
+    uint32_t lastCounterValue;
+    uint32_t currentCounterValue;
+
+    lastCounterValue =  priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.lastCounterValue;
+    currentCounterValue = priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.currentCounterValue;
+
+    /*Check if the counter is stuck by comparing current and last counter values*/
+    if(currentCounterValue == lastCounterValue)
+    {
+       priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.isCounterStuck = 1 ;
+       return RT_COUNTER_STUCK_ERROR;
+    }
+    else
+    {
+        priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.isCounterStuck = 0 ;
+    }
+
+    /*handle the int overflow candition */
+    if(lastCounterValue > currentCounterValue)
+    {
+        rtDiff = (MAX_RT_COUNTER_VALUE - lastCounterValue) + currentCounterValue;
+    }
+    else
+    {
+        rtDiff = currentCounterValue - lastCounterValue;
+    }
+
+    /*convert into us */
+    rtDiff = rtDiff*((float)(1000000000)/priv->pru_clock);
+    /* Check if the recovery time is within the short or long recovery time range */
+    if ((rtDiff >= SHORT_RECOVERY_TIME_MIN) && (rtDiff <= SHORT_RECOVERY_TIME_MAX)) {
+        return RT_NO_ERROR;  /* Valid short recovery time */
+    }
+    if ((rtDiff >= LONG_RECOVERY_TIME_MIN) && (rtDiff <= LONG_RECOVERY_TIME_MAX)) {
+        return RT_NO_ERROR;  /* Valid long recovery time */
+    }
+    return RT_OUT_OF_RANGE_ERROR;  /*Error: out of expected range*/
+}
+
+void endat_init_rt_measurement (struct endat_priv *priv) 
+{
+    priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.recoveryTime = 0;
+    priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.lastCounterValue = 0;
+    priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.startingValue = RT_COUNTER_STARTING_VALUE + 100*(priv->channel); /* Assign a unique starting value for each channel; */
+    priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.currentCounterValue = priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.startingValue;
+    priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.isCounterStuck = 0;
+}
+void endat_enable_rt_measurement (struct endat_priv *priv)
+{
+    priv->pruss_xchg->ch[priv->channel].enableRTM = 1;
+}
+void endat_disable_rt_measurement (struct endat_priv *priv)
+{
+    priv->pruss_xchg->ch[priv->channel].enableRTM = 0;
 }

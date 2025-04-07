@@ -123,7 +123,8 @@ SysConfig can be used to configure things mentioned below:
    <td>DMEM: 152 Bytes <br>  IMEM: 6.2 KB </td>
    <td>IEP0: CMP0 and CMP3 </td>
    <td>INTC Signal No. 18 is used to trigger a R5 interrupt</td>
-   <td>IEP, CMP events and INTC signal are used only in periodic continuous mode</td>
+   <td>IEP, CMP events and INTC signal are used only in periodic continuous mode <br> \note Multi-Channel single PRU firmware requires more than 6KB IMEM, so it cannot run on TX PRU
+    </td>
 </tr>
 <tr>
    <td>Multi Channel Configuration with load share</td>

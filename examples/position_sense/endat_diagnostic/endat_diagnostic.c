@@ -54,6 +54,15 @@
 
 #include "endat_periodic_trigger.h"
 
+/* Size of the PRU instruction memory in bytes.*/
+#define PRU_IRAM_SIZE   ( 12 * 1024 )    /* 12KB */
+
+/* Size of the RTU PRU instruction memory in bytes. */
+#define RTUPRU_IRAM_SIZE   ( 8 * 1024 )    /* 8KB */
+
+/* Size of the TX PRU instruction memory in bytes.*/
+#define TXPRU_IRAM_SIZE   ( 6 * 1024 )    /* 6KB */
+
 #if (PRU_ICSSGx_PRU_SLICE == 1)
 #define PRUICSS_PRUx PRUICSS_PRU1
 #ifndef PRUICSSM
@@ -133,17 +142,20 @@ TaskP_Object gTaskObject;
 #define VALID_PERIODIC_CMD(x) ((x) == 200)
 
 #define VALID_HOST_CMD(x) ((x == 100) || ((x) == 101) || ((x) == 102) || ((x) == 103) || ((x) == 104) || ((x) == 105) || \
-                           ((x) == 106) || ((x) == 107) || ((x) == 108) || ((x) == 109) || ((x) == 110) || ((x) == 111))
+                           ((x) == 106) || ((x) == 107) || ((x) == 108) || ((x) == 109) || ((x) == 110) || ((x) == 111) ||((x)== 112))
 
 #define HAVE_COMMAND_SUPPLEMENT(x) (((x) == 2) || ((x) == 3) || ((x) == 4) || ((x) == 7) || \
                                     ((x) == 9) || ((x) == 10) || ((x) == 11) || ((x) == 13) || ((x) == 14) || \
-                                    ((x) == 100) || ((x) == 101) || ((x)== 103) || ((x) == 105) || ((x) == 106) || ((x) == 107) || ((x) == 108) || ((x) == 109)  || ((x) == 200))
+                                    ((x) == 100) || ((x) == 101) || ((x)== 103) || ((x) == 105) || ((x) == 106) || ((x) == 107) || ((x) == 108) || ((x) == 109)  || ((x) == 200) || ((x) == 112))
 
 
-
+#if defined(SOC_AM243X) || defined(SOC_AM64X)
+#define ICSS_PRU_CORE_CLOCK CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ
+#define ENDAT_INPUT_CLOCK_UART_FREQUENCY   192000000
+#else
 #define ICSS_PRU_CORE_CLOCK CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ
 #define ENDAT_INPUT_CLOCK_UART_FREQUENCY CONFIG_PRU_ICSS0_UART_CLK_FREQ_HZ
-
+#endif
 
 #if RX_FIFO_CLOCK_SOURCE == 1
 #define ENDAT_RX_INPUT_CLOCK_FREQUENCY ICSS_PRU_CORE_CLOCK
@@ -249,7 +261,11 @@ uint32_t endat_pruicss_load_run_fw(struct endat_priv *priv)
 #if CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU /*enable loadshare mode*/
 
 
-
+           /*validate binary size*/
+           if((sizeof(EnDatFirmwareMultiMakeRTU_0)) > RTUPRU_IRAM_SIZE)
+           {
+               DebugP_log("ERROR: Firmware binary size (%d) exceeds available IRAM size (%d)\n", sizeof(EnDatFirmwareMultiMakeRTU_0), RTUPRU_IRAM_SIZE);
+           }
             status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_RTUPRUx);
             DebugP_assert(SystemP_SUCCESS == status);
             status=PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_RTU_PRU(PRUICSS_SLICEx),
@@ -261,6 +277,11 @@ uint32_t endat_pruicss_load_run_fw(struct endat_priv *priv)
             status = PRUICSS_enableCore(gPruIcssXHandle, PRUICSS_RTUPRUx);
             DebugP_assert(SystemP_SUCCESS == status);
 
+            /*validate binary size*/
+           if((sizeof(EnDatFirmwareMultiMakePRU_0)) > PRU_IRAM_SIZE)
+           {
+               DebugP_log("ERROR: Firmware binary size (%d) exceeds available IRAM size (%d)\n", sizeof(EnDatFirmwareMultiMakePRU_0), PRU_IRAM_SIZE);
+           }
 
             status=PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_PRUx );
             DebugP_assert(SystemP_SUCCESS == status);
@@ -273,7 +294,11 @@ uint32_t endat_pruicss_load_run_fw(struct endat_priv *priv)
             status = PRUICSS_enableCore(gPruIcssXHandle, PRUICSS_PRUx);
             DebugP_assert(SystemP_SUCCESS == status);
 
-
+           /*validate binary size*/
+           if((sizeof(EnDatFirmwareMultiMakeTXPRU_0)) > TXPRU_IRAM_SIZE)
+           {
+               DebugP_log("ERROR: Firmware binary size (%d) exceeds available IRAM size (%d)\n", sizeof(EnDatFirmwareMultiMakeTXPRU_0), TXPRU_IRAM_SIZE);
+           }
            status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_TXPRUx);
              DebugP_assert(SystemP_SUCCESS == status);
             status = PRUICSS_writeMemory(gPruIcssXHandle,  PRUICSS_IRAM_TX_PRU(PRUICSS_SLICEx),
@@ -295,13 +320,25 @@ uint32_t endat_pruicss_load_run_fw(struct endat_priv *priv)
         DebugP_assert(SystemP_SUCCESS == status);
 
 #if(CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU)
+           
+           
+            /*validate binary size*/
+           if((sizeof(EnDatFirmwareMulti_0)) > PRU_IRAM_SIZE)
+           {
+               DebugP_log("ERROR: Firmware binary size (%d) exceeds available IRAM size (%d)\n", sizeof(EnDatFirmwareMulti_0), PRU_IRAM_SIZE);
+           }
 
             status = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_SLICEx),
                                 0, (uint32_t *) EnDatFirmwareMulti_0,
                                 sizeof(EnDatFirmwareMulti_0));
 
 #else
-
+           
+           /*validate binary size*/
+           if((sizeof(EnDatFirmware_0)) > PRU_IRAM_SIZE)
+           {
+               DebugP_log("ERROR: Firmware binary size (%d) exceeds available IRAM size (%d)\n", sizeof(EnDatFirmware_0), PRU_IRAM_SIZE);
+           }
             status = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_SLICEx),
                                 0, (uint32_t *) EnDatFirmware_0,
                                 sizeof(EnDatFirmware_0));
@@ -396,6 +433,7 @@ static void endat_print_menu(void)
 
     DebugP_log("\r|110: Recovery Time (RT)                                                       |\n");
     DebugP_log("\r|111: Simulate motor control 2.1 position loop for long time                   |\n");
+    DebugP_log("\r|112: Start/Stop Recovery Time measurement                                     |\n");
     DebugP_log("\r|200: Start periodic continuous mode                                           |\n");
 
     DebugP_log("\r|------------------------------------------------------------------------------|\n\r|\n");
@@ -897,6 +935,35 @@ static int32_t endat_get_command_supplement(int32_t cmd,
                 return -EINVAL;
             }
 
+            break;
+        case 112:
+            DebugP_log("\r| enter 1 to enable recovery time measurement and 0 to disable recovery time measurement: ");
+
+            if(DebugP_scanf("%u\n", &cmd_supplement->frequency) < 0)
+            {
+                DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                return -EINVAL;
+            }
+            if(cmd_supplement->frequency > 1)
+            {
+                DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                               return -EINVAL;
+            }
+            if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
+            {
+                DebugP_log("\r| Select Channel: ");
+                if(DebugP_scanf("%u\n", &priv->channel) < 0)
+                {
+                    DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
+                    return -EINVAL;
+                }
+
+                if(!((gEndat_multi_ch_mask) & (1<<priv->channel)))
+                {
+                    DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
+                    return -EINVAL;
+                }
+            }
             break;
         case 200:
 
@@ -1986,17 +2053,22 @@ static void endat_process_host_command(int32_t cmd,
                     endat_multi_channel_set_cur(priv, j);
                     DebugP_log("channel: %d",priv->channel);
                     DebugP_log("\t");
+                    
                     recovery_time = endat_get_recovery_time(priv);
-                    DebugP_log("Recovery Time: %d ns", recovery_time);
-                    DebugP_log("\n");
+                    DebugP_log("\r Recovery Time: %10u ns \n", recovery_time);
+                    DebugP_log("\r Current value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.currentCounterValue);
+                    DebugP_log("\r Previous value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.lastCounterValue);
+                    DebugP_log("\r Starting value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.startingValue);
                 }
             }
         }
         else
         {
             recovery_time = endat_get_recovery_time(priv);
-            DebugP_log("Recovery Time: %d ns", recovery_time);
-            DebugP_log("\n");
+            DebugP_log("\r Recovery Time: %10u ns \n", recovery_time);
+            DebugP_log("\r Current value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.currentCounterValue);
+            DebugP_log("\r Previous value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.lastCounterValue);
+            DebugP_log("\r Starting value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.startingValue);
         }
 
     }
@@ -2071,6 +2143,17 @@ static void endat_process_host_command(int32_t cmd,
                 ClockP_usleep(500);
 
             }
+        }
+    }
+    else if(cmd == 112)
+    {
+        if(cmd_supplement->frequency == 1)
+        {
+            endat_enable_rt_measurement(priv);
+        }
+        else
+        {
+            endat_disable_rt_measurement(priv);
         }
     }
     else
@@ -2230,7 +2313,7 @@ void endat_main(void *args)
     }
 
     endat_config_host_trigger(priv);
-
+    
     /* Configure Delays based on the ICSSG frequency*/
     /* Count = ((required delay * icssClk)/1000) */
     priv->pruss_xchg->endat_delay_125ns = ((icssClk*125)/1000000000);
@@ -2317,6 +2400,9 @@ void endat_main(void *args)
         endat_print_encoder_info(priv);
     }
 
+    /*Initialization of RT parameters*/
+     endat_init_rt_measurement(priv);
+
     /* default frequency - 8MHz for 2.2 encoders, 1MHz for 2.1 encoders */
     if(priv->cmd_set_2_2)
     {
@@ -2367,6 +2453,7 @@ void endat_main(void *args)
         if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
         {
             int32_t j;
+            int8_t rt_error;
 
             DebugP_log("\r|\n");
 
@@ -2377,12 +2464,33 @@ void endat_main(void *args)
                     endat_multi_channel_set_cur(priv, j);
                     DebugP_log("\r|\n|\t\t\t\tCHANNEL %d\n", j);
                     endat_handle_rx(priv, cmd);
+                    /* Recovery Time validation */
+                    rt_error =  endat_check_rt_error(priv);
+                    if(rt_error != RT_NO_ERROR)
+                    {
+                        DebugP_log("\r Error: Channel %d - Recovery time out of expected range. \n", priv->channel);
+                        if(rt_error == RT_COUNTER_STUCK_ERROR)
+                        {
+                            DebugP_log("\r Error: Counter for Channel %d is stuck.\n", priv->channel);
+                        }
+                    }
                 }
             }
         }
         else
         {
+            int8_t rt_error;
             endat_handle_rx(priv, cmd);
+            /* Recovery Time validation */
+            rt_error =  endat_check_rt_error(priv);
+            if(rt_error == RT_COUNTER_STUCK_ERROR)
+            {
+                DebugP_log("\r Error: Channel %d - Recovery time out of expected range. \n", priv->channel);
+                if(priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.isCounterStuck == 1)
+                {
+                    DebugP_log("\r Error: Counter for Channel %d is stuck. \n", priv->channel);
+                }
+            }
         }
 
         /* this cannot be done except as last in loop; additional info becomes applicable from next command onwards only */
