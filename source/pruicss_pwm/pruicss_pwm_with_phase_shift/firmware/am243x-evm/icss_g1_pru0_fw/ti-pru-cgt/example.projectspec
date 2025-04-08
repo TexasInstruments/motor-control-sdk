@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectSpec>
+    <applicability>
+        <when>
+            <context
+                deviceFamily="PRU"
+                deviceId="AM243x_GP_EVM"
+            />
+        </when>
+    </applicability>
+
+    <project
+        title="Pruicss Pwm With Phase Shift"
+        name = "pruicss_pwm_with_phase_shift_am243x-evm_icss_g1_pru0_fw_ti-pru-cgt"
+        products="com.ti.MOTOR_CONTROL_SDK_AMXXX"
+        configurations="
+            Release,
+            Debug,
+        "
+        connection="TIXDS110_Connection.xml"
+        toolChain="TI"
+        cgtVersion="2.3.3"
+        device="AM243x_GP_EVM"
+        deviceCore="ICSS_G1_PRU_0"
+        ignoreDefaultDeviceSettings="true"
+        ignoreDefaultCCSSettings="true"
+        endianness="little"
+        outputFormat="ELF"
+        outputType="executable"
+
+        compilerBuildOptions="
+            -I${CG_TOOL_ROOT}/include
+            -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source
+            -I${MOTOR_CONTROL_SDK_PATH}/source
+            -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/common
+            -DICSSG1
+            -DPRU0
+            -DSLICE0
+            -v4
+            -DSOC_AM243X
+        "
+        linkerBuildOptions="
+            -m=pruicss_pwm_with_phase_shift.${ConfigName}.map
+            --disable_auto_rts
+            --entry_point=main
+            --diag_suppress=10063-D
+        "
+
+        postBuildStep="
+             $(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=PRU0_G1_Firmware  -o pru0_g1_load_bin.h pruicss_pwm_with_phase_shift_am243x-evm_icss_g1_pru0_fw_ti-pru-cgt.out; if ${CCS_HOST_OS} == win32 $(CCS_INSTALL_DIR)/utils/cygwin/sed -i '0r ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h' pru0_g1_load_bin.h ; if ${CCS_HOST_OS} == linux sed -i '0r ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h' pru0_g1_load_bin.h ;if ${CCS_HOST_OS} == win32 move pru0_g1_load_bin.h ${MOTOR_CONTROL_SDK_PATH}/source/pruicss_pwm/pruicss_pwm_with_phase_shift/firmware/am243x-evm/pru0_g1_load_bin.h; if ${CCS_HOST_OS} == linux mv pru0_g1_load_bin.h ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pruicss_pwm/pruicss_pwm_with_phase_shift/firmware/am243x-evm/pru0_g1_load_bin.h 
+        "
+
+        description="A Pruicss Pwm With Phase Shift FW project">
+
+        <configuration name="Release"
+            compilerBuildOptions="
+                -O3
+            "
+            linkerBuildOptions="
+            "
+        ></configuration>
+        <configuration name="Debug"
+            compilerBuildOptions="
+                -D_DEBUG_=1
+            "
+            linkerBuildOptions="
+            "
+        ></configuration>
+        <pathVariable name="MOTOR_CONTROL_SDK_PATH" path="${COM_TI_MOTOR_CONTROL_SDK_AMXXX_INSTALL_DIR}" scope="project" />
+        <file path="../../../main.asm" openOnCreation="false" excludeFromBuild="false" action="copy">
+        </file>
+        <file path="./linker.cmd" openOnCreation="false" excludeFromBuild="false" action="copy">
+        </file>
+        <file path="${MOTOR_CONTROL_SDK_PATH}/docs/api_guide_am243x/EXAMPLE_PRUICSS_PWM_WITH_PHASE_SHIFT.html"
+                openOnCreation="false" excludeFromBuild="false" targetName="README.html" action="link">
+        </file>
+    </project>
+</projectSpec>
