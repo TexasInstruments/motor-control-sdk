@@ -34,6 +34,7 @@ This page lists all the examples and demos supported in this SDK.
         - \subpage EXAMPLES_TRANSFORMS_TEST
 - PRU-ICSS PWM
     - \subpage EXAMPLE_PRUICSS_PWM_DEADBAND_EPWM_SYNC
+    - \subpage EXAMPLE_PRUICSS_PWM_WITH_PHASE_SHIFT
 \endcond
 
 \cond SOC_AM263X

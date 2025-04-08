@@ -98,6 +98,7 @@ help:
 	@echo  $(MAKE) -s -C examples/transforms/transforms_test/am243x-evm/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C examples/transforms/transforms_test/am243x-lp/r5fss0-0_nortos/ti-arm-clang [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C examples/transforms/transforms_test/am243x-lp/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C examples/pruicss_pwm/pruicss_pwm_with_phase_shift/am243x-evm/r5fss0-0_freertos/ti-arm-clang [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icssg0-pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icssg0-rtupru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icssg0-txpru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
@@ -129,6 +130,8 @@ help:
 	@echo  $(MAKE) -s -C source/position_sense/tamagawa/firmware/multi_channel/am243x-lp/icssg0-pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/tamagawa/firmware/single_channel/am243x-evm/icssg0-pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/tamagawa/firmware/single_channel/am243x-lp/icssg0-pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C source/pruicss_pwm/pruicss_pwm_with_phase_shift/firmware/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C source/pruicss_pwm/pruicss_pwm_with_phase_shift/firmware/am243x-evm/icss_g1_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  .
 	@echo  System Example build targets,
 	@echo  =============================
@@ -311,6 +314,7 @@ BUILD_COMBO_EXAMPLE_ALL += transforms_test_am243x-evm_r5fss0-0_nortos_ti-arm-cla
 BUILD_COMBO_EXAMPLE_ALL += transforms_test_am243x-evm_r5fss0-0_freertos_ti-arm-clang
 BUILD_COMBO_EXAMPLE_ALL += transforms_test_am243x-lp_r5fss0-0_nortos_ti-arm-clang
 BUILD_COMBO_EXAMPLE_ALL += transforms_test_am243x-lp_r5fss0-0_freertos_ti-arm-clang
+BUILD_COMBO_EXAMPLE_ALL += pruicss_pwm_with_phase_shift_am243x-evm_r5fss0-0_freertos_ti-arm-clang
 # Various System Example Targets
 BUILD_COMBO_EXAMPLE_ALL += single_chip_servo_am243x-lp_system_freertos_nortos
 
@@ -347,6 +351,8 @@ BUILD_COMBO_EXAMPLE_PRIVATE_ALL += tamagawa_multi_channel_am243x-evm_icssg0-pru1
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += tamagawa_multi_channel_am243x-lp_icssg0-pru1_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += tamagawa_single_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += tamagawa_single_channel_am243x-lp_icssg0-pru1_fw_ti-pru-cgt
+BUILD_COMBO_EXAMPLE_PRIVATE_ALL += pruicss_pwm_with_phase_shift_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt
+BUILD_COMBO_EXAMPLE_PRIVATE_ALL += pruicss_pwm_with_phase_shift_am243x-evm_icss_g1_pru0_fw_ti-pru-cgt
 # Various Private System Example Targets
 
 examples: $(BUILD_COMBO_EXAMPLE_ALL)
@@ -491,6 +497,9 @@ examples-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_ALL)
  transforms_test_am243x-lp_r5fss0-0_freertos_ti-arm-clang:
 	$(MAKE) -C examples/transforms/transforms_test/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile all
 
+ pruicss_pwm_with_phase_shift_am243x-evm_r5fss0-0_freertos_ti-arm-clang:
+	$(MAKE) -C examples/pruicss_pwm/pruicss_pwm_with_phase_shift/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile all
+
  sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-pru0_fw_ti-pru-cgt:
 	$(MAKE) -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icssg0-pru0_fw/ti-pru-cgt -f makefile all
 
@@ -584,6 +593,12 @@ examples-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_ALL)
  tamagawa_single_channel_am243x-lp_icssg0-pru1_fw_ti-pru-cgt:
 	$(MAKE) -C source/position_sense/tamagawa/firmware/single_channel/am243x-lp/icssg0-pru1_fw/ti-pru-cgt -f makefile all
 
+ pruicss_pwm_with_phase_shift_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt:
+	$(MAKE) -C source/pruicss_pwm/pruicss_pwm_with_phase_shift/firmware/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt -f makefile all
+
+ pruicss_pwm_with_phase_shift_am243x-evm_icss_g1_pru0_fw_ti-pru-cgt:
+	$(MAKE) -C source/pruicss_pwm/pruicss_pwm_with_phase_shift/firmware/am243x-evm/icss_g1_pru0_fw/ti-pru-cgt -f makefile all
+
  single_chip_servo_am243x-lp_system_freertos_nortos:
 	$(MAKE) -C examples/tidep_01032_dual_motor_drive/single_chip_servo/am243x-lp/system_freertos_nortos -f makefile all
 
@@ -636,6 +651,7 @@ BUILD_COMBO_EXAMPLE_CLEAN_ALL += transforms_test_am243x-evm_r5fss0-0_nortos_ti-a
 BUILD_COMBO_EXAMPLE_CLEAN_ALL += transforms_test_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_CLEAN_ALL += transforms_test_am243x-lp_r5fss0-0_nortos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_CLEAN_ALL += transforms_test_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_CLEAN_ALL += pruicss_pwm_with_phase_shift_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean
 # Various System Example Clean Targets
 BUILD_COMBO_EXAMPLE_CLEAN_ALL += single_chip_servo_am243x-lp_system_freertos_nortos_clean
 
@@ -672,6 +688,8 @@ BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += tamagawa_multi_channel_am243x-evm_icssg
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += tamagawa_multi_channel_am243x-lp_icssg0-pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += tamagawa_single_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += tamagawa_single_channel_am243x-lp_icssg0-pru1_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += pruicss_pwm_with_phase_shift_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += pruicss_pwm_with_phase_shift_am243x-evm_icss_g1_pru0_fw_ti-pru-cgt_clean
 # Various Private System Example Targets
 
 examples-clean: $(BUILD_COMBO_EXAMPLE_CLEAN_ALL)
@@ -816,6 +834,9 @@ examples-private-clean: $(BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL)
  transforms_test_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
 	$(MAKE) -C examples/transforms/transforms_test/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile clean
 
+ pruicss_pwm_with_phase_shift_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/pruicss_pwm/pruicss_pwm_with_phase_shift/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile clean
+
  sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-pru0_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icssg0-pru0_fw/ti-pru-cgt -f makefile clean
 
@@ -909,6 +930,12 @@ examples-private-clean: $(BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL)
  tamagawa_single_channel_am243x-lp_icssg0-pru1_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/tamagawa/firmware/single_channel/am243x-lp/icssg0-pru1_fw/ti-pru-cgt -f makefile clean
 
+ pruicss_pwm_with_phase_shift_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/pruicss_pwm/pruicss_pwm_with_phase_shift/firmware/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt -f makefile clean
+
+ pruicss_pwm_with_phase_shift_am243x-evm_icss_g1_pru0_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/pruicss_pwm/pruicss_pwm_with_phase_shift/firmware/am243x-evm/icss_g1_pru0_fw/ti-pru-cgt -f makefile clean
+
  single_chip_servo_am243x-lp_system_freertos_nortos_clean:
 	$(MAKE) -C examples/tidep_01032_dual_motor_drive/single_chip_servo/am243x-lp/system_freertos_nortos -f makefile clean
 
@@ -961,6 +988,7 @@ BUILD_COMBO_EXAMPLE_SCRUB_ALL += transforms_test_am243x-evm_r5fss0-0_nortos_ti-a
 BUILD_COMBO_EXAMPLE_SCRUB_ALL += transforms_test_am243x-evm_r5fss0-0_freertos_ti-arm-clang_scrub
 BUILD_COMBO_EXAMPLE_SCRUB_ALL += transforms_test_am243x-lp_r5fss0-0_nortos_ti-arm-clang_scrub
 BUILD_COMBO_EXAMPLE_SCRUB_ALL += transforms_test_am243x-lp_r5fss0-0_freertos_ti-arm-clang_scrub
+BUILD_COMBO_EXAMPLE_SCRUB_ALL += pruicss_pwm_with_phase_shift_am243x-evm_r5fss0-0_freertos_ti-arm-clang_scrub
 # Various System Example Scrub Targets
 BUILD_COMBO_EXAMPLE_SCRUB_ALL += single_chip_servo_am243x-lp_system_freertos_nortos_scrub
 
@@ -997,6 +1025,8 @@ BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += tamagawa_multi_channel_am243x-evm_icssg
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += tamagawa_multi_channel_am243x-lp_icssg0-pru1_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += tamagawa_single_channel_am243x-evm_icssg0-pru1_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += tamagawa_single_channel_am243x-lp_icssg0-pru1_fw_ti-pru-cgt_scrub
+BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += pruicss_pwm_with_phase_shift_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_scrub
+BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += pruicss_pwm_with_phase_shift_am243x-evm_icss_g1_pru0_fw_ti-pru-cgt_scrub
 # Various Private System Example Targets
 
 examples-scrub: $(BUILD_COMBO_EXAMPLE_SCRUB_ALL)
@@ -1141,6 +1171,9 @@ examples-scrub-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL)
  transforms_test_am243x-lp_r5fss0-0_freertos_ti-arm-clang_scrub:
 	$(MAKE) -C examples/transforms/transforms_test/am243x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile scrub
 
+ pruicss_pwm_with_phase_shift_am243x-evm_r5fss0-0_freertos_ti-arm-clang_scrub:
+	$(MAKE) -C examples/pruicss_pwm/pruicss_pwm_with_phase_shift/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile scrub
+
  sdfm_firmware_multi_axis_load_share_am243x-evm_icssg0-pru0_fw_ti-pru-cgt_scrub:
 	$(MAKE) -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icssg0-pru0_fw/ti-pru-cgt -f makefile scrub
 
@@ -1233,6 +1266,12 @@ examples-scrub-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL)
 
  tamagawa_single_channel_am243x-lp_icssg0-pru1_fw_ti-pru-cgt_scrub:
 	$(MAKE) -C source/position_sense/tamagawa/firmware/single_channel/am243x-lp/icssg0-pru1_fw/ti-pru-cgt -f makefile scrub
+
+ pruicss_pwm_with_phase_shift_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_scrub:
+	$(MAKE) -C source/pruicss_pwm/pruicss_pwm_with_phase_shift/firmware/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt -f makefile scrub
+
+ pruicss_pwm_with_phase_shift_am243x-evm_icss_g1_pru0_fw_ti-pru-cgt_scrub:
+	$(MAKE) -C source/pruicss_pwm/pruicss_pwm_with_phase_shift/firmware/am243x-evm/icss_g1_pru0_fw/ti-pru-cgt -f makefile scrub
 
  single_chip_servo_am243x-lp_system_freertos_nortos_scrub:
 	$(MAKE) -C examples/tidep_01032_dual_motor_drive/single_chip_servo/am243x-lp/system_freertos_nortos -f makefile scrub

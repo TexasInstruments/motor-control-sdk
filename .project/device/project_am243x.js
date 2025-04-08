@@ -40,6 +40,7 @@ const example_file_list = [
     "examples/pruicss_pwm/pruicss_pwm_dead_band_epwm_sync/.project/project.js",
     "examples/tidep_01032_dual_motor_drive/single_chip_servo/.project/mcsdk_project.js",
     "examples/transforms/transforms_test/.project/mcsdk_project.js",
+    "examples/pruicss_pwm/pruicss_pwm_with_phase_shift/.project/project.js",
     "source/current_sense/sdfm/firmware/multi_axis_load_share/.project/project.js",
     "source/current_sense/sdfm/firmware/single_axis_single_pru/.project/project.js",
     "source/position_sense/bissc/firmware/multi_channel_load_share/.project/project.js",
@@ -61,7 +62,7 @@ const example_file_list = [
     "source/position_sense/nikon/firmware/single_channel/.project/project.js",
     "source/position_sense/tamagawa/firmware/multi_channel/.project/project.js",
     "source/position_sense/tamagawa/firmware/single_channel/.project/project.js",
-
+    "source/pruicss_pwm/pruicss_pwm_with_phase_shift/firmware/.project/project.js",
 ];
 
 function getProjectSpecCpu(cpu) {
