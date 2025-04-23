@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2024 Texas Instruments Incorporated
+ *  Copyright (C) 2024-25 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -98,7 +98,8 @@ struct nikon_priv *nikon_init(PRUICSS_Handle gPruIcssXHandle,
                               uint32_t uart_clk_freq,
                               uint32_t tx_rx_clock_source,
                               uint32_t mask,
-                              uint32_t totalch);
+                              uint32_t totalch,
+                              uint32_t protocol_version);
 
 /**
  *  \brief      Clear the channel specific frame size cfg registers.
@@ -181,7 +182,7 @@ void nikon_update_enc_len(struct nikon_priv *priv,
                           uint32_t multi_turn_len[],
                           uint32_t ch);
 /**
- *  \brief      Update the operating baud rate as user speciefied baud rate
+ *  \brief      Update the operating baud rate as user specified baud rate
  *              through UART menu
  *
  *  \param[in]  priv            cookie returned by \ref nikon_init
@@ -230,11 +231,30 @@ void nikon_update_eeprom_data(struct nikon_priv *priv, uint32_t data_high, uint3
  *  \brief      Assign the specified 24bits as Identification code of encoder
  *
  *  \param[in]  priv            cookie returned by \ref nikon_init
- *  \param[in]  data_high       Upper byte to assign as ID code[23 : 16]
- *  \param[in]  data_mid        Middle byte to assign as ID code[15 : 8]
- *  \param[in]  data_low        Lower byte to assign as ID code[7 : 0]
+ *  \param[in]  data_high       Upper byte to assign as ID code[7:0]
+ *  \param[in]  data_mid        Middle byte to assign as ID code[15:8]
+ *  \param[in]  data_low        Lower byte to assign as ID code[23:16]
  */
 void nikon_update_id_code(struct nikon_priv *priv, uint32_t data_high, uint32_t data_mid, uint32_t data_low);
+
+/**
+ *  \brief      Assign the specified 19 bits as velocity coefficient of encoder
+ *
+ *  \param[in]  priv            cookie returned by \ref nikon_init
+ *  \param[in]  data_high       Upper byte to assign as velocity coefficient [7:0]
+ *  \param[in]  data_mid        Middle byte to assign as velocity coefficient [15:8]
+ *  \param[in]  data_low        Lower byte to assign as velocity coefficient [18:16] (Only lower 3 bits of data_low will be used)
+ */
+void nikon_update_velocity_coefficient(struct nikon_priv *priv, uint32_t data_high, uint32_t data_mid, uint32_t data_low);
+
+/**
+ *  \brief Configure bank for memory operations in Nikon 3.0
+ *
+ *  \param[in]  priv    Cookie returned by \ref nikon_init
+ *  \param[in]  bank    Bank number to be set
+ */
+void nikon_update_bank(struct nikon_priv *priv, uint8_t bank);
+
 /** @} */
 #ifdef __cplusplus
 }

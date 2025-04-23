@@ -70,8 +70,16 @@
 #define PRUICSS_TXPRUx                    (`txPru`)
 #define PRUICSS_RTUPRUx                   (`rtuPru`)
 #define TX_RX_FIFO_CLOCK_SOURCE           (`instance.Tx_Rx_Clk_Source`)
- %if ((instance.instance === "ICSSG1" || instance.instance === "ICSSG0") && (instance.G_MUX_EN))
+%if ((instance.instance === "ICSSG1" || instance.instance === "ICSSG0") && (instance.G_MUX_EN))
     %{
 #define `instance.$name`_G_MUX_EN          `instance["G_MUX_EN"] & 1`
+    %}
+%if (instance.protovolVersion === 2.1)
+    %{
+#define NIKON_PROTOCOL_VERSION             (NIKON_PROTOCOL_V2_1)
+    %}
+%if (instance.protovolVersion === 3.0)
+    %{
+#define NIKON_PROTOCOL_VERSION             (NIKON_PROTOCOL_V3_0)
     %}
 % }

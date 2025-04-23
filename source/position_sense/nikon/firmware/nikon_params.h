@@ -1,5 +1,5 @@
 ;
-; Copyright (C) 2024 Texas Instruments Incorporated
+; Copyright (C) 2024-25 Texas Instruments Incorporated
 ;
 ; Redistribution and use in source and binary forms, with or without
 ; modification, are permitted provided that the following conditions
@@ -45,9 +45,9 @@
 	; R11.b0	- 8 bit calculated On-the-fly CRC for channel 0
 	; R11.b1 	- 8 bit calculated On-the-fly CRC for channel 1
 	; R11.b2 	- 8 bit calculated On-the-fly CRC for channel 2
-	; R12.b0 	- 8 bit receivedd CRC for channel 0
-	; R12.b1 	- 8 bit receivedd CRC for channel 1
-	; R12.b2 	- 8 bit receivedd CRC for channel 2
+	; R12.b0 	- 8 bit received CRC for channel 0
+	; R12.b1 	- 8 bit received CRC for channel 1
+	; R12.b2 	- 8 bit received CRC for channel 2
 	; R13.b0	- Valid bit index for selected channel
 	; R13.b1 	- FIFO bit index for selected channel
 	; R13.b2 	- Channel mask for channel in use

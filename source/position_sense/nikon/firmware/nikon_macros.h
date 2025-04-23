@@ -1,5 +1,5 @@
 ;
-; Copyright (C) 2024 Texas Instruments Incorporated
+; Copyright (C) 2024-25 Texas Instruments Incorporated
 ;
 ; Redistribution and use in source and binary forms, with or without
 ; modification, are permitted provided that the following conditions
@@ -286,7 +286,7 @@ NIKON_CRC_END?:
 ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 
 M_OTF_RECEIVE	.macro	Ra, num_frames, frame_cnt, raw_data_offset
-NIKON_START_RECIEVE?:
+NIKON_START_RECEIVE?:
     ADD     frame_cnt, frame_cnt, 1
     QBNE    NIKON_START_BIT?, frame_cnt, num_frames		;Last RX frame contains 8 bit data and 8 bit crc
     LDI     SCRATCH2.b1, NIKON_RX_CRC_LEN				;Loop for first 8 bit in M_OTF_RECEIVE_DOWNSAPLE_AND_CRC and next 8 bit in M_OTF_RECEIVE_AND_DOWNSAMPLE
@@ -301,7 +301,7 @@ NIKON_DATA_RCV?:
 	M_OTF_RECEIVE_DOWNSAMPLE_AND_CRC 	Ra, SCRATCH2.b1, FIFO_BIT_IDX, VALID_BIT_IDX, FF0.b0, FF1.b0, FF2.b0, FF3.b0, FF4.b0, FF5.b0, FF6.b0, FF7.b0, EX.b0
 	;Receive the data bits and performe otf crc algorithm.
     QBNE    NIKON_STOP_BIT?, frame_cnt, num_frames
-	;Recieve crc bits from last RX frame.
+	;Receive crc bits from last RX frame.
 	M_OTF_RECEIVE_AND_DOWNSAMPLE 	Ra, NIKON_RCV_CRC.b0, SCRATCH2.b1, FIFO_BIT_IDX, VALID_BIT_IDX
 	;Receive crc bits to compare with otf crc
 	NOP
@@ -314,7 +314,7 @@ NIKON_STOP_BIT?:
 	ADD 	raw_data_offset, raw_data_offset, 6			;Increment to the offset of next RX frame memory location
     ZERO    &Ra, 4
 
-    QBNE    NIKON_START_RECIEVE?, frame_cnt, num_frames	;Poll for start bit of next frame if current frame is not last frame.
+    QBNE    NIKON_START_RECEIVE?, frame_cnt, num_frames	;Poll for start bit of next frame if current frame is not last frame.
 	M_CALC_CRC 	NIKON_OTF_CRC.b0, FF0.b0, FF1.b0, FF2.b0, FF3.b0, FF4.b0, FF5.b0, FF6.b0, FF7.b0 ;Store the clculated On-the-fly CRC
 	QBEQ 	NIKON_CRC_SUCCESS?, NIKON_RCV_CRC.b0, NIKON_OTF_CRC.b0
 	LBCO 	&SCRATCH1, PRUx_DMEM, SCRATCH3.b1, 4
@@ -548,7 +548,7 @@ NIKON_CRC_CH0_END?:
 ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 
 M_OTF_RECEIVE_MC	.macro	Ra, Rb, Rc, num_frames, frame_cnt, raw_data_offset
-NIKON_START_RECIEVE?:
+NIKON_START_RECEIVE?:
     ADD     frame_cnt, frame_cnt, 1
     QBNE    NIKON_START_BIT?, frame_cnt, num_frames		;Last RX frame contains 8 bit data and 8 bit crc
     LDI     SCRATCH2.b1, NIKON_RX_CRC_LEN				;Loop for first 8 bit in M_OTF_RECEIVE_DOWNSAPLE_AND_CRC_MC and next 8 bit in M_OTF_RECEIVE_AND_DOWNSAMPLE_MC
@@ -573,7 +573,7 @@ NIKON_DATA_RCV?:
 	M_OTF_RECEIVE_DOWNSAMPLE_AND_CRC_MC 	Ra, Rb, Rc, SCRATCH2.b1, FIFO_BIT_IDX, FF0, FF1, FF2, FF3, FF4, FF5, FF6, FF7, EX
     ;Receive the data bits and performe otf crc algorithm for all channels.
 	QBNE    NIKON_STOP_BIT?, frame_cnt, num_frames
-	;Recieve crc bits from last RX frame of all channels.
+	;Receive crc bits from last RX frame of all channels.
 	M_OTF_RECEIVE_AND_DOWNSAMPLE_MC 	Ra, Rb, Rc, NIKON_RCV_CRC, SCRATCH2.b1, FIFO_BIT_IDX
 	;Receive crc bits of all channels to compare with otf crc
 	NOP
@@ -595,7 +595,7 @@ NIKON_STOP_BIT_FOUND?:
 	SBCO 	&Ra, PRUx_DMEM, raw_data_offset, 6					;Store 16(x3 for all channels) bit data from each frame excluding start bit and stop bit.
 	ADD 	raw_data_offset, raw_data_offset, 6					;Increment to the offset of next RX frame memory location of ch0
     ZERO    &Ra, 6
-    QBNE    NIKON_START_RECIEVE?, frame_cnt, num_frames			;Poll for start bit of next frame if current frame is not last frame.
+    QBNE    NIKON_START_RECEIVE?, frame_cnt, num_frames			;Poll for start bit of next frame if current frame is not last frame.
 	M_CALC_CRC_MC 	NIKON_OTF_CRC, FF0, FF1, FF2, FF3, FF4, FF5, FF6, FF7	;Store the clculated On-the-fly CRC for all channels
 	QBEQ 	NIKON_CH0_CRC_SUCCESS?, NIKON_RCV_CRC.b0, NIKON_OTF_CRC.b0
 	LBCO 	&SCRATCH1, PRUx_DMEM, SCRATCH3.b1, 4
@@ -692,7 +692,7 @@ NIKON_RX_RECEIVE_DOWNSAMPLE_16MHZ_LOOP?:
 ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 
 M_OTF_RECEIVE_16MHZ	.macro	Ra, num_frames, frame_cnt, raw_data_offset
-NIKON_START_RECIEVE_16MHZ?:
+NIKON_START_RECEIVE_16MHZ?:
     ADD     frame_cnt, frame_cnt, 1
 NIKON_START_BIT_16MHZ?:
     QBBC    NIKON_START_BIT_16MHZ?, R31, VALID_BIT_IDX		;Poll for start bit at beginning of each RX frame
@@ -718,7 +718,7 @@ NIKON_STOP_BIT_16MHZ?:
 	ADD 	raw_data_offset, raw_data_offset, 6			;Increment to the offset of next RX frame memory location
     ZERO    &Ra, 4
 
-    QBNE    NIKON_START_RECIEVE_16MHZ?, frame_cnt, num_frames	;Poll for start bit of next frame if current frame is not last frame.
+    QBNE    NIKON_START_RECEIVE_16MHZ?, frame_cnt, num_frames	;Poll for start bit of next frame if current frame is not last frame.
 	.endm
 
 ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
@@ -794,7 +794,7 @@ NIKON_RX_RECEIVE_DOWNSAMPLE_16MHZ_LOOP?:
 ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 
 M_OTF_RECEIVE_16MHZ_MC	.macro	Ra, Rb, Rc, num_frames, frame_cnt, raw_data_offset
-NIKON_START_RECIEVE_16MHZ?:
+NIKON_START_RECEIVE_16MHZ?:
     ADD     frame_cnt, frame_cnt, 1
 NIKON_START_BIT_16MHZ?:										;Poll for start bit at beginning of each RX frame
 	AND 	SCRATCH1.b0, R31.b3, CH_MASK
@@ -834,7 +834,7 @@ NIKON_STOP_BIT_FOUND_16MHZ?:
 	SBCO 	&Ra, PRUx_DMEM, raw_data_offset, 6					;Store 16(x3 for all channels) bit data from each frame excluding start bit and stop bit.
 	ADD 	raw_data_offset, raw_data_offset, 6					;Increment to the offset of next RX frame memory location of ch0
     ZERO    &Ra, 6
-    QBNE    NIKON_START_RECIEVE_16MHZ?, frame_cnt, num_frames			;Poll for start bit of next frame if current frame is not last frame.
+    QBNE    NIKON_START_RECEIVE_16MHZ?, frame_cnt, num_frames			;Poll for start bit of next frame if current frame is not last frame.
 	.endm
 
 ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
@@ -937,12 +937,15 @@ NIKON_SEND_CDF_MULTI_CHANNEL?:
 	.endif
 	QBEQ 	NIKON_SKIP_TX_SEND?, EEPROM_ACCESS_STATUS, NON_EEPROM_CMD
 	SUB 	SCRATCH2.b3, SCRATCH2.b3, 1
-	QBEQ 	NIKON_NEXT_MDF_CMD?, EEPROM_ACCESS_STATUS, EEPROM_READ_CMD
+	;QBEQ 	NIKON_NEXT_MDF_CMD?, EEPROM_ACCESS_STATUS, EEPROM_READ_CMD
+	; SCRATCH3.b2 is used to store the address of MDF data being sent
 	LDI 	SCRATCH3.b2, NIKON_MEMORY_DATA0_FRAME_OFFSET
-	LDI 	SCRATCH2.b2, 3
+	;LDI 	SCRATCH2.b2, 3
+	; SCRATCH2.b2 is used for storing number of MDFs to be sent
+	LBCO 	&SCRATCH2.b2, PRUx_DMEM, NIKON_NUM_MDF, 1
 NIKON_NEXT_MDF_CMD?:
 	M_ENABLE_PRU_CYCLE_COUNTER
-	LBCO 	&SCRATCH, PRUx_DMEM, NIKON_CONFIG_DELAY_10US_OFFSET, 4
+	LBCO 	&SCRATCH, PRUx_DMEM, NIKON_CONFIG_DELAY_1US_OFFSET, 4
 	ZERO 	&SCRATCH1, 4
 	SBCO 	&SCRATCH1, ICSS_PRU_CTRL_CONST, PRUx_CNTL_CYCLE_COUNT_OFFSET, 4
 NIKON_SKIP_WAIT_TILL_FILL?:
@@ -963,12 +966,14 @@ NIKON_SEND_DELAY_MULTI_CHANNEL?
 	LBCO 	&SCRATCH1, ICSS_PRU_CTRL_CONST, PRUx_CNTL_CYCLE_COUNT_OFFSET, 4
 	QBLE 	NIKON_SKIP_WAIT_TILL_FILL?, SCRATCH, SCRATCH1
 	M_DISABLE_PRU_CYCLE_COUNTER
-	QBNE 	NIKON_LOAD_READ_MDF?, EEPROM_ACCESS_STATUS, EEPROM_WRITE_CMD
+	;QBNE 	NIKON_LOAD_READ_MDF?, EEPROM_ACCESS_STATUS, EEPROM_WRITE_CMD
+	;LBCO 	&mdf, PRUx_DMEM, SCRATCH3.b2, 4
+	;QBA 	NIKON_SKIP_MDF_LOAD?
+;NIKON_LOAD_READ_MDF?:
+	;LBCO 	&mdf, PRUx_DMEM, NIKON_MEMORY_ADDR_FRAME_OFFSET, 4
+;NIKON_SKIP_MDF_LOAD?:
 	LBCO 	&mdf, PRUx_DMEM, SCRATCH3.b2, 4
-	QBA 	NIKON_SKIP_MDF_LOAD?
-NIKON_LOAD_READ_MDF?:
-	LBCO 	&mdf, PRUx_DMEM, NIKON_MEMORY_ADDR_FRAME_OFFSET, 4
-NIKON_SKIP_MDF_LOAD?:
+	; SCRATCH2.b0 is used for maintaining number of bytes sent from one MDF
 	LDI 	SCRATCH2.b0, 	0
 NIKON_SKIP_MDF_CHx?:
 	ADD 	SCRATCH2.b0, SCRATCH2.b0, 1
@@ -987,16 +992,38 @@ NIKON_SEND_MDF_EACH_CHx?:
 	.endif
 	LSL 	mdf, mdf, 8
 	QBNE	NIKON_SKIP_MDF_CHx?, SCRATCH2.b0, 4
-	QBNE 	NIKON_SKIP_NEXT_MDF_CMD?, EEPROM_ACCESS_STATUS, EEPROM_WRITE_CMD
+	;QBNE 	NIKON_SKIP_NEXT_MDF_CMD?, EEPROM_ACCESS_STATUS, EEPROM_WRITE_CMD
 	SUB 	SCRATCH2.b2, SCRATCH2.b2, 1
+	; Update the address for next MDF data
 	ADD 	SCRATCH3.b2, SCRATCH3.b2, 4
-	QBNE 	NIKON_NEXT_MDF_CMD?, SCRATCH2.b2, 0									;In case of EEPROM write load MDF0-2 with 10usec delay in between
+	QBNE 	NIKON_NEXT_MDF_CMD?, SCRATCH2.b2, 0
+	;In case of EEPROM write load MDF0-2 with 10usec delay in between
 NIKON_SKIP_NEXT_MDF_CMD?:
 	QBEQ 	NIKON_SKIP_TX_SEND?, SCRATCH2.b3, 0
-	LBCO 	&SCRATCH, PRUx_DMEM, NIKON_CONFIG_DELAY_10US_OFFSET, 4
+	LBCO 	&SCRATCH, PRUx_DMEM, NIKON_CONFIG_DELAY_1US_OFFSET, 4
 NIKON_WAIT_LOOP?:
 	SUB 	SCRATCH, SCRATCH, 1
-	QBNE 	NIKON_WAIT_LOOP?, SCRATCH, 0												;first nikon cycle data is undetermined, start the next cycle after certain delay.
+	;first nikon cycle data is undetermined, start the next cycle after certain delay.
+	QBNE 	NIKON_WAIT_LOOP?, SCRATCH, 0
+NIKON_SEND_WAIT_TILL_TX_BUSY_2?:
+	LDI     SCRATCH.w0, ICSS_CFG_PRUx_NIKON_TXCFG
+	LBCO	&SCRATCH2.b0,	ICSS_CFG,	SCRATCH.w0,		1
+	.if $isdefed("ENABLE_MULTI_CHANNEL")
+	AND 	SCRATCH2.b0, 	SCRATCH2.b0, 	0xE0
+	QBNE 	NIKON_SEND_WAIT_TILL_TX_BUSY_2?, 	SCRATCH2.b0, 	0
+	.else
+	QBBC 	NIKON_CH1_TX_BUSY_2?, CH_MASK, 0
+	;Determines when you can assert tx go to issue a new TX frame
+    QBBS    NIKON_SEND_WAIT_TILL_TX_BUSY_2?,	SCRATCH2.b0,	5
+NIKON_CH1_TX_BUSY_2?:
+	QBBC 	NIKON_CH2_TX_BUSY_2?, CH_MASK, 1
+    QBBS    NIKON_SEND_WAIT_TILL_TX_BUSY_2?,	SCRATCH2.b0,	6
+NIKON_CH2_TX_BUSY_2?:
+	QBBC 	NIKON_SKIP_TX_BUSY_2?, CH_MASK, 2
+	;Determines when you can assert tx go to issue a new TX frame
+    QBBS    NIKON_SEND_WAIT_TILL_TX_BUSY_2?,	SCRATCH2.b0,	7
+	.endif
+NIKON_SKIP_TX_BUSY_2?:
 	.if $isdefed("ENABLE_MULTI_MAKE_RTU")
 	M_NIKON_LS_WAIT_FOR_SYNC
 	QBBC 	NIKON_SKIP_GLOBAL_REINIT1?, PRIMARY_CORE, 0

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2024 Texas Instruments Incorporated
+ *  Copyright (C) 2024-25 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -133,8 +133,9 @@
 #define TCA6416_REG_CONFIG_PORT_1       (0x07U)
 #endif
 
+/** \brief Global Structure pointer holding Nikon handle */
 struct nikon_priv *priv;
-/** \brief Global Structure pointer holding PRU-ICSSG memory Map. */
+
 uint32_t gTaskFxnStack[TASK_STACK_SIZE/sizeof(uint32_t)] __attribute__((aligned(32)));
 
 PRUICSS_Handle gPruIcssXHandle;
@@ -284,8 +285,8 @@ static void nikon_pruicss_init(void)
     int32_t status = SystemP_FAILURE;
     int32_t size;
     gPruIcssXHandle = PRUICSS_open(CONFIG_PRU_ICSS0);
-    /* Configure g_mux_en to 1 in ICSSG_SA_MX_REG Register. */
 #ifdef CONFIG_NIKON0_G_MUX_EN
+    /* Configure g_mux_en to 1 in ICSSG_SA_MX_REG Register. */
     status = PRUICSS_setSaMuxMode(gPruIcssXHandle, PRUICSS_SA_MUX_MODE_SD_ENDAT);
     DebugP_assert(SystemP_SUCCESS == status);
 #endif
@@ -451,42 +452,79 @@ uint64_t nikon_get_fw_version(void)
 
 static void nikon_display_menu(void)
 {
-    DebugP_log("\r\n|--------------------------------------------------------------------------------|");
-    DebugP_log("\r\n|                             Select input parametes                             |");
-    DebugP_log("\r\n|--------------------------------------------------------------------------------|");
-    DebugP_log("\r\n| 0 :   ABS full 40 bit data request                                             |");
-    DebugP_log("\r\n| 1 :   ABS lower 24bit data request                                             |");
-    DebugP_log("\r\n| 2 :   ABS upper 24bit data request                                             |");
-    DebugP_log("\r\n| 3 :   Encoder status Request                                                   |");
-    DebugP_log("\r\n| 4 :   ABS full 40 bit data request(MT)                                         |");
-    DebugP_log("\r\n| 5 :   ABS lower 24bit data request(MT)                                         |");
-    DebugP_log("\r\n| 6 :   ABS upper 24bit data request(MT)                                         |");
-    DebugP_log("\r\n| 7 :   Encoder status Request(MT)                                               |");
-    DebugP_log("\r\n| 8 :   Status flag clear request                                                |");
-    DebugP_log("\r\n| 9 :   Multiple turn data clear request                                         |");
-    DebugP_log("\r\n| 10:   Status+ Multiple turn data clear request                                 |");
-    DebugP_log("\r\n| 11:   Encoder address setting I (one-to-one connection)                        |");
-    DebugP_log("\r\n| 12:   Single turn data zero preset                                             |");
-    DebugP_log("\r\n| 13:   EEPROM read request                                                      |");
-    DebugP_log("\r\n| 14:   EEPROM write request                                                     |");
-    DebugP_log("\r\n| 15:   Temperature data request                                                 |");
-    DebugP_log("\r\n| 16:   Identification code read I                                               |");
-    DebugP_log("\r\n| 17:   Identification code read II(one-to-one connection)                       |");
-    DebugP_log("\r\n| 18:   Identification code write I                                              |");
-    DebugP_log("\r\n| 19:   Identification code write II(one-to-one connection)                      |");
-    DebugP_log("\r\n| 20:   Encoder address setting II                                               |");
-    DebugP_log("\r\n| 21:   ABS lower 17bit data request                                             |");
-    DebugP_log("\r\n| 22:   ABS lower 17bit data request(MT)                                         |");
-    DebugP_log("\r\n| 27:   ABS lower 24bit + status request                                         |");
-    DebugP_log("\r\n| 28:   ABS lower 24bit + status request(MT)                                     |");
-    DebugP_log("\r\n| 29:   ABS lower 24bit + Temperature data request                               |");
-    DebugP_log("\r\n| 30:   ABS lower 24bit + Temperature data request(MT)                           |");
-    DebugP_log("\r\n| Below options are user application specific for cmd prepare                    |");
-    DebugP_log("\r\n| 31:   Update Encoder address(EAX) in APP local context                         |");
-    DebugP_log("\r\n| 32:   Start Continuous Mode                                                    |");
-    DebugP_log("\r\n| 33:   Select clock frequency in MHz(2.5/4/6.67/8/16)                           |");
-    DebugP_log("\r\n| 34:   Update Encoder's single turn and Multi turn Resoltions                   |");
-    DebugP_log("\r\n|--------------------------------------------------------------------------------|");
+    DebugP_log("\r\n|-------------------------------------------------------------------------------------- |");
+    DebugP_log("\r\n|                             Select input parameters                                   |");
+    DebugP_log("\r\n|-------------------------------------------------------------------------------------- |");
+    if (priv->protocol_version == NIKON_PROTOCOL_V3_0)
+    {
+        DebugP_log("\r\n| 0 : ABS full 40 bit data request                                                      |");
+        DebugP_log("\r\n| 1 : ABS lower 24bit data request / ABS full 40bit data + velocity data request        |");
+        DebugP_log("\r\n| 2 : ABS upper 24bit data request                                                      |");
+        DebugP_log("\r\n| 3 : Encoder status Request                                                            |");
+        DebugP_log("\r\n| 4 : ABS full 40 bit data request(MT)                                                  |");
+        DebugP_log("\r\n| 5 : ABS lower 24bit data request(MT) / ABS full 40bit data + velocity data request(MT)|");
+        DebugP_log("\r\n| 6 : ABS upper 24bit data request(MT)                                                  |");
+        DebugP_log("\r\n| 7 : Encoder status Request(MT)                                                        |");
+        DebugP_log("\r\n| 8 : Status flag clear request / ABS lower 24bit data request                          |");
+        DebugP_log("\r\n| 9 : Multiple turn data clear request / ABS lower 24bit data request                   |");
+        DebugP_log("\r\n| 10: Status + Multiple turn data clear request / ABS lower 24bit data request          |");
+        DebugP_log("\r\n| 11: Encoder address setting I (one-to-one connection) / ABS lower 24bit data request  |");
+        DebugP_log("\r\n| 12: Single turn data zero preset / ABS lower 24bit data request                       |");
+        DebugP_log("\r\n| 13: EEPROM read request                                                               |");
+        DebugP_log("\r\n| 14: EEPROM write request                                                              |");
+        DebugP_log("\r\n| 15: Temperature data request                                                          |");
+        DebugP_log("\r\n| 16: Identification code read I / Velocity coefficient read                            |");
+        DebugP_log("\r\n| 17: Identification code read II(one-to-one connection)                                |");
+        DebugP_log("\r\n| 18: Identification code write I / Velocity coefficient write                          |");
+        DebugP_log("\r\n| 19: Identification code write II(one-to-one connection)                               |");
+        DebugP_log("\r\n| 20: Encoder address setting II                                                        |");
+        DebugP_log("\r\n| 21: ABS lower 17bit data request                                                      |");
+        DebugP_log("\r\n| 22: ABS lower 17bit data request(MT)                                                  |");
+        DebugP_log("\r\n| 23: ABS lower 24bit + velocity request (Individual)                                   |");
+        DebugP_log("\r\n| 24: ABS lower 24bit + velocity request (Multiple)                                     |");
+        DebugP_log("\r\n| 25: ABS lower 24bit + velocity + acceleration (Individual)                            |");
+        DebugP_log("\r\n| 26: ABS lower 24bit + velocity + acceleration (Multiple)                              |");
+        DebugP_log("\r\n| 27: ABS lower 24bit + status request                                                  |");
+        DebugP_log("\r\n| 28: ABS lower 24bit + status request(MT)                                              |");
+        DebugP_log("\r\n| 29: ABS lower 24bit + Temperature data request                                        |");
+        DebugP_log("\r\n| 30: ABS lower 24bit + Temperature data request(MT)                                    |");
+    }
+    else
+    {
+        DebugP_log("\r\n| 0 : ABS full 40 bit data request                                                      |");
+        DebugP_log("\r\n| 1 : ABS lower 24bit data request                                                      |");
+        DebugP_log("\r\n| 2 : ABS upper 24bit data request                                                      |");
+        DebugP_log("\r\n| 3 : Encoder status Request                                                            |");
+        DebugP_log("\r\n| 4 : ABS full 40 bit data request(MT)                                                  |");
+        DebugP_log("\r\n| 5 : ABS lower 24bit data request(MT)                                                  |");
+        DebugP_log("\r\n| 6 : ABS upper 24bit data request(MT)                                                  |");
+        DebugP_log("\r\n| 7 : Encoder status Request(MT)                                                        |");
+        DebugP_log("\r\n| 8 : Status flag clear request                                                         |");
+        DebugP_log("\r\n| 9 : Multiple turn data clear request                                                  |");
+        DebugP_log("\r\n| 10: Status + Multiple turn data clear request                                         |");
+        DebugP_log("\r\n| 11: Encoder address setting I (one-to-one connection)                                 |");
+        DebugP_log("\r\n| 12: Single turn data zero preset                                                      |");
+        DebugP_log("\r\n| 13: EEPROM read request                                                               |");
+        DebugP_log("\r\n| 14: EEPROM write request                                                              |");
+        DebugP_log("\r\n| 15: Temperature data request                                                          |");
+        DebugP_log("\r\n| 16: Identification code read I                                                        |");
+        DebugP_log("\r\n| 17: Identification code read II(one-to-one connection)                                |");
+        DebugP_log("\r\n| 18: Identification code write I                                                       |");
+        DebugP_log("\r\n| 19: Identification code write II(one-to-one connection)                               |");
+        DebugP_log("\r\n| 20: Encoder address setting II                                                        |");
+        DebugP_log("\r\n| 21: ABS lower 17bit data request                                                      |");
+        DebugP_log("\r\n| 22: ABS lower 17bit data request(MT)                                                  |");
+        DebugP_log("\r\n| 27: ABS lower 24bit + status request                                                  |");
+        DebugP_log("\r\n| 28: ABS lower 24bit + status request(MT)                                              |");
+        DebugP_log("\r\n| 29: ABS lower 24bit + Temperature data request                                        |");
+        DebugP_log("\r\n| 30: ABS lower 24bit + Temperature data request(MT)                                    |");
+    }
+    DebugP_log("\r\n| Below options are user application specific for cmd prepare                           |");
+    DebugP_log("\r\n| 31: Update Encoder address(EAX) in APP local context                                  |");
+    DebugP_log("\r\n| 32: Start Continuous Mode                                                             |");
+    DebugP_log("\r\n| 33: Select clock frequency in MHz(2.5/4/6.67/8/16)                                    |");
+    DebugP_log("\r\n| 34: Update Encoder's Single Turn and Multi turn Resolution                            |");
+    DebugP_log("\r\n|---------------------------------------------------------------------------------------|");
     DebugP_log("\r\n| enter value:\r\n");
 }
 static int nikon_get_command()
@@ -494,9 +532,9 @@ static int nikon_get_command()
     int cmd;
     DebugP_scanf("%d\n", &cmd);
     /* Check to make sure that the command issued is correct */
-    if((cmd > CMD_22 && cmd < CMD_27) || (cmd >= CMD_CODE_NUM))
+    if(((priv->protocol_version == NIKON_PROTOCOL_V2_1) && ((cmd > CMD_22 && cmd < CMD_27))) || (cmd >= CMD_CODE_NUM))
     {
-        DebugP_log("\r\n| WARNING: invalid option try again\n");
+        DebugP_log("\r\n| WARNING: Invalid option, try again\n");
         return SystemP_FAILURE;
     }
     return cmd;
@@ -634,6 +672,7 @@ void nikon_main(void *args)
     int64_t cmp0;
     uint64_t icssClk;
     uint64_t uartClk;
+
     /* Open drivers to open the UART driver for console */
     Drivers_open();
     Board_driversOpen();
@@ -678,7 +717,7 @@ void nikon_main(void *args)
     icssClk = ICSS_PRU_CORE_CLOCK;
     uartClk = ICSS_PRU_UART_CLOCK;
 
-    priv = nikon_init(gPruIcssXHandle, PRUICSS_PRUx, CONFIG_NIKON0_BAUDRATE, (uint32_t)icssClk, (uint32_t)uartClk, TX_RX_FIFO_CLOCK_SOURCE, mask, totalchannels);
+    priv = nikon_init(gPruIcssXHandle, PRUICSS_PRUx, CONFIG_NIKON0_BAUDRATE, (uint32_t)icssClk, (uint32_t)uartClk, TX_RX_FIFO_CLOCK_SOURCE, mask, totalchannels, NIKON_PROTOCOL_VERSION);
 
     if(CONFIG_NIKON0_MODE == NIKON_MODE_MULTI_CHANNEL_MULTI_PRU)
     {
@@ -732,6 +771,9 @@ void nikon_main(void *args)
         uint32_t data_high = 0;
         uint32_t data_mid = 0;
         uint32_t data_low = 0;
+        uint32_t bank = 0;
+        uint8_t access_with_bank = 0;
+        uint8_t cmd_type;
         ch = nikon_get_current_channel(priv, 0);
         nikon_display_menu();
         cmd = nikon_get_command();
@@ -781,11 +823,35 @@ void nikon_main(void *args)
             case CMD_2:
             case CMD_5:
             case CMD_6:
+
+                if ((priv->protocol_version == NIKON_PROTOCOL_V3_0) && (cmd == CMD_1 || cmd == CMD_5))
+                {
+                    while(1)
+                    {
+                        DebugP_log("\r\n Enter \"1\" to request ABS lower 24bit data, or enter \"2\" to request ABS 40bit data + velocity data : ");
+                        DebugP_scanf("%c", &cmd_type);
+
+                        if(cmd_type == '1')
+                        {
+                            break;
+                        }
+                        else if(cmd_type == '2')
+                        {
+                            cmd = (cmd == CMD_1)?CMD_1_VEL:CMD_5_VEL;
+                            break;
+                        }
+                        else
+                        {
+                            DebugP_log("\r\n ERROR: Invalid option, try again \n");
+                        }
+                    }
+                }
+
                 nikon_generate_cdf(priv, cmd);
                 ret = nikon_get_pos(priv, cmd);
                 if(ret < 0)
                 {
-                    DebugP_log("\r\n ERROR: 24bit ABS meaasurement failed \n");
+                    DebugP_log("\r\n ERROR: ABS measurement failed \n");
                     continue;
                 }
                 for(ch_num = 0; ch_num < totalchannels; ch_num++)
@@ -802,17 +868,28 @@ void nikon_main(void *args)
                     }
                     for(enc_num = 0; enc_num < priv->num_enc_access[ls_ch]; enc_num++)
                     {
-                        if(cmd == CMD_5 || cmd == CMD_6)
+                        if(cmd == CMD_5 || cmd == CMD_6 || cmd == CMD_5_VEL)
                         {
-                            DebugP_log("\r\n Encoder %d: \n",enc_num);
+                            DebugP_log("\r\n Encoder %d: \n", enc_num);
                         }
+
                         DebugP_log("\r\n Info Field: 0x%x, Data Field0: 0x%x, Data Field1: 0x%x\n", priv->pos_data_info[ch].raw_data0[enc_num], priv->pos_data_info[ch].raw_data1[enc_num], priv->pos_data_info[ch].raw_data2[enc_num]);
+
+                        if ((priv->protocol_version == NIKON_PROTOCOL_V3_0) && (cmd == CMD_1_VEL || cmd == CMD_5_VEL))
+                        {
+                            DebugP_log("\r\n Data Field2: 0x%x, Data Field3: 0x%x, Data Field4: 0x%x\n", priv->pos_data_info[ch].raw_data3[enc_num], priv->pos_data_info[ch].raw_data4[enc_num], priv->pos_data_info[ch].raw_data5[enc_num]);
+                        }
+
                         DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u\n", priv->pos_data_info[ch].rcv_crc[enc_num], priv->pos_data_info[ch].otf_crc[enc_num], priv->pos_data_info[ch].crc_err_cnt[enc_num]);
                         DebugP_log("\r\n Encoder Address: %u, Encoder Status: 0x%x, Command to Encoder: %u, ", priv->enc_info[ch].enc_addr[enc_num], priv->enc_info[ch].enc_status[enc_num], priv->enc_info[ch].enc_cmd[enc_num]);
                         DebugP_log("ABS: 0x%llx \n", priv->pos_data_info[ch].abs[enc_num]);
-                        if((priv->abs_len >= priv->single_turn_len[ch][enc_num])&& cmd != CMD_2 && cmd != CMD_6)
+                        if((priv->abs_len >= priv->single_turn_len[ch][enc_num]) && cmd != CMD_2 && cmd != CMD_6)
                         {
                             DebugP_log("\r\n Angle: %.12f , Multi Turn Rev: %u \n", priv->pos_data_info[ch].angle[enc_num], priv->pos_data_info[ch].multi_turn[enc_num]);
+                        }
+                        if ((priv->protocol_version == NIKON_PROTOCOL_V3_0) && (cmd == CMD_1_VEL || cmd == CMD_5_VEL))
+                        {
+                            DebugP_log("\r\n Velocity: %d \n", priv->pos_data_info[ch].velocity[enc_num]);
                         }
                     }
                 }
@@ -825,55 +902,178 @@ void nikon_main(void *args)
             case CMD_10:
             case CMD_11:
             case CMD_12:
+
+                if ((priv->protocol_version == NIKON_PROTOCOL_V3_0) && (cmd >= CMD_8 && cmd <= CMD_12))
+                {
+                    while(1)
+                    {
+                        DebugP_log("\r\n Enter \"1\" to request operation (clear or set as selected above), or enter \"2\" to request ABS lower 24bit data : ");
+                        DebugP_scanf("%c", &cmd_type);
+
+                        if(cmd_type == '1')
+                        {
+                            break;
+                        }
+                        else if(cmd_type == '2')
+                        {
+                            if(cmd == CMD_8)
+                            {
+                                cmd = CMD_8_POS;
+                            }
+                            else if(cmd == CMD_9)
+                            {
+                                cmd = CMD_9_POS;
+                            }
+                            else if(cmd == CMD_10)
+                            {
+                                cmd = CMD_10_POS;
+                            }
+                            else if(cmd == CMD_11)
+                            {
+                                cmd = CMD_11_POS;
+                            }
+                            else if(cmd == CMD_12)
+                            {
+                                cmd = CMD_12_POS;
+                            }
+                            break;
+                        }
+                        else
+                        {
+                            DebugP_log("\r\n ERROR: Invalid option, try again \n");
+                        }
+                    }
+                }
+
                 nikon_generate_cdf(priv, cmd);
                 ret = nikon_get_pos(priv, cmd);
-                if(ret < 0)
+
+                if(cmd >= CMD_8_POS && cmd <= CMD_12_POS)
                 {
-                    DebugP_log("\r\n ERROR: Encoder's Status request failed \n");
-                    continue;
-                }
-                for(ch_num = 0; ch_num < totalchannels; ch_num++)
-                {
-                    ch = nikon_get_current_channel(priv, ch_num);
-                    DebugP_log("\r\n Channel %d: \n",ch);
-                    if(CONFIG_NIKON0_LOAD_SHARE_MODE)
+                    if(ret < 0)
                     {
-                        ls_ch = ch;
+                        DebugP_log("\r\n ERROR: ABS measurement failed \n");
+                        continue;
                     }
-                    else
+                    for(ch_num = 0; ch_num < totalchannels; ch_num++)
                     {
-                        ls_ch = 0;
-                    }
-                    for(enc_num = 0; enc_num < priv->num_enc_access[ls_ch]; enc_num++)
-                    {
-                        if(cmd == CMD_7)
+                        ch = nikon_get_current_channel(priv, ch_num);
+                        DebugP_log("\r\n Channel %d: \n",ch);
+                        if(CONFIG_NIKON0_LOAD_SHARE_MODE)
                         {
-                            DebugP_log("\r\n Encoder %d: \n",enc_num);
+                            ls_ch = ch;
                         }
-                        DebugP_log("\r\n Info Field: 0x%x, Data Field0: 0x%x, Data Field1: 0x%x \n", priv->pos_data_info[ch].raw_data0[enc_num], priv->pos_data_info[ch].raw_data1[enc_num], priv->pos_data_info[ch].raw_data2[enc_num]);
-                        DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u\n", priv->pos_data_info[ch].rcv_crc[enc_num], priv->pos_data_info[ch].otf_crc[enc_num], priv->pos_data_info[ch].crc_err_cnt[enc_num]);
-                        DebugP_log("\r\n Encoder Address: %u, Encoder Status: 0x%x, Command to Encoder: %u, ", priv->enc_info[ch].enc_addr[enc_num], priv->enc_info[ch].enc_status[enc_num], priv->enc_info[ch].enc_cmd[enc_num]);
-                        DebugP_log("ALM: 0x%x\n", priv->alm_field[ch][enc_num]);
-                        DebugP_log("\r\n Batt: %u, MtErr: %u, OverFlow: %u, OverSpeed: %u, Memory Error: %u, Single Turn Error: %u \n", priv->alm_bits[ch][enc_num].batt, priv->alm_bits[ch][enc_num].mt_err, priv->alm_bits[ch][enc_num].ov_flow, priv->alm_bits[ch][enc_num].ov_spd, priv->alm_bits[ch][enc_num].mem_err, priv->alm_bits[ch][enc_num].st_err);
-                        DebugP_log("\r\n PS Error: %u, Busy: %u, Memory Busy: %u, Over Temperature: %u, Increment Error: %u \n",priv->alm_bits[ch][enc_num].ps_err, priv->alm_bits[ch][enc_num].busy, priv->alm_bits[ch][enc_num].mem_busy, priv->alm_bits[ch][enc_num].ov_temp, priv->alm_bits[ch][enc_num].inc_err);
+                        else
+                        {
+                            ls_ch = 0;
+                        }
+                        for(enc_num = 0; enc_num < priv->num_enc_access[ls_ch]; enc_num++)
+                        {
+                            DebugP_log("\r\n Info Field: 0x%x, Data Field0: 0x%x, Data Field1: 0x%x\n", priv->pos_data_info[ch].raw_data0[enc_num], priv->pos_data_info[ch].raw_data1[enc_num], priv->pos_data_info[ch].raw_data2[enc_num]);
+                            DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u\n", priv->pos_data_info[ch].rcv_crc[enc_num], priv->pos_data_info[ch].otf_crc[enc_num], priv->pos_data_info[ch].crc_err_cnt[enc_num]);
+                            DebugP_log("\r\n Encoder Address: %u, Encoder Status: 0x%x, Command to Encoder: %u, ", priv->enc_info[ch].enc_addr[enc_num], priv->enc_info[ch].enc_status[enc_num], priv->enc_info[ch].enc_cmd[enc_num]);
+                            DebugP_log("ABS: 0x%llx \n", priv->pos_data_info[ch].abs[enc_num]);
+                            if((priv->abs_len >= priv->single_turn_len[ch][enc_num]))
+                            {
+                                DebugP_log("\r\n Angle: %.12f , Multi Turn Rev: %u \n", priv->pos_data_info[ch].angle[enc_num], priv->pos_data_info[ch].multi_turn[enc_num]);
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    if(ret < 0)
+                    {
+                        DebugP_log("\r\n ERROR: Encoder's Status request failed \n");
+                        continue;
+                    }
+
+                    for(ch_num = 0; ch_num < totalchannels; ch_num++)
+                    {
+                        ch = nikon_get_current_channel(priv, ch_num);
+                        DebugP_log("\r\n Channel %d: \n",ch);
+                        if(CONFIG_NIKON0_LOAD_SHARE_MODE)
+                        {
+                            ls_ch = ch;
+                        }
+                        else
+                        {
+                            ls_ch = 0;
+                        }
+                        for(enc_num = 0; enc_num < priv->num_enc_access[ls_ch]; enc_num++)
+                        {
+                            if(cmd == CMD_7)
+                            {
+                                DebugP_log("\r\n Encoder %d: \n",enc_num);
+                            }
+                            DebugP_log("\r\n Info Field: 0x%x, Data Field0: 0x%x, Data Field1: 0x%x \n", priv->pos_data_info[ch].raw_data0[enc_num], priv->pos_data_info[ch].raw_data1[enc_num], priv->pos_data_info[ch].raw_data2[enc_num]);
+                            DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u\n", priv->pos_data_info[ch].rcv_crc[enc_num], priv->pos_data_info[ch].otf_crc[enc_num], priv->pos_data_info[ch].crc_err_cnt[enc_num]);
+                            DebugP_log("\r\n Encoder Address: %u, Encoder Status: 0x%x, Command to Encoder: %u, ", priv->enc_info[ch].enc_addr[enc_num], priv->enc_info[ch].enc_status[enc_num], priv->enc_info[ch].enc_cmd[enc_num]);
+                            DebugP_log("\r\n ALM: 0x%x \n", priv->alm_field[ch][enc_num]);
+                            DebugP_log("\r\n Batt: %u, MtErr: %u, OverFlow: %u, OverSpeed M: %u, Memory Error: %u, Single Turn Error M: %u \n", priv->alm_bits[ch][enc_num].batt, priv->alm_bits[ch][enc_num].mt_err, priv->alm_bits[ch][enc_num].ov_flow, priv->alm_bits[ch][enc_num].ov_spd, priv->alm_bits[ch][enc_num].mem_err, priv->alm_bits[ch][enc_num].st_err);
+                            DebugP_log("\r\n PS Error M: %u, Busy M: %u, Memory Busy: %u, Over Temperature: %u, Increment Error M: %u \n",priv->alm_bits[ch][enc_num].ps_err, priv->alm_bits[ch][enc_num].busy, priv->alm_bits[ch][enc_num].mem_busy, priv->alm_bits[ch][enc_num].ov_temp, priv->alm_bits[ch][enc_num].inc_err_m);
+                            DebugP_log("\r\n OverSpeed S: %u, Single Turn Error S: %u, PS Error S: %u, Busy S: %u, Increment Error S: %u \n",priv->alm_bits[ch][enc_num].ov_spd_s, priv->alm_bits[ch][enc_num].st_err_s, priv->alm_bits[ch][enc_num].ps_err_s, priv->alm_bits[ch][enc_num].busy_s, priv->alm_bits[ch][enc_num].inc_err_s);
+                            if (priv->protocol_version == NIKON_PROTOCOL_V3_0)
+                            {
+                                DebugP_log("\r\n PM ALM: 0x%x \n", priv->pm_alm_field[ch][enc_num]);
+                                DebugP_log("\r\n INCW1: %u, INCW2: %u, IFW1:%u, IFW2: %u", priv->pm_alm_bits[ch][enc_num].incw_1, priv->pm_alm_bits[ch][enc_num].incw_2, priv->pm_alm_bits[ch][enc_num].ifw_1, priv->pm_alm_bits[ch][enc_num].ifw_2);
+                            }
+                        }
                     }
                 }
                 break;
 
             case CMD_13:
+                access_with_bank = 0;
+                if (priv->protocol_version == NIKON_PROTOCOL_V3_0)
+                {
+                    while(1)
+                    {
+                        DebugP_log("\r\n Read with bank? (y/n) ");
+                        DebugP_scanf("%c", &cmd_type);
+
+                        if((cmd_type == 'y') || (cmd_type == 'Y'))
+                        {
+                            DebugP_log("\r\n Enter bank number: ");
+                            DebugP_scanf("%x", &bank);
+
+                            if(bank > 0xFF)
+                            {
+                                DebugP_log("\r\n Please enter a valid bank value\n");
+                            }
+                            else
+                            {
+                                nikon_update_bank(priv, bank);
+                                access_with_bank = 1;
+                                break;
+                            }
+                        }
+                        else if((cmd_type == 'n') || (cmd_type == 'N'))
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            DebugP_log("\r\n ERROR: Invalid option, try again \n");
+                        }
+                    }
+                }
+
                 while(1)
                 {
-                    DebugP_log("\r\n Enter Memory location(in hex) to read(00h to FFh are available): ");
+                    DebugP_log("\r\n Enter Memory location(in hex) to read(00h to FFh is valid): ");
                     DebugP_scanf("%x", &addr);
+
                     if(addr > 0xFF)
                     {
-                        DebugP_log("\r\n Please enter a valid 8 bit address\n");
+                        DebugP_log("\r\n Please enter a valid 8 bit value\n");
                     }
                     else
                     {
                         break;
                     }
                 }
+
                 nikon_update_eeprom_addr(priv, addr);
                 nikon_generate_cdf(priv, cmd);
                 ret = nikon_get_pos(priv, cmd);
@@ -886,10 +1086,22 @@ void nikon_main(void *args)
                 {
                     ch = nikon_get_current_channel(priv, ch_num);
                     DebugP_log("\r\n Channel %d: \n",ch);
-                    DebugP_log("\r\n Info Field: 0x%x, EEPROM Data: 0x%x, EEPROM Address: 0x%x \n", priv->pos_data_info[ch].raw_data0[0], priv->pos_data_info[ch].raw_data1[0], priv->pos_data_info[ch].raw_data2[0]);
+                    if(access_with_bank == 1)
+                    {
+                        DebugP_log("\r\n Info Field: 0x%x, EEPROM Data: 0x%x, EEPROM Bank: 0x%x, EEPROM Address: 0x%x \n", priv->pos_data_info[ch].raw_data0[0], priv->pos_data_info[ch].raw_data1[0], nikon_reverse_bits((priv->pos_data_info[ch].raw_data2[0] & 0xFF00) >> 8, NIKON_EEPROM_BANK_LEN), nikon_reverse_bits((priv->pos_data_info[ch].raw_data2[0] & 0xFF), NIKON_EEPROM_ADDR_LEN));
+                        if(priv->bank_error == 1)
+                        {
+                            DebugP_log("\r\n ERROR: Invalid bank number was specified \n");
+                        }
+                    }
+                    else
+                    {
+                        DebugP_log("\r\n Info Field: 0x%x, EEPROM Data: 0x%x, EEPROM Address: 0x%x \n", priv->pos_data_info[ch].raw_data0[0], priv->pos_data_info[ch].raw_data1[0], priv->pos_data_info[ch].raw_data2[0]);
+                    }
+
                     DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u \n", priv->pos_data_info[ch].rcv_crc[0], priv->pos_data_info[ch].otf_crc[0], priv->pos_data_info[ch].crc_err_cnt[0]);
                     DebugP_log("\r\n Encoder Address: %u, Encoder Status: 0x%x, Command to Encoder: %u\n", priv->enc_info[ch].enc_addr[0], priv->enc_info[ch].enc_status[0], priv->enc_info[ch].enc_cmd[0]);
-                    if(addr == 0xF9)
+                    if((access_with_bank == 0) && (addr == 0xF9))
                     {
                         DebugP_log("\r\n Temperature: %d \n", priv->temperature[ch][0]);
                     }
@@ -897,15 +1109,51 @@ void nikon_main(void *args)
                 break;
 
             case CMD_14:
+                access_with_bank = 0;
+                if (priv->protocol_version == NIKON_PROTOCOL_V3_0)
+                {
+                    while(1)
+                    {
+                        DebugP_log("\r\n Write with bank? (y/n) ");
+                        DebugP_scanf("%c", &cmd_type);
+
+                        if((cmd_type == 'y') || (cmd_type == 'Y'))
+                        {
+                            DebugP_log("\r\n Enter bank number: ");
+                            DebugP_scanf("%x", &bank);
+
+                            if(bank > 0xFF)
+                            {
+                                DebugP_log("\r\n Please enter a valid bank value\n");
+                            }
+                            else
+                            {
+                                access_with_bank = 1;
+                                nikon_update_bank(priv, bank);
+                                break;
+                            }
+                        }
+                        else if((cmd_type == 'n') || (cmd_type == 'N'))
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            DebugP_log("\r\n ERROR: Invalid option, try again \n");
+                        }
+                    }
+                }
+
                 while(1)
                 {
-                    DebugP_log("\r\n Enter Memory location(in hex) to write(00h to EFh are available): ");
+                    DebugP_log("\r\n Enter Memory location(in hex) to write(for bank read, 00h to FFh is valid; for non-bank read, 00h to EFh is valid): ");
                     DebugP_scanf("%x", &addr);
                     DebugP_log("\r\n Enter upper byte of data(in hex) to write at Memory location 0x%x: ", addr);
                     DebugP_scanf("%x", &data_high);
                     DebugP_log("\r\n Enter lower byte of data(in hex) to write in Memory location 0x%x: ", addr);
                     DebugP_scanf("%x", &data_low);
-                    if((data_high > 0xFF) || (data_low > 0xFF) || (addr > 0xEF))
+
+                    if((data_high > 0xFF) || (data_low > 0xFF) || (addr > 0xFF) || ((access_with_bank == 0) && (addr > 0xEF)))
                     {
                         DebugP_log("\r\n Please enter a valid 8 bit value\n");
                     }
@@ -916,6 +1164,7 @@ void nikon_main(void *args)
                 }
                 nikon_update_eeprom_addr(priv, addr);
                 nikon_update_eeprom_data(priv, data_high, data_low);
+
                 nikon_generate_cdf(priv, cmd);
                 ret = nikon_get_pos(priv, cmd);
                 if(ret < 0)
@@ -927,7 +1176,20 @@ void nikon_main(void *args)
                 {
                     ch = nikon_get_current_channel(priv, ch_num);
                     DebugP_log("\r\n Channel %d: \n",ch);
-                    DebugP_log("\r\n Info Field: 0x%x, EEPROM Data: 0x%x, EEPROM Address: 0x%x \n", priv->pos_data_info[ch].raw_data0[0], priv->pos_data_info[ch].raw_data1[0], priv->pos_data_info[ch].raw_data2[0]);
+
+                    if(access_with_bank == 1)
+                    {
+                        DebugP_log("\r\n Info Field: 0x%x, EEPROM Data: 0x%x, EEPROM Bank: 0x%x, EEPROM Address: 0x%x \n", priv->pos_data_info[ch].raw_data0[0], priv->pos_data_info[ch].raw_data1[0], nikon_reverse_bits((priv->pos_data_info[ch].raw_data2[0] & 0xFF00) >> 8, NIKON_EEPROM_BANK_LEN), nikon_reverse_bits((priv->pos_data_info[ch].raw_data2[0] & 0xFF), NIKON_EEPROM_ADDR_LEN));
+
+                        if(priv->bank_error == 1)
+                        {
+                            DebugP_log("\r\n ERROR: Invalid bank number was specified \n");
+                        }
+                    }
+                    else
+                    {
+                        DebugP_log("\r\n Info Field: 0x%x, EEPROM Data: 0x%x, EEPROM Address: 0x%x \n", priv->pos_data_info[ch].raw_data0[0], priv->pos_data_info[ch].raw_data1[0], priv->pos_data_info[ch].raw_data2[0]);
+                    }
                     DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u \n", priv->pos_data_info[ch].rcv_crc[0], priv->pos_data_info[ch].otf_crc[0], priv->pos_data_info[ch].crc_err_cnt[0]);
                     DebugP_log("\r\n Encoder Address: %u, Encoder Status: 0x%x, Command to Encoder: %u\n", priv->enc_info[ch].enc_addr[0], priv->enc_info[ch].enc_status[0], priv->enc_info[ch].enc_cmd[0]);
                 }
@@ -953,59 +1215,167 @@ void nikon_main(void *args)
 
             case CMD_16:
             case CMD_17:
+                if ((priv->protocol_version == NIKON_PROTOCOL_V3_0) && (cmd == CMD_16))
+                {
+                    while(1)
+                    {
+                        DebugP_log("\r\n Enter \"1\" to request identification code read, or enter \"2\" to request velocity coefficient read : ");
+                        DebugP_scanf("%c", &cmd_type);
+
+                        if(cmd_type == '1')
+                        {
+                            break;
+                        }
+                        else if(cmd_type == '2')
+                        {
+                            cmd = CMD_16_VEL;
+                            break;
+                        }
+                        else
+                        {
+                            DebugP_log("\r\n ERROR: Invalid option, try again \n");
+                        }
+                    }
+                }
+
                 nikon_generate_cdf(priv, cmd);
                 ret = nikon_get_pos(priv, cmd);
-                if(ret < 0)
+
+                if(cmd == CMD_16_VEL)
                 {
-                    DebugP_log("\r\n ERROR: Identification code read request failed \n");
-                    continue;
+                    if(ret < 0)
+                    {
+                        DebugP_log("\r\n ERROR: Velocity coefficient read request failed \n");
+                        continue;
+                    }
+
+                    for(ch_num = 0; ch_num < totalchannels; ch_num++)
+                    {
+                        ch = nikon_get_current_channel(priv, ch_num);
+                        DebugP_log("\r\n Channel %d: \n",ch);
+                        DebugP_log("\r\n Info Field: 0x%x, Velocity coefficient (bits 0:23): 0x%x \n", priv->pos_data_info[ch].raw_data0[0], priv->velocity_coefficient[ch]);
+                        DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u \n", priv->pos_data_info[ch].rcv_crc[0], priv->pos_data_info[ch].otf_crc[0], priv->pos_data_info[ch].crc_err_cnt[0]);
+                        DebugP_log("\r\n Encoder Address: %u, Encoder Status: 0x%x, Command to Encoder: %u\n", priv->enc_info[ch].enc_addr[0], priv->enc_info[ch].enc_status[0], priv->enc_info[ch].enc_cmd[0]);
+                    }
                 }
-                for(ch_num = 0; ch_num < totalchannels; ch_num++)
+                else
                 {
-                    ch = nikon_get_current_channel(priv, ch_num);
-                    DebugP_log("\r\n Channel %d: \n",ch);
-                    DebugP_log("\r\n Info Field: 0x%x, Identification Code: 0x%x \n", priv->pos_data_info[ch].raw_data0[0], priv->identification_code[ch]);
-                    DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u \n", priv->pos_data_info[ch].rcv_crc[0], priv->pos_data_info[ch].otf_crc[0], priv->pos_data_info[ch].crc_err_cnt[0]);
-                    DebugP_log("\r\n Encoder Address: %u, Encoder Status: 0x%x, Command to Encoder: %u\n", priv->enc_info[ch].enc_addr[0], priv->enc_info[ch].enc_status[0], priv->enc_info[ch].enc_cmd[0]);
+                    if(ret < 0)
+                    {
+                        DebugP_log("\r\n ERROR: Identification code read request failed \n");
+                        continue;
+                    }
+                    for(ch_num = 0; ch_num < totalchannels; ch_num++)
+                    {
+                        ch = nikon_get_current_channel(priv, ch_num);
+                        DebugP_log("\r\n Channel %d: \n",ch);
+                        DebugP_log("\r\n Info Field: 0x%x, Identification Code (bits 0:23): 0x%x \n", priv->pos_data_info[ch].raw_data0[0], priv->identification_code[ch]);
+                        DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u \n", priv->pos_data_info[ch].rcv_crc[0], priv->pos_data_info[ch].otf_crc[0], priv->pos_data_info[ch].crc_err_cnt[0]);
+                        DebugP_log("\r\n Encoder Address: %u, Encoder Status: 0x%x, Command to Encoder: %u\n", priv->enc_info[ch].enc_addr[0], priv->enc_info[ch].enc_status[0], priv->enc_info[ch].enc_cmd[0]);
+                    }
                 }
                 break;
 
             case CMD_18:
             case CMD_19:
             case CMD_20:
-                while(1)
+
+                if ((priv->protocol_version == NIKON_PROTOCOL_V3_0) && (cmd == CMD_18))
                 {
-                    DebugP_log("\r\n Enter upper byte of data(in hex) to assign as identification code: ");
-                    DebugP_scanf("%x", &data_high);
-                    DebugP_log("\r\n Enter middle byte of data(in hex) to assign as identification code: ");
-                    DebugP_scanf("%x", &data_mid);
-                    DebugP_log("\r\n Enter lower byte of data(in hex) to assign as identification code: ");
-                    DebugP_scanf("%x", &data_low);
-                    if((data_high > 0xFF) || (data_mid > 0xFF) || (data_low > 0xFF))
+                    while(1)
                     {
-                        DebugP_log("\r\n Please enter a valid 8 bit value \n");
+                        DebugP_log("\r\n Enter \"1\" to request identification code write, or enter \"2\" to request velocity coefficient write : ");
+                        DebugP_scanf("%c", &cmd_type);
+
+                        if(cmd_type == '1')
+                        {
+                            break;
+                        }
+                        else if(cmd_type == '2')
+                        {
+                            cmd = CMD_18_VEL;
+                            break;
+                        }
+                        else
+                        {
+                            DebugP_log("\r\n ERROR: Invalid option, try again \n");
+                        }
                     }
-                    else
+                }
+
+                if(cmd == CMD_18_VEL)
+                {
+                    while(1)
                     {
-                        break;
+                        DebugP_log("\r\n Enter bits 0:7 of data(in hex) to assign as Velocity coefficient: ");
+                        DebugP_scanf("%x", &data_high);
+                        DebugP_log("\r\n Enter bits 8:15 of data(in hex) to assign as Velocity coefficient: ");
+                        DebugP_scanf("%x", &data_mid);
+                        DebugP_log("\r\n Enter bits 18:16 of data(in hex) to assign as Velocity coefficient: ");
+                        DebugP_scanf("%x", &data_low);
+                        if((data_high > 0xFF) || (data_mid > 0xFF) || (data_low > 0x7))
+                        {
+                            DebugP_log("\r\n Please enter valid values \n");
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                    nikon_update_velocity_coefficient(priv, data_high, data_mid, data_low);
+                    nikon_generate_cdf(priv, cmd);
+                    ret = nikon_get_pos(priv, cmd);
+                    if(ret < 0)
+                    {
+                        DebugP_log("\r\n ERROR: Encoder's Velocity coefficient code write access failed \n");
+                        continue;
+                    }
+                    for(ch_num = 0; ch_num < totalchannels; ch_num++)
+                    {
+                        ch = nikon_get_current_channel(priv, ch_num);
+                        DebugP_log("\r\n Channel %d: \n",ch);
+                        DebugP_log("\r\n Info Field: 0x%x, Velocity coefficient (bits 0:23): 0x%x \n", priv->pos_data_info[ch].raw_data0[0], priv->velocity_coefficient[ch]);
+                        DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u \n", priv->pos_data_info[ch].rcv_crc[0], priv->pos_data_info[ch].otf_crc[0], priv->pos_data_info[ch].crc_err_cnt[0]);
+                        DebugP_log("\r\n Encoder Address: %u, Encoder Status: 0x%x, Command to Encoder: %u\n", priv->enc_info[ch].enc_addr[0], priv->enc_info[ch].enc_status[0], priv->enc_info[ch].enc_cmd[0]);
                     }
                 }
-                nikon_update_id_code(priv, data_high, data_mid, data_low);
-                nikon_generate_cdf(priv, cmd);
-                ret = nikon_get_pos(priv, cmd);
-                if(ret < 0)
+                else
                 {
-                    DebugP_log("\r\n ERROR: Encoder's identification code write access failed \n");
-                    continue;
+                    while(1)
+                    {
+                        DebugP_log("\r\n Enter bits 0:7 of data(in hex) to assign as identification code: ");
+                        DebugP_scanf("%x", &data_high);
+                        DebugP_log("\r\n Enter bits 8:15 of data(in hex) to assign as identification code: ");
+                        DebugP_scanf("%x", &data_mid);
+                        DebugP_log("\r\n Enter bits 16:23 of data(in hex) to assign as identification code: ");
+                        DebugP_scanf("%x", &data_low);
+                        if((data_high > 0xFF) || (data_mid > 0xFF) || (data_low > 0xFF))
+                        {
+                            DebugP_log("\r\n Please enter a valid 8 bit value \n");
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                    nikon_update_id_code(priv, data_high, data_mid, data_low);
+                    nikon_generate_cdf(priv, cmd);
+                    ret = nikon_get_pos(priv, cmd);
+                    if(ret < 0)
+                    {
+                        DebugP_log("\r\n ERROR: Encoder's identification code write access failed \n");
+                        continue;
+                    }
+                    for(ch_num = 0; ch_num < totalchannels; ch_num++)
+                    {
+                        ch = nikon_get_current_channel(priv, ch_num);
+                        DebugP_log("\r\n Channel %d: \n",ch);
+                        DebugP_log("\r\n Info Field: 0x%x, Identification Code (bits 0:23): 0x%x \n", priv->pos_data_info[ch].raw_data0[0], priv->identification_code[ch]);
+                        DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u \n", priv->pos_data_info[ch].rcv_crc[0], priv->pos_data_info[ch].otf_crc[0], priv->pos_data_info[ch].crc_err_cnt[0]);
+                        DebugP_log("\r\n Encoder Address: %u, Encoder Status: 0x%x, Command to Encoder: %u\n", priv->enc_info[ch].enc_addr[0], priv->enc_info[ch].enc_status[0], priv->enc_info[ch].enc_cmd[0]);
+                    }
                 }
-                for(ch_num = 0; ch_num < totalchannels; ch_num++)
-                {
-                    ch = nikon_get_current_channel(priv, ch_num);
-                    DebugP_log("\r\n Channel %d: \n",ch);
-                    DebugP_log("\r\n Info Field: 0x%x, Identification Code: 0x%x \n", priv->pos_data_info[ch].raw_data0[0], priv->identification_code[ch]);
-                    DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u \n", priv->pos_data_info[ch].rcv_crc[0], priv->pos_data_info[ch].otf_crc[0], priv->pos_data_info[ch].crc_err_cnt[0]);
-                    DebugP_log("\r\n Encoder Address: %u, Encoder Status: 0x%x, Command to Encoder: %u\n", priv->enc_info[ch].enc_addr[0], priv->enc_info[ch].enc_status[0], priv->enc_info[ch].enc_cmd[0]);
-                }
+
                 break;
 
             case CMD_21:
@@ -1035,7 +1405,7 @@ void nikon_main(void *args)
                         {
                             DebugP_log("\r\n Encoder %d: \n",enc_num);
                         }
-                        DebugP_log("\r\n Info Field: 0x%x, ABS: 0x%llx \n", priv->pos_data_info[ch].raw_data0[enc_num], priv->pos_data_info[ch].abs[enc_num]);
+                        DebugP_log("\r\n Info Field: 0x%x,  Data Field0: 0x%x, ABS: 0x%llx \n", priv->pos_data_info[ch].raw_data0[enc_num], priv->pos_data_info[ch].raw_data1[enc_num], priv->pos_data_info[ch].abs[enc_num]);
                         DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u \n", priv->pos_data_info[ch].rcv_crc[enc_num], priv->pos_data_info[ch].otf_crc[enc_num], priv->pos_data_info[ch].crc_err_cnt[enc_num]);
                         DebugP_log("\r\n Encoder Address: %u, Encoder Status: 0x%x\n", priv->enc_info[ch].enc_addr[enc_num], priv->enc_info[ch].enc_status[enc_num]);
 
@@ -1046,7 +1416,68 @@ void nikon_main(void *args)
                     }
                 }
                 break;
+            case CMD_23:
+            case CMD_24:
+            case CMD_25:
+            case CMD_26:
+                if (priv->protocol_version == NIKON_PROTOCOL_V3_0)
+                {
+                    nikon_generate_cdf(priv, cmd);
+                    ret = nikon_get_pos(priv, cmd);
+                    if(ret < 0)
+                    {
+                        DebugP_log("\r\n ERROR: Velocity/acceleration request failed\n");
+                        continue;
+                    }
 
+                    for(ch_num = 0; ch_num < totalchannels; ch_num++)
+                    {
+                        ch = nikon_get_current_channel(priv, ch_num);
+                        DebugP_log("\r\n Channel %d: \n",ch);
+                        if(CONFIG_NIKON0_LOAD_SHARE_MODE)
+                        {
+                            ls_ch = ch;
+                        }
+                        else
+                        {
+                            ls_ch = 0;
+                        }
+                        for(enc_num = 0; enc_num < priv->num_enc_access[ls_ch]; enc_num++)
+                        {
+                            if(cmd == CMD_24 || cmd == CMD_26)
+                            {
+                                DebugP_log("\r\n Encoder %d: \n", enc_num);
+                            }
+                            DebugP_log("\r\n Info Field: 0x%x, Data Field0: 0x%x, Data Field1: 0x%x\n", priv->pos_data_info[ch].raw_data0[enc_num], priv->pos_data_info[ch].raw_data1[enc_num], priv->pos_data_info[ch].raw_data2[enc_num]);
+
+                            if(cmd == CMD_25 || cmd == CMD_26)
+                            {
+                                DebugP_log("\r\n Data Field2: 0x%x, Data Field3: 0x%x Data Field4: 0x%x\n", priv->pos_data_info[ch].raw_data3[enc_num], priv->pos_data_info[ch].raw_data4[enc_num], priv->pos_data_info[ch].raw_data5[enc_num]);
+                            }
+                            else
+                            {
+                                DebugP_log("\r\n Data Field2: 0x%x, Data Field3: 0x%x\n", priv->pos_data_info[ch].raw_data3[enc_num], priv->pos_data_info[ch].raw_data4[enc_num]);
+                            }
+
+                            DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u\n", priv->pos_data_info[ch].rcv_crc[enc_num], priv->pos_data_info[ch].otf_crc[enc_num], priv->pos_data_info[ch].crc_err_cnt[enc_num]);
+                            DebugP_log("\r\n Encoder Address: %u, Encoder Status: 0x%x, Command to Encoder: %u, ", priv->enc_info[ch].enc_addr[enc_num], priv->enc_info[ch].enc_status[enc_num], priv->enc_info[ch].enc_cmd[enc_num]);
+                            DebugP_log("ABS: 0x%llx \n", priv->pos_data_info[ch].abs[enc_num]);
+                            if(priv->abs_len >= priv->single_turn_len[ch][enc_num])
+                            {
+                                DebugP_log("\r\n Angle: %.12f , Multi Turn Rev: %u \n", priv->pos_data_info[ch].angle[enc_num], priv->pos_data_info[ch].multi_turn[enc_num]);
+                            }
+
+                            DebugP_log("\r\n Velocity: %d \n", priv->pos_data_info[ch].velocity[enc_num]);
+
+                            if(cmd == CMD_25 || cmd == CMD_26)
+                            {
+                                DebugP_log("\r\n Acceleration: %d \n", priv->pos_data_info[ch].acc[enc_num]);
+                            }
+
+                        }
+                    }
+                }
+                break;
             case CMD_27:
             case CMD_28:
                 nikon_generate_cdf(priv, cmd);
@@ -1083,8 +1514,9 @@ void nikon_main(void *args)
                             DebugP_log("\r\n Angle: %.12f, Multi Turn Rev: %u \n", priv->pos_data_info[ch].angle[enc_num], priv->pos_data_info[ch].multi_turn[enc_num]);
                         }
                         DebugP_log("\r\n ALM: 0x%x \n", priv->alm_field[ch][enc_num]);
-                        DebugP_log("\r\n Batt: %u, MtErr: %u, OverFlow: %u, OverSpeed: %u, Memory Error: %u, Single Turn Error: %u \n", priv->alm_bits[ch][enc_num].batt, priv->alm_bits[ch][enc_num].mt_err, priv->alm_bits[ch][enc_num].ov_flow, priv->alm_bits[ch][enc_num].ov_spd, priv->alm_bits[ch][enc_num].mem_err, priv->alm_bits[ch][enc_num].st_err);
-                        DebugP_log("\r\n PS Error: %u, Busy: %u, Memory Busy: %u, Over Temperature: %u, Increment Error: %u \n",priv->alm_bits[ch][enc_num].ps_err, priv->alm_bits[ch][enc_num].busy, priv->alm_bits[ch][enc_num].mem_busy, priv->alm_bits[ch][enc_num].ov_temp, priv->alm_bits[ch][enc_num].inc_err);
+                        DebugP_log("\r\n Batt: %u, MtErr: %u, OverFlow: %u, OverSpeed M: %u, Memory Error: %u, Single Turn Error M: %u \n", priv->alm_bits[ch][enc_num].batt, priv->alm_bits[ch][enc_num].mt_err, priv->alm_bits[ch][enc_num].ov_flow, priv->alm_bits[ch][enc_num].ov_spd, priv->alm_bits[ch][enc_num].mem_err, priv->alm_bits[ch][enc_num].st_err);
+                        DebugP_log("\r\n PS Error M: %u, Busy M: %u, Memory Busy: %u, Over Temperature: %u, Increment Error M: %u \n",priv->alm_bits[ch][enc_num].ps_err, priv->alm_bits[ch][enc_num].busy, priv->alm_bits[ch][enc_num].mem_busy, priv->alm_bits[ch][enc_num].ov_temp, priv->alm_bits[ch][enc_num].inc_err_m);
+                        DebugP_log("\r\n OverSpeed S: %u, Single Turn Error S: %u, PS Error S: %u, Busy S: %u, Increment Error S: %u \n",priv->alm_bits[ch][enc_num].ov_spd_s, priv->alm_bits[ch][enc_num].st_err_s, priv->alm_bits[ch][enc_num].ps_err_s, priv->alm_bits[ch][enc_num].busy_s, priv->alm_bits[ch][enc_num].inc_err_s);
                     }
                 }
                 break;
@@ -1116,7 +1548,7 @@ void nikon_main(void *args)
                         {
                             DebugP_log("\r\n Encoder %d: \n",enc_num);
                         }
-                        DebugP_log("\r\n Info Field: 0x%x, Data Field0: 0x%x, Data Field1; 0x%x, Data Field2: 0x%x \n", priv->pos_data_info[ch].raw_data0[enc_num], priv->pos_data_info[ch].raw_data1[enc_num], priv->pos_data_info[ch].raw_data2[enc_num], priv->pos_data_info[ch].raw_data3[enc_num], priv->pos_data_info[ch].abs[enc_num]);
+                        DebugP_log("\r\n Info Field: 0x%x, Data Field0: 0x%x, Data Field1: 0x%x, Data Field2: 0x%x \n", priv->pos_data_info[ch].raw_data0[enc_num], priv->pos_data_info[ch].raw_data1[enc_num], priv->pos_data_info[ch].raw_data2[enc_num], priv->pos_data_info[ch].raw_data3[enc_num], priv->pos_data_info[ch].abs[enc_num]);
                         DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u \n", priv->pos_data_info[ch].rcv_crc[enc_num], priv->pos_data_info[ch].otf_crc[enc_num], priv->pos_data_info[ch].crc_err_cnt[enc_num]);
                         DebugP_log("\r\n Encoder Address: %u, Encoder Status: 0x%x, Command to Encoder: %u, ", priv->enc_info[ch].enc_addr[enc_num], priv->enc_info[ch].enc_status[enc_num], priv->enc_info[ch].enc_cmd[enc_num]);
                         DebugP_log("ABS: 0x%llx \n", priv->pos_data_info[ch].abs[enc_num]);

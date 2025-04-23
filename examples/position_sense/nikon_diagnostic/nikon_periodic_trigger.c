@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2024 Texas Instruments Incorporated
+ *  Copyright (C) 2024-25 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -45,9 +45,9 @@
 #include "ti_drivers_open_close.h"
 #include "ti_board_open_close.h"
 
-static HwiP_Object gIcssgEncoderHwiObject0;  /* ICSSG NIKON PRU FW HWI */
+static HwiP_Object gIcssEncoderHwiObject0;  /* ICSS NIKON PRU FW HWI */
 struct nikon_priv *priv;
-/* ICSSG Interrupt settings */
+/* ICSS Interrupt settings */
 #ifdef PRUICSSM
 #if (PRUICSSx == 1)
 #define ICSS_PRU_NIKON_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_0 )
@@ -140,14 +140,14 @@ void nikon_interrupt_config(struct nikon_periodic_interface *nikon_periodic_inte
 {
     int32_t status;
     HwiP_Params hwiPrms;
-    /* Register & enable ICSSG nikon PRU FW interrupt */
+    /* Register & enable ICSS nikon PRU FW interrupt */
     HwiP_Params_init(&hwiPrms);
     hwiPrms.intNum      = ICSS_PRU_NIKON_INT_NUM;
     hwiPrms.callback    = &pru_nikon_irq_handler0;
     hwiPrms.args        = 0;
     hwiPrms.isPulse     = FALSE;
     hwiPrms.isFIQ       = FALSE;
-    status              = HwiP_construct(&gIcssgEncoderHwiObject0, &hwiPrms);
+    status              = HwiP_construct(&gIcssEncoderHwiObject0, &hwiPrms);
     DebugP_assert(status == SystemP_SUCCESS);
 
 }
@@ -203,7 +203,7 @@ void pru_nikon_irq_handler0(void *args)
     HW_WR_REG8((uint8_t*)gPruIcss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
 
     /* Clear interrupt at source */
-    /* Write 18 to ICSSG_STATUS_CLR_INDEX_REG
+    /* Write 18 to ICSS STATUS CLR INDEX Register
         Firmware:   TRIGGER_HOST_SDFM_IRQ defined as 18
         18 = 16+2, 2 is Host Interrupt Number. See AM64x TRM.
     */

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2024 Texas Instruments Incorporated
+ *  Copyright (C) 2024-25 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -69,7 +69,7 @@ between two cycles in memory access commands) */
 /* Maximum number of Nikon Encoders connected in bus connection*/
 #define NUM_ENCODERS_MAX                    3
 /* Maximum number of Memory Data Frames to be sent on Tx*/
-#define NUM_MDF_CMD_MAX                     3
+#define NUM_MDF_CMD_MAX                     NUM_MDF_MAX
 
 #define NIKON_RX_SAMPLE_SIZE_4X             3      /* 4x over sample rate */
 #define NIKON_RX_SAMPLE_SIZE_6X             5      /* 6x over sample rate */
@@ -124,6 +124,7 @@ between two cycles in memory access commands) */
 #define NIKON_DB_BITS_LEN                   10      /* temperature bits*/
 #define NIKON_RX_ONE_FRAME_LEN              16      /* Rx frame*/
 #define NIKON_EEPROM_ADDR_LEN               8       /* EEPROM memory address*/
+#define NIKON_EEPROM_BANK_LEN               8       /* EEPROM memory BANK*/
 #define NIKON_COMMAND_CODE_LEN              5       /* command code */
 #define NIKON_ENC_STATUS_LEN                4       /* encoder status field */
 #define NIKON_ENC_ADDR_LEN                  3       /* encoder address */
@@ -133,6 +134,8 @@ between two cycles in memory access commands) */
 #define NIKON_START_BIT_LEN                 1       /* start bit */
 #define NIKON_STOP_BIT_LEN                  1       /* stop bit */
 #define NIKON_FIXED_BIT_LEN                 1       /* fix bit in info field*/
+#define NIKON_VEL_LEN                       32      /* velocity data length in bits*/
+#define NIKON_ACC_LEN                       16      /* acceleration data length in bits*/
 
 /* Status for request or access */
 #define NIKON_EEPROM_READ_ACCESS            1       /* eeprom read access */
@@ -140,7 +143,7 @@ between two cycles in memory access commands) */
 #define NIKON_ENABLE_ID_CODE_WRITE          2       /* ID code write request */
 
 /* Maximum possible parameters */
-#define NIKON_MAX_NUM_RX_FRAMES             4       /* Rx frames */
+#define NIKON_MAX_NUM_RX_FRAMES             6       /* Rx frames */
 #define NIKON_MAX_ABS_LEN                   40      /* ABS data length */
 #define NIKON_MAX_NUM_DATA_FIELDS           3       /* Rx Data fields */
 /* Common parameters for most of the commands */
@@ -150,11 +153,25 @@ between two cycles in memory access commands) */
 #define NIKON_MIN_NUM_RX_FRAMES             2       /* Rx frames */
 #define NIKON_MIN_ABS_LEN                   17      /* ABS data length*/
 
+#define NIKON_NUM_RX_FRAMES_TWO             (2U)
+#define NIKON_NUM_RX_FRAMES_THREE           (3U)
+#define NIKON_NUM_RX_FRAMES_FOUR            (4U)
+#define NIKON_NUM_RX_FRAMES_FIVE            (5U)
+#define NIKON_NUM_RX_FRAMES_SIX             (6U)
+
 /* Masks for speecified fields */
 #define NIKON_DB_BITS_MASK                  0x3FF   /* temperature bits(DB) */
 #define NIKON_ENC_STATUS_MASK               0xF     /* encoder status field */
 #define NIKON_CMD_CODE_MASK                 0x1F    /* command code field*/
 #define NIKON_ENC_ADDR_MASK                 0x7     /* encoder address field */
+
+/* Nikon protocol versions */
+#define NIKON_PROTOCOL_V2_1                 0
+#define NIKON_PROTOCOL_V3_0                 1
+
+/* Frame codes for Nikon 3.0 memory operations */
+#define NIKON_FRAME_CODE_NO_BANK            0x0
+#define NIKON_FRAME_CODE_BANK               0x3
 
 /* Number of cycles required to perform operation or reset specific commands */
 #define NIKON_NUM_OF_CYCLE_FOR_RESET        7
@@ -186,17 +203,27 @@ enum cmd_code
     CMD_20,                 /**< Encoder address setting II*/
     CMD_21,                 /**< ABS lower 17bit data request*/
     CMD_22,                 /**< ABS lower 17bit data request (MT) */
+    CMD_23,                 /**< ABS lower 24bit + velocity request (Individual) */
+    CMD_24,                 /**< ABS lower 24bit + velocity request (Multiple) */
+    CMD_25,                 /**< ABS lower 24bit + velocity + acceleration request (Individual) */
+    CMD_26,                 /**< ABS lower 24bit + velocity + acceleration request (Multiple) */
     CMD_27 = 27,            /**< ABS lower 24bit data + Status request*/
     CMD_28,                 /**< ABS lower 24bit data + Status request (MT) */
-    CMD_29,                 /**< ABS lower 24bit data
-                                 + Temperature data request*/
-    CMD_30,                 /**< ABS lower 24bit data
-                                 + Temperatuure data request (MT) */
-    /**< Update Encoder address(EAX) in APP local context*/
-    ENCODER_ADR_CHANGE,
+    CMD_29,                 /**< ABS lower 24bit data + Temperature data request*/
+    CMD_30,                 /**< ABS lower 24bit data + Temperature data request (MT) */
+    ENCODER_ADR_CHANGE,     /**< Update Encoder address(EAX) in APP local context*/
     START_CONTINUOUS_MODE,  /**< Start periodic trigger mode*/
     UPDATE_CLOCK_FREQ,      /**< Update operating baud rate as specified by user*/
     UPDATE_ENC_LEN,         /**< Update encoder's single turn and multi turn resolution*/
+    CMD_1_VEL,              /**< ABS full 40bit data + velocity data request */
+    CMD_5_VEL,              /**< ABS full 40bit data + velocity data request (MT) */
+    CMD_8_POS,              /**< ABS lower 24bit data request */
+    CMD_9_POS,              /**< ABS lower 24bit data request */
+    CMD_10_POS,             /**< ABS lower 24bit data request */
+    CMD_11_POS,             /**< ABS lower 24bit data request */
+    CMD_12_POS,             /**< ABS lower 24bit data request */
+    CMD_16_VEL,             /**< Velocity coefficient read*/
+    CMD_18_VEL,             /**< Velocity coefficient write*/
     CMD_CODE_NUM
 };
 
@@ -219,6 +246,7 @@ struct nikon_clk_cfg
     uint16_t  is_core_clk;
     /**< status for core clock source*/
 };
+
 struct pos_data_info
 {
     uint32_t raw_data0[NUM_ENCODERS_MAX];
@@ -229,6 +257,10 @@ struct pos_data_info
     /**< Raw data receive from encoder - DF1 */
     uint32_t raw_data3[NUM_ENCODERS_MAX];
     /**< Raw data receive from encoder - DF2 */
+    uint32_t raw_data4[NUM_ENCODERS_MAX];
+    /**< Raw data receive from encoder - DF3 */
+    uint32_t raw_data5[NUM_ENCODERS_MAX];
+    /**< Raw data receive from encoder - DF4 */
     uint32_t rcv_crc[NUM_ENCODERS_MAX];
     /**< 8-bit receive position sense crc*/
     uint32_t otf_crc[NUM_ENCODERS_MAX];
@@ -236,12 +268,17 @@ struct pos_data_info
     uint32_t crc_err_cnt[NUM_ENCODERS_MAX];
     /**< Position data crc error count*/
     uint64_t abs[NUM_ENCODERS_MAX];
-    /**< Absolute data(position data) receivedd from the encoder */
+    /**< Absolute data(position data) received from the encoder */
     uint32_t multi_turn[NUM_ENCODERS_MAX];
     /**< Total number of complete rotations(360) */
     float angle[NUM_ENCODERS_MAX];
     /**< Angle of encoder shaft*/
+    uint32_t velocity[NUM_ENCODERS_MAX];
+    /* Velocity data */
+    uint16_t acc[NUM_ENCODERS_MAX];
+    /* Acceleration data */
 };
+
 struct enc_info
 {
     uint32_t enc_status[NUM_ENCODERS_MAX];
@@ -251,8 +288,27 @@ struct enc_info
     uint32_t enc_addr[NUM_ENCODERS_MAX];
     /**<Encoder address acknowledged by the encoder*/
 };
+
 /**
- *    \brief    Structure defining Alarm bits receivedd by the encoder
+ *    \brief    Structure defining Predictive Maintenance Alarm bits received by the encoder (Nikon 3.0 only)
+ *
+ *    \details  Alarm for incremental signal and LED forward current value
+ *
+ */
+struct pm_alm_bits
+{
+    uint8_t incw_1;
+    /**<  Alarm occurs when deterioration is observed in incremental signal of sensor unit 1*/
+    uint8_t incw_2;
+    /**<  Alarm occurs when deterioration is observed in incremental signal of sensor unit 2*/
+    uint8_t ifw_1;
+    /**<  Alarm occurs when LED deterioration is observed based on forward current value in sensor unit 1*/
+    uint8_t ifw_2;
+    /**<  Alarm occurs when LED deterioration is observed based on forward current value in sensor unit 2*/
+};
+
+/**
+ *    \brief    Structure defining Alarm bits received by the encoder
  *
  *    \details  Alarm for battery voltage beyond a specific band, over flow,
  *              over speed, over temperature, Memory , single turn
@@ -293,10 +349,21 @@ struct alm_bits
     uint8_t ov_temp;
     /**< It issues warning when the temperature sensor’s output
      * on board becomes beyond the specified value*/
-    uint8_t inc_err;
+    uint8_t inc_err_m;
     /**< When a signal failure (amplitude, level, etc.) in the incremental
      * signal phase A/ phase B is detected, this flag outputs ‘1.’*/
+    uint8_t ov_spd_s;
+    /* Over speed (Nikon 3.0) */
+    uint8_t st_err_s;
+    /* Single turn error (Nikon 3.0) */
+    uint8_t ps_err_s;
+    /* Position error (Nikon 3.0) */
+    uint8_t busy_s;
+    /* Busy (Nikon 3.0) */
+    uint8_t inc_err_s;
+    /* Increment error (Nikon 3.0) */
 };
+
 /**
  *    \brief    Initialize NIKON firmware interface address
  *              and get the pointer to struct nikon_priv instance
@@ -323,11 +390,9 @@ struct nikon_priv
     uint32_t multi_turn_len[NUM_ED_CH_MAX][NUM_ENCODERS_MAX];
     /**< Multi turn resolution*/
     uint32_t channel[NUM_ED_CH_MAX];
-    /**< Arrray of all configured channel*/
+    /**< Array of all configured channel*/
     struct nikon_pruicss_xchg *pruicss_xchg;
     /**< Structure defining NIKON interface*/
-    uint32_t has_safety;
-    /**< Status for safety support*/
     void *pruicss_cfg;
     /**< PRU-ICSS cfg registers base offset*/
     uint32_t tx_cdf[NUM_ED_CH_MAX];
@@ -363,22 +428,33 @@ struct nikon_priv
     /**< Encoder's information(Encoder address, Encoder status and
      *   command given to the encoder) extracted from the data receive */
     uint32_t temperature[NUM_ED_CH_MAX][NUM_ENCODERS_MAX];
-    /**<Temperature */
+    /**< Temperature */
     uint32_t identification_code[NUM_ED_CH_MAX];
-    /**<Identification code of the current encoder */
+    /**< Identification code of the current encoder (ID bits 0:23 are stored in lower 24 bits of this 32 bit variable) */
+    uint32_t velocity_coefficient[NUM_ED_CH_MAX];
+    /**< Velocity Coefficient of the current encoder (Velocity coefficient bits 0:23 are stored in lower 24 bits of this 32 bit variable) */
     uint32_t alm_field[NUM_ED_CH_MAX][NUM_ENCODERS_MAX];
-    /**<ALM field receivedd from the encoder */
+    /**< ALM field received from the encoder */
+    uint32_t pm_alm_field[NUM_ED_CH_MAX][NUM_ENCODERS_MAX];
+    /**< PM ALM field received from the encoder */
     struct alm_bits alm_bits[NUM_ED_CH_MAX][NUM_ENCODERS_MAX];
-    /**< ALM bits receivedd from the encoder */
+    /**< ALM bits received from the encoder */
+    struct pm_alm_bits pm_alm_bits[NUM_ED_CH_MAX][NUM_ENCODERS_MAX];
+    /**< PM ALM bits received from the encoder */
     uint32_t abs_len;
-    /**< Length of absolute data receivedd from encoder */
+    /**< Length of absolute data received from encoder */
     uint32_t is_continuous_mode;
     /**< Flag for continuous mode triggered */
     void *pruicss_iep;
     /**< ICSS IEP base address*/
     uint64_t cmp3;
     /**< IEP CMP3 reg used in periodic trigger mode*/
-
+    uint8_t protocol_version;
+    /* NIKON_PROTOCOL_V2_1 or NIKON_PROTOCOL_V3_0 */
+    uint8_t eeprom_access_with_bank;
+    /* Read/write access to EEPROM with bank*/
+    uint8_t bank_error;
+    /* Incorrect bank error indication in response */
 };
 
 #ifdef __cplusplus
