@@ -41,9 +41,15 @@
 /* ICSSG INTC events */
 /* Compile-time Host event for SDFM samples available.
    Ideally Host would provide this to FW via pseudo-register in DMEM. */
-#define PRU_TRIGGER_HOST_SDFM_EVT   ( 3+18 )    /* 18+3 (EVT) for 123 (INT#) pr0_pru_mst_intr[3]_intr_req */
-#define RTU_TRIGGER_HOST_SDFM_EVT   ( 4+18 )    /* 18+4 (EVT) for 124 (INT#) pr0_pru_mst_intr[4]_intr_req */
-#define TXPRU_TRIGGER_HOST_SDFM_EVT ( 5+18 )    /* 18+5 (EVT) for 125 (INT#) pr0_pru_mst_intr[5]_intr_req*/
+#define PRU_TRIGGER_HOST_SDFM_EVT_CH0  ( 3+18 )   
+#define PRU_TRIGGER_HOST_SDFM_EVT_CH1  ( 4+18 )   
+#define PRU_TRIGGER_HOST_SDFM_EVT_CH2  ( 5+18 )    
+#define RTU_TRIGGER_HOST_SDFM_EVT_CH0  ( 6+18 )   
+#define RTU_TRIGGER_HOST_SDFM_EVT_CH1  ( 7+18 )   
+#define RTU_TRIGGER_HOST_SDFM_EVT_CH2  ( 8+18 )   
+#define TXPRU_TRIGGER_HOST_SDFM_EVT_CH0 ( 9+18 )  
+#define TXPRU_TRIGGER_HOST_SDFM_EVT_CH1  ( 10+18 )    
+#define TXPRU_TRIGGER_HOST_SDFM_EVT_CH2 ( 11+18 )   
 
 /*
     Firmware registers

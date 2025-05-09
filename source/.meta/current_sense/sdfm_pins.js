@@ -174,12 +174,12 @@ function pinmuxRequirements(inst) {
                 }
             }
             else{
-                if((pin.pinName == "GPI10") || (pin.pinName == "GPI10") ){
+                if((pin.pinName == "GPI10") || (pin.pinName == "GPI19") ){
                     pinResource.used = false;
                 }
             }
         }else{
-           if( (pin.pinName == "GPI11") ||((pin.pinName == "GPI10") || (pin.pinName == "GPI10"))){
+           if( (pin.pinName == "GPI11") ||((pin.pinName == "GPI10") || (pin.pinName == "GPI19"))){
                pinResource.used = false;
            } 
         }
@@ -271,6 +271,20 @@ function pinmuxRequirements(inst) {
             if(pin.pinName == "GPO1")
             {    
                 pinResource.used = true;
+            }
+        }
+        else
+        {
+            if(inst["Enable_Channel_0"] == true)
+            {
+                if(pin.pinName == "GPI1")
+                {    
+                    pinResource.used = true;
+                }
+            }
+            if(pin.pinName == "GPO1")
+            {    
+                pinResource.used = false;
             }
         }
      

@@ -46,10 +46,17 @@
 #include "ti_board_open_close.h"
 
 #include "tisdfm_pruss_intc_mapping.h"  /* INTC configuration */
-#include "current_sense/sdfm/firmware/sdfm_pru_bin.h"            /* SDFM image data */
-#include "current_sense/sdfm/firmware/sdfm_rtu_bin.h"            /* SDFM image data */
-#include "current_sense/sdfm/firmware/sdfm_txpru_bin.h"            /* SDFM image data */
-#include "current_sense/sdfm/firmware/sdfm_bin.h"            /* SDFM image data */
+#if CONFIG_SDFM0_SLICE == PRUICSS_PRU1
+#include "current_sense/sdfm/firmware/multi_axis_load_share/sdfm_pru1_bin.h"            /* SDFM image data */
+#include "current_sense/sdfm/firmware/multi_axis_load_share/sdfm_rtu1_bin.h"            /* SDFM image data */
+#include "current_sense/sdfm/firmware/multi_axis_load_share/sdfm_txpru1_bin.h"            /* SDFM image data */
+#include "current_sense/sdfm/firmware/single_axis_single_pru/sdfm_pru1_bin.h"            /* SDFM image data */
+#else
+#include "current_sense/sdfm/firmware/multi_axis_load_share/sdfm_pru0_bin.h"            /* SDFM image data */
+#include "current_sense/sdfm/firmware/multi_axis_load_share/sdfm_rtu0_bin.h"            /* SDFM image data */
+#include "current_sense/sdfm/firmware/multi_axis_load_share/sdfm_txpru0_bin.h"            /* SDFM image data */
+#include "current_sense/sdfm/firmware/single_axis_single_pru/sdfm_pru0_bin.h"            /* SDFM image data */
+#endif
 
 #include "sdfm_example.h"
 #include "current_sense/sdfm/include/sdfm_api.h"
@@ -67,10 +74,17 @@ typedef struct PRUSDFM_PruFwImageInfo_s
 /* PRU SDFM image info */
 static PRUSDFM_PruFwImageInfo gPruFwImageInfo[PRU_SDFM_NUM_PRU_IMAGE] =
 {
+#if CONFIG_SDFM0_SLICE == PRUICSS_PRU1
+    {SDFM_PRU1_image_0, sizeof(SDFM_PRU1_image_0)}, /* single PRU FW binary */
+    {pru_SDFM_PRU1_image_0, sizeof(pru_SDFM_PRU1_image_0)}, /* load share PRU FW binary */
+    {pru_SDFM_RTU1_image_0, sizeof(pru_SDFM_RTU1_image_0)}, /*load share RTU FW binary */
+    {pru_SDFM_TXPRU1_image_0, sizeof(pru_SDFM_TXPRU1_image_0)} /*load share TXPRU binary*/ 
+#else
     {SDFM_PRU0_image_0, sizeof(SDFM_PRU0_image_0)}, /* single PRU FW binary */
     {pru_SDFM_PRU0_image_0, sizeof(pru_SDFM_PRU0_image_0)}, /* load share PRU FW binary */
     {pru_SDFM_RTU0_image_0, sizeof(pru_SDFM_RTU0_image_0)}, /*load share RTU FW binary */
     {pru_SDFM_TXPRU0_image_0, sizeof(pru_SDFM_TXPRU0_image_0)} /*load share TXPRU binary*/ 
+#endif
 };
 
 /* ICSS INTC configuration */
@@ -363,7 +377,7 @@ int32_t initSdfmFw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm,  PRU
     SDFM_configIepCount(hSdfm, pSdfmPrms->epwmOutFreq);
 
    /*Configuration of sdfm parameters which are supported per axis, not for individual channels. 
-    Channel0 parameters value is used for all three channels of the axis.
+    Channel0 parameters value is used for all three channels of the axis.*/
 
     /*Phase delay calculation for ch0. With Load share mode also, phase delay calculation is enabled only for channel0 */
     if(pSdfmPrms->phaseDelay && (SDFM_CH == 0))

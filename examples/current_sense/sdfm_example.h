@@ -109,7 +109,6 @@
 #define CPU1_ATCM_SOCVIEW(x) (CSL_R5FSS1_CORE0_ATCM_BASE+(x))
 #define CPU0_BTCM_SOCVIEW(x) (CSL_R5FSS0_CORE0_BTCM_BASE+(x - CSL_R5FSS0_BTCM_BASE))
 #define CPU1_BTCM_SOCVIEW(x) (CSL_R5FSS1_CORE0_BTCM_BASE+(x - CSL_R5FSS1_BTCM_BASE))
-
 #define ICSSG_SLICE_ID_0   ( 0 )    /* ICSSG pru slide ID 0 */
 #define ICSSG_SLICE_ID_1   ( 1 )    /* ICSSG pru slide ID 1 */
 #define ICSSG_NUM_SLICE    ( 2 )    /* ICSSG number of slices */
