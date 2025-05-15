@@ -46,6 +46,8 @@ extern "C" {
 #define ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU (0U)
 #define ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU (1U)
 #define ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU (2U)
+/* Maximum number of EnDat Encoders connected with one PRU Slice*/
+#define NUM_ENCODERS_MAX                    3
 
 /*12 words */
 #define MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE0   0xA1
@@ -148,27 +150,23 @@ enum { linear, rotary };
 struct endat_priv
 {   int32_t pruicss_slicex;
     int32_t load_share;
+    int32_t current_channel;
     int32_t pos_res;
-    int32_t single_turn_res;
-    int32_t multi_turn_res;
-    int32_t step;
-    uint32_t pos_rx_bits_21_RTUPRU;
-    uint32_t pos_rx_bits_21_PRU;
-    uint32_t pos_rx_bits_21_TXPRU;
-    uint32_t pos_rx_bits_22_RTUPRU;
-    uint32_t pos_rx_bits_22_PRU;
-    uint32_t pos_rx_bits_22_TXPRU;
+    int32_t multi_turn_res[NUM_ENCODERS_MAX];
+    int32_t single_turn_res[NUM_ENCODERS_MAX];
+    int32_t step[NUM_ENCODERS_MAX];
+    uint32_t pos_rx_bits_21_cmd[NUM_ENCODERS_MAX];
+    uint32_t pos_rx_bits_22_cmd[NUM_ENCODERS_MAX];
+    int32_t type[NUM_ENCODERS_MAX];
+    int32_t has_safety[NUM_ENCODERS_MAX];
+    uint32_t cmd_set_2_2;
     struct flags flags;
     struct id id;
     struct sn sn;
-    uint32_t cmd_set_2_2;
-    int32_t type;
     int32_t raw_data;
-    int32_t channel;
     uint16_t rx_en_cnt;
     struct endat_pruss_xchg *pruss_xchg;
     struct endatChRxInfo *endatChRxInfo;
-    int32_t has_safety;
     void *pruss_cfg;
     void *pruss_iep;
     uint64_t cmp0;
@@ -306,8 +304,8 @@ typedef struct endat_clock_config_s
 #define ENDAT_MRS_VAL_STOP_ADDITIONAL_INFO (0xF)
 #define ENDAT_MRS_MASK_STOP_ADDITIONAL_INFO (ENDAT_MRS_VAL_STOP_ADDITIONAL_INFO)
 
-#define ENDAT_GET_POS_MULTI_TURN(pos, priv) (((pos) & (((unsigned long long) 1 << (priv)->pos_res) - 1)) >> (priv)->single_turn_res)
-#define ENDAT_GET_POS_SINGLE_TURN(pos, priv) ((pos) & (((unsigned long long) 1 << (priv)->single_turn_res) - 1))
+#define ENDAT_GET_POS_MULTI_TURN(pos, priv) (((pos) & (((unsigned long long) 1 << (priv)->pos_res) - 1)) >> (priv)->single_turn_res[(priv)->current_channel])
+#define ENDAT_GET_POS_SINGLE_TURN(pos, priv) ((pos) & (((unsigned long long) 1 << (priv)->single_turn_res[(priv)->current_channel]) - 1))
 
 #include "endat_api.h"
 

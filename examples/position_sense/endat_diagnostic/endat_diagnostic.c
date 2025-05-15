@@ -645,11 +645,11 @@ static void endat_recvd_print(int32_t cmd, struct endat_priv *priv,
                               union endat_format_data *u, int32_t crc)
 {
     uint32_t addinfo, byte1;
-    uint64_t max = pow(2, priv->single_turn_res);
+    uint64_t max = pow(2, priv->single_turn_res[priv->current_channel]);
     union position position;
 
     /* this would give wrong values if cmd is not position related, but that is okay as then this value won't be used */
-    if(priv->type == rotary)
+    if(priv->type[priv->current_channel] == rotary)
     {
         position.angle = ((float) u->position_addinfo.position.position) /
                          (float)max * (float)360;
@@ -657,7 +657,7 @@ static void endat_recvd_print(int32_t cmd, struct endat_priv *priv,
 
     else
     {
-        position.length = u->position_addinfo.position.position * priv->step;
+        position.length = u->position_addinfo.position.position * priv->step[priv->current_channel];
     }
 
 
@@ -688,14 +688,14 @@ static void endat_recvd_print(int32_t cmd, struct endat_priv *priv,
             break;
 
         case 1:
-            if(priv->multi_turn_res)
+            if(priv->multi_turn_res[priv->current_channel])
             {
                 sprintf(gUart_buffer, "\r| position: %.12f, revolution: %s, ",
                         position.angle, uint64_to_str(u->position_addinfo.position.revolution));
             }
             else
             {
-                if(priv->type == rotary)
+                if(priv->type[priv->current_channel] == rotary)
                 {
                     sprintf(gUart_buffer, "\r| position: %.12f ", position.angle);
                 }
@@ -719,14 +719,14 @@ static void endat_recvd_print(int32_t cmd, struct endat_priv *priv,
         case 11:
         case 12:
         case 13:
-            if(priv->multi_turn_res)
+            if(priv->multi_turn_res[priv->current_channel])
             {
                 sprintf(gUart_buffer, "\r| position: %.12f, revolution: %s, ",
                         position.angle, uint64_to_str(u->position_addinfo.position.revolution));
             }
             else
             {
-                if(priv->type == rotary)
+                if(priv->type[priv->current_channel] == rotary)
                 {
                     sprintf(gUart_buffer, "\r| position: %.12f ", position.angle);
                 }
@@ -783,7 +783,7 @@ static void endat_recvd_print(int32_t cmd, struct endat_priv *priv,
 
 static void endat_display_raw_data(int32_t cmd, struct endat_priv *priv)
 {
-    int32_t ch = priv->channel;
+    int32_t ch = priv->current_channel;
     struct endatChRxInfo *endatChRxInfo = priv->endatChRxInfo;
 
     switch(cmd)
@@ -1002,13 +1002,13 @@ static int32_t endat_get_command_supplement(int32_t cmd,
             if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
             {
                 DebugP_log("\r| Select Channel: ");
-                if(DebugP_scanf("%u\n", &priv->channel) < 0)
+                if(DebugP_scanf("%u\n", &priv->current_channel) < 0)
                 {
                     DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
                     return -EINVAL;
                 }
 
-                if(!((gEndat_multi_ch_mask) & (1<<priv->channel)))
+                if(!((gEndat_multi_ch_mask) & (1<<priv->current_channel)))
                 {
                     DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
                     return -EINVAL;
@@ -1027,13 +1027,13 @@ static int32_t endat_get_command_supplement(int32_t cmd,
             if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
             {
                 DebugP_log("\r| Select Channel: ");
-                if(DebugP_scanf("%u\n", &priv->channel) < 0)
+                if(DebugP_scanf("%u\n", &priv->current_channel) < 0)
                 {
                     DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
                     return -EINVAL;
                 }
 
-                if(!((gEndat_multi_ch_mask) & (1<<priv->channel)))
+                if(!((gEndat_multi_ch_mask) & (1<<priv->current_channel)))
                 {
                     DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
                     return -EINVAL;
@@ -1053,13 +1053,13 @@ static int32_t endat_get_command_supplement(int32_t cmd,
             if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
             {
                 DebugP_log("\r| Select Channel: ");
-                if(DebugP_scanf("%u\n", &priv->channel) < 0)
+                if(DebugP_scanf("%u\n", &priv->current_channel) < 0)
                 {
                     DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
                     return -EINVAL;
                 }
 
-                if(!((gEndat_multi_ch_mask) & (1<<priv->channel)))
+                if(!((gEndat_multi_ch_mask) & (1<<priv->current_channel)))
                 {
                     DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
                     return -EINVAL;
@@ -1078,13 +1078,13 @@ static int32_t endat_get_command_supplement(int32_t cmd,
             if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
             {
                 DebugP_log("\r| Select Channel: ");
-                if(DebugP_scanf("%u\n", &priv->channel) < 0)
+                if(DebugP_scanf("%u\n", &priv->current_channel) < 0)
                 {
                     DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
                     return -EINVAL;
                 }
 
-                if(!((gEndat_multi_ch_mask) & (1<<priv->channel)))
+                if(!((gEndat_multi_ch_mask) & (1<<priv->current_channel)))
                 {
                     DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
                     return -EINVAL;
@@ -1360,7 +1360,7 @@ void endat_process_2_2_position_command(uint32_t a0)
     struct cmd_supplement cmd_supplement;
     uint16_t pos_word;
 
-    if(((!gEndat_is_multi_ch || !gEndat_is_load_share_mode) && priv->has_safety) )
+    if(((!gEndat_is_multi_ch || !gEndat_is_load_share_mode) && priv->has_safety[priv->current_channel]) )
     {
         cmd = 9, cmd_supplement.address = gEndat_2_2_loop_mrs;
     }
@@ -1371,7 +1371,7 @@ void endat_process_2_2_position_command(uint32_t a0)
 
     pos_word = _endat_process_2_2_position_command(cmd, &cmd_supplement, a0);
 
-    if((gEndat_is_multi_ch) || (!priv->has_safety) || (gEndat_is_load_share_mode))
+    if((gEndat_is_multi_ch) || (!priv->has_safety[priv->current_channel]) || (gEndat_is_load_share_mode))
     {
         return;
     }
@@ -1464,7 +1464,7 @@ static int32_t endat_get_position_loop_chars(struct endat_priv *priv,
 {
     int32_t i;
 
-    if(priv->multi_turn_res)
+    if(priv->multi_turn_res[priv->current_channel])
     {
         i = 34;
     }
@@ -1491,10 +1491,10 @@ static int32_t endat_get_position_loop_chars(struct endat_priv *priv,
 static void endat_print_position_loop(struct endat_priv *priv, int32_t continuous,
                                       int32_t is_2_2, int32_t ch)
 {
-    uint64_t max = pow(2, priv->single_turn_res);
+    uint64_t max = pow(2, priv->single_turn_res[priv->current_channel]);
     union position position;
 
-    if(priv->type == rotary)
+    if(priv->type[priv->current_channel] == rotary)
     {
         position.angle = ((float)
                           gEndat_format_data_mtrctrl[ch].position_addinfo.position.position) /
@@ -1503,18 +1503,18 @@ static void endat_print_position_loop(struct endat_priv *priv, int32_t continuou
     else
     {
         position.length =
-            gEndat_format_data_mtrctrl[ch].position_addinfo.position.position * priv->step;
+            gEndat_format_data_mtrctrl[ch].position_addinfo.position.position * priv->step[priv->current_channel];
     }
 
     /* max value is 2x48, has 15 digits, so 16 is safe */
-    if(priv->multi_turn_res)
+    if(priv->multi_turn_res[priv->current_channel])
     {
         sprintf(gUart_buffer, "%16.12f, %16s", position.angle,
                 uint64_to_str(gEndat_format_data_mtrctrl[ch].position_addinfo.position.revolution));
     }
     else
     {
-        if(priv->type == rotary)
+        if(priv->type[priv->current_channel] == rotary)
         {
             sprintf(gUart_buffer, "%16.12f", position.angle);
         }
@@ -1640,7 +1640,7 @@ static void endat_process_periodic_command(int32_t cmd,
         DebugP_assert(0 != status);
         endat_position_loop_status = ENDAT_POSITION_LOOP_START;
 
-        if(priv->multi_turn_res)
+        if(priv->multi_turn_res[priv->current_channel])
         {
             DebugP_log("\r|\n\r| press enter to stop the continuous mode\r\n|\r\n|         position,       revolution, f1\r\n| ");
         }
@@ -1726,7 +1726,7 @@ static void endat_process_host_command(int32_t cmd,
                 if(gEndat_multi_ch_mask & 1 << j)
                 {
                     endat_multi_channel_set_cur(priv, j);
-                    endat_handle_prop_delay(priv, gEndat_prop_delay[priv->channel]);
+                    endat_handle_prop_delay(priv, gEndat_prop_delay[priv->current_channel]);
                     d = gEndat_prop_delay_max - gEndat_prop_delay[j];
                     endat_config_wire_delay(priv, d);
                 }
@@ -1734,7 +1734,7 @@ static void endat_process_host_command(int32_t cmd,
         }
         else
         {
-            endat_handle_prop_delay(priv, gEndat_prop_delay[priv->channel]);
+            endat_handle_prop_delay(priv, gEndat_prop_delay[priv->current_channel]);
         }
 
         /* set tST to 2us if frequency > 1MHz, else turn it off */
@@ -1793,7 +1793,7 @@ static void endat_process_host_command(int32_t cmd,
         TimerP_start(gTimerBaseAddr[CONFIG_TIMER0]);
         endat_position_loop_status = ENDAT_POSITION_LOOP_START;
 
-        if(priv->multi_turn_res)
+        if(priv->multi_turn_res[priv->current_channel])
         {
             DebugP_log("\r|\r\n| press enter to stop the position display|\n");
 
@@ -1922,7 +1922,7 @@ static void endat_process_host_command(int32_t cmd,
         endat_start_continuous_mode(priv);
         endat_position_loop_status = ENDAT_POSITION_LOOP_START;
 
-        if(priv->multi_turn_res)
+        if(priv->multi_turn_res[priv->current_channel])
         {
             DebugP_log("\r|\n\r| press enter to stop the continuous mode\r\n|\r\n|         position,       revolution, f1\r\n| ");
         }
@@ -2049,14 +2049,14 @@ static void endat_process_host_command(int32_t cmd,
         /* so that proper position value 2 is displayed from the begining */
         ClockP_usleep(us * 3);
 
-        if((!gEndat_is_multi_ch && !priv->has_safety) || (!gEndat_is_load_share_mode && !priv->has_safety))
+        if((!gEndat_is_multi_ch && !priv->has_safety[priv->current_channel]) || (!gEndat_is_load_share_mode && !priv->has_safety[priv->current_channel]))
         {
             DebugP_log("\r|\n| encoder does not support safety, position value 2 would not be displayed\n|\n");
         }
 
         DebugP_log("\r|\n\r| press enter to stop the position display\n\r|\n");
 
-        if(priv->multi_turn_res)
+        if(priv->multi_turn_res[priv->current_channel])
         {
             if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
             {
@@ -2081,7 +2081,7 @@ static void endat_process_host_command(int32_t cmd,
             {
                 DebugP_log("\r|         position,       revolution, crc errors, f1, f2");
 
-                if(priv->has_safety)
+                if(priv->has_safety[priv->current_channel])
                 {
                     DebugP_log(",      position(2),    revolution(2), crc errors(2)");
                 }
@@ -2113,7 +2113,7 @@ static void endat_process_host_command(int32_t cmd,
             {
                 DebugP_log("|         position, crc errors, f1, f2 ");
 
-                if(priv->has_safety)
+                if(priv->has_safety[priv->current_channel])
                 {
                     DebugP_log(",      position(2), crc errors(2)");
                 }
@@ -2159,33 +2159,33 @@ static void endat_process_host_command(int32_t cmd,
                     endat_print_position_loop(priv, 0, 1, 0);
                 }
 
-                if((!gEndat_is_multi_ch && priv->has_safety) || (!gEndat_is_load_share_mode && priv->has_safety))
+                if((!gEndat_is_multi_ch && priv->has_safety[priv->current_channel]) || (!gEndat_is_load_share_mode && priv->has_safety[priv->current_channel]))
                 {
                     uint64_t multi_turn, single_turn;
                     union position position2;
-                    uint64_t max = pow(2, priv->single_turn_res);
+                    uint64_t max = pow(2, priv->single_turn_res[priv->current_channel]);
 
                     multi_turn = ENDAT_GET_POS_MULTI_TURN(gEndat_2_2_pos_val2[0], priv);
                     single_turn = ENDAT_GET_POS_SINGLE_TURN(gEndat_2_2_pos_val2[0], priv);
 
-                    if(priv->type == rotary)
+                    if(priv->type[priv->current_channel] == rotary)
                     {
                         position2.angle = (float)single_turn / (float)max * (float)360;
                     }
                     else
                     {
-                        position2.length = single_turn * priv->step;
+                        position2.length = single_turn * priv->step[priv->current_channel];
                     }
 
                     DebugP_log(", ");
 
-                    if(priv->multi_turn_res)
+                    if(priv->multi_turn_res[priv->current_channel])
                     {
                         sprintf(gUart_buffer, "%16.12f, %16s", position2.angle, uint64_to_str(multi_turn));
                     }
                     else
                     {
-                        if(priv->type == rotary)
+                        if(priv->type[priv->current_channel] == rotary)
                         {
                             sprintf(gUart_buffer, "%16.12f", position2.angle);
                         }
@@ -2203,9 +2203,9 @@ static void endat_process_host_command(int32_t cmd,
                 /* increase sleep value if glitches in display to be prevented (and would result in slower position display freq) */
                 ClockP_usleep(100);
 
-                if((!gEndat_is_multi_ch && priv->has_safety) || (!gEndat_is_load_share_mode && priv->has_safety))
+                if((!gEndat_is_multi_ch && priv->has_safety[priv->current_channel]) || (!gEndat_is_load_share_mode && priv->has_safety[priv->current_channel]))
                 {
-                    if(priv->multi_turn_res)
+                    if(priv->multi_turn_res[priv->current_channel])
                     {
                         i += 2 + 46 + 3;
                     }
@@ -2232,7 +2232,7 @@ static void endat_process_host_command(int32_t cmd,
                 if(gEndat_multi_ch_mask & 1 << j)
                 {
                     endat_multi_channel_set_cur(priv, j);
-                    DebugP_log("channel: %d",priv->channel);
+                    DebugP_log("channel: %d",priv->current_channel);
                     DebugP_log("\t");
 
                     recovery_time = endat_get_recovery_time(priv);
@@ -2364,21 +2364,21 @@ static void endat_print_encoder_info(struct endat_priv *priv)
 {
     DebugP_log("EnDat 2.%d %s encoder\tID: %u %s\tSN: %c %u %c\n\n",
                 priv->cmd_set_2_2 ? 2 : 1,
-                (priv->type == rotary) ? "rotary" : "linear",
+                (priv->type[priv->current_channel] == rotary) ? "rotary" : "linear",
                 priv->id.binary, (char *)&priv->id.ascii,
                 (char)priv->sn.ascii_msb, priv->sn.binary, (char)priv->sn.ascii_lsb);
     DebugP_log("\rPosition: %d bits ", priv->pos_res);
 
-    if(priv->type == rotary)
+    if(priv->type[priv->current_channel] == rotary)
     {
-        DebugP_log("(singleturn: %d, multiturn: %d) ", priv->single_turn_res,
-                    priv->multi_turn_res);
+        DebugP_log("(singleturn: %d, multiturn: %d) ", priv->single_turn_res[priv->current_channel],
+                    priv->multi_turn_res[priv->current_channel]);
     }
 
-    DebugP_log("[resolution: %d %s]", priv->step,
-                priv->type == rotary ? "M/rev" : "nm");
+    DebugP_log("[resolution: %d %s]", priv->step[priv->current_channel],
+                priv->type[priv->current_channel] == rotary ? "M/rev" : "nm");
     DebugP_log("\r\n\nPropagation delay: %dns",
-                gEndat_prop_delay[priv->channel]);
+                gEndat_prop_delay[priv->current_channel]);
     DebugP_log("\n\n\n");
 }
 
@@ -2554,7 +2554,7 @@ void endat_main(void *args)
                     return;
                 }
                 /*convert cnt to time in ns ((cnt*1000000000)/icssClk) before use*/
-                gEndat_prop_delay[priv->channel] = endat_get_prop_delay(priv)*((float)(1000000000)/icssClk);
+                gEndat_prop_delay[priv->current_channel] = endat_get_prop_delay(priv)*((float)(1000000000)/icssClk);
                 DebugP_log("\n\t\t\t\tCHANNEL %d\n\n", j);
                 endat_print_encoder_info(priv);
             }
@@ -2575,7 +2575,7 @@ void endat_main(void *args)
             return;
         }
         /*convert cnt to time in ns ((cnt*1000000000)/icssClk) before use*/
-        gEndat_prop_delay[priv->channel] = endat_get_prop_delay(priv)*((float)(1000000000)/icssClk);
+        gEndat_prop_delay[priv->current_channel] = endat_get_prop_delay(priv)*((float)(1000000000)/icssClk);
 
         endat_print_encoder_info(priv);
     }
