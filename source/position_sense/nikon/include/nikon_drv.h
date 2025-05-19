@@ -127,6 +127,7 @@ between two cycles in memory access commands) */
 #define NIKON_EEPROM_BANK_LEN               8       /* EEPROM memory BANK*/
 #define NIKON_COMMAND_CODE_LEN              5       /* command code */
 #define NIKON_ENC_STATUS_LEN                4       /* encoder status field */
+#define NIKON_ENC_STATUS_BIT_LEN            1       /* encoder status bit field for CMD_21/CMD_22 */
 #define NIKON_ENC_ADDR_LEN                  3       /* encoder address */
 #define NIKON_SYNC_CODE_LEN                 3       /* sync code */
 #define NIKON_TX_CRC_LEN                    3       /* 3bit Tx CRC */
@@ -136,6 +137,9 @@ between two cycles in memory access commands) */
 #define NIKON_FIXED_BIT_LEN                 1       /* fix bit in info field*/
 #define NIKON_VEL_LEN                       32      /* velocity data length in bits*/
 #define NIKON_ACC_LEN                       16      /* acceleration data length in bits*/
+#define NIKON_ID_CODE_LEN                   24      /* ID code data length in bits*/
+#define NIKON_VEL_COEFFICIENT_LEN           19      /* velocity coefficient data length in bits*/
+#define NIKON_CMD_21_22_IF_DATA_LEN         9       /* Data bits in IF for CMD_21/CMD_22 */
 
 /* Status for request or access */
 #define NIKON_EEPROM_READ_ACCESS            1       /* eeprom read access */
@@ -159,9 +163,10 @@ between two cycles in memory access commands) */
 #define NIKON_NUM_RX_FRAMES_FIVE            (5U)
 #define NIKON_NUM_RX_FRAMES_SIX             (6U)
 
-/* Masks for speecified fields */
+/* Masks for specified fields */
 #define NIKON_DB_BITS_MASK                  0x3FF   /* temperature bits(DB) */
 #define NIKON_ENC_STATUS_MASK               0xF     /* encoder status field */
+#define NIKON_ENC_STATUS_BIT_MASK           0x1     /* encoder status field for CMD_21/CMD_22*/
 #define NIKON_CMD_CODE_MASK                 0x1F    /* command code field*/
 #define NIKON_ENC_ADDR_MASK                 0x7     /* encoder address field */
 
