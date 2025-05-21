@@ -15,16 +15,16 @@ const device_defines = {
 };
 
 const example_file_list = [
-    "examples/dcl/dcl_df22/.project/mcsdk_project.js",
-    "examples/dcl/dcl_pi/.project/mcsdk_project.js",
+    "examples/rtlibs/dcl/dcl_df22/.project/mcsdk_project.js",
+    "examples/rtlibs/dcl/dcl_pi/.project/mcsdk_project.js",
     "examples/position_sense/bissc_diagnostic/single_channel/.project/project.js",
     "examples/position_sense/endat_diagnostic/single_channel/.project/project.js",
     "examples/position_sense/nikon_diagnostic/single_channel/.project/project.js",
     "examples/position_sense/tamagawa_diagnostic_over_soc_uart/.project/project.js",
     "examples/position_sense/tamagawa_diagnostic/single_channel/.project/project.js",
-    "examples/sfra/.project/mcsdk_project.js",
-    "examples/transforms/transforms_test/.project/mcsdk_project.js",
-    "examples/utilities/datalog/.project/mcsdk_project.js",
+    "examples/rtlibs/sfra/.project/mcsdk_project.js",
+    "examples/rtlibs/transforms/transforms_test/.project/mcsdk_project.js",
+    "examples/rtlibs/utilities/datalog/.project/mcsdk_project.js",
     "source/position_sense/bissc/firmware/single_channel/.project/project.js",
     "source/position_sense/endat/firmware/single_channel/.project/project.js",
     "source/position_sense/nikon/firmware/single_channel/.project/project.js",
