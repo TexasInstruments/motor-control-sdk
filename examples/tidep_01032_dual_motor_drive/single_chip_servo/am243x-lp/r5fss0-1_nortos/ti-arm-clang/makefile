@@ -68,11 +68,11 @@ INCLUDES_common := \
 	-I${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/include \
 	-I${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware \
 	-I${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/include \
-	-I${MOTOR_CONTROL_SDK_PATH}/source/transforms/clarke \
-	-I${MOTOR_CONTROL_SDK_PATH}/source/transforms/ipark \
-	-I${MOTOR_CONTROL_SDK_PATH}/source/transforms/park \
-	-I${MOTOR_CONTROL_SDK_PATH}/source/transforms/svgen \
-	-I${MOTOR_CONTROL_SDK_PATH}/source/dcl \
+	-I${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/transforms/clarke \
+	-I${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/transforms/ipark \
+	-I${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/transforms/park \
+	-I${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/transforms/svgen \
+	-I${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/dcl \
 	-Igenerated \
 
 DEFINES_common := \

@@ -6,27 +6,27 @@
 
 
 This example uses the PRUICSS PWM module to generate a signal with a specified duty cycle and deadband at rise edge and fall edge of PWM, syncing pruicss PWM with EPWM sync cout
- 
-The default parameters are in the example are: 
-  
-- Frequency : 16kHz  
-- PWM0_0_POS(alias signal PWM0_A0) is configured with duty cycle of 25% , rise edge delay as 0ns and fall edge delay as 0ns 
-- PWM0_0_NEG(alias signal PWM0_B0) is configured with duty cycle of 25% , rise edge delay as 200ns and fall edge delay as 400ns 
-- PWM2_0_POS(alias signal PWM2_A0) is configured with duty cycle of 25% , rise edge delay as 0ns and fall edge delay as 0ns 
-- PWM2_0_NEG(alias signal PWM2_B0) is configured with duty cycle of 25% , rise edge delay as 600ns and fall edge delay as 800ns 
+
+The default parameters are in the example are:
+
+- Frequency : 16kHz
+- PWM0_0_POS(alias signal PWM0_A0) is configured with duty cycle of 25% , rise edge delay as 0ns and fall edge delay as 0ns
+- PWM0_0_NEG(alias signal PWM0_B0) is configured with duty cycle of 25% , rise edge delay as 200ns and fall edge delay as 400ns
+- PWM2_0_POS(alias signal PWM2_A0) is configured with duty cycle of 25% , rise edge delay as 0ns and fall edge delay as 0ns
+- PWM2_0_NEG(alias signal PWM2_B0) is configured with duty cycle of 25% , rise edge delay as 600ns and fall edge delay as 800ns
 
 All these parameters are configurable.
 
-## Code Flow  
+## Code Flow
 
 ### PRUICSS IEP configuration
 
 - IEP shadow mode and slave mode are enabled (Refer section 6.4.13 of Technical Reference Manual) and IEP is configured to reset twice on every PWM period as mentioned below
 
-- EPWM0 sync out is configured to generate every PRUICSS PWM period, PRUICSS IEP COMPARE 0 is configured with one IEP cycle delay ((PWM_PERIOD/2)+1). 
+- EPWM0 sync out is configured to generate every PRUICSS PWM period, PRUICSS IEP COMPARE 0 is configured with one IEP cycle delay ((PWM_PERIOD/2)+1).
 - By configuring PRUICSS IEP COMPARE 0 with one IEP cycle delay, IEP COMPARE 0 event is missed at the end of PRUICSS PWM period.
 - PRUICSS IEP CMP0 resets IEP couter in middle of PRUICSS PWM period.
-- EPWM0 sync out resets IEP counter at end of PRUICSS PWM period.   
+- EPWM0 sync out resets IEP counter at end of PRUICSS PWM period.
 
 ### PRUICSS PWM configuration
 
@@ -34,13 +34,13 @@ All these parameters are configurable.
 
 - PWM Duty cycle, rise edge delay, fall edge delay can configured or updated using \ref PRUICSS_PWM_config API call.
 
-- PWM Period can be configured or updated using \ref PRUICSS_PWM_pruIcssPwmFrequencyInit API call . 
+- PWM Period can be configured or updated using \ref PRUICSS_PWM_pruIcssPwmFrequencyInit API call .
 
 - PWM0_0_POS, PWM0_0_NEG, PWM2_0_POS, PWM2_0_NEG uses IEP0 CMP0 and EPWM0 sync out signal to achieve PWM synchronization.
 
 - Individual compare event mapped to PWM_x signals controls duty cycle.
 
-Below two steps are executed once in PWM period 
+Below two steps are executed once in PWM period
 
 \imageStyle{epwm_pruicss_pwm_sync_dead_band.png, width:100% height:50%}
 \image html epwm_pruicss_pwm_sync_dead_band.png "GENERATION OF PRUICSS PWM SIGNAL"
@@ -51,11 +51,11 @@ Below two steps are executed once in PWM period
 
 The pruicss PWM signal generated is similar to EPWM signal when EPWM counter is configured in up-down mode.
 
-#### Note 
+#### Note
 This example uses EPWM0 sync out to reset IEP at the PWM period, PRUICSS IEP CMP0 can also be used to do this when EPWM sync out signal is disabled.
 
 
-#### LP-AM243 
+#### LP-AM243
 - When LP-AM243 PROC109A revision is used to test this example, SW6 should be in open state to probe PRG0_PWM0_B0 on J2.15, Refer <a href="https://www.ti.com/lit/ug/spruj12f/spruj12f.pdf?ts=1711526744464&ref_url=https%253A%252F%252Fwww.ti.com%252Ftool%252FLP-AM243" target="_blank"> LP-AM243 User Guide </a>  Section 4.2.1
 - PRG0_PWM0_A0 can be probed on J1.5
 - PRG0_PWM0_B0 can be probed on J2.15
@@ -63,7 +63,7 @@ This example uses EPWM0 sync out to reset IEP at the PWM period, PRUICSS IEP CMP
 - PRG0_PWM2_B0 can be probed on J4.39
 - EPWM0_CHANNEL_A can be probed on J4.40
 
-#### TMDS243EVM 
+#### TMDS243EVM
 <a href="https://www.ti.com/tool/TMDS64DC01EVM" target="_blank"> An IO Breakout Board </a> is required to probe the PWM outputs
 - PRG0_PWM0_A0 can be probed on J3.1
 - PRG0_PWM0_B0 can be probed on J3.3
@@ -123,7 +123,7 @@ This example uses EPWM0 sync out to reset IEP at the PWM period, PRUICSS IEP CMP
 
 ## Steps to synchronize PRUICSS PWM from SOC EPWM
 
-This example demonstrates synchronization of PRUICSS PWM with SOC EPWM. For synchronization of SOC EPWM with PRUICSS PWM, follow the steps below 
+This example demonstrates synchronization of PRUICSS PWM with SOC EPWM. For synchronization of SOC EPWM with PRUICSS PWM, follow the steps below
 
 - Compare 0 event which controls period of PRUICSS PWM is mapped to cmp_event_router_input_16.
 - Configure compare event router to mux cmp_event_router_output_40 with cmp_event_router_input_16.

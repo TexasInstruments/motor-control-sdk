@@ -9,7 +9,7 @@
         ],
         "description": "A Direct Form 2 2nd order example demonstrating the digital control library (DCL). CPU is R5FSS0-0 running NORTOS.",
         "name": "dcl_df22",
-        "location": "../../examples/dcl/dcl_df22/am263x-cc/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
+        "location": "../../examples/rtlibs/dcl/dcl_df22/am263x-cc/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
         "devtools": [
             "TMDSCNCD263"
         ],
@@ -20,6 +20,7 @@
             "ticlang"
         ],
         "subCategories": [
+            "rtlibs",
             "dcl",
             "dcl_df22",
             "r5fss0-0_nortos"
@@ -41,7 +42,7 @@
         ],
         "description": "A Direct Form 2 2nd order example demonstrating the digital control library (DCL). CPU is R5FSS0-0 running FREERTOS.",
         "name": "dcl_df22",
-        "location": "../../examples/dcl/dcl_df22/am263x-cc/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "location": "../../examples/rtlibs/dcl/dcl_df22/am263x-cc/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "TMDSCNCD263"
         ],
@@ -52,6 +53,7 @@
             "ticlang"
         ],
         "subCategories": [
+            "rtlibs",
             "dcl",
             "dcl_df22",
             "r5fss0-0_freertos"
@@ -73,7 +75,7 @@
         ],
         "description": "A Direct Form 2 2nd order example demonstrating the digital control library (DCL). CPU is R5FSS0-0 running NORTOS.",
         "name": "dcl_df22",
-        "location": "../../examples/dcl/dcl_df22/am263x-lp/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
+        "location": "../../examples/rtlibs/dcl/dcl_df22/am263x-lp/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
         "devtools": [
             "LP-AM263"
         ],
@@ -84,6 +86,7 @@
             "ticlang"
         ],
         "subCategories": [
+            "rtlibs",
             "dcl",
             "dcl_df22",
             "r5fss0-0_nortos"
@@ -105,7 +108,7 @@
         ],
         "description": "A Direct Form 2 2nd order example demonstrating the digital control library (DCL). CPU is R5FSS0-0 running FREERTOS.",
         "name": "dcl_df22",
-        "location": "../../examples/dcl/dcl_df22/am263x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "location": "../../examples/rtlibs/dcl/dcl_df22/am263x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "LP-AM263"
         ],
@@ -116,6 +119,7 @@
             "ticlang"
         ],
         "subCategories": [
+            "rtlibs",
             "dcl",
             "dcl_df22",
             "r5fss0-0_freertos"
@@ -137,7 +141,7 @@
         ],
         "description": "A PI controller example demonstrating the digital control library (DCL).  CPU is R5FSS0-0 running NORTOS.",
         "name": "dcl_pi",
-        "location": "../../examples/dcl/dcl_pi/am263x-cc/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
+        "location": "../../examples/rtlibs/dcl/dcl_pi/am263x-cc/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
         "devtools": [
             "TMDSCNCD263"
         ],
@@ -148,6 +152,7 @@
             "ticlang"
         ],
         "subCategories": [
+            "rtlibs",
             "dcl",
             "dcl_pi",
             "r5fss0-0_nortos"
@@ -169,7 +174,7 @@
         ],
         "description": "A PI controller example demonstrating the digital control library (DCL).  CPU is R5FSS0-0 running FREERTOS.",
         "name": "dcl_pi",
-        "location": "../../examples/dcl/dcl_pi/am263x-cc/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "location": "../../examples/rtlibs/dcl/dcl_pi/am263x-cc/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "TMDSCNCD263"
         ],
@@ -180,6 +185,7 @@
             "ticlang"
         ],
         "subCategories": [
+            "rtlibs",
             "dcl",
             "dcl_pi",
             "r5fss0-0_freertos"
@@ -201,7 +207,7 @@
         ],
         "description": "A PI controller example demonstrating the digital control library (DCL).  CPU is R5FSS0-0 running NORTOS.",
         "name": "dcl_pi",
-        "location": "../../examples/dcl/dcl_pi/am263x-lp/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
+        "location": "../../examples/rtlibs/dcl/dcl_pi/am263x-lp/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
         "devtools": [
             "LP-AM263"
         ],
@@ -212,6 +218,7 @@
             "ticlang"
         ],
         "subCategories": [
+            "rtlibs",
             "dcl",
             "dcl_pi",
             "r5fss0-0_nortos"
@@ -233,7 +240,7 @@
         ],
         "description": "A PI controller example demonstrating the digital control library (DCL).  CPU is R5FSS0-0 running FREERTOS.",
         "name": "dcl_pi",
-        "location": "../../examples/dcl/dcl_pi/am263x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "location": "../../examples/rtlibs/dcl/dcl_pi/am263x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "LP-AM263"
         ],
@@ -244,8 +251,42 @@
             "ticlang"
         ],
         "subCategories": [
+            "rtlibs",
             "dcl",
             "dcl_pi",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "description": "A Bissc Diagnostic Single Channel Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "bissc_diagnostic_single_channel",
+        "location": "../../examples/position_sense/bissc_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "LP-AM263"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "position_sense",
+            "bissc_diagnostic",
+            "single_channel",
             "r5fss0-0_freertos"
         ],
         "mainCategories": [
@@ -278,6 +319,39 @@
         "subCategories": [
             "position_sense",
             "endat_diagnostic",
+            "single_channel",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "description": "A Nikon Diagnostic Single Channel Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "nikon_diagnostic_single_channel",
+        "location": "../../examples/position_sense/nikon_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "LP-AM263"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "position_sense",
+            "nikon_diagnostic",
             "single_channel",
             "r5fss0-0_freertos"
         ],
@@ -363,7 +437,7 @@
         ],
         "description": "Verification of SFRA Library for PI Controller.  CPU is R5FSS0-0 running NORTOS.",
         "name": "sfralib",
-        "location": "../../examples/sfra/am263x-cc/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
+        "location": "../../examples/rtlibs/sfra/am263x-cc/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
         "devtools": [
             "TMDSCNCD263"
         ],
@@ -374,6 +448,7 @@
             "ticlang"
         ],
         "subCategories": [
+            "rtlibs",
             "sfra",
             "r5fss0-0_nortos"
         ],
@@ -394,7 +469,7 @@
         ],
         "description": "A simple test vector of ClARKE-PARK-IPARK-SVGEN data verification CPU is R5FSS0-0 running NORTOS.",
         "name": "transforms_test",
-        "location": "../../examples/transforms/transforms_test/am263x-cc/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
+        "location": "../../examples/rtlibs/transforms/transforms_test/am263x-cc/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
         "devtools": [
             "TMDSCNCD263"
         ],
@@ -405,6 +480,7 @@
             "ticlang"
         ],
         "subCategories": [
+            "rtlibs",
             "transforms",
             "transforms_test",
             "r5fss0-0_nortos"
@@ -426,7 +502,7 @@
         ],
         "description": "A simple test vector of ClARKE-PARK-IPARK-SVGEN data verification CPU is R5FSS0-0 running FREERTOS.",
         "name": "transforms_test",
-        "location": "../../examples/transforms/transforms_test/am263x-cc/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "location": "../../examples/rtlibs/transforms/transforms_test/am263x-cc/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "TMDSCNCD263"
         ],
@@ -437,6 +513,7 @@
             "ticlang"
         ],
         "subCategories": [
+            "rtlibs",
             "transforms",
             "transforms_test",
             "r5fss0-0_freertos"
@@ -458,7 +535,7 @@
         ],
         "description": "A simple test vector of ClARKE-PARK-IPARK-SVGEN data verification CPU is R5FSS0-0 running NORTOS.",
         "name": "transforms_test",
-        "location": "../../examples/transforms/transforms_test/am263x-lp/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
+        "location": "../../examples/rtlibs/transforms/transforms_test/am263x-lp/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
         "devtools": [
             "LP-AM263"
         ],
@@ -469,6 +546,7 @@
             "ticlang"
         ],
         "subCategories": [
+            "rtlibs",
             "transforms",
             "transforms_test",
             "r5fss0-0_nortos"
@@ -490,7 +568,7 @@
         ],
         "description": "A simple test vector of ClARKE-PARK-IPARK-SVGEN data verification CPU is R5FSS0-0 running FREERTOS.",
         "name": "transforms_test",
-        "location": "../../examples/transforms/transforms_test/am263x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "location": "../../examples/rtlibs/transforms/transforms_test/am263x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "LP-AM263"
         ],
@@ -501,6 +579,7 @@
             "ticlang"
         ],
         "subCategories": [
+            "rtlibs",
             "transforms",
             "transforms_test",
             "r5fss0-0_freertos"
@@ -522,7 +601,7 @@
         ],
         "description": "Verifying data logging after triggering using Data log Library.  CPU is R5FSS0-0 running NORTOS.",
         "name": "dlog4ch_lib",
-        "location": "../../examples/utilities/datalog/am263x-cc/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
+        "location": "../../examples/rtlibs/utilities/datalog/am263x-cc/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
         "devtools": [
             "TMDSCNCD263"
         ],
@@ -533,6 +612,7 @@
             "ticlang"
         ],
         "subCategories": [
+            "rtlibs",
             "utilities",
             "datalog",
             "r5fss0-0_nortos"

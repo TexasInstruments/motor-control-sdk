@@ -19,7 +19,7 @@
         "
         connection="TIXDS110_Connection.xml"
         toolChain="TICLANG"
-        cgtVersion="3.2.1"
+        cgtVersion="4.0.0"
         device="Cortex R.AM263x"
         deviceCore="MAIN_PULSAR_Cortex_R5_0_0"
         ignoreDefaultDeviceSettings="true"
@@ -105,7 +105,7 @@
             -i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/nortos/lib
             -i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers/lib
             -i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/board/lib
-            -i${MOTOR_CONTROL_SDK_PATH}/source/sfra/lib
+            -i${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/sfra/lib
             -i${CG_TOOL_ROOT}/lib
             -m=universal_motorcontrol.${ConfigName}.map
             --diag_suppress=10063
@@ -156,15 +156,15 @@
 	    <pathVariable name="PROJ_ROOT" path="../../.."       scope="project" />
 
 
-        <file path="MC_SDK_ROOT/source/control/fwc/source/fwc.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/control/fwc/">
+        <file path="MC_SDK_ROOT/source/rtlibs/control/fwc/source/fwc.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/control/fwc/">
         </file>
-        <file path="MC_SDK_ROOT/source/control/mtpa/source/mtpa.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/control/mtpa/">
+        <file path="MC_SDK_ROOT/source/rtlibs/control/mtpa/source/mtpa.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/control/mtpa/">
         </file>
-        <file path="MC_SDK_ROOT/source/control/pi/source/pi.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/control/pi/">
+        <file path="MC_SDK_ROOT/source/rtlibs/control/pi/source/pi.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/control/pi/">
         </file>
-        <file path="MC_SDK_ROOT/source/control/vs_freq/source/vs_freq.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/control/vs_freq/">
+        <file path="MC_SDK_ROOT/source/rtlibs/control/vs_freq/source/vs_freq.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/control/vs_freq/">
         </file>
-        <file path="MC_SDK_ROOT/source/control/filter/filter_fo/source/filter_fo.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/filter/filter_fo/">
+        <file path="MC_SDK_ROOT/source/rtlibs/control/filter/filter_fo/source/filter_fo.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/filter/filter_fo/">
         </file>
         <file path="MCU_SDK_ROOT/source/mathlib/fastrts/fastrts.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/math/fastrts/">
         </file>
@@ -172,29 +172,29 @@
         </file>
         <file path="MCU_SDK_ROOT/source/mathlib/fastrts/fastrts_repl.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/math/fastrts/">
         </file>
-        <file path="MC_SDK_ROOT/source/observers/encoder/source/encoder.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/observers/encoder/">
+        <file path="MC_SDK_ROOT/source/rtlibs/observers/encoder/source/encoder.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/observers/encoder/">
         </file>
-        <file path="MC_SDK_ROOT/source/observers/esmo/source/esmo.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/observers/esmo/">
+        <file path="MC_SDK_ROOT/source/rtlibs/observers/esmo/source/esmo.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/observers/esmo/">
         </file>
-        <file path="MC_SDK_ROOT/source/observers/hall/source/hall.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/observers/hall/">
+        <file path="MC_SDK_ROOT/source/rtlibs/observers/hall/source/hall.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/observers/hall/">
         </file>
-        <file path="MC_SDK_ROOT/source/observers/speedcalc/source/speedcalc.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/observers/speedcalc/">
+        <file path="MC_SDK_ROOT/source/rtlibs/observers/speedcalc/source/speedcalc.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/observers/speedcalc/">
         </file>
-        <file path="MC_SDK_ROOT/source/observers/speedfr/source/speedfr.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/observers/speedfr/">
+        <file path="MC_SDK_ROOT/source/rtlibs/observers/speedfr/source/speedfr.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/observers/speedfr/">
         </file>
         <file path="PROJ_ROOT/sfra_setting/sfra.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/SFRA/">
         </file>
-        <file path="MC_SDK_ROOT/source/transforms/svgen/svgen_current.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/transforms/svgen/">
+        <file path="MC_SDK_ROOT/source/rtlibs/transforms/svgen/svgen_current.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/transforms/svgen/">
         </file>
-        <file path="MC_SDK_ROOT/source/transforms/volts/source/volt_recons.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/transforms/volts/">
+        <file path="MC_SDK_ROOT/source/rtlibs/transforms/volts/source/volt_recons.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/transforms/volts/">
         </file>
-        <file path="MC_SDK_ROOT/source/utilities/angle_gen/source/angle_gen.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/utilities/angle_gen/">
+        <file path="MC_SDK_ROOT/source/rtlibs/utilities/angle_gen/source/angle_gen.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/utilities/angle_gen/">
         </file>
-        <file path="MC_SDK_ROOT/source/utilities/datalog/source/datalog.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/utilities/datalog/">
+        <file path="MC_SDK_ROOT/source/rtlibs/utilities/datalog/source/datalog.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/utilities/datalog/">
         </file>
-        <file path="MC_SDK_ROOT/source/utilities/step_response/source/step_response.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/utilities/step_response/">
+        <file path="MC_SDK_ROOT/source/rtlibs/utilities/step_response/source/step_response.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/utilities/step_response/">
         </file>
-        <file path="MC_SDK_ROOT/source/utilities/traj/source/traj.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/utilities/traj/">
+        <file path="MC_SDK_ROOT/source/rtlibs/utilities/traj/source/traj.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/utilities/traj/">
         </file>
         <file path="PROJ_ROOT/am263x-lp-3phGaN_3SC/r5fss0-0_nortos/AM263_3phGaN_3SC.syscfg" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="src_board/">
         </file>
@@ -221,65 +221,65 @@
                 openOnCreation="false" excludeFromBuild="false" targetName="README.html" action="link">
         </file>
         
-        <file path="MC_SDK_ROOT/source/control/fwc/include/fwc.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/control/fwc/">
+        <file path="MC_SDK_ROOT/source/rtlibs/control/fwc/include/fwc.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/control/fwc/">
         </file>
-        <file path="MC_SDK_ROOT/source/control/mtpa/include/mtpa.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/control/mtpa/">
+        <file path="MC_SDK_ROOT/source/rtlibs/control/mtpa/include/mtpa.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/control/mtpa/">
         </file>
-        <file path="MC_SDK_ROOT/source/control/pi/include/pi.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/control/pi/">
+        <file path="MC_SDK_ROOT/source/rtlibs/control/pi/include/pi.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/control/pi/">
         </file>
-        <file path="MC_SDK_ROOT/source/control/vs_freq/include/vs_freq.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/control/vs_freq/">
+        <file path="MC_SDK_ROOT/source/rtlibs/control/vs_freq/include/vs_freq.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/control/vs_freq/">
         </file>
-        <file path="MC_SDK_ROOT/source/dcl/" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/">
+        <file path="MC_SDK_ROOT/source/rtlibs/dcl/" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/">
         </file>
-        <file path="MC_SDK_ROOT/source/control/filter/filter_fo/include/filter_fo.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/filter/filter_fo/">
+        <file path="MC_SDK_ROOT/source/rtlibs/control/filter/filter_fo/include/filter_fo.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/filter/filter_fo/">
         </file>
-        <file path="MC_SDK_ROOT/source/utilities/math_types.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/math/include/">
+        <file path="MC_SDK_ROOT/source/rtlibs/utilities/math_types.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/math/include/">
         </file>
-        <file path="MC_SDK_ROOT/source/observers/encoder/include/encoder.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/observers/encoder/">
+        <file path="MC_SDK_ROOT/source/rtlibs/observers/encoder/include/encoder.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/observers/encoder/">
         </file>
-        <file path="MC_SDK_ROOT/source/observers/esmo/include/esmo.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/observers/esmo/">
+        <file path="MC_SDK_ROOT/source/rtlibs/observers/esmo/include/esmo.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/observers/esmo/">
         </file>
-        <file path="MC_SDK_ROOT/source/observers/est/include/motor.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/observers/est/">
+        <file path="MC_SDK_ROOT/source/rtlibs/observers/est/include/motor.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/observers/est/">
         </file>
-        <file path="MC_SDK_ROOT/source/observers/est/include/userParams.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/observers/est/">
+        <file path="MC_SDK_ROOT/source/rtlibs/observers/est/include/userParams.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/observers/est/">
         </file>
-        <file path="MC_SDK_ROOT/source/observers/hall/include/hall.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/observers/hall/">
+        <file path="MC_SDK_ROOT/source/rtlibs/observers/hall/include/hall.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/observers/hall/">
         </file>
-        <file path="MC_SDK_ROOT/source/observers/speedcalc/include/speedcalc.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/observers/speedcalc/">
+        <file path="MC_SDK_ROOT/source/rtlibs/observers/speedcalc/include/speedcalc.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/observers/speedcalc/">
         </file>
-        <file path="MC_SDK_ROOT/source/observers/speedfr/include/speedfr.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/observers/speedfr/">
+        <file path="MC_SDK_ROOT/source/rtlibs/observers/speedfr/include/speedfr.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/observers/speedfr/">
         </file>
-        <file path="MC_SDK_ROOT/source/sfra/sfra_f32.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/SFRA/">
+        <file path="MC_SDK_ROOT/source/rtlibs/sfra/sfra_f32.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/SFRA/">
         </file>
         <file path="PROJ_ROOT/sfra_setting/sfra_settings.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/SFRA/">
         </file>
-        <file path="MC_SDK_ROOT/source/sfra/scripts/SFRA.xlsx" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/SFRA/scripts/">
+        <file path="MC_SDK_ROOT/source/rtlibs/sfra/scripts/SFRA.xlsx" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/SFRA/scripts/">
         </file>
-        <file path="MC_SDK_ROOT/source/sfra/scripts/SFRADataExtraction.m" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/SFRA/scripts/">
+        <file path="MC_SDK_ROOT/source/rtlibs/sfra/scripts/SFRADataExtraction.m" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/SFRA/scripts/">
         </file>
-        <file path="MC_SDK_ROOT/source/sfra/scripts/STB_Data_Compare_with_model.m" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/SFRA/scripts/">
+        <file path="MC_SDK_ROOT/source/rtlibs/sfra/scripts/STB_Data_Compare_with_model.m" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/SFRA/scripts/">
         </file>
-        <file path="MC_SDK_ROOT/source/transforms/clarke/clarke.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/transforms/clarke/">
+        <file path="MC_SDK_ROOT/source/rtlibs/transforms/clarke/clarke.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/transforms/clarke/">
         </file>
-        <file path="MC_SDK_ROOT/source/transforms/ipark/ipark.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/transforms/ipark/">
+        <file path="MC_SDK_ROOT/source/rtlibs/transforms/ipark/ipark.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/transforms/ipark/">
         </file>
-        <file path="MC_SDK_ROOT/source/transforms/park/park.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/transforms/park/">
+        <file path="MC_SDK_ROOT/source/rtlibs/transforms/park/park.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/transforms/park/">
         </file>
-        <file path="MC_SDK_ROOT/source/transforms/svgen/svgen_current.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/transforms/svgen/">
+        <file path="MC_SDK_ROOT/source/rtlibs/transforms/svgen/svgen_current.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/transforms/svgen/">
         </file>
-        <file path="MC_SDK_ROOT/source/transforms/svgen/svgen.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/transforms/svgen/">
+        <file path="MC_SDK_ROOT/source/rtlibs/transforms/svgen/svgen.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/transforms/svgen/">
         </file>
-        <file path="MC_SDK_ROOT/source/transforms/volts/include/volt_recons.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/transforms/volts/">
+        <file path="MC_SDK_ROOT/source/rtlibs/transforms/volts/include/volt_recons.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/transforms/volts/">
         </file>
-        <file path="MC_SDK_ROOT/source/utilities/angle_gen/include/angle_gen.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/utilities/angle_gen/">
+        <file path="MC_SDK_ROOT/source/rtlibs/utilities/angle_gen/include/angle_gen.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/utilities/angle_gen/">
         </file>
-        <file path="MC_SDK_ROOT/source/utilities/datalog/include/datalog_input.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/utilities/datalog/">
+        <file path="MC_SDK_ROOT/source/rtlibs/utilities/datalog/include/datalog_input.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/utilities/datalog/">
         </file>
-        <file path="MC_SDK_ROOT/source/utilities/datalog/include/datalog.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/utilities/datalog/">
+        <file path="MC_SDK_ROOT/source/rtlibs/utilities/datalog/include/datalog.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/utilities/datalog/">
         </file>
-        <file path="MC_SDK_ROOT/source/utilities/step_response/include/step_response.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/utilities/step_response/">
+        <file path="MC_SDK_ROOT/source/rtlibs/utilities/step_response/include/step_response.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/utilities/step_response/">
         </file>
-        <file path="MC_SDK_ROOT/source/utilities/traj/include/traj.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/utilities/traj/">
+        <file path="MC_SDK_ROOT/source/rtlibs/utilities/traj/include/traj.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/utilities/traj/">
         </file>
         <file path="PROJ_ROOT/src_board/hal_data.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="src_board/">
         </file>

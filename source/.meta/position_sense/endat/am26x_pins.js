@@ -4,12 +4,19 @@ let device = common.getDeviceName();
 let pinmux = system.getScript("/drivers/pinmux/pinmux");
 let is_am263x_soc = (device === "am263x-cc") ? true : false;
 let is_am261x_soc = (device === "am261x-lp") ? true : false;
+let is_am263px_soc = (device === "am263px-cc") ? true : false;
 
 function getInterfaceName(inst)
 {
-    if(is_am263x_soc) {
+    if(is_am263px_soc)
+    {
+        return "PRU-ICSS";
+    }
+    else if(is_am263x_soc)
+    {
         return inst.instance;
-    } else if (is_am261x_soc) {
+    } else if (is_am261x_soc) 
+    {
         if(inst.instance === "ICSSM0") {
             return "PRU-ICSS0";
         } else {

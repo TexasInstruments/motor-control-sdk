@@ -4,7 +4,7 @@
 
 \attention Also refer to individual module pages for more details on each feature, unsupported features, important usage guidelines.
 
-\attention For release notes of Industrial Communications SDK and MCU+ SDK, please refer to <a href="@VAR_IC_SDK_DOCS_PATH/RELEASE_NOTES_10_00_00_PAGE.html" target="_blank"> @VAR_SOC_NAME Industrial Communications SDK Release Notes 10.00.00</a> and <a href="@VAR_MCU_SDK_DOCS_PATH/RELEASE_NOTES_10_00_00_PAGE.html" target="_blank"> @VAR_SOC_NAME MCU+ SDK Release Notes 10.00.00</a> respectively.
+\attention For release notes of Industrial Communications SDK and MCU+ SDK, please refer to <a href="@VAR_IC_SDK_DOCS_PATH/RELEASE_NOTES_10_00_01_PAGE.html" target="_blank"> @VAR_SOC_NAME Industrial Communications SDK Release Notes 10.00.01</a> and <a href="@VAR_MCU_SDK_DOCS_PATH/RELEASE_NOTES_10_00_01_PAGE.html" target="_blank"> @VAR_SOC_NAME MCU+ SDK Release Notes 10.00.01</a> respectively.
 
 \note The examples will show usage of SW modules and APIs on a specific CPU instance and OS combination. \n
       Unless noted otherwise, the SW modules would work in both FreeRTOS and NORTOS environment. \n

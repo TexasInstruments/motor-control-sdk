@@ -7,7 +7,7 @@
 Tamagawa over uart application does below,
 
 - Configures pinmux, GPIO, UART (UART clock to 192MHz, Baud rate, etc.)
-- Initializes UART0 for debug log & UART1 for communication
+- Initializes UART0 for debug log & \if SOC_AM263PX UART3 \else UART1 \endif for communication
 - Select UART LLD with polling mode for encoder communication
 - Load and executes tamagawa example on R5_0
 
@@ -15,15 +15,11 @@ Tamagawa over uart application does below,
 Connect the Tamagawa encoder via RS-485 Half-Duplex EVM to LP-AM263.
 The connections between LP-AM263 and RS-485
 
-UART RX Pin(UART1_RXD)->JMP1-R,
-UART TX Pin(UART1_TXD)->JMP4-D,
-GPIO Pin(GPIO62)->JM3-DE
+UART RX Pin(\if SOC_AM263PX  UART3_RXD \else  UART1_RXD \endif)->JMP1-R,
+UART TX Pin(\if SOC_AM263PX  UART3_TXD \else  UART1_TXD \endif)->JMP4-D,
+GPIO Pin(GPIO62)->JMP3-DE
 
-The tamagawa over uart example runs on R5 and communicates with tamagawa encoder by UART instance 1. It presents the user with menu options to select Data ID code (as defined by Tamagawa) to be sent to the encoder. The application collects the data entered by the user and configures the relevant command. Then via the UART LLD write API, the command is passed to encoder. Once the command is sent, the encoder starts to respond, and UART LLD read API starts to read this response. Response is stored in the tamagawa interface, the status of the transaction is check by CRC calculation. If the status indicates success, the result is presented to the user otherwise print CRC failure.
-
-
-
-
+The tamagawa over uart example runs on R5 and communicates with tamagawa encoder by UART instance. It presents the user with menu options to select Data ID code (as defined by Tamagawa) to be sent to the encoder. The application collects the data entered by the user and configures the relevant command. Then via the UART LLD write API, the command is passed to encoder. Once the command is sent, the encoder starts to respond, and UART LLD read API starts to read this response. Response is stored in the tamagawa interface, the status of the transaction is check by CRC calculation. If the status indicates success, the result is presented to the user otherwise print CRC failure.
 
 ### Example Flow-Chart
 
@@ -52,7 +48,8 @@ The tamagawa over uart example runs on R5 and communicates with tamagawa encoder
 </table>
 
 # Supported Combinations
-\cond SOC_AM263X
+
+\cond (SOC_AM263X || SOC_AM263PX)
 
  Parameter      | Value
  ---------------|-----------
@@ -63,23 +60,36 @@ The tamagawa over uart example runs on R5 and communicates with tamagawa encoder
 
 \endcond
 
-
 # Steps to Run the Example
 
 ## Hardware Prerequisites
 -  Tamagawa Encoders
--  LP-AM263
+\cond (SOC_AM263X)
+- <a href="https://www.ti.com/tool/LP-AM263" target="_blank"> LP-AM263 Board </a>
+\endcond
+\cond (SOC_AM263PX)
+- <a href="https://www.ti.com/tool/LP-AM263P" target="_blank"> LP-AM263P Board </a>
+\endcond
 -  RS-485 Half Duplex EVM
 -  5V and 3.3V power supplier
 
 ## Hardware Setup
 
-\imageStyle{Tamagawa_Uart_Hw_Setup.PNG,width:60%}
-\image html Tamagawa_Uart_Hw_Setup.PNG "Tamagawa Encoder Hardware Setup with AM263x"
+\cond (SOC_AM263X)
+\imageStyle{Tamagawa_Uart_am263x_Hw_Setup.PNG,width:60%}
+\image html Tamagawa_Uart_am263x_Hw_Setup.PNG "Tamagawa Encoder Hardware Setup with LP-AM263"
 
-\imageStyle{Tamagawa_Setup_image.jpg,width:60%}
-\image html Tamagawa_Setup_image.jpg "Hardware Setup For LP-AM263"
+\imageStyle{Tamagawa_am263x_Setup_image.jpg,width:60%}
+\image html Tamagawa_am263x_Setup_image.jpg "Hardware Setup For LP-AM263"
+\endcond
 
+\cond (SOC_AM263PX)
+\imageStyle{Tamagawa_Uart_am263px_Hw_Setup.PNG,width:60%}
+\image html Tamagawa_Uart_am263px_Hw_Setup.PNG "Tamagawa Encoder Hardware Setup with LP-AM263P"
+
+\imageStyle{Tamagawa_am263px_Setup_image.jpeg,width:60%}
+\image html Tamagawa_am263px_Setup_image.jpeg "Hardware Setup For LP-AM263P"
+\endcond
 
 ## Build, load and run
 

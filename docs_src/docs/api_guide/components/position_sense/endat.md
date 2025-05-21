@@ -41,10 +41,14 @@ EnDat is a bidirectional interface for position encoders. During EnDat operation
    <td> 1MHz, 5MHz
 </tr>
 \endcond
-\cond SOC_AM263X
+\cond (SOC_AM263X || SOC_AM263PX)
+<tr>
+   <td> PRU UART Clock (192 MHz)
+   <td> 1MHz, 2MHz, 4MHz, 6MHz, 8MHz, 12MHz, 16MHz
+</tr>
 <tr>
    <td> PRU UART Clock (160 MHz)
-   <td> 1MHz, 2MHz, 4MHz, 5MHz, 10MHz 
+   <td> 1MHz, 2MHz, 4MHz, 5MHz, 10MHz
 </tr>
 <tr>
    <td>PRU Core Clock (200 MHz)
@@ -72,20 +76,20 @@ supported in this release, including the below
 \cond SOC_AM243X || SOC_AM64X
 -  Continuous clock mode in Multi-channel single PRU mode
 \endcond
-### Limitations 
+### Limitations
 \cond SOC_AM243X || SOC_AM64X
 This section describes known limitations of the current implementation in multi-channel single PRU mode.
 - Clock above 8 MHz: it is not possible to over sample, downsample and store one bit for all three channels in one clock cycle time.
-- Reset command CRC failure: The encoder which takes more time in reset operation will show CRC failure because the reset time is not the same for each encoder so the acknowledgment will not arrive on same time for all encoders at the master end.   
+- Reset command CRC failure: The encoder which takes more time in reset operation will show CRC failure because the reset time is not the same for each encoder so the acknowledgment will not arrive on same time for all encoders at the master end.
 \endcond
 ## SysConfig Features
 
 @VAR_SYSCFG_USAGE_NOTE
 
 SysConfig can be used to configure things mentioned below:
-- Selecting the ICSS instance. 
-\if (SOC_AM263X || SOC_AM261X)
-- Selecting the ICSSM PRU slice. (\if (SOC_AM263X) Tested on ICSSM-PRU0 \else Tested on ICSSM1-PRU0 \endif)
+- Selecting the ICSS instance.
+\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X)
+- Selecting the ICSSM PRU slice. (\if (SOC_AM263X || SOC_AM263PX) Tested on ICSSM-PRU0 \else Tested on ICSSM1-PRU0 \endif)
 \else
 - Selecting the ICSSG PRU slice. (Tested on ICSSG0-PRU1)
 \endif
@@ -95,10 +99,10 @@ SysConfig can be used to configure things mentioned below:
 - Selecting Multi Channel with Encoders of Different Make" using load share mode.
 - Enabling SA Mux mode
 \endcond
-- Selecting RX and TX source clock 
+- Selecting RX and TX source clock
 
 
-## ICSS PRU Resource Usage 
+## ICSS PRU Resource Usage
 <table>
 <tr>
    <th>Configuration</th>

@@ -3,9 +3,10 @@ let common = system.getScript("/common");
 let device = common.getDeviceName();
 let nikon_module_name = "/position_sense/nikon";
 let is_am243x_lp_device = (device === "am243x-lp") ? true : false;
-let is_am26x_soc = (device === "am261x-lp" || device === "am263x-cc") ? true : false;
+let is_am26x_soc = (device === "am261x-lp" || device === "am263x-cc" || device === "am263px-cc" ) ? true : false;
 let is_am263x_soc = (device === "am263x-cc") ? true : false;
 let is_am261x_soc = (device === "am261x-lp") ? true : false;
+let is_am263px_soc = (device === "am263px-cc") ? true : false;
 let nikon_pins = (is_am26x_soc) ? system.getScript("/position_sense/nikon/am26x_pins.js") : system.getScript("/position_sense/nikon_pins.js");
 
 function onValidate(inst, validation)
@@ -22,14 +23,14 @@ function onValidate(inst, validation)
             validation.logError("On AM243x-LP, Channel 1 is not supported",inst,"channel_1");
         }
         /* validation for booster pack */
-        if(( device!="am243x-lp" && device!= "am263x-cc" &&  device!= "am261x-lp" )&&(instance.Booster_Pack))
+        if(( device!="am243x-lp" && device!= "am263x-cc" &&  device!= "am261x-lp" && device != "am263px-cc")&&(instance.Booster_Pack))
         {
             validation.logError("Select only when using Booster Pack with LP",inst,"Booster_Pack");
         }
 
         if(is_am26x_soc)
             {
-                if(is_am263x_soc)
+                if(is_am263x_soc || is_am263px_soc)
                 {
                     if(instance.PRU_Slice == "PRU0" && instance.channel_2)
                     {
@@ -72,7 +73,7 @@ let nikon_module = {
         {
             name: "instance",
             displayName: "Instance",
-            default: (is_am261x_soc) ? "ICSSM1" : ((is_am263x_soc) ? "ICSSM" : "ICSSG0"),
+            default: (is_am261x_soc) ? "ICSSM1" : ((is_am263x_soc || is_am263px_soc) ? "ICSSM" : "ICSSG0"),
             options: (is_am261x_soc) ?
                         [
                             {
@@ -83,7 +84,7 @@ let nikon_module = {
                             }
                         ]
                         :
-                        ((is_am263x_soc) ?
+                        ((is_am263x_soc || is_am263px_soc) ?
                         [
                             {
                             name: "ICSSM",
@@ -306,7 +307,7 @@ function moduleInstances(instance){
 
 function sharedModuleInstances(instance) {
     let modInstances = new Array();
-    let requiredArgs = (is_am263x_soc) ? {instance:`${instance.instance}0`} : (is_am261x_soc) ? {instance:`${instance.instance}`} : {instance: instance.instance ,coreClk:instance.coreClk};
+    let requiredArgs = (is_am263x_soc || is_am263px_soc) ? {instance:`${instance.instance}0`} : (is_am261x_soc) ? {instance:`${instance.instance}`} : {instance: instance.instance ,coreClk:instance.coreClk};
 
     modInstances.push({
         name: "pru",

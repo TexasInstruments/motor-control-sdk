@@ -8,15 +8,7 @@ BISS-C diagnostic application does the following:
 - Initializes ICSS0-PRU1
 - Initializes default parameters, loads the PRU firmware & executes it.
 
-This application is controlled with a terminal interface using a serial over USB connection between the PC host and the EVM.
-Please connect a USB cable between the PC and the EVM/LP.
-A serial terminal application (like teraterm/ hyperterminal/ minicom) is then run on the host.
-To configure, select the serial port corresponding to the port emulated over USB by the EVM.
-The host serial port should be configured to 115200 baud, no parity, 1 stop bit and no flow control.
-
-The BISS-C receiver firmware running on ICSS0-PRU1 provides a defined interface. The BISS-C diagnostic application interacts with the BISS-C receiver firmware interface. It then presents the user with menu options to select Data ID code. The application collects the data entered by the user and configures the relevant interface. Then via the BISS-C receiver interface, the command is triggered. Once the command completion is indicated by the interface, the status of the transaction is checked. If the Status indicates success, the result is presented to the user.
-
-\note BiSS-C firmware will only run with ICSSG Core Clock running at 200 MHz or 300 MHz frequency. 225/250/333 MHz values are not supported due to clock divider requirements.
+\note BiSS-C firmware will only run with ICSS Core Clock running at 200 MHz/300 MHz frequency or ICSS UART Clock running at 192 MHz. 225/250/333 MHz values are not supported due to clock divider requirements.
 
 \endcond
 
@@ -24,9 +16,25 @@ The BISS-C receiver firmware running on ICSS0-PRU1 provides a defined interface.
 
 BISS-C diagnostic application does the following:
 
-- Configures pinmux, GPIO, UART, ICSS clock
-- Initializes ICSSM1-PRU0
+- Configures pinmux, GPIO, UART, ICSS clock to 225MHz
+- Initializes ICSS0-PRU0
 - Initializes default parameters, loads the PRU firmware & executes it.
+
+\note BiSS-C firmware will only run with ICSS UART Clock running at 160 MHz(ICSS Core Clock is configured at 225 MHz & is not supported for firmware due to clock divider requirements) frequency.
+
+\endcond
+
+\cond (SOC_AM263X || SOC_AM263PX)
+
+BISS-C diagnostic application does the following:
+
+- Configures pinmux, GPIO, UART, ICSS clock to 200MHz
+- Initializes ICSS-PRU0
+- Initializes default parameters, loads the PRU firmware & executes it.
+
+\note BiSS-C firmware will only run with ICSS Core Clock running at 200 MHz frequency or ICSS UART Clock running at 192 MHz frequency.
+
+\endcond
 
 This application is controlled with a terminal interface using a serial over USB connection between the PC host and the EVM.
 Please connect a USB cable between the PC and the EVM/LP.
@@ -34,11 +42,7 @@ A serial terminal application (like teraterm/ hyperterminal/ minicom) is then ru
 To configure, select the serial port corresponding to the port emulated over USB by the EVM.
 The host serial port should be configured to 115200 baud, no parity, 1 stop bit and no flow control.
 
-The BISS-C receiver firmware running on ICSSM1-PRU0 provides a defined interface. The BISS-C diagnostic application interacts with the BISS-C receiver firmware interface. It then presents the user with menu options to select Data ID code. The application collects the data entered by the user and configures the relevant interface. Then via the BISS-C receiver interface, the command is triggered. Once the command completion is indicated by the interface, the status of the transaction is checked. If the Status indicates success, the result is presented to the user.
-
-\note BiSS-C firmware will only run with ICSSG Core Clock running at 200 MHz or 300 MHz frequency. 225/250/333 MHz values are not supported due to clock divider requirements.
-
-\endcond
+The BISS-C receiver firmware running on ICSS0-PRU1 provides a defined interface. The BISS-C diagnostic application interacts with the BISS-C receiver firmware interface. It then presents the user with menu options to select Data ID code. The application collects the data entered by the user and configures the relevant interface. Then via the BISS-C receiver interface, the command is triggered. Once the command completion is indicated by the interface, the status of the transaction is checked. If the Status indicates success, the result is presented to the user.
 
 \cond SOC_AM243X
 ## Channel Selection In Sysconfig
@@ -88,6 +92,19 @@ The BISS-C receiver firmware running on ICSSM1-PRU0 provides a defined interface
 
 \endcond
 
+\cond (SOC_AM263X || SOC_AM263PX)
+
+ Parameter      | Value
+ ---------------|-----------
+ CPU + OS       | r5fss0-0 freertos
+ ICSSM          | ICSSM
+ PRU            | PRU0
+ Toolchain      | ti-arm-clang
+ Board          | @VAR_LP_BOARD_NAME_LOWER (Single channel example)
+ Example folder | examples/position_sense/bissc_diagnostic
+
+\endcond
+
 \cond SOC_AM261X
 
  Parameter      | Value
@@ -121,6 +138,21 @@ The BISS-C receiver firmware running on ICSSM1-PRU0 provides a defined interface
 
 \endcond
 
+\cond SOC_AM263X
+
+- BISS-C Encoders
+- <a href="https://www.ti.com/tool/LP-AM263" target="_blank"> LP-AM263 </a>
+- <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
+
+\endcond
+
+\cond SOC_AM263PX
+
+- BISS-C Encoders
+- <a href="https://www.ti.com/tool/LP-AM263P" target="_blank"> LP-AM263P </a>
+- <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
+
+\endcond
 
 ## Hardware Setup
 
@@ -194,12 +226,12 @@ The BISS-C receiver firmware running on ICSSM1-PRU0 provides a defined interface
 <tr>
     <td>J27</td>
     <td>ON</td>
-    <td>3WIRE/SDFM MUX</td>
+    <td>Encoder and %SDFM Paths Select</td>
 </tr>
 <tr>
     <td>J28</td>
     <td>OFF</td>
-    <td>3WIRE MUX</td>
+    <td>AM243/AM263 Mode</td>
 </tr>
 </table>
 
@@ -291,18 +323,127 @@ The BISS-C receiver firmware running on ICSSM1-PRU0 provides a defined interface
 <tr>
     <td>J27</td>
     <td>ON</td>
-    <td>3WIRE/SDFM MUX</td>
+    <td>Encoder and %SDFM Paths Select</td>
 </tr>
 <tr>
     <td>J28</td>
     <td>OFF</td>
-    <td>3WIRE MUX</td>
+    <td>AM243/AM263 Mode</td>
 </tr>
 </table>
 
 \endcond
 
+\cond (SOC_AM263X || SOC_AM263PX)
 
+\cond SOC_AM263X
+
+### Hardware Setup(Using Booster Pack & LP-AM263)
+\imageStyle{AM263x_lp_bp_bissc_encoder_setup.png,width:40%}
+\image html AM263x_lp_bp_bissc_encoder_setup.png  "Hardware Setup of Booster Pack + LP for BISS-C"
+
+#### LP-AM263 Jumper Configuration
+
+\endcond
+
+\cond SOC_AM263PX
+
+### Hardware Setup(Using Booster Pack & LP-AM263P)
+\imageStyle{AM263Px_lp_bp_bissc_encoder_setup.png,width:40%}
+\image html AM263Px_lp_bp_bissc_encoder_setup.png  "Hardware Setup of Booster Pack + LP for BISS-C"
+
+#### LP-AM263P Jumper Configuration
+
+\endcond
+
+<table>
+<tr>
+    <th>Designator</th>
+    <th>ON/OFF</th>
+    <th>Description</th>
+</tr>
+<tr>
+    <td>J13</td>
+    <td>ON</td>
+    <td>3V3 Supply to Booster Pack</td>
+</tr>
+<tr>
+    <td>J14</td>
+    <td>ON</td>
+    <td>5V0 Supply to Booster Pack</td>
+</tr>
+</table>
+
+#### Booster Pack Jumper Configuration
+<table>
+<tr>
+    <th>Designator</th>
+    <th>ON/OFF</th>
+    <th>Description</th>
+</tr>
+<tr>
+    <td>J11</td>
+    <td>OFF</td>
+    <td>VSENSE/ISENSE select</td>
+</tr>
+<tr>
+    <td>J13</td>
+    <td>OFF</td>
+    <td>VSENSE/ISENSE select</td>
+</tr>
+<tr>
+    <td>J17</td>
+    <td>Pin 1-2 Connected</td>
+    <td>SDFM Clock Feedback Select</td>
+</tr>
+<tr>
+    <td>J18/J19</td>
+    <td>J19 installed: sets VSENSOR1 to 5.0V</td>
+    <td>Axis 1: Encoder/Resolver Voltage Select</td>
+</tr>
+<tr>
+    <td>J20/J21</td>
+    <td>J21 installed: sets VSENSOR2 to 5.0V</td>
+    <td>Axis 2: Encoder/Resolver Voltage Select</td>
+</tr>
+<tr>
+    <td>J22</td>
+    <td>OFF</td>
+    <td>Axis 1: Manchester Encoding Select</td>
+</tr>
+<tr>
+    <td>J23</td>
+    <td>OFF</td>
+    <td>Axis 2: Manchester Encoding Select</td>
+</tr>
+<tr>
+    <td>J24</td>
+    <td>OFF</td>
+    <td>Axis 1: RS485/DSL MUX</td>
+</tr>
+<tr>
+    <td>J25</td>
+    <td>OFF</td>
+    <td>Axis 2: RS485/DSL MUX</td>
+</tr>
+<tr>
+    <td>J26</td>
+    <td>OFF</td>
+    <td>VSENSE/ISENSE Select</td>
+</tr>
+<tr>
+    <td>J27</td>
+    <td>OFF</td>
+    <td>Encoder and %SDFM Paths Select</td>
+</tr>
+<tr>
+    <td>J28</td>
+    <td>ON</td>
+    <td>AM243/AM263 Mode</td>
+</tr>
+</table>
+
+\endcond
 
 ## Build, load and run
 

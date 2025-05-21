@@ -15,35 +15,88 @@
 
 Feature                                                                                         | Module
 ------------------------------------------------------------------------------------------------|-----------------------------------
-Tamagawa over PRU 3-channel interface                                                                  | Position Sense
+Tamagawa over PRU 3-channel interface                                                           | Position Sense Tamagawa
+Multiple baud rate support : 2.5 Mbps, and 5 Mbps                                               | Position Sense Tamagawa
+EnDat 2.2                                                                                       | Position Sense EnDat
+Nikon A-Format Single Channel                                                                   | Position Sense Nikon A-Format
+Multiple baud rate support : 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz                        | Position Sense Nikon A-Format
+BiSS-C Single Channel                                                                           | Position Sense BiSS-C
+Multiple baud rate support : 1 MHz, 2 MHz, 5 MHz, 8 MHz, and 10 MHz                             | Position Sense BiSS-C
 
 
 ## Device and Validation Information
 
 SOC   | Supported CPUs  | EVM                                                                          | Host PC
 ------|-----------------|------------------------------------------------------------------------------|-----------------------------------------
-AM263x| R5F             | AM263x ControlCard Revision E1  (referred to as am263x-cc in code). \n       | Windows 10 64b or Ubuntu 18.04 64b
+AM263x| R5F             | AM263x ControlCard Revision E2  (referred to as am263x-cc in code). \n       | Windows 10 64b or Ubuntu 18.04 64b
 AM263x| R5F             | AM263x LaunchPad Revision E2  (referred to as am263x-lp in code)             | Windows 10 64b or Ubuntu 18.04 64b
 
-## Tools, Compiler and Other Open Source SW Module Information
 
-Tools / SW module       | Supported CPUs | Version
+## Dependent Tools and Compiler Information
+
+Tools                   | Supported CPUs | Version
 ------------------------|----------------|-----------------------
-Code Composer Studio    | R5F            | 12.7.0
-SysConfig               | R5F            | 1.20.0, build 3587
-TI ARM CLANG            | R5F            | 3.2.2.LTS
+Code Composer Studio    | R5F            | 12.8.0
+SysConfig               | R5F            | 1.21.0 build, build 3721
+TI ARM CLANG            | R5F            | 4.0.0.LTS
 FreeRTOS Kernel         | R5F            | 10.4.3
 LwIP                    | R5F            | STABLE-2_2_0_RELEASE
-Mbed-TLS                | R5F            | mbedtls-2.13.1
+Mbed-TLS                | R5F            | mbedtls-3.0.0
 
 ## Key Features
 
 ### Position Sense
 
-Module       | Supported CPUs | SysConfig Support | OS Support        | Key features tested                                                                                                                                            | Key features not tested
--------------|----------------|-------------------|-------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------
-Tamagawa over SOC UART   | R5F            | YES               | FreeRTOS          | Absolute position, Encoder ID, Reset, EEPROM Read, EEPROM Write, 2.5 Mbps and 5 Mbps Encoder Support                                                           | -
-Tamagawa over PRU 3-channel interface    | R5F            | YES               | FreeRTOS          | Absolute position, Encoder ID, Reset, EEPROM Read, EEPROM Write, 2.5 Mbps and 5 Mbps Encoder Support                                                           | -
+<table>
+<tr>
+    <th> Module
+    <th> Supported CPUs
+    <th> SysConfig Support
+    <th> OS Support
+    <th> Key features tested
+    <th> Key features not tested
+</tr>
+<tr>
+    <td> BiSS-C
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Single channel, point-to-point connection, control communication, automatic processing delay detection and compensation, Interface speed of 1, 2, 5, 8, and 10 MHz, Boosterpack with LP-AM261
+    <td> Multi Transmission Mode, Long cable (upto 100 meters)
+</tr>
+<tr>
+    <td> EnDat
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Single channel, Continuous mode, Recovery Time for 2.2 command set, Long cable (upto 100 meters), Boosterpack with LP-AM263
+    <td> Encoder receive communication command
+</tr>
+<tr>
+    <td> Nikon A-Format
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Single channel, point-to-point connection, baud rates from 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz, up to 40-bit absolute position (single turn + multi turn) data with additional information, Boosterpack with LP-AM261
+    <td> Daisy Chain Testing, Long cable (upto 100 meters)
+</tr>
+<tr>
+    <td> Tamagawa over PRU 3-channel interface
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Absolute position, Encoder ID, Reset, EEPROM Read, EEPROM Write, 2.5 Mbps Encoder, Boosterpack with LP-AM263
+    <td> 5 Mbps Encoder
+</tr>
+<tr>
+    <td> Tamagawa over SOC UART
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Absolute position, Encoder ID, Reset, EEPROM Read, EEPROM Write, 2.5 Mbps Encoder
+    <td> 5 Mbps Encoder
+</tr>
+</table>
 
 ### Real Time Libraries
 
@@ -106,7 +159,7 @@ Tamagawa over PRU 3-channel interface    | R5F            | YES               | 
 </tr>
 </table>
 
-## Fixed Issues
+<!-- ## Fixed Issues
 
 <table>
 <tr>
@@ -117,9 +170,9 @@ Tamagawa over PRU 3-channel interface    | R5F            | YES               | 
     <th> Resolution/Comments
 </tr>
 
-</table>
+</table> -->
 
-<!-- ## Known Issues
+## Known Issues
 
 <table>
 <tr>
@@ -129,7 +182,14 @@ Tamagawa over PRU 3-channel interface    | R5F            | YES               | 
     <th> Applicable Releases
     <th> Workaround
 </tr>
-</table> -->
+<tr>
+    <td> PINDSW-8358
+    <td> BiSS-C/Nikon/EnDat/Tamagawa: Exiting Periodic Trigger mode UART option does not work
+    <td> Position Sense BiSS-C, Position Sense EnDat, Position Sense Nikon A-Format, Position Sense Tamagawa
+    <td> 10.00.00 onwards
+    <td> -
+</tr>
+</table>
 
 <!-- ## Errata
 <table>
@@ -195,7 +255,7 @@ Tamagawa over PRU 3-channel interface    | R5F            | YES               | 
 </tr>
 </table> -->
 
-## Limitations
+<!-- ## Limitations
 <table>
 <tr>
     <th> ID
@@ -206,7 +266,7 @@ Tamagawa over PRU 3-channel interface    | R5F            | YES               | 
     <th> Workaround
 </tr>
 
-</table>
+</table> -->
 
 ## Upgrade and Compatibility Information for Motor Control SDK 10.00.00 {#UPGRADE_AND_COMPATIBILITY_INFORMATION_10_0_0}
 
@@ -234,7 +294,7 @@ earlier SDKs. -->
 </tr>
 </table> -->
 
-<!-- ### Examples
+### Examples
 
 <table>
 <tr>
@@ -242,6 +302,12 @@ earlier SDKs. -->
     <th> Affected API
     <th> Change
     <th> Additional Remarks
+</tr>
+<tr>
+    <td> Real Time Libraries
+    <td> -
+    <td> Moved examples/dcl, examples/sfra, examples/transforms, examples/utilities to examples/rtlibs folder
+    <td> All exammples using Real Time Libraries are updated to use new path
 </tr>
 </table>
 
@@ -254,5 +320,10 @@ earlier SDKs. -->
     <th> Change
     <th> Additional Remarks
 </tr>
-</table> -->
-
+<tr>
+    <td> Real Time Libraries
+    <td> -
+    <td> Moved source/control, source/dcl, source/observers, source/sfra, source/transforms, source/utilities to source/rtlibs folder
+    <td> All exammples using Real Time Libraries are updated to use new path
+</tr>
+</table>

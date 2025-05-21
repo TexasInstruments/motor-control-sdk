@@ -1,10 +1,10 @@
 # Migration Guide {#MIGRATION_GUIDES}
 
-\cond SOC_AM64X || SOC_AM243X
+\cond (SOC_AM64X || SOC_AM243X)
 Components under Motor Control SDK were available in MCU+ SDK 7.x and 8.x releases.
 \endcond
 
-\cond SOC_AM263X
+\cond (SOC_AM263X)
 Components under Motor Control SDK were available in MCU+ SDK 8.x releases.
 \endcond
 
@@ -31,7 +31,7 @@ If you are a user of MCU+ SDK, then items listed on this page that will assist y
 
 \endcond
 
-\cond SOC_AM263X
+\cond (SOC_AM263X)
 
 - The example and driver for position sense encoder is moved from MCU+ SDK to Motor Control SDK. Folder location changes are also shown below.
 

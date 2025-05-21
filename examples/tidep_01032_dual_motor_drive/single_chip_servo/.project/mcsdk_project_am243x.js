@@ -160,11 +160,11 @@ const includes_r5f_0_0 = {
         "${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/include",
         "${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware",
         "${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/include",
-        "${MOTOR_CONTROL_SDK_PATH}/source/transforms/clarke",
-        "${MOTOR_CONTROL_SDK_PATH}/source/transforms/ipark",
-        "${MOTOR_CONTROL_SDK_PATH}/source/transforms/park",
-        "${MOTOR_CONTROL_SDK_PATH}/source/transforms/svgen",
-        "${MOTOR_CONTROL_SDK_PATH}/source/dcl",
+        "${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/transforms/clarke",
+        "${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/transforms/ipark",
+        "${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/transforms/park",
+        "${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/transforms/svgen",
+        "${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/dcl",
     ],
 };
 
@@ -179,11 +179,11 @@ const includes_r5f_0_1 = {
         "${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/include",
         "${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware",
         "${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/include",
-        "${MOTOR_CONTROL_SDK_PATH}/source/transforms/clarke",
-        "${MOTOR_CONTROL_SDK_PATH}/source/transforms/ipark",
-        "${MOTOR_CONTROL_SDK_PATH}/source/transforms/park",
-        "${MOTOR_CONTROL_SDK_PATH}/source/transforms/svgen",
-        "${MOTOR_CONTROL_SDK_PATH}/source/dcl",
+        "${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/transforms/clarke",
+        "${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/transforms/ipark",
+        "${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/transforms/park",
+        "${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/transforms/svgen",
+        "${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/dcl",
     ],
 };
 
