@@ -690,9 +690,9 @@ void nikon_main(void *args)
 
     i = nikon_get_fw_version();
 
-    DebugP_log("\n\n");
-    DebugP_log("NIKON firmware \t: %x.%x.%x (%s)\n", (i >> 24) & 0x7F,
+    DebugP_log("\r\nNIKON firmware \t: %x.%x.%x (%s)\n", (i >> 24) & 0x7F,
                 (i >> 16) & 0xFF, i & 0xFFFF, i & (1 << 31) ? "internal" : "release");
+    DebugP_log("\r\nNIKON Protocol Version selected\t: %s", (NIKON_PROTOCOL_VERSION == NIKON_PROTOCOL_V2_1)?"2.1":"3.0");
 
     nikon_pruicss_init();
 
@@ -768,9 +768,7 @@ void nikon_main(void *args)
         int32_t ret;
         int32_t ch;
         uint32_t addr = 0;
-        uint32_t data_high = 0;
-        uint32_t data_mid = 0;
-        uint32_t data_low = 0;
+        uint32_t data = 0;
         uint32_t bank = 0;
         uint8_t access_with_bank = 0;
         uint8_t cmd_type;
@@ -1043,7 +1041,7 @@ void nikon_main(void *args)
                             }
                             else
                             {
-                                nikon_update_bank(priv, bank);
+                                nikon_update_bank(priv, (bank & 0xFF));
                                 access_with_bank = 1;
                                 break;
                             }
@@ -1074,7 +1072,7 @@ void nikon_main(void *args)
                     }
                 }
 
-                nikon_update_eeprom_addr(priv, addr);
+                nikon_update_eeprom_addr(priv, (addr & 0xFF));
                 nikon_generate_cdf(priv, cmd);
                 ret = nikon_get_pos(priv, cmd);
                 if(ret < 0)
@@ -1088,7 +1086,7 @@ void nikon_main(void *args)
                     DebugP_log("\r\n Channel %d: \n",ch);
                     if(access_with_bank == 1)
                     {
-                        DebugP_log("\r\n Info Field: 0x%x, EEPROM Data: 0x%x, EEPROM Bank: 0x%x, EEPROM Address: 0x%x \n", priv->pos_data_info[ch].raw_data0[0], priv->pos_data_info[ch].raw_data1[0], nikon_reverse_bits((priv->pos_data_info[ch].raw_data2[0] & 0xFF00) >> 8, NIKON_EEPROM_BANK_LEN), nikon_reverse_bits((priv->pos_data_info[ch].raw_data2[0] & 0xFF), NIKON_EEPROM_ADDR_LEN));
+                        DebugP_log("\r\n Info Field: 0x%x, EEPROM Data: 0x%x, EEPROM Bank: 0x%x, EEPROM Address: 0x%x \n", priv->pos_data_info[ch].raw_data0[0], nikon_reverse_bits(priv->pos_data_info[ch].raw_data1[0], NIKON_RX_ONE_FRAME_LEN), nikon_reverse_bits((priv->pos_data_info[ch].raw_data2[0] & 0xFF00) >> 8, NIKON_EEPROM_BANK_LEN), nikon_reverse_bits((priv->pos_data_info[ch].raw_data2[0] & 0xFF), NIKON_EEPROM_ADDR_LEN));
                         if(priv->bank_error == 1)
                         {
                             DebugP_log("\r\n ERROR: Invalid bank number was specified \n");
@@ -1096,7 +1094,7 @@ void nikon_main(void *args)
                     }
                     else
                     {
-                        DebugP_log("\r\n Info Field: 0x%x, EEPROM Data: 0x%x, EEPROM Address: 0x%x \n", priv->pos_data_info[ch].raw_data0[0], priv->pos_data_info[ch].raw_data1[0], priv->pos_data_info[ch].raw_data2[0]);
+                        DebugP_log("\r\n Info Field: 0x%x, EEPROM Data: 0x%x, EEPROM Address: 0x%x \n", priv->pos_data_info[ch].raw_data0[0], nikon_reverse_bits(priv->pos_data_info[ch].raw_data1[0], NIKON_RX_ONE_FRAME_LEN), nikon_reverse_bits((priv->pos_data_info[ch].raw_data2[0] & 0xFF00) >> 8, NIKON_EEPROM_ADDR_LEN));
                     }
 
                     DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u \n", priv->pos_data_info[ch].rcv_crc[0], priv->pos_data_info[ch].otf_crc[0], priv->pos_data_info[ch].crc_err_cnt[0]);
@@ -1129,7 +1127,7 @@ void nikon_main(void *args)
                             else
                             {
                                 access_with_bank = 1;
-                                nikon_update_bank(priv, bank);
+                                nikon_update_bank(priv, (bank & 0xFF));
                                 break;
                             }
                         }
@@ -1148,12 +1146,10 @@ void nikon_main(void *args)
                 {
                     DebugP_log("\r\n Enter Memory location(in hex) to write(for bank read, 00h to FFh is valid; for non-bank read, 00h to EFh is valid): ");
                     DebugP_scanf("%x", &addr);
-                    DebugP_log("\r\n Enter upper byte of data(in hex) to write at Memory location 0x%x: ", addr);
-                    DebugP_scanf("%x", &data_high);
-                    DebugP_log("\r\n Enter lower byte of data(in hex) to write in Memory location 0x%x: ", addr);
-                    DebugP_scanf("%x", &data_low);
+                    DebugP_log("\r\n Enter data(Bits [15:0] in hex) to write at Memory location 0x%x: ", addr);
+                    DebugP_scanf("%x", &data);
 
-                    if((data_high > 0xFF) || (data_low > 0xFF) || (addr > 0xFF) || ((access_with_bank == 0) && (addr > 0xEF)))
+                    if((data > 0xFFFF) || (addr > 0xFF) || ((access_with_bank == 0) && (addr > 0xEF)))
                     {
                         DebugP_log("\r\n Please enter a valid 8 bit value\n");
                     }
@@ -1162,8 +1158,8 @@ void nikon_main(void *args)
                         break;
                     }
                 }
-                nikon_update_eeprom_addr(priv, addr);
-                nikon_update_eeprom_data(priv, data_high, data_low);
+                nikon_update_eeprom_addr(priv, (addr & 0xFF));
+                nikon_update_eeprom_data(priv, (data & 0xFFFF));
 
                 nikon_generate_cdf(priv, cmd);
                 ret = nikon_get_pos(priv, cmd);
@@ -1179,7 +1175,7 @@ void nikon_main(void *args)
 
                     if(access_with_bank == 1)
                     {
-                        DebugP_log("\r\n Info Field: 0x%x, EEPROM Data: 0x%x, EEPROM Bank: 0x%x, EEPROM Address: 0x%x \n", priv->pos_data_info[ch].raw_data0[0], priv->pos_data_info[ch].raw_data1[0], nikon_reverse_bits((priv->pos_data_info[ch].raw_data2[0] & 0xFF00) >> 8, NIKON_EEPROM_BANK_LEN), nikon_reverse_bits((priv->pos_data_info[ch].raw_data2[0] & 0xFF), NIKON_EEPROM_ADDR_LEN));
+                        DebugP_log("\r\n Info Field: 0x%x, EEPROM Data: 0x%x, EEPROM Bank: 0x%x, EEPROM Address: 0x%x \n", priv->pos_data_info[ch].raw_data0[0], nikon_reverse_bits(priv->pos_data_info[ch].raw_data1[0], NIKON_RX_ONE_FRAME_LEN), nikon_reverse_bits((priv->pos_data_info[ch].raw_data2[0] & 0xFF00) >> 8, NIKON_EEPROM_BANK_LEN), nikon_reverse_bits((priv->pos_data_info[ch].raw_data2[0] & 0xFF), NIKON_EEPROM_ADDR_LEN));
 
                         if(priv->bank_error == 1)
                         {
@@ -1188,7 +1184,7 @@ void nikon_main(void *args)
                     }
                     else
                     {
-                        DebugP_log("\r\n Info Field: 0x%x, EEPROM Data: 0x%x, EEPROM Address: 0x%x \n", priv->pos_data_info[ch].raw_data0[0], priv->pos_data_info[ch].raw_data1[0], priv->pos_data_info[ch].raw_data2[0]);
+                        DebugP_log("\r\n Info Field: 0x%x, EEPROM Data: 0x%x, EEPROM Address: 0x%x \n", priv->pos_data_info[ch].raw_data0[0], nikon_reverse_bits(priv->pos_data_info[ch].raw_data1[0], NIKON_RX_ONE_FRAME_LEN), nikon_reverse_bits((priv->pos_data_info[ch].raw_data2[0] & 0xFF00) >> 8, NIKON_EEPROM_ADDR_LEN));
                     }
                     DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u \n", priv->pos_data_info[ch].rcv_crc[0], priv->pos_data_info[ch].otf_crc[0], priv->pos_data_info[ch].crc_err_cnt[0]);
                     DebugP_log("\r\n Encoder Address: %u, Encoder Status: 0x%x, Command to Encoder: %u\n", priv->enc_info[ch].enc_addr[0], priv->enc_info[ch].enc_status[0], priv->enc_info[ch].enc_cmd[0]);
@@ -1253,7 +1249,7 @@ void nikon_main(void *args)
                     {
                         ch = nikon_get_current_channel(priv, ch_num);
                         DebugP_log("\r\n Channel %d: \n",ch);
-                        DebugP_log("\r\n Info Field: 0x%x, Velocity coefficient (bits 0:23): 0x%x \n", priv->pos_data_info[ch].raw_data0[0], priv->velocity_coefficient[ch]);
+                        DebugP_log("\r\n Info Field: 0x%x, Velocity coefficient (Bits [18:0]): 0x%x \n", priv->pos_data_info[ch].raw_data0[0], priv->velocity_coefficient[ch]);
                         DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u \n", priv->pos_data_info[ch].rcv_crc[0], priv->pos_data_info[ch].otf_crc[0], priv->pos_data_info[ch].crc_err_cnt[0]);
                         DebugP_log("\r\n Encoder Address: %u, Encoder Status: 0x%x, Command to Encoder: %u\n", priv->enc_info[ch].enc_addr[0], priv->enc_info[ch].enc_status[0], priv->enc_info[ch].enc_cmd[0]);
                     }
@@ -1269,7 +1265,7 @@ void nikon_main(void *args)
                     {
                         ch = nikon_get_current_channel(priv, ch_num);
                         DebugP_log("\r\n Channel %d: \n",ch);
-                        DebugP_log("\r\n Info Field: 0x%x, Identification Code (bits 0:23): 0x%x \n", priv->pos_data_info[ch].raw_data0[0], priv->identification_code[ch]);
+                        DebugP_log("\r\n Info Field: 0x%x, Identification Code (Bits [23:0]): 0x%x \n", priv->pos_data_info[ch].raw_data0[0], priv->identification_code[ch]);
                         DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u \n", priv->pos_data_info[ch].rcv_crc[0], priv->pos_data_info[ch].otf_crc[0], priv->pos_data_info[ch].crc_err_cnt[0]);
                         DebugP_log("\r\n Encoder Address: %u, Encoder Status: 0x%x, Command to Encoder: %u\n", priv->enc_info[ch].enc_addr[0], priv->enc_info[ch].enc_status[0], priv->enc_info[ch].enc_cmd[0]);
                     }
@@ -1307,22 +1303,18 @@ void nikon_main(void *args)
                 {
                     while(1)
                     {
-                        DebugP_log("\r\n Enter bits 0:7 of data(in hex) to assign as Velocity coefficient: ");
-                        DebugP_scanf("%x", &data_high);
-                        DebugP_log("\r\n Enter bits 8:15 of data(in hex) to assign as Velocity coefficient: ");
-                        DebugP_scanf("%x", &data_mid);
-                        DebugP_log("\r\n Enter bits 18:16 of data(in hex) to assign as Velocity coefficient: ");
-                        DebugP_scanf("%x", &data_low);
-                        if((data_high > 0xFF) || (data_mid > 0xFF) || (data_low > 0x7))
+                        DebugP_log("\r\n Enter data(Bits [18:0] in hex) to assign as Velocity coefficient: ");
+                        DebugP_scanf("%x", &data);
+                        if((data > 0x7FFFF))
                         {
-                            DebugP_log("\r\n Please enter valid values \n");
+                            DebugP_log("\r\n Please enter valid value \n");
                         }
                         else
                         {
                             break;
                         }
                     }
-                    nikon_update_velocity_coefficient(priv, data_high, data_mid, data_low);
+                    nikon_update_velocity_coefficient(priv, data);
                     nikon_generate_cdf(priv, cmd);
                     ret = nikon_get_pos(priv, cmd);
                     if(ret < 0)
@@ -1334,7 +1326,7 @@ void nikon_main(void *args)
                     {
                         ch = nikon_get_current_channel(priv, ch_num);
                         DebugP_log("\r\n Channel %d: \n",ch);
-                        DebugP_log("\r\n Info Field: 0x%x, Velocity coefficient (bits 0:23): 0x%x \n", priv->pos_data_info[ch].raw_data0[0], priv->velocity_coefficient[ch]);
+                        DebugP_log("\r\n Info Field: 0x%x, Velocity coefficient (Bits [18:0]): 0x%x \n", priv->pos_data_info[ch].raw_data0[0], priv->velocity_coefficient[ch]);
                         DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u \n", priv->pos_data_info[ch].rcv_crc[0], priv->pos_data_info[ch].otf_crc[0], priv->pos_data_info[ch].crc_err_cnt[0]);
                         DebugP_log("\r\n Encoder Address: %u, Encoder Status: 0x%x, Command to Encoder: %u\n", priv->enc_info[ch].enc_addr[0], priv->enc_info[ch].enc_status[0], priv->enc_info[ch].enc_cmd[0]);
                     }
@@ -1343,22 +1335,19 @@ void nikon_main(void *args)
                 {
                     while(1)
                     {
-                        DebugP_log("\r\n Enter bits 0:7 of data(in hex) to assign as identification code: ");
-                        DebugP_scanf("%x", &data_high);
-                        DebugP_log("\r\n Enter bits 8:15 of data(in hex) to assign as identification code: ");
-                        DebugP_scanf("%x", &data_mid);
-                        DebugP_log("\r\n Enter bits 16:23 of data(in hex) to assign as identification code: ");
-                        DebugP_scanf("%x", &data_low);
-                        if((data_high > 0xFF) || (data_mid > 0xFF) || (data_low > 0xFF))
+                        DebugP_log("\r\n Enter data(Bits [23:0] in hex) to assign as identification code: ");
+                        DebugP_scanf("%x", &data);
+
+                        if((data > 0xFFFFFF))
                         {
-                            DebugP_log("\r\n Please enter a valid 8 bit value \n");
+                            DebugP_log("\r\n Please enter a valid value \n");
                         }
                         else
                         {
                             break;
                         }
                     }
-                    nikon_update_id_code(priv, data_high, data_mid, data_low);
+                    nikon_update_id_code(priv, data);
                     nikon_generate_cdf(priv, cmd);
                     ret = nikon_get_pos(priv, cmd);
                     if(ret < 0)
@@ -1370,12 +1359,11 @@ void nikon_main(void *args)
                     {
                         ch = nikon_get_current_channel(priv, ch_num);
                         DebugP_log("\r\n Channel %d: \n",ch);
-                        DebugP_log("\r\n Info Field: 0x%x, Identification Code (bits 0:23): 0x%x \n", priv->pos_data_info[ch].raw_data0[0], priv->identification_code[ch]);
+                        DebugP_log("\r\n Info Field: 0x%x, Identification Code (Bits [23:0]): 0x%x \n", priv->pos_data_info[ch].raw_data0[0], priv->identification_code[ch]);
                         DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u \n", priv->pos_data_info[ch].rcv_crc[0], priv->pos_data_info[ch].otf_crc[0], priv->pos_data_info[ch].crc_err_cnt[0]);
                         DebugP_log("\r\n Encoder Address: %u, Encoder Status: 0x%x, Command to Encoder: %u\n", priv->enc_info[ch].enc_addr[0], priv->enc_info[ch].enc_status[0], priv->enc_info[ch].enc_cmd[0]);
                     }
                 }
-
                 break;
 
             case CMD_21:

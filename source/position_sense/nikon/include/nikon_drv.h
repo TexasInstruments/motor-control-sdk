@@ -125,6 +125,7 @@ between two cycles in memory access commands) */
 #define NIKON_RX_ONE_FRAME_LEN              16      /* Rx frame*/
 #define NIKON_EEPROM_ADDR_LEN               8       /* EEPROM memory address*/
 #define NIKON_EEPROM_BANK_LEN               8       /* EEPROM memory BANK*/
+#define NIKON_EEPROM_DATA_BYTE_LEN          8       /* EEPROM memory Data Byte Length (High/Low)*/
 #define NIKON_COMMAND_CODE_LEN              5       /* command code */
 #define NIKON_ENC_STATUS_LEN                4       /* encoder status field */
 #define NIKON_ENC_STATUS_BIT_LEN            1       /* encoder status bit field for CMD_21/CMD_22 */
@@ -180,6 +181,12 @@ between two cycles in memory access commands) */
 
 /* Number of cycles required to perform operation or reset specific commands */
 #define NIKON_NUM_OF_CYCLE_FOR_RESET        7
+
+#define NIKON_MEM_DATA_LOW_INDEX    (0U)
+#define NIKON_MEM_DATA_HIGH_INDEX   (1U)
+#define NIKON_MEM_ADDRESS_INDEX     (2U)
+#define NIKON_MEM_BANK_INDEX        (3U)
+
 /**
 *    \brief    Command codes[4:0]
 */
@@ -435,9 +442,9 @@ struct nikon_priv
     uint32_t temperature[NUM_ED_CH_MAX][NUM_ENCODERS_MAX];
     /**< Temperature */
     uint32_t identification_code[NUM_ED_CH_MAX];
-    /**< Identification code of the current encoder (ID bits 0:23 are stored in lower 24 bits of this 32 bit variable) */
+    /**< Identification code of the current encoder (ID bits are stored in lower 24 bits of this 32 bit variable) */
     uint32_t velocity_coefficient[NUM_ED_CH_MAX];
-    /**< Velocity Coefficient of the current encoder (Velocity coefficient bits 0:23 are stored in lower 24 bits of this 32 bit variable) */
+    /**< Velocity Coefficient of the current encoder (Velocity coefficient bits are stored in lower 19 bits of this 32 bit variable) */
     uint32_t alm_field[NUM_ED_CH_MAX][NUM_ENCODERS_MAX];
     /**< ALM field received from the encoder */
     uint32_t pm_alm_field[NUM_ED_CH_MAX][NUM_ENCODERS_MAX];
