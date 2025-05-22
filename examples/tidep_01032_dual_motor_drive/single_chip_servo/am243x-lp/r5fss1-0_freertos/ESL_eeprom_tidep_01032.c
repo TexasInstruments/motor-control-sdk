@@ -57,6 +57,8 @@
 // Offset at which ESI EEPROM data is written on Flash
 #define APP_OSPI_FLASH_OFFSET_BASE  (0x200000U)
 
+static uint32_t flashForceErase = 0;
+
 /// EEPROM header containing magic key and data length parameters
 typedef struct ESL_EEP_header
 {
@@ -191,7 +193,8 @@ void EC_SLV_APP_EEP_write(void *pContext, void*pEeprom, uint32_t length)
                           CONFIG_FLASH0,
                           APP_OSPI_FLASH_OFFSET_BASE,
                           sizeof(ESL_EEP_header_t) + length,
-                          pageHead);
+                          pageHead, 
+                          flashForceErase);
         }
 
         OSAL_MEMORY_free(pageHead);
