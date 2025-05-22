@@ -60,12 +60,13 @@ void nikon_command_send(struct nikon_priv *priv)
 
 void nikon_update_enc_len(struct nikon_priv *priv, uint32_t num_encoders, uint32_t single_turn_len[], uint32_t multi_turn_len[], uint32_t ch)
 {
-    int32_t enc_num;
-    int32_t ls_ch = 0;
+    uint32_t enc_num;
+    uint32_t ls_ch = 0;
     if(priv->load_share)
     {
         ls_ch = ch;
     }
+
     priv->num_encoders[ls_ch] = num_encoders;
     for(enc_num = 0; enc_num < num_encoders; enc_num++)
     {
@@ -75,10 +76,10 @@ void nikon_update_enc_len(struct nikon_priv *priv, uint32_t num_encoders, uint32
     }
 }
 
-int32_t nikon_reverse_bits(uint64_t bits, int32_t num_bits)
+uint64_t nikon_reverse_bits(uint64_t bits, uint32_t num_bits)
 {
-    int32_t temp;
-    int32_t i;
+    uint32_t temp;
+    uint32_t i;
     uint64_t res = 0;
     for(i = 0; i < num_bits; i++)
     {
@@ -140,10 +141,10 @@ void nikon_update_velocity_coefficient(struct nikon_priv *priv, uint32_t data)
 
 static uint32_t nikon_calc_3bitcrc(struct nikon_priv *priv, uint32_t cmd)
 {
-    int8_t ff0 = 0;
-    int8_t ff1 = 0;
-    int8_t ff2 = 0;
-    int8_t crc;
+    uint8_t ff0 = 0;
+    uint8_t ff1 = 0;
+    uint8_t ff2 = 0;
+    uint8_t crc;
     uint32_t res;
     uint32_t msb;
     uint32_t ex;
@@ -176,14 +177,14 @@ static uint32_t nikon_calc_3bitcrc(struct nikon_priv *priv, uint32_t cmd)
     return res;
 }
 
-void nikon_generate_cdf(struct nikon_priv *priv, int32_t cmd)
+void nikon_generate_cdf(struct nikon_priv *priv, uint32_t cmd)
 {
     /* padding of 12 1's has be provided at the beginning to compensate for 2micro sec t2 delay and 2 1's t3 delay compensation
         start bit = 0, fc = 00/11, encoder adress = EA[0:2], command code = CC[0:4], crc = CRC[2:0], stop bit = 1*/
 
-    int32_t cdf_cmd;
-    int32_t pru_num;
-    int32_t ls_ch;
+    uint32_t cdf_cmd;
+    uint32_t pru_num;
+    uint32_t ls_ch;
     uint32_t res;
 
     priv->fc = 0;
@@ -256,13 +257,13 @@ void nikon_generate_cdf(struct nikon_priv *priv, int32_t cmd)
     }
 }
 
-static void nikon_generate_mdf(struct nikon_priv *priv, int32_t mem_idx)
+static void nikon_generate_mdf(struct nikon_priv *priv, uint32_t mem_idx)
 {
     /*  padding of 12 1's has be provided at the beginning to compensate for 2micro sec t2 delay
         and 2 1's t3 delay compensation start bit = 0, fc = FC[0:1], memory adress or
         memory data = MEM[0:7], crc = CRC[2:0], stop bit = 1
     */
-    int32_t mdf_cmd;
+    uint32_t mdf_cmd;
     mdf_cmd = priv->fc;
     mdf_cmd = mdf_cmd << (NIKON_ENC_ADDR_LEN + NIKON_COMMAND_CODE_LEN) | priv->mem_data[mem_idx];
     priv->tx_mdf = nikon_calc_3bitcrc(priv, mdf_cmd);
@@ -318,6 +319,7 @@ int32_t nikon_command_wait(struct nikon_priv *priv)
     return SystemP_SUCCESS;
 
 }
+
 static int32_t nikon_command_process(struct nikon_priv *priv)
 {
     int32_t ret = SystemP_FAILURE;
@@ -330,7 +332,7 @@ void nikon_config_periodic_trigger(struct nikon_priv *priv)
 {
     /* Configures Nikon in periodic trigger mode */
     struct nikon_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
-    int8_t pru_num;
+    uint8_t pru_num;
     pruicss_xchg->num_rx_frames = NIKON_MAX_NUM_RX_FRAMES;
     if(priv->load_share)
     {
@@ -358,7 +360,7 @@ void nikon_config_host_trigger(struct nikon_priv *priv)
 {
     /* Configures Nikon receiver in host trigger mode */
     struct nikon_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
-    int8_t pru_num;
+    uint8_t pru_num;
     if(priv->load_share)
     {
         for(pru_num = 0; pru_num < NUM_ED_CH_MAX; pru_num++)
@@ -415,7 +417,7 @@ static void nikon_config_clock(struct nikon_priv *priv,
     }
 }
 
-static int32_t nikon_calc_clock(struct nikon_priv *priv, struct nikon_clk_cfg *clk_cfg)
+int32_t nikon_calc_clock(struct nikon_priv *priv, struct nikon_clk_cfg *clk_cfg)
 {
     double freq = priv->baud_rate;
     struct nikon_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
@@ -565,7 +567,7 @@ void nikon_update_clock_freq(struct nikon_priv *priv, float_t frequency)
 static void nikon_set_default_initialization(struct nikon_priv *priv, uint64_t icssClk)
 {
     struct nikon_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
-    int8_t pru_num;
+    uint8_t pru_num;
     /* Initialize parameters to default values */
     pruicss_xchg->pos_crc_len         = NIKON_POS_CRC_LEN;
     pruicss_xchg->rx_clk_freq         = priv->baud_rate;
@@ -588,10 +590,10 @@ static void nikon_set_default_initialization(struct nikon_priv *priv, uint64_t i
     priv->bank_error                  = 0;                  /*Incorrect bank error*/
 }
 
-static void nikon_config_channel(struct nikon_priv *priv, int32_t mask, int32_t totalch)
+static void nikon_config_channel(struct nikon_priv *priv, uint32_t mask, uint32_t totalch)
 {
     struct nikon_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
-    int32_t ch_num;
+    uint32_t ch_num;
     pruicss_xchg->channel = mask;
     priv->totalchannels = totalch;
     /*  Below for loop iterates for enabled channel number of times.
@@ -622,7 +624,7 @@ static void nikon_config_channel(struct nikon_priv *priv, int32_t mask, int32_t 
 }
 
 struct nikon_priv *nikon_init(PRUICSS_Handle gPruIcssXHandle,
-                              int32_t slice,
+                              uint32_t slice,
                               float_t frequency,
                               uint32_t core_clk_freq,
                               uint32_t uart_clk_freq,
@@ -636,7 +638,7 @@ struct nikon_priv *nikon_init(PRUICSS_Handle gPruIcssXHandle,
     void *pruicss_iep;
     pruicss_iep = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->iep0RegBase);
     pruicss_cfg = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->cfgRegBase);
-    if(slice)
+    if(slice == 1)
     {
         pruicss_xchg =  (struct nikon_pruicss_xchg *)((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->pru1DramBase;
     }
@@ -660,16 +662,16 @@ struct nikon_priv *nikon_init(PRUICSS_Handle gPruIcssXHandle,
     return &nikon_priv;
 }
 
-void nikon_config_load_share(struct nikon_priv *priv, int32_t mask)
+void nikon_config_load_share(struct nikon_priv *priv, uint8_t mask)
 {
     priv->load_share = NIKON_SET_STATUS_FLAG; /*Enable load-share*/
     nikon_config_primary_core_mask(priv, mask);
     nikon_enable_load_share_mode(priv);
 }
 
-static void nikon_get_alm_bits(struct nikon_priv *priv, int32_t enc_num, int32_t ch)
+static void nikon_get_alm_bits(struct nikon_priv *priv, uint32_t enc_num, uint32_t ch)
 {
-    int32_t alm;
+    uint32_t alm;
     alm = priv->alm_field[ch][enc_num];
 
     if(priv->protocol_version == NIKON_PROTOCOL_V3_0)
@@ -713,9 +715,9 @@ static void nikon_get_alm_bits(struct nikon_priv *priv, int32_t enc_num, int32_t
     priv->alm_bits[ch][enc_num].batt = alm & 1;
 }
 
-static void nikon_get_pm_alm_bits(struct nikon_priv *priv, int32_t enc_num, int32_t ch)
+static void nikon_get_pm_alm_bits(struct nikon_priv *priv, uint32_t enc_num, uint32_t ch)
 {
-    int32_t pm_alm;
+    uint32_t pm_alm;
     pm_alm = priv->pm_alm_field[ch][enc_num];
 
     if(priv->protocol_version == NIKON_PROTOCOL_V3_0)
@@ -733,8 +735,9 @@ static void nikon_get_pm_alm_bits(struct nikon_priv *priv, int32_t enc_num, int3
 
 int32_t nikon_wait_for_encoder_detection(struct nikon_priv *priv)
 {
-    int32_t pru_num;
-    int32_t ls_ch;
+    uint32_t pru_num;
+    uint32_t ls_ch;
+
     for(pru_num = 0; pru_num < priv->totalchannels; pru_num++)
     {
         if(priv->load_share)
@@ -764,7 +767,7 @@ int32_t nikon_wait_for_encoder_detection(struct nikon_priv *priv)
     return SystemP_SUCCESS;
 }
 
-int32_t nikon_get_pos(struct nikon_priv *priv, int8_t cmd)
+int32_t nikon_get_pos(struct nikon_priv *priv, uint32_t cmd)
 {
     struct nikon_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
     uint64_t max;

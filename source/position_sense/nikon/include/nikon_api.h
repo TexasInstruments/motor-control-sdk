@@ -64,7 +64,7 @@ int32_t nikon_command_wait(struct nikon_priv *priv);
  *  \param[in]  cmd      command code specified by user
  *
  */
-int32_t nikon_get_pos(struct nikon_priv *priv, int8_t cmd);
+int32_t nikon_get_pos(struct nikon_priv *priv, uint32_t cmd);
 
 /**
  *  \brief      Configure Nikon clock
@@ -92,7 +92,7 @@ void nikon_config_clock(struct nikon_priv *priv,
  *
  */
 struct nikon_priv *nikon_init(PRUICSS_Handle gPruIcssXHandle,
-                              int32_t slice,
+                              uint32_t slice,
                               float_t frequency,
                               uint32_t core_clk_freq,
                               uint32_t uart_clk_freq,
@@ -122,7 +122,7 @@ int32_t nikon_calc_clock(struct nikon_priv *priv, struct nikon_clk_cfg *clk_cfg)
  *  \param[in]  priv            cookie returned by \ref nikon_init
  *  \param[in]  cmd             command code requested by the user.
  */
-void nikon_generate_cdf(struct nikon_priv *priv, int32_t cmd);
+void nikon_generate_cdf(struct nikon_priv *priv, uint32_t cmd);
 
 /**
  *  \brief      Reverse the bits (LSB to be sent out first) provided as parameters.
@@ -132,7 +132,7 @@ void nikon_generate_cdf(struct nikon_priv *priv, int32_t cmd);
  *
  *  \retval     res         return the reversed field.
  */
-int32_t nikon_reverse_bits(uint64_t bits, int32_t num_bits);
+uint64_t nikon_reverse_bits(uint64_t bits, uint32_t num_bits);
 
 /**
  *  \brief      Calculate 3 bit otf crc and generate tx command.
@@ -149,7 +149,7 @@ uint32_t nikon_calc_3bitcrc(struct nikon_priv *priv, uint32_t cmd);
  *  \param[in]  mask    channel mask
  *
  */
-void nikon_config_load_share(struct nikon_priv *priv, int32_t mask);
+void nikon_config_load_share(struct nikon_priv *priv, uint8_t mask);
 
 /**
  *  \brief      Configure periodic trigger operation mode

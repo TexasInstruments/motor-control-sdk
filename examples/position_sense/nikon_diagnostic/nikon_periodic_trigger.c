@@ -153,7 +153,7 @@ void nikon_interrupt_config(struct nikon_periodic_interface *nikon_periodic_inte
 }
 uint32_t nikon_config_periodic_mode(struct nikon_periodic_interface *nikon_periodic_interface, PRUICSS_Handle handle)
 {
-    int32_t  status;
+    int32_t status;
     gPruIcssXHandle = handle;
     gPruIcss_iep = nikon_periodic_interface->pruicss_iep;
     /*configure IEP*/

@@ -141,9 +141,9 @@ uint32_t gTaskFxnStack[TASK_STACK_SIZE/sizeof(uint32_t)] __attribute__((aligned(
 PRUICSS_Handle gPruIcssXHandle;
 TaskP_Object gTaskObject;
 
-static int32_t nikon_position_loop_status;
-int32_t totalchannels = 0;
-int32_t mask = 0;
+static uint32_t nikon_position_loop_status;
+uint32_t totalchannels = 0;
+uint32_t mask = 0;
 
 #if defined(SOC_AM263PX)
 I2C_Handle          i2cHandle;
@@ -283,7 +283,7 @@ void lp_bp_mux_mode_config()
 static void nikon_pruicss_init(void)
 {
     int32_t status = SystemP_FAILURE;
-    int32_t size;
+    uint32_t size;
     gPruIcssXHandle = PRUICSS_open(CONFIG_PRU_ICSS0);
 #ifdef CONFIG_NIKON0_G_MUX_EN
     /* Configure g_mux_en to 1 in ICSSG_SA_MX_REG Register. */
@@ -329,7 +329,7 @@ static void nikon_pruicss_init(void)
 int32_t nikon_pruicss_load_run_fw(struct nikon_priv *priv, uint8_t mask)
 {
     int32_t status = SystemP_SUCCESS;
-    int32_t size;
+    uint32_t size;
 #if(CONFIG_NIKON0_MODE == NIKON_MODE_MULTI_CHANNEL_MULTI_PRU) /*enable loadshare mode*/
 #if(CONFIG_NIKON0_CHANNEL0)
     status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_RTUPRUx);
@@ -431,22 +431,22 @@ void nikon_get_enc_data_len(struct nikon_priv *priv)
     }
 }
 
-uint64_t nikon_get_fw_version(void)
+uint32_t nikon_get_fw_version(void)
 {
 #if (CONFIG_NIKON0_MODE == NIKON_MODE_MULTI_CHANNEL_SINGLE_PRU)
-    return *((unsigned long *)NikonFirmwareMulti_0 + 2);
+    return *((uint32_t *)NikonFirmwareMulti_0 + 2);
 #endif
 #if (CONFIG_NIKON0_CHANNEL0) && (CONFIG_NIKON0_LOAD_SHARE_MODE)
-    return *((unsigned long *)NikonFirmwareMultiMakeRTU_0 + 2);
+    return *((uint32_t *)NikonFirmwareMultiMakeRTU_0 + 2);
 #endif
 #if (CONFIG_NIKON0_CHANNEL1) && (CONFIG_NIKON0_LOAD_SHARE_MODE)
-    return *((unsigned long *)NikonFirmwareMultiMakePRU_0 + 2);
+    return *((uint32_t *)NikonFirmwareMultiMakePRU_0 + 2);
 #endif
 #if (CONFIG_NIKON0_CHANNEL2) && (CONFIG_NIKON0_LOAD_SHARE_MODE)
-    return *((unsigned long *)NikonFirmwareMultiMakeTXPRU_0 + 2);
+    return *((uint32_t *)NikonFirmwareMultiMakeTXPRU_0 + 2);
 #endif
 #if (CONFIG_NIKON0_MODE == NIKON_MODE_SINGLE_CHANNEL_SINGLE_PRU)
-    return *((unsigned long *)NikonFirmware_0 + 2);
+    return *((uint32_t *)NikonFirmware_0 + 2);
 #endif
 }
 
@@ -527,10 +527,11 @@ static void nikon_display_menu(void)
     DebugP_log("\r\n|---------------------------------------------------------------------------------------|");
     DebugP_log("\r\n| enter value:\r\n");
 }
-static int nikon_get_command()
+
+static uint32_t nikon_get_command()
 {
-    int cmd;
-    DebugP_scanf("%d\n", &cmd);
+    uint32_t cmd;
+    DebugP_scanf("%u\n", &cmd);
     /* Check to make sure that the command issued is correct */
     if(((priv->protocol_version == NIKON_PROTOCOL_V2_1) && ((cmd > CMD_22 && cmd < CMD_27))) || (cmd >= CMD_CODE_NUM))
     {
@@ -571,14 +572,15 @@ static int32_t nikon_loop_task_create(void)
         DebugP_log("\rnikon_position_loop_decide_termination creation failed\n");
     }
 
-    return status ;
+    return status;
 }
+
 static void nikon_process_periodic_command(struct nikon_priv *priv, int64_t cmp0, int64_t cmp3)
 {
     int32_t status;
     int32_t ret;
-    int32_t ch_num;
-    int32_t ch;
+    uint32_t ch_num;
+    uint32_t ch;
     uint32_t pos_fail_cnt = 0;
     uint32_t pos_total_cnt = 0;
     struct nikon_periodic_interface nikon_periodic_interface;
@@ -661,17 +663,18 @@ static void nikon_process_periodic_command(struct nikon_priv *priv, int64_t cmp0
 
 void nikon_main(void *args)
 {
-    int32_t i;
-    int32_t enc_addr = 0;
-    int32_t ch_num;
-    int32_t enc_num;
-    int32_t pru_num;
-    int32_t ls_ch;
+    int32_t ret;
+    uint32_t enc_addr = 0;
+    uint32_t ch_num;
+    uint32_t enc_num;
+    uint32_t pru_num;
+    uint32_t ls_ch;
     float_t freq;
     int64_t cmp3;
     int64_t cmp0;
     uint64_t icssClk;
     uint64_t uartClk;
+    uint32_t version;
 
     /* Open drivers to open the UART driver for console */
     Drivers_open();
@@ -688,25 +691,13 @@ void nikon_main(void *args)
 #endif
 #endif
 
-    i = nikon_get_fw_version();
+    version = nikon_get_fw_version();
 
-    DebugP_log("\r\nNIKON firmware \t: %x.%x.%x (%s)\n", (i >> 24) & 0x7F,
-                (i >> 16) & 0xFF, i & 0xFFFF, i & (1 << 31) ? "internal" : "release");
+    DebugP_log("\r\nNIKON firmware \t: %x.%x.%x (%s)\n", (version >> 24) & 0x7F,
+                (version >> 16) & 0xFF, version & 0xFFFF, version & (1 << 31) ? "internal" : "release");
     DebugP_log("\r\nNIKON Protocol Version selected\t: %s", (NIKON_PROTOCOL_VERSION == NIKON_PROTOCOL_V2_1)?"2.1":"3.0");
 
     nikon_pruicss_init();
-
-    i = CONFIG_NIKON0_CHANNEL0 & 0;
-
-    i += CONFIG_NIKON0_CHANNEL1;
-
-    i += CONFIG_NIKON0_CHANNEL2<<1;
-
-    if(i < 0 || i > 2)
-    {
-        DebugP_log("\r\nWARNING: invalid channel selected, defaulting to Channel 0\n");
-        i = 0;
-    }
 
     mask = CONFIG_NIKON0_CHANNEL0<<0 | CONFIG_NIKON0_CHANNEL1<<1 | CONFIG_NIKON0_CHANNEL2<<2;
 
@@ -743,8 +734,8 @@ void nikon_main(void *args)
     }
     nikon_get_enc_data_len(priv);
     DebugP_log("\r\nRunning CDF4(Multi Transmission command) with maximum encoder address for detecting connected encoder\n");
-    i = nikon_pruicss_load_run_fw(priv, mask);
-    if(i < 0)
+    ret = nikon_pruicss_load_run_fw(priv, mask);
+    if(ret < 0)
     {
         DebugP_log("\r\nERROR: NIKON initialization failed \n");
         DebugP_log("\r\ncheck whether encoder of selected frequency is connected and ensure proper connections\n");
@@ -764,7 +755,7 @@ void nikon_main(void *args)
 
     while(1)
     {
-        int8_t cmd;
+        uint32_t cmd;
         int32_t ret;
         int32_t ch;
         uint32_t addr = 0;
@@ -775,10 +766,7 @@ void nikon_main(void *args)
         ch = nikon_get_current_channel(priv, 0);
         nikon_display_menu();
         cmd = nikon_get_command();
-        if(cmd < CMD_0)
-        {
-            continue;
-        }
+
         switch(cmd)
         {
             case CMD_0:
