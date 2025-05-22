@@ -858,7 +858,6 @@ int32_t nikon_get_pos(struct nikon_priv *priv, uint32_t cmd)
             priv->bank_error = 0;
 
             /* Send MDF0 (Data lower 8 bits), MDF1 (Data upper 8 bits), MDF3 (bank number) and MDF2 (memory address) after CDF*/
-
             priv->pruicss_xchg->mdf_frame[3] = priv->pruicss_xchg->mdf_frame[2];
 
             priv->fc = 0;
@@ -909,12 +908,9 @@ int32_t nikon_get_pos(struct nikon_priv *priv, uint32_t cmd)
             {
                 return SystemP_FAILURE;
             }
-        }while (loop_cnt--);
-        /* 30msec delay after 8th cycle to print the changes occured */
-        ClockP_usleep(NIKON_30_MILLI_SEC_DELAY);
+        } while(loop_cnt--);
     }
-
-    if(nikon_command_process(priv) < 0)
+    else if(nikon_command_process(priv) < 0)
     {
         return SystemP_FAILURE;
     }
