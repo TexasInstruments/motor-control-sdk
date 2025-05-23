@@ -761,7 +761,6 @@ void nikon_main(void *args)
         uint32_t addr = 0;
         uint32_t data = 0;
         uint32_t bank = 0;
-        uint8_t access_with_bank = 0;
         uint8_t cmd_type;
         ch = nikon_get_current_channel(priv, 0);
         nikon_display_menu();
@@ -1010,7 +1009,6 @@ void nikon_main(void *args)
                 break;
 
             case CMD_13:
-                access_with_bank = 0;
                 if (priv->protocol_version == NIKON_PROTOCOL_V3_0)
                 {
                     while(1)
@@ -1020,7 +1018,7 @@ void nikon_main(void *args)
 
                         if((cmd_type == 'y') || (cmd_type == 'Y'))
                         {
-                            DebugP_log("\r\n Enter bank number: ");
+                            DebugP_log("\r\n Enter bank number (in hex): ");
                             DebugP_scanf("%x", &bank);
 
                             if(bank > 0xFF)
@@ -1030,7 +1028,7 @@ void nikon_main(void *args)
                             else
                             {
                                 nikon_update_bank(priv, (bank & 0xFF));
-                                access_with_bank = 1;
+                                cmd = CMD_13_BANK;
                                 break;
                             }
                         }
@@ -1068,13 +1066,27 @@ void nikon_main(void *args)
                     DebugP_log("\r\n ERROR: EEPROM Read access request failed \n");
                     continue;
                 }
+                else
+                {
+                    /* 300 microseconds sleep - wait for read data to be determined*/
+                    ClockP_usleep(300);
+                    ret = nikon_get_pos(priv, cmd);
+
+                    if(ret < 0)
+                    {
+                        DebugP_log("\r\n ERROR: EEPROM Read access request failed \n");
+                        continue;
+                    }
+                }
+
                 for(ch_num = 0; ch_num < totalchannels; ch_num++)
                 {
                     ch = nikon_get_current_channel(priv, ch_num);
                     DebugP_log("\r\n Channel %d: \n",ch);
-                    if(access_with_bank == 1)
+                    if(CMD_13_BANK == cmd)
                     {
-                        DebugP_log("\r\n Info Field: 0x%x, EEPROM Data: 0x%x, EEPROM Bank: 0x%x, EEPROM Address: 0x%x \n", priv->pos_data_info[ch].raw_data0[0], nikon_reverse_bits(priv->pos_data_info[ch].raw_data1[0], NIKON_RX_ONE_FRAME_LEN), nikon_reverse_bits((priv->pos_data_info[ch].raw_data2[0] & 0xFF00) >> 8, NIKON_EEPROM_BANK_LEN), nikon_reverse_bits((priv->pos_data_info[ch].raw_data2[0] & 0xFF), NIKON_EEPROM_ADDR_LEN));
+                        DebugP_log("\r\n Info Field: 0x%x, EEPROM Data: 0x%x, EEPROM Bank: 0x%x, EEPROM Address: 0x%x \n", priv->pos_data_info[ch].raw_data0[0], (uint16_t)nikon_reverse_bits((uint16_t)(priv->pos_data_info[ch].raw_data1[0]), NIKON_RX_ONE_FRAME_LEN), (uint8_t)nikon_reverse_bits((uint8_t)((priv->pos_data_info[ch].raw_data2[0] & 0xFF00) >> 8), NIKON_EEPROM_BANK_LEN), (uint8_t)nikon_reverse_bits((uint8_t)((priv->pos_data_info[ch].raw_data2[0] & 0xFF)), NIKON_EEPROM_ADDR_LEN));
+
                         if(priv->bank_error == 1)
                         {
                             DebugP_log("\r\n ERROR: Invalid bank number was specified \n");
@@ -1082,12 +1094,12 @@ void nikon_main(void *args)
                     }
                     else
                     {
-                        DebugP_log("\r\n Info Field: 0x%x, EEPROM Data: 0x%x, EEPROM Address: 0x%x \n", priv->pos_data_info[ch].raw_data0[0], nikon_reverse_bits(priv->pos_data_info[ch].raw_data1[0], NIKON_RX_ONE_FRAME_LEN), nikon_reverse_bits((priv->pos_data_info[ch].raw_data2[0] & 0xFF00) >> 8, NIKON_EEPROM_ADDR_LEN));
+                        DebugP_log("\r\n Info Field: 0x%x, EEPROM Data: 0x%x, EEPROM Address: 0x%x \n", priv->pos_data_info[ch].raw_data0[0], (uint16_t)nikon_reverse_bits((uint16_t)(priv->pos_data_info[ch].raw_data1[0]), NIKON_RX_ONE_FRAME_LEN), (uint8_t)nikon_reverse_bits((uint8_t)((priv->pos_data_info[ch].raw_data2[0] & 0xFF00) >> 8), NIKON_EEPROM_ADDR_LEN));
                     }
 
                     DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u \n", priv->pos_data_info[ch].rcv_crc[0], priv->pos_data_info[ch].otf_crc[0], priv->pos_data_info[ch].crc_err_cnt[0]);
                     DebugP_log("\r\n Encoder Address: %u, Encoder Status: 0x%x, Command to Encoder: %u\n", priv->enc_info[ch].enc_addr[0], priv->enc_info[ch].enc_status[0], priv->enc_info[ch].enc_cmd[0]);
-                    if((access_with_bank == 0) && (addr == 0xF9))
+                    if((cmd == CMD_13) && (addr == 0xF9))
                     {
                         DebugP_log("\r\n Temperature: %d \n", priv->temperature[ch][0]);
                     }
@@ -1095,7 +1107,6 @@ void nikon_main(void *args)
                 break;
 
             case CMD_14:
-                access_with_bank = 0;
                 if (priv->protocol_version == NIKON_PROTOCOL_V3_0)
                 {
                     while(1)
@@ -1105,7 +1116,7 @@ void nikon_main(void *args)
 
                         if((cmd_type == 'y') || (cmd_type == 'Y'))
                         {
-                            DebugP_log("\r\n Enter bank number: ");
+                            DebugP_log("\r\n Enter bank number (in hex): ");
                             DebugP_scanf("%x", &bank);
 
                             if(bank > 0xFF)
@@ -1114,8 +1125,8 @@ void nikon_main(void *args)
                             }
                             else
                             {
-                                access_with_bank = 1;
                                 nikon_update_bank(priv, (bank & 0xFF));
+                                cmd = CMD_14_BANK;
                                 break;
                             }
                         }
@@ -1137,7 +1148,7 @@ void nikon_main(void *args)
                     DebugP_log("\r\n Enter data(Bits [15:0] in hex) to write at Memory location 0x%x: ", addr);
                     DebugP_scanf("%x", &data);
 
-                    if((data > 0xFFFF) || (addr > 0xFF) || ((access_with_bank == 0) && (addr > 0xEF)))
+                    if((data > 0xFFFF) || (addr > 0xFF) || ((cmd == CMD_14) && (addr > 0xEF)))
                     {
                         DebugP_log("\r\n Please enter a valid 8 bit value\n");
                     }
@@ -1156,14 +1167,20 @@ void nikon_main(void *args)
                     DebugP_log("\r\n ERROR: EEPROM Write access request failed \n");
                     continue;
                 }
+                else
+                {
+                    /* 30 miliseconds sleep - wait for write operation to finish*/
+                    ClockP_usleep(30*1000);
+                }
+
                 for(ch_num = 0; ch_num < totalchannels; ch_num++)
                 {
                     ch = nikon_get_current_channel(priv, ch_num);
                     DebugP_log("\r\n Channel %d: \n",ch);
 
-                    if(access_with_bank == 1)
+                    if(CMD_14_BANK == cmd)
                     {
-                        DebugP_log("\r\n Info Field: 0x%x, EEPROM Data: 0x%x, EEPROM Bank: 0x%x, EEPROM Address: 0x%x \n", priv->pos_data_info[ch].raw_data0[0], nikon_reverse_bits(priv->pos_data_info[ch].raw_data1[0], NIKON_RX_ONE_FRAME_LEN), nikon_reverse_bits((priv->pos_data_info[ch].raw_data2[0] & 0xFF00) >> 8, NIKON_EEPROM_BANK_LEN), nikon_reverse_bits((priv->pos_data_info[ch].raw_data2[0] & 0xFF), NIKON_EEPROM_ADDR_LEN));
+                        DebugP_log("\r\n Info Field: 0x%x, EEPROM Data: 0x%x, EEPROM Bank: 0x%x, EEPROM Address: 0x%x \n", priv->pos_data_info[ch].raw_data0[0], (uint16_t)nikon_reverse_bits((uint16_t)(priv->pos_data_info[ch].raw_data1[0]), NIKON_RX_ONE_FRAME_LEN), (uint8_t)nikon_reverse_bits((uint8_t)((priv->pos_data_info[ch].raw_data2[0] & 0xFF00) >> 8), NIKON_EEPROM_BANK_LEN), (uint8_t)nikon_reverse_bits((uint8_t)((priv->pos_data_info[ch].raw_data2[0] & 0xFF)), NIKON_EEPROM_ADDR_LEN));
 
                         if(priv->bank_error == 1)
                         {
@@ -1172,7 +1189,7 @@ void nikon_main(void *args)
                     }
                     else
                     {
-                        DebugP_log("\r\n Info Field: 0x%x, EEPROM Data: 0x%x, EEPROM Address: 0x%x \n", priv->pos_data_info[ch].raw_data0[0], nikon_reverse_bits(priv->pos_data_info[ch].raw_data1[0], NIKON_RX_ONE_FRAME_LEN), nikon_reverse_bits((priv->pos_data_info[ch].raw_data2[0] & 0xFF00) >> 8, NIKON_EEPROM_ADDR_LEN));
+                        DebugP_log("\r\n Info Field: 0x%x, EEPROM Data: 0x%x, EEPROM Address: 0x%x \n", priv->pos_data_info[ch].raw_data0[0], (uint16_t)nikon_reverse_bits((uint16_t)(priv->pos_data_info[ch].raw_data1[0]), NIKON_RX_ONE_FRAME_LEN), (uint8_t)nikon_reverse_bits((uint8_t)((priv->pos_data_info[ch].raw_data2[0] & 0xFF00) >> 8), NIKON_EEPROM_ADDR_LEN));
                     }
                     DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u \n", priv->pos_data_info[ch].rcv_crc[0], priv->pos_data_info[ch].otf_crc[0], priv->pos_data_info[ch].crc_err_cnt[0]);
                     DebugP_log("\r\n Encoder Address: %u, Encoder Status: 0x%x, Command to Encoder: %u\n", priv->enc_info[ch].enc_addr[0], priv->enc_info[ch].enc_status[0], priv->enc_info[ch].enc_cmd[0]);

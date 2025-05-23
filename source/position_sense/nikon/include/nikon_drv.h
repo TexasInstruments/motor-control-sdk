@@ -215,10 +215,10 @@ enum cmd_code
     CMD_20,                 /**< Encoder address setting II*/
     CMD_21,                 /**< ABS lower 17bit data request*/
     CMD_22,                 /**< ABS lower 17bit data request (MT) */
-    CMD_23,                 /**< ABS lower 24bit + velocity request (Individual) */
-    CMD_24,                 /**< ABS lower 24bit + velocity request (Multiple) */
-    CMD_25,                 /**< ABS lower 24bit + velocity + acceleration request (Individual) */
-    CMD_26,                 /**< ABS lower 24bit + velocity + acceleration request (Multiple) */
+    CMD_23,                 /**< ABS lower 24bit + velocity request (Individual) (Nikon 3.0 only) */
+    CMD_24,                 /**< ABS lower 24bit + velocity request (Multiple) (Nikon 3.0 only) */
+    CMD_25,                 /**< ABS lower 24bit + velocity + acceleration request (Individual) (Nikon 3.0 only) */
+    CMD_26,                 /**< ABS lower 24bit + velocity + acceleration request (Multiple) (Nikon 3.0 only) */
     CMD_27 = 27,            /**< ABS lower 24bit data + Status request*/
     CMD_28,                 /**< ABS lower 24bit data + Status request (MT) */
     CMD_29,                 /**< ABS lower 24bit data + Temperature data request*/
@@ -227,15 +227,17 @@ enum cmd_code
     START_CONTINUOUS_MODE,  /**< Start periodic trigger mode*/
     UPDATE_CLOCK_FREQ,      /**< Update operating baud rate as specified by user*/
     UPDATE_ENC_LEN,         /**< Update encoder's single turn and multi turn resolution*/
-    CMD_1_VEL,              /**< ABS full 40bit data + velocity data request */
-    CMD_5_VEL,              /**< ABS full 40bit data + velocity data request (MT) */
-    CMD_8_POS,              /**< ABS lower 24bit data request */
-    CMD_9_POS,              /**< ABS lower 24bit data request */
-    CMD_10_POS,             /**< ABS lower 24bit data request */
-    CMD_11_POS,             /**< ABS lower 24bit data request */
-    CMD_12_POS,             /**< ABS lower 24bit data request */
-    CMD_16_VEL,             /**< Velocity coefficient read*/
-    CMD_18_VEL,             /**< Velocity coefficient write*/
+    CMD_1_VEL,              /**< ABS full 40bit data + velocity data request (Nikon 3.0 only) */
+    CMD_5_VEL,              /**< ABS full 40bit data + velocity data request(MT) (Nikon 3.0 only) */
+    CMD_8_POS,              /**< ABS lower 24bit data request (Nikon 3.0 only) */
+    CMD_9_POS,              /**< ABS lower 24bit data request (Nikon 3.0 only) */
+    CMD_10_POS,             /**< ABS lower 24bit data request (Nikon 3.0 only) */
+    CMD_11_POS,             /**< ABS lower 24bit data request (Nikon 3.0 only) */
+    CMD_12_POS,             /**< ABS lower 24bit data request (Nikon 3.0 only) */
+    CMD_13_BANK,            /**< EEPROM read request with bank (Nikon 3.0 only) */
+    CMD_14_BANK,            /**< EEPROM write request with bank (Nikon 3.0 only) */
+    CMD_16_VEL,             /**< Velocity coefficient read (Nikon 3.0 only) */
+    CMD_18_VEL,             /**< Velocity coefficient write (Nikon 3.0 only) */
     CMD_CODE_NUM
 };
 
@@ -463,8 +465,6 @@ struct nikon_priv
     /**< IEP CMP3 reg used in periodic trigger mode*/
     uint8_t protocol_version;
     /* NIKON_PROTOCOL_V2_1 or NIKON_PROTOCOL_V3_0 */
-    uint8_t eeprom_access_with_bank;
-    /* Read/write access to EEPROM with bank*/
     uint8_t bank_error;
     /* Incorrect bank error indication in response */
 };

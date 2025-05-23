@@ -113,7 +113,6 @@ TWO_BYTES_FIFO_LEVEL    				.set    0x08  		;Mask to check whether the Tx FIFO l
 
 DATA_SIZE_IN_EACH_FRAME					.set 	16			;Length of Data in each Rx frame, except start bit and stop bit.
 NIKON_AUTO_ARM_DELAY 					.set 	0x0A		;Enable Rx after a certain period, by loading auto arm delay as non zero value.
-NUM_OF_NIKON_CYC_FOR_EEPROM_ACCESS 		.set 	2			;Number of cycles to be executed for accessing EEPROM
 NIKON_RX_CRC_LEN						.set 	8			;length of CRC received in last Rx frame
 
 EEPROM_READ_CMD 						.set 	1			;status flag for EEPROM read command
