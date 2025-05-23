@@ -1032,11 +1032,12 @@ int32_t nikon_get_pos(struct nikon_priv *priv, uint32_t cmd)
                     priv->pos_data_info[ch].raw_data0[enc_num] = pruicss_xchg->pos_data_res[enc_num].raw_data.info_field[ch];
                     priv->pos_data_info[ch].raw_data1[enc_num] = pruicss_xchg->pos_data_res[enc_num].raw_data.data_field[0][ch];
                     priv->pos_data_info[ch].raw_data2[enc_num] = pruicss_xchg->pos_data_res[enc_num].raw_data.data_field[1][ch];
-                    /* At EEPROM address 0xF9, DTB[0:7] (temperature data) is encoded */
+                    /* At EEPROM address 0xF9, DTB[0:9] (temperature data) is encoded */
                     if((uint32_t)nikon_reverse_bits(((priv->pos_data_info[ch].raw_data2[enc_num]) >> NIKON_POS_CRC_LEN), NIKON_EEPROM_ADDR_LEN) == 0xF9)
                     {
-                        priv->temperature[ch][enc_num] = (priv->pos_data_info[ch].raw_data1[enc_num] >> 6) & 0xFF;  /* 8bit temperature information */
-                        priv->temperature[ch][enc_num] = (uint32_t)nikon_reverse_bits(priv->temperature[ch][enc_num], 8);
+                        priv->temperature[ch][enc_num] = (priv->pos_data_info[ch].raw_data1[enc_num] & 0xFFFF) >> 6;  /* 10 bit temperature information */
+                        priv->temperature[ch][enc_num] = (uint32_t)nikon_reverse_bits(priv->temperature[ch][enc_num], NIKON_DB_BITS_LEN);
+                        priv->temperature[ch][enc_num] = priv->temperature[ch][enc_num] * 0.25;
                     }
                     break;
                 case CMD_13_BANK:
