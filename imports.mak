@@ -2,7 +2,7 @@
 DEVICE ?= am64x
 ifeq ($(OS),Windows_NT)
     TOOLS_PATH?=C:/ti
-    CCS_PATH?=$(TOOLS_PATH)/ccs1281/ccs
+    CCS_PATH?=$(TOOLS_PATH)/'toolVersions.ccsVersion'/ccs
     CCS_ECLIPSE=$(CCS_PATH)/eclipse/eclipsec
     CYGWIN_PATH?=$(CCS_PATH)/utils/cygwin
     MKDIR=$(CYGWIN_PATH)/mkdir -p
@@ -16,14 +16,14 @@ ifeq ($(OS),Windows_NT)
     PATHSEP=\\
     CHMOD=$(CYGWIN_PATH)/echo
     SHELL=cmd.exe
-    CGT_GCC_AARCH64_PATH=$(TOOLS_PATH)/gcc-arm-9.2-2019.12-mingw-w64-i686-aarch64-none-elf
-    CGT_GCC_ARM_PATH=$(TOOLS_PATH)/gcc-arm-none-eabi-9-2019-q4-major-win32
+    CGT_GCC_AARCH64_PATH=$(TOOLS_PATH)/'toolVersions.gccAarch64WinVersion'
+    CGT_GCC_ARM_PATH=$(TOOLS_PATH)/'toolVersions.gccArmWinVersion'
     CGT_GCC_ARMV7_PATH=$(CGT_GCC_ARM_PATH)
 else
     UNAME_S := $(shell uname -s)
     ifneq (,$(filter $(UNAME_S),Linux Darwin))
         export TOOLS_PATH?=$(HOME)/ti
-        export CCS_PATH?=$(TOOLS_PATH)/ccs1281/ccs
+        export CCS_PATH?=$(TOOLS_PATH)/'toolVersions.ccsVersion'/ccs
         export CCS_ECLIPSE=$(CCS_PATH)/eclipse/eclipse
         export MKDIR=mkdir -p
         export RMDIR=rm -rf
@@ -36,7 +36,7 @@ else
         export PATHSEP=/
         export CHMOD=chmod
         CGT_GCC_AARCH64_PATH=$(TOOLS_PATH)/gcc-arm-9.2-2019.12-x86_64-aarch64-none-elf
-        CGT_GCC_ARM_PATH=$(TOOLS_PATH)/gcc-arm-none-eabi-9-2019-q4-major
+        CGT_GCC_ARM_PATH=$(TOOLS_PATH)//gcc-arm-none-eabi-9-2019-q4-major
         CGT_GCC_ARMV7_PATH=$(CGT_GCC_ARM_PATH)
     endif
 endif
@@ -49,7 +49,7 @@ endif
 CGT_TI_C6000_PATH=$(CCS_PATH)/tools/compiler/ti-cgt-c6000_8.3.12
 DSPLIB_PATH=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/dsplib_c66x_3_4_0_0
 CCS_NODE = $(CCS_PATH)/tools/node/node
-SYSCFG_PATH ?= $(TOOLS_PATH)/sysconfig_1.21.2
+SYSCFG_PATH ?= $(TOOLS_PATH)/sysconfig_1.23.0
 SYSCFG_CLI_PATH ?= $(SYSCFG_PATH)
 SYSCFG_NODE = $(SYSCFG_PATH)/nodejs/node
 SYSCFG_NWJS = $(SYSCFG_PATH)/nw/nw

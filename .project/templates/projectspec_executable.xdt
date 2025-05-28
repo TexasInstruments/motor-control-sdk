@@ -64,10 +64,10 @@
         connection="TIXDS110_Connection.xml"
         toolChain="`args.utils.getToolChainProjectSpec(obj.cgt)`"
         % if ((args.project.cgt == 'gcc-aarch64') || (args.project.cgt == 'gcc-armv7')) {
-        toolVersion="`args.utils.getToolChainVersionProjectSpec(obj.cgt)`"
+        toolVersion="`args.utils.getToolChainVersionProjectSpec(obj.cgt, obj.device)`"
         % }
         % else {
-        cgtVersion="`args.utils.getToolChainVersionProjectSpec(obj.cgt)`"
+        cgtVersion="`args.utils.getToolChainVersionProjectSpec(obj.cgt, obj.device)`"
         % }
         device="`args.utils.getDeviceIdProjectSpec(obj.device, obj.cpu, obj.board)`"
         deviceCore="`args.utils.getProjectSpecCpu(obj.device, obj.cpu)`"
