@@ -70,6 +70,13 @@ let hdsl_module = {
                         ]
         },
         {
+            name: "G_MUX_EN",
+            displayName: "Enable G MUX ",
+            description: "Enable G mux in ICSSG_SA_MX_REG Register, Few 3 channel Peripheral pins get remapped to enable different usecase",
+            default: true,
+            hidden:  (device == "am243x-lp" ||device == "am243x-evm" ||device == "am64x-evm") ? false : true,
+        },
+        {
             name: "coreClk",
             displayName: "PRU-ICSS Core Clk (Hz)",
             default: 225*1000000,

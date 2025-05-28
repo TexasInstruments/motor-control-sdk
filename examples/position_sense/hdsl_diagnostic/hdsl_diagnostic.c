@@ -87,19 +87,19 @@
 /* Divide factor for oversampled clock (default value for 300 MHz=3) */
 #define DIV_FACTOR_OVERSAMPLED 3
 #if PRU_ICSSGx_PRU_SLICE == 1
-#include <position_sense/hdsl/firmware/multichannel_ch0/hdsl_receiver_multichannel_ch0_pru1_bin.h>
-#include <position_sense/hdsl/firmware/multichannel_ch0_sync_mode/hdsl_receiver_multichannel_ch1_pru1_bin.h>
-#include <position_sense/hdsl/firmware/multichannel_ch1/hdsl_receiver_multichannel_ch2_pru1_bin.h>
-#include <position_sense/hdsl/firmware/multichannel_ch1_sync_mode/hdsl_receiver_multichannel_ch0_sync_mode_pru1_bin.h>
-#include <position_sense/hdsl/firmware/multichannel_ch2/hdsl_receiver_multichannel_ch1_sync_mode_pru1_bin.h>
-#include <position_sense/hdsl/firmware/multichannel_ch2_sync_mode/hdsl_receiver_multichannel_ch2_sync_mode_pru1_bin.h>
+#include <position_sense/hdsl/firmware/multichannel_ch0/hdsl_receiver_multichannel_rtu_pru1_bin.h>
+#include <position_sense/hdsl/firmware/multichannel_ch0_sync_mode/hdsl_receiver_multichannel_sync_mode_rtu_pru1_bin.h>
+#include <position_sense/hdsl/firmware/multichannel_ch1/hdsl_receiver_multichannel_pru1_bin.h>
+#include <position_sense/hdsl/firmware/multichannel_ch1_sync_mode/hdsl_receiver_multichannel_sync_mode_pru1_bin.h>
+#include <position_sense/hdsl/firmware/multichannel_ch2/hdsl_receiver_multichannel_tx_pru1_bin.h>
+#include <position_sense/hdsl/firmware/multichannel_ch2_sync_mode/hdsl_receiver_multichannel_sync_mode_tx_pru1_bin.h>
 #else
-#include <position_sense/hdsl/firmware/multichannel_ch0/hdsl_receiver_multichannel_ch0_pru0_bin.h>
-#include <position_sense/hdsl/firmware/multichannel_ch0_sync_mode/hdsl_receiver_multichannel_ch1_pru0_bin.h>
-#include <position_sense/hdsl/firmware/multichannel_ch1/hdsl_receiver_multichannel_ch2_pru0_bin.h>
-#include <position_sense/hdsl/firmware/multichannel_ch1_sync_mode/hdsl_receiver_multichannel_ch0_sync_mode_pru0_bin.h>
-#include <position_sense/hdsl/firmware/multichannel_ch2/hdsl_receiver_multichannel_ch1_sync_mode_pru0_bin.h>
-#include <position_sense/hdsl/firmware/multichannel_ch2_sync_mode/hdsl_receiver_multichannel_ch2_sync_mode_pru0_bin.h>
+#include <position_sense/hdsl/firmware/multichannel_ch0/hdsl_receiver_multichannel_rtu_pru0_bin.h>
+#include <position_sense/hdsl/firmware/multichannel_ch0_sync_mode/hdsl_receiver_multichannel_sync_mode_rtu_pru0_bin.h>
+#include <position_sense/hdsl/firmware/multichannel_ch1/hdsl_receiver_multichannel_pru0_bin.h>
+#include <position_sense/hdsl/firmware/multichannel_ch1_sync_mode/hdsl_receiver_multichannel_sync_mode_pru0_bin.h>
+#include <position_sense/hdsl/firmware/multichannel_ch2/hdsl_receiver_multichannel_tx_pru0_bin.h>
+#include <position_sense/hdsl/firmware/multichannel_ch2_sync_mode/hdsl_receiver_multichannel_sync_mode_tx_pru0_bin.h>
 #endif
 /* Divide factor for normal clock (default value for 300 MHz=31) */
 #define DIV_FACTOR_NORMAL 31
