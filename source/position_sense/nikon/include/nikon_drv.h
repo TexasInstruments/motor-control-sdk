@@ -411,7 +411,7 @@ struct nikon_priv
     /**< PRU-ICSS cfg registers base offset*/
     uint32_t tx_cdf[NUM_ED_CH_MAX];
     /**< Command data frame to be transmitted to encoder*/
-    uint32_t tx_mdf;
+    uint32_t tx_mdf[NUM_ED_CH_MAX][NUM_MDF_CMD_MAX];
     /**< Memory data frame to be transmitted to encoder*/
     uint32_t num_rx_frames;
     /**< Number of Rx frames to be receive */
@@ -433,7 +433,7 @@ struct nikon_priv
     /**<Synchronization code*/
     uint32_t tx_crc;
     /**<Tx 3 bit crc*/
-    uint32_t mem_data[NUM_MDF_CMD_MAX];
+    uint32_t mem_data[NUM_ED_CH_MAX][NUM_MDF_CMD_MAX];
     /**<Memory data in indexes 0,1 and memory address in index 2*/
     struct   pos_data_info  pos_data_info[NUM_ED_CH_MAX];
     /**<ABS, ALM, EEPROM or Identification code information extracted

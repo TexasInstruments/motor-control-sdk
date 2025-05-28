@@ -219,7 +219,7 @@ uint32_t nikon_get_totalchannels(struct nikon_priv *priv);
  *
  *  \param[in]  priv            cookie returned by \ref nikon_init
  *  \param[in]  enc_addr        encoder address specified by the user
- *  \param[in]  ls_ch           channel in use in load share
+ *  \param[in]  ls_ch           channel in use in load share or 0 in case of single channel mode
  */
 void nikon_update_enc_addr(struct nikon_priv *priv, uint32_t enc_addr, uint32_t ls_ch);
 
@@ -228,42 +228,45 @@ void nikon_update_enc_addr(struct nikon_priv *priv, uint32_t enc_addr, uint32_t 
  *
  *  \param[in]  priv            cookie returned by \ref nikon_init
  *  \param[in]  addr            EEPROM address (Bits [7:0] in addr)
+ *  \param[in]  ls_ch           channel in use in load share or 0 in case of single channel mode
  */
-void nikon_update_eeprom_addr(struct nikon_priv *priv, uint8_t addr);
+void nikon_update_eeprom_addr(struct nikon_priv *priv, uint8_t addr, uint32_t ls_ch);
 
 /**
  *  \brief      Write data at specified EEPROM location
  *
  *  \param[in]  priv            cookie returned by \ref nikon_init
  *  \param[in]  data            data to write at EEPROM location (Bits [15:0] in data)
+ *  \param[in]  ls_ch           channel in use in load share or 0 in case of single channel mode
  */
-void nikon_update_eeprom_data(struct nikon_priv *priv, uint16_t data);
+void nikon_update_eeprom_data(struct nikon_priv *priv, uint16_t data, uint32_t ls_ch);
 
 /**
  *  \brief      Assign the specified 24bits as Identification code of encoder
  *
  *  \param[in]  priv            cookie returned by \ref nikon_init
  *  \param[in]  data            data to assign as ID code (Bits [23:0] in data will be used)
+ *  \param[in]  ls_ch           channel in use in load share or 0 in case of single channel mode
  */
-void nikon_update_id_code(struct nikon_priv *priv, uint32_t data);
-
+void nikon_update_id_code(struct nikon_priv *priv, uint32_t data, uint32_t ls_ch);
 
 /**
  *  \brief      Assign the specified 19 bits as velocity coefficient of encoder
  *
  *  \param[in]  priv            cookie returned by \ref nikon_init
  *  \param[in]  data_high       data to assign as velocity coefficient (Bits [18:0] in data will be used)
+ *  \param[in]  ls_ch           channel in use in load share or 0 in case of single channel mode
  */
-void nikon_update_velocity_coefficient(struct nikon_priv *priv, uint32_t data);
-
+void nikon_update_velocity_coefficient(struct nikon_priv *priv, uint32_t data, uint32_t ls_ch);
 
 /**
  *  \brief Configure bank for memory operations in Nikon 3.0
  *
- *  \param[in]  priv    Cookie returned by \ref nikon_init
- *  \param[in]  bank    Bank number to be set (Bits [7:0] in bank)
+ *  \param[in]  priv            Cookie returned by \ref nikon_init
+ *  \param[in]  bank            Bank number to be set (Bits [7:0] in bank)
+ *  \param[in]  ls_ch           channel in use in load share or 0 in case of single channel mode
  */
-void nikon_update_bank(struct nikon_priv *priv, uint8_t bank);
+void nikon_update_eeprom_bank(struct nikon_priv *priv, uint8_t bank, uint32_t ls_ch);
 
 /** @} */
 #ifdef __cplusplus
