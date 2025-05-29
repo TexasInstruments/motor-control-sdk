@@ -2,6 +2,7 @@ const common = require(`./common.js`);
 const path = require(`path`);
 const _ = require('lodash');
 const fs = require('fs');
+const versions = require('./toolChainVersions.js');
 
 const utils = {
 
@@ -158,49 +159,64 @@ const utils = {
 
         return "copy";
     },
-    getToolChainVersionProjectSpec: (cgt) => {
-        let toolchainVersion = ''
 
-        switch(cgt) {
-            case 'ti-arm-clang':
-                toolchainVersion = '4.0.1'
-                break;
-            case 'gcc-aarch64':
-                toolchainVersion = '9.2'
-                break;
-            case 'gcc-armv7':
-                toolchainVersion = '7.2'
-                break;
-            case 'ti-c6000':
-                toolchainVersion = '8.3.12'
-                break;
-            case 'ti-pru-cgt':
-                toolchainVersion = '2.3.3'
-                break;
-        }
-
-        return toolchainVersion;
+    /**
+     * Get the toolchain version based on compiler type and SOC
+     * 
+     * @param {string} cgt - Compiler/toolchain identifier (e.g., 'ti-arm-clang', 'gcc-aarch64')
+     * @param {string} device - Device identifier (e.g., 'am64x', 'am243x')
+     * @returns {string} Version of the specified toolchain for the given device, falls back to default if not specified
+     */
+    getToolChainVersionProjectSpec: (cgt, device) => {
+        const deviceVersions = versions.toolchain[device] || versions.toolchain.default;
+        return deviceVersions[cgt] || '';
+    },
+        /**
+     * Get SysConfig version for specified device
+     * 
+     * @param {string} device - Device identifier (e.g., 'am64x', 'am243x')
+     * @returns {string} SysConfig version for the device, falls back to default if not specified
+     */
+    getSysCfgVersionProjectSpec: (device) => {
+        return versions.sysConfig[device] || versions.sysConfig.default;
+    },
+    /**
+     * Get Code Composer Studio (CCS) version for specified device
+     * 
+     * @param {string} device - Device identifier (e.g., 'am64x', 'am243x')
+     * @returns {string} CCS version for the device, falls back to default if not specified
+     */
+    getCCSVersionProjectSpec: (device) => {
+        return versions.ccs[device] || versions.ccs.default
+    },
+    /**
+     * Get TI Clang compiler version for specified device
+     * 
+     * @param {string} device - Device identifier (e.g., 'am64x', 'am243x')
+     * @returns {string} TI Clang version for the device, falls back to default if not specified
+     */
+    getTiClangVersionProjectSpec: (device) => {
+        return versions.tiClang[device] || versions.tiClang.default;
+    },
+     /**
+     * Get GCC AArch64 compiler version for specified device
+     * 
+     * @param {string} device - Device identifier (e.g., 'am64x', 'am243x')
+     * @returns {string} GCC AArch64 version for the device, falls back to default if not specified
+     */
+    getGCCAarch64NoneVersionProjectSpec: (device) => {
+        return versions.gccAarch64[device] || versions.gccAarch64.default;
+    },
+     /**
+     * Get GCC ARMv7 compiler version for specified device
+     * 
+     * @param {string} device - Device identifier (e.g., 'am64x', 'am243x')
+     * @returns {string} GCC ARMv7 version for the device, falls back to default if not specified
+     */
+    getGCCArmv7NoneVersionProjectSpec: (device) => {
+        return versions.gccArmv7[device] || versions.gccArmv7.default;
     },
 
-    getSysCfgVersionProjectSpec: () => {
-        return "1.21.2";
-    },
-
-    getCCSVersionProjectSpec: () => {
-        return "1281";
-    },
-
-    getTiClangVersionProjectSpec: () => {
-        return "4.0.1";
-    },
-
-    getGCCAarch64NoneVersionProjectSpec: () => {
-        return "9.2.1";
-    },
-
-    getGCCArmv7NoneVersionProjectSpec: () => {
-        return "10";
-    },
 
     getTitleProjectSpec: (name) => {
         let title = name.replace(/_/g, ' ');
