@@ -26,7 +26,7 @@ const example_file_list = [
     "source/position_sense/hdsl/firmware/sync_225_mhz/.project/project.js",
     "source/position_sense/nikon/firmware/single_channel/.project/project.js",
     "source/position_sense/tamagawa/firmware/single_channel/.project/project.js",
-   
+
 ];
 
 function getProjectSpecCpu(cpu) {
@@ -50,16 +50,18 @@ function getComponentList() {
 function getExampleList() {
     return example_file_list;
 }
-
 function getSysCfgDevice(board) {
     switch (board) {
         case "am261x-lp":
             return "AM261x_ZFG";
-        case "am261x-lp (dp83826 phy)":
+        case "am261x-lp-dp83tg720/am261x-lp":
             return "AM261x_ZFG";
-        case "am261x-lp (dp83tg720 phy)":
+        case "am261x-lp-dp83826/am261x-lp":
             return "AM261x_ZFG";
         case "am261x-som":
+            return "AM261x_ZCZ";
+        case "am261x-som-dp83869/am261x-som":
+            return "AM261x_ZCZ";
 	default:
             return "AM261x_ZCZ";
     }
@@ -71,11 +73,14 @@ function getProjectSpecDevice(board) {
             return "AM261x";
 		case "am261x-lp":
 			return "AM261x";
-        case "am261x-lp (dp83826 phy)":
+        case "am261x-lp-dp83tg720/am261x-lp":
             return "AM261x";
-        case "am261x-lp (dp83tg720 phy)":
+        case "am261x-lp-dp83826/am261x-lp":
             return "AM261x";
         case "am261x-som":
+            return "AM261x";
+        case "am261x-som-dp83869/am261x-som":
+            return "AM261x";
         default:
             return "AM261x";
     }
@@ -86,14 +91,18 @@ function getSysCfgCpu(cpu) {
 }
 
 function getSysCfgPkg(board) {
+
     switch (board) {
         case "am261x-lp":
             return "ZFG";
-        case "am261x-lp (dp83826 phy)":
+        case "am261x-lp-dp83tg720/am261x-lp":
             return "ZFG";
-        case "am261x-lp (dp83tg720 phy)":
+        case "am261x-lp-dp83826/am261x-lp":
             return "ZFG";
         case "am261x-som":
+            return "ZCZ";
+        case "am261x-som-dp83869/am261x-som":
+            return "ZCZ";
         default:
             return "ZCZ";
     }
@@ -103,11 +112,14 @@ function getSysCfgPart(board) {
     switch (board) {
         case "am261x-lp":
             return "AM2612";
-        case "am261x-lp (dp83826 phy)":
+        case "am261x-lp-dp83tg720/am261x-lp":
             return "AM2612";
-        case "am261x-lp (dp83tg720 phy)":
+        case "am261x-lp-dp83826/am261x-lp":
             return "AM2612";
         case "am261x-som":
+            return "AM2611";
+        case "am261x-som-dp83869/am261x-som":
+            return "AM2611";
         default:
             return "AM2611";
     }
@@ -115,16 +127,19 @@ function getSysCfgPart(board) {
 
 function getDevToolTirex(board) {
 	switch (board) {
-		case "am261x-lp":
-			return "LP-AM263P";
-		case "am261x-lp (dp83826 phy)":
-			return "LP-AM263P";
-		case "am261x-lp (dp83tg720 phy)":
-			return "LP-AM263P";
-		case "am261x-som":
-		default:
-			return "TMDSCNCD263P";
-	}
+        case "am261x-lp":
+            return "LP-AM261";
+        case "am261x-lp-dp83tg720/am261x-lp":
+            return "LP-AM261";
+        case "am261x-lp-dp83826/am261x-lp":
+            return "LP-AM261";
+        case "am261x-som":
+            return "AM261-SOM-EVM";
+        case "am261x-som-dp83869/am261x-som":
+            return "AM261-SOM-EVM";
+        default:
+            return "LP-AM261";
+    }
 }
 
 function getProperty() {

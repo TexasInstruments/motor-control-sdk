@@ -2,10 +2,7 @@
     productName = args.utils.getProductNameProjectSpec(args.device);
     isDevelopmentMode = args.common.isDevelopmentMode();
     deviceName = args.utils.getProjectSpecDevice(args.device);
-    if(args.device == "am273x")
-        deviceName = "AM273x"
-    if(args.device == "am62x")
-        deviceName = "AM62x"
+
     if(isDevelopmentMode)
         deviceName = "AMXXX";
 
@@ -30,7 +27,7 @@
         % }
         "devices": ["`deviceName`"],
         "tags": ["SDK", "Baremetal", "FreeRTOS"],
-        % if ((args.device == "am263x") || (args.device == "am261x")) {
+        % if ((args.device == "am263x") || (args.device == "am263px") || (args.device == "am261x")) {
         "description": "Motor Control SDK contains examples, libraries and tools to develop RTOS and no-RTOS based applications enabling real-time communication for position sense from motors, and real-time control libraries for ARM R5F CPU and related peripherals.",
         % }
         % else if ((args.device == "am64x") || (args.device == "am243x") || (isDevelopmentMode)) {

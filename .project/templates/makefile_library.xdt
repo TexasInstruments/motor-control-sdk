@@ -165,7 +165,7 @@ $(OBJDIR)/%.obj %.obj: %.S
 	$(CC) $(CFLAGS) $(INCLUDES) $(DEFINES) -ppd=$(OBJDIR)/$(basename $@).d -ppa -fr=$(OBJDIR)/ -fa=$<
 % }
 % if (args.project.cgt == "ti-arm-clang") {
-	$(CC) -c $(ASMFLAGS) -o $(OBJDIR)/$@ $<
+	$(CC) -c $(ASMFLAGS) $(INCLUDES) $(DEFINES) -o $(OBJDIR)/$@ $<
 % }
 % if ((args.project.cgt == "gcc-aarch64") || (args.project.cgt == "gcc-armv7")) {
 	$(CC) -c -x assembler-with-cpp $(CFLAGS) $(INCLUDES) $(DEFINES) -o $(OBJDIR)$@ $<

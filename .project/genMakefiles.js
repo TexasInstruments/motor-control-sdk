@@ -258,8 +258,10 @@ function genMakefileExample(example_file_list, device) {
             let common_build_property = require(`./device/project_${device}`).getProperty();
             let project = [];
             let makefileOutPath = common.path.makeExampleOutPath(property.dirPath, buildOption);
+            let makefileDefsOutPath = common.path.makeExampleOutPath(property.dirPath, buildOption);
 
             fs.mkdirSync(makefileOutPath, { recursive: true });
+            fs.mkdirSync(makefileDefsOutPath, { recursive: true });
 
             build_property = require(`../${example}`).getComponentBuildProperty(buildOption);
 
@@ -296,11 +298,18 @@ function genMakefileExample(example_file_list, device) {
                     `.project/templates/makefile_${project.makefile}.xdt`,
                     `${project.dirPath}/makefile`,
                     args);
-            } else
+            } else {
+                common.convertTemplateToFile(
+                        `.project/templates/makefile_${project.type}.xdt`,
+                        `${project.dirPath}/makefile`,
+                        args);
+            }
+
+            // Generate makefile.defs for all examples
             common.convertTemplateToFile(
-                    `.project/templates/makefile_${project.type}.xdt`,
-                    `${project.dirPath}/makefile`,
-                    args);
+                `.project/templates/makefile_defs.xdt`,
+                `${makefileDefsOutPath}/makefile.defs`,
+                args);
         }
     }
 }
