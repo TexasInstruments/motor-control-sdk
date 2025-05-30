@@ -36,7 +36,7 @@ function onValidate(inst, validation)
                     {
                         validation.logWarning("Channel2 TX EN signal is not pinned out at the device level", inst, "channel_2");
                     }
-                    
+
                     if((instance.channel_2 || instance.channel_0)&&(instance.Booster_Pack))
                     {
                         validation.logError("Channel0 and Channel2 are not supported on Booster Pack",inst,"Booster_Pack");
@@ -44,13 +44,13 @@ function onValidate(inst, validation)
                 }
                 if(is_am261x_soc)
                 {
-                    
+
                     if((instance.channel_2 || instance.channel_1)&&(instance.Booster_Pack))
                     {
                         validation.logError("Channel1 and Channel2 are not supported on Booster Pack",inst,"Booster_Pack");
                     }
                 }
-                
+
             }
     }
 }
@@ -100,7 +100,7 @@ let nikon_module = {
                                 name: "ICSSG1",
                             }
                         ])
-            
+
         },
         {
             name: "Tx_Rx_Clk_Source",
@@ -169,7 +169,21 @@ let nikon_module = {
                 },
             ],
         },
-        (is_am243x_lp_device) ? 
+        {
+            name: "protocolVersion",
+            displayName: "Select Nikon Protocol Version",
+            description: "Nikon Protocol Version",
+            default: 2.1,
+            options: [
+                {
+                    name: 2.1,
+                },
+                {
+                    name: 3.0,
+                },
+            ],
+        },
+        (is_am243x_lp_device) ?
         {
             name: "coreClk",
             displayName: "PRU-ICSS Core Clk (Hz)",
@@ -274,8 +288,8 @@ function moduleInstances(instance){
                     },
                 });
             }
-           
-        
+
+
         }
         if(is_am263x_soc)
         {
@@ -315,7 +329,7 @@ function sharedModuleInstances(instance) {
         moduleName: '/drivers/pruicss/pruicss',
         requiredArgs
     });
-   
+
     return (modInstances);
 }
 

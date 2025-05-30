@@ -1,5 +1,5 @@
 ;
-; Copyright (C) 2024 Texas Instruments Incorporated
+; Copyright (C) 2024-25 Texas Instruments Incorporated
 ;
 ; Redistribution and use in source and binary forms, with or without
 ; modification, are permitted provided that the following conditions
@@ -70,20 +70,38 @@ NIKON_OPMODE_RTU_CONFIG_OFFSET              .set    0x18            ;operation m
 NIKON_OPMODE_PRU_CONFIG_OFFSET              .set    0x19            ;operation mode of PRU offset
 NIKON_OPMODE_TXPRU_CONFIG_OFFSET            .set    0x1A            ;operation mode of TxPRU offset
 
-NIKON_COMMAND_DATA_FRAME_OFFSET             .set    0x1C            ;command data frame to be send over Tx
-NIKON_COMMAND_DATA_FRAME_RTU_OFFSET         .set    0x1C            ;command data frame to be send over Tx by RTU
-NIKON_COMMAND_DATA_FRAME_PRU_OFFSET         .set    0x20            ;command data frame to be send over Tx by PRU
-NIKON_COMMAND_DATA_FRAME_TXPRU_OFFSET       .set    0x24            ;command data frame to be send over Tx by TXPRU
+NIKON_COMMAND_DATA_FRAME_OFFSET             .set    0x1C            ;command data frame to be sent over Tx
+NIKON_COMMAND_DATA_FRAME_RTU_OFFSET         .set    0x1C            ;command data frame to be sent over Tx by RTU
+NIKON_COMMAND_DATA_FRAME_PRU_OFFSET         .set    0x20            ;command data frame to be sent over Tx by PRU
+NIKON_COMMAND_DATA_FRAME_TXPRU_OFFSET       .set    0x24            ;command data frame to be sent over Tx by TXPRU
 
+NIKON_MEMORY_DATA_FRAME0_OFFSET             .set    0x28            ;data for first MDF (after CDF) to be sent over Tx
+NIKON_MEMORY_DATA_FRAME1_OFFSET             .set    0x2C            ;MDF1 for second MDF (after CDF) code to be sent over Tx
+NIKON_MEMORY_DATA_FRAME2_OFFSET             .set    0x30            ;MDF2 for third MDF (after CDF) to be sent over Tx
+NIKON_MEMORY_DATA_FRAME3_OFFSET             .set    0x34            ;MDF3 for fourth MDF (after CDF) to be sent over Tx
 
+NIKON_MEMORY_DATA_FRAME0_RTU_OFFSET         .set    0x28            ;data for first MDF (after CDF) to be sent over Tx by RTU
+NIKON_MEMORY_DATA_FRAME1_RTU_OFFSET         .set    0x2C            ;MDF1 for second MDF (after CDF) code to be sent over Tx by RTU
+NIKON_MEMORY_DATA_FRAME2_RTU_OFFSET         .set    0x30            ;MDF2 for third MDF (after CDF) to be sent over Tx by RTU
+NIKON_MEMORY_DATA_FRAME3_RTU_OFFSET         .set    0x34            ;MDF3 for fourth MDF (after CDF) to be sent over Tx by RTU
 
-NIKON_MEMORY_DATA0_FRAME_OFFSET             .set    0x28            ;MDF0 for upper byte of data to be written in EEPROM or as ID code
+NIKON_MEMORY_DATA_FRAME0_PRU_OFFSET         .set    0x38            ;data for first MDF (after CDF) to be sent over Tx by PRU
+NIKON_MEMORY_DATA_FRAME1_PRU_OFFSET         .set    0x3C            ;MDF1 for second MDF (after CDF) code to be sent over Tx by PRU
+NIKON_MEMORY_DATA_FRAME2_PRU_OFFSET         .set    0x40            ;MDF2 for third MDF (after CDF) to be sent over Tx by PRU
+NIKON_MEMORY_DATA_FRAME3_PRU_OFFSET         .set    0x44            ;MDF3 for fourth MDF (after CDF) to be sent over Tx by PRU
 
-NIKON_MEMORY_DATA1_FRAME_OFFSET             .set    0x2C            ;MDF1 for lower byte of data to be written in EEPROM or as  middle byte of ID code
+NIKON_MEMORY_DATA_FRAME0_TXPRU_OFFSET       .set    0x48            ;data for first MDF (after CDF) to be sent over Tx by TXPRU
+NIKON_MEMORY_DATA_FRAME1_TXPRU_OFFSET       .set    0x4C            ;MDF1 for second MDF (after CDF) code to be sent over Tx by TXPRU
+NIKON_MEMORY_DATA_FRAME2_TXPRU_OFFSET       .set    0x50            ;MDF2 for third MDF (after CDF) to be sent over Tx by TXPRU
+NIKON_MEMORY_DATA_FRAME3_TXPRU_OFFSET       .set    0x54            ;MDF3 for fourth MDF (after CDF) to be sent over Tx by TXPRU
 
-NIKON_MEMORY_ADDR_FRAME_OFFSET              .set    0x30            ;MDF2 for address of EEPROM location or lower byte of ID code
+NIKON_NUM_MDF                               .set    0x58            ;Number of MDFs to be sent
 
-NIKON_POSITION_DATA_ENC0_RES_OFFSET         .set    0x34            ;Base Offset for encoder 0
+NIKON_CONFIG_DELAY_1US_OFFSET               .set    0x5C            ;1 micro second delay offest
+
+NIKON_CONFIG_ICSS_CLK_OFFSET                .set    0x60            ;icss clock configuration offset
+
+NIKON_POSITION_DATA_ENC0_RES_OFFSET         .set    0x68            ;Base Offset for encoder 0
 NIKON_INFO_FIELD_OFFSET                     .set    0x00            ;information field offset
 NIKON_INFO_FIELD_CH0_OFFSET                 .set    0x00            ;information field ch0 offset
 NIKON_INFO_FIELD_CH1_OFFSET                 .set    0x02            ;information field ch1 offset
@@ -104,29 +122,30 @@ NIKON_DATA_FIELD2_CH0_OFFSET                .set    0x00            ;data field 
 NIKON_DATA_FIELD2_CH1_OFFSET                .set    0x02            ;data field 2 ch1 offset
 NIKON_DATA_FIELD2_CH2_OFFSET                .set    0X04            ;data field 2 ch2 offset
 
-NIKON_POS_DATA_CRC_ERROR_COUNT              .set    0x18            ;CRC Error Count offset
-NIKON_POS_DATA_CH0_CRC_ERROR_COUNT          .set    0X18            ;CRC Error Count ch0 offset
-NIKON_POS_DATA_CH1_CRC_ERROR_COUNT          .set    0x1C            ;CRC Error Count ch1 offset
-NIKON_POS_DATA_CH2_CRC_ERROR_COUNT          .set    0x20            ;CRC Error Count ch2 offset
+NIKON_DATA_FIELD3_OFFSET                    .set    0x18            ;data field 3 offset
+NIKON_DATA_FIELD3_CH0_OFFSET                .set    0x00            ;data field 3 ch0 offset
+NIKON_DATA_FIELD3_CH1_OFFSET                .set    0x02            ;data field 3 ch1 offset
+NIKON_DATA_FIELD3_CH2_OFFSET                .set    0X04            ;data field 3 ch2 offset
 
-NIKON_POSITION_DATA_OTF_CRC_OFFSET          .set    0x24            ;8-bit on the fly crc offset
-NIKON_POSITION_DATA_OTF_CRC_CH0_OFFSET      .set    0x24            ;8-bit on the fly crc ch0 offset
-NIKON_POSITION_DATA_OTF_CRC_CH1_OFFSET      .set    0x25            ;8-bit on the fly crc ch1 offset
-NIKON_POSITION_DATA_OTF_CRC_CH2_OFFSET      .set    0x26            ;8-bit on the fly crc ch2 offset
+NIKON_DATA_FIELD4_OFFSET                    .set    0x1E            ;data field 4 offset
+NIKON_DATA_FIELD4_CH0_OFFSET                .set    0x00            ;data field 4 ch0 offset
+NIKON_DATA_FIELD4_CH1_OFFSET                .set    0x02            ;data field 4 ch1 offset
+NIKON_DATA_FIELD4_CH2_OFFSET                .set    0X04            ;data field 4 ch2 offset
 
-NIKON_POSITION_DATA_RCV_CRC_OFFSET          .set    0x27            ;8-bit receive crc offset
-NIKON_POSITION_DATA_RCV_CRC_CH0_OFFSET      .set    0x27            ;8-bit receive crc ch0 offset
-NIKON_POSITION_DATA_RCV_CRC_CH1_OFFSET      .set    0x28            ;8-bit receive crc ch1 offset
-NIKON_POSITION_DATA_RCV_CRC_CH2_OFFSET      .set    0x29            ;8-bit receive crc ch2 offset
+NIKON_POS_DATA_CRC_ERROR_COUNT              .set    0x24            ;CRC Error Count offset
+NIKON_POS_DATA_CH0_CRC_ERROR_COUNT          .set    0X24            ;CRC Error Count ch0 offset
+NIKON_POS_DATA_CH1_CRC_ERROR_COUNT          .set    0x28            ;CRC Error Count ch1 offset
+NIKON_POS_DATA_CH2_CRC_ERROR_COUNT          .set    0x2C            ;CRC Error Count ch2 offset
 
-NIKON_POSITION_DATA_ENC1_RES_OFFSET         .set    0x60            ;offset of raw data receive from encoder 1
-NIKON_POSITION_DATA_ENC2_RES_OFFSET         .set    0x8C            ;offset of raw data receive from encoder 2
+NIKON_POSITION_DATA_OTF_CRC_OFFSET          .set    0x30            ;8-bit on the fly crc offset
+NIKON_POSITION_DATA_OTF_CRC_CH0_OFFSET      .set    0x30            ;8-bit on the fly crc ch0 offset
+NIKON_POSITION_DATA_OTF_CRC_CH1_OFFSET      .set    0x31            ;8-bit on the fly crc ch1 offset
+NIKON_POSITION_DATA_OTF_CRC_CH2_OFFSET      .set    0x32            ;8-bit on the fly crc ch2 offset
 
+NIKON_POSITION_DATA_RCV_CRC_OFFSET          .set    0x33            ;8-bit receive crc offset
+NIKON_POSITION_DATA_RCV_CRC_CH0_OFFSET      .set    0x33            ;8-bit receive crc ch0 offset
+NIKON_POSITION_DATA_RCV_CRC_CH1_OFFSET      .set    0x34            ;8-bit receive crc ch1 offset
+NIKON_POSITION_DATA_RCV_CRC_CH2_OFFSET      .set    0x35            ;8-bit receive crc ch2 offset
 
-NIKON_CONFIG_DELAY_10US_OFFSET              .set    0xB8            ;10 micro second delay offest
-
-NIKON_CONFIG_DELAY_300US_OFFSET             .set    0xBC            ;300 micro second delay offset
-
-NIKON_CONFIG_DELAY_30MS_OFFSET              .set    0xC0            ;30 milli second delay offset
-
-NIKON_CONFIG_ICSSG_CLK_OFFSET               .set    0xC4            ;icssg clock configuration offset
+NIKON_POSITION_DATA_ENC1_RES_OFFSET         .set    0xA0            ;offset of raw data receive from encoder 1
+NIKON_POSITION_DATA_ENC2_RES_OFFSET         .set    0xD8            ;offset of raw data receive from encoder 2

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2024 Texas Instruments Incorporated
+ *  Copyright (C) 2024-25 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -64,7 +64,7 @@ int32_t nikon_command_wait(struct nikon_priv *priv);
  *  \param[in]  cmd      command code specified by user
  *
  */
-int32_t nikon_get_pos(struct nikon_priv *priv, int8_t cmd);
+int32_t nikon_get_pos(struct nikon_priv *priv, uint32_t cmd);
 
 /**
  *  \brief      Configure Nikon clock
@@ -92,13 +92,14 @@ void nikon_config_clock(struct nikon_priv *priv,
  *
  */
 struct nikon_priv *nikon_init(PRUICSS_Handle gPruIcssXHandle,
-                              int32_t slice,
+                              uint32_t slice,
                               float_t frequency,
                               uint32_t core_clk_freq,
                               uint32_t uart_clk_freq,
                               uint32_t tx_rx_clock_source,
                               uint32_t mask,
-                              uint32_t totalch);
+                              uint32_t totalch,
+                              uint32_t protocol_version);
 
 /**
  *  \brief      Clear the channel specific frame size cfg registers.
@@ -106,6 +107,7 @@ struct nikon_priv *nikon_init(PRUICSS_Handle gPruIcssXHandle,
  *  \param[in]  priv            cookie returned by \ref nikon_init
  */
 void nikon_config_clr_cfg0(struct nikon_priv *priv);
+
 /**
  *  \brief      Calculate Rx and Tx divisors for given frequency.
  *
@@ -113,13 +115,14 @@ void nikon_config_clr_cfg0(struct nikon_priv *priv);
  *  \param[in]  clk_cfg         pointer to structure containing clock configuration data.
  */
 int32_t nikon_calc_clock(struct nikon_priv *priv, struct nikon_clk_cfg *clk_cfg);
+
 /**
  *  \brief      Generate CDF command to be passed in Tx fifo.
  *
  *  \param[in]  priv            cookie returned by \ref nikon_init
  *  \param[in]  cmd             command code requested by the user.
  */
-void nikon_generate_cdf(struct nikon_priv *priv, int32_t cmd);
+void nikon_generate_cdf(struct nikon_priv *priv, uint32_t cmd);
 
 /**
  *  \brief      Reverse the bits (LSB to be sent out first) provided as parameters.
@@ -129,7 +132,7 @@ void nikon_generate_cdf(struct nikon_priv *priv, int32_t cmd);
  *
  *  \retval     res         return the reversed field.
  */
-int32_t nikon_reverse_bits(uint64_t bits, int32_t num_bits);
+uint64_t nikon_reverse_bits(uint64_t bits, uint32_t num_bits);
 
 /**
  *  \brief      Calculate 3 bit otf crc and generate tx command.
@@ -138,6 +141,7 @@ int32_t nikon_reverse_bits(uint64_t bits, int32_t num_bits);
  *  \param[in]  cmd             cdf or mdf command to be included in 3 bit crc calculation.
  */
 uint32_t nikon_calc_3bitcrc(struct nikon_priv *priv, uint32_t cmd);
+
 /**
  *  \brief      Configure Load Share mode for Nikon receiver
  *
@@ -145,7 +149,7 @@ uint32_t nikon_calc_3bitcrc(struct nikon_priv *priv, uint32_t cmd);
  *  \param[in]  mask    channel mask
  *
  */
-void nikon_config_load_share(struct nikon_priv *priv, int32_t mask);
+void nikon_config_load_share(struct nikon_priv *priv, uint8_t mask);
 
 /**
  *  \brief      Configure periodic trigger operation mode
@@ -153,18 +157,21 @@ void nikon_config_load_share(struct nikon_priv *priv, int32_t mask);
  *  \param[in]  priv            cookie returned by \ref nikon_init
  */
 void nikon_config_periodic_trigger(struct nikon_priv *priv);
+
 /**
  *  \brief      Configure host trigger operation mode
  *
  *  \param[in]  priv            cookie returned by \ref nikon_init
  */
 void nikon_config_host_trigger(struct nikon_priv *priv);
+
 /**
  *  \brief      Detect whether the connected encoder is of selected frequency
  *
  *  \param[in]  priv            cookie returned by \ref nikon_init
  */
 int32_t nikon_wait_for_encoder_detection(struct nikon_priv *priv);
+
 /**
  *  \brief      Update number of encoders connected in bus or one-to-one and
  *              update data lengths of those encoders
@@ -180,14 +187,16 @@ void nikon_update_enc_len(struct nikon_priv *priv,
                           uint32_t single_turn_len[],
                           uint32_t multi_turn_len[],
                           uint32_t ch);
+
 /**
- *  \brief      Update the operating baud rate as user speciefied baud rate
+ *  \brief      Update the operating baud rate as user specified baud rate
  *              through UART menu
  *
  *  \param[in]  priv            cookie returned by \ref nikon_init
  *  \param[in]  frequency       frequency as specified by the user
  */
 void nikon_update_clock_freq(struct nikon_priv *priv, float_t frequency);
+
 /**
  *  \brief      Retrives the current channel in use
  *
@@ -196,6 +205,7 @@ void nikon_update_clock_freq(struct nikon_priv *priv, float_t frequency);
  *  \retval     channel[ch_idx] current channel in use
  */
 uint32_t nikon_get_current_channel(struct nikon_priv *priv, uint32_t ch_idx);
+
 /**
  *  \brief      Retrives total number of channels configured
  *
@@ -203,38 +213,61 @@ uint32_t nikon_get_current_channel(struct nikon_priv *priv, uint32_t ch_idx);
  *  \retval     totalchannels   total number of channels configured
  */
 uint32_t nikon_get_totalchannels(struct nikon_priv *priv);
+
 /**
  *  \brief      Update encoder address as specified by the user
  *
  *  \param[in]  priv            cookie returned by \ref nikon_init
  *  \param[in]  enc_addr        encoder address specified by the user
- *  \param[in]  ls_ch           channel in use in load share
+ *  \param[in]  ls_ch           channel in use in load share or 0 in case of single channel mode
  */
 void nikon_update_enc_addr(struct nikon_priv *priv, uint32_t enc_addr, uint32_t ls_ch);
+
 /**
  *  \brief      Access encoder's EEPROM location specified by the user
  *
  *  \param[in]  priv            cookie returned by \ref nikon_init
- *  \param[in]  addr            EEPROM address specified by the user
+ *  \param[in]  addr            EEPROM address (Bits [7:0] in addr)
+ *  \param[in]  ls_ch           channel in use in load share or 0 in case of single channel mode
  */
-void nikon_update_eeprom_addr(struct nikon_priv *priv, uint32_t addr);
+void nikon_update_eeprom_addr(struct nikon_priv *priv, uint8_t addr, uint32_t ls_ch);
+
 /**
  *  \brief      Write data at specified EEPROM location
  *
  *  \param[in]  priv            cookie returned by \ref nikon_init
- *  \param[in]  data_high       upper byte of data to write at EEPROM location
- *  \param[in]  data_low        lower byte of data to write at EEPROM location
+ *  \param[in]  data            data to write at EEPROM location (Bits [15:0] in data)
+ *  \param[in]  ls_ch           channel in use in load share or 0 in case of single channel mode
  */
-void nikon_update_eeprom_data(struct nikon_priv *priv, uint32_t data_high, uint32_t data_low);
+void nikon_update_eeprom_data(struct nikon_priv *priv, uint16_t data, uint32_t ls_ch);
+
 /**
  *  \brief      Assign the specified 24bits as Identification code of encoder
  *
  *  \param[in]  priv            cookie returned by \ref nikon_init
- *  \param[in]  data_high       Upper byte to assign as ID code[23 : 16]
- *  \param[in]  data_mid        Middle byte to assign as ID code[15 : 8]
- *  \param[in]  data_low        Lower byte to assign as ID code[7 : 0]
+ *  \param[in]  data            data to assign as ID code (Bits [23:0] in data will be used)
+ *  \param[in]  ls_ch           channel in use in load share or 0 in case of single channel mode
  */
-void nikon_update_id_code(struct nikon_priv *priv, uint32_t data_high, uint32_t data_mid, uint32_t data_low);
+void nikon_update_id_code(struct nikon_priv *priv, uint32_t data, uint32_t ls_ch);
+
+/**
+ *  \brief      Assign the specified 19 bits as velocity coefficient of encoder
+ *
+ *  \param[in]  priv            cookie returned by \ref nikon_init
+ *  \param[in]  data_high       data to assign as velocity coefficient (Bits [18:0] in data will be used)
+ *  \param[in]  ls_ch           channel in use in load share or 0 in case of single channel mode
+ */
+void nikon_update_velocity_coefficient(struct nikon_priv *priv, uint32_t data, uint32_t ls_ch);
+
+/**
+ *  \brief Configure bank for memory operations in Nikon 3.0
+ *
+ *  \param[in]  priv            Cookie returned by \ref nikon_init
+ *  \param[in]  bank            Bank number to be set (Bits [7:0] in bank)
+ *  \param[in]  ls_ch           channel in use in load share or 0 in case of single channel mode
+ */
+void nikon_update_eeprom_bank(struct nikon_priv *priv, uint8_t bank, uint32_t ls_ch);
+
 /** @} */
 #ifdef __cplusplus
 }
