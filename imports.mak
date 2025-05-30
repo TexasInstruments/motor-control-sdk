@@ -1,5 +1,5 @@
 
-DEVICE ?= am64x
+DEVICE ?= am243x
 
 ifeq ($(OS),Windows_NT)
     TOOLS_PATH?=C:/ti
@@ -48,6 +48,9 @@ ifeq ($(wildcard $(CGT_TI_ARM_CLANG_PATH)),)
     CGT_TI_ARM_CLANG_PATH=$(TOOLS_PATH)/ti-cgt-armllvm_4.0.1.LTS
 endif
 CGT_TI_C6000_PATH=$(CCS_PATH)/tools/compiler/ti-cgt-c6000_8.3.12
+ifeq ($(wildcard $(CGT_TI_C6000_PATH)),)
+    CGT_TI_C6000_PATH=$(TOOLS_PATH)/ti-cgt-c6000_8.3.12
+endif
 DSPLIB_PATH=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/dsplib_c66x_3_4_0_0
 CCS_NODE = $(CCS_PATH)/tools/node/node
 SYSCFG_PATH ?= $(TOOLS_PATH)/sysconfig_1.23.0
@@ -55,6 +58,5 @@ SYSCFG_CLI_PATH ?= $(SYSCFG_PATH)
 SYSCFG_NODE = $(SYSCFG_PATH)/nodejs/node
 SYSCFG_NWJS = $(SYSCFG_PATH)/nw/nw
 SYSCFG_SDKPRODUCT=$(MOTOR_CONTROL_SDK_PATH)/.metadata/product.json
-SIGNING_TOOL_PATH=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/security/security_common/tools/boot/signing
 OPTISHARE = $(CCS_NODE) $(CGT_TI_ARM_CLANG_PATH)/opti-share/opti-share.js
 OPTISAVE = $(CCS_NODE) $(CGT_TI_ARM_CLANG_PATH)/opti-share/utils/opti-save.js

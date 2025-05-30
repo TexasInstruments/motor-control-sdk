@@ -109,5 +109,7 @@
         </file>
         <file path="makefile_ccs_bootimage_gen" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
+        <file path="makefile.defs" openOnCreation="false" excludeFromBuild="false" action="copy">
+        </file>
     </project>
 </projectSpec>
