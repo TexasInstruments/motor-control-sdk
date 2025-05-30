@@ -78,7 +78,7 @@ struct crc
 };
 struct pos_data_res
 {
-    struct   raw_data raw_data;
+    struct raw_data raw_data;
     /**< Raw data receive from encoder*/
     struct crc crc;
     /**< Calculated CRC, Received CRC and CRC error count */
@@ -122,22 +122,17 @@ struct nikon_pruicss_xchg
     /**< operation mode status: '0' for periodic trigger
      * and '1' for host trigger */
     volatile uint32_t cdf_frame[NUM_ED_CH_MAX];
-    /**< Command to be transmitted to Tx*/
-    volatile uint32_t mdf_frame[NUM_MDF_MAX];
-    /**< Memory data frames MDF 0,1 indexes for data
-     * and MDF 2 index for EEPROM address*/
-    struct   pos_data_res   pos_data_res[NUM_ENCODERS_MAX];
-    /**< Results extracted from raw data received */
-    volatile uint32_t delay_1us;
-    /**< Nikon Minimum delay between memory access commands */
-    volatile uint32_t delay_300us;
-    /**< Nikon Max membusy duration */
-    volatile uint32_t delay_30ms;
-    /**< Nikon max interframe delay  */
-    volatile uint64_t icss_clk;
-    /**< ICSS core clock frequency  */
+    /**< Command to be transmitted to encoder */
+    volatile uint32_t mdf_frame[NUM_ED_CH_MAX][NUM_MDF_MAX];
+    /**< Memory data frames to be transmitted to encoder */
     volatile uint32_t num_mdf;
     /**< Number of MDFs to be sent */
+    volatile uint32_t delay_1us;
+    /**< Nikon Minimum delay between memory access commands */
+    volatile uint64_t icss_clk;
+    /**< ICSS core clock frequency */
+    struct   pos_data_res   pos_data_res[NUM_ENCODERS_MAX];
+    /**< Results extracted from raw data received */
 };
 
 #ifdef __cplusplus

@@ -170,7 +170,7 @@ let nikon_module = {
             ],
         },
         {
-            name: "protovolVersion",
+            name: "protocolVersion",
             displayName: "Select Nikon Protocol Version",
             description: "Nikon Protocol Version",
             default: 2.1,

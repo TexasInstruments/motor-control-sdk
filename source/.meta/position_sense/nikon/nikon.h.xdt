@@ -74,11 +74,11 @@
     %{
 #define `instance.$name`_G_MUX_EN          `instance["G_MUX_EN"] & 1`
     %}
-%if (instance.protovolVersion === 2.1)
+%if (instance.protocolVersion === 2.1)
     %{
 #define NIKON_PROTOCOL_VERSION             (NIKON_PROTOCOL_V2_1)
     %}
-%if (instance.protovolVersion === 3.0)
+%if (instance.protocolVersion === 3.0)
     %{
 #define NIKON_PROTOCOL_VERSION             (NIKON_PROTOCOL_V3_0)
     %}

@@ -969,7 +969,7 @@ void nikon_main(void *args)
                 {
                     if(ret < 0)
                     {
-                        DebugP_log("\r\n ERROR: Encoder's Status request failed \n");
+                        DebugP_log("\r\n ERROR: Encoder's operation request failed \n");
                         continue;
                     }
 
@@ -1018,19 +1018,40 @@ void nikon_main(void *args)
 
                         if((cmd_type == 'y') || (cmd_type == 'Y'))
                         {
-                            DebugP_log("\r\n Enter bank number (in hex): ");
-                            DebugP_scanf("%x", &bank);
+                            cmd = CMD_13_BANK;
 
-                            if(bank > 0xFF)
+                            for(pru_num = 0; pru_num < totalchannels; pru_num++)
                             {
-                                DebugP_log("\r\n Please enter a valid bank value\n");
+                                ch = nikon_get_current_channel(priv, pru_num);
+                                if(priv->load_share)
+                                {
+                                    ls_ch = ch;
+                                    DebugP_log("\r\n Channel %d: \n",ch);
+                                }
+                                else
+                                {
+                                    ls_ch = 0;
+                                    pru_num = nikon_get_totalchannels(priv);
+                                }
+
+                                while (1)
+                                {
+                                    DebugP_log("\r\n Enter bank number (in hex): ");
+                                    DebugP_scanf("%x", &bank);
+
+                                    if(bank > 0xFF)
+                                    {
+                                        DebugP_log("\r\n Please enter a valid bank value\n");
+                                    }
+                                    else
+                                    {
+                                        break;
+                                    }
+                                }
+
+                                nikon_update_eeprom_bank(priv, (bank & 0xFF), ls_ch);
                             }
-                            else
-                            {
-                                nikon_update_bank(priv, (bank & 0xFF));
-                                cmd = CMD_13_BANK;
-                                break;
-                            }
+                            break;
                         }
                         else if((cmd_type == 'n') || (cmd_type == 'N'))
                         {
@@ -1043,22 +1064,37 @@ void nikon_main(void *args)
                     }
                 }
 
-                while(1)
+                for(pru_num = 0; pru_num < totalchannels; pru_num++)
                 {
-                    DebugP_log("\r\n Enter Memory location(in hex) to read(00h to FFh is valid): ");
-                    DebugP_scanf("%x", &addr);
-
-                    if(addr > 0xFF)
+                    ch = nikon_get_current_channel(priv, pru_num);
+                    if(priv->load_share)
                     {
-                        DebugP_log("\r\n Please enter a valid 8 bit value\n");
+                        ls_ch = ch;
+                        DebugP_log("\r\nChannel %d: ", ch);
                     }
                     else
                     {
-                        break;
+                        ls_ch = 0;
+                        pru_num = nikon_get_totalchannels(priv);
+                    }
+
+                    while(1)
+                    {
+                        DebugP_log("\r\n Enter Memory location(in hex) to read(00h to FFh is valid): ");
+                        DebugP_scanf("%x", &addr);
+
+                        if(addr > 0xFF)
+                        {
+                            DebugP_log("\r\n Please enter a valid 8 bit value\n");
+                        }
+                        else
+                        {
+                            nikon_update_eeprom_addr(priv, (addr & 0xFF), ls_ch);
+                            break;
+                        }
                     }
                 }
 
-                nikon_update_eeprom_addr(priv, (addr & 0xFF));
                 nikon_generate_cdf(priv, cmd);
                 ret = nikon_get_pos(priv, cmd);
                 if(ret < 0)
@@ -1099,7 +1135,7 @@ void nikon_main(void *args)
 
                     DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u \n", priv->pos_data_info[ch].rcv_crc[0], priv->pos_data_info[ch].otf_crc[0], priv->pos_data_info[ch].crc_err_cnt[0]);
                     DebugP_log("\r\n Encoder Address: %u, Encoder Status: 0x%x, Command to Encoder: %u\n", priv->enc_info[ch].enc_addr[0], priv->enc_info[ch].enc_status[0], priv->enc_info[ch].enc_cmd[0]);
-                    if((cmd == CMD_13) && (addr == 0xF9))
+                    if((cmd == CMD_13) && ((uint8_t)nikon_reverse_bits((uint8_t)((priv->pos_data_info[ch].raw_data2[0] & 0xFF00) >> 8), NIKON_EEPROM_ADDR_LEN) == 0xF9))
                     {
                         DebugP_log("\r\n Temperature: %d \n", priv->temperature[ch][0]);
                     }
@@ -1116,19 +1152,40 @@ void nikon_main(void *args)
 
                         if((cmd_type == 'y') || (cmd_type == 'Y'))
                         {
-                            DebugP_log("\r\n Enter bank number (in hex): ");
-                            DebugP_scanf("%x", &bank);
+                            cmd = CMD_14_BANK;
 
-                            if(bank > 0xFF)
+                            for(pru_num = 0; pru_num < totalchannels; pru_num++)
                             {
-                                DebugP_log("\r\n Please enter a valid bank value\n");
+                                ch = nikon_get_current_channel(priv, pru_num);
+                                if(priv->load_share)
+                                {
+                                    ls_ch = ch;
+                                    DebugP_log("\r\n Channel %d: \n",ch);
+                                }
+                                else
+                                {
+                                    ls_ch = 0;
+                                    pru_num = nikon_get_totalchannels(priv);
+                                }
+
+                                while (1)
+                                {
+                                    DebugP_log("\r\n Enter bank number (in hex): ");
+                                    DebugP_scanf("%x", &bank);
+
+                                    if(bank > 0xFF)
+                                    {
+                                        DebugP_log("\r\n Please enter a valid bank value\n");
+                                    }
+                                    else
+                                    {
+                                        break;
+                                    }
+                                }
+
+                                nikon_update_eeprom_bank(priv, (bank & 0xFF), ls_ch);
                             }
-                            else
-                            {
-                                nikon_update_bank(priv, (bank & 0xFF));
-                                cmd = CMD_14_BANK;
-                                break;
-                            }
+                            break;
                         }
                         else if((cmd_type == 'n') || (cmd_type == 'N'))
                         {
@@ -1141,24 +1198,39 @@ void nikon_main(void *args)
                     }
                 }
 
-                while(1)
+                for(pru_num = 0; pru_num < totalchannels; pru_num++)
                 {
-                    DebugP_log("\r\n Enter Memory location(in hex) to write(for bank read, 00h to FFh is valid; for non-bank read, 00h to EFh is valid): ");
-                    DebugP_scanf("%x", &addr);
-                    DebugP_log("\r\n Enter data(Bits [15:0] in hex) to write at Memory location 0x%x: ", addr);
-                    DebugP_scanf("%x", &data);
-
-                    if((data > 0xFFFF) || (addr > 0xFF) || ((cmd == CMD_14) && (addr > 0xEF)))
+                    ch = nikon_get_current_channel(priv, pru_num);
+                    if(priv->load_share)
                     {
-                        DebugP_log("\r\n Please enter a valid 8 bit value\n");
+                        ls_ch = ch;
+                        DebugP_log("\r\nChannel %d: ", ch);
                     }
                     else
                     {
-                        break;
+                        ls_ch = 0;
+                        pru_num = nikon_get_totalchannels(priv);
+                    }
+
+                    while(1)
+                    {
+                        DebugP_log("\r\n Enter Memory location(in hex) to write(for bank read, 00h to FFh is valid; for non-bank read, 00h to EFh is valid): ");
+                        DebugP_scanf("%x", &addr);
+                        DebugP_log("\r\n Enter data(Bits [15:0] in hex) to write at Memory location 0x%x: ", addr);
+                        DebugP_scanf("%x", &data);
+
+                        if((data > 0xFFFF) || (addr > 0xFF) || ((cmd == CMD_14) && (addr > 0xEF)))
+                        {
+                            DebugP_log("\r\n Please enter a valid 8 bit value\n");
+                        }
+                        else
+                        {
+                            nikon_update_eeprom_addr(priv, (addr & 0xFF), ls_ch);
+                            nikon_update_eeprom_data(priv, (data & 0xFFFF), ls_ch);
+                            break;
+                        }
                     }
                 }
-                nikon_update_eeprom_addr(priv, (addr & 0xFF));
-                nikon_update_eeprom_data(priv, (data & 0xFFFF));
 
                 nikon_generate_cdf(priv, cmd);
                 ret = nikon_get_pos(priv, cmd);
@@ -1306,20 +1378,36 @@ void nikon_main(void *args)
 
                 if(cmd == CMD_18_VEL)
                 {
-                    while(1)
+                    for(pru_num = 0; pru_num < totalchannels; pru_num++)
                     {
-                        DebugP_log("\r\n Enter data(Bits [18:0] in hex) to assign as Velocity coefficient: ");
-                        DebugP_scanf("%x", &data);
-                        if((data > 0x7FFFF))
+                        ch = nikon_get_current_channel(priv, pru_num);
+                        if(priv->load_share)
                         {
-                            DebugP_log("\r\n Please enter valid value \n");
+                            ls_ch = ch;
+                            DebugP_log("\r\nChannel %d: ", ch);
                         }
                         else
                         {
-                            break;
+                            ls_ch = 0;
+                            pru_num = nikon_get_totalchannels(priv);
+                        }
+
+                        while(1)
+                        {
+                            DebugP_log("\r\n Enter data(Bits [18:0] in hex) to assign as Velocity coefficient: ");
+                            DebugP_scanf("%x", &data);
+                            if((data > 0x7FFFF))
+                            {
+                                DebugP_log("\r\n Please enter valid value \n");
+                            }
+                            else
+                            {
+                                nikon_update_velocity_coefficient(priv, data, ls_ch);
+                                break;
+                            }
                         }
                     }
-                    nikon_update_velocity_coefficient(priv, data);
+
                     nikon_generate_cdf(priv, cmd);
                     ret = nikon_get_pos(priv, cmd);
                     if(ret < 0)
@@ -1338,28 +1426,52 @@ void nikon_main(void *args)
                 }
                 else
                 {
-                    while(1)
+                    for(pru_num = 0; pru_num < totalchannels; pru_num++)
                     {
-                        DebugP_log("\r\n Enter data(Bits [23:0] in hex) to assign as identification code: ");
-                        DebugP_scanf("%x", &data);
-
-                        if((data > 0xFFFFFF))
+                        ch = nikon_get_current_channel(priv, pru_num);
+                        if(priv->load_share)
                         {
-                            DebugP_log("\r\n Please enter a valid value \n");
+                            ls_ch = ch;
+                            DebugP_log("\r\nChannel %d: ", ch);
                         }
                         else
                         {
-                            break;
+                            ls_ch = 0;
+                            pru_num = nikon_get_totalchannels(priv);
+                        }
+
+                        while(1)
+                        {
+                            DebugP_log("\r\n Enter data(Bits [23:0] in hex) to assign as identification code: ");
+                            DebugP_scanf("%x", &data);
+
+                            if((data > 0xFFFFFF))
+                            {
+                                DebugP_log("\r\n Please enter a valid value \n");
+                            }
+                            else
+                            {
+                                nikon_update_id_code(priv, data, ls_ch);
+                                break;
+                            }
                         }
                     }
-                    nikon_update_id_code(priv, data);
+
                     nikon_generate_cdf(priv, cmd);
                     ret = nikon_get_pos(priv, cmd);
                     if(ret < 0)
                     {
-                        DebugP_log("\r\n ERROR: Encoder's identification code write access failed \n");
+                        if(cmd == CMD_20)
+                        {
+                            DebugP_log("\r\n ERROR: Encoder's address setting failed \n");
+                        }
+                        else
+                        {
+                            DebugP_log("\r\n ERROR: Encoder's identification code write access failed \n");
+                        }
                         continue;
                     }
+
                     for(ch_num = 0; ch_num < totalchannels; ch_num++)
                     {
                         ch = nikon_get_current_channel(priv, ch_num);
@@ -1419,7 +1531,7 @@ void nikon_main(void *args)
                     ret = nikon_get_pos(priv, cmd);
                     if(ret < 0)
                     {
-                        DebugP_log("\r\n ERROR: Velocity/acceleration request failed\n");
+                        DebugP_log("\r\n ERROR: ABS measurement and velocity/acceleration request failed\n");
                         continue;
                     }
 
@@ -1561,7 +1673,7 @@ void nikon_main(void *args)
                     if(priv->load_share)
                     {
                         ls_ch = ch;
-                        DebugP_log("\r\nChannel %d - ", ch);
+                        DebugP_log("\r\nChannel %d: ", ch);
                     }
                     else
                     {
