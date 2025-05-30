@@ -7,7 +7,7 @@ const versions = {
     /**
      * SysConfig versions for different devices
      * These versions are used for system configuration tools
-     * 
+     *
      * Refer to the genProjectSpec.js file in the MCU+ SDK for the version
      */
     sysConfig: {
@@ -22,7 +22,7 @@ const versions = {
     /**
      * Code Composer Studio (CCS) versions for different devices
      * Specifies the CCS version to be used for each device
-     * 
+     *
      * Refer to the genProjectSpec.js file in the MCU+ SDK for the version
      */
     ccs: {
@@ -37,7 +37,7 @@ const versions = {
     /**
      * TI ARM Clang compiler versions for different devices
      * Device-specific compiler versions for TI Clang
-     * 
+     *
      * Refer to the genProjectSpec.js file in the MCU+ SDK for the version
      */
     tiClang: {
@@ -52,7 +52,7 @@ const versions = {
     /**
      * GCC AArch64 compiler versions for different devices
      * Used for 64-bit ARM compilation
-     * 
+     *
      * Refer to the genProjectSpec.js file in the MCU+ SDK for the version
      */
     gccAarch64: {
@@ -67,7 +67,7 @@ const versions = {
     /**
      * GCC ARMv7 compiler versions for different devices
      * Used for 32-bit ARM compilation
-     * 
+     *
      * Refer to the genProjectSpec.js file in the MCU+ SDK for the version
      */
     gccArmv7: {
@@ -83,7 +83,7 @@ const versions = {
      * Generic toolchain versions
      * These versions are used in the getToolChainVersionProjectSpec function
      * Key is the toolchain identifier and value is its version
-     * 
+     *
      * Refer to the genProjectSpec.js file in the MCU+ SDK for the version
      */
     toolchain: {
@@ -135,80 +135,80 @@ const versions = {
      * Tool versions and paths configuration specific to each device
      * These versions are used in imports.mak.xdt
      * Contains compiler versions, paths and development tools
-     * 
+     *
      * Refer to the genProjectSpec.js file in the MCU+ SDK for the version
      */
     toolVersionsForImportsMakefile: {
         default: {
             ccsVersion: "ccs1281",
             cgtPruVersion: "ti-cgt-pru_2.3.3",
-            cgtArmClangVersion: "ti-cgt-armllvm_4.0.1.LTS", 
+            cgtArmClangVersion: "ti-cgt-armllvm_4.0.1.LTS",
             cgtC6000Version: "ti-cgt-c6000_8.3.12",
             dsplibVersion: "dsplib_c66x_3_4_0_0",
             sysconfigVersion: "sysconfig_1.23.0",
             gccAarch64WinVersion: "gcc-arm-9.2-2019.12-mingw-w64-i686-aarch64-none-elf",
             gccArmWinVersion: "gcc-arm-none-eabi-9-2019-q4-major-win32",
-            gccAarch64LinuxVersion: "gcc-arm-9.2-2019.12-x86_64-aarch64-none-elf", 
+            gccAarch64LinuxVersion: "gcc-arm-9.2-2019.12-x86_64-aarch64-none-elf",
             gccArmLinuxVersion: "gcc-arm-none-eabi-9-2019-q4-major"
         },
         am64x: {
             ccsVersion: "ccs1281",
             cgtPruVersion: "ti-cgt-pru_2.3.3",
-            cgtArmClangVersion: "ti-cgt-armllvm_4.0.1.LTS", 
+            cgtArmClangVersion: "ti-cgt-armllvm_4.0.1.LTS",
             cgtC6000Version: "ti-cgt-c6000_8.3.12",
             dsplibVersion: "dsplib_c66x_3_4_0_0",
             sysconfigVersion: "sysconfig_1.23.0",
             gccAarch64WinVersion: "gcc-arm-9.2-2019.12-mingw-w64-i686-aarch64-none-elf",
             gccArmWinVersion: "gcc-arm-none-eabi-9-2019-q4-major-win32",
-            gccAarch64LinuxVersion: "gcc-arm-9.2-2019.12-x86_64-aarch64-none-elf", 
+            gccAarch64LinuxVersion: "gcc-arm-9.2-2019.12-x86_64-aarch64-none-elf",
             gccArmLinuxVersion: "gcc-arm-none-eabi-9-2019-q4-major"
         },
         am243x: {
             ccsVersion: "ccs1281",
             cgtPruVersion: "ti-cgt-pru_2.3.3",
-            cgtArmClangVersion: "ti-cgt-armllvm_4.0.1.LTS", 
+            cgtArmClangVersion: "ti-cgt-armllvm_4.0.1.LTS",
             cgtC6000Version: "ti-cgt-c6000_8.3.12",
             dsplibVersion: "dsplib_c66x_3_4_0_0",
             sysconfigVersion: "sysconfig_1.23.0",
             gccAarch64WinVersion: "gcc-arm-9.2-2019.12-mingw-w64-i686-aarch64-none-elf",
             gccArmWinVersion: "gcc-arm-none-eabi-9-2019-q4-major-win32",
-            gccAarch64LinuxVersion: "gcc-arm-9.2-2019.12-x86_64-aarch64-none-elf", 
+            gccAarch64LinuxVersion: "gcc-arm-9.2-2019.12-x86_64-aarch64-none-elf",
             gccArmLinuxVersion: "gcc-arm-none-eabi-9-2019-q4-major"
         },
         am263px: {
             ccsVersion: "ccs1281",
             cgtPruVersion: "ti-cgt-pru_2.3.3",
-            cgtArmClangVersion: "ti-cgt-armllvm_4.0.1.LTS", 
+            cgtArmClangVersion: "ti-cgt-armllvm_4.0.1.LTS",
             cgtC6000Version: "ti-cgt-c6000_8.3.12",
             dsplibVersion: "dsplib_c66x_3_4_0_0",
             sysconfigVersion: "sysconfig_1.23.0",
             gccAarch64WinVersion: "gcc-arm-9.2-2019.12-mingw-w64-i686-aarch64-none-elf",
             gccArmWinVersion: "gcc-arm-none-eabi-9-2019-q4-major-win32",
-            gccAarch64LinuxVersion: "gcc-arm-9.2-2019.12-x86_64-aarch64-none-elf", 
+            gccAarch64LinuxVersion: "gcc-arm-9.2-2019.12-x86_64-aarch64-none-elf",
             gccArmLinuxVersion: "gcc-arm-none-eabi-9-2019-q4-major"
         },
         am263x: {
             ccsVersion: "ccs1281",
             cgtPruVersion: "ti-cgt-pru_2.3.3",
-            cgtArmClangVersion: "ti-cgt-armllvm_4.0.1.LTS", 
+            cgtArmClangVersion: "ti-cgt-armllvm_4.0.1.LTS",
             cgtC6000Version: "ti-cgt-c6000_8.3.12",
             dsplibVersion: "dsplib_c66x_3_4_0_0",
             sysconfigVersion: "sysconfig_1.23.0",
             gccAarch64WinVersion: "gcc-arm-9.2-2019.12-mingw-w64-i686-aarch64-none-elf",
             gccArmWinVersion: "gcc-arm-none-eabi-9-2019-q4-major-win32",
-            gccAarch64LinuxVersion: "gcc-arm-9.2-2019.12-x86_64-aarch64-none-elf", 
+            gccAarch64LinuxVersion: "gcc-arm-9.2-2019.12-x86_64-aarch64-none-elf",
             gccArmLinuxVersion: "gcc-arm-none-eabi-9-2019-q4-major"
         },
         am261x: {
             ccsVersion: "ccs1281",
             cgtPruVersion: "ti-cgt-pru_2.3.3",
-            cgtArmClangVersion: "ti-cgt-armllvm_4.0.1.LTS", 
+            cgtArmClangVersion: "ti-cgt-armllvm_4.0.1.LTS",
             cgtC6000Version: "ti-cgt-c6000_8.3.12",
             dsplibVersion: "dsplib_c66x_3_4_0_0",
             sysconfigVersion: "sysconfig_1.23.0",
             gccAarch64WinVersion: "gcc-arm-9.2-2019.12-mingw-w64-i686-aarch64-none-elf",
             gccArmWinVersion: "gcc-arm-none-eabi-9-2019-q4-major-win32",
-            gccAarch64LinuxVersion: "gcc-arm-9.2-2019.12-x86_64-aarch64-none-elf", 
+            gccAarch64LinuxVersion: "gcc-arm-9.2-2019.12-x86_64-aarch64-none-elf",
             gccArmLinuxVersion: "gcc-arm-none-eabi-9-2019-q4-major"
         }
     },

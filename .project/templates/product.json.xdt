@@ -1,8 +1,7 @@
 %%{
     isDevelopmentMode = args.common.isDevelopmentMode();
     deviceName = args.utils.getProjectSpecDevice(args.device);
-    sysCfgVersion = args.utils.getSysCfgVersionProjectSpec();
-
+    sysCfgVersion = args.utils.getSysCfgVersionProjectSpec(args.device);
     /**
      * Get SDK version and format it to remove minor version
      */
@@ -16,7 +15,7 @@
     "name": "MOTOR_CONTROL_SDK_`deviceName`",
     "displayName": "MOTOR CONTROL SDK for `deviceName`",
 % }
-    "version": "sdkVersion",
+    "version": "`sdkVersion`",
     "documentationPath": "../docs",
     "includePaths": [
         "../source",

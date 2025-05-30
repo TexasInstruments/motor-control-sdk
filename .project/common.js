@@ -184,12 +184,13 @@ function setInstrumentationMode(mode)
 {
     genInstrumentationMode = mode;
 }
+
 /**
  * Get toolchain versions for a specific device
  *
  * @param {string} device - Device identifier (e.g., 'am64x', 'am243x')
  * @returns {object} Object containing toolchain versions and configurations
- *                If device-specific versions aren't found, returns default versions
+ *                  If device-specific versions aren't found, returns default versions
  *
  * @example
  * // Returns am64x-specific toolchain versions
@@ -244,6 +245,7 @@ function getSdkVersion(device) {
 function formatSdkVersion(version) {
     return version.split('.').slice(0, 3).join('.');
 }
+
 module.exports = {
     genBuildfiles,
     isDevelopmentMode,

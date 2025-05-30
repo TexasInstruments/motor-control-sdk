@@ -159,10 +159,9 @@ const utils = {
 
         return "copy";
     },
-
     /**
      * Get the toolchain version based on compiler type and SOC
-     * 
+     *
      * @param {string} cgt - Compiler/toolchain identifier (e.g., 'ti-arm-clang', 'gcc-aarch64')
      * @param {string} device - Device identifier (e.g., 'am64x', 'am243x')
      * @returns {string} Version of the specified toolchain for the given device, falls back to default if not specified
@@ -171,52 +170,56 @@ const utils = {
         const deviceVersions = versions.toolchain[device] || versions.toolchain.default;
         return deviceVersions[cgt] || '';
     },
-        /**
+
+    /**
      * Get SysConfig version for specified device
-     * 
+     *
      * @param {string} device - Device identifier (e.g., 'am64x', 'am243x')
      * @returns {string} SysConfig version for the device, falls back to default if not specified
      */
     getSysCfgVersionProjectSpec: (device) => {
         return versions.sysConfig[device] || versions.sysConfig.default;
     },
+
     /**
      * Get Code Composer Studio (CCS) version for specified device
-     * 
+     *
      * @param {string} device - Device identifier (e.g., 'am64x', 'am243x')
      * @returns {string} CCS version for the device, falls back to default if not specified
      */
     getCCSVersionProjectSpec: (device) => {
-        return versions.ccs[device] || versions.ccs.default
+        return versions.ccs[device] || versions.ccs.default;
     },
+
     /**
      * Get TI Clang compiler version for specified device
-     * 
+     *
      * @param {string} device - Device identifier (e.g., 'am64x', 'am243x')
      * @returns {string} TI Clang version for the device, falls back to default if not specified
      */
     getTiClangVersionProjectSpec: (device) => {
         return versions.tiClang[device] || versions.tiClang.default;
     },
-     /**
+
+    /**
      * Get GCC AArch64 compiler version for specified device
-     * 
+     *
      * @param {string} device - Device identifier (e.g., 'am64x', 'am243x')
      * @returns {string} GCC AArch64 version for the device, falls back to default if not specified
      */
     getGCCAarch64NoneVersionProjectSpec: (device) => {
         return versions.gccAarch64[device] || versions.gccAarch64.default;
     },
-     /**
+
+    /**
      * Get GCC ARMv7 compiler version for specified device
-     * 
+     *
      * @param {string} device - Device identifier (e.g., 'am64x', 'am243x')
      * @returns {string} GCC ARMv7 version for the device, falls back to default if not specified
      */
     getGCCArmv7NoneVersionProjectSpec: (device) => {
         return versions.gccArmv7[device] || versions.gccArmv7.default;
     },
-
 
     getTitleProjectSpec: (name) => {
         let title = name.replace(/_/g, ' ');
