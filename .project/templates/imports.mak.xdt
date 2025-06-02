@@ -2,13 +2,15 @@
     isDevelopmentMode = args.common.isDevelopmentMode();
     deviceName = args.utils.getProjectSpecDevice(args.device);
 
+    // Get device-specific versions using common functions
     const toolVersions = args.common.getToolVersions(args.device);
 %%}
 
-DEVICE ?= am64x
+DEVICE ?= am243x
+
 ifeq ($(OS),Windows_NT)
     TOOLS_PATH?=C:/ti
-    CCS_PATH?=$(TOOLS_PATH)/'toolVersions.ccsVersion'/ccs
+    CCS_PATH?=$(TOOLS_PATH)/`toolVersions.ccsVersion`/ccs
     CCS_ECLIPSE=$(CCS_PATH)/eclipse/eclipsec
     CYGWIN_PATH?=$(CCS_PATH)/utils/cygwin
     MKDIR=$(CYGWIN_PATH)/mkdir -p
@@ -23,17 +25,17 @@ ifeq ($(OS),Windows_NT)
     CHMOD=$(CYGWIN_PATH)/echo
     SHELL=cmd.exe
 % if((args.device == "am64x") || (isDevelopmentMode)) {
-    CGT_GCC_AARCH64_PATH=$(TOOLS_PATH)/'toolVersions.gccAarch64WinVersion'
+    CGT_GCC_AARCH64_PATH=$(TOOLS_PATH)/`toolVersions.gccAarch64WinVersion`
 % }
 % if((args.device == "am64x") || (args.device == "am243x") || (isDevelopmentMode)) {
-    CGT_GCC_ARM_PATH=$(TOOLS_PATH)/'toolVersions.gccArmWinVersion'
+    CGT_GCC_ARM_PATH=$(TOOLS_PATH)/`toolVersions.gccArmWinVersion`
     CGT_GCC_ARMV7_PATH=$(CGT_GCC_ARM_PATH)
 % }
 else
     UNAME_S := $(shell uname -s)
     ifneq (,$(filter $(UNAME_S),Linux Darwin))
         export TOOLS_PATH?=$(HOME)/ti
-        export CCS_PATH?=$(TOOLS_PATH)/'toolVersions.ccsVersion'/ccs
+        export CCS_PATH?=$(TOOLS_PATH)/`toolVersions.ccsVersion`/ccs
         export CCS_ECLIPSE=$(CCS_PATH)/eclipse/eclipse
         export MKDIR=mkdir -p
         export RMDIR=rm -rf
@@ -49,7 +51,7 @@ else
         CGT_GCC_AARCH64_PATH=$(TOOLS_PATH)/`toolVersions.gccAarch64LinuxVersion`
 % }
 % if((args.device == "am64x") || (args.device == "am243x") || (isDevelopmentMode)) {
-        CGT_GCC_ARM_PATH=$(TOOLS_PATH)//`toolVersions.gccArmLinuxVersion`
+        CGT_GCC_ARM_PATH=$(TOOLS_PATH)/`toolVersions.gccArmLinuxVersion`
         CGT_GCC_ARMV7_PATH=$(CGT_GCC_ARM_PATH)
 % }
     endif
@@ -62,6 +64,9 @@ ifeq ($(wildcard $(CGT_TI_ARM_CLANG_PATH)),)
 endif
 % if((args.device == "am273x") || (args.device == "awr294x") || (isDevelopmentMode)) {
 CGT_TI_C6000_PATH=$(CCS_PATH)/tools/compiler/`toolVersions.cgtC6000Version`
+ifeq ($(wildcard $(CGT_TI_C6000_PATH)),)
+    CGT_TI_C6000_PATH=$(TOOLS_PATH)/`toolVersions.cgtC6000Version`
+endif
 DSPLIB_PATH=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/`toolVersions.dsplibVersion`
 % }
 CCS_NODE = $(CCS_PATH)/tools/node/node

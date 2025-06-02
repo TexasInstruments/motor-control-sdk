@@ -86,5 +86,7 @@
         <file path="${MOTOR_CONTROL_SDK_PATH}/docs/api_guide_am243x/HDSL_DESIGN.html"
                 openOnCreation="false" excludeFromBuild="false" targetName="README.html" action="link">
         </file>
+        <file path="makefile.defs" openOnCreation="false" excludeFromBuild="false" action="copy">
+        </file>
     </project>
 </projectSpec>

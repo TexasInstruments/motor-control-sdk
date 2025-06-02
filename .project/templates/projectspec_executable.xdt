@@ -1,4 +1,8 @@
 %%{
+    function replaceSpecialCharInBoardName(boardName) {
+        // replace "/" in boardName with "_"
+        return boardName.replace(/\//g, "_");
+    }
     let profile_list = ["release", "debug"];
 
     products = "";
@@ -54,7 +58,7 @@
     <project
         % obj = args.project
         title="`args.utils.getTitleProjectSpec(args.project.name)`"
-        name = "`obj.name`_`obj.board`_`obj.cpu`_`obj.os`_`obj.cgt`"
+        name = "`obj.name`_`replaceSpecialCharInBoardName(obj.board)`_`obj.cpu`_`obj.os`_`obj.cgt`"
         products="`products`"
         configurations="
         % for (profile of profile_list) {
@@ -324,5 +328,7 @@
         <file path="makefile_ccs_bootimage_gen" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
         % }
+        <file path="makefile.defs" openOnCreation="false" excludeFromBuild="false" action="copy">
+        </file>
     </project>
 </projectSpec>

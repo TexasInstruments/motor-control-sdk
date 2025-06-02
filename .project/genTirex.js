@@ -1,5 +1,17 @@
 const common = require(`./common.js`);
 
+function findKernelFromOS(os) {
+    const validKernels = ["tirtos7", "tirtos", "freertos", "nortos"]; // TIREX allowable values for kernel
+
+    for (let validKernel of validKernels) {
+        if (os.includes(validKernel)) {
+            return validKernel;
+        }
+    }
+
+    return null; // Return null if no valid kernel is found
+}
+
 function genTirexSystemProjectContent(example, device) {
     let deviceData = require(`./device/project_${device}.js`);
     let property = require(`../${example}`).getComponentProperty(device);
@@ -35,11 +47,11 @@ function genTirexSystemProjectContent(example, device) {
     //tirex_content.compiler = [];
 
     /* Temp fix: Push only one kernel as TIREX doesn't support a list yet. Remove when this is fixed */
-    tirex_content.kernel.push(project.projects[0].os);
+    tirex_content.kernel.push(findKernelFromOS(project.projects[0].os));
     for (subproject of project.projects)
     {
         /* Temp fix: see above */
-        //tirex_content.kernel.push(subproject.os);
+        //tirex_content.kernel.push(findKernelFromOS(subproject.os));
         /* Temp fix: see above */
         //switch(subproject.cgt)
         //{
@@ -118,7 +130,7 @@ function genTirexExampleContentList(example_file_list, device) {
             tirex_content.kernel = [];
             tirex_content.compiler = [];
 
-            tirex_content.kernel.push(buildOption.os);
+            tirex_content.kernel.push(findKernelFromOS(buildOption.os));
             switch(buildOption.cgt)
             {
                 case "ti-arm-clang":

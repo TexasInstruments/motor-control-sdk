@@ -1,8 +1,7 @@
 %%{
     isDevelopmentMode = args.common.isDevelopmentMode();
     deviceName = args.utils.getProjectSpecDevice(args.device);
-    sysCfgVersion = args.utils.getSysCfgVersionProjectSpec();
-
+    sysCfgVersion = args.utils.getSysCfgVersionProjectSpec(args.device);
     /**
      * Get SDK version and format it to remove minor version
      */
@@ -16,7 +15,7 @@
     "name": "MOTOR_CONTROL_SDK_`deviceName`",
     "displayName": "MOTOR CONTROL SDK for `deviceName`",
 % }
-    "version": "sdkVersion",
+    "version": "`sdkVersion`",
     "documentationPath": "../docs",
     "includePaths": [
         "../source",
@@ -49,6 +48,7 @@
         "/security/security",
         "/xbar/xbar",
         "/memory_configurator/components",
+        "sdl/sdl"
 % }
 % if((args.device == "am263px")){
         "/motor_control",
@@ -61,11 +61,10 @@
         "/security/security",
         "/xbar/xbar",
         "/memory_configurator/components",
-        "/optiflash/optiflash"
+        "/optiflash/optiflash",
+        "sdl/sdl"
 % }
 % if((args.device == "am261x")){
-        "/motor_control",
-        "/industrial_comms/industrial_comms",
         "/kernel/dpl",
         "/drivers/drivers",
         "/board/board",
@@ -75,7 +74,8 @@
         "/usb/usb",
         "/xbar/xbar",
         "/memory_configurator/components",
-        "/optiflash/optiflash"
+        "/optiflash/optiflash",
+        "sdl/sdl"
 % }
     ],
     "devices": [
