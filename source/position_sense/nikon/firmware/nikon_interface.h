@@ -149,3 +149,8 @@ NIKON_POSITION_DATA_RCV_CRC_CH2_OFFSET      .set    0x35            ;8-bit recei
 
 NIKON_POSITION_DATA_ENC1_RES_OFFSET         .set    0xA0            ;offset of raw data receive from encoder 1
 NIKON_POSITION_DATA_ENC2_RES_OFFSET         .set    0xD8            ;offset of raw data receive from encoder 2
+NIKON_POSITION_DATA_ENC3_RES_OFFSET         .set    0x110           ;offset of raw data receive from encoder 3
+NIKON_POSITION_DATA_ENC4_RES_OFFSET         .set    0x148           ;offset of raw data receive from encoder 4
+NIKON_POSITION_DATA_ENC5_RES_OFFSET         .set    0x180           ;offset of raw data receive from encoder 5
+NIKON_POSITION_DATA_ENC6_RES_OFFSET         .set    0x1B8           ;offset of raw data receive from encoder 6
+NIKON_POSITION_DATA_ENC7_RES_OFFSET         .set    0x1F0           ;offset of raw data receive from encoder 7

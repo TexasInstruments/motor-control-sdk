@@ -59,12 +59,14 @@
 	; R15.b1	- Number of Rx frames to be received
 	; R15.b2	- Current the value of channel in use
 	; R15.b3	- Holds Rx clock frrequency
-	; R16.b0 	- Offset of current encoder in BUS configuration.
-	; R16.b1 	- Offset of RAW DATA from current encoder on current channel.
+	; R16.w0 	- Offset of current encoder in BUS configuration.
 	; R17-R20	- Used as scratch registers
-	; R21-R28	- Free
-	; R29	 	- Link register
-	; unused Register: R21-R28
+	; R21.w0 	- Offset of RAW DATA from current encoder on current channel.
+	; R21.w2 	- Offset of CRC Error Count from current encoder on current channel.
+	; R22.w0 	- Offset of OTF CRC from current encoder on current channel.
+	; R22.w2	- Free
+	; R23-R29	- Free
+	; unused Register: R22.w2-R29
 	.asg 	R0, 	HW_CONFIG
 	.asg    R1, 	FF0
     .asg    R2, 	FF1
@@ -92,15 +94,16 @@
 	.asg 	R15.b1, NUM_FRAMES
 	.asg 	R15.b2, CH_IN_USE
 	.asg 	R15.b3, RX_FREQ
-	.asg 	R16.b0, ENCODER_OFFSET
-	.asg 	R16.b1, RAW_DATA_OFFSET
+	.asg 	R16.w0, ENCODER_OFFSET
 	.asg 	R16.b2, LS_SYNC_STATE
 	.asg 	R16.b3, PRIMARY_CORE
 	.asg	R17, 	SCRATCH
 	.asg	R18, 	SCRATCH1
 	.asg 	R19, 	SCRATCH2
 	.asg 	R20, 	SCRATCH3
-	.asg 	R29, 	LINK_REG
+	.asg 	R21.w0, RAW_DATA_OFFSET
+	.asg 	R21.w2, CRC_ERR_OFFSET
+	.asg 	R22.w0, OTF_CRC_OFFSET
 
 NIKON_16MHZ_FREQ 						.set 	16			;16MHz frequency
 NIKON_RX_CRC_POLY 						.set 	0x11D		;Polynomial for 8-bit crc calculation
