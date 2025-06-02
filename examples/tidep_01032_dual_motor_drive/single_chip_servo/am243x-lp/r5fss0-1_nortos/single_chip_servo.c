@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023 Texas Instruments Incorporated
+ *  Copyright (C) 2023-25 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -69,24 +69,46 @@
 #define PRUICSS_SLICEx PRU_ICSSGx_PRU_SLICE
 
 #if CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU
-#include  <position_sense/endat/firmware/endat_master_multi_bin.h>
+#if PRU_ICSSGx_PRU_SLICE == PRUICSS_PRU1
+#include <multi_channel_single_pru/endat_receiver_multi_pru1_bin.h>
+#else
+#include <multi_channel_single_pru/endat_receiver_multi_pru0_bin.h>
+#endif
 #endif
 
 #if (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
-#include <position_sense/endat/firmware/endat_master_multi_RTU_bin.h>
-#endif
 
-#if (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
-#include <position_sense/endat/firmware/endat_master_multi_PRU_bin.h>
+#if PRU_ICSSGx_PRU_SLICE == PRUICSS_PRU1
+#if CONFIG_ENDAT0_CHANNEL0
+#include <multi_channel_load_share/endat_receiver_multi_rtu_pru1_bin.h>
 #endif
-
-#if (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
-#include <position_sense/endat/firmware/endat_master_multi_TXPRU_bin.h>
+#if CONFIG_ENDAT0_CHANNEL1
+#include <multi_channel_load_share/endat_receiver_multi_pru1_bin.h>
 #endif
+#if CONFIG_ENDAT0_CHANNEL2
+#include <multi_channel_load_share/endat_receiver_multi_tx_pru1_bin.h>
+#endif
+#else
+#if CONFIG_ENDAT0_CHANNEL0
+#include <multi_channel_load_share/endat_receiver_multi_rtu_pru0_bin.h>
+#endif
+#if CONFIG_ENDAT0_CHANNEL1
+#include <multi_channel_load_share/endat_receiver_multi_pru0_bin.h>
+endat_receiver_multi_pru0_bin.h
+#endif
+#if CONFIG_ENDAT0_CHANNEL2
+#include <multi_channel_load_share/endat_receiver_multi_tx_pru0_bin.h>
+#endif /* CONFIG_ENDAT0_CHANNEL*/
+#endif /* PRU_ICSSGx_PRU_SLICE */
+#endif /* (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU) */
 
 #if CONFIG_ENDAT0_MODE == ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU
-#include <position_sense/endat/firmware/endat_master_bin.h>
-#endif
+#if PRU_ICSSGx_PRU_SLICE == PRUICSS_PRU1
+#include <single_channel/endat_receiver_pru1_bin.h>
+#else
+#include <single_channel/endat_receiver_pru0_bin.h>
+#endif /* PRU_ICSSGx_PRU_SLICE*/
+#endif /* (CONFIG_ENDAT0_MODE == ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU)*/
 
 #define WAIT_5_SECOND  (5000)
 #define TASK_STACK_SIZE (4096)
@@ -106,6 +128,9 @@
 #define CPU1_BTCM_SOCVIEW(x) (CSL_R5FSS1_CORE0_BTCM_BASE+(x - CSL_R5FSS1_BTCM_BASE))
 
 #define  NUM_CH_SUPPORTED      ( 3 )
+
+#define ICSS_PRU_CORE_CLOCK CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ
+#define ENDAT_INPUT_CLOCK_UART_FREQUENCY   CONFIG_PRU_ICSS0_UART_CLK_FREQ_HZ
 
 /* EPWM ISR information */
 typedef struct _AppEPwmIsrInfo_t
@@ -245,13 +270,20 @@ __attribute__((section(".gEnDatChInfo"))) struct endatChRxInfo gEndatChInfo;
 #define ENDAT_MULTI_CH1 (1 << 1)
 #define ENDAT_MULTI_CH2 (1 << 2)
 
-#define ENDAT_INPUT_CLOCK_UART_FREQUENCY 192000000
-/* use uart clock only to start with */
-#define ENDAT_INPUT_CLOCK_FREQUENCY ENDAT_INPUT_CLOCK_UART_FREQUENCY
+#if RX_FIFO_CLOCK_SOURCE == 1
+#define ENDAT_RX_INPUT_CLOCK_FREQUENCY ICSS_PRU_CORE_CLOCK
+#else
+#define ENDAT_RX_INPUT_CLOCK_FREQUENCY ENDAT_INPUT_CLOCK_UART_FREQUENCY
+#endif
+
+#if TX_FIFO_CLOCK_SOURCE == 1
+#define ENDAT_TX_INPUT_CLOCK_FREQUENCY ICSS_PRU_CORE_CLOCK
+#else
+#define ENDAT_TX_INPUT_CLOCK_FREQUENCY ENDAT_INPUT_CLOCK_UART_FREQUENCY
+#endif
 
 #define ENDAT_RX_SAMPLE_SIZE    7
 #define ENDAT_RX_SESQUI_DIV (1 << 15)
-
 static unsigned char gEndat_multi_ch_mask;
 
 static unsigned int gEndat_prop_delay[3];
@@ -315,8 +347,9 @@ static void endat_pruss_init(void)
 {
     gPruIcssXHandle = PRUICSS_open(CONFIG_PRU_ICSS0);
      /* Configure g_mux_en to 1 in ICSSG_SA_MX_REG Register. */
+#ifdef CONFIG_ENDAT0_G_MUX_EN
     PRUICSS_setSaMuxMode(gPruIcssXHandle, PRUICSS_SA_MUX_MODE_SD_ENDAT);
-
+#endif
     /* Set in constant table C30 to shared RAM 0x40300000 */
     PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_PRUx, PRUICSS_CONST_TBL_ENTRY_C30, ((0x40300000 & 0x00FFFF00) >> 8));
     if(gEndat_is_load_share_mode)
@@ -351,8 +384,7 @@ uint32_t endat_pruss_load_run_fw(struct endat_priv *priv)
 
 #if CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU /*enable loadshare mode*/
 
-
-
+#if (CONFIG_ENDAT0_CHANNEL0 == 1)
             status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_RTUPRUx);
             DebugP_assert(SystemP_SUCCESS == status);
             status=PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_RTU_PRU(PRUICSS_SLICEx),
@@ -363,8 +395,9 @@ uint32_t endat_pruss_load_run_fw(struct endat_priv *priv)
             DebugP_assert(SystemP_SUCCESS == status);
             status = PRUICSS_enableCore(gPruIcssXHandle, PRUICSS_RTUPRUx);
             DebugP_assert(SystemP_SUCCESS == status);
+#endif
 
-
+#if (CONFIG_ENDAT0_CHANNEL1 == 1)
             status=PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_PRUx );
             DebugP_assert(SystemP_SUCCESS == status);
             status = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_SLICEx),
@@ -376,7 +409,8 @@ uint32_t endat_pruss_load_run_fw(struct endat_priv *priv)
             status = PRUICSS_enableCore(gPruIcssXHandle, PRUICSS_PRUx);
             DebugP_assert(SystemP_SUCCESS == status);
 
-
+#endif
+#if (CONFIG_ENDAT0_CHANNEL2 == 1)
            status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_TXPRUx);
              DebugP_assert(SystemP_SUCCESS == status);
             status = PRUICSS_writeMemory(gPruIcssXHandle,  PRUICSS_IRAM_TX_PRU(PRUICSS_SLICEx),
@@ -390,7 +424,7 @@ uint32_t endat_pruss_load_run_fw(struct endat_priv *priv)
 
 
         status=endat_wait_initialization(priv, WAIT_5_SECOND, gEndat_multi_ch_mask);
-
+#endif
 
 #else
 
@@ -435,12 +469,13 @@ static int endat_calc_clock(unsigned freq, struct endat_clk_cfg *clk_cfg)
         DebugP_log("\r| ERROR: frequency above 16MHz, between 12 & 16MHz not allowed\n|\n|\n");
         return -1;
     }
+    
+    if((freq != 16000000) && (ENDAT_RX_INPUT_CLOCK_FREQUENCY % (freq * 8))&&(ENDAT_TX_INPUT_CLOCK_FREQUENCY % (freq)))
+    DebugP_log("\r| WARNING: exact clock divider is not possible, frequencies set would be tx: %u\trx: %u\n",
+                ENDAT_TX_INPUT_CLOCK_FREQUENCY / (ENDAT_TX_INPUT_CLOCK_FREQUENCY / freq),
+                ENDAT_RX_INPUT_CLOCK_FREQUENCY / (ENDAT_RX_INPUT_CLOCK_FREQUENCY / (freq * 8)));
 
-    if((freq != 16000000) && (ENDAT_INPUT_CLOCK_FREQUENCY % (freq * 8)))
-        DebugP_log("\r| WARNING: exact clock divider is not possible, frequencies set would be tx: %u\trx: %u\n",
-                    ENDAT_INPUT_CLOCK_FREQUENCY / (ENDAT_INPUT_CLOCK_FREQUENCY / freq),
-                    ENDAT_INPUT_CLOCK_FREQUENCY / (ENDAT_INPUT_CLOCK_FREQUENCY / (freq * 8)));
-
+    
     ns = 2 * 1000000000 / freq; /* rx arm >= 2 clock */
 
     /* should be divisible by 5 */
@@ -449,8 +484,8 @@ static int endat_calc_clock(unsigned freq, struct endat_clk_cfg *clk_cfg)
         ns /= 5, ns += 1,  ns *= 5;
     }
 
-    clk_cfg->tx_div = ENDAT_INPUT_CLOCK_FREQUENCY / freq - 1;
-    clk_cfg->rx_div = ENDAT_INPUT_CLOCK_FREQUENCY / (freq * 8) - 1;
+    clk_cfg->tx_div = ENDAT_TX_INPUT_CLOCK_FREQUENCY / freq - 1;
+    clk_cfg->rx_div = ENDAT_RX_INPUT_CLOCK_FREQUENCY / (freq * 8) - 1;
     clk_cfg->rx_en_cnt = ns;
     clk_cfg->rx_div_attr = ENDAT_RX_SAMPLE_SIZE;
 
@@ -1529,11 +1564,27 @@ void init_encoder(){
     pruss_cfg = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->cfgRegBase);
     pruss_iep  = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->iep0RegBase);
 
+     /* Read the ICSSG configured clock frequency. */
+    if(gPruIcssXHandle->hwAttrs->instance)
+    {
+        SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG1, TISCI_DEV_PRU_ICSSG1_CORE_CLK, &icssgclk);
+    }
+    else
+    {
+        SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG0, TISCI_DEV_PRU_ICSSG0_CORE_CLK, &icssgclk);
+    }
+
+     /*3 channel pheripheral clock configuration*/
+    endat_clk_config.pru_clock = icssgclk;
+    endat_clk_config.pru_uart_clock = ENDAT_INPUT_CLOCK_UART_FREQUENCY;
+    endat_clk_config.rx_clock_source = RX_FIFO_CLOCK_SOURCE;
+    endat_clk_config. tx_clock_source = TX_FIFO_CLOCK_SOURCE;
+
     /*Translate the TCM local view addr to globel view addr */
     uint64_t gEndatChInfoGlobalAddr = CPU0_BTCM_SOCVIEW((uint64_t)&gEndatChInfo);
 
     priv = endat_init((struct endat_pruss_xchg *)((PRUICSS_HwAttrs *)(
-                          gPruIcssXHandle->hwAttrs))->pru1DramBase, &gEndatChInfo, gEndatChInfoGlobalAddr, pruss_cfg, pruss_iep, PRUICSS_SLICEx);
+                          gPruIcssXHandle->hwAttrs))->pru1DramBase, &gEndatChInfo, gEndatChInfoGlobalAddr, pruss_cfg, pruss_iep, PRUICSS_SLICEx, &endat_clk_config);
 
     if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
     {
@@ -1546,15 +1597,6 @@ void init_encoder(){
 
     endat_config_host_trigger(priv);
 
-    /* Read the ICSSG configured clock frequency. */
-    if(gPruIcssXHandle->hwAttrs->instance)
-    {
-        SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG1, TISCI_DEV_PRU_ICSSG1_CORE_CLK, &icssgclk);
-    }
-    else
-    {
-        SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG0, TISCI_DEV_PRU_ICSSG0_CORE_CLK, &icssgclk);
-    }
 
     /* Configure Delays based on the ICSSG frequency*/
     /* Count = ((required delay * icssgclk)/1000) */

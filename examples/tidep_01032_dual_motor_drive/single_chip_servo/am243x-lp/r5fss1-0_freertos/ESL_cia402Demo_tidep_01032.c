@@ -45,7 +45,7 @@
 #include <ESL_os.h>
 #include <ESL_BOARD_OS_config.h>
 
-#include "ecSlvCiA402.h"
+#include "ecSubDeviceCiA402.h"
 
 #include "ESL_cia402Demo.h"
 #include "ESL_cia402Obd.h"

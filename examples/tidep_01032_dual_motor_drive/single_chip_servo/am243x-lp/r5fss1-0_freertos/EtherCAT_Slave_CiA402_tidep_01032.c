@@ -51,7 +51,7 @@
 
 /* this one shall the only one to be using it ! */
 #include "project.h"
-#include "ecSlvCiA402.h"
+#include "ecSubDeviceCiA402.h"
 
 #if (defined FBTL_REMOTE) && (FBTL_REMOTE==1)
 #if (defined FBTLIMPL_LINEUART) && (1==FBTLIMPL_LINEUART)

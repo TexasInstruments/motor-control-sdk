@@ -46,7 +46,7 @@ FILES_common := \
 	ESL_gpioHelper.c \
 	CUST_PHY_base.c \
 	CUST_PHY_dp83869.c \
-	ecSlvCiA402.c \
+	ecSubDeviceCiA402.c \
 	ESL_cia402Obd.c \
 	EtherCAT_Slave_CiA402_tidep_01032.c \
 	ESL_cia402Demo_tidep_01032.c \
@@ -66,10 +66,10 @@ FILES_PATH_common = \
 	.. \
 	../../.. \
 	../../../../../.. \
-	../../../../../../ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/common \
-	../../../../../../ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/common/os/freertos \
+	../../../../../../ind_comms_sdk/examples/industrial_comms/ethercat_subdevice_demo/common \
+	../../../../../../ind_comms_sdk/examples/industrial_comms/ethercat_subdevice_demo/common/os/freertos \
 	../../../../../../ind_comms_sdk/examples/industrial_comms/custom_phy/src \
-	../../../../../../ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/device_profiles/402_cia \
+	../../../../../../ind_comms_sdk/examples/industrial_comms/ethercat_subdevice_demo/device_profiles/402_cia \
 	../../../../../../ind_comms_sdk/examples/industrial_comms/nvm \
 	../../../../../../ind_comms_sdk/examples/industrial_comms/nvm/app/src \
 	../../../../../../ind_comms_sdk/examples/industrial_comms/nvm/app/inc \
@@ -87,12 +87,12 @@ INCLUDES_common := \
 	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/FreeRTOS-Kernel/include \
 	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F \
 	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/am243x/r5f \
-	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/device_profiles/402_cia \
-	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/common \
-	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/common/os \
-	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/common/os/freertos \
-	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/common/board/am243lp \
-	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/ethercat_slave_demo/common/board/am243lp/freertos \
+	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/ethercat_subdevice_demo/device_profiles/402_cia \
+	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/ethercat_subdevice_demo/common \
+	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/ethercat_subdevice_demo/common/os \
+	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/ethercat_subdevice_demo/common/os/freertos \
+	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/ethercat_subdevice_demo/common/board/am243x-lp \
+	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/ethercat_subdevice_demo/common/board/am243x-lp/freertos \
 	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/custom_phy/inc \
 	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/nvm/app/inc \
 	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/nvm/drv/inc \
