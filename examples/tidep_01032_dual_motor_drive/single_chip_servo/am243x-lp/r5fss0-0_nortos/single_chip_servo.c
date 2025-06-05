@@ -499,19 +499,19 @@ static void endat_print_encoder_info(struct endat_priv *priv)
 {
     DebugP_log("EnDat 2.%d %s encoder\tID: %u %s\tSN: %c %u %c\n\n",
                 priv->cmd_set_2_2 ? 2 : 1,
-                (priv->type == rotary) ? "rotary" : "linear",
+                (priv->type[priv->current_channel] == rotary) ? "rotary" : "linear",
                 priv->id.binary, (char *)&priv->id.ascii,
                 (char)priv->sn.ascii_msb, priv->sn.binary, (char)priv->sn.ascii_lsb);
     DebugP_log("\rPosition: %d bits ", priv->pos_res);
 
-    if(priv->type == rotary)
+    if(priv->type[priv->current_channel] == rotary)
     {
-        DebugP_log("(singleturn: %d, multiturn: %d) ", priv->single_turn_res,
-                    priv->multi_turn_res);
+        DebugP_log("(singleturn: %d, multiturn: %d) ", priv->single_turn_res[priv->current_channel],
+                    priv->multi_turn_res[priv->current_channel]);
     }
 
-    DebugP_log("[resolution: %d %s]", priv->step,
-                priv->type == rotary ? "M/rev" : "nm");
+    DebugP_log("[resolution: %d %s]", priv->step[priv->current_channel],
+                priv->type[priv->current_channel] == rotary ? "M/rev" : "nm");
     DebugP_log("\r\n\nPropagation delay: %dns",
                 gEndat_prop_delay[priv->channel]);
     DebugP_log("\n\n\n");
@@ -557,7 +557,7 @@ static void endat_init_clock(uint32_t frequency, struct endat_priv *priv) {
         if(gEndat_multi_ch_mask & 1 << j)
         {
             endat_multi_channel_set_cur(priv, j);
-            endat_handle_prop_delay(priv, gEndat_prop_delay[priv->channel]);
+            endat_handle_prop_delay(priv, gEndat_prop_delay[priv->current_channel]);
             d = gEndat_prop_delay_max - gEndat_prop_delay[j];
             endat_config_wire_delay(priv, d);
         }
@@ -589,7 +589,7 @@ static void endat_handle_rx(struct endat_priv *priv, int cmd)
 
     endat_recvd_process(priv, cmd,  &endat_format_data);
     endat_recvd_validate(priv, cmd, &endat_format_data);
-    gAngle = (float) endat_format_data.position_addinfo.position.position / priv->step * 360.0;
+    gAngle = (float) endat_format_data.position_addinfo.position.position / priv->step[priv->current_channel] * 360.0;
     gRevolution = endat_format_data.position_addinfo.position.revolution;
 
     return;
@@ -689,7 +689,7 @@ uint8_t localEnDatGetSingleMulti(float32_t * mechTheta, uint16_t * multiTurn, in
     rev = ((rev & 0x07F00000) >> 15) | ((pos & 0xF8000000) >> 27);
     pos = (pos >> 2) & 0x1FFFFFF;
 
-    *mechTheta = (float32_t) pos / (float32_t) priv->step * 360.0;
+    *mechTheta = (float32_t) pos / (float32_t) priv->step[priv->current_channel] * 360.0;
     *multiTurn = (uint16_t) rev;
 
     return 0;
@@ -1626,14 +1626,14 @@ void init_encoder(){
                 return;
             }
 
-            gEndat_prop_delay[priv->channel] = endat_get_prop_delay(priv);
+            gEndat_prop_delay[priv->current_channel] = endat_get_prop_delay(priv);
             DebugP_log("\n\t\t\t\tCHANNEL %d\n\n", j);
             endat_print_encoder_info(priv);
         }
     }
 
     /* pass the encoder step to the R5F_0_1 */
-    priv_step = priv->step;
+    priv_step = priv->step[priv->current_channel];
 
     gEndat_prop_delay_max = gEndat_prop_delay[0] > gEndat_prop_delay[1] ?
                            gEndat_prop_delay[0] : gEndat_prop_delay[1];
