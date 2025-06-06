@@ -1133,13 +1133,13 @@ static int32_t endat_get_command_supplement(int32_t cmd,
             if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
             {
                 DebugP_log("\r| Select Channel: ");
-                if(DebugP_scanf("%u\n", &priv->channel) < 0)
+                if(DebugP_scanf("%u\n", &priv->current_channel) < 0)
                 {
                     DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
                     return -EINVAL;
                 }
 
-                if(!((gEndat_multi_ch_mask) & (1<<priv->channel)))
+                if(!((gEndat_multi_ch_mask) & (1<<priv->current_channel)))
                 {
                     DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
                     return -EINVAL;
@@ -2237,9 +2237,9 @@ static void endat_process_host_command(int32_t cmd,
 
                     recovery_time = endat_get_recovery_time(priv);
                     DebugP_log("\r Recovery Time: %10u ns \n", recovery_time);
-                    DebugP_log("\r Current value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.currentCounterValue);
-                    DebugP_log("\r Previous value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.lastCounterValue);
-                    DebugP_log("\r Starting value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.startingValue);
+                    DebugP_log("\r Current value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.currentCounterValue);
+                    DebugP_log("\r Previous value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.lastCounterValue);
+                    DebugP_log("\r Starting value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.startingValue);
                 }
             }
         }
@@ -2247,9 +2247,9 @@ static void endat_process_host_command(int32_t cmd,
         {
             recovery_time = endat_get_recovery_time(priv);
             DebugP_log("\r Recovery Time: %10u ns \n", recovery_time);
-            DebugP_log("\r Current value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.currentCounterValue);
-            DebugP_log("\r Previous value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.lastCounterValue);
-            DebugP_log("\r Starting value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.startingValue);
+            DebugP_log("\r Current value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.currentCounterValue);
+            DebugP_log("\r Previous value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.lastCounterValue);
+            DebugP_log("\r Starting value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.startingValue);
         }
 
     }
@@ -2648,10 +2648,10 @@ void endat_main(void *args)
                     rt_error =  endat_check_rt_error(priv);
                     if(rt_error != RT_NO_ERROR)
                     {
-                        DebugP_log("\r Error: Channel %d - Recovery time out of expected range. \n", priv->channel);
+                        DebugP_log("\r Error: Channel %d - Recovery time out of expected range. \n", priv->current_channel);
                         if(rt_error == RT_COUNTER_STUCK_ERROR)
                         {
-                            DebugP_log("\r Error: Counter for Channel %d is stuck.\n", priv->channel);
+                            DebugP_log("\r Error: Counter for Channel %d is stuck.\n", priv->current_channel);
                         }
                     }
                 }
@@ -2665,10 +2665,10 @@ void endat_main(void *args)
             rt_error =  endat_check_rt_error(priv);
             if(rt_error == RT_COUNTER_STUCK_ERROR)
             {
-                DebugP_log("\r Error: Channel %d - Recovery time out of expected range. \n", priv->channel);
-                if(priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.isCounterStuck == 1)
+                DebugP_log("\r Error: Channel %d - Recovery time out of expected range. \n", priv->current_channel);
+                if(priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.isCounterStuck == 1)
                 {
-                    DebugP_log("\r Error: Counter for Channel %d is stuck. \n", priv->channel);
+                    DebugP_log("\r Error: Counter for Channel %d is stuck. \n", priv->current_channel);
                 }
             }
         }
