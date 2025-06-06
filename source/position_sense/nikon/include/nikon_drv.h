@@ -55,21 +55,15 @@ extern "C" {
     different commands and multi transmission connection.
 */
 /* Single PRU - Single channel configuration */
-#define NIKON_MODE_SINGLE_CHANNEL_SINGLE_PRU (0U)
+#define NIKON_MODE_SINGLE_CHANNEL_SINGLE_PRU    (0U)
 /* Single PRU - Multichannel configuration */
-#define NIKON_MODE_MULTI_CHANNEL_SINGLE_PRU (1U)
+#define NIKON_MODE_MULTI_CHANNEL_SINGLE_PRU     (1U)
 /* Multichannel - Load Share configuration */
-#define NIKON_MODE_MULTI_CHANNEL_MULTI_PRU (2U)
+#define NIKON_MODE_MULTI_CHANNEL_MULTI_PRU      (2U)
 
 /* 35 milisec as max cycle timeout (more than 30 mili sec delay is required
 between two cycles in memory access commands) */
 #define NIKON_MAX_CYCLE_TIMEOUT             35
-/* Maximum number of 3-ch peripheral interface Channels*/
-#define NUM_ED_CH_MAX                       3
-/* Maximum number of Nikon Encoders connected in bus connection*/
-#define NUM_ENCODERS_MAX                    3
-/* Maximum number of Memory Data Frames to be sent on Tx*/
-#define NUM_MDF_CMD_MAX                     NUM_MDF_MAX
 
 #define NIKON_RX_SAMPLE_SIZE_4X             3      /* 4x over sample rate */
 #define NIKON_RX_SAMPLE_SIZE_6X             5      /* 6x over sample rate */
@@ -411,7 +405,7 @@ struct nikon_priv
     /**< PRU-ICSS cfg registers base offset*/
     uint32_t tx_cdf[NUM_ED_CH_MAX];
     /**< Command data frame to be transmitted to encoder*/
-    uint32_t tx_mdf[NUM_ED_CH_MAX][NUM_MDF_CMD_MAX];
+    uint32_t tx_mdf[NUM_ED_CH_MAX][NUM_MDF_MAX];
     /**< Memory data frame to be transmitted to encoder*/
     uint32_t num_rx_frames;
     /**< Number of Rx frames to be receive */
@@ -433,7 +427,7 @@ struct nikon_priv
     /**<Synchronization code*/
     uint32_t tx_crc;
     /**<Tx 3 bit crc*/
-    uint32_t mem_data[NUM_ED_CH_MAX][NUM_MDF_CMD_MAX];
+    uint32_t mem_data[NUM_ED_CH_MAX][NUM_MDF_MAX];
     /**<Memory data in indexes 0,1 and memory address in index 2*/
     struct   pos_data_info  pos_data_info[NUM_ED_CH_MAX];
     /**<ABS, ALM, EEPROM or Identification code information extracted

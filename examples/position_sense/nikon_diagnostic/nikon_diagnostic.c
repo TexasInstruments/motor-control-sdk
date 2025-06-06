@@ -404,29 +404,31 @@ void nikon_get_enc_data_len(struct nikon_priv *priv)
             single_turn_len[enc_num] = 0;
             multi_turn_len[enc_num] = 0;
         }
+
         ch = nikon_get_current_channel(priv, ch_num);
         DebugP_log("\r\nPlease enter encoder length connected to Channel %d:\n", ch);
-        DebugP_log("\r\nPlease enter 1st encoder single turn length: ");
+
+        DebugP_log("\r\nPlease enter single turn length for encoder 1: ");
         DebugP_scanf("%u\n", &single_turn_len[0]);
-        num_encoders = 1;
-        DebugP_log("\r\nPlease enter 1st encoder multi turn length (zero if not a multi turn encoder): ");
+        DebugP_log("\r\nPlease enter multi turn length for encoder 1 (0, if not a multi turn encoder): ");
         DebugP_scanf("%u\n", &multi_turn_len[0]);
-        DebugP_log("\r\nPlease enter 2nd encoder single turn length (zero if not connected): ");
-        DebugP_scanf("%u\n", &single_turn_len[1]);
-        if(single_turn_len[1])
+        num_encoders = 1;
+
+        for(enc_num = 1; enc_num < NUM_ENCODERS_MAX; enc_num++)
         {
-            DebugP_log("\r\nPlease enter 2nd encoder multi turn length (zero if not a multi turn encoder): ");
-            DebugP_scanf("%u\n", &multi_turn_len[1]);
-            num_encoders = 2;
-            DebugP_log("\r\nPlease enter 3rd encoder single turn length (zero if not connected): ");
-            DebugP_scanf("%u\n", &single_turn_len[2]);
-            if(single_turn_len[2])
+            DebugP_log("\r\nPlease enter single turn length for encoder %d (0, if not connected): ", (enc_num + 1));
+            DebugP_scanf("%u\n", &single_turn_len[enc_num]);
+
+            if(single_turn_len[enc_num] == 0)
             {
-                DebugP_log("Please enter 3rd encoder multi turn length (zero if not a multi turn encoder): ");
-                DebugP_scanf("%u\n", &multi_turn_len[2]);
-                num_encoders = 3;
+                break;
             }
+            DebugP_log("\r\nPlease enter multi turn length for encoder %d (0, if not a multi turn encoder): ", (enc_num + 1));
+            DebugP_scanf("%u\n", &multi_turn_len[enc_num]);
+
+            num_encoders++;
         }
+
         nikon_update_enc_len(priv, num_encoders, single_turn_len, multi_turn_len, ch);
     }
 }
@@ -1680,12 +1682,20 @@ void nikon_main(void *args)
                         ls_ch = 0;
                         pru_num = nikon_get_totalchannels(priv);
                     }
-                    DebugP_log(" Please enter the encoder address : ");
-                    DebugP_scanf("%d", &enc_addr);
-                    if(enc_addr > 7)
+                    while(1)
                     {
-                        DebugP_log("\r\n Please enter a 3-bit value(0-7)\n");
-                        continue;
+
+                        DebugP_log("\r\n Current encoder address : %d", priv->eax[ls_ch]);
+                        DebugP_log("\r\n Please enter the encoder address : ");
+                        DebugP_scanf("%d", &enc_addr);
+                        if(enc_addr > 7)
+                        {
+                            DebugP_log("\r\n Please enter a 3-bit value(0-7)\n");
+                        }
+                        else
+                        {
+                            break;
+                        }
                     }
                     nikon_update_enc_addr(priv, enc_addr, ls_ch);
                 }

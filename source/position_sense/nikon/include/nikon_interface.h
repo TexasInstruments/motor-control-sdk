@@ -36,14 +36,14 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-/* Maximum number of 3-ch peripheral interface Channels*/
-#define NUM_ED_CH_MAX                       3
+/* Maximum number of channels in 3 channel peripheral interface of 1 PRU-ICSS Slice */
+#define NUM_ED_CH_MAX                       (3U)
 /* Maximum number of Nikon Encoders connected in bus connection*/
-#define NUM_ENCODERS_MAX                    3
-/* Maximum number of Received data field frames */
-#define NUM_DATA_FIELDS_MAX                 5
-/* Maximum number of Memory data field frames */
-#define NUM_MDF_MAX                         4
+#define NUM_ENCODERS_MAX                    (8U)
+/* Maximum number of Received Data Field Frames */
+#define NUM_DATA_FIELDS_MAX                 (5U)
+/* Maximum number of Memory Data Field Frames */
+#define NUM_MDF_MAX                         (4U)
 
 /* ========================================================================== */
 /*                           Macros                                           */
@@ -74,7 +74,6 @@ struct crc
     /**< Position data otf crc bits*/
     volatile uint8_t pos_rcv_crc[NUM_ED_CH_MAX];
     /**< Position data receive crc bits*/
-
 };
 struct pos_data_res
 {

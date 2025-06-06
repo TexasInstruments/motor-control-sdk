@@ -771,13 +771,26 @@ int32_t nikon_wait_for_encoder_detection(struct nikon_priv *priv)
         priv->pruicss_xchg->num_encoders[ls_ch] = priv->num_encoders[ls_ch];
         priv->pruicss_xchg->rx_frame_size[ls_ch] = 0xfff;
     }
+
     priv->pruicss_xchg->num_rx_frames = NIKON_NUM_RX_FRAMES_FOUR;
     nikon_generate_cdf(priv, CMD_4);
-    for(pru_num = 0; pru_num < NUM_ED_CH_MAX; pru_num++)
+
+    for(pru_num = 0; pru_num < priv->totalchannels; pru_num++)
     {
-        priv->pruicss_xchg->cdf_frame[pru_num] = priv->tx_cdf[pru_num];
-        priv->eax[pru_num] = 0;
+        if(priv->load_share)
+        {
+            ls_ch = priv->channel[pru_num];
+        }
+        else
+        {
+            ls_ch = 0;
+            pru_num = priv->totalchannels;
+        }
+
+        priv->pruicss_xchg->cdf_frame[ls_ch] = priv->tx_cdf[ls_ch];
+        priv->eax[ls_ch] = 0;
     }
+
     if(nikon_command_process(priv) < 0)
     {
         return SystemP_FAILURE;
@@ -798,12 +811,15 @@ int32_t nikon_get_pos(struct nikon_priv *priv, uint32_t cmd)
     uint32_t pru_num;
     uint32_t mdf_num;
 
-    ch = priv->channel[0];
 
     if(((priv->protocol_version == NIKON_PROTOCOL_V2_1) && (((cmd > CMD_22) && (cmd < CMD_27)) || (cmd > CMD_30))) || ((cmd > CMD_30) && (cmd < CMD_1_VEL)) || (cmd >= CMD_CODE_NUM))
     {
         return SystemP_FAILURE;
     }
+
+    ch = priv->channel[0];
+    pruicss_xchg->is_memory_access = 0;
+    pruicss_xchg->num_mdf = 0;
 
     if((cmd == CMD_0) || (cmd == CMD_4) || ((cmd >= CMD_27) && (cmd <= CMD_30)))
     {
@@ -854,7 +870,7 @@ int32_t nikon_get_pos(struct nikon_priv *priv, uint32_t cmd)
         priv->num_rx_frames = NIKON_NUM_RX_FRAMES_THREE;
 
         /* Send MDF0 (Data lower 8 bits), MDF1 (Data upper 8 bits) and MDF2 (memory address) after CDF*/
-        for(mdf_num = 0; mdf_num < NUM_MDF_CMD_MAX-1; mdf_num++)
+        for(mdf_num = 0; mdf_num < NUM_MDF_MAX-1; mdf_num++)
         {
             priv->fc = (uint32_t)nikon_reverse_bits(mdf_num + 1 , NIKON_FRAME_CODE_LEN);
             nikon_generate_mdf(priv, mdf_num, mdf_num);
@@ -869,7 +885,7 @@ int32_t nikon_get_pos(struct nikon_priv *priv, uint32_t cmd)
         priv->bank_error = 0;
 
         /* Send MDF0 (Data lower 8 bits), MDF1 (Data upper 8 bits) after CDF*/
-        for(mdf_num = 0; mdf_num < NUM_MDF_CMD_MAX-2; mdf_num++)
+        for(mdf_num = 0; mdf_num < NUM_MDF_MAX-2; mdf_num++)
         {
             priv->fc = (uint32_t)nikon_reverse_bits(mdf_num + 1 , NIKON_FRAME_CODE_LEN);
             nikon_generate_mdf(priv, mdf_num, mdf_num);
@@ -888,7 +904,7 @@ int32_t nikon_get_pos(struct nikon_priv *priv, uint32_t cmd)
         pruicss_xchg->num_mdf = 3;
         priv->num_rx_frames = NIKON_NUM_RX_FRAMES_THREE;
 
-        for(mdf_num = 0; mdf_num < NUM_MDF_CMD_MAX-1; mdf_num++)
+        for(mdf_num = 0; mdf_num < NUM_MDF_MAX-1; mdf_num++)
         {
             priv->fc = (uint32_t)nikon_reverse_bits(mdf_num + 1 , NIKON_FRAME_CODE_LEN);
             nikon_generate_mdf(priv, mdf_num, mdf_num);
