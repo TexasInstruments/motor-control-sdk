@@ -88,6 +88,7 @@ void nikon_config_clock(struct nikon_priv *priv,
  *  \param[in]  tx_rx_clock_source   Clock Source Selection
  *  \param[in]  mask                 Mask for the selected channels
  *  \param[in]  totalch              Total number of selected channels
+ *  \param[in]  protocol_version     \ref NIKON_PROTOCOL_V2_1 or \ref NIKON_PROTOCOL_V3_0
  *  \retval     priv            pointer to struct nikon_priv instance
  *
  */
@@ -117,7 +118,7 @@ void nikon_config_clr_cfg0(struct nikon_priv *priv);
 int32_t nikon_calc_clock(struct nikon_priv *priv, struct nikon_clk_cfg *clk_cfg);
 
 /**
- *  \brief      Generate CDF command to be passed in Tx fifo.
+ *  \brief      Generate CDF command to be sent to encoder. Update encoder ID appropriately with \ref nikon_update_enc_addr API.
  *
  *  \param[in]  priv            cookie returned by \ref nikon_init
  *  \param[in]  cmd             command code requested by the user.
@@ -215,7 +216,7 @@ uint32_t nikon_get_current_channel(struct nikon_priv *priv, uint32_t ch_idx);
 uint32_t nikon_get_totalchannels(struct nikon_priv *priv);
 
 /**
- *  \brief      Update encoder address as specified by the user
+ *  \brief      Update encoder address as specified by the user. Default initial address is 0.
  *
  *  \param[in]  priv            cookie returned by \ref nikon_init
  *  \param[in]  enc_addr        encoder address specified by the user
@@ -254,7 +255,7 @@ void nikon_update_id_code(struct nikon_priv *priv, uint32_t data, uint32_t ls_ch
  *  \brief      Assign the specified 19 bits as velocity coefficient of encoder
  *
  *  \param[in]  priv            cookie returned by \ref nikon_init
- *  \param[in]  data_high       data to assign as velocity coefficient (Bits [18:0] in data will be used)
+ *  \param[in]  data            data to assign as velocity coefficient (Bits [18:0] in data will be used)
  *  \param[in]  ls_ch           channel in use in load share or 0 in case of single channel mode
  */
 void nikon_update_velocity_coefficient(struct nikon_priv *priv, uint32_t data, uint32_t ls_ch);

@@ -417,7 +417,7 @@ static void nikon_config_clock(struct nikon_priv *priv,
                         struct nikon_clk_cfg *clk_cfg)
 {
     void *pruicss_cfg = priv->pruicss_cfg;
-    /* Set PRU1_ED_RX_SB_POL polarity bit to 0 for Nikon */
+
     if(priv->pruicss_slicex)
     {
         HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG,
@@ -603,7 +603,7 @@ static void nikon_set_default_initialization(struct nikon_priv *priv, uint64_t i
     }
     priv->is_continuous_mode          = NIKON_CLEAR_STATUS_FLAG;
     priv->cmp3                        = ((icssClk*100) / 1000000);   /* 100usec delay */
-    priv->sync_code                   = 2;                  /*Syn code for Rx is 010*/
+    priv->sync_code                   = 2;                  /*Sync code for Rx is 010*/
     priv->fc                          = 0;                  /*Frame code for CDF is 00*/
     priv->bank_error                  = 0;                  /*Incorrect bank error*/
 }
@@ -1174,7 +1174,6 @@ int32_t nikon_get_pos(struct nikon_priv *priv, uint32_t cmd)
                     priv->pos_data_info[ch].raw_data2[enc_num] = pruicss_xchg->pos_data_res[enc_num].raw_data.data_field[1][ch];
                     priv->pos_data_info[ch].raw_data3[enc_num] = pruicss_xchg->pos_data_res[enc_num].raw_data.data_field[2][ch];
                     priv->alm_field[ch][enc_num] = ((priv->pos_data_info[ch].raw_data2[enc_num] & 0xFF) << 8) | ((priv->pos_data_info[ch].raw_data3[enc_num]) >> NIKON_POS_CRC_LEN);
-                    priv->alm_field[ch][enc_num] = priv->alm_field[ch][enc_num];
                     nikon_get_alm_bits(priv, enc_num, ch);
                     priv->pos_data_info[ch].abs[enc_num] = (priv->pos_data_info[ch].raw_data1[enc_num] << NIKON_RX_ONE_FRAME_LEN) | priv->pos_data_info[ch].raw_data2[enc_num];
                     priv->pos_data_info[ch].abs[enc_num] = priv->pos_data_info[ch].abs[enc_num] >> 8;
