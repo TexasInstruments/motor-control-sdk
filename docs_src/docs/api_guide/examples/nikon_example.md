@@ -9,7 +9,7 @@ Nikon diagnostic application does the following:
 - Initializes ICSS0-PRU1,
 - Initializes default parameters, loads the PRU firmware & executes it.
 
-\note Nikon firmware will only run with ICSS Core Clock running at 200 MHz/300 MHz frequency or ICSS UART Clock running at 192 MHz. 225/250/333 MHz values are not supported due to clock divider requirements.
+\note Nikon firmware will only run with ICSS Core Clock running at 200 MHz/300 MHz frequency or ICSS UART Clock running at 192 MHz. 225/250/333 MHz values are not supported for interface clock generation due to clock divider requirements.
 \endcond
 
 \cond SOC_AM261X
@@ -20,7 +20,7 @@ Nikon diagnostic application does the following:
 - Initializes ICSS0-PRU1,
 - Initializes default parameters, loads the PRU firmware & executes it.
 
-\note Nikon firmware will only run with ICSS UART Clock running at 160 MHz(ICSS Core Clock is configured at 225 MHz & is not supported for firmware due to clock divider requirements) frequency.
+\note Nikon firmware will only run with ICSS UART Clock running at 160 MHz frequency. ICSS Core Clock is configured at 225 MHz, and is not supported for interface clock generation due to clock divider requirements.
 
 \endcond
 
@@ -467,161 +467,191 @@ Shown below is a sample output when the application is run:
     <tr>
         <td>0</td>
         <td>ABS full 40 bit data request</td>
-        <td>In this command we will receive:
-		Absolute 40 bit data for Single encoder with status information.
+        <td>In this command, encoder sends absolute 40 bit data for single encoder with status information.
 		</td>
-        <td>CRC success with Rotor angle, num rotations and CRC values printed in the terminal.
+        <td>CRC success with rotor angle, number of rotations and CRC values printed in the terminal.
         </td>
     </tr>
 	<tr>
         <td>1</td>
         <td>ABS lower 24bit data request</td>
-        <td>In this command we will receive:
-        Absolute lower 24 bit data for Single encoder with status information.
+        <td>In this command, encoder sends absolute lower 24 bit data for single encoder with status information.
 		</td>
-        <td>CRC success with Rotor angle, num rotations and CRC values printed in the terminal.
+        <td>CRC success with rotor angle, number of rotations and CRC values printed in the terminal.
+        </td>
+    </tr>
+	<tr>
+        <td>1 (Nikon A-Format version 3.0 only, based on factory setting)</td>
+        <td>ABS full 40bit data + velocity data request </td>
+        <td>In this command, encoder sends absolute 40 bit data for single encoder with status and velocity information.
+		</td>
+        <td>CRC success with rotor angle, number of rotations, velocity and CRC values printed in the terminal.
         </td>
     </tr>
     <tr>
         <td>2</td>
         <td>ABS upper 24bit data request</td>
-        <td>In this command we will receive:
-		Absolute upper 24 bit data for Single encoder with status information.
+        <td>In this command, encoder sends absolute upper 24 bit data for single encoder with status information.
 		</td>
-        <td>CRC success with Rotor angle, num rotations and CRC values printed in the terminal.
+        <td>CRC success with rotor angle, number of rotations and CRC values printed in the terminal.
         </td>
     </tr>
     <tr>
         <td>3</td>
         <td>Encoder status Request</td>
-        <td>In this command we will receive:
-		Encoder will send status information, Alarm bits and additional information.
+        <td>In this command, encoder sends status information, alarm bits and additional information.
 		</td>
-        <td>Alarm bits, Encoder status bits printed in the terminal along with CRC success.
+        <td>Alarm bits (PM Alarm bits shown for Nikon A-Format version 3.0 only), encoder status bits printed in the terminal along with CRC success.
         </td>
     </tr>
     <tr>
         <td>4</td>
         <td>ABS full 40 bit data request(MT)</td>
-        <td>In this command we will receive:
-		Absolute 40 bit data for Multiple encoders connected in bus with status information.
+        <td>In this command, encoder sends absolute 40 bit data for multiple encoders connected in bus with status information.
 		</td>
-        <td>CRC success with Rotor angle, num rotations and CRC values printed in the terminal.
+        <td>CRC success with rotor angle, number of rotations and CRC values printed in the terminal.
         </td>
     </tr>
 	<tr>
         <td>5</td>
         <td>ABS lower 24bit data request(MT)</td>
-        <td>In this command we will receive:
-        Absolute lower 24 bit data for Multiple encoders connected in bus with status information.
+        <td>In this command, encoder sends absolute lower 24 bit data for multiple encoders connected in bus with status information.
 		</td>
-        <td>CRC success with Rotor angle, num rotations and CRC values printed in the terminal.
+        <td>CRC success with rotor angle, number of rotations and CRC values printed in the terminal.
+        </td>
+    </tr>
+	<tr>
+        <td>5 (Nikon A-Format version 3.0 only, based on factory setting)</td>
+        <td>ABS full 40bit data + velocity data request </td>
+        <td>In this command, encoder sends absolute 40 bit data for multiple encoders connected in bus with status and velocity information.
+		</td>
+        <td>CRC success with rotor angle, number of rotations, velocity and CRC values printed in the terminal.
         </td>
     </tr>
     <tr>
         <td>6</td>
         <td>ABS upper 24bit data request(MT)</td>
-        <td>In this command we will receive:
-		Absolute upper 24 bit data for Multiple encoders connected in bus with status information.
+        <td>In this command, encoder sends absolute upper 24 bit data for multiple encoders connected in bus with status information.
 		</td>
-        <td>CRC success with Rotor angle, num rotations and CRC values printed in the terminal.
+        <td>CRC success with rotor angle, number of rotations and CRC values printed in the terminal.
         </td>
     </tr>
     <tr>
         <td>7</td>
         <td>Encoder status Request(MT)</td>
-        <td>In this command we will receive:
-		Encoder will send status information, Alarm bits and additional information for all encoders connected in bus.
+        <td>In this command, encoder sends status information, alarm bits and additional information for all encoders connected in bus.
 		</td>
-        <td>Alarm bits, Encoder status bits printed in the terminal along with CRC success.
+        <td>Alarm bits (PM Alarm bits shown for Nikon A-Format version 3.0 only), encoder status bits printed in the terminal along with CRC success.
         </td>
     </tr>
     <tr>
         <td>8</td>
         <td>Status flag clear request</td>
-        <td>In this command we will receive:
-		Encoder will send status information, Alarm bits and additional information after clearing the status flags.
+        <td>In this command, encoder sends status information, alarm bits and additional information after clearing the status flags.
 		</td>
-        <td>Alarm bits, Encoder status bits printed in the terminal along with CRC success.
+        <td>Alarm bits (PM Alarm bits shown for Nikon A-Format version 3.0 only), encoder status bits printed in the terminal along with CRC success.
         </td>
     </tr>
     <tr>
         <td>9</td>
         <td>Multiple turn data clear request</td>
-        <td>In this command we will receive:
-		Encoder will send status information, Alarm bits and additional information after clearing the Multiple turn data bits.
+        <td>In this command, encoder sends status information, alarm bits and additional information after clearing the multiple turn data bits.
 		</td>
-        <td>Alarm bits, Encoder status bits printed in the terminal along with CRC success.
+        <td>Alarm bits (PM Alarm bits shown for Nikon A-Format version 3.0 only), encoder status bits printed in the terminal along with CRC success.
         </td>
     </tr>
     <tr>
         <td>10</td>
         <td>Status+ Multiple turn data clear request</td>
-        <td>In this command we will receive:
-		Encoder will send status information, Alarm bits and additional information after clearing the Status and Multiple turn data bits.
+        <td>In this command, encoder sends status information, alarm bits and additional information after clearing the status and multiple turn data bits.
 		</td>
-        <td>Alarm bits, Encoder status bits printed in the terminal along with CRC success.
+        <td>Alarm bits (PM Alarm bits shown for Nikon A-Format version 3.0 only), encoder status bits printed in the terminal along with CRC success.
         </td>
     </tr>
     <tr>
         <td>11</td>
         <td>Encoder address setting I (one-to-one connection)</td>
-        <td>In this command we will receive:
-		Encoder address setting will be performed and status will be returned with ALM bits.
+        <td>In this command, encoder address setting will be performed and status will be returned with ALM bits.
 		</td>
-        <td>Alarm bits, Encoder status bits printed in the terminal along with CRC success.
+        <td>Alarm bits (PM Alarm bits shown for Nikon A-Format version 3.0 only), encoder status bits printed in the terminal along with CRC success.
         </td>
     </tr>
     <tr>
         <td>12</td>
         <td>Single turn data zero preset</td>
-        <td>In this command we will receive:
-		Encoder will set single turn data bits to zero and returns status bits along with ALM bits.
+        <td>In this command, encoder sets single turn data bits to zero and returns status bits along with ALM bits.
 		</td>
-        <td>Alarm bits, Encoder status bits printed in the terminal along with CRC success.
+        <td>Alarm bits (PM Alarm bits shown for Nikon A-Format version 3.0 only), encoder status bits printed in the terminal along with CRC success.
+        </td>
+    </tr>
+        <tr>
+        <td> 8 to 12 (Nikon A-Format version 3.0 only, based on factory setting)</td>
+        <td>ABS lower 24bit data request</td>
+        <td>In this command, encoder sends absolute lower 24 bit data for single encoder with status information.
+		</td>
+        <td>CRC success with rotor angle, number of rotations and CRC values printed in the terminal.
         </td>
     </tr>
     <tr>
         <td>13</td>
         <td>EEPROM read request</td>
-        <td>In this command we will receive:
-		Encoder will send EEPROM register data along with the requested address information.
+        <td>In this command, encoder sends EEPROM register data along with the requested address information.
 		</td>
-        <td>Received data CRC should match with calculated CRC and CRC success printed in the terminal.
+        <td>CRC success with matching address (received address should be the same as sent by user)
+        </td>
+    </tr>
+    <tr>
+        <td>13 (Nikon A-Format version 3.0 only) </td>
+        <td>EEPROM read request with bank</td>
+        <td>In this command, encoder sends EEPROM register data along with the requested address and bank information.
+		</td>
+        <td>CRC success with matching address and bank (received address and bank should be the same as sent by user)
         </td>
     </tr>
     <tr>
         <td>14</td>
         <td>EEPROM write request</td>
-        <td>In this command we will receive:
-		Encoder will perform EEPROM register write the data specified by user in the specified address.
+        <td>In this command, encoder performs write and acknowledges the data and address specified by user.
 		</td>
-        <td>Received data CRC should match with calculated CRC and CRC success printed in the terminal.
+        <td>CRC success with matching data and address (received data and address should be the same as sent by user)
+        </td>
+    </tr>
+    <tr>
+        <td>14 (Nikon A-Format version 3.0 only) </td>
+        <td>EEPROM write request with bank</td>
+        <td>In this command, encoder performs write and acknowledges the data, address and bank specified by user.
+		</td>
+        <td>CRC success with matching data, address and bank (received data, address and bank should be the same as sent by user)
         </td>
     </tr>
     <tr>
         <td>15</td>
         <td>Temperature data request</td>
-        <td>In this command we will receive:
-		Encoder will send temperature information along with status.
+        <td>In this command, encoder sends temperature information along with status.
 		</td>
-        <td>Encoder Temperature and status bits printed in the terminal along with CRC success.
+        <td>Encoder temperature and status bits printed in the terminal along with CRC success.
         </td>
     </tr>
     <tr>
         <td>16</td>
         <td>Identification code read I</td>
-        <td>In this command we will receive:
-		Encoder will send identification code.
+        <td>In this command, encoder sends identification code.
 		</td>
         <td>Encoder identification code will be printed in the terminal along with CRC success.
         </td>
     </tr>
     <tr>
+        <td>16 (Nikon A-Format version 3.0 only) </td>
+        <td>Velocity coefficient read</td>
+        <td>In this command, encoder sends velocity coefficient.
+		</td>
+        <td>Encoder velocity coefficient will be printed in the terminal along with CRC success.
+        </td>
+    </tr>
+    <tr>
         <td>17</td>
         <td>Identification code read II(one-to-one connection)</td>
-        <td>In this command we will receive:
-		Encoder will send identification code irrespective of encoder address.
+        <td>In this command, encoder sends identification code irrespective of encoder address.
 		</td>
         <td>Encoder identification code will be printed in the terminal along with CRC success.
         </td>
@@ -629,91 +659,121 @@ Shown below is a sample output when the application is run:
     <tr>
         <td>18</td>
         <td>Identification code write I</td>
-        <td>In this command we will receive:
-		Encoder will update identification code provide by user in its local register.
+        <td>In this command, encoder writes and acknowledges identification code provide by user in its local register.
 		</td>
-        <td>Encoder identification code will be printed in the terminal along with CRC success.
+        <td>CRC success with matching identification code (received identification code should be the same as sent by user)
+        </td>
+    </tr>
+        <tr>
+        <td>18 (Nikon A-Format version 3.0 only) </td>
+        <td>Velocity coefficient write</td>
+        <td>In this command, encoder writes and acknowledges velocity coefficient.
+		</td>
+        <td>CRC success with matching velocity coefficient (received velocity coefficient should be the same as sent by user)
         </td>
     </tr>
     <tr>
         <td>19</td>
         <td>Identification code write II(one-to-one connection)</td>
-        <td>In this command we will receive:
-		Encoder will update identification code provide by user in its local register irrespective of encoder address.
+        <td>In this command, encoder writes and acknowledges identification code provide by user in its local register irrespective of encoder address.
 		</td>
-        <td>Encoder identification code will be printed in the terminal along with CRC success.
+        <td>CRC success with matching identification code (received identification code should be the same as sent by user)
         </td>
     </tr>
     <tr>
         <td>20</td>
         <td>Encoder address setting II</td>
-        <td>In this command we will receive:
-		Encoder will update its own address field based on identification code provide by user.
+        <td>In this command, encoder address is set based on identification code provided by user.
 		</td>
-        <td>Encoder identification code and updated address will be printed in the terminal along with CRC success.
+        <td>CRC success with matching identification code (received identification code should be the same as sent by user)
         </td>
     </tr>
 	<tr>
         <td>21</td>
         <td>ABS lower 17bit data request</td>
-        <td>In this command we will receive:
-        Absolute lower 17 bit data for Single encoder with status information.
+        <td>In this command, encoder sends absolute lower 17 bit data for single encoder with status information.
 		</td>
-        <td>CRC success with Rotor angle, num rotations and CRC values printed in the terminal.
+        <td>CRC success with rotor angle, number of rotations and CRC values printed in the terminal.
         </td>
     </tr>
 	<tr>
         <td>22</td>
         <td>ABS lower 17bit data request(MT)</td>
-        <td>In this command we will receive:
-        Absolute lower 17 bit data for encoders connected in bus with status information.
+        <td>In this command, encoder sends absolute lower 17 bit data for encoders connected in bus with status information.
 		</td>
-        <td>CRC success with Rotor angle, num rotations and CRC values printed in the terminal.
+        <td>CRC success with rotor angle, number of rotations and CRC values printed in the terminal.
+        </td>
+    </tr>
+	<tr>
+        <td>23 (Nikon A-Format version 3.0 only)</td>
+        <td>ABS lower 24bit + velocity request</td>
+        <td>In this command, encoder sends absolute lower 24 bit data for single encoder with velocity information.
+		</td>
+        <td>CRC success with rotor angle, number of rotations, velocity and CRC values printed in the terminal.
+        </td>
+    </tr>
+	<tr>
+        <td>24 (Nikon A-Format version 3.0 only)</td>
+        <td>ABS lower 24bit + velocity request(MT)</td>
+        <td>In this command, encoder sends absolute lower 24 bit data for encoders connected in bus with velocity information.
+		</td>
+        <td>CRC success with rotor angle, number of rotations, velocity and CRC values printed in the terminal.
+        </td>
+    </tr>
+	<tr>
+        <td>25 (Nikon A-Format version 3.0 only)</td>
+        <td>ABS lower 24bit + velocity + acceleration request</td>
+        <td>In this command, encoder sends absolute lower 24 bit data for single encoder with velocity and acceleration information.
+		</td>
+        <td>CRC success with rotor angle, number of rotations, velocity, acceleration and CRC values printed in the terminal.
+        </td>
+    </tr>
+	<tr>
+        <td>26 (Nikon A-Format version 3.0 only)</td>
+        <td>ABS lower 24bit + velocity + acceleration request(MT)</td>
+        <td>In this command, encoder sends absolute lower 24 bit data for encoders connected in bus with velocity and acceleration information.
+		</td>
+        <td>CRC success with rotor angle, number of rotations, velocity, acceleration and CRC values printed in the terminal.
         </td>
     </tr>
 	<tr>
         <td>27</td>
         <td>ABS lower 24bit + status request</td>
-        <td>In this command we will receive:
-        Absolute lower 24 bit data for Single encoder with status and alarm bits information.
+        <td>In this command, encoder sends absolute lower 24 bit data for single encoder with status and alarm bits information.
 		</td>
-        <td>CRC success with Rotor angle, num rotations, alm and CRC values printed in the terminal.
+        <td>CRC success with rotor angle, number of rotations, alarm bits and CRC values printed in the terminal.
         </td>
     </tr>
 	<tr>
         <td>28</td>
         <td>ABS lower 24bit + status request(MT)</td>
-        <td>In this command we will receive:
-        Absolute lower 24 bit data for encoders connected in bus with status and alarm bits information.
+        <td>In this command, encoder sends absolute lower 24 bit data for encoders connected in bus with status and alarm bits information.
 		</td>
-        <td>CRC success with Rotor angle, num rotations, alm and CRC values printed in the terminal.
+        <td>CRC success with rotor angle, number of rotations, alarm bits and CRC values printed in the terminal.
         </td>
     </tr>
 	<tr>
         <td>29</td>
-        <td>ABS lower 24bit + Temperature data request</td>
-        <td>In this command we will receive:
-        Absolute lower 24 bit data for Single encoder with Temperature information.
+        <td>ABS lower 24bit + temperature data request</td>
+        <td>In this command, encoder sends absolute lower 24 bit data for single encoder with temperature information.
 		</td>
-        <td>CRC success with Rotor angle, num rotations, Temperature and CRC values printed in the terminal.
+        <td>CRC success with rotor angle, number of rotations, temperature and CRC values printed in the terminal.
         </td>
     </tr>
 	<tr>
         <td>30</td>
-        <td>ABS lower 24bit + Temperature data request(MT)</td>
-        <td>In this command we will receive:
-        Absolute lower 24 bit data for encoders connected in bus with Temperature information.
+        <td>ABS lower 24bit + temperature data request(MT)</td>
+        <td>In this command, encoder sends absolute lower 24 bit data for encoders connected in bus with temperature information.
 		</td>
-        <td>CRC success with Rotor angle, num rotations, Temperature and CRC values printed in the terminal.
+        <td>CRC success with rotor angle, number of rotations, temperature and CRC values printed in the terminal.
         </td>
     </tr>
-	<tr>
-        <td>32</td>
+    <tr>
+        <td>32 (Note: This is not a command with ID 32, it is UART option number 32)</td>
         <td>Start Continuous Mode</td>
-        <td>In this command we will receive:
-        Absolute lower 40 bit data for encoders connected in point to point / bus.
+        <td>In this command, encoder sends absolute lower 40 bit data for encoders connected in point to point / bus.
 		</td>
-        <td>CRC success with Rotor angle, num rotations and CRC stats printed in the terminal.
+        <td>CRC success with rotor angle, number of rotations and CRC stats printed in the terminal.
         </td>
     </tr>
 </table>

@@ -265,6 +265,37 @@ The main software components in the block diagram specific to motor control are 
     <td>\ref TAMAGAWA
     <td> Driver and PRU-ICSS firmware for Tamagawa encoder interface
 </tr>
+<tr><td colspan="3" bgcolor=#F0F0F0>**Real Time Libraries**</td></tr>
+<tr>
+    <td> Control algorithms
+    <td> \ref CONTROL
+    <td> Library for control algorithms and techniques used in motors such as PMSM and BLDC
+</tr>
+<tr>
+    <td> Datalog
+    <td>\ref DATALOG
+    <td> Library for storing the real time values of user selectable variables
+</tr>
+<tr>
+    <td> Digital Control Library (DCL)
+    <td>\ref DCL
+    <td> Header-only library for digital control applications
+</tr>
+<tr>
+    <td> Observer algorithms
+    <td>\ref OBSERVERS
+    <td> Header-only library for encoder/observer algorithms used in both sensored/sensorless field oriented control (FOC)
+</tr>
+<tr>
+    <td> Software Frequency Response Analyzer
+    <td>\ref SFRA
+    <td> Library that enables developers to quickly measure the frequency response of their digital power converter.
+</tr>
+<tr>
+    <td> Transforms
+    <td>\ref TRANSFORMS
+    <td> Transformation including Clarke, Park, Space Vector Generation used in motor control applications.
+</tr>
 <tr><td colspan="3" bgcolor=#F0F0F0>**Examples and Demos**</td></tr>
 <tr>
     <td>Examples and Demos

@@ -372,7 +372,7 @@ This section lists changes which could affect user applications developed using 
 </tr>
 <tr>
     <td> Position Sense EnDat
-    <td> \ref endat_init
+    <td> structure \ref endat_init
     <td> Added API parameter `pruss_iep`
     <td> Needed for periodic mode
 </tr>

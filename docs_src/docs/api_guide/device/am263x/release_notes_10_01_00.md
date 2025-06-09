@@ -189,7 +189,7 @@ earlier SDKs. -->
     <td>
     <td>
 </tr>
-</table> 
+</table>
 
 ### Examples
 
@@ -223,5 +223,5 @@ earlier SDKs. -->
     <td> Added new variables: `enableRTM`
     <td> -
 </tr>
-</table> 
+</table>
 

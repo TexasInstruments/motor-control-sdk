@@ -307,7 +307,7 @@ earlier SDKs. -->
     <td> Real Time Libraries
     <td> -
     <td> Moved examples/dcl, examples/sfra, examples/transforms, examples/utilities to examples/rtlibs folder
-    <td> All exammples using Real Time Libraries are updated to use new path
+    <td> All examples using Real Time Libraries are updated to use new path
 </tr>
 </table>
 
@@ -324,6 +324,6 @@ earlier SDKs. -->
     <td> Real Time Libraries
     <td> -
     <td> Moved source/control, source/dcl, source/observers, source/sfra, source/transforms, source/utilities to source/rtlibs folder
-    <td> All exammples using Real Time Libraries are updated to use new path
+    <td> All examples using Real Time Libraries are updated to use new path
 </tr>
 </table>

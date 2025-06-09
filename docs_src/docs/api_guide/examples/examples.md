@@ -84,4 +84,14 @@ This page lists all the examples and demos supported in this SDK.
     - \subpage EXAMPLE_MOTORCONTROL_HDSL
     - \subpage EXAMPLE_MOTORCONTROL_NIKON
     - \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA
+- Real Time Libraries
+    - DCL
+        - \subpage EXAMPLES_DCL_PI
+        - \subpage EXAMPLES_DCL_DF22
+    - Transforms
+        - \subpage EXAMPLES_TRANSFORMS_TEST
+    - SFRA
+        - \subpage EXAMPLES_SFRA_TEST
+    - DATALOG
+        - \subpage EXAMPLES_DATALOG_TEST
 \endcond
