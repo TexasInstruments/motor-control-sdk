@@ -13,7 +13,7 @@ const versions = {
     sysConfig: {
         default: "1.23.0",
         am64x: "1.23.0",
-        am243x: "1.23.0",
+        am243x: "1.22.0",
         am263px: "1.23.0",
         am263x: "1.23.0",
         am261x: "1.23.0"
@@ -145,7 +145,7 @@ const versions = {
             cgtArmClangVersion: "ti-cgt-armllvm_4.0.1.LTS",
             cgtC6000Version: "ti-cgt-c6000_8.3.12",
             dsplibVersion: "dsplib_c66x_3_4_0_0",
-            sysconfigVersion: "sysconfig_1.23.0",
+            sysconfigVersion: "sysconfig_1.22.0",
             gccAarch64WinVersion: "gcc-arm-9.2-2019.12-mingw-w64-i686-aarch64-none-elf",
             gccArmWinVersion: "gcc-arm-none-eabi-9-2019-q4-major-win32",
             gccAarch64LinuxVersion: "gcc-arm-9.2-2019.12-x86_64-aarch64-none-elf",
@@ -159,9 +159,9 @@ const versions = {
             dsplibVersion: "dsplib_c66x_3_4_0_0",
             sysconfigVersion: "sysconfig_1.23.0",
             gccAarch64WinVersion: "gcc-arm-9.2-2019.12-mingw-w64-i686-aarch64-none-elf",
-            gccArmWinVersion: "gcc-arm-none-eabi-9-2019-q4-major-win32",
+            gccArmWinVersion: "gcc-arm-none-eabi-7-2017-q4-major-win32",
             gccAarch64LinuxVersion: "gcc-arm-9.2-2019.12-x86_64-aarch64-none-elf",
-            gccArmLinuxVersion: "gcc-arm-none-eabi-9-2019-q4-major"
+            gccArmLinuxVersion: "gcc-arm-none-eabi-7-2017-q4-major"
         },
         am243x: {
             ccsVersion: "ccs1281",
@@ -169,11 +169,11 @@ const versions = {
             cgtArmClangVersion: "ti-cgt-armllvm_4.0.1.LTS",
             cgtC6000Version: "ti-cgt-c6000_8.3.12",
             dsplibVersion: "dsplib_c66x_3_4_0_0",
-            sysconfigVersion: "sysconfig_1.23.0",
+            sysconfigVersion: "sysconfig_1.22.0",
             gccAarch64WinVersion: "gcc-arm-9.2-2019.12-mingw-w64-i686-aarch64-none-elf",
-            gccArmWinVersion: "gcc-arm-none-eabi-9-2019-q4-major-win32",
+            gccArmWinVersion: "gcc-arm-none-eabi-7-2017-q4-major-win32",
             gccAarch64LinuxVersion: "gcc-arm-9.2-2019.12-x86_64-aarch64-none-elf",
-            gccArmLinuxVersion: "gcc-arm-none-eabi-9-2019-q4-major"
+            gccArmLinuxVersion: "gcc-arm-none-eabi-7-2017-q4-major"
         },
         am263px: {
             ccsVersion: "ccs1281",
