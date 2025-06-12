@@ -1116,13 +1116,7 @@ void hdsl_init_300m(void)
         Tsync=period/(PRU clock freq)  =  period/300)
 
         ES <= Tsync/Tmin  and  ES >= Tsync/Tmax     */
-
-        if ((ES > (period/(MIN_SYNC_CYCLE_TIME*300))) || (ES < (period/(MAX_SYNC_CYCLE_TIME*300))))
-        {
-            DebugP_log("\r\n FAIL: HDSL ES or period value you entered is not valid");
-            while(1)
-                ;
-        }
+        DebugP_assert((ES <= (period/(MIN_SYNC_CYCLE_TIME*300))) && (ES >= (period/(MAX_SYNC_CYCLE_TIME*300))));
         HDSL_enable_sync_signal(ES,period);
         if (CONFIG_HDSL0_CHANNEL0==1)
         {
