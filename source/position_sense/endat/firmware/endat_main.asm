@@ -2417,8 +2417,11 @@ ENDAT_SKIP41_CH2:
     LDI  R27.b0,   0x4
 ENDAT_START_OTF:
 
+     ;If it is 2.1 command  then skip RT calculation
+    QBBC	ENDAT_SKIP_RT_FOR_CMD2_1, ENDAT_CMDTYP_NO_SUPPLEMENT_REG,	2
     QBBS	ENDAT_RT_FOR_NSP_CMD2_2, ENDAT_CMDTYP_NO_SUPPLEMENT_REG,	0
     ;Skip RT calculation for supplement command
+ENDAT_SKIP_RT_FOR_CMD2_1:
     LDI  R27.b0,  0
 ENDAT_RT_FOR_NSP_CMD2_2:
     LDI		R0.b0,	0
