@@ -103,7 +103,6 @@ void globalVariablesInit();
 //
 static inline void controlCode(void)
 {
-    setProfilingGPIO();
 
     if(closeGiLoop == 1)
     {
@@ -117,7 +116,6 @@ static inline void controlCode(void)
     gi_out_prev = gi_out;
 
     clearPWMInterruptFlag(C28x_CONTROLISR_INTERRUPT_TRIG_PWM_BASE);
-    resetProfilingGPIO();
 
 }
 

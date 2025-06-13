@@ -165,11 +165,6 @@ int main(void)
     setupADC();
 
     //
-    //Profiling GPIO
-    //
-    setupProfilingGPIO();
-
-    //
     // Initialize global variables generic to the board like ones used to
     // read current values and others
     //
