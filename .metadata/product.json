@@ -10,6 +10,8 @@
         "../mcu_plus_sdk/source/networking/enet/core/sysconfig",
     ],
     "components": [
+        "/motor_control",
+        "/industrial_comms/industrial_comms",
         "/kernel/dpl",
         "/drivers/drivers",
         "/board/board",

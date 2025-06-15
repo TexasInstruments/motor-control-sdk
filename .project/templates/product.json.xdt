@@ -65,6 +65,8 @@
         "sdl/sdl"
 % }
 % if((args.device == "am261x")){
+        "/motor_control",
+        "/industrial_comms/industrial_comms",
         "/kernel/dpl",
         "/drivers/drivers",
         "/board/board",
