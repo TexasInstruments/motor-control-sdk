@@ -482,6 +482,12 @@ int32_t nikon_calc_clock(struct nikon_priv *priv, struct nikon_clk_cfg *clk_cfg)
                 clk_cfg->rx_div = (priv->uart_clk_freq / (freq * (NIKON_RX_SAMPLE_SIZE_4X + 1))) - 1;
                 pruicss_xchg->fifo_bit_idx = NIKON_FIFO_BIT_IDX_4X_OS;
             }
+            else if(freq == NIKON_FREQ_16MHZ * 1000 * 1000)
+            {
+                clk_cfg->rx_div_attr = NIKON_RX_SAMPLE_SIZE_5X;
+                clk_cfg->rx_div = (priv->uart_clk_freq / (freq * (NIKON_RX_SAMPLE_SIZE_5X + 1))) - 1;
+                pruicss_xchg->fifo_bit_idx = NIKON_FIFO_BIT_IDX_5X_OS;
+            }
         }
         else if(priv->uart_clk_freq == PRU_UART_CLK_FREQ_192MHZ * 1000 * 1000)
         {

@@ -70,10 +70,10 @@ Nikon A-Format absolute encoder receiver implementation on the TI PRU-ICSS inter
 <tr>
     <td>PRU UART Clock (160 MHz)
     <td>8x
-	 <td>8x
+	<td>8x
     <td>8x
-	 <td>4x
-    <td>Not tested
+	<td>4x
+    <td>5x
 </tr>
 </table>
 

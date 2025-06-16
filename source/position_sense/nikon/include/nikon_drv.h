@@ -66,6 +66,7 @@ between two cycles in memory access commands) */
 #define NIKON_MAX_CYCLE_TIMEOUT             35
 
 #define NIKON_RX_SAMPLE_SIZE_4X             3      /* 4x over sample rate */
+#define NIKON_RX_SAMPLE_SIZE_5X             4      /* 5x over sample rate */
 #define NIKON_RX_SAMPLE_SIZE_6X             5      /* 6x over sample rate */
 #define NIKON_RX_SAMPLE_SIZE                7       /* 8x over sample rate */
 #define NIKON_RX_ENABLE_FRACTIONAL_DIV      (1<<15) /* Enable fractional divider 1.5 for RX */
@@ -110,6 +111,7 @@ between two cycles in memory access commands) */
 /* Middle bit indexes for Given Oversampling rates */
 #define NIKON_FIFO_BIT_IDX_8X_OS            4       /* 8x Oversampling */
 #define NIKON_FIFO_BIT_IDX_6X_OS            3       /* 6x Oversampling */
+#define NIKON_FIFO_BIT_IDX_5X_OS            2       /* 5x Oversampling */
 #define NIKON_FIFO_BIT_IDX_4X_OS            2       /* 4x Oversampling */
 
 #define NIKON_BASE_VALID_BIT_IDX            24      /* Base valid bit index */
