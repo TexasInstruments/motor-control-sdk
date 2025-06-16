@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2024 Texas Instruments Incorporated
+ *  Copyright (C) 2023-2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -29,7 +29,6 @@
  *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 #ifndef _DCL_NLPID_H_
 #define _DCL_NLPID_H_
 
@@ -119,8 +118,8 @@ typedef _DCL_VOLATILE struct dcl_nlpid
     float32_t i18;      //!< No longer needed
 
     /* miscellaneous */
-    DCL_NLPID_SPS *sps; //!< Pointer to shadow parameter structure
-    DCL_CSS *css;       //!< Pointer to controller support structure
+    DCL_NLPID_SPS *sps; //!< updates controller parameter
+    DCL_CSS *css;       //!< configuration & debugging
 } DCL_NLPID;
 
 //! \brief          Defines default values to initialize the DCL_NLPID structure
@@ -130,9 +129,20 @@ typedef _DCL_VOLATILE struct dcl_nlpid
                         0.1f, 0.1f, 0.1f, \
                         1.0f, 1.0f, 1.0f, \
                         1.0f, 0.0f, \
-                        0.0f, 0.0f, \
-    0.0f, 1.0f, 0.0f, 1.0f, 0.0f, \
+                        1.0f, -1.0f, \
+    0.0f, 0.0f, 0.0f, 1.0f, 0.0f, \
     &(DCL_NLPID_SPS)NLPID_SPS_DEFAULTS, &(DCL_CSS)DCL_CSS_DEFAULTS }
+
+//! \brief          Macro for internal default values to initialize DCL_NLPID
+//!                 Example: DCL_NLPID nlpid_ctrl = { 
+//!                                             .Kp = 1.0f,
+//!                                             .Ki = 0.0f,
+//!                                             ...
+//!                                             .Umin = -1.0f,
+//!                                             NLPID_INT_DEFAULTS
+//!                                           };
+#define NLPID_INT_DEFAULTS .d2=0.0f, .d3=0.0f, .i7=0.0f, .i16=1.0f, i18=0.0f,\
+    .sps=&(DCL_PID_SPS)PID_SPS_DEFAULTS, .css=&(DCL_CSS)DCL_CSS_DEFAULTS 
 
 //! \brief          Resets NLPID internal storage data with interrupt protection
 //!
@@ -142,6 +152,7 @@ _DCL_CODE_ACCESS
 void DCL_resetNLPID(DCL_NLPID *pid)
 {
     dcl_interrupt_t ints;
+
     ints = DCL_disableInts();
     pid->d2 = pid->d3 = pid->i7 = 0.0f;
     pid->i16 = 1.0f;
@@ -155,6 +166,26 @@ void DCL_resetNLPID(DCL_NLPID *pid)
 _DCL_CODE_ACCESS
 void DCL_forceUpdateNLPID(DCL_NLPID *pid)
 {
+
+#ifdef DCL_ERROR_HANDLING_ENABLED
+    float32_t tau = (2.0f - pid->sps->c1 * pid->css->T) / (2.0f * pid->sps->c1);
+    float32_t ec2 = pid->sps->c1 * (pid->css->T - 2.0f * tau) / 2.0f;
+    uint32_t err_code = dcl_none;
+    err_code |= ((pid->sps->c2 < (ec2 - DCL_FPU32_TOL)) || (pid->sps->c2 > (ec2 + DCL_FPU32_TOL))) ? dcl_param_invalid_err : dcl_none;
+    err_code |= (pid->sps->delta_p < DCL_DELTA_MIN) ? dcl_param_range_err : dcl_none;
+    err_code |= (pid->sps->delta_i < DCL_DELTA_MIN) ? dcl_param_range_err : dcl_none;
+    err_code |= (pid->sps->delta_d < DCL_DELTA_MIN) ? dcl_param_range_err : dcl_none;
+    err_code |= (pid->sps->Umax <= pid->sps->Umin) ? dcl_param_invalid_err : dcl_none;
+    err_code |= (pid->css->T <= 0.0f) ? dcl_param_range_err : dcl_none;
+    err_code |= ((pid->sps->Kp < 0.0f) || (pid->sps->Ki < 0.0f) || (pid->sps->Kd < 0.0f)) ? dcl_param_range_err : dcl_none;
+    if (err_code)
+    {
+        DCL_setError(pid,err_code);
+        DCL_getErrorInfo(pid);
+        DCL_runErrorHandler(pid);
+    }
+#endif
+
     pid->Kp = pid->sps->Kp;
     pid->Ki = pid->sps->Ki;
     pid->Kd = pid->sps->Kd;
@@ -180,51 +211,17 @@ void DCL_forceUpdateNLPID(DCL_NLPID *pid)
 _DCL_CODE_ACCESS
 void DCL_updateNLPIDNoCheck(DCL_NLPID *pid)
 {
-
-#ifdef DCL_ERROR_HANDLING_ENABLED
-    float32_t tau = (2.0f - pid->sps->c1 * pid->css->T) / (2.0f * pid->sps->c1);
-    float32_t ec2 = pid->sps->c1 * (pid->css->T - 2.0f * tau) / 2.0f;
-    uint32_t err_code = dcl_none;
-    err_code |= ((pid->sps->c2 < (ec2 - DCL_FPU32_TOL)) || (pid->sps->c2 > (ec2 + DCL_FPU32_TOL))) ? dcl_param_invalid_err : dcl_none;
-    err_code |= (pid->sps->delta_p < DCL_DELTA_MIN) ? dcl_param_range_err : dcl_none;
-    err_code |= (pid->sps->delta_i < DCL_DELTA_MIN) ? dcl_param_range_err : dcl_none;
-    err_code |= (pid->sps->delta_d < DCL_DELTA_MIN) ? dcl_param_range_err : dcl_none;
-    err_code |= (pid->sps->Umax <= pid->sps->Umin) ? dcl_param_invalid_err : dcl_none;
-    err_code |= (pid->css->T <= 0.0f) ? dcl_param_range_err : dcl_none;
-    err_code |= ((pid->sps->Kp < 0.0f) || (pid->sps->Ki < 0.0f) || (pid->sps->Kd < 0.0f)) ? dcl_param_range_err : dcl_none;
-    if (err_code)
-    {
-        DCL_setError(pid,err_code);
-        DCL_getErrorInfo(pid);
-        DCL_runErrorHandler(pid);
-    }
-#endif
-
     dcl_interrupt_t ints;
+    
     ints = DCL_disableInts();
-    pid->Kp = pid->sps->Kp;
-    pid->Ki = pid->sps->Ki;
-    pid->Kd = pid->sps->Kd;
-    pid->alpha_p = pid->sps->alpha_p;
-    pid->alpha_i = pid->sps->alpha_i;
-    pid->alpha_d = pid->sps->alpha_d;
-    pid->delta_p = pid->sps->delta_p;
-    pid->delta_i = pid->sps->delta_i;
-    pid->delta_d = pid->sps->delta_d;
-    pid->gamma_p = pid->sps->gamma_p;
-    pid->gamma_i = pid->sps->gamma_i;
-    pid->gamma_d = pid->sps->gamma_d;
-    pid->c1 = pid->sps->c1;
-    pid->c2 = pid->sps->c2;
-    pid->Umax = pid->sps->Umax;
-    pid->Umin = pid->sps->Umin;  
+    DCL_forceUpdateNLPID(pid);
     DCL_restoreInts(ints);
 }
 
 //! \brief           A conditional update based on the update flag.
 //!                  If the update status is set, the function will update NLPID
 //!                  parameter from its SPS parameter and clear the status flag on completion.
-//! \note            Note: Use DCL_getUpdateStatus(pid) to set the update status.
+//! \note            Note: Use DCL_setUpdateStatus(pid) to set the update status.
 //!
 //! \param[in] pid  Pointer to the DCL_NLPID structure
 //! \return         'true' if an update is applied, otherwise 'false'
@@ -408,19 +405,7 @@ void DCL_setActiveNLPIDgamma(DCL_NLPID *pid)
 _DCL_CRIT_ACCESS
 float32_t DCL_runNLPIDParallel(DCL_NLPID *pid, float32_t rk, float32_t yk, float32_t lk)
 {
-    float32_t v1, v2, v3, v4, v5, v8, v9, v10, v12, v13, v14, v15;
-
-#ifdef DCL_ERROR_HANDLING_ENABLED
-    uint32_t err_code = dcl_none;
-    err_code |= (DCL_getControllerStatus(pid)) ? dcl_controller_err : dcl_none;
-    if (err_code)
-    {
-        DCL_setError(pid,err_code);
-        DCL_getErrorInfo(pid);
-        DCL_runErrorHandler(pid);
-    }
-    DCL_setControllerStatus(pid);
-#endif
+    float32_t v1, v2, v3, v4, v5, v8, v9, v10, v12, v13, v14;
 
     // pre-conditioning block
     v1 = (rk - yk) * 0.5f;
@@ -458,8 +443,7 @@ float32_t DCL_runNLPIDParallel(DCL_NLPID *pid, float32_t rk, float32_t yk, float
     // output sum & clamp
     v13 = (pid->Kp * (v4 + v12)) + v8;
     v14 = DCL_runSat(v13, pid->Umax, pid->Umin);
-    v15 = (v14 == v13) ? 1.0f : 0.0f;
-    pid->i16 = v15 * lk;
+    pid->i16 = (v14 == v13) ? lk : 0.0f;
 
 #ifdef DCL_TESTPOINTS_ENABLED
     pid->css->tpt = v14;
@@ -483,19 +467,7 @@ float32_t DCL_runNLPIDParallel(DCL_NLPID *pid, float32_t rk, float32_t yk, float
 _DCL_CRIT_ACCESS
 float32_t DCL_runNLPIDSeries(DCL_NLPID *pid, float32_t rk, float32_t yk, float32_t lk)
 {
-    float32_t v1, v2, vd2, v3, vd3, v4, v5, v6, v8, v9, v12, v15, v16, v17;
-
-#ifdef DCL_ERROR_HANDLING_ENABLED
-    uint32_t err_code = dcl_none;
-    err_code |= (DCL_getControllerStatus(pid)) ? dcl_controller_err : dcl_none;
-    if (err_code)
-    {
-        DCL_setError(pid,err_code);
-        DCL_getErrorInfo(pid);
-        DCL_runErrorHandler(pid);
-    }
-    DCL_setControllerStatus(pid);
-#endif
+    float32_t v1, v2, vd2, v3, vd3, v4, v5, v6, v8, v9, v15, v16, v17;
 
     // pre-conditioning block for P & I
     v1 = (rk - yk) * 0.5f;
@@ -548,8 +520,7 @@ float32_t DCL_runNLPIDSeries(DCL_NLPID *pid, float32_t rk, float32_t yk, float32
     // output sum & clamp
     v9 = (pid->Kp * (v4 - v16)) + v8;
     v17 = DCL_runSat(v9, pid->Umax, pid->Umin);
-    v12 = (v17 == v9) ? 1.0f : 0.0f;
-    pid->i16 = v12 * lk;
+    pid->i16 = (v17 == v9) ? lk : 0.0f;
 
 #ifdef DCL_TESTPOINTS_ENABLED
     pid->css->tpt = v17;

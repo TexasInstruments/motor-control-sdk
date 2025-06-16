@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2024 Texas Instruments Incorporated
+ *  Copyright (C) 2023-2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -29,7 +29,6 @@
  *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 #ifndef _DCL_MLOG_H_
 #define _DCL_MLOG_H_
 
@@ -74,7 +73,7 @@ typedef _DCL_VOLATILE struct dcl_mlog
     uint32_t  tScale;                //!< Number of samples per log write
     uint32_t  sCount;                //!< Sample counter
     uint32_t  mode;                  //!< Operating mode
-} DCL_MLOG, MLOG;
+} DCL_MLOG;
 
 //! \brief          Defines default values to initialise the MLOG structure
 //!                 Note: modify to match number of channels

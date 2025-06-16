@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2024 Texas Instruments Incorporated
+ *  Copyright (C) 2023-2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -18,7 +18,7 @@
  *    from this software without specific prior written permission.
  *
  *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- *  "AS IS" AND ANY EXPgResS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  *  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
  *  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
@@ -28,8 +28,7 @@
  *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
- 
+ */ 
 #ifndef _DCL_PID64_H_
 #define _DCL_PID64_H_
 
@@ -155,6 +154,7 @@ _DCL_CODE_ACCESS
 void DCL_resetPIDF64(DCL_PIDF64 *pid)
 {
     dcl_interrupt_t ints;
+
     ints = DCL_disableInts();
     pid->d2 = pid->d3 = pid->i10 = 0.0L;
     pid->i14 = 1.0L;
@@ -203,33 +203,10 @@ void DCL_forceUpdatePIDF64(DCL_PIDF64 *pid)
 _DCL_CODE_ACCESS
 void DCL_updatePIDF64NoCheck(DCL_PIDF64 *pid)
 {
-
-#ifdef DCL_ERROR_HANDLING_ENABLED
-    float64_t tau = (2.0L - pid->sps->c1 * pid->css->T) / (2.0L * pid->sps->c1);
-    float64_t ec2 = pid->sps->c1 * (pid->css->T - 2.0L * tau) / 2.0L;
-    uint32_t err_code = dcl_none;
-    err_code |= DCL_isValue(pid->sps->c2, ec2) ? dcl_none : dcl_param_invalid_err;
-    err_code |= (pid->sps->Umax > pid->sps->Umin) ? dcl_none : dcl_param_invalid_err;
-    err_code |= (pid->css->T > 0.0L) ? dcl_none : dcl_param_range_err;
-    err_code |= ((pid->sps->Kp > 0.0L) && (pid->sps->Ki > 0.0L) && (pid->sps->Kd > 0.0L) && (pid->sps->Kr > 0.0L)) ? dcl_none : dcl_param_range_err ;
-    if (err_code)
-    {
-        DCL_setError(pid,err_code);
-        DCL_getErrorInfo(pid);
-        DCL_runErrorHandler(pid);
-    }
-#endif
-
     dcl_interrupt_t ints;
+
     ints = DCL_disableInts();
-    pid->Kp = pid->sps->Kp;
-    pid->Ki = pid->sps->Ki;
-    pid->Kd = pid->sps->Kd;
-    pid->Kr = pid->sps->Kr;
-    pid->c1 = pid->sps->c1;
-    pid->c2 = pid->sps->c2;
-    pid->Umax = pid->sps->Umax;
-    pid->Umin = pid->sps->Umin;
+    DCL_forceUpdatePIDF64(pid);
     DCL_restoreInts(ints);
 }
 
@@ -462,7 +439,7 @@ void DCL_loadParallelPIDF64asZPK(DCL_PIDF64 *pid, DCL_ZPK3 *zpk)
 _DCL_CRIT_ACCESS
 float64_t DCL_runPIDF64Series(DCL_PIDF64 *pid, float64_t rk, float64_t yk, float64_t lk)
 {
-    float64_t v1, v4, v5, v8, v9, v10, v12;
+    float64_t v1, v4, v5, v8, v9, v10;
 
     v5 = (pid->Kr * rk) - yk;
     v8 = ((rk - yk) * pid->Ki * pid->Kp * pid->i14) + pid->i10;
@@ -472,9 +449,8 @@ float64_t DCL_runPIDF64Series(DCL_PIDF64 *pid, float64_t rk, float64_t yk, float
     pid->d2 = v1;
     pid->d3 = v4 * pid->c2;
     v9 = ((v5 - v4) * pid->Kp) + v8;
-    v10 = DCL_runSat(v9, pid->Umax, pid->Umin);
-    v12 = (v10 == v9) ? 1.0L : 0.0L;
-    pid->i14 = v12 * lk;
+    v10 = DCL_runSatF64(v9, pid->Umax, pid->Umin);
+    pid->i14 = (v10 == v9) ? lk : 0.0L;
 
 #ifdef DCL_TESTPOINTS_ENABLED
     pid->css->tpt = v5;
@@ -494,7 +470,7 @@ float64_t DCL_runPIDF64Series(DCL_PIDF64 *pid, float64_t rk, float64_t yk, float
 _DCL_CRIT_ACCESS
 float64_t DCL_runPIDF64Parallel(DCL_PIDF64 *pid, float64_t rk, float64_t yk, float64_t lk)
 {
-    float64_t v1, v4, v5, v6, v8, v9, v10, v12;
+    float64_t v1, v4, v5, v6, v8, v9, v10;
 
     v5 = rk - yk;
     v6 = v5 * pid->Kp;
@@ -505,9 +481,8 @@ float64_t DCL_runPIDF64Parallel(DCL_PIDF64 *pid, float64_t rk, float64_t yk, flo
     pid->d2 = v1;
     pid->d3 = v4 * pid->c2;
     v9 = v6 + v8 + v4;
-    v10 = DCL_runSat(v9, pid->Umax, pid->Umin);
-    v12 = (v10 == v9) ? 1.0L : 0.0L;
-    pid->i14 = v12 * lk;
+    v10 = DCL_runSatF64(v9, pid->Umax, pid->Umin);
+    pid->i14 = (v10 == v9) ? lk : 0.0L;
 
 #ifdef DCL_TESTPOINTS_ENABLED
     pid->css->tpt = v8;

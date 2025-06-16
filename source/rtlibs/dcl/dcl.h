@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2024 Texas Instruments Incorporated
+ *  Copyright (C) 2023-2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -59,8 +59,8 @@ extern "C" {
  */
 
 //! \brief          Library version number formatted for numerical comparison
-//!                 v4.02.00.00
-#define DCL_VERSION 4020000
+//!                 v4.03.00.00
+#define DCL_VERSION 4030000
 
 //! \brief          Enable voltaile flag for dcl strcutures
 //!                 Disabled by default
@@ -77,9 +77,15 @@ extern "C" {
 //!                 Disabled by default
 //#define DCL_TESTPOINTS_ENABLED
 
+/* Includes legacy API */
+#ifndef DCL_NO_LEGACY_API
+#include "misc/dcl_c28_compatibility.h"
+#endif
+
 /* utilities */
 #include "misc/dcl_error.h"
 #include "misc/dcl_fdlog.h"
+#include "misc/dcl_gsm.h"
 #include "misc/dcl_mlog.h"
 #include "misc/dcl_refgen.h"
 #include "misc/dcl_tcm.h"

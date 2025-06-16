@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2024 Texas Instruments Incorporated
+ *  Copyright (C) 2023-2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -64,15 +64,11 @@ typedef double        float64_t;
 
 //! \brief  Defines the scope of critical dcl functions
 //!
-//! \note   For users wanting to map critial functions in a specific memory region, 
-//!         uncomment "__attribute__((section("dclfuncs")))" and map 
-//!         the memory directive "dclfuncs" in the .cmd linker script
-#define _DCL_CRIT_ACCESS   static __attribute__((always_inline)) //__attribute__((section("dclfuncs")))
+#define _DCL_CRIT_ACCESS   static inline __attribute__((always_inline))
 
 //! \brief  Defines volatile for DCL strctures
-//!
-//! \note   Define "DCL_VOLATILE_ENABLED" to enable violatile 
-//!         (either in in dcl.h or user files that includes dcl.h)
+//!         Flags can be defined in dcl.h or 
+//!         user files before including DCL lib
 #ifdef DCL_VOLATILE_ENABLED
     #define _DCL_VOLATILE volatile
 #else
@@ -85,6 +81,8 @@ typedef double        float64_t;
     #define DCL_setBreakPoint() asm(" ESTOP")
 #elif defined (__ARM_ARCH)      //ARM ISA
     #define DCL_setBreakPoint()  __asm(" bkpt #0")
+#elif defined (__C29__)		    //C29 ISA
+    #define DCL_setBreakPoint() __asm(" EMUSTOP0")
 #else
     #define DCL_setBreakPoint()
     #warning "DCL currently doesn't support break point for this architecture"
@@ -100,6 +98,10 @@ typedef double        float64_t;
     #include <kernel/dpl/HwiP.h>
     #define DCL_disableInts()   HwiP_disable()
     #define DCL_restoreInts(v)  HwiP_restore(v)
+    typedef uint32_t            dcl_interrupt_t;
+#elif defined (__C29__)
+    #define DCL_disableInts()   0; __asm(" DISINT")
+    #define DCL_restoreInts(v)  __asm(" ENINT")
     typedef uint32_t            dcl_interrupt_t;
 #else 
     #define DCL_disableInts()   0

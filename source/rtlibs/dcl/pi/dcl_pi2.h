@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2024 Texas Instruments Incorporated
+ *  Copyright (C) 2023-2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -28,8 +28,7 @@
  *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
- 
+ */ 
 #ifndef _DCL_PI2_H_
 #define _DCL_PI2_H_
 
@@ -148,6 +147,7 @@ _DCL_CODE_ACCESS
 void DCL_resetPI2(DCL_PI2 *pi2)
 {
     dcl_interrupt_t ints;
+
     ints = DCL_disableInts();
     pi2->i6 = pi2->i9 = 0.0f;
     pi2->i12 = pi2->i13 = 1.0f;
@@ -189,27 +189,10 @@ void DCL_forceUpdatePI2(DCL_PI2 *pi2)
 _DCL_CODE_ACCESS
 void DCL_updatePI2NoCheck(DCL_PI2 *pi2)
 {
-
-#ifdef DCL_ERROR_HANDLING_ENABLED
-    uint32_t err_code = dcl_none;
-    err_code |= (pi2->sps->Umax <= pi2->sps->Umin) ? dcl_param_invalid_err : dcl_none;
-    err_code |= (pi2->css->T <= 0.0f) ? dcl_param_range_err : dcl_none;
-    err_code |= (pi2->sps->Kp < 0.0f) ? dcl_param_range_err : dcl_none;
-    err_code |= (pi2->sps->Ki < 0.0f) ? dcl_param_range_err : dcl_none;
-    if (err_code)
-    {
-        DCL_setError(pi2,err_code);
-        DCL_getErrorInfo(pi2);
-        DCL_runErrorHandler(pi2);
-    }
-#endif
-
     dcl_interrupt_t ints;
+    
     ints = DCL_disableInts();
-    pi2->Ki = pi2->sps->Ki;
-    pi2->Kp = pi2->sps->Kp;
-    pi2->Umax = pi2->sps->Umax;
-    pi2->Umin = pi2->sps->Umin;
+    DCL_forceUpdatePI2(pi2);
     DCL_restoreInts(ints);
 }
 
