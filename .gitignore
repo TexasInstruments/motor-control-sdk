@@ -76,3 +76,5 @@ mcupsdk_setup
 .west/*
 repo_manifests.git/*
 repo_manifests.git
+*.lnkxml
+*.ossr

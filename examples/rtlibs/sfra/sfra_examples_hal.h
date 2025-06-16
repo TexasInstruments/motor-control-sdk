@@ -83,59 +83,15 @@ void disablePWMCLKCounting(void);
 void enablePWMCLKCounting(void);
 void setPinsAsPWM();
 
-void setupProfilingGPIO();
-
 //
 // ISR related
 //
 
  void controlISR(void *args);
 
-
-
 //
 // Inline functions
 //
-
-//
-// setProfilingGPIO
-//
-static inline void setProfilingGPIO(void)
-{
-
-    HW_WR_REG32((CSL_GPIO0_U_BASE + CSL_GPIO_SET_DATA(0)), 0x2000); // GPIO used by default is 13
-
-}
-
-//
-// resetProfilingGPIO
-//
-static inline void resetProfilingGPIO(void)
-{
-
-    HW_WR_REG32((CSL_GPIO0_U_BASE + CSL_GPIO_CLR_DATA(0)), 0x2000); // GPIO used by default is 13
-
-}
-
-//
-// setProfilingGPIO
-//
-static inline void setProfilingGPIO2(void)
-{
-
-    HW_WR_REG32((CSL_GPIO0_U_BASE + CSL_GPIO_SET_DATA(0)), 0x4000); // GPIO used by default is 14
-
-}
-
-//
-// resetProfilingGPIO
-//
-static inline void resetProfilingGPIO2(void)
-{
-
-    HW_WR_REG32((CSL_GPIO0_U_BASE + CSL_GPIO_CLR_DATA(0)), 0x4000); // GPIO used by default is 14
-
-}
 
 //
 // clearPWM Interrupt Flag

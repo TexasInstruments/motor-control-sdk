@@ -1,6 +1,11 @@
 
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL =
 # Various Example Projectspec Build Targets
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += bissc_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += endat_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += nikon_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += tamagawa_diagnostic_soc_uart_am263x-lp_r5fss0-0_freertos_ti-arm-clang_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += tamagawa_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += dcl_df22_am263x-cc_r5fss0-0_nortos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += dcl_df22_am263x-cc_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += dcl_df22_am263x-lp_r5fss0-0_nortos_ti-arm-clang_build
@@ -9,11 +14,6 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += dcl_pi_am263x-cc_r5fss0-0_nortos_ti
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += dcl_pi_am263x-cc_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += dcl_pi_am263x-lp_r5fss0-0_nortos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += dcl_pi_am263x-lp_r5fss0-0_freertos_ti-arm-clang_build
-BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += bissc_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_build
-BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += endat_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_build
-BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += nikon_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_build
-BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += tamagawa_diagnostic_soc_uart_am263x-lp_r5fss0-0_freertos_ti-arm-clang_build
-BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += tamagawa_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += sfralib_am263x-cc_r5fss0-0_nortos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += transforms_test_am263x-cc_r5fss0-0_nortos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += transforms_test_am263x-cc_r5fss0-0_freertos_ti-arm-clang_build
@@ -38,6 +38,21 @@ all: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL)
 
 all-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL)
 
+ bissc_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_build:
+	$(MAKE) -C examples/position_sense/bissc_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
+
+ endat_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_build:
+	$(MAKE) -C examples/position_sense/endat_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
+
+ nikon_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_build:
+	$(MAKE) -C examples/position_sense/nikon_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
+
+ tamagawa_diagnostic_soc_uart_am263x-lp_r5fss0-0_freertos_ti-arm-clang_build:
+	$(MAKE) -C examples/position_sense/tamagawa_diagnostic_over_soc_uart/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
+
+ tamagawa_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_build:
+	$(MAKE) -C examples/position_sense/tamagawa_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
+
  dcl_df22_am263x-cc_r5fss0-0_nortos_ti-arm-clang_build:
 	$(MAKE) -C examples/rtlibs/dcl/dcl_df22/am263x-cc/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec all
 
@@ -61,21 +76,6 @@ all-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL)
 
  dcl_pi_am263x-lp_r5fss0-0_freertos_ti-arm-clang_build:
 	$(MAKE) -C examples/rtlibs/dcl/dcl_pi/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
-
- bissc_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_build:
-	$(MAKE) -C examples/position_sense/bissc_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
-
- endat_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_build:
-	$(MAKE) -C examples/position_sense/endat_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
-
- nikon_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_build:
-	$(MAKE) -C examples/position_sense/nikon_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
-
- tamagawa_diagnostic_soc_uart_am263x-lp_r5fss0-0_freertos_ti-arm-clang_build:
-	$(MAKE) -C examples/position_sense/tamagawa_diagnostic_over_soc_uart/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
-
- tamagawa_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_build:
-	$(MAKE) -C examples/position_sense/tamagawa_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
 
  sfralib_am263x-cc_r5fss0-0_nortos_ti-arm-clang_build:
 	$(MAKE) -C examples/rtlibs/sfra/am263x-cc/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec all
@@ -123,6 +123,11 @@ all-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL)
 
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL =
 # Various Example Projectspec Clean Targets
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += bissc_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += endat_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += nikon_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += tamagawa_diagnostic_soc_uart_am263x-lp_r5fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += tamagawa_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += dcl_df22_am263x-cc_r5fss0-0_nortos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += dcl_df22_am263x-cc_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += dcl_df22_am263x-lp_r5fss0-0_nortos_ti-arm-clang_clean
@@ -131,11 +136,6 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += dcl_pi_am263x-cc_r5fss0-0_nortos_ti
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += dcl_pi_am263x-cc_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += dcl_pi_am263x-lp_r5fss0-0_nortos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += dcl_pi_am263x-lp_r5fss0-0_freertos_ti-arm-clang_clean
-BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += bissc_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_clean
-BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += endat_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_clean
-BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += nikon_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_clean
-BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += tamagawa_diagnostic_soc_uart_am263x-lp_r5fss0-0_freertos_ti-arm-clang_clean
-BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += tamagawa_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += sfralib_am263x-cc_r5fss0-0_nortos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += transforms_test_am263x-cc_r5fss0-0_nortos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += transforms_test_am263x-cc_r5fss0-0_freertos_ti-arm-clang_clean
@@ -160,6 +160,21 @@ clean: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL)
 
 clean-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL)
 
+ bissc_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/position_sense/bissc_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
+
+ endat_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/position_sense/endat_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
+
+ nikon_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/position_sense/nikon_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
+
+ tamagawa_diagnostic_soc_uart_am263x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/position_sense/tamagawa_diagnostic_over_soc_uart/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
+
+ tamagawa_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/position_sense/tamagawa_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
+
  dcl_df22_am263x-cc_r5fss0-0_nortos_ti-arm-clang_clean:
 	$(MAKE) -C examples/rtlibs/dcl/dcl_df22/am263x-cc/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec clean
 
@@ -183,21 +198,6 @@ clean-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL)
 
  dcl_pi_am263x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
 	$(MAKE) -C examples/rtlibs/dcl/dcl_pi/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
-
- bissc_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
-	$(MAKE) -C examples/position_sense/bissc_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
-
- endat_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
-	$(MAKE) -C examples/position_sense/endat_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
-
- nikon_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
-	$(MAKE) -C examples/position_sense/nikon_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
-
- tamagawa_diagnostic_soc_uart_am263x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
-	$(MAKE) -C examples/position_sense/tamagawa_diagnostic_over_soc_uart/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
-
- tamagawa_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
-	$(MAKE) -C examples/position_sense/tamagawa_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
 
  sfralib_am263x-cc_r5fss0-0_nortos_ti-arm-clang_clean:
 	$(MAKE) -C examples/rtlibs/sfra/am263x-cc/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec clean
@@ -245,6 +245,11 @@ clean-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL)
 
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL =
 # Various Example Projectspec Export Targets
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += bissc_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += endat_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += nikon_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += tamagawa_diagnostic_soc_uart_am263x-lp_r5fss0-0_freertos_ti-arm-clang_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += tamagawa_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += dcl_df22_am263x-cc_r5fss0-0_nortos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += dcl_df22_am263x-cc_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += dcl_df22_am263x-lp_r5fss0-0_nortos_ti-arm-clang_export
@@ -253,11 +258,6 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += dcl_pi_am263x-cc_r5fss0-0_nortos_t
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += dcl_pi_am263x-cc_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += dcl_pi_am263x-lp_r5fss0-0_nortos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += dcl_pi_am263x-lp_r5fss0-0_freertos_ti-arm-clang_export
-BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += bissc_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_export
-BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += endat_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_export
-BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += nikon_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_export
-BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += tamagawa_diagnostic_soc_uart_am263x-lp_r5fss0-0_freertos_ti-arm-clang_export
-BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += tamagawa_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += sfralib_am263x-cc_r5fss0-0_nortos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += transforms_test_am263x-cc_r5fss0-0_nortos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += transforms_test_am263x-cc_r5fss0-0_freertos_ti-arm-clang_export
@@ -282,6 +282,21 @@ export: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL)
 
 export-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL)
 
+ bissc_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_export:
+	$(MAKE) -C examples/position_sense/bissc_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
+
+ endat_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_export:
+	$(MAKE) -C examples/position_sense/endat_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
+
+ nikon_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_export:
+	$(MAKE) -C examples/position_sense/nikon_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
+
+ tamagawa_diagnostic_soc_uart_am263x-lp_r5fss0-0_freertos_ti-arm-clang_export:
+	$(MAKE) -C examples/position_sense/tamagawa_diagnostic_over_soc_uart/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
+
+ tamagawa_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_export:
+	$(MAKE) -C examples/position_sense/tamagawa_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
+
  dcl_df22_am263x-cc_r5fss0-0_nortos_ti-arm-clang_export:
 	$(MAKE) -C examples/rtlibs/dcl/dcl_df22/am263x-cc/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec export
 
@@ -305,21 +320,6 @@ export-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL)
 
  dcl_pi_am263x-lp_r5fss0-0_freertos_ti-arm-clang_export:
 	$(MAKE) -C examples/rtlibs/dcl/dcl_pi/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
-
- bissc_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_export:
-	$(MAKE) -C examples/position_sense/bissc_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
-
- endat_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_export:
-	$(MAKE) -C examples/position_sense/endat_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
-
- nikon_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_export:
-	$(MAKE) -C examples/position_sense/nikon_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
-
- tamagawa_diagnostic_soc_uart_am263x-lp_r5fss0-0_freertos_ti-arm-clang_export:
-	$(MAKE) -C examples/position_sense/tamagawa_diagnostic_over_soc_uart/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
-
- tamagawa_diagnostic_single_channel_am263x-lp_r5fss0-0_freertos_ti-arm-clang_export:
-	$(MAKE) -C examples/position_sense/tamagawa_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
 
  sfralib_am263x-cc_r5fss0-0_nortos_ti-arm-clang_export:
 	$(MAKE) -C examples/rtlibs/sfra/am263x-cc/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec export
@@ -383,6 +383,11 @@ help:
 	@echo  .
 	@echo  Example ProjectSpec build targets,
 	@echo  ==================================
+	@echo  $(MAKE) -s -C examples/position_sense/bissc_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C examples/position_sense/endat_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C examples/position_sense/nikon_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C examples/position_sense/tamagawa_diagnostic_over_soc_uart/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C examples/position_sense/tamagawa_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/rtlibs/dcl/dcl_df22/am263x-cc/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/rtlibs/dcl/dcl_df22/am263x-cc/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/rtlibs/dcl/dcl_df22/am263x-lp/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec [export all clean]
@@ -391,11 +396,6 @@ help:
 	@echo  $(MAKE) -s -C examples/rtlibs/dcl/dcl_pi/am263x-cc/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/rtlibs/dcl/dcl_pi/am263x-lp/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/rtlibs/dcl/dcl_pi/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
-	@echo  $(MAKE) -s -C examples/position_sense/bissc_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
-	@echo  $(MAKE) -s -C examples/position_sense/endat_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
-	@echo  $(MAKE) -s -C examples/position_sense/nikon_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
-	@echo  $(MAKE) -s -C examples/position_sense/tamagawa_diagnostic_over_soc_uart/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
-	@echo  $(MAKE) -s -C examples/position_sense/tamagawa_diagnostic/single_channel/am263x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/rtlibs/sfra/am263x-cc/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/rtlibs/transforms/transforms_test/am263x-cc/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/rtlibs/transforms/transforms_test/am263x-cc/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
