@@ -763,7 +763,7 @@ void nikon_main(void *args)
         uint32_t addr = 0;
         uint32_t data = 0;
         uint32_t bank = 0;
-        uint8_t cmd_type;
+        uint32_t cmd_type;
         ch = nikon_get_current_channel(priv, 0);
         nikon_display_menu();
         cmd = nikon_get_command();
@@ -816,13 +816,13 @@ void nikon_main(void *args)
                     while(1)
                     {
                         DebugP_log("\r\n Enter \"1\" to request ABS lower 24bit data, or enter \"2\" to request ABS 40bit data + velocity data : ");
-                        DebugP_scanf("%c", &cmd_type);
+                        DebugP_scanf("%u", &cmd_type);
 
-                        if(cmd_type == '1')
+                        if(cmd_type == 1)
                         {
                             break;
                         }
-                        else if(cmd_type == '2')
+                        else if(cmd_type == 2)
                         {
                             cmd = (cmd == CMD_1)?CMD_1_VEL:CMD_5_VEL;
                             break;
@@ -895,13 +895,13 @@ void nikon_main(void *args)
                     while(1)
                     {
                         DebugP_log("\r\n Enter \"1\" to request operation (clear or set as selected above), or enter \"2\" to request ABS lower 24bit data : ");
-                        DebugP_scanf("%c", &cmd_type);
+                        DebugP_scanf("%u", &cmd_type);
 
-                        if(cmd_type == '1')
+                        if(cmd_type == 1)
                         {
                             break;
                         }
-                        else if(cmd_type == '2')
+                        else if(cmd_type == 2)
                         {
                             if(cmd == CMD_8)
                             {
@@ -1015,10 +1015,10 @@ void nikon_main(void *args)
                 {
                     while(1)
                     {
-                        DebugP_log("\r\n Read with bank? (y/n) ");
-                        DebugP_scanf("%c", &cmd_type);
+                        DebugP_log("\r\n Read with bank? (0 for without bank / 1 for with bank) ");
+                        DebugP_scanf("%u", &cmd_type);
 
-                        if((cmd_type == 'y') || (cmd_type == 'Y'))
+                        if(cmd_type == 1)
                         {
                             cmd = CMD_13_BANK;
 
@@ -1055,7 +1055,7 @@ void nikon_main(void *args)
                             }
                             break;
                         }
-                        else if((cmd_type == 'n') || (cmd_type == 'N'))
+                        else if(cmd_type == 0)
                         {
                             break;
                         }
@@ -1149,10 +1149,10 @@ void nikon_main(void *args)
                 {
                     while(1)
                     {
-                        DebugP_log("\r\n Write with bank? (y/n) ");
-                        DebugP_scanf("%c", &cmd_type);
+                        DebugP_log("\r\n Read with bank? (0 for without bank / 1 for with bank) ");
+                        DebugP_scanf("%u", &cmd_type);
 
-                        if((cmd_type == 'y') || (cmd_type == 'Y'))
+                        if(cmd_type == 1)
                         {
                             cmd = CMD_14_BANK;
 
@@ -1189,7 +1189,7 @@ void nikon_main(void *args)
                             }
                             break;
                         }
-                        else if((cmd_type == 'n') || (cmd_type == 'N'))
+                        else if(cmd_type == 0)
                         {
                             break;
                         }
@@ -1295,13 +1295,13 @@ void nikon_main(void *args)
                     while(1)
                     {
                         DebugP_log("\r\n Enter \"1\" to request identification code read, or enter \"2\" to request velocity coefficient read : ");
-                        DebugP_scanf("%c", &cmd_type);
+                        DebugP_scanf("%u", &cmd_type);
 
-                        if(cmd_type == '1')
+                        if(cmd_type == 1)
                         {
                             break;
                         }
-                        else if(cmd_type == '2')
+                        else if(cmd_type == 2)
                         {
                             cmd = CMD_16_VEL;
                             break;
@@ -1360,13 +1360,13 @@ void nikon_main(void *args)
                     while(1)
                     {
                         DebugP_log("\r\n Enter \"1\" to request identification code write, or enter \"2\" to request velocity coefficient write : ");
-                        DebugP_scanf("%c", &cmd_type);
+                        DebugP_scanf("%u", &cmd_type);
 
-                        if(cmd_type == '1')
+                        if(cmd_type == 1)
                         {
                             break;
                         }
-                        else if(cmd_type == '2')
+                        else if(cmd_type == 2)
                         {
                             cmd = CMD_18_VEL;
                             break;
