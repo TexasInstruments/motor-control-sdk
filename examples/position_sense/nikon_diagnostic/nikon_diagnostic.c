@@ -583,6 +583,8 @@ static void nikon_process_periodic_command(struct nikon_priv *priv, int64_t cmp0
     int32_t ret;
     uint32_t ch_num;
     uint32_t ch;
+    uint32_t enc_num;
+    uint32_t ls_ch;
     uint32_t pos_fail_cnt = 0;
     uint32_t pos_total_cnt = 0;
     struct nikon_periodic_interface nikon_periodic_interface;
@@ -633,31 +635,25 @@ static void nikon_process_periodic_command(struct nikon_priv *priv, int64_t cmp0
                 {
                     DebugP_log("\r");
                 }
-                DebugP_log("Channel:%d - Encoder1: ",ch);
-                if(priv->multi_turn_len[ch][0])
+
+                if(CONFIG_NIKON0_LOAD_SHARE_MODE)
                 {
-                    DebugP_log("MT rev:%u, ", priv->pos_data_info[ch].multi_turn[0]);
+                    ls_ch = ch;
                 }
-                DebugP_log("Angle:%.12f, crc error count:%u",priv->pos_data_info[ch].angle[0], priv->pos_data_info[ch].crc_err_cnt[0]);
-                if(priv->single_turn_len[ch][1])
+                else
                 {
-                    DebugP_log(", Encoder2: ");
-                    if(priv->multi_turn_len[ch][1])
-                    {
-                        DebugP_log("MT rev:%u, ", priv->pos_data_info[ch].multi_turn[1]);
-                    }
-                    DebugP_log("Angle:%.12f, crc error count:%u",priv->pos_data_info[ch].angle[1], priv->pos_data_info[ch].crc_err_cnt[1]);
-                    if(priv->single_turn_len[ch][2])
-                    {
-                        DebugP_log("Encoder3: ");
-                        if(priv->multi_turn_len[ch][2])
-                        {
-                            DebugP_log("MT rev:%u, ", priv->pos_data_info[ch].multi_turn[2]);
-                        }
-                        DebugP_log("Angle:%.12f, crc error count:%u",priv->pos_data_info[ch].angle[2], priv->pos_data_info[ch].crc_err_cnt[2]);
-                    }
+                    ls_ch = 0;
                 }
 
+                for(enc_num = 0; enc_num < priv->num_enc_access[ls_ch]; enc_num++)
+                {
+                    DebugP_log("Channel:%d-Encoder %d: ", ch, enc_num+1);
+                    if(priv->multi_turn_len[ch][enc_num])
+                    {
+                        DebugP_log("MT:%u, ", priv->pos_data_info[ch].multi_turn[enc_num]);
+                    }
+                    DebugP_log("Angle:%.12f, CRC Error Count:%u",priv->pos_data_info[ch].angle[enc_num], priv->pos_data_info[ch].crc_err_cnt[enc_num]);
+                }
             }
         }
     }
@@ -1702,13 +1698,13 @@ void nikon_main(void *args)
                 break;
 
             case START_CONTINUOUS_MODE:
-                DebugP_log("\r| Enter IEP cycle count(must be greater than Nikon cycle time in nano seconds): ");
+                DebugP_log("\r| Enter IEP cycle count(must be greater than Nikon cycle time, in IEP cycles): ");
                 if(DebugP_scanf("%lld\n", &cmp0) < 0)
                 {
                     DebugP_log("\r\n| WARNING: invalid value entered\n");
                     continue;
                 }
-                DebugP_log("\r| Enter IEP trigger time(must be less than or equal to IEP cycle count, in nano seconds): ");
+                DebugP_log("\r| Enter IEP trigger time(must be less than or equal to IEP cycle count, in IEP cycles): ");
                 DebugP_scanf("%lld\n", &cmp3);
                 if((cmp3 > cmp0) || (cmp3 <= IEP_DEFAULT_INC))
                 {

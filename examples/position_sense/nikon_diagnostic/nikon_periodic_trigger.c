@@ -213,8 +213,6 @@ void pru_nikon_irq_handler0(void *args)
 
 void nikon_periodic_interface_init(struct nikon_priv *priv, struct nikon_periodic_interface *nikon_periodic_interface, int64_t cmp0, int64_t cmp3)
 {
-    cmp0 = (cmp0 * priv->core_clk_freq)/1000000000; /* convert nano sec to PRU cycles */
-    cmp3 = (cmp3 * priv->core_clk_freq)/1000000000; /* convert nano sec to PRU cycles */
     nikon_periodic_interface->pruicss_iep = priv->pruicss_iep;
     nikon_periodic_interface->cmp3 = cmp3;
     nikon_periodic_interface->cmp0 = cmp0;
