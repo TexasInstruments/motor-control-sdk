@@ -354,24 +354,15 @@ void nikon_config_periodic_trigger(struct nikon_priv *priv)
     /* Configures Nikon in periodic trigger mode */
     struct nikon_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
     uint8_t pru_num;
-    pruicss_xchg->num_rx_frames = NIKON_MAX_NUM_RX_FRAMES;
     if(priv->load_share)
     {
         for(pru_num = 0; pru_num < NUM_ED_CH_MAX; pru_num++)
         {
-            pruicss_xchg->cdf_frame[pru_num] = priv->tx_cdf[pru_num];
-            pruicss_xchg->num_encoders[pru_num] = priv->num_encoders[pru_num];
-            pruicss_xchg->rx_frame_size[pru_num] = (pruicss_xchg->num_encoders[pru_num] == 1)
-                ? (priv->num_rx_frames * (NIKON_RX_ONE_FRAME_LEN + NIKON_START_BIT_LEN + NIKON_STOP_BIT_LEN)) : 0xfff;
             pruicss_xchg->opmode[pru_num] = NIKON_CONFIG_PERIODIC_TRIGGER_MODE;
         }
     }
     else
     {
-        pruicss_xchg->cdf_frame[0] = priv->tx_cdf[0];
-        pruicss_xchg->num_encoders[0] = priv->num_encoders[0];
-        pruicss_xchg->rx_frame_size[0] = (pruicss_xchg->num_encoders[0] == 1)
-            ? (priv->num_rx_frames * (NIKON_RX_ONE_FRAME_LEN + NIKON_START_BIT_LEN + NIKON_STOP_BIT_LEN)) : 0xfff;
         pruicss_xchg->opmode[0] = NIKON_CONFIG_PERIODIC_TRIGGER_MODE;
     }
     priv->is_continuous_mode = NIKON_SET_STATUS_FLAG;
