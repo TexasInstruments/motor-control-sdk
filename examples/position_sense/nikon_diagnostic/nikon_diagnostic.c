@@ -583,6 +583,8 @@ static void nikon_process_periodic_command(struct nikon_priv *priv, int64_t cmp0
     int32_t ret;
     uint32_t ch_num;
     uint32_t ch;
+    uint32_t enc_num;
+    uint32_t ls_ch;
     uint32_t pos_fail_cnt = 0;
     uint32_t pos_total_cnt = 0;
     struct nikon_periodic_interface nikon_periodic_interface;
@@ -633,31 +635,25 @@ static void nikon_process_periodic_command(struct nikon_priv *priv, int64_t cmp0
                 {
                     DebugP_log("\r");
                 }
-                DebugP_log("Channel:%d - Encoder1: ",ch);
-                if(priv->multi_turn_len[ch][0])
+
+                if(CONFIG_NIKON0_LOAD_SHARE_MODE)
                 {
-                    DebugP_log("MT rev:%u, ", priv->pos_data_info[ch].multi_turn[0]);
+                    ls_ch = ch;
                 }
-                DebugP_log("Angle:%.12f, crc error count:%u",priv->pos_data_info[ch].angle[0], priv->pos_data_info[ch].crc_err_cnt[0]);
-                if(priv->single_turn_len[ch][1])
+                else
                 {
-                    DebugP_log(", Encoder2: ");
-                    if(priv->multi_turn_len[ch][1])
-                    {
-                        DebugP_log("MT rev:%u, ", priv->pos_data_info[ch].multi_turn[1]);
-                    }
-                    DebugP_log("Angle:%.12f, crc error count:%u",priv->pos_data_info[ch].angle[1], priv->pos_data_info[ch].crc_err_cnt[1]);
-                    if(priv->single_turn_len[ch][2])
-                    {
-                        DebugP_log("Encoder3: ");
-                        if(priv->multi_turn_len[ch][2])
-                        {
-                            DebugP_log("MT rev:%u, ", priv->pos_data_info[ch].multi_turn[2]);
-                        }
-                        DebugP_log("Angle:%.12f, crc error count:%u",priv->pos_data_info[ch].angle[2], priv->pos_data_info[ch].crc_err_cnt[2]);
-                    }
+                    ls_ch = 0;
                 }
 
+                for(enc_num = 0; enc_num < priv->num_enc_access[ls_ch]; enc_num++)
+                {
+                    DebugP_log("Channel:%d-Encoder %d: ", ch, enc_num+1);
+                    if(priv->multi_turn_len[ch][enc_num])
+                    {
+                        DebugP_log("MT:%u, ", priv->pos_data_info[ch].multi_turn[enc_num]);
+                    }
+                    DebugP_log("Angle:%.12f, CRC Error Count:%u",priv->pos_data_info[ch].angle[enc_num], priv->pos_data_info[ch].crc_err_cnt[enc_num]);
+                }
             }
         }
     }
@@ -763,7 +759,7 @@ void nikon_main(void *args)
         uint32_t addr = 0;
         uint32_t data = 0;
         uint32_t bank = 0;
-        uint8_t cmd_type;
+        uint32_t cmd_type;
         ch = nikon_get_current_channel(priv, 0);
         nikon_display_menu();
         cmd = nikon_get_command();
@@ -816,13 +812,13 @@ void nikon_main(void *args)
                     while(1)
                     {
                         DebugP_log("\r\n Enter \"1\" to request ABS lower 24bit data, or enter \"2\" to request ABS 40bit data + velocity data : ");
-                        DebugP_scanf("%c", &cmd_type);
+                        DebugP_scanf("%u", &cmd_type);
 
-                        if(cmd_type == '1')
+                        if(cmd_type == 1)
                         {
                             break;
                         }
-                        else if(cmd_type == '2')
+                        else if(cmd_type == 2)
                         {
                             cmd = (cmd == CMD_1)?CMD_1_VEL:CMD_5_VEL;
                             break;
@@ -895,13 +891,13 @@ void nikon_main(void *args)
                     while(1)
                     {
                         DebugP_log("\r\n Enter \"1\" to request operation (clear or set as selected above), or enter \"2\" to request ABS lower 24bit data : ");
-                        DebugP_scanf("%c", &cmd_type);
+                        DebugP_scanf("%u", &cmd_type);
 
-                        if(cmd_type == '1')
+                        if(cmd_type == 1)
                         {
                             break;
                         }
-                        else if(cmd_type == '2')
+                        else if(cmd_type == 2)
                         {
                             if(cmd == CMD_8)
                             {
@@ -1015,10 +1011,10 @@ void nikon_main(void *args)
                 {
                     while(1)
                     {
-                        DebugP_log("\r\n Read with bank? (y/n) ");
-                        DebugP_scanf("%c", &cmd_type);
+                        DebugP_log("\r\n Read with bank? (0 for without bank / 1 for with bank) ");
+                        DebugP_scanf("%u", &cmd_type);
 
-                        if((cmd_type == 'y') || (cmd_type == 'Y'))
+                        if(cmd_type == 1)
                         {
                             cmd = CMD_13_BANK;
 
@@ -1055,7 +1051,7 @@ void nikon_main(void *args)
                             }
                             break;
                         }
-                        else if((cmd_type == 'n') || (cmd_type == 'N'))
+                        else if(cmd_type == 0)
                         {
                             break;
                         }
@@ -1149,10 +1145,10 @@ void nikon_main(void *args)
                 {
                     while(1)
                     {
-                        DebugP_log("\r\n Write with bank? (y/n) ");
-                        DebugP_scanf("%c", &cmd_type);
+                        DebugP_log("\r\n Read with bank? (0 for without bank / 1 for with bank) ");
+                        DebugP_scanf("%u", &cmd_type);
 
-                        if((cmd_type == 'y') || (cmd_type == 'Y'))
+                        if(cmd_type == 1)
                         {
                             cmd = CMD_14_BANK;
 
@@ -1189,7 +1185,7 @@ void nikon_main(void *args)
                             }
                             break;
                         }
-                        else if((cmd_type == 'n') || (cmd_type == 'N'))
+                        else if(cmd_type == 0)
                         {
                             break;
                         }
@@ -1295,13 +1291,13 @@ void nikon_main(void *args)
                     while(1)
                     {
                         DebugP_log("\r\n Enter \"1\" to request identification code read, or enter \"2\" to request velocity coefficient read : ");
-                        DebugP_scanf("%c", &cmd_type);
+                        DebugP_scanf("%u", &cmd_type);
 
-                        if(cmd_type == '1')
+                        if(cmd_type == 1)
                         {
                             break;
                         }
-                        else if(cmd_type == '2')
+                        else if(cmd_type == 2)
                         {
                             cmd = CMD_16_VEL;
                             break;
@@ -1360,13 +1356,13 @@ void nikon_main(void *args)
                     while(1)
                     {
                         DebugP_log("\r\n Enter \"1\" to request identification code write, or enter \"2\" to request velocity coefficient write : ");
-                        DebugP_scanf("%c", &cmd_type);
+                        DebugP_scanf("%u", &cmd_type);
 
-                        if(cmd_type == '1')
+                        if(cmd_type == 1)
                         {
                             break;
                         }
-                        else if(cmd_type == '2')
+                        else if(cmd_type == 2)
                         {
                             cmd = CMD_18_VEL;
                             break;
@@ -1702,13 +1698,13 @@ void nikon_main(void *args)
                 break;
 
             case START_CONTINUOUS_MODE:
-                DebugP_log("\r| Enter IEP cycle count(must be greater than Nikon cycle time in nano seconds): ");
+                DebugP_log("\r| Enter IEP cycle count(must be greater than Nikon cycle time, in IEP cycles): ");
                 if(DebugP_scanf("%lld\n", &cmp0) < 0)
                 {
                     DebugP_log("\r\n| WARNING: invalid value entered\n");
                     continue;
                 }
-                DebugP_log("\r| Enter IEP trigger time(must be less than or equal to IEP cycle count, in nano seconds): ");
+                DebugP_log("\r| Enter IEP trigger time(must be less than or equal to IEP cycle count, in IEP cycles): ");
                 DebugP_scanf("%lld\n", &cmp3);
                 if((cmp3 > cmp0) || (cmp3 <= IEP_DEFAULT_INC))
                 {
