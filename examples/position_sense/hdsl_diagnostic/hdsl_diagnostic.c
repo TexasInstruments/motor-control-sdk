@@ -845,7 +845,7 @@ void hdsl_pruss_init_300m(void)
 
     /* configure C28 to IEP1 base and C29 to EDMA + 0x1000 */
     /*6.4.14.1.1 ICSSG_PRU_CONTROL RegisterPRU_ICSSG0_PR1_PDSP0_IRAM 00B0 2400h*/
-    HW_WR_REG32(CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE + CSL_ICSS_G_PR1_RTU1_PR1_RTU1_IRAM_REGS_BASE + CSL_ICSS_G_PR1_PDSP0_IRAM_CONSTANT_TABLE_PROG_PTR_0, 0xF0000238); // Address = 0x30023828
+    HW_WR_REG32(CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE + CSL_ICSS_G_PR1_RTU1_PR1_RTU1_IRAM_REGS_BASE + CSL_ICSS_G_PR1_PDSP0_IRAM_CONSTANT_TABLE_PROG_PTR_0, 0xF00002F0);
     PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_PRU1, PRUICSS_CONST_TBL_ENTRY_C28, 0x02f0);
     HW_WR_REG32(CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE + CSL_ICSS_G_PR1_PDSP_TX1_IRAM_REGS_BASE + CSL_ICSS_G_PR1_PDSP0_IRAM_CONSTANT_TABLE_PROG_PTR_0, 0xF0000258); // Address = 0x30025828
     /*IEP1 base */
@@ -1601,7 +1601,9 @@ void hdsl_diagnostic_main(void *arg)
     uint32_t    val, acc_bits, pos_bits;
     uint8_t     ureg;
 #ifndef SOC_AM261X
+#if (PRU_CORE_CLK==PRU_CLK_FREQ_300M)
     uint8_t     chMask = 0;
+#endif
 #endif
 #if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_) && !defined(SOC_AM261X)
     int32_t     retVal = UDMA_SOK;
@@ -1629,7 +1631,9 @@ void hdsl_diagnostic_main(void *arg)
 
     #ifndef HDSL_AM64xE1_TRANSCEIVER
         /* Configure g_mux_en to 1 in ICSSG_SA_MX_REG Register. This is required to remap EnDAT signals correctly via Interface card.*/
-
+    #ifndef SOC_AM261X
+        PRUICSS_setSaMuxMode(gPruIcssXHandle, PRUICSS_SA_MUX_MODE_SD_ENDAT);
+    #endif
     #if (CONFIG_HDSL0_BOOSTER_PACK == 0)
         /*Configure GPIO42 for HDSL mode.*/
         GPIO_setDirMode(CONFIG_GPIO0_BASE_ADDR, CONFIG_GPIO0_PIN, CONFIG_GPIO0_DIR);
