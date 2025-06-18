@@ -1240,7 +1240,7 @@ static int32_t endat_calc_clock(uint32_t freq, struct endat_clk_cfg *clk_cfg)
                     ENDAT_TX_INPUT_CLOCK_FREQUENCY / (ENDAT_TX_INPUT_CLOCK_FREQUENCY / freq),
                     ENDAT_RX_INPUT_CLOCK_FREQUENCY / (ENDAT_RX_INPUT_CLOCK_FREQUENCY / (freq * 8)));
 
-    ns = 2 * 1000000000 / freq; /* rx arm >= 2 clock */
+    ns = ENDAT_DELAY_COUNTER_INCREMENT*(2*ICSS_PRU_CORE_CLOCK/freq); /* rx arm >= 2 clock */
 
     /* should be divisible by 5 */
     if(ns % 5)
@@ -1584,12 +1584,15 @@ static void endat_print_position_loop_channel_info(struct endat_priv *priv,
 static void endat_handle_prop_delay(struct endat_priv *priv,
                                     uint16_t prop_delay)
 {
-    float ct = (priv->rx_en_cnt)/2; /*one endat clock cycle time = 1/endat frequency = 2*rx_en_cnt*/
+    /*convert rx_en_cnt into ns */
+    float ct = ((priv->rx_en_cnt/ENDAT_DELAY_COUNTER_INCREMENT)*((float)1000000000/priv->pru_clock))/2; /*one endat clock cycle time = 1/endat frequency = 2*rx_en_cnt*/
     /* if propagation delay is more than half clock cycle time (2/endat frequency) then we have to reduce clock cycles for rx*/
     if(prop_delay > (ct/2))
     {
-        uint16_t dis = round(prop_delay/ct);
-        endat_config_rx_arm_cnt(priv, prop_delay);
+        uint16_t dis = floor(prop_delay/ct);
+        /* convert propagation delay into rx arm counts */
+        uint16_t temp = ((uint16_t)(((float)prop_delay * priv->pru_clock )/1000000000)) * ENDAT_DELAY_COUNTER_INCREMENT;
+        endat_config_rx_arm_cnt(priv, temp);
         /* propagation delay/cycle_time */
         endat_config_rx_clock_disable(priv, dis);
     }
@@ -1902,6 +1905,9 @@ static void endat_process_host_command(int32_t cmd,
     else if(cmd == 103)
     {
         uint32_t delay;
+ 
+        /* convert tst delay from ns to tst counts*/
+        cmd_supplement->frequency = ENDAT_DELAY_COUNTER_INCREMENT*((uint16_t)(((float)cmd_supplement->frequency * priv->pru_clock)/1000000000));
 
         delay = endat_do_sanity_tst_delay(cmd_supplement->frequency);
 
@@ -1980,6 +1986,8 @@ static void endat_process_host_command(int32_t cmd,
     else if(cmd == 105)
     {
         uint32_t val;
+        /* convert rx arm delay from ns to rx arm count*/
+        cmd_supplement->frequency = ENDAT_DELAY_COUNTER_INCREMENT*((uint16_t)(((float)cmd_supplement->frequency * priv->pru_clock)/1000000000));
 
         /* reuse tST delay sanity check */
         val = endat_do_sanity_tst_delay(cmd_supplement->frequency);
@@ -1991,7 +1999,10 @@ static void endat_process_host_command(int32_t cmd,
     }
     else if(cmd == 106)
     {
-        uint16_t dis = cmd_supplement->frequency * 2 / priv->rx_en_cnt;
+        
+        /*convert rx_en_cnt into 1 enadt clock cycle period */ 
+        float ct = ((priv->rx_en_cnt/ENDAT_DELAY_COUNTER_INCREMENT)*((float)1000000000/priv->pru_clock))/2;
+        uint16_t dis = floor(cmd_supplement->frequency / ct);
 
         endat_config_rx_clock_disable(priv, dis);
     }
@@ -2009,6 +2020,8 @@ static void endat_process_host_command(int32_t cmd,
     }
     else if(cmd == 109)
     {
+        /* convert from ns to wire delay count*/
+        cmd_supplement->frequency = ENDAT_DELAY_COUNTER_INCREMENT*((uint16_t)(((float)cmd_supplement->frequency * priv->pru_clock)/1000000000));
         /* reuse tST delay sanity check */
         uint32_t val = endat_do_sanity_tst_delay(cmd_supplement->frequency);
 

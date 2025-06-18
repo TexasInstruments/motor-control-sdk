@@ -90,6 +90,8 @@ extern "C" {
 /**    \brief    additional info 1 CRC status mask (if both present) */
 #define ENDAT_CRC_ADDINFO1  (0x1 << 2)
 
+/**    \brief    delay counter increment value */ 
+#define ENDAT_DELAY_COUNTER_INCREMENT  5
 
 /* ========================================================================== */
 /*                         Structures                                         */

@@ -2101,7 +2101,7 @@ static void endat_hw_init(struct endat_priv *priv)
         clk_cfg.tx_div = priv->pru_uart_clock/ENDAT_INIT_FREQ - 1;
     }
     /* 2T */
-    clk_cfg.rx_en_cnt = 10000;
+    clk_cfg.rx_en_cnt = ENDAT_DELAY_COUNTER_INCREMENT*((2*priv->pru_clock)/ENDAT_INIT_FREQ);
     /* sample size 8 */
     clk_cfg.rx_div_attr = ENDAT_RX_OVERSAMPLING_RATE - 1;
 
