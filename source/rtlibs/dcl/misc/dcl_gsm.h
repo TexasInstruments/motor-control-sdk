@@ -30,8 +30,8 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DCL_TCM_H_
-#define _DCL_TCM_H_
+#ifndef _DCL_GSM_H_
+#define _DCL_GSM_H_
 
 #ifdef __cplusplus
 extern "C" {
