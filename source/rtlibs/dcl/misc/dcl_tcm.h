@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2024 Texas Instruments Incorporated
+ *  Copyright (C) 2023-2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -29,7 +29,6 @@
  *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 #ifndef _DCL_TCM_H_
 #define _DCL_TCM_H_
 
@@ -45,7 +44,6 @@ extern "C" {
  *  \brief      Defines the interface to the Transient Capture Module (TCM)
  */
 
-#include <math.h>
 #include "dcl_fdlog.h"
 #include "../dcl_common.h"
 
@@ -59,11 +57,11 @@ typedef _DCL_VOLATILE struct dcl_tcm {
     float32_t trigMin;      //!< Lower trigger threshold
     uint32_t mode;          //!< Operating mode
     uint32_t lead;          //!< Lead frame size in 32-bit words = trigger crossing index
-} DCL_TCM, TCM;
+} DCL_TCM;
 
 //! \brief          Defines default values to initialize the TCM structure
 //!
-#define TCM_DEFAULTS { FDLOG_DEFAULTS, FDLOG_DEFAULTS, FDLOG_DEFAULTS, 0.1, -0.1, 0, 10 }
+#define TCM_DEFAULTS { FDLOG_DEFAULTS, FDLOG_DEFAULTS, FDLOG_DEFAULTS, 0.1f, -0.1f, 0, 10 }
 
 //! \brief          Enumerated TCM operating modes
 //!
@@ -215,7 +213,7 @@ float32_t DCL_runITAE(DCL_FDLOG *elog, float32_t prd)
     // accumulate ITAE data
     while (size--)
     {
-        rlt += fabs(*(elog->dptr++)) * tim;
+        rlt += fabsf(*(elog->dptr++)) * tim;
         tim += prd;
     }
     DCL_resetLog(elog);
@@ -240,7 +238,7 @@ float32_t DCL_runIAE(DCL_FDLOG *elog)
     // accumulate IAE data
     while (size--)
     {
-        rlt += fabs(*(elog->dptr++));
+        rlt += fabsf(*(elog->dptr++));
     }
     DCL_resetLog(elog);
 

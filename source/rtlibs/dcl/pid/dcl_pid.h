@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2024 Texas Instruments Incorporated
+ *  Copyright (C) 2023-2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -28,8 +28,7 @@
  *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
- 
+ */ 
 #ifndef _DCL_PID_H_
 #define _DCL_PID_H_
 
@@ -158,6 +157,7 @@ _DCL_CODE_ACCESS
 void DCL_resetPID(DCL_PID *pid)
 {
     dcl_interrupt_t ints;
+
     ints = DCL_disableInts();
     pid->d2 = pid->d3 = pid->i10 = 0.0f;
     pid->i14 = 1.0f;
@@ -205,40 +205,17 @@ void DCL_forceUpdatePID(DCL_PID *pid)
 _DCL_CODE_ACCESS
 void DCL_updatePIDNoCheck(DCL_PID *pid)
 {
- 
-#ifdef DCL_ERROR_HANDLING_ENABLED
-    float32_t tau = (2.0f - pid->sps->c1 * pid->css->T) / (2.0f * pid->sps->c1);
-    float32_t ec2 = pid->sps->c1 * (pid->css->T - 2.0f * tau) / 2.0f;
-    uint32_t err_code = dcl_none;
-    err_code |= DCL_isValue(pid->sps->c2, ec2) ? dcl_none : dcl_param_invalid_err;
-    err_code |= (pid->sps->Umax > pid->sps->Umin) ? dcl_none : dcl_param_invalid_err;
-    err_code |= (pid->css->T > 0.0f) ? dcl_none : dcl_param_range_err;
-    err_code |= ((pid->sps->Kp > 0.0f) && (pid->sps->Ki > 0.0f) && (pid->sps->Kd > 0.0f) && (pid->sps->Kr > 0.0f)) ? dcl_none : dcl_param_range_err ;
-    if (err_code)
-    {
-        DCL_setError(pid,err_code);
-        DCL_getErrorInfo(pid);
-        DCL_runErrorHandler(pid);
-    }
-#endif
-
     dcl_interrupt_t ints;
+    
     ints = DCL_disableInts();
-    pid->Kp = pid->sps->Kp;
-    pid->Ki = pid->sps->Ki;
-    pid->Kd = pid->sps->Kd;
-    pid->Kr = pid->sps->Kr;
-    pid->c1 = pid->sps->c1;
-    pid->c2 = pid->sps->c2;
-    pid->Umax = pid->sps->Umax;
-    pid->Umin = pid->sps->Umin;
+    DCL_forceUpdatePID(pid);
     DCL_restoreInts(ints);
 }
 
 //! \brief           A conditional update based on the update flag.
 //!                  If the update status is set, the function will update PID
 //!                  parameter from its SPS parameter and clear the status flag on completion.
-//! \note            Note: Use DCL_getUpdateStatus(pid) to set the update status.
+//! \note            Note: Use DCL_setUpdateStatus(pid) to set the update status.
 //!     
 //! \param[in] pid   Pointer to the DCL_PID controller structure
 //! \return          'true' if an update is applied, otherwise 'false'
@@ -464,7 +441,7 @@ void DCL_loadParallelPIDasZPK(DCL_PID *pid, DCL_ZPK3 *zpk)
 _DCL_CRIT_ACCESS
 float32_t DCL_runPIDSeries(DCL_PID *pid, float32_t rk, float32_t yk, float32_t lk)
 {
-    float32_t v1, v4, v5, v8, v9, v10, v12;
+    float32_t v1, v4, v5, v8, v9, v10;
 
     v5 = (pid->Kr * rk) - yk;
     v8 = ((rk - yk) * pid->Ki * pid->Kp * pid->i14) + pid->i10;
@@ -475,8 +452,7 @@ float32_t DCL_runPIDSeries(DCL_PID *pid, float32_t rk, float32_t yk, float32_t l
     pid->d3 = v4 * pid->c2;
     v9 = ((v5 - v4) * pid->Kp) + v8;
     v10 = DCL_runSat(v9, pid->Umax, pid->Umin);
-    v12 = (v10 == v9) ? 1.0f : 0.0f;
-    pid->i14 = v12 * lk;
+    pid->i14 = (v10 == v9) ? lk : 0.0f;
 
 #ifdef DCL_TESTPOINTS_ENABLED
     pid->css->tpt = v4;
@@ -496,7 +472,7 @@ float32_t DCL_runPIDSeries(DCL_PID *pid, float32_t rk, float32_t yk, float32_t l
 _DCL_CRIT_ACCESS
 float32_t DCL_runPIDParallel(DCL_PID *pid, float32_t rk, float32_t yk, float32_t lk)
 {
-    float32_t v1, v4, v5, v6, v8, v9, v10, v12;
+    float32_t v1, v4, v5, v6, v8, v9, v10;
 
     v5 = rk - yk;
     v6 = v5 * pid->Kp;
@@ -508,8 +484,7 @@ float32_t DCL_runPIDParallel(DCL_PID *pid, float32_t rk, float32_t yk, float32_t
     pid->d3 = v4 * pid->c2;
     v9 = v6 + v8 + v4;
     v10 = DCL_runSat(v9, pid->Umax, pid->Umin);
-    v12 = (v10 == v9) ? 1.0f : 0.0f;
-    pid->i14 = v12 * lk;
+    pid->i14 = (v10 == v9) ? lk : 0.0f;
 
 #ifdef DCL_TESTPOINTS_ENABLED
     pid->css->tpt = v8;

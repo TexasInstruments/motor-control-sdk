@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2024 Texas Instruments Incorporated
+ *  Copyright (C) 2023-2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -99,7 +99,7 @@ extern "C" {
 //*****************************************************************************
 #define DCL_runNLPID_C1   DCL_runNLPIDParallel
 #define DCL_runNLPID_C2   DCL_runNLPIDSeries 
-#define DCL_runNLPID_C3   DCL_runNLPIDSeries 
+#define DCL_runNLPID_C3   DCL_runNLPIDSeries    // C28 ASM function
 #define DCL_runNLF_C1     DCL_runNLF 
 #define DCL_calcGamma     DCL_getNLPIDgamma
 
@@ -238,16 +238,26 @@ extern "C" {
 #define FDLOG_SIZE         DCL_getLogSize
 #define FDLOG_ELEMENT      DCL_getLogIndex
 #define FDLOG_DEFAULT_SIZE 0x0400
+typedef struct dcl_fdlog   FDLOG;
+typedef struct dcl_mlog    MLOG;
+
 
 //*****************************************************************************
 // TCM
 //*****************************************************************************
-#define DCL_runITAE_C1     DCL_runITAE
+#define DCL_runITAE_C1     DCL_runITAE      // C28 ASM function
 #define DCL_runITAE_C2     DCL_runITAE
-#define DCL_runIAE_C1      DCL_runIAE
+#define DCL_runIAE_C1      DCL_runIAE       // C28 ASM function
 #define DCL_runIAE_C2      DCL_runIAE
-#define DCL_runIES_C1      DCL_runIES
+#define DCL_runIES_C1      DCL_runIES       // C28 ASM function
 #define DCL_runIES_C2      DCL_runIES
+typedef struct dcl_tcm            TCM;
+
+//*****************************************************************************
+// GSM
+//*****************************************************************************
+#define DCL_runGSM_C1      DCL_runGSM
+#define DCL_fupdateGSM     DCL_updateGSM    // C28 ASM function
 
 /** @} */
 
