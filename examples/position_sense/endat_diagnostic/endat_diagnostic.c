@@ -183,6 +183,7 @@ TaskP_Object gTaskObject;
                                     ((x) == 9) || ((x) == 10) || ((x) == 11) || ((x) == 13) || ((x) == 14) || \
                                     ((x) == 100) || ((x) == 101) || ((x)== 103) || ((x) == 105) || ((x) == 106) || ((x) == 107) || ((x) == 108) || ((x) == 109)  || ((x) == 200) || ((x) == 112))
 
+
 #if defined(SOC_AM243X) || defined(SOC_AM64X)
 #define ICSS_PRU_CORE_CLOCK CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ
 #define ENDAT_INPUT_CLOCK_UART_FREQUENCY   192000000
@@ -501,8 +502,8 @@ uint32_t endat_pruicss_load_run_fw(struct endat_priv *priv)
         DebugP_assert(SystemP_SUCCESS == status);
 
 #if(CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU)
-
-
+           
+           
             /*validate binary size*/
            if((sizeof(EnDatFirmwareMulti_0)) > PRU_IRAM_SIZE)
            {
@@ -514,7 +515,7 @@ uint32_t endat_pruicss_load_run_fw(struct endat_priv *priv)
                                 sizeof(EnDatFirmwareMulti_0));
 
 #else
-
+           
            /*validate binary size*/
            if((sizeof(EnDatFirmware_0)) > PRU_IRAM_SIZE)
            {
