@@ -49,7 +49,9 @@ extern "C" {
 
 //! \brief          Defines the number of MLOG channels
 //!
+#ifndef MLOG_CHANS
 #define MLOG_CHANS   4
+#endif
 
 //! \brief          Enumerated MLOG operating modes
 //!

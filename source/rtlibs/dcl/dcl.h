@@ -77,6 +77,11 @@ extern "C" {
 //!                 Disabled by default
 //#define DCL_TESTPOINTS_ENABLED
 
+//! \brief          Disables compatibility with C28 (v3) DCL API calls
+//!                 Only disable it if legacy calls resulted in a conflict
+//!                 Disabled by default
+//#define DCL_NO_LEGACY_API
+
 /* Includes legacy API */
 #ifndef DCL_NO_LEGACY_API
 #include "misc/dcl_c28_compatibility.h"
