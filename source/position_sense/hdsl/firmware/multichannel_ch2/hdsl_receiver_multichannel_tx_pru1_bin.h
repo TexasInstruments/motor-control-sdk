@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2024 Texas Instruments Incorporated
+ *  Copyright (C) 2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -2465,7 +2465,7 @@ const uint8_t Hiperface_DSL2_0_TX_PRU_1[] = {
 0x00,
 0x24,
 0x20,
-0x01,
+0x02,
 0x00,
 0x24,
 0x00,

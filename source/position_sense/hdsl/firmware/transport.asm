@@ -78,7 +78,7 @@ transport_on_v_frame_2:
 	mov		REG_TMP11.w1, REG_FNC.w0
 
 ; retrieve the 8 bytes for secondary channel from VPOS2_TEMP
-    lbco        &REG_TMP1, MASTER_REGS_CONST, VPOS2_TEMP, 8
+	lbco        &REG_TMP1, MASTER_REGS_CONST, VPOS2_TEMP, 8
 ; error checks for secondary channel
 	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, ONLINE_STATUS_2_H, 1
 ; retrieve H_FRAME.flags from H_FRAME_FLAGS_TEMP
@@ -113,9 +113,23 @@ transport_on_v_frame_no_vpos2_error:
 transport_on_v_frame_vpos2_error_exit:
 transport_on_v_frame_2_exit:
 ; store the data from secondary channel
+	.if $defined("HDSL_MULTICHANNEL")
 ; swap bytes in each 32 bit register REG_TMP1 and REG_TMP2
 	xin     160, &REG_TMP1, 8
-
+	.else
+; First word byte swap
+    mov         REG_TMP0, REG_TMP1
+    mov         REG_TMP1.b0, REG_TMP0.b3
+    mov         REG_TMP1.b1, REG_TMP0.b2
+    mov         REG_TMP1.b2, REG_TMP0.b1
+    mov         REG_TMP1.b3, REG_TMP0.b0
+    ; Second word byte swap
+    mov         REG_TMP0, REG_TMP2
+    mov         REG_TMP2.b0, REG_TMP0.b3
+    mov         REG_TMP2.b1, REG_TMP0.b2
+    mov         REG_TMP2.b2, REG_TMP0.b1
+    mov         REG_TMP2.b3, REG_TMP0.b0
+	.endif
 ; update ONLINE_STATUS_2_SUM2 in ONLINE_STATUS_2
     qbbs        online_status_2_sum2_set, REG_TMP2.b0, STATUS2_TEST2
     qbbs        online_status_2_sum2_set, REG_TMP2.b0, STATUS2_ERR2
@@ -375,9 +389,21 @@ calc_relpos_extend_vel:
 	adc		REG_TMP0.w2, REG_TMP0.w2, REG_TMP1.w2
 	sbco		&REG_TMP0, MASTER_REGS_CONST, REL_POS0, 4
 	;store fast pos. and velocity
-    mov     REG_TMP0, FAST_POSH
+	.if $defined("HDSL_MULTICHANNEL")
+	mov     REG_TMP0, FAST_POSH
     mov     REG_TMP1, SPEED
     xin     160, &REG_TMP0, 8
+	.else
+	mov		REG_TMP0.b0, FAST_POSH.b3
+	mov		REG_TMP0.b1, FAST_POSH.b2
+	mov		REG_TMP0.b2, FAST_POSH.b1
+	mov		REG_TMP0.b3, FAST_POSH.b0
+
+	mov		REG_TMP1.b0, SPEED.b3
+	mov		REG_TMP1.b1, SPEED.b2
+	mov		REG_TMP1.b2, SPEED.b1
+	mov		REG_TMP1.b3, SPEED.b0
+	.endif
 	sbco	&REG_TMP0, MASTER_REGS_CONST, POS4, SIZE_FAST_POS+3
 ; Set POSTX to 2
     ldi         REG_TMP0.b0, 0x2
@@ -678,8 +704,15 @@ transport_layer_received_long_msg:
 transport_layer_received_long_msg_no_data:
 ;we already read 32 bits bits (PC_ADD_H/L + CRC)
 ;store already received  bits (32) to master registers
+	.if $defined("HDSL_MULTICHANNEL")
 	mov		REG_TMP0, REG_TMP11
 	xin     160, &REG_TMP0, 4
+	.else
+	mov		REG_TMP0.b0, REG_TMP11.b3
+	mov		REG_TMP0.b1, REG_TMP11.b2
+	mov		REG_TMP0.b2, REG_TMP11.b1
+	mov		REG_TMP0.b3, REG_TMP11.b0
+	.endif
 ;check if we have LOFF
 	qbbc		transport_layer_received_long_msg_no_loffset, REG_TMP11.b3, LOFF
 	sbco		&REG_TMP0, MASTER_REGS_CONST, PC_ADD_H, 2
