@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2024 Texas Instruments Incorporated
+ *  Copyright (C) 2024-2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -222,13 +222,14 @@ static inline void DATALOG_update(DATALOG_Handle handle)
                   obj->flag_enableLogOneShot = false;
               }
           }
-          else {
-          for(int temp1 = 0; temp1 < DATA_LOG_BUFF_NUM; temp1++)
+          else 
           {
-              obj->datalogBuff[temp1][obj->cntr] = (*obj->iptr[temp1]);
+            for(int temp1 = 0; temp1 < DATA_LOG_BUFF_NUM; temp1++)
+            {
+                obj->datalogBuff[temp1][obj->cntr] = (*obj->iptr[temp1]);
+            }
+            obj->cntr++;
           }
-          }
-          obj->cntr++;
        }
     }
     else if(obj->flag_enableLogOneShot == true)
