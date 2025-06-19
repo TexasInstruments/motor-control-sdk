@@ -224,16 +224,19 @@ void SDFM_setEnableChannel(sdfm_handle h_sdfm, uint8_t channel_number)
     {
         h_sdfm->pSdfmInterface->sdfm_ch_ctrl.sdfm_ch_id |= (channel_number << SDFM_CFG_BF_SD_CH0_ID_SHIFT);
         h_sdfm->pSdfmInterface->sdfm_cfg_ptr[0].ch_id = channel_number;
+        h_sdfm->pSdfmInterface->sdfm_ch_ctrl.sdfm_ch_mask |= 1;
     }
     else if(temp & SDFM_CH_MASK_FOR_CH1_CH4_CH7)
     {
         h_sdfm->pSdfmInterface->sdfm_ch_ctrl.sdfm_ch_id |= (channel_number<< SDFM_CFG_BF_SD_CH1_ID_SHIFT);
         h_sdfm->pSdfmInterface->sdfm_cfg_ptr[1].ch_id = channel_number;
+        h_sdfm->pSdfmInterface->sdfm_ch_ctrl.sdfm_ch_mask |= 2;
     }
     else 
     {
         h_sdfm->pSdfmInterface->sdfm_ch_ctrl.sdfm_ch_id |= (channel_number << SDFM_CFG_BF_SD_CH2_ID_SHIFT);
         h_sdfm->pSdfmInterface->sdfm_cfg_ptr[2].ch_id = channel_number;
+        h_sdfm->pSdfmInterface->sdfm_ch_ctrl.sdfm_ch_mask |= 4;
     }
 }
 /* set SDFM channel acc source */
@@ -795,6 +798,21 @@ int32_t SDFM_configClockFromGPO1(sdfm_handle h_sdfm, uint8_t div0, uint8_t div1)
     return retVal;
     
 }
+
+/*Enable shadow register basedNC sampling */
+void SDFM_enableShadowRegBasedNC(sdfm_handle h_sdfm)
+{
+    /*Enable shadow register basedNC sampling */
+    h_sdfm->pSdfmInterface->sdfm_ctrl.sdfm_en_shadow_nc = 1;
+}
+
+/*Disable shadow register basedNC sampling */
+void SDFM_disableShadowRegBasedNC(sdfm_handle h_sdfm)
+{
+    /*Enable shadow register basedNC sampling */
+    h_sdfm->pSdfmInterface->sdfm_ctrl.sdfm_en_shadow_nc = 0;
+}
+
 /* SDFM global enable */
 void SDFM_enable(sdfm_handle h_sdfm)
 {
@@ -810,5 +828,3 @@ void SDFM_enable(sdfm_handle h_sdfm)
 
 
 }
-
-

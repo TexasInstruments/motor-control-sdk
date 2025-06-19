@@ -320,3 +320,17 @@ Following are different examples for ICSS %SDFM:
  </tr>
 </table>
 
+## Shadow Mode Based Normal Current Sampling in SDFM
+Shadow mode based normal current provides an alternative method for Normal Current (NC) sampling in SDFM, eliminating dependencies on IEP counter-based timing. This mode utilizes the Over Current mechanism for Normal Current sampling.
+
+All SDK SDFM examples, by default, use the IEP CMP event based normal current. This approach may not be reliable in certain situations
+- When the SD clock is unstable with jitter and variations
+- When the IEP gets reset during normal current sampling
+
+Configuration of Shadow Mode for normal current sampling:
+- Enable Shadow Mode: In sdfm_example.h, set #define SDFM_SHADOW_REG_BASED_NC to 1
+- Set the over-current OSR (oversampling ratio) equal to the normal current OSR
+
+Limitations:
+- Over-current detection is not available, as the accumulator flags and shadow registers are used for normal current sampling 
+\note "fast detect" feature is still available and can be used as an alternative for over-current detection.

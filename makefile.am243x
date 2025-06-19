@@ -102,7 +102,11 @@ help:
 	@echo  $(MAKE) -s -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icss_g0_rtu_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icss_g0_tx_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icss_g0_rtu_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icss_g0_tx_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/current_sense/sdfm/firmware/single_axis_single_pru/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
+	@echo  $(MAKE) -s -C source/current_sense/sdfm/firmware/single_axis_single_pru/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/bissc/firmware/multi_channel_load_share/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/bissc/firmware/multi_channel_load_share/am243x-evm/icss_g0_rtu_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/bissc/firmware/multi_channel_load_share/am243x-evm/icss_g0_tx_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
@@ -346,7 +350,11 @@ BUILD_COMBO_EXAMPLE_PRIVATE_ALL =
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_rtu_pru0_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_tx_pru0_fw_ti-pru-cgt
+BUILD_COMBO_EXAMPLE_PRIVATE_ALL += sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt
+BUILD_COMBO_EXAMPLE_PRIVATE_ALL += sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_rtu_pru1_fw_ti-pru-cgt
+BUILD_COMBO_EXAMPLE_PRIVATE_ALL += sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_tx_pru1_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += sdfm_firmware_single_axis_single_pru_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt
+BUILD_COMBO_EXAMPLE_PRIVATE_ALL += sdfm_firmware_single_axis_single_pru_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru1_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru1_fw_ti-pru-cgt
@@ -555,8 +563,20 @@ examples-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_ALL)
  sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_tx_pru0_fw_ti-pru-cgt:
 	$(MAKE) -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icss_g0_tx_pru0_fw/ti-pru-cgt -f makefile all
 
+ sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt:
+	$(MAKE) -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile all
+
+ sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_rtu_pru1_fw_ti-pru-cgt:
+	$(MAKE) -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icss_g0_rtu_pru1_fw/ti-pru-cgt -f makefile all
+
+ sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_tx_pru1_fw_ti-pru-cgt:
+	$(MAKE) -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icss_g0_tx_pru1_fw/ti-pru-cgt -f makefile all
+
  sdfm_firmware_single_axis_single_pru_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt:
 	$(MAKE) -C source/current_sense/sdfm/firmware/single_axis_single_pru/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt -f makefile all
+
+ sdfm_firmware_single_axis_single_pru_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt:
+	$(MAKE) -C source/current_sense/sdfm/firmware/single_axis_single_pru/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile all
 
  bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt:
 	$(MAKE) -C source/position_sense/bissc/firmware/multi_channel_load_share/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile all
@@ -775,7 +795,11 @@ BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL =
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_rtu_pru0_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_tx_pru0_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_rtu_pru1_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_tx_pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += sdfm_firmware_single_axis_single_pru_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += sdfm_firmware_single_axis_single_pru_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru1_fw_ti-pru-cgt_clean
@@ -984,8 +1008,20 @@ examples-private-clean: $(BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL)
  sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_tx_pru0_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icss_g0_tx_pru0_fw/ti-pru-cgt -f makefile clean
 
+ sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile clean
+
+ sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_rtu_pru1_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icss_g0_rtu_pru1_fw/ti-pru-cgt -f makefile clean
+
+ sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_tx_pru1_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icss_g0_tx_pru1_fw/ti-pru-cgt -f makefile clean
+
  sdfm_firmware_single_axis_single_pru_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/current_sense/sdfm/firmware/single_axis_single_pru/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt -f makefile clean
+
+ sdfm_firmware_single_axis_single_pru_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/current_sense/sdfm/firmware/single_axis_single_pru/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile clean
 
  bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/bissc/firmware/multi_channel_load_share/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile clean
@@ -1204,7 +1240,11 @@ BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL =
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_rtu_pru0_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_tx_pru0_fw_ti-pru-cgt_scrub
+BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_scrub
+BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_rtu_pru1_fw_ti-pru-cgt_scrub
+BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_tx_pru1_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += sdfm_firmware_single_axis_single_pru_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_scrub
+BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += sdfm_firmware_single_axis_single_pru_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru1_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru1_fw_ti-pru-cgt_scrub
@@ -1413,8 +1453,20 @@ examples-scrub-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL)
  sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_tx_pru0_fw_ti-pru-cgt_scrub:
 	$(MAKE) -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icss_g0_tx_pru0_fw/ti-pru-cgt -f makefile scrub
 
+ sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_scrub:
+	$(MAKE) -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile scrub
+
+ sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_rtu_pru1_fw_ti-pru-cgt_scrub:
+	$(MAKE) -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icss_g0_rtu_pru1_fw/ti-pru-cgt -f makefile scrub
+
+ sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_tx_pru1_fw_ti-pru-cgt_scrub:
+	$(MAKE) -C source/current_sense/sdfm/firmware/multi_axis_load_share/am243x-evm/icss_g0_tx_pru1_fw/ti-pru-cgt -f makefile scrub
+
  sdfm_firmware_single_axis_single_pru_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_scrub:
 	$(MAKE) -C source/current_sense/sdfm/firmware/single_axis_single_pru/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt -f makefile scrub
+
+ sdfm_firmware_single_axis_single_pru_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_scrub:
+	$(MAKE) -C source/current_sense/sdfm/firmware/single_axis_single_pru/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile scrub
 
  bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_scrub:
 	$(MAKE) -C source/position_sense/bissc/firmware/multi_channel_load_share/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile scrub

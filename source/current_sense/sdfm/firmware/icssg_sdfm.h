@@ -41,9 +41,15 @@
 /* ICSSG INTC events */
 /* Compile-time Host event for SDFM samples available.
    Ideally Host would provide this to FW via pseudo-register in DMEM. */
-#define PRU_TRIGGER_HOST_SDFM_EVT   ( 3+18 )    /* 18+3 (EVT) for 123 (INT#) pr0_pru_mst_intr[3]_intr_req */
-#define RTU_TRIGGER_HOST_SDFM_EVT   ( 4+18 )    /* 18+4 (EVT) for 124 (INT#) pr0_pru_mst_intr[4]_intr_req */
-#define TXPRU_TRIGGER_HOST_SDFM_EVT ( 5+18 )    /* 18+5 (EVT) for 125 (INT#) pr0_pru_mst_intr[5]_intr_req*/
+#define PRU_TRIGGER_HOST_SDFM_EVT_CH0  ( 3+18 )   
+#define PRU_TRIGGER_HOST_SDFM_EVT_CH1  ( 4+18 )   
+#define PRU_TRIGGER_HOST_SDFM_EVT_CH2  ( 5+18 )    
+#define RTU_TRIGGER_HOST_SDFM_EVT_CH0  ( 6+18 )   
+#define RTU_TRIGGER_HOST_SDFM_EVT_CH1  ( 7+18 )   
+#define RTU_TRIGGER_HOST_SDFM_EVT_CH2  ( 8+18 )   
+#define TXPRU_TRIGGER_HOST_SDFM_EVT_CH0 ( 9+18 )  
+#define TXPRU_TRIGGER_HOST_SDFM_EVT_CH1  ( 10+18 )    
+#define TXPRU_TRIGGER_HOST_SDFM_EVT_CH2 ( 11+18 )   
 
 /*
     Firmware registers
@@ -110,6 +116,7 @@
 #define SDFM_EN_OFFSET                     ( 0x00 )
 #define SDFM_EN_ACK_OFFSET                 ( 0x01 )
 #define SDFM_PRU_ID_OFFSET                 ( 0x02 )
+#define SDFM_EN_NC_USING_SHADOW_REG_OFFSET ( 0x03 )
 
 /* SDFM IEP Configuration */
 #define SDFM_CFG_IEP_CFG_OFFSET              ( 0x04 )
@@ -122,6 +129,7 @@
 
 /* SDFM Configuration*/
 #define SDFM_CFG_SD_CH_ID_OFFSET             ( 0x10 )
+#define SDFM_CFG_SD_CH_MASK_OFFSET           ( 0x12 )
 #define SDFM_CFG_SD_EN_COMP_OFFSET           ( 0x14 )
 #define SDFM_CFG_SD_EN_FD_OFFSET             ( 0x16 )
 #define SDFM_CFG_SD_EN_PHASE_DELAY           ( 0x17 )
@@ -333,6 +341,11 @@
 /* SDFM_CFG_TRIP_STATUS */
 #define SDFM_CFG_BF_SD_TRIP_STATUS_HIGH                  ( 0x01 )
 #define SDFM_CFG_BF_SD_TRIP_STATUS_LOW                   ( 0x00 )
+
+/* SDFM_ACTIVE_CHANNELS*/
+#define SDFM_CFG_CH0_EN                  ( 0x00 )
+#define SDFM_CFG_CH1_EN                  ( 0x01 )
+#define SDFM_CFG_CH2_EN                  ( 0x02 )
 
 
 /* SDFM_CFG_TRIG_SAMP_TIME */

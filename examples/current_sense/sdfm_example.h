@@ -37,6 +37,9 @@
 #include <drivers/pruicss.h>
 #include "current_sense/sdfm/include/sdfm_api.h"
 
+/* Shadow based normal current sampling*/
+#define SDFM_SHADOW_REG_BASED_NC     ( 0 )
+
 /* Status codes */
 #define SDFM_ERR_NERR               (  0 )  /* no error */
 #define SDFM_ERR_CFG_PIN_MUX        ( -1 )  /* pin mux configuration error */
@@ -106,7 +109,6 @@
 #define CPU1_ATCM_SOCVIEW(x) (CSL_R5FSS1_CORE0_ATCM_BASE+(x))
 #define CPU0_BTCM_SOCVIEW(x) (CSL_R5FSS0_CORE0_BTCM_BASE+(x - CSL_R5FSS0_BTCM_BASE))
 #define CPU1_BTCM_SOCVIEW(x) (CSL_R5FSS1_CORE0_BTCM_BASE+(x - CSL_R5FSS1_BTCM_BASE))
-
 #define ICSSG_SLICE_ID_0   ( 0 )    /* ICSSG pru slide ID 0 */
 #define ICSSG_SLICE_ID_1   ( 1 )    /* ICSSG pru slide ID 1 */
 #define ICSSG_NUM_SLICE    ( 2 )    /* ICSSG number of slices */
@@ -166,6 +168,8 @@ typedef struct SdfmCompFilterPrms_s
 
 typedef struct SdfmChannelPrms_s
 {
+    /**< Current Channel Enable  */
+    uint16_t chEnable;
     /**< Normal current OSR  */
     uint16_t filterOsr;
     /**< SINC filter type*/

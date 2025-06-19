@@ -79,9 +79,9 @@ clean:
 	-@echo ' '
 
 post-build:
-		-$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=pru_SDFM_TXPRU0_image -o sdfm_txpru_bin.h  sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_tx_pru0_fw_ti-pru-cgt.out
-		-$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h sdfm_txpru_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware/sdfm_txpru_bin.h
-		-$(RM)  sdfm_txpru_bin.h
+		-$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=pru_SDFM_TXPRU0_image -o sdfm_txpru0_bin.h  sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_tx_pru0_fw_ti-pru-cgt.out
+		-$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h sdfm_txpru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware/multi_axis_load_share/sdfm_txpru0_bin.h
+		-$(RM)  sdfm_txpru0_bin.h
 	-@echo ' '
 
 .PHONY: all clean

@@ -50,11 +50,17 @@
 ; Compile-time Host event for SDFM samples available
 ; R31 event interface mapping, add pru<n>_r31_vec_valid to system event number, <sysevt> + 1<<5
     .if $isdefed("SDFM_PRU_CORE")
-TRIGGER_HOST_SDFM_IRQ   .set PRU_TRIGGER_HOST_SDFM_EVT + 16
+TRIGGER_HOST_SDFM_IRQ_CH0   .set PRU_TRIGGER_HOST_SDFM_EVT_CH0 + 16
+TRIGGER_HOST_SDFM_IRQ_CH1   .set PRU_TRIGGER_HOST_SDFM_EVT_CH1 + 16
+TRIGGER_HOST_SDFM_IRQ_CH2   .set PRU_TRIGGER_HOST_SDFM_EVT_CH2 + 16
     .elseif $isdefed("SDFM_RTU_CORE")
-TRIGGER_HOST_SDFM_IRQ   .set RTU_TRIGGER_HOST_SDFM_EVT + 16
+TRIGGER_HOST_SDFM_IRQ_CH0   .set RTU_TRIGGER_HOST_SDFM_EVT_CH0 + 16
+TRIGGER_HOST_SDFM_IRQ_CH1   .set RTU_TRIGGER_HOST_SDFM_EVT_CH1 + 16
+TRIGGER_HOST_SDFM_IRQ_CH2   .set RTU_TRIGGER_HOST_SDFM_EVT_CH2 + 16
     .elseif $isdefed("SDFM_TXPRU_CORE")
-TRIGGER_HOST_SDFM_IRQ   .set TXPRU_TRIGGER_HOST_SDFM_EVT + 16
+TRIGGER_HOST_SDFM_IRQ_CH0   .set TXPRU_TRIGGER_HOST_SDFM_EVT_CH0 + 16
+TRIGGER_HOST_SDFM_IRQ_CH1   .set TXPRU_TRIGGER_HOST_SDFM_EVT_CH1 + 16
+TRIGGER_HOST_SDFM_IRQ_CH2   .set TXPRU_TRIGGER_HOST_SDFM_EVT_CH2 + 16
     .endif
 
 ;SPAD Bank for SD Ch context storage
@@ -152,13 +158,7 @@ CHECK_SDFM_EN:
 ; Perform initialization
 ;
 INIT_SDFM:
-
-    ;Initialize Task Manager
-    JAL     RET_ADDR_REG, FN_TM_INIT 
-
-    ;Enable Task Manager
-    M_PRU_TM_ENABLE  
-
+    
     .if $isdefed("SDFM_PRU_CORE")
     ;Initialize SD mode   
     LDI32   TEMP_REG1, PR1_PRUn_GP_MUX_SEL_VAL<<PR1_PRUn_GP_MUX_SEL_SHIFT   
@@ -191,6 +191,9 @@ INIT_SDFM_CONT:
     AND    TEMP_REG1, TEMP_REG0, BF_SD_CH2_ID_MASK
     MOV    SD_CH2_ID, TEMP_REG1.b0   
 
+    ;read connected channel mask 
+    LBBO   &NC_CHANNEL_MASK, SDFM_CFG_BASE_PTR_REG,  SDFM_CFG_SD_CH_MASK_OFFSET,  1
+
     ; Reset SDFM state
     JAL     RET_ADDR_REG, FN_RESET_SDFM_STATE
 
@@ -203,11 +206,9 @@ INIT_SDFM_CONT:
     ; Global enable SD HW,
     ; reset SD channel HW
     JAL     RET_ADDR_REG, FN_RESET_SD_CH_HW
-    SET     R30.t25 ; R30[25] channel_en = 1, all channels enabled    
+    SET     R30.t25 ; R30[25] channel_en = 1, all channels enabled
 
-    ;Configure PWM trip configuration register
-    JAL   RET_ADDR_REG, FN_CONFIG_PWM_REG 
-
+    
     ; Initialize dedicated registers:
     ;   MASK register,
     ;   Local NC output sample buffer address,
@@ -250,6 +251,16 @@ SKIP_ACC2:
     SUB   NC_SAMPLE_COUNT, NC_SAMPLE_COUNT, 3
 END_NC_SAMPLE_COUNT:
 
+
+    ; Skip Task Manager and IEP configuration if NC sampling is shadow register-based
+    LBBO    &TEMP_REG0.b0, SDFM_CFG_BASE_PTR_REG, SDFM_EN_NC_USING_SHADOW_REG_OFFSET, 1
+    QBBS    SKIP_ENABLE_TM, TEMP_REG0.b0, 0                  
+    ;Initialize Task Manager
+    JAL     RET_ADDR_REG, FN_TM_INIT
+
+    ;Enable Task Manager
+    M_PRU_TM_ENABLE
+
     ;Initialize IEP0
     JAL     RET_ADDR_REG, FN_IEP0_INIT
 
@@ -259,8 +270,20 @@ END_NC_SAMPLE_COUNT:
     SET     TEMP_REG0, TEMP_REG0, CNT_ENABLE_BN ; ICSSG_IEP_GLOBAL_CFG_REG:CNT_ENABLE=1
     SBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_IEP0, ICSSG_IEP_GLOBAL_CFG_REG, 1
     .endif
-
+SKIP_ENABLE_TM:
+    
     LBBO   &COMPARATOR_EN, SDFM_CFG_BASE_PTR_REG,  SDFM_CFG_SD_EN_COMP_OFFSET,  SDFM_CFG_EN_COMP_SZ
+    ;Skip pwm config if OC is not enabled
+    QBBC    SKIP_PWM_CONFIG, COMPARATOR_EN, SDFM_CFG_EN_COMP_BIT
+    ;Configure PWM trip configuration register
+    JAL   RET_ADDR_REG, FN_CONFIG_PWM_REG 
+SKIP_PWM_CONFIG:
+
+
+    LBBO    &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_EN_NC_USING_SHADOW_REG_OFFSET, 1
+    QBBC    SKIP_NC_USING_SHD_REG, TEMP_REG0, 0
+    JMP     NC_USING_SHADOW_REG
+SKIP_NC_USING_SHD_REG:
     QBBS    TS0_OC_LOOP, COMPARATOR_EN, SDFM_CFG_EN_COMP_BIT
     ;waiting loop if OC is disable
 WAIT_LOOP:
@@ -1046,8 +1069,8 @@ END_RESET_NC_FRAME:
     LBBO    &TEMP_REG3, SDFM_CFG_BASE_PTR_REG, OUT_SAMP_BUF_REG, ICSSG_NUM_SD_CH_FW*4
     LBBO    &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_OUT_SAMP_BUF_BASE_ADD_OFFSET,4
     SBBO    &TEMP_REG3,  TEMP_REG0,  SDFM_CFG_OUT_SAMP_BUF_OFFSET, ICSSG_NUM_SD_CH_FW*4
-    ;Trigger interrupt
-    LDI     R31.w0, TRIGGER_HOST_SDFM_IRQ
+    ;Trigger interrupt for NC sampling
+    LDI     R31.w0, TRIGGER_HOST_SDFM_IRQ_CH0
 
 NRESET_NC_FRAME:
 
@@ -1076,6 +1099,7 @@ FN_TM_INIT:
 
     ;set T1_S1 address
     LDI     TEMP_REG0.w0, $CODE(FN_NC_LOOP_TASK)
+
     .if $isdefed("SDFM_TXPRU_CORE")
     SBCO    &TEMP_REG0.w0, C28, TASKS_MGR_TS1_PC_S1, 2
     .else
@@ -1427,10 +1451,9 @@ SDFM_MASK_SKIP1_CH1
 SDFM_MASK_SKIP1_CH2: 
 
 END_MASK_CONFIG:
-       LDI    TEMP_REG1, ICSSG_CFG_PWMx
-       SBCO   &TEMP_REG0, CT_PRU_ICSSG_CFG, TEMP_REG1, 4
-
-       JMP     RET_ADDR_REG
+    LDI    TEMP_REG1, ICSSG_CFG_PWMx
+    SBCO   &TEMP_REG0, CT_PRU_ICSSG_CFG, TEMP_REG1, 4
+    JMP     RET_ADDR_REG
       
 
 ;Phase delay measurement
@@ -1444,34 +1467,289 @@ END_MASK_CONFIG:
 ;   -> macro calcultes time between rising edge of data and upcoming nearest clock edge (rising or falling)
 ;   -> store 8 times calculted time into DMEM
 SDFM_CLOCK_PHASE_COMPENSATION:
-        ;decide mask 
-        LDI32 TEMP_REG1, SDFM_11_MASK
-        ; waiting zero
-        wbc  R31.b0, 1
-        ;waiting for rising edge of sd data
-        wbs  R31.b0, 1
-        ; check nereset clock edge from starting point of bit
-        AND  TEMP_REG0, R31, TEMP_REG1
-        ;Max value
-        LDI   TEMP_REG2, 0
-        QBEQ   DELAY_CAL_FOR_FALLING_EDGE, TEMP_REG0, TEMP_REG1
-        LDI TEMP_REG1, 0
+    ;decide mask 
+    LDI32 TEMP_REG1, SDFM_11_MASK
+    ; waiting zero
+    wbc  R31.b0, 1
+    ;waiting for rising edge of sd data
+    wbs  R31.b0, 1
+    ; check nereset clock edge from starting point of bit
+    AND  TEMP_REG0, R31, TEMP_REG1
+    ;Max value
+    LDI   TEMP_REG2, 0
+    QBEQ   DELAY_CAL_FOR_FALLING_EDGE, TEMP_REG0, TEMP_REG1
+    LDI TEMP_REG1, 0
 
-        LOOP    SDFM_CLOCK_PHASE_COMPENSATION_LOOP, 8
-        M_SDFM_PHASE_DELAY_FOR_RAISING_EDGE
+    LOOP    SDFM_CLOCK_PHASE_COMPENSATION_LOOP, 8
+    M_SDFM_PHASE_DELAY_FOR_RAISING_EDGE
 SDFM_CLOCK_PHASE_COMPENSATION_LOOP:
-        JMP  END_PHASE_DELAY
+    JMP  END_PHASE_DELAY
 DELAY_CAL_FOR_FALLING_EDGE:
-        LDI TEMP_REG1, 0
-        LOOP    SDFM_CLOCK_PHASE_COMPENSATION_LOOP1, 8
-        M_SDFM_PHASE_DELAY_FOR_FALLING_EDGE
+    LDI TEMP_REG1, 0
+    LOOP    SDFM_CLOCK_PHASE_COMPENSATION_LOOP1, 8
+    M_SDFM_PHASE_DELAY_FOR_FALLING_EDGE
 SDFM_CLOCK_PHASE_COMPENSATION_LOOP1:
 END_PHASE_DELAY:
-        ;storing phase delay (8 times) and edge status in DMEM 
-        ;final result in TEMP_REG1 register
-        LSR    TEMP_REG0, TEMP_REG1.w0, 3
-        SUB  TEMP_REG0, TEMP_REG2,TEMP_REG0
-        QBLT   SDFM_CLOCK_PHASE_COMPENSATION, TEMP_REG0, 1
-        SBBO  &TEMP_REG1, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_SD_CLOCK_PHASE_DELAY, 4
-        JMP     RET_ADDR_REG
+    ;storing phase delay (8 times) and edge status in DMEM 
+    ;final result in TEMP_REG1 register
+    LSR    TEMP_REG0, TEMP_REG1.w0, 3
+    SUB  TEMP_REG0, TEMP_REG2,TEMP_REG0
+    QBLT   SDFM_CLOCK_PHASE_COMPENSATION, TEMP_REG0, 1
+    SBBO  &TEMP_REG1, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_SD_CLOCK_PHASE_DELAY, 4
+    JMP     RET_ADDR_REG
 
+
+NC_USING_SHADOW_REG:
+ 
+    ; Read accumulator output
+    QBBC CH0_SKIP, NC_CHANNEL_MASK, SDFM_CFG_CH0_EN
+    ;select ch0, enable all channel
+    LDI     R30.w2, (SD_CH0<<10 | 1<<9 )
+    NOP
+CH0_WAIT:
+    ;R31[28], check shadow_update_flag for Ch0
+    QBBC    CH0_SKIP, R31, 28
+
+    ;R31[24], ; clear shadow update flag for ch0
+    SET     R31, R31.t24
+    ; Load reg R31[0-27] SD HW ACC3/ACC2/ACC1 output sample
+    AND     DN0, R31, MASK_REG
+
+    ;Performs differentiation of accumulator's output
+    
+    ;Execute SINC3/SINC2/SINC1 differentiation for Ch0 ; 0h = acc3, 1h =acc2 & 2h = acc1
+    QBNE    SKIP1_ACC3_CH0, NC_SINC_FILTER_TYPE, 0
+    M_ACC3_PROCESS ACC3_DN1_CH0, ACC3_DN3_CH0, ACC3_DN5_CH0
+    JMP  END1_ACC_CH0
+SKIP1_ACC3_CH0:
+    QBNE    SKIP1_ACC2_CH0, NC_SINC_FILTER_TYPE, 1
+    M_ACC2_PROCESS ACC3_DN1_CH0, ACC3_DN3_CH0
+    JMP  END1_ACC_CH0
+SKIP1_ACC2_CH0:
+    M_ACC1_PROCESS ACC3_DN1_CH0
+END1_ACC_CH0:
+    
+    ;Over current detection 
+    QBBC    END_OC_DETECTION_CH0, COMPARATOR_EN, SDFM_CFG_BF_SD_CH0_EN_COMP_BIT
+    ;Comparator for Ch0
+    MOV     TEMP_REG3, CN5
+    ;Load the positive threshold value for current channel
+    LBBO    &OC_HIGH_THR, SDFM_CFG_BASE_PTR_REG,  SDFM_CFG_OC_HIGH_THR_CH0_OFFSET,  SDFM_CFG_OC_HIGH_THR_SZ
+    ;Load the positive threshold value for current channel
+    LBBO    &OC_LOW_THR,  SDFM_CFG_BASE_PTR_REG,  SDFM_CFG_OC_LOW_THR_CH0_OFFSET,  SDFM_CFG_OC_LOW_THR_SZ
+
+    ;PWM0 register offset 
+    LDI    TEMP_REG1, ICSSG_CFG_PWMx
+    LBCO   &TEMP_REG0, CT_PRU_ICSSG_CFG, TEMP_REG1, 4
+    ;Check if the sample value is greater than the high threshold
+    QBGE    OC_HIGH_THRESHOLD_CH0, OC_HIGH_THR, TEMP_REG3
+    ;Unset in DMEM
+    LDI    TEMP_REG0.b0, 0
+    SBBO   &TEMP_REG0.b0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_OC_HIGH_THR_STATUS_CH0_OFFSET, 1
+    ;Check if the sample value is lower than the low threshold
+    QBLE    OC_LOW_THRESHOLD_CH0, OC_LOW_THR, TEMP_REG3
+    ;Unset in DMEM
+    SBBO   &TEMP_REG0.b0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_OC_LOW_THR_STATUS_CH0_OFFSET, 1
+    JMP     END_OC_DETECTION_CH0
+OC_HIGH_THRESHOLD_CH0:
+    ;Generate PWM trip
+    SET   TEMP_REG0.b2.t3
+    SBCO   &TEMP_REG0, CT_PRU_ICSSG_CFG, TEMP_REG1, 4 
+    ;Store in DMEM
+    LDI    TEMP_REG0.b0, 1
+    SBBO   &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_OC_HIGH_THR_STATUS_CH0_OFFSET, 1
+    JMP     END_OC_DETECTION_CH0
+OC_LOW_THRESHOLD_CH0:
+      ;Generate PWM trip
+    SET   TEMP_REG0.b2.t3
+    SBCO   &TEMP_REG0, CT_PRU_ICSSG_CFG, TEMP_REG1, 4 
+    ;set bit store in DMEM
+    LDI    TEMP_REG0.b0, 1
+    SBBO   &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_OC_LOW_THR_STATUS_CH0_OFFSET, 1
+END_OC_DETECTION_CH0:
+
+ 
+    ;Save NC output sample to local output sample buffer
+    ADD  TEMP_REG0, OUT_SAMP_BUF_REG, 0
+    SBBO    &CN5, SDFM_CFG_BASE_PTR_REG, TEMP_REG0, 4
+
+    LBBO    &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_OUT_SAMP_BUF_BASE_ADD_OFFSET,4
+    LDI    TEMP_REG1, SDFM_CFG_OUT_SAMP_BUF_OFFSET
+    ;;ADD    TEMP_REG1, TEMP_REG1, 4
+    SBBO    &CN5,  TEMP_REG0,  TEMP_REG1, 4
+    ;Trigger interrupt
+    LDI     R31.w0, TRIGGER_HOST_SDFM_IRQ_CH0
+
+CH0_SKIP:
+    
+
+    ;Ch1 sampling
+    QBBC CH1_SKIP, NC_CHANNEL_MASK, SDFM_CFG_CH1_EN
+    
+    ;select ch1, enable all channel
+    LDI     R30.w2, (SD_CH1<<10 | 1<<9 )
+    NOP
+CH1_WAIT:
+    ;R31[28], check shadow_update_flag for Ch1
+    ;;QBBC    CH1_WAIT, R31, 28
+    QBBC CH1_SKIP, R31, 28
+     
+
+    ;R31[24], ; clear shadow update flag for ch1
+    SET     R31, R31.t24
+    ; Load reg R31[0-27] SD HW ACC3/ACC2/ACC1 output sample
+    AND     TEMP_REG1, R31, MASK_REG
+
+    ;QBBC CH1_SKIP1, NC_CHANNEL_MASK, SDFM_CFG_CH1_EN
+    ;Execute SINC3/SINC2/SINC1 differentiation for Ch1 ; 0h = acc3, 1h =acc2 & 2h = acc1
+    MOV     DN0, TEMP_REG1 ; DN0 = Ch2 SD HW ACC3/ACC2/ACC1 output sample
+    QBNE    SKIP1_ACC3_CH1, NC_SINC_FILTER_TYPE, 0
+    M_ACC3_PROCESS ACC3_DN1_CH1, ACC3_DN3_CH1, ACC3_DN5_CH1
+    JMP  END1_ACC_CH1
+SKIP1_ACC3_CH1:
+    QBNE    SKIP1_ACC2_CH1, NC_SINC_FILTER_TYPE, 1
+    M_ACC2_PROCESS ACC3_DN1_CH1, ACC3_DN3_CH1
+    JMP  END1_ACC_CH1
+SKIP1_ACC2_CH1:
+    M_ACC1_PROCESS ACC3_DN1_CH1
+END1_ACC_CH1:
+
+    ;Over Current 
+    QBBC    END_OC_DETECTION_CH1, COMPARATOR_EN, SDFM_CFG_BF_SD_CH1_EN_COMP_BIT
+    ;Comparator for Ch1
+    MOV     TEMP_REG3, CN5  
+    ;Load the positive threshold value for current channel
+    LBBO    &OC_HIGH_THR, SDFM_CFG_BASE_PTR_REG,  SDFM_CFG_OC_HIGH_THR_CH1_OFFSET,  SDFM_CFG_OC_HIGH_THR_SZ
+    ;Load the positive threshold value for current channel
+    LBBO    &OC_LOW_THR,  SDFM_CFG_BASE_PTR_REG,  SDFM_CFG_OC_LOW_THR_CH1_OFFSET,  SDFM_CFG_OC_LOW_THR_SZ
+
+    ;PWM0 register offset 
+    LDI    TEMP_REG1, ICSSG_CFG_PWMx
+    LBCO   &TEMP_REG0, CT_PRU_ICSSG_CFG, TEMP_REG1, 4
+   
+    ;Check if the sample value is greater than the high threshold
+    QBGE    OC_HIGH_THRESHOLD_CH1, OC_HIGH_THR, TEMP_REG3
+    ;Unset in DMEM
+    LDI    TEMP_REG0.b0, 0
+    SBBO   &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_OC_HIGH_THR_STATUS_CH1_OFFSET, 1
+    ;Check if the sample value is lower than the low threshold
+    QBLE    OC_LOW_THRESHOLD_CH1, OC_LOW_THR, TEMP_REG3
+    SBBO   &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_OC_LOW_THR_STATUS_CH1_OFFSET, 1
+    JMP     END_OC_DETECTION_CH1
+OC_HIGH_THRESHOLD_CH1:
+    ;Generate PWM trip
+    SET   TEMP_REG0.b2.t3
+    SBCO   &TEMP_REG0, CT_PRU_ICSSG_CFG, TEMP_REG1, 4
+    ;Store DMEM
+    LDI    TEMP_REG0.b0, 1
+    SBBO   &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_OC_HIGH_THR_STATUS_CH1_OFFSET, 1
+    JMP     END_OC_DETECTION_CH1
+OC_LOW_THRESHOLD_CH1:
+    ;Generate PWM trip
+    SET   TEMP_REG0.b2.t3
+    SBCO   &TEMP_REG0, CT_PRU_ICSSG_CFG, TEMP_REG1, 4
+    ;set bit store in DMEM
+    LDI    TEMP_REG0.b0, 1
+    SBBO   &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_OC_LOW_THR_STATUS_CH1_OFFSET, 1
+END_OC_DETECTION_CH1:  
+
+    ; Save output sample to local output sample buffer
+    ADD  TEMP_REG0, OUT_SAMP_BUF_REG, 4
+    SBBO    &CN5, SDFM_CFG_BASE_PTR_REG, TEMP_REG0, 4
+    ;SBBO    &CN5, OUT_SAMP_BUF_REG, 4, 4
+
+    ; Write local interleaved output samples to Host buffer address
+    ;;LBBO    &TEMP_REG3, SDFM_CFG_BASE_PTR_REG, OUT_SAMP_BUF_REG, ICSSG_NUM_SD_CH_FW*4
+    LBBO    &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_OUT_SAMP_BUF_BASE_ADD_OFFSET,4
+    LDI    TEMP_REG1, SDFM_CFG_OUT_SAMP_BUF_OFFSET
+    ADD    TEMP_REG1, TEMP_REG1, 4
+    SBBO    &CN5,  TEMP_REG0,  TEMP_REG1, 4
+    ;Trigger interrupt
+    LDI     R31.w0, TRIGGER_HOST_SDFM_IRQ_CH1
+
+CH1_SKIP:
+
+    QBBC NC_USING_SHADOW_REG, NC_CHANNEL_MASK, SDFM_CFG_CH2_EN
+    ;select ch1, enable all channel
+    LDI     R30.w2, (SD_CH2<<10 | 1<<9 )
+    NOP
+CH2_WAIT:
+    ;R31[28], check shadow_update_flag for Ch1
+   ;;; QBBC    CH2_WAIT, R31, 28
+    QBBC    NC_USING_SHADOW_REG, R31, 28
+    ;R31[24], ; clear shadow update flag for ch1
+    SET     R31, R31.t24
+    ; Load reg R31[0-27] SD HW ACC3/ACC2/ACC1 output sample
+    AND     TEMP_REG2, R31, MASK_REG
+
+    ;;QBBC CH2_SKIP1, NC_CHANNEL_MASK, SDFM_CFG_CH2_EN
+    ; Execute SINC3/SINC2/SINC1 differentiation for Ch2: 0h = acc3, 1h =acc2 & 2h = acc1
+    MOV     DN0, TEMP_REG2 ; DN0 = Ch2 SD HW ACC3/ACC2/ACC1 output sample
+
+    QBNE    SKIP1_ACC3_CH2, NC_SINC_FILTER_TYPE, 0
+    M_ACC3_PROCESS ACC3_DN1_CH2, ACC3_DN3_CH2, ACC3_DN5_CH2
+    JMP  END1_ACC_CH2
+SKIP1_ACC3_CH2
+    QBNE    SKIP1_ACC2_CH2, NC_SINC_FILTER_TYPE, 1
+    M_ACC2_PROCESS ACC3_DN1_CH2, ACC3_DN3_CH2
+    JMP  END_ACC_CH2
+SKIP1_ACC2_CH2:
+    M_ACC1_PROCESS ACC3_DN1_CH2
+END1_ACC_CH2:
+    
+    ;Over current 
+    QBBC    END_OC_DETECTION_CH2, COMPARATOR_EN, SDFM_CFG_BF_SD_CH2_EN_COMP_BIT
+    ;Comparator for Ch2
+    MOV     TEMP_REG3, CN5   
+    
+    ;Load the positive threshold value for current channel
+    LBBO    &OC_HIGH_THR, SDFM_CFG_BASE_PTR_REG,  SDFM_CFG_OC_HIGH_THR_CH2_OFFSET,  SDFM_CFG_OC_HIGH_THR_SZ
+    ;Load the positive threshold value for current channel
+    LBBO    &OC_LOW_THR,  SDFM_CFG_BASE_PTR_REG,  SDFM_CFG_OC_LOW_THR_CH2_OFFSET,  SDFM_CFG_OC_LOW_THR_SZ
+    ;PWM0 register offset 
+    LDI    TEMP_REG1, ICSSG_CFG_PWMx
+    LBCO   &TEMP_REG0, CT_PRU_ICSSG_CFG, TEMP_REG1, 4
+    ;Check if the sample value is greater than the high threshold
+    QBGE    OC_HIGH_THRESHOLD_CH2, OC_HIGH_THR, TEMP_REG3
+    ;Unset in DMEM
+    LDI    TEMP_REG0.b0, 0
+    SBBO   &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_OC_HIGH_THR_STATUS_CH2_OFFSET, 1
+    ;Check if the sample value is lower than the low threshold
+    QBLE    OC_LOW_THRESHOLD_CH2, OC_LOW_THR, TEMP_REG3
+    SBBO   &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_OC_LOW_THR_STATUS_CH2_OFFSET, 1
+    JMP     END_OC_DETECTION_CH2
+OC_HIGH_THRESHOLD_CH2:
+    ;Generate PWM trip
+    SET   TEMP_REG0.b2.t3
+    SBCO   &TEMP_REG0, CT_PRU_ICSSG_CFG, TEMP_REG1, 4
+    ;Store in DMEM
+    LDI    TEMP_REG0.b0, 1
+    SBBO   &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_OC_HIGH_THR_STATUS_CH2_OFFSET, 1
+    JMP     END_OC_DETECTION_CH2
+OC_LOW_THRESHOLD_CH2:
+    ;Generate PWM trip
+    SET   TEMP_REG0.b2.t3
+    SBCO   &TEMP_REG0, CT_PRU_ICSSG_CFG, TEMP_REG1, 4
+    ;set bit store in DMEM
+    LDI    TEMP_REG0.b0, 1
+    SBBO   &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_OC_LOW_THR_STATUS_CH2_OFFSET, 1
+END_OC_DETECTION_CH2:
+
+    ; Save output sample to local output sample buffer
+    ADD  TEMP_REG0, OUT_SAMP_BUF_REG, 8
+    SBBO    &CN5, SDFM_CFG_BASE_PTR_REG, TEMP_REG0, 4
+    
+    ; Write local interleaved output samples to Host buffer address
+    ;;LBBO    &TEMP_REG3, SDFM_CFG_BASE_PTR_REG, OUT_SAMP_BUF_REG, ICSSG_NUM_SD_CH_FW*4
+    LBBO    &TEMP_REG0, SDFM_CFG_BASE_PTR_REG, SDFM_CFG_OUT_SAMP_BUF_BASE_ADD_OFFSET,4
+    LDI    TEMP_REG1, SDFM_CFG_OUT_SAMP_BUF_OFFSET
+    ADD    TEMP_REG1, TEMP_REG1, 8
+    SBBO    &CN5,  TEMP_REG0,  TEMP_REG1, 4
+    ;Trigger interrupt
+    LDI     R31.w0, TRIGGER_HOST_SDFM_IRQ_CH2
+    QBA NC_USING_SHADOW_REG
+
+CH2_SKIP: 
+    QBA     NC_USING_SHADOW_REG
+
+   
