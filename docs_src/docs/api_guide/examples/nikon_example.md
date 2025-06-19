@@ -1,6 +1,8 @@
 # NIKON Diagnostic {#EXAMPLE_MOTORCONTROL_NIKON}
 [TOC]
 
+\note A-Format® is a registered trademark of the Nikon Corporation.
+
 \cond SOC_AM243X
 
 Nikon diagnostic application does the following:

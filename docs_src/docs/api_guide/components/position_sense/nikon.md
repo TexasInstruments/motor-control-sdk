@@ -2,6 +2,8 @@
 
 [TOC]
 
+\note A-Format® is a registered trademark of the Nikon Corporation.
+
 ## Introduction
 
 Nikon A-Format absolute encoder receiver implementation on the TI PRU-ICSS interfaces with the Nikon A-Format encoders either via point-to-point communication or up to 8 Nikon A-Format encoders connected on a bus. Nikon A-Format encoders use a proprietary asynchronous serial bi-directional half-duplex communication protocol compliant with the RS-485. The encoder can generate either single- or multi-turn absolute position data and can operate at a baud rate of up to 16 MHz. Besides position data, the encoder can also send status and diagnostic information well. Reliability is ensured by using a 3-bit CRC by the receiver and an 8-bit CRC by the encoder. Another interesting feature of the Nikon-A encoders is the optional battery backup circuit, which can be used in case of power failure. Nikon A-Format encoders are widely used in industrial machinery, including industrial robots in automobile production lines and machine tools, and are highly valued as the next-generation standard for sensors that can detect the absolute rotational displacement values of robot arms.
