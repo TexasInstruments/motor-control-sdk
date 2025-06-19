@@ -2,9 +2,11 @@
 
 [TOC]
 
+\note A-Format® is a registered trademark of the Nikon Corporation.
+
 ## Introduction
 
-This design implements Nikon Receiver using the 3 channel peripheral interface of PRU-ICSS available on the TI Sitara SoCs. The 3 channel peripheral interface is a digital bidirectional serial interface for position encoders.
+This design implements Nikon A-Format Receiver using the 3 channel peripheral interface of PRU-ICSS available on the TI Sitara SoCs. The 3 channel peripheral interface is a digital bidirectional serial interface for position encoders.
 Transfer between receiver and encoder at the physical layer is in accordance with RS485, with transceiver at both ends.
 
 ## Nikon A-Format encoder receiver
