@@ -98,6 +98,9 @@
 #define ICSS_PRU_UART_CLOCK CONFIG_PRU_ICSS0_UART_CLK_FREQ_HZ
 #endif
 
+/* Macro for 0.5 seconds delay - value in microseconds */
+#define NIKON_POWER_UP_DELAY (0.5 * 1000 * 1000)
+
 /*Use soc driver instead it when available */
 #if SOC_AM263PX
 /**
@@ -689,6 +692,9 @@ void nikon_main(void *args)
 #endif
 #endif
 
+    /* As per encoder specification, add 0.5 seconds delay after powering up to ensure that encoder is in normal operation state */
+    ClockP_usleep(NIKON_POWER_UP_DELAY);
+
     version = nikon_get_fw_version();
 
     DebugP_log("\r\nNIKON firmware \t: %x.%x.%x (%s)\n", (version >> 24) & 0x7F,
@@ -1212,7 +1218,15 @@ void nikon_main(void *args)
 
                     while(1)
                     {
-                        DebugP_log("\r\n Enter Memory location(in hex) to write(for bank read, 00h to FFh is valid; for non-bank read, 00h to EFh is valid): ");
+                        if(cmd == CMD_14_BANK)
+                        {
+                            DebugP_log("\r\n Enter Memory location(in hex) to write (00h to FFh is valid): ");
+                        }
+                        else
+                        {
+                            DebugP_log("\r\n Enter Memory location(in hex) to write (00h to EFh is valid): ");
+                        }
+
                         DebugP_scanf("%x", &addr);
                         DebugP_log("\r\n Enter data(Bits [15:0] in hex) to write at Memory location 0x%x: ", addr);
                         DebugP_scanf("%x", &data);
