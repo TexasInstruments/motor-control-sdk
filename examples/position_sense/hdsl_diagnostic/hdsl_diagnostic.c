@@ -1628,7 +1628,7 @@ void hdsl_diagnostic_main(void *arg)
         GPIO_setDirMode(ENC2_EN_BASE_ADDR, ENC2_EN_PIN, ENC2_EN_DIR);
         GPIO_pinWriteHigh(ENC2_EN_BASE_ADDR, ENC2_EN_PIN);
 #endif
-
+    gPruIcssXHandle = PRUICSS_open(CONFIG_PRU_ICSS0);
     #ifndef HDSL_AM64xE1_TRANSCEIVER
         /* Configure g_mux_en to 1 in ICSSG_SA_MX_REG Register. This is required to remap EnDAT signals correctly via Interface card.*/
     #ifndef SOC_AM261X
@@ -1647,7 +1647,6 @@ void hdsl_diagnostic_main(void *arg)
         hdsl_i2c_io_expander(NULL);
     #endif
 
-    gPruIcssXHandle = PRUICSS_open(CONFIG_PRU_ICSS0);
     // initialize hdsl handle
     DebugP_log( "\n\n Hiperface DSL diagnostic\n");
     #if (PRU_CORE_CLK==PRU_CLK_FREQ_225M)

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2024 Texas Instruments Incorporated
+ *  Copyright (C) 2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -1257,7 +1257,7 @@ const uint32_t Hiperface_DSL_SYNC2_0_RTU_0[] = {
 0x240003c0,
 0x810605c0,
 0x24001100,
-0x24000120,
+0x24000220,
 0x810b1800,
 0x81441800,
 0x810c1820,
