@@ -1218,7 +1218,15 @@ void nikon_main(void *args)
 
                     while(1)
                     {
-                        DebugP_log("\r\n Enter Memory location(in hex) to write(for bank read, 00h to FFh is valid; for non-bank read, 00h to EFh is valid): ");
+                        if(cmd == CMD_14_BANK)
+                        {
+                            DebugP_log("\r\n Enter Memory location(in hex) to write (00h to FFh is valid): ");
+                        }
+                        else
+                        {
+                            DebugP_log("\r\n Enter Memory location(in hex) to write (00h to EFh is valid): ");
+                        }
+
                         DebugP_scanf("%x", &addr);
                         DebugP_log("\r\n Enter data(Bits [15:0] in hex) to write at Memory location 0x%x: ", addr);
                         DebugP_scanf("%x", &data);
