@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2024 Texas Instruments Incorporated
+ *  Copyright (C) 2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
 
 const uint32_t TamagawaFirmware_0[] = {
 0x00000208,
-0x00010001,
+0x01010000,
 0x24000400,
 0x810b0400,
 0x2eff8180,

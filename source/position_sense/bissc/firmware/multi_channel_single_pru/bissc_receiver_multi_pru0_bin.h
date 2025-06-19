@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2024 Texas Instruments Incorporated
+ *  Copyright (C) 2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -33,7 +33,7 @@
 const uint32_t BiSSFirmwareMulti_0[] = {
 0x21000300,
 0x00000208,
-0x00000003,
+0x01010000,
 0x2effbb80,
 0x83d07880,
 0x911c1809,

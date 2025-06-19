@@ -1,6 +1,6 @@
 
 ;
-; Copyright (C) 2022 Texas Instruments Incorporated
+; Copyright (C) 2025 Texas Instruments Incorporated
 ;
 ; Redistribution and use in source and binary forms, with or without
 ; modification, are permitted provided that the following conditions
@@ -57,11 +57,11 @@ FIRMWARE_PROTOCOL_TYPE_TAMAGAWA .set        0x08
 FIRMWARE_VERSION_RELEASE	.set	0
 FIRMWARE_VERSION_INTERNAL	.set	1
 ;  bit30..24		version number
-FIRMWARE_VERSION_REVISION	.set		0x00
+FIRMWARE_VERSION_REVISION	.set		0x01
 ;  bit23..16		major number
 FIRMWARE_VERSION_MAJOR	.set			0x01
 ;  bit15..0		minor number
-FIRMWARE_VERSION_MINOR	.set			0x0001
+FIRMWARE_VERSION_MINOR	.set			0x0000
 
 ICSS_FIRMWARE_RELEASE_1	.set	((FIRMWARE_DEVICE_AM64x_AM243x << 8) | (FIRMWARE_PROTOCOL_TYPE_TAMAGAWA << 0))
 ICSS_FIRMWARE_RELEASE_2	.set ((FIRMWARE_VERSION_RELEASE << 31) | (FIRMWARE_VERSION_REVISION << 24) | (FIRMWARE_VERSION_MAJOR << 16) | (FIRMWARE_VERSION_MINOR << 0))
