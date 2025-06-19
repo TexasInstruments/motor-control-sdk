@@ -98,6 +98,9 @@
 #define ICSS_PRU_UART_CLOCK CONFIG_PRU_ICSS0_UART_CLK_FREQ_HZ
 #endif
 
+/* Macro for 0.5 seconds delay - value in microseconds */
+#define NIKON_POWER_UP_DELAY (0.5 * 1000 * 1000)
+
 /*Use soc driver instead it when available */
 #if SOC_AM263PX
 /**
@@ -688,6 +691,9 @@ void nikon_main(void *args)
     GPIO_pinWriteHigh(ENC2_EN_BASE_ADDR, ENC2_EN_PIN);
 #endif
 #endif
+
+    /* As per encoder specification, add 0.5 seconds delay after powering up to ensure that encoder is in normal operation state */
+    ClockP_usleep(NIKON_POWER_UP_DELAY);
 
     version = nikon_get_fw_version();
 
