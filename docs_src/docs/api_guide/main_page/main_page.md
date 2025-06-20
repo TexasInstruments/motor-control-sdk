@@ -31,7 +31,9 @@ Welcome to **@VAR_SDK_NAME for @VAR_SOC_NAME**. This SDK contains examples, libr
 
 To get started, see <a href="@VAR_MCU_SDK_DOCS_PATH/GETTING_STARTED.html" target="_blank"> GETTING STARTED </a> page.
 
-\note To build examples from Industrial Communications SDK and MCU+ SDK using CCS projects, user has to add <b>${SDK_INSTALL_PATH}/ind_comms_sdk</b> path and <b>${SDK_INSTALL_PATH}/mcu_plus_sdk</b> path to "Product discovery path" respectively in CCS (from Window->Preferences->Code Composer Studio->Products)
+\note
+    - To build examples from Industrial Communications SDK and MCU+ SDK using CCS projects, user has to add <b>${SDK_INSTALL_PATH}/ind_comms_sdk</b> path and <b>${SDK_INSTALL_PATH}/mcu_plus_sdk</b> path to "Product discovery path" respectively in CCS (from Window->Preferences->Code Composer Studio->Products)
+    - In order to build the Networking examples from MCU+ SDK using CCS projects, the user needs to change the file action of the source files from "link" to "copy" in the example.projectspec and then import their project in CCS.
 
 ## Block Diagram
 
