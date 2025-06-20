@@ -99,7 +99,7 @@ SysConfig can be used to configure things mentioned below:
 <tr>
     <td> Single Channel Mode
     <td> PRUx
-    <td> DMEM: 1773 Bytes (256B for HDSL Registers per channel + 1517B for LUTs) <br>  IMEM: 7284 Bytes
+    <td> DMEM: 1773 Bytes (256B for HDSL Registers per channel + 1517B for LUTs) <br>  IMEM: ~7.4 kB (Sync Mode), ~6.9 kB (Free Run Mode)
 	<td> IEP0: CMP1
     <td> INTC Signal host interrupt event 19 is used to trigger a R5 interrupt
     <td> IEP, CMP events and INTC signal are used only in periodic continuous mode.
