@@ -17,12 +17,18 @@ Feature                                                                         
 ------------------------------------------------------------------------------------------------|-----------------------------------
 Nikon A-Format version 3.0                                                                      | Position Sense Nikon A-Format
 Support for up to 8 encoders in bus connection                                                  | Position Sense Nikon A-Format
+Control algorithms                                                                              | Real Time Libraries
+Datalog                                                                                         | Real Time Libraries
+Digital Control Library (DCL)                                                                   | Real Time Libraries
+Observer algorithms                                                                             | Real Time Libraries
+Software Frequency Response Analyzer                                                            | Real Time Libraries
+Transformation Algorithm                                                                        | Real Time Libraries
 
 ## Device and Validation Information
 
 SOC    | Supported CPUs  | EVM                                                                          | Host PC
--------|-----------------|------------------------------------------------------------------------------|-----------------------------------------
-AM261x | R5F             | AM261x Launchpad Rev E2    (referred to as am261x-lp in code). \n            | Windows 10 64b or Ubuntu 18.04 64b
+-------|-----------------|------------------------------------------------------------------------------|-----------------------------------------------
+AM261x | R5F             | AM261x Launchpad Rev E2    (referred to as am261x-lp in code). \n            | Windows 10 64b or Ubuntu 18.04 64b or MacOS
 
 ## Dependent Tools and Compiler Information
 
@@ -49,12 +55,44 @@ Mbed-TLS                | R5F            | 2.13.1
     <th> Key features not tested
 </tr>
 <tr>
+    <td> BiSS-C
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Single channel, point-to-point connection, control communication, automatic processing delay detection and compensation, Interface speed of 1, 2, 5, 8, and 10 MHz, Boosterpack with LP-AM261
+    <td> Daisy chaining, Multi Transmission Mode
+</tr>
+<tr>
+    <td> EnDat
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Single channel, Continuous mode, Recovery Time for 2.2 command set, Interface speed of 5 and 10 MHz, Boosterpack with LP-AM261
+    <td> Encoder receive communication command
+</tr>
+<tr>
+    <td> HDSL
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Single channel, Free Run mode, Sync mode, Short Message Read and Write, Long Message Read and Write, Pipeline Channel Data, Long cable (upto 100 meters) with single channel Free Run mode, Boosterpack with LP-AM261, 225 MHz PRU firmware
+    <td> Long cable (upto 100 meters) with sync mode, Trace feature for logging registers
+</tr>
+<tr>
     <td> Nikon A-Format
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
     <td> Nikon A-Format version 2.1 and version 3.0, Single channel, Multi channel using single PRU core, point-to-point connection, bus connection up to 8 encoders, Individual and multiple transmission mode with encoder addresses ranging between ENC1-ENC8, baud rates from 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz, up to 40-bit absolute position (single turn + multi turn) data with additional information, long cable (upto 100 meters), Boosterpack with LP-AM261
     <td> -
+</tr>
+<tr>
+    <td> Tamagawa
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Absolute position, Encoder ID, Reset, EEPROM Read, EEPROM Write, 2.5 Mbps Encoder, Boosterpack with LP-AM261
+    <td> 5 Mbps encoder
 </tr>
 </table>
 
@@ -69,6 +107,54 @@ Mbed-TLS                | R5F            | 2.13.1
     <th> Key features tested
     <th> Key features not tested
 </tr>
+<tr>
+    <td> Control
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Field Weakening Control, Maximum Torque Per Ampere, Strator voltage frequency generator support
+    <td> -
+</tr>
+<tr>
+    <td> Digital Control Library (DCL)
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Linear PI, Linear PID, Linear PI with double integrator (PI2), Direct Form 1 (first order), Direct Form 1 (second order), Direct Form 1 (third order), Direct Form 2 (second order), Direct Form 2 (third order), Non-linear PID controller
+    <td> -
+</tr>
+<tr>
+    <td> Observer
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Sensored eQEP-based encoder, Hall sensor, Sensorless Enhanced Sliding Mode Observer, both speed measurement for sensored (speedcalc) and sensorless (speedfr)
+    <td> -
+</tr>
+<tr>
+    <td> SFRA
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Software Frequency Response Analyzer support
+    <td> -
+</tr>
+<tr>
+    <td> Transforms
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Clarke transformation, Park transformation, Inverse Park transformation, Space Vector Generation (SVGEN), Common-mode subtraction approach, DPWM Generation (Part of SVGEN), Maximum Modulation, Minimum Modulation, SVGEN current reconstruction for single-shunt (SVGENCURRENT), Phase voltage reconstruction in overmodulation (VOLTS_RECON)
+    <td> -
+</tr>
+<tr>
+    <td> Utilities
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Angle Compensation Generator, Step Response, Datalog, Trapezoid generator
+    <td> -
+</tr>
 </table>
 
 ## Fixed Issues
@@ -82,8 +168,29 @@ Mbed-TLS                | R5F            | 2.13.1
     <th> Resolution/Comments
 </tr>
 <tr>
+    <td> PINDSW-8087
+    <td> Tamagawa: UART clock source is used for TX fifo
+    <td> Position Sense Tamagawa
+    <td> 10.0.0 onwards
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-8353
+    <td> AM261x: HDSL Long message UART Commands (8, 9 and 10) not working
+    <td> Position Sense HDSL
+    <td> 10.0.0 onwards
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-8358
+    <td> BiSS-C/Nikon/EnDat/Tamagawa: Exiting Periodic Trigger mode UART option does not work
+    <td> Position Sense BiSS-C, Position Sense EnDat, Position Sense Nikon A-Format, Position Sense Tamagawa
+    <td> 10.0.1 onwards
+    <td> -
+</tr>
+<tr>
     <td> PINDSW-8399
-    <td> EnDat: Implement the recovery time as specified in section 3.3 of "Heidenhain Document D1128897-03-A-02.8: Safety with EnDat 2.2 and Non-Safe EnDat Master"
+    <td> EnDat: Implementation of Recovery time is not as per specification (RT counter is missing)
     <td> Position Sense EnDat
     <td> 10.0.0 onwards
     <td> -
@@ -144,18 +251,79 @@ Mbed-TLS                | R5F            | 2.13.1
     <td> 10.0.1
     <td> -
 </tr>
-
+<tr>
+    <td> PINDSW-9238
+    <td> Nikon: IEP compare value is not set correctly for continuous mode
+    <td> Position Sense Nikon A-Format
+    <td> 10.0.1
+    <td> Change the units to IEP clock cycle count
+</tr>
+<tr>
+    <td> PINDSW-9239
+    <td> Nikon: nikon_config_periodic_trigger assumes fixed receive size of response
+    <td> Position Sense Nikon A-Format
+    <td> 10.0.1
+    <td> Remove receive size hard-coding in driver
+</tr>
+<tr>
+    <td> PINDSW-9248
+    <td> EnDat: RX arm delay and TST delay settings are hard-coded for a 200MHz core clock
+    <td> Position Sense EnDat
+    <td> 10.0.0 onwards
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-9255
+    <td> Nikon: If Debug log/scan is removed and encoder resolution is fixed in application code, initialization fails
+    <td> Position Sense Nikon A-Format
+    <td> 10.0.1
+    <td> Add 0.5 seconds delay in application after powering up the encoder
+</tr>
 </table>
 
 ## Known Issues
 
-<table>
 <tr>
-    <th> ID
-    <th> Head Line
-    <th> Module
-    <th> Applicable Releases
-    <th> Workaround
+    <td> PINDSW-5690
+    <td> HDSL: EDGE register is not updated
+    <td> Position Sense HDSL
+    <td> 10.0.1 onwards
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-6486
+    <td> HDSL: RSSI register shows higher values than expected for a non-noisy setup
+    <td> Position Sense HDSL
+    <td> 10.0.1 onwards
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-7130
+    <td> HDSL: Few protocol resets seen during initialization with Free Run mode on LP-AM243 and LP-AM261
+    <td> Position Sense HDSL
+    <td> 10.0.1 onwards
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-7163
+    <td> HDSL: Trailer data contains 4 zeros instead of 5
+    <td> Position Sense HDSL
+    <td> 10.0.1 onwards
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-7474
+    <td> HDSL: Sync mode does not work 100m long cable
+    <td> Position Sense HDSL
+    <td> 10.0.1 onwards
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-8296
+    <td> HDSL: Incorrect SAFE_SUM value is seen
+    <td> Position Sense HDSL
+    <td> 10.0.1 onwards
+    <td> -
 </tr>
 <tr>
     <td> PINDSW-9179

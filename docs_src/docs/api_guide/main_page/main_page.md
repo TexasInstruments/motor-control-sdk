@@ -355,6 +355,7 @@ Given below is a overview of the directory structure to help you navigate the SD
 Given below are the paths where the different tools needed outside the SDK, like CCS, SysConfig are installed by default in Windows.
 In Linux, the tools are installed by default in ${HOME}/ti.
 
+\cond (SOC_AM243X || SOC_AM64X)
 <table>
 <tr>
     <th>Folder/Files
@@ -373,6 +374,70 @@ In Linux, the tools are installed by default in ${HOME}/ti.
     <td>TI ARM CLANG compiler tool chain</td>
 </tr>
 </table>
+\endcond
+
+\cond SOC_AM263X
+<table>
+<tr>
+    <th>Folder/Files
+    <th>Description
+</tr>
+<tr>
+    <td>C:/ti/ccs@VAR_CCS_FOLDER_VERSION_AM263X
+    <td>Code Composer Studio</td>
+</tr>
+<tr>
+    <td>C:/ti/sysconfig_@VAR_SYSCFG_VERSION_AM263X
+    <td>SysConfig. **NOTE**, SysConfig is also installed as part of CCS at ${CCS_INSTALL_PATH}/ccs/utils/sysconfig_x.x.x</td>
+</tr>
+<tr>
+    <td>C:/ti/ti-cgt-armllvm_@VAR_TI_ARM_CLANG_VERSION
+    <td>TI ARM CLANG compiler tool chain</td>
+</tr>
+</table>
+\endcond
+
+\cond SOC_AM263PX
+<table>
+<tr>
+    <th>Folder/Files
+    <th>Description
+</tr>
+<tr>
+    <td>C:/ti/ccs@VAR_CCS_FOLDER_VERSION_AM263PX
+    <td>Code Composer Studio</td>
+</tr>
+<tr>
+    <td>C:/ti/sysconfig_@VAR_SYSCFG_VERSION_AM263PX
+    <td>SysConfig. **NOTE**, SysConfig is also installed as part of CCS at ${CCS_INSTALL_PATH}/ccs/utils/sysconfig_x.x.x</td>
+</tr>
+<tr>
+    <td>C:/ti/ti-cgt-armllvm_@VAR_TI_ARM_CLANG_VERSION
+    <td>TI ARM CLANG compiler tool chain</td>
+</tr>
+</table>
+\endcond
+
+\cond SOC_AM261X
+<table>
+<tr>
+    <th>Folder/Files
+    <th>Description
+</tr>
+<tr>
+    <td>C:/ti/ccs@VAR_CCS_FOLDER_VERSION_AM261X
+    <td>Code Composer Studio</td>
+</tr>
+<tr>
+    <td>C:/ti/sysconfig_@VAR_SYSCFG_VERSION_AM261X
+    <td>SysConfig. **NOTE**, SysConfig is also installed as part of CCS at ${CCS_INSTALL_PATH}/ccs/utils/sysconfig_x.x.x</td>
+</tr>
+<tr>
+    <td>C:/ti/ti-cgt-armllvm_@VAR_TI_ARM_CLANG_VERSION
+    <td>TI ARM CLANG compiler tool chain</td>
+</tr>
+</table>
+\endcond
 
 ## Licenses
 
