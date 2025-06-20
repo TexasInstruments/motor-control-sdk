@@ -185,7 +185,7 @@ Mbed-TLS                | R5F            | 2.13.1
     <td> PINDSW-8358
     <td> BiSS-C/Nikon/EnDat/Tamagawa: Exiting Periodic Trigger mode UART option does not work
     <td> Position Sense BiSS-C, Position Sense EnDat, Position Sense Nikon A-Format, Position Sense Tamagawa
-    <td> 10.0.1 onwards
+    <td> 10.0.1
     <td> -
 </tr>
 <tr>
@@ -283,6 +283,14 @@ Mbed-TLS                | R5F            | 2.13.1
 
 ## Known Issues
 
+<table>
+<tr>
+    <th> ID
+    <th> Head Line
+    <th> Module
+    <th> Applicable Releases
+    <th> Workaround
+</tr>
 <tr>
     <td> PINDSW-5690
     <td> HDSL: EDGE register is not updated
