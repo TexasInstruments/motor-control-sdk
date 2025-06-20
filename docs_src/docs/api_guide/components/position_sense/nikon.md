@@ -209,7 +209,7 @@ SysConfig can be used to configure things mentioned below:
 <tr>
     <td> Single Channel Mode
     <td> PRUx
-    <td> DMEM: 196 Bytes <br>  IMEM: 1468 Bytes
+    <td> DMEM: 552 Bytes <br>  IMEM: ~ 1.4 kB
 	<td> IEP0: CMP0 and CMP3
     <td> INTC Signal host interrupt 2 is used to trigger a R5 interrupt
     <td> IEP, CMP events and INTC signal are used only in periodic continuous mode.
@@ -217,7 +217,7 @@ SysConfig can be used to configure things mentioned below:
 <tr>
     <td> Multi Channel Single PRU Mode
     <td> PRUx
-    <td> DMEM: 196 Bytes <br>  IMEM: 1700 Bytes
+    <td> DMEM: 552 Bytes <br>  IMEM: 1700 Bytes
 	<td> IEP0: CMP0 and CMP3
     <td> INTC Signal host interrupt 2 is used to trigger a R5 interrupt
     <td> IEP, CMP events and INTC signal are used only in periodic continuous mode.
@@ -225,7 +225,7 @@ SysConfig can be used to configure things mentioned below:
 <tr>
     <td rowspan="3"> Multi Channel Load Share Mode
     <td> PRUx
-    <td rowspan="3"> DMEM: 196 Bytes <br>  IMEM: 1604 Bytes
+    <td rowspan="3"> DMEM: 552 Bytes <br>  IMEM: 1604 Bytes
 	<td rowspan="3">IEP0: CMP0, CMP3, CMP5 and CMP6 </td>
     <td rowspan="3">INTC Signal host interrupt 2,3 & 4 is used to trigger a R5 interrupt</td>
     <td rowspan="3">IEP, CMP events and INTC signals are used only in periodic continuous mode.</td>
@@ -255,7 +255,7 @@ SysConfig can be used to configure things mentioned below:
 <tr>
     <td> Single Channel Mode
     <td> PRUx
-    <td> DMEM: 196 Bytes <br>  IMEM: 1468 Bytes
+    <td> DMEM: 552 Bytes <br>  IMEM: ~ 1.4 kB
 	<td> IEP0: CMP0 and CMP3
     <td> INTC Signal host interrupt 2 is used to trigger a R5 interrupt
     <td> IEP, CMP events and INTC signal are used only in periodic continuous mode.
