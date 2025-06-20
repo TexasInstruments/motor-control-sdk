@@ -238,13 +238,6 @@ Mbed-TLS                | R5F            | 2.13.1
     <td> Added provision for different address/data per channel
 </tr>
 <tr>
-    <td> PINDSW-9154
-    <td> Nikon: CRC error seen with 16 Mbps in Single PRU Multi-channel mode
-    <td> Position Sense Nikon A-Format
-    <td> 10.0.1
-    <td> -
-</tr>
-<tr>
     <td> PINDSW-9180
     <td> Nikon: 10 us delay between CDF-MDF and MDF-MDF is used for commands needing MDF
     <td> Position Sense Nikon A-Format
