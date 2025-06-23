@@ -79,9 +79,9 @@ clean:
 	-@echo ' '
 
 post-build:
-		- $(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=PRU0_G0_Firmware  -o pru0_g0_load_bin.h pruicss_pwm_with_phase_shift_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt.out
-		- $(SED) -i '0r ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h' pru0_g0_load_bin.h 
-		- $(MOVE) pru0_g0_load_bin.h ${MOTOR_CONTROL_SDK_PATH}/source/pruicss_pwm/pruicss_pwm_with_phase_shift/firmware/am243x-evm/pru0_g0_load_bin.h 
+		-$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=PRU0_G0_Firmware  -o pru0_g0_load_bin.h pruicss_pwm_with_phase_shift_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt.out
+		-$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h pru0_g0_load_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/pruicss_pwm/pruicss_pwm_with_phase_shift/firmware/am243x-evm/pru0_g0_load_bin.h 
+		-$(RM) pru0_g0_load_bin.h
 	-@echo ' '
 
 .PHONY: all clean
