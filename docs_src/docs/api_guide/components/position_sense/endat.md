@@ -47,6 +47,47 @@ SysConfig can be used to configure things mentioned below:
 - Channel selection.
 - Selecting Multi Channel with Encoders of Different Make" using load share mode.
 
+## ICSS PRU Resource Usage 
+<table>
+<tr>
+   <th>Configuration</th>
+   <th>PRU Core</th>
+   <th>Memory Usage</th>
+   <th>IEP Usage</th>
+   <th>Other Peripheral Usage</th>
+   <th>Description</th>
+</tr>
+<tr>
+   <td>Single Channel Configuration</td>
+   <td>PRUx</td>
+   <td>DMEM: 152 Bytes <br>  IMEM: 5.4 KB </td>
+   <td>IEP0: CMP0 and CMP3 </td>
+   <td>INTC Signal No. 18 is used to trigger a R5 interrupt </td>
+   <td>IEP, CMP events and INTC signal are used only in periodic continuous mode.</td>
+</tr>
+\cond SOC_AM243X || SOC_AM64X
+<tr>
+   <td>Multi Channel Configuration with single PRU core</td>
+   <td>PRUx</td>
+   <td>DMEM: 152 Bytes <br>  IMEM: 6.7 KB </td>
+   <td>IEP0: CMP0 and CMP3 </td>
+   <td>INTC Signal No. 18 is used to trigger a R5 interrupt</td>
+   <td>IEP, CMP events and INTC signal are used only in periodic continuous mode <br> \note Multi-Channel single PRU firmware requires more than 6KB IMEM, so it cannot run on TX PRU
+    </td>
+</tr>
+<tr>
+   <td>Multi Channel Configuration with load share</td>
+   <td>PRUx, TXPRUx, RTUPRUx</td>
+   <td>DMEM: 152 Bytes <br>  PRU_IMEM: 4.1 KB <br>  RTU_IMEM: 4.1 KB <br>  TX_IMEM: 4.1 KB</td>
+   <td>IEP0: CMP0, CMP3, CMP5 and CMP6 </td>
+   <td>INTC Signal No. 18, 19 and 20 are used to trigger R5 interrupts.</td>
+   <td>IEP, CMP events and INTC signals are used only in periodic continuous mode.</td>
+</tr>
+\endcond
+</table>
+
+\note For pin usage, see \ref ENDAT_PIN_USAGE section.
+
 
 ## ENDAT Design
 

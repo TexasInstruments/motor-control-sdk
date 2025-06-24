@@ -766,11 +766,15 @@ Shown below is a sample output when the application is run:
     <tr>
         <td rowspan="2" style="text-align: center">30.</td>
         <td rowspan="2" style="text-align: center">To read Recovery Time</td>
-        <td>1. Enter 8 to select "Encoder send position values + Additional Information(s)" </td>
+        <td>1. Enter 112 to enable recovery time measurement </td>
         <td style="text-align: center">CRC Success </td>
     </tr>
     <tr>
-        <td>2. Enter 110 for read recovery time from DMEM </td>
+        <td>2. Enter 8 to select "Encoder send position values + Additional Information(s)"</td>
+        <td style="text-align: center">CRC Success </td>
+    </tr>
+    <tr>
+        <td>3. Enter 110 to read recovery time information  </td>
         <td style="text-align: center">Recovery Time is set to 1.25 us <= RT <= 3.75us or  10 us <= RT <= 30 us</td>
     </tr>
     <tr>

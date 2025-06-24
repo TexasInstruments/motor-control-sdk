@@ -115,11 +115,11 @@ TaskP_Object gTaskObject;
 #define VALID_PERIODIC_CMD(x) ((x) == 200)
 
 #define VALID_HOST_CMD(x) ((x == 100) || ((x) == 101) || ((x) == 102) || ((x) == 103) || ((x) == 104) || ((x) == 105) || \
-                           ((x) == 106) || ((x) == 107) || ((x) == 108) || ((x) == 109) || ((x) == 110) || ((x) == 111))
+                           ((x) == 106) || ((x) == 107) || ((x) == 108) || ((x) == 109) || ((x) == 110) || ((x) == 111) || ((x)== 112))
 
 #define HAVE_COMMAND_SUPPLEMENT(x) (((x) == 2) || ((x) == 3) || ((x) == 4) || ((x) == 7) || \
                                     ((x) == 9) || ((x) == 10) || ((x) == 11) || ((x) == 13) || ((x) == 14) || \
-                                    ((x) == 100) || ((x) == 101) || ((x)== 103) || ((x) == 105) || ((x) == 106) || ((x) == 107) || ((x) == 108) || ((x) == 109)  || ((x) == 200))
+                                    ((x) == 100) || ((x) == 101) || ((x)== 103) || ((x) == 105) || ((x) == 106) || ((x) == 107) || ((x) == 108) || ((x) == 109)  || ((x) == 200) || ((x) == 112))
 
 #define ENDAT_INPUT_CLOCK_UART_FREQUENCY 192000000
 /* use uart clock only to start with */
@@ -364,6 +364,7 @@ static void endat_print_menu(void)
 
     DebugP_log("\r|110: Recovery Time (RT)                                                       |\n");
     DebugP_log("\r|111: Simulate motor control 2.1 position loop for long time                   |\n");
+    DebugP_log("\r|112: Start/Stop Recovery Time measurement                                     |\n");
     DebugP_log("\r|200: Start periodic continuous mode                                           |\n");
 
     DebugP_log("\r|------------------------------------------------------------------------------|\n\r|\n");
@@ -866,6 +867,35 @@ static int32_t endat_get_command_supplement(int32_t cmd,
             }
 
             break;
+        case 112:
+            DebugP_log("\r| enter 1 to enable recovery time measurement and 0 to disable recovery time measurement: ");
+
+            if(DebugP_scanf("%u\n", &cmd_supplement->frequency) < 0)
+            {
+                DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                return -EINVAL;
+            }
+            if(cmd_supplement->frequency > 1)
+            {
+                DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                               return -EINVAL;
+            }
+            if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
+            {
+                DebugP_log("\r| Select Channel: ");
+                if(DebugP_scanf("%u\n", &priv->channel) < 0)
+                {
+                    DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
+                    return -EINVAL;
+                }
+
+                if(!((gEndat_multi_ch_mask) & (1<<priv->channel)))
+                {
+                    DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
+                    return -EINVAL;
+                }
+            }
+            break;
         case 200:
         
            
@@ -1303,12 +1333,15 @@ static void endat_print_position_loop_channel_info(struct endat_priv *priv,
 static void endat_handle_prop_delay(struct endat_priv *priv,
                                     uint16_t prop_delay)
 {
-    float ct = (priv->rx_en_cnt)/2; /*one endat clock cycle time = 1/endat frequency = 2*rx_en_cnt*/
+    /*convert rx_en_cnt into ns */
+    float ct = ((priv->rx_en_cnt/ENDAT_DELAY_COUNTER_INCREMENT)*((float)1000000000/priv->pru_clock))/2; /*one endat clock cycle time = 1/endat frequency = 2*rx_en_cnt*/
     /* if propagation delay is more than half clock cycle time (2/endat frequency) then we have to reduce clock cycles for rx*/
     if(prop_delay > (ct/2))
     {
-        uint16_t dis = round(prop_delay/ct);
-        endat_config_rx_arm_cnt(priv, prop_delay);
+        uint16_t dis = floor(prop_delay/ct);
+        /* convert propagation delay into rx arm counts */
+        uint16_t temp = ((uint16_t)(((float)prop_delay * priv->pru_clock )/1000000000)) * ENDAT_DELAY_COUNTER_INCREMENT;
+        endat_config_rx_arm_cnt(priv, temp);
         /* propagation delay/cycle_time */
         endat_config_rx_clock_disable(priv, dis);
     }
@@ -1621,6 +1654,9 @@ static void endat_process_host_command(int32_t cmd,
     else if(cmd == 103)
     {
         uint32_t delay;
+ 
+        /* convert tst delay from ns to tst counts*/
+        cmd_supplement->frequency = ENDAT_DELAY_COUNTER_INCREMENT*((uint16_t)(((float)cmd_supplement->frequency * priv->pru_clock)/1000000000));
 
         delay = endat_do_sanity_tst_delay(cmd_supplement->frequency);
 
@@ -1699,6 +1735,8 @@ static void endat_process_host_command(int32_t cmd,
     else if(cmd == 105)
     {
         uint32_t val;
+        /* convert rx arm delay from ns to rx arm count*/
+        cmd_supplement->frequency = ENDAT_DELAY_COUNTER_INCREMENT*((uint16_t)(((float)cmd_supplement->frequency * priv->pru_clock)/1000000000));
 
         /* reuse tST delay sanity check */
         val = endat_do_sanity_tst_delay(cmd_supplement->frequency);
@@ -1710,7 +1748,10 @@ static void endat_process_host_command(int32_t cmd,
     }
     else if(cmd == 106)
     {
-        uint16_t dis = cmd_supplement->frequency * 2 / priv->rx_en_cnt;
+        
+        /*convert rx_en_cnt into 1 enadt clock cycle period */ 
+        float ct = ((priv->rx_en_cnt/ENDAT_DELAY_COUNTER_INCREMENT)*((float)1000000000/priv->pru_clock))/2;
+        uint16_t dis = floor(cmd_supplement->frequency / ct);
 
         endat_config_rx_clock_disable(priv, dis);
     }
@@ -1728,6 +1769,8 @@ static void endat_process_host_command(int32_t cmd,
     }
     else if(cmd == 109)
     {
+        /* convert from ns to wire delay count*/
+        cmd_supplement->frequency = ENDAT_DELAY_COUNTER_INCREMENT*((uint16_t)(((float)cmd_supplement->frequency * priv->pru_clock)/1000000000));
         /* reuse tST delay sanity check */
         uint32_t val = endat_do_sanity_tst_delay(cmd_supplement->frequency);
 
@@ -1955,16 +1998,20 @@ static void endat_process_host_command(int32_t cmd,
                     DebugP_log("channel: %d",priv->channel);
                     DebugP_log("\t");
                     recovery_time = endat_get_recovery_time(priv);
-                    DebugP_log("Recovery Time: %d ns", recovery_time);
-                    DebugP_log("\n");
+                    DebugP_log("\r Recovery Time: %10u ns \n", recovery_time);
+                    DebugP_log("\r Current value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.currentCounterValue);
+                    DebugP_log("\r Previous value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.lastCounterValue);
+                    DebugP_log("\r Starting value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.startingValue);
                 }
             }
         }
         else
         {
             recovery_time = endat_get_recovery_time(priv);
-            DebugP_log("Recovery Time: %d ns", recovery_time);
-            DebugP_log("\n");
+            DebugP_log("\r Recovery Time: %10u ns \n", recovery_time);
+            DebugP_log("\r Current value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.currentCounterValue);
+            DebugP_log("\r Previous value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.lastCounterValue);
+            DebugP_log("\r Starting value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.startingValue);
         }
 
     }
@@ -2039,6 +2086,17 @@ static void endat_process_host_command(int32_t cmd,
                 ClockP_usleep(500);
 
             }
+        }
+    }
+    else if(cmd == 112)
+    {
+        if(cmd_supplement->frequency == 1)
+        {
+            endat_enable_rt_measurement(priv);
+        }
+        else
+        {
+            endat_disable_rt_measurement(priv);
         }
     }
     else
@@ -2196,6 +2254,7 @@ void endat_main(void *args)
     {
         SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG0, TISCI_DEV_PRU_ICSSG0_CORE_CLK, &icssgclk);
     }
+    priv->pru_clock = icssgclk;
 
     /* Configure Delays based on the ICSSG frequency*/
     /* Count = ((required delay * icssgclk)/1000) */
@@ -2250,6 +2309,9 @@ void endat_main(void *args)
             if(gEndat_multi_ch_mask & 1 << j)
             {
                 endat_multi_channel_set_cur(priv, j);
+                /*Initialization of RT parameters*/
+                endat_init_rt_measurement(priv);
+    
                 if(endat_get_encoder_info(priv) < 0)
                 {
                     DebugP_log("\rEnDat initialization channel %d failed\n", j);
@@ -2271,6 +2333,8 @@ void endat_main(void *args)
     }
     else
     {
+        /*Initialization of RT parameters*/
+        endat_init_rt_measurement(priv);
         if(endat_get_encoder_info(priv) < 0)
         {
             DebugP_log("\rEnDat initialization failed\n");
@@ -2328,6 +2392,7 @@ void endat_main(void *args)
         if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
         {
             int32_t j;
+            int8_t rt_error;
 
             DebugP_log("\r|\n");
 
@@ -2338,14 +2403,41 @@ void endat_main(void *args)
                     endat_multi_channel_set_cur(priv, j);
                     DebugP_log("\r|\n|\t\t\t\tCHANNEL %d\n", j);
                     endat_handle_rx(priv, cmd);
+                    /* Recovery Time validation */
+                    if(endat_status_rt_measurement(priv) == 1)
+                    {
+                        rt_error =  endat_check_rt_error(priv);
+                        if(rt_error != RT_NO_ERROR)
+                        {
+                            DebugP_log("\r Error: Channel %d - Recovery time out of expected range. \n", priv->channel);
+                            if(rt_error == RT_COUNTER_STUCK_ERROR)
+                            {
+                                DebugP_log("\r Error: Counter for Channel %d is stuck.\n", priv->channel);
+                            }
+                        }
+                    }
                 }
             }
         }
         else
         {
+            int8_t rt_error;
             endat_handle_rx(priv, cmd);
+            /* Recovery Time validation */
+            if(endat_status_rt_measurement(priv) == 1)
+            {
+                rt_error =  endat_check_rt_error(priv);
+                if(rt_error == RT_COUNTER_STUCK_ERROR)
+                {
+                    DebugP_log("\r Error: Channel %d - Recovery time out of expected range. \n", priv->channel);
+                    if(priv->endatChRxInfo->ch[priv->channel].recoveryTimeParms.isCounterStuck == 1)
+                    {
+                        DebugP_log("\r Error: Counter for Channel %d is stuck. \n", priv->channel);
+                    }
+                }
+    
+            }
         }
-
         /* this cannot be done except as last in loop; additional info becomes applicable from next command onwards only */
         endat_addinfo_track(priv, cmd, &cmd_supplement);
     }

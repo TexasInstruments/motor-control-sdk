@@ -90,6 +90,8 @@ extern "C" {
 /**    \brief    additional info 1 CRC status mask (if both present) */
 #define ENDAT_CRC_ADDINFO1  (0x1 << 2)
 
+/**    \brief    delay counter increment value */ 
+#define ENDAT_DELAY_COUNTER_INCREMENT  5
 
 /* ========================================================================== */
 /*                         Structures                                         */
@@ -131,10 +133,24 @@ typedef struct Endat_ChInfo_s
      /**< automatically estimated propagation delay */
      Endat_CrcInfo crc;
      /**<Crc information*/
-     volatile uint32_t   resvdInt0;
-     /**< reserved */
+     volatile uint32_t   enableRTM;
+     /**< enable Recovery Time Measurement  */
 
 }Endat_ChInfo;
+/**
+ * \brief    Structure defining Recovery Time parameters  
+ * \details  
+ * 
+*/
+typedef struct Endat_ChRTInfo_s
+{
+     volatile uint32_t recoveryTime;
+     volatile uint32_t currentCounterValue;
+     volatile uint32_t lastCounterValue;
+     volatile uint32_t startingValue;
+     volatile uint8_t isCounterStuck; 
+
+}Endat_ChRTInfo;
 /**
  * \brief    Structure defining EnDat channel Rx Info 
  * \details  Firmware per channel interface for store Rx data (command response)
@@ -157,14 +173,8 @@ typedef struct Endat_ChRXInfo_s
          bit0: 1 - position/data success, 0 - position/data failure       <br>
          bit1: 1 - additional info1 success, 0 - additioanl info1 failure <br>
          bit2: 1 - additional info2 success, 0 - additioanl info2 failure */
-     volatile uint8_t resvdInt2;
-     /**< reserved */
-     volatile uint16_t resvdInt3;
-     /**< reserved */
-     volatile uint32_t   recoveryTime;
+     Endat_ChRTInfo recoveryTimeParms;
      /*< Recovery Time */
-   
-
 }Endat_ChRxInfo;
 
 /**

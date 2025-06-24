@@ -29,6 +29,7 @@ SINC1 and SINC2 Filtering                                                       
 Deadband Configuration                                                                          | PRU-ICSS PWM
 Control Library                                                                                 | Real Time Libraries
 Observer Library                                                                                | Real Time Libraries
+Updated EnDat Recovery time measurement method                                                  | Position Sense EnDat
 
 ## Device and Validation Information
 
@@ -283,6 +284,12 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> 9.1 onwards
     <td> -
 </tr>
+<tr>
+    <td> PINDSW-9248
+    <td> EnDat: RX arm delay and TST delay settings are hard-coded for a 200MHz core clock
+    <td> Position Sense EnDat
+    <td> 9.0 onwards 
+</tr> 
 </table>
 
 ## Known Issues
@@ -614,7 +621,7 @@ This section lists changes which could affect user applications developed using 
 <tr>
     <td>  Position Sense EnDat
     <td>  Structure `endat_priv`
-    <td>  Added a variable: cmp0
+    <td>  Added variables: `cmp0`, `pru_clock`
     <td>
 </tr>
 <tr>
@@ -629,4 +636,17 @@ This section lists changes which could affect user applications developed using 
     <td> \ref PRUICSS_PWM_configureIepCompareEnable API call is removed from the \ref PRUICSS_PWM_iepConfig function
     <td> \ref PRUICSS_PWM_configureIepCompareEnable needs to be called separately to enable IEP cmp events
 </tr>
+<tr>
+    <td>  Position Sense EnDat
+    <td>  API `endat_recovery_time_conversion`
+    <td>  Removed the API. The functionality is now handled by \ref endat_get_recovery_time, which performs runtime conversion 
+    <td>
+</tr>
+<tr>
+    <td> Position Sense EnDat
+    <td> structure: `Endat_ChRXInfo_s`
+    <td> Updated Recovery time variable to 'Endat_ChRTInfo'
+    <td>
+</tr>
+
 </table>
