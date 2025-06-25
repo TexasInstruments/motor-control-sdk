@@ -276,8 +276,6 @@ Mbed-TLS                | R5F            | mbedtls-3.0.0
 
 <!-- ## Upgrade and Compatibility Information for Motor Control SDK 10.00.00 {#UPGRADE_AND_COMPATIBILITY_INFORMATION_10_0_0}
 
-\attention When migrating from MCU+ SDK, see \ref MIGRATION_GUIDES for more details. -->
-
 <!-- This section lists changes which could affect user applications developed using older SDK versions.
 Read this carefully to see if you need to do any changes in your existing application when migrating to this SDK version relative to
 previous SDK version. Also refer to older SDK version release notes to see changes in
