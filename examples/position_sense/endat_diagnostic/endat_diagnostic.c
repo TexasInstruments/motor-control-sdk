@@ -2561,6 +2561,8 @@ void endat_main(void *args)
             if(gEndat_multi_ch_mask & 1 << j)
             {
                 endat_multi_channel_set_cur(priv, j);
+                /*Initialization of RT parameters*/
+                endat_init_rt_measurement(priv);
                 if(endat_get_encoder_info(priv) < 0)
                 {
                     DebugP_log("\rEnDat initialization channel %d failed\n", j);
@@ -2582,6 +2584,8 @@ void endat_main(void *args)
     }
     else
     {
+        /*Initialization of RT parameters*/
+        endat_init_rt_measurement(priv);
         if(endat_get_encoder_info(priv) < 0)
         {
             DebugP_log("\rEnDat initialization failed\n");
@@ -2593,9 +2597,6 @@ void endat_main(void *args)
 
         endat_print_encoder_info(priv);
     }
-
-    /*Initialization of RT parameters*/
-     endat_init_rt_measurement(priv);
 
     /* default frequency - 8MHz for 2.2 encoders, 1MHz for 2.1 encoders */
     if(priv->cmd_set_2_2)
@@ -2659,13 +2660,16 @@ void endat_main(void *args)
                     DebugP_log("\r|\n|\t\t\t\tCHANNEL %d\n", j);
                     endat_handle_rx(priv, cmd);
                     /* Recovery Time validation */
-                    rt_error =  endat_check_rt_error(priv);
-                    if(rt_error != RT_NO_ERROR)
+                    if(endat_status_rt_measurement(priv) == 1)
                     {
-                        DebugP_log("\r Error: Channel %d - Recovery time out of expected range. \n", priv->current_channel);
-                        if(rt_error == RT_COUNTER_STUCK_ERROR)
+                        rt_error =  endat_check_rt_error(priv);
+                        if(rt_error != RT_NO_ERROR)
                         {
-                            DebugP_log("\r Error: Counter for Channel %d is stuck.\n", priv->current_channel);
+                            DebugP_log("\r Error: Channel %d - Recovery time out of expected range. \n", priv->current_channel);
+                            if(rt_error == RT_COUNTER_STUCK_ERROR)
+                            {
+                                DebugP_log("\r Error: Counter for Channel %d is stuck.\n", priv->current_channel);
+                            }
                         }
                     }
                 }
@@ -2676,13 +2680,16 @@ void endat_main(void *args)
             int8_t rt_error;
             endat_handle_rx(priv, cmd);
             /* Recovery Time validation */
-            rt_error =  endat_check_rt_error(priv);
-            if(rt_error == RT_COUNTER_STUCK_ERROR)
+            if(endat_status_rt_measurement(priv) == 1)
             {
-                DebugP_log("\r Error: Channel %d - Recovery time out of expected range. \n", priv->current_channel);
-                if(priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.isCounterStuck == 1)
+                rt_error =  endat_check_rt_error(priv);
+                if(rt_error == RT_COUNTER_STUCK_ERROR)
                 {
-                    DebugP_log("\r Error: Counter for Channel %d is stuck. \n", priv->current_channel);
+                    DebugP_log("\r Error: Channel %d - Recovery time out of expected range. \n", priv->current_channel);
+                    if(priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.isCounterStuck == 1)
+                    {
+                        DebugP_log("\r Error: Counter for Channel %d is stuck. \n", priv->current_channel);
+                    }
                 }
             }
         }
