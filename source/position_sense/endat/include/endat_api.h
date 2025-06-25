@@ -404,6 +404,14 @@ void endat_disable_rt_measurement (struct endat_priv *priv);
  * 
  */
 void endat_enable_rt_measurement (struct endat_priv *priv);
+/**
+ *  \brief      read the status of recovery time measurement 
+ *             
+ *  \param[in]  priv  cookie returned by endat_init
+ * 
+ *  \retval  return 1 if recovery time measurement is enabled else return 0
+ */
+uint32_t endat_status_rt_measurement (struct endat_priv *priv);
 /** @} */
 
 #ifdef __cplusplus

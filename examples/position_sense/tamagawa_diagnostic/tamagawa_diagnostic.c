@@ -67,14 +67,8 @@ TaskP_Object gTaskObject;
 #define TAMAGAWA_POSITION_LOOP_STOP    0
 #define TAMAGAWA_POSITION_LOOP_START   1
 
-#if defined(SOC_AM263PX) || defined(SOC_AM263X)
-#define ICSS_PRU_CORE_CLOCK 200000000
-#define ICSS_PRU_UART_CLOCK 192000000
-#define NIKON_CH1_RX_GPIO_NUM   0x400
-#else
 #define ICSS_PRU_CORE_CLOCK CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ
 #define ICSS_PRU_UART_CLOCK CONFIG_PRU_ICSS0_UART_CLK_FREQ_HZ
-#endif
 
 /*Use soc driver instead it when available */
 #if SOC_AM263PX
@@ -279,15 +273,8 @@ void tamagawa_pruicss_init(void)
     PRUICSS_setSaMuxMode(gPruIcssXHandle, PRUICSS_SA_MUX_MODE_SD_ENDAT);
 #endif
 
-#if defined(SOC_AM263PX) ||  defined(SOC_AM263X)
 #if defined(SOC_AM263PX)
     lp_bp_mux_mode_config();
-#endif
-    /* Set bits for input pins in ICSSM_PRU0_GPIO_OUT_CTRL register */
-    HW_WR_REG32(CSL_MSS_CTRL_U_BASE + CSL_MSS_CTRL_ICSSM_PRU0_GPIO_OUT_CTRL, NIKON_CH1_RX_GPIO_NUM);
-    int32_t status;
-    status = SOC_moduleSetClockFrequency(SOC_RcmPeripheralId_ICSSM0_UART0, SOC_RcmPeripheralClockSource_DPLL_PER_HSDIV0_CLKOUT1, ICSS_PRU_UART_CLOCK);
-    DebugP_assertNoLog(status == SystemP_SUCCESS);
 #endif
 
 }

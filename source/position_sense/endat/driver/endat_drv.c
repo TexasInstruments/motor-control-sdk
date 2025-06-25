@@ -2192,3 +2192,7 @@ void endat_disable_rt_measurement (struct endat_priv *priv)
 {
     priv->pruss_xchg->ch[priv->current_channel].enableRTM = 0;
 }
+uint32_t endat_status_rt_measurement (struct endat_priv *priv)
+{
+    return priv->pruss_xchg->ch[priv->current_channel].enableRTM;
+}
