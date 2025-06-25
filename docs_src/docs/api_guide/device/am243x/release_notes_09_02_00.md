@@ -17,10 +17,10 @@
 
 Feature                                                                                         | Module
 ------------------------------------------------------------------------------------------------|-----------------------------------
-Three channel Nikon A-Format with one PRU-ICSSG Slice                                           | Position Sense Nikon A-Format
-Point-to-point and bus connection support for Nikon A-Format                                    | Position Sense Nikon A-Format
-Multiple baud rate support : 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz                        | Position Sense Nikon A-Format
-Long cable (upto 100 meters)                                                                    | Position Sense Nikon A-Format
+Three channel Nikon A-format with one PRU-ICSSG Slice                                           | Position Sense Nikon A-format
+Point-to-point and bus connection support for Nikon A-format                                    | Position Sense Nikon A-format
+Multiple baud rate support : 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz                        | Position Sense Nikon A-format
+Long cable (upto 100 meters)                                                                    | Position Sense Nikon A-format
 Updated HDSL position realignment algorithm                                                     | Position Sense HDSL
 Readiness for BiSS Safety profile by supporting 16 bit CRC and sign-of-life counter             | Position Sense BiSS-C
 Compare event based command trigger support                                                     | Position Sense BiSS-C
@@ -127,7 +127,7 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> 225 MHz PRU-ICSSG Core Clock based firmware, Multi-channel with long cables(100m length), Long cable (upto 100 meters) with sync mode
 </tr>
 <tr>
-    <td> Nikon A-Format
+    <td> Nikon A-format
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS

@@ -17,8 +17,8 @@ Feature                                                                         
 ------------------------------------------------------------------------------------------------|-----------------------------------
 HDSL Single Channel Support                                                                     | Position Sense HDSL
 SYNC Mode support for 1 to 10 frames per cycle and 8 kHz to 50 kHz cycle frequency              | Position Sense HDSL
-Nikon A-Format Single Channel Support                                                           | Position Sense Nikon A-Format
-Multiple baud rate support : 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz                        | Position Sense Nikon A-Format
+Nikon A-format Single Channel Support                                                           | Position Sense Nikon A-format
+Multiple baud rate support : 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz                        | Position Sense Nikon A-format
 BiSS-C Single Channel Support                                                                   | Position Sense BiSS-C
 Multiple baud rate support : 1 MHz, 2 MHz, 5 MHz, 8 MHz, and 10 MHz                             | Position Sense BiSS-C
 
@@ -77,7 +77,7 @@ Mbed-TLS                | R5F            | 2.13.1
     <td> Multi-channel, Multi-channel with long cables(100m length), Long cable (upto 100 meters) with sync mode
 </tr>
 <tr>
-    <td> Nikon A-Format
+    <td> Nikon A-format
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
@@ -169,7 +169,7 @@ Mbed-TLS                | R5F            | 2.13.1
 <tr>
     <td> PINDSW-8358
     <td> BiSS-C/Nikon/EnDat/Tamagawa: Exiting Periodic Trigger mode UART option does not work
-    <td> Position Sense BiSS-C, Position Sense EnDat, Position Sense Nikon A-Format, Position Sense Tamagawa
+    <td> Position Sense BiSS-C, Position Sense EnDat, Position Sense Nikon A-format, Position Sense Tamagawa
     <td> 10.00.01 onwards
     <td> -
 </tr>
