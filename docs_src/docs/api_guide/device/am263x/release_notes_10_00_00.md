@@ -18,8 +18,8 @@ Feature                                                                         
 Tamagawa over PRU 3-channel interface                                                           | Position Sense Tamagawa
 Multiple baud rate support : 2.5 Mbps, and 5 Mbps                                               | Position Sense Tamagawa
 EnDat 2.2                                                                                       | Position Sense EnDat
-Nikon A-Format Single Channel                                                                   | Position Sense Nikon A-Format
-Multiple baud rate support : 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz                        | Position Sense Nikon A-Format
+Nikon A-format Single Channel                                                                   | Position Sense Nikon A-format
+Multiple baud rate support : 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz                        | Position Sense Nikon A-format
 BiSS-C Single Channel                                                                           | Position Sense BiSS-C
 Multiple baud rate support : 1 MHz, 2 MHz, 5 MHz, 8 MHz, and 10 MHz                             | Position Sense BiSS-C
 
@@ -73,7 +73,7 @@ Mbed-TLS                | R5F            | mbedtls-3.0.0
     <td> Encoder receive communication command
 </tr>
 <tr>
-    <td> Nikon A-Format
+    <td> Nikon A-format
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
@@ -185,7 +185,7 @@ Mbed-TLS                | R5F            | mbedtls-3.0.0
 <tr>
     <td> PINDSW-8358
     <td> BiSS-C/Nikon/EnDat/Tamagawa: Exiting Periodic Trigger mode UART option does not work
-    <td> Position Sense BiSS-C, Position Sense EnDat, Position Sense Nikon A-Format, Position Sense Tamagawa
+    <td> Position Sense BiSS-C, Position Sense EnDat, Position Sense Nikon A-format, Position Sense Tamagawa
     <td> 10.00.00 onwards
     <td> -
 </tr>

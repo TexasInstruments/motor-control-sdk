@@ -118,9 +118,9 @@ The main software components in the block diagram specific to motor control are 
     <td> Driver and PRU-ICSS firmware for Hiperface DSL encoder interface
 </tr>
 <tr>
-    <td> Nikon A-Format
+    <td> Nikon A-format
     <td>\ref NIKON
-    <td> Driver and PRU-ICSS firmware for Nikon A-Format encoder interface
+    <td> Driver and PRU-ICSS firmware for Nikon A-format encoder interface
 </tr>
 <tr>
     <td> Tamagawa
@@ -189,9 +189,9 @@ The main software components in the block diagram specific to motor control are 
     <td> Driver and PRU-ICSS firmware for EnDat encoder interface
 </tr>
 <tr>
-    <td> Nikon A-Format
+    <td> Nikon A-format
     <td>\ref NIKON
-    <td> Driver and PRU-ICSS firmware for Nikon A-Format encoder interface
+    <td> Driver and PRU-ICSS firmware for Nikon A-format encoder interface
 </tr>
 <tr>
     <td> Tamagawa
@@ -268,9 +268,9 @@ The main software components in the block diagram specific to motor control are 
     <td> Driver and PRU-ICSS firmware for Hiperface DSL encoder interface
 </tr>
 <tr>
-    <td> Nikon A-Format
+    <td> Nikon A-format
     <td>\ref NIKON
-    <td> Driver and PRU-ICSS firmware for Nikon A-Format encoder interface
+    <td> Driver and PRU-ICSS firmware for Nikon A-format encoder interface
 </tr>
 <tr>
     <td> Tamagawa

@@ -1,7 +1,7 @@
 # NIKON Diagnostic {#EXAMPLE_MOTORCONTROL_NIKON}
 [TOC]
 
-\note A-Format® is a registered trademark of the Nikon Corporation.
+\note A-format® is a registered trademark of the Nikon Corporation.
 
 \cond SOC_AM243X
 
@@ -126,7 +126,7 @@ The Nikon receiver firmware running on ICSS-PRU provides a defined interface. Th
 ## Hardware Prerequisites
 \cond SOC_AM243X
 
-- Nikon A-Format encoders
+- Nikon A-format encoders
 - <a href="https://www.ti.com/tool/LP-AM243" target="_blank"> LP-AM243 </a>
 - <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
 
@@ -134,7 +134,7 @@ The Nikon receiver firmware running on ICSS-PRU provides a defined interface. Th
 
 \cond SOC_AM261X
 
-- Nikon A-Format encoders
+- Nikon A-format encoders
 - <a href="https://www.ti.com/tool/LP-AM261" target="_blank"> LP-AM261 </a>
 - <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
 
@@ -142,7 +142,7 @@ The Nikon receiver firmware running on ICSS-PRU provides a defined interface. Th
 
 \cond SOC_AM263X
 
-- Nikon A-Format encoders
+- Nikon A-format encoders
 - <a href="https://www.ti.com/tool/LP-AM263" target="_blank"> LP-AM263 </a>
 - <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
 
@@ -150,7 +150,7 @@ The Nikon receiver firmware running on ICSS-PRU provides a defined interface. Th
 
 \cond SOC_AM263PX
 
-- Nikon A-Format encoders
+- Nikon A-format encoders
 - <a href="https://www.ti.com/tool/LP-AM263P" target="_blank"> LP-AM263P </a>
 - <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
 
@@ -483,7 +483,7 @@ Shown below is a sample output when the application is run:
         </td>
     </tr>
 	<tr>
-        <td>1 (Nikon A-Format version 3.0 only, based on factory setting)</td>
+        <td>1 (Nikon A-format version 3.0 only, based on factory setting)</td>
         <td>ABS full 40bit data + velocity data request </td>
         <td>In this command, encoder sends absolute 40 bit data for single encoder with status and velocity information.
 		</td>
@@ -503,7 +503,7 @@ Shown below is a sample output when the application is run:
         <td>Encoder status Request</td>
         <td>In this command, encoder sends status information, alarm bits and additional information.
 		</td>
-        <td>Alarm bits (PM Alarm bits shown for Nikon A-Format version 3.0 only), encoder status bits printed in the terminal along with CRC success.
+        <td>Alarm bits (PM Alarm bits shown for Nikon A-format version 3.0 only), encoder status bits printed in the terminal along with CRC success.
         </td>
     </tr>
     <tr>
@@ -523,7 +523,7 @@ Shown below is a sample output when the application is run:
         </td>
     </tr>
 	<tr>
-        <td>5 (Nikon A-Format version 3.0 only, based on factory setting)</td>
+        <td>5 (Nikon A-format version 3.0 only, based on factory setting)</td>
         <td>ABS full 40bit data + velocity data request </td>
         <td>In this command, encoder sends absolute 40 bit data for multiple encoders connected in bus with status and velocity information.
 		</td>
@@ -543,7 +543,7 @@ Shown below is a sample output when the application is run:
         <td>Encoder status Request(MT)</td>
         <td>In this command, encoder sends status information, alarm bits and additional information for all encoders connected in bus.
 		</td>
-        <td>Alarm bits (PM Alarm bits shown for Nikon A-Format version 3.0 only), encoder status bits printed in the terminal along with CRC success.
+        <td>Alarm bits (PM Alarm bits shown for Nikon A-format version 3.0 only), encoder status bits printed in the terminal along with CRC success.
         </td>
     </tr>
     <tr>
@@ -551,7 +551,7 @@ Shown below is a sample output when the application is run:
         <td>Status flag clear request</td>
         <td>In this command, encoder sends status information, alarm bits and additional information after clearing the status flags.
 		</td>
-        <td>Alarm bits (PM Alarm bits shown for Nikon A-Format version 3.0 only), encoder status bits printed in the terminal along with CRC success.
+        <td>Alarm bits (PM Alarm bits shown for Nikon A-format version 3.0 only), encoder status bits printed in the terminal along with CRC success.
         </td>
     </tr>
     <tr>
@@ -559,7 +559,7 @@ Shown below is a sample output when the application is run:
         <td>Multiple turn data clear request</td>
         <td>In this command, encoder sends status information, alarm bits and additional information after clearing the multiple turn data bits.
 		</td>
-        <td>Alarm bits (PM Alarm bits shown for Nikon A-Format version 3.0 only), encoder status bits printed in the terminal along with CRC success.
+        <td>Alarm bits (PM Alarm bits shown for Nikon A-format version 3.0 only), encoder status bits printed in the terminal along with CRC success.
         </td>
     </tr>
     <tr>
@@ -567,7 +567,7 @@ Shown below is a sample output when the application is run:
         <td>Status+ Multiple turn data clear request</td>
         <td>In this command, encoder sends status information, alarm bits and additional information after clearing the status and multiple turn data bits.
 		</td>
-        <td>Alarm bits (PM Alarm bits shown for Nikon A-Format version 3.0 only), encoder status bits printed in the terminal along with CRC success.
+        <td>Alarm bits (PM Alarm bits shown for Nikon A-format version 3.0 only), encoder status bits printed in the terminal along with CRC success.
         </td>
     </tr>
     <tr>
@@ -575,7 +575,7 @@ Shown below is a sample output when the application is run:
         <td>Encoder address setting I (one-to-one connection)</td>
         <td>In this command, encoder address setting will be performed and status will be returned with ALM bits.
 		</td>
-        <td>Alarm bits (PM Alarm bits shown for Nikon A-Format version 3.0 only), encoder status bits printed in the terminal along with CRC success.
+        <td>Alarm bits (PM Alarm bits shown for Nikon A-format version 3.0 only), encoder status bits printed in the terminal along with CRC success.
         </td>
     </tr>
     <tr>
@@ -583,11 +583,11 @@ Shown below is a sample output when the application is run:
         <td>Single turn data zero preset</td>
         <td>In this command, encoder sets single turn data bits to zero and returns status bits along with ALM bits.
 		</td>
-        <td>Alarm bits (PM Alarm bits shown for Nikon A-Format version 3.0 only), encoder status bits printed in the terminal along with CRC success.
+        <td>Alarm bits (PM Alarm bits shown for Nikon A-format version 3.0 only), encoder status bits printed in the terminal along with CRC success.
         </td>
     </tr>
         <tr>
-        <td> 8 to 12 (Nikon A-Format version 3.0 only, based on factory setting)</td>
+        <td> 8 to 12 (Nikon A-format version 3.0 only, based on factory setting)</td>
         <td>ABS lower 24bit data request</td>
         <td>In this command, encoder sends absolute lower 24 bit data for single encoder with status information.
 		</td>
@@ -603,7 +603,7 @@ Shown below is a sample output when the application is run:
         </td>
     </tr>
     <tr>
-        <td>13 (Nikon A-Format version 3.0 only) </td>
+        <td>13 (Nikon A-format version 3.0 only) </td>
         <td>EEPROM read request with bank</td>
         <td>In this command, encoder sends EEPROM register data along with the requested address and bank information.
 		</td>
@@ -619,7 +619,7 @@ Shown below is a sample output when the application is run:
         </td>
     </tr>
     <tr>
-        <td>14 (Nikon A-Format version 3.0 only) </td>
+        <td>14 (Nikon A-format version 3.0 only) </td>
         <td>EEPROM write request with bank</td>
         <td>In this command, encoder performs write and acknowledges the data, address and bank specified by user.
 		</td>
@@ -643,7 +643,7 @@ Shown below is a sample output when the application is run:
         </td>
     </tr>
     <tr>
-        <td>16 (Nikon A-Format version 3.0 only) </td>
+        <td>16 (Nikon A-format version 3.0 only) </td>
         <td>Velocity coefficient read</td>
         <td>In this command, encoder sends velocity coefficient.
 		</td>
@@ -667,7 +667,7 @@ Shown below is a sample output when the application is run:
         </td>
     </tr>
         <tr>
-        <td>18 (Nikon A-Format version 3.0 only) </td>
+        <td>18 (Nikon A-format version 3.0 only) </td>
         <td>Velocity coefficient write</td>
         <td>In this command, encoder writes and acknowledges velocity coefficient.
 		</td>
@@ -707,7 +707,7 @@ Shown below is a sample output when the application is run:
         </td>
     </tr>
 	<tr>
-        <td>23 (Nikon A-Format version 3.0 only)</td>
+        <td>23 (Nikon A-format version 3.0 only)</td>
         <td>ABS lower 24bit + velocity request</td>
         <td>In this command, encoder sends absolute lower 24 bit data for single encoder with velocity information.
 		</td>
@@ -715,7 +715,7 @@ Shown below is a sample output when the application is run:
         </td>
     </tr>
 	<tr>
-        <td>24 (Nikon A-Format version 3.0 only)</td>
+        <td>24 (Nikon A-format version 3.0 only)</td>
         <td>ABS lower 24bit + velocity request(MT)</td>
         <td>In this command, encoder sends absolute lower 24 bit data for encoders connected in bus with velocity information.
 		</td>
@@ -723,7 +723,7 @@ Shown below is a sample output when the application is run:
         </td>
     </tr>
 	<tr>
-        <td>25 (Nikon A-Format version 3.0 only)</td>
+        <td>25 (Nikon A-format version 3.0 only)</td>
         <td>ABS lower 24bit + velocity + acceleration request</td>
         <td>In this command, encoder sends absolute lower 24 bit data for single encoder with velocity and acceleration information.
 		</td>
@@ -731,7 +731,7 @@ Shown below is a sample output when the application is run:
         </td>
     </tr>
 	<tr>
-        <td>26 (Nikon A-Format version 3.0 only)</td>
+        <td>26 (Nikon A-format version 3.0 only)</td>
         <td>ABS lower 24bit + velocity + acceleration request(MT)</td>
         <td>In this command, encoder sends absolute lower 24 bit data for encoders connected in bus with velocity and acceleration information.
 		</td>

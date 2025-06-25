@@ -17,8 +17,8 @@
 
 Feature                                                                                         | Module
 ------------------------------------------------------------------------------------------------|-----------------------------------
-Nikon A-Format version 3.0                                                                      | Position Sense Nikon A-Format
-Support for up to 8 encoders in bus connection                                                  | Position Sense Nikon A-Format
+Nikon A-format version 3.0                                                                      | Position Sense Nikon A-format
+Support for up to 8 encoders in bus connection                                                  | Position Sense Nikon A-format
 Control algorithms                                                                              | Real Time Libraries
 Datalog                                                                                         | Real Time Libraries
 Digital Control Library (DCL)                                                                   | Real Time Libraries
@@ -81,11 +81,11 @@ Mbed-TLS                | R5F            | 2.13.1
     <td> Long cable (upto 100 meters) with sync mode, Trace feature for logging registers
 </tr>
 <tr>
-    <td> Nikon A-Format
+    <td> Nikon A-format
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Nikon A-Format version 2.1 and version 3.0, Single channel, Multi channel using single PRU core, point-to-point connection, bus connection up to 8 encoders, Individual and multiple transmission mode with encoder addresses ranging between ENC1-ENC8, baud rates from 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz, up to 40-bit absolute position (single turn + multi turn) data with additional information, long cable (upto 100 meters), Boosterpack with LP-AM261
+    <td> Nikon A-format version 2.1 and version 3.0, Single channel, Multi channel using single PRU core, point-to-point connection, bus connection up to 8 encoders, Individual and multiple transmission mode with encoder addresses ranging between ENC1-ENC8, baud rates from 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz, up to 40-bit absolute position (single turn + multi turn) data with additional information, long cable (upto 100 meters), Boosterpack with LP-AM261
     <td> -
 </tr>
 <tr>
@@ -186,7 +186,7 @@ Mbed-TLS                | R5F            | 2.13.1
 <tr>
     <td> PINDSW-8358
     <td> BiSS-C/Nikon/EnDat/Tamagawa: Exiting Periodic Trigger mode UART option does not work
-    <td> Position Sense BiSS-C, Position Sense EnDat, Position Sense Nikon A-Format, Position Sense Tamagawa
+    <td> Position Sense BiSS-C, Position Sense EnDat, Position Sense Nikon A-format, Position Sense Tamagawa
     <td> 10.0.1
     <td> -
 </tr>
@@ -200,63 +200,63 @@ Mbed-TLS                | R5F            | 2.13.1
 <tr>
     <td> PINDSW-9123
     <td> Nikon: Data reversal not done correctly for EEPROM and ID commands
-    <td> Position Sense Nikon A-Format
+    <td> Position Sense Nikon A-format
     <td> 10.0.1
     <td> Fixes done in \ref nikon_update_eeprom_addr, \ref nikon_update_eeprom_data, \ref nikon_update_id_code and \ref nikon_get_pos
 </tr>
 <tr>
     <td> PINDSW-9124
     <td> Nikon: Data reversal not done correctly for encoder status received in response
-    <td> Position Sense Nikon A-Format
+    <td> Position Sense Nikon A-format
     <td> 10.0.1
     <td> Fixes done in \ref nikon_get_pos
 </tr>
 <tr>
     <td> PINDSW-9127
     <td> Nikon: For commands 8 to 12, 9 requests are sent instead of 8
-    <td> Position Sense Nikon A-Format
+    <td> Position Sense Nikon A-format
     <td> 10.0.1
     <td> Fixes done in \ref nikon_get_pos
 </tr>
 <tr>
     <td> PINDSW-9128
     <td> Nikon: For EEPROM commands, request is sent 2 times from firmware
-    <td> Position Sense Nikon A-Format
+    <td> Position Sense Nikon A-format
     <td> 10.0.1
     <td> Fixes done in \ref nikon_get_pos, and updates in the application code for EEPROM command handling
 </tr>
 <tr>
     <td> PINDSW-9131
     <td> Nikon: EEPROM read for temperature does not use 10 bit data
-    <td> Position Sense Nikon A-Format
+    <td> Position Sense Nikon A-format
     <td> 10.0.1
     <td> Fixes done in \ref nikon_get_pos, and updated the application code for EEPROM command handling
 </tr>
 <tr>
     <td> PINDSW-9144
     <td> Nikon: For EEPROM/ID commands, same data is used for all channels in multi-channel mode
-    <td> Position Sense Nikon A-Format
+    <td> Position Sense Nikon A-format
     <td> 10.0.1
     <td> Added provision for different address/data per channel
 </tr>
 <tr>
     <td> PINDSW-9180
     <td> Nikon: 10 us delay between CDF-MDF and MDF-MDF is used for commands needing MDF
-    <td> Position Sense Nikon A-Format
+    <td> Position Sense Nikon A-format
     <td> 10.0.1
     <td> -
 </tr>
 <tr>
     <td> PINDSW-9238
     <td> Nikon: IEP compare value is not set correctly for continuous mode
-    <td> Position Sense Nikon A-Format
+    <td> Position Sense Nikon A-format
     <td> 10.0.1
     <td> Change the units to IEP clock cycle count
 </tr>
 <tr>
     <td> PINDSW-9239
     <td> Nikon: nikon_config_periodic_trigger assumes fixed receive size of response
-    <td> Position Sense Nikon A-Format
+    <td> Position Sense Nikon A-format
     <td> 10.0.1
     <td> Remove receive size hard-coding in driver
 </tr>
@@ -270,7 +270,7 @@ Mbed-TLS                | R5F            | 2.13.1
 <tr>
     <td> PINDSW-9255
     <td> Nikon: If Debug log/scan is removed and encoder resolution is fixed in application code, initialization fails
-    <td> Position Sense Nikon A-Format
+    <td> Position Sense Nikon A-format
     <td> 10.0.1
     <td> Add 0.5 seconds delay in application after powering up the encoder
 </tr>
@@ -331,7 +331,7 @@ Mbed-TLS                | R5F            | 2.13.1
 <tr>
     <td> PINDSW-9179
     <td> Nikon: PRU Firmware gets stuck if encoder does not respond with number of bytes expected by driver
-    <td> Position Sense Nikon A-Format
+    <td> Position Sense Nikon A-format
     <td> 10.0.1 onwards
     <td> -
 </tr>
@@ -373,7 +373,7 @@ previous SDK version. Also refer to older SDK version release notes to see chang
     <th> Additional Remarks
 </tr>
 <tr>
-    <td> Position Sense Nikon A-Format
+    <td> Position Sense Nikon A-format
     <td> Multiple variables
     <td> Refactor code to avoid unsigned to signed and signed to unsigned conversion
     <td> -
@@ -402,92 +402,92 @@ previous SDK version. Also refer to older SDK version release notes to see chang
     <td> -
 </tr>
 <tr>
-    <td> Position Sense Nikon A-Format
+    <td> Position Sense Nikon A-format
     <td> structure \ref pos_data_info
     <td> Added variables `raw_data4`, `raw_data5`, `velocity` and `acc`
-    <td> Needed for Nikon A-Format version 3.0
+    <td> Needed for Nikon A-format version 3.0
 </tr>
 <tr>
-    <td> Position Sense Nikon A-Format
+    <td> Position Sense Nikon A-format
     <td> structure \ref alm_bits
     <td> Added variables `ov_spd_s`, `st_err_s`, `ps_err_s`, `busy_s` and `inc_err_s`
-    <td> Needed for Nikon A-Format version 3.0
+    <td> Needed for Nikon A-format version 3.0
 </tr>
 <tr>
-    <td> Position Sense Nikon A-Format
+    <td> Position Sense Nikon A-format
     <td> structure \ref alm_bits
     <td> Updated variable `inc_err`'s name to `inc_err`
-    <td> Updated as per Nikon A-Format version 3.0
+    <td> Updated as per Nikon A-format version 3.0
 </tr>
 <tr>
-    <td> Position Sense Nikon A-Format
+    <td> Position Sense Nikon A-format
     <td> structure \ref nikon_priv
     <td> Added parameters `tx_rx_clock_source` and `protocol_version`
     <td> Needed for configuring clock source selection and specifying protocol version respectively
 </tr>
 <tr>
-    <td> Position Sense Nikon A-Format
+    <td> Position Sense Nikon A-format
     <td> structure \ref nikon_priv
     <td> Updated parameter `tx_mdf`
     <td> Updated the variable type from `uint32_t` to 2D array of type `uint32_t` to store different `tx_mdf` data for each channel and each MDF
 </tr>
 
 <tr>
-    <td> Position Sense Nikon A-Format
+    <td> Position Sense Nikon A-format
     <td> structure \ref nikon_priv
     <td> Updated parameter `mem_data`
     <td> Updated the variable type from 1D array of type `uint32_t` to 2D array of type `uint32_t` to store different `mem_data` data for each channel and each MDF
 </tr>
 <tr>
-    <td> Position Sense Nikon A-Format
+    <td> Position Sense Nikon A-format
     <td> structure \ref nikon_priv
     <td> Added variable `velocity_coefficient`, `pm_alm_field`, and `bank_error`
-    <td> Needed for Nikon A-Format version 3.0
+    <td> Needed for Nikon A-format version 3.0
 </tr>
 <tr>
-    <td> Position Sense Nikon A-Format
+    <td> Position Sense Nikon A-format
     <td> API \ref nikon_init
     <td> Added input parameters `tx_rx_clock_source` and `protocol_version`
     <td> Needed for configuring clock source selection and specifying protocol version respectively
 </tr>
 <tr>
-    <td> Position Sense Nikon A-Format
+    <td> Position Sense Nikon A-format
     <td> structure \ref nikon_pruicss_xchg
     <td> Updated parameter `mdf_frame`
     <td> Updated the variable type from 1D array of type `uint32_t` to 2D array of type `uint32_t` to store different `mdf_frame` data for each channel and each MDF
 </tr>
 <tr>
-    <td> Position Sense Nikon A-Format
+    <td> Position Sense Nikon A-format
     <td> structure \ref nikon_pruicss_xchg
     <td> Add parameter `num_mdf`
     <td> It stores the number of MDFs to be sent
 </tr>
 <tr>
-    <td> Position Sense Nikon A-Format
+    <td> Position Sense Nikon A-format
     <td> structure \ref nikon_pruicss_xchg
     <td> Removed `delay_300us`, `delay_30ms`, `delay_10us` and added `delay_1us`
     <td> 300 us, 30 ms and 10 us delay values are not needed in firmware. 1 us is needed for delay between CDF and MDFs.
 </tr>
 <tr>
-    <td> Position Sense Nikon A-Format
+    <td> Position Sense Nikon A-format
     <td> structure \ref nikon_pruicss_xchg
     <td> Renamed variable `icssg_clk` to `icss_clk`
     <td> -
 </tr>
 <tr>
-    <td> Position Sense Nikon A-Format
+    <td> Position Sense Nikon A-format
     <td> API \ref nikon_get_pos
     <td> CRC is not removed while copying data into last raw data byte for all commands (`priv->pos_data_info[ch].raw_data<x>[enc_num]`)
     <td> -
 </tr>
 <tr>
-    <td> Position Sense Nikon A-Format
+    <td> Position Sense Nikon A-format
     <td> APIs \ref nikon_get_pos, \ref nikon_init, \ref nikon_generate_cdf, \ref nikon_reverse_bits, \ref nikon_config_load_share
     <td> Refactor code to avoid unsigned to signed and signed to unsigned conversion. Update the data type of function arguments.
     <td> -
 </tr>
 <tr>
-    <td> Position Sense Nikon A-Format
+    <td> Position Sense Nikon A-format
     <td> APIs \ref nikon_update_eeprom_addr, \ref nikon_update_eeprom_data, \ref nikon_update_id_code
     <td> Add channel as function argument, and update the data type based on bit width needed for address, data, and ID code
     <td> -

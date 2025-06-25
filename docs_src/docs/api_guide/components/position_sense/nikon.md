@@ -1,12 +1,12 @@
-# Nikon A-Format {#NIKON}
+# Nikon A-format {#NIKON}
 
 [TOC]
 
-\note A-Format® is a registered trademark of the Nikon Corporation.
+\note A-format® is a registered trademark of the Nikon Corporation.
 
 ## Introduction
 
-Nikon A-Format absolute encoder receiver implementation on the TI PRU-ICSS interfaces with the Nikon A-Format encoders either via point-to-point communication or up to 8 Nikon A-Format encoders connected on a bus. Nikon A-Format encoders use a proprietary asynchronous serial bi-directional half-duplex communication protocol compliant with the RS-485. The encoder can generate either single- or multi-turn absolute position data and can operate at a baud rate of up to 16 MHz. Besides position data, the encoder can also send status and diagnostic information well. Reliability is ensured by using a 3-bit CRC by the receiver and an 8-bit CRC by the encoder. Another interesting feature of the Nikon-A encoders is the optional battery backup circuit, which can be used in case of power failure. Nikon A-Format encoders are widely used in industrial machinery, including industrial robots in automobile production lines and machine tools, and are highly valued as the next-generation standard for sensors that can detect the absolute rotational displacement values of robot arms.
+Nikon A-format absolute encoder receiver implementation on the TI PRU-ICSS interfaces with the Nikon A-format encoders either via point-to-point communication or up to 8 Nikon A-format encoders connected on a bus. Nikon A-format encoders use a proprietary asynchronous serial bi-directional half-duplex communication protocol compliant with the RS-485. The encoder can generate either single- or multi-turn absolute position data and can operate at a baud rate of up to 16 MHz. Besides position data, the encoder can also send status and diagnostic information well. Reliability is ensured by using a 3-bit CRC by the receiver and an 8-bit CRC by the encoder. Another interesting feature of the Nikon-A encoders is the optional battery backup circuit, which can be used in case of power failure. Nikon A-format encoders are widely used in industrial machinery, including industrial robots in automobile production lines and machine tools, and are highly valued as the next-generation standard for sensors that can detect the absolute rotational displacement values of robot arms.
 
 ## Features Supported {#NIKON_FEATURES}
    -  Support for Nikon version 2.1 and Nikon version 3.0
@@ -118,7 +118,7 @@ Nikon A-Format absolute encoder receiver implementation on the TI PRU-ICSS inter
    -  Support for identification code read and write.
    -  Support for encoder address setting.
    -  Support for individual and multiple transmission mode with encoder addresses ranging between ENC1-ENC8.
-   -  Nikon A-Format version 3.0 specific supported features:
+   -  Nikon A-format version 3.0 specific supported features:
         -  Support for velocity and acceleration data.
         -  Support for velocity coefficient read and write.
         -  Support for non-volatile (EEPROM) read and write access with bank.
