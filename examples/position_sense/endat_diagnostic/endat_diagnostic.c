@@ -184,13 +184,8 @@ TaskP_Object gTaskObject;
                                     ((x) == 100) || ((x) == 101) || ((x)== 103) || ((x) == 105) || ((x) == 106) || ((x) == 107) || ((x) == 108) || ((x) == 109)  || ((x) == 200) || ((x) == 112))
 
 
-#if defined(SOC_AM243X) || defined(SOC_AM64X)
-#define ICSS_PRU_CORE_CLOCK CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ
-#define ENDAT_INPUT_CLOCK_UART_FREQUENCY   192000000
-#else
 #define ICSS_PRU_CORE_CLOCK CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ
 #define ENDAT_INPUT_CLOCK_UART_FREQUENCY CONFIG_PRU_ICSS0_UART_CLK_FREQ_HZ
-#endif
 
 #if RX_FIFO_CLOCK_SOURCE == 1
 #define ENDAT_RX_INPUT_CLOCK_FREQUENCY ICSS_PRU_CORE_CLOCK
@@ -421,17 +416,8 @@ static void endat_pruicss_init(void)
 void endat_pre_init(void)
 {
     endat_pruicss_init();
-#if defined(SOC_AM263PX) ||  defined(SOC_AM263X)
 #if defined(SOC_AM263PX)
     lp_bp_mux_mode_config();
-#endif
-    /* Set bits for input pins in ICSSM_PRU0_GPIO_OUT_CTRL register */
-    HW_WR_REG32(CSL_MSS_CTRL_U_BASE + CSL_MSS_CTRL_ICSSM_PRU0_GPIO_OUT_CTRL, ENDAT_CH1_RX_GPIO_NUM);
-    int32_t status;
-
-    /* Set PRU UART Clock Frequency to 192 MHz */
-    status = SOC_moduleSetClockFrequency(SOC_RcmPeripheralId_ICSSM0_UART0, SOC_RcmPeripheralClockSource_DPLL_PER_HSDIV0_CLKOUT1, ENDAT_INPUT_CLOCK_UART_FREQUENCY);
-    DebugP_assertNoLog(status == SystemP_SUCCESS);
 #endif
 }
 
