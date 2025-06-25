@@ -56,6 +56,14 @@ For more details refer below:
 \imageStyle{pruicss_pwm_with_phase_shift_probe_output.png, width:90%}
 \image html pruicss_pwm_with_phase_shift_probe_output.png "phase shift between PRU-ICSS0 PWM0_A0, PWM1_A0, PWM2_A0"
 
+- step 1: Here PWM signals are off
+- step 2: Generate PWM signals for 500usecs with 12.5%, 25%, 50%, 75% duty cycle
+- step 3: Fix PRGx_PWMy_Az and PRGx_PWMy_Bz to ~(initial_state), this can be altered to Fix PRGx_PWMy_Az to and PRGx_PWMy_Bz to initial_state by changing FIX_PRGX_PWMY_AZ_PRGX_PWMY_BZ_TO_INITIAL_STATE_COMPLIMENT to 0 in in main.asm of PRU project and rebuilding it  
+(When FIX_PRGX_PWMY_AZ_PRGX_PWMY_BZ_TO_INITIAL_STATE_COMPLIMENT is set to 1, generating or stopping of PWM signal is decided while configuring second compare event and AXIS_X_SKIP_CMP_UP_AND_DOWN_INIT_VAL can be used to generate or stop PWM signal during firmware initializtion)
+- step 4: Regenerate PWM signals for 500usecs with 75% duty cycle
+
+Above four steps are repeated in infinite loop
+
 # Supported Combinations
 
 \cond SOC_AM243X
