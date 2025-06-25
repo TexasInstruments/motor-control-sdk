@@ -31,9 +31,19 @@ Welcome to **@VAR_SDK_NAME for @VAR_SOC_NAME**. This SDK contains examples, libr
 
 To get started, see <a href="@VAR_MCU_SDK_DOCS_PATH/GETTING_STARTED.html" target="_blank"> GETTING STARTED </a> page.
 
+
+\cond SOC_AM261X
+\note
+    - Motor Control SDK version 10.02.00 supports LP-AM261 Rev. E2 only. The upcoming LP-AM261 board revision will feature integrated DP83869 Ethernet PHYs onboard, replacing the DP83826E daughter card approach used in LP-AM261 Rev. E2.
+    - To build examples from Industrial Communications SDK and MCU+ SDK using CCS projects, user has to add <b>${SDK_INSTALL_PATH}/ind_comms_sdk</b> path and <b>${SDK_INSTALL_PATH}/mcu_plus_sdk</b> path to "Product discovery path" respectively in CCS (from Window->Preferences->Code Composer Studio->Products)
+    - In order to build the Networking examples from MCU+ SDK using CCS projects, the user needs to change the file action of the source files from "link" to "copy" in the example.projectspec and then import their project in CCS.
+\endcond
+
+\cond !SOC_AM261X
 \note
     - To build examples from Industrial Communications SDK and MCU+ SDK using CCS projects, user has to add <b>${SDK_INSTALL_PATH}/ind_comms_sdk</b> path and <b>${SDK_INSTALL_PATH}/mcu_plus_sdk</b> path to "Product discovery path" respectively in CCS (from Window->Preferences->Code Composer Studio->Products)
     - In order to build the Networking examples from MCU+ SDK using CCS projects, the user needs to change the file action of the source files from "link" to "copy" in the example.projectspec and then import their project in CCS.
+\endcond
 
 ## Block Diagram
 

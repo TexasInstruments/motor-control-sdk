@@ -2,6 +2,8 @@
 
 [TOC]
 
+\note Motor Control SDK version 10.02.00 supports LP-AM261 Rev. E2 only. The upcoming LP-AM261 board revision will feature integrated DP83869 Ethernet PHYs onboard, replacing the DP83826E daughter card approach used in LP-AM261 Rev. E2.
+
 \attention Also refer to individual module pages for more details on each feature, unsupported features, important usage guidelines.
 
 \attention For release notes of Industrial Communications SDK and MCU+ SDK, please refer to <a href="@VAR_IC_SDK_DOCS_PATH/RELEASE_NOTES_10_02_00_PAGE.html" target="_blank"> @VAR_SOC_NAME Industrial Communications SDK Release Notes 10.02.00</a> and <a href="@VAR_MCU_SDK_DOCS_PATH/RELEASE_NOTES_10_02_00_PAGE.html" target="_blank"> @VAR_SOC_NAME MCU+ SDK Release Notes 10.02.00</a> respectively.
