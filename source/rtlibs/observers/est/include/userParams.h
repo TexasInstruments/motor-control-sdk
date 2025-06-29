@@ -121,6 +121,8 @@ typedef struct _USER_Params_
     uint16_t motor_numEncSlots;         //!< Defines the number of encoder
                                         //!< slots if quadrature encoder is
                                         //!< connected
+    uint32_t motor_absEncResolution;           //!< Defines the absolute encoder resolution (e.g. 2^32 for a 32-bit absolute encoder)
+    uint32_t motor_absEncBits;                 //!< Defines the number of bits used to represent the absolute encoder position                                    
     float32_t motor_ratedFlux_Wb;         //!< Defines the rated flux of the
                                         //!< motor, Wb
     float32_t motor_Rr_Ohm;               //!< Defines the direct rotor

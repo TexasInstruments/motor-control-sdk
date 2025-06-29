@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023 Texas Instruments Incorporated
+ *  Copyright (C) 2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -29,58 +29,60 @@
  *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
- 
-// **************************************************************************
-// the includes
-#include "encoder.h"
+
+#ifndef USER_H
+#define USER_H
 
 
-// **************************************************************************
-// the functions
 
-ENC_Handle ENC_init(void *pMemory, const size_t numBytes)
-{
-	ENC_Handle handle;
-
-	if(numBytes < sizeof(ENC_Obj))
-	{
-		return((ENC_Handle)0x0);
-	}
-
-	// assign the handle
-	handle = (ENC_Handle)pMemory;
-
-	return(handle);
-}
-
-//------------------------------------------------------------------------------
-void ENC_setParams(ENC_Handle handle, const USER_Params *pUserParams)
-{
-    ENC_Obj *obj = (ENC_Obj *)handle;
-
-    obj->Ts_sec = pUserParams->ctrlPeriod_sec;
-
-    obj->polePairs = pUserParams->motor_numPolePairs;
-    obj->encLines = pUserParams->motor_numEncSlots;
-
-    if(obj->encLines == 0)
-	{
-		obj->absEncResolution = pUserParams->motor_absEncResolution;
-		obj->absEncBits = pUserParams->motor_absEncBits;
-		obj->mechanicalScaler = 1.0f / (float)pUserParams->motor_absEncResolution;
-	}
-    
-    else
-	{
-		obj->mechanicalScaler = 0.25f / obj->encLines;
-	}
-    
-
-    obj->encState = ENC_IDLE;
-
-    return;
-}
-
-//----------------------------------------------------------------
+//*****************************************************************************
 //
-// end of file
+// If building with a C++ compiler, make all of the definitions in this header
+// have a C binding.
+//
+//*****************************************************************************
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+//*****************************************************************************
+//
+//! \addtogroup USER ALL
+//! @{
+//
+//*****************************************************************************
+
+// the includes
+#include "user_common.h"
+
+#include "user_mtr1.h"
+
+// modules
+#include "userParams.h"
+
+
+#define USER_MOTOR_Ls_d_H       USER_MOTOR1_Ls_d_H
+#define USER_MOTOR_Ls_q_H       USER_MOTOR1_Ls_q_H
+
+#define USER_NUM_CURRENT_SENSORS    USER_M1_NUM_CURRENT_SENSORS
+#define USER_NUM_VOLTAGE_SENSORS    USER_M1_NUM_VOLTAGE_SENSORS
+
+//*****************************************************************************
+//
+// Close the Doxygen group.
+//! @}
+//
+//*****************************************************************************
+
+//*****************************************************************************
+//
+// Mark the end of the C bindings section for C++ compilers.
+//
+//*****************************************************************************
+#ifdef __cplusplus
+}
+#endif
+
+#endif // end of USER_H definition
+

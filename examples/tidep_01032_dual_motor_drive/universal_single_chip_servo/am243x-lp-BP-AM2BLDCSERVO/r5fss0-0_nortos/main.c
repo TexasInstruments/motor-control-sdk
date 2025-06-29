@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023 Texas Instruments Incorporated
+ *  Copyright (C) 2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -29,58 +29,23 @@
  *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+ #include <stdlib.h>
+ #include "ti_drivers_config.h"
+ #include "ti_board_config.h"
  
-// **************************************************************************
-// the includes
-#include "encoder.h"
+ void universal_motorcontrol_main(void *args);
+ 
+ int main(void)
+ {
+    System_init();
+    Board_init();
 
+    universal_motorcontrol_main(NULL);
 
-// **************************************************************************
-// the functions
+    Board_deinit();
+    System_deinit();
 
-ENC_Handle ENC_init(void *pMemory, const size_t numBytes)
-{
-	ENC_Handle handle;
-
-	if(numBytes < sizeof(ENC_Obj))
-	{
-		return((ENC_Handle)0x0);
-	}
-
-	// assign the handle
-	handle = (ENC_Handle)pMemory;
-
-	return(handle);
-}
-
-//------------------------------------------------------------------------------
-void ENC_setParams(ENC_Handle handle, const USER_Params *pUserParams)
-{
-    ENC_Obj *obj = (ENC_Obj *)handle;
-
-    obj->Ts_sec = pUserParams->ctrlPeriod_sec;
-
-    obj->polePairs = pUserParams->motor_numPolePairs;
-    obj->encLines = pUserParams->motor_numEncSlots;
-
-    if(obj->encLines == 0)
-	{
-		obj->absEncResolution = pUserParams->motor_absEncResolution;
-		obj->absEncBits = pUserParams->motor_absEncBits;
-		obj->mechanicalScaler = 1.0f / (float)pUserParams->motor_absEncResolution;
-	}
-    
-    else
-	{
-		obj->mechanicalScaler = 0.25f / obj->encLines;
-	}
-    
-
-    obj->encState = ENC_IDLE;
-
-    return;
-}
-
-//----------------------------------------------------------------
-//
-// end of file
+    return 0;
+ }
+ 
