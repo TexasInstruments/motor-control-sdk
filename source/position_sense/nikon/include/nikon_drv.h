@@ -183,6 +183,9 @@ between two cycles in memory access commands) */
 #define NIKON_MEM_ADDRESS_INDEX     (2U)
 #define NIKON_MEM_BANK_INDEX        (3U)
 
+/* Macro to define multiplication factor to convert MHz into Hz*/
+#define MHZ_TO_HZ (1000000)
+
 /**
 *    \brief    Command codes[4:0]
 */
