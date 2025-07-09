@@ -286,9 +286,9 @@ struct pos_data_info
     /**< Total number of complete rotations(360) */
     float angle[NUM_ENCODERS_MAX];
     /**< Angle of encoder shaft*/
-    uint32_t velocity[NUM_ENCODERS_MAX];
+    int32_t velocity[NUM_ENCODERS_MAX];
     /* Velocity data */
-    uint16_t acc[NUM_ENCODERS_MAX];
+    int16_t acc[NUM_ENCODERS_MAX];
     /* Acceleration data */
 };
 

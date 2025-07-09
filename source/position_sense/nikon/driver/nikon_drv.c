@@ -1018,9 +1018,9 @@ int32_t nikon_get_pos(struct nikon_priv *priv, uint32_t cmd)
                     priv->pos_data_info[ch].abs[enc_num] = nikon_reverse_bits(priv->pos_data_info[ch].abs[enc_num], priv->single_turn_len[ch][enc_num]);
                     priv->pos_data_info[ch].abs[enc_num] = priv->pos_data_info[ch].abs[enc_num] & (max - 1);
                     /* Extract velocity data */
-                    priv->pos_data_info[ch].velocity[enc_num] = ((priv->pos_data_info[ch].raw_data3[enc_num] & 0xFF) << 24) |
+                    priv->pos_data_info[ch].velocity[enc_num] = (uint32_t)(((priv->pos_data_info[ch].raw_data3[enc_num] & 0xFF) << 24) |
                                                                 (priv->pos_data_info[ch].raw_data4[enc_num] << 8) |
-                                                                ((priv->pos_data_info[ch].raw_data5[enc_num]) >> NIKON_POS_CRC_LEN);
+                                                                ((priv->pos_data_info[ch].raw_data5[enc_num]) >> NIKON_POS_CRC_LEN));
                     priv->pos_data_info[ch].velocity[enc_num] = (uint32_t)nikon_reverse_bits(priv->pos_data_info[ch].velocity[enc_num], NIKON_VEL_LEN);
                     break;
                 case CMD_3:
@@ -1134,9 +1134,9 @@ int32_t nikon_get_pos(struct nikon_priv *priv, uint32_t cmd)
                     priv->pos_data_info[ch].abs[enc_num] = priv->pos_data_info[ch].abs[enc_num] & (max - 1);
                     priv->pos_data_info[ch].multi_turn[enc_num] = priv->pos_data_info[ch].abs[enc_num] >> priv->single_turn_len[ch][enc_num];
                     /* Extract velocity data */
-                    priv->pos_data_info[ch].velocity[enc_num] = ((priv->pos_data_info[ch].raw_data2[enc_num] & 0xFF) << 24) |
+                    priv->pos_data_info[ch].velocity[enc_num] = (uint32_t)(((priv->pos_data_info[ch].raw_data2[enc_num] & 0xFF) << 24) |
                                                                 (priv->pos_data_info[ch].raw_data3[enc_num] << 8) |
-                                                                ((priv->pos_data_info[ch].raw_data4[enc_num] & 0xFF00) >> NIKON_POS_CRC_LEN);
+                                                                ((priv->pos_data_info[ch].raw_data4[enc_num] & 0xFF00) >> NIKON_POS_CRC_LEN));
                     priv->pos_data_info[ch].velocity[enc_num] = (uint32_t)nikon_reverse_bits(priv->pos_data_info[ch].velocity[enc_num], NIKON_VEL_LEN);
                     break;
                 case CMD_25:
@@ -1154,12 +1154,12 @@ int32_t nikon_get_pos(struct nikon_priv *priv, uint32_t cmd)
                     priv->pos_data_info[ch].abs[enc_num] = priv->pos_data_info[ch].abs[enc_num] & (max - 1);
                     priv->pos_data_info[ch].multi_turn[enc_num] = priv->pos_data_info[ch].abs[enc_num] >> priv->single_turn_len[ch][enc_num];
                     /* Extract velocity data */
-                    priv->pos_data_info[ch].velocity[enc_num] = ((priv->pos_data_info[ch].raw_data2[enc_num] & 0xFF) << 24) |
+                    priv->pos_data_info[ch].velocity[enc_num] = (uint32_t)(((priv->pos_data_info[ch].raw_data2[enc_num] & 0xFF) << 24) |
                                                                 (priv->pos_data_info[ch].raw_data3[enc_num] << 8) |
-                                                                ((priv->pos_data_info[ch].raw_data4[enc_num] & 0xFF00) >> 8);
+                                                                ((priv->pos_data_info[ch].raw_data4[enc_num] & 0xFF00) >> 8));
                     priv->pos_data_info[ch].velocity[enc_num] = (uint32_t)nikon_reverse_bits(priv->pos_data_info[ch].velocity[enc_num], NIKON_VEL_LEN);
                     /* Extract acceleration data */
-                    priv->pos_data_info[ch].acc[enc_num] = ((priv->pos_data_info[ch].raw_data4[enc_num] & 0xFF) << 8) | ((priv->pos_data_info[ch].raw_data5[enc_num] & 0xFF00) >> NIKON_POS_CRC_LEN);
+                    priv->pos_data_info[ch].acc[enc_num] = (uint32_t)(((priv->pos_data_info[ch].raw_data4[enc_num] & 0xFF) << 8) | ((priv->pos_data_info[ch].raw_data5[enc_num] & 0xFF00) >> NIKON_POS_CRC_LEN));
                     priv->pos_data_info[ch].acc[enc_num] = (uint32_t)nikon_reverse_bits(priv->pos_data_info[ch].acc[enc_num], NIKON_ACC_LEN);
                     break;
                 case CMD_27:
