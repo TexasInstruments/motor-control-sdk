@@ -473,10 +473,10 @@ static void nikon_display_menu(void)
         DebugP_log("\r\n| 20: Encoder address setting II                                                        |");
         DebugP_log("\r\n| 21: ABS lower 17bit data request                                                      |");
         DebugP_log("\r\n| 22: ABS lower 17bit data request(MT)                                                  |");
-        DebugP_log("\r\n| 23: ABS lower 24bit + velocity request (Individual)                                   |");
-        DebugP_log("\r\n| 24: ABS lower 24bit + velocity request (Multiple)                                     |");
-        DebugP_log("\r\n| 25: ABS lower 24bit + velocity + acceleration (Individual)                            |");
-        DebugP_log("\r\n| 26: ABS lower 24bit + velocity + acceleration (Multiple)                              |");
+        DebugP_log("\r\n| 23: ABS lower 24bit + velocity request                                                |");
+        DebugP_log("\r\n| 24: ABS lower 24bit + velocity request(MT)                                            |");
+        DebugP_log("\r\n| 25: ABS lower 24bit + velocity + acceleration                                         |");
+        DebugP_log("\r\n| 26: ABS lower 24bit + velocity + acceleration(MT)                                     |");
         DebugP_log("\r\n| 27: ABS lower 24bit + status request                                                  |");
         DebugP_log("\r\n| 28: ABS lower 24bit + status request(MT)                                              |");
         DebugP_log("\r\n| 29: ABS lower 24bit + Temperature data request                                        |");

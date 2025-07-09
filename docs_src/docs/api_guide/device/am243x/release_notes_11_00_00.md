@@ -207,6 +207,13 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> 9.2
     <td> -
 </tr>
+<tr>
+    <td> PINDSW-9308
+    <td> Nikon: nikon_calc_clock API does not handle baud rate correctly
+    <td> Position Sense Nikon A-format
+    <td> 9.2
+    <td> -
+</tr>
 </table>
 
 ## Known Issues

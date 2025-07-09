@@ -433,7 +433,7 @@ int32_t nikon_calc_clock(struct nikon_priv *priv, struct nikon_clk_cfg *clk_cfg)
 {
     double freq = priv->baud_rate;
     struct nikon_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
-    freq = freq * 1000 * 1000;
+    freq = freq * MHZ_TO_HZ;
     clk_cfg->rx_div_attr = NIKON_RX_SAMPLE_SIZE;
     pruicss_xchg->fifo_bit_idx = NIKON_FIFO_BIT_IDX_8X_OS;
     if(priv->tx_rx_clock_source == NIKON_SET_STATUS_FLAG)
@@ -441,18 +441,18 @@ int32_t nikon_calc_clock(struct nikon_priv *priv, struct nikon_clk_cfg *clk_cfg)
         clk_cfg->tx_div = (priv->core_clk_freq / freq) - 1;
         clk_cfg->rx_div = (priv->core_clk_freq / (freq * (NIKON_RX_SAMPLE_SIZE + 1))) - 1;
         clk_cfg->is_core_clk = NIKON_SET_STATUS_FLAG;
-        if(priv->core_clk_freq == PRU_CORE_CLK_FREQ_200MHZ * 1000 * 1000)
+        if(priv->core_clk_freq == PRU_CORE_CLK_FREQ_200MHZ * MHZ_TO_HZ)
         {
-            if(((uint8_t)freq % NIKON_FREQ_6_67MHZ * 1000 *1000) < 1)
+            if(((uint8_t)(priv->baud_rate) % NIKON_FREQ_6_67MHZ) < 1)
             {
                 clk_cfg->rx_div_attr = NIKON_RX_SAMPLE_SIZE_6X;
                 clk_cfg->rx_div = (priv->core_clk_freq / (freq * (NIKON_RX_SAMPLE_SIZE_6X + 1))) - 1;
                 pruicss_xchg->fifo_bit_idx = NIKON_FIFO_BIT_IDX_6X_OS;
             }
         }
-        else if(priv->core_clk_freq == PRU_CORE_CLK_FREQ_300MHZ * 1000 * 1000)
+        else if(priv->core_clk_freq == PRU_CORE_CLK_FREQ_300MHZ * MHZ_TO_HZ)
         {
-            if(((uint8_t)freq % NIKON_FREQ_6_67MHZ * 1000 * 1000) < 1)
+            if(((uint8_t)(priv->baud_rate) % NIKON_FREQ_6_67MHZ) < 1)
             {
                 clk_cfg->rx_div_attr = NIKON_RX_SAMPLE_SIZE_6X | NIKON_RX_ENABLE_FRACTIONAL_DIV;
                 clk_cfg->rx_div = (priv->core_clk_freq / (freq * (NIKON_RX_SAMPLE_SIZE_6X + 1))) - 1;
@@ -465,24 +465,24 @@ int32_t nikon_calc_clock(struct nikon_priv *priv, struct nikon_clk_cfg *clk_cfg)
         clk_cfg->tx_div = (priv->uart_clk_freq / freq) - 1;
         clk_cfg->rx_div = (priv->uart_clk_freq / (freq * (NIKON_RX_SAMPLE_SIZE + 1))) - 1;
         clk_cfg->is_core_clk = NIKON_CLEAR_STATUS_FLAG;
-        if(priv->uart_clk_freq == PRU_UART_CLK_FREQ_160MHZ * 1000 * 1000)
+        if(priv->uart_clk_freq == PRU_UART_CLK_FREQ_160MHZ * MHZ_TO_HZ)
         {
-            if(freq == NIKON_FREQ_8MHZ * 1000 * 1000)
+            if(priv->baud_rate == NIKON_FREQ_8MHZ)
             {
                 clk_cfg->rx_div_attr = NIKON_RX_SAMPLE_SIZE_4X;
                 clk_cfg->rx_div = (priv->uart_clk_freq / (freq * (NIKON_RX_SAMPLE_SIZE_4X + 1))) - 1;
                 pruicss_xchg->fifo_bit_idx = NIKON_FIFO_BIT_IDX_4X_OS;
             }
-            else if(freq == NIKON_FREQ_16MHZ * 1000 * 1000)
+            else if(priv->baud_rate == NIKON_FREQ_16MHZ)
             {
                 clk_cfg->rx_div_attr = NIKON_RX_SAMPLE_SIZE_5X;
                 clk_cfg->rx_div = (priv->uart_clk_freq / (freq * (NIKON_RX_SAMPLE_SIZE_5X + 1))) - 1;
                 pruicss_xchg->fifo_bit_idx = NIKON_FIFO_BIT_IDX_5X_OS;
             }
         }
-        else if(priv->uart_clk_freq == PRU_UART_CLK_FREQ_192MHZ * 1000 * 1000)
+        else if(priv->uart_clk_freq == PRU_UART_CLK_FREQ_192MHZ * MHZ_TO_HZ)
         {
-            if(freq == NIKON_FREQ_16MHZ * 1000 * 1000)
+            if(priv->baud_rate == NIKON_FREQ_16MHZ)
             {
                 clk_cfg->rx_div_attr = NIKON_RX_SAMPLE_SIZE | NIKON_RX_ENABLE_FRACTIONAL_DIV;
                 clk_cfg->rx_div = (priv->uart_clk_freq / (freq * (NIKON_RX_SAMPLE_SIZE + 1)* 1.5)) - 1;
@@ -490,21 +490,21 @@ int32_t nikon_calc_clock(struct nikon_priv *priv, struct nikon_clk_cfg *clk_cfg)
             }
         }
     }
-    if(freq == NIKON_FREQ_2_5MHZ *1000 * 1000)
+    if(priv->baud_rate == NIKON_FREQ_2_5MHZ)
     {
-       priv->pruicss_xchg->multi_transmission_delay = ((freq*3)/1000000);
+       priv->pruicss_xchg->multi_transmission_delay = ((freq*3)/MHZ_TO_HZ);
     }
-    else if(freq == NIKON_FREQ_4MHZ *1000 *1000)
+    else if(priv->baud_rate == NIKON_FREQ_4MHZ)
     {
-       priv->pruicss_xchg->multi_transmission_delay = ((freq*2)/1000000);
+       priv->pruicss_xchg->multi_transmission_delay = ((freq*2)/MHZ_TO_HZ);
     }
-    else if((freq == NIKON_FREQ_16MHZ * 1000 * 1000) || (freq == NIKON_FREQ_8MHZ * 1000 * 1000))
+    else if((priv->baud_rate == NIKON_FREQ_16MHZ) || (priv->baud_rate == NIKON_FREQ_8MHZ))
     {
-       priv->pruicss_xchg->multi_transmission_delay = ((freq*1.5)/1000000);
+       priv->pruicss_xchg->multi_transmission_delay = ((freq*1.5)/MHZ_TO_HZ);
     }
-    else if(((uint8_t)freq % NIKON_FREQ_6_67MHZ) < 1)
+    else if(((uint8_t)(priv->baud_rate) % NIKON_FREQ_6_67MHZ) < 1)
     {
-       priv->pruicss_xchg->multi_transmission_delay = ((priv->core_clk_freq*2)/1000000);
+       priv->pruicss_xchg->multi_transmission_delay = ((priv->core_clk_freq*2)/MHZ_TO_HZ);
     }
     else
     {
@@ -589,7 +589,7 @@ static void nikon_set_default_initialization(struct nikon_priv *priv, uint64_t i
     /* Initialize parameters to default values */
     pruicss_xchg->pos_crc_len         = NIKON_POS_CRC_LEN;
     pruicss_xchg->rx_clk_freq         = priv->baud_rate;
-    pruicss_xchg->delay_1us           = ((icssClk*1) / 1000000);
+    pruicss_xchg->delay_1us           = ((icssClk*1) / MHZ_TO_HZ);
     pruicss_xchg->icss_clk            = icssClk;
     pruicss_xchg->valid_bit_idx       = NIKON_BASE_VALID_BIT_IDX;
     for(pru_num = 0; pru_num < NUM_ED_CH_MAX; pru_num++)
@@ -599,7 +599,7 @@ static void nikon_set_default_initialization(struct nikon_priv *priv, uint64_t i
         pruicss_xchg->opmode[pru_num]              = NIKON_CONFIG_HOST_TRIGGER_MODE;
     }
     priv->is_continuous_mode          = NIKON_CLEAR_STATUS_FLAG;
-    priv->cmp3                        = ((icssClk*100) / 1000000);   /* 100usec delay */
+    priv->cmp3                        = ((icssClk*100) / MHZ_TO_HZ);   /* 100usec delay */
     priv->sync_code                   = 2;                  /*Sync code for Rx is 010*/
     priv->fc                          = 0;                  /*Frame code for CDF is 00*/
     priv->bank_error                  = 0;                  /*Incorrect bank error*/
@@ -1018,9 +1018,9 @@ int32_t nikon_get_pos(struct nikon_priv *priv, uint32_t cmd)
                     priv->pos_data_info[ch].abs[enc_num] = nikon_reverse_bits(priv->pos_data_info[ch].abs[enc_num], priv->single_turn_len[ch][enc_num]);
                     priv->pos_data_info[ch].abs[enc_num] = priv->pos_data_info[ch].abs[enc_num] & (max - 1);
                     /* Extract velocity data */
-                    priv->pos_data_info[ch].velocity[enc_num] = ((priv->pos_data_info[ch].raw_data3[enc_num] & 0xFF) << 24) |
+                    priv->pos_data_info[ch].velocity[enc_num] = (uint32_t)(((priv->pos_data_info[ch].raw_data3[enc_num] & 0xFF) << 24) |
                                                                 (priv->pos_data_info[ch].raw_data4[enc_num] << 8) |
-                                                                ((priv->pos_data_info[ch].raw_data5[enc_num]) >> NIKON_POS_CRC_LEN);
+                                                                ((priv->pos_data_info[ch].raw_data5[enc_num]) >> NIKON_POS_CRC_LEN));
                     priv->pos_data_info[ch].velocity[enc_num] = (uint32_t)nikon_reverse_bits(priv->pos_data_info[ch].velocity[enc_num], NIKON_VEL_LEN);
                     break;
                 case CMD_3:
@@ -1134,9 +1134,9 @@ int32_t nikon_get_pos(struct nikon_priv *priv, uint32_t cmd)
                     priv->pos_data_info[ch].abs[enc_num] = priv->pos_data_info[ch].abs[enc_num] & (max - 1);
                     priv->pos_data_info[ch].multi_turn[enc_num] = priv->pos_data_info[ch].abs[enc_num] >> priv->single_turn_len[ch][enc_num];
                     /* Extract velocity data */
-                    priv->pos_data_info[ch].velocity[enc_num] = ((priv->pos_data_info[ch].raw_data2[enc_num] & 0xFF) << 24) |
+                    priv->pos_data_info[ch].velocity[enc_num] = (uint32_t)(((priv->pos_data_info[ch].raw_data2[enc_num] & 0xFF) << 24) |
                                                                 (priv->pos_data_info[ch].raw_data3[enc_num] << 8) |
-                                                                ((priv->pos_data_info[ch].raw_data4[enc_num] & 0xFF00) >> NIKON_POS_CRC_LEN);
+                                                                ((priv->pos_data_info[ch].raw_data4[enc_num] & 0xFF00) >> NIKON_POS_CRC_LEN));
                     priv->pos_data_info[ch].velocity[enc_num] = (uint32_t)nikon_reverse_bits(priv->pos_data_info[ch].velocity[enc_num], NIKON_VEL_LEN);
                     break;
                 case CMD_25:
@@ -1154,12 +1154,12 @@ int32_t nikon_get_pos(struct nikon_priv *priv, uint32_t cmd)
                     priv->pos_data_info[ch].abs[enc_num] = priv->pos_data_info[ch].abs[enc_num] & (max - 1);
                     priv->pos_data_info[ch].multi_turn[enc_num] = priv->pos_data_info[ch].abs[enc_num] >> priv->single_turn_len[ch][enc_num];
                     /* Extract velocity data */
-                    priv->pos_data_info[ch].velocity[enc_num] = ((priv->pos_data_info[ch].raw_data2[enc_num] & 0xFF) << 24) |
+                    priv->pos_data_info[ch].velocity[enc_num] = (uint32_t)(((priv->pos_data_info[ch].raw_data2[enc_num] & 0xFF) << 24) |
                                                                 (priv->pos_data_info[ch].raw_data3[enc_num] << 8) |
-                                                                ((priv->pos_data_info[ch].raw_data4[enc_num] & 0xFF00) >> 8);
+                                                                ((priv->pos_data_info[ch].raw_data4[enc_num] & 0xFF00) >> 8));
                     priv->pos_data_info[ch].velocity[enc_num] = (uint32_t)nikon_reverse_bits(priv->pos_data_info[ch].velocity[enc_num], NIKON_VEL_LEN);
                     /* Extract acceleration data */
-                    priv->pos_data_info[ch].acc[enc_num] = ((priv->pos_data_info[ch].raw_data4[enc_num] & 0xFF) << 8) | ((priv->pos_data_info[ch].raw_data5[enc_num] & 0xFF00) >> NIKON_POS_CRC_LEN);
+                    priv->pos_data_info[ch].acc[enc_num] = (uint32_t)(((priv->pos_data_info[ch].raw_data4[enc_num] & 0xFF) << 8) | ((priv->pos_data_info[ch].raw_data5[enc_num] & 0xFF00) >> NIKON_POS_CRC_LEN));
                     priv->pos_data_info[ch].acc[enc_num] = (uint32_t)nikon_reverse_bits(priv->pos_data_info[ch].acc[enc_num], NIKON_ACC_LEN);
                     break;
                 case CMD_27:

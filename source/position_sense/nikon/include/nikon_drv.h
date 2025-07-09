@@ -183,6 +183,9 @@ between two cycles in memory access commands) */
 #define NIKON_MEM_ADDRESS_INDEX     (2U)
 #define NIKON_MEM_BANK_INDEX        (3U)
 
+/* Macro to define multiplication factor to convert MHz into Hz*/
+#define MHZ_TO_HZ (1000000)
+
 /**
 *    \brief    Command codes[4:0]
 */
@@ -283,9 +286,9 @@ struct pos_data_info
     /**< Total number of complete rotations(360) */
     float angle[NUM_ENCODERS_MAX];
     /**< Angle of encoder shaft*/
-    uint32_t velocity[NUM_ENCODERS_MAX];
+    int32_t velocity[NUM_ENCODERS_MAX];
     /* Velocity data */
-    uint16_t acc[NUM_ENCODERS_MAX];
+    int16_t acc[NUM_ENCODERS_MAX];
     /* Acceleration data */
 };
 
