@@ -97,6 +97,9 @@
 #define WAIT_5_SECOND  (5000)
 #define TASK_STACK_SIZE (4096)
 #define TASK_PRIORITY   (6)
+#define NANOSECS_IN_SECOND 1000000000
+#define MICROSECS_IN_SECOND 1000000
+#define MILLISECS_IN_SECOND 1000
 
 #define ENDAT_RX_SAMPLE_SIZE    7
 #define ENDAT_RX_SESQUI_DIV (1 << 15)
@@ -453,7 +456,7 @@ static int endat_calc_clock(unsigned freq, struct endat_clk_cfg *clk_cfg)
                     ENDAT_INPUT_CLOCK_FREQUENCY / (ENDAT_INPUT_CLOCK_FREQUENCY / freq),
                     ENDAT_INPUT_CLOCK_FREQUENCY / (ENDAT_INPUT_CLOCK_FREQUENCY / (freq * 8)));
 
-    ns = 2 * 1000000000 / freq; /* rx arm >= 2 clock */
+    ns = 2 * NANOSECS_IN_SECOND / freq; /* rx arm >= 2 clock */
 
     /* should be divisible by 5 */
     if(ns % 5)
@@ -480,12 +483,16 @@ static int endat_calc_clock(unsigned freq, struct endat_clk_cfg *clk_cfg)
 static void endat_handle_prop_delay(struct endat_priv *priv,
                                     unsigned short prop_delay)
 {
-    if(prop_delay > priv->rx_en_cnt)
-    {
-        unsigned short dis = (prop_delay - priv->rx_en_cnt) * 2 / priv->rx_en_cnt;
-
-        endat_config_rx_arm_cnt(priv, prop_delay);
-        /* propagation delay - 2T */
+    /*convert rx_en_cnt into ns */
+      float ct = ((priv->rx_en_cnt/ENDAT_DELAY_COUNTER_INCREMENT)*((float)NANOSECS_IN_SECOND/priv->pru_clock))/2; /*one endat clock cycle time = 1/endat frequency = 2*rx_en_cnt*/
+      /* if propagation delay is more than half clock cycle time (2/endat frequency) then we have to reduce clock cycles for rx*/
+   if(prop_delay > ct/2)
+   {
+        uint16_t dis = floor(prop_delay/ct);
+        /* convert propagation delay into rx arm counts */
+        uint16_t temp = ((uint16_t)(((float)prop_delay * priv->pru_clock )/NANOSECS_IN_SECOND)) * ENDAT_DELAY_COUNTER_INCREMENT;
+        endat_config_rx_arm_cnt(priv, temp);
+         /* propagation delay - 2T */
         endat_config_rx_clock_disable(priv, dis);
     }
     else
@@ -566,7 +573,7 @@ static void endat_init_clock(uint32_t frequency, struct endat_priv *priv) {
     /* set tST to 2us if frequency > 1MHz, else turn it off */
     if(frequency >= 1000000)
     {
-        frequency = 2000;
+        frequency = ENDAT_DELAY_COUNTER_INCREMENT*((uint16_t)(((float)2000 * priv->pru_clock)/NANOSECS_IN_SECOND));
     }
     else
     {
@@ -575,9 +582,28 @@ static void endat_init_clock(uint32_t frequency, struct endat_priv *priv) {
 
     delay = endat_do_sanity_tst_delay(frequency);
 
-    if(delay <= (unsigned short)~0)
+    if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
     {
-        endat_config_tst_delay(priv, (unsigned short) delay);
+        int32_t j;
+        for(j = 0; j < 3; j++)
+        {
+            if(gEndat_multi_ch_mask & 1 << j)
+            {
+                endat_multi_channel_set_cur(priv, j);
+                if(delay <= (unsigned short)~0)
+                {
+                    endat_config_tst_delay(priv, (unsigned short) delay);
+                }
+            }
+       }
+    }
+    else
+    {
+        if(delay <= (unsigned short)~0)
+        {
+            endat_config_tst_delay(priv, (unsigned short) delay);
+        }
+
     }
 }
 volatile float gAngle = 0;
@@ -1568,18 +1594,19 @@ void init_encoder(){
     {
         SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG0, TISCI_DEV_PRU_ICSSG0_CORE_CLK, &icssgclk);
     }
+    priv->pru_clock = icssgclk;
 
     /* Configure Delays based on the ICSSG frequency*/
     /* Count = ((required delay * icssgclk)/1000) */
-    priv->pruss_xchg->endat_delay_125ns = ((icssgclk*125)/1000000000);
-    priv->pruss_xchg->endat_delay_51us = ((icssgclk*51)/1000000 );
-    priv->pruss_xchg->endat_delay_5us = ((icssgclk*5)/1000000);
-    priv->pruss_xchg->endat_delay_1ms = ((icssgclk/1000) * 1);
-    priv->pruss_xchg->endat_delay_2ms = ((icssgclk/1000) * 2);
-    priv->pruss_xchg->endat_delay_12ms = ((icssgclk/1000) * 12);
-    priv->pruss_xchg->endat_delay_50ms = ((icssgclk/1000) * 50);
-    priv->pruss_xchg->endat_delay_380ms = ((icssgclk/1000) * 380);
-    priv->pruss_xchg->endat_delay_900ms = ((icssgclk/1000) * 900);
+    priv->pruss_xchg->endat_delay_125ns = ((icssgclk*125)/NANOSECS_IN_SECOND);
+    priv->pruss_xchg->endat_delay_51us = ((icssgclk*51)/MICROSECS_IN_SECOND );
+    priv->pruss_xchg->endat_delay_5us = ((icssgclk*5)/MICROSECS_IN_SECOND);
+    priv->pruss_xchg->endat_delay_1ms = ((icssgclk/MILLISECS_IN_SECOND) * 1);
+    priv->pruss_xchg->endat_delay_2ms = ((icssgclk/MILLISECS_IN_SECOND) * 2);
+    priv->pruss_xchg->endat_delay_12ms = ((icssgclk/MILLISECS_IN_SECOND) * 12);
+    priv->pruss_xchg->endat_delay_50ms = ((icssgclk/MILLISECS_IN_SECOND) * 50);
+    priv->pruss_xchg->endat_delay_380ms = ((icssgclk/MILLISECS_IN_SECOND) * 380);
+    priv->pruss_xchg->endat_delay_900ms = ((icssgclk/MILLISECS_IN_SECOND) * 900);
     priv->pruss_xchg->icssg_clk = icssgclk;
 
 
@@ -1626,7 +1653,7 @@ void init_encoder(){
                 return;
             }
 
-            gEndat_prop_delay[priv->channel] = endat_get_prop_delay(priv);
+            gEndat_prop_delay[priv->channel] = endat_get_prop_delay(priv)*((float)(NANOSECS_IN_SECOND)/icssgclk);
             DebugP_log("\n\t\t\t\tCHANNEL %d\n\n", j);
             endat_print_encoder_info(priv);
         }
@@ -1643,8 +1670,6 @@ void init_encoder(){
 #if 1
     /* default frequency - 16MHz for 2.2 encoders, 1MHz for 2.1 encoders */
     endat_init_clock(16 * 1000 * 1000, priv);
-    /* JR: Hard code propagation delay to make 16MHz work @300MHz PRU */
-    endat_handle_prop_delay(priv, 265);
 #else
     /* default frequency - 8MHz for 2.2 encoders, 1MHz for 2.1 encoders */
     endat_init_clock(8 * 1000 * 1000, priv);
