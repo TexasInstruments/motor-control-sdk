@@ -300,6 +300,11 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 \imageStyle{EnDat_am263px_hw_Setup.jpeg,width:60%}
 \image html EnDat_am263px_hw_Setup.jpeg "Hardware Setup for single channel on LP-AM263P + BP"
 \endif
+
+#### LaunchPad Jumper Configuration
+
+Connect the jumpers J13 and J26 for providing 3.3V and 5V to boosterpack.
+
 #### Booster Pack Jumper Configuration
 <table>
 <tr>
