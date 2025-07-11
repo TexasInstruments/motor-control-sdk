@@ -435,7 +435,7 @@ The Nikon receiver firmware running on ICSS-PRU provides a defined interface. Th
 </tr>
 <tr>
     <td>J28</td>
-    <td>OFF</td>
+    <td>ON</td>
     <td>AM243/AM263 Mode</td>
 </tr>
 </table>

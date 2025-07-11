@@ -554,8 +554,8 @@ int32_t endat_command_build(struct endat_priv *priv, int32_t cmd,
             } /* command build for ch0, ch1 and ch2 in load share mode*/
             else
             {
-                endat_pruss_xchg->cmd[priv->current_channel].word0 = ENDAT_CMD_SEND_POSITION_VALUES;
-                endat_pruss_xchg->cmd[priv->current_channel].word1 = priv->pos_rx_bits_21_cmd[priv->current_channel] | (ENDAT_TX_6BITS << 8) |
+                endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSITION_VALUES;
+                endat_pruss_xchg->cmd[0].word1 = priv->pos_rx_bits_21_cmd[priv->current_channel] | (ENDAT_TX_6BITS << 8) |
                               ((ENDAT_CMDTYP_NO_SUPPLEMENT | ENDAT_CMDTYP_POSITION) << 16);
             }
             break;
