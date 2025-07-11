@@ -26,6 +26,7 @@ Readiness for BiSS Safety profile by supporting 16 bit CRC and sign-of-life coun
 Compare event based command trigger support                                                     | Position Sense BiSS-C
 SysConfig Enhancements                                                                          | Current Sense %SDFM
 SINC1 and SINC2 Filtering                                                                       | Current Sense %SDFM
+PWM Phase-shift Example                                                                         | PRU-ICSS PWM
 Deadband Configuration                                                                          | PRU-ICSS PWM
 Control Library                                                                                 | Real Time Libraries
 Observer Library                                                                                | Real Time Libraries
@@ -37,17 +38,19 @@ SOC    | Supported CPUs  | Boards                                               
 -------|-----------------|-------------------------------------------------------------------------------------------------------------|-----------------------------------
 AM243x | R5F             | AM243x EVM (referred to as am243x-evm in code), \n AM243x LAUNCHPAD (referred to as am243x-lp in code)      | Windows 10 64b or Ubuntu 18.04 64b
 
-## Tools, Compiler and Other Open Source SW Module Information
+## SDKs, Tools, Compiler and Other Open Source SW Module Information
 
-Tools / SW module       | Supported CPUs | Version
-------------------------|----------------|-----------------------
-Code Composer Studio    | R5F, M4F       | 12.7.0
-SysConfig               | R5F, M4F       | 1.20.0, build 3587
-TI ARM CLANG            | R5F, M4F       | 3.2.2.LTS
-FreeRTOS Kernel         | R5F, M4F       | 10.4.3
-Tiny USB                | R5F            | 0.14.0
-LwIP                    | R5F            | STABLE-2_2_0_RELEASE
-Mbed-TLS                | R5F            | mbedtls-2.13.1
+Tools / SW module                        | Supported CPUs | Version
+-----------------------------------------|----------------|-----------------------
+AM243x Industrial Communications SDK     | R5F            | 09.02.00.24
+AM243x MCU+ SDK                          | R5F, M4F       | 09.02.00.50
+Code Composer Studio                     | R5F, M4F       | 12.7.0
+SysConfig                                | R5F, M4F       | 1.20.0, build 3587
+TI ARM CLANG                             | R5F, M4F       | 3.2.2.LTS
+FreeRTOS Kernel                          | R5F, M4F       | 10.4.3
+Tiny USB                                 | R5F            | 0.14.0
+LwIP                                     | R5F            | STABLE-2_2_0_RELEASE
+Mbed-TLS                                 | R5F            | mbedtls-2.13.1
 
 ## Key Features
 
