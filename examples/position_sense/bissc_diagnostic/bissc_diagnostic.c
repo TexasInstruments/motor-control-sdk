@@ -144,7 +144,7 @@
 struct bissc_priv *priv;
 /** \brief Global Structure pointer holding PRU-ICSSG memory Map. */
 uint32_t gTaskFxnStack[TASK_STACK_SIZE/sizeof(uint32_t)] __attribute__((aligned(32)));
-static int32_t bissc_position_loop_status;
+volatile int32_t bissc_position_loop_status;
 int32_t totalchannels = 0, mask = 0;
 
 TaskP_Object gTaskObject;
