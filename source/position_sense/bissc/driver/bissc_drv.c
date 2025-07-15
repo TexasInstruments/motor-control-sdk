@@ -716,9 +716,15 @@ void bissc_update_data_len(struct bissc_priv *priv, uint32_t single_turn_len[], 
     struct bissc_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
     uint32_t sl_num, ls_ch;
     if(priv->load_share)
+    {
         ls_ch = priv->channel[ch_num];
+    }
     else
+    {
         ls_ch = 0;
+    }
+    priv->num_encoders[ls_ch] = 0;
+
     for( sl_num = 0; sl_num < NUM_ENCODERS_MAX; sl_num++)
     {
         if(single_turn_len[sl_num])
