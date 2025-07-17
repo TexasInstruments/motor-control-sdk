@@ -89,6 +89,16 @@ extern "C"
 
 #define APP_EPWM_OUTPUT_FREQ          (APP_EPWM_OUTPUT_FREQ_15K)
 
+
+/*
+ *  Deadband RED/FED timer counts
+ *
+ *  20 nsec @ 250MHz
+ *  20 nsec @ 250MHz
+ */
+#define APP_EPWM_DB_RED_COUNT         (5)
+#define APP_EPWM_DB_FED_COUNT         (5)
+
 /*
  *  EPWM configuration
  *

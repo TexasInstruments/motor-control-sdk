@@ -43,6 +43,10 @@
 #include "motor1_drive.h"
 
 // the globals
+#if defined(CLOSED_LOOP_CIA402)
+__attribute__((section(".gEtherCatCia402"))) volatile int32_t gCurTargetVelocity[3];
+__attribute__((section(".gEtherCatCia402"))) volatile int32_t gCurActualVelocity[3];
+#endif
 
 //!< the hardware abstraction layer object to motor control
 __attribute__ ((section("foc_data"))) volatile MOTOR_Handle motorHandle_M1;
@@ -222,6 +226,11 @@ void initMotor1Handles(MOTOR_Handle handle)
 
     // initialize the driver
     halMtr_M1.motorNum = MTR_1;
+#if defined(CLOSED_LOOP_CIA402)
+    // set initial velocity for 1st motor
+    gCurTargetVelocity[0] = MAX_SPD_RPM;
+    gCurActualVelocity[0] = MAX_SPD_RPM;
+#endif
     obj->halMtrHandle = HAL_MTR_init(&halMtr_M1, sizeof(halMtr_M1));
     
     obj->motorSetsHandle = &motorSetVars_M1;
@@ -240,6 +249,12 @@ void initMotor2Handles(MOTOR_Handle handle)
 
     // initialize the driver
     halMtr_M2.motorNum = MTR_2;
+
+#if defined(CLOSED_LOOP_CIA402)
+    // set initial velocity for 2nd motor
+    gCurTargetVelocity[1] = MAX_SPD_RPM;
+    gCurActualVelocity[1] = MAX_SPD_RPM;
+#endif
     obj->halMtrHandle = HAL_MTR_init(&halMtr_M2, sizeof(halMtr_M2));
     
     obj->motorSetsHandle = &motorSetVars_M2;
@@ -2179,6 +2194,20 @@ void motorCtrlISR(MOTOR_Handle handle)
     // convert the feedback speed to rpm
     obj->speed_rpm = obj->speed_Hz * obj->hz2Rpm_sf;
 
+#if defined(CLOSED_LOOP_CIA402)
+    if(obj->motorNum == MTR_1)
+    {
+        gCurActualVelocity[0] = obj->speed_rpm;
+        obj->speedRef_rpm = gCurTargetVelocity[0];
+    }
+    else if (obj->motorNum == MTR_2)
+    {
+        gCurActualVelocity[1] = obj->speed_rpm;
+        obj->speedRef_rpm = gCurTargetVelocity[1];
+    }
+
+    obj->speedRef_Hz = obj->speedRef_rpm * obj->rpm2Hz_sf;
+#else
     if(obj->flagCmdRpmOrHz == FALSE)
     {
         obj->speedRef_rpm = obj->speedRef_Hz * obj->hz2Rpm_sf;
@@ -2187,6 +2216,8 @@ void motorCtrlISR(MOTOR_Handle handle)
     {
         obj->speedRef_Hz = obj->speedRef_rpm * obj->rpm2Hz_sf;
     }
+#endif
+
 #endif  // MOTOR1_RPM_CMD
 
 //---------- Common Speed and Current Loop for all observers -------------------

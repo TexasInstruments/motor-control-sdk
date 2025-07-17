@@ -11,7 +11,7 @@
 
     <project
         title="Universal Motorcontrol"
-        name = "universal_motorcontrol_am243x-lp_r5fss0-0_nortos_ti-arm-clang_BP_AM2BLDCSERVO"
+        name = "universal_single_chip_servo_am243x-lp_r5fss0-0_nortos_ti-arm-clang_BP_AM2BLDCSERVO"
         products="sysconfig;com.ti.MOTOR_CONTROL_SDK_AMXXX"
         configurations="
             Release,

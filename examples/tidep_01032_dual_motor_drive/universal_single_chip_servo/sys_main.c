@@ -120,13 +120,13 @@ void universal_motorcontrol_main(void *args)
 #endif
 
 #if defined(MOTOR1_INLINE_SDFM)
-    systemVars.currentSenseType_M1 = CURSEN_TYPE_SDFM;
+    systemVars.currentSenseType_M1 = CURSEN_TYPE_INLINE_SDFM;
 #else
 #error Not select a right current sensor for this project
 #endif  // Current Sense Type
 
 #if defined(MOTOR2_INLINE_SDFM)
-    systemVars.currentSenseType_M2 = CURSEN_TYPE_SDFM;
+    systemVars.currentSenseType_M2 = CURSEN_TYPE_INLINE_SDFM;
 #else
 #error Not select a right current sensor for this project
 #endif  // Current Sense Type
@@ -155,8 +155,8 @@ void universal_motorcontrol_main(void *args)
     // set the reference speed, this can be replaced or removed
     motorVars_M1.flagEnableRunAndIdentify = FALSE;
 
-    motorVars_M1.speedRef_Hz = 15.0f;       // Hz
-    motorVars_M1.speedRef_rpm = 225.0f;     // rpm
+    motorVars_M1.speedRef_Hz = 8.0f;       // Hz
+    motorVars_M1.speedRef_rpm = MAX_SPD_RPM;     // rpm
     userParams_M1.flag_bypassMotorId = TRUE;
 
 
@@ -171,8 +171,8 @@ void universal_motorcontrol_main(void *args)
     motorHandle_M2 = (MOTOR_Handle)(&motorVars_M2);
     // set the reference speed, this can be replaced or removed
     motorVars_M2.flagEnableRunAndIdentify = FALSE;
-    motorVars_M2.speedRef_Hz = 15.0f;       // Hz
-    motorVars_M2.speedRef_rpm = 225.0f;     // rpm
+    motorVars_M2.speedRef_Hz = 8.0f;       // Hz
+    motorVars_M2.speedRef_rpm = MAX_SPD_RPM;     // rpm
     userParams_M2.flag_bypassMotorId = TRUE;
     
     initMotor2Handles(motorHandle_M2);

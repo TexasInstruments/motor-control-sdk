@@ -35,6 +35,7 @@ const mpu_armv72      = mpu_armv7.addInstance();
 const mpu_armv73      = mpu_armv7.addInstance();
 const mpu_armv74      = mpu_armv7.addInstance();
 const mpu_armv75      = mpu_armv7.addInstance();
+const mpu_armv76      = mpu_armv7.addInstance();
 const timer           = scripting.addModule("/kernel/dpl/timer", {}, false);
 const timer1          = timer.addInstance();
 const default_linker  = scripting.addModule("/memory_configurator/default_linker", {}, false);
@@ -58,6 +59,7 @@ const section11       = section.addInstance();
 const section12       = section.addInstance();
 const section13       = section.addInstance();
 const section14       = section.addInstance();
+const section15       = section.addInstance();
 const endat           = scripting.addModule("/position_sense/endat", {}, false);
 const endat1          = endat.addInstance();
 
@@ -153,7 +155,7 @@ gpio4.GPIO_n.$assign = "I2C0_SDA";
 
 debug_log.enableUartLog        = true;
 debug_log.uartLog.$name        = "CONFIG_UART_CONSOLE";
-debug_log.uartLog.UART.$assign = "USART0";
+debug_log.uartLog.UART.$assign = "USART1";
 
 const uart_v0_template  = scripting.addModule("/drivers/uart/v0/uart_v0_template", {}, false);
 const uart_v0_template1 = uart_v0_template.addInstance({}, false);
@@ -185,6 +187,11 @@ mpu_armv75.baseAddr          = 0x60000000;
 mpu_armv75.size              = 28;
 mpu_armv75.accessPermissions = "Supervisor RD, User RD";
 
+mpu_armv76.$name      = "CONFIG_MPU_REGION5";
+mpu_armv76.baseAddr   = 0x701C0000;
+mpu_armv76.size       = 16;
+mpu_armv76.attributes = "NonCached";
+
 timer1.$name         = "CPU_DIAGNOSTICS_TIMER0";
 timer1.startTimer    = true;
 timer1.enableIntr    = false;
@@ -196,7 +203,7 @@ general1.$name        = "CONFIG_GENERAL0";
 general1.linker.$name = "TIARMCLANG0";
 
 region1.$name                               = "MEMORY_REGION_CONFIGURATION0";
-region1.memory_region.create(9);
+region1.memory_region.create(10);
 region1.memory_region[0].type               = "TCMA_R5F";
 region1.memory_region[0].$name              = "R5F_VECS";
 region1.memory_region[0].size               = 0x40;
@@ -238,6 +245,12 @@ region1.memory_region[8].size               = 0xC000;
 region1.memory_region[8].$name              = "RTOS_NORTOS_IPC_SHM_MEM";
 region1.memory_region[8].isShared           = true;
 region1.memory_region[8].shared_cores       = ["m4fss0-0","r5fss0-1","r5fss1-0","r5fss1-1"];
+region1.memory_region[9].$name              = "MSRAM_NO_CACHE";
+region1.memory_region[9].auto               = false;
+region1.memory_region[9].manualStartAddress = 0x701C0000;
+region1.memory_region[9].size               = 0x100;
+region1.memory_region[9].isShared           = true;
+region1.memory_region[9].shared_cores       = ["r5fss1-0"];
 
 section1.$name                        = "Vector Table";
 section1.load_memory                  = "R5F_VECS";
@@ -383,6 +396,15 @@ section14.output_section.create(2);
 section14.output_section[0].$name = ".trigData";
 section14.output_section[1].$name = ".datalog_data";
 
+section15.$name                        = "No Cache Memory ";
+section15.group                        = false;
+section15.load_memory                  = "MSRAM_NO_CACHE";
+section15.type                         = "NOLOAD";
+section15.output_section.create(1);
+section15.output_section[0].$name      = ".gEtherCatCia402";
+section15.output_section[0].alignment  = 4;
+section15.output_section[0].palignment = true;
+
 endat1.$name                    = "CONFIG_ENDAT0";
 endat1.G_MUX_EN                 = true;
 endat1.Booster_Pack             = true;
@@ -427,8 +449,8 @@ epwm2.EPWM.A.$suggestSolution                                                   
 epwm2.EPWM.B.$suggestSolution                                                                = "GPMC0_AD6";
 epwm3.EPWM.A.$suggestSolution                                                                = "GPMC0_AD3";
 epwm3.EPWM.B.$suggestSolution                                                                = "GPMC0_AD4";
-debug_log.uartLog.UART.RXD.$suggestSolution                                                  = "UART0_RXD";
-debug_log.uartLog.UART.TXD.$suggestSolution                                                  = "UART0_TXD";
+debug_log.uartLog.UART.RXD.$suggestSolution                                                  = "UART1_RXD";
+debug_log.uartLog.UART.TXD.$suggestSolution                                                  = "UART1_TXD";
 endat1.PRU_ICSSG0_PRU.GPO2.$suggestSolution                                                  = "PRG0_PRU1_GPO2";
 endat1.PRU_ICSSG0_PRU.GPO1.$suggestSolution                                                  = "PRG0_PRU1_GPO1";
 endat1.PRU_ICSSG0_PRU.GPO0.$suggestSolution                                                  = "PRG0_PRU1_GPO0";
