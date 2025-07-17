@@ -261,6 +261,13 @@ Mbed-TLS                | R5F            | 2.13.1
     <td> 10.0.0 onwards
     <td> -
 </tr>
+<tr>
+    <td> PINDSW-9372
+    <td> BiSS-C/Nikon: SysConfig shows option for load share mode
+    <td> Position Sense BiSS-C, Position Sense Nikon A-format
+    <td> 10.0 onwards
+    <td> This option which is not relevant for AM263Px
+</tr>
 </table>
 
 ## Known Issues

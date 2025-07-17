@@ -218,6 +218,7 @@ let nikon_module = {
             name: "Multi_Channel_Load_Share",
             displayName: "Multi Channel Load Share",
             description: "Selected Channels have different make",
+            hidden :(is_am26x_soc) ? true : false,
             default: false,
         },
         {
