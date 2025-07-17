@@ -102,8 +102,8 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Nikon A-format version 2.1 and version3.0, Single channel, Multi channel using single PRU core and three PRU cores (load share mode), point-to-point connection, bus connection up to 8 encoders, Individual and multiple transmission mode with encoder addresses ranging between ENC1-ENC8, baud rates from 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz, up to 40-bit absolute position (single turn + multi turn) data with additional information, long cable (upto 100 meters), Boosterpack with LP-AM243
-    <td> -
+    <td> Nikon A-format version 2.1 and version3.0, Single channel, Multi channel using single PRU core and three PRU cores (load share mode), point-to-point connection, bus connection up to 7 encoders, Individual and multiple transmission mode with encoder addresses ranging between ENC1-ENC8, baud rates from 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz, up to 40-bit absolute position (single turn + multi turn) data with additional information, long cable (upto 100 meters), Boosterpack with LP-AM243
+    <td> Bus connected with 8 encoders (Tested up to 7 encoders)
 </tr>
 </table>
 
