@@ -160,105 +160,119 @@ Mbed-TLS                | R5F            | 2.13.1
     <td> PINDSW-8087
     <td> Tamagawa: UART clock source is used for TX fifo
     <td> Position Sense Tamagawa
-    <td> 10.0.0 onwards
+    <td> 10.0 onwards
     <td> -
 </tr>
 <tr>
     <td> PINDSW-8358
     <td> BiSS-C/Nikon/EnDat/Tamagawa: Exiting Periodic Trigger mode UART option does not work
     <td> Position Sense BiSS-C, Position Sense EnDat, Position Sense Nikon A-format, Position Sense Tamagawa
-    <td> 10.0.0 onwards
+    <td> 10.0 onwards
     <td> -
 </tr>
 <tr>
     <td> PINDSW-8399
     <td> EnDat: Implementation of Recovery time is not as per specification (RT counter is missing)
     <td> Position Sense EnDat
-    <td> 10.0.0 onwards
+    <td> 10.0 onwards
     <td> -
 </tr>
 <tr>
     <td> PINDSW-9123
     <td> Nikon: Data reversal not done correctly for EEPROM and ID commands
     <td> Position Sense Nikon A-format
-    <td> 10.0.0 onwards
+    <td> 10.0 onwards
     <td> Fixes done in \ref nikon_update_eeprom_addr, \ref nikon_update_eeprom_data, \ref nikon_update_id_code and \ref nikon_get_pos
 </tr>
 <tr>
     <td> PINDSW-9124
     <td> Nikon: Data reversal not done correctly for encoder status received in response
     <td> Position Sense Nikon A-format
-    <td> 10.0.0 onwards
+    <td> 10.0 onwards
     <td> Fixes done in \ref nikon_get_pos
 </tr>
 <tr>
     <td> PINDSW-9127
     <td> Nikon: For commands 8 to 12, 9 requests are sent instead of 8
     <td> Position Sense Nikon A-format
-    <td> 10.0.0 onwards
+    <td> 10.0 onwards
     <td> Fixes done in \ref nikon_get_pos
 </tr>
 <tr>
     <td> PINDSW-9128
     <td> Nikon: For EEPROM commands, request is sent 2 times from firmware
     <td> Position Sense Nikon A-format
-    <td> 10.0.0 onwards
+    <td> 10.0 onwards
     <td> Fixes done in \ref nikon_get_pos, and updates in the application code for EEPROM command handling
 </tr>
 <tr>
     <td> PINDSW-9131
     <td> Nikon: EEPROM read for temperature does not use 10 bit data
     <td> Position Sense Nikon A-format
-    <td> 10.0.0 onwards
+    <td> 10.0 onwards
     <td> Fixes done in \ref nikon_get_pos, and updated the application code for EEPROM command handling
 </tr>
 <tr>
     <td> PINDSW-9144
     <td> Nikon: For EEPROM/ID commands, same data is used for all channels in multi-channel mode
     <td> Position Sense Nikon A-format
-    <td> 10.0.0 onwards
+    <td> 10.0 onwards
     <td> Added provision for different address/data per channel
 </tr>
 <tr>
     <td> PINDSW-9180
     <td> Nikon: 10 us delay between CDF-MDF and MDF-MDF is used for commands needing MDF
     <td> Position Sense Nikon A-format
-    <td> 10.0.0 onwards
+    <td> 10.0 onwards
     <td> -
 </tr>
 <tr>
     <td> PINDSW-9238
     <td> Nikon: IEP compare value is not set correctly for continuous mode
     <td> Position Sense Nikon A-format
-    <td> 10.0.0 onwards
+    <td> 10.0 onwards
     <td> Change the units to IEP clock cycle count
 </tr>
 <tr>
     <td> PINDSW-9239
     <td> Nikon: nikon_config_periodic_trigger assumes fixed receive size of response
     <td> Position Sense Nikon A-format
-    <td> 10.0.0 onwards
+    <td> 10.0 onwards
     <td> Remove receive size hard-coding in driver
 </tr>
 <tr>
     <td> PINDSW-9248
     <td> EnDat: RX arm delay and TST delay settings are hard-coded for a 200MHz core clock
     <td> Position Sense EnDat
-    <td> 10.0.0 onwards
+    <td> 10.0 onwards
     <td> -
 </tr>
 <tr>
     <td> PINDSW-9255
     <td> Nikon: If Debug log/scan is removed and encoder resolution is fixed in application code, initialization fails
     <td> Position Sense Nikon A-format
-    <td> 10.0.0 onwards
+    <td> 10.0 onwards
     <td> Add 0.5 seconds delay in application after powering up the encoder
 </tr>
 <tr>
     <td> PINDSW-9308
     <td> Nikon: nikon_calc_clock API does not handle baud rate correctly
     <td> Position Sense Nikon A-format
-    <td> 10.0.0 onwards
+    <td> 10.0 onwards
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-9312
+    <td> Nikon: Data type of velocity and acceleration is unsigned integer
+    <td> Position Sense Nikon A-format
+    <td> 10.0 onwards
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-9317
+    <td> BiSS-C: bissc_update_data_len does not set number of encoders correctly
+    <td> Position Sense BiSS-C
+    <td> 10.0 onwards
     <td> -
 </tr>
 <tr>
@@ -284,7 +298,7 @@ Mbed-TLS                | R5F            | 2.13.1
     <td> PINDSW-9179
     <td> Nikon: PRU Firmware gets stuck if encoder does not respond with number of bytes expected by driver
     <td> Position Sense Nikon A-format
-    <td> 10.0.0 onwards
+    <td> 10.0 onwards
     <td> -
 </tr>
 </table>
