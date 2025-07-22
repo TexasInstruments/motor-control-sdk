@@ -40,7 +40,6 @@ const example_file_list = [
     "examples/rtlibs/dcl/dcl_df22/.project/mcsdk_project.js",
     "examples/rtlibs/dcl/dcl_pi/.project/mcsdk_project.js",
     "examples/rtlibs/transforms/transforms_test/.project/mcsdk_project.js",    
-    "examples/tidep_01032_dual_motor_drive/single_chip_servo/.project/mcsdk_project.js",
     "source/current_sense/sdfm/firmware/multi_axis_load_share/.project/project.js",
     "source/current_sense/sdfm/firmware/single_axis_single_pru/.project/project.js",
     "source/position_sense/bissc/firmware/multi_channel_load_share/.project/project.js",
