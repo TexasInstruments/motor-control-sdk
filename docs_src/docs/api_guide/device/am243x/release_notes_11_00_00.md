@@ -346,7 +346,7 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
 </tr>
 </table>
 
-## Upgrade and Compatibility Information for Motor Control SDK 11.00.00 {#UPGRADE_AND_COMPATIBILITY_INFORMATION_11_00_00}
+## Upgrade and Compatibility Information for Motor Control SDK 11.00.00 {#UPGRADE_AND_COMPATIBILITY_INFORMATION_11_0_0}
 
 \attention When migrating from MCU+ SDK, see \ref MIGRATION_GUIDES for more details.
 

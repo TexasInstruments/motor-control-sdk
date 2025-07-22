@@ -328,7 +328,7 @@ All SDK SDFM examples, by default, use the IEP CMP event based normal current. T
 - When the IEP gets reset during normal current sampling
 
 Configuration of Shadow Mode for normal current sampling:
-- Enable Shadow Mode: In sdfm_example.h, set #define SDFM_SHADOW_REG_BASED_NC to 1
+- Enable Shadow Mode: In sdfm_example.h, update the value of `SDFM_SHADOW_REG_BASED_NC` to 1
 - Set the over-current OSR (oversampling ratio) equal to the normal current OSR
 
 Limitations:

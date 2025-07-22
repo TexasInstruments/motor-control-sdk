@@ -45,7 +45,7 @@ If you are a user of MCU+ SDK, then items listed on this page that will assist y
 
 \cond SOC_AM64X || SOC_AM243X
 
-- \ref UPGRADE_AND_COMPATIBILITY_INFORMATION_10_0_0 has details on changes which can affect migration of applications based on Motor Control SDK 09.02.00 to Motor Control SDK 10.00.00.
+- \ref UPGRADE_AND_COMPATIBILITY_INFORMATION_11_0_0 has details on changes which can affect migration of applications based on Motor Control SDK 09.02.00 to Motor Control SDK 11.00.00.
 - \ref UPGRADE_AND_COMPATIBILITY_INFORMATION_9_2_0 has details on changes which can affect migration of applications based on Motor Control SDK 09.01.00 to Motor Control SDK 09.02.00.
 - \ref UPGRADE_AND_COMPATIBILITY_INFORMATION_9_1_0 has details on changes which can affect migration of applications based on Motor Control SDK 09.00.00 to Motor Control SDK 09.01.00.
 - \ref UPGRADE_AND_COMPATIBILITY_INFORMATION_9_0_0 has details on changes which can affect migration of applications based on MCU+ SDK 08.06.00 to Motor Control SDK 09.00.00.
