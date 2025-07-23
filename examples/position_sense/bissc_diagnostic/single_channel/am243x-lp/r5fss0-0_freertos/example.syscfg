@@ -1,9 +1,9 @@
 /**
  * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
  * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
- * @cliArgs --device "AM243x_ALX_beta" --part "ALX" --package "ALX" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@07.03.01"
- * @v2CliArgs --device "AM2434" --package "FCCSP (ALX)" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@07.03.01"
- * @versions {"tool":"1.21.0+3721"}
+ * @cliArgs --device "AM243x_ALX_beta" --part "ALX" --package "ALX" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@11.00.00"
+ * @v2CliArgs --device "AM2434" --package "FCCSP (ALX)" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@11.00.00"
+ * @versions {"tool":"1.22.0+3893"}
  */
 
 /**
@@ -46,7 +46,6 @@ const bissc1          = bissc.addInstance();
 debug_log.enableUartLog        = true;
 debug_log.enableCssLog         = false;
 debug_log.uartLog.$name        = "CONFIG_UART_CONSOLE";
-debug_log.uartLog.inputClkFreq = 192000000;
 debug_log.uartLog.UART.$assign = "USART0";
 
 const uart_v0_template  = scripting.addModule("/drivers/uart/v0/uart_v0_template", {}, false);
@@ -247,8 +246,8 @@ section11.output_section[0].$name     = ".bss.nocache";
 section11.output_section[0].alignment = 0;
 
 bissc1.$name                           = "CONFIG_BISSC0";
-bissc1.Booster_Pack                    = true;
 bissc1.G_MUX_EN                        = true;
+bissc1.Booster_Pack                    = true;
 bissc1.PRU_ICSSG0_PRU.$assign          = "PRU_ICSSG0_PRU1";
 bissc1.ENC0_EN.$name                   = "ENC0_EN";
 bissc1.ENC0_EN.GPIO_n.$assign          = "MMC1_SDWP";

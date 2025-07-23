@@ -102,8 +102,8 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Nikon A-format version 2.1 and version3.0, Single channel, Multi channel using single PRU core and three PRU cores (load share mode), point-to-point connection, bus connection up to 8 encoders, Individual and multiple transmission mode with encoder addresses ranging between ENC1-ENC8, baud rates from 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz, up to 40-bit absolute position (single turn + multi turn) data with additional information, long cable (upto 100 meters), Boosterpack with LP-AM243
-    <td> -
+    <td> Nikon A-format version 2.1 and version3.0, Single channel, Multi channel using single PRU core and three PRU cores (load share mode), point-to-point connection, bus connection up to 7 encoders, Individual and multiple transmission mode with encoder addresses ranging between ENC1-ENC8, baud rates from 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz, up to 40-bit absolute position (single turn + multi turn) data with additional information, long cable (upto 100 meters), Boosterpack with LP-AM243
+    <td> Bus connected with 8 encoders (Tested up to 7 encoders)
 </tr>
 </table>
 
@@ -131,6 +131,13 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <th> Resolution/Comments
 </tr>
 <tr>
+    <td> PINDSW-5537
+    <td> HDSL not working with 225 MHz PRU-ICSSG Core Clock Frequency
+    <td> Position Sense HDSL
+    <td> 9.0 onwards
+    <td> -
+</tr>
+<tr>
     <td> PINDSW-7976
     <td> PRUICSS PWM : validation of number of pwm channels and pwm trip zone blocks are not correct in sysconfig
     <td> PRUICSS PWM
@@ -138,9 +145,9 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> -
 </tr>
 <tr>
-    <td> PINDSW-5537
-    <td> HDSL not working with 225 MHz PRU-ICSSG Core Clock Frequency
-    <td> Position Sense HDSL
+    <td> PINDSW-8087
+    <td> Tamagawa: UART clock source is used for TX fifo
+    <td> Position Sense Tamagawa
     <td> 9.0 onwards
     <td> -
 </tr>
@@ -155,63 +162,105 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> PINDSW-9123
     <td> Nikon: Data reversal not done correctly for EEPROM and ID commands
     <td> Position Sense Nikon A-format
-    <td> 9.2
+    <td> 9.2 onwards
     <td> Fixes done in \ref nikon_update_eeprom_addr, \ref nikon_update_eeprom_data, \ref nikon_update_id_code and \ref nikon_get_pos
 </tr>
 <tr>
     <td> PINDSW-9124
     <td> Nikon: Data reversal not done correctly for encoder status received in response
     <td> Position Sense Nikon A-format
-    <td> 9.2
+    <td> 9.2 onwards
     <td> Fixes done in \ref nikon_get_pos
 </tr>
 <tr>
     <td> PINDSW-9127
     <td> Nikon: For commands 8 to 12, 9 requests are sent instead of 8
     <td> Position Sense Nikon A-format
-    <td> 9.2
+    <td> 9.2 onwards
     <td> Fixes done in \ref nikon_get_pos
 </tr>
 <tr>
     <td> PINDSW-9128
     <td> Nikon: For EEPROM commands, request is sent 2 times from firmware
     <td> Position Sense Nikon A-format
-    <td> 9.2
+    <td> 9.2 onwards
     <td> Fixes done in \ref nikon_get_pos, and updates in the application code for EEPROM command handling
 </tr>
 <tr>
     <td> PINDSW-9131
     <td> Nikon: EEPROM read for temperature does not use 10 bit data
     <td> Position Sense Nikon A-format
-    <td> 9.2
+    <td> 9.2 onwards
     <td> Fixes done in \ref nikon_get_pos, and updated the application code for EEPROM command handling
 </tr>
 <tr>
     <td> PINDSW-9144
     <td> Nikon: For EEPROM/ID commands, same data is used for all channels in multi-channel mode
     <td> Position Sense Nikon A-format
-    <td> 9.2
+    <td> 9.2 onwards
     <td> Added provision for different address/data per channel
 </tr>
 <tr>
     <td> PINDSW-9154
     <td> Nikon: CRC error seen with 16 Mbps in Single PRU Multi-channel mode
     <td> Position Sense Nikon A-format
-    <td> 9.2
+    <td> 9.2 onwards
     <td> -
 </tr>
 <tr>
     <td> PINDSW-9180
     <td> Nikon: 10 us delay between CDF-MDF and MDF-MDF is used for commands needing MDF
     <td> Position Sense Nikon A-format
-    <td> 9.2
+    <td> 9.2 onwards
     <td> -
+</tr>
+<tr>
+    <td> PINDSW-9238
+    <td> Nikon: IEP compare value is not set correctly for continuous mode
+    <td> Position Sense Nikon A-format
+    <td> 9.2 onwards
+    <td> Change the units to IEP clock cycle count
+</tr>
+<tr>
+    <td> PINDSW-9239
+    <td> Nikon: nikon_config_periodic_trigger assumes fixed receive size of response
+    <td> Position Sense Nikon A-format
+    <td> 9.2 onwards
+    <td> Remove receive size hard-coding in driver
+</tr>
+<tr>
+    <td> PINDSW-9248
+    <td> EnDat: RX arm delay and TST delay settings are hard-coded for a 200MHz core clock
+    <td> Position Sense EnDat
+    <td> 9.2 onwards
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-9255
+    <td> Nikon: If Debug log/scan is removed and encoder resolution is fixed in application code, initialization fails
+    <td> Position Sense Nikon A-format
+    <td> 9.2 onwards
+    <td> Add 0.5 seconds delay in application after powering up the encoder
 </tr>
 <tr>
     <td> PINDSW-9308
     <td> Nikon: nikon_calc_clock API does not handle baud rate correctly
     <td> Position Sense Nikon A-format
-    <td> 9.2
+    <td> 9.2 onwards
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-9312
+    <td> Nikon: Data type of velocity and acceleration is unsigned integer
+    <td> Position Sense Nikon A-format
+    <td> 9.2 onwards
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-9317
+    <td> BiSS-C: bissc_update_data_len does not set number of encoders correctly
+    <td> Position Sense BiSS-C
+    <td> 9.2 onwards
     <td> -
 </tr>
 </table>
@@ -297,7 +346,7 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
 </tr>
 </table>
 
-## Upgrade and Compatibility Information for Motor Control SDK 11.00.00 {#UPGRADE_AND_COMPATIBILITY_INFORMATION_11_00_00}
+## Upgrade and Compatibility Information for Motor Control SDK 11.00.00 {#UPGRADE_AND_COMPATIBILITY_INFORMATION_11_0_0}
 
 \attention When migrating from MCU+ SDK, see \ref MIGRATION_GUIDES for more details.
 

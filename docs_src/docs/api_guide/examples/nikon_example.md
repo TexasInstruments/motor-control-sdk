@@ -46,6 +46,18 @@ The host serial port should be configured to 115200 baud, no parity, 1 stop bit 
 
 The Nikon receiver firmware running on ICSS-PRU provides a defined interface. The Nikon diagnostic application interacts with the Nikon receiver firmware interface. It then presents the user with menu options to select different commands. The application collects the data entered by the user and configures the relevant interface. Then via the Nikon receiver interface, the command is triggered. Once the command completion is indicated by the interface, the status of the transaction is checked. If the Status indicates success, the result is presented to the user.
 
+\note
+    Limitation with <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a> boosterpack with TI LaunchPad
+
+\note
+    - Hardware Limitation with BP-AM2BLDCSERVO
+        - Only up to 7 encoders in bus connection have been tested with BP-AM2BLDCSERVO
+        - This limitation is due to insufficient voltage when attempting to power 8 encoders
+        - Attempting to connect 8 encoders may result in unreliable operation
+
+    - Software Support
+        - The example code and PRU firmware are designed to handle 8 encoders
+
 \cond SOC_AM243X
 
 ## Channel Selection In Sysconfig

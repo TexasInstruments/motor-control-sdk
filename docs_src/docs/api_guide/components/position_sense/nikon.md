@@ -135,11 +135,20 @@ supported in this release, including the below
 
 ### Known Limitations
 
+-    Limitation with <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a> boosterpack with TI LaunchPad
+    - Hardware Limitation with BP-AM2BLDCSERVO
+        - Only up to 7 encoders in bus connection have been tested with BP-AM2BLDCSERVO
+        - This limitation is due to insufficient voltage when attempting to power 8 encoders
+        - Attempting to connect 8 encoders may result in unreliable operation
+
+    - Software Support
+        - The example code and PRU firmware are designed to handle 8 encoders
+
 \cond SOC_AM243X
 - PRU Firmware gets stuck if encoder does not respond with number of bytes expected by driver as per PINDSW-9179 in \ref RELEASE_NOTES_11_00_00_PAGE
 \endcond
 
-\cond SOC_AM261X
+\cond (SOC_AM263X || SOC_AM263PX || SOC_AM261X)
 - PRU Firmware gets stuck if encoder does not respond with number of bytes expected by driver as per PINDSW-9179 in \ref RELEASE_NOTES_10_02_00_PAGE
 \endcond
 
