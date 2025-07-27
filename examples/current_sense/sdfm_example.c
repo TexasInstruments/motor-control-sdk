@@ -45,7 +45,6 @@
 #include "ti_drivers_open_close.h"
 #include "ti_board_open_close.h"
 
-#include "tisdfm_pruss_intc_mapping.h"  /* INTC configuration */
 #if CONFIG_SDFM0_SLICE == PRUICSS_PRU1
 #include "current_sense/sdfm/firmware/multi_axis_load_share/sdfm_pru1_bin.h"            /* SDFM image data */
 #include "current_sense/sdfm/firmware/multi_axis_load_share/sdfm_rtu1_bin.h"            /* SDFM image data */
@@ -88,7 +87,12 @@ static PRUSDFM_PruFwImageInfo gPruFwImageInfo[PRU_SDFM_NUM_PRU_IMAGE] =
 };
 
 /* ICSS INTC configuration */
-static const PRUICSS_IntcInitData gPruicssIntcInitdata = PRUICSS_INTC_INITDATA;
+#if CONFIG_SDFM0_ICSSGx == 1
+/* These variables are defined in the generated SysCfg code */
+extern PRUICSS_IntcInitData icss1_intc_initdata;
+#else
+extern PRUICSS_IntcInitData icss0_intc_initdata;
+#endif
 
 /*
  *  ======== initIcss ========
@@ -196,7 +200,11 @@ int32_t initIcss(
     PRUICSS_setSaMuxMode(pruIcssHandle, saMuxMode);
 #endif
     /* Initialize ICSS INTC */
-    status = PRUICSS_intcInit(pruIcssHandle, &gPruicssIntcInitdata);
+#if CONFIG_SDFM0_ICSSGx == 1
+    status = PRUICSS_intcInit(pruIcssHandle, &icss1_intc_initdata);
+#else
+    status = PRUICSS_intcInit(pruIcssHandle, &icss0_intc_initdata);
+#endif
     if (status != SystemP_SUCCESS) {
         return SDFM_ERR_INIT_ICSSG;
     }

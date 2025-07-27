@@ -54,16 +54,15 @@ const pruicss_g_v0_pwm1 = pruicss_g_v0_pwm.addInstance();
 /**
  * Write custom configuration values to the imported modules.
  */
-sdfm1.$name                      = "CONFIG_SDFM0";
-sdfm1.Enable_Channel_0           = true;
-sdfm1.Enable_Channel_1           = true;
-sdfm1.Enable_Channel_2           = true;
-sdfm1.Ch0_EPWM_SYNC              = true;
-sdfm1.Ch1_EPWM_SYNC              = true;
-sdfm1.Ch2_EPWM_SYNC              = true;
-sdfm1.G_MUX_EN                   = true;
-sdfm1.PRU_ICSSG0_PRU.$assign     = "PRU_ICSSG0_PRU0";
-sdfm1.PRU_ICSSG0_PRU.GPI18.$used = false;
+sdfm1.$name                  = "CONFIG_SDFM0";
+sdfm1.Enable_Channel_0       = true;
+sdfm1.Enable_Channel_1       = true;
+sdfm1.Enable_Channel_2       = true;
+sdfm1.Ch0_EPWM_SYNC          = true;
+sdfm1.Ch1_EPWM_SYNC          = true;
+sdfm1.Ch2_EPWM_SYNC          = true;
+sdfm1.G_MUX_EN               = true;
+sdfm1.PRU_ICSSG0_PRU.$assign = "PRU_ICSSG0_PRU0";
 
 epwm1.$name              = "CONFIG_EPWM0";
 epwm1.EPWM.$assign       = "EHRPWM0";
@@ -323,6 +322,10 @@ pruicss1.AdditionalICSSSettings[0].$name                                        
 pruicss1.AdditionalICSSSettings[0].PruEcapIO.create(1);
 pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].$name                             = "CONFIG_PRU_ICSS_ECAP_IO0";
 pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].PRU_ICSSG0_ECAP.IN_APWM_OUT.$used = true;
+pruicss1.intcMapping.create(1);
+pruicss1.intcMapping[0].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING0";
+pruicss1.intcMapping[0].event                                                     = "21";
+pruicss1.intcMapping[0].channel                                                   = "3";
 
 /**
  * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future

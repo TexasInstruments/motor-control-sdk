@@ -1,9 +1,9 @@
 /**
  * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
  * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
- * @cliArgs --device "AM243x_ALX_beta" --part "ALX" --package "ALX" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@07.03.01"
- * @v2CliArgs --device "AM2434" --package "FCCSP (ALX)" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@07.03.01"
- * @versions {"tool":"1.21.0+3721"}
+ * @cliArgs --device "AM243x_ALX_beta" --part "ALX" --package "ALX" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@11.00.00"
+ * @v2CliArgs --device "AM2434" --package "FCCSP (ALX)" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@11.00.00"
+ * @versions {"tool":"1.23.0+4000"}
  */
 
 /**
@@ -22,7 +22,7 @@ const gpio4           = gpio.addInstance();
 const pruicss         = scripting.addModule("/drivers/pruicss/pruicss", {}, false);
 const pruicss1        = pruicss.addInstance();
 const debug_log       = scripting.addModule("/kernel/dpl/debug_log");
-const dpl_cfg           = scripting.addModule("/kernel/dpl/dpl_cfg");
+const dpl_cfg         = scripting.addModule("/kernel/dpl/dpl_cfg");
 const mpu_armv7       = scripting.addModule("/kernel/dpl/mpu_armv7", {}, false);
 const mpu_armv71      = mpu_armv7.addInstance();
 const mpu_armv72      = mpu_armv7.addInstance();
@@ -97,21 +97,17 @@ gpio1.pinDir                   = "OUTPUT";
 gpio1.useMcuDomainPeripherals  = true;
 gpio1.MCU_GPIO.gpioPin.$assign = "MCU_UART0_RXD";
 
-gpio2.pinDir               = "OUTPUT";
-gpio2.$name                = "GPIO_ZC_TH_CH0";
-gpio2.GPIO.$assign         = "GPIO0";
-gpio2.GPIO.gpioPin.rx      = false;
-gpio2.GPIO.gpioPin.$assign = "PRG1_PRU0_GPO18";
+gpio2.pinDir         = "OUTPUT";
+gpio2.$name          = "GPIO_ZC_TH_CH0";
+gpio2.GPIO_n.$assign = "PRG1_PRU0_GPO18";
 
-gpio3.pinDir               = "OUTPUT";
-gpio3.$name                = "GPIO_ZC_TH_CH1";
-gpio3.GPIO.gpioPin.rx      = false;
-gpio3.GPIO.gpioPin.$assign = "PRG0_PRU1_GPO2";
+gpio3.pinDir         = "OUTPUT";
+gpio3.$name          = "GPIO_ZC_TH_CH1";
+gpio3.GPIO_n.$assign = "PRG0_PRU1_GPO2";
 
-gpio4.pinDir               = "OUTPUT";
-gpio4.$name                = "GPIO_ZC_TH_CH2";
-gpio4.GPIO.gpioPin.rx      = false;
-gpio4.GPIO.gpioPin.$assign = "PRG0_PRU1_GPO1";
+gpio4.pinDir         = "OUTPUT";
+gpio4.$name          = "GPIO_ZC_TH_CH2";
+gpio4.GPIO_n.$assign = "PRG0_PRU1_GPO1";
 
 pruicss1.$name                                                                    = "CONFIG_PRU_ICSS0";
 pruicss1.coreClk                                                                  = 300000000;
@@ -122,6 +118,16 @@ pruicss1.AdditionalICSSSettings[0].PruEcapIO.create(1);
 pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].$name                             = "CONFIG_PRU_ICSS_ECAP_IO0";
 pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].PRU_ICSSG0_ECAP.$assign           = "PRU_ICSSG0_ECAP0";
 pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].PRU_ICSSG0_ECAP.IN_APWM_OUT.$used = true;
+pruicss1.intcMapping.create(3);
+pruicss1.intcMapping[0].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING0";
+pruicss1.intcMapping[0].event                                                     = "21";
+pruicss1.intcMapping[0].channel                                                   = "3";
+pruicss1.intcMapping[1].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING1";
+pruicss1.intcMapping[1].event                                                     = "24";
+pruicss1.intcMapping[1].channel                                                   = "6";
+pruicss1.intcMapping[2].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING2";
+pruicss1.intcMapping[2].channel                                                   = "9";
+pruicss1.intcMapping[2].event                                                     = "27";
 
 debug_log.enableUartLog        = true;
 debug_log.uartLog.$name        = "CONFIG_UART_CONSOLE";
@@ -342,7 +348,7 @@ sdfm1.PRU_ICSSG0_PRU.GPI1.$suggestSolution                                      
 sdfm1.PRU_ICSSG0_PRU.GPI3.$suggestSolution                                                   = "PRG0_PRU0_GPO3";
 sdfm1.PRU_ICSSG0_PRU.GPI5.$suggestSolution                                                   = "PRG0_PRU0_GPO5";
 sdfm1.PRU_ICSSG0_PRU.GPI7.$suggestSolution                                                   = "PRG0_PRU0_GPO7";
-sdfm1.PRU_ICSSG0_PRU.GPI18.$suggestSolution                                                   = "PRG0_PRU0_GPO18";
+sdfm1.PRU_ICSSG0_PRU.GPI18.$suggestSolution                                                  = "PRG0_PRU0_GPO18";
 sdfm1.PRU_ICSSG0_PRU.GPI11.$suggestSolution                                                  = "PRG0_PRU0_GPO11";
 sdfm1.PRU_ICSSG0_PRU.GPI13.$suggestSolution                                                  = "PRG0_PRU0_GPO13";
 sdfm1.PRU_ICSSG0_PRU.GPI15.$suggestSolution                                                  = "PRG0_PRU0_GPO15";
@@ -354,8 +360,6 @@ epwm2.EPWM.$suggestSolution                                                     
 epwm2.EPWM.A.$suggestSolution                                                                = "GPMC0_AD5";
 epwm2.EPWM.B.$suggestSolution                                                                = "GPMC0_AD6";
 gpio1.MCU_GPIO.$suggestSolution                                                              = "MCU_GPIO0";
-gpio3.GPIO.$suggestSolution                                                                  = "GPIO1";
-gpio4.GPIO.$suggestSolution                                                                  = "GPIO1";
 pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].PRU_ICSSG0_ECAP.IN_APWM_OUT.$suggestSolution = "PRG0_PRU1_GPO15";
 debug_log.uartLog.UART.RXD.$suggestSolution                                                  = "UART0_RXD";
 debug_log.uartLog.UART.TXD.$suggestSolution                                                  = "UART0_TXD";
