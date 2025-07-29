@@ -57,16 +57,6 @@
 __attribute__ ((section("sys_data"))) volatile SYSTEM_Vars_t systemVars;
 
 
-#if defined(SFRA_ENABLE)
-__attribute__ ((section(".sfradata"))) float32_t   sfraNoiseId;
-__attribute__ ((section(".sfradata"))) float32_t   sfraNoiseIq;
-__attribute__ ((section(".sfradata"))) float32_t   sfraNoiseSpd;
-__attribute__ ((section(".sfradata"))) float32_t   sfraNoiseOut;
-__attribute__ ((section(".sfradata"))) float32_t   sfraNoiseFdb;
-__attribute__ ((section(".sfradata"))) SFRA_TEST_e sfraTestLoop;
-__attribute__ ((section(".sfradata"))) Bool        sfraCollectStart;
-#endif  // SFRA_ENABLE
-
 #if defined(CPUTIME_ENABLE)
 __attribute__ ((section("sys_data"))) volatile float32_t cpuCyclesAv;
 __attribute__ ((section("sys_data"))) volatile uint32_t cpuCycles;
@@ -88,7 +78,7 @@ void universal_motorcontrol_main(void *args)
 #if defined(BP_AM2BLDCSERVO)
     systemVars.boardKit = BOARD_BP_AM2BLDCSERVO;    // BP_AM2BLDCSERVO
 #else
-#error Not select a right board for this project
+#error Please define a supported board for this project
 #endif
 
 #if defined(MOTOR1_ESMO)
@@ -102,7 +92,7 @@ void universal_motorcontrol_main(void *args)
 #elif defined(MOTOR1_HALL)
     systemVars.estType = EST_TYPE_HALL;         // the sensor is HALL
 #else
-#error Not select a right estimator/sensor for this project
+#error Note select a right estimator/sensor for this project
 #endif
 
 #if defined(MOTOR2_ESMO)
@@ -116,19 +106,19 @@ void universal_motorcontrol_main(void *args)
 #elif defined(MOTOR2_HALL)
     systemVars.estType_M2 = EST_TYPE_HALL;         // the sensor is HALL
 #else
-///#error Not select a right estimator/sensor for this project
+#error Note select a right estimator/sensor for this project
 #endif
 
 #if defined(MOTOR1_INLINE_SDFM)
     systemVars.currentSenseType_M1 = CURSEN_TYPE_INLINE_SDFM;
 #else
-#error Not select a right current sensor for this project
+#error Note select a right current sensor for this project
 #endif  // Current Sense Type
 
 #if defined(MOTOR2_INLINE_SDFM)
     systemVars.currentSenseType_M2 = CURSEN_TYPE_INLINE_SDFM;
 #else
-#error Not select a right current sensor for this project
+#error Note select a right current sensor for this project
 #endif  // Current Sense Type
 
 
@@ -176,7 +166,7 @@ void universal_motorcontrol_main(void *args)
     userParams_M2.flag_bypassMotorId = TRUE;
     
     initMotor2Handles(motorHandle_M2);
-    //MOTOR1 params arer used for motor1
+    
     initMotorCtrlParameters(motorHandle_M2);
 
 
@@ -196,9 +186,9 @@ void universal_motorcontrol_main(void *args)
     // set datalog parameters
     /*FIXME*/
 #if defined(MOTOR1_INLINE_SDFM)
-    datalogObj->iptr[0] = (float32_t*) &motorVars_M1.sdfmData.V_V.value[0];
-    datalogObj->iptr[1] = (float32_t*) &motorVars_M1.sdfmData.V_V.value[1];
-    datalogObj->iptr[2] = (float32_t*) &motorVars_M1.sdfmData.V_V.value[2];
+    datalogObj->iptr[0] = (float32_t*) &motorVars_M1.sdfmData.I_A.value[0];
+    datalogObj->iptr[1] = (float32_t*) &motorVars_M1.sdfmData.I_A.value[1];
+    datalogObj->iptr[2] = (float32_t*) &motorVars_M1.sdfmData.I_A.value[2];
 #else
     datalogObj->iptr[0] = (float32_t*) &motorVars_M1.adcData.V_V.value[0];
     datalogObj->iptr[1] = (float32_t*) &motorVars_M1.adcData.V_V.value[1];
@@ -228,19 +218,6 @@ void universal_motorcontrol_main(void *args)
     datalogObj->iptr[3] = (float32_t*) &motorVars_M1.angleFOC_rad;
 #endif  // DMC_BUILDLEVEL = DMC_LEVEL_1/2/3/4
 #endif  //DATALOG_EN
-
-#if defined(SFRA_ENABLE)
-    // Plot GH & H plots using SFRA_GUI, GH & CL plots using SFRA_GUI_MC
-    configureSFRA(SFRA_GUI_PLOT_GH_H, USER_M1_ISR_FREQ_Hz);
-
-    sfraNoiseId = 0.0f;
-    sfraNoiseIq = 0.0f;
-    sfraNoiseSpd = 0.0f;
-    sfraNoiseOut = 0.0f;
-    sfraNoiseFdb = 0.0f;
-    sfraTestLoop = SFRA_TEST_D_AXIS;
-    sfraCollectStart = FALSE;
-#endif  // SFRA_ENABLE
 
 #if defined(STEP_RP_EN)
     GRAPH_init(&stepRPVars,
@@ -280,7 +257,7 @@ void universal_motorcontrol_main(void *args)
     /* Clear the SDFM interrupt */
     HAL_ackMtrSdfmInt(MTR_1);
 
-#if defined (BPAXIS2_EN)
+#if defined (MOTOR2_INLINE_SDFM)
     /* Register & enable interrupt */
     HwiP_Params_init(&hwiPrms);
     hwiPrms.intNum = MOTOR2_ICSSG_PRU_SDFM_INT_NUM;
@@ -356,7 +333,7 @@ void universal_motorcontrol_main(void *args)
             }
             else
             {
-               /*FIXEME, add LED GPIO if available */
+               /* Toggle LED GPIO if LED GPIO available on board */
                // GPIO_pinWriteHigh(HAL_GPIO_LED1B_BASE_ADD, HAL_GPIO_LED1B);     // Turn on the LED      
             }
 
@@ -373,10 +350,10 @@ void universal_motorcontrol_main(void *args)
                     calculateRMSData(motorHandle_M2);
                     break;
                 case 3:
-#if defined(MOTOR1_PI_TUNE)
+#if defined(MOTOR1_PI_TUNE) || defined(MOTOR2_PI_TUNE)
                     // Tune the gains of the controllers
                     tuneControllerGains(motorHandle_M1);
-#endif      // MOTOR1_PI_TUNE
+#endif      // MOTOR1_PI_TUNE || MOTOR2_PI_TUNE
                     break;
                 case 4:     // calculate motor protection value
                     calcMotorOverCurrentThreshold(motorHandle_M1);
@@ -387,11 +364,6 @@ void universal_motorcontrol_main(void *args)
                     systemVars.timerCnt_5ms++;
                     break;
             }
-
-
-#if defined(SFRA_ENABLE)
-            SFRA_F32_runBackgroundTask(&sfra1);
-#endif  // SFRA_ENABLE
 
 #if defined(STEP_RP_EN)
             // Generate Step response

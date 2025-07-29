@@ -60,7 +60,7 @@ extern "C"
 //*****************************************************************************
 
 #include "math_types.h"
-#if defined (MOTOR1_INLINE_SDFM)
+#if defined (MOTOR1_INLINE_SDFM) || defined (MOTOR2_INLINE_SDFM)
 //*****************************************************************************
 //
 //! \brief Defines the SDFM data

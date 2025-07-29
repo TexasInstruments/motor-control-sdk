@@ -147,7 +147,3 @@ void App_epwmConfig(AppEPwmCfg_t *config)
     }
 
 }
-
- 
- 
-

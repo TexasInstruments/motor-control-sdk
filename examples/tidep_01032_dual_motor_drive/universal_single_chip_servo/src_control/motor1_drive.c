@@ -173,7 +173,7 @@ __attribute__ ((section("foc_data"))) volatile float32_t angleOffsetIPD_rad;
 __attribute__ ((section("foc_data"))) volatile float32_t angleDetectIPD_rad;
 #endif  // MOTOR1_SSIPD
 
-#if defined(BP_AM2BLDCSERVO) && defined(BPAXIS2_EN)
+#if  defined(MOTOR2_ENC) || defined(MOTOR2_INLINE_SDFM) 
 //!< the hardware abstraction layer object to motor control
 
 __attribute__ ((section("foc_data"))) volatile MOTOR_Handle motorHandle_M2;
@@ -196,11 +196,10 @@ __attribute__ ((section("foc_data"))) PI_Obj        pi_spd_M2;
 //!< the speed reference trajectory object
 __attribute__ ((section("foc_data"))) TRAJ_Obj     traj_spd_M2;
 
-#if (DMC_BUILDLEVEL <= DMC_LEVEL_3) || defined(MOTOR1_VOLRECT) || \
-               defined(MOTOR1_ESMO) || defined(MOTOR1_ENC)
+#if (DMC_BUILDLEVEL <= DMC_LEVEL_3)  || defined(MOTOR2_ENC)
 //!< the Angle Generate onject for open loop control
 __attribute__ ((section("foc_data"))) ANGLE_GEN_Obj    angleGen_M2;
-#endif  // DMC_BUILDLEVEL <= DMC_LEVEL_3 || MOTOR1_ESMO || MOTOR1_ENC || MOTOR1_VOLRECT
+#endif  // DMC_BUILDLEVEL <= DMC_LEVEL_3 || MOTOR2_ENC 
 
 #if(DMC_BUILDLEVEL == DMC_LEVEL_2)
 //!< the Vs per Freq object for open loop control
@@ -208,13 +207,13 @@ __attribute__ ((section("foc_data"))) VS_FREQ_Obj    VsFreq_M2;
 #endif // (DMC_BUILDLEVEL == DMC_LEVEL_2)
 
 
-#if defined(MOTOR1_ENC)
+#if defined(MOTOR2_ENC)
 //!< the handle for the enc object
 __attribute__ ((section("foc_data"))) ENC_Obj enc_M2;
 
 //!< the handle for the speedcalc object
 __attribute__ ((section("foc_data"))) SPDCALC_Obj speedcalc_M2;
-#endif  // MOTOR1_ENC
+#endif  // MOTOR2_ENC
 
 #endif
 // the control handles for motor 1
@@ -240,7 +239,7 @@ void initMotor1Handles(MOTOR_Handle handle)
 }
 
 
-#if defined(BP_AM2BLDCSERVO) && defined(BPAXIS2_EN)
+#if  defined(MOTOR2_ENC) || defined(MOTOR2_INLINE_SDFM) 
 void initMotor2Handles(MOTOR_Handle handle)
 {
     MOTOR_Vars_t *obj = (MOTOR_Vars_t *)handle;
@@ -279,7 +278,7 @@ void initMotorCtrlParameters(MOTOR_Handle handle)
 
     objSets->Kp_spd = 0.05f;
     objSets->Ki_spd = 0.005f;
-    /*Same ctr parameters are used for motor1 and motor2*/
+    /*Same control parameters are used for motor1 and motor2*/
 
     objSets->Kp_fwc = USER_M1_FWC_KP;
     objSets->Ki_fwc = USER_M1_FWC_KI;
@@ -327,7 +326,7 @@ void initMotorCtrlParameters(MOTOR_Handle handle)
     objSets->dacCMPValH = 2048U + 1024U;    // set default positive peak value
     objSets->dacCMPValL = 2048U - 1024U;    // set default negative peak value
 
-#if defined(MOTOR1_INLINE_SDFM)
+#if defined(MOTOR1_INLINE_SDFM) || defined(MOTOR2_INLINE_SDFM)
     obj->sdfmData.current_sf = objUser->current_sf * USER_M1_SIGN_CURRENT_SF;
 
     obj->sdfmData.voltage_sf = objUser->voltage_sf;
@@ -404,12 +403,8 @@ void initMotorCtrlParameters(MOTOR_Handle handle)
     obj->flagEnableAlignment = TRUE;
 
     obj->alignTimeDelay = (uint16_t)(objUser->ctrlFreq_Hz * 0.1f);      // 0.1s
-#elif defined(MOTOR1_ENC)
-//#if defined(MOTOR1_ABS_ENC)
-//    obj->estimatorMode = ESTIMATOR_MODE_ABS;
-//#else
+#elif defined(MOTOR1_ENC) || defined(MOTOR2_ENC)
     obj->estimatorMode = ESTIMATOR_MODE_ENC;
-//#endif
     obj->flagEnableAlignment = TRUE;
 
     obj->alignTimeDelay = (uint16_t)(objUser->ctrlFreq_Hz * 0.1f);      // 0.1s
@@ -418,7 +413,7 @@ void initMotorCtrlParameters(MOTOR_Handle handle)
 
     obj->flagEnableAlignment = TRUE;
 #else   // Not select algorithm
-#error Not select a right estimator for this project
+#error "No valid estimator selected for this project. Please define one of MOTOR1_ESMO, MOTOR1_ENC, or MOTOR1_HALL."
 #endif  // !MOTOR1_ESMO
 
     obj->speed_int_Hz = 0.0f;
@@ -493,7 +488,7 @@ void initMotorCtrlParameters(MOTOR_Handle handle)
 
 
 #if (DMC_BUILDLEVEL <= DMC_LEVEL_3) || defined(MOTOR1_VOLRECT) || \
-               defined(MOTOR1_ESMO) || defined(MOTOR1_ENC)
+               defined(MOTOR1_ESMO) || defined(MOTOR1_ENC) || defined(MOTOR2_ENC)
     // initialize the angle generate module
     if(obj->motorNum == MTR_1)
     {
@@ -507,7 +502,7 @@ void initMotorCtrlParameters(MOTOR_Handle handle)
    
 
     ANGLE_GEN_setParams(obj->angleGenHandle, objUser->ctrlPeriod_sec);
-#endif  // DMC_BUILDLEVEL <= DMC_LEVEL_3 || MOTOR1_ESMO || MOTOR1_VOLRECT || MOTOR1_ENC
+#endif  // DMC_BUILDLEVEL <= DMC_LEVEL_3 || MOTOR1_ESMO || MOTOR1_VOLRECT || MOTOR1_ENC|| MOTOR2_ENC
 
 #if(DMC_BUILDLEVEL <= DMC_LEVEL_3)
     obj->Idq_set_A.value[0] = 0.0f;
@@ -536,7 +531,7 @@ void initMotorCtrlParameters(MOTOR_Handle handle)
 #endif // (DMC_BUILDLEVEL == DMC_LEVEL_2)
 
 
-#if defined(MOTOR1_ENC)
+#if defined(MOTOR1_ENC) || defined(MOTOR2_ENC)
     // initialize the enc handle
     if(obj->motorNum == MTR_1)
     {
@@ -549,11 +544,11 @@ void initMotorCtrlParameters(MOTOR_Handle handle)
     }
 
     // set the ENC controller parameters
-#if defined(MOTOR1_ABS_ENC)
+#if defined(MOTOR1_ABS_ENC) || defined(MOTOR2_ABS_ENC)
     /* Initialization of enocoder is done in hal init function */
 #else
     ENC_setQEPHandle(obj->encHandle, MTR1_QEP_BASE);
-#endif  // MOTOR1_ABS_ENC
+#endif  // MOTOR1_ABS_ENC || MOTOR2_ABS_ENC
     ENC_setParams(obj->encHandle, obj->userParamsHandle);
 
     // initialize the apll handle
@@ -572,7 +567,7 @@ void initMotorCtrlParameters(MOTOR_Handle handle)
     SPDCALC_setParams(obj->spdcalcHandle, obj->userParamsHandle);
 
     obj->frswPos_sf = 0.6f;     // Tune this coefficient per the motor/system
-#endif  // MOTOR1_ENC
+#endif  // MOTOR1_ENC || MOTOR2_ENC
 
 
 
@@ -717,7 +712,7 @@ void initMotorCtrlParameters(MOTOR_Handle handle)
     obj->brakingMode = HARDSWITCH_BRAKE_MODE;
 #endif  // BRAKE_ENABLE
 
-#if defined(MOTOR1_RPM_CMD)
+#if defined(MOTOR1_RPM_CMD) || defined(MOTOR2_RPM_CMD)
     obj->flagCmdRpmOrHz = FALSE;     // the speed command is rpm
     obj->rpm2Hz_sf = objUser->motor_numPolePairs / 60.0f;
     obj->hz2Rpm_sf = 60.0f / objUser->motor_numPolePairs;
@@ -727,7 +722,7 @@ void initMotorCtrlParameters(MOTOR_Handle handle)
     // setup the controllers, speed, d/q-axis current pid regulator
     setupControllers(handle);
 
-#if defined(MOTOR1_PI_TUNE)
+#if defined(MOTOR1_PI_TUNE) || defined(MOTOR2_PI_TUNE)
     // set the coefficient of the controllers gains
     setupControllerSF(handle);
 #endif      // MOTOR1_PI_TUNE
@@ -781,7 +776,7 @@ void runMotorOffsetsCalculation(MOTOR_Handle handle)
 
     obj->adcData.offset_Idc_ad = USER_M1_IDC_OFFSET_AD;
 #else // !(MOTOR1_DCLINKSS)
-#if defined(MOTOR1_INLINE_SDFM)
+#if defined(MOTOR1_INLINE_SDFM) || defined(MOTOR2_INLINE_SDFM)
     /*PRU SDFM does not has Post processing block for Hardware-based offset correctionso just storing offset value for convertion from SDFM raw data to current */
     obj->sdfmData.offset_I_ad.value[0]  = USER_M1_IA_OFFSET_AD;
     obj->sdfmData.offset_I_ad.value[1]  = USER_M1_IB_OFFSET_AD;
@@ -807,14 +802,14 @@ void runMotorOffsetsCalculation(MOTOR_Handle handle)
     {
         float32_t offsetK1 = 0.998001f;  // Offset filter coefficient K1: 0.05/(T+0.05);
         float32_t offsetK2 = 0.001999f;  // Offset filter coefficient K2: T/(T+0.05);
-#if defined(MOTOR1_INLINE_SDFM)
+#if defined(MOTOR1_INLINE_SDFM) || defined(MOTOR2_INLINE_SDFM)
         /*(Inverse Current Scaling Factor):*/
         /*current_sf: Scaling factor to convert ADC counts to amperes
         invCurrentSf: Inverse scaling factor (amperes to ADC counts)*/
         float32_t invCurrentSf = 1.0f / obj->sdfmData.current_sf;
 #else
         float32_t invCurrentSf = 1.0f / obj->adcData.current_sf;
-#endif  // MOTOR1_INLINE_SDFM
+#endif  // MOTOR1_INLINE_SDFM || MOTOR2_INLINE_SDFM
         uint16_t offsetCnt;
 
         ClockP_usleep(2L);      // delay 2us
@@ -838,7 +833,7 @@ void runMotorOffsetsCalculation(MOTOR_Handle handle)
         HAL_writePWMData(obj->halMtrHandle, &obj->pwmData);
 
 #else  // !(MOTOR1_DCLINKSS)
-#if defined(MOTOR1_INLINE_SDFM)
+#if defined(MOTOR1_INLINE_SDFM) || defined(MOTOR2_INLINE_SDFM)
         obj->sdfmData.offset_I_ad.value[0] =
                 obj->sdfmData.offset_I_ad.value[0] * obj->sdfmData.current_sf;
         obj->sdfmData.offset_I_ad.value[1] =
@@ -856,7 +851,7 @@ void runMotorOffsetsCalculation(MOTOR_Handle handle)
                  obj->adcData.offset_I_ad.value[1] * obj->adcData.current_sf;
         obj->adcData.offset_I_ad.value[2] =
                  obj->adcData.offset_I_ad.value[2] * obj->adcData.current_sf;
-#endif // MOTOR1_INLINE_SDFM
+#endif // MOTOR1_INLINE_SDFM || MOTOR2_INLINE_SDFM
         // Set the 3-phase output PWMs to 50% duty cycle
         obj->pwmData.Vabc_pu.value[0] = 0.0f;
         obj->pwmData.Vabc_pu.value[1] = 0.0f;
@@ -871,7 +866,7 @@ void runMotorOffsetsCalculation(MOTOR_Handle handle)
 
         for(offsetCnt = 0; offsetCnt < 32000; offsetCnt++)
         {
-#if defined(MOTOR1_INLINE_SDFM) 
+#if defined(MOTOR1_INLINE_SDFM) || defined(MOTOR2_INLINE_SDFM)
             /*clear the interrupt for sdfm */
             HAL_ackMtrSdfmInt(obj->halMtrHandle->motorNum);
            // while (PRUICSS_getEvent(gPruIcssXHandle, PRU_TRIGGER_HOST_SDFM_EVT) == FALSE);
@@ -887,7 +882,7 @@ void runMotorOffsetsCalculation(MOTOR_Handle handle)
 #endif
             if(offsetCnt >= 2000)       // Ignore the first 2000 times
             {
-                // Offsets in phase current sensing
+                /* Offsets in phase current sensing */
 #if defined(MOTOR1_DCLINKSS)
                 obj->adcData.offset_Idc_ad = offsetK1 * obj->adcData.offset_Idc_ad +
                                0.25f * offsetK2 *(obj->adcData.Idc1_A.value[0] +
@@ -895,7 +890,7 @@ void runMotorOffsetsCalculation(MOTOR_Handle handle)
                                                   obj->adcData.Idc2_A.value[0] +
                                                   obj->adcData.Idc2_A.value[1]);
 #else // (MOTOR1_DCLINKSS)
-#if defined(MOTOR1_INLINE_SDFM) 
+#if defined(MOTOR1_INLINE_SDFM) || defined(MOTOR2_INLINE_SDFM)
                 obj->sdfmData.offset_I_ad.value[0] =
                          offsetK1 * obj->sdfmData.offset_I_ad.value[0] +
                          obj->sdfmData.I_A.value[0] * offsetK2;
@@ -917,7 +912,7 @@ void runMotorOffsetsCalculation(MOTOR_Handle handle)
                 obj->adcData.offset_I_ad.value[2] =
                         offsetK1 * obj->adcData.offset_I_ad.value[2] +
                         obj->adcData.I_A.value[2] * offsetK2;
-#endif // (MOTOR1_INLINE_SDFM)
+#endif // (MOTOR1_INLINE_SDFM) || (MOTOR2_INLINE_SDFM)
 #endif // !(MOTOR1_DCLINKSS)
 
             }
@@ -946,7 +941,7 @@ void runMotorOffsetsCalculation(MOTOR_Handle handle)
         ADC_setPPBReferenceOffset(MTR1_IDC4_ADC_BASE, MTR1_IDC4_ADC_PPB_NUM,
                                   (uint16_t)obj->adcData.offset_Idc_ad);
 #else // !(MOTOR1_DCLINKSS)
-#if defined(MOTOR1_INLINE_SDFM)
+#if defined(MOTOR1_INLINE_SDFM) || defined(MOTOR2_INLINE_SDFM)
         obj->sdfmData.offset_I_ad.value[0] =
                  obj->sdfmData.offset_I_ad.value[0] * invCurrentSf;
         obj->sdfmData.offset_I_ad.value[1] =
@@ -969,7 +964,7 @@ void runMotorOffsetsCalculation(MOTOR_Handle handle)
 
         ADC_setPPBReferenceOffset(MTR1_IW_ADC_BASE, MTR1_IW_ADC_PPB_NUM,
                                   (uint16_t)obj->adcData.offset_I_ad.value[2]);
-#endif // (MOTOR1_INLINE_SDFM)
+#endif // (MOTOR1_INLINE_SDFM) || (MOTOR2_INLINE_SDFM)
 #endif // (MOTOR1_DCLINKSS)
     }   // flagEnableOffsetCalc = TRUE
 
@@ -981,7 +976,7 @@ void runMotorOffsetsCalculation(MOTOR_Handle handle)
         obj->faultMtrNow.bit.currentOffset = 1;
     }
 #else // !(MOTOR1_DCLINKSS)
-#if defined(MOTOR1_INLINE_SDFM)
+#if defined(MOTOR1_INLINE_SDFM) || defined(MOTOR2_INLINE_SDFM)
     // Check current and voltage offset
     if( (obj->sdfmData.offset_I_ad.value[0] > USER_M1_IA_OFFSET_AD_MAX) ||
         (obj->sdfmData.offset_I_ad.value[0] < USER_M1_IA_OFFSET_AD_MIN) )
@@ -1019,7 +1014,7 @@ void runMotorOffsetsCalculation(MOTOR_Handle handle)
     {
         obj->faultMtrNow.bit.currentOffset = 1;
     }
-#endif // (MOTOR1_INLINE_SDFM)
+#endif // (MOTOR1_INLINE_SDFM) || (MOTOR2_INLINE_SDFM)
 #endif // (MOTOR1_DCLINKSS)
 
     if((obj->faultMtrNow.bit.voltageOffset == 0) &&
@@ -1063,7 +1058,6 @@ void runMotorControl(MOTOR_Handle handle)
 
     if(obj->flagEnableRunAndIdentify == TRUE)
     {
-        // Had some faults to stop the motor
         if(obj->faultMtrUse.all != 0)
         {
             if(obj->flagRunIdentAndOnLine == TRUE)
@@ -1193,25 +1187,20 @@ void runMotorControl(MOTOR_Handle handle)
 
     if(obj->flagRunIdentAndOnLine == TRUE)
     {
-//        HAL_enablePWM(obj->halMtrHandle);
         if(HAL_getPwmEnableStatus(obj->halMtrHandle) == FALSE)
         {
             // enable the PWM
             HAL_enablePWM(obj->halMtrHandle);
         }
 
-
-//        {
-
-
-            if(obj->speedRef_Hz > 0.0f)
-            {
-                obj->direction = 1.0f;
-            }
-            else
-            {
-                obj->direction = -1.0f;
-            }
+        if(obj->speedRef_Hz > 0.0f)
+        {
+            obj->direction = 1.0f;
+        }
+        else
+        {
+            obj->direction = -1.0f;
+        }
 
             // Sets the target speed for the speed trajectory
         #if defined(MOTOR1_ESMO)
@@ -1224,7 +1213,7 @@ void runMotorControl(MOTOR_Handle handle)
                 TRAJ_setTargetValue(obj->trajHandle_spd,
                                     (obj->speedForce_Hz * obj->direction));
             }
-        #elif defined(MOTOR1_ENC)
+        #elif defined(MOTOR1_ENC) || defined(MOTOR2_ENC)
             if(obj->motorState >= MOTOR_CL_RUNNING)
             {
                 TRAJ_setTargetValue(obj->trajHandle_spd, obj->speedRef_Hz);
@@ -1245,7 +1234,7 @@ void runMotorControl(MOTOR_Handle handle)
                                     (obj->speedForce_Hz * obj->direction));
             }
         #else   // !MOTOR1_ESMO
-        #error No select a right estimator for motor_1 control
+        #error select a right estimator for this project
         #endif  // MOTOR1_ESMO
 
             if((fabs(obj->speed_Hz) > obj->speedStart_Hz) ||
@@ -1360,7 +1349,7 @@ void motorCtrlISR(MOTOR_Handle handle)
     MOTOR_Vars_t *obj = (MOTOR_Vars_t *)handle;
     USER_Params *objUser = (USER_Params *)(obj->userParamsHandle);
 
-#if defined(MOTOR1_INLINE_SDFM)
+#if defined(MOTOR1_INLINE_SDFM) || defined(MOTOR2_INLINE_SDFM)
     // acknowledge the SDFM interrupt
     
     HAL_ackMtrSdfmInt(obj->halMtrHandle->motorNum);
@@ -1371,8 +1360,8 @@ void motorCtrlISR(MOTOR_Handle handle)
     //calculate the current
     obj->sdfmData.I_A.value[0] =  obj->sdfmData.I_A.value[0]  -( obj->sdfmData.offset_I_ad.value[0] * obj->sdfmData.current_sf);
     obj->sdfmData.I_A.value[1] =  obj->sdfmData.I_A.value[1]  -( obj->sdfmData.offset_I_ad.value[1] * obj->sdfmData.current_sf);
-    //obj->sdfmData.I_A.value[2] =  obj->sdfmData.I_A.value[2]  -( obj->sdfmData.offset_I_ad.value[1] * obj->sdfmData.current_sf);
-    obj->sdfmData.I_A.value[2] = -(obj->sdfmData.I_A.value[0] + obj->sdfmData.I_A.value[1]);
+    obj->sdfmData.I_A.value[2] =  obj->sdfmData.I_A.value[2]  -( obj->sdfmData.offset_I_ad.value[1] * obj->sdfmData.current_sf);
+    //obj->sdfmData.I_A.value[2] = -(obj->sdfmData.I_A.value[0] + obj->sdfmData.I_A.value[1]);
 #else
     // acknowledge the ADC interrupt
     HAL_ackMtr1ADCInt();
@@ -1882,16 +1871,15 @@ void motorCtrlISR(MOTOR_Handle handle)
 // End of MOTOR1_ESMO
 
 //------------------------------------------------------------------------------
-#elif defined(MOTOR1_ENC)
+#elif defined(MOTOR1_ENC) || defined(MOTOR2_ENC)
     MATH_Vec2 phasor;
 
     ANGLE_GEN_run(obj->angleGenHandle, obj->speed_int_Hz);
     obj->angleGen_rad = ANGLE_GEN_getAngle(obj->angleGenHandle);
 
     // run Clarke transform on current
-#if defined(MOTOR1_INLINE_SDFM)
+#if defined(MOTOR1_INLINE_SDFM) || defined(MOTOR2_INLINE_SDFM)
     CLARKE_run_threeInput(obj->sdfmData.I_A.value[0], obj->sdfmData.I_A.value[1], obj->sdfmData.I_A.value[2], &obj->Iab_A.value[0], &obj->Iab_A.value[1]);
-    /*need to add support for 2 channel*/
 #else
     CLARKE_run_threeInput(obj->adcData.I_A.value[0], obj->adcData.I_A.value[1], obj->adcData.I_A.value[2], &obj->Iab_A.value[0], &obj->Iab_A.value[1]);
 #endif
@@ -1919,15 +1907,13 @@ void motorCtrlISR(MOTOR_Handle handle)
     }
 
     obj->speed_int_Hz = TRAJ_getIntValue(obj->trajHandle_spd);
-#if defined(MOTOR1_INLINE_SDFM)
+#if defined(MOTOR1_INLINE_SDFM) || defined(MOTOR2_INLINE_SDFM)
      obj->oneOverDcBus_invV = 1.0f / obj->sdfmData.VdcBus_V;
-    //obj->oneOverDcBus_invV = 1.0f ;
-    //Just take refrence from single chip servo
 #else
     obj->oneOverDcBus_invV = 1.0f / obj->adcData.VdcBus_V;
 #endif
 
-#if defined(MOTOR1_ABS_ENC)
+#if defined(MOTOR1_ABS_ENC) || defined(MOTOR2_ABS_ENC)
     //obj->encState = ENC_CALIBRATION_DONE;
     HAL_getMtrEncoderPosition(obj->encHandle, obj->motorNum);
 #else
@@ -2037,7 +2023,7 @@ void motorCtrlISR(MOTOR_Handle handle)
     // run the Park transform
     PARK_run(phasor.value[1], phasor.value[0], obj->Iab_A.value[0], obj->Iab_A.value[1], &obj->Idq_in_A.value[0], &obj->Idq_in_A.value[1]);
 
-// End of MOTOR1_ENC
+// End of MOTOR1_ENC || MOTOR2_ENC
 //------------------------------------------------------------------------------
 
 #elif defined(MOTOR1_HALL)
@@ -2187,10 +2173,10 @@ void motorCtrlISR(MOTOR_Handle handle)
 
 //------------------------------------------------------------------------------
 #else   // No Any Estimator
-#error Not select a right estimator for this project
+#error select a right estimator for this project
 #endif  // (ESTIMATOR)
 
-#if defined(MOTOR1_RPM_CMD)
+#if defined(MOTOR1_RPM_CMD) || defined(MOTOR2_RPM_CMD)
     // convert the feedback speed to rpm
     obj->speed_rpm = obj->speed_Hz * obj->hz2Rpm_sf;
 
@@ -2223,19 +2209,6 @@ void motorCtrlISR(MOTOR_Handle handle)
 //---------- Common Speed and Current Loop for all observers -------------------
 #if(DMC_BUILDLEVEL >= DMC_LEVEL_4)
 
-#if defined(SFRA_ENABLE)
-
-    if(sfraCollectStart == TRUE)
-    {
-        collectSFRA(motorHandle_M1);    // Collect noise feedback from loop
-    }
-
-    //  SFRA injection
-    injectSFRA();                   // create SFRA Noise per 'sfraTestLoop'
-
-    sfraCollectStart = TRUE;       // enable SFRA data collection
-#endif  // SFRA_ENABLE
-
     // run the speed controller
     obj->counterSpeed++;
 
@@ -2248,17 +2221,9 @@ void motorCtrlISR(MOTOR_Handle handle)
         if(obj->enableSpeedCtrl == TRUE)
         {
             obj->Is_ffwd_A = 0.0f;
-
-
-#if defined(SFRA_ENABLE)
-            PI_run_series(obj->piHandle_spd,
-                   (obj->speed_int_Hz + sfraNoiseSpd), obj->speed_reg_Hz,
-                   obj->Is_ffwd_A, (float32_t *)&obj->IsRef_A);
-#else     // !SFRA_ENABLE
             PI_run_series(obj->piHandle_spd,
                    obj->speed_int_Hz, obj->speed_reg_Hz,
                    obj->Is_ffwd_A, (float32_t *)&obj->IsRef_A);
-#endif  // !SFRA_ENABLE
         }
         else if((obj->motorState >= MOTOR_CL_RUNNING) &&
                 (obj->flagMotorIdentified == TRUE))
@@ -2447,32 +2412,14 @@ void motorCtrlISR(MOTOR_Handle handle)
         obj->Vdq_ffwd_V.value[0] = 0.0f;
         obj->Vdq_ffwd_V.value[1] = 0.0f;
 
-
         // Maximum voltage output
-#if defined(MOTOR1_INLINE_SDFM)
+#if defined(MOTOR1_INLINE_SDFM) || defined(MOTOR2_INLINE_SDFM)
         obj->VsMax_V = objUser->maxVsMag_pu * obj->sdfmData.VdcBus_V;
 #else
         obj->VsMax_V = objUser->maxVsMag_pu * obj->adcData.VdcBus_V;
 #endif
         PI_setMinMax(obj->piHandle_Id, -obj->VsMax_V, obj->VsMax_V);
 
-#if defined(SFRA_ENABLE)
-        // run the Id controller
-        PI_run_series(obj->piHandle_Id,
-                      (obj->IdqRef_A.value[0] + sfraNoiseId), obj->Idq_in_A.value[0],
-                      obj->Vdq_ffwd_V.value[0], (float32_t*)&obj->Vdq_out_V.value[0]);
-
-        // calculate Iq controller limits
-        float32_t outMax_V = sqrtf((obj->VsMax_V * obj->VsMax_V) -
-                          (obj->Vdq_out_V.value[0] * obj->Vdq_out_V.value[0]));
-
-        PI_setMinMax(obj->piHandle_Iq, -outMax_V, outMax_V);
-
-        // run the Iq controller
-        PI_run(obj->piHandle_Iq, (obj->IdqRef_A.value[1] + sfraNoiseIq),
-               obj->Idq_in_A.value[1], (float32_t*)&obj->Vdq_out_V.value[1]);
-
-#else     // !SFRA_ENABLE
         // run the Id controller
         PI_run_series(obj->piHandle_Id,
                       obj->IdqRef_A.value[0], obj->Idq_in_A.value[0],
@@ -2487,14 +2434,12 @@ void motorCtrlISR(MOTOR_Handle handle)
         // run the Iq controller
         PI_run(obj->piHandle_Iq, obj->IdqRef_A.value[1],
                obj->Idq_in_A.value[1], (float32_t*)&obj->Vdq_out_V.value[1]);
-#endif  // !SFRA_ENABLE
-
 
     }
 
 #if(DMC_BUILDLEVEL == DMC_LEVEL_2)
 
-#define Manual_Vdq            // Set Vd and Vq manually for level 2
+//#define Manual_Vdq            // Set Vd and Vq manually for level 2
 
 #ifndef Manual_Vdq
     VS_FREQ_run(obj->VsFreqHandle, obj->speed_int_Hz);
@@ -2538,13 +2483,10 @@ void motorCtrlISR(MOTOR_Handle handle)
 
     // run the inverse Park module
     IPARK_run(phasor.value[1], phasor.value[0], obj->Vdq_out_V.value[0], obj->Vdq_out_V.value[1], &obj->Vab_out_V.value[0], &obj->Vab_out_V.value[1]);
-    //IPARK_run(0, 1, obj->Vdq_out_V.value[0], obj->Vdq_out_V.value[1], &obj->Vab_out_V.value[0], &obj->Vab_out_V.value[1]);
-
     // run the space vector generator (SVGEN) module
 #if defined(MOTOR1_DCLINKSS)
     SVGEN_runCom(obj->oneOverDcBus_invV, obj->Vab_out_V.value[0], obj->Vab_out_V.value[1], &obj->pwmData.Vabc_pu.value[0], &obj->pwmData.Vabc_pu.value[1], &obj->pwmData.Vabc_pu.value[2]);
 #else  // !(MOTOR1_DCLINKSS)
-    //SVGEN_runMin(obj->oneOverDcBus_invV, obj->Vab_out_V.value[0], obj->Vab_out_V.value[1], &obj->pwmData.Vabc_pu.value[0], &obj->pwmData.Vabc_pu.value[1], &obj->pwmData.Vabc_pu.value[2]);
     SVGEN_runCom(obj->oneOverDcBus_invV, obj->Vab_out_V.value[0], obj->Vab_out_V.value[1], &obj->pwmData.Vabc_pu.value[0], &obj->pwmData.Vabc_pu.value[1], &obj->pwmData.Vabc_pu.value[2]);
 #endif  // !(MOTOR1_DCLINKSS)
 
@@ -2626,7 +2568,10 @@ void motorCtrlISR(MOTOR_Handle handle)
 #endif  // EPWMDAC_MODE
 
 #if defined(DATALOG_EN)
+    if(obj->motorNum == MTR_1)
+    {
         DATALOG_update(datalogHandle);
+    }
 #endif  // DATALOG_EN
 
 #if defined(DAC128S_ENABLE)

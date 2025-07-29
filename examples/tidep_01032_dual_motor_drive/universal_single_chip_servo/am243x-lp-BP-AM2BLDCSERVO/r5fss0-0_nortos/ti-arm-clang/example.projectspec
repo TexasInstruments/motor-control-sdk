@@ -78,16 +78,20 @@
             -DDSYSCONFIG_EN
             -D_INLINE
             -DBP_AM2BLDCSERVO
-            -DBPAXIS2_EN
+            -DCLOSED_LOOP_CIA402
             -DMOTOR1_ABS_ENC
             -DMOTOR1_ENC
             -DMOTOR1_INLINE_SDFM
+            -DMOTOR2_ABS_ENC
+            -DMOTOR2_ENC
+            -DMOTOR2_INLINE_SDFM
             -DHALL_CAL_N
             -DMOTOR1_OVM_N
             -DMOTOR1_FWC_N
             -DMOTOR1_MTPA_N
             -DMOTOR1_PI_TUNE_N
-            -DMOTOR1_RPM_CMD_N
+            -DMOTOR1_RPM_CMD
+            -DMOTOR2_RPM_CMD
             -DMOTOR1_FILTERIS_N
             -DMOTOR1_FILTERVS_N
             -DBRAKE_ENABLE_N
@@ -148,7 +152,7 @@
                 -llibsysbm.a
             "
         ></configuration>
-<!-- XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX -->
+        
 <!-- define directory for all of the kits and link device supoorting files-->
         <pathVariable name="MOTOR_CONTROL_SDK_PATH" path="${COM_TI_MOTOR_CONTROL_SDK_AMXXX_INSTALL_DIR}" scope="project" />
         <pathVariable name="MCU_SDK_ROOT"  path="../../../../../../mcu_plus_sdk" scope="project" />
@@ -181,8 +185,6 @@
         <file path="MC_SDK_ROOT/source/rtlibs/observers/speedcalc/source/speedcalc.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/observers/speedcalc/">
         </file>
         <file path="MC_SDK_ROOT/source/rtlibs/observers/speedfr/source/speedfr.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/observers/speedfr/">
-        </file>
-        <file path="PROJ_ROOT/sfra_setting/sfra.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/SFRA/">
         </file>
         <file path="MC_SDK_ROOT/source/rtlibs/transforms/svgen/svgen_current.c" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/transforms/svgen/">
         </file>
@@ -243,8 +245,6 @@
         </file>
         <file path="MC_SDK_ROOT/source/rtlibs/sfra/sfra_f32.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/SFRA/">
         </file>
-        <file path="PROJ_ROOT/sfra_setting/sfra_settings.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/SFRA/">
-        </file>
         <file path="MC_SDK_ROOT/source/rtlibs/sfra/scripts/SFRA.xlsx" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/SFRA/scripts/">
         </file>
         <file path="MC_SDK_ROOT/source/rtlibs/sfra/scripts/SFRADataExtraction.m" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/SFRA/scripts/">
@@ -294,6 +294,8 @@
         <file path="../epwm.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="">
         </file>
         <file path="PROJ_ROOT/sys_settings.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="">
+        </file>
+        <file path="syscfg_c.rov.xs" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
         <file path="PROJ_ROOT/src_control/debug/datalog.graphProp" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="src_control/debug/">
         </file>

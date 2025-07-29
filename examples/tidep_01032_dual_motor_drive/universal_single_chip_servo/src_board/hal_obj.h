@@ -78,7 +78,7 @@ typedef struct _HAL_MTR_Obj_
   uint32_t       gateEnableGPIO;
   uint32_t       gateEnableGPIOBaseAdd;
 #else // BP_AM2BLDCSERVO
-#error Not select a right board for this project
+#error "Board configuration not specified. Please define a valid board for this project."
 #endif
 
 } HAL_MTR_Obj;

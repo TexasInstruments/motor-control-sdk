@@ -61,6 +61,7 @@ const section12       = section.addInstance();
 flash1.$name                         = "CONFIG_FLASH0";
 flash1.peripheralDriver.$name        = "CONFIG_OSPI0";
 flash1.peripheralDriver.inputClkFreq = 200000000;
+flash1.peripheralDriver.child.$name  = "drivers_ospi_v0_ospi_v0_template0";
 
 led1.$name = "CONFIG_LED_ERROR";
 
@@ -77,7 +78,8 @@ gpio3.$name          = "CONFIG_GPIO0_PHYRESET1";
 gpio3.pinDir         = "OUTPUT";
 gpio3.GPIO_n.$assign = "PRG1_PRU1_GPO18";
 
-uart1.$name = "CONFIG_UART_CONSOLE";
+uart1.$name        = "CONFIG_UART_CONSOLE";
+uart1.UART.$assign = "USART0";
 
 const uart_v0_template  = scripting.addModule("/drivers/uart/v0/uart_v0_template", {}, false);
 const uart_v0_template1 = uart_v0_template.addInstance({}, false);
@@ -283,8 +285,8 @@ section11.output_section[0].alignment = 0;
 
 section12.$name                        = "Non Cacheable Memory";
 section12.group                        = false;
-section12.type                         = "NOLOAD";
 section12.load_memory                  = "MSRAM_NO_CACHE";
+section12.type                         = "NOLOAD";
 section12.output_section.create(1);
 section12.output_section[0].$name      = ".gEtherCatCia402";
 section12.output_section[0].palignment = true;
@@ -302,7 +304,6 @@ flash1.peripheralDriver.OSPI.D3.$suggestSolution             = "OSPI0_D3";
 flash1.peripheralDriver.OSPI.D2.$suggestSolution             = "OSPI0_D2";
 flash1.peripheralDriver.OSPI.D1.$suggestSolution             = "OSPI0_D1";
 flash1.peripheralDriver.OSPI.D0.$suggestSolution             = "OSPI0_D0";
-uart1.UART.$suggestSolution                                  = "USART0";
 uart1.UART.RXD.$suggestSolution                              = "UART0_RXD";
 uart1.UART.TXD.$suggestSolution                              = "UART0_TXD";
 ethercat1.PRU_ICSSG1_MDIO.$suggestSolution                   = "PRU_ICSSG1_MDIO0";

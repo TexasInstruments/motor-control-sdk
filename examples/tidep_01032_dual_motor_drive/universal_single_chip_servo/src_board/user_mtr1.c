@@ -65,13 +65,13 @@ void USER_setMotor1Params(userParams_Handle handle)
 
     objUser->motor_numPolePairs = USER_MOTOR1_NUM_POLE_PAIRS;
 
-#if defined(MOTOR1_ENC)
+#if defined(MOTOR1_ENC) ||  defined(MOTOR2_ENC)
     objUser->motor_numEncSlots = USER_MOTOR1_NUM_ENC_SLOTS;
-#if defined (MOTOR1_ABS_ENC)
+#if defined (MOTOR1_ABS_ENC) || defined (MOTOR2_ABS_ENC)
     objUser->motor_absEncResolution = USER_MOTOR1_ENC_RESOLUTION;
     objUser->motor_absEncBits = USER_MOTOR1_NUM_ENC_POS_BITS;
-#endif // MOTOR1_ABS_ENC
-#endif // MOTOR1_ENC
+#endif // MOTOR1_ABS_ENC || MOTOR2_ABS_ENC
+#endif // MOTOR1_ENC || MOTOR2_ENC
 
     objUser->dcBus_nominal_V = USER_M1_NOMINAL_DC_BUS_VOLTAGE_V;
 

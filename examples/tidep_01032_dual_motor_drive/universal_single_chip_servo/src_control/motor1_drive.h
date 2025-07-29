@@ -155,7 +155,7 @@ extern volatile float32_t angleOffsetIPD_rad;
 extern volatile float32_t angleDetectIPD_rad;
 #endif  // MOTOR1_SSIPD
 
-#if defined (BP_AM2BLDCSERVO) && defined(BPAXIS2_EN)
+#if  defined(MOTOR2_ENC) || defined(MOTOR2_INLINE_SDFM) 
 //the globel
 extern volatile MOTOR_Handle motorHandle_M2;
 
@@ -178,11 +178,10 @@ extern PI_Obj        pi_spd_M2;
 //!< the speed reference trajectory object
 extern TRAJ_Obj     traj_spd_M2;
 
-#if (DMC_BUILDLEVEL <= DMC_LEVEL_3) || defined(MOTOR1_VOLRECT) || \
-               defined(MOTOR1_ESMO) || defined(MOTOR1_ENC)
+#if (DMC_BUILDLEVEL <= DMC_LEVEL_3) ||  defined(MOTOR2_ENC)
 //!< the Angle Generate onject for open loop control
 extern ANGLE_GEN_Obj    angleGen_M2;
-#endif  // DMC_BUILDLEVEL <= DMC_LEVEL_3 || MOTOR1_ESMO || MOTOR1_VOLRECT || MOTOR1_ENC
+#endif  // DMC_BUILDLEVEL <= DMC_LEVEL_3 || MOTOR2_ENC
 
 #if (DMC_BUILDLEVEL == DMC_LEVEL_2)
 //!< the Vs per Freq object for open loop control
@@ -190,14 +189,14 @@ extern VS_FREQ_Obj    VsFreq_M2;
 #endif // (DMC_BUILDLEVEL == DMC_LEVEL_2)
 
 
-#if defined(MOTOR1_ENC)
+#if defined(MOTOR2_ENC)
 //!< the handle for the enc object
 extern ENC_Obj enc_M2;
 
 //!< the handle for the speedcalc object
 extern SPDCALC_Obj speedcalc_M1;
 
-#endif  // MOTOR1_ENC
+#endif  // MOTOR2_ENC
 
 
 #endif

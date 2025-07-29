@@ -61,7 +61,7 @@ extern "C"
 //! SysCtl_setClock(), need to change this definition accordingly
 
 //! \brief Define the system frequency (Hz)
-#define DEVICE_SYSCLK_FREQ     200000000.0f
+#define DEVICE_SYSCLK_FREQ     250000000.0f
 
 #define USER_SYSTEM_FREQ_Hz             (float32_t)(DEVICE_SYSCLK_FREQ)
 

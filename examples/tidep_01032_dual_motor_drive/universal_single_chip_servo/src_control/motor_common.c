@@ -148,7 +148,7 @@ void stopMotorControl(MOTOR_Handle handle)
     }
 #endif  // BRAKE_ENABLE
 
-#if defined(MOTOR1_ENC)
+#if defined(MOTOR1_ENC) || defined(MOTOR2_ENC)
     if(obj->motorState == MOTOR_FAULT_STOP)
     {
         ENC_resetState(obj->encHandle);
@@ -165,7 +165,7 @@ void stopMotorControl(MOTOR_Handle handle)
     }
 #else
     obj->motorState = MOTOR_STOP_IDLE;
-#endif  // MOTOR1_ENC
+#endif  // MOTOR1_ENC || MOTOR2_ENC
 
     obj->restartTimesCnt = 0;
 
@@ -196,7 +196,7 @@ void restartMotorControl(MOTOR_Handle handle)
     }
 #endif  // BRAKE_ENABLE
 
-#if defined(MOTOR1_ENC)
+#if defined(MOTOR1_ENC) || defined(MOTOR2_ENC)
     if(obj->estimatorMode == ESTIMATOR_MODE_ENC)
     {
         if(obj->motorState == MOTOR_NORM_STOP)
@@ -222,8 +222,8 @@ void restartMotorControl(MOTOR_Handle handle)
 
         ENC_setState(obj->encHandle, ENC_ALIGNMENT);
     }
-    // MOTOR1_ENC
-#else   // !MOTOR1_ENC
+    // MOTOR1_ENC || MOTOR2_ENC
+#else   // !MOTOR1_ENC 
     if(obj->flagEnableFlyingStart == TRUE)
     {
         obj->motorState = MOTOR_SEEK_POS;
@@ -232,7 +232,7 @@ void restartMotorControl(MOTOR_Handle handle)
     {
         obj->motorState = MOTOR_ALIGNMENT;
     }
-#endif  // !MOTOR1_ENC
+#endif  // !MOTOR1_ENC 
 
 #if defined(MOTOR1_ESMO)
     ESMO_resetParams(obj->esmoHandle);
@@ -253,12 +253,7 @@ void restartMotorControl(MOTOR_Handle handle)
     obj->flagRunIdentAndOnLine = TRUE;
     obj->stateRunTimeCnt = 0;
     obj->startSumTimesCnt++;
-
-#if defined(SFRA_ENABLE)
-    sfraCollectStart = FALSE;       // disable SFRA data collection
-#endif  // SFRA_ENABLE
-
-
+    
     return;
 }
 
@@ -330,20 +325,28 @@ void runMotorMonitor(MOTOR_Handle handle)
     }
 
     // Check if DC bus voltage is over threshold
-#if defined(MOTOR1_INLINE_SDFM)
-        if (obj->sdfmData.VdcBus_V > objSets->overVoltageFault_V) {
-            if (obj->overVoltageTimeCnt > objSets->voltageFaultTimeSet) {
-                obj->faultMtrNow.bit.overVoltage = 1;
-            } else {
-                obj->overVoltageTimeCnt++;
-            }
-        } else if (obj->sdfmData.VdcBus_V < objSets->overVoltageNorm_V) {
-            if (obj->overVoltageTimeCnt == 0) {
-                obj->faultMtrNow.bit.overVoltage = 0;
-            } else {
-                obj->overVoltageTimeCnt--;
-            }
+#if defined(MOTOR1_INLINE_SDFM) || defined(MOTOR2_INLINE_SDFM)
+    if (obj->sdfmData.VdcBus_V > objSets->overVoltageFault_V)
+    {
+        if (obj->overVoltageTimeCnt > objSets->voltageFaultTimeSet) 
+        {
+            obj->faultMtrNow.bit.overVoltage = 1;
+        } 
+        else 
+        {
+            obj->overVoltageTimeCnt++;
         }
+    } 
+    else if (obj->sdfmData.VdcBus_V < objSets->overVoltageNorm_V)
+    {
+        if (obj->overVoltageTimeCnt == 0) 
+        {
+            obj->faultMtrNow.bit.overVoltage = 0;
+        } else 
+        {
+            obj->overVoltageTimeCnt--;
+        }
+    }
 #else
     if(obj->adcData.VdcBus_V > objSets->overVoltageFault_V)
     {
@@ -367,9 +370,9 @@ void runMotorMonitor(MOTOR_Handle handle)
             obj->overVoltageTimeCnt--;
         }
     }
-#endif // MOTOR1_INLINE_SDFM
+#endif // MOTOR1_INLINE_SDFM || MOTOR2_INLINE_SDFM
     // Check if DC bus voltage is under threshold
-#if defined(MOTOR1_INLINE_SDFM)
+#if defined(MOTOR1_INLINE_SDFM) || defined(MOTOR2_INLINE_SDFM)
         if (obj->sdfmData.VdcBus_V < objSets->underVoltageFault_V) {
             if (obj->underVoltageTimeCnt > objSets->voltageFaultTimeSet) {
                 obj->faultMtrNow.bit.underVoltage = 1;
@@ -406,7 +409,7 @@ void runMotorMonitor(MOTOR_Handle handle)
             obj->underVoltageTimeCnt--;
         }
     }
-#endif // MOTOR1_INLINE_SDFM
+#endif // MOTOR1_INLINE_SDFM || MOTOR2_INLINE_SDFM
     // check these faults when motor is running
     if(obj->motorState >= MOTOR_CL_RUNNING)
     {
@@ -536,7 +539,7 @@ void runMotorMonitor(MOTOR_Handle handle)
 void collectRMSData(MOTOR_Handle handle)
 {
     MOTOR_Vars_t *obj = (MOTOR_Vars_t *)handle;
-#if defined(MOTOR1_INLINE_SDFM)
+#if defined(MOTOR1_INLINE_SDFM) || defined(MOTOR2_INLINE_SDFM)
     obj->IrmsCalSum[0] += obj->sdfmData.I_A.value[0] * obj->sdfmData.I_A.value[0];
     obj->IrmsCalSum[1] += obj->sdfmData.I_A.value[1] * obj->sdfmData.I_A.value[1];
     obj->IrmsCalSum[2] += obj->sdfmData.I_A.value[2] * obj->sdfmData.I_A.value[2];
@@ -814,7 +817,7 @@ void updateGlobalVariables(MOTOR_Handle handle)
 } // end of updateGlobalVariables() function
 
 
-#if defined(MOTOR1_PI_TUNE)
+#if defined(MOTOR1_PI_TUNE) || defined(MOTOR2_PI_TUNE)
 //! \brief  Tune the gains of the controllers according to the speed or load
 void tuneControllerGains(MOTOR_Handle handle)
 {
@@ -885,9 +888,9 @@ void tuneControllerGains(MOTOR_Handle handle)
 
     return;
 }
-#endif      // MOTOR1_PI_TUNE
+#endif      // MOTOR1_PI_TUNE || MOTOR2_PI_TUNE
 
-#if defined(MOTOR1_PI_TUNE)
+#if defined(MOTOR1_PI_TUNE) || defined(MOTOR2_PI_TUNE)
 //! \brief  set the coefficient of the controllers gains
 void setupControllerSF(MOTOR_Handle handle)
 {
@@ -938,7 +941,7 @@ void setupControllerSF(MOTOR_Handle handle)
 
     return;
 }
-#endif      // MOTOR1_PI_TUNE
+#endif      // MOTOR1_PI_TUNE || MOTOR2_PI_TUNE
 //
 //-- end of this file ----------------------------------------------------------
 //

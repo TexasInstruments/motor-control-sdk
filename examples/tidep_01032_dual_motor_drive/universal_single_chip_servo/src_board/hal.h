@@ -68,7 +68,7 @@ extern "C"
 #include "hal_obj.h"
 #include "svgen_current.h"
 
-#if defined(MOTOR1_ABS_ENC)
+#if defined(MOTOR1_ABS_ENC) || defined(MOTOR2_ABS_ENC)
 #include "encoder.h"
 #endif
 #if defined(DATALOG_EN)
@@ -127,7 +127,7 @@ extern uint32_t loadSize_sfradata;
 #define MTR2_PWM_U_BASE         EPWM0_AXIS2_BASE_ADDR
 #define MTR2_PWM_V_BASE         EPWM1_AXIS2_BASE_ADDR
 #define MTR2_PWM_W_BASE         EPWM2_AXIS2_BASE_ADDR
-#define MTR2_PWM_UB_BASE        EPWM0_B_AXIS2_BASE_ADDR
+#define MTR2_PWM_WB_BASE        EPWM2_B_AXIS2_BASE_ADDR
 
 //! \brief Defines the gpio for enabling Power Module
 #define MTR1_GATE_EN_GPIO                CONFIG_AXIS1_GATE_EN_GPIO_PIN  //67
@@ -143,17 +143,30 @@ PRUICSS_Handle gPruIcssXHandle;
 #define PRUICSS_INSTANCE  CONFIG_PRU_ICSS0
 #define ICSS_PRU_CORE_CLOCK CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ
 #define ICSS_PRU_IEP_CLOCK CONFIG_PRU_ICSS0_IEP_CLK_FREQ_HZ //CONFIG_PRU_ICSS0_UART_CLK_FREQ_HZ, add from sysconfig
-#define ICSS_PRU_UART_FREQUENCY 192000000 //CONFIG_PRU_ICSS0_UART_CLK_FREQ_HZ
+#define ENDAT_INPUT_CLOCK_UART_FREQUENCY CONFIG_PRU_ICSS0_UART_CLK_FREQ_HZ
 #define PRUICSS_ENABLE_SA_MUX_MODE 1
 
 /*EnDat Encoder defines*/
-#define  ENDAT_PRUICSS_SLICEx        PRU_ICSSGx_PRU_SLICE
+#define  ENDAT_PRUICSSx      CONFIG_ENDAT0_PRUICSSx
+#define  ENDAT_PRUICSS_SLICEx        CONFIG_ENDAT0_PRUICSS_PRUx
+
+#if (ENDAT_PRUICSS_SLICEx == PRUICSS_PRU1)
 #define  MOTOR1_ENDAT_PRUICSS_CORE          PRUICSS_RTU_PRU1 
-#define  MOTOR1_ENDAT_ENABLE_CHANNEL        0
+#else
+#define  MOTOR1_ENDAT_PRUICSS_CORE          PRUICSS_RTU_PRU0
+#endif
+
+#define  MOTOR1_ENDAT_ENABLE_CHANNEL        CONFIG_ENDAT0_CHANNEL0
 #define  MOTOR1_PRU_TRIGGER_HOST_ENDAT_EVT_NUMBER            ( 18 )
 #define  MOTOR1_ICSSG_PRU_ENDAT_INT_NUM    CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_0
+
+#if (ENDAT_PRUICSS_SLICEx == PRUICSS_PRU1)
 #define  MOTOR2_ENDAT_PRUICSS_CORE          PRUICSS_TX_PRU1
-#define  MOTOR2_ENDAT_ENABLE_CHANNEL        2
+#else
+#define  MOTOR2_ENDAT_PRUICSS_CORE          PRUICSS_TX_PRU0
+#endif
+
+#define  MOTOR2_ENDAT_ENABLE_CHANNEL        CONFIG_ENDAT0_CHANNEL2
 #define  MOTOR2_PRU_TRIGGER_HOST_ENDAT_EVT_NUMBER            ( 20 )
 #define  MOTOR2_ICSSG_PRU_ENDAT_INT_NUM    CSLR_R5FSS0_CORE1_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_1
 
@@ -162,36 +175,62 @@ PRUICSS_Handle gPruIcssXHandle;
 
 #define  ENDAT_ENABLE_CHANNEL_MASK  (CONFIG_ENDAT0_CHANNEL0<<0|CONFIG_ENDAT0_CHANNEL1<<1|CONFIG_ENDAT0_CHANNEL2<<2) 
 #define  ENDAT_WAIT_5_SECOND        5000
-#define  ENDAT_TX_INPUT_CLOCK_FREQUENCY ICSS_PRU_UART_FREQUENCY
-#define  ENDAT_RX_INPUT_CLOCK_FREQUENCY ICSS_PRU_UART_FREQUENCY
+#if RX_FIFO_CLOCK_SOURCE == 1
+#define ENDAT_RX_INPUT_CLOCK_FREQUENCY ICSS_PRU_CORE_CLOCK
+#else
+#define ENDAT_RX_INPUT_CLOCK_FREQUENCY ENDAT_INPUT_CLOCK_UART_FREQUENCY
+#endif
+
+#if TX_FIFO_CLOCK_SOURCE == 1
+#define ENDAT_TX_INPUT_CLOCK_FREQUENCY ICSS_PRU_CORE_CLOCK
+#else
+#define ENDAT_TX_INPUT_CLOCK_FREQUENCY ENDAT_INPUT_CLOCK_UART_FREQUENCY
+#endif
+
+#define ENDAT_RX_SAMPLE_SIZE    7
+
+#define CLOCK_UPDATE 100
+#define CONFIG_TST_DELAY 103
 
 
 
 /*SDFM defines*/
-#define  SDFM_PRUICSS_SLICEx        0 //PRU_ICSSGx_PRU_SLICE, need to add in sysconfig
+#define SDFM_PRUICSSx    CONFIG_SDFM0_ICSSGx
+#define  SDFM_PRUICSS_SLICEx        CONFIG_SDFM0_SLICE 
+
+#if (SDFM_PRUICSS_SLICEx == PRUICSS_PRU1)
+#define  MOTOR1_SDFM_PRUICSS_CORE          PRUICSS_RTU_PRU1
+#else
 #define  MOTOR1_SDFM_PRUICSS_CORE          PRUICSS_RTU_PRU0
+#endif
+
 #define  SDFM_MCLK_VALUE           CONFIG_SDFM0_CHANNEL0_MCLK /*Common clock is used for all channel */
 #define  SDFM_NC_OSR_VALUE         CONFIG_SDFM0_CHANNEL0_NC_OSR /*Common NC OSR is used for all channel */
 #define  SDFM_NORMAL_CURRENT_TRIGGER_POINT  CONFIG_SDFM0_CHANNEL0_FIRST_TRIGGER_POINT
 #define  SDFM_EPWM_SYNC_SOURCE     CONFIG_SDFM0_CHANNEL0_EPWM_SOURCE
+
 /* R5F interrupt settings for ICSSG */
 #define  MOTOR1_ICSSG_PRU_SDFM_INT_NUM          ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_3 )  /* VIM interrupt number */
 #define  MOTOR1_PRU_TRIGGER_HOST_SDFM_EVT_NUMBER   ( 6 + 18 ) /* PRU event number for SDFM interrupt */
 
+#if (SDFM_PRUICSS_SLICEx == PRUICSS_PRU1)
+#define  MOTOR2_SDFM_PRUICSS_CORE          PRUICSS_PRU1
+#else
 #define  MOTOR2_SDFM_PRUICSS_CORE          PRUICSS_PRU0
+#endif
+
 /* R5F interrupt settings for ICSSG */
 #define  MOTOR2_ICSSG_PRU_SDFM_INT_NUM          ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_4 )  /* VIM interrupt number */
 #define  MOTOR2_PRU_TRIGGER_HOST_SDFM_EVT_NUMBER   ( 3+18 ) /* PRU event number for SDFM interrupt */
 
-
-
+#define BP_AM2BLDCSERVO_VDC_BUS_VOLTAGE   24.0f
 /* Sigma Delta definitions for SINC3 OSR64 - 0 - 2^18 */
 #define  SDDF_FULL_SCALE        4096.0f
 #define  SDDF_HALF_SCALE        2048.0f
 #define  SDDF_HALF_SCALE_FLT    2048.0f
 
 #else   // Not select a kit
-#error Not select a kit and define the symbols in hal.h
+#error Board configuration not specified. Please define a valid board for this project.
 #endif   // Not select a kit
 
 // **************************************************************************
@@ -214,12 +253,8 @@ PRUICSS_Handle gPruIcssXHandle;
 #if defined(BP_AM2BLDCSERVO) /* Configure */
 #define HAL_GPIO_LED1C               CONFIG_LED1C_PIN  //GPIOo_27   //!< GPIO pin number for LaunchPad LED 1
 #define HAL_GPIO_LED1C_BASE_ADD      CONFIG_LED1C_BASE_ADDR
-//#define HAL_GPIO_LED1B               CONFIG_LED1B_PIN  //GPIO 93   //!< GPIO pin number for BoostxlPak LED 1
-//#define HAL_GPIO_LED1B_BASE_ADD      CONFIG_LED1B_BASE_ADDR
-//#define HAL_GPIO_LED2B               CONFIG_LED2B_PIN  //GPIO 125   //!< GPIO pin number for BoostxlPak LED 2
-//#define HAL_GPIO_LED2B_BASE_ADD      CONFIG_LED2B_BASE_ADDR
 #else
-#error Not defined GPIOs for LED & Debug in hal.h
+#error Board configuration not specified. Please define a valid board for this project.
 #endif  //
 
 //! \brief Enumeration for the sensor types
@@ -256,7 +291,7 @@ __attribute__ ((section(".tcm_code"))) extern void motor1CtrlISR(void  *handle);
 //! \brief The main interrupt service (ISR) routine
 __attribute__ ((section(".tcm_code"))) extern void motor2CtrlISR(void *handle);
 
-#if defined(MOTOR1_INLINE_SDFM)
+#if defined(MOTOR1_INLINE_SDFM) || defined(MOTOR2_INLINE_SDFM)
 //! \brief     Acknowledges an interrupt from the SDFM so that another SDFM
 //!            interrupt can happen again.
 //! \param[in] handle     The hardware abstraction layer (HAL) handle
@@ -358,6 +393,8 @@ HAL_getTimeBasePeriod(HAL_MTR_Handle handle)
 //! \brief      Initializes the PRU-ICSS
 void HAL_pruIcssX_init();
 #endif
+#endif // BP_AM2BLDCSERVO
+#if defined(MOTOR1_INLINE_SDFM) || defined(MOTOR2_INLINE_SDFM)
 //! \brief      Initializes the SDFM
 //! \param[in]  handle  The hardware abstraction layer (HAL) handle
 void HAL_setupSDFM(HAL_Handle handle);
@@ -388,7 +425,7 @@ extern HAL_Handle HAL_init(void *pMemory,const size_t numBytes);
 //! \return     The hardware abstraction layer (HAL_MTR) object handle
 extern HAL_MTR_Handle HAL_MTR_init(void *pMemory, const size_t numBytes);
 
-#if defined(MOTOR1_INLINE_SDFM)
+#if defined(MOTOR1_INLINE_SDFM) || defined(MOTOR2_INLINE_SDFM)
 //! \brief      Reads the SDFM data with offset
 //! \details    Reads in the ADC result registers and scales the values
 //!             according to the settings in user_m1.h or user_m2.h.
@@ -407,7 +444,7 @@ static inline void
 HAL_setCMPSSDACValueHigh(HAL_MTR_Handle handle,
                          const uint16_t cmpssNumber, uint16_t dacValue)
 {
-#if defined(MOTOR1_INLINE_SDFM)
+#if defined(MOTOR1_INLINE_SDFM) || defined(MOTOR2_INLINE_SDFM)
  //support is not added
 #endif
 
@@ -423,7 +460,7 @@ static inline void
 HAL_setCMPSSDACValueLow(HAL_MTR_Handle handle,
                         const uint16_t cmpssNumber, uint16_t dacValue)
 {
-#if defined(MOTOR1_INLINE_SDFM)
+#if defined(MOTOR1_INLINE_SDFM) || defined(MOTOR2_INLINE_SDFM)
   //support is not added
 #endif
   return;
@@ -474,16 +511,16 @@ extern void HAL_MTR_setParams(HAL_MTR_Handle handle, USER_Params *pUserParams);
 //! \param[in] handle  The hardware abstraction layer (HAL) handle
 extern void HAL_setupGPIOs(HAL_Handle handle);
 
-#if defined(MOTOR1_ENC)
-#if defined(MOTOR1_ABS_ENC)
+#if defined(MOTOR1_ENC) || defined(MOTOR2_ENC)
+#if defined(MOTOR1_ABS_ENC) || defined(MOTOR2_ABS_ENC)
 //! \brief     Sets up the Encoder peripheral
 //! \param[in] handle  The hardware abstraction layer (HAL) handle
 extern void HAL_setupEncoder(HAL_Handle handle);
 //! \brief   read the ansolution of the encoder position  
 //! \param[in] handle  the ENC Handle
 extern void HAL_getMtrEncoderPosition(ENC_Handle handle, uint32_t motorNum);
-#endif // MOTOR1_ABS_ENC
-#endif // MOTOR1_ENC
+#endif // MOTOR1_ABS_ENC || MOTOR2_ABS_ENC
+#endif // MOTOR1_ENC || MOTOR2_ENC
 
 // Declare HAL_setupGate and HAL_enableDRV
 #if defined(BP_AM2BLDCSERVO)
@@ -590,15 +627,15 @@ HAL_writePWMData(HAL_MTR_Handle handle, HAL_PWMData_t *pPWMData)
         EPWM_setCounterCompareValue(obj->pwmHandle[pwmCnt],
                                     EPWM_COUNTER_COMPARE_B,
                                     pPWMData->cmpValue[pwmCnt]);
-#if defined(BP_AM2BLDCSERVO)
-       if(pwmCnt == 0 && obj->motorNum == MTR_2)
+#if defined(SOC_AM243X)
+       if(pwmCnt == 2 && obj->motorNum == MTR_2)
        {
-        // write the PWM data value
-        EPWM_setCounterCompareValue(MTR2_PWM_UB_BASE,
-            EPWM_COUNTER_COMPARE_A,
-            pPWMData->cmpValue[pwmCnt]);
+            // write the PWM data value
+            EPWM_setCounterCompareValue(MTR2_PWM_WB_BASE,
+                EPWM_COUNTER_COMPARE_A,
+                pPWMData->cmpValue[pwmCnt]);
 
-        EPWM_setCounterCompareValue(MTR2_PWM_UB_BASE,
+            EPWM_setCounterCompareValue(MTR2_PWM_WB_BASE,
                                     EPWM_COUNTER_COMPARE_B,
                                     pPWMData->cmpValue[pwmCnt]);
        }
@@ -641,6 +678,7 @@ static inline void HAL_enablePWM(HAL_MTR_Handle handle)
 } // end of HAL_enablePWM() function
 
 
+#ifdef BRAKE_ENABLE
 //! \brief      Enables the PWM for braking
 //! \details    Turns on the outputs of the EPWM peripheral which will allow
 //!             the power switches to be controlled.
@@ -650,8 +688,8 @@ static inline void HAL_enableBrakePWM(HAL_MTR_Handle handle)
     HAL_MTR_Obj *obj = (HAL_MTR_Obj *)handle;
     uint16_t  cnt;
 
-#if defined(BP_AM2BLDCSERVO)
-    //Support is not there
+#if defined(BP_AM2BLDCSERVO) || defined(SOC_AM243X)
+    /*Not supported with AM243X and BP-AM2BLDCSERVO based example*/
 #else  
     for(cnt=0; cnt<3; cnt++)
     {
@@ -676,7 +714,6 @@ static inline void HAL_enableBrakePWM(HAL_MTR_Handle handle)
     return;
 } // end of HAL_enableBrakePWM() function
 
-
 //! \brief      Enables the PWM for braking
 //! \details    Turns on the outputs of the EPWM peripheral which will allow
 //!             the power switches to be controlled.
@@ -686,9 +723,8 @@ static inline void HAL_exitBrakeResetPWM(HAL_MTR_Handle handle)
     HAL_MTR_Obj *obj = (HAL_MTR_Obj *)handle;
     uint16_t  cnt;
 
-#if defined(BP_AM2BLDCSERVO)
-   /*Add code if required */
-    // BP_AM2BLDCSERVO
+#if defined(BP_AM2BLDCSERVO) || defined(SOC_AM243X)
+    /*Not supported with AM243X and BP-AM2BLDCSERVO based example*/
 #else   
     for(cnt=0; cnt<3; cnt++)
     {
@@ -710,18 +746,18 @@ static inline void HAL_exitBrakeResetPWM(HAL_MTR_Handle handle)
     obj->flagEnablePWM = FALSE;
     return;
 } // end of HAL_exitBrakeResetPWM() function
-
+#endif // BRAKE_ENABLE
 //! \brief      clear fault status of motor control
 //! \details
 //! \param[in]  handle  The hardware abstraction layer (HAL) handle
 static inline void HAL_clearMtrFaultStatus(HAL_MTR_Handle handle)
 {
-    HAL_MTR_Obj *obj = (HAL_MTR_Obj *)handle;
-
+   
     // Clear any comparator digital filter output latch
-#if defined(MOTOR1_INLINE_SDFM)
-    
+#if defined(MOTOR1_INLINE_SDFM) || defined(MOTOR2_INLINE_SDFM)
+    // support is not added
 #else
+
     HAL_MTR_Obj *obj = (HAL_MTR_Obj *)handle;
     CMPSS_clearFilterLatchHigh(obj->cmpssHandle[0]);
     CMPSS_clearFilterLatchLow(obj->cmpssHandle[0]);
@@ -737,7 +773,7 @@ static inline void HAL_clearMtrFaultStatus(HAL_MTR_Handle handle)
     EPWM_clearTripZoneFlag(obj->pwmHandle[0], HAL_TZFLAG_INTERRUPT_ALL);
     EPWM_clearTripZoneFlag(obj->pwmHandle[1], HAL_TZFLAG_INTERRUPT_ALL);
     EPWM_clearTripZoneFlag(obj->pwmHandle[2], HAL_TZFLAG_INTERRUPT_ALL);
-#endif // defined(MOTOR1_INLINE_SDFM)
+#endif // defined(MOTOR1_INLINE_SDFM) || defined(MOTOR2_INLINE_SDFM)
 
     return;
 } // end of HAL_clearMtrFaultStatus() function
@@ -775,11 +811,12 @@ extern void HAL_setupPWMs(HAL_MTR_Handle handle);
 //! \param[in] handle          The hardware abstraction layer (HAL) handle
 static inline uint16_t HAL_getMtrTripFaults(HAL_MTR_Handle handle)
 {
-    HAL_MTR_Obj *obj = (HAL_MTR_Obj *)handle;
     uint16_t tripFault = 0;
 
-#if defined(MOTOR1_INLINE_SDFM)
+#if defined(MOTOR1_INLINE_SDFM) || defined(MOTOR2_INLINE_SDFM)
     // support is not added
+#else
+    HAL_MTR_Obj *obj = (HAL_MTR_Obj *)handle;
 #endif
 
     return(tripFault);

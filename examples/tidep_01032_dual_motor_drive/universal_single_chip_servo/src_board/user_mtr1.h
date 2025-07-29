@@ -496,7 +496,7 @@ extern "C"
 //! \brief For space vector over-modulation, the SVM generator goes
 //! \brief all the way to trapezoidal.
 //!
-#define USER_M1_MAX_VS_MAG_PU              1//(0.66f)
+#define USER_M1_MAX_VS_MAG_PU              0.5//(0.66f)
 //#define USER_M1_MAX_VS_MAG_PU             (0.65f)
 //#define USER_M1_MAX_VS_MAG_PU             (0.576f)
 //#define USER_M1_MAX_VS_MAG_PU             (0.565f)
@@ -863,12 +863,12 @@ extern "C"
 // the duration time for motor brake, in 5ms time base
 #define USER_MOTOR1_BRAKE_TIME_DELAY       (12000U)         // 60s/5ms
 
-#if defined(MOTOR1_ENC)
+#if defined(MOTOR1_ENC) || defined(MOTOR2_ENC)
 // Only for encoder
 #define USER_MOTOR1_NUM_ENC_SLOTS          (1000)           // lines
 #define USER_MOTOR1_ENC_POS_MAX            (USER_MOTOR1_NUM_ENC_SLOTS * 4 - 1)
 #define USER_MOTOR1_ENC_POS_OFFSET         (668)            // lines
-#endif  // MOTOR1_ENC
+#endif  // MOTOR1_ENC || MOTOR2_ENC
 
 #if defined(MOTOR1_ESMO)
 // Only for eSMO
@@ -1420,12 +1420,12 @@ extern "C"
 #define USER_MOTOR1_BRAKE_CURRENT_A        (1.0f)               // A
 #define USER_MOTOR1_BRAKE_TIME_DELAY       (12000U)             // 60s/5ms
 
-#if defined(MOTOR1_ENC)
+#if defined(MOTOR1_ENC) || defined(MOTOR2_ENC)
 // Only for encoder
 #define USER_MOTOR1_NUM_ENC_SLOTS          (1000)           // lines
 #define USER_MOTOR1_ENC_POS_MAX            (USER_MOTOR1_NUM_ENC_SLOTS * 4 - 1)
 #define USER_MOTOR1_ENC_POS_OFFSET         (668)            // lines
-#endif  // MOTOR1_ENC
+#endif  // MOTOR1_ENC || MOTOR2_ENC
 
 #if defined(MOTOR1_ESMO)
 // Only for eSMO
@@ -2598,12 +2598,12 @@ extern "C"
 #define USER_MOTOR1_SPEED_LPF_FC_Hz        (200.0f)     // 100.0f
 #endif  // MOTOR1_ESMO
 
-#if defined(MOTOR1_ENC)
+#if defined(MOTOR1_ENC) || defined(MOTOR2_ENC)
 // Only for encoder
 #define USER_MOTOR1_NUM_ENC_SLOTS          (NULL)
 #define USER_MOTOR1_ENC_POS_MAX            (USER_MOTOR1_NUM_ENC_SLOTS * 4 - 1)
 #define USER_MOTOR1_ENC_POS_OFFSET         (668)            // lines
-#endif  // MOTOR1_ENC
+#endif  // MOTOR1_ENC || MOTOR2_ENC
 
 #if defined(MOTOR1_HALL)
 // Only for hall sensor
@@ -3045,12 +3045,12 @@ extern "C"
 #define USER_MOTOR1_SPEED_LPF_FC_Hz        (200.0f)
 #endif  // MOTOR1_ESMO
 
-#if defined(MOTOR1_ENC)
+#if defined(MOTOR1_ENC) || defined(MOTOR2_ENC)
 // Only for encoder
 #define USER_MOTOR1_NUM_ENC_SLOTS          (1000)           // lines
 #define USER_MOTOR1_ENC_POS_MAX            (USER_MOTOR1_NUM_ENC_SLOTS * 4 - 1)
 #define USER_MOTOR1_ENC_POS_OFFSET         (668)            // lines
-#endif  // MOTOR1_ENC
+#endif  // MOTOR1_ENC || MOTOR2_ENC
 
 #if defined(MOTOR1_HALL)
 // Only for hall sensor
@@ -3487,45 +3487,45 @@ extern "C"
 // Refer to the description of the following parameters for BLY344D_48V_3200
 #define USER_MOTOR1_TYPE                   MOTOR_TYPE_PM  /**< Motor type: Permanent Magnet */
 #define USER_MOTOR1_NUM_POLE_PAIRS         (4)            /**< Number of pole pairs */
-#define USER_MOTOR1_Rs_Ohm                 (0.325)        /**< Phase resistance (Ohms) */
-#define USER_MOTOR1_Ls_d_H                 (0.325e-3)     /**< Direct axis inductance (Henries) */
-#define USER_MOTOR1_Ls_q_H                 (0.325e-3)     /**< Quadrature axis inductance (Henries) */
-#define USER_MOTOR1_RATED_FLUX_VpHz        (0.104)        /**< Rated flux (Wb) */
+#define USER_MOTOR1_Rs_Ohm                 (0.09)        /**< Phase resistance (Ohms) */
+#define USER_MOTOR1_Ls_d_H                 (0.175e-3) //(0.175)//(0.325e-3)     /**< Direct axis inductance (Henries) */
+#define USER_MOTOR1_Ls_q_H                 (0.175e-3) //(0.175)//(0.325e-3)     /**< Quadrature axis inductance (Henries) */
+#define USER_MOTOR1_RATED_FLUX_VpHz        (0.170)        /**< Rated flux (Wb) */
 #define USER_MOTOR1_MAGNETIZING_CURRENT_A  (0)            /**< Magnetizing current (Amps) */
 #define USER_MOTOR1_RES_EST_CURRENT_A      (1.0)           /**< Resistance estimation current (Amps) */
-#define USER_MOTOR1_IND_EST_CURRENT_A      (-1.0)          /**< Inductance estimation current (Amps) */
-#define USER_MOTOR1_Rr_Ohm                 (0.325)        /**< Rotor resistance (Ohm) */
+#define USER_MOTOR1_IND_EST_CURRENT_A      (1.0)          /**< Inductance estimation current (Amps) */
+#define USER_MOTOR1_Rr_Ohm                 (0.09)        /**< Rotor resistance (Ohm) */
 
-#define USER_MOTOR1_FLUX_EXC_FREQ_Hz       (15.0)         /**< Flux excitation frequency (Hz) */
+#define USER_MOTOR1_FLUX_EXC_FREQ_Hz       (213.33)         /**< Flux excitation frequency (Hz) */
 #define USER_MOTOR1_NUM_ENC_SLOTS          (0)            /**< Number of encoder slots (not applicable for EnDat 2.2) */
 #define USER_MOTOR1_ENC_RESOLUTION         33554432 //(0x02000000)   /**<EnDat Encoder resolution (25 bits for position), add auto calculation option based on USER_MOTOR1_NUM_ENC_POS_BITS  */
 #define USER_MOTOR1_NUM_ENC_POS_BITS           25 /**< Encoder protocol: EnDat 2.2 */
-#define USER_MOTOR1_OVER_CURRENT_A          (15.0)  /*Note that the actual overcurrent threshold value should be determined based on the specific requirements of the application*/
+#define USER_MOTOR1_OVER_CURRENT_A          (8.0)  /*Note that the actual overcurrent threshold value should be determined based on the specific requirements of the application*/
 
-#define USER_MOTOR1_MAX_CURRENT_A            0.8 /// //(6.6f)         /**< Maximum current (Amps) */
+#define USER_MOTOR1_MAX_CURRENT_A            2 //0.8 /// //(6.6f)         /**< Maximum current (Amps) */
 #define USER_MOTOR1_TORQUE_CURRENT_A        (0.5 * USER_MOTOR1_MAX_CURRENT_A) /**< Torque current (A) - 50% of max current */
 #define USER_MOTOR1_FLUX_CURRENT_A          (0.2 * USER_MOTOR1_MAX_CURRENT_A) /**< Flux current (A) - 20% of max current */
 #define USER_MOTOR1_ALIGN_CURRENT_A         (0.1 * USER_MOTOR1_MAX_CURRENT_A) /**< Alignment current (A) - 10% of max current */
 #define USER_MOTOR1_STARTUP_CURRENT_A       (0.8 * USER_MOTOR1_MAX_CURRENT_A) /**< Startup current (A) - 80% of max current */
 
-#define USER_MOTOR1_SPEED_START_Hz          (10.0)         /**< Starting speed (Hz) */
-#define USER_MOTOR1_SPEED_FORCE_Hz          (50.0)         /**< Forcing speed (Hz) */
+#define USER_MOTOR1_SPEED_START_Hz          (15.0)         /**< Starting speed (Hz) */
+#define USER_MOTOR1_SPEED_FORCE_Hz          (20.0)         /**< Forcing speed (Hz) */
 #define USER_MOTOR1_SPEED_FS_Hz             (20.0)         /**< Flying start speed (Hz) */
 
 #define USER_MOTOR1_ACCEL_MAX_Hzps          1.0 // (100.0)        /**< Maximum acceleration (Hz/s) */
 #define USER_MOTOR1_ACCEL_START_Hzps        (1.0) // (50.0)         /**< Starting acceleration (Hz/s) */
 
 #define USER_MOTOR1_FREQ_MAX_Hz             (200.0)///         /**< Maximum frequency (Hz) */
-#define USER_MOTOR1_INERTIA_Kgm2           (0.05)         /**< Moment of inertia (kg.m^2) */
+#define USER_MOTOR1_INERTIA_Kgm2           (0.0000208f)         /**< Moment of inertia (kg.m^2) */
 
 #define USER_MOTOR1_RATED_VOLTAGE_V        (48.0)        /**< Rated voltage (V) */
 
 #define USER_MOTOR1_FREQ_MIN_Hz            (9.0f)
 #define USER_MOTOR1_FREQ_LOW_Hz            (10 )//10% of max speed //(5.0f)
-#define USER_MOTOR1_FREQ_HIGH_Hz           (100 ) //106.0// (400.0f)
+#define USER_MOTOR1_FREQ_HIGH_Hz           (150 ) //106.0// (400.0f)
 #define USER_MOTOR1_VOLT_MIN_V              5 //7.2f//(3.6f)     // 7.2
 #define USER_MOTOR1_VOLT_MAX_V              24 //48.0f//(24.0f) // 48.0
-#define USER_MOTOR1_GAIN_SPEED_LOW_Hz      (60.0f)
+#define USER_MOTOR1_GAIN_SPEED_LOW_Hz      (10.0f)
 #define USER_MOTOR1_GAIN_SPEED_HIGH_Hz     (150.0f)
 #define USER_MOTOR1_KP_SPD_START_SF        (1.5f)
 #define USER_MOTOR1_KI_SPD_START_SF        (1.5f)
@@ -3547,7 +3547,7 @@ extern "C"
 
 //------------------------------------------------------------------------------
 #else
-#error No motor type specified
+#error motor type is not specified
 #endif
 
 

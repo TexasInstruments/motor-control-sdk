@@ -1773,9 +1773,9 @@ void endat_config_clock(struct endat_priv *priv,
     }
     
     if(priv->load_share)
-    endat_enable_load_share_mode(priv);
-
-
+    {
+        endat_enable_load_share_mode(priv);
+    }
 }
 
 void endat_config_tst_delay(struct endat_priv *priv, uint16_t delay)

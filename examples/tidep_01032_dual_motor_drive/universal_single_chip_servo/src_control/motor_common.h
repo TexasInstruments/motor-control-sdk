@@ -76,11 +76,11 @@ extern "C"
 #include "volt_recons.h"
 
 
-#if defined(MOTOR1_ENC)
+#if defined(MOTOR1_ENC) || defined(MOTOR2_ENC)
 #include "encoder.h"
 #include "speedcalc.h"
 #include "hall.h"
-#endif  // MOTOR1_ENC
+#endif  // MOTOR1_ENC || MOTOR2_ENC
 
 #if defined(MOTOR1_HALL)
 #include "hall.h"
@@ -96,11 +96,6 @@ extern "C"
 
 #include "user.h"
 #include "hal.h"
-
-#if defined(SFRA_ENABLE)
-#include "sfra_settings.h"
-#include "sfra_f32.h"
-#endif  // SFRA_ENABLE
 
 #if defined(STEP_RP_EN)
 #include "step_response.h"
@@ -236,7 +231,7 @@ typedef enum
 {
     ESTIMATOR_MODE_ESMO  = 1              //!< ESMO estimator
 } ESTIMATOR_Mode_e;
-#elif defined(MOTOR1_ENC)
+#elif defined(MOTOR1_ENC) || defined(MOTOR2_ENC)
 typedef enum
 {
     ESTIMATOR_MODE_ENC   = 2              //!< Encoder
@@ -546,7 +541,7 @@ typedef struct _MOTOR_Vars_t_
     uint16_t counterTrajSpeed;
 
     uint32_t ISRCount;
-#if defined(MOTOR1_INLINE_SDFM)
+#if defined(MOTOR1_INLINE_SDFM) || defined(MOTOR2_INLINE_SDFM)
     HAL_sdfmData_t sdfmData;
    // uint32_t sdfmISRCount; ISR is for sdfm
 #else
@@ -718,7 +713,7 @@ typedef struct _MOTOR_Vars_t_
     PI_Handle    piHandle_fwc;
 #endif  // MOTOR1_FWC || MOTOR2_FWC
 
-#if defined(MOTOR1_ENC)
+#if defined(MOTOR1_ENC) || defined(MOTOR2_ENC)
     // the rotor angle from Encoder modules
     float32_t angleENC_rad;
 
@@ -730,7 +725,7 @@ typedef struct _MOTOR_Vars_t_
 
     //!< the handle for the speedcalc object
     SPDCALC_Handle spdcalcHandle;
-#endif  // MOTOR1_ENC
+#endif  // MOTOR1_ENC || MOTOR2_ENC
 
 #if defined(MOTOR1_HALL)
     // the rotor angle from Hall Sensor
@@ -766,7 +761,7 @@ typedef struct _MOTOR_Vars_t_
 #endif  // MOTOR1_ESMO
 
 #if (DMC_BUILDLEVEL <= DMC_LEVEL_3) || defined(MOTOR1_VOLRECT) || \
-               defined(MOTOR1_ESMO) || defined(MOTOR1_ENC)
+               defined(MOTOR1_ESMO) || defined(MOTOR1_ENC) || defined(MOTOR2_ENC)
     //!< the handles for Angle Generate for open loop control
     ANGLE_GEN_Handle angleGenHandle;
 #endif  // DMC_BUILDLEVEL <= DMC_LEVEL_3 || MOTOR1_ESMO || MOTOR1_VOLRECT
@@ -808,15 +803,6 @@ typedef struct _MOTOR_Vars_t_
 //!
 typedef volatile struct _MOTOR_Vars_t_ *MOTOR_Handle;
 
-#if defined(SFRA_ENABLE)
-extern float32_t   sfraNoiseId;
-extern float32_t   sfraNoiseIq;
-extern float32_t   sfraNoiseSpd;
-extern float32_t   sfraNoiseOut;
-extern float32_t   sfraNoiseFdb;
-extern SFRA_TEST_e sfraTestLoop;
-extern Bool        sfraCollectStart;
-#endif  // SFRA_ENABLE
 
 #if defined(CPUTIME_ENABLE)
 extern volatile float32_t cpuCyclesAv;
@@ -928,70 +914,6 @@ extern void updateFWCParams(MOTOR_Handle handle);
 
 //! \brief      Updates the MTPA parameters
 extern void updateMTPAParams(MOTOR_Handle handle);
-
-#if defined(SFRA_ENABLE)
-//------------------------------------------------------------------------------
-// Using SFRA tool :
-//      - INJECT noise
-//      - RUN the controller
-//      - CAPTURE or COLLECT the controller output
-// From a controller analysis standpoint, this sequence will reveal the
-// output of controller for a given input, and therefore, good for analysis
-inline void injectSFRA(void)
-{
-    float32_t sfraNoiseInj_pu = 0.0f;
-
-    sfraNoiseId = 0.0f;
-    sfraNoiseIq = 0.0f;
-    sfraNoiseSpd = 0.0f;
-
-    sfraNoiseInj_pu = SFRA_F32_inject(0.0f);
-
-    if(sfraTestLoop == SFRA_TEST_D_AXIS)
-    {
-        sfraNoiseId = sfraNoiseInj_pu * USER_M1_ADC_FULL_SCALE_CURRENT_A;
-    }
-    else if(sfraTestLoop == SFRA_TEST_Q_AXIS)
-    {
-        sfraNoiseIq = sfraNoiseInj_pu * USER_M1_ADC_FULL_SCALE_CURRENT_A;
-    }
-    else if(sfraTestLoop == SFRA_TEST_SPEEDLOOP)
-    {
-        sfraNoiseSpd = sfraNoiseInj_pu * USER_MOTOR1_FREQ_MAX_Hz;
-    }
-
-    return;
-}
-
-//------------------------------------------------------------------------------
-inline void collectSFRA(MOTOR_Handle handle)
-{
-    MOTOR_Vars_t *objMtr = (MOTOR_Vars_t *)handle;
-
-    if(sfraTestLoop == SFRA_TEST_D_AXIS)
-    {
-        sfraNoiseOut = objMtr->Vdq_out_V.value[0] * (1.0f / USER_M1_ADC_FULL_SCALE_VOLTAGE_V);
-        sfraNoiseFdb = objMtr->Idq_in_A.value[0] * (1.0f / USER_M1_ADC_FULL_SCALE_CURRENT_A);
-    }
-    else if(sfraTestLoop == SFRA_TEST_Q_AXIS)
-    {
-        sfraNoiseOut = objMtr->Vdq_out_V.value[1] * (1.0f / USER_M1_ADC_FULL_SCALE_VOLTAGE_V);
-        sfraNoiseFdb = objMtr->Idq_in_A.value[1] * (1.0f / USER_M1_ADC_FULL_SCALE_CURRENT_A);
-    }
-    else if(sfraTestLoop == SFRA_TEST_SPEEDLOOP)
-    {
-        sfraNoiseOut = objMtr->IsRef_A * (1.0f / USER_M1_ADC_FULL_SCALE_CURRENT_A);
-        sfraNoiseFdb = objMtr->speed_Hz * (1.0f / USER_MOTOR1_FREQ_MAX_Hz);
-    }
-
-    SFRA_F32_collect(&sfraNoiseOut, &sfraNoiseFdb);
-
-    return;
-}
-//------------------------------------------------------------------------------
-
-#endif  // SFRA_ENABLE
-
 
 //*****************************************************************************
 //

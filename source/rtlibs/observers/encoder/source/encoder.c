@@ -75,7 +75,6 @@ void ENC_setParams(ENC_Handle handle, const USER_Params *pUserParams)
 		obj->mechanicalScaler = 0.25f / obj->encLines;
 	}
     
-
     obj->encState = ENC_IDLE;
 
     return;

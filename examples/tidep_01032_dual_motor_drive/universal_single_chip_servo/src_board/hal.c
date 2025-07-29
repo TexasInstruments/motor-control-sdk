@@ -49,11 +49,11 @@
 /*Includes source files for SDFM & ENDAT*/
 
 /*SDFM*/
-#if defined (MOTOR1_INLINE_SDFM)
+#if defined (MOTOR1_INLINE_SDFM) || defined (MOTOR2_INLINE_SDFM)
 #include <current_sense/sdfm/include/sdfm_api.h>
 #if (SDFM_PRUICSS_SLICEx == PRUICSS_PRU1)
-#include <current_sense/sdfm/firmware/sdfm_rtu_bin.h>
-#include <current_sense/sdfm/firmware/sdfm_pru_bin.h>
+#include <current_sense/sdfm/firmware/multi_axis_load_share/sdfm_rtu1_bin.h>
+#include <current_sense/sdfm/firmware/multi_axis_load_share/sdfm_pru1_bin.h>
 #else
 #include <current_sense/sdfm/firmware/multi_axis_load_share/sdfm_rtu0_bin.h>
 #include <current_sense/sdfm/firmware/multi_axis_load_share/sdfm_pru0_bin.h>
@@ -71,7 +71,7 @@ __attribute__((section(".gSddfChSampsRaw"))) uint32_t gSdfm_sampleOutput[6] = { 
 #endif
 
 /*ENDAT*/
-#if defined (MOTOR1_ABS_ENC)
+#if defined (MOTOR1_ABS_ENC) || defined (MOTOR2_ABS_ENC)
 #include <position_sense/endat/include/endat_drv.h>
 #if (ENDAT_PRUICSS_SLICEx == PRUICSS_PRU1)
 #include <position_sense/endat/firmware/multi_channel_load_share/endat_receiver_multi_rtu_pru1_bin.h>
@@ -80,7 +80,6 @@ __attribute__((section(".gSddfChSampsRaw"))) uint32_t gSdfm_sampleOutput[6] = { 
 #include <position_sense/endat/firmware/multi_channel_load_share/endat_receiver_multi_rtu_pru0_bin.h>
 #include <position_sense/endat/firmware/multi_channel_load_share/endat_receiver_multi_tx_pru0_bin.h>
 #endif // ENDAT_PRUICSS_SLICEx
-#endif
 
 
 extern PRUICSS_IntcInitData icss0_intc_initdata;
@@ -101,11 +100,13 @@ uint32_t gEndatPosReadFailCount = 0;
 static uint8_t gEndat_is_multi_ch;
 static uint8_t gEndat_multi_ch_mask;
 static uint8_t  gEndat_is_load_share_mode;
+static uint32_t gEndat_prop_delay[3] = {0};
+static uint32_t gEndat_prop_delay_max = 0;
 
 #define ENDAT_MULTI_CH0 (1 << 0)
 #define ENDAT_MULTI_CH1 (1 << 1)
 #define ENDAT_MULTI_CH2 (1 << 2)
-
+#endif
 
 /*EPWM*/
 
@@ -247,8 +248,6 @@ void HAL_MTR_setParams(HAL_MTR_Handle handle, USER_Params *pUserParams)
     return;
 } // end of HAL_MTR_setParams() function
 
-
-
 // HAL_setupGate & HAL_enableDRV
 #if defined(BP_AM2BLDCSERVO)
 void HAL_enableDRV(HAL_MTR_Handle handle)
@@ -261,7 +260,7 @@ void HAL_enableDRV(HAL_MTR_Handle handle)
     return;
 } // HAL_enableDRV() function
 #else
-#error No HAL_setupGate or HAL_enableDRV
+#error Board configuration not specified. Please define a valid board for this project.
 #endif  // HAL_setupGate & HAL_enableDRV
 
 void HAL_setupMtrFaults(HAL_MTR_Handle handle)
@@ -297,7 +296,7 @@ void HAL_setupPWMs(HAL_MTR_Handle handle)
         gEpwm0BaseAddr = (uint32_t)AddrTranslateP_getLocalAddr(EPWM0_AXIS2_BASE_ADDR);
         gEpwm1BaseAddr = (uint32_t)AddrTranslateP_getLocalAddr(EPWM1_AXIS2_BASE_ADDR);
         gEpwm2BaseAddr = (uint32_t)AddrTranslateP_getLocalAddr(EPWM2_AXIS2_BASE_ADDR);
-        gEpwm0BaseAddrB = (uint32_t)AddrTranslateP_getLocalAddr(EPWM0_B_AXIS2_BASE_ADDR);
+        gEpwm0BaseAddrB = (uint32_t)AddrTranslateP_getLocalAddr(EPWM2_B_AXIS2_BASE_ADDR);
         /*FIXME, SYNC for all EPWM*/
 //      SOC_controlModuleUnlockMMR(SOC_DOMAIN_ID_MAIN, 1);
 //      /*EPWM3 and 6 sync in sel*/
@@ -363,7 +362,6 @@ void HAL_setupPWMs(HAL_MTR_Handle handle)
     appEpwmCfg.epwmBaseAddr = gEpwm2BaseAddr;
     App_epwmConfig(&appEpwmCfg);
 
-
     if(obj->motorNum == MTR_2)
     {
         /*FIXME Debug code, doing syn of EPWM3 and EPWM6*/
@@ -381,7 +379,134 @@ void HAL_setupPWMs(HAL_MTR_Handle handle)
     return;
 }  // end of HAL_setupPWMs() function
 
-#if defined (BP_AM2BLDCSERVO)
+#if defined (MOTOR1_ABS_ENC) || defined (MOTOR2_ABS_ENC)
+static void endat_process_host_command(int32_t cmd,
+    struct cmd_supplement *cmd_supplement, struct endat_priv *priv)
+{
+    struct endat_clk_cfg clk_cfg;
+    /* clock configuration */
+    if(cmd == CLOCK_UPDATE)
+    {
+        clk_cfg.rx_div = ENDAT_RX_INPUT_CLOCK_FREQUENCY/(cmd_supplement->frequency * 8) - 1;
+        clk_cfg.tx_div = ENDAT_TX_INPUT_CLOCK_FREQUENCY/(cmd_supplement->frequency) - 1;
+        uint32_t rx_cnt;
+        rx_cnt = ENDAT_DELAY_COUNTER_INCREMENT*(2*ICSS_PRU_CORE_CLOCK/cmd_supplement->frequency);
+        if(rx_cnt % 5)
+        {
+            rx_cnt /= 5, rx_cnt += 1,  rx_cnt *= 5;
+        }
+        clk_cfg.rx_en_cnt = rx_cnt; /* rx arm >= 2 clock */
+        clk_cfg.rx_div_attr = ENDAT_RX_SAMPLE_SIZE;
+
+        endat_config_clock(priv, &clk_cfg);
+
+        priv->rx_en_cnt = clk_cfg.rx_en_cnt;
+
+        if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
+        {
+            int32_t j;
+            uint16_t d;
+
+            for(j = 0; j < 3; j++)
+            {
+                if(gEndat_multi_ch_mask & 1 << j)
+                {
+                    endat_multi_channel_set_cur(priv, j);
+                    /*convert rx_en_cnt into ns */
+                    float ct = ((priv->rx_en_cnt/ENDAT_DELAY_COUNTER_INCREMENT)*((float)1000000000/priv->pru_clock))/2; /*one endat clock cycle time = 1/endat frequency = 2*rx_en_cnt*/
+                    /* if propagation delay is more than half clock cycle time (2/endat frequency) then we have to reduce clock cycles for rx*/
+                    if(gEndat_prop_delay[priv->current_channel] > (ct/2))
+                    {
+                        uint16_t dis = floor(gEndat_prop_delay[priv->current_channel]/ct);
+                        /* convert propagation delay into rx arm counts */
+                        uint16_t temp = ((uint16_t)(((float)gEndat_prop_delay[priv->current_channel] * priv->pru_clock )/1000000000)) * ENDAT_DELAY_COUNTER_INCREMENT;
+                        endat_config_rx_arm_cnt(priv, temp);
+                        /* propagation delay/cycle_time */
+                        endat_config_rx_clock_disable(priv, dis);
+                    }
+                    else
+                    {
+                        endat_config_rx_arm_cnt(priv, priv->rx_en_cnt);
+                        endat_config_rx_clock_disable(priv, 0);
+                    }
+                
+                    d = gEndat_prop_delay_max - gEndat_prop_delay[j];
+                    endat_config_wire_delay(priv, d);
+                }
+            }
+        }
+        else
+        {
+            /*convert rx_en_cnt into ns */
+            float ct = ((priv->rx_en_cnt/ENDAT_DELAY_COUNTER_INCREMENT)*((float)1000000000/priv->pru_clock))/2; /*one endat clock cycle time = 1/endat frequency = 2*rx_en_cnt*/
+            /* if propagation delay is more than half clock cycle time (2/endat frequency) then we have to reduce clock cycles for rx*/
+            if(gEndat_prop_delay[priv->current_channel] > (ct/2))
+            {
+                uint16_t dis = floor(gEndat_prop_delay[priv->current_channel]/ct);
+                /* convert propagation delay into rx arm counts */
+                uint16_t temp = ((uint16_t)(((float)gEndat_prop_delay[priv->current_channel] * priv->pru_clock )/1000000000)) * ENDAT_DELAY_COUNTER_INCREMENT;
+                endat_config_rx_arm_cnt(priv, temp);
+                /* propagation delay/cycle_time */
+                endat_config_rx_clock_disable(priv, dis);
+            }
+            else
+            {
+                endat_config_rx_arm_cnt(priv, priv->rx_en_cnt);
+                endat_config_rx_clock_disable(priv, 0);
+            }
+        }
+
+        /* set tST to 2us if frequency > 1MHz, else turn it off */
+        if(cmd_supplement->frequency >= 1000000)
+        {
+            cmd_supplement->frequency = 2000; 
+        }
+        else
+        {
+            cmd_supplement->frequency = 0;
+        }
+
+        /* control loop */
+        if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
+        {
+            int32_t j;
+            for(j = 0; j < 3; j++)
+            {
+                if(gEndat_multi_ch_mask & 1 << j)
+                {
+                    endat_multi_channel_set_cur(priv, j);
+                    endat_process_host_command(CONFIG_TST_DELAY, cmd_supplement, priv);
+                }
+           }
+        }
+        else
+        {
+            endat_process_host_command(CONFIG_TST_DELAY, cmd_supplement, priv);
+        }
+
+    }
+    else if(cmd == CONFIG_TST_DELAY)
+    {
+        uint32_t delay;
+ 
+        /* convert tst delay from ns to tst counts*/
+        delay = ENDAT_DELAY_COUNTER_INCREMENT*((uint16_t)(((float)cmd_supplement->frequency * priv->pru_clock)/1000000000));
+        if(delay % 5)
+        {
+            delay += 5, delay /= 5, delay *= 5;
+        }
+
+        if(delay <= (uint16_t)~0)
+        {
+            endat_config_tst_delay(priv, (uint16_t) delay);
+        }
+    }
+    else
+    {
+        DebugP_log("\r| ERROR: non host command being requested to be handled as host command\n|\n|\n");
+    }
+   
+}
 void HAL_setupEncoder(HAL_Handle handle)
 {
     /*EnDat Intruppt code need to be add */
@@ -389,26 +514,30 @@ void HAL_setupEncoder(HAL_Handle handle)
 
     uint64_t icssClk;
     uint32_t status = SystemP_FAILURE;
-    uint32_t gEndat_prop_delay[3];
-    uint32_t gEndat_prop_delay_max;
 
     void *pruicss_cfg;
     void *pruicss_iep;
 
     endat_clock_config endat_clk_config;
-    struct endat_clk_cfg clk_cfg;
 
     gEndat_is_multi_ch = CONFIG_ENDAT0_MODE & 1;
     gEndat_is_load_share_mode = CONFIG_ENDAT0_MODE & 2;
 
     /* PRU ICSS configuration */
-    /* Set in constant table C30 to shared RAM 0x40300000 */
-    PRUICSS_setConstantTblEntry(gPruIcssXHandle, MOTOR1_ENDAT_PRUICSS_CORE, PRUICSS_CONST_TBL_ENTRY_C30, ((0x40300000 & 0x00FFFF00) >> 8));
-    PRUICSS_setConstantTblEntry(gPruIcssXHandle, MOTOR2_ENDAT_PRUICSS_CORE, PRUICSS_CONST_TBL_ENTRY_C30, ((0x40300000 & 0x00FFFF00) >> 8));
-
     /*Set in constant table C29 for  tx pru*/
-
+#if ENDAT_PRUICSSx == 1
+#if (ENDAT_PRUICSS_SLICEx == PRUICSS_PRU1)
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, MOTOR1_ENDAT_PRUICSS_CORE, PRUICSS_CONST_TBL_ENTRY_C29, 0xA58);    
+#else
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, MOTOR1_ENDAT_PRUICSS_CORE, PRUICSS_CONST_TBL_ENTRY_C29, 0xA50);
+#endif
+#else
+#if (ENDAT_PRUICSS_SLICEx == PRUICSS_PRU1)
     PRUICSS_setConstantTblEntry(gPruIcssXHandle, MOTOR2_ENDAT_PRUICSS_CORE, PRUICSS_CONST_TBL_ENTRY_C28, 0x258);
+#else
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, MOTOR2_ENDAT_PRUICSS_CORE, PRUICSS_CONST_TBL_ENTRY_C28, 0x250);
+#endif
+#endif
     /* clear ICSS PRU data RAM and IRAM */
     PRUICSS_initMemory(gPruIcssXHandle, PRUICSS_DATARAM(ENDAT_PRUICSS_SLICEx));
     PRUICSS_initMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(ENDAT_PRUICSS_SLICEx));
@@ -424,9 +553,30 @@ void HAL_setupEncoder(HAL_Handle handle)
 #endif
 
 
-    /* Initialize the EnDat channel mask */
-    gEndat_multi_ch_mask=(CONFIG_ENDAT0_CHANNEL0<<0|CONFIG_ENDAT0_CHANNEL1<<1|CONFIG_ENDAT0_CHANNEL2<<2);
-        
+    if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
+    {
+        gEndat_multi_ch_mask=(CONFIG_ENDAT0_CHANNEL0<<0|CONFIG_ENDAT0_CHANNEL1<<1|CONFIG_ENDAT0_CHANNEL2<<2);
+        if(!gEndat_multi_ch_mask)
+        {
+            DebugP_log("\r\nERROR: Please select multi-channel configuration -\n\n");
+            DebugP_log("\rexit %s\n",
+                          __func__);
+            return;
+        }
+    }
+    else
+    {
+        int i;
+        i = CONFIG_ENDAT0_CHANNEL0 & 0;
+        i += CONFIG_ENDAT0_CHANNEL1;
+        i += CONFIG_ENDAT0_CHANNEL2<<1;
+        if(i < 0 || i > 2)
+        {
+           DebugP_log("\r\nWARNING: invalid channel selected, defaulting to Channel 0\n");
+           i = 0;
+        }
+    }
+
     /*Translate the TCM local view addr to globel view addr */
     uint64_t gEndatChInfoGlobalAddr = CPU0_BTCM_SOCVIEW((uint64_t)&gEndatChInfo);
 
@@ -438,7 +588,7 @@ void HAL_setupEncoder(HAL_Handle handle)
 
     /*3 channel pheripheral clock configuration*/
     endat_clk_config.pru_clock = icssClk;
-    endat_clk_config.pru_uart_clock = ICSS_PRU_UART_FREQUENCY;
+    endat_clk_config.pru_uart_clock = ENDAT_INPUT_CLOCK_UART_FREQUENCY;
     endat_clk_config.rx_clock_source = ENDAT_RX_FIFO_CLOCK_SOURCE;
     endat_clk_config. tx_clock_source = ENDAT_TX_FIFO_CLOCK_SOURCE;
 
@@ -452,8 +602,14 @@ void HAL_setupEncoder(HAL_Handle handle)
                           gPruIcssXHandle->hwAttrs))->pru0DramBase, &gEndatChInfo, gEndatChInfoGlobalAddr,  pruicss_cfg, pruicss_iep, ENDAT_PRUICSS_SLICEx, &endat_clk_config);
 #endif
 
-    
-    endat_config_multi_channel_mask(priv, gEndat_multi_ch_mask, gEndat_is_load_share_mode);
+    if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
+    {
+        endat_config_multi_channel_mask(priv, gEndat_multi_ch_mask, gEndat_is_load_share_mode);
+    }
+    else
+    {
+    endat_config_channel(priv, MOTOR1_ENDAT_ENABLE_CHANNEL);
+    }
 
     endat_config_host_trigger(priv);
 
@@ -497,6 +653,8 @@ void HAL_setupEncoder(HAL_Handle handle)
 
     if(status < 0)
     {
+        DebugP_log("\r\t Check whether encoder is connected properly \n");
+        
         gEndatInitStatus = SystemP_FAILURE;
         return;
     }
@@ -507,27 +665,30 @@ void HAL_setupEncoder(HAL_Handle handle)
 
     /* read encoder info at low frequency (200KHz) so that cable length won't affect */
     cmd_supplement.frequency = 200 * 1000;
-    //endat_process_host_command(100, &cmd_supplement, priv);
-    clk_cfg.rx_div = ENDAT_RX_INPUT_CLOCK_FREQUENCY/(cmd_supplement.frequency * 8) - 1;
-    clk_cfg.tx_div = ENDAT_TX_INPUT_CLOCK_FREQUENCY/(cmd_supplement.frequency) - 1;
-    clk_cfg.rx_en_cnt =  ENDAT_DELAY_COUNTER_INCREMENT*(2*ICSS_PRU_CORE_CLOCK/cmd_supplement.frequency); /* rx arm >= 2 clock */ 
-    clk_cfg.rx_div_attr = 7;
-    endat_config_clock(priv, &clk_cfg);
+    endat_process_host_command(CLOCK_UPDATE, &cmd_supplement, priv);
+    
 
-    for(int i=0; i<3;i++)
+    if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
     {
- 
-        if(gEndat_multi_ch_mask & 1 << i)
-        {
-            endat_multi_channel_set_cur(priv, i);
-            endat_init_rt_measurement(priv);
+        int32_t j;
 
-            if(endat_get_encoder_info(priv) < 0)
+        for(j = 0; j < 3; j++)
+        {
+            if(gEndat_multi_ch_mask & 1 << j)
             {
-                gEndatInitStatus = SystemP_FAILURE;
-                return;
+                endat_multi_channel_set_cur(priv, j);
+                /*Initialization of RT parameters*/
+                endat_init_rt_measurement(priv);
+                if(endat_get_encoder_info(priv) < 0)
+                {
+                    DebugP_log("\rEnDat initialization channel %d failed\n", j);
+                    DebugP_log("\rexit %s due to failed initialization\n", __func__);
+                    return;
+                }
+                /*convert cnt to time in ns ((cnt*1000000000)/icssClk) before use*/
+                gEndat_prop_delay[priv->current_channel] = endat_get_prop_delay(priv)*((float)(1000000000)/icssClk);
+                DebugP_log("\n\t\t\t\tCHANNEL %d\n\n", j);
             }
-            gEndat_prop_delay[priv->current_channel] = endat_get_prop_delay(priv)*((float)(1000000000)/icssClk);
         }
 
         gEndat_prop_delay_max = gEndat_prop_delay[0] > gEndat_prop_delay[1] ?
@@ -535,8 +696,22 @@ void HAL_setupEncoder(HAL_Handle handle)
         gEndat_prop_delay_max = gEndat_prop_delay_max > gEndat_prop_delay[2] ?
                                gEndat_prop_delay_max : gEndat_prop_delay[2];
     }
-    
-    /* default frequency - 8MHz for 2.2 encoders, 1MHz for 2.1 encoders, add more generic ode how to handle diff core clock configuration */
+    else
+    {
+        /*Initialization of RT parameters*/
+        endat_init_rt_measurement(priv);
+        if(endat_get_encoder_info(priv) < 0)
+        {
+            DebugP_log("\rEnDat initialization failed\n");
+            DebugP_log("\rexit %s due to failed initialization\n", __func__);
+            return;
+        }
+        /*convert cnt to time in ns ((cnt*1000000000)/icssClk) before use*/
+        gEndat_prop_delay[priv->current_channel] = endat_get_prop_delay(priv)*((float)(1000000000)/icssClk);
+
+    }
+
+    /* default frequency - 8MHz for 2.2 encoders, 1MHz for 2.1 encoders*/
     if(priv->cmd_set_2_2)
     {
         cmd_supplement.frequency = 8 * 1000 * 1000;
@@ -546,46 +721,15 @@ void HAL_setupEncoder(HAL_Handle handle)
         cmd_supplement.frequency = 1 * 1000 * 1000;
     }
 
-    clk_cfg.rx_div = ENDAT_RX_INPUT_CLOCK_FREQUENCY/(cmd_supplement.frequency * 8) - 1;
-    clk_cfg.tx_div = ENDAT_TX_INPUT_CLOCK_FREQUENCY/(cmd_supplement.frequency) - 1;
-    clk_cfg.rx_en_cnt = ENDAT_DELAY_COUNTER_INCREMENT*(2*ICSS_PRU_CORE_CLOCK/cmd_supplement.frequency); /* rx arm >= 2 clock */
-    clk_cfg.rx_div_attr = 7;
-    /*Hnadle prop delay */
-    for(int j = 0; j < 3; j++)
-    {
-        if(gEndat_multi_ch_mask & 1 << j)
-        {
-            endat_multi_channel_set_cur(priv, j);
-           /*convert rx_en_cnt into ns */
-            float ct = ((priv->rx_en_cnt/ENDAT_DELAY_COUNTER_INCREMENT)*((float)1000000000/ICSS_PRU_CORE_CLOCK))/2; /*one endat clock cycle time = 1/endat frequency = 2*rx_en_cnt*/
-            /* if propagation delay is more than half clock cycle time (2/endat frequency) then we have to reduce clock cycles for rx*/
-            if(gEndat_prop_delay[priv->current_channel] > (ct/2))
-            {
-                uint16_t dis = floor(gEndat_prop_delay[priv->current_channel]/ct);
-                /* convert propagation delay into rx arm counts */
-                uint16_t temp = ((uint16_t)(((float)gEndat_prop_delay[priv->current_channel] *ICSS_PRU_CORE_CLOCK)/1000000000)) * ENDAT_DELAY_COUNTER_INCREMENT;
-                endat_config_rx_arm_cnt(priv, temp);
-                /* propagation delay/cycle_time */
-                endat_config_rx_clock_disable(priv, dis);
-            }
-            else
-            {
-                endat_config_rx_arm_cnt(priv, priv->rx_en_cnt);
-                endat_config_rx_clock_disable(priv, 0);
-            }
-            uint16_t d = gEndat_prop_delay_max - gEndat_prop_delay[j];
-            endat_config_wire_delay(priv, d);
-        }
-    }
-    endat_config_clock(priv, &clk_cfg);
+    endat_process_host_command(CLOCK_UPDATE, &cmd_supplement, priv);
 
-    uint64_t cmp3 = 3000;
-    uint64_t cmp4 = 3000;
+    uint64_t cmp3 = 800;
+    uint64_t cmp4 = 800;
     uint32_t cmp_reg0, cmp_reg1;
     uint16_t event, event_clear;
 
 
-    /* cmp cfg reg */
+    /* Configure IEP for peridoc mode  */
     event = HW_RD_REG8(pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP_CFG_REG);
     event_clear = HW_RD_REG8(pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP_STATUS_REG);
 
@@ -612,6 +756,16 @@ void HAL_setupEncoder(HAL_Handle handle)
     /*enable  event*/
     HW_WR_REG8(pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP_CFG_REG, event);
    
+    for(int i=0; i<3;i++)
+    {
+        if(gEndat_multi_ch_mask & 1 << i)
+        {
+            endat_multi_channel_set_cur(priv, i);
+        
+            DebugP_log("\r|\n|\t\t\t\tCHANNEL %d\n", i);
+            DebugP_log("Encoder Channel Init Completed!!!\n");
+        }
+    }
 
     endat_config_periodic_trigger(priv);
     DebugP_assert(endat_command_process(priv, 8, NULL) >= 0);
@@ -684,8 +838,14 @@ void HAL_getMtrEncoderPosition(ENC_Handle handle, uint32_t motorNum)
         while(obj->thetaElec_rad > MATH_TWO_PI)
            obj->thetaElec_rad -= MATH_TWO_PI;
 
-        obj->thetaElec_rad =  - obj->thetaElec_rad;
-         obj->thetaElec_rad =  obj->thetaElec_rad - 0.5*MATH_PI;
+        if(motorNum == MTR_1)
+        {
+            obj->thetaElec_rad =  obj->thetaElec_rad + 0.5*MATH_PI;
+        }
+        else
+        {
+            obj->thetaElec_rad =  obj->thetaElec_rad + 0.5*MATH_PI;
+        }
 
         if(obj->thetaElec_rad >= MATH_PI)
         {
@@ -708,7 +868,7 @@ void HAL_getMtrEncoderPosition(ENC_Handle handle, uint32_t motorNum)
 void HAL_setMtrCMPSSDACValue(HAL_MTR_Handle handle,
                              const uint16_t dacValH, const uint16_t dacValL)
 {
-#if defined(MOTOR1_INLINE_SDFM)
+#if defined(MOTOR1_INLINE_SDFM) || defined(MOTOR2_INLINE_SDFM)
    /*Over current support has not added yet*/
 #endif
     return;
@@ -746,7 +906,7 @@ Bool HAL_MTR_setGateDriver(HAL_MTR_Handle handle)
 
     //BP_AM2BLDCSERVO
 #else
-#error Not select a right supporting kit!
+#error Board configuration not specified. Please define a valid board for this project.
 #endif  // Setup Gate Enable
 
     return(driverStatus);
@@ -762,7 +922,7 @@ void HAL_pruIcssX_init()
     PRUICSS_setSaMuxMode(gPruIcssXHandle, PRUICSS_ENABLE_SA_MUX_MODE);
 #endif
 
-    //Enable Int
+    /*Enable PRU Interrupt Controller*/
     uint32_t status;
     status = PRUICSS_intcInit(gPruIcssXHandle, &icss0_intc_initdata);
     DebugP_assert(SystemP_SUCCESS == status);
@@ -770,7 +930,7 @@ void HAL_pruIcssX_init()
 }
 #endif
 
-#if defined (BP_AM2BLDCSERVO)
+#if defined (MOTOR1_INLINE_SDFM) || defined (MOTOR2_INLINE_SDFM)
 void HAL_setupSDFM(HAL_Handle handle)
 {
     /*SDFM intruppt code need to add*/
@@ -877,8 +1037,7 @@ void HAL_setupSDFM(HAL_Handle handle)
             SDFM_enableIep(gMotorSdfm);
         }
         /*configure IEP count for one epwm period*/
-        SDFM_configIepCount(gMotorSdfm, 30000);
-
+        SDFM_configIepCount(gMotorSdfm, APP_EPWM_OUTPUT_FREQ); //3000
         /*configuration of sdfm parameters which are supported per axis, not for invidual channels.
         Channel0 perametrs value are used for all 3 channels of axis*/
         /*set Noraml current OSR */
@@ -927,12 +1086,12 @@ void HAL_setupSDFM(HAL_Handle handle)
     if(motorNum == MTR_1)
     {
         gMotorSdfm->sampleOutputInterface =  (SDFM_SampleOutInterface *)((uint32_t)&gSdfm_sampleOutput);
-        value =  SDFM_getFilterData(gMotorSdfm, 2);
+        value =  SDFM_getFilterData(gMotorSdfm, 0);
     }
     else
     {
         gMotorSdfm->sampleOutputInterface =  (SDFM_SampleOutInterface *)((uint32_t)&gSdfm_sampleOutput + 12);
-        value =  SDFM_getFilterData(gMotorSdfm, 2);
+        value =  SDFM_getFilterData(gMotorSdfm, 0);
     }
     pSdfmData->I_A.value[0] = (value ) * pSdfmData->current_sf;
     
@@ -951,19 +1110,19 @@ void HAL_setupSDFM(HAL_Handle handle)
     if(motorNum == MTR_1)
     {
         gMotorSdfm->sampleOutputInterface =  (SDFM_SampleOutInterface *)((uint32_t)&gSdfm_sampleOutput);
-        value =  SDFM_getFilterData(gMotorSdfm, 0);
+        value =  SDFM_getFilterData(gMotorSdfm, 2);
     }
     else
     {
         gMotorSdfm->sampleOutputInterface =  (SDFM_SampleOutInterface *)((uint32_t)&gSdfm_sampleOutput + 12);
-        value =  SDFM_getFilterData(gMotorSdfm, 0);
+        value =  SDFM_getFilterData(gMotorSdfm, 2);
 
     }
     pSdfmData->I_A.value[2] = (value) * pSdfmData->current_sf;
 
-    pSdfmData->VdcBus_V = 24.0f;
+    pSdfmData->VdcBus_V = BP_AM2BLDCSERVO_VDC_BUS_VOLTAGE;
     return;
 }  // end of HAL_readMtr1SdfmData() functions
-#endif //MOTOR1_INLINE_SDFM
+#endif //MOTOR1_INLINE_SDFM || MOTOR2_INLINE_SDFM
 
 // end of file
