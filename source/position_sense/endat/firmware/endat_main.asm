@@ -127,6 +127,9 @@ TRIGGER_ENDAT_COMPLETE_EVENT		.set	19
 TRIGGER_ENDAT_COMPLETE_IRQ		.set	(0x20 | (TRIGGER_ENDAT_COMPLETE_EVENT - 16))
 
 ENDAT_RX_STATUS_BIT           .set  28
+ENDAT_TX_BUSY_CH0             .set  5
+ENDAT_TX_BUSY_CH1             .set  13
+ENDAT_TX_BUSY_CH2             .set  21
 
 
 ENDAT_INIT:
@@ -956,21 +959,6 @@ ENDAT_SKIP14_CH2:
 
 ENDAT_HOST_CMD_END:
 
-     LDI  R3.w0, 0
-	.if $isdefed("ENABLE_MULTI_MAKE_RTU") ;clear command trigger  for ch0
-	    SBCO	&R3.b0,	PRUx_DMEM,	ENDAT_CH0_INTFC_CMD_TRIGGER_OFFSET,	1
-        LBCO		&SCRATCH.b0,	PRUx_DMEM,	ENDAT_CH0_OPMODE_CONFIG_OFFSET,	1  ; Check RTU host trigger  for ch0
-	.elseif $isdefed("ENABLE_MULTI_MAKE_PRU") ;clear command trigger   for ch1
-	    SBCO	&R3.b0,	PRUx_DMEM,	ENDAT_CH1_INTFC_CMD_TRIGGER_OFFSET,	1
-        LBCO		&SCRATCH.b0,	PRUx_DMEM,	ENDAT_CH1_OPMODE_CONFIG_OFFSET,	1  ;Check PRU host trigger  for ch1
-	.elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU") ;clear command trigger  for ch2
-	    SBCO	&R3.b0,	PRUx_DMEM,	ENDAT_CH2_INTFC_CMD_TRIGGER_OFFSET,	1
-        LBCO		&SCRATCH.b0,	PRUx_DMEM,	ENDAT_CH2_OPMODE_CONFIG_OFFSET,	1  ;Check TXPRU host trigger  for ch2
-	.else  ; when load share mode is not used
-	    SBCO	&R3.b0,	PRUx_DMEM,	ENDAT_CH0_INTFC_CMD_TRIGGER_OFFSET,	1
-        LBCO		&SCRATCH.b0,	PRUx_DMEM,	ENDAT_CH0_OPMODE_CONFIG_OFFSET,	1 ;check PRU host trigger for all three channels
-	.endif
-
 	;Recovery Time calculation 
 	LBCO    &SCRATCH,    PRUx_DMEM, ENDAT_CONFIG_CH_INFO_MEMORY_ADDRESS, 4
 	.if $isdefed("ENABLE_MULTI_MAKE_RTU")
@@ -1029,6 +1017,21 @@ SKIP_RTM_CH1:
     SBBO    &R1,  SCRATCH,  ENDAT_CH2_CURRENT_RT_COUNTER_OFFSET, 4
 	.endif
 ENDAT_RT_CAL_END:
+
+    LDI  R3.w0, 0
+	.if $isdefed("ENABLE_MULTI_MAKE_RTU") ;clear command trigger  for ch0
+	    SBCO	&R3.b0,	PRUx_DMEM,	ENDAT_CH0_INTFC_CMD_TRIGGER_OFFSET,	1
+        LBCO		&SCRATCH.b0,	PRUx_DMEM,	ENDAT_CH0_OPMODE_CONFIG_OFFSET,	1  ; Check RTU host trigger  for ch0
+	.elseif $isdefed("ENABLE_MULTI_MAKE_PRU") ;clear command trigger   for ch1
+	    SBCO	&R3.b0,	PRUx_DMEM,	ENDAT_CH1_INTFC_CMD_TRIGGER_OFFSET,	1
+        LBCO		&SCRATCH.b0,	PRUx_DMEM,	ENDAT_CH1_OPMODE_CONFIG_OFFSET,	1  ;Check PRU host trigger  for ch1
+	.elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU") ;clear command trigger  for ch2
+	    SBCO	&R3.b0,	PRUx_DMEM,	ENDAT_CH2_INTFC_CMD_TRIGGER_OFFSET,	1
+        LBCO		&SCRATCH.b0,	PRUx_DMEM,	ENDAT_CH2_OPMODE_CONFIG_OFFSET,	1  ;Check TXPRU host trigger  for ch2
+	.else  ; when load share mode is not used
+	    SBCO	&R3.b0,	PRUx_DMEM,	ENDAT_CH0_INTFC_CMD_TRIGGER_OFFSET,	1
+        LBCO		&SCRATCH.b0,	PRUx_DMEM,	ENDAT_CH0_OPMODE_CONFIG_OFFSET,	1 ;check PRU host trigger for all three channels
+	.endif
 
     QBNE  SKIP_INTERRUPT_TRIGGER,  SCRATCH.b0,  0
     .if $isdefed("ENABLE_MULTI_MAKE_RTU")
@@ -1342,10 +1345,11 @@ M_CALC_RECOV_TIME_CH0 .macro
     ;enable PRU cycle counter
     M_ENABLE_PRU_CYCLE_COUNTER
 	ZERO		&SCRATCH2,	4
-ENDAT_TD_LAST_RISING_CLOCK_CH0?:
 	LDI     SCRATCH1.w0, ICSS_CFG_PRUx_ENDAT_TXCFG
+ENDAT_TD_LAST_RISING_CLOCK_CH0?:
 	LBCO	&R27.w0,	ICSS_CFG,	SCRATCH1.w0,	2
     QBBC            ENDAT_TD_LAST_RISING_CLOCK_CH0?,  R27.w0,  8
+
     ; read the PRU counter value 
 	LBCO 	&SCRATCH2, c11, PRUx_CNTL_CYCLE_COUNT_OFFSET, 4
 
@@ -1362,6 +1366,12 @@ WRXCH0?:
 
 	LBCO 	&R27, c11, PRUx_CNTL_CYCLE_COUNT_OFFSET, 4
 	SUB     R27, R27, SCRATCH2
+
+    ; subtract the propagation delay
+	QBBS	ENDAT_SKIP_PDELAY_FOR_NSP_CMD2_2_CH0?, ENDAT_CMDTYP_NO_SUPPLEMENT_REG,	0
+	LBCO	&SCRATCH2,	PRUx_DMEM,	ENDAT_CH0_MEAS_PROPDELAY_OFFSET,	4
+	SUB     R27, R27, SCRATCH2
+ENDAT_SKIP_PDELAY_FOR_NSP_CMD2_2_CH0?:
     ; store in DMEM
 	;Load memory address 
 	LBCO    &SCRATCH2,    PRUx_DMEM, ENDAT_CONFIG_CH_INFO_MEMORY_ADDRESS, 4
@@ -1373,8 +1383,8 @@ M_CALC_RECOV_TIME_CH1 .macro
     ; enable PRU cycle counter
     M_ENABLE_PRU_CYCLE_COUNTER
 	ZERO		&SCRATCH2,	4
-ENDAT_TD_LAST_RISING_CLOCK_CH1?:
 	LDI     SCRATCH1.w0, ICSS_CFG_PRUx_ENDAT_TXCFG
+ENDAT_TD_LAST_RISING_CLOCK_CH1?:
 	LBCO	&R27.w0,	ICSS_CFG,	SCRATCH1.w0,	2
     QBBC            ENDAT_TD_LAST_RISING_CLOCK_CH1?,  R27.w0,  9
 
@@ -1393,6 +1403,12 @@ WRXCH1?:
     ; read pru counter at time when rx start
 	LBCO 	&R27, c11, PRUx_CNTL_CYCLE_COUNT_OFFSET, 4
 	SUB     R27, R27, SCRATCH2
+
+    QBBS	ENDAT_SKIP_PDELAY_FOR_NSP_CMD2_2_CH1?, ENDAT_CMDTYP_NO_SUPPLEMENT_REG,	0
+	; subtract the propagation delay
+	LBCO	&SCRATCH2,	PRUx_DMEM,	ENDAT_CH1_MEAS_PROPDELAY_OFFSET,	4
+	SUB     R27, R27, SCRATCH2
+ENDAT_SKIP_PDELAY_FOR_NSP_CMD2_2_CH1?:
     ;Load memory address 
 	LBCO    &SCRATCH2,    PRUx_DMEM, ENDAT_CONFIG_CH_INFO_MEMORY_ADDRESS, 4
     ; store in DMEM
@@ -1404,8 +1420,8 @@ M_CALC_RECOV_TIME_CH2 .macro
     ;enable PRU counter
     M_ENABLE_PRU_CYCLE_COUNTER
 	ZERO		&SCRATCH2,	4
-ENDAT_TD_LAST_RISING_CLOCK_CH2?:
 	LDI     SCRATCH1.w0, ICSS_CFG_PRUx_ENDAT_TXCFG
+ENDAT_TD_LAST_RISING_CLOCK_CH2?:
 	LBCO	&R27.w0,	ICSS_CFG,	SCRATCH1.w0,	2
     QBBC            ENDAT_TD_LAST_RISING_CLOCK_CH2?,  R27.w0,  10
 
@@ -1415,17 +1431,14 @@ ENDAT_TD_LAST_RISING_CLOCK_CH2?:
     .else
 	    LBCO 	&SCRATCH2, c11, PRUx_CNTL_CYCLE_COUNT_OFFSET, 4
 	.endif
-
-
      ; wait for rx complete
-     LDI     SCRATCH1.w0, ICSS_CFG_PRUx_ENDAT_CH2_CFG0
+    LDI     SCRATCH1.w0, ICSS_CFG_PRUx_ENDAT_CH2_CFG0
 WHRXCH2?:
 	LBCO	&R27,	ICSS_CFG,	SCRATCH1.w0,	4
 	QBBC		WHRXCH2?,	R27,	ENDAT_RX_STATUS_BIT
 WRXCH2?:
 	LBCO	&R27,	ICSS_CFG,	SCRATCH1.w0,	4
 	QBBS		WRXCH2?,	R27,	ENDAT_RX_STATUS_BIT
-
 
     ; read pru counter at time when rx start
     .if $isdefed("ENABLE_MULTI_MAKE_TXPRU")
@@ -1434,6 +1447,12 @@ WRXCH2?:
 	    LBCO 	&R27, c11, PRUx_CNTL_CYCLE_COUNT_OFFSET, 4
 	.endif
     SUB     R27, R27, SCRATCH2
+
+    ; subtract the propagation delay
+    QBBS	ENDAT_SKIP_PDELAY_FOR_NSP_CMD2_2_CH2?, ENDAT_CMDTYP_NO_SUPPLEMENT_REG,	0
+	LBCO	&SCRATCH2,	PRUx_DMEM,	ENDAT_CH2_MEAS_PROPDELAY_OFFSET,	4
+	SUB     R27, R27, SCRATCH2
+ENDAT_SKIP_PDELAY_FOR_NSP_CMD2_2_CH2?:
     ; store in DMEM
 	;Load memory address 
 	LBCO    &SCRATCH2,    PRUx_DMEM, ENDAT_CONFIG_CH_INFO_MEMORY_ADDRESS, 4
@@ -1685,7 +1704,7 @@ ENDAT_SKIP34_PRE_CH1:
 ENDAT_SKIP34_PRE_CH2:
     .endif
 
-   ;disbale calculation of RT for free run continuous mode 
+   ;disable calculation of RT for free run continuous mode 
     LDI  R27.b0,  0
     
 	.if	$isdefed("ENABLE_MULTI_CHANNEL")
@@ -2131,11 +2150,10 @@ ENDAT_SKIP18_CH2:
 WB_RTU_17:
     AND R28.b0, R31.b0, 0x1C
     QBNE   WB_RTU_17, R28.b0, 0
-;waiting for Rx start first time
-W_RX_RTU_CH0:
-    LDI     SCRATCH1.w0, ICSS_CFG_PRUx_ENDAT_CH0_CFG0
-	LBCO	&R28,	ICSS_CFG,	SCRATCH1.w0,	4
-	QBBS		W_RX_RTU_CH0,	R28,	ENDAT_RX_STATUS_BIT
+	; wait until the last TX bit is on the wire
+WAIT_TX_DONE_CH0:
+    QBBS   WAIT_TX_DONE_CH0, R31, ENDAT_TX_BUSY_CH0
+
     ;RT claculation
     M_CALC_RECOV_TIME_CH0
     .elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
@@ -2143,11 +2161,9 @@ W_RX_RTU_CH0:
 WB_PRU_17:
     AND R28.b0, R31.b1, 0x1C
     QBNE   WB_PRU_17, R28.b0, 0
-;waiting for Rx start first time
-W_RX_PRU_CH1:
-    LDI     SCRATCH1.w0, ICSS_CFG_PRUx_ENDAT_CH1_CFG0
-	LBCO	&R28,	ICSS_CFG,	SCRATCH1.w0,	4
-	QBBS		W_RX_PRU_CH1,	R28,	ENDAT_RX_STATUS_BIT
+; wait until the last TX bit is on the wire
+WAIT_TX_DONE_CH1:
+    QBBS   WAIT_TX_DONE_CH1, R31, ENDAT_TX_BUSY_CH1
     ;RT Calculation
     M_CALC_RECOV_TIME_CH1
     .elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
@@ -2155,11 +2171,9 @@ W_RX_PRU_CH1:
 WB_TXPRU_17:
     AND R28.b0, R31.b2, 0x1C
     QBNE   WB_TXPRU_17, R28.b0, 0
-;waiting for Rx start first time
-W_RX_TXPRU_CH2:
-    LDI     SCRATCH1.w0, ICSS_CFG_PRUx_ENDAT_CH2_CFG0
-	LBCO	&R28,	ICSS_CFG,	SCRATCH1.w0,	4
-	QBBS		W_RX_TXPRU_CH2,	R28,	ENDAT_RX_STATUS_BIT
+; wait until the last TX bit is on the wire
+WAIT_TX_DONE_CH2:
+    QBBS   WAIT_TX_DONE_CH2, R31, ENDAT_TX_BUSY_CH2
     ;RT Calculation
     M_CALC_RECOV_TIME_CH2
     .elseif	$isdefed("ENABLE_MULTI_CHANNEL")
@@ -2197,11 +2211,12 @@ ENDAT_SKIP101_MULTI_CH2:
 WB_TX_FIFO_COM_CH0:
     AND R28.b0, R31.b0, 0x1C
     QBNE   WB_TX_FIFO_COM_CH0, R28.b0, 0
-;waiting for Rx start first time
-W_RX_LOW_CH0:
-    LDI     SCRATCH1.w0, ICSS_CFG_PRUx_ENDAT_CH0_CFG0
-	LBCO	&R28,	ICSS_CFG,	SCRATCH1.w0,	4
-	QBBS		W_RX_LOW_CH0,	R28,	ENDAT_RX_STATUS_BIT
+    ; wait until the last TX bit is on the wire
+WAIT_TX_DONE_CH0:
+    QBBS   WAIT_TX_DONE_CH0, R31, ENDAT_TX_BUSY_CH0
+
+  
+
     M_CALC_RECOV_TIME_CH0
 
 ENDAT_SKIP19_CH0:
@@ -2210,11 +2225,11 @@ ENDAT_SKIP19_CH0:
 WB_TX_FIFO_COM_CH1:
     AND R28.b0, R31.b1, 0x1C
     QBNE   WB_TX_FIFO_COM_CH1, R28.b0, 0
-;waiting for Rx start first time
-W_RX_LOW_CH1:
-    LDI     SCRATCH1.w0, ICSS_CFG_PRUx_ENDAT_CH1_CFG0
-	LBCO	&R28,	ICSS_CFG,	SCRATCH1.w0,	4
-	QBBS		W_RX_LOW_CH1,	R28,	ENDAT_RX_STATUS_BIT
+;wait to start Rx
+; wait until the last TX bit is on the wire
+WAIT_TX_DONE_CH1:
+    QBBS   WAIT_TX_DONE_CH1, R31, ENDAT_TX_BUSY_CH1
+
     M_CALC_RECOV_TIME_CH1
 
 ENDAT_SKIP19_CH1:
@@ -2223,11 +2238,11 @@ ENDAT_SKIP19_CH1:
 WB_TX_FIFO_COM_CH2:
     AND R28.b0, R31.b2, 0x1C
     QBNE   WB_TX_FIFO_COM_CH2, R28.b0, 0
-;waiting for Rx start first time
-W_RX_LOW_CH2:
-    LDI     SCRATCH1.w0, ICSS_CFG_PRUx_ENDAT_CH2_CFG0
-	LBCO	&R28,	ICSS_CFG,	SCRATCH1.w0,	4
-	QBBS		W_RX_LOW_CH2,	R28,	ENDAT_RX_STATUS_BIT
+;wait to start Rx
+; wait until the last TX bit is on the wire
+WAIT_TX_DONE_CH2:
+    QBBS   WAIT_TX_DONE_CH2, R31, ENDAT_TX_BUSY_CH2
+
     M_CALC_RECOV_TIME_CH2
 ENDAT_SKIP19_CH2:
   .endif
