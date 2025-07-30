@@ -21,6 +21,7 @@ Nikon A-format version 3.0                                                      
 Support for up to 8 encoders in bus connection                                                  | Position Sense Nikon A-format
 Independent IEP events for each axis in load share mode                                         | Position Sense Nikon A-format
 Enabled configuration of IEP1 independently                                                     | PRU-ICSS PWM
+Independent IEP events for each axis in load share mode                                         | Position Sense BiSS-C
 
 \cond SOC_AM243X
 SOC    | Supported CPUs  | Boards                                                                                                      | Host PC
@@ -377,6 +378,18 @@ previous SDK version. Also refer to older SDK version release notes to see chang
     <th> Additional Remarks
 </tr>
 <tr>
+    <td> Position Sense BiSS-C
+    <td> Periodic mode APIs
+    <td> Configuration of independent IEP events in peridic mode for 3-axis use case
+    <td> Change affects multi channel load share example
+</tr>
+<tr>
+    <td> Position Sense BiSS-C
+    <td> structure `bissc_periodic_interface`
+    <td> Added cmp5 and cmp6 as variable members to structure
+    <td> Change affects multi channel load share example
+</tr>
+<tr>
     <td> Position Sense Nikon A-format
     <td> nikon_process_periodic_command()
     <td> Updated input parameters for the API cmp0 -> iep_reset_count, cmp3 -> ch0_trigger_count & added new parameters ch1_trigger_count & ch2_trigger_count
@@ -420,6 +433,64 @@ previous SDK version. Also refer to older SDK version release notes to see chang
 </tr>
 
 <tr>
+<<<<<<< HEAD
+    <td> Position Sense Nikon A-format
+    <td> nikon_process_periodic_command()
+    <td> Updated input parameters for the API cmp0 -> iep_reset_count, cmp3 -> ch0_trigger_count & added new parameters ch1_trigger_count & ch2_trigger_count
+    <td> Change affects multi channel load share example
+</tr>
+<tr>
+    <td> Position Sense Nikon A-format
+    <td> nikon_periodic_interface_init()
+    <td>  Updated input parameters for the API cmp0 -> iep_reset_count, cmp3 -> ch0_trigger_count & added new parameters ch1_trigger_count & ch2_trigger_count
+    <td> Change affects multi channel load share example
+</tr>
+<tr>
+    <td> Position Sense Nikon A-format
+    <td> structure nikon_periodic_interface
+    <td> updated parameters for the structure cmp0 -> iep_reset_count, cmp3 -> ch0_trigger_count & added new parameters ch1_trigger_count & ch2_trigger_count
+    <td> Change affects multi channel load share example
+</tr>
+<tr>
+    <td> Position Sense Nikon A-format
+    <td> pru_nikon_irq_handler()
+    <td> Updated API name
+    <td> Change affects multi channel load share example
+</tr>
+<tr>
+    <td> Position Sense Nikon A-format
+    <td> txpru_nikon_irq_handler()
+    <td> Added new API Method for handling interrupt from txpru
+    <td> Change affects multi channel load share example
+</tr>
+<tr>
+    <td> Position Sense Nikon A-format
+    <td> rtu_nikon_irq_handler()
+    <td> Added new API Method for handling interrupt from rtu
+    <td> Change affects multi channel load share example
+</tr>
+<tr>
+    <td> Position Sense Nikon A-format
+    <td> PRU_TRIGGER_HOST_EVT,RTU_TRIGGER_HOST_EVT,TXPRU_TRIGGER_HOST_EVT
+    <td> Updated PRU_TRIGGER_HOST_NIKON_EVT0,PRU_TRIGGER_HOST_NIKON_EVT1,PRU_TRIGGER_HOST_NIKON_EVT2 host event macro names
+    <td> Change affects multi channel load share example
+</tr>
+
+<tr>
+=======
+    <td> Position Sense BiSS-C
+    <td> Periodic mode APIs
+    <td> Configuration of independent IEP events in peridic mode for 3-axis use case
+    <td> Change affects multi channel load share example
+</tr>
+<tr>
+    <td> Position Sense BiSS-C
+    <td> structure `bissc_periodic_interface`
+    <td> Added cmp5 and cmp6 as variable members to structure
+    <td> Change affects multi channel load share example
+</tr>
+<tr>
+>>>>>>> 7466368a (am243x: BiSS-C: Update IEP Events for periodic mode)
     <td> Position Sense Endat
     <td> Firmware binary files
     <td> Renamed all binary files

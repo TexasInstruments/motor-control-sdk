@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2024 Texas Instruments Incorporated
+ *  Copyright (C) 2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -584,7 +584,7 @@ static int32_t bissc_loop_task_create(void)
     return status ;
 }
 
-static void bissc_process_periodic_command(struct bissc_priv *priv, int64_t cmp3, int64_t cmp0)
+static void bissc_process_periodic_command(struct bissc_priv *priv, int64_t cmp3, int64_t cmp5, int64_t cmp6, int64_t cmp0)
 {
     int32_t status, ret;
     uint32_t pos_fail_cnt = 0, pos_total_cnt = 0;
@@ -597,7 +597,7 @@ static void bissc_process_periodic_command(struct bissc_priv *priv, int64_t cmp3
         DebugP_log("Task_create() failed!\n");
         return;
     }
-    bissc_periodic_interface_init(priv, &bissc_periodic_interface, cmp3, cmp0);
+    bissc_periodic_interface_init(priv, &bissc_periodic_interface, cmp3, cmp5, cmp6, cmp0);
     status = bissc_config_periodic_mode(&bissc_periodic_interface, gPruIcssXHandle);
     DebugP_assert(0 != status);
     bissc_position_loop_status = BISSC_POSITION_LOOP_START;
@@ -751,7 +751,7 @@ void bissc_main(void *args)
     while(1)
     {
         int32_t cmd, ret;
-        int64_t cmp3, cmp0;
+        int64_t cmp3=0, cmp5=0, cmp6=0, cmp0=0;
         uint32_t freq, ctrl_cmd[3]={0};
         uint32_t loop_cnt;
         uint32_t safety = 0;
@@ -1003,14 +1003,54 @@ void bissc_main(void *args)
                 DebugP_log("\r\n| WARNING: invalid value entered\n");
                 continue;
             }
-            DebugP_log("\r| Enter IEP trigger time(must be less than or equal to IEP cycle count, in IEP cycles): ");
-            DebugP_scanf("%lld\n", &cmp3);
-            if((cmp3 > cmp0) || (cmp3 <= IEP_DEFAULT_INC))
+            if(CONFIG_BISSC0_LOAD_SHARE_MODE)
             {
-                DebugP_log("\r\n| WARNING: invalid value entered\n");
-                continue;
+
+                if(CONFIG_BISSC0_CHANNEL0)
+                {
+                    DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) Channel0: \n");
+                    DebugP_scanf("%lld\n", &cmp3);
+                    if((cmp3 > cmp0) || (cmp3 <= IEP_DEFAULT_INC))
+                    {
+                        DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                        continue;
+                    }
+                }
+
+                if(CONFIG_BISSC0_CHANNEL1)
+                {
+                    DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) Channel1: \n");
+                    DebugP_scanf("%lld\n", &cmp5);
+                    if((cmp5 > cmp0) || (cmp5 <= IEP_DEFAULT_INC))
+                    {
+                        DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                        continue;
+                    }
+                }
+                if(CONFIG_BISSC0_CHANNEL2)
+                {
+                    DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) Channel2: \n");
+                    DebugP_scanf("%lld\n", &cmp6);
+                    if((cmp6 > cmp0) || (cmp6 <= IEP_DEFAULT_INC))
+                    {
+                        DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                        continue;
+                    }
+                }
+
             }
-            bissc_process_periodic_command(priv, cmp3, cmp0);
+            else
+            {
+                DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles): ");
+                DebugP_scanf("%lld\n", &cmp3);
+                if((cmp3 > cmp0) || (cmp3 <= IEP_DEFAULT_INC))
+                {
+                    DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                    continue;
+                }
+            }
+
+            bissc_process_periodic_command(priv, cmp3, cmp5, cmp6, cmp0);
         }
         else if(cmd == BISSC_ENABLE_SAFETY)
         {

@@ -246,26 +246,35 @@ section11.output_section[0].$name     = ".bss.nocache";
 section11.output_section[0].alignment = 0;
 
 bissc1.$name                           = "CONFIG_BISSC0";
-bissc1.G_MUX_EN                        = true;
 bissc1.channel_2                       = true;
 bissc1.Multi_Channel_Load_Share        = true;
 bissc1.Booster_Pack                    = true;
-bissc1.PRU_ICSSG0_PRU.$assign          = "PRU_ICSSG0_PRU1";
+bissc1.G_MUX_EN                        = true;
 bissc1.ENC0_EN.$name                   = "ENC0_EN";
+bissc1.ENC0_EN.rx                      = true;
 bissc1.ENC0_EN.GPIO_n.$assign          = "MMC1_SDWP";
 bissc1.ENC2_EN.$name                   = "ENC2_EN";
+bissc1.ENC2_EN.pu_pd                   = "pu";
 bissc1.ENC2_EN.GPIO_n.$assign          = "MMC1_SDCD";
 bissc1.BISSC_CH0_OUT_EN.$name          = "BISSC_CH0_OUT_EN";
 bissc1.BISSC_CH0_OUT_EN.GPIO_n.$assign = "PRG0_PRU1_GPO2";
 bissc1.BISSC_CH2_OUT_EN.$name          = "BISSC_CH2_OUT_EN";
 bissc1.BISSC_CH2_OUT_EN.GPIO_n.$assign = "PRG0_PRU1_GPO8";
+bissc1.PRU_ICSSG0_PRU.$assign          = "PRU_ICSSG0_PRU1";
 
 pruicss1.$name                           = "CONFIG_PRU_ICSS0";
 bissc1.pru                               = pruicss1;
 pruicss1.AdditionalICSSSettings[0].$name = "CONFIG_PRU_ICSS_IO0";
-pruicss1.intcMapping.create(1);
+pruicss1.intcMapping.create(3);
+pruicss1.intcMapping.create(3);
 pruicss1.intcMapping[0].$name            = "CONFIG_ICSS0_INTC_MAPPING0";
 pruicss1.intcMapping[0].event            = "18";
+pruicss1.intcMapping[1].$name            = "CONFIG_ICSS0_INTC_MAPPING1";
+pruicss1.intcMapping[1].event            = "19";
+pruicss1.intcMapping[1].channel          = "3";
+pruicss1.intcMapping[2].$name            = "CONFIG_ICSS0_INTC_MAPPING2";
+pruicss1.intcMapping[2].event            = "20";
+pruicss1.intcMapping[2].channel          = "4";
 
 /**
  * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future
