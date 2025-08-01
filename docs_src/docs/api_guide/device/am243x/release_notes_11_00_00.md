@@ -19,7 +19,9 @@ Feature                                                                         
 ------------------------------------------------------------------------------------------------|-----------------------------------
 Nikon A-format version 3.0                                                                      | Position Sense Nikon A-format
 Support for up to 8 encoders in bus connection                                                  | Position Sense Nikon A-format
+Independent IEP events for each axis in load share mode                                         | Position Sense Nikon A-format
 Enabled configuration of IEP1 independently                                                     | PRU-ICSS PWM
+
 
 \cond SOC_AM243X
 SOC    | Supported CPUs  | Boards                                                                                                      | Host PC
@@ -369,7 +371,6 @@ Read this carefully to see if you need to do any changes in your existing applic
 previous SDK version. Also refer to older SDK version release notes to see changes in earlier SDKs.
 
 ### Examples
-
 <table>
 <tr>
     <th> Module
@@ -377,6 +378,43 @@ previous SDK version. Also refer to older SDK version release notes to see chang
     <th> Change
     <th> Additional Remarks
 </tr>
+<tr>
+    <td> Position Sense Nikon A-format
+    <td> nikon_process_periodic_command()
+    <td> Updated input parametrs for the API cmp0 -> iep_reset_count, cmp3 -> ch0_trigger_count & added new parameters ch1_trigger_count & ch2_trigger_count
+    <td> Change affects multi channel load share example
+</tr>
+<tr>
+    <td> Position Sense Nikon A-format
+    <td> nikon_periodic_interface_init()
+    <td>  Updated input parametrs for the API cmp0 -> iep_reset_count, cmp3 -> ch0_trigger_count & added new parameters ch1_trigger_count & ch2_trigger_count
+    <td> Change affects multi channel load share example
+</tr>
+<tr>
+    <td> Position Sense Nikon A-format
+    <td> structure nikon_periodic_interface
+    <td> updated parametrs for the structure cmp0 -> iep_reset_count, cmp3 -> ch0_trigger_count & added new parameters ch1_trigger_count & ch2_trigger_count
+    <td> Change affects multi channel load share example
+</tr>
+<tr>
+    <td> Position Sense Nikon A-format
+    <td> txpru_nikon_irq_handler()
+    <td> Added new API for handling interrupt from txpru
+    <td> Change affects multi channel load share example
+</tr>
+<tr>
+    <td> Position Sense Nikon A-format
+    <td> rtu_nikon_irq_handler()
+    <td> Added new API for handling interrupt from rtu
+    <td> Change affects multi channel load share example
+</tr>
+<tr>
+    <td> Position Sense Nikon A-format
+    <td> PRU_TRIGGER_HOST_EVT,RTU_TRIGGER_HOST_EVT,TXPRU_TRIGGER_HOST_EVT
+    <td> Updated PRU_TRIGGER_HOST_NIKON_EVT0,PRU_TRIGGER_HOST_NIKON_EVT1,PRU_TRIGGER_HOST_NIKON_EVT2 host event macro names
+    <td> Change affects multi channel load share example
+</tr>
+
 <tr>
     <td> Position Sense Endat
     <td> Firmware binary files
