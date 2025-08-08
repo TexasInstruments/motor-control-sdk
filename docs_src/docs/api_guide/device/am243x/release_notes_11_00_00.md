@@ -263,6 +263,13 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> 9.2 onwards
     <td> -
 </tr>
+<tr>
+    <td> PINDSW-9385
+    <td> EnDat: Recovery time does not work with EnDat 2.2 supplementary commands for certain EnDat frequencies
+    <td> Position Sense EnDat
+    <td> 9.2 onwards
+    <td> -
+</tr>
 </table>
 
 ## Known Issues
