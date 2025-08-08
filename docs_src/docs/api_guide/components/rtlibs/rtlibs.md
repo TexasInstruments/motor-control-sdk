@@ -2,7 +2,7 @@
 
 [TOC]
 
-Real Time Libraries module contains following components:
+Real Time Libraries module contains the following components:
 
 \cond SOC_AM243X
 

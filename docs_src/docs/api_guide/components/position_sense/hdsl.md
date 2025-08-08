@@ -4,7 +4,7 @@
 
 ## Introduction
 
-The HDSL firmware running on ICSS-PRU provides a defined well interface to execute the HDSL protocol.
+The HDSL firmware running on ICSS-PRU provides a well-defined interface to execute the HDSL protocol.
 
 ## Features Supported
 
@@ -12,12 +12,12 @@ The HDSL firmware running on ICSS-PRU provides a defined well interface to execu
 - Fast position, speed
 - Communication status
 - External pulse synchronization
-	- 1 to 10 frames per cycle
-	- 8 kHz to 50 kHz cycle frequency
+    - 1 to 10 frames per cycle
+    - 8 kHz to 50 kHz cycle frequency
 - Register interface to be compatible with SICK HDSL FPGA IP Core (apart from the differences listed in \ref HDSL_EXCEPTIONS_LIST)
 - Parameter channel communication
-	- Short message
-	- Long message
+    - Short message
+    - Long message
 - Safety
 - Pipeline Channel Data
 \cond SOC_AM243X
@@ -28,12 +28,13 @@ The HDSL firmware running on ICSS-PRU provides a defined well interface to execu
 \endcond
 - Tested with three different encoder makes (EDM35, EKS36, EKM36)
 \cond SOC_AM243X
-\note Channel 2 can be enabled only if channel 0 is enabled because of code overlay scheme needed in TX-PRU. See \ref HDSL_DESIGN_TXPRU_OVERLAY for more details
+\note Channel 2 can be enabled only if channel 0 is enabled because of the code overlay scheme needed in TX-PRU. See \ref HDSL_DESIGN_TXPRU_OVERLAY for more details.
 \endcond
+
 ## Features Not Supported
 
-In general, peripherals or features not mentioned as part of "Features Supported" section are not
-supported, including the below
+In general, peripherals or features not mentioned as part of the "Features Supported" section are not
+supported, including the below:
  - 100m cable
  - Pipeline Channel Status
 
@@ -41,12 +42,13 @@ supported, including the below
 
 @VAR_SYSCFG_USAGE_NOTE
 
-SysConfig can be used to configure things mentioned below:
-- Selecting the ICSS PRU slice instance.(Tested on ICSSG0-PRU1 for AM243x (EVM, LP) and ICSSM1-PRU0 for LP-AM261)
+SysConfig can be used to configure the following:
+- Selecting the ICSS PRU slice instance (Tested on ICSSG0-PRU1 for AM243x (EVM, LP) and ICSSM1-PRU0 for LP-AM261)
 - Configuring PINMUX
 - Channel selection
 - Mode Selection (Free run/Sync mode)
 - Hardware selection (Booster Pack for LP-AM243 and LP-AM261)
+
 ## ICSS PRU Resource Usage
 \cond SOC_AM243X
 <table>
@@ -114,11 +116,11 @@ SysConfig can be used to configure things mentioned below:
 
 ## Register List
 
-\subpage HDSL_REGISTER_LIST contains the description of registers in TI's HDSL implementation. Please note that all the corresponding register fields are not implemented.
+\subpage HDSL_REGISTER_LIST contains the description of registers in TI's HDSL implementation.
 
 ## Exceptions
 
-\subpage HDSL_EXCEPTIONS_LIST lists the exceptions TI's HDSL implementation when compared with SICK HDSL FPGA IP Core. Please note that all the corresponding register fields are not implemented.
+\subpage HDSL_EXCEPTIONS_LIST lists the exceptions in TI's HDSL implementation when compared with SICK HDSL FPGA IP Core. Please note that not all the corresponding register fields are implemented, and see the description of register for more details.
 
 ## Datasheet
 

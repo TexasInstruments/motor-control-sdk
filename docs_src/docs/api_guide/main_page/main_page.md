@@ -4,10 +4,10 @@
 
 \cond SOC_AM64X || SOC_AM243X
 
-Welcome to **@VAR_SDK_NAME for @VAR_SOC_NAME**. This SDK contains examples, libraries and tools to develop **RTOS and no-RTOS** based applications enabling real-time communication for position and current sense from motors, and real-time control libraries for **ARM R5F CPU** and related peripherals.
+Welcome to **@VAR_SDK_NAME for @VAR_SOC_NAME**. This SDK contains examples, libraries and tools to develop **RTOS and no-RTOS** based applications enabling real-time communication for position and current sense from motors, and real-time control libraries for **Arm® Cortex®-R5F CPU** and related peripherals.
 
 
-Real-time communication with encoders and current sensing is typically handled by the Programmable Real-Time Unit Industrial Communication Subsystem (PRU-ICSS). The PRU-ICSS is a co-processor subsystem containing Programmable Real-Time (PRU) cores which implement the low level firmware. The PRU-ICSS frees up the main ARM cores in the device for other functions, such as control and data processing.
+Real-time communication with encoders and current sensing is typically handled by the Programmable Real-Time Unit Industrial Communication Subsystem (PRU-ICSS). The PRU-ICSS is a co-processor subsystem containing Programmable Real-Time (PRU) cores which implement the low level firmware. The PRU-ICSS frees up the main Arm-based cores in the device for other functions, such as control and data processing.
 
 Applications and PRU-ICSS firmwares for position sense and current sense are provided in the SDK.
 
@@ -15,13 +15,21 @@ Applications and PRU-ICSS firmwares for position sense and current sense are pro
 
 \cond (SOC_AM263X || SOC_AM263PX)
 
-Welcome to **@VAR_SDK_NAME for @VAR_SOC_NAME**. This SDK contains examples, libraries and tools to develop **RTOS and no-RTOS** based applications enabling real-time communication for position sense from motors, and real-time control libraries for **ARM R5F CPU** and related peripherals.
+Welcome to **@VAR_SDK_NAME for @VAR_SOC_NAME**. This SDK contains examples, libraries and tools to develop **RTOS and no-RTOS** based applications enabling real-time communication for position sense from motors, and real-time control libraries for **Arm® Cortex®-R5F CPU** and related peripherals.
+
+Real-time communication with encoders is typically handled by the Programmable Real-Time Unit Industrial Communication Subsystem (PRU-ICSS). The PRU-ICSS is a co-processor subsystem containing Programmable Real-Time (PRU) cores which implement the low level firmware. The PRU-ICSS frees up the main Arm-based cores in the device for other functions, such as control and data processing.
+
+Applications and PRU-ICSS firmwares for position sense are provided in the SDK.
 
 \endcond
 
 \cond SOC_AM261X
 
-Welcome to **@VAR_SDK_NAME for @VAR_SOC_NAME**. This SDK contains examples, libraries and tools to develop **RTOS and no-RTOS** based applications enabling real-time communication for position sense from motors for **ARM R5F CPU** and related peripherals.
+Welcome to **@VAR_SDK_NAME for @VAR_SOC_NAME**. This SDK contains examples, libraries and tools to develop **RTOS and no-RTOS** based applications enabling real-time communication for position sense from motors for **Arm® Cortex®-R5F CPU** and related peripherals.
+
+Real-time communication with encoders is typically handled by the Programmable Real-Time Unit Industrial Communication Subsystem (PRU-ICSS). The PRU-ICSS is a co-processor subsystem containing Programmable Real-Time (PRU) cores which implement the low level firmware. The PRU-ICSS frees up the main Arm-based cores in the device for other functions, such as control and data processing.
+
+Applications and PRU-ICSS firmwares for position sense are provided in the SDK.
 
 \endcond
 
@@ -35,14 +43,14 @@ To get started, see <a href="@VAR_MCU_SDK_DOCS_PATH/GETTING_STARTED.html" target
 \cond SOC_AM261X
 \note
     - Motor Control SDK version 10.02.00 supports LP-AM261 Rev. E2 only. The upcoming LP-AM261 board revision will feature integrated DP83869 Ethernet PHYs onboard, replacing the DP83826E daughter card approach used in LP-AM261 Rev. E2.
-    - To build examples from Industrial Communications SDK and MCU+ SDK using CCS projects, user has to add <b>${SDK_INSTALL_PATH}/ind_comms_sdk</b> path and <b>${SDK_INSTALL_PATH}/mcu_plus_sdk</b> path to "Product discovery path" respectively in CCS (from Window->Preferences->Code Composer Studio->Products)
-    - In order to build the Networking examples from MCU+ SDK using CCS projects, the user needs to change the file action of the source files from "link" to "copy" in the example.projectspec and then import their project in CCS.
+    - To build examples from Industrial Communications SDK and MCU+ SDK using CCS projects, users have to add <b>${SDK_INSTALL_PATH}/ind_comms_sdk</b> path and <b>${SDK_INSTALL_PATH}/mcu_plus_sdk</b> path to "Product discovery path" respectively in CCS (from Window->Preferences->Code Composer Studio->Products)
+    - In order to build the Networking examples from MCU+ SDK using CCS projects, users need to change the file action of the source files from "link" to "copy" in the example.projectspec and then import their project in CCS.
 \endcond
 
 \cond !SOC_AM261X
 \note
-    - To build examples from Industrial Communications SDK and MCU+ SDK using CCS projects, user has to add <b>${SDK_INSTALL_PATH}/ind_comms_sdk</b> path and <b>${SDK_INSTALL_PATH}/mcu_plus_sdk</b> path to "Product discovery path" respectively in CCS (from Window->Preferences->Code Composer Studio->Products)
-    - In order to build the Networking examples from MCU+ SDK using CCS projects, the user needs to change the file action of the source files from "link" to "copy" in the example.projectspec and then import their project in CCS.
+    - To build examples from Industrial Communications SDK and MCU+ SDK using CCS projects, users have to add <b>${SDK_INSTALL_PATH}/ind_comms_sdk</b> path and <b>${SDK_INSTALL_PATH}/mcu_plus_sdk</b> path to "Product discovery path" respectively in CCS (from Window->Preferences->Code Composer Studio->Products)
+    - In order to build the Networking examples from MCU+ SDK using CCS projects, users need to change the file action of the source files from "link" to "copy" in the example.projectspec and then import their project in CCS.
 \endcond
 
 ## Block Diagram
@@ -322,7 +330,7 @@ For details on software components of Industrial Communications SDK and MCU+ SDK
 
 ## Directory Structure
 
-Given below is a overview of the directory structure to help you navigate the SDK and related tools.
+Given below is an overview of the directory structure to help you navigate the SDK and related tools.
 
 <table>
 <tr>
@@ -463,3 +471,5 @@ For additional help and support, see https://e2e.ti.com/support/microcontrollers
 ## Documentation Credits
 
 This user guide is generated using doxygen, v1.8.20. See https://www.doxygen.nl/index.html
+
+\note Arm is a registered trademark of Arm Limited (or its subsidiaries or affiliates) in the US and/or elsewhere.

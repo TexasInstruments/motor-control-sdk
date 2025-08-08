@@ -8,7 +8,7 @@ BISS-C diagnostic application does the following:
 - Initializes ICSS0-PRU1
 - Initializes default parameters, loads the PRU firmware & executes it.
 
-\note BiSS-C firmware will only run with ICSS Core Clock running at 200 MHz/300 MHz frequency or ICSS UART Clock running at 192 MHz. 225/250/333 MHz values are not supported due to clock divider requirements.
+\note BiSS-C firmware supports operation with ICSS Core Clock running at 200 MHz/300 MHz frequency or ICSS UART Clock running at 192 MHz only. ICSS Core Clock at 225/250/333 MHz is not supported due to clock divider requirements.
 
 \endcond
 
@@ -20,7 +20,7 @@ BISS-C diagnostic application does the following:
 - Initializes ICSS0-PRU0
 - Initializes default parameters, loads the PRU firmware & executes it.
 
-\note BiSS-C firmware will only run with ICSS UART Clock running at 160 MHz(ICSS Core Clock is configured at 225 MHz & is not supported for firmware due to clock divider requirements) frequency.
+\note BiSS-C firmware supports operation with ICSS UART Clock running at 160 MHz only, when ICSS Core Clock is 225 MHz due to clock divider requirements.
 
 \endcond
 
@@ -32,7 +32,7 @@ BISS-C diagnostic application does the following:
 - Initializes ICSS-PRU0
 - Initializes default parameters, loads the PRU firmware & executes it.
 
-\note BiSS-C firmware will only run with ICSS Core Clock running at 200 MHz frequency or ICSS UART Clock running at 192 MHz frequency.
+\note BiSS-C firmware supports operation with ICSS Core Clock running at 200 MHz frequency or ICSS UART Clock running at 192 MHz frequency only.
 
 \endcond
 
@@ -42,14 +42,14 @@ A serial terminal application (like teraterm/ hyperterminal/ minicom) is then ru
 To configure, select the serial port corresponding to the port emulated over USB by the EVM.
 The host serial port should be configured to 115200 baud, no parity, 1 stop bit and no flow control.
 
-The BISS-C receiver firmware running on ICSS0-PRU1 provides a defined interface. The BISS-C diagnostic application interacts with the BISS-C receiver firmware interface. It then presents the user with menu options to select Data ID code. The application collects the data entered by the user and configures the relevant interface. Then via the BISS-C receiver interface, the command is triggered. Once the command completion is indicated by the interface, the status of the transaction is checked. If the Status indicates success, the result is presented to the user.
+The BISS-C receiver firmware running on ICSS0-PRU1 provides a defined interface. The BISS-C diagnostic application interacts with the BISS-C receiver firmware interface. It then presents the user with menu options to select Data ID code. The application collects the data entered by the user and configures the relevant interface. Then via the BISS-C receiver interface, the command is triggered. Once the command completion is indicated by the interface, the status of the transaction is checked. If the status indicates success, the result is presented to the user.
 
 \cond SOC_AM243X
 ## Channel Selection In Sysconfig
 
 \image html bissc_syscfg_ch_sel.png      "Channel Selection In Sysconfig"
 
-\image html Endat_channel_selection_configuration.png     "BiSS-C configuration selection between Single/Multi channel "
+\image html Endat_channel_selection_configuration.png     "BiSS-C configuration selection between Single/Multi channel"
 
 \endcond
 
@@ -158,13 +158,13 @@ The BISS-C receiver firmware running on ICSS0-PRU1 provides a defined interface.
 
 \cond SOC_AM243X
 
-### Hardware Setup(Using Booster Pack & LP-AM243)
+### Hardware Setup (Using Booster Pack & LP-AM243)
 \imageStyle{AM243x_lp_bp_bissc_encoder_setup.png,width:40%}
 \image html AM243x_lp_bp_bissc_encoder_setup.png  "Hardware Setup of Booster Pack + LP for BISS-C"
 
 \note
     - The PROC109A version of LP supports two channels
-    - To enable the second channel on LP, SW6 needs to be turn OFF
+    - To enable the second channel on LP, SW6 needs to be turned OFF
 
 #### Booster Pack Jumper Configuration
 <table>
@@ -239,7 +239,7 @@ The BISS-C receiver firmware running on ICSS0-PRU1 provides a defined interface.
 
 \cond SOC_AM261X
 
-### Hardware Setup(Using Booster Pack & LP-AM261)
+### Hardware Setup (Using Booster Pack & LP-AM261)
 \imageStyle{AM261x_lp_bp_bissc_encoder_setup.png,width:40%}
 \image html AM261x_lp_bp_bissc_encoder_setup.png  "Hardware Setup of Booster Pack + LP for BISS-C"
 
@@ -338,7 +338,7 @@ The BISS-C receiver firmware running on ICSS0-PRU1 provides a defined interface.
 
 \cond SOC_AM263X
 
-### Hardware Setup(Using Booster Pack & LP-AM263)
+### Hardware Setup (Using Booster Pack & LP-AM263)
 \imageStyle{AM263x_lp_bp_bissc_encoder_setup.png,width:40%}
 \image html AM263x_lp_bp_bissc_encoder_setup.png  "Hardware Setup of Booster Pack + LP for BISS-C"
 
@@ -348,7 +348,7 @@ The BISS-C receiver firmware running on ICSS0-PRU1 provides a defined interface.
 
 \cond SOC_AM263PX
 
-### Hardware Setup(Using Booster Pack & LP-AM263P)
+### Hardware Setup (Using Booster Pack & LP-AM263P)
 \imageStyle{AM263Px_lp_bp_bissc_encoder_setup.png,width:40%}
 \image html AM263Px_lp_bp_bissc_encoder_setup.png  "Hardware Setup of Booster Pack + LP for BISS-C"
 
@@ -476,36 +476,28 @@ Shown below is a sample output to enable safety and the safety encoder results:
     <tr>
         <td>1</td>
         <td>Data readout (absolute position data)</td>
-        <td>In this command we will receive:
-		Absolute rotor position value,
-		errors, and warnings
+        <td>Absolute rotor position value, errors, and warnings are received.
 		</td>
         <td>CRC success with ABS, E, W and CRC values printed in the terminal.</td>
     </tr>
 	<tr>
         <td>2</td>
         <td>Control Communication</td>
-        <td>In this command we will receive:
-		Absolute rotor position value,
-		errors, and warnings, along with the result of the control
-        communication command.
+        <td>Absolute rotor position value, errors, and warnings, along with the result of the control communication command are received.
 		</td>
         <td>CRC success with ABS position value, E, W and CRC values of position data along with the control communication result printed in the terminal.</td>
     </tr>
     <tr>
         <td>3</td>
         <td>Start periodic continuous mode</td>
-        <td>In this command we will receive:
-		Absolute rotor position value, errors, and warnings periodically.
-        Rotate the rotor of motor and see the changes in Position value on UART.
+        <td>Absolute rotor position value, errors, and warnings are received periodically. Rotate the rotor of motor and see the changes in position value on UART.
 		</td>
         <td>0 CRC errors with ABS position value, E, W and CRC values printed in the terminal.</td>
     </tr>
     <tr>
         <td>4</td>
         <td>Enable safety mode</td>
-        <td>In this command we will enable Safety mode by using control communication:
-		</td>
-        <td>Safety should be enabled and CRC and Sign of Life counters will displayed from next position data request</td>
+        <td>Enable safety mode by using control communication</td>
+        <td>Safety should be enabled and CRC and Sign of Life counters will be displayed from next position data request</td>
     </tr>
 </table>

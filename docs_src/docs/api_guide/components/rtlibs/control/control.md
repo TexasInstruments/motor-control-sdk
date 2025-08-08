@@ -12,14 +12,14 @@ Supported algorithms:
 
 - Field weakening control (FWC)
 - Maximum torque per ampere (MTPA)
-- Strator voltage frequency generator (VS_FREQ)
-  
+- Stator voltage frequency generator (VS_FREQ)
 
-## Field Weakening Control 
+
+## Field Weakening Control
 
 Field weakening control (FWC) is a control methodology used in iPMSM motors to expand operating limits and enable higher than rated speed while allowing optimal control across speed and voltage range.
 
-## Maximum Torque Per Ampere 
+## Maximum Torque Per Ampere
 
 Maximum Torque Per Ampere (MTPA) technique is used for iPMSM to optimize torque generation in the constant torque region. As iPMSM motor's total torque has a non-linear relationship with respect to the rotor angle.
 
@@ -29,12 +29,12 @@ Stator Voltage Frequency Generator (VS_FREQ) can be used in scalar volts/hertz m
 
 ## Benchmark Results
 
-A benchmark on R5F core has been conducted to observe the following results when running controller arithmetic:
+A benchmark on Arm® Cortex®-R5F core has been conducted to observe the following results when running controller arithmetic:
 
 <table>
 <tr>
     <th>Functions
-    <th>Cpu Cycles
+    <th>CPU Cycles
 </tr>
 <tr><td colspan="2" bgcolor=#F0F0F0> Single-shunt DC-Link </td></tr>
 <tr>
@@ -67,24 +67,18 @@ A benchmark on R5F core has been conducted to observe the following results when
     <td>MTPA_computeCurrentAngle</td>
     <td>85</td>
 </tr>
-<tr><td colspan="2" bgcolor=#F0F0F0> Strator voltage frequency generator </td></tr>
+<tr><td colspan="2" bgcolor=#F0F0F0> Stator voltage frequency generator </td></tr>
 <tr>
     <td>VS_FREQ_run</td>
     <td>29</td>
 </tr>
 </table>
 
-- Ran with TI Clang Compiler v3.2.0.LTS, with -Os flag, obtained the average result from 600 consecutive reading of running the controller with DPL CycleCountP minus the overhead, simulating a control loop scenario.
-- Actual result may vary depending on provided datasets and memory configuration. For R5F, it is recommended for users to map control loops to TCM for the best performance.
-  
-## Provided Examples 
-
-
-
-## Additional References
-
-N/A
+- Ran with TI Clang Compiler v3.2.0.LTS, with -Os flag, obtained the average result from 600 consecutive readings of running the controller with DPL CycleCountP minus the overhead, simulating a control loop scenario.
+- Actual result may vary depending on provided datasets and memory configuration. For Arm Cortex-R5F, it is recommended for users to map control loops to TCM for the best performance.
 
 ## API
 
 \ref CONTROLS_MODULE
+
+\note Arm is a registered trademark of Arm Limited (or its subsidiaries or affiliates) in the US and/or elsewhere.

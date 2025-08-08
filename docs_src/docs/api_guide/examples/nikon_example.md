@@ -11,7 +11,7 @@ Nikon diagnostic application does the following:
 - Initializes ICSS0-PRU1,
 - Initializes default parameters, loads the PRU firmware & executes it.
 
-\note Nikon firmware will only run with ICSS Core Clock running at 200 MHz/300 MHz frequency or ICSS UART Clock running at 192 MHz. 225/250/333 MHz values are not supported for interface clock generation due to clock divider requirements.
+\note Nikon firmware supports operation with ICSS Core Clock running at 200 MHz/300 MHz frequency or ICSS UART Clock running at 192 MHz only. ICSS Core Clock at 225/250/333 MHz is not supported due to clock divider requirements.
 \endcond
 
 \cond SOC_AM261X
@@ -22,7 +22,7 @@ Nikon diagnostic application does the following:
 - Initializes ICSS0-PRU1,
 - Initializes default parameters, loads the PRU firmware & executes it.
 
-\note Nikon firmware will only run with ICSS UART Clock running at 160 MHz frequency. ICSS Core Clock is configured at 225 MHz, and is not supported for interface clock generation due to clock divider requirements.
+\note Nikon firmware supports operation with ICSS UART Clock running at 160 MHz only, when ICSS Core Clock is 225 MHz due to clock divider requirements.
 
 \endcond
 
@@ -34,7 +34,7 @@ Nikon diagnostic application does the following:
 - Initializes ICSS-PRU0,
 - Initializes default parameters, loads the PRU firmware & executes it.
 
-\note Nikon firmware will only run with ICSS Core Clock running at 200 MHz frequency or ICSS UART Clock running at 192 MHz frequency.
+\note Nikon firmware supports operation with ICSS Core Clock running at 200 MHz frequency or ICSS UART Clock running at 192 MHz frequency only.
 
 \endcond
 

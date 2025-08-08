@@ -1,25 +1,25 @@
-# Tamagawa over Uart Example {#EXAMPLE_MOTORCONTROL_TAMAGAWA_OVER_UART}
+# Tamagawa over UART Example {#EXAMPLE_MOTORCONTROL_TAMAGAWA_OVER_UART}
 [TOC]
 
 
 ## Introduction
 
-Tamagawa over uart application does below,
+The Tamagawa over UART application does the following:
 
 - Configures pinmux, GPIO, UART (UART clock to 192MHz, Baud rate, etc.)
 - Initializes UART0 for debug log & \if SOC_AM263PX UART3 \else UART1 \endif for communication
-- Select UART LLD with polling mode for encoder communication
-- Load and executes tamagawa example on R5_0
+- Selects UART LLD with polling mode for encoder communication
+- Loads and executes Tamagawa example on R5_0
 
 
 Connect the Tamagawa encoder via RS-485 Half-Duplex EVM to LP-AM263.
-The connections between LP-AM263 and RS-485
+The connections between LP-AM263 and RS-485:
 
 UART RX Pin(\if SOC_AM263PX  UART3_RXD \else  UART1_RXD \endif)->JMP1-R,
 UART TX Pin(\if SOC_AM263PX  UART3_TXD \else  UART1_TXD \endif)->JMP4-D,
 GPIO Pin(GPIO62)->JMP3-DE
 
-The tamagawa over uart example runs on R5 and communicates with tamagawa encoder by UART instance. It presents the user with menu options to select Data ID code (as defined by Tamagawa) to be sent to the encoder. The application collects the data entered by the user and configures the relevant command. Then via the UART LLD write API, the command is passed to encoder. Once the command is sent, the encoder starts to respond, and UART LLD read API starts to read this response. Response is stored in the tamagawa interface, the status of the transaction is check by CRC calculation. If the status indicates success, the result is presented to the user otherwise print CRC failure.
+The Tamagawa over UART example runs on R5 and communicates with Tamagawa encoder by UART instance. It presents the user with menu options to select Data ID code (as defined by Tamagawa) to be sent to the encoder. The application collects the data entered by the user and configures the relevant command. Then via the UART LLD write API, the command is passed to encoder. Once the command is sent, the encoder starts to respond, and UART LLD read API starts to read this response. Response is stored in the Tamagawa interface, the status of the transaction is checked by CRC calculation. If the status indicates success, the result is presented to the user otherwise it prints CRC failure.
 
 ### Example Flow-Chart
 
@@ -39,11 +39,11 @@ The tamagawa over uart example runs on R5 and communicates with tamagawa encoder
 <tr><td colspan="2" bgcolor=#F0F0F0> ${SDK_INSTALL_PATH}/source/position_sense/tamagawa_over_soc_uart</td></tr>
 <tr>
     <td>include/</td>
-    <td>Folder containing tamagawa interface file.</td>
+    <td>Folder containing Tamagawa interface file.</td>
 </tr>
 <tr>
     <td>driver/</td>
-    <td>Tamagawa uart driver</td>
+    <td>Tamagawa UART driver</td>
 </tr>
 </table>
 
@@ -118,85 +118,84 @@ Shown below is a sample output when the application is run:
     <tr>
         <td>Data ID 0</td>
         <td>Data readout (absolute position data)</td>
-        <td>In this command we will receive:
-		Absolute rotor position value in field name ABS.
-		Errors and warnings in field name SF(status field)
+        <td>Receive following data:
+		<br>Absolute rotor position value in field name ABS.
+		<br>Errors and warnings in field name SF(status field)
 		</td>
         <td>CRC success with ABS, SF, CF and CRC values printed in the terminal.</td>
     </tr>
 	<tr>
         <td>Data ID 1</td>
         <td>Data readout (multi-turn data)</td>
-        <td>In this command we will receive data about:
-		No. of rotor turns in field name ABM.
-		Errors and warnings in field name SF(status field).
+        <td>Receive following data:
+		<br>No. of rotor turns in field name ABM.
+		<br>Errors and warnings in field name SF(status field).
 		</td>
         <td>CRC success with ABM, SF, CF and CRC values printed in the terminal.</td>
     </tr>
 	<tr>
         <td>Data ID 2</td>
-        <td>Endoder-ID</td>
-        <td>In this command we will receive data about :
-		Tamagawa encoder make-ID in ENID field.
-		Errors and warnings in field name SF(status field)
+        <td>Encoder-ID</td>
+        <td>Receive following data:
+		<br>Tamagawa encoder make-ID in ENID field.
+		<br>Errors and warnings in field name SF(status field)
 		</td>
         <td>CRC success with ENID, SF, CF and CRC values printed in the terminal.</td>
     </tr>
 	<tr>
         <td>Data ID 3</td>
         <td>Data readout(absolute+multiturn+encoder-ID)</td>
-        <td>In this command we will receive :
-		Absolute rotor position value in field name ABS.
-		No. of rotor turns in field name ABM.
-		Tamagawa encoder make-ID in ENID field.
-		Errors and warnings in field name SF(status field)
-		Other warnings in field name ALMC
+        <td>Receive following data:
+		<br>Absolute rotor position value in field name ABS.
+		<br>No. of rotor turns in field name ABM.
+		<br>Tamagawa encoder make-ID in ENID field.
+		<br>Errors and warnings in field name SF(status field)
+		<br>Other warnings in field name ALMC
 		</td>
         <td>CRC success with ABS, ENID, ABM, ALMC, SF, CF and CRC values printed in the terminal.</td>
     </tr>
     <tr>
         <td>Data ID 6</td>
         <td>Writing to EEPROM</td>
-        <td>In this command you provide :
-        Proper address of the EEPROM where you want to write
-		Proper data that you want to write.<br>
-        As a response you recieve:
-        Control Field for EEPROM Write command
-        EEPROM address that you want to write to
-        Data that you want to write to the EEPROM
-        CRC value
+        <td>Transmit following data:
+        <br>Proper address of the EEPROM where you want to write
+		<br>Proper data that you want to write.<br>
+        <br>Receive following data:
+        <br>Control Field for EEPROM Write command
+        <br>EEPROM address that you want to write to
+        <br>Data that you want to write to the EEPROM
+        <br>CRC value
 		</td>
         <td>CRC success with EDF, ADF, CF and CRC values printed in the terminal.</td>
     </tr>
     <tr>
         <td>Data ID D</td>
         <td>Readout from EEPROM</td>
-        <td>In this command you provide :
-        Proper address of the EEPROM that you want to read.<br>
-		As a response you recieve:
-        Control Field for EEPROM Write command
-        EEPROM address that you want to write to
-        Data that you want to write to the EEPROM
-        CRC value
+        <td>Transmit following data:
+        <br>Proper address of the EEPROM that you want to read.<br>
+		<br>Receive following data:
+        <br>Control Field for EEPROM Write command
+        <br>EEPROM address that you want to write to
+        <br>Data that you want to write to the EEPROM
+        <br>CRC value
 		</td>
         <td>CRC success with EDF, ADF, CF and CRC values printed in the terminal.</td>
     </tr>
 	<tr>
         <td>Data ID 7</td>
         <td>Reset-Error</td>
-        <td>This command used to reset errors. </td>
+        <td>This command is used to reset errors. </td>
         <td>CRC success with ABS, SF, CF and CRC values printed in the terminal.</td>
     </tr>
 	<tr>
         <td>Data ID 8</td>
-        <td>Reset- absolute</td>
-        <td>This command used to reset absolute position data(ABS) </td>
+        <td>Reset - absolute</td>
+        <td>This command is used to reset absolute position data(ABS). </td>
         <td>CRC success with ABS, SF, CF and CRC values printed in the terminal.</td>
     </tr>    <tr>
         <td>Data ID C</td>
-        <td>Reset- multiturn</td>
-        <td>This command used to reset multi-turn data(ABM) </td>
+        <td>Reset - multiturn</td>
+        <td>This command is used to reset multi-turn data(ABM). </td>
         <td>CRC success with ABS, SF, CF and CRC values printed in the terminal.</td>
     </tr>
 </table>
-

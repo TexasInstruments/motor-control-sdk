@@ -4,14 +4,14 @@
 
 ## Introduction
 
-BiSS is an open-source digital interface for sensors and actuators. BiSS stands for bidirectional serial synchronous. The BiSS interface was introduced by iC-Haus GmbH as an open-source protocol in 2002. BiSS-C mode is the continuous mode in which the BiSS-C interface master reads out the position data cyclically. Control communication is available for the master to send commands to the encoders and to read and write the encoder local registers. The BiSS interface is used in position-control applications. The interface enables a complete closed-loop position control system by providing the real-time position feedback to the master to control the motor.
+BiSS is an open-source digital interface for sensors and actuators. BiSS stands for bidirectional serial synchronous. The BiSS interface was introduced by iC-Haus GmbH as an open-source protocol in 2002. BiSS-C mode is the continuous mode in which the BiSS-C interface receiver reads out the position data cyclically. Control communication is available for the receiver to send commands to the encoders and to read and write the encoder local registers. The BiSS interface is used in position-control applications. The interface enables a complete closed-loop position control system by providing the real-time position feedback to the receiver to control the motor.
 
-BiSS Safety is a profile definition for BiSS that has been certified by TÜV Rheinland for safety-critical applications up to SIL3 according to IEC61508:2010. BiSS Safety uses the concept of a "Black Channel" transmission and specifies the data channel contents in order to ensure failure mode detection as defined in IEC61784-3 using redundant position words, different CRC polynomials and a sign-of-life counter. BiSS Safety is fully compatible with BiSS and all of its features including line delay compensation, processing times. BiSS Safety is implemented by assuming 2 encoders connected in daisy chain one will send CPW and another one will send SPW. Daisy chaining is also possible on top of safety (2 encoders dedicated safety - one for CPW and another one for SPW) up to 3 encoders per channel.
+BiSS Safety is a profile definition for BiSS that has been certified by TÜV Rheinland for safety-critical applications up to SIL3 according to IEC61508:2010. BiSS Safety uses the concept of a "Black Channel" transmission and specifies the data channel contents in order to ensure failure mode detection as defined in IEC61784-3 using redundant position words, different CRC polynomials and a sign-of-life counter. BiSS Safety is fully compatible with BiSS and all of its features including line delay compensation, processing times. BiSS Safety is implemented by assuming 2 encoders connected in daisy chain, one will send CPW and another one will send SPW. Daisy chaining is also possible on top of safety (2 encoders dedicated safety - one for CPW and another one for SPW) up to 3 encoders per channel.
 
 ## Features Supported
 \cond SOC_AM243X
 
-   -  BiSS-C Interface Master for point-to-point communication
+   -  BiSS-C interface receiver for point-to-point communication
    -  Support for single channel implementation with one encoder
    -  Receive on-the-fly CRC verification of position and control data
    -  Interface speed of 1, 2, 5, 8, and 10 MHz
@@ -57,8 +57,8 @@ BiSS Safety is a profile definition for BiSS that has been certified by TÜV Rhe
    -  Two modes of operation - host trigger and periodic trigger
    -  Support for control communication
    -  Support for automatic processing delay detection and compensation
-   -  Support for multiple encoders connected via daisy-chain configuration (up-to 3 encoders)
-   -  Support for concurrent multi-channel support on a single PRU (up-to 3 identical encoders)
+   -  Support for multiple encoders connected via daisy-chain configuration (up to 3 encoders)
+   -  Support for concurrent multi-channel support on a single PRU (up to 3 identical encoders)
    -  Support for multi-channel encoders of different make under load share model (each of PRU, RTU-PRU, and TX-PRU from one PRU-ICSSG slice handles one channel)
    -  Support for up to 100 meter cable
    -  Readiness for BiSS Safety profile by supporting 16 bit CRC and sign-of-life counter
@@ -67,7 +67,7 @@ BiSS Safety is a profile definition for BiSS that has been certified by TÜV Rhe
 
 \cond SOC_AM261X
 
-   -  BiSS-C Interface Master for point-to-point communication
+   -  BiSS-C interface receiver for point-to-point communication
    -  Support for single channel implementation with one encoder
    -  Receive on-the-fly CRC verification of position and control data
    -  Interface speed of 1, 2, 5, 8, and 10 MHz
@@ -97,8 +97,8 @@ BiSS Safety is a profile definition for BiSS that has been certified by TÜV Rhe
    -  Two modes of operation - host trigger and periodic trigger
    -  Support for control communication
    -  Support for automatic processing delay detection and compensation
-   -  Support for multiple encoders connected via daisy-chain configuration (up-to 3 encoders)
-   -  Support for concurrent multi-channel support on a single PRU (up-to 3 identical encoders)
+   -  Support for multiple encoders connected via daisy-chain configuration (up to 3 encoders)
+   -  Support for concurrent multi-channel support on a single PRU (up to 3 identical encoders)
    -  Support for up to 100 meter cable
    -  Readiness for BiSS Safety profile by supporting 16 bit CRC and sign-of-life counter
 
@@ -106,7 +106,7 @@ BiSS Safety is a profile definition for BiSS that has been certified by TÜV Rhe
 
 \cond (SOC_AM263X || SOC_AM263PX)
 
-   -  BiSS-C Interface Master for point-to-point communication
+   -  BiSS-C interface receiver for point-to-point communication
    -  Support for single channel implementation with one encoder
    -  Receive on-the-fly CRC verification of position and control data
    -  Interface speed of 1, 2, 5, 8, and 10 MHz
@@ -144,8 +144,8 @@ BiSS Safety is a profile definition for BiSS that has been certified by TÜV Rhe
    -  Two modes of operation - host trigger and periodic trigger
    -  Support for control communication
    -  Support for automatic processing delay detection and compensation
-   -  Support for multiple encoders connected via daisy-chain configuration (up-to 3 encoders)
-   -  Support for concurrent multi-channel support on a single PRU (up-to 3 identical encoders)
+   -  Support for multiple encoders connected via daisy-chain configuration (up to 3 encoders)
+   -  Support for concurrent multi-channel support on a single PRU (up to 3 identical encoders)
    -  Support for up to 100 meter cable
    -  Readiness for BiSS Safety profile by supporting 16 bit CRC and sign-of-life counter
 
@@ -154,7 +154,7 @@ BiSS Safety is a profile definition for BiSS that has been certified by TÜV Rhe
 ## Features Not Supported
 
 In general, peripherals or features not mentioned as part of "Features Supported" section are not
-supported in this release, including the below
+supported in this release, including the below:
 -  BISS Line
 -  Independent clocks on multi channel mode.
 
@@ -170,12 +170,11 @@ SysConfig can be used to configure things mentioned below:
 - Configuring PINMUX.
 - Frequency selection.
 - Channel selection.
-- Selecting Multi Channel with Encoders of Different Make using load share mode.
+- Selecting Multi Channel with encoders of different make using load share mode.
 - Enabling SA Mux mode
 - Selecting clock source
 
-\note BiSS-C firmware will only run with ICSSG Core Clock running at 200 MHz or 300 MHz frequency. 225/250/333 MHz values are not supported due to clock divider requirements.
-
+\note BiSS-C firmware supports operation with ICSS Core Clock running at 200 MHz/300 MHz frequency or ICSS UART Clock running at 192 MHz only. ICSS Core Clock at 225/250/333 MHz is not supported due to clock divider requirements.
 \endcond
 
 \cond SOC_AM261X
@@ -189,7 +188,7 @@ SysConfig can be used to configure things mentioned below:
 - Frequency selection.
 - Selecting clock source
 
-\note BiSS-C firmware will only run with ICSS UART Clock running at 160 MHz(when ICSS Core Clock is 225 MHz).
+\note BiSS-C firmware supports operation with ICSS UART Clock running at 160 MHz only, when ICSS Core Clock is 225 MHz due to clock divider requirements.
 
 \endcond
 
@@ -203,6 +202,8 @@ SysConfig can be used to configure things mentioned below:
 - Configuring PINMUX.
 - Frequency selection.
 - Selecting clock source
+
+\note BiSS-C firmware supports operation with ICSS Core Clock running at 200 MHz frequency or ICSS UART Clock running at 192 MHz frequency only.
 
 \endcond
 
@@ -238,7 +239,7 @@ SysConfig can be used to configure things mentioned below:
     <td> PRUx
     <td rowspan="3"> DMEM: 272 Bytes <br>  IMEM: 3484 Bytes
 	<td rowspan="3">IEP0: CMP0, CMP3, CMP5 and CMP6 </td>
-    <td rowspan="3">INTC Signal host interrupt 2,3 & 4 is used to trigger a R5 interrupt</td>
+    <td rowspan="3">INTC Signal host interrupt 2, 3 & 4 is used to trigger a R5 interrupt</td>
     <td rowspan="3">IEP, CMP events and INTC signals are used only in periodic continuous mode.</td>
 </tr>
 <tr>
@@ -285,4 +286,3 @@ SysConfig can be used to configure things mentioned below:
 
 ## API
 \ref BISSC_API_MODULE
-

@@ -2,13 +2,13 @@
 
 [TOC]
 
-This example does trigger based normal current sampling. Normal current Over-sampling Ratio (OSR), Over current OSR and Normal current trigger time can be configured by the user. There are two different examples based on number of %SDFM channels.
+This example does trigger-based normal current sampling. Normal current Over-sampling Ratio (OSR), Over current OSR and Normal current trigger time can be configured by the user. There are two different examples based on number of %SDFM channels.
 
 # Three Channels
 
 Only one core - PRU is used for this example.
 
-The example does the below:
+The example does the following:
 - Set %SDFM channels: Channel 0 - Channel 2
 - Configure normal current sample trigger time (time for read sample) and OSR
 
@@ -16,7 +16,7 @@ The example does the below:
 
 Load share mode of PRU-ICSSG is enabled for this example and three cores - RTU-PRU, PRU and TX-PRU are used for this example.
 
-The example does the below
+The example does the following:
  - Enable load share mode
  - Set %SDFM channels: Channel 0 - Channel 8
  - Configure normal current sample trigger time (time for read sample) and OSR
@@ -75,7 +75,7 @@ The example does the below
 # Steps to Run the Example
 
 ## Hardware Prerequisites
-Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_SETUP_PAGE.html" target="_blank"> EVM Setup </a>, below additional hardware is required to run this demo
+Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_SETUP_PAGE.html" target="_blank"> EVM Setup </a>, the additional hardware listed below is required to run this demo
 - <a href="../TIDEP-01015RevE1.1(001)_Sch.pdf" target="_blank"> TIDEP-01015 3 Axis Board </a>
 - <a href="../MS_TI_EVM_3-AXIS_INTERFACE_BOARD_SCH_REV_E1.pdf" target="_blank"> Interface card connecting EVM and TIDEP-01015 3 Axis </a>
 - Signal generator
@@ -86,7 +86,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 \image html SDFM_HwSetup_image.PNG  "Hardware Setup SDFM"
 \image html SDFM_EVM_HW_setup.png  "SDFM: EVM and 3axis board setup view"
 \cond SOC_AM243X
-### Hardware Prerequisities for LP
+### Hardware Prerequisites for LP
 - AMC1035EVM
 - <a href="https://www.ti.com/tool/LP-AM243" target="_blank"> LP-AM243 Board </a>
 - Signal generator
@@ -144,7 +144,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 <tr>
         <td>3. To check Raw data for Double Update</td>
         <td>1. Set NC OSR to 64</td>
-        <td>The drawn graphs and raw data should look like attached image</td>
+        <td>The drawn graphs and raw data should look like the attached image</td>
 </tr>
 <tr>
         <td></td>
@@ -174,7 +174,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 <tr>
         <td></td>
         <td></td>
-        <td>The pattern of the graph should be different from the single update graph. It takes 2 samples in one EPWM cycle so the graph pattern should look more like a sine wave compare to single update graph</td>
+        <td>The pattern of the graph should be different from the single update graph. It takes 2 samples in one EPWM cycle so the graph pattern should look more like a sine wave compared to the single update graph</td>
 </tr>
 
 <tr>
@@ -201,7 +201,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 </tr>
 <tr>
         <td></td>
-        <td>2. Set High Threshold to 3500 and low threshold to 2500 (low and high threshold value should be configured based on raw data resolution for 16 OSR) </td>
+        <td>2. Set High Threshold to 3500 and low threshold to 2500 (low and high threshold values should be configured based on raw data resolution for 16 OSR) </td>
         <td></td>
 </tr>
 
@@ -311,12 +311,12 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
  </tr>
 <tr>
         <td></td>
-        <td>4. Set zero cross threshold vales to 1700 {value should be between max sampled value and min sampled value for 16 OSR}</td>
+        <td>4. Set zero cross threshold values to 1700 {value should be between max sampled value and min sampled value for 16 OSR}</td>
         <td>\image html SDFM_Zero_cross_GPIO_output.png "Zero cross GPIO behaviour" </td>
  </tr>
 <tr>
         <td></td>
-        <td>5. probe ch0 zero cross GPIO pins and input SD analog signal</td>
+        <td>5. Probe ch0 zero cross GPIO pins and input SD analog signal</td>
         <td></td>
 </tr>
 <tr>
@@ -333,12 +333,12 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 
 <tr>
         <td>10.Testing with sdfm clock from EPWM </td>
-        <td>1. Make hardware set up like attached image </td>
-        <td>All test cases results should match with ECAP test case results</td>
+        <td>1. Make hardware setup like attached image </td>
+        <td>All test case results should match with ECAP test case results</td>
  </tr>
 <tr>
         <td></td>
-        <td>2. \image html SDFM_EPWM1_HW_Setup.png "SDFM: Hw set for clock from EPWM"</td>
+        <td>2. \image html SDFM_EPWM1_HW_Setup.png "SDFM: HW set for clock from EPWM"</td>
         <td></td>
  </tr>
  <tr>
@@ -348,7 +348,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
  </tr>
  <tr>
         <td></td>
-        <td>4. Set EPWM1 out put frequency to 12.5MHz or 5MHz in app_sdfm.c file</td>
+        <td>4. Set EPWM1 output frequency to 12.5MHz or 5MHz in app_sdfm.c file</td>
         <td></td>
  </tr>
  <tr>
@@ -371,7 +371,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
  <tr>
         <td>11. To test EPWM Synchronization source</td>
         <td>1. Set synchronization source to EPWM3 </td>
-        <td> All test cases sh </td>
+        <td> All test cases should work properly </td>
 </tr>
 <tr>
         <td></td>
@@ -421,7 +421,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 </tr>
 
 <tr>
-        <td>13. To test S%DFM clock generation from ICSSG PRU GPO1</td>
+        <td>13. To test %SDFM clock generation from ICSSG PRU GPO1</td>
         <td>1. Set `SDCLK Generation From` to PRU-ICSSG (PRG<k>_PRU1/0_GPI1) </td>
         <td></td>
 </tr>
@@ -444,7 +444,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 <tr>
         <td></td>
         <td>2. %SDFM Clock to 20MHz </td>
-        <td> Generated clock should come out on two pins corresponding SYNC0 and SYNC1</td>
+        <td> Generated clock should come out on two pins corresponding to SYNC0 and SYNC1</td>
 </tr>
 <tr>
         <td></td>
