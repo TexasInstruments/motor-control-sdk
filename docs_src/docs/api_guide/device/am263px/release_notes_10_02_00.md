@@ -280,7 +280,14 @@ Mbed-TLS                | R5F            | 2.13.1
     <td> BiSS-C/Nikon: SysConfig shows option for load share mode
     <td> Position Sense BiSS-C, Position Sense Nikon A-format
     <td> 10.0 onwards
-    <td> This option which is not relevant for AM263Px
+    <td> This option is not relevant for AM263Px
+</tr>
+<tr>
+    <td> PINDSW-9385
+    <td> EnDat: Recovery time does not work with EnDat 2.2 supplementary commands for certain EnDat frequencies
+    <td> Position Sense EnDat
+    <td> 10.0 onwards
+    <td> -
 </tr>
 </table>
 
