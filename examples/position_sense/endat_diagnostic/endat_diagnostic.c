@@ -63,7 +63,7 @@
 /* Size of the TX PRU instruction memory in bytes.*/
 #define TXPRU_IRAM_SIZE   ( 6 * 1024 )    /* 6KB */
 
-#if (PRU_ICSSGx_PRU_SLICE == 1)
+#if (PRUICSS_PRUx == 1)
 #define PRUICSS_PRUx PRUICSS_PRU1
 #ifndef PRUICSSM
 #define PRUICSS_TXPRUx PRUICSS_TX_PRU1
@@ -77,10 +77,10 @@
 #endif
 #endif
 
-#define PRUICSS_SLICEx PRU_ICSSGx_PRU_SLICE
+#define PRUICSS_SLICEx PRUICSS_PRUx
 
 #if CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU
-#if PRU_ICSSGx_PRU_SLICE == 1
+#if PRUICSS_PRUx == 1
 #include <endat_receiver_multi_pru1_bin.h>
 #else
 #include <endat_receiver_multi_pru0_bin.h>
@@ -88,7 +88,7 @@
 #endif
 
 #if (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
-#if PRU_ICSSGx_PRU_SLICE == 1
+#if PRUICSS_PRUx == 1
 #include <endat_receiver_multi_rtu_pru1_bin.h>
 #include <endat_receiver_multi_pru1_bin.h>
 #include <endat_receiver_multi_tx_pru1_bin.h>
@@ -100,7 +100,7 @@
 #endif
 
 #if CONFIG_ENDAT0_MODE == ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU
-#if PRU_ICSSGx_PRU_SLICE == 1
+#if PRUICSS_PRUx == 1
 #include <endat_receiver_pru1_bin.h>
 #else
 #include <endat_receiver_pru0_bin.h>
@@ -398,8 +398,24 @@ static void endat_pruicss_init(void)
 
         PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C30, ((0x40300000 & 0x00FFFF00) >> 8));
         PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_RTUPRUx, PRUICSS_CONST_TBL_ENTRY_C30, ((0x40300000 & 0x00FFFF00) >> 8));
-        /*Set in constant table C29 for  tx pru*/
-        PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0x258);
+    /*
+    * Set the constant table C28 for tx pru
+    * configuring the constant table C28 to point to the TX counter
+    * register (CNTR). The counter is needed in firmware for adding waits and time stemps.
+    */
+#if PRUICSSx == 1
+#if PRUICSS_PRUx == 1
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0xA58);
+#else
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0xA50);
+#endif // PRUICSS_PRUx == 1
+#else
+#if PRUICSS_PRUx == 1
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0x258);
+#else
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0x250);
+#endif // PRUICSS_PRUx == 1
+#endif // PRUICSSx == 1
 #endif
 
      /* clear ICSS0 PRU1 data RAM */
@@ -2471,7 +2487,7 @@ void endat_main(void *args)
     endat_clk_config. tx_clock_source = TX_FIFO_CLOCK_SOURCE;
 
 
-    #if (PRU_ICSSGx_PRU_SLICE == 1)
+    #if (PRUICSS_PRUx == 1)
         priv = endat_init((struct endat_pruss_xchg *)((PRUICSS_HwAttrs *)(
                           gPruIcssXHandle->hwAttrs))->pru1DramBase, &gEndatChInfo, gEndatChInfoGlobalAddr, pruicss_cfg, pruicss_iep, PRUICSS_SLICEx, &endat_clk_config);
 

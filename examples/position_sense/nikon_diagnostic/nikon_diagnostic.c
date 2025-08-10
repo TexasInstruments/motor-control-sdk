@@ -296,17 +296,25 @@ static void nikon_pruicss_init(void)
         DebugP_assert(SystemP_SUCCESS == status);
         status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_TXPRUx);
         DebugP_assert(SystemP_SUCCESS == status);
-        /*Set in constant table C28 for  tx pru*/
-        if(CONFIG_PRU_ICSS0)
-        {
-            /*ICSSG_PRU_CONTROL registers offset for ICSSG1 is 0xA58 */
-            PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0xA58);
-        }
-        else
-        {
-            /*ICSSG_PRU_CONTROL registers offset for ICSSG0 is 0x258 */
-            PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0x258);
-        }
+    /*
+    * Set the constant table C28 for tx pru
+    * configuring the constant table C28 to point to the TX counter
+    * register (CNTR). The counter is needed in firmware for adding waits and time stemps.
+    */
+#if PRUICSSx == 1
+#if PRUICSS_PRUx == 1
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0xA58);
+#else
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0xA50);
+#endif // PRUICSS_PRUx == 1
+#else
+#if PRUICSS_PRUx == 1
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0x258);
+#else
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0x250);
+#endif // PRUICSS_PRUx == 1
+#endif // PRUICSSx == 1
+
     }
     status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_PRUx);
     DebugP_assert(SystemP_SUCCESS == status);

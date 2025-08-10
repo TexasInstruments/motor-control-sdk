@@ -69,7 +69,7 @@
 #define PRU_CORE_CLK CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ
 
 #if (PRU_CORE_CLK==PRU_CLK_FREQ_225M)
-#if PRU_ICSSGx_PRU_SLICE == 1
+#if PRUICSS_PRUx == 1
 #include <position_sense/hdsl/firmware/freerun_225_mhz/hdsl_receiver_freerun_225_mhz_pru1_bin.h>
 #include <position_sense/hdsl/firmware/sync_225_mhz/hdsl_receiver_sync_225_mhz_pru1_bin.h>
 #else
@@ -86,7 +86,7 @@
 #define DIV_FACTOR_NORMAL 31
 /* Divide factor for oversampled clock (default value for 300 MHz=3) */
 #define DIV_FACTOR_OVERSAMPLED 3
-#if PRU_ICSSGx_PRU_SLICE == 1
+#if PRUICSS_PRUx == 1
 #include <position_sense/hdsl/firmware/multichannel_ch0/hdsl_receiver_multichannel_rtu_pru1_bin.h>
 #include <position_sense/hdsl/firmware/multichannel_ch0_sync_mode/hdsl_receiver_multichannel_sync_mode_rtu_pru1_bin.h>
 #include <position_sense/hdsl/firmware/multichannel_ch1/hdsl_receiver_multichannel_pru1_bin.h>
@@ -122,7 +122,7 @@
 #include <board/ioexp/ioexp_tca6424.h>
 #endif
 
-#define PRUICSS_PRUx  PRU_ICSSGx_PRU_SLICE
+#define PRUICSS_PRUx  PRUICSS_PRUx
 #define PRUICSS_TX_PRUx    PRUICSS_PRUx + 4
 #define PRUICSS_RTU_PRUx   PRUICSS_PRUx + 2
 /* Oversample rate 8*/

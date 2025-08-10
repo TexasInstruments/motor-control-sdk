@@ -69,7 +69,7 @@
 
 #define  `instance.$name`_MODE             `Mode`
 #define `instance.$name`_BOOSTER_PACK     `instance.Booster_Pack & 1`
-#define  PRU_ICSSGx_PRU_SLICE            `Slice`
+#define  PRUICSS_PRUx                     `Slice`
 #define  PRUICSSx                          (`icssInst`)
 
 #define RX_FIFO_CLOCK_SOURCE             `instance.Rx_Clk_Source`
