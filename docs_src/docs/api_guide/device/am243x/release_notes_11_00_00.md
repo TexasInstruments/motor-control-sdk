@@ -23,6 +23,7 @@ Support for up to 8 encoders in bus connection                                  
 Independent IEP events for each axis in load share mode                                         | Position Sense Nikon A-format
 Enabled configuration of IEP1 independently                                                     | PRU-ICSS PWM
 Refactor the examples, renamed the old example to snoop mode based example and added new examples for shadow mode which does not use snoop mode | Current Sense %SDFM
+Single R5 core example for dual-servo motor drive reference design based on Universal Motor Control similar to other Sitara/C2000 devices. | TIDEP-01032 EtherCAT-Connected Single-Chip Dual-Servo Motor Drive Reference Design
 SFRA Library                                                                                    | Real Time Libraries
 Datalog Library and Example                                                                     | Real Time Libraries
 
@@ -499,6 +500,13 @@ previous SDK version. Also refer to older SDK version release notes to see chang
     <td> -
     <td> Moved examples/dcl, examples/sfra, examples/transforms, examples/utilities to examples/rtlibs folder
     <td> All examples using Real Time Libraries are updated to use new path
+</tr>
+</table>
+<tr>
+    <td> Reference Design
+    <td> Example: TIDEP-01032 EtherCAT-Connected Single-Chip Dual-Servo Motor Drive Reference Design
+    <td> Refactored the software and FOC implementation based on universal motor control, similar to other Sitara/C2000 devices.
+    <td> -
 </tr>
 <tr>
     <td> Current Sense %SDFM

@@ -115,8 +115,6 @@
             --ram_model
             --reread_libs
         "
-
-
         enableSysConfigTool="true"
         sysConfigBuildOptions="
             --context r5fss0-0 --part ALX --package ALX
