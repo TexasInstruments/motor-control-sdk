@@ -49,13 +49,13 @@ static HwiP_Object gIcssEncoderHwiObject0;  /* ICSS NIKON PRU FW HWI */
 struct nikon_priv *priv;
 /* ICSS Interrupt settings */
 #ifdef PRUICSSM
-#if (PRUICSSx == 1)
+#if (CONFIG_NIKON0_PRUICSSx == 1)
 #define ICSS_PRU_NIKON_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_0 )
 #else
 #define ICSS_PRU_NIKON_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_0 )
 #endif
 #else
-#if (PRUICSSx == 1)
+#if (CONFIG_NIKON0_PRUICSSx == 1)
 #define ICSS_PRU_NIKON_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_0 )
 #else
 #define ICSS_PRU_NIKON_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_0 )
@@ -69,7 +69,7 @@ void *gPruIcss_iep;
 PRUICSS_Handle gPruIcssXHandle;
 
 /* ICSS INTC configuration */
-#if(PRUICSSx == 1)
+#if(CONFIG_NIKON0_PRUICSSx == 1)
 extern PRUICSS_IntcInitData icss1_intc_initdata;
 #else
 extern PRUICSS_IntcInitData icss0_intc_initdata;
@@ -159,7 +159,7 @@ uint32_t nikon_config_periodic_mode(struct nikon_periodic_interface *nikon_perio
     /*configure IEP*/
     nikon_config_iep(nikon_periodic_interface);
     /* Initialize ICSS INTC */
-#if(PRUICSSx == 1)
+#if(CONFIG_NIKON0_PRUICSSx == 1)
     status = PRUICSS_intcInit(gPruIcssXHandle, &icss1_intc_initdata);
     if (status != SystemP_SUCCESS)
     {

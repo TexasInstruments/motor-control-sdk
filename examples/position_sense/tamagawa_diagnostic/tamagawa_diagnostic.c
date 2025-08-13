@@ -106,14 +106,14 @@ TaskP_Object gTaskObject;
 #endif
 
 #if ((CONFIG_TAMAGAWA0_CHANNEL0 + CONFIG_TAMAGAWA0_CHANNEL1 + CONFIG_TAMAGAWA0_CHANNEL2) == 1)
-#if PRUICSS_PRUx == 1
+#if CONFIG_TAMAGAWA0_PRUICSS_PRUx == 1
 #include <tamagawa_receiver_single_channel_pru1_bin.h>
 #else
 #include <tamagawa_receiver_single_channel_pru0_bin.h>
 #endif
 #endif
 #if ((CONFIG_TAMAGAWA0_CHANNEL0 + CONFIG_TAMAGAWA0_CHANNEL1 + CONFIG_TAMAGAWA0_CHANNEL2) > 1)
-#if PRUICSS_PRUx == 1
+#if CONFIG_TAMAGAWA0_PRUICSS_PRUx == 1
 #include <tamagawa_receiver_multi_channel_pru1_bin.h>
 #else
 #include <tamagawa_receiver_multi_channel_pru0_bin.h>
@@ -266,9 +266,9 @@ void lp_bp_mux_mode_config()
 void tamagawa_pruicss_init(void)
 {
     gPruIcssXHandle = PRUICSS_open(CONFIG_PRU_ICSS0);
-    /* PRUICSS_PRUx holds value 0 or 1 depending on whether we are using PRU0 or PRU1 slice */
-    PRUICSS_initMemory(gPruIcssXHandle, PRUICSS_DATARAM(PRUICSS_PRUx));
-    PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_PRUx);
+    /* CONFIG_TAMAGAWA0_PRUICSS_PRUx holds value 0 or 1 depending on whether we are using PRU0 or PRU1 slice */
+    PRUICSS_initMemory(gPruIcssXHandle, PRUICSS_DATARAM(CONFIG_TAMAGAWA0_PRUICSS_PRUx));
+    PRUICSS_disableCore(gPruIcssXHandle, CONFIG_TAMAGAWA0_PRUICSS_PRUx);
 #ifdef CONFIG_TAMAGAWA0_G_MUX_EN
     PRUICSS_setSaMuxMode(gPruIcssXHandle, PRUICSS_SA_MUX_MODE_SD_ENDAT);
 #endif
@@ -281,12 +281,12 @@ void tamagawa_pruicss_init(void)
 
 void tamagawa_pruicss_load_run_fw(void)
 {
-    PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_PRUx);
+    PRUICSS_disableCore(gPruIcssXHandle, CONFIG_TAMAGAWA0_PRUICSS_PRUx);
     /*Load firmware. Set buffer = write to Pru memory */
-    PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_PRUx),0, (uint32_t *) TamagawaFirmware_0,sizeof(TamagawaFirmware_0));
-    PRUICSS_resetCore(gPruIcssXHandle, PRUICSS_PRUx);
+    PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(CONFIG_TAMAGAWA0_PRUICSS_PRUx),0, (uint32_t *) TamagawaFirmware_0,sizeof(TamagawaFirmware_0));
+    PRUICSS_resetCore(gPruIcssXHandle, CONFIG_TAMAGAWA0_PRUICSS_PRUx);
     /*Run firmware */
-    PRUICSS_enableCore(gPruIcssXHandle, PRUICSS_PRUx);
+    PRUICSS_enableCore(gPruIcssXHandle, CONFIG_TAMAGAWA0_PRUICSS_PRUx);
 }
 
 void tamagawa_display_result(struct tamagawa_priv *priv, int32_t cmd)
@@ -656,13 +656,13 @@ void tamagawa_main(void *args)
     pruicss_cfg = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->cfgRegBase);
     pruicss_iep  = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->iep0RegBase);
 
-    if(PRUICSS_PRUx == 0)
+    if(CONFIG_TAMAGAWA0_PRUICSS_PRUx == 0)
     {
         slice_value = 0;
     }
 
     /* Initialize the priv structure according to the PRUx slice selected */
-#if PRUICSS_PRUx
+#if CONFIG_TAMAGAWA0_PRUICSS_PRUx
     priv = tamagawa_init((struct tamagawa_xchg *)(
         (PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->pru1DramBase, pruicss_cfg,pruicss_iep,slice_value);
 #else
@@ -675,8 +675,8 @@ void tamagawa_main(void *args)
     priv->pru_uart_clock = ICSS_PRU_UART_CLOCK;
 
 
-    priv->rx_clock_source = RX_FIFO_CLOCK_SOURCE;
-    priv->tx_clock_source = TX_FIFO_CLOCK_SOURCE;
+    priv->rx_clock_source = CONFIG_TAMAGAWA0_RX_FIFO_CLOCK_SOURCE;
+    priv->tx_clock_source = CONFIG_TAMAGAWA0_TX_FIFO_CLOCK_SOURCE;
 
 
     DebugP_log("\r\n\nTamagawa PRU-ICSS init done\n\n");

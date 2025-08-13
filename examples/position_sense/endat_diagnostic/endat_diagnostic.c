@@ -63,7 +63,9 @@
 /* Size of the TX PRU instruction memory in bytes.*/
 #define TXPRU_IRAM_SIZE   ( 6 * 1024 )    /* 6KB */
 
-#if (PRUICSS_PRUx == 1)
+#define PRUICSS_SLICEx CONFIG_ENDAT0_PRUICSS_PRUx
+
+#if (PRUICSS_SLICEx == 1)
 #define PRUICSS_PRUx PRUICSS_PRU1
 #ifndef PRUICSSM
 #define PRUICSS_TXPRUx PRUICSS_TX_PRU1
@@ -77,10 +79,10 @@
 #endif
 #endif
 
-#define PRUICSS_SLICEx PRUICSS_PRUx
+
 
 #if CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU
-#if PRUICSS_PRUx == 1
+#if PRUICSS_SLICEx == 1
 #include <endat_receiver_multi_pru1_bin.h>
 #else
 #include <endat_receiver_multi_pru0_bin.h>
@@ -88,7 +90,7 @@
 #endif
 
 #if (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
-#if PRUICSS_PRUx == 1
+#if PRUICSS_SLICEx == 1
 #include <endat_receiver_multi_rtu_pru1_bin.h>
 #include <endat_receiver_multi_pru1_bin.h>
 #include <endat_receiver_multi_tx_pru1_bin.h>
@@ -100,7 +102,7 @@
 #endif
 
 #if CONFIG_ENDAT0_MODE == ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU
-#if PRUICSS_PRUx == 1
+#if PRUICSS_SLICEx == 1
 #include <endat_receiver_pru1_bin.h>
 #else
 #include <endat_receiver_pru0_bin.h>
@@ -187,13 +189,13 @@ TaskP_Object gTaskObject;
 #define ICSS_PRU_CORE_CLOCK CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ
 #define ENDAT_INPUT_CLOCK_UART_FREQUENCY CONFIG_PRU_ICSS0_UART_CLK_FREQ_HZ
 
-#if RX_FIFO_CLOCK_SOURCE == 1
+#if CONFIG_ENDAT0_RX_FIFO_CLOCK_SOURCE == 1
 #define ENDAT_RX_INPUT_CLOCK_FREQUENCY ICSS_PRU_CORE_CLOCK
 #else
 #define ENDAT_RX_INPUT_CLOCK_FREQUENCY ENDAT_INPUT_CLOCK_UART_FREQUENCY
 #endif
 
-#if TX_FIFO_CLOCK_SOURCE == 1
+#if CONFIG_ENDAT0_RX_FIFO_CLOCK_SOURCE == 1
 #define ENDAT_TX_INPUT_CLOCK_FREQUENCY ICSS_PRU_CORE_CLOCK
 #else
 #define ENDAT_TX_INPUT_CLOCK_FREQUENCY ENDAT_INPUT_CLOCK_UART_FREQUENCY
@@ -403,19 +405,19 @@ static void endat_pruicss_init(void)
     * configuring the constant table C28 to point to the TX counter
     * register (CNTR). The counter is needed in firmware for adding waits and time stemps.
     */
-#if PRUICSSx == 1
-#if PRUICSS_PRUx == 1
+#if CONFIG_ENDAT0_PRUICSSx == 1
+#if PRUICSS_SLICEx == 1
     PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0xA58);
 #else
     PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0xA50);
-#endif // PRUICSS_PRUx == 1
+#endif /* PRUICSS_SLICEx == 1 */
 #else
-#if PRUICSS_PRUx == 1
+#if PRUICSS_SLICEx == 1
     PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0x258);
 #else
     PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0x250);
-#endif // PRUICSS_PRUx == 1
-#endif // PRUICSSx == 1
+#endif /* PRUICSS_SLICEx == 1 */
+#endif /* CONFIG_ENDAT0_PRUICSSx == 1 */
 #endif
 
      /* clear ICSS0 PRU1 data RAM */
@@ -2483,11 +2485,11 @@ void endat_main(void *args)
     /*3 channel pheripheral clock configuration*/
     endat_clk_config.pru_clock = icssClk;
     endat_clk_config.pru_uart_clock = ENDAT_INPUT_CLOCK_UART_FREQUENCY;
-    endat_clk_config.rx_clock_source = RX_FIFO_CLOCK_SOURCE;
-    endat_clk_config. tx_clock_source = TX_FIFO_CLOCK_SOURCE;
+    endat_clk_config.rx_clock_source = CONFIG_ENDAT0_RX_FIFO_CLOCK_SOURCE;
+    endat_clk_config. tx_clock_source = CONFIG_ENDAT0_RX_FIFO_CLOCK_SOURCE;
 
 
-    #if (PRUICSS_PRUx == 1)
+    #if (PRUICSS_SLICEx == 1)
         priv = endat_init((struct endat_pruss_xchg *)((PRUICSS_HwAttrs *)(
                           gPruIcssXHandle->hwAttrs))->pru1DramBase, &gEndatChInfo, gEndatChInfoGlobalAddr, pruicss_cfg, pruicss_iep, PRUICSS_SLICEx, &endat_clk_config);
 

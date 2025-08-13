@@ -50,13 +50,13 @@ static HwiP_Object gIcssgEncoderHwiObject0;  /* ICSSG Tamagawa PRU FW HWI */
 
 /* ICSSG Interrupt settings */
 #if (SOC_AM261X || SOC_AM263PX || SOC_AM263X)
-#if (PRUICSSx == 1)
+#if (CONFIG_TAMAGAWA0_PRUICSSx == 1)
 #define ICSS_PRU_TAMAGAWA_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_0 )
 #else
 #define ICSS_PRU_TAMAGAWA_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_0 )
 #endif
 #else
-#if (PRUICSSx == 1)
+#if (CONFIG_TAMAGAWA0_PRUICSSx == 1)
 #define ICSS_PRU_TAMAGAWA_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_0 )
 #else
 #define ICSS_PRU_TAMAGAWA_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_0 )
@@ -70,7 +70,7 @@ void *gPruss_iep;
 PRUICSS_Handle gPruIcssXHandle;
 
 /* ICSS INTC configuration */
-#if (PRUICSSx == 1)
+#if (CONFIG_TAMAGAWA0_PRUICSSx == 1)
     extern PRUICSS_IntcInitData icss1_intc_initdata;
 #else
     extern PRUICSS_IntcInitData icss0_intc_initdata;
@@ -159,7 +159,7 @@ uint32_t  tamagawa_config_periodic_mode(struct tamagawa_periodic_interface *tama
     tamagawa_config_iep(tamagawa_periodic_interface);
     /* Initialize ICSS INTC */
     /*am261x does not support periodic mode*/
-#if (PRUICSSx == 1)
+#if (CONFIG_TAMAGAWA0_PRUICSSx == 1)
     status = PRUICSS_intcInit(gPruIcssXHandle, &icss1_intc_initdata);
     if (status != SystemP_SUCCESS)
     {
