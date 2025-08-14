@@ -61,20 +61,20 @@ SysConfig can be used to configure the following:
     <th> Description
 </tr>
 <tr>
-    <td> Single Channel Mode
+    <td> Single channel
     <td> PRUx
     <td> DMEM: 1773 Bytes (256B for HDSL Registers per channel + 1517B for LUTs) <br>  IMEM: 7284 Bytes
 	<td> IEP1: CMP1
-    <td> INTC Signal host interrupt event 19 is used to trigger a R5 interrupt
+    <td> INTC event/input numbers 16, 18, 19, 20, 21, 22 (pr[0/1]_pru_mst_intr[0/2/3/4/5/6]_intr_req) are used to trigger a R5 interrupts for EVENT, V-frame, H-frame, EVENT_S and H-frame respectively </td>
     <td> IEP, CMP events and INTC signal are used only in periodic continuous mode.
 </tr>
 <tr>
-    <td rowspan="3"> Multi Channel Load Share Mode
+    <td rowspan="3"> Multi-channel with load share across 3 PRU cores
     <td> PRUx
     <td rowspan="3"> DMEM: 2285 Bytes ((256B for HDSL Registers per channel)*3 + 1517B for LUTs) <br>  IMEM: 7428 Bytes
 	<td rowspan="3"> IEP1: CMP1 </td>
-    <td rowspan="3">INTC Signal host interrupt event 19 is used to trigger a R5 interrupt</td>
-    <td rowspan="3">IEP, CMP events and INTC signal are used only in periodic continuous mode.</td>
+    <td rowspan="3"> INTC event/input numbers 16, 18, 19, 20, 21, 22 (pr[0/1]_pru_mst_intr[0/2/3/4/5/6]_intr_req) are used to trigger a R5 interrupts for EVENT, V-frame, H-frame, EVENT_S and H-frame respectively </td>
+    <td rowspan="3"> IEP, CMP events and INTC signal are used only in periodic continuous mode.</td>
 </tr>
 <tr>
     <td> RTU_PRUx
@@ -99,11 +99,11 @@ SysConfig can be used to configure the following:
     <th> Description
 </tr>
 <tr>
-    <td> Single Channel Mode
+    <td> Single channel
     <td> PRUx
     <td> DMEM: 1773 Bytes (256B for HDSL Registers per channel + 1517B for LUTs) <br>  IMEM: ~7.4 kB (Sync Mode), ~6.9 kB (Free Run Mode)
 	<td> IEP0: CMP1
-    <td> INTC Signal host interrupt event 19 is used to trigger a R5 interrupt
+    <td> INTC event/input numbers 16, 18, 19, 20, 21, 22 (pr[0/1]_pru_mst_intr[0/2/3/4/5/6]_intr_req) are used to trigger a R5 interrupts for EVENT, V-frame, H-frame, EVENT_S and H-frame respectively </td>
     <td> IEP, CMP events and INTC signal are used only in periodic continuous mode.
 </tr>
 </table>

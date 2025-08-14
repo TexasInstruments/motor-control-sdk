@@ -219,28 +219,28 @@ SysConfig can be used to configure things mentioned below:
     <th> Description
 </tr>
 <tr>
-    <td> Single Channel Mode
+    <td> Single channel
     <td> PRUx
     <td> DMEM: 272 Bytes <br>  IMEM: 3080 Bytes
 	<td> IEP0: CMP0 and CMP3
-    <td> INTC Signal host interrupt 2 is used to trigger a R5 interrupt
+    <td> INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger a R5 interrupt </td>
     <td> IEP, CMP events and INTC signal are used only in periodic continuous mode.
 </tr>
 <tr>
-    <td> Multi Channel Single PRU Mode
+    <td> Multi-channel with single PRU core
     <td> PRUx
     <td> DMEM: 272 Bytes <br>  IMEM: 3380 Bytes
 	<td> IEP0: CMP0 and CMP3
-    <td> INTC Signal host interrupt 2 is used to trigger a R5 interrupt
+    <td> INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger a R5 interrupt </td>
     <td> IEP, CMP events and INTC signal are used only in periodic continuous mode.
 </tr>
 <tr>
-    <td rowspan="3"> Multi Channel Load Share Mode
+    <td rowspan="3"> Multi-channel with load share across 3 PRU cores
     <td> PRUx
     <td rowspan="3"> DMEM: 272 Bytes <br>  IMEM: 3484 Bytes
-	<td rowspan="3">IEP0: CMP0, CMP3, CMP5 and CMP6 </td>
-    <td rowspan="3">INTC Signal host interrupt 2, 3 & 4 is used to trigger a R5 interrupt</td>
-    <td rowspan="3">IEP, CMP events and INTC signals are used only in periodic continuous mode.</td>
+	<td rowspan="3"> IEP0: CMP0, CMP3, CMP5 and CMP6 </td>
+    <td rowspan="3"> INTC event/input number 18, 19 and 20 (pr[0/1]_pru_mst_intr[2/3/4]_intr_req) is used to trigger a R5 interrupt </td>
+    <td rowspan="3"> IEP, CMP events and INTC signals are used only in periodic continuous mode.</td>
 </tr>
 <tr>
     <td> RTU_PRUx
@@ -265,11 +265,11 @@ SysConfig can be used to configure things mentioned below:
     <th> Description
 </tr>
 <tr>
-    <td> Single Channel Mode
+    <td> Single channel
     <td> PRUx
     <td> DMEM: 272 Bytes <br>  IMEM: 3080 Bytes
 	<td> IEP0: CMP0 and CMP3
-    <td> INTC Signal host interrupt 2 is used to trigger a R5 interrupt
+    <td> INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger a R5 interrupt </td>
     <td> IEP, CMP events and INTC signal are used only in periodic continuous mode.
 </tr>
 </table>

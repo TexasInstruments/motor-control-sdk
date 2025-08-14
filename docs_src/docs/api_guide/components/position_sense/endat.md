@@ -113,30 +113,36 @@ SysConfig can be used to configure things mentioned below:
    <th>Description</th>
 </tr>
 <tr>
-   <td>Single Channel Configuration</td>
+   <td>Single channel</td>
    <td>PRUx</td>
    <td>DMEM: 160 Bytes <br>  IMEM: 5.4 KB </td>
    <td>IEP0: CMP0 and CMP3 </td>
-   <td>INTC Signal No. 18 is used to trigger a R5 interrupt </td>
+   <td>INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger a R5 interrupt </td>
    <td>IEP, CMP events and INTC signal are used only in periodic continuous mode.</td>
 </tr>
 \cond SOC_AM243X || SOC_AM64X
 <tr>
-   <td>Multi Channel Configuration with single PRU core</td>
+   <td>Multi-channel with single PRU core</td>
    <td>PRUx</td>
    <td>DMEM: 160 Bytes <br>  IMEM: 6.2 KB </td>
    <td>IEP0: CMP0 and CMP3 </td>
-   <td>INTC Signal No. 18 is used to trigger a R5 interrupt</td>
+   <td>INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger a R5 interrupt </td>
    <td>IEP, CMP events and INTC signal are used only in periodic continuous mode <br> \note Multi-Channel single PRU firmware requires more than 6KB IMEM, so it cannot run on TX PRU
     </td>
 </tr>
 <tr>
-   <td>Multi Channel Configuration with load share</td>
-   <td>PRUx, TXPRUx, RTUPRUx</td>
-   <td>DMEM: 160 Bytes <br>  PRU_IMEM: 4 KB <br>  RTU_IMEM: 4 KB <br>  TX_IMEM: 4 KB</td>
-   <td>IEP0: CMP0, CMP3, CMP5 and CMP6 </td>
-   <td>INTC Signal No. 18, 19 and 20 are used to trigger R5 interrupts.</td>
-   <td>IEP, CMP events and INTC signals are used only in periodic continuous mode.</td>
+    <td rowspan="3">Multi-channel with load share across 3 PRU cores
+    <td>PRUx
+    <td rowspan="3">DMEM: 160 Bytes <br>  PRU_IMEM: 4 KB <br>  RTU_IMEM: 4 KB <br>  TX_IMEM: 4 KB</td>
+    <td rowspan="3">IEP0: CMP0, CMP3, CMP5 and CMP6 </td>
+    <td rowspan="3">INTC event/input number 18, 19 and 20 (pr[0/1]_pru_mst_intr[2/3/4]_intr_req) is used to trigger a R5 interrupt </td>
+    <td rowspan="3">IEP, CMP events and INTC signals are used only in periodic continuous mode.</td>
+</tr>
+<tr>
+    <td> RTU_PRUx
+</tr>
+<tr>
+    <td> TX_PRUx
 </tr>
 \endcond
 </table>
