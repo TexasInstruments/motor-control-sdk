@@ -1,4 +1,4 @@
-# PRU-ICSS PWM(R5F Based and PRU Based Control) {#PRUICSS_PWM}
+# PRU-ICSS PWM {#PRUICSS_PWM}
 
 [TOC]
 
@@ -20,13 +20,9 @@
 - Configuration of PWM Glitch Filter with Debounce Value
 - Configuration of PWM Deadband
 - Configuration of Tripzone output block to mask trip errors inputs
+- Driver APIs to program Initial, Trip, Active states of PWM outputs
 
-# PRU-ICSS PWM control using R5F
-
-The PRU-ICSS PWM driver provides API to program Initial, Trip, Active states of PWM outputs.
-Above are the high level features supported by the driver.
-
-## SysConfig Features supported for R5F based PRU-ICSS PWM control
+## SysConfig Features supported
 
 @VAR_SYSCFG_USAGE_NOTE
 
@@ -37,30 +33,34 @@ SysConfig can be used to configure things mentioned below:
 - Configuration of Duty cycle to each of the PWM outputs
 - Configuration of Fall edge and Rise edge delay which inserts deadband
 
-## Features NOT Supported in R5F based PRU-ICSS PWM control
+## Features NOT Supported
 
 - Generate PWM outputs with distinct time period, which means all PRUICSS PWM outputs are generated with same frequency controlled by IEP compare 0 event.
 - Phase shift greater than half of the PWM period.
 
-## Example Usage for R5F based PRU-ICSS PWM control
+## Example Usage
 
 - \ref EXAMPLE_PRUICSS_PWM_DEADBAND_EPWM_SYNC
 
-## API Usage for R5F based PRU-ICSS PWM control
+## API Usage
 
 \ref PRUICSS_PWM_API
 
-# PRU-ICSS PWM control using PRU
+# Features supported in PRU based example
 
-Major difference between R5F driver based PRUICSS PWM control and PRU based PRUICSS PWM control is below:
+- Configuration of IEP compare events to produce the PWM outputs
+- Enable Efficiency mode to auto clear compare status on state transition
+- Configuration of duty cycle to each of the PWM outputs
+- Configuration of PWM outputs behavior in Initial state
+- Configuration of PWM outputs behavior in Active state
+- Configuration of PWM outputs behavior in Trip state
+- Configuration of PWM Glitch Filter with Debounce Value
+- Configuration of PWM Deadband
+- Configuration of Tripzone output block to mask trip errors inputs
+- Configurable phase shift between each axis
+- Each PWM output can have distinct PWM period (NOTE: Current SDK examples uses same period, but it can be modified)
 
-- In PRU based PWM control PRUICSS IEP timer is configured free running and Compare event is used as scheduler in order to update compare events of each axis PWM signals
-
-## Additional features supported in PRU based PRU-ICSS PWM control
-    - Each PWM output can have distinct PWM period (Note: this is not supported currently in SDK example)
-    - Configurable Phase shift between each axis
-
-## SysConfig Features supported for PRU based PRU-ICSS PWM control
+## SysConfig Features supported
     - Pinmuxing can be done from Additional Settings of PRU(ICSS) sysconfig module
 
 ## Example Usage
