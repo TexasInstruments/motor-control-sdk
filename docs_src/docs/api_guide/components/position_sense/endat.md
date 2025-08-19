@@ -4,7 +4,7 @@
 
 ## Introduction
 
-EnDat is a bidirectional interface for position encoders. During EnDat operation the EnDat receiver receives position information from the EnDat position encoder.
+EnDat is a bidirectional interface for position encoders. During EnDat operation, the EnDat receiver receives position information from the EnDat position encoder.
 
 ## Features Supported
 
@@ -12,20 +12,20 @@ EnDat is a bidirectional interface for position encoders. During EnDat operation
    -  EnDat 2.1 command set
    -  Interrupted and continuous clock mode
    -  Cable length up to 100m @8MHz
-   -  Propagation delay compensation  \if (SOC_AM243X ||SOC_AM64X) (capable of handling different propagation delay of different
-      propagation delay of different channels in concurrent multi channel configuration) \endif
+   -  Propagation delay compensation  \if (SOC_AM243X ||SOC_AM64X) (capable of handling different
+      propagation delays of different channels in concurrent multi-channel configuration) \endif
    -  Automatic estimation of propagation delay
    -  Receive on-the-fly CRC verification of position, parameters and additional information
    -  Two modes of operation - host trigger and periodic trigger
    -  Channel select
 \cond SOC_AM243X || SOC_AM64X
-   -  Concurrent multi channel support (up-to 3 encoders with identical part number @ 8MHz maximum)
-   -  "Multi Channel with Encoders of Different Make" using load share mode (Each of PRU, RTU-PRU, and TX-PRU from one PRU-ICSSG slice handles one channel)
+   -  Concurrent multi-channel support (up to 3 encoders with identical part numbers @ 8MHz maximum)
+   -  "Multi Channel with encoders of different make" using load share mode (Each of PRU, RTU-PRU, and TX-PRU from one PRU-ICSSG slice handles one channel)
 \endcond
    -  Safety Readiness: Recovery time
-   -  Clock up to 16MHz with single channel \if (SOC_AM243X || SOC_AM64X) and load share mode (multi channel) \endif
-      \note Receive (Rx) is oversampled at 8x of send(Tx). Therefore, the encoder interface frequency "f" should such that Tx source clock value is divisible by "f" and Rx source clock value is divisible by "8*f".
-   - Possible interface speeds with different source clock combinations.
+   -  Clock up to 16MHz with single channel \if (SOC_AM243X || SOC_AM64X) and load share mode (multi-channel) \endif
+      \note In three channel interface of PRU-ICSS, receive (Rx) is oversampled at 8x of send (Tx). Therefore, the encoder interface frequency "f" should be such that Tx source clock value is divisible by "f" and Rx source clock value is divisible by "8*f".
+   - Possible interface speeds with different source clock combinations:
 <table>
 <tr>
    <th>Clock Source
@@ -71,7 +71,7 @@ EnDat is a bidirectional interface for position encoders. During EnDat operation
 ## Features Not Supported
 
 In general, peripherals or features not mentioned as part of "Features Supported" section are not
-supported in this release, including the below
+supported in this release, including the below:
 -  Independent clocks on multi channel mode.
 \cond SOC_AM243X || SOC_AM64X
 -  Continuous clock mode in Multi-channel single PRU mode
@@ -79,8 +79,8 @@ supported in this release, including the below
 ### Limitations
 \cond SOC_AM243X || SOC_AM64X
 This section describes known limitations of the current implementation in multi-channel single PRU mode.
-- Clock above 8 MHz: it is not possible to over sample, downsample and store one bit for all three channels in one clock cycle time.
-- Reset command CRC failure: The encoder which takes more time in reset operation will show CRC failure because the reset time is not the same for each encoder so the acknowledgment will not arrive on same time for all encoders at the master end.
+- Clock above 8 MHz: it is not possible to oversample, downsample and store one bit for all three channels in one clock cycle time.
+- Reset command CRC failure: The encoder which takes more time in reset operation will show CRC failure because the reset time is not the same for each encoder so the acknowledgment will not arrive at the same time for all encoders at the EnDat receiver end.
 \endcond
 ## SysConfig Features
 
@@ -96,7 +96,7 @@ SysConfig can be used to configure things mentioned below:
 - Configuring PINMUX.
 - Channel selection.
 \cond SOC_AM243X || SOC_AM64X
-- Selecting Multi Channel with Encoders of Different Make" using load share mode.
+- Selecting "Multi Channel with encoders of different make" using load share mode.
 - Enabling SA Mux mode
 \endcond
 - Selecting RX and TX source clock
@@ -113,30 +113,36 @@ SysConfig can be used to configure things mentioned below:
    <th>Description</th>
 </tr>
 <tr>
-   <td>Single Channel Configuration</td>
+   <td>Single channel</td>
    <td>PRUx</td>
    <td>DMEM: 160 Bytes <br>  IMEM: 5.4 KB </td>
    <td>IEP0: CMP0 and CMP3 </td>
-   <td>INTC Signal No. 18 is used to trigger a R5 interrupt </td>
+   <td>INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger a R5 interrupt </td>
    <td>IEP, CMP events and INTC signal are used only in periodic continuous mode.</td>
 </tr>
 \cond SOC_AM243X || SOC_AM64X
 <tr>
-   <td>Multi Channel Configuration with single PRU core</td>
+   <td>Multi-channel with single PRU core</td>
    <td>PRUx</td>
    <td>DMEM: 160 Bytes <br>  IMEM: 6.2 KB </td>
    <td>IEP0: CMP0 and CMP3 </td>
-   <td>INTC Signal No. 18 is used to trigger a R5 interrupt</td>
+   <td>INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger a R5 interrupt </td>
    <td>IEP, CMP events and INTC signal are used only in periodic continuous mode <br> \note Multi-Channel single PRU firmware requires more than 6KB IMEM, so it cannot run on TX PRU
     </td>
 </tr>
 <tr>
-   <td>Multi Channel Configuration with load share</td>
-   <td>PRUx, TXPRUx, RTUPRUx</td>
-   <td>DMEM: 160 Bytes <br>  PRU_IMEM: 4 KB <br>  RTU_IMEM: 4 KB <br>  TX_IMEM: 4 KB</td>
-   <td>IEP0: CMP0, CMP3, CMP5 and CMP6 </td>
-   <td>INTC Signal No. 18, 19 and 20 are used to trigger R5 interrupts.</td>
-   <td>IEP, CMP events and INTC signals are used only in periodic continuous mode.</td>
+    <td rowspan="3">Multi-channel with load share across 3 PRU cores
+    <td>PRUx
+    <td rowspan="3">DMEM: 160 Bytes <br>  PRU_IMEM: 4 KB <br>  RTU_IMEM: 4 KB <br>  TX_IMEM: 4 KB</td>
+    <td rowspan="3">IEP0: CMP0, CMP3, CMP5 and CMP6 </td>
+    <td rowspan="3">INTC event/input number 18, 19 and 20 (pr[0/1]_pru_mst_intr[2/3/4]_intr_req) is used to trigger a R5 interrupt </td>
+    <td rowspan="3">IEP, CMP events and INTC signals are used only in periodic continuous mode.</td>
+</tr>
+<tr>
+    <td> RTU_PRUx
+</tr>
+<tr>
+    <td> TX_PRUx
 </tr>
 \endcond
 </table>
@@ -152,4 +158,3 @@ SysConfig can be used to configure things mentioned below:
 
 ## API
 \ref ENDAT_API_MODULE
-

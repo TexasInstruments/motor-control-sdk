@@ -4,7 +4,7 @@
 
 ## Introduction
 
-The Tamagawa receiver firmware running on PRU-ICSS provides a defined well interface to execute the Tamagawa protocol. The Tamagawa diagnostic application interacts with the Tamagawa receiver firmware interface.
+The Tamagawa receiver firmware running on PRU-ICSS provides a well-defined interface to execute the Tamagawa encoder communication protocol. The Tamagawa diagnostic application interacts with the Tamagawa receiver firmware interface.
 
 \note
 Tamagawa firmware and examples are based on 3 Channel Peripheral interface from \if ( SOC_AM263X || SOC_AM261X)  PRU-ICSSM \else PRU-ICSSG \endif.
@@ -16,7 +16,7 @@ Tamagawa firmware and examples are based on 3 Channel Peripheral interface from 
 -  Baud rate selection
 -  Supports all Data Readout, Reset and EEPROM commands
 -  2.5 Mbps and 5 Mbps encoder support
-   \note Receive (Rx) is oversampled at 8x of send(Tx). Therefore, the encoder interface frequency "f" should such that Tx source clock value is divisible by "f" and Rx source clock value is divisible by "(8*f)".
+   \note In three channel interface of PRU-ICSS, receive (Rx) is oversampled at 8x of send (Tx). Therefore, the encoder interface frequency "f" should be such that Tx source clock value is divisible by "f" and Rx source clock value is divisible by "(8*f)".
 - Possible interface speeds with different source clock combinations.
 <table>
 <tr>
@@ -26,27 +26,27 @@ Tamagawa firmware and examples are based on 3 Channel Peripheral interface from 
 \cond SOC_AM261X
 <tr>
     <td> PRU UART Clock (160 MHz)
-    <td> 2.5MHz, 5MHz
+    <td> 2.5 MHz, 5 MHz
 </tr>
 <tr>
     <td>PRU Core Clock (200 MHz)
-    <td> 2.5MHz, 5MHz
+    <td> 2.5 MHz, 5 MHz
 </tr>
 \endcond
 \cond (SOC_AM263X || SOC_AM263PX)
 <tr>
     <td> PRU UART Clock (160 MHz)
-    <td> 2.5MHz, 5MHz
+    <td> 2.5 MHz, 5 MHz
 </tr>
 <tr>
     <td>PRU Core Clock (200 MHz)
-    <td> 2.5MHz, 5MHz
+    <td> 2.5 MHz, 5 MHz
 </tr>
 \endcond
 \cond SOC_AM243X || SOC_AM64X
 <tr>
     <td>PRU Core Clock (200 MHz)
-    <td> 2.5MHz, 5MHz
+    <td> 2.5 MHz, 5 MHz
 </tr>
 \endcond
 
@@ -54,14 +54,14 @@ Tamagawa firmware and examples are based on 3 Channel Peripheral interface from 
 
 ## Features Not Supported
 
-In general, peripherals or features not mentioned as part of "Features Supported" section are not supported, including the below
+In general, peripherals or features not mentioned as part of "Features Supported" section are not supported, including the following:
 -  Other baud rates.
 
 ## SysConfig Features
 
 @VAR_SYSCFG_USAGE_NOTE
 
-SysConfig can be used to configure things mentioned below:
+SysConfig can be used to configure the following:
 \cond (SOC_AM263X || SOC_AM263PX)
 - Selecting the ICSSM PRU slice (Tested on ICSSM-PRU0)
 - Configuring PINMUX and GPIO
@@ -72,7 +72,7 @@ SysConfig can be used to configure things mentioned below:
 \else
 - Selecting the ICSSG instance
 - Selecting the ICSSG PRU slice (Tested on ICSSG0-PRU1)
-- Configuring PINMUX, GPIO and ICSS clock to 200MHz
+- Configuring PINMUX, GPIO and ICSS clock to 200 MHz
 - Enabling SA Mux mode
 \endif
 - Channel selection
@@ -90,20 +90,20 @@ SysConfig can be used to configure things mentioned below:
    <th>Description</th>
 </tr>
 <tr>
-   <td>Single Channel Configuration</td>
+   <td>Single channel </td>
    <td>PRUx</td>
    <td>DMEM: 220 Bytes <br> IMEM: 1.8 KB</td>
    <td>IEP0: CMP0 and CMP3 </td>
-   <td>INTC Signal No. 18 is used to trigger a R5 interrupt </td>
+   <td>INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger a R5 interrupt </td>
    <td>IEP, CMP events and INTC signal are used only in periodic continuous mode</td>
 </tr>
 \cond SOC_AM243X || SOC_AM64X
 <tr>
-   <td>Multi Channel Configuration with single PRU core</td>
+   <td>Multi-channel with single PRU core</td>
    <td>PRUx</td>
    <td>DMEM: 220 Bytes <br> IMEM: 1.5 KB</td>
    <td>IEP0: CMP0 and CMP3 </td>
-   <td>INTC Signal No. 18 is used to trigger a R5 interrupt</td>
+   <td>INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger a R5 interrupt </td>
    <td>IEP, CMP events and INTC signal are used only in periodic continuous mode</td>
 </tr>
 \endcond

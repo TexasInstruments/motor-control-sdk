@@ -1,30 +1,30 @@
-# %SDFM Examples with Continuous Normal Current Sampling{#BASIC_SDFM_EXAMPLES_WITH_CONTINUOUS_NC}
+# %SDFM Examples with Continuous Normal Current Sampling {#BASIC_SDFM_EXAMPLES_WITH_CONTINUOUS_NC}
 
 [TOC]
 
-This example does continuous normal current sampling. Normal current over-sampling Ratio (OSR) can be configured by the user. There are two different examples based on number of %SDFM channels.
+This example does continuous normal current sampling. Normal current over-sampling Ratio (OSR) can be configured by the user. There are two different examples based on the number of %SDFM channels.
 
 # Three Channels with Continuous Mode
 
 Only one core - PRU is used for this example.
 
-The example does the below
+The example does the following:
 
- - Set %SDFM channels : Channel 0 - Channel 2
- - Enable continuous mode for normal current
- - Configure Normal current OSR
+ - Sets %SDFM channels: Channel 0 - Channel 2
+ - Enables continuous mode for normal current
+ - Configures Normal current OSR
 
 
 # Nine Channels with Continuous Mode
 
 Load share mode of PRU-ICSSG is enabled for this example and three cores - RTU-PRU, PRU and TX-PRU are used for this example.
 
-The example does the below
+The example does the following:
 
- - Enable load share mode
- - Set %SDFM channels : Channel 0 - Channel 8
- - Enable continuous mode for normal current
- - Configure Normal current OSR
+ - Enables load share mode
+ - Sets %SDFM channels: Channel 0 - Channel 8
+ - Enables continuous mode for normal current
+ - Configures Normal current OSR
 
  # Important files and directory structure
 
@@ -79,7 +79,7 @@ The example does the below
 # Steps to Run the Example
 
 ## Hardware Prerequisites
-Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_SETUP_PAGE.html" target="_blank"> EVM Setup </a>, below additional hardware is required to run this demo
+Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_SETUP_PAGE.html" target="_blank"> EVM Setup </a>, the additional hardware listed below is required to run this demo
 - <a href="../TIDEP-01015RevE1.1(001)_Sch.pdf" target="_blank"> TIDEP-01015 3 Axis Board </a>
 - <a href="../MS_TI_EVM_3-AXIS_INTERFACE_BOARD_SCH_REV_E1.pdf" target="_blank"> Interface card connecting EVM and TIDEP-01015 3 Axis </a>
 - Signal generator
@@ -90,7 +90,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 \image html SDFM_HwSetup_image.PNG  "Hardware Setup SDFM"
 \image html SDFM_EVM_HW_setup.png  "SDFM: EVM and 3axis board setup view"
 \cond SOC_AM243X
-### Hardware Prerequisities for LP
+### Hardware Prerequisites for LP
 - AMC1035EVM
 - <a href="https://www.ti.com/tool/LP-AM243" target="_blank"> LP-AM243 Board </a>
 - Signal generator
@@ -194,8 +194,8 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 \cond SOC_AM243X
 <tr>
         <td>5.Testing with sdfm clock from EPWM </td>
-        <td>1. Make hardware set up like attached image </td>
-        <td>All test cases results should match with ECAP test case results</td>
+        <td>1. Make hardware setup like attached image </td>
+        <td>All test case results should match with ECAP test case results</td>
  </tr>
 <tr>
         <td></td>
@@ -209,7 +209,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
  </tr>
  <tr>
         <td></td>
-        <td>4. Set EPWM1 out put frequency to 12.5MHz or 5MHz in app_sdfm.c file</td>
+        <td>4. Set EPWM1 output frequency to 12.5MHz or 5MHz in app_sdfm.c file</td>
         <td></td>
  </tr>
  <tr>

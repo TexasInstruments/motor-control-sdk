@@ -165,7 +165,7 @@ Tamagawa over PRU 3-channel interface    | R5F            | YES               | 
 
 </table>
 
-## Upgrade and Compatibility Information for Motor Control SDK 10.00.00 {#UPGRADE_AND_COMPATIBILITY_INFORMATION_10_0_0}
+## Upgrade and Compatibility Information for Motor Control SDK 10.00.00 {#UPGRADE_AND_COMPATIBILITY_INFORMATION_10_1_0}
 
 \attention When migrating from MCU+ SDK, see \ref MIGRATION_GUIDES for more details.
 

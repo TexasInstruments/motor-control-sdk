@@ -1,3 +1,4 @@
+
 # %SDFM Example With Phase Compensation {#BASIC_SDFM_EXAMPLE_WITH_PHASE_DELAY}
 
 [TOC]
@@ -5,11 +6,11 @@
 # ICSS SDFM three channel with phase compensation
 
 This example measures phase compensation for %SDFM channel 0 in PRU GPIO mode
-during initialization. Normal current Over-sampling Ratio (OSR), Over current OSR and Normal current trigger time can be configured by the user
+during initialization. Normal current Over-sampling Ratio (OSR), Over current OSR and Normal current trigger time can be configured by the user.
 
 Only one core - PRU is used for this example.
 
-The example does the below:
+The example does the following:
 - Configure ICSSG0 IEP0 for generating clock for %SDFM
 - Enable Phase Compensation Measurement
 - Configure SYNC1 Delay register based on the measured phase delay
@@ -64,7 +65,7 @@ The example does the below:
 # Steps to Run the Example
 
 ## Hardware Prerequisites
-Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_SETUP_PAGE.html" target="_blank"> EVM Setup </a>, below additional hardware is required to run this demo
+Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_SETUP_PAGE.html" target="_blank"> EVM Setup </a>, the additional hardware listed below is required to run this demo
 - TMDS64DC01EVM IO Link/Breakout Board
 - AMC1035EVM
 - TMDS243EVM
@@ -76,7 +77,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 \image html SDFM_EVMHw_SETUP_image.jpeg  "Hardware Setup SDFM"
 \image html SDFM_EVM_SETUP_FOR_PHASE_DELAY.png  "SDFM: EVM and IO breakout board setup view"
 \cond SOC_AM243X
-### Hardware Prerequisities for LP
+### Hardware Prerequisites for LP
 - AMC1035EVM
 - <a href="https://www.ti.com/tool/LP-AM243" target="_blank"> LP-AM243 Board </a>
 - Signal generator
@@ -107,7 +108,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 </tr>
 <tr>
         <td></td>
-        <td>2. probe ch0 SD0_D pin and SD8_CLK pin </td>
+        <td>2. Probe ch0 SD0_D pin and SD8_CLK pin </td>
         <td></td>
 </tr>
 <tr>
@@ -117,12 +118,12 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 </tr>
 <tr>
         <td></td>
-        <td>4. Take time stamp of any rising edge of SD0_D pin and upcoming active SD8_CLK edge</td>
+        <td>4. Take timestamp of any rising edge of SD0_D pin and upcoming active SD8_CLK edge</td>
         <td></td>
 </tr>
 <tr>
         <td></td>
-        <td>5. Compare this time with measured delay(stored in DMEM at offset 0x18)</td>
-        <td>Both value should be same or have a maximum variation of 1 PRU cycle</td>
+        <td>5. Compare this time with measured delay (stored in DMEM at offset 0x18)</td>
+        <td>Both values should be the same or have a maximum variation of 1 PRU cycle</td>
 </tr>
 </table>

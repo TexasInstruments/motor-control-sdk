@@ -2,7 +2,7 @@
 
 [TOC]
 
-This example demonstrates usage of SFRA library. PI controller is designed for plant of constant value for testing the functionality of SFRA. When "sfra1.start" variable provided with value "1" at run time will initiate the SFRA functionality for configured frequency vectors and calculates plant /open loop/ closed loop magnitude and phase vectors. These data points can be exported and used for boded plots generation.
+This example demonstrates usage of the SFRA library. A PI controller is designed for a plant of constant value for testing the functionality of SFRA. When the "sfra1.start" variable is provided with value "1" at run time, it will initiate the SFRA functionality for configured frequency vectors and calculate plant/open loop/closed loop magnitude and phase vectors. These data points can be exported and used for Bode plot generation.
 
 ## Files and directory structure
 
@@ -17,11 +17,11 @@ This example demonstrates usage of SFRA library. PI controller is designed for p
 </tr>
 <tr>
     <td>sfra_main.h</td>
-    <td>Main function for defining control loop functionality with SFRA</td>
+    <td>Header file for defining control loop functionality with SFRA</td>
 </tr>
 <tr>
     <td>sfra_examples_hal.c and sfra_examples_hal.h</td>
-    <td>files for setting up interrupt and gpio profiling</td>
+    <td>Files for setting up interrupt and GPIO profiling</td>
 </tr>
 <tr>
     <td>sfra_examples_settings.h</td>
@@ -63,7 +63,7 @@ This example demonstrates usage of SFRA library. PI controller is designed for p
 \imageStyle{am263px_sfra_setup.jpeg,width:40%}
 \image html am263px_sfra_setup.jpeg "Hardware Setup with @VAR_BOARD_NAME"
 
-- Ensure that the SW9 dual switches are positioned towards dot.
+- Ensure that the SW9 dual switches are positioned toward the dot.
 
 \endcond
 
@@ -78,14 +78,13 @@ This example demonstrates usage of SFRA library. PI controller is designed for p
 
 Shown below is a sample output when the application is run:
 
-Magnitude and phase vector data values after SFRA initiated by providing "1" to sfra1.start is shown in figure.
+Magnitude and phase vector data values after SFRA is initiated by providing "1" to sfra1.start are shown in the figure.
 
 \imageStyle{sfra_test.png,width:50%}
 \image html sfra_test.png "Data values of calculated magnitude and phase vector in expression window"
 
-You should see following message after the processing is done for 100 samples, which takes around two minutes.
+You should see the following message after the processing is done for 100 samples, which takes around two minutes.
 
 \code
 Test passed
 \endcode
-

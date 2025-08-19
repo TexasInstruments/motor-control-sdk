@@ -7,9 +7,9 @@ Simple DCL DF22 controller demonstration
 This example leverages a direct form 2 2nd order (DF22) compensator from
 the digital control library (DCL).
 
-It demonstrates how to setup and run the DF22 controller. The example first
-initializes the datalog DCL_FDLOG to the test vector, run the controller
-based on the test input and compare the output with the expected value.
+It demonstrates how to set up and run the DF22 controller. The example first
+initializes the datalog DCL_FDLOG to the test vector, runs the controller
+based on the test input and compares the output with the expected value.
 
 
 ## Files and directory structure
@@ -26,7 +26,7 @@ based on the test input and compare the output with the expected value.
 </tr>
 <tr>
     <td>df22_test.h</td>
-    <td>Contains all initialization of needed strctures</td>
+    <td>Contains all initialization of needed structures</td>
 </tr>
 <tr>
     <td>data/</td>

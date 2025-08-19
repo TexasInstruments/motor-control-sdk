@@ -4,7 +4,7 @@ This reference design showcases the ability of the AM243x device to support a fu
 
 ## Features Supported
 
-- Support EtherCAT CiA402 device profile for motor velocity control
+- Support for EtherCAT CiA402 device profile for motor velocity control
 - Single-chip, dual-servo motor control
 - BOOST-XL TI BoosterPack Plug-in Module design - 80 digital and analog I/O compatible with AM2x LaunchPad Development Kits
 - Two axes of 3-phase BLDC motor drive with the DRV8316R 24 V, 8 A monolithic gate drive and amplifier bridges
@@ -13,6 +13,6 @@ This reference design showcases the ability of the AM243x device to support a fu
 
 ## User Guide
 
-For more details on the design like system overview, hardware/software description, etc., please refer to  <a href="../TIDUF42.pdf" target="_blank"> TIDEP-01032 Design Guide </a>.
+For more details on the design like system overview, hardware/software description, etc., please refer to the <a href="../TIDUF42.pdf" target="_blank"> TIDEP-01032 Design Guide </a>.
 
-\note Currently the FOC loop used for Closed Speed (Velocity) Control is based on the CMSIS library. We will switch to the RTLib functions and DCL functions in the near future.
+\note Currently, the FOC loop used for Closed Speed (Velocity) Control is based on the CMSIS library. It will be based on RTLib functions and DCL functions in future releases.

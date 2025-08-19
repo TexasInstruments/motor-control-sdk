@@ -2,21 +2,21 @@
 
 [TOC]
 
-Simple data test incorporating foc-related libraries
+Simple data test incorporating FOC-related libraries
 
-This example runs verifies various transforms libraries used in motor-control application,
-specifically as a building block of Field of Control (FOC) motor design.
+This example verifies various transforms libraries used in motor-control applications,
+specifically as a building block of Field-Oriented Control (FOC) motor design.
 
-It demonstrates how to run clarke, park, inverse park transform and 
-space-vector generation (svgen). This test trys to mimic a conventional
-workflow of passing current values into clarke transform, then park, then
-inverse park (PI controllers are neglected here but should exist for both open and close-loop design)
-and finally passing to svgen to generate the three-phase ABC value. 
+It demonstrates how to run Clarke, Park, Inverse Park transforms and
+space-vector generation (SVGEN). This test tries to mimic a conventional
+workflow of passing current values into Clarke transform, then Park, then
+Inverse Park (PI controllers are neglected here but should exist for both open and closed-loop design)
+and finally passing to SVGEN to generate the three-phase ABC values.
 
-The test used an aribitary phasor angle that feeds into park/ipark, 
+The test uses an arbitrary phasor angle that feeds into park/ipark,
 as opposed to an angle generation module required by an actual FOC design.
 
-The test vector then compares the PARK, SVGEN results to ensure the integraty of the library.
+The test vector then compares the PARK, SVGEN results to ensure the integrity of the library.
 
 
 
@@ -34,7 +34,7 @@ The test vector then compares the PARK, SVGEN results to ensure the integraty of
 </tr>
 <tr>
     <td>transforms_test.h</td>
-    <td>Contains all initialization of test strctures and variables</td>
+    <td>Contains all initialization of test structures and variables</td>
 </tr>
 
 <tr><td colspan="2" bgcolor=#F0F0F0> ${SDK_INSTALL_PATH}/source/rtlibs/transforms</td></tr>
@@ -102,8 +102,8 @@ The test vector then compares the PARK, SVGEN results to ensure the integraty of
 
 ### Sample Output
 
-Shown below is a sample output when the application is run, assuming when all test passes:
+Shown below is a sample output when the application is run, assuming all tests pass:
 
 \code
-Transforms test produced 0 error
+Transforms test produced 0 errors
 \endcode

@@ -4,15 +4,15 @@
 
 ## Introduction
 
-The Sitara & C2000 Digital Control Library (DCL) provides a suite of robust software functions for developers of digital control applications using the Texas Instruments Sitara™ or C2000™ MCUs.
+The Sitara™ & C2000™ Digital Control Library (DCL) provides a suite of robust software functions for developers of digital control applications using the Texas Instruments Sitara™ or C2000™ MCUs.
 
 DCL is a header-only library, and all functions in the library are provided in the form of C source-code.
 
-The DCL contains PI,PID and "Direct Form" controller types. The former are typically used to tune properties of a transient response, while the latter are typically used to shape the open loop frequency response. 
+The DCL contains PI, PID and "Direct Form" controller types. The former are typically used to tune properties of a transient response, while the latter are typically used to shape the open loop frequency response.
 
-In addintion, DCL contains functions to convert controller parameters from one type to the other. As well as functions to parameterize the controller given a transfer function.
+In addition, DCL contains functions to convert controller parameters from one type to the other, as well as functions to parameterize the controller given a transfer function.
 
-Several utility modules are also included as a supporting module, refer below for the list of supported modules.
+Several utility modules are also included as supporting modules. Refer below for the list of supported modules.
 
 ## Getting Started
 
@@ -23,11 +23,11 @@ To use the DCL library, simply include the top-level file dcl.h and make sure th
 
 ## Features Supported
 
-Supported controller modules: 
+Supported controller modules:
 (In 32-bit floating-point, unless specified)
 
 - Linear PI
-  -  Serial PI  
+  -  Serial PI
      +  DCL_runPISeries
   -  Serial PI with Tustin Integrator
      +  DCL_runPISeriesTustin
@@ -37,15 +37,15 @@ Supported controller modules:
      +  DCL_runPIParallel
   -  Parallel PI with Enhanced Anti-windup Logic
      +  DCL_runPIParallelEnhanced
-     +  Note: It incorporates an addintional integrator clamp, which make use of the Imin and Imax attributes.
+     +  Note: It incorporates an additional integrator clamp, which makes use of the Imin and Imax attributes.
 - Linear PID
   - Serial PID
     + DCL_runPIDSeries
   - 64bit Serial PID (PIDF64)
-    + DCL_runPIDF64Series 
+    + DCL_runPIDF64Series
   - Parallel PID
     + DCL_runPIDParallel
-  - 64bit Parallel PID (PIDF64) 
+  - 64bit Parallel PID (PIDF64)
     + DCL_runPIDF64Parallel
 - Non-linear PID (NLPID)
   - Serial PID
@@ -55,7 +55,7 @@ Supported controller modules:
 - Non-linear Controls
   - Simple non-linear control law
     - DCL_runNLF
-  
+
 - Direct Form 1 1st order (DF11)
   - w/o saturation
     + DCL_runDF11
@@ -80,25 +80,25 @@ Supported controller modules:
   - w/ saturation
     + DCL_runDF23Clamp
 
-Other utility module includes:
-  
+Other utility modules include:
+
 - Data Logging (FDLOG)
 - Multi-channel data logs (MLOG)
 - Reference Generator (REFGEN)
 - Transient Capture Module and performance index (TCM)
 - Gain Scheduler Module (GSM)
 
-Note: Controller modules include Error Handling and Test Points which are disabled by default, these features could enabled by macros defined in "dcl.h"
-Note: DCL is also backwards compatible with C2000's C28 (v3) API call. For a proper mapping between the two APIs, refer to "misc/dcl_c28_compatibility.h"
+Note: Controller modules include error handling and test points which are disabled by default. These features could be enabled by macros defined in "dcl.h"
+Note: DCL is also backwards compatible with C2000™'s C28 (v3) API call. For a proper mapping between the two APIs, refer to "misc/dcl_c28_compatibility.h"
 
 ## Benchmark Results
 
-A benchmark on R5F core has been conducted to observe the following results when running controller arithmetic:
+A benchmark on Arm® Cortex®-R5F core has been conducted to observe the following results when running controller arithmetic:
 
 <table>
 <tr>
     <th>Controller Function
-    <th>Cpu Cycles
+    <th>CPU Cycles
 </tr>
 <tr><td colspan="2" bgcolor=#F0F0F0> PI Controller </td></tr>
 <tr>
@@ -174,9 +174,9 @@ A benchmark on R5F core has been conducted to observe the following results when
 </tr>
 </table>
 
-- Ran with TI Clang Compiler v2.1.3.LTS, with -Os flag and all DCL functions inlined, obtained the average result from 600 consecutive reading of running the controller with DPL CycleCountP.
-- Simulated inputs are based on arbitrary sinusoidal waves and saturation condition that roughly clamps ~50% of the time. For functions with clamp (PI,PI2,PID and DF Clamps), clock cycle varies depending on clamping condition and provided inputs.
-- Actual result may vary depending on provided datasets and memory configuration. For R5F, it is recommended for users to map control loops to TCM for the best performance.
+- Ran with TI Clang Compiler v2.1.3.LTS, with -Os flag and all DCL functions inlined, obtained the average result from 600 consecutive readings of running the controller with DPL CycleCountP.
+- Simulated inputs are based on arbitrary sinusoidal waves and saturation condition that roughly clamps ~50% of the time. For functions with clamp (PI, PI2, PID and DF Clamps), clock cycle varies depending on clamping condition and provided inputs.
+- Actual result may vary depending on provided datasets and memory configuration. For Arm Cortex-R5F, it is recommended for users to map control loops to TCM for the best performance.
 
 ## Release Notes
 
@@ -190,10 +190,10 @@ Shown below lists all the past software revision history for this software:
 <tr>
     <td> v4.03.00
     <td> Changes:
-        - Merge C29 & Sitara DCL to be a common library across the two platform 
+        - Merge C29 & Sitara™ DCL to be a common library across the two platforms
         - Ported Gain Scheduler Module (GSM)
         - Fix incorrect NLPID default variables
-        - Reduce PID/NLPID control arthmetic
+        - Reduce PID/NLPID control arithmetic
         - C28 API mapping are now included by default
     </td>
 </tr>
@@ -205,11 +205,11 @@ Shown below lists all the past software revision history for this software:
         - Reference Generator (REFGEN)
         - Multi-channel datalogs (MLOG)
         - Transient Capture Module and performance index (TCM)
-    </td> 
+    </td>
 </tr>
 <tr>
     <td> v4.01.00
-    <td> Initial release version as the continuation of C2000 DCL. The porting includes (Backwards compatible with C2000 DCL API):
+    <td> Initial release version as the continuation of C2000™ DCL. The porting includes (Backwards compatible with C2000™ DCL API):
         - Linear PI
         - Linear PID
         - Linear PI with double integrator (PI2)
@@ -223,17 +223,15 @@ Shown below lists all the past software revision history for this software:
 </tr>
 </table>
 
-## Provided Examples 
+## Provided Examples
 
-The following examples has been provided to demonstrate the DCL library:
+The following examples have been provided to demonstrate the DCL library:
 
 - \ref EXAMPLES_DCL_PI
 - \ref EXAMPLES_DCL_DF22
 
-## Additional References {#DCL_ADDITIONAL_REFERENCES}
-
-N/A
-
 ## API
 
 \ref DCL_API_MODULE
+
+\note Arm is a registered trademark of Arm Limited (or its subsidiaries or affiliates) in the US and/or elsewhere.

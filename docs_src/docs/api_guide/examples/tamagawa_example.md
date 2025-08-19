@@ -11,7 +11,7 @@ Starting with MCU+ SDK version 08.05.00, the Tamagawa firmware and examples are 
 
 ## Introduction
 
-Tamagawa diagnostic application does below,
+The Tamagawa diagnostic application does the following:
 \cond (SOC_AM243X || SOC_AM64X)
 - Configures pinmux, GPIO, UART, ICSS clock to 200MHz
 - Initializes ICSSG0-PRU1
@@ -140,7 +140,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 
 \note For more design details of the TIDEP-01015 3 Axis Board, or Interface card connecting EVM and TIDEP-01015 3 Axis, please contact TI via E2E/FAE.
 
-## Hardware Prerequisities with LP-AM243
+## Hardware Prerequisites with LP-AM243
 - Tamagawa Encoder(s)
 - <a href="https://www.ti.com/tool/LP-AM243" target="_blank"> LP-AM243 Board </a>
 - <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
@@ -149,21 +149,21 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 
 \cond SOC_AM263X
 
-## Hardware Prerequisities with LP-AM263
+## Hardware Prerequisites with LP-AM263
 - Tamagawa Encoder(s)
 - <a href="https://www.ti.com/tool/LP-AM263" target="_blank"> LP-AM263 Board </a>
 - <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
 \endcond
 
 \cond SOC_AM263PX
-## Hardware Prerequisities with LP-AM263P
+## Hardware Prerequisites with LP-AM263P
 - Tamagawa Encoder(s)
 - <a href="https://www.ti.com/tool/LP-AM263P" target="_blank"> LP-AM263P Board </a>
 - <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
 \endcond
 
 \cond SOC_AM261X
-## Hardware Prerequisities with LP-AM261
+## Hardware Prerequisites with LP-AM261
 - Tamagawa Encoder(s)
 - <a href="https://www.ti.com/tool/LP-AM261" target="_blank"> LP-AM261 Board </a>
 - <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
@@ -183,7 +183,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 \image html Tamagawa_Booster_Pack.png  "Hardware Setup with LP-AM243"
 \note
     - The PROC109A version of LP supports two channels
-    - To enable the second channel on LP, SW6 needs to be turn OFF
+    - To enable the second channel on LP, SW6 needs to be turned OFF
 
 #### Booster Pack Jumper Configuration
 <table>
@@ -456,37 +456,37 @@ Shown below is a sample output when the application is run:
     <tr>
         <td>Data ID 0</td>
         <td>Data readout (absolute position data)</td>
-        <td>In this command we will receive:
-		Absolute rotor position value in field name ABS..
-		Errors and warnings in field name SF(status field)
+        <td>Receive following data:
+		<br>Absolute rotor position value in field name ABS.
+		<br>Errors and warnings in field name SF(status field)
 		</td>
         <td>CRC success with ABS, SF, CF and CRC values printed in the terminal.</td>
     </tr>
 	<tr>
         <td>Data ID 1</td>
         <td>Data readout (multi-turn data)</td>
-        <td>In this command we will receive data about:
-		No. of rotor turns in field name ABM.
-		Errors and warnings in field name SF(status field).
+        <td>Receive following data:
+		<br>No. of rotor turns in field name ABM.
+		<br>Errors and warnings in field name SF(status field).
 		</td>
         <td>CRC success with ABM, SF, CF and CRC values printed in the terminal.</td>
     </tr>
 	<tr>
         <td>Data ID 2</td>
-        <td>Endoder-ID</td>
-        <td>In this command we will receive data about :
-		Tamagawa encoder make-ID in ENID field .
-		Errors and warnings in field name SF(status field)
+        <td>Encoder-ID</td>
+        <td>Receive following data:
+    	<br>Tamagawa encoder make-ID in ENID field.
+		<br>Errors and warnings in field name SF(status field)
 		</td>
         <td>CRC success with ENID, SF, CF and CRC values printed in the terminal.</td>
     </tr>
 	<tr>
         <td>Data ID 3</td>
         <td>Data readout(absolute+multiturn+encoder-ID)</td>
-        <td>In this command we will receive :
+        <td>Receive following data:
 		Absolute rotor position value in field name ABS.
 		No. of rotor turns in field name ABM.
-		Tamagawa encoder make-ID in ENID field .
+		Tamagawa encoder make-ID in ENID field.
 		Errors and warnings in field name SF(status field)
 		Other warnings in field name ALMC
 		</td>
@@ -495,34 +495,34 @@ Shown below is a sample output when the application is run:
     <tr>
         <td>Data ID 6</td>
         <td>Writing to EEPROM</td>
-        <td>In this command you provide :
-        Proper address of the EEPROM where you want to write
-		Proper data that you want to write.<br>
-        As a response you recieve:
-        Control Field for EEPROM Write command
-        EEPROM address that you want to write to
-        Data that you want to write to the EEPROM
-        CRC value
+        <td>Transmit following data:
+        <br>Proper address of the EEPROM where you want to write
+		<br>Proper data that you want to write.<br>
+        <br>Receive following data:
+        <br>Control Field for EEPROM Write command
+        <br>EEPROM address that you want to write to
+        <br>Data that you want to write to the EEPROM
+        <br>CRC value
 		</td>
         <td>CRC success with EDF, ADF, CF and CRC values printed in the terminal.</td>
     </tr>
     <tr>
         <td>Data ID D</td>
         <td>Readout from EEPROM</td>
-        <td>In this command you provide :
-        Proper address of the EEPROM that you want to read.<br>
-		As a response you recieve:
-        Control Field for EEPROM Write command
-        EEPROM address that you want to write to
-        Data that you want to write to the EEPROM
-        CRC value
+        <td>Transmit following data:
+        <br>Proper address of the EEPROM that you want to read.<br>
+		<br>Receive following data:
+        <br>Control Field for EEPROM Write command
+        <br>EEPROM address that you want to write to
+        <br>Data that you want to write to the EEPROM
+        <br>CRC value
 		</td>
         <td>CRC success with EDF, ADF, CF and CRC values printed in the terminal.</td>
     </tr>
 	<tr>
         <td>Data ID 7</td>
         <td>Reset-Error</td>
-        <td>This command used to reset errors. </td>
+        <td>This command is used to reset errors. </td>
         <td>CRC success with ABS, SF, CF and CRC values printed in the terminal.</td>
     </tr>
 	<tr>

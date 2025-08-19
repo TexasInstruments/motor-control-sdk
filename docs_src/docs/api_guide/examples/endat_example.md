@@ -2,56 +2,56 @@
 
 [TOC]
 
-The EnDat diagnostic application, described here,
+The EnDat diagnostic application described here
 demonstrates the EnDat receiver operation.
 
-The EnDat driver provides a well defined set of APIs to expose EnDat
+The EnDat driver provides a well-defined set of APIs to expose the EnDat
 receiver interface.
 
 \cond (SOC_AM261X)
-\note ICSSM1 UART clock set to 160 MHz is used to drive the EnDat interface. Receive (Rx) is oversampled at 8x of send(Tx). Therefore, the encoder interface frequency "f" should such that 160 Mhz is divisible by "f" and "8 times f".
+\note ICSSM UART clock set to 160 MHz is used to drive the EnDat interface. In three channel interface of PRU-ICSS, receive (Rx) is oversampled at 8x of send (Tx). Therefore, the encoder interface frequency "f" should be such that 160 MHz is divisible by "f" and "8 times f".
 \endcond
 
 
-The diagnostic invokes these APIs to
+The diagnostic invokes these APIs to:
 - initialize EnDat,
 \cond (SOC_AM243X || SOC_AM64X)
-- select one configuration among concurrent multi channel with Encoders of Same make, multi channel with Encoders of Different Make and single channel configuration based on SysConfig.
-- select the channel (channels in the case of concurrent multi channel with encoders of same make or multi channel with Encoders of Different Make),
+- select one configuration among concurrent multi-channel with encoders of same make, multi-channel with encoders of different make, and single channel configuration based on SysConfig,
+- select the channel (channels in the case of concurrent multi-channel with encoders of same make or multi-channel with encoders of different make),
 \endcond
 - configure the host trigger mode,
 - and run the firmware.
 \cond (SOC_AM243X || SOC_AM64X)
-- If using "Multi Channel with Encoders of Different Make" configuration is selected" :
-    - enable load share mode.
-    - select primary core for global configuration.
-    - configuration of synchronization bits.
+- If "Multi-Channel with encoders of different make" configuration is selected:
+    - enable load share mode,
+    - select primary core for global configuration,
+    - configure synchronization bits.
 \endcond
 
-Once these steps are executed,
+Once these steps are executed:
 - the driver waits for the EnDat to be initialized.
 - It then sets clock frequency to 200KHz (as propagation delay is not yet compensated)
-- and obtains the encoder details including serial number, position resolution etc, and displays on the console/UART.
-- Based on the whether encoder is 2.2 or 2.1 type, it sets clock to either \if (SOC_AM261X) 5MHz \else 8MHz \endif or 1MHz respectively.
-- While configuring clock, propagation delay is taken care using the automatically estimated propagation delay (user can override it too).
+- and obtains the encoder details including serial number, position resolution etc., and displays them on the console/UART.
+- Based on whether the encoder is 2.2 or 2.1 type, it sets the clock to either \if (SOC_AM261X) 5MHz \else 8MHz \endif or 1MHz respectively.
+- While configuring the clock, propagation delay is taken care of using the automatically estimated propagation delay (user can override it too).
 \cond (SOC_AM243X || SOC_AM64X)
-- In the case of concurrent Multi Channel with Encoders of Same Make or Multi Channel with Encoders of Different Make, if propagation delay between various channels are different, that too is automatically taken care.
+- In the case of concurrent Multi-Channel with encoders of same make or Multi-Channel with encoders of different make, if propagation delays between various channels are different, that too is automatically taken care of.
 \endcond
 
-Once initial setup is over,
-- the diagnostic provides the user with a self explanatory menu.
+Once the initial setup is over:
+- the diagnostic provides the user with a self-explanatory menu.
 - Two types of menu options are presented. One type (1-14) will send an EnDat command as per EnDat 2.2 specification.
-- The other type (100-108) allows the user to configure clock frequency, various timing parameters, simulate motor control loop using 2.1 command as well as 2.2 command with safety (redundant position information), switch to continuous clock mode and monitor raw data.
+- The other type (100-108) allows the user to configure clock frequency, various timing parameters, simulate motor control loop using 2.1 command as well as 2.2 command with safety (redundant position information), switch to continuous clock mode, and monitor raw data.
 \cond (SOC_AM243X || SOC_AM64X)
-- Concurrent multi channel with Encoder of Same Make configuration can work simultaneously for up-to three encoders with identical part number, all variants of 2.2 position commands as well as the 2.1 position command is supported and an additional option (109) to configure wire delay (useful when propagation delay in each channel is different) is available.
-- Single PRU core handles enabled channels in single channel and Multi Channel with Encoders of Same Make configuration.
+- Concurrent multi-channel with encoder of same make configuration can work simultaneously for up to three encoders with identical part numbers. All variants of 2.2 position commands as well as the 2.1 position command are supported, and an additional option (109) to configure wire delay (useful when propagation delay in each channel is different) is available.
+- Single PRU core handles enabled channels in single channel and Multi-Channel with encoders of same make configuration.
 \endcond
-- Application by default, handles wire delay as required, the menu option provides a way to override it.
+- Application by default handles wire delay as required. The menu option provides a way to override it.
 
-After the user selects an EnDat command,
-- the diagnostic asks for more details to frame the command and performs a basic sanity check on the user entered values.
-- Then the EnDat APIs are invoked to process the command set, set the host trigger bit and waiting until the host trigger bit cleared, \if (SOC_AM243X || SOC_AM64X) If multi-channel with Encoders of Different make is used, these operations are done for each channel".\endif
-- The received EnDat is processed & validated using the defined APIs. The result is then presented to the user.
+After the user selects an EnDat command:
+- the diagnostic asks for more details to frame the command and performs a basic sanity check on the user-entered values.
+- Then the EnDat APIs are invoked to process the command set, set the host trigger bit, and wait until the host trigger bit is cleared. \if (SOC_AM243X || SOC_AM64X) If multi-channel with encoders of different make is used, these operations are done for each channel.\endif
+- The received EnDat data is processed & validated using the defined APIs. The result is then presented to the user.
 
 ### Channel Selection In Sysconfig
 
@@ -68,12 +68,12 @@ After the user selects an EnDat command,
 \endcond
 
 \cond (SOC_AM243X || SOC_AM64X)
-\image html Endat_channel_selection_configuration.png     "EnDAT configuration seletion between Single/Multi channel "
+\image html Endat_channel_selection_configuration.png     "EnDAT configuration selection between Single/Multi channel "
 \endcond
 
 ### Endat Example Implementation
 
-Following section describes the Example implementation of EnDat on ARM(R5F).
+The following section describes the Example implementation of EnDat on Arm®-based core.
 \image html Endat_Example_Implementation.png "Endat Example"
 
 ## Important files and directory structure
@@ -107,8 +107,8 @@ Following section describes the Example implementation of EnDat on ARM(R5F).
  ---------------|-----------
  CPU + OS       | r5fss0-0 freertos
  ICSSG          | ICSSG0
- PRU            | PRU1 (single channel, multi channel using single PRU)
- ^              | PRU1, RTU-PRU1, TXPRU1 (multi channel using three PRUs - load share mode)
+ PRU            | PRU1 (single channel, multi-channel using single PRU)
+ ^              | PRU1, RTU-PRU1, TXPRU1 (multi-channel using three PRUs - load share mode)
  Toolchain      | ti-arm-clang
  Board          | @VAR_BOARD_NAME_LOWER
  Example folder | examples/position_sense/endat_diagnostic
@@ -121,8 +121,8 @@ Following section describes the Example implementation of EnDat on ARM(R5F).
  ---------------|-----------
  CPU + OS       | r5fss0-0 freertos
  ICSSG          | ICSSG0
- PRU            | PRU1 (single channel, multi channel using single PRU)
- ^              | PRU1, RTU-PRU1, TXPRU1 (multi channel using three PRUs - load share mode)
+ PRU            | PRU1 (single channel, multi-channel using single PRU)
+ ^              | PRU1, RTU-PRU1, TXPRU1 (multi-channel using three PRUs - load share mode)
  Toolchain      | ti-arm-clang
  Board          | @VAR_BOARD_NAME_LOWER (3 channel and 1 channel examples), @VAR_LP_BOARD_NAME_LOWER (2 channel and 1 channel examples)
  Example folder | examples/position_sense/endat_diagnostic
@@ -157,7 +157,7 @@ Following section describes the Example implementation of EnDat on ARM(R5F).
 
 # Steps to Run the Example
 
-Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_SETUP_PAGE.html" target="_blank"> EVM Setup </a>, below additional hardware is required to run this demo
+Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_SETUP_PAGE.html" target="_blank"> EVM Setup </a>, the following additional hardware is required to run this demo:
 
 
 \cond SOC_AM243X
@@ -171,7 +171,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 
 \note For more design details of the TIDEP-01015 3 Axis Board, or Interface card connecting EVM and TIDEP-01015 3 Axis, please contact TI via E2E/FAE.
 
-## Hardware Prerequisities with LP-AM243
+## Hardware Prerequisites with LP-AM243
 
 - EnDAT Encoder(s)
 - <a href="https://www.ti.com/tool/LP-AM243" target="_blank"> LP-AM243 Board </a>
@@ -180,7 +180,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 
 \cond SOC_AM261X
 
-## Hardware Prerequisities with LP-AM261
+## Hardware Prerequisites with LP-AM261
 
 - EnDAT Encoder(s)
 - <a href="https://www.ti.com/tool/LP-AM261" target="_blank"> LP-AM261 Board </a>
@@ -189,7 +189,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 
 \cond SOC_AM263X
 
-## Hardware Prerequisities with LP-AM263
+## Hardware Prerequisites with LP-AM263
 
 - EnDAT Encoder(s)
 - <a href="https://www.ti.com/tool/LP-AM263" target="_blank"> LP-AM263 Board </a>
@@ -198,7 +198,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 
 \cond SOC_AM263PX
 
-## Hardware Prerequisities with LP-AM263P
+## Hardware Prerequisites with LP-AM263P
 
 - EnDAT Encoder(s)
 - <a href="https://www.ti.com/tool/LP-AM263P" target="_blank"> LP-AM263P Board </a>
@@ -216,7 +216,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 \image html EnDat_Booster_Pack.png  "Hardware Setup with LP-AM243"
 \note
     - The PROC109A version of LP supports two channels
-    - To enable the second channel on LP, SW6 needs to be turn OFF
+    - To enable the second channel on LP, SW6 needs to be turned OFF
 
 
 #### Booster Pack Jumper Configuration
@@ -461,9 +461,9 @@ Connect the jumpers J13 and J26 for providing 3.3V and 5V to boosterpack.
 
 - **When using CCS projects to build**, import the CCS project and build it using the CCS project menu (see <a href="@VAR_MCU_SDK_DOCS_PATH/CCS_PROJECTS_PAGE.html" target="_blank"> Using SDK with CCS Projects </a>).
 - **When using makefiles to build**, note the required combination and build using
-  make command (see <a href="@VAR_MCU_SDK_DOCS_PATH/MAKEFILE_BUILD_PAGE.html" target="_blank"> Using SDK with Makefiles </a>)
+  the make command (see <a href="@VAR_MCU_SDK_DOCS_PATH/MAKEFILE_BUILD_PAGE.html" target="_blank"> Using SDK with Makefiles </a>)
 - Launch a CCS debug session and run the executable, see <a href="@VAR_MCU_SDK_DOCS_PATH/CCS_LAUNCH_PAGE.html" target="_blank">  CCS Launch, Load and Run </a>
-- Refer to UART terminal for user interface menu options.
+- Refer to the UART terminal for user interface menu options.
 
 ### Sample Output
 
@@ -560,7 +560,7 @@ Shown below is a sample output when the application is run:
         <td></td>
     </tr>
     <tr>
-        <td>5. Enter 0 in "parameter value"  for seting value in " Error message"</td>
+        <td>5. Enter 0 in "parameter value"  for setting value in "Error message"</td>
         <td style="text-align: center">CRC success </td>
     </tr>
     <tr>
@@ -582,12 +582,12 @@ Shown below is a sample output when the application is run:
         <td></td>
     </tr>
     <tr>
-        <td>5. Enter 0 in "parameter value"  for seting value in " Error message"</td>
+        <td>5. Enter 0 in "parameter value" for setting value in "Error message"</td>
         <td style="text-align: center">CRC success </td>
     </tr>
     <tr>
         <td rowspan="8" style="text-align: center">7.</td>
-        <td rowspan="8" style="text-align: center">To set values to encoder's manufacturing parameters for Endat 2.2(Status of additional info)</td>
+        <td rowspan="8" style="text-align: center">To set values to encoder's manufacturing parameters for Endat 2.2 (Status of additional info)</td>
         <td>1. Enter 9 to select "Encoder send position values + Additional Information(s) and Selection of memory area"</td>
         <td></td>
     </tr>
@@ -612,12 +612,12 @@ Shown below is a sample output when the application is run:
         <td></td>
     </tr>
     <tr>
-        <td>7. Enter 1235 (or any 2 byte value) in "parameter value"  for seting value in " Status of additional info"</td>
+        <td>7. Enter 1235 (or any 2 byte value) in "parameter value" for setting value in "Status of additional info"</td>
         <td style="text-align: center">CRC success </td>
     </tr>
     <tr>
-        <td>8. Enter 8 to select "Encoder send position values + Additional Information(s)"<br>&emsp; <b>Note: Write is not permenant. When read again using Command 11, encoder will return the default value</b></td>
-        <td style="text-align: center">Values followed by 0x45 represents last byte of the data received by encoder<br> Crc success </td>
+        <td>8. Enter 8 to select "Encoder send position values + Additional Information(s)"<br>&emsp; <b>Note: Write is not permanent. When read again using Command 11, encoder will return the default value</b></td>
+        <td style="text-align: center">Values followed by 0x45 represent the last byte of the data received by encoder<br> CRC success </td>
     </tr>
     <tr>
         <td style="text-align: center">8.</td>
@@ -655,7 +655,7 @@ Shown below is a sample output when the application is run:
     </tr>
     <tr>
         <td rowspan="5" style="text-align: center">11.</td>
-        <td rowspan="5" style="text-align: center">To check position value with aditional info.</td>
+        <td rowspan="5" style="text-align: center">To check position value with additional info.</td>
         <td>1. Enter 9 to select "Encoder send position values + Additional Information(s) and Selection of memory area"</td>
         <td style="text-align: center">CRC success </td>
     </tr>
@@ -677,8 +677,8 @@ Shown below is a sample output when the application is run:
     </tr>
     <tr>
         <td rowspan="7" style="text-align: center">12.</td>
-        <td rowspan="7" style="text-align: center">To receive encoder's operating parameters(error messege)
-		+receive position value with  additional info
+        <td rowspan="7" style="text-align: center">To receive encoder's operating parameters (error message)
+		+ receive position value with additional info
 		</td>
         <td>1. Enter 9 to select "Encoder send position values + Additional Information(s) and Selection of memory area"</td>
         <td> </td>
@@ -710,7 +710,7 @@ Shown below is a sample output when the application is run:
     <tr>
         <td rowspan="7" style="text-align: center">13.</td>
         <td rowspan="7" style="text-align: center">To receive encoder's manufacture parameters
-		for Endat 2.2 +receive position value with  additional info
+		for Endat 2.2 + receive position value with additional info
         <td>1. Enter 9 to select "Encoder send position values + Additional Information(s) and Selection of memory area"</td>
         <td> </td>
     </tr>
@@ -740,7 +740,7 @@ Shown below is a sample output when the application is run:
     </tr>
     <tr>
         <td rowspan="5" style="text-align: center">14.</td>
-        <td rowspan="5" style="text-align: center">To acknowledge MRS code for Endat 2.2
+        <td rowspan="5" style="text-align: center">To acknowledge MRS code for Endat 2.2</td>
         <td>1. Enter 9 to select "Encoder send position values + Additional Information(s) and Selection of memory area"</td>
         <td> </td>
     </tr>
@@ -749,7 +749,7 @@ Shown below is a sample output when the application is run:
         <td style="text-align: center">CRC success </td>
     </tr>
     <tr>
-        <td>3. Enter 9 to select "Encoder send position values + Additional Information(s) and Selection of memory area</td>
+        <td>3. Enter 9 to select "Encoder send position values + Additional Information(s) and Selection of memory area"</td>
         <td> </td>
     </tr>
     <tr>
@@ -763,7 +763,7 @@ Shown below is a sample output when the application is run:
     <tr>
         <td rowspan="5" style="text-align: center">15.</td>
         <td rowspan="5" style="text-align: center">To set values to encoder's operating parameters (error message)
-		+receive position value with additional info
+		+ receive position value with additional info</td>
         <td>1. Enter 9 to select "Encoder send position values + Additional Information(s) and Selection of memory area"</td>
         <td> </td>
     </tr>
@@ -780,13 +780,13 @@ Shown below is a sample output when the application is run:
         <td> </td>
     </tr>
     <tr>
-        <td>5. Enter 0 in "parameter value"  for seting value in "Error message"</td>
+        <td>5. Enter 0 in "parameter value" for setting value in "Error message"</td>
         <td style="text-align: center">CRC success</td>
     </tr>
     <tr>
         <td rowspan="5" style="text-align: center">16.</td>
-        <td rowspan="5" style="text-align: center">To set values to encoder's manufacturing parameters for Endat 2.2(Status of additional info)
-		+receive position value with additional info
+        <td rowspan="5" style="text-align: center">To set values to encoder's manufacturing parameters for Endat 2.2 (Status of additional info)
+		+ receive position value with additional info
 		</td>
         <td>1. Enter 9 to select "Encoder send position values + Additional Information(s) and Selection of memory area"</td>
         <td> </td>
@@ -804,7 +804,7 @@ Shown below is a sample output when the application is run:
         <td> </td>
     </tr>
     <tr>
-        <td>5. Enter 0 in "parameter value"  for seting value in " Status of additional info"</td>
+        <td>5. Enter 0 in "parameter value" for setting value in "Status of additional info"</td>
         <td style="text-align: center">CRC success</td>
     </tr>
     <tr>
@@ -861,7 +861,7 @@ Shown below is a sample output when the application is run:
     </tr>
     <tr>
         <td rowspan="7" style="text-align: center">19.</td>
-        <td rowspan="7" style="text-align: center">To reset encoder +receive position value with additional info</td>
+        <td rowspan="7" style="text-align: center">To reset encoder + receive position value with additional info</td>
         <td>1. Enter 12 to select "Encoder send position values + Additional Information(s) and receive error reset"</td>
         <td style="text-align: center">CRC success </td>
     </tr>
@@ -870,11 +870,11 @@ Shown below is a sample output when the application is run:
         <td style="text-align: center">CRC success </td>
     </tr>
     <tr>
-        <td>2. Enter ______in "enter encoder address" </td>
+        <td>2. Enter ______ in "enter encoder address" </td>
         <td style="text-align: center">CRC success </td>
     </tr>
     <tr>
-        <td>3. Enter _____ in  "instruction hex value"</td>
+        <td>3. Enter _____ in "instruction hex value"</td>
         <td style="text-align: center">CRC success </td>
     </tr>
     <tr>
@@ -882,11 +882,11 @@ Shown below is a sample output when the application is run:
         <td style="text-align: center">CRC success </td>
     </tr>
     <tr>
-        <td>2. Enter ______in "enter encoder address" </td>
+        <td>2. Enter ______ in "enter encoder address" </td>
         <td style="text-align: center">CRC success </td>
     </tr>
     <tr>
-        <td>3. Enter _____ in  "instruction hex value"</td>
+        <td>3. Enter _____ in "instruction hex value"</td>
         <td style="text-align: center">CRC success </td>
     </tr>
     <tr>
@@ -896,8 +896,8 @@ Shown below is a sample output when the application is run:
         <td> </td>
     </tr>
     <tr>
-        <td>2. Enter ___ for clock frequency(in Hz)</td>
-        <td style="text-align: center">CRC success(Tested up to 8MHz)</td>
+        <td>2. Enter ___ for clock frequency (in Hz)</td>
+        <td style="text-align: center">CRC success (Tested up to 8MHz)</td>
     </tr>
     <tr>
         <td rowspan="3" style="text-align: center">21.</td>
@@ -955,7 +955,7 @@ Shown below is a sample output when the application is run:
     </tr>
     <tr>
         <td rowspan="3" style="text-align: center">26.</td>
-        <td rowspan="3" style="text-align: center">configure rx clock disable time</td>
+        <td rowspan="3" style="text-align: center">Configure rx clock disable time</td>
         <td>1. Enter 106 to select "configure rx clock disable time"</td>
         <td> </td>
     </tr>
@@ -969,7 +969,7 @@ Shown below is a sample output when the application is run:
     </tr>
     <tr>
         <td rowspan="3" style="text-align: center">27.</td>
-        <td rowspan="3" style="text-align: center">Simulate motor control 2.2 position loop(safety)</td>
+        <td rowspan="3" style="text-align: center">Simulate motor control 2.2 position loop (safety)</td>
         <td>1. Enter 107 to select "Simulate motor control 2.2 position loop"</td>
         <td> </td>
     </tr>
@@ -983,7 +983,7 @@ Shown below is a sample output when the application is run:
     </tr>
     <tr>
         <td rowspan="2" style="text-align: center">28.</td>
-        <td rowspan="2" style="text-align: center">Configure propogation delay(td)</td>
+        <td rowspan="2" style="text-align: center">Configure propagation delay (td)</td>
         <td>1. Enter 108 to select configure propagation delay </td>
         <td> </td>
     </tr>
@@ -1040,7 +1040,9 @@ Shown below is a sample output when the application is run:
         <td></td>
     </tr>
     <tr>
-        <td>2. press enter to stop the long term test</td>
-        <td style="text-align: center">The result shows the number of position command sent and the number of CRC failures received</td>
+        <td>2. Press enter to stop the long term test</td>
+        <td style="text-align: center">The result shows the number of position commands sent and the number of CRC failures received</td>
     </tr>
 </table>
+
+\note Arm is a registered trademark of Arm Limited (or its subsidiaries or affiliates) in the US and/or elsewhere.

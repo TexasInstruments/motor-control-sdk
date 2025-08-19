@@ -3,7 +3,8 @@
 [TOC]
 
 ## Introduction
-The Tamagawa over UART module provides a support for SoC UART instance to execute the Tamagawa protocol.
+The Tamagawa over UART module provides implementation to execute the Tamagawa encoder communication protocol using SoC UART peripheral.
+
 ## Features Supported
 
 -  Single channel
@@ -21,10 +22,10 @@ The Tamagawa over UART module provides a support for SoC UART instance to execut
 
 @VAR_SYSCFG_USAGE_NOTE
 
-SysConfig can be used to configure things mentioned below:
-- Baud rate selection(2461538 bps for 2.5 Mbps encoder, 4923076 bps for 5Mbps encoder)
+SysConfig can be used to configure the following:
+- Baud rate selection (2461538 bps for 2.5 Mbps encoder, 4923076 bps for 5 Mbps encoder)
 - Communication mode selection (Tested using polling mode with UART LLD)
-- Configuring GPIO62 signal with J2 pin (RTSn pin for software based flow control)
+- Configuring GPIO62 signal with J2 pin (RTSn pin for software-based flow control)
 - UART instance selection
 
 

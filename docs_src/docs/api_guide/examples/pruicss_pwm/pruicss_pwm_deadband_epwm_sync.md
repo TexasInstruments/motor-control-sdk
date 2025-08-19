@@ -5,15 +5,15 @@
 # Introduction
 
 
-This example uses the PRUICSS PWM module to generate a signal with a specified duty cycle and deadband at rise edge and fall edge of PWM, syncing pruicss PWM with EPWM sync cout
+This example uses the PRUICSS PWM module to generate a signal with a specified duty cycle and deadband at rise edge and fall edge of PWM, syncing PRUICSS PWM with EPWM sync count.
 
-The default parameters are in the example are:
+The default parameters in the example are:
 
 - Frequency : 16kHz
-- PWM0_0_POS(alias signal PWM0_A0) is configured with duty cycle of 25% , rise edge delay as 0ns and fall edge delay as 0ns
-- PWM0_0_NEG(alias signal PWM0_B0) is configured with duty cycle of 25% , rise edge delay as 200ns and fall edge delay as 400ns
-- PWM2_0_POS(alias signal PWM2_A0) is configured with duty cycle of 25% , rise edge delay as 0ns and fall edge delay as 0ns
-- PWM2_0_NEG(alias signal PWM2_B0) is configured with duty cycle of 25% , rise edge delay as 600ns and fall edge delay as 800ns
+- PWM0_0_POS(alias signal PWM0_A0) is configured with duty cycle of 25%, rise edge delay as 0ns and fall edge delay as 0ns
+- PWM0_0_NEG(alias signal PWM0_B0) is configured with duty cycle of 25%, rise edge delay as 200ns and fall edge delay as 400ns
+- PWM2_0_POS(alias signal PWM2_A0) is configured with duty cycle of 25%, rise edge delay as 0ns and fall edge delay as 0ns
+- PWM2_0_NEG(alias signal PWM2_B0) is configured with duty cycle of 25%, rise edge delay as 600ns and fall edge delay as 800ns
 
 All these parameters are configurable.
 
@@ -21,20 +21,20 @@ All these parameters are configurable.
 
 ### PRUICSS IEP configuration
 
-- IEP shadow mode and slave mode are enabled (Refer section 6.4.13 of Technical Reference Manual) and IEP is configured to reset twice on every PWM period as mentioned below
+- IEP shadow mode and slave mode are enabled (Refer to section 6.4.13 of Technical Reference Manual) and IEP is configured to reset twice on every PWM period as mentioned below.
 
 - EPWM0 sync out is configured to generate every PRUICSS PWM period, PRUICSS IEP COMPARE 0 is configured with one IEP cycle delay ((PWM_PERIOD/2)+1).
 - By configuring PRUICSS IEP COMPARE 0 with one IEP cycle delay, IEP COMPARE 0 event is missed at the end of PRUICSS PWM period.
-- PRUICSS IEP CMP0 resets IEP couter in middle of PRUICSS PWM period.
+- PRUICSS IEP CMP0 resets IEP counter in middle of PRUICSS PWM period.
 - EPWM0 sync out resets IEP counter at end of PRUICSS PWM period.
 
 ### PRUICSS PWM configuration
 
-- PWM signal is configured to low in Intial state, Toggle in Active state, Change of state from Active to Intial is disabled on IEP0 CMP0 event.
+- PWM signal is configured to low in Initial state, Toggle in Active state, Change of state from Active to Initial is disabled on IEP0 CMP0 event.
 
-- PWM Duty cycle, rise edge delay, fall edge delay can configured or updated using \ref PRUICSS_PWM_config API call.
+- PWM Duty cycle, rise edge delay, fall edge delay can be configured or updated using \ref PRUICSS_PWM_config API call.
 
-- PWM Period can be configured or updated using \ref PRUICSS_PWM_pruIcssPwmFrequencyInit API call .
+- PWM Period can be configured or updated using \ref PRUICSS_PWM_pruIcssPwmFrequencyInit API call.
 
 - PWM0_0_POS, PWM0_0_NEG, PWM2_0_POS, PWM2_0_NEG uses IEP0 CMP0 and EPWM0 sync out signal to achieve PWM synchronization.
 
@@ -45,11 +45,11 @@ Below two steps are executed once in PWM period
 \imageStyle{epwm_pruicss_pwm_sync_dead_band.png, width:100% height:50%}
 \image html epwm_pruicss_pwm_sync_dead_band.png "GENERATION OF PRUICSS PWM SIGNAL"
 
-- Step1 : When EPWM0 sync out resets IEP counter, PWM signals are moved to intial state on software reset, shadow compare register values which decides rise edge are moved to active register values, next compare value which decides fall edge of PWM signal is computed and shadow compare register field is updated.
+- Step1: When EPWM0 sync out resets IEP counter, PWM signals are moved to initial state on software reset, shadow compare register values which decide rise edge are moved to active register values, next compare value which decides fall edge of PWM signal is computed and shadow compare register field is updated.
 
-- Step2 : When PRUICSS IEP CMP0 resets IEP counter, shadow compare register values which decides fall edge are moved to active register values, new compare values which decides rise edge of PWM signal are computed from updated duty cycle and shadow compare register field is updated.
+- Step2: When PRUICSS IEP CMP0 resets IEP counter, shadow compare register values which decide fall edge are moved to active register values, new compare values which decide rise edge of PWM signal are computed from updated duty cycle and shadow compare register field is updated.
 
-The pruicss PWM signal generated is similar to EPWM signal when EPWM counter is configured in up-down mode.
+The PRUICSS PWM signal generated is similar to EPWM signal when EPWM counter is configured in up-down mode.
 
 #### Note
 This example uses EPWM0 sync out to reset IEP at the PWM period, PRUICSS IEP CMP0 can also be used to do this when EPWM sync out signal is disabled.
@@ -74,10 +74,10 @@ This example uses EPWM0 sync out to reset IEP at the PWM period, PRUICSS IEP CMP
 #### Probe Output
 
 \imageStyle{epwm_pruicss_pwm_sync_dead_band_probe_output_2.png, width:98%}
-\image html epwm_pruicss_pwm_sync_dead_band_probe_output_2.png "PRU-ICSS0 PWM0_A0 and PWM0_B0 DUTYCYCLE and FREQUENCY"
+\image html epwm_pruicss_pwm_sync_dead_band_probe_output_2.png "PRU-ICSS0 PWM0_A0 and PWM0_B0 DUTY CYCLE and FREQUENCY"
 
 \imageStyle{epwm_pruicss_pwm_sync_dead_band_probe_output_1.png, width:98%}
-\image html epwm_pruicss_pwm_sync_dead_band_probe_output_1.png "PRU-ICSS0 PWM2_A0 and PWM2_B0 DUTYCYCLE and FREQUENCY"
+\image html epwm_pruicss_pwm_sync_dead_band_probe_output_1.png "PRU-ICSS0 PWM2_A0 and PWM2_B0 DUTY CYCLE and FREQUENCY"
 
 \imageStyle{epwm_pruicss_pwm_sync_dead_band_probe_output_3.png, width:98%}
 \image html epwm_pruicss_pwm_sync_dead_band_probe_output_3.png "PRU-ICSS0 PWM0_A0 and PWM0_B0 DEADBAND and PRU-ICSS0 PWM0_A0 and PWM0_B0 DEADBAND"
@@ -113,7 +113,7 @@ This example uses EPWM0 sync out to reset IEP at the PWM period, PRUICSS IEP CMP
 - **When using CCS projects to build**, import the CCS project for the required combination and build it using the CCS project menu (see <a href="@VAR_MCU_SDK_DOCS_PATH/CCS_PROJECTS_PAGE.html" target="_blank"> Using SDK with CCS Projects </a>).
 - **When using makefiles to build**, note the required combination and build using make command (see <a href="@VAR_MCU_SDK_DOCS_PATH/MAKEFILE_BUILD_PAGE.html" target="_blank"> Using SDK with Makefiles </a>)
 - Launch a CCS debug session and run the executable, see <a href="@VAR_MCU_SDK_DOCS_PATH/CCS_LAUNCH_PAGE.html" target="_blank">  CCS Launch, Load and Run </a>
-- To probe the PRUICSS PWM output please refer setup details as mentioned above in Introduction section
+- To probe the PRUICSS PWM output please refer to setup details as mentioned above in Introduction section
 
 # See Also
 
@@ -123,7 +123,7 @@ This example uses EPWM0 sync out to reset IEP at the PWM period, PRUICSS IEP CMP
 
 ## Steps to synchronize PRUICSS PWM from SOC EPWM
 
-This example demonstrates synchronization of PRUICSS PWM with SOC EPWM. For synchronization of SOC EPWM with PRUICSS PWM, follow the steps below
+This example demonstrates synchronization of PRUICSS PWM with SOC EPWM. For synchronization of SOC EPWM with PRUICSS PWM, follow the steps below:
 
 - Compare 0 event which controls period of PRUICSS PWM is mapped to cmp_event_router_input_16.
 - Configure compare event router to mux cmp_event_router_output_40 with cmp_event_router_input_16.
@@ -165,9 +165,9 @@ void EPWM_config_syncin_event()
 void config_compare_event_router_out()
 {
     /*Configure compare event router to mux cmp_event_router_output_40 with cmp_event_router_input_16*/
-    volatile uint32_t  *Addr ;
+    volatile uint32_t  *Addr;
     uint32_t CMP_EVENT_INTROUTER_MUXCTRL_ADDR_OFFSET = 0x00000004;
-    uint32_t CMP_EVENT_INTROUTER0_OUTP_40_EPWM0_SYNC_IN_ADDR_OFFSET = 0x28 * 4 ;
+    uint32_t CMP_EVENT_INTROUTER0_OUTP_40_EPWM0_SYNC_IN_ADDR_OFFSET = 0x28 * 4;
     Addr =(uint32_t *)( CSL_CMP_EVENT_INTROUTER0_CFG_BASE + CMP_EVENT_INTROUTER_MUXCTRL_ADDR_OFFSET + CMP_EVENT_INTROUTER0_OUTP_40_EPWM0_SYNC_IN_ADDR_OFFSET);
     CSL_REG32_WR(Addr,0x10010);
 }

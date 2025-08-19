@@ -6,7 +6,7 @@
 
 ## Introduction
 
-Nikon A-format absolute encoder receiver implementation on the TI PRU-ICSS interfaces with the Nikon A-format encoders either via point-to-point communication or up to 8 Nikon A-format encoders connected on a bus. Nikon A-format encoders use a proprietary asynchronous serial bi-directional half-duplex communication protocol compliant with the RS-485. The encoder can generate either single- or multi-turn absolute position data and can operate at a baud rate of up to 16 MHz. Besides position data, the encoder can also send status and diagnostic information well. Reliability is ensured by using a 3-bit CRC by the receiver and an 8-bit CRC by the encoder. Another interesting feature of the Nikon-A encoders is the optional battery backup circuit, which can be used in case of power failure. Nikon A-format encoders are widely used in industrial machinery, including industrial robots in automobile production lines and machine tools, and are highly valued as the next-generation standard for sensors that can detect the absolute rotational displacement values of robot arms.
+Nikon A-format absolute encoder receiver implementation on the TI PRU-ICSS interfaces with the Nikon A-format encoders either via point-to-point communication or up to 8 Nikon A-format encoders connected on a bus. Nikon A-format encoders use a proprietary asynchronous serial bi-directional half-duplex communication protocol compliant with RS-485. The encoder can generate either single- or multi-turn absolute position data and can operate at a baud rate of up to 16 MHz. Besides position data, the encoder can also send status and diagnostic information as well. Reliability is ensured by using a 3-bit CRC by the receiver and an 8-bit CRC by the encoder. Another interesting feature of the Nikon-A encoders is the optional battery backup circuit, which can be used in case of power failure. Nikon A-format encoders are widely used in industrial machinery, including industrial robots in automobile production lines and machine tools, and are highly valued as the next-generation standard for sensors that can detect the absolute rotational displacement values of robot arms.
 
 ## Features Supported {#NIKON_FEATURES}
    -  Support for Nikon version 2.1 and Nikon version 3.0
@@ -51,8 +51,8 @@ Nikon A-format absolute encoder receiver implementation on the TI PRU-ICSS inter
     <td>Not tested
 </tr>
 </table>
-   -  Support for concurrent multi-channel support on a single PRU (up-to 3 channels with identical number of encoders of same frequency connected to all configured channels).
-   -  Support for multi-channel with different communication modes and different number of encoders connected across channels under load share model (each of PRU, RTU-PRU, and TX-PRU from one PRU-ICSSG slice handles all 3 channels).
+   -  Support for concurrent multi-channel support on a single PRU (up to 3 channels with identical number of encoders of the same frequency connected to all configured channels).
+   -  Support for multi-channel with different communication modes and different numbers of encoders connected across channels under load share model (each of PRU, RTU-PRU, and TX-PRU from one PRU-ICSSG slice handles all 3 channels).
 \endcond
 
 \cond SOC_AM261X
@@ -129,8 +129,8 @@ Nikon A-format absolute encoder receiver implementation on the TI PRU-ICSS inter
 
 ## Features Not Supported
 
-In general, peripherals or features not mentioned as part of "Features Supported" section are not
-supported in this release, including the below
+In general, peripherals or features not mentioned as part of the "Features Supported" section are not
+supported in this release, including the following:
 -  Independent clocks on multi channel mode.
 
 ### Known Limitations
@@ -145,17 +145,20 @@ supported in this release, including the below
         - The example code and PRU firmware are designed to handle 8 encoders
 
 \cond SOC_AM243X
-- PRU Firmware gets stuck if encoder does not respond with number of bytes expected by driver as per PINDSW-9179 in \ref RELEASE_NOTES_11_00_00_PAGE
-\endcond
-
-\cond (SOC_AM263X || SOC_AM263PX || SOC_AM261X)
-- PRU Firmware gets stuck if encoder does not respond with number of bytes expected by driver as per PINDSW-9179 in \ref RELEASE_NOTES_10_02_00_PAGE
-\endcond
-
+- PRU Firmware gets stuck if encoder does not respond with the number of bytes expected by the driver as per PINDSW-9179 in \ref RELEASE_NOTES_11_00_00_PAGE
  - Example cases when firmware gets stuck
-    1. Any command is sent with encoder address not matching to that of encoder connected with the device
-    2. In bus mode, if encoders with address 0, 1, 2 are connected and MT command is sent with encoder address 3 or more
-    3. Command 20 is sent with ID not matching to encoder connected with the device
+    1. Any command is sent with encoder address not matching that of the encoder connected with the device
+    2. In bus mode, if encoders with addresses 0, 1, 2 are connected and MT command is sent with encoder address 3 or more
+    3. Command 20 is sent with ID not matching the encoder connected with the device
+\endcond
+
+\cond (SOC_AM263PX || SOC_AM261X)
+- PRU Firmware gets stuck if encoder does not respond with the number of bytes expected by the driver as per PINDSW-9179 in \ref RELEASE_NOTES_10_02_00_PAGE
+ - Example cases when firmware gets stuck
+    1. Any command is sent with encoder address not matching that of the encoder connected with the device
+    2. In bus mode, if encoders with addresses 0, 1, 2 are connected and MT command is sent with encoder address 3 or more
+    3. Command 20 is sent with ID not matching the encoder connected with the device
+\endcond
 
 ## SysConfig Features
 
@@ -163,44 +166,48 @@ supported in this release, including the below
 
 \cond SOC_AM243X
 
-SysConfig can be used to configure things mentioned below:
+SysConfig can be used to configure the following:
 - Selecting the ICSSG instance. (Tested on ICSSG0)
-- Selecting the ICSSG0PRUx instance.(Tested on ICSSG0-PRU1)
+- Selecting the ICSSG0PRUx instance. (Tested on ICSSG0-PRU1)
 - Configuring PINMUX.
 - Frequency selection.
 - Channel selection.
-- Selecting Multi Channel with Encoders connected in Different Configurations (bus or one-to-one) using load share mode.
+- Selecting Multi Channel with encoders connected in Different Configurations (bus or one-to-one) using load share mode.
 - Enabling SA Mux mode.
 - Selecting source clock.
 - Selecting Nikon protocol version (2.1 or 3.0)
+
+\note Nikon firmware supports operation with ICSS Core Clock running at 200 MHz/300 MHz frequency or ICSS UART Clock running at 192 MHz only. ICSS Core Clock at 225/250/333 MHz is not supported due to clock divider requirements.
 
 \endcond
 
 \cond SOC_AM261X
 
-SysConfig can be used to configure things mentioned below:
+SysConfig can be used to configure the following:
 - Selecting the ICSS instance. (Tested on ICSSM1)
-- Selecting the ICSS PRU slice.(Tested on ICSSM1-PRU0)
+- Selecting the ICSS PRU slice. (Tested on ICSSM1-PRU0)
 - Configuring PINMUX.
 - Frequency selection.
 - Channel selection.
 - Selecting source clock.
 - Selecting Nikon protocol version (2.1 or 3.0)
 
-\note Nikon firmware will only run with ICSS UART Clock running at 160 MHz(when ICSS Core Clock is 225 MHz).
+\note Nikon firmware supports operation with ICSS UART Clock running at 160 MHz only, when ICSS Core Clock is 225 MHz due to clock divider requirements.
 
 \endcond
 
 \cond  (SOC_AM263X || SOC_AM263PX)
 
-SysConfig can be used to configure things mentioned below:
+SysConfig can be used to configure the following:
 - Selecting the ICSS instance. (Tested on ICSSM)
-- Selecting the ICSS PRU slice.(Tested on ICSSM-PRU0)
+- Selecting the ICSS PRU slice. (Tested on ICSSM-PRU0)
 - Configuring PINMUX.
 - Frequency selection.
 - Channel selection.
 - Selecting source clock.
 - Selecting Nikon protocol version (2.1 or 3.0)
+
+\note Nikon firmware supports operation with ICSS Core Clock running at 200 MHz frequency or ICSS UART Clock running at 192 MHz frequency only.
 
 \endcond
 
@@ -216,28 +223,28 @@ SysConfig can be used to configure things mentioned below:
     <th> Description
 </tr>
 <tr>
-    <td> Single Channel Mode
+    <td> Single channel
     <td> PRUx
     <td> DMEM: 552 Bytes <br>  IMEM: ~ 1.4 kB
 	<td> IEP0: CMP0 and CMP3
-    <td> INTC Signal host interrupt 2 is used to trigger a R5 interrupt
+    <td> INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger a R5 interrupt
     <td> IEP, CMP events and INTC signal are used only in periodic continuous mode.
 </tr>
 <tr>
-    <td> Multi Channel Single PRU Mode
+    <td> Multi-channel with single PRU core
     <td> PRUx
     <td> DMEM: 552 Bytes <br>  IMEM: 1700 Bytes
 	<td> IEP0: CMP0 and CMP3
-    <td> INTC Signal host interrupt 2 is used to trigger a R5 interrupt
+    <td> INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger a R5 interrupt
     <td> IEP, CMP events and INTC signal are used only in periodic continuous mode.
 </tr>
 <tr>
-    <td rowspan="3"> Multi Channel Load Share Mode
+    <td rowspan="3"> Multi-channel with load share across 3 PRU cores
     <td> PRUx
     <td rowspan="3"> DMEM: 552 Bytes <br>  IMEM: 1604 Bytes
-	<td rowspan="3">IEP0: CMP0, CMP3, CMP5 and CMP6 </td>
-    <td rowspan="3">INTC Signal host interrupt 2,3 & 4 is used to trigger a R5 interrupt</td>
-    <td rowspan="3">IEP, CMP events and INTC signals are used only in periodic continuous mode.</td>
+	<td rowspan="3"> IEP0: CMP0, CMP3, CMP5 and CMP6 </td>
+    <td rowspan="3"> INTC event/input number 18, 19 and 20 (pr[0/1]_pru_mst_intr[2/3/4]_intr_req) is used to trigger a R5 interrupt
+    <td rowspan="3"> IEP, CMP events and INTC signals are used only in periodic continuous mode.</td>
 </tr>
 <tr>
     <td> RTU_PRUx
@@ -247,7 +254,7 @@ SysConfig can be used to configure things mentioned below:
 </tr>
 </table>
 
-\note For pin usage see \ref NIKON_PIN_USAGE  page.
+\note For pin usage, see \ref NIKON_PIN_USAGE page.
 
 \endcond
 
@@ -262,11 +269,11 @@ SysConfig can be used to configure things mentioned below:
     <th> Description
 </tr>
 <tr>
-    <td> Single Channel Mode
+    <td> Single channel
     <td> PRUx
     <td> DMEM: 552 Bytes <br>  IMEM: ~ 1.4 kB
 	<td> IEP0: CMP0 and CMP3
-    <td> INTC Signal host interrupt 2 is used to trigger a R5 interrupt
+    <td> INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger a R5 interrupt
     <td> IEP, CMP events and INTC signal are used only in periodic continuous mode.
 </tr>
 </table>
@@ -283,4 +290,3 @@ SysConfig can be used to configure things mentioned below:
 
 ## API
 \ref NIKON_API_MODULE
-
