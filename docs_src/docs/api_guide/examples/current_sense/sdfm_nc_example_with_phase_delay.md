@@ -4,18 +4,18 @@
 [TOC]
 
 # ICSS SDFM three channel with phase compensation
+This example demonstrates phase compensation implemented for channel 0. It uses PRU-ICSSG IEP SYNC0 and SYNC1 to generate phase delayed clock for %SDFM interface and modulator.
 
-This example measures phase compensation for %SDFM channel 0 in PRU GPIO mode
-during initialization. Normal current Over-sampling Ratio (OSR), Over current OSR and Normal current trigger time can be configured by the user.
+It measures the phase delay for %SDFM channel 0 in PRU GPIO mode during initialization. Normal current Over-sampling Ratio (OSR), Over current OSR and Normal current trigger time can be configured by the user.
 
-Only one core - PRU is used for this example.
+> **Note:** The current firmware supports measuring the phase delay using the SD0_DATA pin and the SD8_CLK pin for a single-axis use case. A similar measurement can be applied and implemented for multi-axis or individual channels as described in \ref PHASE_COMPENSATION.
 
-The example does the following:
-- Configure ICSSG0 IEP0 for generating clock for %SDFM
-- Enable Phase Compensation Measurement
-- Configure SYNC1 Delay register based on the measured phase delay
-- Set %SDFM channels: Channel 0 - Channel 2
-- Configure normal current sample trigger time (time for read sample) and OSR
+This example demonstrates a three-channel single PRU configuration that performs the following tasks:
+- Configures ICSSG0 IEP0 to generate a clock for the %SDFM interface and modulator.
+- Enables phase compensation measurement.
+- Configures the SYNC1 delay register based on the measured phase delay.
+- Sets up %SDFM channels: Channel 0, Channel 1 and Channel 2.
+- Configures the normal current sample trigger time, oversampling ratio (OSR), and sinc filter type.
 
 # Important files and directory structure
 
@@ -64,7 +64,7 @@ The example does the following:
 
 # Steps to Run the Example
 
-## Hardware Prerequisites
+## Hardware Prerequisites for EVM
 Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_SETUP_PAGE.html" target="_blank"> EVM Setup </a>, the additional hardware listed below is required to run this demo
 - TMDS64DC01EVM IO Link/Breakout Board
 - AMC1035EVM
@@ -72,17 +72,17 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 - Signal generator
 
 
-### Hardware Setup
+### EVM Hardware Setup 
 \imageStyle{SDFM_EVMHw_SETUP_image.jpeg,width:40%}
 \image html SDFM_EVMHw_SETUP_image.jpeg  "Hardware Setup SDFM"
 \image html SDFM_EVM_SETUP_FOR_PHASE_DELAY.png  "SDFM: EVM and IO breakout board setup view"
 \cond SOC_AM243X
-### Hardware Prerequisites for LP
+## Hardware Prerequisites for LP
 - AMC1035EVM
 - <a href="https://www.ti.com/tool/LP-AM243" target="_blank"> LP-AM243 Board </a>
 - Signal generator
 
-#### LP Hardware Setup
+### LP Hardware Setup
 \imageStyle{SDFM_LPHw_SETUP_FOR_PHASE_DELAY.jpeg,width:40%}
 \image html SDFM_LPHw_SETUP_FOR_PHASE_DELAY.jpeg  "LP Hardware setup"
 \image html SDFM_LP_HWSETUP_FOR_PHASE_DELAY.png  "SDFM: LP setup view"

@@ -324,8 +324,8 @@ typedef struct SDFM_Ctrl_s
     volatile uint8_t  sdfm_en_ack;
     /**< SDFM PRU ID*/
     volatile uint8_t  sdfm_pru_id;
-    /**<  enable shadow register based Normal current sampling */
-    volatile uint8_t  sdfm_en_shadow_nc;
+    /**<  enable snoop based Normal current sampling */
+    volatile uint8_t  sdfm_en_snoop_nc;
 } SDFM_Ctrl;
 
 typedef struct SDFM_Interface_s{

@@ -22,6 +22,7 @@ Nikon A-format version 3.0                                                      
 Support for up to 8 encoders in bus connection                                                  | Position Sense Nikon A-format
 Independent IEP events for each axis in load share mode                                         | Position Sense Nikon A-format
 Enabled configuration of IEP1 independently                                                     | PRU-ICSS PWM
+Refactor the examples, renamed the old example to snoop mode based example and added new examples for shadow mode which does not use snoop mode | Current Sense %SDFM
 
 
 \cond SOC_AM243X
@@ -486,6 +487,54 @@ previous SDK version. Also refer to older SDK version release notes to see chang
     <td> Moved examples/dcl, examples/sfra, examples/transforms, examples/utilities to examples/rtlibs folder
     <td> All examples using Real Time Libraries are updated to use new path
 </tr>
+<tr>
+    <td> Current Sense %SDFM
+    <td> `SdfmPrms_s`
+    <td> Added variable: `snoopModeEnable`
+    <td> -
+</tr>
+<tr>
+    <td> Current Sense %SDFM
+    <td> Example: `icss_sdfm_nine_channel_load_share_snoop_mode`
+    <td> Renamed the example name from `icss_sdfm_nine_channel_load_share_mode` to `icss_sdfm_nine_channel_load_share_snoop_mode`, Changed the INTC mapping between host channels and PRU events
+    <td> This change identifies the sampling mode between Normal mode and Snoop mode. INTC mapping info is available at \ref SDFM_INTC_MAPPING
+</tr>
+<tr>
+    <td> Current Sense %SDFM
+    <td> Example: `icss_sdfm_three_channel_single_pru_snoop_mode`
+    <td> Renamed the example name from `icss_sdfm_three_channel_single_pru_mode` to `icss_sdfm_three_channel_single_pru_snoop_mode`, Changed the INTC mapping between host channel and PRU event
+    <td> This change identifies the sampling mode between Normal mode and Snoop mode. INTC mapping info is available at \ref SDFM_INTC_MAPPING
+</tr>
+<tr>
+    <td> Current Sense %SDFM
+    <td> Example: `icss_sdfm_nine_channel_load_share_mode`
+    <td> Normal mode for sampling is used
+    <td> To demonstrate shadow mode-based sampling, it uses Normal mode for sampling.
+</tr>
+<tr>
+    <td> Current Sense %SDFM
+    <td> Example: `icss_sdfm_nine_channel_with_continuous_mode`
+    <td> Made Normal mode the default mode for sampling, and individual interrupt is used for all channels
+    <td> Updated the callback function to read sample data. INTC mapping info is available at \ref SDFM_INTC_MAPPING
+</tr>
+<tr>
+    <td> Current Sense %SDFM
+    <td> Example: `icss_sdfm_three_channel_single_pru_mode`
+    <td> Normal mode for sampling is used
+    <td> To demonstrate shadow mode-based sampling, it uses Normal mode for sampling.
+</tr>
+<tr>
+    <td> Current Sense %SDFM
+    <td> Example: `icss_sdfm_three_channel_with_continuous_mode`
+    <td> Made Normal mode the default mode for sampling, and individual interrupt is used for all channels
+    <td> Updated the callback function to read sample data. INTC mapping info is available at \ref SDFM_INTC_MAPPING
+</tr>
+<tr>
+    <td> Current Sense %SDFM
+    <td> Example: `icss_sdfm_three_channel_with_phase_compensation`
+    <td> Made Normal mode the default mode for sampling, Changed the INTC mapping between host channel and PRU event
+    <td> INTC mapping info is available at \ref SDFM_INTC_MAPPING
+</tr>
 </table>
 
 ### Drivers
@@ -659,5 +708,17 @@ previous SDK version. Also refer to older SDK version release notes to see chang
     <td> -
     <td> Moved source/control, source/dcl, source/observers, source/sfra, source/transforms, source/utilities to source/rtlibs folder
     <td> All examples using Real Time Libraries are updated to use new path
+</tr>
+<tr>
+    <td> Current Sense %SDFM
+    <td> \ref SDFM_Ctrl
+    <td> Added variable: `sdfm_en_snoop_nc`
+    <td> -
+</tr>
+<tr>
+    <td> Current Sense %SDFM
+    <td>\ref SDFM_setFilterOverSamplingRatio
+    <td> Added input parameter: `channel`
+    <td> Take current channel number as input parameter
 </tr>
 </table>

@@ -18,8 +18,10 @@ const device_defines = {
 
 const example_file_list = [
     "examples/current_sense/icss_sdfm_nine_channel_load_share_mode/.project/project.js",
+    "examples/current_sense/icss_sdfm_nine_channel_load_share_snoop_mode/.project/project.js",
     "examples/current_sense/icss_sdfm_nine_channel_with_continuous_mode/.project/project.js",
     "examples/current_sense/icss_sdfm_three_channel_single_pru_mode/.project/project.js",
+    "examples/current_sense/icss_sdfm_three_channel_single_pru_snoop_mode/.project/project.js",
     "examples/current_sense/icss_sdfm_three_channel_with_continuous_mode/.project/project.js",
     "examples/current_sense/icss_sdfm_three_channel_with_phase_compensation/.project/project.js",
     "examples/position_sense/bissc_diagnostic/multi_channel_load_share/.project/project.js",

@@ -14,11 +14,6 @@ const sdfm1             = sdfm.addInstance();
 const epwm              = scripting.addModule("/drivers/epwm/epwm", {}, false);
 const epwm1             = epwm.addInstance();
 const epwm2             = epwm.addInstance();
-const gpio              = scripting.addModule("/drivers/gpio/gpio", {}, false);
-const gpio1             = gpio.addInstance();
-const gpio2             = gpio.addInstance();
-const gpio3             = gpio.addInstance();
-const gpio4             = gpio.addInstance();
 const pruicss           = scripting.addModule("/drivers/pruicss/pruicss", {}, false);
 const pruicss1          = pruicss.addInstance();
 const debug_log         = scripting.addModule("/kernel/dpl/debug_log");
@@ -75,23 +70,6 @@ epwm2.$name              = "CONFIG_EPWM1";
 epwm2.EPWM.SYNCO.$assign = "GPMC0_AD1";
 epwm2.EPWM.SYNCO.$used   = false;
 epwm2.EPWM.SYNCI.$used   = false;
-
-gpio1.$name                    = "GPIO_MTR_1_PWM_EN";
-gpio1.pinDir                   = "OUTPUT";
-gpio1.useMcuDomainPeripherals  = true;
-gpio1.MCU_GPIO.gpioPin.$assign = "MCU_UART0_RXD";
-
-gpio2.pinDir         = "OUTPUT";
-gpio2.$name          = "GPIO_ZC_TH_CH0";
-gpio2.GPIO_n.$assign = "PRG1_PRU0_GPO18";
-
-gpio3.pinDir         = "OUTPUT";
-gpio3.$name          = "GPIO_ZC_TH_CH1";
-gpio3.GPIO_n.$assign = "PRG0_PRU1_GPO2";
-
-gpio4.pinDir         = "OUTPUT";
-gpio4.$name          = "GPIO_ZC_TH_CH2";
-gpio4.GPIO_n.$assign = "PRG0_PRU1_GPO1";
 
 debug_log.enableUartLog        = true;
 debug_log.uartLog.$name        = "CONFIG_UART_CONSOLE";
@@ -318,10 +296,16 @@ pruicss1.AdditionalICSSSettings[0].$name                                        
 pruicss1.AdditionalICSSSettings[0].PruEcapIO.create(1);
 pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].$name                             = "CONFIG_PRU_ICSS_ECAP_IO0";
 pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].PRU_ICSSG0_ECAP.IN_APWM_OUT.$used = true;
-pruicss1.intcMapping.create(1);
-pruicss1.intcMapping[0].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING0";
+pruicss1.intcMapping.create(3);
+pruicss1.intcMapping[0].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING1";
 pruicss1.intcMapping[0].event                                                     = "21";
-pruicss1.intcMapping[0].host                                                      = "3";
+pruicss1.intcMapping[0].channel                                                   = "3";
+pruicss1.intcMapping[1].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING0";
+pruicss1.intcMapping[1].event                                                     = "22";
+pruicss1.intcMapping[1].channel                                                   = "4";
+pruicss1.intcMapping[2].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING2";
+pruicss1.intcMapping[2].event                                                     = "23";
+pruicss1.intcMapping[2].channel                                                   = "5";
 
 /**
  * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future
@@ -338,7 +322,6 @@ epwm1.EPWM.SYNCO.$suggestSolution                                               
 epwm2.EPWM.$suggestSolution                                                                  = "EHRPWM1";
 epwm2.EPWM.A.$suggestSolution                                                                = "GPMC0_AD5";
 epwm2.EPWM.B.$suggestSolution                                                                = "GPMC0_AD6";
-gpio1.MCU_GPIO.$suggestSolution                                                              = "MCU_GPIO0";
 debug_log.uartLog.UART.RXD.$suggestSolution                                                  = "UART0_RXD";
 debug_log.uartLog.UART.TXD.$suggestSolution                                                  = "UART0_TXD";
 pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[0].PRU_ICSSG0_PWM.$suggestSolution                     = "PRU_ICSSG0_PWM0";

@@ -217,33 +217,37 @@ void SDFM_configGpioPins(sdfm_handle h_sdfm, uint8_t loadShare, uint8_t pruInsId
 {
     if(loadShare)
     {
-        uint32_t gpioBaseAddrCh;
-        uint32_t pinNumCh;
         switch (pruInsId)
         {
             case PRUICSS_PRU0:
             case PRUICSS_PRU1:
-                /*ch5 GPIO configuration*/
-                gpioBaseAddrCh = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH1_BASE_ADDR);
-                pinNumCh       = GPIO_ZC_TH_CH1_PIN;
+#if (CONFIG_SDFM0_CHANNEL5_OC_EN_ZERO_CROSS != 0)
+                /*ch5 GPIO configuration */
+                uint32_t gpioBaseAddrCh = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH1_BASE_ADDR);
+                uint32_t pinNumCh       = GPIO_ZC_TH_CH1_PIN;
                 GPIO_setDirMode(gpioBaseAddrCh, pinNumCh, GPIO_ZC_TH_CH1_DIR);
                 SDFM_configComparatorGpioPins(h_sdfm, 2, gpioBaseAddrCh, pinNumCh);
+#endif
                 break;
             case PRUICSS_RTU_PRU0:
             case PRUICSS_RTU_PRU1:
+#if (CONFIG_SDFM0_CHANNEL2_OC_EN_ZERO_CROSS != 0)
                 /*ch2 GPIO configuration*/
-                gpioBaseAddrCh = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH0_BASE_ADDR);
-                pinNumCh       = GPIO_ZC_TH_CH0_PIN;
+                uint32_t gpioBaseAddrCh = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH0_BASE_ADDR);
+                uint32_t pinNumCh       = GPIO_ZC_TH_CH0_PIN;
                 GPIO_setDirMode(gpioBaseAddrCh, pinNumCh, GPIO_ZC_TH_CH0_DIR);
                 SDFM_configComparatorGpioPins(h_sdfm, 2, gpioBaseAddrCh, pinNumCh);
+#endif
                 break;
             case PRUICSS_TX_PRU0:
             case PRUICSS_TX_PRU1:
                 /*ch8 GPIO configuration*/
-                gpioBaseAddrCh = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH2_BASE_ADDR);
-                pinNumCh       = GPIO_ZC_TH_CH2_PIN;
+#if (CONFIG_SDFM0_CHANNEL8_OC_EN_ZERO_CROSS != 0)
+                uint32_t gpioBaseAddrCh = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH2_BASE_ADDR);
+                uint32_t pinNumCh       = GPIO_ZC_TH_CH2_PIN;
                 GPIO_setDirMode(gpioBaseAddrCh, pinNumCh, GPIO_ZC_TH_CH2_DIR);
                 SDFM_configComparatorGpioPins(h_sdfm, 2, gpioBaseAddrCh, pinNumCh);
+#endif
                 break;
             default:
                 break;
@@ -251,23 +255,27 @@ void SDFM_configGpioPins(sdfm_handle h_sdfm, uint8_t loadShare, uint8_t pruInsId
     }
     else
     {
+#if (CONFIG_SDFM0_CHANNEL0_OC_EN_ZERO_CROSS != 0)
         /*ch0 GPIO configuration*/
         uint32_t gpioBaseAddrCh0 = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH0_BASE_ADDR);
         uint32_t pinNumCh0       = GPIO_ZC_TH_CH0_PIN;
         GPIO_setDirMode(gpioBaseAddrCh0, pinNumCh0, GPIO_ZC_TH_CH0_DIR);
         SDFM_configComparatorGpioPins(h_sdfm, 0, gpioBaseAddrCh0, pinNumCh0);
-    
+#endif
+#if (CONFIG_SDFM0_CHANNEL1_OC_EN_ZERO_CROSS != 0)
         /*ch1 GPIO configuration*/
         uint32_t gpioBaseAddrCh1 = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH1_BASE_ADDR);
         uint32_t pinNumCh1       = GPIO_ZC_TH_CH1_PIN;
         GPIO_setDirMode(gpioBaseAddrCh1, pinNumCh1, GPIO_ZC_TH_CH1_DIR);
         SDFM_configComparatorGpioPins(h_sdfm, 1, gpioBaseAddrCh1, pinNumCh1);
-    
+#endif
+#if (CONFIG_SDFM0_CHANNEL2_OC_EN_ZERO_CROSS != 0)
         /*ch2 GPIO configuration*/
         uint32_t gpioBaseAddrCh2 = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH2_BASE_ADDR);
         uint32_t pinNumCh2       = GPIO_ZC_TH_CH2_PIN;
         GPIO_setDirMode(gpioBaseAddrCh2, pinNumCh2, GPIO_ZC_TH_CH2_DIR);
         SDFM_configComparatorGpioPins(h_sdfm, 2, gpioBaseAddrCh2, pinNumCh2);
+#endif
     }
 }   
 
@@ -376,67 +384,85 @@ int32_t initSdfmFw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm,  PRU
 
 #endif
    
-#if (SDFM_SHADOW_REG_BASED_NC)
-    /*Enable shadow register based normal current sampling */
-    SDFM_enableShadowRegBasedNC(hSdfm);
-#endif
+   if(pSdfmPrms->snoopModeEnable)
+   {
+        SDFM_enableSnoopBasedNC(hSdfm);
+        /*configure IEP count for one epwm period*/
+        SDFM_configIepCount(hSdfm, pSdfmPrms->epwmOutFreq);
+   
+        /*Configuration of sdfm parameters which are supported per axis, not for individual channels. 
+        Channel0 parameters value is used for all three channels of the axis.*/
+    
+        /*set Normal current OSR */
+        SDFM_setFilterOverSamplingRatio(hSdfm, enChannel, pSdfmPrms->channelPrms[enChannel].filterOsr);
 
-   /*configure IEP count for one epwm period*/
-    SDFM_configIepCount(hSdfm, pSdfmPrms->epwmOutFreq);
+        /*Enable Continuous mode*/
+        if(pSdfmPrms->channelPrms[enChannel].enableContinuousMode)
+        {
+            SDFM_enableContinuousNormalCurrent(hSdfm);
+            /*When Continuous mode is enabled, configure the first sample starting point. 
+            Sampling starts with some delay after IEP counter starts because there will be delay due to sdfm register configuration so we cannot trigger CMP event immediately
+            triggring cmp event 5us late*/
+            pSdfmPrms->channelPrms[enChannel].firstSampTrigTime = 5;
+        }
+        else
+        {
+            SDFM_setSampleTriggerTime(hSdfm, pSdfmPrms->channelPrms[enChannel].firstSampTrigTime);
+            if(pSdfmPrms->channelPrms[enChannel].enSecondUpdate)
+            {
+                SDFM_enableDoubleSampling(hSdfm, pSdfmPrms->channelPrms[enChannel].secondSampTrigTime);
+            }
+            else
+            {
+                SDFM_disableDoubleSampling(hSdfm);
+            }
+        }
 
-   /*Configuration of sdfm parameters which are supported per axis, not for individual channels. 
-    Channel0 parameters value is used for all three channels of the axis.*/
-
-    /*Phase delay calculation for ch0. With Load share mode also, phase delay calculation is enabled only for channel0 */
-    if(pSdfmPrms->phaseDelay && (SDFM_CH == 0))
-    {
-        SDFM_measureClockPhaseDelay(hSdfm, pSdfmPrms->clkPrms[0].clkInv);
-    }
-
-    /*set Normal current OSR */
-    SDFM_setFilterOverSamplingRatio(hSdfm, pSdfmPrms->channelPrms[enChannel].filterOsr);
-
-
-    /*Enable Continuous mode*/
-    if(pSdfmPrms->channelPrms[enChannel].enableContinuousMode)
-    {
-        SDFM_enableContinuousNormalCurrent(hSdfm);
-        /*When Continuous mode is enabled, configure the first sample starting point. 
-        Sampling starts with some delay after IEP counter starts because there will be delay due to sdfm register configuration so we cannot trigger CMP event immediately
-        triggring cmp event 5us late*/
-        pSdfmPrms->channelPrms[enChannel].firstSampTrigTime = 5;
-    }
-
-    /*GPIO pin configuration for zero cross*/
-    SDFM_configGpioPins(hSdfm, pSdfmPrms->loadShare, pSdfmPrms->pruInsId);
-
-    SDFM_setSampleTriggerTime(hSdfm, pSdfmPrms->channelPrms[enChannel].firstSampTrigTime);
-    if(pSdfmPrms->channelPrms[enChannel].enSecondUpdate)
-    {
-        SDFM_enableDoubleSampling(hSdfm, pSdfmPrms->channelPrms[enChannel].secondSampTrigTime);
+        /*GPIO pin configuration for zero cross*/
+        SDFM_configGpioPins(hSdfm, pSdfmPrms->loadShare, pSdfmPrms->pruInsId);
     }
     else
     {
-        SDFM_disableDoubleSampling(hSdfm);
+        /*Enable Continuous mode*/
+        if(pSdfmPrms->channelPrms[enChannel].enableContinuousMode)
+        {
+            SDFM_enableContinuousNormalCurrent(hSdfm);
+        }
+        else
+        {
+            SDFM_setSampleTriggerTime(hSdfm, pSdfmPrms->channelPrms[enChannel].firstSampTrigTime);
+            if(pSdfmPrms->channelPrms[enChannel].enSecondUpdate)
+            {
+                SDFM_enableDoubleSampling(hSdfm, pSdfmPrms->channelPrms[enChannel].secondSampTrigTime);
+            }
+            else
+            {
+                SDFM_disableDoubleSampling(hSdfm);
+            }
+        }
     }
-    
+
     /*enable epwm sync*/
     if(pSdfmPrms->channelPrms[enChannel].enableEpwmSync)
     {
         SDFM_enableEpwmSync(hSdfm, pSdfmPrms->channelPrms[enChannel].epwmSyncSource);
     }
      
+    /*Phase delay calculation for ch0. With Load share mode also, phase delay calculation is enabled only for channel0 */
+    if(pSdfmPrms->phaseDelay && (SDFM_CH == 0))
+    {
+        SDFM_measureClockPhaseDelay(hSdfm, pSdfmPrms->clkPrms[0].clkInv);
+    }
 
     /*below configuration for all three channel*/
     for(SDFM_CH = 0; SDFM_CH < NUM_CH_SUPPORTED_PER_AXIS; SDFM_CH++)
     {
-#if (!SDFM_SHADOW_REG_BASED_NC)
-        /*set comparator osr or Over current osr*/
-                SDFM_setCompFilterOverSamplingRatio(hSdfm, SDFM_CH, pSdfmPrms->compFilterPrms[SDFM_CH].comFilterOsr);
-#else
-        /*Use normal current osr to configure the accumulator osr */
-        SDFM_setCompFilterOverSamplingRatio(hSdfm, SDFM_CH, pSdfmPrms->channelPrms[SDFM_CH].filterOsr);
-#endif
+        SDFM_setCompFilterOverSamplingRatio(hSdfm, SDFM_CH, pSdfmPrms->compFilterPrms[SDFM_CH].comFilterOsr);
+        if(pSdfmPrms->snoopModeEnable != 1)
+        {
+            SDFM_setFilterOverSamplingRatio(hSdfm, SDFM_CH, pSdfmPrms->channelPrms[SDFM_CH].filterOsr);
+        }
+
         /*set ACC source or filter type*/
         SDFM_configDataFilter(hSdfm, SDFM_CH, pSdfmPrms->channelPrms[SDFM_CH].accSource);
 
