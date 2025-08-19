@@ -54,10 +54,10 @@
 #include <position_sense/nikon/include/nikon_api.h>
 #include "nikon_periodic_trigger.h"
 
-#define PRUICSS_SLICEx PRUICSS_PRUx
+#define PRUICSS_SLICEx CONFIG_NIKON0_PRUICSS_PRUx
 
 #if (CONFIG_NIKON0_MODE == NIKON_MODE_MULTI_CHANNEL_SINGLE_PRU)
-#if (PRUICSS_PRUx == 1)
+#if (PRUICSS_SLICEx == 1)
 #include  <nikon_receiver_multi_pru1_bin.h>
 #else
 #include  <nikon_receiver_multi_pru0_bin.h>
@@ -65,7 +65,7 @@
 #endif
 
 #if (CONFIG_NIKON0_MODE == NIKON_MODE_MULTI_CHANNEL_MULTI_PRU )
-#if (PRUICSS_PRUx == 1)
+#if (PRUICSS_SLICEx == 1)
 #include <nikon_receiver_multi_rtu_pru1_bin.h>
 #include <nikon_receiver_multi_pru1_bin.h>
 #include <nikon_receiver_multi_tx_pru1_bin.h>
@@ -77,7 +77,7 @@
 #endif
 
 #if (CONFIG_NIKON0_MODE == NIKON_MODE_SINGLE_CHANNEL_SINGLE_PRU)
-#if (PRUICSS_PRUx == 1)
+#if (PRUICSS_SLICEx == 1)
 #include  <nikon_receiver_pru1_bin.h>
 #else
 #include  <nikon_receiver_pru0_bin.h>
@@ -288,27 +288,35 @@ static void nikon_pruicss_init(void)
     DebugP_assert(SystemP_SUCCESS == status);
 #endif
     /* clear ICSS0 PRUx data RAM */
-    size = PRUICSS_initMemory(gPruIcssXHandle, PRUICSS_DATARAM(PRUICSS_PRUx));
+    size = PRUICSS_initMemory(gPruIcssXHandle, PRUICSS_DATARAM(PRUICSS_SLICEx));
     DebugP_assert(size);
     if(CONFIG_NIKON0_MODE == NIKON_MODE_MULTI_CHANNEL_MULTI_PRU)
     {
-        status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_RTUPRUx);
+        status = PRUICSS_disableCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_RTUPRUx);
         DebugP_assert(SystemP_SUCCESS == status);
-        status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_TXPRUx);
+        status = PRUICSS_disableCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_TXPRUx);
         DebugP_assert(SystemP_SUCCESS == status);
-        /*Set in constant table C28 for  tx pru*/
-        if(CONFIG_PRU_ICSS0)
-        {
-            /*ICSSG_PRU_CONTROL registers offset for ICSSG1 is 0xA58 */
-            PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0xA58);
-        }
-        else
-        {
-            /*ICSSG_PRU_CONTROL registers offset for ICSSG0 is 0x258 */
-            PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0x258);
-        }
+    /*
+    * Set the constant table C28 for tx pru
+    * configuring the constant table C28 to point to the TX counter
+    * register (CNTR). The counter is needed in firmware for adding waits and time stemps.
+    */
+#if CONFIG_NIKON0_PRUICSSx == 1
+#if PRUICSS_SLICEx == 1
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0xA58);
+#else
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0xA50);
+#endif /* PRUICSS_SLICEx == 1 */ 
+#else
+#if PRUICSS_SLICEx == 1
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0x258);
+#else
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0x250);
+#endif /* PRUICSS_SLICEx == 1 */ 
+#endif /* CONFIG_NIKON0_PRUICSSx == 1 */ 
+
     }
-    status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_PRUx);
+    status = PRUICSS_disableCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_PRUx);
     DebugP_assert(SystemP_SUCCESS == status);
 
 #if defined(SOC_AM263PX)
@@ -323,58 +331,58 @@ int32_t nikon_pruicss_load_run_fw(struct nikon_priv *priv, uint8_t mask)
     uint32_t size;
 #if(CONFIG_NIKON0_MODE == NIKON_MODE_MULTI_CHANNEL_MULTI_PRU) /*enable loadshare mode*/
 #if(CONFIG_NIKON0_CHANNEL0)
-    status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_RTUPRUx);
+    status = PRUICSS_disableCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_RTUPRUx);
     DebugP_assert(SystemP_SUCCESS == status);
     size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_RTU_PRU(PRUICSS_SLICEx),
                                                         0, (uint32_t *) NikonFirmwareMultiMakeRTU_0,
                                                         sizeof(NikonFirmwareMultiMakeRTU_0));
     DebugP_assert(size);
-    status = PRUICSS_resetCore(gPruIcssXHandle, PRUICSS_RTUPRUx);
+    status = PRUICSS_resetCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_RTUPRUx);
     DebugP_assert(SystemP_SUCCESS == status);
-    status = PRUICSS_enableCore(gPruIcssXHandle, PRUICSS_RTUPRUx);
+    status = PRUICSS_enableCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_RTUPRUx);
     DebugP_assert(SystemP_SUCCESS == status);
 #endif
 #if(CONFIG_NIKON0_CHANNEL1)
-    status=PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_PRUx );
+    status=PRUICSS_disableCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_PRUx );
     DebugP_assert(SystemP_SUCCESS == status);
     size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_SLICEx),
                                                       0, (uint32_t *) NikonFirmwareMultiMakePRU_0,
                                                       sizeof(NikonFirmwareMultiMakePRU_0));
     DebugP_assert(size);
-    status = PRUICSS_resetCore(gPruIcssXHandle, PRUICSS_PRUx);
+    status = PRUICSS_resetCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_PRUx);
     DebugP_assert(SystemP_SUCCESS == status);
-    status = PRUICSS_enableCore(gPruIcssXHandle, PRUICSS_PRUx);
+    status = PRUICSS_enableCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_PRUx);
     DebugP_assert(SystemP_SUCCESS == status);
 #endif
 #if(CONFIG_NIKON0_CHANNEL2)
-    status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_TXPRUx);
+    status = PRUICSS_disableCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_TXPRUx);
     DebugP_assert(SystemP_SUCCESS == status);
     size = PRUICSS_writeMemory(gPruIcssXHandle,  PRUICSS_IRAM_TX_PRU(PRUICSS_SLICEx),
                                                         0, (uint32_t *) NikonFirmwareMultiMakeTXPRU_0,
                                                         sizeof(NikonFirmwareMultiMakeTXPRU_0));
     DebugP_assert(size);
-    status = PRUICSS_resetCore(gPruIcssXHandle, PRUICSS_TXPRUx);
+    status = PRUICSS_resetCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_TXPRUx);
     DebugP_assert(SystemP_SUCCESS == status);
-    status = PRUICSS_enableCore(gPruIcssXHandle, PRUICSS_TXPRUx);
+    status = PRUICSS_enableCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_TXPRUx);
     DebugP_assert(SystemP_SUCCESS == status);
 #endif
 #else
-    status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_PRUx);
+    status = PRUICSS_disableCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_PRUx);
     DebugP_assert(SystemP_SUCCESS == status);
 #if(CONFIG_NIKON0_MODE == NIKON_MODE_MULTI_CHANNEL_SINGLE_PRU)
-    size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_PRUx),
+    size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(CONFIG_NIKON0_PRUICSS_PRUx),
                                 0, (uint32_t *) NikonFirmwareMulti_0,
                                 sizeof(NikonFirmwareMulti_0));
 #else
-    size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_PRUx),
+    size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(CONFIG_NIKON0_PRUICSS_PRUx),
                                 0, (uint32_t *) NikonFirmware_0,
                                 sizeof(NikonFirmware_0));
 #endif
     DebugP_assert(size);
-    status = PRUICSS_resetCore(gPruIcssXHandle, PRUICSS_PRUx);
+    status = PRUICSS_resetCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_PRUx);
     DebugP_assert(SystemP_SUCCESS == status);
     /*Run firmware */
-    status = PRUICSS_enableCore(gPruIcssXHandle, PRUICSS_PRUx);
+    status = PRUICSS_enableCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_PRUx);
     DebugP_assert(SystemP_SUCCESS == status);
 #endif
     status = nikon_wait_for_encoder_detection(priv);
@@ -687,7 +695,7 @@ void nikon_main(void *args)
 
     DebugP_log("\r\nNIKON firmware \t: %x.%x.%x (%s)\n", (version >> 24) & 0x7F,
                 (version >> 16) & 0xFF, version & 0xFFFF, version & (1 << 31) ? "internal" : "release");
-    DebugP_log("\r\nNIKON Protocol Version selected\t: %s", (NIKON_PROTOCOL_VERSION == NIKON_PROTOCOL_V2_1)?"2.1":"3.0");
+    DebugP_log("\r\nNIKON Protocol Version selected\t: %s", (CONFIG_NIKON0_PROTOCOL_VERSION == NIKON_PROTOCOL_V2_1)?"2.1":"3.0");
 
     nikon_pruicss_init();
 
@@ -700,7 +708,7 @@ void nikon_main(void *args)
     icssClk = ICSS_PRU_CORE_CLOCK;
     uartClk = ICSS_PRU_UART_CLOCK;
 
-    priv = nikon_init(gPruIcssXHandle, PRUICSS_PRUx, CONFIG_NIKON0_BAUDRATE, (uint32_t)icssClk, (uint32_t)uartClk, TX_RX_FIFO_CLOCK_SOURCE, mask, totalchannels, NIKON_PROTOCOL_VERSION);
+    priv = nikon_init(gPruIcssXHandle, PRUICSS_SLICEx, CONFIG_NIKON0_BAUDRATE, (uint32_t)icssClk, (uint32_t)uartClk, CONFIG_NIKON0_TX_RX_FIFO_CLOCK_SOURCE, mask, totalchannels, CONFIG_NIKON0_PROTOCOL_VERSION);
 
     if(CONFIG_NIKON0_MODE == NIKON_MODE_MULTI_CHANNEL_MULTI_PRU)
     {

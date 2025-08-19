@@ -139,6 +139,7 @@ function pinmuxRequirements(inst) {
         displayName: interfaceName,
         interfaceName: interfaceName,
         resources: resources,
+        canShareWith: "/position_sense"
     };
 
     return [peripheralRequirements];

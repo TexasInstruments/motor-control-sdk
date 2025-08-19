@@ -270,6 +270,13 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> 9.2 onwards
     <td> -
 </tr>
+<tr>
+    <td> PINDSW-9406
+    <td> EnDat/Nikon: Channel2 does not work on PRU Slice0 with loadshare
+    <td> Position Sense EnDat and Nikon
+    <td> 9.2 onwards
+    <td> -
+</tr>
 </table>
 
 ## Known Issues

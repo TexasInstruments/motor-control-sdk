@@ -54,10 +54,10 @@
 #include <position_sense/bissc/include/bissc_api.h>
 #include "bissc_periodic_trigger.h"
 
-#define PRUICSS_SLICEx PRUICSS_PRUx
+#define PRUICSS_SLICEx  CONFIG_BISSC0_PRUICSS_PRUx
 
 #if (CONFIG_BISSC0_MODE == BISSC_MODE_MULTI_CHANNEL_SINGLE_PRU)
-#if (PRUICSS_PRUx == 1)
+#if (PRUICSS_SLICEx == 1)
 #include  <bissc_receiver_multi_pru1_bin.h>
 #else
 #include  <bissc_receiver_multi_pru0_bin.h>
@@ -65,7 +65,7 @@
 #endif
 
 #if (CONFIG_BISSC0_MODE == BISSC_MODE_MULTI_CHANNEL_MULTI_PRU )
-#if (PRUICSS_PRUx == 1)
+#if (PRUICSS_SLICEx == 1)
 #include <bissc_receiver_multi_rtu_pru1_bin.h>
 #include <bissc_receiver_multi_pru1_bin.h>
 #include <bissc_receiver_multi_tx_pru1_bin.h>
@@ -77,7 +77,7 @@
 #endif
 
 #if (CONFIG_BISSC0_MODE == BISSC_MODE_SINGLE_CHANNEL_SINGLE_PRU)
-#if (PRUICSS_PRUx == 1)
+#if (PRUICSS_SLICEx == 1)
 #include  <bissc_receiver_pru1_bin.h>
 #else
 #include  <bissc_receiver_pru0_bin.h>
@@ -296,16 +296,16 @@ static void bissc_pruicss_init(void)
     DebugP_assert(SystemP_SUCCESS == status);
 #endif
     /* clear ICSS0 PRUx data RAM */
-    size = PRUICSS_initMemory(gPruIcssXHandle, PRUICSS_DATARAM(PRUICSS_PRUx));
+    size = PRUICSS_initMemory(gPruIcssXHandle, PRUICSS_DATARAM(PRUICSS_SLICEx));
     DebugP_assert(size);
     if(CONFIG_BISSC0_MODE == BISSC_MODE_MULTI_CHANNEL_MULTI_PRU)
     {
-        status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_RTUPRUx);
+        status = PRUICSS_disableCore(gPruIcssXHandle, CONFIG_BISSC0_PRUICSS_RTUPRUx);
         DebugP_assert(SystemP_SUCCESS == status);
-        status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_TXPRUx);
+        status = PRUICSS_disableCore(gPruIcssXHandle, CONFIG_BISSC0_PRUICSS_TXPRUx);
         DebugP_assert(SystemP_SUCCESS == status);
     }
-    status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_PRUx);
+    status = PRUICSS_disableCore(gPruIcssXHandle, CONFIG_BISSC0_PRUICSS_PRUx);
     DebugP_assert(SystemP_SUCCESS == status);
 
 #if defined(SOC_AM263PX)
@@ -319,58 +319,58 @@ int32_t bissc_pruicss_load_run_fw(struct bissc_priv *priv, uint8_t mask)
     int32_t status = SystemP_FAILURE, size;
 #if (CONFIG_BISSC0_MODE == BISSC_MODE_MULTI_CHANNEL_MULTI_PRU) /*enable loadshare mode*/
 #if(CONFIG_BISSC0_CHANNEL0)
-    status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_RTUPRUx);
+    status = PRUICSS_disableCore(gPruIcssXHandle, CONFIG_BISSC0_PRUICSS_RTUPRUx);
     DebugP_assert(SystemP_SUCCESS == status);
     size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_RTU_PRU(PRUICSS_SLICEx),
                                                         0, (uint32_t *) BiSSFirmwareMultiMakeRTU_0,
                                                         sizeof(BiSSFirmwareMultiMakeRTU_0));
     DebugP_assert(size);
-    status = PRUICSS_resetCore(gPruIcssXHandle, PRUICSS_RTUPRUx);
+    status = PRUICSS_resetCore(gPruIcssXHandle, CONFIG_BISSC0_PRUICSS_RTUPRUx);
     DebugP_assert(SystemP_SUCCESS == status);
-    status = PRUICSS_enableCore(gPruIcssXHandle, PRUICSS_RTUPRUx);
+    status = PRUICSS_enableCore(gPruIcssXHandle, CONFIG_BISSC0_PRUICSS_RTUPRUx);
     DebugP_assert(SystemP_SUCCESS == status);
 #endif
 #if(CONFIG_BISSC0_CHANNEL1)
-    status=PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_PRUx );
+    status=PRUICSS_disableCore(gPruIcssXHandle, CONFIG_BISSC0_PRUICSS_PRUx );
     DebugP_assert(SystemP_SUCCESS == status);
     size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_SLICEx),
                                                       0, (uint32_t *) BiSSFirmwareMultiMakePRU_0,
                                                       sizeof(BiSSFirmwareMultiMakePRU_0));
     DebugP_assert(size);
-    status = PRUICSS_resetCore(gPruIcssXHandle, PRUICSS_PRUx);
+    status = PRUICSS_resetCore(gPruIcssXHandle, CONFIG_BISSC0_PRUICSS_PRUx);
     DebugP_assert(SystemP_SUCCESS == status);
-    status = PRUICSS_enableCore(gPruIcssXHandle, PRUICSS_PRUx);
+    status = PRUICSS_enableCore(gPruIcssXHandle, CONFIG_BISSC0_PRUICSS_PRUx);
     DebugP_assert(SystemP_SUCCESS == status);
 #endif
 #if(CONFIG_BISSC0_CHANNEL2)
-    status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_TXPRUx);
+    status = PRUICSS_disableCore(gPruIcssXHandle, CONFIG_BISSC0_PRUICSS_TXPRUx);
     DebugP_assert(SystemP_SUCCESS == status);
     size = PRUICSS_writeMemory(gPruIcssXHandle,  PRUICSS_IRAM_TX_PRU(PRUICSS_SLICEx),
                                                         0, (uint32_t *) BiSSFirmwareMultiMakeTXPRU_0,
                                                         sizeof(BiSSFirmwareMultiMakeTXPRU_0));
     DebugP_assert(size);
-    status = PRUICSS_resetCore(gPruIcssXHandle, PRUICSS_TXPRUx);
+    status = PRUICSS_resetCore(gPruIcssXHandle, CONFIG_BISSC0_PRUICSS_TXPRUx);
     DebugP_assert(SystemP_SUCCESS == status);
-    status = PRUICSS_enableCore(gPruIcssXHandle, PRUICSS_TXPRUx);
+    status = PRUICSS_enableCore(gPruIcssXHandle, CONFIG_BISSC0_PRUICSS_TXPRUx);
     DebugP_assert(SystemP_SUCCESS == status);
 #endif
 #else
-    status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_PRUx);
+    status = PRUICSS_disableCore(gPruIcssXHandle, CONFIG_BISSC0_PRUICSS_PRUx);
     DebugP_assert(SystemP_SUCCESS == status);
 #if(CONFIG_BISSC0_MODE == BISSC_MODE_MULTI_CHANNEL_SINGLE_PRU)
-    size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_PRUx),
+    size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(CONFIG_BISSC0_PRUICSS_PRUx),
                                 0, (uint32_t *) BiSSFirmwareMulti_0,
                                 sizeof(BiSSFirmwareMulti_0));
 #else
-    size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_PRUx),
+    size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(CONFIG_BISSC0_PRUICSS_PRUx),
                                 0, (uint32_t *) BiSSFirmware_0,
                                 sizeof(BiSSFirmware_0));
 #endif
     DebugP_assert(size);
-    status = PRUICSS_resetCore(gPruIcssXHandle, PRUICSS_PRUx);
+    status = PRUICSS_resetCore(gPruIcssXHandle, CONFIG_BISSC0_PRUICSS_PRUx);
     DebugP_assert(SystemP_SUCCESS == status);
     /*Run firmware */
-    status = PRUICSS_enableCore(gPruIcssXHandle, PRUICSS_PRUx);
+    status = PRUICSS_enableCore(gPruIcssXHandle, CONFIG_BISSC0_PRUICSS_PRUx);
     DebugP_assert(SystemP_SUCCESS == status);
 #endif
     /* check initialization ack from firmware, with a timeout of 5 second */
@@ -678,7 +678,7 @@ void bissc_main(void *args)
     icssClk = ICSS_PRU_CORE_CLOCK;
     uartClk = ICSS_PRU_UART_CLOCK;
 
-    priv = bissc_init(gPruIcssXHandle, PRUICSS_PRUx, CONFIG_BISSC0_BAUDRATE, (uint32_t)icssClk, (uint32_t)uartClk, TX_RX_FIFO_CLOCK_SOURCE);
+    priv = bissc_init(gPruIcssXHandle, PRUICSS_SLICEx, CONFIG_BISSC0_BAUDRATE, (uint32_t)icssClk, (uint32_t)uartClk, CONFIG_BISSC0_TX_RX_FIFO_CLOCK_SOURCE);
     bissc_config_channel(priv, mask, totalchannels);
     if(CONFIG_BISSC0_MODE == BISSC_MODE_MULTI_CHANNEL_MULTI_PRU)
     {

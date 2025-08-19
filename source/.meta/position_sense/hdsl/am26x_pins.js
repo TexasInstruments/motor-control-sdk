@@ -129,6 +129,7 @@ function pinmuxRequirements(inst) {
         displayName: interfaceName,
         interfaceName: interfaceName,
         resources: resources,
+         canShareWith: "/motor_control"
     };
 
     return [peripheralRequirements];
