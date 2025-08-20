@@ -122,9 +122,9 @@ EEPROM_READ_CMD 						.set 	1			;status flag for EEPROM read command
 EEPROM_WRITE_CMD 						.set 	2			;status flag for EEPROM write command
 NON_EEPROM_CMD							.set 	0			;status flag for Non-EEPROM command
 
-NIKON_PRU_TRIGGER_HOST_EVT0				.set	34			;( pr0_pru_mst_intr[2]_intr_req )
-NIKON_PRU_TRIGGER_HOST_EVT1				.set	35			;( pr0_pru_mst_intr[3]_intr_req )
-NIKON_PRU_TRIGGER_HOST_EVT2				.set	36			;( pr0_pru_mst_intr[4]_intr_req )
+NIKON_RTU_TRIGGER_HOST_EVT			.set	34			;( pr0_pru_mst_intr[2]_intr_req )
+NIKON_PRU_TRIGGER_HOST_EVT			.set	35			;( pr0_pru_mst_intr[3]_intr_req )
+NIKON_TXPRU_TRIGGER_HOST_EVT			.set	36			;( pr0_pru_mst_intr[4]_intr_req )
 
 IEP_CMP3_EVNT							.set    3
 IEP_CMP5_EVNT							.set    5

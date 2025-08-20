@@ -140,22 +140,22 @@ NIKON_HANDLE_PERIODIC_TRIGGER:
 	; wait till IEP CMP3 event
     QBBC    NIKON_CHECK_OPERATING_MODE ,    SCRATCH1,    IEP_CMP3_EVNT
     ; Clear IEP CMP3 event
-    LDI SCRATCH1.b0, 0x8
+    LDI SCRATCH1.b0, (1<<IEP_CMP3_EVNT)
     .elseif $isdefed("ENABLE_MULTI_MAKE_PRU") ;Check PRU host trigger  for ch1
     ; wait till IEP CMP5 event
     QBBC    NIKON_CHECK_OPERATING_MODE,    SCRATCH1,    IEP_CMP5_EVNT
     ; Clear IEP CMP5 event
-    LDI SCRATCH1.b0, 0x20
+    LDI SCRATCH1.b0, (1<<IEP_CMP5_EVNT)
     .elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
     ; wait till IEP CMP6 event
     QBBC    NIKON_CHECK_OPERATING_MODE,    SCRATCH1,    IEP_CMP6_EVNT
     ; Clear IEP CMP6 event
-    LDI SCRATCH1.b0, 0x40
+    LDI SCRATCH1.b0, (1<<IEP_CMP6_EVNT)
     .else
     ; wait till IEP CMP3 event
     QBBC    NIKON_CHECK_OPERATING_MODE,    SCRATCH1,    IEP_CMP3_EVNT
     ; Clear IEP CMP3 event
-    LDI SCRATCH1.b0, 0x8
+    LDI SCRATCH1.b0, (1<<IEP_CMP3_EVNT)
     .endif
     ; store compare event status
     SBCO	&SCRATCH1,	ICSS_IEP,  ICSS_IEP_CMP_STATUS_REG,	4
@@ -342,7 +342,7 @@ NIKON_CLEAR_CYCLE_TRIGGER:
     ;skip interrupt to R5F in host trigger
     QBNE    NIKON_SKIP_INTERRUPT_TRIGGER,  SCRATCH1.b0,  0
 	;Generate interrupt to R5F
-	LDI 	R31.w0, NIKON_PRU_TRIGGER_HOST_EVT0				;PRU_TRIGGER_HOST_NIKON_EVT0 ( pr0_pru_mst_intr[2]_intr_req )
+	LDI 	R31.w0, NIKON_RTU_TRIGGER_HOST_EVT				;PRU_TRIGGER_HOST_NIKON_EVT ( pr0_pru_mst_intr[2]_intr_req )
 NIKON_SKIP_INTERRUPT_TRIGGER:
 	SET     R31, NIKON_TX_GLOBAL_REINIT
 
@@ -352,7 +352,7 @@ NIKON_SKIP_INTERRUPT_TRIGGER:
 	;skip interrupt to R5F in host trigger
     QBNE    NIKON_SKIP_INTERRUPT_TRIGGER,  SCRATCH1.b0,  0
 	;Generate interrupt to R5F
-	LDI 	R31.w0, NIKON_PRU_TRIGGER_HOST_EVT1				;PRU_TRIGGER_HOST_NIKON_EVT1 ( pr0_pru_mst_intr[3]_intr_req )
+	LDI 	R31.w0, NIKON_PRU_TRIGGER_HOST_EVT				;PRU_TRIGGER_HOST_NIKON_EVT ( pr0_pru_mst_intr[3]_intr_req )
 NIKON_SKIP_INTERRUPT_TRIGGER:
 	SET 	R31, NIKON_TX_GLOBAL_REINIT
 	.elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
@@ -361,14 +361,14 @@ NIKON_SKIP_INTERRUPT_TRIGGER:
 	;skip interrupt to R5F in host trigger
     QBNE    NIKON_SKIP_INTERRUPT_TRIGGER,  SCRATCH1.b0,  0
 	;Generate interrupt to R5F
-	LDI 	R31.w0, NIKON_PRU_TRIGGER_HOST_EVT2			;PRU_TRIGGER_HOST_NIKON_EVT2 ( pr0_pru_mst_intr[4]_intr_req )
+	LDI 	R31.w0, NIKON_TXPRU_TRIGGER_HOST_EVT		;PRU_TRIGGER_HOST_NIKON_EVT ( pr0_pru_mst_intr[4]_intr_req )
 NIKON_SKIP_INTERRUPT_TRIGGER:
 	SET 	R31, NIKON_TX_GLOBAL_REINIT
 	.else
 	;skip interrupt to R5F in host trigger
     QBNE    NIKON_SKIP_INTERRUPT_TRIGGER,  SCRATCH1.b0,  0
 	;Generate interrupt to R5F
-	LDI 	R31.w0, NIKON_PRU_TRIGGER_HOST_EVT0				;PRU_TRIGGER_HOST_NIKON_EVT0 ( pr0_pru_mst_intr[2]_intr_req )
+	LDI 	R31.w0, NIKON_RTU_TRIGGER_HOST_EVT				;PRU_TRIGGER_HOST_NIKON_EVT ( pr0_pru_mst_intr[2]_intr_req )
 NIKON_SKIP_INTERRUPT_TRIGGER:
 	SET 	R31, NIKON_TX_GLOBAL_REINIT
 	.endif

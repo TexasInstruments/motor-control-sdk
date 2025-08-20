@@ -53,6 +53,12 @@ struct nikon_periodic_interface
 #define IEP_CMP3_EVNT       (0x1 << 3)
 #define IEP_CMP5_EVNT       (0x1 << 5)
 #define IEP_CMP6_EVNT       (0x1 << 6)
+#define IEP_CMP3_EVNT_MASK       (0x1 << 4)
+#define IEP_CMP5_EVNT_MASK       (0x1 << 6)
+#define IEP_CMP6_EVNT_MASK       (0x1 << 7)
+#define IEP_CMP3_EVNT_CLR_MASK       (0x1 << 3)
+#define IEP_CMP5_EVNT_CLR_MASK       (0x1 << 5)
+#define IEP_CMP6_EVNT_CLR_MASK       (0x1 << 6)
 
 #define RTU_TRIGGER_HOST_EVT   ( 2+16 )    /* pr0_pru_mst_intr[2]_intr_req */
 #define PRU_TRIGGER_HOST_EVT   ( 3+16 )    /* pr0_pru_mst_intr[3]_intr_req */
@@ -66,6 +72,6 @@ static void rtu_nikon_irq_handler(void *handle);
 static void pru_nikon_irq_handler(void *handle);
 static void txpru_nikon_irq_handler(void *handle);
 
-void nikon_periodic_interface_init(struct nikon_priv *priv, struct nikon_periodic_interface *nikon_periodic_interface,int64_t iep_reset_count, int64_t ch0_trigger_count,int64_t ch1_trigger_count, int64_t ch2_trigger_count);
+void nikon_periodic_interface_init(struct nikon_priv *priv, struct nikon_periodic_interface *nikon_periodic_interface, int64_t iep_reset_count, int64_t ch0_trigger_count, int64_t ch1_trigger_count, int64_t ch2_trigger_count);
 
 #endif /* _NIKON_H_ */
