@@ -200,7 +200,7 @@ const uint32_t BiSSFirmwareMultiMakeTXPRU_0[] = {
 0x81061857,
 0x910e181a,
 0x69001a07,
-0x91741a19,
+0x91743a99,
 0xcf06f9fd,
 0x24004019,
 0x81743a99,

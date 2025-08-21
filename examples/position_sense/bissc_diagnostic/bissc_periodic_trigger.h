@@ -39,10 +39,10 @@
 struct bissc_periodic_interface
 {
   void *pruicss_iep;
-  uint64_t cmp3;
-  uint64_t cmp5;
-  uint64_t cmp6;
-  uint64_t cmp0;
+  uint64_t ch0_trigger_count;
+  uint64_t ch1_trigger_count;
+  uint64_t ch2_trigger_count;
+  uint64_t iep_reset_count;
 };
 
 #define IEP_DEFAULT_INC     0x1
@@ -53,21 +53,27 @@ struct bissc_periodic_interface
 #define IEP_CMP3_EVNT       (0x1 << 3)
 #define IEP_CMP5_EVNT       (0x1 << 5)
 #define IEP_CMP6_EVNT       (0x1 << 6)
+#define IEP_CMP3_EVNT_CLR_MASK       (0x1 << 3)
+#define IEP_CMP5_EVNT_CLR_MASK       (0x1 << 5)
+#define IEP_CMP6_EVNT_CLR_MASK      (0x1 << 6)
+#define IEP_CMP3_EVNT_MASK      (0x1 << 4)
+#define IEP_CMP5_EVNT_MASK      (0x1 << 6)
+#define IEP_CMP6_EVNT_MASK      (0x1 << 7)
 
-#define PRU_TRIGGER_HOST_BISSC_EVT0   ( 2+16 )    /* pr0_pru_mst_intr[2]_intr_req */
-#define PRU_TRIGGER_HOST_BISSC_EVT1   ( 3+16 )    /* pr0_pru_mst_intr[2]_intr_req */
-#define PRU_TRIGGER_HOST_BISSC_EVT2   ( 4+16 )    /* pr0_pru_mst_intr[2]_intr_req */
+#define RTU_TRIGGER_HOST_BISSC_EVT   ( 2+16 )    /* pr0_pru_mst_intr[2]_intr_req */
+#define PRU_TRIGGER_HOST_BISSC_EVT   ( 3+16 )    /* pr0_pru_mst_intr[2]_intr_req */
+#define TXPRU_TRIGGER_HOST_BISSC_EVT  ( 4+16 )    /* pr0_pru_mst_intr[2]_intr_req */
 
 uint32_t bissc_config_periodic_mode(struct bissc_periodic_interface *bissc_periodic_interface, PRUICSS_Handle handle);
 
 void bissc_stop_periodic_mode(struct bissc_periodic_interface *bissc_periodic_interface);
 
-static void prubisscIrqHandler0(void *handle);
-static void prubisscIrqHandler1(void *handle);
-static void prubisscIrqHandler2(void *handle);
+static void rtuBisscIrqHandler(void *handle);
+static void pruBisscIrqHandler(void *handle);
+static void txpruBisscIrqHandler(void *handle);
 
-void bissc_periodic_interface_init(struct bissc_priv *priv, struct bissc_periodic_interface *bissc_periodic_interface, int64_t cmp3,
-int64_t cmp5, int64_t cmp6, int64_t cmp0);
+void bissc_periodic_interface_init(struct bissc_priv *priv, struct bissc_periodic_interface *bissc_periodic_interface, int64_t ch0_trigger_count,
+int64_t ch1_trigger_count, int64_t ch2_trigger_count, int64_t iep_reset_count);
 
 
 #endif /* _BISSC_H_ */

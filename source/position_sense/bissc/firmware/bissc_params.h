@@ -131,9 +131,9 @@ BISSC_CH2_VALID_BIT_IDX			.set 	26			;RX valid bit index channel 2
 BISSC_MAX_FRAME_SIZE			.set	256			;Max frame size for Processing delay measurement
 BISSC_MAX_WAIT_FOR_ENC_DETECT	.set	10000		;Max wait count for encoder detected
 
-BISSC_PRU_TRIGGER_HOST_EVT0		.set 	34			;event 0 trigger
-BISSC_PRU_TRIGGER_HOST_EVT1	    .set    35          ;event 1 trigger
-BISSC_PRU_TRIGGER_HOST_EVT2	    .set    36          ;event 2 trigger
+BISSC_RTU_TRIGGER_HOST_EVT		.set 	34			;event 0 trigger
+BISSC_PRU_TRIGGER_HOST_EVT	    .set    35          ;event 1 trigger
+BISSC_TXPRU_TRIGGER_HOST_EVT	.set    36          ;event 2 trigger
 IEP_CMP3_EVNT					.set    3
 IEP_CMP5_EVNT					.set    5
 IEP_CMP6_EVNT					.set    6
