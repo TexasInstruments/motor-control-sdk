@@ -1,8 +1,10 @@
-# ICSS %SDFM Examples {#EXAMPLES_MOTORCONTROL_SDFM}
-
-[TOC]
+# Current Sense Examples{#EXAMPLES_CURRENT_SENSE}
 
 This page lists all the examples of ICSSG %SDFM available in this SDK. Following sections describe the features available in each of the examples.
+
+-# \subpage BASIC_SDFM_EXAMPLES
+-# \subpage BASIC_SDFM_EXAMPLES_WITH_CONTINUOUS_NC
+-# \subpage BASIC_SDFM_EXAMPLE_WITH_PHASE_DELAY
 
 The ICSS %SDFM driver provides a well-defined set of APIs to expose sigma delta interface.
 

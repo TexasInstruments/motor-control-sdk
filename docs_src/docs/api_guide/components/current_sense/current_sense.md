@@ -69,7 +69,7 @@ Normal current processing time for its different execution flows
 \subpage SDFM_DESIGN explains the design in detail.
 
 ## Example
-\ref EXAMPLES_MOTORCONTROL_SDFM
+\ref EXAMPLES_CURRENT_SENSE
 
 ## API
 \ref SDFM_API_MODULE
