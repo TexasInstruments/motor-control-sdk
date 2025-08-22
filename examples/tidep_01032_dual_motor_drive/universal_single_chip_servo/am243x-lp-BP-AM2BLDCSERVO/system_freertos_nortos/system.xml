@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<system>
+    <project configuration="@match" id="project_0" name="universal_single_chip_servo_am243x-lp_r5fss0-0_nortos_ti-arm-clang_BP_AM2BLDCSERVO">
+    </project>
+    <core id="MAIN_PULSAR_Cortex_R5_0_0" project="project_0"/>
+    <project configuration="@match" id="project_1" name="universal_single_chip_servo_am243x-lp_r5fss1-0_freertos_ti-arm-clang_BP_AM2BLDCSERVO">
+    </project>
+    <core id="MAIN_PULSAR_Cortex_R5_1_0" project="project_1"/>
+	<preBuildSteps>
+	</preBuildSteps>
+    <postBuildSteps>
+        <step command="$(MAKE) -C ${CCS_PROJECT_DIR} -f makefile_system_ccs_bootimage_gen OUTNAME=single_chip_servo_system PROFILE=${ConfigName} MOTOR_CONTROL_SDK_PATH=${MOTOR_CONTROL_SDK_PATH} MCU_PLUS_SDK_PATH=${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk CG_TOOL_ROOT=${CG_TOOL_ROOT} CCS_INSTALL_DIR=${CCS_INSTALL_DIR} CCS_IDE_MODE=${CCS_IDE_MODE}"/>
+    </postBuildSteps>
+
+</system>

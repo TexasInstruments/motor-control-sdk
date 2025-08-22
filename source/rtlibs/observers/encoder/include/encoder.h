@@ -82,6 +82,8 @@ typedef struct _ENC_Obj_
     float32_t Ts_sec;               // sampling period (sec)
 	float32_t polePairs;            // pole pairs of the motor
 	float32_t encLines;             // lines of the encoder
+    uint32_t absEncResolution;      // absolute encoder resolution
+    uint32_t absEncBits;            // absEncBits
 
     float32_t mechanicalScaler;
 

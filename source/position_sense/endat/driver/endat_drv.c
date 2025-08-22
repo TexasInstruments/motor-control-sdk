@@ -1771,9 +1771,11 @@ void endat_config_clock(struct endat_priv *priv,
             clk_cfg->rx_div_attr);
        HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG, clk_cfg->tx_div << 16 | priv->tx_clock_source << 4);
     }
-
-
-
+    
+    if(priv->load_share)
+    {
+        endat_enable_load_share_mode(priv);
+    }
 }
 
 void endat_config_tst_delay(struct endat_priv *priv, uint16_t delay)

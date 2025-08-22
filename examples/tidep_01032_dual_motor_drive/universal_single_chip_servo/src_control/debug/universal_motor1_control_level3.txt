@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ExportImportMemento.1>
+<VarMeta IMemento.internal.id="systemVars.flagEnableSystem"/>
+<VarMeta IMemento.internal.id="motorVars_M1.ISRCount"/>
+<VarMeta IMemento.internal.id="systemVars.boardKit"/>
+<VarMeta IMemento.internal.id="systemVars.estType"/>
+<VarMeta IMemento.internal.id="motorVars_M1.motorState"/>
+<VarMeta IMemento.internal.id="motorVars_M1.estimatorMode"/>
+<VarMeta IMemento.internal.id="motorSetVars_M1.flux_VpHz"/>
+<VarMeta IMemento.internal.id="motorVars_M1.adcData.VdcBus_V"/>
+<VarMeta IMemento.internal.id="motorVars_M1.speedRef_Hz"/>
+<VarMeta IMemento.internal.id="motorVars_M1.speed_Hz"/>
+<VarMeta IMemento.internal.id="motorVars_M1.flagEnableRunAndIdentify"/>
+<VarMeta IMemento.internal.id="motorVars_M1.flagRunIdentAndOnLine"/>
+<VarMeta IMemento.internal.id="motorVars_M1.flagEnableForceAngle"/>
+<VarMeta IMemento.internal.id="motorVars_M1.enableSpeedCtrl"/>
+<VarMeta IMemento.internal.id="motorVars_M1.angleFOC_rad"/>
+<VarMeta IMemento.internal.id="motorVars_M1.accelerationMax_Hzps"/>
+<VarMeta IMemento.internal.id="motorVars_M1.accelerationStart_Hzps"/>
+<VarMeta IMemento.internal.id="motorVars_M1.flagClearFaults"/>
+<VarMeta IMemento.internal.id="motorVars_M1.faultMtrUse.all"/>
+<VarMeta IMemento.internal.id="motorVars_M1.faultMtrPrev.bit"/>
+<VarMeta IMemento.internal.id="motorSetVars_M1.dacCMPValH"/>
+<VarMeta IMemento.internal.id="motorSetVars_M1.dacCMPValL"/>
+<VarMeta IMemento.internal.id="motorSetVars_M1.overCurrent_A"/>
+<VarMeta IMemento.internal.id="motorVars_M1.startCurrent_A"/>
+<VarMeta IMemento.internal.id="motorVars_M1.maxCurrent_A"/>
+<VarMeta IMemento.internal.id="motorVars_M1.Idq_set_A.value[0]"/>
+<VarMeta IMemento.internal.id="motorVars_M1.Idq_set_A.value[1]"/>
+<VarMeta IMemento.internal.id="motorVars_M1.IdqRef_A.value[0]"/>
+<VarMeta IMemento.internal.id="motorVars_M1.IdqRef_A.value[1]"/>
+<VarMeta IMemento.internal.id="motorSetVars_M1.Kp_Id"/>
+<VarMeta IMemento.internal.id="motorSetVars_M1.Ki_Id"/>
+<VarMeta IMemento.internal.id="motorSetVars_M1.Kp_Iq"/>
+<VarMeta IMemento.internal.id="motorSetVars_M1.Ki_Iq"/>
+<VarMeta IMemento.internal.id="motorSetVars_M1.Kp_spd"/>
+<VarMeta IMemento.internal.id="motorSetVars_M1.Ki_spd"/>
+<VarMeta IMemento.internal.id="pi_spd_M1"/>
+<VarMeta IMemento.internal.id="pi_Iq_M1"/>
+<VarMeta IMemento.internal.id="pi_Id_M1"/>
+<VarMeta IMemento.internal.id="motorVars_M1.adcData"/>
+<VarMeta IMemento.internal.id="motorVars_M1.Irms_A"/>
+</ExportImportMemento.1>

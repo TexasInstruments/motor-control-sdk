@@ -1,5 +1,14 @@
-/*
- *  Copyright (C) 2023 Texas Instruments Incorporated
+/*!
+ *  \example version.h
+ *
+ *  \brief
+ *  EtherCAT_SubDevice_Simple version defines example.
+ *
+ *  \author
+ *  Texas Instruments Incorporated
+ *
+ *  \copyright
+ *  Copyright (C) 2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -29,57 +38,21 @@
  *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
- 
-// **************************************************************************
-// the includes
-#include "encoder.h"
 
+#if !(defined __VERSION_H__)
+#define __VERSION_H__		1
 
-// **************************************************************************
-// the functions
+#define IND_PKG_VERSION             "EtherCAT SubDevice 01.00.06.01"
+#define OLED_DISPLAY_VERSION_STRING "EtherCAT App 1.0.6"
 
-ENC_Handle ENC_init(void *pMemory, const size_t numBytes)
-{
-	ENC_Handle handle;
+#if (defined __cplusplus)
+extern "C" {
+#endif
 
-	if(numBytes < sizeof(ENC_Obj))
-	{
-		return((ENC_Handle)0x0);
-	}
+/* extern void func(void); */
 
-	// assign the handle
-	handle = (ENC_Handle)pMemory;
-
-	return(handle);
+#if (defined __cplusplus)
 }
+#endif
 
-//------------------------------------------------------------------------------
-void ENC_setParams(ENC_Handle handle, const USER_Params *pUserParams)
-{
-    ENC_Obj *obj = (ENC_Obj *)handle;
-
-    obj->Ts_sec = pUserParams->ctrlPeriod_sec;
-
-    obj->polePairs = pUserParams->motor_numPolePairs;
-    obj->encLines = pUserParams->motor_numEncSlots;
-
-    if(obj->encLines == 0)
-	{
-		obj->absEncResolution = pUserParams->motor_absEncResolution;
-		obj->absEncBits = pUserParams->motor_absEncBits;
-		obj->mechanicalScaler = 1.0f / (float)pUserParams->motor_absEncResolution;
-	}
-    
-    else
-	{
-		obj->mechanicalScaler = 0.25f / obj->encLines;
-	}
-    
-    obj->encState = ENC_IDLE;
-
-    return;
-}
-
-//----------------------------------------------------------------
-//
-// end of file
+#endif /* __VERSION_H__ */
