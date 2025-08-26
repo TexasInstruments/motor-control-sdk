@@ -33,7 +33,7 @@
 const uint32_t NikonFirmwareMulti_0[] = {
 0x21000300,
 0x00000208,
-0x01010005,
+0x01010006,
 0x2effbb80,
 0x9103184d,
 0x24000092,
@@ -52,7 +52,7 @@ const uint32_t NikonFirmwareMulti_0[] = {
 0x69001307,
 0x91743a92,
 0xcf03f2fd,
-0x1f03f2f2,
+0x24000812,
 0x81743a92,
 0x24000112,
 0x81001812,

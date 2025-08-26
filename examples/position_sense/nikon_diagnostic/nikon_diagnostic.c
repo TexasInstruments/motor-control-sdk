@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2024-25 Texas Instruments Incorporated
+ *  Copyright (C) 2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -576,7 +576,7 @@ static int32_t nikon_loop_task_create(void)
     return status;
 }
 
-static void nikon_process_periodic_command(struct nikon_priv *priv, int64_t cmp0, int64_t cmp3)
+static void nikon_process_periodic_command(struct nikon_priv *priv, int64_t iep_reset_count, int64_t ch0_trigger_count, int64_t ch1_trigger_count, int64_t ch2_trigger_count)
 {
     int32_t status;
     int32_t ret;
@@ -597,7 +597,7 @@ static void nikon_process_periodic_command(struct nikon_priv *priv, int64_t cmp0
         return;
     }
 
-    nikon_periodic_interface_init(priv, &nikon_periodic_interface, cmp0, cmp3);
+    nikon_periodic_interface_init(priv, &nikon_periodic_interface, iep_reset_count, ch0_trigger_count, ch1_trigger_count, ch2_trigger_count);
 
     status = nikon_config_periodic_mode(&nikon_periodic_interface, gPruIcssXHandle);
     DebugP_assert(0 != status);
@@ -667,8 +667,10 @@ void nikon_main(void *args)
     uint32_t pru_num;
     uint32_t ls_ch;
     float_t freq;
-    int64_t cmp3;
-    int64_t cmp0;
+    int64_t iep_reset_count=0;
+    int64_t ch0_trigger_count=0;
+    int64_t ch1_trigger_count=0;
+    int64_t ch2_trigger_count=0;
     uint64_t icssClk;
     uint64_t uartClk;
     uint32_t version;
@@ -1709,19 +1711,57 @@ void nikon_main(void *args)
 
             case START_CONTINUOUS_MODE:
                 DebugP_log("\r| Enter IEP cycle count(must be greater than Nikon cycle time, in IEP cycles): ");
-                if(DebugP_scanf("%lld\n", &cmp0) < 0)
+                DebugP_scanf("%lld\n", &iep_reset_count);
+                if(iep_reset_count <= IEP_DEFAULT_INC)
                 {
                     DebugP_log("\r\n| WARNING: invalid value entered\n");
                     continue;
                 }
-                DebugP_log("\r| Enter IEP trigger time(must be less than or equal to IEP cycle count, in IEP cycles): ");
-                DebugP_scanf("%lld\n", &cmp3);
-                if((cmp3 > cmp0) || (cmp3 <= IEP_DEFAULT_INC))
+                if(CONFIG_NIKON0_LOAD_SHARE_MODE)
                 {
-                    DebugP_log("\r\n| WARNING: invalid value entered\n");
-                    continue;
+                    if(CONFIG_NIKON0_CHANNEL0)
+                    {
+                        DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) Channel0: \n");
+                        DebugP_scanf("%lld\n", &ch0_trigger_count);
+                        if((ch0_trigger_count > iep_reset_count) || (ch0_trigger_count <= IEP_DEFAULT_INC))
+                        {
+                            DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                            continue;
+                        }
+                    }
+                    if(CONFIG_NIKON0_CHANNEL1)
+                    {
+                        DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) Channel1: \n");
+                        DebugP_scanf("%lld\n", &ch1_trigger_count);
+                        if((ch1_trigger_count > iep_reset_count) || (ch1_trigger_count <= IEP_DEFAULT_INC))
+                        {
+                            DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                            continue;
+                        }
+                    }
+                    if(CONFIG_NIKON0_CHANNEL2)
+                    {
+                        DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) Channel2: \n");
+                        DebugP_scanf("%lld\n", &ch2_trigger_count);
+                        if((ch2_trigger_count > iep_reset_count) || (ch2_trigger_count <= IEP_DEFAULT_INC))
+                        {
+                            DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                            continue;
+                        }
+                    }
+
                 }
-                nikon_process_periodic_command(priv, cmp0, cmp3);
+                else
+                {
+                    DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles): ");
+                    DebugP_scanf("%lld\n", &ch0_trigger_count);
+                    if((ch0_trigger_count > iep_reset_count) || (ch0_trigger_count <= IEP_DEFAULT_INC))
+                    {
+                        DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                        continue;
+                    }
+                }
+                nikon_process_periodic_command(priv, iep_reset_count, ch0_trigger_count, ch1_trigger_count, ch2_trigger_count);
                 nikon_command_wait(priv);
                 break;
 
