@@ -1,0 +1,10 @@
+[bitbucket_app]
+pr_commands = [
+"/review",
+"/improve --pr_code_suggestions.commitable_code_suggestions=true --pr_code_suggestions.suggestions_score_threshold=7",
+]
+handle_push_trigger = true
+push_commands = [
+    "/describe",
+    "/review",
+]
