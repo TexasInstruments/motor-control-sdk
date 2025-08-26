@@ -33,7 +33,7 @@
 const uint32_t BiSSFirmwareMultiMakeRTU_0[] = {
 0x21000300,
 0x00000208,
-0x01010000,
+0x01010001,
 0x24000117,
 0x81c81817,
 0x91031819,
@@ -202,7 +202,7 @@ const uint32_t BiSSFirmwareMultiMakeRTU_0[] = {
 0x69001a07,
 0x91743a99,
 0xcf03f9fd,
-0x1f03f9f9,
+0x24000819,
 0x81743a99,
 0x24000119,
 0x81081819,

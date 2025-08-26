@@ -159,12 +159,29 @@ BISSC_CHECK_OPERATING_MODE:
 	QBNE	BISSC_HANDLE_HOST_TRIGGER,	SCRATCH2.b0,		0
 
 BISSC_HANDLE_PERIODIC_TRIGGER:
-    ;Get compare event status
-	LBCO	&SCRATCH1,	ICSS_IEP,	ICSS_IEP_CMP_STATUS_REG,	4
+	; Get pending events from IEP
+    LBCO    &SCRATCH1,    ICSS_IEP,    ICSS_IEP_CMP_STATUS_REG,    4
+    .if $isdefed("ENABLE_MULTI_MAKE_RTU")
     ; wait till IEP CMP3 event
-	QBBC	BISSC_CHECK_OPERATING_MODE,	SCRATCH1,	3
-	; Clear IEP CMP3 event
-	SET		SCRATCH1,	SCRATCH1,	3
+    QBBC    BISSC_CHECK_OPERATING_MODE ,    SCRATCH1,    IEP_CMP3_EVNT
+    ; Clear IEP CMP3 event
+    LDI SCRATCH1.b0, (1<<IEP_CMP3_EVNT)
+    .elseif $isdefed("ENABLE_MULTI_MAKE_PRU") ;Check PRU host trigger  for ch1
+    ; wait till IEP CMP5 event
+    QBBC    BISSC_CHECK_OPERATING_MODE,    SCRATCH1,    IEP_CMP5_EVNT
+    ; Clear IEP CMP5 event
+    LDI SCRATCH1.b0, (1<<IEP_CMP5_EVNT)
+    .elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
+    ; wait till IEP CMP6 event
+    QBBC    BISSC_CHECK_OPERATING_MODE,    SCRATCH1,    IEP_CMP6_EVNT
+    ; Clear IEP CMP6 event
+    LDI SCRATCH1.b0, (1<<IEP_CMP6_EVNT)
+    .else
+    ; wait till IEP CMP3 event
+    QBBC    BISSC_CHECK_OPERATING_MODE,    SCRATCH1,    IEP_CMP3_EVNT
+    ; Clear IEP CMP3 event
+    LDI SCRATCH1.b0, (1<<IEP_CMP3_EVNT)
+    .endif
     ; store compare event status
     SBCO	&SCRATCH1,	ICSS_IEP,  ICSS_IEP_CMP_STATUS_REG,	4
 BISSC_SKIP_IEP_CMP_STATUS?:
@@ -724,7 +741,7 @@ BISSC_SKIP_RESET_BIT?:
 	;skip interrupt to R5F in host trigger
 	QBNE 	BISSC_SKIP_INTERRUPT_TRIGGER, STATUS_REG1, 0
 	;Generate interrupt to R5F
-    LDI     R31.w0, BISSC_PRU_TRIGGER_HOST_EVT;PRU_TRIGGER_HOST_BISSC_EVT0 ( pr0_pru_mst_intr[2]_intr_req )
+    LDI     R31.w0, BISSC_RTU_TRIGGER_HOST_EVT; ( pr0_pru_mst_intr[2]_intr_req )
 BISSC_SKIP_INTERRUPT_TRIGGER:
 	SET 	R31, BISSC_TX_GLOBAL_REINIT ; Set TX_EN low
 	.elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
@@ -733,7 +750,7 @@ BISSC_SKIP_INTERRUPT_TRIGGER:
 	;skip interrupt to R5F in host trigger
 	QBNE 	BISSC_SKIP_INTERRUPT_TRIGGER, STATUS_REG1, 0
 	;Generate interrupt to R5F
-    LDI     R31.w0, BISSC_PRU_TRIGGER_HOST_EVT;PRU_TRIGGER_HOST_BISSC_EVT0 ( pr0_pru_mst_intr[2]_intr_req )
+    LDI     R31.w0, BISSC_PRU_TRIGGER_HOST_EVT; ( pr0_pru_mst_intr[3]_intr_req )
 BISSC_SKIP_INTERRUPT_TRIGGER:
 	SET 	R31, BISSC_TX_GLOBAL_REINIT ; Set TX_EN low
 	.elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
@@ -742,14 +759,14 @@ BISSC_SKIP_INTERRUPT_TRIGGER:
 	;skip interrupt to R5F in host trigger
 	QBNE 	BISSC_SKIP_INTERRUPT_TRIGGER, STATUS_REG1, 0
 	;Generate interrupt to R5F
-    LDI     R31.w0, BISSC_PRU_TRIGGER_HOST_EVT;PRU_TRIGGER_HOST_BISSC_EVT0 ( pr0_pru_mst_intr[2]_intr_req )
+    LDI     R31.w0, BISSC_TXPRU_TRIGGER_HOST_EVT; ( pr0_pru_mst_intr[4]_intr_req )
 BISSC_SKIP_INTERRUPT_TRIGGER:
 	SET 	R31, BISSC_TX_GLOBAL_REINIT ; Set TX_EN low
 	.else
 	;skip interrupt to R5F in host trigger
 	QBNE 	BISSC_SKIP_INTERRUPT_TRIGGER, STATUS_REG1, 0
 	;Generate interrupt to R5F
-    LDI     R31.w0, BISSC_PRU_TRIGGER_HOST_EVT;PRU_TRIGGER_HOST_BISSC_EVT0 ( pr0_pru_mst_intr[2]_intr_req )
+    LDI     R31.w0, BISSC_RTU_TRIGGER_HOST_EVT; ( pr0_pru_mst_intr[2]_intr_req )
 BISSC_SKIP_INTERRUPT_TRIGGER:
 	SET 	R31, BISSC_TX_GLOBAL_REINIT ; Set TX_EN low
 
