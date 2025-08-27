@@ -104,15 +104,14 @@ void tamagawa_config_iep(struct tamagawa_periodic_interface *tamagawa_periodic_i
     HW_WR_REG32((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG0, 0);
     HW_WR_REG32((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG1, 0);
 
-    /*configure cmp3 registers*/
-    event |= (0x1 << 4 );
-    event_clear |= (0x1 << 3);
-    cmp_reg0 = (tamagawa_periodic_interface->cmp3 & 0xffffffff) - IEP_DEFAULT_INC;
-    cmp_reg1 = (tamagawa_periodic_interface->cmp3>>32 & 0xffffffff);
+    /*configure cmp registers*/
+    event |= (0x1 << (IEP_CMP_EVNT + 1));
+    event_clear |= (0x1 << IEP_CMP_EVNT);
+    cmp_reg0 = (tamagawa_periodic_interface->periodic_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
+    cmp_reg1 = (tamagawa_periodic_interface->periodic_trigger_count>>32 & 0xffffffff);
 
-    HW_WR_REG32((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP3_REG0,  cmp_reg0);
-    HW_WR_REG32((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP3_REG1,  cmp_reg1);
-
+    HW_WR_REG32((uint8_t*)pruss_iep + (CSL_ICSS_PR1_IEP0_SLV_COUNT_REG0 + 8*IEP_CMP_EVNT),  cmp_reg0);
+    HW_WR_REG32((uint8_t*)pruss_iep + (CSL_ICSS_PR1_IEP0_SLV_COUNT_REG1 + 8*IEP_CMP_EVNT),  cmp_reg1);
 
     /*clear event*/
     HW_WR_REG8((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
@@ -120,8 +119,8 @@ void tamagawa_config_iep(struct tamagawa_periodic_interface *tamagawa_periodic_i
     HW_WR_REG8((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG, event);
 
     /*configure cmp0 registers*/
-    cmp_reg0 = (tamagawa_periodic_interface->cmp0 & 0xffffffff) - IEP_DEFAULT_INC;
-    cmp_reg1 = (tamagawa_periodic_interface->cmp0>>32 & 0xffffffff);
+    cmp_reg0 = (tamagawa_periodic_interface->cmp0_count & 0xffffffff) - IEP_DEFAULT_INC;
+    cmp_reg1 = (tamagawa_periodic_interface->cmp0_count>>32 & 0xffffffff);
     HW_WR_REG32((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0,  cmp_reg0);
     HW_WR_REG32((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1,  cmp_reg1);
 
@@ -197,11 +196,7 @@ void prutamagawaIrqHandler0(void *args)
     gPrutamagawaIrqCnt0++;
 
     /* clear Cmp3 event*/
-    uint32_t event_clear;
-    event_clear = HW_RD_REG8((uint8_t*)gPruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
-    event_clear |= IEP_CMP3_EVNT;
-    HW_WR_REG8((uint8_t*)gPruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
-
+    HW_WR_REG8((uint8_t*)gPruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, 1 << IEP_CMP_EVENT);
     /* Clear interrupt at source */
     /* Write 18 to ICSSG_STATUS_CLR_INDEX_REG
         Firmware:   TRIGGER_HOST_SDFM_IRQ defined as 18

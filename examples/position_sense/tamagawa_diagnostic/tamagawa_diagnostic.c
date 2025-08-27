@@ -395,13 +395,13 @@ static enum data_id tamagawa_get_command(uint8_t *adf, uint8_t *edf)
     if(cmd == PERIODIC_TRIGGER_CMD)
     {
         DebugP_log("\r| Enter IEP reset cycle count (must be greater than Tamagawa cycle time including timeout period, in IEP cycles):");
-        if(DebugP_scanf("%u\n", &priv->cmp0))
+        if(DebugP_scanf("%u\n", &priv->iep_reset_count))
         {
             DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
             return cmd;
         }
         DebugP_log("\r| Enter IEP trigger time(must be less than or equal to IEP reset cycle, in IEP cycles): ");
-        if(DebugP_scanf("%u\n", &priv->cmp3) >= 0)
+        if(DebugP_scanf("%u\n", &priv->periodic_trigger_count) >= 0)
         {
             return cmd;
         }else{
@@ -568,8 +568,8 @@ static void tamagawa_process_periodic_command(enum data_id process_dataid_cmd)
     tamagawa_periodic_interface.pruss_cfg = priv->pruss_cfg;
     tamagawa_periodic_interface.pruss_iep = priv->pruss_iep;
     tamagawa_periodic_interface.pruss_dmem = priv->tamagawa_xchg;
-    tamagawa_periodic_interface.cmp3 = priv->cmp3;
-     tamagawa_periodic_interface.cmp0 = priv->cmp0;
+    tamagawa_periodic_interface.periodic_trigger_count = priv->periodic_trigger_count;
+    tamagawa_periodic_interface.cmp0_count = priv->iep_reset_count;
 
     status = tamagawa_config_periodic_mode(&tamagawa_periodic_interface, gPruIcssXHandle);
     DebugP_assert(0 != status);

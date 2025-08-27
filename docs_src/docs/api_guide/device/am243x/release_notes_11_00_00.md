@@ -464,6 +464,12 @@ previous SDK version. Also refer to older SDK version release notes to see chang
 </tr>
 <tr>
     <td> Position Sense Endat
+    <td> structure `endat_periodic_interface`
+    <td> Renamed the cmp event variables
+    <td> Renamed variables: `cmp0` to `cmp0_count`, `cmp3` to `ch0_trigger_count`, `cmp5` to `ch1_trigger_count`, and `cmp6` to `ch2_trigger_count`
+</tr>
+<tr>
+    <td> Position Sense Endat
     <td> Firmware binary files
     <td> Renamed all binary files
     <td> Used encoder_receiver inclusive term
@@ -473,6 +479,12 @@ previous SDK version. Also refer to older SDK version release notes to see chang
     <td> Firmware binary files
     <td> Renamed all binary files
     <td> Used encoder_receiver inclusive term
+</tr>
+<tr>
+    <td> Position Sense Tamagawa
+    <td> structure `tamagawa_periodic_interface`
+    <td> Renamed the cmp event variables
+    <td> Renamed variables: `cmp0` to `iep_reset_count`, `cmp3` to `periodic_trigger_count`
 </tr>
 <tr>
     <td> Position Sense Nikon A-format
@@ -531,6 +543,18 @@ previous SDK version. Also refer to older SDK version release notes to see chang
     <td> Position Sense Endat
     <td> structure \ref endat_init
     <td> Added new parameter: \ref endat_clock_config
+    <td> -
+</tr>
+<tr>
+    <td> Position Sense Endat
+    <td> structure \ref endat_priv
+    <td> Renamed variables: `cmp0` to `iep_reset_count`, `cmp3` to `ch0_trigger_count`, `cmp5` to `ch1_trigger_count`, and `cmp6` to `ch2_trigger_count`
+    <td> -
+</tr>
+<tr>
+    <td> Position Sense Endat
+    <td> structure \ref cmd_supplement
+    <td> Renamed variables: `cmp0` to `iep_reset_count`, `cmp3` to `ch0_trigger_count`, `cmp5` to `ch1_trigger_count`, and `cmp6` to `ch2_trigger_count`
     <td> -
 </tr>
 <tr>
@@ -652,6 +676,13 @@ previous SDK version. Also refer to older SDK version release notes to see chang
     <td> Position Sense Tamagawa
     <td> \ref tamagawa_priv
     <td> Added new variables: `pru_uart_clock`, `rx_clock_source" and `tx_clock_source`
+    <td> -
+</tr>
+
+<tr>
+    <td> Position Sense Tamagawa
+    <td> \ref tamagawa_priv
+    <td> Renamed variables: `cmp0` to `iep_reset_count`, `cmp3` to `periodic_trigger_count`
     <td> -
 </tr>
 <tr>

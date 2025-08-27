@@ -1,9 +1,9 @@
 /**
  * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
  * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
- * @cliArgs --device "AM243x_ALV_beta" --part "ALV" --package "ALV" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@07.03.01"
- * @v2CliArgs --device "AM2434" --package "FCBGA (ALV)" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@07.03.01"
- * @versions {"tool":"1.21.0+3721"}
+ * @cliArgs --device "AM243x_ALV_beta" --part "ALV" --package "ALV" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@11.00.00"
+ * @v2CliArgs --device "AM2434" --package "FCBGA (ALV)" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@11.00.00"
+ * @versions {"tool":"1.22.0+3893"}
  */
 
 /**
@@ -279,6 +279,15 @@ endat1.PRU_ICSSG0_PRU.$assign   = "PRU_ICSSG0_PRU1";
 pruicss1.$name                           = "CONFIG_PRU_ICSS0";
 endat1.pru                               = pruicss1;
 pruicss1.AdditionalICSSSettings[0].$name = "CONFIG_PRU_ICSS_IO0";
+pruicss1.intcMapping.create(3);
+pruicss1.intcMapping[0].$name            = "CONFIG_ICSS0_INTC_MAPPING0";
+pruicss1.intcMapping[0].event            = "18";
+pruicss1.intcMapping[1].$name            = "CONFIG_ICSS0_INTC_MAPPING1";
+pruicss1.intcMapping[1].event            = "19";
+pruicss1.intcMapping[1].channel          = "3";
+pruicss1.intcMapping[2].$name            = "CONFIG_ICSS0_INTC_MAPPING2";
+pruicss1.intcMapping[2].channel          = "4";
+pruicss1.intcMapping[2].event            = "20";
 
 /**
  * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future
@@ -293,12 +302,12 @@ debug_log.uartLog.UART.TXD.$suggestSolution  = "UART0_TXD";
 endat1.PRU_ICSSG0_PRU.GPO2.$suggestSolution  = "PRG0_PRU1_GPO2";
 endat1.PRU_ICSSG0_PRU.GPO1.$suggestSolution  = "PRG0_PRU1_GPO1";
 endat1.PRU_ICSSG0_PRU.GPO0.$suggestSolution  = "PRG0_PRU1_GPO0";
-endat1.PRU_ICSSG0_PRU.GPI13.$suggestSolution = "PRG0_PRU1_GPO13";
 endat1.PRU_ICSSG0_PRU.GPO5.$suggestSolution  = "PRG0_PRU1_GPO5";
 endat1.PRU_ICSSG0_PRU.GPO4.$suggestSolution  = "PRG0_PRU1_GPO4";
 endat1.PRU_ICSSG0_PRU.GPO3.$suggestSolution  = "PRG0_PRU1_GPO3";
-endat1.PRU_ICSSG0_PRU.GPI14.$suggestSolution = "PRG0_PRU1_GPO14";
 endat1.PRU_ICSSG0_PRU.GPO8.$suggestSolution  = "PRG0_PRU1_GPO8";
-endat1.PRU_ICSSG0_PRU.GPO12.$suggestSolution = "PRG0_PRU1_GPO12";
 endat1.PRU_ICSSG0_PRU.GPO6.$suggestSolution  = "PRG0_PRU1_GPO6";
 endat1.PRU_ICSSG0_PRU.GPI11.$suggestSolution = "PRG0_PRU1_GPO11";
+endat1.PRU_ICSSG0_PRU.GPI13.$suggestSolution = "PRG0_PRU1_GPO13";
+endat1.PRU_ICSSG0_PRU.GPI14.$suggestSolution = "PRG0_PRU1_GPO14";
+endat1.PRU_ICSSG0_PRU.GPO12.$suggestSolution = "PRG0_PRU1_GPO12";

@@ -169,10 +169,10 @@ struct endat_priv
     struct endatChRxInfo *endatChRxInfo;
     void *pruss_cfg;
     void *pruss_iep;
-    uint64_t cmp0;
-    uint64_t cmp3;
-    uint64_t cmp5;
-    uint64_t cmp6;
+    uint64_t iep_reset_count;
+    uint64_t ch0_trigger_count;
+    uint64_t ch1_trigger_count;
+    uint64_t ch2_trigger_count;
     uint64_t pru_clock; /**<PRU CORE Clock*/
     uint64_t pru_uart_clock; /*ICSS PRU UART clock value*/
     uint8_t rx_clock_source; /*3 channel Peripheral RX clock source*/
@@ -193,10 +193,10 @@ struct cmd_supplement
     uint32_t block;
     uint8_t has_block_address;
     uint32_t frequency;
-    uint64_t cmp0;
-    uint64_t cmp3;
-    uint64_t cmp5;
-    uint64_t cmp6;
+    uint64_t iep_reset_count;
+    uint64_t ch0_trigger_count;
+    uint64_t ch1_trigger_count;
+    uint64_t ch2_trigger_count;
 };
 
 struct endat_data
