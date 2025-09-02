@@ -8,6 +8,8 @@ BiSS is an open-source digital interface for sensors and actuators. BiSS stands 
 
 BiSS Safety is a profile definition for BiSS that has been certified by TÜV Rheinland for safety-critical applications up to SIL3 according to IEC61508:2010. BiSS Safety uses the concept of a "Black Channel" transmission and specifies the data channel contents in order to ensure failure mode detection as defined in IEC61784-3 using redundant position words, different CRC polynomials and a sign-of-life counter. BiSS Safety is fully compatible with BiSS and all of its features including line delay compensation, processing times. BiSS Safety is implemented by assuming 2 encoders connected in daisy chain, one will send CPW and another one will send SPW. Daisy chaining is also possible on top of safety (2 encoders dedicated safety - one for CPW and another one for SPW) up to 3 encoders per channel.
 
+\note This implementation using Peripheral input/output mode of PRU-ICSS. Refer \ref PRUICSS_PERIPHERAL_IF_MODE for more details.
+
 ## Features Supported
 \cond SOC_AM243X
 
@@ -59,7 +61,7 @@ BiSS Safety is a profile definition for BiSS that has been certified by TÜV Rhe
    -  Support for automatic processing delay detection and compensation
    -  Support for multiple encoders connected via daisy-chain configuration (up to 3 encoders)
    -  Support for concurrent multi-channel support on a single PRU (up to 3 identical encoders)
-   -  Support for multi-channel encoders of different make under load share model (each of PRU, RTU-PRU, and TX-PRU from one PRU-ICSSG slice handles one channel)
+   -  Support for multi-channel encoders of different make under load share mode (Refer \ref PRUICSSG_LOAD_SHARE_MODE for more details)
    -  Support for up to 100 meter cable
    -  Readiness for BiSS Safety profile by supporting 16 bit CRC and sign-of-life counter
 

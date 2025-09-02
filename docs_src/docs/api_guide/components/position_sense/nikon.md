@@ -8,6 +8,8 @@
 
 Nikon A-format absolute encoder receiver implementation on the TI PRU-ICSS interfaces with the Nikon A-format encoders either via point-to-point communication or up to 8 Nikon A-format encoders connected on a bus. Nikon A-format encoders use a proprietary asynchronous serial bi-directional half-duplex communication protocol compliant with RS-485. The encoder can generate either single- or multi-turn absolute position data and can operate at a baud rate of up to 16 MHz. Besides position data, the encoder can also send status and diagnostic information as well. Reliability is ensured by using a 3-bit CRC by the receiver and an 8-bit CRC by the encoder. Another interesting feature of the Nikon-A encoders is the optional battery backup circuit, which can be used in case of power failure. Nikon A-format encoders are widely used in industrial machinery, including industrial robots in automobile production lines and machine tools, and are highly valued as the next-generation standard for sensors that can detect the absolute rotational displacement values of robot arms.
 
+\note This implementation using Peripheral input/output mode of PRU-ICSS. Refer \ref PRUICSS_PERIPHERAL_IF_MODE for more details.
+
 ## Features Supported {#NIKON_FEATURES}
    -  Support for Nikon version 2.1 and Nikon version 3.0
    -  Support for point-to-point and bus communication (up to 8 encoders).
@@ -52,7 +54,7 @@ Nikon A-format absolute encoder receiver implementation on the TI PRU-ICSS inter
 </tr>
 </table>
    -  Support for concurrent multi-channel support on a single PRU (up to 3 channels with identical number of encoders of the same frequency connected to all configured channels).
-   -  Support for multi-channel with different communication modes and different numbers of encoders connected across channels under load share model (each of PRU, RTU-PRU, and TX-PRU from one PRU-ICSSG slice handles all 3 channels).
+   -  Support for multi-channel with different communication modes and different numbers of encoders connected across channels under load share mode (Refer \ref PRUICSSG_LOAD_SHARE_MODE for more details).
 \endcond
 
 \cond SOC_AM261X

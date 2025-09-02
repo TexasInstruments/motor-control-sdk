@@ -8,6 +8,8 @@ Current sensing is handled by the Programmable Real-Time Unit Industrial Communi
 
 ICSS %SDFM is a sigma delta interface for phase current measurement in high-performance motor and servo drives. During Sigma delta decimation filtering (SDDF), the PRU hardware provides hardware integrators that do the accumulation part of Sinc filtering, while the ICSS %SDFM firmware does the differentiation part.
 
+\note This implementation using SD input/output mode of PRU-ICSS. Refer \ref PRUICSS_SD_MODE for more details.
+
 ## Features Supported
 - 3 %SDFM channels on a single PRU core
 - Normal Current (NC) for data read: SINC3 filter with an Over-Sampling Ratio (OSR) ranging from 8 to 256
@@ -25,7 +27,7 @@ ICSS %SDFM is a sigma delta interface for phase current measurement in high-perf
 - PRU-ICSS PWM trip generation for overcurrent
 - Clock phase compensation
 - Zero-cross comparator
-- Support for up to 9 channels using load share mode
+- Support for up to 9 channels using load share mode (Refer \ref PRUICSSG_LOAD_SHARE_MODE for more details)
 - SINC1, SINC2, and SINC3 filters
 - Supported clock sources:
   - Independent clock source for each channel
