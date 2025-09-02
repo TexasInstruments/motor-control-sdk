@@ -118,25 +118,22 @@ void nikon_config_iep(struct nikon_periodic_interface *nikon_periodic_interface)
     /*Clear all event & configure*/
     if(CONFIG_NIKON0_LOAD_SHARE_MODE)
     {
-        /* CMP3 for ch0*/
-        event |= CONFIG_NIKON0_CHANNEL0==1?(IEP_CMP3_EVNT_MASK):0;
-        /* CMP5 for ch1*/
-        event |= CONFIG_NIKON0_CHANNEL1==1?(IEP_CMP5_EVNT_MASK):0;
-        /* CMP6 for ch2*/
-        event |= CONFIG_NIKON0_CHANNEL2==1?(IEP_CMP6_EVNT_MASK):0;
+        event |= CONFIG_NIKON0_CHANNEL0 == 1 ? (0x1 << (IEP_CH0_CMP_EVNT + 1)):0;
+        event |= CONFIG_NIKON0_CHANNEL1 == 1 ? (0x1 << (IEP_CH1_CMP_EVNT + 1)):0;
+        event |= CONFIG_NIKON0_CHANNEL2 == 1 ? (0x1 << (IEP_CH2_CMP_EVNT + 1)):0;
 
         /*clear event*/
-        event_clear |= CONFIG_NIKON0_CHANNEL0==1?(IEP_CMP3_EVNT_CLR_MASK):0;
-        event_clear |= CONFIG_NIKON0_CHANNEL1==1?(IEP_CMP5_EVNT_CLR_MASK):0;
-        event_clear |= CONFIG_NIKON0_CHANNEL2==1?(IEP_CMP6_EVNT_CLR_MASK):0;
+        event_clear |= CONFIG_NIKON0_CHANNEL0 == 1 ? (0x1 << (IEP_CH0_CMP_EVNT)):0;
+        event_clear |= CONFIG_NIKON0_CHANNEL1 == 1 ? (0x1 << (IEP_CH1_CMP_EVNT)):0;
+        event_clear |= CONFIG_NIKON0_CHANNEL2 == 1 ? (0x1 << (IEP_CH2_CMP_EVNT)):0;
 
         if(CONFIG_NIKON0_CHANNEL0)
         {
             cmp_reg0 = (nikon_periodic_interface->ch0_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
             cmp_reg1 = (nikon_periodic_interface->ch0_trigger_count>>32 & 0xffffffff);
 
-            HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP3_REG0,  cmp_reg0);
-            HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP3_REG1,  cmp_reg1);
+            HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG0 + IEP_CH0_CMP_EVNT*8,  cmp_reg0);
+            HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG1 + IEP_CH0_CMP_EVNT*8,  cmp_reg1);
         }
 
         if(CONFIG_NIKON0_CHANNEL1)
@@ -144,8 +141,8 @@ void nikon_config_iep(struct nikon_periodic_interface *nikon_periodic_interface)
             cmp_reg0 = (nikon_periodic_interface->ch1_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
             cmp_reg1 = (nikon_periodic_interface->ch1_trigger_count>>32 & 0xffffffff);
 
-            HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP5_REG0,  cmp_reg0);
-            HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP5_REG1,  cmp_reg1);
+            HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG0 + IEP_CH1_CMP_EVNT*8, cmp_reg0);
+            HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG1 + IEP_CH1_CMP_EVNT*8, cmp_reg1);
 
         }
 
@@ -154,20 +151,20 @@ void nikon_config_iep(struct nikon_periodic_interface *nikon_periodic_interface)
             cmp_reg0 = (nikon_periodic_interface->ch2_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
             cmp_reg1 = (nikon_periodic_interface->ch2_trigger_count>>32 & 0xffffffff);
 
-            HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP6_REG0,  cmp_reg0);
-            HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP6_REG1,  cmp_reg1);
+            HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG0 + IEP_CH2_CMP_EVNT*8, cmp_reg0);
+            HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG1 + IEP_CH2_CMP_EVNT*8,  cmp_reg1);
 
         }
     }
     else
     {
-        event |= (0x1 << 4);
-        event_clear |= (0x1 << 3);
+        event |= (0x1 << (IEP_CH0_CMP_EVNT + 1));
+        event_clear |= (0x1 << (IEP_CH0_CMP_EVNT));
         cmp_reg0 = (nikon_periodic_interface->ch0_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
         cmp_reg1 = (nikon_periodic_interface->ch0_trigger_count>>32 & 0xffffffff);
 
-        HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP3_REG0,  cmp_reg0);
-        HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP3_REG1,  cmp_reg1);
+        HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG0 + IEP_CH0_CMP_EVNT*8,  cmp_reg0);
+        HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG1 + IEP_CH0_CMP_EVNT*8,  cmp_reg1);
 
     }
     iep_reset_count = nikon_periodic_interface->iep_reset_count;
@@ -294,10 +291,10 @@ void rtu_nikon_irq_handler(void *args)
     /* debug, increment PRU SDFM IRQ count */
     gRtuNikonIrqCnt++;
 
-    /* clear Cmp3 event*/
+    /* clear Channel 0 cmp event*/
     uint32_t event_clear;
     event_clear = HW_RD_REG8((uint8_t *)gPruIcss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
-    event_clear |= IEP_CMP3_EVNT;
+    event_clear |=(0x1 << IEP_CH0_CMP_EVNT);
     HW_WR_REG8((uint8_t *)gPruIcss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
 
     /* Clear interrupt at source */
@@ -313,10 +310,10 @@ void pru_nikon_irq_handler(void *args)
     /* debug, inncrement PRU SDFM IRQ count */
     gPruNikonIrqCnt++;
 
-    /* clear Cmp3 event*/
+    /* clear channel 1 cmp event*/
     uint32_t event_clear;
     event_clear = HW_RD_REG8((uint8_t *)gPruIcss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
-    event_clear |= IEP_CMP5_EVNT;
+    event_clear |= (0x1 << IEP_CH1_CMP_EVNT);
     HW_WR_REG8((uint8_t *)gPruIcss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
 
     /* Clear interrupt at source */
@@ -331,10 +328,10 @@ void txpru_nikon_irq_handler(void *args)
     /* debug, inncrement PRU SDFM IRQ count */
     gTxpruNikonIrqCnt++;
 
-    /* clear Cmp3 event*/
+    /* clear channel 2 cmp event*/
     uint32_t event_clear;
     event_clear = HW_RD_REG8((uint8_t *)gPruIcss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
-    event_clear |= IEP_CMP6_EVNT;
+    event_clear |= (0x1 << IEP_CH2_CMP_EVNT);
     HW_WR_REG8((uint8_t *)gPruIcss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
 
     /* Clear interrupt at source */

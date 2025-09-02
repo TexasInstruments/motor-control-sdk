@@ -57,7 +57,6 @@ static HwiP_Object gIcssgEncoderHwiObject2;  /* ICSSG BiSS-C PRU FW HWI */
 #define ICSS_PRU_BISSC_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_1)
 #define ICSS_TXPRU_BISSC_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_2)
 #else
-
 #define ICSS_RTU_BISSC_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_0)
 #define ICSS_PRU_BISSC_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_1)
 #define ICSS_TXPRU_BISSC_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_2)
@@ -71,6 +70,7 @@ static HwiP_Object gIcssgEncoderHwiObject2;  /* ICSSG BiSS-C PRU FW HWI */
 #define ICSS_RTU_BISSC_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_0)
 #define ICSS_PRU_BISSC_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_1)
 #define ICSS_TXPRU_BISSC_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_2)
+#endif
 #endif
 
 uint32_t gRtuBisscIrqCnt, gPruBisscIrqCnt, gTxpruBisscIrqCnt;
@@ -119,27 +119,22 @@ void bissc_config_iep(struct bissc_periodic_interface *bissc_periodic_interface)
     /*Clear all event & configure*/
     if(CONFIG_BISSC0_LOAD_SHARE_MODE)
     {
-        /* CMP3 for ch0 */
-        event |= CONFIG_BISSC0_CHANNEL0==1?(IEP_CMP3_EVNT_MASK):0;
-        /* CMP5 for ch0 */
-        event |= CONFIG_BISSC0_CHANNEL1==1?(IEP_CMP5_EVNT_MASK):0;
-        /* CMP6 for ch0 */
-        event |= CONFIG_BISSC0_CHANNEL2==1?(IEP_CMP6_EVNT_MASK):0;
+        event |= CONFIG_BISSC0_CHANNEL0 == 1 ? (0x1 << (IEP_CH0_CMP_EVNT + 1)):0;
+        event |= CONFIG_BISSC0_CHANNEL1 == 1 ? (0x1 << (IEP_CH1_CMP_EVNT + 1)):0;
+        event |= CONFIG_BISSC0_CHANNEL2 == 1 ? (0x1 << (IEP_CH2_CMP_EVNT + 1)):0;
 
         /*clear event*/
-        event_clear |= CONFIG_BISSC0_CHANNEL0==1?(IEP_CMP3_EVNT_CLR_MASK):0;
-        event_clear |= CONFIG_BISSC0_CHANNEL1==1?(IEP_CMP5_EVNT_CLR_MASK):0;
-        event_clear |= CONFIG_BISSC0_CHANNEL2==1?(IEP_CMP6_EVNT_CLR_MASK):0;
+        event_clear |= CONFIG_BISSC0_CHANNEL0 == 1? (0x1 << (IEP_CH0_CMP_EVNT)):0;
+        event_clear |= CONFIG_BISSC0_CHANNEL1 == 1? (0x1 << (IEP_CH1_CMP_EVNT)):0;
+        event_clear |= CONFIG_BISSC0_CHANNEL2 == 1? (0x1 << (IEP_CH2_CMP_EVNT)):0;
 
         if(CONFIG_BISSC0_CHANNEL0)
         {
             cmp_reg0 = (bissc_periodic_interface->ch0_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
             cmp_reg1 = (bissc_periodic_interface->ch0_trigger_count>>32 & 0xffffffff);
 
-
-            HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP3_REG0,  cmp_reg0);
-            HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP3_REG1,  cmp_reg1);
-
+            HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG0 + IEP_CH0_CMP_EVNT*8,  cmp_reg0);
+            HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG1 + IEP_CH0_CMP_EVNT*8,  cmp_reg1);
 
         }
 
@@ -148,10 +143,8 @@ void bissc_config_iep(struct bissc_periodic_interface *bissc_periodic_interface)
             cmp_reg0 = (bissc_periodic_interface->ch1_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
             cmp_reg1 = (bissc_periodic_interface->ch1_trigger_count>>32 & 0xffffffff);
 
-
-            HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP5_REG0,  cmp_reg0);
-            HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP5_REG1,  cmp_reg1);
-
+            HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG0 + IEP_CH1_CMP_EVNT*8,  cmp_reg0);
+            HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG1 + IEP_CH1_CMP_EVNT*8,  cmp_reg1);
 
         }
 
@@ -160,23 +153,20 @@ void bissc_config_iep(struct bissc_periodic_interface *bissc_periodic_interface)
             cmp_reg0 = (bissc_periodic_interface->ch2_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
             cmp_reg1 = (bissc_periodic_interface->ch2_trigger_count>>32 & 0xffffffff);
 
-
-            HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP6_REG0,  cmp_reg0);
-            HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP6_REG1,  cmp_reg1);
-
+            HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG0 + IEP_CH2_CMP_EVNT*8,  cmp_reg0);
+            HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG1 + IEP_CH2_CMP_EVNT*8,  cmp_reg1);
 
         }
     }
     else
     {
-        event |= (0x1 << 4);
-        event_clear |= (0x1 << 3);
+        event |= (0x1 << (IEP_CH0_CMP_EVNT + 1));
+        event_clear |= (0x1 << (IEP_CH0_CMP_EVNT));
         cmp_reg0 = (bissc_periodic_interface->ch0_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
         cmp_reg1 = (bissc_periodic_interface->ch0_trigger_count>>32 & 0xffffffff);
 
-
-        HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP3_REG0,  cmp_reg0);
-        HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP3_REG1,  cmp_reg1);
+        HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG0 + IEP_CH0_CMP_EVNT*8,  cmp_reg0);
+        HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG1 + IEP_CH0_CMP_EVNT*8,  cmp_reg1);
 
     }
     iep_reset_count = bissc_periodic_interface->iep_reset_count;
@@ -307,10 +297,10 @@ void rtuBisscIrqHandler(void *args)
     /* debug, inncrement PRU SDFM IRQ count */
     gRtuBisscIrqCnt++;
 
-    /* clear Cmp3 event*/
+    /* clear channel 0 cmp event*/
     uint32_t event_clear;
     event_clear = HW_RD_REG8((uint8_t *)gPruIcss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
-    event_clear |= IEP_CMP3_EVNT;
+    event_clear |= (1 << IEP_CH0_CMP_EVNT);
     HW_WR_REG8((uint8_t *)gPruIcss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
 
     /* Clear interrupt at source */
@@ -326,10 +316,10 @@ void pruBisscIrqHandler(void *args)
     /* debug, inncrement PRU SDFM IRQ count */
     gPruBisscIrqCnt++;
 
-    /* clear Cmp3 event*/
+    /* clear channel 1 cmp event*/
     uint32_t event_clear;
     event_clear = HW_RD_REG8((uint8_t *)gPruIcss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
-    event_clear |= IEP_CMP5_EVNT;
+    event_clear |= (1 << IEP_CH1_CMP_EVNT);
     HW_WR_REG8((uint8_t *)gPruIcss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
 
     /* Clear interrupt at source */
@@ -345,10 +335,10 @@ void txpruBisscIrqHandler(void *args)
     /* debug, inncrement PRU SDFM IRQ count */
     gTxpruBisscIrqCnt++;
 
-    /* clear Cmp3 event*/
+    /* clear channel 2 cmp event*/
     uint32_t event_clear;
     event_clear = HW_RD_REG8((uint8_t *)gPruIcss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
-    event_clear |= IEP_CMP6_EVNT;
+    event_clear |= (0x1 << IEP_CH2_CMP_EVNT);
     HW_WR_REG8((uint8_t *)gPruIcss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
 
     /* Clear interrupt at source */

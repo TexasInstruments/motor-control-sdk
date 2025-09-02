@@ -162,25 +162,25 @@ BISSC_HANDLE_PERIODIC_TRIGGER:
 	; Get pending events from IEP
     LBCO    &SCRATCH1,    ICSS_IEP,    ICSS_IEP_CMP_STATUS_REG,    4
     .if $isdefed("ENABLE_MULTI_MAKE_RTU")
-    ; wait till IEP CMP3 event
-    QBBC    BISSC_CHECK_OPERATING_MODE ,    SCRATCH1,    IEP_CMP3_EVNT
-    ; Clear IEP CMP3 event
-    LDI SCRATCH1.b0, (1<<IEP_CMP3_EVNT)
+    ; wait till IEP CH0 CMP event
+    QBBC    BISSC_CHECK_OPERATING_MODE ,    SCRATCH1,    IEP_CH0_CMP_EVNT
+    ; Clear IEP CH0 CMP event
+    LDI SCRATCH1.b0, (1<<IEP_CH0_CMP_EVNT)
     .elseif $isdefed("ENABLE_MULTI_MAKE_PRU") ;Check PRU host trigger  for ch1
-    ; wait till IEP CMP5 event
-    QBBC    BISSC_CHECK_OPERATING_MODE,    SCRATCH1,    IEP_CMP5_EVNT
-    ; Clear IEP CMP5 event
-    LDI SCRATCH1.b0, (1<<IEP_CMP5_EVNT)
+    ; wait till IEP CH1 CMP event
+    QBBC    BISSC_CHECK_OPERATING_MODE,    SCRATCH1,    IEP_CH1_CMP_EVNT
+    ; Clear IEP CH1 CMP event
+    LDI SCRATCH1.b0, (1<<IEP_CH1_CMP_EVNT)
     .elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
-    ; wait till IEP CMP6 event
-    QBBC    BISSC_CHECK_OPERATING_MODE,    SCRATCH1,    IEP_CMP6_EVNT
-    ; Clear IEP CMP6 event
-    LDI SCRATCH1.b0, (1<<IEP_CMP6_EVNT)
+    ; wait till IEP CH2 CMP event
+    QBBC    BISSC_CHECK_OPERATING_MODE,    SCRATCH1,    IEP_CH2_CMP_EVNT
+    ; Clear IEP CH2 CMP event
+    LDI SCRATCH1.b0, (1<<IEP_CH2_CMP_EVNT)
     .else
-    ; wait till IEP CMP3 event
-    QBBC    BISSC_CHECK_OPERATING_MODE,    SCRATCH1,    IEP_CMP3_EVNT
-    ; Clear IEP CMP3 event
-    LDI SCRATCH1.b0, (1<<IEP_CMP3_EVNT)
+    ; wait till IEP CH0 CMP event
+    QBBC    BISSC_CHECK_OPERATING_MODE,    SCRATCH1,    IEP_CH0_CMP_EVNT
+    ; Clear IEP CH2 CMP event
+    LDI SCRATCH1.b0, (1<<IEP_CH0_CMP_EVNT)
     .endif
     ; store compare event status
     SBCO	&SCRATCH1,	ICSS_IEP,  ICSS_IEP_CMP_STATUS_REG,	4
