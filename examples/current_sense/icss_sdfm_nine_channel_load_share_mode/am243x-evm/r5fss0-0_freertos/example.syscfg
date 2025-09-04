@@ -13,11 +13,6 @@ const sdfm              = scripting.addModule("/current_sense/sdfm", {}, false);
 const sdfm1             = sdfm.addInstance();
 const epwm              = scripting.addModule("/drivers/epwm/epwm", {}, false);
 const epwm1             = epwm.addInstance();
-const gpio              = scripting.addModule("/drivers/gpio/gpio", {}, false);
-const gpio1             = gpio.addInstance();
-const gpio2             = gpio.addInstance();
-const gpio3             = gpio.addInstance();
-const gpio4             = gpio.addInstance();
 const pruicss           = scripting.addModule("/drivers/pruicss/pruicss", {}, false);
 const pruicss1          = pruicss.addInstance();
 const debug_log         = scripting.addModule("/kernel/dpl/debug_log");
@@ -83,28 +78,6 @@ epwm1.EPWM.A.$assign     = "GPMC0_AD3";
 epwm1.EPWM.B.$assign     = "GPMC0_AD4";
 epwm1.EPWM.SYNCO.$assign = "GPMC0_AD1";
 epwm1.EPWM.SYNCI.$used   = false;
-
-gpio1.$name          = "GPIO_MTR_1_PWM_EN";
-gpio1.pinDir         = "OUTPUT";
-gpio1.GPIO_n.$assign = "GPMC0_AD15";
-
-gpio2.pinDir                   = "OUTPUT";
-gpio2.useMcuDomainPeripherals  = true;
-gpio2.$name                    = "GPIO_ZC_TH_CH0";
-gpio2.MCU_GPIO.$assign         = "MCU_GPIO0";
-gpio2.MCU_GPIO.gpioPin.rx      = false;
-gpio2.MCU_GPIO.gpioPin.$assign = "MCU_SPI0_D1";
-
-gpio3.pinDir                   = "OUTPUT";
-gpio3.useMcuDomainPeripherals  = true;
-gpio3.$name                    = "GPIO_ZC_TH_CH1";
-gpio3.MCU_GPIO.gpioPin.rx      = false;
-gpio3.MCU_GPIO.gpioPin.$assign = "MCU_SPI1_CS0";
-
-gpio4.pinDir                   = "OUTPUT";
-gpio4.useMcuDomainPeripherals  = true;
-gpio4.$name                    = "GPIO_ZC_TH_CH2";
-gpio4.MCU_GPIO.gpioPin.$assign = "MCU_SPI1_D1";
 
 debug_log.enableUartLog        = true;
 debug_log.uartLog.$name        = "CONFIG_UART_CONSOLE";
@@ -321,7 +294,7 @@ section12.output_section[0].alignment = 4;
 pruicss_g_v0_pwm1.$name                                                 = "CONFIG_PRUICSS_PWM0";
 pruicss_g_v0_pwm1.PRUICSS_PWM_IEP.$name                                 = "CONFIG_PRUICSS_PWM_IEP0";
 pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[0].$name                          = "CONFIG_PRUICSS_PWM_CHANNEL0";
-pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE.create(3);
+pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE.create(2);
 pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE[0].$name                         = "CONFIG_PRUICSS_PWM_TRIPZONE0";
 pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE[0].PRU_ICSSG0_PWM.$assign        = "PRU_ICSSG0_PWM0";
 pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE[0].PRU_ICSSG0_PWM.TZ_OUT.$used   = true;
@@ -329,10 +302,6 @@ pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE[1].$name                         = "CONFI
 pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE[1].PRU_ICSSG0_PWM.$assign        = "PRU_ICSSG0_PWM1";
 pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE[1].PRU_ICSSG0_PWM.TZ_OUT.$assign = "PRG0_PRU1_GPO19";
 pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE[1].PRU_ICSSG0_PWM.TZ_OUT.$used   = true;
-pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE[2].$name                         = "CONFIG_PRUICSS_PWM_TRIPZONE2";
-pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE[2].PRU_ICSSG0_PWM.$assign        = "PRU_ICSSG0_PWM2";
-pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE[2].PRU_ICSSG0_PWM.TZ_OUT.$assign = "PRG0_PRU1_GPO8";
-pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE[2].PRU_ICSSG0_PWM.TZ_OUT.$used   = true;
 
 pruicss1.$name                                                                      = "CONFIG_PRU_ICSS0";
 pruicss1.coreClk                                                                    = 300000000;
@@ -368,13 +337,11 @@ sdfm1.PRU_ICSSG0_PRU.GPI1.$suggestSolution                                      
 sdfm1.PRU_ICSSG0_PRU.GPI3.$suggestSolution                                       = "PRG0_PRU0_GPO3";
 sdfm1.PRU_ICSSG0_PRU.GPI5.$suggestSolution                                       = "PRG0_PRU0_GPO5";
 sdfm1.PRU_ICSSG0_PRU.GPI7.$suggestSolution                                       = "PRG0_PRU0_GPO7";
-sdfm1.PRU_ICSSG0_PRU.GPI18.$suggestSolution                                      = "PRG0_PRU0_GPO18";
 sdfm1.PRU_ICSSG0_PRU.GPI11.$suggestSolution                                      = "PRG0_PRU0_GPO11";
 sdfm1.PRU_ICSSG0_PRU.GPI13.$suggestSolution                                      = "PRG0_PRU0_GPO13";
 sdfm1.PRU_ICSSG0_PRU.GPI15.$suggestSolution                                      = "PRG0_PRU0_GPO15";
 sdfm1.PRU_ICSSG0_PRU.GPI17.$suggestSolution                                      = "PRG0_PRU0_GPO17";
-gpio3.MCU_GPIO.$suggestSolution                                                  = "MCU_GPIO0";
-gpio4.MCU_GPIO.$suggestSolution                                                  = "MCU_GPIO0";
+sdfm1.PRU_ICSSG0_PRU.GPI18.$suggestSolution                                      = "PRG0_PRU0_GPO18";
 debug_log.uartLog.UART.RXD.$suggestSolution                                      = "UART0_RXD";
 debug_log.uartLog.UART.TXD.$suggestSolution                                      = "UART0_TXD";
 pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[0].PRU_ICSSG0_PWM.$suggestSolution         = "PRU_ICSSG0_PWM0";

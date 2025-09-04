@@ -2,25 +2,50 @@
 
 [TOC]
 
-This example does trigger-based normal current sampling. Normal current Over-sampling Ratio (OSR), Over current OSR and Normal current trigger time can be configured by the user. There are two different examples based on number of %SDFM channels.
+These examples demonstrate both trigger-based and continuous normal current sampling. The examples support Normal Current, Over Current, and Fast Detect configurations.
 
-# Three Channels
+There are four different examples based on the number of %SDFM channels and the mode of Normal Current sampling.
 
-Only one core - PRU is used for this example.
+> **Note:** Normal Current trigger mode examples do not support Over Current. 
 
-The example does the following:
-- Set %SDFM channels: Channel 0 - Channel 2
-- Configure normal current sample trigger time (time for read sample) and OSR
+## Three Channels
 
-# Nine Channels
+Only one core, PRU, is used for these examples.
 
-Load share mode of PRU-ICSSG is enabled for this example and three cores - RTU-PRU, PRU and TX-PRU are used for this example.
+1. **Continuous Mode Example**  
+        - Continuous Normal Current sampling.  
+        - Three channels: Channel 0, Channel 1, and Channel 2.  
+        - Each channel has an individual interrupt to trigger an R5 event.  
+        - ICSS PWM trip-based Fast Detect. ICSS PWM0 instance is used to generate the PWM trip.  
+        - ICSS PWM trip-based Over Current detection. ICSS PWM0 instance is used to generate the PWM trip.  
+                - **Note:** Over Current OSR should be equal to Normal Current OSR.  
 
-The example does the following:
- - Enable load share mode
- - Set %SDFM channels: Channel 0 - Channel 8
- - Configure normal current sample trigger time (time for read sample) and OSR
+2. **Trigger Mode Example**  
+        - Three channels: Channel 0, Channel 1, and Channel 2.  
+        - Trigger-based Normal Current sampling synchronized with EPWM.  
+        - A common interrupt is used for all three channels.  
+        - ICSS PWM trip-based Fast Detect. ICSS PWM0 instance is used to generate the PWM trip.  
 
+## Nine Channels
+
+The load share mode of PRU-ICSSG is enabled for these examples. Three cores—RTU-PRU, PRU, and TX-PRU—are used.
+
+\note Channels 6 to 8 Fast Detect is not mapped with any ICSS PWM trip zone block. This is a hardware limitation. A software-based solution can be used as described in \ref OC_FD_TRIP.
+
+1. **Continuous Mode Example**  
+        - Continuous Normal Current sampling.  
+        - Nine channels with load share mode.  
+        - ICSS PWM trip-based Fast Detect for channels 0 to 5.  
+        - ICSS PWM trip-based Over Current detection for all nine channels.  
+                - **Note:** Over Current OSR should be equal to Normal Current OSR.  
+        - Each channel has an individual interrupt.  
+                - **Note:** Due to the unavailability of host interrupts, only the Channel 0 interrupt is configured for the TX PRU (Channels 6 to 8) in the application.  
+
+2. **Trigger Mode Example**  
+        - Trigger-based Normal Current sampling synchronized with EPWM.  
+        - A common interrupt is used for every three channels.  
+        - Nine channels with load share mode.  
+        - ICSS PWM trip-based Fast Detect for channels 0 to 5.  
 
 # Important files and directory structure
 
@@ -36,6 +61,14 @@ The example does the following:
 <tr>
     <td> ${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_three_channel_single_pru_mode</td>
     <td> Application specific sources for ICSS %SDFM for trigger based normal current sampling for three channels </td>
+</tr>
+<tr>
+    <td> ${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_nine_channel_with_continuous_mode</td>
+    <td> Application specific sources for ICSS %SDFM for continuous normal current sampling for nine channels </td>
+</tr>
+<tr>
+    <td> ${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_three_channel_with_continuous_mode</td>
+    <td> Application specific sources for ICSS %SDFM for continuous normal current sampling for three channels </td>
 </tr>
 <tr>
     <td>${SDK_INSTALL_PATH}/examples/current_sense</td>
@@ -74,7 +107,7 @@ The example does the following:
 
 # Steps to Run the Example
 
-## Hardware Prerequisites
+## Hardware Prerequisites for EVM
 Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_SETUP_PAGE.html" target="_blank"> EVM Setup </a>, the additional hardware listed below is required to run this demo
 - <a href="../TIDEP-01015RevE1.1(001)_Sch.pdf" target="_blank"> TIDEP-01015 3 Axis Board </a>
 - <a href="../MS_TI_EVM_3-AXIS_INTERFACE_BOARD_SCH_REV_E1.pdf" target="_blank"> Interface card connecting EVM and TIDEP-01015 3 Axis </a>
@@ -82,16 +115,16 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 
 \note For more design details of the TIDEP-01015 3 Axis Board, or Interface card connecting EVM and TIDEP-01015 3 Axis, please contact TI via E2E/FAE.
 
-### Hardware Setup
+### EVM Hardware Setup
 \image html SDFM_HwSetup_image.PNG  "Hardware Setup SDFM"
 \image html SDFM_EVM_HW_setup.png  "SDFM: EVM and 3axis board setup view"
 \cond SOC_AM243X
-### Hardware Prerequisites for LP
+## Hardware Prerequisites for LP
 - AMC1035EVM
 - <a href="https://www.ti.com/tool/LP-AM243" target="_blank"> LP-AM243 Board </a>
 - Signal generator
 
-#### LP Hardware Setup
+### LP Hardware Setup
 \image html SDFM_LpHwSetup_image.png  "LP Hardware setup"
 \image html SDFM_LpHwSetup.png  "SDFM: LP setup view"
 \endcond
@@ -110,18 +143,29 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
         <th>Pass/Fail Criteria
 </tr>
 <tr>
-        <td>1. Normal current sample data</td>
+        <td>1. Normal current sample data for trigger mode </td>
         <td>1. Run example on supported board</td>
         <td>The drawn graph and raw data should look like the attached image</td>
 </tr>
 <tr>
         <td></td>
-        <td>2. Draw the graph of sdfm_ch0_samples, sdfm_ch1_samples and sdfm_ch2_samples arrays</td>
+        <td>2. Draw the graph of sdfm_ch_samples array</td>
         <td>\image html SDFM_sample_output.PNG "NC sample data"</td>
  </tr>
 
+ <tr>
+        <td>2. Normal current sample data for continuous mode</td>
+        <td>1. Run example on supported board</td>
+        <td>The drawn graph and raw data should look like the attached image</td>
+</tr>
 <tr>
-        <td>2. To check raw data for Single Update (64 Normal Current (NC) OSR)</td>
+        <td></td>
+        <td>2. Draw the graph of raw the graph of sdfm_ch_samples array</td>
+        <td>\image html SDFM_Continuous_mode_sample.PNG "NC sample data"</td>
+ </tr>
+
+<tr>
+        <td>3. To check raw data for Single Update (64 Normal Current (NC) OSR)</td>
         <td>1. Set NC OSR to 64</td>
         <td>The drawn graph and raw data should look like the attached image</td>
 </tr>
@@ -142,7 +186,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 </tr>
 
 <tr>
-        <td>3. To check Raw data for Double Update</td>
+        <td>4. To check Raw data for Double Update</td>
         <td>1. Set NC OSR to 64</td>
         <td>The drawn graphs and raw data should look like the attached image</td>
 </tr>
@@ -178,7 +222,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 </tr>
 
 <tr>
-        <td>4. To test SINC1/SINC2/SINC3 filter</td>
+        <td>5. To test SINC1/SINC2/SINC3 filter</td>
         <td>1. Set NC OSR to 64 </td>
         <td> Raw data should have different resolution for different SINC filter </td>
 </tr>
@@ -195,7 +239,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 
 
 <tr>
-        <td>5. To check Threshold comparator and Over current</td>
+        <td>6. To check Threshold comparator and Over current for continuous mode example </td>
         <td>1. Enable Comparator filter  </td>
         <td> Trip status bit must be set for the respective pwm trip zone block and TZ_OUT pin must be high</td>
 </tr>
@@ -207,7 +251,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 
 <tr>
         <td></td>
-        <td>3. Set Over current OSR to 16</td>
+        <td>3. Set Over current and Normal current OSR to 16</td>
         <td>High Low Threshold status bits must be constantly unset and set</td>
 </tr>
 <tr>
@@ -223,12 +267,12 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 <tr>
         <td></td>
         <td>6. Capture signal in Logic analyzer</td>
-        <td> </td>
+        <td> Trip must be triggered for the respective pwm trip zone block</td>
  </tr>
 
 <tr>
-        <td>6. To check NC Samples with Different NC OSR Values</td>
-        <td>1. Set NC OSR values between 16 to 255 </td>
+        <td>7. To check NC Samples with Different NC OSR Values</td>
+        <td>1. Set NC OSR values between 8 to 256 </td>
         <td>Raw data should have different resolution for different OSR values </td>
 </tr>
 <tr>
@@ -242,9 +286,9 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
         <td></td>
 </tr>
 <tr>
-        <td>7. To check NC samples with different sdfm clock values</td>
+        <td>8. To check NC samples with different sdfm clock values</td>
         <td>1. Set NC OSR to 64</td>
-        <td> Raw data should have different resolution for different sdfm clock values  </td>
+        <td> Raw data range should not exceed the OSR limits   </td>
 </tr>
 <tr>
         <td></td>
@@ -267,7 +311,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
         <td></td>
 </tr>
 <tr>
-        <td>8. To check Fast detect</td>
+        <td>9. To check Fast detect</td>
         <td>1. Set NC OSR to 64</td>
         <td> Trip must be triggered for the respective pwm trip zone block </td>
 </tr>
@@ -294,41 +338,6 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
         <td></td>
 </tr>
 
-<tr>
-        <td>9. To check Zero Cross</td>
-        <td>1. Enable Comparator filter </td>
-        <td> Logic analyzer capture should match with this capture </td>
-</tr>
-<tr>
-        <td></td>
-        <td>2. Set Overcurrent (OC) OSR to 16 </td>
-        <td></td>
- </tr>
- <tr>
-        <td></td>
-        <td>3. Enable Zero cross detection</td>
-        <td></td>
- </tr>
-<tr>
-        <td></td>
-        <td>4. Set zero cross threshold values to 1700 {value should be between max sampled value and min sampled value for 16 OSR}</td>
-        <td>\image html SDFM_Zero_cross_GPIO_output.png "Zero cross GPIO behaviour" </td>
- </tr>
-<tr>
-        <td></td>
-        <td>5. Probe ch0 zero cross GPIO pins and input SD analog signal</td>
-        <td></td>
-</tr>
-<tr>
-        <td></td>
-        <td>6. Build and run example</td>
-        <td></td>
-</tr>
-<tr>
-        <td></td>
-        <td>7. Capture signals in logic analyzer</td>
-        <td></td>
-</tr>
 \cond SOC_AM243X
 
 <tr>

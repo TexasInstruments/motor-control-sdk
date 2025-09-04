@@ -215,6 +215,8 @@ typedef struct SdfmPrms_s
     SdfmChannelPrms channelPrms[NUM_CH_SUPPORTED_PER_AXIS];
     /**< output samples base address*/
     uint32_t samplesBaseAddress;
+    /**<snoop mode enable */
+    uint8_t snoopModeEnable;
 } SdfmPrms;
 
 

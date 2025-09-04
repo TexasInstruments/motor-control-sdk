@@ -3,51 +3,48 @@
  * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
  * @cliArgs --device "AM243x_ALV_beta" --part "ALV" --package "ALV" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@11.00.00"
  * @v2CliArgs --device "AM2434" --package "FCBGA (ALV)" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@11.00.00"
- * @versions {"tool":"1.23.0+4000"}
+ * @versions {"tool":"1.22.0+3893"}
  */
 
 /**
  * Import the modules used in this configuration.
  */
-const sdfm            = scripting.addModule("/current_sense/sdfm", {}, false);
-const sdfm1           = sdfm.addInstance();
-const epwm            = scripting.addModule("/drivers/epwm/epwm", {}, false);
-const epwm1           = epwm.addInstance();
-const gpio            = scripting.addModule("/drivers/gpio/gpio", {}, false);
-const gpio1           = gpio.addInstance();
-const gpio2           = gpio.addInstance();
-const gpio3           = gpio.addInstance();
-const gpio4           = gpio.addInstance();
-const pruicss         = scripting.addModule("/drivers/pruicss/pruicss", {}, false);
-const pruicss1        = pruicss.addInstance();
-const debug_log       = scripting.addModule("/kernel/dpl/debug_log");
-const dpl_cfg         = scripting.addModule("/kernel/dpl/dpl_cfg");
-const mpu_armv7       = scripting.addModule("/kernel/dpl/mpu_armv7", {}, false);
-const mpu_armv71      = mpu_armv7.addInstance();
-const mpu_armv72      = mpu_armv7.addInstance();
-const mpu_armv73      = mpu_armv7.addInstance();
-const mpu_armv74      = mpu_armv7.addInstance();
-const mpu_armv75      = mpu_armv7.addInstance();
-const mpu_armv76      = mpu_armv7.addInstance();
-const default_linker  = scripting.addModule("/memory_configurator/default_linker", {}, false);
-const default_linker1 = default_linker.addInstance();
-const general         = scripting.addModule("/memory_configurator/general", {}, false);
-const general1        = general.addInstance();
-const region          = scripting.addModule("/memory_configurator/region", {}, false);
-const region1         = region.addInstance();
-const section         = scripting.addModule("/memory_configurator/section", {}, false);
-const section1        = section.addInstance();
-const section2        = section.addInstance();
-const section3        = section.addInstance();
-const section4        = section.addInstance();
-const section5        = section.addInstance();
-const section6        = section.addInstance();
-const section7        = section.addInstance();
-const section8        = section.addInstance();
-const section9        = section.addInstance();
-const section10       = section.addInstance();
-const section11       = section.addInstance();
-const section12       = section.addInstance();
+const sdfm              = scripting.addModule("/current_sense/sdfm", {}, false);
+const sdfm1             = sdfm.addInstance();
+const epwm              = scripting.addModule("/drivers/epwm/epwm", {}, false);
+const epwm1             = epwm.addInstance();
+const pruicss           = scripting.addModule("/drivers/pruicss/pruicss", {}, false);
+const pruicss1          = pruicss.addInstance();
+const debug_log         = scripting.addModule("/kernel/dpl/debug_log");
+const dpl_cfg           = scripting.addModule("/kernel/dpl/dpl_cfg");
+const mpu_armv7         = scripting.addModule("/kernel/dpl/mpu_armv7", {}, false);
+const mpu_armv71        = mpu_armv7.addInstance();
+const mpu_armv72        = mpu_armv7.addInstance();
+const mpu_armv73        = mpu_armv7.addInstance();
+const mpu_armv74        = mpu_armv7.addInstance();
+const mpu_armv75        = mpu_armv7.addInstance();
+const mpu_armv76        = mpu_armv7.addInstance();
+const default_linker    = scripting.addModule("/memory_configurator/default_linker", {}, false);
+const default_linker1   = default_linker.addInstance();
+const general           = scripting.addModule("/memory_configurator/general", {}, false);
+const general1          = general.addInstance();
+const region            = scripting.addModule("/memory_configurator/region", {}, false);
+const region1           = region.addInstance();
+const section           = scripting.addModule("/memory_configurator/section", {}, false);
+const section1          = section.addInstance();
+const section2          = section.addInstance();
+const section3          = section.addInstance();
+const section4          = section.addInstance();
+const section5          = section.addInstance();
+const section6          = section.addInstance();
+const section7          = section.addInstance();
+const section8          = section.addInstance();
+const section9          = section.addInstance();
+const section10         = section.addInstance();
+const section11         = section.addInstance();
+const section12         = section.addInstance();
+const pruicss_g_v0_pwm  = scripting.addModule("/pruicss_g_v0_pwm/pruicss_g_v0_pwm", {}, false);
+const pruicss_g_v0_pwm1 = pruicss_g_v0_pwm.addInstance();
 
 /**
  * Write custom configuration values to the imported modules.
@@ -90,49 +87,6 @@ epwm1.EPWM.A.$assign     = "GPMC0_AD3";
 epwm1.EPWM.B.$assign     = "GPMC0_AD4";
 epwm1.EPWM.SYNCO.$assign = "GPMC0_AD1";
 epwm1.EPWM.SYNCI.$used   = false;
-
-gpio1.$name          = "GPIO_MTR_1_PWM_EN";
-gpio1.pinDir         = "OUTPUT";
-gpio1.GPIO_n.$assign = "GPMC0_AD15";
-
-gpio2.pinDir                   = "OUTPUT";
-gpio2.useMcuDomainPeripherals  = true;
-gpio2.$name                    = "GPIO_ZC_TH_CH0";
-gpio2.MCU_GPIO.$assign         = "MCU_GPIO0";
-gpio2.MCU_GPIO.gpioPin.rx      = false;
-gpio2.MCU_GPIO.gpioPin.$assign = "MCU_SPI0_D1";
-
-gpio3.pinDir                   = "OUTPUT";
-gpio3.useMcuDomainPeripherals  = true;
-gpio3.$name                    = "GPIO_ZC_TH_CH1";
-gpio3.MCU_GPIO.gpioPin.rx      = false;
-gpio3.MCU_GPIO.gpioPin.$assign = "MCU_SPI1_CS0";
-
-gpio4.pinDir                   = "OUTPUT";
-gpio4.useMcuDomainPeripherals  = true;
-gpio4.$name                    = "GPIO_ZC_TH_CH2";
-gpio4.MCU_GPIO.gpioPin.$assign = "MCU_SPI1_D1";
-
-pruicss1.$name                                                                      = "CONFIG_PRU_ICSS0";
-pruicss1.coreClk                                                                    = 300000000;
-pruicss1.iepClk                                                                     = 300000000;
-sdfm1.pru                                                                           = pruicss1;
-pruicss1.AdditionalICSSSettings[0].$name                                            = "CONFIG_PRU_ICSS_IO0";
-pruicss1.AdditionalICSSSettings[0].PruEcapIO.create(1);
-pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].$name                               = "CONFIG_PRU_ICSS_ECAP_IO0";
-pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].PRU_ICSSG0_ECAP.$assign             = "PRU_ICSSG0_ECAP0";
-pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].PRU_ICSSG0_ECAP.IN_APWM_OUT.$assign = "PRG0_PRU1_GPO15";
-pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].PRU_ICSSG0_ECAP.IN_APWM_OUT.$used   = true;
-pruicss1.intcMapping.create(3);
-pruicss1.intcMapping[0].$name                                                       = "CONFIG_ICSS0_INTC_MAPPING0";
-pruicss1.intcMapping[0].event                                                       = "21";
-pruicss1.intcMapping[0].channel                                                     = "3";
-pruicss1.intcMapping[1].$name                                                       = "CONFIG_ICSS0_INTC_MAPPING1";
-pruicss1.intcMapping[1].event                                                       = "24";
-pruicss1.intcMapping[1].channel                                                     = "6";
-pruicss1.intcMapping[2].$name                                                       = "CONFIG_ICSS0_INTC_MAPPING2";
-pruicss1.intcMapping[2].event                                                       = "27";
-pruicss1.intcMapping[2].channel                                                     = "9";
 
 debug_log.enableUartLog        = true;
 debug_log.uartLog.$name        = "CONFIG_UART_CONSOLE";
@@ -346,22 +300,71 @@ section12.output_section.create(1);
 section12.output_section[0].$name     = ".gSdfmSampleOutput   ";
 section12.output_section[0].alignment = 4;
 
+pruicss_g_v0_pwm1.$name                                               = "CONFIG_PRUICSS_PWM0";
+pruicss_g_v0_pwm1.PRUICSS_PWM_IEP.$name                               = "CONFIG_PRUICSS_PWM_IEP0";
+pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[0].$name                        = "CONFIG_PRUICSS_PWM_CHANNEL0";
+pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE.create(3);
+pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE[0].$name                       = "CONFIG_PRUICSS_PWM_TRIPZONE0";
+pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE[0].PRU_ICSSG0_PWM.$assign      = "PRU_ICSSG0_PWM0";
+pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE[0].PRU_ICSSG0_PWM.TZ_OUT.$used = true;
+pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE[1].$name                       = "CONFIG_PRUICSS_PWM_TRIPZONE1";
+pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE[1].PRU_ICSSG0_PWM.$assign      = "PRU_ICSSG0_PWM1";
+pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE[2].$name                       = "CONFIG_PRUICSS_PWM_TRIPZONE2";
+pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE[2].PRU_ICSSG0_PWM.$assign      = "PRU_ICSSG0_PWM2";
+pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE[2].PRU_ICSSG0_PWM.TZ_OUT.$used = true;
+
+pruicss1.$name                                                                      = "CONFIG_PRU_ICSS0";
+pruicss1.coreClk                                                                    = 300000000;
+pruicss1.iepClk                                                                     = 300000000;
+sdfm1.pru                                                                           = pruicss1;
+pruicss_g_v0_pwm1.PRUICSS                                                           = pruicss1;
+pruicss1.AdditionalICSSSettings[0].$name                                            = "CONFIG_PRU_ICSS_IO0";
+pruicss1.AdditionalICSSSettings[0].PruEcapIO.create(1);
+pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].$name                               = "CONFIG_PRU_ICSS_ECAP_IO0";
+pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].PRU_ICSSG0_ECAP.$assign             = "PRU_ICSSG0_ECAP0";
+pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].PRU_ICSSG0_ECAP.IN_APWM_OUT.$assign = "PRG0_PRU1_GPO15";
+pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].PRU_ICSSG0_ECAP.IN_APWM_OUT.$used   = true;
+pruicss1.intcMapping.create(7);
+pruicss1.intcMapping[0].$name                                                       = "CONFIG_ICSS0_INTC_MAPPING0";
+pruicss1.intcMapping[0].event                                                       = "21";
+pruicss1.intcMapping[0].channel                                                     = "3";
+pruicss1.intcMapping[1].$name                                                       = "CONFIG_ICSS0_INTC_MAPPING1";
+pruicss1.intcMapping[1].channel                                                     = "4";
+pruicss1.intcMapping[1].event                                                       = "22";
+pruicss1.intcMapping[2].$name                                                       = "CONFIG_ICSS0_INTC_MAPPING2";
+pruicss1.intcMapping[2].channel                                                     = "5";
+pruicss1.intcMapping[2].event                                                       = "23";
+pruicss1.intcMapping[3].$name                                                       = "CONFIG_ICSS0_INTC_MAPPING3";
+pruicss1.intcMapping[3].event                                                       = "24";
+pruicss1.intcMapping[3].channel                                                     = "6";
+pruicss1.intcMapping[4].$name                                                       = "CONFIG_ICSS0_INTC_MAPPING4";
+pruicss1.intcMapping[4].event                                                       = "25";
+pruicss1.intcMapping[4].channel                                                     = "7";
+pruicss1.intcMapping[5].$name                                                       = "CONFIG_ICSS0_INTC_MAPPING5";
+pruicss1.intcMapping[5].event                                                       = "26";
+pruicss1.intcMapping[5].channel                                                     = "8";
+pruicss1.intcMapping[6].$name                                                       = "CONFIG_ICSS0_INTC_MAPPING6";
+pruicss1.intcMapping[6].event                                                       = "27";
+pruicss1.intcMapping[6].channel                                                     = "9";
+
 /**
  * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future
  * version of the tool will not impact the pinmux you originally saw.  These lines can be completely deleted in order to
  * re-solve from scratch.
  */
-sdfm1.PRU_ICSSG0_PRU.GPI16.$suggestSolution = "PRG0_PRU0_GPO16";
-sdfm1.PRU_ICSSG0_PRU.GPI1.$suggestSolution  = "PRG0_PRU0_GPO1";
-sdfm1.PRU_ICSSG0_PRU.GPI3.$suggestSolution  = "PRG0_PRU0_GPO3";
-sdfm1.PRU_ICSSG0_PRU.GPI5.$suggestSolution  = "PRG0_PRU0_GPO5";
-sdfm1.PRU_ICSSG0_PRU.GPI7.$suggestSolution  = "PRG0_PRU0_GPO7";
-sdfm1.PRU_ICSSG0_PRU.GPI18.$suggestSolution = "PRG0_PRU0_GPO18";
-sdfm1.PRU_ICSSG0_PRU.GPI11.$suggestSolution = "PRG0_PRU0_GPO11";
-sdfm1.PRU_ICSSG0_PRU.GPI13.$suggestSolution = "PRG0_PRU0_GPO13";
-sdfm1.PRU_ICSSG0_PRU.GPI15.$suggestSolution = "PRG0_PRU0_GPO15";
-sdfm1.PRU_ICSSG0_PRU.GPI17.$suggestSolution = "PRG0_PRU0_GPO17";
-gpio3.MCU_GPIO.$suggestSolution             = "MCU_GPIO0";
-gpio4.MCU_GPIO.$suggestSolution             = "MCU_GPIO0";
-debug_log.uartLog.UART.RXD.$suggestSolution = "UART0_RXD";
-debug_log.uartLog.UART.TXD.$suggestSolution = "UART0_TXD";
+sdfm1.PRU_ICSSG0_PRU.GPI16.$suggestSolution                                      = "PRG0_PRU0_GPO16";
+sdfm1.PRU_ICSSG0_PRU.GPI1.$suggestSolution                                       = "PRG0_PRU0_GPO1";
+sdfm1.PRU_ICSSG0_PRU.GPI3.$suggestSolution                                       = "PRG0_PRU0_GPO3";
+sdfm1.PRU_ICSSG0_PRU.GPI5.$suggestSolution                                       = "PRG0_PRU0_GPO5";
+sdfm1.PRU_ICSSG0_PRU.GPI7.$suggestSolution                                       = "PRG0_PRU0_GPO7";
+sdfm1.PRU_ICSSG0_PRU.GPI11.$suggestSolution                                      = "PRG0_PRU0_GPO11";
+sdfm1.PRU_ICSSG0_PRU.GPI13.$suggestSolution                                      = "PRG0_PRU0_GPO13";
+sdfm1.PRU_ICSSG0_PRU.GPI15.$suggestSolution                                      = "PRG0_PRU0_GPO15";
+sdfm1.PRU_ICSSG0_PRU.GPI17.$suggestSolution                                      = "PRG0_PRU0_GPO17";
+sdfm1.PRU_ICSSG0_PRU.GPI18.$suggestSolution                                      = "PRG0_PRU0_GPO18";
+debug_log.uartLog.UART.RXD.$suggestSolution                                      = "UART0_RXD";
+debug_log.uartLog.UART.TXD.$suggestSolution                                      = "UART0_TXD";
+pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[0].PRU_ICSSG0_PWM.$suggestSolution         = "PRU_ICSSG0_PWM0";
+pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[0].PRU_ICSSG0_PWM.pwmPin.$suggestSolution  = "PRG0_PRU0_GPO12";
+pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE[0].PRU_ICSSG0_PWM.TZ_OUT.$suggestSolution = "PRG0_PRU0_GPO19";
+pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE[2].PRU_ICSSG0_PWM.TZ_OUT.$suggestSolution = "PRG0_PRU1_GPO8";

@@ -136,7 +136,10 @@ void SDFM_setEnableChannel(sdfm_handle h_sdfm, uint8_t channel_number);
  *  \param[in]  ch_id           current ch number
  *  \param[in]  osr             comparator filter/Over current sampling ratio
  *
- *
+ *  \note This API is used to configure the sampling ratio for the over-current
+ *        filter. It should be called only when the snoop mode is enabled.
+ *        When the snoop mode is disabled, the sampling ratio for the over-current
+ *        filter is set through \ref SDFM_setFilterOverSamplingRatio.
  *
  */
 void SDFM_setCompFilterOverSamplingRatio(sdfm_handle h_sdfm, uint8_t ch_id, uint16_t osr);
@@ -296,14 +299,22 @@ void SDFM_configComparatorGpioPins(sdfm_handle h_sdfm, uint8_t ch,uint32_t gpio_
 uint32_t SDFM_getFilterData(sdfm_handle h_sdfm,uint8_t ch);
 /**
  *
- *  \brief  Configure iep count for normal current sampling
+ *  \brief  Configure normal current OSR.
+ *
+ *          If Snoop mode is used, it configures IEP count for normal current
+ *          sampling.
+ *          \note h_sdfm->snoop_mode must be set to 1 before calling this API for snoop mode configuration 
+ *
+ *          If Snoop mode is not used, it configures SD HW OSR equal to
+ *          matNC OSR.
  *
  *  \param[in]  h_sdfm          SDFM handle
+ *  \param[in]  ch              current ch number
  *  \param[in]  nc_osr          Normal current osr value
  *
  *
  */
-void SDFM_setFilterOverSamplingRatio(sdfm_handle h_sdfm, uint16_t nc_osr);
+void SDFM_setFilterOverSamplingRatio(sdfm_handle h_sdfm, uint8_t ch, uint16_t nc_osr);
 /**
  *
  *  \brief  Return Firmware version
@@ -536,17 +547,17 @@ int32_t SDFM_configSync1Delay(sdfm_handle h_sdfm, uint32_t delay);
 int32_t SDFM_configClockFromGPO1(sdfm_handle h_sdfm, uint8_t div0, uint8_t div1);
 
 /**
- *  \brief  Enable shadow register based normal current sampling
+ *  \brief  Enable snoop based normal current sampling
  *  \param[in]  h_sdfm          SDFM handle
  * 
 */
-void SDFM_enableShadowRegBasedNC(sdfm_handle h_sdfm);
+void SDFM_enableSnoopBasedNC(sdfm_handle h_sdfm);
 /**
- *  \brief  disable shadow register based normal current sampling
+ *  \brief  disable snoop based normal current sampling
  *  \param[in]  h_sdfm          SDFM handle
  * 
 */
-void SDFM_disableShadowRegBasedNC(sdfm_handle h_sdfm);
+void SDFM_disableSnoopBasedNC(sdfm_handle h_sdfm);
 
 /** @} */
 

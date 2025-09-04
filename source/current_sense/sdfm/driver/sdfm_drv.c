@@ -290,15 +290,23 @@ uint32_t SDFM_getFilterData(sdfm_handle h_sdfm, uint8_t ch)
 }
 
 /*Configure normal current OSR for data filter*/
-void SDFM_setFilterOverSamplingRatio(sdfm_handle h_sdfm, uint16_t nc_osr)
+void SDFM_setFilterOverSamplingRatio(sdfm_handle h_sdfm, uint8_t ch, uint16_t nc_osr)
 {
     
-    /*IEP0 counts in normal current sampling period*/
-    uint16_t count;
-    uint32_t iep_freq = h_sdfm->iepClock;
-    uint32_t sd_clock = h_sdfm->sdfmClock;
-    count = (int)((float)nc_osr*((float)iep_freq/(float)sd_clock));
-    h_sdfm->pSdfmInterface->sdfm_cfg_trigger.nc_prd_iep_cnt = count;
+    if(h_sdfm->pSdfmInterface->sdfm_ctrl.sdfm_en_snoop_nc == 1)
+    {
+        /*IEP0 counts in normal current sampling period*/
+        uint16_t count;
+        uint32_t iep_freq = h_sdfm->iepClock;
+        uint32_t sd_clock = h_sdfm->sdfmClock;
+        count = (int)((float)nc_osr*((float)iep_freq/(float)sd_clock));
+        h_sdfm->pSdfmInterface->sdfm_cfg_trigger.nc_prd_iep_cnt = count;
+    }
+    else
+    {
+        /*Setting SDFM hardware OSR for normal current without snoop mode */
+        SDFM_setCompFilterOverSamplingRatio(h_sdfm, ch, nc_osr);
+    }
 }
 /*return firmware version */
 uint32_t SDFM_getFirmwareVersion(sdfm_handle h_sdfm)
@@ -799,18 +807,18 @@ int32_t SDFM_configClockFromGPO1(sdfm_handle h_sdfm, uint8_t div0, uint8_t div1)
     
 }
 
-/*Enable shadow register basedNC sampling */
-void SDFM_enableShadowRegBasedNC(sdfm_handle h_sdfm)
+/*Enable snoop based NC sampling */
+void SDFM_enableSnoopBasedNC(sdfm_handle h_sdfm)
 {
-    /*Enable shadow register basedNC sampling */
-    h_sdfm->pSdfmInterface->sdfm_ctrl.sdfm_en_shadow_nc = 1;
+    /*Enable snoop based NC sampling */
+    h_sdfm->pSdfmInterface->sdfm_ctrl.sdfm_en_snoop_nc = 1;
 }
 
-/*Disable shadow register basedNC sampling */
-void SDFM_disableShadowRegBasedNC(sdfm_handle h_sdfm)
+/*Disable snoop basedNC sampling */
+void SDFM_disableSnoopBasedNC(sdfm_handle h_sdfm)
 {
-    /*Enable shadow register basedNC sampling */
-    h_sdfm->pSdfmInterface->sdfm_ctrl.sdfm_en_shadow_nc = 0;
+    /*Disable snoop basedNC sampling */
+    h_sdfm->pSdfmInterface->sdfm_ctrl.sdfm_en_snoop_nc = 0;
 }
 
 /* SDFM global enable */

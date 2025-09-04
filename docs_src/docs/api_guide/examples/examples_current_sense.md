@@ -1,25 +1,28 @@
 # Current Sense Examples{#EXAMPLES_CURRENT_SENSE}
+[TOC]
 
-This page lists all the examples of ICSSG %SDFM available in this SDK. Following sections describe the features available in each of the examples.
-
+This page lists all the examples of ICSSG %SDFM available in this SDK. 
 -# \subpage BASIC_SDFM_EXAMPLES
--# \subpage BASIC_SDFM_EXAMPLES_WITH_CONTINUOUS_NC
+-# \subpage BASIC_SDFM_EXAMPLES_WITH_SNOOP_MODE_NC
 -# \subpage BASIC_SDFM_EXAMPLE_WITH_PHASE_DELAY
+
+Following sections describe the features available in each of the examples.
 
 The ICSS %SDFM driver provides a well-defined set of APIs to expose sigma delta interface.
 
 The ICSS %SDFM examples invoke these APIs to:
 - Set %SDFM channels
-- Set Accumulator (ACC) source, Normal Current (NC) Over-sampling Ratio (OSR), Over-current (OC) OSR, Clock source and Clock inversion
+- Set accumulator (ACC) source, normal current (NC) over-sampling ratio (OSR), over-current (OC) OSR, clock source and clock inversion
 - Enable/disable threshold comparators
 - Set high and low threshold values
-- Enable Zero Cross and set Zero cross threshold value
-- Configure normal current sample trigger time (time for read sample)
+- Enable zero cross detection and set zero cross threshold value
+- Configure normal current sample trigger time
 - Enable and disable double update
+- Enable and disable snoop based normal current sampling (if applicable)  
 - Inform firmware to enable %SDFM mode
 - Configure the fast detect block
 - Enable PRU load share mode
-- Enable Phase Compensation
+- Enable phase compensation
 
 Once these steps are executed:
 - ICSS %SDFM example waits for an interrupt (triggered by %SDFM firmware) to read sample data
@@ -226,6 +229,98 @@ The Fast Detect is used for fast over current detection and trip generation. It 
 - Zero count maximum limit in fast detect window
 - Zero count minimum limit in fast detect window
 
+## SDFM INTC Mapping {#SDFM_INTC_MAPPING}
+<table>
+  <tr>
+    <th>Example</th>
+    <th>PRU Event</th>
+    <th>Host Channel</th>
+  </tr>
+  <tr>
+    <td rowspan="3">${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_nine_channel_load_share_mode</td>
+    <td>INTC event/input number 21 (pr[0/1]_pru_mst_intr[5]_intr_req)</td>
+    <td>Host Channel 3</td>
+  </tr>
+  <tr>
+    <td>INTC event/input number 24 (pr[0/1]_pru_mst_intr[8]_intr_req)</td>
+    <td>Host Channel 6</td>
+  </tr>
+  <tr>
+    <td>INTC event/input number 27 (pr[0/1]_pru_mst_intr[11]_intr_req)</td>
+    <td>Host Channel 9</td>
+  </tr>
+  <tr>
+    <td rowspan="3">${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_nine_channel_load_share_snoop_mode</td>
+    <td>INTC event/input number 21 (pr[0/1]_pru_mst_intr[5]_intr_req)</td>
+    <td>Host Channel 3</td>
+  </tr>
+  <tr>
+    <td>INTC event/input number 24 (pr[0/1]_pru_mst_intr[8]_intr_req)</td>
+    <td>Host Channel 6</td>
+  </tr>
+  <tr>
+    <td>INTC event/input number 27 (pr[0/1]_pru_mst_intr[11]_intr_req)</td>
+    <td>Host Channel 9</td>
+  </tr>
+  <tr>
+    <td rowspan="7">${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_nine_channel_with_continuous_mode</td>
+    <td>INTC event/input number 21 (pr[0/1]_pru_mst_intr[5]_intr_req)</td>
+    <td>Host Channel 3</td>
+  </tr>
+  <tr>
+    <td>INTC event/input number 22 (pr[0/1]_pru_mst_intr[6]_intr_req)</td>
+    <td>Host Channel 4</td>
+  </tr>
+  <tr>
+    <td>INTC event/input number 23 (pr[0/1]_pru_mst_intr[7]_intr_req)</td>
+    <td>Host Channel 5</td>
+  </tr>
+  <tr>
+    <td>INTC event/input number 24 (pr[0/1]_pru_mst_intr[8]_intr_req)</td>
+    <td>Host Channel 6</td>
+  </tr>
+  <tr>
+    <td>INTC event/input number 25 (pr[0/1]_pru_mst_intr[9]_intr_req)</td>
+    <td>Host Channel 7</td>
+  </tr>
+  <tr>
+    <td>INTC event/input number 26 (pr[0/1]_pru_mst_intr[10]_intr_req)</td>
+    <td>Host Channel 8</td>
+  </tr>
+  <tr>
+    <td>INTC event/input number 27 (pr[0/1]_pru_mst_intr[11]_intr_req)</td>
+    <td>Host Channel 9</td>
+  </tr>
+  <tr>
+    <td>${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_three_channel_single_pru_mode</td>
+    <td>INTC event/input number 21 (pr[0/1]_pru_mst_intr[5]_intr_req)</td>
+    <td>Host Channel 3</td>
+  </tr>
+  <tr>
+    <td>${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_three_channel_single_pru_snoop_mode</td>
+    <td>INTC event/input number 21 (pr[0/1]_pru_mst_intr[5]_intr_req)</td>
+    <td>Host Channel 3</td>
+  </tr>
+  <tr>
+    <td rowspan="3">${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_three_channel_with_continuous_mode</td>
+    <td>INTC event/input number 21 (pr[0/1]_pru_mst_intr[5]_intr_req)</td>
+    <td>Host Channel 3</td>
+  </tr>
+  <tr>
+    <td>INTC event/input number 22 (pr[0/1]_pru_mst_intr[6]_intr_req)</td>
+    <td>Host Channel 4</td>
+  </tr>
+  <tr>
+    <td>INTC event/input number 23 (pr[0/1]_pru_mst_intr[7]_intr_req)</td>
+    <td>Host Channel 5</td>
+  </tr>
+  <tr>
+    <td>${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_three_channel_with_phase_compensation</td>
+    <td>INTC event/input number 21 (pr[0/1]_pru_mst_intr[5]_intr_req)</td>
+    <td>Host Channel 3</td>
+  </tr>
+</table>
+
 # ICSS SDFM Examples Implementation
 Following section describes the flow of the examples.
 
@@ -247,6 +342,10 @@ Following section describes the flow of the examples.
     <td> Application specific sources for ICSS %SDFM for trigger based normal current sampling for nine channels </td>
 </tr>
 <tr>
+    <td> ${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_nine_channel_load_share_snoop_mode</td>
+    <td>Application specific sources for ICSS %SDFM for trigger based normal current sampling for nine channels using ICSS %SDFM snoop mode.</td>
+</tr>
+<tr>
     <td> ${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_three_channel_single_pru_mode</td>
     <td> Application specific sources for ICSS %SDFM for trigger based normal current sampling for three channels </td>
 </tr>
@@ -254,7 +353,10 @@ Following section describes the flow of the examples.
     <td>${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_three_channel_with_continuous_mode</td>
     <td> Application specific sources for ICSS %SDFM for continuous normal current sampling for three channels </td>
 </tr>
-
+<tr>
+    <td> ${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_three_channel_single_pru_snoop_mode</td>
+    <td> Application specific sources for ICSS %SDFM for trigger based normal current sampling for three channels using ICSS %SDFM snoop mode</td>
+</tr>
 <tr>
     <td>${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_three_channel_with_phase_compensation</td>
     <td> Application specific sources for ICSS %SDFM with phase compensation </td>
@@ -294,45 +396,69 @@ Following section describes the flow of the examples.
 
 \endcond
 
-# ICSS SDFM Examples Description
+# ICSS SDFM Examples Description {#SDFM_EXAMPLES_DESCRIPTION}
 
 Following are different examples for ICSS %SDFM:
 
 <table>
 <tr>
-        <th>Example
-        <th>Enabled Features
-        <th>Tested/Supported Features
+    <th>Example</th>
+    <th>Tested/Supported Features</th>
+    <th>Limitations</th>
 </tr>
 <tr>
-        <td>\subpage BASIC_SDFM_EXAMPLES </td>
-        <td>Trigger based Normal current, Over current detection</td>
-        <td>Zero cross detection, Fast detect, Double Update</td>
- </tr>
- <tr>
-        <td>\subpage BASIC_SDFM_EXAMPLES_WITH_CONTINUOUS_NC</td>
-        <td>Continuous normal current sampling</td>
-        <td>Fast detect</td>
- </tr>
- <tr>
-        <td>\subpage BASIC_SDFM_EXAMPLE_WITH_PHASE_DELAY</td>
-        <td>Trigger based Normal current, Phase compensation, Over current detection </td>
-        <td>Fast detect, Double Update, Zero cross detection</td>
-
- </tr>
+    <td>\subpage BASIC_SDFM_EXAMPLES</td>
+    <td>
+        - Continuous normal current<br>
+        - PRU-ICSS PWM trip-based over current<br>
+        - Trigger-based normal current synchronized with EPWM<br>
+        - PRU-ICSS PWM trip-based fast detect<br>
+        - Double Update<br>
+        - Up to 9-channel support using load share mode<br>
+        - OSR 8 - 256 <br>
+        - SINC1, SINC2 and SINC3 filter
+        - Supported clock sources:  
+            - Independent clock source for each channel  
+            - Shared clock source for three channels  
+            - Common clock source for all nine channels  
+    </td>
+    <td>
+        - OSR values must be identical for both normal current and over current<br>
+        - Normal current trigger mode does not support over current<br>
+        - Zero cross detection is not supported
+    </td>
+</tr>
+<tr>
+    <td>\subpage BASIC_SDFM_EXAMPLES_WITH_SNOOP_MODE_NC</td>
+    <td>
+        - Continuous Normal Current<br>
+        - PRU-ICSS PWM trip-based over current<br>
+        - Trigger-based normal current synchronized with EPWM<br>
+        - PRU-ICSS PWM trip-based fast detect<br>
+        - Double Update<br>
+        - Up to 9-channel support using load share mode<br>
+        - Zero Cross detection<br>
+        - OSR 16 - 256 <br>
+        - SINC1, SINC2 and SINC3 filter
+        - Supported clock sources:   
+            - Shared clock source for three channels  
+            - Common clock source for all nine channels 
+    </td>
+    <td>
+        These examples use the IEP CMP event for %SDFM snoop mode. However, they may not be reliable in certain situations:<br>
+        - When the SD clock is unstable with jitter and variations<br>
+        - When the IEP gets reset during normal current sampling
+        - Independent clock source for each channel
+    </td>
+</tr>
+<tr>
+    <td>\subpage BASIC_SDFM_EXAMPLE_WITH_PHASE_DELAY</td>
+    <td>
+        - Phase compensation for Channel0 
+    </td>
+    <td>
+        - This example is based on the %SDFM basic examples, which does not use the snoop mode.
+    </td>
+</tr>
 </table>
 
-## Shadow Mode Based Normal Current Sampling in SDFM
-Shadow mode based normal current provides an alternative method for Normal Current (NC) sampling in SDFM, eliminating dependencies on IEP counter-based timing. This mode utilizes the Over Current mechanism for Normal Current sampling.
-
-All SDK SDFM examples, by default, use the IEP CMP event based normal current. This approach may not be reliable in certain situations:
-- When the SD clock is unstable with jitter and variations
-- When the IEP gets reset during normal current sampling
-
-Configuration of Shadow Mode for normal current sampling:
-- Enable Shadow Mode: In sdfm_example.h, update the value of `SDFM_SHADOW_REG_BASED_NC` to 1
-- Set the over-current OSR (oversampling ratio) equal to the normal current OSR
-
-Limitations:
-- Over-current detection is not available, as the accumulator flags and shadow registers are used for normal current sampling
-\note "fast detect" feature is still available and can be used as an alternative for over-current detection.

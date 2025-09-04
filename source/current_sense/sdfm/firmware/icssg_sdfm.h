@@ -116,7 +116,7 @@
 #define SDFM_EN_OFFSET                     ( 0x00 )
 #define SDFM_EN_ACK_OFFSET                 ( 0x01 )
 #define SDFM_PRU_ID_OFFSET                 ( 0x02 )
-#define SDFM_EN_NC_USING_SHADOW_REG_OFFSET ( 0x03 )
+#define SDFM_EN_NC_USING_SNOOP_REG_OFFSET  ( 0x03 )
 
 /* SDFM IEP Configuration */
 #define SDFM_CFG_IEP_CFG_OFFSET              ( 0x04 )
