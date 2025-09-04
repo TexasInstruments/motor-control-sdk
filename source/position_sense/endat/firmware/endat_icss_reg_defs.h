@@ -64,6 +64,13 @@ PRU_TRIGGER_HOST_ENDAT_EVT0  .set         34
 PRU_TRIGGER_HOST_ENDAT_EVT1  .set         35
 PRU_TRIGGER_HOST_ENDAT_EVT2  .set         36
 
+;CMP event for periodic mode
+;CMP event 3 for channel 0
+IEP_CH0_CMP_EVNT					.set    3
+;CMP event 5 for channel 1
+IEP_CH1_CMP_EVNT					.set    5
+;CMP event 6 for channel 2
+IEP_CH2_CMP_EVNT					.set    6
 
 ; CLK MODE bits R30[20:19]
 ENDAT_TX_CLK_MODE_FREERUN_STOPLOW	.set	(0 << 3)

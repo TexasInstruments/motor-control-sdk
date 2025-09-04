@@ -32,7 +32,7 @@
 
 const uint32_t TamagawaFirmware_0[] = {
 0x00000208,
-0x01010000,
+0x01010001,
 0x24000400,
 0x810b0400,
 0x2eff8180,

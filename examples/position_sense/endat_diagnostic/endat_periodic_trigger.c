@@ -55,14 +55,22 @@ static HwiP_Object gIcssgEncoderHwiObject2;  /* ICSSG EnDat PRU FW HWI */
 #ifdef PRUICSSM
 #if (CONFIG_ENDAT0_PRUICSSx == 1)
 #define ICSS_PRU_ENDAT_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_0 )
+#define ICSS_RTU_ENDAT_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_1 )
+#define ICSS_TXPRU_ENDAT_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_2 )
 #else
 #define ICSS_PRU_ENDAT_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_0 )
+#define ICSS_RTU_ENDAT_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_1 )
+#define ICSS_TXPRU_ENDAT_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_2 )
 #endif
 #else
 #if (CONFIG_ENDAT0_PRUICSSx == 1)
 #define ICSS_PRU_ENDAT_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_0 )
+#define ICSS_RTU_ENDAT_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_1 )
+#define ICSS_TXPRU_ENDAT_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_2 )
 #else
 #define ICSS_PRU_ENDAT_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_0 )
+#define ICSS_RTU_ENDAT_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_1 )
+#define ICSS_TXPRU_ENDAT_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_2 )
 #endif
 #endif
 uint32_t gPruEnDatIrqCnt0;
@@ -77,7 +85,11 @@ void *gPruss_iep;
 PRUICSS_Handle gPruIcssXHandle;
 
 /* ICSS INTC configuration */
-static const PRUICSS_IntcInitData gPruicssIntcInitdata = PRUICSS_INTC_INITDATA;
+#if (CONFIG_ENDAT0_PRUICSSx == 1)
+    extern PRUICSS_IntcInitData icss1_intc_initdata;
+#else
+    extern PRUICSS_IntcInitData icss0_intc_initdata;
+#endif
 
 void endat_config_iep(struct endat_periodic_interface *endat_periodic_interface)
 {
@@ -111,56 +123,55 @@ void endat_config_iep(struct endat_periodic_interface *endat_periodic_interface)
     /*Clear all event & configure*/
     if(endat_periodic_interface->load_share)
     {
-        event |= pruss_xchg->config[0].channel==1?(0x1 << 4 ):0; //CMP3 for ch0
-        event |= pruss_xchg->config[1].channel==2?(0x1 << 6 ):0;  //CMP5 for Ch1
-        event |= pruss_xchg->config[2].channel==4?(0x1 << 7 ):0;  //CMP6 for CH2
+        /*enable event*/
+        event |= pruss_xchg->config[0].channel==1?(0x1 << (IEP_CH0_CMP_EVNT + 1)):0; 
+        event |= pruss_xchg->config[1].channel==2?(0x1 << (IEP_CH1_CMP_EVNT + 1)):0;  
+        event |= pruss_xchg->config[2].channel==4?(0x1 << (IEP_CH2_CMP_EVNT + 1)):0;  
 
         /*clear event*/
-        event_clear |= pruss_xchg->config[0].channel==1?(0x1 << 3 ):0; //CMP3 for ch0
-        event_clear |= pruss_xchg->config[1].channel==2?(0x1 << 5 ):0;  //CMP5 for Ch1
-        event_clear |= pruss_xchg->config[2].channel==4?(0x1 << 6 ):0;  //CMP6 for CH2
+        event_clear |= pruss_xchg->config[0].channel==1?(0x1 << IEP_CH0_CMP_EVNT):0; 
+        event_clear |= pruss_xchg->config[1].channel==2?(0x1 << IEP_CH1_CMP_EVNT):0; 
+        event_clear |= pruss_xchg->config[2].channel==4?(0x1 << IEP_CH2_CMP_EVNT):0;  
 
         if(pruss_xchg->config[0].channel)
         {
-            cmp_reg0 = (endat_periodic_interface->cmp3 & 0xffffffff) - IEP_DEFAULT_INC;
-            cmp_reg1 = (endat_periodic_interface->cmp3>>32 & 0xffffffff);
+            cmp_reg0 = (endat_periodic_interface->ch0_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
+            cmp_reg1 = (endat_periodic_interface->ch0_trigger_count>>32 & 0xffffffff);
 
-            HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP3_REG0,  cmp_reg0);
-            HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP3_REG1,  cmp_reg1);
-
+            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_COUNT_REG0 + IEP_CH0_CMP_EVNT*8),  cmp_reg0);
+            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_COUNT_REG1 + IEP_CH0_CMP_EVNT*8),  cmp_reg1);
         }
 
         if(pruss_xchg->config[1].channel)
         {
-            cmp_reg0 = (endat_periodic_interface->cmp5 & 0xffffffff) - IEP_DEFAULT_INC;
-            cmp_reg1 = (endat_periodic_interface->cmp5>>32 & 0xffffffff);
+            cmp_reg0 = (endat_periodic_interface->ch1_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
+            cmp_reg1 = (endat_periodic_interface->ch1_trigger_count>>32 & 0xffffffff);
 
-            HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP5_REG0,  cmp_reg0);
-            HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP5_REG1,  cmp_reg1);
+            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_COUNT_REG0 + IEP_CH1_CMP_EVNT*8),  cmp_reg0);
+            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_COUNT_REG1 + IEP_CH1_CMP_EVNT*8),  cmp_reg1);
 
         }
 
         if(pruss_xchg->config[2].channel)
         {
-            cmp_reg0 = (endat_periodic_interface->cmp6 & 0xffffffff) - IEP_DEFAULT_INC;
-            cmp_reg1 = (endat_periodic_interface->cmp6>>32 & 0xffffffff);
+            cmp_reg0 = (endat_periodic_interface->ch2_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
+            cmp_reg1 = (endat_periodic_interface->ch2_trigger_count>>32 & 0xffffffff);
 
-            HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP6_REG0,  cmp_reg0);
-            HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP6_REG1,  cmp_reg1);
+            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_COUNT_REG0 + IEP_CH2_CMP_EVNT*8),  cmp_reg0);
+            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_COUNT_REG1 + IEP_CH2_CMP_EVNT*8),  cmp_reg1);
 
         }
-
 
     }
     else
     {
-        event |= (0x1 << 4 );
-        event_clear |= (0x1 << 3);
-        cmp_reg0 = (endat_periodic_interface->cmp3 & 0xffffffff) - IEP_DEFAULT_INC;
-        cmp_reg1 = (endat_periodic_interface->cmp3>>32 & 0xffffffff);
+        event |= (0x1 << (IEP_CH0_CMP_EVNT + 1));
+        event_clear |= (0x1 << IEP_CH0_CMP_EVNT);
+        cmp_reg0 = (endat_periodic_interface->ch0_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
+        cmp_reg1 = (endat_periodic_interface->ch0_trigger_count>>32 & 0xffffffff);
 
-        HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP3_REG0,  cmp_reg0);
-        HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP3_REG1,  cmp_reg1);
+        HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + IEP_CH0_CMP_EVNT*8),  cmp_reg0);
+        HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + IEP_CH0_CMP_EVNT*8),  cmp_reg1);
 
     }
     /*clear event*/
@@ -169,9 +180,8 @@ void endat_config_iep(struct endat_periodic_interface *endat_periodic_interface)
     HW_WR_REG8((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG, event);
 
     /*configure cmp0 registers*/
-    
-    cmp_reg0 = (endat_periodic_interface->cmp0 & 0xffffffff) - IEP_DEFAULT_INC;
-    cmp_reg1 = (endat_periodic_interface->cmp0>>32 & 0xffffffff);
+    cmp_reg0 = (endat_periodic_interface->cmp0_count & 0xffffffff) - IEP_DEFAULT_INC;
+    cmp_reg1 = (endat_periodic_interface->cmp0_count>>32 & 0xffffffff);
     HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0,  cmp_reg0);
     HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1,  cmp_reg1);
 
@@ -196,7 +206,7 @@ void endat_interrupt_config(struct endat_periodic_interface *endat_periodic_inte
             /* Register & enable ICSSG EnDat PRU FW interrupt */
             HwiP_Params_init(&hwiPrms);
             hwiPrms.intNum      = ICSS_PRU_ENDAT_INT_NUM;
-            hwiPrms.callback    = &pruEnDatIrqHandler0;
+            hwiPrms.callback    = &pruEnDatIrqHandler;
             hwiPrms.args        = 0;
             hwiPrms.isPulse     = FALSE;
             hwiPrms.isFIQ       = FALSE;
@@ -208,8 +218,8 @@ void endat_interrupt_config(struct endat_periodic_interface *endat_periodic_inte
         {
             /* Register & enable ICSSG EnDat PRU FW interrupt */
             HwiP_Params_init(&hwiPrms);
-            hwiPrms.intNum      = ICSS_PRU_ENDAT_INT_NUM + 1;
-            hwiPrms.callback    = &pruEnDatIrqHandler1;
+            hwiPrms.intNum      = ICSS_RTU_ENDAT_INT_NUM;
+            hwiPrms.callback    = &rtuEnDatIrqHandler;
             hwiPrms.args        = 0;
             hwiPrms.isPulse     = FALSE;
             hwiPrms.isFIQ       = FALSE;
@@ -221,8 +231,8 @@ void endat_interrupt_config(struct endat_periodic_interface *endat_periodic_inte
         {
             /* Register & enable ICSSG EnDat PRU FW interrupt */
             HwiP_Params_init(&hwiPrms);
-            hwiPrms.intNum      = ICSS_PRU_ENDAT_INT_NUM + 2;
-            hwiPrms.callback    = &pruEnDatIrqHandler2;
+            hwiPrms.intNum      = ICSS_TXPRU_ENDAT_INT_NUM;
+            hwiPrms.callback    = &txpruEnDatIrqHandler;
             hwiPrms.args        = 0;
             hwiPrms.isPulse     = FALSE;
             hwiPrms.isFIQ       = FALSE;
@@ -236,7 +246,7 @@ void endat_interrupt_config(struct endat_periodic_interface *endat_periodic_inte
         /* Register & enable ICSSG EnDat PRU FW interrupt */
         HwiP_Params_init(&hwiPrms);
         hwiPrms.intNum      = ICSS_PRU_ENDAT_INT_NUM;
-        hwiPrms.callback    = &pruEnDatIrqHandler0;
+        hwiPrms.callback    = &pruEnDatIrqHandler;
         hwiPrms.args        = 0;
         hwiPrms.isPulse     = FALSE;
         hwiPrms.isFIQ       = FALSE;
@@ -254,11 +264,19 @@ uint32_t  endat_config_periodic_mode(struct endat_periodic_interface *endat_peri
     /*configure IEP*/
     endat_config_iep(endat_periodic_interface);
     /* Initialize ICSS INTC */
-    status = PRUICSS_intcInit(gPruIcssXHandle, &gPruicssIntcInitdata);
-        if (status != SystemP_SUCCESS)
-        {
-            return 0;
-        }
+#if (CONFIG_BISSC0_PRUICSSx == 1)
+    status = PRUICSS_intcInit(gPruIcssXHandle, &icss1_intc_initdata);
+    if (status != SystemP_SUCCESS)
+    {
+        return 0;
+    }
+#else
+    status = PRUICSS_intcInit(gPruIcssXHandle, &icss0_intc_initdata);
+    if (status != SystemP_SUCCESS)
+    {
+        return 0;
+    }
+#endif
     /*config Interrupt*/
     endat_interrupt_config(endat_periodic_interface);
     return 1;
@@ -277,48 +295,29 @@ void endat_stop_periodic_continuous_mode(struct endat_periodic_interface *endat_
 }
 
 /* PRU EnDat FW IRQ handler */
-void pruEnDatIrqHandler0(void *args)
+void pruEnDatIrqHandler(void *args)
 {
-    
-    /* debug, inncrement PRU SDFM IRQ count */
+    /* Increment PRU ENDAT IRQ count */
     gPruEnDatIrqCnt0++;
 
     /* Clear interrupt at source */
-    /* Write 18 to ICSSG_STATUS_CLR_INDEX_REG
-        Firmware:   TRIGGER_HOST_SDFM_IRQ defined as 18
-        18 = 16+2, 2 is Host Interrupt Number. See AM64x TRM.
-    */
-    PRUICSS_clearEvent(gPruIcssXHandle, PRU_TRIGGER_HOST_SDFM_EVT0);
-    
+    PRUICSS_clearEvent(gPruIcssXHandle, PRU_TRIGGER_HOST_ENDAT_EVT0);
 }
 /* PRU EnDat FW IRQ handler */
-void pruEnDatIrqHandler1(void *args)
+void rtuEnDatIrqHandler(void *args)
 {
-    /* debug, inncrement PRU SDFM IRQ count */
+    /* Increment PRU ENDAT IRQ count */
     gPruEnDatIrqCnt1++;
 
     /* Clear interrupt at source */
-    /* Write 18 to ICSSG_STATUS_CLR_INDEX_REG
-        Firmware:   TRIGGER_HOST_SDFM_IRQ defined as 18
-        18 = 16+2, 2 is Host Interrupt Number. See AM64x TRM.
-    */
-
-    PRUICSS_clearEvent(gPruIcssXHandle, PRU_TRIGGER_HOST_SDFM_EVT1);
-
-
+    PRUICSS_clearEvent(gPruIcssXHandle, PRU_TRIGGER_HOST_ENDAT_EVT1);
 }
 /* PRU EnDat FW IRQ handler */
-void pruEnDatIrqHandler2(void *args)
+void txpruEnDatIrqHandler(void *args)
 {
-    /* debug, inncrement PRU SDFM IRQ count */
+    /*Increment PRU ENDAT IRQ count */
     gPruEnDatIrqCnt2++;
 
     /* Clear interrupt at source */
-    /* Write 18 to ICSSG_STATUS_CLR_INDEX_REG
-        Firmware:   TRIGGER_HOST_SDFM_IRQ defined as 18
-        18 = 16+2, 2 is Host Interrupt Number. See AM64x TRM.
-    */
-    PRUICSS_clearEvent(gPruIcssXHandle, PRU_TRIGGER_HOST_SDFM_EVT2);
-
-
+    PRUICSS_clearEvent(gPruIcssXHandle, PRU_TRIGGER_HOST_ENDAT_EVT2);
 }

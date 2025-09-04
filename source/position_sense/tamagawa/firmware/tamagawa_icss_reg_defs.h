@@ -79,6 +79,9 @@ TAMAGAWA_TX_CH2_SEL	.set					2
 	.asg	R31.t16,	TAMAGAWA_CH2_TX_OVERUN
 	.asg	R31.t17,	TAMAGAWA_CH2_TX_UNDERRUN
 
+;CMP event 3 for periodic mode
+IEP_CMP_EVNT					.set    3
+
 
 ; TAMAGAWA
 
