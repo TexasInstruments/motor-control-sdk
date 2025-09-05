@@ -18,14 +18,14 @@ function onValidate(inst, validation)
         {
             validation.logError("Select atleast one channel",inst,"channel_0");
         }
-        if((device==="am243x-lp") && (instance.channel_1 ))
+        if((device === "am243x-lp") && (instance.channel_1) && (instance.Booster_Pack))
         {
-            validation.logError("On AM243x-LP, Channel 1 is not supported",inst,"channel_1");
+            validation.logError("Channel 1 is not supported with BP-AM2BLDCSERVO BoosterPack",inst,"Booster_Pack");
         }
-        /* validation for booster pack */
+        /* validation for BP-AM2BLDCSERVO BoosterPack */
         if(( device!="am243x-lp" && device!= "am263x-cc" &&  device!= "am261x-lp" && device != "am263px-cc")&&(instance.Booster_Pack))
         {
-            validation.logError("Select only when using Booster Pack with LP",inst,"Booster_Pack");
+            validation.logError("Select only when using BP-AM2BLDCSERVO BoosterPack with LP",inst,"Booster_Pack");
         }
 
         if(is_am26x_soc)
@@ -34,12 +34,12 @@ function onValidate(inst, validation)
                 {
                     if(instance.PRU_Slice == "PRU0" && instance.channel_2)
                     {
-                        validation.logWarning("Channel2 TX EN signal is not pinned out at the device level", inst, "channel_2");
+                        validation.logWarning("Channel 2 TX EN signal is not pinned out at the device level", inst, "channel_2");
                     }
 
                     if((instance.channel_2 || instance.channel_0)&&(instance.Booster_Pack))
                     {
-                        validation.logError("Channel0 and Channel2 are not supported on Booster Pack",inst,"Booster_Pack");
+                        validation.logError("Channel 0 and Channel 2 are not supported with BP-AM2BLDCSERVO BoosterPack",inst,"Booster_Pack");
                     }
                 }
                 if(is_am261x_soc)
@@ -47,7 +47,7 @@ function onValidate(inst, validation)
 
                     if((instance.channel_2 || instance.channel_1)&&(instance.Booster_Pack))
                     {
-                        validation.logError("Channel1 and Channel2 are not supported on Booster Pack",inst,"Booster_Pack");
+                        validation.logError("Channel 1 and Channel 2 are not supported with BP-AM2BLDCSERVO BoosterPack",inst,"Booster_Pack");
                     }
                 }
 
@@ -223,8 +223,8 @@ let nikon_module = {
         },
         {
             name: "Booster_Pack",
-            displayName: "Booster Pack",
-            description: "Only for Booster Pack",
+            displayName: "Using BP-AM2BLDCSERVO BoosterPack",
+            description: "Only for BP-AM2BLDCSERVO BoosterPack",
             default: false,
         },
         {
@@ -270,7 +270,7 @@ function moduleInstances(instance){
         {
             modInstances.push({
                 name: "ENC0_EN",
-                displayName: "Booster Pack Axis1 Power Enable Pin",
+                displayName: "BP-AM2BLDCSERVO BoosterPack Axis1 Power Enable Pin",
                 moduleName: "/drivers/gpio/gpio",
                 requiredArgs: {
                     pinDir: "OUTPUT",
@@ -281,7 +281,7 @@ function moduleInstances(instance){
             {
                 modInstances.push({
                     name: "ENC2_EN",
-                    displayName: "Booster Pack Axis2 Power Enable Pin",
+                    displayName: "BP-AM2BLDCSERVO BoosterPack Axis2 Power Enable Pin",
                     moduleName: "/drivers/gpio/gpio",
                     requiredArgs: {
                         pinDir: "OUTPUT",
