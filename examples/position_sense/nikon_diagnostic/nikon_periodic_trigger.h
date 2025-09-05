@@ -50,15 +50,9 @@ struct nikon_periodic_interface
 #define IEP_COUNTER_EN      0x1
 #define IEP_RST_CNT_EN      0x1
 #define IEP_CMP0_ENABLE     (0x1 << 1)
-#define IEP_CMP3_EVNT       (0x1 << 3)
-#define IEP_CMP5_EVNT       (0x1 << 5)
-#define IEP_CMP6_EVNT       (0x1 << 6)
-#define IEP_CMP3_EVNT_MASK       (0x1 << 4)
-#define IEP_CMP5_EVNT_MASK       (0x1 << 6)
-#define IEP_CMP6_EVNT_MASK       (0x1 << 7)
-#define IEP_CMP3_EVNT_CLR_MASK       (0x1 << 3)
-#define IEP_CMP5_EVNT_CLR_MASK       (0x1 << 5)
-#define IEP_CMP6_EVNT_CLR_MASK       (0x1 << 6)
+#define IEP_CH0_CMP_EVNT ( 3 )              /* IEP CMP3 event */
+#define IEP_CH1_CMP_EVNT ( 5 )              /* IEP CMP5 event */
+#define IEP_CH2_CMP_EVNT ( 6 )              /* IEP CMP6 even t*/
 
 #define RTU_TRIGGER_HOST_EVT   ( 2+16 )    /* pr0_pru_mst_intr[2]_intr_req */
 #define PRU_TRIGGER_HOST_EVT   ( 3+16 )    /* pr0_pru_mst_intr[3]_intr_req */

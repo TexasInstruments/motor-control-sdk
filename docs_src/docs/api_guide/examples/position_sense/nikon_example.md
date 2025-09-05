@@ -68,6 +68,20 @@ The Nikon receiver firmware running on ICSS-PRU provides a defined interface. Th
 
 \endcond
 
+### Periodic Continuous Mode
+Current SDK example uses IEP CMP event to trigger periodic mode. CMP0 is used to get periodic CMP events by resetting the IEP counter continuously. Firmware triggers a R5 interrupt after getting a response from the encoder. The application code uses a callback function to clear the PRU interrupt, which can be modified as per the use case. Currently, command 32 is used to demonstrate the periodic mode, which informs the firmware to use position cmd 4. It prints the response written by the firmware on the UART terminal.
+CMP3 is used for single channel and multi-channel PRU mode, and for load-share mode CMP5 is used for RTU core and CMP6 is used for TX PRU core channel. To use changes in CMP event, the following macros need to be updated in the application `nikon_periodic_trigger.h` file and source file `nikon_params.h`:
+```c
+#define IEP_CH0_CMP_EVNT ( 3 )
+#define IEP_CH1_CMP_EVNT ( 5 )
+#define IEP_CH2_CMP_EVNT ( 6 )
+```
+
+> **Note:** To disable IEP counter rest by CMP0 event, the following code needs to be disabled in `nikon_periodic_trigger.c`:
+```c
+event |= IEP_CMP0_ENABLE;
+event |= IEP_RST_CNT_EN;
+```
 ## Important files and directory structure
 
 <table>
