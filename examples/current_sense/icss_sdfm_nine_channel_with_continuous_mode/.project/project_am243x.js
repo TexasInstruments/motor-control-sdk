@@ -64,7 +64,7 @@ const lnkfiles = {
 
 const syscfgfile = "../example.syscfg";
 
-const readmeDoxygenPageTag = "BASIC_SDFM_EXAMPLES_WITH_CONTINUOUS_NC";
+const readmeDoxygenPageTag = "BASIC_SDFM_EXAMPLES";
 
 const templates_freertos_r5f =
 [
