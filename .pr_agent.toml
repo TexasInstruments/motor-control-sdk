@@ -1,10 +1,14 @@
-[bitbucket_app]
+[config]
 pr_commands = [
-"/review",
-"/improve --pr_code_suggestions.commitable_code_suggestions=true --pr_code_suggestions.suggestions_score_threshold=7",
+    "/review",
+    "/improve --pr_code_suggestions.commitable_code_suggestions=true --pr_code_suggestions.suggestions_score_threshold=7"
 ]
+
 handle_push_trigger = true
+push_trigger_ignore_bot_commits = true
+push_trigger_ignore_merge_commits = true
+push_trigger_wait_for_initial_review = false
 push_commands = [
     "/describe",
-    "/review",
+    "/review"
 ]
