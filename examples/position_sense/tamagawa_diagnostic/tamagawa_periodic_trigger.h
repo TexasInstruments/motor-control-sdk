@@ -50,7 +50,7 @@ struct tamagawa_periodic_interface
 #define IEP_RST_CNT_EN      0x1;
 #define IEP_CMP0_ENABLE     0x1 << 1;
 
-#define IEP_CMP_EVNT       ( 3 )
+#define IEP_CMP_EVENT       ( 3 )
 
 #define PRU_TRIGGER_HOST_TAMAGAWA_EVT0   ( 2+16 )    /* pr0_pru_mst_intr[2]_intr_req */
 

@@ -105,13 +105,13 @@ void tamagawa_config_iep(struct tamagawa_periodic_interface *tamagawa_periodic_i
     HW_WR_REG32((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG1, 0);
 
     /*configure cmp registers*/
-    event |= (0x1 << (IEP_CMP_EVNT + 1));
-    event_clear |= (0x1 << IEP_CMP_EVNT);
+    event |= (0x1 << (IEP_CMP_EVENT + 1));
+    event_clear |= (0x1 << IEP_CMP_EVENT);
     cmp_reg0 = (tamagawa_periodic_interface->periodic_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
     cmp_reg1 = (tamagawa_periodic_interface->periodic_trigger_count>>32 & 0xffffffff);
 
-    HW_WR_REG32((uint8_t*)pruss_iep + (CSL_ICSS_PR1_IEP0_SLV_COUNT_REG0 + 8*IEP_CMP_EVNT),  cmp_reg0);
-    HW_WR_REG32((uint8_t*)pruss_iep + (CSL_ICSS_PR1_IEP0_SLV_COUNT_REG1 + 8*IEP_CMP_EVNT),  cmp_reg1);
+    HW_WR_REG32((uint8_t*)pruss_iep + (CSL_ICSS_PR1_IEP0_SLV_COUNT_REG0 + 8*IEP_CMP_EVENT),  cmp_reg0);
+    HW_WR_REG32((uint8_t*)pruss_iep + (CSL_ICSS_PR1_IEP0_SLV_COUNT_REG1 + 8*IEP_CMP_EVENT),  cmp_reg1);
 
     /*clear event*/
     HW_WR_REG8((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
