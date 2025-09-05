@@ -10,8 +10,8 @@
     </applicability>
 
     <project
-        title="Single Chip Servo"
-        name = "universal_single_chip_servo_am243x-lp_r5fss1-0_freertos_ti-arm-clang_BP_AM2BLDCSERVO"
+        title="Universal Single Chip Servo"
+        name = "universal_single_chip_servo_am243x-lp_r5fss1-0_freertos_ti-arm-clang"
         products="sysconfig;com.ti.MOTOR_CONTROL_SDK_AMXXX"
         configurations="
             Release,
@@ -70,6 +70,7 @@
             -Dam243x_lp
             -DSSC_CHECKTIMER=1
             -DUSE_ECAT_TIMER=1
+            -DCUST_PHY_DP83869=1
         "
         linkerBuildOptions="
             -i${CG_TOOL_ROOT}/lib
@@ -78,7 +79,7 @@
             -i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/board/lib
             -i${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/source/industrial_comms/ethercat_slave/stack/lib
             -i${CG_TOOL_ROOT}/lib
-            -m=single_chip_servo.${ConfigName}.map
+            -m=universal_single_chip_servo_am243x-lp_r5fss1-0_freertos_ti-arm-clang.${ConfigName}.map
             --diag_suppress=10063
             --ram_model
             --reread_libs
@@ -94,7 +95,7 @@
             --context r5fss1-0 --part ALX --package ALX
         "
 
-        description="A Single Chip Servo FREERTOS project">
+        description="A Universal Single Chip Servo FREERTOS project">
 
         <configuration name="Release"
             compilerBuildOptions="

@@ -43,7 +43,7 @@
  #include <math.h>
  #include <drivers/epwm.h>
  #include <drivers/hw_include/hw_types.h>
- #include "epwm.h"
+ #include "app_epwm.h"
 
 /* ========================================================================== */
 /*                           Macros & Typedefs                                */
@@ -65,6 +65,9 @@
  */
 void App_epwmConfig(AppEPwmCfg_t *config)
 {
+    if (config == NULL) {
+        return;
+    }
     uint32_t baseAddr = config->epwmBaseAddr;
     uint32_t ch = config->epwmCh;
     uint32_t funcClk = config->epwmFuncClk;
@@ -144,6 +147,6 @@ void App_epwmConfig(AppEPwmCfg_t *config)
         /* Configure event trigger Submodule */
         EPWM_etIntrCfg(baseAddr, config->intSel, config->intPrd);
         EPWM_etIntrEnable(baseAddr);
-    }
-
+    }   
+    return;
 }

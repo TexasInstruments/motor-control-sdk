@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <system>
-    <project configuration="@match" id="project_0" name="universal_single_chip_servo_am243x-lp_r5fss0-0_nortos_ti-arm-clang_BP_AM2BLDCSERVO">
+    <project configuration="@match" id="project_0" name="universal_single_chip_servo_am243x-lp_r5fss0-0_nortos_ti-arm-clang">
     </project>
     <core id="MAIN_PULSAR_Cortex_R5_0_0" project="project_0"/>
-    <project configuration="@match" id="project_1" name="universal_single_chip_servo_am243x-lp_r5fss1-0_freertos_ti-arm-clang_BP_AM2BLDCSERVO">
+    <project configuration="@match" id="project_1" name="universal_single_chip_servo_am243x-lp_r5fss1-0_freertos_ti-arm-clang">
     </project>
     <core id="MAIN_PULSAR_Cortex_R5_1_0" project="project_1"/>
 	<preBuildSteps>

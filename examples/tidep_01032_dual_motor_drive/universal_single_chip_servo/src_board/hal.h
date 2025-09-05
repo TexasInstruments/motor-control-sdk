@@ -77,7 +77,7 @@ extern "C"
 #endif  //DATALOG_EN
 
 #if defined (SOC_AM243X)
-#include "epwm.h"
+#include "app_epwm.h"
 #endif  
 
 // the globals
