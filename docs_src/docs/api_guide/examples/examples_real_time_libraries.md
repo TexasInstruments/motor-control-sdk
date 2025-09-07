@@ -5,6 +5,8 @@ This page lists all the examples related to Real Time Libraries.
 - DCL
     - \subpage EXAMPLES_DCL_PI
     - \subpage EXAMPLES_DCL_DF22
+- DATALOG
+    - \subpage EXAMPLES_DATALOG_TEST
 - Transforms
     - \subpage EXAMPLES_TRANSFORMS_TEST
 \endcond

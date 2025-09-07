@@ -23,7 +23,8 @@ Support for up to 8 encoders in bus connection                                  
 Independent IEP events for each axis in load share mode                                         | Position Sense Nikon A-format
 Enabled configuration of IEP1 independently                                                     | PRU-ICSS PWM
 Refactor the examples, renamed the old example to snoop mode based example and added new examples for shadow mode which does not use snoop mode | Current Sense %SDFM
-
+SFRA Library                                                                                    | Real Time Libraries
+Datalog Library and Example                                                                     | Real Time Libraries
 
 \cond SOC_AM243X
 SOC    | Supported CPUs  | Boards                                                                                                      | Host PC

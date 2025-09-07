@@ -77,11 +77,14 @@ A benchmark on Arm® Cortex®-R5F core has been conducted to observe the followi
 
 - Ran with TI Clang Compiler v3.2.1.LTS, with -Os flag and functions force-inlined onto the benchmarking function placed in TCM memory. Obtained the average result from 500 consecutive loops of running sfra functions with DPL CycleCountP, mimicking the usage of a control loop and overhead (~10 cycles) is removed.
 - Actual result may vary depending on provided datasets and memory configuration. For Arm Cortex-R5F, it is recommended for users to map control loops to TCM for the best performance.
+
+\cond SOC_AM261X || SOC_AM263PX || SOC_AM263X
 ## Provided Examples
 
 The following examples have been provided to demonstrate sfra module:
 
 - \ref EXAMPLES_SFRA_TEST
+\endcond
 
 ## API
 
