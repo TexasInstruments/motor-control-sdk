@@ -39,6 +39,8 @@ const example_file_list = [
     "examples/position_sense/tamagawa_diagnostic/single_channel/.project/project.js",
     "examples/pruicss_pwm/pruicss_pwm_dead_band_epwm_sync/.project/project.js",
     "examples/pruicss_pwm/pruicss_pwm_with_phase_shift/.project/project.js",
+    "examples/time_sync/time_sync_time_receiver/.project/project.js",
+    "examples/time_sync/time_sync_time_transmitter_receiver/.project/project.js",
     "examples/rtlibs/dcl/dcl_df22/.project/mcsdk_project.js",
     "examples/rtlibs/dcl/dcl_pi/.project/mcsdk_project.js",
     "examples/rtlibs/transforms/transforms_test/.project/mcsdk_project.js",
@@ -65,6 +67,7 @@ const example_file_list = [
     "source/position_sense/tamagawa/firmware/multi_channel/.project/project.js",
     "source/position_sense/tamagawa/firmware/single_channel/.project/project.js",
     "source/pruicss_pwm/pruicss_pwm_with_phase_shift/firmware/.project/project.js",
+    "source/pruicss_iep_sync_out_generation/.project/project.js",
 ];
 
 function getProjectSpecCpu(cpu) {

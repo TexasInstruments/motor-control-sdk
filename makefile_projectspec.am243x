@@ -43,6 +43,8 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += pruicss_pwm_deadband_epwm_sync_am24
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += pruicss_pwm_deadband_epwm_sync_am243x-lp_r5fss0-0_nortos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += pruicss_pwm_deadband_epwm_sync_am243x-evm_r5fss0-0_nortos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += pruicss_pwm_with_phase_shift_am243x-evm_r5fss0-0_freertos_ti-arm-clang_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += time_receiver_am243x-evm_r5fss0-0_freertos_ti-arm-clang_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += time_sync_transmitter_receiver_am243x-evm_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += dcl_df22_am243x-evm_r5fss0-0_nortos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += dcl_df22_am243x-evm_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += dcl_df22_am243x-lp_r5fss0-0_nortos_ti-arm-clang_build
@@ -120,6 +122,12 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += tamagawa_single_channel_am2
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += tamagawa_single_channel_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += pruicss_pwm_with_phase_shift_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += pruicss_pwm_with_phase_shift_am243x-evm_icss_g1_pru0_fw_ti-pru-cgt_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += pruicss_iep_sync_out_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += pruicss_iep_sync_out_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += pruicss_iep_sync_out_am243x-evm_icss_g0_rtu_pru0_fw_ti-pru-cgt_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += pruicss_iep_sync_out_am243x-evm_icss_g0_rtu_pru1_fw_ti-pru-cgt_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += pruicss_iep_sync_out_am243x-evm_icss_g0_tx_pru0_fw_ti-pru-cgt_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += pruicss_iep_sync_out_am243x-evm_icss_g0_tx_pru1_fw_ti-pru-cgt_build
 # Various Private System Example Projectspec Build Targets
 
 all: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL)
@@ -242,6 +250,12 @@ all-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL)
 
  pruicss_pwm_with_phase_shift_am243x-evm_r5fss0-0_freertos_ti-arm-clang_build:
 	$(MAKE) -C examples/pruicss_pwm/pruicss_pwm_with_phase_shift/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
+
+ time_receiver_am243x-evm_r5fss0-0_freertos_ti-arm-clang_build:
+	$(MAKE) -C examples/time_sync/time_sync_time_receiver/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
+
+ time_sync_transmitter_receiver_am243x-evm_r5fss0-0_freertos_ti-arm-clang_build:
+	$(MAKE) -C examples/time_sync/time_sync_time_transmitter_receiver/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
 
  dcl_df22_am243x-evm_r5fss0-0_nortos_ti-arm-clang_build:
 	$(MAKE) -C examples/rtlibs/dcl/dcl_df22/am243x-evm/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec all
@@ -462,6 +476,24 @@ all-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL)
  pruicss_pwm_with_phase_shift_am243x-evm_icss_g1_pru0_fw_ti-pru-cgt_build:
 	$(MAKE) -C source/pruicss_pwm/pruicss_pwm_with_phase_shift/firmware/am243x-evm/icss_g1_pru0_fw/ti-pru-cgt -f makefile_projectspec all
 
+ pruicss_iep_sync_out_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_build:
+	$(MAKE) -C source/pruicss_iep_sync_out_generation/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt -f makefile_projectspec all
+
+ pruicss_iep_sync_out_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_build:
+	$(MAKE) -C source/pruicss_iep_sync_out_generation/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile_projectspec all
+
+ pruicss_iep_sync_out_am243x-evm_icss_g0_rtu_pru0_fw_ti-pru-cgt_build:
+	$(MAKE) -C source/pruicss_iep_sync_out_generation/am243x-evm/icss_g0_rtu_pru0_fw/ti-pru-cgt -f makefile_projectspec all
+
+ pruicss_iep_sync_out_am243x-evm_icss_g0_rtu_pru1_fw_ti-pru-cgt_build:
+	$(MAKE) -C source/pruicss_iep_sync_out_generation/am243x-evm/icss_g0_rtu_pru1_fw/ti-pru-cgt -f makefile_projectspec all
+
+ pruicss_iep_sync_out_am243x-evm_icss_g0_tx_pru0_fw_ti-pru-cgt_build:
+	$(MAKE) -C source/pruicss_iep_sync_out_generation/am243x-evm/icss_g0_tx_pru0_fw/ti-pru-cgt -f makefile_projectspec all
+
+ pruicss_iep_sync_out_am243x-evm_icss_g0_tx_pru1_fw_ti-pru-cgt_build:
+	$(MAKE) -C source/pruicss_iep_sync_out_generation/am243x-evm/icss_g0_tx_pru1_fw/ti-pru-cgt -f makefile_projectspec all
+
 
 
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL =
@@ -505,6 +537,8 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += pruicss_pwm_deadband_epwm_sync_am24
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += pruicss_pwm_deadband_epwm_sync_am243x-lp_r5fss0-0_nortos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += pruicss_pwm_deadband_epwm_sync_am243x-evm_r5fss0-0_nortos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += pruicss_pwm_with_phase_shift_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += time_receiver_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += time_sync_transmitter_receiver_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += dcl_df22_am243x-evm_r5fss0-0_nortos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += dcl_df22_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += dcl_df22_am243x-lp_r5fss0-0_nortos_ti-arm-clang_clean
@@ -582,6 +616,12 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += tamagawa_single_channel_am2
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += tamagawa_single_channel_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += pruicss_pwm_with_phase_shift_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += pruicss_pwm_with_phase_shift_am243x-evm_icss_g1_pru0_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += pruicss_iep_sync_out_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += pruicss_iep_sync_out_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += pruicss_iep_sync_out_am243x-evm_icss_g0_rtu_pru0_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += pruicss_iep_sync_out_am243x-evm_icss_g0_rtu_pru1_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += pruicss_iep_sync_out_am243x-evm_icss_g0_tx_pru0_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += pruicss_iep_sync_out_am243x-evm_icss_g0_tx_pru1_fw_ti-pru-cgt_clean
 # Various Private System Example Projectspec Clean Targets
 
 clean: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL)
@@ -704,6 +744,12 @@ clean-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL)
 
  pruicss_pwm_with_phase_shift_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean:
 	$(MAKE) -C examples/pruicss_pwm/pruicss_pwm_with_phase_shift/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
+
+ time_receiver_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/time_sync/time_sync_time_receiver/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
+
+ time_sync_transmitter_receiver_am243x-evm_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/time_sync/time_sync_time_transmitter_receiver/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
 
  dcl_df22_am243x-evm_r5fss0-0_nortos_ti-arm-clang_clean:
 	$(MAKE) -C examples/rtlibs/dcl/dcl_df22/am243x-evm/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec clean
@@ -924,6 +970,24 @@ clean-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL)
  pruicss_pwm_with_phase_shift_am243x-evm_icss_g1_pru0_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/pruicss_pwm/pruicss_pwm_with_phase_shift/firmware/am243x-evm/icss_g1_pru0_fw/ti-pru-cgt -f makefile_projectspec clean
 
+ pruicss_iep_sync_out_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/pruicss_iep_sync_out_generation/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt -f makefile_projectspec clean
+
+ pruicss_iep_sync_out_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/pruicss_iep_sync_out_generation/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile_projectspec clean
+
+ pruicss_iep_sync_out_am243x-evm_icss_g0_rtu_pru0_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/pruicss_iep_sync_out_generation/am243x-evm/icss_g0_rtu_pru0_fw/ti-pru-cgt -f makefile_projectspec clean
+
+ pruicss_iep_sync_out_am243x-evm_icss_g0_rtu_pru1_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/pruicss_iep_sync_out_generation/am243x-evm/icss_g0_rtu_pru1_fw/ti-pru-cgt -f makefile_projectspec clean
+
+ pruicss_iep_sync_out_am243x-evm_icss_g0_tx_pru0_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/pruicss_iep_sync_out_generation/am243x-evm/icss_g0_tx_pru0_fw/ti-pru-cgt -f makefile_projectspec clean
+
+ pruicss_iep_sync_out_am243x-evm_icss_g0_tx_pru1_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/pruicss_iep_sync_out_generation/am243x-evm/icss_g0_tx_pru1_fw/ti-pru-cgt -f makefile_projectspec clean
+
 
 
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL =
@@ -967,6 +1031,8 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += pruicss_pwm_deadband_epwm_sync_am2
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += pruicss_pwm_deadband_epwm_sync_am243x-lp_r5fss0-0_nortos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += pruicss_pwm_deadband_epwm_sync_am243x-evm_r5fss0-0_nortos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += pruicss_pwm_with_phase_shift_am243x-evm_r5fss0-0_freertos_ti-arm-clang_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += time_receiver_am243x-evm_r5fss0-0_freertos_ti-arm-clang_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += time_sync_transmitter_receiver_am243x-evm_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += dcl_df22_am243x-evm_r5fss0-0_nortos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += dcl_df22_am243x-evm_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += dcl_df22_am243x-lp_r5fss0-0_nortos_ti-arm-clang_export
@@ -1044,6 +1110,12 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += tamagawa_single_channel_am
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += tamagawa_single_channel_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += pruicss_pwm_with_phase_shift_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += pruicss_pwm_with_phase_shift_am243x-evm_icss_g1_pru0_fw_ti-pru-cgt_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += pruicss_iep_sync_out_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += pruicss_iep_sync_out_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += pruicss_iep_sync_out_am243x-evm_icss_g0_rtu_pru0_fw_ti-pru-cgt_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += pruicss_iep_sync_out_am243x-evm_icss_g0_rtu_pru1_fw_ti-pru-cgt_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += pruicss_iep_sync_out_am243x-evm_icss_g0_tx_pru0_fw_ti-pru-cgt_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += pruicss_iep_sync_out_am243x-evm_icss_g0_tx_pru1_fw_ti-pru-cgt_export
 # Various Private System Example Projectspec Export Targets
 
 export: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL)
@@ -1166,6 +1238,12 @@ export-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL)
 
  pruicss_pwm_with_phase_shift_am243x-evm_r5fss0-0_freertos_ti-arm-clang_export:
 	$(MAKE) -C examples/pruicss_pwm/pruicss_pwm_with_phase_shift/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
+
+ time_receiver_am243x-evm_r5fss0-0_freertos_ti-arm-clang_export:
+	$(MAKE) -C examples/time_sync/time_sync_time_receiver/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
+
+ time_sync_transmitter_receiver_am243x-evm_r5fss0-0_freertos_ti-arm-clang_export:
+	$(MAKE) -C examples/time_sync/time_sync_time_transmitter_receiver/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
 
  dcl_df22_am243x-evm_r5fss0-0_nortos_ti-arm-clang_export:
 	$(MAKE) -C examples/rtlibs/dcl/dcl_df22/am243x-evm/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec export
@@ -1386,6 +1464,24 @@ export-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL)
  pruicss_pwm_with_phase_shift_am243x-evm_icss_g1_pru0_fw_ti-pru-cgt_export:
 	$(MAKE) -C source/pruicss_pwm/pruicss_pwm_with_phase_shift/firmware/am243x-evm/icss_g1_pru0_fw/ti-pru-cgt -f makefile_projectspec export
 
+ pruicss_iep_sync_out_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_export:
+	$(MAKE) -C source/pruicss_iep_sync_out_generation/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt -f makefile_projectspec export
+
+ pruicss_iep_sync_out_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_export:
+	$(MAKE) -C source/pruicss_iep_sync_out_generation/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile_projectspec export
+
+ pruicss_iep_sync_out_am243x-evm_icss_g0_rtu_pru0_fw_ti-pru-cgt_export:
+	$(MAKE) -C source/pruicss_iep_sync_out_generation/am243x-evm/icss_g0_rtu_pru0_fw/ti-pru-cgt -f makefile_projectspec export
+
+ pruicss_iep_sync_out_am243x-evm_icss_g0_rtu_pru1_fw_ti-pru-cgt_export:
+	$(MAKE) -C source/pruicss_iep_sync_out_generation/am243x-evm/icss_g0_rtu_pru1_fw/ti-pru-cgt -f makefile_projectspec export
+
+ pruicss_iep_sync_out_am243x-evm_icss_g0_tx_pru0_fw_ti-pru-cgt_export:
+	$(MAKE) -C source/pruicss_iep_sync_out_generation/am243x-evm/icss_g0_tx_pru0_fw/ti-pru-cgt -f makefile_projectspec export
+
+ pruicss_iep_sync_out_am243x-evm_icss_g0_tx_pru1_fw_ti-pru-cgt_export:
+	$(MAKE) -C source/pruicss_iep_sync_out_generation/am243x-evm/icss_g0_tx_pru1_fw/ti-pru-cgt -f makefile_projectspec export
+
 
 # Import extra components into CCS workspace before creating a project
 # Setup dependency separately so that it runs if one or all projects are built via the makefile
@@ -1454,6 +1550,8 @@ help:
 	@echo  $(MAKE) -s -C examples/pruicss_pwm/pruicss_pwm_dead_band_epwm_sync/am243x-lp/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/pruicss_pwm/pruicss_pwm_dead_band_epwm_sync/am243x-evm/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/pruicss_pwm/pruicss_pwm_with_phase_shift/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C examples/time_sync/time_sync_time_receiver/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C examples/time_sync/time_sync_time_transmitter_receiver/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/rtlibs/dcl/dcl_df22/am243x-evm/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/rtlibs/dcl/dcl_df22/am243x-evm/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/rtlibs/dcl/dcl_df22/am243x-lp/r5fss0-0_nortos/ti-arm-clang -f makefile_projectspec [export all clean]
@@ -1527,6 +1625,12 @@ help:
 	@echo  $(MAKE) -s -C source/position_sense/tamagawa/firmware/single_channel/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C source/pruicss_pwm/pruicss_pwm_with_phase_shift/firmware/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C source/pruicss_pwm/pruicss_pwm_with_phase_shift/firmware/am243x-evm/icss_g1_pru0_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C source/pruicss_iep_sync_out_generation/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C source/pruicss_iep_sync_out_generation/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C source/pruicss_iep_sync_out_generation/am243x-evm/icss_g0_rtu_pru0_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C source/pruicss_iep_sync_out_generation/am243x-evm/icss_g0_rtu_pru1_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C source/pruicss_iep_sync_out_generation/am243x-evm/icss_g0_tx_pru0_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C source/pruicss_iep_sync_out_generation/am243x-evm/icss_g0_tx_pru1_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
 	@echo  .
 	@echo  System Example ProjectSpec build targets,
 	@echo  =========================================
