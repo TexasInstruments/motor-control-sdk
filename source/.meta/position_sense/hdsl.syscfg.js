@@ -15,17 +15,22 @@ function onValidate(inst, validation) {
         if ((!instance.channel_0)&&(!instance.channel_2)&&(!instance.channel_1))
             validation.logError("Select atleast one channel",inst,"channel_0");
 
-        //* validation for booster pack */
+        if((device === "am243x-lp") && (instance.channel_1) && (instance.Booster_Pack))
+        {
+            validation.logError("Channel 1 is not supported with BP-AM2BLDCSERVO BoosterPack",inst,"Booster_Pack");
+        }
+
+        /* validation for BP-AM2BLDCSERVO BoosterPack */
         if((device!="am243x-lp" && device!="am261x-lp")&&(instance.Booster_Pack))
         {
-            validation.logError("Select only when using Booster Pack with LP",inst,"Booster_Pack");
+            validation.logError("Select only when using BP-AM2BLDCSERVO BoosterPack with LP",inst,"Booster_Pack");
         }
         if(is_am261x_soc)
         {
-            
+
             if((instance.Channel_2 || instance.Channel_1)&&(instance.Booster_Pack))
             {
-                validation.logError("Channel1 and Channel2 are not supported on Booster Pack",inst,"Booster_Pack");
+                validation.logError("Channel 1 and Channel 2 are not supported with BP-AM2BLDCSERVO BoosterPack",inst,"Booster_Pack");
             }
         }
     }
@@ -93,8 +98,8 @@ let hdsl_module = {
         },
         {
             name: "Booster_Pack",
-            displayName: "Booster Pack",
-            description: "Only for Booster Pack",
+            displayName: "Using BP-AM2BLDCSERVO BoosterPack",
+            description: "Only for BP-AM2BLDCSERVO BoosterPack",
             default: false,
         },
         {
@@ -173,7 +178,7 @@ function moduleInstances(instance){
         {
             modInstances.push({
                 name: "ENC1_EN",
-                displayName: "Booster Pack Axis1 Power Enable Pin",
+                displayName: "BP-AM2BLDCSERVO BoosterPack Axis1 Power Enable Pin",
                 moduleName: "/drivers/gpio/gpio",
                 requiredArgs: {
                     pinDir: "OUTPUT",
@@ -184,7 +189,7 @@ function moduleInstances(instance){
             {
                 modInstances.push({
                     name: "ENC2_EN",
-                    displayName: "Booster Pack Axis2 Power Enable Pin",
+                    displayName: "BP-AM2BLDCSERVO BoosterPack Axis2 Power Enable Pin",
                     moduleName: "/drivers/gpio/gpio",
                     requiredArgs: {
                         pinDir: "OUTPUT",
