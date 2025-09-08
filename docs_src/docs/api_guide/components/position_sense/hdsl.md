@@ -6,6 +6,8 @@
 
 The HDSL firmware running on ICSS-PRU provides a well-defined interface to execute the HDSL protocol.
 
+\note This implementation using Peripheral input/output mode of PRU-ICSS. Refer \ref PRUICSS_PERIPHERAL_IF_MODE for more details.
+
 ## Features Supported
 
 - Safe position
@@ -69,7 +71,7 @@ SysConfig can be used to configure the following:
     <td> IEP, CMP events and INTC signal are used only in periodic continuous mode.
 </tr>
 <tr>
-    <td rowspan="3"> Multi-channel with load share across 3 PRU cores
+    <td rowspan="3"> Multi-channel with load share across 3 PRU cores (Refer \ref PRUICSSG_LOAD_SHARE_MODE for more details)
     <td> PRUx
     <td rowspan="3"> DMEM: 2285 Bytes ((256B for HDSL Registers per channel)*3 + 1517B for LUTs) <br>  IMEM: 7428 Bytes
 	<td rowspan="3"> IEP1: CMP1 </td>

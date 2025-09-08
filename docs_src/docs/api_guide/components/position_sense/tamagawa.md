@@ -6,8 +6,7 @@
 
 The Tamagawa receiver firmware running on PRU-ICSS provides a well-defined interface to execute the Tamagawa encoder communication protocol. The Tamagawa diagnostic application interacts with the Tamagawa receiver firmware interface.
 
-\note
-Tamagawa firmware and examples are based on 3 Channel Peripheral interface from \if ( SOC_AM263X || SOC_AM261X)  PRU-ICSSM \else PRU-ICSSG \endif.
+\note This implementation using Peripheral input/output mode of PRU-ICSS. Refer \ref PRUICSS_PERIPHERAL_IF_MODE for more details.
 
 ## Features Supported
 

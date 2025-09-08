@@ -98,10 +98,11 @@ The following sections contain a brief overview of different modes.
 
 - pru<n>_r30[0] is shifted out on DATAOUT on every rising edge of pru<n>_r30[1] (CLOCKOUT).
 - Free Running Clock or Fixed Clock Count Mode is selected by the PRU_ICSSM_GPECFGx register.
+- This mode uses two 16-bit shadow registers (GPO_SH0 and GPO_SH1) to support ping-pong buffers.
 - LOAD_GPO_SH0 (Load Shadow Register 0) is mapped to pru<n>_r30[29]. LOAD_GPO_SH1 (Load Shadow Register 1) is mapped to pru<n>_r30[30].
 - ENABLE_SHIFT is mapped to pru<n>_r30[31].
 
-### Peripheral IF mode
+### Peripheral IF mode {#PRUICSS_PERIPHERAL_IF_MODE}
 
 \image html pruicssm_peripheral_if_mode.png "Peripheral IF Mode"
 
@@ -125,62 +126,88 @@ The following sections contain a brief overview of different modes.
 <tr>
     <th> Pad Names at Device Level
     <th> Peripheral IF Mode
-</tr>
-<tr>
-    <td> PR<k>_PRU<n>_GPI9
-    <td> PERIF0_IN
-</tr>
-<tr>
-    <td> PR<k>_PRU<n>_GPI10
-    <td> PERIF1_IN
-</tr>
-<tr>
-    <td> PR<k>_PRU<n>_GPI11
-    <td> PERIF2_IN
+    <th> Example usage for 4-wire interface like EnDat 2.2
+    <th> Example usage for 2-wire interface like Hiperface DSL
 </tr>
 <tr>
     <td> PR<k>_PRU<n>_GPO0
     <td> PERIF0_CLK
+    <td> Channel 0 Clock
+    <td> -
 </tr>
 <tr>
     <td> PR<k>_PRU<n>_GPO1
     <td> PERIF0_OUT
+    <td> Channel 0 Data Out
+    <td> Channel 0 Data Out
 </tr>
 <tr>
     <td> PR<k>_PRU<n>_GPO2
     <td> PERIF0_OUT_EN
+    <td> Channel 0 Output Enable
+    <td> Channel 0 Output Enable
 </tr>
 <tr>
     <td> PR<k>_PRU<n>_GPO3
     <td> PERIF1_CLK
+    <td> Channel 1 Clock
+    <td> -
 </tr>
 <tr>
     <td> PR<k>_PRU<n>_GPO4
     <td> PERIF1_OUT
+    <td> Channel 1 Data Out
+    <td> Channel 1 Data Out
 </tr>
 <tr>
     <td> PR<k>_PRU<n>_GPO5
     <td> PERIF1_OUT_EN
+    <td> Channel 1 Output Enable
+    <td> Channel 1 Output Enable
 </tr>
 <tr>
     <td> PR<k>_PRU<n>_GPO6
     <td> PERIF2_CLK
+    <td> Channel 2 Clock
+    <td> -
 </tr>
 <tr>
     <td> PR<k>_PRU<n>_GPO7
     <td> PERIF2_OUT
+    <td> Channel 2 Data Out
+    <td> Channel 2 Data Out
 </tr>
 <tr>
     <td> PR<k>_PRU<n>_GPO8
     <td> PERIF2_OUT_EN
+    <td> Channel 2 Output Enable
+    <td> Channel 2 Output Enable
+</tr>
+<tr>
+    <td> PR<k>_PRU<n>_GPI9
+    <td> PERIF0_IN
+    <td> Channel 0 Data In
+    <td> Channel 0 Data In
+</tr>
+<tr>
+    <td> PR<k>_PRU<n>_GPI10
+    <td> PERIF1_IN
+    <td> Channel 1 Data In
+    <td> Channel 1 Data In
+</tr>
+<tr>
+    <td> PR<k>_PRU<n>_GPI11
+    <td> PERIF2_IN
+    <td> Channel 2 Data In
+    <td> Channel 2 Data In
 </tr>
 </table>
 
 \note
-    - These signals are shared with the GPIO, MII, and SD modes. To configure for Peripheral IF, PRU_ICSS_GPCFGx[29-26] PR1_PRUy_GP_MUX_SEL needs to be set to 1h.
-    - Some devices may not pin out all 29 bits of R31 and all 32 bits of R30. For which pins are available on a specific device, see the device-specific datasheet for device pin mapping.
+    1. These signals are shared with the GPIO, MII, and SD modes. To configure for Peripheral IF, PRU_ICSS_GPCFGx[29-26] PR1_PRUy_GP_MUX_SEL needs to be set to 1h.
+    2. Some devices may not pin out all 29 bits of R31 and all 32 bits of R30. For which pins are available on a specific device, see the device-specific datasheet for device pin mapping.
 
-### SD mode
+### SD mode {#PRUICSS_SD_MODE}
 
 \image html pruicssm_sd_mode.png "Sigma Delta Mode"
 
@@ -211,12 +238,12 @@ The following images show the block diagram of the Sigma Delta hardware integrat
 <tr>
     <td> PR<k>_PRU<n>_GPI0
     <td> SD0_CLK
-    <td> SD demodulator clock channel 0
+    <td> SD demodulator clock channel 0 or <br/>SD demodulator clock for channels 0, 1 and 2
 </tr>
 <tr>
     <td> PR<k>_PRU<n>_GPI1
     <td> SD0_D
-    <td> SD demodulator data channel 0
+    <td> SD demodulator data channel 0 or <br/>generate SD_CLKOUT clock (*note 3)
 </tr>
 <tr>
     <td> PR<k>_PRU<n>_GPI2
@@ -241,7 +268,7 @@ The following images show the block diagram of the Sigma Delta hardware integrat
 <tr>
     <td> PR<k>_PRU<n>_GPI6
     <td> SD3_CLK
-    <td> SD demodulator clock channel 3
+    <td> SD demodulator clock channel 3 or <br/>SD demodulator clock for channels 3, 4 and 5
 </tr>
 <tr>
     <td> PR<k>_PRU<n>_GPI7
@@ -271,7 +298,7 @@ The following images show the block diagram of the Sigma Delta hardware integrat
 <tr>
     <td> PR<k>_PRU<n>_GPI12
     <td> SD6_CLK
-    <td> SD demodulator clock channel 6
+    <td> SD demodulator clock channel 6 or <br/>SD demodulator clock for channels 6, 7 and 8
 </tr>
 <tr>
     <td> PR<k>_PRU<n>_GPI13
@@ -291,7 +318,7 @@ The following images show the block diagram of the Sigma Delta hardware integrat
 <tr>
     <td> PR<k>_PRU<n>_GPI16
     <td> SD8_CLK
-    <td> SD demodulator clock channel 8
+    <td> SD demodulator clock channel 8 or <br/>SD demodulator clock for channels 0 to 8
 </tr>
 <tr>
     <td> PR<k>_PRU<n>_GPI17
@@ -300,16 +327,15 @@ The following images show the block diagram of the Sigma Delta hardware integrat
 </tr>
 </table>
 
-
 \cond SOC_AM261X
 \note
-    - These signals are shared with the GPIO, MII, and Peripheral IF modes. To configure for SD, PRU_ICSS_GPCFGx[29-26] PR1_PRUy_GP_MUX_SEL needs to be set to 3h.
-    - Some devices may not pin out all 29 bits of R31 and all 32 bits of R30. For which pins are available on a specific device, see the device-specific datasheet for device pin mapping.
-    - The PR<k>_PRU0_GPI1 signal (muxed with SD0_D) can be used as SD_CLKOUT when PRU-ICSS generates the clock. This is a trade-off as the PRU application will lose one SD channel. SD_CLKOUT needs to go through a clock generator chip if driving multiple sigma delta modulators and also be looped back into PRU-ICSS as SD_CLKIN, typically pru_gpi16. For more details, please see section "7.3.5.2.2.3.5.1 Sigma Delta Block Diagram and Signals" of <a href="https://www.ti.com/lit/ug/sprujb6b/sprujb6b.pdf" target="_blank">AM261x Technical Reference Manual</a>.
+    1. These signals are shared with the GPIO, MII, and Peripheral IF modes. To configure for SD, PRU_ICSS_GPCFGx[29-26] PR1_PRUy_GP_MUX_SEL needs to be set to 3h.
+    2. Some devices may not pin out all 29 bits of R31 and all 32 bits of R30. For which pins are available on a specific device, see the device-specific datasheet for device pin mapping.
+    3. The PR<k>_PRU0_GPI1 signal (muxed with SD0_D) can be used as SD_CLKOUT when PRU-ICSS generates the clock. This is a trade-off as the PRU application will lose one SD channel. SD_CLKOUT needs to go through a clock generator chip if driving multiple sigma delta modulators and also be looped back into PRU-ICSS as SD_CLKIN, typically pru_gpi16. For more details, please see section "7.3.5.2.2.3.5.1 Sigma Delta Block Diagram and Signals" of <a href="https://www.ti.com/lit/ug/sprujb6b/sprujb6b.pdf" target="_blank">AM261x Technical Reference Manual</a>.
 \endcond
 \cond SOC_AM263PX
 \note
-    - These signals are shared with the GPIO, MII, and Peripheral IF modes. To configure for SD, PRU_ICSS_GPCFGx[29-26] PR1_PRUy_GP_MUX_SEL needs to be set to 3h.
-    - Some devices may not pin out all 29 bits of R31 and all 32 bits of R30. For which pins are available on a specific device, see the device-specific datasheet for device pin mapping.
-    - The PR<k>_PRU0_GPI1 signal (muxed with SD0_D) can be used as SD_CLKOUT when PRU-ICSS generates the clock. This is a trade-off as the PRU application will lose one SD channel. SD_CLKOUT needs to go through a clock generator chip if driving multiple sigma delta modulators and also be looped back into PRU-ICSS as SD_CLKIN, typically pru_gpi16. For more details, please see section "7.3.5.2.2.3.5.1 Sigma Delta Block Diagram and Signals" of <a href="https://www.ti.com/lit/ug/spruj55d/spruj55d.pdf" target="_blank">AM263Px Technical Reference Manual</a>.
+    1. These signals are shared with the GPIO, MII, and Peripheral IF modes. To configure for SD, PRU_ICSS_GPCFGx[29-26] PR1_PRUy_GP_MUX_SEL needs to be set to 3h.
+    2. Some devices may not pin out all 29 bits of R31 and all 32 bits of R30. For which pins are available on a specific device, see the device-specific datasheet for device pin mapping.
+    3. The PR<k>_PRU0_GPI1 signal (muxed with SD0_D) can be used as SD_CLKOUT when PRU-ICSS generates the clock. This is a trade-off as the PRU application will lose one SD channel. SD_CLKOUT needs to go through a clock generator chip if driving multiple sigma delta modulators and also be looped back into PRU-ICSS as SD_CLKIN, typically pru_gpi16. For more details, please see section "7.3.5.2.2.3.5.1 Sigma Delta Block Diagram and Signals" of <a href="https://www.ti.com/lit/ug/spruj55d/spruj55d.pdf" target="_blank">AM263Px Technical Reference Manual</a>.
 \endcond

@@ -6,6 +6,8 @@
 
 EnDat is a bidirectional interface for position encoders. During EnDat operation, the EnDat receiver receives position information from the EnDat position encoder.
 
+\note This implementation using Peripheral input/output mode of PRU-ICSS. Refer \ref PRUICSS_PERIPHERAL_IF_MODE for more details.
+
 ## Features Supported
 
    -  EnDat 2.2 command set
@@ -20,7 +22,7 @@ EnDat is a bidirectional interface for position encoders. During EnDat operation
    -  Channel select
 \cond SOC_AM243X || SOC_AM64X
    -  Concurrent multi-channel support (up to 3 encoders with identical part numbers @ 8MHz maximum)
-   -  "Multi Channel with encoders of different make" using load share mode (Each of PRU, RTU-PRU, and TX-PRU from one PRU-ICSSG slice handles one channel)
+   -  "Multi Channel with encoders of different make" using load share mode (Refer \ref PRUICSSG_LOAD_SHARE_MODE for more details)
 \endcond
    -  Safety Readiness: Recovery time
    -  Clock up to 16MHz with single channel \if (SOC_AM243X || SOC_AM64X) and load share mode (multi-channel) \endif
