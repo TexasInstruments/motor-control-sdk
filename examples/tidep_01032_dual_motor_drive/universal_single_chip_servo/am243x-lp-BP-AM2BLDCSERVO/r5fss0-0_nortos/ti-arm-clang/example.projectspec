@@ -11,7 +11,7 @@
 
     <project
         title="Universal Motorcontrol"
-        name = "universal_single_chip_servo_am243x-lp_r5fss0-0_nortos_ti-arm-clang_BP_AM2BLDCSERVO"
+        name = "universal_single_chip_servo_am243x-lp_r5fss0-0_nortos_ti-arm-clang"
         products="sysconfig;com.ti.MOTOR_CONTROL_SDK_AMXXX"
         configurations="
             Release,
@@ -115,7 +115,7 @@
             --ram_model
             --reread_libs
         "
-
+        postBuildStep="$(MAKE) -C ${CCS_PROJECT_DIR} -f makefile_ccs_bootimage_gen OUTNAME=${BuildArtifactFileBaseName} PROFILE=${ConfigName} MOTOR_CONTROL_SDK_PATH=${MOTOR_CONTROL_SDK_PATH} MCU_PLUS_SDK_PATH=${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk CG_TOOL_ROOT=${CG_TOOL_ROOT} CCS_INSTALL_DIR=${CCS_INSTALL_DIR} CCS_IDE_MODE=${CCS_IDE_MODE} DEVICE=am243x"
 
         enableSysConfigTool="true"
         sysConfigBuildOptions="
@@ -152,6 +152,7 @@
                 -llibsysbm.a
             "
         ></configuration>
+
         
 <!-- define directory for all of the kits and link device supoorting files-->
         <pathVariable name="MOTOR_CONTROL_SDK_PATH" path="${COM_TI_MOTOR_CONTROL_SDK_AMXXX_INSTALL_DIR}" scope="project" />
@@ -212,7 +213,7 @@
         </file>
         <file path="../main.c" openOnCreation="true" excludeFromBuild="false" action="copy" targetDirectory="">
         </file>
-        <file path="../epwm.c" openOnCreation="true" excludeFromBuild="false" action="copy" targetDirectory="">
+        <file path="../app_epwm.c" openOnCreation="true" excludeFromBuild="false" action="copy" targetDirectory="">
         </file>
 
         <file path="MC_SDK_ROOT/source/rtlibs/control/fwc/include/fwc.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="libraries/control/fwc/">
@@ -291,11 +292,15 @@
         </file>
         <file path="PROJ_ROOT/sys_main.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="">
         </file>
-        <file path="../epwm.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="">
+        <file path="../app_epwm.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="">
         </file>
         <file path="PROJ_ROOT/sys_settings.h" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="">
         </file>
         <file path="syscfg_c.rov.xs" openOnCreation="false" excludeFromBuild="false" action="copy">
+        </file>
+        <file path="makefile_ccs_bootimage_gen" openOnCreation="false" excludeFromBuild="false" action="copy">
+        </file>
+        <file path="makefile.defs" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
         <file path="PROJ_ROOT/src_control/debug/datalog.graphProp" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="src_control/debug/">
         </file>

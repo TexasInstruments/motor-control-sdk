@@ -174,6 +174,12 @@ The main software components in the block diagram specific to motor control are 
     <td>\ref EXAMPLES
     <td>Examples and demos showing usage of different SW libraries and APIs for motor control
 </tr>
+<tr><td colspan="3" bgcolor=#F0F0F0>**TIDEP-01032 EtherCAT-Connected Single-Chip Dual-Servo Motor Drive Reference Design****</td></tr>
+<tr>
+    <td> Reference design
+    <td>\ref REFERENCE_DESIGN
+    <td>Reference design showcasing the ability of the AM243x device to support a fully integrated real-time servo motor drive control and industrial communication. 
+</tr>
 </table>
 
 \endcond

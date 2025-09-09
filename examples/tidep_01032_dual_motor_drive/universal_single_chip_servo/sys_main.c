@@ -82,15 +82,15 @@ void universal_motorcontrol_main(void *args)
 #endif
 
 #if defined(MOTOR1_ESMO)
-    systemVars.estType = EST_TYPE_ESMO;         // the estimator is ESMO
+    systemVars.estType_M1 = EST_TYPE_ESMO;         // the estimator is ESMO
 #elif defined(MOTOR1_ESMO) && defined(MOTOR1_ENC)
-    systemVars.estType = EST_TYPE_ESMO_ENC;     // the estimator is ESMO and ENC
+    systemVars.estType_M1 = EST_TYPE_ESMO_ENC;     // the estimator is ESMO and ENC
 #elif defined(MOTOR1_ABS_ENC)
     systemVars.estType_M1 = EST_TYPE_ABS_ENC;      // the sensor is ABS-ENC
 #elif defined(MOTOR1_ENC)
-    systemVars.estType = EST_TYPE_ENC;          // the sensor is ENC
+    systemVars.estType_M1 = EST_TYPE_ENC;          // the sensor is ENC
 #elif defined(MOTOR1_HALL)
-    systemVars.estType = EST_TYPE_HALL;         // the sensor is HALL
+    systemVars.estType_M1 = EST_TYPE_HALL;         // the sensor is HALL
 #else
 #error Note select a right estimator/sensor for this project
 #endif
@@ -120,8 +120,6 @@ void universal_motorcontrol_main(void *args)
 #else
 #error Note select a right current sensor for this project
 #endif  // Current Sense Type
-
-
 
     //  Open drivers and boards
     Drivers_open();

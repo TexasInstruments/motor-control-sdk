@@ -3,8 +3,8 @@
 <VarMeta IMemento.internal.id="systemVars.flagEnableSystem"/>
 <VarMeta IMemento.internal.id="motorVars_M2.ISRCount"/>
 <VarMeta IMemento.internal.id="systemVars.boardKit"/>
-<VarMeta IMemento.internal.id="systemVars.estType"/>
-<VarMeta IMemento.internal.id="systemVars.currentSenseType"/>
+<VarMeta IMemento.internal.id="systemVars.estType_M2"/>
+<VarMeta IMemento.internal.id="systemVars.currentSenseType_M2"/>
 <VarMeta IMemento.internal.id="motorVars_M2.speed_Hz"/>
 <VarMeta IMemento.internal.id="motorVars_M2.speedRef_Hz"/>
 <VarMeta IMemento.internal.id="motorVars_M2.flagEnableRunAndIdentify"/>

@@ -45,7 +45,6 @@
 #include "datalog.h"
 
 #if defined(SOC_AM243X)
-#include "epwm.h"
 /*Includes source files for SDFM & ENDAT*/
 
 /*SDFM*/
@@ -1038,10 +1037,14 @@ void HAL_setupSDFM(HAL_Handle handle)
         }
         /*configure IEP count for one epwm period*/
         SDFM_configIepCount(gMotorSdfm, APP_EPWM_OUTPUT_FREQ); //3000
+
+        SDFM_enableSnoopBasedNC(gMotorSdfm);
         /*configuration of sdfm parameters which are supported per axis, not for invidual channels.
         Channel0 perametrs value are used for all 3 channels of axis*/
         /*set Noraml current OSR */
-        SDFM_setFilterOverSamplingRatio(gMotorSdfm, SDFM_NC_OSR_VALUE);
+        SDFM_setFilterOverSamplingRatio(gMotorSdfm, 0, SDFM_NC_OSR_VALUE);
+        SDFM_setFilterOverSamplingRatio(gMotorSdfm, 1, SDFM_NC_OSR_VALUE);
+        SDFM_setFilterOverSamplingRatio(gMotorSdfm, 2, SDFM_NC_OSR_VALUE);
         /*set first sample trigger time*/
         SDFM_setSampleTriggerTime(gMotorSdfm, SDFM_NORMAL_CURRENT_TRIGGER_POINT);
         /*enable epwm sync*/
