@@ -62,8 +62,8 @@ const includes_freertos_r5f_am243x_lp = {
 const libs_freertos_r5f = {
     common: [
         "freertos.am243x.r5f.ti-arm-clang.${ConfigName}.lib",
-        "drivers.am243x.r5f.ti-arm-clang.freertos.${ConfigName}.lib",
-        "board.am243x.r5f.ti-arm-clang.freertos.${ConfigName}.lib",
+        "drivers.am243x.r5f.ti-arm-clang.${ConfigName}.lib",
+        "board.am243x.r5f.ti-arm-clang.${ConfigName}.lib",
     ],
 };
 
