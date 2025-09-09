@@ -232,7 +232,6 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
     - The PROC109A version of LP supports two channels
     - To enable the second channel on LP, SW6 needs to be turned OFF
 
-
 #### Booster Pack Jumper Configuration
 <table>
 <tr>
@@ -391,11 +390,9 @@ Connect the jumpers J13 and J26 for providing 3.3V and 5V to boosterpack.
 \endcond
 \cond SOC_AM261X
 
-
 ## Hardware Setup with LP-AM261
 \imageStyle{EnDat_am261x_hw_Setup.jpeg,width:40%}
 \image html EnDat_am261x_hw_Setup.jpeg  "Hardware Setup with LP-AM261"
-
 
 #### LaunchPad Jumper Configuration
 
@@ -486,7 +483,37 @@ Shown below is a sample output when the application is run:
 \imageStyle{EnDAT_Initialization_UART_PRINT.png,width:60%}
 \image html EnDAT_Initialization_UART_PRINT.png "EnDAT Usage"
 
-### Test Case Description
+## EnDat Debug Guide {#ENDAT_DEBUG_GUIDE}  
+This section describes how to debug the EnDat application, including a guide to debugging the EnDat example and firmware. It mainly focuses on verifying the configuration of all components and encoder registers as described in \ref ENCODER_EXAMPLES_DEBUG_GUIDE. 
+
+If the EnDat interface is not initializing correctly, the steps mentioned below can help identify the root cause. Additionally, ensure that the hardware connections and software configurations are properly set up before proceeding with debugging.
+
+### Initialization Failures
+
+In case of initialization failure, perform the following steps to identify the root cause:
+
+1. Probe the four pins of the connected channel
+2. Load the example and capture signals during the initialization sequence  
+3. Compare with the expected initialization communication shown below:
+\image html EnDat_debug_init_responses.png "EnDat Initialization Responses"
+
+Verify the clock frequency is set to 200KHz. The TX and RX signals should show meaningful data exchanges for all initialization commands.
+
+If the initialization communication is incorrect, possible causes include:
+
+1. Firmware not loaded into the correct PRU core
+2. Firmware stuck due to:
+   - No response or incorrect response from encoder
+   - Incorrect channel selection or incorrect clock configuration
+
+Troubleshooting steps:
+1. Verify hardware connections 
+2. Confirm the pin settings and the clock configuration 
+3. If above are correct, debug the PRU firmware by connecting to the appropriate core as described in the \ref ENCODER_EXAMPLES_DEBUG_GUIDE
+
+> **Note:** For issues occurring after encoder initialization, debug by examining register values and capturing TX, RX and clock signals.
+
+## Test Case Description
 
 <table>
     <tr>

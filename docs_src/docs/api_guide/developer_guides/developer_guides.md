@@ -21,3 +21,8 @@ Refer below pages for additional useful information for developers to efficientl
 - \subpage DEVELOPER_GUIDE_PRUICSSM_IO_MODES
 - <a href="@VAR_MCU_SDK_DOCS_PATH/DEVELOPER_GUIDES.html" target="_blank">MCU+ SDK Developer Guides</a>
 \endcond
+
+- Module-specific Debug Guides
+    - \ref  SDFM_EXAMPLES_DEBUG_GUIDE
+    - \ref  ENCODER_EXAMPLES_DEBUG_GUIDE   
+        - \ref ENDAT_DEBUG_GUIDE 
