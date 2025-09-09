@@ -465,14 +465,18 @@ Following are different examples for ICSS %SDFM:
 # ICSS SDFM Debug Guide {#SDFM_EXAMPLES_DEBUG_GUIDE}
 This section provides a comprehensive debugging guide for troubleshooting issues that may arise during %SDFM testing or development. Follow these steps to identify and resolve potential problems.
 
+\note For initial debugging, use the `icss_sdfm_three_channel_with_continuous_mode` example. This basic example has minimal dependencies and uses the internal eCAP clock source. Refer to \ref BASIC_SDFM_EXAMPLES for setup instructions. This example helps determine whether an issue is hardware or software related.
+
 ## SDFM Register Configuration
 The PRU_ICSSG_CFG registers from offset 0x44 to 0xD8 are allocated for %SDFM configuration. To review and verify the %SDFM settings:
 
 1. Halt the R5 core
 2. Open the memory browser window 
-3. Enter the address of the PRU_ICSSG_CFG register and view the configured values
+3. Enter the base address of the PRU_ICSSG_CFG registers and view the configured values
 
-For detailed register descriptions, refer to section 6.4.14.5 PRU_ICSSG_CFG Registers in the Am243x Technical Reference Manual (TRM).
+> **Note:** Ensure you are entering the correct address for %sdfm registers. Each ICSS instance has different address for the CFG registers.
+
+For detailed registers description, refer to section 6.4.14.5 PRU_ICSSG_CFG Registers in the Am243x Technical Reference Manual (TRM).
 
 Key registers and their configurations:
 
@@ -501,12 +505,13 @@ To verify IEP configuration:
 3. Review `IEP_CMP_CFG_REG` to ensure all compare events are properly configured for trigger mode
 4. Check `IEP_CMP_STATUS_REG` to verify corresponding compare events are setting status flags correctly
 5. Validate that Compare Registers are configured with correct trigger point values
+> **Note:** Ensure you are entering the correct address for IEP register. Each ICSS instance has different address for the IEP register.
 \image html SDFM_debug_IEP_registers_view1.png "PRU-ICSS IEP register view"
 \image html SDFM_debug_IEP_registers_view2.png "PRU-ICSS IEP CMP events register view"
 
-For detailed register descriptions, refer to section `6.4.14.9 PRU_IEP_IEP Registers` in the Am243x TRM.
+For detailed register descriptions, refer to section `6.4.14.9` PRU_IEP_IEP Registers in the AM243x TRM.
 
-## INTC Configuration 
+## Interrupt Controller Internal Signals Mapping 
 If you experience missing PRU interrupts or incorrect IRQ mapping, verify the interrupt mapping between PRU and R5 in the SysConfig PRU INTC module. The Host channel number and PRU Event should match your configuration.
 
 For example, the %SDFM basic example uses:
@@ -533,7 +538,8 @@ DebugP_assert(status == SystemP_SUCCESS);
 
 /* PRU SDFM FW IRQ handler */
 void pruSdfmIrqHandler(void *args)
-{/* Increment PRU SDFM IRQ count for debugging */
+{
+    /* Increment PRU SDFM IRQ count for debugging */
     gPruSdfmIrqCnt++;
     /* Clear interrupt at source */
     PRUICSS_clearEvent(gPruIcssHandle, PRU_TRIGGER_HOST_SDFM_EVT_CH0);
@@ -580,5 +586,3 @@ After loading the firmware, you can analyze the PRU execution flow:
   
 - **With Over Current Enabled:**
   - PRU continuously executes over current sampling
-
-\note For initial debugging, use the `icss_sdfm_three_channel_with_continuous_mode` example. This basic example has minimal dependencies and uses the internal eCAP clock source. Refer to \ref BASIC_SDFM_EXAMPLES for setup instructions. This example helps determine whether an issue is hardware or software related.
