@@ -13,6 +13,7 @@ This page lists all the examples and demos supported in this SDK.
 - \subpage EXAMPLES_CURRENT_SENSE
 - \subpage EXAMPLES_PRUICSS_PWM
 - \subpage EXAMPLES_REAL_TIME_LIBRARIES
+- \subpage EXAMPLES_PRUICSS_TIME_SYNC
 \endcond
 
 \cond SOC_AM263X
