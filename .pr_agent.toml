@@ -12,3 +12,9 @@ push_commands = [
     "/describe",
     "/review"
 ]
+[ignore]
+glob = [
+'.out', # Compiled binaries '.arxml', # AUTOSAR XML files
+'*.xdm', # Configuration files
+'Config/output/' # Generated configuration outputs
+]
