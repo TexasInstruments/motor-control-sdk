@@ -1,7 +1,7 @@
 [config]
 pr_commands = [
     "/review",
-    "/improve --pr_code_suggestions.commitable_code_suggestions=true --pr_code_suggestions.suggestions_score_threshold=7"
+    "/improve --pr_code_suggestions.commitable_code_suggestions=true --pr_code_suggestions.suggestions_score_threshold=5"
 ]
 
 handle_push_trigger = true
@@ -11,4 +11,9 @@ push_trigger_wait_for_initial_review = false
 push_commands = [
     "/describe",
     "/review"
+]
+[ignore]
+glob = [
+    '*.out',  # Compiled binaries 
+    '*.html'  # Html files
 ]
