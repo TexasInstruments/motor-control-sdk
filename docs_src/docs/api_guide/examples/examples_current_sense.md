@@ -237,19 +237,6 @@ The Fast Detect is used for fast over current detection and trip generation. It 
     <th>Host Channel</th>
   </tr>
   <tr>
-    <td rowspan="3">${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_nine_channel_load_share_mode</td>
-    <td>INTC event/input number 21 (pr[0/1]_pru_mst_intr[5]_intr_req)</td>
-    <td>Host Channel 3</td>
-  </tr>
-  <tr>
-    <td>INTC event/input number 24 (pr[0/1]_pru_mst_intr[8]_intr_req)</td>
-    <td>Host Channel 6</td>
-  </tr>
-  <tr>
-    <td>INTC event/input number 27 (pr[0/1]_pru_mst_intr[11]_intr_req)</td>
-    <td>Host Channel 9</td>
-  </tr>
-  <tr>
     <td rowspan="3">${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_nine_channel_load_share_snoop_mode</td>
     <td>INTC event/input number 21 (pr[0/1]_pru_mst_intr[5]_intr_req)</td>
     <td>Host Channel 3</td>
@@ -338,10 +325,6 @@ Following section describes the flow of the examples.
     <td> Application specific sources for ICSS %SDFM for continuous normal current sampling for nine channels </td>
 </tr>
 <tr>
-    <td> ${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_nine_channel_load_share_mode</td>
-    <td> Application specific sources for ICSS %SDFM for trigger based normal current sampling for nine channels </td>
-</tr>
-<tr>
     <td> ${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_nine_channel_load_share_snoop_mode</td>
     <td>Application specific sources for ICSS %SDFM for trigger based normal current sampling for nine channels using ICSS %SDFM snoop mode.</td>
 </tr>
@@ -425,7 +408,9 @@ Following are different examples for ICSS %SDFM:
     <td>
         - OSR values must be identical for both normal current and over current<br>
         - Normal current trigger mode does not support over current<br>
-        - Zero cross detection is not supported
+        - Zero cross detection is not supported<br>
+        - Support for nine channels in trigger mode
+            - **Note:** An example of nine channels using a single PRU for trigger mode will be available in the next release
     </td>
 </tr>
 <tr>

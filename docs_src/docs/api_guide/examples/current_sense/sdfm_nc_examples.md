@@ -4,7 +4,7 @@
 
 These examples demonstrate both trigger-based and continuous normal current sampling. The examples support Normal Current, Over Current, and Fast Detect configurations.
 
-There are four different examples based on the number of %SDFM channels and the mode of Normal Current sampling.
+There are three different examples based on the number of %SDFM channels and the mode of Normal Current sampling.
 
 > **Note:** Normal Current trigger mode examples do not support Over Current. 
 
@@ -28,7 +28,7 @@ Only one core, PRU, is used for these examples.
 
 ## Nine Channels
 
-The load share mode of PRU-ICSSG is enabled for these examples. Three cores—RTU-PRU, PRU, and TX-PRU—are used.
+The load share mode of PRU-ICSSG is enabled for this example. Three cores—RTU-PRU, PRU, and TX-PRU—are used.
 
 \note Channels 6 to 8 Fast Detect is not mapped with any ICSS PWM trip zone block. This is a hardware limitation. A software-based solution can be used as described in \ref OC_FD_TRIP.
 
@@ -41,22 +41,12 @@ The load share mode of PRU-ICSSG is enabled for these examples. Three cores—RT
         - Each channel has an individual interrupt.  
                 - **Note:** Due to the unavailability of host interrupts, only the Channel 0 interrupt is configured for the TX PRU (Channels 6 to 8) in the application.  
 
-2. **Trigger Mode Example**  
-        - Trigger-based Normal Current sampling synchronized with EPWM.  
-        - A common interrupt is used for every three channels.  
-        - Nine channels with load share mode.  
-        - ICSS PWM trip-based Fast Detect for channels 0 to 5.  
-
 # Important files and directory structure
 
 <table>
 <tr>
     <th>Folder/Files
     <th>Description
-</tr>
-<tr>
-    <td> ${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_nine_channel_load_share_mode</td>
-    <td> Application specific sources for ICSS %SDFM for trigger based normal current sampling for nine channels </td>
 </tr>
 <tr>
     <td> ${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_three_channel_single_pru_mode</td>
