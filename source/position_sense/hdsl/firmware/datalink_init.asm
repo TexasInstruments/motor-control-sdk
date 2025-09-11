@@ -100,9 +100,9 @@ check_test_pattern_false:
 ;--------------------------------------------------------------------------------------------------
 ;stores sync pulse period in R20 in unit of cycles
 sync_pulse:
-	lbco        &REG_TMP1, IEP_CONST, IEP_CAPR6_RISE, 4
+	lbco        &REG_TMP1, IEP_BASE_CONST, IEP_CAPR6_RISE, 4
 wait_next_pulse:
-	lbco        &R20, IEP_CONST, IEP_CAPR6_RISE, 4
+	lbco        &R20, IEP_BASE_CONST, IEP_CAPR6_RISE, 4
 	QBEQ		wait_next_pulse, R20, REG_TMP1
 	SUB         R20, R20, REG_TMP1
 	RET1

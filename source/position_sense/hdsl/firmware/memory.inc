@@ -400,14 +400,22 @@ ADDR .set 0x15ff
 ;--------------------------------------------------------------------------------------------------
 ;Memory offsets
 ;--------------------------------------------------------------------------------------------------
-PRU_CTRL_CONST	.set					c11
+    .if $defined("HDSL_MULTICHANNEL")
+PRU_CTRL_CONST	.set					C28
+IEP_BASE_CONST   .set                   C1
+IEP_CONST   .set 						C26
+    .else
+PRU_CTRL_CONST  .set                    C11
+IEP_BASE_CONST   .set                   C28
+IEP_CONST   .set 						C28
+    .endif
+
 PRU_CYCLCNT	.set						0x0c
 PWMSS1_CONST	.set					C19
 PWMSS2_CONST	.set					C20
 ECAP		.set						0x100
 ECAP_ECCLR	.set						0x30
 ECAP_ECCTL1	.set						0x28
-IEP_CONST	.set						C28
 IEP_CNT		.set						0x10
 IEP_CAPR6_RISE .set                     0x50
 TXPRU1_CTRL .set 						0x00025800
