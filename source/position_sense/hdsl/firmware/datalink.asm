@@ -1952,7 +1952,7 @@ comp_logic_starts:
 	mov         NUM_STUFFING_COMP, NUM_STUFFING
 
 	lbco		&REG_TMP0, MASTER_REGS_CONST, EXTRA_EDGE_TIMESTAMP, 4
-	lbco        &REG_TMP1, IEP_CONST, 0x50, 4
+	lbco        &REG_TMP1, IEP_BASE_CONST, 0x50, 4
 	qbge        extra_edge_ahead, REG_TMP1 ,REG_TMP0
 	mov         REG_TMP2, REG_TMP0
 	sub         REG_TMP0, REG_TMP1, REG_TMP0
