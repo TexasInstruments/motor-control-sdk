@@ -10,7 +10,7 @@
     </applicability>
 
     <project
-        title="Universal Single Chip Servo"
+        title="EtherCAT-Connected Single-Chip Dual-Servo Motor Drive Reference Design"
         name = "universal_single_chip_servo_am243x-lp_r5fss1-0_freertos_ti-arm-clang"
         products="sysconfig;com.ti.MOTOR_CONTROL_SDK_AMXXX"
         configurations="

@@ -87,7 +87,7 @@ extern "C"
 #define APP_EPWM_OUTPUT_FREQ_30K      (1U * 30000U)
 #define APP_EPWM_OUTPUT_FREQ_50K      (1U * 50000U)
 
-#define APP_EPWM_OUTPUT_FREQ          (APP_EPWM_OUTPUT_FREQ_15K)
+#define APP_EPWM_OUTPUT_FREQ          (APP_EPWM_OUTPUT_FREQ_20K)
 
 
 /*

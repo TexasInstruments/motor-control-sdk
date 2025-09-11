@@ -181,8 +181,6 @@ void universal_motorcontrol_main(void *args)
     datalogObj->flag_enableLogData = 1;
 
 #if (DMC_BUILDLEVEL <= DMC_LEVEL_2)
-    // set datalog parameters
-    /*FIXME*/
 #if defined(MOTOR1_INLINE_SDFM)
     datalogObj->iptr[0] = (float32_t*) &motorVars_M1.sdfmData.I_A.value[0];
     datalogObj->iptr[1] = (float32_t*) &motorVars_M1.sdfmData.I_A.value[1];

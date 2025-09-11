@@ -299,10 +299,10 @@ extern "C"
 //!        the non-inverting pin of the operational amplifier
 #define USER_M1_SIGN_CURRENT_SF         -1.0f //(-1.0f)
 
-//! \brief SDFM current offsets for A, B, and C phases
-#define USER_M1_IA_OFFSET_AD    (2048.0f)
-#define USER_M1_IB_OFFSET_AD    (2048.0f)
-#define USER_M1_IC_OFFSET_AD    (2048.0f)
+//! \brief SDFM current offsets for A, B, and C phases,
+#define USER_M1_IA_OFFSET_AD    SDFM_HALF_SCALE
+#define USER_M1_IB_OFFSET_AD    SDFM_HALF_SCALE
+#define USER_M1_IC_OFFSET_AD    SDFM_HALF_SCALE
 
 //! \brief ADC current offset for CMPSS
 #define USER_M1_IS_OFFSET_CMPSS     (uint16_t)((USER_M1_IA_OFFSET_AD + USER_M1_IB_OFFSET_AD + USER_M1_IC_OFFSET_AD) / 3.0f)
@@ -433,7 +433,7 @@ extern "C"
 
 //! \brief Defines the Pulse Width Modulation (PWM) frequency, kHz
 //!
-#define USER_M1_PWM_FREQ_kHz        (15.0f)
+#define USER_M1_PWM_FREQ_kHz        (20.0f)
 #define USER_M1_PWM_TBPRD_NUM       (uint16_t)(USER_SYSTEM_FREQ_MHz * 1000.0f / USER_M1_PWM_FREQ_kHz / 2.0f)
 
 //! \brief Defines the Pulse Width Modulation (PWM) period, usec
@@ -457,16 +457,16 @@ extern "C"
 
 //! \brief Defines the voltage scale factor for the system
 //!
-#define USER_M1_VOLTAGE_SF          (USER_M1_ADC_FULL_SCALE_VOLTAGE_V / 4096.0f)
+#define USER_M1_VOLTAGE_SF          (USER_M1_ADC_FULL_SCALE_VOLTAGE_V / SDFM_FULL_SCALE)
 
 //! \brief Defines the current scale factor for the system
 //!
-#define USER_M1_CURRENT_SF          (USER_M1_ADC_FULL_SCALE_CURRENT_A /2048.0f) //4096.0f)
+#define USER_M1_CURRENT_SF          (USER_M1_ADC_FULL_SCALE_CURRENT_A /SDFM_HALF_SCALE)
 
 
 //! \brief Defines the current scale invert factor for the system
 //!
-#define USER_M1_CURRENT_INV_SF      (2048.0f / USER_M1_ADC_FULL_SCALE_CURRENT_A)
+#define USER_M1_CURRENT_INV_SF      (SDFM_HALF_SCALE / USER_M1_ADC_FULL_SCALE_CURRENT_A)
 
 
 //! \brief Defines the analog voltage filter pole location, rad/s

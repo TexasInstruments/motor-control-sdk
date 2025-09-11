@@ -156,7 +156,7 @@ PRUICSS_Handle gPruIcssXHandle;
 #define  MOTOR1_ENDAT_PRUICSS_CORE          PRUICSS_RTU_PRU0
 #endif
 
-#define  MOTOR1_ENDAT_ENABLE_CHANNEL        CONFIG_ENDAT0_CHANNEL0
+#define  MOTOR1_ENDAT_ENABLE_CHANNEL        0
 #define  MOTOR1_PRU_TRIGGER_HOST_ENDAT_EVT_NUMBER            ( 18 )
 #define  MOTOR1_ICSSG_PRU_ENDAT_INT_NUM    CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_0
 
@@ -166,7 +166,7 @@ PRUICSS_Handle gPruIcssXHandle;
 #define  MOTOR2_ENDAT_PRUICSS_CORE          PRUICSS_TX_PRU0
 #endif
 
-#define  MOTOR2_ENDAT_ENABLE_CHANNEL        CONFIG_ENDAT0_CHANNEL2
+#define  MOTOR2_ENDAT_ENABLE_CHANNEL        2
 #define  MOTOR2_PRU_TRIGGER_HOST_ENDAT_EVT_NUMBER            ( 20 )
 #define  MOTOR2_ICSSG_PRU_ENDAT_INT_NUM    CSLR_R5FSS0_CORE1_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_1
 
@@ -189,9 +189,14 @@ PRUICSS_Handle gPruIcssXHandle;
 
 #define ENDAT_RX_SAMPLE_SIZE    7
 
-#define CLOCK_UPDATE 100
-#define CONFIG_TST_DELAY 103
-
+#define CLOCK_UPDATE                       100
+#define CONFIG_TST_DELAY                   103
+#define ENDAT_FREQUENCY                    8000000
+/* Position feedback trigger point is set to 25 microseconds.
+ * This is calculated as (25 * 300000000) / 10000000,
+ * where the IEP clock is 300MHz.
+ */
+#define ENDAT_TRIGGER_POINT                7500
 
 
 /*SDFM defines*/
@@ -224,10 +229,9 @@ PRUICSS_Handle gPruIcssXHandle;
 #define  MOTOR2_PRU_TRIGGER_HOST_SDFM_EVT_NUMBER   ( 3+18 ) /* PRU event number for SDFM interrupt */
 
 #define BP_AM2BLDCSERVO_VDC_BUS_VOLTAGE   24.0f
-/* Sigma Delta definitions for SINC3 OSR64 - 0 - 2^18 */
-#define  SDDF_FULL_SCALE        4096.0f
-#define  SDDF_HALF_SCALE        2048.0f
-#define  SDDF_HALF_SCALE_FLT    2048.0f
+/* Sigma delta filter output range for SINC3 OSR64: 64*64*64 */
+#define SDFM_FULL_SCALE         262144.0f
+#define SDFM_HALF_SCALE         131072.0f
 
 #else   // Not select a kit
 #error Board configuration not specified. Please define a valid board for this project.

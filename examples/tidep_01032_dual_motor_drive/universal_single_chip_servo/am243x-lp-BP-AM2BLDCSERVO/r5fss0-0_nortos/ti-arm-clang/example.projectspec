@@ -10,7 +10,7 @@
     </applicability>
 
     <project
-        title="Universal Motorcontrol"
+        title="EtherCAT-Connected Single-Chip Dual-Servo Motor Drive Reference Design"
         name = "universal_single_chip_servo_am243x-lp_r5fss0-0_nortos_ti-arm-clang"
         products="sysconfig;com.ti.MOTOR_CONTROL_SDK_AMXXX"
         configurations="
@@ -110,7 +110,7 @@
             -i${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/lib
             -i${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/lib
             -i${CG_TOOL_ROOT}/lib
-            -m=universal_motorcontrol.${ConfigName}.map
+            -m=universal_single_chip_servo_am243x-lp_r5fss0-0_nortos_ti-arm-clang.${ConfigName}.map
             --diag_suppress=10063
             --ram_model
             --reread_libs

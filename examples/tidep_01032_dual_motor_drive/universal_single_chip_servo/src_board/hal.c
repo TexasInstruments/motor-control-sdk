@@ -90,11 +90,12 @@ __attribute__((section(".gEnDatChInfo"))) struct endatChRxInfo gEndatChInfo;
 struct endat_priv *priv;
 
 /*ENDAT PRU IRQ counter*/
-uint32_t gEndatPruIrqCount = 0;
+static uint32_t gEndatPruIrqCount = 0;
 /*ENDAT Initialization Status*/
-uint32_t gEndatInitStatus = 0;
+static uint32_t gEndatInitStatus = 0;
 /*ENDAT Position read failure counter*/
-uint32_t gEndatPosReadFailCount = 0;
+static uint32_t gEndatPosReadFailCountM1 = 0;
+static uint32_t gEndatPosReadFailCountM2 = 0;
 
 static uint8_t gEndat_is_multi_ch;
 static uint8_t gEndat_multi_ch_mask;
@@ -140,14 +141,19 @@ HAL_Handle HAL_init(void *pMemory,const size_t numBytes)
     // assign the object
     obj = (HAL_Obj *)handle;
 
-#if defined (BP_AM2BLDCSERVO)   
     /*initialize the ICSS PRU*/
 #if defined (SOC_AM243X)
     HAL_pruIcssX_init();
 #endif
-    obj->encoderHandle = &priv;             // EnDat handle
+
+#if defined (MOTOR1_ABS_ENC) || defined (MOTOR2_ABS_ENC)
+    obj->encoderHandle = &priv;
+#endif
+
+#if defined (MOTOR1_INLINE_SDFM) || defined (MOTOR2_INLINE_SDFM)
     obj->sdfmHandle = &gMotorSdfm;
-#endif // BP_AM2BLDCSERVO
+#endif
+
     // initialize the GPIO toggle
     obj->toggleGPIO[0] = 0;
 
@@ -219,13 +225,15 @@ HAL_MTR_Handle HAL_MTR_init(void *pMemory, const size_t numBytes)
 void HAL_setParams(HAL_Handle handle)
 {
 
-#if defined(BP_AM2BLDCSERVO)
+#if defined (MOTOR1_ABS_ENC) || defined (MOTOR2_ABS_ENC)
+    /* Initialization of Encoders*/
+    HAL_setupEncoder(handle);
+#endif
+
+#if defined (MOTOR1_INLINE_SDFM) || defined (MOTOR2_INLINE_SDFM)
     /* Initialization of SDFM */
     HAL_setupSDFM(handle);
-   /* Initialization of Encoders*/
-    HAL_setupEncoder(handle);
-
-#endif //BP_AM2BLDCSERVO
+#endif
     return;
 } // end of HAL_setParams() function
 
@@ -289,6 +297,12 @@ void HAL_setupPWMs(HAL_MTR_Handle handle)
         gEpwm0BaseAddr = (uint32_t)AddrTranslateP_getLocalAddr(EPWM0_AXIS1_BASE_ADDR);
         gEpwm1BaseAddr = (uint32_t)AddrTranslateP_getLocalAddr(EPWM1_AXIS1_BASE_ADDR);
         gEpwm2BaseAddr = (uint32_t)AddrTranslateP_getLocalAddr(EPWM2_AXIS1_BASE_ADDR);
+        SOC_controlModuleUnlockMMR(SOC_DOMAIN_ID_MAIN, 1);
+        /* Configure the SYNCI/SYNCO mapping to tie the three PWM groups together and have PWM0 SYNC from Time Sync Router 38 */
+        CSL_REG32_WR(CSL_CTRL_MMR0_CFG0_BASE + CSL_MAIN_CTRL_MMR_CFG0_EPWM0_CTRL, (2 << CSL_MAIN_CTRL_MMR_CFG0_EPWM0_CTRL_SYNCIN_SEL_SHIFT));
+        SOC_controlModuleLockMMR(SOC_DOMAIN_ID_MAIN, 1);
+        /* Time Sync Router input 29 (ICSSG1 IEP0 SYNC0) -> Time Sync Router output 38 (0x26 + 4 = 0x2A + Time Sync Router Base */
+        CSL_REG32_WR(CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + ((38 * 4) + 4), (0x10000 | 29));
     }
     if(obj->motorNum == MTR_2)
     {
@@ -296,15 +310,17 @@ void HAL_setupPWMs(HAL_MTR_Handle handle)
         gEpwm1BaseAddr = (uint32_t)AddrTranslateP_getLocalAddr(EPWM1_AXIS2_BASE_ADDR);
         gEpwm2BaseAddr = (uint32_t)AddrTranslateP_getLocalAddr(EPWM2_AXIS2_BASE_ADDR);
         gEpwm0BaseAddrB = (uint32_t)AddrTranslateP_getLocalAddr(EPWM2_B_AXIS2_BASE_ADDR);
-        /*FIXME, SYNC for all EPWM*/
-//      SOC_controlModuleUnlockMMR(SOC_DOMAIN_ID_MAIN, 1);
-//      /*EPWM3 and 6 sync in sel*/
-//      CSL_REG32_WR(CSL_CTRL_MMR0_CFG0_BASE + CSL_MAIN_CTRL_MMR_CFG0_EPWM3_CTRL, (2 << CSL_MAIN_CTRL_MMR_CFG0_EPWM3_CTRL_SYNCIN_SEL_SHIFT));
-//      CSL_REG32_WR(CSL_CTRL_MMR0_CFG0_BASE + CSL_MAIN_CTRL_MMR_CFG0_EPWM6_CTRL, (2 << CSL_MAIN_CTRL_MMR_CFG0_EPWM6_CTRL_SYNCIN_SEL_SHIFT));
-//      SOC_controlModuleLockMMR(SOC_DOMAIN_ID_MAIN, 1);
-//      /* Time Sync Router input 29 (ICSSG1 IEP0 SYNC0) -> Time Sync Router output 39 (0x26 + 4 = 0x2A + Time Sync Router Base */
-//      CSL_REG32_WR(CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + ((39 * 4) + 4), (0x10000 | 39));
-//      CSL_REG32_WR(CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + ((40 * 4) + 4), (0x10000 | 39));
+        /*SYNC for all EPWM*/
+        SOC_controlModuleUnlockMMR(SOC_DOMAIN_ID_MAIN, 1);
+        /* Configure the SYNCI/SYNCO mapping to tie the three PWM groups together and have PWM3 SYNC from Time Sync Router 39 */
+        CSL_REG32_WR(CSL_CTRL_MMR0_CFG0_BASE + CSL_MAIN_CTRL_MMR_CFG0_EPWM3_CTRL, (2 << CSL_MAIN_CTRL_MMR_CFG0_EPWM3_CTRL_SYNCIN_SEL_SHIFT));
+        /* Configure the SYNCI/SYNCO mapping to tie the three PWM groups together and have PWM6 SYNC from Time Sync Router 40 */
+        CSL_REG32_WR(CSL_CTRL_MMR0_CFG0_BASE + CSL_MAIN_CTRL_MMR_CFG0_EPWM6_CTRL, (2 << CSL_MAIN_CTRL_MMR_CFG0_EPWM6_CTRL_SYNCIN_SEL_SHIFT));
+        SOC_controlModuleLockMMR(SOC_DOMAIN_ID_MAIN, 1);
+        /* Time Sync Router input 29 (ICSSG1 IEP0 SYNC0) -> Time Sync Router output 39 (0x26 + 4 = 0x2A + Time Sync Router Base */
+        CSL_REG32_WR(CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + ((39 * 4) + 4), (0x10000 | 29));
+        /* Time Sync Router input 29 (ICSSG1 IEP0 SYNC0) -> Time Sync Router output 40 (0x26 + 4 = 0x2A + Time Sync Router Base */
+        CSL_REG32_WR(CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + ((40 * 4) + 4), (0x10000 | 29));
     }
    
     /* Configure PWMs */
@@ -686,7 +702,6 @@ void HAL_setupEncoder(HAL_Handle handle)
                 }
                 /*convert cnt to time in ns ((cnt*1000000000)/icssClk) before use*/
                 gEndat_prop_delay[priv->current_channel] = endat_get_prop_delay(priv)*((float)(1000000000)/icssClk);
-                DebugP_log("\n\t\t\t\tCHANNEL %d\n\n", j);
             }
         }
 
@@ -713,7 +728,7 @@ void HAL_setupEncoder(HAL_Handle handle)
     /* default frequency - 8MHz for 2.2 encoders, 1MHz for 2.1 encoders*/
     if(priv->cmd_set_2_2)
     {
-        cmd_supplement.frequency = 8 * 1000 * 1000;
+        cmd_supplement.frequency = ENDAT_FREQUENCY;
     }
     else
     {
@@ -721,9 +736,9 @@ void HAL_setupEncoder(HAL_Handle handle)
     }
 
     endat_process_host_command(CLOCK_UPDATE, &cmd_supplement, priv);
-
-    uint64_t cmp3 = 800;
-    uint64_t cmp4 = 800;
+    
+    uint64_t cmp3 = ENDAT_TRIGGER_POINT;
+    uint64_t cmp4 = ENDAT_TRIGGER_POINT;
     uint32_t cmp_reg0, cmp_reg1;
     uint16_t event, event_clear;
 
@@ -761,8 +776,8 @@ void HAL_setupEncoder(HAL_Handle handle)
         {
             endat_multi_channel_set_cur(priv, i);
         
-            DebugP_log("\r|\n|\t\t\t\tCHANNEL %d\n", i);
-            DebugP_log("Encoder Channel Init Completed!!!\n");
+            DebugP_log("\r|\n|\t\t\t\tCHANNEL %d Init Completed!!!\n", i);
+            DebugP_log("\n");
         }
     }
 
@@ -779,36 +794,33 @@ void HAL_getMtrEncoderPosition(ENC_Handle handle, uint32_t motorNum)
     uint32_t pos, rev;
     ENC_Obj *obj = (ENC_Obj *)handle;
 
-    /* Check CRC from the EnDat PRU */
+    /* Read the position data from memory */
     if(motorNum == MTR_1)
     {
-
-        uint32_t status = gEndatChInfo.ch[MOTOR1_ENDAT_ENABLE_CHANNEL].crcStatus;
-        status = status & ENDAT_CRC_DATA;
         if(!(gEndatChInfo.ch[MOTOR1_ENDAT_ENABLE_CHANNEL].crcStatus & ENDAT_CRC_DATA))
         {
-            gEndatPosReadFailCount++;  
+            gEndatPosReadFailCountM1++;
             return;
         }
         else 
         {
-            /*FIXME add code to clear CRC status here*/
+            /*Clear the CRC status*/
+            gEndatChInfo.ch[MOTOR1_ENDAT_ENABLE_CHANNEL].crcStatus = 0;
         }
         pos = gEndatChInfo.ch[MOTOR1_ENDAT_ENABLE_CHANNEL].posWord0;
         rev = gEndatChInfo.ch[MOTOR1_ENDAT_ENABLE_CHANNEL].posWord1;
     }
     else if(motorNum == MTR_2)
     {
-        uint32_t status = gEndatChInfo.ch[MOTOR2_ENDAT_ENABLE_CHANNEL].crcStatus;
-        status = status & ENDAT_CRC_DATA;
         if(!(gEndatChInfo.ch[MOTOR2_ENDAT_ENABLE_CHANNEL].crcStatus & ENDAT_CRC_DATA))
         {
-            gEndatPosReadFailCount++;
+            gEndatPosReadFailCountM2++;
             return;
         }
         else
         {
-            /*FIXME add code to clear CRC status here*/
+            /*Clear the CRC status*/
+            gEndatChInfo.ch[MOTOR2_ENDAT_ENABLE_CHANNEL].crcStatus = 0;
         }
         pos = gEndatChInfo.ch[MOTOR2_ENDAT_ENABLE_CHANNEL].posWord0;
         rev = gEndatChInfo.ch[MOTOR2_ENDAT_ENABLE_CHANNEL].posWord1;

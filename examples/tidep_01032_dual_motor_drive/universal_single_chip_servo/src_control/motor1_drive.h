@@ -204,8 +204,7 @@ extern SPDCALC_Obj speedcalc_M1;
 // the function prototypes
 
 //! \brief The main interrupt service (ISR) routine
-//__attribute__ ((section(".tcm_code"))) extern void motor1CtrlISR(void *handle);
-extern void motor1CtrlISR(void *handle);
+__attribute__ ((section(".tcm_code"))) extern void motor1CtrlISR(void *handle);
 //! \brief The main interrupt service (ISR) routine
 __attribute__ ((section(".tcm_code"))) extern void motor2CtrlISR(void *handle);
 
