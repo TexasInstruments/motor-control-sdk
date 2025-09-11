@@ -138,8 +138,8 @@ void endat_config_iep(struct endat_periodic_interface *endat_periodic_interface)
             cmp_reg0 = (endat_periodic_interface->ch0_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
             cmp_reg1 = (endat_periodic_interface->ch0_trigger_count>>32 & 0xffffffff);
 
-            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_COUNT_REG0 + IEP_CH0_CMP_EVNT*8),  cmp_reg0);
-            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_COUNT_REG1 + IEP_CH0_CMP_EVNT*8),  cmp_reg1);
+            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + IEP_CH0_CMP_EVNT*8),  cmp_reg0);
+            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + IEP_CH0_CMP_EVNT*8),  cmp_reg1);
         }
 
         if(pruss_xchg->config[1].channel)
@@ -147,8 +147,8 @@ void endat_config_iep(struct endat_periodic_interface *endat_periodic_interface)
             cmp_reg0 = (endat_periodic_interface->ch1_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
             cmp_reg1 = (endat_periodic_interface->ch1_trigger_count>>32 & 0xffffffff);
 
-            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_COUNT_REG0 + IEP_CH1_CMP_EVNT*8),  cmp_reg0);
-            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_COUNT_REG1 + IEP_CH1_CMP_EVNT*8),  cmp_reg1);
+            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + IEP_CH1_CMP_EVNT*8),  cmp_reg0);
+            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + IEP_CH1_CMP_EVNT*8),  cmp_reg1);
 
         }
 
@@ -157,8 +157,8 @@ void endat_config_iep(struct endat_periodic_interface *endat_periodic_interface)
             cmp_reg0 = (endat_periodic_interface->ch2_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
             cmp_reg1 = (endat_periodic_interface->ch2_trigger_count>>32 & 0xffffffff);
 
-            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_COUNT_REG0 + IEP_CH2_CMP_EVNT*8),  cmp_reg0);
-            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_COUNT_REG1 + IEP_CH2_CMP_EVNT*8),  cmp_reg1);
+            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + IEP_CH2_CMP_EVNT*8),  cmp_reg0);
+            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + IEP_CH2_CMP_EVNT*8),  cmp_reg1);
 
         }
 
