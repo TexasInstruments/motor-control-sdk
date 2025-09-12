@@ -46,7 +46,7 @@
  * Any state -> RESET : If offset exceeds threshold
  */
 
-#include "time_sync.h"
+#include <time_sync.h>
 #include <drivers/pruicss.h>
 #include <kernel/dpl/DebugP.h>
 #include <kernel/dpl/AddrTranslateP.h>

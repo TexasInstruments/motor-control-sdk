@@ -37,6 +37,7 @@
             -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/am243x/r5f
             -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/driver
             -I${MOTOR_CONTROL_SDK_PATH}/source/pruicss_iep_sync_out_generation/am243x-evm
+            -I${MOTOR_CONTROL_SDK_PATH}/examples/time_sync
             -mcpu=cortex-r5
             -mfloat-abi=hard
             -mfpu=vfpv3-d16
@@ -103,8 +104,6 @@
         <file path="../../../../time_sync_main.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
         <file path="../../../../time_sync.c" openOnCreation="false" excludeFromBuild="false" action="copy">
-        </file>
-        <file path="../../../../time_sync.h" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
         <file path="../example.syscfg" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>

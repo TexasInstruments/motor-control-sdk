@@ -41,7 +41,7 @@
 #include <drivers/pinmux.h>
 #include <stdlib.h>
 #include <board/ioexp/ioexp_tca6424.h>
-#include "time_sync.h"
+#include <time_sync.h>
 #include <rtupru0_load_bin.h>
 
 const uint8_t gIepIncrementValue = 5;
@@ -226,8 +226,8 @@ void pru_icss_with_time_sync_main(void *args)
 #ifdef ENABLE_DEBUG_GPIO
     GPIO_pinWriteLow(gpioBaseAddr, pinNum);
 #endif
-#endif
     }
+#endif
 #endif
 #ifdef TIME_TRANSMITTER_RECEIVER
     /* Wait for offset to be stable */

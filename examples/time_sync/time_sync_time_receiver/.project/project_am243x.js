@@ -6,8 +6,7 @@ const files = {
     common: [
         "main.c",
         "time_sync_main.c",
-        "time_sync.c",
-        "time_sync.h"
+        "time_sync.c"
     ],
 };
 
@@ -46,6 +45,7 @@ const includes_freertos_r5f_am243x_evm = {
         "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/am243x/r5f",
         "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/driver",
         "${MOTOR_CONTROL_SDK_PATH}/source/pruicss_iep_sync_out_generation/am243x-evm",
+        "${MOTOR_CONTROL_SDK_PATH}/examples/time_sync"
     ],
 };
 

@@ -40,7 +40,6 @@ FILES_common := \
 	main.c \
 	time_sync_main.c \
 	time_sync.c \
-	time_sync.h \
 	ti_drivers_config.c \
 	ti_drivers_open_close.c \
 	ti_board_config.c \
@@ -64,6 +63,7 @@ INCLUDES_common := \
 	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/am243x/r5f \
 	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/driver \
 	-I${MOTOR_CONTROL_SDK_PATH}/source/pruicss_iep_sync_out_generation/am243x-evm \
+	-I${MOTOR_CONTROL_SDK_PATH}/examples/time_sync \
 	-Igenerated \
 
 DEFINES_common := \
