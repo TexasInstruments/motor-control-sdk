@@ -15,5 +15,8 @@ push_commands = [
 [ignore]
 glob = [
     '*.out',  # Compiled binaries 
+    '*.jpg',  # JPEG images
+    '*.png',  # PNG images
+    '*.ppt*', # PPT files
     '*.html'  # Html files
 ]

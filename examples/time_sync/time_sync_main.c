@@ -67,6 +67,27 @@ TimesyncDebug timesyncDebug0;
 #endif
 TimesyncDebug timesyncDebug1;
 
+/* Processing delay macros which include propagation delay and CPU latency (in nanoseconds) */
+/* Refer to Time Sync Design SDK documentation for calculation methodology */
+#define TIMESYNC_PROCESSING_DELAY_TRANSMITTER_RECEIVER  (400U) /* Value applicable in release mode of transmitter and receiver example */
+#define TIMESYNC_PROCESSING_DELAY_RECEIVER              (750U) /* Value applicable in debug mode of receiver example */
+
+/* TIMESYNC router configuration register offsets and values */
+#define TIMESYNC_EVENT_ROUTER_REG_SIZE         (4U)
+#define TIMESYNC_EVENT_ROUTER_OUT12_OFFSET     (12U * TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U)
+#define TIMESYNC_EVENT_ROUTER_OUT8_OFFSET      (8U * TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U)
+#define TIMESYNC_EVENT_ROUTER_IN25_TO_OUT12    (0x00010019U)  /* PRU_ICSSG0_PR1_EDC0_SYNC0_OUT_0 to PRG1_IEP0_LATCH_IN0 */
+#define TIMESYNC_EVENT_ROUTER_IN4_TO_OUT8      (0x00010004U)  /* PINFUCTION_PRG0_IEP0_LATCH_IN0 to PRG0_IEP0_LATCH_IN0 */
+
+/* IEP configuration values */
+#define IEP_SYNC_PULSE_WIDTH                   (200U)
+#define IEP_SYNC_DISABLED                      (0x0000U)
+#define IEP_CMP_EVENTS_ENABLE_ALL              (0x1FFFEU)
+
+/* Helper macro to access IEP registers */
+#define IEP_REG_ADDR(pruHandle, regOffset) \
+    ((uint32_t)(((PRUICSS_HwAttrs *)(pruHandle->hwAttrs))->iep0RegBase) + (regOffset))
+
 #if defined(am243x_evm)
 static void i2c_io_expander(void *args)
 {
@@ -113,9 +134,9 @@ void pru_icss_with_time_sync_main(void *args)
 
     gPruIcss0Handle = PRUICSS_open(CONFIG_PRU_ICSS0);
     /* Call the board specific function to configure the IO expander */
-    #if defined(am243x_evm)
+#if defined(am243x_evm)
     i2c_io_expander(NULL);
-    #endif
+#endif
     /* Initialize the PRUICSS DMEM memory */
     status = PRUICSS_initMemory(gPruIcss0Handle, PRUICSS_DATARAM(PRUICSS_PRU0));
     DebugP_assert(status != 0);
@@ -132,71 +153,75 @@ void pru_icss_with_time_sync_main(void *args)
     status = PRUICSS_loadFirmware(gPruIcss1Handle, PRUICSS_RTU_PRU0, RTUPRU0_Firmware_0, sizeof(RTUPRU0_Firmware_0));
     DebugP_assert(SystemP_SUCCESS == status);
     /*Connect TIMESYNC_INTRTR0_IN25(PRU_ICSSG0_PR1_EDC0_SYNC0_OUT_0) to TIMESYNC_INTRTR0_OUT12(PRG1_IEP0_LATCH_IN0)*/
-    HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + (12*4 + 4)), (0x00010019));
-    timesyncHandle1 = timesync_init(&timesyncParams1, (uint32_t)(((PRUICSS_HwAttrs *)(gPruIcss1Handle->hwAttrs))->iep0RegBase));
+    HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + TIMESYNC_EVENT_ROUTER_OUT12_OFFSET), TIMESYNC_EVENT_ROUTER_IN25_TO_OUT12);
+    timesyncHandle1 = timesync_init(&timesyncParams1, IEP_REG_ADDR(gPruIcss1Handle, 0));
     timesyncHandle1->iepIncrementValue = gIepIncrementValue;
 #ifdef ENABLE_DEBUG_LOGS
     timesyncHandle1->timesyncDebugPtr = &timesyncDebug1;
 #endif
-    timesyncHandle1->processingDelay = 400;
+    timesyncHandle1->processingDelay = TIMESYNC_PROCESSING_DELAY_TRANSMITTER_RECEIVER;
 #endif
 
 #ifdef TIME_RECEIVER
     /*TIME SYNC router configuration */
     /*Connect TIMESYNC_INTRTR0_IN4(PINFUCTION_PRG0_IEP0_LATCH_IN0) to TIMESYNC_INTRTR0_OUT8 (PRG0_IEP0_LATCH_IN0)*/
-    HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + (8*4 + 4)), (0x00010004));
-    timesyncHandle0 = timesync_init(&timesyncParams0, (uint32_t)(((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->iep0RegBase));
+    HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + TIMESYNC_EVENT_ROUTER_OUT8_OFFSET), TIMESYNC_EVENT_ROUTER_IN4_TO_OUT8);
+    timesyncHandle0 = timesync_init(&timesyncParams0, IEP_REG_ADDR(gPruIcss0Handle, 0));
     timesyncHandle0->iepIncrementValue = gIepIncrementValue;
 #ifdef ENABLE_DEBUG_LOGS
     timesyncHandle0->timesyncDebugPtr = &timesyncDebug0;
 #endif
-    timesyncHandle0->processingDelay = 750;
+    timesyncHandle0->processingDelay = TIMESYNC_PROCESSING_DELAY_RECEIVER;
 #endif
     /*disable IEP0 of ICSSG0 */
     PRUICSS_controlIepCounter(gPruIcss0Handle, 0, 0);
     /*Initialize IEP0 counter value*/
-    HW_WR_REG32((uint32_t)(((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->iep0RegBase) + CSL_ICSS_G_PR1_IEP0_SLV_COUNT_REG0, 0x0);
-    HW_WR_REG32((uint32_t)(((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->iep0RegBase) + CSL_ICSS_G_PR1_IEP0_SLV_COUNT_REG1, 0x0);
+    HW_WR_REG32(IEP_REG_ADDR(gPruIcss0Handle, CSL_ICSS_G_PR1_IEP0_SLV_COUNT_REG0), 0x0);
+    HW_WR_REG32(IEP_REG_ADDR(gPruIcss0Handle, CSL_ICSS_G_PR1_IEP0_SLV_COUNT_REG1), 0x0);
     /*Configure non zero compare1 value, compare 1 value is initialized with 1000 in sync generation firmware*/
-    HW_WR_REG32((uint32_t)(((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->iep0RegBase) + CSL_ICSS_G_PR1_IEP0_SLV_CMP1_REG0, SYNC_PERIOD_IN_NS);
+    HW_WR_REG32(IEP_REG_ADDR(gPruIcss0Handle, CSL_ICSS_G_PR1_IEP0_SLV_CMP1_REG0), SYNC_PERIOD_IN_NS);
     /*clear compare status*/
-    HW_WR_REG32((uint32_t)(((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->iep0RegBase) + CSL_ICSS_G_PR1_IEP0_SLV_CMP_STATUS_REG, 0xFFFF);
+    HW_WR_REG32(IEP_REG_ADDR(gPruIcss0Handle, CSL_ICSS_G_PR1_IEP0_SLV_CMP_STATUS_REG), 0xFFFF);
     /*configure sync pulse width and disable sync*/
-    HW_WR_REG32((uint32_t)(((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->iep0RegBase) + CSL_ICSS_G_PR1_IEP0_SLV_SYNC_PWIDTH_REG, 200);
-    HW_WR_REG32((uint32_t)(((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->iep0RegBase) + CSL_ICSS_G_PR1_IEP0_SLV_SYNC_CTRL_REG, 0x0000);
+    HW_WR_REG32(IEP_REG_ADDR(gPruIcss0Handle, CSL_ICSS_G_PR1_IEP0_SLV_SYNC_PWIDTH_REG), IEP_SYNC_PULSE_WIDTH);
+    HW_WR_REG32(IEP_REG_ADDR(gPruIcss0Handle, CSL_ICSS_G_PR1_IEP0_SLV_SYNC_CTRL_REG), IEP_SYNC_DISABLED);
     /*enable all compare events of ICSSG0*/
-    HW_WR_REG32((uint32_t)(((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->iep0RegBase) + CSL_ICSS_G_PR1_IEP0_SLV_CMP_CFG_REG, (0x1FFFE));
+    HW_WR_REG32(IEP_REG_ADDR(gPruIcss0Handle, CSL_ICSS_G_PR1_IEP0_SLV_CMP_CFG_REG), IEP_CMP_EVENTS_ENABLE_ALL);
 #ifdef TIME_TRANSMITTER_RECEIVER
     /*disable IEP0 of ICSSG1*/
     PRUICSS_controlIepCounter(gPruIcss1Handle, 0, 0);
     /*Initialize IEP0 counter value*/
-    HW_WR_REG32((uint32_t)(((PRUICSS_HwAttrs *)(gPruIcss1Handle->hwAttrs))->iep0RegBase) + CSL_ICSS_G_PR1_IEP0_SLV_COUNT_REG0, 0x0);
-    HW_WR_REG32((uint32_t)(((PRUICSS_HwAttrs *)(gPruIcss1Handle->hwAttrs))->iep0RegBase) + CSL_ICSS_G_PR1_IEP0_SLV_COUNT_REG1, 0x0);
+    HW_WR_REG32(IEP_REG_ADDR(gPruIcss1Handle, CSL_ICSS_G_PR1_IEP0_SLV_COUNT_REG0), 0x0);
+    HW_WR_REG32(IEP_REG_ADDR(gPruIcss1Handle, CSL_ICSS_G_PR1_IEP0_SLV_COUNT_REG1), 0x0);
     /*Configure non zero compare1 value, compare 1 value is initialized with 1000 in sync generation firmware*/
-    HW_WR_REG32((uint32_t)(((PRUICSS_HwAttrs *)(gPruIcss1Handle->hwAttrs))->iep0RegBase) + CSL_ICSS_G_PR1_IEP0_SLV_CMP1_REG0, SYNC_PERIOD_IN_NS);
+    HW_WR_REG32(IEP_REG_ADDR(gPruIcss1Handle, CSL_ICSS_G_PR1_IEP0_SLV_CMP1_REG0), SYNC_PERIOD_IN_NS);
     /*clear compare status*/
-    HW_WR_REG32((uint32_t)(((PRUICSS_HwAttrs *)(gPruIcss1Handle->hwAttrs))->iep0RegBase) + CSL_ICSS_G_PR1_IEP0_SLV_CMP_STATUS_REG, 0xFFFF);
+    HW_WR_REG32(IEP_REG_ADDR(gPruIcss1Handle, CSL_ICSS_G_PR1_IEP0_SLV_CMP_STATUS_REG), 0xFFFF);
     /*configure sync pulse width and disable sync*/
-    HW_WR_REG32((uint32_t)(((PRUICSS_HwAttrs *)(gPruIcss1Handle->hwAttrs))->iep0RegBase) + CSL_ICSS_G_PR1_IEP0_SLV_SYNC_PWIDTH_REG, 200);
-    HW_WR_REG32((uint32_t)(((PRUICSS_HwAttrs *)(gPruIcss1Handle->hwAttrs))->iep0RegBase) + CSL_ICSS_G_PR1_IEP0_SLV_SYNC_CTRL_REG, 0x0000);
+    HW_WR_REG32(IEP_REG_ADDR(gPruIcss1Handle, CSL_ICSS_G_PR1_IEP0_SLV_SYNC_PWIDTH_REG), IEP_SYNC_PULSE_WIDTH);
+    HW_WR_REG32(IEP_REG_ADDR(gPruIcss1Handle, CSL_ICSS_G_PR1_IEP0_SLV_SYNC_CTRL_REG), IEP_SYNC_DISABLED);
     /* Enable IEP0 with increment of 5 for ICSSG1*/
-    PRUICSS_setIepCounterIncrementValue(gPruIcss1Handle, 0, 5);
+    PRUICSS_setIepCounterIncrementValue(gPruIcss1Handle, 0, gIepIncrementValue);
     PRUICSS_controlIepCounter(gPruIcss1Handle, 0, 1);
 #endif
     /* Enable IEP0 with increment of 5 for ICSSG0*/
-    PRUICSS_setIepCounterIncrementValue(gPruIcss0Handle, 0, 5);
+    PRUICSS_setIepCounterIncrementValue(gPruIcss0Handle, 0, gIepIncrementValue);
     PRUICSS_controlIepCounter(gPruIcss0Handle, 0, 1);
 
+
 #ifdef TIME_RECEIVER
+#if (defined(_DEBUG_) != 1)
+    DebugP_log("This example is supported only in debug mode\n");
     while(1)
     {
-#if defined _DEBUG_ != 1
-    DebugP_log("This example is supported only in debug mode\n");
+        ClockP_usleep(1);
+    }
 #else
+    while(1)
+    {
 #ifdef ENABLE_DEBUG_GPIO
     GPIO_pinWriteHigh(gpioBaseAddr, pinNum);
 #endif
-
        timesync_run(timesyncHandle0);
 #ifdef ENABLE_DEBUG_GPIO
     GPIO_pinWriteLow(gpioBaseAddr, pinNum);

@@ -137,28 +137,6 @@ typedef struct {
     uint32_t    McompensationPeriod[MSIZE];     /**< History of calculated compensation periods */
 } TimesyncDebug;
 
-/**
- * \brief Variables used for offset stabilization
- * algorithm
- */
-typedef struct
-{
-    /**Count for last sync which had drift
-     * lower than threshold. This index keeps incrementing
-     * for every sync frame and gets reset to 0 if it
-     * crosses a threshold.
-     */
-    uint8_t lastSeen_good_drift_index;
-
-    /**Counter for recording the offsets*/
-    uint8_t num_entries_index;
-
-    /**Array of correction values with
-     * low drift which are clustered together
-     */
-    int32_t correction[OFFSET_ALGO_BIN_SIZE];
-
-} TimesyncOffsetStableAlgo;
 
 /**
  * \brief Core parameters and state for time synchronization
@@ -172,7 +150,6 @@ typedef struct {
     volatile uint64_t    currentTimestamp;   /**< Most recently captured timestamp from master */
     volatile uint64_t    prevTimestamp;      /**< Previously captured timestamp for interval calculation */
     volatile uint64_t    processingDelay;    /**< Initial IEP count */
-    volatile uint64_t    timeElapsed;
 
     /* Offset Tracking */
     volatile int32_t     currOffset;         /**< Current measured offset from master time */

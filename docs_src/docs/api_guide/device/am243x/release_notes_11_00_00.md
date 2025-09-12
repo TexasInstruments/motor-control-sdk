@@ -26,6 +26,9 @@ Refactor the examples, renamed the old example to snoop mode based example and a
 Single R5 core example for dual-servo motor drive reference design based on Universal Motor Control similar to other Sitara/C2000 devices. | TIDEP-01032 EtherCAT-Connected Single-Chip Dual-Servo Motor Drive Reference Design
 SFRA Library                                                                                    | Real Time Libraries
 Datalog Library and Example                                                                     | Real Time Libraries
+Phase Shift Example(PRU Based PWM Control)                                                      | PRU-ICSS PWM
+Time Transmitter Receiver Example                                                               | Time Sync
+Time Receiver Example(Supported Only In Debug Mode)                                             | Time Sync
 
 \cond SOC_AM243X
 SOC    | Supported CPUs  | Boards                                                                                                      | Host PC

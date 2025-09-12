@@ -42,7 +42,7 @@
 /* State transitions:
  * RESET -> FIRST_ADJUSTMENT_DONE : After initial sync
  * FIRST_ADJUSTMENT_DONE -> SLOW_COMPENSATION : Start drift compensation
- * SLOW_COMPENSATION -> TIMER_IN_SYNC : When offset stabilizes
+ * SLOW_COMPENSATION -> TIMER_IN_SYNC : When offset stabilizes and rate difference converges
  * Any state -> RESET : If offset exceeds threshold
  */
 
@@ -81,6 +81,7 @@ void timesync_run(TimesyncHandle handle)
 {
     uint32_t iepBaseAddress = handle->iepBaseAddress;
     uint64_t expectedTimestamp;
+    uint32_t timeElapsed;
 
 #ifdef ENABLE_DEBUG_LOGS
     TimesyncDebug *timesyncDebugPtr = handle->timesyncDebugPtr;
@@ -99,12 +100,12 @@ void timesync_run(TimesyncHandle handle)
     {
         /* FIRST SYNC EVENT after start or restart */
         /* Store the initial count into IEP timer */
-        handle->timeElapsed = (timesync_read_iep_count(iepBaseAddress) - handle->currentTimestamp) + handle->processingDelay;
-        timesync_do_first_adjustment(iepBaseAddress, handle->timeElapsed);
+        timeElapsed = (timesync_read_iep_count(iepBaseAddress) - handle->currentTimestamp) + handle->processingDelay;
+        timesync_do_first_adjustment(iepBaseAddress, timeElapsed);
 
         handle->state = TIMESYNC_STATE_FIRST_ADJUSTMENT_DONE;
-
-        //configure compare 1 with 1ms after first sync and enable compare events
+ 
+        /* configure compare 1 with sync period after first sync and enable compare events */
         HW_WR_REG32((uint32_t)(iepBaseAddress + CSL_ICSS_G_PR1_IEP0_SLV_CMP1_REG0),(SYNC_PERIOD_IN_NS));
         HW_WR_REG32((uint32_t)(iepBaseAddress + CSL_ICSS_G_PR1_IEP0_SLV_CMP_CFG_REG), 0x1FFFE);
         HW_WR_REG32((uint32_t)(iepBaseAddress + CSL_ICSS_G_PR1_IEP0_SLV_SYNC_CTRL_REG), 0x0003);
@@ -149,8 +150,8 @@ void timesync_run(TimesyncHandle handle)
             timesync_reset(handle);
 #ifdef ENABLE_DEBUG_LOGS
             timesync_debug_reset(timesyncDebugPtr);
-            return;
 #endif
+            return;
         }
         /* Find clock drift */
         if(handle->prevOffsetValid[0])
@@ -390,7 +391,6 @@ void timesync_adjust_slow_compensation(TimesyncHandle handle, int32_t adjOffset)
     TimesyncDebug *timesyncDebugPtr = handle->timesyncDebugPtr;
 #endif
 
-
     if(adjOffset != 0)
     {
         /* set compensation interval = (sync interval - time elapsed since last sync interval)/drift */
@@ -504,8 +504,6 @@ volatile uint64_t timesync_read_latch_input(uint32_t iepBaseAddress)
 
     return currentTimestamp;
 }
-
-
 
 /**
  * \brief Reads the current IEP counter value
