@@ -323,8 +323,8 @@ void initMotorCtrlParameters(MOTOR_Handle handle)
     objSets->restartTimesSet = USER_M1_START_TIMES_SET;
 
 
-    objSets->dacCMPValH = 2048U + 1024U;    // set default positive peak value
-    objSets->dacCMPValL = 2048U - 1024U;    // set default negative peak value
+    objSets->dacCMPValH = SDFM_HALF_SCALE + SDFM_HALF_SCALE/2;    // set default positive peak value
+    objSets->dacCMPValL = SDFM_HALF_SCALE - SDFM_HALF_SCALE/2;    // set default negative peak value
 
 #if defined(MOTOR1_INLINE_SDFM) || defined(MOTOR2_INLINE_SDFM)
     obj->sdfmData.current_sf = objUser->current_sf * USER_M1_SIGN_CURRENT_SF;
@@ -1323,8 +1323,7 @@ void runMotorControl(MOTOR_Handle handle)
     return;
 }   // end of the runMotorControl() function
 
-//__attribute__ ((section(".tcm_code"))) void motor1CtrlISR(void *handle)
-void motor1CtrlISR(void *handle)
+__attribute__ ((section(".tcm_code"))) void motor1CtrlISR(void *handle)
 {
     motorVars_M1.ISRCount++;
     motorCtrlISR(motorHandle_M1);

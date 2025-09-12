@@ -56,6 +56,7 @@ The implementation features dual-axis BLDC motor control where the control loop 
 - Field weakening control, flying start, MTPA, and braking
 - RMS calculations (Not tested)
 - Controller tuning (Not tested)
+- Encoder offset calibration
 
 ## Design Considerations
 
@@ -113,6 +114,18 @@ Below are the settings used in the SDK example. These configurations are done in
 - Frequency: 8MHz.
 - Position trigger point: 25us (middle of EPWM cycle).
     - IEP CMP event is configured as 7500 IEP count for 25us.
+To change the trigger point and EnDat frequency, the following macros need to be updated in the `hal.h` file:
+```c
+#define ENDAT_FREQUENCY                    8000000
+#define ENDAT_TRIGGER_POINT                7500
+```
+\note The current implementation uses a fixed 90-degree (0.5*MATH_PI) offset for all EnDat encoder configurations. While this works for many setups, optimal motor performance may require a proper encoder offset calibration process.The relationship between the encoder's zero position and the motor's electrical reference position can vary based on physical mounting. For custom applications or when precise alignment is required, consider implementing a true offset calibration by:
+    - Reading the encoder position after the motor alignment phase
+    - Using this value as the offset instead of the fixed 90-degree value
+    - This calibration would replace the current fixed offset lines in the `HAL_getMtrEncoderPosition` function in the `hal.c`:
+```c
+obj->thetaElec_rad =  obj->thetaElec_rad + 0.5*MATH_PI;
+```
 
 #### SDFM Configuration
 
@@ -128,7 +141,14 @@ The following settings are used in the SDK example:
 
 `HAL_setupSDFM` and `HAL_readMtrSdfmData` functions are used to initialize %SDFM and to get %SDFM samples, respectively. Other relevant macros and %SDFM handle are defined in `hal.h` and `hal.c`. The current example uses a common configuration for both motors and PRU0 channel and RTU channels in load share mode for sampling. The IEP SYNC output is used to generate a 20 MHz %SDFM clock. Parameter configuration can be changed in `hal.h` file and %SDFM Sysconfig.
 
-\note Overcurrent detection is not enabled.
+\note 
+- The following macros should be updated according to the OSR values and SINC filter types when the OSR value and filter type are changed in the Sysconfig.
+```c
+   /* Sigma delta filter output range for SINC3 OSR64: 64*64*64 */
+   #define SDFM_FULL_SCALE         262144.0f
+   #define SDFM_HALF_SCALE         131072.0f
+```
+- Overcurrent detection is not enabled.
 
 #### EPWM Configuration
 
@@ -136,7 +156,7 @@ EPWM0-2 are used for Motor1, and EPWM3_A, EPWM5_B, EPWM7, and EPWM8 are used for
 
 All EPWM configuration and parameter settings are configured in `hal.c`, `hal.h`, `epwm.h`, and `epwm.c` files.
 
-\note To update the output frequency of the EPWM, the `#define USER_M1_PWM_FREQ_kHz` macro in `user_mtr.h` file needs to be updated. Additionally, the `#define APP_EPWM_OUTPUT_FREQ` in `app_epwm.h` also needs to be updated.
+\note To update the output frequency of the EPWM, the `USER_M1_PWM_FREQ_kHz` macro in the `user_mtr.h` file needs to be updated. Additionally, the `APP_EPWM_OUTPUT_FREQ` in the `app_epwm.h` file also needs to be updated. Moreover, the position and current trigger points should also be adjusted according to the EPWM cycle timing.
 
 \note EPWM trip zone is not enabled.
 
@@ -478,3 +498,5 @@ This section describes the steps to run the EtherCAT sub-device CiA402 demo exam
 3. Set RxPDO_1 (Motor 2) Controlword to `"15"`
 4. Verify Motor 2 reaches target speed of `180` RPM
 5. Verify TxPDO1 (Motor 2) Velocity actual value shows `180` RPM
+
+\note For instructions on how to enable DC mode, refer to the section titled "Testing DC Synchronization mode" in the document <a href="@VAR_IC_SDK_DOCS_PATH/ETHERCAT_SUBDEVICE_DEMO_TWINCAT.html" target="_blank">@VAR_SOC_NAME EtherCAT SubDevice Setup with TwinCAT</a>.
