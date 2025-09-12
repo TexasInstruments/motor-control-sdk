@@ -308,7 +308,7 @@ pruicss1.intcMapping[1].event                                                   
 pruicss1.intcMapping[1].channel                                                   = "4";
 pruicss1.intcMapping[2].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING2";
 pruicss1.intcMapping[2].event                                                     = "23";
-pruicss1.intcMapping[2].channel                                                   = "4";
+pruicss1.intcMapping[2].channel                                                   = "5";
 
 /**
  * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future
