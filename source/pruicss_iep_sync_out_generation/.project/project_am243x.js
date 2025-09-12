@@ -39,9 +39,6 @@ const lflags = {
     ],
 };
 
-const readmeDoxygenPageTag = "EXAMPLE_PRUICSS_PWM_WITH_TIME_SYNC";
-
-
 const templates_pru =
 [
     {
@@ -150,7 +147,6 @@ function getComponentBuildProperty(buildOption) {
     build_property.includes = includes;
     build_property.lflags = lflags;
     build_property.templates = templates_pru;
-    build_property.readmeDoxygenPageTag = readmeDoxygenPageTag;
     build_property.projecspecFileAction = "copy";
     build_property.skipMakefileCcsBootimageGen = true;
     build_property.ccsPruPostBuildSteps = getccsPruPostBuildSteps(buildOption.cpu, buildOption.board);
