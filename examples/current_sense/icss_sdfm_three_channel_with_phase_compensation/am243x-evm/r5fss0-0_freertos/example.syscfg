@@ -279,11 +279,10 @@ section12.output_section.create(1);
 section12.output_section[0].$name     = ".gSdfmSampleOutput   ";
 section12.output_section[0].alignment = 4;
 
-pruicss_g_v0_pwm1.$name                                               = "CONFIG_PRUICSS_PWM0";
-pruicss_g_v0_pwm1.PRUICSS_PWM_IEP.$name                               = "CONFIG_PRUICSS_PWM_IEP0";
-pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[0].$name                        = "CONFIG_PRUICSS_PWM_CHANNEL0";
-pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE[0].$name                       = "CONFIG_PRUICSS_PWM_TRIPZONE0";
-pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE[0].PRU_ICSSG0_PWM.TZ_OUT.$used = true;
+pruicss_g_v0_pwm1.$name                         = "CONFIG_PRUICSS_PWM0";
+pruicss_g_v0_pwm1.PRUICSS_PWM_IEP.$name         = "CONFIG_PRUICSS_PWM_IEP0";
+pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[0].$name  = "CONFIG_PRUICSS_PWM_CHANNEL0";
+pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE[0].$name = "CONFIG_PRUICSS_PWM_TRIPZONE0";
 
 pruicss1.$name                                                                    = "CONFIG_PRU_ICSS0";
 pruicss1.coreClk                                                                  = 300000000;
@@ -293,6 +292,7 @@ pruicss_g_v0_pwm1.PRUICSS                                                       
 pruicss1.AdditionalICSSSettings[0].$name                                          = "CONFIG_PRU_ICSS_IO0";
 pruicss1.AdditionalICSSSettings[0].PruIepIO.create(1);
 pruicss1.AdditionalICSSSettings[0].PruIepIO[0].$name                              = "CONFIG_PRU_ICSS_IEP_IO0";
+pruicss1.AdditionalICSSSettings[0].PruIepIO[0].PRU_ICSSG0_IEP.$assign             = "PRU_ICSSG0_IEP0";
 pruicss1.AdditionalICSSSettings[0].PruIepIO[0].PRU_ICSSG0_IEP.EDC_SYNC_OUT0.$used = true;
 pruicss1.AdditionalICSSSettings[0].PruIepIO[0].PRU_ICSSG0_IEP.EDC_SYNC_OUT1.$used = true;
 pruicss1.AdditionalICSSSettings[0].PruEcapIO.create(1);
@@ -319,8 +319,6 @@ debug_log.uartLog.UART.TXD.$suggestSolution                                     
 pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[0].PRU_ICSSG0_PWM.$suggestSolution                     = "PRU_ICSSG0_PWM0";
 pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[0].PRU_ICSSG0_PWM.pwmPin.$suggestSolution              = "PRG0_PRU0_GPO12";
 pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE[0].PRU_ICSSG0_PWM.$suggestSolution                    = "PRU_ICSSG0_PWM0";
-pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE[0].PRU_ICSSG0_PWM.TZ_OUT.$suggestSolution             = "PRG0_PRU0_GPO19";
-pruicss1.AdditionalICSSSettings[0].PruIepIO[0].PRU_ICSSG0_IEP.$suggestSolution               = "PRU_ICSSG0_IEP1";
-pruicss1.AdditionalICSSSettings[0].PruIepIO[0].PRU_ICSSG0_IEP.EDC_SYNC_OUT0.$suggestSolution = "PRG0_PRU1_GPO19";
-pruicss1.AdditionalICSSSettings[0].PruIepIO[0].PRU_ICSSG0_IEP.EDC_SYNC_OUT1.$suggestSolution = "PRG0_PRU1_GPO17";
+pruicss1.AdditionalICSSSettings[0].PruIepIO[0].PRU_ICSSG0_IEP.EDC_SYNC_OUT0.$suggestSolution = "PRG0_PRU0_GPO19";
+pruicss1.AdditionalICSSSettings[0].PruIepIO[0].PRU_ICSSG0_IEP.EDC_SYNC_OUT1.$suggestSolution = "PRG0_PRU0_GPO17";
 pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].PRU_ICSSG0_ECAP.IN_APWM_OUT.$suggestSolution = "PRG0_PRU1_GPO15";
