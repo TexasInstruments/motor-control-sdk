@@ -306,14 +306,14 @@ static void nikon_pruicss_init(void)
     PRUICSS_setConstantTblEntry(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0xA58);
 #else
     PRUICSS_setConstantTblEntry(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0xA50);
-#endif /* PRUICSS_SLICEx == 1 */ 
+#endif /* PRUICSS_SLICEx == 1 */
 #else
 #if PRUICSS_SLICEx == 1
     PRUICSS_setConstantTblEntry(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0x258);
 #else
     PRUICSS_setConstantTblEntry(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0x250);
-#endif /* PRUICSS_SLICEx == 1 */ 
-#endif /* CONFIG_NIKON0_PRUICSSx == 1 */ 
+#endif /* PRUICSS_SLICEx == 1 */
+#endif /* CONFIG_NIKON0_PRUICSSx == 1 */
 
     }
     status = PRUICSS_disableCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_PRUx);
@@ -1692,8 +1692,7 @@ void nikon_main(void *args)
                     }
                     while(1)
                     {
-
-                        DebugP_log("\r\n Current encoder address : %d", priv->eax[ls_ch]);
+                        DebugP_log("\r\n Current encoder address : %u", (uint32_t)nikon_reverse_bits(priv->eax[ls_ch], NIKON_ENC_ADDR_LEN));
                         DebugP_log("\r\n Please enter the encoder address : ");
                         DebugP_scanf("%d", &enc_addr);
                         if(enc_addr > 7)
