@@ -24,5 +24,7 @@ Refer below pages for additional useful information for developers to efficientl
 
 - Module-specific Debug Guides
     - \ref  SDFM_EXAMPLES_DEBUG_GUIDE
-    - \ref  ENCODER_EXAMPLES_DEBUG_GUIDE   
-        - \ref ENDAT_DEBUG_GUIDE 
+    - \ref  ENCODER_EXAMPLES_DEBUG_GUIDE
+        - \ref BISSC_DEBUG_GUIDE
+        - \ref ENDAT_DEBUG_GUIDE
+        - \ref HDSL_DEBUG_GUIDE
