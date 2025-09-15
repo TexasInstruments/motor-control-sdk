@@ -674,10 +674,8 @@ void tamagawa_main(void *args)
     priv->pru_clock = ICSS_PRU_CORE_CLOCK;
     priv->pru_uart_clock = ICSS_PRU_UART_CLOCK;
 
-
-    priv->rx_clock_source = CONFIG_TAMAGAWA0_RX_FIFO_CLOCK_SOURCE;
-    priv->tx_clock_source = CONFIG_TAMAGAWA0_TX_FIFO_CLOCK_SOURCE;
-
+    priv->rx_clock_source = CONFIG_TAMAGAWA0_TX_RX_FIFO_CLOCK_SOURCE;
+    priv->tx_clock_source = CONFIG_TAMAGAWA0_TX_RX_FIFO_CLOCK_SOURCE;
 
     DebugP_log("\r\n\nTamagawa PRU-ICSS init done\n\n");
 

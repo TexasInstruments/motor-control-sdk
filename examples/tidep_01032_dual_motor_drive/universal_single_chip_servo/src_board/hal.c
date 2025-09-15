@@ -605,8 +605,7 @@ void HAL_setupEncoder(HAL_Handle handle)
     endat_clk_config.pru_clock = icssClk;
     endat_clk_config.pru_uart_clock = ENDAT_INPUT_CLOCK_UART_FREQUENCY;
     endat_clk_config.rx_clock_source = ENDAT_RX_FIFO_CLOCK_SOURCE;
-    endat_clk_config. tx_clock_source = ENDAT_TX_FIFO_CLOCK_SOURCE;
-
+    endat_clk_config.tx_clock_source = ENDAT_TX_FIFO_CLOCK_SOURCE;
 
 #if (ENDAT_PRUICSS_SLICEx == PRUICSS_PRU1)
     priv = endat_init((struct endat_pruss_xchg *)((PRUICSS_HwAttrs *)(

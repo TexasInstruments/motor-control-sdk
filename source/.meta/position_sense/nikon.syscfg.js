@@ -105,7 +105,7 @@ let nikon_module = {
         {
             name: "Tx_Rx_Clk_Source",
             displayName: "TX RX FIFO Clock Source",
-            description: "TX RX FIFO Clock Source Options",
+            description: "TX RX FIFO Clock Source Options. See module specific page in SDK documentation for more details and known limitations.",
             default: "0",
             options: [
                 {

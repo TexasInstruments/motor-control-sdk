@@ -56,22 +56,21 @@
     %{
         % Mode = 2;
     %}
-
-#define `instance.$name`                  (`i`)
-#define `instance.$name`_CHANNEL0         (`instance.channel_0 & 1`)
-#define `instance.$name`_CHANNEL1         (`instance.channel_1 & 1`)
-#define `instance.$name`_CHANNEL2         (`instance.channel_2 & 1`)
-#define `instance.$name`_BAUDRATE         (`instance.baudrate`)
-#define `instance.$name`_LOAD_SHARE_MODE  `instance.Multi_Channel_Load_Share & 1`
-#define `instance.$name`_MODE             `Mode`
-#define `instance.$name`_BOOSTER_PACK     (`instance.Booster_Pack & 1`)
-#define `instance.$name`_PRUICSS_PRUx                      (`sliceVal`)
-#define `instance.$name`_PRUICSSx                          (`icssValue`)
-#define `instance.$name`_PRUICSS_TXPRUx                    (`txPru`)
-#define `instance.$name`_PRUICSS_RTUPRUx                   (`rtuPru`)
-#define `instance.$name`_TX_RX_FIFO_CLOCK_SOURCE           (`instance.Tx_Rx_Clk_Source`)
+#define `instance.$name`                                    (`i`)
+#define `instance.$name`_CHANNEL0                           (`instance.channel_0 & 1`)
+#define `instance.$name`_CHANNEL1                           (`instance.channel_1 & 1`)
+#define `instance.$name`_CHANNEL2                           (`instance.channel_2 & 1`)
+#define `instance.$name`_BAUDRATE                           (`instance.baudrate`)
+#define `instance.$name`_LOAD_SHARE_MODE                    (`instance.Multi_Channel_Load_Share & 1`)
+#define `instance.$name`_MODE                               (`Mode`)
+#define `instance.$name`_BOOSTER_PACK                       (`instance.Booster_Pack & 1`)
+#define `instance.$name`_PRUICSS_PRUx                       (`sliceVal`)
+#define `instance.$name`_PRUICSSx                           (`icssValue`)
+#define `instance.$name`_PRUICSS_TXPRUx                     (`txPru`)
+#define `instance.$name`_PRUICSS_RTUPRUx                    (`rtuPru`)
+#define `instance.$name`_TX_RX_FIFO_CLOCK_SOURCE            (`instance.Tx_Rx_Clk_Source`)
  %if ((instance.instance === "ICSSG1" || instance.instance === "ICSSG0") && (instance.G_MUX_EN))
     %{
-#define `instance.$name`_G_MUX_EN          `instance["G_MUX_EN"] & 1`
+#define `instance.$name`_G_MUX_EN                           (`instance["G_MUX_EN"] & 1`)
     %}
 % }

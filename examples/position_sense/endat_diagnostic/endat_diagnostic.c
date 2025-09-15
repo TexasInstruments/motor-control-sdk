@@ -189,15 +189,11 @@ TaskP_Object gTaskObject;
 #define ICSS_PRU_CORE_CLOCK CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ
 #define ENDAT_INPUT_CLOCK_UART_FREQUENCY CONFIG_PRU_ICSS0_UART_CLK_FREQ_HZ
 
-#if CONFIG_ENDAT0_RX_FIFO_CLOCK_SOURCE == 1
+#if CONFIG_ENDAT0_TX_RX_FIFO_CLOCK_SOURCE == 1
 #define ENDAT_RX_INPUT_CLOCK_FREQUENCY ICSS_PRU_CORE_CLOCK
-#else
-#define ENDAT_RX_INPUT_CLOCK_FREQUENCY ENDAT_INPUT_CLOCK_UART_FREQUENCY
-#endif
-
-#if CONFIG_ENDAT0_RX_FIFO_CLOCK_SOURCE == 1
 #define ENDAT_TX_INPUT_CLOCK_FREQUENCY ICSS_PRU_CORE_CLOCK
 #else
+#define ENDAT_RX_INPUT_CLOCK_FREQUENCY ENDAT_INPUT_CLOCK_UART_FREQUENCY
 #define ENDAT_TX_INPUT_CLOCK_FREQUENCY ENDAT_INPUT_CLOCK_UART_FREQUENCY
 #endif
 
@@ -2485,8 +2481,8 @@ void endat_main(void *args)
     /*3 channel pheripheral clock configuration*/
     endat_clk_config.pru_clock = icssClk;
     endat_clk_config.pru_uart_clock = ENDAT_INPUT_CLOCK_UART_FREQUENCY;
-    endat_clk_config.rx_clock_source = CONFIG_ENDAT0_RX_FIFO_CLOCK_SOURCE;
-    endat_clk_config. tx_clock_source = CONFIG_ENDAT0_RX_FIFO_CLOCK_SOURCE;
+    endat_clk_config.rx_clock_source = CONFIG_ENDAT0_TX_RX_FIFO_CLOCK_SOURCE;
+    endat_clk_config.tx_clock_source = CONFIG_ENDAT0_TX_RX_FIFO_CLOCK_SOURCE;
 
 
     #if (PRUICSS_SLICEx == 1)
