@@ -284,8 +284,7 @@ tamagawa1.channel_1              = true;
 tamagawa1.channel_0              = false;
 tamagawa1.Booster_Pack           = true;
 tamagawa1.PRU_Slice              = "PRU0";
-tamagawa1.Rx_Clk_Source          = "1";
-tamagawa1.Tx_Clk_Source          = "1";
+tamagawa1.Tx_Rx_Clk_Source       = "1";
 tamagawa1.ENC1_EN.$name          = "ENC1_EN";
 tamagawa1.ENC1_EN.GPIO_n.$assign = "SDFM0_D1";
 

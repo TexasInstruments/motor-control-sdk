@@ -38,7 +38,7 @@
         % {
             % Slice = 1;
         % }
-#define  PRUICSSM                        1      
+#define  PRUICSSM                           (1)
         %if(instance.instance === "ICSSM1")
         %{
         % icssInst = 1;
@@ -53,13 +53,13 @@
     %{
         % Mode = 1;
     %}
-#define `instance.$name`_BOOSTER_PACK     `instance.Booster_Pack & 1`
-#define `instance.$name`                  (`i`)
-#define `instance.$name`_CHANNEL0         (`instance.channel_0 & 1`)
-#define `instance.$name`_CHANNEL1         (`instance.channel_1 & 1`)
-#define `instance.$name`_CHANNEL2         (`instance.channel_2 & 1`)
-#define `instance.$name`_MODE             (`Mode`)
-#define `instance.$name`_BOOSTER_PACK     `instance.Booster_Pack & 1`
-#define `instance.$name`_PRUICSS_PRUx            `Slice`
-#define `instance.$name`_PRUICSSx                          (`icssInst`)
+#define `instance.$name`_BOOSTER_PACK       (`instance.Booster_Pack & 1`)
+#define `instance.$name`                    (`i`)
+#define `instance.$name`_CHANNEL0           (`instance.channel_0 & 1`)
+#define `instance.$name`_CHANNEL1           (`instance.channel_1 & 1`)
+#define `instance.$name`_CHANNEL2           (`instance.channel_2 & 1`)
+#define `instance.$name`_MODE               (`Mode`)
+#define `instance.$name`_BOOSTER_PACK       (`instance.Booster_Pack & 1`)
+#define `instance.$name`_PRUICSS_PRUx       (`Slice`)
+#define `instance.$name`_PRUICSSx           (`icssInst`)
 % }
