@@ -1024,24 +1024,6 @@ NIKON_CH2_TX_BUSY_2?:
     QBBS    NIKON_SEND_WAIT_TILL_TX_BUSY_2?,	SCRATCH2.b0,	7
 	.endif
 NIKON_SKIP_TX_BUSY_2?:
-	.if $isdefed("ENABLE_MULTI_MAKE_RTU")
-	M_NIKON_LS_WAIT_FOR_SYNC
-	QBBC 	NIKON_SKIP_GLOBAL_REINIT1?, PRIMARY_CORE, 0
-    SET     R31, NIKON_TX_GLOBAL_REINIT
-	.elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
-	M_NIKON_LS_WAIT_FOR_SYNC
-	QBBC 	NIKON_SKIP_GLOBAL_REINIT1?, PRIMARY_CORE, 1
-	SET 	R31, NIKON_TX_GLOBAL_REINIT
-	.elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
-	M_NIKON_LS_WAIT_FOR_SYNC
-	QBBC 	NIKON_SKIP_GLOBAL_REINIT1?, PRIMARY_CORE, 2
-	SET 	R31, NIKON_TX_GLOBAL_REINIT
-	.else
-	SET 	R31, NIKON_TX_GLOBAL_REINIT
-	.endif
-NIKON_SKIP_GLOBAL_REINIT1?:
-	ZERO 	&SCRATCH, 4
-	SBCO 	&SCRATCH, PRUx_DMEM, NIKON_LS_RTU_SYNC_STATUS_OFFSET, 3
 NIKON_SKIP_TX_SEND?:
 	LDI 	SCRATCH.b0,  NON_EEPROM_CMD
 	SBCO 	&SCRATCH.b0, PRUx_DMEM, NIKON_MEM_ACCESS_STATUS_OFFSET, 1
@@ -1064,7 +1046,7 @@ NIKON_SKIP_TX_SEND?:
 ;		5.Repeat step 3 and 4 till all PRUs(in use) execution state is set.
 ;		(end code)
 ;
-;	 Worst case peak cycle usage: 14
+;	 Worst case peak cycle usage: Variable (depends on sync set completion time)
 ;
 ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 
@@ -1088,6 +1070,55 @@ NIKON_IS_SYNCED?:
 	LBCO	&LS_SYNC_STATE, PRUx_DMEM, NIKON_LS_TXPRU_SYNC_STATUS_OFFSET, 1
 	OR		SCRATCH.b1, SCRATCH.b1, LS_SYNC_STATE
 	QBNE	NIKON_IS_SYNCED?, SCRATCH.b1, SCRATCH.b0
+	.endm
+
+	; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
+; Macro: M_NIKON_LS_CLEAR
+; 	Clear all PRU synchronization status locations in load share mode.
+; Registers:
+;	SCRATCH: Temporary register used to store zero value for clearing.
+;
+;  PseudoCode:
+;	 (start code)
+;		1.Load 32-bit zero value into SCRATCH register.
+;		2.Store 3 bytes of zero starting at NIKON_LS_RTU_SYNC_STATUS_OFFSET to clear
+;		  all three sync status locations (RTU, PRU, TXPRU) simultaneously.
+;	 (end code)
+;
+;	 Worst case peak cycle usage: 3
+;
+; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
+
+M_NIKON_LS_CLEAR	.macro
+	LDI32	SCRATCH, 0
+	SBCO	&SCRATCH, PRUx_DMEM, NIKON_LS_RTU_SYNC_STATUS_OFFSET, 3
+	.endm
+
+; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
+; Macro: M_NIKON_LS_WAIT_FOR_SYNC_CLEAR
+; 	Wait until all PRU synchronization status locations are cleared in load share mode.
+; Registers:
+;	SCRATCH: Temporary register used to read sync status values.
+;
+;  PseudoCode:
+;	 (start code)
+;		1.Initialize SCRATCH register with zero.
+;		2.Read 3 bytes starting at NIKON_LS_RTU_SYNC_STATUS_OFFSET containing
+;		  all sync status locations (RTU, PRU, TXPRU).
+;		3.Compare with zero to check if all sync status locations are cleared.
+;		4.Loop back to step 2 if any sync status location is still set.
+;		5.Continue execution when all sync status locations are cleared.
+;	 (end code)
+;
+;	 Worst case peak cycle usage: Variable (depends on sync clear completion time)
+;
+; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
+
+M_NIKON_LS_WAIT_FOR_SYNC_CLEAR 	.macro
+	LDI32	SCRATCH, 0
+NIKON_IS_SYNC_CLEARED?:
+	LBCO	&SCRATCH, PRUx_DMEM, NIKON_LS_RTU_SYNC_STATUS_OFFSET, 3
+	QBNE	NIKON_IS_SYNC_CLEARED?, SCRATCH, 0
 	.endm
 
 ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;

@@ -285,61 +285,43 @@ void nikon_stop_periodic_mode(struct nikon_periodic_interface *nikon_periodic_in
     HW_WR_REG8((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG, temp);
 }
 
-/* PRU nikon FW IRQ handler */
+/* RTU Nikon FW IRQ handler */
 void rtu_nikon_irq_handler(void *args)
 {
-    /* debug, increment PRU SDFM IRQ count */
+    /* Increment RTU NIKON IRQ count */
     gRtuNikonIrqCnt++;
-
-    /* clear Channel 0 cmp event*/
-    uint32_t event_clear;
-    event_clear = HW_RD_REG8((uint8_t *)gPruIcss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
-    event_clear |=(0x1 << IEP_CH0_CMP_EVNT);
-    HW_WR_REG8((uint8_t *)gPruIcss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
 
     /* Clear interrupt at source */
     /* Write 18 to ICSS STATUS CLR INDEX Register
-        Firmware:   TRIGGER_HOST_SDFM_IRQ defined as 18
-        18 = 16+2, 2 is Host Interrupt Number. See AM64x TRM.
+        18 = 16+2, 2 is Host Interrupt Number. See TRM for more details.
     */
-    PRUICSS_clearEvent(gPruIcssXHandle,RTU_TRIGGER_HOST_EVT);
-
+    PRUICSS_clearEvent(gPruIcssXHandle, RTU_TRIGGER_HOST_EVT);
 }
+
+/* PRU Nikon FW IRQ handler */
 void pru_nikon_irq_handler(void *args)
 {
-    /* debug, inncrement PRU SDFM IRQ count */
+    /* Increment PRU NIKON IRQ count */
     gPruNikonIrqCnt++;
-
-    /* clear channel 1 cmp event*/
-    uint32_t event_clear;
-    event_clear = HW_RD_REG8((uint8_t *)gPruIcss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
-    event_clear |= (0x1 << IEP_CH1_CMP_EVNT);
-    HW_WR_REG8((uint8_t *)gPruIcss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
 
     /* Clear interrupt at source */
     /* Write 19 to ICSS STATUS CLR INDEX Register
-        19 = 16+3, 3 is Host Interrupt Number. See AM64x TRM.
+        19 = 16+3, 3 is Host Interrupt Number. See TRM for more details.
     */
-    PRUICSS_clearEvent(gPruIcssXHandle,PRU_TRIGGER_HOST_EVT);
-
+    PRUICSS_clearEvent(gPruIcssXHandle, PRU_TRIGGER_HOST_EVT);
 }
+
+/* TXPRU Nikon FW IRQ handler */
 void txpru_nikon_irq_handler(void *args)
 {
-    /* debug, inncrement PRU SDFM IRQ count */
+    /* Increment TXPRU NIKON IRQ count */
     gTxpruNikonIrqCnt++;
-
-    /* clear channel 2 cmp event*/
-    uint32_t event_clear;
-    event_clear = HW_RD_REG8((uint8_t *)gPruIcss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
-    event_clear |= (0x1 << IEP_CH2_CMP_EVNT);
-    HW_WR_REG8((uint8_t *)gPruIcss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
 
     /* Clear interrupt at source */
     /* Write 20 to ICSS STATUS CLR INDEX Register
-        20 = 16+4, 4 is Host Interrupt Number. See AM64x TRM.
+        20 = 16+4, 4 is Host Interrupt Number. See TRM for more details.
     */
     PRUICSS_clearEvent(gPruIcssXHandle, TXPRU_TRIGGER_HOST_EVT);
-
 }
 
 void nikon_periodic_interface_init(struct nikon_priv *priv, struct nikon_periodic_interface *nikon_periodic_interface, int64_t iep_reset_count, int64_t ch0_trigger_count, int64_t ch1_trigger_count, int64_t ch2_trigger_count)
