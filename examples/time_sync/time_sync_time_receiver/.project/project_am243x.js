@@ -75,7 +75,7 @@ const lnkfiles = {
 
 const syscfgfile = "../example.syscfg"
 
-const readmeDoxygenPageTag = "EXAMPLE_TIME_SYNC_RECEIVER";
+const readmeDoxygenPageTag = "EXAMPLE_PRUICSS_TIME_SYNC";
 
 const templates_freertos_r5f =
 [
