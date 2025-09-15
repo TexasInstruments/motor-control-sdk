@@ -387,8 +387,22 @@ void pru_icss_with_phase_shift_main(void *args)
     /* Enter an infinite loop */
     while (1)
     {
-        /*wait until firmware initialization is done and PWM signals are in off state*/
-        while(gPruIcssPwmParams->off_axis_0_2_pwm_signals==1);
+        uint32_t timeoutCount = 0;
+        const uint32_t timeoutThreshold = UINT32_MAX; /* timeout threshold */
+        /* Loop until the PWM signals are in off state or timeout occurs */
+        while (gPruIcssPwmParams->off_axis_0_2_pwm_signals == 1)
+        {
+            /* Increment the timeout counter */
+            timeoutCount++;
+            
+            /* Check for timeout */
+            if (timeoutCount >= timeoutThreshold)
+            {
+                /* Fatal error - assert will halt execution in debug builds */
+                DebugP_logError("Timeout waiting for PRU firmware to change PWM signals to Off state\n");
+                DebugP_assert(0);
+            }
+        }
         /* Now PWM signals are in active state*/
         /* Update the PRUICSS PWM parameters in DMEM */
         updatePruIcssPwmParamsInDmem(12.5);

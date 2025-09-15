@@ -328,7 +328,7 @@ uint8_t timesync_wait_iep_latch0_event(uint32_t iepBaseAddress, uint32_t sleepTi
         timeoutCount++;
 
         /* Check for timeout */
-        if (timeoutCount > timeoutThreshold)
+        if (timeoutCount >= timeoutThreshold)
         {
             /* Handle timeout condition (e.g., log an error, reset the system, etc.) */
             DebugP_log("Timeout waiting for IEP0 latch timestamp\n");
