@@ -1072,7 +1072,7 @@ NIKON_IS_SYNCED?:
 	QBNE	NIKON_IS_SYNCED?, SCRATCH.b1, SCRATCH.b0
 	.endm
 
-	; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
+; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 ; Macro: M_NIKON_LS_CLEAR
 ; 	Clear all PRU synchronization status locations in load share mode.
 ; Registers:
