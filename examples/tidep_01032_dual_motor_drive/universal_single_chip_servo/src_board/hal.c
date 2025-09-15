@@ -89,8 +89,6 @@ __attribute__((section(".gEnDatChInfo"))) struct endatChRxInfo gEndatChInfo;
 /*EnDat handle*/
 struct endat_priv *priv;
 
-/*ENDAT PRU IRQ counter*/
-static uint32_t gEndatPruIrqCount = 0;
 /*ENDAT Initialization Status*/
 static uint32_t gEndatInitStatus = 0;
 /*ENDAT Position read failure counter*/
