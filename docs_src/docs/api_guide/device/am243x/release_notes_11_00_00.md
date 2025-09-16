@@ -82,6 +82,14 @@
     <td>TX/RX clock source configuration from SysConfig
     <td>Position Sense
 </tr>
+<tr>
+    <td>Developer Guides for PRU resource allocation and PRU-ICSSG IO Modes
+    <td>Developer Guides
+</tr>
+<tr>
+    <td>Debug Guides for different components
+    <td>Developer Guides
+</tr>
 </table>
 
 SOC    | Supported CPUs  | Boards                                                                                                      | Host PC

@@ -1,4 +1,4 @@
-# Module Specific Debug Guides {#MODULE_SPECIFIC_DEBUG_GUIDES}
+# Debug Guides {#MODULE_SPECIFIC_DEBUG_GUIDES}
 
 This page lists debug guides related to all the Modules.
 \cond SOC_AM64X || SOC_AM243X
@@ -7,6 +7,7 @@ This page lists debug guides related to all the Modules.
     - \ref BISSC_DEBUG_GUIDE
     - \ref ENDAT_DEBUG_GUIDE
     - \ref HDSL_DEBUG_GUIDE
+    - \ref NIKON_DEBUG_GUIDE
     - \ref TAMAGAWA_DEBUG_GUIDE
 - PRUICSS PWM
     - \ref PRUICSS_PWM_PHASE_SHIFT_EXAMPLE_DEBUG_GUIDE
@@ -18,6 +19,7 @@ This page lists debug guides related to all the Modules.
     - \ref BISSC_DEBUG_GUIDE
     - \ref ENDAT_DEBUG_GUIDE
     - \ref HDSL_DEBUG_GUIDE
+    - \ref NIKON_DEBUG_GUIDE
     - \ref TAMAGAWA_DEBUG_GUIDE
 - PRUICSS PWM
     - \ref PRUICSS_PWM_PHASE_SHIFT_EXAMPLE_DEBUG_GUIDE
@@ -29,6 +31,7 @@ This page lists debug guides related to all the Modules.
 - \ref  ENCODER_EXAMPLES_DEBUG_GUIDE   
     - \ref BISSC_DEBUG_GUIDE
     - \ref ENDAT_DEBUG_GUIDE
+    - \ref NIKON_DEBUG_GUIDE
     - \ref TAMAGAWA_DEBUG_GUIDE
 \endcond
 

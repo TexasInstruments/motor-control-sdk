@@ -48,7 +48,7 @@ The \if (SOC_AM64X || SOC_AM243X) PRU_ICSSG_CFG \else ICSSM_PR1_CFG_SLV \endif r
 1. Halt the R5 core
 2. Open the memory browser window
 3. Enter the address of the \if (SOC_AM64X || SOC_AM243X) PRU_ICSSG_CFG \else ICSSM_PR1_CFG_SLV \endif register and view the configured values
-> **Note:** Ensure you are entering the correct base address for encoder registers. Each ICSS instance has different address for the CFG register.
+> **Note:** Ensure you are entering the correct base address for encoder registers. Each ICSS instance has a different address for the CFG register.
 
 For detailed register descriptions, refer to:
 \if (SOC_AM64X || SOC_AM243X)
@@ -78,7 +78,7 @@ Key registers and their configurations:
    - TX wire delay configuration
 
 4. **ICSS_PRU0_ED_CH0_CFG1_REG**
-   - Rx arm counter value if Rx auto arm enable
+   - Rx arm counter value if Rx auto arm is enabled
    - TST delay
 
 5. **ICSS_GPCFG0_REG**
@@ -93,10 +93,10 @@ Key registers and their configurations:
 
 ### Hardware Setup and Pin Configuration
 
-The RS485 interface card, control card, and encoder should be connected to the correct PRU GPIO pins mapped for the Encoder interface \ref PRUICSS_PERIPHERAL_IF_MODE. All associated pins must be selected in SysConfig. 
+The RS485 interface card, control card, and encoder should be connected to the correct PRU GPIO pins mapped for the Encoder interface \ref PRUICSS_PERIPHERAL_IF_MODE. All associated pins must be selected in SysConfig.
 
 \cond (SOC_AM64X || SOC_AM243X)
-When using alternative pin options, the 'G_MUX_EN' bit of 'ICSSG_SA_MX_REG' register must be set.
+When using alternative pin options, the 'G_MUX_EN' bit of the 'ICSSG_SA_MX_REG' register must be set.
 \endcond
 
 \cond (SOC_AM243X)
@@ -260,17 +260,17 @@ Guide to debug the components used in encoder examples:
 
 #### IEP Registers Configuration
 
-The Industrial Ethernet Peripheral (IEP) is used for periodic continuous mode. If IEP is not configured correctly, periodic continuous mode will not work.
+The Industrial Ethernet Peripheral (IEP) is used for periodic continuous mode. If the IEP is not configured correctly, periodic continuous mode will not work.
 
 To verify IEP configuration:
 
-1. Check if IEP is running by examining `IEP_COUNT_REG0/1` registers
+1. Check if the IEP is running by examining `IEP_COUNT_REG0/1` registers
 2. Verify counter increment by monitoring count values
 3. Review `IEP_CMP_CFG_REG` to ensure all compare events are properly configured for trigger mode
-4. Check `IEP_CMP_STATUS_REG` to verify corresponding compare events are setting status flags correctly
+4. Check `IEP_CMP_STATUS_REG` to verify that corresponding compare events are setting status flags correctly
 5. Validate that Compare Registers are configured with correct trigger point values
 
-> **Note:** Ensure you are entering the correct address for IEP register. Each ICSS instance has different base address for the IEP register.
+> **Note:** Ensure you are entering the correct address for IEP registers. Each ICSS instance has a different base address for the IEP registers.
 \image html Encoder_debug_iep_register_view1.png "PRU-ICSS IEP register view"
 \image html Encoder_debug_iep_register_view2.png "PRU-ICSS IEP CMP events register view"
 
@@ -283,7 +283,7 @@ Table 4-417 of the AM263x Sitara Processors Technical Reference Manual Register 
 Table 4-1573 of the AM261x Sitara Processors Technical Reference Manual Register Addendum
 \endif
 
-#### Interrupt Controller Internal Signals Mapping 
+#### Interrupt Controller Internal Signals Mapping
 If you experience missing PRU interrupts or incorrect IRQ mapping, verify the interrupt mapping between PRU and R5 in the SysConfig PRU INTC module. The Host channel number and PRU Event should match your configuration.
 
 For example, the EnDAT example uses:
@@ -321,5 +321,5 @@ void pruEnDatIrqHandler(void *args)
 
 The PRU event number is defined in `endat_periodic_trigger.h`:
 ```c
-#define PRU_TRIGGER_HOST_ENDAT_EVT0   ( 2+16 ) 
+#define PRU_TRIGGER_HOST_ENDAT_EVT0   ( 2+16 )
 ```

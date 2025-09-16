@@ -1,7 +1,7 @@
 # Current Sense Examples{#EXAMPLES_CURRENT_SENSE}
 [TOC]
 
-This page lists all the examples of ICSSG %SDFM available in this SDK. 
+This page lists all the examples of ICSSG %SDFM available in this SDK.
 -# \subpage BASIC_SDFM_EXAMPLES
 -# \subpage BASIC_SDFM_EXAMPLES_WITH_SNOOP_MODE_NC
 -# \subpage BASIC_SDFM_EXAMPLE_WITH_PHASE_DELAY
@@ -18,7 +18,7 @@ The ICSS %SDFM examples invoke these APIs to:
 - Enable zero cross detection and set zero cross threshold value
 - Configure normal current sample trigger time
 - Enable and disable double update
-- Enable and disable snoop based normal current sampling (if applicable)  
+- Enable and disable snoop based normal current sampling (if applicable)
 - Inform firmware to enable %SDFM mode
 - Configure the fast detect block
 - Enable PRU load share mode
@@ -400,10 +400,10 @@ Following are different examples for ICSS %SDFM:
         - Up to 9-channel support using load share mode<br>
         - OSR 8 - 256 <br>
         - SINC1, SINC2 and SINC3 filter
-        - Supported clock sources:  
-            - Independent clock source for each channel  
-            - Shared clock source for three channels  
-            - Common clock source for all nine channels  
+        - Supported clock sources:
+            - Independent clock source for each channel
+            - Shared clock source for three channels
+            - Common clock source for all nine channels
     </td>
     <td>
         - OSR values must be identical for both normal current and over current<br>
@@ -425,9 +425,9 @@ Following are different examples for ICSS %SDFM:
         - Zero Cross detection<br>
         - OSR 16 - 256 <br>
         - SINC1, SINC2 and SINC3 filter
-        - Supported clock sources:   
-            - Shared clock source for three channels  
-            - Common clock source for all nine channels 
+        - Supported clock sources:
+            - Shared clock source for three channels
+            - Common clock source for all nine channels
     </td>
     <td>
         These examples use the IEP CMP event for %SDFM snoop mode. However, they may not be reliable in certain situations:<br>
@@ -439,7 +439,7 @@ Following are different examples for ICSS %SDFM:
 <tr>
     <td>\subpage BASIC_SDFM_EXAMPLE_WITH_PHASE_DELAY</td>
     <td>
-        - Phase compensation for Channel0 
+        - Phase compensation for Channel0
     </td>
     <td>
         - This example is based on the %SDFM basic examples, which does not use the snoop mode.
@@ -456,12 +456,12 @@ This section provides a comprehensive debugging guide for troubleshooting issues
 The PRU_ICSSG_CFG registers from offset 0x44 to 0xD8 are allocated for %SDFM configuration. To review and verify the %SDFM settings:
 
 1. Halt the R5 core
-2. Open the memory browser window 
+2. Open the memory browser window
 3. Enter the base address of the PRU_ICSSG_CFG registers and view the configured values
 
-> **Note:** Ensure you are entering the correct address for %sdfm registers. Each ICSS instance has different address for the CFG registers.
+> **Note:** Ensure you are entering the correct address for %SDFM registers. Each ICSS instance has a different address for the CFG registers.
 
-For detailed registers description, refer to section 6.4.14.5 PRU_ICSSG_CFG Registers in the Am243x Technical Reference Manual (TRM).
+For detailed register descriptions, refer to section 6.4.14.5 PRU_ICSSG_CFG Registers in the AM243x Technical Reference Manual (TRM).
 
 Key registers and their configurations:
 
@@ -477,26 +477,26 @@ Key registers and their configurations:
    - Fast Detect Window Size configuration
    - Fast Detect One Count configuration
    - Over Sample Rate (OSR) configuration
-     - When snoop mode is enabled: Used for over current
-     - When snoop mode is disabled: Used for normal current and over current both
+     - When snoop mode is enabled: Used for overcurrent
+     - When snoop mode is disabled: Used for normal current and overcurrent both
 \image html SDFM_debug_cfg_registers_view.png "PRU-ICSS SDFM register view"
 
 ## IEP Registers Configuration
-The Industrial Ethernet Peripheral (IEP) is critical for triggering normal current sampling. If IEP is not configured correctly, normal current tasks will fail to execute.
+The Industrial Ethernet Peripheral (IEP) is critical for triggering normal current sampling. If the IEP is not configured correctly, normal current tasks will fail to execute.
 
 To verify IEP configuration:
-1. Check if IEP is running by examining `IEP_COUNT_REG0/1` registers
+1. Check if the IEP is running by examining `IEP_COUNT_REG0/1` registers
 2. Verify counter increment by monitoring count values
 3. Review `IEP_CMP_CFG_REG` to ensure all compare events are properly configured for trigger mode
-4. Check `IEP_CMP_STATUS_REG` to verify corresponding compare events are setting status flags correctly
+4. Check `IEP_CMP_STATUS_REG` to verify that corresponding compare events are setting status flags correctly
 5. Validate that Compare Registers are configured with correct trigger point values
-> **Note:** Ensure you are entering the correct address for IEP register. Each ICSS instance has different address for the IEP register.
+> **Note:** Ensure you are entering the correct address for IEP registers. Each ICSS instance has a different address for the IEP registers.
 \image html SDFM_debug_IEP_registers_view1.png "PRU-ICSS IEP register view"
 \image html SDFM_debug_IEP_registers_view2.png "PRU-ICSS IEP CMP events register view"
 
 For detailed register descriptions, refer to section `6.4.14.9` PRU_IEP_IEP Registers in the AM243x TRM.
 
-## Interrupt Controller Internal Signals Mapping 
+## Interrupt Controller Internal Signals Mapping
 If you experience missing PRU interrupts or incorrect IRQ mapping, verify the interrupt mapping between PRU and R5 in the SysConfig PRU INTC module. The Host channel number and PRU Event should match your configuration.
 
 For example, the %SDFM basic example uses:
@@ -543,7 +543,7 @@ void pruSdfmIrqHandler(void *args)
 
 The PRU event number is defined in `icssg_sdfm.h`:
 ```c
-#define PRU_TRIGGER_HOST_SDFM_EVT_CH0  ( 3+18 )   
+#define PRU_TRIGGER_HOST_SDFM_EVT_CH0  ( 3+18 )
 ```
 
 ## PRU Debug
@@ -565,9 +565,9 @@ For PRU-related issues, verify that the application is loading the PRU firmware 
 ### PRU Execution Analysis
 After loading the firmware, you can analyze the PRU execution flow:
 
-- **Without Over Current Enabled:**
+- **Without Overcurrent Enabled:**
   - PRU waits for IEP compare event
   - Normal current execution starts after event trigger
-  
-- **With Over Current Enabled:**
-  - PRU continuously executes over current sampling
+
+- **With Overcurrent Enabled:**
+  - PRU continuously executes overcurrent sampling

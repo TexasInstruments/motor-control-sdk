@@ -65,7 +65,7 @@ SysConfig can be used to configure the following:
 <tr>
     <td> Single channel
     <td> PRUx
-    <td> DMEM: (0x0 to 0x700) 1773 Bytes (256B for HDSL Registers per channel + 1517B for LUTs) <br>  IMEM: 7284 Bytes
+    <td> DMEM: 1773 Bytes: 256B for HDSL Registers (0x0 to 0xFF) + 1517B for LUTs (0x100 to 0x6ED) <br>  IMEM: 7284 Bytes
 	<td> IEP1: CMP1
     <td> INTC event/input numbers 16, 18, 19, 20, 21, 22 (pr[0/1]_pru_mst_intr[0/2/3/4/5/6]_intr_req) are used to trigger a R5 interrupts for EVENT, V-frame, H-frame, EVENT_S and H-frame respectively </td>
     <td> IEP, CMP events and INTC signal are used only in periodic continuous mode.
@@ -73,7 +73,7 @@ SysConfig can be used to configure the following:
 <tr>
     <td rowspan="3"> Multi-channel with load share across 3 PRU cores (Refer \ref PRUICSSG_LOAD_SHARE_MODE for more details)
     <td> PRUx
-    <td rowspan="3"> DMEM:(CH0: 0x0 to 0x700, CH1:0x700 to 0x800, CH2:0xE00 to 0xF00) 2285 Bytes ((256B for HDSL Registers per channel)*3 + 1517B for LUTs) <br>  IMEM: 7428 Bytes
+    <td rowspan="3"> DMEM:5101 Bytes: 3 * 256B for HDSL Registers per channel (0x0 to 0xFF, 0x700 to 0x7FF and 0xE00 to 0xEFF) + 1517B for LUTs (0x100 to 0x6ED) + 2816 Bytes for instructions storage related to TXPRU dynamic overlay (0x1500 to 0x1FFF)<br>  IMEM: 7428 Bytes
 	<td rowspan="3"> IEP1: CMP1 </td>
     <td rowspan="3"> INTC event/input numbers 16, 18, 19, 20, 21, 22 (pr[0/1]_pru_mst_intr[0/2/3/4/5/6]_intr_req) are used to trigger a R5 interrupts for EVENT, V-frame, H-frame, EVENT_S and H-frame respectively </td>
     <td rowspan="3"> IEP, CMP events and INTC signal are used only in periodic continuous mode.</td>
@@ -103,7 +103,7 @@ SysConfig can be used to configure the following:
 <tr>
     <td> Single channel
     <td> PRUx
-    <td> DMEM: 1773 Bytes (256B for HDSL Registers per channel + 1517B for LUTs) <br>  IMEM: ~7.4 kB (Sync Mode), ~6.9 kB (Free Run Mode)
+    <td> DMEM: 1773 Bytes: 256B for HDSL Registers (0x0 to 0xFF) + 1517B for LUTs (0x100 to 0x6ED) <br>  IMEM: ~7.4 kB (Sync Mode), ~6.9 kB (Free Run Mode)
 	<td> IEP0: CMP1
     <td> INTC event/input numbers 16, 18, 19, 20, 21, 22 (pr[0/1]_pru_mst_intr[0/2/3/4/5/6]_intr_req) are used to trigger a R5 interrupts for EVENT, V-frame, H-frame, EVENT_S and H-frame respectively </td>
     <td> IEP, CMP events and INTC signal are used only in periodic continuous mode.
