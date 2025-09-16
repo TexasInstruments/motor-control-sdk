@@ -117,6 +117,14 @@ Mbed-TLS                             | R5F            | mbedtls-2.13.1
     <th> Key features tested
     <th> Key features not tested
 </tr>
+<tr>
+    <td> ICSS %SDFM
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> Three %SDFM channels using single PRU core, Nine %SDFM channels using three PRU cores (load share mode), %SDFM Sync with EPWM, Single/Double Normal Current Sampling per EPWM cycle, Continuous Normal Current Sampling, High and Low Threshold Comparator (Over-current detction), Fast Detect, Phase Compensation, Zero Cross Detection, Trip Generation using PRU-ICSS TripZone, Tested with %SDFM clock from ECAP/IEP, Tested with 5MHz Clock from EPWM
+    <td> -
+</tr>
 </table>
 
 ### Position Sense
@@ -143,7 +151,7 @@ Mbed-TLS                             | R5F            | mbedtls-2.13.1
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Single channel, Multi channel using single PRU core and three PRU cores (load share mode), recovery time for 2.2 command set, interface speed of 5 and 10 MHz, long cable (upto 100 meters), continuous mode, BP-AM2BLDCSERVO Boosterpack with LP-AM243
+    <td> Single channel, Multi channel using single PRU core and three PRU cores (load share mode), recovery time for 2.2 command set, interface speed of 4, 8 and 16 MHz, long cable (upto 100 meters), continuous mode, BP-AM2BLDCSERVO Boosterpack with LP-AM243
     <td> Encoder receive communication command
 </tr>
 <tr>
@@ -265,6 +273,14 @@ Mbed-TLS                             | R5F            | mbedtls-2.13.1
     <th> Key features tested
     <th> Key features not tested
 </tr>
+<tr>
+    <td> TIDEP-01032 EtherCAT-Connected Single-Chip Dual-Servo Motor Drive Reference Design
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS, NORTOS
+    <td> All build levels, speed control for open loop and closed loop, closed loop with EtherCAT Distributed Clock (DC) mode
+    <td> -
+</tr>
 </table>
 
 ### Timesync
@@ -307,10 +323,10 @@ Mbed-TLS                             | R5F            | mbedtls-2.13.1
 </tr>
 <tr>
     <td> PINDSW-6544
-    <td> SDFM: Incorrect samples seen intermittently with EPWM as SDFM clock
+    <td> %SDFM: Incorrect samples seen intermittently with EPWM as %SDFM clock
     <td> Current Sense %SDFM
     <td> 9.0 onwards
-    <td> Use new example with shadow register based normal current sampling
+    <td> Use new example with shadow register based normal current sampling. This is a limitation of snoop mode based normal current sampling.
 </tr>
 <tr>
     <td> PINDSW-7976
@@ -346,6 +362,13 @@ Mbed-TLS                             | R5F            | mbedtls-2.13.1
     <td> Position Sense EnDat
     <td> 9.0 onwards
     <td> -
+</tr>
+<tr>
+    <td> PINDSW-8415
+    <td> %SDFM: Incorrect samples observed when individual clock option is used
+    <td> Current Sense %SDFM
+    <td> 9.0 onwards
+    <td> Use new example with shadow register based normal current sampling. This is a limitation of snoop mode based normal current sampling.
 </tr>
 <tr>
     <td> PINDSW-8564
@@ -440,7 +463,7 @@ Mbed-TLS                             | R5F            | mbedtls-2.13.1
 </tr>
 <tr>
     <td> PINDSW-9292
-    <td> SDFM: Fast Detect only works if the Fast Detect option is enabled for channel 0
+    <td> %SDFM: Fast Detect only works if the Fast Detect option is enabled for channel 0
     <td> Current Sense %SDFM
     <td> 9.0 onwards
     <td> -
