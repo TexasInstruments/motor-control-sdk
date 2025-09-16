@@ -22,6 +22,24 @@
 - Configuration of Tripzone output block to mask trip errors inputs
 - Driver APIs to program Initial, Trip, Active states of PWM outputs
 
+## ICSS PRU Resource Usage
+<table>
+<tr>
+   <th>PRU Core</th>
+   <th>ICSS Memory Usage</th>
+   <th>IEP Usage</th>
+   <th>Other Peripheral Usage</th>
+   <th>Description</th>
+</tr>
+<tr>
+    <td>Un-used</td>
+    <td>Un-used</td>
+    <td>IEP CMP events are used. Refer Table 6-441 PWM to IEP Compare mapping of AM243x Technical Reference Manual</td>
+    <td>Un-used</td>
+    <td>This example demonstrates using deadband feature of PRUICSS PWM and synchronizing it with EPWM sync out. <br> Based on required PRUICSS PWM frequency IEP compare event configuration to generate PRUICSS PWM can be split across multiple R5F cores</td>
+</tr>
+</table>
+
 ## SysConfig Features supported
 
 @VAR_SYSCFG_USAGE_NOTE
@@ -66,5 +84,23 @@ SysConfig can be used to configure things mentioned below:
 ## Example Usage
 
 - \ref EXAMPLE_PRUICSS_PWM_WITH_PHASE_SHIFT
+
+## ICSS PRU Resource Usage
+<table>
+<tr>
+   <th>PRU Core</th>
+   <th>ICSS Memory Usage</th>
+   <th>IEP Usage</th>
+   <th>Other Peripheral Usage</th>
+   <th>Description</th>
+</tr>
+<tr>
+    <td>PRUx <br> Note : Any PRU can be used</td>
+    <td>DMEM0 : 168bytes <br> Default offset : 0x600</td>
+    <td>IEP CMP events are used. Refer Table 6-441 PWM to IEP Compare mapping of AM243x Technical Reference Manual</td>
+    <td>Un-used</td>
+    <td>This example demonstrates PRUICSS PWM generation with phase shifting capabilities. <br> Based on required PRUICSS PWM frequency, IEP compare event configuration to generate PRUICSS PWM can be split across multiple PRU cores</td>
+</tr>
+</table>
 
 \note Arm is a registered trademark of Arm Limited (or its subsidiaries or affiliates) in the US and/or elsewhere.

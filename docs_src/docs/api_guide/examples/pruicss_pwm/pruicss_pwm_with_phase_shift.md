@@ -98,3 +98,39 @@ Above four steps are repeated in an infinite loop.
 - Launch a CCS debug session and run the executable, see <a href="@VAR_MCU_SDK_DOCS_PATH/CCS_LAUNCH_PAGE.html" target="_blank">  CCS Launch, Load and Run </a>
 
 \note Arm is a registered trademark of Arm Limited (or its subsidiaries or affiliates) in the US and/or elsewhere.
+
+# PRUICSS PWM Phase Shift Example Debug Guide {#PRUICSS_PWM_PHASE_SHIFT_EXAMPLE_DEBUG_GUIDE}
+
+### No PRUICSS PWM Output
+
+- Verify pin configurations in SysConfig.
+   - Open `example.syscfg` file for correct PWM pin assignments.
+
+- Verify IEP counter is running.
+   - Check IEP0_GLOBAL_CFG bit 0 (CNT_ENABLE) = 1.
+   - Monitor IEP0_COUNT_REG0/1 to verify incrementing.
+
+- Verify PWM active state configuration.
+   - Using CCS memory browser, check CSL_ICSSCFG_PWM0_0 register.
+   - Verify CSL_ICSSCFG_PWM0_0_PWM0_0_POS_ACT field = 0 (TOGGLE).
+   - Check same field for all PWM channels in use.
+
+- Verify firmware loading.
+   - Connect to PRU core in CCS and open disassembly window.
+   - Verify instructions are loaded in PRU instruction memory.
+   - Verify firmware version is printed on console.
+   - Check PRU_DMEM at 0x600 for updated PWM parameters.
+
+### Incorrect PWM Output
+
+- Verify frequency and phase shift values.
+   - Check `PWM_OUTPUT_FREQ` value.
+   - Verify `PHASE_SHIFT_BETWEEN_AXES` value.
+   - Measure actual frequency and phase shift with oscilloscope.
+
+- Check duty cycle and deadband settings.
+   - Add `gpruIcssPwmDutyCycleDeadBandValues` to CCS expression window.
+   - Verify duty cycle and deadband values.
+
+\note
+   - use AM243x Technical Reference Manual to find register address mentioned above
