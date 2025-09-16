@@ -457,7 +457,37 @@ Shown below is a sample output when the application is run:
 \imageStyle{Tamagawa_SampleOutput.JPG,width:60%}
 \image html Tamagawa_SampleOutput.JPG "Tamagawa Sample Output"
 
-### Test Case Description
+## Tamagawa Debug Guide {#TAMAGAWA_DEBUG_GUIDE}  
+
+This section describes how to debug the Tamagawa application, including a guide to debugging the Tamagawa example and firmware. It mainly focuses on verifying the configuration of all components and encoder registers, as described in the \ref ENCODER_EXAMPLES_DEBUG_GUIDE.
+
+If the Tamagawa interface is not initializing correctly, the steps mentioned below can help identify the root cause. Additionally, ensure that the hardware connections and software configurations are properly set up before proceeding with debugging.
+
+### Initial Command Failures
+
+In the case of getting CRC failure, firmware getting stuck, or getting `0xffff` data with CRC success when the first time the command is run through UART terminal, possible route causes can be:
+- Incorrect clock configuration
+- Incorrect hardware configuration
+
+Following things can be tried for finding the root cause:
+
+1. Probe the four pins of the connected channel.
+2. Load the example and capture signals for command `0`.
+3. Compare with the expected communication shown below:
+
+\image html Tamagawa_debug_init_responses.png "Tamagawa cmd 0 Response"
+
+Verify that the clock frequency is set to `2.5 Mbps` or `5 Mbps`. The TX and RX signals should show meaningful data exchange for command `0`.
+
+If nothing is coming on the signals, possible causes are:
+
+1. Firmware not loaded into the correct PRU core
+2. Firmware getting stuck due to:
+   - Incorrect channel selection or incorrect configuration
+
+This issue can be troubleshot by debugging the firmware and examining register values, as described in the \ref ENCODER_EXAMPLES_DEBUG_GUIDE.
+
+## Test Case Description
 
 <table>
     <tr>

@@ -99,6 +99,140 @@ The RS485 interface card, control card, and encoder should be connected to the c
 When using alternative pin options, the 'G_MUX_EN' bit of 'ICSSG_SA_MX_REG' register must be set.
 \endcond
 
+\cond (SOC_AM243X)
+#### LP-AM243 Booster Pack Pin Configuration
+<table>
+<tr>
+   <th>Pin name
+   <th>Jumper number
+   <th>Function
+</tr>
+<tr>
+   <td>PRG0_PRU1_GPO0
+   <td>J2.11
+   <td>Channel 0 clock
+</tr>
+<tr>
+   <td>PRG0_PRU1_GPO1
+   <td>J7.67
+   <td>Channel 0 transmit
+</tr>
+<tr>
+   <td>PRG0_PRU1_GPO2
+   <td>J7.68
+   <td>Channel 0 transmit enable
+</tr>
+<tr>
+   <td>PRG0_PRU1_GPI13
+   <td>J8.71
+   <td>Channel 0 receive
+</tr>
+<tr>
+   <td>GPIO1_78 Pin (J8.73)
+   <td>ENC1_EN (J8.73)
+   <td>Enable 3 channel peripheral interface in Axis 1 of BP (C16 GPIO pin)
+</tr>
+<tr>
+   <td>PRG0_PRU1_GPO6
+   <td>J7.69
+   <td>Channel 2 clock
+</tr>
+<tr>
+   <td>PRG0_PRU1_GPO12
+   <td>J8.72
+   <td>Channel 2 transmit
+</tr>
+<tr>
+   <td>PRG0_PRU1_GPO8
+   <td>J6.57
+   <td>Channel 2 transmit enable
+</tr>
+<tr>
+   <td>PRG0_PRU1_GPI11
+   <td>J7.70
+   <td>Channel 2 receive
+</tr>
+<tr>
+   <td>GPIO1_77 Pin (J8.74)
+   <td>ENC2_EN
+   <td>Enable 3 channel peripheral interface in Axis 2 of BP (B17 GPIO pin)
+</tr>
+</table>
+\endcond
+
+\cond SOC_AM261X
+#### LP-AM261 Booster Pack Pin Configuration
+<table>
+<tr>
+   <th>Pin name
+   <th>Jumper number
+   <th>Function
+</tr>
+<tr>
+   <td>PR1_PRU0_GPIO0
+   <td>J2.11
+   <td>Channel 0 clock
+</tr>
+<tr>
+   <td>PR1_PRU0_GPIO1
+   <td>J7.67
+   <td>Channel 0 transmit
+</tr>
+<tr>
+   <td>PR1_PRU0_GPIO3
+   <td>J7.68
+   <td>Channel 0 transmit enable
+</tr>
+<tr>
+    <td>PR1_PRU0_GPI9
+    <td>J8.71
+    <td>Channel 0 receive
+</tr>
+<tr>
+   <td>GPIO21 Pin (J8.73)
+   <td>ENC1_EN
+   <td>Enable 3 channel peripheral interface in Axis 1 of BP (B10 GPIO pin)
+</tr>
+</table>
+\endcond
+
+\cond (SOC_AM263X || SOC_AM263PX)
+
+##### @VAR_LP_BOARD_NAME Booster Pack Pin Configuration
+<table>
+<tr>
+   <th>Pin name
+   <th>Jumper number
+   <th>Function
+</tr>
+<tr>
+   <td>PR0_PRU0_GPIO3
+   <td>J2.19
+   <td>Channel 1 clock
+</tr>
+<tr>
+   <td>PR0_PRU0_GPO4
+   <td>J2.17
+   <td>Channel 1 transmit
+</tr>
+<tr>
+   <td>PR0_PRU0_GPO5
+   <td>J2.13
+   <td>Channel 1 transmit enable
+</tr>
+<tr>
+   <td>PR0_PRU0_GPI10
+   <td>J1.8
+   <td>Channel 1 receive
+</tr>
+<tr>
+   <td>SDFM0_D1 Pin (J8.73)
+   <td>ENC1_EN
+   <td>Enable 3 channel peripheral interface in Axis 1 of BP (D13 GPIO pin)
+</tr>
+</table>
+\endcond
+
 ### PRU Firmware Debug
 
 For PRU-related issues, verify that the application is loading the PRU firmware into the correct PRU core. If firmware loading fails:

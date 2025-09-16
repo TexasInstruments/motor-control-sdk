@@ -91,7 +91,7 @@ SysConfig can be used to configure the following:
 <tr>
    <td>Single channel </td>
    <td>PRUx</td>
-   <td>DMEM: 220 Bytes <br> IMEM: 1.8 KB</td>
+   <td>DMEM: 220 Bytes, from offset <code>0x00</code> to <code>0xDC</code> offset <br> IMEM: 1.8 KB</td>
    <td>IEP0: CMP0 and CMP3 </td>
    <td>INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger a R5 interrupt </td>
    <td>IEP, CMP events and INTC signal are used only in periodic continuous mode</td>
@@ -100,7 +100,7 @@ SysConfig can be used to configure the following:
 <tr>
    <td>Multi-channel with single PRU core</td>
    <td>PRUx</td>
-   <td>DMEM: 220 Bytes <br> IMEM: 1.5 KB</td>
+   <td>DMEM: 220 Bytes, from offset <code>0x00</code> to <code>0xDC</code> offset <br> IMEM: 1.5 KB</td>
    <td>IEP0: CMP0 and CMP3 </td>
    <td>INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger a R5 interrupt </td>
    <td>IEP, CMP events and INTC signal are used only in periodic continuous mode</td>

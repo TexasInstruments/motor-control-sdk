@@ -28,3 +28,4 @@ Refer below pages for additional useful information for developers to efficientl
         - \ref BISSC_DEBUG_GUIDE
         - \ref ENDAT_DEBUG_GUIDE
         - \ref HDSL_DEBUG_GUIDE
+        - \ref TAMAGAWA_DEBUG_GUIDE
