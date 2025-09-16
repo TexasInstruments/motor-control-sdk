@@ -1,6 +1,6 @@
 
 ;
-; Copyright (C) 2023 Texas Instruments Incorporated
+; Copyright (C) 2023-25 Texas Instruments Incorporated
 ;
 ; Redistribution and use in source and binary forms, with or without
 ; modification, are permitted provided that the following conditions
@@ -85,38 +85,41 @@ BISSC_MAIN:
 	.asg    ICSS_CFG_PRU1_ENDAT_TXCFG,    ICSS_CFG_PRUx_BISSC_TXCFG
 	.asg    ICSS_CFG_PRU1_ENDAT_RXCFG,    ICSS_CFG_PRUx_BISSC_RXCFG
 	.endif
-	.if $isdefed("ENABLE_MULTI_MAKE_RTU")
-	M_BISSC_LS_WAIT_FOR_SYNC
-	.elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
-	M_BISSC_LS_WAIT_FOR_SYNC
-	.elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
-	M_BISSC_LS_WAIT_FOR_SYNC
-	.endif
+
 	; clear all registers
 	ZERO	&R0,	120
 	SBCO 	&R0, PRUx_DMEM, BISSC_REG_BACKUP, 24
 	LBCO  	&FIFO_BIT_IDX, PRUx_DMEM, BISSC_FIFO_BIT_IDX_OFFSET, 1 ;bit_idx - 4 th bit(middle one) of 8x over clock or 2nd bit for 4x oversampling
 	LDI 	VALID_BIT_IDX, BISSC_CH0_VALID_BIT_IDX	;Valid bit index base(24)
 	LBCO	&PRIMARY_CORE, PRUx_DMEM, BISSC_MASK_FOR_PRIMARY_CORE, 1 ;load the primary core mask
+
 	.if $isdefed("ENABLE_MULTI_MAKE_RTU")
-	ZERO 	&SCRATCH1, 1
-	SBCO	&SCRATCH1, PRUx_DMEM, BISSC_LS_EXEC_RTU_STATE, 1
+	M_BISSC_LS_WAIT_FOR_SYNC
 	QBBC	BISSC_SKIP_GLOBAL_REINIT0?, PRIMARY_CORE, 0 ;global reinit to be done only by primary core
 	SET		R31, BISSC_TX_GLOBAL_REINIT 	; Set TX_EN low
+	M_BISSC_LS_CLEAR
 	.elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
-	ZERO 	&SCRATCH1, 1
-	SBCO	&SCRATCH1, PRUx_DMEM, BISSC_LS_EXEC_PRU_STATE, 1
+	M_BISSC_LS_WAIT_FOR_SYNC
 	QBBC	BISSC_SKIP_GLOBAL_REINIT0?, PRIMARY_CORE, 1
 	SET 	R31, BISSC_TX_GLOBAL_REINIT
+	M_BISSC_LS_CLEAR
 	.elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
-	ZERO 	&SCRATCH1, 1
-	SBCO	&SCRATCH1, PRUx_DMEM, BISSC_LS_EXEC_TXPRU_STATE, 1
+	M_BISSC_LS_WAIT_FOR_SYNC
 	QBBC	BISSC_SKIP_GLOBAL_REINIT0?, PRIMARY_CORE, 2
 	SET 	R31, BISSC_TX_GLOBAL_REINIT
+	M_BISSC_LS_CLEAR
 	.else
 	SET 	R31, BISSC_TX_GLOBAL_REINIT
 	.endif
 BISSC_SKIP_GLOBAL_REINIT0?:
+
+	.if $isdefed("ENABLE_MULTI_MAKE_RTU")
+	M_BISSC_LS_WAIT_FOR_SYNC_CLEAR
+	.elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
+	M_BISSC_LS_WAIT_FOR_SYNC_CLEAR
+	.elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
+	M_BISSC_LS_WAIT_FOR_SYNC_CLEAR
+	.endif
 
 	LBCO	&CH_MASK, PRUx_DMEM, BISSC_CHANNEL_CONFIG_OFFSET, 1
 	;change the channel mask it self, so individual PRU work as channel agnostic, single channel single PRU firmware.
@@ -326,8 +329,6 @@ BISSC_SKIP_DAISY_CHAIN:
 	LDI		SCRATCH2.w0, 0
     ; store Rx and Tx frame size to ICSS_CFG_PRUx_ED_CHx for all configured channels
 	M_BISSC_CLK_CONFIG CH_MASK, SCRATCH2
-	LDI 	SCRATCH1,	0	;clear the syn bits for load share.
-	SBCO	&SCRATCH1, PRUx_DMEM, BISSC_LS_EXEC_RTU_STATE, 4
 	LDI 	R30.b0, 0
 	.if	$isdefed("ENABLE_MULTI_CHANNEL")
 	SET	    R31, BISSC_TX_GLOBAL_GO
@@ -736,42 +737,53 @@ BISSC_SKIP_RESET_BIT?:
 	; rx_en = 0 : Disable RX mode
 	LDI 	R30.b3, 0
 	.if $isdefed("ENABLE_MULTI_MAKE_RTU")
+	;skip interrupt to R5F in host trigger
+	QBNE 	BISSC_SKIP_INTERRUPT_TRIGGER, STATUS_REG1, 0
+	;Generate interrupt to R5F
+    LDI     R31.w0, BISSC_RTU_TRIGGER_HOST_EVT;				(pr0_pru_mst_intr[2]_intr_req)
+BISSC_SKIP_INTERRUPT_TRIGGER:
 	M_BISSC_LS_WAIT_FOR_SYNC
 	QBBC	BISSC_SKIP_GLOBAL_REINIT?, PRIMARY_CORE, 0
+	SET 	R31, BISSC_TX_GLOBAL_REINIT ; Set TX_EN low
+	M_BISSC_LS_CLEAR
+	.elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
 	;skip interrupt to R5F in host trigger
 	QBNE 	BISSC_SKIP_INTERRUPT_TRIGGER, STATUS_REG1, 0
 	;Generate interrupt to R5F
-    LDI     R31.w0, BISSC_RTU_TRIGGER_HOST_EVT; ( pr0_pru_mst_intr[2]_intr_req )
+    LDI     R31.w0, BISSC_PRU_TRIGGER_HOST_EVT;				(pr0_pru_mst_intr[3]_intr_req)
 BISSC_SKIP_INTERRUPT_TRIGGER:
-	SET 	R31, BISSC_TX_GLOBAL_REINIT ; Set TX_EN low
-	.elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
 	M_BISSC_LS_WAIT_FOR_SYNC
 	QBBC	BISSC_SKIP_GLOBAL_REINIT?, PRIMARY_CORE, 1
+	SET 	R31, BISSC_TX_GLOBAL_REINIT ; Set TX_EN low
+	M_BISSC_LS_CLEAR
+	.elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
 	;skip interrupt to R5F in host trigger
 	QBNE 	BISSC_SKIP_INTERRUPT_TRIGGER, STATUS_REG1, 0
 	;Generate interrupt to R5F
-    LDI     R31.w0, BISSC_PRU_TRIGGER_HOST_EVT; ( pr0_pru_mst_intr[3]_intr_req )
+    LDI     R31.w0, BISSC_TXPRU_TRIGGER_HOST_EVT;			(pr0_pru_mst_intr[4]_intr_req)
 BISSC_SKIP_INTERRUPT_TRIGGER:
-	SET 	R31, BISSC_TX_GLOBAL_REINIT ; Set TX_EN low
-	.elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
 	M_BISSC_LS_WAIT_FOR_SYNC
 	QBBC	BISSC_SKIP_GLOBAL_REINIT?, PRIMARY_CORE, 2
-	;skip interrupt to R5F in host trigger
-	QBNE 	BISSC_SKIP_INTERRUPT_TRIGGER, STATUS_REG1, 0
-	;Generate interrupt to R5F
-    LDI     R31.w0, BISSC_TXPRU_TRIGGER_HOST_EVT; ( pr0_pru_mst_intr[4]_intr_req )
-BISSC_SKIP_INTERRUPT_TRIGGER:
 	SET 	R31, BISSC_TX_GLOBAL_REINIT ; Set TX_EN low
+	M_BISSC_LS_CLEAR
 	.else
 	;skip interrupt to R5F in host trigger
 	QBNE 	BISSC_SKIP_INTERRUPT_TRIGGER, STATUS_REG1, 0
 	;Generate interrupt to R5F
-    LDI     R31.w0, BISSC_RTU_TRIGGER_HOST_EVT; ( pr0_pru_mst_intr[2]_intr_req )
+    LDI     R31.w0, BISSC_RTU_TRIGGER_HOST_EVT;				(pr0_pru_mst_intr[2]_intr_req)
 BISSC_SKIP_INTERRUPT_TRIGGER:
 	SET 	R31, BISSC_TX_GLOBAL_REINIT ; Set TX_EN low
-
 	.endif
 BISSC_SKIP_GLOBAL_REINIT?:
+
+	.if $isdefed("ENABLE_MULTI_MAKE_RTU")
+	M_BISSC_LS_WAIT_FOR_SYNC_CLEAR
+	.elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
+	M_BISSC_LS_WAIT_FOR_SYNC_CLEAR
+	.elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
+	M_BISSC_LS_WAIT_FOR_SYNC_CLEAR
+	.endif
+
 	LDI		STATUS_REG1,	0
     ;Clear Host Trigger
 	.if $isdefed("ENABLE_MULTI_MAKE_RTU")
