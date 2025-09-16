@@ -113,6 +113,7 @@ In the current implementation, the Transmit data is loaded into the Tx FIFO byte
 
 In case of EEPROM read, EEPROM write, ID code write, Velocity coefficient write and encoder address setting (command 20), 1 or more MDFs need to be sent after CDF as per Nikon A-format specification. There should be delay between CDF and MDF(s). For this, Tx frame size is set to 0 (continuous mode). 4 bytes of CDF are first loaded into the Tx FIFO and then FIFO byte level is constantly monitored and the FIFO is reloaded with the 1's when the FIFO level reaches 1 byte and it is repeated until PRU Cycle counter exceeds 1 microseconds equivalent value, then MDF with appropriate data is sent byte-wise when Tx FIFO level reaches 1 byte fill level. This process of sending MDF is repeated if there are more than one MDFs.
 
+\image html nikon_tx_send.png "Transmit Flow Chart"
 
 ### Receive Data Parse {#NIKON_DESIGN_RX}
 
@@ -127,7 +128,7 @@ In case of 16 Mbps, the Data is received and downsampled without On-the-fly CRC 
 
 ### Continuous mode
 
-\image html nikon_continuous_mode.png "Continuous Mode"
+\image html nikon_continuous_mode.png "Continuous mode"
 
 Nikon receiver application has the support for continuous mode in which periodically MT Command is transmitted to encoder and its position data is read and the CRC is computed.
 User can stop continuous mode by hitting any key in UART console.
