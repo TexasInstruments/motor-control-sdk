@@ -1,4 +1,4 @@
-# PRUICSS TIME SYNC DESIGN {#TIME_SYNC_DESIGN}
+# PRU-ICSS TIME SYNC DESIGN {#TIME_SYNC_DESIGN}
 
 ### Time Synchronization Principle and Algorithm
 

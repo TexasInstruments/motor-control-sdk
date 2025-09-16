@@ -381,7 +381,7 @@ TI HDSL Solution's register map is compatible with SICK HDSL IP Core release ver
          - Each individual edge register bit is set if, at system start-up, an edge of the test signal is detected during the time period of the corresponding bit. An edge is defined as a change in cable value between successive detections.
          - The sampling is carried out eight times as fast as the cable bit rate.
          - Clean cable signals mean that only a few bits are set in the edge register, whilst noisy cable signals set a large number of bits.
-         <br/> **NOTE: Not available in TI HDSL Solution in this release**
+         <br/> **NOTE: Not available in TI HDSL Solution**
 </tr>
 <tr>
     <td>
