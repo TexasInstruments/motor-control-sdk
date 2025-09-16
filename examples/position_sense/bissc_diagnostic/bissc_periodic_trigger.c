@@ -290,60 +290,42 @@ void bissc_stop_periodic_mode(struct bissc_periodic_interface *bissc_periodic_in
     HW_WR_REG8((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG, temp);
 }
 
-/* PRU bissc FW IRQ handler */
+/* RTU bissc FW IRQ handler */
 void rtuBisscIrqHandler(void *args)
 {
-
-    /* debug, inncrement PRU SDFM IRQ count */
+    /* Increment RTU NIKON IRQ count */
     gRtuBisscIrqCnt++;
-
-    /* clear channel 0 cmp event*/
-    uint32_t event_clear;
-    event_clear = HW_RD_REG8((uint8_t *)gPruIcss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
-    event_clear |= (1 << IEP_CH0_CMP_EVNT);
-    HW_WR_REG8((uint8_t *)gPruIcss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
 
     /* Clear interrupt at source */
     /* Write 18 to ICSSG_STATUS_CLR_INDEX_REG
-        18 = 16+2, 2 is Host Interrupt Number. See AM243x TRM.
+        18 = 16+2, 2 is Host Interrupt Number. See TRM for more details.
     */
     PRUICSS_clearEvent(gPruIcssXHandle, RTU_TRIGGER_HOST_BISSC_EVT);
 
 }
 
+/* PRU bissc FW IRQ handler */
 void pruBisscIrqHandler(void *args)
 {
-    /* debug, inncrement PRU SDFM IRQ count */
+    /* Increment PRU NIKON IRQ count */
     gPruBisscIrqCnt++;
-
-    /* clear channel 1 cmp event*/
-    uint32_t event_clear;
-    event_clear = HW_RD_REG8((uint8_t *)gPruIcss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
-    event_clear |= (1 << IEP_CH1_CMP_EVNT);
-    HW_WR_REG8((uint8_t *)gPruIcss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
 
     /* Clear interrupt at source */
     /* Write 19 to ICSSG_STATUS_CLR_INDEX_REG
-        19 = 16+3, 3 is Host Interrupt Number. See AM243x TRM.
+        19 = 16+3, 3 is Host Interrupt Number. See TRM for more details.
     */
     PRUICSS_clearEvent(gPruIcssXHandle, PRU_TRIGGER_HOST_BISSC_EVT);
 }
 
+/* TXPRU bissc FW IRQ handler */
 void txpruBisscIrqHandler(void *args)
 {
-
-    /* debug, inncrement PRU SDFM IRQ count */
+    /* Increment TXPRU NIKON IRQ count */
     gTxpruBisscIrqCnt++;
-
-    /* clear channel 2 cmp event*/
-    uint32_t event_clear;
-    event_clear = HW_RD_REG8((uint8_t *)gPruIcss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
-    event_clear |= (0x1 << IEP_CH2_CMP_EVNT);
-    HW_WR_REG8((uint8_t *)gPruIcss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
 
     /* Clear interrupt at source */
     /* Write 20 to ICSSG_STATUS_CLR_INDEX_REG
-        20 = 16+4, 4 is Host Interrupt Number. See AM243x TRM.
+        20 = 16+4, 4 is Host Interrupt Number. See TRM for more details.
     */
     PRUICSS_clearEvent(gPruIcssXHandle, TXPRU_TRIGGER_HOST_BISSC_EVT);
 

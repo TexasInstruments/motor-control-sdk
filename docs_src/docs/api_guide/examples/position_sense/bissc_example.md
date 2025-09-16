@@ -479,6 +479,41 @@ Shown below is a sample output to enable safety and the safety encoder results:
 \imageStyle{bissc_safety_sample_output.png,width:60%}
 \image html bissc_safety_sample_output.png "BISS-C Sample Output when safety is enabled"
 
+
+## BiSS-C Debug Guide {#BISSC_DEBUG_GUIDE}
+This section describes how to debug the BiSS-C application, including a guide to debugging BiSS-C example and firmware. It mainly focuses on verifying the configuration of all components and encoder registers as described in \ref ENCODER_EXAMPLES_DEBUG_GUIDE. 
+
+If the BiSS-C interface is not initializing correctly, the steps mentioned below can help identify the root cause. Additionally, ensure that the hardware connections and software configurations are properly set up before proceeding with debugging.
+
+### Initialization Failures
+
+In case of initialization failure, perform the following steps to identify the root cause:
+
+1. Probe the rx and clock pins of the connected channel
+2. Load the example and capture signals during the initialization sequence. Check \ref BISSC_DESIGN for details on initialization.
+3. Compare with the expected initialization sequenece below:
+\imageStyle{bissc_initialization_response.png,width:60%}
+\image html bissc_initialization_response.png "BiSS-C Initialization Response"
+
+4. Probe the response and verify with image below
+\imageStyle{bissc_response.png,width:60%}
+\image html bissc_response.png "BiSS-C Response"
+
+\note Initialization sequence for BiSS-C will be repeated 8 times & will have extended clock signal for proc delay measurement.
+
+Verify the clock and RX signals should show meaningful data exchanges.
+If the initialization communication is incorrect, possible causes include:
+
+1. Firmware not loaded into the correct PRU core
+2. Firmware stuck due to:
+   - No response or incorrect response from encoder
+   - Incorrect channel selection or incorrect clock configuration
+
+Troubleshooting steps:
+1. Verify hardware connections
+2. Confirm the pin settings and the clock configuration
+3. If above are correct, debug the PRU firmware by connecting to the appropriate core as described in the \ref ENCODER_EXAMPLES_DEBUG_GUIDE
+
 ### Test Case Description
 
 <table>
