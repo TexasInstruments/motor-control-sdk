@@ -209,7 +209,6 @@ CFLAGS_cpp_common := \
 CFLAGS_release := \
 	-Os \
 	-ffast-math \
-	-flto \
 	-finline-functions \
 
 
