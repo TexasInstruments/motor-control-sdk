@@ -363,8 +363,9 @@ Enter the period (which can be calculated with the formula = Cycle Time (in us) 
 \image html hdsl_sync_mode_menu1.png "HDSL Sync mode Menu"
 \image html hdsl_sync_mode_menu2.png "HDSL Sync mode Menu"
 \image html hdsl_positional_commands_menu.png "HDSL Sync mode Menu"
-## HDSL Debug Guide {#HDSL_DEBUG_GUIDE}  
-This section describes how to debug the HDSL application, including a guide to debugging the HDSL example and firmware. It mainly focuses on verifying the configuration of all components and encoder registers as described in \ref ENCODER_EXAMPLES_DEBUG_GUIDE. 
+
+## HDSL Debug Guide {#HDSL_DEBUG_GUIDE}
+This section describes how to debug the HDSL application, including a guide to debugging the HDSL example and firmware. It mainly focuses on verifying the configuration of all components and encoder registers as described in \ref ENCODER_EXAMPLES_DEBUG_GUIDE.
 
 If the HDSL interface is not initializing correctly, the steps mentioned below can help identify the root cause. Additionally, ensure that the hardware connections and software configurations are properly set up before proceeding with debugging.
 
@@ -373,11 +374,11 @@ If the HDSL interface is not initializing correctly, the steps mentioned below c
 In case of initialization failure, perform the following steps to identify the root cause:
 
 1. Probe the four pins of the connected channel
-2. Load the example and capture signals during the initialization sequence  
+2. Load the example and capture signals during the initialization sequence
 3. Compare with the expected initialization communication shown below:
 \image html HDSL_debug_init_responses.png "HDSL Initialization Responses"
 
-Verify the TX and RX signals should show meaningful data exchanges.
+Verify that the TX and RX signals show meaningful data exchanges.
 If the initialization communication is incorrect, possible causes include:
 
 1. Firmware not loaded into the correct PRU core
@@ -386,6 +387,6 @@ If the initialization communication is incorrect, possible causes include:
    - Incorrect channel selection or incorrect clock configuration
 
 Troubleshooting steps:
-1. Verify hardware connections 
-2. Confirm the pin settings and the clock configuration 
-3. If above are correct, debug the PRU firmware by connecting to the appropriate core as described in the \ref ENCODER_EXAMPLES_DEBUG_GUIDE
+1. Verify hardware connections
+2. Confirm the pin settings and the clock configuration
+3. If the above are correct, debug the PRU firmware by connecting to the appropriate core as described in the \ref ENCODER_EXAMPLES_DEBUG_GUIDE

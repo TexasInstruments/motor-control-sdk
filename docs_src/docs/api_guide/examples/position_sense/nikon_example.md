@@ -483,7 +483,36 @@ Shown below is a sample output when the application is run:
 \imageStyle{nikon_sample_output.png,width:60%}
 \image html nikon_sample_output.png "Nikon Sample Output"
 
-### Test Case Description
+## Nikon A-format Debug Guide {#NIKON_DEBUG_GUIDE}
+
+This section describes how to debug the Nikon A-format application, including a guide to debugging the Nikon A-format example and firmware. It mainly focuses on verifying the configuration of all components and encoder registers, as described in the \ref ENCODER_EXAMPLES_DEBUG_GUIDE.
+
+If the Nikon A-format interface is not initializing correctly, the steps mentioned below can help identify the root cause. Additionally, ensure that the hardware connections and software configurations are properly set up before proceeding with debugging, as described in the \ref ENCODER_EXAMPLES_DEBUG_GUIDE.
+
+### Initialization Failures
+
+In case of initialization failure, perform the following steps to identify the root cause:
+
+1. Probe the TX, RX, TX_EN and clock pins of the connected channel (as per \ref ENCODER_EXAMPLES_DEBUG_GUIDE)
+2. Run the example and capture signals during the initialization sequence. CMD_4 which is a multi-transmission command, is sent during initialization.
+3. Compare with the expected initialization sequence below:
+
+\image html nikon_initialization_response.png "Nikon A-format Initialization Response"
+
+4. Verify that the TX and RX signals show meaningful data exchanges.
+
+If the initialization communication is incorrect, possible causes include:
+1. Firmware not loaded into the correct PRU core
+2. Firmware stuck due to:
+   - No response or incorrect response from encoder
+   - Incorrect channel selection or incorrect clock configuration
+
+Troubleshooting steps:
+1. Verify hardware connections
+2. Confirm the pin settings and the clock configuration
+3. If the above are correct, debug the PRU firmware by connecting to the appropriate core as described in the \ref ENCODER_EXAMPLES_DEBUG_GUIDE
+
+## Test Case Description
 
 <table>
     <tr>

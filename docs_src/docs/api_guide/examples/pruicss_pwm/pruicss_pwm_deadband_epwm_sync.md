@@ -115,6 +115,45 @@ This example uses EPWM0 sync out to reset IEP at the PWM period, PRUICSS IEP CMP
 - Launch a CCS debug session and run the executable, see <a href="@VAR_MCU_SDK_DOCS_PATH/CCS_LAUNCH_PAGE.html" target="_blank">  CCS Launch, Load and Run </a>
 - To probe the PRUICSS PWM output please refer to setup details as mentioned above in Introduction section
 
+# PRUICSS PWM Deadband Example Debug Guide {#PRUICSS_PWM_DEADBAND_EXAMPLE_DEBUG_GUIDE}
+
+### No PRUICSS PWM Output
+
+- Verify pin configurations in SysConfig.
+   - Open `example.syscfg` file for correct PWM pin assignments.
+- Verify IEP counter is running.
+   - Check IEP0_GLOBAL_CFG for counter enable.
+   - Monitor IEP0_COUNT_REG0/1 to verify incrementing.
+- Verify PWM active state configuration.
+   - Using CCS memory browser, check CSL_ICSSCFG_PWM0_0 register.
+   - Verify CSL_ICSSCFG_PWM0_0_PWM0_0_POS_ACT field = 0 (TOGGLE).
+   - Check same field for all PWM channels in use.
+- Check Compare 0 interrupt service.
+   - Set breakpoint at Compare 0 ISR function and ensure interrupt is configured correctly.
+   - Add code to toggle GPIO signal inside ISR function.
+   - Verify GPIO signal is toggled repeatedly at expected frequency.
+- Verify EPWM interrupt service.
+   - Set breakpoint at EPWM sync ISR function and ensure interrupt is configured correctly.
+   - Add code to toggle GPIO signal inside ISR function.
+   - Verify GPIO signal is toggled repeatedly at expected frequency.
+- Ensure IEP reset on EPWM sync is enabled.
+   - Check IEP_PWM_REG register.
+   - Verify bit 1 (EPWM0_SYNC_EN) = 1 for EPWM0 sync reset.
+
+### Incorrect PRUICSS PWM Output
+
+- Verify PWM frequency settings.
+   - Check `CONFIG_PRUICSS_PWM_INSTANCE0_FREQ_HZ` value.
+   - Measure actual frequency with oscilloscope.
+- Check EPWM and PRUICSS PWM frequency match.
+   - Verify `SOC_EPWM_OUTPUT_FREQ == CONFIG_PRUICSS_PWM_INSTANCE0_FREQ_HZ`.
+- Examine PWM configuration.
+   - Add `gPruIcssPwmHandle` to watch window.
+   - Check duty cycle and deadband values.
+
+\note
+   - use AM243x Technical Reference Manual to find register address mentioned above
+
 # See Also
 
 \ref PRUICSS_PWM_API

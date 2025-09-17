@@ -29,8 +29,7 @@ Notable exceptions in TI HDSL Solution when compared with SICK HDSL IP Core rele
     </tr>
     <tr>
         <td> EDGES
-        <td> **Not available in TI HDSL Solution in this release**<br/>
-            This will be available in future releases.
+        <td> **Not available in TI HDSL Solution**<br/>
     </tr>
     <tr>
         <td> VERSION<br/>

@@ -44,13 +44,40 @@ To get started, see <a href="@VAR_MCU_SDK_DOCS_PATH/GETTING_STARTED.html" target
 \note
     - Motor Control SDK version 10.02.00 supports LP-AM261 Rev. E2 only. The upcoming LP-AM261 board revision will feature integrated DP83869 Ethernet PHYs onboard, replacing the DP83826E daughter card approach used in LP-AM261 Rev. E2.
     - To build examples from Industrial Communications SDK and MCU+ SDK using CCS projects, users have to add <b>${SDK_INSTALL_PATH}/ind_comms_sdk</b> path and <b>${SDK_INSTALL_PATH}/mcu_plus_sdk</b> path to "Product discovery path" respectively in CCS (from Window->Preferences->Code Composer Studio->Products)
-    - In order to build the Networking examples from MCU+ SDK using CCS projects, users need to change the file action of the source files from "link" to "copy" in the example.projectspec and then import their project in CCS.
+    - To build Networking examples from MCU+ SDK using CCS projects:
+        - Import the project in CCS.
+        - Backup your .project file before making any changes.
+        - Open the .project file.
+        - Find all instances of "COM_TI_MOTOR_CONTROL_SDK_AM261X_INSTALL_DIR/mcu_plus_sdk" in locationURI attributes.
+        - Replace them with "MCU_PLUS_SDK_PATH".
+        - Save the file and rebuild the project in CCS.
+        - After these changes, all the linked files will be correctly resolved and the project will build as expected in CCS.
 \endcond
 
-\cond !SOC_AM261X
+\cond SOC_AM243X
 \note
     - To build examples from Industrial Communications SDK and MCU+ SDK using CCS projects, users have to add <b>${SDK_INSTALL_PATH}/ind_comms_sdk</b> path and <b>${SDK_INSTALL_PATH}/mcu_plus_sdk</b> path to "Product discovery path" respectively in CCS (from Window->Preferences->Code Composer Studio->Products)
-    - In order to build the Networking examples from MCU+ SDK using CCS projects, users need to change the file action of the source files from "link" to "copy" in the example.projectspec and then import their project in CCS.
+    - To build Networking examples from MCU+ SDK using CCS projects:
+        - Import the project in CCS.
+        - Backup your .project file before making any changes.
+        - Open the .project file.
+        - Find all instances of "COM_TI_MOTOR_CONTROL_SDK_AM243X_INSTALL_DIR/mcu_plus_sdk" in locationURI attributes.
+        - Replace them with "MCU_PLUS_SDK_PATH".
+        - Save the file and rebuild the project in CCS.
+        - After these changes, all the linked files will be correctly resolved and the project will build as expected in CCS.
+\endcond
+
+\cond SOC_AM263PX
+\note
+    - To build examples from Industrial Communications SDK and MCU+ SDK using CCS projects, users have to add <b>${SDK_INSTALL_PATH}/ind_comms_sdk</b> path and <b>${SDK_INSTALL_PATH}/mcu_plus_sdk</b> path to "Product discovery path" respectively in CCS (from Window->Preferences->Code Composer Studio->Products)
+    - To build Networking examples from MCU+ SDK using CCS projects:
+        - Import the project in CCS.
+        - Backup your .project file before making any changes.
+        - Open the .project file.
+        - Find all instances of "COM_TI_MOTOR_CONTROL_SDK_AM263PX_INSTALL_DIR/mcu_plus_sdk" in locationURI attributes.
+        - Replace them with "MCU_PLUS_SDK_PATH".
+        - Save the file and rebuild the project in CCS.
+        - After these changes, all the linked files will be correctly resolved and the project will build as expected in CCS.
 \endcond
 
 ## Block Diagram
@@ -168,17 +195,23 @@ The main software components in the block diagram specific to motor control are 
     <td>\ref PRUICSS_PWM
     <td> Driver for using PRU-ICSS PWM Peripheral
 </tr>
+<tr><td colspan="3" bgcolor=#F0F0F0>**TIDEP-01032 EtherCAT-Connected Single-Chip Dual-Servo Motor Drive Reference Design**</td></tr>
+<tr>
+    <td> Reference design
+    <td>\ref REFERENCE_DESIGN
+    <td>Reference design showcasing the ability of the AM243x device to support a fully integrated real-time servo motor drive control and industrial communication.
+</tr>
+<tr><td colspan="3" bgcolor=#F0F0F0>**PRU-ICSS TIME SYNC**</td></tr>
+<tr>
+    <td>Timesync
+    <td>\ref EXAMPLE_PRUICSS_TIME_SYNC
+    <td>Example showing clock synchronization between multiple devices using PRU-ICSS.
+</tr>
 <tr><td colspan="3" bgcolor=#F0F0F0>**Examples and Demos**</td></tr>
 <tr>
     <td>Examples and Demos
     <td>\ref EXAMPLES
-    <td>Examples and demos showing usage of different SW libraries and APIs for motor control
-</tr>
-<tr><td colspan="3" bgcolor=#F0F0F0>**TIDEP-01032 EtherCAT-Connected Single-Chip Dual-Servo Motor Drive Reference Design****</td></tr>
-<tr>
-    <td> Reference design
-    <td>\ref REFERENCE_DESIGN
-    <td>Reference design showcasing the ability of the AM243x device to support a fully integrated real-time servo motor drive control and industrial communication. 
+    <td>Examples and demos showing usage of different SW libraries and APIs for position sense, current sense, PRU-ICSS PWM and real-time libraries.
 </tr>
 </table>
 
