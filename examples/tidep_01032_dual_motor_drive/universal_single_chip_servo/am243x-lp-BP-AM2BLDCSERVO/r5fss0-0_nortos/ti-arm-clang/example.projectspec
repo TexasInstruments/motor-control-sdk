@@ -72,7 +72,6 @@
             -Wno-unused-function
             -O=2
             -ffast-math
-            -flto
             -finline-functions
             -DSOC_AM243X
             -DDSYSCONFIG_EN
