@@ -15,7 +15,7 @@ Only one core, PRU, is used for these examples.
 1. **Continuous Mode Example**  
         - Continuous Normal Current sampling.  
         - Three channels: Channel 0, Channel 1, and Channel 2.  
-        - Each channel has an individual interrupt to trigger an R5 event.  
+        - Each channel has an individual interrupt to Arm® Cortex®-R5F.  
         - ICSS PWM trip-based Fast Detect. ICSS PWM0 instance is used to generate the PWM trip.  
         - ICSS PWM trip-based Over Current detection. ICSS PWM0 instance is used to generate the PWM trip.  
                 - **Note:** Over Current OSR should be equal to Normal Current OSR.  
@@ -456,3 +456,5 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
         <td></td>
 </tr>
 </table>
+
+\note Arm is a registered trademark of Arm Limited (or its subsidiaries or affiliates) in the US and/or elsewhere.

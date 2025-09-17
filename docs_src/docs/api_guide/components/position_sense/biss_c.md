@@ -61,7 +61,12 @@ BiSS Safety is a profile definition for BiSS that has been certified by TÜV Rhe
    -  Support for automatic processing delay detection and compensation
    -  Support for multiple encoders connected via daisy-chain configuration (up to 3 encoders)
    -  Support for concurrent multi-channel support on a single PRU (up to 3 identical encoders)
+        - In this mode, data transmission and reception must happen simultaneously on all channels.
+        - The encoder configuration and cable length should be the same on all channels.
+        - If encoders across channels don't respond at the same time, this mode will not work. Load share configuration should be used instead.
    -  Support for multi-channel encoders of different make under load share mode (Refer \ref PRUICSSG_LOAD_SHARE_MODE for more details)
+        - In this mode, data transmission and reception can happen independently on all channels.
+        - After a command is sent, all channels wait for a response and process the response independently. However, all channels must finish processing before the next command can be triggered.
    -  Support for up to 100 meter cable
    -  Readiness for BiSS Safety profile by supporting 16 bit CRC and sign-of-life counter
 
@@ -225,7 +230,7 @@ SysConfig can be used to configure things mentioned below:
     <td> PRUx
     <td> DMEM: (0x0 to 0x10A) 272 Bytes <br>  IMEM: 3080 Bytes
 	<td> IEP0: CMP0 and CMP3
-    <td> INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger a R5 interrupt </td>
+    <td> INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger interrupt to Arm® Cortex®-R5F</td>
     <td> IEP, CMP events and INTC signal are used only in periodic continuous mode.
 </tr>
 <tr>
@@ -233,7 +238,7 @@ SysConfig can be used to configure things mentioned below:
     <td> PRUx
     <td> DMEM: (0x0 to 0x10A) 272 Bytes <br>  IMEM: 3380 Bytes
 	<td> IEP0: CMP0 and CMP3
-    <td> INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger a R5 interrupt </td>
+    <td> INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger interrupt to R5F</td>
     <td> IEP, CMP events and INTC signal are used only in periodic continuous mode.
 </tr>
 <tr>
@@ -241,7 +246,7 @@ SysConfig can be used to configure things mentioned below:
     <td> PRUx
     <td rowspan="3"> DMEM: (0x0 to 0x10A) 272 Bytes <br>  IMEM: 3484 Bytes
 	<td rowspan="3"> IEP0: CMP0, CMP3, CMP5 and CMP6 </td>
-    <td rowspan="3"> INTC event/input number 18, 19 and 20 (pr[0/1]_pru_mst_intr[2/3/4]_intr_req) is used to trigger a R5 interrupt </td>
+    <td rowspan="3"> INTC events/inputs number 18, 19 and 20 (pr[0/1]_pru_mst_intr[2/3/4]_intr_req) are used to trigger interrupts to R5F</td>
     <td rowspan="3"> IEP, CMP events and INTC signals are used only in periodic continuous mode.</td>
 </tr>
 <tr>
@@ -271,7 +276,7 @@ SysConfig can be used to configure things mentioned below:
     <td> PRUx
     <td> DMEM: (0x0 to 0x10A) 272 Bytes <br>  IMEM: 3080 Bytes
 	<td> IEP0: CMP0 and CMP3
-    <td> INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger a R5 interrupt </td>
+    <td> INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger interrupt to R5F</td>
     <td> IEP, CMP events and INTC signal are used only in periodic continuous mode.
 </tr>
 </table>
@@ -288,3 +293,5 @@ SysConfig can be used to configure things mentioned below:
 
 ## API
 \ref BISSC_API_MODULE
+
+\note Arm is a registered trademark of Arm Limited (or its subsidiaries or affiliates) in the US and/or elsewhere.

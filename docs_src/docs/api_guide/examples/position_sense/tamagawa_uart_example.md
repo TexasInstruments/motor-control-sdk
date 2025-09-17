@@ -9,7 +9,7 @@ The Tamagawa over UART application does the following:
 - Configures pinmux, GPIO, UART (UART clock to 192MHz, Baud rate, etc.)
 - Initializes UART0 for debug log & \if SOC_AM263PX UART3 \else UART1 \endif for communication
 - Selects UART LLD with polling mode for encoder communication
-- Loads and executes Tamagawa example on R5_0
+- Loads and executes Tamagawa example on Arm® Cortex®-R5F
 
 
 Connect the Tamagawa encoder via RS-485 Half-Duplex EVM to LP-AM263.
@@ -19,7 +19,7 @@ UART RX Pin(\if SOC_AM263PX  UART3_RXD \else  UART1_RXD \endif)->JMP1-R,
 UART TX Pin(\if SOC_AM263PX  UART3_TXD \else  UART1_TXD \endif)->JMP4-D,
 GPIO Pin(GPIO62)->JMP3-DE
 
-The Tamagawa over UART example runs on R5 and communicates with Tamagawa encoder by UART instance. It presents the user with menu options to select Data ID code (as defined by Tamagawa) to be sent to the encoder. The application collects the data entered by the user and configures the relevant command. Then via the UART LLD write API, the command is passed to encoder. Once the command is sent, the encoder starts to respond, and UART LLD read API starts to read this response. Response is stored in the Tamagawa interface, the status of the transaction is checked by CRC calculation. If the status indicates success, the result is presented to the user otherwise it prints CRC failure.
+The Tamagawa over UART example runs on R5F and communicates with Tamagawa encoder by UART instance. It presents the user with menu options to select Data ID code (as defined by Tamagawa) to be sent to the encoder. The application collects the data entered by the user and configures the relevant command. Then via the UART LLD write API, the command is passed to encoder. Once the command is sent, the encoder starts to respond, and UART LLD read API starts to read this response. Response is stored in the Tamagawa interface, the status of the transaction is checked by CRC calculation. If the status indicates success, the result is presented to the user otherwise it prints CRC failure.
 
 ### Example Flow-Chart
 
@@ -199,3 +199,5 @@ Shown below is a sample output when the application is run:
         <td>CRC success with ABS, SF, CF and CRC values printed in the terminal.</td>
     </tr>
 </table>
+
+\note Arm is a registered trademark of Arm Limited (or its subsidiaries or affiliates) in the US and/or elsewhere.

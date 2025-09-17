@@ -14,6 +14,12 @@ The Tamagawa receiver firmware running on PRU-ICSS provides a well-defined inter
 -  Channel selection
 -  Baud rate selection
 -  Supports all Data Readout, Reset and EEPROM commands
+\cond SOC_AM243X || SOC_AM64X
+-  Support for concurrent multi-channel support on a single PRU (up to 3 identical encoders)
+    - In this mode, data transmission and reception must happen simultaneously on all channels.
+    - The encoder configuration and cable length should be the same on all channels.
+    - If encoders across channels don't respond at the same time, this mode will not work.
+\endcond
 -  2.5 Mbps and 5 Mbps encoder support
    \note In three channel interface of PRU-ICSS, receive (Rx) is oversampled at 8x of send (Tx). Therefore, the encoder interface frequency "f" should be such that Tx source clock value is divisible by "f" and Rx source clock value is divisible by "(8*f)".
 - Possible interface speeds with different source clock combinations.
@@ -93,7 +99,7 @@ SysConfig can be used to configure the following:
    <td>PRUx</td>
    <td>DMEM: 220 Bytes, from offset <code>0x00</code> to <code>0xDC</code> offset <br> IMEM: 1.8 KB</td>
    <td>IEP0: CMP0 and CMP3 </td>
-   <td>INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger a R5 interrupt </td>
+   <td>INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger interrupt to Arm® Cortex®-R5F </td>
    <td>IEP, CMP events and INTC signal are used only in periodic continuous mode</td>
 </tr>
 \cond SOC_AM243X || SOC_AM64X
@@ -102,7 +108,7 @@ SysConfig can be used to configure the following:
    <td>PRUx</td>
    <td>DMEM: 220 Bytes, from offset <code>0x00</code> to <code>0xDC</code> offset <br> IMEM: 1.5 KB</td>
    <td>IEP0: CMP0 and CMP3 </td>
-   <td>INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger a R5 interrupt </td>
+   <td>INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger interrupt to R5F </td>
    <td>IEP, CMP events and INTC signal are used only in periodic continuous mode</td>
 </tr>
 \endcond
@@ -121,3 +127,5 @@ SysConfig can be used to configure the following:
 ## API
 
 \ref TAMAGAWA_API_MODULE
+
+\note Arm is a registered trademark of Arm Limited (or its subsidiaries or affiliates) in the US and/or elsewhere.

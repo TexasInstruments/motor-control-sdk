@@ -54,9 +54,9 @@ ICSS %SDFM is a sigma delta interface for phase current measurement in high-perf
    <td>DMEM: from offset <code>0x00</code> to <code>0x200</code> Offset <br> IMEM: <code>4.1 KB</code></td>
    <td>
     PRU-ICSS EVENT:
-     - INTC event/input number <code>21</code> (<code>pr[0/1]_pru_mst_intr[5]_intr_req</code>) is used to trigger an R5 interrupt for Channel <code>0</code>
-     - INTC event/input number <code>22</code> (<code>pr[0/1]_pru_mst_intr[6]_intr_req</code>) is used to trigger an R5 interrupt for Channel <code>1</code>
-     - INTC event/input number <code>23</code> (<code>pr[0/1]_pru_mst_intr[7]_intr_req</code>) is used to trigger an R5 interrupt for Channel <code>2</code>
+     - INTC event/input number <code>21</code> (<code>pr[0/1]_pru_mst_intr[5]_intr_req</code>) is used to trigger interrupt to Arm® Cortex®-R5F for Channel <code>0</code>
+     - INTC event/input number <code>22</code> (<code>pr[0/1]_pru_mst_intr[6]_intr_req</code>) is used to trigger interrupt to R5F for Channel <code>1</code>
+     - INTC event/input number <code>23</code> (<code>pr[0/1]_pru_mst_intr[7]_intr_req</code>) is used to trigger interrupt to R5F for Channel <code>2</code>
     PRU-ICSS PWM:
      - PWM0 TRIP ZONE to generate a trip for overcurrent and fast detection error
 
@@ -83,15 +83,15 @@ ICSS %SDFM is a sigma delta interface for phase current measurement in high-perf
    </td>
    <td rowspan="3">
     PRU-ICSS EVENT:
-     - INTC event/input number <code>21</code> (<code>pr[0/1]_pru_mst_intr[5]_intr_req</code>) is used to trigger an R5 interrupt for Channel <code>0</code>
-     - INTC event/input number <code>22</code> (<code>pr[0/1]_pru_mst_intr[6]_intr_req</code>) is used to trigger an R5 interrupt for Channel <code>1</code>
-     - INTC event/input number <code>23</code> (<code>pr[0/1]_pru_mst_intr[7]_intr_req</code>) is used to trigger an R5 interrupt for Channel <code>2</code>
-     - INTC event/input number <code>24</code> (<code>pr[0/1]_pru_mst_intr[8]_intr_req</code>) is used to trigger an R5 interrupt for Channel <code>3</code>
-     - INTC event/input number <code>25</code> (<code>pr[0/1]_pru_mst_intr[9]_intr_req</code>) is used to trigger an R5 interrupt for Channel <code>4</code>
-     - INTC event/input number <code>26</code> (<code>pr[0/1]_pru_mst_intr[10]_intr_req</code>) is used to trigger an R5 interrupt for Channel <code>5</code>
-     - INTC event/input number <code>27</code> (<code>pr[0/1]_pru_mst_intr[11]_intr_req</code>) is used to trigger an R5 interrupt for Channel <code>6</code>
-     - INTC event/input number <code>28</code> (<code>pr[0/1]_pru_mst_intr[12]_intr_req</code>) is used to trigger an R5 interrupt for Channel <code>7</code>
-     - INTC event/input number <code>29</code> (<code>pr[0/1]_pru_mst_intr[13]_intr_req</code>) is used to trigger an R5 interrupt for Channel <code>8</code>
+     - INTC event/input number <code>21</code> (<code>pr[0/1]_pru_mst_intr[5]_intr_req</code>) is used to trigger interrupt to R5F for Channel <code>0</code>
+     - INTC event/input number <code>22</code> (<code>pr[0/1]_pru_mst_intr[6]_intr_req</code>) is used to trigger interrupt to R5F for Channel <code>1</code>
+     - INTC event/input number <code>23</code> (<code>pr[0/1]_pru_mst_intr[7]_intr_req</code>) is used to trigger interrupt to R5F for Channel <code>2</code>
+     - INTC event/input number <code>24</code> (<code>pr[0/1]_pru_mst_intr[8]_intr_req</code>) is used to trigger interrupt to R5F for Channel <code>3</code>
+     - INTC event/input number <code>25</code> (<code>pr[0/1]_pru_mst_intr[9]_intr_req</code>) is used to trigger interrupt to R5F for Channel <code>4</code>
+     - INTC event/input number <code>26</code> (<code>pr[0/1]_pru_mst_intr[10]_intr_req</code>) is used to trigger interrupt to R5F for Channel <code>5</code>
+     - INTC event/input number <code>27</code> (<code>pr[0/1]_pru_mst_intr[11]_intr_req</code>) is used to trigger interrupt to R5F for Channel <code>6</code>
+     - INTC event/input number <code>28</code> (<code>pr[0/1]_pru_mst_intr[12]_intr_req</code>) is used to trigger interrupt to R5F for Channel <code>7</code>
+     - INTC event/input number <code>29</code> (<code>pr[0/1]_pru_mst_intr[13]_intr_req</code>) is used to trigger interrupt to R5F for Channel <code>8</code>
 
     PRU-ICSS PWM:
      - PWM0 TRIP ZONE to generate a trip for overcurrent and fast detection error
@@ -144,12 +144,12 @@ ICSS %SDFM is a sigma delta interface for phase current measurement in high-perf
 ### Task duration for Normal Current at 300 MHz PRU Core Clock
 Normal current processing time for its different execution flows
 - Task duration when only single update is enabled
-  - 320ns, without R5 interrupt and samples stored in TCM memory
-  - 328ns, with R5 interrupt and samples stored in TCM memory
+  - 320ns, without R5F interrupt and samples stored in TCM memory
+  - 328ns, with R5F interrupt and samples stored in TCM memory
 \image html SDFM_NC_Task_time_for_single_update.png "NC Task duration for single update"
 - Task duration when double update is enabled
-  - 320ns, without R5 interrupt and samples stored in TCM memory
-  - 336ns, with R5 interrupt and samples stored in TCM memory.
+  - 320ns, without R5F interrupt and samples stored in TCM memory
+  - 336ns, with R5F interrupt and samples stored in TCM memory.
   \image html SDFM_NC_Task_time_for_double_update.png "NC Task duration for double update"
 - Task duration for continuous mode is 360ns
 \image html SDFM_NC_Task_time_for_continuous_mode.png "NC Task duration for continuous mode"

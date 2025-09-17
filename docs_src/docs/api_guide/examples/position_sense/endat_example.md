@@ -72,8 +72,8 @@ After the user selects an EnDat command:
 \endcond
 
 ### Periodic Continuous Mode
-Current SDK example uses IEP CMP event to trigger periodic mode. CMP0 is used to get periodic CMP events by resetting the IEP counter continuously. Firmware triggers a R5 interrupt after getting a response from the encoder. The application code uses a callback function to clear the PRU interrupt, which can be modified as per the use case. Currently, command 200 is used to demonstrate the periodic mode, which informs the firmware to use position cmd 1. It prints the response written by the firmware on the UART terminal.
-CMP3 is used for single channel and multi-channel PRU mode, and for load-share mode CMP5 is used for RTU core and CMP6 is used for TX PRU core channel. To use changes in CMP event, the following macros need to be updated in the application `endat_periodic_trigger.h` file and source file `endat_icss_reg_defs.h`:
+Current SDK example uses IEP CMP event to trigger periodic mode. CMP0 is used to get periodic CMP events by resetting the IEP counter continuously. Firmware triggers an Arm® Cortex®-R5F interrupt after getting a response from the encoder. The application code uses a callback function to clear the PRU interrupt, which can be modified as per the use case. Currently, command 200 is used to demonstrate the periodic mode, which informs the firmware to use position cmd 1. It prints the response written by the firmware on the UART terminal.
+CMP3 is used for single channel and single PRU multi-channel mode. For multi-channel load share mode, CMP3 is used for RTU core, CMP5 is used for PRU core and CMP6 is used for TX PRU core channel. To use changes in CMP event, the following macros need to be updated in the application `endat_periodic_trigger.h` file and source file `endat_icss_reg_defs.h`:
 ```c
 #define IEP_CH0_CMP_EVNT ( 3 )
 #define IEP_CH1_CMP_EVNT ( 5 )
@@ -484,7 +484,7 @@ Shown below is a sample output when the application is run:
 \image html EnDAT_Initialization_UART_PRINT.png "EnDAT Usage"
 
 ## EnDat Debug Guide {#ENDAT_DEBUG_GUIDE}
-This section describes how to debug the EnDat application, including a guide to debugging the EnDat example and firmware. It mainly focuses on verifying the configuration of all components and encoder registers as described in \ref ENCODER_EXAMPLES_DEBUG_GUIDE.
+This section describes how to debug the EnDat application, including a guide to debugging the EnDat example and firmware. Several common debugging steps on verifying the configuration of key registers, hardware details for probing pins, debugging firmware, common issues with multi-channel or continuous mode, etc. are described in \ref ENCODER_EXAMPLES_DEBUG_GUIDE.
 
 If the EnDat interface is not initializing correctly, the steps mentioned below can help identify the root cause. Additionally, ensure that the hardware connections and software configurations are properly set up before proceeding with debugging.
 

@@ -455,7 +455,7 @@ This section provides a comprehensive debugging guide for troubleshooting issues
 ## SDFM Register Configuration
 The PRU_ICSSG_CFG registers from offset 0x44 to 0xD8 are allocated for %SDFM configuration. To review and verify the %SDFM settings:
 
-1. Halt the R5 core
+1. Halt the Arm® Cortex®-R5F core
 2. Open the memory browser window
 3. Enter the base address of the PRU_ICSSG_CFG registers and view the configured values
 
@@ -497,7 +497,7 @@ To verify IEP configuration:
 For detailed register descriptions, refer to section `6.4.14.9` PRU_IEP_IEP Registers in the AM243x TRM.
 
 ## Interrupt Controller Internal Signals Mapping
-If you experience missing PRU interrupts or incorrect IRQ mapping, verify the interrupt mapping between PRU and R5 in the SysConfig PRU INTC module. The Host channel number and PRU Event should match your configuration.
+If you experience missing PRU interrupts or incorrect IRQ mapping, verify the interrupt mapping between PRU and R5F in the SysConfig PRU INTC module. The Host channel number and PRU Event should match your configuration.
 
 For example, the %SDFM basic example uses:
 - PRU Event: `21: pr0_pru_mst_intr[5]_intr_req`
@@ -571,3 +571,5 @@ After loading the firmware, you can analyze the PRU execution flow:
 
 - **With Overcurrent Enabled:**
   - PRU continuously executes overcurrent sampling
+
+\note Arm is a registered trademark of Arm Limited (or its subsidiaries or affiliates) in the US and/or elsewhere.

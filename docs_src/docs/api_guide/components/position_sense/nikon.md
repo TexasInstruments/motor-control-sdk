@@ -54,7 +54,12 @@ Nikon A-format absolute encoder receiver implementation on the TI PRU-ICSS inter
 </tr>
 </table>
    -  Support for concurrent multi-channel support on a single PRU (up to 3 channels with identical number of encoders of the same frequency connected to all configured channels).
+       - In this mode, data transmission and reception must happen simultaneously on all channels.
+       - The encoder configuration and cable length should be the same on all channels.
+       - If encoders across channels don't respond at the same time, this mode will not work. Load share configuration should be used instead.
    -  Support for multi-channel with different communication modes and different numbers of encoders connected across channels under load share mode (Refer \ref PRUICSSG_LOAD_SHARE_MODE for more details).
+       - In this mode, data transmission and reception can happen independently on all channels.
+       - After a command is sent, all channels wait for a response and process the response independently. However, all channels must finish processing before the next command can be triggered.
 \endcond
 
 \cond SOC_AM261X
@@ -229,7 +234,7 @@ SysConfig can be used to configure the following:
     <td> PRUx
     <td> DMEM: 549 Bytes (0x0 to 0x225) <br>  IMEM: ~ 1.4 kB
 	<td> IEP0: CMP0 and CMP3
-    <td> INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger a R5 interrupt
+    <td> INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger interrupt to Arm® Cortex®-R5F
     <td> IEP, CMP events and INTC signal are used only in periodic continuous mode.
 </tr>
 <tr>
@@ -237,7 +242,7 @@ SysConfig can be used to configure the following:
     <td> PRUx
     <td> DMEM: 549 Bytes (0x0 to 0x225) <br>  IMEM: 1700 Bytes
 	<td> IEP0: CMP0 and CMP3
-    <td> INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger a R5 interrupt
+    <td> INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger interrupt to R5F
     <td> IEP, CMP events and INTC signal are used only in periodic continuous mode.
 </tr>
 <tr>
@@ -245,7 +250,7 @@ SysConfig can be used to configure the following:
     <td> PRUx
     <td rowspan="3"> DMEM: 549 Bytes (0x0 to 0x225) <br>  IMEM: 1604 Bytes
 	<td rowspan="3"> IEP0: CMP0, CMP3, CMP5 and CMP6 </td>
-    <td rowspan="3"> INTC event/input number 18, 19 and 20 (pr[0/1]_pru_mst_intr[2/3/4]_intr_req) is used to trigger a R5 interrupt
+    <td rowspan="3"> INTC events/inputs number 18, 19 and 20 (pr[0/1]_pru_mst_intr[2/3/4]_intr_req) are used to trigger interrupts to R5F
     <td rowspan="3"> IEP, CMP events and INTC signals are used only in periodic continuous mode.</td>
 </tr>
 <tr>
@@ -275,7 +280,7 @@ SysConfig can be used to configure the following:
     <td> PRUx
     <td> DMEM: 549 Bytes (0x0 to 0x225) <br>  IMEM: ~ 1.4 kB
 	<td> IEP0: CMP0 and CMP3
-    <td> INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger a R5 interrupt
+    <td> INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger interrupt to R5F
     <td> IEP, CMP events and INTC signal are used only in periodic continuous mode.
 </tr>
 </table>
@@ -292,3 +297,5 @@ SysConfig can be used to configure the following:
 
 ## API
 \ref NIKON_API_MODULE
+
+\note Arm is a registered trademark of Arm Limited (or its subsidiaries or affiliates) in the US and/or elsewhere.
