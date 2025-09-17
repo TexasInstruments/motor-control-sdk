@@ -45,7 +45,7 @@ This section provides a debugging guide for troubleshooting issues that may aris
 
 The \if (SOC_AM64X || SOC_AM243X) PRU_ICSSG_CFG \else ICSSM_PR1_CFG_SLV \endif registers from offset 0xE0 to 0x11C are allocated for encoder configuration. To review and verify the encoder settings:
 
-1. Halt the R5 core
+1. Halt the Arm® Cortex®-R5F core
 2. Open the memory browser window
 3. Enter the address of the \if (SOC_AM64X || SOC_AM243X) PRU_ICSSG_CFG \else ICSSM_PR1_CFG_SLV \endif register and view the configured values
 > **Note:** Ensure you are entering the correct base address for encoder registers. Each ICSS instance has a different address for the CFG register.
@@ -254,11 +254,32 @@ For PRU-related issues, verify that the application is loading the PRU firmware 
 
 \image html EnDAT_debug_firmware_load.png "Load EnDAT RTU firmware symbols"
 
-### Other Configurations
+### Multi-channel modes
 
-Guide to debug the components used in encoder examples:
+#### Multi-channel with single PRU mode
 
-#### IEP Registers Configuration
+\note This subsection is applicable for BiSS-C, EnDat, Nikon A-format, and Tamagawa only.
+
+- In this mode, data transmission and reception must happen simultaneously on all channels.
+- The encoder configuration and cable length should be the same on all channels.
+- If encoders across channels don't respond at the same time, this mode will not work. Load share configuration should be used instead.
+
+#### Multi-channel with load share mode
+
+\note This subsection is applicable for BiSS-C, EnDat, HDSL, and Nikon A-format only.
+
+- In this mode, data transmission and reception can happen independently on all channels.
+- After a command is sent, all channels wait for a response and process the response independently. However, all channels must finish processing before the next command can be triggered. (This restriction does not apply to HDSL. HDSL channels can continue operating independently.)
+
+### Periodic Continuous Mode
+
+\note This subsection is applicable for BiSS-C, EnDat, Nikon A-format and Tamagawa only. Load share mode is not available for Tamagawa.
+
+SDK examples uses IEP CMP event to trigger periodic mode. CMP0 is used to get periodic CMP events by resetting the IEP counter continuously. Firmware triggers a R5F interrupt after getting a response from the encoder. The application code uses a callback function to clear the PRU interrupt, which can be modified as per the use case. CMP3 is used for single channel and single PRU multi-channel mode. For multi-channel load share mode, CMP3 is used for RTU core, CMP5 is used for PRU core and CMP6 is used for TX PRU core channel. Refer the example specific page for details on how to modify the compare events.
+
+When programming the values for CMP based trigger events, ensure that the command send and receive can complete within the cycle time (configured with CMP0). In multi-channel, ensure that command completion for timings for all channels are considered. Incorrect values may send PRU FW in bad state. Also, refer to encoder specifications to ensure that requirement for mimimum interval between two commands is met.
+
+### IEP Registers Configuration
 
 The Industrial Ethernet Peripheral (IEP) is used for periodic continuous mode. If the IEP is not configured correctly, periodic continuous mode will not work.
 
@@ -283,8 +304,8 @@ Table 4-417 of the AM263x Sitara Processors Technical Reference Manual Register 
 Table 4-1573 of the AM261x Sitara Processors Technical Reference Manual Register Addendum
 \endif
 
-#### Interrupt Controller Internal Signals Mapping
-If you experience missing PRU interrupts or incorrect IRQ mapping, verify the interrupt mapping between PRU and R5 in the SysConfig PRU INTC module. The Host channel number and PRU Event should match your configuration.
+### Interrupt Controller Internal Signals Mapping
+If you experience missing PRU interrupts or incorrect IRQ mapping, verify the interrupt mapping between PRU and R5F in the SysConfig PRU INTC module. The Host channel number and PRU Event should match your configuration.
 
 For example, the EnDAT example uses:
 - PRU Event: `18: pr0_pru_mst_intr[2]_intr_req`
@@ -323,3 +344,5 @@ The PRU event number is defined in `endat_periodic_trigger.h`:
 ```c
 #define PRU_TRIGGER_HOST_ENDAT_EVT0   ( 2+16 )
 ```
+
+\note Arm is a registered trademark of Arm Limited (or its subsidiaries or affiliates) in the US and/or elsewhere.

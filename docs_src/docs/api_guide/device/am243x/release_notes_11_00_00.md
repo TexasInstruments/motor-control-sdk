@@ -27,7 +27,7 @@
     <th>Module
 </tr>
 <tr>
-    <td>Single R5 core example for dual-servo motor drive reference design based on Universal Motor Control similar to other Sitara™ and C2000™ devices.
+    <td>Dual Arm® Cortex®-R5F core example (1 core for motor control and EtherCAT each) for Dual-Servo Motor Drive reference design based on Universal Motor Control similar to other Sitara™ and C2000™ devices.
     <td>TIDEP-01032 EtherCAT-Connected Single-Chip Dual-Servo Motor Drive Reference Design
 </tr>
 <tr>

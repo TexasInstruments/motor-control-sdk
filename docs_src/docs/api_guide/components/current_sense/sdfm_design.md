@@ -91,8 +91,8 @@ Following section describes the firmware implementation of Sigma Delta Decimatio
   2. Snoop Mode: It reads sample data directly from the accumulator and the desired one sample timing is achieved by using the IEP CMP event.
 
 - **Normal Mode:**
-    - Continuous Mode: It performs continuous sampling for all three channels independently. Each channel store sample in memory and generates an independent R5 event when sample is ready. It also performs over-current comparison if the sample values cross the threshold range, It triggers the PRU-ICSS PWM trip.
-    - Trigger Mode: It starts the sampling when a CMP event is hit. First, it clears all accumulator and differentiation registers. Then it starts sampling for all three channels. It performs continuous SINC filter order times sampling for all three channels. Once the sampling is done for all channels, it store samples in memory and triggers a R5 interrupt.
+    - Continuous Mode: It performs continuous sampling for all three channels independently. Each channel store sample in memory and generates an independent R5F event when sample is ready. It also performs over-current comparison if the sample values cross the threshold range, It triggers the PRU-ICSS PWM trip.
+    - Trigger Mode: It starts the sampling when a CMP event is hit. First, it clears all accumulator and differentiation registers. Then it starts sampling for all three channels. It performs continuous SINC filter order times sampling for all three channels. Once the sampling is done for all channels, it store samples in memory and triggers a R5F interrupt.
 \image html SDFM_NC_OC_FLOWCHART_FOR_NORMAL_MODE.jpg "Firmware flow chart for normal mode"
 - **Snoop Mode:**
     - If threshold comparator is enabled, then a free run over current loop is setup, else it sets up an infinite waiting loop. In over current loop, the firmware reads sample data from the shadow copy register and does low and high threshold comparison with sample data, and depending on the configuration it generates over current trip in PRU-ICSS PWM trip zone block. Also if zero cross detection is enabled, it detects zero cross.
@@ -107,7 +107,7 @@ This section describes normal current implementation for snoop mode.
 There are two different variations of normal current.
 - Trigger based: It starts execution when the trigger point is acquired (first time CMP event hits) and performs four continuous samplings to bring the accumulator and differentiator registers to stable state for the configured normal current OSR. Initially the CMP register is configured with the first sample trigger start time and then until the next third continuous normal current sample it is updated with the normal current OSR sampling time. At the end of the fourth normal current sample again, it is updated with the second sample start time if double update is enabled otherwise with the first sample trigger start time.
 
-- Continuous sampling: It starts execution when the first time CMP event hits. Every time it updates CMP event register with the normal current OSR sampling time for next continuous sample, stores sample values in DMEM and triggers R5 interrupt.
+- Continuous sampling: It starts execution when the first time CMP event hits. Every time it updates CMP event register with the normal current OSR sampling time for next continuous sample, stores sample values in DMEM and triggers R5F interrupt.
 
 \image html SDFM_NC_FLOW_CHART.png "Normal Current"
 

@@ -69,8 +69,8 @@ The Nikon receiver firmware running on ICSS-PRU provides a defined interface. Th
 \endcond
 
 ### Periodic Continuous Mode
-Current SDK example uses IEP CMP event to trigger periodic mode. CMP0 is used to get periodic CMP events by resetting the IEP counter continuously. Firmware triggers a R5 interrupt after getting a response from the encoder. The application code uses a callback function to clear the PRU interrupt, which can be modified as per the use case. Currently, command 32 is used to demonstrate the periodic mode, which informs the firmware to use position cmd 4. It prints the response written by the firmware on the UART terminal.
-CMP3 is used for single channel and multi-channel PRU mode, and for load-share mode CMP5 is used for RTU core and CMP6 is used for TX PRU core channel. To use changes in CMP event, the following macros need to be updated in the application `nikon_periodic_trigger.h` file and source file `nikon_params.h`:
+Current SDK example uses IEP CMP event to trigger periodic mode. CMP0 is used to get periodic CMP events by resetting the IEP counter continuously. Firmware triggers an Arm® Cortex®-R5F interrupt after getting a response from the encoder. The application code uses a callback function to clear the PRU interrupt, which can be modified as per the use case. Currently, command 32 is used to demonstrate the periodic mode, which informs the firmware to use position cmd 4. It prints the response written by the firmware on the UART terminal.
+CMP3 is used for single channel and single PRU multi-channel mode. For multi-channel load share mode, CMP3 is used for RTU core, CMP5 is used for PRU core and CMP6 is used for TX PRU core channel. To use changes in CMP event, the following macros need to be updated in the application `nikon_periodic_trigger.h` file and source file `nikon_params.h`:
 ```c
 #define IEP_CH0_CMP_EVNT ( 3 )
 #define IEP_CH1_CMP_EVNT ( 5 )
@@ -512,6 +512,27 @@ Troubleshooting steps:
 2. Confirm the pin settings and the clock configuration
 3. If the above are correct, debug the PRU firmware by connecting to the appropriate core as described in the \ref ENCODER_EXAMPLES_DEBUG_GUIDE
 
+### Command Failures
+
+- If the encoder ID is not set correctly for encoders, it may cause problems with PRU firmware or R5F driver. Correct encoder ID should be set using UART menu option 31 before sending commands or by calling \ref nikon_update_enc_addr API appropriately.
+- In single PRU multi-channel mode, the encoder ID should be same on all channels.
+
+\cond SOC_AM243X
+- PRU Firmware gets stuck if encoder does not respond with the number of bytes expected by the driver as per PINDSW-9179 in \ref RELEASE_NOTES_11_00_00_PAGE
+- Example cases when firmware gets stuck
+    1. Any command is sent with encoder address not matching that of the encoder connected with the device
+    2. In bus mode, if encoders with addresses 0, 1, 2 are connected and MT command is sent with encoder address 3 or more
+    3. Command 20 is sent with ID not matching the encoder connected with the device
+\endcond
+
+\cond (SOC_AM263PX || SOC_AM261X)
+- PRU Firmware gets stuck if encoder does not respond with the number of bytes expected by the driver as per PINDSW-9179 in \ref RELEASE_NOTES_10_02_00_PAGE
+- Example cases when firmware gets stuck
+    1. Any command is sent with encoder address not matching that of the encoder connected with the device
+    2. In bus mode, if encoders with addresses 0, 1, 2 are connected and MT command is sent with encoder address 3 or more
+    3. Command 20 is sent with ID not matching the encoder connected with the device
+\endcond
+
 ## Test Case Description
 
 <table>
@@ -834,3 +855,5 @@ Troubleshooting steps:
         </td>
     </tr>
 </table>
+
+\note Arm is a registered trademark of Arm Limited (or its subsidiaries or affiliates) in the US and/or elsewhere.

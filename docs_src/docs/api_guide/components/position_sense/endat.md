@@ -22,7 +22,12 @@ EnDat is a bidirectional interface for position encoders. During EnDat operation
    -  Channel select
 \cond SOC_AM243X || SOC_AM64X
    -  Concurrent multi-channel support (up to 3 encoders with identical part numbers @ 8MHz maximum)
+      - In this mode, data transmission and reception must happen simultaneously on all channels.
+      - The encoder configuration and cable length should be the same on all channels.
+      - If encoders across channels don't respond at the same time, this mode will not work. Load share configuration should be used instead.
    -  "Multi Channel with encoders of different make" using load share mode (Refer \ref PRUICSSG_LOAD_SHARE_MODE for more details)
+      - In this mode, data transmission and reception can happen independently on all channels.
+      - After a command is sent, all channels wait for a response and process the response independently. However, all channels must finish processing before the next command can be triggered.
 \endcond
    -  Safety Readiness: Recovery time
    -  Clock up to 16MHz with single channel \if (SOC_AM243X || SOC_AM64X) and load share mode (multi-channel) \endif
@@ -119,7 +124,7 @@ SysConfig can be used to configure things mentioned below:
    <td>PRUx</td>
    <td>DMEM:160 Bytes, from offset <code>0x00</code> to <code>0xA0</code> offset <br>  IMEM: 5.4 KB  <br>TCMB0: 40 Bytes, 40 Bytes of memory can be located anywhere within the offset range 0x00 to 0x78, depending on the selected channel.</td>
    <td>IEP0: CMP0 and CMP3 </td>
-   <td>INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger a R5 interrupt </td>
+   <td>INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger interrupt to Arm® Cortex®-R5F </td>
    <td>IEP, CMP events and INTC signal are used only in periodic continuous mode.</td>
 </tr>
 \cond SOC_AM243X || SOC_AM64X
@@ -128,7 +133,7 @@ SysConfig can be used to configure things mentioned below:
    <td>PRUx</td>
    <td>DMEM: 160 Bytes, from offset <code>0x00</code> to <code>0xA0</code> offset  <br>  IMEM: 6.2 KB <br>TCMB0:120 Bytes, from offset <code>0x00</code> to <code>0x78</code> offset </td>
    <td>IEP0: CMP0 and CMP3 </td>
-   <td>INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger a R5 interrupt </td>
+   <td>INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger interrupt to R5F </td>
    <td>IEP, CMP events and INTC signal are used only in periodic continuous mode <br> \note Multi-Channel single PRU firmware requires more than 6KB IMEM, so it cannot run on TX PRU
     </td>
 </tr>
@@ -137,7 +142,7 @@ SysConfig can be used to configure things mentioned below:
     <td>PRUx
     <td rowspan="3">DMEM: 160 Bytes, from offset <code>0x00</code> to <code>0xA0</code> offset  <br>  PRU_IMEM: 4 KB <br>  RTU_IMEM: 4 KB <br>  TX_IMEM: 4 KB <br>TCMB0:120 Bytes, from offset <code>0x00</code> to <code>0x78</code> offset</td>
     <td rowspan="3">IEP0: CMP0, CMP3, CMP5 and CMP6 </td>
-    <td rowspan="3">INTC event/input number 18, 19 and 20 (pr[0/1]_pru_mst_intr[2/3/4]_intr_req) is used to trigger a R5 interrupt </td>
+    <td rowspan="3">INTC events/inputs number 18, 19 and 20 (pr[0/1]_pru_mst_intr[2/3/4]_intr_req) are used to trigger interrupts to R5F </td>
     <td rowspan="3">IEP, CMP events and INTC signals are used only in periodic continuous mode.</td>
 </tr>
 <tr>
@@ -160,3 +165,5 @@ SysConfig can be used to configure things mentioned below:
 
 ## API
 \ref ENDAT_API_MODULE
+
+\note Arm is a registered trademark of Arm Limited (or its subsidiaries or affiliates) in the US and/or elsewhere.

@@ -365,7 +365,7 @@ Enter the period (which can be calculated with the formula = Cycle Time (in us) 
 \image html hdsl_positional_commands_menu.png "HDSL Sync mode Menu"
 
 ## HDSL Debug Guide {#HDSL_DEBUG_GUIDE}
-This section describes how to debug the HDSL application, including a guide to debugging the HDSL example and firmware. It mainly focuses on verifying the configuration of all components and encoder registers as described in \ref ENCODER_EXAMPLES_DEBUG_GUIDE.
+This section describes how to debug the HDSL application, including a guide to debugging the HDSL example and firmware. Several common debugging steps on verifying the configuration of key registers, hardware details for probing pins, debugging firmware, common issues with multi-channel or continuous mode, etc. are described in \ref ENCODER_EXAMPLES_DEBUG_GUIDE.
 
 If the HDSL interface is not initializing correctly, the steps mentioned below can help identify the root cause. Additionally, ensure that the hardware connections and software configurations are properly set up before proceeding with debugging.
 

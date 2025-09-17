@@ -4,7 +4,7 @@
 
 This reference design showcases the ability of the AM243x device to support a fully-integrated real-time servo motor drive control and industrial communication path. This path extends from receiving EtherCAT CiA402 target commands for velocity, to performing closed-loop FOC velocity control of dual connected motors, to passing the actual velocity values back to the EtherCAT PLC.
 
-The implementation features dual-axis BLDC motor control where the control loop runs in the R5F_0_0 core. %SDFM interrupt is used to trigger the control loop execution, while EPWM is utilized for motor output control. The system employs EnDat 2.2 absolute encoders for position feedback and ICSS %SDFM module for current feedback.
+The implementation features dual-axis BLDC motor control where the control loop runs in the Arm® Cortex®-R5F (R5F_0_0) core. %SDFM interrupt is used to trigger the control loop execution, while EPWM is utilized for motor output control. The system employs EnDat 2.2 absolute encoders for position feedback and ICSS %SDFM module for current feedback.
 
 ## R5F_0_0 Example Implementation
 
@@ -105,7 +105,7 @@ System Configuration:
 
 #### EnDat Configuration
 
-The EnDat 2.2 is used for position feedback. It operates in periodic mode and is synchronized with the EPWM SYNC out event. For Motor 1, Channel 0 of PRU slice 1 runs on the RTU core. For Motor 2, Channel 2 of PRU slice 1 runs on the TX PRU core. Both PRUs send commands to the encoder and store the position value in memory, which is used by R5 for position feedback.
+The EnDat 2.2 is used for position feedback. It operates in periodic mode and is synchronized with the EPWM SYNC out event. For Motor 1, Channel 0 of PRU slice 1 runs on the RTU core. For Motor 2, Channel 2 of PRU slice 1 runs on the TX PRU core. Both PRUs send commands to the encoder and store the position value in memory, which is used by R5F for position feedback.
 
 All EnDat configuration and parameter settings are configured in `hal.c` and `hal.h` files. For more information about the EnDat design, please refer to \ref ENDAT.
 
@@ -129,7 +129,7 @@ obj->thetaElec_rad =  obj->thetaElec_rad + 0.5*MATH_PI;
 
 #### SDFM Configuration
 
-The PRU-ICSS %SDFM interface is used for current feedback and operates in normal current trigger mode. Channels 0 to 2 of PRU slice 0 are used for Motor 1 current feedback, running on the RTU core. Channels 3 to 5 of PRU slice 0 are used for Motor 2 current feedback, running on the PRU core. After sampling is complete, both PRUs store the sampled values in memory and trigger interrupts to the R5 core. The IEP0 SYNC0 output is used to generate a 20 MHz SDFM clock, which is configured by `HAL_setupSDFM`.
+The PRU-ICSS %SDFM interface is used for current feedback and operates in normal current trigger mode. Channels 0 to 2 of PRU slice 0 are used for Motor 1 current feedback, running on the RTU core. Channels 3 to 5 of PRU slice 0 are used for Motor 2 current feedback, running on the PRU core. After sampling is complete, both PRUs store the sampled values in memory and trigger interrupts to the R5F core. The IEP0 SYNC0 output is used to generate a 20 MHz SDFM clock, which is configured by `HAL_setupSDFM`.
 
 All %SDFM configuration and parameter settings are configured in `hal.c` and `hal.h` files. For more information about the %SDFM design, please refer to \ref SDFM.
 
@@ -358,7 +358,7 @@ In this build level, the system runs with open-loop control. The %SDFM values ar
 
 6. The motorVars_M1.speedRef_Hz variable sets the speed reference. Verify that the actual speed (motorVars_M1.speed_Hz) closely matches the reference speed (motorVars_M1.speedRef_Hz)
 
-\note Runtime changes to MotorVars_M1.speedRef_Hz require halting the R5 core. To avoid sudden motor stops, use EtherCAT for speed control as described in the EtherCAT CiA402 Client Example section
+\note Runtime changes to MotorVars_M1.speedRef_Hz require halting the R5F core. To avoid sudden motor stops, use EtherCAT for speed control as described in the EtherCAT CiA402 Client Example section
 
 7. Validate current sensing, rotor angle estimator, and generator using the DATALOG module for viewing waveforms
 
@@ -500,3 +500,5 @@ This section describes the steps to run the EtherCAT sub-device CiA402 demo exam
 5. Verify TxPDO1 (Motor 2) Velocity actual value shows `180` RPM
 
 \note For instructions on how to enable DC mode, refer to the section titled "Testing DC Synchronization mode" in the document <a href="@VAR_IC_SDK_DOCS_PATH/ETHERCAT_SUBDEVICE_DEMO_TWINCAT.html" target="_blank">@VAR_SOC_NAME EtherCAT SubDevice Setup with TwinCAT</a>.
+
+\note Arm is a registered trademark of Arm Limited (or its subsidiaries or affiliates) in the US and/or elsewhere.

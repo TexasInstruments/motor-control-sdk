@@ -47,7 +47,7 @@ The Tamagawa receiver firmware running on ICSSM1-PRU0 provides a defined interfa
 The Tamagawa diagnostic application interacts with the Tamagawa receiver firmware interface. It then presents the user with menu options to select Data ID code (as defined by Tamagawa) to be sent to the encoder. The application collects the data entered by the user and configures the relevant interface. Then via the Tamagawa receiver interface, the command is triggered. Once the command completion is indicated by the interface, the status of the transaction is checked. If the Status indicates success, the result is presented to the user.
 
 ## Periodic Continuous Mode
-Current SDK example uses IEP CMP3 event to trigger periodic mode. CMP0 is used to get periodic CMP events by resetting the IEP counter continuously. Firmware triggers a R5 interrupt after getting a response from the encoder. The application code uses a callback function to clear the PRU interrupt, which can be modified as per the use case. Currently, command 9 is used to demonstrate the periodic mode, which informs the firmware to use position cmd 1. It prints the response written by the firmware on the UART terminal.
+Current SDK example uses IEP CMP3 event to trigger periodic mode. CMP0 is used to get periodic CMP events by resetting the IEP counter continuously. Firmware triggers an Arm® Cortex®-R5F interrupt after getting a response from the encoder. The application code uses a callback function to clear the PRU interrupt, which can be modified as per the use case. Currently, command 9 is used to demonstrate the periodic mode, which informs the firmware to use position cmd 1. It prints the response written by the firmware on the UART terminal.
 To use changes in CMP event, the following macros need to be updated in the application `tamagawa_periodic_trigger.h` file and source file `tamagawa_icss_reg_defs.h`:
 ```c
 #define IEP_CMP_EVNT       ( 3 )
@@ -459,7 +459,7 @@ Shown below is a sample output when the application is run:
 
 ## Tamagawa Debug Guide {#TAMAGAWA_DEBUG_GUIDE}
 
-This section describes how to debug the Tamagawa application, including a guide to debugging the Tamagawa example and firmware. It mainly focuses on verifying the configuration of all components and encoder registers, as described in the \ref ENCODER_EXAMPLES_DEBUG_GUIDE.
+This section describes how to debug the Tamagawa application, including a guide to debugging the Tamagawa example and firmware. Several common debugging steps on verifying the configuration of key registers, hardware details for probing pins, debugging firmware, common issues with multi-channel or continuous mode, etc. are described in \ref ENCODER_EXAMPLES_DEBUG_GUIDE.
 
 If the Tamagawa interface is not initializing correctly, the steps mentioned below can help identify the root cause. Additionally, ensure that the hardware connections and software configurations are properly set up before proceeding with debugging.
 
@@ -580,3 +580,5 @@ This issue can be troubleshot by debugging the firmware and examining register v
         <td>CRC success with ABM value set to 0 along with SF, CF and CRC values printed in the terminal.</td>
     </tr>
 </table>
+
+\note Arm is a registered trademark of Arm Limited (or its subsidiaries or affiliates) in the US and/or elsewhere.
