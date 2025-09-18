@@ -7,7 +7,7 @@
 \attention For release notes of Industrial Communications SDK and MCU+ SDK, please refer to <a href="@VAR_IC_SDK_DOCS_PATH/RELEASE_NOTES_11_00_00_PAGE.html" target="_blank"> @VAR_SOC_NAME Industrial Communications SDK Release Notes 11.00.00</a> and <a href="@VAR_MCU_SDK_DOCS_PATH/RELEASE_NOTES_11_00_00_PAGE.html" target="_blank"> @VAR_SOC_NAME MCU+ SDK Release Notes 11.00.00</a> respectively.
 
 \note
-        1. In Motor Control SDK 11.00.00, using the EtherCAT example from Industrial Communications SDK 11.00.00.13 requires downloading the Beckhoff SSC stack from the ETG website and rebuilding the library as described in the following documentation:
+        1. In Motor Control SDK 11.00.00 (production package), using the EtherCAT example from Industrial Communications SDK 11.00.00.13 or EtherCAT example for TIDEP-01032 EtherCAT-Connected Single-Chip Dual-Servo Motor Drive Reference Design requires downloading the Beckhoff SSC stack from the ETG website and rebuilding the library as described in the following documentation:
             - <a href="../../ind_comms_sdk/docs/am243x/ethercat_subdevice/beckhoff__s_c_c.html" target="_blank">Beckhoff SSC</a>
             - <a href="@VAR_IC_SDK_DOCS_PATH/EXAMPLES_INDUSTRIAL_COMMS_ETHERCAT_SLAVE_BECKHOFF_SSC_DEMO.html#STEPS_TO_RUN_ECAT_BECKHOFF_SSC_DEMO" target="_blank"> Steps to Run the Example</a>
             - For EtherCAT example evaluation without access to Beckhoff SSC, please use the evaluation package.
@@ -548,13 +548,6 @@ Mbed-TLS                             | R5F            | mbedtls-2.13.1
     <td> HDSL: Sync mode does not work 100m long cable
     <td> Position Sense HDSL
     <td> 9.0 onwards
-    <td> -
-</tr>
-<tr>
-    <td> PINDSW-8296
-    <td> HDSL: Incorrect SAFE_SUM value is seen
-    <td> Position Sense HDSL
-    <td> 11.0 onwards
     <td> -
 </tr>
 <tr>
