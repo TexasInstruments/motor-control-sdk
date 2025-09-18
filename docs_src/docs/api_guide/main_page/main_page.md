@@ -168,11 +168,16 @@ The main software components in the block diagram specific to motor control are 
     <td>\ref SDFM
     <td> Driver and firmware for current sense using Sigma-Delta Filtering Module
 </tr>
-<tr><td colspan="3" bgcolor=#F0F0F0>**Real Time Libraries**</td></tr>
+<tr><td colspan="5" bgcolor=#F0F0F0>**Real Time Libraries**</td></tr>
 <tr>
     <td> Control algorithms
     <td> \ref CONTROL
     <td> Library for control algorithms and techniques used in motors such as PMSM and BLDC
+</tr>
+<tr>
+    <td> Datalog
+    <td>\ref DATALOG
+    <td> Library for storing the real time values of user selectable variables
 </tr>
 <tr>
     <td> Digital Control Library (DCL)
@@ -183,6 +188,11 @@ The main software components in the block diagram specific to motor control are 
     <td> Observer algorithms
     <td>\ref OBSERVERS
     <td> Header-only library for encoder/observer algorithms used in both sensored/sensorless field oriented control (FOC)
+</tr>
+<tr>
+    <td> Software Frequency Response Analyzer
+    <td>\ref SFRA
+    <td> Library that enables developers to quickly measure the frequency response of their digital power converter.
 </tr>
 <tr>
     <td> Transforms
@@ -501,7 +511,7 @@ In Linux, the tools are installed by default in ${HOME}/ti.
 ## Licenses
 
 The licensing information of this SDK, as well as any third-party components included which are made available under a number of other open-source licenses are enumerated as part of the manifest.
-A complete manifest along with export control information is detailed here [\htmllink{../../docs/@VAR_SOC_MANIFEST,LINK}] and the SDK Software License Agreement (SLA) is here [\htmllink{../../license.txt,LINK}]
+A complete manifest along with export control information is detailed in "${SDK_INSTALL_PATH}/docs/motor_control_sdk_*_manifest.html" file and the SDK Software License Agreement (SLA) is here [\htmllink{../../license.txt,LINK}]
 
 ## Help and Support
 
