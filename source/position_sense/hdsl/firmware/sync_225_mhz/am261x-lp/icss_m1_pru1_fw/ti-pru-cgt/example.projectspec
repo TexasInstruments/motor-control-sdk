@@ -40,6 +40,7 @@
             -DCHANNEL_0
             -DICSS_G_V_1_0
             -DEXT_SYNC_ENABLE
+            -DOS_FW
         "
         linkerBuildOptions="
             -m=hdsl_receiver_sync_225_mhz.${ConfigName}.map

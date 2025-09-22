@@ -57,7 +57,7 @@ all: $(OBJS) $(CMD_SRCS)
 $(OBJDIR)/%.obj %.obj: %.asm
 	@echo 'Building file: "$^"'
 	@echo 'Invoking: PRU Compiler'
-	"$(CGT_TI_PRU_PATH)/bin/clpru" -DICSSG0 -DTX_PRU0 -DSLICE0 -v4 -v4 --define=SOC_AM243X --define=ENABLE_MULTI_MAKE_TXPRU --include_path="${CG_TOOL_ROOT}/include" --include_path="${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source" --include_path="${MOTOR_CONTROL_SDK_PATH}/source" --include_path="${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware"  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little --preproc_with_compile --preproc_dependency="$(basename $(<F)).d_raw" $^
+	"$(CGT_TI_PRU_PATH)/bin/clpru" -DICSSG0 -DTX_PRU0 -DSLICE0 -v4 -v4 --define=SOC_AM243X --define=ENABLE_MULTI_MAKE_TXPRU --define=OS_FW --include_path="${CG_TOOL_ROOT}/include" --include_path="${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source" --include_path="${MOTOR_CONTROL_SDK_PATH}/source" --include_path="${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware"  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little --preproc_with_compile --preproc_dependency="$(basename $(<F)).d_raw" $^
 	@echo 'Finished building: "$^"'
 	@echo ' '
 
@@ -65,7 +65,7 @@ $(OBJDIR)/%.obj %.obj: %.asm
 bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru0_fw_ti-pru-cgt.out: $(OBJS) $(CMD_SRCS)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: PRU Linker'
-	"$(CGT_TI_PRU_PATH)/bin/clpru" -DICSSG0 -DTX_PRU0 -DSLICE0 -v4 -v4 --define=SOC_AM243X --define=ENABLE_MULTI_MAKE_TXPRU  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little -z -m"bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru0_fw_ti-pru-cgt.map" --disable_auto_rts   --diag_wrap=off --display_error_number --warn_sections --xml_link_info="bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru0_fw_ti-pru-cgt_linkInfo.xml" --disable_auto_rts --diag_suppress=10063-D --entry_point=BISSC_INIT --disable_auto_rts  --rom_model -o "bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru0_fw_ti-pru-cgt.out" $^
+	"$(CGT_TI_PRU_PATH)/bin/clpru" -DICSSG0 -DTX_PRU0 -DSLICE0 -v4 -v4 --define=SOC_AM243X --define=ENABLE_MULTI_MAKE_TXPRU --define=OS_FW  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little -z -m"bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru0_fw_ti-pru-cgt.map" --disable_auto_rts   --diag_wrap=off --display_error_number --warn_sections --xml_link_info="bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru0_fw_ti-pru-cgt_linkInfo.xml" --disable_auto_rts --diag_suppress=10063-D --entry_point=BISSC_INIT --disable_auto_rts  --rom_model -o "bissc_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_tx_pru0_fw_ti-pru-cgt.out" $^
 	@echo 'Finished building target: "$@"'
 	@echo ' '
 	@$(MAKE) --no-print-directory post-build

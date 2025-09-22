@@ -40,6 +40,7 @@
             -v4
             -DSOC_AM243X
             -DENABLE_MULTI_MAKE_TXPRU
+            -DOS_FW
         "
         linkerBuildOptions="
             -m=bissc_peripheral_interface_multi_ch_load_share.${ConfigName}.map
