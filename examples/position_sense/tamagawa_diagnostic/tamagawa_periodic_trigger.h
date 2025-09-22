@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023 Texas Instruments Incorporated
+ *  Copyright (C) 2023-24 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -40,8 +40,8 @@ struct tamagawa_periodic_interface
   void *pruss_iep;
   void *pruss_dmem;
   void *pruss_cfg;
-  uint64_t cmp3;
-  uint64_t cmp0;
+  uint64_t periodic_trigger_count;
+  uint64_t cmp0_count;
 };
 
 #define IEP_DEFAULT_INC    0x1;
@@ -49,10 +49,10 @@ struct tamagawa_periodic_interface
 #define IEP_COUNTER_EN      0x1;
 #define IEP_RST_CNT_EN      0x1;
 #define IEP_CMP0_ENABLE     0x1 << 1;
-#define IEP_CMP3_EVNT (0x1 << 3 )
+
+#define IEP_CMP_EVENT       ( 3 )
 
 #define PRU_TRIGGER_HOST_TAMAGAWA_EVT0   ( 2+16 )    /* pr0_pru_mst_intr[2]_intr_req */
-#define PERIOD
 
 uint32_t tamagawa_config_periodic_mode(struct tamagawa_periodic_interface *tamagawa_periodic_interface, PRUICSS_Handle handle);
 

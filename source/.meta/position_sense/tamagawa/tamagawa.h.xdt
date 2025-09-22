@@ -26,12 +26,30 @@
             % sliceVal = 0;
         % }
     % }
-#define `instance.$name`                  (`i`)
-#define `instance.$name`_CHANNEL0         (`instance.channel_0 & 1`)
-#define `instance.$name`_CHANNEL1         (`instance.channel_1 & 1`)
-#define `instance.$name`_CHANNEL2         (`instance.channel_2 & 1`)
-#define `instance.$name`_BAUDRATE         (`instance.baudrate`)
-#define `instance.$name`_BOOSTER_PACK     (`instance.Booster_Pack & 1`)
-#define PRUICSS_PRUx                      (`sliceVal`)
-#define PRUICSSx                          (`icssValue`)
+    /*Macro for am263x/am261x */
+    % if(instance.instance === "ICSSM" || instance.instance === "ICSSM0" || instance.instance === "ICSSM1")
+    % {
+        % if(instance.PRU_Slice == "PRU0")
+        % {
+            % sliceVal = 0;
+        % }
+         % if(instance.instance === "ICSSM1")
+        % {
+            %  icssValue = 1;
+        % }
+
+    % }
+#define `instance.$name`                                (`i`)
+#define `instance.$name`_CHANNEL0                       (`instance.channel_0 & 1`)
+#define `instance.$name`_CHANNEL1                       (`instance.channel_1 & 1`)
+#define `instance.$name`_CHANNEL2                       (`instance.channel_2 & 1`)
+#define `instance.$name`_BAUDRATE                       (`instance.baudrate`)
+#define `instance.$name`_BOOSTER_PACK                   (`instance.Booster_Pack & 1`)
+#define `instance.$name`_PRUICSS_PRUx                   (`sliceVal`)
+#define `instance.$name`_PRUICSSx                       (`icssValue`)
+#define `instance.$name`_TX_RX_FIFO_CLOCK_SOURCE        (`instance.Tx_Rx_Clk_Source`)
+ %if ((instance.instance === "ICSSG1" || instance.instance === "ICSSG0") && (instance.G_MUX_EN))
+    %{
+#define `instance.$name`_G_MUX_EN                       (`instance["G_MUX_EN"] & 1`)
+    %}
 % }

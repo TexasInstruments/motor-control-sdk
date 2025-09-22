@@ -130,7 +130,7 @@ void endat_command_wait(struct endat_priv *priv);
 
 
 /**
- *  \brief  read RT from DMEM
+ *  \brief  read recovery time parameters from memory
  *
  *  \param[in]  priv     cookie returned by endat_init
  *
@@ -348,12 +348,13 @@ int32_t endat_wait_initialization(struct endat_priv *priv, uint32_t timeout, uin
  *  \param[in]  pruss_cfg       ICSS PRU config base address
  *  \param[in]  pruss_iep       ICSS PRU iep base address
  *  \param[in]  slice           ICSS PRU SLICE
+ *  \param[in]  endat_clk_config           3 channel Peripheral configuration parameters 
  *
  *  \retval     priv            pointer to struct endat_priv instance
  *
  */
 struct endat_priv *endat_init(struct endat_pruss_xchg *pruss_xchg, struct endatChRxInfo *endatRxInfo, uint64_t endatChInfoGlobalAddr,
-                              void *pruss_cfg, void *pruss_iep, int32_t slice);
+                              void *pruss_cfg, void *pruss_iep, int32_t slice, endat_clock_config *endat_clk_config);
 
 /**
  *  \brief      Read EnDat 2.2 angular position in steps for rotary encoders      <br>
@@ -372,7 +373,45 @@ struct endat_priv *endat_init(struct endat_pruss_xchg *pruss_xchg, struct endatC
  *
  */
 int32_t endat_get_2_2_angle(struct endat_priv *priv);
+/**
+ *  \brief      Initialize the recovery time parameters 
+ *             
+ *   \param[in]  priv    cookie returned by endat_init
+ *
+ */
 
+void endat_init_rt_measurement (struct endat_priv *priv); 
+/**
+ *  \brief      Validate the recovery time parameters 
+ *             
+ *  \param[in]  priv  cookie returned by endat_init
+ * 
+ *  \retval  return 0 if measured recovery time is within the recovery time range else return error 
+ */
+
+int8_t endat_check_rt_error(struct endat_priv *priv);
+/**
+ *  \brief      Disable the recovery time measurement 
+ *             
+ *  \param[in]  priv  cookie returned by endat_init
+ * 
+ */
+void endat_disable_rt_measurement (struct endat_priv *priv);
+/**
+ *  \brief      Enable the recovery time measurement 
+ *             
+ *  \param[in]  priv  cookie returned by endat_init
+ * 
+ */
+void endat_enable_rt_measurement (struct endat_priv *priv);
+/**
+ *  \brief      read the status of recovery time measurement 
+ *             
+ *  \param[in]  priv  cookie returned by endat_init
+ * 
+ *  \retval  return 1 if recovery time measurement is enabled else return 0
+ */
+uint32_t endat_status_rt_measurement (struct endat_priv *priv);
 /** @} */
 
 #ifdef __cplusplus

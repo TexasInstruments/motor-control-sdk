@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023 Texas Instruments Incorporated
+ *  Copyright (C) 2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -41,7 +41,10 @@
 #include <kernel/dpl/DebugP.h>
 #include <drivers/soc.h>
 
+#if defined(SOC_AM243X) || defined(SOC_AM64X)
 #include <drivers/sciclient.h>
+#endif
+
 #include <kernel/dpl/TaskP.h>
 #include <drivers/pinmux.h>
 #include <drivers/hw_include/hw_types.h>
@@ -51,26 +54,34 @@
 #include <position_sense/bissc/include/bissc_api.h>
 #include "bissc_periodic_trigger.h"
 
-#define PRUICSS_SLICEx PRUICSS_PRUx
+#define PRUICSS_SLICEx  CONFIG_BISSC0_PRUICSS_PRUx
 
 #if (CONFIG_BISSC0_MODE == BISSC_MODE_MULTI_CHANNEL_SINGLE_PRU)
-#include  <position_sense/bissc/firmware/bissc_receiver_multi_bin.h>
+#if (PRUICSS_SLICEx == 1)
+#include  <bissc_receiver_multi_pru1_bin.h>
+#else
+#include  <bissc_receiver_multi_pru0_bin.h>
+#endif
 #endif
 
-#if (CONFIG_BISSC0_CHANNEL0) && (CONFIG_BISSC0_LOAD_SHARE_MODE)
-#include <position_sense/bissc/firmware/bissc_receiver_multi_RTU_bin.h>
+#if (CONFIG_BISSC0_MODE == BISSC_MODE_MULTI_CHANNEL_MULTI_PRU )
+#if (PRUICSS_SLICEx == 1)
+#include <bissc_receiver_multi_rtu_pru1_bin.h>
+#include <bissc_receiver_multi_pru1_bin.h>
+#include <bissc_receiver_multi_tx_pru1_bin.h>
+#else
+#include <bissc_receiver_multi_rtu_pru0_bin.h>
+#include <bissc_receiver_multi_pru0_bin.h>
+#include <bissc_receiver_multi_tx_pru0_bin.h>
 #endif
-
-#if (CONFIG_BISSC0_CHANNEL1) && (CONFIG_BISSC0_LOAD_SHARE_MODE)
-#include <position_sense/bissc/firmware/bissc_receiver_multi_PRU_bin.h>
-#endif
-
-#if (CONFIG_BISSC0_CHANNEL2) && (CONFIG_BISSC0_LOAD_SHARE_MODE)
-#include <position_sense/bissc/firmware/bissc_receiver_multi_TXPRU_bin.h>
 #endif
 
 #if (CONFIG_BISSC0_MODE == BISSC_MODE_SINGLE_CHANNEL_SINGLE_PRU)
-#include <position_sense/bissc/firmware/bissc_receiver_bin.h>
+#if (PRUICSS_SLICEx == 1)
+#include  <bissc_receiver_pru1_bin.h>
+#else
+#include  <bissc_receiver_pru0_bin.h>
+#endif
 #endif
 
 #define WAIT_5_SECOND                       (5000)
@@ -91,35 +102,216 @@
 #define BISSC_POSITION_LOOP_STOP            0
 #define BISSC_POSITION_LOOP_START           1
 
+#define ICSS_PRU_CORE_CLOCK CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ
+#define ICSS_PRU_UART_CLOCK CONFIG_PRU_ICSS0_UART_CLK_FREQ_HZ
+
+
+/*Use soc driver instead it when available */
+#if SOC_AM263PX
+/**
+ *  \anchor TCA6416_Mode
+ *  \name IO pin mode - Input or Output
+ *  @{
+ */
+/** \brief Configure IO pin as input */
+#define TCA6416_MODE_INPUT              (0U)
+/** \brief Configure IO pin as output */
+#define TCA6416_MODE_OUTPUT             (1U)
+/** @} */
+
+/**
+ *  \anchor TCA6416_OutState
+ *  \name IO pin output state - HIGH or LOW
+ *  @{
+ */
+/** \brief Configure IO pin output as LOW */
+#define TCA6416_OUT_STATE_LOW           (0U)
+/** \brief Configure IO pin output as HIGH */
+#define TCA6416_OUT_STATE_HIGH          (1U)
+/** @} */
+
+
+#define TCA6416_REG_INPUT_PORT_0        (0x00U)
+#define TCA6416_REG_INPUT_PORT_1        (0x01U)
+#define TCA6416_REG_OUTPUT_PORT_0       (0x02U)
+#define TCA6416_REG_OUTPUT_PORT_1       (0x03U)
+#define TCA6416_REG_POL_INV_PORT_0      (0x04U)
+#define TCA6416_REG_POL_INV_PORT_1      (0x05U)
+#define TCA6416_REG_CONFIG_PORT_0       (0x06U)
+#define TCA6416_REG_CONFIG_PORT_1       (0x07U)
+#endif
+
 struct bissc_priv *priv;
 /** \brief Global Structure pointer holding PRU-ICSSG memory Map. */
 uint32_t gTaskFxnStack[TASK_STACK_SIZE/sizeof(uint32_t)] __attribute__((aligned(32)));
-static int32_t bissc_position_loop_status;
+volatile int32_t bissc_position_loop_status;
 int32_t totalchannels = 0, mask = 0;
 
 TaskP_Object gTaskObject;
 PRUICSS_Handle gPruIcssXHandle;
+
+#if defined(SOC_AM263PX)
+I2C_Handle          i2cHandle;
+
+int32_t TCA6416_open()
+{
+    int32_t status = SystemP_SUCCESS;
+
+    i2cHandle = I2C_getHandle(CONFIG_I2C0);
+
+    return (status);
+}
+
+int32_t TCA6416_config(uint32_t ioIndex, uint32_t mode)
+{
+
+    int32_t         status = SystemP_SUCCESS;
+    I2C_Transaction i2cTransaction;
+    uint32_t        port, portPin, i2cAddress;
+    uint8_t         buffer[2U] = {0};
+
+    i2cAddress  = 0x20;
+
+    if(status == SystemP_SUCCESS)
+    {
+        /* Each port contains 8 IOs */
+        port        = 0;
+        portPin     = ioIndex;
+
+        /* Set config register address - needed for next read */
+        I2C_Transaction_init(&i2cTransaction);
+        buffer[0] = TCA6416_REG_CONFIG_PORT_0 + port;
+        i2cTransaction.writeBuf     = buffer;
+        i2cTransaction.writeCount   = 1U;
+        i2cTransaction.targetAddress = i2cAddress;
+        status += I2C_transfer(i2cHandle, &i2cTransaction);
+
+        /* Read config register value */
+        I2C_Transaction_init(&i2cTransaction);
+        i2cTransaction.readBuf      = buffer;
+        i2cTransaction.readCount    = 1;
+        i2cTransaction.targetAddress = i2cAddress;
+        status += I2C_transfer(i2cHandle, &i2cTransaction);
+
+        /* Set output or input mode to particular IO pin - read/modify/write */
+        I2C_Transaction_init(&i2cTransaction);
+        if(TCA6416_MODE_INPUT == mode)
+        {
+            buffer[1] = buffer[0] | (0x01 << portPin);
+        }
+        else
+        {
+            buffer[1] = buffer[0] & ~(0x01 << portPin);
+        }
+        buffer[0] = TCA6416_REG_CONFIG_PORT_0 + port;
+        i2cTransaction.writeBuf     = buffer;
+        i2cTransaction.writeCount   = 2;
+        i2cTransaction.targetAddress = i2cAddress;
+        status += I2C_transfer(i2cHandle, &i2cTransaction);
+    }
+
+    return (status);
+}
+
+int32_t TCA6416_setOutput(uint32_t ioIndex, uint32_t state)
+{
+    int32_t         status = SystemP_SUCCESS;
+    I2C_Transaction i2cTransaction;
+    uint32_t        port, portPin, i2cAddress;
+    uint8_t         buffer[2U] = {0};
+
+    i2cAddress  = 0x20;
+
+    if(status == SystemP_SUCCESS)
+    {
+        /* Each port contains 8 IOs */
+        port        = 0;
+        portPin     = ioIndex;
+
+        /* Set output prt register address - needed for next read */
+        I2C_Transaction_init(&i2cTransaction);
+        buffer[0] = TCA6416_REG_OUTPUT_PORT_0 + port;
+        i2cTransaction.writeBuf     = buffer;
+        i2cTransaction.writeCount   = 1U;
+        i2cTransaction.targetAddress = i2cAddress;
+        status += I2C_transfer(i2cHandle, &i2cTransaction);
+
+        /* Read config register value */
+        I2C_Transaction_init(&i2cTransaction);
+        i2cTransaction.readBuf      = buffer;
+        i2cTransaction.readCount    = 1;
+        i2cTransaction.targetAddress = i2cAddress;
+        status += I2C_transfer(i2cHandle, &i2cTransaction);
+
+        /* Set output or input mode to particular IO pin - read/modify/write */
+        I2C_Transaction_init(&i2cTransaction);
+        if(TCA6416_OUT_STATE_HIGH == state)
+        {
+            buffer[1] = buffer[0] | (0x01 << portPin);
+        }
+        else
+        {
+            buffer[1] = buffer[0] & ~(0x01 << portPin);
+        }
+        buffer[0] = TCA6416_REG_OUTPUT_PORT_0 + port;
+        i2cTransaction.writeBuf     = buffer;
+        i2cTransaction.writeCount   = 2;
+        i2cTransaction.targetAddress = i2cAddress;
+        status += I2C_transfer(i2cHandle, &i2cTransaction);
+    }
+
+    return (status);
+}
+
+void lp_bp_mux_mode_config()
+{
+    int32_t status = SystemP_FAILURE;
+    status = TCA6416_open();
+    DebugP_assert(status == SystemP_SUCCESS);
+
+    /* Configure pins 6 and 7 as outputs */
+    status = TCA6416_config(6, TCA6416_MODE_OUTPUT);
+    DebugP_assert(status == SystemP_SUCCESS);
+    status = TCA6416_config(7, TCA6416_MODE_OUTPUT);
+    DebugP_assert(status == SystemP_SUCCESS);
+
+    /* Set value 1 in pin 7 - BP Mux 0 */
+    status = TCA6416_setOutput(7, TCA6416_OUT_STATE_HIGH);
+    DebugP_assert(status == SystemP_SUCCESS);
+
+     /* Set value 1 in pin 6 - BP Mux 1 */
+    status = TCA6416_setOutput(6, TCA6416_OUT_STATE_HIGH);
+    DebugP_assert(status == SystemP_SUCCESS);
+}
+#endif
 
 static void bissc_pruicss_init(void)
 {
     int32_t status = SystemP_FAILURE;
     int32_t size;
     gPruIcssXHandle = PRUICSS_open(CONFIG_PRU_ICSS0);
-     /* Configure g_mux_en to 1 in ICSSG_SA_MX_REG Register. */
+#ifdef CONFIG_BISSC0_G_MUX_EN
+    /* Configure g_mux_en to 1 in ICSSG_SA_MX_REG Register. */
     status = PRUICSS_setSaMuxMode(gPruIcssXHandle, PRUICSS_SA_MUX_MODE_SD_ENDAT);
     DebugP_assert(SystemP_SUCCESS == status);
+#endif
     /* clear ICSS0 PRUx data RAM */
-    size = PRUICSS_initMemory(gPruIcssXHandle, PRUICSS_DATARAM(PRUICSS_PRUx));
+    size = PRUICSS_initMemory(gPruIcssXHandle, PRUICSS_DATARAM(PRUICSS_SLICEx));
     DebugP_assert(size);
     if(CONFIG_BISSC0_MODE == BISSC_MODE_MULTI_CHANNEL_MULTI_PRU)
     {
-        status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_RTUPRUx);
+        status = PRUICSS_disableCore(gPruIcssXHandle, CONFIG_BISSC0_PRUICSS_RTUPRUx);
         DebugP_assert(SystemP_SUCCESS == status);
-        status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_TXPRUx);
+        status = PRUICSS_disableCore(gPruIcssXHandle, CONFIG_BISSC0_PRUICSS_TXPRUx);
         DebugP_assert(SystemP_SUCCESS == status);
     }
-    status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_PRUx);
+    status = PRUICSS_disableCore(gPruIcssXHandle, CONFIG_BISSC0_PRUICSS_PRUx);
     DebugP_assert(SystemP_SUCCESS == status);
+
+#if defined(SOC_AM263PX)
+    lp_bp_mux_mode_config();
+#endif
+
 }
 
 int32_t bissc_pruicss_load_run_fw(struct bissc_priv *priv, uint8_t mask)
@@ -127,58 +319,58 @@ int32_t bissc_pruicss_load_run_fw(struct bissc_priv *priv, uint8_t mask)
     int32_t status = SystemP_FAILURE, size;
 #if (CONFIG_BISSC0_MODE == BISSC_MODE_MULTI_CHANNEL_MULTI_PRU) /*enable loadshare mode*/
 #if(CONFIG_BISSC0_CHANNEL0)
-    status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_RTUPRUx);
+    status = PRUICSS_disableCore(gPruIcssXHandle, CONFIG_BISSC0_PRUICSS_RTUPRUx);
     DebugP_assert(SystemP_SUCCESS == status);
     size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_RTU_PRU(PRUICSS_SLICEx),
                                                         0, (uint32_t *) BiSSFirmwareMultiMakeRTU_0,
                                                         sizeof(BiSSFirmwareMultiMakeRTU_0));
     DebugP_assert(size);
-    status = PRUICSS_resetCore(gPruIcssXHandle, PRUICSS_RTUPRUx);
+    status = PRUICSS_resetCore(gPruIcssXHandle, CONFIG_BISSC0_PRUICSS_RTUPRUx);
     DebugP_assert(SystemP_SUCCESS == status);
-    status = PRUICSS_enableCore(gPruIcssXHandle, PRUICSS_RTUPRUx);
+    status = PRUICSS_enableCore(gPruIcssXHandle, CONFIG_BISSC0_PRUICSS_RTUPRUx);
     DebugP_assert(SystemP_SUCCESS == status);
 #endif
 #if(CONFIG_BISSC0_CHANNEL1)
-    status=PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_PRUx );
+    status=PRUICSS_disableCore(gPruIcssXHandle, CONFIG_BISSC0_PRUICSS_PRUx );
     DebugP_assert(SystemP_SUCCESS == status);
     size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_SLICEx),
                                                       0, (uint32_t *) BiSSFirmwareMultiMakePRU_0,
                                                       sizeof(BiSSFirmwareMultiMakePRU_0));
     DebugP_assert(size);
-    status = PRUICSS_resetCore(gPruIcssXHandle, PRUICSS_PRUx);
+    status = PRUICSS_resetCore(gPruIcssXHandle, CONFIG_BISSC0_PRUICSS_PRUx);
     DebugP_assert(SystemP_SUCCESS == status);
-    status = PRUICSS_enableCore(gPruIcssXHandle, PRUICSS_PRUx);
+    status = PRUICSS_enableCore(gPruIcssXHandle, CONFIG_BISSC0_PRUICSS_PRUx);
     DebugP_assert(SystemP_SUCCESS == status);
 #endif
 #if(CONFIG_BISSC0_CHANNEL2)
-    status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_TXPRUx);
+    status = PRUICSS_disableCore(gPruIcssXHandle, CONFIG_BISSC0_PRUICSS_TXPRUx);
     DebugP_assert(SystemP_SUCCESS == status);
     size = PRUICSS_writeMemory(gPruIcssXHandle,  PRUICSS_IRAM_TX_PRU(PRUICSS_SLICEx),
                                                         0, (uint32_t *) BiSSFirmwareMultiMakeTXPRU_0,
                                                         sizeof(BiSSFirmwareMultiMakeTXPRU_0));
     DebugP_assert(size);
-    status = PRUICSS_resetCore(gPruIcssXHandle, PRUICSS_TXPRUx);
+    status = PRUICSS_resetCore(gPruIcssXHandle, CONFIG_BISSC0_PRUICSS_TXPRUx);
     DebugP_assert(SystemP_SUCCESS == status);
-    status = PRUICSS_enableCore(gPruIcssXHandle, PRUICSS_TXPRUx);
+    status = PRUICSS_enableCore(gPruIcssXHandle, CONFIG_BISSC0_PRUICSS_TXPRUx);
     DebugP_assert(SystemP_SUCCESS == status);
 #endif
 #else
-    status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_PRUx);
+    status = PRUICSS_disableCore(gPruIcssXHandle, CONFIG_BISSC0_PRUICSS_PRUx);
     DebugP_assert(SystemP_SUCCESS == status);
 #if(CONFIG_BISSC0_MODE == BISSC_MODE_MULTI_CHANNEL_SINGLE_PRU)
-    size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_PRUx),
+    size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(CONFIG_BISSC0_PRUICSS_PRUx),
                                 0, (uint32_t *) BiSSFirmwareMulti_0,
                                 sizeof(BiSSFirmwareMulti_0));
 #else
-    size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_PRUx),
+    size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(CONFIG_BISSC0_PRUICSS_PRUx),
                                 0, (uint32_t *) BiSSFirmware_0,
                                 sizeof(BiSSFirmware_0));
 #endif
     DebugP_assert(size);
-    status = PRUICSS_resetCore(gPruIcssXHandle, PRUICSS_PRUx);
+    status = PRUICSS_resetCore(gPruIcssXHandle, CONFIG_BISSC0_PRUICSS_PRUx);
     DebugP_assert(SystemP_SUCCESS == status);
     /*Run firmware */
-    status = PRUICSS_enableCore(gPruIcssXHandle, PRUICSS_PRUx);
+    status = PRUICSS_enableCore(gPruIcssXHandle, CONFIG_BISSC0_PRUICSS_PRUx);
     DebugP_assert(SystemP_SUCCESS == status);
 #endif
     /* check initialization ack from firmware, with a timeout of 5 second */
@@ -392,7 +584,7 @@ static int32_t bissc_loop_task_create(void)
     return status ;
 }
 
-static void bissc_process_periodic_command(struct bissc_priv *priv, int64_t cmp3, int64_t cmp0)
+static void bissc_process_periodic_command(struct bissc_priv *priv, int64_t ch0_trigger_count, int64_t ch1_trigger_count, int64_t ch2_trigger_count, int64_t iep_reset_count)
 {
     int32_t status, ret;
     uint32_t pos_fail_cnt = 0, pos_total_cnt = 0;
@@ -405,7 +597,7 @@ static void bissc_process_periodic_command(struct bissc_priv *priv, int64_t cmp3
         DebugP_log("Task_create() failed!\n");
         return;
     }
-    bissc_periodic_interface_init(priv, &bissc_periodic_interface, cmp3, cmp0);
+    bissc_periodic_interface_init(priv, &bissc_periodic_interface, ch0_trigger_count, ch1_trigger_count, ch2_trigger_count, iep_reset_count);
     status = bissc_config_periodic_mode(&bissc_periodic_interface, gPruIcssXHandle);
     DebugP_assert(0 != status);
     bissc_position_loop_status = BISSC_POSITION_LOOP_START;
@@ -438,8 +630,8 @@ static void bissc_process_periodic_command(struct bissc_priv *priv, int64_t cmp3
 void bissc_main(void *args)
 {
     int32_t i, totalchns, ch_num, ls_ch = 0, enc_num = 0;
-    uint64_t icssgclk;
-    uint64_t uartclk;
+    uint64_t icssClk;
+    uint64_t uartClk;
     int32_t ch = 0;
 
     /* Open drivers to open the UART driver for console */
@@ -483,26 +675,17 @@ void bissc_main(void *args)
 
     DebugP_log("\r\n");
 
-    /* Read the ICSSG configured clock frequency. */
-    if(gPruIcssXHandle->hwAttrs->instance)
-    {
-        SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG1, TISCI_DEV_PRU_ICSSG1_CORE_CLK, &icssgclk);
-        SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG1, TISCI_DEV_PRU_ICSSG1_UCLK_CLK, &uartclk);
-    }
-    else
-    {
-        SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG0, TISCI_DEV_PRU_ICSSG0_CORE_CLK, &icssgclk);
-        SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG0, TISCI_DEV_PRU_ICSSG0_UCLK_CLK, &uartclk);
-    }
+    icssClk = ICSS_PRU_CORE_CLOCK;
+    uartClk = ICSS_PRU_UART_CLOCK;
 
-    priv = bissc_init(gPruIcssXHandle, PRUICSS_PRUx, CONFIG_BISSC0_BAUDRATE, (uint32_t)icssgclk, (uint32_t)uartclk);
+    priv = bissc_init(gPruIcssXHandle, PRUICSS_SLICEx, CONFIG_BISSC0_BAUDRATE, (uint32_t)icssClk, (uint32_t)uartClk, CONFIG_BISSC0_TX_RX_FIFO_CLOCK_SOURCE);
     bissc_config_channel(priv, mask, totalchannels);
     if(CONFIG_BISSC0_MODE == BISSC_MODE_MULTI_CHANNEL_MULTI_PRU)
     {
         bissc_config_load_share(priv, mask);
     }
 
-    bissc_set_default_initialization(priv, icssgclk);
+    bissc_set_default_initialization(priv, icssClk);
     if(CONFIG_BISSC0_MODE == BISSC_MODE_MULTI_CHANNEL_MULTI_PRU)
     {
         DebugP_log("\r\nBiSS-C Load Share Demo application is running......\n");
@@ -568,7 +751,7 @@ void bissc_main(void *args)
     while(1)
     {
         int32_t cmd, ret;
-        int64_t cmp3, cmp0;
+        int64_t ch0_trigger_count=0, ch1_trigger_count=0, ch2_trigger_count=0, iep_reset_count=0;
         uint32_t freq, ctrl_cmd[3]={0};
         uint32_t loop_cnt;
         uint32_t safety = 0;
@@ -814,20 +997,60 @@ void bissc_main(void *args)
         else if(cmd == BISSC_CMD_PERIODIC_TRIGGER)
         {
             DebugP_log("\r| Enter IEP cycle count(must be greater than BiSS cycle time including timeout period, in IEP cycles): ");
-            DebugP_scanf("%lld\n", &cmp0);
-            if(cmp0 <= IEP_DEFAULT_INC)
+            DebugP_scanf("%lld\n", &iep_reset_count);
+            if(iep_reset_count <= IEP_DEFAULT_INC)
             {
                 DebugP_log("\r\n| WARNING: invalid value entered\n");
                 continue;
             }
-            DebugP_log("\r| Enter IEP trigger time(must be less than or equal to IEP cycle count, in IEP cycles): ");
-            DebugP_scanf("%lld\n", &cmp3);
-            if((cmp3 > cmp0) || (cmp3 <= IEP_DEFAULT_INC))
+            if(CONFIG_BISSC0_LOAD_SHARE_MODE)
             {
-                DebugP_log("\r\n| WARNING: invalid value entered\n");
-                continue;
+
+                if(CONFIG_BISSC0_CHANNEL0)
+                {
+                    DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) Channel0: \n");
+                    DebugP_scanf("%lld\n", &ch0_trigger_count);
+                    if((ch0_trigger_count > iep_reset_count) || (ch0_trigger_count <= IEP_DEFAULT_INC))
+                    {
+                        DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                        continue;
+                    }
+                }
+
+                if(CONFIG_BISSC0_CHANNEL1)
+                {
+                    DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) Channel1: \n");
+                    DebugP_scanf("%lld\n", &ch1_trigger_count);
+                    if((ch1_trigger_count > iep_reset_count) || (ch1_trigger_count <= IEP_DEFAULT_INC))
+                    {
+                        DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                        continue;
+                    }
+                }
+                if(CONFIG_BISSC0_CHANNEL2)
+                {
+                    DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) Channel2: \n");
+                    DebugP_scanf("%lld\n", &ch2_trigger_count);
+                    if((ch2_trigger_count > iep_reset_count) || (ch2_trigger_count <= IEP_DEFAULT_INC))
+                    {
+                        DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                        continue;
+                    }
+                }
+
             }
-            bissc_process_periodic_command(priv, cmp3, cmp0);
+            else
+            {
+                DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles): ");
+                DebugP_scanf("%lld\n", &ch0_trigger_count);
+                if((ch0_trigger_count > iep_reset_count) || (ch0_trigger_count <= IEP_DEFAULT_INC))
+                {
+                    DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                    continue;
+                }
+            }
+
+            bissc_process_periodic_command(priv, ch0_trigger_count, ch1_trigger_count, ch2_trigger_count, iep_reset_count);
         }
         else if(cmd == BISSC_ENABLE_SAFETY)
         {

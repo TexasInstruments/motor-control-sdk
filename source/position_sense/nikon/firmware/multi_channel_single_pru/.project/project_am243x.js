@@ -52,27 +52,50 @@ const lflags = {
 };
 
 const buildOptionCombos = [
-    { device: device, cpu: "icssg0-pru1", cgt: "ti-pru-cgt", board: "am243x-evm", os: "fw"},
+    { device: device, cpu: "icss_g0_pru1", cgt: "ti-pru-cgt", board: "am243x-evm", os: "fw"},
+    { device: device, cpu: "icss_g0_pru0", cgt: "ti-pru-cgt", board: "am243x-evm", os: "fw"},
 ];
 
 function getmakefilePruPostBuildSteps(cpu, board)
 {
-    return  [
-        "$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=NikonFirmwareMulti -o nikon_receiver_multi_bin.h nikon_peripheral_interface_multi_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
-        "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h nikon_receiver_multi_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/nikon/firmware/nikon_receiver_multi_bin.h;"+ 
-        "$(RM) nikon_receiver_multi_bin.h;"
-    ];
+    let postBuildSteps
+    switch(cpu)
+    {
+        case "icss_g0_pru1":
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=NikonFirmwareMulti -o nikon_receiver_multi_pru1_bin.h nikon_peripheral_interface_multi_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+
+            "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h nikon_receiver_multi_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/nikon/firmware/multi_channel_single_pru/nikon_receiver_multi_pru1_bin.h;"+
+            "$(RM) nikon_receiver_multi_pru1_bin.h;"]
+            break;
+        case "icss_g0_pru0":
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=NikonFirmwareMulti -o nikon_receiver_multi_pru0_bin.h nikon_peripheral_interface_multi_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+
+            "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h nikon_receiver_multi_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/nikon/firmware/multi_channel_single_pru/nikon_receiver_multi_pru0_bin.h;"+
+            "$(RM) nikon_receiver_multi_pru0_bin.h;"]
+            break;
+    }
+    return postBuildSteps;
 }
 
 function getccsPruPostBuildSteps(cpu, board)
 {
-    return  [
-        "$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=NikonFirmwareMulti -o nikon_receiver_multi_bin.h nikon_peripheral_interface_multi_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
-        "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h nikon_receiver_multi_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/nikon/firmware/nikon_receiver_multi_bin.h;"+ 
-        "if ${CCS_HOST_OS} == linux rm nikon_receiver_multi_bin.h;"+
-        "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h nikon_receiver_multi_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/nikon/firmware/nikon_receiver_multi_bin.h;"+ 
-        "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm nikon_receiver_multi_bin.h;"
-    ];
+    let postBuildSteps
+    switch(cpu)
+    {
+        case "icss_g0_pru1":
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=NikonFirmwareMulti -o nikon_receiver_multi_pru1_bin.h nikon_peripheral_interface_multi_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+
+            "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h nikon_receiver_multi_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/nikon/firmware/multi_channel_single_pru/nikon_receiver_multi_pru1_bin.h;"+
+            "if ${CCS_HOST_OS} == linux rm nikon_receiver_multi_pru1_bin.h;"+
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h nikon_receiver_multi_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/nikon/firmware/multi_channel_single_pru/nikon_receiver_multi_pru1_bin.h;"+
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm nikon_receiver_multi_pru1_bin.h;"]
+            break;
+        case "icss_g0_pru0":
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=NikonFirmwareMulti -o nikon_receiver_multi_pru0_bin.h nikon_peripheral_interface_multi_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+
+            "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h nikon_receiver_multi_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/nikon/firmware/multi_channel_single_pru/nikon_receiver_multi_pru0_bin.h;"+
+            "if ${CCS_HOST_OS} == linux rm nikon_receiver_multi_pru0_bin.h;"+
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h nikon_receiver_multi_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/nikon/firmware/multi_channel_single_pru/nikon_receiver_multi_pru0_bin.h;"+
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm nikon_receiver_multi_pru0_bin.h;"]
+            break;
+    }
+    return postBuildSteps;
 }
 
 function getComponentProperty() {

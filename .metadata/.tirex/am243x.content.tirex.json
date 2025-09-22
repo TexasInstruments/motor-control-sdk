@@ -7,9 +7,9 @@
         "resourceSubClass": [
             "example.general"
         ],
-        "description": "A Icss Sdfm Nine Channel Load Share Mode Example. CPU is R5FSS0-0 running FREERTOS.",
-        "name": "icss_sdfm_nine_channel_load_share_mode",
-        "location": "../../examples/current_sense/icss_sdfm_nine_channel_load_share_mode/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "description": "A Icss Sdfm Nine Channel Load Share Snoop Mode Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "icss_sdfm_nine_channel_load_share_snoop_mode",
+        "location": "../../examples/current_sense/icss_sdfm_nine_channel_load_share_snoop_mode/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "TMDS243EVM"
         ],
@@ -21,7 +21,7 @@
         ],
         "subCategories": [
             "current_sense",
-            "icss_sdfm_nine_channel_load_share_mode",
+            "icss_sdfm_nine_channel_load_share_snoop_mode",
             "r5fss0-0_freertos"
         ],
         "mainCategories": [
@@ -39,9 +39,9 @@
         "resourceSubClass": [
             "example.general"
         ],
-        "description": "A Icss Sdfm Nine Channel Load Share Mode Example. CPU is R5FSS0-0 running FREERTOS.",
-        "name": "icss_sdfm_nine_channel_load_share_mode",
-        "location": "../../examples/current_sense/icss_sdfm_nine_channel_load_share_mode/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "description": "A Icss Sdfm Nine Channel Load Share Snoop Mode Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "icss_sdfm_nine_channel_load_share_snoop_mode",
+        "location": "../../examples/current_sense/icss_sdfm_nine_channel_load_share_snoop_mode/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "LP-AM243"
         ],
@@ -53,7 +53,7 @@
         ],
         "subCategories": [
             "current_sense",
-            "icss_sdfm_nine_channel_load_share_mode",
+            "icss_sdfm_nine_channel_load_share_snoop_mode",
             "r5fss0-0_freertos"
         ],
         "mainCategories": [
@@ -199,6 +199,70 @@
         "resourceSubClass": [
             "example.general"
         ],
+        "description": "A Icss Sdfm Three Channel Single Pru Snoop Mode Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "icss_sdfm_three_channel_single_pru_snoop_mode",
+        "location": "../../examples/current_sense/icss_sdfm_three_channel_single_pru_snoop_mode/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "TMDS243EVM"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "current_sense",
+            "icss_sdfm_three_channel_single_pru_snoop_mode",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "description": "A Icss Sdfm Three Channel Single Pru Snoop Mode Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "icss_sdfm_three_channel_single_pru_snoop_mode",
+        "location": "../../examples/current_sense/icss_sdfm_three_channel_single_pru_snoop_mode/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "LP-AM243"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "current_sense",
+            "icss_sdfm_three_channel_single_pru_snoop_mode",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
         "description": "A Icss Sdfm Three Channel With Continuous Mode Example. CPU is R5FSS0-0 running FREERTOS.",
         "name": "icss_sdfm_three_channel_with_continuous_mode",
         "location": "../../examples/current_sense/icss_sdfm_three_channel_with_continuous_mode/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
@@ -310,262 +374,6 @@
         "subCategories": [
             "current_sense",
             "icss_sdfm_three_channel_with_phase_compensation",
-            "r5fss0-0_freertos"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ]
-    },
-    {
-        "resourceType": "project.ccs",
-        "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.gettingstarted"
-        ],
-        "description": "A Direct Form 2 2nd order example demonstrating the digital control library (DCL). CPU is R5FSS0-0 running NORTOS.",
-        "name": "dcl_df22",
-        "location": "../../examples/dcl/dcl_df22/am243x-evm/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
-        "devtools": [
-            "TMDS243EVM"
-        ],
-        "kernel": [
-            "nortos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
-        "subCategories": [
-            "dcl",
-            "dcl_df22",
-            "r5fss0-0_nortos"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ]
-    },
-    {
-        "resourceType": "project.ccs",
-        "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.gettingstarted"
-        ],
-        "description": "A Direct Form 2 2nd order example demonstrating the digital control library (DCL). CPU is R5FSS0-0 running FREERTOS.",
-        "name": "dcl_df22",
-        "location": "../../examples/dcl/dcl_df22/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
-        "devtools": [
-            "TMDS243EVM"
-        ],
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
-        "subCategories": [
-            "dcl",
-            "dcl_df22",
-            "r5fss0-0_freertos"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ]
-    },
-    {
-        "resourceType": "project.ccs",
-        "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.gettingstarted"
-        ],
-        "description": "A Direct Form 2 2nd order example demonstrating the digital control library (DCL). CPU is R5FSS0-0 running NORTOS.",
-        "name": "dcl_df22",
-        "location": "../../examples/dcl/dcl_df22/am243x-lp/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
-        "devtools": [
-            "LP-AM243"
-        ],
-        "kernel": [
-            "nortos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
-        "subCategories": [
-            "dcl",
-            "dcl_df22",
-            "r5fss0-0_nortos"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ]
-    },
-    {
-        "resourceType": "project.ccs",
-        "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.gettingstarted"
-        ],
-        "description": "A Direct Form 2 2nd order example demonstrating the digital control library (DCL). CPU is R5FSS0-0 running FREERTOS.",
-        "name": "dcl_df22",
-        "location": "../../examples/dcl/dcl_df22/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
-        "devtools": [
-            "LP-AM243"
-        ],
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
-        "subCategories": [
-            "dcl",
-            "dcl_df22",
-            "r5fss0-0_freertos"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ]
-    },
-    {
-        "resourceType": "project.ccs",
-        "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.gettingstarted"
-        ],
-        "description": "A PI controller example demonstrating the digital control library (DCL). CPU is R5FSS0-0 running NORTOS.",
-        "name": "dcl_pi",
-        "location": "../../examples/dcl/dcl_pi/am243x-evm/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
-        "devtools": [
-            "TMDS243EVM"
-        ],
-        "kernel": [
-            "nortos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
-        "subCategories": [
-            "dcl",
-            "dcl_pi",
-            "r5fss0-0_nortos"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ]
-    },
-    {
-        "resourceType": "project.ccs",
-        "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.gettingstarted"
-        ],
-        "description": "A PI controller example demonstrating the digital control library (DCL). CPU is R5FSS0-0 running FREERTOS.",
-        "name": "dcl_pi",
-        "location": "../../examples/dcl/dcl_pi/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
-        "devtools": [
-            "TMDS243EVM"
-        ],
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
-        "subCategories": [
-            "dcl",
-            "dcl_pi",
-            "r5fss0-0_freertos"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ]
-    },
-    {
-        "resourceType": "project.ccs",
-        "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.gettingstarted"
-        ],
-        "description": "A PI controller example demonstrating the digital control library (DCL). CPU is R5FSS0-0 running NORTOS.",
-        "name": "dcl_pi",
-        "location": "../../examples/dcl/dcl_pi/am243x-lp/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
-        "devtools": [
-            "LP-AM243"
-        ],
-        "kernel": [
-            "nortos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
-        "subCategories": [
-            "dcl",
-            "dcl_pi",
-            "r5fss0-0_nortos"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ]
-    },
-    {
-        "resourceType": "project.ccs",
-        "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.gettingstarted"
-        ],
-        "description": "A PI controller example demonstrating the digital control library (DCL). CPU is R5FSS0-0 running FREERTOS.",
-        "name": "dcl_pi",
-        "location": "../../examples/dcl/dcl_pi/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
-        "devtools": [
-            "LP-AM243"
-        ],
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
-        "subCategories": [
-            "dcl",
-            "dcl_pi",
             "r5fss0-0_freertos"
         ],
         "mainCategories": [
@@ -1369,13 +1177,109 @@
             "example"
         ],
         "resourceSubClass": [
+            "example.general"
+        ],
+        "description": "PRU ICSS PWM with phase shift R5F Project CPU is R5FSS0-0 running FREERTOS.",
+        "name": "pruicss_pwm_with_phase_shift",
+        "location": "../../examples/pruicss_pwm/pruicss_pwm_with_phase_shift/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "TMDS243EVM"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "pruicss_pwm",
+            "pruicss_pwm_with_phase_shift",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "description": "time sync time receiver R5F Project CPU is R5FSS0-0 running FREERTOS.",
+        "name": "time_receiver",
+        "location": "../../examples/time_sync/time_sync_time_receiver/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "TMDS243EVM"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "time_sync",
+            "time_sync_time_receiver",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "description": "time sync transmitter receiver R5F Project CPU is R5FSS0-0 running FREERTOS.",
+        "name": "time_sync_transmitter_receiver",
+        "location": "../../examples/time_sync/time_sync_time_transmitter_receiver/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "TMDS243EVM"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "time_sync",
+            "time_sync_time_transmitter_receiver",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
             "example.gettingstarted"
         ],
-        "description": "EtherCAT connected dual servo motor drive example CPU is R5FSS0-0 running NORTOS.",
-        "name": "single_chip_servo",
-        "location": "../../examples/tidep_01032_dual_motor_drive/single_chip_servo/am243x-lp/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
+        "description": "A Direct Form 2 2nd order example demonstrating the digital control library (DCL). CPU is R5FSS0-0 running NORTOS.",
+        "name": "dcl_df22",
+        "location": "../../examples/rtlibs/dcl/dcl_df22/am243x-evm/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "LP-AM243"
+            "TMDS243EVM"
         ],
         "kernel": [
             "nortos"
@@ -1384,8 +1288,9 @@
             "ticlang"
         ],
         "subCategories": [
-            "tidep_01032_dual_motor_drive",
-            "single_chip_servo",
+            "rtlibs",
+            "dcl",
+            "dcl_df22",
             "r5fss0-0_nortos"
         ],
         "mainCategories": [
@@ -1403,22 +1308,23 @@
         "resourceSubClass": [
             "example.gettingstarted"
         ],
-        "description": "EtherCAT connected dual servo motor drive example CPU is R5FSS0-1 running NORTOS.",
-        "name": "single_chip_servo",
-        "location": "../../examples/tidep_01032_dual_motor_drive/single_chip_servo/am243x-lp/r5fss0-1_nortos/ti-arm-clang/example.projectspec",
+        "description": "A Direct Form 2 2nd order example demonstrating the digital control library (DCL). CPU is R5FSS0-0 running FREERTOS.",
+        "name": "dcl_df22",
+        "location": "../../examples/rtlibs/dcl/dcl_df22/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "LP-AM243"
+            "TMDS243EVM"
         ],
         "kernel": [
-            "nortos"
+            "freertos"
         ],
         "compiler": [
             "ticlang"
         ],
         "subCategories": [
-            "tidep_01032_dual_motor_drive",
-            "single_chip_servo",
-            "r5fss0-1_nortos"
+            "rtlibs",
+            "dcl",
+            "dcl_df22",
+            "r5fss0-0_freertos"
         ],
         "mainCategories": [
             [
@@ -1435,9 +1341,42 @@
         "resourceSubClass": [
             "example.gettingstarted"
         ],
-        "description": "EtherCAT connected dual servo motor drive example CPU is R5FSS1-0 running FREERTOS.",
-        "name": "single_chip_servo",
-        "location": "../../examples/tidep_01032_dual_motor_drive/single_chip_servo/am243x-lp/r5fss1-0_freertos/ti-arm-clang/example.projectspec",
+        "description": "A Direct Form 2 2nd order example demonstrating the digital control library (DCL). CPU is R5FSS0-0 running NORTOS.",
+        "name": "dcl_df22",
+        "location": "../../examples/rtlibs/dcl/dcl_df22/am243x-lp/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "LP-AM243"
+        ],
+        "kernel": [
+            "nortos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "rtlibs",
+            "dcl",
+            "dcl_df22",
+            "r5fss0-0_nortos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.gettingstarted"
+        ],
+        "description": "A Direct Form 2 2nd order example demonstrating the digital control library (DCL). CPU is R5FSS0-0 running FREERTOS.",
+        "name": "dcl_df22",
+        "location": "../../examples/rtlibs/dcl/dcl_df22/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "LP-AM243"
         ],
@@ -1448,9 +1387,142 @@
             "ticlang"
         ],
         "subCategories": [
-            "tidep_01032_dual_motor_drive",
-            "single_chip_servo",
-            "r5fss1-0_freertos"
+            "rtlibs",
+            "dcl",
+            "dcl_df22",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.gettingstarted"
+        ],
+        "description": "A PI controller example demonstrating the digital control library (DCL). CPU is R5FSS0-0 running NORTOS.",
+        "name": "dcl_pi",
+        "location": "../../examples/rtlibs/dcl/dcl_pi/am243x-evm/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "TMDS243EVM"
+        ],
+        "kernel": [
+            "nortos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "rtlibs",
+            "dcl",
+            "dcl_pi",
+            "r5fss0-0_nortos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.gettingstarted"
+        ],
+        "description": "A PI controller example demonstrating the digital control library (DCL). CPU is R5FSS0-0 running FREERTOS.",
+        "name": "dcl_pi",
+        "location": "../../examples/rtlibs/dcl/dcl_pi/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "TMDS243EVM"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "rtlibs",
+            "dcl",
+            "dcl_pi",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.gettingstarted"
+        ],
+        "description": "A PI controller example demonstrating the digital control library (DCL). CPU is R5FSS0-0 running NORTOS.",
+        "name": "dcl_pi",
+        "location": "../../examples/rtlibs/dcl/dcl_pi/am243x-lp/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "LP-AM243"
+        ],
+        "kernel": [
+            "nortos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "rtlibs",
+            "dcl",
+            "dcl_pi",
+            "r5fss0-0_nortos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.gettingstarted"
+        ],
+        "description": "A PI controller example demonstrating the digital control library (DCL). CPU is R5FSS0-0 running FREERTOS.",
+        "name": "dcl_pi",
+        "location": "../../examples/rtlibs/dcl/dcl_pi/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "LP-AM243"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "rtlibs",
+            "dcl",
+            "dcl_pi",
+            "r5fss0-0_freertos"
         ],
         "mainCategories": [
             [
@@ -1469,7 +1541,7 @@
         ],
         "description": "A simple test vector of ClARKE-PARK-IPARK-SVGEN data verification CPU is R5FSS0-0 running NORTOS.",
         "name": "transforms_test",
-        "location": "../../examples/transforms/transforms_test/am243x-evm/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
+        "location": "../../examples/rtlibs/transforms/transforms_test/am243x-evm/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
         "devtools": [
             "TMDS243EVM"
         ],
@@ -1480,6 +1552,7 @@
             "ticlang"
         ],
         "subCategories": [
+            "rtlibs",
             "transforms",
             "transforms_test",
             "r5fss0-0_nortos"
@@ -1501,7 +1574,7 @@
         ],
         "description": "A simple test vector of ClARKE-PARK-IPARK-SVGEN data verification CPU is R5FSS0-0 running FREERTOS.",
         "name": "transforms_test",
-        "location": "../../examples/transforms/transforms_test/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "location": "../../examples/rtlibs/transforms/transforms_test/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "TMDS243EVM"
         ],
@@ -1512,6 +1585,7 @@
             "ticlang"
         ],
         "subCategories": [
+            "rtlibs",
             "transforms",
             "transforms_test",
             "r5fss0-0_freertos"
@@ -1533,7 +1607,7 @@
         ],
         "description": "A simple test vector of ClARKE-PARK-IPARK-SVGEN data verification CPU is R5FSS0-0 running NORTOS.",
         "name": "transforms_test",
-        "location": "../../examples/transforms/transforms_test/am243x-lp/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
+        "location": "../../examples/rtlibs/transforms/transforms_test/am243x-lp/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
         "devtools": [
             "LP-AM243"
         ],
@@ -1544,6 +1618,7 @@
             "ticlang"
         ],
         "subCategories": [
+            "rtlibs",
             "transforms",
             "transforms_test",
             "r5fss0-0_nortos"
@@ -1565,7 +1640,7 @@
         ],
         "description": "A simple test vector of ClARKE-PARK-IPARK-SVGEN data verification CPU is R5FSS0-0 running FREERTOS.",
         "name": "transforms_test",
-        "location": "../../examples/transforms/transforms_test/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "location": "../../examples/rtlibs/transforms/transforms_test/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "LP-AM243"
         ],
@@ -1576,6 +1651,7 @@
             "ticlang"
         ],
         "subCategories": [
+            "rtlibs",
             "transforms",
             "transforms_test",
             "r5fss0-0_freertos"
@@ -1595,19 +1671,23 @@
         "resourceSubClass": [
             "example.gettingstarted"
         ],
-        "description": "EtherCAT connected dual servo motor drive example System project.",
-        "name": "single_chip_servo",
-        "location": "../../examples/tidep_01032_dual_motor_drive/single_chip_servo/am243x-lp/system_freertos_nortos/system.projectspec",
+        "description": "Verifying data logging after triggering using Data log Library.  CPU is R5FSS0-0 running NORTOS.",
+        "name": "dlog4ch_lib",
+        "location": "../../examples/rtlibs/utilities/datalog/am243x-lp/r5fss0-0_nortos/ti-arm-clang/example.projectspec",
         "devtools": [
             "LP-AM243"
         ],
         "kernel": [
             "nortos"
         ],
+        "compiler": [
+            "ticlang"
+        ],
         "subCategories": [
-            "tidep_01032_dual_motor_drive",
-            "single_chip_servo",
-            "system_freertos_nortos"
+            "rtlibs",
+            "utilities",
+            "datalog",
+            "r5fss0-0_nortos"
         ],
         "mainCategories": [
             [

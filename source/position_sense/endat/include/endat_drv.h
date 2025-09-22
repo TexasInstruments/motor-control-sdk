@@ -46,13 +46,8 @@ extern "C" {
 #define ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU (0U)
 #define ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU (1U)
 #define ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU (2U)
-#define HWREG(x)                                                               \
-        (*((volatile uint32_t *)(x)))
-#define HWREGB(x)                                                              \
-        (*((volatile uint8_t *)(x)))
-#define HWREGH(x)                                                              \
-        (*((volatile uint16_t *)(x)))
-
+/* Maximum number of EnDat Encoders connected with one PRU Slice*/
+#define NUM_ENCODERS_MAX                    3
 
 /*12 words */
 #define MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE0   0xA1
@@ -60,6 +55,15 @@ extern "C" {
 #define MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE1   0xA3
 /*16 words*/
 #define MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE2   0xA5
+
+#define ENDAT_LOAD_SHARE_EN_MASK  (0x00000800U)
+
+/**
+ * 
+ * \brief  Used to set the Rx oversampling rate
+ * 
+*/
+#define ENDAT_RX_OVERSAMPLING_RATE    (8)
 
 /* Adjust 1-bit as we transmit early */
 #define     ENDAT_TX_30BITS (30 + 1)
@@ -96,6 +100,22 @@ extern "C" {
 #define ENDAT_NUM_BITS_PARAMETER    16
 #define ENDAT_NUM_BITS_ADDRESS      8
 
+#define ENDAT_INIT_FREQ    200000
+
+/*Define constants for recovery time ranges*/
+#define SHORT_RECOVERY_TIME_MIN 2450 /* 2.45 μs */ 
+#define SHORT_RECOVERY_TIME_MAX 3750 /* 3.75 μs */ 
+#define LONG_RECOVERY_TIME_MIN 18500 /* 18.5 μs */ 
+#define LONG_RECOVERY_TIME_MAX 30000 /* 30.0 μs */ 
+
+#define MAX_RT_COUNTER_VALUE 0xFFFFFFFF /* Maximum valid counter value - 2^32 - 1*/
+#define RT_OUT_OF_RANGE_ERROR 0x1
+#define RT_COUNTER_STUCK_ERROR 0x2 
+#define RT_NO_ERROR 0x0 
+
+#define RT_COUNTER_STARTING_VALUE  100
+
+
 #define EINVAL  1
 
 struct endat_clk_cfg
@@ -130,34 +150,33 @@ enum { linear, rotary };
 struct endat_priv
 {   int32_t pruicss_slicex;
     int32_t load_share;
+    int32_t current_channel;
     int32_t pos_res;
-    int32_t single_turn_res;
-    int32_t multi_turn_res;
-    int32_t step;
-    uint32_t pos_rx_bits_21_RTUPRU;
-    uint32_t pos_rx_bits_21_PRU;
-    uint32_t pos_rx_bits_21_TXPRU;
-    uint32_t pos_rx_bits_22_RTUPRU;
-    uint32_t pos_rx_bits_22_PRU;
-    uint32_t pos_rx_bits_22_TXPRU;
+    int32_t multi_turn_res[NUM_ENCODERS_MAX];
+    int32_t single_turn_res[NUM_ENCODERS_MAX];
+    int32_t step[NUM_ENCODERS_MAX];
+    uint32_t pos_rx_bits_21_cmd[NUM_ENCODERS_MAX];
+    uint32_t pos_rx_bits_22_cmd[NUM_ENCODERS_MAX];
+    int32_t type[NUM_ENCODERS_MAX];
+    int32_t has_safety[NUM_ENCODERS_MAX];
+    uint32_t cmd_set_2_2;
     struct flags flags;
     struct id id;
     struct sn sn;
-    uint32_t cmd_set_2_2;
-    int32_t type;
     int32_t raw_data;
-    int32_t channel;
     uint16_t rx_en_cnt;
     struct endat_pruss_xchg *pruss_xchg;
     struct endatChRxInfo *endatChRxInfo;
-    int32_t has_safety;
     void *pruss_cfg;
     void *pruss_iep;
-    uint64_t cmp0;
-    uint64_t cmp3;
-    uint64_t cmp5;
-    uint64_t cmp6;
-
+    uint64_t iep_reset_count;
+    uint64_t ch0_trigger_count;
+    uint64_t ch1_trigger_count;
+    uint64_t ch2_trigger_count;
+    uint64_t pru_clock; /**<PRU CORE Clock*/
+    uint64_t pru_uart_clock; /*ICSS PRU UART clock value*/
+    uint8_t rx_clock_source; /*3 channel Peripheral RX clock source*/
+    uint8_t tx_clock_source; /*3 channel Peripheral TX clock source*/
 };
 
 struct cmd_supplement
@@ -174,10 +193,10 @@ struct cmd_supplement
     uint32_t block;
     uint8_t has_block_address;
     uint32_t frequency;
-    uint64_t cmp0;
-    uint64_t cmp3;
-    uint64_t cmp5;
-    uint64_t cmp6;
+    uint64_t iep_reset_count;
+    uint64_t ch0_trigger_count;
+    uint64_t ch1_trigger_count;
+    uint64_t ch2_trigger_count;
 };
 
 struct endat_data
@@ -232,6 +251,23 @@ union endat_format_data
     struct endat_test_values    test;
 };
 
+
+/**
+ *    \brief    Structure defining 3 Channel clock configuration parameters.
+ *
+ */
+typedef struct endat_clock_config_s
+{
+    /**< 3 channel Peripheral RX clock source */
+    volatile uint8_t  rx_clock_source;
+    /**< *3 channel Peripheral TX clock source  */
+    volatile uint8_t  tx_clock_source;
+    /**< ICSS Core clock value */
+     volatile uint64_t  pru_clock;
+    /**<ICSS UART clock value */
+     volatile uint64_t  pru_uart_clock;
+} endat_clock_config;
+
 #define VALID_2_1_CMD(x) (((x) == 1) || ((x) == 2) || ((x) == 3) || ((x) == 4) || ((x) == 5) || ((x) == 6) || ((x) == 7) )
 #define VALID_2_2_CMD(x) (((x) == 8) || ((x) == 9) || ((x) == 10) || ((x) == 11) || ((x) == 12) || ((x) == 13) || ((x) == 14))
 
@@ -268,8 +304,8 @@ union endat_format_data
 #define ENDAT_MRS_VAL_STOP_ADDITIONAL_INFO (0xF)
 #define ENDAT_MRS_MASK_STOP_ADDITIONAL_INFO (ENDAT_MRS_VAL_STOP_ADDITIONAL_INFO)
 
-#define ENDAT_GET_POS_MULTI_TURN(pos, priv) (((pos) & (((unsigned long long) 1 << (priv)->pos_res) - 1)) >> (priv)->single_turn_res)
-#define ENDAT_GET_POS_SINGLE_TURN(pos, priv) ((pos) & (((unsigned long long) 1 << (priv)->single_turn_res) - 1))
+#define ENDAT_GET_POS_MULTI_TURN(pos, priv) (((pos) & (((unsigned long long) 1 << (priv)->pos_res) - 1)) >> (priv)->single_turn_res[(priv)->current_channel])
+#define ENDAT_GET_POS_SINGLE_TURN(pos, priv) ((pos) & (((unsigned long long) 1 << (priv)->single_turn_res[(priv)->current_channel]) - 1))
 
 #include "endat_api.h"
 

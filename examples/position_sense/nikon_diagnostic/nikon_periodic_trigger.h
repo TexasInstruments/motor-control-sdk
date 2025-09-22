@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2024 Texas Instruments Incorporated
+ *  Copyright (C) 2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -39,8 +39,10 @@
 struct nikon_periodic_interface
 {
   void *pruicss_iep;
-  uint64_t cmp3;
-  uint64_t cmp0;
+  uint64_t iep_reset_count;
+  uint64_t ch0_trigger_count;
+  uint64_t ch1_trigger_count;
+  uint64_t ch2_trigger_count;
 };
 
 #define IEP_DEFAULT_INC     0x1
@@ -48,16 +50,22 @@ struct nikon_periodic_interface
 #define IEP_COUNTER_EN      0x1
 #define IEP_RST_CNT_EN      0x1
 #define IEP_CMP0_ENABLE     (0x1 << 1)
-#define IEP_CMP3_EVNT       (0x1 << 3)
+#define IEP_CH0_CMP_EVNT ( 3 )              /* IEP CMP3 event */
+#define IEP_CH1_CMP_EVNT ( 5 )              /* IEP CMP5 event */
+#define IEP_CH2_CMP_EVNT ( 6 )              /* IEP CMP6 even t*/
 
-#define PRU_TRIGGER_HOST_NIKON_EVT0   ( 2+16 )    /* pr0_pru_mst_intr[2]_intr_req */
+#define RTU_TRIGGER_HOST_EVT   ( 2+16 )    /* pr0_pru_mst_intr[2]_intr_req */
+#define PRU_TRIGGER_HOST_EVT   ( 3+16 )    /* pr0_pru_mst_intr[3]_intr_req */
+#define TXPRU_TRIGGER_HOST_EVT   ( 4+16 )    /* pr0_pru_mst_intr[4]_intr_req */
 
 uint32_t nikon_config_periodic_mode(struct nikon_periodic_interface *nikon_periodic_interface, PRUICSS_Handle handle);
 
 void nikon_stop_periodic_mode(struct nikon_periodic_interface *nikon_periodic_interface);
 
-static void pru_nikon_irq_handler0(void *handle);
+static void rtu_nikon_irq_handler(void *handle);
+static void pru_nikon_irq_handler(void *handle);
+static void txpru_nikon_irq_handler(void *handle);
 
-void nikon_periodic_interface_init(struct nikon_priv *priv, struct nikon_periodic_interface *nikon_periodic_interface,int64_t cmp0, int64_t cmp3);
+void nikon_periodic_interface_init(struct nikon_priv *priv, struct nikon_periodic_interface *nikon_periodic_interface, int64_t iep_reset_count, int64_t ch0_trigger_count, int64_t ch1_trigger_count, int64_t ch2_trigger_count);
 
 #endif /* _NIKON_H_ */

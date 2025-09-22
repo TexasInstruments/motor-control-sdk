@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023 Texas Instruments Incorporated
+ *  Copyright (C) 2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -42,12 +42,38 @@
 #include "bissc_periodic_trigger.h"
 #include <drivers/soc.h>
 #include <position_sense/bissc/include/bissc_drv.h>
+#include "ti_drivers_open_close.h"
+#include "ti_board_open_close.h"
 
+HwiP_Params hwiPrms;
 static HwiP_Object gIcssgEncoderHwiObject0;  /* ICSSG BiSS-C PRU FW HWI */
+static HwiP_Object gIcssgEncoderHwiObject1;  /* ICSSG BiSS-C PRU FW HWI */
+static HwiP_Object gIcssgEncoderHwiObject2;  /* ICSSG BiSS-C PRU FW HWI */
 
 /* ICSSG Interrupt settings */
-#define ICSSG_PRU_BISSC_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_0 )
-uint32_t gPrubisscIrqCnt0;
+#ifdef PRUICSSM
+#if (CONFIG_BISSC0_PRUICSSx == 1)
+#define ICSS_RTU_BISSC_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_0)
+#define ICSS_PRU_BISSC_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_1)
+#define ICSS_TXPRU_BISSC_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_2)
+#else
+#define ICSS_RTU_BISSC_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_0)
+#define ICSS_PRU_BISSC_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_1)
+#define ICSS_TXPRU_BISSC_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_2)
+#endif
+#else
+#if (CONFIG_BISSC0_PRUICSSx == 1)
+#define ICSS_RTU_BISSC_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_0)
+#define ICSS_PRU_BISSC_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_1)
+#define ICSS_TXPRU_BISSC_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_2)
+#else
+#define ICSS_RTU_BISSC_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_0)
+#define ICSS_PRU_BISSC_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_1)
+#define ICSS_TXPRU_BISSC_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_2)
+#endif
+#endif
+
+uint32_t gRtuBisscIrqCnt, gPruBisscIrqCnt, gTxpruBisscIrqCnt;
 
 /*global variable */
 void *gPruIcss_iep;
@@ -55,7 +81,11 @@ void *gPruIcss_iep;
 PRUICSS_Handle gPruIcssXHandle;
 
 /* ICSS INTC configuration */
-extern PRUICSS_IntcInitData icss0_intc_initdata;
+#if (CONFIG_BISSC0_PRUICSSx == 1)
+    extern PRUICSS_IntcInitData icss1_intc_initdata;
+#else
+    extern PRUICSS_IntcInitData icss0_intc_initdata;
+#endif
 
 void bissc_config_iep(struct bissc_periodic_interface *bissc_periodic_interface)
 {
@@ -66,16 +96,16 @@ void bissc_config_iep(struct bissc_periodic_interface *bissc_periodic_interface)
     uint32_t cmp_reg0;
     uint32_t cmp_reg1;
     uint32_t event_clear;
-    uint64_t cmp0 = 0;
+    uint64_t iep_reset_count = 0;
 
     /*clear IEP*/
-    temp = HW_RD_REG8((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_GLOBAL_CFG_REG );
+    temp = HW_RD_REG8((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG);
     temp &= 0xFE;
-    HW_WR_REG8((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_GLOBAL_CFG_REG, temp);
+    HW_WR_REG8((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG, temp);
 
     /* cmp cfg reg */
-    event = HW_RD_REG8((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP_CFG_REG);
-    event_clear = HW_RD_REG8((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP_STATUS_REG);
+    event = HW_RD_REG8((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG);
+    event_clear = HW_RD_REG8((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
 
     /*enable IEP reset by cmp0 event*/
     event |= IEP_CMP0_ENABLE;
@@ -83,54 +113,143 @@ void bissc_config_iep(struct bissc_periodic_interface *bissc_periodic_interface)
     event_clear |= 1;
 
     /*set IEP counter to ZERO*/
-    HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_COUNT_REG0, 0);
-    HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_COUNT_REG1, 0);
+    HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG0, 0);
+    HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG1, 0);
 
-    /*configure cmp3 registers*/
-    event |= (0x1 << 4 );
-    event_clear |= (0x1 << 3);
-    cmp_reg0 = (bissc_periodic_interface->cmp3 & 0xffffffff) - IEP_DEFAULT_INC;
-    cmp_reg1 = (bissc_periodic_interface->cmp3>>32 & 0xffffffff);
+    /*Clear all event & configure*/
+    if(CONFIG_BISSC0_LOAD_SHARE_MODE)
+    {
+        event |= CONFIG_BISSC0_CHANNEL0 == 1 ? (0x1 << (IEP_CH0_CMP_EVNT + 1)):0;
+        event |= CONFIG_BISSC0_CHANNEL1 == 1 ? (0x1 << (IEP_CH1_CMP_EVNT + 1)):0;
+        event |= CONFIG_BISSC0_CHANNEL2 == 1 ? (0x1 << (IEP_CH2_CMP_EVNT + 1)):0;
 
-    HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP3_REG0,  cmp_reg0);
-    HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP3_REG1,  cmp_reg1);
+        /*clear event*/
+        event_clear |= CONFIG_BISSC0_CHANNEL0 == 1? (0x1 << (IEP_CH0_CMP_EVNT)):0;
+        event_clear |= CONFIG_BISSC0_CHANNEL1 == 1? (0x1 << (IEP_CH1_CMP_EVNT)):0;
+        event_clear |= CONFIG_BISSC0_CHANNEL2 == 1? (0x1 << (IEP_CH2_CMP_EVNT)):0;
 
-    cmp0 = bissc_periodic_interface->cmp0;
+        if(CONFIG_BISSC0_CHANNEL0)
+        {
+            cmp_reg0 = (bissc_periodic_interface->ch0_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
+            cmp_reg1 = (bissc_periodic_interface->ch0_trigger_count>>32 & 0xffffffff);
+
+            HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + IEP_CH0_CMP_EVNT*8,  cmp_reg0);
+            HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + IEP_CH0_CMP_EVNT*8,  cmp_reg1);
+
+        }
+
+        if(CONFIG_BISSC0_CHANNEL1)
+        {
+            cmp_reg0 = (bissc_periodic_interface->ch1_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
+            cmp_reg1 = (bissc_periodic_interface->ch1_trigger_count>>32 & 0xffffffff);
+
+            HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + IEP_CH1_CMP_EVNT*8,  cmp_reg0);
+            HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + IEP_CH1_CMP_EVNT*8,  cmp_reg1);
+
+        }
+
+        if(CONFIG_BISSC0_CHANNEL2)
+        {
+            cmp_reg0 = (bissc_periodic_interface->ch2_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
+            cmp_reg1 = (bissc_periodic_interface->ch2_trigger_count>>32 & 0xffffffff);
+
+            HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + IEP_CH2_CMP_EVNT*8,  cmp_reg0);
+            HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + IEP_CH2_CMP_EVNT*8,  cmp_reg1);
+
+        }
+    }
+    else
+    {
+        event |= (0x1 << (IEP_CH0_CMP_EVNT + 1));
+        event_clear |= (0x1 << (IEP_CH0_CMP_EVNT));
+        cmp_reg0 = (bissc_periodic_interface->ch0_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
+        cmp_reg1 = (bissc_periodic_interface->ch0_trigger_count>>32 & 0xffffffff);
+
+        HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + IEP_CH0_CMP_EVNT*8,  cmp_reg0);
+        HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + IEP_CH0_CMP_EVNT*8,  cmp_reg1);
+
+    }
+    iep_reset_count = bissc_periodic_interface->iep_reset_count;
 
     /*clear event*/
-    HW_WR_REG8((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP_STATUS_REG, event_clear);
+    HW_WR_REG8((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
     /*enable  event*/
-    HW_WR_REG8((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP_CFG_REG, event);
+    HW_WR_REG8((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG, event);
 
     /*configure cmp0 registers*/
-    cmp_reg0 = (cmp0 & 0xffffffff) - IEP_DEFAULT_INC;
-    cmp_reg1 = (cmp0>>32 & 0xffffffff);
-    HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP0_REG0,  cmp_reg0);
-    HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP0_REG1,  cmp_reg1);
+    cmp_reg0 = (iep_reset_count & 0xffffffff) - IEP_DEFAULT_INC;
+    cmp_reg1 = (iep_reset_count>>32 & 0xffffffff);
+    HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0, cmp_reg0);
+    HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1, cmp_reg1);
 
 
     /*write IEP default increment & IEP start*/
-    temp = HW_RD_REG8((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_GLOBAL_CFG_REG );
+    temp = HW_RD_REG8((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG);
     temp &= 0x0F;
     temp |= 0x10;
     temp |= IEP_COUNTER_EN;
-    HW_WR_REG8((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_GLOBAL_CFG_REG, temp);
+    HW_WR_REG8((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG, temp);
 }
 
 
 void bissc_interrupt_config(struct bissc_periodic_interface *bissc_periodic_interface)
 {
     int32_t status;
-    HwiP_Params hwiPrms;
-    /* Register & enable ICSSG bissc PRU FW interrupt */
-    HwiP_Params_init(&hwiPrms);
-    hwiPrms.intNum      = ICSSG_PRU_BISSC_INT_NUM;
-    hwiPrms.callback    = &prubisscIrqHandler0;
-    hwiPrms.args        = 0;
-    hwiPrms.isPulse     = FALSE;
-    hwiPrms.isFIQ       = FALSE;
-    status              = HwiP_construct(&gIcssgEncoderHwiObject0, &hwiPrms);
-    DebugP_assert(status == SystemP_SUCCESS);
+    if(CONFIG_BISSC0_LOAD_SHARE_MODE)
+    {
+        if(CONFIG_BISSC0_CHANNEL0)
+        {
+            /* Register & enable ICSSG bissc PRU FW interrupt */
+            HwiP_Params_init(&hwiPrms);
+            hwiPrms.intNum      = ICSS_RTU_BISSC_INT_NUM;
+            hwiPrms.callback    = &rtuBisscIrqHandler;
+            hwiPrms.args        = 0;
+            hwiPrms.isPulse     = FALSE;
+            hwiPrms.isFIQ       = FALSE;
+            status              = HwiP_construct(&gIcssgEncoderHwiObject0, &hwiPrms);
+            DebugP_assert(status == SystemP_SUCCESS);
+
+        }
+        if(CONFIG_BISSC0_CHANNEL1)
+        {
+            /* Register & enable ICSSG bissc PRU FW interrupt */
+            HwiP_Params_init(&hwiPrms);
+            hwiPrms.intNum      = ICSS_PRU_BISSC_INT_NUM;
+            hwiPrms.callback    = &pruBisscIrqHandler;
+            hwiPrms.args        = 0;
+            hwiPrms.isPulse     = FALSE;
+            hwiPrms.isFIQ       = FALSE;
+            status              = HwiP_construct(&gIcssgEncoderHwiObject1, &hwiPrms);
+            DebugP_assert(status == SystemP_SUCCESS);
+
+        }
+        if(CONFIG_BISSC0_CHANNEL2)
+        {
+            /* Register & enable ICSSG bissc PRU FW interrupt */
+            HwiP_Params_init(&hwiPrms);
+            hwiPrms.intNum      = ICSS_TXPRU_BISSC_INT_NUM;
+            hwiPrms.callback    = &txpruBisscIrqHandler;
+            hwiPrms.args        = 0;
+            hwiPrms.isPulse     = FALSE;
+            hwiPrms.isFIQ       = FALSE;
+            status              = HwiP_construct(&gIcssgEncoderHwiObject2, &hwiPrms);
+            DebugP_assert(status == SystemP_SUCCESS);
+
+        }
+    }
+    else
+    {
+        /* Register & enable ICSSG bissc PRU FW interrupt */
+        HwiP_Params_init(&hwiPrms);
+        hwiPrms.intNum      = ICSS_RTU_BISSC_INT_NUM;
+        hwiPrms.callback    = &rtuBisscIrqHandler;
+        hwiPrms.args        = 0;
+        hwiPrms.isPulse     = FALSE;
+        hwiPrms.isFIQ       = FALSE;
+        status              = HwiP_construct(&gIcssgEncoderHwiObject0, &hwiPrms);
+        DebugP_assert(status == SystemP_SUCCESS);
+
+    }
 
 }
 uint32_t bissc_config_periodic_mode(struct bissc_periodic_interface *bissc_periodic_interface, PRUICSS_Handle handle)
@@ -141,11 +260,19 @@ uint32_t bissc_config_periodic_mode(struct bissc_periodic_interface *bissc_perio
     /*configure IEP*/
     bissc_config_iep(bissc_periodic_interface);
     /* Initialize ICSS INTC */
+#if (CONFIG_BISSC0_PRUICSSx == 1)
+    status = PRUICSS_intcInit(gPruIcssXHandle, &icss1_intc_initdata);
+    if (status != SystemP_SUCCESS)
+    {
+        return 0;
+    }
+#else
     status = PRUICSS_intcInit(gPruIcssXHandle, &icss0_intc_initdata);
-        if (status != SystemP_SUCCESS)
-        {
-            return 0;
-        }
+    if (status != SystemP_SUCCESS)
+    {
+        return 0;
+    }
+#endif
     /*config Interrupt*/
     bissc_interrupt_config(bissc_periodic_interface);
     return 1;
@@ -158,36 +285,58 @@ void bissc_stop_periodic_mode(struct bissc_periodic_interface *bissc_periodic_in
     void *pruicss_iep = bissc_periodic_interface->pruicss_iep;
     uint8_t temp;
     /*clear IEP*/
-    temp = HW_RD_REG8((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_GLOBAL_CFG_REG );
+    temp = HW_RD_REG8((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG);
     temp &= 0xFE;
-    HW_WR_REG8((uint8_t*)pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_GLOBAL_CFG_REG, temp);
+    HW_WR_REG8((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG, temp);
 }
 
-/* PRU bissc FW IRQ handler */
-void prubisscIrqHandler0(void *args)
+/* RTU bissc FW IRQ handler */
+void rtuBisscIrqHandler(void *args)
 {
-
-    /* debug, inncrement PRU SDFM IRQ count */
-    gPrubisscIrqCnt0++;
-
-    /* clear Cmp3 event*/
-    uint32_t event_clear;
-    event_clear = HW_RD_REG8((uint8_t*)gPruIcss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP_STATUS_REG);
-    event_clear |= IEP_CMP3_EVNT;
-    HW_WR_REG8((uint8_t*)gPruIcss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP_STATUS_REG, event_clear);
+    /* Increment RTU NIKON IRQ count */
+    gRtuBisscIrqCnt++;
 
     /* Clear interrupt at source */
     /* Write 18 to ICSSG_STATUS_CLR_INDEX_REG
-        Firmware:   TRIGGER_HOST_SDFM_IRQ defined as 18
-        18 = 16+2, 2 is Host Interrupt Number. See AM64x TRM.
+        18 = 16+2, 2 is Host Interrupt Number. See TRM for more details.
     */
-    PRUICSS_clearEvent(gPruIcssXHandle, PRU_TRIGGER_HOST_BISSC_EVT0);
+    PRUICSS_clearEvent(gPruIcssXHandle, RTU_TRIGGER_HOST_BISSC_EVT);
 
 }
 
-void bissc_periodic_interface_init(struct bissc_priv *priv, struct bissc_periodic_interface *bissc_periodic_interface, int64_t cmp3, int64_t cmp0)
+/* PRU bissc FW IRQ handler */
+void pruBisscIrqHandler(void *args)
+{
+    /* Increment PRU NIKON IRQ count */
+    gPruBisscIrqCnt++;
+
+    /* Clear interrupt at source */
+    /* Write 19 to ICSSG_STATUS_CLR_INDEX_REG
+        19 = 16+3, 3 is Host Interrupt Number. See TRM for more details.
+    */
+    PRUICSS_clearEvent(gPruIcssXHandle, PRU_TRIGGER_HOST_BISSC_EVT);
+}
+
+/* TXPRU bissc FW IRQ handler */
+void txpruBisscIrqHandler(void *args)
+{
+    /* Increment TXPRU NIKON IRQ count */
+    gTxpruBisscIrqCnt++;
+
+    /* Clear interrupt at source */
+    /* Write 20 to ICSSG_STATUS_CLR_INDEX_REG
+        20 = 16+4, 4 is Host Interrupt Number. See TRM for more details.
+    */
+    PRUICSS_clearEvent(gPruIcssXHandle, TXPRU_TRIGGER_HOST_BISSC_EVT);
+
+}
+
+void bissc_periodic_interface_init(struct bissc_priv *priv, struct bissc_periodic_interface *bissc_periodic_interface, int64_t ch0_trigger_count,
+    int64_t ch1_trigger_count, int64_t ch2_trigger_count, int64_t iep_reset_count)
 {
     bissc_periodic_interface->pruicss_iep = priv->pruicss_iep;
-    bissc_periodic_interface->cmp3 = cmp3;
-    bissc_periodic_interface->cmp0 = cmp0;
+    bissc_periodic_interface->ch0_trigger_count = ch0_trigger_count;
+    bissc_periodic_interface->ch1_trigger_count = ch1_trigger_count;
+    bissc_periodic_interface->ch2_trigger_count = ch2_trigger_count;
+    bissc_periodic_interface->iep_reset_count = iep_reset_count;
 }

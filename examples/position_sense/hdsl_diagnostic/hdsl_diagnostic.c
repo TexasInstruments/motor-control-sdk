@@ -50,8 +50,9 @@
 #include <kernel/dpl/ClockP.h>
 
 #include <drivers/pruicss.h>
+#ifndef SOC_AM261X
 #include <drivers/udma.h>
-
+#endif
 #include "ti_drivers_config.h"
 #include "ti_drivers_open_close.h"
 #include "ti_board_open_close.h"
@@ -60,27 +61,50 @@
 #include <position_sense/hdsl/include/hdsl_drv.h>
 #include <position_sense/hdsl/include/pruss_intc_mapping.h>
 
-/* PRU clock frequency =225Mhz   */
+/* PRU clock frequency = 225 MHz */
 #define PRU_CLK_FREQ_225M 225000000
-/*  PRU clock frequency =300Mhz   */
+/*  PRU clock frequency = 300 MHz */
 #define PRU_CLK_FREQ_300M 300000000
 
-#if (CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ==PRU_CLK_FREQ_225M)
-#include <position_sense/hdsl/firmware/hdsl_master_icssg_freerun_225_mhz_bin.h>
-#include <position_sense/hdsl/firmware/hdsl_master_icssg_sync_225_mhz_bin.h>
+#define PRU_CORE_CLK CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ
+
+#if (PRU_CORE_CLK==PRU_CLK_FREQ_225M)
+#if CONFIG_HDSL0_PRUICSS_PRUx == 1
+#include <position_sense/hdsl/firmware/freerun_225_mhz/hdsl_receiver_freerun_225_mhz_pru1_bin.h>
+#include <position_sense/hdsl/firmware/sync_225_mhz/hdsl_receiver_sync_225_mhz_pru1_bin.h>
+#else
+#include <position_sense/hdsl/firmware/freerun_225_mhz/hdsl_receiver_freerun_225_mhz_pru0_bin.h>
+#include <position_sense/hdsl/firmware/sync_225_mhz/hdsl_receiver_sync_225_mhz_pru0_bin.h>
+#endif
+
 /* Divide factor for normal clock (default value for 225 MHz=23) */
 #define DIV_FACTOR_NORMAL 23
 /* Divide factor for oversampled clock (default value for 225 MHz=2) */
 #define DIV_FACTOR_OVERSAMPLED 2
+#else
+/* Divide factor for normal clock (default value for 300 MHz=31) */
+#define DIV_FACTOR_NORMAL 31
+/* Divide factor for oversampled clock (default value for 300 MHz=3) */
+#define DIV_FACTOR_OVERSAMPLED 3
+#if CONFIG_HDSL0_PRUICSS_PRUx == 1
+#include <position_sense/hdsl/firmware/multichannel_ch0/hdsl_receiver_multichannel_rtu_pru1_bin.h>
+#include <position_sense/hdsl/firmware/multichannel_ch0_sync_mode/hdsl_receiver_multichannel_sync_mode_rtu_pru1_bin.h>
+#include <position_sense/hdsl/firmware/multichannel_ch1/hdsl_receiver_multichannel_pru1_bin.h>
+#include <position_sense/hdsl/firmware/multichannel_ch1_sync_mode/hdsl_receiver_multichannel_sync_mode_pru1_bin.h>
+#include <position_sense/hdsl/firmware/multichannel_ch2/hdsl_receiver_multichannel_tx_pru1_bin.h>
+#include <position_sense/hdsl/firmware/multichannel_ch2_sync_mode/hdsl_receiver_multichannel_sync_mode_tx_pru1_bin.h>
+#else
+#include <position_sense/hdsl/firmware/multichannel_ch0/hdsl_receiver_multichannel_rtu_pru0_bin.h>
+#include <position_sense/hdsl/firmware/multichannel_ch0_sync_mode/hdsl_receiver_multichannel_sync_mode_rtu_pru0_bin.h>
+#include <position_sense/hdsl/firmware/multichannel_ch1/hdsl_receiver_multichannel_pru0_bin.h>
+#include <position_sense/hdsl/firmware/multichannel_ch1_sync_mode/hdsl_receiver_multichannel_sync_mode_pru0_bin.h>
+#include <position_sense/hdsl/firmware/multichannel_ch2/hdsl_receiver_multichannel_tx_pru0_bin.h>
+#include <position_sense/hdsl/firmware/multichannel_ch2_sync_mode/hdsl_receiver_multichannel_sync_mode_tx_pru0_bin.h>
 #endif
-
-#if (CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ==PRU_CLK_FREQ_300M)
-#include <position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch0_bin.h>
-#include <position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch1_bin.h>
-#include <position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch2_bin.h>
-#include <position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch0_sync_mode_bin.h>
-#include <position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch1_sync_mode_bin.h>
-#include <position_sense/hdsl/firmware/hdsl_master_icssg_multichannel_ch2_sync_mode_bin.h>
+/* Divide factor for normal clock (default value for 300 MHz=31) */
+#define DIV_FACTOR_NORMAL 31
+/* Divide factor for oversampled clock (default value for 300 MHz=3) */
+#define DIV_FACTOR_OVERSAMPLED 3
 #endif
 
 /* ========================================================================== */
@@ -94,16 +118,13 @@
 #define TXPRU_IRAM_SIZE             (6*1024) /*6 kB*/
 #define SYNC_PULSE_WAIT_CLK_CYCLES  5505
 
-/* Divide factor for normal clock (default value for 300 MHz=31) */
-#define DIV_FACTOR_NORMAL 31
-/* Divide factor for oversampled clock (default value for 300 MHz=3) */
-#define DIV_FACTOR_OVERSAMPLED 3
-
 #ifdef HDSL_AM64xE1_TRANSCEIVER
 #include <board/ioexp/ioexp_tca6424.h>
 #endif
 
-#define PRUICSS_PRUx  PRUICSS_PRU1
+#define PRUICSS_PRUx  CONFIG_HDSL0_PRUICSS_PRUx
+#define PRUICSS_TX_PRUx    PRUICSS_PRUx + 4
+#define PRUICSS_RTU_PRUx   PRUICSS_PRUx + 2
 /* Oversample rate 8*/
 #define OVERSAMPLE_RATE 7
 
@@ -138,7 +159,7 @@
 #define QM_LINK_ESTABLISHED_AND_VALUE_15    (0x8F)
 
 
-#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
+#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_) && !defined(SOC_AM261X)
 /* Memory Trace is triggered for each H-Frame. SYS_EVENT_21 is triggered for each
    H-Frame from PRU. SYS_EVENT_21 is mapped to PRU_ICSSG0_PR1_HOST_INTR_PEND_3 of R5F
    in INTC Mapping. */
@@ -155,6 +176,10 @@
 /* ========================================================================== */
 
 void sync_calculation(HDSL_Handle hdslHandle);
+
+void HDSL_iep_init(HDSL_Handle hdslHandle);
+
+int HDSL_enable_sync_signal(uint8_t ES, uint32_t period);
 
 void process_request(HDSL_Handle hdslHandle,int32_t menu);
 
@@ -192,7 +217,7 @@ uint32_t read_encoder_resolution(HDSL_Handle hdslHandle);
 static void hdsl_i2c_io_expander(void *args);
 #endif
 
-#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
+#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_) && !defined(SOC_AM261X)
 
 static void App_udmaTrpdInit(Udma_ChHandle chHandle,
                              uint8_t *trpdMem,
@@ -206,22 +231,22 @@ static void HDSL_IsrFxn();
 
 void traces_into_memory(HDSL_Handle hdslHandle);
 #endif
+
 /* ========================================================================== */
 /*                            Global Variables                                */
 /* ========================================================================== */
 
 HDSL_Handle gHdslHandleCh[HDSL_MAX_CHANNELS];
 
-PRUICSS_Handle  gPruIcss0Handle;
+PRUICSS_Handle  gPruIcssXHandle;
 PRUICSS_IntcInitData gPruss0_intc_initdata = PRU_ICSS0_INTC_INITDATA;
-PRUICSS_Handle gPruIcss1Handle;
 PRUICSS_IntcInitData gPruss1_intc_initdata = PRU_ICSS1_INTC_INITDATA;
 
 HDSL_CopyTable *copyTable;
 
 static char gUart_buffer[256];
-static void *gPru_cfg;
 void *gPru_dramx;
+static void *gPru_cfg;
 void *gPru_dramx_0;
 void *gPru_dramx_1;
 void *gPru_dramx_2;
@@ -236,7 +261,7 @@ uint8_t gPc_addrh, gPc_addrl, gPc_offh, gPc_offl, gPc_buf0, gPc_buf1, gPc_buf2, 
 static TCA6424_Config  gTCA6424_Config;
 #endif
 
-#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
+#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_) && !defined(SOC_AM261X)
 
 Udma_ChHandle   chHandle;
 
@@ -258,11 +283,13 @@ HwiP_Object gPRUHwiObject;
 uint8_t gUdmaTestTrpdMem[UDMA_TEST_TRPD_SIZE] __attribute__((aligned(UDMA_CACHELINE_ALIGNMENT)));
 #endif
 
+
 /* ========================================================================== */
 /*                          Function Definitions                              */
 /* ========================================================================== */
 
-#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
+
+#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_) && !defined(SOC_AM261X)
 
 static void App_udmaTrpdInit(Udma_ChHandle chHandle,
                              uint8_t *trpdMem,
@@ -370,7 +397,7 @@ static void HDSL_IsrFxn()
 
     srcBuf = (uint8_t*)HDSL_get_src_loc(gHdslHandleCh[0]);
     length = HDSL_get_length(gHdslHandleCh[0]);
-    PRUICSS_clearEvent(gPruIcss0Handle, HDSL_MEMORY_TRACE_ICSS_INTC_EVENT_NUM);
+    PRUICSS_clearEvent(gPruIcssXHandle, HDSL_MEMORY_TRACE_ICSS_INTC_EVENT_NUM);
 
     /* No of h-frames count */
     h_frames_count++;
@@ -420,6 +447,69 @@ void traces_into_memory(HDSL_Handle hdslHandle)
 
 #endif
 
+void HDSL_iep_init(HDSL_Handle hdslHandle)
+{
+    PRUICSS_setIepCounterIncrementValue(gPruIcssXHandle,0,1);
+    PRUICSS_controlIepCounter(gPruIcssXHandle,0,1);
+    PRUICSS_setIepClkSrc(gPruIcssXHandle,1);
+
+}
+
+int HDSL_enable_sync_signal(uint8_t ES, uint32_t period)
+{
+    uint32_t readValue;
+    uint32_t start_time = 10000;
+#ifdef SOC_AM261X
+    uint32_t iep_base = CSL_ICSS_M_ICSSM_0_IEP0_U_BASE;
+#else
+    uint32_t iep_base = (uint32_t)(((PRUICSS_HwAttrs *)(gHdslHandleCh[0]->icssHandle->hwAttrs))->iep1RegBase);
+#endif
+
+    /* For AM261X, ICSSM0 IEP0 is used to generate SYNC_OUT0 pulse as an input to ICSSM1 LATCH0*/
+    /* Enable IEP. Enable the Counter and set the DEFAULT_INC and CMP_INC to 1.*/
+    HW_WR_REG32(iep_base + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG, 0x111);
+
+    /*Enable SYNC0 and program pulse width*/
+    /*Enable SYNC and SYNC0*/
+    readValue = HW_RD_REG32(iep_base + CSL_ICSS_PR1_IEP0_SLV_SYNC_CTRL_REG);
+    readValue |= 0x03;
+    HW_WR_REG32(iep_base + CSL_ICSS_PR1_IEP0_SLV_SYNC_CTRL_REG, readValue);
+
+    /*Enable cyclic mod*/
+    readValue = HW_RD_REG32(iep_base + CSL_ICSS_PR1_IEP0_SLV_SYNC_CTRL_REG);
+    readValue |= 0x20;
+    HW_WR_REG32(iep_base + CSL_ICSS_PR1_IEP0_SLV_SYNC_CTRL_REG, readValue);
+
+    /*32504 4500 = num_of_cycles, 50Khz signals, 20us time period//(pulse_width / 4) - 1; */
+    HW_WR_REG32(iep_base + CSL_ICSS_PR1_IEP0_SLV_SYNC_PWIDTH_REG, (period)/2);
+    /* (period / 4) - 1; */
+    HW_WR_REG32(iep_base + CSL_ICSS_PR1_IEP0_SLV_SYNC0_PERIOD_REG, (period));
+
+    /*Program CMP1*/
+    readValue = HW_RD_REG32(iep_base + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG);
+    readValue |= 0x00000004;
+    HW_WR_REG32(iep_base + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG, readValue);
+    /*<start time>; Ensure this start time is in future*/
+    HW_WR_REG32(iep_base + CSL_ICSS_PR1_IEP0_SLV_CMP1_REG0, start_time);
+/*  On AM243x, we use Time sync routing, on AM261x, we use Time Sync XBAR */
+#ifdef SOC_AM261X
+    /*Changing internal MUXING for enabling ICSSM1 XBAR instance settings       */
+    HW_WR_REG32(((uint32_t)(((PRUICSS_HwAttrs *)(gHdslHandleCh[0]->icssHandle->hwAttrs))->baseAddr) + CSL_MSS_CTRL_ICSSM1_INPUT_INTR_SEL), 0xff);
+#else
+    /*TSR configuration:*/
+    uint32_t inEvent;
+    uint32_t outEvent_latch;
+    uint32_t outEvent_gpio;
+    inEvent = SYNCEVENT_INTRTR_IN_27;
+    outEvent_latch = SYNCEVT_RTR_SYNC10_EVT;
+    outEvent_gpio = SYNCEVT_RTR_SYNC30_EVT;
+
+    HW_WR_REG32(CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + outEvent_latch, (inEvent | 0x10000));
+    HW_WR_REG32(CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + outEvent_gpio, (inEvent | 0x10000));
+    HW_WR_REG32(CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + SYNCEVT_RTR_SYNC28_EVT, (inEvent | 0x10000));
+#endif
+    return 1;
+}
 void sync_calculation(HDSL_Handle hdslHandle)
 {
     uint8_t ES;
@@ -427,19 +517,24 @@ void sync_calculation(HDSL_Handle hdslHandle)
     uint32_t counter, period, index;
     volatile uint32_t cap6_rise0, cap6_rise1, cap6_fall0, cap6_fall1;
     uint8_t EXTRA_EDGE_ARR[8] = {0x00 ,0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE};
-    #if (CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ==PRU_CLK_FREQ_225M)
+    #if (PRU_CORE_CLK==PRU_CLK_FREQ_225M)
         uint32_t minm_bits = 112, cycle_per_bit = 24, max_stuffing = 26, stuffing_size = 6, cycle_per_overclock_bit =3, minm_extra_size = 4, sync_param_mem_start = 0xDC;
         uint32_t cycles_left, additional_bits, minm_cycles, time_gRest, extra_edge, extra_size, num_of_stuffing, extra_size_remainder, stuffing_remainder, bottom_up_cycles;
     #endif
-    #if (CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ==PRU_CLK_FREQ_300M)
+    #if (PRU_CORE_CLK==PRU_CLK_FREQ_300M)
         uint32_t minm_bits = 112, cycle_per_bit = 32, max_stuffing = 26, stuffing_size = 6, cycle_per_overclock_bit =4, minm_extra_size = 4, sync_param_mem_start = 0xDC;
         uint32_t cycles_left, additional_bits, minm_cycles, time_gRest, extra_edge, extra_size, num_of_stuffing, extra_size_remainder, stuffing_remainder, bottom_up_cycles;
     #endif
     /*measure of SYNC period starts*/
 
     ES=HDSL_get_sync_ctrl(hdslHandle);
-    uint32_t CAPR6_REG0 = CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE + CSL_ICSS_G_PR1_IEP1_SLV_REGS_BASE + CSL_ICSS_G_PR1_IEP0_SLV_CAPR6_REG0;
-    uint32_t CAPF6_REG0 = CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE + CSL_ICSS_G_PR1_IEP1_SLV_REGS_BASE + CSL_ICSS_G_PR1_IEP0_SLV_CAPF6_REG0;
+#ifdef SOC_AM261X
+    uint32_t CAPR6_REG0 = (uint32_t)(((PRUICSS_HwAttrs *)(gHdslHandleCh[0]->icssHandle->hwAttrs))->iep0RegBase) + CSL_ICSS_M_PR1_IEP0_SLV_CAPR6_REG0;
+    uint32_t CAPF6_REG0 = (uint32_t)(((PRUICSS_HwAttrs *)(gHdslHandleCh[0]->icssHandle->hwAttrs))->iep0RegBase)+ CSL_ICSS_M_PR1_IEP0_SLV_CAPF6_REG0;
+#else
+    uint32_t CAPR6_REG0 = (uint32_t)(((PRUICSS_HwAttrs *)(gHdslHandleCh[0]->icssHandle->hwAttrs))->iep1RegBase) + CSL_ICSS_G_PR1_IEP0_SLV_CAPR6_REG0;
+    uint32_t CAPF6_REG0 = (uint32_t)(((PRUICSS_HwAttrs *)(gHdslHandleCh[0]->icssHandle->hwAttrs))->iep1RegBase)+ CSL_ICSS_G_PR1_IEP0_SLV_CAPF6_REG0;
+#endif
     cap6_rise0 = HW_RD_REG32(CAPR6_REG0);
     cap6_fall0 = HW_RD_REG32(CAPF6_REG0);
     cap6_rise1 = cap6_rise0;
@@ -502,25 +597,25 @@ void sync_calculation(HDSL_Handle hdslHandle)
     DebugP_log("\r\n SYNC MODE: extra_size_remainder = %d", extra_size_remainder);
     DebugP_log("\r\n SYNC MODE: stuffing_remainder = %d", stuffing_remainder);
     DebugP_log("\r\n ********************************************************************");
-    #if (CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ==PRU_CLK_FREQ_225M)
+    #if (PRU_CORE_CLK==PRU_CLK_FREQ_225M)
         sync_param_mem_start =sync_param_mem_start + (uint32_t)gPru_dramx;
     #endif
-    #if (CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ==PRU_CLK_FREQ_300M)
+    #if (PRU_CORE_CLK==PRU_CLK_FREQ_300M)
         sync_param_mem_start =sync_param_mem_start + (uint32_t)hdslHandle->baseMemAddr;
     #endif
-    HWREGB(sync_param_mem_start) = extra_size;
+    HW_WR_REG8(sync_param_mem_start, extra_size);
     sync_param_mem_start = sync_param_mem_start + 1;
-    HWREGB(sync_param_mem_start) = num_of_stuffing;
+    HW_WR_REG8(sync_param_mem_start, num_of_stuffing);
     sync_param_mem_start = sync_param_mem_start + 1;
-    HWREGB(sync_param_mem_start) = extra_edge;
+    HW_WR_REG8(sync_param_mem_start, extra_edge);
     sync_param_mem_start = sync_param_mem_start + 1;
-    HWREGB(sync_param_mem_start) = time_gRest;
+    HW_WR_REG8(sync_param_mem_start, time_gRest);
     sync_param_mem_start = sync_param_mem_start + 1;
-    HWREGB(sync_param_mem_start) = extra_size_remainder;
+    HW_WR_REG8(sync_param_mem_start, extra_size_remainder);
     sync_param_mem_start = sync_param_mem_start + 1;
-    HWREGB(sync_param_mem_start) = stuffing_remainder;
+    HW_WR_REG8(sync_param_mem_start, stuffing_remainder);
     sync_param_mem_start = sync_param_mem_start + 1;
-    HWREGH(sync_param_mem_start) = wait_before_start;
+    HW_WR_REG16(sync_param_mem_start, wait_before_start);
 
 }
 
@@ -639,7 +734,8 @@ void process_request(HDSL_Handle hdslHandle,int32_t menu)
                 DebugP_log("\r\n RSSI: %u", ret_status);
             }
             break;
-#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
+
+#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_) && !defined(SOC_AM261X)
         case MENU_HDSL_REG_INTO_MEMORY:
             traces_into_memory(hdslHandle);
             break;
@@ -674,105 +770,133 @@ void process_request(HDSL_Handle hdslHandle,int32_t menu)
 
 void hdsl_pruss_init(void)
 {
-    PRUICSS_disableCore(gPruIcss0Handle, gHdslHandleCh[0]->icssCore);
+    PRUICSS_disableCore(gPruIcssXHandle, gHdslHandleCh[0]->icssCore);
 
     /* clear ICSS0 PRU data RAM */
-    gPru_dramx = (void *)((((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->baseAddr) + PRUICSS_DATARAM(PRUICSS_PRUx));
+    gPru_dramx = (void *)((((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->baseAddr) + PRUICSS_DATARAM(PRUICSS_PRUx));
     memset(gPru_dramx, 0, (4 * 1024));
 
-    gPru_cfg = (void *)(((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->cfgRegBase);
+    gPru_cfg = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->cfgRegBase);
 
-    HW_WR_REG32(gPru_cfg + CSL_ICSSCFG_GPCFG1, HDSL_EN);
+#if (PRUICSS_PRUx==PRUICSS_PRU0)
+    HW_WR_REG32(gPru_cfg + CSL_ICSS_PR1_CFG_SLV_GPCFG0_REG, HDSL_EN);
+    HW_WR_REG32(gPru_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG, HDSL_TX_CFG);
+    HW_WR_REG32(gPru_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG, HDSL_RX_CFG);
 
-    HW_WR_REG32(gPru_cfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER, HDSL_TX_CFG);
-
-    HW_WR_REG32(gPru_cfg + CSL_ICSSCFG_EDPRU1RXCFGREGISTER, HDSL_RX_CFG);
-
-    PRUICSS_intcInit(gPruIcss0Handle, &gPruss0_intc_initdata);
-
-    PRUICSS_intcInit(gPruIcss1Handle, &gPruss1_intc_initdata);
-
-    /* configure C28 to PRU_ICSS_CTRL and C29 to EDMA + 0x1000 */
+#else
+    HW_WR_REG32(gPru_cfg + CSL_ICSS_PR1_CFG_SLV_GPCFG1_REG, HDSL_EN);
+    HW_WR_REG32(gPru_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG, HDSL_TX_CFG);
+    HW_WR_REG32(gPru_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG, HDSL_RX_CFG);
+#endif
+    PRUICSS_intcInit(gPruIcssXHandle, &gPruss0_intc_initdata);
+    /*configure C28 to IEP depending upon IEP instance usage */
+#ifdef SOC_AM261X
+    /*IEP0 base is used for AM261x SoCs*/
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_PRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0x02e0);
+#else
+    /*IEP1 base is used for AM243x SoCs*/
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_PRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0x02f0);
+#endif
     /*6.4.14.1.1 ICSSG_PRU_CONTROL RegisterPRU_ICSSG0_PR1_PDSP0_IRAM 00B0 2400h*/
-    PRUICSS_setConstantTblEntry(gPruIcss0Handle, PRUICSS_PRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0x0240);
-    /*IEP1 base */
-    PRUICSS_setConstantTblEntry(gPruIcss0Handle, PRUICSS_PRUx, PRUICSS_CONST_TBL_ENTRY_C29, 0x0002F000);
-
+#if (PRUICSS_PRUx==PRUICSS_PRU0)
     /* enable cycle counter */
-    HW_WR_REG32((void *)((((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->baseAddr) + CSL_ICSS_G_PR1_PDSP1_IRAM_REGS_BASE), CTR_EN);
+    HW_WR_REG32((void *)((((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->baseAddr) + CSL_ICSS_M_PR1_PDSP0_IRAM_REGS_BASE), CTR_EN);
+
+#else
+        /* enable cycle counter */
+    HW_WR_REG32((void *)((((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->baseAddr) + CSL_ICSS_G_PR1_PDSP1_IRAM_REGS_BASE), CTR_EN);
+#endif
 }
 
+#ifndef SOC_AM261X
 void hdsl_pruss_init_300m(void)
 {
 #if (CONFIG_HDSL0_CHANNEL0 == 1)
-    PRUICSS_disableCore(gPruIcss0Handle, PRUICSS_RTU_PRU1);    // ch0
+    PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_RTU_PRU1);    // ch0
 #endif
 
 #if (CONFIG_HDSL0_CHANNEL1 == 1)
-    PRUICSS_disableCore(gPruIcss0Handle, PRUICSS_PRU1);        // ch1
+    PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_PRU1);        // ch1
 #endif
 
 #if (CONFIG_HDSL0_CHANNEL2 == 1)
-    PRUICSS_disableCore(gPruIcss0Handle, PRUICSS_TX_PRU1);        // ch2
+    PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_TX_PRU1);        // ch2
 #endif
     /* Clear PRU_DRAM0 and PRU_DRAM1 memory */
 
-    gPru_dramx_0 = (void *)((((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->baseAddr) + PRUICSS_DATARAM(PRUICSS_RTU_PRU1));
-    gPru_dramx_1 = (void *)((((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->baseAddr) + PRUICSS_DATARAM(PRUICSS_PRU1));
-    gPru_dramx_2 = (void *)((((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->baseAddr) + PRUICSS_DATARAM(PRUICSS_TX_PRU1));
+    gPru_dramx_0 = (void *)((((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->baseAddr) + PRUICSS_DATARAM(PRUICSS_RTU_PRU1));
+    gPru_dramx_1 = (void *)((((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->baseAddr) + PRUICSS_DATARAM(PRUICSS_PRU1));
+    gPru_dramx_2 = (void *)((((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->baseAddr) + PRUICSS_DATARAM(PRUICSS_TX_PRU1));
     memset(gPru_dramx_0, 0, (4 * 1024));
     memset(gPru_dramx_1, 0, (4 * 1024));
     memset(gPru_dramx_2, 0, (4 * 1024));
     memset((void *) CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE, 0, (16 * 1024));
     memset((void *) CSL_PRU_ICSSG0_DRAM1_SLV_RAM_BASE, 0, (16 * 1024));
 
-    gPru_cfg = (void *)(((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->cfgRegBase);
+    gPru_cfg = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->cfgRegBase);
 
     HW_WR_REG32(gPru_cfg + CSL_ICSSCFG_GPCFG1, HDSL_EN);
     HW_WR_REG32(gPru_cfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER, HDSL_TX_CFG);
     HW_WR_REG32(gPru_cfg + CSL_ICSSCFG_EDPRU1RXCFGREGISTER, HDSL_RX_CFG);
-    PRUICSS_intcInit(gPruIcss0Handle, &gPruss0_intc_initdata);
+    PRUICSS_intcInit(gPruIcssXHandle, &gPruss0_intc_initdata);
 
-    /* configure C28 to PRU_ICSS_CTRL and C29 to EDMA + 0x1000 */
+    /* configure C28 to IEP1 base */
     /*6.4.14.1.1 ICSSG_PRU_CONTROL RegisterPRU_ICSSG0_PR1_PDSP0_IRAM 00B0 2400h*/
-    HWREG(CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE + CSL_ICSS_G_PR1_RTU1_PR1_RTU1_IRAM_REGS_BASE + CSL_ICSS_G_PR1_PDSP0_IRAM_CONSTANT_TABLE_PROG_PTR_0) = 0xF0000238; // Address = 0x30023828
-    PRUICSS_setConstantTblEntry(gPruIcss0Handle, PRUICSS_PRU1, PRUICSS_CONST_TBL_ENTRY_C28, 0x0240);
-    HWREG(CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE + CSL_ICSS_G_PR1_PDSP_TX1_IRAM_REGS_BASE + CSL_ICSS_G_PR1_PDSP0_IRAM_CONSTANT_TABLE_PROG_PTR_0) = 0xF0000258; // Address = 0x30025828
-    /*IEP1 base */
-    PRUICSS_setConstantTblEntry(gPruIcss0Handle, PRUICSS_PRU1, PRUICSS_CONST_TBL_ENTRY_C29, 0x0002F000);
+#if CONFIG_HDSL0_PRUICSSx == 1
+#if CONFIG_HDSL0_PRUICSS_PRUx == 1
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_RTU_PRU1, PRUICSS_CONST_TBL_ENTRY_C28, 0x0A38);
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_PRU1, PRUICSS_CONST_TBL_ENTRY_C28, 0x0A40);
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_TX_PRU1, PRUICSS_CONST_TBL_ENTRY_C28, 0x0A58);
+#else
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_RTU_PRU0, PRUICSS_CONST_TBL_ENTRY_C28, 0x0A30);
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_PRU0, PRUICSS_CONST_TBL_ENTRY_C28, 0x0A20);
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_TX_PRU0, PRUICSS_CONST_TBL_ENTRY_C28, 0x0A50);
+#endif /* CONFIG_HDSL0_PRUICSS_PRUx == 1 */
+#else
+#if CONFIG_HDSL0_PRUICSS_PRUx == 1
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_RTU_PRU1, PRUICSS_CONST_TBL_ENTRY_C28, 0x0238);
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_PRU1, PRUICSS_CONST_TBL_ENTRY_C28, 0x0240);
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_TX_PRU1, PRUICSS_CONST_TBL_ENTRY_C28, 0x0258);
+#else
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_RTU_PRU0, PRUICSS_CONST_TBL_ENTRY_C28, 0x0230);
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_PRU0, PRUICSS_CONST_TBL_ENTRY_C28, 0x0220);
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_TX_PRU0, PRUICSS_CONST_TBL_ENTRY_C28, 0x0250);
+#endif /* CONFIG_HDSL0_PRUICSS_PRUx == 1 */
+#endif /* CONFIG_HDSL0_PRUICSSx == 1 */
 
-    HWREG(CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE + CSL_ICSS_G_PR1_RTU1_PR1_RTU1_IRAM_REGS_BASE + CSL_ICSS_G_PR1_PDSP0_IRAM_CONSTANT_TABLE_BLOCK_INDEX_0) = 0x0000; // RTU Core
-    PRUICSS_setConstantTblEntry(gPruIcss0Handle, PRUICSS_PRU1, PRUICSS_CONST_TBL_ENTRY_C24, 0x0007);        // PRU Core
-    HWREG(CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE + CSL_ICSS_G_PR1_PDSP_TX1_IRAM_REGS_BASE + CSL_ICSS_G_PR1_PDSP0_IRAM_CONSTANT_TABLE_BLOCK_INDEX_0) = 0x000E; // TX_PRU Core
+    HW_WR_REG32(CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE + CSL_ICSS_G_PR1_RTU1_PR1_RTU1_IRAM_REGS_BASE + CSL_ICSS_G_PR1_PDSP0_IRAM_CONSTANT_TABLE_BLOCK_INDEX_0, 0x0000); // RTU Core
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_PRU1, PRUICSS_CONST_TBL_ENTRY_C24, 0x0007);        // PRU Core
+    HW_WR_REG32(CSL_PRU_ICSSG0_DRAM0_SLV_RAM_BASE + CSL_ICSS_G_PR1_PDSP_TX1_IRAM_REGS_BASE + CSL_ICSS_G_PR1_PDSP0_IRAM_CONSTANT_TABLE_BLOCK_INDEX_0, 0x000E); // TX_PRU Core
 
     /* enable cycle counter */
-    HW_WR_REG32((void *)((((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->baseAddr) + CSL_ICSS_G_PR1_RTU1_PR1_RTU1_IRAM_REGS_BASE), CTR_EN);   // RTU_PRU Core
-    HW_WR_REG32((void *)((((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->baseAddr) + CSL_ICSS_G_PR1_PDSP1_IRAM_REGS_BASE), CTR_EN);
-    HW_WR_REG32((void *)((((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->baseAddr) + CSL_ICSS_G_PR1_PDSP_TX1_IRAM_REGS_BASE), CTR_EN);        // TX_PRU Core
+    HW_WR_REG32((void *)((((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->baseAddr) + CSL_ICSS_G_PR1_RTU1_PR1_RTU1_IRAM_REGS_BASE), CTR_EN);   // RTU_PRU Core
+    HW_WR_REG32((void *)((((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->baseAddr) + CSL_ICSS_G_PR1_PDSP1_IRAM_REGS_BASE), CTR_EN);
+    HW_WR_REG32((void *)((((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->baseAddr) + CSL_ICSS_G_PR1_PDSP_TX1_IRAM_REGS_BASE), CTR_EN);        // TX_PRU Core
 
 }
+#endif
 
 void hdsl_pruss_load_run_fw(HDSL_Handle hdslHandle)
 {
-#if (CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ==PRU_CLK_FREQ_225M)
-        PRUICSS_disableCore(gPruIcss0Handle, PRUICSS_PRUx);
+#if (PRU_CORE_CLK==PRU_CLK_FREQ_225M)
+        PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_PRUx);
     if(HDSL_get_sync_ctrl(hdslHandle) == 0)
     {
         /*free run*/
-            PRUICSS_writeMemory(gPruIcss0Handle, PRUICSS_IRAM_PRU(PRUICSS_PRUx),
+            PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_PRUx),
                             0, (uint32_t *) Hiperface_DSL2_0_RTU_0,
                             sizeof(Hiperface_DSL2_0_RTU_0));
     }
     else
     {
         /*sync_mode*/
-            PRUICSS_writeMemory(gPruIcss0Handle, PRUICSS_IRAM_PRU(PRUICSS_PRUx),
+            PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_PRUx),
                         0, (uint32_t *) Hiperface_DSL_SYNC2_0_RTU_0,
                         sizeof(Hiperface_DSL_SYNC2_0_RTU_0));
     }
-        PRUICSS_resetCore(gPruIcss0Handle, PRUICSS_PRUx);
+        PRUICSS_resetCore(gPruIcssXHandle, PRUICSS_PRUx);
         /*Run firmware*/
-        PRUICSS_enableCore(gPruIcss0Handle, PRUICSS_PRUx);
+        PRUICSS_enableCore(gPruIcssXHandle, PRUICSS_PRUx);
 #endif
 }
 
@@ -781,38 +905,38 @@ void hdsl_pruss_load_run_fw_300m(HDSL_Handle hdslHandle)
 #if (CONFIG_HDSL0_CHANNEL2 == 1)
     uint32_t txpruFwSize = 0;
 #endif
-#if (CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ==PRU_CLK_FREQ_300M)
+#if (PRU_CORE_CLK==PRU_CLK_FREQ_300M)
 #if (CONFIG_HDSL0_CHANNEL0 == 1)
-    PRUICSS_disableCore(gPruIcss0Handle, PRUICSS_RTU_PRU1);    // ch0
+    PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_RTU_PRUx);    // ch0
 #endif
 
 #if (CONFIG_HDSL0_CHANNEL1 == 1)
-    PRUICSS_disableCore(gPruIcss0Handle, PRUICSS_PRU1);        // ch1
+    PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_PRUx);        // ch1
 #endif
 
 #if (CONFIG_HDSL0_CHANNEL2 == 1)
-    PRUICSS_disableCore(gPruIcss0Handle, PRUICSS_TX_PRU1);        // ch2
+    PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_TX_PRUx);        // ch2
 #endif
 
     /* Enable Load Share mode */
-    gPru_cfg = (void *)(((PRUICSS_HwAttrs *)(gPruIcss0Handle->hwAttrs))->cfgRegBase);
+    gPru_cfg = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->cfgRegBase);
     hdsl_enable_load_share_mode(gPru_cfg,PRUICSS_PRUx);
 
     if(HDSL_get_sync_ctrl(hdslHandle) == 0)
     {
         /*free run*/
 #if (CONFIG_HDSL0_CHANNEL0 == 1)
-            PRUICSS_writeMemory(gPruIcss0Handle, PRUICSS_IRAM_RTU_PRU(1),
+            PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_RTU_PRU(PRUICSS_PRUx),
                         0, (uint32_t *) Hiperface_DSL2_0_RTU_0,
                         sizeof(Hiperface_DSL2_0_RTU_0));
 #endif
 #if (CONFIG_HDSL0_CHANNEL1 == 1)
-            PRUICSS_writeMemory(gPruIcss0Handle, PRUICSS_IRAM_PRU(1),
+            PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_PRUx),
                         0, (uint32_t *) Hiperface_DSL2_0_PRU_0,
                         sizeof(Hiperface_DSL2_0_PRU_0));
 #endif
 #if (CONFIG_HDSL0_CHANNEL2 == 1)
-            PRUICSS_writeMemory(gPruIcss0Handle, PRUICSS_IRAM_TX_PRU(1),
+            PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_TX_PRU(PRUICSS_PRUx),
                         0, (uint32_t *) Hiperface_DSL2_0_TX_PRU_0,
                         sizeof(Hiperface_DSL2_0_TX_PRU_0));
 
@@ -824,14 +948,14 @@ void hdsl_pruss_load_run_fw_300m(HDSL_Handle hdslHandle)
             txpruFwSize = (copyTable->size1 > copyTable->size2)?(sizeof(Hiperface_DSL2_0_TX_PRU_0) + copyTable->size1):(sizeof(Hiperface_DSL2_0_TX_PRU_0) + copyTable->size2);
             DebugP_assert(txpruFwSize <= TXPRU_IRAM_SIZE);
 
-            PRUICSS_writeMemory(gPruIcss0Handle, PRUICSS_DATARAM(1), 0x1500, (uint32_t *)Hiperface_DSL2_0_TX_PRU_1, copyTable->size1 + copyTable->size2);
+            PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_DATARAM(1), 0x1500, (uint32_t *)Hiperface_DSL2_0_TX_PRU_1, copyTable->size1 + copyTable->size2);
             if(copyTable->loadAddr1 < copyTable->loadAddr2)
             {
-                PRUICSS_writeMemory(gPruIcss0Handle, PRUICSS_IRAM_TX_PRU(1), copyTable->runAddr1, (uint32_t *) ((uint8_t *)Hiperface_DSL2_0_TX_PRU_1), copyTable->size1);
+                PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_TX_PRU(PRUICSS_PRUx), copyTable->runAddr1, (uint32_t *) ((uint8_t *)Hiperface_DSL2_0_TX_PRU_1), copyTable->size1);
             }
             else
             {
-                PRUICSS_writeMemory(gPruIcss0Handle, PRUICSS_IRAM_TX_PRU(1), copyTable->runAddr1, (uint32_t *) ((uint8_t *)Hiperface_DSL2_0_TX_PRU_1 + copyTable->size2), copyTable->size1);
+                PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_TX_PRU(PRUICSS_PRUx), copyTable->runAddr1, (uint32_t *) ((uint8_t *)Hiperface_DSL2_0_TX_PRU_1 + copyTable->size2), copyTable->size1);
             }
 
             HDSL_config_copy_table(hdslHandle, copyTable);
@@ -841,17 +965,17 @@ void hdsl_pruss_load_run_fw_300m(HDSL_Handle hdslHandle)
     {
         /*Sync mode*/
 #if (CONFIG_HDSL0_CHANNEL0 == 1)
-            PRUICSS_writeMemory(gPruIcss0Handle, PRUICSS_IRAM_RTU_PRU(1),
+            PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_RTU_PRU(PRUICSS_PRUx),
                         0, (uint32_t *) Hiperface_DSL_SYNC2_0_RTU_0,
                         sizeof(Hiperface_DSL_SYNC2_0_RTU_0));
 #endif
 #if (CONFIG_HDSL0_CHANNEL1 == 1)
-            PRUICSS_writeMemory(gPruIcss0Handle, PRUICSS_IRAM_PRU(1),
+            PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_PRUx),
                         0, (uint32_t *) Hiperface_DSL_SYNC2_0_PRU_0,
                         sizeof(Hiperface_DSL_SYNC2_0_PRU_0));
 #endif
 #if (CONFIG_HDSL0_CHANNEL2 == 1)
-            PRUICSS_writeMemory(gPruIcss0Handle, PRUICSS_IRAM_TX_PRU(1),
+            PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_TX_PRU(PRUICSS_PRUx),
                        0, (uint32_t *) Hiperface_DSL_SYNC2_0_TX_PRU_0,
                        sizeof(Hiperface_DSL_SYNC2_0_TX_PRU_0));
 
@@ -863,14 +987,14 @@ void hdsl_pruss_load_run_fw_300m(HDSL_Handle hdslHandle)
             txpruFwSize = (copyTable->size1 > copyTable->size2)?(sizeof(Hiperface_DSL_SYNC2_0_TX_PRU_0) + copyTable->size1):(sizeof(Hiperface_DSL_SYNC2_0_TX_PRU_0) + copyTable->size2);
             DebugP_assert(txpruFwSize <= TXPRU_IRAM_SIZE);
 
-            PRUICSS_writeMemory(gPruIcss0Handle, PRUICSS_DATARAM(1), 0x1500, (uint32_t *)Hiperface_DSL_SYNC2_0_TX_PRU_1, copyTable->size1 + copyTable->size2);
+            PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_DATARAM(1), 0x1500, (uint32_t *)Hiperface_DSL_SYNC2_0_TX_PRU_1, copyTable->size1 + copyTable->size2);
             if(copyTable->loadAddr1 < copyTable->loadAddr2)
             {
-                PRUICSS_writeMemory(gPruIcss0Handle, PRUICSS_IRAM_TX_PRU(1), copyTable->runAddr1, (uint32_t *) ((uint8_t *)Hiperface_DSL_SYNC2_0_TX_PRU_1), copyTable->size1);
+                PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_TX_PRU(PRUICSS_PRUx), copyTable->runAddr1, (uint32_t *) ((uint8_t *)Hiperface_DSL_SYNC2_0_TX_PRU_1), copyTable->size1);
             }
             else
             {
-                PRUICSS_writeMemory(gPruIcss0Handle, PRUICSS_IRAM_TX_PRU(1), copyTable->runAddr1, (uint32_t *) ((uint8_t *)Hiperface_DSL_SYNC2_0_TX_PRU_1 + copyTable->size2), copyTable->size1);
+                PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_TX_PRU(PRUICSS_PRUx), copyTable->runAddr1, (uint32_t *) ((uint8_t *)Hiperface_DSL_SYNC2_0_TX_PRU_1 + copyTable->size2), copyTable->size1);
             }
 
             HDSL_config_copy_table(hdslHandle, copyTable);
@@ -881,23 +1005,23 @@ void hdsl_pruss_load_run_fw_300m(HDSL_Handle hdslHandle)
 
 
 #if (CONFIG_HDSL0_CHANNEL0 == 1)
-        PRUICSS_resetCore(gPruIcss0Handle, PRUICSS_RTU_PRU1);
+        PRUICSS_resetCore(gPruIcssXHandle, PRUICSS_RTU_PRUx);
 #endif
 #if (CONFIG_HDSL0_CHANNEL1 == 1)
-        PRUICSS_resetCore(gPruIcss0Handle, PRUICSS_PRU1);
+        PRUICSS_resetCore(gPruIcssXHandle, PRUICSS_PRUx);
 #endif
 #if (CONFIG_HDSL0_CHANNEL2 == 1)
-        PRUICSS_resetCore(gPruIcss0Handle, PRUICSS_TX_PRU1);
+        PRUICSS_resetCore(gPruIcssXHandle, PRUICSS_TX_PRUx);
 #endif
         /*Run firmware*/
 #if (CONFIG_HDSL0_CHANNEL0 == 1)
-        PRUICSS_enableCore(gPruIcss0Handle, PRUICSS_RTU_PRU1);
+        PRUICSS_enableCore(gPruIcssXHandle, PRUICSS_RTU_PRUx);
 #endif
 #if (CONFIG_HDSL0_CHANNEL1 == 1)
-        PRUICSS_enableCore(gPruIcss0Handle, PRUICSS_PRU1);
+        PRUICSS_enableCore(gPruIcssXHandle, PRUICSS_PRUx);
 #endif
 #if (CONFIG_HDSL0_CHANNEL2 == 1)
-        PRUICSS_enableCore(gPruIcss0Handle, PRUICSS_TX_PRU1);
+        PRUICSS_enableCore(gPruIcssXHandle, PRUICSS_TX_PRUx);
 #endif
 #endif
 }
@@ -906,21 +1030,19 @@ void hdsl_init(void)
 {
     uint8_t         ES;
     uint32_t        period;
-#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
+
+#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_) && !defined(SOC_AM261X)
     HwiP_Params     hwiPrms;
     uint32_t        intrNum = HDSL_MEMORY_TRACE_R5F_IRQ_NUM;
 #endif
-
     hdsl_pruss_init();
-
-#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
+#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_) && !defined(SOC_AM261X)
     /* Register PRU interrupt */
     HwiP_Params_init(&hwiPrms);
     hwiPrms.intNum   = intrNum;
     hwiPrms.callback = (void*)&HDSL_IsrFxn;
     HwiP_construct(&gPRUHwiObject, &hwiPrms);
 #endif
-
     HDSL_iep_init(gHdslHandleCh[0]);
     ClockP_usleep(5000);
     if(CONFIG_HDSL0_MODE==0)
@@ -953,21 +1075,18 @@ void hdsl_init_300m(void)
 {
     uint8_t         ES = 0;
     uint32_t        period;
-#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
+#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_) && !defined(SOC_AM261X)
     HwiP_Params     hwiPrms;
     uint32_t        intrNum = HDSL_MEMORY_TRACE_R5F_IRQ_NUM;
 #endif
-
     hdsl_pruss_init_300m();
-
-#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
+#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_) && !defined(SOC_AM261X)
     /* Register PRU interrupt */
     HwiP_Params_init(&hwiPrms);
     hwiPrms.intNum   = intrNum;
     hwiPrms.callback = (void*)&HDSL_IsrFxn;
     HwiP_construct(&gPRUHwiObject, &hwiPrms);
 #endif
-
     if(CONFIG_HDSL0_CHANNEL0==1)
     {
         HDSL_iep_init(gHdslHandleCh[0]);
@@ -1010,13 +1129,7 @@ void hdsl_init_300m(void)
         Tsync=period/(PRU clock freq)  =  period/300)
 
         ES <= Tsync/Tmin  and  ES >= Tsync/Tmax     */
-
-        if ((ES > (period/(MIN_SYNC_CYCLE_TIME*300))) || (ES < (period/(MAX_SYNC_CYCLE_TIME*300))))
-        {
-            DebugP_log("\r\n FAIL: HDSL ES or period value you entered is not valid");
-            while(1)
-                ;
-        }
+        DebugP_assert((ES <= (period/(MIN_SYNC_CYCLE_TIME*300))) && (ES >= (period/(MAX_SYNC_CYCLE_TIME*300))));
         HDSL_enable_sync_signal(ES,period);
         if (CONFIG_HDSL0_CHANNEL0==1)
         {
@@ -1145,7 +1258,7 @@ static void display_menu(void)
     DebugP_log("\r\n |      Access on RID 0x0, indirect write, length 8, with offset 0              |");
     DebugP_log("\r\n | %2d : Parameter Channel Long Message Write                                    |", MENU_INDIRECT_WRITE_RID0_LENGTH8);
     DebugP_log("\r\n |      Access on RID 0x0; indirect write, length 8, without offset value       |");
-#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
+#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_) && !defined(SOC_AM261X)
     DebugP_log("\r\n | %2d : HDSL registers into Memory                                              |", MENU_HDSL_REG_INTO_MEMORY);
 #endif
     DebugP_log("\r\n |------------------------------------------------------------------------------|\n");
@@ -1399,7 +1512,7 @@ static int get_menu(void)
 {
     uint32_t cmd;
 
-#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
+#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_) && !defined(SOC_AM261X)
     if(DebugP_scanf("%d\n", &cmd) < 0 || (cmd >= MENU_LIMIT))
 #else
     if(DebugP_scanf("%d\n", &cmd) < 0 || (cmd >= MENU_LIMIT) || (cmd == MENU_HDSL_REG_INTO_MEMORY))
@@ -1409,7 +1522,7 @@ static int get_menu(void)
         cmd = MENU_SAFE_POSITION;
     }
 
-#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
+#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_) && !defined(SOC_AM261X)
 
     if (cmd == MENU_HDSL_REG_INTO_MEMORY)
     {
@@ -1421,7 +1534,6 @@ static int get_menu(void)
        }
     }
 #endif
-
     return cmd;
 }
 
@@ -1501,39 +1613,40 @@ void hdsl_diagnostic_main(void *arg)
 {
     uint32_t    val, acc_bits, pos_bits;
     uint8_t     ureg;
+#ifndef SOC_AM261X
+#if (PRU_CORE_CLK==PRU_CLK_FREQ_300M)
     uint8_t     chMask = 0;
-
-#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
+#endif
+#endif
+#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_) && !defined(SOC_AM261X)
     int32_t     retVal = UDMA_SOK;
 #endif
-
     /* Open drivers to open the UART driver for console */
     Drivers_open();
     Board_driversOpen();
-
-#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_)
+#if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_) && !defined(SOC_AM261X)
     /* UDMA initialization */
     chHandle = gConfigUdma0BlkCopyChHandle[0];  /* Has to be done after driver open */
     /* Channel enable */
     retVal = Udma_chEnable(chHandle);
     DebugP_assert(UDMA_SOK == retVal);
 #endif
-
     /*C16 pin High for Enabling ch0 in booster pack */
-    #if(CONFIG_HDSL0_BOOSTER_PACK && CONFIG_HDSL0_CHANNEL0)
-        GPIO_setDirMode(ENC0_EN_BASE_ADDR, ENC0_EN_PIN, ENC0_EN_DIR);
-        GPIO_pinWriteHigh(ENC0_EN_BASE_ADDR, ENC0_EN_PIN);
-    #endif
+#if(CONFIG_HDSL0_BOOSTER_PACK && CONFIG_HDSL0_CHANNEL0)
+        GPIO_setDirMode(ENC1_EN_BASE_ADDR, ENC1_EN_PIN, ENC1_EN_DIR);
+        GPIO_pinWriteHigh(ENC1_EN_BASE_ADDR, ENC1_EN_PIN);
+#endif
     /*B17 pin High for Enabling ch2 in booster pack */
-    #if(CONFIG_HDSL0_BOOSTER_PACK && CONFIG_HDSL0_CHANNEL2)
+#if(CONFIG_HDSL0_BOOSTER_PACK && CONFIG_HDSL0_CHANNEL2)
         GPIO_setDirMode(ENC2_EN_BASE_ADDR, ENC2_EN_PIN, ENC2_EN_DIR);
         GPIO_pinWriteHigh(ENC2_EN_BASE_ADDR, ENC2_EN_PIN);
-    #endif
-
+#endif
+    gPruIcssXHandle = PRUICSS_open(CONFIG_PRU_ICSS0);
     #ifndef HDSL_AM64xE1_TRANSCEIVER
         /* Configure g_mux_en to 1 in ICSSG_SA_MX_REG Register. This is required to remap EnDAT signals correctly via Interface card.*/
-        HW_WR_REG32((CSL_PRU_ICSSG0_PR1_CFG_SLV_BASE+0x40), (0x80));
-
+    #ifndef SOC_AM261X
+        PRUICSS_setSaMuxMode(gPruIcssXHandle, PRUICSS_SA_MUX_MODE_SD_ENDAT);
+    #endif
     #if (CONFIG_HDSL0_BOOSTER_PACK == 0)
         /*Configure GPIO42 for HDSL mode.*/
         GPIO_setDirMode(CONFIG_GPIO0_BASE_ADDR, CONFIG_GPIO0_PIN, CONFIG_GPIO0_DIR);
@@ -1546,26 +1659,28 @@ void hdsl_diagnostic_main(void *arg)
         HW_WR_REG32(0x000F41D4, 0x00050001);   /* PRG0_PRU1_GPI9 as input */
         hdsl_i2c_io_expander(NULL);
     #endif
-    gPruIcss0Handle = PRUICSS_open(CONFIG_PRU_ICSS0);
+
     // initialize hdsl handle
     DebugP_log( "\n\n Hiperface DSL diagnostic\n");
-    #if (CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ==PRU_CLK_FREQ_225M)
-    gHdslHandleCh[0] = HDSL_open(gPruIcss0Handle, PRUICSS_PRUx, 0);
+    #if (PRU_CORE_CLK==PRU_CLK_FREQ_225M)
+    gHdslHandleCh[0] = HDSL_open(gPruIcssXHandle, PRUICSS_PRUx, 0);
+
     hdsl_init();
     hdsl_pruss_load_run_fw(gHdslHandleCh[0]);
     #else
 #if (CONFIG_HDSL0_CHANNEL0==1)
-    gHdslHandleCh[0] = HDSL_open(gPruIcss0Handle, PRUICSS_RTU_PRU1, 1);
+    gHdslHandleCh[0] = HDSL_open(gPruIcssXHandle, PRUICSS_RTU_PRUx, 1);
+
     DebugP_assert(gHdslHandleCh[0] != NULL);
     chMask |= CHANNEL_0_ENABLED;
 #endif
 #if (CONFIG_HDSL0_CHANNEL1==1)
-    gHdslHandleCh[1] = HDSL_open(gPruIcss0Handle, PRUICSS_PRU1, 1);
+    gHdslHandleCh[1] = HDSL_open(gPruIcssXHandle, PRUICSS_PRUx, 1);
     DebugP_assert(gHdslHandleCh[1] != NULL);
     chMask |= CHANNEL_1_ENABLED;
 #endif
 #if (CONFIG_HDSL0_CHANNEL2==1)
-    gHdslHandleCh[2] = HDSL_open(gPruIcss0Handle, PRUICSS_TX_PRU1, 1);
+    gHdslHandleCh[2] = HDSL_open(gPruIcssXHandle, PRUICSS_TX_PRUx, 1);
     DebugP_assert(gHdslHandleCh[2] != NULL);
     chMask |= CHANNEL_2_ENABLED;
 #endif

@@ -1,14 +1,16 @@
 /**
  * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
  * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
- * @cliArgs --device "AM243x_ALV_beta" --package "ALV" --part "ALV" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@09.01.00"
- * @versions {"tool":"1.18.0+3266"}
+ * @cliArgs --device "AM243x_ALV_beta" --part "ALV" --package "ALV" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@11.00.00"
+ * @v2CliArgs --device "AM2434" --package "FCBGA (ALV)" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@11.00.00"
+ * @versions {"tool":"1.22.0+3893"}
  */
 
 /**
  * Import the modules used in this configuration.
  */
 const debug_log       = scripting.addModule("/kernel/dpl/debug_log");
+const dpl_cfg         = scripting.addModule("/kernel/dpl/dpl_cfg");
 const mpu_armv7       = scripting.addModule("/kernel/dpl/mpu_armv7", {}, false);
 const mpu_armv71      = mpu_armv7.addInstance();
 const mpu_armv72      = mpu_armv7.addInstance();
@@ -249,6 +251,8 @@ section11.output_section[0].alignment = 0;
 tamagawa1.$name                  = "CONFIG_TAMAGAWA0";
 tamagawa1.channel_1              = true;
 tamagawa1.channel_2              = true;
+tamagawa1.G_MUX_EN               = true;
+tamagawa1.Tx_Rx_Clk_Source       = "1";
 tamagawa1.PRU_ICSSG0_PRU.$assign = "PRU_ICSSG0_PRU1";
 
 const pruicss                            = scripting.addModule("/drivers/pruicss/pruicss", {}, false);
@@ -270,12 +274,12 @@ debug_log.uartLog.UART.TXD.$suggestSolution     = "UART0_TXD";
 tamagawa1.PRU_ICSSG0_PRU.GPO2.$suggestSolution  = "PRG0_PRU1_GPO2";
 tamagawa1.PRU_ICSSG0_PRU.GPO1.$suggestSolution  = "PRG0_PRU1_GPO1";
 tamagawa1.PRU_ICSSG0_PRU.GPO0.$suggestSolution  = "PRG0_PRU1_GPO0";
-tamagawa1.PRU_ICSSG0_PRU.GPI13.$suggestSolution = "PRG0_PRU1_GPO13";
 tamagawa1.PRU_ICSSG0_PRU.GPO5.$suggestSolution  = "PRG0_PRU1_GPO5";
 tamagawa1.PRU_ICSSG0_PRU.GPO4.$suggestSolution  = "PRG0_PRU1_GPO4";
 tamagawa1.PRU_ICSSG0_PRU.GPO3.$suggestSolution  = "PRG0_PRU1_GPO3";
-tamagawa1.PRU_ICSSG0_PRU.GPI14.$suggestSolution = "PRG0_PRU1_GPO14";
 tamagawa1.PRU_ICSSG0_PRU.GPO8.$suggestSolution  = "PRG0_PRU1_GPO8";
-tamagawa1.PRU_ICSSG0_PRU.GPO12.$suggestSolution = "PRG0_PRU1_GPO12";
 tamagawa1.PRU_ICSSG0_PRU.GPO6.$suggestSolution  = "PRG0_PRU1_GPO6";
 tamagawa1.PRU_ICSSG0_PRU.GPI11.$suggestSolution = "PRG0_PRU1_GPO11";
+tamagawa1.PRU_ICSSG0_PRU.GPI13.$suggestSolution = "PRG0_PRU1_GPO13";
+tamagawa1.PRU_ICSSG0_PRU.GPI14.$suggestSolution = "PRG0_PRU1_GPO14";
+tamagawa1.PRU_ICSSG0_PRU.GPO12.$suggestSolution = "PRG0_PRU1_GPO12";

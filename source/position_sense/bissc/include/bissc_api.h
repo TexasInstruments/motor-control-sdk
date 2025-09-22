@@ -153,7 +153,7 @@ void bissc_hw_init(struct bissc_priv *priv);
  *  \param[in]  frequency            Input frequency
  *  \param[in]  core_clk_freq        Core clock frequency
  *  \param[in]  uart_clk_freq        Uart clock frequency
- *
+ *  \param[in]  tx_rx_clock_source   Clock Source Selection
  *  \retval     priv            pointer to struct bissc_priv instance
  *
  */
@@ -161,7 +161,8 @@ struct bissc_priv *bissc_init(PRUICSS_Handle gPruIcssXHandle,
                               int32_t slice,
                               uint32_t frequency,
                               uint32_t core_clk_freq,
-                              uint32_t uart_clk_freq);
+                              uint32_t uart_clk_freq,
+                              uint32_t tx_rx_clock_source);
 
 /**
  *  \brief      Update max processing time and bit index to poll in fifo data

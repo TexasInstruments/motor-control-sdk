@@ -1,7 +1,14 @@
 %%{
     products = "";
-    products+=`com.ti.${args.utils.getProductNameProjectSpec(args.project.projects[0].device)}`
+
+    if(((args.project.device == "am263px") || (args.project.device == "am261x")) && (args.utils.getProductNameProjectSpec(args.project.device) != "MOTOR_CONTROL_SDK_AMXXX")) {
+        products+="MOTOR-CONTROL-SDK-"+args.project.device.toUpperCase()
+    } else {
+        products+=`com.ti.${args.utils.getProductNameProjectSpec(args.project.projects[0].device)}`
+    }
     productName = args.utils.getProductNameProjectSpec(args.project.projects[0].device);
+
+    let profile_list = ["release", "debug"];
 %%}
 <?xml version="1.0" encoding="UTF-8"?>
 <projectSpec>
@@ -9,16 +16,19 @@
     <import spec="../`project.cpu`_`project.os`/`project.cgt`/example.projectspec"/>
 % }
     <project
+        % obj = args.project.projects[0]
         name="`args.project.name`_`args.project.board`_system_`args.project.tag`"
         products="`products`"
         configurations="
-            Release,
-            Debug,
+        % for (profile of profile_list) {
+            `args.utils.capitalize(profile)`,
+        % }
         "
         connection="TIXDS110_Connection.xml"
         device="Cortex R.`args.device.getProjectSpecDevice(args.project.board)`"
         outputType="system"
         toolChain="TICLANG"
+        cgtVersion="`args.utils.getToolChainVersionProjectSpec(obj.cgt, obj.device)`"
         >
         <pathVariable name="`args.sdkName`" path="${COM_TI_`productName`_INSTALL_DIR}" scope="project" />
         % if("readmeDoxygenPageTag" in args.project) {

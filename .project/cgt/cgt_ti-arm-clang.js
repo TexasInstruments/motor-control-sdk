@@ -60,11 +60,12 @@ const cgt_common = {
             "-Wno-extern-c-compat",
             "-Wno-c++11-narrowing",
             "-Wno-reorder-init-list",
-            "-Wno-deprecated-register",
+            "-Wno-register",
             "-Wno-writable-strings",
             "-Wno-enum-compare",
             "-Wno-reserved-user-defined-literal",
             "-Wno-unused-const-variable",
+            "-Wno-vla-cxx-extension",
             "-x c++",
         ],
         debug: [
@@ -83,6 +84,7 @@ const cgt_common = {
         common: [
             "--ram_model",
             "--reread_libs",
+            "--gen_xml_func_hash"
         ],
     },
     libdirs: {

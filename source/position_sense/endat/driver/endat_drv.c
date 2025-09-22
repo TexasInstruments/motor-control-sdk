@@ -53,10 +53,10 @@ static int32_t endat_recvd_organize(int32_t cmd, struct endat_priv *priv,
     struct endatChRxInfo *endatChRxInfo = priv->endatChRxInfo;
     memset(endat_data, 0, sizeof(*endat_data));
 
-    word0 = endatChRxInfo->ch[priv->channel].posWord0;
-    word1 = endatChRxInfo->ch[priv->channel].posWord1;
-    word2 = endatChRxInfo->ch[priv->channel].posWord2;
-    word3 = endatChRxInfo->ch[priv->channel].posWord3;
+    word0 = endatChRxInfo->ch[priv->current_channel].posWord0;
+    word1 = endatChRxInfo->ch[priv->current_channel].posWord1;
+    word2 = endatChRxInfo->ch[priv->current_channel].posWord2;
+    word3 = endatChRxInfo->ch[priv->current_channel].posWord3;
 
     switch(cmd)
     {
@@ -179,8 +179,8 @@ static int64_t endat_recvd_format(int32_t cmd, struct endat_priv *priv,
             pos = pos & (((uint64_t) 1 << priv->pos_res) - 1);       /* mask F1 */
             pos = endat_reflect_ull_nbits(pos, priv->pos_res);
             rev = (pos & (((uint64_t) 1 << priv->pos_res) - 1)) >>
-                  priv->single_turn_res;
-            pos = pos & (((uint64_t) 1 << priv->single_turn_res) - 1);
+                  priv->single_turn_res[priv->current_channel];
+            pos = pos & (((uint64_t) 1 << priv->single_turn_res[priv->current_channel]) - 1);
             u->position_addinfo.position.position = pos;
             u->position_addinfo.position.revolution = rev;
             u->position_addinfo.position.f1 = (endat_data->recvd1 >>
@@ -200,8 +200,8 @@ static int64_t endat_recvd_format(int32_t cmd, struct endat_priv *priv,
                          1);  /* mask F1/F2 */
             pos = endat_reflect_ull_nbits(pos, priv->pos_res);
             rev = (pos & (((uint64_t) 1 << priv->pos_res) - 1)) >>
-                  priv->single_turn_res;
-            pos = pos & (((uint64_t) 1 << priv->single_turn_res) - 1);
+                  priv->single_turn_res[priv->current_channel];
+            pos = pos & (((uint64_t) 1 << priv->single_turn_res[priv->current_channel]) - 1);
             u->position_addinfo.position.position = pos;
             u->position_addinfo.position.revolution = rev;
             u->position_addinfo.position.f1 = (endat_data->recvd1 >>
@@ -403,7 +403,7 @@ uint32_t endat_recvd_validate(struct endat_priv *priv, int32_t cmd,
 #endif
 
 #ifdef ENDAT_USE_OTF_CRC_STATUS
-    val = priv->endatChRxInfo->ch[priv->channel].crcStatus;
+    val = priv->endatChRxInfo->ch[priv->current_channel].crcStatus;
 
     if(priv->flags.info2)
     {
@@ -429,9 +429,9 @@ uint32_t endat_recvd_validate(struct endat_priv *priv, int32_t cmd,
     switch(cmd)
     {
         case 1:
-            lowpos = (u->position_addinfo.position.revolution << priv->single_turn_res |
+            lowpos = (u->position_addinfo.position.revolution << priv->single_turn_res[priv->current_channel] |
                       u->position_addinfo.position.position) & 0xFFFFFFFF;
-            highpos = (u->position_addinfo.position.revolution << priv->single_turn_res |
+            highpos = (u->position_addinfo.position.revolution << priv->single_turn_res[priv->current_channel] |
                        u->position_addinfo.position.position) >> 32;
             crc = make_crc_pos(priv->pos_res, u->position_addinfo.position.f1, 0, 0,
                                highpos, lowpos);
@@ -461,9 +461,9 @@ uint32_t endat_recvd_validate(struct endat_priv *priv, int32_t cmd,
         case 11:
         case 12:
         case 13:
-            lowpos = (u->position_addinfo.position.revolution << priv->single_turn_res |
+            lowpos = (u->position_addinfo.position.revolution << priv->single_turn_res[priv->current_channel] |
                       u->position_addinfo.position.position) & 0xFFFFFFFF;
-            highpos = (u->position_addinfo.position.revolution << priv->single_turn_res |
+            highpos = (u->position_addinfo.position.revolution << priv->single_turn_res[priv->current_channel] |
                        u->position_addinfo.position.position) >> 32;
             crc = make_crc_pos(priv->pos_res, u->position_addinfo.position.f1,
                                u->position_addinfo.position.f2, 1, highpos, lowpos);
@@ -538,19 +538,26 @@ int32_t endat_command_build(struct endat_priv *priv, int32_t cmd,
     switch(cmd)
     {
         case 1:
-            endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSITION_VALUES;
-            endat_pruss_xchg->cmd[0].word1 = priv->pos_rx_bits_21_RTUPRU | (ENDAT_TX_6BITS << 8) |
-                                          ((ENDAT_CMDTYP_NO_SUPPLEMENT | ENDAT_CMDTYP_POSITION) << 16);
             if(priv->load_share)
             {
+                endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSITION_VALUES;
+                endat_pruss_xchg->cmd[0].word1 = priv->pos_rx_bits_21_cmd[0] | (ENDAT_TX_6BITS << 8) |
+                                              ((ENDAT_CMDTYP_NO_SUPPLEMENT | ENDAT_CMDTYP_POSITION) << 16);
+
                 endat_pruss_xchg->cmd[1].word0 = ENDAT_CMD_SEND_POSITION_VALUES;
-                endat_pruss_xchg->cmd[1].word1 = priv->pos_rx_bits_21_PRU | (ENDAT_TX_6BITS << 8) |
+                endat_pruss_xchg->cmd[1].word1 = priv->pos_rx_bits_21_cmd[1] | (ENDAT_TX_6BITS << 8) |
                                           ((ENDAT_CMDTYP_NO_SUPPLEMENT | ENDAT_CMDTYP_POSITION) << 16);
 
                 endat_pruss_xchg->cmd[2].word0 = ENDAT_CMD_SEND_POSITION_VALUES;
-                endat_pruss_xchg->cmd[2].word1 = priv->pos_rx_bits_21_TXPRU | (ENDAT_TX_6BITS << 8) |
+                endat_pruss_xchg->cmd[2].word1 = priv->pos_rx_bits_21_cmd[2] | (ENDAT_TX_6BITS << 8) |
                                           ((ENDAT_CMDTYP_NO_SUPPLEMENT | ENDAT_CMDTYP_POSITION) << 16);
-            } /* command build for ch1 and ch2 in load share mode*/
+            } /* command build for ch0, ch1 and ch2 in load share mode*/
+            else
+            {
+                endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSITION_VALUES;
+                endat_pruss_xchg->cmd[0].word1 = priv->pos_rx_bits_21_cmd[priv->current_channel] | (ENDAT_TX_6BITS << 8) |
+                              ((ENDAT_CMDTYP_NO_SUPPLEMENT | ENDAT_CMDTYP_POSITION) << 16);
+            }
             break;
         case 2:
             endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEL_MEM_AREA;
@@ -694,25 +701,26 @@ int32_t endat_command_build(struct endat_priv *priv, int32_t cmd,
             break;
 
         case 8:
-            endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_WITH_DATA;
-            /*
-            * Though this is not 2.1 command, fw expects it to be ENDAT_CMDTYP_2_1. Ideally macro should
-            *  have been named ENDAT_CMDTYPE_HAVE_2_2_SUPPLEMENT instead of ENDAT_CMDTYP_2_[12] for readability
-            */
-            endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_RTUPRU + info *
-                                           ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
-                                          ((ENDAT_CMDTYP_NO_SUPPLEMENT | ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22)
-                                           << 16);
 
             /*build separate command for all three channel in loadshare mode*/
             if(priv->load_share)
             {
+                endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_WITH_DATA;
+                /*
+                * Though this is not 2.1 command, fw expects it to be ENDAT_CMDTYP_2_1. Ideally macro should
+                *  have been named ENDAT_CMDTYPE_HAVE_2_2_SUPPLEMENT instead of ENDAT_CMDTYP_2_[12] for readability
+                */
+                endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_cmd[0] + info *
+                                               ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
+                                              ((ENDAT_CMDTYP_NO_SUPPLEMENT | ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22)
+                                               << 16);
+
                 endat_pruss_xchg->cmd[1].word0 = ENDAT_CMD_SEND_POSVAL_WITH_DATA;
                 /*
                 * Though this is not 2.1 command, fw expects it to be ENDAT_CMDTYP_2_1. Ideally macro should
                 *  have been named ENDAT_CMDTYPE_HAVE_2_2_SUPPLEMENT instead of ENDAT_CMDTYP_2_[12] for readability
                 */
-                endat_pruss_xchg->cmd[1].word1 = (priv->pos_rx_bits_22_PRU + info *
+                endat_pruss_xchg->cmd[1].word1 = (priv->pos_rx_bits_22_cmd[1] + info *
                                            ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
                                           ((ENDAT_CMDTYP_NO_SUPPLEMENT | ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22)
                                            << 16);
@@ -722,12 +730,24 @@ int32_t endat_command_build(struct endat_priv *priv, int32_t cmd,
                 * Though this is not 2.1 command, fw expects it to be ENDAT_CMDTYP_2_1. Ideally macro should
                 *  have been named ENDAT_CMDTYPE_HAVE_2_2_SUPPLEMENT instead of ENDAT_CMDTYP_2_[12] for readability
                 */
-                endat_pruss_xchg->cmd[2].word1 = (priv->pos_rx_bits_22_TXPRU + info *
+                endat_pruss_xchg->cmd[2].word1 = (priv->pos_rx_bits_22_cmd[2] + info *
                                            ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
                                           ((ENDAT_CMDTYP_NO_SUPPLEMENT | ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22)
                                            << 16);
 
 
+            }
+            else
+            {
+                endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_WITH_DATA;
+                /*
+                * Though this is not 2.1 command, fw expects it to be ENDAT_CMDTYP_2_1. Ideally macro should
+                *  have been named ENDAT_CMDTYPE_HAVE_2_2_SUPPLEMENT instead of ENDAT_CMDTYP_2_[12] for readability
+                */
+                endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_cmd[priv->current_channel] + info *
+                                               ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
+                                              ((ENDAT_CMDTYP_NO_SUPPLEMENT | ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22)
+                                              << 16);
             }
 
 
@@ -767,23 +787,23 @@ int32_t endat_command_build(struct endat_priv *priv, int32_t cmd,
             }
             if(cmd_supplement->has_block_address)
             {
-                endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_RTUPRU + info *
-                                               ENDAT_ADDITIONAL_INFO_RX_BITS) |
-                                              (ENDAT_TX_6BITS << 8) | ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) <<
-                                                      16) | (1 << 24);
-                endat_pruss_xchg->cmd[0].word2 = cmd_supplement->address |
-                                              (cmd_supplement->block << 24);
-
                 if(priv->load_share)
                 {
-                    endat_pruss_xchg->cmd[1].word1 = (priv->pos_rx_bits_22_PRU + info *
+                    endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_cmd[0] + info *
+                                                ENDAT_ADDITIONAL_INFO_RX_BITS) |
+                                               (ENDAT_TX_6BITS << 8) | ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) <<
+                                                        16) | (1 << 24);
+                    endat_pruss_xchg->cmd[0].word2 = cmd_supplement->address |
+                                               (cmd_supplement->block << 24);
+
+                    endat_pruss_xchg->cmd[1].word1 = (priv->pos_rx_bits_22_cmd[1] + info *
                                                ENDAT_ADDITIONAL_INFO_RX_BITS) |
                                               (ENDAT_TX_6BITS << 8) | ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) <<
                                                       16) | (1 << 24);
                     endat_pruss_xchg->cmd[1].word2 = cmd_supplement->address |
                                               (cmd_supplement->block << 24);
 
-                    endat_pruss_xchg->cmd[2].word1 = (priv->pos_rx_bits_22_TXPRU + info *
+                    endat_pruss_xchg->cmd[2].word1 = (priv->pos_rx_bits_22_cmd[1] + info *
                                                ENDAT_ADDITIONAL_INFO_RX_BITS) |
                                               (ENDAT_TX_6BITS << 8) | ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) <<
                                                       16) | (1 << 24);
@@ -791,31 +811,48 @@ int32_t endat_command_build(struct endat_priv *priv, int32_t cmd,
                                               (cmd_supplement->block << 24);
 
                 }
+                else
+                {
+                    endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_cmd[priv->current_channel] + info *
+                        ENDAT_ADDITIONAL_INFO_RX_BITS) |
+                       (ENDAT_TX_6BITS << 8) | ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) <<
+                                16) | (1 << 24);
+                    endat_pruss_xchg->cmd[0].word2 = cmd_supplement->address |
+                       (cmd_supplement->block << 24);
+                }
             }
 
             else
             {
-                endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_RTUPRU + info *
+                if(priv->load_share)
+                {
+                    endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_cmd[0] + info *
                                                ENDAT_ADDITIONAL_INFO_RX_BITS) |
                                               (ENDAT_TX_6BITS << 8) | ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) <<
                                                       16);
-                endat_pruss_xchg->cmd[0].word2 = cmd_supplement->address;
+                    endat_pruss_xchg->cmd[0].word2 = cmd_supplement->address;
 
-                 if(priv->load_share)
-                 {
-                    endat_pruss_xchg->cmd[1].word1 = (priv->pos_rx_bits_22_PRU + info *
+                    endat_pruss_xchg->cmd[1].word1 = (priv->pos_rx_bits_22_cmd[1] + info *
                                                ENDAT_ADDITIONAL_INFO_RX_BITS) |
                                               (ENDAT_TX_6BITS << 8) | ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) <<
                                                       16);
                     endat_pruss_xchg->cmd[1].word2 = cmd_supplement->address;
 
-                    endat_pruss_xchg->cmd[2].word1 = (priv->pos_rx_bits_22_TXPRU + info *
+                    endat_pruss_xchg->cmd[2].word1 = (priv->pos_rx_bits_22_cmd[2] + info *
                                                ENDAT_ADDITIONAL_INFO_RX_BITS) |
                                               (ENDAT_TX_6BITS << 8) | ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) <<
                                                       16);
                     endat_pruss_xchg->cmd[2].word2 = cmd_supplement->address;
 
                  }
+                else
+                {
+                    endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_cmd[priv->current_channel] + info *
+                        ENDAT_ADDITIONAL_INFO_RX_BITS) |
+                       (ENDAT_TX_6BITS << 8) | ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) <<
+                               16);
+                    endat_pruss_xchg->cmd[0].word2 = cmd_supplement->address;
+                }
 
 
             }
@@ -848,19 +885,20 @@ int32_t endat_command_build(struct endat_priv *priv, int32_t cmd,
             break;
 
         case 10:
-            endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_PARAM;
-            endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_RTUPRU + info *
-                                           ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
-                                          ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
-            endat_pruss_xchg->cmd[0].word2 = cmd_supplement->address;
-            /* data MSByte should be @((char *)word2 + 1) and LSByte @((char *)word2 + 2) */
-            endat_pruss_xchg->cmd[0].word2 |= ((cmd_supplement->data & 0xFF) << 16) |
-                                           (cmd_supplement->data & 0xFF00);
 
             if(priv->load_share)
             {
+                endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_PARAM;
+                endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_cmd[0] + info *
+                                               ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
+                                              ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
+                endat_pruss_xchg->cmd[0].word2 = cmd_supplement->address;
+                /* data MSByte should be @((char *)word2 + 1) and LSByte @((char *)word2 + 2) */
+                endat_pruss_xchg->cmd[0].word2 |= ((cmd_supplement->data & 0xFF) << 16) |
+                                           (cmd_supplement->data & 0xFF00);
+
                 endat_pruss_xchg->cmd[1].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_PARAM;
-                endat_pruss_xchg->cmd[1].word1 = (priv->pos_rx_bits_22_PRU + info *
+                endat_pruss_xchg->cmd[1].word1 = (priv->pos_rx_bits_22_cmd[1] + info *
                                            ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
                                           ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
                 endat_pruss_xchg->cmd[1].word2 = cmd_supplement->address;
@@ -869,7 +907,7 @@ int32_t endat_command_build(struct endat_priv *priv, int32_t cmd,
                                            (cmd_supplement->data & 0xFF00);
 
                 endat_pruss_xchg->cmd[2].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_PARAM;
-                endat_pruss_xchg->cmd[2].word1 = (priv->pos_rx_bits_22_TXPRU + info *
+                endat_pruss_xchg->cmd[2].word1 = (priv->pos_rx_bits_22_cmd[2] + info *
                                            ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
                                           ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
                 endat_pruss_xchg->cmd[2].word2 = cmd_supplement->address;
@@ -877,6 +915,17 @@ int32_t endat_command_build(struct endat_priv *priv, int32_t cmd,
                 endat_pruss_xchg->cmd[2].word2 |= ((cmd_supplement->data & 0xFF) << 16) |
                                            (cmd_supplement->data & 0xFF00);
 
+            }
+            else
+            {
+                endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_PARAM;
+                endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_cmd[priv->current_channel] + info *
+                                               ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
+                                              ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
+                endat_pruss_xchg->cmd[0].word2 = cmd_supplement->address;
+                /* data MSByte should be @((char *)word2 + 1) and LSByte @((char *)word2 + 2) */
+                endat_pruss_xchg->cmd[0].word2 |= ((cmd_supplement->data & 0xFF) << 16) |
+                                           (cmd_supplement->data & 0xFF00);
             }
 
 
@@ -907,27 +956,36 @@ int32_t endat_command_build(struct endat_priv *priv, int32_t cmd,
             break;
 
         case 11:
+            if(priv->load_share)
+            {
                 endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_SEND_PARAM;
-                endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_RTUPRU + info *
+                endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_cmd[0] + info *
                                            ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
                                           ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
                 endat_pruss_xchg->cmd[0].word2 = cmd_supplement->address;
 
-            if(priv->load_share)
-            {
                 endat_pruss_xchg->cmd[1].word0 = ENDAT_CMD_SEND_POSVAL_SEND_PARAM;
-                endat_pruss_xchg->cmd[1].word1 = (priv->pos_rx_bits_22_PRU + info *
+                endat_pruss_xchg->cmd[1].word1 = (priv->pos_rx_bits_22_cmd[1] + info *
                                            ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
                                           ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
                 endat_pruss_xchg->cmd[1].word2 = cmd_supplement->address;
 
                 endat_pruss_xchg->cmd[2].word0 = ENDAT_CMD_SEND_POSVAL_SEND_PARAM;
-                endat_pruss_xchg->cmd[2].word1 = (priv->pos_rx_bits_22_TXPRU + info *
+                endat_pruss_xchg->cmd[2].word1 = (priv->pos_rx_bits_22_cmd[2] + info *
                                            ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
                                           ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
                 endat_pruss_xchg->cmd[2].word2 = cmd_supplement->address;
 
             }
+            else
+            {
+                endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_SEND_PARAM;
+                endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_cmd[priv->current_channel] + info *
+                                           ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
+                                          ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
+                endat_pruss_xchg->cmd[0].word2 = cmd_supplement->address;
+            }
+
             if(priv->flags.info1)
             {
                 endat_pruss_xchg->cmd[0].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
@@ -954,22 +1012,29 @@ int32_t endat_command_build(struct endat_priv *priv, int32_t cmd,
             break;
 
         case 12:
-            endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_ERR_RST;
-            endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_RTUPRU + info *
-                                           ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
-                                          ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
-
             if(priv->load_share)
             {
+                endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_ERR_RST;
+                endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_cmd[0] + info *
+                                               ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
+                                              ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
+
                 endat_pruss_xchg->cmd[1].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_ERR_RST;
-                endat_pruss_xchg->cmd[1].word1 = (priv->pos_rx_bits_22_PRU + info *
+                endat_pruss_xchg->cmd[1].word1 = (priv->pos_rx_bits_22_cmd[1] + info *
                                            ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
                                           ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
 
                 endat_pruss_xchg->cmd[2].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_ERR_RST;
-                endat_pruss_xchg->cmd[2].word1 = (priv->pos_rx_bits_22_TXPRU + info *
+                endat_pruss_xchg->cmd[2].word1 = (priv->pos_rx_bits_22_cmd[2] + info *
                                            ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
                                           ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
+            }
+            else
+            {
+                endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_ERR_RST;
+                endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_cmd[priv->current_channel] + info *
+                               ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
+                              ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
             }
 
             if(priv->flags.info1)
@@ -998,25 +1063,33 @@ int32_t endat_command_build(struct endat_priv *priv, int32_t cmd,
             break;
 
         case 13:
-            endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_TESTCMD;
-            endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_RTUPRU + info *
-                                           ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
-                                          ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
-            endat_pruss_xchg->cmd[0].word2 = cmd_supplement->address;
-
             if(priv->load_share)
             {
+                endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_TESTCMD;
+                endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_cmd[0] + info *
+                                               ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
+                                              ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
+                endat_pruss_xchg->cmd[0].word2 = cmd_supplement->address;
+
                 endat_pruss_xchg->cmd[1].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_TESTCMD;
-                endat_pruss_xchg->cmd[1].word1 = (priv->pos_rx_bits_22_PRU + info *
+                endat_pruss_xchg->cmd[1].word1 = (priv->pos_rx_bits_22_cmd[1] + info *
                                            ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
                                           ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
                 endat_pruss_xchg->cmd[1].word2 = cmd_supplement->address;
 
                 endat_pruss_xchg->cmd[2].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_TESTCMD;
-                endat_pruss_xchg->cmd[2].word1 = (priv->pos_rx_bits_22_TXPRU + info *
+                endat_pruss_xchg->cmd[2].word1 = (priv->pos_rx_bits_22_cmd[2] + info *
                                            ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
                                           ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
                 endat_pruss_xchg->cmd[2].word2 = cmd_supplement->address;
+            }
+            else
+            {
+                endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_TESTCMD;
+                endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_cmd[priv->current_channel] + info *
+                                               ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
+                                              ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
+                endat_pruss_xchg->cmd[0].word2 = cmd_supplement->address;
             }
 
             if(priv->flags.info1)
@@ -1116,14 +1189,6 @@ void endat_command_wait(struct endat_priv *priv)
            ;
     }
 }
-void endat_recovery_time_conversion(struct endat_priv *priv)
-{
-     /* RT: convert cycle to ns */
-    priv->endatChRxInfo->ch[0].recoveryTime = priv->endatChRxInfo->ch[0].recoveryTime * ((float)(1000000000)/priv->pruss_xchg->icssg_clk);
-    priv->endatChRxInfo->ch[1].recoveryTime = priv->endatChRxInfo->ch[1].recoveryTime * ((float)(1000000000)/priv->pruss_xchg->icssg_clk);
-    priv->endatChRxInfo->ch[2].recoveryTime = priv->endatChRxInfo->ch[2].recoveryTime * ((float)(1000000000)/priv->pruss_xchg->icssg_clk);
-
-}
 
 int32_t endat_command_process(struct endat_priv *priv, int32_t cmd,
                           struct cmd_supplement *cmd_supplement)
@@ -1137,11 +1202,6 @@ int32_t endat_command_process(struct endat_priv *priv, int32_t cmd,
 
     endat_command_send(priv);
     endat_command_wait(priv);
-    /* RT configuration(convert cycle to ns time ) for command 2.2*/
-    if( cmd > 7 && cmd < 15 )
-    {
-        endat_recovery_time_conversion(priv);
-    }
     return cmd;
 }
 
@@ -1149,7 +1209,7 @@ int32_t endat_get_2_2_angle(struct endat_priv *priv)
 {
     int32_t pos;
     struct endatChRxInfo *endatChRxInfo = priv->endatChRxInfo;
-    int32_t ch = priv->channel;
+    int32_t ch = priv->current_channel;
 
 
     if(!(endatChRxInfo->ch[ch].crcStatus & ENDAT_CRC_DATA))
@@ -1175,7 +1235,7 @@ int32_t endat_get_2_2_angle(struct endat_priv *priv)
     pos >>= 2;
 
     /* mask non-angular bits */
-    pos &= (1 << priv->single_turn_res) - 1;
+    pos &= (1 << priv->single_turn_res[priv->current_channel]) - 1;
     return pos;
 }
 
@@ -1184,7 +1244,7 @@ static int32_t endat_get_pos_res(struct endat_priv *priv)
     int32_t cmd;
     struct cmd_supplement cmd_supplement;
     uint32_t word;
-    int32_t ch = priv->channel;
+    int32_t ch = priv->current_channel;
     struct endatChRxInfo *endatChRxInfo = priv->endatChRxInfo;
 
     /* select memory area encoder manufacturer page 0 */
@@ -1219,7 +1279,7 @@ static int32_t endat_get_multi_turn_res(struct endat_priv *priv)
     int32_t cmd;
     struct cmd_supplement cmd_supplement;
     uint32_t word;
-    int32_t ch = priv->channel;
+    int32_t ch = priv->current_channel;
     struct endatChRxInfo *endatChRxInfo = priv->endatChRxInfo;
 
     /* select memory area encoder manufacturer page 0 */
@@ -1254,7 +1314,7 @@ static int32_t endat_get_id(struct endat_priv *priv)
     int32_t cmd;
     struct cmd_supplement cmd_supplement;
     uint32_t word0, word1, word2;
-    int32_t ch = priv->channel;
+    int32_t ch = priv->current_channel;
     struct endatChRxInfo *endatChRxInfo = priv->endatChRxInfo;
 
     /* select memory area encoder manufacturer page 1 */
@@ -1319,7 +1379,7 @@ static int32_t endat_get_sn(struct endat_priv *priv)
     int32_t cmd;
     struct cmd_supplement cmd_supplement;
     uint32_t word0, word1, word2;
-    int32_t ch = priv->channel;
+    int32_t ch = priv->current_channel;
     struct endatChRxInfo *endatChRxInfo = priv->endatChRxInfo;
 
     /* select memory area encoder manufacturer page 1 */
@@ -1385,7 +1445,7 @@ static int32_t endat_get_command_set(struct endat_priv *priv)
     int32_t cmd;
     struct cmd_supplement cmd_supplement;
     uint32_t word;
-    int32_t ch = priv->channel;
+    int32_t ch = priv->current_channel;
     struct endatChRxInfo *endatChRxInfo = priv->endatChRxInfo;
 
     /* select memory area encoder manufacturer page 2 */
@@ -1413,7 +1473,7 @@ static int32_t endat_get_command_set(struct endat_priv *priv)
     word = (endatChRxInfo->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC)) & ((
                 1 << ENDAT_NUM_BITS_PARAMETER) - 1);
     priv->cmd_set_2_2 = (word & 0x1) && !(word & 0x2);
-    priv->has_safety = (word & 0x4) && !(word & 0x8);
+    priv->has_safety[ch] = (word & 0x4) && !(word & 0x8);
 
     return 0;
 }
@@ -1423,7 +1483,7 @@ static int32_t endat_get_type(struct endat_priv *priv)
     int32_t cmd;
     struct cmd_supplement cmd_supplement;
     uint32_t word;
-    int32_t ch = priv->channel;
+    int32_t ch = priv->current_channel;
     struct endatChRxInfo *endatChRxInfo = priv->endatChRxInfo;
 
     /* select memory area encoder manufacturer page 0 */
@@ -1450,7 +1510,7 @@ static int32_t endat_get_type(struct endat_priv *priv)
 
     word = (endatChRxInfo->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC)) & ((
                 1 << ENDAT_NUM_BITS_PARAMETER) - 1);
-    priv->type = (word & (1 << 15)) ? rotary : linear;
+    priv->type[ch] = (word & (1 << 15)) ? rotary : linear;
 
     return 0;
 }
@@ -1460,7 +1520,7 @@ static int32_t endat_get_step(struct endat_priv *priv)
     int32_t cmd;
     struct cmd_supplement cmd_supplement;
     uint32_t word;
-    int32_t ch = priv->channel;
+    int32_t ch = priv->current_channel;
     struct endatChRxInfo *endatChRxInfo = priv->endatChRxInfo;
 
     /* select memory area encoder manufacturer page 0 */
@@ -1514,55 +1574,35 @@ int32_t endat_get_encoder_info(struct endat_priv *priv)
         return priv->pos_res;
     }
 
-    priv->multi_turn_res = endat_get_multi_turn_res(priv);
+    priv->multi_turn_res[priv->current_channel] = endat_get_multi_turn_res(priv);
 
-    if(priv->multi_turn_res < 0)
+    if(priv->multi_turn_res[priv->current_channel] < 0)
     {
-        return priv->multi_turn_res;
+        return priv->multi_turn_res[priv->current_channel];
     }
 
-    else if(!priv->multi_turn_res)
+    else if(!priv->multi_turn_res[priv->current_channel])
     {
-        priv->single_turn_res = priv->pos_res;
+        priv->single_turn_res[priv->current_channel] = priv->pos_res;
     }
 
     else
     {
-        priv->multi_turn_res = log2(priv->multi_turn_res);
-        priv->single_turn_res = priv->pos_res - priv->multi_turn_res;
+        priv->multi_turn_res[priv->current_channel] = log2(priv->multi_turn_res[priv->current_channel]);
+        priv->single_turn_res[priv->current_channel] = priv->pos_res - priv->multi_turn_res[priv->current_channel];
     }
 
-    priv->step = endat_get_step(priv);
+    priv->step[priv->current_channel] = endat_get_step(priv);
 
-    if(priv->step < 0)
+    if(priv->step[priv->current_channel] < 0)
     {
-        return priv->step;
+        return priv->step[priv->current_channel];
     }
     /*calaculate rx frame size for all three channels and store in different variables*/
-    if(!priv->load_share)
-    {
-        priv->pos_rx_bits_21_RTUPRU = priv->pos_res + ENDAT_NUM_BITS_POSITION_CRC +
-                ENDAT_NUM_BITS_F1;
-        priv->pos_rx_bits_22_RTUPRU = priv->pos_rx_bits_21_RTUPRU + ENDAT_NUM_BITS_F2;
-
-    }
-    else if(priv->channel==0)   /*ch0*/
-    {
-        priv->pos_rx_bits_21_RTUPRU = priv->pos_res + ENDAT_NUM_BITS_POSITION_CRC +
-                ENDAT_NUM_BITS_F1;
-        priv->pos_rx_bits_22_RTUPRU = priv->pos_rx_bits_21_RTUPRU + ENDAT_NUM_BITS_F2;
-    }
-    else if(priv->channel==1) /*ch1*/
-    {
-        priv->pos_rx_bits_21_PRU = priv->pos_res + ENDAT_NUM_BITS_POSITION_CRC +
-                           ENDAT_NUM_BITS_F1;
-        priv->pos_rx_bits_22_PRU = priv->pos_rx_bits_21_PRU + ENDAT_NUM_BITS_F2;}
-    else
-    {
-        priv->pos_rx_bits_21_TXPRU = priv->pos_res + ENDAT_NUM_BITS_POSITION_CRC +
-                        ENDAT_NUM_BITS_F1;
-        priv->pos_rx_bits_22_TXPRU = priv->pos_rx_bits_21_TXPRU + ENDAT_NUM_BITS_F2;
-    } /*ch2*/
+  
+    priv->pos_rx_bits_21_cmd[priv->current_channel] = priv->pos_res + ENDAT_NUM_BITS_POSITION_CRC +
+            ENDAT_NUM_BITS_F1;
+    priv->pos_rx_bits_22_cmd[priv->current_channel] = priv->pos_rx_bits_21_cmd[priv->current_channel] + ENDAT_NUM_BITS_F2;
 
     ret = endat_get_id(priv);
 
@@ -1597,7 +1637,7 @@ int32_t endat_get_encoder_info(struct endat_priv *priv)
 
 uint32_t endat_get_prop_delay(struct endat_priv *priv)
 {
-    return priv->pruss_xchg->ch[priv->channel].propDelay;
+    return priv->pruss_xchg->ch[priv->current_channel].propDelay;
 }
 
 void endat_addinfo_track(struct endat_priv *priv, int32_t cmd,
@@ -1657,45 +1697,45 @@ static void endat_config_global_rx_arm_cnt(struct endat_priv *priv,
     void *pruss_cfg = priv->pruss_cfg;
     if(priv->pruicss_slicex)
     {
-       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1CH0CFG1REGISTER + 2, val);
-       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1CH1CFG1REGISTER + 2, val);
-       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1CH2CFG1REGISTER + 2, val);
+       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG1_REG + 2, val);
+       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH1_CFG1_REG + 2, val);
+       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH2_CFG1_REG + 2, val);
     }
     else
     {
-       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0CH0CFG1REGISTER + 2, val);
-       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0CH1CFG1REGISTER + 2, val);
-       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0CH2CFG1REGISTER + 2, val);
+       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG1_REG + 2, val);
+       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH1_CFG1_REG + 2, val);
+       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH2_CFG1_REG + 2, val);
     }
 }
 
 void endat_config_rx_arm_cnt(struct endat_priv *priv, uint16_t val)
 {
     void *pruss_cfg = priv->pruss_cfg;
-    int32_t ch = priv->channel;
+    int32_t ch = priv->current_channel;
     if(priv->pruicss_slicex)
     {
-       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1CH0CFG1REGISTER + ch * 8 + 2, val);
+       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG1_REG + ch * 8 + 2, val);
     }
     else
     {
-       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0CH0CFG1REGISTER + ch * 8 + 2, val);
+       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG1_REG + ch * 8 + 2, val);
     }
 }
 
 void endat_config_wire_delay(struct endat_priv *priv, uint16_t val)
 {
     void *pruss_cfg = priv->pruss_cfg;
-    int32_t ch = priv->channel;
+    int32_t ch = priv->current_channel;
     uint16_t regval;
     if(priv->pruicss_slicex)
     {
-        regval = HW_RD_REG16((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1CH0CFG0REGISTER + ch *
+        regval = HW_RD_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG0_REG + ch *
                                    8);
     }
     else
     {
-        regval = HW_RD_REG16((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0CH0CFG0REGISTER + ch *
+        regval = HW_RD_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG0_REG + ch *
                                    8);
     }
 
@@ -1706,11 +1746,11 @@ void endat_config_wire_delay(struct endat_priv *priv, uint16_t val)
     regval |= val;
     if(priv->pruicss_slicex)
     {
-       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1CH0CFG0REGISTER + ch * 8, regval);
+       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG0_REG + ch * 8, regval);
     }
     else
     {
-        HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0CH0CFG0REGISTER + ch * 8, regval);
+        HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG0_REG + ch * 8, regval);
     }
 }
 
@@ -1721,32 +1761,34 @@ void endat_config_clock(struct endat_priv *priv,
     /* Set PRU1_ED_RX_SB_POL polarity bit, required for ICSSG (don't care for ICSSM) */
     if(priv->pruicss_slicex)
     {
-        HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1RXCFGREGISTER, clk_cfg->rx_div << 16 | 0x8 |
+        HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG, clk_cfg->rx_div << 16 | priv->rx_clock_source << 4| 0x8 |
             clk_cfg->rx_div_attr);
-        HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER + 2, clk_cfg->tx_div);
+        HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG, clk_cfg->tx_div << 16 | priv->tx_clock_source << 4);
     }
     else
     {
-       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0RXCFGREGISTER, clk_cfg->rx_div << 16 | 0x8 |
+       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG, clk_cfg->rx_div << 16 |priv->rx_clock_source << 4 | 0x8 |
             clk_cfg->rx_div_attr);
-       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0TXCFGREGISTER + 2, clk_cfg->tx_div);
+       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG, clk_cfg->tx_div << 16 | priv->tx_clock_source << 4);
     }
-
-
-
+    
+    if(priv->load_share)
+    {
+        endat_enable_load_share_mode(priv);
+    }
 }
 
 void endat_config_tst_delay(struct endat_priv *priv, uint16_t delay)
 {
     void *pruss_cfg = priv->pruss_cfg;
-    int32_t ch = priv->channel;
+    int32_t ch = priv->current_channel;
     if(priv->pruicss_slicex==1)
     {
-       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1CH0CFG1REGISTER + ch * 8, delay);
+       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG1_REG + ch * 8, delay);
     }
     else
     {
-      HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0CH0CFG1REGISTER + ch * 8, delay);
+      HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG1_REG + ch * 8, delay);
     }
 
 }
@@ -1755,7 +1797,7 @@ void endat_config_rx_clock_disable(struct endat_priv *priv,
                                    uint16_t val)
 {
     struct endat_pruss_xchg *pruss_xchg = priv->pruss_xchg;
-    int32_t ch = priv->channel;
+    int32_t ch = priv->current_channel;
     pruss_xchg->ch[ch].rxClkLess = val;
 }
 
@@ -1851,7 +1893,7 @@ void endat_config_channel(struct endat_priv *priv, int32_t ch)
     struct endat_pruss_xchg *pruss_xchg = priv->pruss_xchg;
 
     pruss_xchg->config[0].channel = 1 << ch;
-    priv->channel = ch;
+    priv->current_channel = ch;
 }
 
 void endat_config_multi_channel_mask(struct endat_priv *priv,
@@ -1888,15 +1930,15 @@ void endat_enable_load_share_mode(struct endat_priv *priv)
     uint32_t rgval;
     if(priv->pruicss_slicex)
     {
-       rgval = HW_RD_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER);
-       rgval |= CSL_ICSSCFG_EDPRU1TXCFGREGISTER_PRU1_ENDAT_SHARE_EN_MASK;
-      HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER, rgval);
+       rgval = HW_RD_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG);
+       rgval |= ENDAT_LOAD_SHARE_EN_MASK;
+      HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG, rgval);
     }
     else
     {
-        rgval = HW_RD_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0TXCFGREGISTER);
-        rgval |= CSL_ICSSCFG_EDPRU0TXCFGREGISTER_PRU0_ENDAT_SHARE_EN_MASK;
-      HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0TXCFGREGISTER, rgval);
+        rgval = HW_RD_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG);
+        rgval |= ENDAT_LOAD_SHARE_EN_MASK;
+      HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG, rgval);
     }
 
 }
@@ -1940,26 +1982,8 @@ uint8_t endat_multi_channel_detected(struct endat_priv *priv)
 
 void endat_multi_channel_set_cur(struct endat_priv *priv, int32_t ch)
 {
-    priv->channel = ch;
-    if(priv->load_share)
-    {
-        if(priv->channel == 0)
-        {
-            priv->pos_res =  priv->pos_rx_bits_21_RTUPRU - (ENDAT_NUM_BITS_POSITION_CRC + ENDAT_NUM_BITS_F1);
-        }
-        else if(priv->channel == 1)
-        {
-            priv->pos_res = priv->pos_rx_bits_21_PRU - (ENDAT_NUM_BITS_POSITION_CRC + ENDAT_NUM_BITS_F1);
-        }
-        else
-        {
-            priv->pos_res = priv->pos_rx_bits_21_TXPRU - (ENDAT_NUM_BITS_POSITION_CRC + ENDAT_NUM_BITS_F1);
-        }
-    }
-    else
-    {
-        priv->pos_res =  priv->pos_rx_bits_21_RTUPRU - (ENDAT_NUM_BITS_POSITION_CRC + ENDAT_NUM_BITS_F1);
-    }
+    priv->current_channel = ch;
+    priv->pos_res =  priv->pos_rx_bits_21_cmd[ch] - (ENDAT_NUM_BITS_POSITION_CRC + ENDAT_NUM_BITS_F1);
 }
 
 int32_t endat_wait_initialization(struct endat_priv *priv, uint32_t timeout, uint8_t mask)
@@ -2032,15 +2056,15 @@ static inline void endat_config_clr_cfg0(struct endat_priv *priv)
     void *pruss_cfg = priv->pruss_cfg;
     if(priv->pruicss_slicex)
     {
-       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1CH0CFG0REGISTER, 0);
-       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1CH1CFG0REGISTER, 0);
-       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU1CH2CFG0REGISTER, 0);
+       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG0_REG, 0);
+       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH1_CFG0_REG, 0);
+       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH2_CFG0_REG, 0);
     }
     else
     {
-       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0CH0CFG0REGISTER, 0);
-       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0CH1CFG0REGISTER, 0);
-       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSSCFG_EDPRU0CH2CFG0REGISTER, 0);
+       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG0_REG, 0);
+       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH1_CFG0_REG, 0);
+       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH2_CFG0_REG, 0);
     }
 }
 
@@ -2049,27 +2073,39 @@ static inline void endat_config_endat_mode(struct endat_priv *priv)
     void *pruss_cfg = priv->pruss_cfg;
     if(priv->pruicss_slicex)
     {
-       HW_WR_REG8((uint8_t *)pruss_cfg + CSL_ICSSCFG_GPCFG1 + 3, 4);
+       HW_WR_REG8((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_GPCFG1_REG + 3, 4);
     }
     else
     {
-       HW_WR_REG8((uint8_t *)pruss_cfg + CSL_ICSSCFG_GPCFG0 + 3, 4);
+       HW_WR_REG8((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_GPCFG0_REG + 3, 4);
     }
 }
 
 static void endat_hw_init(struct endat_priv *priv)
 {
     struct endat_clk_cfg clk_cfg;
-
     /* set initial clock to 200KHz */
-    /* 192MHz / 200KHz - 1 */
-    clk_cfg.tx_div = 959;
-    /* 192MHz / 200KHz / 8 - 1 */
-    clk_cfg.rx_div = 119;
+    if(priv->rx_clock_source == 1)
+    {
+        clk_cfg.rx_div = priv->pru_clock/(ENDAT_RX_OVERSAMPLING_RATE*(ENDAT_INIT_FREQ)) - 1;
+    }
+    else
+    {
+        clk_cfg.rx_div = priv->pru_uart_clock/(ENDAT_RX_OVERSAMPLING_RATE*(ENDAT_INIT_FREQ)) - 1;
+    }
+
+    if(priv->rx_clock_source == 1)
+    {
+        clk_cfg.tx_div = priv->pru_clock/ENDAT_INIT_FREQ - 1;
+    }
+    else
+    {
+        clk_cfg.tx_div = priv->pru_uart_clock/ENDAT_INIT_FREQ - 1;
+    }
     /* 2T */
-    clk_cfg.rx_en_cnt = 10000;
+    clk_cfg.rx_en_cnt = ENDAT_DELAY_COUNTER_INCREMENT*((2*priv->pru_clock)/ENDAT_INIT_FREQ);
     /* sample size 8 */
-    clk_cfg.rx_div_attr = 7;
+    clk_cfg.rx_div_attr = ENDAT_RX_OVERSAMPLING_RATE - 1;
 
     endat_config_endat_mode(priv);
     endat_config_clock(priv, &clk_cfg);
@@ -2078,13 +2114,17 @@ static void endat_hw_init(struct endat_priv *priv)
 }
 
 struct endat_priv *endat_init(struct endat_pruss_xchg *pruss_xchg, struct endatChRxInfo *endatRxInfo, uint64_t endatChInfoGlobalAddr, 
-                              void *pruss_cfg, void* pruss_iep, int32_t slice)
+                              void *pruss_cfg, void* pruss_iep, int32_t slice, endat_clock_config *endat_clk_config)
 {
     endat_priv.pruss_xchg = pruss_xchg;
     endat_priv.pruss_cfg = pruss_cfg;
     endat_priv.pruicss_slicex = slice;
     endat_priv.pruss_iep = pruss_iep;
     endat_priv.endatChRxInfo = endatRxInfo;
+    endat_priv.tx_clock_source = endat_clk_config->tx_clock_source;
+    endat_priv.rx_clock_source = endat_clk_config->rx_clock_source;
+    endat_priv.pru_clock = endat_clk_config->pru_clock;
+    endat_priv.pru_uart_clock = endat_clk_config->pru_uart_clock;
     /*Write Configured memory address to DMEM */
     endat_priv.pruss_xchg->endatChInfoMemoryAdd = endatChInfoGlobalAddr;
     endat_hw_init(&endat_priv);
@@ -2093,5 +2133,68 @@ struct endat_priv *endat_init(struct endat_pruss_xchg *pruss_xchg, struct endatC
 
 uint32_t endat_get_recovery_time(struct endat_priv *priv)
 {
-    return priv->endatChRxInfo->ch[priv->channel].recoveryTime;
+    return priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.recoveryTime*((float)(1000000000)/priv->pru_clock);
+}
+
+int8_t endat_check_rt_error(struct endat_priv *priv)
+{
+    uint32_t rtDiff;
+    uint32_t lastCounterValue;
+    uint32_t currentCounterValue;
+
+    lastCounterValue =  priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.lastCounterValue;
+    currentCounterValue = priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.currentCounterValue;
+
+    /*Check if the counter is stuck by comparing current and last counter values*/
+    if(currentCounterValue == lastCounterValue)
+    {
+       priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.isCounterStuck = 1 ;
+       return RT_COUNTER_STUCK_ERROR;
+    }
+    else
+    {
+        priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.isCounterStuck = 0 ;
+    }
+
+    /*handle the int overflow candition */
+    if(lastCounterValue > currentCounterValue)
+    {
+        rtDiff = (MAX_RT_COUNTER_VALUE - lastCounterValue) + currentCounterValue;
+    }
+    else
+    {
+        rtDiff = currentCounterValue - lastCounterValue;
+    }
+
+    /*convert into us */
+    rtDiff = rtDiff*((float)(1000000000)/priv->pru_clock);
+    /* Check if the recovery time is within the short or long recovery time range */
+    if ((rtDiff >= SHORT_RECOVERY_TIME_MIN) && (rtDiff <= SHORT_RECOVERY_TIME_MAX)) {
+        return RT_NO_ERROR;  /* Valid short recovery time */
+    }
+    if ((rtDiff >= LONG_RECOVERY_TIME_MIN) && (rtDiff <= LONG_RECOVERY_TIME_MAX)) {
+        return RT_NO_ERROR;  /* Valid long recovery time */
+    }
+    return RT_OUT_OF_RANGE_ERROR;  /*Error: out of expected range*/
+}
+
+void endat_init_rt_measurement (struct endat_priv *priv) 
+{
+    priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.recoveryTime = 0;
+    priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.lastCounterValue = 0;
+    priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.startingValue = RT_COUNTER_STARTING_VALUE + 100*(priv->current_channel); /* Assign a unique starting value for each channel; */
+    priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.currentCounterValue = priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.startingValue;
+    priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.isCounterStuck = 0;
+}
+void endat_enable_rt_measurement (struct endat_priv *priv)
+{
+    priv->pruss_xchg->ch[priv->current_channel].enableRTM = 1;
+}
+void endat_disable_rt_measurement (struct endat_priv *priv)
+{
+    priv->pruss_xchg->ch[priv->current_channel].enableRTM = 0;
+}
+uint32_t endat_status_rt_measurement (struct endat_priv *priv)
+{
+    return priv->pruss_xchg->ch[priv->current_channel].enableRTM;
 }

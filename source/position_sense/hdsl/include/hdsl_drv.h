@@ -115,15 +115,6 @@ extern "C" {
 
 #define MAX_WAIT 20000
 
-#define HDSL_ICSSG0_INST        0U
-#define HDSL_ICSSG1_INST        1U
-
-#define HWREG(x)                                                               \
-        (*((volatile uint32_t *)(x)))
-#define HWREGB(x)                                                              \
-        (*((volatile uint8_t *)(x)))
-#define HWREGH(x)                                                              \
-        (*((volatile uint16_t *)(x)))
 /*TSR configuration:*/
 
 /*inEvent value:*/
@@ -270,13 +261,13 @@ typedef struct {
  * @{
  */
 typedef struct HDSL_Config_s {
-    PRUICSS_Handle icssgHandle;
+    PRUICSS_Handle icssHandle;
     /**< PRUICSS_Handle for icssg0 or icssg1 instance*/
     uint32_t icssCore;
     /**< PRUICSS core identifier
      * Check PRUICSS_PRU0 and check other available macros
     */
-    uint32_t *baseMemAddr; // icssgHandle->hwAttrs->baseAddr + PRUICSS_DATARAM(PRUICSS_PRUx)
+    uint32_t *baseMemAddr; // icssHandle->hwAttrs->baseAddr + PRUICSS_DATARAM(PRUICSS_PRUx)
     /**< Base Memory Address for HDSL channel configuration */
     HDSL_Interface *hdslInterface;
     /**< HDSL master memory interface structure */
@@ -326,35 +317,14 @@ void hdsl_enable_load_share_mode(void *pruCfg ,uint32_t pruSlice);
  *  \brief      Open HDSL handle for the specified core
  *              (interrupt mapping should already be completed)
  *
- *  \param[in]  icssgHandle PRUICSS_Handle for the ICSS instance
+ *  \param[in]  icssHandle PRUICSS_Handle for the ICSS instance
  *  \param[in]  icssCore    Core to map in ICSSG instance
  *  \param[in]  pruMode    0 for load share mode disabled, 1 for load share mode enabled
  *  \retval     HDSL_Handle
  *
  */
-HDSL_Handle HDSL_open(PRUICSS_Handle icssgHandle, uint32_t icssCore, uint8_t pruMode);
+HDSL_Handle HDSL_open(PRUICSS_Handle icssHandle, uint32_t icssCore, uint8_t pruMode);
 
-/**
- *  \brief      Initialize IEP and Use OCP as IEP CLK src
- *
- *  \param[in]  hdslHandle
- *
- */
-void HDSL_iep_init(HDSL_Handle hdslHandle);
-
-/**
- *  \brief      Enable IEP            <br>
- *              *Enable SYNC0 and program pulse width   <br>
- *              Enable cyclic mod   <br>
- *              Program CMP1     <br>
- *              TSR configuration <br>
- *
- *  \param[in]  ES
- *  \param[in]  period
- *  \retval     1 for successful enable sync signal
- *
- */
-int HDSL_enable_sync_signal(uint8_t ES, uint32_t period);
 
 /**
  *  \brief      Calculate fast position,safe position1,safe position2

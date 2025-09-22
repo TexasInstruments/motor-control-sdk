@@ -243,20 +243,42 @@ int32_t tamagawa_crc_verify(struct tamagawa_priv *priv)
 void tamagawa_set_baudrate(struct tamagawa_priv *priv, double baudrate)
 {
     /* Updates the values for oversample rate and division factor for Tx and Rx based on the baud rate selected */
-    if (baudrate==2.5)
+
+    uint16_t rx_div;
+    uint16_t tx_div;
+    uint16_t oversample_rate;
+    struct tamagawa_clk_cfg clk_cfg;
+    if(priv->rx_clock_source == 1)
     {
-        /* For 2.5 Mbps, Rx Divide factor is 10, Tx Divide factor is 80 and Oversampling rate is 8 */
-        priv->tamagawa_xchg->tamagawa_interface.rx_div_factor= 9;
-        priv->tamagawa_xchg->tamagawa_interface.tx_div_factor= 79;
-        priv->tamagawa_xchg->tamagawa_interface.oversample_rate= 7;
+        rx_div = priv->pru_clock/(TAMAGAWA_RX_OVERSAMPLING_RATE*(baudrate));
     }
-    if(baudrate==5)
+    else
     {
-        /* For 5 Mbps, Rx Divide factor is 5, Tx Divide factor is 40 and Oversampling rate is 8 */
-        priv->tamagawa_xchg->tamagawa_interface.rx_div_factor= 4;
-        priv->tamagawa_xchg->tamagawa_interface.tx_div_factor= 39;
-        priv->tamagawa_xchg->tamagawa_interface.oversample_rate= 7;
+        rx_div = priv->pru_uart_clock/(TAMAGAWA_RX_OVERSAMPLING_RATE*(baudrate));
     }
+
+    if(priv->rx_clock_source == 1)
+    {
+        tx_div = priv->pru_clock/baudrate;
+    }
+    else
+    {
+        tx_div = priv->pru_uart_clock/baudrate;
+    }
+    oversample_rate = TAMAGAWA_RX_OVERSAMPLING_RATE;
+
+    clk_cfg.rx_clk_source = priv->rx_clock_source;
+    clk_cfg.tx_clk_source = priv->tx_clock_source;
+    clk_cfg.tx_div = tx_div - 1;
+    clk_cfg.rx_div = rx_div - 1;
+    clk_cfg.rx_os_rate = oversample_rate - 1;
+
+    tamagawa_config_clock(priv, &clk_cfg);
+    /*write in DMEM*/
+    priv->tamagawa_xchg->tamagawa_interface.rx_div_factor = rx_div - 1;
+    priv->tamagawa_xchg->tamagawa_interface.tx_div_factor = tx_div - 1;
+    priv->tamagawa_xchg->tamagawa_interface.oversample_rate = oversample_rate - 1;
+    
 }
 
 int32_t tamagawa_command_build(struct tamagawa_priv *priv, int32_t cmd,  uint8_t gTamagawa_multi_ch_mask)
@@ -487,9 +509,9 @@ void tamagawa_config_clock(struct tamagawa_priv *priv, struct tamagawa_clk_cfg *
     /* Configures the tamagawa clock */
     void *pruss_cfg = priv->pruss_cfg;
     /* Configure the PRUx Rx CFG register by writing the Rx Divide Factor and Oversampling rate */
-    HW_WR_REG32((uint32_t)(pruss_cfg) + tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_RXCFG, (uint32_t)(clk_cfg->rx_div << 16 | 0x8 | clk_cfg->rx_div_attr));
+    HW_WR_REG32((uint32_t)(pruss_cfg) + tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_RXCFG, (uint32_t)(clk_cfg->rx_div << 16 | clk_cfg->rx_clk_source << 4 | clk_cfg->rx_os_rate));
     /* Configure the PRUx Tx CFG register by writing the Tx Divide Factor  */
-    HW_WR_REG16((uint32_t)(pruss_cfg) + tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_TXCFG + 2, (uint16_t)(clk_cfg->tx_div));
+    HW_WR_REG32((uint32_t)(pruss_cfg) + tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_TXCFG , (uint32_t)(clk_cfg->tx_div << 16 | clk_cfg->tx_clk_source << 4));
 }
 
 void tamagawa_config_host_trigger(struct tamagawa_priv *priv)
@@ -594,28 +616,28 @@ struct tamagawa_priv *tamagawa_init(struct tamagawa_xchg *tamagawa_xchg, void *p
     /* If the slice value is 0, it denotes that PRU0 is selected. Assign the register offsets for PRU0 */
     if(slice_value==0)
     {
-        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH2_CFG0 = CSL_ICSSCFG_EDPRU0CH2CFG0REGISTER;
-        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH0_CFG0 = CSL_ICSSCFG_EDPRU0CH0CFG0REGISTER;
-        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH0_CFG1 = CSL_ICSSCFG_EDPRU0CH0CFG1REGISTER;
-        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH1_CFG1 = CSL_ICSSCFG_EDPRU0CH1CFG1REGISTER;
-        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH1_CFG0 = CSL_ICSSCFG_EDPRU0CH1CFG0REGISTER;
-        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH2_CFG1 = CSL_ICSSCFG_EDPRU0CH2CFG1REGISTER;
-        tamagawa_priv.register_offset_val.ICSS_CFG_GPCFGx =    CSL_ICSSCFG_GPCFG0;
-        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_RXCFG = CSL_ICSSCFG_EDPRU0RXCFGREGISTER;
-        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_TXCFG = CSL_ICSSCFG_EDPRU0TXCFGREGISTER;
+        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH2_CFG0 = CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH2_CFG0_REG;
+        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH0_CFG0 = CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG0_REG;
+        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH0_CFG1 = CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG1_REG;
+        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH1_CFG1 = CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH1_CFG1_REG;
+        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH1_CFG0 = CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH1_CFG0_REG;
+        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH2_CFG1 = CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH2_CFG1_REG;
+        tamagawa_priv.register_offset_val.ICSS_CFG_GPCFGx =    CSL_ICSS_PR1_CFG_SLV_GPCFG0_REG;
+        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_RXCFG = CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG;
+        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_TXCFG = CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG;
     }
     /* If the slice value is 1, it denotes that PRU1 is selected. Assign the register offsets for PRU1 */
     else if(slice_value==1)
     {
-        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH0_CFG0 = CSL_ICSSCFG_EDPRU1CH0CFG0REGISTER;
-        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH1_CFG0 = CSL_ICSSCFG_EDPRU1CH1CFG0REGISTER;
-        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH2_CFG0 = CSL_ICSSCFG_EDPRU1CH2CFG0REGISTER;
-        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH0_CFG1 = CSL_ICSSCFG_EDPRU1CH0CFG1REGISTER;
-        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH1_CFG1 = CSL_ICSSCFG_EDPRU1CH1CFG1REGISTER;
-        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH2_CFG1 = CSL_ICSSCFG_EDPRU1CH2CFG1REGISTER;
-        tamagawa_priv.register_offset_val.ICSS_CFG_GPCFGx =    CSL_ICSSCFG_GPCFG1;
-        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_RXCFG = CSL_ICSSCFG_EDPRU1RXCFGREGISTER;
-        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_TXCFG = CSL_ICSSCFG_EDPRU1TXCFGREGISTER;
+        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH0_CFG0 = CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG0_REG;
+        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH1_CFG0 = CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH1_CFG0_REG;
+        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH2_CFG0 = CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH2_CFG0_REG;
+        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH0_CFG1 = CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG1_REG;
+        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH1_CFG1 = CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH1_CFG1_REG;
+        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH2_CFG1 = CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH2_CFG1_REG;
+        tamagawa_priv.register_offset_val.ICSS_CFG_GPCFGx =    CSL_ICSS_PR1_CFG_SLV_GPCFG1_REG;
+        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_RXCFG = CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG;
+        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_TXCFG = CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG;
     }
 
     return &tamagawa_priv;

@@ -40,13 +40,6 @@ extern "C" {
 
 #include <drivers/hw_include/hw_types.h>
 
-#define HWREG(x)                                                               \
-        (*((volatile uint32_t *)(x)))
-#define HWREGB(x)                                                              \
-        (*((volatile uint8_t *)(x)))
-#define HWREGH(x)                                                              \
-        (*((volatile uint16_t *)(x)))
-
 /* for DDR trace*/
 #define DDR_START_OFFSET 0x80000000
 #define DDR_LIMIT 0x3FFFFFFF
@@ -55,6 +48,26 @@ extern "C" {
 #define NUM_RESOURCES 5000 //4210752 (0x3fff_ffff div 0xff)
 /* UDMA TR packet descriptor memory size - with one TR */
 #define UDMA_TEST_TRPD_SIZE             (UDMA_GET_TRPD_TR15_SIZE(1U))
+#ifndef SOC_AM261X
+/*TSR configuration:*/
+
+/*inEvent value:*/
+/* ICSSG_0_EDC1_SYNC0 ICSSG0 IEP1 sync event 0 Pulse */
+#define SYNCEVENT_INTRTR_IN_27 27
+
+/*outEvent values:*/
+/*SYNC0_OUT Pin Selectable timesync event 24 Edge (4+(24*4)) */
+#define SYNCEVT_RTR_SYNC28_EVT 0x64
+/* SYNC1_OUT Pin Selectable timesync event 25 Edge (4+(25*4)) */
+#define SYNCEVT_RTR_SYNC29_EVT 0x68
+/* SYNC2_OUT Pin Selectable timesync event 26 Edge (4+(26*4)) */
+#define SYNCEVT_RTR_SYNC30_EVT 0x6C
+/* SYNC3_OUT Pin Selectable timesync event 27 Edge (4+(27*4)) */
+#define SYNCEVT_RTR_SYNC31_EVT 0x70
+/* ICSSG0_PR1_EDC1_LATCH0_IN PRU_ICSSG0 (4+(10*4)) */
+#define SYNCEVT_RTR_SYNC10_EVT 0x2C
+
+#endif
 
 #ifdef __cplusplus
 }

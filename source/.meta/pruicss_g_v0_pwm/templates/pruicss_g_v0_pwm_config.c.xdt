@@ -54,6 +54,50 @@ PRUICSS_PWM_IEP_Attrs iepAttrs[] =
         %{
         .enableIep0ResetOnCompare0 = 0U,
         %}
+
+        /*enableIep1, enableIep1ResetOnCompare0, enableIep1ResetOnEpwm0_Sync, enableIep1ResetOnEpwm3_Sync becomes invalid 
+        when IEP1 slave mode is enabled & IEP1 follows IEP0 counter*/
+        %if(pwm_module.$instances[i].PRUICSS_PWM_IEP.enableIep1)
+        %{
+        .enableIep1 = 1U,
+        %}
+        %else
+        %{
+        .enableIep1 = 0U,
+        %}
+        %if(pwm_module.$instances[i].PRUICSS_PWM_IEP.enableIEP1ShadowMode)
+        %{
+        .enableIEP1ShadowMode = 1U,
+        %}
+        %else
+        %{
+        .enableIEP1ShadowMode = 0U,
+        %}
+        %if(pwm_module.$instances[i].PRUICSS_PWM_IEP.enableIep1ResetOnEpwm0_Sync)
+        %{
+        .enableIep1ResetOnEpwm0_Sync = 1U,
+        %}
+        %else
+        %{
+        .enableIep1ResetOnEpwm0_Sync = 0U,
+        %}
+        %if(pwm_module.$instances[i].PRUICSS_PWM_IEP.enableIep1ResetOnEpwm3_Sync)
+        %{
+        .enableIep1ResetOnEpwm3_Sync = 1U,
+        %}
+        %else
+        %{
+        .enableIep1ResetOnEpwm3_Sync = 0U,
+        %}
+        %if(pwm_module.$instances[i].PRUICSS_PWM_IEP.enableIep1ResetOnCompare0)
+        %{
+        .enableIep1ResetOnCompare0 = 1U,
+        %}
+        %else
+        %{
+        .enableIep1ResetOnCompare0 = 0U,
+        %}
+
         %if(pwm_module.$instances[i].PRUICSS_PWM_IEP.enableIep1SlaveMode)
         %{
         .enableIep1SlaveMode = 1U,

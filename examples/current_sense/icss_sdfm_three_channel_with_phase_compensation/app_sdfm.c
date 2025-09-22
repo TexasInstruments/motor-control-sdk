@@ -86,10 +86,10 @@
 /* Test ICSSG instance ID */
 #define TEST_ICSSG_INST_ID              ( CONFIG_PRU_ICSS0 )
 /* Test ICSSG slice ID */
-#define TEST_PRU_SLICE_ID             ( ICSSG_SLICE_ID_0 )
+#define TEST_PRU_SLICE_ID              ( CONFIG_SDFM0_SLICE )
 
 /* R5F interrupt settings for ICSSG */
-#define ICSSG_PRU_SDFM_INT_NUM          ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_3 )  /* VIM interrupt number */
+#define ICSSG_PRU_SDFM_INT_NUM          ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_1 )
 
 /* EPWM0 IRQ handler */
 static void epwmIrqHandler(void *handle);
@@ -121,14 +121,10 @@ uint32_t gEpwm0BaseAddr;    /* EPWM0 base address */
 EPwmObj_t gEpwm0Obj;        /* EPWM0 object */
 Epwm_Handle hEpwm0;         /* EPWM0 handle */
 
-
-
 volatile uint32_t gEpwmOutFreq = APP_EPWM_OUTPUT_FREQ; /* EPWM output frequency */
-
 
 /* ICSSG PRU SDFM FW IRQ handler */
 static void pruSdfmIrqHandler(void *handle);
-
 
 /* Test ICSSG handle */
 PRUICSS_Handle gPruIcssHandle;
@@ -146,11 +142,6 @@ __attribute__((section(".gSdfmSampleOutput"))) uint32_t gSdfm_sampleOutput[NUM_C
 SdfmPrms gTestSdfmPrms ;
 
 #define PRUICSS_G_MUX_EN    ( 0x1 ) /* ICSSG_SA_MX_REG:G_MUX_EN */
-
-/* GPIO enable signal for EPWM0-2 on 3-axis breakout board */
-uint32_t gMtr1PwnEnGpioBaseAddr = GPIO_MTR_1_PWM_EN_BASE_ADDR;
-uint32_t gMtr1PwnEnGpioPin      = GPIO_MTR_1_PWM_EN_PIN;
-uint32_t gMtr1PwnEnGpioPinDir   = GPIO_MTR_1_PWM_EN_DIR;
 
 /* Flag for continuing to execute test */
 volatile Bool gRunFlag = TRUE;
@@ -260,7 +251,6 @@ void init_pwm()
     DebugP_assert(hEpwm1 != NULL);
 #endif 
 }
-
 void init_sdfm()
 {
     int32_t status;
@@ -281,32 +271,36 @@ void init_sdfm()
     status              = HwiP_construct(&gIcssgPruSdfmHwiObject, &hwiPrms);
     DebugP_assert(status == SystemP_SUCCESS);
 
-   /* Configure  axis level Sdfm parameters */
+   /* Configure axis level Sdfm  parameters */
     sdfmGlobalParamsConfig(&gTestSdfmPrms);
 
     gTestSdfmPrms.icssgInsId = TEST_ICSSG_INST_ID;
+#if (TEST_PRU_SLICE_ID == PRUICSS_PRU1)
+    gTestSdfmPrms.pruInsId = PRUICSS_PRU1;
+#else
     gTestSdfmPrms.pruInsId = PRUICSS_PRU0; 
+#endif
     gTestSdfmPrms.pruSliceId = TEST_PRU_SLICE_ID;
 
     gTestSdfmPrms.epwmOutFreq = APP_EPWM_OUTPUT_FREQ;
     
-
-#if (CONFIG_SDFM0_CHANNEL0 != 0)
     sdfmParamsConfig(0, &gTestSdfmPrms);
-#endif
-#if (CONFIG_SDFM0_CHANNEL1 != 0)
     sdfmParamsConfig(1, &gTestSdfmPrms);
-#endif
-#if (CONFIG_SDFM0_CHANNEL2 != 0)
     sdfmParamsConfig(2, &gTestSdfmPrms);
-#endif
 
+    gPruIcssPwmHandle = PRUICSS_PWM_open(CONFIG_PRUICSS_PWM0, gPruIcssHandle);
+    DebugP_assert(gPruIcssPwmHandle != NULL);
+    
     gHPruSdfm->gPruPwmHandle = gPruIcssPwmHandle;
 
     /*sample output base address for all channel*/
     gTestSdfmPrms.samplesBaseAddress = (uint32_t)&gSdfm_sampleOutput;
     /* Initialize PRU cores for SDFM */
+#if (TEST_PRU_SLICE_ID == PRUICSS_PRU1)
+    status = initPruSdfm(gPruIcssHandle, PRUICSS_PRU1, &gTestSdfmPrms, &gHPruSdfm);
+#else
     status = initPruSdfm(gPruIcssHandle, PRUICSS_PRU0, &gTestSdfmPrms, &gHPruSdfm);
+#endif
     if (status != SDFM_ERR_NERR) 
     {
         DebugP_log("Error: initPruSdfm() fail.\r\n");
@@ -324,12 +318,6 @@ void sdfm_main(void *args)
 
     /* Output build time */
     DebugP_log("Build timestamp      : %s %s\r\n", __DATE__, __TIME__);
-
-
-    /* Enable EPWM0-2 on 3-axis Breakout Board */
-    GPIO_setDirMode(gMtr1PwnEnGpioBaseAddr, gMtr1PwnEnGpioPin, gMtr1PwnEnGpioPinDir);
-    GPIO_pinWriteHigh(gMtr1PwnEnGpioBaseAddr, gMtr1PwnEnGpioPin);
-    GPIO_pinWriteLow(gMtr1PwnEnGpioBaseAddr, gMtr1PwnEnGpioPin);
 
     /*
      *  Configure EPWM0
@@ -350,12 +338,7 @@ void sdfm_main(void *args)
     /* Config IEP SYNC1 delay based on phase compensation  */
     SDFM_configSync1Delay(gHPruSdfm, iepCount);
 #endif
-    /* Start EPWM0 clock */
-    CSL_REG32_WR(CSL_CTRL_MMR0_CFG0_BASE + CSL_MAIN_CTRL_MMR_CFG0_EPWM_TB_CLKEN, 1);
-
-    /* Force SW sync for EPWM0 */
-    EPWM_tbTriggerSwSync(gEpwm0BaseAddr);
-
+   
     while(gRunFlag == TRUE)
     {
         ;
@@ -383,22 +366,14 @@ void pruSdfmIrqHandler(void *args)
     /* debug, inncrement PRU SDFM IRQ count */
     gPruSdfmIrqCnt++;
     /* Clear interrupt at source */
-    /* Write 18 to ICSSG_STATUS_CLR_INDEX_REG
-        Firmware:   TRIGGER_HOST_SDFM_IRQ defined as 18
-        18 = 16+2, 2 is Host Interrupt Number. See AM64x TRM.
-    */
-    PRUICSS_clearEvent(gPruIcssHandle, PRU_TRIGGER_HOST_SDFM_EVT);
+    PRUICSS_clearEvent(gPruIcssHandle, PRU_TRIGGER_HOST_SDFM_EVT_CH0);
 
     if(sdfmPruIdxCnt >= MAX_SAMPLES)
     {
-        sdfmPruIdxCnt = 0;      
+        sdfmPruIdxCnt = 0;
     }
-
-    /* SDFM Output sample for Channel 0 */
     sdfm_ch_samples[SDFM_CH0][sdfmPruIdxCnt] = SDFM_getFilterData(gHPruSdfm, 0);
-    /* SDFM Output sample for Channel 1 */
     sdfm_ch_samples[SDFM_CH1][sdfmPruIdxCnt] = SDFM_getFilterData(gHPruSdfm, 1);
-    /* SDFM Output sample for Channel 2 */
     sdfm_ch_samples[SDFM_CH2][sdfmPruIdxCnt] = SDFM_getFilterData(gHPruSdfm, 2);
 
     sdfmPruIdxCnt++;

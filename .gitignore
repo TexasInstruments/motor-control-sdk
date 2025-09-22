@@ -1,5 +1,5 @@
 lib/
-!source/sfra/lib*
+!source/rtlibs/sfra/lib*
 obj/
 node_modules/
 coverage/
@@ -21,12 +21,20 @@ docs/datasheet*
 *.appimage.signed
 *.appimage.hs
 *.appimage.hs_fs
+*.appimage_qspi.hs
 *.bin
 *.tiimage
 *.tiimage.hs
+*.mcelf
+*.mcelf.hs
+*.mcelf-enc
+*.mcelf_xip
 *-fw
 *.obj
 *.vscode/
+*.vscode-ctags
+*.lnkxml
+*.ossr
 temp_stdout_*.txt
 ccs_projects/
 generated/
@@ -73,3 +81,6 @@ ind_comms_sdk
 .repo/*
 mcupsdk_setup
 *ti-pru-cgt_linkinfo.xml
+.west/*
+repo_manifests.git/*
+repo_manifests.git

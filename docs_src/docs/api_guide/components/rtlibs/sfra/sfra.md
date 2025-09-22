@@ -7,9 +7,9 @@
 The Software Frequency Response Analyzer (SFRA) is a software library that enables developers to
 quickly measure the frequency response of their digital power converter. The SFRA library contains
 software functions that inject a frequency into the control loop and measure the response of the system
-using the Sitara MCUs’ on-chip analog to digital converter (ADC). This process provides the plant
+using the Sitara™ microcontrollers' on-chip analog to digital converter (ADC). This process provides the plant
 frequency response characteristics, the open loop gain frequency response and the closed loop frequency
-response of the closed loop system. 
+response of the closed loop system.
 
 This library contains header file (sfra_f32.h) and ".lib" file based on release/debug configuration.
 
@@ -24,21 +24,21 @@ SFRA module includes calculation and storage of following:
 
 SFRA contains Matlab scripts used for following:
 
-- Extract the data from excel sheet (which needs to be in same format as "SFRA.xlsx") and plot the boded plots
-- Compare boded plots with laplace transfer function provided in script (user can change transfer function as per use case)
-- Script uses sisotool to design the compensation based on boded plots (User need access for Matlab Control System Toolbox)
+- Extract the data from excel sheet (which needs to be in same format as "SFRA.xlsx") and plot the bode plots
+- Compare bode plots with Laplace transfer function provided in script (user can change transfer function as per use case)
+- Script uses sisotool to design the compensation based on bode plots (User needs access to Matlab Control System Toolbox)
 ## Features Not Supported
 
 GUI is not supported
 
 ## Benchmark Results
 
-A benchmark on R5F core has been conducted to observe the following results when running the following functions:
+A benchmark on Arm® Cortex®-R5F core has been conducted to observe the following results when running the following functions:
 
 <table>
 <tr>
     <th>SFRA Function
-    <th>Cpu Cycles
+    <th>CPU Cycles
 <tr>
     <td>SFRA_F32_reset</td>
     <td>15</td>
@@ -76,17 +76,18 @@ A benchmark on R5F core has been conducted to observe the following results when
 </table>
 
 - Ran with TI Clang Compiler v3.2.1.LTS, with -Os flag and functions force-inlined onto the benchmarking function placed in TCM memory. Obtained the average result from 500 consecutive loops of running sfra functions with DPL CycleCountP, mimicking the usage of a control loop and overhead (~10 cycles) is removed.
-- Actual result may vary depending on provided datasets and memory configuration. For R5F, it is recommended for users to map control loops to TCM for the best performance.
-## Provided Examples 
+- Actual result may vary depending on provided datasets and memory configuration. For Arm Cortex-R5F, it is recommended for users to map control loops to TCM for the best performance.
 
-The following examples has been provided to demonstrate sfra module:
+\cond SOC_AM261X || SOC_AM263PX || SOC_AM263X
+## Provided Examples
+
+The following examples have been provided to demonstrate sfra module:
 
 - \ref EXAMPLES_SFRA_TEST
-
-## Additional References {#SFRA_ADDITIONAL_REFERENCES}
-
-N/A
+\endcond
 
 ## API
 
 \ref SFRA_API_MODULE
+
+\note Arm is a registered trademark of Arm Limited (or its subsidiaries or affiliates) in the US and/or elsewhere.

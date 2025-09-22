@@ -2,53 +2,32 @@
 This page lists all the examples and demos supported in this SDK.
 
 \cond SOC_AM64X
-- Position Sense
-    - \subpage EXAMPLE_MOTORCONTROL_ENDAT
-    - \subpage EXAMPLE_MOTORCONTROL_HDSL
-    - \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA
-- Current Sense
-    - \subpage EXAMPLES_MOTORCONTROL_SDFM
-- PRU-ICSS PWM
-    - \subpage EXAMPLE_PRUICSS_PWM_DEADBAND_EPWM_SYNC
+- \subpage EXAMPLES_POSITION_SENSE
+- \subpage EXAMPLES_CURRENT_SENSE
+- \subpage EXAMPLE_PRUICSS_PWM_DEADBAND_EPWM_SYNC
 \endcond
 
 \cond SOC_AM243X
-- Reference Design
-    - \subpage EXAMPLE_TIDEP_01032_REFERENCE_DESIGN
-- Position Sense
-    - \subpage EXAMPLE_MOTORCONTROL_ENDAT
-    - \subpage EXAMPLE_MOTORCONTROL_HDSL
-    - \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA
-    - \subpage EXAMPLE_MOTORCONTROL_BISSC
-    - \subpage EXAMPLE_MOTORCONTROL_NIKON
-- Current Sense
-    - \subpage EXAMPLES_MOTORCONTROL_SDFM
-        - \ref BASIC_SDFM_EXAMPLES
-        - \ref BASIC_SDFM_EXAMPLES_WITH_CONTINUOUS_NC
-        - \ref BASIC_SDFM_EXAMPLE_WITH_PHASE_DELAY
-- Real Time Libraries
-    - DCL
-        - \subpage EXAMPLES_DCL_PI
-        - \subpage EXAMPLES_DCL_DF22
-    - Transforms
-        - \subpage EXAMPLES_TRANSFORMS_TEST
-- PRU-ICSS PWM
-    - \subpage EXAMPLE_PRUICSS_PWM_DEADBAND_EPWM_SYNC
+- \subpage EXAMPLE_TIDEP_01032_REFERENCE_DESIGN
+- \subpage EXAMPLES_POSITION_SENSE
+- \subpage EXAMPLES_CURRENT_SENSE
+- \subpage EXAMPLES_PRUICSS_PWM
+- \subpage EXAMPLES_REAL_TIME_LIBRARIES
+- \subpage EXAMPLES_PRUICSS_TIME_SYNC
 \endcond
 
 \cond SOC_AM263X
-- Reference Design
-    - \subpage  EXAMPLE_TIDM_02018_REFERENCE_DESIGN
-- Position Sense
-    - \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA_OVER_UART
-- Real Time Libraries
-    - DCL
-        - \subpage EXAMPLES_DCL_PI
-        - \subpage EXAMPLES_DCL_DF22
-    - Transforms
-        - \subpage EXAMPLES_TRANSFORMS_TEST
-    - SFRA
-        - \subpage EXAMPLES_SFRA_TEST
-    - DATALOG
-        - \subpage EXAMPLES_DATALOG_TEST
+- \subpage  EXAMPLE_TIDM_02018_REFERENCE_DESIGN
+- \subpage EXAMPLES_POSITION_SENSE
+- \subpage EXAMPLES_REAL_TIME_LIBRARIES
+\endcond
+
+\cond SOC_AM263PX
+- \subpage EXAMPLES_POSITION_SENSE
+- \subpage EXAMPLES_REAL_TIME_LIBRARIES
+\endcond
+
+\cond SOC_AM261X
+- \subpage EXAMPLES_POSITION_SENSE
+- \subpage EXAMPLES_REAL_TIME_LIBRARIES
 \endcond

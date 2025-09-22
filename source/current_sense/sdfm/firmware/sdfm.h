@@ -87,11 +87,11 @@ __sdfm_h    .set    1
         .asg    R22.b1, SD_CH1_ID                ; SD Channel1 ID
         .asg    R22.b2, SD_CH2_ID                ; SD Channel2 ID  
         .asg    R22.b3, NC_SAMPLE_COUNT          ; min no. of continuous sample for sin filter
-        .asg    R20, OUT_SAMP_BUF_REG           ; address of local interleaved NC output sample buffer
+        .asg    R20, OUT_SAMP_BUF_REG            ; address of local interleaved NC output sample buffer
 
         .asg    R28.b0,  SAMP_CNT_REG             ; NC sample count
         .asg    R28.b1,  SAMP_NAME                ; First/second sample number
-        .asg    R28.b2,  NC_OUTPUT_SAMP         ;
+        .asg    R28.b2,  NC_CHANNEL_MASK          ; NC channel mask 
         .asg    R28.b3,  EN_DOUBLE_UPDATE
 
 ;Fast detect registers(using only in SDFM init)

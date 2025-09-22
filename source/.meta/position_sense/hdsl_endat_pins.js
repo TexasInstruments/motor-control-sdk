@@ -15,15 +15,36 @@ function getInterfacePinList(inst)
     pinList.push({ pinName: "GPO2", displayName: "ENDAT0_OUT_EN", rx: false});
     pinList.push({ pinName: "GPO1", displayName: "ENDAT0_OUT", rx: false});
     pinList.push({ pinName: "GPO0", displayName: "ENDAT0_CLK", rx: false});
-    pinList.push({ pinName: "GPI13", displayName: "ENDAT0_IN", rx: true});
+    if(inst.G_MUX_EN)
+    {
+        pinList.push({ pinName: "GPI13", displayName: "ENDAT0_IN", rx: true});
+    }
+    else
+    {
+        pinList.push({ pinName: "GPI9", displayName: "ENDAT0_IN", rx: true});
+    }
 
     pinList.push({ pinName: "GPO5", displayName: "ENDAT1_OUT_EN", rx: false});
     pinList.push({ pinName: "GPO4", displayName: "ENDAT1_OUT", rx: false});
     pinList.push({ pinName: "GPO3", displayName: "ENDAT1_CLK", rx: false});
-    pinList.push({ pinName: "GPI14", displayName: "ENDAT1_IN", rx: true});
+    if(inst.G_MUX_EN)
+    {
+        pinList.push({ pinName: "GPI14", displayName: "ENDAT1_IN", rx: true});
+    }
+    else
+    {
+        pinList.push({ pinName: "GPI10", displayName: "ENDAT1_IN", rx: true});
+    }
 
     pinList.push({ pinName: "GPO8", displayName: "ENDAT2_OUT_EN", rx: false});
-    pinList.push({ pinName: "GPO12", displayName: "ENDAT2_OUT", rx: false});
+    if(inst.G_MUX_EN)
+    {
+        pinList.push({ pinName: "GPO12", displayName: "ENDAT2_OUT", rx: false});
+    }
+    else
+    {
+        pinList.push({ pinName: "GPO7", displayName: "ENDAT2_OUT", rx: false});
+    }
     pinList.push({ pinName: "GPO6", displayName: "ENDAT2_CLK", rx: false});
     pinList.push({ pinName: "GPI11", displayName: "ENDAT2_IN", rx: true});
 
@@ -43,31 +64,31 @@ function pinmuxRequirements(inst) {
         pinmux.setConfigurableDefault( pinResource, "rx", pin.rx );
 
         if((inst["Channel_0"]==true) || (inst["channel_0"]==true)){
-           if( (pin.pinName == "GPO2") || (pin.pinName == "GPO1") || (pin.pinName == "GPO0") || (pin.pinName == "GPI13")){
+           if( (pin.pinName == "GPO2") || (pin.pinName == "GPO1") || (pin.pinName == "GPO0") || (pin.pinName == "GPI13") || (pin.pinName == "GPI9")){
                 pinResource.used = true;
            }
         }else{
-            if( (pin.pinName == "GPO2") || (pin.pinName == "GPO1") || (pin.pinName == "GPO0") || (pin.pinName == "GPI13")){
+            if( (pin.pinName == "GPO2") || (pin.pinName == "GPO1") || (pin.pinName == "GPO0") || (pin.pinName == "GPI13") || (pin.pinName == "GPI9")){
                 pinResource.used = false;
             }    
         }
 
         if((inst["Channel_1"]==true) || (inst["channel_1"]==true)){
-            if( (pin.pinName == "GPO5") || (pin.pinName == "GPO4") || (pin.pinName == "GPO3") || (pin.pinName == "GPI14")){
+            if( (pin.pinName == "GPO5") || (pin.pinName == "GPO4") || (pin.pinName == "GPO3") || (pin.pinName == "GPI14") || (pin.pinName == "GPI10")){
                  pinResource.used = true;
             }
          }else{
-            if( (pin.pinName == "GPO5") || (pin.pinName == "GPO4") || (pin.pinName == "GPO3") || (pin.pinName == "GPI14")){
+            if( (pin.pinName == "GPO5") || (pin.pinName == "GPO4") || (pin.pinName == "GPO3") || (pin.pinName == "GPI14") || (pin.pinName == "GPI10")){
                 pinResource.used = false;
             }    
          }
 
          if((inst["Channel_2"]==true) || (inst["channel_2"]==true)){
-            if( (pin.pinName == "GPO8") || (pin.pinName == "GPO12") || (pin.pinName == "GPO6") || (pin.pinName == "GPI11")){
+            if( (pin.pinName == "GPO8") || (pin.pinName == "GPO12") || (pin.pinName == "GPO6") || (pin.pinName == "GPI11") ||  (pin.pinName == "GPO7")){
                  pinResource.used = true;
             }
          }else{
-            if( (pin.pinName == "GPO8") || (pin.pinName == "GPO12") || (pin.pinName == "GPO6") || (pin.pinName == "GPI11")){
+            if( (pin.pinName == "GPO8") || (pin.pinName == "GPO12") || (pin.pinName == "GPO6") || (pin.pinName == "GPI11") ||  (pin.pinName == "GPO7")){
                 pinResource.used = false;
             }    
          }

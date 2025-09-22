@@ -17,10 +17,10 @@
 
 Feature                                                                                         | Module
 ------------------------------------------------------------------------------------------------|-----------------------------------
-Three channel Nikon A-Format with one PRU-ICSSG Slice                                           | Position Sense Nikon A-Format
-Point-to-point and bus connection support for Nikon A-Format                                    | Position Sense Nikon A-Format
-Multiple baud rate support : 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz                        | Position Sense Nikon A-Format
-Long cable (upto 100 meters)                                                                    | Position Sense Nikon A-Format
+Three channel Nikon A-format with one PRU-ICSSG Slice                                           | Position Sense Nikon A-format
+Point-to-point and bus connection support for Nikon A-format                                    | Position Sense Nikon A-format
+Multiple baud rate support : 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz                        | Position Sense Nikon A-format
+Long cable (upto 100 meters)                                                                    | Position Sense Nikon A-format
 Updated HDSL position realignment algorithm                                                     | Position Sense HDSL
 Readiness for BiSS Safety profile by supporting 16 bit CRC and sign-of-life counter             | Position Sense BiSS-C
 Compare event based command trigger support                                                     | Position Sense BiSS-C
@@ -107,7 +107,7 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Single channel, Multi channel using single PRU core and three PRU cores (load share mode), point-to-point connection, daisy chaining, control communication, automatic processing delay detection and compensation, interface speed of 1, 2, 5, 8, and 10 MHz, Long cable (upto 100 meters), safety CRC, sign-of-life counter, Boosterpack with AM243x-LP
+    <td> Single channel, Multi channel using single PRU core and three PRU cores (load share mode), point-to-point connection, daisy chaining, control communication, automatic processing delay detection and compensation, interface speed of 1, 2, 5, 8, and 10 MHz, Long cable (upto 100 meters), safety CRC, sign-of-life counter, Boosterpack with LP-AM243
     <td> -
 </tr>
 <tr>
@@ -115,7 +115,7 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Single channel, Multi channel using single PRU core and three PRU cores (load share mode), Continuous mode, Recovery Time for 2.2 command set, Long cable (upto 100 meters), Boosterpack with AM243x-LP
+    <td> Single channel, Multi channel using single PRU core and three PRU cores (load share mode), Continuous mode, Recovery Time for 2.2 command set, Long cable (upto 100 meters), Boosterpack with LP-AM243
     <td> Encoder receive communication command
 </tr>
 <tr>
@@ -123,15 +123,15 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Single channel, Multi channel using three PRU cores (load share mode), Free Run mode, Sync mode, Short Message Read and Write, Long Message Read and Write, Pipeline Channel Data, Long cable (upto 100 meters) with single channel Free Run mode, Boosterpack with AM243x-LP
+    <td> Single channel, Multi channel using three PRU cores (load share mode), Free Run mode, Sync mode, Short Message Read and Write, Long Message Read and Write, Pipeline Channel Data, Long cable (upto 100 meters) with single channel Free Run mode, Boosterpack with LP-AM243
     <td> 225 MHz PRU-ICSSG Core Clock based firmware, Multi-channel with long cables(100m length), Long cable (upto 100 meters) with sync mode
 </tr>
 <tr>
-    <td> Nikon A-Format
+    <td> Nikon A-format
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Single channel, Multi channel using single PRU core and three PRU cores (load share mode), point-to-point connection, bus connection, ndividual and multiple transmission mode with encoder addresses ranging between ENC1-ENC8, baud rates from 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz, up to 40-bit absolute position (single turn + multi turn) data with additional information, long cable (upto 100 meters), Boosterpack with AM243x-LP
+    <td> Single channel, Multi channel using single PRU core and three PRU cores (load share mode), point-to-point connection, bus connection, individual and multiple transmission mode with encoder addresses ranging between ENC1-ENC8, baud rates from 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz, up to 40-bit absolute position (single turn + multi turn) data with additional information, long cable (upto 100 meters), Boosterpack with LP-AM243
     <td> -
 </tr>
 <tr>
@@ -139,7 +139,7 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Absolute position, Encoder ID, Reset, EEPROM Read, EEPROM Write, 2.5 Mbps and 5 Mbps Encoder Support, Boosterpack with AM243x-LP
+    <td> Absolute position, Encoder ID, Reset, EEPROM Read, EEPROM Write, 2.5 Mbps and 5 Mbps Encoder Support, Boosterpack with LP-AM243
     <td> -
 </tr>
 </table>
@@ -324,7 +324,7 @@ Below features are not support on AM243X LAUNCHPAD due to SOC or board constrain
 </tr>
 <tr>
     <td> PINDSW-7130
-    <td> HDSL: Few protocol resets seen during initialization with Free Run mode on AM243x-LP
+    <td> HDSL: Few protocol resets seen during initialization with Free Run mode on LP-AM243
     <td> Position Sense HDSL
     <td> 9.0 onwards
     <td> -

@@ -173,6 +173,7 @@ function genMakefileDeviceTop(component_file_list, example_file_list, device, is
         example_list: example_make_list,
         system_example_list: system_example_make_list,
         device: device,
+        ...(require(`./device/project_${device}.js`).getEnableGccBuild ? { isGccBuildEnabled:require(`./device/project_${device}.js`).getEnableGccBuild() } : 0),
     };
 
     common.convertTemplateToFile(
@@ -185,7 +186,8 @@ function genMakefileDeviceTop(component_file_list, example_file_list, device, is
         system_example_list: system_example_make_projectspec_list,
         device: device,
         sdkPath: "MOTOR_CONTROL_SDK_PATH",
-        relPath: relPath
+        relPath: relPath,
+        ...(require(`./device/project_${device}.js`).getEnableGccBuild ? { isGccBuildEnabled:require(`./device/project_${device}.js`).getEnableGccBuild() } : 0),
     };
 
     common.convertTemplateToFile(
@@ -256,8 +258,10 @@ function genMakefileExample(example_file_list, device) {
             let common_build_property = require(`./device/project_${device}`).getProperty();
             let project = [];
             let makefileOutPath = common.path.makeExampleOutPath(property.dirPath, buildOption);
+            let makefileDefsOutPath = common.path.makeExampleOutPath(property.dirPath, buildOption);
 
             fs.mkdirSync(makefileOutPath, { recursive: true });
+            fs.mkdirSync(makefileDefsOutPath, { recursive: true });
 
             build_property = require(`../${example}`).getComponentBuildProperty(buildOption);
 
@@ -294,11 +298,18 @@ function genMakefileExample(example_file_list, device) {
                     `.project/templates/makefile_${project.makefile}.xdt`,
                     `${project.dirPath}/makefile`,
                     args);
-            } else
+            } else {
+                common.convertTemplateToFile(
+                        `.project/templates/makefile_${project.type}.xdt`,
+                        `${project.dirPath}/makefile`,
+                        args);
+            }
+
+            // Generate makefile.defs for all examples
             common.convertTemplateToFile(
-                    `.project/templates/makefile_${project.type}.xdt`,
-                    `${project.dirPath}/makefile`,
-                    args);
+                `.project/templates/makefile_defs.xdt`,
+                `${makefileDefsOutPath}/makefile.defs`,
+                args);
         }
     }
 }

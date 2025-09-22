@@ -33,16 +33,16 @@ The Hall algorithm uses an external Hall effect sensor to calculate speed and ro
 
 ## Speed measurement
 
-Speed measurement is a supplement algorithm that measures speed based on the rotor angle. It consists of two different implementations, speedfr (SPDFR) calculates speed from an eQEP encoder signal whereas speedcalc (SPDCALC) estimates frequency of the eSMO observer.
+Speed measurement is a supplemental algorithm that measures speed based on the rotor angle. It consists of two different implementations: speedfr (SPDFR) calculates speed from an eQEP encoder signal whereas speedcalc (SPDCALC) estimates frequency of the eSMO observer.
 
 ## Benchmark Results
 
-A benchmark on R5F core has been conducted to observe the following results when calling each functions:
+A benchmark on Arm® Cortex®-R5F core has been conducted to observe the following results when calling each function:
 
 <table>
 <tr>
     <th>Functions
-    <th>Cpu Cycles
+    <th>CPU Cycles
 </tr>
 <tr><td colspan="2" bgcolor=#F0F0F0> Encoder </td></tr>
 <tr>
@@ -80,16 +80,11 @@ A benchmark on R5F core has been conducted to observe the following results when
 
 </table>
 
-- Ran with TI Clang Compiler v3.2.0.LTS, with -Os flag, obtained the average result from 600 consecutive reading of running the controller with DPL CycleCountP minus the overhead, simulating a control loop scenario.
-- Actual result may vary depending on provided datasets and memory configuration. For R5F, it is recommended for users to map control loops to TCM for the best performance.
-  
-## Provided Examples 
-
-
-## Additional References
-
-N/A
+- Ran with TI Clang Compiler v3.2.0.LTS, with -Os flag, obtained the average result from 600 consecutive readings of running the controller with DPL CycleCountP minus the overhead, simulating a control loop scenario.
+- Actual result may vary depending on provided datasets and memory configuration. For Arm Cortex-R5F, it is recommended for users to map control loops to TCM for the best performance.
 
 ## API
 
 \ref OBSERVERS_MODULE
+
+\note Arm is a registered trademark of Arm Limited (or its subsidiaries or affiliates) in the US and/or elsewhere.

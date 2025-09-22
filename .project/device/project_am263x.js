@@ -1,7 +1,11 @@
 const common = require("../common.js");
 
 const component_file_list = [
+    "source/position_sense/bissc/.project/project.js",
+    "source/position_sense/endat/.project/project.js",
+    "source/position_sense/nikon/.project/project.js",
     "source/position_sense/tamagawa_over_soc_uart/.project/project.js",
+    "source/position_sense/tamagawa/.project/project.js",
 ];
 
 const device_defines = {
@@ -11,23 +15,31 @@ const device_defines = {
 };
 
 const example_file_list = [
-    "examples/dcl/dcl_df22/.project/mcsdk_project.js",
-    "examples/dcl/dcl_pi/.project/mcsdk_project.js",
+    "examples/position_sense/bissc_diagnostic/single_channel/.project/project.js",
+    "examples/position_sense/endat_diagnostic/single_channel/.project/project.js",
+    "examples/position_sense/nikon_diagnostic/single_channel/.project/project.js",
     "examples/position_sense/tamagawa_diagnostic_over_soc_uart/.project/project.js",
-    "examples/sfra/.project/mcsdk_project.js",
-    "examples/transforms/transforms_test/.project/mcsdk_project.js",
-    "examples/utilities/datalog/.project/mcsdk_project.js",
+    "examples/position_sense/tamagawa_diagnostic/single_channel/.project/project.js",
+    "examples/rtlibs/dcl/dcl_df22/.project/mcsdk_project.js",
+    "examples/rtlibs/dcl/dcl_pi/.project/mcsdk_project.js",
+    "examples/rtlibs/sfra/.project/mcsdk_project.js",
+    "examples/rtlibs/transforms/transforms_test/.project/mcsdk_project.js",
+    "examples/rtlibs/utilities/datalog/.project/mcsdk_project.js",
+    "source/position_sense/bissc/firmware/single_channel/.project/project.js",
+    "source/position_sense/endat/firmware/single_channel/.project/project.js",
+    "source/position_sense/nikon/firmware/single_channel/.project/project.js",
+    "source/position_sense/tamagawa/firmware/single_channel/.project/project.js",
 ];
 
 function getProjectSpecCpu(cpu) {
     let projectSpecCpu =
     {
-        "r5fss0-0": "MAIN_PULSAR_Cortex_R5_0_0",
-        "r5fss0-1": "MAIN_PULSAR_Cortex_R5_0_1",
-        "r5fss1-0": "MAIN_PULSAR_Cortex_R5_1_0",
-        "r5fss1-1": "MAIN_PULSAR_Cortex_R5_1_1",
-        "icssm-pru0": "ICSSM_PRU_0",
-        "icssm-pru1": "ICSSM_PRU_1",
+        "r5fss0-0": "Cortex_R5_0",
+        "r5fss0-1": "Cortex_R5_1",
+        "r5fss1-0": "Cortex_R5_2",
+        "r5fss1-1": "Cortex_R5_3",
+        "icss_m0_pru0": "ICSSM_PRU_0",
+        "icss_m0_pru1": "ICSSM_PRU_1",
     }
 
     return projectSpecCpu[cpu];

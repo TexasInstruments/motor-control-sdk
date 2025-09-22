@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require(`path`);
 const _ = require('lodash');
 const template = require("./templateCompiler");
+const versions = require('./toolChainVersions.js');
 
 function concatArrayPropertiesInObject(obj1, obj2, arr_prop, swap) {
     if(obj2.hasOwnProperty(arr_prop)==false)
@@ -184,6 +185,67 @@ function setInstrumentationMode(mode)
     genInstrumentationMode = mode;
 }
 
+/**
+ * Get toolchain versions for a specific device
+ *
+ * @param {string} device - Device identifier (e.g., 'am64x', 'am243x')
+ * @returns {object} Object containing toolchain versions and configurations
+ *                  If device-specific versions aren't found, returns default versions
+ *
+ * @example
+ * // Returns am64x-specific toolchain versions
+ * const versions = getToolVersions('am64x');
+ * console.log(versions.ccsVersion); // "ccs1281"
+ *
+ * // For unknown device, returns default versions
+ * const defaultVersions = getToolVersions('unknown');
+ * console.log(defaultVersions.ccsVersion); // default CCS version
+ */
+function getToolVersions(device) {
+    if (versions.toolVersionsForImportsMakefile.hasOwnProperty(device)) {
+        return versions.toolVersionsForImportsMakefile[device];
+    }
+    return versions.toolVersionsForImportsMakefile.default;
+}
+
+/**
+ * Get SDK version for a specific device
+ *
+ * @param {string} device - Device identifier (e.g., 'am64x', 'am243x')
+ * @returns {string} SDK version string for the specified device
+ *                   If device-specific version isn't found, returns default version
+ *
+ * @example
+ * // Returns am64x-specific SDK version
+ * const sdkVersion = getSdkVersion('am64x');
+ * console.log(sdkVersion); // "11.00.00"
+ *
+ * // For unknown device, returns default SDK version
+ * const defaultVersion = getSdkVersion('unknown');
+ * console.log(defaultVersion); // "10.02.00"
+ */
+function getSdkVersion(device) {
+    if (versions.sdkVersions.hasOwnProperty(device) &&
+        versions.sdkVersions[device].hasOwnProperty('version')) {
+        return versions.sdkVersions[device].version;
+    }
+    return versions.sdkVersions.default.version;
+}
+
+/**
+ * Format SDK version to remove minor version
+ * Converts x.xx.xx.xx to x.xx.xx
+ *
+ * @param {string} version - Full version string (e.g., "10.02.00.01")
+ * @returns {string} Formatted version (e.g., "10.02.00")
+ *
+ * @example
+ * formatSdkVersion("10.02.00.01") // returns "10.02.00"
+ */
+function formatSdkVersion(version) {
+    return version.split('.').slice(0, 3).join('.');
+}
+
 module.exports = {
     genBuildfiles,
     isDevelopmentMode,
@@ -200,4 +262,8 @@ module.exports = {
     deleteFile,
     getDefaultProjectDescription,
     getDefaultSystemProjectDescription,
+    versions,
+    getToolVersions,
+    getSdkVersion,
+    formatSdkVersion,
 };

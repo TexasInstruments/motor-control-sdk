@@ -1,0 +1,383 @@
+/*
+ *  Copyright (C) 2025 Texas Instruments Incorporated
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
+ *
+ *    Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ *    Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the
+ *    distribution.
+ *
+ *    Neither the name of Texas Instruments Incorporated nor the names of
+ *    its contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ *  A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ *  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ *  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ *  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ *  \file           sys_main.c
+ *  \brief          This project is used to implement motor control with sensored FOC with
+ *                  absolute position and sigma delta.
+ *                  Supports multiple TI EVM boards.
+*/
+
+/*
+*  include the related header files
+*/
+#include <stdio.h>
+#include <kernel/dpl/DebugP.h>
+#include "ti_drivers_config.h"
+#include "ti_drivers_open_close.h"
+#include "ti_board_open_close.h"
+
+
+#include <drivers/hw_include/tistdtypes.h>
+#include <kernel/dpl/TimerP.h>
+
+#include "user.h"
+#include "sys_settings.h"
+#include "sys_main.h"
+
+__attribute__ ((section("sys_data"))) volatile SYSTEM_Vars_t systemVars;
+
+
+#if defined(CPUTIME_ENABLE)
+__attribute__ ((section("sys_data"))) volatile float32_t cpuCyclesAv;
+__attribute__ ((section("sys_data"))) volatile uint32_t cpuCycles;
+__attribute__ ((section("sys_data"))) volatile uint32_t cycleCountBefore;
+__attribute__ ((section("sys_data"))) volatile uint32_t cycleCountAfter;
+__attribute__ ((section("sys_data"))) volatile uint32_t cycleCountAfter2;
+__attribute__ ((section("sys_data"))) volatile float32_t ISRcount;
+#endif  // CPUTIME_ENABLE
+
+void universal_motorcontrol_main(void *args)
+{
+
+#if defined(SYSCONFIG_EN)
+    systemVars.projectConfig = PRJ_DEV_SYSCONFIG;
+#else
+    systemVars.projectConfig = PRJ_NON_SYSCONFIG;
+#endif  // SYSCONFIG_EN
+
+#if defined(BP_AM2BLDCSERVO)
+    systemVars.boardKit = BOARD_BP_AM2BLDCSERVO;    // BP_AM2BLDCSERVO
+#else
+#error Please define a supported board for this project
+#endif
+
+#if defined(MOTOR1_ESMO)
+    systemVars.estType_M1 = EST_TYPE_ESMO;         // the estimator is ESMO
+#elif defined(MOTOR1_ESMO) && defined(MOTOR1_ENC)
+    systemVars.estType_M1 = EST_TYPE_ESMO_ENC;     // the estimator is ESMO and ENC
+#elif defined(MOTOR1_ABS_ENC)
+    systemVars.estType_M1 = EST_TYPE_ABS_ENC;      // the sensor is ABS-ENC
+#elif defined(MOTOR1_ENC)
+    systemVars.estType_M1 = EST_TYPE_ENC;          // the sensor is ENC
+#elif defined(MOTOR1_HALL)
+    systemVars.estType_M1 = EST_TYPE_HALL;         // the sensor is HALL
+#else
+#error Note select a right estimator/sensor for this project
+#endif
+
+#if defined(MOTOR2_ESMO)
+    systemVars.estType_M2 = EST_TYPE_ESMO;         // the estimator is ESMO
+#elif defined(MOTOR2_ESMO) && defined(MOTOR2_ENC)
+    systemVars.estType_M2 = EST_TYPE_ESMO_ENC;     // the estimator is ESMO and ENC
+#elif defined(MOTOR2_ABS_ENC)
+    systemVars.estType_M2 = EST_TYPE_ABS_ENC;      // the sensor is ABS-ENC
+#elif defined(MOTOR2_ENC)
+    systemVars.estType_M2 = EST_TYPE_ENC;          // the sensor is ENC
+#elif defined(MOTOR2_HALL)
+    systemVars.estType_M2 = EST_TYPE_HALL;         // the sensor is HALL
+#else
+#error Note select a right estimator/sensor for this project
+#endif
+
+#if defined(MOTOR1_INLINE_SDFM)
+    systemVars.currentSenseType_M1 = CURSEN_TYPE_INLINE_SDFM;
+#else
+#error Note select a right current sensor for this project
+#endif  // Current Sense Type
+
+#if defined(MOTOR2_INLINE_SDFM)
+    systemVars.currentSenseType_M2 = CURSEN_TYPE_INLINE_SDFM;
+#else
+#error Note select a right current sensor for this project
+#endif  // Current Sense Type
+
+    //  Open drivers and boards
+    Drivers_open();
+    Board_driversOpen();
+
+#if defined(CPUTIME_ENABLE)
+    /* initialize PMU Cycle Counter*/
+    CycleCounterP_init(SOC_getSelfCpuClk());
+#endif  // CPUTIME_ENABLE
+
+
+    // initialize the driver
+    halHandle = HAL_init(&hal, sizeof(hal));
+
+    // set the driver parameters
+    HAL_setParams(halHandle);
+
+    //set control parameters for motor 1
+    motorHandle_M1 = (MOTOR_Handle)(&motorVars_M1);
+
+    // set the reference speed, this can be replaced or removed
+    motorVars_M1.flagEnableRunAndIdentify = FALSE;
+
+    motorVars_M1.speedRef_Hz = 8.0f;       // Hz
+    motorVars_M1.speedRef_rpm = MAX_SPD_RPM;     // rpm
+    userParams_M1.flag_bypassMotorId = TRUE;
+
+
+    initMotor1Handles(motorHandle_M1);
+    initMotorCtrlParameters(motorHandle_M1);
+
+    // set up gate driver after completed GPIO configuration
+    motorVars_M1.faultMtrNow.bit.gateDriver =
+    HAL_MTR_setGateDriver(motorHandle_M1->halMtrHandle);
+
+    // set control parameters for motor 2
+    motorHandle_M2 = (MOTOR_Handle)(&motorVars_M2);
+    // set the reference speed, this can be replaced or removed
+    motorVars_M2.flagEnableRunAndIdentify = FALSE;
+    motorVars_M2.speedRef_Hz = 8.0f;       // Hz
+    motorVars_M2.speedRef_rpm = MAX_SPD_RPM;     // rpm
+    userParams_M2.flag_bypassMotorId = TRUE;
+    
+    initMotor2Handles(motorHandle_M2);
+    
+    initMotorCtrlParameters(motorHandle_M2);
+
+
+
+    motorVars_M2.faultMtrNow.bit.gateDriver =
+    HAL_MTR_setGateDriver(motorHandle_M2->halMtrHandle);
+    
+
+
+#if defined(DATALOG_EN)
+    // Initialize Datalog
+    datalogHandle = DATALOG_init(&datalog, sizeof(datalog), manual, 0, 1);
+    DATALOG_Obj *datalogObj = (DATALOG_Obj *)datalogHandle;
+    datalogObj->flag_enableLogData = 1;
+
+#if (DMC_BUILDLEVEL <= DMC_LEVEL_2)
+#if defined(MOTOR1_INLINE_SDFM)
+    datalogObj->iptr[0] = (float32_t*) &motorVars_M1.sdfmData.I_A.value[0];
+    datalogObj->iptr[1] = (float32_t*) &motorVars_M1.sdfmData.I_A.value[1];
+    datalogObj->iptr[2] = (float32_t*) &motorVars_M1.sdfmData.I_A.value[2];
+#else
+    datalogObj->iptr[0] = (float32_t*) &motorVars_M1.adcData.V_V.value[0];
+    datalogObj->iptr[1] = (float32_t*) &motorVars_M1.adcData.V_V.value[1];
+    datalogObj->iptr[2] = (float32_t*) &motorVars_M1.adcData.V_V.value[2];
+#endif
+    datalogObj->iptr[3] = (float32_t*) &motorVars_M1.angleFOC_rad;
+#elif (DMC_BUILDLEVEL == DMC_LEVEL_3)
+#if defined(MOTOR1_INLINE_SDFM)
+    datalogObj->iptr[0] = (float32_t*) &motorVars_M1.sdfmData.I_A.value[0];
+    datalogObj->iptr[1] = (float32_t*) &motorVars_M1.sdfmData.I_A.value[1];
+    datalogObj->iptr[2] = (float32_t*) &motorVars_M1.sdfmData.I_A.value[2];
+#else
+    datalogObj->iptr[0] = (float32_t*) &motorVars_M1.adcData.I_A.value[0];
+    datalogObj->iptr[1] = (float32_t*) &motorVars_M1.adcData.I_A.value[1];
+    datalogObj->iptr[2] = (float32_t*) &motorVars_M1.adcData.I_A.value[2];
+#endif
+    datalogObj->iptr[3] = (float32_t*) &motorVars_M1.angleFOC_rad;
+#elif (DMC_BUILDLEVEL == DMC_LEVEL_4)
+#if defined(MOTOR1_INLINE_SDFM)
+    datalogObj->iptr[0] = (float32_t*) &motorVars_M1.sdfmData.I_A.value[0];
+    datalogObj->iptr[1] = (float32_t*) &motorVars_M1.sdfmData.V_V.value[0];
+#else
+    datalogObj->iptr[0] = (float32_t*) &motorVars_M1.adcData.I_A.value[0];
+    datalogObj->iptr[1] = (float32_t*) &motorVars_M1.adcData.V_V.value[0];
+#endif
+    datalogObj->iptr[2] = (float32_t*) &motorVars_M1.speed_Hz;
+    datalogObj->iptr[3] = (float32_t*) &motorVars_M1.angleFOC_rad;
+#endif  // DMC_BUILDLEVEL = DMC_LEVEL_1/2/3/4
+#endif  //DATALOG_EN
+
+#if defined(STEP_RP_EN)
+    GRAPH_init(&stepRPVars,
+               &motorVars_M1.speedRef_Hz, &motorVars_M1.speed_Hz,
+               &motorVars_M1.IdqRef_A.value[0], &motorVars_M1.Idq_in_A.value[0],
+               &motorVars_M1.IdqRef_A.value[1], &motorVars_M1.Idq_in_A.value[1]);
+#endif  // STEP_RP_EN
+
+
+    systemVars.flagEnableSystem = FALSE;
+    motorVars_M1.flagEnableOffsetCalc = TRUE;
+
+    //Run offset calibration for motor 1
+    runMotorOffsetsCalculation(motorHandle_M1);
+
+    motorVars_M2.flagEnableOffsetCalc = TRUE;
+
+    //Run offset calibration for motor 1
+    runMotorOffsetsCalculation(motorHandle_M2);
+
+    // Hardware interrupt instance
+    HwiP_Params hwiPrms;
+    int32_t status;
+    static HwiP_Object gAdcHwiObject;
+
+#if defined(MOTOR1_INLINE_SDFM)
+    /* Register & enable interrupt */
+    HwiP_Params_init(&hwiPrms);
+    hwiPrms.intNum = MOTOR1_ICSSG_PRU_SDFM_INT_NUM;
+    hwiPrms.callback = &motor1CtrlISR;
+    hwiPrms.isPulse = FALSE;
+    hwiPrms.isFIQ   = FALSE;
+    hwiPrms.args = 0;
+    status = HwiP_construct(&gAdcHwiObject, &hwiPrms);
+    DebugP_assert(status == SystemP_SUCCESS);
+
+    /* Clear the SDFM interrupt */
+    HAL_ackMtrSdfmInt(MTR_1);
+
+#if defined (MOTOR2_INLINE_SDFM)
+    /* Register & enable interrupt */
+    HwiP_Params_init(&hwiPrms);
+    hwiPrms.intNum = MOTOR2_ICSSG_PRU_SDFM_INT_NUM;
+    hwiPrms.callback = &motor2CtrlISR;
+    hwiPrms.isPulse = FALSE;
+    hwiPrms.args = 0;
+    status = HwiP_construct(&gAdcHwiObject, &hwiPrms);
+    DebugP_assert(status == SystemP_SUCCESS);
+
+    /* Clear the SDFM interrupt */
+    HAL_ackMtrSdfmInt(MTR_2);
+#endif
+#endif
+
+
+    systemVars.powerRelayWaitTime_ms = POWER_RELAY_WAIT_TIME_ms;
+
+    // Waiting one second for enable system flag to be set
+    while(systemVars.flagEnableSystem == FALSE)
+    {
+        if(HAL_getCPUTimerStatus(halHandle, HAL_CPU_TIMER0))
+        {
+            HAL_clearCPUTimerFlag(halHandle, HAL_CPU_TIMER0);
+
+            systemVars.timerBase_1ms++;
+
+            if(systemVars.timerBase_1ms > systemVars.powerRelayWaitTime_ms)
+            {
+                systemVars.flagEnableSystem = TRUE;
+                systemVars.timerBase_1ms = 0;
+            }
+        }
+    }
+
+    motorVars_M1.flagInitializeDone = TRUE;
+    motorVars_M2.flagInitializeDone = TRUE;
+
+    while(systemVars.flagEnableSystem == TRUE)
+    {
+
+        // loop while the enable system flag is TRUE
+        systemVars.mainLoopCnt++;
+
+        // 1ms time base
+        if(HAL_getCPUTimerStatus(halHandle, HAL_CPU_TIMER0))
+        {
+            HAL_clearCPUTimerFlag(halHandle, HAL_CPU_TIMER0);
+
+            // toggle status LED on controller board
+            systemVars.counterLEDC++;
+
+            if(systemVars.counterLEDC > (uint16_t)(1000.0f/LED_BLINK_FREQ_Hz))
+            {
+                HAL_toggleGPIO(halHandle, HAL_GPIO_LED1C_BASE_ADD, HAL_GPIO_LED1C);     // Toggle on the LED
+
+                systemVars.counterLEDC = 0;
+            }
+
+            if(motorVars_M1.motorState >= MOTOR_CL_RUNNING)
+            {
+                systemVars.timeWaitLEDB =
+                        (uint16_t)(40000.0f / (fabs(motorVars_M1.speed_Hz) + 20.0f));
+
+                // toggle status LED on inverter board if have
+                systemVars.counterLEDB++;
+
+                if(systemVars.counterLEDB > systemVars.timeWaitLEDB)
+                {
+                    // toggle status LED on BoosterPack if have
+
+                    systemVars.counterLEDB = 0;
+                }
+            }
+            else
+            {
+               /* Toggle LED GPIO if LED GPIO available on board */
+               // GPIO_pinWriteHigh(HAL_GPIO_LED1B_BASE_ADD, HAL_GPIO_LED1B);     // Turn on the LED      
+            }
+
+            systemVars.timerBase_1ms++;
+
+            switch(systemVars.timerBase_1ms)
+            {
+                case 1:     // motor 1 protection check
+                    runMotorMonitor(motorHandle_M1);
+                    runMotorMonitor(motorHandle_M2);
+                    break;
+                case 2:
+                    calculateRMSData(motorHandle_M1);
+                    calculateRMSData(motorHandle_M2);
+                    break;
+                case 3:
+#if defined(MOTOR1_PI_TUNE) || defined(MOTOR2_PI_TUNE)
+                    // Tune the gains of the controllers
+                    tuneControllerGains(motorHandle_M1);
+#endif      // MOTOR1_PI_TUNE || MOTOR2_PI_TUNE
+                    break;
+                case 4:     // calculate motor protection value
+                    calcMotorOverCurrentThreshold(motorHandle_M1);
+                    calcMotorOverCurrentThreshold(motorHandle_M2);
+                    break;
+                case 5:     // system control
+                    systemVars.timerBase_1ms = 0;
+                    systemVars.timerCnt_5ms++;
+                    break;
+            }
+
+#if defined(STEP_RP_EN)
+            // Generate Step response
+            GRAPH_generateStepResponse(&stepRPVars);
+#endif  // STEP_RP_EN
+        }       // 1ms Timer
+
+        runMotorControl(motorHandle_M1);
+        runMotorControl(motorHandle_M2);
+
+    } // end of while() loop
+
+    // disable the PWM
+    HAL_disablePWM(motorHandle_M1->halMtrHandle);
+    HAL_disablePWM(motorHandle_M2->halMtrHandle);
+
+    DebugP_log("end of main!!\r\n");
+
+    Board_driversClose();
+    Drivers_close();
+}

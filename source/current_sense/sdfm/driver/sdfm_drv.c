@@ -224,16 +224,19 @@ void SDFM_setEnableChannel(sdfm_handle h_sdfm, uint8_t channel_number)
     {
         h_sdfm->pSdfmInterface->sdfm_ch_ctrl.sdfm_ch_id |= (channel_number << SDFM_CFG_BF_SD_CH0_ID_SHIFT);
         h_sdfm->pSdfmInterface->sdfm_cfg_ptr[0].ch_id = channel_number;
+        h_sdfm->pSdfmInterface->sdfm_ch_ctrl.sdfm_ch_mask |= 1;
     }
     else if(temp & SDFM_CH_MASK_FOR_CH1_CH4_CH7)
     {
         h_sdfm->pSdfmInterface->sdfm_ch_ctrl.sdfm_ch_id |= (channel_number<< SDFM_CFG_BF_SD_CH1_ID_SHIFT);
         h_sdfm->pSdfmInterface->sdfm_cfg_ptr[1].ch_id = channel_number;
+        h_sdfm->pSdfmInterface->sdfm_ch_ctrl.sdfm_ch_mask |= 2;
     }
     else 
     {
         h_sdfm->pSdfmInterface->sdfm_ch_ctrl.sdfm_ch_id |= (channel_number << SDFM_CFG_BF_SD_CH2_ID_SHIFT);
         h_sdfm->pSdfmInterface->sdfm_cfg_ptr[2].ch_id = channel_number;
+        h_sdfm->pSdfmInterface->sdfm_ch_ctrl.sdfm_ch_mask |= 4;
     }
 }
 /* set SDFM channel acc source */
@@ -287,15 +290,23 @@ uint32_t SDFM_getFilterData(sdfm_handle h_sdfm, uint8_t ch)
 }
 
 /*Configure normal current OSR for data filter*/
-void SDFM_setFilterOverSamplingRatio(sdfm_handle h_sdfm, uint16_t nc_osr)
+void SDFM_setFilterOverSamplingRatio(sdfm_handle h_sdfm, uint8_t ch, uint16_t nc_osr)
 {
     
-    /*IEP0 counts in normal current sampling period*/
-    uint16_t count;
-    uint32_t iep_freq = h_sdfm->iepClock;
-    uint32_t sd_clock = h_sdfm->sdfmClock;
-    count = (int)((float)nc_osr*((float)iep_freq/(float)sd_clock));
-    h_sdfm->pSdfmInterface->sdfm_cfg_trigger.nc_prd_iep_cnt = count;
+    if(h_sdfm->pSdfmInterface->sdfm_ctrl.sdfm_en_snoop_nc == 1)
+    {
+        /*IEP0 counts in normal current sampling period*/
+        uint16_t count;
+        uint32_t iep_freq = h_sdfm->iepClock;
+        uint32_t sd_clock = h_sdfm->sdfmClock;
+        count = (int)((float)nc_osr*((float)iep_freq/(float)sd_clock));
+        h_sdfm->pSdfmInterface->sdfm_cfg_trigger.nc_prd_iep_cnt = count;
+    }
+    else
+    {
+        /*Setting SDFM hardware OSR for normal current without snoop mode */
+        SDFM_setCompFilterOverSamplingRatio(h_sdfm, ch, nc_osr);
+    }
 }
 /*return firmware version */
 uint32_t SDFM_getFirmwareVersion(sdfm_handle h_sdfm)
@@ -307,7 +318,7 @@ void SDFM_enableContinuousNormalCurrent(sdfm_handle h_sdfm)
 {
     h_sdfm->pSdfmInterface->sdfm_cfg_trigger.en_continuous_mode = 1;
 }
-/*FD block confiuration */
+/*FD block configuration */
 void SDFM_configFastDetect(sdfm_handle h_sdfm, uint8_t ch, uint8_t *fdParms)
 {
     h_sdfm->pSdfmInterface->sdfm_ch_ctrl.enFastDetect |= fdParms[0]<<ch;
@@ -795,6 +806,21 @@ int32_t SDFM_configClockFromGPO1(sdfm_handle h_sdfm, uint8_t div0, uint8_t div1)
     return retVal;
     
 }
+
+/*Enable snoop based NC sampling */
+void SDFM_enableSnoopBasedNC(sdfm_handle h_sdfm)
+{
+    /*Enable snoop based NC sampling */
+    h_sdfm->pSdfmInterface->sdfm_ctrl.sdfm_en_snoop_nc = 1;
+}
+
+/*Disable snoop basedNC sampling */
+void SDFM_disableSnoopBasedNC(sdfm_handle h_sdfm)
+{
+    /*Disable snoop basedNC sampling */
+    h_sdfm->pSdfmInterface->sdfm_ctrl.sdfm_en_snoop_nc = 0;
+}
+
 /* SDFM global enable */
 void SDFM_enable(sdfm_handle h_sdfm)
 {
@@ -810,5 +836,3 @@ void SDFM_enable(sdfm_handle h_sdfm)
 
 
 }
-
-

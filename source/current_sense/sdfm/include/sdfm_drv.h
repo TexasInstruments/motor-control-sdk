@@ -159,6 +159,8 @@ typedef struct SDFM_CfgSdClk_s
     volatile uint8_t  sd_prd_clocks;
     /**< invert SD clock post clock selection mux  */
     volatile uint8_t  sd_clk_inv;
+    /**< reserved  */
+    volatile uint16_t  reserved;
 } SDFM_CfgSdClk;
 
 /**
@@ -221,7 +223,9 @@ typedef struct SDFM_GpioParams_s{
 typedef struct SDFM_ChCtrl_s
 {
     /**< stores the channel ids for different selected channel */
-    volatile uint32_t    sdfm_ch_id;
+    volatile uint16_t    sdfm_ch_id;
+    /*BitN:ChN: Channel mask*/
+    volatile uint16_t    sdfm_ch_mask;
     /**< bit-field to enable comparators for individual SDFM channels, BitN:ChN, non-zero to enable */
     volatile uint16_t    enable_comparator;
     /**< bit-field to enable fast detect  for individual SDFM channels, BitN:ChN, non-zero to enable */
@@ -320,6 +324,8 @@ typedef struct SDFM_Ctrl_s
     volatile uint8_t  sdfm_en_ack;
     /**< SDFM PRU ID*/
     volatile uint8_t  sdfm_pru_id;
+    /**<  enable snoop based Normal current sampling */
+    volatile uint8_t  sdfm_en_snoop_nc;
 } SDFM_Ctrl;
 
 typedef struct SDFM_Interface_s{

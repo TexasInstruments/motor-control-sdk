@@ -4,7 +4,7 @@
 
 ## Introduction
 
-The Transformation module consists of transformation commonly found in motor-control applications.
+The Transformation module consists of transformations commonly found in motor-control applications.
 
 ## Features Supported
 
@@ -20,19 +20,19 @@ Transformation module includes:
   - Minimum Modulation
 - SVGEN current reconstruction for single-shunt (SVGENCURRENT)
 - Phase voltage reconstruction in overmodulation (VOLTS_RECON)
-  
+
 ## Features Not Supported
 
 N/A
 
 ## Benchmark Results
 
-A benchmark on R5F core has been conducted to observe the following results when running the following functions:
+A benchmark on Arm® Cortex®-R5F core has been conducted to observe the following results when running the following functions:
 
 <table>
 <tr>
     <th>Transform Function
-    <th>Cpu Cycles
+    <th>CPU Cycles
 </tr>
 <tr><td colspan="2" bgcolor=#F0F0F0> Clarke Transform </td></tr>
 <tr>
@@ -78,20 +78,19 @@ A benchmark on R5F core has been conducted to observe the following results when
 </tr>
 </table>
 
-  \note both PARK and IPARK does not include trigonometric calculations of phasor. For R5F core, it's recommened to leverage the fast ti_arm_sincos/FastRTS_sincos function found in mathlib of MCU+ SDK.
+  \note both PARK and IPARK do not include trigonometric calculations of phasor. For Arm Cortex-R5F core, it's recommended to leverage the fast ti_arm_sincos/FastRTS_sincos function found in mathlib of MCU+ SDK.
 - Ran with TI Clang Compiler v3.2.0.LTS, with -Os flag and the benchmarking function placed in TCM memory. Obtained the average result from 600 consecutive loops of running transform functions with DPL CycleCountP, mimicking the usage of a control loop.
-- Actual result may vary depending on provided datasets and memory configuration. For R5F, it is recommended for users to map control loops to TCM for the best performance.
+- Actual result may vary depending on provided datasets and memory configuration. For Arm Cortex-R5F, it is recommended for users to map control loops to TCM for the best performance.
 
-## Provided Examples 
+## Provided Examples
 
-The following examples has been provided to demonstrate transformation module:
+The following examples have been provided to demonstrate transformation module:
 
 - \ref EXAMPLES_TRANSFORMS_TEST
 
-## Additional References {#TRANSFORMS_ADDITIONAL_REFERENCES}
-
-N/A
 
 ## API
 
 \ref TRANSFORMS_API_MODULE
+
+\note Arm is a registered trademark of Arm Limited (or its subsidiaries or affiliates) in the US and/or elsewhere.

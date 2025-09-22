@@ -1,0 +1,203 @@
+# Tamagawa over UART Example {#EXAMPLE_MOTORCONTROL_TAMAGAWA_OVER_UART}
+[TOC]
+
+
+## Introduction
+
+The Tamagawa over UART application does the following:
+
+- Configures pinmux, GPIO, UART (UART clock to 192MHz, Baud rate, etc.)
+- Initializes UART0 for debug log & \if SOC_AM263PX UART3 \else UART1 \endif for communication
+- Selects UART LLD with polling mode for encoder communication
+- Loads and executes Tamagawa example on Arm® Cortex®-R5F
+
+
+Connect the Tamagawa encoder via RS-485 Half-Duplex EVM to LP-AM263.
+The connections between LP-AM263 and RS-485:
+
+UART RX Pin(\if SOC_AM263PX  UART3_RXD \else  UART1_RXD \endif)->JMP1-R,
+UART TX Pin(\if SOC_AM263PX  UART3_TXD \else  UART1_TXD \endif)->JMP4-D,
+GPIO Pin(GPIO62)->JMP3-DE
+
+The Tamagawa over UART example runs on R5F and communicates with Tamagawa encoder by UART instance. It presents the user with menu options to select Data ID code (as defined by Tamagawa) to be sent to the encoder. The application collects the data entered by the user and configures the relevant command. Then via the UART LLD write API, the command is passed to encoder. Once the command is sent, the encoder starts to respond, and UART LLD read API starts to read this response. Response is stored in the Tamagawa interface, the status of the transaction is checked by CRC calculation. If the status indicates success, the result is presented to the user otherwise it prints CRC failure.
+
+### Example Flow-Chart
+
+\image html Tamagawa_uart_flow_chart.png "Tamagawa UART example flow-chart"
+
+## Important files and directory structure
+<table>
+<tr>
+    <th>Folder/Files
+    <th>Description
+</tr>
+<tr><td colspan="2" bgcolor=#F0F0F0> ${SDK_INSTALL_PATH}/examples/position_sense/tamagawa_diagnostic_over_soc_uart</td></tr>
+<tr>
+    <td>uart_tamagawa.c</td>
+    <td>Tamagawa UART application</td>
+</tr>
+<tr><td colspan="2" bgcolor=#F0F0F0> ${SDK_INSTALL_PATH}/source/position_sense/tamagawa_over_soc_uart</td></tr>
+<tr>
+    <td>include/</td>
+    <td>Folder containing Tamagawa interface file.</td>
+</tr>
+<tr>
+    <td>driver/</td>
+    <td>Tamagawa UART driver</td>
+</tr>
+</table>
+
+# Supported Combinations
+
+\cond (SOC_AM263X || SOC_AM263PX)
+
+ Parameter      | Value
+ ---------------|-----------
+ CPU + OS       | r5fss0-0 freertos
+ Toolchain      | ti-arm-clang
+ Board          | @VAR_LP_BOARD_NAME_LOWER
+ Example folder | examples/position_sense/tamagawa_diagnostic_over_soc_uart
+
+\endcond
+
+# Steps to Run the Example
+
+## Hardware Prerequisites
+-  Tamagawa Encoders
+\cond (SOC_AM263X)
+- <a href="https://www.ti.com/tool/LP-AM263" target="_blank"> LP-AM263 Board </a>
+\endcond
+\cond (SOC_AM263PX)
+- <a href="https://www.ti.com/tool/LP-AM263P" target="_blank"> LP-AM263P Board </a>
+\endcond
+-  RS-485 Half Duplex EVM
+-  5V and 3.3V power supplier
+
+## Hardware Setup
+
+\cond (SOC_AM263X)
+\imageStyle{Tamagawa_Uart_am263x_Hw_Setup.PNG,width:60%}
+\image html Tamagawa_Uart_am263x_Hw_Setup.PNG "Tamagawa Encoder Hardware Setup with LP-AM263"
+
+\imageStyle{Tamagawa_am263x_Setup_image.jpg,width:60%}
+\image html Tamagawa_am263x_Setup_image.jpg "Hardware Setup For LP-AM263"
+\endcond
+
+\cond (SOC_AM263PX)
+\imageStyle{Tamagawa_Uart_am263px_Hw_Setup.PNG,width:60%}
+\image html Tamagawa_Uart_am263px_Hw_Setup.PNG "Tamagawa Encoder Hardware Setup with LP-AM263P"
+
+\imageStyle{Tamagawa_am263px_Setup_image.jpeg,width:60%}
+\image html Tamagawa_am263px_Setup_image.jpeg "Hardware Setup For LP-AM263P"
+\endcond
+
+## Build, load and run
+
+- **When using CCS projects to build**, import the CCS project and build it using the CCS project menu (see <a href="@VAR_MCU_SDK_DOCS_PATH/CCS_PROJECTS_PAGE.html" target="_blank"> Using SDK with CCS Projects </a>).
+- **When using makefiles to build**, note the required combination and build using
+  make command (see <a href="@VAR_MCU_SDK_DOCS_PATH/MAKEFILE_BUILD_PAGE.html" target="_blank"> Using SDK with Makefiles </a>)
+- Launch a CCS debug session and run the executable, see <a href="@VAR_MCU_SDK_DOCS_PATH/CCS_LAUNCH_PAGE.html" target="_blank">  CCS Launch, Load and Run </a>
+- Refer to UART terminal for user interface menu options.
+
+### Sample Output
+
+Shown below is a sample output when the application is run:
+
+\imageStyle{Tamagawa_UART_output.PNG,width:60%}
+\image html Tamagawa_UART_output.PNG "Tamagawa UART Sample Output"
+
+### Test Case Description
+
+<table>
+    <tr>
+        <th>Data_ID
+        <th>Name
+        <th>Description
+        <th>Pass/fail Criteria
+    </tr>
+    <tr>
+        <td>Data ID 0</td>
+        <td>Data readout (absolute position data)</td>
+        <td>Receive following data:
+		<br>Absolute rotor position value in field name ABS.
+		<br>Errors and warnings in field name SF(status field)
+		</td>
+        <td>CRC success with ABS, SF, CF and CRC values printed in the terminal.</td>
+    </tr>
+	<tr>
+        <td>Data ID 1</td>
+        <td>Data readout (multi-turn data)</td>
+        <td>Receive following data:
+		<br>No. of rotor turns in field name ABM.
+		<br>Errors and warnings in field name SF(status field).
+		</td>
+        <td>CRC success with ABM, SF, CF and CRC values printed in the terminal.</td>
+    </tr>
+	<tr>
+        <td>Data ID 2</td>
+        <td>Encoder-ID</td>
+        <td>Receive following data:
+		<br>Tamagawa encoder make-ID in ENID field.
+		<br>Errors and warnings in field name SF(status field)
+		</td>
+        <td>CRC success with ENID, SF, CF and CRC values printed in the terminal.</td>
+    </tr>
+	<tr>
+        <td>Data ID 3</td>
+        <td>Data readout(absolute+multiturn+encoder-ID)</td>
+        <td>Receive following data:
+		<br>Absolute rotor position value in field name ABS.
+		<br>No. of rotor turns in field name ABM.
+		<br>Tamagawa encoder make-ID in ENID field.
+		<br>Errors and warnings in field name SF(status field)
+		<br>Other warnings in field name ALMC
+		</td>
+        <td>CRC success with ABS, ENID, ABM, ALMC, SF, CF and CRC values printed in the terminal.</td>
+    </tr>
+    <tr>
+        <td>Data ID 6</td>
+        <td>Writing to EEPROM</td>
+        <td>Transmit following data:
+        <br>Proper address of the EEPROM where you want to write
+		<br>Proper data that you want to write.<br>
+        <br>Receive following data:
+        <br>Control Field for EEPROM Write command
+        <br>EEPROM address that you want to write to
+        <br>Data that you want to write to the EEPROM
+        <br>CRC value
+		</td>
+        <td>CRC success with EDF, ADF, CF and CRC values printed in the terminal.</td>
+    </tr>
+    <tr>
+        <td>Data ID D</td>
+        <td>Readout from EEPROM</td>
+        <td>Transmit following data:
+        <br>Proper address of the EEPROM that you want to read.<br>
+		<br>Receive following data:
+        <br>Control Field for EEPROM Write command
+        <br>EEPROM address that you want to write to
+        <br>Data that you want to write to the EEPROM
+        <br>CRC value
+		</td>
+        <td>CRC success with EDF, ADF, CF and CRC values printed in the terminal.</td>
+    </tr>
+	<tr>
+        <td>Data ID 7</td>
+        <td>Reset-Error</td>
+        <td>This command is used to reset errors. </td>
+        <td>CRC success with ABS, SF, CF and CRC values printed in the terminal.</td>
+    </tr>
+	<tr>
+        <td>Data ID 8</td>
+        <td>Reset - absolute</td>
+        <td>This command is used to reset absolute position data(ABS). </td>
+        <td>CRC success with ABS, SF, CF and CRC values printed in the terminal.</td>
+    </tr>    <tr>
+        <td>Data ID C</td>
+        <td>Reset - multiturn</td>
+        <td>This command is used to reset multi-turn data(ABM). </td>
+        <td>CRC success with ABS, SF, CF and CRC values printed in the terminal.</td>
+    </tr>
+</table>
+
+\note Arm is a registered trademark of Arm Limited (or its subsidiaries or affiliates) in the US and/or elsewhere.

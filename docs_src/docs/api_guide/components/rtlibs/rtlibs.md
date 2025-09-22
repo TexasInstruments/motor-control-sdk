@@ -2,18 +2,7 @@
 
 [TOC]
 
-Real Time Libraries module contains following components:
-
-\cond SOC_AM243X
-
-- \subpage CONTROL
-- \subpage DCL
-- \subpage OBSERVERS
-- \subpage TRANSFORMS
-
-\endcond
-
-\cond SOC_AM263X
+Real Time Libraries module contains the following components:
 
 - \subpage CONTROL
 - \subpage DATALOG
@@ -21,5 +10,3 @@ Real Time Libraries module contains following components:
 - \subpage OBSERVERS
 - \subpage SFRA
 - \subpage TRANSFORMS
-
-\endcond

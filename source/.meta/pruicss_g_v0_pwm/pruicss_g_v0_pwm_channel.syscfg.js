@@ -123,10 +123,38 @@ let pruicss_top_module = {
     pinmuxRequirements,
     getInterfaceNameList,
     getPeripheralPinNames,
+    validate: onValidate,
 };
 
-function validate(inst, report) {
-    common.validate.checkSameInstanceName(inst, report);
+function onValidate(inst, report) {
+    let icssg0Channels = 0;
+    let icssg1Channels = 0;
+    for (let instance_index in inst.$module.$instances)
+    {
+        let moduleInstance = inst.$module.$instances[instance_index];
+        if(moduleInstance.instance == "ICSSG0")
+        {
+            if(icssg0Channels < 24)
+            {
+                icssg0Channels = icssg0Channels + 1;    
+            }
+            else
+            {
+                report.logError("Maximum number of PWM channels that can be added are 24 (4 Sets, Each set has 6 PWM channels)",inst);
+            }
+        }
+        else if(moduleInstance.instance == "ICSSG1")
+        {
+            if(icssg1Channels < 24)
+            {
+                icssg1Channels = icssg1Channels + 1;    
+            }
+            else
+            {
+                report.logError("Maximum number of PWM channels that can be added are 24 (4 Sets, Each set has 6 PWM channels)",inst);
+            }
+        }
+    }
 }
 
 exports = pruicss_top_module;

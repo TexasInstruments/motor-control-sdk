@@ -2,20 +2,24 @@
     productName = args.utils.getProductNameProjectSpec(args.device);
     isDevelopmentMode = args.common.isDevelopmentMode();
     deviceName = args.utils.getProjectSpecDevice(args.device);
-    if(args.device == "am273x")
-        deviceName = "AM273x"
-    if(args.device == "am62x")
-        deviceName = "AM62x"
+
     if(isDevelopmentMode)
         deviceName = "AMXXX";
+
+    // Get SDK version using common function
+    const sdkVersion = args.common.getSdkVersion(args.device);
 %%}
 [
     {
         "metadataVersion": "3.01.00",
+        % if(((args.device == "am263px") || (args.device == "am261x")) && (!isDevelopmentMode)) {
+        "id": "`"MOTOR-CONTROL-SDK-"+args.device.toUpperCase()`",
+        % } else {
         "id": "com.ti.`productName`",
+        % }
         "name": "MOTOR CONTROL SDK for `deviceName`",
         "rootCategory": [ "MOTOR CONTROL SDK", "MOTOR CONTROL SDK for `deviceName`" ],
-        "version": "09.02.00.10",
+        "version": "`sdkVersion`",
         "type": "software",
         "image": "./motor_control_sdk.png",
         % if ((args.device == "am64x") || (args.device == "am243x") || (isDevelopmentMode)) {
@@ -23,20 +27,20 @@
         % }
         "devices": ["`deviceName`"],
         "tags": ["SDK", "Baremetal", "FreeRTOS"],
-        % if ((args.device == "am263x")) {
+        % if ((args.device == "am263x") || (args.device == "am263px") || (args.device == "am261x")) {
         "description": "Motor Control SDK contains examples, libraries and tools to develop RTOS and no-RTOS based applications enabling real-time communication for position sense from motors, and real-time control libraries for ARM R5F CPU and related peripherals.",
         % }
         % else if ((args.device == "am64x") || (args.device == "am243x") || (isDevelopmentMode)) {
         "description": "Motor Control SDK contains examples, libraries and tools to develop RTOS and no-RTOS based applications enabling real-time communication for position and current sense from motors, and real-time control libraries for ARM R5F CPU and related peripherals.",
         % }
         "dependencies": [
-            { "packageId": "sysconfig", "version": "`args.utils.getSysCfgVersionProjectSpec()`", "require": "mandatory" },
+            { "packageId": "sysconfig", "version": "`args.utils.getSysCfgVersionProjectSpec(args.device)`", "require": "mandatory" },
             % if (args.device == "am64x" || (isDevelopmentMode)) {
-            { "packageId": "ti_cgt_tiarmclang", "version": "`args.utils.getTiClangVersionProjectSpec()`", "require": "mandatory" },
-            { "packageId": "arm.gnu.aarch64-none", "version": "`args.utils.getGCCAarch64NoneVersionProjectSpec()`", "require": "mandatory" }
+            { "packageId": "ti_cgt_tiarmclang", "version": "`args.utils.getTiClangVersionProjectSpec(args.device)`", "require": "mandatory" },
+            { "packageId": "arm.gnu.aarch64-none", "version": "`args.utils.getGCCAarch64NoneVersionProjectSpec(args.device)`", "require": "mandatory" }
             % }
             % else {
-            { "packageId": "ti_cgt_tiarmclang", "version": "`args.utils.getTiClangVersionProjectSpec()`", "require": "mandatory" }
+            { "packageId": "ti_cgt_tiarmclang", "version": "`args.utils.getTiClangVersionProjectSpec(args.device)`", "require": "mandatory" }
             % }
         ]
     }

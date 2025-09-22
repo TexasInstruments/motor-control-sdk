@@ -27,7 +27,14 @@ function getInterfacePinList(inst)
     pinList.push({ pinName: "GPI7", displayName: "SD_CHANNEL3_DATA", rx: true});
 
     /*SD4_D*/
-    pinList.push({ pinName: "GPI18", displayName: "SD_CHANNEL4_DATA", rx: true});
+    if(inst.G_MUX_EN)
+    {
+        pinList.push({ pinName: "GPI18", displayName: "SD_CHANNEL4_DATA", rx: true});
+    }
+    else
+    {
+        pinList.push({ pinName: "GPI9", displayName: "SD_CHANNEL4_DATA", rx: true});
+    }
 
     /*SD5_D*/
     pinList.push({ pinName: "GPI11", displayName: "SD_CHANNEL5_DATA", rx: true});
@@ -52,7 +59,14 @@ function getInterfacePinList(inst)
     /*SD4_CLK*/
     pinList.push({ pinName: "GPI8", displayName: "SD4_CLK", rx: true});
     /*SD5_CLK*/
-    pinList.push({ pinName: "GPI10", displayName: "SD5_CLK", rx: true});
+    if(inst.G_MUX_EN)
+    {
+        pinList.push({ pinName: "GPI19", displayName: "SD5_CLK", rx: true});
+    }
+    else
+    {
+        pinList.push({ pinName: "GPI10", displayName: "SD5_CLK", rx: true});
+    }
     /*SD6_CLK*/
     pinList.push({ pinName: "GPI12", displayName: "SD6_CLK", rx: true});
     /*SD7_CLK*/
@@ -79,9 +93,6 @@ function pinmuxRequirements(inst) {
            if((pin.pinName == "GPI1")){
                pinResource.used = true;
            }
-           if((pin.pinName == "GPO1")){
-            pinResource.used = false;
-        }
         }else{
            if( (pin.pinName == "GPI1")){
                pinResource.used = false;
@@ -135,7 +146,7 @@ function pinmuxRequirements(inst) {
            }    
         }
         if(inst["Enable_Channel_4"]==true){
-           if((pin.pinName == "GPI9")){
+           if((pin.pinName == "GPI9") || (pin.pinName == "GPI18")){
                pinResource.used = true;
            }
            if((inst["Ch4_SDCLKSEL"]== "1")){
@@ -149,7 +160,7 @@ function pinmuxRequirements(inst) {
                 }
             }
         }else{
-           if( (pin.pinName == "GPI9")||(pin.pinName == "GPI8")){
+           if( (pin.pinName == "GPI9")||(pin.pinName == "GPI8") || (pin.pinName == "GPI18")){
                pinResource.used = false;
             } 
         }
@@ -158,17 +169,17 @@ function pinmuxRequirements(inst) {
                pinResource.used = true;
            }
            if((inst["Ch5_SDCLKSEL"]== "1")){
-                if((pin.pinName == "GPI10")){
+                if((pin.pinName == "GPI10") || (pin.pinName == "GPI19")){
                     pinResource.used = true;
                 }
             }
             else{
-                if((pin.pinName == "GPI10")){
+                if((pin.pinName == "GPI10") || (pin.pinName == "GPI19") ){
                     pinResource.used = false;
                 }
             }
         }else{
-           if( (pin.pinName == "GPI11") ||((pin.pinName == "GPI10"))){
+           if( (pin.pinName == "GPI11") ||((pin.pinName == "GPI10") || (pin.pinName == "GPI19"))){
                pinResource.used = false;
            } 
         }
@@ -260,6 +271,20 @@ function pinmuxRequirements(inst) {
             if(pin.pinName == "GPO1")
             {    
                 pinResource.used = true;
+            }
+        }
+        else
+        {
+            if(inst["Enable_Channel_0"] == true)
+            {
+                if(pin.pinName == "GPI1")
+                {    
+                    pinResource.used = true;
+                }
+            }
+            if(pin.pinName == "GPO1")
+            {    
+                pinResource.used = false;
             }
         }
      
