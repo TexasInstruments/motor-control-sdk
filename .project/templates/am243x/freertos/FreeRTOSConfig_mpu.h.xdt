@@ -2,7 +2,7 @@
     let cpu = args.project.cpu;
 %%}
 /*
- *  Copyright (C) 2018-2021 Texas Instruments Incorporated
+ *  Copyright (C) 2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -42,8 +42,6 @@ extern "C"
 {
 #endif
 
-#include <kernel/dpl/DebugP.h>
-
 /*-----------------------------------------------------------
  * Application specific definitions.
  *
@@ -65,13 +63,9 @@ extern "C"
 #define configOPTIMIZE_FOR_LATENCY              (0)
 
 #define configUSE_PREEMPTION					(1)
-#define configUSE_PORT_OPTIMISED_TASK_SELECTION	(0)
-#define configNUM_CORES                         (2)
-#define configRUN_MULTIPLE_PRIORITIES           (1)
-#define configUSE_CORE_AFFINITY                 (1)
+#define configUSE_PORT_OPTIMISED_TASK_SELECTION	(`(cpu === "r5f-mpu") ? 0 : 1`)
 #define configUSE_TICKLESS_IDLE                 (0)
 #define configUSE_IDLE_HOOK                     (1)  /* when 1, make sure to implement void vApplicationIdleHook(void) as the hook function */
-#define configUSE_MINIMAL_IDLE_HOOK             (1)  /* when 1, make sure to implement void vApplicationMinimalIdleHook(void) as the hook function */
 #define configUSE_MALLOC_FAILED_HOOK            (0)
 #define configUSE_DAEMON_TASK_STARTUP_HOOK      (0)
 #define configUSE_TICK_HOOK                     (0)
@@ -101,12 +95,14 @@ extern "C"
  *           char *pcTaskName );
  */
 #if (configOPTIMIZE_FOR_LATENCY==0)
-#define configCHECK_FOR_STACK_OVERFLOW          (1)
+#define configCHECK_FOR_STACK_OVERFLOW          (2)
 #else
 #define configCHECK_FOR_STACK_OVERFLOW          (0)
 #endif
 #define configQUEUE_REGISTRY_SIZE               (32)
 #define configUSE_QUEUE_SETS                    (0)
+#define configUSE_STREAM_BUFFERS                (0)
+#define configUSE_EVENT_GROUPS                  (1)
 #define configUSE_TIME_SLICING                  (0) /* keep as 0 to get same functionality as SysBIOS6 */
 #define configUSE_NEWLIB_REENTRANT              (0)
 #define configENABLE_BACKWARD_COMPATIBILITY     (1)
@@ -117,14 +113,14 @@ extern "C"
                                                      *
                                                      * void vApplicationGetTimerTaskMemory( StaticTask_t **ppxTimerTaskTCBBuffer,
                                                      *      StackType_t **ppxTimerTaskStackBuffer,
-                                                     *      uint32_t *pulTimerTaskStackSize );
+                                                     *      configSTACK_DEPTH_TYPE *pulTimerTaskStackSize );
                                                      *
                                                      * void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer,
                                                      *      StackType_t **ppxIdleTaskStackBuffer,
-                                                     *      uint32_t *pulIdleTaskStackSize );
+                                                     *      configSTACK_DEPTH_TYPE *pulIdleTaskStackSize );
                                                      */
 #define configSUPPORT_DYNAMIC_ALLOCATION        (1)
-#define configTOTAL_HEAP_SIZE                   (0xF80000) /* not used when heap_3.c is the selected heap */
+#define configTOTAL_HEAP_SIZE                   (4*1024) /* not used when heap_3.c is the selected heap */
 #define configAPPLICATION_ALLOCATED_HEAP        (0)
 
 /* run-time stats config */
@@ -133,10 +129,6 @@ extern "C"
 #else
 #define configGENERATE_RUN_TIME_STATS           (0)
 #endif
-void vPortConfigTimerForRunTimeStats();
-#define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS() vPortConfigTimerForRunTimeStats()
-uint32_t uiPortGetRunTimeCounterValue();
-#define portGET_RUN_TIME_COUNTER_VALUE()        uiPortGetRunTimeCounterValue()
 
 /* co-routine related config */
 #define configUSE_CO_ROUTINES                   (0)
@@ -159,29 +151,35 @@ uint32_t uiPortGetRunTimeCounterValue();
 #define configKERNEL_INTERRUPT_PRIORITY         (configMAX_SYSCALL_INTERRUPT_PRIORITY)
 #define configMAX_API_CALL_INTERRUPT_PRIORITY   (configMAX_SYSCALL_INTERRUPT_PRIORITY)
 
-#if (configOPTIMIZE_FOR_LATENCY==0)
-#define configASSERT(x)                        DebugP_assert( (uint32_t)(x))
-#endif
-
-/* MPU aware FreeRTOS, not supported as TI */
-#define configINCLUDE_APPLICATION_DEFINED_PRIVILEGED_FUNCTIONS  (0)
-#define configTOTAL_MPU_REGIONS                                 (0)
-#undef  configTEX_S_C_B_FLASH
-#undef  configTEX_S_C_B_SRAM
-#define configENFORCE_SYSTEM_CALLS_FROM_KERNEL_ONLY             (0)
+/* MPU aware FreeRTOS related config */
+#define configENABLE_ACCESS_CONTROL_LIST            (0U)
+#define configTOTAL_MPU_REGIONS                     (16UL)
+#define configPROTECTED_KERNEL_OBJECT_POOL_SIZE     (0x20UL)
+#define configSYSTEM_CALL_STACK_SIZE                (configMINIMAL_STACK_SIZE)
 
 /* defines need for FreeRTOS+POSIX*/
 #define configUSE_POSIX_ERRNO           (1)
 #define configUSE_APPLICATION_TASK_TAG  (1)
 
 /* include specific functions */
-#define INCLUDE_vTaskDelete             (1)
-#define INCLUDE_vTaskDelay              (1)
-#define INCLUDE_vTaskSuspend            (1)
-#define INCLUDE_xTimerDelete            (1)
-#define INCLUDE_vSemaphoreDelete        (1)
-#define INCLUDE_xTimerPendFunctionCall  (1)
-#define INCLUDE_xTaskGetIdleTaskHandle  (1)
+#define INCLUDE_vTaskDelete         (1)
+#define INCLUDE_vTaskDelay          (1)
+#define INCLUDE_vTaskSuspend        (1)
+#define INCLUDE_xTimerDelete        (1)
+#define INCLUDE_vSemaphoreDelete    (1)
+#define INCLUDE_xTimerPendFunctionCall   (1)
+#define INCLUDE_xTaskGetIdleTaskHandle   (1)
+#define INCLUDE_xSemaphoreGetMutexHolder (1)
+#define INCLUDE_xTaskGetSchedulerState   (1)
+
+#ifndef FREERTOS_ASSEMBLY
+#include <kernel/dpl/DebugP.h>
+
+#if (configOPTIMIZE_FOR_LATENCY==0)
+#define configASSERT(x)                 DebugP_assert( (uint32_t)(x))
+#endif
+
+#endif /* FREERTOS_ASSEMBLY */
 
 #ifdef __cplusplus
 }
