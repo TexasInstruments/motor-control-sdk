@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2021-23 Texas Instruments Incorporated
+ *  Copyright (C) 2021-25 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -34,7 +34,11 @@
 #include <kernel/dpl/ClockP.h>
 #include <drivers/hw_include/tistdtypes.h>
 #include <drivers/hw_include/hw_types.h>
-static struct endat_priv endat_priv;
+#include <stdlib.h> 
+
+extern uint32_t gEndatConfigNum;
+extern Endat_Config gEndatHandle[];
+
 /*
  * check 2.2 command case with 2.2 capability in encoder, can live w/o as endat_get_command
  * will handle and it is assumed that functions,
@@ -45,18 +49,18 @@ static struct endat_priv endat_priv;
  * will normally be called after endat_get_command
  */
 
-static int32_t endat_recvd_organize(int32_t cmd, struct endat_priv *priv,
-                                struct endat_data *endat_data)
+static int32_t endat_recvd_organize(int32_t cmd, Endat_Handle handle,
+                                Endat_Data *endat_data)
 {
     uint32_t word0, word1, word2, word3;
     uint32_t pos_bits, shift;
-    struct endatChRxInfo *endatChRxInfo = priv->endatChRxInfo;
+    Endat_ChRxInfoArray *channel_rx_info = handle->channel_rx_info;
     memset(endat_data, 0, sizeof(*endat_data));
 
-    word0 = endatChRxInfo->ch[priv->current_channel].posWord0;
-    word1 = endatChRxInfo->ch[priv->current_channel].posWord1;
-    word2 = endatChRxInfo->ch[priv->current_channel].posWord2;
-    word3 = endatChRxInfo->ch[priv->current_channel].posWord3;
+    word0 = channel_rx_info->ch[handle->current_channel].posWord0;
+    word1 = channel_rx_info->ch[handle->current_channel].posWord1;
+    word2 = channel_rx_info->ch[handle->current_channel].posWord2;
+    word3 = channel_rx_info->ch[handle->current_channel].posWord3;
 
     switch(cmd)
     {
@@ -75,7 +79,7 @@ static int32_t endat_recvd_organize(int32_t cmd, struct endat_priv *priv,
             break;
 
         case 1:
-            pos_bits = priv->pos_res + ENDAT_NUM_BITS_POSITION_CRC + ENDAT_NUM_BITS_F1;
+            pos_bits = handle->pos_res + ENDAT_NUM_BITS_POSITION_CRC + ENDAT_NUM_BITS_F1;
 
             if(pos_bits <= sizeof(unsigned) * 8)
             {
@@ -94,7 +98,7 @@ static int32_t endat_recvd_organize(int32_t cmd, struct endat_priv *priv,
         case 11:
         case 12:
         case 13:
-            pos_bits = priv->pos_res + ENDAT_NUM_BITS_POSITION_CRC + ENDAT_NUM_BITS_F1 +
+            pos_bits = handle->pos_res + ENDAT_NUM_BITS_POSITION_CRC + ENDAT_NUM_BITS_F1 +
                        ENDAT_NUM_BITS_F2;
 
             if(pos_bits <= sizeof(unsigned) * 8)
@@ -106,11 +110,11 @@ static int32_t endat_recvd_organize(int32_t cmd, struct endat_priv *priv,
                 shift = pos_bits % (sizeof(unsigned) * 8);
                 endat_data->recvd1 = (uint64_t) word0 << shift | word1;
             }
-            if(priv->flags.info1 || priv->flags.info2)
+            if(handle->flags.info1 || handle->flags.info2)
             {
                 endat_data->recvd2 = word2;
             }
-            if(priv->flags.info1 && priv->flags.info2)
+            if(handle->flags.info1 && handle->flags.info2)
             {
                 endat_data->recvd3 = word3;
             }
@@ -145,8 +149,8 @@ static uint64_t endat_reflect_ull_nbits(uint64_t input,
     return val;
 }
 
-static int64_t endat_recvd_format(int32_t cmd, struct endat_priv *priv,
-                              struct endat_data *endat_data, union endat_format_data *u)
+static int64_t endat_recvd_format(int32_t cmd, Endat_Handle handle,
+                              Endat_Data *endat_data, Endat_FormatData *u)
 {
     uint64_t pos, rev;
 
@@ -176,15 +180,15 @@ static int64_t endat_recvd_format(int32_t cmd, struct endat_priv *priv,
 
         case 1:
             pos = endat_data->recvd1 >> ENDAT_NUM_BITS_POSITION_CRC;
-            pos = pos & (((uint64_t) 1 << priv->pos_res) - 1);       /* mask F1 */
-            pos = endat_reflect_ull_nbits(pos, priv->pos_res);
-            rev = (pos & (((uint64_t) 1 << priv->pos_res) - 1)) >>
-                  priv->single_turn_res[priv->current_channel];
-            pos = pos & (((uint64_t) 1 << priv->single_turn_res[priv->current_channel]) - 1);
+            pos = pos & (((uint64_t) 1 << handle->pos_res) - 1);       /* mask F1 */
+            pos = endat_reflect_ull_nbits(pos, handle->pos_res);
+            rev = (pos & (((uint64_t) 1 << handle->pos_res) - 1)) >>
+                  handle->single_turn_res[handle->current_channel];
+            pos = pos & (((uint64_t) 1 << handle->single_turn_res[handle->current_channel]) - 1);
             u->position_addinfo.position.position = pos;
             u->position_addinfo.position.revolution = rev;
             u->position_addinfo.position.f1 = (endat_data->recvd1 >>
-                                               (ENDAT_NUM_BITS_POSITION_CRC + priv->pos_res)) & 1;
+                                               (ENDAT_NUM_BITS_POSITION_CRC + handle->pos_res)) & 1;
             u->position_addinfo.position.crc = endat_data->recvd1 & ((
                                                    1 << ENDAT_NUM_BITS_POSITION_CRC) - 1);
             break;
@@ -196,24 +200,24 @@ static int64_t endat_recvd_format(int32_t cmd, struct endat_priv *priv,
         case 12:
         case 13:
             pos = endat_data->recvd1 >> ENDAT_NUM_BITS_POSITION_CRC;
-            pos = pos & (((uint64_t) 1 << priv->pos_res) -
+            pos = pos & (((uint64_t) 1 << handle->pos_res) -
                          1);  /* mask F1/F2 */
-            pos = endat_reflect_ull_nbits(pos, priv->pos_res);
-            rev = (pos & (((uint64_t) 1 << priv->pos_res) - 1)) >>
-                  priv->single_turn_res[priv->current_channel];
-            pos = pos & (((uint64_t) 1 << priv->single_turn_res[priv->current_channel]) - 1);
+            pos = endat_reflect_ull_nbits(pos, handle->pos_res);
+            rev = (pos & (((uint64_t) 1 << handle->pos_res) - 1)) >>
+                  handle->single_turn_res[handle->current_channel];
+            pos = pos & (((uint64_t) 1 << handle->single_turn_res[handle->current_channel]) - 1);
             u->position_addinfo.position.position = pos;
             u->position_addinfo.position.revolution = rev;
             u->position_addinfo.position.f1 = (endat_data->recvd1 >>
-                                               (ENDAT_NUM_BITS_POSITION_CRC + priv->pos_res + 1)) & 1;
+                                               (ENDAT_NUM_BITS_POSITION_CRC + handle->pos_res + 1)) & 1;
             u->position_addinfo.position.f2 = (endat_data->recvd1 >>
-                                               (ENDAT_NUM_BITS_POSITION_CRC + priv->pos_res)) & 1;
+                                               (ENDAT_NUM_BITS_POSITION_CRC + handle->pos_res)) & 1;
             u->position_addinfo.position.crc = endat_data->recvd1 & ((
                                                    1 << ENDAT_NUM_BITS_POSITION_CRC) - 1);
 
-            if(priv->flags.info1 || priv->flags.info2)
+            if(handle->flags.info1 || handle->flags.info2)
             {
-                if(endat_priv.flags.info2)
+                if(handle->flags.info2)
                 {
                     u->position_addinfo.addinfo2.addinfo = (endat_data->recvd2 >>
                                                             ENDAT_NUM_BITS_POSITION_CRC) & ((1 << 24) - 1);
@@ -229,7 +233,7 @@ static int64_t endat_recvd_format(int32_t cmd, struct endat_priv *priv,
                 }
             }
 
-            if(priv->flags.info1 && priv->flags.info2)
+            if(handle->flags.info1 && handle->flags.info2)
             {
                 u->position_addinfo.addinfo1.addinfo = (endat_data->recvd3 >>
                                                         ENDAT_NUM_BITS_POSITION_CRC) & ((1 << 24) - 1);
@@ -246,20 +250,20 @@ static int64_t endat_recvd_format(int32_t cmd, struct endat_priv *priv,
     return 0;
 }
 
-int32_t endat_recvd_process(struct endat_priv *priv, int32_t cmd,
-                        union endat_format_data *u)
+int32_t endat_recvd_process(Endat_Handle handle, int32_t cmd,
+                        Endat_FormatData *u)
 {
-    struct endat_data endat_data;
+    Endat_Data endat_data;
     int32_t ret;
 
-    ret = endat_recvd_organize(cmd, priv, &endat_data);
+    ret = endat_recvd_organize(cmd, handle, &endat_data);
 
     if(ret < 0)
     {
         return ret;
     }
 
-    return endat_recvd_format(cmd, priv, &endat_data, u);
+    return endat_recvd_format(cmd, handle, &endat_data, u);
 }
 
 #define ENDAT_USE_OTF_CRC_STATUS
@@ -390,8 +394,8 @@ static uint32_t make_crc_pos(uint32_t clocks, uint32_t error1,
 #endif
 
 /* return crc status: bit0 - position/address params/test, bit1 - additional info1, bit2 - additional info2. return -EINVAL on failure */
-uint32_t endat_recvd_validate(struct endat_priv *priv, int32_t cmd,
-                              union endat_format_data *u)
+uint32_t endat_recvd_validate(Endat_Handle handle, int32_t cmd,
+                              Endat_FormatData *u)
 {
     uint32_t status = 0;
 #ifdef ENDAT_USE_OTF_CRC_STATUS
@@ -403,15 +407,15 @@ uint32_t endat_recvd_validate(struct endat_priv *priv, int32_t cmd,
 #endif
 
 #ifdef ENDAT_USE_OTF_CRC_STATUS
-    val = priv->endatChRxInfo->ch[priv->current_channel].crcStatus;
+    val = handle->channel_rx_info->ch[handle->current_channel].crcStatus;
 
-    if(priv->flags.info2)
+    if(handle->flags.info2)
     {
         status = val & 0x1;
         /* move bit 1 to bit 2 */
         status |= (val & 0x2) << 1;
 
-        if(priv->flags.info1)
+        if(handle->flags.info1)
         {
             /* move bit 2 to bit 1 */
             status |= (val & 0x4) >> 1;
@@ -429,11 +433,11 @@ uint32_t endat_recvd_validate(struct endat_priv *priv, int32_t cmd,
     switch(cmd)
     {
         case 1:
-            lowpos = (u->position_addinfo.position.revolution << priv->single_turn_res[priv->current_channel] |
+            lowpos = (u->position_addinfo.position.revolution << handle->single_turn_res[handle->current_channel] |
                       u->position_addinfo.position.position) & 0xFFFFFFFF;
-            highpos = (u->position_addinfo.position.revolution << priv->single_turn_res[priv->current_channel] |
+            highpos = (u->position_addinfo.position.revolution << handle->single_turn_res[handle->current_channel] |
                        u->position_addinfo.position.position) >> 32;
-            crc = make_crc_pos(priv->pos_res, u->position_addinfo.position.f1, 0, 0,
+            crc = make_crc_pos(handle->pos_res, u->position_addinfo.position.f1, 0, 0,
                                highpos, lowpos);
 
             if(u->position_addinfo.position.crc == crc)
@@ -461,11 +465,11 @@ uint32_t endat_recvd_validate(struct endat_priv *priv, int32_t cmd,
         case 11:
         case 12:
         case 13:
-            lowpos = (u->position_addinfo.position.revolution << priv->single_turn_res[priv->current_channel] |
+            lowpos = (u->position_addinfo.position.revolution << handle->single_turn_res[handle->current_channel] |
                       u->position_addinfo.position.position) & 0xFFFFFFFF;
-            highpos = (u->position_addinfo.position.revolution << priv->single_turn_res[priv->current_channel] |
+            highpos = (u->position_addinfo.position.revolution << handle->single_turn_res[handle->current_channel] |
                        u->position_addinfo.position.position) >> 32;
-            crc = make_crc_pos(priv->pos_res, u->position_addinfo.position.f1,
+            crc = make_crc_pos(handle->pos_res, u->position_addinfo.position.f1,
                                u->position_addinfo.position.f2, 1, highpos, lowpos);
 
             if(u->position_addinfo.position.crc == crc)
@@ -473,7 +477,7 @@ uint32_t endat_recvd_validate(struct endat_priv *priv, int32_t cmd,
                 status = 0x1;
             }
 
-            if(priv->flags.info1)
+            if(handle->flags.info1)
             {
                 crc = make_crc_norm((u->position_addinfo.addinfo1.addinfo >> 16) & 0xFF,
                                     u->position_addinfo.addinfo1.addinfo & 0xFFFF);
@@ -484,7 +488,7 @@ uint32_t endat_recvd_validate(struct endat_priv *priv, int32_t cmd,
                 }
             }
 
-            if(priv->flags.info2)
+            if(handle->flags.info2)
             {
                 crc = make_crc_norm((u->position_addinfo.addinfo2.addinfo >> 16) & 0xFF,
                                     u->position_addinfo.addinfo2.addinfo & 0xFFFF);
@@ -524,178 +528,178 @@ uint32_t endat_recvd_validate(struct endat_priv *priv, int32_t cmd,
  * will handle and it is assumed that this function will be called either after endat_get_command
  * or by diagnostic initialization code where it is only 2.1 commands used
  */
-int32_t endat_command_build(struct endat_priv *priv, int32_t cmd,
-                        struct cmd_supplement *cmd_supplement)
+int32_t endat_command_build(Endat_Handle handle, int32_t cmd,
+                        Endat_CmdSupplement *cmd_supplement)
 {
     uint32_t info;
-    struct endat_pruss_xchg *endat_pruss_xchg = priv->pruss_xchg;
+    Endat_PruicssXchg *endat_pruicss_xchg = handle->pruicss_xchg;
 
-    info = 0, priv->flags.info1 ? info++ : 0, priv->flags.info2 ? info++ : 0 ;
+    info = 0, handle->flags.info1 ? info++ : 0, handle->flags.info2 ? info++ : 0 ;
 
     /*first clear command parameters to be safe */
-    memset(&endat_pruss_xchg->cmd, 0, sizeof(endat_pruss_xchg->cmd));
+    memset(&endat_pruicss_xchg->cmd, 0, sizeof(endat_pruicss_xchg->cmd));
 
     switch(cmd)
     {
         case 1:
-            if(priv->load_share)
+            if(handle->pru_cfg.load_share_enable)
             {
-                endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSITION_VALUES;
-                endat_pruss_xchg->cmd[0].word1 = priv->pos_rx_bits_21_cmd[0] | (ENDAT_TX_6BITS << 8) |
+                endat_pruicss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSITION_VALUES;
+                endat_pruicss_xchg->cmd[0].word1 = handle->pos_rx_bits_21_cmd[0] | (ENDAT_TX_6BITS << 8) |
                                               ((ENDAT_CMDTYP_NO_SUPPLEMENT | ENDAT_CMDTYP_POSITION) << 16);
 
-                endat_pruss_xchg->cmd[1].word0 = ENDAT_CMD_SEND_POSITION_VALUES;
-                endat_pruss_xchg->cmd[1].word1 = priv->pos_rx_bits_21_cmd[1] | (ENDAT_TX_6BITS << 8) |
+                endat_pruicss_xchg->cmd[1].word0 = ENDAT_CMD_SEND_POSITION_VALUES;
+                endat_pruicss_xchg->cmd[1].word1 = handle->pos_rx_bits_21_cmd[1] | (ENDAT_TX_6BITS << 8) |
                                           ((ENDAT_CMDTYP_NO_SUPPLEMENT | ENDAT_CMDTYP_POSITION) << 16);
 
-                endat_pruss_xchg->cmd[2].word0 = ENDAT_CMD_SEND_POSITION_VALUES;
-                endat_pruss_xchg->cmd[2].word1 = priv->pos_rx_bits_21_cmd[2] | (ENDAT_TX_6BITS << 8) |
+                endat_pruicss_xchg->cmd[2].word0 = ENDAT_CMD_SEND_POSITION_VALUES;
+                endat_pruicss_xchg->cmd[2].word1 = handle->pos_rx_bits_21_cmd[2] | (ENDAT_TX_6BITS << 8) |
                                           ((ENDAT_CMDTYP_NO_SUPPLEMENT | ENDAT_CMDTYP_POSITION) << 16);
             } /* command build for ch0, ch1 and ch2 in load share mode*/
             else
             {
-                endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSITION_VALUES;
-                endat_pruss_xchg->cmd[0].word1 = priv->pos_rx_bits_21_cmd[priv->current_channel] | (ENDAT_TX_6BITS << 8) |
+                endat_pruicss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSITION_VALUES;
+                endat_pruicss_xchg->cmd[0].word1 = handle->pos_rx_bits_21_cmd[handle->current_channel] | (ENDAT_TX_6BITS << 8) |
                               ((ENDAT_CMDTYP_NO_SUPPLEMENT | ENDAT_CMDTYP_POSITION) << 16);
             }
             break;
         case 2:
-            endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEL_MEM_AREA;
-            endat_pruss_xchg->cmd[0].word0 |= ((cmd_supplement->address & 0x80) >> 7)
+            endat_pruicss_xchg->cmd[0].word0 = ENDAT_CMD_SEL_MEM_AREA;
+            endat_pruicss_xchg->cmd[0].word0 |= ((cmd_supplement->address & 0x80) >> 7)
                                            | (((cmd_supplement->address << 1) & 0xFE) << 8);
-            endat_pruss_xchg->cmd[0].word1 = ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
+            endat_pruicss_xchg->cmd[0].word1 = ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
                                           (ENDAT_CMDTYP_NO_SUPPLEMENT << 16);
              /*build separate command for all three channel in loadshare mode*/
-            if(priv->load_share)
+            if(handle->pru_cfg.load_share_enable)
             {
-                endat_pruss_xchg->cmd[1].word0 = ENDAT_CMD_SEL_MEM_AREA;
-                endat_pruss_xchg->cmd[1].word0 |= ((cmd_supplement->address & 0x80) >> 7)
+                endat_pruicss_xchg->cmd[1].word0 = ENDAT_CMD_SEL_MEM_AREA;
+                endat_pruicss_xchg->cmd[1].word0 |= ((cmd_supplement->address & 0x80) >> 7)
                                            | (((cmd_supplement->address << 1) & 0xFE) << 8);
-                endat_pruss_xchg->cmd[1].word1 = ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
+                endat_pruicss_xchg->cmd[1].word1 = ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
                                           (ENDAT_CMDTYP_NO_SUPPLEMENT << 16);
 
-                endat_pruss_xchg->cmd[2].word0 = ENDAT_CMD_SEL_MEM_AREA;
-                endat_pruss_xchg->cmd[2].word0 |= ((cmd_supplement->address & 0x80) >> 7)
+                endat_pruicss_xchg->cmd[2].word0 = ENDAT_CMD_SEL_MEM_AREA;
+                endat_pruicss_xchg->cmd[2].word0 |= ((cmd_supplement->address & 0x80) >> 7)
                                            | (((cmd_supplement->address << 1) & 0xFE) << 8);
-                endat_pruss_xchg->cmd[2].word1 = ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
+                endat_pruicss_xchg->cmd[2].word1 = ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
                                           (ENDAT_CMDTYP_NO_SUPPLEMENT << 16);
             }
 
             break;
 
         case 3:
-            endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_RECEIVE_PARAMETERS;
-            endat_pruss_xchg->cmd[0].word0 |= ((cmd_supplement->address & 0x80) >> 7)
+            endat_pruicss_xchg->cmd[0].word0 = ENDAT_CMD_RECEIVE_PARAMETERS;
+            endat_pruicss_xchg->cmd[0].word0 |= ((cmd_supplement->address & 0x80) >> 7)
                                            | (((cmd_supplement->address << 1) & 0xFE) << 8);
-            endat_pruss_xchg->cmd[0].word0 |= ((cmd_supplement->data & 0x8000) >> 7)
+            endat_pruicss_xchg->cmd[0].word0 |= ((cmd_supplement->data & 0x8000) >> 7)
                                            | (((cmd_supplement->data << 1) & 0xFF00) << 8) |
                                            (((cmd_supplement->data << 9) & 0xFE00) << 16);
-            endat_pruss_xchg->cmd[0].word1 =  ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
+            endat_pruicss_xchg->cmd[0].word1 =  ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
                                            (ENDAT_CMDTYP_NO_SUPPLEMENT << 16);
 
              /*build separate command for all three channel in loadshare mode*/
-            if(priv->load_share)
+            if(handle->pru_cfg.load_share_enable)
             {
-                endat_pruss_xchg->cmd[1].word0 = ENDAT_CMD_RECEIVE_PARAMETERS;
-                endat_pruss_xchg->cmd[1].word0 |= ((cmd_supplement->address & 0x80) >> 7)
+                endat_pruicss_xchg->cmd[1].word0 = ENDAT_CMD_RECEIVE_PARAMETERS;
+                endat_pruicss_xchg->cmd[1].word0 |= ((cmd_supplement->address & 0x80) >> 7)
                                            | (((cmd_supplement->address << 1) & 0xFE) << 8);
-                endat_pruss_xchg->cmd[1].word0 |= ((cmd_supplement->data & 0x8000) >> 7)
+                endat_pruicss_xchg->cmd[1].word0 |= ((cmd_supplement->data & 0x8000) >> 7)
                                            | (((cmd_supplement->data << 1) & 0xFF00) << 8) |
                                            (((cmd_supplement->data << 9) & 0xFE00) << 16);
-                endat_pruss_xchg->cmd[1].word1 =  ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
+                endat_pruicss_xchg->cmd[1].word1 =  ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
                                            (ENDAT_CMDTYP_NO_SUPPLEMENT << 16);
 
-                endat_pruss_xchg->cmd[2].word0 = ENDAT_CMD_RECEIVE_PARAMETERS;
-                endat_pruss_xchg->cmd[2].word0 |= ((cmd_supplement->address & 0x80) >> 7)
+                endat_pruicss_xchg->cmd[2].word0 = ENDAT_CMD_RECEIVE_PARAMETERS;
+                endat_pruicss_xchg->cmd[2].word0 |= ((cmd_supplement->address & 0x80) >> 7)
                                            | (((cmd_supplement->address << 1) & 0xFE) << 8);
-                endat_pruss_xchg->cmd[2].word0 |= ((cmd_supplement->data & 0x8000) >> 7)
+                endat_pruicss_xchg->cmd[2].word0 |= ((cmd_supplement->data & 0x8000) >> 7)
                                            | (((cmd_supplement->data << 1) & 0xFF00) << 8) |
                                            (((cmd_supplement->data << 9) & 0xFE00) << 16);
-                endat_pruss_xchg->cmd[2].word1 =  ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
+                endat_pruicss_xchg->cmd[2].word1 =  ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
                                            (ENDAT_CMDTYP_NO_SUPPLEMENT << 16);
             }
             break;
 
         case 4:
-            endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_PARAMETERS;
-            endat_pruss_xchg->cmd[0].word0 |= ((cmd_supplement->address & 0x80) >> 7)
+            endat_pruicss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_PARAMETERS;
+            endat_pruicss_xchg->cmd[0].word0 |= ((cmd_supplement->address & 0x80) >> 7)
                                            | (((cmd_supplement->address << 1) & 0xFE) << 8);
-            endat_pruss_xchg->cmd[0].word1 =  ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
+            endat_pruicss_xchg->cmd[0].word1 =  ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
                                            (ENDAT_CMDTYP_NO_SUPPLEMENT << 16);
 
             /*build separate command for all three channel in loadshare mode */
-            if(priv->load_share)
+            if(handle->pru_cfg.load_share_enable)
             {
-                endat_pruss_xchg->cmd[1].word0 = ENDAT_CMD_SEND_PARAMETERS;
-                endat_pruss_xchg->cmd[1].word0 |= ((cmd_supplement->address & 0x80) >> 7)
+                endat_pruicss_xchg->cmd[1].word0 = ENDAT_CMD_SEND_PARAMETERS;
+                endat_pruicss_xchg->cmd[1].word0 |= ((cmd_supplement->address & 0x80) >> 7)
                                            | (((cmd_supplement->address << 1) & 0xFE) << 8);
-                endat_pruss_xchg->cmd[1].word1 =  ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
+                endat_pruicss_xchg->cmd[1].word1 =  ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
                                            (ENDAT_CMDTYP_NO_SUPPLEMENT << 16);
 
-                endat_pruss_xchg->cmd[2].word0 = ENDAT_CMD_SEND_PARAMETERS;
-                endat_pruss_xchg->cmd[2].word0 |= ((cmd_supplement->address & 0x80) >> 7)
+                endat_pruicss_xchg->cmd[2].word0 = ENDAT_CMD_SEND_PARAMETERS;
+                endat_pruicss_xchg->cmd[2].word0 |= ((cmd_supplement->address & 0x80) >> 7)
                                            | (((cmd_supplement->address << 1) & 0xFE) << 8);
-                endat_pruss_xchg->cmd[2].word1 =  ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
+                endat_pruicss_xchg->cmd[2].word1 =  ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
                                            (ENDAT_CMDTYP_NO_SUPPLEMENT << 16);
             }
             break;
 
         case 5:
-            endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_RECEIVE_RESET;
-            endat_pruss_xchg->cmd[0].word1 = ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
+            endat_pruicss_xchg->cmd[0].word0 = ENDAT_CMD_RECEIVE_RESET;
+            endat_pruicss_xchg->cmd[0].word1 = ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
                                           (ENDAT_CMDTYP_NO_SUPPLEMENT << 16);
 
             /*build separate command for all three channel in loadshare mode*/
-            if(priv->load_share)
+            if(handle->pru_cfg.load_share_enable)
             {
-                endat_pruss_xchg->cmd[1].word0 = ENDAT_CMD_RECEIVE_RESET;
-                endat_pruss_xchg->cmd[1].word1 = ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
+                endat_pruicss_xchg->cmd[1].word0 = ENDAT_CMD_RECEIVE_RESET;
+                endat_pruicss_xchg->cmd[1].word1 = ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
                                           (ENDAT_CMDTYP_NO_SUPPLEMENT << 16);
 
-                endat_pruss_xchg->cmd[2].word0 = ENDAT_CMD_RECEIVE_RESET;
-                endat_pruss_xchg->cmd[2].word1 = ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
+                endat_pruicss_xchg->cmd[2].word0 = ENDAT_CMD_RECEIVE_RESET;
+                endat_pruicss_xchg->cmd[2].word1 = ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
                                           (ENDAT_CMDTYP_NO_SUPPLEMENT << 16);
             }
             break;
 
         case 6:
-            endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_TEST_VALUES;
-            endat_pruss_xchg->cmd[0].word1 = ENDAT_RX_46BITS | (ENDAT_TX_6BITS << 8) |
+            endat_pruicss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_TEST_VALUES;
+            endat_pruicss_xchg->cmd[0].word1 = ENDAT_RX_46BITS | (ENDAT_TX_6BITS << 8) |
                                           (ENDAT_CMDTYP_NO_SUPPLEMENT << 16);
 
             /*build separate command for all three channel in loadshare mode*/
-            if(priv->load_share)
+            if(handle->pru_cfg.load_share_enable)
             {
-                endat_pruss_xchg->cmd[1].word0 = ENDAT_CMD_SEND_TEST_VALUES;
-                endat_pruss_xchg->cmd[1].word1 = ENDAT_RX_46BITS | (ENDAT_TX_6BITS << 8) |
+                endat_pruicss_xchg->cmd[1].word0 = ENDAT_CMD_SEND_TEST_VALUES;
+                endat_pruicss_xchg->cmd[1].word1 = ENDAT_RX_46BITS | (ENDAT_TX_6BITS << 8) |
                                           (ENDAT_CMDTYP_NO_SUPPLEMENT << 16);
 
-                endat_pruss_xchg->cmd[2].word0 = ENDAT_CMD_SEND_TEST_VALUES;
-                endat_pruss_xchg->cmd[2].word1 = ENDAT_RX_46BITS | (ENDAT_TX_6BITS << 8) |
+                endat_pruicss_xchg->cmd[2].word0 = ENDAT_CMD_SEND_TEST_VALUES;
+                endat_pruicss_xchg->cmd[2].word1 = ENDAT_RX_46BITS | (ENDAT_TX_6BITS << 8) |
                                           (ENDAT_CMDTYP_NO_SUPPLEMENT << 16);
             }
             break;
 
         case 7:
-            endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_RECEIVE_TEST_COMMAND;
-            endat_pruss_xchg->cmd[0].word0 |= ((cmd_supplement->address & 0x80) >> 7)
+            endat_pruicss_xchg->cmd[0].word0 = ENDAT_CMD_RECEIVE_TEST_COMMAND;
+            endat_pruicss_xchg->cmd[0].word0 |= ((cmd_supplement->address & 0x80) >> 7)
                                            | (((cmd_supplement->address << 1) & 0xFE) << 8);
-            endat_pruss_xchg->cmd[0].word1 =  ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
+            endat_pruicss_xchg->cmd[0].word1 =  ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
                                            (ENDAT_CMDTYP_NO_SUPPLEMENT << 16);
 
             /*build separate command for all three channel in loadshare mode*/
-            if(priv->load_share)
+            if(handle->pru_cfg.load_share_enable)
             {
-                endat_pruss_xchg->cmd[1].word0 = ENDAT_CMD_RECEIVE_TEST_COMMAND;
-                endat_pruss_xchg->cmd[1].word0 |= ((cmd_supplement->address & 0x80) >> 7)
+                endat_pruicss_xchg->cmd[1].word0 = ENDAT_CMD_RECEIVE_TEST_COMMAND;
+                endat_pruicss_xchg->cmd[1].word0 |= ((cmd_supplement->address & 0x80) >> 7)
                                            | (((cmd_supplement->address << 1) & 0xFE) << 8);
-                endat_pruss_xchg->cmd[1].word1 =  ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
+                endat_pruicss_xchg->cmd[1].word1 =  ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
                                            (ENDAT_CMDTYP_NO_SUPPLEMENT << 16);
 
-                endat_pruss_xchg->cmd[2].word0 = ENDAT_CMD_RECEIVE_TEST_COMMAND;
-                endat_pruss_xchg->cmd[2].word0 |= ((cmd_supplement->address & 0x80) >> 7)
+                endat_pruicss_xchg->cmd[2].word0 = ENDAT_CMD_RECEIVE_TEST_COMMAND;
+                endat_pruicss_xchg->cmd[2].word0 |= ((cmd_supplement->address & 0x80) >> 7)
                                            | (((cmd_supplement->address << 1) & 0xFE) << 8);
-                endat_pruss_xchg->cmd[2].word1 =  ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
+                endat_pruicss_xchg->cmd[2].word1 =  ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
                                            (ENDAT_CMDTYP_NO_SUPPLEMENT << 16);
             }
             break;
@@ -703,34 +707,34 @@ int32_t endat_command_build(struct endat_priv *priv, int32_t cmd,
         case 8:
 
             /*build separate command for all three channel in loadshare mode*/
-            if(priv->load_share)
+            if(handle->pru_cfg.load_share_enable)
             {
-                endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_WITH_DATA;
+                endat_pruicss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_WITH_DATA;
                 /*
                 * Though this is not 2.1 command, fw expects it to be ENDAT_CMDTYP_2_1. Ideally macro should
                 *  have been named ENDAT_CMDTYPE_HAVE_2_2_SUPPLEMENT instead of ENDAT_CMDTYP_2_[12] for readability
                 */
-                endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_cmd[0] + info *
+                endat_pruicss_xchg->cmd[0].word1 = (handle->pos_rx_bits_22_cmd[0] + info *
                                                ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
                                               ((ENDAT_CMDTYP_NO_SUPPLEMENT | ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22)
                                                << 16);
 
-                endat_pruss_xchg->cmd[1].word0 = ENDAT_CMD_SEND_POSVAL_WITH_DATA;
+                endat_pruicss_xchg->cmd[1].word0 = ENDAT_CMD_SEND_POSVAL_WITH_DATA;
                 /*
                 * Though this is not 2.1 command, fw expects it to be ENDAT_CMDTYP_2_1. Ideally macro should
                 *  have been named ENDAT_CMDTYPE_HAVE_2_2_SUPPLEMENT instead of ENDAT_CMDTYP_2_[12] for readability
                 */
-                endat_pruss_xchg->cmd[1].word1 = (priv->pos_rx_bits_22_cmd[1] + info *
+                endat_pruicss_xchg->cmd[1].word1 = (handle->pos_rx_bits_22_cmd[1] + info *
                                            ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
                                           ((ENDAT_CMDTYP_NO_SUPPLEMENT | ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22)
                                            << 16);
 
-                endat_pruss_xchg->cmd[2].word0 = ENDAT_CMD_SEND_POSVAL_WITH_DATA;
+                endat_pruicss_xchg->cmd[2].word0 = ENDAT_CMD_SEND_POSVAL_WITH_DATA;
                 /*
                 * Though this is not 2.1 command, fw expects it to be ENDAT_CMDTYP_2_1. Ideally macro should
                 *  have been named ENDAT_CMDTYPE_HAVE_2_2_SUPPLEMENT instead of ENDAT_CMDTYP_2_[12] for readability
                 */
-                endat_pruss_xchg->cmd[2].word1 = (priv->pos_rx_bits_22_cmd[2] + info *
+                endat_pruicss_xchg->cmd[2].word1 = (handle->pos_rx_bits_22_cmd[2] + info *
                                            ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
                                           ((ENDAT_CMDTYP_NO_SUPPLEMENT | ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22)
                                            << 16);
@@ -739,12 +743,12 @@ int32_t endat_command_build(struct endat_priv *priv, int32_t cmd,
             }
             else
             {
-                endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_WITH_DATA;
+                endat_pruicss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_WITH_DATA;
                 /*
                 * Though this is not 2.1 command, fw expects it to be ENDAT_CMDTYP_2_1. Ideally macro should
                 *  have been named ENDAT_CMDTYPE_HAVE_2_2_SUPPLEMENT instead of ENDAT_CMDTYP_2_[12] for readability
                 */
-                endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_cmd[priv->current_channel] + info *
+                endat_pruicss_xchg->cmd[0].word1 = (handle->pos_rx_bits_22_cmd[handle->current_channel] + info *
                                                ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
                                               ((ENDAT_CMDTYP_NO_SUPPLEMENT | ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22)
                                               << 16);
@@ -752,133 +756,133 @@ int32_t endat_command_build(struct endat_priv *priv, int32_t cmd,
 
 
 
-            if(priv->flags.info1)
+            if(handle->flags.info1)
             {
-                endat_pruss_xchg->cmd[0].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
-                if(priv->load_share)
+                endat_pruicss_xchg->cmd[0].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
+                if(handle->pru_cfg.load_share_enable)
                 {
-                    endat_pruss_xchg->cmd[1].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
+                    endat_pruicss_xchg->cmd[1].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
 
-                    endat_pruss_xchg->cmd[2].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
+                    endat_pruicss_xchg->cmd[2].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
 
                 }
 
             }
 
-            if(priv->flags.info2)
+            if(handle->flags.info2)
             {
-                endat_pruss_xchg->cmd[0].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
-                if(priv->load_share)
+                endat_pruicss_xchg->cmd[0].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
+                if(handle->pru_cfg.load_share_enable)
                 {
-                    endat_pruss_xchg->cmd[1].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
+                    endat_pruicss_xchg->cmd[1].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
 
-                    endat_pruss_xchg->cmd[2].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
+                    endat_pruicss_xchg->cmd[2].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
                 }
             }
 
             break;
 
         case 9:
-            endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_MEMSEL;
-            if(priv->load_share)
+            endat_pruicss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_MEMSEL;
+            if(handle->pru_cfg.load_share_enable)
             {
-                endat_pruss_xchg->cmd[1].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_MEMSEL;
-                endat_pruss_xchg->cmd[2].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_MEMSEL;
+                endat_pruicss_xchg->cmd[1].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_MEMSEL;
+                endat_pruicss_xchg->cmd[2].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_MEMSEL;
             }
             if(cmd_supplement->has_block_address)
             {
-                if(priv->load_share)
+                if(handle->pru_cfg.load_share_enable)
                 {
-                    endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_cmd[0] + info *
+                    endat_pruicss_xchg->cmd[0].word1 = (handle->pos_rx_bits_22_cmd[0] + info *
                                                 ENDAT_ADDITIONAL_INFO_RX_BITS) |
                                                (ENDAT_TX_6BITS << 8) | ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) <<
                                                         16) | (1 << 24);
-                    endat_pruss_xchg->cmd[0].word2 = cmd_supplement->address |
+                    endat_pruicss_xchg->cmd[0].word2 = cmd_supplement->address |
                                                (cmd_supplement->block << 24);
 
-                    endat_pruss_xchg->cmd[1].word1 = (priv->pos_rx_bits_22_cmd[1] + info *
+                    endat_pruicss_xchg->cmd[1].word1 = (handle->pos_rx_bits_22_cmd[1] + info *
                                                ENDAT_ADDITIONAL_INFO_RX_BITS) |
                                               (ENDAT_TX_6BITS << 8) | ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) <<
                                                       16) | (1 << 24);
-                    endat_pruss_xchg->cmd[1].word2 = cmd_supplement->address |
+                    endat_pruicss_xchg->cmd[1].word2 = cmd_supplement->address |
                                               (cmd_supplement->block << 24);
 
-                    endat_pruss_xchg->cmd[2].word1 = (priv->pos_rx_bits_22_cmd[1] + info *
+                    endat_pruicss_xchg->cmd[2].word1 = (handle->pos_rx_bits_22_cmd[1] + info *
                                                ENDAT_ADDITIONAL_INFO_RX_BITS) |
                                               (ENDAT_TX_6BITS << 8) | ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) <<
                                                       16) | (1 << 24);
-                    endat_pruss_xchg->cmd[2].word2 = cmd_supplement->address |
+                    endat_pruicss_xchg->cmd[2].word2 = cmd_supplement->address |
                                               (cmd_supplement->block << 24);
 
                 }
                 else
                 {
-                    endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_cmd[priv->current_channel] + info *
+                    endat_pruicss_xchg->cmd[0].word1 = (handle->pos_rx_bits_22_cmd[handle->current_channel] + info *
                         ENDAT_ADDITIONAL_INFO_RX_BITS) |
                        (ENDAT_TX_6BITS << 8) | ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) <<
                                 16) | (1 << 24);
-                    endat_pruss_xchg->cmd[0].word2 = cmd_supplement->address |
+                    endat_pruicss_xchg->cmd[0].word2 = cmd_supplement->address |
                        (cmd_supplement->block << 24);
                 }
             }
 
             else
             {
-                if(priv->load_share)
+                if(handle->pru_cfg.load_share_enable)
                 {
-                    endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_cmd[0] + info *
+                    endat_pruicss_xchg->cmd[0].word1 = (handle->pos_rx_bits_22_cmd[0] + info *
                                                ENDAT_ADDITIONAL_INFO_RX_BITS) |
                                               (ENDAT_TX_6BITS << 8) | ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) <<
                                                       16);
-                    endat_pruss_xchg->cmd[0].word2 = cmd_supplement->address;
+                    endat_pruicss_xchg->cmd[0].word2 = cmd_supplement->address;
 
-                    endat_pruss_xchg->cmd[1].word1 = (priv->pos_rx_bits_22_cmd[1] + info *
+                    endat_pruicss_xchg->cmd[1].word1 = (handle->pos_rx_bits_22_cmd[1] + info *
                                                ENDAT_ADDITIONAL_INFO_RX_BITS) |
                                               (ENDAT_TX_6BITS << 8) | ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) <<
                                                       16);
-                    endat_pruss_xchg->cmd[1].word2 = cmd_supplement->address;
+                    endat_pruicss_xchg->cmd[1].word2 = cmd_supplement->address;
 
-                    endat_pruss_xchg->cmd[2].word1 = (priv->pos_rx_bits_22_cmd[2] + info *
+                    endat_pruicss_xchg->cmd[2].word1 = (handle->pos_rx_bits_22_cmd[2] + info *
                                                ENDAT_ADDITIONAL_INFO_RX_BITS) |
                                               (ENDAT_TX_6BITS << 8) | ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) <<
                                                       16);
-                    endat_pruss_xchg->cmd[2].word2 = cmd_supplement->address;
+                    endat_pruicss_xchg->cmd[2].word2 = cmd_supplement->address;
 
                  }
                 else
                 {
-                    endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_cmd[priv->current_channel] + info *
+                    endat_pruicss_xchg->cmd[0].word1 = (handle->pos_rx_bits_22_cmd[handle->current_channel] + info *
                         ENDAT_ADDITIONAL_INFO_RX_BITS) |
                        (ENDAT_TX_6BITS << 8) | ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) <<
                                16);
-                    endat_pruss_xchg->cmd[0].word2 = cmd_supplement->address;
+                    endat_pruicss_xchg->cmd[0].word2 = cmd_supplement->address;
                 }
 
 
             }
 
-            if(priv->flags.info1)
+            if(handle->flags.info1)
             {
-                endat_pruss_xchg->cmd[0].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
+                endat_pruicss_xchg->cmd[0].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
 
-                 if(priv->load_share)
+                 if(handle->pru_cfg.load_share_enable)
                  {
-                    endat_pruss_xchg->cmd[1].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
+                    endat_pruicss_xchg->cmd[1].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
 
-                    endat_pruss_xchg->cmd[2].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
+                    endat_pruicss_xchg->cmd[2].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
 
                  }
             }
 
-            if(priv->flags.info2)
+            if(handle->flags.info2)
             {
-                endat_pruss_xchg->cmd[0].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
+                endat_pruicss_xchg->cmd[0].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
 
-                 if(priv->load_share)
+                 if(handle->pru_cfg.load_share_enable)
                  {
 
-                    endat_pruss_xchg->cmd[1].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
-                    endat_pruss_xchg->cmd[2].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
+                    endat_pruicss_xchg->cmd[1].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
+                    endat_pruicss_xchg->cmd[2].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
                  }
             }
 
@@ -886,265 +890,265 @@ int32_t endat_command_build(struct endat_priv *priv, int32_t cmd,
 
         case 10:
 
-            if(priv->load_share)
+            if(handle->pru_cfg.load_share_enable)
             {
-                endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_PARAM;
-                endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_cmd[0] + info *
+                endat_pruicss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_PARAM;
+                endat_pruicss_xchg->cmd[0].word1 = (handle->pos_rx_bits_22_cmd[0] + info *
                                                ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
                                               ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
-                endat_pruss_xchg->cmd[0].word2 = cmd_supplement->address;
+                endat_pruicss_xchg->cmd[0].word2 = cmd_supplement->address;
                 /* data MSByte should be @((char *)word2 + 1) and LSByte @((char *)word2 + 2) */
-                endat_pruss_xchg->cmd[0].word2 |= ((cmd_supplement->data & 0xFF) << 16) |
+                endat_pruicss_xchg->cmd[0].word2 |= ((cmd_supplement->data & 0xFF) << 16) |
                                            (cmd_supplement->data & 0xFF00);
 
-                endat_pruss_xchg->cmd[1].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_PARAM;
-                endat_pruss_xchg->cmd[1].word1 = (priv->pos_rx_bits_22_cmd[1] + info *
+                endat_pruicss_xchg->cmd[1].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_PARAM;
+                endat_pruicss_xchg->cmd[1].word1 = (handle->pos_rx_bits_22_cmd[1] + info *
                                            ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
                                           ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
-                endat_pruss_xchg->cmd[1].word2 = cmd_supplement->address;
+                endat_pruicss_xchg->cmd[1].word2 = cmd_supplement->address;
                 /* data MSByte should be @((char *)word2 + 1) and LSByte @((char *)word2 + 2) */
-                endat_pruss_xchg->cmd[1].word2 |= ((cmd_supplement->data & 0xFF) << 16) |
+                endat_pruicss_xchg->cmd[1].word2 |= ((cmd_supplement->data & 0xFF) << 16) |
                                            (cmd_supplement->data & 0xFF00);
 
-                endat_pruss_xchg->cmd[2].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_PARAM;
-                endat_pruss_xchg->cmd[2].word1 = (priv->pos_rx_bits_22_cmd[2] + info *
+                endat_pruicss_xchg->cmd[2].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_PARAM;
+                endat_pruicss_xchg->cmd[2].word1 = (handle->pos_rx_bits_22_cmd[2] + info *
                                            ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
                                           ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
-                endat_pruss_xchg->cmd[2].word2 = cmd_supplement->address;
+                endat_pruicss_xchg->cmd[2].word2 = cmd_supplement->address;
                 /* data MSByte should be @((char *)word2 + 1) and LSByte @((char *)word2 + 2) */
-                endat_pruss_xchg->cmd[2].word2 |= ((cmd_supplement->data & 0xFF) << 16) |
+                endat_pruicss_xchg->cmd[2].word2 |= ((cmd_supplement->data & 0xFF) << 16) |
                                            (cmd_supplement->data & 0xFF00);
 
             }
             else
             {
-                endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_PARAM;
-                endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_cmd[priv->current_channel] + info *
+                endat_pruicss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_PARAM;
+                endat_pruicss_xchg->cmd[0].word1 = (handle->pos_rx_bits_22_cmd[handle->current_channel] + info *
                                                ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
                                               ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
-                endat_pruss_xchg->cmd[0].word2 = cmd_supplement->address;
+                endat_pruicss_xchg->cmd[0].word2 = cmd_supplement->address;
                 /* data MSByte should be @((char *)word2 + 1) and LSByte @((char *)word2 + 2) */
-                endat_pruss_xchg->cmd[0].word2 |= ((cmd_supplement->data & 0xFF) << 16) |
+                endat_pruicss_xchg->cmd[0].word2 |= ((cmd_supplement->data & 0xFF) << 16) |
                                            (cmd_supplement->data & 0xFF00);
             }
 
 
-            if(priv->flags.info1)
+            if(handle->flags.info1)
             {
-                endat_pruss_xchg->cmd[0].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
-                if(priv->load_share)
+                endat_pruicss_xchg->cmd[0].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
+                if(handle->pru_cfg.load_share_enable)
                 {
-                    endat_pruss_xchg->cmd[1].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
+                    endat_pruicss_xchg->cmd[1].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
 
-                    endat_pruss_xchg->cmd[2].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
+                    endat_pruicss_xchg->cmd[2].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
                 }
 
             }
 
-            if(priv->flags.info2)
+            if(handle->flags.info2)
             {
-                endat_pruss_xchg->cmd[0].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
+                endat_pruicss_xchg->cmd[0].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
 
-                if(priv->load_share)
+                if(handle->pru_cfg.load_share_enable)
                 {
-                    endat_pruss_xchg->cmd[1].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
+                    endat_pruicss_xchg->cmd[1].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
 
-                    endat_pruss_xchg->cmd[2].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
+                    endat_pruicss_xchg->cmd[2].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
                 }
             }
 
             break;
 
         case 11:
-            if(priv->load_share)
+            if(handle->pru_cfg.load_share_enable)
             {
-                endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_SEND_PARAM;
-                endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_cmd[0] + info *
+                endat_pruicss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_SEND_PARAM;
+                endat_pruicss_xchg->cmd[0].word1 = (handle->pos_rx_bits_22_cmd[0] + info *
                                            ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
                                           ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
-                endat_pruss_xchg->cmd[0].word2 = cmd_supplement->address;
+                endat_pruicss_xchg->cmd[0].word2 = cmd_supplement->address;
 
-                endat_pruss_xchg->cmd[1].word0 = ENDAT_CMD_SEND_POSVAL_SEND_PARAM;
-                endat_pruss_xchg->cmd[1].word1 = (priv->pos_rx_bits_22_cmd[1] + info *
+                endat_pruicss_xchg->cmd[1].word0 = ENDAT_CMD_SEND_POSVAL_SEND_PARAM;
+                endat_pruicss_xchg->cmd[1].word1 = (handle->pos_rx_bits_22_cmd[1] + info *
                                            ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
                                           ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
-                endat_pruss_xchg->cmd[1].word2 = cmd_supplement->address;
+                endat_pruicss_xchg->cmd[1].word2 = cmd_supplement->address;
 
-                endat_pruss_xchg->cmd[2].word0 = ENDAT_CMD_SEND_POSVAL_SEND_PARAM;
-                endat_pruss_xchg->cmd[2].word1 = (priv->pos_rx_bits_22_cmd[2] + info *
+                endat_pruicss_xchg->cmd[2].word0 = ENDAT_CMD_SEND_POSVAL_SEND_PARAM;
+                endat_pruicss_xchg->cmd[2].word1 = (handle->pos_rx_bits_22_cmd[2] + info *
                                            ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
                                           ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
-                endat_pruss_xchg->cmd[2].word2 = cmd_supplement->address;
+                endat_pruicss_xchg->cmd[2].word2 = cmd_supplement->address;
 
             }
             else
             {
-                endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_SEND_PARAM;
-                endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_cmd[priv->current_channel] + info *
+                endat_pruicss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_SEND_PARAM;
+                endat_pruicss_xchg->cmd[0].word1 = (handle->pos_rx_bits_22_cmd[handle->current_channel] + info *
                                            ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
                                           ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
-                endat_pruss_xchg->cmd[0].word2 = cmd_supplement->address;
+                endat_pruicss_xchg->cmd[0].word2 = cmd_supplement->address;
             }
 
-            if(priv->flags.info1)
+            if(handle->flags.info1)
             {
-                endat_pruss_xchg->cmd[0].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
+                endat_pruicss_xchg->cmd[0].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
 
-                if(priv->load_share)
+                if(handle->pru_cfg.load_share_enable)
                 {
-                    endat_pruss_xchg->cmd[1].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
+                    endat_pruicss_xchg->cmd[1].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
 
-                    endat_pruss_xchg->cmd[2].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
+                    endat_pruicss_xchg->cmd[2].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
                 }
             }
 
-            if(priv->flags.info2)
+            if(handle->flags.info2)
             {
-                endat_pruss_xchg->cmd[0].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
-                if(priv->load_share)
+                endat_pruicss_xchg->cmd[0].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
+                if(handle->pru_cfg.load_share_enable)
                 {
-                    endat_pruss_xchg->cmd[1].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
+                    endat_pruicss_xchg->cmd[1].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
 
-                    endat_pruss_xchg->cmd[2].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
+                    endat_pruicss_xchg->cmd[2].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
                 }
             }
 
             break;
 
         case 12:
-            if(priv->load_share)
+            if(handle->pru_cfg.load_share_enable)
             {
-                endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_ERR_RST;
-                endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_cmd[0] + info *
+                endat_pruicss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_ERR_RST;
+                endat_pruicss_xchg->cmd[0].word1 = (handle->pos_rx_bits_22_cmd[0] + info *
                                                ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
                                               ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
 
-                endat_pruss_xchg->cmd[1].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_ERR_RST;
-                endat_pruss_xchg->cmd[1].word1 = (priv->pos_rx_bits_22_cmd[1] + info *
+                endat_pruicss_xchg->cmd[1].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_ERR_RST;
+                endat_pruicss_xchg->cmd[1].word1 = (handle->pos_rx_bits_22_cmd[1] + info *
                                            ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
                                           ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
 
-                endat_pruss_xchg->cmd[2].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_ERR_RST;
-                endat_pruss_xchg->cmd[2].word1 = (priv->pos_rx_bits_22_cmd[2] + info *
+                endat_pruicss_xchg->cmd[2].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_ERR_RST;
+                endat_pruicss_xchg->cmd[2].word1 = (handle->pos_rx_bits_22_cmd[2] + info *
                                            ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
                                           ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
             }
             else
             {
-                endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_ERR_RST;
-                endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_cmd[priv->current_channel] + info *
+                endat_pruicss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_ERR_RST;
+                endat_pruicss_xchg->cmd[0].word1 = (handle->pos_rx_bits_22_cmd[handle->current_channel] + info *
                                ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
                               ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
             }
 
-            if(priv->flags.info1)
+            if(handle->flags.info1)
             {
-                endat_pruss_xchg->cmd[0].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
+                endat_pruicss_xchg->cmd[0].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
 
-                if(priv->load_share)
+                if(handle->pru_cfg.load_share_enable)
                 {
-                    endat_pruss_xchg->cmd[1].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
+                    endat_pruicss_xchg->cmd[1].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
 
-                    endat_pruss_xchg->cmd[2].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
+                    endat_pruicss_xchg->cmd[2].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
                 }
             }
 
-            if(priv->flags.info2)
+            if(handle->flags.info2)
             {
-                endat_pruss_xchg->cmd[0].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
-                if(priv->load_share)
+                endat_pruicss_xchg->cmd[0].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
+                if(handle->pru_cfg.load_share_enable)
                 {
-                    endat_pruss_xchg->cmd[1].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
+                    endat_pruicss_xchg->cmd[1].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
 
-                    endat_pruss_xchg->cmd[2].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
+                    endat_pruicss_xchg->cmd[2].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
                 }
             }
 
             break;
 
         case 13:
-            if(priv->load_share)
+            if(handle->pru_cfg.load_share_enable)
             {
-                endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_TESTCMD;
-                endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_cmd[0] + info *
+                endat_pruicss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_TESTCMD;
+                endat_pruicss_xchg->cmd[0].word1 = (handle->pos_rx_bits_22_cmd[0] + info *
                                                ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
                                               ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
-                endat_pruss_xchg->cmd[0].word2 = cmd_supplement->address;
+                endat_pruicss_xchg->cmd[0].word2 = cmd_supplement->address;
 
-                endat_pruss_xchg->cmd[1].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_TESTCMD;
-                endat_pruss_xchg->cmd[1].word1 = (priv->pos_rx_bits_22_cmd[1] + info *
+                endat_pruicss_xchg->cmd[1].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_TESTCMD;
+                endat_pruicss_xchg->cmd[1].word1 = (handle->pos_rx_bits_22_cmd[1] + info *
                                            ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
                                           ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
-                endat_pruss_xchg->cmd[1].word2 = cmd_supplement->address;
+                endat_pruicss_xchg->cmd[1].word2 = cmd_supplement->address;
 
-                endat_pruss_xchg->cmd[2].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_TESTCMD;
-                endat_pruss_xchg->cmd[2].word1 = (priv->pos_rx_bits_22_cmd[2] + info *
+                endat_pruicss_xchg->cmd[2].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_TESTCMD;
+                endat_pruicss_xchg->cmd[2].word1 = (handle->pos_rx_bits_22_cmd[2] + info *
                                            ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
                                           ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
-                endat_pruss_xchg->cmd[2].word2 = cmd_supplement->address;
+                endat_pruicss_xchg->cmd[2].word2 = cmd_supplement->address;
             }
             else
             {
-                endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_TESTCMD;
-                endat_pruss_xchg->cmd[0].word1 = (priv->pos_rx_bits_22_cmd[priv->current_channel] + info *
+                endat_pruicss_xchg->cmd[0].word0 = ENDAT_CMD_SEND_POSVAL_RECEIVE_TESTCMD;
+                endat_pruicss_xchg->cmd[0].word1 = (handle->pos_rx_bits_22_cmd[handle->current_channel] + info *
                                                ENDAT_ADDITIONAL_INFO_RX_BITS) | (ENDAT_TX_6BITS << 8) |
                                               ((ENDAT_CMDTYP_POSITION | ENDAT_CMDTYP_ENDAT22) << 16);
-                endat_pruss_xchg->cmd[0].word2 = cmd_supplement->address;
+                endat_pruicss_xchg->cmd[0].word2 = cmd_supplement->address;
             }
 
-            if(priv->flags.info1)
+            if(handle->flags.info1)
             {
-                endat_pruss_xchg->cmd[0].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
+                endat_pruicss_xchg->cmd[0].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
 
-                if(priv->load_share)
+                if(handle->pru_cfg.load_share_enable)
                 {
-                    endat_pruss_xchg->cmd[1].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
+                    endat_pruicss_xchg->cmd[1].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
 
-                    endat_pruss_xchg->cmd[2].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
+                    endat_pruicss_xchg->cmd[2].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO1) << 16;
                 }
             }
 
-            if(priv->flags.info2)
+            if(handle->flags.info2)
             {
-                endat_pruss_xchg->cmd[0].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
-                if(priv->load_share)
+                endat_pruicss_xchg->cmd[0].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
+                if(handle->pru_cfg.load_share_enable)
                 {
-                    endat_pruss_xchg->cmd[1].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
+                    endat_pruicss_xchg->cmd[1].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
 
-                    endat_pruss_xchg->cmd[2].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
+                    endat_pruicss_xchg->cmd[2].word1 |= (ENDAT_CMDTYP_HAS_ADDINFO2) << 16;
                 }
             }
 
             break;
 
         case 14:
-            endat_pruss_xchg->cmd[0].word0 = ENDAT_CMD_RECEIVE_COMMUNICATION_CMD;
-            endat_pruss_xchg->cmd[0].word0 |= ((cmd_supplement->address & 0x80) >> 7)
+            endat_pruicss_xchg->cmd[0].word0 = ENDAT_CMD_RECEIVE_COMMUNICATION_CMD;
+            endat_pruicss_xchg->cmd[0].word0 |= ((cmd_supplement->address & 0x80) >> 7)
                                            | (((cmd_supplement->address << 1) & 0xFE) << 8);
-            endat_pruss_xchg->cmd[0].word0 |= ((cmd_supplement->data & 0x8000) >> 7)
+            endat_pruicss_xchg->cmd[0].word0 |= ((cmd_supplement->data & 0x8000) >> 7)
                                            | (((cmd_supplement->data << 1) & 0xFF00) << 8) |
                                            (((cmd_supplement->data << 9) & 0xFE00) << 16);
-            endat_pruss_xchg->cmd[0].word1 =  ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
+            endat_pruicss_xchg->cmd[0].word1 =  ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
                                            ((ENDAT_CMDTYP_NO_SUPPLEMENT | ENDAT_CMDTYP_ENDAT22) << 16);
 
-            if(priv->load_share)
+            if(handle->pru_cfg.load_share_enable)
             {
-                endat_pruss_xchg->cmd[1].word0 = ENDAT_CMD_RECEIVE_COMMUNICATION_CMD;
-                endat_pruss_xchg->cmd[1].word0 |= ((cmd_supplement->address & 0x80) >> 7)
+                endat_pruicss_xchg->cmd[1].word0 = ENDAT_CMD_RECEIVE_COMMUNICATION_CMD;
+                endat_pruicss_xchg->cmd[1].word0 |= ((cmd_supplement->address & 0x80) >> 7)
                                            | (((cmd_supplement->address << 1) & 0xFE) << 8);
-                endat_pruss_xchg->cmd[1].word0 |= ((cmd_supplement->data & 0x8000) >> 7)
+                endat_pruicss_xchg->cmd[1].word0 |= ((cmd_supplement->data & 0x8000) >> 7)
                                            | (((cmd_supplement->data << 1) & 0xFF00) << 8) |
                                            (((cmd_supplement->data << 9) & 0xFE00) << 16);
-                endat_pruss_xchg->cmd[1].word1 =  ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
+                endat_pruicss_xchg->cmd[1].word1 =  ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
                                            ((ENDAT_CMDTYP_NO_SUPPLEMENT | ENDAT_CMDTYP_ENDAT22) << 16);
 
-                endat_pruss_xchg->cmd[2].word0 = ENDAT_CMD_RECEIVE_COMMUNICATION_CMD;
-                endat_pruss_xchg->cmd[2].word0 |= ((cmd_supplement->address & 0x80) >> 7)
+                endat_pruicss_xchg->cmd[2].word0 = ENDAT_CMD_RECEIVE_COMMUNICATION_CMD;
+                endat_pruicss_xchg->cmd[2].word0 |= ((cmd_supplement->address & 0x80) >> 7)
                                            | (((cmd_supplement->address << 1) & 0xFE) << 8);
-                endat_pruss_xchg->cmd[2].word0 |= ((cmd_supplement->data & 0x8000) >> 7)
+                endat_pruicss_xchg->cmd[2].word0 |= ((cmd_supplement->data & 0x8000) >> 7)
                                            | (((cmd_supplement->data << 1) & 0xFF00) << 8) |
                                            (((cmd_supplement->data << 9) & 0xFE00) << 16);
-                endat_pruss_xchg->cmd[2].word1 =  ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
+                endat_pruicss_xchg->cmd[2].word1 =  ENDAT_RX_29BITS | (ENDAT_TX_30BITS << 8) |
                                            ((ENDAT_CMDTYP_NO_SUPPLEMENT | ENDAT_CMDTYP_ENDAT22) << 16);
             }
             break;
@@ -1157,67 +1161,67 @@ int32_t endat_command_build(struct endat_priv *priv, int32_t cmd,
     return cmd;
 }
 
-void endat_command_send(struct endat_priv *priv)
+void endat_command_send(Endat_Handle handle)
 {
-    struct endat_pruss_xchg *pruss_xchg = priv->pruss_xchg;
+    Endat_PruicssXchg *pruicss_xchg = handle->pruicss_xchg;
     /*for load share mode set mask for all connected channels*/
-    if(priv->load_share)
+    if(handle->pru_cfg.load_share_enable)
     {
-        pruss_xchg->config[0].trigger = pruss_xchg->config[0].channel==1?0x1:0;
-        pruss_xchg->config[1].trigger = pruss_xchg->config[1].channel==2?0x1:0;
-        pruss_xchg->config[2].trigger = pruss_xchg->config[2].channel==4?0x1:0;
+        pruicss_xchg->config[0].trigger = pruicss_xchg->config[0].channel==1?0x1:0;
+        pruicss_xchg->config[1].trigger = pruicss_xchg->config[1].channel==2?0x1:0;
+        pruicss_xchg->config[2].trigger = pruicss_xchg->config[2].channel==4?0x1:0;
 
     }
     else
     {
-        pruss_xchg->config[0].trigger = 0x1;
+        pruicss_xchg->config[0].trigger = 0x1;
     }
 
 }
 
-void endat_command_wait(struct endat_priv *priv)
+void endat_command_wait(Endat_Handle handle)
 {
-    struct endat_pruss_xchg *pruss_xchg = priv->pruss_xchg;
-    if(priv->load_share)
+    Endat_PruicssXchg *pruicss_xchg = handle->pruicss_xchg;
+    if(handle->pru_cfg.load_share_enable)
     {  /*waiting till host trigger bits has not clear for all enabled channels*/
-        while((pruss_xchg->config[0].trigger&0x1) || (pruss_xchg->config[1].trigger &0x1) || (pruss_xchg->config[2].trigger&0x1))
+        while((pruicss_xchg->config[0].trigger&0x1) || (pruicss_xchg->config[1].trigger &0x1) || (pruicss_xchg->config[2].trigger&0x1))
            ;
     }
     else
     {
-        while(pruss_xchg->config[0].trigger & 0x1)
+        while(pruicss_xchg->config[0].trigger & 0x1)
            ;
     }
 }
 
-int32_t endat_command_process(struct endat_priv *priv, int32_t cmd,
-                          struct cmd_supplement *cmd_supplement)
+int32_t endat_command_process(Endat_Handle handle, int32_t cmd,
+                          Endat_CmdSupplement *cmd_supplement)
 {
-    cmd = endat_command_build(priv, cmd, cmd_supplement);
+    cmd = endat_command_build(handle, cmd, cmd_supplement);
 
     if(cmd < 0)
     {
         return cmd;
     }
 
-    endat_command_send(priv);
-    endat_command_wait(priv);
+    endat_command_send(handle);
+    endat_command_wait(handle);
     return cmd;
 }
 
-int32_t endat_get_2_2_angle(struct endat_priv *priv)
+int32_t endat_get_2_2_angle(Endat_Handle handle)
 {
     int32_t pos;
-    struct endatChRxInfo *endatChRxInfo = priv->endatChRxInfo;
-    int32_t ch = priv->current_channel;
+    Endat_ChRxInfoArray *channel_rx_info = handle->channel_rx_info;
+    int32_t ch = handle->current_channel;
 
 
-    if(!(endatChRxInfo->ch[ch].crcStatus & ENDAT_CRC_DATA))
+    if(!(channel_rx_info->ch[ch].crcStatus & ENDAT_CRC_DATA))
     {
         return -1;
     }
 
-    pos = endatChRxInfo->ch[ch].posWord0;
+    pos = channel_rx_info->ch[ch].posWord0;
 
 #ifdef __TI_ARM__
     pos = __rbit(pos);
@@ -1235,22 +1239,22 @@ int32_t endat_get_2_2_angle(struct endat_priv *priv)
     pos >>= 2;
 
     /* mask non-angular bits */
-    pos &= (1 << priv->single_turn_res[priv->current_channel]) - 1;
+    pos &= (1 << handle->single_turn_res[handle->current_channel]) - 1;
     return pos;
 }
 
-static int32_t endat_get_pos_res(struct endat_priv *priv)
+static int32_t endat_get_pos_res(Endat_Handle handle)
 {
     int32_t cmd;
-    struct cmd_supplement cmd_supplement;
+    Endat_CmdSupplement cmd_supplement;
     uint32_t word;
-    int32_t ch = priv->current_channel;
-    struct endatChRxInfo *endatChRxInfo = priv->endatChRxInfo;
+    int32_t ch = handle->current_channel;
+    Endat_ChRxInfoArray *channel_rx_info = handle->channel_rx_info;
 
     /* select memory area encoder manufacturer page 0 */
     cmd = 2, cmd_supplement.address = MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE0;
 
-    if(endat_command_process(priv, cmd, &cmd_supplement) < 0)
+    if(endat_command_process(handle, cmd, &cmd_supplement) < 0)
     {
         return -EINVAL;
     }
@@ -1261,7 +1265,7 @@ static int32_t endat_get_pos_res(struct endat_priv *priv)
     /* send parameter for word13 */
     cmd = 4, cmd_supplement.address = APP_ENDAT_WORD_13;
 
-    if(endat_command_process(priv, cmd, &cmd_supplement) < 0)
+    if(endat_command_process(handle, cmd, &cmd_supplement) < 0)
     {
         return -EINVAL;
     }
@@ -1269,23 +1273,23 @@ static int32_t endat_get_pos_res(struct endat_priv *priv)
     /* delay copied from fw */
     ClockP_usleep(1000 * 2);
 
-    word = (endatChRxInfo->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC)) & ((
+    word = (channel_rx_info->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC)) & ((
                 1 << ENDAT_NUM_BITS_PARAMETER) - 1);
     return word &= (1 << ENDAT_NUM_BITS_VALID_PAGE0_WORD13) - 1;
 }
 
-static int32_t endat_get_multi_turn_res(struct endat_priv *priv)
+static int32_t endat_get_multi_turn_res(Endat_Handle handle)
 {
     int32_t cmd;
-    struct cmd_supplement cmd_supplement;
+    Endat_CmdSupplement cmd_supplement;
     uint32_t word;
-    int32_t ch = priv->current_channel;
-    struct endatChRxInfo *endatChRxInfo = priv->endatChRxInfo;
+    int32_t ch = handle->current_channel;
+    Endat_ChRxInfoArray *channel_rx_info = handle->channel_rx_info;
 
     /* select memory area encoder manufacturer page 0 */
     cmd = 2, cmd_supplement.address = MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE1;
 
-    if(endat_command_process(priv, cmd, &cmd_supplement) < 0)
+    if(endat_command_process(handle, cmd, &cmd_supplement) < 0)
     {
         return -EINVAL;
     }
@@ -1296,7 +1300,7 @@ static int32_t endat_get_multi_turn_res(struct endat_priv *priv)
     /* send parameter for word1 */
     cmd = 4, cmd_supplement.address = APP_ENDAT_WORD_1;
 
-    if(endat_command_process(priv, cmd, &cmd_supplement) < 0)
+    if(endat_command_process(handle, cmd, &cmd_supplement) < 0)
     {
         return -EINVAL;
     }
@@ -1304,23 +1308,23 @@ static int32_t endat_get_multi_turn_res(struct endat_priv *priv)
     /* delay copied from fw */
     ClockP_usleep(1000 * 2);
 
-    word = (endatChRxInfo->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC)) & ((
+    word = (channel_rx_info->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC)) & ((
                 1 << ENDAT_NUM_BITS_PARAMETER) - 1);
     return word &= (1 << ENDAT_NUM_BITS_VALID_PAGE1_WORD1) - 1;
 }
 
-static int32_t endat_get_id(struct endat_priv *priv)
+static int32_t endat_get_id(Endat_Handle handle)
 {
     int32_t cmd;
-    struct cmd_supplement cmd_supplement;
+    Endat_CmdSupplement cmd_supplement;
     uint32_t word0, word1, word2;
-    int32_t ch = priv->current_channel;
-    struct endatChRxInfo *endatChRxInfo = priv->endatChRxInfo;
+    int32_t ch = handle->current_channel;
+    Endat_ChRxInfoArray *channel_rx_info = handle->channel_rx_info;
 
     /* select memory area encoder manufacturer page 1 */
     cmd = 2, cmd_supplement.address = MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE1;
 
-    if(endat_command_process(priv, cmd, &cmd_supplement) < 0)
+    if(endat_command_process(handle, cmd, &cmd_supplement) < 0)
     {
         return -EINVAL;
     }
@@ -1331,12 +1335,12 @@ static int32_t endat_get_id(struct endat_priv *priv)
     /* send parameter for word8 */
     cmd = 4, cmd_supplement.address = APP_ENDAT_WORD_8;
 
-    if(endat_command_process(priv, cmd, &cmd_supplement) < 0)
+    if(endat_command_process(handle, cmd, &cmd_supplement) < 0)
     {
         return -EINVAL;
     }
 
-    word0 = (endatChRxInfo->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC))
+    word0 = (channel_rx_info->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC))
             & ((1 << ENDAT_NUM_BITS_PARAMETER) - 1);
     /* delay copied from fw */
     ClockP_usleep(1000 * 2);
@@ -1344,12 +1348,12 @@ static int32_t endat_get_id(struct endat_priv *priv)
     /* send parameter for word9 */
     cmd = 4, cmd_supplement.address = APP_ENDAT_WORD_9;
 
-    if(endat_command_process(priv, cmd, &cmd_supplement) < 0)
+    if(endat_command_process(handle, cmd, &cmd_supplement) < 0)
     {
         return -EINVAL;
     }
 
-    word1 = (endatChRxInfo->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC))
+    word1 = (channel_rx_info->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC))
             & ((1 << ENDAT_NUM_BITS_PARAMETER) - 1);
     /* delay copied from fw */
     ClockP_usleep(1000 * 2);
@@ -1357,35 +1361,35 @@ static int32_t endat_get_id(struct endat_priv *priv)
     /* send parameter for word10 */
     cmd = 4, cmd_supplement.address = APP_ENDAT_WORD_10;
 
-    if(endat_command_process(priv, cmd, &cmd_supplement) < 0)
+    if(endat_command_process(handle, cmd, &cmd_supplement) < 0)
     {
         return -EINVAL;
     }
 
-    word2 = (endatChRxInfo->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC))
+    word2 = (channel_rx_info->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC))
             & ((1 << ENDAT_NUM_BITS_PARAMETER) - 1);
     /* delay copied from fw */
     ClockP_usleep(1000 * 2);
 
-    priv->id.binary = word1 | word2 << 16;
+    handle->id.binary = word1 | word2 << 16;
     /* swap the two ascii's so that printing as string will give what is required */
-    priv->id.ascii = ((word0 & 0xFF) << 8) | ((word0 & 0xFF00) >> 8);
+    handle->id.ascii = ((word0 & 0xFF) << 8) | ((word0 & 0xFF00) >> 8);
 
     return 0;
 }
 
-static int32_t endat_get_sn(struct endat_priv *priv)
+static int32_t endat_get_sn(Endat_Handle handle)
 {
     int32_t cmd;
-    struct cmd_supplement cmd_supplement;
+    Endat_CmdSupplement cmd_supplement;
     uint32_t word0, word1, word2;
-    int32_t ch = priv->current_channel;
-    struct endatChRxInfo *endatChRxInfo = priv->endatChRxInfo;
+    int32_t ch = handle->current_channel;
+    Endat_ChRxInfoArray *channel_rx_info = handle->channel_rx_info;
 
     /* select memory area encoder manufacturer page 1 */
     cmd = 2, cmd_supplement.address = MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE1;
 
-    if(endat_command_process(priv, cmd, &cmd_supplement) < 0)
+    if(endat_command_process(handle, cmd, &cmd_supplement) < 0)
     {
         return -EINVAL;
     }
@@ -1396,12 +1400,12 @@ static int32_t endat_get_sn(struct endat_priv *priv)
     /* send parameter for word11 */
     cmd = 4, cmd_supplement.address = APP_ENDAT_WORD_11;
 
-    if(endat_command_process(priv, cmd, &cmd_supplement) < 0)
+    if(endat_command_process(handle, cmd, &cmd_supplement) < 0)
     {
         return -EINVAL;
     }
 
-    word0 = (endatChRxInfo->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC))
+    word0 = (channel_rx_info->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC))
             & ((1 << ENDAT_NUM_BITS_PARAMETER) - 1);
     /* delay copied from fw */
     ClockP_usleep(1000 * 2);
@@ -1409,12 +1413,12 @@ static int32_t endat_get_sn(struct endat_priv *priv)
     /* send parameter for word12 */
     cmd = 4, cmd_supplement.address = APP_ENDAT_WORD_12;
 
-    if(endat_command_process(priv, cmd, &cmd_supplement) < 0)
+    if(endat_command_process(handle, cmd, &cmd_supplement) < 0)
     {
         return -EINVAL;
     }
 
-    word1 = (endatChRxInfo->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC))
+    word1 = (channel_rx_info->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC))
             & ((1 << ENDAT_NUM_BITS_PARAMETER) - 1);
     /* delay copied from fw */
     ClockP_usleep(1000 * 2);
@@ -1422,36 +1426,36 @@ static int32_t endat_get_sn(struct endat_priv *priv)
     /* send parameter for word13 */
     cmd = 4, cmd_supplement.address = APP_ENDAT_WORD_13;
 
-    if(endat_command_process(priv, cmd, &cmd_supplement) < 0)
+    if(endat_command_process(handle, cmd, &cmd_supplement) < 0)
     {
         return -EINVAL;
     }
 
-    word2 = (endatChRxInfo->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC))
+    word2 = (channel_rx_info->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC))
             & ((1 << ENDAT_NUM_BITS_PARAMETER) - 1);
     /* delay copied from fw */
     ClockP_usleep(1000 * 2);
 
-    priv->sn.ascii_lsb = word0 & 0xFF;
-    priv->sn.binary = ((word0 & 0xFF00) >> 8) | (word1 << 8) | ((
+    handle->sn.ascii_lsb = word0 & 0xFF;
+    handle->sn.binary = ((word0 & 0xFF00) >> 8) | (word1 << 8) | ((
                           word2 & 0xFF) << 24);
-    priv->sn.ascii_msb = (word2 & 0xFF00) >> 8;
+    handle->sn.ascii_msb = (word2 & 0xFF00) >> 8;
 
     return 0;
 }
 
-static int32_t endat_get_command_set(struct endat_priv *priv)
+static int32_t endat_get_command_set(Endat_Handle handle)
 {
     int32_t cmd;
-    struct cmd_supplement cmd_supplement;
+    Endat_CmdSupplement cmd_supplement;
     uint32_t word;
-    int32_t ch = priv->current_channel;
-    struct endatChRxInfo *endatChRxInfo = priv->endatChRxInfo;
+    int32_t ch = handle->current_channel;
+    Endat_ChRxInfoArray *channel_rx_info = handle->channel_rx_info;
 
     /* select memory area encoder manufacturer page 2 */
     cmd = 2, cmd_supplement.address = MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE2;
 
-    if(endat_command_process(priv, cmd, &cmd_supplement) < 0)
+    if(endat_command_process(handle, cmd, &cmd_supplement) < 0)
     {
         return -EINVAL;
     }
@@ -1462,7 +1466,7 @@ static int32_t endat_get_command_set(struct endat_priv *priv)
     /* send parameter for word5 */
     cmd = 4, cmd_supplement.address = APP_ENDAT_WORD_5;
 
-    if(endat_command_process(priv, cmd, &cmd_supplement) < 0)
+    if(endat_command_process(handle, cmd, &cmd_supplement) < 0)
     {
         return -EINVAL;
     }
@@ -1470,26 +1474,26 @@ static int32_t endat_get_command_set(struct endat_priv *priv)
     /* delay copied from fw */
     ClockP_usleep(1000 * 2);
 
-    word = (endatChRxInfo->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC)) & ((
+    word = (channel_rx_info->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC)) & ((
                 1 << ENDAT_NUM_BITS_PARAMETER) - 1);
-    priv->cmd_set_2_2 = (word & 0x1) && !(word & 0x2);
-    priv->has_safety[ch] = (word & 0x4) && !(word & 0x8);
+    handle->cmd_set_2_2 = (word & 0x1) && !(word & 0x2);
+    handle->has_safety[ch] = (word & 0x4) && !(word & 0x8);
 
     return 0;
 }
 
-static int32_t endat_get_type(struct endat_priv *priv)
+static int32_t endat_get_type(Endat_Handle handle)
 {
     int32_t cmd;
-    struct cmd_supplement cmd_supplement;
+    Endat_CmdSupplement cmd_supplement;
     uint32_t word;
-    int32_t ch = priv->current_channel;
-    struct endatChRxInfo *endatChRxInfo = priv->endatChRxInfo;
+    int32_t ch = handle->current_channel;
+    Endat_ChRxInfoArray *channel_rx_info = handle->channel_rx_info;
 
     /* select memory area encoder manufacturer page 0 */
     cmd = 2, cmd_supplement.address = MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE0;
 
-    if(endat_command_process(priv, cmd, &cmd_supplement) < 0)
+    if(endat_command_process(handle, cmd, &cmd_supplement) < 0)
     {
         return -EINVAL;
     }
@@ -1500,7 +1504,7 @@ static int32_t endat_get_type(struct endat_priv *priv)
     /* send parameter for word13 */
     cmd = 4, cmd_supplement.address = APP_ENDAT_WORD_14;
 
-    if(endat_command_process(priv, cmd, &cmd_supplement) < 0)
+    if(endat_command_process(handle, cmd, &cmd_supplement) < 0)
     {
         return -EINVAL;
     }
@@ -1508,25 +1512,25 @@ static int32_t endat_get_type(struct endat_priv *priv)
     /* delay copied from fw */
     ClockP_usleep(1000 * 2);
 
-    word = (endatChRxInfo->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC)) & ((
+    word = (channel_rx_info->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC)) & ((
                 1 << ENDAT_NUM_BITS_PARAMETER) - 1);
-    priv->type[ch] = (word & (1 << 15)) ? rotary : linear;
+    handle->type[ch] = (word & (1 << 15)) ? rotary : linear;
 
     return 0;
 }
 
-static int32_t endat_get_step(struct endat_priv *priv)
+static int32_t endat_get_step(Endat_Handle handle)
 {
     int32_t cmd;
-    struct cmd_supplement cmd_supplement;
+    Endat_CmdSupplement cmd_supplement;
     uint32_t word;
-    int32_t ch = priv->current_channel;
-    struct endatChRxInfo *endatChRxInfo = priv->endatChRxInfo;
+    int32_t ch = handle->current_channel;
+    Endat_ChRxInfoArray *channel_rx_info = handle->channel_rx_info;
 
     /* select memory area encoder manufacturer page 0 */
     cmd = 2, cmd_supplement.address = MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE1;
 
-    if(endat_command_process(priv, cmd, &cmd_supplement) < 0)
+    if(endat_command_process(handle, cmd, &cmd_supplement) < 0)
     {
         return -EINVAL;
     }
@@ -1537,95 +1541,95 @@ static int32_t endat_get_step(struct endat_priv *priv)
     /* send parameter for word4 */
     cmd = 4, cmd_supplement.address = APP_ENDAT_WORD_4;
 
-    if(endat_command_process(priv, cmd, &cmd_supplement) < 0)
+    if(endat_command_process(handle, cmd, &cmd_supplement) < 0)
     {
         return -EINVAL;
     }
 
     /* delay copied from fw */
     ClockP_usleep(1000 * 2);
-    word = (endatChRxInfo->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC)) & ((
+    word = (channel_rx_info->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC)) & ((
                 1 << ENDAT_NUM_BITS_PARAMETER) - 1);
 
     /* send parameter for word5 */
     cmd = 4, cmd_supplement.address = APP_ENDAT_WORD_5;
 
-    if(endat_command_process(priv, cmd, &cmd_supplement) < 0)
+    if(endat_command_process(handle, cmd, &cmd_supplement) < 0)
     {
         return -EINVAL;
     }
 
     /* delay copied from fw */
     ClockP_usleep(1000 * 2);
-    word |= ((endatChRxInfo->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC))
+    word |= ((channel_rx_info->ch[ch].posWord0 >> (ENDAT_NUM_BITS_POSITION_CRC))
              & ((1 << ENDAT_NUM_BITS_PARAMETER) - 1)) << 16;
 
     return word;
 }
 
-int32_t endat_get_encoder_info(struct endat_priv *priv)
+int32_t endat_get_encoder_info(Endat_Handle handle)
 {
     int32_t ret;
 
-    priv->pos_res = endat_get_pos_res(priv);
+    handle->pos_res = endat_get_pos_res(handle);
 
-    if(priv->pos_res < 0)
+    if(handle->pos_res < 0)
     {
-        return priv->pos_res;
+        return handle->pos_res;
     }
 
-    priv->multi_turn_res[priv->current_channel] = endat_get_multi_turn_res(priv);
+    handle->multi_turn_res[handle->current_channel] = endat_get_multi_turn_res(handle);
 
-    if(priv->multi_turn_res[priv->current_channel] < 0)
+    if(handle->multi_turn_res[handle->current_channel] < 0)
     {
-        return priv->multi_turn_res[priv->current_channel];
+        return handle->multi_turn_res[handle->current_channel];
     }
 
-    else if(!priv->multi_turn_res[priv->current_channel])
+    else if(!handle->multi_turn_res[handle->current_channel])
     {
-        priv->single_turn_res[priv->current_channel] = priv->pos_res;
+        handle->single_turn_res[handle->current_channel] = handle->pos_res;
     }
 
     else
     {
-        priv->multi_turn_res[priv->current_channel] = log2(priv->multi_turn_res[priv->current_channel]);
-        priv->single_turn_res[priv->current_channel] = priv->pos_res - priv->multi_turn_res[priv->current_channel];
+        handle->multi_turn_res[handle->current_channel] = log2(handle->multi_turn_res[handle->current_channel]);
+        handle->single_turn_res[handle->current_channel] = handle->pos_res - handle->multi_turn_res[handle->current_channel];
     }
 
-    priv->step[priv->current_channel] = endat_get_step(priv);
+    handle->step[handle->current_channel] = endat_get_step(handle);
 
-    if(priv->step[priv->current_channel] < 0)
+    if(handle->step[handle->current_channel] < 0)
     {
-        return priv->step[priv->current_channel];
+        return handle->step[handle->current_channel];
     }
     /*calaculate rx frame size for all three channels and store in different variables*/
   
-    priv->pos_rx_bits_21_cmd[priv->current_channel] = priv->pos_res + ENDAT_NUM_BITS_POSITION_CRC +
+    handle->pos_rx_bits_21_cmd[handle->current_channel] = handle->pos_res + ENDAT_NUM_BITS_POSITION_CRC +
             ENDAT_NUM_BITS_F1;
-    priv->pos_rx_bits_22_cmd[priv->current_channel] = priv->pos_rx_bits_21_cmd[priv->current_channel] + ENDAT_NUM_BITS_F2;
+    handle->pos_rx_bits_22_cmd[handle->current_channel] = handle->pos_rx_bits_21_cmd[handle->current_channel] + ENDAT_NUM_BITS_F2;
 
-    ret = endat_get_id(priv);
-
-    if(ret)
-    {
-        return ret;
-    }
-
-    ret = endat_get_sn(priv);
+    ret = endat_get_id(handle);
 
     if(ret)
     {
         return ret;
     }
 
-    ret = endat_get_type(priv);
+    ret = endat_get_sn(handle);
 
     if(ret)
     {
         return ret;
     }
 
-    ret = endat_get_command_set(priv);
+    ret = endat_get_type(handle);
+
+    if(ret)
+    {
+        return ret;
+    }
+
+    ret = endat_get_command_set(handle);
 
     if(ret)
     {
@@ -1635,20 +1639,20 @@ int32_t endat_get_encoder_info(struct endat_priv *priv)
     return 0;
 }
 
-uint32_t endat_get_prop_delay(struct endat_priv *priv)
+uint32_t endat_get_prop_delay(Endat_Handle handle)
 {
-    return priv->pruss_xchg->ch[priv->current_channel].propDelay;
+    return handle->pruicss_xchg->ch[handle->current_channel].propDelay;
 }
 
-void endat_addinfo_track(struct endat_priv *priv, int32_t cmd,
-                         struct cmd_supplement *cmd_supplement)
+void endat_addinfo_track(Endat_Handle handle, int32_t cmd,
+                         Endat_CmdSupplement *cmd_supplement)
 {
     int32_t c7_c4, c3_c0;
 
     /* reset stops additional info's */
     if(cmd == 5)
     {
-        priv->flags.info1 = FALSE, priv->flags.info2 = FALSE;
+        handle->flags.info1 = FALSE, handle->flags.info2 = FALSE;
     }
 
     if(cmd != 9)
@@ -1664,12 +1668,12 @@ void endat_addinfo_track(struct endat_priv *priv, int32_t cmd,
     {
         if(c3_c0 == ENDAT_MRS_VAL_STOP_ADDITIONAL_INFO)
         {
-            priv->flags.info1 = FALSE;
+            handle->flags.info1 = FALSE;
         }
 
         else
         {
-            priv->flags.info1 = TRUE;
+            handle->flags.info1 = TRUE;
         }
     }
 
@@ -1681,61 +1685,61 @@ void endat_addinfo_track(struct endat_priv *priv, int32_t cmd,
     {
         if(c3_c0 == ENDAT_MRS_VAL_STOP_ADDITIONAL_INFO)
         {
-            priv->flags.info2 = FALSE;
+            handle->flags.info2 = FALSE;
         }
 
         else
         {
-            priv->flags.info2 = TRUE;
+            handle->flags.info2 = TRUE;
         }
     }
 }
 
-static void endat_config_global_rx_arm_cnt(struct endat_priv *priv,
+static void endat_config_global_rx_arm_cnt(Endat_Handle handle,
         uint16_t val)
 {
-    void *pruss_cfg = priv->pruss_cfg;
-    if(priv->pruicss_slicex)
+    void *pruicss_cfg = (void *)((PRUICSS_HwAttrs *)(handle->pru_cfg.pruicss_handle->hwAttrs))->cfgRegBase;
+    if(handle->pru_cfg.pru_slice == 1)
     {
-       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG1_REG + 2, val);
-       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH1_CFG1_REG + 2, val);
-       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH2_CFG1_REG + 2, val);
+       HW_WR_REG16((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG1_REG + 2, val);
+       HW_WR_REG16((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH1_CFG1_REG + 2, val);
+       HW_WR_REG16((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH2_CFG1_REG + 2, val);
     }
     else
     {
-       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG1_REG + 2, val);
-       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH1_CFG1_REG + 2, val);
-       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH2_CFG1_REG + 2, val);
+       HW_WR_REG16((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG1_REG + 2, val);
+       HW_WR_REG16((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH1_CFG1_REG + 2, val);
+       HW_WR_REG16((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH2_CFG1_REG + 2, val);
     }
 }
 
-void endat_config_rx_arm_cnt(struct endat_priv *priv, uint16_t val)
+void endat_config_rx_arm_cnt(Endat_Handle handle, uint16_t val)
 {
-    void *pruss_cfg = priv->pruss_cfg;
-    int32_t ch = priv->current_channel;
-    if(priv->pruicss_slicex)
+    void *pruicss_cfg = (void *)((PRUICSS_HwAttrs *)(handle->pru_cfg.pruicss_handle->hwAttrs))->cfgRegBase;
+    int32_t ch = handle->current_channel;
+    if(handle->pru_cfg.pru_slice == 1)
     {
-       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG1_REG + ch * 8 + 2, val);
+       HW_WR_REG16((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG1_REG + ch * 8 + 2, val);
     }
     else
     {
-       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG1_REG + ch * 8 + 2, val);
+       HW_WR_REG16((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG1_REG + ch * 8 + 2, val);
     }
 }
 
-void endat_config_wire_delay(struct endat_priv *priv, uint16_t val)
+void endat_config_wire_delay(Endat_Handle handle, uint16_t val)
 {
-    void *pruss_cfg = priv->pruss_cfg;
-    int32_t ch = priv->current_channel;
+    void *pruicss_cfg = (void *)((PRUICSS_HwAttrs *)(handle->pru_cfg.pruicss_handle->hwAttrs))->cfgRegBase;
+    int32_t ch = handle->current_channel;
     uint16_t regval;
-    if(priv->pruicss_slicex)
+    if(handle->pru_cfg.pru_slice == 1)
     {
-        regval = HW_RD_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG0_REG + ch *
+        regval = HW_RD_REG16((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG0_REG + ch *
                                    8);
     }
     else
     {
-        regval = HW_RD_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG0_REG + ch *
+        regval = HW_RD_REG16((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG0_REG + ch *
                                    8);
     }
 
@@ -1744,296 +1748,296 @@ void endat_config_wire_delay(struct endat_priv *priv, uint16_t val)
     /* restrict wire delay to wire delay bits only */
     val &= 0x7FF;
     regval |= val;
-    if(priv->pruicss_slicex)
+    if(handle->pru_cfg.pru_slice == 1)
     {
-       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG0_REG + ch * 8, regval);
+       HW_WR_REG16((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG0_REG + ch * 8, regval);
     }
     else
     {
-        HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG0_REG + ch * 8, regval);
+        HW_WR_REG16((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG0_REG + ch * 8, regval);
     }
 }
 
-void endat_config_clock(struct endat_priv *priv,
-                        struct endat_clk_cfg *clk_cfg)
+void endat_config_clock(Endat_Handle handle,
+                        Endat_ClkCfg_Internal *clk_cfg)
 {
-    void *pruss_cfg = priv->pruss_cfg;
+    void *pruicss_cfg = (void *)((PRUICSS_HwAttrs *)(handle->pru_cfg.pruicss_handle->hwAttrs))->cfgRegBase;
     /* Set PRU1_ED_RX_SB_POL polarity bit, required for ICSSG (don't care for ICSSM) */
-    if(priv->pruicss_slicex)
+    if(handle->pru_cfg.pru_slice == 1)
     {
-        HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG, clk_cfg->rx_div << 16 | priv->rx_clock_source << 4| 0x8 |
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG, clk_cfg->rx_div << 16 | handle->clk_cfg->rx_clock_source << 4| 0x8 |
             clk_cfg->rx_div_attr);
-        HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG, clk_cfg->tx_div << 16 | priv->tx_clock_source << 4);
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG, clk_cfg->tx_div << 16 | handle->clk_cfg->tx_clock_source << 4);
     }
     else
     {
-       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG, clk_cfg->rx_div << 16 |priv->rx_clock_source << 4 | 0x8 |
+       HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG, clk_cfg->rx_div << 16 | handle->clk_cfg->rx_clock_source << 4 | 0x8 |
             clk_cfg->rx_div_attr);
-       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG, clk_cfg->tx_div << 16 | priv->tx_clock_source << 4);
+       HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG, clk_cfg->tx_div << 16 | handle->clk_cfg->tx_clock_source << 4);
     }
     
-    if(priv->load_share)
+    if(handle->pru_cfg.load_share_enable)
     {
-        endat_enable_load_share_mode(priv);
+        endat_enable_load_share_mode(handle);
     }
 }
 
-void endat_config_tst_delay(struct endat_priv *priv, uint16_t delay)
+void endat_config_tst_delay(Endat_Handle handle, uint16_t delay)
 {
-    void *pruss_cfg = priv->pruss_cfg;
-    int32_t ch = priv->current_channel;
-    if(priv->pruicss_slicex==1)
+    void *pruicss_cfg = (void *)((PRUICSS_HwAttrs *)(handle->pru_cfg.pruicss_handle->hwAttrs))->cfgRegBase;
+    int32_t ch = handle->current_channel;
+    if(handle->pru_cfg.pru_slice == 1)
     {
-       HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG1_REG + ch * 8, delay);
+       HW_WR_REG16((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG1_REG + ch * 8, delay);
     }
     else
     {
-      HW_WR_REG16((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG1_REG + ch * 8, delay);
+      HW_WR_REG16((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG1_REG + ch * 8, delay);
     }
 
 }
 
-void endat_config_rx_clock_disable(struct endat_priv *priv,
+void endat_config_rx_clock_disable(Endat_Handle handle,
                                    uint16_t val)
 {
-    struct endat_pruss_xchg *pruss_xchg = priv->pruss_xchg;
-    int32_t ch = priv->current_channel;
-    pruss_xchg->ch[ch].rxClkLess = val;
+    Endat_PruicssXchg *pruicss_xchg = handle->pruicss_xchg;
+    int32_t ch = handle->current_channel;
+    pruicss_xchg->ch[ch].rxClkLess = val;
 }
 
-static void endat_set_continuous_mode(struct endat_priv *priv)
+static void endat_set_continuous_mode(Endat_Handle handle)
 {
-    struct endat_pruss_xchg *pruss_xchg = priv->pruss_xchg;
-    if(priv->load_share)
+    Endat_PruicssXchg *pruicss_xchg = handle->pruicss_xchg;
+    if(handle->pru_cfg.load_share_enable)
     {
-        pruss_xchg->config[0].trigger |= pruss_xchg->config[0].channel==1?(0x1 << 7 | 0x1):0;
-        pruss_xchg->config[1].trigger |= pruss_xchg->config[1].channel==2?(0x1 << 7 | 0x1):0;
-        pruss_xchg->config[2].trigger |= pruss_xchg->config[2].channel==4?(0x1 << 7 | 0x1):0;      
+        pruicss_xchg->config[0].trigger |= pruicss_xchg->config[0].channel==1?(0x1 << 7 | 0x1):0;
+        pruicss_xchg->config[1].trigger |= pruicss_xchg->config[1].channel==2?(0x1 << 7 | 0x1):0;
+        pruicss_xchg->config[2].trigger |= pruicss_xchg->config[2].channel==4?(0x1 << 7 | 0x1):0;      
     }
     else
     {
-        pruss_xchg->config[0].trigger |= (0x1 << 7 | 0x1);
+        pruicss_xchg->config[0].trigger |= (0x1 << 7 | 0x1);
     }
 
 }
 
-static void endat_clear_continuous_mode(struct endat_priv *priv)
+static void endat_clear_continuous_mode(Endat_Handle handle)
 {
-    struct endat_pruss_xchg *pruss_xchg = priv->pruss_xchg;
+    Endat_PruicssXchg *pruicss_xchg = handle->pruicss_xchg;
 
-    if(priv->load_share)
+    if(handle->pru_cfg.load_share_enable)
     {
-        pruss_xchg->config[0].trigger &= ~(0x1 << 7);
-        pruss_xchg->config[1].trigger &= ~(0x1 << 7);
-        pruss_xchg->config[2].trigger &= ~(0x1 << 7);
+        pruicss_xchg->config[0].trigger &= ~(0x1 << 7);
+        pruicss_xchg->config[1].trigger &= ~(0x1 << 7);
+        pruicss_xchg->config[2].trigger &= ~(0x1 << 7);
     }
     else
     {
-        pruss_xchg->config[0].trigger &= ~(0x1 << 7);
+        pruicss_xchg->config[0].trigger &= ~(0x1 << 7);
     }
 
 }
 
-int32_t endat_start_continuous_mode(struct endat_priv *priv)
+int32_t endat_start_continuous_mode(Endat_Handle handle)
 {
     int32_t cmd;
 
-    cmd = endat_command_build(priv, 1, NULL);
+    cmd = endat_command_build(handle, 1, NULL);
 
     if(cmd < 0)
     {
         return cmd;
     }
 
-    endat_set_continuous_mode(priv);
+    endat_set_continuous_mode(handle);
 
     return cmd;
 }
 
-void endat_stop_continuous_mode(struct endat_priv *priv)
+void endat_stop_continuous_mode(Endat_Handle handle)
 {
-    endat_clear_continuous_mode(priv);
-    endat_command_wait(priv);
+    endat_clear_continuous_mode(handle);
+    endat_command_wait(handle);
 }
 
-void endat_config_host_trigger(struct endat_priv *priv)
+void endat_config_host_trigger(Endat_Handle handle)
 {
-    struct endat_pruss_xchg *pruss_xchg = priv->pruss_xchg;
+    Endat_PruicssXchg *pruicss_xchg = handle->pruicss_xchg;
     /*for loadshare mode trigger set based on connected channels*/
-    if(priv->load_share)
+    if(handle->pru_cfg.load_share_enable)
     {
-         pruss_xchg->config[0].opmode=(pruss_xchg->config[0].channel&(1<<0))?0x1:0;
-         pruss_xchg->config[1].opmode=(pruss_xchg->config[1].channel&(1<<1))?0x1:0;
-         pruss_xchg->config[2].opmode=(pruss_xchg->config[2].channel&(1<<2))?0x1:0;
+         pruicss_xchg->config[0].opmode=(pruicss_xchg->config[0].channel&(1<<0))?0x1:0;
+         pruicss_xchg->config[1].opmode=(pruicss_xchg->config[1].channel&(1<<1))?0x1:0;
+         pruicss_xchg->config[2].opmode=(pruicss_xchg->config[2].channel&(1<<2))?0x1:0;
     }
     else
     {
-        pruss_xchg->config[0].opmode = 0x1;
+        pruicss_xchg->config[0].opmode = 0x1;
     }
 }
 
-void endat_config_periodic_trigger(struct endat_priv *priv)
+void endat_config_periodic_trigger(Endat_Handle handle)
 {
-    struct endat_pruss_xchg *pruss_xchg = priv->pruss_xchg;
+    Endat_PruicssXchg *pruicss_xchg = handle->pruicss_xchg;
     /*for loadshare mode trigger set based on connected channels*/
-    if(priv->load_share)
+    if(handle->pru_cfg.load_share_enable)
     {
-         pruss_xchg->config[0].opmode=(pruss_xchg->config[0].channel&(1<<0))?0x0:pruss_xchg->config[0].opmode;
-         pruss_xchg->config[1].opmode=(pruss_xchg->config[1].channel&(1<<1))?0x0:pruss_xchg->config[0].opmode;
-         pruss_xchg->config[2].opmode=(pruss_xchg->config[2].channel&(1<<2))?0x0:pruss_xchg->config[0].opmode;
+         pruicss_xchg->config[0].opmode=(pruicss_xchg->config[0].channel&(1<<0))?0x0:pruicss_xchg->config[0].opmode;
+         pruicss_xchg->config[1].opmode=(pruicss_xchg->config[1].channel&(1<<1))?0x0:pruicss_xchg->config[0].opmode;
+         pruicss_xchg->config[2].opmode=(pruicss_xchg->config[2].channel&(1<<2))?0x0:pruicss_xchg->config[0].opmode;
     }
     else
     {
-        pruss_xchg->config[0].opmode = 0;
+        pruicss_xchg->config[0].opmode = 0;
     }
 }
 
-void endat_config_channel(struct endat_priv *priv, int32_t ch)
+void endat_config_channel(Endat_Handle handle, int32_t ch)
 {
-    struct endat_pruss_xchg *pruss_xchg = priv->pruss_xchg;
+    Endat_PruicssXchg *pruicss_xchg = handle->pruicss_xchg;
 
-    pruss_xchg->config[0].channel = 1 << ch;
-    priv->current_channel = ch;
+    pruicss_xchg->config[0].channel = 1 << ch;
+    handle->current_channel = ch;
 }
 
-void endat_config_multi_channel_mask(struct endat_priv *priv,
+void endat_config_multi_channel_mask(Endat_Handle handle,
                                      uint8_t mask,
                                      uint8_t loadshare)
 {
-    priv->load_share = loadshare;
+    handle->pru_cfg.load_share_enable = loadshare;
 
     if(loadshare)
     {
-        priv->pruss_xchg->config[0].channel = mask&(1<<0);
-        priv->pruss_xchg->config[1].channel = mask&(1<<1);
-        priv->pruss_xchg->config[2].channel = mask&(1<<2);
-        endat_config_primary_core_mask(priv, mask);/*select primary core for global configuration*/
-        endat_config_syn_bits(priv, mask); /* configure syn bits for synchronization before any global config*/
-        endat_enable_load_share_mode(priv); /*ENABLE SHARE MODE*/
+        handle->pruicss_xchg->config[0].channel = mask&(1<<0);
+        handle->pruicss_xchg->config[1].channel = mask&(1<<1);
+        handle->pruicss_xchg->config[2].channel = mask&(1<<2);
+        endat_config_primary_core_mask(handle, mask);/*select primary core for global configuration*/
+        endat_config_syn_bits(handle, mask); /* configure syn bits for synchronization before any global config*/
+        endat_enable_load_share_mode(handle); /*ENABLE SHARE MODE*/
     }
     else
     {
-       priv->pruss_xchg->config[0].channel = mask;
+       handle->pruicss_xchg->config[0].channel = mask;
     }
 }
 
-void endat_config_syn_bits(struct endat_priv *priv, uint8_t mask)
+void endat_config_syn_bits(Endat_Handle handle, uint8_t mask)
 {
-    priv->pruss_xchg->endat_ch0_syn_bit=mask&(1<<0)?0x1:0;
-    priv->pruss_xchg->endat_ch1_syn_bit=mask&(1<<1)?0x2:0;
-    priv->pruss_xchg->endat_ch2_syn_bit=mask&(1<<2)?0x4:0;
+    handle->pruicss_xchg->endat_ch0_syn_bit=mask&(1<<0)?0x1:0;
+    handle->pruicss_xchg->endat_ch1_syn_bit=mask&(1<<1)?0x2:0;
+    handle->pruicss_xchg->endat_ch2_syn_bit=mask&(1<<2)?0x4:0;
 }
-void endat_enable_load_share_mode(struct endat_priv *priv)
+void endat_enable_load_share_mode(Endat_Handle handle)
 {
-   void *pruss_cfg = priv->pruss_cfg;
+   void *pruicss_cfg = (void *)((PRUICSS_HwAttrs *)(handle->pru_cfg.pruicss_handle->hwAttrs))->cfgRegBase;
     //HW_WR_REG32(0x30026104) |= 0x0800;
     uint32_t rgval;
-    if(priv->pruicss_slicex)
+    if(handle->pru_cfg.pru_slice == 1)
     {
-       rgval = HW_RD_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG);
+       rgval = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG);
        rgval |= ENDAT_LOAD_SHARE_EN_MASK;
-      HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG, rgval);
+      HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG, rgval);
     }
     else
     {
-        rgval = HW_RD_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG);
+        rgval = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG);
         rgval |= ENDAT_LOAD_SHARE_EN_MASK;
-      HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG, rgval);
+      HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG, rgval);
     }
 
 }
-void endat_config_primary_core_mask(struct endat_priv *priv, uint8_t mask)
+void endat_config_primary_core_mask(Endat_Handle handle, uint8_t mask)
 {
     switch (mask)
     {
 
         case 1:  /*only channel0 connected*/
-            priv->pruss_xchg->endat_primary_core_mask=0x1;
+            handle->pruicss_xchg->endat_primary_core_mask=0x1;
                         break;
         case 2: /*channel1 connected*/
-            priv->pruss_xchg->endat_primary_core_mask=0x2;
+            handle->pruicss_xchg->endat_primary_core_mask=0x2;
                         break;
         case 3:               /*channel0 and channel1 connected*/
-            priv->pruss_xchg->endat_primary_core_mask=0x1;
+            handle->pruicss_xchg->endat_primary_core_mask=0x1;
                         break;
         case 4:  /*channel2 connected*/
-            priv->pruss_xchg->endat_primary_core_mask=0x4;
+            handle->pruicss_xchg->endat_primary_core_mask=0x4;
                         break;
         case 5:               /*channel0 and channel2 connnected*/
-            priv->pruss_xchg->endat_primary_core_mask=0x4;
+            handle->pruicss_xchg->endat_primary_core_mask=0x4;
                         break;
         case 6:                    /*channel1 and channel2 connected*/
-            priv->pruss_xchg->endat_primary_core_mask=0X4;
+            handle->pruicss_xchg->endat_primary_core_mask=0X4;
                         break;
         case 7:                       /*all three channel connected*/
-            priv->pruss_xchg->endat_primary_core_mask=0x4;
+            handle->pruicss_xchg->endat_primary_core_mask=0x4;
                         break;
 
      }
 
 }
-uint8_t endat_multi_channel_detected(struct endat_priv *priv)
-{      if(priv->load_share)
-        return (priv->pruss_xchg->config[0].channel|priv->pruss_xchg->config[1].channel|priv->pruss_xchg->config[2].channel);
+uint8_t endat_multi_channel_detected(Endat_Handle handle)
+{      if(handle->pru_cfg.load_share_enable)  /* for loadshare mode*/
+        return (handle->pruicss_xchg->config[0].channel|handle->pruicss_xchg->config[1].channel|handle->pruicss_xchg->config[2].channel);
        else
-       return priv->pruss_xchg->config[0].channel;
+       return handle->pruicss_xchg->config[0].channel;
 
 }
 
-void endat_multi_channel_set_cur(struct endat_priv *priv, int32_t ch)
+void endat_multi_channel_set_cur(Endat_Handle handle, int32_t ch)
 {
-    priv->current_channel = ch;
-    priv->pos_res =  priv->pos_rx_bits_21_cmd[ch] - (ENDAT_NUM_BITS_POSITION_CRC + ENDAT_NUM_BITS_F1);
+    handle->current_channel = ch;
+    handle->pos_res =  handle->pos_rx_bits_21_cmd[ch] - (ENDAT_NUM_BITS_POSITION_CRC + ENDAT_NUM_BITS_F1);
 }
 
-int32_t endat_wait_initialization(struct endat_priv *priv, uint32_t timeout, uint8_t mask)
+int32_t endat_wait_initialization(Endat_Handle handle, uint32_t timeout, uint8_t mask)
 {
     int32_t i;
 
-    struct endat_pruss_xchg *pruss_xchg = priv->pruss_xchg;
+    Endat_PruicssXchg *pruicss_xchg = handle->pruicss_xchg;
 
     for(i = 0; i < timeout; i++)
     {
 
 
-        if(priv->load_share)  /* for loadshare mode*/
+        if(handle->pru_cfg.load_share_enable)  /* for loadshare mode*/
         {
             switch (mask) {
 
              case 1:  /*channel 0 connected*/
-                     if((pruss_xchg->config[0].status & 1))
+                     if((pruicss_xchg->config[0].status & 1))
                          return 0;
 
                     break;
              case 2: /*channel 1 connected*/
-                       if((pruss_xchg->config[1].status & 1))
+                       if((pruicss_xchg->config[1].status & 1))
                           return 0;
                     break;
              case 3:               /*channel 0 and 1 connected*/
-                    if((pruss_xchg->config[0].status & 1)&&(pruss_xchg->config[1].status & 1))
+                    if((pruicss_xchg->config[0].status & 1)&&(pruicss_xchg->config[1].status & 1))
                           return 0;
                     break;
              case 4:  /*channel 2 connected*/
-                       if((pruss_xchg->config[2].status & 1))
+                       if((pruicss_xchg->config[2].status & 1))
                            return 0;
                     break;
              case 5:               /*channel 0 and 2 connnected*/
-                 if((pruss_xchg->config[0].status & 1)&&(pruss_xchg->config[2].status & 1))
+                 if((pruicss_xchg->config[0].status & 1)&&(pruicss_xchg->config[2].status & 1))
                            return 0;
                     break;
              case 6:                    /*channel 1 and 2 connected*/
-                 if((pruss_xchg->config[1].status & 1)&&(pruss_xchg->config[2].status & 1))
+                 if((pruicss_xchg->config[1].status & 1)&&(pruicss_xchg->config[2].status & 1))
                             return 0;
                     break;
              case 7:                       /*all three channel connected*/
-                 if((pruss_xchg->config[0].status & 1)&&(pruss_xchg->config[1].status & 1)&&( pruss_xchg->config[2].status & 1))
+                 if((pruicss_xchg->config[0].status & 1)&&(pruicss_xchg->config[1].status & 1)&&( pruicss_xchg->config[2].status & 1))
                             return 0;
                     break;
             }
             ClockP_usleep(1000 * 1);
 
         }
-        else if(pruss_xchg->config[0].status & 1)
+        else if(pruicss_xchg->config[0].status & 1)
         {
             break;
         }
@@ -2051,109 +2055,162 @@ int32_t endat_wait_initialization(struct endat_priv *priv, uint32_t timeout, uin
   return 0;
 }
 
-static inline void endat_config_clr_cfg0(struct endat_priv *priv)
+static inline void endat_config_clr_cfg0(Endat_Handle handle)
 {
-    void *pruss_cfg = priv->pruss_cfg;
-    if(priv->pruicss_slicex)
+    void *pruicss_cfg = (void *)((PRUICSS_HwAttrs *)(handle->pru_cfg.pruicss_handle->hwAttrs))->cfgRegBase;
+    if(handle->pru_cfg.pru_slice)
     {
-       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG0_REG, 0);
-       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH1_CFG0_REG, 0);
-       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH2_CFG0_REG, 0);
+       HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG0_REG, 0);
+       HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH1_CFG0_REG, 0);
+       HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH2_CFG0_REG, 0);
     }
     else
     {
-       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG0_REG, 0);
-       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH1_CFG0_REG, 0);
-       HW_WR_REG32((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH2_CFG0_REG, 0);
+       HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG0_REG, 0);
+       HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH1_CFG0_REG, 0);
+       HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH2_CFG0_REG, 0);
     }
 }
 
-static inline void endat_config_endat_mode(struct endat_priv *priv)
+static inline void endat_config_endat_mode(Endat_Handle handle)
 {
-    void *pruss_cfg = priv->pruss_cfg;
-    if(priv->pruicss_slicex)
+    void *pruicss_cfg = (void *)((PRUICSS_HwAttrs *)(handle->pru_cfg.pruicss_handle->hwAttrs))->cfgRegBase;
+    if(handle->pru_cfg.pru_slice == 1)
     {
-       HW_WR_REG8((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_GPCFG1_REG + 3, 4);
+       HW_WR_REG8((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_GPCFG1_REG + 3, 4);
     }
     else
     {
-       HW_WR_REG8((uint8_t *)pruss_cfg + CSL_ICSS_PR1_CFG_SLV_GPCFG0_REG + 3, 4);
+       HW_WR_REG8((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_GPCFG0_REG + 3, 4);
     }
 }
 
-static void endat_hw_init(struct endat_priv *priv)
+static void endat_hw_init(Endat_Handle handle)
 {
-    struct endat_clk_cfg clk_cfg;
+    Endat_ClkCfg_Internal clk_cfg;
     /* set initial clock to 200KHz */
-    if(priv->rx_clock_source == 1)
+    if(handle->clk_cfg->rx_clock_source == 1)
     {
-        clk_cfg.rx_div = priv->pru_clock/(ENDAT_RX_OVERSAMPLING_RATE*(ENDAT_INIT_FREQ)) - 1;
+        clk_cfg.rx_div = handle->pru_cfg.pru_clock /(ENDAT_RX_OVERSAMPLING_RATE*(ENDAT_INIT_FREQ)) - 1;
     }
     else
     {
-        clk_cfg.rx_div = priv->pru_uart_clock/(ENDAT_RX_OVERSAMPLING_RATE*(ENDAT_INIT_FREQ)) - 1;
+        clk_cfg.rx_div = handle->pru_cfg.uart_clock /(ENDAT_RX_OVERSAMPLING_RATE*(ENDAT_INIT_FREQ)) - 1;
     }
 
-    if(priv->rx_clock_source == 1)
+    if(handle->clk_cfg->tx_clock_source == 1)
     {
-        clk_cfg.tx_div = priv->pru_clock/ENDAT_INIT_FREQ - 1;
+        clk_cfg.tx_div =handle->pru_cfg.pru_clock/ENDAT_INIT_FREQ - 1;
     }
     else
     {
-        clk_cfg.tx_div = priv->pru_uart_clock/ENDAT_INIT_FREQ - 1;
+        clk_cfg.tx_div = handle->pru_cfg.uart_clock/ENDAT_INIT_FREQ - 1;
     }
     /* 2T */
-    clk_cfg.rx_en_cnt = ENDAT_DELAY_COUNTER_INCREMENT*((2*priv->pru_clock)/ENDAT_INIT_FREQ);
+    clk_cfg.rx_en_cnt = ENDAT_DELAY_COUNTER_INCREMENT*((2*handle->pru_cfg.pru_clock)/ENDAT_INIT_FREQ);
     /* sample size 8 */
     clk_cfg.rx_div_attr = ENDAT_RX_OVERSAMPLING_RATE - 1;
 
-    endat_config_endat_mode(priv);
-    endat_config_clock(priv, &clk_cfg);
-    endat_config_global_rx_arm_cnt(priv, clk_cfg.rx_en_cnt);
-    endat_config_clr_cfg0(priv);
+    endat_config_endat_mode(handle);
+    endat_config_clock(handle, &clk_cfg);
+    endat_config_global_rx_arm_cnt(handle, clk_cfg.rx_en_cnt);
+    endat_config_clr_cfg0(handle);
 }
 
-struct endat_priv *endat_init(struct endat_pruss_xchg *pruss_xchg, struct endatChRxInfo *endatRxInfo, uint64_t endatChInfoGlobalAddr, 
-                              void *pruss_cfg, void* pruss_iep, int32_t slice, endat_clock_config *endat_clk_config)
+Endat_Handle endat_init(uint32_t index, Endat_Params endat_params)
 {
-    endat_priv.pruss_xchg = pruss_xchg;
-    endat_priv.pruss_cfg = pruss_cfg;
-    endat_priv.pruicss_slicex = slice;
-    endat_priv.pruss_iep = pruss_iep;
-    endat_priv.endatChRxInfo = endatRxInfo;
-    endat_priv.tx_clock_source = endat_clk_config->tx_clock_source;
-    endat_priv.rx_clock_source = endat_clk_config->rx_clock_source;
-    endat_priv.pru_clock = endat_clk_config->pru_clock;
-    endat_priv.pru_uart_clock = endat_clk_config->pru_uart_clock;
+    Endat_Handle handle = NULL;
+
+    if(index >=  gEndatConfigNum)
+    {
+        return NULL;
+    }
+    
+    handle = (Endat_Handle)(&gEndatHandle[index]);
+
+    handle->instance_index = index;
+    
+    if(endat_params.pru_cfg.pruicss_handle == NULL) {
+        /* Return NULL if required PRU handle is NULL */
+        return NULL;
+    }
+    
+    if(endat_params.pru_cfg.pru_slice == 1)
+    {
+        handle->pruicss_xchg = (Endat_PruicssXchg *)((PRUICSS_HwAttrs *)(endat_params.pru_cfg.pruicss_handle->hwAttrs))->pru1DramBase;
+    }
+    else if(endat_params.pru_cfg.pru_slice == 0)
+    {
+        handle->pruicss_xchg = (Endat_PruicssXchg *)((PRUICSS_HwAttrs *)(endat_params.pru_cfg.pruicss_handle->hwAttrs))->pru0DramBase;
+    }
+    else
+    {
+        /* Return NULL if invalid pru slice is provided */
+        return NULL;
+    }
+   /* Check valid range for IEP comparator (0-15), clocks must be positive */
+   if((endat_params.pru_cfg.pru_clock <= 0) ||
+      (endat_params.pru_cfg.uart_clock <= 0) || 
+      (endat_params.pru_cfg.iep_clock <= 0) || 
+      (endat_params.pru_cfg.iep_instance < 0 || endat_params.pru_cfg.iep_instance > 1))
+    {
+        /* Return NULL if invalid parameters */
+        return NULL;
+    }
+    handle->pru_cfg = endat_params.pru_cfg;
+
+    if((endat_params.endat_clk_config->tx_clock_source > 1 || endat_params.endat_clk_config->tx_clock_source < 0) || 
+       (endat_params.endat_clk_config->rx_clock_source > 1 || endat_params.endat_clk_config->rx_clock_source < 0) || 
+       (endat_params.endat_clk_config->rx_os_rate < 0 || endat_params.endat_clk_config->rx_os_rate > 7))
+    {
+        /* Return NULL if invalid clock parameters */
+        return NULL;
+    }
+    /* Configure Delays based on the PRU ICSS frequency*/
+    handle->pruicss_xchg->endat_delay_125ns = ((endat_params.pru_cfg.pru_clock*125)/1000000000);
+    handle->pruicss_xchg->endat_delay_51us = ((endat_params.pru_cfg.pru_clock*51)/1000000 );
+    handle->pruicss_xchg->endat_delay_5us = ((endat_params.pru_cfg.pru_clock*5)/1000000);
+    handle->pruicss_xchg->endat_delay_1ms = ((endat_params.pru_cfg.pru_clock/1000) * 1);
+    handle->pruicss_xchg->endat_delay_2ms = ((endat_params.pru_cfg.pru_clock/1000) * 2);
+    handle->pruicss_xchg->endat_delay_12ms = ((endat_params.pru_cfg.pru_clock/1000) * 12);
+    handle->pruicss_xchg->endat_delay_50ms = ((endat_params.pru_cfg.pru_clock/1000) * 50);
+    handle->pruicss_xchg->endat_delay_380ms = ((endat_params.pru_cfg.pru_clock/1000) * 380);
+    handle->pruicss_xchg->endat_delay_900ms = ((endat_params.pru_cfg.pru_clock/1000) * 900);
+    handle->pruicss_xchg->icssg_clk = endat_params.pru_cfg.pru_clock;
+    
+    handle->clk_cfg = endat_params.endat_clk_config;
+    handle->channel_rx_info = endat_params.channel_rx_info;
+   
     /*Write Configured memory address to DMEM */
-    endat_priv.pruss_xchg->endatChInfoMemoryAdd = endatChInfoGlobalAddr;
-    endat_hw_init(&endat_priv);
-    return &endat_priv;
+    handle->pruicss_xchg->ch_info_memory_add = endat_params.ch_info_global_addr;
+    
+    endat_hw_init(handle);
+    return handle;
 }
 
-uint32_t endat_get_recovery_time(struct endat_priv *priv)
+uint32_t endat_get_recovery_time(Endat_Handle handle)
 {
-    return priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.recoveryTime*((float)(1000000000)/priv->pru_clock);
+    return handle->channel_rx_info->ch[handle->current_channel].recoveryTimeParms.recoveryTime*((float)(1000000000)/handle->pru_cfg.pru_clock);
 }
 
-int8_t endat_check_rt_error(struct endat_priv *priv)
+int8_t endat_check_rt_error(Endat_Handle handle)
 {
     uint32_t rtDiff;
     uint32_t lastCounterValue;
     uint32_t currentCounterValue;
 
-    lastCounterValue =  priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.lastCounterValue;
-    currentCounterValue = priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.currentCounterValue;
+    lastCounterValue =  handle->channel_rx_info->ch[handle->current_channel].recoveryTimeParms.lastCounterValue;
+    currentCounterValue = handle->channel_rx_info->ch[handle->current_channel].recoveryTimeParms.currentCounterValue;
 
     /*Check if the counter is stuck by comparing current and last counter values*/
     if(currentCounterValue == lastCounterValue)
     {
-       priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.isCounterStuck = 1 ;
+       handle->channel_rx_info->ch[handle->current_channel].recoveryTimeParms.isCounterStuck = 1 ;
        return RT_COUNTER_STUCK_ERROR;
     }
     else
     {
-        priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.isCounterStuck = 0 ;
+        handle->channel_rx_info->ch[handle->current_channel].recoveryTimeParms.isCounterStuck = 0 ;
     }
 
     /*handle the int overflow candition */
@@ -2167,7 +2224,7 @@ int8_t endat_check_rt_error(struct endat_priv *priv)
     }
 
     /*convert into us */
-    rtDiff = rtDiff*((float)(1000000000)/priv->pru_clock);
+    rtDiff = rtDiff*((float)(1000000000)/handle->pru_cfg.pru_clock);
     /* Check if the recovery time is within the short or long recovery time range */
     if ((rtDiff >= SHORT_RECOVERY_TIME_MIN) && (rtDiff <= SHORT_RECOVERY_TIME_MAX)) {
         return RT_NO_ERROR;  /* Valid short recovery time */
@@ -2178,23 +2235,23 @@ int8_t endat_check_rt_error(struct endat_priv *priv)
     return RT_OUT_OF_RANGE_ERROR;  /*Error: out of expected range*/
 }
 
-void endat_init_rt_measurement (struct endat_priv *priv) 
+void endat_init_rt_measurement (Endat_Handle handle) 
 {
-    priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.recoveryTime = 0;
-    priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.lastCounterValue = 0;
-    priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.startingValue = RT_COUNTER_STARTING_VALUE + 100*(priv->current_channel); /* Assign a unique starting value for each channel; */
-    priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.currentCounterValue = priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.startingValue;
-    priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.isCounterStuck = 0;
+    handle->channel_rx_info->ch[handle->current_channel].recoveryTimeParms.recoveryTime = 0;
+    handle->channel_rx_info->ch[handle->current_channel].recoveryTimeParms.lastCounterValue = 0;
+    handle->channel_rx_info->ch[handle->current_channel].recoveryTimeParms.startingValue = RT_COUNTER_STARTING_VALUE + 100*(handle->current_channel); /* Assign a unique starting value for each channel; */
+    handle->channel_rx_info->ch[handle->current_channel].recoveryTimeParms.currentCounterValue = handle->channel_rx_info->ch[handle->current_channel].recoveryTimeParms.startingValue;
+    handle->channel_rx_info->ch[handle->current_channel].recoveryTimeParms.isCounterStuck = 0;
 }
-void endat_enable_rt_measurement (struct endat_priv *priv)
+void endat_enable_rt_measurement (Endat_Handle handle)
 {
-    priv->pruss_xchg->ch[priv->current_channel].enableRTM = 1;
+    handle->pruicss_xchg->ch[handle->current_channel].enableRTM = 1;
 }
-void endat_disable_rt_measurement (struct endat_priv *priv)
+void endat_disable_rt_measurement (Endat_Handle handle)
 {
-    priv->pruss_xchg->ch[priv->current_channel].enableRTM = 0;
+    handle->pruicss_xchg->ch[handle->current_channel].enableRTM = 0;
 }
-uint32_t endat_status_rt_measurement (struct endat_priv *priv)
+uint32_t endat_status_rt_measurement (Endat_Handle handle)
 {
-    return priv->pruss_xchg->ch[priv->current_channel].enableRTM;
+    return handle->pruicss_xchg->ch[handle->current_channel].enableRTM;
 }

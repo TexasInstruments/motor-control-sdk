@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2021-23 Texas Instruments Incorporated
+ *  Copyright (C) 2021-25 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -118,68 +118,36 @@ extern "C" {
 
 #define EINVAL  1
 
-struct endat_clk_cfg
+typedef struct Endat_ClkCfg_Internal_s 
 {
     uint16_t  rx_div;
     uint16_t  tx_div;
     uint16_t  rx_en_cnt;
     uint16_t  rx_div_attr;
-};
+}Endat_ClkCfg_Internal;
 
-struct flags
+typedef struct Endat_Flags_s
 {
     uint32_t info1 : 1;
     uint32_t info2 : 1;
-};
+}Endat_Flags;
 
-struct id
+typedef struct Endat_Id_s
 {
     uint32_t ascii;
     uint32_t binary;
-};
+}Endat_Id;
 
-struct sn
+typedef struct Endat_Sn_s
 {
     uint32_t ascii_msb;
     uint32_t binary;
     uint32_t ascii_lsb;
-};
+}Endat_Sn;
 
 enum { linear, rotary };
 
-struct endat_priv
-{   int32_t pruicss_slicex;
-    int32_t load_share;
-    int32_t current_channel;
-    int32_t pos_res;
-    int32_t multi_turn_res[NUM_ENCODERS_MAX];
-    int32_t single_turn_res[NUM_ENCODERS_MAX];
-    int32_t step[NUM_ENCODERS_MAX];
-    uint32_t pos_rx_bits_21_cmd[NUM_ENCODERS_MAX];
-    uint32_t pos_rx_bits_22_cmd[NUM_ENCODERS_MAX];
-    int32_t type[NUM_ENCODERS_MAX];
-    int32_t has_safety[NUM_ENCODERS_MAX];
-    uint32_t cmd_set_2_2;
-    struct flags flags;
-    struct id id;
-    struct sn sn;
-    int32_t raw_data;
-    uint16_t rx_en_cnt;
-    struct endat_pruss_xchg *pruss_xchg;
-    struct endatChRxInfo *endatChRxInfo;
-    void *pruss_cfg;
-    void *pruss_iep;
-    uint64_t iep_reset_count;
-    uint64_t ch0_trigger_count;
-    uint64_t ch1_trigger_count;
-    uint64_t ch2_trigger_count;
-    uint64_t pru_clock; /**<PRU CORE Clock*/
-    uint64_t pru_uart_clock; /*ICSS PRU UART clock value*/
-    uint8_t rx_clock_source; /*3 channel Peripheral RX clock source*/
-    uint8_t tx_clock_source; /*3 channel Peripheral TX clock source*/
-};
-
-struct cmd_supplement
+typedef struct Endat_CmdSupplement_s
 {
     /*
      * uint8_t is ideal for address, but as scanf(%x) is done,
@@ -197,9 +165,9 @@ struct cmd_supplement
     uint64_t ch0_trigger_count;
     uint64_t ch1_trigger_count;
     uint64_t ch2_trigger_count;
-};
+}Endat_CmdSupplement;
 
-struct endat_data
+typedef struct Endat_Data_s
 {
     /* position */
     uint64_t recvd1;
@@ -207,66 +175,117 @@ struct endat_data
     uint32_t recvd2;
     /* addinfo 1 */
     uint32_t recvd3;
-};
+}Endat_Data;
 
-struct endat_position
+typedef struct Endat_Position_s
 {
     uint64_t                position;
     uint64_t                revolution;
     uint8_t           f1;
     uint8_t           f2;
     uint8_t           crc;
-};
+}Endat_Position;
 
-struct endat_addinfo
+typedef struct Endat_Addinfo_s
 {
     uint32_t            addinfo;
     uint8_t           crc;
-};
+}Endat_Addinfo;
 
-struct endat_position_addinfo
+typedef struct Endat_PositionAddinfo_s
 {
-    struct endat_position       position;
-    struct endat_addinfo        addinfo1, addinfo2;
-};
+    Endat_Position       position;
+    Endat_Addinfo        addinfo1, addinfo2;
+}Endat_PositionAddinfo;
 
-struct endat_addr_params
+typedef struct Endat_AddrParams_s
 {
     uint8_t           address;
     uint16_t          params;
     uint8_t           crc;
-};
+}Endat_AddrParams;
 
-struct endat_test_values
+typedef struct Endat_TestValues_s
 {
     uint64_t      value;
     uint8_t           f1;
     uint8_t           crc;
-};
+}Endat_TestValues;
 
-union endat_format_data
+typedef union Endat_FormatData_u
 {
-    struct endat_position_addinfo   position_addinfo;
-    struct endat_addr_params    addr_params;
-    struct endat_test_values    test;
-};
+    Endat_PositionAddinfo   position_addinfo;
+    Endat_AddrParams        addr_params;
+    Endat_TestValues        test;
+}Endat_FormatData;
 
-
+/**
+ *    \brief    Structure defining EnDat PRU configuration
+ *
+ *    \details  Contains configuration parameters for PRU including ID, clock settings, and load sharing
+ */
+typedef struct Endat_PruConfig_s
+{
+    volatile uint8_t      pru_slice;           /**< PRU Slice */
+    PRUICSS_Handle        pruicss_handle;      /**< PRU ICSS Handle */
+    volatile uint32_t     pru_clock;           /**< PRU core clock frequency in Hz */
+    volatile uint8_t      load_share_enable;    /**< Enable load sharing between PRUs */
+    volatile uint8_t      iep_instance;        /**< IEP Instance (0 for IEP0, 1 for IEP1) */
+    volatile uint32_t     iep_clock;           /**< PRU iep clock frequency in Hz */
+    volatile uint32_t     uart_clock;          /**< PRU UART clock frequency */
+} Endat_PruConfig;
 /**
  *    \brief    Structure defining 3 Channel clock configuration parameters.
  *
  */
-typedef struct endat_clock_config_s
+typedef struct Endat_ClkCfg_s
 {
     /**< 3 channel Peripheral RX clock source */
     volatile uint8_t  rx_clock_source;
     /**< *3 channel Peripheral TX clock source  */
     volatile uint8_t  tx_clock_source;
-    /**< ICSS Core clock value */
-     volatile uint64_t  pru_clock;
-    /**<ICSS UART clock value */
-     volatile uint64_t  pru_uart_clock;
-} endat_clock_config;
+    uint16_t  rx_os_rate; /*rx oversample rate*/
+    uint16_t  rx_en_cnt; /*rx enable counter*/
+}Endat_ClkCfg;
+
+/**
+ *    \brief    Structure defining EnDat initialization parameters.
+ *
+ */
+typedef struct Endat_Params_s
+{
+    Endat_ChRxInfoArray *channel_rx_info;
+    uint64_t ch_info_global_addr; 
+    Endat_PruConfig pru_cfg;    /**< Structure defining EnDat PRU configuration*/
+    Endat_ClkCfg *endat_clk_config;  /**< EnDat clock configuration */
+}Endat_Params;
+
+typedef struct Endat_Config_s
+{   
+    uint8_t instance_index ;
+    int32_t current_channel;
+    int32_t pos_res;
+    int32_t multi_turn_res[NUM_ENCODERS_MAX];
+    int32_t single_turn_res[NUM_ENCODERS_MAX];
+    int32_t step[NUM_ENCODERS_MAX];
+    uint32_t pos_rx_bits_21_cmd[NUM_ENCODERS_MAX];
+    uint32_t pos_rx_bits_22_cmd[NUM_ENCODERS_MAX];
+    int32_t type[NUM_ENCODERS_MAX];
+    int32_t has_safety[NUM_ENCODERS_MAX];
+    uint32_t cmd_set_2_2;
+    Endat_Flags flags;
+    Endat_Id id;
+    Endat_Sn sn;
+    int32_t raw_data;
+    uint16_t rx_en_cnt;
+    Endat_PruConfig pru_cfg;
+    Endat_ClkCfg *clk_cfg;
+    Endat_PruicssXchg *pruicss_xchg;
+    Endat_ChRxInfoArray *channel_rx_info;
+}Endat_Config;
+
+typedef Endat_Config *Endat_Handle;
+
 
 #define VALID_2_1_CMD(x) (((x) == 1) || ((x) == 2) || ((x) == 3) || ((x) == 4) || ((x) == 5) || ((x) == 6) || ((x) == 7) )
 #define VALID_2_2_CMD(x) (((x) == 8) || ((x) == 9) || ((x) == 10) || ((x) == 11) || ((x) == 12) || ((x) == 13) || ((x) == 14))
@@ -304,8 +323,8 @@ typedef struct endat_clock_config_s
 #define ENDAT_MRS_VAL_STOP_ADDITIONAL_INFO (0xF)
 #define ENDAT_MRS_MASK_STOP_ADDITIONAL_INFO (ENDAT_MRS_VAL_STOP_ADDITIONAL_INFO)
 
-#define ENDAT_GET_POS_MULTI_TURN(pos, priv) (((pos) & (((unsigned long long) 1 << (priv)->pos_res) - 1)) >> (priv)->single_turn_res[(priv)->current_channel])
-#define ENDAT_GET_POS_SINGLE_TURN(pos, priv) ((pos) & (((unsigned long long) 1 << (priv)->single_turn_res[(priv)->current_channel]) - 1))
+#define ENDAT_GET_POS_MULTI_TURN(pos, handle) (((pos) & (((unsigned long long) 1 << (handle)->pos_res) - 1)) >> (handle)->single_turn_res[(handle)->current_channel])
+#define ENDAT_GET_POS_SINGLE_TURN(pos, handle) ((pos) & (((unsigned long long) 1 << (handle)->single_turn_res[(handle)->current_channel]) - 1))
 
 #include "endat_api.h"
 

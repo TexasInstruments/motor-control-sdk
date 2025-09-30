@@ -79,7 +79,7 @@ clean:
 	-@echo ' '
 
 post-build:
-		-$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmware -o endat_receiver_pru1_bin.h endat_peripheral_interface_single_ch_am263x-lp_icss_m0_pru1_fw_ti-pru-cgt.out
+		-$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwarePru1 -o endat_receiver_pru1_bin.h endat_peripheral_interface_single_ch_am263x-lp_icss_m0_pru1_fw_ti-pru-cgt.out
 		-$(CAT) ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h endat_receiver_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/single_channel/endat_receiver_pru1_bin.h
 		-$(RM) endat_receiver_pru1_bin.h
 	-@echo ' '

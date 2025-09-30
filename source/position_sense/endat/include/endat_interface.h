@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2021-23 Texas Instruments Incorporated
+ *  Copyright (C) 2021-25 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -184,7 +184,7 @@ typedef struct Endat_ChRXInfo_s
  *
  *    \details  Firmware command interface
  */
-struct endat_pruss_cmd
+typedef struct Endat_PruicssCmd_s
 {
     volatile uint32_t   word0;
     /**< command,                                                         <br>
@@ -210,14 +210,14 @@ struct endat_pruss_cmd
          [Byte 2] parameter LSByte                                        <br>
          [Byte 3] block address */
 
-};
+}Endat_PruicssCmd;
 
 /**
  *    \brief    Structure defining EnDat configuration interface
  *
  *    \details  Firmware configuration interface
  */
-struct endat_pruss_config
+typedef struct Endat_PruicssConfig_s
 {
     volatile uint8_t  opmode;
     /**< operation mode selection: 0 - periodic trigger, 1 - host trigger */
@@ -234,7 +234,7 @@ struct endat_pruss_config
     volatile uint8_t  status;
     /**< initialization status: 1 - upon successful. Wait around 5 seconds <br>
          after firmware has started running to confirm status */
-};
+}Endat_PruicssConfig;
 
 /**
  *    \brief    Structure defining EnDat interface
@@ -242,15 +242,15 @@ struct endat_pruss_config
  *    \details  Firmware config, command interface
  *
  */
-struct endat_pruss_xchg
+typedef struct Endat_PruicssXchg_s
 {
-     struct endat_pruss_config   config[3];
+     Endat_PruicssConfig   config[3];
      /**< config interface */
-     struct endat_pruss_cmd      cmd[3];
+     Endat_PruicssCmd      cmd[3];
      /**< command interface */
      Endat_ChInfo ch[3];
      /**<channel interface */
-     uint64_t endatChInfoMemoryAdd;
+     uint64_t ch_info_memory_add;
      uint16_t endat_rx_clk_config;
      uint16_t endat_tx_clk_config;
      uint32_t endat_rx_clk_cnten;
@@ -268,17 +268,17 @@ struct endat_pruss_xchg
      volatile uint8_t endat_ch1_syn_bit;
      volatile uint8_t endat_ch2_syn_bit;
      uint64_t icssg_clk;
-};
+}Endat_PruicssXchg;
 /**
  *    \brief    Structure defining EnDat channel Rx information 
  *
  *    \details   
  *
  */
-struct endatChRxInfo
+typedef struct Endat_ChRxInfoArray_s
 {
     Endat_ChRxInfo ch[3];
-};
+}Endat_ChRxInfoArray;
 #ifdef __cplusplus
 }
 #endif

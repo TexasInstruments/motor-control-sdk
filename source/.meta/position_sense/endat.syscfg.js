@@ -57,6 +57,10 @@ function onValidate(inst, validation) {
 let endat_module = {
     displayName: "EnDat Position Encoder",
     templates: {
+        "/drivers/system/system_config.c.xdt": {
+            driver_config: "/position_sense/endat/endat_templates.c.xdt",
+            moduleName: endat_module_name,
+        },
         "/drivers/system/system_config.h.xdt": {
             driver_config:"/.meta/position_sense/endat/endat_templates.h.xdt",
             moduleName: endat_module_name,

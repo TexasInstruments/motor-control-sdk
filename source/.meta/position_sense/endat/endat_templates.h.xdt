@@ -72,6 +72,3 @@
 #define `instance.$name`_TX_RX_FIFO_CLOCK_SOURCE    (`instance.Tx_Rx_Clk_Source`)
 
 % }
-
-
-

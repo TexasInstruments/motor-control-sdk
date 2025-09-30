@@ -51,7 +51,7 @@
  *
  */
 
-const uint32_t EnDatFirmware_0[] = {
+const uint32_t EnDatFirmwarePru1_0[] = {
 0x21000300,
 0x00000207,
 0x01000004,
@@ -178,10 +178,10 @@ const uint32_t EnDatFirmware_0[] = {
 0x81031800,
 0x91001800,
 0x69000007,
-0x91741a00,
+0x91741a80,
 0xcf03e0fd,
 0x24000800,
-0x81741a00,
+0x81741a80,
 0x24000100,
 0x81021800,
 0x91021800,
