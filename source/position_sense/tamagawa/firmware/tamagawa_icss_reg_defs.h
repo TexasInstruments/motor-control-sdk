@@ -80,9 +80,13 @@ TAMAGAWA_TX_CH2_SEL	.set					2
 	.asg	R31.t17,	TAMAGAWA_CH2_TX_UNDERRUN
 
 ;CMP event 3 for periodic mode
+	.if	$isdefed("SLICE1")
 IEP_CMP_EVNT					.set    3
-
-
+PRU_TRIGGER_HOST_TAMAGAWA_EVT0  .set    34  ; pr0_pru_mst_intr[2]_intr_req
+	.else
+IEP_CMP_EVNT					.set    4
+PRU_TRIGGER_HOST_TAMAGAWA_EVT0  .set    35  ; pr0_pru_mst_intr[3]_intr_req
+	.endif
 ; TAMAGAWA
 
 	.endif

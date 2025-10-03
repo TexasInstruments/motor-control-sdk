@@ -34,18 +34,20 @@
 #include <kernel/dpl/ClockP.h>
 #include <drivers/hw_include/tistdtypes.h>
 #include <drivers/hw_include/hw_types.h>
+#include <stdlib.h>
 
-static struct tamagawa_priv tamagawa_priv;
+extern uint32_t gTamagawaConfigNum;
+extern Tamagawa_Config gTamagawaHandle[];
 
-int32_t tamagawa_parse(int32_t cmd, struct tamagawa_priv *priv)
+int32_t tamagawa_parse(int32_t cmd, Tamagawa_Handle handle)
 {
     /* Parses the data in tamagawa interface received from the Encoder*/
     uint32_t word0, word1, word2;
-    struct tamagawa_xchg *tamagawa_xchg = priv->tamagawa_xchg;
+    Tamagawa_Xchg *tamagawa_xchg = handle->tamagawa_xchg;
 
-    word0 = tamagawa_xchg->ch[priv->channel].pos_word0;
-    word1 = tamagawa_xchg->ch[priv->channel].pos_word1;
-    word2 = tamagawa_xchg->ch[priv->channel].pos_word2;
+    word0 = tamagawa_xchg->ch[handle->channel].pos_word0;
+    word1 = tamagawa_xchg->ch[handle->channel].pos_word1;
+    word2 = tamagawa_xchg->ch[handle->channel].pos_word2;
 
     switch(cmd)
     {
@@ -56,7 +58,7 @@ int32_t tamagawa_parse(int32_t cmd, struct tamagawa_priv *priv)
             tamagawa_xchg->tamagawa_interface.rx_frames_received.sf = (word0>>16) & 0xFF;
             tamagawa_xchg->tamagawa_interface.rx_frames_received.abs = ((word0>>8)& 0xFF) | ((word0)& 0xFF)<<8 | (((word1>>8) & 0xFF) << 16);
             tamagawa_xchg->tamagawa_interface.rx_frames_received.crc = (word1) & 0xFF;
-            tamagawa_xchg->ch[priv->channel].pos_word1=word1<<16;
+            tamagawa_xchg->ch[handle->channel].pos_word1=word1<<16;
             break;
 
         case DATA_ID_1:
@@ -66,7 +68,7 @@ int32_t tamagawa_parse(int32_t cmd, struct tamagawa_priv *priv)
             tamagawa_xchg->tamagawa_interface.rx_frames_received.sf =(word0>>16) & 0xFF;
             tamagawa_xchg->tamagawa_interface.rx_frames_received.abm = ((word0>>8)& 0xFF) | ((word0)& 0xFF)<<8 | (((word1>>8) & 0xFF) << 16);
             tamagawa_xchg->tamagawa_interface.rx_frames_received.crc =(word1) & 0xFF;
-            tamagawa_xchg->ch[priv->channel].pos_word1=word1<<16;
+            tamagawa_xchg->ch[handle->channel].pos_word1=word1<<16;
             break;
 
         case DATA_ID_2:
@@ -88,7 +90,7 @@ int32_t tamagawa_parse(int32_t cmd, struct tamagawa_priv *priv)
             tamagawa_xchg->tamagawa_interface.rx_frames_received.abm = ((word1>>8)& 0xFF) | ((word1)& 0xFF)<<8 | (((word2>>16) & 0xFF) << 16);
             tamagawa_xchg->tamagawa_interface.rx_frames_received.almc =(word2 >> 8) & 0xFF;
             tamagawa_xchg->tamagawa_interface.rx_frames_received.crc = (word2) & 0xFF;
-            tamagawa_xchg->ch[priv->channel].pos_word2=word2<<8;
+            tamagawa_xchg->ch[handle->channel].pos_word2=word2<<8;
             break;
 
         case DATA_ID_7:
@@ -98,7 +100,7 @@ int32_t tamagawa_parse(int32_t cmd, struct tamagawa_priv *priv)
             tamagawa_xchg->tamagawa_interface.rx_frames_received.sf = (word0>>16) & 0xFF;
             tamagawa_xchg->tamagawa_interface.rx_frames_received.abs = ((word0>>8)& 0xFF) | ((word0)& 0xFF)<<8 | (((word1>>8) & 0xFF) << 16);
             tamagawa_xchg->tamagawa_interface.rx_frames_received.crc = (word1) & 0xFF;
-            tamagawa_xchg->ch[priv->channel].pos_word1=word1<<16;
+            tamagawa_xchg->ch[handle->channel].pos_word1=word1<<16;
             break;
 
         case DATA_ID_8:
@@ -108,7 +110,7 @@ int32_t tamagawa_parse(int32_t cmd, struct tamagawa_priv *priv)
             tamagawa_xchg->tamagawa_interface.rx_frames_received.sf = (word0>>16) & 0xFF;
             tamagawa_xchg->tamagawa_interface.rx_frames_received.abs = ((word0>>8)& 0xFF) | ((word0)& 0xFF)<<8 | (((word1>>8) & 0xFF) << 16);
             tamagawa_xchg->tamagawa_interface.rx_frames_received.crc = (word1) & 0xFF;
-            tamagawa_xchg->ch[priv->channel].pos_word1=word1<<16;
+            tamagawa_xchg->ch[handle->channel].pos_word1=word1<<16;
             break;
 
         case DATA_ID_C:
@@ -118,7 +120,7 @@ int32_t tamagawa_parse(int32_t cmd, struct tamagawa_priv *priv)
             tamagawa_xchg->tamagawa_interface.rx_frames_received.sf = (word0>>16) & 0xFF;
             tamagawa_xchg->tamagawa_interface.rx_frames_received.abs = ((word0>>8)& 0xFF) | ((word0)& 0xFF)<<8 | (((word1>>8) & 0xFF) << 16);
             tamagawa_xchg->tamagawa_interface.rx_frames_received.crc = (word1) & 0xFF;
-            tamagawa_xchg->ch[priv->channel].pos_word1=word1<<16;
+            tamagawa_xchg->ch[handle->channel].pos_word1=word1<<16;
             break;
 
         case DATA_ID_6:
@@ -146,7 +148,7 @@ int32_t tamagawa_parse(int32_t cmd, struct tamagawa_priv *priv)
     return 0;
 }
 
-static uint8_t tamagawa_crc(struct tamagawa_priv *priv, uint8_t len, uint32_t ch)
+static uint8_t tamagawa_crc(Tamagawa_Handle handle, uint8_t len, uint32_t ch)
 {
     /* Calculates the CRC for the currently selected channel. Uses the CRC function (X^8+1) */
     uint8_t crc = 0;
@@ -154,7 +156,7 @@ static uint8_t tamagawa_crc(struct tamagawa_priv *priv, uint8_t len, uint32_t ch
     uint32_t  i, j;
     uint32_t word0, word1, word2;
 
-    struct tamagawa_xchg *tamagawa_xchg = priv->tamagawa_xchg;
+    Tamagawa_Xchg *tamagawa_xchg = handle->tamagawa_xchg;
 
     word0 = tamagawa_xchg->tamagawa_eeprom_interface[ch].word0;
     word1 = tamagawa_xchg->tamagawa_eeprom_interface[ch].word1;
@@ -194,12 +196,12 @@ static uint8_t tamagawa_crc(struct tamagawa_priv *priv, uint8_t len, uint32_t ch
     return crc;
 }
 
-void tamagawa_update_crc(struct tamagawa_priv *priv, int32_t cmd, uint32_t ch)
+void tamagawa_update_crc(Tamagawa_Handle handle, int32_t cmd, uint32_t ch)
 {
     /* Passes the values of CF(Control Field), ADF(address of EEPROM) and EDF(data for EEPROM) to the CRC calculator fucntion and update the CRC field */
     uint32_t word0;
-    struct tamagawa_xchg *tamagawa_xchg = priv->tamagawa_xchg;
-    tamagawa_eeprom_crc_reinit(priv);
+    Tamagawa_Xchg *tamagawa_xchg = handle->tamagawa_xchg;
+    tamagawa_eeprom_crc_reinit(handle);
     word0 = tamagawa_xchg->tamagawa_eeprom_interface[ch].word0;
 
     if (cmd == DATA_ID_6)
@@ -209,7 +211,7 @@ void tamagawa_update_crc(struct tamagawa_priv *priv, int32_t cmd, uint32_t ch)
         word0 = word0 |  (tamagawa_xchg->tamagawa_eeprom_interface[ch].adf<<16);
         word0 = word0 | (tamagawa_xchg->tamagawa_eeprom_interface[ch].edf<<8);
         tamagawa_xchg->tamagawa_eeprom_interface[ch].word0 = word0;
-        tamagawa_xchg->tamagawa_eeprom_interface[ch].crc = tamagawa_crc(priv, 3, ch);
+        tamagawa_xchg->tamagawa_eeprom_interface[ch].crc = tamagawa_crc(handle, 3, ch);
     }
     else
     {
@@ -217,18 +219,18 @@ void tamagawa_update_crc(struct tamagawa_priv *priv, int32_t cmd, uint32_t ch)
         word0 = (word0|0xEA)<<24;
         word0 = word0 | (tamagawa_xchg->tamagawa_eeprom_interface[ch].adf<<16);
         tamagawa_xchg->tamagawa_eeprom_interface[ch].word0 = word0;
-        tamagawa_xchg->tamagawa_eeprom_interface[ch].crc = tamagawa_crc(priv, 2, ch);
+        tamagawa_xchg->tamagawa_eeprom_interface[ch].crc = tamagawa_crc(handle, 2, ch);
     }
 
-    tamagawa_eeprom_crc_reinit(priv);
+    tamagawa_eeprom_crc_reinit(handle);
 }
 
-int32_t tamagawa_crc_verify(struct tamagawa_priv *priv)
+int32_t tamagawa_crc_verify(Tamagawa_Handle handle)
 {
     /* Verifies the CRC computed with the encoder crc */
-    struct tamagawa_xchg *tamagawa_xchg = priv->tamagawa_xchg;
+    Tamagawa_Xchg *tamagawa_xchg = handle->tamagawa_xchg;
     uint32_t word0;
-    word0 = tamagawa_xchg->ch[priv->channel].cal_crc;
+    word0 = tamagawa_xchg->ch[handle->channel].cal_crc;
 
     if ((word0 & 0xFF)==1)
     {
@@ -240,51 +242,48 @@ int32_t tamagawa_crc_verify(struct tamagawa_priv *priv)
     }
 }
 
-void tamagawa_set_baudrate(struct tamagawa_priv *priv, double baudrate)
+void tamagawa_set_baudrate(Tamagawa_Handle handle, double baudrate)
 {
     /* Updates the values for oversample rate and division factor for Tx and Rx based on the baud rate selected */
-
     uint16_t rx_div;
     uint16_t tx_div;
-    uint16_t oversample_rate;
-    struct tamagawa_clk_cfg clk_cfg;
-    if(priv->rx_clock_source == 1)
+    Tamagawa_ClkCfg clk_cfg = handle->clk_cfg;
+    if(clk_cfg.rx_clk_source == 1)
     {
-        rx_div = priv->pru_clock/(TAMAGAWA_RX_OVERSAMPLING_RATE*(baudrate));
+        rx_div = handle->pru_cfg.pru_clock/((clk_cfg.rx_os_rate + 1)*(baudrate));
     }
     else
     {
-        rx_div = priv->pru_uart_clock/(TAMAGAWA_RX_OVERSAMPLING_RATE*(baudrate));
+        rx_div = handle->pru_cfg.uart_clock/((clk_cfg.rx_os_rate + 1)*(baudrate));
     }
 
-    if(priv->rx_clock_source == 1)
+    if(clk_cfg.tx_clk_source == 1)
     {
-        tx_div = priv->pru_clock/baudrate;
+        tx_div = handle->pru_cfg.pru_clock/baudrate;
     }
     else
     {
-        tx_div = priv->pru_uart_clock/baudrate;
+        tx_div = handle->pru_cfg.uart_clock/baudrate;
     }
-    oversample_rate = TAMAGAWA_RX_OVERSAMPLING_RATE;
-
-    clk_cfg.rx_clk_source = priv->rx_clock_source;
-    clk_cfg.tx_clk_source = priv->tx_clock_source;
+   
     clk_cfg.tx_div = tx_div - 1;
     clk_cfg.rx_div = rx_div - 1;
-    clk_cfg.rx_os_rate = oversample_rate - 1;
 
-    tamagawa_config_clock(priv, &clk_cfg);
+    /*Configure RX auto arm counter for 1us, FIXME: need to add value based on tamagawa freq. */
+    clk_cfg.rx_en_cnt = TAMAGAWA_DELAY_COUNTER_INCREMENT*(handle->pru_cfg.pru_clock/1000000);
+    tamagawa_config_clock(handle, &clk_cfg);
+    tamagawa_config_global_rx_arm_cnt(handle, clk_cfg.rx_en_cnt);
     /*write in DMEM*/
-    priv->tamagawa_xchg->tamagawa_interface.rx_div_factor = rx_div - 1;
-    priv->tamagawa_xchg->tamagawa_interface.tx_div_factor = tx_div - 1;
-    priv->tamagawa_xchg->tamagawa_interface.oversample_rate = oversample_rate - 1;
+    handle->tamagawa_xchg->tamagawa_interface.rx_div_factor = rx_div - 1;
+    handle->tamagawa_xchg->tamagawa_interface.tx_div_factor = tx_div - 1;
+    handle->tamagawa_xchg->tamagawa_interface.oversample_rate = clk_cfg.rx_os_rate;
     
 }
 
-int32_t tamagawa_command_build(struct tamagawa_priv *priv, int32_t cmd,  uint8_t gTamagawa_multi_ch_mask)
+int32_t tamagawa_command_build(Tamagawa_Handle handle, int32_t cmd,  uint8_t gTamagawa_multi_ch_mask)
 {
     /* Sets up the tamagawa command in the PRU interface buffer */
-    struct tamagawa_xchg *tamagawa_xchg = priv->tamagawa_xchg;
+    Tamagawa_Xchg *tamagawa_xchg = handle->tamagawa_xchg;
 
     /*first clear command parameters to be safe */
     memset(&tamagawa_xchg->cmd, 0, sizeof(tamagawa_xchg->cmd));
@@ -368,7 +367,7 @@ int32_t tamagawa_command_build(struct tamagawa_priv *priv, int32_t cmd,  uint8_t
             {
                 if(gTamagawa_multi_ch_mask & 1 << ch)
                 {
-                    tamagawa_prepare_eeprom_command(priv, cmd, ch);
+                    tamagawa_prepare_eeprom_command(handle, cmd, ch);
                 }
             }
             /* Number of expected Rx frames is 4 */
@@ -384,7 +383,7 @@ int32_t tamagawa_command_build(struct tamagawa_priv *priv, int32_t cmd,  uint8_t
             {
                 if(gTamagawa_multi_ch_mask & 1 << ch)
                 {
-                    tamagawa_prepare_eeprom_command(priv, cmd, ch);
+                    tamagawa_prepare_eeprom_command(handle, cmd, ch);
                 }
             }
             /* Number of expected Rx frames is 4 */
@@ -401,29 +400,29 @@ int32_t tamagawa_command_build(struct tamagawa_priv *priv, int32_t cmd,  uint8_t
     return cmd;
 }
 
-void tamagawa_command_send(struct tamagawa_priv *priv)
+void tamagawa_command_send(Tamagawa_Handle handle)
 {
     /* Triggers sending the tamagawa command in PRU */
-    struct tamagawa_xchg *tamagawa_xchg = priv->tamagawa_xchg;
+    Tamagawa_Xchg *tamagawa_xchg = handle->tamagawa_xchg;
     /* Set the trigger value as 1 */
     tamagawa_xchg->config.trigger = 0x1;
 }
 
-void tamagawa_command_wait(struct tamagawa_priv *priv)
+void tamagawa_command_wait(Tamagawa_Handle handle)
 {
     /* Waits till PRU finishes tamagawa transaction */
-    struct tamagawa_xchg *tamagawa_xchg = priv->tamagawa_xchg;
+    Tamagawa_Xchg *tamagawa_xchg = handle->tamagawa_xchg;
     /* Wait until the trigger value is 1 */
     while(tamagawa_xchg->config.trigger & 0x1)
         ;
 }
 
-int32_t tamagawa_command_process(struct tamagawa_priv *priv, int32_t cmd, uint8_t gTamagawa_multi_ch_mask)
+int32_t tamagawa_command_process(Tamagawa_Handle handle, int32_t cmd, uint8_t gTamagawa_multi_ch_mask)
 {
     /* Sends the tamagawa command and waits till firmware acknowledges */
 
     /* Use tamagawa_command_build to setup the tamagawa command in the PRU interface buffer */
-    cmd = tamagawa_command_build(priv, cmd, gTamagawa_multi_ch_mask);
+    cmd = tamagawa_command_build(handle, cmd, gTamagawa_multi_ch_mask);
 
     if(cmd < 0)
     {
@@ -431,16 +430,16 @@ int32_t tamagawa_command_process(struct tamagawa_priv *priv, int32_t cmd, uint8_
     }
 
     /* Trigger sending the tamagawa command in PRU */
-    tamagawa_command_send(priv);
+    tamagawa_command_send(handle);
     /* Wait till PRU finishes tamagawa transaction */
-    tamagawa_command_wait(priv);
+    tamagawa_command_wait(handle);
 
     /* In case of EEPROM commands, reset the command id for all the channels back to 0 */
     if (cmd == DATA_ID_6 || cmd == DATA_ID_D)
     {
-        priv->tamagawa_xchg->tamagawa_eeprom_interface[0].cmd = 0;
-        priv->tamagawa_xchg->tamagawa_eeprom_interface[1].cmd = 0;
-        priv->tamagawa_xchg->tamagawa_eeprom_interface[2].cmd = 0;
+        handle->tamagawa_xchg->tamagawa_eeprom_interface[0].cmd = 0;
+        handle->tamagawa_xchg->tamagawa_eeprom_interface[1].cmd = 0;
+        handle->tamagawa_xchg->tamagawa_eeprom_interface[2].cmd = 0;
     }
 
     return cmd;
@@ -476,11 +475,11 @@ uint64_t tamagawa_prepare_eeprom_tx_data(uint64_t eeprom_tx_data, volatile uint3
     return eeprom_tx_data;
 }
 
-void tamagawa_prepare_eeprom_command(struct tamagawa_priv *priv, int32_t cmd,uint32_t ch)
+void tamagawa_prepare_eeprom_command(Tamagawa_Handle handle, int32_t cmd,uint32_t ch)
 {
     /* Prepares the required EEPROM command from the CF(Control Field), ADF(address of EEPROM), EDF(data for EEPROM) and CRC */
     uint64_t eeprom_tx_data = 0;
-    struct tamagawa_xchg *tamagawa_xchg = priv->tamagawa_xchg;
+    Tamagawa_Xchg *tamagawa_xchg = handle->tamagawa_xchg;
     if (cmd== DATA_ID_6)
     {
         /* Command preparation for EEPROM Write */
@@ -504,141 +503,200 @@ void tamagawa_prepare_eeprom_command(struct tamagawa_priv *priv, int32_t cmd,uin
     tamagawa_xchg->tamagawa_eeprom_interface[ch].eeprom_tx_data = eeprom_tx_data;
 }
 
-void tamagawa_config_clock(struct tamagawa_priv *priv, struct tamagawa_clk_cfg *clk_cfg)
+void tamagawa_config_clock(Tamagawa_Handle handle, Tamagawa_ClkCfg *clk_cfg)
 {
     /* Configures the tamagawa clock */
-    void *pruss_cfg = priv->pruss_cfg;
+    void *pruicss_cfg = (void *)((PRUICSS_HwAttrs *)(handle->pru_cfg.pruicss_handle->hwAttrs))->cfgRegBase;
     /* Configure the PRUx Rx CFG register by writing the Rx Divide Factor and Oversampling rate */
-    HW_WR_REG32((uint32_t)(pruss_cfg) + tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_RXCFG, (uint32_t)(clk_cfg->rx_div << 16 | clk_cfg->rx_clk_source << 4 | clk_cfg->rx_os_rate));
+    HW_WR_REG32((uint32_t)(pruicss_cfg) + handle->register_offset_val.ICSS_CFG_PRUx_ED_RXCFG, (uint32_t)(clk_cfg->rx_div << 16 | clk_cfg->rx_clk_source << 4 | clk_cfg->rx_os_rate));
     /* Configure the PRUx Tx CFG register by writing the Tx Divide Factor  */
-    HW_WR_REG32((uint32_t)(pruss_cfg) + tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_TXCFG , (uint32_t)(clk_cfg->tx_div << 16 | clk_cfg->tx_clk_source << 4));
+    HW_WR_REG32((uint32_t)(pruicss_cfg) + handle->register_offset_val.ICSS_CFG_PRUx_ED_TXCFG , (uint32_t)(clk_cfg->tx_div << 16 | clk_cfg->tx_clk_source << 4));
 }
 
-void tamagawa_config_host_trigger(struct tamagawa_priv *priv)
+void tamagawa_config_global_rx_arm_cnt(Tamagawa_Handle handle, uint16_t  rx_en_cnt)
+{
+    /* Configures the global RX auto arm counter for tamagawa master */
+    void *pruicss_cfg = (void *)((PRUICSS_HwAttrs *)(handle->pru_cfg.pruicss_handle->hwAttrs))->cfgRegBase;
+    /* Write the value to the PRUx RX Global Auto Arm Counter register */
+    HW_WR_REG16((uint32_t)(pruicss_cfg) + handle->register_offset_val.ICSS_CFG_PRUx_ED_CH0_CFG1 + 2, rx_en_cnt);
+    HW_WR_REG16((uint32_t)(pruicss_cfg) + handle->register_offset_val.ICSS_CFG_PRUx_ED_CH1_CFG1 + 2, rx_en_cnt);
+    HW_WR_REG16((uint32_t)(pruicss_cfg) + handle->register_offset_val.ICSS_CFG_PRUx_ED_CH2_CFG1 + 2, rx_en_cnt);
+}
+
+void tamagawa_config_host_trigger(Tamagawa_Handle handle)
 {
     /* Configures tamagawa master for host trigger mode */
-    struct tamagawa_xchg *tamagawa_xchg = priv->tamagawa_xchg;
+    Tamagawa_Xchg *tamagawa_xchg = handle->tamagawa_xchg;
 
     tamagawa_xchg->config.opmode = 0x1;
 }
 
-void tamagawa_config_periodic_trigger(struct tamagawa_priv *priv)
+void tamagawa_config_periodic_trigger(Tamagawa_Handle handle)
 {
     /* Configures tamagawa master in periodic trigger mode */
-    struct tamagawa_xchg *tamagawa_xchg = priv->tamagawa_xchg;
+    Tamagawa_Xchg *tamagawa_xchg = handle->tamagawa_xchg;
 
     tamagawa_xchg->config.opmode = 0;
 }
 
-void tamagawa_config_channel(struct tamagawa_priv *priv, uint32_t ch)
+void tamagawa_config_channel(Tamagawa_Handle handle, uint32_t ch)
 {
     /* Selects the channel to be used by tamagawa master */
-    struct tamagawa_xchg *tamagawa_xchg = priv->tamagawa_xchg;
+    Tamagawa_Xchg *tamagawa_xchg = handle->tamagawa_xchg;
 
     tamagawa_xchg->config.channel = 1 << ch;
-    priv->channel = ch;
+    handle->channel = ch;
     tamagawa_xchg->tamagawa_interface.ch_mask = 1 << ch;
 }
 
-void tamagawa_config_multi_channel_mask(struct tamagawa_priv *priv, uint8_t mask)
+void tamagawa_config_multi_channel_mask(Tamagawa_Handle handle, uint8_t mask)
 {
     /* Selects mask of channels to be used in multi channel configuration */
-    priv->tamagawa_xchg->config.channel = mask;
+    handle->tamagawa_xchg->config.channel = mask;
+    handle->tamagawa_xchg->tamagawa_interface.ch_mask = mask;
 }
 
-void tamagawa_update_data_id(struct tamagawa_priv *priv, int32_t cmd)
+void tamagawa_update_data_id(Tamagawa_Handle handle, int32_t cmd)
 {
     /* Updates the data id according to the command selected */
-    priv->tamagawa_xchg->tamagawa_interface.data_id= cmd;
+    handle->tamagawa_xchg->tamagawa_interface.data_id= cmd;
     if(cmd == DATA_ID_6 || cmd == DATA_ID_D)
     {
-        priv->tamagawa_xchg->tamagawa_eeprom_interface[0].cmd = cmd;
-        priv->tamagawa_xchg->tamagawa_eeprom_interface[1].cmd = cmd;
-        priv->tamagawa_xchg->tamagawa_eeprom_interface[2].cmd = cmd;
+        handle->tamagawa_xchg->tamagawa_eeprom_interface[0].cmd = cmd;
+        handle->tamagawa_xchg->tamagawa_eeprom_interface[1].cmd = cmd;
+        handle->tamagawa_xchg->tamagawa_eeprom_interface[2].cmd = cmd;
     }
 }
 
-void tamagawa_update_adf(struct tamagawa_priv *priv, uint32_t val, uint32_t ch)
+void tamagawa_update_adf(Tamagawa_Handle handle, uint32_t val, uint32_t ch)
 {
     /* Updates the ADF field for the currently selected channel for EEPROM commands */
-    priv->tamagawa_xchg->tamagawa_eeprom_interface[ch].adf = val;
+    handle->tamagawa_xchg->tamagawa_eeprom_interface[ch].adf = val;
 }
 
-void tamagawa_update_edf(struct tamagawa_priv *priv, uint32_t val, uint32_t ch)
+void tamagawa_update_edf(Tamagawa_Handle handle, uint32_t val, uint32_t ch)
 {
     /* Updates the EDF field for the currently selected channel for EEPROM Write command */
-    priv->tamagawa_xchg->tamagawa_eeprom_interface[ch].edf = val;
+    handle->tamagawa_xchg->tamagawa_eeprom_interface[ch].edf = val;
 }
 
-void tamagawa_eeprom_crc_reinit(struct tamagawa_priv *priv)
+void tamagawa_eeprom_crc_reinit(Tamagawa_Handle handle)
 {
     /* Resets the integers used to calculate the CRC back to 0 for all the channels */
     uint32_t ch = 0;
     for(ch = 0; ch < MAX_CHANNELS; ch++)
     {
-        priv->tamagawa_xchg->tamagawa_eeprom_interface[ch].word0 = 0;
-        priv->tamagawa_xchg->tamagawa_eeprom_interface[ch].word1 = 0;
-        priv->tamagawa_xchg->tamagawa_eeprom_interface[ch].word2 = 0;
+        handle->tamagawa_xchg->tamagawa_eeprom_interface[ch].word0 = 0;
+        handle->tamagawa_xchg->tamagawa_eeprom_interface[ch].word1 = 0;
+        handle->tamagawa_xchg->tamagawa_eeprom_interface[ch].word2 = 0;
     }
 }
 
-uint8_t tamagawa_multi_channel_detected(struct tamagawa_priv *priv)
+uint8_t tamagawa_multi_channel_detected(Tamagawa_Handle handle)
 {
     /* Detects the channels that have been selected in multi-channel configuration */
-    return priv->tamagawa_xchg->config.channel;
+    return handle->tamagawa_xchg->config.channel;
 }
 
-void tamagawa_multi_channel_set_cur(struct tamagawa_priv *priv, uint32_t ch)
+void tamagawa_multi_channel_set_cur(Tamagawa_Handle handle, uint32_t ch)
 {
     /* Set the channel that is currently being processed */
-    priv->channel = ch;
+    handle->channel = ch;
 }
 
-static inline void tamagawa_config_clr_cfg0(struct tamagawa_priv *priv)
+static inline void tamagawa_config_clr_cfg0(Tamagawa_Handle handle)
 {
-    void *pruss_cfg = priv->pruss_cfg;
+    void *pruicss_cfg = (void *)((PRUICSS_HwAttrs *)(handle->pru_cfg.pruicss_handle->hwAttrs))->cfgRegBase;
     /* Clear the CFG0 registers for the selected PRUx slice for Channel 0 */
-    HW_WR_REG32((uint32_t)(pruss_cfg) + tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH0_CFG0, 0);
+    HW_WR_REG32((uint32_t)(pruicss_cfg) + handle->register_offset_val.ICSS_CFG_PRUx_ED_CH0_CFG0, 0);
     /* Clear the CFG0 registers for the selected PRUx slice for Channel 1 */
-    HW_WR_REG32((uint32_t)(pruss_cfg) + tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH1_CFG0, 0);
+    HW_WR_REG32((uint32_t)(pruicss_cfg) + handle->register_offset_val.ICSS_CFG_PRUx_ED_CH1_CFG0, 0);
     /* Clear the CFG0 registers for the selected PRUx slice for Channel 2 */
-    HW_WR_REG32((uint32_t)(pruss_cfg) + tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH2_CFG0, 0);
+    HW_WR_REG32((uint32_t)(pruicss_cfg) + handle->register_offset_val.ICSS_CFG_PRUx_ED_CH2_CFG0, 0);
 }
-
-struct tamagawa_priv *tamagawa_init(struct tamagawa_xchg *tamagawa_xchg, void *pruss_cfg, void *pruss_iep, uint32_t slice_value)
+Tamagawa_Handle tamagawa_init(uint32_t index, Tamagawa_Params tamagawa_params)
 {
-    /* Initializes tamagawa firmware interface address and get the pointer to struct tamagawa_priv instance */
-    tamagawa_priv.tamagawa_xchg = tamagawa_xchg;
-    tamagawa_priv.pruss_cfg = pruss_cfg;
-    tamagawa_priv.slice_value = slice_value;
-    tamagawa_priv.pruss_iep = pruss_iep;
+    Tamagawa_Handle handle = NULL;
+    
+    handle = (Tamagawa_Handle)(&gTamagawaHandle[index]);
+
+    if(index >= gTamagawaConfigNum)
+    {
+        return NULL;
+    }
+    
+    /* Configure the handle */
+    if(tamagawa_params.pru_cfg.pruicss_handle == NULL) {
+        /* Return NULL if required PRU handle is NULL */
+        return NULL;
+    }
+    
+    if(tamagawa_params.pru_cfg.pru_slice == 1)
+    {
+        handle->tamagawa_xchg = (Tamagawa_Xchg *)((PRUICSS_HwAttrs *)(tamagawa_params.pru_cfg.pruicss_handle->hwAttrs))->pru1DramBase;
+    }
+    else if(tamagawa_params.pru_cfg.pru_slice == 0)
+    {
+        handle->tamagawa_xchg = (Tamagawa_Xchg *)((PRUICSS_HwAttrs *)(tamagawa_params.pru_cfg.pruicss_handle->hwAttrs))->pru0DramBase;
+    }
+    else
+    {
+        /* Return NULL if invalid pru slice is provided */
+        return NULL;
+    }
+   /* Check valid range for IEP comparator (0-15), clocks must be positive */
+   if((tamagawa_params.pru_cfg.iep_cmp_event < 0 || tamagawa_params.pru_cfg.iep_cmp_event > 15) ||
+      (tamagawa_params.pru_cfg.pru_clock <= 0) ||
+      (tamagawa_params.pru_cfg.uart_clock <= 0) || 
+      (tamagawa_params.pru_cfg.iep_clock <= 0) || 
+      (tamagawa_params.pru_cfg.iep_instance < 0 || tamagawa_params.pru_cfg.iep_instance > 1))
+    {
+        /* Return NULL if invalid parameters */
+        return NULL;
+    }
+    handle->pru_cfg = tamagawa_params.pru_cfg;
+
+    if((tamagawa_params.clk_cfg.tx_clk_source > 1 || tamagawa_params.clk_cfg.tx_clk_source < 0) || 
+       (tamagawa_params.clk_cfg.rx_clk_source > 1 || tamagawa_params.clk_cfg.rx_clk_source < 0) || 
+       (tamagawa_params.clk_cfg.rx_os_rate < 0 || tamagawa_params.clk_cfg.rx_os_rate > 7))
+    {
+        /* Return NULL if invalid clock parameters */
+        return NULL;
+    }
+    
+    handle->clk_cfg = tamagawa_params.clk_cfg;
+
+    handle->instance_index = index;
 
     /* If the slice value is 0, it denotes that PRU0 is selected. Assign the register offsets for PRU0 */
-    if(slice_value==0)
+    if(tamagawa_params.pru_cfg.pru_slice == 0)
     {
-        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH2_CFG0 = CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH2_CFG0_REG;
-        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH0_CFG0 = CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG0_REG;
-        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH0_CFG1 = CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG1_REG;
-        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH1_CFG1 = CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH1_CFG1_REG;
-        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH1_CFG0 = CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH1_CFG0_REG;
-        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH2_CFG1 = CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH2_CFG1_REG;
-        tamagawa_priv.register_offset_val.ICSS_CFG_GPCFGx =    CSL_ICSS_PR1_CFG_SLV_GPCFG0_REG;
-        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_RXCFG = CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG;
-        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_TXCFG = CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG;
+        handle->register_offset_val.ICSS_CFG_PRUx_ED_CH2_CFG0 = CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH2_CFG0_REG;
+        handle->register_offset_val.ICSS_CFG_PRUx_ED_CH0_CFG0 = CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG0_REG;
+        handle->register_offset_val.ICSS_CFG_PRUx_ED_CH0_CFG1 = CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG1_REG;
+        handle->register_offset_val.ICSS_CFG_PRUx_ED_CH1_CFG1 = CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH1_CFG1_REG;
+        handle->register_offset_val.ICSS_CFG_PRUx_ED_CH1_CFG0 = CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH1_CFG0_REG;
+        handle->register_offset_val.ICSS_CFG_PRUx_ED_CH2_CFG1 = CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH2_CFG1_REG;
+        handle->register_offset_val.ICSS_CFG_GPCFGx = CSL_ICSS_PR1_CFG_SLV_GPCFG0_REG;
+        handle->register_offset_val.ICSS_CFG_PRUx_ED_RXCFG = CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG;
+        handle->register_offset_val.ICSS_CFG_PRUx_ED_TXCFG = CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG;
     }
     /* If the slice value is 1, it denotes that PRU1 is selected. Assign the register offsets for PRU1 */
-    else if(slice_value==1)
+    else /* tamagawa_params.pru_cfg.pru_slice == 1 */
     {
-        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH0_CFG0 = CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG0_REG;
-        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH1_CFG0 = CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH1_CFG0_REG;
-        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH2_CFG0 = CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH2_CFG0_REG;
-        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH0_CFG1 = CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG1_REG;
-        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH1_CFG1 = CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH1_CFG1_REG;
-        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_CH2_CFG1 = CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH2_CFG1_REG;
-        tamagawa_priv.register_offset_val.ICSS_CFG_GPCFGx =    CSL_ICSS_PR1_CFG_SLV_GPCFG1_REG;
-        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_RXCFG = CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG;
-        tamagawa_priv.register_offset_val.ICSS_CFG_PRUx_ED_TXCFG = CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG;
+        handle->register_offset_val.ICSS_CFG_PRUx_ED_CH0_CFG0 = CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG0_REG;
+        handle->register_offset_val.ICSS_CFG_PRUx_ED_CH1_CFG0 = CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH1_CFG0_REG;
+        handle->register_offset_val.ICSS_CFG_PRUx_ED_CH2_CFG0 = CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH2_CFG0_REG;
+        handle->register_offset_val.ICSS_CFG_PRUx_ED_CH0_CFG1 = CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG1_REG;
+        handle->register_offset_val.ICSS_CFG_PRUx_ED_CH1_CFG1 = CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH1_CFG1_REG;
+        handle->register_offset_val.ICSS_CFG_PRUx_ED_CH2_CFG1 = CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH2_CFG1_REG;
+        handle->register_offset_val.ICSS_CFG_GPCFGx = CSL_ICSS_PR1_CFG_SLV_GPCFG1_REG;
+        handle->register_offset_val.ICSS_CFG_PRUx_ED_RXCFG = CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG;
+        handle->register_offset_val.ICSS_CFG_PRUx_ED_TXCFG = CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG;
     }
+    
+    /* Clear CFG0 registers */
+    tamagawa_config_clr_cfg0(handle);
 
-    return &tamagawa_priv;
+    return handle;
 }

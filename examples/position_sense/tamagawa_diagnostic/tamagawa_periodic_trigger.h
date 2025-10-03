@@ -34,14 +34,14 @@
 #define _TAMAGAWA_H_
 
 #include<stdint.h>
+#include <position_sense/tamagawa/include/tamagawa_drv.h>
+#include "ti_drivers_open_close.h"
+#include "ti_board_open_close.h"
 
 struct tamagawa_periodic_interface
 {
-  void *pruss_iep;
-  void *pruss_dmem;
-  void *pruss_cfg;
   uint64_t periodic_trigger_count;
-  uint64_t cmp0_count;
+  uint64_t iep_reset_count;
 };
 
 #define IEP_DEFAULT_INC    0x1;
@@ -50,15 +50,35 @@ struct tamagawa_periodic_interface
 #define IEP_RST_CNT_EN      0x1;
 #define IEP_CMP0_ENABLE     0x1 << 1;
 
+/*
+ * This is also defined in firmware, both macros need to be updated in both places
+ */
+#if (CONFIG_TAMAGAWA0_PRUICSS_PRUx == 1)
 #define IEP_CMP_EVENT       ( 3 )
-
 #define PRU_TRIGGER_HOST_TAMAGAWA_EVT0   ( 2+16 )    /* pr0_pru_mst_intr[2]_intr_req */
+#else
+#define IEP_CMP_EVENT       ( 4 )
+#define PRU_TRIGGER_HOST_TAMAGAWA_EVT0   ( 3+16 )    /* pr0_pru_mst_intr[3]_intr_req */
+#endif
 
-uint32_t tamagawa_config_periodic_mode(struct tamagawa_periodic_interface *tamagawa_periodic_interface, PRUICSS_Handle handle);
+#define TAMAGAWA_PERIODIC_MODE_IEP_INSTANCE   0
+uint32_t tamagawa_config_periodic_mode(struct tamagawa_periodic_interface *tamagawa_periodic_interface, PRUICSS_Handle handle, uint8_t tamagawa_instnace);
 
 void tamagawa_stop_periodic_continuous_mode(struct tamagawa_periodic_interface *tamagawa_periodic_interface);
 
-static void prutamagawaIrqHandler0(void *handle);
+static void pruTamagawaIrqHandler0(void *args);
+
+#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
+void pruTamagawaDualChannelIrqHandler0(void *args);
+#if (CONFIG_TAMAGAWA1_PRUICSS_PRUx == 1)
+#define DUAL_CH_IEP_CMP_EVENT       ( 3 )
+#define PRU_TRIGGER_HOST_TAMAGAWA_DUAL_CH_EVT0   ( 2+16 )    /* pr0_pru_mst_intr[2]_intr_req */
+#else
+#define DUAL_CH_IEP_CMP_EVENT       ( 4 )
+#define PRU_TRIGGER_HOST_TAMAGAWA_DUAL_CH_EVT0   ( 3+16 )    /* pr0_pru_mst_intr[2]_intr_req */
+#endif
+#endif
+
 
 
 #endif /* _TAMAGAWA_H_ */

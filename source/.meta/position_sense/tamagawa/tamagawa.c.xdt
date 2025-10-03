@@ -1,0 +1,15 @@
+%%{
+    let module = system.modules[args[0]];
+%%}
+/*
+ * Tamagawa
+ */
+
+#include <position_sense/tamagawa/include/tamagawa_drv.h>
+%if(module)
+%{
+    /* Handle structures and array */
+Tamagawa_Config gTamagawaHandle[CONFIG_TAMAGAWA_NUM_INSTANCES];
+uint32_t gTamagawaConfigNum = CONFIG_TAMAGAWA_NUM_INSTANCES;
+
+%}

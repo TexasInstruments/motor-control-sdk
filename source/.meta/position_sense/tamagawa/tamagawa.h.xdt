@@ -52,4 +52,5 @@
     %{
 #define `instance.$name`_G_MUX_EN                       (`instance["G_MUX_EN"] & 1`)
     %}
+
 % }

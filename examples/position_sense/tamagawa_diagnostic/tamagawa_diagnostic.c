@@ -1,7 +1,7 @@
 /**
  * tamagawa_diagnostic.c
  *
- * Copyright (c) 2022-24, Texas Instruments Incorporated
+ * Copyright (c) 2022-25, Texas Instruments Incorporated
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -69,6 +69,7 @@ TaskP_Object gTaskObject;
 
 #define ICSS_PRU_CORE_CLOCK CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ
 #define ICSS_PRU_UART_CLOCK CONFIG_PRU_ICSS0_UART_CLK_FREQ_HZ
+#define ICSS_PRU_IEP_CLOCK  CONFIG_PRU_ICSS0_IEP_CLK_FREQ_HZ
 
 /*Use soc driver instead it when available */
 #if SOC_AM263PX
@@ -120,13 +121,47 @@ TaskP_Object gTaskObject;
 #endif
 #endif
 
-static uint8_t gTamagawa_multi_ch_mask;
-static uint32_t gTamagawa_is_multi_ch;
-struct tamagawa_priv *priv;
+#define TAMAGAWA0_PRUICSS_SLICEx CONFIG_TAMAGAWA0_PRUICSS_PRUx
+
+#if (CONFIG_TAMAGAWA0_PRUICSS_PRUx == 1)
+#define TAMAGAWA0_PRUICSS_PRUx PRUICSS_PRU1
+#else
+#define TAMAGAWA0_PRUICSS_PRUx PRUICSS_PRU0
+#endif
+
+/*define macros for dual channels*/
+#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
+
+#define TAMAGAWA1_PRUICSS_SLICEx CONFIG_TAMAGAWA1_PRUICSS_PRUx
+
+#if (TAMAGAWA1_PRUICSS_SLICEx == 1)
+#define TAMAGAWA1_PRUICSS_PRUx PRUICSS_PRU1
+#else
+#define TAMAGAWA1_PRUICSS_PRUx PRUICSS_PRU0
+#endif
+
+Tamagawa_Handle gTamagawaHandle2;
+
+#if TAMAGAWA1_PRUICSS_SLICEx == 1
+#include <tamagawa_receiver_single_channel_pru1_bin.h>
+#else
+#include <tamagawa_receiver_single_channel_pru0_bin.h>
+#endif
+
+uint8_t gTamagawa1_multi_ch_mask;
+uint8_t gTamagawa1_is_multi_ch;
+
+struct tamagawa_periodic_interface tamagawa1_periodic_interface;
+#endif
+
+uint8_t gTamagawa_multi_ch_mask;
+uint32_t gTamagawa_is_multi_ch;
+Tamagawa_Handle gTamagawaHandle1;
 
 /** \brief Global Structure pointer holding PRU-ICSSx memory Map. */
 PRUICSS_Handle gPruIcssXHandle;
-void *gPru_dramx;
+
+struct tamagawa_periodic_interface tamagawa_periodic_interface;
 
 #if defined(SOC_AM263PX)
 I2C_Handle          i2cHandle;
@@ -266,9 +301,16 @@ void lp_bp_mux_mode_config()
 void tamagawa_pruicss_init(void)
 {
     gPruIcssXHandle = PRUICSS_open(CONFIG_PRU_ICSS0);
-    /* CONFIG_TAMAGAWA0_PRUICSS_PRUx holds value 0 or 1 depending on whether we are using PRU0 or PRU1 slice */
-    PRUICSS_initMemory(gPruIcssXHandle, PRUICSS_DATARAM(CONFIG_TAMAGAWA0_PRUICSS_PRUx));
-    PRUICSS_disableCore(gPruIcssXHandle, CONFIG_TAMAGAWA0_PRUICSS_PRUx);
+    /* TAMAGAWA0_PRUICSS_SLICEx holds value 0 or 1 depending on whether we are using PRU0 or PRU1 slice */
+    PRUICSS_initMemory(gPruIcssXHandle, PRUICSS_DATARAM(TAMAGAWA0_PRUICSS_SLICEx));
+    PRUICSS_disableCore(gPruIcssXHandle, TAMAGAWA0_PRUICSS_SLICEx);
+
+#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
+    /* CONFIG_TAMAGAWA1_PRUICSS_SLICEx holds value 0 or 1 depending on whether we are using PRU0 or PRU1 slice */
+    PRUICSS_initMemory(gPruIcssXHandle, PRUICSS_DATARAM(TAMAGAWA1_PRUICSS_SLICEx));
+    PRUICSS_disableCore(gPruIcssXHandle, TAMAGAWA1_PRUICSS_SLICEx);
+#endif
+
 #ifdef CONFIG_TAMAGAWA0_G_MUX_EN
     PRUICSS_setSaMuxMode(gPruIcssXHandle, PRUICSS_SA_MUX_MODE_SD_ENDAT);
 #endif
@@ -281,15 +323,33 @@ void tamagawa_pruicss_init(void)
 
 void tamagawa_pruicss_load_run_fw(void)
 {
-    PRUICSS_disableCore(gPruIcssXHandle, CONFIG_TAMAGAWA0_PRUICSS_PRUx);
+    PRUICSS_disableCore(gPruIcssXHandle, TAMAGAWA0_PRUICSS_SLICEx);
     /*Load firmware. Set buffer = write to Pru memory */
-    PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(CONFIG_TAMAGAWA0_PRUICSS_PRUx),0, (uint32_t *) TamagawaFirmware_0,sizeof(TamagawaFirmware_0));
-    PRUICSS_resetCore(gPruIcssXHandle, CONFIG_TAMAGAWA0_PRUICSS_PRUx);
+#if TAMAGAWA0_PRUICSS_SLICEx == 1
+    PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(CONFIG_TAMAGAWA0_PRUICSS_PRUx),0, (uint32_t *) TamagawaFirmwarePru1_0,sizeof(TamagawaFirmwarePru1_0));
+#else
+    PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(CONFIG_TAMAGAWA0_PRUICSS_PRUx),0, (uint32_t *) TamagawaFirmwarePru0_0,sizeof(TamagawaFirmwarePru0_0));
+#endif
+    PRUICSS_resetCore(gPruIcssXHandle, TAMAGAWA0_PRUICSS_SLICEx);
     /*Run firmware */
-    PRUICSS_enableCore(gPruIcssXHandle, CONFIG_TAMAGAWA0_PRUICSS_PRUx);
+    PRUICSS_enableCore(gPruIcssXHandle, TAMAGAWA0_PRUICSS_SLICEx);
+
+#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
+    PRUICSS_disableCore(gPruIcssXHandle, TAMAGAWA1_PRUICSS_SLICEx);
+    /*Load firmware. Set buffer = write to Pru memory */
+#if TAMAGAWA1_PRUICSS_SLICEx == 1
+    PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(TAMAGAWA1_PRUICSS_SLICEx),0, (uint32_t *) TamagawaFirmwarePru1_0,sizeof(TamagawaFirmwarePru1_0));
+#else
+    PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(TAMAGAWA1_PRUICSS_SLICEx),0, (uint32_t *) TamagawaFirmwarePru0_0,sizeof(TamagawaFirmwarePru0_0));
+#endif
+    PRUICSS_resetCore(gPruIcssXHandle, TAMAGAWA1_PRUICSS_SLICEx);
+    /*Run firmware */
+    PRUICSS_enableCore(gPruIcssXHandle, TAMAGAWA1_PRUICSS_SLICEx);
+
+#endif
 }
 
-void tamagawa_display_result(struct tamagawa_priv *priv, int32_t cmd)
+void tamagawa_display_result(Tamagawa_Handle handle, int32_t cmd)
 {
     /* Prints the position value returned by the encoder for a particular command ID */
     switch(cmd)
@@ -297,55 +357,55 @@ void tamagawa_display_result(struct tamagawa_priv *priv, int32_t cmd)
         case DATA_ID_7:
             /* Reset */
             DebugP_log("\r\n| ");
-            DebugP_log("\r\nABS: 0x%x\tSF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.abs, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.sf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.cf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.crc);
+            DebugP_log("\r\nABS: 0x%x\tSF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.abs, handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.sf, handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.cf, handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.crc);
             break;
 
         case DATA_ID_8:
             /* Reset */
             DebugP_log("\r\n| ");
-            DebugP_log("\r\nABS: 0x%x\tSF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.abs, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.sf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.cf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.crc);
+            DebugP_log("\r\nABS: 0x%x\tSF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.abs, handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.sf, handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.cf, handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.crc);
             break;
 
         case DATA_ID_C:
             /* Reset */
             DebugP_log("\r\n| ");
-            DebugP_log("\r\nABS: 0x%x\tSF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.abs, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.sf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.cf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.crc);
+            DebugP_log("\r\nABS: 0x%x\tSF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.abs, handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.sf, handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.cf, handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.crc);
             break;
 
         case DATA_ID_0:
             /* Data readout: data in one revolution */
             DebugP_log("\r\n| ");
-            DebugP_log("\r\nABS: 0x%x\tSF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.abs, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.sf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.cf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.crc);
+            DebugP_log("\r\nABS: 0x%x\tSF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.abs, handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.sf, handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.cf, handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.crc);
             break;
 
         case DATA_ID_1:
             /* Data readout: multi-turn data */
             DebugP_log("\r\n| ");
-            DebugP_log("\r\nABM: 0x%x\tSF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.abm, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.sf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.cf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.crc);
+            DebugP_log("\r\nABM: 0x%x\tSF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.abm, handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.sf, handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.cf, handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.crc);
             break;
 
         case DATA_ID_2:
             /*  Data readout: encoder ID */
             DebugP_log("\r\n| ");
-            DebugP_log("\r\nENID: 0x%x\tSF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.enid, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.sf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.cf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.crc);
+            DebugP_log("\r\nENID: 0x%x\tSF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.enid, handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.sf, handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.cf, handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.crc);
             break;
 
         case DATA_ID_3:
             /* Data readout: data in one revolution, encoder ID, multi-turn, encoder error */
             DebugP_log("\r\n| ");
-            DebugP_log("\r\nABS: 0x%x\tENID: 0x%x\tABM: 0x%x\tALMC: 0x%x\tSF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.abs, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.enid, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.abm, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.almc, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.sf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.cf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.crc);
+            DebugP_log("\r\nABS: 0x%x\tENID: 0x%x\tABM: 0x%x\tALMC: 0x%x\tSF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.abs, handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.enid, handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.abm, handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.almc, handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.sf, handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.cf, handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.crc);
             break;
 
         case DATA_ID_6:
             /* EEPROM Write */
             DebugP_log("\r\n| ");
-            DebugP_log("\r\nEDF: 0x%x\tADF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.edf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.adf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.cf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.crc);
+            DebugP_log("\r\nEDF: 0x%x\tADF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.edf, handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.adf, handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.cf, handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.crc);
             break;
 
         case DATA_ID_D:
             /* EEPROM Read */
             DebugP_log("\r\n| ");
-            DebugP_log("\r\nEDF: 0x%x\tADF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.edf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.adf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.cf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.crc);
+            DebugP_log("\r\nEDF: 0x%x\tADF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.edf, handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.adf, handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.cf, handle->tamagawa_xchg->tamagawa_interface.rx_frames_received.crc);
             break;
 
         default:
@@ -355,22 +415,22 @@ void tamagawa_display_result(struct tamagawa_priv *priv, int32_t cmd)
 }
 
 
-static void tamagawa_handle_rx(struct tamagawa_priv *priv, int32_t cmd)
+static void tamagawa_handle_rx(Tamagawa_Handle handle, int32_t cmd)
 {
     DebugP_log("\r\n Parsing process started\n");
     /* Case of parsing failure */
-    if (tamagawa_parse(cmd, priv) == -1)
+    if (tamagawa_parse(cmd, handle) == -1)
     {
         DebugP_log("\r\n ERROR: Parsing failure\n");
         return;
     }
     /* Case of successful parsing, display the results after CRC check*/
-    DebugP_log("\r\n Channel is  %x \n",priv->channel);
+    DebugP_log("\r\n Channel is  %x \n",handle->channel);
     DebugP_log("\r\n data id is %x \n",cmd);
-    if (tamagawa_crc_verify(priv) == 1)
+    if (tamagawa_crc_verify(handle) == 1)
     {
         DebugP_log("\r\n CRC success \n");
-        tamagawa_display_result(priv, cmd);
+        tamagawa_display_result(handle, cmd);
         return;
     }
     else
@@ -395,19 +455,40 @@ static enum data_id tamagawa_get_command(uint8_t *adf, uint8_t *edf)
     if(cmd == PERIODIC_TRIGGER_CMD)
     {
         DebugP_log("\r| Enter IEP reset cycle count (must be greater than Tamagawa cycle time including timeout period, in IEP cycles):");
-        if(DebugP_scanf("%u\n", &priv->iep_reset_count))
+        if(DebugP_scanf("%u\n", &tamagawa_periodic_interface.iep_reset_count) < 0)
         {
             DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
-            return cmd;
+            DebugP_log("\r\n| WARNING: invalid Data \n");
+            return -1;
         }
         DebugP_log("\r| Enter IEP trigger time(must be less than or equal to IEP reset cycle, in IEP cycles): ");
-        if(DebugP_scanf("%u\n", &priv->periodic_trigger_count) >= 0)
+        if(DebugP_scanf("%u\n", &tamagawa_periodic_interface.periodic_trigger_count) < 0 )
         {
-            return cmd;
-        }else{
-            cmd = DATA_ID_0;
-            DebugP_log("\r\n| WARNING: invalid value entered, Data readout Data ID 0 will be sent with host trigger mode\n");
+            DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+            DebugP_log("\r\n| WARNING: invalid Data \n");
+            return -1;
         }
+        if(tamagawa_periodic_interface.periodic_trigger_count > tamagawa_periodic_interface.iep_reset_count)
+        {
+            DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+            DebugP_log("\r\n| WARNING: invalid Data\n");
+            return -1;
+        }
+#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
+        DebugP_log("\r| Enter IEP trigger time(must be less than or equal to IEP reset cycle, in IEP cycles) for 2nd channel: ");
+        if(DebugP_scanf("%u\n", &tamagawa1_periodic_interface.periodic_trigger_count) < 0 )
+        {
+            DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+            DebugP_log("\r\n| WARNING: invalid Data\n");
+            return -1;
+        }
+        if(tamagawa1_periodic_interface.periodic_trigger_count > tamagawa_periodic_interface.iep_reset_count)
+        {
+            DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+            DebugP_log("\r\n| WARNING: invalid Data \n");
+            return -1;
+        }
+#endif
     }
     /* Check to make sure that the command issued is correct */
     if(cmd >= DATA_ID_NUM)
@@ -446,7 +527,10 @@ static enum data_id tamagawa_get_command(uint8_t *adf, uint8_t *edf)
                 }
 
                 *adf = (uint8_t)val;
-                tamagawa_update_adf(priv, val, ch);
+                tamagawa_update_adf(gTamagawaHandle1, val, ch);
+#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE) 
+                tamagawa_update_adf(gTamagawaHandle2, val, ch);
+#endif
             }
         }
     }
@@ -481,7 +565,10 @@ static enum data_id tamagawa_get_command(uint8_t *adf, uint8_t *edf)
                 }
 
                 *edf = (uint8_t)val;
-                tamagawa_update_edf(priv, val, ch);
+                tamagawa_update_edf(gTamagawaHandle1, val, ch);
+#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE) 
+                tamagawa_update_edf(gTamagawaHandle2, val, ch);
+#endif
             }
         }
     }
@@ -507,13 +594,28 @@ static void tamagawa_display_menu(void)
     DebugP_log("\r\n| enter value: ");
 }
 
-
 uint32_t tamagawa_get_fw_version(void)
 {
     /* Returns the firmware version, depending on Single or Multi-channel configuration */
-    return *((uint32_t *)TamagawaFirmware_0 + 1);
-}
+#if TAMAGAWA0_PRUICSS_SLICEx == 1
+    return *((uint32_t *)TamagawaFirmwarePru1_0 + 1);
+#else
+    return *((uint32_t *)TamagawaFirmwarePru0_0 + 1);
+#endif
 
+}
+#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
+uint32_t tamagawa1_get_fw_version(void)
+{
+    /* Returns the firmware version, depending on Single or Multi-channel configuration */
+#if TAMAGAWA1_PRUICSS_SLICEx == 1
+    return *((uint32_t *)TamagawaFirmwarePru1_0 + 1);
+#else
+    return *((uint32_t *)TamagawaFirmwarePru0_0 + 1);
+#endif
+
+}
+#endif
 static int32_t tamagawa_position_loop_status;
 
 static void tamagawa_position_loop_decide_termination(void *args)
@@ -551,83 +653,128 @@ static int32_t tamagawa_loop_task_create(void)
     return status ;
 }
 
-static void tamagawa_process_periodic_command(enum data_id process_dataid_cmd)
-{
+void tamagawa_process_periodic_command(Tamagawa_Handle handle1, enum data_id process_dataid_cmd
+#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
+        , Tamagawa_Handle handle2
+#endif
+    )
+    {
     int32_t status;
-
-    tamagawa_config_periodic_trigger(priv);
-
+    
+    tamagawa_config_periodic_trigger(handle1);
+#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
+    tamagawa_config_periodic_trigger(handle2);
+#endif
+    
     if(tamagawa_loop_task_create() != SystemP_SUCCESS)
     {
         DebugP_log("\r| ERROR: OS not allowing continuous mode as related Task creation failed\r\n|\r\n|\n");
         DebugP_log("Task_create() failed!\n");
         return;
     }
-
-    struct tamagawa_periodic_interface tamagawa_periodic_interface;
-    tamagawa_periodic_interface.pruss_cfg = priv->pruss_cfg;
-    tamagawa_periodic_interface.pruss_iep = priv->pruss_iep;
-    tamagawa_periodic_interface.pruss_dmem = priv->tamagawa_xchg;
-    tamagawa_periodic_interface.periodic_trigger_count = priv->periodic_trigger_count;
-    tamagawa_periodic_interface.cmp0_count = priv->iep_reset_count;
-
-    status = tamagawa_config_periodic_mode(&tamagawa_periodic_interface, gPruIcssXHandle);
+    
+    status = tamagawa_config_periodic_mode(&tamagawa_periodic_interface, gPruIcssXHandle, handle1->instance_index);
     DebugP_assert(0 != status);
+#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
+    status = tamagawa_config_periodic_mode(&tamagawa1_periodic_interface, gPruIcssXHandle, handle2->instance_index);
+    DebugP_assert(0 != status);
+#endif
     tamagawa_position_loop_status = TAMAGAWA_POSITION_LOOP_START;
 
     DebugP_log("\r|\n\r| press enter to stop the continuous mode\r\n|\r\n|         position, f1\r\n| ");
 
-    while(1)
+    tamagawa_update_data_id(handle1, process_dataid_cmd);
+#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
+    tamagawa_update_data_id(handle2, process_dataid_cmd);
+#endif
+    
+    /* In case of EEPROM commands, calculate the CRC for the different channels selected */
+    if((process_dataid_cmd == DATA_ID_6) || (process_dataid_cmd == DATA_ID_D))
     {
-        if(tamagawa_position_loop_status == TAMAGAWA_POSITION_LOOP_STOP)
+        uint32_t ch = 0;
+        for(ch = 0; ch < MAX_CHANNELS; ch++)
         {
-            tamagawa_stop_periodic_continuous_mode(&tamagawa_periodic_interface);
-            tamagawa_config_host_trigger(priv);
-            return;
-        }
-        else
-        {
-            tamagawa_update_data_id(priv, process_dataid_cmd);
-
-            /* In case of EEPROM commands, calculate the CRC for the different channels selected */
-            if((process_dataid_cmd == DATA_ID_6) || (process_dataid_cmd == DATA_ID_D))
+            if(gTamagawa_multi_ch_mask & (1 << ch))
             {
-                uint32_t ch = 0;
-                for(ch = 0 ; ch < MAX_CHANNELS ; ch++)
-                {
-                    if(gTamagawa_multi_ch_mask & 1 << ch)
-                    {
-                        tamagawa_update_crc(priv, process_dataid_cmd, ch);
-                    }
-                }
-
+                tamagawa_update_crc(handle1, process_dataid_cmd, ch);
             }
-
-            tamagawa_command_process(priv, process_dataid_cmd, gTamagawa_multi_ch_mask);
-
-            if(gTamagawa_is_multi_ch)
+        }
+        
+#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
+        for(ch = 0; ch < MAX_CHANNELS; ch++)
+        {
+            if(gTamagawa1_multi_ch_mask & (1 << ch))
             {
-                DebugP_log("\r\n Multi-channel mode is enabled\n\n");
+                tamagawa_update_crc(handle2, process_dataid_cmd, ch);
+            }
+        }
+#endif
+    }
 
-                uint32_t ch;
-                for(ch = 0; ch < MAX_CHANNELS; ch++)
-                {
-                    if(gTamagawa_multi_ch_mask & 1 << ch)
-                    {
-                        tamagawa_multi_channel_set_cur(priv, ch);
-                        DebugP_log("\r\n\r|\n|\t\t\t\tCHANNEL %d\n", ch);
-                        tamagawa_handle_rx(priv, process_dataid_cmd);
-                    }
-                }
+    tamagawa_command_process(handle1, process_dataid_cmd, gTamagawa_multi_ch_mask);
+#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
+    tamagawa_command_process(handle2, process_dataid_cmd, gTamagawa1_multi_ch_mask);
+#endif
+    
+        while(1)
+        {
+            if(tamagawa_position_loop_status == TAMAGAWA_POSITION_LOOP_STOP)
+            {
+                tamagawa_stop_periodic_continuous_mode(&tamagawa_periodic_interface);
+                tamagawa_config_host_trigger(handle1);
+#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
+                tamagawa_config_host_trigger(handle2);
+#endif
+                return;
             }
             else
             {
-                DebugP_log("\r\n Single-channel mode is enabled\n\n");
-                tamagawa_handle_rx(priv, process_dataid_cmd);
+                if(gTamagawa_is_multi_ch)
+                {
+                    DebugP_log("\r\n Multi-channel mode is enabled\n\n");
+    
+                    uint32_t ch;
+                    for(ch = 0; ch < MAX_CHANNELS; ch++)
+                    {
+                        if(gTamagawa_multi_ch_mask & (1 << ch))
+                        {
+                            tamagawa_multi_channel_set_cur(handle1, ch);
+                            DebugP_log("\r\n\r|\n|\t\t\t\tCHANNEL %d\n", ch);
+                            tamagawa_handle_rx(handle1, process_dataid_cmd);
+                        }
+                    }
+                }
+                else
+                {
+                    DebugP_log("\r\n Single-channel mode is enabled\n\n");
+                    tamagawa_handle_rx(handle1, process_dataid_cmd);
+                }
+#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
+                if(gTamagawa1_is_multi_ch)
+                {
+                    DebugP_log("\r\n 2nd Slice Multi-channel mode is enabled\n\n");
+    
+                    uint32_t ch;
+                    for(ch = 0; ch < MAX_CHANNELS; ch++)
+                    {
+                        if(gTamagawa1_multi_ch_mask & (1 << ch))
+                        {
+                            tamagawa_multi_channel_set_cur(handle2, ch);
+                            DebugP_log("\r\n\r|\n|\t\t\t\tCHANNEL %d\n", ch);
+                            tamagawa_handle_rx(handle2, process_dataid_cmd);
+                        }
+                    }
+                }
+                else
+                {
+                    DebugP_log("\r\n 2nd Slice Single-channel mode is enabled\n\n");
+                    tamagawa_handle_rx(handle2, process_dataid_cmd);
+                }
+#endif
+                ClockP_usleep(100);
             }
         }
     }
-}
 
 void tamagawa_main(void *args)
 {
@@ -646,41 +793,71 @@ void tamagawa_main(void *args)
     GPIO_pinWriteHigh(ENC2_EN_BASE_ADDR, ENC2_EN_PIN);
 #endif
 
-    void *pruicss_cfg;
-    void *pruicss_iep;
-    uint32_t slice_value = 1;
     uint32_t selected_ch;
 
     tamagawa_pruicss_init();
 
-    pruicss_cfg = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->cfgRegBase);
-    pruicss_iep  = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->iep0RegBase);
+    Tamagawa_Params tamagawa_params;
 
-    if(CONFIG_TAMAGAWA0_PRUICSS_PRUx == 0)
-    {
-        slice_value = 0;
-    }
+    /* Initialize the gTamagawaHandle1 structure according to the PRUx slice selected */
+    tamagawa_params.pru_cfg.iep_cmp_event = IEP_CMP_EVENT;
+    tamagawa_params.pru_cfg.pruicss_handle = gPruIcssXHandle;
+    tamagawa_params.pru_cfg.pru_clock = ICSS_PRU_CORE_CLOCK;
+    tamagawa_params.pru_cfg.uart_clock = ICSS_PRU_UART_CLOCK;
+    tamagawa_params.pru_cfg.iep_clock = ICSS_PRU_IEP_CLOCK;
+    tamagawa_params.pru_cfg.iep_instance = TAMAGAWA_PERIODIC_MODE_IEP_INSTANCE;
 
-    /* Initialize the priv structure according to the PRUx slice selected */
+    tamagawa_params.clk_cfg.rx_clk_source = CONFIG_TAMAGAWA0_TX_RX_FIFO_CLOCK_SOURCE;
+    tamagawa_params.clk_cfg.tx_clk_source = CONFIG_TAMAGAWA0_TX_RX_FIFO_CLOCK_SOURCE;
+    tamagawa_params.clk_cfg.rx_os_rate = TAMAGAWA_RX_OVERSAMPLING_RATE;
 #if CONFIG_TAMAGAWA0_PRUICSS_PRUx
-    priv = tamagawa_init((struct tamagawa_xchg *)(
-        (PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->pru1DramBase, pruicss_cfg,pruicss_iep,slice_value);
+        tamagawa_params.pru_cfg.pru_slice = PRUICSS_PRU1;
+        gTamagawaHandle1 = tamagawa_init(CONFIG_TAMAGAWA0, tamagawa_params);
 #else
-    priv = tamagawa_init((struct tamagawa_xchg *)(
-        (PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->pru0DramBase, pruicss_cfg, pruicss_iep, slice_value);
+        tamagawa_params.pru_cfg.pru_slice = PRUICSS_PRU0;
+        gTamagawaHandle1 = tamagawa_init(CONFIG_TAMAGAWA0, tamagawa_params);
 #endif
+    if(gTamagawaHandle1 == NULL)
+    {
+        DebugP_log("tamagawa_init failed\n");
+        return;
+    }
+    
+#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
+    Tamagawa_Params tamagawa_params1;
 
+    tamagawa_params1.pru_cfg.iep_cmp_event = DUAL_CH_IEP_CMP_EVENT;
+    tamagawa_params1.pru_cfg.pruicss_handle = gPruIcssXHandle;
+    tamagawa_params1.pru_cfg.pru_clock = ICSS_PRU_CORE_CLOCK;
+    tamagawa_params1.pru_cfg.uart_clock = ICSS_PRU_UART_CLOCK;
+    tamagawa_params1.pru_cfg.iep_clock = ICSS_PRU_IEP_CLOCK;
+    tamagawa_params1.pru_cfg.iep_instance = TAMAGAWA_PERIODIC_MODE_IEP_INSTANCE;
 
-    priv->pru_clock = ICSS_PRU_CORE_CLOCK;
-    priv->pru_uart_clock = ICSS_PRU_UART_CLOCK;
-
-    priv->rx_clock_source = CONFIG_TAMAGAWA0_TX_RX_FIFO_CLOCK_SOURCE;
-    priv->tx_clock_source = CONFIG_TAMAGAWA0_TX_RX_FIFO_CLOCK_SOURCE;
-
+    tamagawa_params1.clk_cfg.rx_clk_source = CONFIG_TAMAGAWA1_TX_RX_FIFO_CLOCK_SOURCE;
+    tamagawa_params1.clk_cfg.tx_clk_source = CONFIG_TAMAGAWA1_TX_RX_FIFO_CLOCK_SOURCE;
+    tamagawa_params1.clk_cfg.rx_os_rate = TAMAGAWA_RX_OVERSAMPLING_RATE;
+#if TAMAGAWA1_PRUICSS_SLICEx == 1
+    tamagawa_params1.pru_cfg.pru_slice = PRUICSS_PRU1;
+    gTamagawaHandle2 = tamagawa_init(CONFIG_TAMAGAWA1, tamagawa_params1);
+#else
+    tamagawa_params1.pru_cfg.pru_slice = PRUICSS_PRU0;
+    gTamagawaHandle2 = tamagawa_init(CONFIG_TAMAGAWA1, tamagawa_params1);
+#endif
+    
+    if(gTamagawaHandle2 == NULL)
+    {
+        DebugP_log("tamagawa1_init failed\n");
+        return;
+    }
+#endif
     DebugP_log("\r\n\nTamagawa PRU-ICSS init done\n\n");
 
     /* Set the value of gTamagawa_multi_ch_mask based on the channels selected */
     gTamagawa_multi_ch_mask = (CONFIG_TAMAGAWA0_CHANNEL0<<0|CONFIG_TAMAGAWA0_CHANNEL1<<1|CONFIG_TAMAGAWA0_CHANNEL2<<2);
+
+#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
+    gTamagawa1_multi_ch_mask = (CONFIG_TAMAGAWA1_CHANNEL0<<0|CONFIG_TAMAGAWA1_CHANNEL1<<1|CONFIG_TAMAGAWA1_CHANNEL2<<2);
+#endif
 
     if (CONFIG_TAMAGAWA0_CHANNEL0 + CONFIG_TAMAGAWA0_CHANNEL1 + CONFIG_TAMAGAWA0_CHANNEL2 > 1)
     {
@@ -689,9 +866,8 @@ void tamagawa_main(void *args)
 
     if(gTamagawa_is_multi_ch)
     {
-        tamagawa_config_multi_channel_mask(priv, gTamagawa_multi_ch_mask);
+        tamagawa_config_multi_channel_mask(gTamagawaHandle1, gTamagawa_multi_ch_mask);
     }
-
     else
     {
         if (CONFIG_TAMAGAWA0_CHANNEL0 == 1)
@@ -708,9 +884,37 @@ void tamagawa_main(void *args)
         {
             selected_ch = 2;
         }
-        tamagawa_config_channel(priv, selected_ch);
+        tamagawa_config_channel(gTamagawaHandle1, selected_ch);
+    }
+#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
+    if (CONFIG_TAMAGAWA1_CHANNEL0 + CONFIG_TAMAGAWA1_CHANNEL1 + CONFIG_TAMAGAWA1_CHANNEL2 > 1)
+    {
+        gTamagawa1_is_multi_ch = 1;
     }
 
+    if(gTamagawa1_is_multi_ch)
+    {
+        tamagawa_config_multi_channel_mask(gTamagawaHandle2, gTamagawa1_multi_ch_mask);
+    }
+    else
+    {
+        uint32_t tamagawa1_selected_ch;
+        if (CONFIG_TAMAGAWA1_CHANNEL0 == 1)
+        {
+            tamagawa1_selected_ch = 0;
+        }
+        if (CONFIG_TAMAGAWA1_CHANNEL1 == 1)
+        {
+            tamagawa1_selected_ch = 1;
+        }
+        if (CONFIG_TAMAGAWA1_CHANNEL2 == 1)
+        {
+            tamagawa1_selected_ch = 2;
+        }
+        tamagawa_config_channel(gTamagawaHandle2, tamagawa1_selected_ch);
+    }
+#endif
+    
     uint32_t firmware_ver;
     firmware_ver = tamagawa_get_fw_version();
 
@@ -722,15 +926,30 @@ void tamagawa_main(void *args)
                 gTamagawa_multi_ch_mask & TAMAGAWA_MULTI_CH1 ? "1" : "",
                 gTamagawa_multi_ch_mask & TAMAGAWA_MULTI_CH2 ? "2" : "");
 
-    /*Updating the channel mask in interface*/
-    priv->tamagawa_xchg->tamagawa_interface.ch_mask =gTamagawa_multi_ch_mask;
+#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
+    firmware_ver = tamagawa1_get_fw_version();
+    DebugP_log("\r\nTamagawa firmware \t: %x.%x.%x (%s)\n\n", (firmware_ver >> 24) & 0x7F,
+                (firmware_ver >> 16) & 0xFF, firmware_ver & 0xFFFF, firmware_ver & (1 << 31) ? "internal" : "release");
 
-    tamagawa_config_host_trigger(priv);
+    DebugP_log("\r\nChannel(s) selected on second slice: %s %s %s \n\n\n",
+                gTamagawa1_multi_ch_mask & TAMAGAWA_MULTI_CH0 ? "0" : "",
+                gTamagawa1_multi_ch_mask & TAMAGAWA_MULTI_CH1 ? "1" : "",
+                gTamagawa1_multi_ch_mask & TAMAGAWA_MULTI_CH2 ? "2" : "");
+#endif
 
+    tamagawa_config_host_trigger(gTamagawaHandle1);
+
+#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
+    tamagawa_config_host_trigger(gTamagawaHandle2);
+#endif
     tamagawa_pruicss_load_run_fw();
     DebugP_log("\r\nTamagawa PRU-ICSS firmware loaded and running\n\n\n");
 
-    tamagawa_set_baudrate(priv, CONFIG_TAMAGAWA0_BAUDRATE);
+    tamagawa_set_baudrate(gTamagawaHandle1, CONFIG_TAMAGAWA0_BAUDRATE);
+
+#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
+    tamagawa_set_baudrate(gTamagawaHandle2, CONFIG_TAMAGAWA1_BAUDRATE);
+#endif
 
     while(1)
     {
@@ -743,11 +962,19 @@ void tamagawa_main(void *args)
         tamagawa_display_menu();
         cmd = tamagawa_get_command(&adf, &edf);
 
+        if(cmd < 0)
+        {
+            continue;
+        }
 
         if(cmd == PERIODIC_TRIGGER_CMD)
         {
-            /*Takes which data_id to process in input arguments*/
-            tamagawa_process_periodic_command(DATA_ID_0);
+            /*Takes which data_id to process in input arguments*/            
+#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
+            tamagawa_process_periodic_command(gTamagawaHandle1, DATA_ID_0, gTamagawaHandle2);
+#else
+            tamagawa_process_periodic_command(gTamagawaHandle1, DATA_ID_0);
+#endif
         }
 
         if(cmd >= DATA_ID_NUM)
@@ -755,7 +982,7 @@ void tamagawa_main(void *args)
             continue;
         }
 
-        tamagawa_update_data_id(priv, cmd);
+        tamagawa_update_data_id(gTamagawaHandle1, cmd);
 
         /* In case of EEPROM commands, calculate the CRC for the different channels selected */
         if((cmd == DATA_ID_6) || (cmd == DATA_ID_D))
@@ -765,13 +992,33 @@ void tamagawa_main(void *args)
             {
                 if(gTamagawa_multi_ch_mask & 1 << ch)
                 {
-                    tamagawa_update_crc(priv, cmd, ch);
+                    tamagawa_update_crc(gTamagawaHandle1, cmd, ch);
                 }
             }
 
         }
+#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
+        tamagawa_update_data_id(gTamagawaHandle2, cmd);
 
-        tamagawa_command_process(priv, cmd, gTamagawa_multi_ch_mask);
+        /* In case of EEPROM commands, calculate the CRC for the different channels selected */
+        if((cmd == DATA_ID_6) || (cmd == DATA_ID_D))
+        {
+            uint32_t T1_ch = 0;
+            for(T1_ch = 0 ; T1_ch < MAX_CHANNELS ; T1_ch++)
+            {
+                if(gTamagawa1_multi_ch_mask & 1 << T1_ch)
+                {
+                    tamagawa_update_crc(gTamagawaHandle2, cmd, T1_ch);
+                }
+            }
+
+        }
+#endif
+
+        tamagawa_command_process(gTamagawaHandle1, cmd, gTamagawa_multi_ch_mask);
+#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
+        tamagawa_command_process(gTamagawaHandle2, cmd, gTamagawa1_multi_ch_mask);
+#endif
 
         if(gTamagawa_is_multi_ch)
         {
@@ -782,17 +1029,39 @@ void tamagawa_main(void *args)
             {
                 if(gTamagawa_multi_ch_mask & 1 << ch)
                 {
-                    tamagawa_multi_channel_set_cur(priv, ch);
+                    tamagawa_multi_channel_set_cur(gTamagawaHandle1, ch);
                     DebugP_log("\r\n\r|\n|\t\t\t\tCHANNEL %d\n", ch);
-                    tamagawa_handle_rx(priv, cmd);
+                    tamagawa_handle_rx(gTamagawaHandle1, cmd);
                 }
             }
         }
         else
         {
             DebugP_log("\r\n Single-channel mode is enabled\n\n");
-            tamagawa_handle_rx(priv, cmd);
+            tamagawa_handle_rx(gTamagawaHandle1, cmd);
         }
+#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
+        if(gTamagawa1_is_multi_ch)
+        {
+            DebugP_log("\r\n Dual PRU Slice Multi-channel mode is enabled\n\n");
+            uint32_t ch;
+            for(ch = 0; ch < MAX_CHANNELS; ch++)
+            {
+                if(gTamagawa1_multi_ch_mask & 1 << ch)
+                {
+                    tamagawa_multi_channel_set_cur(gTamagawaHandle2, ch);
+                    DebugP_log("\r\n\r|\n|\t\t\t\tCHANNEL %d\n", ch);
+                    tamagawa_handle_rx(gTamagawaHandle2, cmd);
+                }
+            }
+            
+        }
+        else
+        {
+            DebugP_log("\r\n Dual PRU Slice Single-channel mode is enabled\n\n");
+            tamagawa_handle_rx(gTamagawaHandle2, cmd);
+        }
+#endif
     }
 
     Board_driversClose();

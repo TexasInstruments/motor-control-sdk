@@ -101,7 +101,11 @@ extern "C" {
  * \brief  Used to set the Rx oversampling rate
  * 
 */
-#define TAMAGAWA_RX_OVERSAMPLING_RATE    (8)
+#define TAMAGAWA_RX_OVERSAMPLING_RATE    (7)
+
+/**    \brief    delay counter increment value */ 
+#define  TAMAGAWA_DELAY_COUNTER_INCREMENT  5
+
 
 
 /**
@@ -131,7 +135,7 @@ enum data_id
  *
  *    \details  Firmware per channel interface
  */
-struct tamagawa_ch_info
+typedef struct Tamagawa_ChInfo_s
 {
     volatile uint32_t    pos_word0;          /**<word0 for receiving Rx data  */
 
@@ -141,14 +145,14 @@ struct tamagawa_ch_info
 
     volatile uint32_t  cal_crc;             /**<word for receiving the CRC  */
 
-};
+} Tamagawa_ChInfo;
 
 /**
  *    \brief    Structure defining Tamagawa command interface
  *
  *    \details  Firmware command interface
  */
-struct tamagawa_cmd
+typedef struct Tamagawa_Cmd_s
 {
     volatile uint32_t   word0;/**< command,                                                         <br>
                                     [Byte 0] control field <br> **/
@@ -158,14 +162,14 @@ struct tamagawa_cmd
 
                                     */
 
-};
+} Tamagawa_Cmd;
 
 /**
  *    \brief    Structure defining Tamagawa configuration interface
  *
  *    \details  Firmware configuration interface
  */
-struct tamagawa_config
+typedef struct Tamagawa_FwConfig_s
 {
     volatile uint8_t  opmode;/**< operation mode selection: 0 - periodic trigger, 1 - host trigger */
     volatile uint8_t  channel;/**< channel mask (1 << channel), 0 < channel < 3. This has to be      <br>
@@ -175,12 +179,12 @@ struct tamagawa_config
     volatile uint8_t  trigger;/**< command trigger. Set LSB to send cmd, will be cleared upon cmd    <br>
                                         completion. Note that cmd has to be setup before trigger */
     volatile uint8_t  status;/**< initialization status: 1 - upon successful.  */
-};
+} Tamagawa_FwConfig;
 
 /**
  * \brief Tamagawa Interface Received data
  **/
-struct rx_frames_received
+typedef struct Tamagawa_RxFrames_s
 {
     uint32_t abs;   /**< Data in one revolution */
     uint32_t abm;   /**< Multi-turn Data */
@@ -191,11 +195,11 @@ struct rx_frames_received
     uint8_t  adf;   /**< EEPROM address */
     uint8_t  edf;   /**< EEPROM data */
     uint8_t  crc;   /**< CRC */
-};
+} Tamagawa_RxFrames;
 /**
  * \brief Tamagawa Interface
  */
-struct tamagawa_interface
+typedef struct Tamagawa_Interface_s
 {
     uint8_t ch_mask;   //**< Mask for what channel is required*/
     volatile uint32_t  rx_div_factor;   //**< Rx Divide factor*/
@@ -206,22 +210,22 @@ struct tamagawa_interface
 
     uint32_t version;  /**< Firmware version */
     uint8_t  data_id;  /**< Data ID code */
-    struct rx_frames_received rx_frames_received;      /**< Received data */
+    Tamagawa_RxFrames rx_frames_received;      /**< Received data */
     uint8_t tx_frames;  /**< Number of Tx frames */
     uint8_t rx_frames;  /**< Number of Rx frames */
-};
+} Tamagawa_Interface;
 
-struct config
+typedef struct Tamagawa_ChannelConfig_s
 {
     uint8_t  ch0;   /**< config for channel 0 */
     uint8_t  ch1;   /**< config for channel 1 */
     uint8_t  ch2;   /**< config for channel 2 */
-};
+} Tamagawa_ChannelConfig;
 
 /**
  * \brief Tamagawa EEPROM Interface
  */
-struct tamagawa_eeprom_interface
+typedef struct Tamagawa_EepromInterface_s
 {
     volatile uint32_t cmd; /**< holds the value of command id for EEPROM commands */
     volatile uint32_t adf; /**< holds the value of ADF for EEPROM commands */
@@ -233,7 +237,7 @@ struct tamagawa_eeprom_interface
     volatile uint32_t word2; /**< used for CRC calculation */
 
     uint64_t eeprom_tx_data; /**< used to store the bits for tx in eeprom read/write */
-};
+} Tamagawa_EepromInterface;
 
 
 /**
@@ -242,35 +246,36 @@ struct tamagawa_eeprom_interface
  *    \details  Firmware config, command and channel interface
  *
  */
-struct tamagawa_xchg
+typedef struct Tamagawa_Xchg_s
 {
-    struct tamagawa_config   config;/**< config interface */
-    struct tamagawa_cmd      cmd;/**< command interface */
-    struct tamagawa_ch_info  ch[3];/**< per channel interface */
+    Tamagawa_FwConfig   config;/**< config interface */
+    Tamagawa_Cmd      cmd;/**< command interface */
+    Tamagawa_ChInfo  ch[3];/**< per channel interface */
 
-    struct tamagawa_interface tamagawa_interface;/**< tamagawa interface */
-    struct tamagawa_eeprom_interface tamagawa_eeprom_interface[3];/**< tamagawa interface for EEPROM commands */
-};
+    Tamagawa_Interface tamagawa_interface;/**< tamagawa interface */
+    Tamagawa_EepromInterface tamagawa_eeprom_interface[3];/**< tamagawa interface for EEPROM commands */
+} Tamagawa_Xchg;
 
 /**
  * \brief   Used to configure the Tamagawa Clock.
  *
  */
-struct tamagawa_clk_cfg
+typedef struct Tamagawa_ClkCfg_s
 {
     uint16_t  rx_div;   /**< Rx Div factor*/
     uint16_t  tx_div;   /**< Tx Div factor*/
     uint16_t  rx_os_rate; /*rx oversample rate*/
     uint8_t   rx_clk_source; /*rx clock source*/
     uint8_t   tx_clk_source; /*tx clock source*/
-};
+    uint16_t  rx_en_cnt; /*rx enable counter*/
+} Tamagawa_ClkCfg;
 
 
 /**
  * \brief   Used to store the register offsets depending on different PRU slices.
  *
  */
-struct register_offsets
+typedef struct Tamagawa_RegisterOffsets_s
 {
     int32_t ICSS_CFG_PRUx_ED_CH0_CFG0;
     int32_t ICSS_CFG_PRUx_ED_CH1_CFG0;
@@ -281,37 +286,69 @@ struct register_offsets
     int32_t ICSS_CFG_GPCFGx;
     int32_t ICSS_CFG_PRUx_ED_RXCFG;
     int32_t ICSS_CFG_PRUx_ED_TXCFG;
-};
+} Tamagawa_RegisterOffsets;
 
+/**
+ *    \brief    Structure defining Tamagawa PRU configuration
+ *
+ *    \details  Contains configuration parameters for PRU including ID, clock settings, and load sharing
+ */
+typedef struct Tamagawa_PruConfig_s
+{
+    volatile uint8_t      pru_slice;           /**< PRU Slice */
+    PRUICSS_Handle        pruicss_handle;      /**< PRU ICSS Handle */
+    volatile uint32_t     pru_clock;           /**< PRU core clock frequency in Hz */
+    volatile uint8_t      load_share_enable;    /**< Enable load sharing between PRUs */
+    volatile uint8_t      iep_cmp_event;              /**< IEP CMP event */
+    volatile uint8_t      iep_instance;        /**< IEP Instance (0 for IEP0, 1 for IEP1) */
+    volatile uint32_t     iep_clock;           /**< PRU iep clock frequency in Hz */
+    volatile uint32_t     uart_clock;          /**< PRU UART clock frequency */
+} Tamagawa_PruConfig;
 /**
  * \brief   Used to structures defining the Tamagawa interface, PRU slice and register offsets.
  *
  */
-struct tamagawa_priv
+typedef struct Tamagawa_Config_s
 {
-    int32_t channel;    /**< Holds the ID of the current channel being used*/
-    uint16_t rx_en_cnt;
-    struct tamagawa_xchg *tamagawa_xchg;    /**<Structure defining Tamagawa interface*/
-    void *pruss_cfg;    /**< ICSS PRU config base address*/
-    int32_t slice_value;    /**< PRUx Slice being used*/
-    struct register_offsets register_offset_val;    /**< Register offset values based on PRUx slice selection*/
-    void *pruss_iep; /**< ICSS IEP base address*/
-    uint64_t periodic_trigger_count; /**< IEP CMP event used in periodic trigger mode */
-    uint64_t iep_reset_count; /**<IEP CMP0 reg used in periodic trigger mode to reset IEP*/
-    uint64_t pru_clock; /**<PRU CORE Clock*/
-    uint64_t pru_uart_clock; /*ICSS PRU UART clock value*/
-    uint8_t rx_clock_source; /*3 channel Peripheral RX clock source*/
-    uint8_t tx_clock_source; /*3 channel Peripheral TX clock source*/
-};
+    uint8_t instance_index; /**< Holds the index of the current Tamagawa instance */
+    uint8_t channel;    /**< Holds the ID of the current channel being used*/
+    Tamagawa_PruConfig pru_cfg;    /**< Structure defining Tamagawa PRU configuration*/
+    Tamagawa_Xchg *tamagawa_xchg;    /**<Structure defining Tamagawa interface*/
+    Tamagawa_RegisterOffsets register_offset_val;    /**< Register offset values based on PRUx slice selection*/
+    Tamagawa_ClkCfg clk_cfg;  /**< Tamagawa clock configuration */
+}Tamagawa_Config;
 
+typedef Tamagawa_Config *Tamagawa_Handle;
+
+/**
+ *    \brief    Structure defining TAMAGAWA initialization parameters.
+ *
+ */
+typedef struct Tamagawa_Params_s
+{ 
+    Tamagawa_PruConfig pru_cfg;    /**< Structure defining Tamagawa PRU configuration*/
+    Tamagawa_ClkCfg clk_cfg;  /**< Tamagawa clock configuration */
+}Tamagawa_Params;
 /* ========================================================================== */
 /*                       Function Declarations                                */
 /* ========================================================================== */
 
 /**
+ *  \brief      Initialize tamagawa firmware interface address and configure the provided
+ *              tamagawa_handle instance
+ *
+ *  \param[in]  index            Index of tamagawa handle to use in the gTamagawaHandles array
+ *  \param[in]  tamagawa_params  Structure containing Tamagawa parameters (firmware interface address, 
+ *                              PRU config base, IEP base, slice value)
+ *
+ *  \retval     handle           Pointer to initialized TAMAGAWA_Handle_s instance
+ *
+ */
+Tamagawa_Handle tamagawa_init(uint32_t index, Tamagawa_Params tamagawa_params);
+/**
  *  \brief      send the tamagawa command and wait till firmware acknowledges
  *
- *  \param[in]  priv            cookie returned by tamagawa_init
+ *  \param[in]  handle            cookie returned by tamagawa_init
  *  \param[in]  cmd             tamagawa command number
  *  \param[in]  gTamagawa_multi_ch_mask  Multi-channel mask to keep track of which channels are selected
  *
@@ -319,12 +356,12 @@ struct tamagawa_priv
  *  \retval     -EINVAL failure
  *
  */
-int32_t tamagawa_command_process(struct tamagawa_priv *priv, int32_t cmd, uint8_t gTamagawa_multi_ch_mask);
+int32_t tamagawa_command_process(Tamagawa_Handle handle, int32_t cmd, uint8_t gTamagawa_multi_ch_mask);
 
 /**
  *  \brief      setup the tamagawa command in the PRU interface buffer
  *
- *  \param[in]  priv            cookie returned by tamagawa_init
+ *  \param[in]  handle            cookie returned by tamagawa_init
  *  \param[in]  cmd             tamagawa command number
  *  \param[in]  gTamagawa_multi_ch_mask Multi-channel mask to keep track of which channels are selected
  *
@@ -332,67 +369,75 @@ int32_t tamagawa_command_process(struct tamagawa_priv *priv, int32_t cmd, uint8_
  *  \retval     -EINVAL failure
  *
  */
-int32_t tamagawa_command_build(struct tamagawa_priv *priv, int32_t cmd,  uint8_t gTamagawa_multi_ch_mask);
+int32_t tamagawa_command_build(Tamagawa_Handle handle, int32_t cmd,  uint8_t gTamagawa_multi_ch_mask);
 
 /**
  *  \brief      trigger sending the tamagawa command in PRU
  *
- *  \param[in]  priv     cookie returned by tamagawa_init
+ *  \param[in]  handle     cookie returned by tamagawa_init
  *
  */
-void tamagawa_command_send(struct tamagawa_priv *priv);
+void tamagawa_command_send(Tamagawa_Handle handle);
 
 /**
  *  \brief  wait till PRU finishes tamagawa transaction
  *
- *  \param[in]  priv     cookie returned by tamagawa_init
+ *  \param[in]  handle     cookie returned by tamagawa_init
  *
  */
-void tamagawa_command_wait(struct tamagawa_priv *priv);
-
+void tamagawa_command_wait(Tamagawa_Handle handle);
 
 /**
  *  \brief  configure tamagawa clock
  *
- *  \param[in]  priv    cookie returned by tamagawa_init
+ *  \param[in]  handle    cookie returned by tamagawa_init
+ *  \param[in]  rx_en_cnt value to be set in global RX auto arm counter register
+ *
+ */
+void tamagawa_config_global_rx_arm_cnt(Tamagawa_Handle handle,  uint16_t  rx_en_cnt);
+
+/**
+ *  \brief  configure tamagawa clock
+ *
+ *  \param[in]  handle    cookie returned by tamagawa_init
  *  \param[in]  clk_cfg pointer to structure containing clock configuration data
  *
  */
-void tamagawa_config_clock(struct tamagawa_priv *priv, struct tamagawa_clk_cfg *clk_cfg);
+void tamagawa_config_clock(Tamagawa_Handle handle, Tamagawa_ClkCfg *clk_cfg);
 
 /**
  *  \brief      configure tamagawa master for host trigger mode
  *
- *  \param[in]  priv    cookie returned by tamagawa_init
+ *  \param[in]  handle    cookie returned by tamagawa_init
  *
  */
-void tamagawa_config_host_trigger(struct tamagawa_priv *priv);
+void tamagawa_config_host_trigger(Tamagawa_Handle handle);
 
 /**
  *  \brief      configure tamagawa master in periodic trigger mode
  *
- *  \param[in]  priv    cookie returned by tamagawa_init
+ *  \param[in]  handle    cookie returned by tamagawa_init
  *
  */
-void tamagawa_config_periodic_trigger(struct tamagawa_priv *priv);
+void tamagawa_config_periodic_trigger(Tamagawa_Handle handle);
 
 /**
  *  \brief      select channel to be used by tamagawa master
  *
- *  \param[in]  priv    cookie returned by tamagawa_init
+ *  \param[in]  handle    cookie returned by tamagawa_init
  *  \param[in]  ch      channel to be selected
  *
  */
-void tamagawa_config_channel(struct tamagawa_priv *priv, uint32_t ch);
+void tamagawa_config_channel(Tamagawa_Handle handle, uint32_t ch);
 
 /**
  *  \brief      select mask of channels to be used in multi channel configuration by tamagawa master
  *
- *  \param[in]  priv    cookie returned by tamagawa_init
+ *  \param[in]  handle    cookie returned by tamagawa_init
  *  \param[in]  mask    channel mask
  *
  */
-void tamagawa_config_multi_channel_mask(struct tamagawa_priv *priv, uint8_t mask);
+void tamagawa_config_multi_channel_mask(Tamagawa_Handle handle, uint8_t mask);
 
 /**
  *  \brief      select channels detected in multi channel configuration by tamagawa master.    <br>
@@ -400,74 +445,58 @@ void tamagawa_config_multi_channel_mask(struct tamagawa_priv *priv, uint8_t mask
  *              to know the channels that has been detected. Initialization success implies <br>
  *              that all channels indicated has been detected.
  *
- *  \param[in]  priv    cookie returned by tamagawa_init
+ *  \param[in]  handle    cookie returned by tamagawa_init
  *
  *  \retval     mask    mask of the detected channels
  *
  */
-uint8_t tamagawa_multi_channel_detected(struct tamagawa_priv *priv);
+uint8_t tamagawa_multi_channel_detected(Tamagawa_Handle handle);
 
 /**
  *  \brief      In multi channel configuration, select channel before receive processing in <br>
  *              multi channel configuration. After receive is complete, select each channel <br>
  *              and invoke rx API's to parse data recieved in each channel.
  *
- *  \param[in]  priv    cookie returned by tamagawa_init
+ *  \param[in]  handle    cookie returned by tamagawa_init
  *  \param[in]  ch      channel number to be selected
  *
  */
-void tamagawa_multi_channel_set_cur(struct tamagawa_priv *priv, uint32_t ch);
-
-
-
-/**
- *  \brief      Initialize tamagawa firmware interface address and get the pointer
- *              to struct tamagawa_priv instance
- *
- *  \param[in]  tamagawa_xchg      tamagawa firmware interface address
- *  \param[in]  pruss_cfg       ICSS PRU config base address
- *  \param[in]  pruss_iep       ICSS PRU IEP base address
- *  \param[in]  slice_value     PRUx slice value : 0 for PRU0 and 1 for PRU1
- *
- *  \retval     priv            pointer to struct tamagawa_priv instance
- *
- */
-struct tamagawa_priv *tamagawa_init(struct tamagawa_xchg *tamagawa_xchg, void *pruss_cfg, void *pruss_iep, uint32_t slice_value);
+void tamagawa_multi_channel_set_cur(Tamagawa_Handle handle, uint32_t ch);
 
 /**
  *  \brief      update the current requested command id in tamagawa interface.    <br>
  *
  *
- *  \param[in]  priv    cookie returned by tamagawa_init
+ *  \param[in]  handle    cookie returned by tamagawa_init
  *  \param[in]  cmd     tamagawa command number
  *
  */
 
-void tamagawa_update_data_id(struct tamagawa_priv *priv, int32_t cmd);
+void tamagawa_update_data_id(Tamagawa_Handle handle, int32_t cmd);
 
 /**
  *  \brief      update the adf(address of EEPROM) field entered by user for EEPROM command in tamagawa interface.<br>
  *
  *
- *  \param[in]  priv    cookie returned by tamagawa_init
+ *  \param[in]  handle    cookie returned by tamagawa_init
  *  \param[in]  val     ADF value to be updated
  *  \param[in]  ch      channel number that is currently selected
  *
  */
 
-void tamagawa_update_adf(struct tamagawa_priv *priv, uint32_t val, uint32_t ch);
+void tamagawa_update_adf(Tamagawa_Handle handle, uint32_t val, uint32_t ch);
 
 /**
  *  \brief      update the edf(data for EEPROM) field entered by user for EEPROM command in tamagawa interface.<br>
  *
  *
- *  \param[in]  priv    cookie returned by tamagawa_init
+ *  \param[in]  handle    cookie returned by tamagawa_init
  *  \param[in]  val     EDF value to be updated
  *  \param[in]  ch      channel number that is currently selected
  *
  */
 
-void tamagawa_update_edf(struct tamagawa_priv *priv, uint32_t val, uint32_t ch);
+void tamagawa_update_edf(Tamagawa_Handle handle, uint32_t val, uint32_t ch);
 
 
 /**
@@ -475,55 +504,55 @@ void tamagawa_update_edf(struct tamagawa_priv *priv, uint32_t val, uint32_t ch);
  *
  *
  *  \param[in]  cmd     tamagawa command number
- *  \param[in]  priv    cookie returned by tamagawa_init
+ *  \param[in]  handle    cookie returned by tamagawa_init
  *
  */
-int32_t tamagawa_parse(int32_t cmd, struct tamagawa_priv *priv);
+int32_t tamagawa_parse(int32_t cmd, Tamagawa_Handle handle);
 
 /**
  *  \brief      verify the CRC computed with the encoder crc.<br>
  *
  *
- *  \param[in]  priv    cookie returned by tamagawa_init
+ *  \param[in]  handle    cookie returned by tamagawa_init
  *
  *  \retval     1/0     if verify correctly, return 1 else return 0.
  *
  */
 
-int32_t tamagawa_crc_verify(struct tamagawa_priv *priv);
+int32_t tamagawa_crc_verify(Tamagawa_Handle handle);
 
 /**
  *  \brief      Pass the values of CF(Control Field), ADF(address of EEPROM) and EDF(data for EEPROM) to the CRC calculator fucntion and update the CRC field.<br>
  *
  *
- *  \param[in]  priv    cookie returned by tamagawa_init
+ *  \param[in]  handle    cookie returned by tamagawa_init
  *  \param[in]  cmd     tamagawa command number
  *  \param[in]  ch      channel number that is currently selected
  *
  */
 
-void tamagawa_update_crc(struct tamagawa_priv *priv, int32_t cmd, uint32_t ch);
+void tamagawa_update_crc(Tamagawa_Handle handle, int32_t cmd, uint32_t ch);
 
 /**
  *  \brief      Update the values for oversample rate and division factor for Tx and Rx.<br>
  *
  *
- *  \param[in]  priv    cookie returned by tamagawa_init
+ *  \param[in]  handle    cookie returned by tamagawa_init
  *  \param[in]  baudrate     baud rate of the tamagawa encoder
  *
  */
 
-void tamagawa_set_baudrate(struct tamagawa_priv *priv, double baudrate);
+void tamagawa_set_baudrate(Tamagawa_Handle handle, double baudrate);
 
 /**
  *  \brief      Reset the values of the variables used in CRC calculation to 0.<br>
  *
  *
- *  \param[in]  priv    cookie returned by tamagawa_init
+ *  \param[in]  handle    cookie returned by tamagawa_init
  *
  */
 
-void tamagawa_eeprom_crc_reinit(struct tamagawa_priv *priv);
+void tamagawa_eeprom_crc_reinit(Tamagawa_Handle handle);
 
 /**
  *  \brief      Reverse the bits of a number.<br>
@@ -554,13 +583,13 @@ uint64_t tamagawa_prepare_eeprom_tx_data(uint64_t eeprom_tx_data, volatile uint3
  *  \brief      Prepare the required EEPROM command from the CF(Control Field), ADF(address of EEPROM) and EDF(data for EEPROM).<br>
  *
  *
- *  \param[in]  priv    cookie returned by tamagawa_init
+ *  \param[in]  handle    cookie returned by tamagawa_init
  *  \param[in]  cmd     tamagawa command number
  *  \param[in]  ch      channel number that is currently selected
  *
  */
 
-void tamagawa_prepare_eeprom_command(struct tamagawa_priv *priv, int32_t cmd, uint32_t ch);
+void tamagawa_prepare_eeprom_command(Tamagawa_Handle handle, int32_t cmd, uint32_t ch);
 
 /** @} */
 
