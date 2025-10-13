@@ -2,7 +2,7 @@ MOTOR_CONTROL_SDK_PATH?=$(abspath .)
 include imports.mak
 
 # Default device
-DEVICE ?= am64x
+DEVICE ?= am243x
 
 # debug, release
 PROFILE?=release
@@ -10,8 +10,20 @@ PROFILE?=release
 # GP, HS
 DEVICE_TYPE?=GP
 
+ifeq ($(DEVICE),$(filter $(DEVICE), am261x))
+    SYSCFG_DEVICE = AM261x_ZCZ
+    # default syscfg CPU to use,
+    # options on am261x are r5fss0-0, r5fss0-1
+    SYSCFG_CPU = r5fss0-0
+  endif
+ifeq ($(DEVICE),$(filter $(DEVICE), am263px))
+    SYSCFG_DEVICE = AM263Px
+    # default syscfg CPU to use,
+    # options on am263px are r5fss0-0, r5fss0-1, r5fss1-0, r5fss1-1
+    SYSCFG_CPU = r5fss0-0
+  endif
 ifeq ($(DEVICE),$(filter $(DEVICE), am64x))
-  SYSCFG_DEVICE = AM64x_beta
+  SYSCFG_DEVICE = AM64x
   # default syscfg CPU to use,
   # options on am64x are r5fss0-0, r5fss0-1, r5fss1-0, r5fss1-1, m4fss0-0
   SYSCFG_CPU = r5fss0-0
@@ -38,6 +50,9 @@ clean:
 scrub:
 	$(MAKE) -C . -f makefile.$(DEVICE) scrub PROFILE=$(PROFILE)
 
+scrub_gcc:
+	$(MAKE) -C . -f makefile.$(DEVICE) scrub_gcc PROFILE=$(PROFILE)
+
 libs:
 	$(MAKE) -C . -f makefile.$(DEVICE) libs PROFILE=$(PROFILE) DEVICE_TYPE=$(DEVICE_TYPE)
 
@@ -63,7 +78,7 @@ syscfg-gui:
 	$(SYSCFG_NWJS) $(SYSCFG_PATH) --product $(SYSCFG_SDKPRODUCT) --device $(SYSCFG_DEVICE) --context $(SYSCFG_CPU)
 
 devconfig:
-	$(SYSCFG_NWJS) $(SYSCFG_PATH) --product $(MOTOR_CONTROL_SDK_PATH)/devconfig/devconfig.json --device $(SYSCFG_DEVICE) --context $(SYSCFG_CPU) --output devconfig/ $(MOTOR_CONTROL_SDK_PATH)/devconfig/devconfig.syscfg
+	$(SYSCFG_NWJS) $(SYSCFG_PATH) --product $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/devconfig/devconfig.json --device $(SYSCFG_DEVICE) --context $(SYSCFG_CPU) --output devconfig/ $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/devconfig/devconfig.syscfg
 
 .PHONY: all clean scrub
 .PHONY: libs libs-clean libs-scrub
@@ -90,6 +105,10 @@ projectspec-help:
 
 docs:
 	$(MAKE) -C docs_src/docs/api_guide all DEVICE=$(DEVICE) DOC_COMBO=$(DOC_COMBO)
+	@echo "<script id=\"searchdata\" type=\"text/xmldata\">" >> ./docs/api_guide_$(DEVICE)/search.html
+	$(COPY) docs_src/docs/api_guide/search.js ./docs/api_guide_$(DEVICE)/search/search.js
+	$(CAT) ./docs/api_guide_$(DEVICE)/searchdata.xml >> ./docs/api_guide_$(DEVICE)/search.html
+	@echo "</script>" >> ./docs/api_guide_$(DEVICE)/search.html
 
 docs-clean:
 	$(MAKE) -C docs_src/docs/api_guide clean DEVICE=$(DEVICE) DOC_COMBO=$(DOC_COMBO)
@@ -102,14 +121,15 @@ gen-buildfiles-clean:
 
 syscfg-tests:
 ifeq ($(DEVICE),$(filter $(DEVICE), am64x))
-	-$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/tests/sanityTests.js -s $(SYSCFG_SDKPRODUCT) -d $(SYSCFG_DEVICE) -c a53ss0-0
+	-$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/tests/sanityTests.js -s $(SYSCFG_SDKPRODUCT) -d $(SYSCFG_DEVICE) -c a53ss0-0 --excludeTests="migrateToAnyTarget"
 endif
 ifeq ($(DEVICE),$(filter $(DEVICE), am64x am243x am62x))
-	-$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/tests/sanityTests.js -s $(SYSCFG_SDKPRODUCT) -d $(SYSCFG_DEVICE) -c m4fss0-0
+	-$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/tests/sanityTests.js -s $(SYSCFG_SDKPRODUCT) -d $(SYSCFG_DEVICE) -c m4fss0-0 --excludeTests="migrateToAnyTarget"
 endif
-	-$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/tests/sanityTests.js -s $(SYSCFG_SDKPRODUCT) -d $(SYSCFG_DEVICE) -c r5fss0-0
-ifeq ($(DEVICE),$(filter $(DEVICE), am273x awr294x))
-	-$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/tests/sanityTests.js -s $(SYSCFG_SDKPRODUCT) -d $(SYSCFG_DEVICE) -c c66ss0
+ifeq ($(DEVICE),$(filter $(DEVICE), am263px))
+	-$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/tests/sanityTests.js -s $(SYSCFG_SDKPRODUCT) -d AM263P4 -c r5fss0-0 --excludeTests="migrateToAnyTarget"
+else
+	-$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/tests/sanityTests.js -s $(SYSCFG_SDKPRODUCT) -d $(SYSCFG_DEVICE) -c r5fss0-0 --excludeTests="migrateToAnyTarget"
 endif
 
 .PHONY: projectspec-help docs docs-clean

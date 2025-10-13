@@ -43,6 +43,7 @@
             --display_error_number
             --hardware_mac=on
             -DSOC_AM243X
+            -DOS_FW
         "
         linkerBuildOptions="
             -m=sdfm_firmware_single_axis_single_pru.${ConfigName}.map

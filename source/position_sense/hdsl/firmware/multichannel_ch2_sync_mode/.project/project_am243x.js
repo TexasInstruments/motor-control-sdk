@@ -116,7 +116,6 @@ function getComponentProperty() {
     property.description = "HDSL Master Free Run Mode Firmware for PRU-ICSS running at 300 MHz";
     property.isInternal = false;
     property.buildOptionCombos = buildOptionCombos;
-    property.pru_main_file = "main";
     property.pru_linker_file = "hdsl_receiver_icssg_txpru";
     property.isSkipTopLevelBuild = true;
     property.skipUpdatingTirex = true;

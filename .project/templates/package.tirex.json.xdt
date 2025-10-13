@@ -2,7 +2,6 @@
     productName = args.utils.getProductNameProjectSpec(args.device);
     isDevelopmentMode = args.common.isDevelopmentMode();
     deviceName = args.utils.getProjectSpecDevice(args.device);
-
     if(isDevelopmentMode)
         deviceName = "AMXXX";
 

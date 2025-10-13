@@ -197,6 +197,10 @@ function getEnableGccBuild() {
     return IsGccBuildEnabled;
 }
 
+function getOsList(cpu) {
+    return ["nortos", "freertos"];
+}
+
 module.exports = {
     getComponentList,
     getExampleList,
@@ -212,4 +216,5 @@ module.exports = {
     getProductNameProjectSpec,
     getFlashAddr,
     getEnableGccBuild,
+    getOsList,
 };

@@ -39,6 +39,7 @@
             -DSOC_AM261X
             -DCHANNEL_0
             -DICSS_G_V_1_0
+            -DOS_FW
         "
         linkerBuildOptions="
             -m=hdsl_receiver_freerun_225_mhz.${ConfigName}.map

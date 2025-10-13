@@ -43,6 +43,7 @@
             -DSYNC_300_MHZ
             -DHDSL_MULTICHANNEL
             -DEXT_SYNC_ENABLE
+            -DOS_FW
         "
         linkerBuildOptions="
             -m=hdsl_receiver_multichannel_ch2_sync_mode.${ConfigName}.map

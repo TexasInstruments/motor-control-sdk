@@ -48,6 +48,7 @@
             -Wno-unused-function
             -DSOC_AM243X
             -DSOC_AM243X
+            -DOS_FREERTOS
         "
         linkerBuildOptions="
             -i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/lib
@@ -77,9 +78,9 @@
             "
             linkerBuildOptions="
                 -lfreertos.am243x.r5f.ti-arm-clang.release.lib
-                -ldrivers.am243x.r5f.ti-arm-clang.release.lib
-                -lboard.am243x.r5f.ti-arm-clang.release.lib
-                -lmotorcontrol_endat.am243x.r5f.ti-arm-clang.release.lib
+                -ldrivers.am243x.r5f.ti-arm-clang.freertos.release.lib
+                -lboard.am243x.r5f.ti-arm-clang.freertos.release.lib
+                -lmotorcontrol_endat.am243x.r5f.ti-arm-clang.freertos.release.lib
                 -llibc.a
                 -llibsysbm.a
             "
@@ -90,9 +91,9 @@
             "
             linkerBuildOptions="
                 -lfreertos.am243x.r5f.ti-arm-clang.debug.lib
-                -ldrivers.am243x.r5f.ti-arm-clang.debug.lib
-                -lboard.am243x.r5f.ti-arm-clang.debug.lib
-                -lmotorcontrol_endat.am243x.r5f.ti-arm-clang.debug.lib
+                -ldrivers.am243x.r5f.ti-arm-clang.freertos.debug.lib
+                -lboard.am243x.r5f.ti-arm-clang.freertos.debug.lib
+                -lmotorcontrol_endat.am243x.r5f.ti-arm-clang.freertos.debug.lib
                 -llibc.a
                 -llibsysbm.a
             "

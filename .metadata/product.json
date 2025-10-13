@@ -1,7 +1,7 @@
 {
     "name": "MOTOR_CONTROL_SDK",
     "displayName": "MOTOR CONTROL SDK",
-    "version": "11.00.00",
+    "version": "2025.00.00",
     "documentationPath": "../docs",
     "includePaths": [
         "../source",
@@ -266,5 +266,5 @@
         "showSignals": true,
         "showUsed": true
     },
-    "minToolVersion" : "1.22.0"
+    "minToolVersion" : "1.23.0"
 }
