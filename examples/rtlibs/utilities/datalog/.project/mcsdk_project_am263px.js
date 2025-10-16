@@ -29,9 +29,9 @@ const filedirs = {
 
 const libdirs_nortos = {
     common: [
-        "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/nortos/lib",
-        "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers/lib",
-        "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/board/lib",
+        "${MCU_PLUS_SDK_PATH}/source/kernel/nortos/lib",
+        "${MCU_PLUS_SDK_PATH}/source/drivers/lib",
+        "${MCU_PLUS_SDK_PATH}/source/board/lib",
 
     ],
 };

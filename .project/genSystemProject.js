@@ -21,6 +21,8 @@ function genSystemProjectDevice(device) {
 
             let args = {
                 sdkName: "MOTOR_CONTROL_SDK_PATH",
+                dependentIcsdkName: "IND_COMMS_SDK_PATH",
+                dependentMcusdkName: "MCU_PLUS_SDK_PATH",
                 relPath: common.path.relative(outPath, "."),
                 project: project,
                 utils: require(`./genProjectSpec.js`).utils,

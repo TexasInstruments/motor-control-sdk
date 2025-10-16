@@ -75,10 +75,10 @@ help:
 	$(MAKE) -C . -f makefile.$(DEVICE) -s help PROFILE=$(PROFILE)
 
 syscfg-gui:
-	$(SYSCFG_NWJS) $(SYSCFG_PATH) --product $(SYSCFG_SDKPRODUCT) --device $(SYSCFG_DEVICE) --context $(SYSCFG_CPU)
+	$(SYSCFG_NWJS) $(SYSCFG_PATH) --product $(SYSCFG_SDKPRODUCT) --product $(SYSCFG_ICSDKPRODUCT) --product $(SYSCFG_MCUSDKPRODUCT) --device $(SYSCFG_DEVICE) --context $(SYSCFG_CPU)
 
 devconfig:
-	$(SYSCFG_NWJS) $(SYSCFG_PATH) --product $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/devconfig/devconfig.json --device $(SYSCFG_DEVICE) --context $(SYSCFG_CPU) --output devconfig/ $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/devconfig/devconfig.syscfg
+	$(SYSCFG_NWJS) $(SYSCFG_PATH) --product $(MCU_PLUS_SDK_PATH)/devconfig/devconfig.json --device $(SYSCFG_DEVICE) --context $(SYSCFG_CPU) --output devconfig/ $(MCU_PLUS_SDK_PATH)/devconfig/devconfig.syscfg
 
 .PHONY: all clean scrub
 .PHONY: libs libs-clean libs-scrub

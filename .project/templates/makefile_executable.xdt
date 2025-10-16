@@ -1,11 +1,10 @@
 
 export `args.sdkPath`?=$(abspath `args.relPath`)
 include $(`args.sdkPath`)/imports.mak
-%if (args.tifsR5Core == "TRUE") {
-include $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/devconfig/devconfig.mak
-% } else {
-include $(`args.sdkPath`)/mcu_plus_sdk/devconfig/devconfig.mak
-% }
+ifndef MCU_PLUS_SDK_PATH
+$(error MCU_PLUS_SDK_PATH is not defined)
+endif
+include $(MCU_PLUS_SDK_PATH)/devconfig/devconfig.mak
 
 %let args_compiler = "ticlang"
 %if (args.cgtOptions.cc.includes("gcc")) {
@@ -602,17 +601,17 @@ ifeq ($(SYSTEM_FLAG), false)
 syscfg: `args.project.syscfgfile`
 	@echo Generating SysConfig files ...
 %   if ( args_compiler == "gcc" ){
-	$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/dist/cli.js --product $(SYSCFG_SDKPRODUCT) --context `args.syscfg.cpu` --part `args.syscfg.part` --package `args.syscfg.pkg` --output generated/ --compiler `args_compiler` `args.project.syscfgfile`
+	$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/dist/cli.js --product $(SYSCFG_SDKPRODUCT) --product $(SYSCFG_ICSDKPRODUCT) --product $(SYSCFG_MCUSDKPRODUCT) --context `args.syscfg.cpu` --part `args.syscfg.part` --package `args.syscfg.pkg` --output generated/ --compiler `args_compiler` `args.project.syscfgfile`
 %   } else{
-	$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/dist/cli.js --product $(SYSCFG_SDKPRODUCT) --context `args.syscfg.cpu` --part `args.syscfg.part` --package `args.syscfg.pkg` --output generated/ `args.project.syscfgfile`
+	$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/dist/cli.js --product $(SYSCFG_SDKPRODUCT) --product $(SYSCFG_ICSDKPRODUCT) --product $(SYSCFG_MCUSDKPRODUCT) --context `args.syscfg.cpu` --part `args.syscfg.part` --package `args.syscfg.pkg` --output generated/ `args.project.syscfgfile`
 %}
 endif
 
 syscfg-gui:
 %   if ( args_compiler == "gcc" ){
-	$(SYSCFG_NWJS) $(SYSCFG_PATH) --product $(SYSCFG_SDKPRODUCT) --device `args.syscfg.device` --context `args.syscfg.cpu` --part `args.syscfg.part` --package `args.syscfg.pkg` --output generated/ --compiler `args_compiler` `args.project.syscfgfile`
+	$(SYSCFG_NWJS) $(SYSCFG_PATH) --product $(SYSCFG_SDKPRODUCT) --product $(SYSCFG_ICSDKPRODUCT) --product $(SYSCFG_MCUSDKPRODUCT) --device `args.syscfg.device` --context `args.syscfg.cpu` --part `args.syscfg.part` --package `args.syscfg.pkg` --output generated/ --compiler `args_compiler` `args.project.syscfgfile`
 %    } else{
-	$(SYSCFG_NWJS) $(SYSCFG_PATH) --product $(SYSCFG_SDKPRODUCT) --device `args.syscfg.device` --context `args.syscfg.cpu` --part `args.syscfg.part` --package `args.syscfg.pkg` --output generated/  `args.project.syscfgfile`
+	$(SYSCFG_NWJS) $(SYSCFG_PATH) --product $(SYSCFG_SDKPRODUCT) --product $(SYSCFG_ICSDKPRODUCT) --product $(SYSCFG_MCUSDKPRODUCT) --device `args.syscfg.device` --context `args.syscfg.cpu` --part `args.syscfg.part` --package `args.syscfg.pkg` --output generated/  `args.project.syscfgfile`
 %    }
 % }
 
@@ -629,9 +628,9 @@ ifeq ($(OS),Windows_NT)
 EXE_EXT=.exe
 endif
 ifeq ($(OS),Windows_NT)
-  BOOTIMAGE_CERT_GEN_CMD=powershell -executionpolicy unrestricted -command $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/security/security_common/tools/boot/signing/x509CertificateGen.ps1
+  BOOTIMAGE_CERT_GEN_CMD=powershell -executionpolicy unrestricted -command $(MCU_PLUS_SDK_PATH)/source/security/security_common/tools/boot/signing/x509CertificateGen.ps1
 else
-  BOOTIMAGE_CERT_GEN_CMD=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/security/security_common/tools/boot/signing/x509CertificateGen.sh
+  BOOTIMAGE_CERT_GEN_CMD=$(MCU_PLUS_SDK_PATH)/source/security/security_common/tools/boot/signing/x509CertificateGen.sh
 endif
 BOOTIMAGE_TEMP_OUT_FILE=temp_stdout_$(PROFILE).txt
 
@@ -646,21 +645,21 @@ BOOTIMAGE_CERT_KEY=$(APP_SIGNING_KEY)
 else
 BOOTIMAGE_CERT_KEY=$(ROM_DEGENERATE_KEY)
 endif
-BOOTIMAGE_CERT_GEN_CMD=$(PYTHON) $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/security/security_common/tools/boot/signing/rom_image_gen.py
-SYSFW_PATH=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/drivers/sciclient/soc/am64x_am243x
+BOOTIMAGE_CERT_GEN_CMD=$(PYTHON) $(MCU_PLUS_SDK_PATH)/source/security/security_common/tools/boot/signing/rom_image_gen.py
+SYSFW_PATH=$(MCU_PLUS_SDK_PATH)/source/drivers/sciclient/soc/am64x_am243x
 SYSFW_LOAD_ADDR=0x44000
 BOARDCFG_LOAD_ADDR=0x7B000
 % if (args.project.name.includes("linux")) {
 % if (args.project.device == "am64x") {
-BOARDCFG_BLOB=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/drivers/sciclient/sciclient_default_boardcfg/am64x/boardcfg_blob_linux.bin
+BOARDCFG_BLOB=$(MCU_PLUS_SDK_PATH)/source/drivers/sciclient/sciclient_default_boardcfg/am64x/boardcfg_blob_linux.bin
 % } else if (args.project.device == "am243x") {
-BOARDCFG_BLOB=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/drivers/sciclient/sciclient_default_boardcfg/am243x/boardcfg_blob_linux.bin
+BOARDCFG_BLOB=$(MCU_PLUS_SDK_PATH)/source/drivers/sciclient/sciclient_default_boardcfg/am243x/boardcfg_blob_linux.bin
 % }
 % } else {
 % if (args.project.device == "am64x") {
-BOARDCFG_BLOB=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/drivers/sciclient/sciclient_default_boardcfg/am64x/boardcfg_blob.bin
+BOARDCFG_BLOB=$(MCU_PLUS_SDK_PATH)/source/drivers/sciclient/sciclient_default_boardcfg/am64x/boardcfg_blob.bin
 % } else if (args.project.device == "am243x") {
-BOARDCFG_BLOB=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/drivers/sciclient/sciclient_default_boardcfg/am243x/boardcfg_blob.bin
+BOARDCFG_BLOB=$(MCU_PLUS_SDK_PATH)/source/drivers/sciclient/sciclient_default_boardcfg/am243x/boardcfg_blob.bin
 % }
 % }
 % if ((args.project.device == "am65x")) {
@@ -669,7 +668,7 @@ BOOTIMAGE_CERT_KEY=$(APP_SIGNING_KEY)
 else
 BOOTIMAGE_CERT_KEY=$(ROM_DEGENERATE_KEY)
 endif
-SYSFW_PATH=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/drivers/sciclient/soc/am65x
+SYSFW_PATH=$(MCU_PLUS_SDK_PATH)/source/drivers/sciclient/soc/am65x
 % }
 % }
 
@@ -677,9 +676,9 @@ SYSFW_PATH=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/drivers/sciclient/soc/a
 ifeq ($(DEVICE_TYPE),HS)
 BOOTIMAGE_CERT_KEY=$(APP_SIGNING_KEY)
 else
-BOOTIMAGE_CERT_KEY=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/security/security_common/tools/boot/signing/mcu_gpkey.pem
+BOOTIMAGE_CERT_KEY=$(MCU_PLUS_SDK_PATH)/source/security/security_common/tools/boot/signing/mcu_gpkey.pem
 endif
-BOOTIMAGE_CERT_GEN_CMD=$(PYTHON) $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/security/security_common/tools/boot/signing/mcu_rom_image_gen.py
+BOOTIMAGE_CERT_GEN_CMD=$(PYTHON) $(MCU_PLUS_SDK_PATH)/source/security/security_common/tools/boot/signing/mcu_rom_image_gen.py
 % }
 
 % if ((args.project.device == "am273x") || (args.project.device == "awr294x")) {
@@ -692,7 +691,7 @@ SBL_RUN_ADDRESS=0x41C00100
 SBL_RUN_ADDRESS=0x70000000
 % }
 
-SBL_PREBUILT_PATH=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/sbl_prebuilt/`args.project.board`
+SBL_PREBUILT_PATH=$(MCU_PLUS_SDK_PATH)/tools/boot/sbl_prebuilt/`args.project.board`
 
 $(BOOTIMAGE_BIN_NAME): $(OUTNAME)
 	$(OBJCOPY) --strip-all -O binary $(OUTNAME) $(BOOTIMAGE_BIN_NAME)
@@ -801,7 +800,7 @@ BOOTIMAGE_CORE_ID_m4fss0-1 = 3
 % }
 % if (args.project.device == "awr294x") {
 BOOTIMAGE_CORE_ID_r4       = 3
-R4_RPRC_PATH = $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/drivers/bootloader/soc/awr294x/xwr2xxx_radarss_metarprc.bin
+R4_RPRC_PATH = $(MCU_PLUS_SDK_PATH)/source/drivers/bootloader/soc/awr294x/xwr2xxx_radarss_metarprc.bin
 % }
 SBL_RUN_ADDRESS=0x10200000
 SBL_DEV_ID=55
@@ -823,26 +822,26 @@ SBL_RUN_ADDRESS=0x41C00100
 SBL_DEV_ID=55
 % }
 
-MULTI_CORE_IMAGE_GEN = $(SYSCFG_NODE) $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/multicoreImageGen/multicoreImageGen.js
-OUTRPRC_CMD = $(SYSCFG_NODE) $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/out2rprc/elf2rprc.js
+MULTI_CORE_IMAGE_GEN = $(SYSCFG_NODE) $(MCU_PLUS_SDK_PATH)/tools/boot/multicoreImageGen/multicoreImageGen.js
+OUTRPRC_CMD = $(SYSCFG_NODE) $(MCU_PLUS_SDK_PATH)/tools/boot/out2rprc/elf2rprc.js
 % if (((args.project.device == "am65x") || (args.project.device == "am243x") || (args.project.device == "am64x"))) {
-APP_IMAGE_SIGN_CMD = $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/security/security_common/tools/boot/signing/appimage_x509_cert_gen.py
+APP_IMAGE_SIGN_CMD = $(MCU_PLUS_SDK_PATH)/source/security/security_common/tools/boot/signing/appimage_x509_cert_gen.py
 % }
 % if (((args.project.device == "am263x") || (args.project.device == "am263px") || (args.project.device == "am261x")  || (args.project.device == "am273x") || (args.project.device == "awr294x"))) {
-APP_IMAGE_SIGN_CMD = $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/security/security_common/tools/boot/signing/mcu_appimage_x509_cert_gen.py
+APP_IMAGE_SIGN_CMD = $(MCU_PLUS_SDK_PATH)/source/security/security_common/tools/boot/signing/mcu_appimage_x509_cert_gen.py
 % }
 % if ((args.project.device == "am263x") || (args.project.device == "am263px") || (args.project.device == "am261x")) {
-MCELF_IMAGE_GEN = $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/multicore-elf/genimage.py
+MCELF_IMAGE_GEN = $(MCU_PLUS_SDK_PATH)/tools/boot/multicore-elf/genimage.py
 % }
 
 ifeq ($(OS),Windows_NT)
-  XIPGEN_CMD=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/xipGen/xipGen.exe
+  XIPGEN_CMD=$(MCU_PLUS_SDK_PATH)/tools/boot/xipGen/xipGen.exe
 else
   UNAME_S = $(shell uname -s)
   ifeq ($(UNAME_S), Darwin)
-    XIPGEN_CMD=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/xipGen/xipGen.out.mac
+    XIPGEN_CMD=$(MCU_PLUS_SDK_PATH)/tools/boot/xipGen/xipGen.out.mac
   else
-    XIPGEN_CMD=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/xipGen/xipGen.out
+    XIPGEN_CMD=$(MCU_PLUS_SDK_PATH)/tools/boot/xipGen/xipGen.out
 endif
 endif
 
@@ -1005,7 +1004,7 @@ coverage:
 	$(PROFDATA) merge -sparse -obj-file=$(OUTNAME) $(OUTNAME).cnt -o `args.project.name`.$(PROFILE).profdata
 	$(COV) show --format=html --show-expansions --show-instantiations --show-branches=count --object=$(OUTNAME) -instr-profile=`args.project.name`.$(PROFILE).profdata --output-dir=$(COVERAGE_PATH)/coverage --ignore-filename-regex=build_jenkins
 	$(COV) export --format=text --object=$(OUTNAME) --instr-profile=`args.project.name`.$(PROFILE).profdata > coverage/`args.project.name`.$(PROFILE).profdata.json
-	node $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/smart_placement/clang_coverage_analyse.js --input=coverage/`args.project.name`.$(PROFILE).profdata.json --output-json=coverage/`args.project.name`.$(PROFILE).analysis.json --output=../`args.project.name`.annotations.$(PROFILE).S --top-function-count=500
+	node $(MCU_PLUS_SDK_PATH)/tools/smart_placement/clang_coverage_analyse.js --input=coverage/`args.project.name`.$(PROFILE).profdata.json --output-json=coverage/`args.project.name`.$(PROFILE).analysis.json --output=../`args.project.name`.annotations.$(PROFILE).S --top-function-count=500
 	@echo Coverage Report Generated at $(COVERAGE_PATH)/coverage folder !!!
 
 % }

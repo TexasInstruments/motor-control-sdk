@@ -106,6 +106,14 @@ function getProductNameProjectSpec() {
     return "MOTOR_CONTROL_SDK_AM64X";
 }
 
+function getIcsdkProductNameProjectSpec() {
+    return "IND_COMMS_SDK_AM64X";
+}
+
+function getMcusdkProductNameProjectSpec() {
+    return "MCU_PLUS_SDK_AM64X";
+}
+
 function getFlashAddr() {
     return 0x60000000;
 }
@@ -137,6 +145,8 @@ module.exports = {
     getProperty,
     getLinuxFwName,
     getProductNameProjectSpec,
+    getIcsdkProductNameProjectSpec,
+    getMcusdkProductNameProjectSpec,
     getFlashAddr,
     getEnableGccBuild,
     getOsList,

@@ -1,9 +1,6 @@
-
-% if (["am243x", "am64x"].includes(args.device)) {
 export `args.sdkPath`?=$(abspath `args.relPath`)
 include $(`args.sdkPath`)/imports.mak
 
-% }
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL =
 # Various Example Projectspec Build Targets
 % for (example of args.example_list) {

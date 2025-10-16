@@ -156,6 +156,14 @@ function getProductNameProjectSpec() {
     return "MOTOR_CONTROL_SDK_AM263PX";
 }
 
+function getIcsdkProductNameProjectSpec() {
+    return "IND_COMMS_SDK_AM263PX";
+}
+
+function getMcusdkProductNameProjectSpec() {
+    return "MCU_PLUS_SDK_AM263PX";
+}
+
 function getFlashAddr() {
     return 0x60000000;
 }
@@ -177,6 +185,8 @@ module.exports = {
     getProperty,
     getLinuxFwName,
     getProductNameProjectSpec,
+    getIcsdkProductNameProjectSpec,
+    getMcusdkProductNameProjectSpec,
     getFlashAddr,
     getOsList,
 };
