@@ -57,7 +57,7 @@ all: $(OBJS) $(CMD_SRCS)
 $(OBJDIR)/%.obj %.obj: %.asm
 	@echo 'Building file: "$^"'
 	@echo 'Invoking: PRU Compiler'
-	"$(CGT_TI_PRU_PATH)/bin/clpru" -DICSSG0 -DPRU0 -DSLICE0 -v4 -v4 -o2 --display_error_number --hardware_mac=on --define=SOC_AM243X --define=SDFM_PRU_CORE --define=SDFM_LOAD_SHARE_MODE --define=OS_FW --include_path="${CG_TOOL_ROOT}/include" --include_path="${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source" --include_path="${MOTOR_CONTROL_SDK_PATH}/source" --include_path="${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware"  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little --preproc_with_compile --preproc_dependency="$(basename $(<F)).d_raw" $^
+	"$(CGT_TI_PRU_PATH)/bin/clpru" -DICSSG0 -DPRU0 -DSLICE0 -v4 -v4 -o2 --display_error_number --hardware_mac=on --define=SOC_AM243X --define=SDFM_PRU_CORE --define=SDFM_LOAD_SHARE_MODE --define=OS_FW --include_path="${CG_TOOL_ROOT}/include" --include_path="${MCU_PLUS_SDK_PATH}/source" --include_path="${MOTOR_CONTROL_SDK_PATH}/source" --include_path="${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware"  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little --preproc_with_compile --preproc_dependency="$(basename $(<F)).d_raw" $^
 	@echo 'Finished building: "$^"'
 	@echo ' '
 
@@ -80,7 +80,7 @@ clean:
 
 post-build:
 		-$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=pru_SDFM_PRU0_image -o sdfm_pru0_bin.h  sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt.out
-		-$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h sdfm_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware/multi_axis_load_share/sdfm_pru0_bin.h
+		-$(CAT) ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h sdfm_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware/multi_axis_load_share/sdfm_pru0_bin.h
 		-$(RM)  sdfm_pru0_bin.h
 	-@echo ' '
 

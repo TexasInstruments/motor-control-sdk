@@ -12,7 +12,7 @@
     <project
         title="Endat Peripheral Interface Multi Ch"
         name = "endat_peripheral_interface_multi_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt"
-        products="com.ti.MOTOR_CONTROL_SDK_AMXXX"
+        products="com.ti.MOTOR_CONTROL_SDK_AMXXX;com.ti.IND_COMMS_SDK_AMXXX;com.ti.MCU_PLUS_SDK_AMXXX"
         configurations="
             Release,
             Debug,
@@ -30,7 +30,7 @@
 
         compilerBuildOptions="
             -I${CG_TOOL_ROOT}/include
-            -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source
+            -I${MCU_PLUS_SDK_PATH}/source
             -I${MOTOR_CONTROL_SDK_PATH}/source
             -I${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware
             -DICSSG0
@@ -51,7 +51,7 @@
         "
 
         postBuildStep="
-            $(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMulti -o endat_receiver_multi_pru1_bin.h endat_peripheral_interface_multi_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt.out;if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_receiver_multi_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/multi_channel_single_pru/endat_receiver_multi_pru1_bin.h;if ${CCS_HOST_OS} == linux rm endat_receiver_multi_pru1_bin.h;if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h endat_receiver_multi_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/multi_channel_single_pru/endat_receiver_multi_pru1_bin.h;if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm endat_receiver_multi_pru1_bin.h;
+            $(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMulti -o endat_receiver_multi_pru1_bin.h endat_peripheral_interface_multi_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt.out;if ${CCS_HOST_OS} == linux cat ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h endat_receiver_multi_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/multi_channel_single_pru/endat_receiver_multi_pru1_bin.h;if ${CCS_HOST_OS} == linux rm endat_receiver_multi_pru1_bin.h;if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h endat_receiver_multi_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/multi_channel_single_pru/endat_receiver_multi_pru1_bin.h;if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm endat_receiver_multi_pru1_bin.h;
         "
 
         description="A Endat Peripheral Interface Multi Ch FW project">
@@ -70,6 +70,8 @@
             linkerBuildOptions="
             "
         ></configuration>
+        <pathVariable name="IND_COMMS_SDK_PATH" path="${COM_TI_IND_COMMS_SDK_AMXXX_INSTALL_DIR}" scope="project" />
+        <pathVariable name="MCU_PLUS_SDK_PATH" path="${COM_TI_MCU_PLUS_SDK_AMXXX_INSTALL_DIR}" scope="project" />
         <pathVariable name="MOTOR_CONTROL_SDK_PATH" path="${COM_TI_MOTOR_CONTROL_SDK_AMXXX_INSTALL_DIR}" scope="project" />
         <file path="../../../../endat_main.asm" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>

@@ -1,3 +1,5 @@
+export MOTOR_CONTROL_SDK_PATH?=$(abspath .)
+include $(MOTOR_CONTROL_SDK_PATH)/imports.mak
 
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL =
 # Various Example Projectspec Build Targets
