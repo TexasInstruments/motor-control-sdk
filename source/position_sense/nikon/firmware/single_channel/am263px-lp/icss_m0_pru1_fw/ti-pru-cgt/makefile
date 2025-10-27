@@ -57,7 +57,7 @@ all: $(OBJS) $(CMD_SRCS)
 $(OBJDIR)/%.obj %.obj: %.asm
 	@echo 'Building file: "$^"'
 	@echo 'Invoking: PRU Compiler'
-	"$(CGT_TI_PRU_PATH)/bin/clpru" -DPRU1 -DSLICE1 -v4 -v4 --define=SOC_AM263PX --define=OS_FW --include_path="${CG_TOOL_ROOT}/include" --include_path="${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source" --include_path="${MOTOR_CONTROL_SDK_PATH}/source" --include_path="${MOTOR_CONTROL_SDK_PATH}/source/position_sense/nikon/firmware"  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little --preproc_with_compile --preproc_dependency="$(basename $(<F)).d_raw" $^
+	"$(CGT_TI_PRU_PATH)/bin/clpru" -DPRU1 -DSLICE1 -v4 -v4 --define=SOC_AM263PX --define=OS_FW --include_path="${CG_TOOL_ROOT}/include" --include_path="${MCU_PLUS_SDK_PATH}/source" --include_path="${MOTOR_CONTROL_SDK_PATH}/source" --include_path="${MOTOR_CONTROL_SDK_PATH}/source/position_sense/nikon/firmware"  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little --preproc_with_compile --preproc_dependency="$(basename $(<F)).d_raw" $^
 	@echo 'Finished building: "$^"'
 	@echo ' '
 
@@ -80,7 +80,7 @@ clean:
 
 post-build:
 		-$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=NikonFirmware -o nikon_receiver_pru1_bin.h nikon_peripheral_interface_single_ch_am263px-lp_icss_m0_pru1_fw_ti-pru-cgt.out
-		-$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h nikon_receiver_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/nikon/firmware/single_channel/nikon_receiver_pru1_bin.h
+		-$(CAT) ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h nikon_receiver_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/nikon/firmware/single_channel/nikon_receiver_pru1_bin.h
 		-$(RM) nikon_receiver_pru1_bin.h
 	-@echo ' '
 

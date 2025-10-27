@@ -19,66 +19,9 @@
     "documentationPath": "../docs",
     "includePaths": [
         "../source",
-        "../ind_comms_sdk/source",
-        "../mcu_plus_sdk/source/sysconfig",
-        "../mcu_plus_sdk/source/networking/enet/core/sysconfig",
     ],
     "components": [
-% if((args.device == "am64x") || (args.device == "am243x")) {
         "/motor_control",
-        "/industrial_comms/industrial_comms",
-        "/kernel/dpl",
-        "/drivers/drivers",
-        "/board/board",
-        "/fs/fs",
-        "/networking/networking",
-        "/security/security",
-        "/usb/usb",
-        "/pru_io/pru_io",
-        "/memory_configurator/components"
-% }
-% if(args.device == "am263x"){
-        "/motor_control",
-        "/industrial_comms/industrial_comms",
-        "/kernel/dpl",
-        "/drivers/drivers",
-        "/board/board",
-        "/fs/fs",
-        "/networking/networking",
-        "/security/security",
-        "/xbar/xbar",
-        "/memory_configurator/components",
-        "sdl/sdl"
-% }
-% if((args.device == "am263px")){
-        "/motor_control",
-        "/industrial_comms/industrial_comms",
-        "/kernel/dpl",
-        "/drivers/drivers",
-        "/board/board",
-        "/fs/fs",
-        "/networking/networking",
-        "/security/security",
-        "/xbar/xbar",
-        "/memory_configurator/components",
-        "/optiflash/optiflash",
-        "sdl/sdl"
-% }
-% if((args.device == "am261x")){
-        "/motor_control",
-        "/industrial_comms/industrial_comms",
-        "/kernel/dpl",
-        "/drivers/drivers",
-        "/board/board",
-        "/fs/fs",
-        "/networking/networking",
-        "/security/security",
-        "/usb/usb",
-        "/xbar/xbar",
-        "/memory_configurator/components",
-        "/optiflash/optiflash",
-        "sdl/sdl"
-% }
     ],
     "devices": [
 % if((args.device == "am64x") || (isDevelopmentMode)) {

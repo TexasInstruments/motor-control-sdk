@@ -22,7 +22,7 @@ const filedirs = {
 
 const includes = {
     common: [
-        "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/common",
+        "${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/common",
     ],
 };
 
@@ -82,7 +82,7 @@ function getmakefilePruPostBuildSteps(cpu, board)
     }
     return  [
         "$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix="+ core + "_Firmware  -o "+ core.toLocaleLowerCase() + "_load_bin.h " + "pruicss_iep_sync_out_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
-        "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h "+ core.toLocaleLowerCase() + "_load_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/pruicss_iep_sync_out_generation/"+ board + "/"+ core.toLocaleLowerCase() + "_load_bin.h ;"+ 
+        "$(CAT) ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h "+ core.toLocaleLowerCase() + "_load_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/pruicss_iep_sync_out_generation/"+ board + "/"+ core.toLocaleLowerCase() + "_load_bin.h ;"+ 
         "$(RM) "+ core.toLocaleLowerCase() + "_load_bin.h;"
     ];
 }
@@ -113,9 +113,9 @@ function getccsPruPostBuildSteps(cpu, board)
     }
     return  [
         "$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix="+ core + "_Firmware  -o "+ core.toLocaleLowerCase() + "_load_bin.h " + "pruicss_iep_sync_out_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
-        "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h "+ core.toLocaleLowerCase() + "_load_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/pruicss_iep_sync_out_generation/"+ board + "/"+ core.toLocaleLowerCase() + "_load_bin.h ;"+ 
+        "if ${CCS_HOST_OS} == linux cat ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h "+ core.toLocaleLowerCase() + "_load_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/pruicss_iep_sync_out_generation/"+ board + "/"+ core.toLocaleLowerCase() + "_load_bin.h ;"+ 
         "if ${CCS_HOST_OS} == linux rm "+ core.toLocaleLowerCase() + "_load_bin.h;"+
-        "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h "+ core.toLocaleLowerCase() + "_load_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/pruicss_iep_sync_out_generation/"+ board + "/"+ core.toLocaleLowerCase() + "_load_bin.h ;"+ 
+        "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h "+ core.toLocaleLowerCase() + "_load_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/pruicss_iep_sync_out_generation/"+ board + "/"+ core.toLocaleLowerCase() + "_load_bin.h ;"+ 
         "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm "+ core.toLocaleLowerCase() + "_load_bin.h;"
     ];
 }

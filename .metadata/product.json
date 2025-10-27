@@ -5,22 +5,9 @@
     "documentationPath": "../docs",
     "includePaths": [
         "../source",
-        "../ind_comms_sdk/source",
-        "../mcu_plus_sdk/source/sysconfig",
-        "../mcu_plus_sdk/source/networking/enet/core/sysconfig",
     ],
     "components": [
         "/motor_control",
-        "/industrial_comms/industrial_comms",
-        "/kernel/dpl",
-        "/drivers/drivers",
-        "/board/board",
-        "/fs/fs",
-        "/networking/networking",
-        "/security/security",
-        "/usb/usb",
-        "/pru_io/pru_io",
-        "/memory_configurator/components"
     ],
     "devices": [
         "AM64x",

@@ -12,7 +12,7 @@
     <project
         title="Hdsl Receiver Multichannel Ch2"
         name = "hdsl_receiver_multichannel_ch2_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt"
-        products="com.ti.MOTOR_CONTROL_SDK_AMXXX"
+        products="com.ti.MOTOR_CONTROL_SDK_AMXXX;com.ti.IND_COMMS_SDK_AMXXX;com.ti.MCU_PLUS_SDK_AMXXX"
         configurations="
             Release,
             Debug,
@@ -30,7 +30,7 @@
 
         compilerBuildOptions="
             -I${CG_TOOL_ROOT}/include
-            -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source
+            -I${MCU_PLUS_SDK_PATH}/source
             -I${MOTOR_CONTROL_SDK_PATH}/source
             -I${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware
             -DICSSG0
@@ -53,7 +53,7 @@
         "
 
         postBuildStep="
-            $(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=Hiperface_DSL2_0_TX_PRU -o hdsl_receiver_multichannel_tx_pru1_bin.h  hdsl_receiver_multichannel_ch2_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt.out;if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h hdsl_receiver_multichannel_tx_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/ hdsl/firmware/multichannel_ch2/hdsl_receiver_multichannel_tx_pru1_bin.h;if ${CCS_HOST_OS} == linux rm hdsl_receiver_multichannel_tx_pru1_bin.h;if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h hdsl_receiver_multichannel_tx_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/multichannel_ch2/hdsl_receiver_multichannel_tx_pru1_bin.h;if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm hdsl_receiver_multichannel_tx_pru1_bin.h;
+            $(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=Hiperface_DSL2_0_TX_PRU -o hdsl_receiver_multichannel_tx_pru1_bin.h  hdsl_receiver_multichannel_ch2_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt.out;if ${CCS_HOST_OS} == linux cat ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h hdsl_receiver_multichannel_tx_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/ hdsl/firmware/multichannel_ch2/hdsl_receiver_multichannel_tx_pru1_bin.h;if ${CCS_HOST_OS} == linux rm hdsl_receiver_multichannel_tx_pru1_bin.h;if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h hdsl_receiver_multichannel_tx_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/multichannel_ch2/hdsl_receiver_multichannel_tx_pru1_bin.h;if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm hdsl_receiver_multichannel_tx_pru1_bin.h;
         "
 
         description="A Hdsl Receiver Multichannel Ch2 FW project">
@@ -72,6 +72,8 @@
             linkerBuildOptions="
             "
         ></configuration>
+        <pathVariable name="IND_COMMS_SDK_PATH" path="${COM_TI_IND_COMMS_SDK_AMXXX_INSTALL_DIR}" scope="project" />
+        <pathVariable name="MCU_PLUS_SDK_PATH" path="${COM_TI_MCU_PLUS_SDK_AMXXX_INSTALL_DIR}" scope="project" />
         <pathVariable name="MOTOR_CONTROL_SDK_PATH" path="${COM_TI_MOTOR_CONTROL_SDK_AMXXX_INSTALL_DIR}" scope="project" />
         <file path="../../../../main.asm" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>

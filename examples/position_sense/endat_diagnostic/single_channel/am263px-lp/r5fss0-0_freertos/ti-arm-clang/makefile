@@ -1,7 +1,10 @@
 
 export MOTOR_CONTROL_SDK_PATH?=$(abspath ../../../../../../..)
 include $(MOTOR_CONTROL_SDK_PATH)/imports.mak
-include $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/devconfig/devconfig.mak
+ifndef MCU_PLUS_SDK_PATH
+$(error MCU_PLUS_SDK_PATH is not defined)
+endif
+include $(MCU_PLUS_SDK_PATH)/devconfig/devconfig.mak
 
 CG_TOOL_ROOT=$(CGT_TI_ARM_CLANG_PATH)
 
@@ -62,11 +65,11 @@ FILES_PATH_common = \
 
 INCLUDES_common := \
 	-I${CG_TOOL_ROOT}/include/c \
-	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source \
+	-I${MCU_PLUS_SDK_PATH}/source \
 	-I${MOTOR_CONTROL_SDK_PATH}/source \
-	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/FreeRTOS-Kernel/include \
-	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F \
-	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/am263px/r5f \
+	-I${MCU_PLUS_SDK_PATH}/source/kernel/freertos/FreeRTOS-Kernel/include \
+	-I${MCU_PLUS_SDK_PATH}/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F \
+	-I${MCU_PLUS_SDK_PATH}/source/kernel/freertos/config/am263px/r5f \
 	-I${MOTOR_CONTROL_SDK_PATH}/examples/position_sense/endat_diagnostic \
 	-I${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/single_channel \
 	-Igenerated \
@@ -110,9 +113,9 @@ LNK_FILES_common = \
 	generated/linker.cmd \
 
 LIBS_PATH_common = \
-	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/lib \
-	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers/lib \
-	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/board/lib \
+	-Wl,-i${MCU_PLUS_SDK_PATH}/source/kernel/freertos/lib \
+	-Wl,-i${MCU_PLUS_SDK_PATH}/source/drivers/lib \
+	-Wl,-i${MCU_PLUS_SDK_PATH}/source/board/lib \
 	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/lib \
 	-Wl,-i${CG_TOOL_ROOT}/lib \
 
@@ -140,9 +143,9 @@ LIBS_NAME = \
 	libsysbm.a \
 
 LIBS_PATH_NAME = \
-	${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/lib \
-	${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers/lib \
-	${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/board/lib \
+	${MCU_PLUS_SDK_PATH}/source/kernel/freertos/lib \
+	${MCU_PLUS_SDK_PATH}/source/drivers/lib \
+	${MCU_PLUS_SDK_PATH}/source/board/lib \
 	${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/lib \
 	${CG_TOOL_ROOT}/lib \
 
@@ -270,11 +273,11 @@ $(SYSCFG_GEN_FILES): syscfg
 ifeq ($(SYSTEM_FLAG), false)
 syscfg: ../example.syscfg
 	@echo Generating SysConfig files ...
-	$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/dist/cli.js --product $(SYSCFG_SDKPRODUCT) --context r5fss0-0 --part AM263P4 --package ZCZ_C --output generated/ ../example.syscfg
+	$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/dist/cli.js --product $(SYSCFG_SDKPRODUCT) --product $(SYSCFG_ICSDKPRODUCT) --product $(SYSCFG_MCUSDKPRODUCT) --context r5fss0-0 --part AM263P4 --package ZCZ_C --output generated/ ../example.syscfg
 endif
 
 syscfg-gui:
-	$(SYSCFG_NWJS) $(SYSCFG_PATH) --product $(SYSCFG_SDKPRODUCT) --device AM263Px --context r5fss0-0 --part AM263P4 --package ZCZ_C --output generated/  ../example.syscfg
+	$(SYSCFG_NWJS) $(SYSCFG_PATH) --product $(SYSCFG_SDKPRODUCT) --product $(SYSCFG_ICSDKPRODUCT) --product $(SYSCFG_MCUSDKPRODUCT) --device AM263Px --context r5fss0-0 --part AM263P4 --package ZCZ_C --output generated/  ../example.syscfg
 
 #
 # Generation of boot image which can be loaded by Secondary Boot Loader (SBL)
@@ -283,9 +286,9 @@ ifeq ($(OS),Windows_NT)
 EXE_EXT=.exe
 endif
 ifeq ($(OS),Windows_NT)
-  BOOTIMAGE_CERT_GEN_CMD=powershell -executionpolicy unrestricted -command $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/security/security_common/tools/boot/signing/x509CertificateGen.ps1
+  BOOTIMAGE_CERT_GEN_CMD=powershell -executionpolicy unrestricted -command $(MCU_PLUS_SDK_PATH)/source/security/security_common/tools/boot/signing/x509CertificateGen.ps1
 else
-  BOOTIMAGE_CERT_GEN_CMD=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/security/security_common/tools/boot/signing/x509CertificateGen.sh
+  BOOTIMAGE_CERT_GEN_CMD=$(MCU_PLUS_SDK_PATH)/source/security/security_common/tools/boot/signing/x509CertificateGen.sh
 endif
 BOOTIMAGE_TEMP_OUT_FILE=temp_stdout_$(PROFILE).txt
 
@@ -297,19 +300,19 @@ BOOTIMAGE_CORE_ID_r5fss1-1 = 3
 SBL_RUN_ADDRESS=0x70002000
 SBL_DEV_ID=55
 
-MULTI_CORE_IMAGE_GEN = $(SYSCFG_NODE) $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/multicoreImageGen/multicoreImageGen.js
-OUTRPRC_CMD = $(SYSCFG_NODE) $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/out2rprc/elf2rprc.js
-APP_IMAGE_SIGN_CMD = $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/security/security_common/tools/boot/signing/mcu_appimage_x509_cert_gen.py
-MCELF_IMAGE_GEN = $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/multicore-elf/genimage.py
+MULTI_CORE_IMAGE_GEN = $(SYSCFG_NODE) $(MCU_PLUS_SDK_PATH)/tools/boot/multicoreImageGen/multicoreImageGen.js
+OUTRPRC_CMD = $(SYSCFG_NODE) $(MCU_PLUS_SDK_PATH)/tools/boot/out2rprc/elf2rprc.js
+APP_IMAGE_SIGN_CMD = $(MCU_PLUS_SDK_PATH)/source/security/security_common/tools/boot/signing/mcu_appimage_x509_cert_gen.py
+MCELF_IMAGE_GEN = $(MCU_PLUS_SDK_PATH)/tools/boot/multicore-elf/genimage.py
 
 ifeq ($(OS),Windows_NT)
-  XIPGEN_CMD=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/xipGen/xipGen.exe
+  XIPGEN_CMD=$(MCU_PLUS_SDK_PATH)/tools/boot/xipGen/xipGen.exe
 else
   UNAME_S = $(shell uname -s)
   ifeq ($(UNAME_S), Darwin)
-    XIPGEN_CMD=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/xipGen/xipGen.out.mac
+    XIPGEN_CMD=$(MCU_PLUS_SDK_PATH)/tools/boot/xipGen/xipGen.out.mac
   else
-    XIPGEN_CMD=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/xipGen/xipGen.out
+    XIPGEN_CMD=$(MCU_PLUS_SDK_PATH)/tools/boot/xipGen/xipGen.out
 endif
 endif
 
@@ -380,7 +383,7 @@ coverage:
 	$(PROFDATA) merge -sparse -obj-file=$(OUTNAME) $(OUTNAME).cnt -o endat_diagnostic_single_channel.$(PROFILE).profdata
 	$(COV) show --format=html --show-expansions --show-instantiations --show-branches=count --object=$(OUTNAME) -instr-profile=endat_diagnostic_single_channel.$(PROFILE).profdata --output-dir=$(COVERAGE_PATH)/coverage --ignore-filename-regex=build_jenkins
 	$(COV) export --format=text --object=$(OUTNAME) --instr-profile=endat_diagnostic_single_channel.$(PROFILE).profdata > coverage/endat_diagnostic_single_channel.$(PROFILE).profdata.json
-	node $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/smart_placement/clang_coverage_analyse.js --input=coverage/endat_diagnostic_single_channel.$(PROFILE).profdata.json --output-json=coverage/endat_diagnostic_single_channel.$(PROFILE).analysis.json --output=../endat_diagnostic_single_channel.annotations.$(PROFILE).S --top-function-count=500
+	node $(MCU_PLUS_SDK_PATH)/tools/smart_placement/clang_coverage_analyse.js --input=coverage/endat_diagnostic_single_channel.$(PROFILE).profdata.json --output-json=coverage/endat_diagnostic_single_channel.$(PROFILE).analysis.json --output=../endat_diagnostic_single_channel.annotations.$(PROFILE).S --top-function-count=500
 	@echo Coverage Report Generated at $(COVERAGE_PATH)/coverage folder !!!
 
 -include $(addprefix $(OBJDIR)/, $(DEPS))

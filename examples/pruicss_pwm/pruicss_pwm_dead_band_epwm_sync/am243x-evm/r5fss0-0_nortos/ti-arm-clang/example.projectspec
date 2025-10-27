@@ -12,7 +12,7 @@
     <project
         title="Pruicss Pwm Deadband Epwm Sync"
         name = "pruicss_pwm_deadband_epwm_sync_am243x-evm_r5fss0-0_nortos_ti-arm-clang"
-        products="sysconfig;com.ti.MOTOR_CONTROL_SDK_AMXXX"
+        products="sysconfig;com.ti.MOTOR_CONTROL_SDK_AMXXX;com.ti.IND_COMMS_SDK_AMXXX;com.ti.MCU_PLUS_SDK_AMXXX"
         configurations="
             Release,
             Debug,
@@ -30,9 +30,9 @@
 
         compilerBuildOptions="
             -I${CG_TOOL_ROOT}/include/c
-            -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source
+            -I${MCU_PLUS_SDK_PATH}/source
             -I${MOTOR_CONTROL_SDK_PATH}/source
-            -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers/pruicss/g_v0
+            -I${MCU_PLUS_SDK_PATH}/source/drivers/pruicss/g_v0
             -I${MOTOR_CONTROL_SDK_PATH}/source/pruicss_pwm/include
             -I${MOTOR_CONTROL_SDK_PATH}/examples/pruicss_pwm/pruicss_pwm_dead_band_epwm_sync/include
             -mcpu=cortex-r5
@@ -49,9 +49,9 @@
             -DOS_NORTOS
         "
         linkerBuildOptions="
-            -i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/nortos/lib
-            -i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers/lib
-            -i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/board/lib
+            -i${MCU_PLUS_SDK_PATH}/source/kernel/nortos/lib
+            -i${MCU_PLUS_SDK_PATH}/source/drivers/lib
+            -i${MCU_PLUS_SDK_PATH}/source/board/lib
             -i${MOTOR_CONTROL_SDK_PATH}/source/pruicss_pwm/lib
             -i${CG_TOOL_ROOT}/lib
             -m=pruicss_pwm_deadband_epwm_sync.${ConfigName}.map
@@ -61,7 +61,7 @@
             --gen_xml_func_hash
         "
 
-        postBuildStep="$(MAKE) -C ${CCS_PROJECT_DIR} -f makefile_ccs_bootimage_gen OUTNAME=${BuildArtifactFileBaseName} PROFILE=${ConfigName} MOTOR_CONTROL_SDK_PATH=${MOTOR_CONTROL_SDK_PATH} MCU_PLUS_SDK_PATH=${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk CG_TOOL_ROOT=${CG_TOOL_ROOT} CCS_INSTALL_DIR=${CCS_INSTALL_DIR} CCS_IDE_MODE=${CCS_IDE_MODE} DEVICE=am243x"
+        postBuildStep="$(MAKE) -C ${CCS_PROJECT_DIR} -f makefile_ccs_bootimage_gen OUTNAME=${BuildArtifactFileBaseName} PROFILE=${ConfigName} MOTOR_CONTROL_SDK_PATH=${MOTOR_CONTROL_SDK_PATH} MCU_PLUS_SDK_PATH=${MCU_PLUS_SDK_PATH} CG_TOOL_ROOT=${CG_TOOL_ROOT} CCS_INSTALL_DIR=${CCS_INSTALL_DIR} CCS_IDE_MODE=${CCS_IDE_MODE} DEVICE=am243x"
 
         enableSysConfigTool="true"
         sysConfigBuildOptions="
@@ -96,6 +96,8 @@
                 -llibsysbm.a
             "
         ></configuration>
+        <pathVariable name="IND_COMMS_SDK_PATH" path="${COM_TI_IND_COMMS_SDK_AMXXX_INSTALL_DIR}" scope="project" />
+        <pathVariable name="MCU_PLUS_SDK_PATH" path="${COM_TI_MCU_PLUS_SDK_AMXXX_INSTALL_DIR}" scope="project" />
         <pathVariable name="MOTOR_CONTROL_SDK_PATH" path="${COM_TI_MOTOR_CONTROL_SDK_AMXXX_INSTALL_DIR}" scope="project" />
         <file path="../main.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>

@@ -70,41 +70,41 @@ function addOsIncludes(project, os, buildOption) {
     let includes = [];
     switch(os) {
         case "freertos":
-            includes.push("${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/FreeRTOS-Kernel/include");
+            includes.push("${MCU_PLUS_SDK_PATH}/source/kernel/freertos/FreeRTOS-Kernel/include");
             if (buildOption.cpu.match(/m4f*/)) {
-                includes.push("${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CM4F");
+                includes.push("${MCU_PLUS_SDK_PATH}/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CM4F");
                 cpu = "m4f";
             } else if (buildOption.cpu.match (/r5f*/)) {
-                includes.push("${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F");
+                includes.push("${MCU_PLUS_SDK_PATH}/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F");
                 cpu = "r5f";
             } else if (buildOption.cpu.match(/a53*/)) {
-                includes.push("${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/portable/GCC/ARM_CA53");
+                includes.push("${MCU_PLUS_SDK_PATH}/source/kernel/freertos/portable/GCC/ARM_CA53");
                 cpu = "a53";
             } else if (buildOption.cpu.match(/c66*/)) {
-                includes.push("${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/portable/TI_CGT/DSP_C66");
+                includes.push("${MCU_PLUS_SDK_PATH}/source/kernel/freertos/portable/TI_CGT/DSP_C66");
                 cpu = "c66";
             }
-            includes.push("${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/" + buildOption.device + "/" + cpu);
+            includes.push("${MCU_PLUS_SDK_PATH}/source/kernel/freertos/config/" + buildOption.device + "/" + cpu);
             break;
         case "freertos-smp":
-            includes.push("${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/FreeRTOS-Kernel-smp/include");
+            includes.push("${MCU_PLUS_SDK_PATH}/source/kernel/freertos/FreeRTOS-Kernel-smp/include");
             if (buildOption.cpu.match(/a53*/)) {
-                includes.push("${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/portable_smp/GCC/ARM_CA53");
+                includes.push("${MCU_PLUS_SDK_PATH}/source/kernel/freertos/portable_smp/GCC/ARM_CA53");
                 cpu = "a53";
             }
-            includes.push("${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/" + buildOption.device + "/" + cpu + "-smp");
+            includes.push("${MCU_PLUS_SDK_PATH}/source/kernel/freertos/config/" + buildOption.device + "/" + cpu + "-smp");
             break;
         case "freertos_mpu":
-            includes.push("${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/FreeRTOS-Kernel/include");
+            includes.push("${MCU_PLUS_SDK_PATH}/source/kernel/freertos/FreeRTOS-Kernel/include");
             if (buildOption.cpu.match (/r5f*/)) {
-                includes.push("${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F_MPU");
+                includes.push("${MCU_PLUS_SDK_PATH}/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F_MPU");
                 cpu = "r5f_mpu";
             }
-            includes.push("${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/" + buildOption.device + "/" + cpu);
+            includes.push("${MCU_PLUS_SDK_PATH}/source/kernel/freertos/config/" + buildOption.device + "/" + cpu);
             break;
         case "safertos":
-            includes.push("${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/safertos/safeRTOS/kernel/include_api");
-            includes.push("${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/safertos/safeRTOS/config");
+            includes.push("${MCU_PLUS_SDK_PATH}/source/kernel/safertos/safeRTOS/kernel/include_api");
+            includes.push("${MCU_PLUS_SDK_PATH}/source/kernel/safertos/safeRTOS/config");
             break;
         case "nortos":
         default:

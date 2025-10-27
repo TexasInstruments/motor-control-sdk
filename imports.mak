@@ -2,6 +2,8 @@
 DEVICE ?= am243x
 
 ifeq ($(OS),Windows_NT)
+    MCU_PLUS_SDK_PATH ?= C:/ti/mcu_plus_sdk
+    IND_COMMS_SDK_PATH ?= C:/ti/ind_comms_sdk
     TOOLS_PATH?=C:/ti
     CCS_PATH?=$(TOOLS_PATH)/ccs2020/ccs
     CCS_ECLIPSE=$(CCS_PATH)/eclipse/eclipsec
@@ -23,6 +25,8 @@ ifeq ($(OS),Windows_NT)
 else
     UNAME_S := $(shell uname -s)
     ifneq (,$(filter $(UNAME_S),Linux Darwin))
+        export MCU_PLUS_SDK_PATH ?= $(HOME)/ti/mcu_plus_sdk
+        export IND_COMMS_SDK_PATH ?= $(HOME)/ti/ind_comms_sdk
         export TOOLS_PATH?=$(HOME)/ti
         export CCS_PATH?=$(TOOLS_PATH)/ccs2020/ccs
         export CCS_ECLIPSE=$(CCS_PATH)/eclipse/eclipse
@@ -51,13 +55,15 @@ CGT_TI_C6000_PATH=$(CCS_PATH)/tools/compiler/ti-cgt-c6000_8.3.12
 ifeq ($(wildcard $(CGT_TI_C6000_PATH)),)
     CGT_TI_C6000_PATH=$(TOOLS_PATH)/ti-cgt-c6000_8.3.12
 endif
-DSPLIB_PATH=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/dsplib_c66x_3_4_0_0
+DSPLIB_PATH=$(MCU_PLUS_SDK_PATH)/source/dsplib_c66x_3_4_0_0
 CCS_NODE = $(CCS_PATH)/tools/node/node
 SYSCFG_PATH ?= $(TOOLS_PATH)/sysconfig_1.23.0
 SYSCFG_CLI_PATH ?= $(SYSCFG_PATH)
 SYSCFG_NODE = $(SYSCFG_PATH)/nodejs/node
 SYSCFG_NWJS = $(SYSCFG_PATH)/nw/nw
 SYSCFG_SDKPRODUCT=$(MOTOR_CONTROL_SDK_PATH)/.metadata/product.json
-SIGNING_TOOL_PATH=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/security/security_common/tools/boot/signing
+SYSCFG_ICSDKPRODUCT=$(IND_COMMS_SDK_PATH)/.metadata/product.json
+SYSCFG_MCUSDKPRODUCT=$(MCU_PLUS_SDK_PATH)/.metadata/product.json
+SIGNING_TOOL_PATH=$(MCU_PLUS_SDK_PATH)/source/security/security_common/tools/boot/signing
 OPTISHARE = $(CCS_NODE) $(CGT_TI_ARM_CLANG_PATH)/opti-share/opti-share.js
 OPTISAVE = $(CCS_NODE) $(CGT_TI_ARM_CLANG_PATH)/opti-share/utils/opti-save.js

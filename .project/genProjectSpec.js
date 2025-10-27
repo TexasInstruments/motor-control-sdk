@@ -147,10 +147,27 @@ const utils = {
     getProductNameProjectSpec: (device) => {
 
         if(common.isDevelopmentMode())
-            return "MOTOR_CONTROL_SDK_AMXXX"
+            return "MOTOR_CONTROL_SDK_AMXXX";
 
         return require(`./device/project_${device}`).getProductNameProjectSpec();
     },
+
+    getIcsdkProductNameProjectSpec: (device) => {
+
+        if(common.isDevelopmentMode())
+            return "IND_COMMS_SDK_AMXXX";
+
+        return require(`./device/project_${device}`).getIcsdkProductNameProjectSpec();
+    },
+
+    getMcusdkProductNameProjectSpec: (device) => {
+
+        if(common.isDevelopmentMode())
+            return "MCU_PLUS_SDK_AMXXX";
+
+        return require(`./device/project_${device}`).getMcusdkProductNameProjectSpec();
+    },
+
     /* default action for files in project spec, i.e copy or link */
     getDefaultActionProjectSpec: () => {
 
@@ -267,6 +284,8 @@ function genProjectSpecExample(device) {
 
             let args = {
                 sdkName: "MOTOR_CONTROL_SDK_PATH",
+                dependentIcsdkName: "IND_COMMS_SDK_PATH",
+                dependentMcusdkName: "MCU_PLUS_SDK_PATH",
                 sdkPath: common.path.relative(projectSpecOutPath, path.normalize(__dirname + "/..")),
                 relPath: common.path.relative(project.dirPath, "."),
                 project: project,
