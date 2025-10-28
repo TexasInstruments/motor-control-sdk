@@ -232,14 +232,12 @@ int32_t initIcss(
 /* Initialize PRU core for SDFM */
 int32_t initPruSdfm(
     PRUICSS_Handle pruIcssHandle,
-    uint8_t pruInstId,
-    SdfmPrms *pSdfmPrms,
-    sdfm_handle *pHSdfm
+    SDFM_Params pSdfmPrms,
+    SDFM_Handle *pHSdfm
 );
 
 /* Initialize SDFM parameters */
-void sdfmParamsConfig(uint8_t channel, SdfmPrms *gSdfmPrms);
-
-void sdfmGlobalParamsConfig(SdfmPrms *gSdfmPrms);
-
+void sdfmParamsConfig(uint8_t channel, SDFM_Params *gSdfmPrms);
+void sdfmGlobalParamsConfig(SDFM_Params *gSdfmPrms);
+void sdfmAxisParamsConfig(SDFM_Params *gSdfmPrms, uint8_t pru_core);
 #endif /* _SDFM_H_ */

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023 Texas Instruments Incorporated
+ *  Copyright (C) 2023-25 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -41,10 +41,6 @@
 #include <drivers/pruicss.h>
 #include <drivers/sciclient.h>
 
-#include "ti_drivers_config.h"
-#include "ti_drivers_open_close.h"
-#include "ti_board_open_close.h"
-
 #if CONFIG_SDFM0_SLICE == PRUICSS_PRU1
 #include "current_sense/sdfm/firmware/multi_axis_load_share/sdfm_pru1_bin.h"            /* SDFM image data */
 #include "current_sense/sdfm/firmware/multi_axis_load_share/sdfm_rtu1_bin.h"            /* SDFM image data */
@@ -60,15 +56,33 @@
 #include "sdfm_example.h"
 #include "current_sense/sdfm/include/sdfm_api.h"
 
+#if CONFIG_SDFM0_SLICE == PRUICSS_PRU1
+#define SDFM_PRU_CORE         PRUICSS_PRU1
+#define SDFM_RTU_CORE         PRUICSS_RTU_PRU1
+#define SDFM_TXPRU_CORE       PRUICSS_TX_PRU1
+#else
+#define SDFM_PRU_CORE         PRUICSS_PRU0
+#define SDFM_RTU_CORE         PRUICSS_RTU_PRU0
+#define SDFM_TXPRU_CORE       PRUICSS_TX_PRU0
+#endif
+
+/* Number of PRU images */
+#define PRU_SDFM_NUM_PRU_IMAGE  ( 4 )
+
+/* ICSS INTC configuration */
+#if CONFIG_SDFM0_ICSSGx == 1
+/* These variables are defined in the generated SysCfg code */
+extern PRUICSS_IntcInitData icss1_intc_initdata;
+#else
+extern PRUICSS_IntcInitData icss0_intc_initdata;
+#endif
+
 /* PRU SDFM FW image info */
 typedef struct PRUSDFM_PruFwImageInfo_s 
 {
     const uint32_t *pPruImemImg;
     const uint32_t pruImemImgSz;
 } PRUSDFM_PruFwImageInfo;
-
-/* Number of PRU images */
-#define PRU_SDFM_NUM_PRU_IMAGE  ( 4 )
 
 /* PRU SDFM image info */
 static PRUSDFM_PruFwImageInfo gPruFwImageInfo[PRU_SDFM_NUM_PRU_IMAGE] =
@@ -86,13 +100,6 @@ static PRUSDFM_PruFwImageInfo gPruFwImageInfo[PRU_SDFM_NUM_PRU_IMAGE] =
 #endif
 };
 
-/* ICSS INTC configuration */
-#if CONFIG_SDFM0_ICSSGx == 1
-/* These variables are defined in the generated SysCfg code */
-extern PRUICSS_IntcInitData icss1_intc_initdata;
-#else
-extern PRUICSS_IntcInitData icss0_intc_initdata;
-#endif
 
 /*
  *  ======== initIcss ========
@@ -213,147 +220,142 @@ int32_t initIcss(
 
     return SDFM_ERR_NERR;
 }
-void SDFM_configGpioPins(sdfm_handle h_sdfm, uint8_t loadShare, uint8_t pruInsId)
+void SDFM_configGpioPins(SDFM_Handle h_sdfm, uint8_t SD_CH)
 {
-    if(loadShare)
+    switch (SD_CH)
     {
-        switch (pruInsId)
-        {
-            case PRUICSS_PRU0:
-            case PRUICSS_PRU1:
-#if (CONFIG_SDFM0_CHANNEL5_OC_EN_ZERO_CROSS != 0)
-                /*ch5 GPIO configuration */
-                uint32_t gpioBaseAddrCh = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH1_BASE_ADDR);
-                uint32_t pinNumCh       = GPIO_ZC_TH_CH1_PIN;
-                GPIO_setDirMode(gpioBaseAddrCh, pinNumCh, GPIO_ZC_TH_CH1_DIR);
-                SDFM_configComparatorGpioPins(h_sdfm, 2, gpioBaseAddrCh, pinNumCh);
-#endif
-                break;
-            case PRUICSS_RTU_PRU0:
-            case PRUICSS_RTU_PRU1:
-#if (CONFIG_SDFM0_CHANNEL2_OC_EN_ZERO_CROSS != 0)
-                /*ch2 GPIO configuration*/
-                uint32_t gpioBaseAddrCh = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH0_BASE_ADDR);
-                uint32_t pinNumCh       = GPIO_ZC_TH_CH0_PIN;
-                GPIO_setDirMode(gpioBaseAddrCh, pinNumCh, GPIO_ZC_TH_CH0_DIR);
-                SDFM_configComparatorGpioPins(h_sdfm, 2, gpioBaseAddrCh, pinNumCh);
-#endif
-                break;
-            case PRUICSS_TX_PRU0:
-            case PRUICSS_TX_PRU1:
-                /*ch8 GPIO configuration*/
-#if (CONFIG_SDFM0_CHANNEL8_OC_EN_ZERO_CROSS != 0)
-                uint32_t gpioBaseAddrCh = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH2_BASE_ADDR);
-                uint32_t pinNumCh       = GPIO_ZC_TH_CH2_PIN;
-                GPIO_setDirMode(gpioBaseAddrCh, pinNumCh, GPIO_ZC_TH_CH2_DIR);
-                SDFM_configComparatorGpioPins(h_sdfm, 2, gpioBaseAddrCh, pinNumCh);
-#endif
-                break;
-            default:
-                break;
-        }
-    }
-    else
-    {
+        case 0:
 #if (CONFIG_SDFM0_CHANNEL0_OC_EN_ZERO_CROSS != 0)
-        /*ch0 GPIO configuration*/
-        uint32_t gpioBaseAddrCh0 = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH0_BASE_ADDR);
-        uint32_t pinNumCh0       = GPIO_ZC_TH_CH0_PIN;
-        GPIO_setDirMode(gpioBaseAddrCh0, pinNumCh0, GPIO_ZC_TH_CH0_DIR);
-        SDFM_configComparatorGpioPins(h_sdfm, 0, gpioBaseAddrCh0, pinNumCh0);
+            {
+                uint32_t gpioBaseAddr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH0_BASE_ADDR);
+                uint32_t pinNum = GPIO_ZC_TH_CH0_PIN;
+                GPIO_setDirMode(gpioBaseAddr, pinNum, GPIO_ZC_TH_CH0_DIR);
+                SDFM_configComparatorGpioPins(h_sdfm, SD_CH, gpioBaseAddr, pinNum);
+            }
 #endif
+            break;
+        case 1:
 #if (CONFIG_SDFM0_CHANNEL1_OC_EN_ZERO_CROSS != 0)
-        /*ch1 GPIO configuration*/
-        uint32_t gpioBaseAddrCh1 = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH1_BASE_ADDR);
-        uint32_t pinNumCh1       = GPIO_ZC_TH_CH1_PIN;
-        GPIO_setDirMode(gpioBaseAddrCh1, pinNumCh1, GPIO_ZC_TH_CH1_DIR);
-        SDFM_configComparatorGpioPins(h_sdfm, 1, gpioBaseAddrCh1, pinNumCh1);
+            {
+                uint32_t gpioBaseAddr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH1_BASE_ADDR);
+                uint32_t pinNum = GPIO_ZC_TH_CH1_PIN;
+                GPIO_setDirMode(gpioBaseAddr, pinNum, GPIO_ZC_TH_CH1_DIR);
+                SDFM_configComparatorGpioPins(h_sdfm, SD_CH, gpioBaseAddr, pinNum);
+            }
 #endif
+            break;      
+        case 2:
 #if (CONFIG_SDFM0_CHANNEL2_OC_EN_ZERO_CROSS != 0)
-        /*ch2 GPIO configuration*/
-        uint32_t gpioBaseAddrCh2 = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH2_BASE_ADDR);
-        uint32_t pinNumCh2       = GPIO_ZC_TH_CH2_PIN;
-        GPIO_setDirMode(gpioBaseAddrCh2, pinNumCh2, GPIO_ZC_TH_CH2_DIR);
-        SDFM_configComparatorGpioPins(h_sdfm, 2, gpioBaseAddrCh2, pinNumCh2);
+            {
+                uint32_t gpioBaseAddr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH2_BASE_ADDR);
+                uint32_t pinNum = GPIO_ZC_TH_CH2_PIN;
+                GPIO_setDirMode(gpioBaseAddr, pinNum, GPIO_ZC_TH_CH2_DIR);
+                SDFM_configComparatorGpioPins(h_sdfm, SD_CH, gpioBaseAddr, pinNum);
+            }
 #endif
+            break;
+        case 3:
+#if (CONFIG_SDFM0_CHANNEL3_OC_EN_ZERO_CROSS != 0)
+            {
+                uint32_t gpioBaseAddr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH3_BASE_ADDR);
+                uint32_t pinNum = GPIO_ZC_TH_CH3_PIN;
+                GPIO_setDirMode(gpioBaseAddr, pinNum, GPIO_ZC_TH_CH3_DIR);
+                SDFM_configComparatorGpioPins(h_sdfm, SD_CH, gpioBaseAddr, pinNum);
+            }
+#endif
+            break;
+        case 4:
+#if (CONFIG_SDFM0_CHANNEL4_OC_EN_ZERO_CROSS != 0)
+            {
+                uint32_t gpioBaseAddr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH4_BASE_ADDR);
+                uint32_t pinNum = GPIO_ZC_TH_CH4_PIN;
+                GPIO_setDirMode(gpioBaseAddr, pinNum, GPIO_ZC_TH_CH4_DIR);
+                SDFM_configComparatorGpioPins(h_sdfm, SD_CH, gpioBaseAddr, pinNum);
+            }
+#endif
+            break;
+        case 5:
+#if (CONFIG_SDFM0_CHANNEL5_OC_EN_ZERO_CROSS != 0)
+            {
+                uint32_t gpioBaseAddr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH5_BASE_ADDR);
+                uint32_t pinNum = GPIO_ZC_TH_CH5_PIN;
+                GPIO_setDirMode(gpioBaseAddr, pinNum, GPIO_ZC_TH_CH5_DIR);
+                SDFM_configComparatorGpioPins(h_sdfm, SD_CH, gpioBaseAddr, pinNum);
+            }
+#endif
+            break;  
+        case 6:
+#if (CONFIG_SDFM0_CHANNEL6_OC_EN_ZERO_CROSS != 0)
+            {
+                uint32_t gpioBaseAddr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH6_BASE_ADDR);
+                uint32_t pinNum = GPIO_ZC_TH_CH6_PIN;
+                GPIO_setDirMode(gpioBaseAddr, pinNum, GPIO_ZC_TH_CH6_DIR);
+                SDFM_configComparatorGpioPins(h_sdfm, SD_CH, gpioBaseAddr, pinNum);
+            }
+#endif
+            break;
+        case 7:
+#if (CONFIG_SDFM0_CHANNEL7_OC_EN_ZERO_CROSS != 0)
+            {
+                uint32_t gpioBaseAddr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH7_BASE_ADDR);
+                uint32_t pinNum = GPIO_ZC_TH_CH7_PIN;
+                GPIO_setDirMode(gpioBaseAddr, pinNum, GPIO_ZC_TH_CH7_DIR);
+                SDFM_configComparatorGpioPins(h_sdfm, SD_CH, gpioBaseAddr, pinNum);
+            }
+#endif
+            break;
+        case 8:
+#if (CONFIG_SDFM0_CHANNEL8_OC_EN_ZERO_CROSS != 0)
+            {
+                uint32_t gpioBaseAddr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH8_BASE_ADDR);
+                uint32_t pinNum = GPIO_ZC_TH_CH8_PIN;
+                GPIO_setDirMode(gpioBaseAddr, pinNum, GPIO_ZC_TH_CH8_DIR);
+                SDFM_configComparatorGpioPins(h_sdfm, SD_CH, gpioBaseAddr, pinNum);
+            }
+#endif
+            break;
+        default:
+            break;
     }
-}   
+}
 
 /* Initialize SDFM PRU FW */
-int32_t initSdfmFw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm,  PRUICSS_Handle pruIcssHandle)
+int32_t initSdfmFw(SDFM_Params sdfm_params, SDFM_Handle *pHSdfm)
 {
-    sdfm_handle hSdfm;    
-    uint8_t SDFM_CH = 0;
-    uint8_t enChannel = 0;
+    SDFM_Handle hSdfm;
+    uint8_t SDFM_CH;    
 
     /* Initialize SDFM instance */
-    hSdfm = SDFM_init(pruIcssHandle, pruId, pSdfmPrms->pruInsId);
+    hSdfm = SDFM_init(sdfm_params, CONFIG_SDFM0);
     
     if (hSdfm == NULL)
     {
         return SDFM_ERR_INIT_SDFM;
     }
 
-    hSdfm->pruicssCfg = (void *)(((PRUICSS_HwAttrs *)(pruIcssHandle->hwAttrs))->cfgRegBase);
-
-
-    /*IEP base address*/
-    hSdfm->pruicssIep = (void *)(((PRUICSS_HwAttrs *)(pruIcssHandle->hwAttrs))->iep0RegBase);
-
-    /*eCap base address*/
-    hSdfm->pruicssEcap = (void *)(((PRUICSS_HwAttrs *)(pruIcssHandle->hwAttrs))->ecapRegBase);
-
-    if( pSdfmPrms->loadShare )
+    if(sdfm_params.load_share_enable)
     {
-        if((pSdfmPrms->pruInsId == PRUICSS_PRU0)||(pSdfmPrms->pruInsId == PRUICSS_PRU1))
-        {
-            SDFM_enableLoadShareMode(hSdfm, pSdfmPrms->pruSliceId);
-        }
-
-        switch (pSdfmPrms->pruInsId)
-        {
-            case PRUICSS_PRU0:
-            case PRUICSS_PRU1:
-                SDFM_CH = 3;
-                break;
-            case PRUICSS_RTU_PRU0:
-            case PRUICSS_RTU_PRU1:
-                SDFM_CH = 0;
-                break;
-            case PRUICSS_TX_PRU0:
-            case PRUICSS_TX_PRU1:
-                SDFM_CH = 6;
-                break;
-            default:
-                SDFM_CH = 0;
-                break;
-        }
+        SDFM_enableLoadShareMode(hSdfm, sdfm_params.pru_slice_value);
     }
-    for(int i = SDFM_CH; i<SDFM_CH + NUM_CH_SUPPORTED_PER_AXIS; i++)
+
+    for(int i = 0; i< 9; i++)
     {
-        if(pSdfmPrms->channelPrms[i% NUM_CH_SUPPORTED_PER_AXIS].chEnable)
+        if(sdfm_params.sdfm_channel_mask & (1 << i))
         {
             SDFM_setEnableChannel(hSdfm, i);
-            enChannel = i% NUM_CH_SUPPORTED_PER_AXIS;
         }
-
     }
     uint32_t i;
     i = SDFM_getFirmwareVersion(hSdfm);
     DebugP_log("\n\n\n");
     DebugP_log("SDFM firmware version \t: %x.%x.%x (%s)\n\n", (i >> 24) & 0x7F,
                 (i >> 16) & 0xFF, i & 0xFFFF, i & (1 << 31) ? "internal" : "release");
-
-
-    hSdfm->pruCoreClk = pSdfmPrms->pruClock;
-    hSdfm->iepClock = pSdfmPrms->iepClock[0]; 
-    hSdfm->sdfmClock = pSdfmPrms->clkPrms[0].sdClock; 
-    hSdfm->sampleOutputInterface = (SDFM_SampleOutInterface *)(pSdfmPrms->samplesBaseAddress);
-    uint32_t sampleOutputInterfaceGlobalAddr = CPU0_BTCM_SOCVIEW(pSdfmPrms->samplesBaseAddress);
-    hSdfm->pSdfmInterface->sampleBufferBaseAdd = sampleOutputInterfaceGlobalAddr;
-    hSdfm->iepInc = 1; /* Default IEP increment 1 */
+ 
+    /* Configure SDFM sample output interface */
+    hSdfm->sampleOutputInterface = (SDFM_SampleOutInterface *)(sdfm_params.samplesBaseAddress);
+    uint32_t sampleOutputInterfaceGlobalAddr = CPU0_BTCM_SOCVIEW(sdfm_params.samplesBaseAddress);
+    SDFM_setSampleOutputInterfaceGlobalAddr(hSdfm, sampleOutputInterfaceGlobalAddr);
     
-
 #if (CONFIG_SDFM0_CLK_FROM_IEP != 0)
     /* IEP clock 300MHz, SD clk = 20Mhz
       Div = 300/20 = 15, one period time = 15 IEP cycles, high plus time = 7 IEP cycles  */
@@ -362,12 +364,14 @@ int32_t initSdfmFw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm,  PRU
     uint32_t syncStartTime = 0; /*clock generation start time.*/
     SDFM_configIepSyncMode(hSdfm, highPulseWidth, periodTime, syncStartTime);
     SDFM_enableIep(hSdfm);   
+    hSdfm->clk_config.clock_source = SDFM_CLOCK_SOURCE_IEP;
 #endif
      
     /*configure ecap as PWM code for generate 20 MHz sdfm clock*/
 #if (CONFIG_SDFM0_CLK_FROM_ECAP != 0)
     uint8_t ecap_divider = 0x0F; /*PRU clock at 300MHz: SD clock = 300/15=20Mhz*/
     SDFM_configEcap(hSdfm, ecap_divider);
+    hSdfm->clk_config.clock_source = SDFM_CLOCK_SOURCE_ECAP;
 #endif
     
     /*SD clk configuration from GPO1 */
@@ -381,125 +385,130 @@ int32_t initSdfmFw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm,  PRU
    uint8_t div1 = 0x0;
 
    SDFM_configClockFromGPO1(hSdfm, div0, div1);
-
+   hSdfm->clk_config.clock_source = SDFM_CLOCK_SOURCE_PRUGPIO1;
 #endif
-   
-   if(pSdfmPrms->snoopModeEnable)
+   for(i=0; i<SDFM_NUM_OF_CH_PER_PRU_SLICE; i++)
    {
-        SDFM_enableSnoopBasedNC(hSdfm);
+        if(sdfm_params.sdfm_channel_mask & (1 << i))
+        {
+            hSdfm->clk_config.sdfm_clock_value = sdfm_params.channels[i].sdfmClock;
+            break;
+        }
+   }
+   /*Add code to confgure common configuration for all channels*/
+   if(sdfm_params.enable_snoop_mode[0]|| sdfm_params.enable_snoop_mode[1]|| sdfm_params.enable_snoop_mode[2])
+   {
         /*configure IEP count for one epwm period*/
-        SDFM_configIepCount(hSdfm, pSdfmPrms->epwmOutFreq);
+        SDFM_configIepCount(hSdfm, sdfm_params.iep_reset_freq);
+   }
    
-        /*Configuration of sdfm parameters which are supported per axis, not for individual channels. 
-        Channel0 parameters value is used for all three channels of the axis.*/
-    
-        /*set Normal current OSR */
-        SDFM_setFilterOverSamplingRatio(hSdfm, enChannel, pSdfmPrms->channelPrms[enChannel].filterOsr);
-
-        /*Enable Continuous mode*/
-        if(pSdfmPrms->channelPrms[enChannel].enableContinuousMode)
+   for(int i = 0; i< 3; i++)
+   {
+        if(sdfm_params.sdfm_enable_pru_core_mask & (1 << i))
         {
-            SDFM_enableContinuousNormalCurrent(hSdfm);
-            /*When Continuous mode is enabled, configure the first sample starting point. 
-            Sampling starts with some delay after IEP counter starts because there will be delay due to sdfm register configuration so we cannot trigger CMP event immediately
-            triggring cmp event 5us late*/
-            pSdfmPrms->channelPrms[enChannel].firstSampTrigTime = 5;
-        }
-        else
-        {
-            SDFM_setSampleTriggerTime(hSdfm, pSdfmPrms->channelPrms[enChannel].firstSampTrigTime);
-            if(pSdfmPrms->channelPrms[enChannel].enSecondUpdate)
+           
+            if(sdfm_params.enable_snoop_mode[i])
             {
-                SDFM_enableDoubleSampling(hSdfm, pSdfmPrms->channelPrms[enChannel].secondSampTrigTime);
+                SDFM_enableSnoopBasedNC(hSdfm, i);
             }
-            else
+            if(sdfm_params.trigger_config[i].enable_trigger_mode == 1)
             {
-                SDFM_disableDoubleSampling(hSdfm);
+                SDFM_enableTriggerModeForNormalCurrent(hSdfm, i);
+                SDFM_setSampleTriggerTime(hSdfm, sdfm_params.trigger_config[i].first_samp_trig_time, i);
+                if(sdfm_params.trigger_config[i].en_double_nc_sampling)
+                {
+                    SDFM_enableDoubleSampling(hSdfm, sdfm_params.trigger_config[i].second_samp_trig_time, i);
+                }
+                else
+                {
+                    SDFM_disableDoubleSampling(hSdfm, i);
+                }
+                
+                SDFM_selectIepCmpEvent(hSdfm, sdfm_params.trigger_config[i].iep_cmp_event, i);  
             }
         }
-
-        /*GPIO pin configuration for zero cross*/
-        SDFM_configGpioPins(hSdfm, pSdfmPrms->loadShare, pSdfmPrms->pruInsId);
+   }
+   
+    /*enable epwm sync*/
+    if(sdfm_params.sdfm_enable_epwm_sync)
+    {
+        SDFM_enableEpwmSync(hSdfm, sdfm_params.sdfm_epwm_sync_source);
+        SDFM_enableIep(hSdfm);
     }
     else
     {
-        /*Enable Continuous mode*/
-        if(pSdfmPrms->channelPrms[enChannel].enableContinuousMode)
+        if(sdfm_params.trigger_config[0].enable_trigger_mode == 1|| sdfm_params.trigger_config[1].enable_trigger_mode == 1|| sdfm_params.trigger_config[2].enable_trigger_mode == 1)
         {
-            SDFM_enableContinuousNormalCurrent(hSdfm);
+            SDFM_configIepCmp0ToResetIep(hSdfm, sdfm_params.iep_reset_freq);
+            SDFM_enableIep(hSdfm);
         }
-        else
-        {
-            SDFM_setSampleTriggerTime(hSdfm, pSdfmPrms->channelPrms[enChannel].firstSampTrigTime);
-            if(pSdfmPrms->channelPrms[enChannel].enSecondUpdate)
-            {
-                SDFM_enableDoubleSampling(hSdfm, pSdfmPrms->channelPrms[enChannel].secondSampTrigTime);
-            }
-            else
-            {
-                SDFM_disableDoubleSampling(hSdfm);
-            }
-        }
-    }
-
-    /*enable epwm sync*/
-    if(pSdfmPrms->channelPrms[enChannel].enableEpwmSync)
-    {
-        SDFM_enableEpwmSync(hSdfm, pSdfmPrms->channelPrms[enChannel].epwmSyncSource);
     }
      
-    /*Phase delay calculation for ch0. With Load share mode also, phase delay calculation is enabled only for channel0 */
-    if(pSdfmPrms->phaseDelay && (SDFM_CH == 0))
+    /*Phase delay calculation for ch0. With single PRU and no load share*/
+    if(sdfm_params.sdfm_enable_phase_delay)
     {
-        SDFM_measureClockPhaseDelay(hSdfm, pSdfmPrms->clkPrms[0].clkInv);
+#if (CONFIG_SDFM0_CHANNEL0 == 1 && (CONFIG_SDFM0_LOAD_SHARE == 0))
+        SDFM_measureClockPhaseDelay(hSdfm, sdfm_params.channels[0].clk_inv, 0);
+#endif
     }
 
     /*below configuration for all three channel*/
-    for(SDFM_CH = 0; SDFM_CH < NUM_CH_SUPPORTED_PER_AXIS; SDFM_CH++)
+    for(SDFM_CH = 0; SDFM_CH < 9; SDFM_CH++)
     {
-        SDFM_setCompFilterOverSamplingRatio(hSdfm, SDFM_CH, pSdfmPrms->compFilterPrms[SDFM_CH].comFilterOsr);
-        if(pSdfmPrms->snoopModeEnable != 1)
+        if(sdfm_params.sdfm_channel_mask & (1 << SDFM_CH))
         {
-            SDFM_setFilterOverSamplingRatio(hSdfm, SDFM_CH, pSdfmPrms->channelPrms[SDFM_CH].filterOsr);
-        }
+            SDFM_setCompFilterOverSamplingRatio(hSdfm, SDFM_CH, sdfm_params.channels[SDFM_CH].over_current_osr);
 
-        /*set ACC source or filter type*/
-        SDFM_configDataFilter(hSdfm, SDFM_CH, pSdfmPrms->channelPrms[SDFM_CH].accSource);
+            SDFM_setFilterOverSamplingRatio(hSdfm, SDFM_CH, sdfm_params.channels[SDFM_CH].normal_current_osr);
 
-        /*set clock inversion & clock source for all three channel*/
-        SDFM_selectClockSource(hSdfm, SDFM_CH, pSdfmPrms->clkPrms[SDFM_CH].clkSource);
+            /*set ACC source or filter type*/
+            SDFM_configDataFilter(hSdfm, SDFM_CH, sdfm_params.channels[SDFM_CH].filter_type);
 
-        /*set clock inversion*/
-        SDFM_setClockInversion(hSdfm, SDFM_CH, pSdfmPrms->clkPrms[SDFM_CH].clkInv);
+            /*set clock inversion & clock source for all three channel*/
+            SDFM_selectClockSource(hSdfm, SDFM_CH, sdfm_params.channels[SDFM_CH].clk_source);
 
-        if(pSdfmPrms->fastDetectPrms[SDFM_CH][0])
-        {
-            /*Fast detect configuration */
-            SDFM_configFastDetect(hSdfm, SDFM_CH, pSdfmPrms->fastDetectPrms[SDFM_CH]);
-        }
-        if(pSdfmPrms->compFilterPrms[SDFM_CH].enComparator)
-        {
-            SDFM_enableComparator(hSdfm, SDFM_CH); 
-            /*set high and low thresholds value */
-            SDFM_setCompFilterThresholds(hSdfm, SDFM_CH, pSdfmPrms->compFilterPrms[SDFM_CH].comThresholds);  
-        }
-        else
-        {
-            SDFM_disableComparator(hSdfm, SDFM_CH);
-        }
+            /*set clock inversion*/
+            SDFM_setClockInversion(hSdfm, SDFM_CH, sdfm_params.channels[SDFM_CH].clk_inv);
 
-        /*enabling Zero cross only for first channel of axis in load share mode*/
+            if(sdfm_params.channels[SDFM_CH].enable_comparator == 1)
+            {
+                SDFM_enableComparator(hSdfm, SDFM_CH);
+                /*set high and low thresholds value */
+                uint32_t comThresholds[2];
+                comThresholds[0] = sdfm_params.channels[SDFM_CH].threshold_config.high_threshold;
+                comThresholds[1] = sdfm_params.channels[SDFM_CH].threshold_config.low_threshold;   
+                SDFM_setCompFilterThresholds(hSdfm, SDFM_CH, comThresholds);
+            }
 
-        if(pSdfmPrms->compFilterPrms[SDFM_CH].zeroCrossEn && ((pSdfmPrms->loadShare && SDFM_CH == 2)||(!pSdfmPrms->loadShare)))
-        {
-            SDFM_enableZeroCrossDetection(hSdfm, SDFM_CH, pSdfmPrms->compFilterPrms[SDFM_CH].zeroCrossTh);
+            if(sdfm_params.channels[SDFM_CH].enFastDetect == 1)
+            {
+                /*Fast detect configuration */
+                uint8_t channels[NUM_FD_FIELD];
+                channels[1] = sdfm_params.channels[SDFM_CH].fd_window;
+                channels[2] = sdfm_params.channels[SDFM_CH].fd_zero_max;
+                channels[3] = sdfm_params.channels[SDFM_CH].fd_zero_min;
+                SDFM_configFastDetect(hSdfm, SDFM_CH, channels);
+            }
+
+            if(sdfm_params.channels[SDFM_CH].threshold_config.zeroCrossEn == 1)
+            {
+                /*zero cross configuration*/
+                SDFM_enableZeroCrossDetection(hSdfm, SDFM_CH, sdfm_params.channels[SDFM_CH].threshold_config.zeroCrossTh);
+                /*GPIO pin configuration for zero cross*/
+                SDFM_configGpioPins(hSdfm, SDFM_CH);
+            }
         }
 
     }
     
     /* Enable (global) SDFM */
-    SDFM_enable(hSdfm);
-
+    for(int i = 0; i< 3; i++)
+    {
+        if(sdfm_params.sdfm_enable_pru_core_mask & (1 << i))
+        {
+            SDFM_enable(hSdfm, i);
+        }
+    }
     *pHSdfm = hSdfm;
 
  return SDFM_ERR_NERR;
@@ -510,109 +519,129 @@ int32_t initSdfmFw(uint8_t pruId, SdfmPrms *pSdfmPrms, sdfm_handle *pHSdfm,  PRU
 /* Initialize PRU core for SDFM */
 int32_t initPruSdfm(
     PRUICSS_Handle pruIcssHandle,
-    uint8_t pruInstId,
-    SdfmPrms *pSdfmPrms,
-    sdfm_handle *pHSdfm
+    SDFM_Params pSdfmPrms,
+    SDFM_Handle *pHSdfm
 )
 {
-    uint8_t sliceId;
     uint32_t pruIMem;
     PRUSDFM_PruFwImageInfo *pPruFwImageInfo;
     int32_t size;
     const uint32_t *sourceMem;          /* Source memory[ Array of uint32_t ] */
     uint32_t imemOffset;    /* Offset at which write will happen */
     uint32_t byteLen;                   /* Total number of bytes to be written */
-    uint8_t pruId;
     int32_t status;
-    
-    /* Reset PRU */
-    status = PRUICSS_resetCore(pruIcssHandle, pruInstId);
-    if (status != SystemP_SUCCESS) 
-    {
-        return SDFM_ERR_INIT_PRU_SDFM;
-    }
-
-
-    /* Calculate slice ID */
-    sliceId = pruInstId - (uint8_t)pruInstId/ICSSG_NUM_SLICE * ICSSG_NUM_SLICE;
-    /* Determine PRU DMEM address */
-    /* Determine PRU FW image and PRU IMEM address */
-
-    switch (pruInstId)
-    {
-        case PRUICSS_PRU0:
-        case PRUICSS_PRU1:
-            if(pSdfmPrms->loadShare)
-            { 
-                pPruFwImageInfo = &gPruFwImageInfo[1];
-                pruIMem = PRUICSS_IRAM_PRU(sliceId);
-            }
-            else
-            {
-                pPruFwImageInfo = &gPruFwImageInfo[0];
-                pruIMem = PRUICSS_IRAM_PRU(sliceId);
-            }
-            break;
-        case PRUICSS_RTU_PRU0:
-        case PRUICSS_RTU_PRU1:
-            pPruFwImageInfo = &gPruFwImageInfo[2];
-            pruIMem = PRUICSS_IRAM_RTU_PRU(sliceId);
-            break;
-        case PRUICSS_TX_PRU0:
-        case PRUICSS_TX_PRU1:
-            pPruFwImageInfo = &gPruFwImageInfo[3];
-            pruIMem = PRUICSS_IRAM_TX_PRU(sliceId);
-            if(pruInstId == PRUICSS_TX_PRU0)
-            {
-                PRUICSS_setConstantTblEntry(pruIcssHandle, pruInstId, PRUICSS_CONST_TBL_ENTRY_C28, 0x2A4);
-            }
-            else
-            {
-                PRUICSS_setConstantTblEntry(pruIcssHandle, pruInstId, PRUICSS_CONST_TBL_ENTRY_C28, 0x2A5);
-            }
-            break;
-        default:
-            pPruFwImageInfo = NULL;
-            break;
-    }
-
-    if ((pPruFwImageInfo == NULL) ||
-        (pPruFwImageInfo->pPruImemImg == NULL))
-    {
-        return SDFM_ERR_INIT_PRU_SDFM;
-    }
-
-    /* Write IMEM */
+      
+    /*Load the firmware image*/
     imemOffset = 0;
-    sourceMem = (uint32_t *)pPruFwImageInfo->pPruImemImg;
-    byteLen = pPruFwImageInfo->pruImemImgSz;
-    size = PRUICSS_writeMemory(pruIcssHandle, pruIMem, imemOffset, sourceMem, byteLen);
-    if (size == 0)
+#if(CONFIG_SDFM0_LOAD_SHARE == 1)
     {
-        return SDFM_ERR_INIT_PRU_SDFM;
-    }
+#if CONFIG_SDFM0_CHANNEL0 || CONFIG_SDFM0_CHANNEL1 || CONFIG_SDFM0_CHANNEL2
+        status = PRUICSS_resetCore(pruIcssHandle, SDFM_RTU_CORE);
+        if (status != SystemP_SUCCESS) 
+        {
+            return SDFM_ERR_INIT_PRU_SDFM;
+        }
+        pPruFwImageInfo = &gPruFwImageInfo[2];
+        pruIMem = PRUICSS_IRAM_RTU_PRU(CONFIG_SDFM0_SLICE);
+        /* Write IMEM */
+        sourceMem = (uint32_t *)pPruFwImageInfo->pPruImemImg;
+        byteLen = pPruFwImageInfo->pruImemImgSz;
+        size = PRUICSS_writeMemory(pruIcssHandle, pruIMem, imemOffset, sourceMem, byteLen);
+        if (size == 0)
+        {
+            return SDFM_ERR_INIT_PRU_SDFM;
+        }
+        /* Enable PRU core */
+        status = PRUICSS_enableCore(pruIcssHandle, SDFM_RTU_CORE);
+        if (status != SystemP_SUCCESS) 
+        {
+            return SDFM_ERR_INIT_PRU_SDFM;
+        }
+#endif
+#if CONFIG_SDFM0_CHANNEL3 || CONFIG_SDFM0_CHANNEL4 || CONFIG_SDFM0_CHANNEL5
+        status = PRUICSS_resetCore(pruIcssHandle, SDFM_PRU_CORE);
+        if (status != SystemP_SUCCESS) 
+        {
+            return SDFM_ERR_INIT_PRU_SDFM;
+        }
+        pPruFwImageInfo = &gPruFwImageInfo[1];
+        pruIMem = PRUICSS_IRAM_PRU(CONFIG_SDFM0_SLICE);
+        /* Write IMEM */
+        sourceMem = (uint32_t *)pPruFwImageInfo->pPruImemImg;
+        byteLen = pPruFwImageInfo->pruImemImgSz;
+        size = PRUICSS_writeMemory(pruIcssHandle, pruIMem, imemOffset, sourceMem, byteLen);
+        if (size == 0)
+        {
+            return SDFM_ERR_INIT_PRU_SDFM;
+        }   
 
-    /* Enable PRU */
-    status = PRUICSS_enableCore(pruIcssHandle, pruInstId);
-    if (status != SystemP_SUCCESS) {
-        return SDFM_ERR_INIT_PRU_SDFM;
+        /* Enable PRU core */
+        status = PRUICSS_enableCore(pruIcssHandle, SDFM_PRU_CORE);
+        if (status != SystemP_SUCCESS) 
+        {
+            return SDFM_ERR_INIT_PRU_SDFM;
+        }
+#endif
+#if CONFIG_SDFM0_CHANNEL6 || CONFIG_SDFM0_CHANNEL7 || CONFIG_SDFM0_CHANNEL8
+        status = PRUICSS_resetCore(pruIcssHandle, SDFM_TXPRU_CORE);
+        if (status != SystemP_SUCCESS) 
+        {
+            return SDFM_ERR_INIT_PRU_SDFM;
+        }
+        pPruFwImageInfo = &gPruFwImageInfo[3];
+        pruIMem = PRUICSS_IRAM_TX_PRU(CONFIG_SDFM0_SLICE);
+        if(SDFM_TXPRU_CORE == PRUICSS_TX_PRU0)
+        {
+            PRUICSS_setConstantTblEntry(pruIcssHandle, SDFM_TXPRU_CORE, PRUICSS_CONST_TBL_ENTRY_C28, 0x2A4);
+        }
+        else
+        {
+            PRUICSS_setConstantTblEntry(pruIcssHandle, SDFM_TXPRU_CORE, PRUICSS_CONST_TBL_ENTRY_C28, 0x2A5);
+        }
+        /* Write IMEM */
+        sourceMem = (uint32_t *)pPruFwImageInfo->pPruImemImg;
+        byteLen = pPruFwImageInfo->pruImemImgSz;
+        size = PRUICSS_writeMemory(pruIcssHandle, pruIMem, imemOffset, sourceMem, byteLen);
+        if (size == 0)
+        {
+            return SDFM_ERR_INIT_PRU_SDFM;
+        }   
+
+        /* Enable PRU core */
+        status = PRUICSS_enableCore(pruIcssHandle, SDFM_TXPRU_CORE);
+        if (status != SystemP_SUCCESS) 
+        {
+            return SDFM_ERR_INIT_PRU_SDFM;
+        }
+#endif
     }
-/* Translate PRU ID to SDFM API */
-    if ((pruInstId == PRUICSS_PRU0) || (pruInstId == PRUICSS_RTU_PRU0) || (pruInstId == PRUICSS_TX_PRU0))
-   {
-        pruId = PRU_ID_0;
-    }
-    else if ((pruInstId == PRUICSS_PRU1) || (pruInstId == PRUICSS_RTU_PRU1) || (pruInstId == PRUICSS_TX_PRU1))
-   {
-        pruId = PRU_ID_1;
-    }
-    else 
+#else
     {
-        return SDFM_ERR_INIT_PRU_SDFM;
-    }
+        status = PRUICSS_resetCore(pruIcssHandle, SDFM_PRU_CORE);
+        if (status != SystemP_SUCCESS)
+        {
+            return SDFM_ERR_INIT_PRU_SDFM;
+        }
+        pPruFwImageInfo = &gPruFwImageInfo[0];
+        pruIMem = PRUICSS_IRAM_PRU(CONFIG_SDFM0_SLICE);
+        /* Write IMEM */
+        sourceMem = (uint32_t *)pPruFwImageInfo->pPruImemImg;
+        byteLen = pPruFwImageInfo->pruImemImgSz;
+        size = PRUICSS_writeMemory(pruIcssHandle, pruIMem, imemOffset, sourceMem, byteLen);
+        if (size == 0)
+        {
+            return SDFM_ERR_INIT_PRU_SDFM;
+        }
 
-   
-    status = initSdfmFw(pruId, pSdfmPrms, pHSdfm, pruIcssHandle);
+        /* Enable PRU */
+        status = PRUICSS_enableCore(pruIcssHandle, SDFM_PRU_CORE);
+        if (status != SystemP_SUCCESS) {
+            return SDFM_ERR_INIT_PRU_SDFM;
+        }
+    }
+#endif
+
+    status = initSdfmFw(pSdfmPrms, pHSdfm);
     if (status != SDFM_ERR_NERR) 
     {
         return SDFM_ERR_INIT_PRU_SDFM;
@@ -625,413 +654,306 @@ int32_t initPruSdfm(
  *  ======== Initialize SDFM parameters ========
  */
  
- void sdfmParamsConfig(uint8_t channel, SdfmPrms *gSdfmPrms)
+ void sdfmParamsConfig(uint8_t channel, SDFM_Params *gSdfmPrms)
 {
-    SdfmPrms gTestSdfmPrms = *gSdfmPrms;
+    SDFM_Params gTestSdfmPrms = *gSdfmPrms;
     switch(channel)
     {
         case 0:
-            gTestSdfmPrms.channelPrms[channel].chEnable  =  CONFIG_SDFM0_CHANNEL0;
+            gTestSdfmPrms.channels[channel].enabled  =  CONFIG_SDFM0_CHANNEL0;
 #if (CONFIG_SDFM0_CHANNEL0 != 0)
             /*Clock parameters*/
-            gTestSdfmPrms.clkPrms[channel].sdClock = CONFIG_SDFM0_CHANNEL0_MCLK;
-            gTestSdfmPrms.clkPrms[channel].clkSource = CONFIG_SDFM0_CHANNEL0_CLK_SOURCE;
-            gTestSdfmPrms.clkPrms[channel].clkInv = CONFIG_SDFM0_CHANNEL0_EN_CLK_INV;
+            gTestSdfmPrms.channels[channel].sdfmClock = CONFIG_SDFM0_CHANNEL0_MCLK;
+            gTestSdfmPrms.channels[channel].clk_source = CONFIG_SDFM0_CHANNEL0_CLK_SOURCE;
+            gTestSdfmPrms.channels[channel].clk_inv = CONFIG_SDFM0_CHANNEL0_EN_CLK_INV;
             
             /*Normal current parameters*/
-            gTestSdfmPrms.channelPrms[channel].accSource = CONFIG_SDFM0_CHANNEL0_ACC_SOURCE;
-            gTestSdfmPrms.channelPrms[channel].filterOsr = CONFIG_SDFM0_CHANNEL0_NC_OSR;
-            gTestSdfmPrms.channelPrms[channel].enableContinuousMode = CONFIG_SDFM0_CHANNEL0_EN_CONT_MODE;
-#if(CONFIG_SDFM0_CHANNEL0_EN_CONT_MODE == 0)
-            gTestSdfmPrms.channelPrms[channel].enSecondUpdate = CONFIG_SDFM0_CHANNEL0_EN_DOUBLE_UPDATE;
-            gTestSdfmPrms.channelPrms[channel].firstSampTrigTime = CONFIG_SDFM0_CHANNEL0_FIRST_TRIGGER_POINT;
-#if(CONFIG_SDFM0_CHANNEL0_EN_DOUBLE_UPDATE != 0)
-            gTestSdfmPrms.channelPrms[channel].secondSampTrigTime = CONFIG_SDFM0_CHANNEL0_SECOND_TRIGGER_POINT;          
-#endif
-#endif
-            gTestSdfmPrms.channelPrms[channel].enableEpwmSync = CONFIG_SDFM0_CHANNEL0_EN_EPWM_SYNC;
-#if(CONFIG_SDFM0_CHANNEL0_EN_EPWM_SYNC != 0)
-            gTestSdfmPrms.channelPrms[channel].epwmSyncSource = CONFIG_SDFM0_CHANNEL0_EPWM_SOURCE;
-#endif
-
+            gTestSdfmPrms.channels[channel].filter_type = CONFIG_SDFM0_CHANNEL0_ACC_SOURCE;
+            gTestSdfmPrms.channels[channel].normal_current_osr = CONFIG_SDFM0_CHANNEL0_NC_OSR;
+            
             /*Over current parameters*/
-            gTestSdfmPrms.compFilterPrms[channel].enComparator = CONFIG_SDFM0_CHANNEL0_EN_COMP;
+            gTestSdfmPrms.channels[channel].enable_comparator = CONFIG_SDFM0_CHANNEL0_EN_COMP;
 #if(CONFIG_SDFM0_CHANNEL0_EN_COMP  != 0)
-            gTestSdfmPrms.compFilterPrms[channel].comFilterOsr = CONFIG_SDFM0_CHANNEL0_OC_OSR;
-            gTestSdfmPrms.compFilterPrms[channel].comThresholds[0] = CONFIG_SDFM0_CHANNEL0_OC_HIGH_TH;
-            gTestSdfmPrms.compFilterPrms[channel].comThresholds[1] = CONFIG_SDFM0_CHANNEL0_OC_LOW_TH;
-            gTestSdfmPrms.compFilterPrms[channel].zeroCrossEn = CONFIG_SDFM0_CHANNEL0_OC_EN_ZERO_CROSS;
+            gTestSdfmPrms.channels[channel].over_current_osr = CONFIG_SDFM0_CHANNEL0_OC_OSR;
+            gTestSdfmPrms.channels[channel].threshold_config.high_threshold = CONFIG_SDFM0_CHANNEL0_OC_HIGH_TH;
+            gTestSdfmPrms.channels[channel].threshold_config.low_threshold = CONFIG_SDFM0_CHANNEL0_OC_LOW_TH;
+            gTestSdfmPrms.channels[channel].threshold_config.zeroCrossEn = CONFIG_SDFM0_CHANNEL0_OC_EN_ZERO_CROSS;
 #if(CONFIG_SDFM0_CHANNEL0_OC_EN_ZERO_CROSS != 0 )
-            gTestSdfmPrms.compFilterPrms[channel].zeroCrossTh = CONFIG_SDFM0_CHANNEL0_OC_ZC_TH;
+            gTestSdfmPrms.channels[channel].threshold_config.zeroCrossTh = CONFIG_SDFM0_CHANNEL0_OC_ZC_TH;
 #endif     
 #endif
 
             /*fast detect parameters*/
-            gTestSdfmPrms.fastDetectPrms[channel][0] = CONFIG_SDFM0_CHANNEL0_EN_FD;
+            gTestSdfmPrms.channels[channel].enFastDetect = CONFIG_SDFM0_CHANNEL0_EN_FD;
 #if(CONFIG_SDFM0_CHANNEL0_EN_FD != 0 )       
-            gTestSdfmPrms.fastDetectPrms[channel][1] = CONFIG_SDFM0_CHANNEL0_FD_WINDOW_SIZE;
-            gTestSdfmPrms.fastDetectPrms[channel][2] = CONFIG_SDFM0_CHANNEL0_FD_MAX_ZERO_COUNT;
-            gTestSdfmPrms.fastDetectPrms[channel][3] = CONFIG_SDFM0_CHANNEL0_FD_MIN_ZERO_COUNT;
+            gTestSdfmPrms.channels[channel].fd_window = CONFIG_SDFM0_CHANNEL0_FD_WINDOW_SIZE;
+            gTestSdfmPrms.channels[channel].fd_zero_max = CONFIG_SDFM0_CHANNEL0_FD_MAX_ZERO_COUNT;
+            gTestSdfmPrms.channels[channel].fd_zero_min = CONFIG_SDFM0_CHANNEL0_FD_MIN_ZERO_COUNT;
 #endif
 #endif
             break;
         case 1:
-            gTestSdfmPrms.channelPrms[channel].chEnable  =  CONFIG_SDFM0_CHANNEL1;
+            gTestSdfmPrms.channels[channel].enabled  =  CONFIG_SDFM0_CHANNEL1;
 #if (CONFIG_SDFM0_CHANNEL1 != 0)
             /*Clock parameters*/
-            gTestSdfmPrms.clkPrms[channel].sdClock = CONFIG_SDFM0_CHANNEL1_MCLK;
-            gTestSdfmPrms.clkPrms[channel].clkSource = CONFIG_SDFM0_CHANNEL1_CLK_SOURCE;
-            gTestSdfmPrms.clkPrms[channel].clkInv = CONFIG_SDFM0_CHANNEL1_EN_CLK_INV;
+            gTestSdfmPrms.channels[channel].sdfmClock = CONFIG_SDFM0_CHANNEL1_MCLK;
+            gTestSdfmPrms.channels[channel].clk_source = CONFIG_SDFM0_CHANNEL1_CLK_SOURCE;
+            gTestSdfmPrms.channels[channel].clk_inv = CONFIG_SDFM0_CHANNEL1_EN_CLK_INV;
             
             /*Normal current parameters*/
-            gTestSdfmPrms.channelPrms[channel].accSource = CONFIG_SDFM0_CHANNEL1_ACC_SOURCE;
-            gTestSdfmPrms.channelPrms[channel].filterOsr = CONFIG_SDFM0_CHANNEL1_NC_OSR;
-            gTestSdfmPrms.channelPrms[channel].enableContinuousMode = CONFIG_SDFM0_CHANNEL1_EN_CONT_MODE;
-#if(CONFIG_SDFM0_CHANNEL1_EN_CONT_MODE == 0)
-            gTestSdfmPrms.channelPrms[channel].enSecondUpdate = CONFIG_SDFM0_CHANNEL1_EN_DOUBLE_UPDATE;
-            gTestSdfmPrms.channelPrms[channel].firstSampTrigTime = CONFIG_SDFM0_CHANNEL1_FIRST_TRIGGER_POINT;
-#if(CONFIG_SDFM0_CHANNEL1_EN_DOUBLE_UPDATE != 0)
-            gTestSdfmPrms.channelPrms[channel].secondSampTrigTime = CONFIG_SDFM0_CHANNEL1_SECOND_TRIGGER_POINT;
-#endif
-#endif
-            gTestSdfmPrms.channelPrms[channel].enableEpwmSync = CONFIG_SDFM0_CHANNEL1_EN_EPWM_SYNC;
-#if(CONFIG_SDFM0_CHANNEL1_EN_EPWM_SYNC != 0)
-            gTestSdfmPrms.channelPrms[channel].epwmSyncSource = CONFIG_SDFM0_CHANNEL1_EPWM_SOURCE;
-#endif
-
+            gTestSdfmPrms.channels[channel].filter_type = CONFIG_SDFM0_CHANNEL1_ACC_SOURCE;
+            gTestSdfmPrms.channels[channel].normal_current_osr = CONFIG_SDFM0_CHANNEL1_NC_OSR;
+            
             /*Over current parameters*/
-            gTestSdfmPrms.compFilterPrms[channel].enComparator = CONFIG_SDFM0_CHANNEL1_EN_COMP;
+            gTestSdfmPrms.channels[channel].enable_comparator = CONFIG_SDFM0_CHANNEL1_EN_COMP;
 #if(CONFIG_SDFM0_CHANNEL1_EN_COMP  != 0)
-            gTestSdfmPrms.compFilterPrms[channel].comFilterOsr = CONFIG_SDFM0_CHANNEL1_OC_OSR;
-            gTestSdfmPrms.compFilterPrms[channel].comThresholds[0] = CONFIG_SDFM0_CHANNEL1_OC_HIGH_TH;
-            gTestSdfmPrms.compFilterPrms[channel].comThresholds[1] = CONFIG_SDFM0_CHANNEL1_OC_LOW_TH;
-            gTestSdfmPrms.compFilterPrms[channel].zeroCrossEn = CONFIG_SDFM0_CHANNEL1_OC_EN_ZERO_CROSS;
+            gTestSdfmPrms.channels[channel].over_current_osr = CONFIG_SDFM0_CHANNEL1_OC_OSR;
+            gTestSdfmPrms.channels[channel].threshold_config.high_threshold = CONFIG_SDFM0_CHANNEL1_OC_HIGH_TH;
+            gTestSdfmPrms.channels[channel].threshold_config.low_threshold = CONFIG_SDFM0_CHANNEL1_OC_LOW_TH;
+            gTestSdfmPrms.channels[channel].threshold_config.zeroCrossEn = CONFIG_SDFM0_CHANNEL1_OC_EN_ZERO_CROSS;
 #if(CONFIG_SDFM0_CHANNEL1_OC_EN_ZERO_CROSS != 0 )
-            gTestSdfmPrms.compFilterPrms[channel].zeroCrossTh = CONFIG_SDFM0_CHANNEL1_OC_ZC_TH;
+            gTestSdfmPrms.channels[channel].threshold_config.zeroCrossTh = CONFIG_SDFM0_CHANNEL1_OC_ZC_TH;
 #endif
 #endif
 
             /*fast detect parameters*/
-            gTestSdfmPrms.fastDetectPrms[channel][0] = CONFIG_SDFM0_CHANNEL1_EN_FD;
+            gTestSdfmPrms.channels[channel].enFastDetect = CONFIG_SDFM0_CHANNEL1_EN_FD;
 #if(CONFIG_SDFM0_CHANNEL1_EN_FD != 0 )
-            gTestSdfmPrms.fastDetectPrms[channel][1] = CONFIG_SDFM0_CHANNEL1_FD_WINDOW_SIZE;
-            gTestSdfmPrms.fastDetectPrms[channel][2] = CONFIG_SDFM0_CHANNEL1_FD_MAX_ZERO_COUNT;
-            gTestSdfmPrms.fastDetectPrms[channel][3] = CONFIG_SDFM0_CHANNEL1_FD_MIN_ZERO_COUNT;
+            gTestSdfmPrms.channels[channel].fd_window = CONFIG_SDFM0_CHANNEL1_FD_WINDOW_SIZE;
+            gTestSdfmPrms.channels[channel].fd_zero_max = CONFIG_SDFM0_CHANNEL1_FD_MAX_ZERO_COUNT;
+            gTestSdfmPrms.channels[channel].fd_zero_min = CONFIG_SDFM0_CHANNEL1_FD_MIN_ZERO_COUNT;
 #endif
 #endif
             break;
         case 2:
-            gTestSdfmPrms.channelPrms[channel].chEnable  =  CONFIG_SDFM0_CHANNEL2;
+            gTestSdfmPrms.channels[channel].enabled  =  CONFIG_SDFM0_CHANNEL2;
 #if (CONFIG_SDFM0_CHANNEL2 != 0)
             /*Clock parameters*/
-            gTestSdfmPrms.clkPrms[channel].sdClock = CONFIG_SDFM0_CHANNEL2_MCLK;
-            gTestSdfmPrms.clkPrms[channel].clkSource = CONFIG_SDFM0_CHANNEL2_CLK_SOURCE;
-            gTestSdfmPrms.clkPrms[channel].clkInv = CONFIG_SDFM0_CHANNEL2_EN_CLK_INV;
+            gTestSdfmPrms.channels[channel].sdfmClock = CONFIG_SDFM0_CHANNEL2_MCLK;
+            gTestSdfmPrms.channels[channel].clk_source = CONFIG_SDFM0_CHANNEL2_CLK_SOURCE;
+            gTestSdfmPrms.channels[channel].clk_inv = CONFIG_SDFM0_CHANNEL2_EN_CLK_INV;
             
             /*Normal current parameters*/
-            gTestSdfmPrms.channelPrms[channel].accSource = CONFIG_SDFM0_CHANNEL2_ACC_SOURCE;
-            gTestSdfmPrms.channelPrms[channel].filterOsr = CONFIG_SDFM0_CHANNEL2_NC_OSR;
-            gTestSdfmPrms.channelPrms[channel].enableContinuousMode = CONFIG_SDFM0_CHANNEL2_EN_CONT_MODE;
-#if(CONFIG_SDFM0_CHANNEL2_EN_CONT_MODE == 0)
-            gTestSdfmPrms.channelPrms[channel].enSecondUpdate = CONFIG_SDFM0_CHANNEL2_EN_DOUBLE_UPDATE;
-            gTestSdfmPrms.channelPrms[channel].firstSampTrigTime = CONFIG_SDFM0_CHANNEL2_FIRST_TRIGGER_POINT;
-#if(CONFIG_SDFM0_CHANNEL2_EN_DOUBLE_UPDATE != 0)
-            gTestSdfmPrms.channelPrms[channel].secondSampTrigTime = CONFIG_SDFM0_CHANNEL2_SECOND_TRIGGER_POINT;
-#endif
-#endif
-            gTestSdfmPrms.channelPrms[channel].enableEpwmSync = CONFIG_SDFM0_CHANNEL2_EN_EPWM_SYNC;
-#if(CONFIG_SDFM0_CHANNEL2_EN_EPWM_SYNC != 0)
-            gTestSdfmPrms.channelPrms[channel].epwmSyncSource = CONFIG_SDFM0_CHANNEL2_EPWM_SOURCE;
-#endif
-
+            gTestSdfmPrms.channels[channel].filter_type = CONFIG_SDFM0_CHANNEL2_ACC_SOURCE;
+            gTestSdfmPrms.channels[channel].normal_current_osr = CONFIG_SDFM0_CHANNEL2_NC_OSR;
+            
             /*Over current parameters*/
-            gTestSdfmPrms.compFilterPrms[channel].enComparator = CONFIG_SDFM0_CHANNEL2_EN_COMP;
+            gTestSdfmPrms.channels[channel].enable_comparator = CONFIG_SDFM0_CHANNEL2_EN_COMP;
 #if(CONFIG_SDFM0_CHANNEL2_EN_COMP  != 0)
-            gTestSdfmPrms.compFilterPrms[channel].comFilterOsr = CONFIG_SDFM0_CHANNEL2_OC_OSR;
-            gTestSdfmPrms.compFilterPrms[channel].comThresholds[0] = CONFIG_SDFM0_CHANNEL2_OC_HIGH_TH;
-            gTestSdfmPrms.compFilterPrms[channel].comThresholds[1] = CONFIG_SDFM0_CHANNEL2_OC_LOW_TH;
-            gTestSdfmPrms.compFilterPrms[channel].zeroCrossEn = CONFIG_SDFM0_CHANNEL2_OC_EN_ZERO_CROSS;
+            gTestSdfmPrms.channels[channel].over_current_osr = CONFIG_SDFM0_CHANNEL2_OC_OSR;
+            gTestSdfmPrms.channels[channel].threshold_config.high_threshold = CONFIG_SDFM0_CHANNEL2_OC_HIGH_TH;
+            gTestSdfmPrms.channels[channel].threshold_config.low_threshold = CONFIG_SDFM0_CHANNEL2_OC_LOW_TH;
+            gTestSdfmPrms.channels[channel].threshold_config.zeroCrossEn = CONFIG_SDFM0_CHANNEL2_OC_EN_ZERO_CROSS;
 #if(CONFIG_SDFM0_CHANNEL2_OC_EN_ZERO_CROSS != 0 )
-            gTestSdfmPrms.compFilterPrms[channel].zeroCrossTh = CONFIG_SDFM0_CHANNEL2_OC_ZC_TH;
+            gTestSdfmPrms.channels[channel].threshold_config.zeroCrossTh = CONFIG_SDFM0_CHANNEL2_OC_ZC_TH;
 #endif
 #endif
 
             /*fast detect parameters*/
-            gTestSdfmPrms.fastDetectPrms[channel][0] = CONFIG_SDFM0_CHANNEL2_EN_FD;
+            gTestSdfmPrms.channels[channel].enFastDetect = CONFIG_SDFM0_CHANNEL2_EN_FD;
 #if(CONFIG_SDFM0_CHANNEL2_EN_FD != 0 )
-            gTestSdfmPrms.fastDetectPrms[channel][1] = CONFIG_SDFM0_CHANNEL2_FD_WINDOW_SIZE;
-            gTestSdfmPrms.fastDetectPrms[channel][2] = CONFIG_SDFM0_CHANNEL2_FD_MAX_ZERO_COUNT;
-            gTestSdfmPrms.fastDetectPrms[channel][3] = CONFIG_SDFM0_CHANNEL2_FD_MIN_ZERO_COUNT;
+            gTestSdfmPrms.channels[channel].fd_window = CONFIG_SDFM0_CHANNEL2_FD_WINDOW_SIZE;
+            gTestSdfmPrms.channels[channel].fd_zero_max = CONFIG_SDFM0_CHANNEL2_FD_MAX_ZERO_COUNT;
+            gTestSdfmPrms.channels[channel].fd_zero_min = CONFIG_SDFM0_CHANNEL2_FD_MIN_ZERO_COUNT;
 #endif
 #endif
             break;
         case 3:
-            gTestSdfmPrms.channelPrms[0].chEnable  =  CONFIG_SDFM0_CHANNEL3;
+            gTestSdfmPrms.channels[channel].enabled  =  CONFIG_SDFM0_CHANNEL3;
 #if (CONFIG_SDFM0_CHANNEL3 != 0)
             /*Clock parameters*/
-            gTestSdfmPrms.clkPrms[0].sdClock = CONFIG_SDFM0_CHANNEL3_MCLK;
-            gTestSdfmPrms.clkPrms[0].clkSource = CONFIG_SDFM0_CHANNEL3_CLK_SOURCE;
-            gTestSdfmPrms.clkPrms[0].clkInv = CONFIG_SDFM0_CHANNEL3_EN_CLK_INV;
+            gTestSdfmPrms.channels[channel].sdfmClock = CONFIG_SDFM0_CHANNEL3_MCLK;
+            gTestSdfmPrms.channels[channel].clk_source = CONFIG_SDFM0_CHANNEL3_CLK_SOURCE;
+            gTestSdfmPrms.channels[channel].clk_inv = CONFIG_SDFM0_CHANNEL3_EN_CLK_INV;
             
             /*Normal current parameters*/
-            gTestSdfmPrms.channelPrms[0].accSource = CONFIG_SDFM0_CHANNEL3_ACC_SOURCE;
-            gTestSdfmPrms.channelPrms[0].filterOsr = CONFIG_SDFM0_CHANNEL3_NC_OSR;
-            gTestSdfmPrms.channelPrms[0].enableContinuousMode = CONFIG_SDFM0_CHANNEL3_EN_CONT_MODE;
-#if(CONFIG_SDFM0_CHANNEL3_EN_CONT_MODE == 0)
-            gTestSdfmPrms.channelPrms[0].enSecondUpdate = CONFIG_SDFM0_CHANNEL3_EN_DOUBLE_UPDATE;
-            gTestSdfmPrms.channelPrms[0].firstSampTrigTime = CONFIG_SDFM0_CHANNEL3_FIRST_TRIGGER_POINT;
-#if(CONFIG_SDFM0_CHANNEL3_EN_DOUBLE_UPDATE != 0)
-            gTestSdfmPrms.channelPrms[0].secondSampTrigTime = CONFIG_SDFM0_CHANNEL3_SECOND_TRIGGER_POINT;
-#endif
-#endif
-            gTestSdfmPrms.channelPrms[0].enableEpwmSync = CONFIG_SDFM0_CHANNEL3_EN_EPWM_SYNC;
-#if(CONFIG_SDFM0_CHANNEL3_EN_EPWM_SYNC != 0)
-            gTestSdfmPrms.channelPrms[0].epwmSyncSource = CONFIG_SDFM0_CHANNEL3_EPWM_SOURCE;
-#endif
-
+            gTestSdfmPrms.channels[channel].filter_type = CONFIG_SDFM0_CHANNEL3_ACC_SOURCE;
+            gTestSdfmPrms.channels[channel].normal_current_osr = CONFIG_SDFM0_CHANNEL3_NC_OSR;
+            
             /*Over current parameters*/
-            gTestSdfmPrms.compFilterPrms[0].enComparator = CONFIG_SDFM0_CHANNEL3_EN_COMP;
+            gTestSdfmPrms.channels[channel].enable_comparator = CONFIG_SDFM0_CHANNEL3_EN_COMP;
 #if(CONFIG_SDFM0_CHANNEL3_EN_COMP  != 0)
-            gTestSdfmPrms.compFilterPrms[0].comFilterOsr = CONFIG_SDFM0_CHANNEL3_OC_OSR;
-            gTestSdfmPrms.compFilterPrms[0].comThresholds[0] = CONFIG_SDFM0_CHANNEL3_OC_HIGH_TH;
-            gTestSdfmPrms.compFilterPrms[0].comThresholds[1] = CONFIG_SDFM0_CHANNEL3_OC_LOW_TH;
-            gTestSdfmPrms.compFilterPrms[0].zeroCrossEn = CONFIG_SDFM0_CHANNEL3_OC_EN_ZERO_CROSS;
+            gTestSdfmPrms.channels[channel].over_current_osr = CONFIG_SDFM0_CHANNEL3_OC_OSR;
+            gTestSdfmPrms.channels[channel].threshold_config.high_threshold = CONFIG_SDFM0_CHANNEL3_OC_HIGH_TH;
+            gTestSdfmPrms.channels[channel].threshold_config.low_threshold = CONFIG_SDFM0_CHANNEL3_OC_LOW_TH;
+            gTestSdfmPrms.channels[channel].threshold_config.zeroCrossEn = CONFIG_SDFM0_CHANNEL3_OC_EN_ZERO_CROSS;
 #if(CONFIG_SDFM0_CHANNEL3_OC_EN_ZERO_CROSS != 0 )
-            gTestSdfmPrms.compFilterPrms[0].zeroCrossTh = CONFIG_SDFM0_CHANNEL3_OC_ZC_TH;
+            gTestSdfmPrms.channels[channel].threshold_config.zeroCrossTh = CONFIG_SDFM0_CHANNEL3_OC_ZC_TH;
 #endif
 #endif
 
             /*fast detect parameters*/
-            gTestSdfmPrms.fastDetectPrms[0][0] = CONFIG_SDFM0_CHANNEL3_EN_FD;
+            gTestSdfmPrms.channels[channel].enFastDetect = CONFIG_SDFM0_CHANNEL3_EN_FD;
 #if(CONFIG_SDFM0_CHANNEL3_EN_FD != 0 )
-            gTestSdfmPrms.fastDetectPrms[0][1] = CONFIG_SDFM0_CHANNEL3_FD_WINDOW_SIZE;
-            gTestSdfmPrms.fastDetectPrms[0][2] = CONFIG_SDFM0_CHANNEL3_FD_MAX_ZERO_COUNT;
-            gTestSdfmPrms.fastDetectPrms[0][3] = CONFIG_SDFM0_CHANNEL3_FD_MIN_ZERO_COUNT;
+            gTestSdfmPrms.channels[channel].fd_window = CONFIG_SDFM0_CHANNEL3_FD_WINDOW_SIZE;
+            gTestSdfmPrms.channels[channel].fd_zero_max = CONFIG_SDFM0_CHANNEL3_FD_MAX_ZERO_COUNT;
+            gTestSdfmPrms.channels[channel].fd_zero_min = CONFIG_SDFM0_CHANNEL3_FD_MIN_ZERO_COUNT;
 #endif
 #endif
             break;
         case 4:
-            gTestSdfmPrms.channelPrms[1].chEnable  =  CONFIG_SDFM0_CHANNEL4;
+            gTestSdfmPrms.channels[channel].enabled  =  CONFIG_SDFM0_CHANNEL4;
 #if (CONFIG_SDFM0_CHANNEL4 != 0)
             /*Clock parameters*/
-            gTestSdfmPrms.clkPrms[1].sdClock = CONFIG_SDFM0_CHANNEL4_MCLK;
-            gTestSdfmPrms.clkPrms[1].clkSource = CONFIG_SDFM0_CHANNEL4_CLK_SOURCE;
-            gTestSdfmPrms.clkPrms[1].clkInv = CONFIG_SDFM0_CHANNEL4_EN_CLK_INV;
+            gTestSdfmPrms.channels[channel].sdfmClock = CONFIG_SDFM0_CHANNEL4_MCLK;
+            gTestSdfmPrms.channels[channel].clk_source = CONFIG_SDFM0_CHANNEL4_CLK_SOURCE;
+            gTestSdfmPrms.channels[channel].clk_inv = CONFIG_SDFM0_CHANNEL4_EN_CLK_INV;
             
             /*Normal current parameters*/
-            gTestSdfmPrms.channelPrms[1].accSource = CONFIG_SDFM0_CHANNEL4_ACC_SOURCE;
-            gTestSdfmPrms.channelPrms[1].filterOsr = CONFIG_SDFM0_CHANNEL4_NC_OSR;
-            gTestSdfmPrms.channelPrms[1].enableContinuousMode = CONFIG_SDFM0_CHANNEL4_EN_CONT_MODE;
-#if(CONFIG_SDFM0_CHANNEL4_EN_CONT_MODE == 0)
-            gTestSdfmPrms.channelPrms[1].enSecondUpdate = CONFIG_SDFM0_CHANNEL4_EN_DOUBLE_UPDATE;
-            gTestSdfmPrms.channelPrms[1].firstSampTrigTime = CONFIG_SDFM0_CHANNEL4_FIRST_TRIGGER_POINT;
-#if(CONFIG_SDFM0_CHANNEL4_EN_DOUBLE_UPDATE != 0)
-            gTestSdfmPrms.channelPrms[1].secondSampTrigTime = CONFIG_SDFM0_CHANNEL4_SECOND_TRIGGER_POINT;
-#endif
-#endif
-            gTestSdfmPrms.channelPrms[1].enableEpwmSync = CONFIG_SDFM0_CHANNEL4_EN_EPWM_SYNC;
-#if(CONFIG_SDFM0_CHANNEL4_EN_EPWM_SYNC != 0)
-            gTestSdfmPrms.channelPrms[1].epwmSyncSource = CONFIG_SDFM0_CHANNEL4_EPWM_SOURCE;
-#endif
-
+            gTestSdfmPrms.channels[channel].filter_type = CONFIG_SDFM0_CHANNEL4_ACC_SOURCE;
+            gTestSdfmPrms.channels[channel].normal_current_osr = CONFIG_SDFM0_CHANNEL4_NC_OSR;
+            
             /*Over current parameters*/
-            gTestSdfmPrms.compFilterPrms[1].enComparator = CONFIG_SDFM0_CHANNEL4_EN_COMP;
+            gTestSdfmPrms.channels[channel].enable_comparator = CONFIG_SDFM0_CHANNEL4_EN_COMP;
 #if(CONFIG_SDFM0_CHANNEL4_EN_COMP  != 0)
-            gTestSdfmPrms.compFilterPrms[1].comFilterOsr = CONFIG_SDFM0_CHANNEL4_OC_OSR;
-            gTestSdfmPrms.compFilterPrms[1].comThresholds[0] = CONFIG_SDFM0_CHANNEL4_OC_HIGH_TH;
-            gTestSdfmPrms.compFilterPrms[1].comThresholds[1] = CONFIG_SDFM0_CHANNEL4_OC_LOW_TH;
-            gTestSdfmPrms.compFilterPrms[1].zeroCrossEn = CONFIG_SDFM0_CHANNEL4_OC_EN_ZERO_CROSS;
+            gTestSdfmPrms.channels[channel].over_current_osr = CONFIG_SDFM0_CHANNEL4_OC_OSR;
+            gTestSdfmPrms.channels[channel].threshold_config.high_threshold = CONFIG_SDFM0_CHANNEL4_OC_HIGH_TH;
+            gTestSdfmPrms.channels[channel].threshold_config.low_threshold = CONFIG_SDFM0_CHANNEL4_OC_LOW_TH;
+            gTestSdfmPrms.channels[channel].threshold_config.zeroCrossEn = CONFIG_SDFM0_CHANNEL4_OC_EN_ZERO_CROSS;
 #if(CONFIG_SDFM0_CHANNEL4_OC_EN_ZERO_CROSS != 0 )
-            gTestSdfmPrms.compFilterPrms[1].zeroCrossTh = CONFIG_SDFM0_CHANNEL4_OC_ZC_TH;
+            gTestSdfmPrms.channels[channel].threshold_config.zeroCrossTh = CONFIG_SDFM0_CHANNEL4_OC_ZC_TH;
 #endif
 #endif
 
             /*fast detect parameters*/
-            gTestSdfmPrms.fastDetectPrms[1][0] = CONFIG_SDFM0_CHANNEL4_EN_FD;
+            gTestSdfmPrms.channels[channel].enFastDetect = CONFIG_SDFM0_CHANNEL4_EN_FD;
 #if(CONFIG_SDFM0_CHANNEL4_EN_FD != 0 )
-            gTestSdfmPrms.fastDetectPrms[1][1] = CONFIG_SDFM0_CHANNEL4_FD_WINDOW_SIZE;
-            gTestSdfmPrms.fastDetectPrms[1][2] = CONFIG_SDFM0_CHANNEL4_FD_MAX_ZERO_COUNT;
-            gTestSdfmPrms.fastDetectPrms[1][3] = CONFIG_SDFM0_CHANNEL4_FD_MIN_ZERO_COUNT;
+            gTestSdfmPrms.channels[channel].fd_window = CONFIG_SDFM0_CHANNEL4_FD_WINDOW_SIZE;
+            gTestSdfmPrms.channels[channel].fd_zero_max = CONFIG_SDFM0_CHANNEL4_FD_MAX_ZERO_COUNT;
+            gTestSdfmPrms.channels[channel].fd_zero_min = CONFIG_SDFM0_CHANNEL4_FD_MIN_ZERO_COUNT;
 #endif
 #endif
             break;
         case 5:
-            gTestSdfmPrms.channelPrms[2].chEnable  =  CONFIG_SDFM0_CHANNEL5;
+            gTestSdfmPrms.channels[channel].enabled  =  CONFIG_SDFM0_CHANNEL5;
 #if (CONFIG_SDFM0_CHANNEL5 != 0)
             /*Clock parameters*/
-            gTestSdfmPrms.clkPrms[2].sdClock = CONFIG_SDFM0_CHANNEL5_MCLK;
-            gTestSdfmPrms.clkPrms[2].clkSource = CONFIG_SDFM0_CHANNEL5_CLK_SOURCE;
-            gTestSdfmPrms.clkPrms[2].clkInv = CONFIG_SDFM0_CHANNEL5_EN_CLK_INV;
+            gTestSdfmPrms.channels[channel].sdfmClock = CONFIG_SDFM0_CHANNEL5_MCLK;
+            gTestSdfmPrms.channels[channel].clk_source = CONFIG_SDFM0_CHANNEL5_CLK_SOURCE;
+            gTestSdfmPrms.channels[channel].clk_inv = CONFIG_SDFM0_CHANNEL5_EN_CLK_INV;
             
             /*Normal current parameters*/
-            gTestSdfmPrms.channelPrms[2].accSource = CONFIG_SDFM0_CHANNEL5_ACC_SOURCE;
-            gTestSdfmPrms.channelPrms[2].filterOsr = CONFIG_SDFM0_CHANNEL5_NC_OSR;
-            gTestSdfmPrms.channelPrms[2].enableContinuousMode = CONFIG_SDFM0_CHANNEL5_EN_CONT_MODE;
-#if(CONFIG_SDFM0_CHANNEL5_EN_CONT_MODE == 0)
-            gTestSdfmPrms.channelPrms[2].enSecondUpdate = CONFIG_SDFM0_CHANNEL5_EN_DOUBLE_UPDATE;
-            gTestSdfmPrms.channelPrms[2].firstSampTrigTime = CONFIG_SDFM0_CHANNEL5_FIRST_TRIGGER_POINT;
-#if(CONFIG_SDFM0_CHANNEL5_EN_DOUBLE_UPDATE != 0)
-            gTestSdfmPrms.channelPrms[2].secondSampTrigTime = CONFIG_SDFM0_CHANNEL5_SECOND_TRIGGER_POINT;
-#endif
-#endif
-            gTestSdfmPrms.channelPrms[2].enableEpwmSync = CONFIG_SDFM0_CHANNEL5_EN_EPWM_SYNC;
-#if(CONFIG_SDFM0_CHANNEL5_EN_EPWM_SYNC != 0)
-            gTestSdfmPrms.channelPrms[2].epwmSyncSource = CONFIG_SDFM0_CHANNEL5_EPWM_SOURCE;
-#endif
-
+            gTestSdfmPrms.channels[channel].filter_type = CONFIG_SDFM0_CHANNEL5_ACC_SOURCE;
+            gTestSdfmPrms.channels[channel].normal_current_osr = CONFIG_SDFM0_CHANNEL5_NC_OSR;
+           
             /*Over current parameters*/
-            gTestSdfmPrms.compFilterPrms[2].enComparator = CONFIG_SDFM0_CHANNEL5_EN_COMP;
+            gTestSdfmPrms.channels[channel].enable_comparator = CONFIG_SDFM0_CHANNEL5_EN_COMP;
 #if(CONFIG_SDFM0_CHANNEL5_EN_COMP  != 0)
-            gTestSdfmPrms.compFilterPrms[2].comFilterOsr = CONFIG_SDFM0_CHANNEL5_OC_OSR;
-            gTestSdfmPrms.compFilterPrms[2].comThresholds[0] = CONFIG_SDFM0_CHANNEL5_OC_HIGH_TH;
-            gTestSdfmPrms.compFilterPrms[2].comThresholds[1] = CONFIG_SDFM0_CHANNEL5_OC_LOW_TH;
-            gTestSdfmPrms.compFilterPrms[2].zeroCrossEn = CONFIG_SDFM0_CHANNEL5_OC_EN_ZERO_CROSS;
+            gTestSdfmPrms.channels[channel].over_current_osr = CONFIG_SDFM0_CHANNEL5_OC_OSR;
+            gTestSdfmPrms.channels[channel].threshold_config.high_threshold = CONFIG_SDFM0_CHANNEL5_OC_HIGH_TH;
+            gTestSdfmPrms.channels[channel].threshold_config.low_threshold = CONFIG_SDFM0_CHANNEL5_OC_LOW_TH;
+            gTestSdfmPrms.channels[channel].threshold_config.zeroCrossEn = CONFIG_SDFM0_CHANNEL5_OC_EN_ZERO_CROSS;
 #if(CONFIG_SDFM0_CHANNEL5_OC_EN_ZERO_CROSS != 0 )
-            gTestSdfmPrms.compFilterPrms[2].zeroCrossTh = CONFIG_SDFM0_CHANNEL5_OC_ZC_TH;
+            gTestSdfmPrms.channels[channel].threshold_config.zeroCrossTh = CONFIG_SDFM0_CHANNEL5_OC_ZC_TH;
 #endif
 #endif
 
             /*fast detect parameters*/
-            gTestSdfmPrms.fastDetectPrms[2][0] = CONFIG_SDFM0_CHANNEL5_EN_FD;
+            gTestSdfmPrms.channels[channel].enFastDetect = CONFIG_SDFM0_CHANNEL5_EN_FD;
 #if(CONFIG_SDFM0_CHANNEL5_EN_FD != 0 )
-            gTestSdfmPrms.fastDetectPrms[2][1] = CONFIG_SDFM0_CHANNEL5_FD_WINDOW_SIZE;
-            gTestSdfmPrms.fastDetectPrms[2][2] = CONFIG_SDFM0_CHANNEL5_FD_MAX_ZERO_COUNT;
-            gTestSdfmPrms.fastDetectPrms[2][3] = CONFIG_SDFM0_CHANNEL5_FD_MIN_ZERO_COUNT;
+            gTestSdfmPrms.channels[channel].fd_window = CONFIG_SDFM0_CHANNEL5_FD_WINDOW_SIZE;
+            gTestSdfmPrms.channels[channel].fd_zero_max = CONFIG_SDFM0_CHANNEL5_FD_MAX_ZERO_COUNT;
+            gTestSdfmPrms.channels[channel].fd_zero_min = CONFIG_SDFM0_CHANNEL5_FD_MIN_ZERO_COUNT;
 #endif
 #endif
             break;
         case 6:
-            gTestSdfmPrms.channelPrms[0].chEnable  =  CONFIG_SDFM0_CHANNEL6;
+            gTestSdfmPrms.channels[channel].enabled  =  CONFIG_SDFM0_CHANNEL6;
 #if (CONFIG_SDFM0_CHANNEL6 != 0)
             /*Clock parameters*/
-            gTestSdfmPrms.clkPrms[0].sdClock = CONFIG_SDFM0_CHANNEL6_MCLK;
-            gTestSdfmPrms.clkPrms[0].clkSource = CONFIG_SDFM0_CHANNEL6_CLK_SOURCE;
-            gTestSdfmPrms.clkPrms[0].clkInv = CONFIG_SDFM0_CHANNEL6_EN_CLK_INV;
+            gTestSdfmPrms.channels[channel].sdfmClock = CONFIG_SDFM0_CHANNEL6_MCLK;
+            gTestSdfmPrms.channels[channel].clk_source = CONFIG_SDFM0_CHANNEL6_CLK_SOURCE;
+            gTestSdfmPrms.channels[channel].clk_inv = CONFIG_SDFM0_CHANNEL6_EN_CLK_INV;
             
             /*Normal current parameters*/
-            gTestSdfmPrms.channelPrms[0].accSource = CONFIG_SDFM0_CHANNEL6_ACC_SOURCE;
-            gTestSdfmPrms.channelPrms[0].filterOsr = CONFIG_SDFM0_CHANNEL6_NC_OSR;
-            gTestSdfmPrms.channelPrms[0].enableContinuousMode = CONFIG_SDFM0_CHANNEL6_EN_CONT_MODE;
-#if(CONFIG_SDFM0_CHANNEL6_EN_CONT_MODE == 0)
-            gTestSdfmPrms.channelPrms[0].enSecondUpdate = CONFIG_SDFM0_CHANNEL6_EN_DOUBLE_UPDATE;
-            gTestSdfmPrms.channelPrms[0].firstSampTrigTime = CONFIG_SDFM0_CHANNEL6_FIRST_TRIGGER_POINT;
-#if(CONFIG_SDFM0_CHANNEL6_EN_DOUBLE_UPDATE != 0)
-            gTestSdfmPrms.channelPrms[0].secondSampTrigTime = CONFIG_SDFM0_CHANNEL6_SECOND_TRIGGER_POINT;
-#endif
-#endif
-            gTestSdfmPrms.channelPrms[0].enableEpwmSync = CONFIG_SDFM0_CHANNEL6_EN_EPWM_SYNC;
-#if(CONFIG_SDFM0_CHANNEL6_EN_EPWM_SYNC != 0)
-            gTestSdfmPrms.channelPrms[0].epwmSyncSource = CONFIG_SDFM0_CHANNEL6_EPWM_SOURCE;
-#endif
+            gTestSdfmPrms.channels[channel].filter_type = CONFIG_SDFM0_CHANNEL6_ACC_SOURCE;
+            gTestSdfmPrms.channels[channel].normal_current_osr = CONFIG_SDFM0_CHANNEL6_NC_OSR;
 
             /*Over current parameters*/
-            gTestSdfmPrms.compFilterPrms[0].enComparator = CONFIG_SDFM0_CHANNEL6_EN_COMP;
+            gTestSdfmPrms.channels[channel].enable_comparator = CONFIG_SDFM0_CHANNEL6_EN_COMP;
 #if(CONFIG_SDFM0_CHANNEL6_EN_COMP  != 0)
-            gTestSdfmPrms.compFilterPrms[0].comFilterOsr = CONFIG_SDFM0_CHANNEL6_OC_OSR;
-            gTestSdfmPrms.compFilterPrms[0].comThresholds[0] = CONFIG_SDFM0_CHANNEL6_OC_HIGH_TH;
-            gTestSdfmPrms.compFilterPrms[0].comThresholds[1] = CONFIG_SDFM0_CHANNEL6_OC_LOW_TH;
-            gTestSdfmPrms.compFilterPrms[0].zeroCrossEn = CONFIG_SDFM0_CHANNEL6_OC_EN_ZERO_CROSS;
+            gTestSdfmPrms.channels[channel].over_current_osr = CONFIG_SDFM0_CHANNEL6_OC_OSR;
+            gTestSdfmPrms.channels[channel].threshold_config.high_threshold = CONFIG_SDFM0_CHANNEL6_OC_HIGH_TH;
+            gTestSdfmPrms.channels[channel].threshold_config.low_threshold = CONFIG_SDFM0_CHANNEL6_OC_LOW_TH;
+            gTestSdfmPrms.channels[channel].threshold_config.zeroCrossEn = CONFIG_SDFM0_CHANNEL6_OC_EN_ZERO_CROSS;
 #if(CONFIG_SDFM0_CHANNEL6_OC_EN_ZERO_CROSS != 0 )
-            gTestSdfmPrms.compFilterPrms[0].zeroCrossTh = CONFIG_SDFM0_CHANNEL6_OC_ZC_TH;
+            gTestSdfmPrms.channels[channel].threshold_config.zeroCrossTh = CONFIG_SDFM0_CHANNEL6_OC_ZC_TH;
 #endif
 #endif
 
             /*fast detect parameters*/
-            gTestSdfmPrms.fastDetectPrms[0][0] = CONFIG_SDFM0_CHANNEL6_EN_FD;
+            gTestSdfmPrms.channels[channel].enFastDetect = CONFIG_SDFM0_CHANNEL6_EN_FD;
 #if(CONFIG_SDFM0_CHANNEL6_EN_FD != 0 )
-            gTestSdfmPrms.fastDetectPrms[0][1] = CONFIG_SDFM0_CHANNEL6_FD_WINDOW_SIZE;
-            gTestSdfmPrms.fastDetectPrms[0][2] = CONFIG_SDFM0_CHANNEL6_FD_MAX_ZERO_COUNT;
-            gTestSdfmPrms.fastDetectPrms[0][3] = CONFIG_SDFM0_CHANNEL6_FD_MIN_ZERO_COUNT;
+            gTestSdfmPrms.channels[channel].fd_window = CONFIG_SDFM0_CHANNEL6_FD_WINDOW_SIZE;
+            gTestSdfmPrms.channels[channel].fd_zero_max = CONFIG_SDFM0_CHANNEL6_FD_MAX_ZERO_COUNT;
+            gTestSdfmPrms.channels[channel].fd_zero_min = CONFIG_SDFM0_CHANNEL6_FD_MIN_ZERO_COUNT;
 #endif
 #endif
             break;
         case 7:
-            gTestSdfmPrms.channelPrms[1].chEnable  =  CONFIG_SDFM0_CHANNEL7;
+            gTestSdfmPrms.channels[channel].enabled  =  CONFIG_SDFM0_CHANNEL7;
 #if (CONFIG_SDFM0_CHANNEL7 != 0)
             /*Clock parameters*/
-            gTestSdfmPrms.clkPrms[1].sdClock = CONFIG_SDFM0_CHANNEL7_MCLK;
-            gTestSdfmPrms.clkPrms[1].clkSource = CONFIG_SDFM0_CHANNEL7_CLK_SOURCE;
-            gTestSdfmPrms.clkPrms[1].clkInv = CONFIG_SDFM0_CHANNEL7_EN_CLK_INV;
+            gTestSdfmPrms.channels[channel].sdfmClock = CONFIG_SDFM0_CHANNEL7_MCLK;
+            gTestSdfmPrms.channels[channel].clk_source = CONFIG_SDFM0_CHANNEL7_CLK_SOURCE;
+            gTestSdfmPrms.channels[channel].clk_inv = CONFIG_SDFM0_CHANNEL7_EN_CLK_INV;
             
             /*Normal current parameters*/
-            gTestSdfmPrms.channelPrms[1].accSource = CONFIG_SDFM0_CHANNEL7_ACC_SOURCE;
-            gTestSdfmPrms.channelPrms[1].filterOsr = CONFIG_SDFM0_CHANNEL7_NC_OSR;
-            gTestSdfmPrms.channelPrms[1].enableContinuousMode = CONFIG_SDFM0_CHANNEL7_EN_CONT_MODE;
-#if(CONFIG_SDFM0_CHANNEL7_EN_CONT_MODE == 0)
-            gTestSdfmPrms.channelPrms[1].enSecondUpdate = CONFIG_SDFM0_CHANNEL7_EN_DOUBLE_UPDATE;
-            gTestSdfmPrms.channelPrms[1].firstSampTrigTime = CONFIG_SDFM0_CHANNEL7_FIRST_TRIGGER_POINT;
-#if(CONFIG_SDFM0_CHANNEL7_EN_DOUBLE_UPDATE != 0)
-            gTestSdfmPrms.channelPrms[1].secondSampTrigTime = CONFIG_SDFM0_CHANNEL7_SECOND_TRIGGER_POINT;
-#endif
-#endif
-            gTestSdfmPrms.channelPrms[1].enableEpwmSync = CONFIG_SDFM0_CHANNEL7_EN_EPWM_SYNC;
-#if(CONFIG_SDFM0_CHANNEL7_EN_EPWM_SYNC != 0)
-            gTestSdfmPrms.channelPrms[1].epwmSyncSource = CONFIG_SDFM0_CHANNEL7_EPWM_SOURCE;
-#endif
+            gTestSdfmPrms.channels[channel].filter_type = CONFIG_SDFM0_CHANNEL7_ACC_SOURCE;
+            gTestSdfmPrms.channels[channel].normal_current_osr = CONFIG_SDFM0_CHANNEL7_NC_OSR;
 
             /*Over current parameters*/
-            gTestSdfmPrms.compFilterPrms[1].enComparator = CONFIG_SDFM0_CHANNEL7_EN_COMP;
+            gTestSdfmPrms.channels[channel].enable_comparator = CONFIG_SDFM0_CHANNEL7_EN_COMP;
 #if(CONFIG_SDFM0_CHANNEL7_EN_COMP  != 0)
-            gTestSdfmPrms.compFilterPrms[1].comFilterOsr = CONFIG_SDFM0_CHANNEL7_OC_OSR;
-            gTestSdfmPrms.compFilterPrms[1].comThresholds[0] = CONFIG_SDFM0_CHANNEL7_OC_HIGH_TH;
-            gTestSdfmPrms.compFilterPrms[1].comThresholds[1] = CONFIG_SDFM0_CHANNEL7_OC_LOW_TH;
-            gTestSdfmPrms.compFilterPrms[1].zeroCrossEn = CONFIG_SDFM0_CHANNEL7_OC_EN_ZERO_CROSS;
+            gTestSdfmPrms.channels[channel].over_current_osr = CONFIG_SDFM0_CHANNEL7_OC_OSR;
+            gTestSdfmPrms.channels[channel].threshold_config.high_threshold = CONFIG_SDFM0_CHANNEL7_OC_HIGH_TH;
+            gTestSdfmPrms.channels[channel].threshold_config.low_threshold = CONFIG_SDFM0_CHANNEL7_OC_LOW_TH;
+            gTestSdfmPrms.channels[channel].threshold_config.zeroCrossEn = CONFIG_SDFM0_CHANNEL7_OC_EN_ZERO_CROSS;
 #if(CONFIG_SDFM0_CHANNEL7_OC_EN_ZERO_CROSS != 0 )
-            gTestSdfmPrms.compFilterPrms[1].zeroCrossTh = CONFIG_SDFM0_CHANNEL7_OC_ZC_TH;
+            gTestSdfmPrms.channels[channel].threshold_config.zeroCrossTh = CONFIG_SDFM0_CHANNEL7_OC_ZC_TH;
 #endif
 #endif
 
             /*fast detect parameters*/
-            gTestSdfmPrms.fastDetectPrms[1][0] = CONFIG_SDFM0_CHANNEL7_EN_FD;
+            gTestSdfmPrms.channels[channel].enFastDetect = CONFIG_SDFM0_CHANNEL7_EN_FD;
 #if(CONFIG_SDFM0_CHANNEL7_EN_FD != 0 )
-            gTestSdfmPrms.fastDetectPrms[1][1] = CONFIG_SDFM0_CHANNEL7_FD_WINDOW_SIZE;
-            gTestSdfmPrms.fastDetectPrms[1][2] = CONFIG_SDFM0_CHANNEL7_FD_MAX_ZERO_COUNT;
-            gTestSdfmPrms.fastDetectPrms[1][3] = CONFIG_SDFM0_CHANNEL7_FD_MIN_ZERO_COUNT;
+            gTestSdfmPrms.channels[channel].fd_window = CONFIG_SDFM0_CHANNEL7_FD_WINDOW_SIZE;
+            gTestSdfmPrms.channels[channel].fd_max_zero = CONFIG_SDFM0_CHANNEL7_FD_MAX_ZERO_COUNT;
+            gTestSdfmPrms.channels[channel].fd_min_zero = CONFIG_SDFM0_CHANNEL7_FD_MIN_ZERO_COUNT;
 #endif
 #endif
             break;
         case 8: 
-            gTestSdfmPrms.channelPrms[2].chEnable  =  CONFIG_SDFM0_CHANNEL8;
+            gTestSdfmPrms.channels[channel].enabled  =  CONFIG_SDFM0_CHANNEL8;
 #if (CONFIG_SDFM0_CHANNEL8 !=0 )
             /*Clock parameters*/
-            gTestSdfmPrms.clkPrms[2].sdClock = CONFIG_SDFM0_CHANNEL8_MCLK;
-            gTestSdfmPrms.clkPrms[2].clkSource = CONFIG_SDFM0_CHANNEL8_CLK_SOURCE;
-            gTestSdfmPrms.clkPrms[2].clkInv = CONFIG_SDFM0_CHANNEL8_EN_CLK_INV;
+            gTestSdfmPrms.channels[channel].sdfmClock = CONFIG_SDFM0_CHANNEL8_MCLK;
+            gTestSdfmPrms.channels[channel].clk_source = CONFIG_SDFM0_CHANNEL8_CLK_SOURCE;
+            gTestSdfmPrms.channels[channel].clk_inv = CONFIG_SDFM0_CHANNEL8_EN_CLK_INV;
             
             /*Normal current parameters*/
-            gTestSdfmPrms.channelPrms[2].accSource = CONFIG_SDFM0_CHANNEL8_ACC_SOURCE;
-            gTestSdfmPrms.channelPrms[2].filterOsr = CONFIG_SDFM0_CHANNEL8_NC_OSR;
-            gTestSdfmPrms.channelPrms[2].enableContinuousMode = CONFIG_SDFM0_CHANNEL8_EN_CONT_MODE;
-#if(CONFIG_SDFM0_CHANNEL8_EN_CONT_MODE == 0)
-            gTestSdfmPrms.channelPrms[2].enSecondUpdate = CONFIG_SDFM0_CHANNEL8_EN_DOUBLE_UPDATE;
-            gTestSdfmPrms.channelPrms[2].firstSampTrigTime = CONFIG_SDFM0_CHANNEL8_FIRST_TRIGGER_POINT;
-#if(CONFIG_SDFM0_CHANNEL8_EN_DOUBLE_UPDATE != 0)
-            gTestSdfmPrms.channelPrms[2].secondSampTrigTime = CONFIG_SDFM0_CHANNEL8_SECOND_TRIGGER_POINT;
-#endif
-#endif
-            gTestSdfmPrms.channelPrms[2].enableEpwmSync = CONFIG_SDFM0_CHANNEL8_EN_EPWM_SYNC;
-#if(CONFIG_SDFM0_CHANNEL8_EN_EPWM_SYNC != 0)
-            gTestSdfmPrms.channelPrms[2].epwmSyncSource = CONFIG_SDFM0_CHANNEL8_EPWM_SOURCE;
-#endif
+            gTestSdfmPrms.channels[channel].filter_type = CONFIG_SDFM0_CHANNEL8_ACC_SOURCE;
+            gTestSdfmPrms.channels[channel].normal_current_osr = CONFIG_SDFM0_CHANNEL8_NC_OSR;
+           
 
             /*Over current parameters*/
-            gTestSdfmPrms.compFilterPrms[2].enComparator = CONFIG_SDFM0_CHANNEL8_EN_COMP;
+            gTestSdfmPrms.channels[channel].enable_comparator = CONFIG_SDFM0_CHANNEL8_EN_COMP;
 #if(CONFIG_SDFM0_CHANNEL8_EN_COMP  != 0)
-            gTestSdfmPrms.compFilterPrms[2].comFilterOsr = CONFIG_SDFM0_CHANNEL8_OC_OSR;
-            gTestSdfmPrms.compFilterPrms[2].comThresholds[0] = CONFIG_SDFM0_CHANNEL8_OC_HIGH_TH;
-            gTestSdfmPrms.compFilterPrms[2].comThresholds[1] = CONFIG_SDFM0_CHANNEL8_OC_LOW_TH;
-            gTestSdfmPrms.compFilterPrms[2].zeroCrossEn = CONFIG_SDFM0_CHANNEL8_OC_EN_ZERO_CROSS;
+            gTestSdfmPrms.channels[channel].over_current_osr = CONFIG_SDFM0_CHANNEL8_OC_OSR;
+            gTestSdfmPrms.channels[channel].threshold_config.high_threshold = CONFIG_SDFM0_CHANNEL8_OC_HIGH_TH;
+            gTestSdfmPrms.channels[channel].threshold_config.low_threshold = CONFIG_SDFM0_CHANNEL8_OC_LOW_TH;
+            gTestSdfmPrms.channels[channel].zeroCrossEn = CONFIG_SDFM0_CHANNEL8_OC_EN_ZERO_CROSS;
 #if(CONFIG_SDFM0_CHANNEL8_OC_EN_ZERO_CROSS != 0 )
-            gTestSdfmPrms.compFilterPrms[2].zeroCrossTh = CONFIG_SDFM0_CHANNEL8_OC_ZC_TH;
+            gTestSdfmPrms.channels[channel].threshold_config.zeroCrossTh = CONFIG_SDFM0_CHANNEL8_OC_ZC_TH;
 #endif
 #endif
 
             /*fast detect parameters*/
-            gTestSdfmPrms.fastDetectPrms[2][0] = CONFIG_SDFM0_CHANNEL8_EN_FD;
+            gTestSdfmPrms.channels[channel].enFastDetect = CONFIG_SDFM0_CHANNEL8_EN_FD;
 #if(CONFIG_SDFM0_CHANNEL8_EN_FD != 0 )
-            gTestSdfmPrms.fastDetectPrms[2][1] = CONFIG_SDFM0_CHANNEL8_FD_WINDOW_SIZE;
-            gTestSdfmPrms.fastDetectPrms[2][2] = CONFIG_SDFM0_CHANNEL8_FD_MAX_ZERO_COUNT;
-            gTestSdfmPrms.fastDetectPrms[2][3] = CONFIG_SDFM0_CHANNEL8_FD_MIN_ZERO_COUNT;
+            gTestSdfmPrms.channels[channel].fd_window = CONFIG_SDFM0_CHANNEL8_FD_WINDOW_SIZE;
+            gTestSdfmPrms.channels[channel].fd_max_zero = CONFIG_SDFM0_CHANNEL8_FD_MAX_ZERO_COUNT;
+            gTestSdfmPrms.channels[channel].fd_min_zero = CONFIG_SDFM0_CHANNEL8_FD_MIN_ZERO_COUNT;
 #endif
 #endif
             break;
@@ -1042,32 +964,101 @@ int32_t initPruSdfm(
     *gSdfmPrms = gTestSdfmPrms;
 }
 
-void sdfmGlobalParamsConfig(SdfmPrms *gSdfmPrms)
+void sdfmAxisParamsConfig(SDFM_Params *gSdfmPrms, uint8_t pru_core)
 {
-    SdfmPrms gTestSdfmPrms = *gSdfmPrms;
-
-    int32_t status;
-   /* Configure Sdfm parameters */
-    gTestSdfmPrms.loadShare = CONFIG_SDFM0_LOAD_SHARE;
-    
-    /*get iep & core clock values*/
-    if(CONFIG_SDFM0_ICSSGx == ICSSG0_ID)
+    SDFM_Params sdfmParams  = *gSdfmPrms;
+    /* Configure Sdfm Axis level parameters */
+    switch(pru_core)
     {
-        status = SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG0, TISCI_DEV_PRU_ICSSG0_CORE_CLK, &gTestSdfmPrms.pruClock);
-        DebugP_assert(status == SystemP_SUCCESS);
-        status = SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG0, TISCI_DEV_PRU_ICSSG0_IEP_CLK, &gTestSdfmPrms.iepClock[0]);
-        DebugP_assert(status == SystemP_SUCCESS);
-    }
-    else
-    {
-        status = SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG1, TISCI_DEV_PRU_ICSSG1_CORE_CLK, &gTestSdfmPrms.pruClock);
-        DebugP_assert(status == SystemP_SUCCESS);
-        status = SOC_moduleGetClockFrequency(TISCI_DEV_PRU_ICSSG1, TISCI_DEV_PRU_ICSSG1_IEP_CLK, &gTestSdfmPrms.iepClock[0]);
-        DebugP_assert(status == SystemP_SUCCESS);
+
+        case 0:
+#if (CONFIG_SDFM0_PRU_CORE_ENABLE != 0 )
+            sdfmParams.enable_snoop_mode[pru_core] = CONFIG_SDFM0_PRU_NC_SNOOP_MODE;
+#if (CONFIG_SDFM0_PRU_EN_TRIGGER_MODE != 0)
+            sdfmParams.trigger_config[pru_core].first_samp_trig_time = CONFIG_SDFM0_PRU_FIRST_TRIGGER_POINT;
+            sdfmParams.trigger_config[pru_core].enable_trigger_mode = CONFIG_SDFM0_PRU_EN_TRIGGER_MODE;
+            sdfmParams.trigger_config[pru_core].iep_cmp_event = CONFIG_SDFM0_PRU_IEP_CMP_EVENT;
+
+#if (CONFIG_SDFM0_PRU_EN_DOUBLE_UPDATE != 0 )
+            sdfmParams.trigger_config[pru_core].en_double_nc_sampling = CONFIG_SDFM0_PRU_EN_DOUBLE_UPDATE;
+            sdfmParams.trigger_config[pru_core].second_samp_trig_time = CONFIG_SDFM0_PRU_SECOND_TRIGGER_POINT;
+#endif
+#endif
+#endif
+            break;
+        case 1:
+#if (CONFIG_SDFM0_RTU_CORE_ENABLE != 0 )
+            sdfmParams.enable_snoop_mode[pru_core] = CONFIG_SDFM0_RTU_NC_SNOOP_MODE;    
+#if (CONFIG_SDFM0_RTU_EN_TRIGGER_MODE != 0)
+            sdfmParams.trigger_config[pru_core].first_samp_trig_time = CONFIG_SDFM0_RTU_FIRST_TRIGGER_POINT;
+            sdfmParams.trigger_config[pru_core].enable_trigger_mode = CONFIG_SDFM0_RTU_EN_TRIGGER_MODE;
+            sdfmParams.trigger_config[pru_core].iep_cmp_event = CONFIG_SDFM0_RTU_IEP_CMP_EVENT;
+#if (CONFIG_SDFM0_RTU_EN_DOUBLE_UPDATE != 0 )
+            sdfmParams.trigger_config[pru_core].en_double_nc_sampling = CONFIG_SDFM0_RTU_EN_DOUBLE_UPDATE;
+            sdfmParams.trigger_config[pru_core].second_samp_trig_time = CONFIG_SDFM0_RTU_SECOND_TRIGGER_POINT;
+#endif
+#endif
+#endif
+
+            break;
+        case 2:
+#if (CONFIG_SDFM0_TXPRU_CORE_ENABLE != 0 )
+            sdfmParams.enable_snoop_mode[pru_core] = CONFIG_SDFM0_TXPRU_NC_SNOOP_MODE;
+#if (CONFIG_SDFM0_TXPRU_EN_TRIGGER_MODE != 0)
+            sdfmParams.trigger_config[pru_core].first_samp_trig_time = CONFIG_SDFM0_TXPRU_FIRST_TRIGGER_POINT;
+            sdfmParams.trigger_config[pru_core].enable_trigger_mode = CONFIG_SDFM0_TXPRU_EN_TRIGGER_MODE;
+            sdfmParams.trigger_config[pru_core].iep_cmp_event = CONFIG_SDFM0_TXPRU_IEP_CMP_EVENT;   
+#if (CONFIG_SDFM0_TXPRU_EN_DOUBLE_UPDATE != 0 )
+            sdfmParams.trigger_config[pru_core].en_double_nc_sampling = CONFIG_SDFM0_TXPRU_EN_DOUBLE_UPDATE;
+            sdfmParams.trigger_config[pru_core].second_samp_trig_time = CONFIG_SDFM0_TXPRU_SECOND_TRIGGER_POINT;
+#endif
+#endif
+#endif
+            break;
+        default:
+            break;
     }
     
-    gTestSdfmPrms.phaseDelay = CONFIG_SDFM0_PHASE_DELAY;
+    *gSdfmPrms = sdfmParams;
+}
+void sdfmGlobalParamsConfig(SDFM_Params *gSdfmPrms)
+{
+    SDFM_Params sdfmParams  = *gSdfmPrms;
+    int32_t mask;
+    /* Configure Sdfm parameters */
+    sdfmParams.load_share_enable = CONFIG_SDFM0_LOAD_SHARE;
+    sdfmParams.iep_clock = CONFIG_PRU_ICSS0_IEP_CLK_FREQ_HZ;
+    sdfmParams.pru_clock = CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ;
+#if (CONFIG_SDFM0_TXPRU_EN_TRIGGER_MODE != 0 || CONFIG_SDFM0_RTU_EN_TRIGGER_MODE != 0 || CONFIG_SDFM0_PRU_EN_TRIGGER_MODE != 0)
+    sdfmParams.iep_instance = CONFIG_SDFM0_IEP_INSTANCE;
+    sdfmParams.iep_inc_value = 1;
+    sdfmParams.iep_reset_freq = CONFIG_SDFM0_IEP_RESET_FREQ;
+#endif
+    sdfmParams.pru_slice_value = CONFIG_SDFM0_SLICE;
+    mask = (CONFIG_SDFM0_CHANNEL0 ? 1<< 0 : 0) | (CONFIG_SDFM0_CHANNEL1 ? 1<< 1 : 0) | (CONFIG_SDFM0_CHANNEL2 ? 1<< 2 : 0) | \
+           (CONFIG_SDFM0_CHANNEL3 ? 1<< 3 : 0) | (CONFIG_SDFM0_CHANNEL4 ? 1<< 4 : 0) | (CONFIG_SDFM0_CHANNEL5 ? 1<< 5 : 0) | \
+           (CONFIG_SDFM0_CHANNEL6 ? 1<< 6 : 0) | (CONFIG_SDFM0_CHANNEL7 ? 1<< 7 : 0) | (CONFIG_SDFM0_CHANNEL8 ? 1<< 8 : 0);
+    sdfmParams.sdfm_channel_mask = mask;
+#if(CONFIG_SDFM0_LOAD_SHARE == 0)
+    sdfmParams.sdfm_enable_pru_core_mask = 1;
+#else
+    sdfmParams.sdfm_enable_pru_core_mask |= (CONFIG_SDFM0_CHANNEL0 || CONFIG_SDFM0_CHANNEL1 || CONFIG_SDFM0_CHANNEL2) ? 1 >> 1: 0;
+    sdfmParams.sdfm_enable_pru_core_mask |= (CONFIG_SDFM0_CHANNEL3 || CONFIG_SDFM0_CHANNEL4 || CONFIG_SDFM0_CHANNEL5) ? 1 >> 0: 0;
+    sdfmParams.sdfm_enable_pru_core_mask |= (CONFIG_SDFM0_CHANNEL6 || CONFIG_SDFM0_CHANNEL7 || CONFIG_SDFM0_CHANNEL8) ? 1 >> 2: 0;  
+#endif
 
-    *gSdfmPrms = gTestSdfmPrms;
+#if (CONFIG_SDFM0_EPWM_SYNC_EN == 1)
+    sdfmParams.sdfm_enable_epwm_sync = 1;
+    sdfmParams.sdfm_epwm_sync_source = CONFIG_SDFM0_EPWM_SYNC_SOURCE;
+#else
+    sdfmParams.sdfm_enable_epwm_sync = 0;
+#endif
+    
+#if CONFIG_SDFM0_PHASE_DELAY != 0
+    sdfmParams.sdfm_phase_delay = 1;
+#else
+    sdfmParams.sdfm_phase_delay = 0;
+#endif  
+    *gSdfmPrms = sdfmParams;
 }
 

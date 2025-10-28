@@ -86,72 +86,7 @@ function SDmodulatorSettings(channel)
 	]
 	return(Settings);
 }
-// SD Normal current settings //
 
-function configNCsamplingMode(inst, ui)
-{
-    for (let channel = 0; channel < 9; channel++)
-	{
-        let status = inst["Ch" + channel.toString() + "_EnableContinuousMode"];
-		let status1 = inst["Enable_Channel_" + channel.toString()];
-        
-        if(status1)
-		{
-			ui["Ch" + channel.toString() + "_FirstTriggerPoint"].hidden = status;
-			ui["Ch" + channel.toString() + "_EnableDoubleUpdate"].hidden = status;
-		}
-		
-	}
-
-}
-
-function doubleUpdateConfig(inst, ui)
-{
-    for (let channel = 0; channel < 9; channel++)
-	{
-        let status = inst["Ch" + channel.toString() + "_EnableDoubleUpdate"];
-        ui["Ch" + channel.toString() + "_SecondTriggerPoint"].hidden = !status;
- 
-	}
-
-}
-
-function onChangeEnableEPWM(inst, ui)
-{
-	for (let channel = 0; channel < 9; channel++)
-    {
-        let status = inst["Ch" + channel.toString() + "_EPWM_SYNC"];
-        ui["Ch" + channel.toString() + "_Epwm_Source"].hidden = !status;
-    }
-}
-
-function epwmSettings(channel)
-{
-	let Settings = [];
-	
-	Settings =
-    [
-		{
-			name: "Ch" + channel.toString() + "_Epwm_Source",
-			displayName : "Source of SD SYNC Event",
-			description : 'Source of SD SYNC Event',
-			hidden      : true,
-			default     : "0",
-			options     :
-			[
-				{
-					name: "0",
-					displayName: "SDFM SYNC source is EPWM0 SYNC out event",
-				},
-				{
-					name:"3",
-					displayName: "SDFM SYNC source is EPWM3 SYNC out event",
-				},
-			]
-		},
-	]
-	return(Settings)
-}
 function SDnormalCurrentConfigs(channel)
 {
 	let Settings = [];
@@ -164,36 +99,6 @@ function SDnormalCurrentConfigs(channel)
 			description : 'Normal Current OSR',
 			hidden      : true,
 			default     : 64,
-		},
-		{
-			name        : "Ch" + channel.toString() + "_EnableContinuousMode",
-			displayName : "Enable NC Continuous Mode",
-			description : 'Enable NC Continuous Mode',
-			hidden      : true,
-            default     : false,
-            onChange	: configNCsamplingMode,        
-		},
-		{
-			name        : "Ch" + channel.toString() + "_FirstTriggerPoint",
-			displayName : "First Trigger Point (us)",
-			description : 'First Trigger Point (us)',
-			hidden      : true,
-			default     : 15,
-		},
-        {
-			name        : "Ch" + channel.toString() + "_EnableDoubleUpdate",
-			displayName : "Enable Double Update",
-			description : 'Enable Double Update',
-			hidden      : true,
-            default     : false,
-		    onChange    : doubleUpdateConfig,
-		},
-        {
-			name        : "Ch" + channel.toString() + "_SecondTriggerPoint",
-			displayName : "Second Trigger Point (us)",
-			description : 'Second Trigger Point (us)',
-			hidden      : true,
-			default     : 30,
 		},
         {
 			name        : "Ch" + channel.toString() + "_Datarate_DF",
@@ -251,19 +156,6 @@ function SDnormalCurrentConfigs(channel)
 				return max_value;
             },
             default     : 0,
-		},
-		{
-			name: "Ch" + channel.toString() + "_EPWM_SYNC",
-			displayName : "Use EPWM Synchronization",
-			description : 'Use EPWM Synchronization',
-			hidden      : true,
-			default     : false,
-			onChange    : onChangeEnableEPWM
-		},
-		{
-			name        : "GROUP_EPWM",
-			displayName : "SDSYNC Feature Settings",
-			config      : epwmSettings(channel)
 		},
 
 	]
