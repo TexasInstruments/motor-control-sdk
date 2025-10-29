@@ -431,15 +431,15 @@ In Linux, the tools are installed by default in ${HOME}/ti.
     <th>Description
 </tr>
 <tr>
-    <td>C:/ti/ccs@VAR_CCS_FOLDER_VERSION
+    <td>C:/ti/ccs@VAR_CCS_VERSION_AM243X
     <td>Code composer studio</td>
 </tr>
 <tr>
-    <td>C:/ti/sysconfig_@VAR_SYSCFG_VERSION
+    <td>C:/ti/sysconfig_@VAR_SYSCFG_VERSION_AM243X
     <td>SysConfig. **NOTE**, SysConfig is also installed as part of CCS at ${CCS_INSTALL_PATH}/ccs/utils/sysconfig_x.x.x</td>
 </tr>
 <tr>
-    <td>C:/ti/ti-cgt-armllvm_@VAR_TI_ARM_CLANG_VERSION
+    <td>C:/ti/ti-cgt-armllvm_@VAR_TI_ARM_CLANG_VERSION_AM243X
     <td>TI ARM CLANG compiler tool chain</td>
 </tr>
 </table>
@@ -452,7 +452,7 @@ In Linux, the tools are installed by default in ${HOME}/ti.
     <th>Description
 </tr>
 <tr>
-    <td>C:/ti/ccs@VAR_CCS_FOLDER_VERSION_AM263X
+    <td>C:/ti/ccs@VAR_CCS_VERSION_AM263X
     <td>Code Composer Studio</td>
 </tr>
 <tr>
@@ -460,7 +460,7 @@ In Linux, the tools are installed by default in ${HOME}/ti.
     <td>SysConfig. **NOTE**, SysConfig is also installed as part of CCS at ${CCS_INSTALL_PATH}/ccs/utils/sysconfig_x.x.x</td>
 </tr>
 <tr>
-    <td>C:/ti/ti-cgt-armllvm_@VAR_TI_ARM_CLANG_VERSION
+    <td>C:/ti/ti-cgt-armllvm_@VAR_TI_ARM_CLANG_VERSION_AM263X
     <td>TI ARM CLANG compiler tool chain</td>
 </tr>
 </table>
@@ -473,7 +473,7 @@ In Linux, the tools are installed by default in ${HOME}/ti.
     <th>Description
 </tr>
 <tr>
-    <td>C:/ti/ccs@VAR_CCS_FOLDER_VERSION_AM263PX
+    <td>C:/ti/ccs@VAR_CCS_VERSION_AM263PX
     <td>Code Composer Studio</td>
 </tr>
 <tr>
@@ -481,7 +481,7 @@ In Linux, the tools are installed by default in ${HOME}/ti.
     <td>SysConfig. **NOTE**, SysConfig is also installed as part of CCS at ${CCS_INSTALL_PATH}/ccs/utils/sysconfig_x.x.x</td>
 </tr>
 <tr>
-    <td>C:/ti/ti-cgt-armllvm_@VAR_TI_ARM_CLANG_VERSION
+    <td>C:/ti/ti-cgt-armllvm_@VAR_TI_ARM_CLANG_VERSION_AM263PX
     <td>TI ARM CLANG compiler tool chain</td>
 </tr>
 </table>
@@ -494,7 +494,7 @@ In Linux, the tools are installed by default in ${HOME}/ti.
     <th>Description
 </tr>
 <tr>
-    <td>C:/ti/ccs@VAR_CCS_FOLDER_VERSION_AM261X
+    <td>C:/ti/ccs@VAR_CCS_VERSION_AM261X
     <td>Code Composer Studio</td>
 </tr>
 <tr>
@@ -502,7 +502,7 @@ In Linux, the tools are installed by default in ${HOME}/ti.
     <td>SysConfig. **NOTE**, SysConfig is also installed as part of CCS at ${CCS_INSTALL_PATH}/ccs/utils/sysconfig_x.x.x</td>
 </tr>
 <tr>
-    <td>C:/ti/ti-cgt-armllvm_@VAR_TI_ARM_CLANG_VERSION
+    <td>C:/ti/ti-cgt-armllvm_@VAR_TI_ARM_CLANG_VERSION_AM261X
     <td>TI ARM CLANG compiler tool chain</td>
 </tr>
 </table>

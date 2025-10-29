@@ -1,6 +1,3 @@
-#
-# Auto generated makefile
-#
 
 all:
 	$(MAKE) -f makefile.am64x libs
@@ -45,11 +42,14 @@ help:
 
 # Various Component Targets
 
+
 # Combine all Components
 BUILD_COMBO_ALL =
 
+
 # Combine all Pre-built Components
 BUILD_COMBO_PREBUILT_ALL =
+
 
 # Combine all Private Components
 BUILD_COMBO_PRIVATE_ALL =
@@ -61,20 +61,28 @@ libs-prebuilt: $(BUILD_COMBO_PREBUILT_ALL)
 libs-private: $(BUILD_COMBO_PRIVATE_ALL)
 
 
+
+
 # Various Component Clean Targets
+
 
 # Combine all Components Clean
 BUILD_COMBO_CLEAN_ALL =
 
+
 # Combine all Pre-built Components Clean
 BUILD_COMBO_PREBUILT_CLEAN_ALL =
+
 
 libs-clean: $(BUILD_COMBO_CLEAN_ALL)
 
 libs-prebuilt-clean: $(BUILD_COMBO_PREBUILT_CLEAN_ALL)
 
 
+
+
 # Various Component Scrub Targets
+
 
 # Combine all Components Scrub Targets
 BUILD_COMBO_SCRUB_ALL =
@@ -82,20 +90,28 @@ BUILD_COMBO_SCRUB_ALL =
 # Combine all Pre-built Components Scrub Targets
 BUILD_COMBO_PREBUILT_SCRUB_ALL =
 
+
 libs-scrub: $(BUILD_COMBO_SCRUB_ALL)
 
 libs-prebuilt-scrub: $(BUILD_COMBO_PREBUILT_SCRUB_ALL)
 
 
+
 BUILD_COMBO_EXAMPLE_ALL =
 # Various Example Targets
+
 # Various System Example Targets
+
+
 
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL =
 # Various Private Example Targets
 # Various Private System Example Targets
 
+
 examples: $(BUILD_COMBO_EXAMPLE_ALL)
+
+
 
 examples-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_ALL)
 
@@ -103,6 +119,7 @@ examples-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_ALL)
 BUILD_COMBO_EXAMPLE_CLEAN_ALL =
 # Various Example Clean Targets
 # Various System Example Clean Targets
+
 
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL =
 # Various Private Example Targets
@@ -116,6 +133,7 @@ examples-private-clean: $(BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL)
 BUILD_COMBO_EXAMPLE_SCRUB_ALL =
 # Various Example Scrub Targets
 # Various System Example Scrub Targets
+
 
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL =
 # Various Private Example Targets

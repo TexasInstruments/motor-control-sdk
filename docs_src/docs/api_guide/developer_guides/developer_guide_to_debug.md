@@ -21,10 +21,6 @@ This page lists debug guides related to all the Modules.
     - \ref HDSL_DEBUG_GUIDE
     - \ref NIKON_DEBUG_GUIDE
     - \ref TAMAGAWA_DEBUG_GUIDE
-- PRUICSS PWM
-    - \ref PRUICSS_PWM_PHASE_SHIFT_EXAMPLE_DEBUG_GUIDE
-    - \ref PRUICSS_PWM_DEADBAND_EXAMPLE_DEBUG_GUIDE
-
 \endcond
 
 \cond SOC_AM263PX

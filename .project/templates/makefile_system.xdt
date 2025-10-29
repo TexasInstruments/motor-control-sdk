@@ -2,7 +2,10 @@
 export `args.sdkName`?=$(abspath `args.relPath`)
 include $(`args.sdkName`)/imports.mak
 % if ((args.project.device == "am65x") || (args.project.device == "am64x") || (args.project.device == "am243x") || (args.project.device == "am263x")    ||   (args.project.device == "am263px") || (args.project.device == "am261x")  || (args.project.device == "am273x") || (args.project.device == "awr294x")) {
-include $(`args.sdkName`)/mcu_plus_sdk/devconfig/devconfig.mak
+ifndef MCU_PLUS_SDK_PATH
+$(error MCU_PLUS_SDK_PATH is not defined)
+endif
+include $(MCU_PLUS_SDK_PATH)/devconfig/devconfig.mak
 % }
 
 % if ((args.project.device == "am65x") || (args.project.device == "am64x") || (args.project.device == "am243x") || (args.project.device == "am263x") || (args.project.device == "am263px") || (args.project.device == "am261x")  ||  (args.project.device == "am273x") || (args.project.device == "awr294x")) {
@@ -149,7 +152,7 @@ optisave: buildmcelfsso
 
 buildmcelfsso: coreout
 	@echo .
-	@echo generating mcelf with sso 
+	@echo generating mcelf with sso
 	$(PYTHON) $(MCELF_IMAGE_GEN) $(CORE_IMG_OPTISHARE_ARGS) --output=$(MULTI_CORE_BOOTIMAGE_NAME_MCELF_OPTISHARE) --merge-segments=$(MCELF_MERGE_SEGMENTS_FLAG) --tolerance-limit=$(MCELF_MERGE_SEGMENTS_TOLERANCE_LIMIT) --ignore-context=$(MCELF_IGNORE_CONTEXT_FLAG) --xip=$(MCELF_XIP_RANGE) --xlat=$(MCELF_ADDR_TRANSLATION_PATH) --max-segment-size=$(MCELF_MAX_SEGMENT_SIZE) --sso=sso.out
 	@echo  Boot multi-core ELF image: $(MULTI_CORE_BOOTIMAGE_PATH)/$@ Done !!!
 	@echo  .
@@ -230,10 +233,10 @@ endif
 
 syscfg:
 	@echo Generating SysConfig files ...
-	$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/dist/cli.js --product $(SYSCFG_SDKPRODUCT) $(CORES)
+	$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/dist/cli.js --product $(SYSCFG_SDKPRODUCT) --product $(SYSCFG_ICSDKPRODUCT) --product $(SYSCFG_MCUSDKPRODUCT) $(CORES)
 
 syscfg-gui:
-	$(SYSCFG_NWJS) $(SYSCFG_PATH) --product $(SYSCFG_SDKPRODUCT) --device `args.device.getSysCfgDevice(args.project.board)` --part `args.device.getSysCfgPart(args.project.board)` --package `args.device.getSysCfgPkg(args.project.board)` $(CORES)
+	$(SYSCFG_NWJS) $(SYSCFG_PATH) --product $(SYSCFG_SDKPRODUCT) --product $(SYSCFG_ICSDKPRODUCT) --product $(SYSCFG_MCUSDKPRODUCT) --device `args.device.getSysCfgDevice(args.project.board)` --part `args.device.getSysCfgPart(args.project.board)` --package `args.device.getSysCfgPkg(args.project.board)` $(CORES)
 
 #
 # Generation of multi-core boot image which can be loaded by Secondary Boot Loader (SBL)
@@ -280,7 +283,7 @@ BOOTIMAGE_CORE_ID_m4fss0-1 = 3
 % }
 % if (args.project.device == "awr294x") {
 BOOTIMAGE_CORE_ID_r4       = 3
-R4_RPRC_PATH = $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/drivers/bootloader/soc/awr294x/xwr2xxx_radarss_metarprc.bin
+R4_RPRC_PATH = $(MCU_PLUS_SDK_PATH)/source/drivers/bootloader/soc/awr294x/xwr2xxx_radarss_metarprc.bin
 % }
 SBL_RUN_ADDRESS=0x10200000
 SBL_DEV_ID=55
@@ -302,16 +305,16 @@ SBL_RUN_ADDRESS=0x41C00100
 SBL_DEV_ID=55
 % }
 
-MULTI_CORE_IMAGE_GEN = $(SYSCFG_NODE) $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/multicoreImageGen/multicoreImageGen.js
-OUTRPRC_CMD = $(SYSCFG_NODE) $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/out2rprc/elf2rprc.js
+MULTI_CORE_IMAGE_GEN = $(SYSCFG_NODE) $(MCU_PLUS_SDK_PATH)/tools/boot/multicoreImageGen/multicoreImageGen.js
+OUTRPRC_CMD = $(SYSCFG_NODE) $(MCU_PLUS_SDK_PATH)/tools/boot/out2rprc/elf2rprc.js
 % if ((args.project.device == "am65x") || (args.project.device == "am243x") || (args.project.device == "am64x")) {
-APP_IMAGE_SIGN_CMD = $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/security/security_common/tools/boot/signing/appimage_x509_cert_gen.py
+APP_IMAGE_SIGN_CMD = $(MCU_PLUS_SDK_PATH)/source/security/security_common/tools/boot/signing/appimage_x509_cert_gen.py
 % }
 % if ((args.project.device == "am263x") ||  (args.project.device == "am263px") || (args.project.device == "am261x")  || (args.project.device == "am273x") || (args.project.device == "awr294x")) {
-APP_IMAGE_SIGN_CMD = $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/security/security_common/tools/boot/signing/mcu_appimage_x509_cert_gen.py
+APP_IMAGE_SIGN_CMD = $(MCU_PLUS_SDK_PATH)/source/security/security_common/tools/boot/signing/mcu_appimage_x509_cert_gen.py
 % }
 % if ((args.project.device == "am263x") || (args.project.device == "am263px") || (args.project.device == "am261x")) {
-MCELF_IMAGE_GEN = $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/multicore-elf/genimage.py
+MCELF_IMAGE_GEN = $(MCU_PLUS_SDK_PATH)/tools/boot/multicore-elf/genimage.py
 % }
 
 MULTI_CORE_APP_PARAMS = \
@@ -423,7 +426,7 @@ ifeq ($(RSASSAPSS_ENABLED), no)
 % if ((args.project.device == "am263x") || (args.project.device == "am263px") || (args.project.device == "am261x")) {
 	$(PYTHON) $(APP_IMAGE_SIGN_CMD) --bin $(MULTI_CORE_BOOTIMAGE_NAME_MCELF) --key $(APP_SIGNING_KEY) --enc y --enckey $(APP_ENCRYPTION_KEY) --kd-salt $(KD_SALT) --sign_key_id $(APP_SIGNING_KEY_KEYRING_ID) --enc_key_id $(APP_ENCRYPTION_KEY_KEYRING_ID) --hash_algo $(APP_SIGNING_HASH_ALGO) --output $(MULTI_CORE_BOOTIMAGE_NAME_MCELF_HS)
 	$(RM) $(MULTI_CORE_BOOTIMAGE_NAME_MCELF)-enc
-% }	
+% }
 else
 	@echo Boot image signing: Encryption is enabled. RSASSAPSS is enabled.
 	$(PYTHON) $(APP_IMAGE_SIGN_CMD) --bin $(MULTI_CORE_BOOTIMAGE_NAME) --key $(APP_SIGNING_KEY) --enc y --enckey $(APP_ENCRYPTION_KEY) --kd-salt $(KD_SALT) --sign_key_id $(APP_SIGNING_KEY_KEYRING_ID) --enc_key_id $(APP_ENCRYPTION_KEY_KEYRING_ID) --hash_algo $(APP_SIGNING_HASH_ALGO) --pss_saltlen $(APP_SIGNING_SALT_LENGTH) --output $(MULTI_CORE_BOOTIMAGE_NAME_HS) --rsassa_pss

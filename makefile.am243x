@@ -1,6 +1,3 @@
-#
-# Auto generated makefile
-#
 
 all:
 	$(MAKE) -f makefile.am243x libs
@@ -32,23 +29,23 @@ help:
 	@echo  .
 	@echo  Library build targets,
 	@echo  ======================
-	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_sdfm_r5f.ti-arm-clang
-	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_bissc_r5f.ti-arm-clang
-	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_endat_r5f.ti-arm-clang
-	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_hdsl_r5f.ti-arm-clang
-	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_nikon_r5f.ti-arm-clang
-	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_tamagawa_r5f.ti-arm-clang
-	@echo  $(MAKE) -s -f makefile.am243x pruicss_pwm_r5f.ti-arm-clang
+	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_sdfm_r5f.ti-arm-clang.nortos motorcontrol_sdfm_r5f.ti-arm-clang.freertos
+	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_bissc_r5f.ti-arm-clang.nortos motorcontrol_bissc_r5f.ti-arm-clang.freertos
+	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_endat_r5f.ti-arm-clang.nortos motorcontrol_endat_r5f.ti-arm-clang.freertos
+	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_hdsl_r5f.ti-arm-clang.nortos motorcontrol_hdsl_r5f.ti-arm-clang.freertos
+	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_nikon_r5f.ti-arm-clang.nortos motorcontrol_nikon_r5f.ti-arm-clang.freertos
+	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_tamagawa_r5f.ti-arm-clang.nortos motorcontrol_tamagawa_r5f.ti-arm-clang.freertos
+	@echo  $(MAKE) -s -f makefile.am243x pruicss_pwm_r5f.ti-arm-clang.nortos pruicss_pwm_r5f.ti-arm-clang.freertos
 	@echo  .
 	@echo  Library clean targets,
 	@echo  ======================
-	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_sdfm_r5f.ti-arm-clang_clean
-	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_bissc_r5f.ti-arm-clang_clean
-	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_endat_r5f.ti-arm-clang_clean
-	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_hdsl_r5f.ti-arm-clang_clean
-	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_nikon_r5f.ti-arm-clang_clean
-	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_tamagawa_r5f.ti-arm-clang_clean
-	@echo  $(MAKE) -s -f makefile.am243x pruicss_pwm_r5f.ti-arm-clang_clean
+	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_sdfm_r5f.ti-arm-clang.nortos_clean motorcontrol_sdfm_r5f.ti-arm-clang.freertos_clean
+	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_bissc_r5f.ti-arm-clang.nortos_clean motorcontrol_bissc_r5f.ti-arm-clang.freertos_clean
+	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_endat_r5f.ti-arm-clang.nortos_clean motorcontrol_endat_r5f.ti-arm-clang.freertos_clean
+	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_hdsl_r5f.ti-arm-clang.nortos_clean motorcontrol_hdsl_r5f.ti-arm-clang.freertos_clean
+	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_nikon_r5f.ti-arm-clang.nortos_clean motorcontrol_nikon_r5f.ti-arm-clang.freertos_clean
+	@echo  $(MAKE) -s -f makefile.am243x motorcontrol_tamagawa_r5f.ti-arm-clang.nortos_clean motorcontrol_tamagawa_r5f.ti-arm-clang.freertos_clean
+	@echo  $(MAKE) -s -f makefile.am243x pruicss_pwm_r5f.ti-arm-clang.nortos_clean pruicss_pwm_r5f.ti-arm-clang.freertos_clean
 	@echo  .
 	@echo  Example build targets,
 	@echo  ======================
@@ -176,19 +173,22 @@ help:
 	@echo  .
 
 # Various Component Targets
-BUILD_COMBO_motorcontrol_sdfm = motorcontrol_sdfm_r5f.ti-arm-clang
-BUILD_COMBO_motorcontrol_bissc = motorcontrol_bissc_r5f.ti-arm-clang
-BUILD_COMBO_motorcontrol_endat = motorcontrol_endat_r5f.ti-arm-clang
-BUILD_COMBO_motorcontrol_hdsl = motorcontrol_hdsl_r5f.ti-arm-clang
-BUILD_COMBO_motorcontrol_nikon = motorcontrol_nikon_r5f.ti-arm-clang
-BUILD_COMBO_motorcontrol_tamagawa = motorcontrol_tamagawa_r5f.ti-arm-clang
-BUILD_COMBO_pruicss_pwm = pruicss_pwm_r5f.ti-arm-clang
+BUILD_COMBO_motorcontrol_sdfm = motorcontrol_sdfm_r5f.ti-arm-clang.nortos motorcontrol_sdfm_r5f.ti-arm-clang.freertos
+BUILD_COMBO_motorcontrol_bissc = motorcontrol_bissc_r5f.ti-arm-clang.nortos motorcontrol_bissc_r5f.ti-arm-clang.freertos
+BUILD_COMBO_motorcontrol_endat = motorcontrol_endat_r5f.ti-arm-clang.nortos motorcontrol_endat_r5f.ti-arm-clang.freertos
+BUILD_COMBO_motorcontrol_hdsl = motorcontrol_hdsl_r5f.ti-arm-clang.nortos motorcontrol_hdsl_r5f.ti-arm-clang.freertos
+BUILD_COMBO_motorcontrol_nikon = motorcontrol_nikon_r5f.ti-arm-clang.nortos motorcontrol_nikon_r5f.ti-arm-clang.freertos
+BUILD_COMBO_motorcontrol_tamagawa = motorcontrol_tamagawa_r5f.ti-arm-clang.nortos motorcontrol_tamagawa_r5f.ti-arm-clang.freertos
+BUILD_COMBO_pruicss_pwm = pruicss_pwm_r5f.ti-arm-clang.nortos pruicss_pwm_r5f.ti-arm-clang.freertos
+
 
 # Combine all Components
 BUILD_COMBO_ALL = $(BUILD_COMBO_motorcontrol_sdfm) $(BUILD_COMBO_motorcontrol_bissc) $(BUILD_COMBO_motorcontrol_endat) $(BUILD_COMBO_motorcontrol_hdsl) $(BUILD_COMBO_motorcontrol_nikon) $(BUILD_COMBO_motorcontrol_tamagawa) $(BUILD_COMBO_pruicss_pwm)
 
+
 # Combine all Pre-built Components
 BUILD_COMBO_PREBUILT_ALL =
+
 
 # Combine all Private Components
 BUILD_COMBO_PRIVATE_ALL =
@@ -198,6 +198,7 @@ libs: $(BUILD_COMBO_ALL)
 libs-prebuilt: $(BUILD_COMBO_PREBUILT_ALL)
 
 libs-private: $(BUILD_COMBO_PRIVATE_ALL)
+
 
 $(BUILD_COMBO_motorcontrol_sdfm):
 	$(MAKE) -C source/current_sense/sdfm -f makefile.am243x.$(subst motorcontrol_sdfm_,,$@) all
@@ -221,24 +222,29 @@ $(BUILD_COMBO_pruicss_pwm):
 	$(MAKE) -C source/pruicss_pwm -f makefile.am243x.$(subst pruicss_pwm_,,$@) all
 
 
+
 # Various Component Clean Targets
-BUILD_COMBO_CLEAN_motorcontrol_sdfm = motorcontrol_sdfm_r5f.ti-arm-clang_clean
-BUILD_COMBO_CLEAN_motorcontrol_bissc = motorcontrol_bissc_r5f.ti-arm-clang_clean
-BUILD_COMBO_CLEAN_motorcontrol_endat = motorcontrol_endat_r5f.ti-arm-clang_clean
-BUILD_COMBO_CLEAN_motorcontrol_hdsl = motorcontrol_hdsl_r5f.ti-arm-clang_clean
-BUILD_COMBO_CLEAN_motorcontrol_nikon = motorcontrol_nikon_r5f.ti-arm-clang_clean
-BUILD_COMBO_CLEAN_motorcontrol_tamagawa = motorcontrol_tamagawa_r5f.ti-arm-clang_clean
-BUILD_COMBO_CLEAN_pruicss_pwm = pruicss_pwm_r5f.ti-arm-clang_clean
+BUILD_COMBO_CLEAN_motorcontrol_sdfm = motorcontrol_sdfm_r5f.ti-arm-clang.nortos_clean motorcontrol_sdfm_r5f.ti-arm-clang.freertos_clean
+BUILD_COMBO_CLEAN_motorcontrol_bissc = motorcontrol_bissc_r5f.ti-arm-clang.nortos_clean motorcontrol_bissc_r5f.ti-arm-clang.freertos_clean
+BUILD_COMBO_CLEAN_motorcontrol_endat = motorcontrol_endat_r5f.ti-arm-clang.nortos_clean motorcontrol_endat_r5f.ti-arm-clang.freertos_clean
+BUILD_COMBO_CLEAN_motorcontrol_hdsl = motorcontrol_hdsl_r5f.ti-arm-clang.nortos_clean motorcontrol_hdsl_r5f.ti-arm-clang.freertos_clean
+BUILD_COMBO_CLEAN_motorcontrol_nikon = motorcontrol_nikon_r5f.ti-arm-clang.nortos_clean motorcontrol_nikon_r5f.ti-arm-clang.freertos_clean
+BUILD_COMBO_CLEAN_motorcontrol_tamagawa = motorcontrol_tamagawa_r5f.ti-arm-clang.nortos_clean motorcontrol_tamagawa_r5f.ti-arm-clang.freertos_clean
+BUILD_COMBO_CLEAN_pruicss_pwm = pruicss_pwm_r5f.ti-arm-clang.nortos_clean pruicss_pwm_r5f.ti-arm-clang.freertos_clean
+
 
 # Combine all Components Clean
 BUILD_COMBO_CLEAN_ALL = $(BUILD_COMBO_CLEAN_motorcontrol_sdfm) $(BUILD_COMBO_CLEAN_motorcontrol_bissc) $(BUILD_COMBO_CLEAN_motorcontrol_endat) $(BUILD_COMBO_CLEAN_motorcontrol_hdsl) $(BUILD_COMBO_CLEAN_motorcontrol_nikon) $(BUILD_COMBO_CLEAN_motorcontrol_tamagawa) $(BUILD_COMBO_CLEAN_pruicss_pwm)
 
+
 # Combine all Pre-built Components Clean
 BUILD_COMBO_PREBUILT_CLEAN_ALL =
+
 
 libs-clean: $(BUILD_COMBO_CLEAN_ALL)
 
 libs-prebuilt-clean: $(BUILD_COMBO_PREBUILT_CLEAN_ALL)
+
 
 $(BUILD_COMBO_CLEAN_motorcontrol_sdfm):
 	$(MAKE) -C source/current_sense/sdfm -f makefile.am243x.$(subst motorcontrol_sdfm_,,$(subst _clean,,$@)) clean
@@ -262,14 +268,16 @@ $(BUILD_COMBO_CLEAN_pruicss_pwm):
 	$(MAKE) -C source/pruicss_pwm -f makefile.am243x.$(subst pruicss_pwm_,,$(subst _clean,,$@)) clean
 
 
+
 # Various Component Scrub Targets
-BUILD_COMBO_SCRUB_motorcontrol_sdfm = motorcontrol_sdfm_r5f.ti-arm-clang_scrub_scrub
-BUILD_COMBO_SCRUB_motorcontrol_bissc = motorcontrol_bissc_r5f.ti-arm-clang_scrub_scrub
-BUILD_COMBO_SCRUB_motorcontrol_endat = motorcontrol_endat_r5f.ti-arm-clang_scrub_scrub
-BUILD_COMBO_SCRUB_motorcontrol_hdsl = motorcontrol_hdsl_r5f.ti-arm-clang_scrub_scrub
-BUILD_COMBO_SCRUB_motorcontrol_nikon = motorcontrol_nikon_r5f.ti-arm-clang_scrub_scrub
-BUILD_COMBO_SCRUB_motorcontrol_tamagawa = motorcontrol_tamagawa_r5f.ti-arm-clang_scrub_scrub
-BUILD_COMBO_SCRUB_pruicss_pwm = pruicss_pwm_r5f.ti-arm-clang_scrub_scrub
+BUILD_COMBO_SCRUB_motorcontrol_sdfm = motorcontrol_sdfm_r5f.ti-arm-clang.nortos_scrub motorcontrol_sdfm_r5f.ti-arm-clang.freertos_scrub
+BUILD_COMBO_SCRUB_motorcontrol_bissc = motorcontrol_bissc_r5f.ti-arm-clang.nortos_scrub motorcontrol_bissc_r5f.ti-arm-clang.freertos_scrub
+BUILD_COMBO_SCRUB_motorcontrol_endat = motorcontrol_endat_r5f.ti-arm-clang.nortos_scrub motorcontrol_endat_r5f.ti-arm-clang.freertos_scrub
+BUILD_COMBO_SCRUB_motorcontrol_hdsl = motorcontrol_hdsl_r5f.ti-arm-clang.nortos_scrub motorcontrol_hdsl_r5f.ti-arm-clang.freertos_scrub
+BUILD_COMBO_SCRUB_motorcontrol_nikon = motorcontrol_nikon_r5f.ti-arm-clang.nortos_scrub motorcontrol_nikon_r5f.ti-arm-clang.freertos_scrub
+BUILD_COMBO_SCRUB_motorcontrol_tamagawa = motorcontrol_tamagawa_r5f.ti-arm-clang.nortos_scrub motorcontrol_tamagawa_r5f.ti-arm-clang.freertos_scrub
+BUILD_COMBO_SCRUB_pruicss_pwm = pruicss_pwm_r5f.ti-arm-clang.nortos_scrub pruicss_pwm_r5f.ti-arm-clang.freertos_scrub
+
 
 # Combine all Components Scrub Targets
 BUILD_COMBO_SCRUB_ALL = $(BUILD_COMBO_SCRUB_motorcontrol_sdfm) $(BUILD_COMBO_SCRUB_motorcontrol_bissc) $(BUILD_COMBO_SCRUB_motorcontrol_endat) $(BUILD_COMBO_SCRUB_motorcontrol_hdsl) $(BUILD_COMBO_SCRUB_motorcontrol_nikon) $(BUILD_COMBO_SCRUB_motorcontrol_tamagawa) $(BUILD_COMBO_SCRUB_pruicss_pwm)
@@ -277,9 +285,11 @@ BUILD_COMBO_SCRUB_ALL = $(BUILD_COMBO_SCRUB_motorcontrol_sdfm) $(BUILD_COMBO_SCR
 # Combine all Pre-built Components Scrub Targets
 BUILD_COMBO_PREBUILT_SCRUB_ALL =
 
+
 libs-scrub: $(BUILD_COMBO_SCRUB_ALL)
 
 libs-prebuilt-scrub: $(BUILD_COMBO_PREBUILT_SCRUB_ALL)
+
 
 $(BUILD_COMBO_SCRUB_motorcontrol_sdfm):
 	$(MAKE) -C source/current_sense/sdfm -f makefile.am243x.$(subst motorcontrol_sdfm_,,$(subst _scrub,,$@)) scrub
@@ -357,7 +367,10 @@ BUILD_COMBO_EXAMPLE_ALL += transforms_test_am243x-evm_r5fss0-0_freertos_ti-arm-c
 BUILD_COMBO_EXAMPLE_ALL += transforms_test_am243x-lp_r5fss0-0_nortos_ti-arm-clang
 BUILD_COMBO_EXAMPLE_ALL += transforms_test_am243x-lp_r5fss0-0_freertos_ti-arm-clang
 BUILD_COMBO_EXAMPLE_ALL += dlog4ch_lib_am243x-lp_r5fss0-0_nortos_ti-arm-clang
+
 # Various System Example Targets
+
+
 
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL =
 # Various Private Example Targets
@@ -429,7 +442,10 @@ BUILD_COMBO_EXAMPLE_PRIVATE_ALL += pruicss_iep_sync_out_am243x-evm_icss_g0_tx_pr
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += pruicss_iep_sync_out_am243x-evm_icss_g0_tx_pru1_fw_ti-pru-cgt
 # Various Private System Example Targets
 
+
 examples: $(BUILD_COMBO_EXAMPLE_ALL)
+
+
 
 examples-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_ALL)
 
@@ -843,6 +859,7 @@ BUILD_COMBO_EXAMPLE_CLEAN_ALL += transforms_test_am243x-lp_r5fss0-0_nortos_ti-ar
 BUILD_COMBO_EXAMPLE_CLEAN_ALL += transforms_test_am243x-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_CLEAN_ALL += dlog4ch_lib_am243x-lp_r5fss0-0_nortos_ti-arm-clang_clean
 # Various System Example Clean Targets
+
 
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL =
 # Various Private Example Targets
@@ -1328,6 +1345,7 @@ BUILD_COMBO_EXAMPLE_SCRUB_ALL += transforms_test_am243x-lp_r5fss0-0_nortos_ti-ar
 BUILD_COMBO_EXAMPLE_SCRUB_ALL += transforms_test_am243x-lp_r5fss0-0_freertos_ti-arm-clang_scrub
 BUILD_COMBO_EXAMPLE_SCRUB_ALL += dlog4ch_lib_am243x-lp_r5fss0-0_nortos_ti-arm-clang_scrub
 # Various System Example Scrub Targets
+
 
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL =
 # Various Private Example Targets
