@@ -155,7 +155,7 @@ const utils = {
     getIcsdkProductNameProjectSpec: (device) => {
 
         if(common.isDevelopmentMode())
-            return "IND_COMMS_SDK_AMXXX";
+            return "INDUSTRIAL_COMMUNICATIONS_SDK_AMXXX";
 
         return require(`./device/project_${device}`).getIcsdkProductNameProjectSpec();
     },

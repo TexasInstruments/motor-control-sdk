@@ -157,7 +157,7 @@ function getProductNameProjectSpec() {
 }
 
 function getIcsdkProductNameProjectSpec() {
-    return "IND_COMMS_SDK_AM263PX";
+    return "INDUSTRIAL_COMMUNICATIONS_SDK_AM263PX";
 }
 
 function getMcusdkProductNameProjectSpec() {

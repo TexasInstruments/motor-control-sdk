@@ -107,7 +107,7 @@ function getProductNameProjectSpec() {
 }
 
 function getIcsdkProductNameProjectSpec() {
-    return "IND_COMMS_SDK_AM64X";
+    return "INDUSTRIAL_COMMUNICATIONS_SDK_AM64X";
 }
 
 function getMcusdkProductNameProjectSpec() {
