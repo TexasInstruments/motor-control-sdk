@@ -2,8 +2,6 @@
 DEVICE ?= am243x
 
 ifeq ($(OS),Windows_NT)
-    MCU_PLUS_SDK_PATH ?= C:/ti/mcu_plus_sdk
-    IND_COMMS_SDK_PATH ?= C:/ti/ind_comms_sdk
     TOOLS_PATH?=C:/ti
     CCS_PATH?=$(TOOLS_PATH)/ccs2020/ccs
     CCS_ECLIPSE=$(CCS_PATH)/eclipse/eclipsec
@@ -25,8 +23,6 @@ ifeq ($(OS),Windows_NT)
 else
     UNAME_S := $(shell uname -s)
     ifneq (,$(filter $(UNAME_S),Linux Darwin))
-        export MCU_PLUS_SDK_PATH ?= $(HOME)/ti/mcu_plus_sdk
-        export IND_COMMS_SDK_PATH ?= $(HOME)/ti/ind_comms_sdk
         export TOOLS_PATH?=$(HOME)/ti
         export CCS_PATH?=$(TOOLS_PATH)/ccs2020/ccs
         export CCS_ECLIPSE=$(CCS_PATH)/eclipse/eclipse
@@ -45,6 +41,9 @@ else
         CGT_GCC_ARMV7_PATH=$(CGT_GCC_ARM_PATH)
     endif
 endif
+
+MCU_PLUS_SDK_PATH?=$(TOOLS_PATH)/mcu_plus_sdk
+IND_COMMS_SDK_PATH?=$(TOOLS_PATH)/ind_comms_sdk
 
 CGT_TI_PRU_PATH=$(TOOLS_PATH)/ti-cgt-pru_2.3.3
 CGT_TI_ARM_CLANG_PATH=$(CCS_PATH)/tools/compiler/ti-cgt-armllvm_4.0.1.LTS
