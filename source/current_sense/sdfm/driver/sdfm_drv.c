@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (C) 2023-25 Texas Instruments Incorporated - http://www.ti.com/
  *
  *
  * Redistribution and use in source and binary forms, with or without
@@ -46,14 +46,15 @@
 /*                            Global Variables                                */
 /* ========================================================================== */
 extern SDFM_Handle_Config gSdfmHandles[];
+extern uint32_t gSdfmConfigNum;
 /* ========================================================================== */
 /*                          Function Definitions                              */
 /* ========================================================================== */
 /* Initialize SDFM instance */
-SDFM_Handle SDFM_init(SDFM_Params sdfm_params, uint32_t index)
+SDFM_Handle SDFM_init(uint32_t index, SDFM_Params sdfm_params)
 {
     SDFM_Handle handle = NULL;
-    if(sdfm_params.pruIcssHandle == NULL)
+    if(sdfm_params.pruicss_handle == NULL || (index >= gSdfmConfigNum))
     {
         return NULL;
     }
@@ -63,11 +64,11 @@ SDFM_Handle SDFM_init(SDFM_Params sdfm_params, uint32_t index)
         /* Initialize SDFM interface address */
         if(sdfm_params.pru_slice_value == PRU_ID_0)
         {              
-            handle->sdfm_interface = (void *)(((PRUICSS_HwAttrs *)(sdfm_params.pruIcssHandle->hwAttrs))->pru0DramBase);
+            handle->sdfm_interface = (void *)(((PRUICSS_HwAttrs *)(sdfm_params.pruicss_handle->hwAttrs))->pru0DramBase);
         }
         else if (sdfm_params.pru_slice_value == PRU_ID_1)
         {
-             handle->sdfm_interface = (void *)(((PRUICSS_HwAttrs *)(sdfm_params.pruIcssHandle->hwAttrs))->pru1DramBase);
+             handle->sdfm_interface = (void *)(((PRUICSS_HwAttrs *)(sdfm_params.pruicss_handle->hwAttrs))->pru1DramBase);
         }
         else
         {
@@ -80,18 +81,18 @@ SDFM_Handle SDFM_init(SDFM_Params sdfm_params, uint32_t index)
         handle->pru_config.iep_clock = sdfm_params.iep_clock;
         handle->pru_config.iep_inc_value = sdfm_params.iep_inc_value;
         handle->pru_config.iep_instance = sdfm_params.iep_instance;
-        handle->sdfm_interface->control[0].enable_snoop_nc = sdfm_params.enable_snoop_mode[0];
-        handle->sdfm_interface->control[1].enable_snoop_nc = sdfm_params.enable_snoop_mode[1];
-        handle->sdfm_interface->control[2].enable_snoop_nc = sdfm_params.enable_snoop_mode[2];
-        handle->pru_config.pruPwmHandle = sdfm_params.pruPwmHandle;
-        handle->pru_config.pruIcssHandle = sdfm_params.pruIcssHandle;
+        handle->sdfm_interface->control[SDFM_PRU_CORE_INDX].enable_snoop_nc = sdfm_params.enable_snoop_mode[SDFM_PRU_CORE_INDX];
+        handle->sdfm_interface->control[SDFM_RTUPRU_CORE_INDX].enable_snoop_nc = sdfm_params.enable_snoop_mode[SDFM_RTUPRU_CORE_INDX];
+        handle->sdfm_interface->control[SDFM_TXPRU_CORE_INDX].enable_snoop_nc = sdfm_params.enable_snoop_mode[SDFM_TXPRU_CORE_INDX];
+        handle->pru_config.pwm_handle = sdfm_params.pwm_handle;
+        handle->pru_config.pruicss_handle = sdfm_params.pruicss_handle;
 
         if(sdfm_params.load_share_enable == 1)
         {
             SDFM_enableLoadShareMode(handle, sdfm_params.pru_slice_value);
         }
         /* Enable SDFM mode */
-        SDFM_enablePruSdfmMode(handle, sdfm_params.pru_slice_value);
+        PRUICSS_setGpiMode(sdfm_params.pruicss_handle, sdfm_params.pru_slice_value, PRUICSS_GP_MUX_SEL_MODE_SD);
     }
 
     return handle;
@@ -106,9 +107,9 @@ int32_t SDFM_configIepCount(SDFM_Handle h_sdfm, uint32_t iep_reset_freq)
     }
     /*; max IEP0 count value for one epwm period*/
     uint32_t max_iep_cnt = (h_sdfm->pru_config.iep_clock/iep_reset_freq)*(h_sdfm->pru_config.iep_inc_value);
-    h_sdfm->sdfm_interface->trigger_config[0].max_iep_cnt_per_epwm_prd = max_iep_cnt;
-    h_sdfm->sdfm_interface->trigger_config[1].max_iep_cnt_per_epwm_prd = max_iep_cnt;
-    h_sdfm->sdfm_interface->trigger_config[2].max_iep_cnt_per_epwm_prd = max_iep_cnt;
+    h_sdfm->sdfm_interface->trigger_config[SDFM_PRU_CORE_INDX].max_iep_cnt_per_epwm_prd = max_iep_cnt;
+    h_sdfm->sdfm_interface->trigger_config[SDFM_RTUPRU_CORE_INDX].max_iep_cnt_per_epwm_prd = max_iep_cnt;
+    h_sdfm->sdfm_interface->trigger_config[SDFM_TXPRU_CORE_INDX].max_iep_cnt_per_epwm_prd = max_iep_cnt;
 
     return SystemP_SUCCESS;
 }
@@ -121,7 +122,7 @@ int32_t SDFM_configEcap(SDFM_Handle h_sdfm, uint8_t ecap_divider)
         return SystemP_FAILURE;
     }
  
-    void *pruicssEcap = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruIcssHandle->hwAttrs))->ecapRegBase);;
+    void *pruicssEcap = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->ecapRegBase);;
     uint32_t rgval;
     uint32_t count;
     
@@ -166,7 +167,7 @@ int32_t SDFM_configEcap(SDFM_Handle h_sdfm, uint8_t ecap_divider)
     if(h_sdfm != NULL)
     {
         retVal = SystemP_SUCCESS;
-        hwAttrs = (PRUICSS_HwAttrs const *)((h_sdfm->pru_config.pruIcssHandle)->hwAttrs);
+        hwAttrs = (PRUICSS_HwAttrs const *)((h_sdfm->pru_config.pruicss_handle)->hwAttrs);
         if(h_sdfm->pru_config.pru_slice == PRU_ID_0)
         {
             HW_WR_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_SDPRU0SAMPLESIZEREGISTER0 + (ch_id * 8)),
@@ -272,7 +273,7 @@ int32_t SDFM_configDataFilter(SDFM_Handle h_sdfm, uint8_t ch_id, uint8_t filter)
     if(h_sdfm != NULL)
     {
         retVal = SystemP_SUCCESS;
-        hwAttrs = (PRUICSS_HwAttrs const *)((h_sdfm->pru_config.pruIcssHandle)->hwAttrs);
+        hwAttrs = (PRUICSS_HwAttrs const *)((h_sdfm->pru_config.pruicss_handle)->hwAttrs);
         if(h_sdfm->pru_config.pru_slice == PRU_ID_0)
         {
             HW_WR_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_SDPRU0CLKSELREGISTER0 + (ch_id * 8)),
@@ -308,7 +309,7 @@ int32_t SDFM_selectClockSource(SDFM_Handle h_sdfm, uint8_t ch_id, uint8_t clk_so
     if(h_sdfm != NULL)
     {
         retVal = SystemP_SUCCESS;
-        hwAttrs = (PRUICSS_HwAttrs const *)((h_sdfm->pru_config.pruIcssHandle)->hwAttrs);
+        hwAttrs = (PRUICSS_HwAttrs const *)((h_sdfm->pru_config.pruicss_handle)->hwAttrs);
         if(h_sdfm->pru_config.pru_slice == PRU_ID_0)
         {
             HW_WR_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_SDPRU0CLKSELREGISTER0 + (ch_id * 8)),
@@ -342,7 +343,7 @@ int32_t SDFM_setClockInversion(SDFM_Handle h_sdfm, uint8_t ch_id, uint8_t clk_in
     if(h_sdfm != NULL)
     {
         retVal = SystemP_SUCCESS;
-        hwAttrs = (PRUICSS_HwAttrs const *)((h_sdfm->pru_config.pruIcssHandle)->hwAttrs);
+        hwAttrs = (PRUICSS_HwAttrs const *)((h_sdfm->pru_config.pruicss_handle)->hwAttrs);
         if(h_sdfm->pru_config.pru_slice == PRU_ID_0)
         {
             HW_WR_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_SDPRU0CLKSELREGISTER0 + (ch_id * 8)),
@@ -370,7 +371,7 @@ int32_t SDFM_enableComparator(SDFM_Handle h_sdfm, uint8_t ch)
     uint8_t pwmSet = 0;
     uint16_t trip_mask; 
     int32_t  retVal = SystemP_SUCCESS;
-    PRUICSS_PWM_Handle pruPwmHandle = h_sdfm->pru_config.pruPwmHandle;
+    PRUICSS_PWM_Handle pwm_handle = h_sdfm->pru_config.pwm_handle;
 
     if (ch > SDFM_CHANNEL8 || ch < SDFM_CHANNEL0)
     {
@@ -394,14 +395,14 @@ int32_t SDFM_enableComparator(SDFM_Handle h_sdfm, uint8_t ch)
         return SystemP_FAILURE;
     }
 
-    retVal = PRUICSS_PWM_getPwmTripMask(pruPwmHandle, pwmSet, &trip_mask);
+    retVal = PRUICSS_PWM_getPwmTripMask(pwm_handle, pwmSet, &trip_mask);
     if(retVal != SystemP_SUCCESS)
     {
         return retVal;
     }
     trip_mask |= 0x2; /*set the trip mask for over current trip*/
 
-    retVal = PRUICSS_PWM_setPwmTripMask(pruPwmHandle, pwmSet, trip_mask);
+    retVal = PRUICSS_PWM_setPwmTripMask(pwm_handle, pwmSet, trip_mask);
 
     if(retVal != SystemP_SUCCESS)
     {
@@ -417,7 +418,7 @@ int32_t SDFM_disableComparator(SDFM_Handle h_sdfm, uint8_t ch)
     uint8_t pwmSet;
     uint16_t trip_mask; 
     int32_t                 retVal = SystemP_SUCCESS;
-    PRUICSS_PWM_Handle pruPwmHandle = h_sdfm->pru_config.pruPwmHandle;
+    PRUICSS_PWM_Handle pwm_handle = h_sdfm->pru_config.pwm_handle;
 
     if (ch > SDFM_CHANNEL8 || ch < SDFM_CHANNEL0)
     {
@@ -441,14 +442,14 @@ int32_t SDFM_disableComparator(SDFM_Handle h_sdfm, uint8_t ch)
         return SystemP_FAILURE;
     }
     
-    retVal = PRUICSS_PWM_getPwmTripMask(pruPwmHandle, pwmSet, &trip_mask);
+    retVal = PRUICSS_PWM_getPwmTripMask(pwm_handle, pwmSet, &trip_mask);
     if(retVal != SystemP_SUCCESS)
     {
         return retVal;
     }
     trip_mask &= 0xFFFD; /*Clear the trip mask for over current trip*/
 
-    retVal = PRUICSS_PWM_setPwmTripMask(pruPwmHandle, pwmSet, trip_mask);
+    retVal = PRUICSS_PWM_setPwmTripMask(pwm_handle, pwmSet, trip_mask);
 
     if(retVal != SystemP_SUCCESS)
     {
@@ -487,7 +488,7 @@ uint32_t SDFM_getFilterData(SDFM_Handle h_sdfm, uint8_t ch)
         return SystemP_FAILURE;
     }
     else{
-        return (uint32_t)(h_sdfm->sampleOutputInterface->sampleOutput[ch] );
+        return (uint32_t)(h_sdfm->sampleOutputInterface->sampleOutput[ch]);
     }
 }
 
@@ -553,7 +554,7 @@ int32_t SDFM_configFastDetect(SDFM_Handle h_sdfm, uint8_t ch, uint8_t *fdParms)
     uint8_t pwmSet = 0; // Initialize to prevent uninitialized use
     uint16_t trip_mask; 
     int32_t retVal = SystemP_SUCCESS;
-    PRUICSS_PWM_Handle pruPwmHandle = h_sdfm->pru_config.pruPwmHandle;
+    PRUICSS_PWM_Handle pwm_handle = h_sdfm->pru_config.pwm_handle;
 
     if (ch > SDFM_CHANNEL8 || ch < SDFM_CHANNEL0)
     {
@@ -586,7 +587,7 @@ int32_t SDFM_configFastDetect(SDFM_Handle h_sdfm, uint8_t ch, uint8_t *fdParms)
     h_sdfm->sdfm_interface->channels[ch].fd_one_max = (fdParms[1] + 1) * 4 + 1;
     h_sdfm->sdfm_interface->channels[ch].fd_one_min = 0;
     
-    hwAttrs = (PRUICSS_HwAttrs const *)((h_sdfm->pru_config.pruIcssHandle)->hwAttrs);
+    hwAttrs = (PRUICSS_HwAttrs const *)((h_sdfm->pru_config.pruicss_handle)->hwAttrs);
 
     if(h_sdfm->pru_config.pru_slice == PRU_ID_0)
     {
@@ -625,14 +626,14 @@ int32_t SDFM_configFastDetect(SDFM_Handle h_sdfm, uint8_t ch, uint8_t *fdParms)
         return SystemP_FAILURE;
     } 
 
-    retVal = PRUICSS_PWM_getPwmTripMask(pruPwmHandle, pwmSet, &trip_mask);
+    retVal = PRUICSS_PWM_getPwmTripMask(pwm_handle, pwmSet, &trip_mask);
     if(retVal != SystemP_SUCCESS)
     {
         return retVal;
     }
     trip_mask |= (1<<(ch+2)); /*set the trip mask for fast detect trip*/
 
-    retVal = PRUICSS_PWM_setPwmTripMask(pruPwmHandle, pwmSet, trip_mask);
+    retVal = PRUICSS_PWM_setPwmTripMask(pwm_handle, pwmSet, trip_mask);
 
     return retVal;
 }
@@ -642,7 +643,7 @@ int32_t SDFM_getFastDetectErrorStatus(SDFM_Handle h_sdfm, uint8_t chNum)
 {
     uint8_t pwmSet;
     int32_t                 retVal = SystemP_SUCCESS;
-    PRUICSS_PWM_Handle pruPwmHandle = h_sdfm->pru_config.pruPwmHandle;
+    PRUICSS_PWM_Handle pwm_handle = h_sdfm->pru_config.pwm_handle;
     if(chNum < SDFM_CHANNEL3)
     {
         pwmSet = 0;
@@ -666,7 +667,7 @@ int32_t SDFM_getFastDetectErrorStatus(SDFM_Handle h_sdfm, uint8_t chNum)
     }
     
     /*PWM trip vector */
-    retVal = PRUICSS_PWM_getPwmTripTriggerCauseVector(pruPwmHandle, pwmSet);
+    retVal = PRUICSS_PWM_getPwmTripTriggerCauseVector(pwm_handle, pwmSet);
     if(retVal == SystemP_FAILURE)
     {
         return retVal;
@@ -699,7 +700,7 @@ int32_t SDFM_clearPwmTripStatus(SDFM_Handle h_sdfm, uint8_t chNum)
 {
     uint8_t pwmSet;
     int32_t                 retVal = SystemP_SUCCESS;
-    PRUICSS_PWM_Handle pruPwmHandle = h_sdfm->pru_config.pruPwmHandle;
+    PRUICSS_PWM_Handle pwm_handle = h_sdfm->pru_config.pwm_handle;
     
     if(chNum < SDFM_CHANNEL3)
     {
@@ -724,21 +725,21 @@ int32_t SDFM_clearPwmTripStatus(SDFM_Handle h_sdfm, uint8_t chNum)
     }
 
     /*clear trip status*/
-    retVal = PRUICSS_PWM_generatePwmTripReset(pruPwmHandle, pwmSet);
+    retVal = PRUICSS_PWM_generatePwmTripReset(pwm_handle, pwmSet);
     if(retVal == SystemP_FAILURE)
     {
         return retVal;
     }
 
     /*clear trip reset status*/
-    retVal = PRUICSS_PWM_clearPwmTripResetStatus(pruPwmHandle, pwmSet);
+    retVal = PRUICSS_PWM_clearPwmTripResetStatus(pwm_handle, pwmSet);
 
     return retVal;
 }
 /*Enable Load share mode*/
 void SDFM_enableLoadShareMode(SDFM_Handle h_sdfm, uint8_t sliceId)
 {
-    void *pruicssCfg = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruIcssHandle->hwAttrs))->cfgRegBase);
+    void *pruicssCfg = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->cfgRegBase);
    
     uint32_t rgval;
     if(sliceId)
@@ -754,20 +755,6 @@ void SDFM_enableLoadShareMode(SDFM_Handle h_sdfm, uint8_t sliceId)
         HW_WR_REG32((uint8_t *)pruicssCfg + CSL_ICSSCFG_SDPRU0CLKDIV, rgval);
     }
 
-}
-
-void SDFM_enablePruSdfmMode(SDFM_Handle h_sdfm, uint8_t sliceId)
-{
-    void *pruicssCfg = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruIcssHandle->hwAttrs))->cfgRegBase);
-   
-    if(sliceId)
-    {
-        HW_WR_FIELD32(((uint8_t *)pruicssCfg + CSL_ICSSCFG_GPCFG1), CSL_ICSSCFG_GPCFG0_PR1_PRU0_GP_MUX_SEL, 3);
-    }
-    else
-    {
-        HW_WR_FIELD32(((uint8_t *)pruicssCfg + CSL_ICSSCFG_GPCFG0), CSL_ICSSCFG_GPCFG0_PR1_PRU0_GP_MUX_SEL, 3);
-    }
 }
 /*Measure Phase delay*/
 int32_t SDFM_measureClockPhaseDelay(SDFM_Handle h_sdfm, uint16_t clkEdg, uint8_t chNum)
@@ -838,7 +825,7 @@ int32_t SDFM_clearOverCurrentError(SDFM_Handle h_sdfm, uint8_t chNum)
 {
     uint8_t pwmSet;
     int32_t                 retVal = SystemP_SUCCESS;
-    PRUICSS_PWM_Handle pruPwmHandle = h_sdfm->pru_config.pruPwmHandle;
+    PRUICSS_PWM_Handle pwm_handle = h_sdfm->pru_config.pwm_handle;
     if(chNum < SDFM_CHANNEL3)
     {
         pwmSet = 0;
@@ -862,7 +849,7 @@ int32_t SDFM_clearOverCurrentError(SDFM_Handle h_sdfm, uint8_t chNum)
     }
 
     /*Clear over current Error PWM trip*/
-    retVal = PRUICSS_PWM_clearPwmOverCurrentErrorTrip(pruPwmHandle, pwmSet);
+    retVal = PRUICSS_PWM_clearPwmOverCurrentErrorTrip(pwm_handle, pwmSet);
     if(retVal == SystemP_FAILURE)
     {
         return retVal;
@@ -924,11 +911,11 @@ int32_t SDFM_enableEpwmSync(SDFM_Handle h_sdfm, uint8_t epwmIns)
 
     if(h_sdfm->pru_config.iep_instance == PRUICSS_IEP_INST0)
     {
-        pru_iep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruIcssHandle->hwAttrs))->iep0RegBase);
+        pru_iep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->iep0RegBase);
     }
     else if(h_sdfm->pru_config.iep_instance == PRUICSS_IEP_INST1)
     {
-        pru_iep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruIcssHandle->hwAttrs))->iep1RegBase);
+        pru_iep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->iep1RegBase);
     }
     else
     {
@@ -963,11 +950,11 @@ int32_t SDFM_disableEpwmSync(SDFM_Handle h_sdfm, uint8_t epwmIns)
     int32_t   retVal = SystemP_FAILURE;
     if(h_sdfm->pru_config.iep_instance == PRUICSS_IEP_INST0)
     {
-        pru_iep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruIcssHandle->hwAttrs))->iep0RegBase);
+        pru_iep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->iep0RegBase);
     }
     else if(h_sdfm->pru_config.iep_instance == PRUICSS_IEP_INST1)
     {
-        pru_iep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruIcssHandle->hwAttrs))->iep1RegBase);
+        pru_iep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->iep1RegBase);
     }
     else
     {
@@ -1004,11 +991,11 @@ int32_t SDFM_configIepSyncMode(SDFM_Handle h_sdfm, uint32_t highPulseWidth, uint
 
     if(h_sdfm->pru_config.iep_instance == PRUICSS_IEP_INST0)
     {
-        pruIep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruIcssHandle->hwAttrs))->iep0RegBase);
+        pruIep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->iep0RegBase);
     }
     else if(h_sdfm->pru_config.iep_instance == PRUICSS_IEP_INST1)
     {
-        pruIep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruIcssHandle->hwAttrs))->iep1RegBase);
+        pruIep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->iep1RegBase);
     }
     else
     {
@@ -1064,11 +1051,11 @@ int32_t SDFM_enableIep(SDFM_Handle h_sdfm)
 
     if(h_sdfm->pru_config.iep_instance == PRUICSS_IEP_INST0)
     {
-        pruIep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruIcssHandle->hwAttrs))->iep0RegBase);
+        pruIep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->iep0RegBase);
     }
     else if(h_sdfm->pru_config.iep_instance == PRUICSS_IEP_INST1)
     {
-        pruIep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruIcssHandle->hwAttrs))->iep1RegBase);
+        pruIep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->iep1RegBase);
     }
     else
     {
@@ -1100,11 +1087,11 @@ int32_t SDFM_configSync1Delay(SDFM_Handle h_sdfm, uint32_t delay)
 
     if(h_sdfm->pru_config.iep_instance == PRUICSS_IEP_INST0)
     {
-        pruIep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruIcssHandle->hwAttrs))->iep0RegBase);
+        pruIep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->iep0RegBase);
     }
     else if(h_sdfm->pru_config.iep_instance == PRUICSS_IEP_INST1)
     {
-        pruIep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruIcssHandle->hwAttrs))->iep1RegBase);
+        pruIep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->iep1RegBase);
     }
     else
     {
@@ -1126,7 +1113,7 @@ int32_t SDFM_configClockFromGPO1(SDFM_Handle h_sdfm, uint8_t div0, uint8_t div1)
 {
    
     uint32_t rgval;
-    void *pruicssCfg =(void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruIcssHandle->hwAttrs))->cfgRegBase);;
+    void *pruicssCfg =(void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->cfgRegBase);;
     int32_t   retVal = SystemP_SUCCESS;
     
     if( div0 >= CSL_ICSSCFG_GPCFG1_PRU1_GPO_DIV0_MAX || div1 >= CSL_ICSSCFG_GPCFG1_PRU1_GPO_DIV1_MAX )
@@ -1221,16 +1208,16 @@ int32_t SDFM_selectIepCmpEvent(SDFM_Handle h_sdfm, uint8_t event, uint8_t pru_co
     if(h_sdfm->pru_config.iep_instance == PRUICSS_IEP_INST0)
     {
         /*Enable IEP0 as trigger source */
-        pruIep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruIcssHandle->hwAttrs))->iep0RegBase);
-        iep_cmp_reg = PRU_ICSS_IEP0_BASE + CSL_ICSS_G_PR1_IEP0_SLV_CMP0_REG0 + (event * 8);
-        iep_cmp_status_reg = PRU_ICSS_IEP0_BASE + CSL_ICSS_G_PR1_IEP0_SLV_CMP_STATUS_REG;
+        pruIep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->iep0RegBase);
+        iep_cmp_reg = CSL_ICSS_G_PR1_IEP0_SLV_REGS_BASE + CSL_ICSS_G_PR1_IEP0_SLV_CMP0_REG0 + (event * 8);
+        iep_cmp_status_reg = CSL_ICSS_G_PR1_IEP0_SLV_REGS_BASE + CSL_ICSS_G_PR1_IEP0_SLV_CMP_STATUS_REG;
     }
     else if(h_sdfm->pru_config.iep_instance == PRUICSS_IEP_INST1)
     {
         /*Enable IEP1 as trigger source */
-        pruIep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruIcssHandle->hwAttrs))->iep0RegBase);
-        iep_cmp_reg = PRU_ICSS_IEP1_BASE + CSL_ICSS_G_PR1_IEP0_SLV_CMP0_REG0 + (event * 8);
-        iep_cmp_status_reg = PRU_ICSS_IEP1_BASE + CSL_ICSS_G_PR1_IEP0_SLV_CMP_STATUS_REG;
+        pruIep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->iep0RegBase);
+        iep_cmp_reg = CSL_ICSS_G_PR1_IEP1_SLV_REGS_BASE + CSL_ICSS_G_PR1_IEP0_SLV_CMP0_REG0 + (event * 8);
+        iep_cmp_status_reg = CSL_ICSS_G_PR1_IEP1_SLV_REGS_BASE + CSL_ICSS_G_PR1_IEP0_SLV_CMP_STATUS_REG;
     }
     else
     {
@@ -1271,12 +1258,12 @@ int32_t SDFM_configIepCmp0ToResetIep(SDFM_Handle h_sdfm, uint32_t iep_reset_freq
     if(h_sdfm->pru_config.iep_instance == PRUICSS_IEP_INST0)
     {
         /*Enable IEP0 as trigger source */
-        pruIep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruIcssHandle->hwAttrs))->iep0RegBase);
+        pruIep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->iep0RegBase);
     }
     else if(h_sdfm->pru_config.iep_instance == PRUICSS_IEP_INST1)
     {
         /*Enable IEP1 as trigger source */
-        pruIep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruIcssHandle->hwAttrs))->iep1RegBase);
+        pruIep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->iep1RegBase);
     }
     else
     {

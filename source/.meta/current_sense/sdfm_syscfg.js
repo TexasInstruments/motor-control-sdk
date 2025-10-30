@@ -494,6 +494,10 @@ let sdfm_module = {
     displayName: "SDFM",
     description: "Sigma Delta Filter",
     templates: {
+        "/drivers/system/system_config.c.xdt": {
+            driver_config:"/.meta/current_sense/templates/sdfm_template.c.xdt",
+            moduleName: sdfm_module_name,
+        },
         "/drivers/system/system_config.h.xdt": {
             driver_config:"/.meta/current_sense/templates/sdfm_template.h.xdt",
             moduleName: sdfm_module_name,

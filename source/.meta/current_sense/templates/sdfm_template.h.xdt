@@ -4,7 +4,6 @@
 % let common   = system.getScript("/common");
 % let sd_definition = system.getScript("/current_sense/sdfm_math.syscfg.js");
 
-#include <current_sense/sdfm/include/sdfm_drv.h>
 /*
  * SDFM
  */
@@ -31,9 +30,6 @@
       %}
    %}
 
-/* Handle declaration */
-SDFM_Handle_Config gSdfmHandles[CONFIG_SDFM_NUM_INSTANCES];
-   
 #define `instance.$name`                  `i`
 #define `instance.$name`_SLICE            `Slice`
 #define `instance.$name`_ICSSGx           `IcssgIns`

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (C) 2023-25 Texas Instruments Incorporated - http://www.ti.com/
  *
  *
  * Redistribution and use in source and binary forms, with or without
@@ -119,7 +119,7 @@ extern "C" {
 #define SDFM_CH_MASK_FOR_CH0_CH3_CH6     ( 0x49 )
 #define SDFM_CH_MASK_FOR_CH1_CH4_CH7     ( 0x92 )
 #define SDFM_CH_MASK_FOR_CH2_CH5_CH8     ( 0x124 )
-#define NUM_CH_SUPPORTED_PER_PRU_SLICE   ( 9 )
+#define SDFM_NUM_OF_CH_PER_PRU_SLICE     (9)
 #define NUM_OF_PRU_CORE_PER_PRU_SLICE    ( 3 )
 
 /*SDFM Channel IDs*/
@@ -133,11 +133,7 @@ extern "C" {
 #define SDFM_CHANNEL7    (7)
 #define SDFM_CHANNEL8    (8)
 
-#define SDFM_NUM_OF_CH_PER_PRU_SLICE    (9)
 #define BF_SDFM_EN_ENABLE               (1)
-
-#define PRU_ICSS_IEP1_BASE              (0x2f000UL)
-#define PRU_ICSS_IEP0_BASE              (0x2e000UL)
 
 /*SDFM firmware version mask*/
 #define SDFM_FW_VERSION_BIT_SHIFT       (32)
@@ -151,6 +147,10 @@ extern "C" {
 #define SDFM_IEP_CMP1_EN_SHIFT     (2)
 #define SDFM_IEP_CMP2_EN_SHIFT     (3)
 
+#define SDFM_PRU_CORE_INDX          0U
+#define SDFM_RTUPRU_CORE_INDX       1U
+#define SDFM_TXPRU_CORE_INDX        2U
+
 /* ========================================================================== */
 /*                         Structures                                         */
 /* ========================================================================== */
@@ -161,7 +161,8 @@ extern "C" {
 typedef enum SDFM_ClockSource_e {
     SDFM_CLOCK_SOURCE_IEP = 0,   /**< IEP as clock source */
     SDFM_CLOCK_SOURCE_ECAP = 1,  /**< eCAP as clock source */
-    SDFM_CLOCK_SOURCE_PRUGPIO1 = 2 /**< PRU GPIO1 as clock source */
+    SDFM_CLOCK_SOURCE_PRUGPIO1 = 2, /**< PRU GPIO1 as clock source */
+    SDFM_EXTERNAL_CLOCK_SRC = 3 /**< External clock source */
 } SDFM_ClockSource;
 
 /**
@@ -333,10 +334,10 @@ typedef struct SDFM_CfgPru_s
     volatile uint8_t pru_slice;
     
     /**< PRU ICSS Handle */
-    PRUICSS_Handle pruIcssHandle;
+    PRUICSS_Handle pruicss_handle;
     
     /**< PRU PWM Handle */
-    PRUICSS_PWM_Handle pruPwmHandle;
+    PRUICSS_PWM_Handle pwm_handle;
     
     /**< PRU core clock frequency in Hz */
     volatile uint32_t pru_clock;
@@ -356,6 +357,22 @@ typedef struct SDFM_CfgPru_s
 } SDFM_CfgPru;
 
 /**
+ *    \brief    Structure defining SDFM control settings
+ *
+ *    \details  Contains control parameters for SDFM operation
+ */
+typedef struct SDFM_Control_s
+{
+    /**< SDFM Enable */
+    volatile uint8_t enable;
+    
+    /**< SDFM Enable Ack */
+    volatile uint8_t enable_ack;
+    
+    /**< Enable snoop based Normal current sampling */
+    volatile uint8_t enable_snoop_nc;
+} SDFM_Control;
+/**
  *    \brief    Structure defining SDFM interface components that will be placed in DMEM for firmware interaction
  *
  *    \details  Contains control settings, channel configurations, and trigger settings in a layout
@@ -363,17 +380,8 @@ typedef struct SDFM_CfgPru_s
  */
 typedef struct SDFM_Interface_s
 {
-    /**< Global SDFM control settings */
-    struct {
-        /**< SDFM Enable */
-        volatile uint8_t enable;
-        
-        /**< SDFM Enable Ack */
-        volatile uint8_t enable_ack;
-        
-        /**< Enable snoop based Normal current sampling */
-        volatile uint8_t enable_snoop_nc;
-    } control[NUM_OF_PRU_CORE_PER_PRU_SLICE];
+    /**< Global SDFM control settings for each PRU core */
+    SDFM_Control control[NUM_OF_PRU_CORE_PER_PRU_SLICE];
     
     /**< Channel mask indicating which channels are active */
     volatile uint16_t active_channels_mask;
@@ -385,7 +393,7 @@ typedef struct SDFM_Interface_s
     SDFM_CfgTrigger trigger_config[NUM_OF_PRU_CORE_PER_PRU_SLICE];
     
     /**< Channel-specific configurations - array of 9 channels */
-    SDFM_ChannelConfig channels[NUM_CH_SUPPORTED_PER_PRU_SLICE];
+    SDFM_ChannelConfig channels[SDFM_NUM_OF_CH_PER_PRU_SLICE];
 
     
 } SDFM_Interface;
@@ -436,12 +444,12 @@ typedef struct SDFM_Handle_Config_s *SDFM_Handle;
  */
 typedef struct SDFM_Params_s
 {
-    PRUICSS_Handle pruIcssHandle; /**< PRU ICSS Handle */
-    PRUICSS_PWM_Handle pruPwmHandle; /**< PRU PWM Handle */
+    PRUICSS_Handle pruicss_handle; /**< PRU ICSS Handle */
+    PRUICSS_PWM_Handle pwm_handle; /**< PRU PWM Handle */
     uint32_t load_share_enable; /**< Enable load sharing between PRUs */
     uint8_t enable_snoop_mode[NUM_OF_PRU_CORE_PER_PRU_SLICE]; /**< Enable snoop mode for normal current sampling */
     SDFM_CfgTrigger trigger_config[NUM_OF_PRU_CORE_PER_PRU_SLICE];
-    SDFM_ChannelConfig channels[NUM_CH_SUPPORTED_PER_PRU_SLICE];
+    SDFM_ChannelConfig channels[SDFM_NUM_OF_CH_PER_PRU_SLICE];
     uint32_t pru_slice_value; /**< PRUx slice being used */
     uint32_t iep_instance;     /**< IEP instance (0 for IEP0, 1 for IEP1) */
     uint32_t iep_inc_value; /**< Increment value of IEP counter */

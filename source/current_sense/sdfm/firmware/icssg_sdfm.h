@@ -491,7 +491,7 @@
 #define SDFM_LOCAL_OUTPUT_SAMPLE_BUFFER_OFFSET        (0x2F0)
 
 /*Debug offset*/
-#define SDFM_DUBUG_OFFSET         ( 0x300 )
+#define SDFM_DEBUG_OFFSET         ( 0x300 )
 #endif
 #if defined (SDFM_RTU_CORE)
 /*Zero cross local storage*/
@@ -507,7 +507,7 @@
 #define SDFM_LOCAL_OUTPUT_SAMPLE_BUFFER_OFFSET        (0x320)
 
 /*Debug */
-#define SDFM_DUBUG_OFFSET         ( 0x330 )
+#define SDFM_DEBUG_OFFSET         ( 0x330 )
 #endif
 #if defined (SDFM_TXPRU_CORE)
 /*Zero cross local storage*/
@@ -523,10 +523,11 @@
 #define SDFM_LOCAL_OUTPUT_SAMPLE_BUFFER_OFFSET        (0x350)
 
 /*Debug */
-#define SDFM_DUBUG_OFFSET         ( 0x360 )
+#define SDFM_DEBUG_OFFSET         ( 0x360 )
 #endif
 
-/*LOCAL defins*/
+
+/*Local defines*/
 /* Defines for comparator  */
 #define SDFM_CFG_BF_SD_CH0_EN_COMP_BIT                  ( 0x01 )
 #define SDFM_CFG_BF_SD_CH1_EN_COMP_BIT                  ( 0x02 )

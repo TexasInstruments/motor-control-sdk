@@ -1,4 +1,4 @@
-; Copyright (c) 2025, Texas Instruments Incorporated
+; Copyright (c) 2023-25, Texas Instruments Incorporated
 ; All rights reserved.
 ;
 ;  Redistribution and use in source and binary forms, with or without
@@ -41,8 +41,8 @@
         .include "sdfm.h"
         .include "sdfm_macros.h"
         .include "firmware_version.h"
-        .include "../../../../mcu_plus_sdk/source/pru_io/firmware/common/icss_regs.inc"
-	    .include "../../../../mcu_plus_sdk/source/pru_io/firmware/common/icss_cfg_regs.inc"
+        .include "pru_io/firmware/common/icss_regs.inc"
+	    .include "pru_io/firmware/common/icss_cfg_regs.inc"
 
 ;***********************************************************************************
 
@@ -67,16 +67,15 @@ TRIGGER_HOST_SDFM_IRQ_CH2   .set TXPRU_TRIGGER_HOST_SDFM_EVT_CH2 + 16
 
     .if	$isdefed("SLICE0")
 	.asg	PRU0_DMEM,		PRUx_DMEM
-	.asg    ICSS_CFG_PRU0_ENDAT_CH0_CFG1, ICSS_CFG_PRUx_ENDAT_CH0_CFG1
 	.endif
 
 	.if	$isdefed("SLICE1")
 	.asg	PRU1_DMEM,		PRUx_DMEM
-	.asg    ICSS_CFG_PRU1_ENDAT_CH0_CFG1, ICSS_CFG_PRUx_ENDAT_CH0_CFG1
 	.endif
 
 ;SPAD Bank for SD Ch context storage
 BANK_CTXT_NC               .set BANK0
+BANK_SINGLE_PRU_DIFF_STATE  .set BANK1
 
 ;differentiator state located in BANK locations 9-17
 NUM_REGS_DIFF_STATE    .set  9  ; Number of PRU registers for differentiator state
@@ -131,12 +130,16 @@ SDFM_ENTRY:
     SBCO    &TEMP_REG0.w0, CT_PRU_ICSSG_TM, 0, 2
     .endif    
 
-    ;Write C24 block index for local PRU DMEM
-    ;;M_WRITE_C24_BLK_INDEX C24_BLK_INDEX_FW_REGS_VAL
+    .if !$isdefed("SDFM_LOAD_SHARE_MODE")
+    ;enable scratch pad shifting 
+    LBCO    &TEMP_REG0, CT_PRU_ICSSG_CFG, ICSS_CFG_SPPC, 1
+    SET      TEMP_REG0.w0.t1
+    SBCO    &TEMP_REG0, CT_PRU_ICSSG_CFG, ICSS_CFG_SPPC, 1
+    .endif
 
     .if $isdefed("SDFM_PHASE_DELAY_CALC")
 PHASE_DELAY_CAL:
-    ;check phase delay measurment active
+    ;check phase delay measurement active
     LBCO    &TEMP_REG0.b0, PRUx_DMEM, SDFM_CFG_SD_CH0_EN_PHASE_DELAY, 1
     QBBC    SKIP_PHASE_DELAY_CAL, TEMP_REG0.b0, 0
     JAL     RET_ADDR_REG, SDFM_CLOCK_PHASE_COMPENSATION
@@ -152,7 +155,7 @@ SKIP_PHASE_DELAY_CAL:
 ; If SDFM global enable not set, wait for SDFM global enable from R5.
 ;
 CHECK_SDFM_EN:
-    ;check phase delay measurment active
+    ; ;check phase delay measurement active
     .if $isdefed("SDFM_PHASE_DELAY_CALC")
     LBCO    &TEMP_REG0.b0, PRUx_DMEM, SDFM_CFG_SD_CH0_EN_PHASE_DELAY, 1
     QBBS    PHASE_DELAY_CAL, TEMP_REG0.b0, 0
@@ -174,7 +177,7 @@ INIT_SDFM:
     LSR  TEMP_REG0, TEMP_REG0, ICSS_PRU_SD_FIRST_CH
     MOV SD_CHANNEL_MASK, TEMP_REG0.w0
 
-    ; Reset SDFM state, FIXME add check for snoop mode
+    ; Reset SDFM state
     JAL     RET_ADDR_REG, FN_RESET_SDFM_STATE
 
     ; Global enable SD HW,
@@ -221,6 +224,7 @@ CONF_ZC_REG_LOOP
     LDI TEMP_REG2, SDFM_CFG_CH0_FILTER_TYPE_OFFSET
     
     LDI TEMP_REG1, SD_CH0
+    LDI NC_SINC_FILTER_TYPE, 0
 LOOP_START:
     ; Check if this channel is enabled/connected
     QBBC  SKIP_CH_SINC_FILTER_TYPE, SD_CHANNEL_MASK, TEMP_REG1.b0 
@@ -257,10 +261,10 @@ END_NC_SAMPLE_COUNT:
     ;Enable Task Manager
     M_PRU_TM_ENABLE
 
-    JAL     RET_ADDR_REG, CONFG_IEP_CMP_FOR_TRIGGER_MODE
+    JAL     RET_ADDR_REG, CONFIG_IEP_CMP_FOR_TRIGGER_MODE
 SKIP_ENABLE_TM:
     
-    ;set cmparator regsiter
+    ;set comparator registers
     LDI TEMP_REG2, SDFM_CFG_SD_CH0_EN_COMP_OFFSET
     
     LDI TEMP_REG3, 0
@@ -284,7 +288,7 @@ CONF_COMP_REG_LOOP
     LBCO    &TEMP_REG0, PRUx_DMEM, SDFM_EN_NC_USING_SNOOP_REG_OFFSET, 1
     QBBS    SKIP_NORMAL_MODE, TEMP_REG0, 0
     QBBC    SKIP_TRIGGER_MODE_NC, EN_NC_TRIGGER_MODE, 0
-    JAL     RET_ADDR_REG, CONFG_IEP_CMP_FOR_TRIGGER_MODE
+    JAL     RET_ADDR_REG, CONFIG_IEP_CMP_FOR_TRIGGER_MODE
     JMP      TRIGGER_MODE_START
 SKIP_TRIGGER_MODE_NC:
     JMP     CONTINUOUS_MODE_START
@@ -747,7 +751,7 @@ WAIT_SAMPLE_COUNT_INCR:
 
     .if $isdefed("DEBUG_CODE")   
     ;Store sample counter values
-    LDI    TEMP_REG1, SDFM_DUBUG_OFFSET
+    LDI    TEMP_REG1, SDFM_DEBUG_OFFSET
     LSL    TEMP_REG3, SAMP_CNT_REG, 1
     ADD     TEMP_REG1, TEMP_REG3, TEMP_REG1
     SBCO    &TEMP_REG2, PRUx_DMEM, TEMP_REG1, 1
@@ -940,7 +944,7 @@ SKIP_IEP1:
 ;;      
 ;; Initialize IEP CMP event .
 ;;
-CONFG_IEP_CMP_FOR_TRIGGER_MODE:
+CONFIG_IEP_CMP_FOR_TRIGGER_MODE:
     ; Load IEP CMP4 register address
     LDI     TEMP_REG1, FW_REG_SDFM_CFG_FIRST_TRIG_SAMPLE_TIME
     LBCO    &TEMP_REG0, PRUx_DMEM, TEMP_REG1, 4
@@ -961,6 +965,9 @@ FN_RESET_SDFM_STATE:
     LDI     R0.b0, 0
     ZERO    &R1, 4*18
     XOUT    BANK_CTXT_NC, &R1, 4*18 ;clear ScratchPad registers for NC
+    .if !$isdefed("SDFM_LOAD_SHARE_MODE")
+    XOUT    BANK_SINGLE_PRU_DIFF_STATE, &R1, 4*28 ;clear ScratchPad registers for Single PRU differentiation
+    .endif
     JMP     RET_ADDR_REG
 
 ;
@@ -979,9 +986,9 @@ FN_RESET_SD_CH_HW:
     ADD     TEMP_REG1, TEMP_REG1, 1                     ; increment to next channel 
     SET     R31.t23                                     ; R31[23] re_init=1
 RESET_SD_LOAD_SHARE_CH_HW_LOOP
+
     JMP     RET_ADDR_REG
   
-
     .if $isdefed("SDFM_PHASE_DELAY_CALC")
 ;Phase delay measurement
 ; Measure Phase Difference between MCLK and MDATA
@@ -1043,14 +1050,16 @@ TRIGGER_MODE_START:
     ZERO &R9, 4*9
     ; reset SD channel HW
     JAL     RET_ADDR_REG, FN_RESET_SD_CH_HW
-    
-
+    .if !$isdefed("SDFM_LOAD_SHARE_MODE")   
+    JAL     RET_ADDR_REG, FN_RESET_SDFM_STATE
+    .endif
     ;Sample count initialization
     LDI     SAMP_CNT_REG, 1
     LDI     NC_SAMPLE_DONE, 0
    
 CONTINUOUS_MODE_START:
     ; Read accumulator output
+    .if $isdefed("SDFM_LOAD_SHARE_MODE")
     QBBC CH0_SKIP, SD_CHANNEL_MASK, SD_CH0
     ;select ch0, enable all channel
     LDI     R30.w2, (SD_CH0<<10 | 1<<9 )
@@ -1359,7 +1368,88 @@ END_OC_DETECTION_CH2:
     QBA CONTINUOUS_MODE_START
 
 CH2_SKIP: 
+    .else
+    .if $isdefed("SDFM_PRU_CORE")
+    ;Sampling for all nine channels 
+    ;Cycle through all SD channels
+    LDI  CURRENT_ACTIVE_CHANNEL, SD_CH0
+    LDI  R0, 0
+    ;LDI  SDFM_CFG_CHx_DIFF_REG_OFFSET, SDFM_DIFF_CH0_OFFSET
+    LDI  CURRENT_LOOP_COUNT, 0  ;starting from 1rd channel , each channel offset is 4 bytes
+    LDI  NC_SINC_FILTER_TYPE, SDFM_CFG_CH0_FILTER_TYPE_OFFSET ; SINC filter offset
+    LOOP   SINGLE_PRU_CHANNEL_SAMPLING_LOOP, 9 ; loop over SD channels
+    ; Read accumulator output
+    QBBC CHx_SKIP, SD_CHANNEL_MASK, CURRENT_ACTIVE_CHANNEL
+    ;select channel, enable all channel
+    LSL     TEMP_REG0.w0, CURRENT_ACTIVE_CHANNEL, 10  ; shift channel ID to bits 10-13
+    SET     TEMP_REG0.w0.t9         ; set bit 9 for enable
+    MOV     R30.w2, TEMP_REG0.w0
+    NOP
+    ;R31[28], check shadow_update_flag 
+    QBBC    CHx_SKIP, R31, 28
 
+    ;R31[24], ; clear shadow update flag 
+    SET     R31, R31.t24
+    ; Load reg R31[0-27] SD HW ACC3/ACC2/ACC1 output sample
+    AND     DN0, R31, MASK_REG
+
+    ;Performs differentiation of accumulator's output
+    
+    ;Execute SINC3/SINC2/SINC1 differentiation for Ch ; 0h = acc3, 1h =acc2 & 2h = acc1
+    XIN     BANK_SINGLE_PRU_DIFF_STATE, &TEMP_REG0, 4*3 ;read previous differentiation value from Scratch Pad
+    LBCO    &TEMP_REG3.b2, PRUx_DMEM,  NC_SINC_FILTER_TYPE, 1
+    QBNE    SKIP1_ACC3_CHx, TEMP_REG3.b2, 0
+    M_ACC3_PROCESS TEMP_REG0, TEMP_REG1, TEMP_REG2
+    JMP  END1_ACC_CHx
+SKIP1_ACC3_CHx:
+    QBNE    SKIP1_ACC2_CHx, TEMP_REG3.b2, 1
+    M_ACC2_PROCESS TEMP_REG0, TEMP_REG1
+    JMP  END1_ACC_CHx
+SKIP1_ACC2_CHx:
+    M_ACC1_PROCESS TEMP_REG0
+END1_ACC_CHx:
+    ;store current differentiation value to Scratch Pad
+    XOUT     BANK_SINGLE_PRU_DIFF_STATE, &TEMP_REG0, 4*3 ;store current differentiation value to Scratch Pad
+    
+    ;CH sampling done
+    LDI     TEMP_REG3, 1
+    LSL     TEMP_REG3, TEMP_REG3, CURRENT_ACTIVE_CHANNEL
+    OR      NC_SAMPLE_DONE, NC_SAMPLE_DONE, TEMP_REG3
+    ;Check if the continuous mode is enabled 
+    QBBC    SKIP_TRIGGER_MODE_CHx, EN_NC_TRIGGER_MODE, 0
+
+    ;Save NC output sample to local output sample buffer
+    ADD     TEMP_REG1, CURRENT_LOOP_COUNT, OUT_SAMP_BUF_REG 
+    SBCO    &CN5, PRUx_DMEM, TEMP_REG1, 4
+
+    JMP     CHx_SKIP
+SKIP_TRIGGER_MODE_CHx:
+    
+    ;Save NC output sample to local output sample buffer
+    ADD     TEMP_REG0, CURRENT_LOOP_COUNT, OUT_SAMP_BUF_REG
+    SBCO    &CN5, PRUx_DMEM, TEMP_REG0, 4
+    LDI     TEMP_REG1, SDFM_CFG_OUT_SAMP_BUF_BASE_ADD_OFFSET
+    LBCO    &TEMP_REG0, PRUx_DMEM, TEMP_REG1, 4
+    LDI     TEMP_REG1, SDFM_CFG_OUT_SAMP_BUF_OFFSET
+    ADD     TEMP_REG1, TEMP_REG1, CURRENT_LOOP_COUNT
+    SBBO    &CN5, TEMP_REG0, TEMP_REG1, 4
+    ;Trigger interrupt
+    LDI     TEMP_REG0, TRIGGER_HOST_SDFM_IRQ_CH0
+    ADD     TEMP_REG0.w0, TEMP_REG0.w0, CURRENT_ACTIVE_CHANNEL
+    MOV     R31.w0, TEMP_REG0.w0
+
+CHx_SKIP:
+    
+    ;Update registers for next channel
+    ADD  CURRENT_ACTIVE_CHANNEL, CURRENT_ACTIVE_CHANNEL, 1
+    ADD  CURRENT_LOOP_COUNT, CURRENT_LOOP_COUNT, 4
+    ;Update pad register for next channel.
+    ADD   R0, R0, 3 ; Set shift value to 3 
+    ADD   NC_SINC_FILTER_TYPE, NC_SINC_FILTER_TYPE, ICSSG_SDFM_CH_MEM_OFFSET
+SINGLE_PRU_CHANNEL_SAMPLING_LOOP
+    
+    .endif ;SDFM_PRU_CORE
+    .endif ;SDFM_LOAD_SHARE_MODE
     ;Intruppt for trigger mode 
     QBBC    SKIP_TRIGGER_MODE, EN_NC_TRIGGER_MODE, 0
     AND     TEMP_REG0.w0, NC_SAMPLE_DONE, SD_CHANNEL_MASK
@@ -1404,6 +1494,7 @@ SKIP_CH_FOR_MEMORY:
     ADD     TEMP_REG2, TEMP_REG2, 1
     ADD     TEMP_REG0, TEMP_REG0, 4
 LOAD_SAMPLE_IN_MEMORY
+
     ;Trigger interrupt for NC sampling
     LDI     R31.w0, TRIGGER_HOST_SDFM_IRQ_CH0
 

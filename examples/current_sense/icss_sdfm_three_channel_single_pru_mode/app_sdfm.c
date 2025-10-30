@@ -74,7 +74,7 @@
 #define APP_EPWM_TB_COUNTER_DIR         ( EPWM_TB_COUNTER_DIR_UP_DOWN )
 
 /* EPWM0 IRQ handler */
-static void epwmIrqHandler(void *handle);
+void epwmIrqHandler(void *handle);
 
 static HwiP_Object gEpwm0HwiObject;         /* EPWM0 HWI */
 
@@ -100,7 +100,7 @@ static HwiP_Object gIcssgPruSdfmHwiObject;  /* ICSSG PRU SDFM FW HWI */
 #define APP_EPWM_OUTPUT_FREQ1            (1U*20000000 )
 
 /* EPWM1 IRQ handler */
-static void epwmIrqHandler1(void *handle);
+void epwmIrqHandler1(void *handle);
 
 static HwiP_Object gEpwm1HwiObject;         /* EPWM1 HWI */
 
@@ -115,7 +115,7 @@ volatile uint32_t gEpwmIsrCnt1=0;
 #endif
 
 /* ICSSG PRU SDFM FW IRQ handler */
-static void pruSdfmIrqHandler(void *handle);
+void pruSdfmIrqHandler(void *handle);
 
 /* Test ICSSG handle */
 PRUICSS_Handle gPruIcssHandle;
@@ -263,7 +263,7 @@ void init_sdfm()
     /* Configure Sdfm  parameters */
     sdfmGlobalParamsConfig(&gSdfmParams);
 
-    for(int i=0; i<9; i++)
+    for(int8_t i=0; i<9; i++)
     {
         if(gSdfmParams.sdfm_channel_mask & (1 << i))
         {
@@ -274,16 +274,16 @@ void init_sdfm()
     }
 #if(CONFIG_SDFM0_LOAD_SHARE == 1 )
 #if(CONFIG_SDFM0_CHANNEL0 == 1 || CONFIG_SDFM0_CHANNEL1 == 1 || CONFIG_SDFM0_CHANNEL2 == 1)
-    sdfmAxisParamsConfig(&gSdfmParams, 1);
+    sdfmAxisParamsConfig(&gSdfmParams, SDFM_RTUPRU_CORE_INDX);
 #endif
 #if(CONFIG_SDFM0_CHANNEL3 == 1 || CONFIG_SDFM0_CHANNEL4 == 1 || CONFIG_SDFM0_CHANNEL5 == 1)
-    sdfmAxisParamsConfig(&gSdfmParams, 0);
+    sdfmAxisParamsConfig(&gSdfmParams, SDFM_PRU_CORE_INDX);
 #endif
 #if(CONFIG_SDFM0_CHANNEL6 == 1 || CONFIG_SDFM0_CHANNEL7 == 1 || CONFIG_SDFM0_CHANNEL8 == 1)
-    sdfmAxisParamsConfig(&gSdfmParams, 2);
+    sdfmAxisParamsConfig(&gSdfmParams, SDFM_TXPRU_CORE_INDX);
 #endif
 #else
-    sdfmAxisParamsConfig(&gSdfmParams, 0);
+    sdfmAxisParamsConfig(&gSdfmParams, SDFM_PRU_CORE_INDX);
 #endif
     
     gPruIcssPwmHandle = PRUICSS_PWM_open(CONFIG_PRUICSS_PWM0, gPruIcssHandle);
@@ -360,7 +360,7 @@ void pruSdfmIrqHandler(void *args)
     {
         sdfmPruIdxCnt = 0;
     }
-    for(int i=0; i<SDFM_NUM_OF_CH_PER_PRU_SLICE; i++)
+    for(int8_t i=0; i<SDFM_NUM_OF_CH_PER_PRU_SLICE; i++)
     {
         if(gSdfmParams.sdfm_channel_mask & (1 << i))
         {
@@ -374,7 +374,7 @@ void pruSdfmIrqHandler(void *args)
 
 #if (CONFIG_SDFM0_EPWM_SYNC_EN == 1)
 /* EPWM0 IRQ handler */
-static void epwmIrqHandler(void *args)
+void epwmIrqHandler(void *args)
 {
     volatile uint16_t status;
 
@@ -392,7 +392,7 @@ static void epwmIrqHandler(void *args)
 
 #if APP_EPWM1_ENABLE //DEBUG code for EPWM1
 /* EPWM0 IRQ handler */
-static void epwmIrqHandler1(void *args)
+void epwmIrqHandler1(void *args)
 {
     volatile uint16_t status;
 

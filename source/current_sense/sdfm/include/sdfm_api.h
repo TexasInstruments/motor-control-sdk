@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (C) 2023-25 Texas Instruments Incorporated - http://www.ti.com/
  *
  *
  * Redistribution and use in source and binary forms, with or without
@@ -78,13 +78,13 @@ extern "C" {
  *
  *  \brief  Initialize SDFM instance
  *  
- *  \param[in]  sdfm_params     SDFM initialization parameters
  *  \param[in]  index           SDFM Instance index
+ *  \param[in]  sdfm_params     SDFM initialization parameters
  *
  *  \retval SDFM_Handle         SDFM instance handle
  *
  */
-SDFM_Handle SDFM_init(SDFM_Params sdfm_params, uint32_t index);
+SDFM_Handle SDFM_init(uint32_t index, SDFM_Params sdfm_params);
 
 /**
  *
@@ -546,15 +546,6 @@ int32_t SDFM_enableSnoopBasedNC(SDFM_Handle h_sdfm, uint8_t pru_core);
  *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
  */
 int32_t SDFM_disableSnoopBasedNC(SDFM_Handle h_sdfm, uint8_t pru_core);
-/**
- *
- *  \brief  Enable PRU SDFM mode 
- *
- *  \param[in]  h_sdfm          SDFM handle
- *  \param[in]  sliceId         PRU slice ID, PRU0 or PRU1
- *
- */
-void SDFM_enablePruSdfmMode(SDFM_Handle h_sdfm, uint8_t sliceId);
 
 /**
  *

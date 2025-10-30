@@ -220,9 +220,9 @@ int32_t initIcss(
 
     return SDFM_ERR_NERR;
 }
-void SDFM_configGpioPins(SDFM_Handle h_sdfm, uint8_t SD_CH)
+void SDFM_configGpioPins(SDFM_Handle h_sdfm, uint8_t channel )
 {
-    switch (SD_CH)
+    switch (channel )
     {
         case 0:
 #if (CONFIG_SDFM0_CHANNEL0_OC_EN_ZERO_CROSS != 0)
@@ -230,7 +230,7 @@ void SDFM_configGpioPins(SDFM_Handle h_sdfm, uint8_t SD_CH)
                 uint32_t gpioBaseAddr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH0_BASE_ADDR);
                 uint32_t pinNum = GPIO_ZC_TH_CH0_PIN;
                 GPIO_setDirMode(gpioBaseAddr, pinNum, GPIO_ZC_TH_CH0_DIR);
-                SDFM_configComparatorGpioPins(h_sdfm, SD_CH, gpioBaseAddr, pinNum);
+                SDFM_configComparatorGpioPins(h_sdfm, channel, gpioBaseAddr, pinNum);
             }
 #endif
             break;
@@ -240,7 +240,7 @@ void SDFM_configGpioPins(SDFM_Handle h_sdfm, uint8_t SD_CH)
                 uint32_t gpioBaseAddr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH1_BASE_ADDR);
                 uint32_t pinNum = GPIO_ZC_TH_CH1_PIN;
                 GPIO_setDirMode(gpioBaseAddr, pinNum, GPIO_ZC_TH_CH1_DIR);
-                SDFM_configComparatorGpioPins(h_sdfm, SD_CH, gpioBaseAddr, pinNum);
+                SDFM_configComparatorGpioPins(h_sdfm, channel, gpioBaseAddr, pinNum);
             }
 #endif
             break;      
@@ -250,7 +250,7 @@ void SDFM_configGpioPins(SDFM_Handle h_sdfm, uint8_t SD_CH)
                 uint32_t gpioBaseAddr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH2_BASE_ADDR);
                 uint32_t pinNum = GPIO_ZC_TH_CH2_PIN;
                 GPIO_setDirMode(gpioBaseAddr, pinNum, GPIO_ZC_TH_CH2_DIR);
-                SDFM_configComparatorGpioPins(h_sdfm, SD_CH, gpioBaseAddr, pinNum);
+                SDFM_configComparatorGpioPins(h_sdfm, channel, gpioBaseAddr, pinNum);
             }
 #endif
             break;
@@ -260,7 +260,7 @@ void SDFM_configGpioPins(SDFM_Handle h_sdfm, uint8_t SD_CH)
                 uint32_t gpioBaseAddr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH3_BASE_ADDR);
                 uint32_t pinNum = GPIO_ZC_TH_CH3_PIN;
                 GPIO_setDirMode(gpioBaseAddr, pinNum, GPIO_ZC_TH_CH3_DIR);
-                SDFM_configComparatorGpioPins(h_sdfm, SD_CH, gpioBaseAddr, pinNum);
+                SDFM_configComparatorGpioPins(h_sdfm, channel, gpioBaseAddr, pinNum);
             }
 #endif
             break;
@@ -270,7 +270,7 @@ void SDFM_configGpioPins(SDFM_Handle h_sdfm, uint8_t SD_CH)
                 uint32_t gpioBaseAddr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH4_BASE_ADDR);
                 uint32_t pinNum = GPIO_ZC_TH_CH4_PIN;
                 GPIO_setDirMode(gpioBaseAddr, pinNum, GPIO_ZC_TH_CH4_DIR);
-                SDFM_configComparatorGpioPins(h_sdfm, SD_CH, gpioBaseAddr, pinNum);
+                SDFM_configComparatorGpioPins(h_sdfm, channel, gpioBaseAddr, pinNum);
             }
 #endif
             break;
@@ -280,7 +280,7 @@ void SDFM_configGpioPins(SDFM_Handle h_sdfm, uint8_t SD_CH)
                 uint32_t gpioBaseAddr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH5_BASE_ADDR);
                 uint32_t pinNum = GPIO_ZC_TH_CH5_PIN;
                 GPIO_setDirMode(gpioBaseAddr, pinNum, GPIO_ZC_TH_CH5_DIR);
-                SDFM_configComparatorGpioPins(h_sdfm, SD_CH, gpioBaseAddr, pinNum);
+                SDFM_configComparatorGpioPins(h_sdfm, channel, gpioBaseAddr, pinNum);
             }
 #endif
             break;  
@@ -290,7 +290,7 @@ void SDFM_configGpioPins(SDFM_Handle h_sdfm, uint8_t SD_CH)
                 uint32_t gpioBaseAddr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH6_BASE_ADDR);
                 uint32_t pinNum = GPIO_ZC_TH_CH6_PIN;
                 GPIO_setDirMode(gpioBaseAddr, pinNum, GPIO_ZC_TH_CH6_DIR);
-                SDFM_configComparatorGpioPins(h_sdfm, SD_CH, gpioBaseAddr, pinNum);
+                SDFM_configComparatorGpioPins(h_sdfm, channel, gpioBaseAddr, pinNum);
             }
 #endif
             break;
@@ -300,7 +300,7 @@ void SDFM_configGpioPins(SDFM_Handle h_sdfm, uint8_t SD_CH)
                 uint32_t gpioBaseAddr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH7_BASE_ADDR);
                 uint32_t pinNum = GPIO_ZC_TH_CH7_PIN;
                 GPIO_setDirMode(gpioBaseAddr, pinNum, GPIO_ZC_TH_CH7_DIR);
-                SDFM_configComparatorGpioPins(h_sdfm, SD_CH, gpioBaseAddr, pinNum);
+                SDFM_configComparatorGpioPins(h_sdfm, channel, gpioBaseAddr, pinNum);
             }
 #endif
             break;
@@ -310,7 +310,7 @@ void SDFM_configGpioPins(SDFM_Handle h_sdfm, uint8_t SD_CH)
                 uint32_t gpioBaseAddr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH8_BASE_ADDR);
                 uint32_t pinNum = GPIO_ZC_TH_CH8_PIN;
                 GPIO_setDirMode(gpioBaseAddr, pinNum, GPIO_ZC_TH_CH8_DIR);
-                SDFM_configComparatorGpioPins(h_sdfm, SD_CH, gpioBaseAddr, pinNum);
+                SDFM_configComparatorGpioPins(h_sdfm, channel, gpioBaseAddr, pinNum);
             }
 #endif
             break;
@@ -323,22 +323,17 @@ void SDFM_configGpioPins(SDFM_Handle h_sdfm, uint8_t SD_CH)
 int32_t initSdfmFw(SDFM_Params sdfm_params, SDFM_Handle *pHSdfm)
 {
     SDFM_Handle hSdfm;
-    uint8_t SDFM_CH;    
+    uint8_t channel ;    
 
     /* Initialize SDFM instance */
-    hSdfm = SDFM_init(sdfm_params, CONFIG_SDFM0);
+    hSdfm = SDFM_init(CONFIG_SDFM0, sdfm_params);
     
     if (hSdfm == NULL)
     {
         return SDFM_ERR_INIT_SDFM;
     }
 
-    if(sdfm_params.load_share_enable)
-    {
-        SDFM_enableLoadShareMode(hSdfm, sdfm_params.pru_slice_value);
-    }
-
-    for(int i = 0; i< 9; i++)
+    for(int8_t i = 0; i< 9; i++)
     {
         if(sdfm_params.sdfm_channel_mask & (1 << i))
         {
@@ -396,13 +391,13 @@ int32_t initSdfmFw(SDFM_Params sdfm_params, SDFM_Handle *pHSdfm)
         }
    }
    /*Add code to confgure common configuration for all channels*/
-   if(sdfm_params.enable_snoop_mode[0]|| sdfm_params.enable_snoop_mode[1]|| sdfm_params.enable_snoop_mode[2])
+   if(sdfm_params.enable_snoop_mode[SDFM_PRU_CORE_INDX]|| sdfm_params.enable_snoop_mode[SDFM_RTUPRU_CORE_INDX]|| sdfm_params.enable_snoop_mode[SDFM_TXPRU_CORE_INDX])
    {
         /*configure IEP count for one epwm period*/
         SDFM_configIepCount(hSdfm, sdfm_params.iep_reset_freq);
    }
    
-   for(int i = 0; i< 3; i++)
+   for(int8_t i = 0; i< 3; i++)
    {
         if(sdfm_params.sdfm_enable_pru_core_mask & (1 << i))
         {
@@ -453,56 +448,56 @@ int32_t initSdfmFw(SDFM_Params sdfm_params, SDFM_Handle *pHSdfm)
     }
 
     /*below configuration for all three channel*/
-    for(SDFM_CH = 0; SDFM_CH < 9; SDFM_CH++)
+    for(channel  = 0; channel  < 9; channel ++)
     {
-        if(sdfm_params.sdfm_channel_mask & (1 << SDFM_CH))
+        if(sdfm_params.sdfm_channel_mask & (1 << channel))
         {
-            SDFM_setCompFilterOverSamplingRatio(hSdfm, SDFM_CH, sdfm_params.channels[SDFM_CH].over_current_osr);
+            SDFM_setCompFilterOverSamplingRatio(hSdfm, channel , sdfm_params.channels[channel].over_current_osr);
 
-            SDFM_setFilterOverSamplingRatio(hSdfm, SDFM_CH, sdfm_params.channels[SDFM_CH].normal_current_osr);
+            SDFM_setFilterOverSamplingRatio(hSdfm, channel , sdfm_params.channels[channel].normal_current_osr);
 
             /*set ACC source or filter type*/
-            SDFM_configDataFilter(hSdfm, SDFM_CH, sdfm_params.channels[SDFM_CH].filter_type);
+            SDFM_configDataFilter(hSdfm, channel, sdfm_params.channels[channel].filter_type);
 
             /*set clock inversion & clock source for all three channel*/
-            SDFM_selectClockSource(hSdfm, SDFM_CH, sdfm_params.channels[SDFM_CH].clk_source);
+            SDFM_selectClockSource(hSdfm, channel, sdfm_params.channels[channel].clk_source);
 
             /*set clock inversion*/
-            SDFM_setClockInversion(hSdfm, SDFM_CH, sdfm_params.channels[SDFM_CH].clk_inv);
+            SDFM_setClockInversion(hSdfm, channel, sdfm_params.channels[channel].clk_inv);
 
-            if(sdfm_params.channels[SDFM_CH].enable_comparator == 1)
+            if(sdfm_params.channels[channel].enable_comparator == 1)
             {
-                SDFM_enableComparator(hSdfm, SDFM_CH);
+                SDFM_enableComparator(hSdfm, channel);
                 /*set high and low thresholds value */
                 uint32_t comThresholds[2];
-                comThresholds[0] = sdfm_params.channels[SDFM_CH].threshold_config.high_threshold;
-                comThresholds[1] = sdfm_params.channels[SDFM_CH].threshold_config.low_threshold;   
-                SDFM_setCompFilterThresholds(hSdfm, SDFM_CH, comThresholds);
+                comThresholds[0] = sdfm_params.channels[channel].threshold_config.high_threshold;
+                comThresholds[1] = sdfm_params.channels[channel].threshold_config.low_threshold;   
+                SDFM_setCompFilterThresholds(hSdfm, channel, comThresholds);
             }
 
-            if(sdfm_params.channels[SDFM_CH].enFastDetect == 1)
+            if(sdfm_params.channels[channel].enFastDetect == 1)
             {
                 /*Fast detect configuration */
                 uint8_t channels[NUM_FD_FIELD];
-                channels[1] = sdfm_params.channels[SDFM_CH].fd_window;
-                channels[2] = sdfm_params.channels[SDFM_CH].fd_zero_max;
-                channels[3] = sdfm_params.channels[SDFM_CH].fd_zero_min;
-                SDFM_configFastDetect(hSdfm, SDFM_CH, channels);
+                channels[1] = sdfm_params.channels[channel].fd_window;
+                channels[2] = sdfm_params.channels[channel].fd_zero_max;
+                channels[3] = sdfm_params.channels[channel].fd_zero_min;
+                SDFM_configFastDetect(hSdfm, channel, channels);
             }
 
-            if(sdfm_params.channels[SDFM_CH].threshold_config.zeroCrossEn == 1)
+            if(sdfm_params.channels[channel].threshold_config.zeroCrossEn == 1)
             {
                 /*zero cross configuration*/
-                SDFM_enableZeroCrossDetection(hSdfm, SDFM_CH, sdfm_params.channels[SDFM_CH].threshold_config.zeroCrossTh);
+                SDFM_enableZeroCrossDetection(hSdfm, channel, sdfm_params.channels[channel].threshold_config.zeroCrossTh);
                 /*GPIO pin configuration for zero cross*/
-                SDFM_configGpioPins(hSdfm, SDFM_CH);
+                SDFM_configGpioPins(hSdfm, channel);
             }
         }
 
     }
     
     /* Enable (global) SDFM */
-    for(int i = 0; i< 3; i++)
+    for(int8_t i = 0; i< 3; i++)
     {
         if(sdfm_params.sdfm_enable_pru_core_mask & (1 << i))
         {
@@ -1042,9 +1037,9 @@ void sdfmGlobalParamsConfig(SDFM_Params *gSdfmPrms)
 #if(CONFIG_SDFM0_LOAD_SHARE == 0)
     sdfmParams.sdfm_enable_pru_core_mask = 1;
 #else
-    sdfmParams.sdfm_enable_pru_core_mask |= (CONFIG_SDFM0_CHANNEL0 || CONFIG_SDFM0_CHANNEL1 || CONFIG_SDFM0_CHANNEL2) ? 1 >> 1: 0;
-    sdfmParams.sdfm_enable_pru_core_mask |= (CONFIG_SDFM0_CHANNEL3 || CONFIG_SDFM0_CHANNEL4 || CONFIG_SDFM0_CHANNEL5) ? 1 >> 0: 0;
-    sdfmParams.sdfm_enable_pru_core_mask |= (CONFIG_SDFM0_CHANNEL6 || CONFIG_SDFM0_CHANNEL7 || CONFIG_SDFM0_CHANNEL8) ? 1 >> 2: 0;  
+    sdfmParams.sdfm_enable_pru_core_mask |= (CONFIG_SDFM0_CHANNEL0 || CONFIG_SDFM0_CHANNEL1 || CONFIG_SDFM0_CHANNEL2) ? 1 << 1: 0;
+    sdfmParams.sdfm_enable_pru_core_mask |= (CONFIG_SDFM0_CHANNEL3 || CONFIG_SDFM0_CHANNEL4 || CONFIG_SDFM0_CHANNEL5) ? 1 << 0: 0;
+    sdfmParams.sdfm_enable_pru_core_mask |= (CONFIG_SDFM0_CHANNEL6 || CONFIG_SDFM0_CHANNEL7 || CONFIG_SDFM0_CHANNEL8) ? 1 << 2: 0;  
 #endif
 
 #if (CONFIG_SDFM0_EPWM_SYNC_EN == 1)
