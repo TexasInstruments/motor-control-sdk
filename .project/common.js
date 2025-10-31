@@ -208,7 +208,7 @@ function deleteFile(filepath)
       try {
         await fs_promise.unlink(filepath);
       } catch (e) {
-        /* file doens't exist. Skip error!! */
+        /* file doesn't exist. Skip error!! */
       }
     })();
 }
@@ -326,6 +326,54 @@ function getSdkVersion(device) {
 }
 
 /**
+ * Get ICSDK version for a specific device
+ *
+ * @param {string} device - Device identifier (e.g., 'am64x', 'am243x')
+ * @returns {string} ICSDK version string for the specified device
+ *                   If device-specific version isn't found, returns default version
+ *
+ * @example
+ * // Returns am64x-specific ICSDK version
+ * const icsdkVersion = getIcsdkVersion('am64x');
+ * console.log(icsdkVersion); // "11.00.00"
+ *
+ * // For unknown device, returns default SDK version
+ * const defaultVersion = getIcsdkVersion('unknown');
+ * console.log(defaultVersion); // "10.02.00"
+ */
+function getIcsdkVersion(device) {
+    if (versions.icsdkVersions.hasOwnProperty(device) &&
+        versions.icsdkVersions[device].hasOwnProperty('version')) {
+        return versions.icsdkVersions[device].version;
+    }
+    return versions.icsdkVersions.default.version;
+}
+
+/**
+ * Get MCU+ SDK version for a specific device
+ *
+ * @param {string} device - Device identifier (e.g., 'am64x', 'am243x')
+ * @returns {string} MCU+ SDK version string for the specified device
+ *                   If device-specific version isn't found, returns default version
+ *
+ * @example
+ * // Returns am64x-specific MCU+ SDK version
+ * const mcusdkVersion = getMcusdkVersion('am64x');
+ * console.log(mcusdkVersion); // "11.00.00"
+ *
+ * // For unknown device, returns default SDK version
+ * const defaultVersion = getMcusdkVersion('unknown');
+ * console.log(defaultVersion); // "10.02.00"
+ */
+function getMcusdkVersion(device) {
+    if (versions.mcusdkVersions.hasOwnProperty(device) &&
+        versions.mcusdkVersions[device].hasOwnProperty('version')) {
+        return versions.mcusdkVersions[device].version;
+    }
+    return versions.mcusdkVersions.default.version;
+}
+
+/**
  * Format SDK version to remove minor version
  * Converts x.xx.xx.xx to x.xx.xx
  *
@@ -362,5 +410,7 @@ module.exports = {
     versions,
     getToolVersions,
     getSdkVersion,
+    getIcsdkVersion,
+    getMcusdkVersion,
     formatSdkVersion,
 };

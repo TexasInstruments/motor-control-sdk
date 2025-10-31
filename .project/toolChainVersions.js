@@ -141,6 +141,8 @@ const versions = {
     toolVersionsForImportsMakefile: {
         default: {
             ccsVersion: "ccs2020",
+            icsdkVersion: "2025_00_00_02",
+            mcusdkVersion: "11_01_00_01",
             cgtPruVersion: "ti-cgt-pru_2.3.3",
             cgtArmClangVersion: "ti-cgt-armllvm_4.0.1.LTS",
             cgtC6000Version: "ti-cgt-c6000_8.3.12",
@@ -153,6 +155,8 @@ const versions = {
         },
         am64x: {
             ccsVersion: "ccs2020",
+            icsdkVersion: "2025_00_00_02",
+            mcusdkVersion: "11_01_00_17",
             cgtPruVersion: "ti-cgt-pru_2.3.3",
             cgtArmClangVersion: "ti-cgt-armllvm_4.0.1.LTS",
             cgtC6000Version: "ti-cgt-c6000_8.3.12",
@@ -165,6 +169,8 @@ const versions = {
         },
         am243x: {
             ccsVersion: "ccs2020",
+            icsdkVersion: "2025_00_00_02",
+            mcusdkVersion: "11_01_00_17",
             cgtPruVersion: "ti-cgt-pru_2.3.3",
             cgtArmClangVersion: "ti-cgt-armllvm_4.0.1.LTS",
             cgtC6000Version: "ti-cgt-c6000_8.3.12",
@@ -177,6 +183,8 @@ const versions = {
         },
         am263px: {
             ccsVersion: "ccs2030",
+            icsdkVersion: "2025_00_00_02",
+            mcusdkVersion: "11_00_00_19",
             cgtPruVersion: "ti-cgt-pru_2.3.3",
             cgtArmClangVersion: "ti-cgt-armllvm_4.0.3.LTS",
             cgtC6000Version: "ti-cgt-c6000_8.3.12",
@@ -189,6 +197,8 @@ const versions = {
         },
         am263x: {
             ccsVersion: "ccs2030",
+            icsdkVersion: "2025_00_00_02",
+            mcusdkVersion: "11_00_00_19",
             cgtPruVersion: "ti-cgt-pru_2.3.3",
             cgtArmClangVersion: "ti-cgt-armllvm_4.0.3.LTS",
             cgtC6000Version: "ti-cgt-c6000_8.3.12",
@@ -201,6 +211,8 @@ const versions = {
         },
         am261x: {
             ccsVersion: "ccs2030",
+            icsdkVersion: "2025_00_00_02",
+            mcusdkVersion: "11_00_00_28",
             cgtPruVersion: "ti-cgt-pru_2.3.3",
             cgtArmClangVersion: "ti-cgt-armllvm_4.0.3.LTS",
             cgtC6000Version: "ti-cgt-c6000_8.3.12",
@@ -215,29 +227,76 @@ const versions = {
 
     /**
      * SDK versions for different devices
-     * These versions are referenced in package.ccs.json.xdt
-     * Refer to the genProjectSpec.js file in the MCU+ SDK for the version
+     * These versions are referenced in package.tirex.json.xdt and product.json.xdt
      */
     sdkVersions: {
         default: {
-            version: "2025.00.00.01"
+            version: "2025.00.00.02"
         },
         am64x: {
-            version: "2025.00.00.01"
+            version: "2025.00.00.02"
         },
         am243x: {
-            version: "2025.00.00.01"
+            version: "2025.00.00.02"
         },
         am263px: {
-            version: "2025.00.00.01"
+            version: "2025.00.00.02"
         },
         am263x: {
-            version: "2025.00.00.01"
+            version: "2025.00.00.02"
         },
         am261x: {
-            version: "2025.00.00.01"
+            version: "2025.00.00.02"
         }
-    }
+    },
+
+     /**
+     * MCU+ SDK versions for different devices
+     */
+    mcusdkVersions: {
+        default: {
+            version: "11.1.0.1"
+        },
+        am64x: {
+            version: "11.1.0.17"
+        },
+        am243x: {
+            version: "11.1.0.17"
+        },
+        am263px: {
+            version: "11.1.0.19"
+        },
+        am263x: {
+            version: "11.1.0.19"
+        },
+        am261x: {
+            version: "11.0.0.28"
+        }
+    },
+
+    /**
+     * ICSDK versions for different devices
+     */
+    icsdkVersions: {
+        default: {
+            version: "2025.00.00.02"
+        },
+        am64x: {
+            version: "2025.00.00.02"
+        },
+        am243x: {
+            version: "2025.00.00.02"
+        },
+        am263px: {
+            version: "2025.00.00.02"
+        },
+        am263x: {
+            version: "2025.00.00.02"
+        },
+        am261x: {
+            version: "2025.00.00.02"
+        }
+    },    
 };
 
 /**
