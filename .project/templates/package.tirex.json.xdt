@@ -1,5 +1,7 @@
 %%{
     productName = args.utils.getProductNameProjectSpec(args.device);
+    icsdkProductName = args.utils.getIcsdkProductNameProjectSpec(args.device);
+    mcusdkProductName = args.utils.getMcusdkProductNameProjectSpec(args.device);
     isDevelopmentMode = args.common.isDevelopmentMode();
     deviceName = args.utils.getProjectSpecDevice(args.device);
     if(isDevelopmentMode)
@@ -7,6 +9,8 @@
 
     // Get SDK version using common function
     const sdkVersion = args.common.getSdkVersion(args.device);
+    const icsdkVersion = args.common.getIcsdkVersion(args.device);
+    const mcusdkVersion = args.common.getMcusdkVersion(args.device);
 %%}
 [
     {
@@ -34,12 +38,16 @@
         % }
         "dependencies": [
             { "packageId": "sysconfig", "version": "`args.utils.getSysCfgVersionProjectSpec(args.device)`", "require": "mandatory" },
-            % if (args.device == "am64x" || (isDevelopmentMode)) {
             { "packageId": "ti_cgt_tiarmclang", "version": "`args.utils.getTiClangVersionProjectSpec(args.device)`", "require": "mandatory" },
-            { "packageId": "arm.gnu.aarch64-none", "version": "`args.utils.getGCCAarch64NoneVersionProjectSpec(args.device)`", "require": "mandatory" }
+            % if (args.device == "am64x" || (isDevelopmentMode)) {
+            { "packageId": "arm.gnu.aarch64-none", "version": "`args.utils.getGCCAarch64NoneVersionProjectSpec(args.device)`", "require": "mandatory" },
             % }
-            % else {
-            { "packageId": "ti_cgt_tiarmclang", "version": "`args.utils.getTiClangVersionProjectSpec(args.device)`", "require": "mandatory" }
+            % if(((args.device == "am263px") || (args.device == "am261x")) && (!isDevelopmentMode)) {
+            { "packageId": "`"INDUSTRIAL-COMMUNICATIONS-SDK-"+args.device.toUpperCase()`", "version": "`icsdkVersion`", "require": "mandatory" },
+            { "packageId": "`"MCU-PLUS-SDK-"+args.device.toUpperCase()`", "version": "`mcusdkVersion`", "require": "mandatory" },
+            % } else {
+            { "packageId": "com.ti.`icsdkProductName`", "version": "`icsdkVersion`", "require": "mandatory" },
+            { "packageId": "com.ti.`mcusdkProductName`", "version": "`mcusdkVersion`", "require": "mandatory" },
             % }
         ]
     }
