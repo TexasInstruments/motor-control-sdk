@@ -168,6 +168,18 @@ const utils = {
         return require(`./device/project_${device}`).getMcusdkProductNameProjectSpec();
     },
 
+    getSdkVersionProjectSpec: (device) => {
+        return versions.sdkVersions[device].version || versions.sdkVersions.default.version;
+    },
+
+    getIcsdkVersionProjectSpec: (device) => {
+        return versions.icsdkVersions[device].version || versions.icsdkVersions.default.version;
+    },
+
+    getMcusdkVersionProjectSpec: (device) => {
+        return versions.mcusdkVersions[device].version || versions.mcusdkVersions.default.version;
+    },
+
     /* default action for files in project spec, i.e copy or link */
     getDefaultActionProjectSpec: () => {
 

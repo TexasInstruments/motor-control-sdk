@@ -12,7 +12,7 @@
     <project
         title="Dcl Pi"
         name = "dcl_pi_am263px-lp_r5fss0-0_nortos_ti-arm-clang"
-        products="sysconfig;com.ti.MOTOR_CONTROL_SDK_AMXXX;com.ti.INDUSTRIAL_COMMUNICATIONS_SDK_AMXXX;com.ti.MCU_PLUS_SDK_AMXXX"
+        products="sysconfig:1.25.0;com.ti.MOTOR_CONTROL_SDK_AMXXX:2025.00.00.01;com.ti.INDUSTRIAL_COMMUNICATIONS_SDK_AMXXX:2025.00.00.05;com.ti.MCU_PLUS_SDK_AMXXX:11.1.0.19"
         configurations="
             Release,
             Debug,
