@@ -141,7 +141,7 @@ const versions = {
     toolVersionsForImportsMakefile: {
         default: {
             ccsVersion: "ccs2020",
-            icsdkVersion: "2025_00_00_02",
+            icsdkVersion: "2025_00_00_05",
             mcusdkVersion: "11_01_00_01",
             cgtPruVersion: "ti-cgt-pru_2.3.3",
             cgtArmClangVersion: "ti-cgt-armllvm_4.0.1.LTS",
@@ -155,7 +155,7 @@ const versions = {
         },
         am64x: {
             ccsVersion: "ccs2020",
-            icsdkVersion: "2025_00_00_02",
+            icsdkVersion: "2025_00_00_05",
             mcusdkVersion: "11_01_00_17",
             cgtPruVersion: "ti-cgt-pru_2.3.3",
             cgtArmClangVersion: "ti-cgt-armllvm_4.0.1.LTS",
@@ -169,7 +169,7 @@ const versions = {
         },
         am243x: {
             ccsVersion: "ccs2020",
-            icsdkVersion: "2025_00_00_02",
+            icsdkVersion: "2025_00_00_05",
             mcusdkVersion: "11_01_00_17",
             cgtPruVersion: "ti-cgt-pru_2.3.3",
             cgtArmClangVersion: "ti-cgt-armllvm_4.0.1.LTS",
@@ -183,7 +183,7 @@ const versions = {
         },
         am263px: {
             ccsVersion: "ccs2030",
-            icsdkVersion: "2025_00_00_02",
+            icsdkVersion: "2025_00_00_05",
             mcusdkVersion: "11_00_00_19",
             cgtPruVersion: "ti-cgt-pru_2.3.3",
             cgtArmClangVersion: "ti-cgt-armllvm_4.0.3.LTS",
@@ -197,7 +197,7 @@ const versions = {
         },
         am263x: {
             ccsVersion: "ccs2030",
-            icsdkVersion: "2025_00_00_02",
+            icsdkVersion: "2025_00_00_05",
             mcusdkVersion: "11_00_00_19",
             cgtPruVersion: "ti-cgt-pru_2.3.3",
             cgtArmClangVersion: "ti-cgt-armllvm_4.0.3.LTS",
@@ -211,7 +211,7 @@ const versions = {
         },
         am261x: {
             ccsVersion: "ccs2030",
-            icsdkVersion: "2025_00_00_02",
+            icsdkVersion: "2025_00_00_05",
             mcusdkVersion: "11_00_00_28",
             cgtPruVersion: "ti-cgt-pru_2.3.3",
             cgtArmClangVersion: "ti-cgt-armllvm_4.0.3.LTS",
@@ -231,22 +231,22 @@ const versions = {
      */
     sdkVersions: {
         default: {
-            version: "2025.00.00.02"
+            version: "2025.00.00.01"
         },
         am64x: {
-            version: "2025.00.00.02"
+            version: "2025.00.00.01"
         },
         am243x: {
-            version: "2025.00.00.02"
+            version: "2025.00.00.01"
         },
         am263px: {
-            version: "2025.00.00.02"
+            version: "2025.00.00.01"
         },
         am263x: {
-            version: "2025.00.00.02"
+            version: "2025.00.00.01"
         },
         am261x: {
-            version: "2025.00.00.02"
+            version: "2025.00.00.01"
         }
     },
 
@@ -279,22 +279,22 @@ const versions = {
      */
     icsdkVersions: {
         default: {
-            version: "2025.00.00.02"
+            version: "2025.00.00.05"
         },
         am64x: {
-            version: "2025.00.00.02"
+            version: "2025.00.00.05"
         },
         am243x: {
-            version: "2025.00.00.02"
+            version: "2025.00.00.05"
         },
         am263px: {
-            version: "2025.00.00.02"
+            version: "2025.00.00.05"
         },
         am263x: {
-            version: "2025.00.00.02"
+            version: "2025.00.00.05"
         },
         am261x: {
-            version: "2025.00.00.02"
+            version: "2025.00.00.05"
         }
     },    
 };

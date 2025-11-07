@@ -14,7 +14,9 @@
         "dependencies": [
             { "packageId": "sysconfig", "version": "1.23.0", "require": "mandatory" },
             { "packageId": "ti_cgt_tiarmclang", "version": "4.0.1", "require": "mandatory" },
-            { "packageId": "arm.gnu.aarch64-none", "version": "9.2.1", "require": "mandatory" }
+            { "packageId": "arm.gnu.aarch64-none", "version": "9.2.1", "require": "mandatory" },
+            { "packageId": "com.ti.INDUSTRIAL_COMMUNICATIONS_SDK_AMXXX", "version": "2025.00.00.05", "require": "mandatory" },
+            { "packageId": "com.ti.MCU_PLUS_SDK_AMXXX", "version": "11.1.0.17", "require": "mandatory" },
         ]
     }
 ]
