@@ -37,8 +37,6 @@
         "description": "Motor Control SDK contains examples, libraries and tools to develop RTOS and no-RTOS based applications enabling real-time communication for position and current sense from motors, and real-time control libraries for ARM R5F CPU and related peripherals.",
         % }
         "dependencies": [
-            { "packageId": "sysconfig", "version": "`args.utils.getSysCfgVersionProjectSpec(args.device)`", "require": "mandatory" },
-            { "packageId": "ti_cgt_tiarmclang", "version": "`args.utils.getTiClangVersionProjectSpec(args.device)`", "require": "mandatory" },
             % if (args.device == "am64x" || (isDevelopmentMode)) {
             { "packageId": "arm.gnu.aarch64-none", "version": "`args.utils.getGCCAarch64NoneVersionProjectSpec(args.device)`", "require": "mandatory" },
             % }
@@ -49,6 +47,8 @@
             { "packageId": "com.ti.`icsdkProductName`", "version": "`icsdkVersion`", "require": "mandatory" },
             { "packageId": "com.ti.`mcusdkProductName`", "version": "`mcusdkVersion`", "require": "mandatory" },
             % }
+            { "packageId": "sysconfig", "version": "`args.utils.getSysCfgVersionProjectSpec(args.device)`", "require": "mandatory" },
+            { "packageId": "ti_cgt_tiarmclang", "version": "`args.utils.getTiClangVersionProjectSpec(args.device)`", "require": "mandatory" }
         ]
     }
 ]

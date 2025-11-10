@@ -296,7 +296,7 @@ const versions = {
         am261x: {
             version: "2025.00.00.05"
         }
-    },    
+    },
 };
 
 /**
