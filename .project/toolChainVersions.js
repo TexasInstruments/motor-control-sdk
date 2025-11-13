@@ -8,7 +8,7 @@ const versions = {
      * SysConfig versions for different devices
      * These versions are used for system configuration tools
      *
-     * Refer to the genProjectSpec.js file in the MCU+ SDK for the version
+     * Refer to the genProjectSpec.js file in the Motor Control SDK for the version
      */
     sysConfig: {
         default: "1.23.0",
@@ -23,7 +23,7 @@ const versions = {
      * Code Composer Studio (CCS) versions for different devices
      * Specifies the CCS version to be used for each device
      *
-     * Refer to the genProjectSpec.js file in the MCU+ SDK for the version
+     * Refer to the genProjectSpec.js file in the Motor Control SDK for the version
      */
     ccs: {
         default: "2020",
@@ -38,7 +38,7 @@ const versions = {
      * TI ARM Clang compiler versions for different devices
      * Device-specific compiler versions for TI Clang
      *
-     * Refer to the genProjectSpec.js file in the MCU+ SDK for the version
+     * Refer to the genProjectSpec.js file in the Motor Control SDK for the version
      */
     tiClang: {
         default: "4.0.1",
@@ -53,7 +53,7 @@ const versions = {
      * GCC AArch64 compiler versions for different devices
      * Used for 64-bit ARM compilation
      *
-     * Refer to the genProjectSpec.js file in the MCU+ SDK for the version
+     * Refer to the genProjectSpec.js file in the Motor Control SDK for the version
      */
     gccAarch64: {
         default: "9.2.1",
@@ -68,7 +68,7 @@ const versions = {
      * GCC ARMv7 compiler versions for different devices
      * Used for 32-bit ARM compilation
      *
-     * Refer to the genProjectSpec.js file in the MCU+ SDK for the version
+     * Refer to the genProjectSpec.js file in the Motor Control SDK for the version
      */
     gccArmv7: {
         default: "10",
@@ -84,7 +84,7 @@ const versions = {
      * These versions are used in the getToolChainVersionProjectSpec function
      * Key is the toolchain identifier and value is its version
      *
-     * Refer to the genProjectSpec.js file in the MCU+ SDK for the version
+     * Refer to the genProjectSpec.js file in the Motor Control SDK for the version
      */
     toolchain: {
         default: {
@@ -136,7 +136,7 @@ const versions = {
      * These versions are used in imports.mak.xdt
      * Contains compiler versions, paths and development tools
      *
-     * Refer to the genProjectSpec.js file in the MCU+ SDK for the version
+     * Refer to the genProjectSpec.js file in the Motor Control SDK for the version
      */
     toolVersionsForImportsMakefile: {
         default: {
