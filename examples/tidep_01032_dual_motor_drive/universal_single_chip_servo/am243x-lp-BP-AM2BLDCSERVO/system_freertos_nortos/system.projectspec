@@ -4,7 +4,7 @@
     <import spec="../r5fss1-0_freertos/ti-arm-clang/example.projectspec"/>
     <project
         name="universal_single_chip_servo_am243x-lp_system_freertos_nortos"
-        products="com.ti.MOTOR_CONTROL_SDK_AMXXX"
+        products="com.ti.MOTOR_CONTROL_SDK_AMXXX;com.ti.INDUSTRIAL_COMMUNICATIONS_SDK_AMXXX;com.ti.MCU_PLUS_SDK_AMXXX"
         configurations="
             Release,
             Debug,
@@ -15,6 +15,8 @@
         toolChain="TICLANG"
         cgtVersion="4.0.1"
         >
+        <pathVariable name="IND_COMMS_SDK_PATH" path="${COM_TI_INDUSTRIAL_COMMUNICATIONS_SDK_AMXXX_INSTALL_DIR}" scope="project" />
+        <pathVariable name="MCU_PLUS_SDK_PATH" path="${COM_TI_MCU_PLUS_SDK_AMXXX_INSTALL_DIR}" scope="project" />        
         <pathVariable name="MOTOR_CONTROL_SDK_PATH" path="${COM_TI_MOTOR_CONTROL_SDK_AMXXX_INSTALL_DIR}" scope="project" />
         <file path="${MOTOR_CONTROL_SDK_PATH}/docs/api_guide_am243x/EXAMPLE_TIDEP_01032_REFERENCE_DESIGN.html"
                 openOnCreation="false" excludeFromBuild="false" targetName="README.html" action="link">

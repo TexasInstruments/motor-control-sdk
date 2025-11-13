@@ -12,7 +12,7 @@
     <project
         title="EtherCAT-Connected Single-Chip Dual-Servo Motor Drive Reference Design"
         name = "universal_single_chip_servo_am243x-lp_r5fss0-0_nortos_ti-arm-clang"
-        products="sysconfig;com.ti.MOTOR_CONTROL_SDK_AMXXX"
+        products="sysconfig:1.23.0;com.ti.MOTOR_CONTROL_SDK_AMXXX;com.ti.INDUSTRIAL_COMMUNICATIONS_SDK_AMXXX;com.ti.MCU_PLUS_SDK_AMXXX"
         configurations="
             Release,
             Debug,
@@ -31,7 +31,7 @@
         compilerBuildOptions="
             -I${SYSCONFIG_TOOL_INCLUDE_PATH}
             -I${CG_TOOL_ROOT}/include/c
-            -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source
+            -I${MCU_PLUS_SDK_PATH}/source
             -I${MOTOR_CONTROL_SDK_PATH}/source
             -I${PROJECT_ROOT}/
             -I${PROJECT_ROOT}/libraries/control/fwc
@@ -100,12 +100,13 @@
             -DCPUTIME_ENABLE_N
             -DEPWMDAC_MODE_N
             -DCMD_CAN_N
+            -DOS_NORTOS
         "
         linkerBuildOptions="
             -i${CG_TOOL_ROOT}/lib
-            -i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/nortos/lib
-            -i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers/lib
-            -i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/board/lib
+            -i${MCU_PLUS_SDK_PATH}/source/kernel/nortos/lib
+            -i${MCU_PLUS_SDK_PATH}/source/drivers/lib
+            -i${MCU_PLUS_SDK_PATH}/source/board/lib
             -i${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/lib
             -i${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/lib
             -i${CG_TOOL_ROOT}/lib
@@ -114,7 +115,7 @@
             --ram_model
             --reread_libs
         "
-        postBuildStep="$(MAKE) -C ${CCS_PROJECT_DIR} -f makefile_ccs_bootimage_gen OUTNAME=${BuildArtifactFileBaseName} PROFILE=${ConfigName} MOTOR_CONTROL_SDK_PATH=${MOTOR_CONTROL_SDK_PATH} MCU_PLUS_SDK_PATH=${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk CG_TOOL_ROOT=${CG_TOOL_ROOT} CCS_INSTALL_DIR=${CCS_INSTALL_DIR} CCS_IDE_MODE=${CCS_IDE_MODE} DEVICE=am243x"
+        postBuildStep="$(MAKE) -C ${CCS_PROJECT_DIR} -f makefile_ccs_bootimage_gen OUTNAME=${BuildArtifactFileBaseName} PROFILE=${ConfigName} MOTOR_CONTROL_SDK_PATH=${MOTOR_CONTROL_SDK_PATH} MCU_PLUS_SDK_PATH=${MCU_PLUS_SDK_PATH} CG_TOOL_ROOT=${CG_TOOL_ROOT} CCS_INSTALL_DIR=${CCS_INSTALL_DIR} CCS_IDE_MODE=${CCS_IDE_MODE} DEVICE=am243x"
 
         enableSysConfigTool="true"
         sysConfigBuildOptions="
@@ -129,10 +130,10 @@
             "
             linkerBuildOptions="
                 -lnortos.am243x.r5f.ti-arm-clang.release.lib
-                -ldrivers.am243x.r5f.ti-arm-clang.release.lib
-                -lboard.am243x.r5f.ti-arm-clang.release.lib
-                -lmotorcontrol_sdfm.am243x.r5f.ti-arm-clang.release.lib
-                -lmotorcontrol_endat.am243x.r5f.ti-arm-clang.release.lib 
+                -ldrivers.am243x.r5f.ti-arm-clang.nortos.release.lib
+                -lboard.am243x.r5f.ti-arm-clang.nortos.release.lib
+                -lmotorcontrol_sdfm.am243x.r5f.ti-arm-clang.nortos.release.lib
+                -lmotorcontrol_endat.am243x.r5f.ti-arm-clang.nortos.release.lib
                 -llibc.a
                 -llibsysbm.a
             "
@@ -143,19 +144,21 @@
             "
             linkerBuildOptions="
                 -lnortos.am243x.r5f.ti-arm-clang.debug.lib
-                -ldrivers.am243x.r5f.ti-arm-clang.debug.lib
-                -lboard.am243x.r5f.ti-arm-clang.debug.lib
-                -lmotorcontrol_sdfm.am243x.r5f.ti-arm-clang.debug.lib
-                -lmotorcontrol_endat.am243x.r5f.ti-arm-clang.debug.lib
+                -ldrivers.am243x.r5f.ti-arm-clang.nortos.debug.lib
+                -lboard.am243x.r5f.ti-arm-clang.nortos.debug.lib
+                -lmotorcontrol_sdfm.am243x.r5f.ti-arm-clang.nortos.debug.lib
+                -lmotorcontrol_endat.am243x.r5f.ti-arm-clang.nortos.debug.lib
                 -llibc.a
                 -llibsysbm.a
             "
         ></configuration>
 
-        
+
 <!-- define directory for all of the kits and link device supoorting files-->
+        <pathVariable name="IND_COMMS_SDK_PATH" path="${COM_TI_INDUSTRIAL_COMMUNICATIONS_SDK_AMXXX_INSTALL_DIR}" scope="project" />
+        <pathVariable name="MCU_PLUS_SDK_PATH" path="${COM_TI_MCU_PLUS_SDK_AMXXX_INSTALL_DIR}" scope="project" />
         <pathVariable name="MOTOR_CONTROL_SDK_PATH" path="${COM_TI_MOTOR_CONTROL_SDK_AMXXX_INSTALL_DIR}" scope="project" />
-        <pathVariable name="MCU_SDK_ROOT"  path="../../../../../../mcu_plus_sdk" scope="project" />
+        <pathVariable name="MCU_SDK_ROOT"  path="${COM_TI_MCU_PLUS_SDK_AMXXX_INSTALL_DIR}" scope="project" />
         <pathVariable name="MC_SDK_ROOT"  path="../../../../../.." scope="project" />
 	    <pathVariable name="PROJ_ROOT" path="../../.."       scope="project" />
 
@@ -310,7 +313,7 @@
         <file path="PROJ_ROOT/src_control/debug/universal_motor1_control_level3.txt" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="src_control/debug/">
         </file>
         <file path="PROJ_ROOT/src_control/debug/universal_motor1_control_level4.txt" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="src_control/debug/">
-        </file>   
+        </file>
         <file path="PROJ_ROOT/src_control/debug/universal_motor2_control_level1.txt" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="src_control/debug/">
         </file>
         <file path="PROJ_ROOT/src_control/debug/universal_motor2_control_level2.txt" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="src_control/debug/">
@@ -318,6 +321,6 @@
         <file path="PROJ_ROOT/src_control/debug/universal_motor2_control_level3.txt" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="src_control/debug/">
         </file>
         <file path="PROJ_ROOT/src_control/debug/universal_motor2_control_level4.txt" openOnCreation="false" excludeFromBuild="false" action="copy" targetDirectory="src_control/debug/">
-        </file>         
+        </file>
     </project>
 </projectSpec>
