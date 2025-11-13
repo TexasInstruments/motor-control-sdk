@@ -12,7 +12,7 @@
     <project
         title="Bissc Diagnostic Single Channel"
         name = "bissc_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang"
-        products="sysconfig:1.25.0;com.ti.MOTOR_CONTROL_SDK_AMXXX:2025.00.00.01;com.ti.INDUSTRIAL_COMMUNICATIONS_SDK_AMXXX:2025.00.00.05;com.ti.MCU_PLUS_SDK_AMXXX:11.1.0.19"
+        products="sysconfig:1.25.0;com.ti.MOTOR_CONTROL_SDK_AMXXX:2025.00.00.01;com.ti.INDUSTRIAL_COMMUNICATIONS_SDK_AMXXX:2025.00.00.01;com.ti.MCU_PLUS_SDK_AMXXX:07.03.00.01"
         configurations="
             Release,
             Debug,

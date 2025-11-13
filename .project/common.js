@@ -318,6 +318,10 @@ function getToolVersions(device) {
  * console.log(defaultVersion); // "10.02.00"
  */
 function getSdkVersion(device) {
+    if (isDevelopmentMode()) {
+        return versions.sdkVersions.default.version;
+    }
+
     if (versions.sdkVersions.hasOwnProperty(device) &&
         versions.sdkVersions[device].hasOwnProperty('version')) {
         return versions.sdkVersions[device].version;
@@ -342,6 +346,10 @@ function getSdkVersion(device) {
  * console.log(defaultVersion); // "10.02.00"
  */
 function getIcsdkVersion(device) {
+    if (isDevelopmentMode()) {
+        return versions.icsdkVersions.default.version;
+    }
+
     if (versions.icsdkVersions.hasOwnProperty(device) &&
         versions.icsdkVersions[device].hasOwnProperty('version')) {
         return versions.icsdkVersions[device].version;
@@ -366,6 +374,10 @@ function getIcsdkVersion(device) {
  * console.log(defaultVersion); // "10.02.00"
  */
 function getMcusdkVersion(device) {
+    if (isDevelopmentMode()) {
+        return versions.mcusdkVersions.default.version;
+    }
+
     if (versions.mcusdkVersions.hasOwnProperty(device) &&
         versions.mcusdkVersions[device].hasOwnProperty('version')) {
         return versions.mcusdkVersions[device].version;

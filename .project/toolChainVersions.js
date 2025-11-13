@@ -212,7 +212,7 @@ const versions = {
         am261x: {
             ccsVersion: "ccs2030",
             icsdkVersion: "2025_00_00_05",
-            mcusdkVersion: "11_00_00_28",
+            mcusdkVersion: "11_00_00_29",
             cgtPruVersion: "ti-cgt-pru_2.3.3",
             cgtArmClangVersion: "ti-cgt-armllvm_4.0.3.LTS",
             cgtC6000Version: "ti-cgt-c6000_8.3.12",
@@ -255,22 +255,22 @@ const versions = {
      */
     mcusdkVersions: {
         default: {
-            version: "11.1.0.1"
+            version: "07.03.00.01"
         },
         am64x: {
-            version: "11.1.0.17"
+            version: "11.01.00.17"
         },
         am243x: {
-            version: "11.1.0.17"
+            version: "11.01.00.17"
         },
         am263px: {
-            version: "11.1.0.19"
+            version: "11.01.00.19"
         },
         am263x: {
-            version: "11.1.0.19"
+            version: "11.01.00.19"
         },
         am261x: {
-            version: "11.0.0.28"
+            version: "11.00.00.29"
         }
     },
 
@@ -279,7 +279,7 @@ const versions = {
      */
     icsdkVersions: {
         default: {
-            version: "2025.00.00.05"
+            version: "2025.00.00.01"
         },
         am64x: {
             version: "2025.00.00.05"

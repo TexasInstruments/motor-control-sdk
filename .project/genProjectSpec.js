@@ -169,14 +169,26 @@ const utils = {
     },
 
     getSdkVersionProjectSpec: (device) => {
+
+        if(common.isDevelopmentMode())
+            return versions.sdkVersions.default.version;
+
         return versions.sdkVersions[device].version || versions.sdkVersions.default.version;
     },
 
     getIcsdkVersionProjectSpec: (device) => {
+
+        if(common.isDevelopmentMode())
+            return versions.icsdkVersions.default.version;
+
         return versions.icsdkVersions[device].version || versions.icsdkVersions.default.version;
     },
 
     getMcusdkVersionProjectSpec: (device) => {
+
+        if(common.isDevelopmentMode())
+                    return versions.mcusdkVersions.default.version;
+
         return versions.mcusdkVersions[device].version || versions.mcusdkVersions.default.version;
     },
 

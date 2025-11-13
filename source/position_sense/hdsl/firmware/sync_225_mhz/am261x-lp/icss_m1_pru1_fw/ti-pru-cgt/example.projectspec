@@ -12,7 +12,7 @@
     <project
         title="Hdsl Receiver Sync 225 Mhz"
         name = "hdsl_receiver_sync_225_mhz_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt"
-        products="com.ti.MOTOR_CONTROL_SDK_AMXXX:2025.00.00.01;com.ti.INDUSTRIAL_COMMUNICATIONS_SDK_AMXXX:2025.00.00.05;com.ti.MCU_PLUS_SDK_AMXXX:11.0.0.28"
+        products="com.ti.MOTOR_CONTROL_SDK_AMXXX:2025.00.00.01;com.ti.INDUSTRIAL_COMMUNICATIONS_SDK_AMXXX:2025.00.00.01;com.ti.MCU_PLUS_SDK_AMXXX:07.03.00.01"
         configurations="
             Release,
             Debug,
