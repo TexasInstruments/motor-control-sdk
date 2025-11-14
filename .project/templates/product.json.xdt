@@ -264,7 +264,27 @@
         }, {
             "name": "r5fss0-1",
             "targetdbId": "Cortex_R5_1"
-        },{
+        }, {
+            "name": "hsm0-0",
+            "targetdbId": "Cortex_M4_0"
+        }],
+        "AM261x_ZNC": [{
+            "name": "r5fss0-0",
+            "targetdbId": "Cortex_R5_0"
+        }, {
+            "name": "r5fss0-1",
+            "targetdbId": "Cortex_R5_1"
+        }, {
+            "name": "hsm0-0",
+            "targetdbId": "Cortex_M4_0"
+        }],
+        "AM261x_ZEJ": [{
+            "name": "r5fss0-0",
+            "targetdbId": "Cortex_R5_0"
+        }, {
+            "name": "r5fss0-1",
+            "targetdbId": "Cortex_R5_1"
+        }, {
             "name": "hsm0-0",
             "targetdbId": "Cortex_M4_0"
         }],
@@ -274,7 +294,17 @@
         }, {
             "name": "r5fss0-1",
             "targetdbId": "Cortex_R5_1"
-        },{
+        }, {
+            "name": "hsm0-0",
+            "targetdbId": "Cortex_M4_0"
+        }],
+        "AM261x_ZFG_400": [{
+            "name": "r5fss0-0",
+            "targetdbId": "Cortex_R5_0"
+        }, {
+            "name": "r5fss0-1",
+            "targetdbId": "Cortex_R5_1"
+        }, {
             "name": "hsm0-0",
             "targetdbId": "Cortex_M4_0"
         }],
