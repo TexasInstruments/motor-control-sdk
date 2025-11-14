@@ -118,7 +118,7 @@ LIBS_common = \
 	-lnortos.am261x.r5f.ti-arm-clang.${ConfigName}.lib \
 	-ldrivers.am261x.r5f.ti-arm-clang.nortos.${ConfigName}.lib \
 	-lboard.am261x.r5f.ti-arm-clang.nortos.${ConfigName}.lib \
-	-lsfra.am261x.r5f.ti-arm-clang.nortos.${ConfigName}.lib \
+	-lsfra.am261x.r5f.ti-arm-clang.${ConfigName}.lib \
 	-llibc.a \
 	-llibsysbm.a \
 
@@ -133,7 +133,7 @@ LIBS_NAME = \
 	nortos.am261x.r5f.ti-arm-clang.${ConfigName}.lib \
 	drivers.am261x.r5f.ti-arm-clang.nortos.${ConfigName}.lib \
 	board.am261x.r5f.ti-arm-clang.nortos.${ConfigName}.lib \
-	sfra.am261x.r5f.ti-arm-clang.nortos.${ConfigName}.lib \
+	sfra.am261x.r5f.ti-arm-clang.${ConfigName}.lib \
 	libc.a \
 	libsysbm.a \
 

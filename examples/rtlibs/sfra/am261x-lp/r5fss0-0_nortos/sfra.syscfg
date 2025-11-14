@@ -1,9 +1,9 @@
 /**
  * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
  * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
- * @cliArgs --device "AM261x_ZFG" --part "AM2612" --package "ZFG" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@10.02.00"
- * @v2CliArgs --device "AM2612" --package "NFBGA (ZFG)" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@10.02.00"
- * @versions {"tool":"1.23.0+4000"}
+ * @cliArgs --device "AM261x_ZFG" --part "AM2612" --package "ZFG" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@2025.00.00" --product "INDUSTRIAL_COMMUNICATIONS_SDK@2025.00.00" --product "MCU_PLUS_SDK@07.03.01"
+ * @v2CliArgs --device "AM2612" --package "NFBGA (ZFG)" --variant "500MHz" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@2025.00.00" --product "INDUSTRIAL_COMMUNICATIONS_SDK@2025.00.00" --product "MCU_PLUS_SDK@07.03.01"
+ * @versions {"tool":"1.25.0+4268"}
  */
 
 /**
@@ -63,10 +63,10 @@ adc2.adcClockPrescaler = "ADC_CLK_DIV_4_0";
 adc3.$name             = "ADCC";
 adc3.adcClockPrescaler = "ADC_CLK_DIV_4_0";
 
-epwm1.$name                         = "EPWM0";
 epwm1.epwmTimebase_periodLoadMode   = "EPWM_PERIOD_DIRECT_LOAD";
 epwm1.epwmTimebase_counterMode      = "EPWM_COUNTER_MODE_UP_DOWN";
 epwm1.epwmTimebase_syncOutPulseMode = ["EPWM_SYNC_OUT_PULSE_ON_CNTR_ZERO"];
+epwm1.$name                         = "EPWM_0";
 epwm1.EPWM.$assign                  = "EPWM0";
 
 const soc_ctrl_adc    = scripting.addModule("/drivers/soc_ctrl/v0/subModules/soc_ctrl_adc", {}, false);

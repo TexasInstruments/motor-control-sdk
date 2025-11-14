@@ -120,7 +120,13 @@ function addOsIncludes(project, os, buildOption) {
     return project;
 }
 
-function getLibsBuitwihOS() {
+function getLibsBuiltwithoutOS() {
+    return [
+        "sfra",
+    ];
+}
+
+function getLibsBuiltwithOS() {
     return [
     ];
 }
@@ -135,7 +141,8 @@ function updateLibsWithOs(project, os) {
             let libWithOs = lib.replace(/\${ConfigName}/, buildOption.os + "." + "${ConfigName}");
             libWithOs = libWithOs.replace(/release\.lib/, buildOption.os + "." + "release.lib");
             if (osList.some(osItem => lib.match(new RegExp("^" + osItem + "\\."))) ||
-            getLibsBuitwihOS().some(libWithOs => lib.match(new RegExp("^" + libWithOs)))) {
+            getLibsBuiltwithOS().some(libWithOs => lib.match(new RegExp("^" + libWithOs))) ||
+            getLibsBuiltwithoutOS().some(libWithoutOs => lib.match(new RegExp("^" + libWithoutOs)))) {
                 libs_list.push(lib);
             }
             else
@@ -410,7 +417,8 @@ module.exports = {
     addOsDefine,
     addOsIncludes,
     updateLibsWithOs,
-    getLibsBuitwihOS,
+    getLibsBuiltwithOS,
+    getLibsBuiltwithoutOS,
     convertTemplateToFile,
     path: {
         relative,

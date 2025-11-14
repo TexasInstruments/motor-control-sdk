@@ -118,7 +118,7 @@ LIBS_common = \
 	-lnortos.am263px.r5f.ti-arm-clang.${ConfigName}.lib \
 	-ldrivers.am263px.r5f.ti-arm-clang.nortos.${ConfigName}.lib \
 	-lboard.am263px.r5f.ti-arm-clang.nortos.${ConfigName}.lib \
-	-lsfra.am263px.r5f.ti-arm-clang.nortos.${ConfigName}.lib \
+	-lsfra.am263px.r5f.ti-arm-clang.${ConfigName}.lib \
 	-llibc.a \
 	-llibsysbm.a \
 
@@ -133,7 +133,7 @@ LIBS_NAME = \
 	nortos.am263px.r5f.ti-arm-clang.${ConfigName}.lib \
 	drivers.am263px.r5f.ti-arm-clang.nortos.${ConfigName}.lib \
 	board.am263px.r5f.ti-arm-clang.nortos.${ConfigName}.lib \
-	sfra.am263px.r5f.ti-arm-clang.nortos.${ConfigName}.lib \
+	sfra.am263px.r5f.ti-arm-clang.${ConfigName}.lib \
 	libc.a \
 	libsysbm.a \
 
