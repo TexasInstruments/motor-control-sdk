@@ -47,8 +47,9 @@ function genMakefileDeviceTop(component_file_list, example_file_list, device, is
             component_make.isPrebuilt = true;
         }
         for(buildOption of property.buildOptionCombos) {
-            if (osList.includes(property.name) ||
-            common.getLibsBuitwihOS().some(libWithOs => libWithOs.match(new RegExp("^" + property.name))))
+            if(osList.includes(property.name) ||
+            common.getLibsBuiltwithOS().some(libWithOs => libWithOs.match(new RegExp("^" + property.name))) ||
+            common.getLibsBuiltwithoutOS().some(libWithoutOs => libWithoutOs.match(new RegExp("^" + property.name))))
             {
                 if(buildOption.cgt === "gcc-armv7" && (device === "am64x" ||  device === "am243x")){
                     buildTarget_gcc +=` ${property.name}_${buildOption.cpu}.${buildOption.cgt}`;
@@ -249,12 +250,12 @@ function genMakefileLibrary(component_file_list, device) {
                 tag = `.${property.tag}`;
             }
             if(osList.includes(property.name) ||
-            common.getLibsBuitwihOS().some(libWithOs => libWithOs.match(new RegExp("^" + property.name))))
+            common.getLibsBuiltwithOS().some(libWithOs => libWithOs.match(new RegExp("^" + property.name))))
             {
                 /* Kernel libraries */
                 projectClone = _.cloneDeep(project)
                 projectClone = common.addOsDefine( projectClone, buildOption.os);
-                if (common.getLibsBuitwihOS().some(libWithOs => libWithOs.match(new RegExp("^" + property.name))))
+                if (common.getLibsBuiltwithOS().some(libWithOs => libWithOs.match(new RegExp("^" + property.name))))
                 {
                     projectClone = common.addOsIncludes(projectClone, buildOption.os, buildOption);
                 }
@@ -263,6 +264,13 @@ function genMakefileLibrary(component_file_list, device) {
                     `.project/templates/makefile_${project.type}.xdt`,
                     `${project.dirPath}/makefile${tag}.${project.device}.${project.cpu}.${project.cgt}`,
                     args);
+            }
+            else if(common.getLibsBuiltwithoutOS().some(libWithoutOs => libWithoutOs.match(new RegExp("^" + property.name))))
+            {
+                common.convertTemplateToFile(
+                        `.project/templates/makefile_${project.type}.xdt`,
+                        `${project.dirPath}/makefile${tag}.${project.device}.${project.cpu}.${project.cgt}`,
+                        args);
             }
             else
             {
@@ -293,7 +301,14 @@ function cleanMakefileLibrary(component_file_list, device) {
             project = _.merge({}, project, property);
             project.relpath = common.path.relative(path.normalize(__dirname + "/.."), property.dirPath);
 
-            common.deleteFile(`${project.dirPath}/makefile.${buildOption.device}.${buildOption.cpu}.${buildOption.cgt}.${project.os}`);
+            if(common.getLibsBuiltwithoutOS().some(libWithoutOs => libWithoutOs.match(new RegExp("^" + property.name))))
+            {
+                common.deleteFile(`${project.dirPath}/makefile.${buildOption.device}.${buildOption.cpu}.${buildOption.cgt}`);
+            }
+            else
+            {
+                common.deleteFile(`${project.dirPath}/makefile.${buildOption.device}.${buildOption.cpu}.${buildOption.cgt}.${project.os}`);
+            }
         }
     }
 }

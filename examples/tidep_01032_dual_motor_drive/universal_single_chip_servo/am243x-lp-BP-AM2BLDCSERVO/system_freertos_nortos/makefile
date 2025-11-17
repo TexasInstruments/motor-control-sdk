@@ -1,7 +1,10 @@
 
 export MOTOR_CONTROL_SDK_PATH?=$(abspath ../../../../..)
 include $(MOTOR_CONTROL_SDK_PATH)/imports.mak
-include $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/devconfig/devconfig.mak
+ifndef MCU_PLUS_SDK_PATH
+$(error MCU_PLUS_SDK_PATH is not defined)
+endif
+include $(MCU_PLUS_SDK_PATH)/devconfig/devconfig.mak
 
 ifeq ($(OS), Windows_NT)
 	PYTHON=python
@@ -78,10 +81,10 @@ endif
 
 syscfg:
 	@echo Generating SysConfig files ...
-	$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/dist/cli.js --product $(SYSCFG_SDKPRODUCT) $(CORES)
+	$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/dist/cli.js --product $(SYSCFG_SDKPRODUCT) --product $(SYSCFG_ICSDKPRODUCT) --product $(SYSCFG_MCUSDKPRODUCT) $(CORES)
 
 syscfg-gui:
-	$(SYSCFG_NWJS) $(SYSCFG_PATH) --product $(SYSCFG_SDKPRODUCT) --device AM243x_ALX_beta --part ALX --package ALX $(CORES)
+	$(SYSCFG_NWJS) $(SYSCFG_PATH) --product $(SYSCFG_SDKPRODUCT) --product $(SYSCFG_ICSDKPRODUCT) --product $(SYSCFG_MCUSDKPRODUCT) --device AM243x_ALX_beta --part ALX --package ALX $(CORES)
 
 #
 # Generation of multi-core boot image which can be loaded by Secondary Boot Loader (SBL)
@@ -99,9 +102,9 @@ BOOTIMAGE_CORE_ID_m4fss0-0 = 14
 SBL_RUN_ADDRESS=0x70000000
 SBL_DEV_ID=55
 
-MULTI_CORE_IMAGE_GEN = $(SYSCFG_NODE) $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/multicoreImageGen/multicoreImageGen.js
-OUTRPRC_CMD = $(SYSCFG_NODE) $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/out2rprc/elf2rprc.js
-APP_IMAGE_SIGN_CMD = $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/security/security_common/tools/boot/signing/appimage_x509_cert_gen.py
+MULTI_CORE_IMAGE_GEN = $(SYSCFG_NODE) $(MCU_PLUS_SDK_PATH)/tools/boot/multicoreImageGen/multicoreImageGen.js
+OUTRPRC_CMD = $(SYSCFG_NODE) $(MCU_PLUS_SDK_PATH)/tools/boot/out2rprc/elf2rprc.js
+APP_IMAGE_SIGN_CMD = $(MCU_PLUS_SDK_PATH)/source/security/security_common/tools/boot/signing/appimage_x509_cert_gen.py
 
 MULTI_CORE_APP_PARAMS = \
     ../r5fss0-0_nortos/ti-arm-clang/universal_single_chip_servo_am243x-lp_r5fss0-0_nortos_ti-arm-clang.$(PROFILE).rprc@$(BOOTIMAGE_CORE_ID_r5fss0-0) \

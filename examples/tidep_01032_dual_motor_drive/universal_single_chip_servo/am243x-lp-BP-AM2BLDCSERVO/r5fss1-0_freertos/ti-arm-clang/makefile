@@ -1,7 +1,13 @@
 
 export MOTOR_CONTROL_SDK_PATH?=$(abspath ../../../../../..)
 include $(MOTOR_CONTROL_SDK_PATH)/imports.mak
-include $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/devconfig/devconfig.mak
+ifndef MCU_PLUS_SDK_PATH
+$(error MCU_PLUS_SDK_PATH is not defined)
+endif
+ifndef IND_COMMS_SDK_PATH
+$(error IND_COMMS_SDK_PATH is not defined)
+endif
+include $(MCU_PLUS_SDK_PATH)/devconfig/devconfig.mak
 
 CG_TOOL_ROOT=$(CGT_TI_ARM_CLANG_PATH)
 
@@ -39,7 +45,7 @@ TARGETS := $(BOOTIMAGE_NAME)
 FILES_common := \
 	ESL_version.c \
 	ESL_OS_os.c \
-	ESL_eeprom_tidep_01032.c \
+	ESL_eeprom.c \
 	ESL_fileHandling.c \
 	ESL_foeDemo.c \
 	ESL_soeDemo.c \
@@ -49,8 +55,8 @@ FILES_common := \
 	ecSubDeviceCiA402.c \
 	ESL_cia402Obd.c \
 	EtherCAT_SubDevice_CiA402.c \
-	ESL_cia402Demo_tidep_01032.c \
-	ESL_BOARD_OS_config_tidep_01032.c \
+	ESL_cia402Demo.c \
+	ESL_BOARD_OS_config.c \
 	nvm.c \
 	nvm_drv_eeprom.c \
 	nvm_drv_flash.c \
@@ -67,53 +73,51 @@ FILES_PATH_common = \
 	../.. \
 	../../..\
 	../../../../.. \
-	../../../../../../mcu_plus_sdk/ \
-	../../../../../../ind_comms_sdk/ \
-	../../../../../../mcu_plus_sdk/source \
-	${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/ethercat_subdevice_demo/device_profiles/402_cia \
-	${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/ethercat_subdevice_demo/common \
-	${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/ethercat_subdevice_demo/common/os \
-	${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/ethercat_subdevice_demo/common/os/freertos \
-	${MOTOR_CONTROL_SDK_PATH}//ind_comms_sdk/examples/industrial_comms/ethercat_subdevice_demo/common/board/am243x-lp \
-	${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/ethercat_subdevice_demo/common/board/am243x-lp/freertos \
-	${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/custom_phy/src \
-	${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/nvm/app/src \
-	${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/nvm/drv/src \
-	${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/source/industrial_comms/ethercat_slave/stack/inc \
-	${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/source/industrial_comms/ethercat_slave/stack/inc/defines \
-	${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/source/industrial_comms/ethercat_slave/stack/inc/ext \
-	${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/source/industrial_comms/ethercat_slave/stack/inc/profiles \
-	${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/source/industrial_comms/common/inc \
+	${MCU_PLUS_SDK_PATH}/ \
+	${IND_COMMS_SDK_PATH}/ \
+	${MCU_PLUS_SDK_PATH}/source \
+	${IND_COMMS_SDK_PATH}/examples/industrial_comms/ethercat_subdevice_demo/device_profiles/402_cia \
+	${IND_COMMS_SDK_PATH}/examples/industrial_comms/ethercat_subdevice_demo/common \
+	${IND_COMMS_SDK_PATH}/examples/industrial_comms/ethercat_subdevice_demo/common/os \
+	${IND_COMMS_SDK_PATH}/examples/industrial_comms/ethercat_subdevice_demo/common/os/freertos \
+	${IND_COMMS_SDK_PATH}/examples/industrial_comms/ethercat_subdevice_demo/common/board/am243x-lp \
+	${IND_COMMS_SDK_PATH}/examples/industrial_comms/ethercat_subdevice_demo/common/board/am243x-lp/freertos \
+	${IND_COMMS_SDK_PATH}/examples/industrial_comms/custom_phy/src \
+	${IND_COMMS_SDK_PATH}/examples/industrial_comms/nvm/app/src \
+	${IND_COMMS_SDK_PATH}/examples/industrial_comms/nvm/drv/src \
+	${IND_COMMS_SDK_PATH}/source/industrial_comms/ethercat_subdevice/stack/inc \
+	${IND_COMMS_SDK_PATH}/source/industrial_comms/ethercat_subdevice/stack/inc/defines \
+	${IND_COMMS_SDK_PATH}/source/industrial_comms/ethercat_subdevice/stack/inc/ext \
+	${IND_COMMS_SDK_PATH}/source/industrial_comms/ethercat_subdevice/stack/inc/profiles \
+	${IND_COMMS_SDK_PATH}/source/industrial_comms/common/inc \
 	generated \
 
 INCLUDES_common := \
 	-I${CG_TOOL_ROOT}/include/c \
-	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source \
 	-I${MOTOR_CONTROL_SDK_PATH}/source \
 	-I${CG_TOOL_ROOT}/include/c \
-	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source \
-	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/source \
-	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/FreeRTOS-Kernel/include \
-	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F \
-	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/am243x/r5f \
-	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/ethercat_subdevice_demo/device_profiles/402_cia \
-	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/ethercat_subdevice_demo/common \
-	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/ethercat_subdevice_demo/common/os \
-	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/ethercat_subdevice_demo/common/os/freertos \
-	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/ethercat_subdevice_demo/common/board/am243x-lp \
-	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/ethercat_subdevice_demo/common/board/am243x-lp/freertos \
-	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/custom_phy/inc \
-	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/nvm/app/inc \
-	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/examples/industrial_comms/nvm/drv/inc \
-	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/source/industrial_comms/ethercat_slave/stack/inc \
-	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/source/industrial_comms/ethercat_slave/stack/inc/defines \
-	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/source/industrial_comms/ethercat_slave/stack/inc/ext \
-	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/source/industrial_comms/ethercat_slave/stack/inc/profiles \
-	-I${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/source/industrial_comms/common/inc \
+	-I${MCU_PLUS_SDK_PATH}/source \
+	-I${IND_COMMS_SDK_PATH}/source \
+	-I${MCU_PLUS_SDK_PATH}/source/kernel/freertos/FreeRTOS-Kernel/include \
+	-I${MCU_PLUS_SDK_PATH}/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F \
+	-I${MCU_PLUS_SDK_PATH}/source/kernel/freertos/config/am243x/r5f \
+	-I${IND_COMMS_SDK_PATH}/examples/industrial_comms/ethercat_subdevice_demo/device_profiles/402_cia \
+	-I${IND_COMMS_SDK_PATH}/examples/industrial_comms/ethercat_subdevice_demo/common \
+	-I${IND_COMMS_SDK_PATH}/examples/industrial_comms/ethercat_subdevice_demo/common/os \
+	-I${IND_COMMS_SDK_PATH}/examples/industrial_comms/ethercat_subdevice_demo/common/os/freertos \
+	-I${IND_COMMS_SDK_PATH}/examples/industrial_comms/ethercat_subdevice_demo/common/board/am243x-lp \
+	-I${IND_COMMS_SDK_PATH}/examples/industrial_comms/ethercat_subdevice_demo/common/board/am243x-lp/freertos \
+	-I${IND_COMMS_SDK_PATH}/examples/industrial_comms/custom_phy/inc \
+	-I${IND_COMMS_SDK_PATH}/examples/industrial_comms/nvm/app/inc \
+	-I${IND_COMMS_SDK_PATH}/examples/industrial_comms/nvm/drv/inc \
+	-I${IND_COMMS_SDK_PATH}/source/industrial_comms/ethercat_subdevice/stack/inc \
+	-I${IND_COMMS_SDK_PATH}/source/industrial_comms/ethercat_subdevice/stack/inc/defines \
+	-I${IND_COMMS_SDK_PATH}/source/industrial_comms/ethercat_subdevice/stack/inc/ext \
+	-I${IND_COMMS_SDK_PATH}/source/industrial_comms/ethercat_subdevice/stack/inc/profiles \
+	-I${IND_COMMS_SDK_PATH}/source/industrial_comms/common/inc \
 	-Igenerated \
 
 DEFINES_common := \
-	-DSOC_AM243X \
 	-DSOC_AM243X \
 	-DSOC_AM243X=1 \
 	-DOSAL_FREERTOS=1 \
@@ -123,6 +127,8 @@ DEFINES_common := \
 	-DSSC_CHECKTIMER=1 \
 	-DUSE_ECAT_TIMER=1 \
 	-DCUST_PHY_DP83869=1 \
+	-DOS_FREERTOS \
+	-DENABLE_TIDEP01032_REF_DESIGN_CONFIG \
 
 CFLAGS_common := \
 	-mcpu=cortex-r5 \
@@ -161,18 +167,18 @@ LNK_FILES_common = \
 
 LIBS_PATH_common = \
 	-Wl,-i${CG_TOOL_ROOT}/lib \
-	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/lib \
-	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers/lib \
-	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/board/lib \
-	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/source/industrial_comms/ethercat_slave/stack/lib \
+	-Wl,-i${MCU_PLUS_SDK_PATH}/source/kernel/freertos/lib \
+	-Wl,-i${MCU_PLUS_SDK_PATH}/source/drivers/lib \
+	-Wl,-i${MCU_PLUS_SDK_PATH}/source/board/lib \
+	-Wl,-i${IND_COMMS_SDK_PATH}/source/industrial_comms/ethercat_subdevice/stack/lib \
 	-Wl,-i${CG_TOOL_ROOT}/lib \
 
 LIBS_common = \
 	-llibc.a \
 	-llibsysbm.a \
 	-lfreertos.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
-	-ldrivers.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
-	-lboard.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
+	-ldrivers.am243x.r5f.ti-arm-clang.freertos.${ConfigName}.lib \
+	-lboard.am243x.r5f.ti-arm-clang.freertos.${ConfigName}.lib \
 	-lethercat_subdevice.am243x_lp.r5f.ti-arm-clang.release.lib \
 	-lethercat_subdevice_bkhf_ssc.am243x_lp.r5f.ti-arm-clang.release.lib \
 	-llibc.a \
@@ -191,8 +197,8 @@ LIBS_NAME = \
 	libc.a \
 	libsysbm.a \
 	freertos.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
-	drivers.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
-	board.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
+	drivers.am243x.r5f.ti-arm-clang.freertos.${ConfigName}.lib \
+	board.am243x.r5f.ti-arm-clang.freertos.${ConfigName}.lib \
 	ethercat_subdevice.am243x_lp.r5f.ti-arm-clang.release.lib \
 	ethercat_subdevice_bkhf_ssc.am243x_lp.r5f.ti-arm-clang.release.lib \
 	libc.a \
@@ -200,10 +206,10 @@ LIBS_NAME = \
 
 LIBS_PATH_NAME = \
 	${CG_TOOL_ROOT}/lib \
-	${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/lib \
-	${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers/lib \
-	${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/board/lib \
-	${MOTOR_CONTROL_SDK_PATH}/ind_comms_sdk/source/industrial_comms/ethercat_slave/stack/lib \
+	${MCU_PLUS_SDK_PATH}/source/kernel/freertos/lib \
+	${MCU_PLUS_SDK_PATH}/source/drivers/lib \
+	${MCU_PLUS_SDK_PATH}/source/board/lib \
+	${IND_COMMS_SDK_PATH}/source/industrial_comms/ethercat_subdevice/stack/lib \
 	${CG_TOOL_ROOT}/lib \
 
 FILES := $(FILES_common) $(FILES_$(PROFILE))
@@ -323,11 +329,11 @@ $(SYSCFG_GEN_FILES): syscfg
 ifeq ($(SYSTEM_FLAG), false)
 syscfg: ../example.syscfg
 	@echo Generating SysConfig files ...
-	$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/dist/cli.js --product $(SYSCFG_SDKPRODUCT) --context r5fss1-0 --part ALX --package ALX --output generated/ ../example.syscfg
+	$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/dist/cli.js --product $(SYSCFG_SDKPRODUCT) --product $(SYSCFG_ICSDKPRODUCT) --product $(SYSCFG_MCUSDKPRODUCT) --context r5fss1-0 --part ALX --package ALX --output generated/ ../example.syscfg
 endif
 
 syscfg-gui:
-	$(SYSCFG_NWJS) $(SYSCFG_PATH) --product $(SYSCFG_SDKPRODUCT) --device AM243x_ALX_beta --context r5fss1-0 --part ALX --package ALX --output generated/  ../example.syscfg
+	$(SYSCFG_NWJS) $(SYSCFG_PATH) --product $(SYSCFG_SDKPRODUCT) --product $(SYSCFG_ICSDKPRODUCT) --product $(SYSCFG_MCUSDKPRODUCT) --device AM243x_ALX_beta --context r5fss1-0 --part ALX --package ALX --output generated/  ../example.syscfg
 
 #
 # Generation of boot image which can be loaded by Secondary Boot Loader (SBL)
@@ -336,9 +342,9 @@ ifeq ($(OS),Windows_NT)
 EXE_EXT=.exe
 endif
 ifeq ($(OS),Windows_NT)
-  BOOTIMAGE_CERT_GEN_CMD=powershell -executionpolicy unrestricted -command $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/security/security_common/tools/boot/signing/x509CertificateGen.ps1
+  BOOTIMAGE_CERT_GEN_CMD=powershell -executionpolicy unrestricted -command $(MCU_PLUS_SDK_PATH)/source/security/security_common/tools/boot/signing/x509CertificateGen.ps1
 else
-  BOOTIMAGE_CERT_GEN_CMD=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/security/security_common/tools/boot/signing/x509CertificateGen.sh
+  BOOTIMAGE_CERT_GEN_CMD=$(MCU_PLUS_SDK_PATH)/source/security/security_common/tools/boot/signing/x509CertificateGen.sh
 endif
 BOOTIMAGE_TEMP_OUT_FILE=temp_stdout_$(PROFILE).txt
 
@@ -352,18 +358,18 @@ BOOTIMAGE_CORE_ID_m4fss0-0 = 14
 SBL_RUN_ADDRESS=0x70000000
 SBL_DEV_ID=55
 
-MULTI_CORE_IMAGE_GEN = $(SYSCFG_NODE) $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/multicoreImageGen/multicoreImageGen.js
-OUTRPRC_CMD = $(SYSCFG_NODE) $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/out2rprc/elf2rprc.js
-APP_IMAGE_SIGN_CMD = $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/security/security_common/tools/boot/signing/appimage_x509_cert_gen.py
+MULTI_CORE_IMAGE_GEN = $(SYSCFG_NODE) $(MCU_PLUS_SDK_PATH)/tools/boot/multicoreImageGen/multicoreImageGen.js
+OUTRPRC_CMD = $(SYSCFG_NODE) $(MCU_PLUS_SDK_PATH)/tools/boot/out2rprc/elf2rprc.js
+APP_IMAGE_SIGN_CMD = $(MCU_PLUS_SDK_PATH)/source/security/security_common/tools/boot/signing/appimage_x509_cert_gen.py
 
 ifeq ($(OS),Windows_NT)
-  XIPGEN_CMD=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/xipGen/xipGen.exe
+  XIPGEN_CMD=$(MCU_PLUS_SDK_PATH)/tools/boot/xipGen/xipGen.exe
 else
   UNAME_S = $(shell uname -s)
   ifeq ($(UNAME_S), Darwin)
-    XIPGEN_CMD=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/xipGen/xipGen.out.mac
+    XIPGEN_CMD=$(MCU_PLUS_SDK_PATH)/tools/boot/xipGen/xipGen.out.mac
   else
-    XIPGEN_CMD=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/xipGen/xipGen.out
+    XIPGEN_CMD=$(MCU_PLUS_SDK_PATH)/tools/boot/xipGen/xipGen.out
 endif
 endif
 
@@ -416,7 +422,7 @@ coverage:
 	$(PROFDATA) merge -sparse -obj-file=$(OUTNAME) $(OUTNAME).cnt -o universal_single_chip_servo_am243x-lp_r5fss1-0_freertos_ti-arm-clang.$(PROFILE).profdata
 	$(COV) show --format=html --show-expansions --show-instantiations --show-branches=count --object=$(OUTNAME) -instr-profile=universal_single_chip_servo_am243x-lp_r5fss1-0_freertos_ti-arm-clang.$(PROFILE).profdata --output-dir=$(COVERAGE_PATH)/coverage --ignore-filename-regex=build_jenkins
 	$(COV) export --format=text --object=$(OUTNAME) --instr-profile=universal_single_chip_servo_am243x-lp_r5fss1-0_freertos_ti-arm-clang.$(PROFILE).profdata > coverage/universal_single_chip_servo_am243x-lp_r5fss1-0_freertos_ti-arm-clang.$(PROFILE).profdata.json
-	node $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/smart_placement/clang_coverage_analyse.js --input=coverage/universal_single_chip_servo_am243x-lp_r5fss1-0_freertos_ti-arm-clang.$(PROFILE).profdata.json --output-json=coverage/universal_single_chip_servo_am243x-lp_r5fss1-0_freertos_ti-arm-clang.$(PROFILE).analysis.json --output=../universal_single_chip_servo_am243x-lp_r5fss1-0_freertos_ti-arm-clang.annotations.$(PROFILE).S --top-function-count=500
+	node $(MCU_PLUS_SDK_PATH)/tools/smart_placement/clang_coverage_analyse.js --input=coverage/universal_single_chip_servo_am243x-lp_r5fss1-0_freertos_ti-arm-clang.$(PROFILE).profdata.json --output-json=coverage/universal_single_chip_servo_am243x-lp_r5fss1-0_freertos_ti-arm-clang.$(PROFILE).analysis.json --output=../universal_single_chip_servo_am243x-lp_r5fss1-0_freertos_ti-arm-clang.annotations.$(PROFILE).S --top-function-count=500
 	@echo Coverage Report Generated at $(COVERAGE_PATH)/coverage folder !!!
 
 -include $(addprefix $(OBJDIR)/, $(DEPS))

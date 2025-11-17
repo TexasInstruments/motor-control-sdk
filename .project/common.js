@@ -120,7 +120,13 @@ function addOsIncludes(project, os, buildOption) {
     return project;
 }
 
-function getLibsBuitwihOS() {
+function getLibsBuiltwithoutOS() {
+    return [
+        "sfra",
+    ];
+}
+
+function getLibsBuiltwithOS() {
     return [
     ];
 }
@@ -135,7 +141,8 @@ function updateLibsWithOs(project, os) {
             let libWithOs = lib.replace(/\${ConfigName}/, buildOption.os + "." + "${ConfigName}");
             libWithOs = libWithOs.replace(/release\.lib/, buildOption.os + "." + "release.lib");
             if (osList.some(osItem => lib.match(new RegExp("^" + osItem + "\\."))) ||
-            getLibsBuitwihOS().some(libWithOs => lib.match(new RegExp("^" + libWithOs)))) {
+            getLibsBuiltwithOS().some(libWithOs => lib.match(new RegExp("^" + libWithOs))) ||
+            getLibsBuiltwithoutOS().some(libWithoutOs => lib.match(new RegExp("^" + libWithoutOs)))) {
                 libs_list.push(lib);
             }
             else
@@ -318,6 +325,10 @@ function getToolVersions(device) {
  * console.log(defaultVersion); // "10.02.00"
  */
 function getSdkVersion(device) {
+    if (isDevelopmentMode()) {
+        return versions.sdkVersions.default.version;
+    }
+
     if (versions.sdkVersions.hasOwnProperty(device) &&
         versions.sdkVersions[device].hasOwnProperty('version')) {
         return versions.sdkVersions[device].version;
@@ -342,6 +353,10 @@ function getSdkVersion(device) {
  * console.log(defaultVersion); // "10.02.00"
  */
 function getIcsdkVersion(device) {
+    if (isDevelopmentMode()) {
+        return versions.icsdkVersions.default.version;
+    }
+
     if (versions.icsdkVersions.hasOwnProperty(device) &&
         versions.icsdkVersions[device].hasOwnProperty('version')) {
         return versions.icsdkVersions[device].version;
@@ -366,6 +381,10 @@ function getIcsdkVersion(device) {
  * console.log(defaultVersion); // "10.02.00"
  */
 function getMcusdkVersion(device) {
+    if (isDevelopmentMode()) {
+        return versions.mcusdkVersions.default.version;
+    }
+
     if (versions.mcusdkVersions.hasOwnProperty(device) &&
         versions.mcusdkVersions[device].hasOwnProperty('version')) {
         return versions.mcusdkVersions[device].version;
@@ -398,7 +417,8 @@ module.exports = {
     addOsDefine,
     addOsIncludes,
     updateLibsWithOs,
-    getLibsBuitwihOS,
+    getLibsBuiltwithOS,
+    getLibsBuiltwithoutOS,
     convertTemplateToFile,
     path: {
         relative,

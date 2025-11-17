@@ -264,7 +264,7 @@ uint32_t  endat_config_periodic_mode(struct endat_periodic_interface *endat_peri
     /*configure IEP*/
     endat_config_iep(endat_periodic_interface);
     /* Initialize ICSS INTC */
-#if (CONFIG_BISSC0_PRUICSSx == 1)
+#if (CONFIG_ENDAT0_PRUICSSx == 1)
     status = PRUICSS_intcInit(gPruIcssXHandle, &icss1_intc_initdata);
     if (status != SystemP_SUCCESS)
     {

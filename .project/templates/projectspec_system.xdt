@@ -1,14 +1,19 @@
 %%{
     products = "";
 
-    if(((args.project.device == "am263px") || (args.project.device == "am261x")) && (args.utils.getProductNameProjectSpec(args.project.device) != "MOTOR_CONTROL_SDK_AMXXX")) {
-        products+="MOTOR-CONTROL-SDK-"+args.project.device.toUpperCase();
-        products+=";INDUSTRIAL-COMMUNICATIONS-SDK-"+args.project.projects[i].device.toUpperCase();
-        products+=";MCU-PLUS-SDK-"+args.project.projects[0].device.toUpperCase();
+    // Get SDK versions
+    const sdkVersion    = args.utils.getSdkVersionProjectSpec(args.project.projects[0].device);
+    const icsdkVersion  = args.utils.getIcsdkVersionProjectSpec(args.project.projects[0].device);
+    const mcusdkVersion = args.utils.getMcusdkVersionProjectSpec(args.project.projects[0].device);
+
+    if(((args.project.projects[0].device == "am263px") || (args.project.projects[0].device == "am261x")) && (args.utils.getProductNameProjectSpec(args.project.projects[0].device) != "MOTOR_CONTROL_SDK_AMXXX")) {
+        products+="MOTOR-CONTROL-SDK-"+args.project.projects[0].device.toUpperCase()+":"+sdkVersion;
+        products+=";INDUSTRIAL-COMMUNICATIONS-SDK-"+args.project.projects[0].device.toUpperCase()+":"+icsdkVersion;
+        products+=";MCU-PLUS-SDK-"+args.project.projects[0].device.toUpperCase()+":"+mcusdkVersion;
     } else {
-        products+=`com.ti.${args.utils.getProductNameProjectSpec(args.project.projects[0].device)}`;
-        products+=`;com.ti.${args.utils.getIcsdkProductNameProjectSpec(args.project.projects[0].device)}`
-        products+=`;com.ti.${args.utils.getMcusdkProductNameProjectSpec(args.project.projects[0].device)}`
+        products+=`com.ti.${args.utils.getProductNameProjectSpec(args.project.projects[0].device)}:${sdkVersion}`;
+        products+=`;com.ti.${args.utils.getIcsdkProductNameProjectSpec(args.project.projects[0].device)}:${icsdkVersion}`;
+        products+=`;com.ti.${args.utils.getMcusdkProductNameProjectSpec(args.project.projects[0].device)}:${mcusdkVersion}`;
     }
 
     productName = args.utils.getProductNameProjectSpec(args.project.projects[0].device);

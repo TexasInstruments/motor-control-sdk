@@ -1,7 +1,10 @@
 
 export MOTOR_CONTROL_SDK_PATH?=$(abspath ../../../../../..)
 include $(MOTOR_CONTROL_SDK_PATH)/imports.mak
-include $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/devconfig/devconfig.mak
+ifndef MCU_PLUS_SDK_PATH
+$(error MCU_PLUS_SDK_PATH is not defined)
+endif
+include $(MCU_PLUS_SDK_PATH)/devconfig/devconfig.mak
 
 CG_TOOL_ROOT=$(CGT_TI_ARM_CLANG_PATH)
 
@@ -78,8 +81,8 @@ FILES_PATH_common = \
 	../../../src_board \
 	../../../src_control \
 	../../../../../../source \
-	../../../../../../mcu_plus_sdk/ \
-	../../../../../../mcu_plus_sdk/source \
+	$(MCU_PLUS_SDK_PATH)/ \
+	$(MCU_PLUS_SDK_PATH)/source \
 	$(MOTOR_CONTROL_SDK_PATH)/source/rtlibs/control/fwc/source \
 	../../../../../../source/rtlibs/control/mtpa/source \
 	../../../../../../source/rtlibs/control/pi/source \
@@ -98,16 +101,16 @@ FILES_PATH_common = \
 	../../../../../../source/rtlibs/utilities/datalog/source \
 	../../../../../../source/rtlibs/utilities/step_response/source \
 	../../../../../../source/rtlibs/utilities/traj/source \
-	../../../../../../mcu_plus_sdk/source/mathlib/fastrts \
+	$(MCU_PLUS_SDK_PATH)/source/mathlib/fastrts \
 	generated \
 
 INCLUDES_common := \
 	-I${CG_TOOL_ROOT}/include/c \
-	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source \
+	-I${MCU_PLUS_SDK_PATH}/source \
 	-I${MOTOR_CONTROL_SDK_PATH}/source \
 	-I${CG_TOOL_ROOT}/include/c \
-	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers \
-	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/board \
+	-I${MCU_PLUS_SDK_PATH}/source/drivers \
+	-I${MCU_PLUS_SDK_PATH}/source/board \
 	-I${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware \
 	-I${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/include \
 	-I${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware \
@@ -168,6 +171,7 @@ DEFINES_common := \
 	-DCPUTIME_ENABLE_N \
 	-DEPWMDAC_MODE_N \
 	-DCMD_CAN_N \
+	-DOS_NORTOS \
 
 CFLAGS_common := \
 	-mcpu=cortex-r5 \
@@ -217,9 +221,9 @@ LNK_FILES_common = \
 
 LIBS_PATH_common = \
 	-Wl,-i${CG_TOOL_ROOT}/lib \
-	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/nortos/lib \
-	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers/lib \
-	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/board/lib \
+	-Wl,-i${MCU_PLUS_SDK_PATH}/source/kernel/nortos/lib \
+	-Wl,-i${MCU_PLUS_SDK_PATH}/source/drivers/lib \
+	-Wl,-i${MCU_PLUS_SDK_PATH}/source/board/lib \
 	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/lib \
 	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/lib \
 	-Wl,-i${CG_TOOL_ROOT}/lib \
@@ -227,10 +231,10 @@ LIBS_PATH_common = \
 LIBS_common = \
 	-llibc.a \
 	-lnortos.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
-	-ldrivers.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
-	-lboard.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
-	-lmotorcontrol_sdfm.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
-	-lmotorcontrol_endat.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
+	-ldrivers.am243x.r5f.ti-arm-clang.nortos.${ConfigName}.lib \
+	-lboard.am243x.r5f.ti-arm-clang.nortos.${ConfigName}.lib \
+	-lmotorcontrol_sdfm.am243x.r5f.ti-arm-clang.nortos.${ConfigName}.lib \
+	-lmotorcontrol_endat.am243x.r5f.ti-arm-clang.nortos.${ConfigName}.lib \
 	-llibc.a \
 	-llibsysbm.a \
 
@@ -239,23 +243,23 @@ LFLAGS_common = \
 	-Wl,--ram_model \
 	-Wl,--reread_libs \
 	-Wl,--gen_xml_func_hash \
-	
+
 
 LIBS_NAME = \
 	libc.a \
 	nortos.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
-	drivers.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
-	board.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
-	motorcontrol_sdfm.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
-	motorcontrol_endat.am243x.r5f.ti-arm-clang.${ConfigName}.lib \
+	drivers.am243x.r5f.ti-arm-clang.nortos.${ConfigName}.lib \
+	board.am243x.r5f.ti-arm-clang.nortos.${ConfigName}.lib \
+	motorcontrol_sdfm.am243x.r5f.ti-arm-clang.nortos.${ConfigName}.lib \
+	motorcontrol_endat.am243x.r5f.ti-arm-clang.nortos.${ConfigName}.lib \
 	libc.a \
 	libsysbm.a \
 
 LIBS_PATH_NAME = \
 	${CG_TOOL_ROOT}/lib \
-	${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/nortos/lib \
-	${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers/lib \
-	${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/board/lib \
+	${MCU_PLUS_SDK_PATH}/source/kernel/nortos/lib \
+	${MCU_PLUS_SDK_PATH}/source/drivers/lib \
+	${MCU_PLUS_SDK_PATH}/source/board/lib \
 	${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/lib \
 	${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/lib \
 	${CG_TOOL_ROOT}/lib \
@@ -377,11 +381,11 @@ $(SYSCFG_GEN_FILES): syscfg
 ifeq ($(SYSTEM_FLAG), false)
 syscfg: ../AM243_BP-AM2BLDCSERVO.syscfg
 	@echo Generating SysConfig files ...
-	$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/dist/cli.js --product $(SYSCFG_SDKPRODUCT) --context r5fss0-0 --part ALX --package ALX --output generated/ ../AM243_BP-AM2BLDCSERVO.syscfg
+	$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/dist/cli.js --product $(SYSCFG_SDKPRODUCT) --product $(SYSCFG_ICSDKPRODUCT) --product $(SYSCFG_MCUSDKPRODUCT) --context r5fss0-0 --part ALX --package ALX --output generated/ ../AM243_BP-AM2BLDCSERVO.syscfg
 endif
 
 syscfg-gui:
-	$(SYSCFG_NWJS) $(SYSCFG_PATH) --product $(SYSCFG_SDKPRODUCT) --device AM243x_ALX_beta --context r5fss0-0 --part ALX --package ALX --output generated/  ../AM243_BP-AM2BLDCSERVO.syscfg
+	$(SYSCFG_NWJS) $(SYSCFG_PATH) --product $(SYSCFG_SDKPRODUCT) --product $(SYSCFG_ICSDKPRODUCT) --product $(SYSCFG_MCUSDKPRODUCT) --device AM243x_ALX_beta --context r5fss0-0 --part ALX --package ALX --output generated/  ../AM243_BP-AM2BLDCSERVO.syscfg
 
 #
 # Generation of boot image which can be loaded by Secondary Boot Loader (SBL)
@@ -390,9 +394,9 @@ ifeq ($(OS),Windows_NT)
 EXE_EXT=.exe
 endif
 ifeq ($(OS),Windows_NT)
-  BOOTIMAGE_CERT_GEN_CMD=powershell -executionpolicy unrestricted -command $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/security/security_common/tools/boot/signing/x509CertificateGen.ps1
+  BOOTIMAGE_CERT_GEN_CMD=powershell -executionpolicy unrestricted -command $(MCU_PLUS_SDK_PATH)/source/security/security_common/tools/boot/signing/x509CertificateGen.ps1
 else
-  BOOTIMAGE_CERT_GEN_CMD=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/security/security_common/tools/boot/signing/x509CertificateGen.sh
+  BOOTIMAGE_CERT_GEN_CMD=$(MCU_PLUS_SDK_PATH)/source/security/security_common/tools/boot/signing/x509CertificateGen.sh
 endif
 BOOTIMAGE_TEMP_OUT_FILE=temp_stdout_$(PROFILE).txt
 
@@ -406,18 +410,18 @@ BOOTIMAGE_CORE_ID_m4fss0-0 = 14
 SBL_RUN_ADDRESS=0x70000000
 SBL_DEV_ID=55
 
-MULTI_CORE_IMAGE_GEN = $(SYSCFG_NODE) $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/multicoreImageGen/multicoreImageGen.js
-OUTRPRC_CMD = $(SYSCFG_NODE) $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/out2rprc/elf2rprc.js
-APP_IMAGE_SIGN_CMD = $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/source/security/security_common/tools/boot/signing/appimage_x509_cert_gen.py
+MULTI_CORE_IMAGE_GEN = $(SYSCFG_NODE) $(MCU_PLUS_SDK_PATH)/tools/boot/multicoreImageGen/multicoreImageGen.js
+OUTRPRC_CMD = $(SYSCFG_NODE) $(MCU_PLUS_SDK_PATH)/tools/boot/out2rprc/elf2rprc.js
+APP_IMAGE_SIGN_CMD = $(MCU_PLUS_SDK_PATH)/source/security/security_common/tools/boot/signing/appimage_x509_cert_gen.py
 
 ifeq ($(OS),Windows_NT)
-  XIPGEN_CMD=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/xipGen/xipGen.exe
+  XIPGEN_CMD=$(MCU_PLUS_SDK_PATH)/tools/boot/xipGen/xipGen.exe
 else
   UNAME_S = $(shell uname -s)
   ifeq ($(UNAME_S), Darwin)
-    XIPGEN_CMD=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/xipGen/xipGen.out.mac
+    XIPGEN_CMD=$(MCU_PLUS_SDK_PATH)/tools/boot/xipGen/xipGen.out.mac
   else
-    XIPGEN_CMD=$(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/boot/xipGen/xipGen.out
+    XIPGEN_CMD=$(MCU_PLUS_SDK_PATH)/tools/boot/xipGen/xipGen.out
 endif
 endif
 
@@ -470,7 +474,7 @@ coverage:
 	$(PROFDATA) merge -sparse -obj-file=$(OUTNAME) $(OUTNAME).cnt -o universal_single_chip_servo_am243x-lp_r5fss0-0_nortos_ti-arm-clang.$(PROFILE).profdata
 	$(COV) show --format=html --show-expansions --show-instantiations --show-branches=count --object=$(OUTNAME) -instr-profile=universal_single_chip_servo_am243x-lp_r5fss0-0_nortos_ti-arm-clang.$(PROFILE).profdata --output-dir=$(COVERAGE_PATH)/coverage --ignore-filename-regex=build_jenkins
 	$(COV) export --format=text --object=$(OUTNAME) --instr-profile=universal_single_chip_servo_am243x-lp_r5fss0-0_nortos_ti-arm-clang.$(PROFILE).profdata > coverage/universal_single_chip_servo_am243x-lp_r5fss0-0_nortos_ti-arm-clang.$(PROFILE).profdata.json
-	node $(MOTOR_CONTROL_SDK_PATH)/mcu_plus_sdk/tools/smart_placement/clang_coverage_analyse.js --input=coverage/universal_single_chip_servo_am243x-lp_r5fss0-0_nortos_ti-arm-clang.$(PROFILE).profdata.json --output-json=coverage/universal_single_chip_servo_am243x-lp_r5fss0-0_nortos_ti-arm-clang.$(PROFILE).analysis.json --output=../universal_single_chip_servo_am243x-lp_r5fss0-0_nortos_ti-arm-clang.annotations.$(PROFILE).S --top-function-count=500
+	node $(MCU_PLUS_SDK_PATH)/tools/smart_placement/clang_coverage_analyse.js --input=coverage/universal_single_chip_servo_am243x-lp_r5fss0-0_nortos_ti-arm-clang.$(PROFILE).profdata.json --output-json=coverage/universal_single_chip_servo_am243x-lp_r5fss0-0_nortos_ti-arm-clang.$(PROFILE).analysis.json --output=../universal_single_chip_servo_am243x-lp_r5fss0-0_nortos_ti-arm-clang.annotations.$(PROFILE).S --top-function-count=500
 	@echo Coverage Report Generated at $(COVERAGE_PATH)/coverage folder !!!
 
 -include $(addprefix $(OBJDIR)/, $(DEPS))

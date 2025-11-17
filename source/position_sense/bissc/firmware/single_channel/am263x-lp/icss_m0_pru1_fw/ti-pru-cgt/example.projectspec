@@ -12,7 +12,7 @@
     <project
         title="Bissc Peripheral Interface Single Ch"
         name = "bissc_peripheral_interface_single_ch_am263x-lp_icss_m0_pru1_fw_ti-pru-cgt"
-        products="com.ti.MOTOR_CONTROL_SDK_AMXXX:2025.00.00.01;com.ti.INDUSTRIAL_COMMUNICATIONS_SDK_AMXXX:2025.00.00.05;com.ti.MCU_PLUS_SDK_AMXXX:11.1.0.19"
+        products="com.ti.MOTOR_CONTROL_SDK_AMXXX:2025.00.00.01;com.ti.INDUSTRIAL_COMMUNICATIONS_SDK_AMXXX:2025.00.00.01;com.ti.MCU_PLUS_SDK_AMXXX:07.03.00.01"
         configurations="
             Release,
             Debug,

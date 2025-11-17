@@ -121,15 +121,15 @@ gen-buildfiles-clean:
 
 syscfg-tests:
 ifeq ($(DEVICE),$(filter $(DEVICE), am64x))
-	-$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/tests/sanityTests.js -s $(SYSCFG_SDKPRODUCT) -d $(SYSCFG_DEVICE) -c a53ss0-0 --excludeTests="migrateToAnyTarget"
+	-$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/tests/sanityTests.js -s $(SYSCFG_SDKPRODUCT) -s $(SYSCFG_ICSDKPRODUCT) -s $(SYSCFG_MCUSDKPRODUCT) -d $(SYSCFG_DEVICE) -c a53ss0-0 --excludeTests="migrateToAnyTarget"
 endif
 ifeq ($(DEVICE),$(filter $(DEVICE), am64x am243x am62x))
-	-$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/tests/sanityTests.js -s $(SYSCFG_SDKPRODUCT) -d $(SYSCFG_DEVICE) -c m4fss0-0 --excludeTests="migrateToAnyTarget"
+	-$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/tests/sanityTests.js -s $(SYSCFG_SDKPRODUCT) -s $(SYSCFG_ICSDKPRODUCT) -s $(SYSCFG_MCUSDKPRODUCT) -d $(SYSCFG_DEVICE) -c m4fss0-0 --excludeTests="migrateToAnyTarget"
 endif
 ifeq ($(DEVICE),$(filter $(DEVICE), am263px))
-	-$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/tests/sanityTests.js -s $(SYSCFG_SDKPRODUCT) -d AM263P4 -c r5fss0-0 --excludeTests="migrateToAnyTarget"
+	-$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/tests/sanityTests.js -s $(SYSCFG_SDKPRODUCT) -s $(SYSCFG_ICSDKPRODUCT) -s $(SYSCFG_MCUSDKPRODUCT) -d AM263P4 -c r5fss0-0 --excludeTests="migrateToAnyTarget"
 else
-	-$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/tests/sanityTests.js -s $(SYSCFG_SDKPRODUCT) -d $(SYSCFG_DEVICE) -c r5fss0-0 --excludeTests="migrateToAnyTarget"
+	-$(SYSCFG_NODE) $(SYSCFG_CLI_PATH)/tests/sanityTests.js -s $(SYSCFG_SDKPRODUCT) -s $(SYSCFG_ICSDKPRODUCT) -s $(SYSCFG_MCUSDKPRODUCT) -d $(SYSCFG_DEVICE) -c r5fss0-0 --excludeTests="migrateToAnyTarget"
 endif
 
 .PHONY: projectspec-help docs docs-clean
