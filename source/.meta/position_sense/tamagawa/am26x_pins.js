@@ -52,11 +52,7 @@ function getInterfacePinList(inst)
     pinList.push({ pinName: Slice.toString()+"_GPIO10", displayName: "TAMAGAWA_CHANNEL1_RX", rx: true});
 
     pinList.push({ pinName: Slice.toString()+"_GPIO8", displayName: "TAMAGAWA_CHANNEL2_TX_ENABLE", rx: false});
-    /* PR0_PRU0_GPIO7 is not pinned out at the device level and therefore not supported for PRU0 */
-    if(Slice == "PR0_PRU1")
-    {
-      pinList.push({ pinName: Slice.toString()+"_GPIO7", displayName: "TAMAGAWA_CHANNEL2_TX", rx: false});
-    }
+    pinList.push({ pinName: Slice.toString()+"_GPIO7", displayName: "TAMAGAWA_CHANNEL2_TX", rx: false});
     pinList.push({ pinName: Slice.toString()+"_GPIO6", displayName: "TAMAGAWA_CHANNEL2_CLK", rx: false});
     pinList.push({ pinName: Slice.toString()+"_GPIO11", displayName: "TAMAGAWA_CHANNEL2_RX", rx: true});
 
