@@ -49,12 +49,7 @@ function getInterfacePinList(inst)
     pinList.push({ pinName: Slice.toString()+"_GPIO3", displayName: "BISSC_CHANNEL1_CLK", rx: false});
     pinList.push({ pinName: Slice.toString()+"_GPIO10", displayName: "BISSC_CHANNEL1_RX", rx: true});
 
-    
-    /* PR0_PRU0_GPIO7 is not pinned out at the device level and therefore not supported for PRU0 */
-    if(Slice == "PR0_PRU1")
-    {
-      pinList.push({ pinName: Slice.toString()+"_GPIO7", displayName: "BISSC_CHANNEL2_TX", rx: false});
-    }
+    pinList.push({ pinName: Slice.toString()+"_GPIO7", displayName: "BISSC_CHANNEL2_TX", rx: false});
     pinList.push({ pinName: Slice.toString()+"_GPIO6", displayName: "BISSC_CHANNEL2_CLK", rx: false});
     pinList.push({ pinName: Slice.toString()+"_GPIO11", displayName: "BISSC_CHANNEL2_RX", rx: true});
 
