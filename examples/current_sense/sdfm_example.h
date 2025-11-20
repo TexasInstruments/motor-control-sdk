@@ -221,7 +221,7 @@ typedef struct SdfmPrms_s
 
 
 /* Initialize ICSSG */
-int32_t initIcss(
+int32_t SDFM_pruIcssInit(
     uint8_t icssInstId,
     uint8_t sliceId,
     uint8_t saMuxMode,

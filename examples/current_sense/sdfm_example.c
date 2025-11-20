@@ -105,7 +105,7 @@ static PRUSDFM_PruFwImageInfo gPruFwImageInfo[PRU_SDFM_NUM_PRU_IMAGE] =
  *  ======== initIcss ========
  */
 /* Initialize ICSSG */
-int32_t initIcss(
+int32_t SDFM_pruIcssInit(
     uint8_t icssInstId,
     uint8_t sliceId,
     uint8_t saMuxMode,
