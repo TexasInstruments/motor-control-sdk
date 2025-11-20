@@ -41,10 +41,8 @@ TARGETS := $(BOOTIMAGE_NAME)
 
 FILES_common := \
 	app_sdfm.c \
-	epwm_dc.c \
-	epwm_drv_aux.c \
-	epwm_mod.c \
 	sdfm_example.c \
+	sdfm_epwm.c \
 	main.c \
 	ti_drivers_config.c \
 	ti_drivers_open_close.c \

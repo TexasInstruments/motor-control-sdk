@@ -39,80 +39,14 @@
 #include "ti_drivers_open_close.h"
 #include "ti_board_open_close.h"
 
-#include "epwm_dc.h"
+#include "sdfm_epwm.h"
 #include "sdfm_example.h"
-
-/*EPWM1 configuration for sigma delta clock generation: */
-#define APP_EPWM1_ENABLE  0 /*make sure EPWM1 is added in sysconfig before making true this macro */
-
-#if (CONFIG_SDFM0_EPWM_SYNC_EN == 1)
-/* Output channel - A or B */
-#define APP_EPWM_OUT_CH_EN              ( 0x1 ) /* ChA enabled */
-
-/* EPWM functional clock */
-/* Functional clock is the same for all EPWMs */
-#define APP_EPWM_FCLK                   ( CONFIG_EPWM0_FCLK )
-
-/* EPWM functional clock dividers */
-#define APP_EPWM_FCLK_HSPCLKDIV         ( 0x0 ) /* EPWM_TBCTL:HSPCLKDIV, High-Speed Time-base Clock Prescale Bits */
-#define APP_EPWM_FCLK_CLKDIV            ( 0x0 ) /* EPWM_TBCTL:CLKDIV, Time-base Clock Prescale Bits */
-
-#if (APP_EPWM_FCLK_HSPCLKDIV != 0x0)
-/* EPWM Time Base clock -- all EPWM TB clocks set the same */
-#define APP_EPWM_TB_FREQ               ( APP_EPWM_FCLK / ( 2*APP_EPWM_FCLK_HSPCLKDIV * (1 << APP_EPWM_FCLK_CLKDIV)))
-#else
-/* EPWM Time Base clock -- all EPWM TB clocks set the same */
-#define APP_EPWM_TB_FREQ               ( APP_EPWM_FCLK / ( 1 * (1 << APP_EPWM_FCLK_CLKDIV)))
-#endif
-
-/* Initial Duty Cycle of PWM output signal in %, 0 to 100 */
-#define APP_EPWM0_DUTY_CYCLE            ( 50U )
-
-#define APP_EPWM_OUTPUT_FREQ            ( CONFIG_SDFM0_IEP_RESET_FREQ ) /* init freq */
-
-/* PWM count direction (Up, Down, Up/Down) */
-#define APP_EPWM_TB_COUNTER_DIR         ( EPWM_TB_COUNTER_DIR_UP_DOWN )
-
-/* EPWM0 IRQ handler */
-void epwmIrqHandler(void *handle);
-
-static HwiP_Object gEpwm0HwiObject;         /* EPWM0 HWI */
-
-/* EPWM global variables */
-uint32_t gEpwm0BaseAddr;    /* EPWM0 base address */
-EPwmObj_t gEpwm0Obj;        /* EPWM0 object */
-Epwm_Handle hEpwm0;         /* EPWM0 handle */
-
-volatile uint32_t gEpwmOutFreq = APP_EPWM_OUTPUT_FREQ; /* EPWM output frequency */
-
-volatile uint32_t gEpwmIsrCnt=0;    /* EPWM0 IRQ count */
-EPwmCfgPrms_t epwmCfgPrms;
-
-#endif
 
 /* R5F interrupt settings for ICSSG */
 #define ICSSG_PRU_SDFM_INT_NUM          ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_1 )
 
 /* HWI global variables */
 static HwiP_Object gIcssgPruSdfmHwiObject;  /* ICSSG PRU SDFM FW HWI */
-
-#if APP_EPWM1_ENABLE
-#define APP_EPWM_OUTPUT_FREQ1            (1U*20000000 )
-
-/* EPWM1 IRQ handler */
-void epwmIrqHandler1(void *handle);
-
-static HwiP_Object gEpwm1HwiObject;         /* EPWM1 HWI */
-
-uint32_t gEpwm1BaseAddr;    /* EPWM1 base address */
-EPwmObj_t gEpwm1Obj;        /* EPWM1 object */
-Epwm_Handle hEpwm1;         /* EPWM1 handle */
-
-volatile uint32_t gEpwmOutFreq1 = APP_EPWM_OUTPUT_FREQ1; /*EPWM1 output freq. */
-
-EPwmCfgPrms_t epwm1CfgPrms;
-volatile uint32_t gEpwmIsrCnt1=0;
-#endif
 
 /* ICSSG PRU SDFM FW IRQ handler */
 void pruSdfmIrqHandler(void *handle);
@@ -149,97 +83,9 @@ uint32_t sdfmPruIdxCnt = 0;
 volatile uint32_t gPruSdfmIrqCnt=0; /* PRU ICSS SDFM FW IRQ count */
 
 HwiP_Params hwiPrms;
-HwiP_Params hwiPrms1;
 
 /*PWM Parameters*/
 
-#if (CONFIG_SDFM0_EPWM_SYNC_EN == 1)
-void init_pwm()
-{
-    int32_t status;
-    /* Initialize EPWM0 base address, perform address translation */
-    gEpwm0BaseAddr = (uint32_t)AddrTranslateP_getLocalAddr(CONFIG_EPWM0_BASE_ADDR);
-
-    /* Register & enable EPWM0 interrupt */
-    HwiP_Params_init(&hwiPrms);
-    hwiPrms.intNum      = CONFIG_EPWM0_INTR;
-    hwiPrms.callback    = &epwmIrqHandler;
-    hwiPrms.args        = 0;
-    hwiPrms.isPulse     = CONFIG_EPWM0_INTR_IS_PULSE;
-    hwiPrms.isFIQ       = FALSE;
-    status              = HwiP_construct(&gEpwm0HwiObject, &hwiPrms);
-    DebugP_assert(status == SystemP_SUCCESS);
-
-    /* Configure EPWM0 */
-    epwmCfgPrms.epwmId = EPWM_ID_0;
-    epwmCfgPrms.epwmBaseAddr = gEpwm0BaseAddr;
-    epwmCfgPrms.epwmOutChEn = APP_EPWM_OUT_CH_EN;
-    epwmCfgPrms.hspClkDiv = APP_EPWM_FCLK_HSPCLKDIV;
-    epwmCfgPrms.clkDiv = APP_EPWM_FCLK_CLKDIV;
-    epwmCfgPrms.epwmTbFreq = APP_EPWM_TB_FREQ;
-    epwmCfgPrms.epwmOutFreq = gEpwmOutFreq;
-    epwmCfgPrms.epwmDutyCycle[EPWM_OUTPUT_CH_A] = APP_EPWM0_DUTY_CYCLE;
-    epwmCfgPrms.epwmTbCounterDir = APP_EPWM_TB_COUNTER_DIR;
-    epwmCfgPrms.cfgTbSyncIn = TRUE;
-    epwmCfgPrms.tbPhsValue = 0;
-    epwmCfgPrms.tbSyncInCounterDir = EPWM_TB_COUNTER_DIR_UP;
-    epwmCfgPrms.cfgTbSyncOut = TRUE;
-    epwmCfgPrms.tbSyncOutMode = EPWM_TB_SYNC_OUT_EVT_CNT_EQ_ZERO;
-    epwmCfgPrms.aqCfg[EPWM_OUTPUT_CH_A].zeroAction = EPWM_AQ_ACTION_DONOTHING;
-    epwmCfgPrms.aqCfg[EPWM_OUTPUT_CH_A].prdAction = EPWM_AQ_ACTION_DONOTHING;
-    epwmCfgPrms.aqCfg[EPWM_OUTPUT_CH_A].cmpAUpAction = EPWM_AQ_ACTION_HIGH;
-    epwmCfgPrms.aqCfg[EPWM_OUTPUT_CH_A].cmpADownAction = EPWM_AQ_ACTION_LOW;
-    epwmCfgPrms.aqCfg[EPWM_OUTPUT_CH_A].cmpBUpAction = EPWM_AQ_ACTION_DONOTHING;
-    epwmCfgPrms.aqCfg[EPWM_OUTPUT_CH_A].cmpBDownAction = EPWM_AQ_ACTION_DONOTHING;
-    epwmCfgPrms.cfgDb = FALSE;
-    epwmCfgPrms.cfgEt = TRUE;
-    epwmCfgPrms.intSel = EPWM_ET_INTR_EVT_CNT_EQ_ZRO;
-    epwmCfgPrms.intPrd = EPWM_ET_INTR_PERIOD_FIRST_EVT;
-    hEpwm0 = epwmInit(&epwmCfgPrms, &gEpwm0Obj);
-    DebugP_assert(hEpwm0 != NULL);
-
-#if APP_EPWM1_ENABLE  // DEBUG code for SDFM clock generation from EPWM1
-    /* EPWM1 for SD clock generation */
-    /* Initialize EPWM1 base address, perform address translation */
-    gEpwm1BaseAddr = (uint32_t)AddrTranslateP_getLocalAddr(CONFIG_EPWM1_BASE_ADDR);
-    /* Register & enable EPWM0 interrupt */
-    HwiP_Params_init(&hwiPrms1);
-    hwiPrms1.intNum      = CONFIG_EPWM1_INTR;
-    hwiPrms1.callback    = &epwmIrqHandler1;
-    hwiPrms1.args        = 0;
-    hwiPrms1.isPulse     = CONFIG_EPWM1_INTR_IS_PULSE;
-    hwiPrms1.isFIQ       = FALSE;
-    status              = HwiP_construct(&gEpwm1HwiObject, &hwiPrms1);
-    DebugP_assert(status == SystemP_SUCCESS);
-    /* Configure EPWM0 */
-    epwm1CfgPrms.epwmId = EPWM_ID_1;
-    epwm1CfgPrms.epwmBaseAddr = gEpwm1BaseAddr;
-    epwm1CfgPrms.epwmOutChEn = APP_EPWM_OUT_CH_EN;
-    epwm1CfgPrms.hspClkDiv = APP_EPWM_FCLK_HSPCLKDIV;
-    epwm1CfgPrms.clkDiv = APP_EPWM_FCLK_CLKDIV;
-    epwm1CfgPrms.epwmTbFreq = APP_EPWM_TB_FREQ;
-    epwm1CfgPrms.epwmOutFreq = gEpwmOutFreq1;
-    epwm1CfgPrms.epwmDutyCycle[EPWM_OUTPUT_CH_A] = APP_EPWM0_DUTY_CYCLE;
-    epwm1CfgPrms.epwmTbCounterDir = APP_EPWM_TB_COUNTER_DIR;
-    epwm1CfgPrms.cfgTbSyncIn = FALSE;
-    epwm1CfgPrms.tbPhsValue = 0;
-    epwm1CfgPrms.cfgTbSyncOut = FALSE;
-    epwm1CfgPrms.tbSyncOutMode = EPWM_TB_SYNC_OUT_EVT_CNT_EQ_ZERO;
-    epwm1CfgPrms.aqCfg[EPWM_OUTPUT_CH_A].zeroAction = EPWM_AQ_ACTION_DONOTHING;
-    epwm1CfgPrms.aqCfg[EPWM_OUTPUT_CH_A].prdAction = EPWM_AQ_ACTION_DONOTHING;
-    epwm1CfgPrms.aqCfg[EPWM_OUTPUT_CH_A].cmpAUpAction = EPWM_AQ_ACTION_HIGH;
-    epwm1CfgPrms.aqCfg[EPWM_OUTPUT_CH_A].cmpADownAction = EPWM_AQ_ACTION_LOW;
-    epwm1CfgPrms.aqCfg[EPWM_OUTPUT_CH_A].cmpBUpAction = EPWM_AQ_ACTION_DONOTHING;
-    epwm1CfgPrms.aqCfg[EPWM_OUTPUT_CH_A].cmpBDownAction = EPWM_AQ_ACTION_DONOTHING;
-    epwm1CfgPrms.cfgDb = FALSE;
-    epwm1CfgPrms.cfgEt = FALSE;
-    epwm1CfgPrms.intSel = EPWM_ET_INTR_EVT_CNT_EQ_ZRO;
-    epwm1CfgPrms.intPrd = EPWM_ET_INTR_PERIOD_FIRST_EVT;
-    hEpwm1 = epwmInit(&epwm1CfgPrms, &gEpwm1Obj);
-    DebugP_assert(hEpwm1 != NULL);
-#endif 
-}
-#endif
 void init_sdfm()
 {
     int32_t status;
@@ -289,8 +135,8 @@ void init_sdfm()
     gPruIcssPwmHandle = PRUICSS_PWM_open(CONFIG_PRUICSS_PWM0, gPruIcssHandle);
     DebugP_assert(gPruIcssPwmHandle != NULL);
 
-    gSdfmParams.pruPwmHandle = gPruIcssPwmHandle;
-    gSdfmParams.pruIcssHandle = gPruIcssHandle;
+    gSdfmParams.pwm_handle = gPruIcssPwmHandle;
+    gSdfmParams.pruicss_handle = gPruIcssHandle;
 
     /*sample output base address for all channel*/
     gSdfmParams.samplesBaseAddress = (uint32_t)&gSdfm_sampleOutput;
@@ -305,7 +151,7 @@ void init_sdfm()
 }
 void sdfm_main(void *args)
 {
-
+    int32_t status;
     /* Open drivers to open the UART driver for console */
     Drivers_open();
     Board_driversOpen();
@@ -314,30 +160,29 @@ void sdfm_main(void *args)
 
     /* Output build time */
     DebugP_log("Build timestamp      : %s %s\r\n", __DATE__, __TIME__);
-#if (CONFIG_SDFM0_EPWM_SYNC_EN == 1)
+#if (CONFIG_SDFM0_EPWM_SYNC_EN == 1 || APP_EPWM1_ENABLE == 1)
     /*
      *  Configure EPWM0
      */
-    init_pwm();
+    status = SDFM_initEpwm();
+    if (status != SystemP_SUCCESS) {
+        DebugP_log("Error: SDFM_initEpwm() failed.\r\n");
+        return;
+    }
     DebugP_log("EPWM Configured!\r\n");
 #endif 
     /* Configure SDFM */
     init_sdfm();
     DebugP_log("SDFM Configured!\r\n");
-    
 
     while(gRunFlag == TRUE)
     {
         ;
     }
 
-#if (CONFIG_SDFM0_EPWM_SYNC_EN == 1)
-    /* Disable and clear interrupts for EPWM0 */
-    EPWM_etIntrDisable(gEpwm0BaseAddr); /* Disable interrupts */
-    EPWM_etIntrClear(gEpwm0BaseAddr);   /* Clear pending interrupts */
-
-    /* Destroy EPWM0 HWI */
-    HwiP_destruct(&gEpwm0HwiObject);
+#if (CONFIG_SDFM0_EPWM_SYNC_EN == 1 || APP_EPWM1_ENABLE == 1)
+    /* Disable and clear interrupts for EPWM */
+    SDFM_deinitEpwm();
 #endif
     /* Destroy PRU SDFM HWI */
     HwiP_destruct(&gIcssgPruSdfmHwiObject);
@@ -372,38 +217,3 @@ void pruSdfmIrqHandler(void *args)
     sdfmPruIdxCnt++;
 }
 
-#if (CONFIG_SDFM0_EPWM_SYNC_EN == 1)
-/* EPWM0 IRQ handler */
-void epwmIrqHandler(void *args)
-{
-    volatile uint16_t status;
-
-    /* debug, inncrement EPWM0 IRQ count */
-    gEpwmIsrCnt++;
-
-    status = EPWM_etIntrStatus(gEpwm0BaseAddr);
-    if(status & EPWM_ETFLG_INT_MASK) 
-    {
-        EPWM_etIntrClear(gEpwm0BaseAddr);
-    }
-    return;
-}
-#endif
-
-#if APP_EPWM1_ENABLE //DEBUG code for EPWM1
-/* EPWM0 IRQ handler */
-void epwmIrqHandler1(void *args)
-{
-    volatile uint16_t status;
-
-    /* debug, inncrement EPWM0 IRQ count */
-    gEpwmIsrCnt1++;
-
-    status = EPWM_etIntrStatus(gEpwm1BaseAddr);
-    if (status & EPWM_ETFLG_INT_MASK) 
-    {
-        EPWM_etIntrClear(gEpwm0BaseAddr);
-    }
-    return;
-}
-#endif
