@@ -294,9 +294,9 @@ int32_t endat3_pruicss_load_run_fw()
     int32_t status = SystemP_SUCCESS;
     uint32_t size;
 
-#if(CONFIG_0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU) /*enable loadshare mode*/
+#if (CONFIG_0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU) /*enable loadshare mode*/
 
-#if(CONFIG_ENDAT0_CHANNEL0)
+#if (CONFIG_ENDAT0_CHANNEL0)
     status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_RTU_PRUx);
     DebugP_assert(SystemP_SUCCESS == status);
 
@@ -312,8 +312,8 @@ int32_t endat3_pruicss_load_run_fw()
     DebugP_assert(SystemP_SUCCESS == status);
 #endif
 
-#if(CONFIG_ENDAT0_CHANNEL1)
-    status=PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_PRUx );
+#if (CONFIG_ENDAT0_CHANNEL1)
+    status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_PRUx);
     DebugP_assert(SystemP_SUCCESS == status);
 
     size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_PRUx),
@@ -328,7 +328,7 @@ int32_t endat3_pruicss_load_run_fw()
     DebugP_assert(SystemP_SUCCESS == status);
 #endif
 
-#if(CONFIG_ENDAT0_CHANNEL2)
+#if (CONFIG_ENDAT0_CHANNEL2)
     status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_TX_PRUx);
     DebugP_assert(SystemP_SUCCESS == status);
 
@@ -364,7 +364,7 @@ void endat3_continuous_position_fetch(endat3_Handle handle)
     uint8_t first_print = 1;
 
     /* Create task to monitor stop condition */
-    if(endat3_loop_task_create() != SystemP_SUCCESS)
+    if (endat3_loop_task_create() != SystemP_SUCCESS)
     {
         DebugP_log("\r\n ERROR: Task creation failed\r\n");
         return;
@@ -376,10 +376,10 @@ void endat3_continuous_position_fetch(endat3_Handle handle)
     DebugP_log("\r\n Press Enter to stop continuous mode\r\n");
     DebugP_log("\r\n Position: 0x00000000, Angle: 0.000000 degrees");
 
-    while(1)
+    while (1)
     {
         /* Check if user requested to stop */
-        if(endat3_position_loop_status == ENDAT3_POSITION_LOOP_STOP)
+        if (endat3_position_loop_status == ENDAT3_POSITION_LOOP_STOP)
         {
             DebugP_log("\r\n Continuous mode stopped, returning to menu\r\n");
             return;
@@ -393,13 +393,13 @@ void endat3_continuous_position_fetch(endat3_Handle handle)
 
         /* Set busy flag and wait for transmission to complete */
         endat3_setBusy(handle, ENCODER_BUSY);
-        while(endat3_isBusy(handle));
+        while (endat3_isBusy(handle));
 
         /* Receive response from encoder */
         status = endat3_receive_response(handle);
 
         /* Process response if successful */
-        if(status == 1)
+        if (status == 1)
         {
             /* Use API to get RX buffer */
             const uint8_t* rx_buffer = endat3_getRxBuffer(handle);
@@ -449,7 +449,7 @@ static void endat3_position_loop_decide_termination(void *args)
 {
     char c;
 
-    while(1)
+    while (1)
     {
         DebugP_scanf("%c", &c);
         endat3_position_loop_status = ENDAT3_POSITION_LOOP_STOP;
@@ -476,7 +476,7 @@ static int32_t endat3_loop_task_create(void)
     taskParams.taskMain = (TaskP_FxnMain)endat3_position_loop_decide_termination;
     status = TaskP_construct(&gTaskObject, &taskParams);
 
-    if(status != SystemP_SUCCESS)
+    if (status != SystemP_SUCCESS)
     {
         DebugP_log("\r\nTask creation failed\n");
     }
@@ -497,20 +497,20 @@ static void endat3_process_periodic_command(void)
 
     /* Get IEP timer configuration from user */
     DebugP_log("\r\n| Enter IEP reset cycle count (must be greater than EnDat3 cycle time including timeout period, in IEP cycles): ");
-    if(DebugP_scanf("%u", &cmp0_val) < 0)
+    if (DebugP_scanf("%u", &cmp0_val) < 0)
     {
         DebugP_log("\r\n| ERROR: invalid value\n|\n|\n|\n");
         return;
     }
     DebugP_log("\r\n| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles): ");
-    if(DebugP_scanf("%u", &cmp3_val) < 0)
+    if (DebugP_scanf("%u", &cmp3_val) < 0)
     {
         DebugP_log("\r\n| ERROR: invalid value\n|\n|\n|\n");
         return;
     }
 
     /* Validate CMP3 <= CMP0 */
-    if(cmp3_val > cmp0_val)
+    if (cmp3_val > cmp0_val)
     {
         DebugP_log("\r\n| ERROR: Trigger time (CMP3=%u) must be <= Reset cycle (CMP0=%u)\r\n", cmp3_val, cmp0_val);
         DebugP_log("\r\n| Please enter valid values where CMP3 <= CMP0\r\n|\r\n|\n");
@@ -518,12 +518,12 @@ static void endat3_process_periodic_command(void)
     }
 
     /* Validate CMP0 is reasonable (not too small) */
-    if(cmp0_val < 100000)
+    if (cmp0_val < 100000)
     {
         DebugP_log("\r\n| WARNING: CMP0 value (%u) is very small. Minimum recommended: 100000 IEP cycles\r\n", cmp0_val);
         DebugP_log("\r\n| Continue anyway? (y/n): ");
         char response;
-        if(DebugP_scanf("%c", &response) < 0 || (response != 'y' && response != 'Y'))
+        if (DebugP_scanf("%c", &response) < 0 || (response != 'y' && response != 'Y'))
         {
             DebugP_log("\r\n| Operation cancelled\r\n|\r\n|\n");
             return;
@@ -531,7 +531,7 @@ static void endat3_process_periodic_command(void)
     }
 
     /* Create task to monitor stop condition */
-    if(endat3_loop_task_create() != SystemP_SUCCESS)
+    if (endat3_loop_task_create() != SystemP_SUCCESS)
     {
         DebugP_log("\r\n| ERROR: OS not allowing continuous mode as related Task creation failed\r\n|\r\n|\n");
         DebugP_log("Task_create() failed!\n");
@@ -549,7 +549,7 @@ static void endat3_process_periodic_command(void)
 
     /* Configure and start periodic mode */
     status = endat3_config_periodic_mode(&endat3_periodic_interface, gPruIcssXHandle);
-    if(status != 1)
+    if (status != 1)
     {
         DebugP_log("\r\n| ERROR: Failed to configure periodic mode\r\n|\r\n|\n");
         return;
@@ -563,7 +563,7 @@ static void endat3_process_periodic_command(void)
     /* Set firmware to periodic trigger mode (opmode = 0) */
     DebugP_log("\r\n| Setting firmware to periodic trigger mode...");
     int32_t opmode_result = endat3_setOperatingMode(gEndat3HandleCh[0], 0);  /* 0 = periodic mode */
-    if(opmode_result != SystemP_SUCCESS)
+    if (opmode_result != SystemP_SUCCESS)
     {
         DebugP_log("\r\n| ERROR: Failed to set operating mode to periodic\r\n|\r\n|\n");
         return;
@@ -592,10 +592,10 @@ static void endat3_process_periodic_command(void)
 
     /* Main periodic loop - continuously display position data */
     int32_t line_length = DISPLAY_LINE_LENGTH;
-    
-    while(1)
+
+    while (1)
     {
-        if(endat3_position_loop_status == ENDAT3_POSITION_LOOP_STOP)
+        if (endat3_position_loop_status == ENDAT3_POSITION_LOOP_STOP)
         {
             /* Stop periodic mode and restore host trigger */
             DebugP_log("\r\n| Stopping periodic mode...");
@@ -617,14 +617,14 @@ static void endat3_process_periodic_command(void)
         else
         {
             /* In periodic mode, continuously try to receive data */
-            while(endat3_isBusy(gEndat3HandleCh[0]));
+            while (endat3_isBusy(gEndat3HandleCh[0]));
             status = endat3_receive_response(gEndat3HandleCh[0]);
 
             /* Process response if successful */
-            if(status == 1)
+            if (status == 1)
             {
                 /* Display position info if valid */
-                if(endat3_isHpfDataValid(gEndat3HandleCh[0]))
+                if (endat3_isHpfDataValid(gEndat3HandleCh[0]))
                 {
                     /* Extract position data */
                     const uint8_t* rx_buffer = endat3_getRxBuffer(gEndat3HandleCh[0]);
@@ -685,13 +685,13 @@ void endat3_diagnostic_main(void *args)
 
     /* Initialize PRUICSS */
     /*C16 pin High for Enabling ch0 in booster pack */
-#if(CONFIG_ENDAT0_BOOSTER_PACK && CONFIG_ENDAT0_CHANNEL0)
+#if (CONFIG_ENDAT0_BOOSTER_PACK && CONFIG_ENDAT0_CHANNEL0)
     GPIO_setDirMode(ENC0_EN_BASE_ADDR, ENC0_EN_PIN, ENC0_EN_DIR);
     GPIO_pinWriteHigh(ENC0_EN_BASE_ADDR, ENC0_EN_PIN);
 #endif
 
     /*B17 pin High for Enabling ch2 in booster pack */
-#if(CONFIG_ENDAT0_BOOSTER_PACK && CONFIG_ENDAT0_CHANNEL2)
+#if (CONFIG_ENDAT0_BOOSTER_PACK && CONFIG_ENDAT0_CHANNEL2)
     GPIO_setDirMode(ENC2_EN_BASE_ADDR, ENC2_EN_PIN, ENC2_EN_DIR);
     GPIO_pinWriteHigh(ENC2_EN_BASE_ADDR, ENC2_EN_PIN);
 #endif
@@ -725,7 +725,7 @@ void endat3_diagnostic_main(void *args)
     endat3_setDelayCycles(gEndat3HandleCh[0], CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ);
     i = endat3_pruicss_load_run_fw();
 
-    if(i < 0)
+    if (i < 0)
     {
         DebugP_log("\r\nERROR: Endat3 initialization failed \n");
         DebugP_log("\r\ncheck whether encoder of selected frequency is connected and ensure proper connections\n");
@@ -752,7 +752,7 @@ void endat3_diagnostic_main(void *args)
 
     ClockP_usleep(DELAY_1_SECOND);
 
-    while(1)
+    while (1)
     {
         DebugP_log("\r\n ========================================");
         DebugP_log("\r\n Select command type:");
@@ -763,20 +763,20 @@ void endat3_diagnostic_main(void *args)
         DebugP_log("\r\n ========================================");
         DebugP_scanf("%d", &cmd_type);
 
-        if(cmd_type==ENDAT3_CMD_TYPE_PERIODIC)
+        if (cmd_type == ENDAT3_CMD_TYPE_PERIODIC)
         {
             /* Process periodic trigger mode with dedicated function */
             endat3_process_periodic_command();
         }
         else
         {
-            if(cmd_type==ENDAT3_CMD_TYPE_CONTINUOUS)
+            if (cmd_type == ENDAT3_CMD_TYPE_CONTINUOUS)
             {
                 /* Continuous position fetch mode */
                 DebugP_log("\r\n Starting continuous position fetch mode...");
                 endat3_continuous_position_fetch(gEndat3HandleCh[0]);
             }
-            else if(cmd_type==ENDAT3_CMD_TYPE_FOREGROUND)
+            else if (cmd_type == ENDAT3_CMD_TYPE_FOREGROUND)
             {
                 DebugP_log("\r\n Select command for endat3 foreground communication:");
                 DebugP_log("\r\n 1: DATA0 (Activate LPF send list 0)");
@@ -798,7 +798,7 @@ void endat3_diagnostic_main(void *args)
                 DebugP_scanf("%d", &menu_option);
 
                 /* Map menu option to actual command code */
-                switch(menu_option)
+                switch (menu_option)
                 {
                     case ENDAT3_MENU_DATA0:
                         cmd = endat3_REQ_DATA0;
@@ -939,7 +939,7 @@ void endat3_diagnostic_main(void *args)
 
                 DebugP_scanf("%d", &op_code);
 
-                switch(op_code)
+                switch (op_code)
                 {
                     case 1: /* NOP */
                         op_code = endat3_BGREQ_NOP;
@@ -992,11 +992,13 @@ void endat3_diagnostic_main(void *args)
                         DebugP_log("\r\n (Other values will be rejected with an error)");
                         DebugP_scanf("%d", &mode_input);
 
-                        if(mode_input < 1 || mode_input > 3)
+                        if (mode_input < 1 || mode_input > 3)
                         {
                             DebugP_log("\r\n Invalid mode value. Defaulting to QUERY (1)");
                             mode = 1;
-                        } else {
+                        }
+                        else
+                        {
                             mode = (uint8_t)mode_input;
                         }
 
@@ -1008,11 +1010,13 @@ void endat3_diagnostic_main(void *args)
                         DebugP_log("\r\n 3: MANUFACTURER - For encoder manufacturer access only");
                         DebugP_scanf("%d", &acclevel_input);
 
-                        if(acclevel_input < 0 || acclevel_input > 3)
+                        if (acclevel_input < 0 || acclevel_input > 3)
                         {
                             DebugP_log("\r\n Invalid access level. Defaulting to USER (0)");
                             acclevel = 0;
-                        } else {
+                        }
+                        else
+                        {
                             acclevel = (uint8_t)acclevel_input;
                         }
 
@@ -1046,7 +1050,7 @@ void endat3_diagnostic_main(void *args)
                 /* Use API to get LPH status and state */
                 LPH_Status_t lph_state = endat3_getLphState(gEndat3HandleCh[0]);
 
-                switch(lph_state)
+                switch (lph_state)
                 {
                     case LPH_STATUS_IDLE: /* 0 */
                         /* Cycle stage: 1->2->3->0 */
@@ -1080,18 +1084,21 @@ void endat3_diagnostic_main(void *args)
             uint32_t expected_frames = endat3_getExpectedTxFrameCount(gEndat3HandleCh[0]);
             endat3_send_command(gEndat3HandleCh[0], cmd, expected_frames);
             endat3_setBusy(gEndat3HandleCh[0],ENCODER_BUSY);
-            while(endat3_isBusy(gEndat3HandleCh[0]));
-            status=endat3_receive_response(gEndat3HandleCh[0]);
+            while (endat3_isBusy(gEndat3HandleCh[0]));
+            status = endat3_receive_response(gEndat3HandleCh[0]);
 
-            if(status ==-1) DebugP_log("\r\n Sampling ERROR");
+            if (status == -1)
+            {
+                DebugP_log("\r\n Sampling ERROR");
+            }
 
-            if(status == 1) /* Successful response */
+            if (status == 1) /* Successful response */
             {
                 /* Check for errors */
                 endat3_display_error_status(gEndat3HandleCh[0]);
 
                 /* Display information based on the specific command */
-                switch(cmd)
+                switch (cmd)
                 {
                     case endat3_REQ_DATA0:
                     case endat3_REQ_DATA1:
@@ -1144,7 +1151,9 @@ void endat3_diagnostic_main(void *args)
                         if (endat3_isHpfDataValid(gEndat3HandleCh[0]))
                         {
                             DebugP_log("\r\n - Successfully switched to EnDat3 mode, now all commands can be executed");
-                        } else {
+                        }
+                        else
+                        {
                             DebugP_log("\r\n - Switch to EnDat3 mode in progress");
                             DebugP_log("\r\n (May take up to 300ms to complete)");
                         }
@@ -1157,7 +1166,9 @@ void endat3_diagnostic_main(void *args)
                         {
                             DebugP_log("\r\n - Hard Reset initiated (0xBBBB)");
                             DebugP_log("\r\n - Expect device to restart (up to 300ms)");
-                        } else {
+                        }
+                        else
+                        {
                             DebugP_log("\r\n - Custom Reset Type: 0x%04X", reset_type);
                         }
                         ClockP_usleep(DELAY_302_MILLISEC);
@@ -1186,10 +1197,13 @@ void endat3_diagnostic_main(void *args)
                         if (rate_type == ENDAT3_RATE_12_5MBPS)
                         {
                             DebugP_log("\r\n - Switching to 12.5 Mbps requested");
-                        } else if (rate_type == ENDAT3_RATE_25MBPS)
+                        }
+                        else if (rate_type == ENDAT3_RATE_25MBPS)
                         {
                             DebugP_log("\r\n - Switching to 25 Mbps requested");
-                        } else {
+                        }
+                        else
+                        {
                             DebugP_log("\r\n - Custom rate type: 0x%04X", rate_type);
                         }
                         DebugP_log("\r\n - Note: Rate switching occurs after 2ms of no communication");
@@ -1224,7 +1238,9 @@ void endat3_diagnostic_main(void *args)
                         if (businit_type == ENDAT3_BUSINIT_RESET_ADDR)
                         {
                             DebugP_log("\r\n - Bus address reset to 0x00 (0x8282)");
-                        } else {
+                        }
+                        else
+                        {
                             DebugP_log("\r\n - Custom BUSINIT type: 0x%04X", businit_type);
                         }
                         break;
@@ -1240,17 +1256,20 @@ void endat3_diagnostic_main(void *args)
                 }
 
                 /* Use API to get LPH status */
-                if ((cmd_type==1) && (endat3_getLphStatus(gEndat3HandleCh[0])!=0))
+                if ((cmd_type == 1) && (endat3_getLphStatus(gEndat3HandleCh[0]) != 0))
                 {
                     DebugP_log("\r\n LPH STATUS ERROR");
                 }
             }
-            else {
+            else
+            {
                 DebugP_log("\r\n status=%d, Error during communication", status);
                 if (status == -1)
                 {
                     DebugP_log("\r\n Sampling ERROR");
-                } else {
+                }
+                else
+                {
                     DebugP_log("\r\n CRC ERROR");
                 }
             }

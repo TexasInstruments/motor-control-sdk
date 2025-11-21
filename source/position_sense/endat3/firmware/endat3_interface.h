@@ -41,7 +41,6 @@
 ; Communication Buffers
 ENDAT3_INTERFACE_LUT_OFFSET                     .set    0x0000
 ENDAT3_INTERFACE_RX_BUFFER_OFFSET               .set    0x0140
-DECODED_DATA_OFFSET                             .set    0x0140
 
 ; High Priority Frame (HPF)
 ENDAT3_INTERFACE_HPF_OFFSET                     .set    0x0180
@@ -71,26 +70,21 @@ ENDAT3_INTERFACE_LPF7_OFFSET                    .set    0x01C4
 ; Status Flags
 ENDAT3_INTERFACE_CONNECTED_OFFSET               .set    0x01CC
 ENDAT3_INTERFACE_BUSY_OFFSET                    .set    0x01CD
-HOST_TRIGGER_STATUS_FLAG                        .set    0x01CD
 ENDAT3_INTERFACE_COMM_CYCLE_FLAG_OFFSET         .set    0x01CE
 ENDAT3_INTERFACE_RESERVED1_OFFSET               .set    0x01CF
 
 ; Frame Control
 ENDAT3_INTERFACE_EXPECTED_TX_FRAMES_OFFSET      .set    0x01D0
-TX_FRAMES_EXPECTED_OFFSET                       .set    0x01D0
 ENDAT3_INTERFACE_CURRENT_TX_FRAME_OFFSET        .set    0x01D4
 
 ; Data Buffers
 ENDAT3_INTERFACE_TX_BUFFER_OFFSET               .set    0x01D8
-DMEM_BASE_TX_BUFFER_OFFSET                      .set    0x01D8
 ENDAT3_INTERFACE_BG_DATA_OFFSET                 .set    0x01F0
 
 ; Timing and Operation Codes
 ENDAT3_INTERFACE_PROPAGATION_TIME_OFFSET        .set    0x0208
 ENDAT3_INTERFACE_FOREGROUND_OP_CODE_OFFSET      .set    0x020C
-TX_FRAME_ID_OFFSET                              .set    0x020C
 ENDAT3_INTERFACE_BACKGROUND_OP_CODE_OFFSET      .set    0x0210
-BG_OPCODE_OFFSET                                .set    0x0210
 
 ; Periodic Trigger Configuration (NEW)
 ENDAT3_OPMODE_CONFIG_OFFSET                     .set    0x0214
@@ -110,7 +104,6 @@ ENDAT3_DELAY_10MS_OFFSET                        .set    0x0228
 
 ; Trigger Control (unified for host and periodic modes)
 ENDAT3_INTERFACE_START_TRIGGER_OFFSET            .set    0x022C
-START_TRIGGER_OFFSET                            .set    0x022C
 
 ; Total Size
 ENDAT3_INTERFACE_TOTAL_SIZE                     .set    0x022D

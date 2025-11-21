@@ -38,82 +38,77 @@
 ;******************************************************************************
 ; Register Aliases
 ;******************************************************************************
-; General-purpose registers
-	.asg r0, TEMP0
-	.asg r1, TEMP1
-	.asg r2, TEMP2
-	.asg r3, TEMP3
-	.asg r4, TEMP4
-    .asg r0, TX_DATA_REG0
-	.asg r1, TX_DATA_REG1
-	.asg r2, TX_DATA_REG2
-	.asg r3, TX_DATA_REG3
-	.asg r4, TX_DATA_REG4
-	.asg r5, DMEM_OFFSET
-	.asg r15, ADD_DELAY
-	.asg r22, TEMP_REG1
+; NOTE: Each register now has a single, clear purpose
+;       Overlapping aliases have been reassigned to unused registers
 
-; Protocol handling registers
-	.asg r1, RX_BUFFER_OFFSET
-	.asg r2.b0, first_data_half_bit
-	.asg r2.b1, long_short_status  ;1=long, 0=short;
-	.asg r3.b0, long_symbol_count
-	.asg r29.b0, TX_FRAMES_LEFT
-	.asg r29.b1, CURR_TX_FRAME_MEM_OFFSET
-
-; Error handling registers
-	.asg r24.b0, ERROR_MASK_REG
-	.asg r24.b1, ERROR_STATUS_REG
-
-; Lookup table registers
-	.asg r8, PREAMBLE_START_REG
-	.asg r9, PREAMBLE_BASE
-	.asg r10, DEC_OFFSET_REG
-	.asg r12, OFFLOAD_REG
-	.asg r14, DECODED_DATA_REG
-
-; Manchester encoding registers
-    .asg r27, BYTE_REV_RESULT
-    .asg r28, BYTE_REV_INPUT
-    .asg r8, ENCODE_INPUT_REG
-    .asg r10, ENCODE_OUTPUT_REG
-    .asg r3, ENCODED_DATA_HIGH
-    .asg r4, ENCODED_DATA_LOW
-
-; Data processing registers
-    .asg r17, SAMPLE_OFFSET_COUNTER
-    .asg r21.b0, LUT_SAMPLE_REG
-    .asg r21.b2, TEMP_REG
-    .asg r23, BIT_CAPTURE_REG
-    .asg r27.b0, OVS_DATA_REG
+	.asg	r0,             TEMP0                           ; r0: General purpose
+	.asg	r1,             TEMP1                           ; r1: General purpose
+	.asg	r2,             TEMP2                           ; r2: General purpose
+	.asg	r3,             TEMP3                           ; r3: General purpose
+	.asg	r4,             TEMP4                           ; r4: General purpose
+	.asg	r5,             DMEM_OFFSET                     ; r5: Data memory offset
+	.asg	r6,             RX_BUFFER_OFFSET                ; r6: RX buffer offset
+	.asg	r7.b0,          LONG_SYMBOL_COUNT               ; r7: Long symbol count and protocol state
+	.asg	r7.b1,          FIRST_DATA_HALF_BIT
+	.asg	r7.b2,          LONG_SHORT_STATUS
+	.asg	r8,             PREAMBLE_START_REG              ; r8: Preamble start register
+	.asg	r9,             PREAMBLE_BASE                   ; r9: Preamble base
+	.asg	r10,            DEC_OFFSET_REG                  ; r10: Decode offset register
+	.asg	r11,            ENCODED_DATA_LOW                ; r11: Encoded data low
+	.asg	r12,            OFFLOAD_REG                     ; r12: Offload register
+	.asg	r13,            ENCODE_INPUT_REG                ; r13: Encode input register
+	.asg	r14,            DECODED_DATA_REG                ; r14: Decoded data register
+	.asg	r15,            ADD_DELAY                       ; r15: Additional delay
+	.asg	r16,            ENCODE_OUTPUT_REG               ; r16: Encode output register
+	.asg	r17,            SAMPLE_OFFSET_COUNTER           ; r17: Sample offset counter
+	.asg	r18.b0,         OVS_DATA_REG                    ; r18: Oversampling data register
+	.asg	r19,            ENCODED_DATA_HIGH               ; r19: Encoded data high
+	.asg	r21.b0,         LUT_SAMPLE_REG                  ; r21: LUT sample and temp
+	.asg	r21.b2,         TEMP_REG
+	.asg	r22,            TEMP_REG1                       ; r22: Temporary register 1
+	.asg	r23,            BIT_CAPTURE_REG                 ; r23: Bit capture register
+	.asg	r24.b0,         ERROR_MASK_REG                  ; r24: Error handling
+	.asg	r24.b1,         ERROR_STATUS_REG
+	.asg	r27,            BYTE_REV_RESULT                 ; r27: Byte reverse result
+	.asg	r28,            BYTE_REV_INPUT                  ; r28: Byte reverse input
+	.asg	r29.b0,         TX_FRAMES_LEFT                  ; r29: TX frame control
+	.asg	r29.b1,         CURR_TX_FRAME_MEM_OFFSET
 
 ;******************************************************************************
 ; Shared DRAM Memory Offsets (Absolute Addresses)
 ;******************************************************************************
-PREAMBLE_START .set                     0x10000
-PREAMBLE_DEC .set                       0x10020
-ENDAT3_DEC_OFFS .set                    0x1208C
-OFFLOAD_DATA_OFFS .set                  0x1508C
+PREAMBLE_START                  .set    0x10000
+PREAMBLE_DEC                    .set    0x10020
+ENDAT3_DEC_OFFS                 .set    0x1208C
+OFFLOAD_DATA_OFFS               .set    0x1508C
 
 ;******************************************************************************
 ; Command and Status Constants
 ;******************************************************************************
-WRITE_BG_OPCODE .set 0x3
-RESET_CMD .set 0xB
-SAMPLING_ERROR_FLAG .set 0x2
+WRITE_BG_OPCODE                 .set    0x3
+RESET_CMD                       .set    0xB
+SAMPLING_ERROR_FLAG             .set    0x2
 
 ;******************************************************************************
 ; Protocol Constants
 ;******************************************************************************
-FIXED_TX_PREAMBLE .set 0x1999B29
-FIXED_HELLO_CMD_DATA .set 0x22222269
-RX_FIXED_PREAMBLE_HIGH .set 0x2
-RX_FIXED_PREAMBLE_LOW .set 0xC9
-ERROR_MASK .set 0x80
-POSTAMBLE_PATTERN .set 0xFD
-MIN_LONG_SYMB_COUNT .set 7
-SAMPLING_DELAY_COUNT .set 37
-ENDAT3_TX_START_DELAY_1 .set 0xffff
-ENDAT3_TX_START_DELAY_2 .set 0x80000
-ENDAT3_TX_START_DELAY_3 .set 0x20100
-DELAY_10MS  .set 0x300000 ;TODO: Will work for 300MHz correctly, change this logic for to support all PRU frequency
+FIXED_TX_PREAMBLE               .set    0x1999B29
+FIXED_HELLO_CMD_DATA            .set    0x22222269
+RX_FIXED_PREAMBLE_HIGH          .set    0x2
+RX_FIXED_PREAMBLE_LOW           .set    0xC9
+ERROR_MASK                      .set    0x80
+POSTAMBLE_PATTERN               .set    0xFD
+MIN_LONG_SYMB_COUNT             .set    7
+;******************************************************************************
+; Periodic Trigger Configuration Constants
+;******************************************************************************
+IEP_CMP3_EVENT_FLAG             .set    3       ; Bit 3 for CMP3 event
+IEP_CMP0_EVENT_FLAG             .set    0       ; Bit 0 for CMP0 event
+PRU_TRIGGER_HOST_ENDAT3_EVT0    .set    18      ; (2+16) - Interrupt event
+; Note: IEP register offsets are defined in icss_iep_regs.inc:
+; ICSS_IEP_CMP_STATUS_REG = 0x0074
+; ICSS_IEP_CMP_CFG_REG = 0x0070
+; ICSS_IEP_CMP0_REG = 0x0078
+; ICSS_IEP_CMP3_REG = 0x0090
+
+;******************************************************************************

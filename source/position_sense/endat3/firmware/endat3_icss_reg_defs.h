@@ -38,60 +38,61 @@
     .include "../../../../mcu_plus_sdk/source/pru_io/firmware/common/icss_regs.inc"
     .include "../../../../mcu_plus_sdk/source/pru_io/firmware/common/icss_cfg_regs.inc"
     .include "../../../../mcu_plus_sdk/source/pru_io/firmware/common/icss_constant_defines.inc"
+    .include "../../../../mcu_plus_sdk/source/pru_io/firmware/common/icss_xfer_defines.inc"
 ;******************************************************************************
 ; Channel-specific Bit Flags
 ;******************************************************************************
 ; R31 flags for RX
     .if $defined(ENABLE_MULTI_MAKE_TXPRU)
-RX_OVERFLOW_FLAG              .set                     29
-RX_VALID_FLAG               .set                     26
+RX_OVERFLOW_FLAG                .set                    29
+RX_VALID_FLAG                   .set                    26
     .endif
     .if $defined(ENABLE_MULTI_MAKE_PRU)
-RX_OVERFLOW_FLAG              .set                     28
-RX_VALID_FLAG               .set                     25
+RX_OVERFLOW_FLAG                .set                    28
+RX_VALID_FLAG                   .set                    25
     .endif
     .if $defined(ENABLE_MULTI_MAKE_RTU)
-RX_OVERFLOW_FLAG              .set                     27
-RX_VALID_FLAG               .set                     24
+RX_OVERFLOW_FLAG                .set                    27
+RX_VALID_FLAG                   .set                    24
     .endif
 
 ; R30 flags for RX
     .if $defined(ENABLE_MULTI_MAKE_TXPRU)
-RX_ENABLE                     .set                     26
+RX_ENABLE                       .set                    26
     .endif
     .if $defined(ENABLE_MULTI_MAKE_PRU)
-RX_ENABLE                     .set                     25
+RX_ENABLE                       .set                    25
     .endif
     .if $defined(ENABLE_MULTI_MAKE_RTU)
-RX_ENABLE                     .set                     24
+RX_ENABLE                       .set                    24
     .endif
 
 ; Global TX flags
-TX_GLOBAL_TX_GO             .set                     20
-TX_GLOBAL_REINIT            .set                     19
-TX_CHANNEL_GO               .set                     18
+TX_GLOBAL_TX_GO                 .set                    20
+TX_GLOBAL_REINIT                .set                    19
+TX_CHANNEL_GO                   .set                    18
 
 ; Channel-specific TX flags
     .if $defined(ENABLE_MULTI_MAKE_TXPRU)
-TX_GLOBAL_REINIT_ACTIVE     .set                     21
-TX_UNDERRUN                 .set                     17
-TX_OVERRUN                  .set                     16
+TX_GLOBAL_REINIT_ACTIVE         .set                    21
+TX_UNDERRUN                     .set                    17
+TX_OVERRUN                      .set                    16
     .endif
     .if $defined(ENABLE_MULTI_MAKE_PRU)
-TX_GLOBAL_REINIT_ACTIVE     .set                     13
-TX_UNDERRUN                 .set                      9
-TX_OVERRUN                  .set                      8
+TX_GLOBAL_REINIT_ACTIVE         .set                    13
+TX_UNDERRUN                     .set                     9
+TX_OVERRUN                      .set                     8
     .endif
     .if $defined(ENABLE_MULTI_MAKE_RTU)
-TX_GLOBAL_REINIT_ACTIVE     .set                      5
-TX_UNDERRUN                 .set                      1
-TX_OVERRUN                  .set                      0
+TX_GLOBAL_REINIT_ACTIVE         .set                     5
+TX_UNDERRUN                     .set                     1
+TX_OVERRUN                      .set                     0
     .endif
 
 ; Channel selection bits
     .if $defined(ENABLE_MULTI_MAKE_TXPRU)
-CHANNEL_NUM                 .set                     1
+CHANNEL_NUM                     .set                     1
     .endif
     .if $defined(ENABLE_MULTI_MAKE_PRU)
-CHANNEL_NUM                 .set                     0
+CHANNEL_NUM                     .set                     0
     .endif

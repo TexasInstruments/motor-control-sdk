@@ -131,7 +131,7 @@ static void endat3_config_iep(struct endat3_periodic_interface *endat3_periodic_
     HW_WR_REG32((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG1, 0);
 
     /* Configure compare registers based on load share mode */
-    if(endat3_periodic_interface->load_share)
+    if (endat3_periodic_interface->load_share)
     {
         /* Load share mode: configure CMP3, CMP5, CMP6 for different channels */
         
@@ -203,7 +203,7 @@ static void endat3_interrupt_config(struct endat3_periodic_interface *endat3_per
     int32_t status;
     HwiP_Params hwiPrms;
 
-    if(endat3_periodic_interface->load_share)
+    if (endat3_periodic_interface->load_share)
     {
         /* Load share mode: register handlers for all three channels */
         

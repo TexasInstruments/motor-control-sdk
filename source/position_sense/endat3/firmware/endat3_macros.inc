@@ -75,9 +75,9 @@
 ;------------------------------------------------------------------------------
 REVERSE_BYTE .macro data
 	mov    BYTE_REV_INPUT, data         ; Copy input data to transfer register
-    xout   1,&BYTE_REV_INPUT,4          ; Send to hardware bit reversal unit
-    xin    1,&BYTE_REV_RESULT,4         ; Receive the reversed result
-    mov 	data,BYTE_REV_RESULT        ; Store result back to input register
+    xout   CRC_XID,&BYTE_REV_INPUT,4          ; Send to hardware bit reversal unit
+    xin    CRC_XID,&BYTE_REV_RESULT,4         ; Receive the reversed result
+    mov 	data, BYTE_REV_RESULT        ; Store result back to input register
     .endm
 
 ;------------------------------------------------------------------------------
@@ -319,8 +319,8 @@ PUSH_FIFO .macro dat
 WAIT .macro delay
     lsr delay, delay, 1                ; Divide delay by 2 for efficiency
 l?: 
-    sub delay,delay,1                  ; Decrement counter
-    qblt l?,delay,0                    ; Loop until counter reaches zero
+    sub delay, delay, 1                  ; Decrement counter
+    qblt l?, delay, 0                    ; Loop until counter reaches zero
     .endm
 
 ;------------------------------------------------------------------------------
@@ -521,7 +521,7 @@ TX_CHANNEL .macro
 ; Sets error status flag and optionally halts processing.
 ;------------------------------------------------------------------------------
 ERROR_IN_SAMPLING .macro 
-    ldi     ERROR_STATUS_REG,0          ; Clear error status register to indicate error
+    ldi     ERROR_STATUS_REG, 0          ; Clear error status register to indicate error
     .endm
 
 ;------------------------------------------------------------------------------
@@ -538,35 +538,35 @@ RECEIVE_PREAMBLE .macro loop_cnt
 receive_preamble_bit?:
 	qbbc    receive_preamble_bit?, r31, RX_VALID_FLAG  ; Wait for valid bit
     
-    mov     OVS_DATA_REG,r31.b0         ; Save raw oversampled data
-	lsl     BIT_CAPTURE_REG,BIT_CAPTURE_REG,2  ; Make room for new bits
-    add     TEMP0,TEMP0,0               ; NOP operation
+    mov     OVS_DATA_REG, r31.b0         ; Save raw oversampled data
+	lsl     BIT_CAPTURE_REG, BIT_CAPTURE_REG, 2  ; Make room for new bits
+    add     TEMP0, TEMP0, 0               ; NOP operation
     
     ; Use lookup table to decode bit pattern
-    lbbo    &LUT_SAMPLE_REG, PREAMBLE_BASE,r31.b0,1  ; LUT based sampling decision
+    lbbo    &LUT_SAMPLE_REG, PREAMBLE_BASE, r31.b0, 1  ; LUT based sampling decision
     CLEAR_VAL                          ; Clear valid flag for next bit
-    
+
     ; Store oversampled data for debugging
-    sbco    &OVS_DATA_REG,c25,SAMPLE_OFFSET_COUNTER,1
-	add     SAMPLE_OFFSET_COUNTER,SAMPLE_OFFSET_COUNTER,1  ; Update counter
+    sbco    &OVS_DATA_REG, PRUx_DMEM, SAMPLE_OFFSET_COUNTER, 1
+	add     SAMPLE_OFFSET_COUNTER, SAMPLE_OFFSET_COUNTER, 1  ; Update counter
     
     ; Check for sampling error
-    qbne    no_error_in_sampling?,LUT_SAMPLE_REG,0xff 
+    qbne    no_error_in_sampling?, LUT_SAMPLE_REG, 0xff 
     ERROR_IN_SAMPLING                   ; Handle error if detected
 no_error_in_sampling?:
     
     ; Determine if this is a long or short symbol
-    qbeq    long_symbol?,LUT_SAMPLE_REG,0xC0  ; Check for long symbol pattern 1
-    qbeq    long_symbol?,LUT_SAMPLE_REG,0x0   ; Check for long symbol pattern 2
-    ldi     long_short_status,0         ; Set status to indicate short symbol
+    qbeq    long_symbol?, LUT_SAMPLE_REG, 0xC0  ; Check for long symbol pattern 1
+    qbeq    long_symbol?, LUT_SAMPLE_REG, 0x0   ; Check for long symbol pattern 2
+    ldi     LONG_SHORT_STATUS, 0         ; Set status to indicate short symbol
     qba     symbol_update_done?
 long_symbol?:
-    ldi     long_short_status,1         ; Set status to indicate long symbol
+    ldi     LONG_SHORT_STATUS, 1         ; Set status to indicate long symbol
 symbol_update_done?:
 
     ; Extract decoded bit from LUT result and save to bit capture register
-    lsr     LUT_SAMPLE_REG,LUT_SAMPLE_REG,6  ; Shift to get decoded bit
-    or      BIT_CAPTURE_REG.b0,BIT_CAPTURE_REG.b0,LUT_SAMPLE_REG  ; Store bit
+    lsr     LUT_SAMPLE_REG, LUT_SAMPLE_REG, 6  ; Shift to get decoded bit
+    or      BIT_CAPTURE_REG.b0, BIT_CAPTURE_REG.b0, LUT_SAMPLE_REG  ; Store bit
 bit_sample_done?:  
     .endm
 
@@ -584,27 +584,27 @@ RECEIVE_MANCHESTER_DATA .macro loop_cnt
 receive_manchester_first_half_bit?:
 	qbbc    receive_manchester_first_half_bit?, r31, RX_VALID_FLAG  ; Wait for valid bit
 	
-    lsr     BIT_CAPTURE_REG,BIT_CAPTURE_REG,1  ; Make room for next bit
+    lsr     BIT_CAPTURE_REG, BIT_CAPTURE_REG, 1  ; Make room for next bit
     
     ; Get bit pattern from lookup table
-    lbbo    &LUT_SAMPLE_REG, PREAMBLE_BASE,r31.b0,1  ; LUT-based sampling decision
+    lbbo    &LUT_SAMPLE_REG, PREAMBLE_BASE, r31.b0, 1  ; LUT-based sampling decision
     CLEAR_VAL                          ; Clear valid flag for next bit
     
     ; Check for sampling error
-    qbne    no_error_in_sampling1?,LUT_SAMPLE_REG,0xff
+    qbne    no_error_in_sampling1?, LUT_SAMPLE_REG, 0xff
     ERROR_IN_SAMPLING                   ; Handle error if detected
 no_error_in_sampling1?:
     
     ; Check for Manchester encoding violations (same consecutive half-bits)
-    xor     TEMP_REG,LUT_SAMPLE_REG,first_data_half_bit
-    and     ERROR_STATUS_REG,ERROR_MASK_REG,TEMP_REG  ; ERROR_MASK_REG=0x80
-    
+    xor     TEMP_REG, LUT_SAMPLE_REG, FIRST_DATA_HALF_BIT
+    and     ERROR_STATUS_REG, ERROR_MASK_REG, TEMP_REG  ; ERROR_MASK_REG=0x80
+
     ; Reconstruct original data bit from Manchester encoding
-    or      BIT_CAPTURE_REG.b0,BIT_CAPTURE_REG.b0,first_data_half_bit
-    
+    or      BIT_CAPTURE_REG.b0, BIT_CAPTURE_REG.b0, FIRST_DATA_HALF_BIT
+
     ; Prepare for next bit
-    lsl     LUT_SAMPLE_REG,LUT_SAMPLE_REG,1
-    mov     first_data_half_bit,LUT_SAMPLE_REG  ; Save for next cycle
+    lsl     LUT_SAMPLE_REG, LUT_SAMPLE_REG, 1
+    mov     FIRST_DATA_HALF_BIT, LUT_SAMPLE_REG  ; Save for next cycle
 bit_sample_done?:
     .endm
 
