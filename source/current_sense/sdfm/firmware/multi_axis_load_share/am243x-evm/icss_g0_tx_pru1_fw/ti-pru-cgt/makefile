@@ -80,7 +80,7 @@ clean:
 
 post-build:
 		-$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=pru_SDFM_TXPRU1_image -o sdfm_txpru1_bin.h  sdfm_firmware_multi_axis_load_share_am243x-evm_icss_g0_tx_pru1_fw_ti-pru-cgt.out
-		-$(CAT) ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h sdfm_txpru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware/multi_axis_load_share/sdfm_txpru1_bin.h
+		-$(CAT) ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h sdfm_txpru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/firmware/multi_axis_load_share/sdfm_txpru1_bin.h
 		-$(RM)  sdfm_txpru1_bin.h
 	-@echo ' '
 

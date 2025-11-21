@@ -78,32 +78,32 @@ function getmakefilePruPostBuildSteps(cpu, board)
     {
         case "icss_g0_pru1":
             postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDat3FirmwareMultiMakePRU -o endat3_receiver_multi_pru1_bin.h endat3_peripheral_interface_single_channel_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+
-            "$(CAT) ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h endat3_receiver_multi_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_pru1_bin.h;"+
+            "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat3_receiver_multi_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_pru1_bin.h;"+
             "$(RM) endat3_receiver_multi_pru1_bin.h;"]
             break;
         case "icss_g0_rtu_pru1":
             postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDat3FirmwareMultiMakeRTU -o endat3_receiver_multi_rtu_pru1_bin.h endat3_peripheral_interface_single_channel_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+
-            "$(CAT) ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h endat3_receiver_multi_rtu_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_rtu_pru1_bin.h;"+
+            "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat3_receiver_multi_rtu_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_rtu_pru1_bin.h;"+
             "$(RM) endat3_receiver_multi_rtu_pru1_bin.h;"]
             break;
         case "icss_g0_tx_pru1":
             postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDat3FirmwareMultiMakeTXPRU -o endat3_receiver_multi_tx_pru1_bin.h endat3_peripheral_interface_single_channel_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+
-            "$(CAT) ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h endat3_receiver_multi_tx_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_tx_pru1_bin.h;"+
+            "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat3_receiver_multi_tx_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_tx_pru1_bin.h;"+
             "$(RM) endat3_receiver_multi_tx_pru1_bin.h;"]
             break;
         case "icss_g0_pru0":
             postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDat3FirmwareMultiMakePRU -o endat3_receiver_multi_pru0_bin.h endat3_peripheral_interface_single_channel_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+
-            "$(CAT) ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h endat3_receiver_multi_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_pru0_bin.h;"+
+            "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat3_receiver_multi_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_pru0_bin.h;"+
             "$(RM) endat3_receiver_multi_pru0_bin.h;"]
             break;
         case "icss_g0_rtu_pru0":
             postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDat3FirmwareMultiMakeRTU -o endat3_receiver_multi_rtu_pru0_bin.h endat3_peripheral_interface_single_channel_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+
-            "$(CAT) ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h endat3_receiver_multi_rtu_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_rtu_pru0_bin.h;"+
+            "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat3_receiver_multi_rtu_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_rtu_pru0_bin.h;"+
             "$(RM) endat3_receiver_multi_rtu_pru0_bin.h;"]
             break;
         case "icss_g0_tx_pru0":
             postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDat3FirmwareMultiMakeTXPRU -o endat3_receiver_multi_tx_pru0_bin.h endat3_peripheral_interface_single_channel_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+
-            "$(CAT) ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h endat3_receiver_multi_tx_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_tx_pru0_bin.h;"+
+            "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat3_receiver_multi_tx_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_tx_pru0_bin.h;"+
             "$(RM) endat3_receiver_multi_tx_pru0_bin.h;"]
             break;
     }
@@ -119,44 +119,44 @@ function getccsPruPostBuildSteps(cpu, board)
     {
         case "icss_g0_pru1":
             postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDat3FirmwareMultiMakePRU -o endat3_receiver_multi_pru1_bin.h endat3_peripheral_interface_single_channel_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+
-            "if ${CCS_HOST_OS} == linux cat ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h endat3_receiver_multi_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_pru1_bin.h;"+
+            "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat3_receiver_multi_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_pru1_bin.h;"+
             "if ${CCS_HOST_OS} == linux rm endat3_receiver_multi_pru1_bin.h;"+
-            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h endat3_receiver_multi_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_pru1_bin.h;"+
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat3_receiver_multi_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_pru1_bin.h;"+
             "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm endat3_receiver_multi_pru1_bin.h;"]
             break;
         case "icss_g0_rtu_pru1":
             postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDat3FirmwareMultiMakeRTU -o endat3_receiver_multi_rtu_pru1_bin.h endat3_peripheral_interface_single_channel_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+
-            "if ${CCS_HOST_OS} == linux cat ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h endat3_receiver_multi_rtu_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_rtu_pru1_bin.h;"+
+            "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat3_receiver_multi_rtu_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_rtu_pru1_bin.h;"+
             "if ${CCS_HOST_OS} == linux rm endat3_receiver_multi_rtu_pru1_bin.h;"+
-            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h endat3_receiver_multi_rtu_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_rtu_pru1_bin.h;"+
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat3_receiver_multi_rtu_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_rtu_pru1_bin.h;"+
             "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm endat3_receiver_multi_rtu_pru1_bin.h;"]
             break;
         case "icss_g0_tx_pru1":
             postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDat3FirmwareMultiMakeTXPRU -o endat3_receiver_multi_tx_pru1_bin.h endat3_peripheral_interface_single_channel_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+
-            "if ${CCS_HOST_OS} == linux cat ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h endat3_receiver_multi_tx_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_tx_pru1_bin.h;"+
+            "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat3_receiver_multi_tx_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_tx_pru1_bin.h;"+
             "if ${CCS_HOST_OS} == linux rm endat3_receiver_multi_tx_pru1_bin.h;"+
-            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h endat3_receiver_multi_tx_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_tx_pru1_bin.h;"+
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat3_receiver_multi_tx_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_tx_pru1_bin.h;"+
             "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm endat3_receiver_multi_tx_pru1_bin.h;"]
             break;
         case "icss_g0_pru0":
             postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDat3FirmwareMultiMakePRU -o endat3_receiver_multi_pru0_bin.h endat3_peripheral_interface_single_channel_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+
-            "if ${CCS_HOST_OS} == linux cat ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h endat3_receiver_multi_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_pru0_bin.h;"+
+            "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat3_receiver_multi_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_pru0_bin.h;"+
             "if ${CCS_HOST_OS} == linux rm endat3_receiver_multi_pru0_bin.h;"+
-            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h endat3_receiver_multi_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_pru0_bin.h;"+
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat3_receiver_multi_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_pru0_bin.h;"+
             "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm endat3_receiver_multi_pru0_bin.h;"]
             break;
         case "icss_g0_rtu_pru0":
             postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDat3FirmwareMultiMakeRTU -o endat3_receiver_multi_rtu_pru0_bin.h endat3_peripheral_interface_single_channel_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+
-            "if ${CCS_HOST_OS} == linux cat ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h endat3_receiver_multi_rtu_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_rtu_pru0_bin.h;"+
+            "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat3_receiver_multi_rtu_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_rtu_pru0_bin.h;"+
             "if ${CCS_HOST_OS} == linux rm endat3_receiver_multi_rtu_pru0_bin.h;"+
-            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h endat3_receiver_multi_rtu_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_rtu_pru0_bin.h;"+
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat3_receiver_multi_rtu_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_rtu_pru0_bin.h;"+
             "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm endat3_receiver_multi_rtu_pru0_bin.h;"]
             break;
         case "icss_g0_tx_pru0":
             postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDat3FirmwareMultiMakeTXPRU -o endat3_receiver_multi_tx_pru0_bin.h endat3_peripheral_interface_single_channel_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+
-            "if ${CCS_HOST_OS} == linux cat ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h endat3_receiver_multi_tx_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_tx_pru0_bin.h;"+
+            "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat3_receiver_multi_tx_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_tx_pru0_bin.h;"+
             "if ${CCS_HOST_OS} == linux rm endat3_receiver_multi_tx_pru0_bin.h;"+
-            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h endat3_receiver_multi_tx_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_tx_pru0_bin.h;"+
+            "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat3_receiver_multi_tx_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_tx_pru0_bin.h;"+
             "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm endat3_receiver_multi_tx_pru0_bin.h;"]
             break;
     }
