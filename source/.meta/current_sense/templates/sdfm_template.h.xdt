@@ -8,6 +8,9 @@
  * SDFM
  */
 
+/* Forward declaration */
+typedef struct SDFM_Params_s SDFM_Params;
+
 /* SDFM Instance Macros */
 #define CONFIG_SDFM_NUM_INSTANCES               `module.$instances.length`
 %for(let i = 0; i < module.$instances.length; i++) {
@@ -38,6 +41,10 @@
 #define `instance.$name`_CLK_FROM_IEP     `instance["SDFM_CLK_GEN"] == 3 ? 1 : 0`
 #define `instance.$name`_CLK_FROM_ECAP    `instance["SDFM_CLK_GEN"] == 2 ? 1 : 0`
 #define `instance.$name`_CLK_FROM_GPIO1   `instance["SDFM_CLK_GEN"] == 1 ? 1 : 0`
+%if(instance["SDFM_CLK_GEN"] != "0")
+%{
+#define `instance.$name`_CLOCK_VALUE   `instance["SDFM_Clock_Value"]`
+%}
 #define `instance.$name`_EPWM_SYNC_EN     `instance["Enable_Epwm_Sync"] & 1`
 %if(instance["Enable_Epwm_Sync"])
 %{
@@ -48,76 +55,7 @@
 #define `instance.$name`_IEP_INSTANCE        `instance["IEP_Instance"]`
 #define `instance.$name`_IEP_RESET_FREQ      `instance["IEP_Reset_Freq"]` 
 %}
-%if (instance["Enable_Load_Share"])
-%{
 
-#define `instance.$name`_RTU_CORE_ENABLE             `(instance["Enable_Channel_0"]|| instance["Enable_Channel_1"]|| instance["Enable_Channel_2"] ) ? 1 : 0`
-%if(instance["Enable_Channel_0"]|| instance["Enable_Channel_1"]|| instance["Enable_Channel_2"])
-%{
-#define `instance.$name`_RTU_NC_SNOOP_MODE           `instance["RTU_EnableSnoopNC"] & 1`
-#define `instance.$name`_RTU_EN_TRIGGER_MODE         `instance["RTU_EnableTriggerMode"] & 1`
-%if (instance["RTU_EnableTriggerMode"])
-%{
-#define `instance.$name`_RTU_FIRST_TRIGGER_POINT     `instance["RTU_FirstTriggerPoint"]`
-#define `instance.$name`_RTU_IEP_CMP_EVENT           `instance["RTU_SelectIepCmpEvent"]`
-#define `instance.$name`_RTU_EN_DOUBLE_UPDATE        `instance["RTU_EnableDoubleUpdate"] & 1`
-%if (instance["RTU_EnableDoubleUpdate"])
-%{
-#define `instance.$name`_RTU_SECOND_TRIGGER_POINT    `instance["RTU_SecondTriggerPoint"]` 
-%}
-%}
-%}
-
-#define `instance.$name`_PRU_CORE_ENABLE             `(instance["Enable_Channel_3"]|| instance["Enable_Channel_4"]|| instance["Enable_Channel_5"] ) ? 1 : 0`
-%if(instance["Enable_Channel_3"]|| instance["Enable_Channel_4"]|| instance["Enable_Channel_5"])
-%{
-#define `instance.$name`_PRU_NC_SNOOP_MODE           `instance["PRU_EnableSnoopNC"] & 1`
-#define `instance.$name`_PRU_EN_TRIGGER_MODE         `instance["PRU_EnableTriggerMode"] & 1`
-%if (instance["PRU_EnableTriggerMode"])
-%{
-#define `instance.$name`_PRU_FIRST_TRIGGER_POINT     `instance["PRU_FirstTriggerPoint"]`
-#define `instance.$name`_PRU_IEP_CMP_EVENT           `instance["PRU_SelectIepCmpEvent"]`
-#define `instance.$name`_PRU_EN_DOUBLE_UPDATE        `instance["PRU_EnableDoubleUpdate"] & 1`
-%if (instance["PRU_EnableDoubleUpdate"])
-%{
-#define `instance.$name`_PRU_SECOND_TRIGGER_POINT    `instance["PRU_SecondTriggerPoint"]` 
-%}
-%}
-%}
-
-#define `instance.$name`_TXPRU_CORE_ENABLE           `(instance["Enable_Channel_6"]|| instance["Enable_Channel_7"]|| instance["Enable_Channel_8"] ) ? 1 : 0`
-%if(instance["Enable_Channel_6"]|| instance["Enable_Channel_7"]|| instance["Enable_Channel_8"])
-%{
-#define `instance.$name`_TXPRU_NC_SNOOP_MODE         `instance["TXPRU_EnableSnoopNC"] & 1`
-#define `instance.$name`_TXPRU_EN_TRIGGER_MODE       `instance["TXPRU_EnableTriggerMode"] & 1`
-%if (instance["TXPRU_EnableTriggerMode"])
-%{
-#define `instance.$name`_TXPRU_FIRST_TRIGGER_POINT    `instance["TXPRU_FirstTriggerPoint"]`
-#define `instance.$name`_TXPRU_IEP_CMP_EVENT          `instance["TXPRU_SelectIepCmpEvent"]`
-#define `instance.$name`_TXPRU_EN_DOUBLE_UPDATE       `instance["TXPRU_EnableDoubleUpdate"] & 1`
-%if (instance["TXPRU_EnableDoubleUpdate"])
-%{
-#define `instance.$name`_TXPRU_SECOND_TRIGGER_POINT   `instance["TXPRU_SecondTriggerPoint"]` 
-%}
-%}
-%}
-%}
-%else
-%{
-#define `instance.$name`_PRU_CORE_ENABLE              `1`
-#define `instance.$name`_PRU_NC_SNOOP_MODE            `instance["PRU_EnableSnoopNC"] & 1`
-#define `instance.$name`_PRU_EN_TRIGGER_MODE          `instance["PRU_EnableTriggerMode"] & 1`
-%if (instance["PRU_EnableTriggerMode"])
-%{
-#define `instance.$name`_PRU_FIRST_TRIGGER_POINT      `instance["PRU_FirstTriggerPoint"]`
-#define `instance.$name`_PRU_IEP_CMP_EVENT            `instance["PRU_SelectIepCmpEvent"]`
-#define `instance.$name`_PRU_EN_DOUBLE_UPDATE         `instance["PRU_EnableDoubleUpdate"] & 1`
-%if (instance["PRU_EnableDoubleUpdate"])
-%{
-#define `instance.$name`_PRU_SECOND_TRIGGER_POINT     `instance["PRU_SecondTriggerPoint"]` 
-%}
-%}
-%}
 
 %if ((instance.instance === "ICSSG1" || instance.instance === "ICSSG0") && (instance.G_MUX_EN))
 %{
@@ -130,40 +68,26 @@
    %}
    
    %/////////////////////
-	   // SDFM Channel macros 
+	   // SDFM Channel macros - Zero Cross Enable for GPIO configuration
 	%/////////////////////
    %for(let channel = 0; channel < 9; channel++)
-   %{ 
+   %{
       %if(instance["Enable_Channel_" + channel.toString()])
       %{
-#define `instance.$name`_CHANNEL`channel`_CLK_SOURCE        `instance["Ch" + channel.toString() + "_SDCLKSEL"]`	 
-#define `instance.$name`_CHANNEL`channel`_MCLK              `instance["Ch" + channel.toString() + "_SDFM Clock"]`
-#define `instance.$name`_CHANNEL`channel`_EN_CLK_INV        `instance["Ch" + channel.toString() + "_CLKINV"] & 1`
-#define `instance.$name`_CHANNEL`channel`_ACC_SOURCE        `instance["Ch" + channel.toString() + "_AccSource"]`	 
-#define `instance.$name`_CHANNEL`channel`_EN_COMP           `instance["Ch" + channel.toString() + "_ComparatorEnable"] & 1`
-#define `instance.$name`_CHANNEL`channel`_EN_FD             `instance["Ch" + channel.toString() + "_FastDetect"] & 1`
-#define `instance.$name`_CHANNEL`channel`_NC_OSR            `instance["Ch" + channel.toString() + "_NC_OSR"]`
-
          %if(instance["Ch" + channel.toString() + "_ComparatorEnable"])
          %{
-#define `instance.$name`_CHANNEL`channel`_OC_OSR                     `instance["Ch" + channel.toString() + "_OC_OSR"]`
-#define `instance.$name`_CHANNEL`channel`_OC_HIGH_TH                 `instance["Ch" + channel.toString() + "_HLT"]`
-#define `instance.$name`_CHANNEL`channel`_OC_LOW_TH                  `instance["Ch" + channel.toString() + "_LLT"]`
-#define `instance.$name`_CHANNEL`channel`_OC_EN_ZERO_CROSS           `instance["Ch" + channel.toString() + "_ZeroCross_Enable"] & 1`
             %if(instance["Ch" + channel.toString() + "_ZeroCross_Enable"])
             %{
-#define `instance.$name`_CHANNEL`channel`_OC_ZC_TH                      `instance["Ch" + channel.toString() + "_ZCT"]`
+#define `instance.$name`_CHANNEL`channel`_OC_EN_ZERO_CROSS           `instance["Ch" + channel.toString() + "_ZeroCross_Enable"] & 1`
             %}
          %}
-         %if(instance["Ch" + channel.toString() + "_FastDetect"])
-         %{
-#define `instance.$name`_CHANNEL`channel`_FD_WINDOW_SIZE             `instance["Ch" + channel.toString() + "_FD_SIZE"]`
-#define `instance.$name`_CHANNEL`channel`_FD_MAX_ZERO_COUNT          `instance["Ch" + channel.toString() + "_ZeroMaxTh"]`
-#define `instance.$name`_CHANNEL`channel`_FD_MIN_ZERO_COUNT          `instance["Ch" + channel.toString() + "_ZeroMinTh"]`
-         %}
-
       %}
-
 	%}
-
 % }
+
+/* SDFM Configuration Structures - Generated by SysConfig */
+%if(module && module.$instances.length > 0)
+%{
+/* Main parameters structure - fully initialized by SysConfig */
+extern SDFM_Params gSdfmParams;
+%}
