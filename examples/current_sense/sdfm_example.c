@@ -47,7 +47,7 @@
  *
  *  Key Functions:
  *  - SDFM_pruIcssInit()       : Initialize ICSSG subsystem 
- *  - initPruSdfm()            : Load firmware and configure SDFM 
+ *  - appSdfmPruInit()            : Load firmware and configure SDFM 
  *  - initSdfmFw()             : Internal firmware configuration 
  *  - SDFM_configGpioPins()    : Internal GPIO setup for zero-cross 
 
@@ -254,7 +254,7 @@ int32_t SDFM_pruIcssInit(
  */
 static void SDFM_configGpioPins(SDFM_Handle h_sdfm, uint8_t channel )
 {
-    switch (channel )
+    switch(channel)
     {
         case 0:
 #if (CONFIG_SDFM0_CHANNEL0_OC_EN_ZERO_CROSS != 0)
@@ -354,7 +354,7 @@ static void SDFM_configGpioPins(SDFM_Handle h_sdfm, uint8_t channel )
 /*
  *  ======== initSdfmFw ========
  *  Internal function to initialize SDFM firmware and configure channels.
- *  Called from initPruSdfm() after PRU cores are loaded and running.
+ *  Called from appSdfmPruInit() after PRU cores are loaded and running.
  *
  *  Configures:
  *  - Channel enable/disable
@@ -392,7 +392,13 @@ static int32_t initSdfmFw(SDFM_Params sdfm_params, SDFM_Handle *pHSdfm)
     DebugP_log("SDFM firmware version \t: %x.%x.%x (%s)\n\n", (i >> 24) & 0x7F,
                 (i >> 16) & 0xFF, i & 0xFFFF, i & (1 << 31) ? "internal" : "release");
 
-    /* Configure SDFM sample output interface */
+    /*
+     *
+     * The sample output buffer (gSdfm_sampleOutput) is allocated in R5F BTCM memory.
+     * - R5F driver uses the core-local view address to access the buffer directly
+     * - PRU firmware uses the SoC global view address to write samples via ICSSG memory access
+     *
+     */
     hSdfm->sampleOutputInterface = (SDFM_SampleOutInterface *)(sdfm_params.sample_base_addr);
     uint32_t sampleOutputInterfaceGlobalAddr = CPU0_BTCM_SOCVIEW(sdfm_params.sample_base_addr);
     SDFM_setSampleOutputInterfaceGlobalAddr(hSdfm, sampleOutputInterfaceGlobalAddr);
@@ -432,16 +438,13 @@ static int32_t initSdfmFw(SDFM_Params sdfm_params, SDFM_Handle *pHSdfm)
    hSdfm->clk_config.sdfm_clock_value = CONFIG_SDFM0_CLOCK_VALUE;
 #endif
 
-    
-           
-   /*Add code to confgure common configuration for all channels*/
-   if(sdfm_params.pru_core_config[SDFM_PRU_CORE_INDX].enable_snoop_mode || sdfm_params.pru_core_config[SDFM_RTUPRU_CORE_INDX].enable_snoop_mode || sdfm_params.pru_core_config[SDFM_TXPRU_CORE_INDX].enable_snoop_mode)
+   if(sdfm_params.pru_core_config[SDFM_PRU_CORE_INDEX].enable_snoop_mode || sdfm_params.pru_core_config[SDFM_RTUPRU_CORE_INDEX].enable_snoop_mode || sdfm_params.pru_core_config[SDFM_TXPRU_CORE_INDEX].enable_snoop_mode)
    {
         /*configure IEP count for one epwm period*/
         SDFM_configIepCount(hSdfm, sdfm_params.iep_reset_freq);
    }
 
-   for(int8_t i = 0; i< 3; i++)
+   for(int8_t i = 0; i < 3; i++)
    {
         if(sdfm_params.enable_pru_core_mask & (1 << i))
         {
@@ -543,7 +546,7 @@ static int32_t initSdfmFw(SDFM_Params sdfm_params, SDFM_Handle *pHSdfm)
     }
     
     /* Enable (global) SDFM */
-    for(int8_t i = 0; i< 3; i++)
+    for(int8_t i = 0; i < 3; i++)
     {
         if(sdfm_params.enable_pru_core_mask & (1 << i))
         {
@@ -555,10 +558,10 @@ static int32_t initSdfmFw(SDFM_Params sdfm_params, SDFM_Handle *pHSdfm)
  return SDFM_ERR_NERR;
 }
 /*
- *  ======== initPruSdfm ========
+ *  ======== appSdfmPruInit ========
  */
 /* Initialize PRU core for SDFM */
-int32_t initPruSdfm(
+int32_t appSdfmPruInit(
     PRUICSS_Handle pruIcssHandle,
     SDFM_Params pSdfmPrms,
     SDFM_Handle *pHSdfm

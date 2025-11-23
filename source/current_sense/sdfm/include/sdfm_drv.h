@@ -72,7 +72,7 @@
  *  ## Key Data Structures
  *
  *  - **SDFM_Params**: Initialization parameters from SysConfig (compile-time config)
- *  - **SDFM_Handle_Config**: Runtime driver handle containing PRU interface and state
+ *  - **SDFM_Config**: Runtime driver handle containing PRU interface and state
  *  - **SDFM_Interface**: Firmware interface structure in PRU DMEM (shared memory)
  *  - **SDFM_ChannelConfig**: Per-channel runtime configuration
  *  - **SDFM_ChannelAttrs**: Per-channel compile-time attributes from SysConfig
@@ -156,9 +156,9 @@ extern "C" {
 #define SDFM_IEP_CMP2_EN_SHIFT     ( 3 )  /**< IEP CMP2 enable bit shift */
 
 /* PRU core indices */
-#define SDFM_PRU_CORE_INDX          0U  /**< PRU core index */
-#define SDFM_RTUPRU_CORE_INDX       1U  /**< RTU PRU core index */
-#define SDFM_TXPRU_CORE_INDX        2U  /**< TX PRU core index */
+#define SDFM_PRU_CORE_INDEX          0U  /**< PRU core index */
+#define SDFM_RTUPRU_CORE_INDEX       1U  /**< RTU PRU core index */
+#define SDFM_TXPRU_CORE_INDEX        2U  /**< TX PRU core index */
 
 /* ========================================================================== */
 /*                         Structures                                         */
@@ -222,7 +222,9 @@ typedef struct SDFM_CfgTrigger_s
     /**<IEP cmp status register address */
     volatile uint32_t iep_cmp_status_reg;
     /**< Host output sample buffer base address for this channel */
-    volatile uint64_t   sample_buff_base_addr;
+    volatile uint32_t   sample_buff_base_addr;
+    /**< reserved variable */
+    volatile uint32_t   reserved;
 } SDFM_CfgTrigger;
 
 
@@ -421,7 +423,7 @@ typedef struct SDFM_SampleOutInterface_s
  *
  *    \details  Firmware configuration, control, data and trigger interface with all channel settings organized separately
  */
-typedef struct SDFM_Handle_Config_s {
+typedef struct SDFM_Config_s {
     /**< PRU configuration */
     SDFM_CfgPru pru_config;
     
@@ -439,12 +441,12 @@ typedef struct SDFM_Handle_Config_s {
 
     SDFM_SampleOutInterface *sampleOutputInterface;
     
-} SDFM_Handle_Config;
+} SDFM_Config;
 /**
  *    \brief    Handle to the SDFM driver object
  *
  */
-typedef struct SDFM_Handle_Config_s *SDFM_Handle;
+typedef struct SDFM_Config_s *SDFM_Handle;
 
 /**
  *    \brief    Structure defining SDFM PRU core specific attributes (compile-time/SysConfig configuration data)

@@ -7,7 +7,7 @@
 %if(module)
 %{
 /* Handle declaration */
-SDFM_Handle_Config gSdfmHandles[CONFIG_SDFM_NUM_INSTANCES];
+SDFM_Config gSdfmHandles[CONFIG_SDFM_NUM_INSTANCES];
 uint32_t gSdfmConfigNum = CONFIG_SDFM_NUM_INSTANCES;
 
 /* SDFM Parameters - Fully initialized by SysConfig */

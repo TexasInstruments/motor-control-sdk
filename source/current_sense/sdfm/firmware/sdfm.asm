@@ -43,7 +43,7 @@
         .include "firmware_version.h"
         .include "pru_io/firmware/common/icss_regs.inc"
 	    .include "pru_io/firmware/common/icss_cfg_regs.inc"
-
+        .include "pru_io/firmware/common/icss_constant_defines.inc"
 ;***********************************************************************************
 
 
@@ -84,6 +84,8 @@ TRIGGER_HOST_SDFM_IRQ_CH8   .set ICSS_SDFM_TRIGGER_EVNT_CH8 + 16
 	.if	$isdefed("SLICE1")
 	.asg	PRU1_DMEM,		PRUx_DMEM
 	.endif
+
+PRU_ICSS_IEP1_BASE              .set PRUx_IEP0_BASE + 0x1000
 
 ;SPAD Bank for SD Ch context storage
 BANK_CTXT_NC               .set BANK0
@@ -167,7 +169,7 @@ SKIP_PHASE_DELAY_CAL:
 ; If SDFM global enable not set, wait for SDFM global enable from R5.
 ;
 CHECK_SDFM_EN:
-    ; ;check phase delay measurement active
+    ;check phase delay measurement active
     .if $isdefed("SDFM_PHASE_DELAY_CALC")
     LBCO    &TEMP_REG0.b0, PRUx_DMEM, SDFM_CFG_SD_CH0_EN_PHASE_DELAY, 1
     QBBS    PHASE_DELAY_CAL, TEMP_REG0.b0, 0
@@ -230,7 +232,7 @@ INIT_SDFM:
 SKIP_CH_FOR_ZC:
       ADD TEMP_REG2, TEMP_REG2, ICSSG_SDFM_CH_MEM_OFFSET
       ADD TEMP_REG1, TEMP_REG1, 1
-CONF_ZC_REG_LOOP
+CONF_ZC_REG_LOOP:
 
     ;In trigger mode select common sinc filter for all channels
     LDI TEMP_REG2, SDFM_CFG_CH0_FILTER_TYPE_OFFSET
@@ -294,7 +296,7 @@ SKIP_ENABLE_TM:
 SKIP_CH_FOR_COMP:
     ADD   TEMP_REG2, TEMP_REG2, ICSSG_SDFM_CH_MEM_OFFSET
     ADD   TEMP_REG1, TEMP_REG1, 1
-CONF_COMP_REG_LOOP
+CONF_COMP_REG_LOOP:
 
     ;Skip normal mode if snoop mode is enabled
     LBCO    &TEMP_REG0, PRUx_DMEM, SDFM_EN_NC_USING_SNOOP_REG_OFFSET, 1
@@ -312,7 +314,7 @@ SKIP_NORMAL_MODE:
     JMP    TS0_OC_LOOP
 NEXT_CH_FOR_COMP:
     ADD   TEMP_REG1, TEMP_REG1, 1
-CHECK_COMP_REG_LOOP
+CHECK_COMP_REG_LOOP:
 
     ;waiting loop if OC is disable
 WAIT_LOOP:
@@ -953,11 +955,11 @@ SKIP_IEP1:
 
     JMP     RET_ADDR_REG 
 
-;;      
-;; Initialize IEP CMP event .
-;;
+;      
+; Initialize IEP CMP event .
+;
 CONFIG_IEP_CMP_FOR_TRIGGER_MODE:
-    ; Load IEP CMP4 register address
+    ; Load IEP CMP register address
     LDI     TEMP_REG1, FW_REG_SDFM_CFG_FIRST_TRIG_SAMPLE_TIME
     LBCO    &TEMP_REG0, PRUx_DMEM, TEMP_REG1, 4
     LDI     TEMP_REG1, SDFM_CFG_NC_PRD_IEP_REG_OFFSET
@@ -967,11 +969,11 @@ CONFIG_IEP_CMP_FOR_TRIGGER_MODE:
     SBBO    &TEMP_REG0, TEMP_REG2, 4, 4
     JMP     RET_ADDR_REG
 ;
-;;
-;; Reset Scratchpad for NC registers
-;;
-;; Arguments: None
-;;
+;
+; Reset Scratchpad for NC registers
+;
+; Arguments: None
+;
 ;
 FN_RESET_SDFM_STATE:
     LDI     R0.b0, 0
@@ -997,7 +999,7 @@ FN_RESET_SD_CH_HW:
     MOV     R30.b3, TEMP_REG0.b0
     ADD     TEMP_REG1, TEMP_REG1, 1                     ; increment to next channel 
     SET     R31.t23                                     ; R31[23] re_init=1
-RESET_SD_LOAD_SHARE_CH_HW_LOOP
+RESET_SD_LOAD_SHARE_CH_HW_LOOP:
 
     JMP     RET_ADDR_REG
   
@@ -1456,13 +1458,13 @@ CHx_SKIP:
     ADD  CURRENT_ACTIVE_CHANNEL, CURRENT_ACTIVE_CHANNEL, 1
     ADD  CURRENT_LOOP_COUNT, CURRENT_LOOP_COUNT, 4
     ;Update pad register for next channel.
-    ADD   R0, R0, 3 ; Set shift value to 3 
+    ADD   R0, R0, 3 ; Set shift value to 3
     ADD   NC_SINC_FILTER_TYPE, NC_SINC_FILTER_TYPE, ICSSG_SDFM_CH_MEM_OFFSET
-SINGLE_PRU_CHANNEL_SAMPLING_LOOP
+SINGLE_PRU_CHANNEL_SAMPLING_LOOP:
     
     .endif ;SDFM_PRU_CORE
     .endif ;SDFM_LOAD_SHARE_MODE
-    ;Intruppt for trigger mode 
+    ;Interrupt for trigger mode 
     QBBC    SKIP_TRIGGER_MODE, EN_NC_TRIGGER_MODE, 0
     AND     TEMP_REG0.w0, NC_SAMPLE_DONE, SD_CHANNEL_MASK
     QBNE    CONTINUOUS_MODE_START,  TEMP_REG0.w0, SD_CHANNEL_MASK
@@ -1505,7 +1507,7 @@ SKIP_CH_FOR_MEMORY:
     ADD     TEMP_REG1, TEMP_REG1, 4
     ADD     TEMP_REG2, TEMP_REG2, 1
     ADD     TEMP_REG0, TEMP_REG0, 4
-LOAD_SAMPLE_IN_MEMORY
+LOAD_SAMPLE_IN_MEMORY:
 
     ;Trigger interrupt for NC sampling
     LDI     R31.w0, TRIGGER_HOST_SDFM_IRQ_CH0

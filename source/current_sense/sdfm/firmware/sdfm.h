@@ -36,7 +36,7 @@
 __sdfm_h    .set    1
 
 ;
-; define symboles
+; define symbols
 ; Free registers: R24.b1-b3
     .asg    C4, CT_PRU_ICSSG_CFG            ; Constant Table, PRU_ICSSG CFG
     .asg    C10, CT_PRU_ICSSG_TM            ; Constant Table, PRU_ICSSG TM
@@ -120,8 +120,6 @@ CMP_EVENT_BIT_SHIFT             .set 8
 IEP_DEFAULT_INC                 .set 1
 TASK_IEP0_STARTING_EVT          .set 16
 TASK_IEP1_STARTING_EVT          .set 40
-PRU_ICSS_IEP1_BASE              .set (0x2f000UL)
-PRU_ICSS_IEP0_BASE              .set (0x2e000UL)
 
 ;Mask for phase delay
 SDFM_11_MASK                    .set  0x00010002
