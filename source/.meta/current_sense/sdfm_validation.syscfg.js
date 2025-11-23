@@ -106,7 +106,7 @@ function onValidate(inst, validation) {
         channel_enabled[i] = inst["Enable_Channel_" + i];
         channel_acc_source[i] = inst["Ch" + i + "_AccSource"];
         channel_nc_osr[i] = inst["Ch" + i + "_NC_OSR"];
-        channel_clock[i] = inst["Ch" + i + "_SDFM Clock"];
+        channel_clock[i] = inst["Ch" + i + "_SDFM_Clock"];
     }
     // VALIDATION FOR LOAD SHARE MODE
     if(Load_Share) {
@@ -180,7 +180,7 @@ function validateChannelsConsistency(inst, validation, startCh, endCh, enabled, 
         
         // Check clock
         if(clock[ch] != ref_clock) {
-            inst_name = "Ch" + ref_ch + "_SDFM Clock";
+            inst_name = "Ch" + ref_ch + "_SDFM_Clock";
             validation.logError(
                 "SDFM clock value should be same for Channels " + startCh + " through " + endCh + " in trigger mode",
                 inst, inst_name);
@@ -234,7 +234,7 @@ function validateAllChannelsConsistency(inst, validation, enabled, acc_source, n
         
         // Check clock
         if(clock[ch] != ref_clock) {
-            inst_name = "Ch" + ref_ch + "_SDFM Clock";
+            inst_name = "Ch" + ref_ch + "_SDFM_Clock";
             validation.logError(
                 "SDFM clock value should be same for all channels in trigger mode",
                 inst, inst_name);

@@ -37,7 +37,7 @@ function SDmodulatorSettings(channel)
 			description : 'Select SD Modulator Frequency in Hz',
 			hidden      : true,
 			getValue    : (inst) => {
-                let SDMCLK =  inst["Ch" + channel.toString() + "_SDFM Clock"];
+                let SDMCLK =  inst["Ch" + channel.toString() + "_SDFM_Clock"];
                 return SDMCLK;
             },
             default     : 20000000,

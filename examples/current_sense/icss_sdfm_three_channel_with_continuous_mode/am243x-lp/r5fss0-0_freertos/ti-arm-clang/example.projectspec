@@ -105,15 +105,11 @@
         <pathVariable name="IND_COMMS_SDK_PATH" path="${COM_TI_INDUSTRIAL_COMMUNICATIONS_SDK_AMXXX_INSTALL_DIR}" scope="project" />
         <pathVariable name="MCU_PLUS_SDK_PATH" path="${COM_TI_MCU_PLUS_SDK_AMXXX_INSTALL_DIR}" scope="project" />
         <pathVariable name="MOTOR_CONTROL_SDK_PATH" path="${COM_TI_MOTOR_CONTROL_SDK_AMXXX_INSTALL_DIR}" scope="project" />
-        <file path="../../../app_sdfm.c" openOnCreation="false" excludeFromBuild="false" action="copy">
-        </file>
-        <file path="../../../../epwm_dc.c" openOnCreation="false" excludeFromBuild="false" action="copy">
-        </file>
-        <file path="../../../../epwm_drv_aux.c" openOnCreation="false" excludeFromBuild="false" action="copy">
-        </file>
-        <file path="../../../../epwm_mod.c" openOnCreation="false" excludeFromBuild="false" action="copy">
+        <file path="../../../../app_sdfm.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
         <file path="../../../../sdfm_example.c" openOnCreation="false" excludeFromBuild="false" action="copy">
+        </file>
+        <file path="../../../../sdfm_epwm.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
         <file path="../main.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>

@@ -5,10 +5,8 @@ let device = "am243x";
 const files = {
     common: [
         "app_sdfm.c",
-        "epwm_dc.c",
-        "epwm_drv_aux.c",
-        "epwm_mod.c",
         "sdfm_example.c",
+        "sdfm_epwm.c",
         "main.c",
     ],
 };

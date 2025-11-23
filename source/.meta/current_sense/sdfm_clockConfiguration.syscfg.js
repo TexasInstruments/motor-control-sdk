@@ -22,7 +22,7 @@ for (let channel = 0; channel < 9; channel++)
          options: SDFM_ClockSource
 	    },
         {
-         name: "Ch" + channel.toString() + "_SDFM Clock",
+         name: "Ch" + channel.toString() + "_SDFM_Clock",
          displayName: "Channel" + channel.toString() + " SDFM Clock (Hz)",
          description: "Channel" + channel.toString() + " SDFM Clock (Hz)",
 		    hidden	: true,

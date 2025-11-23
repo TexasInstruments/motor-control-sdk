@@ -34,15 +34,15 @@
 #define _ICSS_SDFM_H_
 
 /* ICSSG INTC events */
-#define PRU_TRIGGER_HOST_SDFM_EVT_CH0  ( 3+18 )   
-#define PRU_TRIGGER_HOST_SDFM_EVT_CH1  ( 4+18 )   
-#define PRU_TRIGGER_HOST_SDFM_EVT_CH2  ( 5+18 )    
-#define RTU_TRIGGER_HOST_SDFM_EVT_CH0  ( 6+18 )   
-#define RTU_TRIGGER_HOST_SDFM_EVT_CH1  ( 7+18 )   
-#define RTU_TRIGGER_HOST_SDFM_EVT_CH2  ( 8+18 )   
-#define TXPRU_TRIGGER_HOST_SDFM_EVT_CH0 ( 9+18 )  
-#define TXPRU_TRIGGER_HOST_SDFM_EVT_CH1  ( 10+18 )    
-#define TXPRU_TRIGGER_HOST_SDFM_EVT_CH2 ( 11+18 )   
+#define ICSS_SDFM_TRIGGER_EVNT_CH0   ( 3+18 )   
+#define ICSS_SDFM_TRIGGER_EVNT_CH1   ( 4+18 )   
+#define ICSS_SDFM_TRIGGER_EVNT_CH2   ( 5+18 )    
+#define ICSS_SDFM_TRIGGER_EVNT_CH3   ( 6+18 )   
+#define ICSS_SDFM_TRIGGER_EVNT_CH4   ( 7+18 )   
+#define ICSS_SDFM_TRIGGER_EVNT_CH5   ( 8+18 )   
+#define ICSS_SDFM_TRIGGER_EVNT_CH6   ( 9+18 )  
+#define ICSS_SDFM_TRIGGER_EVNT_CH7   ( 10+18 )    
+#define ICSS_SDFM_TRIGGER_EVNT_CH8   ( 11+18 )   
 
 /* Number of SDFM channels per PRU, FIXME MOVE TO another file*/
 #if defined (SDFM_LOAD_SHARE_MODE)

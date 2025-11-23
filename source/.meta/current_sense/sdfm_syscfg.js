@@ -122,7 +122,7 @@ config = config.concat([
         description: "SDCLK Generation From",
 		hidden	: false,
         default: "2",
-        options: [   
+        options: [
                 {
                     name: "0",
                     displayName: "None"
@@ -139,7 +139,16 @@ config = config.concat([
                     name: "3",
                     displayName: "IEP"
                 },
-        ]
+        ],
+        onChange: updateClockSourceVisibility,
+    },
+    {
+        name: "SDFM_Clock_Value",
+        displayName: "SDFM Frequency (Hz)",
+        description: "Generated sdfm frequency from the selected clock source (IEP, ECAP, or GPIO1), Note: divider values need to be set manually in sdfm_example.c file.",
+        hidden: true,
+        default: 20000000,
+        onChange: propagateClockToChannels,
     },
     {
         name: "GROUP_pruSettings",
@@ -448,6 +457,44 @@ function addOtherPru(inst, ui)
     ui.TXPRU_EnableSnoopNC.hidden = hideConfigs;
 }
 
+function updateClockSourceVisibility(inst, ui)
+{
+    if (inst.SDFM_CLK_GEN == "0")
+    {
+        ui.SDFM_Clock_Value.hidden = true;
+    }
+    else
+    {
+        ui.SDFM_Clock_Value.hidden = false;
+    }
+
+    // Update read-only status for all channel clock fields
+    for (let channel = 0; channel < 9; channel++)
+    {
+        if (inst["Enable_Channel_" + channel.toString()])
+        {
+            ui["Ch" + channel.toString() + "_SDFM_Clock"].readOnly = (inst.SDFM_CLK_GEN != "0");
+        }
+    }
+
+    propagateClockToChannels(inst, ui);
+}
+
+function propagateClockToChannels(inst, ui)
+{
+    if (inst.SDFM_CLK_GEN != "0")
+    {
+        let clockValue = inst.SDFM_Clock_Value;
+        for (let channel = 0; channel < 9; channel++)
+        {
+            if (inst["Enable_Channel_" + channel.toString()] == true)
+            {
+                inst["Ch" + channel.toString() + "_SDFM_Clock"] = clockValue;
+            }
+        }
+    }
+}
+
 function onChangeEnableChannel(inst, ui)
 {
     for (let channel = 0; channel < total_channel; channel++)
@@ -456,7 +503,13 @@ function onChangeEnableChannel(inst, ui)
 
 		ui["Ch" + channel.toString() + "_SDCLKSEL"].hidden = !status;
         ui["Ch" + channel.toString() + "_CLKINV"].hidden = !status;
-        ui["Ch" + channel.toString() + "_SDFM Clock"].hidden = !status;
+        ui["Ch" + channel.toString() + "_SDFM_Clock"].hidden = !status;
+        ui["Ch" + channel.toString() + "_SDFM_Clock"].readOnly = (inst.SDFM_CLK_GEN != "0");
+
+        if (status && inst.SDFM_CLK_GEN != "0")
+        {
+            inst["Ch" + channel.toString() + "_SDFM_Clock"] = inst.SDFM_Clock_Value;
+        }
         ui["Ch" + channel.toString() + "_AccSource"].hidden = !status;
         ui["Ch" + channel.toString() + "_ComparatorEnable"].hidden = !status;
         ui["Ch" + channel.toString() + "_NC_OSR"].hidden = !status;

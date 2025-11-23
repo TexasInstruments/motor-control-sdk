@@ -31,6 +31,118 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/**
+ *  \file   sdfm_api.h
+ *
+ *  \brief  Public API declarations for SDFM (Sigma-Delta Filter Module) driver.
+ *
+ *  \details
+ *  This header file contains all public API function declarations for the SDFM driver.
+ *
+ *  ## API Categories
+ *
+ *  ### Initialization and Configuration
+ *  - SDFM_init(): Initialize SDFM instance with parameters from SysConfig
+ *  - SDFM_setEnableChannel(): Enable specific SDFM channels
+ *  - SDFM_enable(): Global enable for SDFM on specific PRU core
+ *
+ *  ### Clock Configuration
+ *  - SDFM_selectClockSource(): - 0: Use pr<k>_pru<n>_sd8_clk (common SDFM clock pin for all channels)
+ *                              - 1: Use pr<k>_pru<n>_sd<i>_clk (channel-specific clock)
+ *                              - 2: Use group clocks:
+ *                                      - pr<k>_pru<n>_sd0_clk for channels 0, 1, and 2
+ *                                      - pr<k>_pru<n>_sd3_clk for channels 3, 4, and 5
+ *                                      - pr<k>_pru<n>_sd6_clk for channels 6, 7, and 8 
+ *  - SDFM_setClockInversion(): Configure clock polarity
+ *  - SDFM_configEcap(): Configure ECAP for SD clock generation
+ *  - SDFM_configClockFromGPO1(): Configure PRU GPO shift-out mode for clock
+ *  - SDFM_configIepSyncMode(): Configure IEP SYNC0/SYNC1 for free-running clock
+ *
+ *  ### Filter Configuration
+ *  - SDFM_configDataFilter(): Select filter type (SINC1/SINC2/SINC3)
+ *  - SDFM_setFilterOverSamplingRatio(): Configure normal current OSR
+ *  - SDFM_setCompFilterOverSamplingRatio(): Configure over-current OSR 
+ *
+ *  ### Threshold and Comparator Configuration
+ *  - SDFM_setCompFilterThresholds(): Set high/low over-current thresholds
+ *  - SDFM_enableComparator(): Enable over-current comparator
+ *  - SDFM_disableComparator(): Disable over-current comparator
+ *  - SDFM_enableZeroCrossDetection(): Enable zero-crossing detection
+ *  - SDFM_disableZeroCrossDetection(): Disable zero-crossing detection
+ *  - SDFM_configComparatorGpioPins(): Associate GPIO pins for threshold events
+ *
+ *  ### Fast Detect Configuration
+ *  - SDFM_configFastDetect(): Configure fast detect parameters for error detection
+ *
+ *  ### Trigger Mode Configuration
+ *  - SDFM_enableTriggerModeForNormalCurrent(): Enable IEP-based triggered sampling
+ *  - SDFM_setSampleTriggerTime(): Set first sample trigger time in PWM cycle
+ *  - SDFM_enableDoubleSampling(): Enable second sample in PWM cycle
+ *  - SDFM_disableDoubleSampling(): Disable second sample
+ *  - SDFM_selectIepCmpEvent(): Select IEP comparator event for trigger
+ *  - SDFM_configIepCount(): Configure IEP count for PWM period
+ *  - SDFM_configIepCmp0ToResetIep(): Configure IEP CMP0 to reset counter
+ *
+ *  ### Snoop Mode Configuration
+ *  - SDFM_enableSnoopBasedNC(): Enable snoop mode for a PRU core
+ *  - SDFM_disableSnoopBasedNC(): Disable snoop mode for a PRU core
+ *
+ *  ### EPWM Synchronization
+ *  - SDFM_enableEpwmSync(): Enable EPWM synchronization
+ *  - SDFM_disableEpwmSync(): Disable EPWM synchronization
+ *
+ *  ### Data Retrieval
+ *  - SDFM_getFilterData(): Read current sample from specified channel
+ *
+ *  ### Status and Monitoring
+ *  - SDFM_getHighThresholdStatus(): Check high threshold violation
+ *  - SDFM_getLowThresholdStatus(): Check low threshold violation
+ *  - SDFM_getZeroCrossThresholdStatus(): Check zero-crossing event
+ *  - SDFM_getFastDetectErrorStatus(): Check fast detect error
+ *  - SDFM_clearOverCurrentError(): Clear over-current error flag
+ *  - SDFM_clearPwmTripStatus(): Clear PWM trip status
+ *
+ *  ### Phase Compensation
+ *  - SDFM_measureClockPhaseDelay(): Measure clock phase delay between channels
+ *  - SDFM_getClockPhaseDelay(): Get measured phase delay value
+ *
+ *  ### Load Share Mode
+ *  - SDFM_enableLoadShareMode(): Enable multi-PRU load sharing
+ *
+ *  ### Utility Functions
+ *  - SDFM_getFirmwareVersion(): Get PRU firmware version
+ *  - SDFM_setSampleOutputInterfaceGlobalAddr(): Set sample output buffer address
+ *  - SDFM_enableIep(): Enable IEP counter
+ *  - SDFM_configSync1Delay(): Configure SYNC1 delay relative to SYNC0
+ *
+ *  ## Usage Example
+ *
+ *  \code
+ *  // 1. Initialize SDFM with SysConfig parameters
+ *  SDFM_Handle hSdfm = SDFM_init(CONFIG_SDFM0, gSdfmParams);
+ *
+ *  // 2. Enable channels
+ *  SDFM_setEnableChannel(hSdfm, SDFM_CH0);
+ *  SDFM_setEnableChannel(hSdfm, SDFM_CH1);
+ *
+ *  // 3. Configure thresholds
+ *  uint32_t thresholds[2] = {HIGH_THRESHOLD, LOW_THRESHOLD};
+ *  SDFM_setCompFilterThresholds(hSdfm, SDFM_CH0, thresholds);
+ *
+ *  // 4. Enable SDFM
+ *  SDFM_enable(hSdfm, SDFM_PRU_CORE_INDX);
+ *
+ *  // 5. Read samples
+ *  uint32_t sample = SDFM_getFilterData(hSdfm, SDFM_CH0);
+ *  \endcode
+ *
+ *  ## Related Files
+ *
+ *  - sdfm_drv.h: Data structures, macros, and type definitions
+ *  - sdfm_drv.c: Driver implementation
+ *  - icssg_sdfm.h: Firmware interface definitions
+ */
+
 #ifndef _SDFM_API_H_
 #define _SDFM_API_H_
 
@@ -57,22 +169,6 @@ extern "C" {
  *
  *  @{
  */
-
-/* Number of ICSSG PRUs */
-#define NUM_PRU     ( 2 )
-
-/* PRU IDs */
-#define PRU_ID_0    ( 0 )   /* PRU 0 ID */
-#define PRU_ID_1    ( 1 )   /* PRU 1 ID */
-
-#define PRUx_DMEM_BASE_ADD     (0x00)
-#define RTUx_DMEM_BASE_ADD     (0x200)
-#define TXPRUx_DMEM_BASE_ADD   (0x400)
-/* Number of SD channels */
-#define NUM_SD_CH   ( ICSSG_NUM_SD_CH )
-/* ICSSG INTC event */
-#define SDFM_EVT    ( TRIGGER_HOST_SDFM_EVT )
-
 
 /**
  *
@@ -213,7 +309,13 @@ int32_t SDFM_configDataFilter(SDFM_Handle h_sdfm, uint8_t ch_id, uint8_t filter)
  *
  *  \param[in]  h_sdfm          SDFM handle
  *  \param[in]  ch_id           current ch number
- *  \param[in]  clk_source      channel clock source type 
+ *  \param[in]  clk_source      channel clock source type:
+ *                              - 0: Use pr<k>_pru<n>_sd8_clk (common SDFM clock pin for all channels)
+ *                              - 1: Use pr<k>_pru<n>_sd<i>_clk (channel-specific clock)
+ *                              - 2: Use group clocks:
+ *                                      - pr<k>_pru<n>_sd0_clk for channels 0, 1, and 2
+ *                                      - pr<k>_pru<n>_sd3_clk for channels 3, 4, and 5
+ *                                      - pr<k>_pru<n>_sd6_clk for channels 6, 7, and 8 
  *
  *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
  *
@@ -327,7 +429,7 @@ int32_t SDFM_enableTriggerModeForNormalCurrent(SDFM_Handle h_sdfm, uint8_t pru_c
  *
  *  \param[in]  h_sdfm          SDFM handle
  *  \param[in]  ch              current ch number
- *  \param[in]  fdParms         array of fast detect fields. {window size, zero max count, zero min count, one max count, one min count}
+ *  \param[in]  fdParms         array of fast detect fields. Size of fdParms should be 4 {fast detect enable, window size, zero max count, zero min count}
  *
  *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
  */
