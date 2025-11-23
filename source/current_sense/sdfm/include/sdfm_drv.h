@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (C) 2023-25 Texas Instruments Incorporated - http://www.ti.com/
  *
  *
  * Redistribution and use in source and binary forms, with or without
@@ -119,6 +119,8 @@ extern "C" {
 #define SDFM_CH_MASK_FOR_CH0_CH3_CH6     ( 0x49 )
 #define SDFM_CH_MASK_FOR_CH1_CH4_CH7     ( 0x92 )
 #define SDFM_CH_MASK_FOR_CH2_CH5_CH8     ( 0x124 )
+#define SDFM_NUM_OF_CH_PER_PRU_SLICE     (9)
+#define NUM_OF_PRU_CORE_PER_PRU_SLICE    ( 3 )
 
 /*SDFM Channel IDs*/
 #define SDFM_CHANNEL0    (0)
@@ -130,6 +132,8 @@ extern "C" {
 #define SDFM_CHANNEL6    (6)
 #define SDFM_CHANNEL7    (7)
 #define SDFM_CHANNEL8    (8)
+
+#define BF_SDFM_EN_ENABLE               (1)
 
 /*SDFM firmware version mask*/
 #define SDFM_FW_VERSION_BIT_SHIFT       (32)
@@ -143,9 +147,23 @@ extern "C" {
 #define SDFM_IEP_CMP1_EN_SHIFT     (2)
 #define SDFM_IEP_CMP2_EN_SHIFT     (3)
 
+#define SDFM_PRU_CORE_INDX          0U
+#define SDFM_RTUPRU_CORE_INDX       1U
+#define SDFM_TXPRU_CORE_INDX        2U
+
 /* ========================================================================== */
 /*                         Structures                                         */
 /* ========================================================================== */
+
+/**
+ * \brief SDFM clock source enumeration
+ */
+typedef enum SDFM_ClockSource_e {
+    SDFM_CLOCK_SOURCE_IEP = 0,   /**< IEP as clock source */
+    SDFM_CLOCK_SOURCE_ECAP = 1,  /**< eCAP as clock source */
+    SDFM_CLOCK_SOURCE_PRUGPIO1 = 2, /**< PRU GPIO1 as clock source */
+    SDFM_EXTERNAL_CLOCK_SRC = 3 /**< External clock source */
+} SDFM_ClockSource;
 
 /**
  *    \brief    Structure defining SDFM clock configuration parameters.
@@ -155,12 +173,15 @@ extern "C" {
  */
 typedef struct SDFM_CfgSdClk_s
 {
-    /**< clock count to generate SD clock (eCAP PWM) with desired frequency  */
-    volatile uint8_t  sd_prd_clocks;
-    /**< invert SD clock post clock selection mux  */
-    volatile uint8_t  sd_clk_inv;
-    /**< reserved  */
-    volatile uint16_t  reserved;
+    /**< Clock source selection (IEP, eCAP, or PRU GPIO1) */
+    volatile SDFM_ClockSource clock_source;
+    
+    /**< Sdfm Clock frequency value in Hz */
+    volatile uint64_t sdfm_clock_value;
+    
+    /**< Sdfm Clock divider value */
+    volatile uint64_t sdfm_source_clock_value;
+    
 } SDFM_CfgSdClk;
 
 /**
@@ -173,33 +194,28 @@ typedef struct SDFM_CfgSdClk_s
  */
 typedef struct SDFM_CfgTrigger_s
 {
-    /**< enable continuous mode */
-    volatile  uint8_t  en_continuous_mode;
+    /**< enable trigger mode */
+    volatile  uint8_t  enable_trigger_mode;
     /**< enable double update */
-    volatile uint8_t    en_double_nc_sampling;
+    volatile uint8_t   en_double_nc_sampling;
     /**< First sample starting point */
     volatile uint32_t first_samp_trig_time;
     /**<Second sample starting point*/
     volatile uint32_t second_samp_trig_time;
     /**< IEP0 counts in normal current sampling period*/
-    volatile uint32_t nc_prd_iep_cnt;
+    volatile uint64_t nc_prd_iep_cnt;
+    /**< max IEP0 counts in one epwm period*/
+    volatile uint32_t max_iep_cnt_per_epwm_prd;
+    /**< CMP event number */
+    volatile uint8_t iep_cmp_event;
+    /**< CMP event register address */
+    volatile uint32_t iep_cmp_event_reg;
+    /**<IEP cmp status register address */
+    volatile uint32_t iep_cmp_status_reg;
+    /**< Host output sample buffer base address for this channel */
+    volatile uint64_t   sampleBufferBaseAdd;
+
 } SDFM_CfgTrigger;
-
-/**
- *    \brief    Structure defining SDFM IEP configuration
- *
- *    \details  Increment value of IEP counter (IEP0 default increment=1) <br>
- *              IEP CMP0 count for simulated EPWM period  <br>
- */
-typedef struct SDFM_CfgIep_s
-{
-    /**< bit-field containing flags indicating configurations to be executed, non-zero to enable */
-    volatile uint8_t iep_inc_value;
-
-    /**< IEP CMP0 count for simulated EPWM period */
-    volatile  uint32_t  cnt_epwm_prd;
-
-}SDFM_CfgIep;
 
 
 /**
@@ -214,44 +230,6 @@ typedef struct SDFM_GpioParams_s{
     volatile uint32_t clr_val_addr;
 } SDFM_GpioParams;
 
-/**
- *    \brief    Structure defining SDFM channel control fields
- *
- *    \details  Used by driver to enable / disable individual SD <br>
- *              channels.
- */
-typedef struct SDFM_ChCtrl_s
-{
-    /**< stores the channel ids for different selected channel */
-    volatile uint16_t    sdfm_ch_id;
-    /*BitN:ChN: Channel mask*/
-    volatile uint16_t    sdfm_ch_mask;
-    /**< bit-field to enable comparators for individual SDFM channels, BitN:ChN, non-zero to enable */
-    volatile uint16_t    enable_comparator;
-    /**< bit-field to enable fast detect  for individual SDFM channels, BitN:ChN, non-zero to enable */
-    volatile uint8_t    enFastDetect;
-     /**< enable phase delay calcualtion */
-    volatile uint8_t    en_phase_delay;
-    /**< Clock phase delay */
-     volatile uint16_t   clock_phase_delay;
-    /**<nearest clock edge status of data*/
-    volatile uint16_t    clock_edge;
-
-} SDFM_ChCtrl;
-
-/**
- *    \brief    Structure defining clk source for sdfm ch
- *
- *    \details clk source for channel <br>
- *             iversion of clock
- */
-typedef struct SDFM_ClkSourceParms_s
-{
-    /** < Channle clock source */
-    volatile uint32_t clk_source;
-    /**<clock inversion*/
-    volatile uint8_t  clk_inv;
-}SDFM_ClkSourceParms;
 
 /**
  *    \brief    Structure defining SDFM thresholds parametrs
@@ -276,103 +254,216 @@ typedef struct SDFM_ThresholdParms_s
     /**< Zero Cross Threshold*/
     volatile uint32_t    zeroCrossTh;
 }SDFM_ThresholdParms;
-
 /**
- *    \brief    Structure defining SDFM configuration interface
+ *    \brief    Structure defining configuration for a single SDFM channel
  *
- *    \details  Firmware configuration interface exposed through PRU data <br>
- *              memory - used by driver to configure firmware parameters
+ *    \details  Contains all configuration parameters specific to one SDFM channel
  */
-typedef struct SDFM_Cfg_s
+typedef struct SDFM_ChannelConfig_s
 {
-    /** < Channle id */
+    /**< Channel ID (0-8) */
     volatile uint8_t   ch_id;
+    
+    /**< Enable/disable status for this channel */
+    volatile uint8_t   enabled;
+    
     /**< Filter type - sinc1, sinc2, sinc3 */
-    volatile uint8_t    filter_type;
-    /**< Accumulator Over Sampling Rate (OSR) */
-    volatile uint8_t    osr;
-    /**< sdfm threshold parms*/
-    SDFM_ThresholdParms  sdfm_threshold_parms;
-    /**< Fast detect window size*/
+    volatile uint8_t   filter_type;
+    
+    /**< Normal current Over Sampling Rate (OSR) */
+    volatile uint8_t   normal_current_osr;
+
+    /**< Over current Over Sampling Rate (OSR) */
+    volatile uint8_t   over_current_osr;
+    
+    /**< SDFM clock frequency for this channel */
+    volatile uint32_t  sdfmClock;
+    
+    /**< Enable comparator for this channel */
+    volatile uint8_t  enable_comparator;
+    
+    /**< Enable fast detect for this channel */
+    volatile uint8_t   enFastDetect;
+    
+    /**< Fast detect window size */
     volatile uint8_t   fd_window;
-    /**< Fast detect max count of zero*/
+    
+    /**< Fast detect max count of zero */
     volatile uint8_t   fd_zero_max;
-    /**< Fast detect min count of zero*/
+    
+    /**< Fast detect min count of zero */
     volatile uint8_t   fd_zero_min;
-    /**< Fast detect max count of one*/
+    
+    /**< Fast detect max count of one */
     volatile uint8_t   fd_one_max;
-    /**< Fast detect min count of one*/
+    
+    /**< Fast detect min count of one */
     volatile uint8_t   fd_one_min;
-    /**< sdfm ch clock parms*/
-    SDFM_ClkSourceParms  sdfm_clk_parms;
-    /**< array to store the params of gpios for zero cross threshold*/
-    SDFM_GpioParams        sdfm_gpio_params;
-} SDFM_Cfg;
+    
+    /**< Clock source for this channel */
+    volatile uint32_t  clk_source;
+    
+    /**< Clock inversion for this channel */
+    volatile uint8_t   clk_inv;
+    
+    /**< Enable phase delay calculation */
+    volatile uint8_t   en_phase_delay;
+    
+    /**< Clock phase delay */
+    volatile uint16_t  clock_phase_delay;
+    
+    /**< Nearest clock edge status of data */
+    volatile uint16_t  clock_edge;
+    
+    /**< Threshold configuration */
+    SDFM_ThresholdParms  threshold_config;
+    
+    /**< GPIO parameters for this channel */
+    SDFM_GpioParams     gpio_params;
+    
+} SDFM_ChannelConfig;
 
 /**
- *    \brief    Structure defining SDFM control fields
+ *    \brief    Structure defining SDFM PRU configuration
  *
- *    \details  Firmware control & status interface exposed through PRU data    <br>
- *              memory - used by driver to enable SDFM operations and to select <br>
- *              between continuous and triggered mode <br>
+ *    \details  Contains configuration parameters for PRU including ID, clock settings, and load sharing
  */
-typedef struct SDFM_Ctrl_s
+typedef struct SDFM_CfgPru_s
+{
+    /**< PRU Slice */
+    volatile uint8_t pru_slice;
+    
+    /**< PRU ICSS Handle */
+    PRUICSS_Handle pruicss_handle;
+    
+    /**< PRU PWM Handle */
+    PRUICSS_PWM_Handle pwm_handle;
+    
+    /**< PRU core clock frequency in Hz */
+    volatile uint32_t pru_clock;
+    
+    /**< Enable load sharing between PRUs */
+    volatile uint8_t load_share_enable;
+    
+   /**< IEP Instance (0 for IEP0, 1 for IEP1) */
+   volatile uint8_t iep_instance;
+    
+   /**< Increment value of IEP counter */
+   volatile uint8_t iep_inc_value;
+
+   /**< PRU iep clock frequency in Hz */
+   volatile uint32_t iep_clock;
+    
+} SDFM_CfgPru;
+
+/**
+ *    \brief    Structure defining SDFM control settings
+ *
+ *    \details  Contains control parameters for SDFM operation
+ */
+typedef struct SDFM_Control_s
 {
     /**< SDFM Enable */
-    volatile uint8_t sdfm_en;
+    volatile uint8_t enable;
+    
     /**< SDFM Enable Ack */
-    volatile uint8_t  sdfm_en_ack;
-    /**< SDFM PRU ID*/
-    volatile uint8_t  sdfm_pru_id;
-    /**<  enable snoop based Normal current sampling */
-    volatile uint8_t  sdfm_en_snoop_nc;
-} SDFM_Ctrl;
+    volatile uint8_t enable_ack;
+    
+    /**< Enable snoop based Normal current sampling */
+    volatile uint8_t enable_snoop_nc;
+} SDFM_Control;
+/**
+ *    \brief    Structure defining SDFM interface components that will be placed in DMEM for firmware interaction
+ *
+ *    \details  Contains control settings, channel configurations, and trigger settings in a layout
+ *              that exactly matches the firmware's expected memory layout
+ */
+typedef struct SDFM_Interface_s
+{
+    /**< Global SDFM control settings for each PRU core */
+    SDFM_Control control[NUM_OF_PRU_CORE_PER_PRU_SLICE];
+    
+    /**< Channel mask indicating which channels are active */
+    volatile uint16_t active_channels_mask;
 
-typedef struct SDFM_Interface_s{
-    /**< control interface  */
-    SDFM_Ctrl       sdfm_ctrl;
-    /**<iep configuration interface */
-    SDFM_CfgIep    sdfm_cfg_iep_ptr;
-    /**< SD modulator clock, eCAP PWM period register value */
-    SDFM_CfgSdClk     sd_clk;
-     /**< channel control interface */
-    SDFM_ChCtrl    sdfm_ch_ctrl;
-    /**< sdfm channel configuration interface pointer*/
-    SDFM_Cfg        sdfm_cfg_ptr[NUM_CH_SUPPORTED_PER_AXIS];
-    /*<sdfm time sampling interface pointer */
-    SDFM_CfgTrigger    sdfm_cfg_trigger;
-    /**< host output sample buffer base address */
-    volatile uint32_t   sampleBufferBaseAdd;
-    /**<firmware version */
-    volatile uint64_t  firmwareVersion;
-}SDFM_Interface;
+    /**< Firmware version */
+    volatile uint64_t firmwareVersion;
 
+    /**< Trigger configuration */
+    SDFM_CfgTrigger trigger_config[NUM_OF_PRU_CORE_PER_PRU_SLICE];
+    
+    /**< Channel-specific configurations - array of 9 channels */
+    SDFM_ChannelConfig channels[SDFM_NUM_OF_CH_PER_PRU_SLICE];
+
+    
+} SDFM_Interface;
+/**
+ *    \brief    Structure defining SDFM sample output address
+ *
+ *    \details  SDFM sample output address, used by application/driver to read output samples
+ *             
+ */
 typedef struct SDFM_SampleOutInterface_s
 {
    uint32_t sampleOutput[NUM_CH_SUPPORTED_PER_AXIS];
 }SDFM_SampleOutInterface;
+
 /**
- *    \brief    Structure defining SDFM interface
+ *    \brief    Structure defining SDFM interface with channel-based organization
  *
- *    \details  Firmware configuration, control, data and trigger interface exposed through PRU
+ *    \details  Firmware configuration, control, data and trigger interface with all channel settings organized separately
+ */
+typedef struct SDFM_Handle_Config_s {
+    /**< PRU configuration */
+    SDFM_CfgPru pru_config;
+    
+    /**< Global SD clock configuration */
+    SDFM_CfgSdClk clk_config;
+
+    /**< Pointer to SDFM interface in DMEM */
+    SDFM_Interface *sdfm_interface;
+    
+    /**< synchronization with EPWM */
+    volatile uint8_t enable_sync_with_epwm;
+
+    /**< EPWM source for synchronization */
+    volatile uint8_t sync_epwm_src;
+
+    SDFM_SampleOutInterface *sampleOutputInterface;
+    
+} SDFM_Handle_Config;
+/**
+ *    \brief    Handle to the SDFM driver object
  *
  */
-typedef struct SDFM_s {
-    /**< PRU ID */
-    PRUICSS_Handle gPruIcssHandle;
-    PRUICSS_PWM_Handle gPruPwmHandle;
-    uint8_t pruId;
-    uint32_t sdfmClock;
-    uint32_t iepClock;
-    uint32_t pruCoreClk;
-    uint8_t  iepInc;
-    SDFM_Interface * pSdfmInterface;
-    SDFM_SampleOutInterface *sampleOutputInterface;
-    void *pruicssCfg;
-    void *pruicssIep;
-    void *pruicssEcap;
-} SDFM;
+typedef struct SDFM_Handle_Config_s *SDFM_Handle;
 
+/**
+ *    \brief    Structure defining SDFM initialization parameters.
+ *
+ */
+typedef struct SDFM_Params_s
+{
+    PRUICSS_Handle pruicss_handle; /**< PRU ICSS Handle */
+    PRUICSS_PWM_Handle pwm_handle; /**< PRU PWM Handle */
+    uint32_t load_share_enable; /**< Enable load sharing between PRUs */
+    uint8_t enable_snoop_mode[NUM_OF_PRU_CORE_PER_PRU_SLICE]; /**< Enable snoop mode for normal current sampling */
+    SDFM_CfgTrigger trigger_config[NUM_OF_PRU_CORE_PER_PRU_SLICE];
+    SDFM_ChannelConfig channels[SDFM_NUM_OF_CH_PER_PRU_SLICE];
+    uint32_t pru_slice_value; /**< PRUx slice being used */
+    uint32_t iep_instance;     /**< IEP instance (0 for IEP0, 1 for IEP1) */
+    uint32_t iep_inc_value; /**< Increment value of IEP counter */
+    uint32_t iep_reset_freq; /**< IEP reset frequency in Hz */
+    uint32_t pru_clock; /**< PRU core clock frequency in Hz */
+    uint32_t iep_clock; /**< IEP clock frequency in Hz */
+    uint16_t sdfm_channel_mask; /**< SDFM channel mask to indicate active channels */
+    uint8_t sdfm_enable_pru_core_mask; /**< PRU core mask to indicate which PRU cores are enabled */
+    uint8_t sdfm_enable_epwm_sync; /**< Enable ePWM sync for normal current sampling */
+    uint8_t sdfm_epwm_sync_source; /**< ePWM sync source selection */
+    uint32_t samplesBaseAddress; /**< output samples base address*/
+    uint8_t sdfm_enable_phase_delay; /**< Enable phase delay measurement */
+    uint8_t sdfm_phase_delay; /**< Measured phase delay */
+}SDFM_Params;
 
 #include "sdfm_api.h"
 

@@ -30,6 +30,7 @@ const cflags_pru = {
     common: [
         "-v4",
         "-DSDFM_PRU_CORE",
+        "-DSDFM_PHASE_DELAY_CALC",
         "-o2",
         "--display_error_number",
         "--hardware_mac=on",

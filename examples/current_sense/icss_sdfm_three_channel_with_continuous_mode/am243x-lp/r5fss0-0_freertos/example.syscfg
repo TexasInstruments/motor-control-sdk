@@ -1,8 +1,8 @@
 /**
  * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
  * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
- * @cliArgs --device "AM243x_ALX_beta" --part "ALX" --package "ALX" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@11.00.00"
- * @v2CliArgs --device "AM2434" --package "FCCSP (ALX)" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@11.00.00"
+ * @cliArgs --device "AM243x_ALX_beta" --part "ALX" --package "ALX" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@2025.00.00"
+ * @v2CliArgs --device "AM2434" --package "FCCSP (ALX)" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@2025.00.00"
  * @versions {"tool":"1.23.0+4000"}
  */
 
@@ -49,18 +49,12 @@ const pruicss_g_v0_pwm1 = pruicss_g_v0_pwm.addInstance();
 /**
  * Write custom configuration values to the imported modules.
  */
-sdfm1.$name                    = "CONFIG_SDFM0";
-sdfm1.Enable_Channel_0         = true;
-sdfm1.Enable_Channel_1         = true;
-sdfm1.Enable_Channel_2         = true;
-sdfm1.Ch0_EnableContinuousMode = true;
-sdfm1.Ch0_EPWM_SYNC            = true;
-sdfm1.Ch1_EnableContinuousMode = true;
-sdfm1.Ch1_EPWM_SYNC            = true;
-sdfm1.Ch2_EnableContinuousMode = true;
-sdfm1.Ch2_EPWM_SYNC            = true;
-sdfm1.G_MUX_EN                 = true;
-sdfm1.PRU_ICSSG0_PRU.$assign   = "PRU_ICSSG0_PRU0";
+sdfm1.$name                  = "CONFIG_SDFM0";
+sdfm1.G_MUX_EN               = true;
+sdfm1.Enable_Channel_0       = true;
+sdfm1.Enable_Channel_1       = true;
+sdfm1.Enable_Channel_2       = true;
+sdfm1.PRU_ICSSG0_PRU.$assign = "PRU_ICSSG0_PRU0";
 
 epwm1.$name            = "CONFIG_EPWM0";
 epwm1.EPWM.$assign     = "EHRPWM0";
@@ -290,8 +284,8 @@ pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE[0].PRU_ICSSG0_PWM.TZ_OUT.$used   = true;
 pruicss1.$name                                                                    = "CONFIG_PRU_ICSS0";
 pruicss1.coreClk                                                                  = 300000000;
 pruicss1.iepClk                                                                   = 300000000;
-sdfm1.pru                                                                         = pruicss1;
 pruicss_g_v0_pwm1.PRUICSS                                                         = pruicss1;
+sdfm1.pru                                                                         = pruicss1;
 pruicss1.AdditionalICSSSettings[0].$name                                          = "CONFIG_PRU_ICSS_IO0";
 pruicss1.AdditionalICSSSettings[0].PruEcapIO.create(1);
 pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].$name                             = "CONFIG_PRU_ICSS_ECAP_IO0";
