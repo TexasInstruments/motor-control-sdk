@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2021-23 Texas Instruments Incorporated
+ *  Copyright (C) 2021-25 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -52,18 +52,29 @@ extern "C" {
  *  @{
  */
 
+ /**
+ *  \brief      Initialize EnDat firmware interface address and get the pointer
+ *              to struct Endat_Handle instance
+ *  
+ *  \param[in]  index           Index to use in the global handle array
+ *  \param[in]  endat_params    Structure containing initialization parameters
+ *
+ *  \retval     handle          Pointer to struct Endat_Handle instance, or NULL if parameters are invalid
+ *
+ */
+Endat_Handle endat_init(uint32_t index, Endat_Params endat_params);
 /**
  *  \brief      process raw recieved data and format based on the command
  *
- *  \param[in]  priv    cookie returned by endat_init
+ *  \param[in]  handle    cookie returned by endat_init
  *  \param[in]  cmd     EnDat command number
  *  \param[out] u       pointer to union for storing formatted data based on cmd
  *
  *  \retval     0 for success, -EINVAL for failure
  *
  */
-int32_t endat_recvd_process(struct endat_priv *priv, int32_t cmd,
-                        union endat_format_data *u);
+int32_t endat_recvd_process(Endat_Handle handle, int32_t cmd,
+                        Endat_FormatData *u);
 
 /**
  *  \brief      CRC result indicated in return value as follows,             <br>
@@ -74,233 +85,233 @@ int32_t endat_recvd_process(struct endat_priv *priv, int32_t cmd,
  *              2nd bit high    if addinfo 2 present, addinfo 2 CRC success  <br>
  *              2nd bit low     if addinfo 2 present, addinfo 2 CRC failure
  *
- *  \param[in]  priv    cookie returned by endat_init
+ *  \param[in]  handle    cookie returned by endat_init
  *  \param[in]  cmd     EnDat command number
  *  \param[in]  u       pointer to union having formatted data based on cmd
  *
  *  \retval     status  position/address/params/test CRC status
  *
  */
-uint32_t endat_recvd_validate(struct endat_priv *priv, int32_t cmd,
-                              union endat_format_data *u);
+uint32_t endat_recvd_validate(Endat_Handle handle, int32_t cmd,
+                              Endat_FormatData *u);
 
 /**
  *  \brief      send the EnDat command and wait till firmware acknowledges
  *
- *  \param[in]  priv            cookie returned by endat_init
+ *  \param[in]  handle            cookie returned by endat_init
  *  \param[in]  cmd             EnDat command number
  *  \param[in]  cmd_supplement  Supplement information needed to setup EnDat cmd
  *
  *  \retval     0 for success, -EINVAL for failure
  *
  */
-int32_t endat_command_process(struct endat_priv *priv, int32_t cmd,
-                          struct cmd_supplement *cmd_supplement);
+int32_t endat_command_process(Endat_Handle handle, int32_t cmd,
+                          Endat_CmdSupplement *cmd_supplement);
 
 /**
  *  \brief      setup the EnDat command in the PRU interface buffer
  *
- *  \param[in]  priv            cookie returned by endat_init
+ *  \param[in]  handle            cookie returned by endat_init
  *  \param[in]  cmd             EnDat command number
  *  \param[in]  cmd_supplement  Supplement information needed to setup EnDat cmd
  *
  *  \retval     0 for success, -EINVAL for failure
  *
  */
-int32_t endat_command_build(struct endat_priv *priv, int32_t cmd,
-                        struct cmd_supplement *cmd_supplement);
+int32_t endat_command_build(Endat_Handle handle, int32_t cmd,
+                        Endat_CmdSupplement *cmd_supplement);
 
 /**
  *  \brief      trigger sending the EnDat command in PRU
  *
- *  \param[in]  priv     cookie returned by endat_init
+ *  \param[in]  handle     cookie returned by endat_init
  *
  *
  */
-void endat_command_send(struct endat_priv *priv);
+void endat_command_send(Endat_Handle handle);
 
 /**
  *  \brief  wait till PRU finishes EnDat transaction
  *
- *  \param[in]  priv     cookie returned by endat_init
+ *  \param[in]  handle     cookie returned by endat_init
  *
  *
  */
-void endat_command_wait(struct endat_priv *priv);
+void endat_command_wait(Endat_Handle handle);
 
 
 /**
  *  \brief  read recovery time parameters from memory
  *
- *  \param[in]  priv     cookie returned by endat_init
+ *  \param[in]  handle     cookie returned by endat_init
  *
  *   \retval  Value of Recovery Time in nanoseconds
  *
  */
-uint32_t endat_get_recovery_time(struct endat_priv *priv);
+uint32_t endat_get_recovery_time(Endat_Handle handle);
 
 /**
- *  \brief       update priv with position resolution, id, serial number, encoder
+ *  \brief       update handle with position resolution, id, serial number, encoder
  *               type and supported command set
  *
- *  \param[in]   priv    cookie returned by endat_init
+ *  \param[in]   handle    cookie returned by endat_init
  *
  *  \retval      0 for success, -EINVAL for failure
  *
  */
-int32_t endat_get_encoder_info(struct endat_priv *priv);
+int32_t endat_get_encoder_info(Endat_Handle handle);
 
 /**
  *  \brief  get propagation delay automatically estimated by the firmware
  *
- *  \param[in]  priv    cookie returned by endat_init
+ *  \param[in]  handle    cookie returned by endat_init
  *
  *  \retval     delay   estimated propogation delay
  *
  */
-uint32_t endat_get_prop_delay(struct endat_priv *priv);
+uint32_t endat_get_prop_delay(Endat_Handle handle);
 
 /**
- *  \brief  track presence of additional information in priv
+ *  \brief  track presence of additional information in handle
  *
- *  \param[in]  priv           cookie returned by endat_init
+ *  \param[in]  handle           cookie returned by endat_init
  *  \param[in]  cmd            EnDat command number
  *  \param[in]  cmd_supplement Supplement information needed to setup EnDat cmd
  *
  *
  */
-void endat_addinfo_track(struct endat_priv *priv, int32_t cmd,
-                         struct cmd_supplement *cmd_supplement);
+void endat_addinfo_track(Endat_Handle handle, int32_t cmd,
+                         Endat_CmdSupplement *cmd_supplement);
 
 /**
  *  \brief  configure EnDat clock
  *
- *  \param[in]  priv    cookie returned by endat_init
+ *  \param[in]  handle    cookie returned by endat_init
  *  \param[in]  clk_cfg pointer to structure containing clock configuration data
  *
  *
  */
-void endat_config_clock(struct endat_priv *priv,
-                        struct endat_clk_cfg *clk_cfg);
+void endat_config_clock(Endat_Handle handle,
+                        Endat_ClkCfg_Internal *clk_cfg);
 
 /**
  *  \brief  configure tST delay
  *
- *  \param[in]  priv    cookie returned by endat_init
+ *  \param[in]  handle    cookie returned by endat_init
  *  \param[in]  delay   tST delay value
  *
  *
  */
-void endat_config_tst_delay(struct endat_priv *priv, uint16_t delay);
+void endat_config_tst_delay(Endat_Handle handle, uint16_t delay);
 
 /**
  *  \brief  configure rx arm counter
  *
- *  \param[in]  priv    cookie returned by endat_init
+ *  \param[in]  handle    cookie returned by endat_init
  *  \param[in]  val     rx arm counter value in ns
  *
  *
  */
-void endat_config_rx_arm_cnt(struct endat_priv *priv, uint16_t val);
+void endat_config_rx_arm_cnt(Endat_Handle handle, uint16_t val);
 
 /**
  *  \brief  configure wire delay for the selected channel
  *
- *  \param[in]  priv    cookie returned by endat_init
+ *  \param[in]  handle    cookie returned by endat_init
  *  \param[in]  val     wire delay in ns
  *
  *
  */
-void endat_config_wire_delay(struct endat_priv *priv, uint16_t val);
+void endat_config_wire_delay(Endat_Handle handle, uint16_t val);
 
 /**
  *  \brief  configure clocks to be disabled at the end of rx to account for tD
  *
- *  \param[in]  priv    cookie returned by endat_init
+ *  \param[in]  handle    cookie returned by endat_init
  *  \param[in]  val     number of clocks to be disabled
  *
  *
  */
-void endat_config_rx_clock_disable(struct endat_priv *priv,
+void endat_config_rx_clock_disable(Endat_Handle handle,
                                    uint16_t val);
 
 /**
  *  \brief       start continuous mode
  *
- *  \param[in]   priv   cookie returned by endat_init
+ *  \param[in]   handle   cookie returned by endat_init
  *
  *  \retval      0       success, -EINVAL for failure
  *
  */
-int32_t endat_start_continuous_mode(struct endat_priv *priv);
+int32_t endat_start_continuous_mode(Endat_Handle handle);
 
 /**
  *  \brief       stop continuous mode
  *
- *  \param[in]   priv   cookie returned by endat_init
+ *  \param[in]   handle   cookie returned by endat_init
  *
  *
  */
-void endat_stop_continuous_mode(struct endat_priv *priv);
+void endat_stop_continuous_mode(Endat_Handle handle);
 
 /**
  *  \brief      configure EnDat master for host trigger mode
  *
- *  \param[in]  priv    cookie returned by endat_init
+ *  \param[in]  handle    cookie returned by endat_init
  *
  *
  */
-void endat_config_host_trigger(struct endat_priv *priv);
+void endat_config_host_trigger(Endat_Handle handle);
 
 /**
  *  \brief      configure EnDat master in periodic trigger mode
  *
- *  \param[in]  priv    cookie returned by endat_init
+ *  \param[in]  handle    cookie returned by endat_init
  *
  *
  */
-void endat_config_periodic_trigger(struct endat_priv *priv);
+void endat_config_periodic_trigger(Endat_Handle handle);
 /*  brief     set syn_bits of all connected channels for synchronization before global_TX_init
  *
- *  \param[in]  priv    cookie returned by endat_init
+ *  \param[in]  handle    cookie returned by endat_init
  * \param[in]   mask    channels mask
  *
  */
-void endat_config_syn_bits(struct endat_priv *priv, uint8_t mask);
+void endat_config_syn_bits(Endat_Handle handle, uint8_t mask);
 /**
  *  \brief     set a core as primay core for global configuration, clk configuration and TX_GLOBAL_INIT
  *
- *  \param[in]  priv    cookie returned by endat_init
+ *  \param[in]  handle    cookie returned by endat_init
  *  \param[in]   mask    channels mask
  *
  *
  */
-void endat_config_primary_core_mask(struct endat_priv *priv, uint8_t mask);
+void endat_config_primary_core_mask(Endat_Handle handle, uint8_t mask);
 /**
  *  \brief     enable load share mode if encoders has diffent make
  *
- *  \param[in]  priv    cookie returned by endat_init
+ *  \param[in]  handle    cookie returned by endat_init
  *
  */
-void endat_enable_load_share_mode(struct endat_priv *priv);
+void endat_enable_load_share_mode(Endat_Handle handle);
 /**
  *  \brief      select channel to be used by EnDat master
  *
- *  \param[in]  priv    cookie returned by endat_init
+ *  \param[in]  handle    cookie returned by endat_init
  *  \param[in]  ch      channel to be selected
  *
  *
  */
-void endat_config_channel(struct endat_priv *priv, int32_t ch);
+void endat_config_channel(Endat_Handle handle, int32_t ch);
 /**
  *  \brief      select mask of channels to be used in multi channel configuration by EnDat master
  *
- *  \param[in]  priv    cookie returned by endat_init
+ *  \param[in]  handle    cookie returned by endat_init
  *  \param[in]  mask    channel mask
  *  \param[in]  loadshare  value for loadshare mode enable.
  *
  */
-void endat_config_multi_channel_mask(struct endat_priv *priv,
+void endat_config_multi_channel_mask(Endat_Handle handle,
                                      uint8_t mask,
                                      uint8_t loadshare);
 /**
@@ -309,52 +320,34 @@ void endat_config_multi_channel_mask(struct endat_priv *priv,
  *              to know the channels that has been detected. Initialization success implies <br>
  *              that all channels indicated has been detected.
  *
- *  \param[in]  priv    cookie returned by endat_init
+ *  \param[in]  handle    cookie returned by endat_init
  *
  *  \retval     mask    mask of the detected channels
  *
  */
-uint8_t endat_multi_channel_detected(struct endat_priv *priv);
+uint8_t endat_multi_channel_detected(Endat_Handle handle);
 
 /**
  *  \brief      In multi channel configuration, select channel before receive processing in <br>
  *              multi channel configuration. After receive is complete, select each channel <br>
  *              and invoke rx API's to parse data recieved in each channel.
  *
- *  \param[in]  priv    cookie returned by endat_init
+ *  \param[in]  handle    cookie returned by endat_init
  *  \param[in]  ch      channel number to be selected
  *
  *
  */
-void endat_multi_channel_set_cur(struct endat_priv *priv, int32_t ch);
+void endat_multi_channel_set_cur(Endat_Handle handle, int32_t ch);
 /**
  *  \brief      wait for EnDat master firmware to initialize
  *
- *  \param[in]  priv    cookie returned by endat_init
+ *  \param[in]  handle    cookie returned by endat_init
  *  \param[in]  timeout timeout to wait for initialization
  *  \param[in]  mask    channel mask
  *  \retval     0 for success, -EINVAL for failure
  *
  */
-int32_t endat_wait_initialization(struct endat_priv *priv, uint32_t timeout, uint8_t mask);
-
-/**
- *  \brief      Initialize EnDat firmware interface address and get the pointer
- *              to struct endat_priv instance
- *
- *  \param[in]  pruss_xchg      EnDat firmware interface address
- *  \param[in]  endatRxInfo     EnDat Rx interface
- *  \param[in]  endatChInfoGlobalAddr        global address for endatRxInfo
- *  \param[in]  pruss_cfg       ICSS PRU config base address
- *  \param[in]  pruss_iep       ICSS PRU iep base address
- *  \param[in]  slice           ICSS PRU SLICE
- *  \param[in]  endat_clk_config           3 channel Peripheral configuration parameters 
- *
- *  \retval     priv            pointer to struct endat_priv instance
- *
- */
-struct endat_priv *endat_init(struct endat_pruss_xchg *pruss_xchg, struct endatChRxInfo *endatRxInfo, uint64_t endatChInfoGlobalAddr,
-                              void *pruss_cfg, void *pruss_iep, int32_t slice, endat_clock_config *endat_clk_config);
+int32_t endat_wait_initialization(Endat_Handle handle, uint32_t timeout, uint8_t mask);
 
 /**
  *  \brief      Read EnDat 2.2 angular position in steps for rotary encoders      <br>
@@ -367,51 +360,51 @@ struct endat_priv *endat_init(struct endat_pruss_xchg *pruss_xchg, struct endatC
  *              1. Total resolution >= 25                                         <br>
  *              2. Single turn resolution <= 30
  *
- *  \param[in]  priv    cookie returned by endat_init
+ *  \param[in]  handle    cookie returned by endat_init
  *
  *  \retval     angle for angular position in steps on success, -1 for failure
  *
  */
-int32_t endat_get_2_2_angle(struct endat_priv *priv);
+int32_t endat_get_2_2_angle(Endat_Handle handle);
 /**
  *  \brief      Initialize the recovery time parameters 
  *             
- *   \param[in]  priv    cookie returned by endat_init
+ *   \param[in]  handle    cookie returned by endat_init
  *
  */
 
-void endat_init_rt_measurement (struct endat_priv *priv); 
+void endat_init_rt_measurement (Endat_Handle handle); 
 /**
  *  \brief      Validate the recovery time parameters 
  *             
- *  \param[in]  priv  cookie returned by endat_init
+ *  \param[in]  handle  cookie returned by endat_init
  * 
  *  \retval  return 0 if measured recovery time is within the recovery time range else return error 
  */
 
-int8_t endat_check_rt_error(struct endat_priv *priv);
+int8_t endat_check_rt_error(Endat_Handle handle);
 /**
  *  \brief      Disable the recovery time measurement 
  *             
- *  \param[in]  priv  cookie returned by endat_init
+ *  \param[in]  handle  cookie returned by endat_init
  * 
  */
-void endat_disable_rt_measurement (struct endat_priv *priv);
+void endat_disable_rt_measurement (Endat_Handle handle);
 /**
  *  \brief      Enable the recovery time measurement 
  *             
- *  \param[in]  priv  cookie returned by endat_init
+ *  \param[in]  handle  cookie returned by endat_init
  * 
  */
-void endat_enable_rt_measurement (struct endat_priv *priv);
+void endat_enable_rt_measurement (Endat_Handle handle);
 /**
  *  \brief      read the status of recovery time measurement 
  *             
- *  \param[in]  priv  cookie returned by endat_init
+ *  \param[in]  handle  cookie returned by endat_init
  * 
  *  \retval  return 1 if recovery time measurement is enabled else return 0
  */
-uint32_t endat_status_rt_measurement (struct endat_priv *priv);
+uint32_t endat_status_rt_measurement (Endat_Handle handle);
 /** @} */
 
 #ifdef __cplusplus

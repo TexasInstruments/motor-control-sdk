@@ -51,7 +51,7 @@
  *
  */
 
-const uint32_t EnDatFirmwareMultiMakePRU_0[] = {
+const uint32_t EnDatFirmwareMultiMakePRU1_0[] = {
 0x21000300,
 0x00000207,
 0x01000004,
@@ -151,10 +151,10 @@ const uint32_t EnDatFirmwareMultiMakePRU_0[] = {
 0x81071800,
 0x91041800,
 0x69000007,
-0x91741a00,
+0x91741a80,
 0xcf05e0fd,
 0x24002000,
-0x81741a00,
+0x81741a80,
 0x24000100,
 0x81061800,
 0x91061800,

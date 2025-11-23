@@ -51,7 +51,7 @@
  *
  */
 
-const uint32_t EnDatFirmwareMultiMakeRTU_0[] = {
+const uint32_t EnDatFirmwareMultiMakeRTU0_0[] = {
 0x21000300,
 0x00000207,
 0x01000004,
@@ -151,10 +151,10 @@ const uint32_t EnDatFirmwareMultiMakeRTU_0[] = {
 0x81031800,
 0x91001800,
 0x69000007,
-0x91741a00,
-0xcf03e0fd,
-0x24000800,
-0x81741a00,
+0x91741a80,
+0xcf07e0fd,
+0x24008000,
+0x81741a80,
 0x24000100,
 0x81021800,
 0x91021800,
@@ -195,7 +195,7 @@ const uint32_t EnDatFirmwareMultiMakeRTU_0[] = {
 0x81021803,
 0x91001804,
 0x69000402,
-0x2400229f,
+0x2400259f,
 0x570004d1,
 0x21006900,
 0x910c7880,

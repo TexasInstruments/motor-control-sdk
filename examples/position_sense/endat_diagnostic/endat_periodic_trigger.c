@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023-24 Texas Instruments Incorporated
+ *  Copyright (C) 2023-25 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -41,10 +41,7 @@
 #include <kernel/dpl/ClockP.h>
 #include "endat_periodic_trigger.h"
 #include <drivers/soc.h>
-#include <position_sense/endat/include/endat_drv.h>
 #include <position_sense/endat/include/endat_interface.h>
-#include "ti_drivers_open_close.h"
-#include "ti_board_open_close.h"
 
 HwiP_Params hwiPrms;
 static HwiP_Object gIcssgEncoderHwiObject0;  /* ICSSG EnDat PRU FW HWI */
@@ -77,10 +74,20 @@ uint32_t gPruEnDatIrqCnt0;
 uint32_t gPruEnDatIrqCnt1;
 uint32_t gPruEnDatIrqCnt2;
 
+#if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
+#ifdef PRUICSSM
+#if (CONFIG_ENDAT1_PRUICSSx == 1)
+#define ICSS_PRU_ENDAT1_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_3 )
+#else
+#define ICSS_PRU_ENDAT1_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_3 )
+#endif
+#endif
+uint32_t gPruEnDat1IrqCnt0;
+void pruEnDat1IrqHandler(void *args);
+#endif
+
 /*global variable */
-void *gPruss_iep; 
-
-
+void *gpruicss_iep;
 
 PRUICSS_Handle gPruIcssXHandle;
 
@@ -91,13 +98,22 @@ PRUICSS_Handle gPruIcssXHandle;
     extern PRUICSS_IntcInitData icss0_intc_initdata;
 #endif
 
+#if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
+/* ICSS INTC configuration */
+#if (CONFIG_ENDAT1_PRUICSSx == 1)
+    extern PRUICSS_IntcInitData icss1_intc_initdata;
+#else
+    extern PRUICSS_IntcInitData icss0_intc_initdata;
+ #endif
+#endif
+
 void endat_config_iep(struct endat_periodic_interface *endat_periodic_interface)
 {
     /*reset iep timer*/
     void *pruicss_iep = endat_periodic_interface->pruicss_iep;
-    struct endat_pruss_xchg *pruss_xchg = endat_periodic_interface->pruicss_dmem;
+    Endat_PruicssXchg *pruicss_xchg = endat_periodic_interface->pruicss_dmem;
     uint8_t temp;
-    uint8_t event;
+    uint16_t event;
     uint32_t cmp_reg0;
     uint32_t cmp_reg1;
     uint32_t event_clear;
@@ -108,8 +124,8 @@ void endat_config_iep(struct endat_periodic_interface *endat_periodic_interface)
     HW_WR_REG8((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG, temp);
 
     /* cmp cfg reg */
-    event = HW_RD_REG8((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG);
-    event_clear = HW_RD_REG8((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
+    event = HW_RD_REG16((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG);
+    event_clear = HW_RD_REG16((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
 
     /*enable IEP reset by cmp0 event*/
     event |= IEP_CMP0_ENABLE;
@@ -124,60 +140,89 @@ void endat_config_iep(struct endat_periodic_interface *endat_periodic_interface)
     if(endat_periodic_interface->load_share)
     {
         /*enable event*/
-        event |= pruss_xchg->config[0].channel==1?(0x1 << (IEP_CH0_CMP_EVNT + 1)):0; 
-        event |= pruss_xchg->config[1].channel==2?(0x1 << (IEP_CH1_CMP_EVNT + 1)):0;  
-        event |= pruss_xchg->config[2].channel==4?(0x1 << (IEP_CH2_CMP_EVNT + 1)):0;  
+        event |= pruicss_xchg->config[0].channel==1?(0x1 << (IEP_CH0_CMP_EVNT + 1)):0;
+        event |= pruicss_xchg->config[1].channel==2?(0x1 << (IEP_CH1_CMP_EVNT + 1)):0;
+        event |= pruicss_xchg->config[2].channel==4?(0x1 << (IEP_CH2_CMP_EVNT + 1)):0;
 
         /*clear event*/
-        event_clear |= pruss_xchg->config[0].channel==1?(0x1 << IEP_CH0_CMP_EVNT):0; 
-        event_clear |= pruss_xchg->config[1].channel==2?(0x1 << IEP_CH1_CMP_EVNT):0; 
-        event_clear |= pruss_xchg->config[2].channel==4?(0x1 << IEP_CH2_CMP_EVNT):0;  
+        event_clear |= pruicss_xchg->config[0].channel==1?(0x1 << IEP_CH0_CMP_EVNT):0;
+        event_clear |= pruicss_xchg->config[1].channel==2?(0x1 << IEP_CH1_CMP_EVNT):0;
+        event_clear |= pruicss_xchg->config[2].channel==4?(0x1 << IEP_CH2_CMP_EVNT):0;
 
-        if(pruss_xchg->config[0].channel)
+        if(pruicss_xchg->config[0].channel)
         {
             cmp_reg0 = (endat_periodic_interface->ch0_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
             cmp_reg1 = (endat_periodic_interface->ch0_trigger_count>>32 & 0xffffffff);
-
-            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + IEP_CH0_CMP_EVNT*8),  cmp_reg0);
-            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + IEP_CH0_CMP_EVNT*8),  cmp_reg1);
+            if(IEP_CH0_CMP_EVNT > 7)
+            {
+                HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + IEP_CH0_CMP_EVNT*8 + 8),  cmp_reg0);
+                HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + IEP_CH0_CMP_EVNT*8 + 8),  cmp_reg1);
+            }
+            else
+            {
+                HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + IEP_CH0_CMP_EVNT*8),  cmp_reg0);
+                HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + IEP_CH0_CMP_EVNT*8),  cmp_reg1); 
+            }
         }
 
-        if(pruss_xchg->config[1].channel)
+        if(pruicss_xchg->config[1].channel)
         {
             cmp_reg0 = (endat_periodic_interface->ch1_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
             cmp_reg1 = (endat_periodic_interface->ch1_trigger_count>>32 & 0xffffffff);
-
-            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + IEP_CH1_CMP_EVNT*8),  cmp_reg0);
-            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + IEP_CH1_CMP_EVNT*8),  cmp_reg1);
-
+            if(IEP_CH1_CMP_EVNT > 7)
+            {
+                HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + IEP_CH1_CMP_EVNT*8 + 8),  cmp_reg0);
+                HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + IEP_CH1_CMP_EVNT*8 + 8),  cmp_reg1);
+            }
+            else
+            {
+                HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + IEP_CH1_CMP_EVNT*8),  cmp_reg0);
+                HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + IEP_CH1_CMP_EVNT*8),  cmp_reg1); 
+            }
         }
 
-        if(pruss_xchg->config[2].channel)
+        if(pruicss_xchg->config[2].channel)
         {
             cmp_reg0 = (endat_periodic_interface->ch2_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
             cmp_reg1 = (endat_periodic_interface->ch2_trigger_count>>32 & 0xffffffff);
-
-            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + IEP_CH2_CMP_EVNT*8),  cmp_reg0);
-            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + IEP_CH2_CMP_EVNT*8),  cmp_reg1);
+            if(IEP_CH2_CMP_EVNT > 7)
+            {
+                HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + IEP_CH2_CMP_EVNT*8 + 8),  cmp_reg0);
+                HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + IEP_CH2_CMP_EVNT*8 + 8),  cmp_reg1);
+            }
+            else
+            {
+                HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + IEP_CH2_CMP_EVNT*8),  cmp_reg0);
+                HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + IEP_CH2_CMP_EVNT*8),  cmp_reg1);
+            }
 
         }
 
     }
     else
     {
+
         event |= (0x1 << (IEP_CH0_CMP_EVNT + 1));
         event_clear |= (0x1 << IEP_CH0_CMP_EVNT);
+
         cmp_reg0 = (endat_periodic_interface->ch0_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
         cmp_reg1 = (endat_periodic_interface->ch0_trigger_count>>32 & 0xffffffff);
-
-        HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + IEP_CH0_CMP_EVNT*8),  cmp_reg0);
-        HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + IEP_CH0_CMP_EVNT*8),  cmp_reg1);
+        if(IEP_CH0_CMP_EVNT > 7)
+        {
+            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + IEP_CH0_CMP_EVNT*8 + 8),  cmp_reg0);
+            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + IEP_CH0_CMP_EVNT*8 + 8),  cmp_reg1);
+        }
+        else
+        {
+            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + IEP_CH0_CMP_EVNT*8),  cmp_reg0);
+            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + IEP_CH0_CMP_EVNT*8),  cmp_reg1);
+        }
 
     }
     /*clear event*/
-    HW_WR_REG8((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
+    HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
     /*enable  event*/
-    HW_WR_REG8((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG, event);
+    HW_WR_REG16((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG, event);
 
     /*configure cmp0 registers*/
     cmp_reg0 = (endat_periodic_interface->cmp0_count & 0xffffffff) - IEP_DEFAULT_INC;
@@ -194,14 +239,115 @@ void endat_config_iep(struct endat_periodic_interface *endat_periodic_interface)
     HW_WR_REG8((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG, temp);
 }
 
+#if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
+void endat1_config_iep(struct endat_periodic_interface *endat_periodic_interface)
+{
+   /*reset iep timer*/
+    void *pruicss_iep = endat_periodic_interface->pruicss_iep;
+    Endat_PruicssXchg *pruicss_xchg = endat_periodic_interface->pruicss_dmem;
+    uint16_t event;
+    uint32_t cmp_reg0;
+    uint32_t cmp_reg1;
+    uint32_t event_clear;
+
+    /* cmp cfg reg */
+    event = HW_RD_REG16((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG);
+    event_clear = HW_RD_REG16((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
+
+    /*Clear all event & configure*/
+    if(endat_periodic_interface->load_share)
+    {
+        /*enable event*/
+        event |= pruicss_xchg->config[0].channel==1?(0x1 << (ENDAT1_IEP_CH0_CMP_EVNT + 1)):0;
+        event |= pruicss_xchg->config[1].channel==2?(0x1 << (ENDAT1_IEP_CH1_CMP_EVNT + 1)):0;
+        event |= pruicss_xchg->config[2].channel==4?(0x1 << (ENDAT1_IEP_CH2_CMP_EVNT + 1)):0;
+
+        /*clear event*/
+        event_clear |= pruicss_xchg->config[0].channel==1?(0x1 << ENDAT1_IEP_CH0_CMP_EVNT):0;
+        event_clear |= pruicss_xchg->config[1].channel==2?(0x1 << ENDAT1_IEP_CH1_CMP_EVNT):0;
+        event_clear |= pruicss_xchg->config[2].channel==4?(0x1 << ENDAT1_IEP_CH2_CMP_EVNT):0;
+
+        if(pruicss_xchg->config[0].channel)
+        {
+            cmp_reg0 = (endat_periodic_interface->ch0_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
+            cmp_reg1 = (endat_periodic_interface->ch0_trigger_count>>32 & 0xffffffff);
+            if(ENDAT1_IEP_CH0_CMP_EVNT > 7)
+            {
+                HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + ENDAT1_IEP_CH0_CMP_EVNT*8 + 8),  cmp_reg0);
+                HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + ENDAT1_IEP_CH0_CMP_EVNT*8 + 8),  cmp_reg1);
+            }
+            else
+            {
+                HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + ENDAT1_IEP_CH0_CMP_EVNT*8),  cmp_reg0);
+                HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + ENDAT1_IEP_CH0_CMP_EVNT*8),  cmp_reg1);
+            }
+        }
+
+        if(pruicss_xchg->config[1].channel)
+        {
+            cmp_reg0 = (endat_periodic_interface->ch1_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
+            cmp_reg1 = (endat_periodic_interface->ch1_trigger_count>>32 & 0xffffffff);
+            if(ENDAT1_IEP_CH1_CMP_EVNT > 7)
+            {
+                HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + ENDAT1_IEP_CH1_CMP_EVNT*8 + 8),  cmp_reg0);
+                HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + ENDAT1_IEP_CH1_CMP_EVNT*8 + 8),  cmp_reg1);
+            }
+            else
+            {
+                HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + ENDAT1_IEP_CH1_CMP_EVNT*8),  cmp_reg0);
+                HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + ENDAT1_IEP_CH1_CMP_EVNT*8),  cmp_reg1);
+            }
+        }
+
+        if(pruicss_xchg->config[2].channel)
+        {
+            cmp_reg0 = (endat_periodic_interface->ch2_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
+            cmp_reg1 = (endat_periodic_interface->ch2_trigger_count>>32 & 0xffffffff);
+            if(ENDAT1_IEP_CH2_CMP_EVNT > 7)
+            {
+                HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + ENDAT1_IEP_CH2_CMP_EVNT*8 + 8),  cmp_reg0);
+                HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + ENDAT1_IEP_CH2_CMP_EVNT*8 + 8),  cmp_reg1);
+            }
+            else
+            {
+                HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + ENDAT1_IEP_CH2_CMP_EVNT*8),  cmp_reg0);
+                HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + ENDAT1_IEP_CH2_CMP_EVNT*8),  cmp_reg1);
+            }
+        }
+    }
+    else
+    {
+
+        event |= (0x1 << (ENDAT1_IEP_CH0_CMP_EVNT + 1));
+        event_clear |= (0x1 << ENDAT1_IEP_CH0_CMP_EVNT);
+
+        cmp_reg0 = (endat_periodic_interface->ch0_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
+        cmp_reg1 = (endat_periodic_interface->ch0_trigger_count>>32 & 0xffffffff);
+        if(ENDAT1_IEP_CH0_CMP_EVNT > 7)
+        {
+            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + ENDAT1_IEP_CH0_CMP_EVNT*8 + 8),  cmp_reg0);
+            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + ENDAT1_IEP_CH0_CMP_EVNT*8 + 8),  cmp_reg1);
+        }
+        else
+        {
+            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + ENDAT1_IEP_CH0_CMP_EVNT*8),  cmp_reg0);
+            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + ENDAT1_IEP_CH0_CMP_EVNT*8),  cmp_reg1);
+        }
+    }
+    /*clear event*/
+    HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
+    /*enable  event*/
+    HW_WR_REG16((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG, event);
+}
+#endif
 
 void endat_interrupt_config(struct endat_periodic_interface *endat_periodic_interface)
 {
-    struct endat_pruss_xchg *pruss_xchg = endat_periodic_interface->pruicss_dmem;
+    Endat_PruicssXchg *pruicss_xchg = endat_periodic_interface->pruicss_dmem;
     int32_t status;
     if(endat_periodic_interface->load_share)
     {
-        if(pruss_xchg->config[0].channel)
+        if(pruicss_xchg->config[0].channel)
         {
             /* Register & enable ICSSG EnDat PRU FW interrupt */
             HwiP_Params_init(&hwiPrms);
@@ -214,7 +360,7 @@ void endat_interrupt_config(struct endat_periodic_interface *endat_periodic_inte
             DebugP_assert(status == SystemP_SUCCESS);
 
         }
-        if(pruss_xchg->config[1].channel)
+        if(pruicss_xchg->config[1].channel)
         {
             /* Register & enable ICSSG EnDat PRU FW interrupt */
             HwiP_Params_init(&hwiPrms);
@@ -227,7 +373,7 @@ void endat_interrupt_config(struct endat_periodic_interface *endat_periodic_inte
             DebugP_assert(status == SystemP_SUCCESS);
 
         }
-        if(pruss_xchg->config[2].channel)
+        if(pruicss_xchg->config[2].channel)
         {
             /* Register & enable ICSSG EnDat PRU FW interrupt */
             HwiP_Params_init(&hwiPrms);
@@ -252,17 +398,38 @@ void endat_interrupt_config(struct endat_periodic_interface *endat_periodic_inte
         hwiPrms.isFIQ       = FALSE;
         status              = HwiP_construct(&gIcssgEncoderHwiObject0, &hwiPrms);
         DebugP_assert(status == SystemP_SUCCESS);
+#if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
+        /* Register & enable ICSSG EnDat PRU FW interrupt */
+        HwiP_Params_init(&hwiPrms);
+        hwiPrms.intNum      = ICSS_PRU_ENDAT1_INT_NUM;
+        hwiPrms.callback    = &pruEnDat1IrqHandler;
+        hwiPrms.args        = 0;
+        hwiPrms.isPulse     = FALSE;
+        hwiPrms.isFIQ       = FALSE;
+        status              = HwiP_construct(&gIcssgEncoderHwiObject0, &hwiPrms);
+#endif
 
     }
 
 }    
-uint32_t  endat_config_periodic_mode(struct endat_periodic_interface *endat_periodic_interface, PRUICSS_Handle handle)
+uint32_t  endat_config_periodic_mode(struct endat_periodic_interface *endat_periodic_interface, PRUICSS_Handle handle, Endat_Handle handle)
 {
     int32_t  status;
     gPruIcssXHandle = handle;
-    gPruss_iep = endat_periodic_interface->pruicss_iep;
+    gpruicss_iep = endat_periodic_interface->pruicss_iep;
     /*configure IEP*/
+#if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
+    if(handle->instance_index == 0)
+    {
+        endat_config_iep(endat_periodic_interface);
+    }
+    else
+    {
+        endat1_config_iep(endat_periodic_interface);
+    }
+#else
     endat_config_iep(endat_periodic_interface);
+#endif
     /* Initialize ICSS INTC */
 #if (CONFIG_ENDAT0_PRUICSSx == 1)
     status = PRUICSS_intcInit(gPruIcssXHandle, &icss1_intc_initdata);
@@ -278,7 +445,14 @@ uint32_t  endat_config_periodic_mode(struct endat_periodic_interface *endat_peri
     }
 #endif
     /*config Interrupt*/
+#if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
+    if(handle->instance_index == 1)
+    {
+        endat_interrupt_config(endat_periodic_interface);
+    }
+#else
     endat_interrupt_config(endat_periodic_interface);
+#endif
     return 1;
 
 }
@@ -321,3 +495,15 @@ void txpruEnDatIrqHandler(void *args)
     /* Clear interrupt at source */
     PRUICSS_clearEvent(gPruIcssXHandle, PRU_TRIGGER_HOST_ENDAT_EVT2);
 }
+
+#if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
+/* PRU EnDat FW IRQ handler */
+void pruEnDat1IrqHandler(void *args)
+{
+    /* Increment PRU ENDAT IRQ count */
+    gPruEnDat1IrqCnt0++;
+
+    /* Clear interrupt at source */
+    PRUICSS_clearEvent(gPruIcssXHandle, PRU_TRIGGER_HOST_ENDAT1_EVT);
+}
+#endif

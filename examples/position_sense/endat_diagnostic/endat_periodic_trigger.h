@@ -34,6 +34,9 @@
 #define _ENDAT_H_
 
 #include<stdint.h>
+#include <position_sense/endat/include/endat_drv.h>
+#include "ti_drivers_open_close.h"
+#include "ti_board_open_close.h"
 
 struct endat_periodic_interface
 {
@@ -51,18 +54,40 @@ struct endat_periodic_interface
 #define IEP_RST_CNT_EN      0x1;
 #define IEP_CMP0_ENABLE     0x1 << 1;
 
+#if CONFIG_ENDAT0_PRUICSS_PRUx == 1
+#define PRU_TRIGGER_HOST_ENDAT_EVT0   ( 2+16 )    /* pr0_pru_mst_intr[2]_intr_req */
 #define IEP_CH0_CMP_EVNT ( 3 )
 #define IEP_CH1_CMP_EVNT ( 5 )
 #define IEP_CH2_CMP_EVNT ( 6 )
+#else
+#define PRU_TRIGGER_HOST_ENDAT_EVT0   ( 5+16 )    /* pr0_pru_mst_intr[2]_intr_req */
+#define IEP_CH0_CMP_EVNT ( 7 )
+#define IEP_CH1_CMP_EVNT ( 8 )
+#define IEP_CH2_CMP_EVNT ( 9 )
+#endif
 
-#define PRU_TRIGGER_HOST_ENDAT_EVT0   ( 2+16 )    /* pr0_pru_mst_intr[2]_intr_req */
 #define PRU_TRIGGER_HOST_ENDAT_EVT1   ( 3+16 )    /* pr0_pru_mst_intr[3]_intr_req */
 #define PRU_TRIGGER_HOST_ENDAT_EVT2   ( 4+16 )   /* pr0_pru_mst_intr[4]_intr_req */
 
+#if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
+#if CONFIG_ENDAT1_PRUICSS_PRUx == 1
+#define PRU_TRIGGER_HOST_ENDAT1_EVT   ( 2+16 )    /* pr0_pru_mst_intr[2]_intr_req */
+#define ENDAT1_IEP_CH0_CMP_EVNT ( 3 )
+#define ENDAT1_IEP_CH1_CMP_EVNT ( 5 )
+#define ENDAT1_IEP_CH2_CMP_EVNT ( 6 )
+#else
+#define PRU_TRIGGER_HOST_ENDAT1_EVT   ( 5+16 )    /* pr0_pru_mst_intr[2]_intr_req */
+#define ENDAT1_IEP_CH0_CMP_EVNT ( 7 )
+#define ENDAT1_IEP_CH1_CMP_EVNT ( 8 )
+#define ENDAT1_IEP_CH2_CMP_EVNT ( 9 )
+#endif
+#endif
 
-uint32_t endat_config_periodic_mode(struct endat_periodic_interface *endat_periodic_interface, PRUICSS_Handle handle);
+uint32_t endat_config_periodic_mode(struct endat_periodic_interface *endat_periodic_interface, PRUICSS_Handle handle, Endat_Handle handle);
 
 void endat_stop_periodic_continuous_mode(struct endat_periodic_interface *endat_periodic_interface);
+
+#define ENDAT_PERIODIC_MODE_IEP_INSTANCE  0
 
 static void pruEnDatIrqHandler(void *handle);
 static void rtuEnDatIrqHandler(void *handle);
