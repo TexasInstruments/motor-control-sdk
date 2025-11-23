@@ -63,6 +63,11 @@ let tamagawa_module = {
 
     displayName: "Tamagawa Position Encoder",
     templates: {
+        "/drivers/system/system_config.c.xdt": {
+            driver_config: "/position_sense/tamagawa/tamagawa.c.xdt",
+            moduleName: tamagawa_module_name,
+        },
+        
         "/drivers/system/system_config.h.xdt": {
             driver_config: "/position_sense/tamagawa/tamagawa.h.xdt",
             moduleName: tamagawa_module_name,

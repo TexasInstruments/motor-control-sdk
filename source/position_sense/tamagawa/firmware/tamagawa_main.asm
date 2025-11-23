@@ -83,6 +83,11 @@ RET2	.macro
 	.asg	R27.b1,	TX_DATA1
 	.asg	R1.b1,	TX_FRAMES
 	.asg	R6.b0,	RX_FRAMES
+    .asg	R31.t19,	TAMAGAWA_TX_GLOBAL_REINIT
+
+TAMAGAWA_TX_BUSY_CH0             .set  5
+TAMAGAWA_TX_BUSY_CH1             .set  13
+TAMAGAWA_TX_BUSY_CH2             .set  21
 
 
 ;**********************
@@ -197,6 +202,7 @@ HANDLE_HOST_TRIGGER_MODE:
 	LBCO	&RX_FRAMES , PRUx_DMEM,	TAMAGAWA_WORD_1_OFFSET+1 ,	1
     ;Call SEND RECEIVE FUNCTION
 	CALL	FN_SEND_RECEIVE_TAMAGAWA
+	SET		R31, TAMAGAWA_TX_GLOBAL_REINIT
 
 TAMAGAWA_HOST_CMD_END:
 	LDI		R3.w0,	0
@@ -207,7 +213,7 @@ TAMAGAWA_HOST_CMD_END:
     ;skip interrupt to R5F in host trigger
     QBNE    SKIP_INTERRUPT_TRIGGER,  R3.b0,  0
     ;Generate interrupt to R5F
-    LDI     R31.w0, 34;PRU_TRIGGER_HOST_TAMAGAWA_EVT0 ( pr0_pru_mst_intr[2]_intr_req )
+    LDI     R31.w0, PRU_TRIGGER_HOST_TAMAGAWA_EVT0 
     ;Global reinit
     set     R31, TAMAGAWA_TX_GLOBAL_REINIT
     ;Handle next Postition in periodic trigger
@@ -306,13 +312,7 @@ TX_END:
 
 	.if	$defined("ENABLE_MULTI_CHANNEL")
 MULTI_CHANNEL_RECEIVE:
-    ;enable Rx for channel 0
-    SET     R30,R30.t24
-    ;enable Rx for channel 1
-    SET     R30,R30.t25
-    ;enable Rx for channel 2
-    SET     R30,R30.t26
-
+    
 	RECEIVE_FRAMES_M R2.b1 ,R4.b1 , RX_FRAMES , R4.b2 , SCRATCH, SCRATCH1,TAMAGAWA_ENABLE_CHx,PRUx_DMEM
 CH0_RX_TO_INTERFACE:
     ;If channel 0 enabled,then load Rx data to tamagawa interface
@@ -338,8 +338,7 @@ SINGLE_CHANNEL_RECEIVE:
 CHECK_CH0:
     ;If channel 0 enabled, start Rx for channel 0
     QBBC    CHECK_CH1, TAMAGAWA_ENABLE_CHx,0
-    ;enable Rx for channel 0
-    SET     R30,R30.t24
+
     ;4 is mid bit no. for rx oversample data for channel 0
     RECEIVE_FRAMES_S    R2.b1,R4.b1,RX_FRAMES,R4.b2,SCRATCH, SCRATCH1,0x1,4,R3.b0,PRUx_DMEM,TAMAGAWA_CH0_CRC_OFFSET
     ;storing Channel 0 Rx data to Tamagawa Interface created in R5F application
@@ -347,8 +346,7 @@ CHECK_CH0:
 CHECK_CH1:
     ;If channel 1 enabled, start Rx for channel 1
     QBBC    CHECK_CH2, TAMAGAWA_ENABLE_CHx,1
-    ;enable Rx for channel 1
-    SET     R30,R30.t25
+
     ; 4+8 is mid bit no. for rx oversample data for channel 1
     RECEIVE_FRAMES_S    R2.b1,R4.b1,RX_FRAMES,R4.b2,SCRATCH, SCRATCH1,0x2,4+8,R3.b0,PRUx_DMEM,TAMAGAWA_CH1_CRC_OFFSET
     ;storing Channel 1 Rx data to Tamagawa Interface created in R5F application
@@ -356,8 +354,7 @@ CHECK_CH1:
 CHECK_CH2:
     ;If channel 0 enabled, start Rx for channel 2
     QBBC    ALL_CHANNEL_DONE, TAMAGAWA_ENABLE_CHx,2
-    ;enable Rx for channel 2
-    SET     R30,R30.t26
+
     ; 4+16 is mid bit no. for rx oversample data for channel 2
     RECEIVE_FRAMES_S    R2.b1,R4.b1,RX_FRAMES,R4.b2,SCRATCH, SCRATCH1,0x4,4+16,R3.b0,PRUx_DMEM,TAMAGAWA_CH2_CRC_OFFSET
     ;storing Channel 2 Rx data to Tamagawa Interface created in R5F application
