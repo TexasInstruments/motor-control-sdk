@@ -80,7 +80,7 @@ clean:
 
 post-build:
 		-$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=NikonFirmwareMultiMakeRTU -o nikon_receiver_multi_rtu_pru0_bin.h  nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru0_fw_ti-pru-cgt.out
-		-$(CAT) ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h nikon_receiver_multi_rtu_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/nikon/firmware/multi_channel_load_share/nikon_receiver_multi_rtu_pru0_bin.h
+		-$(CAT) ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h nikon_receiver_multi_rtu_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/nikon/firmware/multi_channel_load_share/nikon_receiver_multi_rtu_pru0_bin.h
 		-$(RM)  nikon_receiver_multi_rtu_pru0_bin.h
 	-@echo ' '
 

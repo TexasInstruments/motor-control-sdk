@@ -80,7 +80,7 @@ clean:
 
 post-build:
 		-$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDat3FirmwareMultiMakePRU -o endat3_receiver_multi_pru0_bin.h endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_pru0_fw_ti-pru-cgt.out
-		-$(CAT) ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h endat3_receiver_multi_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_pru0_bin.h
+		-$(CAT) ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat3_receiver_multi_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat3/firmware/single_channel/endat3_receiver_multi_pru0_bin.h
 		-$(RM) endat3_receiver_multi_pru0_bin.h
 	-@echo ' '
 

@@ -80,7 +80,7 @@ clean:
 
 post-build:
 		-$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=BiSSFirmware -o bissc_receiver_pru0_bin.h bissc_peripheral_interface_single_ch_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt.out
-		-$(CAT) ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h bissc_receiver_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware/single_channel/bissc_receiver_pru0_bin.h
+		-$(CAT) ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h bissc_receiver_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware/single_channel/bissc_receiver_pru0_bin.h
 		-$(RM) bissc_receiver_pru0_bin.h
 	-@echo ' '
 

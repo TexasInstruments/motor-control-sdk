@@ -79,7 +79,7 @@ clean:
 
 post-build:
 		-$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=TamagawaFirmwarePru1 -o tamagawa_receiver_single_channel_pru1_bin.h tamagawa_single_channel_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt.out
-		-$(CAT) ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h tamagawa_receiver_single_channel_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/single_channel/tamagawa_receiver_single_channel_pru1_bin.h
+		-$(CAT) ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h tamagawa_receiver_single_channel_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/single_channel/tamagawa_receiver_single_channel_pru1_bin.h
 		-$(RM) tamagawa_receiver_single_channel_pru1_bin.h
 	-@echo ' '
 

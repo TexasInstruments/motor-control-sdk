@@ -92,7 +92,7 @@ clean:
 
 post-build:
 		-$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=Hiperface_DSL_SYNC2_0_RTU -o hdsl_receiver_sync_225_mhz_pru1_bin.h  hdsl_receiver_sync_225_mhz_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt.out
-		-$(CAT) ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h hdsl_receiver_sync_225_mhz_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/sync_225_mhz/hdsl_receiver_sync_225_mhz_pru1_bin.h
+		-$(CAT) ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h hdsl_receiver_sync_225_mhz_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/sync_225_mhz/hdsl_receiver_sync_225_mhz_pru1_bin.h
 		-$(RM) hdsl_receiver_sync_225_mhz_pru1_bin.h
 	-@echo ' '
 

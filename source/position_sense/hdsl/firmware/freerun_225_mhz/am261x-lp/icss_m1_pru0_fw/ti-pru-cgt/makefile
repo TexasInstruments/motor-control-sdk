@@ -92,7 +92,7 @@ clean:
 
 post-build:
 		-$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=Hiperface_DSL2_0_RTU -o hdsl_receiver_freerun_225_mhz_pru0_bin.h  hdsl_receiver_freerun_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt.out
-		-$(CAT) ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h hdsl_receiver_freerun_225_mhz_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/freerun_225_mhz/hdsl_receiver_freerun_225_mhz_pru0_bin.h
+		-$(CAT) ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h hdsl_receiver_freerun_225_mhz_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/freerun_225_mhz/hdsl_receiver_freerun_225_mhz_pru0_bin.h
 		-$(RM) hdsl_receiver_freerun_225_mhz_pru0_bin.h
 	-@echo ' '
 

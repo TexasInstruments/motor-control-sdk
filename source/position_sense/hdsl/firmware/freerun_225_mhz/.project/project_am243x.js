@@ -53,14 +53,14 @@ function getmakefilePruPostBuildSteps(cpu, board)
         case "icss_g0_pru1":
             postBuildSteps = [
                 "$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=Hiperface_DSL2_0_RTU -o hdsl_receiver_freerun_225_mhz_pru1_bin.h  hdsl_receiver_freerun_225_mhz_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
-                "$(CAT) ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h hdsl_receiver_freerun_225_mhz_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/freerun_225_mhz/hdsl_receiver_freerun_225_mhz_pru1_bin.h;"+ 
+                "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h hdsl_receiver_freerun_225_mhz_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/freerun_225_mhz/hdsl_receiver_freerun_225_mhz_pru1_bin.h;"+ 
                 "$(RM) hdsl_receiver_freerun_225_mhz_pru1_bin.h;"
             ]
             break;
         case "icss_g0_pru0":
             postBuildSteps = [
                 "$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=Hiperface_DSL2_0_RTU -o hdsl_receiver_freerun_225_mhz_pru0_bin.h  hdsl_receiver_freerun_225_mhz_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
-                "$(CAT) ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h hdsl_receiver_freerun_225_mhz_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/freerun_225_mhz/hdsl_receiver_freerun_225_mhz_pru0_bin.h;"+ 
+                "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h hdsl_receiver_freerun_225_mhz_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/freerun_225_mhz/hdsl_receiver_freerun_225_mhz_pru0_bin.h;"+ 
                 "$(RM) hdsl_receiver_freerun_225_mhz_pru0_bin.h;"
             ]
             break;
@@ -76,18 +76,18 @@ function getccsPruPostBuildSteps(cpu, board)
         case "icss_g0_pru1":
             postBuildSteps = [
                 "$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=Hiperface_DSL2_0_RTU -o hdsl_receiver_freerun_225_mhz_pru1_bin.h  hdsl_receiver_freerun_225_mhz_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
-                "if ${CCS_HOST_OS} == linux cat ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h hdsl_receiver_freerun_225_mhz_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/ hdsl/firmware/freerun_225_mhz/hdsl_receiver_freerun_225_mhz_pru1_bin.h;"+ 
+                "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h hdsl_receiver_freerun_225_mhz_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/ hdsl/firmware/freerun_225_mhz/hdsl_receiver_freerun_225_mhz_pru1_bin.h;"+ 
                 "if ${CCS_HOST_OS} == linux rm hdsl_receiver_freerun_225_mhz_pru1_bin.h;"+
-                "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h hdsl_receiver_freerun_225_mhz_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/freerun_225_mhz/hdsl_receiver_freerun_225_mhz_pru1_bin.h;"+ 
+                "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h hdsl_receiver_freerun_225_mhz_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/freerun_225_mhz/hdsl_receiver_freerun_225_mhz_pru1_bin.h;"+ 
                 "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm hdsl_receiver_freerun_225_mhz_pru1_bin.h;"
             ]
             break;
         case "icss_g0_pru0":
             postBuildSteps = [
                 "$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=Hiperface_DSL2_0_RTU -o hdsl_receiver_freerun_225_mhz_pru0_bin.h  hdsl_receiver_freerun_225_mhz_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
-                "if ${CCS_HOST_OS} == linux cat ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h hdsl_receiver_freerun_225_mhz_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/ hdsl/firmware/freerun_225_mhz/hdsl_receiver_freerun_225_mhz_pru0_bin.h;"+ 
+                "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h hdsl_receiver_freerun_225_mhz_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/ hdsl/firmware/freerun_225_mhz/hdsl_receiver_freerun_225_mhz_pru0_bin.h;"+ 
                 "if ${CCS_HOST_OS} == linux rm hdsl_receiver_freerun_225_mhz_pru0_bin.h;"+
-                "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h hdsl_receiver_freerun_225_mhz_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/freerun_225_mhz/hdsl_receiver_freerun_225_mhz_pru0_bin.h;"+ 
+                "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h hdsl_receiver_freerun_225_mhz_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/freerun_225_mhz/hdsl_receiver_freerun_225_mhz_pru0_bin.h;"+ 
                 "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm hdsl_receiver_freerun_225_mhz_pru0_bin.h;"
             ]
             break;

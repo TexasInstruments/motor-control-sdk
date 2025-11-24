@@ -80,7 +80,7 @@ clean:
 
 post-build:
 		-$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=PRU0_G1_Firmware  -o pru0_g1_load_bin.h pruicss_pwm_with_phase_shift_am243x-evm_icss_g1_pru0_fw_ti-pru-cgt.out
-		-$(CAT) ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h pru0_g1_load_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/pruicss_pwm/pruicss_pwm_with_phase_shift/firmware/am243x-evm/pru0_g1_load_bin.h 
+		-$(CAT) ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h pru0_g1_load_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/pruicss_pwm/pruicss_pwm_with_phase_shift/firmware/am243x-evm/pru0_g1_load_bin.h 
 		-$(RM) pru0_g1_load_bin.h
 	-@echo ' '
 
