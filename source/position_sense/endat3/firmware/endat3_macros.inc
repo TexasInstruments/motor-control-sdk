@@ -118,119 +118,130 @@ MANCH_8BIT_LOOP?:
 
 ;------------------------------------------------------------------------------
 ; ENCODE_TX_DATA
-; 
+;
 ; Encodes a full 32-bit data word for transmission using Manchester encoding.
 ; Processes the data in 8-bit chunks, most significant byte first.
 ;
-; Note: Takes data from TEMP1 and stores encoded result in ENCODED_DATA_HIGH
-; and ENCODED_DATA_LOW registers.
+; Parameters:
+;   input_data     - 32-bit register containing data to encode
+;   output_high    - 32-bit register to store high 32 bits of encoded result
+;   output_low     - 32-bit register to store low 32 bits of encoded result
+;   work_reg1      - 32-bit work register for encoding operations
+;   work_reg2      - 32-bit work register for encoding operations
+;   byte_rev_in    - 32-bit register for byte reversal input
+;   byte_rev_out   - 32-bit register for byte reversal output
 ;
-; Fixed Register Usage:
-;   Input:  TEMP1 - 32-bit data to encode
-;   Output: ENCODED_DATA_HIGH - High 32 bits of encoded data
-;           ENCODED_DATA_LOW - Low 32 bits of encoded data
-;   Temp:   ENCODE_INPUT_REG, ENCODE_OUTPUT_REG
+; Example:
+;   ENCODE_TX_DATA TX_CMD_DATA, TX_ENCODED_HIGH, TX_ENCODED_LOW, ENCODE_INPUT_REG, ENCODE_OUTPUT_REG, BYTE_REV_INPUT, BYTE_REV_RESULT
 ;------------------------------------------------------------------------------
-ENCODE_TX_DATA .macro
-	REVERSE_BYTE TEMP1                  ; Reverse the bit order of input data
-    
+ENCODE_TX_DATA .macro input_data, output_high, output_low, work_reg1, work_reg2, byte_rev_in, byte_rev_out
+    ; Reverse byte order of input data (preserve original input_data)
+    mov     byte_rev_in, input_data
+    xout    CRC_XID, &byte_rev_in, 4
+    xin     CRC_XID, &byte_rev_out, 4
+    mov     work_reg1, byte_rev_out
+
     ; Process first byte (MSB)
-	mov ENCODE_INPUT_REG.b0, TEMP1.b3   ; Extract most significant byte
-	FN_MANCHESTER_ENCODE_8BIT ENCODE_INPUT_REG, ENCODE_OUTPUT_REG
-	mov ENCODED_DATA_HIGH.w2, ENCODE_OUTPUT_REG.w0 ; Store encoded result
-	
+	mov     work_reg2.b0, work_reg1.b3
+	FN_MANCHESTER_ENCODE_8BIT work_reg2, TEMP0
+	mov     output_high.w2, TEMP0.w0
+
     ; Process second byte
-	mov ENCODE_INPUT_REG.b0, TEMP1.b2   ; Extract second byte
-	FN_MANCHESTER_ENCODE_8BIT ENCODE_INPUT_REG, ENCODE_OUTPUT_REG
-	mov ENCODED_DATA_HIGH.w0, ENCODE_OUTPUT_REG.w0 ; Store encoded result
-	
+	mov     work_reg2.b0, work_reg1.b2
+	FN_MANCHESTER_ENCODE_8BIT work_reg2, TEMP0
+	mov     output_high.w0, TEMP0.w0
+
     ; Process third byte
-	mov ENCODE_INPUT_REG.b0, TEMP1.b1   ; Extract third byte
-	FN_MANCHESTER_ENCODE_8BIT ENCODE_INPUT_REG, ENCODE_OUTPUT_REG
-	mov ENCODED_DATA_LOW.w2, ENCODE_OUTPUT_REG.w0  ; Store encoded result
-	
+	mov     work_reg2.b0, work_reg1.b1
+	FN_MANCHESTER_ENCODE_8BIT work_reg2, TEMP0
+	mov     output_low.w2, TEMP0.w0
+
     ; Process fourth byte (LSB)
-	mov ENCODE_INPUT_REG.b0, TEMP1.b0   ; Extract least significant byte
-	FN_MANCHESTER_ENCODE_8BIT ENCODE_INPUT_REG, ENCODE_OUTPUT_REG
-	mov ENCODED_DATA_LOW.w0, ENCODE_OUTPUT_REG.w0  ; Store encoded result
+	mov     work_reg2.b0, work_reg1.b0
+	FN_MANCHESTER_ENCODE_8BIT work_reg2, TEMP0
+	mov     output_low.w0, TEMP0.w0
     .endm
 
 ;------------------------------------------------------------------------------
 ; TX_PREPROCESSING
-; 
+;
 ; Prepares encoded data for transmission by:
 ; 1. Shifting data to create space for the postamble
 ; 2. Aligning data across registers
-; 3. Adding the postamble pattern
+; 3. Adding the postamble pattern (0x9)
 ;
-; Fixed Register Usage:
-;   Input:  TEMP2 - Preamble data
-;           TEMP3 - High 32 bits of encoded data
-;           TEMP4 - Low 32 bits of encoded data
-;   Temp:   TEMP0 - Temporary register for calculations
-;   Output: TEMP2, TEMP3, TEMP4 - Preprocessed data ready for transmission
+; Parameters:
+;   preamble_reg   - 32-bit register containing preamble data (modified in-place)
+;   data_high_reg  - 32-bit register containing high encoded data (modified in-place)
+;   data_low_reg   - 32-bit register containing low encoded data (modified in-place)
+;   work_reg       - 32-bit work register for temporary calculations
+;
+; Example:
+;   TX_PREPROCESSING TX_PREAMBLE, TX_ENCODED_HIGH, TX_ENCODED_LOW, TEMP0
 ;------------------------------------------------------------------------------
-TX_PREPROCESSING .macro
+TX_PREPROCESSING .macro preamble_reg, data_high_reg, data_low_reg, work_reg
     ; Make 4 bits space for adding postamble at end
-    ; Adjust TEMP2 by shift 4 positions left
-	lsl TEMP2, TEMP2, 4                 ; Shift preamble data left by 4 bits
-	and TEMP0.b0, TEMP3.b3, 0xf0        ; Extract high nibble from TEMP3 MSB
-	lsr TEMP0.b0, TEMP0.b0, 4           ; Shift to low nibble position
-	or TEMP2.b0, TEMP2.b0, TEMP0.b0     ; Combine with TEMP2
+    ; Adjust preamble register by shifting 4 positions left
+	lsl     preamble_reg, preamble_reg, 4
+	and     work_reg.b0, data_high_reg.b3, 0xf0
+	lsr     work_reg.b0, work_reg.b0, 4
+	or      preamble_reg.b0, preamble_reg.b0, work_reg.b0
 
-    ; Adjust TEMP3 by shift 4 positions left
-	lsl TEMP3, TEMP3, 4                 ; Shift data left by 4 bits
-	and TEMP0.b0, TEMP4.b3, 0xf0        ; Extract high nibble from TEMP4 MSB
-	lsr TEMP0.b0, TEMP0.b0, 4           ; Shift to low nibble position
-	or TEMP3.b0, TEMP3.b0, TEMP0.b0     ; Combine with TEMP3
-    
-    ; Adjust TEMP4 by shift 4 positions left and add postamble
-	lsl TEMP4, TEMP4, 4                 ; Shift data left by 4 bits
-	ldi TEMP0.b0, 0x9                   ; Postamble pattern (1001)
-	or TEMP4.b0, TEMP4.b0, TEMP0.b0     ; Append postamble to data
+    ; Adjust data_high register by shifting 4 positions left
+	lsl     data_high_reg, data_high_reg, 4
+	and     work_reg.b0, data_low_reg.b3, 0xf0
+	lsr     work_reg.b0, work_reg.b0, 4
+	or      data_high_reg.b0, data_high_reg.b0, work_reg.b0
+
+    ; Adjust data_low register by shifting 4 positions left and add postamble
+	lsl     data_low_reg, data_low_reg, 4
+	ldi     work_reg.b0, 0x9
+	or      data_low_reg.b0, data_low_reg.b0, work_reg.b0
     .endm
 
 ;------------------------------------------------------------------------------
 ; SEND_TX
-; 
+;
 ; Sends the prepared data to the EnDat3 interface FIFO for transmission.
 ; Handles data in the proper sequence and manages FIFO flow control.
 ;
-; Fixed Register Usage:
-;   Input: TEMP2 - Preamble data
-;           TEMP3 - High 32 bits of data
-;           TEMP4 - Low 32 bits of data with postamble
+; Parameters:
+;   preamble_reg   - 32-bit register containing preamble data
+;   data_high_reg  - 32-bit register containing high 32 bits of data
+;   data_low_reg   - 32-bit register containing low 32 bits of data with postamble
 ;
-; Note: Sends data in the following order:
-;   1. Preamble (from TEMP2)
-;   2. Data (from TEMP3)
-;   3. Data with postamble (from TEMP4)
+; Note: Sends data in the following order (MSB to LSB):
+;   1. Preamble bytes (from preamble_reg)
+;   2. High data bytes (from data_high_reg)
+;   3. Low data bytes with postamble (from data_low_reg)
+;
+; Example:
+;   SEND_TX TX_PREAMBLE, TX_ENCODED_HIGH, TX_ENCODED_LOW
 ;------------------------------------------------------------------------------
-SEND_TX .macro
-    ; Push data from TEMP2,TEMP3,TEMP4 registers to TX FIFO
-    ; Send preamble first (TEMP2 MSB to LSB)
-	PUSH_FIFO TEMP2.b3                 ; Push most significant byte
-	PUSH_FIFO TEMP2.b2
-	PUSH_FIFO TEMP2.b1
-	TX_CHANNEL                         ; Trigger channel for transmission
-	WAIT_TX_FIFO_FREE                  ; Ensure FIFO has space
-	PUSH_FIFO TEMP2.b0                 ; Push least significant byte
-	
-    ; Send data middle section (TEMP3)
-	WAIT_TX_FIFO_FREE                  ; Ensure FIFO has space
-	PUSH_FIFO TEMP3.b3                 ; Push most significant byte
-	PUSH_FIFO TEMP3.b2
-	WAIT_TX_FIFO_FREE                  ; Ensure FIFO has space
-	PUSH_FIFO TEMP3.b1
-	PUSH_FIFO TEMP3.b0                 ; Push least significant byte
-	
-    ; Send data end section with postamble (TEMP4)
-	WAIT_TX_FIFO_FREE                  ; Ensure FIFO has space
-	PUSH_FIFO TEMP4.b3                 ; Push most significant byte
-	PUSH_FIFO TEMP4.b2
-	WAIT_TX_FIFO_FREE                  ; Ensure FIFO has space
-	PUSH_FIFO TEMP4.b1
-	PUSH_FIFO TEMP4.b0                 ; Push least significant byte (with postamble)
+SEND_TX .macro preamble_reg, data_high_reg, data_low_reg
+    ; Send preamble bytes (MSB to LSB)
+	PUSH_FIFO preamble_reg.b3
+	PUSH_FIFO preamble_reg.b2
+	PUSH_FIFO preamble_reg.b1
+	TX_CHANNEL
+	WAIT_TX_FIFO_FREE
+	PUSH_FIFO preamble_reg.b0
+
+    ; Send high data bytes
+	WAIT_TX_FIFO_FREE
+	PUSH_FIFO data_high_reg.b3
+	PUSH_FIFO data_high_reg.b2
+	WAIT_TX_FIFO_FREE
+	PUSH_FIFO data_high_reg.b1
+	PUSH_FIFO data_high_reg.b0
+
+    ; Send low data bytes with postamble
+	WAIT_TX_FIFO_FREE
+	PUSH_FIFO data_low_reg.b3
+	PUSH_FIFO data_low_reg.b2
+	WAIT_TX_FIFO_FREE
+	PUSH_FIFO data_low_reg.b1
+	PUSH_FIFO data_low_reg.b0
     .endm
 ;******************************************************************************
 ; Channel Enable/Disable Macros
@@ -240,38 +251,48 @@ SEND_TX .macro
 
 ;------------------------------------------------------------------------------
 ; TX_EN
-; 
+;
 ; Enables transmit mode for the configured EnDat3 channel(s).
-; Clears the appropriate bits in R30 based on which channel is defined.
+; Determines channel from runtime mask and clears the appropriate bit in R30.
 ;------------------------------------------------------------------------------
 TX_EN .macro
-	.if $defined(ENABLE_MULTI_MAKE_TXPRU)
-	clr		r30.b3, r30.b3, 2          ; Enable TX for channel 2
-	.endif
-	.if $defined(ENABLE_MULTI_MAKE_PRU)
-	clr		r30.b3, r30.b3, 1          ; Enable TX for channel 1
-	.endif
-	.if $defined(ENABLE_MULTI_MAKE_RTU)
-	clr		r30.b3, r30.b3, 0          ; Enable TX for channel 0
-	.endif
+	; Determine channel from mask at runtime
+	qbbs	tx_ch0?, ENDAT_ENABLE_CHx, 0
+	qbbs	tx_ch1?, ENDAT_ENABLE_CHx, 1
+	qbbs	tx_ch2?, ENDAT_ENABLE_CHx, 2
+	qba		tx_done?
+tx_ch0?:
+	clr		r30.b3, r30.b3, 0              ; Enable TX for channel 0
+	qba		tx_done?
+tx_ch1?:
+	clr		r30.b3, r30.b3, 1              ; Enable TX for channel 1
+	qba		tx_done?
+tx_ch2?:
+	clr		r30.b3, r30.b3, 2              ; Enable TX for channel 2
+tx_done?:
 	.endm
 
 ;------------------------------------------------------------------------------
 ; RX_EN
-; 
+;
 ; Enables receive mode for the configured EnDat3 channel(s).
-; Sets the appropriate bits in R30 based on which channel is defined.
+; Determines channel from runtime mask and sets the appropriate bit in R30.
 ;------------------------------------------------------------------------------
 RX_EN .macro
-	.if $defined(ENABLE_MULTI_MAKE_TXPRU)
-	set		r30.b3, r30.b3, 2          ; Enable RX for channel 2
-	.endif
-	.if $defined(ENABLE_MULTI_MAKE_PRU)
-	set		r30.b3, r30.b3, 1          ; Enable RX for channel 1
-	.endif
-	.if $defined(ENABLE_MULTI_MAKE_RTU)
-	set		r30.b3, r30.b3, 0          ; Enable RX for channel 0
-	.endif
+	; Determine channel from mask at runtime
+	qbbs	rx_ch0?, ENDAT_ENABLE_CHx, 0
+	qbbs	rx_ch1?, ENDAT_ENABLE_CHx, 1
+	qbbs	rx_ch2?, ENDAT_ENABLE_CHx, 2
+	qba		rx_done?
+rx_ch0?:
+	set		r30.b3, r30.b3, 0              ; Enable RX for channel 0
+	qba		rx_done?
+rx_ch1?:
+	set		r30.b3, r30.b3, 1              ; Enable RX for channel 1
+	qba		rx_done?
+rx_ch2?:
+	set		r30.b3, r30.b3, 2              ; Enable RX for channel 2
+rx_done?:
 	.endm
 
 ;******************************************************************************
@@ -296,14 +317,14 @@ RX_EN .macro
 ;   - ENABLE_MULTI_MAKE_TXPRU: Uses r30.b2 for TX PRU (channel 2)
 ;------------------------------------------------------------------------------
 PUSH_FIFO .macro dat
-    .if $defined(ENABLE_MULTI_MAKE_RTU)
+    .if $isdefed("ENABLE_MULTI_MAKE_RTU")
     mov     r30.b0, dat                ; RTU: Move data to TX FIFO register (channel 0)
-    .endif
-    .if $defined(ENABLE_MULTI_MAKE_PRU)
+    .elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
     mov     r30.b1, dat                ; PRU: Move data to TX FIFO register (channel 1)
-    .endif
-    .if $defined(ENABLE_MULTI_MAKE_TXPRU)
+    .elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
     mov     r30.b2, dat                ; TX PRU: Move data to TX FIFO register (channel 2)
+    .else
+    mov     r30.b0, dat                ; Move data to TX FIFO for channel 0
     .endif
     .endm
 
@@ -325,31 +346,47 @@ l?:
 
 ;------------------------------------------------------------------------------
 ; RX_FRAME_SIZE
-; 
+;
 ; Configures the receive frame size for the EnDat3 interface.
-; Sets maximum frame size for the appropriate channel.
+; Sets maximum frame size for all channels.
 ;------------------------------------------------------------------------------
 RX_FRAME_SIZE .macro
     ldi     TEMP0.w0, 0x0FFF           ; Set maximum frame size (4095 bits)
-    
+
     ; Select the appropriate channel configuration register
-    .if $defined(ENABLE_MULTI_MAKE_RTU)
+    .if $isdefed("ENABLE_MULTI_MAKE_RTU")
     ldi     TEMP1.w0, ICSS_CFG_PRUx_ENDAT3_CH0_CFG0 + 2   ; Load offset
     sbco    &TEMP0, ICSS_CFG, TEMP1.w0, 2   ; Channel 0 config register + offset
-    .endif
-    .if $defined(ENABLE_MULTI_MAKE_PRU)
+    .elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
     ldi     TEMP1.w0, ICSS_CFG_PRUx_ENDAT3_CH1_CFG0 + 2   ; Load offset
     sbco    &TEMP0, ICSS_CFG, TEMP1.w0, 2   ; Channel 1 config register + offset
-    .endif
-    .if $defined(ENABLE_MULTI_MAKE_TXPRU)
+    .elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
     ldi     TEMP1.w0, ICSS_CFG_PRUx_ENDAT3_CH2_CFG0 + 2   ; Load offset
     sbco    &TEMP0, ICSS_CFG, TEMP1.w0, 2   ; Channel 2 config register + offset
+    .else
+    ; Single channel mode: determine channel from mask at runtime
+    qbbs    rx_frame_ch0?, ENDAT_ENABLE_CHx, 0
+    qbbs    rx_frame_ch1?, ENDAT_ENABLE_CHx, 1
+    qbbs    rx_frame_ch2?, ENDAT_ENABLE_CHx, 2
+    qba     rx_frame_done?
+rx_frame_ch0?:
+    ldi     TEMP1.w0, ICSS_CFG_PRUx_ENDAT3_CH0_CFG0 + 2
+    sbco    &TEMP0, ICSS_CFG, TEMP1.w0, 2
+    qba     rx_frame_done?
+rx_frame_ch1?:
+    ldi     TEMP1.w0, ICSS_CFG_PRUx_ENDAT3_CH1_CFG0 + 2
+    sbco    &TEMP0, ICSS_CFG, TEMP1.w0, 2
+    qba     rx_frame_done?
+rx_frame_ch2?:
+    ldi     TEMP1.w0, ICSS_CFG_PRUx_ENDAT3_CH2_CFG0 + 2
+    sbco    &TEMP0, ICSS_CFG, TEMP1.w0, 2
+rx_frame_done?:
     .endif
     .endm
 
 ;------------------------------------------------------------------------------
 ; TX_FRAME_SIZE
-; 
+;
 ; Configures the transmit frame size for the EnDat3 interface.
 ;
 ; Parameters:
@@ -358,27 +395,43 @@ RX_FRAME_SIZE .macro
 ;------------------------------------------------------------------------------
 TX_FRAME_SIZE .macro bits, tmp0
     ldi     tmp0, (bits<<11)           ; Prepare frame size value
-    
+
     ; Select the appropriate channel register
-    .if $defined(ENABLE_MULTI_MAKE_TXPRU)
+    .if $isdefed("ENABLE_MULTI_MAKE_TXPRU")
     ldi     TEMP1.w0, ICSS_CFG_PRUx_ENDAT3_CH2_CFG0   ; Load offset
     sbco    &tmp0, ICSS_CFG, TEMP1.w0, 2  ; Configure channel 2
-    .endif
-    .if $defined(ENABLE_MULTI_MAKE_PRU)
+    .elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
     ldi     TEMP1.w0, ICSS_CFG_PRUx_ENDAT3_CH1_CFG0   ; Load offset
     sbco    &tmp0, ICSS_CFG, TEMP1.w0, 2  ; Configure channel 1
-    .endif
-    .if $defined(ENABLE_MULTI_MAKE_RTU)
+    .elseif $isdefed("ENABLE_MULTI_MAKE_RTU")
     ldi     TEMP1.w0, ICSS_CFG_PRUx_ENDAT3_CH0_CFG0   ; Load offset
     sbco    &tmp0, ICSS_CFG, TEMP1.w0, 2  ; Configure channel 0
+    .else
+    ; Single channel mode: determine channel from mask at runtime
+    qbbs    tx_frame_ch0?, ENDAT_ENABLE_CHx, 0
+    qbbs    tx_frame_ch1?, ENDAT_ENABLE_CHx, 1
+    qbbs    tx_frame_ch2?, ENDAT_ENABLE_CHx, 2
+    qba     tx_frame_done?
+tx_frame_ch0?:
+    ldi     TEMP1.w0, ICSS_CFG_PRUx_ENDAT3_CH0_CFG0
+    sbco    &tmp0, ICSS_CFG, TEMP1.w0, 2
+    qba     tx_frame_done?
+tx_frame_ch1?:
+    ldi     TEMP1.w0, ICSS_CFG_PRUx_ENDAT3_CH1_CFG0
+    sbco    &tmp0, ICSS_CFG, TEMP1.w0, 2
+    qba     tx_frame_done?
+tx_frame_ch2?:
+    ldi     TEMP1.w0, ICSS_CFG_PRUx_ENDAT3_CH2_CFG0
+    sbco    &tmp0, ICSS_CFG, TEMP1.w0, 2
+tx_frame_done?:
     .endif
     .endm
 
 ;------------------------------------------------------------------------------
 ; TX_CLK_DIV
-; 
+;
 ; Sets the transmit clock divider for the EnDat3 interface.
-; Controls the transmission bit rate.
+; Controls the transmission bit rate. TXCFG is a single register per PRU.
 ;
 ; Parameters:
 ;   div - Clock divider value
@@ -386,20 +439,8 @@ TX_FRAME_SIZE .macro bits, tmp0
 ;------------------------------------------------------------------------------
 TX_CLK_DIV .macro div, tmp0
     ldi     tmp0.w2, div               ; Load divider value
-    
-    ; Select the appropriate PRU TXCFG register
-    .if $defined(ENABLE_MULTI_MAKE_TXPRU)
     ldi     TEMP1.w0, ICSS_CFG_PRUx_ENDAT3_TXCFG+2   ; Load offset
-    sbco    &tmp0.w2, ICSS_CFG, TEMP1.w0, 2  ; Configure clock divider for TX PRU
-    .endif
-    .if $defined(ENABLE_MULTI_MAKE_PRU)
-    ldi     TEMP1.w0, ICSS_CFG_PRUx_ENDAT3_TXCFG+2   ; Load offset
-    sbco    &tmp0.w2, ICSS_CFG, TEMP1.w0, 2  ; Configure clock divider for PRU
-    .endif
-    .if $defined(ENABLE_MULTI_MAKE_RTU)
-    ldi     TEMP1.w0, ICSS_CFG_PRUx_ENDAT3_TXCFG+2   ; Load offset
-    sbco    &tmp0.w2, ICSS_CFG, TEMP1.w0, 2  ; Configure clock divider for RTU
-    .endif
+    sbco    &tmp0.w2, ICSS_CFG, TEMP1.w0, 2  ; Configure clock divider
     .endm
 
 ;******************************************************************************
@@ -450,15 +491,16 @@ loop1?:
 WAIT_TX_FIFO_FREE .macro
 l?:
     ; Check FIFO status based on active channel
-	.if $defined(ENABLE_MULTI_MAKE_TXPRU)
+	.if $isdefed("ENABLE_MULTI_MAKE_TXPRU")
 	qbbs    l?, r31, TX_GLOBAL_TX_GO    ; Wait if transmission active
 	qbbs    l?, r31, TX_GLOBAL_REINIT   ; Wait if reset in progress
-	.endif
-	.if $defined(ENABLE_MULTI_MAKE_PRU)
+	.elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
 	qbbs    l?, r31, 12                 ; Wait if fill level >= 4
 	qbbs    l?, r31, 11                 ; Wait if fill level >= 2
-	.endif
-	.if $defined(ENABLE_MULTI_MAKE_RTU)
+	.elseif $isdefed("ENABLE_MULTI_MAKE_RTU")
+	qbbs    l?, r31, 4                  ; Wait if fill level >= 4
+	qbbs    l?, r31, 3                  ; Wait if fill level >= 2
+	.else
 	qbbs    l?, r31, 4                  ; Wait if fill level >= 4
 	qbbs    l?, r31, 3                  ; Wait if fill level >= 2
 	.endif
@@ -483,14 +525,39 @@ l?:
 ;------------------------------------------------------------------------------
 SET_TX_CH .macro
 	and     r30.b2, r30.b2, 0xfc        ; Clear channel select bits
-	.if !$defined(ENABLE_MULTI_MAKE_RTU)
-	set     r30.b2, r30.b2, CHANNEL_NUM  ; Set bit for selected channel
+	.if $isdefed("ENABLE_MULTI_MAKE_TXPRU")
+	set     r30.b2, r30.b2, 2           ; Set bits for channel 2
+	.elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
+	set     r30.b2, r30.b2, 1           ; Set bit for channel 1
+	.elseif $isdefed("ENABLE_MULTI_MAKE_RTU")
+	; Channel 0: bits already cleared, nothing to set
+	.else
+	qbbs    set_ch2?, ENDAT_ENABLE_CHx, 2
+	qbbs    set_ch1?, ENDAT_ENABLE_CHx, 1
+	; Default to channel 0 (bits already cleared)
+	qba     ch_set_done?
+set_ch1?:
+	set     r30.b2, r30.b2, 1           ; Set bit for channel 1
+	qba     ch_set_done?
+set_ch2?:
+	set     r30.b2, r30.b2, 2           ; Set bits for channel 2
+ch_set_done?:
 	.endif
 	.endm
 
 ;------------------------------------------------------------------------------
+; LOAD_CH_MASK
+;
+; Loads the channel enable mask from DMEM into ENDAT_ENABLE_CHx register.
+;------------------------------------------------------------------------------
+LOAD_CH_MASK .macro
+    ldi32   DMEM_OFFSET, ENDAT3_CHANNEL_ENABLE_MASK_OFFSET
+    lbbo    &ENDAT_ENABLE_CHx, DMEM_OFFSET, 0, 1     ; Load channel enable mask into r16.b0
+    .endm
+
+;------------------------------------------------------------------------------
 ; CLKMODE
-; 
+;
 ; Sets the clock mode for the EnDat3 interface.
 ; Configures clock to appropriate mode for transmission/reception.
 ;------------------------------------------------------------------------------
@@ -541,15 +608,11 @@ receive_preamble_bit?:
     mov     OVS_DATA_REG, r31.b0         ; Save raw oversampled data
 	lsl     BIT_CAPTURE_REG, BIT_CAPTURE_REG, 2  ; Make room for new bits
     add     TEMP0, TEMP0, 0               ; NOP operation
-    
-    ; Use lookup table to decode bit pattern
-    lbbo    &LUT_SAMPLE_REG, PREAMBLE_BASE, r31.b0, 1  ; LUT based sampling decision
+
+    ; Use lookup table to decode bit pattern from DMEM
+    lbco    &LUT_SAMPLE_REG, PRUx_DMEM, r31.b0, 1  ; LUT based sampling decision (LUT at offset 0x0000 in DMEM)
     CLEAR_VAL                          ; Clear valid flag for next bit
 
-    ; Store oversampled data for debugging
-    sbco    &OVS_DATA_REG, PRUx_DMEM, SAMPLE_OFFSET_COUNTER, 1
-	add     SAMPLE_OFFSET_COUNTER, SAMPLE_OFFSET_COUNTER, 1  ; Update counter
-    
     ; Check for sampling error
     qbne    no_error_in_sampling?, LUT_SAMPLE_REG, 0xff 
     ERROR_IN_SAMPLING                   ; Handle error if detected
@@ -585,9 +648,9 @@ receive_manchester_first_half_bit?:
 	qbbc    receive_manchester_first_half_bit?, r31, RX_VALID_FLAG  ; Wait for valid bit
 	
     lsr     BIT_CAPTURE_REG, BIT_CAPTURE_REG, 1  ; Make room for next bit
-    
-    ; Get bit pattern from lookup table
-    lbbo    &LUT_SAMPLE_REG, PREAMBLE_BASE, r31.b0, 1  ; LUT-based sampling decision
+
+    ; Get bit pattern from lookup table in DMEM
+    lbco    &LUT_SAMPLE_REG, PRUx_DMEM, r31.b0, 1  ; LUT-based sampling decision (LUT at offset 0x0000 in DMEM)
     CLEAR_VAL                          ; Clear valid flag for next bit
     
     ; Check for sampling error

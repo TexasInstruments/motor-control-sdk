@@ -35,6 +35,7 @@
 
 #include<stdint.h>
 #include<drivers/pruicss.h>
+#include<position_sense/endat3/include/endat3_drv.h>
 
 /* External global variables - defined in endat3_periodic_trigger.c */
 extern PRUICSS_Handle gPruIcssXHandle;
@@ -111,14 +112,14 @@ uint32_t endat3_config_periodic_mode(struct endat3_periodic_interface *endat3_pe
 
 /**
  * \brief Stop EnDat3 periodic mode
- * 
+ *
  * Disables the IEP timer and stops periodic triggering. This function
  * resets the IEP counter and disables the counter enable bit.
  *
  * \param endat3_periodic_interface Pointer to periodic interface configuration structure
  *
  * \return void
- * 
+ *
  * \code
  * endat3_stop_periodic_continuous_mode(&periodic_cfg);
  * \endcode

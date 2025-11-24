@@ -110,7 +110,7 @@ static void endat3_config_iep(struct endat3_periodic_interface *endat3_periodic_
     uint8_t event;
     uint32_t cmp_reg0;
     uint32_t cmp_reg1;
-    uint32_t event_clear;
+    uint8_t event_clear;
 
     /* Clear IEP counter */
     temp = HW_RD_REG8((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG);
@@ -300,25 +300,8 @@ void endat3_config_periodic_trigger(endat3_Handle handle)
 }
 
 /**
- * \brief Configure EnDat3 encoder for host trigger mode
- * 
- * Configures the encoder to operate in host trigger mode where the encoder
- * is triggered by host commands. This is the default mode.
- *
- * \param handle EnDat3 handle for the encoder channel
- *
- * \return void
- */
-void endat3_config_host_trigger(endat3_Handle handle)
-{
-    /* Configure encoder for host trigger mode (default) */
-    /* This would typically involve setting encoder-specific registers or parameters */
-    DebugP_log("\r\nEnDat3 encoder configured for host trigger mode\r\n");
-}
-
-/**
  * \brief Stop EnDat3 periodic mode
- * 
+ *
  * Disables the IEP timer and stops periodic triggering.
  *
  * \param endat3_periodic_interface Pointer to periodic interface configuration
@@ -354,7 +337,7 @@ static void pruEnDat3IrqHandler0(void *args)
     gPruEnDat3IrqCnt0++;
 
     /* Clear CMP3 event */
-    uint32_t event_clear;
+    uint8_t event_clear;
     event_clear = HW_RD_REG8((uint8_t*)gPruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
     event_clear |= IEP_CMP3_EVNT;
     HW_WR_REG8((uint8_t*)gPruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
@@ -379,7 +362,7 @@ static void pruEnDat3IrqHandler1(void *args)
     gPruEnDat3IrqCnt1++;
 
     /* Clear CMP5 event */
-    uint32_t event_clear;
+    uint8_t event_clear;
     event_clear = HW_RD_REG8((uint8_t*)gPruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
     event_clear |= IEP_CMP5_EVNT;
     HW_WR_REG8((uint8_t*)gPruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
@@ -404,7 +387,7 @@ static void pruEnDat3IrqHandler2(void *args)
     gPruEnDat3IrqCnt2++;
 
     /* Clear CMP6 event */
-    uint32_t event_clear;
+    uint8_t event_clear;
     event_clear = HW_RD_REG8((uint8_t*)gPruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
     event_clear |= IEP_CMP6_EVNT;
     HW_WR_REG8((uint8_t*)gPruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);

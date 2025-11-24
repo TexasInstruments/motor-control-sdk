@@ -36,18 +36,11 @@
 #include <position_sense/endat3/include/endat3_drv.h>
 #include <drivers/hw_include/hw_types.h>
 
-#define PREAMBLE_DEC        0x020
-#define PREAMBLE_LUT_SIZE   256
+#define MANCHESTER_DECODE_LUT_SIZE   256
 
-/*
-        endat3 memory map:
-        RTU_PRU core:   0x0000 - 0x06FF
-        PRU core:       0x0700 - 0x0DFF
-        TX_PRU core:    0x0E00 - 0x1500
-    */
-
-/* Preamble detection lookup table */
-static const uint8_t preamble_lut_data[PREAMBLE_LUT_SIZE] = {
+/*  8x oversampling lookup table for manchester data (2bits of manchester data in 8 bit oversample data)*/
+/*  Shared LUT with all 3 channels per PRU slice in load share and non-load share mode*/
+static const uint8_t endat3_manchester_decode_lut_data[MANCHESTER_DECODE_LUT_SIZE] = {
     0x00, 0x00, 0x00, 0xFF, 0x00, 0xFF, 0xFF, 0x40,
     0x00, 0xFF, 0xFF, 0x40, 0xFF, 0x40, 0x40, 0x40,
     0x00, 0x00, 0x00, 0xFF, 0x00, 0xFF, 0xFF, 0x40,
@@ -82,15 +75,15 @@ static const uint8_t preamble_lut_data[PREAMBLE_LUT_SIZE] = {
     0x80, 0xFF, 0xFF, 0xC0, 0xFF, 0xC0, 0xC0, 0xC0
 };
 
-static void endat3_preamble_lut(PRUICSS_Handle icssgHandle)
+static void endat3_manchester_decode_lut(endat3_Handle endat3Handle)
 {
-    uint8_t *preamble_detect = (uint8_t *)((((PRUICSS_HwAttrs *)(icssgHandle->hwAttrs))->sharedDramBase) + PREAMBLE_DEC);
-    
-    /* Copy the lookup table data to shared DRAM */
-    memcpy(preamble_detect, preamble_lut_data, PREAMBLE_LUT_SIZE);
+    /* Copy the lookup table data to DMEM at the start of endat3Interface structure */
+    uint8_t *lut_dest = (uint8_t *)endat3Handle->endat3Interface->lut;
+
+    memcpy(lut_dest, endat3_manchester_decode_lut_data, MANCHESTER_DECODE_LUT_SIZE);
 }
 
 void endat3_generate_memory_image(endat3_Handle endat3Handle, PRUICSS_Handle icssgHandle)
 {
-    endat3_preamble_lut(icssgHandle);
+    endat3_manchester_decode_lut(endat3Handle);
 }

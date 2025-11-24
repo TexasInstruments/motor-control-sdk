@@ -75,6 +75,11 @@ endat3_init:
 endat_main:
     ; Clear all registers
     zero    &TEMP0, 120                  ; Clear R0-R29
+
+    ; Load channel enable mask from DMEM
+    ; This mask is used by TX_EN and RX_EN macros for runtime channel determination
+    LOAD_CH_MASK
+
     ; Initialize system
 
 	; If PRU0 is defined, configure PRU0-specific registers
@@ -136,11 +141,11 @@ init_seq_hello:
 	WAIT ADD_DELAY
 
 	; Prepare and send hello sequence
-	ldi32 TEMP2, FIXED_TX_PREAMBLE                   ; Load predefined preamble pattern
-	ldi32 TEMP1, FIXED_HELLO_CMD_DATA                ; Load hello command data
-	ENCODE_TX_DATA                                  ; Manchester encode the data
-	TX_PREPROCESSING                                ; Prepare data for transmission (add postamble, etc)
-	SEND_TX                                         ; Transmit the data
+	ldi32 TX_PREAMBLE, FIXED_TX_PREAMBLE             ; Load predefined preamble pattern
+	ldi32 TX_CMD_DATA, FIXED_HELLO_CMD_DATA          ; Load hello command data
+	ENCODE_TX_DATA TX_CMD_DATA, TX_ENCODED_HIGH, TX_ENCODED_LOW, ENCODE_INPUT_REG, ENCODE_OUTPUT_REG, BYTE_REV_INPUT, BYTE_REV_RESULT
+	TX_PREPROCESSING TX_PREAMBLE, TX_ENCODED_HIGH, TX_ENCODED_LOW, TEMP0
+	SEND_TX TX_PREAMBLE, TX_ENCODED_HIGH, TX_ENCODED_LOW
 
 	; Wait after hello transmission to pass Rx (no need to store rx for hello command used for encoder startup sequence)
 	ldi32 DMEM_OFFSET, ENDAT3_DELAY_TX_START_2_OFFSET
@@ -168,14 +173,18 @@ wait_for_start_trigger:
 	
 	; Reset system for new transmission
 	ZERO    &TEMP0, 116                             ; Clear registers
+
+	; Reload channel mask after register clear
+	LOAD_CH_MASK
+
 	RESET_FIFO_SETTING
 
 	; Send confirmation message
-	ldi32 TEMP2, FIXED_TX_PREAMBLE                   ; Load preamble
-	ldi32 TEMP1, FIXED_HELLO_CMD_DATA                ; Load data
-	ENCODE_TX_DATA                                  ; Manchester encode the data
-	TX_PREPROCESSING                                ; Prepare data for transmission (add postamble, etc)
-	SEND_TX                                         ; Transmit the data
+	ldi32 TX_PREAMBLE, FIXED_TX_PREAMBLE             ; Load preamble
+	ldi32 TX_CMD_DATA, FIXED_HELLO_CMD_DATA          ; Load data
+	ENCODE_TX_DATA TX_CMD_DATA, TX_ENCODED_HIGH, TX_ENCODED_LOW, ENCODE_INPUT_REG, ENCODE_OUTPUT_REG, BYTE_REV_INPUT, BYTE_REV_RESULT
+	TX_PREPROCESSING TX_PREAMBLE, TX_ENCODED_HIGH, TX_ENCODED_LOW, TEMP0
+	SEND_TX TX_PREAMBLE, TX_ENCODED_HIGH, TX_ENCODED_LOW
 
 	; Wait after transmission to pass Rx as we dont need to store rx for HELLO command for encoder wakeup
 	ldi32 DMEM_OFFSET, ENDAT3_DELAY_TX_START_2_OFFSET
@@ -283,17 +292,21 @@ wait_10ms:
 no_wait_for_10ms:
 	; Prepare for data transmission
 	ZERO    &TEMP0, 116                             ; Clear registers
+
+	; Reload channel mask after register clear
+	LOAD_CH_MASK
+
 	RESET_FIFO_SETTING
 	; Prepare and send data frame
-	ldi32 TEMP2, FIXED_TX_PREAMBLE                   ; Load preamble pattern
+	ldi32 TX_PREAMBLE, FIXED_TX_PREAMBLE             ; Load preamble pattern
 	ldi32 DMEM_OFFSET, ENDAT3_INTERFACE_TX_BUFFER_OFFSET    ; Get buffer address
-	lbbo &TEMP1, DMEM_OFFSET, CURR_TX_FRAME_MEM_OFFSET, 4 ; Load data from memory
+	lbbo &TX_CMD_DATA, DMEM_OFFSET, CURR_TX_FRAME_MEM_OFFSET, 4 ; Load data from memory
 	add CURR_TX_FRAME_MEM_OFFSET, CURR_TX_FRAME_MEM_OFFSET, 4 ; Update offset
-	
+
 	; Encode and send the data
-	ENCODE_TX_DATA                                  ; Manchester encode the data
-	TX_PREPROCESSING                                ; Prepare data for transmission (add postamble, etc)
-	SEND_TX                                         ; Transmit the data
+	ENCODE_TX_DATA TX_CMD_DATA, TX_ENCODED_HIGH, TX_ENCODED_LOW, ENCODE_INPUT_REG, ENCODE_OUTPUT_REG, BYTE_REV_INPUT, BYTE_REV_RESULT
+	TX_PREPROCESSING TX_PREAMBLE, TX_ENCODED_HIGH, TX_ENCODED_LOW, TEMP0
+	SEND_TX TX_PREAMBLE, TX_ENCODED_HIGH, TX_ENCODED_LOW
 ;******************************************************************************
 ; Main Processing Loop
 ;
@@ -315,13 +328,11 @@ rx_main_loop:
 one_tx_frame_left:
     ; Clear registers and prepare for reception
     zero			&TEMP0, 116                     ; Clear registers
-    sbco &TEMP0, PRUx_DMEM, TEMP0, 120                       ; Clear memory area
-    
+	
+    ; Reload channel mask after register clear
+    LOAD_CH_MASK
+
     ; Setup lookup tables and decoding resources
-    ldi32   PREAMBLE_START_REG, (PREAMBLE_START)     ; Load preamble start address
-	ldi32   PREAMBLE_BASE, (PREAMBLE_DEC)            ; Load preamble decode table address
-	ldi32   DEC_OFFSET_REG, (ENDAT3_DEC_OFFS)        ; Load decoder offset
-    ldi32   OFFLOAD_REG, (OFFLOAD_DATA_OFFS)         ; Load offload address
     ldi32	DECODED_DATA_REG, ENDAT3_INTERFACE_RX_BUFFER_OFFSET    ; Set decoded data destination
 	
 	; Wait for TX to complete before enabling rx
@@ -434,8 +445,10 @@ host_trigger_next_cmd:
 	; Check if this was a reset command
     ldi DMEM_OFFSET, ENDAT3_INTERFACE_FOREGROUND_OP_CODE_OFFSET              ; Get command ID address
     lbbo &TEMP2.b0, DMEM_OFFSET, 0, 1                  ; Read command ID
-    qbeq init_seq_hello, TEMP2.b0, RESET_CMD          ; If reset command, restart hello sequence
-	qba check_operating_mode                        ; Otherwise check operating mode for next command
+    qbne skip_reset, TEMP2.b0, RESET_CMD             ; If not reset, skip
+    jmp init_seq_hello                                 ; Jump to hello sequence for reset (long jump)
+skip_reset:
+	jmp check_operating_mode                        ; Jump to check operating mode (long jump)
 
 ;******************************************************************************
 ; Error Handling

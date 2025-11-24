@@ -53,27 +53,35 @@
 #include "endat3_periodic_trigger.h"
 
 #define ICSS_PRU_CORE_CLOCK CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ
-#if (PRU_ICSSGx_PRU_SLICE == 1)
-#include <position_sense/endat3/firmware/single_channel/endat3_receiver_multi_rtu_pru1_bin.h>
-#include <position_sense/endat3/firmware/single_channel/endat3_receiver_multi_pru1_bin.h>
-#include <position_sense/endat3/firmware/single_channel/endat3_receiver_multi_tx_pru1_bin.h>
+#if (CONFIG_ENDAT3_0_PRUICSS_PRUx == 1)
+#include <position_sense/endat3/firmware/single_channel/endat3_receiver_pru1_bin.h>
 #else
-#include <position_sense/endat3/firmware/single_channel/endat3_receiver_multi_rtu_pru0_bin.h>
-#include <position_sense/endat3/firmware/single_channel/endat3_receiver_multi_pru0_bin.h>
-#include <position_sense/endat3/firmware/single_channel/endat3_receiver_multi_tx_pru0_bin.h>
+#include <position_sense/endat3/firmware/single_channel/endat3_receiver_pru0_bin.h>
 #endif
 
 /* ========================================================================== */
 /* Macros & Typedefs                                                          */
 /* ========================================================================== */
 
+#define ENDAT3_SUCCESSFUL_RESPONSE   1
+#define ENDAT3_POSITION_LOOP_STOP    0
+#define ENDAT3_POSITION_LOOP_START   1
+#define POSITION_MASK_30BIT          0x3FFFFFFF
+#define ANGLE_FULL_ROTATION          360.0f
+#define ANGLE_BIT_RESOLUTION         30
+#define DISPLAY_LINE_LENGTH          47
+#define CONTINUOUS_MODE_DELAY_US     1000
+#define PERIODIC_MODE_STARTUP_US     100000
+#define PERIODIC_MODE_LOOP_DELAY_US  10000
+#define DATANOP_FIXED_VALUE          0x0000
+#define HELLO_FIXED_VALUE            0x2222
 #define TASK_STACK_SIZE (4096)
 #define TASK_PRIORITY (6)
 #define DELAY_1_SECOND (1000000)
 #define DELAY_302_MILLISEC (302000)
 /* PRU-ICSS Defines */
 #define PRU_CORE_CLK CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ
-#define PRUICSS_PRUx CONFIG_ENDAT0_PRUICSS_PRUx
+#define PRUICSS_PRUx CONFIG_ENDAT3_0_PRUICSS_PRUx
 #define PRUICSS_TX_PRUx PRUICSS_PRUx + 4
 #define PRUICSS_RTU_PRUx PRUICSS_PRUx + 2
 /* Command Type Defines */
@@ -91,21 +99,6 @@ static void *gPru_cfg;
 /* Task management for periodic mode */
 uint32_t gTaskFxnStack[TASK_STACK_SIZE/sizeof(uint32_t)] __attribute__((aligned(32)));
 TaskP_Object gTaskObject;
-
-#define ENDAT3_POSITION_LOOP_STOP    0
-#define ENDAT3_POSITION_LOOP_START   1
-
-/* Hardcoded value constants */
-#define POSITION_MASK_30BIT          0x3FFFFFFF
-#define ANGLE_FULL_ROTATION          360.0f
-#define ANGLE_BIT_RESOLUTION         30
-#define DISPLAY_LINE_LENGTH          47
-#define CONTINUOUS_MODE_DELAY_US     1000
-#define PERIODIC_MODE_STARTUP_US     100000
-#define PERIODIC_MODE_LOOP_DELAY_US  10000
-#define DATANOP_FIXED_VALUE          0x0000
-#define HELLO_FIXED_VALUE            0x2222
-
 static int32_t endat3_position_loop_status;
 
 /* ========================================================================== */
@@ -134,11 +127,15 @@ void endat3_display_position_info(endat3_Handle priv)
 {
     DebugP_log("\r\n Position Information:");
 
-    /* Use API to get HPF status */
-    uint8_t hpf_status = endat3_getHpfStatus(priv);
+    /* Get HPF status */
+    uint8_t hpf_status;
+    if (endat3_getHpfStatus(priv, &hpf_status) != ENDAT3_SUCCESS)
+    {
+        DebugP_log("\r\n Error: Failed to get HPF status");
+        return;
+    }
     DebugP_log("\r\n HPF Status: 0x%02X", hpf_status);
 
-    /* Use boolean APIs instead of bit masking */
     if (endat3_hasHpfError(priv))
     {
         DebugP_log("\r\n - Error detected (F bit set)");
@@ -149,20 +146,20 @@ void endat3_display_position_info(endat3_Handle priv)
         DebugP_log("\r\n - Warning detected (W bit set)");
     }
 
-    /* Use API to check if HPF data is valid */
+    /* Check if HPF data is valid */
     if (!endat3_isHpfDataValid(priv))
     {
         DebugP_log("\r\n - HPF data invalid (HPFV bit not set)");
         return; /* Don't display invalid data */
     }
 
-    /* Use API to check if absolute value is available */
+    /* Check if absolute value is available */
     if (!endat3_hasAbsoluteValue(priv))
     {
         DebugP_log("\r\n - Absolute value not available (RM bit not set)");
     }
 
-    /* Use API to get HPF data */
+    /* Get HPF data */
     uint8_t hpf_data[6];
     if (endat3_getHpfData(priv, hpf_data) == 6)
     {
@@ -170,17 +167,23 @@ void endat3_display_position_info(endat3_Handle priv)
                    hpf_data[3], hpf_data[2], hpf_data[1], hpf_data[0]);
     }
 
-    /* Use API to get HPF CRC */
-    uint8_t hpf_crc = endat3_getHpfCrc(priv);
-    DebugP_log("\r\n CRC: 0x%02X", hpf_crc);
+    /* Get HPF CRC */
+    uint8_t hpf_crc;
+    if (endat3_getHpfCrc(priv, &hpf_crc) == ENDAT3_SUCCESS)
+    {
+        DebugP_log("\r\n CRC: 0x%02X", hpf_crc);
+    }
 
     DebugP_log("\r\n Additional Information:");
 
-    /* Use API to get LPH status */
-    uint8_t lph_status = endat3_getLphStatus(priv);
-    DebugP_log("\r\n LPH Status (communication Status): 0x%x", lph_status);
+    /* Get LPH status */
+    uint8_t lph_status;
+    if (endat3_getLphStatus(priv, &lph_status) == ENDAT3_SUCCESS)
+    {
+        DebugP_log("\r\n LPH Status (communication Status): 0x%x", lph_status);
+    }
 
-    /* Use API to get LPF status and data */
+    /* Get LPF status and data */
     uint8_t lpf_status = endat3_getLpfStatus(priv, 0);
     DebugP_log("\r\n LPF Status: 0x%x", lpf_status);
 
@@ -192,7 +195,7 @@ void endat3_display_position_info(endat3_Handle priv)
                    lpf_data[2], lpf_data[1], lpf_data[0]);
     }
 
-    /* Use API to get LPF CRC */
+    /* Get LPF CRC */
     uint8_t lpf_crc = endat3_getLpfCrc(priv, 0);
     DebugP_log("\r\n LPF CRC: 0x%02X", lpf_crc);
 
@@ -214,23 +217,28 @@ void endat3_display_error_status(endat3_Handle priv)
     DebugP_log("\r\n HPF and LPH Status:");
 
     /* Use APIs to get status */
-    uint8_t hpf_status = endat3_getHpfStatus(priv);
-    uint8_t lph_status = endat3_getLphStatus(priv);
+    uint8_t hpf_status, lph_status;
+    if (endat3_getHpfStatus(priv, &hpf_status) != ENDAT3_SUCCESS ||
+        endat3_getLphStatus(priv, &lph_status) != ENDAT3_SUCCESS)
+    {
+        DebugP_log("\r\n Error: Failed to get status");
+        return;
+    }
 
     DebugP_log("\r\n HPF Status: 0x%02X", hpf_status);
     DebugP_log("\r\n LPH Status: 0x%02X", lph_status);
 
-    /* Use API to extract error code */
+    /* Extract error code */
     endat3_ErrorCode_t error_code = endat3_getErrorCode(priv);
 
-    /* Use API to check for warning */
+    /* Check for warning */
     if (endat3_hasHpfWarning(priv))
     {
         DebugP_log("\r\n Warning detected (W bit set in HPF status)");
     }
 
     /* Display error information if error code is present */
-    if (error_code != endat3_ERR_UNKNOWN)
+    if (error_code != ENDAT3_ERR_UNKNOWN)
     {
         DebugP_log("\r\n Error Code: 0x%04X", error_code);
 
@@ -243,14 +251,14 @@ void endat3_display_error_status(endat3_Handle priv)
         DebugP_log("\r\n Recommended action: %s", action);
 
         /* Special handling for FGERR_RECONFIGURE */
-        if (error_code == endat3_FGERR_RECONFIGURE)
+        if (error_code == ENDAT3_FGERR_RECONFIGURE)
         {
             DebugP_log("\r\n NOTE: If this error occurs without a RECONFIGURE command or active");
             DebugP_log("\r\n background BUSY state, the encoder may be defective.");
         }
 
         /* Special handling for access denied errors */
-        if (error_code == endat3_BGERR_USAGE_ACCESS_DENIED)
+        if (error_code == ENDAT3_BGERR_USAGE_ACCESS_DENIED)
         {
             DebugP_log("\r\n Access protection error: Current user level is insufficient.");
             DebugP_log("\r\n You may need to authenticate with the AUTH command using a higher");
@@ -264,87 +272,42 @@ static void endat3_pruicss_init(void)
     gPruIcssXHandle = PRUICSS_open(CONFIG_PRU_ICSS0);
 
     /* Configure g_mux_en to 1 in ICSSG_SA_MX_REG Register. */
-#ifdef CONFIG_ENDAT0_G_MUX_EN
+#ifdef CONFIG_ENDAT3_0_G_MUX_EN
     PRUICSS_setSaMuxMode(gPruIcssXHandle, PRUICSS_SA_MUX_MODE_SD_ENDAT);
 #endif
 
     /* Set in constant table C30 to shared RAM 0x40300000 */
     PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_PRUx, PRUICSS_CONST_TBL_ENTRY_C30, ((0x40300000 & 0x00FFFF00) >> 8));
 
-#ifdef CONFIG_ENDAT0_LOAD_SHARE_MODE
-    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_TX_PRUx, PRUICSS_CONST_TBL_ENTRY_C30, ((0x40300000 & 0x00FFFF00) >> 8));
-    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_RTU_PRUx, PRUICSS_CONST_TBL_ENTRY_C30, ((0x40300000 & 0x00FFFF00) >> 8));
-    /* Set in constant table C29 for tx pru */
-    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_TX_PRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0x258);
-#endif
-
     /* clear ICSS0 PRU1 data RAM */
     PRUICSS_initMemory(gPruIcssXHandle, PRUICSS_DATARAM(PRUICSS_PRUx));
-
-#ifdef CONFIG_ENDAT0_LOAD_SHARE_MODE
-    PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_RTU_PRUx);
-    PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_TX_PRUx);
-#endif
 
     PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_PRUx);
 }
 
 int32_t endat3_pruicss_load_run_fw()
 {
-    int32_t status = SystemP_SUCCESS;
+    int32_t status = ENDAT3_SUCCESS;
     uint32_t size;
 
-#if (CONFIG_0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU) /*enable loadshare mode*/
-
-#if (CONFIG_ENDAT0_CHANNEL0)
-    status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_RTU_PRUx);
-    DebugP_assert(SystemP_SUCCESS == status);
-
-    size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_RTU_PRU(PRUICSS_PRUx),
-                                0, (uint32_t *) EnDat3FirmwareMultiMakeRTU_0,
-                                sizeof(EnDat3FirmwareMultiMakeRTU_0));
-    DebugP_assert(size);
-
-    status = PRUICSS_resetCore(gPruIcssXHandle, PRUICSS_RTU_PRUx);
-    DebugP_assert(SystemP_SUCCESS == status);
-
-    status = PRUICSS_enableCore(gPruIcssXHandle, PRUICSS_RTU_PRUx);
-    DebugP_assert(SystemP_SUCCESS == status);
-#endif
-
-#if (CONFIG_ENDAT0_CHANNEL1)
     status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_PRUx);
-    DebugP_assert(SystemP_SUCCESS == status);
-
+    DebugP_assert(ENDAT3_SUCCESS == status);
+#if (CONFIG_ENDAT3_0_PRUICSS_PRUx == 0)
     size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_PRUx),
-                                0, (uint32_t *) EnDat3FirmwareMultiMakePRU_0,
-                                sizeof(EnDat3FirmwareMultiMakePRU_0));
+                               0, (uint32_t *) EnDat3FirmwarePru0_0,
+                               sizeof(EnDat3FirmwarePru0_0));
+#else
+    size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_PRUx),
+                                   0, (uint32_t *) EnDat3FirmwarePru1_0,
+                                   sizeof(EnDat3FirmwarePru1_0));
+#endif
     DebugP_assert(size);
 
     status = PRUICSS_resetCore(gPruIcssXHandle, PRUICSS_PRUx);
-    DebugP_assert(SystemP_SUCCESS == status);
+    DebugP_assert(ENDAT3_SUCCESS == status);
 
     status = PRUICSS_enableCore(gPruIcssXHandle, PRUICSS_PRUx);
-    DebugP_assert(SystemP_SUCCESS == status);
-#endif
-
-#if (CONFIG_ENDAT0_CHANNEL2)
-    status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_TX_PRUx);
-    DebugP_assert(SystemP_SUCCESS == status);
-
-    size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_TX_PRU(PRUICSS_PRUx),
-                                0, (uint32_t *) EnDat3FirmwareMultiMakeTXPRU_0,
-                                sizeof(EnDat3FirmwareMultiMakeTXPRU_0));
-    DebugP_assert(size);
-
-    status = PRUICSS_resetCore(gPruIcssXHandle, PRUICSS_TX_PRUx);
-    DebugP_assert(SystemP_SUCCESS == status);
-
-    status = PRUICSS_enableCore(gPruIcssXHandle, PRUICSS_TX_PRUx);
-    DebugP_assert(SystemP_SUCCESS == status);
-#endif
-
-#endif
+    DebugP_assert(ENDAT3_SUCCESS == status);
 
     return status;
 }
@@ -359,14 +322,13 @@ void endat3_continuous_position_fetch(endat3_Handle handle)
     int32_t status = 0;
     uint32_t position = 0;
     float angle = 0.0f;
-    uint16_t cmd = endat3_REQ_DATA0;
-    int32_t line_length = 0;
-    uint8_t first_print = 1;
+    uint16_t cmd = ENDAT3_REQ_DATA0;
 
     /* Create task to monitor stop condition */
-    if (endat3_loop_task_create() != SystemP_SUCCESS)
+    if (endat3_loop_task_create() != ENDAT3_SUCCESS)
     {
         DebugP_log("\r\n ERROR: Task creation failed\r\n");
+        endat3_position_loop_status = ENDAT3_POSITION_LOOP_STOP;
         return;
     }
 
@@ -374,7 +336,6 @@ void endat3_continuous_position_fetch(endat3_Handle handle)
 
     DebugP_log("\r\n Starting continuous position fetch from encoder...\r\n");
     DebugP_log("\r\n Press Enter to stop continuous mode\r\n");
-    DebugP_log("\r\n Position: 0x00000000, Angle: 0.000000 degrees");
 
     while (1)
     {
@@ -386,23 +347,64 @@ void endat3_continuous_position_fetch(endat3_Handle handle)
         }
 
         /* Set expected TX frames count */
-        endat3_setExpectedTxFrameCount(handle, 1);
+        if (endat3_setExpectedTxFrameCount(handle, 1) != ENDAT3_SUCCESS)
+        {
+            int32_t error = endat3_getLastError(gEndat3HandleCh[0]);
+            DebugP_log("\r\nERROR: endat3_setExpectedTxFrameCount() failed with error code: %d", error);
+            if (error == ENDAT3_ERR_INVALID_HANDLE)
+            {
+                DebugP_log(" - Invalid handle or interface\r\n");
+            }
+            break;
+        }
 
         /* Send DATA0 command to encoder */
-        endat3_send_command(handle, cmd, 1);
+        if (endat3_send_command(handle, cmd, 1) != ENDAT3_SUCCESS)
+        {
+            int32_t error = endat3_getLastError(gEndat3HandleCh[0]);
+            DebugP_log("\r\nERROR: endat3_send_command() failed with error code: %d", error);
+            if (error == ENDAT3_ERR_INVALID_HANDLE)
+            {
+                DebugP_log(" - Invalid handle or interface\r\n");
+            }
+            else if (error == ENDAT3_ERR_INVALID_PARAM)
+            {
+                DebugP_log(" - Invalid parameters\r\n");
+            }
+            break;
+        }
 
         /* Set busy flag and wait for transmission to complete */
-        endat3_setBusy(handle, ENCODER_BUSY);
+        if (endat3_setBusy(handle, ENCODER_BUSY) != ENDAT3_SUCCESS)
+        {
+            int32_t error = endat3_getLastError(gEndat3HandleCh[0]);
+            DebugP_log("\r\nERROR: endat3_setBusy() failed with error code: %d", error);
+            if (error == ENDAT3_ERR_INVALID_HANDLE)
+            {
+                DebugP_log(" - Invalid handle or interface\r\n");
+            }
+            break;
+        }
         while (endat3_isBusy(handle));
 
         /* Receive response from encoder */
         status = endat3_receive_response(handle);
 
         /* Process response if successful */
-        if (status == 1)
+        if (status == ENDAT3_SUCCESSFUL_RESPONSE)
         {
-            /* Use API to get RX buffer */
+            /* Get RX buffer */
             const uint8_t* rx_buffer = endat3_getRxBuffer(handle);
+            if (rx_buffer == NULL)
+            {
+                int32_t error = endat3_getLastError(gEndat3HandleCh[0]);
+                DebugP_log("\r\nERROR: endat3_getRxBuffer() failed with error code: %d", error);
+                if (error == ENDAT3_ERR_INVALID_HANDLE)
+                {
+                    DebugP_log(" - Invalid handle or interface\r\n");
+                }
+                break;
+            }
             position = (rx_buffer[0]) |
                       ((rx_buffer[1]) << 8) |
                       ((rx_buffer[2]) << 16) |
@@ -414,25 +416,8 @@ void endat3_continuous_position_fetch(endat3_Handle handle)
             /* Convert position to angle in degrees (30-bit resolution = 2^30 = 1073741824) */
             angle = (position * ANGLE_FULL_ROTATION) / (1 << ANGLE_BIT_RESOLUTION);
 
-            /* Output position and angle data - update in place */
-            if (angle != 0.0f)
-            {
-                if (first_print)
-                {
-                    /* Calculate line length for first print */
-                    line_length = DISPLAY_LINE_LENGTH;  /* Length of "Position: 0x00000000, Angle: 0.000000 degrees" */
-                    first_print = 0;
-                }
-
-                /* Print new values */
-                DebugP_log("\r Position: 0x%x, Angle: %f degrees", position, angle);
-
-                /* Backspace to overwrite the line */
-                for (int32_t i = 0; i < line_length; i++)
-                {
-                    DebugP_log("%c", 8);  /* Backspace character */
-                }
-            }
+            /* Print new values */
+            DebugP_log("\r Position: 0x%x, Angle: %f degrees", position, angle);
         }
 
         /* Small delay to allow task to check for user input */
@@ -461,7 +446,7 @@ static void endat3_position_loop_decide_termination(void *args)
 /**
  * \brief Create task for monitoring periodic mode termination
  *
- * \return SystemP_SUCCESS on success, SystemP_FAILURE on failure
+ * \return ENDAT3_SUCCESS on success, ENDAT3_ERR_RX_FAIL on failure
  */
 static int32_t endat3_loop_task_create(void)
 {
@@ -476,7 +461,7 @@ static int32_t endat3_loop_task_create(void)
     taskParams.taskMain = (TaskP_FxnMain)endat3_position_loop_decide_termination;
     status = TaskP_construct(&gTaskObject, &taskParams);
 
-    if (status != SystemP_SUCCESS)
+    if (status != ENDAT3_SUCCESS)
     {
         DebugP_log("\r\nTask creation failed\n");
     }
@@ -493,7 +478,7 @@ static void endat3_process_periodic_command(void)
 {
     int32_t status;
     uint32_t cmp0_val, cmp3_val;
-    uint16_t cmd = endat3_REQ_DATA0;
+    uint16_t cmd = ENDAT3_REQ_DATA0;
 
     /* Get IEP timer configuration from user */
     DebugP_log("\r\n| Enter IEP reset cycle count (must be greater than EnDat3 cycle time including timeout period, in IEP cycles): ");
@@ -517,24 +502,12 @@ static void endat3_process_periodic_command(void)
         return;
     }
 
-    /* Validate CMP0 is reasonable (not too small) */
-    if (cmp0_val < 100000)
-    {
-        DebugP_log("\r\n| WARNING: CMP0 value (%u) is very small. Minimum recommended: 100000 IEP cycles\r\n", cmp0_val);
-        DebugP_log("\r\n| Continue anyway? (y/n): ");
-        char response;
-        if (DebugP_scanf("%c", &response) < 0 || (response != 'y' && response != 'Y'))
-        {
-            DebugP_log("\r\n| Operation cancelled\r\n|\r\n|\n");
-            return;
-        }
-    }
-
     /* Create task to monitor stop condition */
-    if (endat3_loop_task_create() != SystemP_SUCCESS)
+    if (endat3_loop_task_create() != ENDAT3_SUCCESS)
     {
         DebugP_log("\r\n| ERROR: OS not allowing continuous mode as related Task creation failed\r\n|\r\n|\n");
         DebugP_log("Task_create() failed!\n");
+        endat3_position_loop_status = ENDAT3_POSITION_LOOP_STOP;
         return;
     }
 
@@ -563,9 +536,18 @@ static void endat3_process_periodic_command(void)
     /* Set firmware to periodic trigger mode (opmode = 0) */
     DebugP_log("\r\n| Setting firmware to periodic trigger mode...");
     int32_t opmode_result = endat3_setOperatingMode(gEndat3HandleCh[0], 0);  /* 0 = periodic mode */
-    if (opmode_result != SystemP_SUCCESS)
+    if (opmode_result != ENDAT3_SUCCESS)
     {
-        DebugP_log("\r\n| ERROR: Failed to set operating mode to periodic\r\n|\r\n|\n");
+        int32_t error = endat3_getLastError(gEndat3HandleCh[0]);
+        DebugP_log("\r\n| ERROR: endat3_setOperatingMode() failed with error code: %d", error);
+        if (error == ENDAT3_ERR_INVALID_HANDLE)
+        {
+            DebugP_log(" - Invalid handle or interface\r\n|\r\n|\n");
+        }
+        else
+        {
+            DebugP_log(" - Failed to set operating mode to periodic\r\n|\r\n|\n");
+        }
         return;
     }
     /* Configure frame information before releasing trigger */
@@ -588,11 +570,8 @@ static void endat3_process_periodic_command(void)
     DebugP_log("\r\n|\n\r\n| Firmware will now trigger automatically on IEP CMP3 events");
     DebugP_log("\r\n| Waiting for periodic triggers...");
     DebugP_log("\r\n| press enter to stop the continuous mode\r\n|\r\n|");
-    DebugP_log("\r\n Position: 0x00000000, Angle: 0.000000 degrees");
 
     /* Main periodic loop - continuously display position data */
-    int32_t line_length = DISPLAY_LINE_LENGTH;
-
     while (1)
     {
         if (endat3_position_loop_status == ENDAT3_POSITION_LOOP_STOP)
@@ -606,7 +585,17 @@ static void endat3_process_periodic_command(void)
             /* Set firmware back to host trigger mode */
             DebugP_log("\r\n| Setting firmware to host trigger mode...");
 
-            endat3_setOperatingMode(gEndat3HandleCh[0], 1);  /* 1 = host trigger mode */
+            status = endat3_setOperatingMode(gEndat3HandleCh[0], 1);  /* 1 = host trigger mode */
+            if (status != ENDAT3_SUCCESS)
+            {
+                int32_t error = endat3_getLastError(gEndat3HandleCh[0]);
+                DebugP_log("\r\nERROR: endat3_setOperatingMode() failed with error code: %d", error);
+                if (error == ENDAT3_ERR_INVALID_HANDLE)
+                {
+                    DebugP_log(" - Invalid handle or interface\r\n");
+                }
+                return;
+            }
 
             /* Wait for mode switch to complete */
             ClockP_usleep(100000);
@@ -621,13 +610,23 @@ static void endat3_process_periodic_command(void)
             status = endat3_receive_response(gEndat3HandleCh[0]);
 
             /* Process response if successful */
-            if (status == 1)
+            if (status == ENDAT3_SUCCESSFUL_RESPONSE)
             {
                 /* Display position info if valid */
                 if (endat3_isHpfDataValid(gEndat3HandleCh[0]))
                 {
                     /* Extract position data */
                     const uint8_t* rx_buffer = endat3_getRxBuffer(gEndat3HandleCh[0]);
+                    if (rx_buffer == NULL)
+                    {
+                        int32_t error = endat3_getLastError(gEndat3HandleCh[0]);
+                        DebugP_log("\r\nERROR: endat3_getRxBuffer() failed with error code: %d", error);
+                        if (error == ENDAT3_ERR_INVALID_HANDLE)
+                        {
+                            DebugP_log(" - Invalid handle or interface\r\n");
+                        }
+                        break;
+                    }
                     uint32_t position = (rx_buffer[0]) |
                                       ((rx_buffer[1]) << 8) |
                                       ((rx_buffer[2]) << 16) |
@@ -635,18 +634,12 @@ static void endat3_process_periodic_command(void)
                     
                     /* Mask upper 2 bits to get 30-bit position value */
                     position &= POSITION_MASK_30BIT;
-                    
+
                     /* Convert position to angle in degrees */
                     float angle = (position * ANGLE_FULL_ROTATION) / (1 << ANGLE_BIT_RESOLUTION);
-                    
+
                     /* Print new values */
                     DebugP_log("\r Position: 0x%x, Angle: %f degrees", position, angle);
-                    
-                    /* Backspace to overwrite the line */
-                    for (int32_t i = 0; i < line_length; i++)
-                    {
-                        DebugP_log("%c", 8);  /* Backspace character */
-                    }
                 }
             }
 
@@ -678,6 +671,7 @@ void endat3_diagnostic_main(void *args)
     int32_t reset_type_choice;
     uint16_t clear_flags = 0;
     int32_t clear_f = 0, clear_w = 0, clear_ref = 0;
+    uint8_t channel_mask = 0;
 
     /* Open drivers to open the UART driver for console */
     Drivers_open();
@@ -685,13 +679,13 @@ void endat3_diagnostic_main(void *args)
 
     /* Initialize PRUICSS */
     /*C16 pin High for Enabling ch0 in booster pack */
-#if (CONFIG_ENDAT0_BOOSTER_PACK && CONFIG_ENDAT0_CHANNEL0)
+#if (CONFIG_ENDAT3_0_BOOSTER_PACK && CONFIG_ENDAT3_0_CHANNEL0)
     GPIO_setDirMode(ENC0_EN_BASE_ADDR, ENC0_EN_PIN, ENC0_EN_DIR);
     GPIO_pinWriteHigh(ENC0_EN_BASE_ADDR, ENC0_EN_PIN);
 #endif
 
     /*B17 pin High for Enabling ch2 in booster pack */
-#if (CONFIG_ENDAT0_BOOSTER_PACK && CONFIG_ENDAT0_CHANNEL2)
+#if (CONFIG_ENDAT3_0_BOOSTER_PACK && CONFIG_ENDAT3_0_CHANNEL2)
     GPIO_setDirMode(ENC2_EN_BASE_ADDR, ENC2_EN_PIN, ENC2_EN_DIR);
     GPIO_pinWriteHigh(ENC2_EN_BASE_ADDR, ENC2_EN_PIN);
 #endif
@@ -699,30 +693,47 @@ void endat3_diagnostic_main(void *args)
     /* Initialize EnDAT interface */
     endat3_pruicss_init();
 
-#if (CONFIG_ENDAT0_CHANNEL0==1)
-    gEndat3HandleCh[0] = endat3_open(gPruIcssXHandle, PRUICSS_RTU_PRUx, 1);
-    DebugP_assert(gEndat3HandleCh[0] != NULL);
+    /* Set channel mask based on configured channel */
+    channel_mask = 0;
+#if (CONFIG_ENDAT3_0_CHANNEL0)
+    channel_mask |= (1 << 0);
+#endif
+#if (CONFIG_ENDAT3_0_CHANNEL1)
+    channel_mask |= (1 << 1);
+#endif
+#if (CONFIG_ENDAT3_0_CHANNEL2)
+    channel_mask |= (1 << 2);
 #endif
 
-#if (CONFIG_ENDAT0_CHANNEL1==1)
-    gEndat3HandleCh[1] = endat3_open(gPruIcssXHandle, PRUICSS_PRUx, 1);
-    DebugP_assert(gEndat3HandleCh[1] != NULL);
-#endif
-
-#if (CONFIG_ENDAT0_CHANNEL2==1)
-    gEndat3HandleCh[2] = endat3_open(gPruIcssXHandle, PRUICSS_TX_PRUx, 1);
-    DebugP_assert(gEndat3HandleCh[2] != NULL);
-#endif
-
-    endat3_generate_memory_image(gEndat3HandleCh[0],gPruIcssXHandle);
+    gEndat3HandleCh[0] = endat3_open(gPruIcssXHandle, PRUICSS_PRUx, CONFIG_ENDAT3_0_MODE, CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ, channel_mask, CONFIG_ENDAT3_0_BAUD_RATE);
+    if (gEndat3HandleCh[0] == NULL)
+    {
+        int32_t error = endat3_getLastError(gEndat3HandleCh[0]);
+        DebugP_log("\r\nERROR: endat3_open() failed with error code: %d\n", error);
+        switch (error)
+        {
+            case ENDAT3_ERR_CLOCK_CONFIG:
+                DebugP_log("  Clock configuration failed - check PRU frequency and baud rate settings\n");
+                break;
+            case ENDAT3_ERR_INVALID_CORE:
+                DebugP_log("  Invalid PRU core specified for the selected mode\n");
+                break;
+            case ENDAT3_ERR_DELAY_CONFIG:
+                DebugP_log("  Delay cycle configuration failed - check handle and interface initialization\n");
+                break;
+            case ENDAT3_ERR_CHANNEL_CONFIG:
+                DebugP_log("  Channel mask configuration failed - check channel mask settings\n");
+                break;
+            default:
+                DebugP_log("  Unknown error occurred\n");
+                break;
+        }
+        goto deinit;
+    }
 
     gPru_cfg = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->cfgRegBase);
 
-    endat3_enable_load_share_mode(gPru_cfg,PRUICSS_PRUx);
-
-    /* Calculate and set frequency-independent delay cycles BEFORE loading firmware */
-    /* CRITICAL: Firmware uses these values immediately upon startup! */
-    endat3_setDelayCycles(gEndat3HandleCh[0], CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ);
+    /* Load and run firmware */
     i = endat3_pruicss_load_run_fw();
 
     if (i < 0)
@@ -732,23 +743,46 @@ void endat3_diagnostic_main(void *args)
         goto deinit;
     }
 
-    endat3_config_endat_mode(gEndat3HandleCh[0],PRUICSS_PRUx);
-
-    endat3_configureWithDefaults(gPru_cfg, CONFIG_ENDAT0_LOAD_SHARE_MODE, PRUICSS_PRUx);
-
     /* Set firmware to host trigger mode by default */
-    endat3_setOperatingMode(gEndat3HandleCh[0], 1);  /* 1 = host trigger mode */
+    i = endat3_setOperatingMode(gEndat3HandleCh[0], 1);  /* 1 = host trigger mode */
+    if (i != ENDAT3_SUCCESS)
+    {
+        int32_t error = endat3_getLastError(gEndat3HandleCh[0]);
+        DebugP_log("\r\nERROR: endat3_setOperatingMode() failed with error code: %d", error);
+        if (error == ENDAT3_ERR_INVALID_HANDLE)
+        {
+            DebugP_log(" - Invalid handle or interface\r\n");
+        }
+        goto deinit;
+    }
 
     /* Clear any previous trigger state */
-    endat3_clearStartTrigger(gEndat3HandleCh[0]);
-
-    /* Configure encoder for host trigger mode (default) */
-    endat3_config_host_trigger(gEndat3HandleCh[0]);
-
+    i = endat3_clearStartTrigger(gEndat3HandleCh[0]);
+    if (i != ENDAT3_SUCCESS)
+    {
+        int32_t error = endat3_getLastError(gEndat3HandleCh[0]);
+        DebugP_log("\r\nERROR: endat3_clearStartTrigger() failed with error code: %d", error);
+        if (error == ENDAT3_ERR_INVALID_HANDLE)
+        {
+            DebugP_log(" - Invalid handle or interface\r\n");
+        }
+        goto deinit;
+    }
+    /* It can therefore take up to 300 ms to respond to a HELLO command for initial startup */
     ClockP_usleep(DELAY_1_SECOND);
 
     /* Release start trigger to firmware for initial communication */
-    endat3_releaseStartTrigger(gEndat3HandleCh[0]);
+    i = endat3_releaseStartTrigger(gEndat3HandleCh[0]);
+    if (i != ENDAT3_SUCCESS)
+    {
+        int32_t error = endat3_getLastError(gEndat3HandleCh[0]);
+        DebugP_log("\r\nERROR: endat3_releaseStartTrigger() failed with error code: %d", error);
+        if (error == ENDAT3_ERR_INVALID_HANDLE)
+        {
+            DebugP_log(" - Invalid handle or interface\r\n");
+        }
+        goto deinit;
+    }
 
     ClockP_usleep(DELAY_1_SECOND);
 
@@ -801,40 +835,49 @@ void endat3_diagnostic_main(void *args)
                 switch (menu_option)
                 {
                     case ENDAT3_MENU_DATA0:
-                        cmd = endat3_REQ_DATA0;
+                        cmd = ENDAT3_REQ_DATA0;
                         break;
                     case ENDAT3_MENU_DATA1:
-                        cmd = endat3_REQ_DATA1;
+                        cmd = ENDAT3_REQ_DATA1;
                         break;
                     case ENDAT3_MENU_DATA2:
-                        cmd = endat3_REQ_DATA2;
+                        cmd = ENDAT3_REQ_DATA2;
                         break;
                     case ENDAT3_MENU_DATA3:
-                        cmd = endat3_REQ_DATA3;
+                        cmd = ENDAT3_REQ_DATA3;
                         break;
                     case ENDAT3_MENU_DATA4:
-                        cmd = endat3_REQ_DATA4;
+                        cmd = ENDAT3_REQ_DATA4;
                         break;
                     case ENDAT3_MENU_DATA5:
-                        cmd = endat3_REQ_DATA5;
+                        cmd = ENDAT3_REQ_DATA5;
                         break;
                     case ENDAT3_MENU_DATA6:
-                        cmd = endat3_REQ_DATA6;
+                        cmd = ENDAT3_REQ_DATA6;
                         break;
                     case ENDAT3_MENU_DATA7:
-                        cmd = endat3_REQ_DATA7;
+                        cmd = ENDAT3_REQ_DATA7;
                         break;
                     case ENDAT3_MENU_DATA:
-                        cmd = endat3_REQ_DATA;
+                        cmd = ENDAT3_REQ_DATA;
                         break;
                     case ENDAT3_MENU_DATANOP:
-                        cmd = endat3_REQ_DATANOP;
-                        DebugP_log("\r\n DATANOP uses fixed value 0x0000");
-                        /* Use API to set background data */
-                        endat3_setBgData(gEndat3HandleCh[0], 0, 0x0000);
+                        cmd = ENDAT3_REQ_DATANOP;
+                        DebugP_log("\r\n DATANOP uses fixed value 0x%04X", DATANOP_FIXED_VALUE);
+                        /* Set background data */
+                        if (endat3_setBgData(gEndat3HandleCh[0], 0, DATANOP_FIXED_VALUE) != ENDAT3_SUCCESS)
+                        {
+                            int32_t error = endat3_getLastError(gEndat3HandleCh[0]);
+                            DebugP_log("\r\nERROR: endat3_setBgData() failed with error code: %d", error);
+                            if (error == ENDAT3_ERR_INVALID_HANDLE)
+                            {
+                                DebugP_log(" - Invalid handle or interface\r\n");
+                            }
+                            break;
+                        }
                         break;
                     case ENDAT3_MENU_RESET:
-                        cmd = endat3_REQ_RESET;
+                        cmd = ENDAT3_REQ_RESET;
                         DebugP_log("\r\n Select reset type:");
                         DebugP_log("\r\n 1: Hard Reset (0xBBBB)");
                         DebugP_log("\r\n 2: Other (Enter custom value)");
@@ -849,11 +892,16 @@ void endat3_diagnostic_main(void *args)
                             DebugP_log("\r\n Enter custom reset type (hex):");
                             DebugP_scanf("%x", &req_data);
                         }
-                        /* Use API to set background data */
-                        endat3_setBgData(gEndat3HandleCh[0], 0, req_data);
+                        /* Set background data */
+                        if (endat3_setBgData(gEndat3HandleCh[0], 0, req_data) != ENDAT3_SUCCESS)
+                        {
+                            int32_t error = endat3_getLastError(gEndat3HandleCh[0]);
+                            DebugP_log("\r\nERROR: endat3_setBgData() failed with error code: %d - Invalid handle or interface\r\n", error);
+                            break;
+                        }
                         break;
                     case ENDAT3_MENU_CLEAR:
-                        cmd = endat3_REQ_CLEAR;
+                        cmd = ENDAT3_REQ_CLEAR;
                         clear_flags = 0;
                         clear_f = 0;
                         clear_w = 0;
@@ -874,18 +922,28 @@ void endat3_diagnostic_main(void *args)
                         if (clear_ref)
                             clear_flags |= ENDAT3_CLEAR_REF;
 
-                        /* Use API to set background data */
-                        endat3_setBgData(gEndat3HandleCh[0], 0, clear_flags);
+                        /* Set background data */
+                        if (endat3_setBgData(gEndat3HandleCh[0], 0, clear_flags) != ENDAT3_SUCCESS)
+                        {
+                            int32_t error = endat3_getLastError(gEndat3HandleCh[0]);
+                            DebugP_log("\r\nERROR: endat3_setBgData() failed with error code: %d - Invalid handle or interface\r\n", error);
+                            break;
+                        }
                         break;
                     case ENDAT3_MENU_ECHO:
-                        cmd = endat3_REQ_ECHO;
+                        cmd = ENDAT3_REQ_ECHO;
                         DebugP_log("\r\n Enter echo data (0x0-0xffff):");
                         DebugP_scanf("%x", &req_data);
-                        /* Use API to set background data */
-                        endat3_setBgData(gEndat3HandleCh[0], 0, req_data);
+                        /* Set background data */
+                        if (endat3_setBgData(gEndat3HandleCh[0], 0, req_data) != ENDAT3_SUCCESS)
+                        {
+                            int32_t error = endat3_getLastError(gEndat3HandleCh[0]);
+                            DebugP_log("\r\nERROR: endat3_setBgData() failed with error code: %d - Invalid handle or interface\r\n", error);
+                            break;
+                        }
                         break;
                     case ENDAT3_MENU_RATE:
-                        cmd = endat3_REQ_RATE;
+                        cmd = ENDAT3_REQ_RATE;
                         DebugP_log("\r\n Select data transfer rate:");
                         DebugP_log("\r\n 1: 12.5 Mbps");
 
@@ -905,25 +963,62 @@ void endat3_diagnostic_main(void *args)
                             DebugP_log("\r\n Invalid selection, using 12.5 Mbps");
                             req_data = ENDAT3_RATE_12_5MBPS;
                         }
-                        /* Use API to set background data */
-                        endat3_setBgData(gEndat3HandleCh[0], 0, req_data);
+                        /* Set background data */
+                        if (endat3_setBgData(gEndat3HandleCh[0], 0, req_data) != ENDAT3_SUCCESS)
+                        {
+                            int32_t error = endat3_getLastError(gEndat3HandleCh[0]);
+                            DebugP_log("\r\nERROR: endat3_setBgData() failed with error code: %d - Invalid handle or interface\r\n", error);
+                            break;
+                        }
                         break;
                     case ENDAT3_MENU_HELLO:
-                        cmd = endat3_REQ_HELLO;
-                        DebugP_log("\r\n HELLO uses fixed value 0x2222");
-                        /* Use API to set background data */
-                        endat3_setBgData(gEndat3HandleCh[0], 0, 0x2222);
+                        cmd = ENDAT3_REQ_HELLO;
+                        DebugP_log("\r\n HELLO uses fixed value 0x%04X", HELLO_FIXED_VALUE);
+                        /* Set background data */
+                        if (endat3_setBgData(gEndat3HandleCh[0], 0, HELLO_FIXED_VALUE) != ENDAT3_SUCCESS)
+                        {
+                            int32_t error = endat3_getLastError(gEndat3HandleCh[0]);
+                            DebugP_log("\r\nERROR: endat3_setBgData() failed with error code: %d - Invalid handle or interface\r\n", error);
+                            break;
+                        }
                         break;
                     default:
                         DebugP_log("\r\n Invalid option, using DATA0");
-                        cmd = endat3_REQ_DATA0;
+                        cmd = ENDAT3_REQ_DATA0;
                         break;
                 }
 
                 /* Use APIs to set operation codes */
-                endat3_setBackgroundOpCode(gEndat3HandleCh[0], 0);
-                endat3_setForegroundOpCode(gEndat3HandleCh[0], cmd);
-                endat3_setExpectedTxFrameCount(gEndat3HandleCh[0], 1);
+                if (endat3_setBackgroundOpCode(gEndat3HandleCh[0], 0) != ENDAT3_SUCCESS)
+                {
+                    int32_t error = endat3_getLastError(gEndat3HandleCh[0]);
+                    DebugP_log("\r\nERROR: endat3_setBackgroundOpCode() failed with error code: %d", error);
+                    if (error == ENDAT3_ERR_INVALID_HANDLE)
+                    {
+                        DebugP_log(" - Invalid handle or interface\r\n");
+                    }
+                    break;
+                }
+                if (endat3_setForegroundOpCode(gEndat3HandleCh[0], cmd) != ENDAT3_SUCCESS)
+                {
+                    int32_t error = endat3_getLastError(gEndat3HandleCh[0]);
+                    DebugP_log("\r\nERROR: endat3_setForegroundOpCode() failed with error code: %d", error);
+                    if (error == ENDAT3_ERR_INVALID_HANDLE)
+                    {
+                        DebugP_log(" - Invalid handle or interface\r\n");
+                    }
+                    break;
+                }
+                if (endat3_setExpectedTxFrameCount(gEndat3HandleCh[0], 1) != ENDAT3_SUCCESS)
+                {
+                    int32_t error = endat3_getLastError(gEndat3HandleCh[0]);
+                    DebugP_log("\r\nERROR: endat3_setExpectedTxFrameCount() failed with error code: %d", error);
+                    if (error == ENDAT3_ERR_INVALID_HANDLE)
+                    {
+                        DebugP_log(" - Invalid handle or interface\r\n");
+                    }
+                    break;
+                }
             }
             else
             {
@@ -942,10 +1037,10 @@ void endat3_diagnostic_main(void *args)
                 switch (op_code)
                 {
                     case 1: /* NOP */
-                        op_code = endat3_BGREQ_NOP;
+                        op_code = ENDAT3_BGREQ_NOP;
                         break;
                     case 2: /* READ */
-                        op_code = endat3_BGREQ_READ;
+                        op_code = ENDAT3_BGREQ_READ;
                         DebugP_log("\r\n Enter number of words to read:");
                         DebugP_scanf("%d", &words);
                         data = words;
@@ -955,7 +1050,7 @@ void endat3_diagnostic_main(void *args)
                         DebugP_scanf("%x", &addr_lsb);
                         break;
                     case 3: /* WRITE */
-                        op_code = endat3_BGREQ_WRITE;
+                        op_code = ENDAT3_BGREQ_WRITE;
                         DebugP_log("\r\n Enter address (MSB byte):");
                         DebugP_scanf("%x", &addr_msb);
                         DebugP_log("\r\n Enter address (LSB 2 bytes):");
@@ -964,20 +1059,20 @@ void endat3_diagnostic_main(void *args)
                         DebugP_scanf("%x", &data);
                         break;
                     case 4: /* RECONFIGURE */
-                        op_code = endat3_BGREQ_RECONFIGURE;
+                        op_code = ENDAT3_BGREQ_RECONFIGURE;
                         break;
                     case 5: /* AUTH */
-                        op_code = endat3_BGREQ_AUTH;
+                        op_code = ENDAT3_BGREQ_AUTH;
                         DebugP_log("\r\n Enter user level (0-255):");
                         DebugP_scanf("%d", &user_level);
                         addr_msb = user_level;
                         DebugP_log("\r\n Enter password (hex, up to 32 bits):");
                         DebugP_scanf("%x", &password);
-                        addr_lsb = (password >> 16) & 0xFFFF;
-                        data = password & 0xFFFF;
+                        addr_lsb = (password >> ENDAT3_PASSWORD_HIGH_SHIFT) & ENDAT3_PASSWORD_LOW_MASK;
+                        data = password & ENDAT3_PASSWORD_LOW_MASK;
                         break;
                     case 6: /* PROTECT */
-                        op_code = endat3_BGREQ_PROTECT;
+                        op_code = ENDAT3_BGREQ_PROTECT;
                         DebugP_log("\r\n PROTECT - Controls the protection of memory areas");
                         DebugP_log("\r\n Enter address (MSB byte):");
                         DebugP_scanf("%x", &addr_msb);
@@ -986,16 +1081,16 @@ void endat3_diagnostic_main(void *args)
 
                         int32_t mode_input;
                         DebugP_log("\r\n Enter protection mode:");
-                        DebugP_log("\r\n 1: QUERY (0x01) - Query the current access levels");
-                        DebugP_log("\r\n 2: SET_READ (0x02) - Set the access level for read-accesses");
-                        DebugP_log("\r\n 3: SET_WRITE (0x03) - Set the access level for write-accesses");
+                        DebugP_log("\r\n 1: QUERY (0x%02X) - Query the current access levels", ENDAT3_PROTECT_QUERY);
+                        DebugP_log("\r\n 2: SET_READ (0x%02X) - Set the access level for read-accesses", ENDAT3_PROTECT_SET_READ);
+                        DebugP_log("\r\n 3: SET_WRITE (0x%02X) - Set the access level for write-accesses", ENDAT3_PROTECT_SET_WRITE);
                         DebugP_log("\r\n (Other values will be rejected with an error)");
                         DebugP_scanf("%d", &mode_input);
 
                         if (mode_input < 1 || mode_input > 3)
                         {
                             DebugP_log("\r\n Invalid mode value. Defaulting to QUERY (1)");
-                            mode = 1;
+                            mode = ENDAT3_PROTECT_QUERY;
                         }
                         else
                         {
@@ -1023,31 +1118,49 @@ void endat3_diagnostic_main(void *args)
                         data = ((uint32_t)mode << 24) | ((uint32_t)acclevel << 16);
                         break;
                     case 7: /* SETPASS */
-                        op_code = endat3_BGREQ_SETPASS;
+                        op_code = ENDAT3_BGREQ_SETPASS;
                         DebugP_log("\r\n Enter user level (0-255):");
                         DebugP_scanf("%d", &user_level);
                         addr_msb = user_level;
                         DebugP_log("\r\n Enter new password (hex, up to 32 bits):");
                         DebugP_scanf("%x", &password);
-                        addr_lsb = (password >> 16) & 0xFFFF;
-                        data = password & 0xFFFF;
+                        addr_lsb = (password >> ENDAT3_PASSWORD_HIGH_SHIFT) & ENDAT3_PASSWORD_LOW_MASK;
+                        data = password & ENDAT3_PASSWORD_LOW_MASK;
                         break;
                     case 8: /* LOCATE */
-                        op_code = endat3_BGREQ_LOCATE;
+                        op_code = ENDAT3_BGREQ_LOCATE;
                         DebugP_log("\r\n Enter control value:");
                         DebugP_scanf("%x", &data);
                         break;
                     default:
                         DebugP_log("\r\n Invalid selection, using NOP");
-                        op_code = endat3_BGREQ_NOP;
+                        op_code = ENDAT3_BGREQ_NOP;
                         break;
                 }
 
                 /* Use APIs to set operation codes */
-                endat3_setForegroundOpCode(gEndat3HandleCh[0], 0);
-                endat3_setBackgroundOpCode(gEndat3HandleCh[0], op_code);
+                if (endat3_setForegroundOpCode(gEndat3HandleCh[0], 0) != ENDAT3_SUCCESS)
+                {
+                    int32_t error = endat3_getLastError(gEndat3HandleCh[0]);
+                    DebugP_log("\r\nERROR: endat3_setForegroundOpCode() failed with error code: %d", error);
+                    if (error == ENDAT3_ERR_INVALID_HANDLE)
+                    {
+                        DebugP_log(" - Invalid handle or interface\r\n");
+                    }
+                    break;
+                }
+                if (endat3_setBackgroundOpCode(gEndat3HandleCh[0], op_code) != ENDAT3_SUCCESS)
+                {
+                    int32_t error = endat3_getLastError(gEndat3HandleCh[0]);
+                    DebugP_log("\r\nERROR: endat3_setBackgroundOpCode() failed with error code: %d", error);
+                    if (error == ENDAT3_ERR_INVALID_HANDLE)
+                    {
+                        DebugP_log(" - Invalid handle or interface\r\n");
+                    }
+                    break;
+                }
 
-                /* Use API to get LPH status and state */
+                /* Get LPH status and state */
                 LPH_Status_t lph_state = endat3_getLphState(gEndat3HandleCh[0]);
 
                 switch (lph_state)
@@ -1058,14 +1171,14 @@ void endat3_diagnostic_main(void *args)
                         break;
                     case LPH_STATUS_RX_START: /* 1 */
                         /* Cycle stage: 2->0->1->2->3->0 */
-                        /* Use API to set background data */
+                        /* Set background data */
                         endat3_setBgData(gEndat3HandleCh[0], 0, 0);
                         endat3_setBgData(gEndat3HandleCh[0], 1, 0);
                         endat3_handle_background_command_request(gEndat3HandleCh[0],2, 6, op_code, addr_msb, addr_lsb, data);
                         break;
                     case LPH_STATUS_RX_LAST: /* 2 */
                         /* Cycle stage: 0->1->2->3->0 */
-                        /* Use API to set background data */
+                        /* Set background data */
                         endat3_setBgData(gEndat3HandleCh[0], 0, 0);
                         endat3_handle_background_command_request(gEndat3HandleCh[0],1, 5, op_code, addr_msb, addr_lsb, data);
                         break;
@@ -1080,19 +1193,42 @@ void endat3_diagnostic_main(void *args)
                 }
             }
 
-            /* Use API to get expected TX frame count */
-            uint32_t expected_frames = endat3_getExpectedTxFrameCount(gEndat3HandleCh[0]);
-            endat3_send_command(gEndat3HandleCh[0], cmd, expected_frames);
-            endat3_setBusy(gEndat3HandleCh[0],ENCODER_BUSY);
+            /* Get expected TX frame count */
+            uint32_t expected_frames;
+            if (endat3_getExpectedTxFrameCount(gEndat3HandleCh[0], &expected_frames) != ENDAT3_SUCCESS)
+            {
+                DebugP_log("\r\n Error: Failed to get expected TX frame count");
+                break;
+            }
+            if (endat3_send_command(gEndat3HandleCh[0], cmd, expected_frames) != ENDAT3_SUCCESS)
+            {
+                int32_t error = endat3_getLastError(gEndat3HandleCh[0]);
+                DebugP_log("\r\nERROR: endat3_send_command() failed with error code: %d", error);
+                if (error == ENDAT3_ERR_INVALID_HANDLE)
+                {
+                    DebugP_log(" - Invalid handle or interface\r\n");
+                }
+                else if (error == ENDAT3_ERR_INVALID_PARAM)
+                {
+                    DebugP_log(" - Invalid parameters\r\n");
+                }
+                break;
+            }
+            if (endat3_setBusy(gEndat3HandleCh[0],ENCODER_BUSY) != ENDAT3_SUCCESS)
+            {
+                int32_t error = endat3_getLastError(gEndat3HandleCh[0]);
+                DebugP_log("\r\nERROR: endat3_setBusy() failed with error code: %d - Invalid handle or interface\r\n", error);
+                break;
+            }
             while (endat3_isBusy(gEndat3HandleCh[0]));
             status = endat3_receive_response(gEndat3HandleCh[0]);
 
-            if (status == -1)
+            if (status == ENDAT3_ERR_SAMPLING_ERROR)
             {
                 DebugP_log("\r\n Sampling ERROR");
             }
 
-            if (status == 1) /* Successful response */
+            if (status == ENDAT3_SUCCESSFUL_RESPONSE) /* Successful response */
             {
                 /* Check for errors */
                 endat3_display_error_status(gEndat3HandleCh[0]);
@@ -1100,43 +1236,43 @@ void endat3_diagnostic_main(void *args)
                 /* Display information based on the specific command */
                 switch (cmd)
                 {
-                    case endat3_REQ_DATA0:
-                    case endat3_REQ_DATA1:
-                    case endat3_REQ_DATA2:
-                    case endat3_REQ_DATA3:
-                    case endat3_REQ_DATA4:
-                    case endat3_REQ_DATA5:
-                    case endat3_REQ_DATA6:
-                    case endat3_REQ_DATA7:
+                    case ENDAT3_REQ_DATA0:
+                    case ENDAT3_REQ_DATA1:
+                    case ENDAT3_REQ_DATA2:
+                    case ENDAT3_REQ_DATA3:
+                    case ENDAT3_REQ_DATA4:
+                    case ENDAT3_REQ_DATA5:
+                    case ENDAT3_REQ_DATA6:
+                    case ENDAT3_REQ_DATA7:
                         DebugP_log("\r\n Send list %d activated", cmd);
-                        /* Use API to check if HPF data is valid */
+                        /* Check if HPF data is valid */
                         if (endat3_isHpfDataValid(gEndat3HandleCh[0]))
                         {
                             endat3_display_position_info(gEndat3HandleCh[0]);
                         }
                         break;
-                    case endat3_REQ_DATA:
+                    case ENDAT3_REQ_DATA:
                         DebugP_log("\r\n DATA command executed");
-                        /* Use API to check if HPF data is valid */
+                        /* Check if HPF data is valid */
                         if (endat3_isHpfDataValid(gEndat3HandleCh[0]))
                         {
                             endat3_display_position_info(gEndat3HandleCh[0]);
                         }
                         break;
-                    case endat3_REQ_DATANOP:
+                    case ENDAT3_REQ_DATANOP:
                         DebugP_log("\r\n DATANOP command executed (no BGD)");
-                        /* Use API to check if HPF data is valid */
+                        /* Check if HPF data is valid */
                         if (endat3_isHpfDataValid(gEndat3HandleCh[0]))
                         {
                             endat3_display_position_info(gEndat3HandleCh[0]);
                         }
                         break;
-                    case endat3_REQ_ECHO:
+                    case ENDAT3_REQ_ECHO:
                         /* Display echo response and propagation time */
                         DebugP_log("\r\n Echo Response:");
                         /* For ECHO, HPF data is specifically marked as invalid (HPFV=0) */
 
-                        /* Use API to get HPF data */
+                        /* Get HPF data */
                         uint8_t echo_data[6];
                         if (endat3_getHpfData(gEndat3HandleCh[0], echo_data) == 0)
                         {
@@ -1144,10 +1280,10 @@ void endat3_diagnostic_main(void *args)
                             DebugP_log("\r\n - Echo Req Data: 0x%x%x", echo_data[5], echo_data[4]);
                         }
                         break;
-                    case endat3_REQ_HELLO:
+                    case ENDAT3_REQ_HELLO:
                         /* Display hello response */
                         DebugP_log("\r\n EnDat3 Hello Response:");
-                        /* Use API to check if HPF data is valid */
+                        /* Check if HPF data is valid */
                         if (endat3_isHpfDataValid(gEndat3HandleCh[0]))
                         {
                             DebugP_log("\r\n - Successfully switched to EnDat3 mode, now all commands can be executed");
@@ -1158,10 +1294,15 @@ void endat3_diagnostic_main(void *args)
                             DebugP_log("\r\n (May take up to 300ms to complete)");
                         }
                         break;
-                    case endat3_REQ_RESET:
+                    case ENDAT3_REQ_RESET:
                         DebugP_log("\r\n Encoder Reset Response:");
-                        /* Use API to get background data */
-                        uint16_t reset_type = endat3_getBgData(gEndat3HandleCh[0], 0);
+                        /* Get background data */
+                        uint32_t reset_data;
+                        uint16_t reset_type = 0;
+                        if (endat3_getBgData(gEndat3HandleCh[0], 0, &reset_data) == ENDAT3_SUCCESS)
+                        {
+                            reset_type = (uint16_t)reset_data;
+                        }
                         if (reset_type == ENDAT3_RESET_HARD)
                         {
                             DebugP_log("\r\n - Hard Reset initiated (0xBBBB)");
@@ -1173,11 +1314,16 @@ void endat3_diagnostic_main(void *args)
                         }
                         ClockP_usleep(DELAY_302_MILLISEC);
                         break;
-                    case endat3_REQ_CLEAR:
+                    case ENDAT3_REQ_CLEAR:
                         DebugP_log("\r\n State Reset Response:");
-                        /* Use API to get background data */
-                        uint16_t clear_flags = endat3_getBgData(gEndat3HandleCh[0], 0);
-                        if (clear_flags & endat3_CLEAR_F)
+                        /* Get background data */
+                        uint32_t clear_data;
+                        uint16_t clear_flags = 0;
+                        if (endat3_getBgData(gEndat3HandleCh[0], 0, &clear_data) == ENDAT3_SUCCESS)
+                        {
+                            clear_flags = (uint16_t)clear_data;
+                        }
+                        if (clear_flags & ENDAT3_CLEAR_F)
                         {
                             DebugP_log("\r\n - Errors (F) reset requested");
                         }
@@ -1190,10 +1336,15 @@ void endat3_diagnostic_main(void *args)
                             DebugP_log("\r\n - Absolute value (REF) clear requested");
                         }
                         break;
-                    case endat3_REQ_RATE:
+                    case ENDAT3_REQ_RATE:
                         DebugP_log("\r\n Data Rate Configuration Response:");
-                        /* Use API to get background data */
-                        uint16_t rate_type = endat3_getBgData(gEndat3HandleCh[0], 0);
+                        /* Get background data */
+                        uint32_t rate_data;
+                        uint16_t rate_type = 0;
+                        if (endat3_getBgData(gEndat3HandleCh[0], 0, &rate_data) == ENDAT3_SUCCESS)
+                        {
+                            rate_type = (uint16_t)rate_data;
+                        }
                         if (rate_type == ENDAT3_RATE_12_5MBPS)
                         {
                             DebugP_log("\r\n - Switching to 12.5 Mbps requested");
@@ -1210,31 +1361,42 @@ void endat3_diagnostic_main(void *args)
                         DebugP_log("\r\n and may take up to 300ms to complete");
                         ClockP_usleep(DELAY_302_MILLISEC);
                         break;
-                    case endat3_REQ_FORCE:
+                    case ENDAT3_REQ_FORCE:
                         DebugP_log("\r\n Forced Dynamic Sampling Response:");
                         DebugP_log("\r\n - Check Safety Frame for IgF1 and IgF2 bits");
-                        /* Use API to check if HPF data is valid */
+                        /* Check if HPF data is valid */
                         if (endat3_isHpfDataValid(gEndat3HandleCh[0]))
                         {
                             endat3_display_position_info(gEndat3HandleCh[0]);
                         }
                         break;
-                    case endat3_REQ_BUSBC:
+                    case ENDAT3_REQ_BUSBC:
                         DebugP_log("\r\n Bus Broadcast Command Response:");
-                        /* Use API to get background data */
-                        DebugP_log("\r\n - Broadcast Address: 0x%04X",
-                                   endat3_getBgData(gEndat3HandleCh[0], 0));
+                        /* Get background data */
+                        uint32_t busbc_data = 0;
+                        if (endat3_getBgData(gEndat3HandleCh[0], 0, &busbc_data) == ENDAT3_SUCCESS)
+                        {
+                            DebugP_log("\r\n - Broadcast Address: 0x%04X", (uint16_t)busbc_data);
+                        }
                         break;
-                    case endat3_REQ_BUSP2P:
+                    case ENDAT3_REQ_BUSP2P:
                         DebugP_log("\r\n Bus Point-to-Point Command Response:");
-                        /* Use API to get background data */
-                        DebugP_log("\r\n - P2P Address: 0x%04X",
-                                   endat3_getBgData(gEndat3HandleCh[0], 0));
+                        /* Get background data */
+                        uint32_t busp2p_data = 0;
+                        if (endat3_getBgData(gEndat3HandleCh[0], 0, &busp2p_data) == ENDAT3_SUCCESS)
+                        {
+                            DebugP_log("\r\n - P2P Address: 0x%04X", (uint16_t)busp2p_data);
+                        }
                         break;
-                    case endat3_REQ_BUSINIT:
+                    case ENDAT3_REQ_BUSINIT:
                         DebugP_log("\r\n Bus Initialization Response:");
-                        /* Use API to get background data */
-                        uint16_t businit_type = endat3_getBgData(gEndat3HandleCh[0], 0);
+                        /* Get background data */
+                        uint32_t businit_data;
+                        uint16_t businit_type = 0;
+                        if (endat3_getBgData(gEndat3HandleCh[0], 0, &businit_data) == ENDAT3_SUCCESS)
+                        {
+                            businit_type = (uint16_t)businit_data;
+                        }
                         if (businit_type == ENDAT3_BUSINIT_RESET_ADDR)
                         {
                             DebugP_log("\r\n - Bus address reset to 0x00 (0x8282)");
@@ -1247,7 +1409,7 @@ void endat3_diagnostic_main(void *args)
                     default:
                         /* Generic response display */
                         DebugP_log("\r\n Command 0x%02X Response:", cmd);
-                        /* Use API to check if HPF data is valid */
+                        /* Check if HPF data is valid */
                         if (endat3_isHpfDataValid(gEndat3HandleCh[0]))
                         {
                             endat3_display_position_info(gEndat3HandleCh[0]);
@@ -1255,8 +1417,11 @@ void endat3_diagnostic_main(void *args)
                         break;
                 }
 
-                /* Use API to get LPH status */
-                if ((cmd_type == 1) && (endat3_getLphStatus(gEndat3HandleCh[0]) != 0))
+                /* Get LPH status */
+                uint8_t lph_status;
+                if ((cmd_type == 1) &&
+                    (endat3_getLphStatus(gEndat3HandleCh[0], &lph_status) == ENDAT3_SUCCESS) &&
+                    (lph_status != 0))
                 {
                     DebugP_log("\r\n LPH STATUS ERROR");
                 }
@@ -1264,7 +1429,7 @@ void endat3_diagnostic_main(void *args)
             else
             {
                 DebugP_log("\r\n status=%d, Error during communication", status);
-                if (status == -1)
+                if (status == ENDAT3_ERR_SAMPLING_ERROR)
                 {
                     DebugP_log("\r\n Sampling ERROR");
                 }
