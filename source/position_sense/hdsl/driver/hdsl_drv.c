@@ -33,12 +33,6 @@
 #include <position_sense/hdsl/include/hdsl_drv.h>
 #include <kernel/dpl/ClockP.h>
 #include <drivers/hw_include/tistdtypes.h>
-#if defined (SOC_AM243X) || (SOC_AM64X)
-#include <source/include/g_v0/cslr_icss_common.h>
-#endif
-#if defined (SOC_AM261X)
-#include <source/include/m_v0/cslr_icss_common.h>
-#endif
 #define ONLINE_STATUS_1_L_FRES          (1<<0)
 #define ONLINE_STATUS_D_L_FREL          (1)
 
