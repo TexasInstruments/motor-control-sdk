@@ -34,12 +34,6 @@
 #include <kernel/dpl/ClockP.h>
 #include <drivers/hw_include/tistdtypes.h>
 #include <drivers/hw_include/hw_types.h>
-#if defined(SOC_AM243X)
-#include <source/include/g_v0/cslr_icss_common.h>
-#endif
-#if defined(SOC_AM261X) || defined(SOC_AM263X) || defined(SOC_AM263PX)
-#include <source/include/m_v0/cslr_icss_common.h>
-#endif
 static struct bissc_priv bissc_priv;
 
 void bissc_command_send(struct bissc_priv *priv)
