@@ -48,11 +48,6 @@ function onValidate(inst, validation) {
             {
                 if(is_am263x_soc || is_am263px_soc)
                 {
-                    if(instance.PRU_Slice == "PRU0" && instance.channel_2)
-                    {
-                        validation.logWarning("Channel 2 TX EN signal is not pinned out at the device level", inst, "channel_2");
-                    }
-
                     if((instance.channel_2 || instance.channel_0)&&(instance.Booster_Pack))
                     {
                         validation.logError("Channel 0 and Channel 2 are not supported with BP-AM2BLDCSERVO BoosterPack", inst, "Booster_Pack");
