@@ -294,141 +294,6 @@ char * uint64_to_str (uint64_t x)
     return b;
 }
 
-#if defined(SOC_AM263PX)
-I2C_Handle          i2cHandle;
-
-int32_t TCA6416_open()
-{
-    int32_t status = SystemP_SUCCESS;
-
-    i2cHandle = I2C_getHandle(CONFIG_I2C0);
-
-    return (status);
-}
-
-int32_t TCA6416_config(uint32_t ioIndex, uint32_t mode)
-{
-
-    int32_t         status = SystemP_SUCCESS;
-    I2C_Transaction i2cTransaction;
-    uint32_t        port, portPin, i2cAddress;
-    uint8_t         buffer[2U] = {0};
-
-    i2cAddress  = 0x20;
-
-    if(status == SystemP_SUCCESS)
-    {
-        /* Each port contains 8 IOs */
-        port        = 0;
-        portPin     = ioIndex;
-
-        /* Set config register address - needed for next read */
-        I2C_Transaction_init(&i2cTransaction);
-        buffer[0] = TCA6416_REG_CONFIG_PORT_0 + port;
-        i2cTransaction.writeBuf     = buffer;
-        i2cTransaction.writeCount   = 1U;
-        i2cTransaction.targetAddress = i2cAddress;
-        status += I2C_transfer(i2cHandle, &i2cTransaction);
-
-        /* Read config register value */
-        I2C_Transaction_init(&i2cTransaction);
-        i2cTransaction.readBuf      = buffer;
-        i2cTransaction.readCount    = 1;
-        i2cTransaction.targetAddress = i2cAddress;
-        status += I2C_transfer(i2cHandle, &i2cTransaction);
-
-        /* Set output or input mode to particular IO pin - read/modify/write */
-        I2C_Transaction_init(&i2cTransaction);
-        if(TCA6416_MODE_INPUT == mode)
-        {
-            buffer[1] = buffer[0] | (0x01 << portPin);
-        }
-        else
-        {
-            buffer[1] = buffer[0] & ~(0x01 << portPin);
-        }
-        buffer[0] = TCA6416_REG_CONFIG_PORT_0 + port;
-        i2cTransaction.writeBuf     = buffer;
-        i2cTransaction.writeCount   = 2;
-        i2cTransaction.targetAddress = i2cAddress;
-        status += I2C_transfer(i2cHandle, &i2cTransaction);
-    }
-
-    return (status);
-}
-
-int32_t TCA6416_setOutput(uint32_t ioIndex, uint32_t state)
-{
-    int32_t         status = SystemP_SUCCESS;
-    I2C_Transaction i2cTransaction;
-    uint32_t        port, portPin, i2cAddress;
-    uint8_t         buffer[2U] = {0};
-
-    i2cAddress  = 0x20;
-
-    if(status == SystemP_SUCCESS)
-    {
-        /* Each port contains 8 IOs */
-        port        = 0;
-        portPin     = ioIndex;
-
-        /* Set output prt register address - needed for next read */
-        I2C_Transaction_init(&i2cTransaction);
-        buffer[0] = TCA6416_REG_OUTPUT_PORT_0 + port;
-        i2cTransaction.writeBuf     = buffer;
-        i2cTransaction.writeCount   = 1U;
-        i2cTransaction.targetAddress = i2cAddress;
-        status += I2C_transfer(i2cHandle, &i2cTransaction);
-
-        /* Read config register value */
-        I2C_Transaction_init(&i2cTransaction);
-        i2cTransaction.readBuf      = buffer;
-        i2cTransaction.readCount    = 1;
-        i2cTransaction.targetAddress = i2cAddress;
-        status += I2C_transfer(i2cHandle, &i2cTransaction);
-
-        /* Set output or input mode to particular IO pin - read/modify/write */
-        I2C_Transaction_init(&i2cTransaction);
-        if(TCA6416_OUT_STATE_HIGH == state)
-        {
-            buffer[1] = buffer[0] | (0x01 << portPin);
-        }
-        else
-        {
-            buffer[1] = buffer[0] & ~(0x01 << portPin);
-        }
-        buffer[0] = TCA6416_REG_OUTPUT_PORT_0 + port;
-        i2cTransaction.writeBuf     = buffer;
-        i2cTransaction.writeCount   = 2;
-        i2cTransaction.targetAddress = i2cAddress;
-        status += I2C_transfer(i2cHandle, &i2cTransaction);
-    }
-
-    return (status);
-}
-
-void lp_bp_mux_mode_config()
-{
-    int32_t status = SystemP_FAILURE;
-    status = TCA6416_open();
-    DebugP_assert(status == SystemP_SUCCESS);
-
-    /* Configure pins 6 and 7 as outputs */
-    status = TCA6416_config(6, TCA6416_MODE_OUTPUT);
-    DebugP_assert(status == SystemP_SUCCESS);
-    status = TCA6416_config(7, TCA6416_MODE_OUTPUT);
-    DebugP_assert(status == SystemP_SUCCESS);
-
-    /* Set value 1 in pin 7 - BP Mux 0 */
-    status = TCA6416_setOutput(7, TCA6416_OUT_STATE_HIGH);
-    DebugP_assert(status == SystemP_SUCCESS);
-
-     /* Set value 1 in pin 6 - BP Mux 1 */
-    status = TCA6416_setOutput(6, TCA6416_OUT_STATE_HIGH);
-    DebugP_assert(status == SystemP_SUCCESS);
-}
-#endif
-
 static void endat_pruicss_init(void)
 {
 
@@ -514,9 +379,6 @@ static void endat_pruicss_init(void)
 void endat_pre_init(void)
 {
     endat_pruicss_init();
-#if defined(SOC_AM263PX)
-    lp_bp_mux_mode_config();
-#endif
 }
 
 uint32_t endat_pruicss_load_run_fw(Endat_Handle handle)
@@ -3570,6 +3432,8 @@ void endat_main(void *args)
     int32_t i;
     Endat_CmdSupplement cmd_supplement;
     uint64_t icssClk;
+    Endat_ClkCfg endat_clk_config;  /* Clock configuration structure */
+    memset(&endat_clk_config, 0, sizeof(endat_clk_config));
     Endat_Params endat_params;
 
     /* Open drivers to open the UART driver for console */
@@ -3693,7 +3557,9 @@ void endat_main(void *args)
     /*Translate the TCM local view addr to globel view addr */
     uint64_t gEndatChInfoGlobalAddr = CPU0_BTCM_SOCVIEW((uint64_t)&gEndatChInfo);
     endat_params.ch_info_global_addr = gEndatChInfoGlobalAddr;
-    endat_params.rx_info = &gEndatChInfo;
+    endat_params.channel_rx_info = &gEndatChInfo;
+    /* Initialize the clock config pointer to point to local structure */
+    endat_params.endat_clk_config = &endat_clk_config;
     endat_params.endat_clk_config->rx_clock_source = CONFIG_ENDAT0_TX_RX_FIFO_CLOCK_SOURCE;
     endat_params.endat_clk_config->tx_clock_source = CONFIG_ENDAT0_TX_RX_FIFO_CLOCK_SOURCE;
     endat_params.endat_clk_config->rx_os_rate = ENDAT_RX_OVERSAMPLING_RATE - 1;
@@ -3710,9 +3576,12 @@ void endat_main(void *args)
 #if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
     /*Translate the TCM local view addr to globel view addr */
     uint64_t gEndat1ChInfoGlobalAddr = CPU0_BTCM_SOCVIEW((uint64_t)&gEndat1ChInfo);
+    Endat_ClkCfg endat1_clk_config;  /* Clock configuration structure for second slice */
     Endat_Params endat1_params;
     endat1_params.ch_info_global_addr = gEndat1ChInfoGlobalAddr;
-    endat1_params.rx_info = &gEndat1ChInfo;
+    endat1_params.channel_rx_info = &gEndat1ChInfo;
+    /* Initialize the clock config pointer to point to local structure */
+    endat1_params.endat_clk_config = &endat1_clk_config;
     endat1_params.endat_clk_config->rx_clock_source = CONFIG_ENDAT1_TX_RX_FIFO_CLOCK_SOURCE;
     endat1_params.endat_clk_config->tx_clock_source = CONFIG_ENDAT1_TX_RX_FIFO_CLOCK_SOURCE;
     endat1_params.endat_clk_config->rx_os_rate = ENDAT_RX_OVERSAMPLING_RATE - 1;
