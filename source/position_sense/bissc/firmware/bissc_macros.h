@@ -306,7 +306,7 @@ BISSC_IS_CH2_SEL?:
     LDI     R30.w2, (BISSC_TX_CLK_MODE_FREERUN_STOPHIGH | BISSC_TX_CH2_SEL)
     LDI     R30.b0, 0
 BISSC_SKIP_CH_SEL?:
-    ; loading rx frame size to maximum bits we can receive from BiSSC encoder
+    ; loading rx frame size to maximum bits we can receive from BiSS-C encoder
     LDI     SCRATCH3.w2, BISSC_MAX_FRAME_SIZE
     LDI     SCRATCH3.w0, 0
     ; store Rx and Tx frame size to ICSS_CFG_PRUx_ED_CHx for all configured channels

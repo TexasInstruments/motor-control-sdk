@@ -1,0 +1,102 @@
+%%{
+    let module = system.modules[args[0]];
+%%}
+/*
+ * BiSS-C
+ */
+
+%if(module)
+%{
+/* BiSS-C attributes (compile-time data only) */
+static bissc_attrs gBisscAttrs[CONFIG_BISSC_NUM_INSTANCES] =
+{
+% for(let i = 0; i < module.$instances.length; i++) {
+    % let instance = module.$instances[i];
+    % let pruicss_instance = 0;
+    % /* Determine ICSS type and instance index */
+    % if(instance.instance === "ICSSM" || instance.instance === "ICSSM0" || instance.instance === "ICSSM1") {
+        % if(instance.instance === "ICSSM1") {
+            % pruicss_instance = 1;
+        % }
+    % } else {
+        % if(instance.instance === "ICSSG1") {
+            % pruicss_instance = 1;
+        % }
+    % }
+    % /* Calculate mode based on channel configuration and load share */
+    % let mode = 0;  /* Default: BISSC_MODE_SINGLE_CHANNEL_SINGLE_PRU */
+    % /* Check if multiple channels are enabled */
+    % if(((instance.channel_0 & 1) && (instance.channel_1 & 1)) || ((instance.channel_1 & 1) && (instance.channel_2 & 1)) || ((instance.channel_2 & 1) && (instance.channel_0 & 1))) {
+        % mode = 1;  /* BISSC_MODE_MULTI_CHANNEL_SINGLE_PRU */
+    % }
+    % /* Load share mode overrides multi-channel mode */
+    % if(instance.Multi_Channel_Load_Share & 1) {
+        % mode = 2;  /* BISSC_MODE_MULTI_CHANNEL_MULTI_PRU */
+    % }
+    % /* Calculate channel_mask */
+    % let channel_mask = ((instance.channel_0 & 1) | ((instance.channel_1 & 1) << 1) | ((instance.channel_2 & 1) << 2));
+    % /* Calculate individual channel enabled flags */
+    % let channel0_enabled = (instance.channel_0 & 1);
+    % let channel1_enabled = (instance.channel_1 & 1);
+    % let channel2_enabled = (instance.channel_2 & 1);
+    % /* Calculate total number of channels enabled */
+    % let total_channels = channel0_enabled + channel1_enabled + channel2_enabled;
+    % /* Determine PRU-ICSS Slice (0 or 1) */
+    % let pruicss_slice = 1;  /* Default to PRU1 */
+    % if(instance.instance === "ICSSG0") {
+        % if(instance.PRU_ICSSG0_PRU.$assign === "PRU_ICSSG0_PRU0") {
+            % pruicss_slice = 0;
+        % }
+    % } else if(instance.instance === "ICSSG1") {
+        % if(instance.PRU_ICSSG1_PRU.$assign === "PRU_ICSSG1_PRU0") {
+            % pruicss_slice = 0;
+        % }
+    % } else {
+        % /* For ICSSM, use pruicss_slice configuration */
+        % pruicss_slice = (instance.PRU_Slice == "PRU1") ? 1 : 0;
+    % }
+    % /* Create PRU core ID variables based on slice */
+    % let pru_id = pruicss_slice;              /* PRU0 (0) or PRU1 (1) */
+    % let rtu_pru_id = 2 + pruicss_slice;      /* RTU_PRU0 (2) or RTU_PRU1 (3) */
+    % let tx_pru_id = 4 + pruicss_slice;       /* TX_PRU0 (4) or TX_PRU1 (5) */
+    {
+        .instance = `i`U,
+        .mode = `mode`U,
+        .pruicss_instance = `pruicss_instance`U,
+        .pruicss_slice = `pruicss_slice`U,
+        .load_share_enabled = `(instance.Multi_Channel_Load_Share) ? "1U" : "0U"`,
+        .pru_id = `pru_id`U,
+        .rtu_pru_id = `rtu_pru_id`U,
+        .tx_pru_id = `tx_pru_id`U,
+        .channel_mask = 0x`channel_mask.toString(16).toUpperCase()`U,
+        .channel0_enabled = `channel0_enabled`U,
+        .channel1_enabled = `channel1_enabled`U,
+        .channel2_enabled = `channel2_enabled`U,
+        .total_channels = `total_channels`U,
+        .baud_rate = `instance.baudrate`U,
+        .core_clk_freq = `instance.pru.$name.toUpperCase()`_CORE_CLK_FREQ_HZ,
+        .uart_clk_freq = `instance.pru.$name.toUpperCase()`_UART_CLK_FREQ_HZ,
+        .iep_clk_freq = `instance.pru.$name.toUpperCase()`_IEP_CLK_FREQ_HZ,
+        .is_core_clk = `instance.Tx_Rx_Clk_Source`U,
+    },
+% }
+};
+
+/* BiSS-C priv objects - initialized by the driver */
+static bissc_priv gBisscPriv[CONFIG_BISSC_NUM_INSTANCES];
+
+/* BiSS-C driver configuration */
+bissc_config gBisscHandle[CONFIG_BISSC_NUM_INSTANCES] =
+{
+% for(let i = 0; i < module.$instances.length; i++) {
+    % let instance = module.$instances[i];
+    {
+        .priv = &gBisscPriv[`instance.$name.toUpperCase()`],
+        .attrs = &gBisscAttrs[`instance.$name.toUpperCase()`],
+    },
+% }
+};
+
+uint32_t gBisscConfigNum = CONFIG_BISSC_NUM_INSTANCES;
+
+%}

@@ -103,7 +103,7 @@ function getComponentProperty() {
     property.makefile = "pru";
     property.name = "bissc_peripheral_interface_single_ch";
     property.isInternal = false;
-    property.description = "BiSSC Peripheral Interface"
+    property.description = "BiSS-C Peripheral Interface"
     property.buildOptionCombos = buildOptionCombos;
     property.isSkipTopLevelBuild = true;
     property.skipUpdatingTirex = true;

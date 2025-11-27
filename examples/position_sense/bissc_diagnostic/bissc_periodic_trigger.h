@@ -30,44 +30,81 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _BISSC_H_
-#define _BISSC_H_
+#ifndef _BISSC_PERIODIC_TRIGGER_H_
+#define _BISSC_PERIODIC_TRIGGER_H_
+
+/* ========================================================================== */
+/*                             Include Files                                  */
+/* ========================================================================== */
 
 #include<stdint.h>
 #include <position_sense/bissc/include/bissc_drv.h>
 
-struct bissc_periodic_interface
-{
-  void *pruicss_iep;
-  uint64_t ch0_trigger_count;
-  uint64_t ch1_trigger_count;
-  uint64_t ch2_trigger_count;
-  uint64_t iep_reset_count;
-};
+/* ========================================================================== */
+/*                           Macros & Typedefs                                */
+/* ========================================================================== */
 
+/** \brief IEP counter default increment value (1 per clock cycle) */
 #define IEP_DEFAULT_INC     0x1
-#define IEP_DEFAULT_INC_EN  0x4
+
+/** \brief IEP counter enable bit in Global Config register (start counter) */
 #define IEP_COUNTER_EN      0x1
+
+/** \brief IEP reset counter on CMP0 event enable bit */
 #define IEP_RST_CNT_EN      0x1
+
+/** \brief IEP Compare 0 (CMP0) event enable bit (bit 1 in CMP_CFG_REG) */
 #define IEP_CMP0_ENABLE     (0x1 << 1)
-#define IEP_CH0_CMP_EVNT ( 3 )             /* IEP CMP3 event */
-#define IEP_CH1_CMP_EVNT ( 5 )              /* IEP CMP5 event */
-#define IEP_CH2_CMP_EVNT ( 6 )              /* IEP CMP6 event */
 
-#define RTU_TRIGGER_HOST_BISSC_EVT   ( 2+16 )    /* pr0_pru_mst_intr[2]_intr_req */
-#define PRU_TRIGGER_HOST_BISSC_EVT   ( 3+16 )    /* pr0_pru_mst_intr[2]_intr_req */
-#define TXPRU_TRIGGER_HOST_BISSC_EVT  ( 4+16 )    /* pr0_pru_mst_intr[2]_intr_req */
+/** \brief IEP Compare event number for Channel 0 trigger */
+#define IEP_CH0_CMP_EVNT ( 3 )
 
-uint32_t bissc_config_periodic_mode(struct bissc_periodic_interface *bissc_periodic_interface, PRUICSS_Handle handle);
+/** \brief IEP Compare event number for Channel 1 trigger */
+#define IEP_CH1_CMP_EVNT ( 5 )
 
-void bissc_stop_periodic_mode(struct bissc_periodic_interface *bissc_periodic_interface);
+/** \brief IEP Compare event number for Channel 2 trigger */
+#define IEP_CH2_CMP_EVNT ( 6 )
 
-static void rtuBisscIrqHandler(void *handle);
-static void pruBisscIrqHandler(void *handle);
-static void txpruBisscIrqHandler(void *handle);
+/* ========================================================================== */
+/*                         Structure Declarations                             */
+/* ========================================================================== */
 
-void bissc_periodic_interface_init(struct bissc_priv *priv, struct bissc_periodic_interface *bissc_periodic_interface, int64_t ch0_trigger_count,
-int64_t ch1_trigger_count, int64_t ch2_trigger_count, int64_t iep_reset_count);
+/**
+ * \brief   Structure defining BiSS-C periodic trigger interface configuration
+ *
+ * \details Contains BiSS-C driver handle, IEP timer base pointer, and trigger
+ *          count values for periodic mode operation. Used to configure IEP timer
+ *          for automatic BiSS-C transaction triggering at specified intervals.
+ */
+typedef struct bissc_periodic_interface_s
+{
+  bissc_handle handle;
+  /**< BiSS-C driver handle obtained from bissc_init().
+   *   Used to access driver configuration and PRU-ICSS resources */
 
+  uint64_t ch0_trigger_count;
+  /**< IEP counter value for Channel 0 periodic trigger (in IEP clock cycles). */
 
-#endif /* _BISSC_H_ */
+  uint64_t ch1_trigger_count;
+  /**< IEP counter value for Channel 1 periodic trigger (in IEP clock cycles). */
+
+  uint64_t ch2_trigger_count;
+  /**< IEP counter value for Channel 2 periodic trigger (in IEP clock cycles). */
+
+  uint64_t iep_reset_count;
+  /**< IEP counter reset value (in IEP clock cycles) for CMP0 event.
+   *   When IEP counter reaches this value, it resets to 0, creating periodic cycles */
+} bissc_periodic_interface;
+
+/* ========================================================================== */
+/*                       Function Declarations                                */
+/* ========================================================================== */
+
+uint32_t bissc_config_periodic_mode(bissc_periodic_interface *bissc_periodic_interface);
+
+void bissc_stop_periodic_mode(bissc_periodic_interface *bissc_periodic_interface);
+
+void bissc_periodic_interface_init(bissc_handle handle, bissc_periodic_interface *bissc_periodic_interface_instance, int64_t ch0_trigger_count,
+                                    int64_t ch1_trigger_count, int64_t ch2_trigger_count, int64_t iep_reset_count);
+
+#endif /* _BISSC_PERIODIC_TRIGGER_H_ */

@@ -12,18 +12,37 @@ function onValidate(inst, validation) {
     for (let instance_index in inst.$module.$instances)
     {
        let instance = inst.$module.$instances[instance_index];
+
+        /* Validate that at least one channel is selected (corresponds to attrs->channel_mask == 0 check) */
         if ((!instance.channel_0)&&(!instance.channel_1)&&(!instance.channel_2))
         {
-            validation.logError("Select atleast one channel",inst,"channel_0");
+            validation.logError("Select atleast one channel", inst, "channel_0");
         }
+
+        /* Calculate total channels for validation */
+        let total_channels = (instance.channel_0 ? 1 : 0) + (instance.channel_1 ? 1 : 0) + (instance.channel_2 ? 1 : 0);
+
+        /* AM26x SOC specific validation - only single channel supported */
+        if(is_am26x_soc && total_channels > 1)
+        {
+            validation.logError("AM26x devices support only single channel operation per PRU core", inst, "channel_0");
+        }
+
+        /* Validate baud_rate - must be one of the supported BiSS-C frequencies (1, 2, 5, 8, or 10 MHz) */
+        if(instance.baudrate !== 1 && instance.baudrate !== 2 && instance.baudrate !== 5 &&
+           instance.baudrate !== 8 && instance.baudrate !== 10)
+        {
+            validation.logError("Baud rate must be 1, 2, 5, 8, or 10 MHz", inst, "baudrate");
+        }
+
         if((device === "am243x-lp") && (instance.channel_1) && (instance.Booster_Pack))
         {
-            validation.logError("Channel 1 is not supported with BP-AM2BLDCSERVO BoosterPack",inst,"Booster_Pack");
+            validation.logError("Channel 1 is not supported with BP-AM2BLDCSERVO BoosterPack", inst, "Booster_Pack");
         }
         /* validation for BP-AM2BLDCSERVO BoosterPack */
         if((device!="am243x-lp" && device!= "am263x-cc" &&  device!= "am261x-lp" && device != "am263px-cc" )&&(instance.Booster_Pack))
         {
-            validation.logError("Select only when using BP-AM2BLDCSERVO BoosterPack with LP",inst,"Booster_Pack");
+            validation.logError("Select only when using BP-AM2BLDCSERVO BoosterPack with LP", inst, "Booster_Pack");
         }
         if(is_am26x_soc)
             {
@@ -36,14 +55,14 @@ function onValidate(inst, validation) {
 
                     if((instance.channel_2 || instance.channel_0)&&(instance.Booster_Pack))
                     {
-                        validation.logError("Channel 0 and Channel 2 are not supported with BP-AM2BLDCSERVO BoosterPack",inst,"Booster_Pack");
+                        validation.logError("Channel 0 and Channel 2 are not supported with BP-AM2BLDCSERVO BoosterPack", inst, "Booster_Pack");
                     }
                 }
                 if(is_am261x_soc)
                 {
                     if((instance.channel_2 || instance.channel_1)&&(instance.Booster_Pack))
                     {
-                        validation.logError("Channel 1 and Channel 2 are not supported with BP-AM2BLDCSERVO BoosterPack",inst,"Booster_Pack");
+                        validation.logError("Channel 1 and Channel 2 are not supported with BP-AM2BLDCSERVO BoosterPack", inst, "Booster_Pack");
                     }
                 }
 
@@ -53,13 +72,16 @@ function onValidate(inst, validation) {
 
 let bissc_module = {
 
-    displayName: "BiSSC Position Encoder",
+    displayName: "BiSS-C Position Encoder",
     templates: {
+        "/drivers/system/system_config.c.xdt": {
+            driver_config: "/position_sense/bissc/bissc.c.xdt",
+            moduleName: bissc_module_name,
+        },
         "/drivers/system/system_config.h.xdt": {
             driver_config: "/position_sense/bissc/bissc.h.xdt",
             moduleName: bissc_module_name,
         },
-
         "/drivers/pinmux/pinmux_config.c.xdt": {
             moduleName: bissc_module_name,
         },
