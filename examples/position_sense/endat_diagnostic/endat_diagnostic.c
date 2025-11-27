@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2021-25 Texas Instruments Incorporated
+ *  Copyright (C) 2021-2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -395,19 +395,19 @@ uint32_t endat_pruicss_load_run_fw(Endat_Handle handle)
     uint32_t txFirmwareSize;
 
 #if ENDAT0_PRUICSS_SLICEx == 1
-    rtuFirmware = EnDatFirmwareMultiMakeRTU1_0;
-    pruFirmware = EnDatFirmwareMultiMakePRU1_0;
-    txFirmware = EnDatFirmwareMultiMakeTXPRU1_0;
-    rtuFirmwareSize = sizeof(EnDatFirmwareMultiMakeRTU1_0);
-    pruFirmwareSize = sizeof(EnDatFirmwareMultiMakePRU1_0);
-    txFirmwareSize = sizeof(EnDatFirmwareMultiMakeTXPRU1_0);
+    rtuFirmware = EnDatFirmwareMultiMakeRtuPru1_0;
+    pruFirmware = EnDatFirmwareMultiMakePru1_0;
+    txFirmware = EnDatFirmwareMultiMakeTxPru1_0;
+    rtuFirmwareSize = sizeof(EnDatFirmwareMultiMakeRtuPru1_0);
+    pruFirmwareSize = sizeof(EnDatFirmwareMultiMakePru1_0);
+    txFirmwareSize = sizeof(EnDatFirmwareMultiMakeTxPru1_0);
 #else
-    rtuFirmware = EnDatFirmwareMultiMakeRTU0_0;
-    pruFirmware = EnDatFirmwareMultiMakePRU0_0;
-    txFirmware = EnDatFirmwareMultiMakeTXPRU0_0;
-    rtuFirmwareSize = sizeof(EnDatFirmwareMultiMakeRTU0_0);
-    pruFirmwareSize = sizeof(EnDatFirmwareMultiMakePRU0_0);
-    txFirmwareSize = sizeof(EnDatFirmwareMultiMakeTXPRU0_0);
+    rtuFirmware = EnDatFirmwareMultiMakeRtuPru0_0;
+    pruFirmware = EnDatFirmwareMultiMakePru0_0;
+    txFirmware = EnDatFirmwareMultiMakeTxPru0_0;
+    rtuFirmwareSize = sizeof(EnDatFirmwareMultiMakeRtuPru0_0);
+    pruFirmwareSize = sizeof(EnDatFirmwareMultiMakePru0_0);
+    txFirmwareSize = sizeof(EnDatFirmwareMultiMakeTxPru0_0);
 #endif
 
     /* Load and run RTU firmware when Channel 0 is enabled */
@@ -526,19 +526,19 @@ uint32_t endat1_pruicss_load_run_fw(Endat_Handle handle)
     uint32_t txFirmwareSize;
 
 #if ENDAT1_PRUICSS_SLICEx == 1
-    rtuFirmware = EnDatFirmwareMultiMakeRTU1_0;
-    pruFirmware = EnDatFirmwareMultiMakePRU1_0;
-    txFirmware = EnDatFirmwareMultiMakeTXPRU1_0;
-    rtuFirmwareSize = sizeof(EnDatFirmwareMultiMakeRTU1_0);
-    pruFirmwareSize = sizeof(EnDatFirmwareMultiMakePRU1_0);
-    txFirmwareSize = sizeof(EnDatFirmwareMultiMakeTXPRU1_0);
+    rtuFirmware = EnDatFirmwareMultiMakeRtuPru1_0;
+    pruFirmware = EnDatFirmwareMultiMakePru1_0;
+    txFirmware = EnDatFirmwareMultiMakeTxPru1_0;
+    rtuFirmwareSize = sizeof(EnDatFirmwareMultiMakeRtuPru1_0);
+    pruFirmwareSize = sizeof(EnDatFirmwareMultiMakePru1_0);
+    txFirmwareSize = sizeof(EnDatFirmwareMultiMakeTxPru1_0);
 #else
-    rtuFirmware = EnDatFirmwareMultiMakeRTU0_0;
-    pruFirmware = EnDatFirmwareMultiMakePRU0_0;
-    txFirmware = EnDatFirmwareMultiMakeTXPRU0_0;
-    rtuFirmwareSize = sizeof(EnDatFirmwareMultiMakeRTU0_0);
-    pruFirmwareSize = sizeof(EnDatFirmwareMultiMakePRU0_0);
-    txFirmwareSize = sizeof(EnDatFirmwareMultiMakeTXPRU0_0);
+    rtuFirmware = EnDatFirmwareMultiMakeRtuPru0_0;
+    pruFirmware = EnDatFirmwareMultiMakePru0_0;
+    txFirmware = EnDatFirmwareMultiMakeTxPru0_0;
+    rtuFirmwareSize = sizeof(EnDatFirmwareMultiMakeRtuPru0_0);
+    pruFirmwareSize = sizeof(EnDatFirmwareMultiMakePru0_0);
+    txFirmwareSize = sizeof(EnDatFirmwareMultiMakeTxPru0_0);
 #endif
 
     /* Load and run RTU firmware when Channel 0 is enabled */
@@ -656,25 +656,25 @@ uint64_t endat_get_fw_version(void)
 
 #if (CONFIG_ENDAT0_CHANNEL0) && (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
     #if ENDAT0_PRUICSS_SLICEx == 1
-        return *((unsigned long *)EnDatFirmwareMultiMakeRTU1_0 + 2);
+        return *((unsigned long *)EnDatFirmwareMultiMakeRtuPru1_0 + 2);
     #else
-        return *((unsigned long *)EnDatFirmwareMultiMakeRTU0_0 + 2);
+        return *((unsigned long *)EnDatFirmwareMultiMakeRtuPru0_0 + 2);
     #endif
 #endif
 
 #if (CONFIG_ENDAT0_CHANNEL1) && (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
     #if ENDAT0_PRUICSS_SLICEx == 1
-        return *((unsigned long *)EnDatFirmwareMultiMakePRU1_0 + 2);
+        return *((unsigned long *)EnDatFirmwareMultiMakePru1_0 + 2);
     #else
-        return *((unsigned long *)EnDatFirmwareMultiMakePRU0_0 + 2);
+        return *((unsigned long *)EnDatFirmwareMultiMakePru0_0 + 2);
     #endif
 #endif
 
 #if (CONFIG_ENDAT0_CHANNEL2) && (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
     #if ENDAT0_PRUICSS_SLICEx == 1
-        return *((unsigned long *)EnDatFirmwareMultiMakeTXPRU1_0 + 2);
+        return *((unsigned long *)EnDatFirmwareMultiMakeTxPru1_0 + 2);
     #else
-        return *((unsigned long *)EnDatFirmwareMultiMakeTXPRU0_0 + 2);
+        return *((unsigned long *)EnDatFirmwareMultiMakeTxPru0_0 + 2);
     #endif
 #endif
 
@@ -703,25 +703,25 @@ uint64_t endat1_get_fw_version(void)
 
 #if (CONFIG_ENDAT1_CHANNEL0) && (CONFIG_ENDAT1_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
     #if ENDAT1_PRUICSS_SLICEx == 1
-        return *((unsigned long *)EnDatFirmwareMultiMakeRTU1_0 + 2);
+        return *((unsigned long *)EnDatFirmwareMultiMakeRtuPru1_0 + 2);
     #else
-        return *((unsigned long *)EnDatFirmwareMultiMakeRTU0_0 + 2);
+        return *((unsigned long *)EnDatFirmwareMultiMakeRtuPru0_0 + 2);
     #endif
 #endif
 
 #if (CONFIG_ENDAT1_CHANNEL1) && (CONFIG_ENDAT1_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
     #if ENDAT1_PRUICSS_SLICEx == 1
-        return *((unsigned long *)EnDatFirmwareMultiMakePRU1_0 + 2);
+        return *((unsigned long *)EnDatFirmwareMultiMakePru1_0 + 2);
     #else
-        return *((unsigned long *)EnDatFirmwareMultiMakePRU0_0 + 2);
+        return *((unsigned long *)EnDatFirmwareMultiMakePru0_0 + 2);
     #endif
 #endif
 
 #if (CONFIG_ENDAT1_CHANNEL2) && (CONFIG_ENDAT1_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
     #if ENDAT1_PRUICSS_SLICEx == 1
-        return *((unsigned long *)EnDatFirmwareMultiMakeTXPRU1_0 + 2);
+        return *((unsigned long *)EnDatFirmwareMultiMakeTxPru1_0 + 2);
     #else
-        return *((unsigned long *)EnDatFirmwareMultiMakeTXPRU0_0 + 2);
+        return *((unsigned long *)EnDatFirmwareMultiMakeTxPru0_0 + 2);
     #endif
 #endif
 

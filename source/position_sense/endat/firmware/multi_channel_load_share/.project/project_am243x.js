@@ -83,32 +83,32 @@ function getmakefilePruPostBuildSteps(cpu, board)
     switch(cpu)
     {
         case "icss_g0_pru1":
-            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakePRU1 -o endat_receiver_multi_pru1_bin.h  endat_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakePru1 -o endat_receiver_multi_pru1_bin.h  endat_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
             "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat_receiver_multi_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/multi_channel_load_share/endat_receiver_multi_pru1_bin.h;"+ 
             "$(RM)  endat_receiver_multi_pru1_bin.h;"]
             break;
         case "icss_g0_rtu_pru1":
-            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakeRTU1 -o endat_receiver_multi_rtu_pru1_bin.h  endat_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakeRtuPru1 -o endat_receiver_multi_rtu_pru1_bin.h  endat_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
             "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat_receiver_multi_rtu_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/multi_channel_load_share/endat_receiver_multi_rtu_pru1_bin.h;"+ 
             "$(RM)  endat_receiver_multi_rtu_pru1_bin.h;"]
             break;
         case "icss_g0_tx_pru1":
-            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakeTXPRU1 -o endat_receiver_multi_tx_pru1_bin.h  endat_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakeTxPru1 -o endat_receiver_multi_tx_pru1_bin.h  endat_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
             "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat_receiver_multi_tx_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/multi_channel_load_share/endat_receiver_multi_tx_pru1_bin.h;"+ 
             "$(RM)  endat_receiver_multi_tx_pru1_bin.h;"]
             break;
         case "icss_g0_pru0":
-            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakePRU0 -o endat_receiver_multi_pru0_bin.h  endat_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakePru0 -o endat_receiver_multi_pru0_bin.h  endat_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
             "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat_receiver_multi_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/multi_channel_load_share/endat_receiver_multi_pru0_bin.h;"+ 
             "$(RM)  endat_receiver_multi_pru0_bin.h;"]
             break;
         case "icss_g0_rtu_pru0":
-            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakeRTU0 -o endat_receiver_multi_rtu_pru0_bin.h  endat_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakeRtuPru0 -o endat_receiver_multi_rtu_pru0_bin.h  endat_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
             "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat_receiver_multi_rtu_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/multi_channel_load_share/endat_receiver_multi_rtu_pru0_bin.h;"+ 
             "$(RM)  endat_receiver_multi_rtu_pru0_bin.h;"]
             break;
         case "icss_g0_tx_pru0":
-            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakeTXPRU0 -o endat_receiver_multi_tx_pru0_bin.h  endat_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakeTxPru0 -o endat_receiver_multi_tx_pru0_bin.h  endat_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
             "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat_receiver_multi_tx_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/multi_channel_load_share/endat_receiver_multi_tx_pru0_bin.h;"+ 
             "$(RM)  endat_receiver_multi_tx_pru0_bin.h;"]
             break;
@@ -124,42 +124,42 @@ function getccsPruPostBuildSteps(cpu, board)
     switch(cpu)
     {
         case "icss_g0_pru1":
-            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakePRU1 -o endat_receiver_multi_pru1_bin.h  endat_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakePru1 -o endat_receiver_multi_pru1_bin.h  endat_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
             "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat_receiver_multi_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/multi_channel_load_share/endat_receiver_multi_pru1_bin.h;"+ 
             "if ${CCS_HOST_OS} == linux rm endat_receiver_multi_pru1_bin.h;"+
             "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat_receiver_multi_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/multi_channel_load_share/endat_receiver_multi_pru1_bin.h;"+ 
             "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm endat_receiver_multi_pru1_bin.h;"]
             break;
         case "icss_g0_rtu_pru1":
-            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakeRTU1 -o endat_receiver_multi_rtu_pru1_bin.h  endat_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakeRtuPru1 -o endat_receiver_multi_rtu_pru1_bin.h  endat_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
             "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat_receiver_multi_rtu_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/multi_channel_load_share/endat_receiver_multi_rtu_pru1_bin.h;"+ 
             "if ${CCS_HOST_OS} == linux rm endat_receiver_multi_rtu_pru1_bin.h;"+
             "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat_receiver_multi_rtu_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/multi_channel_load_share/endat_receiver_multi_rtu_pru1_bin.h;"+ 
             "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm endat_receiver_multi_rtu_pru1_bin.h;"]
             break;
         case "icss_g0_tx_pru1":
-            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakeTXPRU1 -o endat_receiver_multi_tx_pru1_bin.h  endat_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakeTxPru1 -o endat_receiver_multi_tx_pru1_bin.h  endat_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
             "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat_receiver_multi_tx_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/multi_channel_load_share/endat_receiver_multi_tx_pru1_bin.h;"+ 
             "if ${CCS_HOST_OS} == linux rm endat_receiver_multi_tx_pru1_bin.h;"+
             "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat_receiver_multi_tx_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/multi_channel_load_share/endat_receiver_multi_tx_pru1_bin.h;"+ 
             "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm endat_receiver_multi_tx_pru1_bin.h;"]
             break;
         case "icss_g0_pru0":
-            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakePRU0 -o endat_receiver_multi_pru0_bin.h  endat_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakePru0 -o endat_receiver_multi_pru0_bin.h  endat_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
             "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat_receiver_multi_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/multi_channel_load_share/endat_receiver_multi_pru0_bin.h;"+ 
             "if ${CCS_HOST_OS} == linux rm endat_receiver_multi_pru0_bin.h;"+
             "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat_receiver_multi_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/multi_channel_load_share/endat_receiver_multi_pru0_bin.h;"+ 
             "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm endat_receiver_multi_pru0_bin.h;"]
             break;
         case "icss_g0_rtu_pru0":
-            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakerRTU0 -o endat_receiver_multi_rtu_pru0_bin.h  endat_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakeRtuPru0 -o endat_receiver_multi_rtu_pru0_bin.h  endat_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
             "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat_receiver_multi_rtu_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/multi_channel_load_share/endat_receiver_multi_rtu_pru0_bin.h;"+ 
             "if ${CCS_HOST_OS} == linux rm endat_receiver_multi_rtu_pru0_bin.h;"+
             "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat_receiver_multi_rtu_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/multi_channel_load_share/endat_receiver_multi_rtu_pru0_bin.h;"+ 
             "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm endat_receiver_multi_rtu_pru0_bin.h;"]
             break;
         case "icss_g0_tx_pru0":
-            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakeTXPRU0 -o endat_receiver_multi_tx_pru0_bin.h  endat_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakeTxPru0 -o endat_receiver_multi_tx_pru0_bin.h  endat_peripheral_interface_multi_ch_load_share_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
             "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat_receiver_multi_tx_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/multi_channel_load_share/endat_receiver_multi_tx_pru0_bin.h;"+ 
             "if ${CCS_HOST_OS} == linux rm endat_receiver_multi_tx_pru0_bin.h;"+
             "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat_receiver_multi_tx_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/multi_channel_load_share/endat_receiver_multi_tx_pru0_bin.h;"+ 

@@ -60,12 +60,12 @@ function getmakefilePruPostBuildSteps(cpu, board)
     switch(cpu)
     {
         case "icss_m1_pru1":
-            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=NikonFirmware -o nikon_receiver_pru1_bin.h nikon_peripheral_interface_single_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=NikonFirmwarePru1 -o nikon_receiver_pru1_bin.h nikon_peripheral_interface_single_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+
             "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h nikon_receiver_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/nikon/firmware/single_channel/nikon_receiver_pru1_bin.h;"+
             "$(RM) nikon_receiver_pru1_bin.h;"]
             break;
         case "icss_m1_pru0":
-            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=NikonFirmware -o nikon_receiver_pru0_bin.h nikon_peripheral_interface_single_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=NikonFirmwarePru0 -o nikon_receiver_pru0_bin.h nikon_peripheral_interface_single_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+
             "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h nikon_receiver_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/nikon/firmware/single_channel/nikon_receiver_pru0_bin.h;"+
             "$(RM) nikon_receiver_pru0_bin.h;"]
             break;
@@ -79,14 +79,14 @@ function getccsPruPostBuildSteps(cpu, board)
     switch(cpu)
     {
         case "icss_m1_pru1":
-            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=NikonFirmware -o nikon_receiver_pru1_bin.h nikon_peripheral_interface_single_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=NikonFirmwarePru1 -o nikon_receiver_pru1_bin.h nikon_peripheral_interface_single_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+
             "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h nikon_receiver_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/nikon/firmware/single_channel/nikon_receiver_pru1_bin.h;"+
             "if ${CCS_HOST_OS} == linux rm nikon_receiver_pru1_bin.h;"+
             "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h nikon_receiver_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/nikon/firmware/single_channel/nikon_receiver_pru1_bin.h;"+
             "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm nikon_receiver_pru1_bin.h;"]
             break;
         case "icss_m1_pru0":
-            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=NikonFirmware -o nikon_receiver_pru0_bin.h nikon_peripheral_interface_single_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+
+            postBuildSteps = ["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=NikonFirmwarePru0 -o nikon_receiver_pru0_bin.h nikon_peripheral_interface_single_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+
             "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h nikon_receiver_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/nikon/firmware/single_channel/nikon_receiver_pru0_bin.h;"+
             "if ${CCS_HOST_OS} == linux rm nikon_receiver_pru0_bin.h;"+
             "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h nikon_receiver_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/nikon/firmware/single_channel/nikon_receiver_pru0_bin.h;"+

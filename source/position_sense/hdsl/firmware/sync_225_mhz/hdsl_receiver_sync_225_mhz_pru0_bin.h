@@ -51,7 +51,7 @@
  *
  */
 
-const uint32_t Hiperface_DSL_SYNC2_0_RTU_0[] = {
+const uint32_t HdslFirmwareSyncPru0_0[] = {
 0x91002b82,
 0x1308e2e2,
 0x81002b82,

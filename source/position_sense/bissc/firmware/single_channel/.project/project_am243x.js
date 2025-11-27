@@ -59,12 +59,12 @@ function getmakefilePruPostBuildSteps(cpu, board)
     switch(cpu)
     {
         case "icss_g0_pru1":
-            postBuildSteps =["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=BiSSFirmware -o bissc_receiver_pru1_bin.h bissc_peripheral_interface_single_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+
+            postBuildSteps =["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=BiSSFirmwarePru1 -o bissc_receiver_pru1_bin.h bissc_peripheral_interface_single_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+
             "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h bissc_receiver_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware/single_channel/bissc_receiver_pru1_bin.h;"+
             "$(RM) bissc_receiver_pru1_bin.h;"]
             break;
         case "icss_g0_pru0":
-            postBuildSteps =["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=BiSSFirmware -o bissc_receiver_pru0_bin.h bissc_peripheral_interface_single_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+
+            postBuildSteps =["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=BiSSFirmwarePru0 -o bissc_receiver_pru0_bin.h bissc_peripheral_interface_single_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+
             "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h bissc_receiver_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware/single_channel/bissc_receiver_pru0_bin.h;"+
             "$(RM) bissc_receiver_pru0_bin.h;"]
             break;
@@ -78,14 +78,14 @@ function getccsPruPostBuildSteps(cpu, board)
     switch(cpu)
     {
         case "icss_g0_pru1":
-            postBuildSteps =["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=BiSSFirmware -o bissc_receiver_pru1_bin.h bissc_peripheral_interface_single_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+
+            postBuildSteps =["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=BiSSFirmwarePru1 -o bissc_receiver_pru1_bin.h bissc_peripheral_interface_single_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+
             "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h bissc_receiver_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware/single_channel/bissc_receiver_pru1_bin.h;"+
             "if ${CCS_HOST_OS} == linux rm bissc_receiver_pru1_bin.h;"+
             "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h bissc_receiver_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware/single_channel/bissc_receiver_pru1_bin.h;"+
             "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm bissc_receiver_pru1_bin.h;"]
             break;
         case "icss_g0_pru0":
-            postBuildSteps =["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=BiSSFirmware -o bissc_receiver_pru0_bin.h bissc_peripheral_interface_single_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+
+            postBuildSteps =["$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=BiSSFirmwarePru0 -o bissc_receiver_pru0_bin.h bissc_peripheral_interface_single_ch_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+
             "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h bissc_receiver_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware/single_channel/bissc_receiver_pru0_bin.h;"+
             "if ${CCS_HOST_OS} == linux rm bissc_receiver_pru0_bin.h;"+
             "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h bissc_receiver_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware/single_channel/bissc_receiver_pru0_bin.h;"+

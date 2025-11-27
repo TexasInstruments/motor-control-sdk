@@ -79,7 +79,7 @@ clean:
 	-@echo ' '
 
 post-build:
-		-$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakeRTU0 -o endat_receiver_multi_rtu_pru0_bin.h  endat_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru0_fw_ti-pru-cgt.out
+		-$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=EnDatFirmwareMultiMakeRtuPru0 -o endat_receiver_multi_rtu_pru0_bin.h  endat_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru0_fw_ti-pru-cgt.out
 		-$(CAT) ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h endat_receiver_multi_rtu_pru0_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/endat/firmware/multi_channel_load_share/endat_receiver_multi_rtu_pru0_bin.h
 		-$(RM)  endat_receiver_multi_rtu_pru0_bin.h
 	-@echo ' '

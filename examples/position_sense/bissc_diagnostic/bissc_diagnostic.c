@@ -223,8 +223,13 @@ static int32_t bissc_pruicss_load_run_fw(bissc_handle handle, uint8_t channel_ma
         status = PRUICSS_disableCore(gPruIcssXHandle, attrs->rtu_pru_id);
         DebugP_assert(SystemP_SUCCESS == status);
         size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_RTU_PRU(CONFIG_BISSC0_PRUICSS_SLICE),
-                                                            0, (uint32_t *) BiSSFirmwareMultiMakeRTU_0,
-                                                            sizeof(BiSSFirmwareMultiMakeRTU_0));
+#if (CONFIG_BISSC0_PRUICSS_SLICE == 1)
+                                                            0, (uint32_t *) BiSSFirmwareMultiMakeRtuPru1_0,
+                                                            sizeof(BiSSFirmwareMultiMakeRtuPru1_0));
+#else
+                                                            0, (uint32_t *) BiSSFirmwareMultiMakeRtuPru0_0,
+                                                            sizeof(BiSSFirmwareMultiMakeRtuPru0_0));
+#endif
         DebugP_assert(size);
         status = PRUICSS_resetCore(gPruIcssXHandle, attrs->rtu_pru_id);
         DebugP_assert(SystemP_SUCCESS == status);
@@ -236,8 +241,13 @@ static int32_t bissc_pruicss_load_run_fw(bissc_handle handle, uint8_t channel_ma
         status=PRUICSS_disableCore(gPruIcssXHandle, attrs->pru_id);
         DebugP_assert(SystemP_SUCCESS == status);
         size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(CONFIG_BISSC0_PRUICSS_SLICE),
-                                                          0, (uint32_t *) BiSSFirmwareMultiMakePRU_0,
-                                                          sizeof(BiSSFirmwareMultiMakePRU_0));
+#if (CONFIG_BISSC0_PRUICSS_SLICE == 1)
+                                                          0, (uint32_t *) BiSSFirmwareMultiMakePru1_0,
+                                                          sizeof(BiSSFirmwareMultiMakePru1_0));
+#else
+                                                          0, (uint32_t *) BiSSFirmwareMultiMakePru0_0,
+                                                          sizeof(BiSSFirmwareMultiMakePru0_0));
+#endif
         DebugP_assert(size);
         status = PRUICSS_resetCore(gPruIcssXHandle, attrs->pru_id);
         DebugP_assert(SystemP_SUCCESS == status);
@@ -249,8 +259,13 @@ static int32_t bissc_pruicss_load_run_fw(bissc_handle handle, uint8_t channel_ma
         status = PRUICSS_disableCore(gPruIcssXHandle, attrs->tx_pru_id);
         DebugP_assert(SystemP_SUCCESS == status);
         size = PRUICSS_writeMemory(gPruIcssXHandle,  PRUICSS_IRAM_TX_PRU(CONFIG_BISSC0_PRUICSS_SLICE),
-                                                            0, (uint32_t *) BiSSFirmwareMultiMakeTXPRU_0,
-                                                            sizeof(BiSSFirmwareMultiMakeTXPRU_0));
+#if (CONFIG_BISSC0_PRUICSS_SLICE == 1)
+                                                            0, (uint32_t *) BiSSFirmwareMultiMakeTxPru1_0,
+                                                            sizeof(BiSSFirmwareMultiMakeTxPru1_0));
+#else
+                                                            0, (uint32_t *) BiSSFirmwareMultiMakeTxPru0_0,
+                                                            sizeof(BiSSFirmwareMultiMakeTxPru0_0));
+#endif
         DebugP_assert(size);
         status = PRUICSS_resetCore(gPruIcssXHandle, attrs->tx_pru_id);
         DebugP_assert(SystemP_SUCCESS == status);
@@ -263,12 +278,22 @@ static int32_t bissc_pruicss_load_run_fw(bissc_handle handle, uint8_t channel_ma
     DebugP_assert(SystemP_SUCCESS == status);
 #if(CONFIG_BISSC0_MODE == BISSC_MODE_MULTI_CHANNEL_SINGLE_PRU)
     size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(attrs->pru_id),
-                                0, (uint32_t *) BiSSFirmwareMulti_0,
-                                sizeof(BiSSFirmwareMulti_0));
+#if (CONFIG_BISSC0_PRUICSS_SLICE == 1)
+                                0, (uint32_t *) BiSSFirmwareMultiPru1_0,
+                                sizeof(BiSSFirmwareMultiPru1_0));
+#else
+                                0, (uint32_t *) BiSSFirmwareMultiPru0_0,
+                                sizeof(BiSSFirmwareMultiPru0_0));
+#endif
 #else
     size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(attrs->pru_id),
-                                0, (uint32_t *) BiSSFirmware_0,
-                                sizeof(BiSSFirmware_0));
+#if (CONFIG_BISSC0_PRUICSS_SLICE == 1)
+                                0, (uint32_t *) BiSSFirmwarePru1_0,
+                                sizeof(BiSSFirmwarePru1_0));
+#else
+                                0, (uint32_t *) BiSSFirmwarePru0_0,
+                                sizeof(BiSSFirmwarePru0_0));
+#endif
 #endif
     DebugP_assert(size);
     status = PRUICSS_resetCore(gPruIcssXHandle, attrs->pru_id);
@@ -286,19 +311,39 @@ static int32_t bissc_pruicss_load_run_fw(bissc_handle handle, uint8_t channel_ma
 static uint64_t bissc_get_fw_version(void)
 {
 #if (CONFIG_BISSC0_MODE == BISSC_MODE_MULTI_CHANNEL_SINGLE_PRU)
-    return *((unsigned long *)BiSSFirmwareMulti_0 + 2);
+#if (CONFIG_BISSC0_PRUICSS_SLICE == 1)
+    return *((unsigned long *)BiSSFirmwareMultiPru1_0 + 2);
+#else
+    return *((unsigned long *)BiSSFirmwareMultiPru0_0 + 2);
+#endif
 #elif (CONFIG_BISSC0_MODE == BISSC_MODE_MULTI_CHANNEL_MULTI_PRU)
 #if (CONFIG_BISSC0_CHANNEL0_ENABLED == 1)
-    return *((unsigned long *)BiSSFirmwareMultiMakeRTU_0 + 2);
+#if (CONFIG_BISSC0_PRUICSS_SLICE == 1)
+    return *((unsigned long *)BiSSFirmwareMultiMakeRtuPru1_0 + 2);
+#else
+    return *((unsigned long *)BiSSFirmwareMultiMakeRtuPru0_0 + 2);
+#endif
 #endif
 #if (CONFIG_BISSC0_CHANNEL1_ENABLED == 1)
-    return *((unsigned long *)BiSSFirmwareMultiMakePRU_0 + 2);
+#if (CONFIG_BISSC0_PRUICSS_SLICE == 1)
+    return *((unsigned long *)BiSSFirmwareMultiMakePru1_0 + 2);
+#else
+    return *((unsigned long *)BiSSFirmwareMultiMakePru0_0 + 2);
+#endif
 #endif
 #if (CONFIG_BISSC0_CHANNEL2_ENABLED == 1)
-    return *((unsigned long *)BiSSFirmwareMultiMakeTXPRU_0 + 2);
+#if (CONFIG_BISSC0_PRUICSS_SLICE == 1)
+    return *((unsigned long *)BiSSFirmwareMultiMakeTxPru1_0 + 2);
+#else
+    return *((unsigned long *)BiSSFirmwareMultiMakeTxPru0_0 + 2);
+#endif
 #endif
 #elif (CONFIG_BISSC0_MODE == BISSC_MODE_SINGLE_CHANNEL_SINGLE_PRU)
-    return *((unsigned long *)BiSSFirmware_0 + 2);
+#if (CONFIG_BISSC0_PRUICSS_SLICE == 1)
+    return *((unsigned long *)BiSSFirmwarePru1_0 + 2);
+#else
+    return *((unsigned long *)BiSSFirmwarePru0_0 + 2);
+#endif
 #endif
 }
 

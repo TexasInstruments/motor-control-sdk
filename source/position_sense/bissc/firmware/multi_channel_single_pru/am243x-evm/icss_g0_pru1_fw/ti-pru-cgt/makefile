@@ -79,7 +79,7 @@ clean:
 	-@echo ' '
 
 post-build:
-		-$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=BiSSFirmwareMulti -o bissc_receiver_multi_pru1_bin.h bissc_peripheral_interface_multi_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt.out
+		-$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=BiSSFirmwareMultiPru1 -o bissc_receiver_multi_pru1_bin.h bissc_peripheral_interface_multi_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt.out
 		-$(CAT) ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h bissc_receiver_multi_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/bissc/firmware/multi_channel_single_pru/bissc_receiver_multi_pru1_bin.h
 		-$(RM) bissc_receiver_multi_pru1_bin.h
 	-@echo ' '

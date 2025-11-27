@@ -51,7 +51,7 @@
  *
  */
 
-const uint32_t Hiperface_DSL2_0_PRU_0[] = {
+const uint32_t HdslFirmwarePru1_0[] = {
 0x91003c82,
 0x1308e2e2,
 0x81003c82,
