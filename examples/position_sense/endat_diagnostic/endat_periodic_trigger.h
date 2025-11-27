@@ -83,7 +83,7 @@ struct endat_periodic_interface
 #endif
 #endif
 
-uint32_t endat_config_periodic_mode(struct endat_periodic_interface *endat_periodic_interface, PRUICSS_Handle handle, Endat_Handle handle);
+uint32_t endat_config_periodic_mode(struct endat_periodic_interface *endat_periodic_interface, PRUICSS_Handle pru_handle, Endat_Handle handle);
 
 void endat_stop_periodic_continuous_mode(struct endat_periodic_interface *endat_periodic_interface);
 
