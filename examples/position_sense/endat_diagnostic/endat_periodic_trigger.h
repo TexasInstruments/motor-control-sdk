@@ -40,54 +40,73 @@
 
 struct endat_periodic_interface
 {
-  void *pruicss_iep;
-  void *pruicss_dmem;
-  uint8_t load_share;
-  uint64_t cmp0_count;
-  uint64_t ch0_trigger_count;
-  uint64_t ch1_trigger_count;
-  uint64_t ch2_trigger_count;
+  Endat_Handle endat_handle;
+  uint64_t iep_reset_count;
+  uint64_t ch_trigger_count[3];
+  uint8_t  is_cap_mode;
+  uint64_t iep_sync0_period;
 };
-#define IEP_DEFAULT_INC    0x1;
-#define IEP_DEFAULT_INC_EN  0x4;
-#define IEP_COUNTER_EN      0x1;
-#define IEP_RST_CNT_EN      0x1;
-#define IEP_CMP0_ENABLE     0x1 << 1;
-
+/* IEP trigger host event numbers */
 #if CONFIG_ENDAT0_PRUICSS_PRUx == 1
 #define PRU_TRIGGER_HOST_ENDAT_EVT0   ( 2+16 )    /* pr0_pru_mst_intr[2]_intr_req */
-#define IEP_CH0_CMP_EVNT ( 3 )
-#define IEP_CH1_CMP_EVNT ( 5 )
-#define IEP_CH2_CMP_EVNT ( 6 )
 #else
-#define PRU_TRIGGER_HOST_ENDAT_EVT0   ( 5+16 )    /* pr0_pru_mst_intr[2]_intr_req */
-#define IEP_CH0_CMP_EVNT ( 7 )
-#define IEP_CH1_CMP_EVNT ( 8 )
-#define IEP_CH2_CMP_EVNT ( 9 )
+#define PRU_TRIGGER_HOST_ENDAT_EVT0   ( 5+16 )    /* pr0_pru_mst_intr[5]_intr_req */
 #endif
 
 #define PRU_TRIGGER_HOST_ENDAT_EVT1   ( 3+16 )    /* pr0_pru_mst_intr[3]_intr_req */
-#define PRU_TRIGGER_HOST_ENDAT_EVT2   ( 4+16 )   /* pr0_pru_mst_intr[4]_intr_req */
+#define PRU_TRIGGER_HOST_ENDAT_EVT2   ( 4+16 )    /* pr0_pru_mst_intr[4]_intr_req */
 
 #if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
 #if CONFIG_ENDAT1_PRUICSS_PRUx == 1
 #define PRU_TRIGGER_HOST_ENDAT1_EVT   ( 2+16 )    /* pr0_pru_mst_intr[2]_intr_req */
-#define ENDAT1_IEP_CH0_CMP_EVNT ( 3 )
-#define ENDAT1_IEP_CH1_CMP_EVNT ( 5 )
-#define ENDAT1_IEP_CH2_CMP_EVNT ( 6 )
 #else
-#define PRU_TRIGGER_HOST_ENDAT1_EVT   ( 5+16 )    /* pr0_pru_mst_intr[2]_intr_req */
-#define ENDAT1_IEP_CH0_CMP_EVNT ( 7 )
-#define ENDAT1_IEP_CH1_CMP_EVNT ( 8 )
-#define ENDAT1_IEP_CH2_CMP_EVNT ( 9 )
+#define PRU_TRIGGER_HOST_ENDAT1_EVT   ( 5+16 )    /* pr0_pru_mst_intr[5]_intr_req */
 #endif
 #endif
 
-uint32_t endat_config_periodic_mode(struct endat_periodic_interface *endat_periodic_interface, PRUICSS_Handle pru_handle, Endat_Handle handle);
+uint32_t endat_config_periodic_mode(struct endat_periodic_interface *endat_periodic_interface);
 
 void endat_stop_periodic_continuous_mode(struct endat_periodic_interface *endat_periodic_interface);
 
-#define ENDAT_PERIODIC_MODE_IEP_INSTANCE  0
+/* TIMESYNC router configuration register offsets and values */
+#define TIMESYNC_EVENT_ROUTER_REG_SIZE         (4U)
+#define TIMESYNC_EVENT_ROUTER_OUT8_OFFSET      (8U * TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U)  /*ICSSG0 PRG0_IEP0_LATCH0_IN0*/
+#define TIMESYNC_EVENT_ROUTER_OUT9_OFFSET      (9U * TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U)  /*ICSSG0 PRG0_IEP0_LATCH1_IN0*/
+#define TIMESYNC_EVENT_ROUTER_OUT10_OFFSET     (10U * TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG0 PRG0_IEP1_LATCH0_IN0*/
+#define TIMESYNC_EVENT_ROUTER_OUT11_OFFSET     (11U * TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG0 PRG0_IEP1_LATCH1_IN0*/
+#define TIMESYNC_EVENT_ROUTER_OUT12_OFFSET     (12U * TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG1 PRG1_IEP0_LATCH0_IN0*/
+#define TIMESYNC_EVENT_ROUTER_OUT13_OFFSET     (13U * TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG1 PRG1_IEP0_LATCH1_IN0*/
+#define TIMESYNC_EVENT_ROUTER_OUT14_OFFSET     (14U * TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG1 PRG1_IEP1_LATCH0_IN0*/
+#define TIMESYNC_EVENT_ROUTER_OUT15_OFFSET     (15U * TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG1 PRG1_IEP1_LATCH1_IN0*/
+
+/*CAP0 is used for Channel1 for periodic contimuos cap mode, to changes cap event different cap number offset can be found at TRM section 9.3.2.2 GPIOMUX_INTRTR0 Integration.*/
+#define GPIOMUX_INTROUTER0_IEP0_CAP_OFFSET     (18U * TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U)  /*GPIOMUX0 IEP0_CAP_IN*/
+#define GPIOMUX_INTROUTER0_IEP1_CAP_OFFSET     (24U * TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U)  /*GPIOMUX0 IEP1_CAP_IN*/
+
+
+#define TIMESYNC_EVENT_ROUTER_IN25              (0x00010019U)  /* PRU_ICSSG0_PR1_EDC0_SYNC0_OUT_0 */
+#define TIMESYNC_EVENT_ROUTER_IN27              (0x0001001BU)  /* PRU_ICSSG0_PR1_EDC1_SYNC0_OUT_0 */
+#define TIMESYNC_EVENT_ROUTER_IN29              (0x0001001DU)  /* PRU_ICSSG1_PR1_EDC0_SYNC0_OUT_0 */
+#define TIMESYNC_EVENT_ROUTER_IN31              (0x0001001FU)  /* PRU_ICSSG1_PR1_EDC1_SYNC0_OUT_0 */
+
+/* GPIO number need to be configured based on the input source GPIO pin number.
+ * Refer to the GPIOMUX_INTRTR0 Interrupt Map section in the TRM (9.4.1.8) for details. */
+#define GPIOMUX_INTROUTER0_CAP_GPIO_IN          (0x00010004U)  /* PINFUNCTION_PRG0_IEP_CAP_IN */
+
+/* IEP SYNC control register bit definitions */
+#define IEP_SYNC_CTRL_SYNC01_EN_SHIFT            (0U)           /* SYNC01 enable bit position */
+#define IEP_SYNC_CTRL_SYNC01_EN_MASK             (0x00000001U)  /* SYNC01 enable bit mask */
+#define IEP_SYNC_CTRL_SYNC0_EN_SHIFT            (1U)           /* SYNC1 enable bit position */
+#define IEP_SYNC_CTRL_SYNC0_EN_MASK             (0x00000002U)  /* SYNC1 enable bit mask */
+#define IEP_SYNC_CTRL_SYNC0_CYCLIC_EN_SHIFT     (5U)           /* SYNC0 cyclic generation bit position */
+#define IEP_SYNC_CTRL_SYNC0_CYCLIC_EN_MASK      (0x00000020U)  /* SYNC0 cyclic generation bit mask */
+
+/* IEP SYNC configuration values */
+#define IEP_CMP1_START_DELAY             (100U)         /* IEP CMP1 start delay in cycles */
+#define IEP_SYNC0_PULSE_WIDTH            (10U)          /* SYNC0 high pulse time in IEP clock cycles */
+#define IEP_CMP_EVENT_FOR_SYNC0          (1U)           /* IEP CMP event number used for SYNC0 generation */
+#define IEP_CMP_EVENT_FOR_IEP_RESET      (0U)           /* IEP CMP event number used for IEP counter reset */
+
 
 static void pruEnDatIrqHandler(void *handle);
 static void rtuEnDatIrqHandler(void *handle);

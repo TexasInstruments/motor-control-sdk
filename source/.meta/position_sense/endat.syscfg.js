@@ -51,6 +51,68 @@ function onValidate(inst, validation) {
                 }
             }
         }
+
+        /* Validate CMP and CAP event numbers don't conflict across channels in load share mode */
+        if (instance.Multi_Channel_Load_Share) {
+            let enabled_channels = [];
+
+            /* Collect enabled channels and their event numbers */
+            if (instance.Channel_0) {
+                enabled_channels.push({
+                    name: "Channel 0",
+                    cmp_event: instance.CMP_Event_Num_CH0,
+                    cap_event: instance.CAP_Event_Num_CH0,
+                    cmp_field: "CMP_Event_Num_CH0",
+                    cap_field: "CAP_Event_Num_CH0"
+                });
+            }
+            if (instance.Channel_1) {
+                enabled_channels.push({
+                    name: "Channel 1",
+                    cmp_event: instance.CMP_Event_Num_CH1,
+                    cap_event: instance.CAP_Event_Num_CH1,
+                    cmp_field: "CMP_Event_Num_CH1",
+                    cap_field: "CAP_Event_Num_CH1"
+                });
+            }
+            if (instance.Channel_2) {
+                enabled_channels.push({
+                    name: "Channel 2",
+                    cmp_event: instance.CMP_Event_Num_CH2,
+                    cap_event: instance.CAP_Event_Num_CH2,
+                    cmp_field: "CMP_Event_Num_CH2",
+                    cap_field: "CAP_Event_Num_CH2"
+                });
+            }
+
+            /* Check for CMP event conflicts between channels */
+            for (let i = 0; i < enabled_channels.length; i++) {
+                for (let j = i + 1; j < enabled_channels.length; j++) {
+                    if (enabled_channels[i].cmp_event === enabled_channels[j].cmp_event) {
+                        validation.logError(
+                            enabled_channels[i].name + " and " + enabled_channels[j].name +
+                            " cannot use the same IEP CMP event number (CMP" + enabled_channels[i].cmp_event + ")",
+                            inst,
+                            enabled_channels[j].cmp_field
+                        );
+                    }
+                }
+            }
+
+            /* Check for CAP event conflicts between channels */
+            for (let i = 0; i < enabled_channels.length; i++) {
+                for (let j = i + 1; j < enabled_channels.length; j++) {
+                    if (enabled_channels[i].cap_event === enabled_channels[j].cap_event) {
+                        validation.logError(
+                            enabled_channels[i].name + " and " + enabled_channels[j].name +
+                            " cannot use the same IEP CAP event number (CAP" + enabled_channels[i].cap_event + ")",
+                            inst,
+                            enabled_channels[j].cap_field
+                        );
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -130,18 +192,36 @@ let endat_module = {
             displayName: "Enable Channel 0",
             description: "Channel 0 Selection",
             default: true,
+            onChange: function(inst, ui) {
+                if (inst.Multi_Channel_Load_Share) {
+                    ui.CMP_Event_Num_CH0.hidden = !inst.Channel_0;
+                    ui.CAP_Event_Num_CH0.hidden = !inst.Channel_0;
+                }
+            },
         },
         {
             name: "Channel_1",
             displayName: "Enable Channel 1",
             description: "Channel 1 Selection ",
             default: false,
+            onChange: function(inst, ui) {
+                if (inst.Multi_Channel_Load_Share) {
+                    ui.CMP_Event_Num_CH1.hidden = !inst.Channel_1;
+                    ui.CAP_Event_Num_CH1.hidden = !inst.Channel_1;
+                }
+            },
         },
         {
             name: "Channel_2",
             displayName: "Enable Channel 2",
             description: "Channel 2 Selection ",
             default: false,
+            onChange: function(inst, ui) {
+                if (inst.Multi_Channel_Load_Share) {
+                    ui.CMP_Event_Num_CH2.hidden = !inst.Channel_2;
+                    ui.CAP_Event_Num_CH2.hidden = !inst.Channel_2;
+                }
+            },
         },
 
         {
@@ -150,6 +230,32 @@ let endat_module = {
             description: "Selected Channels have different make",
             hidden :(is_am26x_soc) ? true : false,
             default: false,
+            onChange: function(inst, ui) {
+                /* When load share is toggled, update visibility of event selectors */
+                if (inst.Multi_Channel_Load_Share) {
+                    /* Hide global CMP and CAP event selectors */
+                    ui.CMP_Event_Num.hidden = true;
+                    ui.CAP_Event_Num.hidden = true;
+                    /* Show per-channel CMP and CAP selectors based on enabled channels */
+                    ui.CMP_Event_Num_CH0.hidden = !inst.Channel_0;
+                    ui.CAP_Event_Num_CH0.hidden = !inst.Channel_0;
+                    ui.CMP_Event_Num_CH1.hidden = !inst.Channel_1;
+                    ui.CAP_Event_Num_CH1.hidden = !inst.Channel_1;
+                    ui.CMP_Event_Num_CH2.hidden = !inst.Channel_2;
+                    ui.CAP_Event_Num_CH2.hidden = !inst.Channel_2;
+                } else {
+                    /* Show global CMP and CAP event selectors */
+                    ui.CMP_Event_Num.hidden = false;
+                    ui.CAP_Event_Num.hidden = false;
+                    /* Hide all per-channel selectors */
+                    ui.CMP_Event_Num_CH0.hidden = true;
+                    ui.CAP_Event_Num_CH0.hidden = true;
+                    ui.CMP_Event_Num_CH1.hidden = true;
+                    ui.CAP_Event_Num_CH1.hidden = true;
+                    ui.CMP_Event_Num_CH2.hidden = true;
+                    ui.CAP_Event_Num_CH2.hidden = true;
+                }
+            },
         },
         {
             name: "Booster_Pack",
@@ -172,6 +278,205 @@ let endat_module = {
                     name: "PRU1",
                 },
             ],
+        },
+        {
+            name: "Periodic_Trigger_Mode_Config",
+            displayName: "Periodic Trigger Mode Configuration",
+            description: "Configure periodic trigger mode using IEP CMP and CAP events.",
+            config: [
+                {
+                    name: "IEP_Instance",
+                    displayName: "Select IEP Instance",
+                    description: "Select IEP instance for periodic trigger",
+                    default: "IEP0",
+                    options: (is_am26x_soc) ?
+                        [
+                            {
+                                name: "IEP0",
+                            },
+                        ]
+                        :
+                        [
+                            {
+                                name: "IEP0",
+                            },
+                            {
+                                name: "IEP1",
+                            },
+                        ],
+                },
+                {
+                    name: "CMP_Event_Num",
+                    displayName: "IEP CMP Event Number",
+                    description: "CMP event number (0-15) for periodic CMP trigger mode (cmd 200)",
+                    default: 0,
+                    hidden: false,
+                    options: [
+                        { name: 0, displayName: "CMP0" },
+                        { name: 1, displayName: "CMP1" },
+                        { name: 2, displayName: "CMP2" },
+                        { name: 3, displayName: "CMP3" },
+                        { name: 4, displayName: "CMP4" },
+                        { name: 5, displayName: "CMP5" },
+                        { name: 6, displayName: "CMP6" },
+                        { name: 7, displayName: "CMP7" },
+                        { name: 8, displayName: "CMP8" },
+                        { name: 9, displayName: "CMP9" },
+                        { name: 10, displayName: "CMP10" },
+                        { name: 11, displayName: "CMP11" },
+                        { name: 12, displayName: "CMP12" },
+                        { name: 13, displayName: "CMP13" },
+                        { name: 14, displayName: "CMP14" },
+                        { name: 15, displayName: "CMP15" },
+                    ],
+                },
+                {
+                    name: "CAP_Event_Num",
+                    displayName: "IEP CAP Event Number",
+                    description: "CAP event number (0-7) for periodic CAP trigger mode (cmd 201)",
+                    default: 6,
+                    hidden: false,
+                    options: [
+                        { name: 0, displayName: "CAP0" },
+                        { name: 1, displayName: "CAP1" },
+                        { name: 2, displayName: "CAP2" },
+                        { name: 3, displayName: "CAP3" },
+                        { name: 4, displayName: "CAP4" },
+                        { name: 5, displayName: "CAP5" },
+                        { name: 6, displayName: "CAP6" },
+                        { name: 7, displayName: "CAP7" },
+                    ],
+                },
+                /* Channel event numbers (only shown when load share is enabled) */
+                /* CMP Event Numbers for each channel */
+                {
+                    name: "CMP_Event_Num_CH0",
+                    displayName: "Channel 0 - CMP Event Number",
+                    description: "CMP event number (0-15) for Channel 0 periodic CMP trigger mode (cmd 200)",
+                    default: 0,
+                    hidden: true,
+                    options: [
+                        { name: 0, displayName: "CMP0" },
+                        { name: 1, displayName: "CMP1" },
+                        { name: 2, displayName: "CMP2" },
+                        { name: 3, displayName: "CMP3" },
+                        { name: 4, displayName: "CMP4" },
+                        { name: 5, displayName: "CMP5" },
+                        { name: 6, displayName: "CMP6" },
+                        { name: 7, displayName: "CMP7" },
+                        { name: 8, displayName: "CMP8" },
+                        { name: 9, displayName: "CMP9" },
+                        { name: 10, displayName: "CMP10" },
+                        { name: 11, displayName: "CMP11" },
+                        { name: 12, displayName: "CMP12" },
+                        { name: 13, displayName: "CMP13" },
+                        { name: 14, displayName: "CMP14" },
+                        { name: 15, displayName: "CMP15" },
+                    ],
+                },
+                {
+                    name: "CAP_Event_Num_CH0",
+                    displayName: "Channel 0 - CAP Event Number",
+                    description: "CAP event number (0-7) for Channel 0 periodic CAP trigger mode (cmd 201)",
+                    default: 0,
+                    hidden: true,
+                    options: [
+                        { name: 0, displayName: "CAP0" },
+                        { name: 1, displayName: "CAP1" },
+                        { name: 2, displayName: "CAP2" },
+                        { name: 3, displayName: "CAP3" },
+                        { name: 4, displayName: "CAP4" },
+                        { name: 5, displayName: "CAP5" },
+                        { name: 6, displayName: "CAP6" },
+                        { name: 7, displayName: "CAP7" },
+                    ],
+                },
+                {
+                    name: "CMP_Event_Num_CH1",
+                    displayName: "Channel 1 - CMP Event Number",
+                    description: "CMP event number (0-15) for Channel 1 periodic CMP trigger mode (cmd 200)",
+                    default: 1,
+                    hidden: true,
+                    options: [
+                        { name: 0, displayName: "CMP0" },
+                        { name: 1, displayName: "CMP1" },
+                        { name: 2, displayName: "CMP2" },
+                        { name: 3, displayName: "CMP3" },
+                        { name: 4, displayName: "CMP4" },
+                        { name: 5, displayName: "CMP5" },
+                        { name: 6, displayName: "CMP6" },
+                        { name: 7, displayName: "CMP7" },
+                        { name: 8, displayName: "CMP8" },
+                        { name: 9, displayName: "CMP9" },
+                        { name: 10, displayName: "CMP10" },
+                        { name: 11, displayName: "CMP11" },
+                        { name: 12, displayName: "CMP12" },
+                        { name: 13, displayName: "CMP13" },
+                        { name: 14, displayName: "CMP14" },
+                        { name: 15, displayName: "CMP15" },
+                    ],
+                },
+                {
+                    name: "CAP_Event_Num_CH1",
+                    displayName: "Channel 1 - CAP Event Number",
+                    description: "CAP event number (0-7) for Channel 1 periodic CAP trigger mode (cmd 201)",
+                    default: 1,
+                    hidden: true,
+                    options: [
+                        { name: 0, displayName: "CAP0" },
+                        { name: 1, displayName: "CAP1" },
+                        { name: 2, displayName: "CAP2" },
+                        { name: 3, displayName: "CAP3" },
+                        { name: 4, displayName: "CAP4" },
+                        { name: 5, displayName: "CAP5" },
+                        { name: 6, displayName: "CAP6" },
+                        { name: 7, displayName: "CAP7" },
+                    ],
+                },
+                {
+                    name: "CMP_Event_Num_CH2",
+                    displayName: "Channel 2 - CMP Event Number",
+                    description: "CMP event number (0-15) for Channel 2 periodic CMP trigger mode (cmd 200)",
+                    default: 2,
+                    hidden: true,
+                    options: [
+                        { name: 0, displayName: "CMP0" },
+                        { name: 1, displayName: "CMP1" },
+                        { name: 2, displayName: "CMP2" },
+                        { name: 3, displayName: "CMP3" },
+                        { name: 4, displayName: "CMP4" },
+                        { name: 5, displayName: "CMP5" },
+                        { name: 6, displayName: "CMP6" },
+                        { name: 7, displayName: "CMP7" },
+                        { name: 8, displayName: "CMP8" },
+                        { name: 9, displayName: "CMP9" },
+                        { name: 10, displayName: "CMP10" },
+                        { name: 11, displayName: "CMP11" },
+                        { name: 12, displayName: "CMP12" },
+                        { name: 13, displayName: "CMP13" },
+                        { name: 14, displayName: "CMP14" },
+                        { name: 15, displayName: "CMP15" },
+                    ],
+                },
+                {
+                    name: "CAP_Event_Num_CH2",
+                    displayName: "Channel 2 - CAP Event Number",
+                    description: "CAP event number (0-7) for Channel 2 periodic CAP trigger mode (cmd 201)",
+                    default: 2,
+                    hidden: true,
+                    options: [
+                        { name: 0, displayName: "CAP0" },
+                        { name: 1, displayName: "CAP1" },
+                        { name: 2, displayName: "CAP2" },
+                        { name: 3, displayName: "CAP3" },
+                        { name: 4, displayName: "CAP4" },
+                        { name: 5, displayName: "CAP5" },
+                        { name: 6, displayName: "CAP6" },
+                        { name: 7, displayName: "CAP7" },
+                    ],
+                },
+            ],
+            collapsed: false,
         },
     ],
     moduleStatic: {

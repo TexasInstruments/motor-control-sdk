@@ -270,7 +270,7 @@ void endat_config_host_trigger(Endat_Handle handle);
  *
  *
  */
-void endat_config_periodic_trigger(Endat_Handle handle);
+void endat_config_periodic_trigger_cmp_mode(Endat_Handle handle);
 /*  brief     set syn_bits of all connected channels for synchronization before global_TX_init
  *
  *  \param[in]  handle    cookie returned by endat_init
@@ -405,6 +405,104 @@ void endat_enable_rt_measurement (Endat_Handle handle);
  *  \retval  return 1 if recovery time measurement is enabled else return 0
  */
 uint32_t endat_status_rt_measurement (Endat_Handle handle);
+
+/**
+ *  \brief      Enable IEP reset on CMP0 event
+ *
+ *  \param[in]  handle  cookie returned by endat_init
+ *  \param[in]  iep_reset_count  IEP reset count value for CMP0
+ *
+ *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE otherwise
+ */
+int32_t endat_enable_iep_reset_on_cmp0(Endat_Handle handle, uint64_t iep_reset_count);
+
+/**
+ *  \brief      Enable IEP counter
+ * 
+ *   Note: It configure IEP counter increment values from  
+ *   handle->pru_cfg.iep_increment which is configured during endat_init.
+ *
+ *  \param[in]  handle  cookie returned by endat_init 
+ *
+ *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE otherwise
+ */
+int32_t endat_enable_iep_counter(Endat_Handle handle);
+
+/**
+ *  \brief      Disable IEP counter
+ *
+ *  \param[in]  handle  cookie returned by endat_init
+ *
+ *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE otherwise
+ */
+int32_t endat_disable_iep_counter(Endat_Handle handle);
+
+/**
+ *  \brief      Configure periodic trigger CAP mode
+ *
+ *  This function configures the EnDAT channels to operate in periodic trigger mode
+ *  with IEP CAP events.
+ *
+ *  \param[in]  handle  cookie returned by endat_init
+ *
+ */
+void endat_config_periodic_trigger_cap_mode(Endat_Handle handle);
+
+/**
+ *  \brief      Configure IEP CMP event for periodic trigger
+ *
+ *  This function configures an IEP compare event for periodic trigger mode.
+ *  It sets the compare register value and enables the specified CMP event (0-15).
+ *
+ *  \param[in]  handle          cookie returned by endat_init
+ *  \param[in]  channel         EnDAT channel number (0-2)
+ *  \param[in]  trigger_point   IEP counter value at which the CMP event triggers
+ *  \param[in]  event_num       CMP event number (0-15)
+ *
+ *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE otherwise
+ */
+int32_t endat_config_iep_cmp_event(Endat_Handle handle, uint8_t channel, uint64_t trigger_point, uint8_t event_num);
+
+/**
+ *  \brief      Configure IEP CAP event for periodic trigger
+ *
+ *  This function configures an IEP capture event for periodic trigger mode.
+ *  It enables the specified CAP event (0-7) and configures the capture register
+ *  address and event number in the PRU shared memory for firmware access.
+ *
+ *  \param[in]  handle      cookie returned by endat_init
+ *  \param[in]  channel     EnDAT channel number (0-2)
+ *  \param[in]  event_num   CAP event number (0-7)
+ *
+ *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE otherwise
+ */
+int32_t endat_config_iep_cap_event(Endat_Handle handle, uint8_t channel, uint8_t event_num);
+
+/**
+ *  \brief      Disable IEP CMP event
+ *
+ *  This function disables a previously configured IEP compare event.
+ *  It clears the CMP_EN bit for the specified CMP event (0-15).
+ *
+ *  \param[in]  handle      cookie returned by endat_init
+ *  \param[in]  event_num   CMP event number (0-15) to disable
+ *
+ *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE otherwise
+ */
+int32_t endat_disable_iep_cmp_event(Endat_Handle handle, uint8_t event_num);
+
+/**
+ *  \brief      Disable IEP CAP event
+ *
+ *  This function disables a previously configured IEP capture event.
+ *  It clears the CAP_EN bit for the specified CAP event (0-7).
+ *
+ *  \param[in]  handle      cookie returned by endat_init
+ *  \param[in]  event_num   CAP event number (0-7) to disable
+ *
+ *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE otherwise
+ */
+int32_t endat_disable_iep_cap_event(Endat_Handle handle, uint8_t event_num);
 /** @} */
 
 #ifdef __cplusplus

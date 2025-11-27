@@ -115,6 +115,38 @@ extern "C" {
 
 #define RT_COUNTER_STARTING_VALUE  100
 
+/**    \brief    IEP cap 0 register , cslr common file does not have defined cap registers 
+ *      FIXME: Remove these definitions once they are available in cslr_common.h
+ */
+#define ENDAT_CFG_REG_SIZE         (4U)
+#define CSL_ICSS_PR1_IEP0_SLV_CAP0_REG0  (CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG + 2U*ENDAT_CFG_REG_SIZE)
+#define CSL_ICSS_PR1_IEP0_SLV_CAP0_REG1  (CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG + 3U*ENDAT_CFG_REG_SIZE)
+#define IEP_SLV_CMP_CFG_REG_CMP_EN_SHIFT                       (0x1)
+#define IEP_SLV_CMP_CFG_REG_CMP0_RST_CNT_EN_SHIFT              (0x00000000U)
+
+/**
+ *  \brief  ENDAT operation mode: Periodic trigger mode using IEP compare event
+ *
+ *  In periodic mode, the PRU firmware automatically triggers position readout
+ *  at regular intervals configured by IEP timer.
+ */
+#define ENDAT_OPMODE_CMP_PERIODIC                (0x0U)
+
+/**
+ *  \brief  ENDAT operation mode: Host trigger
+ *
+ *  In host trigger mode, the R5F host processor explicitly triggers
+ *  each position readout by setting the trigger bit.
+ */
+#define ENDAT_OPMODE_HOST_TRIGGER                (0x1U)
+/** 
+ *  \brief  ENDAT operation mode: Periodic trigger mode using IEP capture event
+ *  
+ *  The PRU firmware automatically triggers position readout
+ *  at regular intervals configured by IEP timer.
+ *
+ */
+#define ENDAT_OPMODE_CAP_PERIODIC                (0x2U)
 
 #define EINVAL  1
 
@@ -162,9 +194,8 @@ typedef struct Endat_CmdSupplement_s
     uint8_t has_block_address;
     uint32_t frequency;
     uint64_t iep_reset_count;
-    uint64_t ch0_trigger_count;
-    uint64_t ch1_trigger_count;
-    uint64_t ch2_trigger_count;
+    uint64_t ch_trigger_count[3];
+    uint64_t iep_sync0_period;
 }Endat_CmdSupplement;
 
 typedef struct Endat_Data_s
@@ -231,8 +262,10 @@ typedef struct Endat_PruConfig_s
     volatile uint32_t     pru_clock;           /**< PRU core clock frequency in Hz */
     volatile uint8_t      load_share_enable;    /**< Enable load sharing between PRUs */
     volatile uint8_t      iep_instance;        /**< IEP Instance (0 for IEP0, 1 for IEP1) */
+    volatile uint8_t      iep_increment;          /**< Increment value for IEP */
     volatile uint32_t     iep_clock;           /**< PRU iep clock frequency in Hz */
     volatile uint32_t     uart_clock;          /**< PRU UART clock frequency */
+    void * iep_base_addr;                    /**< IEP base address */
 } Endat_PruConfig;
 /**
  *    \brief    Structure defining 3 Channel clock configuration parameters.
@@ -259,6 +292,7 @@ typedef struct Endat_Params_s
     Endat_PruConfig pru_cfg;    /**< Structure defining EnDat PRU configuration*/
     Endat_ClkCfg *endat_clk_config;  /**< EnDat clock configuration */
 }Endat_Params;
+
 
 typedef struct Endat_Config_s
 {   

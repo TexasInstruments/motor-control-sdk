@@ -223,14 +223,14 @@ static void (*endat_fn_position_loop)(unsigned int);
 uint32_t gTaskFxnStack[TASK_STACK_SIZE/sizeof(uint32_t)] __attribute__((aligned(32)));
 TaskP_Object gTaskObject;
 
-#define VALID_CONT_MODE_CMD(x) ((x) == 101 || (x) == 104 || (x) == 107 || (x) == 111 || (x) == 200)
+#define VALID_CONT_MODE_CMD(x) ((x) == 101 || (x) == 104 || (x) == 107 || (x) == 111 || (x) == 200 || (x) == 201)
 
 #define VALID_HOST_CMD(x) ((x == 100) || ((x) == 102) || ((x) == 103) || ((x) == 105) || \
                            ((x) == 106) || ((x) == 108) || ((x) == 109) || ((x) == 110) || ((x)== 112))
 
 #define HAVE_COMMAND_SUPPLEMENT(x) (((x) == 2) || ((x) == 3) || ((x) == 4) || ((x) == 7) || \
                                     ((x) == 9) || ((x) == 10) || ((x) == 11) || ((x) == 13) || ((x) == 14) || \
-                                    ((x) == 100) || ((x) == 101) || ((x)== 103) || ((x) == 105) || ((x) == 106) || ((x) == 107) || ((x) == 108) || ((x) == 109)  || ((x) == 200) || ((x) == 112))
+                                    ((x) == 100) || ((x) == 101) || ((x)== 103) || ((x) == 105) || ((x) == 106) || ((x) == 107) || ((x) == 108) || ((x) == 109)  || ((x) == 200) || ((x) == 201) || ((x) == 112))
 
 
 #define ICSS_PRU_CORE_CLOCK CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ
@@ -799,7 +799,8 @@ static void endat_print_menu(void)
     DebugP_log("\r|110: Recovery Time (RT)                                                       |\n");
     DebugP_log("\r|111: Simulate motor control 2.1 position loop for long time                   |\n");
     DebugP_log("\r|112: Start/Stop Recovery Time measurement                                     |\n");
-    DebugP_log("\r|200: Start periodic continuous mode                                           |\n");
+    DebugP_log("\r|200: Start periodic continuous mode (CMP trigger)                             |\n");
+    DebugP_log("\r|201: Start periodic continuous mode (CAP trigger)                             |\n");
 
     DebugP_log("\r|------------------------------------------------------------------------------|\n\r|\n");
     DebugP_log("\r| enter value: ");
@@ -1440,7 +1441,7 @@ static int32_t endat_get_command_supplement(int32_t cmd,
 #endif
                 {
                     DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) Channel0: \n");
-                    if(DebugP_scanf("%u\n", &cmd_supplement->ch0_trigger_count) < 0)
+                    if(DebugP_scanf("%u\n", &cmd_supplement->ch_trigger_count[0]) < 0)
                     {
                         DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
                         return -EINVAL;
@@ -1453,7 +1454,7 @@ static int32_t endat_get_command_supplement(int32_t cmd,
 #endif
                 {
                     DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) Channel1: \n");
-                    if(DebugP_scanf("%u\n", &cmd_supplement->ch1_trigger_count) < 0)
+                    if(DebugP_scanf("%u\n", &cmd_supplement->ch_trigger_count[1]) < 0)
                     {
                         DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
                         return -EINVAL;
@@ -1466,7 +1467,7 @@ static int32_t endat_get_command_supplement(int32_t cmd,
 #endif
                 {
                     DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) Channel2: \n");
-                    if(DebugP_scanf("%u\n", &cmd_supplement->ch2_trigger_count) < 0)
+                    if(DebugP_scanf("%u\n", &cmd_supplement->ch_trigger_count[2]) < 0)
                     {
                         DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
                         return -EINVAL;
@@ -1477,12 +1478,25 @@ static int32_t endat_get_command_supplement(int32_t cmd,
             else
             {
                 DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles): ");
-                if(DebugP_scanf("%u\n", &cmd_supplement->ch0_trigger_count) < 0)
+                if(DebugP_scanf("%u\n", &cmd_supplement->ch_trigger_count[0]) < 0)
                 {
                     DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
                     return -EINVAL;
                 }
             }
+            break;
+
+        case 201:
+#if defined(SOC_AM243X) || defined(SOC_AM64X)
+            DebugP_log("\r| Enter IEP SYNC OUT0 cycle period (in IEP cycles): ");
+            if(DebugP_scanf("%u\n", &cmd_supplement->iep_sync0_period) < 0)
+            {
+                DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                return -EINVAL;
+            }
+#else
+            DebugP_log("\r| Periodic cap mode cycle time will be equal to EPWM SYNC OUT frequency. \n NOTE: In SysConfig, EPWM and EPWM to IEP LATCH XBAR configuration must be done\n|\n|\n|\n");
+#endif      
             break;
 
         default:
@@ -2595,11 +2609,11 @@ static void endat_process_host_command(int32_t cmd,
 }
 #if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
 static void endat_process_continuous_mode_command(int32_t cmd,
-                                      Endat_CmdSupplement *cmd_supplement, Endat_Handle handle, Endat_Handle gEndatHandle2,
+                                      Endat_CmdSupplement *cmd_supplement, Endat_Handle handle1, Endat_Handle handle2,
                                       Endat_CmdSupplement *cmd_supplement_copy) 
 #else
 static void endat_process_continuous_mode_command(int32_t cmd,
-                                      Endat_CmdSupplement *cmd_supplement, Endat_Handle handle)                                      
+                                      Endat_CmdSupplement *cmd_supplement, Endat_Handle handle1)                                      
 #endif                      
 {
     static int32_t timer_init;
@@ -2615,51 +2629,78 @@ static void endat_process_continuous_mode_command(int32_t cmd,
     /* Set position loop status for all commands */
     endat_position_loop_status = ENDAT_POSITION_LOOP_START;
 
-    /* Command 200: Start periodic continuous mode */
-    if(cmd == 200)
+    if(cmd == 200 || cmd == 201)
     {
-        endat_config_periodic_trigger(handle);
-        int32_t status;
-        int32_t pos_cmd = 1;
-        DebugP_assert(endat_command_process(handle, pos_cmd, NULL) >= 0);
+        int8_t is_cap_mode = (cmd == 201) ? 1 : 0;
 
-
-#if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
-        endat_config_periodic_trigger(gEndatHandle2);
-        DebugP_assert(endat_command_process(gEndatHandle2, pos_cmd, NULL) >= 0);
-#endif
-
-        struct endat_periodic_interface endat_periodic_interface;
-        if(handle->pru_cfg.iep_instance == 0)
+        if(is_cap_mode)
         {
-            endat_periodic_interface.pruicss_iep = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->iep0RegBase);
+            endat_config_periodic_trigger_cap_mode(handle1);
+#if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
+            endat_config_periodic_trigger_cap_mode(handle2);
+#endif
         }
         else
         {
-            endat_periodic_interface.pruicss_iep = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->iep0RegBase);
+            endat_config_periodic_trigger_cmp_mode(handle1);
+#if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
+            endat_config_periodic_trigger_cmp_mode(handle2);
+#endif
         }
-        endat_periodic_interface.pruicss_dmem = handle->pruicss_xchg;
-        endat_periodic_interface.load_share = handle->pru_cfg.load_share_enable;
-        endat_periodic_interface.ch0_trigger_count = cmd_supplement->ch0_trigger_count;
-        endat_periodic_interface.ch1_trigger_count = cmd_supplement->ch1_trigger_count;
-        endat_periodic_interface.ch2_trigger_count = cmd_supplement->ch2_trigger_count;
-        endat_periodic_interface.cmp0_count = cmd_supplement->iep_reset_count;
 
-        status = endat_config_periodic_mode(&endat_periodic_interface, gPruIcssXHandle, handle);
-        DebugP_assert(0 != status);
+        int32_t status;
+        int32_t pos_cmd = 1;
+        struct endat_periodic_interface endat_periodic_interface;
+        memset(&endat_periodic_interface, 0, sizeof(endat_periodic_interface));
+        endat_periodic_interface.endat_handle = handle1;
+        endat_periodic_interface.is_cap_mode = is_cap_mode;
+
+        if(is_cap_mode)
+            endat_periodic_interface.iep_sync0_period = cmd_supplement->iep_sync0_period;
+        else
+        {
+            endat_periodic_interface.ch_trigger_count[0] = cmd_supplement->ch_trigger_count[0];
+            endat_periodic_interface.ch_trigger_count[1] = cmd_supplement->ch_trigger_count[1];
+            endat_periodic_interface.ch_trigger_count[2] = cmd_supplement->ch_trigger_count[2];
+            endat_periodic_interface.iep_reset_count = cmd_supplement->iep_reset_count;
+        }
+
+        status = endat_config_periodic_mode(&endat_periodic_interface);
+        if(SystemP_SUCCESS != status)
+        {
+            DebugP_log("\r| ERROR: Failed to configure periodic %s mode\n|\n|\n|\n", is_cap_mode ? "CAP" : "CMP");
+            endat_config_host_trigger(handle1);
+            return;
+        }
 
 #if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
         struct endat_periodic_interface endat_periodic_interface1;
-        endat_periodic_interface1.pruicss_iep = endat_periodic_interface.pruicss_iep; /*IEP is common for both slice*/
-        endat_periodic_interface1.pruicss_dmem = gEndatHandle2->pruicss_xchg;
-        endat_periodic_interface1.load_share = gEndatHandle2->pru_cfg.load_share_enable;
-        endat_periodic_interface1.ch0_trigger_count = cmd_supplement_copy->ch0_trigger_count;
-        endat_periodic_interface1.ch1_trigger_count = cmd_supplement_copy->ch1_trigger_count;
-        endat_periodic_interface1.ch2_trigger_count = cmd_supplement_copy->ch2_trigger_count;
-        endat_periodic_interface1.cmp0_count = endat_periodic_interface.cmp0_count; /*IEP is common for both slice*/
+        memset(&endat_periodic_interface1, 0, sizeof(endat_periodic_interface1));
+        endat_periodic_interface1.endat_handle = handle2;
+        endat_periodic_interface1.is_cap_mode = is_cap_mode;
+        if(is_cap_mode)
+            endat_periodic_interface1.iep_sync0_period = endat_periodic_interface.iep_sync0_period;
+        else
+        {
+            endat_periodic_interface1.ch_trigger_count[0] = cmd_supplement_copy->ch_trigger_count[0];
+            endat_periodic_interface1.ch_trigger_count[1] = cmd_supplement_copy->ch_trigger_count[1];
+            endat_periodic_interface1.ch_trigger_count[2] = cmd_supplement_copy->ch_trigger_count[2];
+            endat_periodic_interface1.iep_reset_count = endat_periodic_interface.iep_reset_count;
+        }
 
-        status = endat_config_periodic_mode(&endat_periodic_interface1, gPruIcssXHandle, gEndatHandle2);
-        DebugP_assert(0 != status);
+        status = endat_config_periodic_mode(&endat_periodic_interface1);
+        if(SystemP_SUCCESS != status)
+        {
+            DebugP_log("\r| ERROR: Failed to configure periodic %s mode for second slice\n|\n|\n|\n", is_cap_mode ? "CAP" : "CMP");
+            endat_config_host_trigger(handle1);
+            endat_config_host_trigger(handle2);
+            return;
+        }
+#endif
+
+        DebugP_assert(endat_command_process(handle1, pos_cmd, NULL) >= 0);
+#if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
+        DebugP_assert(endat_command_process(handle2, pos_cmd, NULL) >= 0);
 #endif
 
         DebugP_log("\r|\n\r| press enter to stop the continuous mode\r\n|\r\n");
@@ -2668,10 +2709,9 @@ static void endat_process_continuous_mode_command(int32_t cmd,
             if(endat_position_loop_status == ENDAT_POSITION_LOOP_STOP)
             {
                 endat_stop_periodic_continuous_mode(&endat_periodic_interface);
-                endat_config_host_trigger(handle);
-
+                endat_config_host_trigger(handle1);
 #if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
-                endat_config_host_trigger(gEndatHandle2);
+                endat_config_host_trigger(handle2);
 #endif
                 return;
             }
@@ -2680,7 +2720,7 @@ static void endat_process_continuous_mode_command(int32_t cmd,
                 int32_t i = 0;
 
                 /*  Process first channel */
-                endat_print_position_header(handle, 1, 0, gEndat_multi_ch_mask);
+                endat_print_position_header(handle1, 1, 0, gEndat_multi_ch_mask);
 
                 if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
                 {
@@ -2689,11 +2729,11 @@ static void endat_process_continuous_mode_command(int32_t cmd,
                     {
                         if(gEndat_multi_ch_mask & 1 << j)
                         {
-                            endat_multi_channel_set_cur(handle, j);
-                            endat_recvd_process(handle, 1, &gEndat_format_data_mtrctrl[j]);
-                            i += endat_get_position_loop_chars(handle, 0, 0);
+                            endat_multi_channel_set_cur(handle1, j);
+                            endat_recvd_process(handle1, pos_cmd, &gEndat_format_data_mtrctrl[j]);
+                            i += endat_get_position_loop_chars(handle1, 0, 0);
                             DebugP_log("| Ch1-%d: ", j);
-                            endat_print_position_loop(handle, 1, 0, j);
+                            endat_print_position_loop(handle1, 1, 0, j);
                             DebugP_log("\n| ");
                             i += 3;
                         }
@@ -2701,16 +2741,16 @@ static void endat_process_continuous_mode_command(int32_t cmd,
                 }
                 else
                 {
-                    endat_recvd_process(handle, 1, &gEndat_format_data_mtrctrl[0]);
-                    i = endat_get_position_loop_chars(handle, 1, 0);
-                    endat_print_position_loop(handle, 1, 0, 0);
+                    endat_recvd_process(handle1, pos_cmd, &gEndat_format_data_mtrctrl[0]);
+                    i = endat_get_position_loop_chars(handle1, 1, 0);
+                    endat_print_position_loop(handle1, 1, 0, 0);
                     DebugP_log("\n| ");
                 }
 
 #if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
                 /* Process second channel */
                 DebugP_log("\r|\n\r| ---2nd Channel ---\r\n| ");
-                endat_print_position_header(gEndatHandle2, 1, 0, gEndat1_multi_ch_mask);
+                endat_print_position_header(handle2, 1, 0, gEndat1_multi_ch_mask);
 
                 if(gEndat1_is_multi_ch || gEndat1_is_load_share_mode)
                 {
@@ -2719,11 +2759,11 @@ static void endat_process_continuous_mode_command(int32_t cmd,
                     {
                         if(gEndat1_multi_ch_mask & 1 << j)
                         {
-                            endat_multi_channel_set_cur(gEndatHandle2, j);
-                            endat_recvd_process(gEndatHandle2, 1, &gEndat1_format_data_mtrctrl[j]);
-                            i += endat_get_position_loop_chars(gEndatHandle2, 0, 0);
+                            endat_multi_channel_set_cur(handle2, j);
+                            endat_recvd_process(handle2, pos_cmd, &gEndat1_format_data_mtrctrl[j]);
+                            i += endat_get_position_loop_chars(handle2, 0, 0);
                             DebugP_log("| Ch2-%d: ", j);
-                            endat_print_position_loop(gEndatHandle2, 1, 0, j);
+                            endat_print_position_loop(handle2, 1, 0, j);
                             DebugP_log("\n| ");
                             i += 3;
                         }
@@ -2731,13 +2771,12 @@ static void endat_process_continuous_mode_command(int32_t cmd,
                 }
                 else
                 {
-                    endat_recvd_process(gEndatHandle2, 1, &gEndat1_format_data_mtrctrl[0]);
-                    i += endat_get_position_loop_chars(gEndatHandle2, 1, 0);
-                    endat_print_position_loop(gEndatHandle2, 1, 0, 0);
+                    endat_recvd_process(handle2, pos_cmd, &gEndat1_format_data_mtrctrl[0]);
+                    i += endat_get_position_loop_chars(handle2, 1, 0);
+                    endat_print_position_loop(handle2, 1, 0, 0);
                     DebugP_log("\n| ");
                 }
 #endif
-                /* increase sleep value if glitches in display to be prevented (and would result in slower position display freq) */
                 ClockP_usleep(100);
                 while(i--)
                 {
@@ -2745,7 +2784,6 @@ static void endat_process_continuous_mode_command(int32_t cmd,
                 }
             }
     }
-
     /* Command 101: Simulate motor control 2.1 position loop */
     else if(cmd == 101)
     {
@@ -2782,7 +2820,7 @@ static void endat_process_continuous_mode_command(int32_t cmd,
                 int32_t i = 0;
 
                 /*  Process first channel */
-                endat_print_position_header(handle, 0, 0, gEndat_multi_ch_mask);
+                endat_print_position_header(handle1, 0, 0, gEndat_multi_ch_mask);
 
                 if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
                 {
@@ -2792,10 +2830,10 @@ static void endat_process_continuous_mode_command(int32_t cmd,
                     {
                         if(gEndat_multi_ch_mask & 1 << j)
                         {
-                            endat_multi_channel_set_cur(handle, j);
-                            i += endat_get_position_loop_chars(handle, 0, 0);
+                            endat_multi_channel_set_cur(handle1, j);
+                            i += endat_get_position_loop_chars(handle1, 0, 0);
                             DebugP_log("| Ch1-%d: ", j);
-                            endat_print_position_loop(handle, 0, 0, j);
+                            endat_print_position_loop(handle1, 0, 0, j);
                             DebugP_log("\n| ");
                             i += 3;
                         }
@@ -2803,15 +2841,15 @@ static void endat_process_continuous_mode_command(int32_t cmd,
                 }
                 else
                 {
-                    i = endat_get_position_loop_chars(handle, 0, 0);
-                    endat_print_position_loop(handle, 0, 0, 0);
+                    i = endat_get_position_loop_chars(handle1, 0, 0);
+                    endat_print_position_loop(handle1, 0, 0, 0);
                     DebugP_log("\n| ");
                 }
 
 #if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
                 /*Process second channel*/
                 DebugP_log("\r|\n\r| --- 2nd Channel  ---\r\n| ");
-                endat_print_position_header(gEndatHandle2, 0, 0, gEndat1_multi_ch_mask);
+                endat_print_position_header(handle2, 0, 0, gEndat1_multi_ch_mask);
 
                 if(gEndat1_is_multi_ch || gEndat1_is_load_share_mode)
                 {
@@ -2821,10 +2859,10 @@ static void endat_process_continuous_mode_command(int32_t cmd,
                     {
                         if(gEndat1_multi_ch_mask & 1 << j)
                         {
-                            endat_multi_channel_set_cur(gEndatHandle2, j);
-                            i += endat_get_position_loop_chars(gEndatHandle2, 0, 0);
+                            endat_multi_channel_set_cur(handle2, j);
+                            i += endat_get_position_loop_chars(handle2, 0, 0);
                             DebugP_log("| Ch2-%d: ", j);
-                            endat_print_position_loop(gEndatHandle2, 0, 0, j);
+                            endat_print_position_loop(handle2, 0, 0, j);
                             DebugP_log("\n| ");
                             i += 3;
                         }
@@ -2832,8 +2870,8 @@ static void endat_process_continuous_mode_command(int32_t cmd,
                 }
                 else
                 {
-                    i += endat_get_position_loop_chars(gEndatHandle2, 0, 0);
-                    endat_print_position_loop(gEndatHandle2, 0, 0, 0);
+                    i += endat_get_position_loop_chars(handle2, 0, 0);
+                    endat_print_position_loop(handle2, 0, 0, 0);
                     DebugP_log("\n| ");
                 }
 #endif
@@ -2851,9 +2889,9 @@ static void endat_process_continuous_mode_command(int32_t cmd,
     /* Command 104: Start continuous mode */
     else if(cmd == 104)
     {
-        endat_start_continuous_mode(handle);
+        endat_start_continuous_mode(handle1);
 #if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
-        endat_start_continuous_mode(gEndatHandle2);
+        endat_start_continuous_mode(handle2);
 #endif
 
         DebugP_log("\r|\n\r| press enter to stop the continuous mode\r\n|\r\n");
@@ -2861,9 +2899,9 @@ static void endat_process_continuous_mode_command(int32_t cmd,
         while(1)
             if(endat_position_loop_status == ENDAT_POSITION_LOOP_STOP)
             {
-                endat_stop_continuous_mode(handle);
+                endat_stop_continuous_mode(handle1);
 #if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
-                endat_stop_continuous_mode(gEndatHandle2);
+                endat_stop_continuous_mode(handle2);
 #endif
                 return;
             }
@@ -2872,7 +2910,7 @@ static void endat_process_continuous_mode_command(int32_t cmd,
                 int32_t i = 0;
 
                 /* Process first channel */
-                endat_print_position_header(handle, 1, 0, gEndat_multi_ch_mask);
+                endat_print_position_header(handle1, 1, 0, gEndat_multi_ch_mask);
 
                 if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
                 {
@@ -2881,11 +2919,11 @@ static void endat_process_continuous_mode_command(int32_t cmd,
                     {
                         if(gEndat_multi_ch_mask & 1 << j)
                         {
-                            endat_multi_channel_set_cur(handle, j);
-                            endat_recvd_process(handle, 1, &gEndat_format_data_mtrctrl[j]);
-                            i += endat_get_position_loop_chars(handle, 0, 0);
+                            endat_multi_channel_set_cur(handle1, j);
+                            endat_recvd_process(handle1, 1, &gEndat_format_data_mtrctrl[j]);
+                            i += endat_get_position_loop_chars(handle1, 0, 0);
                             DebugP_log("| Ch1-%d: ", j);
-                            endat_print_position_loop(handle, 1, 0, j);
+                            endat_print_position_loop(handle1, 1, 0, j);
                             DebugP_log("\n| ");
                             i += 3;
                         }
@@ -2893,16 +2931,16 @@ static void endat_process_continuous_mode_command(int32_t cmd,
                 }
                 else
                 {
-                    endat_recvd_process(handle, 1, &gEndat_format_data_mtrctrl[0]);
-                    i = endat_get_position_loop_chars(handle, 1, 0);
-                    endat_print_position_loop(handle, 1, 0, 0);
+                    endat_recvd_process(handle1, 1, &gEndat_format_data_mtrctrl[0]);
+                    i = endat_get_position_loop_chars(handle1, 1, 0);
+                    endat_print_position_loop(handle1, 1, 0, 0);
                     DebugP_log("\n| ");
                 }
 
 #if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
                 /* Process second channel */
                 DebugP_log("\r|\n\r| --- 2nd Channel  ---\r\n| ");
-                endat_print_position_header(gEndatHandle2, 1, 0, gEndat1_multi_ch_mask);
+                endat_print_position_header(handle2, 1, 0, gEndat1_multi_ch_mask);
 
                 if(gEndat1_is_multi_ch || gEndat1_is_load_share_mode)
                 {
@@ -2911,11 +2949,11 @@ static void endat_process_continuous_mode_command(int32_t cmd,
                     {
                         if(gEndat1_multi_ch_mask & 1 << j)
                         {
-                            endat_multi_channel_set_cur(gEndatHandle2, j);
-                            endat_recvd_process(gEndatHandle2, 1, &gEndat1_format_data_mtrctrl[j]);
-                            i += endat_get_position_loop_chars(gEndatHandle2, 0, 0);
+                            endat_multi_channel_set_cur(handle2, j);
+                            endat_recvd_process(handle2, 1, &gEndat1_format_data_mtrctrl[j]);
+                            i += endat_get_position_loop_chars(handle2, 0, 0);
                             DebugP_log("| Ch2-%d: ", j);
-                            endat_print_position_loop(gEndatHandle2, 1, 0, j);
+                            endat_print_position_loop(handle2, 1, 0, j);
                             DebugP_log("\n| ");
                             i += 3;
                         }
@@ -2923,9 +2961,9 @@ static void endat_process_continuous_mode_command(int32_t cmd,
                 }
                 else
                 {
-                    endat_recvd_process(gEndatHandle2, 1, &gEndat1_format_data_mtrctrl[0]);
-                    i += endat_get_position_loop_chars(gEndatHandle2, 1, 0);
-                    endat_print_position_loop(gEndatHandle2, 1, 0, 0);
+                    endat_recvd_process(handle2, 1, &gEndat1_format_data_mtrctrl[0]);
+                    i += endat_get_position_loop_chars(handle2, 1, 0);
+                    endat_print_position_loop(handle2, 1, 0, 0);
                     DebugP_log("\n| ");
                 }
 #endif
@@ -2961,14 +2999,14 @@ static void endat_process_continuous_mode_command(int32_t cmd,
         }
 
         /* reset additional info's if present */
-        endat_command_process(handle, 5, NULL);
-        endat_addinfo_track(handle, 5, NULL);
+        endat_command_process(handle1, 5, NULL);
+        endat_addinfo_track(handle1, 5, NULL);
 
         gEndat_2_2_loop_mrs = MRS_POS_VAL2_WORD1;
 
 #if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
-        endat_command_process(gEndatHandle2, 5, NULL);
-        endat_addinfo_track(gEndatHandle2, 5, NULL);
+        endat_command_process(handle2, 5, NULL);
+        endat_addinfo_track(handle2, 5, NULL);
 
         gEndat1_2_2_loop_mrs = MRS_POS_VAL2_WORD1;
 #endif
@@ -2979,7 +3017,7 @@ static void endat_process_continuous_mode_command(int32_t cmd,
         /* so that proper position value 2 is displayed from the begining */
         ClockP_usleep(us * 3);
 
-        if((!gEndat_is_multi_ch && !handle->has_safety[handle->current_channel]) || (!gEndat_is_load_share_mode && !handle->has_safety[handle->current_channel]))
+        if((!gEndat_is_multi_ch && !handle1->has_safety[handle1->current_channel]) || (!gEndat_is_load_share_mode && !handle1->has_safety[handle1->current_channel]))
         {
             DebugP_log("\r|\n| encoder does not support safety, position value 2 would not be displayed\n|\n");
         }
@@ -2992,12 +3030,12 @@ static void endat_process_continuous_mode_command(int32_t cmd,
                 TimerP_stop(gTimerBaseAddr[CONFIG_TIMER0]);
 
                 /* reset additional info1 */
-                endat_command_process(handle, 5, NULL);
-                endat_addinfo_track(handle, 5, NULL);
+                endat_command_process(handle1, 5, NULL);
+                endat_addinfo_track(handle1, 5, NULL);
 
 #if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
-                endat_command_process(gEndatHandle2, 5, NULL);
-                endat_addinfo_track(gEndatHandle2, 5, NULL);
+                endat_command_process(handle2, 5, NULL);
+                endat_addinfo_track(handle2, 5, NULL);
 #endif
                 return;
             }
@@ -3006,7 +3044,7 @@ static void endat_process_continuous_mode_command(int32_t cmd,
                 int32_t i = 0;
 
                 /*Process first channel*/
-                endat_print_position_header(handle, 0, 1, gEndat_multi_ch_mask);
+                endat_print_position_header(handle1, 0, 1, gEndat_multi_ch_mask);
 
                 if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
                 {
@@ -3016,38 +3054,38 @@ static void endat_process_continuous_mode_command(int32_t cmd,
                     {
                         if(gEndat_multi_ch_mask & 1 << j)
                         {
-                            endat_multi_channel_set_cur(handle, j);
-                            i += endat_get_position_loop_chars(handle, 0, 1);
+                            endat_multi_channel_set_cur(handle1, j);
+                            i += endat_get_position_loop_chars(handle1, 0, 1);
                             DebugP_log("| Ch1-%d: ", j);
-                            endat_print_position_loop(handle, 0, 1, j);
+                            endat_print_position_loop(handle1, 0, 1, j);
 
-                            if((!gEndat_is_multi_ch && handle->has_safety[handle->current_channel]) || (!gEndat_is_load_share_mode && handle->has_safety[handle->current_channel]))
+                            if((!gEndat_is_multi_ch && handle1->has_safety[handle1->current_channel]) || (!gEndat_is_load_share_mode && handle1->has_safety[handle1->current_channel]))
                             {
                                 uint64_t multi_turn, single_turn;
                                 union position position2;
-                                uint64_t max = pow(2, handle->single_turn_res[handle->current_channel]);
+                                uint64_t max = pow(2, handle1->single_turn_res[handle1->current_channel]);
 
-                                multi_turn = ENDAT_GET_POS_MULTI_TURN(gEndat_2_2_pos_val2[j], handle);
-                                single_turn = ENDAT_GET_POS_SINGLE_TURN(gEndat_2_2_pos_val2[j], handle);
+                                multi_turn = ENDAT_GET_POS_MULTI_TURN(gEndat_2_2_pos_val2[j], handle1);
+                                single_turn = ENDAT_GET_POS_SINGLE_TURN(gEndat_2_2_pos_val2[j], handle1);
 
-                                if(handle->type[handle->current_channel] == rotary)
+                                if(handle1->type[handle1->current_channel] == rotary)
                                 {
                                     position2.angle = (float)single_turn / (float)max * (float)360;
                                 }
                                 else
                                 {
-                                    position2.length = single_turn * handle->step[handle->current_channel];
+                                    position2.length = single_turn * handle1->step[handle1->current_channel];
                                 }
 
                                 DebugP_log(", ");
 
-                                if(handle->multi_turn_res[handle->current_channel])
+                                if(handle1->multi_turn_res[handle1->current_channel])
                                 {
                                     sprintf(gUart_buffer, "%16.12f, %16s", position2.angle, uint64_to_str(multi_turn));
                                 }
                                 else
                                 {
-                                    if(handle->type[handle->current_channel] == rotary)
+                                    if(handle1->type[handle1->current_channel] == rotary)
                                     {
                                         sprintf(gUart_buffer, "%16.12f", position2.angle);
                                     }
@@ -3068,36 +3106,36 @@ static void endat_process_continuous_mode_command(int32_t cmd,
                 }
                 else
                 {
-                    i = endat_get_position_loop_chars(handle, 0, 1);
-                    endat_print_position_loop(handle, 0, 1, 0);
+                    i = endat_get_position_loop_chars(handle1, 0, 1);
+                    endat_print_position_loop(handle1, 0, 1, 0);
 
-                    if((!gEndat_is_multi_ch && handle->has_safety[handle->current_channel]) || (!gEndat_is_load_share_mode && handle->has_safety[handle->current_channel]))
+                    if((!gEndat_is_multi_ch && handle1->has_safety[handle1->current_channel]) || (!gEndat_is_load_share_mode && handle1->has_safety[handle1->current_channel]))
                     {
                         uint64_t multi_turn, single_turn;
                         union position position2;
-                        uint64_t max = pow(2, handle->single_turn_res[handle->current_channel]);
+                        uint64_t max = pow(2, handle1->single_turn_res[handle1->current_channel]);
 
-                        multi_turn = ENDAT_GET_POS_MULTI_TURN(gEndat_2_2_pos_val2[0], handle);
-                        single_turn = ENDAT_GET_POS_SINGLE_TURN(gEndat_2_2_pos_val2[0], handle);
+                        multi_turn = ENDAT_GET_POS_MULTI_TURN(gEndat_2_2_pos_val2[0], handle1);
+                        single_turn = ENDAT_GET_POS_SINGLE_TURN(gEndat_2_2_pos_val2[0], handle1);
 
-                        if(handle->type[handle->current_channel] == rotary)
+                        if(handle1->type[handle1->current_channel] == rotary)
                         {
                             position2.angle = (float)single_turn / (float)max * (float)360;
                         }
                         else
                         {
-                            position2.length = single_turn * handle->step[handle->current_channel];
+                            position2.length = single_turn * handle1->step[handle1->current_channel];
                         }
 
                         DebugP_log(", ");
 
-                        if(handle->multi_turn_res[handle->current_channel])
+                        if(handle1->multi_turn_res[handle1->current_channel])
                         {
                             sprintf(gUart_buffer, "%16.12f, %16s", position2.angle, uint64_to_str(multi_turn));
                         }
                         else
                         {
-                            if(handle->type[handle->current_channel] == rotary)
+                            if(handle1->type[handle1->current_channel] == rotary)
                             {
                                 sprintf(gUart_buffer, "%16.12f", position2.angle);
                             }
@@ -3110,7 +3148,7 @@ static void endat_process_continuous_mode_command(int32_t cmd,
                         DebugP_log("%s", gUart_buffer);
                         DebugP_log(",    %10u", gEndat_2_2_crc_addinfo1_err_cnt[0]);
 
-                        if(handle->multi_turn_res[handle->current_channel])
+                        if(handle1->multi_turn_res[handle1->current_channel])
                         {
                             i += 2 + 46 + 3;
                         }
@@ -3126,7 +3164,7 @@ static void endat_process_continuous_mode_command(int32_t cmd,
 #if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
                 /* Process second channel*/
                 DebugP_log("\r|\n\r| --- Channel 2 ---\r\n| ");
-                endat_print_position_header(gEndatHandle2, 0, 1, gEndat1_multi_ch_mask);
+                endat_print_position_header(handle2, 0, 1, gEndat1_multi_ch_mask);
 
                 if(gEndat1_is_multi_ch || gEndat1_is_load_share_mode)
                 {
@@ -3136,38 +3174,38 @@ static void endat_process_continuous_mode_command(int32_t cmd,
                     {
                         if(gEndat1_multi_ch_mask & 1 << j)
                         {
-                            endat_multi_channel_set_cur(gEndatHandle2, j);
-                            i += endat_get_position_loop_chars(gEndatHandle2, 0, 1);
+                            endat_multi_channel_set_cur(handle2, j);
+                            i += endat_get_position_loop_chars(handle2, 0, 1);
                             DebugP_log("| Ch2-%d: ", j);
-                            endat_print_position_loop(gEndatHandle2, 0, 1, j);
+                            endat_print_position_loop(handle2, 0, 1, j);
 
-                            if((!gEndat1_is_multi_ch && gEndatHandle2->has_safety[gEndatHandle2->current_channel]) || (!gEndat1_is_load_share_mode && gEndatHandle2->has_safety[gEndatHandle2->current_channel]))
+                            if((!gEndat1_is_multi_ch && handle2->has_safety[handle2->current_channel]) || (!gEndat1_is_load_share_mode && handle2->has_safety[handle2->current_channel]))
                             {
                                 uint64_t multi_turn, single_turn;
                                 union position position2;
-                                uint64_t max = pow(2, gEndatHandle2->single_turn_res[gEndatHandle2->current_channel]);
+                                uint64_t max = pow(2, handle2->single_turn_res[handle2->current_channel]);
 
-                                multi_turn = ENDAT_GET_POS_MULTI_TURN(gEndat1_2_2_pos_val2[j], gEndatHandle2);
-                                single_turn = ENDAT_GET_POS_SINGLE_TURN(gEndat1_2_2_pos_val2[j], gEndatHandle2);
+                                multi_turn = ENDAT_GET_POS_MULTI_TURN(gEndat1_2_2_pos_val2[j], handle2);
+                                single_turn = ENDAT_GET_POS_SINGLE_TURN(gEndat1_2_2_pos_val2[j], handle2);
 
-                                if(gEndatHandle2->type[gEndatHandle2->current_channel] == rotary)
+                                if(handle2->type[handle2->current_channel] == rotary)
                                 {
                                     position2.angle = (float)single_turn / (float)max * (float)360;
                                 }
                                 else
                                 {
-                                    position2.length = single_turn * gEndatHandle2->step[gEndatHandle2->current_channel];
+                                    position2.length = single_turn * handle2->step[handle2->current_channel];
                                 }
 
                                 DebugP_log(", ");
 
-                                if(gEndatHandle2->multi_turn_res[gEndatHandle2->current_channel])
+                                if(handle2->multi_turn_res[handle2->current_channel])
                                 {
                                     sprintf(gUart_buffer, "%16.12f, %16s", position2.angle, uint64_to_str(multi_turn));
                                 }
                                 else
                                 {
-                                    if(gEndatHandle2->type[gEndatHandle2->current_channel] == rotary)
+                                    if(handle2->type[handle2->current_channel] == rotary)
                                     {
                                         sprintf(gUart_buffer, "%16.12f", position2.angle);
                                     }
@@ -3188,36 +3226,36 @@ static void endat_process_continuous_mode_command(int32_t cmd,
                 }
                 else
                 {
-                    i += endat_get_position_loop_chars(gEndatHandle2, 0, 1);
-                    endat_print_position_loop(gEndatHandle2, 0, 1, 0);
+                    i += endat_get_position_loop_chars(handle2, 0, 1);
+                    endat_print_position_loop(handle2, 0, 1, 0);
 
-                    if((!gEndat1_is_multi_ch && gEndatHandle2->has_safety[gEndatHandle2->current_channel]) || (!gEndat1_is_load_share_mode && gEndatHandle2->has_safety[gEndatHandle2->current_channel]))
+                    if((!gEndat1_is_multi_ch && handle2->has_safety[handle2->current_channel]) || (!gEndat1_is_load_share_mode && handle2->has_safety[handle2->current_channel]))
                     {
                         uint64_t multi_turn, single_turn;
                         union position position2;
-                        uint64_t max = pow(2, gEndatHandle2->single_turn_res[gEndatHandle2->current_channel]);
+                        uint64_t max = pow(2, handle2->single_turn_res[handle2->current_channel]);
 
-                        multi_turn = ENDAT_GET_POS_MULTI_TURN(gEndat1_2_2_pos_val2[0], gEndatHandle2);
-                        single_turn = ENDAT_GET_POS_SINGLE_TURN(gEndat1_2_2_pos_val2[0], gEndatHandle2);
+                        multi_turn = ENDAT_GET_POS_MULTI_TURN(gEndat1_2_2_pos_val2[0], handle2);
+                        single_turn = ENDAT_GET_POS_SINGLE_TURN(gEndat1_2_2_pos_val2[0], handle2);
 
-                        if(gEndatHandle2->type[gEndatHandle2->current_channel] == rotary)
+                        if(handle2->type[handle2->current_channel] == rotary)
                         {
                             position2.angle = (float)single_turn / (float)max * (float)360;
                         }
                         else
                         {
-                            position2.length = single_turn * gEndatHandle2->step[gEndatHandle2->current_channel];
+                            position2.length = single_turn * handle2->step[handle2->current_channel];
                         }
 
                         DebugP_log(", ");
 
-                        if(gEndatHandle2->multi_turn_res[gEndatHandle2->current_channel])
+                        if(handle2->multi_turn_res[handle2->current_channel])
                         {
                             sprintf(gUart_buffer, "%16.12f, %16s", position2.angle, uint64_to_str(multi_turn));
                         }
                         else
                         {
-                            if(gEndatHandle2->type[gEndatHandle2->current_channel] == rotary)
+                            if(handle2->type[handle2->current_channel] == rotary)
                             {
                                 sprintf(gUart_buffer, "%16.12f", position2.angle);
                             }
@@ -3230,7 +3268,7 @@ static void endat_process_continuous_mode_command(int32_t cmd,
                         DebugP_log("%s", gUart_buffer);
                         DebugP_log(",    %10u", gEndat1_2_2_crc_addinfo1_err_cnt[0]);
 
-                        if(gEndatHandle2->multi_turn_res[gEndatHandle2->current_channel])
+                        if(handle2->multi_turn_res[handle2->current_channel])
                         {
                             i += 2 + 46 + 3;
                         }
@@ -3337,7 +3375,7 @@ static void endat_process_continuous_mode_command(int32_t cmd,
                     {
                         if(gEndat_multi_ch_mask & 1 << j)
                         {
-                            endat_multi_channel_set_cur(handle, j);
+                            endat_multi_channel_set_cur(handle1, j);
                             endat_process_position_command(j);
                         }
                     }
@@ -3357,7 +3395,7 @@ static void endat_process_continuous_mode_command(int32_t cmd,
                     {
                         if(gEndat1_multi_ch_mask & 1 << j)
                         {
-                            endat_multi_channel_set_cur(gEndatHandle2, j);
+                            endat_multi_channel_set_cur(handle2, j);
                             endat1_process_position_command(j);
                         }
                     }
@@ -3559,15 +3597,26 @@ void endat_main(void *args)
     endat_params.ch_info_global_addr = gEndatChInfoGlobalAddr;
     endat_params.channel_rx_info = &gEndatChInfo;
     /* Initialize the clock config pointer to point to local structure */
+    endat_clk_config.rx_clock_source = CONFIG_ENDAT0_TX_RX_FIFO_CLOCK_SOURCE;
+    endat_clk_config.tx_clock_source = CONFIG_ENDAT0_TX_RX_FIFO_CLOCK_SOURCE;
+    endat_clk_config.rx_os_rate = ENDAT_RX_OVERSAMPLING_RATE - 1;
     endat_params.endat_clk_config = &endat_clk_config;
-    endat_params.endat_clk_config->rx_clock_source = CONFIG_ENDAT0_TX_RX_FIFO_CLOCK_SOURCE;
-    endat_params.endat_clk_config->tx_clock_source = CONFIG_ENDAT0_TX_RX_FIFO_CLOCK_SOURCE;
-    endat_params.endat_clk_config->rx_os_rate = ENDAT_RX_OVERSAMPLING_RATE - 1;
     endat_params.pru_cfg.pruicss_handle = gPruIcssXHandle;
+    endat_params.pru_cfg.iep_instance = CONFIG_ENDAT0_IEP_INSTANCE;
+    endat_params.pru_cfg.iep_increment = ENDAT_PRU_IEP_COUNTER_INCREMENT;
+#if defined SOC_AM64X || defined SOC_AM243X
+    if(endat_params.pru_cfg.iep_instance)
+    {
+        endat_params.pru_cfg.iep_base_addr = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->iep1RegBase);
+    }
+    else
+#endif
+    {
+        endat_params.pru_cfg.iep_base_addr = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->iep0RegBase);
+    }
     endat_params.pru_cfg.iep_clock = CONFIG_PRU_ICSS0_IEP_CLK_FREQ_HZ;
     endat_params.pru_cfg.pru_clock = CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ;
     endat_params.pru_cfg.uart_clock = CONFIG_PRU_ICSS0_UART_CLK_FREQ_HZ;
-    endat_params.pru_cfg.iep_instance =  ENDAT_PERIODIC_MODE_IEP_INSTANCE;
     endat_params.pru_cfg.pru_slice = ENDAT0_PRUICSS_SLICEx;
     endat_params.pru_cfg.load_share_enable = gEndat_is_load_share_mode;
     
@@ -3581,10 +3630,22 @@ void endat_main(void *args)
     endat1_params.ch_info_global_addr = gEndat1ChInfoGlobalAddr;
     endat1_params.channel_rx_info = &gEndat1ChInfo;
     /* Initialize the clock config pointer to point to local structure */
+    endat1_clk_config.rx_clock_source = CONFIG_ENDAT0_TX_RX_FIFO_CLOCK_SOURCE;
+    endat1_clk_config.tx_clock_source = CONFIG_ENDAT0_TX_RX_FIFO_CLOCK_SOURCE;
+    endat1_clk_config.rx_os_rate = ENDAT_RX_OVERSAMPLING_RATE - 1;
     endat1_params.endat_clk_config = &endat1_clk_config;
-    endat1_params.endat_clk_config->rx_clock_source = CONFIG_ENDAT1_TX_RX_FIFO_CLOCK_SOURCE;
-    endat1_params.endat_clk_config->tx_clock_source = CONFIG_ENDAT1_TX_RX_FIFO_CLOCK_SOURCE;
-    endat1_params.endat_clk_config->rx_os_rate = ENDAT_RX_OVERSAMPLING_RATE - 1;
+    endat1_params.pru_cfg.iep_instance = CONFIG_ENDAT0_IEP_INSTANCE;
+    endat1_params.pru_cfg.iep_increment = ENDAT_PRU_IEP_COUNTER_INCREMENT;
+#if defined SOC_AM64X || defined SOC_AM243X
+    if(endat1_params.pru_cfg.iep_instance)
+    {
+        endat1_params.pru_cfg.iep_base_addr = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->iep1RegBase);
+    }
+    else
+#endif
+    {
+        endat1_params.pru_cfg.iep_base_addr = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->iep0RegBase);
+    }
     endat1_params.pru_cfg.pruicss_handle = gPruIcssXHandle;
     endat1_params.pru_cfg.iep_clock = CONFIG_PRU_ICSS0_IEP_CLK_FREQ_HZ;
     endat1_params.pru_cfg.pru_clock = CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ;

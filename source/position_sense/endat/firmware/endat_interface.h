@@ -111,10 +111,10 @@ ENDAT_CH0_RTM_ENABLE_OFFSET         .set    0x3C
 ;CH1 registers
 ENDAT_CH1_NUM_CLOCK_PULSES_OFFSET	.set	0x40
 ENDAT_CH1_ENDAT22_STAT_OFFSET	.set		0x41
-ENDAT_CH1_CLOCK_LESS_FOR_TD	.set		0x42
-ENDAT_CH1_MEAS_PROPDELAY_OFFSET	.set		0x44
+ENDAT_CH1_CLOCK_LESS_FOR_TD	        .set	0x42
+ENDAT_CH1_MEAS_PROPDELAY_OFFSET	    .set    0x44
 ENDAT_CH1_CRC_ERR_COUNTER_OFFSET	.set	0x48 ; CRC error count
-ENDAT_CH1_RTM_ENABLE_OFFSET         .set     0x4C
+ENDAT_CH1_RTM_ENABLE_OFFSET         .set    0x4C
 
 ;CH2 registers 
 ENDAT_CH2_NUM_CLOCK_PULSES_OFFSET	.set	0x50
@@ -126,7 +126,6 @@ ENDAT_CH2_RTM_ENABLE_OFFSET         .set    0x5C
 
 ;;;;;;;;;;Configured memory address offset ;;;;;;;;;;;
 ENDAT_CONFIG_CH_INFO_MEMORY_ADDRESS .set   0x60  ;64 bit data store memory address
-
 
 ;;;;;;;;;; clock configuration ;;;;;;;;;
 ENDAT_CONFIG_CLOCK_RX_OFFSET	.set		0x68 ; clock to be configure for rx = tx * oversample rate
@@ -152,7 +151,15 @@ ENDAT_CH1_CONFIG_SYN_BIT        .set    0x96 ;0th bit for ch0
 ENDAT_CH2_CONFIG_SYN_BIT        .set    0x97 ;0th bit for ch0
 
 ;;;;;;; icssgclock ;;;;;;;;;;;;;;
-PRUICSSG_CLOCK         .set  0x98;
+PRUICSS_CLOCK         .set  0x98; 64 bit icssg clock
+
+ENDAT_IEP_BASE_ADDR_OFFSET	.set	        0xA0  ;IEP instance, 0: IEP0, 1: IEP1
+ENDAT_CH0_IEP_EVENT_OFFSET	.set	        0xA4  ;IEP event number for ch0
+ENDAT_CH0_IEP_CAPTURE_REG_OFFSET	.set	0xA8  ;IEP capture register value for ch0
+ENDAT_CH1_IEP_EVENT_OFFSET	.set	        0xAC  
+ENDAT_CH1_IEP_CAPTURE_REG_OFFSET	.set	0xB0  ;IEP capture register value for ch1
+ENDAT_CH2_IEP_EVENT_OFFSET	.set	        0xB4  
+ENDAT_CH2_IEP_CAPTURE_REG_OFFSET	.set	0xB8  ;IEP capture register value for ch2
 
 ;;;;;;;;;; EnDat channel Rx info offset ;;;;;;;;
 ; NOTE: For ENDAT_CHx_POSITION_DATA_LSW_OFFSET: Bit0 is Error flag (EnDat2.1) and Bit0,Bit1 are Error flags (EnDat2.2)
