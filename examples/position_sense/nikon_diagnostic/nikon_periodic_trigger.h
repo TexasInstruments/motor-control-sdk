@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2025 Texas Instruments Incorporated
+ *  Copyright (C) 2024-2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -30,42 +30,126 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _NIKON_H_
-#define _NIKON_H_
+#ifndef _NIKON_PERIODIC_TRIGGER_H_
+#define _NIKON_PERIODIC_TRIGGER_H_
+
+/* ========================================================================== */
+/*                             Include Files                                  */
+/* ========================================================================== */
 
 #include<stdint.h>
 #include <position_sense/nikon/include/nikon_drv.h>
+#include "ti_drivers_config.h"
 
-struct nikon_periodic_interface
-{
-  void *pruicss_iep;
-  uint64_t iep_reset_count;
-  uint64_t ch0_trigger_count;
-  uint64_t ch1_trigger_count;
-  uint64_t ch2_trigger_count;
-};
+/* ========================================================================== */
+/*                           Macros & Typedefs                                */
+/* ========================================================================== */
 
+/** \brief IEP counter default increment value (1 per clock cycle) */
 #define IEP_DEFAULT_INC     0x1
-#define IEP_DEFAULT_INC_EN  0x4
+
+/** \brief IEP counter enable bit in Global Config register (start counter) */
 #define IEP_COUNTER_EN      0x1
+
+/** \brief IEP reset counter on CMP0 event enable bit */
 #define IEP_RST_CNT_EN      0x1
+
+/** \brief IEP Compare 0 (CMP0) event enable bit (bit 1 in CMP_CFG_REG) */
 #define IEP_CMP0_ENABLE     (0x1 << 1)
-#define IEP_CH0_CMP_EVNT ( 3 )              /* IEP CMP3 event */
-#define IEP_CH1_CMP_EVNT ( 5 )              /* IEP CMP5 event */
-#define IEP_CH2_CMP_EVNT ( 6 )              /* IEP CMP6 even t*/
 
-#define RTU_TRIGGER_HOST_EVT   ( 2+16 )    /* pr0_pru_mst_intr[2]_intr_req */
-#define PRU_TRIGGER_HOST_EVT   ( 3+16 )    /* pr0_pru_mst_intr[3]_intr_req */
-#define TXPRU_TRIGGER_HOST_EVT   ( 4+16 )    /* pr0_pru_mst_intr[4]_intr_req */
+/* ========================================================================== */
+/*                         Structure Declarations                             */
+/* ========================================================================== */
 
-uint32_t nikon_config_periodic_mode(struct nikon_periodic_interface *nikon_periodic_interface, PRUICSS_Handle handle);
+/**
+ * \brief   Structure defining Nikon periodic trigger interface configuration
+ *
+ * \details Contains Nikon driver handle, IEP timer base pointer, and trigger
+ *          count values for periodic mode operation. Used to configure IEP timer
+ *          for automatic Nikon transaction triggering at specified intervals.
+ */
+typedef struct nikon_periodic_interface_s
+{
+  nikon_handle handle[CONFIG_NIKON_NUM_INSTANCES];
+  /**< Nikon driver handle obtained from nikon_init().
+   *   Used to access driver configuration and PRU-ICSS resources */
 
-void nikon_stop_periodic_mode(struct nikon_periodic_interface *nikon_periodic_interface);
+  uint64_t periodic_trigger_count[CONFIG_NIKON_NUM_INSTANCES][NIKON_NUM_CH_PER_SLICE_MAX];
+  /**< IEP counter value for periodic trigger (in IEP clock cycles) per instance and channel. */
 
-static void rtu_nikon_irq_handler(void *handle);
-static void pru_nikon_irq_handler(void *handle);
-static void txpru_nikon_irq_handler(void *handle);
+  uint64_t iep_reset_count;
+  /**< IEP counter reset value (in IEP clock cycles) for CMP0 event.
+   *   When IEP counter reaches this value, it resets to 0, creating periodic cycles */
+} nikon_periodic_interface;
 
-void nikon_periodic_interface_init(struct nikon_priv *priv, struct nikon_periodic_interface *nikon_periodic_interface, int64_t iep_reset_count, int64_t ch0_trigger_count, int64_t ch1_trigger_count, int64_t ch2_trigger_count);
+/* ========================================================================== */
+/*                       Function Declarations                                */
+/* ========================================================================== */
 
-#endif /* _NIKON_H_ */
+/**
+ * \brief   Configure Nikon encoder for periodic trigger mode
+ *
+ * \details This function configures the Nikon encoder interface to operate in periodic
+ *          trigger mode, where encoder position data is automatically sampled at regular
+ *          intervals using the PRU-ICSS IEP (Industrial Ethernet Peripheral) timer.
+ *
+ *          The function performs the following operations:
+ *          1. Configures IEP timer with specified periodic trigger count and reset count
+ *          2. Enables IEP Compare 0 (CMP0) event for periodic triggering
+ *          3. Registers interrupt handler for processing periodic samples
+ *          4. Enables PRU interrupt handling
+ *
+ *          In periodic mode:
+ *          - IEP counter increments at IEP clock rate (default: 200 MHz)
+ *          - When counter reaches periodic_trigger_count, encoder transaction is triggered for that channel
+ *          - When counter reaches iep_reset_count, counter resets to 0 (defines period)
+ *          - Interrupt handler is called on each Nikon transaction completion
+ *
+ *          Requirements:
+ *          - Nikon driver must be initialized with nikon_init() before calling this function
+ *          - periodic_trigger_count must be less than iep_reset_count
+ *          - IEP clock must be configured via SysConfig
+ *
+ * \param[in]   nikon_periodic_interface  Pointer to periodic interface structure containing:
+ *                                           - handle: Nikon driver handle from nikon_init()
+ *                                           - periodic_trigger_count[]: IEP count value for trigger
+ *                                             per channel
+ *                                           - iep_reset_count: IEP count value for counter reset
+ *
+ * \retval      SystemP_SUCCESS    Configuration successful, periodic mode active
+ * \retval      SystemP_FAILURE    Configuration failed (NULL interface pointer, invalid handle,
+ *                                 or configuration error)
+ *
+ * \note        Call nikon_stop_periodic_mode() before returning to host trigger mode
+ *
+ */
+
+int32_t nikon_config_periodic_mode(nikon_periodic_interface *nikon_periodic_interface);
+
+/**
+ * \brief   Stop Nikon periodic trigger mode
+ *
+ * \details This function disables periodic trigger mode for the Nikon encoder interface.
+ *
+ *          The function performs the following operations:
+ *          1. Disables PRU interrupts for periodic trigger events
+ *          2. Disables IEP Compare 0 (CMP0) event
+ *          3. Stops IEP counter
+ *          4. Unregisters interrupt handler
+ *
+ *          After calling this function:
+ *          - IEP timer is stopped
+ *          - No automatic encoder transactions occur
+ *          - Application must enable host trigger mode and call
+ *            nikon_command_process() explicitly for each transaction
+ *
+ * \param[in]   nikon_periodic_interface  Pointer to periodic interface structure containing
+ *                                           the Nikon driver handle(s) to stop
+ *
+ * \retval      SystemP_SUCCESS    Periodic mode stopped successfully
+ * \retval      SystemP_FAILURE    Failed to stop periodic mode (NULL interface pointer or invalid handle)
+ *
+ */
+int32_t nikon_stop_periodic_mode(nikon_periodic_interface *nikon_periodic_interface);
+
+#endif /* _NIKON_PERIODIC_TRIGGER_H_ */

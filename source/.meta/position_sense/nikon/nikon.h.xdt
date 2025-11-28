@@ -5,80 +5,85 @@
  * Nikon
  */
 
+#include <position_sense/nikon/include/nikon_api.h>
+
 /* Nikon Instance Macros */
-#define CONFIG_NIKON_NUM_INSTANCES               `module.$instances.length`
+#define CONFIG_NIKON_NUM_INSTANCES               (`module.$instances.length`U)
 % for(let i = 0; i < module.$instances.length; i++) {
     % let instance = module.$instances[i];
-    % let Mode = 0;
-    % let sliceVal = 1;
-    % let rtuPru = 3;
-    % let txPru = 5;
-    % let icssValue = 0;
-    % if(instance.instance === "ICSSG0")
-    % {
-        % if(instance.PRU_ICSSG0_PRU.$assign === "PRU_ICSSG0_PRU0")
-        % {
-            % sliceVal = 0;
+    % /* Calculate mode based on channel configuration and load share (for compile-time firmware selection) */
+    % let mode = "NIKON_MODE_SINGLE_CHANNEL_SINGLE_PRU";  /* Default: NIKON_MODE_SINGLE_CHANNEL_SINGLE_PRU */
+    % /* Check if multiple channels are enabled */
+    % if(((instance.channel_0 & 1) && (instance.channel_1 & 1)) || ((instance.channel_1 & 1) && (instance.channel_2 & 1)) || ((instance.channel_2 & 1) && (instance.channel_0 & 1))) {
+        % mode = "NIKON_MODE_MULTI_CHANNEL_SINGLE_PRU";  /* NIKON_MODE_MULTI_CHANNEL_SINGLE_PRU */
+    % }
+    % /* Load share mode overrides multi-channel mode */
+    % if(instance.Multi_Channel_Load_Share & 1) {
+        % mode = "NIKON_MODE_MULTI_CHANNEL_MULTI_PRU";  /* NIKON_MODE_MULTI_CHANNEL_MULTI_PRU */
+    % }
+    % /* Determine PRU-ICSS Slice (0 or 1) */
+    % let pruicss_slice = 1;  /* Default to PRU1 */
+    % if(instance.instance === "ICSSG0") {
+        % if(instance.PRU_ICSSG0_PRU.$assign === "PRU_ICSSG0_PRU0") {
+            % pruicss_slice = 0;
+        % }
+    % } else if(instance.instance === "ICSSG1") {
+        % if(instance.PRU_ICSSG1_PRU.$assign === "PRU_ICSSG1_PRU0") {
+            % pruicss_slice = 0;
+        % }
+    % } else {
+        % /* For ICSSM, use pruicss_slice configuration */
+        % pruicss_slice = (instance.PRU_Slice == "PRU1") ? 1 : 0;
+    % }
+    % /* Create PRU core ID variables based on slice */
+    % let pru_id = "PRUICSS_PRU0";
+    % let rtu_pru_id = "PRUICSS_RTU_PRU0";
+    % let tx_pru_id = "PRUICSS_TX_PRU0";
+    % if(pruicss_slice == 1) {
+        % pru_id = "PRUICSS_PRU1";
+        % rtu_pru_id = "PRUICSS_RTU_PRU1";
+        % tx_pru_id = "PRUICSS_TX_PRU1";
+    % }
+    % let pruicss_instance = 0;
+    % /* Determine ICSS type and instance index */
+    % if(instance.instance === "ICSSM" || instance.instance === "ICSSM0" || instance.instance === "ICSSM1") {
+        % if(instance.instance === "ICSSM1") {
+            % pruicss_instance = 1;
+        % }
+    % } else {
+        % if(instance.instance === "ICSSG1") {
+            % pruicss_instance = 1;
         % }
     % }
-    % else if(instance.instance === "ICSSG1")
-    % {
-        % icssValue = 1;
-        % if(instance.PRU_ICSSG1_PRU.$assign === "PRU_ICSSG1_PRU0")
-        % {
-            % sliceVal = 0;
-        % }
-    % }
-     /*Macro for am263x/am261x */
-    % if(instance.instance === "ICSSM" || instance.instance === "ICSSM0" || instance.instance === "ICSSM1")
-    % {
-        % if(instance.PRU_Slice == "PRU0")
-        % {
-            % sliceVal = 0;
-        % }
-#define PRUICSSM
-         % if(instance.instance === "ICSSM1")
-        % {
-            %  icssValue = 1;
-        % }
-
-    % }
-    %if(!(sliceVal & 1))
+    % /* Calculate individual channel enabled flags */
+    % let channel0_enabled = (instance.channel_0 & 1);
+    % let channel1_enabled = (instance.channel_1 & 1);
+    % let channel2_enabled = (instance.channel_2 & 1);
+#define `instance.$name.toUpperCase()`                                    (`i`U)
+#define `instance.$name.toUpperCase()`_MODE                               (`mode`)
+#define `instance.$name.toUpperCase()`_PRUICSS_INSTANCE                   (`pruicss_instance`U)
+#define `instance.$name.toUpperCase()`_PRUICSS_SLICE                      (`pruicss_slice`U)
+#define `instance.$name.toUpperCase()`_PRUICSS_PRU_ID                     (`pru_id`)
+    % if(instance.Multi_Channel_Load_Share & 1)
     %{
-        % rtuPru = 2;
-        % txPru = 4;
+#define `instance.$name.toUpperCase()`_PRUICSS_RTU_PRU_ID                 (`rtu_pru_id`)
+#define `instance.$name.toUpperCase()`_PRUICSS_TX_PRU_ID                  (`tx_pru_id`)
     %}
-    %if(((instance.channel_0 & 1)&&(instance.channel_1 & 1))||((instance.channel_1 & 1)&&(instance.channel_2 & 1))||((instance.channel_2 & 1)&&(instance.channel_0 & 1)))
+#define `instance.$name.toUpperCase()`_CHANNEL0_ENABLED                   (`channel0_enabled`U)
+#define `instance.$name.toUpperCase()`_CHANNEL1_ENABLED                   (`channel1_enabled`U)
+#define `instance.$name.toUpperCase()`_CHANNEL2_ENABLED                   (`channel2_enabled`U)
+#define `instance.$name.toUpperCase()`_BOOSTER_PACK_ENABLE                (`instance.Booster_Pack & 1`U)
+    %if ((instance.instance === "ICSSG1" || instance.instance === "ICSSG0") && (instance.G_MUX_EN))
     %{
-        % Mode = 1;
+#define `instance.$name.toUpperCase()`_G_MUX_EN                           (`instance["G_MUX_EN"] & 1`U)
     %}
-    %if(instance.Multi_Channel_Load_Share & 1)
+    %if (instance.protocolVersion === 2.1)
     %{
-        % Mode = 2;
+#define `instance.$name.toUpperCase()`_PROTOCOL_VERSION                   (NIKON_PROTOCOL_V2_1)
     %}
-#define `instance.$name`                                    (`i`)
-#define `instance.$name`_CHANNEL0                           (`instance.channel_0 & 1`)
-#define `instance.$name`_CHANNEL1                           (`instance.channel_1 & 1`)
-#define `instance.$name`_CHANNEL2                           (`instance.channel_2 & 1`)
-#define `instance.$name`_BAUDRATE                           (`instance.baudrate`)
-#define `instance.$name`_LOAD_SHARE_MODE                    (`instance.Multi_Channel_Load_Share & 1`)
-#define `instance.$name`_MODE                               (`Mode`)
-#define `instance.$name`_BOOSTER_PACK                       (`instance.Booster_Pack & 1`)
-#define `instance.$name`_PRUICSS_PRUx                       (`sliceVal`)
-#define `instance.$name`_PRUICSSx                           (`icssValue`)
-#define `instance.$name`_PRUICSS_TXPRUx                     (`txPru`)
-#define `instance.$name`_PRUICSS_RTUPRUx                    (`rtuPru`)
-#define `instance.$name`_TX_RX_FIFO_CLOCK_SOURCE            (`instance.Tx_Rx_Clk_Source`)
-%if ((instance.instance === "ICSSG1" || instance.instance === "ICSSG0") && (instance.G_MUX_EN))
+    %if (instance.protocolVersion === 3.0)
     %{
-#define `instance.$name`_G_MUX_EN                           (`instance["G_MUX_EN"] & 1`)
-    %}
-%if (instance.protocolVersion === 2.1)
-    %{
-#define `instance.$name`_PROTOCOL_VERSION                   (NIKON_PROTOCOL_V2_1)
-    %}
-%if (instance.protocolVersion === 3.0)
-    %{
-#define `instance.$name`_PROTOCOL_VERSION                   (NIKON_PROTOCOL_V3_0)
+#define `instance.$name.toUpperCase()`_PROTOCOL_VERSION                   (NIKON_PROTOCOL_V3_0)
     %}
 % }
+

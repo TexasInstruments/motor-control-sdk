@@ -59,11 +59,14 @@ let nikon_module = {
 
     displayName: "Nikon Position Encoder",
     templates: {
+        "/drivers/system/system_config.c.xdt": {
+            driver_config: "/position_sense/nikon/nikon.c.xdt",
+            moduleName: nikon_module_name,
+        },
         "/drivers/system/system_config.h.xdt": {
             driver_config: "/position_sense/nikon/nikon.h.xdt",
             moduleName: nikon_module_name,
         },
-
         "/drivers/pinmux/pinmux_config.c.xdt": {
             moduleName: nikon_module_name,
         },

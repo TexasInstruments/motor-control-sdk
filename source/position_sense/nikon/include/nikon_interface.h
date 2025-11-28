@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2024-25 Texas Instruments Incorporated
+ *  Copyright (C) 2024-2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -36,8 +36,13 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-/* Maximum number of channels in 3 channel peripheral interface of 1 PRU-ICSS Slice */
-#define NUM_ED_CH_MAX                       (3U)
+
+/* ========================================================================== */
+/*                           Macros & Typedefs                                */
+/* ========================================================================== */
+
+/** \brief Maximum number of channels per PRU-ICSS slice */
+#define NIKON_NUM_CH_PER_SLICE_MAX          (3U)
 /* Maximum number of Nikon Encoders connected in bus connection*/
 #define NUM_ENCODERS_MAX                    (8U)
 /* Maximum number of Received Data Field Frames */
@@ -46,12 +51,7 @@ extern "C" {
 #define NUM_MDF_MAX                         (4U)
 
 /* ========================================================================== */
-/*                           Macros                                           */
-/* ========================================================================== */
-
-
-/* ========================================================================== */
-/*                         Structures                                         */
+/*                         Structure Declarations                             */
 /* ========================================================================== */
 
 /**
@@ -59,46 +59,48 @@ extern "C" {
  *
  *    \details  IF frame, Data field 0, Data field 1, Data field 2.
  */
-struct  raw_data
+typedef struct nikon_raw_data_s
 {
-    volatile uint16_t    info_field[NUM_ED_CH_MAX];
+    volatile uint16_t    info_field[NIKON_NUM_CH_PER_SLICE_MAX];
     /**<Information Field receive from the encoder*/
-    volatile uint16_t    data_field[NUM_DATA_FIELDS_MAX][NUM_ED_CH_MAX];
+    volatile uint16_t    data_field[NUM_DATA_FIELDS_MAX][NIKON_NUM_CH_PER_SLICE_MAX];
     /**<Data fields receive from the encoder*/
-};
-struct crc
+} nikon_raw_data;
+
+typedef struct nikon_crc_s
 {
-    volatile uint32_t pd_crc_err_cnt[NUM_ED_CH_MAX];
+    volatile uint32_t pd_crc_err_cnt[NIKON_NUM_CH_PER_SLICE_MAX];
     /**< Position data crc error count*/
-    volatile uint8_t pos_otf_crc[NUM_ED_CH_MAX];
+    volatile uint8_t pos_otf_crc[NIKON_NUM_CH_PER_SLICE_MAX];
     /**< Position data otf crc bits*/
-    volatile uint8_t pos_rcv_crc[NUM_ED_CH_MAX];
+    volatile uint8_t pos_rcv_crc[NIKON_NUM_CH_PER_SLICE_MAX];
     /**< Position data receive crc bits*/
-};
-struct pos_data_res
+} nikon_crc;
+
+typedef struct nikon_pos_data_res_s
 {
-    struct raw_data raw_data;
+    nikon_raw_data raw_data;
     /**< Raw data receive from encoder*/
-    struct crc crc;
+    nikon_crc crc;
     /**< Calculated CRC, Received CRC and CRC error count */
-};
+} nikon_pos_data_res;
 /**
  *    \brief    Structure defining Nikon interface
  *
  *    \details  Firmware config, command and channel interface
  *
  */
-struct nikon_pruicss_xchg
+typedef struct nikon_pruicss_xchg_s
 {
-    volatile uint8_t cycle_trigger[NUM_ED_CH_MAX];
+    volatile uint8_t cycle_trigger[NIKON_NUM_CH_PER_SLICE_MAX];
     /**< Nikon cycle trigger/complete status */
     volatile uint8_t channel;
     /**< Channel configuration */
-    volatile uint8_t num_encoders[NUM_ED_CH_MAX];
+    volatile uint8_t num_encoders[NIKON_NUM_CH_PER_SLICE_MAX];
     /**< Number of Encoders connected */
     volatile uint8_t pos_crc_len;
     /**< Position data CRC length */
-    volatile uint16_t rx_frame_size[NUM_ED_CH_MAX];
+    volatile uint16_t rx_frame_size[NIKON_NUM_CH_PER_SLICE_MAX];
     /**< Rx frame size to be configured*/
     volatile uint8_t valid_bit_idx;
     /**< Channel Bit Index */
@@ -113,16 +115,16 @@ struct nikon_pruicss_xchg
     volatile uint8_t multi_transmission_delay;
     /**< t5(m)-t6-t5(m-1) delay between 2 consecutive
      * responses of encoders connected in bus*/
-    volatile uint8_t pru_sync_status[NUM_ED_CH_MAX];
+    volatile uint8_t pru_sync_status[NIKON_NUM_CH_PER_SLICE_MAX];
     /**< status flag for synchronization of PRUs in load share*/
     volatile uint8_t primary_core_mask;
     /**< Primary core mask incase of load share */
-    volatile uint8_t opmode[NUM_ED_CH_MAX];
+    volatile uint8_t opmode[NIKON_NUM_CH_PER_SLICE_MAX];
     /**< operation mode status: '0' for periodic trigger
      * and '1' for host trigger */
-    volatile uint32_t cdf_frame[NUM_ED_CH_MAX];
+    volatile uint32_t cdf_frame[NIKON_NUM_CH_PER_SLICE_MAX];
     /**< Command to be transmitted to encoder */
-    volatile uint32_t mdf_frame[NUM_ED_CH_MAX][NUM_MDF_MAX];
+    volatile uint32_t mdf_frame[NIKON_NUM_CH_PER_SLICE_MAX][NUM_MDF_MAX];
     /**< Memory data frames to be transmitted to encoder */
     volatile uint32_t num_mdf;
     /**< Number of MDFs to be sent */
@@ -130,9 +132,9 @@ struct nikon_pruicss_xchg
     /**< Nikon Minimum delay between memory access commands */
     volatile uint64_t icss_clk;
     /**< ICSS core clock frequency */
-    struct   pos_data_res   pos_data_res[NUM_ENCODERS_MAX];
+    nikon_pos_data_res pos_data_res[NUM_ENCODERS_MAX];
     /**< Results extracted from raw data received */
-};
+} nikon_pruicss_xchg;
 
 #ifdef __cplusplus
 }
