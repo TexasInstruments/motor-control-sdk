@@ -11,7 +11,7 @@ let tamagawa_pins = (is_am26x_soc) ? system.getScript("/position_sense/tamagawa/
 let tamagawa_module_name = "/position_sense/tamagawa";
 
 function onValidate(inst, validation) {
-    for (let instance_index in inst.$module.$instances)
+    for(let instance_index in inst.$module.$instances)
     {
        let instance = inst.$module.$instances[instance_index];
         if ((!instance.channel_0)&&(!instance.channel_1)&&(!instance.channel_2))
@@ -67,7 +67,7 @@ let tamagawa_module = {
             driver_config: "/position_sense/tamagawa/tamagawa.c.xdt",
             moduleName: tamagawa_module_name,
         },
-        
+
         "/drivers/system/system_config.h.xdt": {
             driver_config: "/position_sense/tamagawa/tamagawa.h.xdt",
             moduleName: tamagawa_module_name,
@@ -156,7 +156,7 @@ let tamagawa_module = {
         },
         {
             name: "baudrate",
-            displayName: "Select Baud Rate(in Mbps)",
+            displayName: "Select Baud Rate",
             description: "Data Speed Selection ",
             default: 2500000,
             options: [

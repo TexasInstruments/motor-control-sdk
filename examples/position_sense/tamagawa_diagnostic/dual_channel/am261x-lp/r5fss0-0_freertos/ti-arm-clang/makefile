@@ -60,14 +60,11 @@ INCLUDES_common := \
 	-I${CG_TOOL_ROOT}/include/c \
 	-I${MCU_PLUS_SDK_PATH}/source \
 	-I${MOTOR_CONTROL_SDK_PATH}/source \
-	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/FreeRTOS-Kernel/include \
-	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F \
-	-I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/am261x/r5f \
-	-I${MOTOR_CONTROL_SDK_PATH}/examples/position_sense/tamagawa_diagnostic \
-	-I${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/single_channel \
 	-I${MCU_PLUS_SDK_PATH}/source/kernel/freertos/FreeRTOS-Kernel/include \
 	-I${MCU_PLUS_SDK_PATH}/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F \
 	-I${MCU_PLUS_SDK_PATH}/source/kernel/freertos/config/am261x/r5f \
+	-I${MOTOR_CONTROL_SDK_PATH}/examples/position_sense/tamagawa_diagnostic \
+	-I${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/firmware/single_channel \
 	-Igenerated \
 
 DEFINES_common := \
@@ -110,9 +107,9 @@ LNK_FILES_common = \
 	generated/linker.cmd \
 
 LIBS_PATH_common = \
-	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/lib \
-	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers/lib \
-	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/board/lib \
+	-Wl,-i${MCU_PLUS_SDK_PATH}/source/kernel/freertos/lib \
+	-Wl,-i${MCU_PLUS_SDK_PATH}/source/drivers/lib \
+	-Wl,-i${MCU_PLUS_SDK_PATH}/source/board/lib \
 	-Wl,-i${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/lib \
 	-Wl,-i${CG_TOOL_ROOT}/lib \
 
@@ -140,9 +137,9 @@ LIBS_NAME = \
 	libsysbm.a \
 
 LIBS_PATH_NAME = \
-	${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/lib \
-	${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers/lib \
-	${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/board/lib \
+	${MCU_PLUS_SDK_PATH}/source/kernel/freertos/lib \
+	${MCU_PLUS_SDK_PATH}/source/drivers/lib \
+	${MCU_PLUS_SDK_PATH}/source/board/lib \
 	${MOTOR_CONTROL_SDK_PATH}/source/position_sense/tamagawa/lib \
 	${CG_TOOL_ROOT}/lib \
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023-24 Texas Instruments Incorporated
+ *  Copyright (C) 2023-2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -30,55 +30,126 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _TAMAGAWA_H_
-#define _TAMAGAWA_H_
+#ifndef _TAMAGAWA_PERIODIC_TRIGGER_H_
+#define _TAMAGAWA_PERIODIC_TRIGGER_H_
+
+/* ========================================================================== */
+/*                             Include Files                                  */
+/* ========================================================================== */
 
 #include<stdint.h>
 #include <position_sense/tamagawa/include/tamagawa_drv.h>
 #include "ti_drivers_open_close.h"
-#include "ti_board_open_close.h"
 
-struct tamagawa_periodic_interface
-{
-  uint64_t periodic_trigger_count;
-  uint64_t iep_reset_count;
-};
+/* ========================================================================== */
+/*                           Macros & Typedefs                                */
+/* ========================================================================== */
 
-#define IEP_DEFAULT_INC    0x1;
-#define IEP_DEFAULT_INC_EN  0x4;
-#define IEP_COUNTER_EN      0x1;
-#define IEP_RST_CNT_EN      0x1;
-#define IEP_CMP0_ENABLE     0x1 << 1;
+/** \brief IEP counter default increment value (1 per clock cycle) */
+#define IEP_DEFAULT_INC     0x1
 
-/*
- * This is also defined in firmware, both macros need to be updated in both places
+/** \brief IEP counter enable bit in Global Config register (start counter) */
+#define IEP_COUNTER_EN      0x1
+
+/** \brief IEP reset counter on CMP0 event enable bit */
+#define IEP_RST_CNT_EN      0x1
+
+/** \brief IEP Compare 0 (CMP0) event enable bit (bit 1 in CMP_CFG_REG) */
+#define IEP_CMP0_ENABLE     (0x1 << 1)
+
+/* ========================================================================== */
+/*                         Structure Declarations                             */
+/* ========================================================================== */
+
+/**
+ * \brief   Structure defining Tamagawa periodic trigger interface configuration
+ *
+ * \details Contains Tamagawa driver handle, trigger count values and IEP reset
+ *          count for periodic mode operation, in which automatic Tamagawa transaction
+ *          is triggered at configured intervals.
  */
-#if (CONFIG_TAMAGAWA0_PRUICSS_PRUx == 1)
-#define IEP_CMP_EVENT       ( 3 )
-#define PRU_TRIGGER_HOST_TAMAGAWA_EVT0   ( 2+16 )    /* pr0_pru_mst_intr[2]_intr_req */
-#else
-#define IEP_CMP_EVENT       ( 4 )
-#define PRU_TRIGGER_HOST_TAMAGAWA_EVT0   ( 3+16 )    /* pr0_pru_mst_intr[3]_intr_req */
-#endif
+typedef struct tamagawa_periodic_interface_s
+{
+  tamagawa_handle handle[CONFIG_TAMAGAWA_NUM_INSTANCES];
+  /**< Tamagawa driver handle obtained from tamagawa_init().
+   *   Used to access driver configuration and PRU-ICSS resources */
 
-#define TAMAGAWA_PERIODIC_MODE_IEP_INSTANCE   0
-uint32_t tamagawa_config_periodic_mode(struct tamagawa_periodic_interface *tamagawa_periodic_interface, PRUICSS_Handle handle, uint8_t tamagawa_instnace);
+  uint64_t periodic_trigger_count[CONFIG_TAMAGAWA_NUM_INSTANCES];
+  /**< IEP counter value for periodic trigger (in IEP clock cycles). */
 
-void tamagawa_stop_periodic_continuous_mode(struct tamagawa_periodic_interface *tamagawa_periodic_interface);
+  uint64_t iep_reset_count;
+  /**< IEP counter reset value (in IEP clock cycles) for CMP0 event.
+   *   When IEP counter reaches this value, it resets to 0, creating periodic cycles */
 
-static void pruTamagawaIrqHandler0(void *args);
+} tamagawa_periodic_interface;
 
-#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
-void pruTamagawaDualChannelIrqHandler0(void *args);
-#if (CONFIG_TAMAGAWA1_PRUICSS_PRUx == 1)
-#define DUAL_CH_IEP_CMP_EVENT       ( 3 )
-#define PRU_TRIGGER_HOST_TAMAGAWA_DUAL_CH_EVT0   ( 2+16 )    /* pr0_pru_mst_intr[2]_intr_req */
-#else
-#define DUAL_CH_IEP_CMP_EVENT       ( 4 )
-#define PRU_TRIGGER_HOST_TAMAGAWA_DUAL_CH_EVT0   ( 3+16 )    /* pr0_pru_mst_intr[2]_intr_req */
-#endif
-#endif
+/* ========================================================================== */
+/*                       Function Declarations                                */
+/* ========================================================================== */
 
+/**
+ * \brief   Configure Tamagawa encoder for periodic trigger mode
+ *
+ * \details This function configures the Tamagawa encoder interface to operate in periodic
+ *          trigger mode, where encoder position data is automatically sampled at regular
+ *          intervals using the PRU-ICSS IEP (Industrial Ethernet Peripheral) timer.
+ *
+ *          The function performs the following operations:
+ *          1. Configures IEP timer with specified periodic trigger count and reset count
+ *          2. Enables IEP Compare 0 (CMP0) event for periodic triggering
+ *          3. Registers interrupt handler for processing periodic samples
+ *          4. Enables PRU interrupt handling
+ *
+ *          In periodic mode:
+ *          - IEP counter increments at IEP clock rate (default: 200 MHz)
+ *          - When counter reaches periodic_trigger_count, encoder transaction is triggered
+ *          - When counter reaches iep_reset_count, counter resets to 0 (defines period)
+ *          - Interrupt handler is called on each Tamagawa transaction completion
+ *
+ *          Requirements:
+ *          - Tamagawa driver must be initialized with tamagawa_init() before calling this function
+ *          - periodic_trigger_count must be less than iep_reset_count
+ *          - IEP clock must be configured via SysConfig
+ *
+ * \param[in]   tamagawa_periodic_interface  Pointer to periodic interface structure containing:
+ *                                           - handle: Tamagawa driver handle from tamagawa_init()
+ *                                           - periodic_trigger_count: IEP count value for trigger
+ *                                           - iep_reset_count: IEP count value for counter reset
+ *
+ * \retval      SystemP_SUCCESS    Configuration successful, periodic mode active
+ * \retval      SystemP_FAILURE    Configuration failed (NULL interface pointer, invalid handle,
+ *                                 or configuration error)
+ *
+ * \note        Call tamagawa_stop_periodic_mode() before returning to host trigger mode
+ *
+ * \see         tamagawa_stop_periodic_mode()
+ */
+int32_t tamagawa_config_periodic_mode(tamagawa_periodic_interface *tamagawa_periodic_interface);
 
+/**
+ * \brief   Stop Tamagawa periodic trigger mode
+ *
+ * \details This function disables periodic trigger mode for the Tamagawa encoder interface.
+ *
+ *          The function performs the following operations:
+ *          1. Disables PRU interrupts for periodic trigger events
+ *          2. Disables IEP Compare 0 (CMP0) event
+ *          3. Stops IEP counter
+ *          4. Unregisters interrupt handler
+ *
+ *          After calling this function:
+ *          - IEP timer is stopped
+ *          - No automatic encoder transactions occur
+ *          - Application must enable host trigger mode and  call
+ *            tamagawa_command_process() explicitly for each transaction
+ *
+ * \param[in]   tamagawa_periodic_interface  Pointer to periodic interface structure containing
+ *                                           the Tamagawa driver handle(s) to stop
+ *
+ * \retval      SystemP_SUCCESS    Periodic mode stopped successfully
+ * \retval      SystemP_FAILURE    Failed to stop periodic mode (NULL interface pointer or invalid handle)
+ *
+ */
+int32_t tamagawa_stop_periodic_mode(tamagawa_periodic_interface *tamagawa_periodic_interface);
 
-#endif /* _TAMAGAWA_H_ */
+#endif /* _TAMAGAWA_PERIODIC_TRIGGER_H_ */

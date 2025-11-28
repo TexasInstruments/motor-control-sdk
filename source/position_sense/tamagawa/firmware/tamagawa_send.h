@@ -62,7 +62,7 @@
 ;       tx_data1 - Stores the second byte of the tx data to be sent to the encoder
 ;
 ;   Worst case peak cycle usage:   68 (approx.)
-;   For all commands except EEPROM Read and Write, the Control Field (CF) should be transmitted to the encoder in about 2.0 +/- 0.05 μs and 4.0 +/- 0.1 μs for 5 Mbps and 2.5 Mbps Tamagawa encoders respectively.
+;   For all commands except EEPROM Read and Write, the Control Field (CF) should be transmitted to the encoder in about 2.0 +/- 0.05 us and 4.0 +/- 0.1 us for 5 Mbps and 2.5 Mbps Tamagawa encoders respectively.
 ;
 ;**************************************************************************************************************************************
 
