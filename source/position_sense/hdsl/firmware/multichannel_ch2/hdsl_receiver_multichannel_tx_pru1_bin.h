@@ -51,7 +51,7 @@
  *
  */
 
-const uint32_t Hiperface_DSL2_0_TX_PRU_0[] = {
+const uint32_t HdslFirmwareTxPru1_0[] = {
 0x91003c82,
 0x1308e2e2,
 0x81003c82,
@@ -1172,7 +1172,7 @@ const uint32_t Hiperface_DSL2_0_TX_PRU_0[] = {
 0x15ff0d0d,
 0x20d10000};
 
-const uint8_t Hiperface_DSL2_0_TX_PRU_1[] = {
+const uint8_t HdslFirmwareTxPru1_1[] = {
 0xab,
 0x8d,
 0x8d,
@@ -3534,7 +3534,7 @@ const uint8_t Hiperface_DSL2_0_TX_PRU_1[] = {
 0x04,
 0x21};
 
-const uint8_t Hiperface_DSL2_0_TX_PRU_2[] = {
+const uint8_t HdslFirmwareTxPru1_2[] = {
 0x0c,
 0x00,
 0x01,

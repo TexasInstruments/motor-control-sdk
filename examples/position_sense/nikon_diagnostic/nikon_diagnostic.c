@@ -159,9 +159,15 @@ int32_t nikon_pruicss_load_run_fw(struct nikon_priv *priv, uint8_t mask)
 #if(CONFIG_NIKON0_CHANNEL0)
     status = PRUICSS_disableCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_RTUPRUx);
     DebugP_assert(SystemP_SUCCESS == status);
+#if (PRUICSS_SLICEx == 1)
     size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_RTU_PRU(PRUICSS_SLICEx),
-                                                        0, (uint32_t *) NikonFirmwareMultiMakeRTU_0,
-                                                        sizeof(NikonFirmwareMultiMakeRTU_0));
+                                                        0, (uint32_t *) NikonFirmwareMultiMakeRtuPru1_0,
+                                                        sizeof(NikonFirmwareMultiMakeRtuPru1_0));
+#else
+    size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_RTU_PRU(PRUICSS_SLICEx),
+                                                        0, (uint32_t *) NikonFirmwareMultiMakeRtuPru0_0,
+                                                        sizeof(NikonFirmwareMultiMakeRtuPru0_0));
+#endif
     DebugP_assert(size);
     status = PRUICSS_resetCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_RTUPRUx);
     DebugP_assert(SystemP_SUCCESS == status);
@@ -171,9 +177,15 @@ int32_t nikon_pruicss_load_run_fw(struct nikon_priv *priv, uint8_t mask)
 #if(CONFIG_NIKON0_CHANNEL1)
     status=PRUICSS_disableCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_PRUx );
     DebugP_assert(SystemP_SUCCESS == status);
+#if (PRUICSS_SLICEx == 1)
     size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_SLICEx),
-                                                      0, (uint32_t *) NikonFirmwareMultiMakePRU_0,
-                                                      sizeof(NikonFirmwareMultiMakePRU_0));
+                                                      0, (uint32_t *) NikonFirmwareMultiMakePru1_0,
+                                                      sizeof(NikonFirmwareMultiMakePru1_0));
+#else
+    size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_SLICEx),
+                                                      0, (uint32_t *) NikonFirmwareMultiMakePru0_0,
+                                                      sizeof(NikonFirmwareMultiMakePru0_0));
+#endif
     DebugP_assert(size);
     status = PRUICSS_resetCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_PRUx);
     DebugP_assert(SystemP_SUCCESS == status);
@@ -183,9 +195,15 @@ int32_t nikon_pruicss_load_run_fw(struct nikon_priv *priv, uint8_t mask)
 #if(CONFIG_NIKON0_CHANNEL2)
     status = PRUICSS_disableCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_TXPRUx);
     DebugP_assert(SystemP_SUCCESS == status);
+#if (PRUICSS_SLICEx == 1)
     size = PRUICSS_writeMemory(gPruIcssXHandle,  PRUICSS_IRAM_TX_PRU(PRUICSS_SLICEx),
-                                                        0, (uint32_t *) NikonFirmwareMultiMakeTXPRU_0,
-                                                        sizeof(NikonFirmwareMultiMakeTXPRU_0));
+                                                        0, (uint32_t *) NikonFirmwareMultiMakeTxPru1_0,
+                                                        sizeof(NikonFirmwareMultiMakeTxPru1_0));
+#else
+    size = PRUICSS_writeMemory(gPruIcssXHandle,  PRUICSS_IRAM_TX_PRU(PRUICSS_SLICEx),
+                                                        0, (uint32_t *) NikonFirmwareMultiMakeTxPru0_0,
+                                                        sizeof(NikonFirmwareMultiMakeTxPru0_0));
+#endif
     DebugP_assert(size);
     status = PRUICSS_resetCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_TXPRUx);
     DebugP_assert(SystemP_SUCCESS == status);
@@ -196,13 +214,25 @@ int32_t nikon_pruicss_load_run_fw(struct nikon_priv *priv, uint8_t mask)
     status = PRUICSS_disableCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_PRUx);
     DebugP_assert(SystemP_SUCCESS == status);
 #if(CONFIG_NIKON0_MODE == NIKON_MODE_MULTI_CHANNEL_SINGLE_PRU)
+#if (PRUICSS_SLICEx == 1)
     size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(CONFIG_NIKON0_PRUICSS_PRUx),
-                                0, (uint32_t *) NikonFirmwareMulti_0,
-                                sizeof(NikonFirmwareMulti_0));
+                                0, (uint32_t *) NikonFirmwareMultiPru1_0,
+                                sizeof(NikonFirmwareMultiPru1_0));
 #else
     size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(CONFIG_NIKON0_PRUICSS_PRUx),
-                                0, (uint32_t *) NikonFirmware_0,
-                                sizeof(NikonFirmware_0));
+                                0, (uint32_t *) NikonFirmwareMultiPru0_0,
+                                sizeof(NikonFirmwareMultiPru0_0));
+#endif
+#else
+#if (PRUICSS_SLICEx == 1)
+    size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(CONFIG_NIKON0_PRUICSS_PRUx),
+                                0, (uint32_t *) NikonFirmwarePru1_0,
+                                sizeof(NikonFirmwarePru1_0));
+#else
+    size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(CONFIG_NIKON0_PRUICSS_PRUx),
+                                0, (uint32_t *) NikonFirmwarePru0_0,
+                                sizeof(NikonFirmwarePru0_0));
+#endif
 #endif
     DebugP_assert(size);
     status = PRUICSS_resetCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_PRUx);
@@ -261,19 +291,39 @@ void nikon_get_enc_data_len(struct nikon_priv *priv)
 uint32_t nikon_get_fw_version(void)
 {
 #if (CONFIG_NIKON0_MODE == NIKON_MODE_MULTI_CHANNEL_SINGLE_PRU)
-    return *((uint32_t *)NikonFirmwareMulti_0 + 2);
+#if (PRUICSS_SLICEx == 1)
+    return *((uint32_t *)NikonFirmwareMultiPru1_0 + 2);
+#else
+    return *((uint32_t *)NikonFirmwareMultiPru0_0 + 2);
+#endif
 #endif
 #if (CONFIG_NIKON0_CHANNEL0) && (CONFIG_NIKON0_LOAD_SHARE_MODE)
-    return *((uint32_t *)NikonFirmwareMultiMakeRTU_0 + 2);
+#if (PRUICSS_SLICEx == 1)
+    return *((uint32_t *)NikonFirmwareMultiMakeRtuPru1_0 + 2);
+#else
+    return *((uint32_t *)NikonFirmwareMultiMakeRtuPru0_0 + 2);
+#endif
 #endif
 #if (CONFIG_NIKON0_CHANNEL1) && (CONFIG_NIKON0_LOAD_SHARE_MODE)
-    return *((uint32_t *)NikonFirmwareMultiMakePRU_0 + 2);
+#if (PRUICSS_SLICEx == 1)
+    return *((uint32_t *)NikonFirmwareMultiMakePru1_0 + 2);
+#else
+    return *((uint32_t *)NikonFirmwareMultiMakePru0_0 + 2);
+#endif
 #endif
 #if (CONFIG_NIKON0_CHANNEL2) && (CONFIG_NIKON0_LOAD_SHARE_MODE)
-    return *((uint32_t *)NikonFirmwareMultiMakeTXPRU_0 + 2);
+#if (PRUICSS_SLICEx == 1)
+    return *((uint32_t *)NikonFirmwareMultiMakeTxPru1_0 + 2);
+#else
+    return *((uint32_t *)NikonFirmwareMultiMakeTxPru0_0 + 2);
+#endif
 #endif
 #if (CONFIG_NIKON0_MODE == NIKON_MODE_SINGLE_CHANNEL_SINGLE_PRU)
-    return *((uint32_t *)NikonFirmware_0 + 2);
+#if (PRUICSS_SLICEx == 1)
+    return *((uint32_t *)NikonFirmwarePru1_0 + 2);
+#else
+    return *((uint32_t *)NikonFirmwarePru0_0 + 2);
+#endif
 #endif
 }
 

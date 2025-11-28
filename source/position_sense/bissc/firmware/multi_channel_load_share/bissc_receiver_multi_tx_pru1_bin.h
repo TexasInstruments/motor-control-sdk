@@ -51,7 +51,7 @@
  *
  */
 
-const uint32_t BiSSFirmwareMultiMakeTXPRU_0[] = {
+const uint32_t BiSSFirmwareMultiMakeTxPru1_0[] = {
 0x21000300,
 0x00000208,
 0x01010002,

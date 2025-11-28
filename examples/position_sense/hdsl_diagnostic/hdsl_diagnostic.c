@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2021-2023 Texas Instruments Incorporated
+ *  Copyright (C) 2021-2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -883,16 +883,28 @@ void hdsl_pruss_load_run_fw(HDSL_Handle hdslHandle)
     if(HDSL_get_sync_ctrl(hdslHandle) == 0)
     {
         /*free run*/
+#if (CONFIG_HDSL0_PRUICSS_PRUx == 1)
             PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_PRUx),
-                            0, (uint32_t *) Hiperface_DSL2_0_RTU_0,
-                            sizeof(Hiperface_DSL2_0_RTU_0));
+                            0, (uint32_t *) HdslFirmwarePru1_0,
+                            sizeof(HdslFirmwarePru1_0));
+#else
+            PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_PRUx),
+                            0, (uint32_t *) HdslFirmwarePru0_0,
+                            sizeof(HdslFirmwarePru0_0));
+#endif
     }
     else
     {
         /*sync_mode*/
+#if (CONFIG_HDSL0_PRUICSS_PRUx == 1)
             PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_PRUx),
-                        0, (uint32_t *) Hiperface_DSL_SYNC2_0_RTU_0,
-                        sizeof(Hiperface_DSL_SYNC2_0_RTU_0));
+                        0, (uint32_t *) HdslFirmwareSyncPru1_0,
+                        sizeof(HdslFirmwareSyncPru1_0));
+#else
+            PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_PRUx),
+                        0, (uint32_t *) HdslFirmwareSyncPru0_0,
+                        sizeof(HdslFirmwareSyncPru0_0));
+#endif
     }
         PRUICSS_resetCore(gPruIcssXHandle, PRUICSS_PRUx);
         /*Run firmware*/
@@ -926,37 +938,73 @@ void hdsl_pruss_load_run_fw_300m(HDSL_Handle hdslHandle)
     {
         /*free run*/
 #if (CONFIG_HDSL0_CHANNEL0 == 1)
+#if (CONFIG_HDSL0_PRUICSS_PRUx == 1)
             PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_RTU_PRU(PRUICSS_PRUx),
-                        0, (uint32_t *) Hiperface_DSL2_0_RTU_0,
-                        sizeof(Hiperface_DSL2_0_RTU_0));
+                        0, (uint32_t *) HdslFirmwareRtuPru1_0,
+                        sizeof(HdslFirmwareRtuPru1_0));
+#else
+            PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_RTU_PRU(PRUICSS_PRUx),
+                        0, (uint32_t *) HdslFirmwareRtuPru0_0,
+                        sizeof(HdslFirmwareRtuPru0_0));
+#endif
 #endif
 #if (CONFIG_HDSL0_CHANNEL1 == 1)
+#if (CONFIG_HDSL0_PRUICSS_PRUx == 1)
             PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_PRUx),
-                        0, (uint32_t *) Hiperface_DSL2_0_PRU_0,
-                        sizeof(Hiperface_DSL2_0_PRU_0));
+                        0, (uint32_t *) HdslFirmwarePru1_0,
+                        sizeof(HdslFirmwarePru1_0));
+#else
+            PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_PRUx),
+                        0, (uint32_t *) HdslFirmwarePru0_0,
+                        sizeof(HdslFirmwarePru0_0));
+#endif
 #endif
 #if (CONFIG_HDSL0_CHANNEL2 == 1)
+#if (CONFIG_HDSL0_PRUICSS_PRUx == 1)
             PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_TX_PRU(PRUICSS_PRUx),
-                        0, (uint32_t *) Hiperface_DSL2_0_TX_PRU_0,
-                        sizeof(Hiperface_DSL2_0_TX_PRU_0));
+                        0, (uint32_t *) HdslFirmwareTxPru1_0,
+                        sizeof(HdslFirmwareTxPru1_0));
 
             /*
             NOTE: As this array is typecasted into a structure with 32-bit variables,
             32b alignment is required. This is done using linker.
             */
-            copyTable = (HDSL_CopyTable *)&Hiperface_DSL2_0_TX_PRU_2;
-            txpruFwSize = (copyTable->size1 > copyTable->size2)?(sizeof(Hiperface_DSL2_0_TX_PRU_0) + copyTable->size1):(sizeof(Hiperface_DSL2_0_TX_PRU_0) + copyTable->size2);
+            copyTable = (HDSL_CopyTable *)&HdslFirmwareTxPru1_2;
+            txpruFwSize = (copyTable->size1 > copyTable->size2)?(sizeof(HdslFirmwareTxPru1_0) + copyTable->size1):(sizeof(HdslFirmwareTxPru1_0) + copyTable->size2);
             DebugP_assert(txpruFwSize <= TXPRU_IRAM_SIZE);
 
-            PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_DATARAM(1), 0x1500, (uint32_t *)Hiperface_DSL2_0_TX_PRU_1, copyTable->size1 + copyTable->size2);
+            PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_DATARAM(1), 0x1500, (uint32_t *)HdslFirmwareTxPru1_1, copyTable->size1 + copyTable->size2);
             if(copyTable->loadAddr1 < copyTable->loadAddr2)
             {
-                PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_TX_PRU(PRUICSS_PRUx), copyTable->runAddr1, (uint32_t *) ((uint8_t *)Hiperface_DSL2_0_TX_PRU_1), copyTable->size1);
+                PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_TX_PRU(PRUICSS_PRUx), copyTable->runAddr1, (uint32_t *) ((uint8_t *)HdslFirmwareTxPru1_1), copyTable->size1);
             }
             else
             {
-                PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_TX_PRU(PRUICSS_PRUx), copyTable->runAddr1, (uint32_t *) ((uint8_t *)Hiperface_DSL2_0_TX_PRU_1 + copyTable->size2), copyTable->size1);
+                PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_TX_PRU(PRUICSS_PRUx), copyTable->runAddr1, (uint32_t *) ((uint8_t *)HdslFirmwareTxPru1_1 + copyTable->size2), copyTable->size1);
             }
+#else
+            PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_TX_PRU(PRUICSS_PRUx),
+                        0, (uint32_t *) HdslFirmwareTxPru0_0,
+                        sizeof(HdslFirmwareTxPru0_0));
+
+            /*
+            NOTE: As this array is typecasted into a structure with 32-bit variables,
+            32b alignment is required. This is done using linker.
+            */
+            copyTable = (HDSL_CopyTable *)&HdslFirmwareTxPru0_2;
+            txpruFwSize = (copyTable->size1 > copyTable->size2)?(sizeof(HdslFirmwareTxPru0_0) + copyTable->size1):(sizeof(HdslFirmwareTxPru0_0) + copyTable->size2);
+            DebugP_assert(txpruFwSize <= TXPRU_IRAM_SIZE);
+
+            PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_DATARAM(1), 0x1500, (uint32_t *)HdslFirmwareTxPru0_1, copyTable->size1 + copyTable->size2);
+            if(copyTable->loadAddr1 < copyTable->loadAddr2)
+            {
+                PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_TX_PRU(PRUICSS_PRUx), copyTable->runAddr1, (uint32_t *) ((uint8_t *)HdslFirmwareTxPru0_1), copyTable->size1);
+            }
+            else
+            {
+                PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_TX_PRU(PRUICSS_PRUx), copyTable->runAddr1, (uint32_t *) ((uint8_t *)HdslFirmwareTxPru0_1 + copyTable->size2), copyTable->size1);
+            }
+#endif
 
             HDSL_config_copy_table(hdslHandle, copyTable);
 #endif
@@ -965,37 +1013,73 @@ void hdsl_pruss_load_run_fw_300m(HDSL_Handle hdslHandle)
     {
         /*Sync mode*/
 #if (CONFIG_HDSL0_CHANNEL0 == 1)
+#if (CONFIG_HDSL0_PRUICSS_PRUx == 1)
             PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_RTU_PRU(PRUICSS_PRUx),
-                        0, (uint32_t *) Hiperface_DSL_SYNC2_0_RTU_0,
-                        sizeof(Hiperface_DSL_SYNC2_0_RTU_0));
+                        0, (uint32_t *) HdslFirmwareSyncRtuPru1_0,
+                        sizeof(HdslFirmwareSyncRtuPru1_0));
+#else
+            PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_RTU_PRU(PRUICSS_PRUx),
+                        0, (uint32_t *) HdslFirmwareSyncRtuPru0_0,
+                        sizeof(HdslFirmwareSyncRtuPru0_0));
+#endif
 #endif
 #if (CONFIG_HDSL0_CHANNEL1 == 1)
+#if (CONFIG_HDSL0_PRUICSS_PRUx == 1)
             PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_PRUx),
-                        0, (uint32_t *) Hiperface_DSL_SYNC2_0_PRU_0,
-                        sizeof(Hiperface_DSL_SYNC2_0_PRU_0));
+                        0, (uint32_t *) HdslFirmwareSyncPru1_0,
+                        sizeof(HdslFirmwareSyncPru1_0));
+#else
+            PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_PRUx),
+                        0, (uint32_t *) HdslFirmwareSyncPru0_0,
+                        sizeof(HdslFirmwareSyncPru0_0));
+#endif
 #endif
 #if (CONFIG_HDSL0_CHANNEL2 == 1)
+#if (CONFIG_HDSL0_PRUICSS_PRUx == 1)
             PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_TX_PRU(PRUICSS_PRUx),
-                       0, (uint32_t *) Hiperface_DSL_SYNC2_0_TX_PRU_0,
-                       sizeof(Hiperface_DSL_SYNC2_0_TX_PRU_0));
+                       0, (uint32_t *) HdslFirmwareSyncTxPru1_0,
+                       sizeof(HdslFirmwareSyncTxPru1_0));
 
             /*
             NOTE: As this array is typecasted into a structure with 32-bit variables,
             32b alignment is required. This is done using linker.
             */
-            copyTable = (HDSL_CopyTable *)&Hiperface_DSL_SYNC2_0_TX_PRU_2;
-            txpruFwSize = (copyTable->size1 > copyTable->size2)?(sizeof(Hiperface_DSL_SYNC2_0_TX_PRU_0) + copyTable->size1):(sizeof(Hiperface_DSL_SYNC2_0_TX_PRU_0) + copyTable->size2);
+            copyTable = (HDSL_CopyTable *)&HdslFirmwareSyncTxPru1_2;
+            txpruFwSize = (copyTable->size1 > copyTable->size2)?(sizeof(HdslFirmwareSyncTxPru1_0) + copyTable->size1):(sizeof(HdslFirmwareSyncTxPru1_0) + copyTable->size2);
             DebugP_assert(txpruFwSize <= TXPRU_IRAM_SIZE);
 
-            PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_DATARAM(1), 0x1500, (uint32_t *)Hiperface_DSL_SYNC2_0_TX_PRU_1, copyTable->size1 + copyTable->size2);
+            PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_DATARAM(1), 0x1500, (uint32_t *)HdslFirmwareSyncTxPru1_1, copyTable->size1 + copyTable->size2);
             if(copyTable->loadAddr1 < copyTable->loadAddr2)
             {
-                PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_TX_PRU(PRUICSS_PRUx), copyTable->runAddr1, (uint32_t *) ((uint8_t *)Hiperface_DSL_SYNC2_0_TX_PRU_1), copyTable->size1);
+                PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_TX_PRU(PRUICSS_PRUx), copyTable->runAddr1, (uint32_t *) ((uint8_t *)HdslFirmwareSyncTxPru1_1), copyTable->size1);
             }
             else
             {
-                PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_TX_PRU(PRUICSS_PRUx), copyTable->runAddr1, (uint32_t *) ((uint8_t *)Hiperface_DSL_SYNC2_0_TX_PRU_1 + copyTable->size2), copyTable->size1);
+                PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_TX_PRU(PRUICSS_PRUx), copyTable->runAddr1, (uint32_t *) ((uint8_t *)HdslFirmwareSyncTxPru1_1 + copyTable->size2), copyTable->size1);
             }
+#else
+            PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_TX_PRU(PRUICSS_PRUx),
+                       0, (uint32_t *) HdslFirmwareSyncTxPru0_0,
+                       sizeof(HdslFirmwareSyncTxPru0_0));
+
+            /*
+            NOTE: As this array is typecasted into a structure with 32-bit variables,
+            32b alignment is required. This is done using linker.
+            */
+            copyTable = (HDSL_CopyTable *)&HdslFirmwareSyncTxPru0_2;
+            txpruFwSize = (copyTable->size1 > copyTable->size2)?(sizeof(HdslFirmwareSyncTxPru0_0) + copyTable->size1):(sizeof(HdslFirmwareSyncTxPru0_0) + copyTable->size2);
+            DebugP_assert(txpruFwSize <= TXPRU_IRAM_SIZE);
+
+            PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_DATARAM(1), 0x1500, (uint32_t *)HdslFirmwareSyncTxPru0_1, copyTable->size1 + copyTable->size2);
+            if(copyTable->loadAddr1 < copyTable->loadAddr2)
+            {
+                PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_TX_PRU(PRUICSS_PRUx), copyTable->runAddr1, (uint32_t *) ((uint8_t *)HdslFirmwareSyncTxPru0_1), copyTable->size1);
+            }
+            else
+            {
+                PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_TX_PRU(PRUICSS_PRUx), copyTable->runAddr1, (uint32_t *) ((uint8_t *)HdslFirmwareSyncTxPru0_1 + copyTable->size2), copyTable->size1);
+            }
+#endif
 
             HDSL_config_copy_table(hdslHandle, copyTable);
 #endif

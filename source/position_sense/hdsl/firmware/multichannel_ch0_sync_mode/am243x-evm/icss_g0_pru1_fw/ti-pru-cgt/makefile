@@ -91,7 +91,7 @@ clean:
 	-@echo ' '
 
 post-build:
-		-$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=Hiperface_DSL_SYNC2_0_RTU -o hdsl_receiver_multichannel_sync_mode_rtu_pru1_bin.h  hdsl_receiver_multichannel_ch0_sync_mode_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt.out
+		-$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=HdslFirmwareSyncRtuPru1 -o hdsl_receiver_multichannel_sync_mode_rtu_pru1_bin.h  hdsl_receiver_multichannel_ch0_sync_mode_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt.out
 		-$(CAT) ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h hdsl_receiver_multichannel_sync_mode_rtu_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/hdsl/firmware/multichannel_ch0_sync_mode/hdsl_receiver_multichannel_sync_mode_rtu_pru1_bin.h
 		-$(RM) hdsl_receiver_multichannel_sync_mode_rtu_pru1_bin.h
 	-@echo ' '

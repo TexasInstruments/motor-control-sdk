@@ -51,7 +51,7 @@
  *
  */
 
-const uint32_t EnDatFirmwareMultiMakeTXPRU0_0[] = {
+const uint32_t EnDatFirmwareMultiMakeTxPru0_0[] = {
 0x21000300,
 0x00000207,
 0x01000004,
