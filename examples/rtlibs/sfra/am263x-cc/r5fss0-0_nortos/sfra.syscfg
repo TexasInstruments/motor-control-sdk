@@ -63,7 +63,7 @@ adc2.adcClockPrescaler = "ADC_CLK_DIV_4_0";
 adc3.$name             = "ADCC";
 adc3.adcClockPrescaler = "ADC_CLK_DIV_4_0";
 
-epwm1.$name                         = "EPWM0";
+epwm1.$name                         = "EPWM_0";
 epwm1.epwmTimebase_counterMode      = "EPWM_COUNTER_MODE_UP_DOWN";
 epwm1.epwmTimebase_syncOutPulseMode = ["EPWM_SYNC_OUT_PULSE_ON_CNTR_ZERO"];
 epwm1.epwmTimebase_periodLoadMode   = "EPWM_PERIOD_DIRECT_LOAD";

@@ -40,16 +40,12 @@ function getInterfacePinList(inst)
         Slice = "PR0_"+Slice;
     }
 
-    
-    pinList.push({ pinName: Slice.toString()+"_GPIO1", displayName: "BISSC_CHANNEL0_TX", rx: false});
     pinList.push({ pinName: Slice.toString()+"_GPIO0", displayName: "BISSC_CHANNEL0_CLK", rx: false});
     pinList.push({ pinName: Slice.toString()+"_GPIO9", displayName: "BISSC_CHANNEL0_RX", rx: true});
 
-    pinList.push({ pinName: Slice.toString()+"_GPIO4", displayName: "BISSC_CHANNEL1_TX", rx: false});
     pinList.push({ pinName: Slice.toString()+"_GPIO3", displayName: "BISSC_CHANNEL1_CLK", rx: false});
     pinList.push({ pinName: Slice.toString()+"_GPIO10", displayName: "BISSC_CHANNEL1_RX", rx: true});
 
-    pinList.push({ pinName: Slice.toString()+"_GPIO7", displayName: "BISSC_CHANNEL2_TX", rx: false});
     pinList.push({ pinName: Slice.toString()+"_GPIO6", displayName: "BISSC_CHANNEL2_CLK", rx: false});
     pinList.push({ pinName: Slice.toString()+"_GPIO11", displayName: "BISSC_CHANNEL2_RX", rx: true});
 
@@ -81,52 +77,35 @@ function pinmuxRequirements(inst) {
         pinmux.setConfigurableDefault( pinResource, "rx", pin.rx );
 
         if(inst["channel_0"]==true){
-            if( (pin.pinName == Slice.toString()+"_GPIO1") || (pin.pinName == Slice.toString()+"_GPIO0") || (pin.pinName == Slice.toString()+"_GPIO9")){
+            if((pin.pinName == Slice.toString()+"_GPIO0") || (pin.pinName == Slice.toString()+"_GPIO9")){
                  pinResource.used = true;
             }
         }else{
-            if( (pin.pinName == Slice.toString()+"_GPIO1") || (pin.pinName == Slice.toString()+"_GPIO0") || (pin.pinName == Slice.toString()+"_GPIO9")){
+            if((pin.pinName == Slice.toString()+"_GPIO0") || (pin.pinName == Slice.toString()+"_GPIO9")){
                 pinResource.used = false;
             }
         }
-
         if(inst["channel_1"]==true){
-            if( (pin.pinName == Slice.toString()+"_GPIO4") || (pin.pinName == Slice.toString()+"_GPIO3") || (pin.pinName == Slice.toString()+"_GPIO10")){
+            if((pin.pinName == Slice.toString()+"_GPIO3") || (pin.pinName == Slice.toString()+"_GPIO10")){
                   pinResource.used = true;
              }
         }else{
-            if( (pin.pinName == Slice.toString()+"_GPIO4") || (pin.pinName == Slice.toString()+"_GPIO3") || (pin.pinName == Slice.toString()+"_GPIO10")){
+            if((pin.pinName == Slice.toString()+"_GPIO3") || (pin.pinName == Slice.toString()+"_GPIO10")){
                 pinResource.used = false;
             }
         }
-
-        if(Slice =="PR0_PRU1")
+        if(inst["channel_2"]==true)
         {
-            if(inst["channel_2"]==true){
-                if( (pin.pinName == Slice.toString()+"_GPIO7") || (pin.pinName == Slice.toString()+"_GPIO6") || (pin.pinName == Slice.toString()+"_GPIO11")){
+            if((pin.pinName == Slice.toString()+"_GPIO6") || (pin.pinName == Slice.toString()+"_GPIO11")){
                     pinResource.used = true;
                 }
-            }else{
-                    if( (pin.pinName == Slice.toString()+"_GPIO7") || (pin.pinName == Slice.toString()+"_GPIO6") || (pin.pinName == Slice.toString()+"_GPIO11")){
-                    pinResource.used = false;
-                }
-            }
         }else{
-            if(inst["channel_2"]==true){
-                if( (pin.pinName == Slice.toString()+"_GPIO6") || (pin.pinName == Slice.toString()+"_GPIO11")){
-                    pinResource.used = true;
+            if((pin.pinName == Slice.toString()+"_GPIO6") || (pin.pinName == Slice.toString()+"_GPIO11")){
+                pinResource.used = false;
                 }
-            }else{
-                    if( (pin.pinName == Slice.toString()+"_GPIO6") || (pin.pinName == Slice.toString()+"_GPIO11")){
-                    pinResource.used = false;
-                }
-            }
         }
-
-
         resources.push( pinResource );
     }
-
     let peripheralRequirements = {
         name: interfaceName,
         displayName: interfaceName,
@@ -152,7 +131,6 @@ function getPeripheralPinNames(inst)
 
     return pinNameList;
 }
-
 
 exports = {
 
