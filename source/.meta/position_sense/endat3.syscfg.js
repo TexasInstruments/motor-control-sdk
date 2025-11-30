@@ -2,10 +2,11 @@
 let common = system.getScript("/common");
 let endat3_module_name = "/position_sense/endat3";
 let device = common.getDeviceName();
-let is_am26x_soc = (device === "am263x-cc" || device === "am261x-lp") ? true : false;
+let is_am26x_soc = (device === "am263x-cc" || device === "am261x-lp" || device === "am263px-cc") ? true : false;
 let is_am263x_soc = (device === "am263x-cc") ? true : false;
 let is_am261x_soc = (device === "am261x-lp") ? true : false;
-let hdsl_endat3_pins = (is_am26x_soc) ? system.getScript("/position_sense/endat3/hdsl_endat_pins.js") : system.getScript("/position_sense/hdsl_endat3_pins.js");
+let is_am263px_soc = (device === "am263px-cc") ? true : false;
+let hdsl_endat3_pins = (is_am26x_soc) ? system.getScript("/position_sense/endat3/hdsl_endat_pins.js") : system.getScript("/position_sense/hdsl_endat_pins.js");
 
 function onValidate(inst, validation)
 {
@@ -23,34 +24,34 @@ function onValidate(inst, validation)
             validation.logError("On AM243x-LP, Channel 1 is not supported",inst,"Channel_1");
         }
         /* Validation for booster pack */
-        if(( device!="am243x-lp" && device!= "am263x-cc" &&  device!= "am261x-lp" )&&(instance.Booster_Pack))
+        if((device!="am243x-lp" && device != "am263x-cc" && device!="am261x-lp" && device != "am263px-cc" )&&(instance.Booster_Pack))
         {
-            validation.logError("Select only when using Booster Pack with LP",inst,"Booster_Pack");
+            validation.logError("Select only when using BP-AM2BLDCSERVO BoosterPack with LP",inst,"Booster_Pack");
         }
 
         if(is_am26x_soc)
             {
-                if(is_am263x_soc)
+                if(is_am263x_soc || is_am263px_soc)
                 {
                     if(instance.PRU_Slice == "PRU0" && instance.Channel_2)
                     {
                         validation.logError("Channel2 TX signal is not pinned out at the device level", inst, "Channel_2");
                     }
-                    
+
                     if((instance.Channel_2 || instance.Channel_0)&&(instance.Booster_Pack))
                     {
-                        validation.logError("Channel0 and Channel2 are not supported on Booster Pack",inst,"Booster_Pack");
+                        validation.logError("Channel 0 and Channel 2 are not supported with BP-AM2BLDCSERVO BoosterPack",inst,"Booster_Pack");
                     }
                 }
                 if(is_am261x_soc)
                 {
-                    
+
                     if((instance.Channel_2 || instance.Channel_1)&&(instance.Booster_Pack))
                     {
-                        validation.logError("Channel1 and Channel2 are not supported on Booster Pack",inst,"Booster_Pack");
+                        validation.logError("Channel 1 and Channel 2 are not supported with BP-AM2BLDCSERVO BoosterPack",inst,"Booster_Pack");
                     }
                 }
-                
+
             }
     }
 }
@@ -66,12 +67,12 @@ let endat3_module = {
             moduleName: endat3_module_name,
         },
     },
-    defaultInstanceName: "CONFIG_ENDAT3",
+    defaultInstanceName: "CONFIG_ENDAT3_",
     config: [
         {
             name: "instance",
             displayName: "Instance",
-            default: (is_am261x_soc) ? "ICSSM1" : ((is_am263x_soc) ? "ICSSM" : "ICSSG0"),
+            default: (is_am261x_soc) ? "ICSSM1" : ((is_am263x_soc || is_am263px_soc ) ? "ICSSM" : "ICSSG0"),
             options: (is_am261x_soc) ?
                         [
                             {
@@ -82,7 +83,7 @@ let endat3_module = {
                             }
                         ]
                         :
-                        ((is_am263x_soc) ?
+                        ((is_am263x_soc || is_am263px_soc) ?
                         [
                             {
                             name: "ICSSM",
@@ -107,9 +108,9 @@ let endat3_module = {
             hidden:  (device == "am243x-lp" ||device == "am243x-evm" ||device == "am64x-evm") ? false : true,
         },
         {
-            name: "Rx_Clk_Source",
-            displayName: "RX FIFO Clock Source",
-            description: "RX FIFO Clock Source Options",
+            name: "Tx_Rx_Clk_Source",
+            displayName: "TX RX FIFO Clock Source",
+            description: "TX RX FIFO Clock Source Options. See module specific page in SDK documentation for more details and known limitations.",
             default: "0",
             options: [
                 {
@@ -123,18 +124,14 @@ let endat3_module = {
             ],
         },
         {
-            name: "Tx_Clk_Source",
-            displayName: "TX FIFO Clock Source",
-            description: "TX FIFO Clock Source Options",
+            name: "Baud_Rate",
+            displayName: "Baud Rate",
+            description: "EnDAT3 Communication Baud Rate",
             default: "0",
             options: [
                 {
                     name: "0",
-                    displayName: "ICSS UART Clock",
-                },
-                {
-                    name: "1",
-                    displayName: "ICSS Core Clock",
+                    displayName: "12.5 Mbps",
                 },
             ],
         },
@@ -158,16 +155,9 @@ let endat3_module = {
         },
 
         {
-            name: "Multi_Channel_Load_Share",
-            displayName: "Multi Channel Load Share",
-            description: "Selected Channels have different make",
-            hidden :(is_am26x_soc) ? true : false,
-            default: false,
-        },
-        {
             name: "Booster_Pack",
-            displayName: "Booster Pack",
-            description: "Only for Booster Pack",
+            displayName: "Using BP-AM2BLDCSERVO BoosterPack",
+            description: "Only for BP-AM2BLDCSERVO BoosterPack",
             default: false,
         },
 
@@ -195,9 +185,9 @@ let endat3_module = {
             }]
         },
     },
-    pinmuxRequirements: hdsl_endat_pins.pinmuxRequirements,
-    getInterfaceName: hdsl_endat_pins.getInterfaceName,
-    getPeripheralPinNames: hdsl_endat_pins.getPeripheralPinNames,
+    pinmuxRequirements: hdsl_endat3_pins.pinmuxRequirements,
+    getInterfaceName: hdsl_endat3_pins.getInterfaceName,
+    getPeripheralPinNames: hdsl_endat3_pins.getPeripheralPinNames,
     sharedModuleInstances: sharedModuleInstances,
     moduleInstances: moduleInstances,
     validate: onValidate,
@@ -261,7 +251,7 @@ function moduleInstances(instance){
 
 function sharedModuleInstances(instance) {
     let modInstances = new Array();
-    let requiredArgs = (is_am263x_soc) ? {instance:`${instance.instance}0`} : {instance: instance.instance};
+    let requiredArgs = (is_am263x_soc || is_am263px_soc) ? {instance:`${instance.instance}0`} : {instance: instance.instance};
     modInstances.push({
         name: "pru",
         displayName: "PRU ICSS Configuration",

@@ -38,50 +38,120 @@
 ;******************************************************************************
 ; Register Aliases
 ;******************************************************************************
-; NOTE: Each register now has a single, clear purpose
-;       Overlapping aliases have been reassigned to unused registers
+; DESIGN PRINCIPLE: Each register name maps to ONE unique physical register
+; No overlapping aliases - clear 1-to-1 mapping for all registers
+; Registers are listed in ascending order by physical register number
+;******************************************************************************
 
-	.asg	r0,             TEMP0                           ; r0: General purpose
-	.asg	r1,             TEMP1                           ; r1: General purpose
-	.asg	r2,             TEMP2                           ; r2: General purpose
-	.asg	r3,             TEMP3                           ; r3: General purpose
-	.asg	r4,             TEMP4                           ; r4: General purpose
-	.asg	r5,             DMEM_OFFSET                     ; r5: Data memory offset
-	.asg	r6,             RX_BUFFER_OFFSET                ; r6: RX buffer offset
-	.asg	r7.b0,          LONG_SYMBOL_COUNT               ; r7: Long symbol count and protocol state
-	.asg	r7.b1,          FIRST_DATA_HALF_BIT
-	.asg	r7.b2,          LONG_SHORT_STATUS
-	.asg	r8,             PREAMBLE_START_REG              ; r8: Preamble start register
-	.asg	r9,             PREAMBLE_BASE                   ; r9: Preamble base
-	.asg	r10,            DEC_OFFSET_REG                  ; r10: Decode offset register
-	.asg	r11,            ENCODED_DATA_LOW                ; r11: Encoded data low
-	.asg	r12,            OFFLOAD_REG                     ; r12: Offload register
-	.asg	r13,            ENCODE_INPUT_REG                ; r13: Encode input register
-	.asg	r14,            DECODED_DATA_REG                ; r14: Decoded data register
-	.asg	r15,            ADD_DELAY                       ; r15: Additional delay
-	.asg	r16,            ENCODE_OUTPUT_REG               ; r16: Encode output register
-	.asg	r17,            SAMPLE_OFFSET_COUNTER           ; r17: Sample offset counter
-	.asg	r18.b0,         OVS_DATA_REG                    ; r18: Oversampling data register
-	.asg	r19,            ENCODED_DATA_HIGH               ; r19: Encoded data high
-	.asg	r21.b0,         LUT_SAMPLE_REG                  ; r21: LUT sample and temp
-	.asg	r21.b2,         TEMP_REG
-	.asg	r22,            TEMP_REG1                       ; r22: Temporary register 1
-	.asg	r23,            BIT_CAPTURE_REG                 ; r23: Bit capture register
-	.asg	r24.b0,         ERROR_MASK_REG                  ; r24: Error handling
-	.asg	r24.b1,         ERROR_STATUS_REG
-	.asg	r27,            BYTE_REV_RESULT                 ; r27: Byte reverse result
-	.asg	r28,            BYTE_REV_INPUT                  ; r28: Byte reverse input
-	.asg	r29.b0,         TX_FRAMES_LEFT                  ; r29: TX frame control
-	.asg	r29.b1,         CURR_TX_FRAME_MEM_OFFSET
+;------------------------------------------------------------------------------
+; r0-r4: TX Pipeline Registers - Descriptive Naming
+;------------------------------------------------------------------------------
+	.asg	r0,             TEMP0                           ; r0: General purpose temporary register 0
+	.asg	r1,             TX_CMD_DATA                     ; r1: TX command data input
+	.asg	r2,             TX_PREAMBLE                     ; r2: TX preamble storage
+	.asg	r3,             TX_ENCODED_HIGH                 ; r3: TX encoded data high 32 bits
+	.asg	r4,             TX_ENCODED_LOW                  ; r4: TX encoded data low 32 bits
+
+;------------------------------------------------------------------------------
+; r5-r6: Memory and Data Path Registers
+;------------------------------------------------------------------------------
+	.asg	r5,             DMEM_OFFSET                     ; r5: Data memory base pointer
+	.asg	r6,             RX_BUFFER_OFFSET                ; r6: RX buffer write offset
+
+;------------------------------------------------------------------------------
+; r7: Protocol State Registers (byte-packed)
+;------------------------------------------------------------------------------
+	.asg	r7.b0,          LONG_SYMBOL_COUNT               ; r7.b0: Long symbol counter
+	.asg	r7.b1,          FIRST_DATA_HALF_BIT             ; r7.b1: First half-bit value
+	.asg	r7.b2,          LONG_SHORT_STATUS               ; r7.b2: Symbol length indicator
+
+;------------------------------------------------------------------------------
+; r8-r10: Available for future use
+;------------------------------------------------------------------------------
+
+;------------------------------------------------------------------------------
+; r11: TX Encoding Input Register
+;------------------------------------------------------------------------------
+	.asg	r11,            ENCODE_INPUT_REG                ; r11: TX encode 8-bit input
+
+;------------------------------------------------------------------------------
+; r12: Available for future use
+;------------------------------------------------------------------------------
+
+;------------------------------------------------------------------------------
+; r13: TX Encoding Output Register
+;------------------------------------------------------------------------------
+	.asg	r13,            ENCODE_OUTPUT_REG               ; r13: TX encode 16-bit output
+
+;------------------------------------------------------------------------------
+; r14-r15: RX and Timing Registers
+;------------------------------------------------------------------------------
+	.asg	r14,            DECODED_DATA_REG                ; r14: RX decoded data destination
+	.asg	r15,            ADD_DELAY                       ; r15: Delay counter for timing loops
+
+;------------------------------------------------------------------------------
+; r16: Channel Enable Mask Register
+;------------------------------------------------------------------------------
+	.asg	r16.b0,         ENDAT_ENABLE_CHx                ; r16.b0: Channel enable mask (bit 0=CH0, bit 1=CH1, bit 2=CH2)
+
+;------------------------------------------------------------------------------
+; r17-r18: RX Sampling Registers
+;------------------------------------------------------------------------------
+	.asg	r17,            SAMPLE_OFFSET_COUNTER           ; r17: RX sample debug offset counter
+	.asg	r18.b0,         OVS_DATA_REG                    ; r18.b0: RX oversampling data storage
+
+;------------------------------------------------------------------------------
+; r19-r20: General Purpose Temporary Registers
+;------------------------------------------------------------------------------
+	.asg	r19,            TEMP1                           ; r19: General purpose temporary register 1
+	.asg	r20,            TEMP2                           ; r20: General purpose temporary register 2
+
+;------------------------------------------------------------------------------
+; r21-r24: RX Sampling, LUT, and Error Detection Registers
+;------------------------------------------------------------------------------
+	.asg	r21.b0,         LUT_SAMPLE_REG                  ; r21.b0: LUT lookup result
+	.asg	r21.b2,         TEMP_REG                        ; r21.b2: Temporary byte storage
+	.asg	r22,            TEMP_REG1                       ; r22: General temporary storage
+	.asg	r23,            BIT_CAPTURE_REG                 ; r23: RX bit accumulation buffer
+	.asg	r24.b0,         ERROR_MASK_REG                  ; r24.b0: Error detection mask
+	.asg	r24.b1,         ERROR_STATUS_REG                ; r24.b1: Error status flag
+
+;------------------------------------------------------------------------------
+; r25-r26: Unused - Available for future use
+;------------------------------------------------------------------------------
+
+;------------------------------------------------------------------------------
+; r27-r28: Byte Reversal Registers (TX encoding operations)
+;------------------------------------------------------------------------------
+	.asg	r27,            BYTE_REV_RESULT                 ; r27: Byte reversal output
+	.asg	r28,            BYTE_REV_INPUT                  ; r28: Byte reversal input
+
+;------------------------------------------------------------------------------
+; r29: TX Frame Management Registers (byte-packed)
+;------------------------------------------------------------------------------
+	.asg	r29.b0,         TX_FRAMES_LEFT                  ; r29.b0: TX frame counter
+	.asg	r29.b1,         CURR_TX_FRAME_MEM_OFFSET        ; r29.b1: TX frame memory offset
 
 ;******************************************************************************
-; Shared DRAM Memory Offsets (Absolute Addresses)
+; Free Register Summary - Available for Future Development
 ;******************************************************************************
-PREAMBLE_START                  .set    0x10000
-PREAMBLE_DEC                    .set    0x10020
-ENDAT3_DEC_OFFS                 .set    0x1208C
-OFFLOAD_DATA_OFFS               .set    0x1508C
-
+; This section documents all unused register space for easy reference when
+; adding new features or optimizations to the EnDAT3 firmware.
+;
+; FREE BYTE FIELDS (partial register usage):
+;   r7.b3                  : 1 byte   - Protocol state register
+;   r16.b1, r16.b2, r16.b3 : 3 bytes  - Channel enable register
+;   r18.b1, r18.b2, r18.b3 : 3 bytes  - RX sampling register
+;   r21.b1, r21.b3         : 2 bytes  - LUT/temp register
+;   r24.b2, r24.b3         : 2 bytes  - Error detection register
+;   r29.b2, r29.b3         : 2 bytes  - TX frame management register
+;
+; FREE FULL REGISTERS:
+;   r8, r9, r10            : 12 bytes - Available for future use
+;   r12                    : 4 bytes  - Available for future use
+;   r25, r26               : 8 bytes  - Available for future use
+;
+; TOTAL FREE SPACE: 37 bytes
 ;******************************************************************************
 ; Command and Status Constants
 ;******************************************************************************
@@ -110,5 +180,4 @@ PRU_TRIGGER_HOST_ENDAT3_EVT0    .set    18      ; (2+16) - Interrupt event
 ; ICSS_IEP_CMP_CFG_REG = 0x0070
 ; ICSS_IEP_CMP0_REG = 0x0078
 ; ICSS_IEP_CMP3_REG = 0x0090
-
 ;******************************************************************************

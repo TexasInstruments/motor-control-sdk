@@ -60,29 +60,40 @@ extern "C" {
 /*                           Macros & Typedefs                               */
 /* ========================================================================== */
 
-/* EnDAT3 Driver Error Codes */
+/* EnDAT3 Driver Return Codes */
+#define ENDAT3_SUCCESS               0
+#define ENDAT3_ERR_INVALID_HANDLE   -12
+#define ENDAT3_ERR_CHANNEL_CONFIG   -11
+#define ENDAT3_ERR_DELAY_CONFIG     -10
+#define ENDAT3_ERR_INVALID_CORE     -9
+#define ENDAT3_ERR_CLOCK_CONFIG     -8
+#define ENDAT3_ERR_SAMPLING_ERROR   -7
+#define ENDAT3_ERR_LPF_CRC_FAIL     -6
 #define ENDAT3_ERR_HPF_CRC_FAIL     -5
 #define ENDAT3_ERR_LPH_CRC_FAIL     -4
 #define ENDAT3_ERR_TIMEOUT          -3
 #define ENDAT3_ERR_RX_FAIL          -2
 #define ENDAT3_ERR_INVALID_PARAM    -1
 
+/* EnDAT3 Success Response Code (for protocol-level responses) */
+#define ENDAT3_SUCCESSFUL_RESPONSE   1
+
 /* Encoder busy/error status defines */
 #define ENCODER_IDLE 0x0
 #define ENCODER_BUSY 0x1
 #define ENCODER_ERROR 0x2
 
-/* Default clock configuration values */
-#define ENDAT3_DIV_FACTOR_NORMAL        11      /* Divide factor for normal clock (300/25=12) */
-#define ENDAT3_DIV_FACTOR_OVERSAMPLED   2       /* Divide factor for over sampled clock 300/(12.5*8)=3 */
-#define ENDAT3_PRU_CLOCK_TYPE           0x10    /* PRU clock type */
-#define ENDAT3_UART_CLOCK_TYPE          0x0     /* UART clock type */
-#define ENDAT3_OVERSAMPLE_RATE          7       /* Over sample rate 8 (actual = 7+1) */
+/* Reference frequency for delay calculations */
+#define REFERENCE_PRU_FREQ_HZ 1000000ULL        /* 1 MHz reference frequency (base for calculations) */
+
+/* TX Clock frequency defines for different baud rates */
+#define ENDAT3_TX_CLOCK_FREQ_12_5_MBPS  25000000ULL   /* 25 MHz TX clock for 12.5 Mbps mode */
+#define ENDAT3_TX_CLOCK_FREQ_25_MBPS    50000000ULL   /* 50 MHz TX clock for 25 Mbps mode */
 
 /* Start bit polarity configuration */
 #define ENDAT3_START_BIT_POL_0          0x0     /* Start bit polarity 0 */
 #define ENDAT3_START_BIT_POL_1          0x8     /* Start bit polarity 1 */
-#define DEFAULT_SB_POLARITY             ENDAT3_START_BIT_POL_0
+#define ENDAT3_SB_POLARITY              ENDAT3_START_BIT_POL_0
 
 /* Register configuration values */
 #define ENDAT3_ENABLE_BIT               (0x1 << 26)     /* EnDat3 enable bit */
@@ -93,7 +104,7 @@ extern "C" {
 #define LPF_DATA_SIZE                   6       /* Low Priority Frame data size in bytes */
 #define MAX_LPF_COUNT                   8       /* Maximum number of LPF frames */
 #define TEMP_BUFFER_SIZE                16      /* Temporary buffer size */
-#define LUT_SIZE                        80      /* Lookup table size */
+#define LUT_SIZE                        64      /* Lookup table size (256 bytes / 4 bytes per uint32_t) */
 #define RX_BUFFER_SIZE                  64      /* Receive buffer size */
 #define TX_BUFFER_SIZE                  24      /* Transmit buffer size */
 #define BG_DATA_SIZE                    6       /* Background data array size */
@@ -105,7 +116,6 @@ extern "C" {
 
 /* Clear command flag bits */
 #define ENDAT3_CLEAR_F                  0x01    /**< Clear F (error) flag */
-#define endat3_CLEAR_F                  0x01    /**< Clear F (error) flag - alternate naming */
 #define ENDAT3_CLEAR_W                  0x02    /**< Clear W (warning) flag */
 #define ENDAT3_CLEAR_REF                0x04    /**< Clear reference flag */
 
@@ -116,6 +126,16 @@ extern "C" {
 /* Bus initialization command types */
 #define ENDAT3_BUSINIT_RESET_ADDR       0x01    /**< Bus init with address reset */
 #define ENDAT3_BUSINIT_KEEP_ADDR        0x00    /**< Bus init keeping addresses */
+
+/* Protection/Authentication modes */
+#define ENDAT3_PROTECT_QUERY            0x01    /**< Query current access levels */
+#define ENDAT3_PROTECT_SET_READ         0x02    /**< Set access level for read operations */
+#define ENDAT3_PROTECT_SET_WRITE        0x03    /**< Set access level for write operations */
+
+/* Password bit masks for splitting 32-bit password */
+#define ENDAT3_PASSWORD_HIGH_MASK       0xFFFF0000  /**< Upper 16 bits mask */
+#define ENDAT3_PASSWORD_LOW_MASK        0x0000FFFF  /**< Lower 16 bits mask */
+#define ENDAT3_PASSWORD_HIGH_SHIFT      16          /**< Shift for upper 16 bits */
 
 /* Configuration computation macros */
 #define ENDAT3_COMPUTE_TX_CFG(clock_type, load_share, div_factor) \
@@ -130,36 +150,41 @@ extern "C" {
 #define ENDAT3_PRE_LENGTH     25  /**< Minimum preamble length in halfbits */
 #define ENDAT3_POST_LENGTH    4   /**< Postamble length in halfbits */
 #define ENDAT3_MAX_CHANNELS   3   /**< Maximum number of supported channels per PRU Slice */
-#define ENDAT3_RX_OVERSAMPLING_RATE 8 /**< Oversampling rate for RX */
 /** \} */
 
 /**
- * \brief Clock configuration structure
- * 
- * Defines the configuration parameters for the EnDAT3 clock settings.
+ * \name Channel Enable Mask Bits
+ * \{
  */
-typedef struct {
-    uint32_t rx_clk_source;   /**< RX clock source */
-    uint32_t tx_clk_source;   /**< TX clock source */
-    uint32_t tx_div;          /**< TX clock divider */
-    uint32_t rx_div;          /**< RX clock divider */
-    uint32_t rx_os_rate;      /**< RX oversampling rate */
-} endat3_clk_cfg_t;
+#define ENDAT3_CH0_MASK       0x01  /**< Channel 0 enable mask bit */
+#define ENDAT3_CH1_MASK       0x02  /**< Channel 1 enable mask bit */
+#define ENDAT3_CH2_MASK       0x04  /**< Channel 2 enable mask bit */
+#define ENDAT3_ALL_CH_MASK    0x07  /**< All channels enable mask */
+/** \} */
 
 /**
  * \brief EnDat3 Clock Configuration Structure
- * 
- * This structure contains clock configuration parameters
- * for EnDat3 timing setup.
+ *
+ * This structure contains clock configuration parameters for EnDat3 timing setup.
+ * Applications must fill this structure based on the PRU core frequency.
+ *
+ * Example for 300MHz PRU clock:
+ *   - div_factor_normal = 11 (actual divider = 12, resulting in 300/12 = 25 MHz TX clock)
+ *   - div_factor_oversampled = 2 (actual divider = 3, resulting in 300/(12.5*8) = 3 MHz)
+ *   - pru_clock_type = 0x10
+ *   - uart_clock_type = 0x0
+ *   - clock_type = 0x10 (PRU clock)
+ *   - oversample_rate = 7 (actual rate = 8)
+ *   - sb_polarity = 0 (use ENDAT3_START_BIT_POL_0 or ENDAT3_START_BIT_POL_1)
  */
 typedef struct {
-    uint32_t div_factor_normal;         /**< Divide factor for normal clock (300/25=12) */
-    uint32_t div_factor_oversampled;    /**< Divide factor for over sampled clock 300/(12.5*8)=3 */
-    uint32_t pru_clock_type;            /**< PRU clock type configuration */
-    uint32_t uart_clock_type;           /**< UART clock type configuration */
-    uint32_t clock_type;                /**< Selected clock type */
-    uint32_t oversample_rate;           /**< Over sample rate (actual rate = value + 1) */
-    uint32_t sb_polarity; /**< Start bit polarity (0 or 1) */
+    uint32_t div_factor_normal;         /**< Divide factor for normal TX clock (actual divider = value + 1) */
+    uint32_t div_factor_oversampled;    /**< Divide factor for oversampled RX clock (actual divider = value + 1) */
+    uint32_t pru_clock_type;            /**< PRU clock type configuration (typically 0x10) */
+    uint32_t uart_clock_type;           /**< UART clock type configuration (typically 0x0) */
+    uint32_t clock_type;                /**< Selected clock type (use pru_clock_type or uart_clock_type) */
+    uint32_t oversample_rate;           /**< Oversample rate (actual rate = value + 1, typically 7 for 8x oversampling) */
+    uint32_t sb_polarity;               /**< Start bit polarity (use ENDAT3_START_BIT_POL_0 or ENDAT3_START_BIT_POL_1) */
 } endat3_ClockConfig_t;
 /**
  * \brief EnDat3 Register Configuration Structure
@@ -225,10 +250,9 @@ typedef struct {
  * 
  * Main structure for storing communication buffers and status information.
  */
-typedef struct 
-{
+typedef struct {
     /* Communication buffers */
-    uint32_t LUT[LUT_SIZE];                 /**< Lookup table */
+    uint32_t lut[LUT_SIZE];                 /**< Lookup table */
     uint8_t rx_buffer[RX_BUFFER_SIZE];            /**< Receive buffer */
     
     /* Frame structures */
@@ -271,6 +295,9 @@ typedef struct
 
     /* Trigger Control */
     uint8_t start_trigger;            /**< Start trigger: released by R5F core based on operating mode */
+
+    /* Channel Enable Mask */
+    uint8_t channel_enable_mask;      /**< Channel enable mask: bit 0=CH0, bit 1=CH1, bit 2=CH2 */
 } endat3_Interface;
 
 /**
@@ -291,15 +318,15 @@ typedef enum {
  * Operation codes for background processing operations.
  */
 typedef enum {
-    endat3_BGREQ_NOP          = 0x01,  /**< No operation */
-    endat3_BGREQ_READ         = 0x02,  /**< Read from encoder memory */
-    endat3_BGREQ_WRITE        = 0x03,  /**< Write to encoder memory */
-    endat3_BGREQ_RECONFIGURE  = 0x04,  /**< Reconfigure parameters */
-    endat3_BGREQ_AUTH         = 0x80,  /**< Authentication */
-    endat3_BGREQ_PROTECT      = 0x81,  /**< Set protection */
-    endat3_BGREQ_RESERVED     = 0x82,  /**< Reserved for future use */
-    endat3_BGREQ_SETPASS      = 0x83,  /**< Set password */
-    endat3_BGREQ_LOCATE       = 0x84   /**< Locate function */
+    ENDAT3_BGREQ_NOP          = 0x01,  /**< No operation */
+    ENDAT3_BGREQ_READ         = 0x02,  /**< Read from encoder memory */
+    ENDAT3_BGREQ_WRITE        = 0x03,  /**< Write to encoder memory */
+    ENDAT3_BGREQ_RECONFIGURE  = 0x04,  /**< Reconfigure parameters */
+    ENDAT3_BGREQ_AUTH         = 0x80,  /**< Authentication */
+    ENDAT3_BGREQ_PROTECT      = 0x81,  /**< Set protection */
+    ENDAT3_BGREQ_RESERVED     = 0x82,  /**< Reserved for future use */
+    ENDAT3_BGREQ_SETPASS      = 0x83,  /**< Set password */
+    ENDAT3_BGREQ_LOCATE       = 0x84   /**< Locate function */
 } endat3_BgReqOpCode_t;
 
 /**
@@ -308,26 +335,26 @@ typedef enum {
  * Operation codes for foreground request commands.
  */
 typedef enum {
-    endat3_REQ_DATA0      = 0x00,  /**< Activate LPF send list 0 */
-    endat3_REQ_DATA1      = 0x01,  /**< Activate LPF send list 1 */
-    endat3_REQ_DATA2      = 0x02,  /**< Activate LPF send list 2 */
-    endat3_REQ_DATA3      = 0x03,  /**< Activate LPF send list 3 */
-    endat3_REQ_DATA4      = 0x04,  /**< Activate LPF send list 4 */
-    endat3_REQ_DATA5      = 0x05,  /**< Activate LPF send list 5 */
-    endat3_REQ_DATA6      = 0x06,  /**< Activate LPF send list 6 */
-    endat3_REQ_DATA7      = 0x07,  /**< Activate LPF send list 7 */
-    endat3_REQ_DATA       = 0x08,  /**< Data with BGD */
-    endat3_REQ_DATANOP    = 0x09,  /**< Data without BGD */
-    endat3_REQ_RESET      = 0x0B,  /**< Encoder reset */
-    endat3_REQ_CLEAR      = 0x0C,  /**< Resetting of states */
-    endat3_REQ_ECHO       = 0x0E,  /**< Echo for measuring propagation time */
-    endat3_REQ_RATE       = 0x10,  /**< Set data transfer rate */
-    endat3_REQ_HELLO      = 0x22,  /**< Switch to EnDat 3 mode */
-    endat3_REQ_RESERVED   = 0x40,  /**< Reserved */
-    endat3_REQ_BUSBC      = 0x80,  /**< Bus command for broadcast */
-    endat3_REQ_BUSP2P     = 0x81,  /**< Bus command for point-to-point communication */
-    endat3_REQ_BUSINIT    = 0x82,  /**< Initialization of a bus setup */
-    endat3_REQ_FORCE      = 0x90   /**< Forced dynamic sampling */
+    ENDAT3_REQ_DATA0      = 0x00,  /**< Activate LPF send list 0 */
+    ENDAT3_REQ_DATA1      = 0x01,  /**< Activate LPF send list 1 */
+    ENDAT3_REQ_DATA2      = 0x02,  /**< Activate LPF send list 2 */
+    ENDAT3_REQ_DATA3      = 0x03,  /**< Activate LPF send list 3 */
+    ENDAT3_REQ_DATA4      = 0x04,  /**< Activate LPF send list 4 */
+    ENDAT3_REQ_DATA5      = 0x05,  /**< Activate LPF send list 5 */
+    ENDAT3_REQ_DATA6      = 0x06,  /**< Activate LPF send list 6 */
+    ENDAT3_REQ_DATA7      = 0x07,  /**< Activate LPF send list 7 */
+    ENDAT3_REQ_DATA       = 0x08,  /**< Data with BGD */
+    ENDAT3_REQ_DATANOP    = 0x09,  /**< Data without BGD */
+    ENDAT3_REQ_RESET      = 0x0B,  /**< Encoder reset */
+    ENDAT3_REQ_CLEAR      = 0x0C,  /**< Resetting of states */
+    ENDAT3_REQ_ECHO       = 0x0E,  /**< Echo for measuring propagation time */
+    ENDAT3_REQ_RATE       = 0x10,  /**< Set data transfer rate */
+    ENDAT3_REQ_HELLO      = 0x22,  /**< Switch to EnDat 3 mode */
+    ENDAT3_REQ_RESERVED   = 0x40,  /**< Reserved */
+    ENDAT3_REQ_BUSBC      = 0x80,  /**< Bus command for broadcast */
+    ENDAT3_REQ_BUSP2P     = 0x81,  /**< Bus command for point-to-point communication */
+    ENDAT3_REQ_BUSINIT    = 0x82,  /**< Initialization of a bus setup */
+    ENDAT3_REQ_FORCE      = 0x90   /**< Forced dynamic sampling */
 } endat3_ReqCode_t;
 
 /**
@@ -363,11 +390,11 @@ typedef enum {
  * Individual bits in the HPF status byte.
  */
 typedef enum {
-    endat3_HPF_STATUS_F       = 0x01,  /**< Bit 0: Collective error bit */
-    endat3_HPF_STATUS_W       = 0x02,  /**< Bit 1: Collective warning bit */
-    endat3_HPF_STATUS_HPFV    = 0x04,  /**< Bit 2: Validity of HPF data */
-    endat3_HPF_STATUS_RM      = 0x08,  /**< Bit 3: Availability of absolute value */
-    endat3_HPF_STATUS_ERR_REQ = 0x10   /**< Bit 4: Request code not supported */
+    ENDAT3_HPF_STATUS_F       = 0x01,  /**< Bit 0: Collective error bit */
+    ENDAT3_HPF_STATUS_W       = 0x02,  /**< Bit 1: Collective warning bit */
+    ENDAT3_HPF_STATUS_HPFV    = 0x04,  /**< Bit 2: Validity of HPF data */
+    ENDAT3_HPF_STATUS_RM      = 0x08,  /**< Bit 3: Availability of absolute value */
+    ENDAT3_HPF_STATUS_ERR_REQ = 0x10   /**< Bit 4: Request code not supported */
 } endat3_HpfStatusBits_t;
 
 /**
@@ -376,14 +403,14 @@ typedef enum {
  * Status flags for the Low Priority Header (LPH).
  */
 typedef enum {
-    endat3_LPH_STATUS_IDLE        = 0x0,  /**< Idle state, no background operation in progress */
-    endat3_LPH_STATUS_RX_START    = 0x1,  /**< First frame of a multi-frame background response */
-    endat3_LPH_STATUS_RX_LAST     = 0x2,  /**< Last frame of a multi-frame background response */
-    endat3_LPH_STATUS_BUSY        = 0x3,  /**< Background operation in progress */
-    endat3_LPH_BG_ERR_EXEC        = 0x4,  /**< Error during background operation execution */
-    endat3_LPH_BG_BUSY            = 0x8,  /**< Background processor is busy */
-    endat3_LPH_BG_RTX_ERROR       = 0x10, /**< Background transmit/receive error */
-    endat3_LPH_STATE_MASK         = 0x3   /**< Mask for extracting LPH state (bits 0-1) */
+    ENDAT3_LPH_STATUS_IDLE        = 0x0,  /**< Idle state, no background operation in progress */
+    ENDAT3_LPH_STATUS_RX_START    = 0x1,  /**< First frame of a multi-frame background response */
+    ENDAT3_LPH_STATUS_RX_LAST     = 0x2,  /**< Last frame of a multi-frame background response */
+    ENDAT3_LPH_STATUS_BUSY        = 0x3,  /**< Background operation in progress */
+    ENDAT3_LPH_BG_ERR_EXEC        = 0x4,  /**< Error during background operation execution */
+    ENDAT3_LPH_BG_BUSY            = 0x8,  /**< Background processor is busy */
+    ENDAT3_LPH_BG_RTX_ERROR       = 0x10, /**< Background transmit/receive error */
+    ENDAT3_LPH_STATE_MASK         = 0x3   /**< Mask for extracting LPH state (bits 0-1) */
 } endat3_LphStatus_t;
 
 /**
@@ -404,15 +431,16 @@ typedef struct endat3_priv {
     uint64_t pru_clock; /**<PRU CORE Clock*/
     uint8_t rx_clock_source; /*3 channel Peripheral RX clock source*/
     uint8_t tx_clock_source; /*3 channel Peripheral TX clock source*/
+    int32_t last_error;            /**< Last error code for this handle */
 } endat3_priv_t;
 /**
- * \brief Extended clock configuration structure for legacy compatibility
+ * \brief Clock configuration structure
  */
 typedef struct {
     uint32_t rx_div;        /**< RX clock divider */
     uint32_t tx_div;        /**< TX clock divider */
     uint32_t rx_div_attr;   /**< RX divider attributes */
-} endat_clk_cfg_ext_t;
+} endat3_clk_cfg_t;
 
 /**
  * \brief EnDAT3 Driver Handle
@@ -428,30 +456,30 @@ typedef struct endat3_priv *endat3_Handle;
  */
 typedef enum {
     /* General errors */
-    endat3_ERR_UNKNOWN                 = 0x0000,  /**< The cause of the error is unknown */
+    ENDAT3_ERR_UNKNOWN                 = 0x0000,  /**< The cause of the error is unknown */
 
     /* Foreground errors (0x0001-0x0FFF) */
-    endat3_FGERR_RECONFIGURE           = 0x0001,  /**< Device is in configuration as a result of RECONFIGURE */
-    endat3_FGERR_ECHO                  = 0x0002,  /**< An ECHO is being responded to */
-    endat3_FGERR_INVALID_FID           = 0x0100,  /**< An invalid FID was configured */
-    endat3_FGERR_DUPLICATE_FID         = 0x0101,  /**< FID was selected more than once during the cycle */
-    endat3_FGERR_INVALID_DATA          = 0x0200,  /**< LPF is supported, but invalid data were delivered internally */
-    endat3_FGERR_INT_TRM               = 0x0201,  /**< LPF is supported but currently unavailable */
-    endat3_FGERR_NO_SENSOR_DATA        = 0x0300,  /**< Sensor box data not available */
+    ENDAT3_FGERR_RECONFIGURE           = 0x0001,  /**< Device is in configuration as a result of RECONFIGURE */
+    ENDAT3_FGERR_ECHO                  = 0x0002,  /**< An ECHO is being responded to */
+    ENDAT3_FGERR_INVALID_FID           = 0x0100,  /**< An invalid FID was configured */
+    ENDAT3_FGERR_DUPLICATE_FID         = 0x0101,  /**< FID was selected more than once during the cycle */
+    ENDAT3_FGERR_INVALID_DATA          = 0x0200,  /**< LPF is supported, but invalid data were delivered internally */
+    ENDAT3_FGERR_INT_TRM               = 0x0201,  /**< LPF is supported but currently unavailable */
+    ENDAT3_FGERR_NO_SENSOR_DATA        = 0x0300,  /**< Sensor box data not available */
 
     /* Background errors - Usage errors (0x1100-0x11FF) */
-    endat3_BGERR_USAGE                 = 0x1100,  /**< Generic operator error */
-    endat3_BGERR_USAGE_OPCODE          = 0x1101,  /**< Invalid or unsupported command code */
-    endat3_BGERR_USAGE_ARGUMENTS       = 0x1102,  /**< Invalid arguments */
-    endat3_BGERR_USAGE_SEQUENCE        = 0x1103,  /**< Invalid command sequence */
-    endat3_BGERR_USAGE_ACCESS_DENIED   = 0x1104,  /**< Access denied; insufficient user level */
-    endat3_BGERR_USAGE_MEM_ADDRESS     = 0x1105,  /**< Access to invalid address */
-    endat3_BGERR_USAGE_NO_BG           = 0x1106,  /**< Encoder does not support background processing */
+    ENDAT3_BGERR_USAGE                 = 0x1100,  /**< Generic operator error */
+    ENDAT3_BGERR_USAGE_OPCODE          = 0x1101,  /**< Invalid or unsupported command code */
+    ENDAT3_BGERR_USAGE_ARGUMENTS       = 0x1102,  /**< Invalid arguments */
+    ENDAT3_BGERR_USAGE_SEQUENCE        = 0x1103,  /**< Invalid command sequence */
+    ENDAT3_BGERR_USAGE_ACCESS_DENIED   = 0x1104,  /**< Access denied; insufficient user level */
+    ENDAT3_BGERR_USAGE_MEM_ADDRESS     = 0x1105,  /**< Access to invalid address */
+    ENDAT3_BGERR_USAGE_NO_BG           = 0x1106,  /**< Encoder does not support background processing */
 
     /* Background errors - Internal errors (0x1200-0x12FF) */
-    endat3_BGERR_INTERNAL              = 0x1200,  /**< Generic exception error in the encoder */
-    endat3_BGERR_INTERNAL_MEMORY       = 0x1201,  /**< Exception error when accessing memory */
-    endat3_BGERR_INTERNAL_CONFIG       = 0x1202   /**< Exception error: configuration invalid */
+    ENDAT3_BGERR_INTERNAL              = 0x1200,  /**< Generic exception error in the encoder */
+    ENDAT3_BGERR_INTERNAL_MEMORY       = 0x1201,  /**< Exception error when accessing memory */
+    ENDAT3_BGERR_INTERNAL_CONFIG       = 0x1202   /**< Exception error: configuration invalid */
 } endat3_ErrorCode_t;
 
 /* ========================================================================== */
@@ -459,23 +487,50 @@ typedef enum {
 /* ========================================================================== */
 
 /**
+ * \brief Get last error code for a specific EnDAT3 handle
+ *
+ * Returns the last error code set by any operation on the specified handle.
+ * Each handle maintains its own error code, allowing proper error tracking
+ * when multiple EnDAT3 channels are in use simultaneously.
+ *
+ * \param handle EnDAT3 handle
+ * \return Error code (negative value) or 0 if no error
+ *         - ENDAT3_ERR_CLOCK_CONFIG (-8): Clock configuration failed
+ *         - ENDAT3_ERR_INVALID_CORE (-9): Invalid PRU core specified
+ *         - ENDAT3_ERR_DELAY_CONFIG (-10): Delay cycle configuration failed
+ *         - ENDAT3_ERR_CHANNEL_CONFIG (-11): Channel mask configuration failed
+ *         - ENDAT3_ERR_INVALID_HANDLE (-1): Invalid handle (handle is NULL)
+ */
+int32_t endat3_getLastError(endat3_Handle handle);
+
+/**
  * \ brief Open EnDAT3 handle for the specified core
- * 
+ *
  * This function initializes and returns a handle to the EnDAT3 interface
  * associated with the specified PRU-ICSS core. It supports both load-share
- * and non-load-share modes.
+ * and non-load-share modes. This function performs initialization including
+ * clock configuration, memory image generation, delay cycle calculation,
+ * EnDAT mode configuration, and TX/RX clock setup.
  *
  * \ param icssHandle PRUICSS_Handle for the ICSS instance
  * \ param icssCore Core to map in ICSSG instance
- * \ param pruMode 0 for load share mode disabled, 1 for load share mode enabled
+ * \ param pruMode 0 for non-load-share mode, 1 for load-share mode
+ * \ param pru_freq_hz PRU core frequency in Hz (e.g., 300000000 for 300MHz)
+ * \ param channel_mask Channel enable mask (bit 0=CH0, bit 1=CH1, bit 2=CH2)
+ * \ param baud_rate Baud rate selection: 0 = 12.5 Mbps, 1 = 25 Mbps
  *
- * \ return endat3_Handle on success, NULL on error
+ * \ return Valid endat3_Handle on success, NULL on error
+ *
+ * \ note Error conditions that return NULL:
+ *       - Clock configuration initialization fails
+ *       - Invalid icssCore specified for the given pruMode
+ *       - Application should check for NULL and report appropriate error
  */
-endat3_Handle endat3_open(PRUICSS_Handle icssHandle, uint32_t icssCore, uint8_t pruMode);
+endat3_Handle endat3_open(PRUICSS_Handle icssHandle, uint32_t icssCore, uint8_t pruMode, uint64_t pru_freq_hz, uint8_t channel_mask, uint32_t baud_rate);
 
 /**
  * \ brief Send EnDAT3 command
- * 
+ *
  * Prepares and sends an EnDAT3 command with the specified command code
  * and number of frames. Validates input parameters and checks for buffer
  * overflow conditions before transmission.
@@ -484,202 +539,33 @@ endat3_Handle endat3_open(PRUICSS_Handle icssHandle, uint32_t icssCore, uint8_t 
  * \ param cmd Command code
  * \ param frames Number of frames to transmit
  *
- * \ return SystemP_SUCCESS on success, SystemP_FAILURE on error
- *         (invalid handle, buffer overflow, or invalid data array)
+ * \ return SystemP_SUCCESS (0) on success
+ *         SystemP_FAILURE (-1) on error: invalid handle, NULL pointers, buffer overflow, or invalid parameters
+ *         **CRITICAL**: Always check return value before calling endat3_setBusy() or waiting for response
  */
 int32_t endat3_send_command(endat3_Handle priv, uint8_t cmd, uint8_t frames);
 
 /**
  * \ brief Receive EnDAT3 response
- * 
+ *
  * Receives and processes EnDAT3 response frames, verifying CRC integrity
  * and parsing the data into appropriate structures.
  *
  * \ param priv Private structure pointer
  *
- * \ return 0 on success, negative on error, 1 for special status
+ * \ return 1 (ENDAT3_SUCCESSFUL_RESPONSE) on successful reception with valid CRC
+ *         0 (SystemP_SUCCESS) on completion
+ *         ENDAT3_ERR_SAMPLING_ERROR (-7) on encoder sampling/timing error (busy==2)
+ *         ENDAT3_ERR_LPF_CRC_FAIL (-6) on LPF CRC mismatch
+ *         ENDAT3_ERR_HPF_CRC_FAIL (-5) on HPF CRC mismatch
+ *         ENDAT3_ERR_LPH_CRC_FAIL (-4) on LPH CRC mismatch
+ *         ENDAT3_ERR_TIMEOUT (-3) on receive timeout
+ *         ENDAT3_ERR_RX_FAIL (-2) on general reception failure
+ *         **IMPORTANT**: Check return value to ensure valid data before reading HPF/LPH/LPF
  */
 int32_t endat3_receive_response(endat3_Handle priv);
 
-/**
- * \ brief Calculate CRC for EnDAT3 frame
- * 
- * Calculates the CRC-8 checksum for EnDAT3 frames using the
- * standard EnDAT3 CRC algorithm.
- *
- * \ param data Data buffer
- * \ param len Data length
- *
- * \ return Calculated CRC value
- */
-uint8_t endat3_calculate_crc(uint8_t *data, uint32_t len);
 
-/**
- * \ brief Configure EnDAT3 for host trigger mode
- * 
- * Sets up the EnDAT3 interface for host-triggered operation,
- * where communication is initiated by the host processor.
- *
- * \ param priv Private structure pointer
- */
-void endat3_config_host_trigger(endat3_Handle priv);
-
-/**
- * \ brief Configure EnDAT3 for periodic trigger mode
- * 
- * Sets up the EnDAT3 interface for periodic triggering,
- * where communication occurs at regular intervals.
- *
- * \ param priv Private structure pointer
- */
-void endat3_config_periodic_trigger(endat3_Handle priv);
-
-/**
- * \ brief Generates memory image
- * 
- * Creates a memory image for the PRU firmware based on the
- * current EnDAT3 configuration.
- *
- * \ param endat3Handle EnDAT3 handle
-  * \ param icssgHandle PRUICSS handle
- */
-void endat3_generate_memory_image(endat3_Handle endat3Handle, PRUICSS_Handle icssgHandle);
-
-/**
- * \ brief Process endat3 frame with variable length
- * 
- * Verifies the integrity of an endat3 frame by calculating its CRC
- * and comparing it with the received CRC byte. The CRC byte is assumed
- * to be the last byte in the buffer.
- *
- * \ param priv endat3 handle for the interface
- * \ param buffer Data buffer containing the complete frame including CRC byte
- * \ param length Total length of the buffer including CRC byte
- * \ return uint8_t 1 if the calculated CRC matches the received CRC (frame is valid),
- *                 0 if CRC check failed or buffer is too short
- */
-uint8_t endat3_process_frame(endat3_Handle priv, uint8_t *buffer, uint32_t length);
-
-
-/**
- * \brief Initialize EnDat3 configuration with default values
- *
- * This function initializes the EnDat3 configuration structure with default
- * values for all clock and register parameters. The load share mode can be
- * specified as a parameter.
- *
- * \param config         [OUT] Pointer to EnDat3 configuration structure to initialize
- * \param load_share_mode [IN]  Load share mode flag (0 or 1)
- *
- * \return void
- *
- * \pre config must point to a valid endat3_Config_t structure
- * \post config structure is initialized with default values
- */
-void endat3_initConfig(endat3_Config_t *config, uint32_t load_share_mode);
-
-/**
- * \brief Configure EnDat3 PRU registers using configuration structure
- *
- * This function configures the necessary PRU-ICSS registers for EnDat3 operation
- * using values from the provided configuration structure. It writes to the
- * GPCFG1, EDPRU1TXCFGREGISTER, and EDPRU1RXCFGREGISTER registers.
- *
- * \param pru_cfg_base [IN] Pointer to PRU configuration register base address
- * \param config       [IN] Pointer to EnDat3 configuration structure
- * \param pruSlice
- * \return void
- *
- * \pre pru_cfg_base must point to valid PRU configuration register space
- * \pre config must point to a valid, initialized endat3_Config_t structure
- * \post PRU registers are configured for EnDat3 operation
- */
-void endat3_configurePruRegisters(void *pru_cfg_base, const endat3_Config_t *config, uint32_t pruSlice);
-
-/**
- * \brief Create EnDat3 configuration and configure PRU registers (convenience function)
- *
- * This is a convenience function that initializes the configuration structure
- * with default values and configures the PRU registers in one call. It combines
- * the functionality of endat3_initConfig() and endat3_configurePruRegisters().
- *
- * \param pru_cfg_base    [IN] Pointer to PRU configuration register base address
- * \param load_share_mode [IN] Load share mode flag (0 or 1)
- * \param pruSlice
- * \return void
- *
- * \pre pru_cfg_base must point to valid PRU configuration register space
- * \post PRU registers are configured for EnDat3 operation with default values
- */
-void endat3_configureWithDefaults(void *pru_cfg_base, uint32_t load_share_mode,uint32_t pruSlice);
-
-/**
- * \brief Calculate and set frequency-independent delay cycles in firmware interface
- *
- * This function calculates delay values in PRU cycles based on the actual PRU
- * core frequency and stores them in the endat3_Interface structure. The firmware
- * loads these values at runtime, making the delays frequency-independent.
- *
- * \param handle         [IN] EnDAT3 handle containing interface pointer
- * \param pru_freq_hz    [IN] PRU core frequency in Hz (e.g., 300000000 for 300MHz)
- *
- * \return SystemP_SUCCESS on success, SystemP_FAILURE if handle is invalid
- *
- * \note This function should be called after endat3_open() and before starting communication.
- *       The delay values are calculated based on protocol timing requirements:
- *       - delay_tx_start_1: Short delay after clock reset (~65us)
- *       - delay_tx_start_2: Long delay after HELLO transmission (~524ms)
- *       - delay_tx_start_3: Delay between frame transmissions (~131ms)
- *       - delay_sampling: Sampling delay before RX enable (~37 cycles minimum)
- *       - delay_10ms: Special timing delay for EEPROM writes (10ms)
- *
- * \code
- * endat3_Handle handle = endat3_open(pruicss_handle, PRUICSS_PRU0, 1);
- * endat3_setDelayCycles(handle, 300000000);  // 300MHz PRU
- * \endcode
- */
-int32_t endat3_setDelayCycles(endat3_Handle handle, uint64_t pru_freq_hz);
-
-/**
- * \ brief Configure ENDAT mode for the specified PRU-ICSS slice
- * 
- * This function configures the ENDAT communication mode by writing to the
- * appropriate PRU-ICSS general purpose configuration register based on the
- * specified slice.
- * 
- * \ param priv         Handle to the endat3 instance containing PRU-ICSS configuration
- * \ param pruicss_slicex  PRU-ICSS slice selector:
- *                       - 0: Configure PRU slice 0 (GPCFG0_REG)
- *                       - 1: Configure PRU slice 1 (GPCFG1_REG)
- * 
- * \ return None
- * 
- * \ note This function writes value 4 to the upper byte (offset +3) of the
- *       respective GPCFG register to enable ENDAT mode.
- */
-/**
- * \ brief Configure EnDAT mode in PRU configuration registers
- *
- * Configures the PRU-ICSS configuration registers to enable EnDAT mode
- * operation for the specified PRU slice.
- *
- * \ param priv endat3 handle
- * \ param pruicss_slicex PRU slice selection (0 or 1)
- * \ return void
- */
-void endat3_config_endat_mode(endat3_Handle priv, uint8_t pruicss_slicex);
-
-/**
- * \ brief Enable load share mode for EnDAT3
- *
- * Enables load share mode in the PRU-ICSS configuration, allowing multiple
- * PRU cores to share the EnDAT3 communication interface.
- *
- * \ param pruCfg Pointer to PRU configuration register base address
- * \ param pruSlice PRU slice selector (0 or 1)
- * \ return void
- */
-void endat3_enable_load_share_mode(void *pruCfg, uint32_t pruSlice);
 
 /**
  * \ brief Get error description string
@@ -745,21 +631,24 @@ void endat3_handle_background_command_request(endat3_Handle endat3Handle, int in
 
 /**
  * \ brief Get HPF status byte
- * 
+ *
  * Retrieves the status byte from the High Priority Frame, which contains
  * critical status flags including F, W, HPFV, RM, and ERR_REQ bits.
  *
  * \ param handle EnDAT3 handle
- * \ return HPF status byte, or 0 if handle is NULL
- * 
+ * \ param status Pointer to store HPF status byte
+ * \ return SystemP_SUCCESS on success, SystemP_FAILURE if handle or status is NULL
+ *
  * \ code
- * uint8_t status = endat3_getHpfStatus(handle);
- * if (status & endat3_HPF_STATUS_F) {
- *     // Handle error condition
+ * uint8_t status;
+ * if (endat3_getHpfStatus(handle, &status) == SystemP_SUCCESS) {
+ *     if (status & endat3_HPF_STATUS_F) {
+ *         // Handle error condition
+ *     }
  * }
  * \ endcode
  */
-uint8_t endat3_getHpfStatus(endat3_Handle handle);
+int32_t endat3_getHpfStatus(endat3_Handle handle, uint8_t *status);
 
 /**
  * \ brief Get HPF data array
@@ -783,70 +672,74 @@ int32_t endat3_getHpfData(endat3_Handle handle, uint8_t *data);
 
 /**
  * \ brief Get HPF CRC value
- * 
+ *
  * Retrieves the CRC checksum from the High Priority Frame.
  *
  * \ param handle EnDAT3 handle
- * \ return HPF CRC value, or 0 if handle is NULL
+ * \ param crc Pointer to store HPF CRC value
+ * \ return SystemP_SUCCESS on success, SystemP_FAILURE if handle or crc is NULL
  */
-uint8_t endat3_getHpfCrc(endat3_Handle handle);
+int32_t endat3_getHpfCrc(endat3_Handle handle, uint8_t *crc);
 
 /**
  * \ brief Get HPF data as 64-bit value
- * 
+ *
  * Retrieves the HPF data payload as a single 64-bit unsigned integer.
  * Useful for position data extraction. Data is packed in little-endian format.
  *
  * \ param handle EnDAT3 handle
- * \ return HPF data as uint64_t, or 0 if handle is NULL
- * 
+ * \ param data Pointer to store HPF data as uint64_t
+ * \ return SystemP_SUCCESS on success, SystemP_FAILURE if handle or data is NULL
+ *
  * \ code
- * uint64_t position = endat3_getHpfDataAsU64(handle);
- * uint32_t single_turn = position & 0x1FFF;  // Extract 13-bit single turn
+ * uint64_t position;
+ * if (endat3_getHpfDataAsU64(handle, &position) == SystemP_SUCCESS) {
+ *     uint32_t single_turn = position & 0x1FFF;  // Extract 13-bit single turn
+ * }
  * \ endcode
  */
-uint64_t endat3_getHpfDataAsU64(endat3_Handle handle);
+int32_t endat3_getHpfDataAsU64(endat3_Handle handle, uint64_t *data);
 
 /**
  * \ brief Check if HPF data is valid
- * 
+ *
  * Checks the HPFV bit in the HPF status to determine if the data is valid.
  *
  * \ param handle EnDAT3 handle
- * \ return  1 if HPF data is valid (HPFV bit set), 0 otherwise
+ * \ return 1 if HPF data is valid (HPFV bit set), 0 otherwise
  */
-uint8_t endat3_isHpfDataValid(endat3_Handle handle);
+int32_t endat3_isHpfDataValid(endat3_Handle handle);
 
 /**
  * \ brief Check if HPF has error flag set
- * 
+ *
  * Checks the F bit in the HPF status to determine if an error is present.
  *
  * \ param handle EnDAT3 handle
- * \ return  1 if error flag is set, 0 otherwise
+ * \ return 1 if error flag is set, 0 otherwise
  */
-uint8_t endat3_hasHpfError(endat3_Handle handle);
+int32_t endat3_hasHpfError(endat3_Handle handle);
 
 /**
  * \ brief Check if HPF has warning flag set
- * 
+ *
  * Checks the W bit in the HPF status to determine if a warning is present.
  *
  * \ param handle EnDAT3 handle
- * \ return  1 if warning flag is set, 0 otherwise
+ * \ return 1 if warning flag is set, 0 otherwise
  */
-uint8_t endat3_hasHpfWarning(endat3_Handle handle);
+int32_t endat3_hasHpfWarning(endat3_Handle handle);
 
 /**
  * \ brief Check if absolute value is available
- * 
+ *
  * Checks the RM bit in the HPF status to determine if absolute position
  * value is available.
  *
  * \ param handle EnDAT3 handle
- * \ return  1 if absolute value is available (RM bit set), 0 otherwise
+ * \ return 1 if absolute value is available (RM bit set), 0 otherwise
  */
-uint8_t endat3_hasAbsoluteValue(endat3_Handle handle);
+int32_t endat3_hasAbsoluteValue(endat3_Handle handle);
 
 /* ========================================================================== */
 /*                    LPH (Low Priority Header) Access APIs                   */
@@ -854,43 +747,46 @@ uint8_t endat3_hasAbsoluteValue(endat3_Handle handle);
 
 /**
  * \ brief Get LPH status byte
- * 
+ *
  * Retrieves the status byte from the Low Priority Header, which contains
  * the communication state and error flags.
  *
  * \ param handle EnDAT3 handle
- * \ return LPH status byte, or 0 if handle is NULL
+ * \ param status Pointer to store LPH status byte
+ * \ return SystemP_SUCCESS on success, SystemP_FAILURE if handle or status is NULL
  */
-uint8_t endat3_getLphStatus(endat3_Handle handle);
+int32_t endat3_getLphStatus(endat3_Handle handle, uint8_t *status);
 
 /**
  * \ brief Get number of LPF frames
- * 
+ *
  * Retrieves the number of Low Priority Frames indicated in the LPH.
  *
  * \ param handle EnDAT3 handle
- * \ return Number of LPF frames (0-15), or 0 if handle is NULL
+ * \ param num_lpf Pointer to store number of LPF frames (0-15)
+ * \ return SystemP_SUCCESS on success, SystemP_FAILURE if handle or num_lpf is NULL
  */
-uint8_t endat3_getLphnum_lpf (endat3_Handle handle);
+int32_t endat3_getLphnum_lpf(endat3_Handle handle, uint8_t *num_lpf);
 
 /**
  * \ brief Get LPH CRC value
- * 
+ *
  * Retrieves the CRC checksum from the Low Priority Header.
  *
  * \ param handle EnDAT3 handle
- * \ return LPH CRC value, or 0 if handle is NULL
+ * \ param crc Pointer to store LPH CRC value
+ * \ return SystemP_SUCCESS on success, SystemP_FAILURE if handle or crc is NULL
  */
-uint8_t endat3_getLphCrc(endat3_Handle handle);
+int32_t endat3_getLphCrc(endat3_Handle handle, uint8_t *crc);
 
 /**
  * \ brief Get LPH communication state
- * 
+ *
  * Extracts the communication state from the LPH status byte (bits 0-1).
  *
  * \ param handle EnDAT3 handle
- * \ return LPH_Status_t enum value (IDLE, RX_START, RX_LAST, BUSY)
- * 
+ * \ return LPH_Status_t enum value (IDLE, RX_START, RX_LAST, BUSY). Returns LPH_STATUS_IDLE if handle is NULL.
+ *
  * \ code
  * LPH_Status_t state = endat3_getLphState(handle);
  * switch(state) {
@@ -903,7 +799,7 @@ uint8_t endat3_getLphCrc(endat3_Handle handle);
  * }
  * \ endcode
  */
-LPH_Status_t endat3_getLphState(endat3_Handle handle);
+int32_t endat3_getLphState(endat3_Handle handle);
 
 /**
  * \ brief Check if background operation has error
@@ -913,7 +809,7 @@ LPH_Status_t endat3_getLphState(endat3_Handle handle);
  * \ param handle EnDAT3 handle
  * \ return  1 if background error is present, 0 otherwise
  */
-uint8_t endat3_hasBgError(endat3_Handle handle);
+int32_t endat3_hasBgError(endat3_Handle handle);
 
 /**
  * \ brief Check if background processor is busy
@@ -923,7 +819,7 @@ uint8_t endat3_hasBgError(endat3_Handle handle);
  * \ param handle EnDAT3 handle
  * \ return  1 if background processor is busy, 0 otherwise
  */
-uint8_t endat3_isBgBusy(endat3_Handle handle);
+int32_t endat3_isBgBusy(endat3_Handle handle);
 
 /**
  * \ brief Check if background RTX error occurred
@@ -933,7 +829,7 @@ uint8_t endat3_isBgBusy(endat3_Handle handle);
  * \ param handle EnDAT3 handle
  * \ return  1 if background transmit/receive error occurred, 0 otherwise
  */
-uint8_t endat3_hasBgRtxError(endat3_Handle handle);
+int32_t endat3_hasBgRtxError(endat3_Handle handle);
 
 /* ========================================================================== */
 /*                    LPF (Low Priority Frame) Access APIs                    */
@@ -948,7 +844,7 @@ uint8_t endat3_hasBgRtxError(endat3_Handle handle);
  * \ param index LPF frame index (0 to MAX_LPF_COUNT-1)
  * \ return LPF status byte, or 0 if handle is NULL or index is invalid
  */
-uint8_t endat3_getLpfStatus(endat3_Handle handle, uint8_t index);
+int32_t endat3_getLpfStatus(endat3_Handle handle, uint8_t index);
 
 /**
  * \ brief Get LPF data array for specific frame
@@ -979,7 +875,7 @@ int32_t endat3_getLpfData(endat3_Handle handle, uint8_t index, uint8_t *data);
  * \ param index LPF frame index (0 to MAX_LPF_COUNT-1)
  * \ return LPF CRC value, or 0 if handle is NULL or index is invalid
  */
-uint8_t endat3_getLpfCrc(endat3_Handle handle, uint8_t index);
+int32_t endat3_getLpfCrc(endat3_Handle handle, uint8_t index);
 
 /**
  * \ brief Get LPF FID (Frame ID) for specific frame
@@ -990,7 +886,7 @@ uint8_t endat3_getLpfCrc(endat3_Handle handle, uint8_t index);
  * \ param index LPF frame index (0 to MAX_LPF_COUNT-1)
  * \ return FID value (0-255), or 0 if handle is NULL or index is invalid
  */
-uint8_t endat3_getLpfFid(endat3_Handle handle, uint8_t index);
+int32_t endat3_getLpfFid(endat3_Handle handle, uint8_t index);
 
 /* ========================================================================== */
 /*                    Communication Control APIs                              */
@@ -1004,66 +900,74 @@ uint8_t endat3_getLpfFid(endat3_Handle handle, uint8_t index);
  * \ param handle EnDAT3 handle
  * \ return  1 if connected, 0 otherwise
  */
-uint8_t endat3_isConnected(endat3_Handle handle);
+int32_t endat3_isConnected(endat3_Handle handle);
 
 /**
  * \ brief Get busy status
- * 
+ *
  * Checks if a transfer is currently in progress.
  *
  * \ param handle EnDAT3 handle
- * \ return  1 if busy, 0 otherwise
+ * \ return 1 if busy, 0 otherwise
  */
-uint8_t endat3_isBusy(endat3_Handle handle);
+int32_t endat3_isBusy(endat3_Handle handle);
 
 /**
  * \ brief Set busy status
- * 
+ *
  * Sets the busy flag to indicate a transfer is in progress.
  *
  * \ param handle EnDAT3 handle
  * \ param busy Busy state to set (1 for busy, 0 for not busy)
- * \ return 0 on success, -1 if handle is NULL
+ * \ return SystemP_SUCCESS (0) on success
+ *         SystemP_FAILURE (-1) if handle is NULL or endat3Interface is NULL
+ *         **NOTE**: Check return value to ensure state was set properly
  */
 int32_t endat3_setBusy(endat3_Handle handle, uint8_t busy);
 
 /**
  * \ brief Get expected TX frame count
- * 
+ *
  * Retrieves the number of frames expected to be transmitted.
  *
  * \ param handle EnDAT3 handle
- * \ return Expected TX frame count, or 0 if handle is NULL
+ * \ param count Pointer to store expected TX frame count
+ * \ return SystemP_SUCCESS on success, SystemP_FAILURE if handle or count is NULL
  */
-uint32_t endat3_getExpectedTxFrameCount(endat3_Handle handle);
+int32_t endat3_getExpectedTxFrameCount(endat3_Handle handle, uint32_t *count);
 
 /**
  * \ brief Set expected TX frame count
- * 
+ *
  * Sets the number of frames expected to be transmitted.
  *
  * \ param handle EnDAT3 handle
  * \ param count Expected frame count
- * \ return 0 on success, -1 if handle is NULL
+ * \ return SystemP_SUCCESS (0) on success
+ *         SystemP_FAILURE (-1) if handle is NULL or endat3Interface is NULL
+ *         **NOTE**: Check return value - incorrect frame count causes communication errors
  */
 int32_t endat3_setExpectedTxFrameCount(endat3_Handle handle, uint32_t count);
 
 /**
  * \ brief Get propagation time
- * 
+ *
  * Retrieves the measured propagation time from ECHO command.
  * The value is in PRU clock cycles.
  *
  * \ param handle EnDAT3 handle
- * \ return Propagation time in PRU clock cycles, or 0 if handle is NULL
- * 
+ * \ param prop_time Pointer to store propagation time in PRU clock cycles
+ * \ return SystemP_SUCCESS on success, SystemP_FAILURE if handle or prop_time is NULL
+ *
  * \ code
- * uint32_t prop_time_cycles = endat3_getPropagationTime(handle);
- * // Convert to nanoseconds (assuming 200MHz PRU clock)
- * uint32_t prop_time_ns = (prop_time_cycles * 1000) / 200;
+ * uint32_t prop_time_cycles;
+ * if (endat3_getPropagationTime(handle, &prop_time_cycles) == SystemP_SUCCESS) {
+ *     // Convert to nanoseconds (assuming 200MHz PRU clock)
+ *     uint32_t prop_time_ns = (prop_time_cycles * 1000) / 200;
+ * }
  * \ endcode
  */
-uint32_t endat3_getPropagationTime(endat3_Handle handle);
+int32_t endat3_getPropagationTime(endat3_Handle handle, uint32_t *prop_time);
 
 /* ========================================================================== */
 /*                    Command and Data APIs                                   */
@@ -1071,50 +975,62 @@ uint32_t endat3_getPropagationTime(endat3_Handle handle);
 
 /**
  * \ brief Get foreground operation code
- * 
+ *
  * Retrieves the current foreground operation code.
  *
  * \ param handle EnDAT3 handle
- * \ return Foreground operation code, or 0 if handle is NULL
+ * \ param opcode Pointer to store foreground operation code
+ * \ return SystemP_SUCCESS on success, SystemP_FAILURE if handle or opcode is NULL
  */
-uint32_t endat3_getForegroundOpCode(endat3_Handle handle);
+int32_t endat3_getForegroundOpCode(endat3_Handle handle, uint32_t *opcode);
 
 /**
  * \ brief Set foreground operation code
- * 
+ *
  * Sets the foreground operation code for the next command.
  *
  * \ param handle EnDAT3 handle
  * \ param opcode Operation code to set (use endat3_ReqCode_t enum values)
- * \ return 0 on success, -1 if handle is NULL
- * 
+ * \ return SystemP_SUCCESS (0) on success
+ *         SystemP_FAILURE (-1) if handle is NULL or endat3Interface is NULL
+ *         **CRITICAL**: Check return value before calling endat3_send_command() - wrong opcode sends wrong command
+ *
  * \ code
- * endat3_setForegroundOpCode(handle, endat3_REQ_DATA0);
+ * if (endat3_setForegroundOpCode(handle, ENDAT3_REQ_DATA0) != SystemP_SUCCESS) {
+ *     DebugP_log("ERROR: Failed to set foreground opcode\r\n");
+ *     return;
+ * }
  * \ endcode
  */
 int32_t endat3_setForegroundOpCode(endat3_Handle handle, uint32_t opcode);
 
 /**
  * \ brief Get background operation code
- * 
+ *
  * Retrieves the current background operation code.
  *
  * \ param handle EnDAT3 handle
- * \ return Background operation code, or 0 if handle is NULL
+ * \ param opcode Pointer to store background operation code
+ * \ return SystemP_SUCCESS on success, SystemP_FAILURE if handle or opcode is NULL
  */
-uint32_t endat3_getBackgroundOpCode(endat3_Handle handle);
+int32_t endat3_getBackgroundOpCode(endat3_Handle handle, uint32_t *opcode);
 
 /**
  * \ brief Set background operation code
- * 
+ *
  * Sets the background operation code for the next command.
  *
  * \ param handle EnDAT3 handle
  * \ param opcode Operation code to set (use endat3_BgReqOpCode_t enum values)
- * \ return 0 on success, -1 if handle is NULL
- * 
+ * \ return SystemP_SUCCESS (0) on success
+ *         SystemP_FAILURE (-1) if handle is NULL or endat3Interface is NULL
+ *         **CRITICAL**: Check return value before calling endat3_send_command() - wrong opcode sends wrong background operation
+ *
  * \ code
- * endat3_setBackgroundOpCode(handle, endat3_BGREQ_READ);
+ * if (endat3_setBackgroundOpCode(handle, ENDAT3_BGREQ_READ) != SystemP_SUCCESS) {
+ *     DebugP_log("ERROR: Failed to set background opcode\r\n");
+ *     return;
+ * }
  * \ endcode
  */
 int32_t endat3_setBackgroundOpCode(endat3_Handle handle, uint32_t opcode);
@@ -1128,44 +1044,53 @@ int32_t endat3_setBackgroundOpCode(endat3_Handle handle, uint32_t opcode);
  * \ param index Data word index (0-5)
  * \ return Background data word, or 0 if handle is NULL or index is invalid
  */
-uint32_t endat3_getBgData(endat3_Handle handle, uint8_t index);
+int32_t endat3_getBgData(endat3_Handle handle, uint8_t index, uint32_t *data);
 
 /**
  * \ brief Set background data word
- * 
+ *
  * Sets a specific word in the background data array.
  *
  * \ param handle EnDAT3 handle
  * \ param index Data word index (0-5)
  * \ param data Data value to set
- * \ return 0 on success, -1 if handle is NULL or index is invalid
- * 
+ * \ return SystemP_SUCCESS (0) on success
+ *         SystemP_FAILURE (-1) if handle is NULL, endat3Interface is NULL, or index >= BG_DATA_SIZE (6)
+ *         **IMPORTANT**: Check return value - wrong background data sends incorrect command parameters
+ *
  * \ code
  * // Set RESET command data
- * endat3_setBgData(handle, 0, endat3_RESET_HARD);
+ * if (endat3_setBgData(handle, 0, ENDAT3_RESET_HARD) != SystemP_SUCCESS) {
+ *     DebugP_log("ERROR: Failed to set background data\r\n");
+ *     return;
+ * }
  * \ endcode
  */
 int32_t endat3_setBgData(endat3_Handle handle, uint8_t index, uint32_t data);
 
 /**
  * \ brief Get all background data
- * 
+ *
  * Retrieves all background data words into the provided buffer.
  *
  * \ param handle EnDAT3 handle
- * \ param data Buffer to store background data (must be at least 6 words)
- * \ return 0 on success, -1 if handle or data is NULL
+ * \ param data Buffer to store background data (must be at least BG_DATA_SIZE words = 6 words = 24 bytes)
+ * \ return SystemP_SUCCESS (0) on success
+ *         SystemP_FAILURE (-1) if handle is NULL, endat3Interface is NULL, or data buffer is NULL
+ *         **NOTE**: Check return value to ensure data was retrieved successfully
  */
 int32_t endat3_getAllBgData(endat3_Handle handle, uint32_t *data);
 
 /**
  * \ brief Set all background data
- * 
+ *
  * Sets all background data words from the provided buffer.
  *
  * \ param handle EnDAT3 handle
- * \ param data Buffer containing background data (must be at least 6 words)
- * \ return 0 on success, -1 if handle or data is NULL
+ * \ param data Buffer containing background data (must be at least BG_DATA_SIZE words = 6 words = 24 bytes)
+ * \ return SystemP_SUCCESS (0) on success
+ *         SystemP_FAILURE (-1) if handle is NULL, endat3Interface is NULL, or data buffer is NULL
+ *         **NOTE**: Check return value to ensure data was set successfully
  */
 int32_t endat3_setAllBgData(endat3_Handle handle, const uint32_t *data);
 
@@ -1289,21 +1214,29 @@ endat3_Interface* endat3_getInterface(endat3_Handle handle);
 
 /**
  * \ brief Set operating mode (host trigger or periodic trigger)
- * 
+ *
  * Configures the firmware operating mode for the EnDAT3 interface.
  * This determines whether the encoder is triggered by host commands
  * or by periodic IEP timer events.
  *
  * \ param handle EnDAT3 handle
  * \ param opmode Operating mode: 0 = periodic trigger, 1 = host trigger
- * \ return 0 on success, -1 if handle is NULL
- * 
+ * \ return SystemP_SUCCESS (0) on success
+ *         SystemP_FAILURE (-1) if handle is NULL or endat3Interface is NULL
+ *         **CRITICAL**: Check return value - wrong operating mode causes complete communication failure
+ *
  * \ code
  * // Set to host trigger mode (default)
- * endat3_setOperatingMode(handle, 1);
- * 
+ * if (endat3_setOperatingMode(handle, 1) != SystemP_SUCCESS) {
+ *     DebugP_log("ERROR: Failed to set operating mode\r\n");
+ *     return;
+ * }
+ *
  * // Set to periodic trigger mode
- * endat3_setOperatingMode(handle, 0);
+ * if (endat3_setOperatingMode(handle, 0) != SystemP_SUCCESS) {
+ *     DebugP_log("ERROR: Failed to set operating mode\r\n");
+ *     return;
+ * }
  * \ endcode
  */
 int32_t endat3_setOperatingMode(endat3_Handle handle, uint8_t opmode);
@@ -1320,30 +1253,37 @@ int32_t endat3_getOperatingMode(endat3_Handle handle);
 
 /**
  * \ brief Release start trigger to firmware
- * 
+ *
  * Signals the firmware to begin processing by setting the start_trigger flag.
  * The firmware will process the command based on the current operating mode:
  * - In host mode: processes the command immediately
  * - In periodic mode: waits for the next IEP CMP3 event
  *
  * \ param handle EnDAT3 handle
- * \ return 0 on success, -1 if handle is NULL
- * 
+ * \ return SystemP_SUCCESS (0) on success
+ *         SystemP_FAILURE (-1) if handle is NULL or endat3Interface is NULL
+ *         **CRITICAL**: Check return value - if this fails, command will never be processed by firmware
+ *
  * \ code
  * // Release trigger to firmware
- * endat3_releaseStartTrigger(handle);
+ * if (endat3_releaseStartTrigger(handle) != SystemP_SUCCESS) {
+ *     DebugP_log("ERROR: Failed to release start trigger\r\n");
+ *     return;
+ * }
  * \ endcode
  */
 int32_t endat3_releaseStartTrigger(endat3_Handle handle);
 
 /**
  * \ brief Clear start trigger flag
- * 
+ *
  * Clears the start_trigger flag after the firmware has processed the command.
  * This prepares the interface for the next command.
  *
  * \ param handle EnDAT3 handle
- * \ return 0 on success, -1 if handle is NULL
+ * \ return SystemP_SUCCESS (0) on success
+ *         SystemP_FAILURE (-1) if handle is NULL or endat3Interface is NULL
+ *         **NOTE**: Check return value to ensure trigger was cleared properly
  */
 int32_t endat3_clearStartTrigger(endat3_Handle handle);
 

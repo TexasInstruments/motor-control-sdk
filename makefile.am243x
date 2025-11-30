@@ -133,11 +133,7 @@ help:
 	@echo  $(MAKE) -s -C source/position_sense/endat/firmware/single_channel/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/endat/firmware/single_channel/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/endat3/firmware/single_channel/am243x-lp/icss_g0_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
-	@echo  $(MAKE) -s -C source/position_sense/endat3/firmware/single_channel/am243x-lp/icss_g0_rtu_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
-	@echo  $(MAKE) -s -C source/position_sense/endat3/firmware/single_channel/am243x-lp/icss_g0_tx_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/endat3/firmware/single_channel/am243x-lp/icss_g0_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
-	@echo  $(MAKE) -s -C source/position_sense/endat3/firmware/single_channel/am243x-lp/icss_g0_rtu_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
-	@echo  $(MAKE) -s -C source/position_sense/endat3/firmware/single_channel/am243x-lp/icss_g0_tx_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/hdsl/firmware/freerun_225_mhz/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/hdsl/firmware/freerun_225_mhz/am243x-evm/icss_g0_pru0_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
 	@echo  $(MAKE) -s -C source/position_sense/hdsl/firmware/multichannel_ch0/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt [all clean syscfg-gui syscfg]
@@ -425,11 +421,7 @@ BUILD_COMBO_EXAMPLE_PRIVATE_ALL += endat_peripheral_interface_multi_ch_am243x-ev
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += endat_peripheral_interface_single_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += endat_peripheral_interface_single_ch_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_pru1_fw_ti-pru-cgt
-BUILD_COMBO_EXAMPLE_PRIVATE_ALL += endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_rtu_pru1_fw_ti-pru-cgt
-BUILD_COMBO_EXAMPLE_PRIVATE_ALL += endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_tx_pru1_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_pru0_fw_ti-pru-cgt
-BUILD_COMBO_EXAMPLE_PRIVATE_ALL += endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_rtu_pru0_fw_ti-pru-cgt
-BUILD_COMBO_EXAMPLE_PRIVATE_ALL += endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_tx_pru0_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += hdsl_receiver_freerun_225_mhz_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += hdsl_receiver_freerun_225_mhz_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt
 BUILD_COMBO_EXAMPLE_PRIVATE_ALL += hdsl_receiver_multichannel_ch0_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt
@@ -723,20 +715,8 @@ examples-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_ALL)
  endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_pru1_fw_ti-pru-cgt:
 	$(MAKE) -C source/position_sense/endat3/firmware/single_channel/am243x-lp/icss_g0_pru1_fw/ti-pru-cgt -f makefile all
 
- endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_rtu_pru1_fw_ti-pru-cgt:
-	$(MAKE) -C source/position_sense/endat3/firmware/single_channel/am243x-lp/icss_g0_rtu_pru1_fw/ti-pru-cgt -f makefile all
-
- endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_tx_pru1_fw_ti-pru-cgt:
-	$(MAKE) -C source/position_sense/endat3/firmware/single_channel/am243x-lp/icss_g0_tx_pru1_fw/ti-pru-cgt -f makefile all
-
  endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_pru0_fw_ti-pru-cgt:
 	$(MAKE) -C source/position_sense/endat3/firmware/single_channel/am243x-lp/icss_g0_pru0_fw/ti-pru-cgt -f makefile all
-
- endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_rtu_pru0_fw_ti-pru-cgt:
-	$(MAKE) -C source/position_sense/endat3/firmware/single_channel/am243x-lp/icss_g0_rtu_pru0_fw/ti-pru-cgt -f makefile all
-
- endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_tx_pru0_fw_ti-pru-cgt:
-	$(MAKE) -C source/position_sense/endat3/firmware/single_channel/am243x-lp/icss_g0_tx_pru0_fw/ti-pru-cgt -f makefile all
 
  hdsl_receiver_freerun_225_mhz_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt:
 	$(MAKE) -C source/position_sense/hdsl/firmware/freerun_225_mhz/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile all
@@ -942,11 +922,7 @@ BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += endat_peripheral_interface_multi_ch_am2
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += endat_peripheral_interface_single_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += endat_peripheral_interface_single_ch_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_pru1_fw_ti-pru-cgt_clean
-BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_rtu_pru1_fw_ti-pru-cgt_clean
-BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_tx_pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_pru0_fw_ti-pru-cgt_clean
-BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_rtu_pru0_fw_ti-pru-cgt_clean
-BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_tx_pru0_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += hdsl_receiver_freerun_225_mhz_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += hdsl_receiver_freerun_225_mhz_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL += hdsl_receiver_multichannel_ch0_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_clean
@@ -1237,20 +1213,8 @@ examples-private-clean: $(BUILD_COMBO_EXAMPLE_PRIVATE_CLEAN_ALL)
  endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_pru1_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/endat3/firmware/single_channel/am243x-lp/icss_g0_pru1_fw/ti-pru-cgt -f makefile clean
 
- endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_rtu_pru1_fw_ti-pru-cgt_clean:
-	$(MAKE) -C source/position_sense/endat3/firmware/single_channel/am243x-lp/icss_g0_rtu_pru1_fw/ti-pru-cgt -f makefile clean
-
- endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_tx_pru1_fw_ti-pru-cgt_clean:
-	$(MAKE) -C source/position_sense/endat3/firmware/single_channel/am243x-lp/icss_g0_tx_pru1_fw/ti-pru-cgt -f makefile clean
-
  endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_pru0_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/endat3/firmware/single_channel/am243x-lp/icss_g0_pru0_fw/ti-pru-cgt -f makefile clean
-
- endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_rtu_pru0_fw_ti-pru-cgt_clean:
-	$(MAKE) -C source/position_sense/endat3/firmware/single_channel/am243x-lp/icss_g0_rtu_pru0_fw/ti-pru-cgt -f makefile clean
-
- endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_tx_pru0_fw_ti-pru-cgt_clean:
-	$(MAKE) -C source/position_sense/endat3/firmware/single_channel/am243x-lp/icss_g0_tx_pru0_fw/ti-pru-cgt -f makefile clean
 
  hdsl_receiver_freerun_225_mhz_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/hdsl/firmware/freerun_225_mhz/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile clean
@@ -1456,11 +1420,7 @@ BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += endat_peripheral_interface_multi_ch_am2
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += endat_peripheral_interface_single_ch_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += endat_peripheral_interface_single_ch_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_pru1_fw_ti-pru-cgt_scrub
-BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_rtu_pru1_fw_ti-pru-cgt_scrub
-BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_tx_pru1_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_pru0_fw_ti-pru-cgt_scrub
-BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_rtu_pru0_fw_ti-pru-cgt_scrub
-BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_tx_pru0_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += hdsl_receiver_freerun_225_mhz_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += hdsl_receiver_freerun_225_mhz_am243x-evm_icss_g0_pru0_fw_ti-pru-cgt_scrub
 BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL += hdsl_receiver_multichannel_ch0_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_scrub
@@ -1751,20 +1711,8 @@ examples-scrub-private: $(BUILD_COMBO_EXAMPLE_PRIVATE_SCRUB_ALL)
  endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_pru1_fw_ti-pru-cgt_scrub:
 	$(MAKE) -C source/position_sense/endat3/firmware/single_channel/am243x-lp/icss_g0_pru1_fw/ti-pru-cgt -f makefile scrub
 
- endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_rtu_pru1_fw_ti-pru-cgt_scrub:
-	$(MAKE) -C source/position_sense/endat3/firmware/single_channel/am243x-lp/icss_g0_rtu_pru1_fw/ti-pru-cgt -f makefile scrub
-
- endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_tx_pru1_fw_ti-pru-cgt_scrub:
-	$(MAKE) -C source/position_sense/endat3/firmware/single_channel/am243x-lp/icss_g0_tx_pru1_fw/ti-pru-cgt -f makefile scrub
-
  endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_pru0_fw_ti-pru-cgt_scrub:
 	$(MAKE) -C source/position_sense/endat3/firmware/single_channel/am243x-lp/icss_g0_pru0_fw/ti-pru-cgt -f makefile scrub
-
- endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_rtu_pru0_fw_ti-pru-cgt_scrub:
-	$(MAKE) -C source/position_sense/endat3/firmware/single_channel/am243x-lp/icss_g0_rtu_pru0_fw/ti-pru-cgt -f makefile scrub
-
- endat3_peripheral_interface_single_channel_am243x-lp_icss_g0_tx_pru0_fw_ti-pru-cgt_scrub:
-	$(MAKE) -C source/position_sense/endat3/firmware/single_channel/am243x-lp/icss_g0_tx_pru0_fw/ti-pru-cgt -f makefile scrub
 
  hdsl_receiver_freerun_225_mhz_am243x-evm_icss_g0_pru1_fw_ti-pru-cgt_scrub:
 	$(MAKE) -C source/position_sense/hdsl/firmware/freerun_225_mhz/am243x-evm/icss_g0_pru1_fw/ti-pru-cgt -f makefile scrub

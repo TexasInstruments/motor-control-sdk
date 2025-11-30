@@ -1,8 +1,8 @@
 /**
  * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
  * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
- * @cliArgs --device "AM243x_ALX_beta" --part "ALX" --package "ALX" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@10.00.01"
- * @v2CliArgs --device "AM2434" --package "FCCSP (ALX)" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@10.00.01"
+ * @cliArgs --device "AM243x_ALX_beta" --part "ALX" --package "ALX" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@2025.00.00" --product "INDUSTRIAL_COMMUNICATIONS_SDK@2025.00.00" --product "MCU_PLUS_SDK@07.03.01"
+ * @v2CliArgs --device "AM2434" --package "FCCSP (ALX)" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@2025.00.00" --product "INDUSTRIAL_COMMUNICATIONS_SDK@2025.00.00" --product "MCU_PLUS_SDK@07.03.01"
  * @versions {"tool":"1.23.1+4034"}
  */
 
@@ -38,8 +38,8 @@ const section9        = section.addInstance();
 const section10       = section.addInstance();
 const section11       = section.addInstance();
 const section12       = section.addInstance();
-const endat           = scripting.addModule("/position_sense/endat", {}, false);
-const endat1          = endat.addInstance();
+const endat3          = scripting.addModule("/position_sense/endat3", {}, false);
+const endat31         = endat3.addInstance();
 
 /**
  * Write custom configuration values to the imported modules.
@@ -253,26 +253,17 @@ section12.output_section.create(1);
 section12.output_section[0].$name     = ".gEnDatChInfo";
 section12.output_section[0].alignment = 4;
 
-endat1.$name                        = "CONFIG_ENDAT0";
-endat1.Multi_Channel_Load_Share     = true;
-endat1.G_MUX_EN                     = true;
-endat1.Booster_Pack                 = true;
-endat1.PRU_ICSSG0_PRU.$assign       = "PRU_ICSSG0_PRU1";
-endat1.PRU_ICSSG0_PRU.GPO2.$assign  = "PRG0_PRU1_GPO2";
-endat1.PRU_ICSSG0_PRU.GPO1.$assign  = "PRG0_PRU1_GPO1";
-endat1.PRU_ICSSG0_PRU.GPO0.$assign  = "PRG0_PRU1_GPO0";
-endat1.PRU_ICSSG0_PRU.GPI13.$assign = "PRG0_PRU1_GPO13";
-endat1.PRU_ICSSG0_PRU.GPO8.$assign  = "PRG0_PRU1_GPO8";
-endat1.PRU_ICSSG0_PRU.GPO12.$assign = "PRG0_PRU1_GPO12";
-endat1.PRU_ICSSG0_PRU.GPO6.$assign  = "PRG0_PRU1_GPO6";
-endat1.PRU_ICSSG0_PRU.GPI11.$assign = "PRG0_PRU1_GPO11";
-endat1.ENC1_EN.$name                = "ENC0_EN";
-endat1.ENC1_EN.GPIO_n.$assign       = "MMC1_SDWP";
-endat1.ENC2_EN.$name                = "ENC2_EN";
-endat1.ENC2_EN.GPIO_n.$assign       = "MMC1_SDCD";
+endat31.$name                  = "CONFIG_ENDAT3_0";
+endat31.Booster_Pack           = true;
+endat31.G_MUX_EN               = true;
+endat31.ENC1_EN.$name          = "ENC0_EN";
+endat31.ENC1_EN.GPIO_n.$assign = "MMC1_SDWP";
+endat31.ENC2_EN.$name          = "ENC2_EN";
+endat31.ENC2_EN.GPIO_n.$assign = "MMC1_SDCD";
+endat31.PRU_ICSSG0_PRU.$assign = "PRU_ICSSG0_PRU1";
 
 pruicss1.$name                           = "CONFIG_PRU_ICSS0";
-endat1.pru                               = pruicss1;
+endat31.pru                              = pruicss1;
 pruicss1.coreClk                         = 300000000;
 pruicss1.AdditionalICSSSettings[0].$name = "CONFIG_PRU_ICSS_IO0";
 pruicss1.intcMapping.create(3);
@@ -291,5 +282,9 @@ pruicss1.intcMapping[2].channel          = "4";
  * version of the tool will not impact the pinmux you originally saw.  These lines can be completely deleted in order to
  * re-solve from scratch.
  */
-debug_log.uartLog.UART.RXD.$suggestSolution = "UART0_RXD";
-debug_log.uartLog.UART.TXD.$suggestSolution = "UART0_TXD";
+debug_log.uartLog.UART.RXD.$suggestSolution   = "UART0_RXD";
+debug_log.uartLog.UART.TXD.$suggestSolution   = "UART0_TXD";
+endat31.PRU_ICSSG0_PRU.GPO2.$suggestSolution  = "PRG0_PRU1_GPO2";
+endat31.PRU_ICSSG0_PRU.GPO1.$suggestSolution  = "PRG0_PRU1_GPO1";
+endat31.PRU_ICSSG0_PRU.GPO0.$suggestSolution  = "PRG0_PRU1_GPO0";
+endat31.PRU_ICSSG0_PRU.GPI13.$suggestSolution = "PRG0_PRU1_GPO13";

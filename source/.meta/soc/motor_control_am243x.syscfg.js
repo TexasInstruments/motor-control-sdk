@@ -5,6 +5,7 @@ const topModules_main = [
     "/current_sense/sdfm",
     "/position_sense/bissc",
     "/position_sense/endat",
+    "/position_sense/endat3",
     "/position_sense/hdsl",
     "/position_sense/nikon",
     "/position_sense/tamagawa",
