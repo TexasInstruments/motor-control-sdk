@@ -6,6 +6,7 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL =
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += bissc_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += endat_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += endat_diagnostic_dual_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += endat3_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += hdsl_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += nikon_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += tamagawa_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_build
@@ -26,6 +27,8 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += bissc_peripheral_interface_
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += bissc_peripheral_interface_single_ch_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += endat_peripheral_interface_single_ch_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += endat_peripheral_interface_single_ch_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += endat3_peripheral_interface_single_channel_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += endat3_peripheral_interface_single_channel_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += hdsl_receiver_freerun_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += hdsl_receiver_freerun_225_mhz_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += hdsl_receiver_sync_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_build
@@ -48,6 +51,9 @@ all-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL)
 
  endat_diagnostic_dual_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_build:
 	$(MAKE) -C examples/position_sense/endat_diagnostic/dual_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
+
+ endat3_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_build:
+	$(MAKE) -C examples/position_sense/endat3_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
 
  hdsl_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_build:
 	$(MAKE) -C examples/position_sense/hdsl_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
@@ -97,6 +103,12 @@ all-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL)
  endat_peripheral_interface_single_ch_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_build:
 	$(MAKE) -C source/position_sense/endat/firmware/single_channel/am261x-lp/icss_m1_pru1_fw/ti-pru-cgt -f makefile_projectspec all
 
+ endat3_peripheral_interface_single_channel_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_build:
+	$(MAKE) -C source/position_sense/endat3/firmware/single_channel/am261x-lp/icss_m1_pru1_fw/ti-pru-cgt -f makefile_projectspec all
+
+ endat3_peripheral_interface_single_channel_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_build:
+	$(MAKE) -C source/position_sense/endat3/firmware/single_channel/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt -f makefile_projectspec all
+
  hdsl_receiver_freerun_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_build:
 	$(MAKE) -C source/position_sense/hdsl/firmware/freerun_225_mhz/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt -f makefile_projectspec all
 
@@ -128,6 +140,7 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL =
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += bissc_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += endat_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += endat_diagnostic_dual_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += endat3_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += hdsl_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += nikon_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += tamagawa_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_clean
@@ -148,6 +161,8 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += bissc_peripheral_interface_
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += bissc_peripheral_interface_single_ch_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += endat_peripheral_interface_single_ch_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += endat_peripheral_interface_single_ch_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += endat3_peripheral_interface_single_channel_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += endat3_peripheral_interface_single_channel_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += hdsl_receiver_freerun_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += hdsl_receiver_freerun_225_mhz_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += hdsl_receiver_sync_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_clean
@@ -170,6 +185,9 @@ clean-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL)
 
  endat_diagnostic_dual_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
 	$(MAKE) -C examples/position_sense/endat_diagnostic/dual_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
+
+ endat3_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/position_sense/endat3_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
 
  hdsl_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_clean:
 	$(MAKE) -C examples/position_sense/hdsl_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
@@ -219,6 +237,12 @@ clean-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL)
  endat_peripheral_interface_single_ch_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/endat/firmware/single_channel/am261x-lp/icss_m1_pru1_fw/ti-pru-cgt -f makefile_projectspec clean
 
+ endat3_peripheral_interface_single_channel_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/position_sense/endat3/firmware/single_channel/am261x-lp/icss_m1_pru1_fw/ti-pru-cgt -f makefile_projectspec clean
+
+ endat3_peripheral_interface_single_channel_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/position_sense/endat3/firmware/single_channel/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt -f makefile_projectspec clean
+
  hdsl_receiver_freerun_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/hdsl/firmware/freerun_225_mhz/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt -f makefile_projectspec clean
 
@@ -250,6 +274,7 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL =
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += bissc_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += endat_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += endat_diagnostic_dual_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += endat3_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += hdsl_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += nikon_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += tamagawa_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_export
@@ -270,6 +295,8 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += bissc_peripheral_interface
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += bissc_peripheral_interface_single_ch_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += endat_peripheral_interface_single_ch_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += endat_peripheral_interface_single_ch_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += endat3_peripheral_interface_single_channel_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += endat3_peripheral_interface_single_channel_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += hdsl_receiver_freerun_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += hdsl_receiver_freerun_225_mhz_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += hdsl_receiver_sync_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_export
@@ -292,6 +319,9 @@ export-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL)
 
  endat_diagnostic_dual_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_export:
 	$(MAKE) -C examples/position_sense/endat_diagnostic/dual_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
+
+ endat3_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_export:
+	$(MAKE) -C examples/position_sense/endat3_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
 
  hdsl_diagnostic_single_channel_am261x-lp_r5fss0-0_freertos_ti-arm-clang_export:
 	$(MAKE) -C examples/position_sense/hdsl_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
@@ -341,6 +371,12 @@ export-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL)
  endat_peripheral_interface_single_ch_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_export:
 	$(MAKE) -C source/position_sense/endat/firmware/single_channel/am261x-lp/icss_m1_pru1_fw/ti-pru-cgt -f makefile_projectspec export
 
+ endat3_peripheral_interface_single_channel_am261x-lp_icss_m1_pru1_fw_ti-pru-cgt_export:
+	$(MAKE) -C source/position_sense/endat3/firmware/single_channel/am261x-lp/icss_m1_pru1_fw/ti-pru-cgt -f makefile_projectspec export
+
+ endat3_peripheral_interface_single_channel_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_export:
+	$(MAKE) -C source/position_sense/endat3/firmware/single_channel/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt -f makefile_projectspec export
+
  hdsl_receiver_freerun_225_mhz_am261x-lp_icss_m1_pru0_fw_ti-pru-cgt_export:
 	$(MAKE) -C source/position_sense/hdsl/firmware/freerun_225_mhz/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt -f makefile_projectspec export
 
@@ -388,6 +424,7 @@ help:
 	@echo  $(MAKE) -s -C examples/position_sense/bissc_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/position_sense/endat_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/position_sense/endat_diagnostic/dual_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C examples/position_sense/endat3_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/position_sense/hdsl_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/position_sense/nikon_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/position_sense/tamagawa_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
@@ -404,6 +441,8 @@ help:
 	@echo  $(MAKE) -s -C source/position_sense/bissc/firmware/single_channel/am261x-lp/icss_m1_pru1_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C source/position_sense/endat/firmware/single_channel/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C source/position_sense/endat/firmware/single_channel/am261x-lp/icss_m1_pru1_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C source/position_sense/endat3/firmware/single_channel/am261x-lp/icss_m1_pru1_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C source/position_sense/endat3/firmware/single_channel/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C source/position_sense/hdsl/firmware/freerun_225_mhz/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C source/position_sense/hdsl/firmware/freerun_225_mhz/am261x-lp/icss_m1_pru1_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C source/position_sense/hdsl/firmware/sync_225_mhz/am261x-lp/icss_m1_pru0_fw/ti-pru-cgt -f makefile_projectspec [export all clean]

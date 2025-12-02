@@ -33,6 +33,7 @@
 #include <string.h>
 #include <position_sense/endat3/include/endat3_drv.h>
 #include <drivers/hw_include/hw_types.h>
+#include <drivers/hw_include/cslr_icss.h>
 #include <kernel/dpl/ClockP.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -158,7 +159,7 @@ endat3_Handle endat3_open(PRUICSS_Handle icssHandle, uint32_t icssCore, uint8_t 
         return NULL;
     }
 
-   if (pruMode == 0)
+    if (pruMode == 0)
     {
         endat3Handle = &endat3Config0;
         if (icssCore == 0)
@@ -166,48 +167,56 @@ endat3_Handle endat3_open(PRUICSS_Handle icssHandle, uint32_t icssCore, uint8_t 
             endat3Handle->baseMemAddr = (uint32_t *)(((PRUICSS_HwAttrs *)(icssHandle->hwAttrs))->pru0DramBase);
             pru_slice = 0;
         }
-        else
+        else if (icssCore == 1)
         {
             endat3Handle->baseMemAddr = (uint32_t *)(((PRUICSS_HwAttrs *)(icssHandle->hwAttrs))->pru1DramBase);
             pru_slice = 1;
+        }
+        else
+        {
+            /* Invalid icssCore value for single channel mode */
+            endat3Handle = NULL;
         }
     }
     else
     {
         /* Load share mode - use memory map offsets defined in macros */
+        /* Note: pruMode=1 (load-share) is only supported on AM243x/AM64x with ICSSG.
+         * AM261x with ICSSM does not support load-share mode and will return NULL. */
+
         /* Handle Slice 1 cores */
-        if (icssCore == PRUICSS_RTU_PRU1)
+        if (icssCore == ENDAT3_PRUICSS_RTU_PRU1)
         {
             endat3Handle = &endat3Config0;
             endat3Handle->baseMemAddr = (uint32_t *)((((PRUICSS_HwAttrs *)(icssHandle->hwAttrs))->pru1DramBase) + DMEM_BASE_OFFSET_RTU_PRU);
             pru_slice = 1;
         }
-        else if (icssCore == PRUICSS_PRU1)
+        else if (icssCore == ENDAT3_PRUICSS_PRU1)
         {
             endat3Handle = &endat3Config1;
             endat3Handle->baseMemAddr = (uint32_t *)((((PRUICSS_HwAttrs *)(icssHandle->hwAttrs))->pru1DramBase) + DMEM_BASE_OFFSET_PRU);
             pru_slice = 1;
         }
-        else if (icssCore == PRUICSS_TX_PRU1)
+        else if (icssCore == ENDAT3_PRUICSS_TX_PRU1)
         {
             endat3Handle = &endat3Config2;
             endat3Handle->baseMemAddr = (uint32_t *)((((PRUICSS_HwAttrs *)(icssHandle->hwAttrs))->pru1DramBase) + DMEM_BASE_OFFSET_TX_PRU);
             pru_slice = 1;
         }
         /* Handle Slice 0 cores */
-        else if (icssCore == PRUICSS_RTU_PRU0)
+        else if (icssCore == ENDAT3_PRUICSS_RTU_PRU0)
         {
             endat3Handle = &endat3Config0;
             endat3Handle->baseMemAddr = (uint32_t *)((((PRUICSS_HwAttrs *)(icssHandle->hwAttrs))->pru0DramBase) + DMEM_BASE_OFFSET_RTU_PRU);
             pru_slice = 0;
         }
-        else if (icssCore == PRUICSS_PRU0)
+        else if (icssCore == ENDAT3_PRUICSS_PRU0)
         {
             endat3Handle = &endat3Config1;
             endat3Handle->baseMemAddr = (uint32_t *)((((PRUICSS_HwAttrs *)(icssHandle->hwAttrs))->pru0DramBase) + DMEM_BASE_OFFSET_PRU);
             pru_slice = 0;
         }
-        else if (icssCore == PRUICSS_TX_PRU0)
+        else if (icssCore == ENDAT3_PRUICSS_TX_PRU0)
         {
             endat3Handle = &endat3Config2;
             endat3Handle->baseMemAddr = (uint32_t *)((((PRUICSS_HwAttrs *)(icssHandle->hwAttrs))->pru0DramBase) + DMEM_BASE_OFFSET_TX_PRU);
@@ -219,6 +228,7 @@ endat3_Handle endat3_open(PRUICSS_Handle icssHandle, uint32_t icssCore, uint8_t 
             endat3Handle = NULL;
         }
     }
+
     if (endat3Handle != NULL)
     {
         endat3Handle->icssHandle   = icssHandle;
@@ -506,6 +516,7 @@ static int32_t endat3_process_frame(endat3_Handle priv, uint8_t *buffer, uint32_
     return (received_crc == calculated_crc) ? ENDAT3_SUCCESS : ENDAT3_ERR_HPF_CRC_FAIL;
 }
 
+/* Clear CFG0 registers for enabled channels - resets encoder channel configuration */
 static void endat3_config_clr_cfg0(endat3_Handle priv, uint8_t pruicss_slicex)
 {
     void *pruicss_cfg = priv->pruicss_cfg;
@@ -561,21 +572,22 @@ static void endat3_config_endat_mode(endat3_Handle priv, uint8_t pruicss_slicex)
     /* Clear CFG0 registers for all channels - CRITICAL for proper operation */
     endat3_config_clr_cfg0(priv, pruicss_slicex);
 }
+
 static void endat3_enable_load_share_mode(void *pru_cfg, uint32_t pru_slice)
 {
     uint32_t regVal;
 
     if (pru_slice == 1)
     {
-        regVal = HW_RD_REG32((uint8_t *)pru_cfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER_PRU1_ED_TX_CLK_SEL_MASK);
-        regVal |= CSL_ICSSCFG_EDPRU1TXCFGREGISTER_PRU1_ENDAT_SHARE_EN_MASK;
-        HW_WR_REG32((uint8_t *)pru_cfg + CSL_ICSSCFG_EDPRU1TXCFGREGISTER, regVal);
+        regVal = HW_RD_REG32((uint8_t *)pru_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG);
+        regVal |= CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG_PRU1_ENDAT_SHARE_EN_MASK;
+        HW_WR_REG32((uint8_t *)pru_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG, regVal);
     }
     else
     {
-        regVal = HW_RD_REG32((uint8_t *)pru_cfg + CSL_ICSSCFG_EDPRU0TXCFGREGISTER_PRU0_ED_TX_CLK_SEL_MASK);
-        regVal |= CSL_ICSSCFG_EDPRU0TXCFGREGISTER_PRU0_ENDAT_SHARE_EN_MASK;
-        HW_WR_REG32((uint8_t *)pru_cfg + CSL_ICSSCFG_EDPRU0TXCFGREGISTER, regVal);
+        regVal = HW_RD_REG32((uint8_t *)pru_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG);
+        regVal |= CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG_PRU0_ENDAT_SHARE_EN_MASK;
+        HW_WR_REG32((uint8_t *)pru_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG, regVal);
     }
 }
 
@@ -622,24 +634,24 @@ static void endat3_configurePruRegisters(void *pru_cfg_base, const endat3_Config
     if (pru_slice == 1)
     {
         /* Enable EnDat3 functionality in GPCFG1 register */
-        HW_WR_REG32(pru_cfg_base + CSL_ICSSCFG_GPCFG1, config->reg_config.endat3_enable);
+        HW_WR_REG32((uint8_t *)pru_cfg_base + CSL_ICSS_PR1_CFG_SLV_GPCFG1_REG, config->reg_config.endat3_enable);
 
         /* Configure PRU1 TX parameters */
-        HW_WR_REG32(pru_cfg_base + CSL_ICSSCFG_EDPRU1TXCFGREGISTER, config->reg_config.tx_config);
+        HW_WR_REG32((uint8_t *)pru_cfg_base + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG, config->reg_config.tx_config);
 
         /* Configure PRU1 RX parameters */
-        HW_WR_REG32(pru_cfg_base + CSL_ICSSCFG_EDPRU1RXCFGREGISTER, config->reg_config.rx_config);
+        HW_WR_REG32((uint8_t *)pru_cfg_base + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG, config->reg_config.rx_config);
     }
     else
     {
         /* Enable EnDat3 functionality in GPCFG0 register */
-        HW_WR_REG32(pru_cfg_base + CSL_ICSSCFG_GPCFG0, config->reg_config.endat3_enable);
+        HW_WR_REG32((uint8_t *)pru_cfg_base + CSL_ICSS_PR1_CFG_SLV_GPCFG0_REG, config->reg_config.endat3_enable);
 
         /* Configure PRU0 TX parameters */
-        HW_WR_REG32(pru_cfg_base + CSL_ICSSCFG_EDPRU0TXCFGREGISTER, config->reg_config.tx_config);
+        HW_WR_REG32((uint8_t *)pru_cfg_base + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG, config->reg_config.tx_config);
 
         /* Configure PRU0 RX parameters */
-        HW_WR_REG32(pru_cfg_base + CSL_ICSSCFG_EDPRU0RXCFGREGISTER, config->reg_config.rx_config);
+        HW_WR_REG32((uint8_t *)pru_cfg_base + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG, config->reg_config.rx_config);
     }
 }
 
