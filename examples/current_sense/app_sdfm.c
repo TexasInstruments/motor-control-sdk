@@ -129,9 +129,12 @@ void sdfmIrqHandlerChannel7(void *handle);
 /*Note: This function can be used for CH8 as an individual IRQ function by remapping unused host interrupts via SysConfig.
  *  For example, if channels 0-2 are unused, their host interrupts can be reassigned to CH7 and CH8.
  *  - This requires SysConfig changes to remap PRU event outputs to different host interrupts.
- *  - The code available in the sdfmIrqHandlerChannel7 function is not applicable for channel8, so it should be commented when using the channel8 individual IRQ function.
+ *  - When using this as the CH8 IRQ handler, comment out the CH8-specific code in sdfmIrqHandlerChannel7.
  * 
-/*void sdfmIrqHandlerChannel8(void *handle);*/
+ */
+#ifdef SDFM_CHANNEL8_IRQ_HANDLER_USED
+void sdfmIrqHandlerChannel8(void *handle); 
+#endif
 
 /* ========================================================================== */
 /*                            Global Variables                                */
@@ -868,7 +871,8 @@ void sdfmIrqHandlerChannel7(void *args)
  *  because Channel 7 and Channel 8 share the same host interrupt (HOST_INTR_PEND_7)
  *  and are handled together by sdfmIrqHandlerChannel7.
  */
-/*void sdfmIrqHandlerChannel8(void *args)
+#ifdef SDFM_CHANNEL8_IRQ_HANDLER_USED
+void sdfmIrqHandlerChannel8(void *args)
 {
     gSdfmIrqCntChannel8++;
     PRUICSS_clearEvent(gPruIcssHandle, ICSS_SDFM_TRIGGER_EVNT_CH8);
@@ -880,4 +884,5 @@ void sdfmIrqHandlerChannel7(void *args)
 
     sdfm_ch_samples[SDFM_CHANNEL8][sdfmIdxCntChannel8] = SDFM_getFilterData(gPruIcssSdfmHandle, SDFM_CHANNEL8);
     sdfmIdxCntChannel8++;
-}*/
+}
+#endif

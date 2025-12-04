@@ -155,4 +155,18 @@ SD_CH7                       .set 0111b
 SD_CH8                       .set 1000b
    .endif
 
+; IEP Base Addresses
+PRU_ICSS_IEP1_BASE              .set PRUx_IEP0_BASE + 0x1000
+
+; SPAD Bank for SD Ch context storage
+BANK_CTXT_NC                    .set BANK0
+BANK_SINGLE_PRU_DIFF_STATE      .set BANK1
+
+; Differentiator state located in BANK locations 9-17
+NUM_REGS_DIFF_STATE             .set 9      ; Number of PRU registers for differentiator state
+OUT_SAMP_MASK                   .set 0x0FFFFFFF ; 28-bit mask applied to Integrator & Differentiator output
+
+; Required sample for stable NC sample = NC_SAMP_CNT - 1
+NC_SAMP_CNT                     .set 4
+
    .endif  ; __sdfm_h

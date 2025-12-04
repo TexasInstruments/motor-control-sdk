@@ -116,7 +116,7 @@
 /* ========================================================================== */
 /*                            Global Variables                                */
 /* ========================================================================== */
-extern SDFM_Config gSdfmHandles[];
+extern SDFM_Config gSdfmHandle[];
 extern uint32_t gSdfmConfigNum;
 /* ========================================================================== */
 /*                          Function Definitions                              */
@@ -131,7 +131,7 @@ SDFM_Handle SDFM_init(uint32_t index, SDFM_Params sdfm_params)
     }
     else
     {
-        handle = (SDFM_Handle)(&gSdfmHandles[index]);
+        handle = (SDFM_Handle)(&gSdfmHandle[index]);
         /* Initialize SDFM interface address */
         if(sdfm_params.pru_slice == PRUICSS_PRU0)
         {              
@@ -586,8 +586,7 @@ int32_t SDFM_setFilterOverSamplingRatio(SDFM_Handle h_sdfm, uint8_t ch, uint16_t
     {
         return SystemP_FAILURE;
     }
-
-
+    
     if(h_sdfm->sdfm_interface->control[pru_core].enable_snoop_nc == 1)
     {
         /* IEP0 counts in normal current sampling period */

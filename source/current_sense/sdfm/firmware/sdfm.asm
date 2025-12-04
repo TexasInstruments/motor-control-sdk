@@ -85,19 +85,6 @@ TRIGGER_HOST_SDFM_IRQ_CH8   .set ICSS_SDFM_TRIGGER_EVNT_CH8 + 16
 	.asg	PRU1_DMEM,		PRUx_DMEM
 	.endif
 
-PRU_ICSS_IEP1_BASE              .set PRUx_IEP0_BASE + 0x1000
-
-;SPAD Bank for SD Ch context storage
-BANK_CTXT_NC               .set BANK0
-BANK_SINGLE_PRU_DIFF_STATE  .set BANK1
-
-;differentiator state located in BANK locations 9-17
-NUM_REGS_DIFF_STATE    .set  9  ; Number of PRU registers for differentiator state
-OUT_SAMP_MASK           .set 0x0FFFFFFF ; 28-bit mask applied to Integrator & Differentiator output
-
-;Required sample for stable NC sample = NC_SAMP_CNT - 1
-NC_SAMP_CNT .set 4
-
 ;***************************************************************************************************
 
 ;--------------------------------------Used Registers-------------------------------------;

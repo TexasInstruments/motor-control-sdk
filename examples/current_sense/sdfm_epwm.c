@@ -72,6 +72,13 @@ SdfmEpwmCfg_t gEpwmCfgPrms = {0};
 
 #if APP_EPWM1_ENABLE
 /* EPWM1 IRQ handler forward declaration */
+/**
+ *  \brief EPWM1 configuration for sigma delta clock generation
+ *
+ *  EPWM1 can be used to generate the sigma delta modulator clock.
+ *  Set APP_EPWM1_ENABLE to 1 to enable EPWM1.
+ *  Make sure EPWM1 is added in SysConfig before enabling this macro.
+ */
 void epwmIrqHandler1(void *handle);
 HwiP_Object gEpwm1HwiObject;         /* EPWM1 HWI */
 uint32_t gEpwm1BaseAddr = 0;    /* EPWM1 base address */
@@ -240,11 +247,17 @@ int32_t sdfmEpwmInit(void)
     sdfmEpwmConfig(&gEpwmCfgPrms);
 
 #if APP_EPWM1_ENABLE
-    /* EPWM for SDFM clock generation */
+/**
+ *  \brief EPWM1 configuration for sigma delta clock generation
+ *
+ *  EPWM1 can be used to generate the sigma delta modulator clock.
+ *  Set APP_EPWM1_ENABLE to 1 to enable EPWM1.
+ *  Make sure EPWM1 is added in SysConfig before enabling this macro.
+ */
     /* Initialize EPWM base address, perform address translation */
     gEpwm1BaseAddr = (uint32_t)AddrTranslateP_getLocalAddr(CONFIG_EPWM1_BASE_ADDR);
 
-    HwiP_Params HwiPrms1;
+    HwiP_Params hwiPrms1;
 
     /* Register & enable EPWM1 interrupt */
     HwiP_Params_init(&hwiPrms1);
