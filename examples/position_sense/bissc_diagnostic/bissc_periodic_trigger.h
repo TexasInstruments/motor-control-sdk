@@ -45,17 +45,47 @@
 /*                           Macros & Typedefs                                */
 /* ========================================================================== */
 
-/** \brief IEP counter default increment value (1 per clock cycle) */
-#define IEP_DEFAULT_INC     0x1
+/* TIMESYNC router configuration register offsets and values */
+#define BISSC_TIMESYNC_EVENT_ROUTER_REG_SIZE         (4U)
+#define BISSC_TIMESYNC_EVENT_ROUTER_OUT8_OFFSET      (8U * BISSC_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U)  /*ICSSG0 PRG0_IEP0_LATCH0_IN0*/
+#define BISSC_TIMESYNC_EVENT_ROUTER_OUT9_OFFSET      (9U * BISSC_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U)  /*ICSSG0 PRG0_IEP0_LATCH1_IN0*/
+#define BISSC_TIMESYNC_EVENT_ROUTER_OUT10_OFFSET     (10U * BISSC_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG0 PRG0_IEP1_LATCH0_IN0*/
+#define BISSC_TIMESYNC_EVENT_ROUTER_OUT11_OFFSET     (11U * BISSC_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG0 PRG0_IEP1_LATCH1_IN0*/
+#define BISSC_TIMESYNC_EVENT_ROUTER_OUT12_OFFSET     (12U * BISSC_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG1 PRG1_IEP0_LATCH0_IN0*/
+#define BISSC_TIMESYNC_EVENT_ROUTER_OUT13_OFFSET     (13U * BISSC_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG1 PRG1_IEP0_LATCH1_IN0*/
+#define BISSC_TIMESYNC_EVENT_ROUTER_OUT14_OFFSET     (14U * BISSC_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG1 PRG1_IEP1_LATCH0_IN0*/
+#define BISSC_TIMESYNC_EVENT_ROUTER_OUT15_OFFSET     (15U * BISSC_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG1 PRG1_IEP1_LATCH1_IN0*/
 
-/** \brief IEP counter enable bit in Global Config register (start counter) */
-#define IEP_COUNTER_EN      0x1
+/*CAP0 is used for Channel1 for periodic contimuos cap mode, to changes cap event different cap number offset can be found at TRM section 9.3.2.2 GPIOMUX_INTRTR0 Integration.*/
+#define BISSC_GPIOMUX_INTROUTER0_IEP0_CAP_OFFSET     (18U * BISSC_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U)  /*GPIOMUX0 IEP0_CAP_IN*/
+#define BISSC_GPIOMUX_INTROUTER0_IEP1_CAP_OFFSET     (24U * BISSC_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U)  /*GPIOMUX0 IEP1_CAP_IN*/
 
-/** \brief IEP reset counter on CMP0 event enable bit */
-#define IEP_RST_CNT_EN      0x1
+#define BISSC_TIMESYNC_EVENT_ROUTER_IN25              (0x00010019U)  /* PRU_ICSSG0_PR1_EDC0_SYNC0_OUT_0 */
+#define BISSC_TIMESYNC_EVENT_ROUTER_IN27              (0x0001001BU)  /* PRU_ICSSG0_PR1_EDC1_SYNC0_OUT_0 */
+#define BISSC_TIMESYNC_EVENT_ROUTER_IN29              (0x0001001DU)  /* PRU_ICSSG1_PR1_EDC0_SYNC0_OUT_0 */
+#define BISSC_TIMESYNC_EVENT_ROUTER_IN31              (0x0001001FU)  /* PRU_ICSSG1_PR1_EDC1_SYNC0_OUT_0 */
 
-/** \brief IEP Compare 0 (CMP0) event enable bit (bit 1 in CMP_CFG_REG) */
-#define IEP_CMP0_ENABLE     (0x1 << 1)
+/* GPIO number need to be configured based on the input source GPIO pin number.
+ * Refer to the GPIOMUX_INTRTR0 Interrupt Map section in the TRM (9.4.1.8) for details. */
+#define BISSC_GPIOMUX_INTROUTER0_CAP_GPIO_IN          (0x00010004U)  /* PINFUNCTION_PRG0_IEP_CAP_IN */
+
+/* IEP SYNC control register bit definitions */
+#define BISSC_IEP_SYNC_CTRL_SYNC01_EN_SHIFT            (0U)           /* SYNC01 enable bit position */
+#define BISSC_IEP_SYNC_CTRL_SYNC01_EN_MASK             (0x00000001U)  /* SYNC01 enable bit mask */
+#define BISSC_IEP_SYNC_CTRL_SYNC0_EN_SHIFT            (1U)           /* SYNC1 enable bit position */
+#define BISSC_IEP_SYNC_CTRL_SYNC0_EN_MASK             (0x00000002U)  /* SYNC1 enable bit mask */
+#define BISSC_IEP_SYNC_CTRL_SYNC0_CYCLIC_EN_SHIFT     (5U)           /* SYNC0 cyclic generation bit position */
+#define BISSC_IEP_SYNC_CTRL_SYNC0_CYCLIC_EN_MASK      (0x00000020U)  /* SYNC0 cyclic generation bit mask */
+
+/* IEP SYNC configuration values */
+#define BISSC_IEP_CMP1_START_DELAY             (100U)         /* IEP CMP1 start delay in cycles */
+#define BISSC_IEP_SYNC0_PULSE_WIDTH            (10U)          /* SYNC0 high pulse time in IEP clock cycles */
+#define BISSC_IEP_CMP_EVENT_FOR_SYNC0          (1U)           /* CMP event number used for SYNC0 generation */
+
+/*IEP Counter configuration*/
+#define BISSC_IEP_COUNTER_ENABLE         (1U)          /* IEP counter enable value */
+#define BISSC_IEP_COUNTER_DISABLE        (0U)          /* IEP counter disable value */
+#define BISSC_IEP_COUNTER_INCREMENT      (1U)          /* IEP counter increment value */
 
 /* ========================================================================== */
 /*                         Structure Declarations                             */
@@ -80,6 +110,9 @@ typedef struct bissc_periodic_interface_s
   uint64_t iep_reset_count;
   /**< IEP counter reset value (in IEP clock cycles) for CMP0 event.
    *   When IEP counter reaches this value, it resets to 0, creating periodic cycles */
+
+  uint8_t is_cap_mode;
+  /**< Flag indicating periodic trigger mode: 0 = CMP mode, 1 = CAP mode */
 } bissc_periodic_interface;
 
 /* ========================================================================== */

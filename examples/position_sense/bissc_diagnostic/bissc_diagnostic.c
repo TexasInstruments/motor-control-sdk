@@ -104,7 +104,7 @@
 #include <kernel/dpl/DebugP.h>
 #include <drivers/soc.h>
 
-#if defined(SOC_AM243X) || defined(SOC_AM64X)
+#if defined(SOC_AM243X)
 #include <drivers/sciclient.h>
 #endif
 
@@ -178,8 +178,9 @@
 #define BISSC_CMD_ENC_SEND_POS              (3)
 #define BISSC_CMD_ENC_CTRL_CMD              (4)
 #define BISSC_CMD_ENC_LOOP_OVER_CYC         (5)
-#define BISSC_CMD_PERIODIC_TRIGGER          (6)
-#define BISSC_ENABLE_SAFETY                 (7)
+#define BISSC_CMD_PERIODIC_TRIGGER_CMP      (6)
+#define BISSC_CMD_PERIODIC_TRIGGER_CAP      (7)
+#define BISSC_ENABLE_SAFETY                 (8)
 
 #define BISSC_POSITION_LOOP_STOP            0
 #define BISSC_POSITION_LOOP_START           1
@@ -220,7 +221,7 @@ static void bissc_print_res(bissc_handle handle);
 static int32_t bissc_get_command(void);
 static void bissc_position_loop_decide_termination(void *args);
 static int32_t bissc_loop_task_create(void);
-static void bissc_process_periodic_command(bissc_handle handle[CONFIG_BISSC_NUM_INSTANCES], uint64_t trigger_count[CONFIG_BISSC_NUM_INSTANCES][BISSC_NUM_CH_PER_SLICE_MAX], uint64_t iep_reset_count);
+static void bissc_process_periodic_command(bissc_handle handle[CONFIG_BISSC_NUM_INSTANCES], uint64_t trigger_count[CONFIG_BISSC_NUM_INSTANCES][BISSC_NUM_CH_PER_SLICE_MAX], uint64_t iep_reset_count, uint8_t is_cap_mode);
 void bissc_main(void *args);
 
 /* ========================================================================== */
@@ -542,8 +543,9 @@ static void bissc_display_menu(void)
     DebugP_log("\r\n| 3 : Encoder send position values                                             |");
     DebugP_log("\r\n| 4 : Control Communication - Register Read/Write                              |");
     DebugP_log("\r\n| 5 : Loop over BiSS-C cycles                                                  |");
-    DebugP_log("\r\n| 6 : Start continuous mode                                                    |");
-    DebugP_log("\r\n| 7 : Enable safety mode                                                       |");
+    DebugP_log("\r\n| 6 : Start periodic continuous mode (CMP trigger)                             |");
+    DebugP_log("\r\n| 7 : Start periodic continuous mode (CAP trigger)                             |");
+    DebugP_log("\r\n| 8 : Enable safety mode                                                       |");
     DebugP_log("\r\n| 0 : Exit the application                                                     |");
     DebugP_log("\r\n|------------------------------------------------------------------------------|");
     DebugP_log("\r\n| Enter value:\r\n");
@@ -741,7 +743,7 @@ static int32_t bissc_loop_task_create(void)
     return status;
 }
 
-static void bissc_process_periodic_command(bissc_handle handle[CONFIG_BISSC_NUM_INSTANCES], uint64_t trigger_count[CONFIG_BISSC_NUM_INSTANCES][BISSC_NUM_CH_PER_SLICE_MAX], uint64_t iep_reset_count)
+static void bissc_process_periodic_command(bissc_handle handle[CONFIG_BISSC_NUM_INSTANCES], uint64_t trigger_count[CONFIG_BISSC_NUM_INSTANCES][BISSC_NUM_CH_PER_SLICE_MAX], uint64_t iep_reset_count, uint8_t is_cap_mode)
 {
     /* Any function call failure will lead to exit of bissc_process_periodic_command function */
     int32_t ret;
@@ -750,11 +752,22 @@ static void bissc_process_periodic_command(bissc_handle handle[CONFIG_BISSC_NUM_
     const bissc_attrs *attrs;
 
     for(i = 0; i < CONFIG_BISSC_NUM_INSTANCES; i++)
-    {
-        if(bissc_config_periodic_trigger(handle[i]) != SystemP_SUCCESS)
+    {  
+        if(is_cap_mode)
         {
-            DebugP_log("\r| ERROR: Failed to configure periodic trigger\n");
-            return;
+            if(bissc_config_periodic_trigger_cap_mode(handle[i]) != SystemP_SUCCESS)
+            {
+                DebugP_log("\r| ERROR: Failed to configure periodic trigger in CAP mode\n");
+                return;
+            }
+        }
+        else
+        {
+            if(bissc_config_periodic_trigger_cmp_mode(handle[i]) != SystemP_SUCCESS)
+            {
+                DebugP_log("\r| ERROR: Failed to configure periodic trigger in CMP mode\n");
+                return;
+            }
         }
     }
 
@@ -762,35 +775,39 @@ static void bissc_process_periodic_command(bissc_handle handle[CONFIG_BISSC_NUM_
     {
         return;
     }
-
-    for(i = 0; i < CONFIG_BISSC_NUM_INSTANCES; i++)
+    if(is_cap_mode == 0)
     {
-        attrs = bissc_get_attrs(handle[i]);
-
-        gBisscPeriodicInterface.handle[i] = handle[i];
-
-        if(attrs->load_share_enabled)
+        for(i = 0; i < CONFIG_BISSC_NUM_INSTANCES; i++)
         {
-            if(attrs->channel0_enabled)
+            attrs = bissc_get_attrs(handle[i]);
+
+            if(attrs->load_share_enabled)
+            {
+                if(attrs->channel0_enabled)
+                {
+                    gBisscPeriodicInterface.periodic_trigger_count[i][0] = trigger_count[i][0];
+                }
+                if(attrs->channel1_enabled)
+                {
+                    gBisscPeriodicInterface.periodic_trigger_count[i][1] = trigger_count[i][1];
+                }
+                if(attrs->channel2_enabled)
+                {
+                    gBisscPeriodicInterface.periodic_trigger_count[i][2] = trigger_count[i][2];
+                }
+            }
+            else
             {
                 gBisscPeriodicInterface.periodic_trigger_count[i][0] = trigger_count[i][0];
             }
-            if(attrs->channel1_enabled)
-            {
-                gBisscPeriodicInterface.periodic_trigger_count[i][1] = trigger_count[i][1];
-            }
-            if(attrs->channel2_enabled)
-            {
-                gBisscPeriodicInterface.periodic_trigger_count[i][2] = trigger_count[i][2];
-            }
-        }
-        else
-        {
-            gBisscPeriodicInterface.periodic_trigger_count[i][0] = trigger_count[i][0];
         }
     }
-
+    for(i = 0; i < CONFIG_BISSC_NUM_INSTANCES; i++)
+    {
+        gBisscPeriodicInterface.handle[i] = handle[i];
+    }
     gBisscPeriodicInterface.iep_reset_count = iep_reset_count;
+    gBisscPeriodicInterface.is_cap_mode = is_cap_mode;
 
     if(bissc_config_periodic_mode(&gBisscPeriodicInterface) != SystemP_SUCCESS)
     {
@@ -1080,6 +1097,7 @@ void bissc_main(void *args)
     {
         int32_t cmd, ret;
         uint64_t trigger_count[CONFIG_BISSC_NUM_INSTANCES][BISSC_NUM_CH_PER_SLICE_MAX]={0}, iep_reset_count = 0;
+        uint8_t is_cap_mode = 0;
         uint32_t freq, ctrl_cmd[BISSC_NUM_CH_PER_SLICE_MAX]={0};
         uint32_t loop_cnt;
         uint32_t safety = 0;
@@ -1353,14 +1371,15 @@ void bissc_main(void *args)
                 DebugP_log("\r\nPlease enter non-zero value\n");
             }
         }
-        else if(cmd == BISSC_CMD_PERIODIC_TRIGGER)
+        else if(cmd == BISSC_CMD_PERIODIC_TRIGGER_CMP)
         {
+            is_cap_mode = 0;
 #if defined(BISSC_DUAL_PRU_SLICE_ENABLE)
             DebugP_log("\r\n IEP is common for both BiSS-C instances. Same IEP periodic cycle will be used for both instances.\n");
 #endif
             DebugP_log("\r| Enter IEP cycle count(must be greater than BiSS cycle time including timeout period, in IEP cycles): ");
             DebugP_scanf("%llu\n", &iep_reset_count);
-            if(iep_reset_count <= IEP_DEFAULT_INC)
+            if(iep_reset_count <= BISSC_IEP_COUNTER_INCREMENT)
             {
                 DebugP_log("\r\n| ERROR: Invalid value entered\n");
                 continue;
@@ -1374,7 +1393,7 @@ void bissc_main(void *args)
                     {
                         DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) for channel 0: \n");
                         DebugP_scanf("%llu\n", &trigger_count[i][0]);
-                        if((trigger_count[i][0] > iep_reset_count) || (trigger_count[i][0] <= IEP_DEFAULT_INC))
+                        if((trigger_count[i][0] > iep_reset_count) || (trigger_count[i][0] <= BISSC_IEP_COUNTER_INCREMENT))
                         {
                             DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
                             continue;
@@ -1385,7 +1404,7 @@ void bissc_main(void *args)
                     {
                         DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) for channel 1: \n");
                         DebugP_scanf("%llu\n", &trigger_count[i][1]);
-                        if((trigger_count[i][1] > iep_reset_count) || (trigger_count[i][1] <= IEP_DEFAULT_INC))
+                        if((trigger_count[i][1] > iep_reset_count) || (trigger_count[i][1] <= BISSC_IEP_COUNTER_INCREMENT))
                         {
                             DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
                             continue;
@@ -1395,7 +1414,7 @@ void bissc_main(void *args)
                     {
                         DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) for channel 2: \n");
                         DebugP_scanf("%llu\n", &trigger_count[i][2]);
-                        if((trigger_count[i][2] > iep_reset_count) || (trigger_count[i][2] <= IEP_DEFAULT_INC))
+                        if((trigger_count[i][2] > iep_reset_count) || (trigger_count[i][2] <= BISSC_IEP_COUNTER_INCREMENT))
                         {
                             DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
                             continue;
@@ -1407,7 +1426,7 @@ void bissc_main(void *args)
                 {
                     DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles): ");
                     DebugP_scanf("%llu\n", &trigger_count[i][0]);
-                    if((trigger_count[i][0] > iep_reset_count) || (trigger_count[i][0] <= IEP_DEFAULT_INC))
+                    if((trigger_count[i][0] > iep_reset_count) || (trigger_count[i][0] <= BISSC_IEP_COUNTER_INCREMENT))
                     {
                         DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
                         continue;
@@ -1416,10 +1435,10 @@ void bissc_main(void *args)
             }
             DebugP_log("\r\n Switching to periodic trigger mode\n");
 
-            /* Switching to periodic mode using bissc_config_periodic_trigger() is done
+            /* Switching to periodic mode using bissc_config_periodic_trigger_cmp_mode() is done
              * inside bissc_process_periodic_command */
 
-            bissc_process_periodic_command(gAppBisscHandle, trigger_count, iep_reset_count);
+            bissc_process_periodic_command(gAppBisscHandle, trigger_count, iep_reset_count, is_cap_mode);
 
             /* Switch back to host trigger mode for menu-driven operation */
             DebugP_log("\r\n Switching to host trigger mode\n");
@@ -1474,6 +1493,42 @@ void bissc_main(void *args)
                 }
             }
         }
+        else if(cmd == BISSC_CMD_PERIODIC_TRIGGER_CAP)
+        {
+            is_cap_mode = 1;
+#if defined(SOC_AM243X) 
+            DebugP_log("\r| Enter IEP SYNC0 period (in IEP cycles, used for CAP mode):");
+            DebugP_scanf("%llu\n", &iep_reset_count);
+            if(iep_reset_count <= BISSC_IEP_COUNTER_INCREMENT)
+            {
+                DebugP_log("\r\n| ERROR: Invalid value entered\n");
+                continue;
+            }       
+#else
+            DebugP_log("\r| Periodic CAP mode cycle time will be equal to EPWM frequency. NOTE: In SysConfig, EPWM and EPWM to IEP LATCH XBAR configuration must be done. \n|\n|\n|\n");
+            
+#endif
+            DebugP_log("\r\n Switching to periodic trigger mode \n");
+
+            /* Switching to periodic mode using bissc_config_periodic_trigger_cap_mode() is done
+             * inside bissc_process_periodic_command */
+
+            bissc_process_periodic_command(gAppBisscHandle, trigger_count, iep_reset_count, is_cap_mode);
+
+            /* Switch back to host trigger mode for menu-driven operation */
+            DebugP_log("\r\n Switching to host trigger mode\n");
+
+            for(i = 0; i < CONFIG_BISSC_NUM_INSTANCES; i++)
+            {
+                if(bissc_config_host_trigger(gAppBisscHandle[i]) != SystemP_SUCCESS)
+                {
+                    /* NOTE: If this fails, driver may remain in periodic mode causing subsequent
+                    * host-triggered commands to fail. */
+                    DebugP_log("\r| ERROR: Failed to revert to host trigger for BiSS-C instance %u\n", i);
+                }
+            }
+        }
+        
     }
 deinit:
 
