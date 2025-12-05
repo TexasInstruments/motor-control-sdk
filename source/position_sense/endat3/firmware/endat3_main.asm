@@ -143,7 +143,7 @@ init_seq_hello:
 	; Prepare and send hello sequence
 	ldi32 TX_PREAMBLE, FIXED_TX_PREAMBLE             ; Load predefined preamble pattern
 	ldi32 TX_CMD_DATA, FIXED_HELLO_CMD_DATA          ; Load hello command data
-	ENCODE_TX_DATA TX_CMD_DATA, TX_ENCODED_HIGH, TX_ENCODED_LOW, ENCODE_INPUT_REG, ENCODE_OUTPUT_REG, BYTE_REV_INPUT, BYTE_REV_RESULT
+	ENCODE_TX_DATA TX_CMD_DATA, TX_ENCODED_HIGH, TX_ENCODED_LOW, ENCODE_INPUT_REG, ENCODE_OUTPUT_REG
 	TX_PREPROCESSING TX_PREAMBLE, TX_ENCODED_HIGH, TX_ENCODED_LOW, TEMP0
 	SEND_TX TX_PREAMBLE, TX_ENCODED_HIGH, TX_ENCODED_LOW
 
@@ -182,7 +182,7 @@ wait_for_start_trigger:
 	; Send confirmation message
 	ldi32 TX_PREAMBLE, FIXED_TX_PREAMBLE             ; Load preamble
 	ldi32 TX_CMD_DATA, FIXED_HELLO_CMD_DATA          ; Load data
-	ENCODE_TX_DATA TX_CMD_DATA, TX_ENCODED_HIGH, TX_ENCODED_LOW, ENCODE_INPUT_REG, ENCODE_OUTPUT_REG, BYTE_REV_INPUT, BYTE_REV_RESULT
+	ENCODE_TX_DATA TX_CMD_DATA, TX_ENCODED_HIGH, TX_ENCODED_LOW, ENCODE_INPUT_REG, ENCODE_OUTPUT_REG
 	TX_PREPROCESSING TX_PREAMBLE, TX_ENCODED_HIGH, TX_ENCODED_LOW, TEMP0
 	SEND_TX TX_PREAMBLE, TX_ENCODED_HIGH, TX_ENCODED_LOW
 
@@ -304,7 +304,7 @@ no_wait_for_10ms:
 	add CURR_TX_FRAME_MEM_OFFSET, CURR_TX_FRAME_MEM_OFFSET, 4 ; Update offset
 
 	; Encode and send the data
-	ENCODE_TX_DATA TX_CMD_DATA, TX_ENCODED_HIGH, TX_ENCODED_LOW, ENCODE_INPUT_REG, ENCODE_OUTPUT_REG, BYTE_REV_INPUT, BYTE_REV_RESULT
+	ENCODE_TX_DATA TX_CMD_DATA, TX_ENCODED_HIGH, TX_ENCODED_LOW, ENCODE_INPUT_REG, ENCODE_OUTPUT_REG
 	TX_PREPROCESSING TX_PREAMBLE, TX_ENCODED_HIGH, TX_ENCODED_LOW, TEMP0
 	SEND_TX TX_PREAMBLE, TX_ENCODED_HIGH, TX_ENCODED_LOW
 ;******************************************************************************
@@ -345,6 +345,10 @@ one_tx_frame_left:
 	loop sampling_delay,ADD_DELAY  ; Use dynamic sampling delay
 	add TEMP0, TEMP0, 0
 sampling_delay:
+	;Check for preamble (delimiter)
+    ldi ERROR_MASK_REG, ERROR_MASK                   ; Set error detection mask
+    ldi ERROR_STATUS_REG, 1                          ; Initialize error status
+	ldi FIRST_DATA_HALF_BIT, 0                       ; Clear first bit storage
 
 	; Configure and enable rx mode
 	RX_FRAME_SIZE                                   ; Configure rx frame size
@@ -356,11 +360,6 @@ sampling_delay:
 ; Detects and validates the preamble pattern from the encoder response.
 ; Ensures proper synchronization before proceeding to data reception.
 ;******************************************************************************
-;Check for preamble (delimiter)
-    ldi ERROR_MASK_REG, ERROR_MASK                   ; Set error detection mask
-    ldi ERROR_STATUS_REG, 1                          ; Initialize error status
-	ldi FIRST_DATA_HALF_BIT, 0                       ; Clear first bit storage
-    
     ; Receive first bit of preamble
     RECEIVE_PREAMBLE 1                              ; Get first preamble bit
     ;;Now FIRST_DATA_HALF_BIT contain start of preamble (first half bit)
@@ -368,11 +367,10 @@ sampling_delay:
 start_bits:
     ; Continue receiving preamble bits
     RECEIVE_PREAMBLE 1                              ; Get next bit
-	qbeq long_symbol_detected, LONG_SHORT_STATUS, 1   ; Check if it's a long symbol
+	qbeq start_bits, LONG_SHORT_STATUS, 1   ; Check if it's a long symbol
 
 short_symbol_detected:
     ; Process short symbol (pattern recognition)
-    qbgt error_detected, LONG_SYMBOL_COUNT, MIN_LONG_SYMB_COUNT ; Check long symbol count
     RECEIVE_PREAMBLE 5                              ; Get 5 more bits
 	
 	; Mask and analyze the bit pattern
@@ -392,11 +390,6 @@ short_symbol_detected:
 	ldi32 TEMP1, 0                                   ; Clear TEMP1
     qba receive_data_frames                         ; Start receiving data
     
-long_symbol_detected:
-    ; Track long symbols (part of preamble detection)
-    add LONG_SYMBOL_COUNT, LONG_SYMBOL_COUNT, 1       ; Increment long symbol counter
-    qba start_bits                                  ; Continue preamble detection
-
 ;******************************************************************************
 ; Data Reception and Decoding
 ;

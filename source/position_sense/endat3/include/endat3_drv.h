@@ -110,6 +110,16 @@ extern "C" {
 #define BG_DATA_SIZE                    6       /* Background data array size */
 #define TEMP2_BUFFER_SIZE               4       /* Additional temporary storage size */
 
+/* PRU core definitions for load-share mode
+ * Note: Load-share mode (pruMode=1) is only supported on AM243x/AM64x with ICSSG.
+ * These values map to PRUICSS core IDs on supported devices. */
+#define ENDAT3_PRUICSS_PRU0             (0U)    /**< PRU core 0 */
+#define ENDAT3_PRUICSS_PRU1             (1U)    /**< PRU core 1 */
+#define ENDAT3_PRUICSS_RTU_PRU0         (2U)    /**< RTU PRU core 0 (ICSSG only) */
+#define ENDAT3_PRUICSS_RTU_PRU1         (3U)    /**< RTU PRU core 1 (ICSSG only) */
+#define ENDAT3_PRUICSS_TX_PRU0          (4U)    /**< TX PRU core 0 (ICSSG only) */
+#define ENDAT3_PRUICSS_TX_PRU1          (5U)    /**< TX PRU core 1 (ICSSG only) */
+
 /* Reset command data values */
 #define ENDAT3_RESET_HARD               0x01    /**< Hard reset command data */
 #define ENDAT3_RESET_SOFT               0x00    /**< Soft reset command data */
@@ -120,8 +130,8 @@ extern "C" {
 #define ENDAT3_CLEAR_REF                0x04    /**< Clear reference flag */
 
 /* Data rate configuration values */
-#define ENDAT3_RATE_12_5MBPS            0x01    /**< 12.5 Mbps data rate */
-#define ENDAT3_RATE_25MBPS              0x02    /**< 25 Mbps data rate */
+#define ENDAT3_RATE_12_5MBPS            0x00    /**< 12.5 Mbps data rate */
+#define ENDAT3_RATE_25MBPS              0x01    /**< 25 Mbps data rate */
 
 /* Bus initialization command types */
 #define ENDAT3_BUSINIT_RESET_ADDR       0x01    /**< Bus init with address reset */
@@ -513,8 +523,11 @@ int32_t endat3_getLastError(endat3_Handle handle);
  * EnDAT mode configuration, and TX/RX clock setup.
  *
  * \ param icssHandle PRUICSS_Handle for the ICSS instance
- * \ param icssCore Core to map in ICSSG instance
+ * \ param icssCore Core to map in ICSSG instance. For load-share mode (pruMode=1),
+ *                  use ENDAT3_PRUICSS_PRU0/1, ENDAT3_PRUICSS_RTU_PRU0/1, or ENDAT3_PRUICSS_TX_PRU0/1.
  * \ param pruMode 0 for non-load-share mode, 1 for load-share mode
+ *                 Note: pruMode=1 is only supported on AM243x/AM64x with ICSSG.
+ *                 AM261x with ICSSM does not support load-share mode.
  * \ param pru_freq_hz PRU core frequency in Hz (e.g., 300000000 for 300MHz)
  * \ param channel_mask Channel enable mask (bit 0=CH0, bit 1=CH1, bit 2=CH2)
  * \ param baud_rate Baud rate selection: 0 = 12.5 Mbps, 1 = 25 Mbps

@@ -6,23 +6,35 @@ let is_am26x_soc = (device === "am263x-cc" || device === "am261x-lp" || device =
 let is_am263x_soc = (device === "am263x-cc") ? true : false;
 let is_am261x_soc = (device === "am261x-lp") ? true : false;
 let is_am263px_soc = (device === "am263px-cc") ? true : false;
-let hdsl_endat3_pins = (is_am26x_soc) ? system.getScript("/position_sense/endat3/hdsl_endat_pins.js") : system.getScript("/position_sense/hdsl_endat_pins.js");
+let hdsl_endat3_pins = (is_am26x_soc) ? system.getScript("/position_sense/endat3/am26x_pins.js") : system.getScript("/position_sense/hdsl_endat_pins.js");
 
 function onValidate(inst, validation)
 {
     for (let instance_index in inst.$module.$instances)
     {
        let instance = inst.$module.$instances[instance_index];
-        /* Select atleast one channel */
+
+        /* Validate that at least one channel is selected */
         if ((!instance.Channel_0)&&(!instance.Channel_1)&&(!instance.Channel_2))
         {
             validation.logError("Select atleast one channel",inst,"Channel_0");
         }
+
+        /* Calculate total channels for validation */
+        let total_channels = (instance.Channel_0 ? 1 : 0) + (instance.Channel_1 ? 1 : 0) + (instance.Channel_2 ? 1 : 0);
+
+        /* AM26x SOC specific validation - only single channel supported */
+        if(is_am26x_soc && total_channels > 1)
+        {
+            validation.logError("AM26x devices support only single channel operation per PRU core", inst, "Channel_0");
+        }
+
         /* Channel 0 and channel 2 are supported on am243x-lp */
         if((device==="am243x-lp") && (instance.Channel_1 ))
         {
             validation.logError("On AM243x-LP, Channel 1 is not supported",inst,"Channel_1");
         }
+
         /* Validation for booster pack */
         if((device!="am243x-lp" && device != "am263x-cc" && device!="am261x-lp" && device != "am263px-cc" )&&(instance.Booster_Pack))
         {
@@ -35,7 +47,7 @@ function onValidate(inst, validation)
                 {
                     if(instance.PRU_Slice == "PRU0" && instance.Channel_2)
                     {
-                        validation.logError("Channel2 TX signal is not pinned out at the device level", inst, "Channel_2");
+                        validation.logError("Channel 2 TX signal is not pinned out at the device level", inst, "Channel_2");
                     }
 
                     if((instance.Channel_2 || instance.Channel_0)&&(instance.Booster_Pack))

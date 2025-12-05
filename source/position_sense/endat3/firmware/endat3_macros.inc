@@ -128,18 +128,14 @@ MANCH_8BIT_LOOP?:
 ;   output_low     - 32-bit register to store low 32 bits of encoded result
 ;   work_reg1      - 32-bit work register for encoding operations
 ;   work_reg2      - 32-bit work register for encoding operations
-;   byte_rev_in    - 32-bit register for byte reversal input
-;   byte_rev_out   - 32-bit register for byte reversal output
 ;
 ; Example:
-;   ENCODE_TX_DATA TX_CMD_DATA, TX_ENCODED_HIGH, TX_ENCODED_LOW, ENCODE_INPUT_REG, ENCODE_OUTPUT_REG, BYTE_REV_INPUT, BYTE_REV_RESULT
+;   ENCODE_TX_DATA TX_CMD_DATA, TX_ENCODED_HIGH, TX_ENCODED_LOW, ENCODE_INPUT_REG, ENCODE_OUTPUT_REG
 ;------------------------------------------------------------------------------
-ENCODE_TX_DATA .macro input_data, output_high, output_low, work_reg1, work_reg2, byte_rev_in, byte_rev_out
+ENCODE_TX_DATA .macro input_data, output_high, output_low, work_reg1, work_reg2
     ; Reverse byte order of input data (preserve original input_data)
-    mov     byte_rev_in, input_data
-    xout    CRC_XID, &byte_rev_in, 4
-    xin     CRC_XID, &byte_rev_out, 4
-    mov     work_reg1, byte_rev_out
+    mov     work_reg1, input_data
+    REVERSE_BYTE work_reg1
 
     ; Process first byte (MSB)
 	mov     work_reg2.b0, work_reg1.b3
