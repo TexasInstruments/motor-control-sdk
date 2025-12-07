@@ -16,14 +16,15 @@ const device_defines = {
 };
 
 const example_file_list = [
+    "examples/position_sense/bissc_diagnostic/dual_channel/.project/project.js",
     "examples/position_sense/bissc_diagnostic/single_channel/.project/project.js",
-    "examples/position_sense/endat_diagnostic/single_channel/.project/project.js",
     "examples/position_sense/endat_diagnostic/dual_channel/.project/project.js",
+    "examples/position_sense/endat_diagnostic/single_channel/.project/project.js",
     "examples/position_sense/endat3_diagnostic/single_channel/.project/project.js",
     "examples/position_sense/hdsl_diagnostic/single_channel/.project/project.js",
     "examples/position_sense/nikon_diagnostic/single_channel/.project/project.js",
-    "examples/position_sense/tamagawa_diagnostic/single_channel/.project/project.js",
     "examples/position_sense/tamagawa_diagnostic/dual_channel/.project/project.js",
+    "examples/position_sense/tamagawa_diagnostic/single_channel/.project/project.js",
     "examples/rtlibs/dcl/dcl_df22/.project/mcsdk_project.js",
     "examples/rtlibs/dcl/dcl_pi/.project/mcsdk_project.js",
     "examples/rtlibs/sfra/.project/mcsdk_project.js",

@@ -7,6 +7,39 @@
         "resourceSubClass": [
             "example.general"
         ],
+        "description": "A Bissc Diagnostic Dual Channel Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "bissc_diagnostic_dual_channel",
+        "location": "../../examples/position_sense/bissc_diagnostic/dual_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "LP-AM261"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "position_sense",
+            "bissc_diagnostic",
+            "dual_channel",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
         "description": "A Bissc Diagnostic Single Channel Example. CPU is R5FSS0-0 running FREERTOS.",
         "name": "bissc_diagnostic_single_channel",
         "location": "../../examples/position_sense/bissc_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
@@ -23,6 +56,39 @@
             "position_sense",
             "bissc_diagnostic",
             "single_channel",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "description": "A Endat Diagnostic Dual Channel Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "endat_diagnostic_dual_channel",
+        "location": "../../examples/position_sense/endat_diagnostic/dual_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "LP-AM261"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "position_sense",
+            "endat_diagnostic",
+            "dual_channel",
             "r5fss0-0_freertos"
         ],
         "mainCategories": [
@@ -73,9 +139,9 @@
         "resourceSubClass": [
             "example.general"
         ],
-        "description": "A Endat Diagnostic Dual Channel Example. CPU is R5FSS0-0 running FREERTOS.",
-        "name": "endat_diagnostic_dual_channel",
-        "location": "../../examples/position_sense/endat_diagnostic/dual_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "description": "A Endat3 Diagnostic Single Channel Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "endat3_diagnostic_single_channel",
+        "location": "../../examples/position_sense/endat3_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "LP-AM261"
         ],
@@ -87,8 +153,8 @@
         ],
         "subCategories": [
             "position_sense",
-            "endat_diagnostic",
-            "dual_channel",
+            "endat3_diagnostic",
+            "single_channel",
             "r5fss0-0_freertos"
         ],
         "mainCategories": [
@@ -172,9 +238,9 @@
         "resourceSubClass": [
             "example.general"
         ],
-        "description": "A Tamagawa Diagnostic Single Channel Example. CPU is R5FSS0-0 running FREERTOS.",
-        "name": "tamagawa_diagnostic_single_channel",
-        "location": "../../examples/position_sense/tamagawa_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "description": "A Tamagawa Diagnostic Dual Channel Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "tamagawa_diagnostic_dual_channel",
+        "location": "../../examples/position_sense/tamagawa_diagnostic/dual_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "LP-AM261"
         ],
@@ -187,7 +253,7 @@
         "subCategories": [
             "position_sense",
             "tamagawa_diagnostic",
-            "single_channel",
+            "dual_channel",
             "r5fss0-0_freertos"
         ],
         "mainCategories": [
@@ -205,9 +271,9 @@
         "resourceSubClass": [
             "example.general"
         ],
-        "description": "A Tamagawa Diagnostic Dual Channel Example. CPU is R5FSS0-0 running FREERTOS.",
-        "name": "tamagawa_diagnostic_dual_channel",
-        "location": "../../examples/position_sense/tamagawa_diagnostic/dual_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "description": "A Tamagawa Diagnostic Single Channel Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "tamagawa_diagnostic_single_channel",
+        "location": "../../examples/position_sense/tamagawa_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "LP-AM261"
         ],
@@ -220,7 +286,7 @@
         "subCategories": [
             "position_sense",
             "tamagawa_diagnostic",
-            "dual_channel",
+            "single_channel",
             "r5fss0-0_freertos"
         ],
         "mainCategories": [

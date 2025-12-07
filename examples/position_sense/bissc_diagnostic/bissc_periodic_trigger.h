@@ -39,6 +39,7 @@
 
 #include<stdint.h>
 #include <position_sense/bissc/include/bissc_drv.h>
+#include "ti_drivers_open_close.h"
 
 /* ========================================================================== */
 /*                           Macros & Typedefs                                */
@@ -56,15 +57,6 @@
 /** \brief IEP Compare 0 (CMP0) event enable bit (bit 1 in CMP_CFG_REG) */
 #define IEP_CMP0_ENABLE     (0x1 << 1)
 
-/** \brief IEP Compare event number for Channel 0 trigger */
-#define IEP_CH0_CMP_EVNT ( 3 )
-
-/** \brief IEP Compare event number for Channel 1 trigger */
-#define IEP_CH1_CMP_EVNT ( 5 )
-
-/** \brief IEP Compare event number for Channel 2 trigger */
-#define IEP_CH2_CMP_EVNT ( 6 )
-
 /* ========================================================================== */
 /*                         Structure Declarations                             */
 /* ========================================================================== */
@@ -72,24 +64,18 @@
 /**
  * \brief   Structure defining BiSS-C periodic trigger interface configuration
  *
- * \details Contains BiSS-C driver handle, IEP timer base pointer, and trigger
- *          count values for periodic mode operation. Used to configure IEP timer
- *          for automatic BiSS-C transaction triggering at specified intervals.
+ * \details Contains BiSS-C driver handle, trigger count values and IEP reset
+ *          count for periodic mode operation, in which automatic BiSS-C transaction
+ *          is triggered at configured intervals.
  */
 typedef struct bissc_periodic_interface_s
 {
-  bissc_handle handle;
+  bissc_handle handle[CONFIG_BISSC_NUM_INSTANCES];
   /**< BiSS-C driver handle obtained from bissc_init().
    *   Used to access driver configuration and PRU-ICSS resources */
 
-  uint64_t ch0_trigger_count;
-  /**< IEP counter value for Channel 0 periodic trigger (in IEP clock cycles). */
-
-  uint64_t ch1_trigger_count;
-  /**< IEP counter value for Channel 1 periodic trigger (in IEP clock cycles). */
-
-  uint64_t ch2_trigger_count;
-  /**< IEP counter value for Channel 2 periodic trigger (in IEP clock cycles). */
+  uint64_t periodic_trigger_count[CONFIG_BISSC_NUM_INSTANCES][BISSC_NUM_CH_PER_SLICE_MAX];
+  /**< IEP counter value for periodic trigger (in IEP clock cycles) per instance and channel. */
 
   uint64_t iep_reset_count;
   /**< IEP counter reset value (in IEP clock cycles) for CMP0 event.
@@ -100,11 +86,70 @@ typedef struct bissc_periodic_interface_s
 /*                       Function Declarations                                */
 /* ========================================================================== */
 
-uint32_t bissc_config_periodic_mode(bissc_periodic_interface *bissc_periodic_interface);
+/**
+ * \brief   Configure BiSS-C encoder for periodic trigger mode
+ *
+ * \details This function configures the BiSS-C encoder interface to operate in periodic
+ *          trigger mode, where encoder position data is automatically sampled at regular
+ *          intervals using the PRU-ICSS IEP (Industrial Ethernet Peripheral) timer.
+ *
+ *          The function performs the following operations:
+ *          1. Configures IEP timer with specified periodic trigger count and reset count
+ *          2. Enables IEP Compare 0 (CMP0) event for periodic triggering
+ *          3. Registers interrupt handler for processing periodic samples
+ *          4. Enables PRU interrupt handling
+ *
+ *          In periodic mode:
+ *          - IEP counter increments at IEP clock rate (default: 200 MHz)
+ *          - When counter reaches periodic_trigger_count, encoder transaction is triggered for that channel
+ *          - When counter reaches iep_reset_count, counter resets to 0 (defines period)
+ *          - Interrupt handler is called on each BiSS-C transaction completion
+ *
+ *          Requirements:
+ *          - BiSS-C driver must be initialized with bissc_init() before calling this function
+ *          - periodic_trigger_count must be less than iep_reset_count
+ *          - IEP clock must be configured via SysConfig
+ *
+ * \param[in]   bissc_periodic_interface  Pointer to periodic interface structure containing:
+ *                                           - handle: BiSS-C driver handle from bissc_init()
+ *                                           - periodic_trigger_count[]: IEP count value for trigger
+ *                                             per channel
+ *                                           - iep_reset_count: IEP count value for counter reset
+ *
+ * \retval      SystemP_SUCCESS    Configuration successful, periodic mode active
+ * \retval      SystemP_FAILURE    Configuration failed (NULL interface pointer, invalid handle,
+ *                                 or configuration error)
+ *
+ * \note        Call bissc_stop_periodic_mode() before returning to host trigger mode
+ *
+ */
 
-void bissc_stop_periodic_mode(bissc_periodic_interface *bissc_periodic_interface);
+int32_t bissc_config_periodic_mode(bissc_periodic_interface *bissc_periodic_interface);
 
-void bissc_periodic_interface_init(bissc_handle handle, bissc_periodic_interface *bissc_periodic_interface_instance, int64_t ch0_trigger_count,
-                                    int64_t ch1_trigger_count, int64_t ch2_trigger_count, int64_t iep_reset_count);
+/**
+ * \brief   Stop BiSS-C periodic trigger mode
+ *
+ * \details This function disables periodic trigger mode for the BiSS-C encoder interface.
+ *
+ *          The function performs the following operations:
+ *          1. Disables PRU interrupts for periodic trigger events
+ *          2. Disables IEP Compare 0 (CMP0) event
+ *          3. Stops IEP counter
+ *          4. Unregisters interrupt handler
+ *
+ *          After calling this function:
+ *          - IEP timer is stopped
+ *          - No automatic encoder transactions occur
+ *          - Application must enable host trigger mode and call
+ *            bissc_command_process() explicitly for each transaction
+ *
+ * \param[in]   bissc_periodic_interface  Pointer to periodic interface structure containing
+ *                                        the BiSS-C driver handle(s) to stop
+ *
+ * \retval      SystemP_SUCCESS    Periodic mode stopped successfully
+ * \retval      SystemP_FAILURE    Failed to stop periodic mode (NULL interface pointer or invalid handle)
+ *
+ */
+int32_t bissc_stop_periodic_mode(bissc_periodic_interface *bissc_periodic_interface);
 
 #endif /* _BISSC_PERIODIC_TRIGGER_H_ */

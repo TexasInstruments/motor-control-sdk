@@ -11,13 +11,6 @@
 #define CONFIG_BISSC_NUM_INSTANCES               (`module.$instances.length`U)
 % for(let i = 0; i < module.$instances.length; i++) {
     % let instance = module.$instances[i];
-
-#define `instance.$name.toUpperCase()`                                    (`i`)
-#define `instance.$name.toUpperCase()`_BOOSTER_PACK_ENABLE                (`instance.Booster_Pack & 1`)
- %if ((instance.instance === "ICSSG1" || instance.instance === "ICSSG0") && (instance.G_MUX_EN))
-    %{
-#define `instance.$name.toUpperCase()`_G_MUX_EN                           (`instance["G_MUX_EN"] & 1`)
-    %}
     % /* Calculate mode based on channel configuration and load share (for compile-time firmware selection) */
     % let mode = "BISSC_MODE_SINGLE_CHANNEL_SINGLE_PRU";  /* Default: BISSC_MODE_SINGLE_CHANNEL_SINGLE_PRU */
     % /* Check if multiple channels are enabled */
@@ -42,7 +35,15 @@
         % /* For ICSSM, use pruicss_slice configuration */
         % pruicss_slice = (instance.PRU_Slice == "PRU1") ? 1 : 0;
     % }
-#define `instance.$name.toUpperCase()`_MODE                               (`mode`)
+    % /* Create PRU core ID variables based on slice */
+    % let pru_id = "PRUICSS_PRU0";
+    % let rtu_pru_id = "PRUICSS_RTU_PRU0";
+    % let tx_pru_id = "PRUICSS_TX_PRU0";
+    % if(pruicss_slice == 1) {
+        % pru_id = "PRUICSS_PRU1";
+        % rtu_pru_id = "PRUICSS_RTU_PRU1";
+        % tx_pru_id = "PRUICSS_TX_PRU1";
+    % }
     % let pruicss_instance = 0;
     % /* Determine ICSS type and instance index */
     % if(instance.instance === "ICSSM" || instance.instance === "ICSSM0" || instance.instance === "ICSSM1") {
@@ -54,13 +55,26 @@
             % pruicss_instance = 1;
         % }
     % }
-#define `instance.$name.toUpperCase()`_PRUICSS_INSTANCE                   (`pruicss_instance`)
-#define `instance.$name.toUpperCase()`_PRUICSS_SLICE                      (`pruicss_slice`)
     % /* Calculate individual channel enabled flags */
     % let channel0_enabled = (instance.channel_0 & 1);
     % let channel1_enabled = (instance.channel_1 & 1);
     % let channel2_enabled = (instance.channel_2 & 1);
-#define `instance.$name.toUpperCase()`_CHANNEL0_ENABLED                   (`channel0_enabled`)
-#define `instance.$name.toUpperCase()`_CHANNEL1_ENABLED                   (`channel1_enabled`)
-#define `instance.$name.toUpperCase()`_CHANNEL2_ENABLED                   (`channel2_enabled`)
+#define `instance.$name.toUpperCase()`                                    (`i`U)
+#define `instance.$name.toUpperCase()`_MODE                               (`mode`)
+#define `instance.$name.toUpperCase()`_PRUICSS_INSTANCE                   (`pruicss_instance`U)
+#define `instance.$name.toUpperCase()`_PRUICSS_SLICE                      (`pruicss_slice`U)
+#define `instance.$name.toUpperCase()`_PRUICSS_PRU_ID                     (`pru_id`)
+    % if(instance.Multi_Channel_Load_Share & 1)
+    %{
+#define `instance.$name.toUpperCase()`_PRUICSS_RTU_PRU_ID                 (`rtu_pru_id`)
+#define `instance.$name.toUpperCase()`_PRUICSS_TX_PRU_ID                  (`tx_pru_id`)
+    %}
+#define `instance.$name.toUpperCase()`_CHANNEL0_ENABLED                   (`channel0_enabled`U)
+#define `instance.$name.toUpperCase()`_CHANNEL1_ENABLED                   (`channel1_enabled`U)
+#define `instance.$name.toUpperCase()`_CHANNEL2_ENABLED                   (`channel2_enabled`U)
+#define `instance.$name.toUpperCase()`_BOOSTER_PACK_ENABLE                (`instance.Booster_Pack & 1`U)
+    %if ((instance.instance === "ICSSG1" || instance.instance === "ICSSG0") && (instance.G_MUX_EN))
+    %{
+#define `instance.$name.toUpperCase()`_G_MUX_EN                           (`instance["G_MUX_EN"] & 1`U)
+    %}
 % }

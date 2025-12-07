@@ -353,9 +353,10 @@ typedef struct bissc_clk_cfg_s
      *   Example: For 1 MHz from 200 MHz core: tx_div = 199 */
 
     uint16_t  rx_div_attr;
-    /**< Rx oversampling rate and fractional divider configuration.
-     *   Bits [14:0]: Oversampling divisor (7=8x, 5=6x, 3=4x)
-     *   Bit [15]: Fractional divider enable (1=enable 1.5x fractional division) */
+    /**< Rx oversampling rate, start bit polarity and fractional divider configuration.
+     *   Bits [2:0] : Oversampling divisor (7 = 8x, 5 = 6x, 3 = 4x)
+     *   Bits [3]   : Start bit polarity (0 or 1)
+     *   Bit  [15]  : Fractional divider enable (1=enable 1.5x fractional division) */
 
     uint16_t  is_core_clk;
     /**< Clock source selection for BiSS-C communication.
@@ -420,7 +421,7 @@ typedef struct bissc_params_s
 
     uint32_t cmd_process_delay_us;
     /**< Delay in microseconds for command processing polling loop.
-     *   Used in \ref bissc_command_wait to avoid excessive CPU usage.
+     *   Used in \ref bissc_command_wait.
      *   Default: 1000 us (1 ms) */
 
     uint32_t fw_wait_delay_us;
@@ -432,7 +433,7 @@ typedef struct bissc_params_s
     uint32_t max_wait_loop_count;
     /**< Maximum wait loop count for BiSS-C cycle timeout detection.
      *   Actual timeout (ms) = max_wait_loop_count * cmd_process_delay_us / 1000
-     *   Used in \ref bissc_command_wait to detect communication failures.
+     *   Used in \ref bissc_command_wait.
      *   Must be greater than 0.
      *   Default: 5 (with default cmd_process_delay_us of 1000us results in 5ms timeout) */
 } bissc_params;
@@ -538,25 +539,31 @@ typedef struct bissc_priv_s
 
     uint32_t baud_rate;
     /**< BiSS-C communication baud rate in MHz (1, 2, 5, 8, or 10).
-     *   Configured via bissc_update_clock_freq() or from SysConfig */
+     *   Configured via bissc_update_clock_freq() or from SysConfig.
+     *   Copied from attrs in \ref bissc_init. Runtime modification
+     *   is possible. */
 
     uint32_t cmd_process_delay_us;
     /**< Delay in microseconds for command processing polling loop.
-     *   Used in \ref bissc_command_wait to avoid excessive CPU usage */
+     *   Used in \ref bissc_command_wait.
+     *   Copied from params in \ref bissc_init. */
 
     uint32_t fw_wait_delay_us;
     /**< Delay in microseconds between firmware status checks.
-     *   Used in firmware initialization and control communication functions */
+     *   Used in firmware initialization and control communication functions.
+     *   Copied from params in \ref bissc_init. */
 
     uint32_t max_wait_loop_count;
     /**< Maximum wait loop count for BiSS-C cycle timeout detection.
      *   Actual timeout (ms) = max_wait_loop_count * cmd_process_delay_us / 1000
-     *   Used in \ref bissc_command_wait to detect communication failures.
-     *   Must be greater than 0 */
+     *   Used in \ref bissc_command_wait.
+     *   Must be greater than 0.
+     *   Copied from params in \ref bissc_init. */
 
     PRUICSS_Handle pruicss_handle;
     /**< PRU-ICSS driver handle obtained from PRUICSS_open().
-     *   Used for accessing PRU-ICSS hardware resources */
+     *   Used for accessing PRU-ICSS hardware resources.
+     *   Copied from params in \ref bissc_init. */
 } bissc_priv;
 
 /**
@@ -570,7 +577,7 @@ typedef struct bissc_attrs_s
      *   Used to distinguish between multiple BiSS-C instances in the system */
 
     uint8_t mode;
-    /**< BiSS-C channel configuration mode.
+    /**< BiSS-C configuration mode.
      *   0 = BISSC_MODE_SINGLE_CHANNEL_SINGLE_PRU (one channel, one PRU)
      *   1 = BISSC_MODE_MULTI_CHANNEL_SINGLE_PRU (multiple channels, one PRU)
      *   2 = BISSC_MODE_MULTI_CHANNEL_MULTI_PRU (multiple channels, load-shared across PRUs) */
@@ -590,21 +597,6 @@ typedef struct bissc_attrs_s
     /**< Load share mode enable flag.
      *   0 = Disabled (single PRU handles all channels)
      *   1 = Enabled (channels distributed across RTU-PRU, PRU, and TX-PRU in PRU-ICSSG only) */
-
-    uint8_t pru_id;
-    /**< PRU core ID for channel assignment.
-     *   0 = PRUICSS_PRU0 (handles any channel in single PRU mode, and handles channel 1 in load share mode)
-     *   1 = PRUICSS_PRU1 */
-
-    uint8_t rtu_pru_id;
-    /**< RTU-PRU core ID for channel assignment in load share mode.
-     *   2 = PRUICSS_RTU_PRU0 (handles channel 0)
-     *   3 = PRUICSS_RTU_PRU1 */
-
-    uint8_t tx_pru_id;
-    /**< TX-PRU core ID for channel assignment in load share mode.
-     *   4 = PRUICSS_TX_PRU0 (handles channel 2)
-     *   5 = PRUICSS_TX_PRU1 */
 
     uint8_t channel_mask;
     /**< Bit mask indicating which channels are enabled (0-7).
