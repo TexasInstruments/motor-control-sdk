@@ -59,7 +59,7 @@ extern "C" {
  *  - **Array bounds checking**: APIs with array parameters or index parameters perform bounds validation
  *  - **Internal structure validation**: Internal structures (attrs, priv, pruicss_xchg, pruicss_handle)
  *    are validated once during bissc_init() and assumed valid in subsequent API calls
- *  - This strategy reduces overhead in time-critical data path functions while maintaining safety
+ *  - This strategy reduces overhead in time-critical data path functions
  *
  *  @{
  */
@@ -153,7 +153,7 @@ int32_t bissc_command_send(bissc_handle handle);
  *  \param[in]  handle     BiSS-C handle
  *
  *  \retval     SystemP_SUCCESS on successful completion
- *  \retval     SystemP_FAILURE on timeout (configured via bissc_params.max_cycle_timeout_ms before calling \ref bissc_init, default: 5ms)
+ *  \retval     SystemP_FAILURE on timeout (configured via bissc_params.max_wait_loop_count before calling \ref bissc_init, default: 5ms)
  *
  */
 int32_t bissc_command_wait(bissc_handle handle);
@@ -257,14 +257,14 @@ int32_t bissc_config_primary_core_mask(bissc_handle handle, uint8_t mask);
  *              - ClockP_usleep(): Delay configured via bissc_params.fw_wait_delay_us (before calling \ref bissc_init)
  *                (default: 1000 microseconds) between poll iterations to prevent excessive CPU usage
  *
- *  \param[in]  handle    BiSS-C handle
- *  \param[in]  timeout   timeout value in iterations (not milliseconds)
+ *  \param[in]  handle          BiSS-C handle
+ *  \param[in]  loop_count      timeout value in iterations
  *  \param[in]  mask      channel mask
  *  \retval     SystemP_SUCCESS when all specified channels are initialized
  *  \retval     SystemP_FAILURE on timeout
  *
  */
-int32_t bissc_wait_for_fw_initialization(bissc_handle handle, uint32_t timeout, uint8_t mask);
+int32_t bissc_wait_for_fw_initialization(bissc_handle handle, uint32_t loop_count, uint8_t mask);
 
 /**
  *  \brief      Initialize BiSS-C hardware interface
@@ -305,13 +305,13 @@ int32_t bissc_update_max_proc_delay(bissc_handle handle);
  *              - ClockP_usleep(): Delay configured via bissc_params.fw_wait_delay_us (before calling \ref bissc_init)
  *                (default: 1000 microseconds) between poll iterations to prevent excessive CPU usage
  *
- *  \param[in]  handle    BiSS-C handle
- *  \param[in]  timeout   timeout value in iterations (not milliseconds)
+ *  \param[in]  handle       BiSS-C handle
+ *  \param[in]  loop_count   timeout value in iterations
  *  \retval     SystemP_SUCCESS when measurement completes
  *  \retval     SystemP_FAILURE on timeout
  *
  */
-int32_t bissc_wait_measure_proc_delay(bissc_handle handle, uint32_t timeout);
+int32_t bissc_wait_measure_proc_delay(bissc_handle handle, uint32_t loop_count);
 
 /**
  *  \brief      Set default configuration parameters for BiSS-C receiver firmware
@@ -560,13 +560,13 @@ int32_t bissc_update_clock_freq(bissc_handle handle, uint32_t frequency);
  *
  *  \param[in]  handle          BiSS-C handle
  *  \param[in]  frequency       Desired clock frequency in MHz (valid values: 1/2/5/8/10)
- *  \param[in]  timeout         Timeout used when calling \ref bissc_wait_measure_proc_delay
+ *  \param[in]  loop_count      loop_count used when calling \ref bissc_wait_measure_proc_delay
  *
  *  \retval     SystemP_SUCCESS on successful clock configuration and delay measurement
  *  \retval     SystemP_FAILURE if clock calculation fails or delay measurement times out
  *
  */
-int32_t bissc_clock_config(bissc_handle handle, uint32_t frequency, uint32_t timeout);
+int32_t bissc_clock_config(bissc_handle handle, uint32_t frequency, uint32_t loop_count);
 
 /**
  *  \brief      Enable Safety for connected BiSS-C encoder

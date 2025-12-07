@@ -67,14 +67,17 @@ extern "C" {
  */
 #define BISSC_DEFAULT_FW_WAIT_DELAY_US          (1000U)
 
-/** \brief Maximum BiSS-C cycle timeout in milliseconds
+/** \brief Maximum wait loop count for BiSS-C cycle timeout
  *
+ *  Actual timeout (ms) = max_wait_loop_count * cmd_process_delay_us / 1000
  *  BiSS-C cycle time formula: TCycle_min = TMA * (5 + DLEN + CRCLEN) + tLineDelay + tbusy_max + busy_s_max + tTO
- *  A timeout of 5ms is used as it accommodates various encoders and daisy chain configurations.
- *  This timeout is the default value used in \ref bissc_command_wait to detect communication failures.
- *  Different value can be configured by changing max_cycle_timeout_ms of \ref bissc_params before calling \ref bissc_init.
+ *  Default value is 5, which with default cmd_process_delay_us of 1000us results in 5ms timeout.
+ *  This accommodates various encoders and daisy chain configurations.
+ *
+ *  Different value can be configured by changing max_wait_loop_count of \ref bissc_params before calling \ref bissc_init.
+ *  Value must be greater than 0.
  */
-#define BISSC_DEFAULT_MAX_CYCLE_TIMEOUT         (5U)
+#define BISSC_DEFAULT_MAX_WAIT_LOOP_COUNT         (5U)
 
 /** \brief Single PRU - Single channel configuration mode
  *
@@ -426,10 +429,12 @@ typedef struct bissc_params_s
      *   and \ref bissc_set_ctrl_cmd_and_process.
      *   Default: 1000 us (1 ms) */
 
-    uint32_t max_cycle_timeout_ms;
-    /**< Maximum BiSS-C cycle timeout in milliseconds.
+    uint32_t max_wait_loop_count;
+    /**< Maximum wait loop count for BiSS-C cycle timeout detection.
+     *   Actual timeout (ms) = max_wait_loop_count * cmd_process_delay_us / 1000
      *   Used in \ref bissc_command_wait to detect communication failures.
-     *   Default: 5 ms */
+     *   Must be greater than 0.
+     *   Default: 5 (with default cmd_process_delay_us of 1000us results in 5ms timeout) */
 } bissc_params;
 
 /**
@@ -543,9 +548,11 @@ typedef struct bissc_priv_s
     /**< Delay in microseconds between firmware status checks.
      *   Used in firmware initialization and control communication functions */
 
-    uint32_t max_cycle_timeout_ms;
-    /**< Maximum BiSS-C cycle timeout in milliseconds.
-     *   Used in \ref bissc_command_wait to detect communication failures */
+    uint32_t max_wait_loop_count;
+    /**< Maximum wait loop count for BiSS-C cycle timeout detection.
+     *   Actual timeout (ms) = max_wait_loop_count * cmd_process_delay_us / 1000
+     *   Used in \ref bissc_command_wait to detect communication failures.
+     *   Must be greater than 0 */
 
     PRUICSS_Handle pruicss_handle;
     /**< PRU-ICSS driver handle obtained from PRUICSS_open().

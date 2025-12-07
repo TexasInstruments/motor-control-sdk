@@ -70,7 +70,7 @@ const bissc_params gBisscDefaultParams =
     NULL,                               /* pruicss_handle */
     BISSC_DEFAULT_CMD_PROCESS_DELAY_US, /* cmd_process_delay_us */
     BISSC_DEFAULT_FW_WAIT_DELAY_US,     /* fw_wait_delay_us */
-    BISSC_DEFAULT_MAX_CYCLE_TIMEOUT,    /* max_cycle_timeout_ms */
+    BISSC_DEFAULT_MAX_WAIT_LOOP_COUNT,  /* max_wait_loop_count */
 };
 
 /* ========================================================================== */
@@ -117,7 +117,7 @@ bissc_handle bissc_init(uint32_t index, const bissc_params *params)
     if(status == SystemP_SUCCESS)
     {
         /* Validate params */
-        if(params->pruicss_handle == NULL)
+        if((params->pruicss_handle == NULL) || (params->max_wait_loop_count == 0))
         {
             status = SystemP_FAILURE;
         }
@@ -179,7 +179,7 @@ bissc_handle bissc_init(uint32_t index, const bissc_params *params)
         priv->baud_rate = attrs->baud_rate;
         priv->cmd_process_delay_us = params->cmd_process_delay_us;
         priv->fw_wait_delay_us = params->fw_wait_delay_us;
-        priv->max_cycle_timeout_ms = params->max_cycle_timeout_ms;
+        priv->max_wait_loop_count = params->max_wait_loop_count;
 
         status = bissc_hw_init(handle);
     }
@@ -264,13 +264,20 @@ int32_t bissc_command_wait(bissc_handle handle)
     bissc_priv          *priv = handle->priv;
     const bissc_attrs   *attrs = handle->attrs;
     bissc_pruicss_xchg  *pruicss_xchg = priv->pruicss_xchg;
-    uint32_t            timeout;
+    uint32_t            loop_count;
 
     /*  Minimum and Maximum BiSS-C cycle time depends on various params as below:
         TCycle_min = TMA * (5 + DLEN + CRCLEN) + tLineDelay + tbusy_max + busy_s_max + tTO
         Instead wait for max of 5 ms as this can vary for different encoders and for daisy chain
     */
-    timeout = priv->max_cycle_timeout_ms;
+    loop_count = priv->max_wait_loop_count;
+
+    /* Handle zero loop count case - would cause infinite loop */
+    if(loop_count == 0)
+    {
+        return SystemP_FAILURE;
+    }
+
     while(1)
     {
         if(attrs->load_share_enabled)
@@ -287,8 +294,8 @@ int32_t bissc_command_wait(bissc_handle handle)
         if(!priv->is_continuous_mode)
         {
             ClockP_usleep(priv->cmd_process_delay_us);
-            timeout--;
-            if(timeout == 0)
+            loop_count--;
+            if(loop_count == 0)
             {
                 return SystemP_FAILURE;
             }
@@ -489,7 +496,7 @@ int32_t bissc_update_clock_freq(bissc_handle handle, uint32_t frequency)
     return SystemP_SUCCESS;
 }
 
-int32_t bissc_clock_config(bissc_handle handle, uint32_t frequency, uint32_t timeout)
+int32_t bissc_clock_config(bissc_handle handle, uint32_t frequency, uint32_t loop_count)
 {
     /* Validate handle parameter */
     if(handle == NULL)
@@ -516,7 +523,7 @@ int32_t bissc_clock_config(bissc_handle handle, uint32_t frequency, uint32_t tim
     {
         return SystemP_FAILURE;
     }
-    status = bissc_wait_measure_proc_delay(handle, timeout);
+    status = bissc_wait_measure_proc_delay(handle, loop_count);
     return status;
 }
 
@@ -741,7 +748,7 @@ int32_t bissc_config_load_share(bissc_handle handle, uint8_t mask)
     return SystemP_SUCCESS;
 }
 
-int32_t bissc_wait_for_fw_initialization(bissc_handle handle, uint32_t timeout, uint8_t mask)
+int32_t bissc_wait_for_fw_initialization(bissc_handle handle, uint32_t loop_count, uint8_t mask)
 {
     /* Validate handle parameter */
     if(handle == NULL)
@@ -754,11 +761,12 @@ int32_t bissc_wait_for_fw_initialization(bissc_handle handle, uint32_t timeout, 
     uint32_t            i;
     bissc_pruicss_xchg  *pruicss_xchg = priv->pruicss_xchg;
 
-    for(i = 0; i < timeout; i++)
+    for(i = 0; i < loop_count; i++)
     {
          if(attrs->load_share_enabled)  /* for loadshare mode*/
         {
-            switch (mask) {
+            switch (mask)
+            {
                 case 1: /*channel 0 connected*/
                     if((pruicss_xchg->status[0] & 1))
                         return SystemP_SUCCESS;
@@ -799,7 +807,7 @@ int32_t bissc_wait_for_fw_initialization(bissc_handle handle, uint32_t timeout, 
             ClockP_usleep(priv->fw_wait_delay_us);
         }
     }
-    if(i == timeout)
+    if(i == loop_count)
     {
         return SystemP_FAILURE;
     }
@@ -1017,7 +1025,7 @@ int32_t bissc_update_max_proc_delay(bissc_handle handle)
     return SystemP_SUCCESS;
 }
 
-int32_t bissc_wait_measure_proc_delay(bissc_handle handle, uint32_t timeout)
+int32_t bissc_wait_measure_proc_delay(bissc_handle handle, uint32_t loop_count)
 {
     /* Validate handle parameter */
     if(handle == NULL)
@@ -1029,7 +1037,7 @@ int32_t bissc_wait_measure_proc_delay(bissc_handle handle, uint32_t timeout)
     uint32_t            i;
     bissc_pruicss_xchg  *pruicss_xchg = priv->pruicss_xchg;
 
-    for(i = 0; i < timeout; i++)
+    for(i = 0; i < loop_count; i++)
     {
         if(pruicss_xchg->measure_proc_delay & 1)
         {
@@ -1040,7 +1048,7 @@ int32_t bissc_wait_measure_proc_delay(bissc_handle handle, uint32_t timeout)
             ClockP_usleep(priv->fw_wait_delay_us);
         }
     }
-    if(i == timeout)
+    if(i == loop_count)
     {
         return SystemP_FAILURE;
     }

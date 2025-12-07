@@ -648,7 +648,7 @@ static void bissc_process_periodic_command(bissc_handle handle, int64_t ch0_trig
  *          - **Array bounds checking**: APIs with array parameters or index parameters perform bounds validation
  *          - **Internal structure validation**: Internal structures (attrs, priv, pruicss_xchg, pruicss_handle)
  *            are validated once during bissc_init() and assumed valid in subsequent API calls
- *          - This strategy reduces overhead in time-critical data path functions while maintaining safety
+ *          - This strategy reduces overhead in time-critical data path functions
  *
  * \param[in]   args    Unused
  */
@@ -695,11 +695,11 @@ void bissc_main(void *args)
     /* Default delay values are used:
      *   - cmd_process_delay_us = 1000us (delay for command processing polling loop)
      *   - fw_wait_delay_us = 1000us (delay for firmware status checks)
-     *   - max_cycle_timeout_ms = 5ms (maximum BiSS-C cycle timeout)
+     *   - max_wait_loop_count = 5 (maximum wait loop count, 5ms with default cmd_process_delay_us)
      * If needed, these can be modified before calling bissc_init():
      *   bissc_params_instance.cmd_process_delay_us = <custom_value>;
      *   bissc_params_instance.fw_wait_delay_us = <custom_value>;
-     *   bissc_params_instance.max_cycle_timeout_ms = <custom_value>;
+     *   bissc_params_instance.max_wait_loop_count = <custom_value>;
      */
     bissc_params_instance.pruicss_handle = gPruIcssXHandle;
 
