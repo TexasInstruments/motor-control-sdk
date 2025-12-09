@@ -145,7 +145,7 @@ config = config.concat([
     {
         name: "SDFM_Clock_Value",
         displayName: "SDFM Frequency (Hz)",
-        description: "Generated sdfm frequency from the selected clock source (IEP, ECAP, or GPIO1), Note: divider values need to be set manually in sdfm_example.c file.",
+        description: "Generated SDFM clock frequency from the selected clock source (IEP, ECAP, or GPIO1). It generates a macro like `CONFIG_SDFM0_CLOCK_VALUE` in ti_drivers_config.h for use in application code. Note: Clock divider values need to be set manually in application initialization based on this frequency.",
         hidden: true,
         default: 20000000,
         onChange: propagateClockToChannels,

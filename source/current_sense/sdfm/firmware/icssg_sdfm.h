@@ -44,7 +44,7 @@
 #define ICSS_SDFM_TRIGGER_EVNT_CH7   ( 10+18 )    
 #define ICSS_SDFM_TRIGGER_EVNT_CH8   ( 11+18 )   
 
-/* Number of SDFM channels per PRU, FIXME MOVE TO another file*/
+/* Number of SDFM channels per PRU */
 #if defined (SDFM_LOAD_SHARE_MODE)
 #define ICSS_PRU_MAX_NUM_OF_SD_CH         ( 3 )
 #if defined (SDFM_PRU_CORE)
@@ -387,9 +387,9 @@
 #define SDFM_CFG_ZC_THR_CH2_WRITE_VAL_OFFSET     (0x2B8)
 #define SDFM_CFG_ZC_THR_CH2_SET_VAL_ADDR_OFFSET  (0x2BC)
 #define SDFM_CFG_ZC_THR_CH2_CLR_VAL_ADDR_OFFSET  (0x2C0)
-#endif 
+#endif
 #else
-//* Channel 0 offsets*/
+/* Channel 0 offsets */
 #define SDFM_CH0_ID_OFFSET                       (0xA8)
 #define SDFM_CH0_ENABLE_OFFSET                   (0xA9)
 #define SDFM_CFG_CH0_FILTER_TYPE_OFFSET          (0xAA)

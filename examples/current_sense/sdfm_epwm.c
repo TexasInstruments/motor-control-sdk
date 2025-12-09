@@ -63,22 +63,27 @@
 #if (CONFIG_SDFM0_EPWM_SYNC_EN == 1)
 /* EPWM0 IRQ handler forward declaration */
 void epwmIrqHandler(void *handle);
-static HwiP_Object gEpwm0HwiObject;         /* EPWM0 HWI */
+HwiP_Object gEpwm0HwiObject;         /* EPWM0 HWI */
 /* EPWM global variables */
-static uint32_t gEpwm0BaseAddr;    /* EPWM0 base address */
-static volatile uint32_t gEpwmIsrCnt=0;    /* EPWM0 IRQ count */
-static SDFM_EPwmCfg_t epwmCfgPrms;
-static HwiP_Params hwiPrms;
+uint32_t gEpwm0BaseAddr = 0;    /* EPWM0 base address */
+volatile uint32_t gEpwmIsrCnt = 0;    /* EPWM0 IRQ count */
+SdfmEpwmCfg_t gEpwmCfgPrms = {0};
 #endif
 
 #if APP_EPWM1_ENABLE
 /* EPWM1 IRQ handler forward declaration */
+/**
+ *  \brief EPWM1 configuration for sigma delta clock generation
+ *
+ *  EPWM1 can be used to generate the sigma delta modulator clock.
+ *  Set APP_EPWM1_ENABLE to 1 to enable EPWM1.
+ *  Make sure EPWM1 is added in SysConfig before enabling this macro.
+ */
 void epwmIrqHandler1(void *handle);
-static HwiP_Object gEpwm1HwiObject;         /* EPWM1 HWI */
-static uint32_t gEpwm1BaseAddr;    /* EPWM1 base address */
-static SDFM_EPwmCfg_t epwm1CfgPrms;
-static volatile uint32_t gEpwmIsrCnt1=0;
-static HwiP_Params hwiPrms1;
+HwiP_Object gEpwm1HwiObject;         /* EPWM1 HWI */
+uint32_t gEpwm1BaseAddr = 0;    /* EPWM1 base address */
+SdfmEpwmCfg_t gEpwm1CfgPrms = {0};
+volatile uint32_t gEpwmIsrCnt1 = 0;
 #endif
 
 /* ========================================================================== */
@@ -94,7 +99,7 @@ static HwiP_Params hwiPrms1;
  *
  *  \param config [IN] Pointer to EPWM configuration parameters
  */
-void SDFM_epwmConfig(SDFM_EPwmCfg_t *config)
+void sdfmEpwmConfig(SdfmEpwmCfg_t *config)
 {
     if (config == NULL)
     {
@@ -196,10 +201,11 @@ void SDFM_epwmConfig(SDFM_EPwmCfg_t *config)
  *
  *  \return SystemP_SUCCESS on success, SystemP_FAILURE on failure
  */
-int32_t SDFM_initEpwm(void)
+int32_t sdfmEpwmInit(void)
 {
 #if (CONFIG_SDFM0_EPWM_SYNC_EN == 1)
     int32_t status;
+    HwiP_Params hwiPrms;
 
     /* Initialize EPWM0 base address, perform address translation */
     gEpwm0BaseAddr = (uint32_t)AddrTranslateP_getLocalAddr(CONFIG_EPWM0_BASE_ADDR);
@@ -215,35 +221,43 @@ int32_t SDFM_initEpwm(void)
     DebugP_assert(status == SystemP_SUCCESS);
 
     /* Configure EPWM0 */
-    epwmCfgPrms.epwmBaseAddr = gEpwm0BaseAddr;
-    epwmCfgPrms.epwmTbFreq = APP_EPWM0_TB_FREQ;
-    epwmCfgPrms.epwmOutFreq = APP_EPWM0_OUTPUT_FREQ;
-    epwmCfgPrms.epwmDutyCycle = APP_EPWM0_DUTY_CYCLE;
-    epwmCfgPrms.epwmTbCounterDir = APP_EPWM0_TB_COUNTER_DIR;
-    epwmCfgPrms.cfgTbSyncIn = TRUE;
-    epwmCfgPrms.tbPhsValue = 0;
-    epwmCfgPrms.tbSyncInCounterDir = EPWM_TB_COUNTER_DIR_UP;
-    epwmCfgPrms.cfgTbSyncOut = TRUE;
-    epwmCfgPrms.tbSyncOutMode = EPWM_TB_SYNC_OUT_EVT_CNT_EQ_ZERO;
-    epwmCfgPrms.aqCfg.zeroAction = EPWM_AQ_ACTION_DONOTHING;
-    epwmCfgPrms.aqCfg.prdAction = EPWM_AQ_ACTION_DONOTHING;
-    epwmCfgPrms.aqCfg.cmpAUpAction = EPWM_AQ_ACTION_HIGH;
-    epwmCfgPrms.aqCfg.cmpADownAction = EPWM_AQ_ACTION_LOW;
-    epwmCfgPrms.aqCfg.cmpBUpAction = EPWM_AQ_ACTION_DONOTHING;
-    epwmCfgPrms.aqCfg.cmpBDownAction = EPWM_AQ_ACTION_DONOTHING;
-    epwmCfgPrms.cfgDb = FALSE;
-    epwmCfgPrms.cfgEt = TRUE;
-    epwmCfgPrms.intSel = EPWM_ET_INTR_EVT_CNT_EQ_ZRO;
-    epwmCfgPrms.intPrd = EPWM_ET_INTR_PERIOD_FIRST_EVT;
-    epwmCfgPrms.epwmCh = EPWM_OUTPUT_CH_A;
-    epwmCfgPrms.epwmFuncClk = APP_EPWM_FCLK;
+    gEpwmCfgPrms.epwmBaseAddr = gEpwm0BaseAddr;
+    gEpwmCfgPrms.epwmTbFreq = APP_EPWM0_TB_FREQ;
+    gEpwmCfgPrms.epwmOutFreq = APP_EPWM0_OUTPUT_FREQ;
+    gEpwmCfgPrms.epwmDutyCycle = APP_EPWM0_DUTY_CYCLE;
+    gEpwmCfgPrms.epwmTbCounterDir = APP_EPWM0_TB_COUNTER_DIR;
+    gEpwmCfgPrms.cfgTbSyncIn = TRUE;
+    gEpwmCfgPrms.tbPhsValue = 0;
+    gEpwmCfgPrms.tbSyncInCounterDir = EPWM_TB_COUNTER_DIR_UP;
+    gEpwmCfgPrms.cfgTbSyncOut = TRUE;
+    gEpwmCfgPrms.tbSyncOutMode = EPWM_TB_SYNC_OUT_EVT_CNT_EQ_ZERO;
+    gEpwmCfgPrms.aqCfg.zeroAction = EPWM_AQ_ACTION_DONOTHING;
+    gEpwmCfgPrms.aqCfg.prdAction = EPWM_AQ_ACTION_DONOTHING;
+    gEpwmCfgPrms.aqCfg.cmpAUpAction = EPWM_AQ_ACTION_HIGH;
+    gEpwmCfgPrms.aqCfg.cmpADownAction = EPWM_AQ_ACTION_LOW;
+    gEpwmCfgPrms.aqCfg.cmpBUpAction = EPWM_AQ_ACTION_DONOTHING;
+    gEpwmCfgPrms.aqCfg.cmpBDownAction = EPWM_AQ_ACTION_DONOTHING;
+    gEpwmCfgPrms.cfgDb = FALSE;
+    gEpwmCfgPrms.cfgEt = TRUE;
+    gEpwmCfgPrms.intSel = EPWM_ET_INTR_EVT_CNT_EQ_ZRO;
+    gEpwmCfgPrms.intPrd = EPWM_ET_INTR_PERIOD_FIRST_EVT;
+    gEpwmCfgPrms.epwmCh = EPWM_OUTPUT_CH_A;
+    gEpwmCfgPrms.epwmFuncClk = APP_EPWM_FCLK;
 
-    SDFM_epwmConfig(&epwmCfgPrms);
+    sdfmEpwmConfig(&gEpwmCfgPrms);
 
 #if APP_EPWM1_ENABLE
-    /* EPWM for SDFM clock generation */
+/**
+ *  \brief EPWM1 configuration for sigma delta clock generation
+ *
+ *  EPWM1 can be used to generate the sigma delta modulator clock.
+ *  Set APP_EPWM1_ENABLE to 1 to enable EPWM1.
+ *  Make sure EPWM1 is added in SysConfig before enabling this macro.
+ */
     /* Initialize EPWM base address, perform address translation */
     gEpwm1BaseAddr = (uint32_t)AddrTranslateP_getLocalAddr(CONFIG_EPWM1_BASE_ADDR);
+
+    HwiP_Params hwiPrms1;
 
     /* Register & enable EPWM1 interrupt */
     HwiP_Params_init(&hwiPrms1);
@@ -256,29 +270,29 @@ int32_t SDFM_initEpwm(void)
     DebugP_assert(status == SystemP_SUCCESS);
 
     /* Configure EPWM1 */
-    epwm1CfgPrms.epwmBaseAddr = gEpwm1BaseAddr;
-    epwm1CfgPrms.epwmTbFreq = APP_EPWM1_TB_FREQ;
-    epwm1CfgPrms.epwmOutFreq = APP_EPWM1_OUTPUT_FREQ;
-    epwm1CfgPrms.epwmDutyCycle = APP_EPWM1_DUTY_CYCLE;
-    epwm1CfgPrms.epwmTbCounterDir = APP_EPWM1_TB_COUNTER_DIR;
-    epwm1CfgPrms.cfgTbSyncIn = FALSE;
-    epwm1CfgPrms.tbPhsValue = 0;
-    epwm1CfgPrms.cfgTbSyncOut = FALSE;
-    epwm1CfgPrms.tbSyncOutMode = EPWM_TB_SYNC_OUT_EVT_CNT_EQ_ZERO;
-    epwm1CfgPrms.aqCfg.zeroAction = EPWM_AQ_ACTION_DONOTHING;
-    epwm1CfgPrms.aqCfg.prdAction = EPWM_AQ_ACTION_DONOTHING;
-    epwm1CfgPrms.aqCfg.cmpAUpAction = EPWM_AQ_ACTION_HIGH;
-    epwm1CfgPrms.aqCfg.cmpADownAction = EPWM_AQ_ACTION_LOW;
-    epwm1CfgPrms.aqCfg.cmpBUpAction = EPWM_AQ_ACTION_DONOTHING;
-    epwm1CfgPrms.aqCfg.cmpBDownAction = EPWM_AQ_ACTION_DONOTHING;
-    epwm1CfgPrms.cfgDb = FALSE;
-    epwm1CfgPrms.cfgEt = FALSE;
-    epwm1CfgPrms.intSel = EPWM_ET_INTR_EVT_CNT_EQ_ZRO;
-    epwm1CfgPrms.intPrd = EPWM_ET_INTR_PERIOD_FIRST_EVT;
-    epwm1CfgPrms.epwmCh = EPWM_OUTPUT_CH_A;
-    epwm1CfgPrms.epwmFuncClk = APP_EPWM_FCLK;
+    gEpwm1CfgPrms.epwmBaseAddr = gEpwm1BaseAddr;
+    gEpwm1CfgPrms.epwmTbFreq = APP_EPWM1_TB_FREQ;
+    gEpwm1CfgPrms.epwmOutFreq = APP_EPWM1_OUTPUT_FREQ;
+    gEpwm1CfgPrms.epwmDutyCycle = APP_EPWM1_DUTY_CYCLE;
+    gEpwm1CfgPrms.epwmTbCounterDir = APP_EPWM1_TB_COUNTER_DIR;
+    gEpwm1CfgPrms.cfgTbSyncIn = FALSE;
+    gEpwm1CfgPrms.tbPhsValue = 0;
+    gEpwm1CfgPrms.cfgTbSyncOut = FALSE;
+    gEpwm1CfgPrms.tbSyncOutMode = EPWM_TB_SYNC_OUT_EVT_CNT_EQ_ZERO;
+    gEpwm1CfgPrms.aqCfg.zeroAction = EPWM_AQ_ACTION_DONOTHING;
+    gEpwm1CfgPrms.aqCfg.prdAction = EPWM_AQ_ACTION_DONOTHING;
+    gEpwm1CfgPrms.aqCfg.cmpAUpAction = EPWM_AQ_ACTION_HIGH;
+    gEpwm1CfgPrms.aqCfg.cmpADownAction = EPWM_AQ_ACTION_LOW;
+    gEpwm1CfgPrms.aqCfg.cmpBUpAction = EPWM_AQ_ACTION_DONOTHING;
+    gEpwm1CfgPrms.aqCfg.cmpBDownAction = EPWM_AQ_ACTION_DONOTHING;
+    gEpwm1CfgPrms.cfgDb = FALSE;
+    gEpwm1CfgPrms.cfgEt = FALSE;
+    gEpwm1CfgPrms.intSel = EPWM_ET_INTR_EVT_CNT_EQ_ZRO;
+    gEpwm1CfgPrms.intPrd = EPWM_ET_INTR_PERIOD_FIRST_EVT;
+    gEpwm1CfgPrms.epwmCh = EPWM_OUTPUT_CH_A;
+    gEpwm1CfgPrms.epwmFuncClk = APP_EPWM_FCLK;
 
-    SDFM_epwmConfig(&epwm1CfgPrms);
+    sdfmEpwmConfig(&gEpwm1CfgPrms);
 #endif
 
     return SystemP_SUCCESS;
@@ -292,7 +306,7 @@ int32_t SDFM_initEpwm(void)
  *
  *  This function disables EPWM interrupts and destroys the hardware interrupt object.
  */
-void SDFM_deinitEpwm(void)
+void sdfmEpwmDeinit(void)
 {
 #if (CONFIG_SDFM0_EPWM_SYNC_EN == 1)
     /* Disable and clear interrupts for EPWM0 */

@@ -53,6 +53,7 @@ sdfm1.$name                     = "CONFIG_SDFM0";
 sdfm1.G_MUX_EN                  = true;
 sdfm1.Enable_Phase_Compensation = true;
 sdfm1.SDFM_CLK_GEN              = "3";
+sdfm1.SDFM_Clock_Value          = 20000000;
 sdfm1.PRU_ICSSG0_PRU.$assign    = "PRU_ICSSG0_PRU0";
 
 epwm1.$name              = "CONFIG_EPWM0";

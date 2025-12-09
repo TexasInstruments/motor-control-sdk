@@ -52,8 +52,8 @@
  *  - EPWM synchronization 
  *
  *  Key Functions:
- *  - initSdfm()      : Initialize ICSSG, configure parameters, register interrupts
- *  - sdfm_main()     : Main entry point with EPWM init, SDFM init, and main loop
+ *  - appSdfmInit()      : Initialize ICSSG, configure parameters, register interrupts
+ *  - sdfmMain()     : Main entry point with EPWM init, SDFM init, and main loop
  *  - sdfmIrqHandlerChannelX() : Nine independent handlers for data collection
  *
  *  Channel-to-PRU Core Mapping (Load-Share Mode):
@@ -62,16 +62,14 @@
  *  - Channels 6-8 : TX PRU  (HOST_INTR_PEND_6, 7 shared for 2 channels)
  *
  *  Host Interrupt Limitation:
- *  - Only 8 host interrupts are mapped with PRU interrupts (HOST_INTR_PEND_0-7) 
- *  - Channels 0-7 have individual R5F interrupts (one per channel)
+ *  - Only 8 host interrupts are available for PRU-ICSS (HOST_INTR_PEND_0-7)
+ *  - Channels 0-6 have individual R5F interrupts (one per channel)
  *  - Channels 7-8 share one common R5F host interrupt (HOST_INTR_PEND_7)
- *  - PRU firmware triggers individual interrupts for CH7, CH8
- *  - Current implementation uses one common handler for CH7-8 due to R5F host
+ *  - PRU firmware triggers individual events for CH7 and CH8, but both map to same host interrupt
+ *  - Current implementation uses one common handler (sdfmIrqHandlerChannel7) for both CH7-8
  *
- *  Note: Individual interrupts for CH7 and CH8 can be implemented:
- *  - If other channels (0-6) are not connected, their host interrupts can be
- *    reassigned to CH7 and CH8
- *  - Any available HOST_INTR_PEND (0-7) can be mapped to CH7/CH8
+ *  Note: Individual interrupts for CH7/CH8 can be implemented by remapping unused host interrupts via SysConfig.
+ *  For example, if channels 0-2 are unused, their host interrupts can be reassigned to CH7 and CH8.
  *  - This requires SysConfig changes to remap PRU event outputs to different
  *    host interrupt channels
  *
@@ -127,27 +125,28 @@ void sdfmIrqHandlerChannel4(void *handle);
 void sdfmIrqHandlerChannel5(void *handle);
 void sdfmIrqHandlerChannel6(void *handle);
 void sdfmIrqHandlerChannel7(void *handle);
-void sdfmIrqHandlerChannel8(void *handle);
+
+/*Note: This function can be used for CH8 as an individual IRQ function by remapping unused host interrupts via SysConfig.
+ *  For example, if channels 0-2 are unused, their host interrupts can be reassigned to CH7 and CH8.
+ *  - This requires SysConfig changes to remap PRU event outputs to different host interrupts.
+ *  - When using this as the CH8 IRQ handler, comment out the CH8-specific code in sdfmIrqHandlerChannel7.
+ * 
+ */
+#ifdef SDFM_CHANNEL8_IRQ_HANDLER_USED
+void sdfmIrqHandlerChannel8(void *handle); 
+#endif
 
 /* ========================================================================== */
 /*                            Global Variables                                */
 /* ========================================================================== */
 
-/* HWI objects for all 9 channels */
-static HwiP_Object gSdfmHwiObjectChannel0;
-static HwiP_Object gSdfmHwiObjectChannel1;
-static HwiP_Object gSdfmHwiObjectChannel2;
-static HwiP_Object gSdfmHwiObjectChannel3;
-static HwiP_Object gSdfmHwiObjectChannel4;
-static HwiP_Object gSdfmHwiObjectChannel5;
-static HwiP_Object gSdfmHwiObjectChannel6;
-static HwiP_Object gSdfmHwiObjectChannel7;
-static HwiP_Object gSdfmHwiObjectChannel8;
+/* HWI objects  */
+static HwiP_Object gSdfmHwiObject[SDFM_NUM_OF_CH_PER_PRU_SLICE];
 
 /* Handles */
-PRUICSS_Handle gPruIcssHandle;
-PRUICSS_PWM_Handle gPruIcssPwmHandle;
-SDFM_Handle gPruIcssSdfmHandle;
+PRUICSS_Handle gPruIcssHandle = NULL;
+PRUICSS_PWM_Handle gPruIcssPwmHandle = NULL;
+SDFM_Handle gPruIcssSdfmHandle = NULL;
 
 /* SDFM output samples, written by PRU cores */
 __attribute__((section(".gSdfmSampleOutput"))) uint32_t gSdfm_sampleOutput[SDFM_NUM_OF_CH_PER_PRU_SLICE];
@@ -155,35 +154,17 @@ __attribute__((section(".gSdfmSampleOutput"))) uint32_t gSdfm_sampleOutput[SDFM_
 extern SDFM_Params gSdfmParams;
 
 /* Flag for continuing to execute test */
-volatile Bool gRunFlag = TRUE;
+volatile uint8_t gRunFlag = 1;
 
 /* ICSS SDFM Output samples - 9 channels */
-uint32_t sdfm_ch_samples[9][MAX_SAMPLES] = {0};
+uint32_t gSdfmChSamples[SDFM_NUM_OF_CH_PER_PRU_SLICE][MAX_SAMPLES] = {0};
 
 /* Sample indices for each channel */
-uint32_t sdfmIdxCntChannel0 = 0;
-uint32_t sdfmIdxCntChannel1 = 0;
-uint32_t sdfmIdxCntChannel2 = 0;
-uint32_t sdfmIdxCntChannel3 = 0;
-uint32_t sdfmIdxCntChannel4 = 0;
-uint32_t sdfmIdxCntChannel5 = 0;
-uint32_t sdfmIdxCntChannel6 = 0;
-uint32_t sdfmIdxCntChannel7 = 0;
-uint32_t sdfmIdxCntChannel8 = 0;
+uint32_t gSdfmIdxCnt[SDFM_NUM_OF_CH_PER_PRU_SLICE] = {0};
 
 /* IRQ counters for debugging - one per channel */
-volatile uint32_t gSdfmIrqCntChannel0 = 0;
-volatile uint32_t gSdfmIrqCntChannel1 = 0;
-volatile uint32_t gSdfmIrqCntChannel2 = 0;
-volatile uint32_t gSdfmIrqCntChannel3 = 0;
-volatile uint32_t gSdfmIrqCntChannel4 = 0;
-volatile uint32_t gSdfmIrqCntChannel5 = 0;
-volatile uint32_t gSdfmIrqCntChannel6 = 0;
-volatile uint32_t gSdfmIrqCntChannel7 = 0;
-volatile uint32_t gSdfmIrqCntChannel8 = 0;
+volatile uint32_t gSdfmIrqCnt[SDFM_NUM_OF_CH_PER_PRU_SLICE] = {0};
 
-/* HWI parameters */
-HwiP_Params hwiPrms;
 
 /* ========================================================================== */
 /*                          Function Definitions                              */
@@ -195,9 +176,10 @@ HwiP_Params hwiPrms;
  *  This function initializes the ICSSG, configures SDFM parameters,
  *  registers interrupt handlers, and initializes the SDFM firmware.
  */
-void initSdfm(void)
+void appSdfmInit(void)
 {
     int32_t status;
+    HwiP_Params sdfmHwiPrms;
 
     /* Initialize ICSSG */
     status = SDFM_pruIcssInit(CONFIG_PRU_ICSS0, CONFIG_SDFM0_SLICE, PRUICSS_G_MUX_EN,
@@ -212,20 +194,20 @@ void initSdfm(void)
     if(gSdfmParams.load_share_enable == 1)
     {
         /* Load share mode - register handlers for all enabled channels */
-        if(gSdfmParams.enable_pru_core_mask & 1<< SDFM_RTUPRU_CORE_INDX)
+        if(gSdfmParams.enable_pru_core_mask & (1<< SDFM_RTUPRU_CORE_INDEX))
         {
             /* RTU PRU core enabled - register handlers for channels 0-2 */
-            if(gSdfmParams.pru_core_config[SDFM_RTUPRU_CORE_INDX].enable_snoop_mode == 1 || gSdfmParams.pru_core_config[SDFM_RTUPRU_CORE_INDX].enable_trigger_mode == 1)
+            if(gSdfmParams.pru_core_config[SDFM_RTUPRU_CORE_INDEX].enable_snoop_mode == 1 || gSdfmParams.pru_core_config[SDFM_RTUPRU_CORE_INDEX].enable_trigger_mode == 1)
             {
                 DebugP_log("RTU PRU core: Trigger mode enabled.\r\n");
                 /* common interrupt handler for all three channels */
-                HwiP_Params_init(&hwiPrms);
-                hwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH0;
-                hwiPrms.callback = &sdfmIrqHandlerChannel0;
-                hwiPrms.args = 0;
-                hwiPrms.isPulse = FALSE;
-                hwiPrms.isFIQ = FALSE;
-                status = HwiP_construct(&gSdfmHwiObjectChannel0, &hwiPrms);
+                HwiP_Params_init(&sdfmHwiPrms);
+                sdfmHwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH0;
+                sdfmHwiPrms.callback = &sdfmIrqHandlerChannel0;
+                sdfmHwiPrms.args = 0;
+                sdfmHwiPrms.isPulse = FALSE;
+                sdfmHwiPrms.isFIQ = FALSE;
+                status = HwiP_construct(&gSdfmHwiObject[SDFM_CHANNEL0], &sdfmHwiPrms);
                 DebugP_assert(status == SystemP_SUCCESS);
             }
             else
@@ -235,56 +217,56 @@ void initSdfm(void)
                 if(gSdfmParams.enable_channel_mask & (1<<SDFM_CHANNEL0))
                 {
                     /* Channel 0 enabled */
-                    HwiP_Params_init(&hwiPrms);
-                    hwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH0;
-                    hwiPrms.callback = &sdfmIrqHandlerChannel0;
-                    hwiPrms.args = 0;
-                    hwiPrms.isPulse = FALSE;
-                    hwiPrms.isFIQ = FALSE;
-                    status = HwiP_construct(&gSdfmHwiObjectChannel0, &hwiPrms);
+                    HwiP_Params_init(&sdfmHwiPrms);
+                    sdfmHwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH0;
+                    sdfmHwiPrms.callback = &sdfmIrqHandlerChannel0;
+                    sdfmHwiPrms.args = 0;
+                    sdfmHwiPrms.isPulse = FALSE;
+                    sdfmHwiPrms.isFIQ = FALSE;
+                    status = HwiP_construct(&gSdfmHwiObject[SDFM_CHANNEL0], &sdfmHwiPrms);
                     DebugP_assert(status == SystemP_SUCCESS);
                 }
                 if(gSdfmParams.enable_channel_mask & (1<<SDFM_CHANNEL1))
                 {
                     /* Channel 1 enabled */
-                    HwiP_Params_init(&hwiPrms); 
-                    hwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH1;
-                    hwiPrms.callback = &sdfmIrqHandlerChannel1;
-                    hwiPrms.args = 0;
-                    hwiPrms.isPulse = FALSE;
-                    hwiPrms.isFIQ = FALSE;
-                    status = HwiP_construct(&gSdfmHwiObjectChannel1, &hwiPrms);
+                    HwiP_Params_init(&sdfmHwiPrms); 
+                    sdfmHwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH1;
+                    sdfmHwiPrms.callback = &sdfmIrqHandlerChannel1;
+                    sdfmHwiPrms.args = 0;
+                    sdfmHwiPrms.isPulse = FALSE;
+                    sdfmHwiPrms.isFIQ = FALSE;
+                    status = HwiP_construct(&gSdfmHwiObject[SDFM_CHANNEL1], &sdfmHwiPrms);
                     DebugP_assert(status == SystemP_SUCCESS);
                 }
                 if(gSdfmParams.enable_channel_mask & (1<<SDFM_CHANNEL2))
                 {
                     /* Channel 2 enabled */
-                    HwiP_Params_init(&hwiPrms); 
-                    hwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH2;
-                    hwiPrms.callback = &sdfmIrqHandlerChannel2;
-                    hwiPrms.args = 0;
-                    hwiPrms.isPulse = FALSE;
-                    hwiPrms.isFIQ = FALSE;
-                    status = HwiP_construct(&gSdfmHwiObjectChannel2, &hwiPrms);
+                    HwiP_Params_init(&sdfmHwiPrms); 
+                    sdfmHwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH2;
+                    sdfmHwiPrms.callback = &sdfmIrqHandlerChannel2;
+                    sdfmHwiPrms.args = 0;
+                    sdfmHwiPrms.isPulse = FALSE;
+                    sdfmHwiPrms.isFIQ = FALSE;
+                    status = HwiP_construct(&gSdfmHwiObject[SDFM_CHANNEL2], &sdfmHwiPrms);
                     DebugP_assert(status == SystemP_SUCCESS);
                 }
             }
          
         }
-        if(gSdfmParams.enable_pru_core_mask & 1<< SDFM_PRU_CORE_INDX)
+        if(gSdfmParams.enable_pru_core_mask & (1<< SDFM_PRU_CORE_INDEX))
         {
             /* PRU core enabled - register handlers for channels 3-5 */
-            if(gSdfmParams.pru_core_config[SDFM_PRU_CORE_INDX].enable_snoop_mode == 1 || gSdfmParams.pru_core_config[SDFM_PRU_CORE_INDX].enable_trigger_mode == 1)
+            if(gSdfmParams.pru_core_config[SDFM_PRU_CORE_INDEX].enable_snoop_mode == 1 || gSdfmParams.pru_core_config[SDFM_PRU_CORE_INDEX].enable_trigger_mode == 1)
             {
                 DebugP_log("PRU core: Trigger mode enabled.\r\n");
                 /* common interrupt handler for all three channels */
-                HwiP_Params_init(&hwiPrms);
-                hwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH3;
-                hwiPrms.callback = &sdfmIrqHandlerChannel3;
-                hwiPrms.args = 0;
-                hwiPrms.isPulse = FALSE;
-                hwiPrms.isFIQ = FALSE;
-                status = HwiP_construct(&gSdfmHwiObjectChannel3, &hwiPrms);
+                HwiP_Params_init(&sdfmHwiPrms);
+                sdfmHwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH3;
+                sdfmHwiPrms.callback = &sdfmIrqHandlerChannel3;
+                sdfmHwiPrms.args = 0;
+                sdfmHwiPrms.isPulse = FALSE;
+                sdfmHwiPrms.isFIQ = FALSE;
+                status = HwiP_construct(&gSdfmHwiObject[SDFM_CHANNEL3], &sdfmHwiPrms);
                 DebugP_assert(status == SystemP_SUCCESS);
             }
             else
@@ -295,55 +277,55 @@ void initSdfm(void)
                 if(gSdfmParams.enable_channel_mask & (1<<SDFM_CHANNEL3))
                 {
                     /* Channel 3 enabled */
-                    HwiP_Params_init(&hwiPrms);
-                    hwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH3;
-                    hwiPrms.callback = &sdfmIrqHandlerChannel3;
-                    hwiPrms.args = 0;
-                    hwiPrms.isPulse = FALSE;
-                    hwiPrms.isFIQ = FALSE;
-                    status = HwiP_construct(&gSdfmHwiObjectChannel3, &hwiPrms);
+                    HwiP_Params_init(&sdfmHwiPrms);
+                    sdfmHwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH3;
+                    sdfmHwiPrms.callback = &sdfmIrqHandlerChannel3;
+                    sdfmHwiPrms.args = 0;
+                    sdfmHwiPrms.isPulse = FALSE;
+                    sdfmHwiPrms.isFIQ = FALSE;
+                    status = HwiP_construct(&gSdfmHwiObject[SDFM_CHANNEL3], &sdfmHwiPrms);
                     DebugP_assert(status == SystemP_SUCCESS);
                 }
                 if(gSdfmParams.enable_channel_mask & (1<<SDFM_CHANNEL4))
                 {
                     /* Channel 4 enabled */
-                    HwiP_Params_init(&hwiPrms);
-                    hwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH4;
-                    hwiPrms.callback = &sdfmIrqHandlerChannel4;
-                    hwiPrms.args = 0;
-                    hwiPrms.isPulse = FALSE;
-                    hwiPrms.isFIQ = FALSE;
-                    status = HwiP_construct(&gSdfmHwiObjectChannel4, &hwiPrms);
+                    HwiP_Params_init(&sdfmHwiPrms);
+                    sdfmHwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH4;
+                    sdfmHwiPrms.callback = &sdfmIrqHandlerChannel4;
+                    sdfmHwiPrms.args = 0;
+                    sdfmHwiPrms.isPulse = FALSE;
+                    sdfmHwiPrms.isFIQ = FALSE;
+                    status = HwiP_construct(&gSdfmHwiObject[SDFM_CHANNEL4], &sdfmHwiPrms);
                     DebugP_assert(status == SystemP_SUCCESS);       
                 }
                 if(gSdfmParams.enable_channel_mask & (1<<SDFM_CHANNEL5))
                 {
                     /* Channel 5 enabled */
-                    HwiP_Params_init(&hwiPrms);
-                    hwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH5;
-                    hwiPrms.callback = &sdfmIrqHandlerChannel5;
-                    hwiPrms.args = 0;
-                    hwiPrms.isPulse = FALSE;
-                    hwiPrms.isFIQ = FALSE;
-                    status = HwiP_construct(&gSdfmHwiObjectChannel5, &hwiPrms);
+                    HwiP_Params_init(&sdfmHwiPrms);
+                    sdfmHwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH5;
+                    sdfmHwiPrms.callback = &sdfmIrqHandlerChannel5;
+                    sdfmHwiPrms.args = 0;
+                    sdfmHwiPrms.isPulse = FALSE;
+                    sdfmHwiPrms.isFIQ = FALSE;
+                    status = HwiP_construct(&gSdfmHwiObject[SDFM_CHANNEL5], &sdfmHwiPrms);
                     DebugP_assert(status == SystemP_SUCCESS);
                 }
             }
         }
-        if(gSdfmParams.enable_pru_core_mask & 1<< SDFM_TXPRU_CORE_INDX)
+        if(gSdfmParams.enable_pru_core_mask & (1<< SDFM_TXPRU_CORE_INDEX))
         {
             /* TX PRU core enabled - register handlers for channels 6-8 */
-            if(gSdfmParams.pru_core_config[SDFM_TXPRU_CORE_INDX].enable_snoop_mode == 1 || gSdfmParams.pru_core_config[SDFM_TXPRU_CORE_INDX].enable_trigger_mode == 1)
+            if(gSdfmParams.pru_core_config[SDFM_TXPRU_CORE_INDEX].enable_snoop_mode == 1 || gSdfmParams.pru_core_config[SDFM_TXPRU_CORE_INDEX].enable_trigger_mode == 1)
             {
                 DebugP_log("TX PRU core: Trigger mode enabled.\r\n");
                 /* common interrupt handler for all three channels */
-                HwiP_Params_init(&hwiPrms);
-                hwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH6;
-                hwiPrms.callback = &sdfmIrqHandlerChannel6;
-                hwiPrms.args = 0;
-                hwiPrms.isPulse = FALSE;
-                hwiPrms.isFIQ = FALSE;
-                status = HwiP_construct(&gSdfmHwiObjectChannel6, &hwiPrms);
+                HwiP_Params_init(&sdfmHwiPrms);
+                sdfmHwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH6;
+                sdfmHwiPrms.callback = &sdfmIrqHandlerChannel6;
+                sdfmHwiPrms.args = 0;
+                sdfmHwiPrms.isPulse = FALSE;
+                sdfmHwiPrms.isFIQ = FALSE;
+                status = HwiP_construct(&gSdfmHwiObject[SDFM_CHANNEL6], &sdfmHwiPrms);
                 DebugP_assert(status == SystemP_SUCCESS);
             }
             else
@@ -353,13 +335,13 @@ void initSdfm(void)
                 if(gSdfmParams.enable_channel_mask & (1<<SDFM_CHANNEL6))
                 {
                     /* Channel 6 enabled */
-                    HwiP_Params_init(&hwiPrms);
-                    hwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH6;
-                    hwiPrms.callback = &sdfmIrqHandlerChannel6;
-                    hwiPrms.args = 0;
-                    hwiPrms.isPulse = FALSE;
-                    hwiPrms.isFIQ = FALSE;
-                    status = HwiP_construct(&gSdfmHwiObjectChannel6, &hwiPrms);
+                    HwiP_Params_init(&sdfmHwiPrms);
+                    sdfmHwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH6;
+                    sdfmHwiPrms.callback = &sdfmIrqHandlerChannel6;
+                    sdfmHwiPrms.args = 0;
+                    sdfmHwiPrms.isPulse = FALSE;
+                    sdfmHwiPrms.isFIQ = FALSE;
+                    status = HwiP_construct(&gSdfmHwiObject[SDFM_CHANNEL6], &sdfmHwiPrms);
                     DebugP_assert(status == SystemP_SUCCESS);
                 }
                 /*Note: due to host interrupt number limitation for 2 channels7 - 8, common IRQ is used to read samples for channels 7-8*/
@@ -367,13 +349,13 @@ void initSdfm(void)
                 if(gSdfmParams.enable_channel_mask & (1<<SDFM_CHANNEL7) || gSdfmParams.enable_channel_mask & (1<<SDFM_CHANNEL8))
                 {
                     /* Channel 7/8 enabled */
-                    HwiP_Params_init(&hwiPrms);
-                    hwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH7;
-                    hwiPrms.callback = &sdfmIrqHandlerChannel7;
-                    hwiPrms.args = 0;
-                    hwiPrms.isPulse = FALSE;
-                    hwiPrms.isFIQ = FALSE;
-                    status = HwiP_construct(&gSdfmHwiObjectChannel7, &hwiPrms);
+                    HwiP_Params_init(&sdfmHwiPrms);
+                    sdfmHwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH7;
+                    sdfmHwiPrms.callback = &sdfmIrqHandlerChannel7;
+                    sdfmHwiPrms.args = 0;
+                    sdfmHwiPrms.isPulse = FALSE;
+                    sdfmHwiPrms.isFIQ = FALSE;
+                    status = HwiP_construct(&gSdfmHwiObject[SDFM_CHANNEL7], &sdfmHwiPrms);
                     DebugP_assert(status == SystemP_SUCCESS);
                 }
             }
@@ -383,7 +365,7 @@ void initSdfm(void)
     else
     {
         /* Snoop mode enabled */
-        if(gSdfmParams.pru_core_config[SDFM_PRU_CORE_INDX].enable_snoop_mode == 1 )
+        if(gSdfmParams.pru_core_config[SDFM_PRU_CORE_INDEX].enable_snoop_mode == 1 )
         {
             if(gSdfmParams.enable_channel_mask > 7)
             {
@@ -392,17 +374,17 @@ void initSdfm(void)
             }
             DebugP_log("PRU core: Snoop mode enabled.\r\n");
         }
-        else if(gSdfmParams.pru_core_config[SDFM_PRU_CORE_INDX].enable_trigger_mode == 1)
+        else if(gSdfmParams.pru_core_config[SDFM_PRU_CORE_INDEX].enable_trigger_mode == 1)
         {
             DebugP_log("PRU core: Trigger mode enabled.\r\n");
             /* common interrupt handler for all nine channels */
-            HwiP_Params_init(&hwiPrms);
-            hwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH0;
-            hwiPrms.callback = &sdfmIrqHandlerChannel0;
-            hwiPrms.args = 0;
-            hwiPrms.isPulse = FALSE;
-            hwiPrms.isFIQ = FALSE;
-            status = HwiP_construct(&gSdfmHwiObjectChannel0, &hwiPrms);
+            HwiP_Params_init(&sdfmHwiPrms);
+            sdfmHwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH0;
+            sdfmHwiPrms.callback = &sdfmIrqHandlerChannel0;
+            sdfmHwiPrms.args = 0;
+            sdfmHwiPrms.isPulse = FALSE;
+            sdfmHwiPrms.isFIQ = FALSE;
+            status = HwiP_construct(&gSdfmHwiObject[SDFM_CHANNEL0], &sdfmHwiPrms);
             DebugP_assert(status == SystemP_SUCCESS);
         }
         else 
@@ -412,85 +394,85 @@ void initSdfm(void)
             if(gSdfmParams.enable_channel_mask & (1<<SDFM_CHANNEL0))
             {
                 /* Channel 0 enabled */
-                HwiP_Params_init(&hwiPrms);
-                hwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH0;
-                hwiPrms.callback = &sdfmIrqHandlerChannel0;
-                hwiPrms.args = 0;
-                hwiPrms.isPulse = FALSE;
-                hwiPrms.isFIQ = FALSE;
-                status = HwiP_construct(&gSdfmHwiObjectChannel0, &hwiPrms);
+                HwiP_Params_init(&sdfmHwiPrms);
+                sdfmHwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH0;
+                sdfmHwiPrms.callback = &sdfmIrqHandlerChannel0;
+                sdfmHwiPrms.args = 0;
+                sdfmHwiPrms.isPulse = FALSE;
+                sdfmHwiPrms.isFIQ = FALSE;
+                status = HwiP_construct(&gSdfmHwiObject[SDFM_CHANNEL0], &sdfmHwiPrms);
                 DebugP_assert(status == SystemP_SUCCESS);
             }
             if(gSdfmParams.enable_channel_mask & (1<<SDFM_CHANNEL1))
             {
                 /* Channel 1 enabled */
-                HwiP_Params_init(&hwiPrms);
-                hwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH1;
-                hwiPrms.callback = &sdfmIrqHandlerChannel1;
-                hwiPrms.args = 0;
-                hwiPrms.isPulse = FALSE;
-                hwiPrms.isFIQ = FALSE;
-                status = HwiP_construct(&gSdfmHwiObjectChannel1, &hwiPrms);
+                HwiP_Params_init(&sdfmHwiPrms);
+                sdfmHwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH1;
+                sdfmHwiPrms.callback = &sdfmIrqHandlerChannel1;
+                sdfmHwiPrms.args = 0;
+                sdfmHwiPrms.isPulse = FALSE;
+                sdfmHwiPrms.isFIQ = FALSE;
+                status = HwiP_construct(&gSdfmHwiObject[SDFM_CHANNEL1], &sdfmHwiPrms);
                 DebugP_assert(status == SystemP_SUCCESS);
             }
             if(gSdfmParams.enable_channel_mask & (1<<SDFM_CHANNEL2))
             {
                 /* Channel 2 enabled */
-                HwiP_Params_init(&hwiPrms);
-                hwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH2;
-                hwiPrms.callback = &sdfmIrqHandlerChannel2;
-                hwiPrms.args = 0;
-                hwiPrms.isPulse = FALSE;
-                hwiPrms.isFIQ = FALSE;
-                status = HwiP_construct(&gSdfmHwiObjectChannel2, &hwiPrms);
+                HwiP_Params_init(&sdfmHwiPrms);
+                sdfmHwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH2;
+                sdfmHwiPrms.callback = &sdfmIrqHandlerChannel2;
+                sdfmHwiPrms.args = 0;
+                sdfmHwiPrms.isPulse = FALSE;
+                sdfmHwiPrms.isFIQ = FALSE;
+                status = HwiP_construct(&gSdfmHwiObject[SDFM_CHANNEL2], &sdfmHwiPrms);
                 DebugP_assert(status == SystemP_SUCCESS);
             }
             if(gSdfmParams.enable_channel_mask & (1<<SDFM_CHANNEL3))
             {
                 /* Channel 3 enabled */
-                HwiP_Params_init(&hwiPrms);
-                hwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH3;
-                hwiPrms.callback = &sdfmIrqHandlerChannel3;
-                hwiPrms.args = 0;
-                hwiPrms.isPulse = FALSE;
-                hwiPrms.isFIQ = FALSE;          
-                status = HwiP_construct(&gSdfmHwiObjectChannel3, &hwiPrms);
+                HwiP_Params_init(&sdfmHwiPrms);
+                sdfmHwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH3;
+                sdfmHwiPrms.callback = &sdfmIrqHandlerChannel3;
+                sdfmHwiPrms.args = 0;
+                sdfmHwiPrms.isPulse = FALSE;
+                sdfmHwiPrms.isFIQ = FALSE;          
+                status = HwiP_construct(&gSdfmHwiObject[SDFM_CHANNEL3], &sdfmHwiPrms);
                 DebugP_assert(status == SystemP_SUCCESS);
             }
             if(gSdfmParams.enable_channel_mask & (1<<SDFM_CHANNEL4))
             {
                 /* Channel 4 enabled */
-                HwiP_Params_init(&hwiPrms);
-                hwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH4;
-                hwiPrms.callback = &sdfmIrqHandlerChannel4;
-                hwiPrms.args = 0;
-                hwiPrms.isPulse = FALSE;
-                hwiPrms.isFIQ = FALSE;          
-                status = HwiP_construct(&gSdfmHwiObjectChannel4, &hwiPrms);
+                HwiP_Params_init(&sdfmHwiPrms);
+                sdfmHwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH4;
+                sdfmHwiPrms.callback = &sdfmIrqHandlerChannel4;
+                sdfmHwiPrms.args = 0;
+                sdfmHwiPrms.isPulse = FALSE;
+                sdfmHwiPrms.isFIQ = FALSE;          
+                status = HwiP_construct(&gSdfmHwiObject[SDFM_CHANNEL4], &sdfmHwiPrms);
                 DebugP_assert(status == SystemP_SUCCESS);       
             }
             if(gSdfmParams.enable_channel_mask & (1<<SDFM_CHANNEL5))
             {
                 /* Channel 5 enabled */
-                HwiP_Params_init(&hwiPrms);
-                hwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH5;
-                hwiPrms.callback = &sdfmIrqHandlerChannel5;
-                hwiPrms.args = 0;
-                hwiPrms.isPulse = FALSE;
-                hwiPrms.isFIQ = FALSE;          
-                status = HwiP_construct(&gSdfmHwiObjectChannel5, &hwiPrms);
+                HwiP_Params_init(&sdfmHwiPrms);
+                sdfmHwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH5;
+                sdfmHwiPrms.callback = &sdfmIrqHandlerChannel5;
+                sdfmHwiPrms.args = 0;
+                sdfmHwiPrms.isPulse = FALSE;
+                sdfmHwiPrms.isFIQ = FALSE;          
+                status = HwiP_construct(&gSdfmHwiObject[SDFM_CHANNEL5], &sdfmHwiPrms);
                 DebugP_assert(status == SystemP_SUCCESS);
             }
             if(gSdfmParams.enable_channel_mask & (1<<SDFM_CHANNEL6))
             {
                 /* Channel 6 enabled */
-                HwiP_Params_init(&hwiPrms);
-                hwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH6;
-                hwiPrms.callback = &sdfmIrqHandlerChannel6;
-                hwiPrms.args = 0;
-                hwiPrms.isPulse = FALSE;
-                hwiPrms.isFIQ = FALSE;
-                status = HwiP_construct(&gSdfmHwiObjectChannel6, &hwiPrms);
+                HwiP_Params_init(&sdfmHwiPrms);
+                sdfmHwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH6;
+                sdfmHwiPrms.callback = &sdfmIrqHandlerChannel6;
+                sdfmHwiPrms.args = 0;
+                sdfmHwiPrms.isPulse = FALSE;
+                sdfmHwiPrms.isFIQ = FALSE;
+                status = HwiP_construct(&gSdfmHwiObject[SDFM_CHANNEL6], &sdfmHwiPrms);
                 DebugP_assert(status == SystemP_SUCCESS);
             }
             /*Note: due to host interrupt number limitation for 2 channels7 - 8, common IRQ is used to read samples for channels 7-8*/
@@ -498,24 +480,34 @@ void initSdfm(void)
             if(gSdfmParams.enable_channel_mask & (1<<SDFM_CHANNEL7) || gSdfmParams.enable_channel_mask & (1<<SDFM_CHANNEL8))
             {
                 /* Channel 7/8 enabled */
-                HwiP_Params_init(&hwiPrms);
-                hwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH7;
-                hwiPrms.callback = &sdfmIrqHandlerChannel7;
-                hwiPrms.args = 0;
-                hwiPrms.isPulse = FALSE;
-                hwiPrms.isFIQ = FALSE;
-                status = HwiP_construct(&gSdfmHwiObjectChannel7, &hwiPrms);
+                HwiP_Params_init(&sdfmHwiPrms);
+                sdfmHwiPrms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH7;
+                sdfmHwiPrms.callback = &sdfmIrqHandlerChannel7;
+                sdfmHwiPrms.args = 0;
+                sdfmHwiPrms.isPulse = FALSE;
+                sdfmHwiPrms.isFIQ = FALSE;
+                status = HwiP_construct(&gSdfmHwiObject[SDFM_CHANNEL7], &sdfmHwiPrms);
                 DebugP_assert(status == SystemP_SUCCESS);
+                if(gSdfmParams.enable_channel_mask & (1<<SDFM_CHANNEL7) && gSdfmParams.enable_channel_mask & (1<<SDFM_CHANNEL8))
+                {
+                    DebugP_log("Note: Due to host interrupt number limitation, common IRQ is used to read samples for channels 7 and 8\r\n");                
+                }
             }
         }
     }
 
-    /* Open PRUICSS PWM handle */
-    /*FIXME call if only Overcurrent or fast detect is enabeled */
+    /* Open PRUICSS PWM handle if overcurrent (comparator) or fast detect is enabled */
+#if (CONFIG_SDFM0_ENABLE_ICSS_PWM)
     gPruIcssPwmHandle = PRUICSS_PWM_open(CONFIG_PRUICSS_PWM0, gPruIcssHandle);
-    DebugP_assert(gPruIcssPwmHandle != NULL);
+    if (gPruIcssPwmHandle == NULL)
+    {
+        DebugP_log("Error: PRUICSS_PWM_open() failed.\r\n");
+        return;
+    }
     gSdfmParams.pwm_handle = gPruIcssPwmHandle;
-
+#else
+    gSdfmParams.pwm_handle = NULL;
+#endif
     gSdfmParams.pruicss_handle = gPruIcssHandle;
 
     /* Sample output base address for all channels */
@@ -533,10 +525,10 @@ void initSdfm(void)
     DebugP_log("\r\n");
 
     /* Initialize SDFM driver and load the SDFM firmware*/
-    status = initPruSdfm(gPruIcssHandle, gSdfmParams, &gPruIcssSdfmHandle);
+    status = appSdfmPruInit(gPruIcssHandle, gSdfmParams, &gPruIcssSdfmHandle);
     if (status != SDFM_ERR_NERR)
     {
-        DebugP_log("Error: initPruSdfm() fail.\r\n");
+        DebugP_log("Error: appSdfmPruInit() fail.\r\n");
         return;
     }
 }
@@ -546,7 +538,7 @@ void initSdfm(void)
  *
  *  \param args [IN] User arguments (unused)
  */
-void sdfm_main(void *args)
+void sdfmMain(void *args)
 {
     /* Open drivers to open the UART driver for console */
     Drivers_open();
@@ -559,17 +551,17 @@ void sdfm_main(void *args)
 
 #if (CONFIG_SDFM0_EPWM_SYNC_EN == 1 || APP_EPWM1_ENABLE == 1)
     /* Configure EPWM */
-    int32_t status = SDFM_initEpwm();
+    int32_t status = sdfmEpwmInit();
     if (status != SystemP_SUCCESS)
     {
-        DebugP_log("Error: SDFM_initEpwm() failed.\r\n");
+        DebugP_log("Error: sdfmEpwmInit() failed.\r\n");
         return;
     }
     DebugP_log("EPWM Configured!\r\n");
 #endif
 
     /* Configure SDFM */
-    initSdfm();
+    appSdfmInit();
     DebugP_log("SDFM Configured!\r\n");
 
 #if (CONFIG_SDFM0_PHASE_DELAY != 0)
@@ -582,40 +574,27 @@ void sdfm_main(void *args)
 #endif
 
     /* Main loop */
-    while (gRunFlag == TRUE)
+    while (gRunFlag == 1)
     {
         ;
     }
 
 #if (CONFIG_SDFM0_EPWM_SYNC_EN == 1 || APP_EPWM1_ENABLE == 1)
     /* Disable and clear interrupts for EPWM */
-    SDFM_deinitEpwm();
+    sdfmEpwmDeinit();
 #endif
-
-    /* Array of pointers to HWI objects for loop-based cleanup */
-    HwiP_Object* hwiObjects[9] = {
-        &gSdfmHwiObjectChannel0,
-        &gSdfmHwiObjectChannel1,
-        &gSdfmHwiObjectChannel2,
-        &gSdfmHwiObjectChannel3,
-        &gSdfmHwiObjectChannel4,
-        &gSdfmHwiObjectChannel5,
-        &gSdfmHwiObjectChannel6,
-        &gSdfmHwiObjectChannel7,
-        &gSdfmHwiObjectChannel8  /* CH7 and CH8 share the same HWI object */
-    };
 
     /* Destroy interrupt handlers for all enabled channels */
     for (int8_t i = 0; i < 9; i++)
     {
         if (gSdfmParams.enable_channel_mask & (1 << i))
         {
-            /* Skip channel 8 to avoid double destruction (CH7 and CH8 share the same HWI) */
-            if (i == SDFM_CHANNEL8)
+            /* Skip channel 8 if channel 7 is also enabled (they share the same HWI object) */
+            if (i == SDFM_CHANNEL8 && (gSdfmParams.enable_channel_mask & (1 << SDFM_CHANNEL7)))
             {
                 continue;
             }
-            HwiP_destruct(hwiObjects[i]);
+            HwiP_destruct(&gSdfmHwiObject[i]);
         }
     }
 
@@ -637,53 +616,53 @@ void sdfm_main(void *args)
  */
 void sdfmIrqHandlerChannel0(void *args)
 {
-    gSdfmIrqCntChannel0++;
+    gSdfmIrqCnt[SDFM_CHANNEL0]++;
     PRUICSS_clearEvent(gPruIcssHandle, ICSS_SDFM_TRIGGER_EVNT_CH0);
 
-    if (sdfmIdxCntChannel0 >= MAX_SAMPLES)
+    if (gSdfmIdxCnt[SDFM_CHANNEL0] >= MAX_SAMPLES)
     {
-        sdfmIdxCntChannel0 = 0;
+        gSdfmIdxCnt[SDFM_CHANNEL0] = 0;
     }
 
     if(gSdfmParams.load_share_enable == 1)
     {
-       if(gSdfmParams.pru_core_config[SDFM_RTUPRU_CORE_INDX].enable_snoop_mode == 1 || gSdfmParams.pru_core_config[SDFM_RTUPRU_CORE_INDX].enable_trigger_mode == 1)
+       if(gSdfmParams.pru_core_config[SDFM_RTUPRU_CORE_INDEX].enable_snoop_mode == 1 || gSdfmParams.pru_core_config[SDFM_RTUPRU_CORE_INDEX].enable_trigger_mode == 1)
        {
            /* Load share mode - Trigger/snoop mode - read all enabled RTU PRU channels (CH0-CH2) */
            for (int8_t i = SDFM_CHANNEL0; i <= SDFM_CHANNEL2; i++)
            {
                if (gSdfmParams.enable_channel_mask & (1 << i))
                {
-                   sdfm_ch_samples[i][sdfmIdxCntChannel0] = SDFM_getFilterData(gPruIcssSdfmHandle, i);
+                   gSdfmChSamples[i][gSdfmIdxCnt[SDFM_CHANNEL0]] = SDFM_getFilterData(gPruIcssSdfmHandle, i);
                }
            }
        }
        else
        {
-           sdfm_ch_samples[SDFM_CHANNEL0][sdfmIdxCntChannel0] = SDFM_getFilterData(gPruIcssSdfmHandle, SDFM_CHANNEL0);
+           gSdfmChSamples[SDFM_CHANNEL0][gSdfmIdxCnt[SDFM_CHANNEL0]] = SDFM_getFilterData(gPruIcssSdfmHandle, SDFM_CHANNEL0);
        }
     }
     else
     {
-        if(gSdfmParams.pru_core_config[SDFM_PRU_CORE_INDX].enable_snoop_mode == 1 || gSdfmParams.pru_core_config[SDFM_PRU_CORE_INDX].enable_trigger_mode == 1)
+        if(gSdfmParams.pru_core_config[SDFM_PRU_CORE_INDEX].enable_snoop_mode == 1 || gSdfmParams.pru_core_config[SDFM_PRU_CORE_INDEX].enable_trigger_mode == 1)
         {
             /* Single PRU mode - Trigger/snoop mode - read all enabled channels (CH0-CH8) */
             for (int8_t i = SDFM_CHANNEL0; i <= SDFM_CHANNEL8; i++)
             {
                 if (gSdfmParams.enable_channel_mask & (1 << i))
                 {
-                    sdfm_ch_samples[i][sdfmIdxCntChannel0] = SDFM_getFilterData(gPruIcssSdfmHandle, i);
+                    gSdfmChSamples[i][gSdfmIdxCnt[SDFM_CHANNEL0]] = SDFM_getFilterData(gPruIcssSdfmHandle, i);
                 }
             }
         }
         else
         {
             /* Single PRU mode - Continuous mode - Channel 0 only */
-            sdfm_ch_samples[SDFM_CHANNEL0][sdfmIdxCntChannel0] = SDFM_getFilterData(gPruIcssSdfmHandle, SDFM_CHANNEL0);
+            gSdfmChSamples[SDFM_CHANNEL0][gSdfmIdxCnt[SDFM_CHANNEL0]] = SDFM_getFilterData(gPruIcssSdfmHandle, SDFM_CHANNEL0);
         }
     }
 
-    sdfmIdxCntChannel0++;
+    gSdfmIdxCnt[SDFM_CHANNEL0]++;
 }
 
 /**
@@ -693,16 +672,16 @@ void sdfmIrqHandlerChannel0(void *args)
  */
 void sdfmIrqHandlerChannel1(void *args)
 {
-    gSdfmIrqCntChannel1++;
+    gSdfmIrqCnt[SDFM_CHANNEL1]++;
     PRUICSS_clearEvent(gPruIcssHandle, ICSS_SDFM_TRIGGER_EVNT_CH1);
 
-    if (sdfmIdxCntChannel1 >= MAX_SAMPLES)
+    if (gSdfmIdxCnt[SDFM_CHANNEL1] >= MAX_SAMPLES)
     {
-        sdfmIdxCntChannel1 = 0;
+        gSdfmIdxCnt[SDFM_CHANNEL1] = 0;
     }
 
-    sdfm_ch_samples[SDFM_CHANNEL1][sdfmIdxCntChannel1] = SDFM_getFilterData(gPruIcssSdfmHandle, SDFM_CHANNEL1);
-    sdfmIdxCntChannel1++;
+    gSdfmChSamples[SDFM_CHANNEL1][gSdfmIdxCnt[SDFM_CHANNEL1]] = SDFM_getFilterData(gPruIcssSdfmHandle, SDFM_CHANNEL1);
+    gSdfmIdxCnt[SDFM_CHANNEL1]++;
 }
 
 /**
@@ -712,16 +691,16 @@ void sdfmIrqHandlerChannel1(void *args)
  */
 void sdfmIrqHandlerChannel2(void *args)
 {
-    gSdfmIrqCntChannel2++;
+    gSdfmIrqCnt[SDFM_CHANNEL2]++;
     PRUICSS_clearEvent(gPruIcssHandle, ICSS_SDFM_TRIGGER_EVNT_CH2);
 
-    if (sdfmIdxCntChannel2 >= MAX_SAMPLES)
+    if (gSdfmIdxCnt[SDFM_CHANNEL2] >= MAX_SAMPLES)
     {
-        sdfmIdxCntChannel2 = 0;
+        gSdfmIdxCnt[SDFM_CHANNEL2] = 0;
     }
 
-    sdfm_ch_samples[SDFM_CHANNEL2][sdfmIdxCntChannel2] = SDFM_getFilterData(gPruIcssSdfmHandle, SDFM_CHANNEL2);
-    sdfmIdxCntChannel2++;
+    gSdfmChSamples[SDFM_CHANNEL2][gSdfmIdxCnt[SDFM_CHANNEL2]] = SDFM_getFilterData(gPruIcssSdfmHandle, SDFM_CHANNEL2);
+    gSdfmIdxCnt[SDFM_CHANNEL2]++;
 }
 
 /**
@@ -732,40 +711,40 @@ void sdfmIrqHandlerChannel2(void *args)
  */
 void sdfmIrqHandlerChannel3(void *args)
 {
-    gSdfmIrqCntChannel3++;
+    gSdfmIrqCnt[SDFM_CHANNEL3]++;
 
     PRUICSS_clearEvent(gPruIcssHandle, ICSS_SDFM_TRIGGER_EVNT_CH3);
 
-    if (sdfmIdxCntChannel3 >= MAX_SAMPLES)
+    if (gSdfmIdxCnt[SDFM_CHANNEL3] >= MAX_SAMPLES)
     {
-        sdfmIdxCntChannel3 = 0;
+        gSdfmIdxCnt[SDFM_CHANNEL3] = 0;
     }
 
     if(gSdfmParams.load_share_enable == 1)
     {
-        if(gSdfmParams.pru_core_config[SDFM_PRU_CORE_INDX].enable_snoop_mode == 1 || gSdfmParams.pru_core_config[SDFM_PRU_CORE_INDX].enable_trigger_mode == 1)
+        if(gSdfmParams.pru_core_config[SDFM_PRU_CORE_INDEX].enable_snoop_mode == 1 || gSdfmParams.pru_core_config[SDFM_PRU_CORE_INDEX].enable_trigger_mode == 1)
         {
             /* Load share mode - Trigger/snoop mode - read all enabled PRU channels (CH3-CH5) */
             for (int8_t i = SDFM_CHANNEL3; i <= SDFM_CHANNEL5; i++)
             {
                 if (gSdfmParams.enable_channel_mask & (1 << i))
                 {
-                    sdfm_ch_samples[i][sdfmIdxCntChannel3] = SDFM_getFilterData(gPruIcssSdfmHandle, i);
+                    gSdfmChSamples[i][gSdfmIdxCnt[SDFM_CHANNEL3]] = SDFM_getFilterData(gPruIcssSdfmHandle, i);
                 }
             }
         }
         else
         {
             /* Load share mode - Continuous mode - Channel 3 only */
-            sdfm_ch_samples[SDFM_CHANNEL3][sdfmIdxCntChannel3] = SDFM_getFilterData(gPruIcssSdfmHandle, SDFM_CHANNEL3);
+            gSdfmChSamples[SDFM_CHANNEL3][gSdfmIdxCnt[SDFM_CHANNEL3]] = SDFM_getFilterData(gPruIcssSdfmHandle, SDFM_CHANNEL3);
         }
     }
     else
     {
         /* Single PRU mode - Channel 3 only */
-        sdfm_ch_samples[SDFM_CHANNEL3][sdfmIdxCntChannel3] = SDFM_getFilterData(gPruIcssSdfmHandle, SDFM_CHANNEL3);
+        gSdfmChSamples[SDFM_CHANNEL3][gSdfmIdxCnt[SDFM_CHANNEL3]] = SDFM_getFilterData(gPruIcssSdfmHandle, SDFM_CHANNEL3);
     }
-    sdfmIdxCntChannel3++;
+    gSdfmIdxCnt[SDFM_CHANNEL3]++;
 }
 
 /**
@@ -775,16 +754,16 @@ void sdfmIrqHandlerChannel3(void *args)
  */
 void sdfmIrqHandlerChannel4(void *args)
 {
-    gSdfmIrqCntChannel4++;
+    gSdfmIrqCnt[SDFM_CHANNEL4]++;
     PRUICSS_clearEvent(gPruIcssHandle, ICSS_SDFM_TRIGGER_EVNT_CH4);
 
-    if (sdfmIdxCntChannel4 >= MAX_SAMPLES)
+    if (gSdfmIdxCnt[SDFM_CHANNEL4] >= MAX_SAMPLES)
     {
-        sdfmIdxCntChannel4 = 0;
+        gSdfmIdxCnt[SDFM_CHANNEL4] = 0;
     }
 
-    sdfm_ch_samples[SDFM_CHANNEL4][sdfmIdxCntChannel4] = SDFM_getFilterData(gPruIcssSdfmHandle, SDFM_CHANNEL4);
-    sdfmIdxCntChannel4++;
+    gSdfmChSamples[SDFM_CHANNEL4][gSdfmIdxCnt[SDFM_CHANNEL4]] = SDFM_getFilterData(gPruIcssSdfmHandle, SDFM_CHANNEL4);
+    gSdfmIdxCnt[SDFM_CHANNEL4]++;
 }
 
 /**
@@ -794,16 +773,16 @@ void sdfmIrqHandlerChannel4(void *args)
  */
 void sdfmIrqHandlerChannel5(void *args)
 {
-    gSdfmIrqCntChannel5++;
+    gSdfmIrqCnt[SDFM_CHANNEL5]++;
     PRUICSS_clearEvent(gPruIcssHandle, ICSS_SDFM_TRIGGER_EVNT_CH5);
 
-    if (sdfmIdxCntChannel5 >= MAX_SAMPLES)
+    if (gSdfmIdxCnt[SDFM_CHANNEL5] >= MAX_SAMPLES)
     {
-        sdfmIdxCntChannel5 = 0;
+        gSdfmIdxCnt[SDFM_CHANNEL5] = 0;
     }
 
-    sdfm_ch_samples[SDFM_CHANNEL5][sdfmIdxCntChannel5] = SDFM_getFilterData(gPruIcssSdfmHandle, SDFM_CHANNEL5);
-    sdfmIdxCntChannel5++;
+    gSdfmChSamples[SDFM_CHANNEL5][gSdfmIdxCnt[SDFM_CHANNEL5]] = SDFM_getFilterData(gPruIcssSdfmHandle, SDFM_CHANNEL5);
+    gSdfmIdxCnt[SDFM_CHANNEL5]++;
 }
 
 /**
@@ -814,39 +793,39 @@ void sdfmIrqHandlerChannel5(void *args)
  */
 void sdfmIrqHandlerChannel6(void *args)
 {
-    gSdfmIrqCntChannel6++;
-   
+    gSdfmIrqCnt[SDFM_CHANNEL6]++;
+
     PRUICSS_clearEvent(gPruIcssHandle, ICSS_SDFM_TRIGGER_EVNT_CH6);
 
-    if (sdfmIdxCntChannel6 >= MAX_SAMPLES)
+    if (gSdfmIdxCnt[SDFM_CHANNEL6] >= MAX_SAMPLES)
     {
-        sdfmIdxCntChannel6 = 0;
+        gSdfmIdxCnt[SDFM_CHANNEL6] = 0;
     }
     if(gSdfmParams.load_share_enable == 1)
     {
-       if(gSdfmParams.pru_core_config[SDFM_TXPRU_CORE_INDX].enable_snoop_mode == 1 || gSdfmParams.pru_core_config[SDFM_TXPRU_CORE_INDX].enable_trigger_mode == 1)
+       if(gSdfmParams.pru_core_config[SDFM_TXPRU_CORE_INDEX].enable_snoop_mode == 1 || gSdfmParams.pru_core_config[SDFM_TXPRU_CORE_INDEX].enable_trigger_mode == 1)
        {
            /* Load share mode - Trigger/snoop mode - read all enabled TX PRU channels (CH6-CH8) */
            for (int8_t i = SDFM_CHANNEL6; i <= SDFM_CHANNEL8; i++)
            {
                if (gSdfmParams.enable_channel_mask & (1 << i))
                {
-                   sdfm_ch_samples[i][sdfmIdxCntChannel6] = SDFM_getFilterData(gPruIcssSdfmHandle, i);
+                   gSdfmChSamples[i][gSdfmIdxCnt[SDFM_CHANNEL6]] = SDFM_getFilterData(gPruIcssSdfmHandle, i);
                }
            }
        }
        else
        {
            /* Load share mode - Continuous mode - Channel 6 only */
-           sdfm_ch_samples[SDFM_CHANNEL6][sdfmIdxCntChannel6] = SDFM_getFilterData(gPruIcssSdfmHandle, SDFM_CHANNEL6);
+           gSdfmChSamples[SDFM_CHANNEL6][gSdfmIdxCnt[SDFM_CHANNEL6]] = SDFM_getFilterData(gPruIcssSdfmHandle, SDFM_CHANNEL6);
        }
     }
     else
     {
         /* Single PRU mode - Channel 6 only */
-        sdfm_ch_samples[SDFM_CHANNEL6][sdfmIdxCntChannel6] = SDFM_getFilterData(gPruIcssSdfmHandle, SDFM_CHANNEL6);
+        gSdfmChSamples[SDFM_CHANNEL6][gSdfmIdxCnt[SDFM_CHANNEL6]] = SDFM_getFilterData(gPruIcssSdfmHandle, SDFM_CHANNEL6);
     }
-    sdfmIdxCntChannel6++;
+    gSdfmIdxCnt[SDFM_CHANNEL6]++;
 }
 
 /**
@@ -859,27 +838,32 @@ void sdfmIrqHandlerChannel6(void *args)
  */
 void sdfmIrqHandlerChannel7(void *args)
 {
-    gSdfmIrqCntChannel7++;
+    gSdfmIrqCnt[SDFM_CHANNEL7]++;
     PRUICSS_clearEvent(gPruIcssHandle, ICSS_SDFM_TRIGGER_EVNT_CH7);
-    
-    if (sdfmIdxCntChannel7 >= MAX_SAMPLES)
-    {
-        sdfmIdxCntChannel7 = 0;
-    }
-    sdfm_ch_samples[SDFM_CHANNEL7][sdfmIdxCntChannel7] = SDFM_getFilterData(gPruIcssSdfmHandle, SDFM_CHANNEL7);
-    sdfmIdxCntChannel7++;
 
-    /*Channel 8*/
-    PRUICSS_clearEvent(gPruIcssHandle, ICSS_SDFM_TRIGGER_EVNT_CH8);
-    if (sdfmIdxCntChannel8 >= MAX_SAMPLES)
+    if(gSdfmParams.enable_channel_mask & (1 << SDFM_CHANNEL8))
     {
-        sdfmIdxCntChannel8 = 0;
+        PRUICSS_clearEvent(gPruIcssHandle, ICSS_SDFM_TRIGGER_EVNT_CH8);
     }
-    sdfm_ch_samples[SDFM_CHANNEL8][sdfmIdxCntChannel8] = SDFM_getFilterData(gPruIcssSdfmHandle, SDFM_CHANNEL8);
 
-    sdfmIdxCntChannel8++;
+    if (gSdfmIdxCnt[SDFM_CHANNEL7] >= MAX_SAMPLES)
+    {
+        gSdfmIdxCnt[SDFM_CHANNEL7] = 0;
+    }
+    gSdfmChSamples[SDFM_CHANNEL7][gSdfmIdxCnt[SDFM_CHANNEL7]] = SDFM_getFilterData(gPruIcssSdfmHandle, SDFM_CHANNEL7);
+    gSdfmIdxCnt[SDFM_CHANNEL7]++;
+
+    /* Channel 8 - only process if enabled */
+    if(gSdfmParams.enable_channel_mask & (1 << SDFM_CHANNEL8))
+    {
+        if (gSdfmIdxCnt[SDFM_CHANNEL8] >= MAX_SAMPLES)
+        {
+            gSdfmIdxCnt[SDFM_CHANNEL8] = 0;
+        }
+        gSdfmChSamples[SDFM_CHANNEL8][gSdfmIdxCnt[SDFM_CHANNEL8]] = SDFM_getFilterData(gPruIcssSdfmHandle, SDFM_CHANNEL8);
+        gSdfmIdxCnt[SDFM_CHANNEL8]++;
+    }
 }
-
 /**
  *  \brief PRU SDFM IRQ handler for Channel 8
  *
@@ -887,6 +871,7 @@ void sdfmIrqHandlerChannel7(void *args)
  *  because Channel 7 and Channel 8 share the same host interrupt (HOST_INTR_PEND_7)
  *  and are handled together by sdfmIrqHandlerChannel7.
  */
+#ifdef SDFM_CHANNEL8_IRQ_HANDLER_USED
 void sdfmIrqHandlerChannel8(void *args)
 {
     gSdfmIrqCntChannel8++;
@@ -900,3 +885,4 @@ void sdfmIrqHandlerChannel8(void *args)
     sdfm_ch_samples[SDFM_CHANNEL8][sdfmIdxCntChannel8] = SDFM_getFilterData(gPruIcssSdfmHandle, SDFM_CHANNEL8);
     sdfmIdxCntChannel8++;
 }
+#endif

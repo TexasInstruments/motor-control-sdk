@@ -139,7 +139,7 @@ typedef struct
     Bool        cfgEt;              /**< Config ET module */
     uint32_t    intSel;             /**< ET interrupt select */
     uint32_t    intPrd;             /**< ET interrupt period */
-} SDFM_EPwmCfg_t;
+} SdfmEpwmCfg_t;
 
 /**
  *  \brief Counter Compare Module enum
@@ -150,7 +150,7 @@ typedef enum
 {
     SDFM_EPWM_COUNTER_COMPARE_A = 0, /**< Counter compare A */
     SDFM_EPWM_COUNTER_COMPARE_B = 2, /**< Counter compare B */
-} SDFM_EPWM_CounterCompareModule;
+} SdfmEpwmCounterCompareModule;
 
 /* ========================================================================== */
 /*                          Function Declarations                             */
@@ -165,7 +165,7 @@ typedef enum
  *
  *  \param config [IN] Pointer to EPWM configuration parameters
  */
-void SDFM_epwmConfig(SDFM_EPwmCfg_t *config);
+void sdfmEpwmConfig(SdfmEpwmCfg_t *config);
 
 /**
  *  \brief Get EPWM timebase period value
@@ -176,7 +176,7 @@ void SDFM_epwmConfig(SDFM_EPwmCfg_t *config);
  *
  *  \return Timebase period value
  */
-static inline uint16_t SDFM_EPWM_getTimeBasePeriod(uint32_t base)
+static inline uint16_t sdfmEpwmGetTimeBasePeriod(uint32_t base)
 {
     return (HW_RD_REG16(base + PWMSS_EPWM_TBPRD));
 }
@@ -191,9 +191,9 @@ static inline uint16_t SDFM_EPWM_getTimeBasePeriod(uint32_t base)
  *
  *  \return Counter compare value
  */
-static inline uint16_t SDFM_EPWM_getCounterCompareValue(
+static inline uint16_t sdfmEpwmGetCounterCompareValue(
     uint32_t base,
-    SDFM_EPWM_CounterCompareModule compModule
+    SdfmEpwmCounterCompareModule compModule
 )
 {
     uint32_t registerOffset;
@@ -224,9 +224,9 @@ static inline uint16_t SDFM_EPWM_getCounterCompareValue(
  *  \param compModule [IN] Counter Compare module (SDFM_EPWM_COUNTER_COMPARE_A or SDFM_EPWM_COUNTER_COMPARE_B)
  *  \param compCount  [IN] Counter compare value to write
  */
-static inline void SDFM_EPWM_setCounterCompareValue(
+static inline void sdfmEpwmSetCounterCompareValue(
     uint32_t base,
-    SDFM_EPWM_CounterCompareModule compModule,
+    SdfmEpwmCounterCompareModule compModule,
     uint16_t compCount
 )
 {
@@ -245,14 +245,14 @@ static inline void SDFM_EPWM_setCounterCompareValue(
  *
  *  \return SystemP_SUCCESS on success, SystemP_FAILURE on failure
  */
-int32_t SDFM_initEpwm(void);
+int32_t sdfmEpwmInit(void);
 
 /**
  *  \brief De-initialize EPWM module
  *
  *  This function disables EPWM interrupts and destroys the hardware interrupt object.
  */
-void SDFM_deinitEpwm(void);
+void sdfmEpwmDeinit(void);
 
 #ifdef __cplusplus
 }

@@ -40,7 +40,7 @@
  *
  *  Key Functions:
  *  - SDFM_pruIcssInit()  : Initialize ICSSG PRU subsystem for SDFM
- *  - initPruSdfm()       : Load PRU firmware and configure SDFM parameters
+ *  - appSdfmPruInit()       : Load PRU firmware and configure SDFM parameters
  */
 
 #ifndef _SDFM_H_
@@ -63,11 +63,19 @@
 #define SDFM_ERR_INIT_PRU_SDFM      ( -5 )  /* initialize PRU for SDFM error */
 #define SDFM_ERR_INIT_SDFM          ( -6 )  /* initialize SDFM error */
 
-/* Translate the TCM local view addr to SoC view addr */
-#define CPU0_ATCM_SOCVIEW(x) (CSL_R5FSS0_CORE0_ATCM_BASE+(x))
-#define CPU1_ATCM_SOCVIEW(x) (CSL_R5FSS1_CORE0_ATCM_BASE+(x))
-#define CPU0_BTCM_SOCVIEW(x) (CSL_R5FSS0_CORE0_BTCM_BASE+(x - CSL_R5FSS0_BTCM_BASE))
-#define CPU1_BTCM_SOCVIEW(x) (CSL_R5FSS1_CORE0_BTCM_BASE+(x - CSL_R5FSS1_BTCM_BASE))
+/**
+ * \brief Address translation macros for TCM to SoC view
+ *
+ * These macros translate R5F core-local TCM (Tightly Coupled Memory) addresses
+ * to SoC global view addresses. This translation is required when the PRU firmware
+ * needs to access data structures allocated in R5F TCM memory, since PRU uses
+ * the SoC address space rather than the core-local address space.
+ *
+ */
+#define CPU0_ATCM_SOCVIEW(x) (CSL_R5FSS0_CORE0_ATCM_BASE+(x))  /**< CPU0 ATCM: core local to SoC global address */
+#define CPU1_ATCM_SOCVIEW(x) (CSL_R5FSS1_CORE0_ATCM_BASE+(x))  /**< CPU1 ATCM: core local to SoC global address */
+#define CPU0_BTCM_SOCVIEW(x) (CSL_R5FSS0_CORE0_BTCM_BASE+(x - CSL_R5FSS0_BTCM_BASE))  /**< CPU0 BTCM: core local to SoC global address */
+#define CPU1_BTCM_SOCVIEW(x) (CSL_R5FSS1_CORE0_BTCM_BASE+(x - CSL_R5FSS1_BTCM_BASE))  /**< CPU1 BTCM: core local to SoC global address */
 
 
 /* ========================================================================== */
@@ -107,7 +115,7 @@ int32_t SDFM_pruIcssInit(
  *
  *  \return SDFM_ERR_NERR on success, error code otherwise
  */
-int32_t initPruSdfm(
+int32_t appSdfmPruInit(
     PRUICSS_Handle pruIcssHandle,
     SDFM_Params pSdfmPrms,
     SDFM_Handle *pHSdfm

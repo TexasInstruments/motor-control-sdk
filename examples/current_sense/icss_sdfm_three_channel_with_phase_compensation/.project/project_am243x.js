@@ -70,7 +70,7 @@ const templates_freertos_r5f =
         input: ".project/templates/am243x/freertos/main_freertos.c.xdt",
         output: "../main.c",
         options: {
-            entryFunction: "sdfm_main",
+            entryFunction: "sdfmMain",
         },
     }
 ];
