@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023 Texas Instruments Incorporated
+ *  Copyright (C) 2023-2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -30,11 +30,13 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* ========================================================================== */
+/*                             Include Files                                  */
+/* ========================================================================== */
 
 #include<stdio.h>
 #include<stdint.h>
 #include<math.h>
-
 #include <drivers/pruicss.h>
 #include <drivers/hw_include/hw_types.h>
 #include <drivers/hw_include/tistdtypes.h>
@@ -42,74 +44,111 @@
 #include "tamagawa_periodic_trigger.h"
 #include <drivers/soc.h>
 
+/* ========================================================================== */
+/*                           Macros & Typedefs                                */
+/* ========================================================================== */
 
-static HwiP_Object gIcssgEncoderHwiObject0;  /* ICSSG Tamagawa PRU FW HWI */
+#ifndef SOC_AM243X
+/* ICSSM Interrupt Numbers */
+#if (CONFIG_TAMAGAWA0_PRUICSS_INSTANCE == 1)
+#define ICSS_PRU_TAMAGAWA_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_0)
+#else
+#define ICSS_PRU_TAMAGAWA_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_0)
+#endif /* CONFIG_TAMAGAWA0_PRUICSS_INSTANCE */
+#else
+/* ICSSG Interrupt Numbers */
+#if (CONFIG_TAMAGAWA0_PRUICSS_INSTANCE == 1)
+#define ICSS_PRU_TAMAGAWA_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_0)
+#else
+#define ICSS_PRU_TAMAGAWA_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_0)
+#endif /* CONFIG_TAMAGAWA0_PRUICSS_INSTANCE */
+#endif /* SOC_AM243X */
 
-/* ICSSG Interrupt settings */
-#if (SOC_AM261X || SOC_AM263PX || SOC_AM263X)
-#if (CONFIG_TAMAGAWA0_PRUICSSx == 1)
-#define ICSS_PRU_TAMAGAWA_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_0 )
+#if (CONFIG_TAMAGAWA0_PRUICSS_PRUx == 1)
+#define IEP_CMP_EVENT       ( 3 )
+#define PRU_TRIGGER_HOST_TAMAGAWA_EVT   ( 2+16 )    /* pr0_pru_mst_intr[2]_intr_req */
 #else
-#define ICSS_PRU_TAMAGAWA_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_0 )
-#endif
-#else
-#if (CONFIG_TAMAGAWA0_PRUICSSx == 1)
-#define ICSS_PRU_TAMAGAWA_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_0 )
-#else
-#define ICSS_PRU_TAMAGAWA_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_0 )
-#endif
-#endif
-uint32_t gPrutamagawaIrqCnt0;
+#define IEP_CMP_EVENT       ( 4 )
+#define PRU_TRIGGER_HOST_TAMAGAWA_EVT   ( 3+16 )    /* pr0_pru_mst_intr[3]_intr_req */
+#endif /* CONFIG_TAMAGAWA0_PRUICSS_PRUx */
 
 #if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
-#if (SOC_AM261X || SOC_AM263PX || SOC_AM263X)
-#if (CONFIG_TAMAGAWA0_PRUICSSx == 1)
-#define ICSS_PRU_TAMAGAWA_DUAL_CHANNEL_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_1 )
+#ifndef SOC_AM243X
+#if (CONFIG_TAMAGAWA1_PRUICSS_INSTANCE == 1)
+#define ICSS_PRU_TAMAGAWA_INT_NUM_SECOND_SLICE  (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_1)
 #else
-#define ICSS_PRU_TAMAGAWA_DUAL_CHANNEL_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_1 )
-#endif
+#define ICSS_PRU_TAMAGAWA_INT_NUM_SECOND_SLICE  (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_1)
+#endif /* CONFIG_TAMAGAWA1_PRUICSS_INSTANCE */
 #else
-#if (CONFIG_TAMAGAWA0_PRUICSSx == 1)
-#define ICSS_PRU_TAMAGAWA_DUAL_CHANNEL_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_1 )
+#if (CONFIG_TAMAGAWA1_PRUICSS_INSTANCE == 1)
+#define ICSS_PRU_TAMAGAWA_INT_NUM_SECOND_SLICE  (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_1)
 #else
-#define ICSS_PRU_TAMAGAWA_DUAL_CHANNEL_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_1 )
-#endif
-#endif
-uint32_t gPrutamagawaDualChannelIrqCnt0;
-
-static HwiP_Object gIcssgEncoder1HwiObject0; 
-#endif 
-
-/*global variable */
-void *gPruIcssIep;
-
-PRUICSS_Handle gPruIcssXHandle;
-
-/* ICSS INTC configuration */
-#if (CONFIG_TAMAGAWA0_PRUICSSx == 1)
-    extern PRUICSS_IntcInitData icss1_intc_initdata;
+#define ICSS_PRU_TAMAGAWA_INT_NUM_SECOND_SLICE  (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_1)
+#endif /* CONFIG_TAMAGAWA1_PRUICSS_INSTANCE */
+#endif /* SOC_AM243X */
+#if (CONFIG_TAMAGAWA1_PRUICSS_PRUx == 1)
+#define IEP_CMP_EVENT_SECOND_SLICE       ( 3 )
+#define PRU_TRIGGER_HOST_TAMAGAWA_EVT_SECOND_SLICE   ( 2+16 )    /* pr0_pru_mst_intr[2]_intr_req */
 #else
-    extern PRUICSS_IntcInitData icss0_intc_initdata;
+#define IEP_CMP_EVENT_SECOND_SLICE       ( 4 )
+#define PRU_TRIGGER_HOST_TAMAGAWA_EVT_SECOND_SLICE   ( 3+16 )    /* pr0_pru_mst_intr[3]_intr_req */
+#endif /* CONFIG_TAMAGAWA1_PRUICSS_PRUx */
+#endif /* TAMAGAWA_DUAL_PRU_SLICE_ENABLE */
+
+/* ========================================================================== */
+/*                            Global Variables                                */
+/* ========================================================================== */
+
+static HwiP_Object gTamagawaHwiObject[CONFIG_TAMAGAWA_NUM_INSTANCES];
+uint32_t gPruTamagawaIrqCnt[CONFIG_TAMAGAWA_NUM_INSTANCES] = {0};
+
+/* PRU-ICSS INTC Configuration uses first Tamagawa instance */
+/* ASSUMPTION: Same PRU-ICSS instance is used for multiple Tamagawa handles in this example */
+#if (CONFIG_TAMAGAWA0_PRUICSS_INSTANCE == 1)
+extern PRUICSS_IntcInitData icss1_intc_initdata;
+#else
+extern PRUICSS_IntcInitData icss0_intc_initdata;
 #endif
 
-void tamagawa_config_iep(struct tamagawa_periodic_interface *tamagawa_periodic_interface)
+/* ========================================================================== */
+/*                       Function Declarations                                */
+/* ========================================================================== */
+
+static void tamagawa_config_iep(tamagawa_periodic_interface *tamagawa_periodic_interface);
+
+static void tamagawa_interrupt_config(tamagawa_periodic_interface *tamagawa_periodic_interface);
+
+void tamagawa_pru_irq_handler(void *pruicss_handle);
+
+#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
+void tamagawa_pru_irq_handler_second_slice(void *pruicss_handle);
+#endif
+
+/* ========================================================================== */
+/*                          Function Definitions                              */
+/* ========================================================================== */
+
+static void tamagawa_config_iep(tamagawa_periodic_interface *tamagawa_periodic_interface)
 {
-    /*reset iep timer*/
-    void *pruicss_iep = gPruIcssIep;
+    /* PRU-ICSS Level Global Configuration uses first Tamagawa handle */
+    /* ASSUMPTION: Same PRU-ICSS instance is used for multiple Tamagawa handles in this example */
+    tamagawa_priv *priv = tamagawa_get_priv(tamagawa_periodic_interface->handle[CONFIG_TAMAGAWA0]);
+    void *pruicss_iep = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->iep0RegBase);
     uint8_t temp;
-    uint16_t event;
+    uint32_t event;
+    uint32_t event_clear;
     uint32_t cmp_reg0;
     uint32_t cmp_reg1;
-    uint32_t event_clear;
+    uint64_t iep_reset_count = 0;
 
     /*clear IEP*/
-    temp = HW_RD_REG8((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG );
+    temp = HW_RD_REG8((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG);
     temp &= 0xFE;
-    HW_WR_REG8((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG, temp);
+    HW_WR_REG8((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG, temp);
 
     /* cmp cfg reg */
-    event = HW_RD_REG16((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG);
-    event_clear = HW_RD_REG16((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
+    event = HW_RD_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG);
+    event_clear = HW_RD_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
 
     /*enable IEP reset by cmp0 event*/
     event |= IEP_CMP0_ENABLE;
@@ -117,201 +156,196 @@ void tamagawa_config_iep(struct tamagawa_periodic_interface *tamagawa_periodic_i
     event_clear |= 1;
 
     /*set IEP counter to ZERO*/
-    HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG0, 0);
-    HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG1, 0);
+    HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG0, 0);
+    HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG1, 0);
 
-    /*configure cmp registers*/
+    /* Configure CMP based on periodic_trigger_count of first handle */
     event |= (0x1 << (IEP_CMP_EVENT + 1));
-    event_clear |= (0x1 << IEP_CMP_EVENT);
+    event_clear |= (0x1 << (IEP_CMP_EVENT));
+    cmp_reg0 = (tamagawa_periodic_interface->periodic_trigger_count[CONFIG_TAMAGAWA0] & 0xffffffff) - IEP_DEFAULT_INC;
+    cmp_reg1 = (tamagawa_periodic_interface->periodic_trigger_count[CONFIG_TAMAGAWA0]>>32 & 0xffffffff);
 
-    cmp_reg0 = (tamagawa_periodic_interface->periodic_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
-    cmp_reg1 = (tamagawa_periodic_interface->periodic_trigger_count>>32 & 0xffffffff);
-
-    HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + 8*IEP_CMP_EVENT),  cmp_reg0);
-    HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + 8*IEP_CMP_EVENT),  cmp_reg1);
+    HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + IEP_CMP_EVENT*8,  cmp_reg0);
+    HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + IEP_CMP_EVENT*8,  cmp_reg1);
 
     /*clear event*/
-    HW_WR_REG16((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
-    /*enable  event*/
-    HW_WR_REG16((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG, event);
+    HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
+    /*enable event*/
+    HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG, event);
+
+#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
+    /* Configure CMP based on periodic_trigger_count of second handle */
+
+    event = HW_RD_REG32((uint32_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG);
+    event_clear = HW_RD_REG32((uint32_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
+
+    event |= (0x1 << (IEP_CMP_EVENT_SECOND_SLICE + 1));
+    event_clear |= (0x1 << (IEP_CMP_EVENT_SECOND_SLICE));
+    cmp_reg0 = (tamagawa_periodic_interface->periodic_trigger_count[CONFIG_TAMAGAWA1] & 0xffffffff) - IEP_DEFAULT_INC;
+    cmp_reg1 = (tamagawa_periodic_interface->periodic_trigger_count[CONFIG_TAMAGAWA1]>>32 & 0xffffffff);
+
+    HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + IEP_CMP_EVENT_SECOND_SLICE*8,  cmp_reg0);
+    HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + IEP_CMP_EVENT_SECOND_SLICE*8,  cmp_reg1);
+
+    /*clear event*/
+    HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
+    /*enable event*/
+    HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG, event);
+#endif
+
+    iep_reset_count = tamagawa_periodic_interface->iep_reset_count;
 
     /*configure cmp0 registers*/
-    cmp_reg0 = (tamagawa_periodic_interface->iep_reset_count & 0xffffffff) - IEP_DEFAULT_INC;
-    cmp_reg1 = (tamagawa_periodic_interface->iep_reset_count>>32 & 0xffffffff);
-    HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0,  cmp_reg0);
-    HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1,  cmp_reg1);
+    cmp_reg0 = (iep_reset_count & 0xffffffff) - IEP_DEFAULT_INC;
+    cmp_reg1 = (iep_reset_count>>32 & 0xffffffff);
+    HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0, cmp_reg0);
+    HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1, cmp_reg1);
 
     /*write IEP default increment & IEP start*/
-    temp = HW_RD_REG8((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG );
+    temp = HW_RD_REG8((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG);
     temp &= 0x0F;
     temp |= 0x10;
     temp |= IEP_COUNTER_EN;
-    HW_WR_REG8((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG, temp);
+    HW_WR_REG8((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG, temp);
 }
 
-#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
-void tamagawa1_config_iep(struct tamagawa_periodic_interface *tamagawa_periodic_interface)
+
+static void tamagawa_interrupt_config(tamagawa_periodic_interface *tamagawa_periodic_interface)
 {
-    /*reset iep timer*/
-    void *pruicss_iep = gPruIcssIep;
-    uint16_t event;
-    uint32_t cmp_reg0;
-    uint32_t cmp_reg1;
-    uint32_t event_clear;
-
-    /* cmp cfg reg */
-    event = HW_RD_REG16((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG);
-    event_clear = HW_RD_REG16((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
-
-    event |= (0x1 << (DUAL_CH_IEP_CMP_EVENT + 1));
-    event_clear |= (0x1 << DUAL_CH_IEP_CMP_EVENT);
-
-
-    cmp_reg0 = (tamagawa_periodic_interface->periodic_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
-    cmp_reg1 = (tamagawa_periodic_interface->periodic_trigger_count>>32 & 0xffffffff);
-
-    HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + 8*DUAL_CH_IEP_CMP_EVENT),  cmp_reg0);
-    HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + 8*DUAL_CH_IEP_CMP_EVENT),  cmp_reg1);
-
-    /*clear event*/
-    HW_WR_REG16((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
-    /*enable  event*/
-    HW_WR_REG16((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG, event);
-}
-#endif
-
-void tamagawa_interrupt_config(struct tamagawa_periodic_interface *tamagawa_periodic_interface)
-{
+    /* PRU-ICSS Level Global Configuration uses first Tamagawa handle */
+    /* ASSUMPTION: Same PRU-ICSS instance is used for multiple Tamagawa handles in this example */
+    tamagawa_priv *priv = tamagawa_get_priv(tamagawa_periodic_interface->handle[CONFIG_TAMAGAWA0]);
+    void *pruicss_handle = (void *)(priv->pruicss_handle);
     int32_t status;
-    HwiP_Params hwiPrms;
-    /* Register & enable ICSSG tamagawa PRU FW interrupt */
-    HwiP_Params_init(&hwiPrms);
-    hwiPrms.intNum      = ICSS_PRU_TAMAGAWA_INT_NUM;
-    hwiPrms.callback    = &pruTamagawaIrqHandler0;
-    hwiPrms.args        = 0;
-    hwiPrms.isPulse     = FALSE;
-    hwiPrms.isFIQ       = FALSE;
-    status              = HwiP_construct(&gIcssgEncoderHwiObject0, &hwiPrms);
+    HwiP_Params hwi_params;
+
+    /* Register and enable PRU FW interrupt */
+    HwiP_Params_init(&hwi_params);
+    hwi_params.intNum   = ICSS_PRU_TAMAGAWA_INT_NUM;
+    hwi_params.callback = &tamagawa_pru_irq_handler;
+    hwi_params.args     = pruicss_handle;
+    hwi_params.isPulse  = FALSE;
+    hwi_params.isFIQ    = FALSE;
+    status              = HwiP_construct(&gTamagawaHwiObject[CONFIG_TAMAGAWA0], &hwi_params);
     DebugP_assert(status == SystemP_SUCCESS);
-}
 
 #if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
-void tamagawa1_interrupt_config(struct tamagawa_periodic_interface *tamagawa_periodic_interface)
-{
-    int32_t status;
-    HwiP_Params hwiPrms;
-    /* Register & enable ICSSG tamagawa PRU FW interrupt */
-    HwiP_Params_init(&hwiPrms);
-    hwiPrms.intNum      = ICSS_PRU_TAMAGAWA_DUAL_CHANNEL_INT_NUM;
-    hwiPrms.callback    = &pruTamagawaDualChannelIrqHandler0;
-    hwiPrms.args        = 0;
-    hwiPrms.isPulse     = FALSE;
-    hwiPrms.isFIQ       = FALSE;
-    status              = HwiP_construct(&gIcssgEncoder1HwiObject0, &hwiPrms);
+    /* Register and enable PRU FW interrupt */
+    HwiP_Params_init(&hwi_params);
+    hwi_params.intNum   = ICSS_PRU_TAMAGAWA_INT_NUM_SECOND_SLICE;
+    hwi_params.callback = &tamagawa_pru_irq_handler_second_slice;
+    hwi_params.args     = pruicss_handle;
+    hwi_params.isPulse  = FALSE;
+    hwi_params.isFIQ    = FALSE;
+    status              = HwiP_construct(&gTamagawaHwiObject[CONFIG_TAMAGAWA1], &hwi_params);
     DebugP_assert(status == SystemP_SUCCESS);
+#endif
 }
-  
+
+int32_t tamagawa_config_periodic_mode(tamagawa_periodic_interface *tamagawa_periodic_interface)
+{
+    int32_t         status;
+    tamagawa_priv   *priv;
+    void            *pruicss_handle;
+
+    /* NULL check on interface pointer and handle */
+    if(tamagawa_periodic_interface == NULL || tamagawa_periodic_interface->handle[CONFIG_TAMAGAWA0] == NULL)
+    {
+        return SystemP_FAILURE;
+    }
+
+#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
+    /* NULL check on second handle in dual slice mode */
+    if(tamagawa_periodic_interface->handle[CONFIG_TAMAGAWA1] == NULL)
+    {
+        return SystemP_FAILURE;
+    }
 #endif
 
-uint32_t tamagawa_config_periodic_mode(struct tamagawa_periodic_interface *tamagawa_periodic_interface, PRUICSS_Handle handle, uint8_t tamagawa_instnace)
-{
-    int32_t  status;
-    gPruIcssXHandle = handle;
-#if TAMAGAWA_PERIODIC_MODE_IEP_INSTANCE == 0
-    gPruIcssIep =  (void *)(((PRUICSS_HwAttrs *)(handle->hwAttrs))->iep0RegBase);
-#else
-    gPruIcssIep =  (void *)(((PRUICSS_HwAttrs *)(handle->hwAttrs))->iep1RegBase);
-#endif
-    /*configure IEP*/
-#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
-    if(tamagawa_instnace == 1)
-    {
-        tamagawa1_config_iep(tamagawa_periodic_interface);
-        /*config Interrupt*/
-        tamagawa1_interrupt_config(tamagawa_periodic_interface);
-    }
-    else
-    {
-        tamagawa_config_iep(tamagawa_periodic_interface);
-        /*config Interrupt*/
-        tamagawa_interrupt_config(tamagawa_periodic_interface);
-        /* Initialize ICSS INTC */
-#if (CONFIG_TAMAGAWA0_PRUICSSx == 1)
-        status = PRUICSS_intcInit(gPruIcssXHandle, &icss1_intc_initdata);
-        if (status != SystemP_SUCCESS)
-        {
-            return 0;
-        }
-#else
-        status = PRUICSS_intcInit(gPruIcssXHandle, &icss0_intc_initdata);
-        if (status != SystemP_SUCCESS)
-        {
-            return 0;
-        }
-#endif
-    }
-#else
+    /* PRU-ICSS Level Global Configuration uses first Tamagawa handle */
+    /* ASSUMPTION: Same PRU-ICSS instance is used for multiple Tamagawa handles in this example */
+    priv = tamagawa_get_priv(tamagawa_periodic_interface->handle[CONFIG_TAMAGAWA0]);
+    pruicss_handle = (void *)(priv->pruicss_handle);
+
+    /* Configure IEP */
     tamagawa_config_iep(tamagawa_periodic_interface);
-    /*config Interrupt*/
-    tamagawa_interrupt_config(tamagawa_periodic_interface);
-    /* Initialize ICSS INTC */
-#if (CONFIG_TAMAGAWA0_PRUICSSx == 1)
-    status = PRUICSS_intcInit(gPruIcssXHandle, &icss1_intc_initdata);
-    if (status != SystemP_SUCCESS)
+
+    /* Initialize PRU-ICSS Interrupt Controller */
+    /* ASSUMPTION: Same PRU-ICSS instance is used for multiple Tamagawa handles in this example */
+#if (CONFIG_TAMAGAWA0_PRUICSS_INSTANCE == 1)
+    status = PRUICSS_intcInit(pruicss_handle, &icss1_intc_initdata);
+    if(status != SystemP_SUCCESS)
     {
-        return 0;
+        return status;
     }
 #else
-    status = PRUICSS_intcInit(gPruIcssXHandle, &icss0_intc_initdata);
-    if (status != SystemP_SUCCESS)
+    status = PRUICSS_intcInit(pruicss_handle, &icss0_intc_initdata);
+    if(status != SystemP_SUCCESS)
     {
-        return 0;
+        return status;
     }
 #endif
-#endif
-   
-    return 1;
+    /* Configure Interrupts */
+    tamagawa_interrupt_config(tamagawa_periodic_interface);
+    return SystemP_SUCCESS;
+
 }
 
-void tamagawa_stop_periodic_continuous_mode(struct tamagawa_periodic_interface *tamagawa_periodic_interface)
+int32_t tamagawa_stop_periodic_mode(tamagawa_periodic_interface *tamagawa_periodic_interface)
 {
-    /*reset iep timer*/
-    void *pruicss_iep = gPruIcssIep;
+    tamagawa_priv *priv;
+    void *pruicss_iep;
     uint8_t temp;
-    /*clear IEP*/
-    temp = HW_RD_REG8((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG );
-    temp &= 0xFE;
-    HW_WR_REG8((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG, temp);
 
-    HwiP_destruct(&gIcssgEncoderHwiObject0);
+    /* NULL check on interface pointer and handle */
+    if(tamagawa_periodic_interface == NULL || tamagawa_periodic_interface->handle[CONFIG_TAMAGAWA0] == NULL)
+    {
+        return SystemP_FAILURE;
+    }
+
 #if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
-    HwiP_destruct(&gIcssgEncoder1HwiObject0);
+    /* NULL check on second handle in dual slice mode */
+    if(tamagawa_periodic_interface->handle[CONFIG_TAMAGAWA1] == NULL)
+    {
+        return SystemP_FAILURE;
+    }
 #endif
+
+    /* PRU-ICSS Level Global Configuration uses first Tamagawa handle */
+    /* ASSUMPTION: Same PRU-ICSS instance is used for multiple Tamagawa handles in this example */
+    priv = tamagawa_get_priv(tamagawa_periodic_interface->handle[CONFIG_TAMAGAWA0]);
+    pruicss_iep = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->iep0RegBase);
+
+    /*Stop IEP*/
+    temp = HW_RD_REG8((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG);
+    temp &= 0xFE;
+    HW_WR_REG8((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG, temp);
+
+    HwiP_destruct(&gTamagawaHwiObject[CONFIG_TAMAGAWA0]);
+#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
+    HwiP_destruct(&gTamagawaHwiObject[CONFIG_TAMAGAWA1]);
+#endif
+
+    return SystemP_SUCCESS;
 }
 
-/* PRU tamagawa FW IRQ handler */
-void pruTamagawaIrqHandler0(void *args)
+/* PRU FW IRQ handler */
+void tamagawa_pru_irq_handler(void *pruicss_handle)
 {
+    /* Increment IRQ count */
+    gPruTamagawaIrqCnt[CONFIG_TAMAGAWA0]++;
 
-    /* inncrement PRU SDFM IRQ count */
-    gPrutamagawaIrqCnt0++;
-
-    /* clear Cmp event*/
-    HW_WR_REG8((uint8_t*)gPruIcssIep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, 1 << IEP_CMP_EVENT);
     /* Clear interrupt at source */
-    
-    PRUICSS_clearEvent(gPruIcssXHandle, PRU_TRIGGER_HOST_TAMAGAWA_EVT0);
-
+    PRUICSS_clearEvent((PRUICSS_Handle)pruicss_handle, PRU_TRIGGER_HOST_TAMAGAWA_EVT);
 }
 
 #if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
-void pruTamagawaDualChannelIrqHandler0(void *args)
+void tamagawa_pru_irq_handler_second_slice(void *pruicss_handle)
 {
+    /* Increment IRQ count */
+    gPruTamagawaIrqCnt[CONFIG_TAMAGAWA1]++;
 
-    /* inncrement PRU IRQ count */
-    gPrutamagawaDualChannelIrqCnt0++;
     /* Clear interrupt at source */
-    PRUICSS_clearEvent(gPruIcssXHandle, PRU_TRIGGER_HOST_TAMAGAWA_DUAL_CH_EVT0);
-
+    PRUICSS_clearEvent((PRUICSS_Handle)pruicss_handle, PRU_TRIGGER_HOST_TAMAGAWA_EVT_SECOND_SLICE);
 }
 #endif
