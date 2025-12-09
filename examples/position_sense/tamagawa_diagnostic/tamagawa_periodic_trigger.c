@@ -30,6 +30,36 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/**
+ * \file  tamagawa_periodic_trigger.c
+ *
+ * \brief Tamagawa periodic trigger mode implementation using IEP timer
+ *
+ * This file implements periodic trigger mode for Tamagawa encoder interface.
+ * In periodic mode, encoder position data is automatically sampled at regular
+ * intervals using the PRU-ICSS Industrial Ethernet Peripheral (IEP) timer,
+ * eliminating the need for host CPU trigger for each transaction.
+ *
+ * \par IEP Timer Configuration:
+ * The IEP timer is a PRU-ICSS instance-level resource shared between slices.
+ * Therefore, IEP configuration uses the first handle (CONFIG_TAMAGAWA0) to access
+ * the PRU-ICSS hardware attributes, regardless of how many slices are active.
+ * Each slice/instance can have different trigger counts per channel, but they
+ * share the same IEP reset count (period).
+ * - Trigger Count: IEP counter value when encoder transaction is initiated
+ * - Reset Count: IEP counter value when counter resets to 0 (defines period)
+ *
+ * \par First instance (CONFIG_TAMAGAWA0) is used for shared resources:
+ * Several operations use gAppTamagawaHandle[CONFIG_TAMAGAWA0] to access shared PRU-ICSS
+ * resources:
+ * 1. IEP timer configuration (tamagawa_config_iep()): IEP is PRU-ICSS instance-level,
+ *    not slice-specific. Using first handle ensures consistent access.
+ * 2. INTC initialization (tamagawa_config_periodic_mode()): INTC is initialized once
+ *    per PRU-ICSS instance, not per slice.
+ * 3. This approach works correctly because validation in tamagawa_pruicss_init()
+ *    ensures both instances use the same PRU-ICSS instance.
+ */
+
 /* ========================================================================== */
 /*                             Include Files                                  */
 /* ========================================================================== */
@@ -73,19 +103,16 @@
 #endif /* CONFIG_TAMAGAWA0_PRUICSS_PRUx */
 
 #if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
-#ifndef SOC_AM243X
+/* NOTE: Dual handle example using PRU0 and PRU1 is tested only with
+ * TAMAGAWA_MODE_SINGLE_CHANNEL_SINGLE_PRU mode on AM261x. For enabling other
+ * combinations, update code and remove this line.
+ */
 #if (CONFIG_TAMAGAWA1_PRUICSS_INSTANCE == 1)
 #define ICSS_PRU_TAMAGAWA_INT_NUM_SECOND_SLICE  (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_1)
 #else
 #define ICSS_PRU_TAMAGAWA_INT_NUM_SECOND_SLICE  (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_1)
 #endif /* CONFIG_TAMAGAWA1_PRUICSS_INSTANCE */
-#else
-#if (CONFIG_TAMAGAWA1_PRUICSS_INSTANCE == 1)
-#define ICSS_PRU_TAMAGAWA_INT_NUM_SECOND_SLICE  (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_1)
-#else
-#define ICSS_PRU_TAMAGAWA_INT_NUM_SECOND_SLICE  (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_1)
-#endif /* CONFIG_TAMAGAWA1_PRUICSS_INSTANCE */
-#endif /* SOC_AM243X */
+
 #if (CONFIG_TAMAGAWA1_PRUICSS_PRUx == 1)
 #define IEP_CMP_EVENT_SECOND_SLICE       ( 3 )
 #define PRU_TRIGGER_HOST_TAMAGAWA_EVT_SECOND_SLICE   ( 2+16 )    /* pr0_pru_mst_intr[2]_intr_req */
@@ -121,6 +148,9 @@ static void tamagawa_interrupt_config(tamagawa_periodic_interface *tamagawa_peri
 void tamagawa_pru_irq_handler(void *pruicss_handle);
 
 #if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
+/* NOTE: Dual handle example using PRU0 and PRU1 is tested only with
+ * TAMAGAWA_MODE_SINGLE_CHANNEL_SINGLE_PRU mode on AM261x.
+ */
 void tamagawa_pru_irq_handler_second_slice(void *pruicss_handle);
 #endif
 
@@ -247,20 +277,21 @@ int32_t tamagawa_config_periodic_mode(tamagawa_periodic_interface *tamagawa_peri
     int32_t         status;
     tamagawa_priv   *priv;
     void            *pruicss_handle;
+    uint32_t        i;
 
-    /* NULL check on interface pointer and handle */
-    if(tamagawa_periodic_interface == NULL || tamagawa_periodic_interface->handle[CONFIG_TAMAGAWA0] == NULL)
+    /* NULL check on interface pointer and handle(s) */
+    if(tamagawa_periodic_interface == NULL)
     {
         return SystemP_FAILURE;
     }
 
-#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
-    /* NULL check on second handle in dual slice mode */
-    if(tamagawa_periodic_interface->handle[CONFIG_TAMAGAWA1] == NULL)
+    for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
     {
-        return SystemP_FAILURE;
+        if(tamagawa_periodic_interface->handle[i] == NULL)
+        {
+            return SystemP_FAILURE;
+        }
     }
-#endif
 
     /* PRU-ICSS Level Global Configuration uses first Tamagawa handle */
     /* ASSUMPTION: Same PRU-ICSS instance is used for multiple Tamagawa handles in this example */
@@ -296,20 +327,21 @@ int32_t tamagawa_stop_periodic_mode(tamagawa_periodic_interface *tamagawa_period
     tamagawa_priv *priv;
     void *pruicss_iep;
     uint8_t temp;
+    uint32_t i;
 
-    /* NULL check on interface pointer and handle */
-    if(tamagawa_periodic_interface == NULL || tamagawa_periodic_interface->handle[CONFIG_TAMAGAWA0] == NULL)
+    /* NULL check on interface pointer and handle(s) */
+    if(tamagawa_periodic_interface == NULL)
     {
         return SystemP_FAILURE;
     }
 
-#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
-    /* NULL check on second handle in dual slice mode */
-    if(tamagawa_periodic_interface->handle[CONFIG_TAMAGAWA1] == NULL)
+    for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
     {
-        return SystemP_FAILURE;
+        if(tamagawa_periodic_interface->handle[i] == NULL)
+        {
+            return SystemP_FAILURE;
+        }
     }
-#endif
 
     /* PRU-ICSS Level Global Configuration uses first Tamagawa handle */
     /* ASSUMPTION: Same PRU-ICSS instance is used for multiple Tamagawa handles in this example */
