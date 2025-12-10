@@ -42,52 +42,33 @@
 ;******************************************************************************
 ; Channel-specific Bit Flags
 ;******************************************************************************
-; R31 flags for RX
-    .if $isdefed("ENABLE_MULTI_MAKE_TXPRU")
-RX_OVERFLOW_FLAG                .set                    29
-RX_VALID_FLAG                   .set                    26
-    .elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
-RX_OVERFLOW_FLAG                .set                    28
-RX_VALID_FLAG                   .set                    25
-    .elseif $isdefed("ENABLE_MULTI_MAKE_RTU")
-RX_OVERFLOW_FLAG                .set                    27
-RX_VALID_FLAG                   .set                    24
-    .else
-RX_OVERFLOW_FLAG                .set                    27
-RX_VALID_FLAG                   .set                    24
-    .endif
+; Channel-specific RX valid flags (common across all cores)
+CH0_RX_VALID_FLAG                   .set                    24
+CH1_RX_VALID_FLAG                   .set                    25
+CH2_RX_VALID_FLAG                   .set                    26
 
-; R30 flags for RX
-    .if $isdefed("ENABLE_MULTI_MAKE_TXPRU")
-RX_ENABLE                       .set                    26
-    .elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
-RX_ENABLE                       .set                    25
-    .elseif $isdefed("ENABLE_MULTI_MAKE_RTU")
-RX_ENABLE                       .set                    24
-    .else
-RX_ENABLE                       .set                    24
-    .endif
+CH0_RX_ENABLE                       .set                    24
+CH1_RX_ENABLE                       .set                    25
+CH2_RX_ENABLE                       .set                    26
+
+CH0_RX_OVERFLOW_FLAG                .set                    27
+CH1_RX_OVERFLOW_FLAG                .set                    28
+CH2_RX_OVERFLOW_FLAG                .set                    29
 
 ; Global TX flags
-TX_GLOBAL_TX_GO                 .set                    20
-TX_GLOBAL_REINIT                .set                    19
-TX_CHANNEL_GO                   .set                    18
+TX_GLOBAL_TX_GO                     .set                    20
+TX_GLOBAL_REINIT                    .set                    19
+TX_CHANNEL_GO                       .set                    18
 
 ; Channel-specific TX flags
-    .if $isdefed("ENABLE_MULTI_MAKE_TXPRU")
-TX_GLOBAL_REINIT_ACTIVE         .set                    21
-TX_UNDERRUN                     .set                    17
-TX_OVERRUN                      .set                    16
-    .elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
-TX_GLOBAL_REINIT_ACTIVE         .set                    13
-TX_UNDERRUN                     .set                     9
-TX_OVERRUN                      .set                     8
-    .elseif $isdefed("ENABLE_MULTI_MAKE_RTU")
-TX_GLOBAL_REINIT_ACTIVE         .set                     5
-TX_UNDERRUN                     .set                     1
-TX_OVERRUN                      .set                     0
-    .else
-TX_GLOBAL_REINIT_ACTIVE         .set                     5
-TX_UNDERRUN                     .set                     1
-TX_OVERRUN                      .set                     0
-    .endif
+CH0_TX_GLOBAL_REINIT_ACTIVE         .set                    5
+CH1_TX_GLOBAL_REINIT_ACTIVE         .set                    13
+CH2_TX_GLOBAL_REINIT_ACTIVE         .set                    21
+
+CH0_TX_UNDERRUN                     .set                    1
+CH1_TX_UNDERRUN                     .set                    9
+CH2_TX_UNDERRUN                     .set                    17
+
+CH0_TX_OVERRUN                      .set                    0
+CH1_TX_OVERRUN                      .set                    8
+CH2_TX_OVERRUN                      .set                    16
