@@ -497,20 +497,45 @@ l?:
 	qbbs    l?, r31, 4                  ; Wait if fill level >= 4
 	qbbs    l?, r31, 3                  ; Wait if fill level >= 2
 	.else
+	; Determine channel from mask at runtime
+	qbbs    wait_fifo_ch2?, ENDAT_ENABLE_CHx, 2
+	qbbs    wait_fifo_ch1?, ENDAT_ENABLE_CHx, 1
+	; Default to channel 0
 	qbbs    l?, r31, 4                  ; Wait if fill level >= 4
 	qbbs    l?, r31, 3                  ; Wait if fill level >= 2
+	qba     wait_fifo_done?
+wait_fifo_ch1?:
+	qbbs    l?, r31, 12                 ; Wait if fill level >= 4
+	qbbs    l?, r31, 11                 ; Wait if fill level >= 2
+	qba     wait_fifo_done?
+wait_fifo_ch2?:
+	qbbs    l?, r31, TX_GLOBAL_TX_GO    ; Wait if transmission active
+	qbbs    l?, r31, TX_GLOBAL_REINIT   ; Wait if reset in progress
+wait_fifo_done?:
 	.endif
 	.endm
 
 ;------------------------------------------------------------------------------
 ; WAIT_TX_DONE
-; 
+;
 ; Waits until TX transmission is fully completed.
 ; Ensures all data has been transmitted before proceeding.
+; Channel-aware: checks the appropriate TX_GLOBAL_REINIT_ACTIVE bit for active channel
 ;------------------------------------------------------------------------------
 WAIT_TX_DONE .macro
-l?:
-	qbbs    l?, r31, TX_GLOBAL_REINIT_ACTIVE  ; Wait while TX is active
+    qbbs    wait_tx_ch0?, ENDAT_ENABLE_CHx, 0
+    qbbs    wait_tx_ch1?, ENDAT_ENABLE_CHx, 1
+    qbbs    wait_tx_ch2?, ENDAT_ENABLE_CHx, 2
+    qba     wait_tx_done?
+wait_tx_ch0?:
+	qbbs    wait_tx_ch0?, r31, CH0_TX_GLOBAL_REINIT_ACTIVE
+    qba     wait_tx_done?
+wait_tx_ch1?:
+	qbbs    wait_tx_ch1?, r31, CH1_TX_GLOBAL_REINIT_ACTIVE
+    qba     wait_tx_done?
+wait_tx_ch2?:
+	qbbs    wait_tx_ch2?, r31, CH2_TX_GLOBAL_REINIT_ACTIVE
+wait_tx_done?:
 	.endm
 
 ;------------------------------------------------------------------------------
@@ -522,21 +547,21 @@ l?:
 SET_TX_CH .macro
 	and     r30.b2, r30.b2, 0xfc        ; Clear channel select bits
 	.if $isdefed("ENABLE_MULTI_MAKE_TXPRU")
-	set     r30.b2, r30.b2, 2           ; Set bits for channel 2
+	set     r30.b2, r30.b2, 1           ; Set bit 1 for channel 2 (0b10)
 	.elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
-	set     r30.b2, r30.b2, 1           ; Set bit for channel 1
+	set     r30.b2, r30.b2, 0           ; Set bit 0 for channel 1 (0b01)
 	.elseif $isdefed("ENABLE_MULTI_MAKE_RTU")
-	; Channel 0: bits already cleared, nothing to set
+	; Channel 0: bits already cleared, nothing to set (0b00)
 	.else
 	qbbs    set_ch2?, ENDAT_ENABLE_CHx, 2
 	qbbs    set_ch1?, ENDAT_ENABLE_CHx, 1
 	; Default to channel 0 (bits already cleared)
 	qba     ch_set_done?
 set_ch1?:
-	set     r30.b2, r30.b2, 1           ; Set bit for channel 1
+	set     r30.b2, r30.b2, 0           ; Set bit 0 for channel 1 (0b01)
 	qba     ch_set_done?
 set_ch2?:
-	set     r30.b2, r30.b2, 2           ; Set bits for channel 2
+	set     r30.b2, r30.b2, 1           ; Set bit 1 for channel 2 (0b10)
 ch_set_done?:
 	.endif
 	.endm
@@ -596,74 +621,195 @@ ERROR_IN_SAMPLING .macro
 ; Parameters:
 ;   loop_cnt - Number of bits to process
 ;------------------------------------------------------------------------------
+;------------------------------------------------------------------------------
+; RECEIVE_PREAMBLE / RECEIVE_MANCHESTER_DATA - Wrapper macros
+; Automatically selects the correct channel-specific macro based on ENDAT_ENABLE_CHx
+;------------------------------------------------------------------------------
 RECEIVE_PREAMBLE .macro loop_cnt
-   loop     bit_sample_done?,loop_cnt   ; Loop for specified number of bits
-receive_preamble_bit?:
-	qbbc    receive_preamble_bit?, r31, RX_VALID_FLAG  ; Wait for valid bit
-    
-    mov     OVS_DATA_REG, r31.b0         ; Save raw oversampled data
-	lsl     BIT_CAPTURE_REG, BIT_CAPTURE_REG, 2  ; Make room for new bits
-    add     TEMP0, TEMP0, 0               ; NOP operation
+    qbbs    use_ch0_preamble?, ENDAT_ENABLE_CHx, 0
+    qbbs    use_ch1_preamble?, ENDAT_ENABLE_CHx, 1
+    qbbs    use_ch2_preamble?, ENDAT_ENABLE_CHx, 2
+    qba     preamble_done?
+use_ch0_preamble?:
+    RECEIVE_PREAMBLE_CH0 loop_cnt
+    qba     preamble_done?
+use_ch1_preamble?:
+    RECEIVE_PREAMBLE_CH1 loop_cnt
+    qba     preamble_done?
+use_ch2_preamble?:
+    RECEIVE_PREAMBLE_CH2 loop_cnt
+preamble_done?:
+    .endm
 
-    ; Use lookup table to decode bit pattern from DMEM
-    lbco    &LUT_SAMPLE_REG, PRUx_DMEM, r31.b0, 1  ; LUT based sampling decision (LUT at offset 0x0000 in DMEM)
-    CLEAR_VAL                          ; Clear valid flag for next bit
-
-    ; Check for sampling error
-    qbne    no_error_in_sampling?, LUT_SAMPLE_REG, 0xff 
-    ERROR_IN_SAMPLING                   ; Handle error if detected
-no_error_in_sampling?:
-    
-    ; Determine if this is a long or short symbol
-    qbeq    long_symbol?, LUT_SAMPLE_REG, 0xC0  ; Check for long symbol pattern 1
-    qbeq    long_symbol?, LUT_SAMPLE_REG, 0x0   ; Check for long symbol pattern 2
-    ldi     LONG_SHORT_STATUS, 0         ; Set status to indicate short symbol
-    qba     symbol_update_done?
-long_symbol?:
-    ldi     LONG_SHORT_STATUS, 1         ; Set status to indicate long symbol
-symbol_update_done?:
-
-    ; Extract decoded bit from LUT result and save to bit capture register
-    lsr     LUT_SAMPLE_REG, LUT_SAMPLE_REG, 6  ; Shift to get decoded bit
-    or      BIT_CAPTURE_REG.b0, BIT_CAPTURE_REG.b0, LUT_SAMPLE_REG  ; Store bit
-bit_sample_done?:  
+RECEIVE_MANCHESTER_DATA .macro loop_cnt
+    qbbs    use_ch0_manchester?, ENDAT_ENABLE_CHx, 0
+    qbbs    use_ch1_manchester?, ENDAT_ENABLE_CHx, 1
+    qbbs    use_ch2_manchester?, ENDAT_ENABLE_CHx, 2
+    qba     manchester_done?
+use_ch0_manchester?:
+    RECEIVE_MANCHESTER_DATA_CH0 loop_cnt
+    qba     manchester_done?
+use_ch1_manchester?:
+    RECEIVE_MANCHESTER_DATA_CH1 loop_cnt
+    qba     manchester_done?
+use_ch2_manchester?:
+    RECEIVE_MANCHESTER_DATA_CH2 loop_cnt
+manchester_done?:
     .endm
 
 ;------------------------------------------------------------------------------
-; RECEIVE_MANCHESTER_DATA
-; 
-; Receives and decodes Manchester-encoded data from the EnDat3 interface.
-; Handles error detection and bit reconstruction from Manchester encoding.
-;
-; Parameters:
-;   loop_cnt - Number of bytes to receive (each byte is 8 bits)
+; RECEIVE_PREAMBLE_CH0 - Channel 0 specific preamble reception
 ;------------------------------------------------------------------------------
-RECEIVE_MANCHESTER_DATA .macro loop_cnt
-   loop     bit_sample_done?,loop_cnt   ; Loop for specified number of bytes
+RECEIVE_PREAMBLE_CH0 .macro loop_cnt
+   loop     bit_sample_done?,loop_cnt
+receive_preamble_bit?:
+	qbbc    receive_preamble_bit?, r31, CH0_RX_VALID_FLAG
+	lsl     BIT_CAPTURE_REG, BIT_CAPTURE_REG, 2
+    lbco    &LUT_SAMPLE_REG, PRUx_DMEM, r31.b0, 1
+    set		r31, r31, CH0_RX_VALID_FLAG
+
+    qbne    no_error_in_sampling?, LUT_SAMPLE_REG, 0xff
+    ldi     ERROR_STATUS_REG, 0
+    qba error_detected
+no_error_in_sampling?:
+
+    qbeq    long_symbol?, LUT_SAMPLE_REG, 0xC0
+    qbeq    long_symbol?, LUT_SAMPLE_REG, 0x0
+    ldi     LONG_SHORT_STATUS, 0
+    qba     symbol_update_done?
+long_symbol?:
+    ldi     LONG_SHORT_STATUS, 1
+symbol_update_done?:
+
+    lsr     LUT_SAMPLE_REG, LUT_SAMPLE_REG, 6
+    or      BIT_CAPTURE_REG.b0, BIT_CAPTURE_REG.b0, LUT_SAMPLE_REG
+bit_sample_done?:
+    .endm
+
+;------------------------------------------------------------------------------
+; RECEIVE_PREAMBLE_CH1 - Channel 1 specific preamble reception
+;------------------------------------------------------------------------------
+RECEIVE_PREAMBLE_CH1 .macro loop_cnt
+   loop     bit_sample_done?,loop_cnt
+receive_preamble_bit?:
+	qbbc    receive_preamble_bit?, r31, CH1_RX_VALID_FLAG
+	lsl     BIT_CAPTURE_REG, BIT_CAPTURE_REG, 2
+    lbco    &LUT_SAMPLE_REG, PRUx_DMEM, r31.b1, 1
+    set		r31, r31, CH1_RX_VALID_FLAG
+
+    qbne    no_error_in_sampling?, LUT_SAMPLE_REG, 0xff
+    ldi     ERROR_STATUS_REG, 0
+    qba error_detected
+no_error_in_sampling?:
+
+    qbeq    long_symbol?, LUT_SAMPLE_REG, 0xC0
+    qbeq    long_symbol?, LUT_SAMPLE_REG, 0x0
+    ldi     LONG_SHORT_STATUS, 0
+    qba     symbol_update_done?
+long_symbol?:
+    ldi     LONG_SHORT_STATUS, 1
+symbol_update_done?:
+
+    lsr     LUT_SAMPLE_REG, LUT_SAMPLE_REG, 6
+    or      BIT_CAPTURE_REG.b0, BIT_CAPTURE_REG.b0, LUT_SAMPLE_REG
+bit_sample_done?:
+    .endm
+
+;------------------------------------------------------------------------------
+; RECEIVE_PREAMBLE_CH2 - Channel 2 specific preamble reception
+;------------------------------------------------------------------------------
+RECEIVE_PREAMBLE_CH2 .macro loop_cnt
+   loop     bit_sample_done?,loop_cnt
+receive_preamble_bit?:
+	qbbc    receive_preamble_bit?, r31, CH2_RX_VALID_FLAG
+	lsl     BIT_CAPTURE_REG, BIT_CAPTURE_REG, 2
+    lbco    &LUT_SAMPLE_REG, PRUx_DMEM, r31.b2, 1
+    set		r31, r31, CH2_RX_VALID_FLAG
+
+    qbne    no_error_in_sampling?, LUT_SAMPLE_REG, 0xff
+    ldi     ERROR_STATUS_REG, 0
+    qba error_detected
+no_error_in_sampling?:
+
+    qbeq    long_symbol?, LUT_SAMPLE_REG, 0xC0
+    qbeq    long_symbol?, LUT_SAMPLE_REG, 0x0
+    ldi     LONG_SHORT_STATUS, 0
+    qba     symbol_update_done?
+long_symbol?:
+    ldi     LONG_SHORT_STATUS, 1
+symbol_update_done?:
+
+    lsr     LUT_SAMPLE_REG, LUT_SAMPLE_REG, 6
+    or      BIT_CAPTURE_REG.b0, BIT_CAPTURE_REG.b0, LUT_SAMPLE_REG
+bit_sample_done?:
+    .endm
+
+;------------------------------------------------------------------------------
+; RECEIVE_MANCHESTER_DATA_CH0 - Channel 0 specific Manchester data reception
+;------------------------------------------------------------------------------
+RECEIVE_MANCHESTER_DATA_CH0 .macro loop_cnt
+   loop     bit_sample_done?,loop_cnt
 receive_manchester_first_half_bit?:
-	qbbc    receive_manchester_first_half_bit?, r31, RX_VALID_FLAG  ; Wait for valid bit
-	
-    lsr     BIT_CAPTURE_REG, BIT_CAPTURE_REG, 1  ; Make room for next bit
+	qbbc    receive_manchester_first_half_bit?, r31, CH0_RX_VALID_FLAG
+    lsr     BIT_CAPTURE_REG, BIT_CAPTURE_REG, 1
+    lbco    &LUT_SAMPLE_REG, PRUx_DMEM, r31.b0, 1
+    set		r31, r31, CH0_RX_VALID_FLAG
 
-    ; Get bit pattern from lookup table in DMEM
-    lbco    &LUT_SAMPLE_REG, PRUx_DMEM, r31.b0, 1  ; LUT-based sampling decision (LUT at offset 0x0000 in DMEM)
-    CLEAR_VAL                          ; Clear valid flag for next bit
-    
-    ; Check for sampling error
     qbne    no_error_in_sampling1?, LUT_SAMPLE_REG, 0xff
-    ERROR_IN_SAMPLING                   ; Handle error if detected
+    ldi     ERROR_STATUS_REG, 0
 no_error_in_sampling1?:
-    
-    ; Check for Manchester encoding violations (same consecutive half-bits)
+
     xor     TEMP_REG, LUT_SAMPLE_REG, FIRST_DATA_HALF_BIT
-    and     ERROR_STATUS_REG, ERROR_MASK_REG, TEMP_REG  ; ERROR_MASK_REG=0x80
-
-    ; Reconstruct original data bit from Manchester encoding
+    and     ERROR_STATUS_REG, ERROR_MASK_REG, TEMP_REG
     or      BIT_CAPTURE_REG.b0, BIT_CAPTURE_REG.b0, FIRST_DATA_HALF_BIT
-
-    ; Prepare for next bit
     lsl     LUT_SAMPLE_REG, LUT_SAMPLE_REG, 1
-    mov     FIRST_DATA_HALF_BIT, LUT_SAMPLE_REG  ; Save for next cycle
+    mov     FIRST_DATA_HALF_BIT, LUT_SAMPLE_REG
+bit_sample_done?:
+    .endm
+
+;------------------------------------------------------------------------------
+; RECEIVE_MANCHESTER_DATA_CH1 - Channel 1 specific Manchester data reception
+;------------------------------------------------------------------------------
+RECEIVE_MANCHESTER_DATA_CH1 .macro loop_cnt
+   loop     bit_sample_done?,loop_cnt
+receive_manchester_first_half_bit?:
+	qbbc    receive_manchester_first_half_bit?, r31, CH1_RX_VALID_FLAG
+    lsr     BIT_CAPTURE_REG, BIT_CAPTURE_REG, 1
+    lbco    &LUT_SAMPLE_REG, PRUx_DMEM, r31.b1, 1
+    set		r31, r31, CH1_RX_VALID_FLAG
+
+    qbne    no_error_in_sampling1?, LUT_SAMPLE_REG, 0xff
+    ldi     ERROR_STATUS_REG, 0
+no_error_in_sampling1?:
+
+    xor     TEMP_REG, LUT_SAMPLE_REG, FIRST_DATA_HALF_BIT
+    and     ERROR_STATUS_REG, ERROR_MASK_REG, TEMP_REG
+    or      BIT_CAPTURE_REG.b0, BIT_CAPTURE_REG.b0, FIRST_DATA_HALF_BIT
+    lsl     LUT_SAMPLE_REG, LUT_SAMPLE_REG, 1
+    mov     FIRST_DATA_HALF_BIT, LUT_SAMPLE_REG
+bit_sample_done?:
+    .endm
+
+;------------------------------------------------------------------------------
+; RECEIVE_MANCHESTER_DATA_CH2 - Channel 2 specific Manchester data reception
+;------------------------------------------------------------------------------
+RECEIVE_MANCHESTER_DATA_CH2 .macro loop_cnt
+   loop     bit_sample_done?,loop_cnt
+receive_manchester_first_half_bit?:
+	qbbc    receive_manchester_first_half_bit?, r31, CH2_RX_VALID_FLAG
+    lsr     BIT_CAPTURE_REG, BIT_CAPTURE_REG, 1
+    lbco    &LUT_SAMPLE_REG, PRUx_DMEM, r31.b2, 1
+    set		r31, r31, CH2_RX_VALID_FLAG
+
+    qbne    no_error_in_sampling1?, LUT_SAMPLE_REG, 0xff
+    ldi     ERROR_STATUS_REG, 0
+no_error_in_sampling1?:
+
+    xor     TEMP_REG, LUT_SAMPLE_REG, FIRST_DATA_HALF_BIT
+    and     ERROR_STATUS_REG, ERROR_MASK_REG, TEMP_REG
+    or      BIT_CAPTURE_REG.b0, BIT_CAPTURE_REG.b0, FIRST_DATA_HALF_BIT
+    lsl     LUT_SAMPLE_REG, LUT_SAMPLE_REG, 1
+    mov     FIRST_DATA_HALF_BIT, LUT_SAMPLE_REG
 bit_sample_done?:
     .endm
 

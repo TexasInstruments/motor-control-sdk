@@ -68,7 +68,7 @@ PRUICSS_Handle gPruIcssXHandle = NULL;
 /* ICSS Interrupt Configuration                                              */
 /* ========================================================================== */
 
-#if (SOC_AM261X || SOC_AM263X)
+#if (SOC_AM261X || SOC_AM263X || SOC_AM263PX)
 #if (PRUICSSx == 1)
 #define ICSS_PRU_ENDAT3_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_0 )
 #else
