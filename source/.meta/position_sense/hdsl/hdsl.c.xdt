@@ -1,0 +1,136 @@
+%%{
+    let module = system.modules[args[0]];
+%%}
+/*
+ * HDSL
+ */
+
+%if(module)
+%{
+/* HDSL attributes (compile-time data only)
+ *
+ * Device-Specific Clock Support:
+ * - AM243x with PRU-ICSSG: Supports both 225 MHz and 300 MHz
+ * - AM261x with PRU-ICSSM: Supports 225 MHz only (load share not available)
+ *
+ * Attrs Structure:
+ * - Single attrs per instance, shared across all channels
+ * - All channels of an instance use the same attrs[instance]
+ *
+ * HDSL Load Share Mode Architecture:
+ * -----------------------------------
+ * The HDSL driver supports two operating modes based on PRU-ICSS core clock frequency:
+ *
+ * 1. NON-LOAD SHARE MODE (225 MHz core clock):
+ *    - Single channel operation only
+ *    - All channels use the same PRU core (PRU0 or PRU1 based on selected slice)
+ *    - gHdslAttrs[instance] contains configuration for the instance
+ *    - Application accesses gHdslHandle[instance][0]
+ *    - Supported on: AM243x (ICSSG) and AM261x (ICSSM)
+ *
+ * 2. LOAD SHARE MODE (300 MHz core clock):
+ *    - Multi-channel operation (up to 3 channels per PRU-ICSS slice)
+ *    - Channels distributed across different PRU cores for load balancing:
+ *      * Channel 0 -> RTU_PRU, Channel 1 -> PRU, Channel 2 -> TX_PRU
+ *    - gHdslAttrs[instance] contains configuration for all channels
+ *    - Application uses gHdslHandle[instance][channel] for direct access
+ *    - Supported on: AM243x (ICSSG) only
+ *
+ * The structure allows:
+ * - gHdslAttrs[i]: Single attrs shared by all channels of instance i
+ * - gHdslPriv[i][j]: Per-channel runtime state
+ * - gHdslHandle[i][j]: Per-channel handle, all pointing to same attrs[i]
+ */
+static HDSL_Attrs gHdslAttrs[CONFIG_HDSL_NUM_INSTANCES] =
+{
+% for(let i = 0; i < module.$instances.length; i++) {
+    % let instance = module.$instances[i];
+    % let pruicss_instance = 0;
+    % let pruicss_type = "HDSL_PRU_ICSSG";
+    % /* Determine ICSS type and instance index */
+    % if(instance.instance === "ICSSM" || instance.instance === "ICSSM0" || instance.instance === "ICSSM1") {
+        % pruicss_type = "HDSL_PRU_ICSSM";
+        % if(instance.instance === "ICSSM1") {
+            % pruicss_instance = 1;
+        % }
+    % } else {
+        % if(instance.instance === "ICSSG1") {
+            % pruicss_instance = 1;
+        % }
+    % }
+    % /* Calculate channel_mask */
+    % let channel_mask = ((instance.channel_0 & 1) | ((instance.channel_1 & 1) << 1) | ((instance.channel_2 & 1) << 2));
+    % /* Determine PRU-ICSS Slice (0 or 1) */
+    % let pruicss_slice = 1;  /* Default to PRU1 */
+    % if(instance.instance === "ICSSG0") {
+        % if(instance.PRU_ICSSG0_PRU.$assign === "PRU_ICSSG0_PRU0") {
+            % pruicss_slice = 0;
+        % }
+    % } else if(instance.instance === "ICSSG1") {
+        % if(instance.PRU_ICSSG1_PRU.$assign === "PRU_ICSSG1_PRU0") {
+            % pruicss_slice = 0;
+        % }
+    % } else {
+        % /* For ICSSM, use PRU_Slice configuration */
+        % pruicss_slice = (instance.PRU_Slice == "PRU1") ? 1 : 0;
+    % }
+    % /* Calculate individual channel enabled flags */
+    % let channel0_enabled = (instance.channel_0 & 1);
+    % let channel1_enabled = (instance.channel_1 & 1);
+    % let channel2_enabled = (instance.channel_2 & 1);
+    % /* Calculate total number of channels enabled */
+    % let total_channels = channel0_enabled + channel1_enabled + channel2_enabled;
+    % /* Check if load share is enabled */
+    % let load_share_enabled = (instance.Multi_Channel_Load_Share & 1);
+    % /* Calculate mode value from SysConfig Mode variable */
+    % let operational_mode = (instance.Mode === "FREE_RUN") ? "HDSL_OPERATIONAL_MODE_FREE_RUN" : "HDSL_OPERATIONAL_MODE_SYNC";
+    {
+        .instance = `i`U,
+        .pruicss_type = `pruicss_type`,
+        .pruicss_instance = `pruicss_instance`U,
+        .pruicss_slice = `pruicss_slice`U,
+        .mode = `operational_mode`,
+        .load_share_enabled = `load_share_enabled`U,
+        .channel_mask = 0x`channel_mask.toString(16).toUpperCase()`U,
+        .channel0_enabled = `channel0_enabled`U,
+        .channel1_enabled = `channel1_enabled`U,
+        .channel2_enabled = `channel2_enabled`U,
+        .total_channels = `total_channels`U,
+        .core_clk_freq = `instance.pru.$name.toUpperCase()`_CORE_CLK_FREQ_HZ,
+        .iep_clk_freq = `instance.pru.$name.toUpperCase()`_IEP_CLK_FREQ_HZ,
+    },
+% }
+};
+
+/* HDSL priv objects - initialized by the driver
+ * 2D array structure: [instance][channel]
+ * Each channel has its own runtime state (priv)
+ * In load share mode: enabled channels have valid priv entries
+ * In non-load share mode: only priv[0] is used
+ */
+static HDSL_Priv gHdslPriv[CONFIG_HDSL_NUM_INSTANCES][HDSL_NUM_CH_PER_SLICE_MAX];
+
+/* HDSL driver configuration - 2D array for per-channel access
+ * Access pattern: gHdslHandle[instance][channel]
+ * Each handle points to:
+ *   - Shared attrs[instance] (common configuration for all channels)
+ *   - Per-channel priv[instance][channel] (individual runtime state)
+ * In load share mode: gHdslHandle[i][0], [i][1], [i][2] for enabled channels
+ * In non-load share mode: only gHdslHandle[i][0] is valid
+ */
+HDSL_Object gHdslHandle[CONFIG_HDSL_NUM_INSTANCES][HDSL_NUM_CH_PER_SLICE_MAX] =
+{
+% for(let i = 0; i < module.$instances.length; i++) {
+    % let instance = module.$instances[i];
+    {
+    % for(let j = 0; j < 3; j++) {
+        {
+            .priv = &gHdslPriv[`instance.$name.toUpperCase()`][`j`],
+            .attrs = &gHdslAttrs[`instance.$name.toUpperCase()`],
+        },
+    % }
+    },
+% }
+};
+uint32_t gHdslConfigNum = CONFIG_HDSL_NUM_INSTANCES;
+%}
