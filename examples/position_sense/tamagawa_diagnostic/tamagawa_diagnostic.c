@@ -30,6 +30,57 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/**
+ * \file  tamagawa_diagnostic.c
+ *
+ * \brief Tamagawa encoder diagnostic application
+ *
+ * This application provides comprehensive diagnostic and testing capabilities for
+ * Tamagawa encoders, including single-shot position reads, EEPROM operations,
+ * reset commands, and periodic trigger mode.
+ *
+ * \par Dual Slice Support (tested only on AM261x with Single PRU Single Channel mode):
+ * This diagnostic application supports dual PRU slice operation when compiled with
+ * TAMAGAWA_DUAL_PRU_SLICE_ENABLE defined. In dual slice mode:
+ * - Two independent Tamagawa instances (CONFIG_TAMAGAWA0, CONFIG_TAMAGAWA1) run simultaneously
+ * - Each instance operates on a different PRU slice (PRU0 or PRU1)
+ * - Both instances must use the same PRU-ICSS instance (validated at runtime)
+ * - Both instances share common PRU-ICSS level resources
+ *
+ * \par Instance vs Slice:
+ * - Instance: Software driver instance (CONFIG_TAMAGAWA0, CONFIG_TAMAGAWA1) with independent
+ *   configuration, state, and driver handle. Configured via SysConfig.
+ * - Slice: Hardware PRU-ICSS slice number (0 or 1) within PRU-ICSS where firmware executes.
+ *   CONFIG_TAMAGAWAx_PRUICSS_SLICE specifies which slice each instance uses.
+ *
+ * \par Driver Handle Array:
+ * The global handle array gAppTamagawaHandle[CONFIG_TAMAGAWA_NUM_INSTANCES] stores driver
+ * handles for all configured instances:
+ * - gAppTamagawaHandle[CONFIG_TAMAGAWA0]: Handle for first instance (always present)
+ * - gAppTamagawaHandle[CONFIG_TAMAGAWA1]: Handle for second instance (tested only on AM261x with Single PRU Single Channel mode)
+ * - CONFIG_TAMAGAWA_NUM_INSTANCES: Number of instances (defined by SysConfig)
+ * ASSUMPTIONS: Loop (with index i) is used to call functions with handle as argument.
+ *      - i = 0 will use CONFIG_TAMAGAWA0
+ *      - i = 1 will use CONFIG_TAMAGAWA1 when TAMAGAWA_DUAL_PRU_SLICE_ENABLE is defined
+ *
+ * \par Shared Resources:
+ * When both instances use the same PRU-ICSS instance, they share:
+ * - IEP Timer: Used for periodic trigger mode, configured via first instance
+ * - PRU-ICSS INTC: Interrupt controller shared across slices
+ *
+ * \par First instance (CONFIG_TAMAGAWA0) is used for shared resources:
+ * Several operations use gAppTamagawaHandle[CONFIG_TAMAGAWA0] to access shared PRU-ICSS
+ * resources. This approach works correctly because validation in tamagawa_pruicss_init()
+ * ensures both instances use the same PRU-ICSS instance.
+ *
+ * \par Periodic Trigger Mode:
+ * In periodic mode, the IEP timer automatically triggers Tamagawa transactions:
+ * - Each instance/channel can have different trigger times
+ * - All instances share the same IEP reset count (period)
+ * - Configured via tamagawa_periodic_interface structure
+ * - See tamagawa_periodic_trigger.c for detailed IEP configuration
+ */
+
 /* ========================================================================== */
 /*                             Include Files                                  */
 /* ========================================================================== */
@@ -75,23 +126,17 @@
 #endif
 
 #if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
-#if (CONFIG_TAMAGAWA1_MODE == TAMAGAWA_MODE_SINGLE_CHANNEL_SINGLE_PRU)
+#if !defined(SOC_AM261X) || (CONFIG_TAMAGAWA1_MODE != TAMAGAWA_MODE_SINGLE_CHANNEL_SINGLE_PRU)
+#error "Dual handle example using PRU0 and PRU1 is tested only with TAMAGAWA_MODE_SINGLE_CHANNEL_SINGLE_PRU mode on AM261x. For enabling other combinations, update code and remove this line."
+#endif
+
 /* Single channel mode firmware */
 #if (CONFIG_TAMAGAWA1_PRUICSS_SLICE == 1)
 #include <tamagawa_receiver_single_channel_pru1_bin.h>
 #else
 #include <tamagawa_receiver_single_channel_pru0_bin.h>
 #endif
-#endif
 
-#if (CONFIG_TAMAGAWA1_MODE == TAMAGAWA_MODE_MULTI_CHANNEL_SINGLE_PRU)
-/* Multi-channel mode firmware */
-#if (CONFIG_TAMAGAWA1_PRUICSS_SLICE == 1)
-#include <tamagawa_receiver_multi_channel_pru1_bin.h>
-#else
-#include <tamagawa_receiver_multi_channel_pru0_bin.h>
-#endif
-#endif
 #endif
 
 /* ========================================================================== */
@@ -104,6 +149,7 @@
 #define TAMAGAWA_POSITION_LOOP_STOP             (0)
 #define TAMAGAWA_POSITION_LOOP_START            (1)
 
+#define TAMAGAWA_PERIODIC_MODE_CMD              (DATA_ID_0)
 #define TAMAGAWA_PERIODIC_MODE_LOG_SLEEP_US     (100)
 
 /* ========================================================================== */
@@ -132,7 +178,7 @@ TaskP_Object gTaskObject;
 
 static void tamagawa_pruicss_init(void);
 static void tamagawa_pruicss_load_run_fw(void);
-static void tamagawa_get_fw_version(void);
+static void tamagawa_display_fw_version(void);
 static void tamagawa_display_menu(void);
 static void tamagawa_display_result(tamagawa_handle handle, int32_t cmd);
 static int32_t tamagawa_handle_rx(tamagawa_handle handle, int32_t cmd);
@@ -210,7 +256,7 @@ static void tamagawa_pruicss_load_run_fw(void)
     uint32_t pruFirmwareSize = 0;
     uint8_t pru_id = CONFIG_TAMAGAWA0_PRUICSS_PRU_ID;
 
-#if CONFIG_TAMAGAWA0_PRUICSS_SLICE == 1
+#if (CONFIG_TAMAGAWA0_PRUICSS_SLICE == 1)
     pruFirmware = TamagawaFirmwarePru1_0;
     pruFirmwareSize = sizeof(TamagawaFirmwarePru1_0);
 #else
@@ -237,7 +283,7 @@ static void tamagawa_pruicss_load_run_fw(void)
 
 
 #if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
-#if CONFIG_TAMAGAWA1_PRUICSS_SLICE == 1
+#if (CONFIG_TAMAGAWA1_PRUICSS_SLICE == 1)
     pruFirmware = TamagawaFirmwarePru1_0;
     pruFirmwareSize = sizeof(TamagawaFirmwarePru1_0);
 #else
@@ -382,6 +428,9 @@ static int32_t tamagawa_get_command(uint8_t *adf, uint8_t *edf)
 {
     int32_t cmd;
     uint32_t val;
+    uint32_t i;
+    const tamagawa_attrs *attrs;
+
     /* Check to make sure that the command issued is correct */
     if(DebugP_scanf("%d\n", &cmd) < 0)
     {
@@ -398,35 +447,21 @@ static int32_t tamagawa_get_command(uint8_t *adf, uint8_t *edf)
             return SystemP_FAILURE;
         }
 
-        DebugP_log("\r| Enter IEP trigger time(must be less than or equal to IEP reset cycle, in IEP cycles): ");
-        if(DebugP_scanf("%u\n", &gTamagawaPeriodicInterface.periodic_trigger_count[CONFIG_TAMAGAWA0]) < 0 )
+        for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
         {
-            DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
-            return SystemP_FAILURE;
+            DebugP_log("\r| Enter IEP trigger time(must be less than or equal to IEP reset cycle, in IEP cycles) for Tamagawa instance %u: ", i);
+            if(DebugP_scanf("%u\n", &gTamagawaPeriodicInterface.periodic_trigger_count[i]) < 0 )
+            {
+                DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                return SystemP_FAILURE;
+            }
+
+            if(gTamagawaPeriodicInterface.periodic_trigger_count[i] > gTamagawaPeriodicInterface.iep_reset_count)
+            {
+                DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                return SystemP_FAILURE;
+            }
         }
-
-        if(gTamagawaPeriodicInterface.periodic_trigger_count[CONFIG_TAMAGAWA0] > gTamagawaPeriodicInterface.iep_reset_count)
-        {
-            DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
-            return SystemP_FAILURE;
-        }
-
-#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
-
-        DebugP_log("\r| Enter IEP trigger time(must be less than or equal to IEP reset cycle, in IEP cycles) for second slice: ");
-        if(DebugP_scanf("%u\n", &gTamagawaPeriodicInterface.periodic_trigger_count[CONFIG_TAMAGAWA1]) < 0 )
-        {
-            DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
-            return SystemP_FAILURE;
-        }
-
-        if(gTamagawaPeriodicInterface.periodic_trigger_count[CONFIG_TAMAGAWA1] > gTamagawaPeriodicInterface.iep_reset_count)
-        {
-            DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
-            return SystemP_FAILURE;
-        }
-#endif
-
     }
     /* Check to make sure that the command issued is correct */
     if(cmd >= DATA_ID_NUM)
@@ -437,166 +472,95 @@ static int32_t tamagawa_get_command(uint8_t *adf, uint8_t *edf)
     /* In case of EEPROM commands, take input for Address field for different channels selected*/
     if((cmd == DATA_ID_D) || (cmd == DATA_ID_6))
     {
-        uint8_t ch = 0;
-        for(ch = 0 ; ch < TAMAGAWA_MAX_CHANNELS ; ch++)
+        for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
         {
-            if(gAppTamagawaHandle[CONFIG_TAMAGAWA0]->attrs->channel_mask & (1 << ch))
+            attrs = tamagawa_get_attrs(gAppTamagawaHandle[i]);
+            uint8_t ch = 0;
+            for(ch = 0 ; ch < TAMAGAWA_MAX_CHANNELS ; ch++)
             {
-                if(gAppTamagawaHandle[CONFIG_TAMAGAWA0]->attrs->total_channels == 1)
+                if(attrs->channel_mask & (1 << ch))
                 {
-                    DebugP_log("\r\n| Enter EEPROM address (hex value) : ");
-                }
-                else
-                {
-                    DebugP_log("\r\n| Enter EEPROM address (hex value) for ch %d : ", ch);
-                }
-                if(DebugP_scanf("%x\n", &val) < 0)
-                {
-                    cmd = DATA_ID_NUM;
-                    DebugP_log("\r\n| ERROR: invalid EEPROM address\n|\n");
-                    break;
-                }
+                    if(attrs->total_channels == 1)
+                    {
+                        DebugP_log("\r\n| Enter EEPROM address (hex value) for Tamagawa instance %u: ", i);
+                    }
+                    else
+                    {
+                        DebugP_log("\r\n| Enter EEPROM address (hex value) for ch %d for Tamagawa instance %u: ", ch, i);
+                    }
+                    if(DebugP_scanf("%x\n", &val) < 0)
+                    {
+                        cmd = DATA_ID_NUM;
+                        DebugP_log("\r\n| ERROR: invalid EEPROM address\n|\n");
+                        break;
+                    }
 
-                if(val > TAMAGAWA_MAX_EEPROM_ADDRESS)
-                {
-                    cmd = DATA_ID_NUM;
-                    DebugP_log("\r\n| ERROR: invalid EEPROM address\n|\n");
-                    break;
-                }
+                    if(val > TAMAGAWA_MAX_EEPROM_ADDRESS)
+                    {
+                        cmd = DATA_ID_NUM;
+                        DebugP_log("\r\n| ERROR: invalid EEPROM address\n|\n");
+                        break;
+                    }
 
-                *adf = (uint8_t)val;
-                if(tamagawa_update_adf(gAppTamagawaHandle[CONFIG_TAMAGAWA0], val, ch) != SystemP_SUCCESS)
-                {
-                    /* If EEPROM address update fails, command cannot proceed with correct address.
-                     * Mark command as invalid to prevent execution with wrong address. */
-                    cmd = DATA_ID_NUM;
-                    DebugP_log("\r\n| ERROR: tamagawa_update_adf failed\n|\n");
-                    break;
+                    *adf = (uint8_t)val;
+                    if(tamagawa_update_adf(gAppTamagawaHandle[i], val, ch) != SystemP_SUCCESS)
+                    {
+                        /* If EEPROM address update fails, command cannot proceed with correct address.
+                        * Mark command as invalid to prevent execution with wrong address. */
+                        cmd = DATA_ID_NUM;
+                        DebugP_log("\r\n| ERROR: tamagawa_update_adf failed for Tamagawa instance %u\n|\n", i);
+                        break;
+                    }
                 }
             }
         }
 
-#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
-        for(ch = 0 ; ch < TAMAGAWA_MAX_CHANNELS ; ch++)
-        {
-            if(gAppTamagawaHandle[CONFIG_TAMAGAWA1]->attrs->channel_mask & (1 << ch))
-            {
-                if(gAppTamagawaHandle[CONFIG_TAMAGAWA1]->attrs->total_channels == 1)
-                {
-                    DebugP_log("\r\n| Enter EEPROM address (hex value) for second slice: ");
-                }
-                else
-                {
-                    DebugP_log("\r\n| Enter EEPROM address (hex value) for ch %d in second slice: ", ch);
-                }
-                if(DebugP_scanf("%x\n", &val) < 0)
-                {
-                    cmd = DATA_ID_NUM;
-                    DebugP_log("\r\n| ERROR: invalid EEPROM address\n|\n");
-                    break;
-                }
-
-                if(val > TAMAGAWA_MAX_EEPROM_ADDRESS)
-                {
-                    cmd = DATA_ID_NUM;
-                    DebugP_log("\r\n| ERROR: invalid EEPROM address\n|\n");
-                    break;
-                }
-
-                *adf = (uint8_t)val;
-                if(tamagawa_update_adf(gAppTamagawaHandle[CONFIG_TAMAGAWA1], val, ch) != SystemP_SUCCESS)
-                {
-                    /* If EEPROM address update fails, command cannot proceed with correct address.
-                     * Mark command as invalid to prevent execution with wrong address. */
-                    cmd = DATA_ID_NUM;
-                    DebugP_log("\r\n| ERROR: tamagawa_update_adf failed for second slice\n|\n");
-                    break;
-                }
-            }
-        }
-#endif
     }
     /* In case of EEPROM Write, take input for Address field for different channels selected*/
     if(cmd == DATA_ID_6)
     {
-        uint8_t ch = 0;
-        for(ch = 0 ; ch < TAMAGAWA_MAX_CHANNELS ; ch++)
+        for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
         {
-            if(gAppTamagawaHandle[CONFIG_TAMAGAWA0]->attrs->channel_mask & (1 << ch))
+            attrs = tamagawa_get_attrs(gAppTamagawaHandle[i]);
+            uint8_t ch = 0;
+            for(ch = 0 ; ch < TAMAGAWA_MAX_CHANNELS ; ch++)
             {
-                if(gAppTamagawaHandle[CONFIG_TAMAGAWA0]->attrs->total_channels == 1)
+                if(attrs->channel_mask & (1 << ch))
                 {
-                    DebugP_log("\r\n| Enter EEPROM data (hex value) : ");
-                }
-                else
-                {
-                    DebugP_log("\r\n| Enter EEPROM data (hex value) for ch %d : ", ch);
-                }
-                if(DebugP_scanf("%x\n", &val) < 0)
-                {
-                    cmd = DATA_ID_NUM;
-                    DebugP_log("\r\n| ERROR: invalid EEPROM data\n|\n");
-                    break;
-                }
+                    if(attrs->total_channels == 1)
+                    {
+                        DebugP_log("\r\n| Enter EEPROM data (hex value) for Tamagawa instance %u: ", i);
+                    }
+                    else
+                    {
+                        DebugP_log("\r\n| Enter EEPROM data (hex value) for ch %d for Tamagawa instance %u: ", ch, i);
+                    }
+                    if(DebugP_scanf("%x\n", &val) < 0)
+                    {
+                        cmd = DATA_ID_NUM;
+                        DebugP_log("\r\n| ERROR: invalid EEPROM data\n|\n");
+                        break;
+                    }
 
-                if(val > TAMAGAWA_MAX_EEPROM_WRITE_DATA)
-                {
-                    cmd = DATA_ID_NUM;
-                    DebugP_log("\r\n| ERROR: invalid EEPROM data\n|\n");
-                    break;
-                }
+                    if(val > TAMAGAWA_MAX_EEPROM_WRITE_DATA)
+                    {
+                        cmd = DATA_ID_NUM;
+                        DebugP_log("\r\n| ERROR: invalid EEPROM data\n|\n");
+                        break;
+                    }
 
-                *edf = (uint8_t)val;
-                if(tamagawa_update_edf(gAppTamagawaHandle[CONFIG_TAMAGAWA0], val, ch) != SystemP_SUCCESS)
-                {
-                    /* If EEPROM data update fails, write command cannot proceed with correct data.
-                     * Mark command as invalid to prevent execution with wrong data. */
-                    cmd = DATA_ID_NUM;
-                    DebugP_log("\r\n| ERROR: tamagawa_update_edf failed\n|\n");
-                    break;
+                    *edf = (uint8_t)val;
+                    if(tamagawa_update_edf(gAppTamagawaHandle[i], val, ch) != SystemP_SUCCESS)
+                    {
+                        /* If EEPROM data update fails, write command cannot proceed with correct data.
+                        * Mark command as invalid to prevent execution with wrong data. */
+                        cmd = DATA_ID_NUM;
+                        DebugP_log("\r\n| ERROR: tamagawa_update_edf failed for Tamagawa instance %u\n|\n", i);
+                        break;
+                    }
                 }
             }
         }
-
-#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
-        for(ch = 0 ; ch < TAMAGAWA_MAX_CHANNELS ; ch++)
-        {
-            if(gAppTamagawaHandle[CONFIG_TAMAGAWA1]->attrs->channel_mask & (1 << ch))
-            {
-                if(gAppTamagawaHandle[CONFIG_TAMAGAWA1]->attrs->total_channels == 1)
-                {
-                    DebugP_log("\r\n| Enter EEPROM data (hex value) for second slice: ");
-                }
-                else
-                {
-                    DebugP_log("\r\n| Enter EEPROM data (hex value) for ch %d in second slice: ", ch);
-                }
-                if(DebugP_scanf("%x\n", &val) < 0)
-                {
-                    cmd = DATA_ID_NUM;
-                    DebugP_log("\r\n| ERROR: invalid EEPROM data\n|\n");
-                    break;
-                }
-
-                if(val > TAMAGAWA_MAX_EEPROM_WRITE_DATA)
-                {
-                    cmd = DATA_ID_NUM;
-                    DebugP_log("\r\n| ERROR: invalid EEPROM data\n|\n");
-                    break;
-                }
-
-                *edf = (uint8_t)val;
-                if(tamagawa_update_edf(gAppTamagawaHandle[CONFIG_TAMAGAWA1], val, ch) != SystemP_SUCCESS)
-                {
-                    /* If EEPROM data update fails, write command cannot proceed with correct data.
-                     * Mark command as invalid to prevent execution with wrong data. */
-                    cmd = DATA_ID_NUM;
-                    DebugP_log("\r\n| ERROR: tamagawa_update_edf failed for second slice\n|\n");
-                    break;
-                }
-            }
-        }
-#endif
     }
 
     if(cmd == DATA_ID_NUM)
@@ -626,7 +590,7 @@ static void tamagawa_display_menu(void)
     DebugP_log("\r\n| enter value: ");
 }
 
-static void tamagawa_get_fw_version(void)
+static void tamagawa_display_fw_version(void)
 {
     uint32_t version;
     /* Prints the firmware version, depending on Single or Multi-channel configuration */
@@ -635,7 +599,7 @@ static void tamagawa_get_fw_version(void)
 #else
     version = *((uint32_t *)TamagawaFirmwarePru0_0 + 1);
 #endif
-    DebugP_log("\r\nTamagawa firmware \t: %x.%x.%x (%s)\n\n", (version >> 24) & 0x7F, (version >> 16) & 0xFF, version & 0xFFFF, version & (1 << 31) ? "internal" : "release");
+    DebugP_log("\r\nTamagawa firmware for Tamagawa instance 0\t: %x.%x.%x (%s)\n\n", (version >> 24) & 0x7F, (version >> 16) & 0xFF, version & 0xFFFF, version & (1 << 31) ? "internal" : "release");
 
 #if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
 #if (CONFIG_TAMAGAWA1_PRUICSS_SLICE == 1)
@@ -643,7 +607,7 @@ static void tamagawa_get_fw_version(void)
 #else
     version = *((uint32_t *)TamagawaFirmwarePru0_0 + 1);
 #endif
-    DebugP_log("\r\nTamagawa firmware (second slice)\t: %x.%x.%x (%s)\n\n", (version >> 24) & 0x7F, (version >> 16) & 0xFF, version & 0xFFFF, version & (1 << 31) ? "internal" : "release");
+    DebugP_log("\r\nTamagawa firmware for Tamagawa instance 1\t: %x.%x.%x (%s)\n\n", (version >> 24) & 0x7F, (version >> 16) & 0xFF, version & 0xFFFF, version & (1 << 31) ? "internal" : "release");
 #endif
 }
 
@@ -683,31 +647,33 @@ static int32_t tamagawa_loop_task_create(void)
 
 static void tamagawa_process_periodic_command(tamagawa_handle handle[], int32_t process_dataid_cmd)
 {
-    /* Any function call failure will lead to exit of tamagawa_process_periodic_command function */
-    if(tamagawa_config_periodic_trigger(handle[CONFIG_TAMAGAWA0]) != SystemP_SUCCESS)
+    /* NOTE:
+     * - Any function call failure will lead to exit of tamagawa_process_periodic_command function
+     * - Switch back to host trigger mode is outside this function
+     */
+    uint32_t i;
+    const tamagawa_attrs *attrs;
+
+    for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
     {
-        DebugP_log("\r| ERROR: tamagawa_config_periodic_trigger failed\r\n|\r\n|\n");
-        return;
+        if(tamagawa_config_periodic_trigger(handle[i]) != SystemP_SUCCESS)
+        {
+            DebugP_log("\r| ERROR: tamagawa_config_periodic_trigger failed for Tamagawa instance %u\r\n|\r\n|\n", i);
+            return;
+        }
     }
-#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
-    if(tamagawa_config_periodic_trigger(handle[CONFIG_TAMAGAWA1]) != SystemP_SUCCESS)
-    {
-        DebugP_log("\r| ERROR: tamagawa_config_periodic_trigger failed for second slice\r\n|\r\n|\n");
-        return;
-    }
-#endif
 
     if(tamagawa_loop_task_create() != SystemP_SUCCESS)
     {
         return;
     }
 
-    gTamagawaPeriodicInterface.handle[CONFIG_TAMAGAWA0] = handle[CONFIG_TAMAGAWA0];
-    /* Assuming that periodic_trigger_count[CONFIG_TAMAGAWA0] and iep_reset_count values are set in tamagawa_get_command() */
-#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
-    gTamagawaPeriodicInterface.handle[CONFIG_TAMAGAWA1] = handle[CONFIG_TAMAGAWA1];
-    /* Assuming that periodic_trigger_count[CONFIG_TAMAGAWA1] and iep_reset_count values are set in tamagawa_get_command() */
-#endif
+    for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
+    {
+        gTamagawaPeriodicInterface.handle[i] = handle[i];
+    }
+    /* Assuming that periodic_trigger_count[] and iep_reset_count values are set in tamagawa_get_command() */
+
 
     if(tamagawa_config_periodic_mode(&gTamagawaPeriodicInterface) != SystemP_SUCCESS)
     {
@@ -719,65 +685,44 @@ static void tamagawa_process_periodic_command(tamagawa_handle handle[], int32_t 
 
     DebugP_log("\r|\n\r| Press Enter to stop the continuous mode\r\n|\r\n|         position, f1\r\n| ");
 
-    if(tamagawa_update_data_id(handle[CONFIG_TAMAGAWA0], process_dataid_cmd) != SystemP_SUCCESS)
+    for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
     {
-        DebugP_log("\r| ERROR: tamagawa_update_data_id failed\r\n|\r\n|\n");
-        return;
+        if(tamagawa_update_data_id(handle[i], process_dataid_cmd) != SystemP_SUCCESS)
+        {
+            DebugP_log("\r| ERROR: tamagawa_update_data_id failed for Tamagawa instance %u\r\n|\r\n|\n", i);
+            return;
+        }
     }
-
-#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
-    if(tamagawa_update_data_id(handle[CONFIG_TAMAGAWA1], process_dataid_cmd) != SystemP_SUCCESS)
-    {
-        DebugP_log("\r| ERROR: tamagawa_update_data_id failed for second slice\r\n|\r\n|\n");
-        return;
-    }
-#endif
 
     /* In case of EEPROM commands, calculate the CRC for the different channels selected */
     if((process_dataid_cmd == DATA_ID_6) || (process_dataid_cmd == DATA_ID_D))
     {
-        uint8_t ch = 0;
-        for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS; ch++)
+        for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
         {
-            if(handle[CONFIG_TAMAGAWA0]->attrs->channel_mask & (1 << ch))
+            attrs = tamagawa_get_attrs(handle[i]);
+            uint8_t ch = 0;
+            for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS; ch++)
             {
-                if(tamagawa_update_crc(handle[CONFIG_TAMAGAWA0], process_dataid_cmd, ch) != SystemP_SUCCESS)
+                if(attrs->channel_mask & (1 << ch))
                 {
-                    DebugP_log("\r| ERROR: tamagawa_update_crc failed for channel %d\r\n|\r\n|\n", ch);
-                    return;
+                    if(tamagawa_update_crc(handle[i], process_dataid_cmd, ch) != SystemP_SUCCESS)
+                    {
+                        DebugP_log("\r| ERROR: tamagawa_update_crc failed for channel %d of Tamagawa instance %u\r\n|\r\n|\n", ch, i);
+                        return;
+                    }
                 }
             }
         }
-#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
-        for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS; ch++)
+    }
+
+    for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
+    {
+        if(tamagawa_command_process(handle[i], process_dataid_cmd) != SystemP_SUCCESS)
         {
-            if(handle[CONFIG_TAMAGAWA1]->attrs->channel_mask & (1 << ch))
-            {
-                if(tamagawa_update_crc(handle[CONFIG_TAMAGAWA1], process_dataid_cmd, ch) != SystemP_SUCCESS)
-                {
-                    DebugP_log("\r| ERROR: tamagawa_update_crc failed for channel %d in second slice \r\n|\r\n|\n", ch);
-                    return;
-                }
-            }
+            DebugP_log("\r| ERROR: tamagawa_command_process failed for Tamagawa instance %u\r\n|\r\n|\n", i);
+            return;
         }
-#endif
     }
-
-    if(tamagawa_command_process(handle[CONFIG_TAMAGAWA0], process_dataid_cmd) != SystemP_SUCCESS)
-    {
-        DebugP_log("\r| ERROR: tamagawa_command_process failed\r\n|\r\n|\n");
-        return;
-    }
-
-#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
-
-    if(tamagawa_command_process(handle[CONFIG_TAMAGAWA1], process_dataid_cmd) != SystemP_SUCCESS)
-    {
-        DebugP_log("\r| ERROR: tamagawa_command_process failed for second slice\r\n|\r\n|\n");
-        return;
-    }
-
-#endif
 
     while(1)
     {
@@ -791,72 +736,43 @@ static void tamagawa_process_periodic_command(tamagawa_handle handle[], int32_t 
         }
         else
         {
-            if(handle[CONFIG_TAMAGAWA0]->attrs->total_channels > 1)
+            for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
             {
-                DebugP_log("\r\n Multi-channel mode is enabled\n\n");
-
-                uint8_t ch;
-                for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS; ch++)
+                attrs = tamagawa_get_attrs(handle[i]);
+                if(attrs->total_channels > 1)
                 {
-                    if(handle[CONFIG_TAMAGAWA0]->attrs->channel_mask & (1 << ch))
+                    DebugP_log("\r\n Multi-channel mode is enabled for Tamagawa instance %u\n\n", i);
+
+                    uint8_t ch;
+                    for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS; ch++)
                     {
-                        if(tamagawa_multi_channel_set_cur(handle[CONFIG_TAMAGAWA0], ch) != SystemP_SUCCESS)
+                        if(attrs->channel_mask & (1 << ch))
                         {
-                            DebugP_log("\r| ERROR: tamagawa_multi_channel_set_cur failed for channel %d\r\n|\r\n|\n", ch);
-                            return;
-                        }
-                        DebugP_log("\r\n\r|\n|\t\t\t\tCHANNEL %d\n", ch);
-                        if(tamagawa_handle_rx(handle[CONFIG_TAMAGAWA0], process_dataid_cmd) != SystemP_SUCCESS)
-                        {
-                            DebugP_log("\r| ERROR: tamagawa_handle_rx failed for channel %d\r\n|\r\n|\n", ch);
-                            return;
+                            if(tamagawa_multi_channel_set_cur(handle[i], ch) != SystemP_SUCCESS)
+                            {
+                                DebugP_log("\r| ERROR: tamagawa_multi_channel_set_cur failed for channel %d of Tamagawa instance %u\r\n|\r\n|\n", ch, i);
+                                return;
+                            }
+                            DebugP_log("\r\n\r|\n|\t\t\t\tCHANNEL %d\n", ch);
+                            if(tamagawa_handle_rx(handle[i], process_dataid_cmd) != SystemP_SUCCESS)
+                            {
+                                DebugP_log("\r| ERROR: tamagawa_handle_rx failed for channel %d of Tamagawa instance %u\r\n|\r\n|\n", ch, i);
+                                return;
+                            }
                         }
                     }
                 }
-            }
-            else
-            {
-                DebugP_log("\r\n Single-channel mode is enabled\n\n");
-                if(tamagawa_handle_rx(handle[CONFIG_TAMAGAWA0], process_dataid_cmd) != SystemP_SUCCESS)
+                else
                 {
-                    DebugP_log("\r| ERROR: tamagawa_handle_rx failed\r\n|\r\n|\n");
-                    return;
-                }
-            }
-#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
-            if(handle[CONFIG_TAMAGAWA1]->attrs->total_channels > 1)
-            {
-                DebugP_log("\r\n Multi-channel mode is enabled in second slice\n\n");
-
-                uint8_t ch;
-                for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS; ch++)
-                {
-                    if(handle[CONFIG_TAMAGAWA1]->attrs->channel_mask & (1 << ch))
+                    DebugP_log("\r\n Single-channel mode is enabled for Tamagawa instance %u\n\n", i);
+                    if(tamagawa_handle_rx(handle[i], process_dataid_cmd) != SystemP_SUCCESS)
                     {
-                        if(tamagawa_multi_channel_set_cur(handle[CONFIG_TAMAGAWA1], ch) != SystemP_SUCCESS)
-                        {
-                            DebugP_log("\r| ERROR: tamagawa_multi_channel_set_cur failed for channel %d in second slice\r\n|\r\n|\n", ch);
-                            return;
-                        }
-                        DebugP_log("\r\n\r|\n|\t\t\t\tCHANNEL %d\n", ch);
-                        if(tamagawa_handle_rx(handle[CONFIG_TAMAGAWA1], process_dataid_cmd) != SystemP_SUCCESS)
-                        {
-                            DebugP_log("\r| ERROR: tamagawa_handle_rx failed for channel %d in second slice\r\n|\r\n|\n", ch);
-                            return;
-                        }
+                        DebugP_log("\r| ERROR: tamagawa_handle_rx failed for Tamagawa instance %u\r\n|\r\n|\n", i);
+                        return;
                     }
                 }
             }
-            else
-            {
-                DebugP_log("\r\n Single-channel mode is enabled in second slice\n\n");
-                if(tamagawa_handle_rx(handle[CONFIG_TAMAGAWA1], process_dataid_cmd) != SystemP_SUCCESS)
-                {
-                    DebugP_log("\r| ERROR: tamagawa_handle_rx failed for second slice\r\n|\r\n|\n");
-                    return;
-                }
-            }
-#endif
+
             ClockP_usleep(TAMAGAWA_PERIODIC_MODE_LOG_SLEEP_US);
         }
     }
@@ -909,8 +825,9 @@ static void tamagawa_process_periodic_command(tamagawa_handle handle[], int32_t 
  */
 void tamagawa_main(void *args)
 {
+    uint32_t i;
+    const tamagawa_attrs *attrs;
     tamagawa_params tamagawa_params;
-
     /* ========================================================================== */
     /* STEP 1: Initialize SoC drivers and board drivers                          */
     /* ========================================================================== */
@@ -928,19 +845,6 @@ void tamagawa_main(void *args)
     GPIO_pinWriteHigh(ENC2_EN_BASE_ADDR, ENC2_EN_PIN);
 #endif
 
-#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
-/* Set pin high for Enabling ch0 in booster pack */
-#if (CONFIG_TAMAGAWA1_BOOSTER_PACK && CONFIG_TAMAGAWA1_CHANNEL0_ENABLED)
-    GPIO_setDirMode(ENC1_EN_BASE_ADDR, ENC1_EN_PIN, ENC1_EN_DIR);
-    GPIO_pinWriteHigh(ENC1_EN_BASE_ADDR, ENC1_EN_PIN);
-#endif
-/* Set pin high for Enabling ch2 in booster pack */
-#if (CONFIG_TAMAGAWA1_BOOSTER_PACK && CONFIG_TAMAGAWA1_CHANNEL2_ENABLED)
-    GPIO_setDirMode(ENC2_EN_BASE_ADDR, ENC2_EN_PIN, ENC2_EN_DIR);
-    GPIO_pinWriteHigh(ENC2_EN_BASE_ADDR, ENC2_EN_PIN);
-#endif
-#endif
-
     /* ========================================================================== */
     /* STEP 2: Initialize PRU-ICSS and Tamagawa driver                           */
     /* ========================================================================== */
@@ -949,92 +853,60 @@ void tamagawa_main(void *args)
     tamagawa_pruicss_init();
     DebugP_log("\r\n\nTamagawa PRU-ICSS init done\n\n");
 
-    /* Initialize Tamagawa parameters with defaults and set PRU-ICSS handle */
-    tamagawa_params_init(&tamagawa_params);
-    tamagawa_params.pruicss_handle = gPruIcssXHandle;
-    /* Default delay values are used:
-     *   - cmd_wait_delay_us = 10us (delay for command wait loop)
-     *   - max_wait_loop_count = 5 (number of wait loop iterations in tamagawa_command_wait())
-     * If needed, these can be modified before calling tamagawa_init():
-     *   tamagawa_params.cmd_wait_delay_us = <custom_value>;
-     *   tamagawa_params.max_wait_loop_count = <custom_value>;
-     */
-
-    /* Initialize Tamagawa driver instance
-     * This calls: tamagawa_config_clr_cfg0(), tamagawa_config_channel(), tamagawa_set_baudrate(),
-     * and tamagawa_config_host_trigger() */
-    gAppTamagawaHandle[CONFIG_TAMAGAWA0] = tamagawa_init(CONFIG_TAMAGAWA0, &tamagawa_params);
-    if(gAppTamagawaHandle[CONFIG_TAMAGAWA0] == NULL)
+    for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
     {
-        DebugP_log("\r\nERROR: Tamagawa initialization failed\n");
-        return;
+        DebugP_log("\r\n|------------------------------------------------------------------------------|");
+        DebugP_log("\r\n Tamagawa Instance %u", i);
+
+        /* Initialize Tamagawa parameters with defaults and set PRU-ICSS handle */
+        tamagawa_params_init(&tamagawa_params);
+        tamagawa_params.pruicss_handle = gPruIcssXHandle;
+        /* Default delay values are used:
+         *   - cmd_wait_delay_us = 100 us (delay for command wait loop)
+         *   - max_wait_loop_count = 50 (number of wait loop iterations in tamagawa_command_wait())
+         * If needed, these can be modified before calling tamagawa_init():
+         *   tamagawa_params.cmd_wait_delay_us = <custom_value>;
+         *   tamagawa_params.max_wait_loop_count = <custom_value>;
+         */
+
+        /* Initialize Tamagawa driver instance
+         * This calls: tamagawa_config_clr_cfg0(), tamagawa_config_channel(), tamagawa_set_baudrate(),
+         * and tamagawa_config_host_trigger() */
+        gAppTamagawaHandle[i] = tamagawa_init(i, &tamagawa_params);
+        if(gAppTamagawaHandle[i] == NULL)
+        {
+            DebugP_log("\r\nERROR: Tamagawa initialization failed for instance %u\n", i);
+            return;
+        }
+
+        /* Display HW instances used, operation mode and enabled channels */
+        attrs = tamagawa_get_attrs(gAppTamagawaHandle[i]);
+        DebugP_log("\r\n PRU-ICSS instance: %u, PRU-ICSS slice number: %u\n", attrs->pruicss_instance, attrs->pruicss_slice);
+        if(attrs->mode == TAMAGAWA_MODE_MULTI_CHANNEL_SINGLE_PRU)
+        {
+            /* Multi-channel single PRU mode: Multiple channels handled by one PRU core */
+            DebugP_log("\r\nTamagawa Multi channel, Single PRU Demo application is running......\n");
+        }
+        else
+        {
+            /* Single channel single PRU mode: One channel on one PRU core */
+            DebugP_log("\r\nTamagawa Single channel, Single PRU Demo application is running......\n");
+        }
+
+        DebugP_log("\r\nChannel(s) selected: %s %s %s \n\n\n",
+                    attrs->channel_mask & (1 << 0) ? "0" : "",
+                    attrs->channel_mask & (1 << 1) ? "1" : "",
+                    attrs->channel_mask & (1 << 2) ? "2" : "");
+        DebugP_log("\r\n|------------------------------------------------------------------------------|\n\n");
     }
-
-#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
-    /* Initialize Tamagawa parameters with defaults for second instance */
-    tamagawa_params_init(&tamagawa_params);
-    tamagawa_params.pruicss_handle = gPruIcssXHandle;
-    /* Default delay values are used:
-     *   - cmd_wait_delay_us = 10us (delay for command wait loop)
-     *   - max_wait_loop_count = 5 (number of wait loop iterations in tamagawa_command_wait())
-     * If needed, these can be modified before calling tamagawa_init():
-     *   tamagawa_params.cmd_wait_delay_us = <custom_value>;
-     *   tamagawa_params.max_wait_loop_count = <custom_value>;
-     */
-
-    /* Initialize Tamagawa driver instance for second slice */
-    gAppTamagawaHandle[CONFIG_TAMAGAWA1] = tamagawa_init(CONFIG_TAMAGAWA1, &tamagawa_params);
-    if(gAppTamagawaHandle[CONFIG_TAMAGAWA1] == NULL)
-    {
-        DebugP_log("\r\nERROR: Tamagawa initialization failed for second slice\n");
-        return;
-    }
-#endif
-
-    /* Get and display Tamagawa firmware version from PRU firmware image */
-    tamagawa_get_fw_version();
-
-    /* Display HW instances used, operation mode and enabled channels */
-    DebugP_log("\r\n PRU-ICSS instance: %u, PRU-ICSS slice number: %u\n", CONFIG_TAMAGAWA0_PRUICSS_INSTANCE, CONFIG_TAMAGAWA0_PRUICSS_SLICE);
-    if(CONFIG_TAMAGAWA0_MODE == TAMAGAWA_MODE_MULTI_CHANNEL_SINGLE_PRU)
-    {
-        /* Multi-channel single PRU mode: Multiple channels handled by one PRU core */
-        DebugP_log("\r\nTamagawa Multi channel, Single PRU Demo application is running......\n");
-    }
-    else
-    {
-        /* Single channel single PRU mode: One channel on one PRU core */
-        DebugP_log("\r\nTamagawa Single channel, Single PRU Demo application is running......\n");
-    }
-
-    DebugP_log("\r\nChannel(s) selected: %s %s %s \n\n\n",
-                gAppTamagawaHandle[CONFIG_TAMAGAWA0]->attrs->channel_mask & (1 << 0) ? "0" : "",
-                gAppTamagawaHandle[CONFIG_TAMAGAWA0]->attrs->channel_mask & (1 << 1) ? "1" : "",
-                gAppTamagawaHandle[CONFIG_TAMAGAWA0]->attrs->channel_mask & (1 << 2) ? "2" : "");
-
-#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
-    /* Display HW instances used, operation mode and enabled channels for second slice */
-    DebugP_log("\r\n For second slice, PRU-ICSS instance: %u, PRU-ICSS slice number: %u\n", CONFIG_TAMAGAWA1_PRUICSS_INSTANCE, CONFIG_TAMAGAWA1_PRUICSS_SLICE);
-    if(CONFIG_TAMAGAWA1_MODE == TAMAGAWA_MODE_MULTI_CHANNEL_SINGLE_PRU)
-    {
-        /* Multi-channel single PRU mode: Multiple channels handled by one PRU core */
-        DebugP_log("\r\nTamagawa Multi channel, Single PRU Demo application is running in second slice......\n");
-    }
-    else
-    {
-        /* Single channel single PRU mode: One channel on one PRU core */
-        DebugP_log("\r\nTamagawa Single channel, Single PRU Demo application is running in second slice......\n");
-    }
-
-    DebugP_log("\r\nChannel(s) selected in second slice: %s %s %s \n\n\n",
-                gAppTamagawaHandle[CONFIG_TAMAGAWA1]->attrs->channel_mask & (1 << 0) ? "0" : "",
-                gAppTamagawaHandle[CONFIG_TAMAGAWA1]->attrs->channel_mask & (1 << 1) ? "1" : "",
-                gAppTamagawaHandle[CONFIG_TAMAGAWA1]->attrs->channel_mask & (1 << 2) ? "2" : "");
-#endif
 
     /* ========================================================================== */
-    /* STEP 3: Load and run PRU firmware                                         */
+    /* STEP 3: Load and run PRU firmware                                          */
     /* ========================================================================== */
+
+    /* Display Tamagawa firmware version from PRU firmware image */
+    tamagawa_display_fw_version();
+
     /* Load PRU firmware image to instruction RAM and enable PRU cores */
     tamagawa_pruicss_load_run_fw();
 
@@ -1066,195 +938,131 @@ void tamagawa_main(void *args)
         {
             DebugP_log("\r\n\n Switching to periodic trigger mode");
 
+            /* Switching to periodic mode using tamagawa_config_periodic_trigger() is done
+             * inside tamagawa_process_periodic_command */
+
             /* Process continuous position readout using DATA_ID_0 */
-            tamagawa_process_periodic_command(gAppTamagawaHandle, DATA_ID_0);
+            tamagawa_process_periodic_command(gAppTamagawaHandle, TAMAGAWA_PERIODIC_MODE_CMD);
 
             /* Switch back to host trigger mode for menu-driven operation */
             DebugP_log("\r\n\n Switching to host trigger mode");
-            if(tamagawa_config_host_trigger(gAppTamagawaHandle[CONFIG_TAMAGAWA0]) != SystemP_SUCCESS)
+
+            for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
             {
-                /* NOTE: If this fails, driver may remain in periodic mode causing subsequent
-                 * host-triggered commands to fail. */
-                DebugP_log("\r| ERROR: tamagawa_config_host_trigger failed\r\n|\r\n|\n");
+                if(tamagawa_config_host_trigger(gAppTamagawaHandle[i]) != SystemP_SUCCESS)
+                {
+                    /* NOTE: If this fails, driver may remain in periodic mode causing subsequent
+                     * host-triggered commands to fail. */
+                    DebugP_log("\r| ERROR: tamagawa_config_host_trigger failed for Tamagawa instance %u\r\n|\r\n|\n", i);
+                }
             }
-#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
-            if(tamagawa_config_host_trigger(gAppTamagawaHandle[CONFIG_TAMAGAWA1]) != SystemP_SUCCESS)
-            {
-                /* NOTE: If this fails, driver may remain in periodic mode causing subsequent
-                 * host-triggered commands to fail. */
-                DebugP_log("\r| ERROR: tamagawa_config_host_trigger failed for second slice\r\n|\r\n|\n");
-            }
-#endif
         }
 
         /* Validate DATA_ID command is within valid range */
-        if(cmd >= DATA_ID_NUM)
+        if(cmd < 0 || cmd >= DATA_ID_NUM)
         {
             continue;
         }
 
-        /* Update DATA_ID for encoder command (configures which data to retrieve from encoder) */
-        if(tamagawa_update_data_id(gAppTamagawaHandle[CONFIG_TAMAGAWA0], cmd) != SystemP_SUCCESS)
+        for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
         {
-            /* NOTE: If DATA_ID update fails, subsequent command processing would use wrong/stale DATA_ID.
-             * Skip this command iteration to prevent incorrect encoder operation. */
-            DebugP_log("\r\n| ERROR: tamagawa_update_data_id failed\n");
-            continue;
-        }
-
-        /* For EEPROM read/write commands (DATA_ID_6, DATA_ID_D), calculate and update CRC.
-         * CRC is required to ensure data integrity when accessing encoder EEPROM. */
-        if((cmd == DATA_ID_6) || (cmd == DATA_ID_D))
-        {
-            uint8_t ch = 0;
-            uint8_t crc_failed = 0;
-            for(ch = 0 ; ch < TAMAGAWA_MAX_CHANNELS ; ch++)
+            /* Update DATA_ID for encoder command (configures which data to retrieve from encoder) */
+            if(tamagawa_update_data_id(gAppTamagawaHandle[i], cmd) != SystemP_SUCCESS)
             {
-                if(gAppTamagawaHandle[CONFIG_TAMAGAWA0]->attrs->channel_mask & (1 << ch))
-                {
-                    if(tamagawa_update_crc(gAppTamagawaHandle[CONFIG_TAMAGAWA0], cmd, ch) != SystemP_SUCCESS)
-                    {
-                        /* NOTE: If CRC calculation fails, EEPROM command would proceed without proper CRC verification.
-                         * Mark as failed to skip command execution and prevent data corruption. */
-                        DebugP_log("\r\n| ERROR: tamagawa_update_crc failed for channel %d\n", ch);
-                        crc_failed = 1;
-                    }
-                }
-            }
-            if(crc_failed)
-            {
+                /* NOTE: If DATA_ID update fails, subsequent command processing would use wrong/stale DATA_ID.
+                * Skip this command iteration to prevent incorrect encoder operation. */
+                DebugP_log("\r\n| ERROR: tamagawa_update_data_id failed for Tamagawa instance %u\n", i);
                 continue;
             }
 
-        }
-#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
-        if(tamagawa_update_data_id(gAppTamagawaHandle[CONFIG_TAMAGAWA1], cmd) != SystemP_SUCCESS)
-        {
-            /* NOTE: If DATA_ID update fails, subsequent command processing would use wrong/stale DATA_ID.
-             * Skip this command iteration to prevent incorrect encoder operation. */
-            DebugP_log("\r\n| ERROR: tamagawa_update_data_id failed for second slice\n");
-            continue;
-        }
-
-        /* In case of EEPROM commands, calculate the CRC for the different channels selected */
-        if((cmd == DATA_ID_6) || (cmd == DATA_ID_D))
-        {
-            uint8_t ch = 0;
-            uint8_t crc_failed = 0;
-            for(ch = 0 ; ch < TAMAGAWA_MAX_CHANNELS ; ch++)
+            /* For EEPROM read/write commands (DATA_ID_6, DATA_ID_D), calculate and update CRC.
+            * CRC is required to ensure data integrity when accessing encoder EEPROM. */
+            if((cmd == DATA_ID_6) || (cmd == DATA_ID_D))
             {
-                if(gAppTamagawaHandle[CONFIG_TAMAGAWA1]->attrs->channel_mask & (1 << ch))
+                attrs = tamagawa_get_attrs(gAppTamagawaHandle[i]);
+                uint8_t ch = 0;
+                uint8_t crc_failed = 0;
+                for(ch = 0 ; ch < TAMAGAWA_MAX_CHANNELS ; ch++)
                 {
-                    if(tamagawa_update_crc(gAppTamagawaHandle[CONFIG_TAMAGAWA1], cmd, ch) != SystemP_SUCCESS)
+                    if(attrs->channel_mask & (1 << ch))
                     {
-                        /* NOTE: If CRC calculation fails, EEPROM command would proceed without proper CRC verification.
-                         * Mark as failed to skip command execution and prevent data corruption. */
-                        DebugP_log("\r\n| ERROR: tamagawa_update_crc failed for channel %d in second slice\n", ch);
-                        crc_failed = 1;
+                        if(tamagawa_update_crc(gAppTamagawaHandle[i], cmd, ch) != SystemP_SUCCESS)
+                        {
+                            /* NOTE: If CRC calculation fails, EEPROM command would proceed without proper CRC verification.
+                            * Mark as failed to skip command execution and prevent data corruption. */
+                            DebugP_log("\r\n| ERROR: tamagawa_update_crc failed for channel %d of Tamagawa instance %u\n", ch, i);
+                            crc_failed = 1;
+                        }
                     }
                 }
+                if(crc_failed)
+                {
+                    continue;
+                }
             }
-            if(crc_failed)
-            {
-                continue;
-            }
-
         }
-#endif
 
         /* Execute Tamagawa command transaction with encoder.
          * This triggers PRU firmware to send command to encoder and wait for response. */
-        if(tamagawa_command_process(gAppTamagawaHandle[CONFIG_TAMAGAWA0], cmd) != SystemP_SUCCESS)
-        {
-            /* NOTE: If command processing fails, no valid data is available to parse.
-             * Skip data processing for this slice to prevent parsing invalid/stale data. */
-            DebugP_log("\r\n| ERROR: tamagawa_command_process failed\n");
-            continue;
-        }
-#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
-        if(tamagawa_command_process(gAppTamagawaHandle[CONFIG_TAMAGAWA1], cmd) != SystemP_SUCCESS)
-        {
-            /* NOTE: If command processing fails, no valid data is available to parse.
-             * Skip data processing for this slice to prevent parsing invalid/stale data. */
-            DebugP_log("\r\n| ERROR: tamagawa_command_process failed for second slice\n");
-            continue;
-        }
-#endif
 
-        /* Parse and display received encoder data based on channel configuration */
-        if(gAppTamagawaHandle[CONFIG_TAMAGAWA0]->attrs->total_channels > 1)
+
+        for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
         {
-            /* Multi-channel mode: Process each enabled channel separately */
-            DebugP_log("\r\n Multi-channel mode is enabled\n\n");
-            uint8_t ch;
-            for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS; ch++)
+            if(tamagawa_command_process(gAppTamagawaHandle[i], cmd) != SystemP_SUCCESS)
             {
-                if(gAppTamagawaHandle[CONFIG_TAMAGAWA0]->attrs->channel_mask & (1 << ch))
+                /* NOTE: If command processing fails, no valid data is available to parse.
+                 * Skip data processing for this slice to prevent parsing invalid/stale data. */
+                DebugP_log("\r\n| ERROR: tamagawa_command_process failed for Tamagawa instance %u\n", i);
+                continue;
+            }
+        }
+
+        for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
+        {
+            attrs = tamagawa_get_attrs(gAppTamagawaHandle[i]);
+
+            /* Parse and display received encoder data based on channel configuration */
+            if(attrs->total_channels > 1)
+            {
+                /* Multi-channel mode: Process each enabled channel separately */
+                DebugP_log("\r\n Multi-channel mode is enabled for Tamagawa instance %u\n\n", i);
+                uint8_t ch;
+                for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS; ch++)
                 {
-                    if(tamagawa_multi_channel_set_cur(gAppTamagawaHandle[CONFIG_TAMAGAWA0], ch) != SystemP_SUCCESS)
+                    if(attrs->channel_mask & (1 << ch))
                     {
-                        /* NOTE: If channel selection fails, subsequent RX parsing would use wrong channel.
-                         * Skip this channel to prevent incorrect data interpretation. */
-                        DebugP_log("\r\n| ERROR: tamagawa_multi_channel_set_cur failed for channel %d\n", ch);
-                        continue;
-                    }
-                    DebugP_log("\r\n\r|\n|\t\t\t\tCHANNEL %d\n", ch);
-                    if(tamagawa_handle_rx(gAppTamagawaHandle[CONFIG_TAMAGAWA0], cmd) != SystemP_SUCCESS)
-                    {
-                        DebugP_log("\r\n| ERROR: tamagawa_handle_rx failed for channel %d\n", ch);
+                        if(tamagawa_multi_channel_set_cur(gAppTamagawaHandle[i], ch) != SystemP_SUCCESS)
+                        {
+                            /* NOTE: If channel selection fails, subsequent RX parsing would use wrong channel.
+                            * Skip this channel to prevent incorrect data interpretation. */
+                            DebugP_log("\r\n| ERROR: tamagawa_multi_channel_set_cur failed for channel %d of Tamagawa instance %u\n", ch, i);
+                            continue;
+                        }
+                        DebugP_log("\r\n\r|\n|\t\t\t\tCHANNEL %d (Tamagawa instance %u)\n", ch, i);
+                        if(tamagawa_handle_rx(gAppTamagawaHandle[i], cmd) != SystemP_SUCCESS)
+                        {
+                            DebugP_log("\r\n| ERROR: tamagawa_handle_rx failed for channel %d of Tamagawa instance %u\n", ch, i);
+                        }
                     }
                 }
             }
-        }
-        else
-        {
-            /* Single-channel mode: Process single channel data directly */
-            DebugP_log("\r\n Single-channel mode is enabled\n\n");
-            if(tamagawa_handle_rx(gAppTamagawaHandle[CONFIG_TAMAGAWA0], cmd) != SystemP_SUCCESS)
+            else
             {
-                DebugP_log("\r\n| ERROR: tamagawa_handle_rx failed\n");
-            }
-        }
-#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
-        if(gAppTamagawaHandle[CONFIG_TAMAGAWA1]->attrs->total_channels > 1)
-        {
-            DebugP_log("\r\n Multi-channel mode is enabled in second slice\n\n");
-            uint8_t ch;
-            for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS; ch++)
-            {
-                if(gAppTamagawaHandle[CONFIG_TAMAGAWA1]->attrs->channel_mask & (1 << ch))
+                /* Single-channel mode: Process single channel data directly */
+                DebugP_log("\r\n Single-channel mode is enabled for Tamagawa instance %u\n\n", i);
+                if(tamagawa_handle_rx(gAppTamagawaHandle[i], cmd) != SystemP_SUCCESS)
                 {
-                    if(tamagawa_multi_channel_set_cur(gAppTamagawaHandle[CONFIG_TAMAGAWA1], ch) != SystemP_SUCCESS)
-                    {
-                        /* NOTE: If channel selection fails, subsequent RX parsing would use wrong channel.
-                         * Skip this channel to prevent incorrect data interpretation. */
-                        DebugP_log("\r\n| ERROR: tamagawa_multi_channel_set_cur failed for channel %d in second slice\n", ch);
-                        continue;
-                    }
-                    DebugP_log("\r\n\r|\n|\t\t\t\tCHANNEL %d\n", ch);
-                    if(tamagawa_handle_rx(gAppTamagawaHandle[CONFIG_TAMAGAWA1], cmd) != SystemP_SUCCESS)
-                    {
-                        DebugP_log("\r\n| ERROR: tamagawa_handle_rx failed for channel %d in second slice\n", ch);
-                    }
+                    DebugP_log("\r\n| ERROR: tamagawa_handle_rx failed for Tamagawa instance %u\n", i);
                 }
             }
-
         }
-        else
-        {
-            DebugP_log("\r\n Single-channel mode is enabled in second slice\n\n");
-            if(tamagawa_handle_rx(gAppTamagawaHandle[CONFIG_TAMAGAWA1], cmd) != SystemP_SUCCESS)
-            {
-                DebugP_log("\r\n| ERROR: tamagawa_handle_rx failed for second slice\n");
-            }
-        }
-#endif
     }
 
-    tamagawa_deinit(gAppTamagawaHandle[CONFIG_TAMAGAWA0]);
-#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
-    tamagawa_deinit(gAppTamagawaHandle[CONFIG_TAMAGAWA1]);
-#endif
+    for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
+    {
+        tamagawa_deinit(gAppTamagawaHandle[i]);
+    }
+
     Board_driversClose();
     Drivers_close();
 }

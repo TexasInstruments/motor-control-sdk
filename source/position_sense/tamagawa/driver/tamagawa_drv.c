@@ -246,7 +246,7 @@ int32_t tamagawa_parse(tamagawa_handle handle, int32_t cmd)
     }
 
     /* Explicit validation of cmd parameter against valid DATA_ID range */
-    if((cmd < DATA_ID_0) || (cmd > DATA_ID_D))
+    if((cmd < 0) || (cmd > DATA_ID_D))
     {
         return SystemP_FAILURE;
     }
@@ -560,7 +560,7 @@ int32_t tamagawa_command_build(tamagawa_handle handle, int32_t cmd)
     }
 
     /* Explicit validation of cmd parameter against valid DATA_ID range */
-    if((cmd < DATA_ID_0) || (cmd > DATA_ID_D))
+    if((cmd < 0) || (cmd > DATA_ID_D))
     {
         return SystemP_FAILURE;
     }

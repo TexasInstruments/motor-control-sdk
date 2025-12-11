@@ -136,7 +136,9 @@ extern "C" {
 #define TAMAGAWA_RX_OVERSAMPLING_RATE (7)
 
 /**
- *  \brief  Delay counter increment value
+ *  \brief  Delay counter increment value. 5 ns based on 200 MHz clock,
+ *          as Three Channel Peripheral interface needs this value in
+ *          200 MHz clock units.
  */
 #define TAMAGAWA_DELAY_COUNTER_INCREMENT (5)
 
@@ -166,16 +168,16 @@ extern "C" {
  *  This delay is used in command wait loops to prevent busy-waiting and
  *  allow timeout detection. Can be overridden via tamagawa_params.
  */
-#define TAMAGAWA_DEFAULT_CMD_WAIT_DELAY_US (10)
+#define TAMAGAWA_DEFAULT_CMD_WAIT_DELAY_US (100)
 
 /**
  *  \brief  Default maximum wait loop count
  *
  *  Maximum number of wait loop iterations in \ref tamagawa_command_wait to detect
  *  communication failures. The actual timeout is: max_wait_loop_count × cmd_wait_delay_us.
- *  With defaults (5 × 10us = 50us). Can be overridden via tamagawa_params.
+ *  With defaults (50 × 100 us = 5000 us). Can be overridden via tamagawa_params.
  */
-#define TAMAGAWA_DEFAULT_MAX_WAIT_LOOP_COUNT (5U)
+#define TAMAGAWA_DEFAULT_MAX_WAIT_LOOP_COUNT (50U)
 
 /**
  *  \brief  Tamagawa EEPROM Control Field value for Write operation
@@ -497,12 +499,13 @@ typedef struct tamagawa_params_s
 {
     /** PRU-ICSS handle (must be valid, obtained from PRUICSS_open) */
     PRUICSS_Handle pruicss_handle;
-    /** Command process delay in microseconds (used in command wait timeout loop) */
+    /** Command process delay in microseconds (used in command wait timeout loop)
+     *  Default: 100 us */
     uint32_t cmd_wait_delay_us;
     /** Maximum wait loop iteration count.
      *  Used in \ref tamagawa_command_wait to detect communication failures.
      *  Actual timeout = max_wait_loop_count × cmd_wait_delay_us microseconds.
-     *  Default: 5 (gives 5 × 10us = 50us with default cmd_wait_delay_us) */
+     *  Default: 50 (gives 50 × 100 us = 5000 us with default cmd_wait_delay_us) */
     uint32_t max_wait_loop_count;
 } tamagawa_params;
 
@@ -653,7 +656,7 @@ int32_t tamagawa_command_send(tamagawa_handle handle);
  *  \retval     SystemP_SUCCESS    Command completed successfully
  *  \retval     SystemP_FAILURE    NULL handle provided or timeout occurred (configured via
  *                                 tamagawa_params.max_wait_loop_count before calling \ref tamagawa_init,
- *                                 default: 50us = 5 loops × 10us/loop)
+ *                                 default: 5000 us = 50 loops × 100 us/loop)
  *
  *  \note       NULL check: Strict check on handle. After successful init, internal structures
  *              are assumed valid and not rechecked.
