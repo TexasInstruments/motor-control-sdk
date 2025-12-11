@@ -1,0 +1,63 @@
+%%{
+    let module = system.modules[args[0]];
+%%}
+/*
+ * EnDat3
+ */
+
+#include <position_sense/endat3/include/endat3_drv.h>
+
+/* EnDat3 Instance Macros */
+#define CONFIG_ENDAT3_NUM_INSTANCES               (`module.$instances.length`U)
+% for(let i = 0; i < module.$instances.length; i++) {
+    % let instance = module.$instances[i];
+    % /* Calculate mode based on channel configuration */
+    % let mode = "ENDAT3_MODE_SINGLE_CHANNEL_SINGLE_PRU";  /* Default: ENDAT3_MODE_SINGLE_CHANNEL_SINGLE_PRU */
+    % /* Determine PRU-ICSS Slice (0 or 1) */
+    % let pruicss_slice = 1;  /* Default to PRU1 */
+    % if(instance.instance === "ICSSG0") {
+        % if(instance.PRU_ICSSG0_PRU.$assign === "PRU_ICSSG0_PRU0") {
+            % pruicss_slice = 0;
+        % }
+    % } else if(instance.instance === "ICSSG1") {
+        % if(instance.PRU_ICSSG1_PRU.$assign === "PRU_ICSSG1_PRU0") {
+            % pruicss_slice = 0;
+        % }
+    % } else {
+        % /* For ICSSM, use pruicss_slice configuration */
+        % pruicss_slice = (instance.PRU_Slice == "PRU1") ? 1 : 0;
+    % }
+    % /* Create PRU core ID variables based on slice */
+    % let pru_id = "PRUICSS_PRU0";
+    % if(pruicss_slice == 1) {
+        % pru_id = "PRUICSS_PRU1";
+    % }
+    % let pruicss_instance = 0;
+    % /* Determine ICSS type and instance index */
+    % if(instance.instance === "ICSSM" || instance.instance === "ICSSM0" || instance.instance === "ICSSM1") {
+        % if(instance.instance === "ICSSM1") {
+            % pruicss_instance = 1;
+        % }
+    % } else {
+        % if(instance.instance === "ICSSG1") {
+            % pruicss_instance = 1;
+        % }
+    % }
+    % /* Calculate individual channel enabled flags */
+    % let channel0_enabled = (instance.channel_0 & 1);
+    % let channel1_enabled = (instance.channel_1 & 1);
+    % let channel2_enabled = (instance.channel_2 & 1);
+#define `instance.$name.toUpperCase()`                                    (`i`U)
+#define `instance.$name.toUpperCase()`_MODE                               (`mode`)
+#define `instance.$name.toUpperCase()`_PRUICSS_INSTANCE                   (`pruicss_instance`U)
+#define `instance.$name.toUpperCase()`_PRUICSS_SLICE                      (`pruicss_slice`U)
+#define `instance.$name.toUpperCase()`_PRUICSS_PRU_ID                     (`pru_id`)
+#define `instance.$name.toUpperCase()`_CHANNEL0_ENABLED                   (`channel0_enabled`U)
+#define `instance.$name.toUpperCase()`_CHANNEL1_ENABLED                   (`channel1_enabled`U)
+#define `instance.$name.toUpperCase()`_CHANNEL2_ENABLED                   (`channel2_enabled`U)
+#define `instance.$name.toUpperCase()`_BOOSTER_PACK_ENABLE                (`instance.Booster_Pack & 1`U)
+    %if ((instance.instance === "ICSSG1" || instance.instance === "ICSSG0") && (instance.G_MUX_EN))
+    %{
+#define `instance.$name.toUpperCase()`_G_MUX_EN                           (`instance["G_MUX_EN"] & 1`U)
+    %}
+% }

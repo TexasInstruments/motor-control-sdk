@@ -300,8 +300,8 @@ section13.output_section[0].$name     = ".gEnDatChInfo";
 section13.output_section[0].alignment = 4;
 
 endat31.$name                  = "CONFIG_ENDAT3_0";
-endat31.Channel_1              = true;
-endat31.Channel_0              = false;
+endat31.channel_1              = true;
+endat31.channel_0              = false;
 endat31.Booster_Pack           = true;
 endat31.PRU_Slice              = "PRU0";
 endat31.ENC1_EN.$name          = "ENC1_EN";

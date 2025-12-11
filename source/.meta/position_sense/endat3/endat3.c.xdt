@@ -1,0 +1,99 @@
+%%{
+/*
+ * EnDAT3 SysConfig Code Generation Template
+ *
+ * This template generates configuration structures and initialization code
+ * for EnDAT3 encoder interface driver.
+ *
+ * Generated artifacts:
+ * - gEndat3Attrs[]: Static attrs array with compile-time configuration
+ * - gEndat3Priv[]: Static priv array for runtime state
+ * - gEndat3Handle[]: Public config handle array
+ * - gEndat3ConfigNum: Total number of configured instances
+ *
+ */
+    let module = system.modules[args[0]];
+%%}
+/*
+ * EnDat3
+ */
+
+%if(module)
+%{
+/* EnDat3 attributes (compile-time data only) */
+static endat3_attrs gEndat3Attrs[CONFIG_ENDAT3_NUM_INSTANCES] =
+{
+% for(let i = 0; i < module.$instances.length; i++) {
+    % let instance = module.$instances[i];
+    % let pruicss_instance = 0;
+    % /* Determine ICSS type and instance index */
+    % if(instance.instance === "ICSSM" || instance.instance === "ICSSM0" || instance.instance === "ICSSM1") {
+        % if(instance.instance === "ICSSM1") {
+            % pruicss_instance = 1;
+        % }
+    % } else {
+        % if(instance.instance === "ICSSG1") {
+            % pruicss_instance = 1;
+        % }
+    % }
+    % /* Calculate mode based on channel configuration */
+    % let mode = "ENDAT3_MODE_SINGLE_CHANNEL_SINGLE_PRU";  /* Default: ENDAT3_MODE_SINGLE_CHANNEL_SINGLE_PRU */
+    % /* Calculate channel_mask */
+    % let channel_mask = ((instance.channel_0 & 1) | ((instance.channel_1 & 1) << 1) | ((instance.channel_2 & 1) << 2));
+    % /* Calculate individual channel enabled flags */
+    % let channel0_enabled = (instance.channel_0 & 1);
+    % let channel1_enabled = (instance.channel_1 & 1);
+    % let channel2_enabled = (instance.channel_2 & 1);
+    % /* Calculate total number of channels enabled */
+    % let total_channels = channel0_enabled + channel1_enabled + channel2_enabled;
+    % /* Determine PRU-ICSS Slice (0 or 1) */
+    % let pruicss_slice = 1;  /* Default to PRU1 */
+    % if(instance.instance === "ICSSG0") {
+        % if(instance.PRU_ICSSG0_PRU.$assign === "PRU_ICSSG0_PRU0") {
+            % pruicss_slice = 0;
+        % }
+    % } else if(instance.instance === "ICSSG1") {
+        % if(instance.PRU_ICSSG1_PRU.$assign === "PRU_ICSSG1_PRU0") {
+            % pruicss_slice = 0;
+        % }
+    % } else {
+        % /* For ICSSM, use pruicss_slice configuration */
+        % pruicss_slice = (instance.PRU_Slice == "PRU1") ? 1 : 0;
+    % }
+    % let baud_rate = "ENDAT3_BAUD_RATE_12_5_MBPS";
+    % /* Calculate PRU core ID based on slice */
+    {
+        .instance = `i`U,
+        .mode = `mode`,
+        .pruicss_instance = `pruicss_instance`U,
+        .pruicss_slice = `pruicss_slice`U,
+        .channel_mask = 0x`channel_mask.toString(16).toUpperCase()`U,
+        .channel0_enabled = `channel0_enabled`U,
+        .channel1_enabled = `channel1_enabled`U,
+        .channel2_enabled = `channel2_enabled`U,
+        .total_channels = `total_channels`U,
+        .baud_rate = `baud_rate`,
+        .core_clk_freq = `instance.pru.$name.toUpperCase()`_CORE_CLK_FREQ_HZ,
+        .iep_clk_freq = `instance.pru.$name.toUpperCase()`_IEP_CLK_FREQ_HZ,
+    },
+% }
+};
+
+/* EnDat3 priv objects - initialized by the driver */
+static endat3_priv gEndat3Priv[CONFIG_ENDAT3_NUM_INSTANCES];
+
+/* EnDat3 driver configuration */
+endat3_config gEndat3Handle[CONFIG_ENDAT3_NUM_INSTANCES] =
+{
+% for(let i = 0; i < module.$instances.length; i++) {
+    % let instance = module.$instances[i];
+    {
+        .priv = &gEndat3Priv[`instance.$name.toUpperCase()`],
+        .attrs = &gEndat3Attrs[`instance.$name.toUpperCase()`],
+    },
+% }
+};
+
+uint32_t gEndat3ConfigNum = CONFIG_ENDAT3_NUM_INSTANCES;
+
+%}

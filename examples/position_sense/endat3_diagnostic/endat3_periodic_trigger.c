@@ -30,368 +30,214 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* ========================================================================== */
+/*                             Include Files                                  */
+/* ========================================================================== */
+
 #include<stdio.h>
 #include<stdint.h>
 #include<math.h>
-
 #include <drivers/pruicss.h>
 #include <drivers/hw_include/hw_types.h>
 #include <drivers/hw_include/tistdtypes.h>
 #include <kernel/dpl/ClockP.h>
-#include <kernel/dpl/DebugP.h>
 #include "endat3_periodic_trigger.h"
 #include <drivers/soc.h>
-#include <position_sense/endat3/include/endat3_drv.h>
-#include "ti_drivers_open_close.h"
-#include "ti_board_open_close.h"
 
 /* ========================================================================== */
-/* Global Variables                                                           */
+/*                           Macros & Typedefs                                */
 /* ========================================================================== */
 
-static HwiP_Object gIcssgEnDat3HwiObject0;  /**< ICSSG EnDat3 PRU FW HWI - Channel 0 */
-static HwiP_Object gIcssgEnDat3HwiObject1;  /**< ICSSG EnDat3 PRU FW HWI - Channel 1 */
-static HwiP_Object gIcssgEnDat3HwiObject2;  /**< ICSSG EnDat3 PRU FW HWI - Channel 2 */
-
-/* Interrupt counters for debugging */
-uint32_t gPruEnDat3IrqCnt0 = 0;  /**< Channel 0 interrupt count */
-uint32_t gPruEnDat3IrqCnt1 = 0;  /**< Channel 1 interrupt count */
-uint32_t gPruEnDat3IrqCnt2 = 0;  /**< Channel 2 interrupt count */
-
-/* Global IEP pointer for interrupt handler access */
-void *gPruss_iep = NULL;
-
-/* Global PRUICSS handle for interrupt handler access */
-PRUICSS_Handle gPruIcssXHandle = NULL;
-
-/* ========================================================================== */
-/* ICSS Interrupt Configuration                                              */
-/* ========================================================================== */
-
-#if (SOC_AM261X || SOC_AM263X || SOC_AM263PX)
-#if (PRUICSSx == 1)
-#define ICSS_PRU_ENDAT3_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_0 )
+#ifndef SOC_AM243X
+/* ICSSM Interrupt Numbers */
+#if(CONFIG_ENDAT3_0_PRUICSS_INSTANCE == 1)
+#define ICSS_PRU_ENDAT3_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_0)
 #else
-#define ICSS_PRU_ENDAT3_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_0 )
+#define ICSS_PRU_ENDAT3_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_0)
 #endif
 #else
-#if (PRUICSSx == 1)
-#define ICSS_PRU_ENDAT3_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_0 )
+/* ICSSG Interrupt Numbers */
+#if(CONFIG_ENDAT3_0_PRUICSS_INSTANCE == 1)
+#define ICSS_PRU_ENDAT3_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_0)
 #else
-#define ICSS_PRU_ENDAT3_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_0 )
+#define ICSS_PRU_ENDAT3_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_0)
 #endif
 #endif
 
-/* ICSS INTC configuration */
-#if (PRUICSSx == 1)
-    extern PRUICSS_IntcInitData icss1_intc_initdata;
+#define IEP_CMP_EVENT                   (3)
+/** \brief PRU interrupt event number (18 = 2 + 16) */
+#define PRU_TRIGGER_HOST_ENDAT3_EVT     (2+16)    /* pr0_pru_mst_intr[2]_intr_req */
+
+/* ========================================================================== */
+/*                            Global Variables                                */
+/* ========================================================================== */
+
+static HwiP_Object gEndat3HwiObject[CONFIG_ENDAT3_NUM_INSTANCES];
+uint32_t gPruEndat3IrqCnt[CONFIG_ENDAT3_NUM_INSTANCES] = {0};
+
+#if(CONFIG_ENDAT3_0_PRUICSS_INSTANCE == 1)
+extern PRUICSS_IntcInitData icss1_intc_initdata;
 #else
-    extern PRUICSS_IntcInitData icss0_intc_initdata;
+extern PRUICSS_IntcInitData icss0_intc_initdata;
 #endif
 
 /* ========================================================================== */
-/* Function Definitions                                                       */
+/*                       Function Declarations                                */
 /* ========================================================================== */
 
-/**
- * \brief Configure IEP timer for periodic triggering
- * 
- * Sets up the IEP timer with compare registers for periodic event generation.
- * Configures CMP0 for counter reset and CMP3/CMP5/CMP6 for periodic triggers.
- *
- * \param endat3_periodic_interface Pointer to periodic interface configuration
- *
- * \return void
- */
-static void endat3_config_iep(struct endat3_periodic_interface *endat3_periodic_interface)
+static void endat3_config_iep(endat3_periodic_interface *endat3_periodic_interface);
+
+static void endat3_interrupt_config(endat3_periodic_interface *endat3_periodic_interface);
+
+void endat3_pru_irq_handler(void *pruicss_handle);
+
+/* ========================================================================== */
+/*                          Function Definitions                              */
+/* ========================================================================== */
+
+static void endat3_config_iep(endat3_periodic_interface *endat3_periodic_interface)
 {
-    void *pruss_iep = endat3_periodic_interface->pruss_iep;
+    endat3_priv *priv = endat3_get_priv(endat3_periodic_interface->handle[CONFIG_ENDAT3_0]);
+    void *pruicss_iep = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->iep0RegBase);
     uint8_t temp;
-    uint8_t event;
+    uint32_t event;
+    uint32_t event_clear;
     uint32_t cmp_reg0;
     uint32_t cmp_reg1;
-    uint8_t event_clear;
+    uint64_t iep_reset_count = 0;
 
-    /* Clear IEP counter */
-    temp = HW_RD_REG8((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG);
+    /* Clear IEP */
+    temp = HW_RD_REG8((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG);
     temp &= 0xFE;
-    HW_WR_REG8((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG, temp);
+    HW_WR_REG8((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG, temp);
 
-    /* Read current compare configuration and status */
-    event = HW_RD_REG8((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG);
-    event_clear = HW_RD_REG8((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
+    event = HW_RD_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG);
+    event_clear = HW_RD_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
 
-    /* Enable IEP reset by CMP0 event */
+    /* Enable IEP reset by cmp0 event */
     event |= IEP_CMP0_ENABLE;
     event |= IEP_RST_CNT_EN;
     event_clear |= 1;
 
     /* Set IEP counter to ZERO */
-    HW_WR_REG32((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG0, 0);
-    HW_WR_REG32((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG1, 0);
+    HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG0, 0);
+    HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG1, 0);
 
-    /* Configure compare registers based on load share mode */
-    if (endat3_periodic_interface->load_share)
-    {
-        /* Load share mode: configure CMP3, CMP5, CMP6 for different channels */
-        
-        /* Configure CMP3 for channel 0 */
-        event |= (0x1 << 4);
-        event_clear |= (0x1 << 3);
-        cmp_reg0 = (endat3_periodic_interface->cmp3 & 0xffffffff) - IEP_DEFAULT_INC;
-        cmp_reg1 = (endat3_periodic_interface->cmp3 >> 32 & 0xffffffff);
-        HW_WR_REG32((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP3_REG0, cmp_reg0);
-        HW_WR_REG32((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP3_REG1, cmp_reg1);
+    /* Configure CMP based on periodic_trigger_count of first handle */
+    event |= (0x1 << (IEP_CMP_EVENT + 1));
+    event_clear |= (0x1 << (IEP_CMP_EVENT));
+    cmp_reg0 = (endat3_periodic_interface->periodic_trigger_count[CONFIG_ENDAT3_0] & 0xffffffff) - IEP_DEFAULT_INC;
+    cmp_reg1 = (endat3_periodic_interface->periodic_trigger_count[CONFIG_ENDAT3_0]>>32 & 0xffffffff);
 
-        /* Configure CMP5 for channel 1 */
-        event |= (0x1 << 6);
-        event_clear |= (0x1 << 5);
-        cmp_reg0 = (endat3_periodic_interface->cmp5 & 0xffffffff) - IEP_DEFAULT_INC;
-        cmp_reg1 = (endat3_periodic_interface->cmp5 >> 32 & 0xffffffff);
-        HW_WR_REG32((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP5_REG0, cmp_reg0);
-        HW_WR_REG32((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP5_REG1, cmp_reg1);
+    HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + IEP_CMP_EVENT*8,  cmp_reg0);
+    HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + IEP_CMP_EVENT*8,  cmp_reg1);
 
-        /* Configure CMP6 for channel 2 */
-        event |= (0x1 << 7);
-        event_clear |= (0x1 << 6);
-        cmp_reg0 = (endat3_periodic_interface->cmp6 & 0xffffffff) - IEP_DEFAULT_INC;
-        cmp_reg1 = (endat3_periodic_interface->cmp6 >> 32 & 0xffffffff);
-        HW_WR_REG32((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP6_REG0, cmp_reg0);
-        HW_WR_REG32((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP6_REG1, cmp_reg1);
-    }
-    else
-    {
-        /* Single channel mode: configure CMP3 only */
-        event |= (0x1 << 4);
-        event_clear |= (0x1 << 3);
-        cmp_reg0 = (endat3_periodic_interface->cmp3 & 0xffffffff) - IEP_DEFAULT_INC;
-        cmp_reg1 = (endat3_periodic_interface->cmp3 >> 32 & 0xffffffff);
-        HW_WR_REG32((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP3_REG0, cmp_reg0);
-        HW_WR_REG32((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP3_REG1, cmp_reg1);
-    }
+    /* Clear event */
+    HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
+    /* Enable event */
+    HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG, event);
 
-    /* Clear and enable compare events */
-    HW_WR_REG8((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
-    HW_WR_REG8((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG, event);
+    iep_reset_count = endat3_periodic_interface->iep_reset_count;
 
-    /* Configure CMP0 for counter reset */
-    cmp_reg0 = (endat3_periodic_interface->cmp0 & 0xffffffff) - IEP_DEFAULT_INC;
-    cmp_reg1 = (endat3_periodic_interface->cmp0 >> 32 & 0xffffffff);
-    HW_WR_REG32((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0, cmp_reg0);
-    HW_WR_REG32((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1, cmp_reg1);
+    /* Configure cmp0 registers */
+    cmp_reg0 = (iep_reset_count & 0xffffffff) - IEP_DEFAULT_INC;
+    cmp_reg1 = (iep_reset_count>>32 & 0xffffffff);
+    HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0, cmp_reg0);
+    HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1, cmp_reg1);
 
-    /* Start IEP counter with default increment */
-    temp = HW_RD_REG8((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG);
+    /* Write IEP default increment and IEP start */
+    temp = HW_RD_REG8((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG);
     temp &= 0x0F;
     temp |= 0x10;
     temp |= IEP_COUNTER_EN;
-    HW_WR_REG8((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG, temp);
+    HW_WR_REG8((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG, temp);
 }
 
-/**
- * \brief Configure interrupt handlers for periodic triggers
- * 
- * Registers hardware interrupt handlers for periodic trigger events.
- * Supports single channel and load share (multi-channel) modes.
- *
- * \param endat3_periodic_interface Pointer to periodic interface configuration
- *
- * \return void
- */
-static void endat3_interrupt_config(struct endat3_periodic_interface *endat3_periodic_interface)
+static void endat3_interrupt_config(endat3_periodic_interface *endat3_periodic_interface)
 {
+    endat3_priv *priv = endat3_get_priv(endat3_periodic_interface->handle[CONFIG_ENDAT3_0]);
+    void *pruicss_handle = (void *)(priv->pruicss_handle);
     int32_t status;
-    HwiP_Params hwiPrms;
+    HwiP_Params hwi_params;
 
-    if (endat3_periodic_interface->load_share)
-    {
-        /* Load share mode: register handlers for all three channels */
-        
-        /* Channel 0 interrupt handler */
-        HwiP_Params_init(&hwiPrms);
-        hwiPrms.intNum      = ICSS_PRU_ENDAT3_INT_NUM;
-        hwiPrms.callback    = &pruEnDat3IrqHandler0;
-        hwiPrms.args        = 0;
-        hwiPrms.isPulse     = FALSE;
-        hwiPrms.isFIQ       = FALSE;
-        status              = HwiP_construct(&gIcssgEnDat3HwiObject0, &hwiPrms);
-        DebugP_assert(status == SystemP_SUCCESS);
-
-        /* Channel 1 interrupt handler */
-        HwiP_Params_init(&hwiPrms);
-        hwiPrms.intNum      = ICSS_PRU_ENDAT3_INT_NUM + 1;
-        hwiPrms.callback    = &pruEnDat3IrqHandler1;
-        hwiPrms.args        = 0;
-        hwiPrms.isPulse     = FALSE;
-        hwiPrms.isFIQ       = FALSE;
-        status              = HwiP_construct(&gIcssgEnDat3HwiObject1, &hwiPrms);
-        DebugP_assert(status == SystemP_SUCCESS);
-
-        /* Channel 2 interrupt handler */
-        HwiP_Params_init(&hwiPrms);
-        hwiPrms.intNum      = ICSS_PRU_ENDAT3_INT_NUM + 2;
-        hwiPrms.callback    = &pruEnDat3IrqHandler2;
-        hwiPrms.args        = 0;
-        hwiPrms.isPulse     = FALSE;
-        hwiPrms.isFIQ       = FALSE;
-        status              = HwiP_construct(&gIcssgEnDat3HwiObject2, &hwiPrms);
-        DebugP_assert(status == SystemP_SUCCESS);
-    }
-    else
-    {
-        /* Single channel mode: register handler for channel 0 only */
-        HwiP_Params_init(&hwiPrms);
-        hwiPrms.intNum      = ICSS_PRU_ENDAT3_INT_NUM;
-        hwiPrms.callback    = &pruEnDat3IrqHandler0;
-        hwiPrms.args        = 0;
-        hwiPrms.isPulse     = FALSE;
-        hwiPrms.isFIQ       = FALSE;
-        status              = HwiP_construct(&gIcssgEnDat3HwiObject0, &hwiPrms);
-        DebugP_assert(status == SystemP_SUCCESS);
-    }
+    /* Register and enable PRU FW interrupt */
+    HwiP_Params_init(&hwi_params);
+    hwi_params.intNum   = ICSS_PRU_ENDAT3_INT_NUM;
+    hwi_params.callback = &endat3_pru_irq_handler;
+    hwi_params.args     = pruicss_handle;
+    hwi_params.isPulse  = FALSE;
+    hwi_params.isFIQ    = FALSE;
+    status              = HwiP_construct(&gEndat3HwiObject[CONFIG_ENDAT3_0], &hwi_params);
+    DebugP_assert(status == SystemP_SUCCESS);
 }
 
-/**
- * \brief Configure EnDat3 periodic mode
- * 
- * Main initialization function for periodic trigger mode. Configures IEP timer,
- * initializes ICSS interrupt controller, and sets up interrupt handlers.
- *
- * \param endat3_periodic_interface Pointer to periodic interface configuration
- * \param handle PRUICSS handle
- *
- * \return 1 on success, 0 on failure
- */
-uint32_t endat3_config_periodic_mode(struct endat3_periodic_interface *endat3_periodic_interface, PRUICSS_Handle handle)
+int32_t endat3_config_periodic_mode(endat3_periodic_interface *endat3_periodic_interface)
 {
-    gPruIcssXHandle = handle;
-    gPruss_iep = endat3_periodic_interface->pruss_iep;
+    int32_t         status;
+    endat3_priv   *priv;
+    void            *pruicss_handle;
 
-    /* Configure IEP timer */
+    /* NULL check on interface pointer and handle */
+    if(endat3_periodic_interface == NULL || endat3_periodic_interface->handle[CONFIG_ENDAT3_0] == NULL)
+    {
+        return SystemP_FAILURE;
+    }
+
+    priv = endat3_get_priv(endat3_periodic_interface->handle[CONFIG_ENDAT3_0]);
+    pruicss_handle = (void *)(priv->pruicss_handle);
+
+    /* Configure IEP */
     endat3_config_iep(endat3_periodic_interface);
 
-    /* Note: PRUICSS INTC initialization is handled by syscfg/ti_drivers_config.c
-     * The INTC is already initialized when Drivers_open() is called in main.
-     * Attempting to initialize it again here would cause issues.
-     */
-
-    /* Configure interrupt handlers */
+#if(CONFIG_ENDAT3_0_PRUICSS_INSTANCE == 1)
+    status = PRUICSS_intcInit(pruicss_handle, &icss1_intc_initdata);
+    if(status != SystemP_SUCCESS)
+    {
+        return status;
+    }
+#else
+    status = PRUICSS_intcInit(pruicss_handle, &icss0_intc_initdata);
+    if(status != SystemP_SUCCESS)
+    {
+        return status;
+    }
+#endif
+    /* Configure Interrupts */
     endat3_interrupt_config(endat3_periodic_interface);
-
-    DebugP_log("\r\nEnDat3 periodic mode configured successfully\r\n");
-    return 1;
+    return SystemP_SUCCESS;
 }
 
-/**
- * \brief Configure EnDat3 encoder for periodic trigger mode
- * 
- * Configures the encoder to operate in periodic trigger mode where the
- * encoder is triggered by periodic IEP timer events instead of host commands.
- *
- * \param handle EnDat3 handle for the encoder channel
- *
- * \return void
- */
-void endat3_config_periodic_trigger(endat3_Handle handle)
+int32_t endat3_stop_periodic_mode(endat3_periodic_interface *endat3_periodic_interface)
 {
-    /* Configure encoder for periodic trigger mode */
-    /* This would typically involve setting encoder-specific registers or parameters */
-    DebugP_log("\r\nEnDat3 encoder configured for periodic trigger mode\r\n");
-}
-
-/**
- * \brief Stop EnDat3 periodic mode
- *
- * Disables the IEP timer and stops periodic triggering.
- *
- * \param endat3_periodic_interface Pointer to periodic interface configuration
- *
- * \return void
- */
-void endat3_stop_periodic_continuous_mode(struct endat3_periodic_interface *endat3_periodic_interface)
-{
-    void *pruss_iep = endat3_periodic_interface->pruss_iep;
+    endat3_priv *priv;
+    void *pruicss_iep;
     uint8_t temp;
 
-    /* Clear IEP counter enable bit */
-    temp = HW_RD_REG8((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG);
+    /* NULL check on interface pointer and handle */
+    if(endat3_periodic_interface == NULL || endat3_periodic_interface->handle[CONFIG_ENDAT3_0] == NULL)
+    {
+        return SystemP_FAILURE;
+    }
+
+    priv = endat3_get_priv(endat3_periodic_interface->handle[CONFIG_ENDAT3_0]);
+    pruicss_iep = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->iep0RegBase);
+
+    /* Stop IEP */
+    temp = HW_RD_REG8((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG);
     temp &= 0xFE;
-    HW_WR_REG8((uint8_t*)pruss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG, temp);
+    HW_WR_REG8((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG, temp);
 
-    DebugP_log("\r\nEnDat3 periodic mode stopped\r\n");
+    HwiP_destruct(&gEndat3HwiObject[CONFIG_ENDAT3_0]);
+
+    return SystemP_SUCCESS;
 }
 
-/**
- * \brief EnDat3 periodic trigger interrupt handler - Channel 0
- * 
- * Handles CMP3 event for channel 0. Clears the event flag and acknowledges
- * the interrupt at the source.
- *
- * \param args Pointer to arguments (unused)
- *
- * \return void
- */
-static void pruEnDat3IrqHandler0(void *args)
+/* PRU FW IRQ handler */
+void endat3_pru_irq_handler(void *pruicss_handle)
 {
-    /* Increment interrupt counter for debugging */
-    gPruEnDat3IrqCnt0++;
-
-    /* Clear CMP3 event */
-    uint8_t event_clear;
-    event_clear = HW_RD_REG8((uint8_t*)gPruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
-    event_clear |= IEP_CMP3_EVNT;
-    HW_WR_REG8((uint8_t*)gPruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
+    /* Increment IRQ count */
+    gPruEndat3IrqCnt[CONFIG_ENDAT3_0]++;
 
     /* Clear interrupt at source */
-    PRUICSS_clearEvent(gPruIcssXHandle, PRU_TRIGGER_HOST_ENDAT3_EVT0);
-}
-
-/**
- * \brief EnDat3 periodic trigger interrupt handler - Channel 1
- * 
- * Handles CMP5 event for channel 1. Clears the event flag and acknowledges
- * the interrupt at the source.
- *
- * \param args Pointer to arguments (unused)
- *
- * \return void
- */
-static void pruEnDat3IrqHandler1(void *args)
-{
-    /* Increment interrupt counter for debugging */
-    gPruEnDat3IrqCnt1++;
-
-    /* Clear CMP5 event */
-    uint8_t event_clear;
-    event_clear = HW_RD_REG8((uint8_t*)gPruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
-    event_clear |= IEP_CMP5_EVNT;
-    HW_WR_REG8((uint8_t*)gPruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
-
-    /* Clear interrupt at source */
-    PRUICSS_clearEvent(gPruIcssXHandle, PRU_TRIGGER_HOST_ENDAT3_EVT1);
-}
-
-/**
- * \brief EnDat3 periodic trigger interrupt handler - Channel 2
- * 
- * Handles CMP6 event for channel 2. Clears the event flag and acknowledges
- * the interrupt at the source.
- *
- * \param args Pointer to arguments (unused)
- *
- * \return void
- */
-static void pruEnDat3IrqHandler2(void *args)
-{
-    /* Increment interrupt counter for debugging */
-    gPruEnDat3IrqCnt2++;
-
-    /* Clear CMP6 event */
-    uint8_t event_clear;
-    event_clear = HW_RD_REG8((uint8_t*)gPruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
-    event_clear |= IEP_CMP6_EVNT;
-    HW_WR_REG8((uint8_t*)gPruss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
-
-    /* Clear interrupt at source */
-    PRUICSS_clearEvent(gPruIcssXHandle, PRU_TRIGGER_HOST_ENDAT3_EVT2);
+    PRUICSS_clearEvent((PRUICSS_Handle)pruicss_handle, PRU_TRIGGER_HOST_ENDAT3_EVT);
 }
