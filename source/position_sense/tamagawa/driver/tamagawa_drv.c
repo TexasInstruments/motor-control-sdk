@@ -95,6 +95,7 @@ tamagawa_handle tamagawa_init(uint32_t index, const tamagawa_params *params)
     tamagawa_priv           *priv = NULL;
     const tamagawa_attrs    *attrs = NULL;
     uint8_t ch;
+    uint32_t iep_address;
 
     if((index >= gTamagawaConfigNum) || (params == NULL))
     {
@@ -140,9 +141,26 @@ tamagawa_handle tamagawa_init(uint32_t index, const tamagawa_params *params)
            (attrs->uart_clk_freq == 0) ||
            (attrs->iep_clk_freq == 0) ||
            (attrs->is_core_clk > 1) ||
-           (attrs->load_share_enabled > 1))
+           (attrs->load_share_enabled > 1) ||
+           (attrs->iep_base_addr == NULL) ||
+           (attrs->iep_instance > 1))
         {
             status = SystemP_FAILURE;
+        }
+
+        /* Validate IEP CMP and CAP event numbers for periodic trigger mode */
+        if(status == SystemP_SUCCESS)
+        {
+            /* Validate IEP CMP event numbers and CAP event numbers */
+            for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS_PER_SLICE; ch++)
+            {
+                if((attrs->iep_cmp_event[ch] >= TAMAGAWA_IEP_MAX_CMP_EVENT) ||
+                   (attrs->iep_cap_event[ch] >= TAMAGAWA_IEP_MAX_CAP_EVENT))
+                {
+                    status = SystemP_FAILURE;
+                    break;
+                }
+            }
         }
 
         /* Validate baud_rate - must be one of the supported Tamagawa frequencies */
@@ -197,6 +215,41 @@ tamagawa_handle tamagawa_init(uint32_t index, const tamagawa_params *params)
     if(status == SystemP_SUCCESS)
     {
         status = PRUICSS_setGpMuxSelect(priv->pruicss_handle, attrs->pruicss_slice, PRUICSS_GP_MUX_SEL_MODE_ENDAT);
+    }
+
+    if(status == SystemP_SUCCESS)
+    {
+        /*Set IEP base address */
+        void *base_addr = (void *)((PRUICSS_HwAttrs *)(params->pruicss_handle->hwAttrs))->baseAddr;
+        iep_address = ((uint32_t)attrs->iep_base_addr) - ((uint32_t)base_addr);
+
+        /* Initialize IEP base address in pruicss_xchg */
+        status = tamagawa_config_iep_base_address(handle, iep_address);
+    }
+
+    /* Configure IEP CMP and CAP events for enabled channels */
+    if(status == SystemP_SUCCESS)
+    {
+        for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS_PER_SLICE; ch++)
+        {
+            /* Check if channel is enabled */
+            if(attrs->channel_mask & (1U << ch))
+            {
+                /* Configure IEP CMP event for this channel */
+                status = tamagawa_config_iep_cmp_event(handle, ch, attrs->iep_cmp_event[ch]);
+                if(status != SystemP_SUCCESS)
+                {
+                    break;
+                }
+
+                /* Configure IEP CAP event for this channel */
+                status = tamagawa_config_iep_cap_event(handle, ch, attrs->iep_cap_event[ch]);
+                if(status != SystemP_SUCCESS)
+                {
+                    break;
+                }
+            }
+        }
     }
 
     if((status == SystemP_SUCCESS) && (attrs->mode == TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU))
@@ -1260,7 +1313,7 @@ int32_t tamagawa_config_host_trigger(tamagawa_handle handle)
     return SystemP_SUCCESS;
 }
 
-int32_t tamagawa_config_periodic_trigger(tamagawa_handle handle)
+int32_t tamagawa_config_periodic_trigger_cmp_mode(tamagawa_handle handle)
 {
     uint8_t xchg_index;
     tamagawa_xchg *tamagawa_xchg_ptr;
@@ -1281,18 +1334,66 @@ int32_t tamagawa_config_periodic_trigger(tamagawa_handle handle)
         {
             if(handle->attrs->channel_mask & (1 << xchg_index))
             {
-                tamagawa_xchg_ptr->config[xchg_index].opmode = TAMAGAWA_OPMODE_PERIODIC;
+                tamagawa_xchg_ptr->config[xchg_index].opmode = TAMAGAWA_OPMODE_PERIODIC_CMP;
             }
         }
     }
     else
     {
-        tamagawa_xchg_ptr->config[0].opmode = TAMAGAWA_OPMODE_PERIODIC;
+        tamagawa_xchg_ptr->config[0].opmode = TAMAGAWA_OPMODE_PERIODIC_CMP;
     }
 
     return SystemP_SUCCESS;
 }
 
+int32_t tamagawa_config_iep_base_address(tamagawa_handle handle, uint32_t iep_base_addr)
+{
+    tamagawa_xchg *tamagawa_xchg_ptr;
+
+    /* NULL check on handle */
+    if(handle == NULL || iep_base_addr == 0)    
+    {
+        return SystemP_FAILURE;
+    }
+
+    tamagawa_xchg_ptr = handle->priv->tamagawa_xchg;
+    tamagawa_xchg_ptr->iep_base_addr = iep_base_addr;
+
+    return SystemP_SUCCESS;
+}
+
+int32_t tamagawa_config_periodic_trigger_cap_mode(tamagawa_handle handle)
+{
+    uint8_t xchg_index;
+    tamagawa_xchg *tamagawa_xchg_ptr;
+    const tamagawa_attrs *attrs = NULL;
+
+    /* NULL check on handle */
+    if(handle == NULL)
+    {
+        return SystemP_FAILURE;
+    }
+
+    tamagawa_xchg_ptr = handle->priv->tamagawa_xchg;
+    attrs = handle->attrs;
+
+    if(attrs->load_share_enabled)
+    {
+        for(xchg_index = 0; xchg_index < TAMAGAWA_MAX_CHANNELS_PER_SLICE; xchg_index++)
+        {
+            if(handle->attrs->channel_mask & (1 << xchg_index))
+            {
+                tamagawa_xchg_ptr->config[xchg_index].opmode = TAMAGAWA_OPMODE_PERIODIC_CAP;
+            }
+        }
+    }
+    else
+    {
+        tamagawa_xchg_ptr->config[0].opmode = TAMAGAWA_OPMODE_PERIODIC_CAP;
+    }
+
+    return SystemP_SUCCESS;
+}
 int32_t tamagawa_config_channel(tamagawa_handle handle, uint8_t mask)
 {
     uint8_t xchg_index;
@@ -1520,6 +1621,81 @@ static void tamagawa_config_clr_cfg0(tamagawa_handle handle)
             HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH2_CFG0_REG, 0);
         }
     }
+}
+
+int32_t tamagawa_config_iep_cmp_event(tamagawa_handle handle, uint8_t channel, uint8_t event_num)
+{
+    int32_t ret_val = SystemP_SUCCESS;
+    const tamagawa_attrs *attrs;
+    tamagawa_priv *priv;
+    tamagawa_xchg *tamagawa_xchg_ptr;
+    uint8_t ch_index = 0;
+
+    if(handle == NULL || event_num >= TAMAGAWA_IEP_MAX_CMP_EVENT || channel >= TAMAGAWA_MAX_CHANNELS_PER_SLICE)
+    {
+        return SystemP_FAILURE;
+    }
+
+    attrs = handle->attrs;
+    priv = handle->priv;
+    tamagawa_xchg_ptr = priv->tamagawa_xchg;
+
+    /* Determine channel index for DMEM access */
+    if(attrs->load_share_enabled)
+    {
+        ch_index = channel;
+    }
+    else
+    {
+        /* Always 0 in single PRU mode. When load share mode is disabled.
+        In single PRU mode firmware, the channel number is ignored and the firmware always reads data from DMEM using the channel 0 offset, regardless of which channels are connected.*/
+        ch_index = 0;
+    }
+
+    /* Write IEP CMP event number to DMEM for PRU firmware access */
+    tamagawa_xchg_ptr->trigger_params[ch_index].iep_cmp_event = event_num;
+
+    return ret_val;
+}
+
+int32_t tamagawa_config_iep_cap_event(tamagawa_handle handle, uint8_t channel, uint8_t event_num)
+{
+    int32_t ret_val = SystemP_SUCCESS;
+    const tamagawa_attrs *attrs;
+    tamagawa_priv *priv;
+    tamagawa_xchg *tamagawa_xchg_ptr;
+    uint8_t ch_index = 0;
+
+    if(handle == NULL || event_num >= TAMAGAWA_IEP_MAX_CAP_EVENT || channel >= TAMAGAWA_MAX_CHANNELS_PER_SLICE)
+    {
+        return SystemP_FAILURE;
+    }
+
+    attrs = handle->attrs;
+    priv = handle->priv;
+    tamagawa_xchg_ptr = priv->tamagawa_xchg;
+
+    if(attrs->load_share_enabled)
+    {
+        ch_index = channel;
+    }
+    else
+    {
+        /* Always 0 in single PRU mode. When load share mode is disabled.
+        In single PRU mode firmware, the channel number is ignored and the firmware always reads data from DMEM using the channel 0 offset, regardless of which channels are connected.*/
+        ch_index = 0;
+    }
+
+    /* write cap event and capture register address in DMEM */
+    tamagawa_xchg_ptr->trigger_params[ch_index].iep_cap_event = event_num;
+    tamagawa_xchg_ptr->trigger_params[ch_index].iep_capture_reg = tamagawa_xchg_ptr->iep_base_addr + TAMAGAWA_CSL_ICSS_PR1_IEP0_SLV_CAP0_REG0  + TAMAGAWA_8_BYTE_REG_OFFSET*(event_num);
+
+    /* Offset is not identical after 6th event. The 6th and 7th CAP event have 2 extra registers for Fall captures. */
+    if(event_num > 6)
+    {
+        tamagawa_xchg_ptr->trigger_params[ch_index].iep_capture_reg += TAMAGAWA_8_BYTE_REG_OFFSET;
+    }
+    return ret_val;
 }
 
 /**

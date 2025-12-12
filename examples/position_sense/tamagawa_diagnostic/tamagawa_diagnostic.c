@@ -580,7 +580,7 @@ static int32_t tamagawa_get_command(uint8_t *adf, uint8_t *edf)
 {
     int32_t cmd;
     uint32_t val;
-    uint32_t i;
+    uint32_t i, j;
     const tamagawa_attrs *attrs;
 
     /* Check to make sure that the command issued is correct */
@@ -589,9 +589,11 @@ static int32_t tamagawa_get_command(uint8_t *adf, uint8_t *edf)
         cmd = DATA_ID_0;
         DebugP_log("\r\n| WARNING: invalid Data ID, Data readout Data ID 0 will be sent\n");
     }
-    /* If the command is 9, start periodic trigger with DATA ID as 0*/
-    if(cmd == PERIODIC_TRIGGER_CMD)
+    /* If the command is 9, start periodic trigger CMP mode with DATA ID as 0*/
+    if(cmd == PERIODIC_TRIGGER_CMP_CMD)
     {
+        gTamagawaPeriodicInterface.is_cap_mode = 0;  /* CMP mode */
+
         DebugP_log("\r| Enter IEP reset cycle count (must be greater than Tamagawa cycle time including timeout period, in IEP cycles):");
         if(DebugP_scanf("%u\n", &gTamagawaPeriodicInterface.iep_reset_count) < 0)
         {
@@ -601,19 +603,61 @@ static int32_t tamagawa_get_command(uint8_t *adf, uint8_t *edf)
 
         for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
         {
-            DebugP_log("\r| Enter IEP trigger time(must be less than or equal to IEP reset cycle, in IEP cycles) for Tamagawa instance %u: ", i);
-            if(DebugP_scanf("%u\n", &gTamagawaPeriodicInterface.periodic_trigger_count[i]) < 0 )
+            attrs = tamagawa_get_attrs(gAppTamagawaHandle[i]);
+            if(attrs->load_share_enabled)
             {
-                DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
-                return SystemP_FAILURE;
-            }
+                for(j = 0; j < TAMAGAWA_MAX_CHANNELS_PER_SLICE; j++)
+                {
+                    if((attrs->channel_mask & (1 << j)))
+                    {
+                    
+                        DebugP_log("\r| Enter IEP trigger time(must be less than or equal to IEP reset cycle, in IEP cycles) for ch %u for Tamagawa instance %u: ", j, i);
+                        if(DebugP_scanf("%u\n", &gTamagawaPeriodicInterface.periodic_trigger_count[i][j]) < 0 )
+                        {
+                            DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                            return SystemP_FAILURE;
+                        }
 
-            if(gTamagawaPeriodicInterface.periodic_trigger_count[i] > gTamagawaPeriodicInterface.iep_reset_count)
+                        if(gTamagawaPeriodicInterface.periodic_trigger_count[i][j] > gTamagawaPeriodicInterface.iep_reset_count)
+                        {
+                            DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                            return SystemP_FAILURE;
+                        }
+                    }
+                }
+            }
+            else
             {
-                DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
-                return SystemP_FAILURE;
+                DebugP_log("\r| Enter IEP trigger time(must be less than or equal to IEP reset cycle, in IEP cycles) for Tamagawa instance %u: ", i);
+            
+                if(DebugP_scanf("%u\n", &gTamagawaPeriodicInterface.periodic_trigger_count[i][0]) < 0 )
+                {
+                    DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                    return SystemP_FAILURE;
+                }
+
+                if(gTamagawaPeriodicInterface.periodic_trigger_count[i][0] > gTamagawaPeriodicInterface.iep_reset_count)
+                {
+                    DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                    return SystemP_FAILURE;
+                }
             }
         }
+    }
+    /* If the command is 10, start periodic trigger CAP mode with DATA ID as 0*/
+    else if(cmd == PERIODIC_TRIGGER_CAP_CMD)
+    {
+        gTamagawaPeriodicInterface.is_cap_mode = 1;  /* CAP mode */
+#if defined(SOC_AM243X) || defined(SOC_AM64X)
+        DebugP_log("\r| Enter IEP SYNC0 period (in IEP cycles, used for CAP mode):");
+        if(DebugP_scanf("%u\n", &gTamagawaPeriodicInterface.iep_reset_count) < 0)
+        {
+            DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+            return SystemP_FAILURE;
+        }
+#else
+        DebugP_log("\r| Periodic CAP mode cycle time will be equal to EPWM frequency. NOTE: In SysConfig, EPWM and EPWM to IEP LATCH XBAR configuration must be done. \n|\n|\n|\n");
+#endif
     }
     /* Check to make sure that the command issued is correct */
     if(cmd >= DATA_ID_NUM)
@@ -737,7 +781,8 @@ static void tamagawa_display_menu(void)
     DebugP_log("\r\n| 6 : Reset (Data ID 8)                                                        |");
     DebugP_log("\r\n| 7 : Reset (Data ID C)                                                        |");
     DebugP_log("\r\n| 8 : Readout from EEPROM (Data ID D)                                          |");
-    DebugP_log("\r\n| 9 : Start periodic continuous mode                                           |");
+    DebugP_log("\r\n| 9 : Start periodic continuous mode (CMP mode)                                |");
+    DebugP_log("\r\n| 10: Start periodic continuous mode (CAP mode)                                |");
     DebugP_log("\r\n|------------------------------------------------------------------------------|\n|\n");
     DebugP_log("\r\n| enter value: ");
 }
@@ -842,10 +887,22 @@ static void tamagawa_process_periodic_command(tamagawa_handle handle[], int32_t 
 
     for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
     {
-        if(tamagawa_config_periodic_trigger(handle[i]) != SystemP_SUCCESS)
+        if(gTamagawaPeriodicInterface.is_cap_mode)
         {
-            DebugP_log("\r| ERROR: tamagawa_config_periodic_trigger failed for Tamagawa instance %u\r\n|\r\n|\n", i);
-            return;
+            if(tamagawa_config_periodic_trigger_cap_mode(handle[i]) != SystemP_SUCCESS)
+            {
+                DebugP_log("\r| ERROR: tamagawa_config_periodic_trigger_cap_mode failed for Tamagawa instance %u\r\n|\r\n|\n", i);
+                return;
+            }
+        }
+        else
+        {
+            if(tamagawa_config_periodic_trigger_cmp_mode(handle[i]) != SystemP_SUCCESS)
+            {
+                DebugP_log("\r| ERROR: tamagawa_config_periodic_trigger_cmp_mode failed for Tamagawa instance %u\r\n|\r\n|\n", i);
+                return;
+            }
+
         }
     }
 
@@ -1047,6 +1104,7 @@ void tamagawa_main(void *args)
         /* Initialize Tamagawa parameters with defaults and set PRU-ICSS handle */
         tamagawa_params_init(&tamagawa_params);
         tamagawa_params.pruicss_handle = gPruIcssXHandle;
+
         /* Default delay values are used:
          *   - cmd_wait_delay_us = 100 us (delay for command wait loop)
          *   - max_wait_loop_count = 50 (number of wait loop iterations in tamagawa_command_wait())
@@ -1126,7 +1184,7 @@ void tamagawa_main(void *args)
         }
 
         /* Handle periodic trigger mode - continuous position sampling using IEP timer */
-        if(cmd == PERIODIC_TRIGGER_CMD)
+        if(cmd == PERIODIC_TRIGGER_CMP_CMD || cmd == PERIODIC_TRIGGER_CAP_CMD)
         {
 
 #if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)

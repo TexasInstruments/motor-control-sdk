@@ -77,6 +77,8 @@ RET2	.macro
 
 	.asg	R28,	SCRATCH
 	.asg	R29,	SCRATCH1
+	.asg	R26,	SCRATCH2
+	.asg	R27,	SCRATCH3
 	.asg	R7.b0,	TAMAGAWA_ENABLE_CHx
     ;TAMAGAWA_ENABLED_CHANNELS is used only load share mode, to sync channels and do global reint
     .asg    R9.b0,  TAMAGAWA_ENABLED_CHANNELS
@@ -160,18 +162,101 @@ TAMAGAWA_SKIP_INIT_SUCCESS:
 CHECK_OPERATING_MODE:
 	LBCO	&R0.b0,	PRUx_DMEM,	TAMAGAWA_OPMODE_CONFIG_OFFSET,	1
     ;If opmode=1, Host trigger is done
-	;If opmode=0, Periodic trigger is done
-	QBNE	HANDLE_HOST_TRIGGER_MODE,	R0.b0,		0
+	;If opmode=0, Periodic trigger (CMP mode) is done
+	;If opmode=2, Periodic trigger (CAP mode) is done
+	QBEQ	HANDLE_HOST_TRIGGER_MODE,	R0.b0,		1
+	QBEQ	HANDLE_PERIODIC_TRIGGER_CMP_MODE,	R0.b0,		0
 
-HANDLE_PERIODIC_TRIGGER_MODE:
-    ;Get compare event status
-    LBCO	&R0,	ICSS_IEP,	ICSS_IEP_CMP_STATUS_REG,	4
-    ; wait till IEP CMP3 event
-	QBBC	CHECK_OPERATING_MODE,	R0,	IEP_CMP_EVNT
-	; Clear IEP CMP3 event
-	SET	R0,	R0,	IEP_CMP_EVNT
-    ; store compare event status
-    SBCO	&R0,	ICSS_IEP,  ICSS_IEP_CMP_STATUS_REG,	4
+HANDLE_PERIODIC_TRIGGER_CAP_MODE:
+    ; Load IEP base address from DMEM (offset from PRU-ICSS base)
+    LBCO	&SCRATCH1,	PRUx_DMEM,	TAMAGAWA_IEP_BASE_ADDR_OFFSET,	4
+
+    ; Get capture event status from IEP
+    LBBO	&SCRATCH.w0,	SCRATCH1,	ICSS_IEP_CAP_STATUS_REG,	2
+
+    ; Wait till IEP CAP event - Per-channel for load share mode
+    .if $isdefed("ENABLE_MULTI_MAKE_RTU")
+    ; RTU-PRU handles CH0 in load share mode
+    LBCO	&SCRATCH3.b0,	PRUx_DMEM,	TAMAGAWA_CH0_IEP_CAP_EVENT_OFFSET,	1
+    QBBC	CHECK_OPERATING_MODE,	SCRATCH.w0,	SCRATCH3.b0
+    ; Read cap register offset from DMEM
+    ;LDI		SCRATCH1,	TAMAGAWA_CH0_IEP_CAPTURE_REG_OFFSET
+    LBCO	&SCRATCH,	PRUx_DMEM,	TAMAGAWA_CH0_IEP_CAPTURE_REG_OFFSET,	4
+    ; Clear capture event by reading capture register value
+    LBBO	&SCRATCH1,	SCRATCH,	0,	4
+    .elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
+    ; PRU handles CH1 in load share mode
+    LBCO	&SCRATCH3.b0,	PRUx_DMEM,	TAMAGAWA_CH1_IEP_CAP_EVENT_OFFSET,	1
+    QBBC	CHECK_OPERATING_MODE,	SCRATCH.w0,	SCRATCH3.b0
+    ; Read cap register offset from DMEM
+    LBCO	&SCRATCH,	PRUx_DMEM,	TAMAGAWA_CH1_IEP_CAPTURE_REG_OFFSET,	4
+    ; Clear capture event by reading capture register value
+    LBBO	&SCRATCH1,	SCRATCH,	0,	4
+    .elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
+    ; TX-PRU handles CH2 in load share mode
+    LBCO	&SCRATCH3.b0,	PRUx_DMEM,	TAMAGAWA_CH2_IEP_CAP_EVENT_OFFSET,	1
+    QBBC	CHECK_OPERATING_MODE,	SCRATCH.w0,	SCRATCH3.b0
+    ; Read cap register offset from DMEM
+    LBCO	&SCRATCH,	PRUx_DMEM,	TAMAGAWA_CH2_IEP_CAPTURE_REG_OFFSET,	4
+    ; Clear capture event by reading capture register value
+    LBBO	&SCRATCH1,	SCRATCH,	0,	4
+    .else
+    ; Single/multi-channel single PRU mode - use CH0 event
+    LBCO	&SCRATCH3.b0,	PRUx_DMEM,	TAMAGAWA_CH0_IEP_CAP_EVENT_OFFSET,	1
+    QBBC	CHECK_OPERATING_MODE,	SCRATCH.w0,	SCRATCH3.b0
+    ; Read cap register offset from DMEM
+    LBCO	&SCRATCH,	PRUx_DMEM,	TAMAGAWA_CH0_IEP_CAPTURE_REG_OFFSET,	4
+    ; Clear capture event by reading capture register value
+    LBBO	&SCRATCH1,	SCRATCH,	0,	4
+    .endif
+
+    ; SET command TRIGGER
+    LDI		R0.b0,	1
+    SBCO    &R0.b0,	PRUx_DMEM, TAMAGAWA_INTFC_CMD_TRIGGER_OFFSET,	1
+    JMP     HANDLE_HOST_TRIGGER_MODE
+
+HANDLE_PERIODIC_TRIGGER_CMP_MODE:
+    ; Load IEP base address from DMEM (offset from PRU-ICSS base)
+    LBCO	&SCRATCH1,	PRUx_DMEM,	TAMAGAWA_IEP_BASE_ADDR_OFFSET,	4
+
+    ; Get compare event status from IEP
+    LBBO	&SCRATCH.w0,	SCRATCH1,	ICSS_IEP_CMP_STATUS_REG,	2
+
+    ; Wait till IEP CMP event get set - Per-channel for load share mode
+    .if $isdefed("ENABLE_MULTI_MAKE_RTU")
+    ; RTU-PRU handles CH0 in load share mode
+    LBCO	&SCRATCH3.b0,	PRUx_DMEM,	TAMAGAWA_CH0_IEP_CMP_EVENT_OFFSET,	1
+    QBBC	CHECK_OPERATING_MODE,	SCRATCH.w0,	SCRATCH3.b0
+    ; Clear IEP CMP event
+    LDI	SCRATCH2.w0,	1
+    LSL	SCRATCH2.w0,	SCRATCH2.w0,	SCRATCH3.w0
+    .elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
+    ; PRU handles CH1 in load share mode
+    LBCO	&SCRATCH3.b0,	PRUx_DMEM,	TAMAGAWA_CH1_IEP_CMP_EVENT_OFFSET,	1
+    QBBC	CHECK_OPERATING_MODE,	SCRATCH.w0,	SCRATCH3.b0
+    ; Clear IEP CMP event
+    LDI	SCRATCH2.w0,	1
+    LSL	SCRATCH2.w0,	SCRATCH2.w0,	SCRATCH3.w0
+    .elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
+    ; TX-PRU handles CH2 in load share mode
+    LBCO	&SCRATCH3.b0,	PRUx_DMEM,	TAMAGAWA_CH2_IEP_CMP_EVENT_OFFSET,	1
+    QBBC	CHECK_OPERATING_MODE,	SCRATCH.w0,	SCRATCH3.b0
+    ; Clear IEP CMP event
+    LDI	SCRATCH2.w0,	1
+    LSL	SCRATCH2.w0,	SCRATCH2.w0,	SCRATCH3.w0
+    .else
+    ; Single/multi-channel single PRU mode - use CH0 event
+    LBCO	&SCRATCH3.b0,	PRUx_DMEM,	TAMAGAWA_CH0_IEP_CMP_EVENT_OFFSET,	1
+    QBBC	CHECK_OPERATING_MODE,	SCRATCH.w0,	SCRATCH3.b0
+    ; Clear IEP CMP event
+    LDI	SCRATCH2.w0,	1
+    LSL	SCRATCH2.w0,	SCRATCH2.w0,	SCRATCH3.w0
+    .endif
+
+    ; Get IEP instance from DMEM to write clear status
+    LBCO	&SCRATCH3,	PRUx_DMEM,	TAMAGAWA_IEP_BASE_ADDR_OFFSET,	4
+    SBBO	&SCRATCH2.w0,	SCRATCH3,	ICSS_IEP_CMP_STATUS_REG,	2
+
     ; SET command TRIGGER
     LDI		R0.b0,	1
     SBCO    &R0.b0,	PRUx_DMEM, TAMAGAWA_INTFC_CMD_TRIGGER_OFFSET,	1
@@ -201,7 +286,7 @@ TAMAGAWA_HOST_CMD_END:
     ;check PRU host trigger for all three channels
     LBCO	&R3.b0,	PRUx_DMEM,	TAMAGAWA_OPMODE_CONFIG_OFFSET,	1 
     ;skip interrupt to R5F in host trigger
-    QBNE    SKIP_INTERRUPT_TRIGGER,  R3.b0,  0
+    QBEQ    SKIP_INTERRUPT_TRIGGER,  R3.b0,  1
     ;Generate interrupt to R5F - different events for load-share mode
     .if $isdefed("ENABLE_MULTI_MAKE_RTU")
     LDI     R31.w0, RTU_TRIGGER_HOST_TAMAGAWA_EVT   ; RTU-PRU: pr0_pru_mst_intr[4/5]_intr_req
@@ -214,8 +299,8 @@ TAMAGAWA_HOST_CMD_END:
     .endif 
     ;Global reinit
     M_TAMAGAWA_LS_GLOBAL_REINIT
-    ;Handle next Postition in periodic trigger
-    JMP		HANDLE_PERIODIC_TRIGGER_MODE
+    ;Handle next Postition in periodic trigger	
+    JMP     CHECK_OPERATING_MODE
 
 SKIP_INTERRUPT_TRIGGER:
     ;Handle next Position request by user.

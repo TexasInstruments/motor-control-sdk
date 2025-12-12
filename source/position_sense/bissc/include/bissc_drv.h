@@ -345,6 +345,11 @@ extern "C" {
 #define BISSC_IEP_SLV_CMP_CFG_REG_CMP_EN_SHIFT                       (0x1)
 #define BISSC_IEP_SLV_CMP_CFG_REG_CMP0_RST_CNT_EN_SHIFT              (0x00000000U)
 
+/**
+ * \brief 8-byte register offset for IEP registers
+ */
+#define BISSC_8_BYTE_REG_OFFSET    (8U)
+
 /** \brief Maximum number of IEP capture events (0-7) */
 #define BISSC_IEP_MAX_CAP_EVENT    (0x8U)
 /** \brief Maximum number of IEP compare events (0-15) */

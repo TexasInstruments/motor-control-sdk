@@ -133,15 +133,6 @@
 #define PRU_TRIGGER_HOST_BISSC_EVT      (2+16)
 #endif
 
-/** \brief IEP Compare event number for Channel 0 trigger */
-#define IEP_CH0_CMP_EVENT               (3)
-
-/** \brief IEP Compare event number for Channel 1 trigger */
-#define IEP_CH1_CMP_EVENT               (5)
-
-/** \brief IEP Compare event number for Channel 2 trigger */
-#define IEP_CH2_CMP_EVENT               (6)
-
 #if defined(BISSC_DUAL_PRU_SLICE_ENABLE)
 /* NOTE: Dual handle example using PRU0 and PRU1 is tested only with
  * BISSC_MODE_SINGLE_CHANNEL_SINGLE_PRU mode on AM261x. For enabling other
@@ -155,10 +146,8 @@
 #endif
 
 #if (CONFIG_BISSC1_PRUICSS_SLICE == 1)
-#define IEP_CH0_CMP_EVENT_SECOND_SLICE              (3)
 #define PRU_TRIGGER_HOST_BISSC_EVT_SECOND_SLICE     (2+16)
 #else
-#define IEP_CH0_CMP_EVENT_SECOND_SLICE              (4)
 #define PRU_TRIGGER_HOST_BISSC_EVT_SECOND_SLICE     (3+16)
 #endif /* CONFIG_BISSC1_PRUICSS_SLICE */
 
@@ -184,9 +173,10 @@ extern PRUICSS_IntcInitData icss0_intc_initdata;
 /* ========================================================================== */
 
 /* IEP Configuration Functions */
+#if defined(SOC_AM243X)
 static void bissc_config_iep_cap_for_sync(bissc_handle handle, uint64_t iep_sync0_period);
 static void bissc_disable_iep_cap_sync(bissc_handle handle);
-
+#endif /* SOC_AM243X */
 static void bissc_config_iep(bissc_periodic_interface *bissc_periodic_interface);
 
 /* IEP Counter Control */
@@ -232,7 +222,7 @@ void bissc_pru_irq_handler_second_slice(void *pruicss_handle);
  * \brief Configure IEP CAP mode for periodic trigger using SYNC signal
  *
  * \details This function configures IEP SYNC OUT0 generation and routes it to CAP inputs:
- * - AM243x/AM64x: IEP SYNC OUT0 routed to LATCH inputs via Time Sync Router
+ * - AM243x: IEP SYNC OUT0 routed to LATCH inputs via Time Sync Router
  * - AM26x: Uses EPWM crossbar configuration (done in SysConfig)
  *
  * Channel Configuration:
@@ -244,6 +234,7 @@ void bissc_pru_irq_handler_second_slice(void *pruicss_handle);
  * \param handle BiSS-C driver handle
  * \param iep_sync0_period IEP SYNC OUT0 period in IEP clock cycles
  */
+#if defined(SOC_AM243X)
 static void bissc_config_iep_cap_for_sync(bissc_handle handle, uint64_t iep_sync0_period)
 {
     const bissc_attrs *attrs = bissc_get_attrs(handle);
@@ -269,7 +260,6 @@ static void bissc_config_iep_cap_for_sync(bissc_handle handle, uint64_t iep_sync
     HW_WR_REG32((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_SYNC_PWIDTH_REG, BISSC_IEP_SYNC0_PULSE_WIDTH);
     HW_WR_REG32((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_SYNC0_PERIOD_REG, iep_sync0_period);
 
-#if defined(SOC_AM243X)
     /* Route SYNC OUT0 to LATCH inputs via Time Sync Event Router */
 
     if(attrs->load_share_enabled)
@@ -362,9 +352,9 @@ static void bissc_config_iep_cap_for_sync(bissc_handle handle, uint64_t iep_sync
     else
     {
         /* Non-load share mode: Route SYNC OUT0 to LATCH0_IN0 for single channel */
-        if(attrs->pruicss_instance == 1)
+        if(attrs->iep_instance == 0)
         {
-            if(attrs->iep_instance == 0)
+            if(attrs->pruicss_instance == 1)
             {
                 /* ICSSG1: Connect IEP0 SYNC OUT0 output to LATCH0_IN0 */
                 HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + BISSC_TIMESYNC_EVENT_ROUTER_OUT12_OFFSET),
@@ -372,18 +362,18 @@ static void bissc_config_iep_cap_for_sync(bissc_handle handle, uint64_t iep_sync
             }
             else
             {
-                /* ICSSG1: Connect IEP1 SYNC OUT0 output to LATCH0_IN0 */
-                HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + BISSC_TIMESYNC_EVENT_ROUTER_OUT14_OFFSET),
-                            BISSC_TIMESYNC_EVENT_ROUTER_IN31);
+                /* ICSSG0: Connect IEP0 SYNC OUT0 output to LATCH0_IN0 */
+                HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + BISSC_TIMESYNC_EVENT_ROUTER_OUT8_OFFSET),
+                            BISSC_TIMESYNC_EVENT_ROUTER_IN25);
             }
         }
         else
         {
-            if(attrs->iep_instance == 0)
+            if(attrs->pruicss_instance == 1)
             {
-                /* ICSSG0: Connect IEP0 SYNC OUT0 output to LATCH0_IN0 */
-                HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + BISSC_TIMESYNC_EVENT_ROUTER_OUT8_OFFSET),
-                            BISSC_TIMESYNC_EVENT_ROUTER_IN25);
+                /* ICSSG1: Connect IEP1 SYNC OUT0 output to LATCH0_IN0 */
+                HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + BISSC_TIMESYNC_EVENT_ROUTER_OUT14_OFFSET),
+                            BISSC_TIMESYNC_EVENT_ROUTER_IN31);
             }
             else
             {
@@ -393,8 +383,8 @@ static void bissc_config_iep_cap_for_sync(bissc_handle handle, uint64_t iep_sync
             }
         }
     }
-#endif /* SOC_AM243X */
 }
+#endif /* SOC_AM243X */
 
 /**
  * \brief Disable IEP CAP mode SYNC generation
@@ -404,9 +394,9 @@ static void bissc_config_iep_cap_for_sync(bissc_handle handle, uint64_t iep_sync
  *
  * \param handle BiSS-C driver handle
  */
+#if defined(SOC_AM243X)
 static void bissc_disable_iep_cap_sync(bissc_handle handle)
 {
-#if defined(SOC_AM243X)
     const bissc_attrs *attrs = bissc_get_attrs(handle);
     void *pru_iep = attrs->iep_base_addr;
     uint32_t reg_value;
@@ -419,15 +409,14 @@ static void bissc_disable_iep_cap_sync(bissc_handle handle)
 
     /* Disable CMP1 event (configured for SYNC OUT0) */
     bissc_disable_iep_cmp_event(handle, BISSC_IEP_CMP_EVENT_FOR_SYNC0);
-#endif /* SOC_AM243X */
 }
-
+#endif /* SOC_AM243X */
 static void bissc_enable_iep_reset_on_cmp0(bissc_handle handle, uint64_t iep_reset_count)
 {
     const bissc_attrs *attrs;
     void *pru_iep;
     uint16_t event;
-    uint32_t event_clear;
+    uint16_t event_clear;
     uint32_t reg0;
     uint32_t reg1;
 
@@ -450,7 +439,7 @@ static void bissc_enable_iep_reset_on_cmp0(bissc_handle handle, uint64_t iep_res
     event_clear |= 1;
 
     /* Clear event */
-    HW_WR_REG32((uint8_t*)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
+    HW_WR_REG16((uint8_t*)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
     /* Enable event */
     HW_WR_REG16((uint8_t*)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG, event);
 }
@@ -479,25 +468,31 @@ static void bissc_enable_iep_counter(bissc_handle handle)
 {
     bissc_priv *priv;
     const bissc_attrs *attrs;
+    int32_t status;
 
     priv = bissc_get_priv(handle);
     attrs = bissc_get_attrs(handle);
 
     /* Configure and enable IEP counter */
-    PRUICSS_setIepCounterIncrementValue(priv->pruicss_handle, attrs->iep_instance, BISSC_IEP_COUNTER_INCREMENT);
-    PRUICSS_controlIepCounter(priv->pruicss_handle, attrs->iep_instance, BISSC_IEP_COUNTER_ENABLE);
+    status = PRUICSS_setIepCounterIncrementValue(priv->pruicss_handle, attrs->iep_instance, BISSC_IEP_COUNTER_INCREMENT);
+    DebugP_assert(status == SystemP_SUCCESS);
+
+    status = PRUICSS_controlIepCounter(priv->pruicss_handle, attrs->iep_instance, BISSC_IEP_COUNTER_ENABLE);
+    DebugP_assert(status == SystemP_SUCCESS);
 }
 
 static void bissc_disable_iep_counter(bissc_handle handle)
 {
     bissc_priv *priv;
     const bissc_attrs *attrs;
+    int32_t status;
 
     priv = bissc_get_priv(handle);
     attrs = bissc_get_attrs(handle);
 
     /* Disable IEP counter */
-    PRUICSS_controlIepCounter(priv->pruicss_handle, attrs->iep_instance, BISSC_IEP_COUNTER_DISABLE);
+    status = PRUICSS_controlIepCounter(priv->pruicss_handle, attrs->iep_instance, BISSC_IEP_COUNTER_DISABLE);
+    DebugP_assert(status == SystemP_SUCCESS);
 }
 
 static void bissc_disable_iep_cmp_event(bissc_handle handle, uint8_t event_num)
@@ -516,6 +511,19 @@ static void bissc_disable_iep_cmp_event(bissc_handle handle, uint8_t event_num)
     reg0 &= ~(((uint32_t)1U << event_num) << BISSC_IEP_SLV_CMP_CFG_REG_CMP_EN_SHIFT);
     /* Write back the modified value */
     HW_WR_REG32(((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG), reg0);
+
+    /* Clear CMP register values */
+    /* IEP CMP registers 8-15 have a gap in memory layout and require an additional 8-byte offset */
+    if(event_num > 7)
+    {
+        HW_WR_REG32((uint8_t*)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + event_num*BISSC_8_BYTE_REG_OFFSET + BISSC_8_BYTE_REG_OFFSET),  0);
+        HW_WR_REG32((uint8_t*)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + event_num*BISSC_8_BYTE_REG_OFFSET + BISSC_8_BYTE_REG_OFFSET),  0);
+    }
+    else
+    {
+        HW_WR_REG32((uint8_t*)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + event_num*BISSC_8_BYTE_REG_OFFSET),  0);
+        HW_WR_REG32((uint8_t*)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + event_num*BISSC_8_BYTE_REG_OFFSET),  0);
+    }
 }
 
 static void bissc_disable_iep_cap_event(bissc_handle handle, uint8_t event_num)
@@ -578,13 +586,13 @@ static void bissc_enable_iep_cmp_event(bissc_handle handle, uint64_t trigger_poi
     /* IEP CMP registers 8-15 have a gap in memory layout and require an additional 8-byte offset */
     if(event_num > 7)
     {
-        HW_WR_REG32((uint8_t*)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + event_num*8 + 8),  reg0);
-        HW_WR_REG32((uint8_t*)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + event_num*8 + 8),  reg1);
+        HW_WR_REG32((uint8_t*)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + event_num*BISSC_8_BYTE_REG_OFFSET + BISSC_8_BYTE_REG_OFFSET),  reg0);
+        HW_WR_REG32((uint8_t*)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + event_num*BISSC_8_BYTE_REG_OFFSET + BISSC_8_BYTE_REG_OFFSET),  reg1);
     }
     else
     {
-        HW_WR_REG32((uint8_t*)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + event_num*8),  reg0);
-        HW_WR_REG32((uint8_t*)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + event_num*8),  reg1);
+        HW_WR_REG32((uint8_t*)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + event_num*BISSC_8_BYTE_REG_OFFSET),  reg0);
+        HW_WR_REG32((uint8_t*)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + event_num*BISSC_8_BYTE_REG_OFFSET),  reg1);
     }
 }
 
@@ -592,7 +600,6 @@ static void bissc_config_iep(bissc_periodic_interface *bissc_periodic_interface)
 {
     const bissc_attrs *attrs = bissc_get_attrs(bissc_periodic_interface->handle[CONFIG_BISSC0]);
     bissc_handle *handle = bissc_periodic_interface->handle;
-    int32_t status;
     uint8_t ch_idx;
     uint64_t iep_count = bissc_periodic_interface->iep_reset_count;
 #if defined(BISSC_DUAL_PRU_SLICE_ENABLE)
@@ -617,7 +624,7 @@ static void bissc_config_iep(bissc_periodic_interface *bissc_periodic_interface)
         bissc_config_iep_cap_for_sync(handle[CONFIG_BISSC0], iep_count);
 #endif
         /* Configure CAP events for channels */
-        if(attrs->load_share_enabled)
+        if(attrs->load_share_enabled == 1)
         {
             /* Load share mode: Iterate through enabled channels using channel_mask */
             for(ch_idx = 0; ch_idx < BISSC_NUM_CH_PER_SLICE_MAX; ch_idx++)
@@ -651,7 +658,7 @@ static void bissc_config_iep(bissc_periodic_interface *bissc_periodic_interface)
         bissc_enable_iep_reset_on_cmp0(handle[CONFIG_BISSC0], iep_count);
 
         /* Configure CMP events for channels */
-        if(attrs->load_share_enabled)
+        if(attrs->load_share_enabled == 1)
         {
             /* Load share mode: Iterate through enabled channels using channel_mask */
             for(ch_idx = 0; ch_idx < BISSC_NUM_CH_PER_SLICE_MAX; ch_idx++)
@@ -807,7 +814,6 @@ int32_t bissc_config_periodic_mode(bissc_periodic_interface *bissc_periodic_inte
 int32_t bissc_stop_periodic_mode(bissc_periodic_interface *bissc_periodic_interface)
 {
     const bissc_attrs *attrs;
-    bissc_handle *handle;
     uint8_t ch_idx;
     uint32_t i;
 #if defined(BISSC_DUAL_PRU_SLICE_ENABLE)
@@ -829,7 +835,6 @@ int32_t bissc_stop_periodic_mode(bissc_periodic_interface *bissc_periodic_interf
     }
 
     attrs = bissc_get_attrs(bissc_periodic_interface->handle[CONFIG_BISSC0]);
-    handle = bissc_periodic_interface->handle;
 #if defined(BISSC_DUAL_PRU_SLICE_ENABLE)
     attrs1 = bissc_get_attrs(bissc_periodic_interface->handle[CONFIG_BISSC1]);
 #endif
@@ -837,27 +842,27 @@ int32_t bissc_stop_periodic_mode(bissc_periodic_interface *bissc_periodic_interf
     /* Disable IEP counter first */
     /* PRU-ICSS Level Global Configuration uses first BiSS-C handle */
     /* ASSUMPTION: Same PRU-ICSS instance and IEP instance is used for multiple BiSS-C handles in this example */
-    bissc_disable_iep_counter(handle[CONFIG_BISSC0]);
+    bissc_disable_iep_counter(bissc_periodic_interface->handle[CONFIG_BISSC0]);
 
     /* Disable events based on mode */
     if(bissc_periodic_interface->is_cap_mode)
     {
         /* CAP mode: Disable capture events */
-        if(attrs->load_share_enabled)
+        if(attrs->load_share_enabled == 1)
         {
             /* Load share mode: Iterate through enabled channels using channel_mask */
             for(ch_idx = 0; ch_idx < BISSC_NUM_CH_PER_SLICE_MAX; ch_idx++)
             {
                 if(attrs->channel_mask & (1U << ch_idx))
                 {
-                    bissc_disable_iep_cap_event(handle[CONFIG_BISSC0], attrs->iep_cap_event[ch_idx]);
+                    bissc_disable_iep_cap_event(bissc_periodic_interface->handle[CONFIG_BISSC0], attrs->iep_cap_event[ch_idx]);
                 }
             }
         }
         else
         {
             /* Non-load share mode: Use index 0 always */
-            bissc_disable_iep_cap_event(handle[CONFIG_BISSC0], attrs->iep_cap_event[0]);
+            bissc_disable_iep_cap_event(bissc_periodic_interface->handle[CONFIG_BISSC0], attrs->iep_cap_event[0]);
         }
 #if defined(BISSC_DUAL_PRU_SLICE_ENABLE)
         /* Disable CAP event for second slice if enabled */
@@ -865,48 +870,49 @@ int32_t bissc_stop_periodic_mode(bissc_periodic_interface *bissc_periodic_interf
         /* This code is only tested on AM261x with DUAL PRU SLICE MODE*/
         if(attrs1->load_share_enabled == 0)
         {
-            bissc_disable_iep_cap_event(handle[CONFIG_BISSC1], attrs1->iep_cap_event[0]);
+            bissc_disable_iep_cap_event(bissc_periodic_interface->handle[CONFIG_BISSC1], attrs1->iep_cap_event[0]);
         }
 #endif
 
         /* Disable IEP SYNC generation for CAP mode */
         /* ASSUMPTION: Same PRU-ICSS instance and IEP instance is used for multiple BiSS-C handles in this example */
-        bissc_disable_iep_cap_sync(handle[CONFIG_BISSC0]);
-
+#if defined(SOC_AM243X)
+        bissc_disable_iep_cap_sync(bissc_periodic_interface->handle[CONFIG_BISSC0]);
+#endif /* SOC_AM243X */
     }
     else
     {
         /* CMP mode: Disable compare events */
-        if(attrs->load_share_enabled)
+        if(attrs->load_share_enabled == 1)
         {
             /* Load share mode: Iterate through enabled channels using channel_mask */
             for(ch_idx = 0; ch_idx < BISSC_NUM_CH_PER_SLICE_MAX; ch_idx++)
             {
                 if(attrs->channel_mask & (1U << ch_idx))
                 {
-                    bissc_disable_iep_cmp_event(handle[CONFIG_BISSC0], attrs->iep_cmp_event[ch_idx]);
+                    bissc_disable_iep_cmp_event(bissc_periodic_interface->handle[CONFIG_BISSC0], attrs->iep_cmp_event[ch_idx]);
                 }
             }
         }
         else
         {
             /* Non-load share mode: Use index 0 always */
-            bissc_disable_iep_cmp_event(handle[CONFIG_BISSC0], attrs->iep_cmp_event[0]);
+            bissc_disable_iep_cmp_event(bissc_periodic_interface->handle[CONFIG_BISSC0], attrs->iep_cmp_event[0]);
         }
 #if defined(BISSC_DUAL_PRU_SLICE_ENABLE)
-        /* Disable CMP event for second slice if enabled */ 
+        /* Disable CMP event for second slice if enabled */
         /* Configuring CMP events for SINGLE_CHANNEL_SINGLE_PRU mode, For load share mode it is not added*/
         /* This code is only tested on AM261x with DUAL PRU SLICE MODE*/
         if(attrs1->load_share_enabled == 0)
         {
-            bissc_disable_iep_cmp_event(handle[CONFIG_BISSC1], attrs1->iep_cmp_event[0]);
+            bissc_disable_iep_cmp_event(bissc_periodic_interface->handle[CONFIG_BISSC1], attrs1->iep_cmp_event[0]);
         }
 #endif
 
         /* Disable IEP reset on CMP0 event */
         /* PRU-ICSS Level Global Configuration uses first BiSS-C handle */
         /* ASSUMPTION: Same PRU-ICSS instance and IEP instance is used for multiple BiSS-C handles in this example */
-        bissc_disable_iep_reset_on_cmp0(handle[CONFIG_BISSC0]);
+        bissc_disable_iep_reset_on_cmp0(bissc_periodic_interface->handle[CONFIG_BISSC0]);
     }
 
 #if (CONFIG_BISSC0_MODE == BISSC_MODE_MULTI_CHANNEL_MULTI_PRU)
@@ -957,7 +963,6 @@ void bissc_rtupru_irq_handler(void *pruicss_handle)
 
     /* Clear interrupt at source */
     PRUICSS_clearEvent((PRUICSS_Handle)pruicss_handle, RTU_TRIGGER_HOST_BISSC_EVT);
-
 }
 
 /* TX-PRU FW IRQ handler */
@@ -968,7 +973,6 @@ void bissc_txpru_irq_handler(void *pruicss_handle)
 
     /* Clear interrupt at source */
     PRUICSS_clearEvent((PRUICSS_Handle)pruicss_handle, TXPRU_TRIGGER_HOST_BISSC_EVT);
-
 }
 #endif
 

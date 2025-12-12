@@ -94,13 +94,11 @@ TAMAGAWA_CHANNEL_BIT_ID			   .set	 TAMAGAWA_TX_PRU_BIT_ID
 
 ;CMP event 3 for periodic mode
 	.if	$isdefed("SLICE1")
-IEP_CMP_EVNT						.set    3
 PRU_TRIGGER_HOST_TAMAGAWA_EVT  		.set    34  ; pr0_pru_mst_intr[2]_intr_req
 ; Load-share mode interrupt events for SLICE1
 RTU_TRIGGER_HOST_TAMAGAWA_EVT   	.set    36  ; pr0_pru_mst_intr[4]_intr_req  (RTU-PRU)
 TXPRU_TRIGGER_HOST_TAMAGAWA_EVT 	.set    38  ; pr0_pru_mst_intr[6]_intr_req  (TX-PRU)
 	.else
-IEP_CMP_EVNT						.set    4
 PRU_TRIGGER_HOST_TAMAGAWA_EVT  		.set    35  ; pr0_pru_mst_intr[3]_intr_req
 ; Load-share mode interrupt events for SLICE0
 RTU_TRIGGER_HOST_TAMAGAWA_EVT   	.set    37  ; pr0_pru_mst_intr[5]_intr_req  (RTU-PRU)

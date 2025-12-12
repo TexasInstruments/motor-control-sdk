@@ -152,6 +152,7 @@ bissc_handle bissc_init(uint32_t index, const bissc_params *params)
     bissc_pruicss_xchg  *pruicss_xchg = NULL;
     uint32_t temp;
     void *base_addr = NULL;
+    uint8_t ch_idx;
 
     if((index >= gBisscConfigNum) || (params == NULL))
     {
@@ -207,7 +208,6 @@ bissc_handle bissc_init(uint32_t index, const bissc_params *params)
         /* Validate IEP CMP and CAP event numbers for periodic trigger mode */
         if(status == SystemP_SUCCESS)
         {
-            uint8_t ch_idx;
             /* Validate IEP CMP event numbers and CAP event numbers */
             for(ch_idx = 0; ch_idx < BISSC_NUM_CH_PER_SLICE_MAX; ch_idx++)
             {
@@ -288,7 +288,6 @@ bissc_handle bissc_init(uint32_t index, const bissc_params *params)
     /* Configure IEP CMP and CAP events for enabled channels */
     if(status == SystemP_SUCCESS)
     {
-        uint8_t ch_idx;
         for(ch_idx = 0; ch_idx < BISSC_NUM_CH_PER_SLICE_MAX; ch_idx++)
         {
             /* Check if channel is enabled */
@@ -1596,12 +1595,12 @@ int32_t bissc_config_iep_cap_event(bissc_handle handle, uint8_t channel, uint8_t
 
     /* write cap event and capture register address in DMEM */
     pruicss_xchg->trigger_params[ch_index].iep_cap_event = event_num;
-    pruicss_xchg->trigger_params[ch_index].iep_capture_reg = pruicss_xchg->iep_base_address + BISSC_CSL_ICSS_PR1_IEP0_SLV_CAP0_REG0  + 8*(event_num);
+    pruicss_xchg->trigger_params[ch_index].iep_capture_reg = pruicss_xchg->iep_base_address + BISSC_CSL_ICSS_PR1_IEP0_SLV_CAP0_REG0  + BISSC_8_BYTE_REG_OFFSET*(event_num);
 
     /* Offset is not identical after 6th event. The 6th and 7th CAP event have 2 extra registers for Fall captures. */
     if(event_num > 6)
     {
-        pruicss_xchg->trigger_params[ch_index].iep_capture_reg += 8;
+        pruicss_xchg->trigger_params[ch_index].iep_capture_reg += BISSC_8_BYTE_REG_OFFSET;
     }
     return ret_val;
 }
@@ -1609,25 +1608,19 @@ int32_t bissc_config_iep_cap_event(bissc_handle handle, uint8_t channel, uint8_t
 int32_t bissc_config_iep_cmp_event(bissc_handle handle, uint8_t channel, uint8_t event_num)
 {
     int32_t ret_val = SystemP_SUCCESS;
+    const bissc_attrs   *attrs;
     bissc_priv          *priv;
     bissc_pruicss_xchg  *pruicss_xchg;
-    const bissc_attrs   *attrs;
     uint8_t ch_index = 0;
 
-    /* Validate handle parameter */
-    if(handle == NULL)
+    if(handle == NULL || event_num >= BISSC_IEP_MAX_CMP_EVENT || channel >= BISSC_NUM_CH_PER_SLICE_MAX)
     {
         return SystemP_FAILURE;
     }
-    priv = handle->priv;
-    attrs = handle->attrs;
-    pruicss_xchg = priv->pruicss_xchg;
 
-    if((event_num >= BISSC_IEP_MAX_CMP_EVENT) || (channel >= BISSC_NUM_CH_PER_SLICE_MAX))
-    {
-        ret_val = SystemP_FAILURE;
-        return ret_val;
-    }
+    attrs = handle->attrs;
+    priv = handle->priv;
+    pruicss_xchg = priv->pruicss_xchg;
 
     /* Determine channel index for DMEM access */
     if(attrs->load_share_enabled)

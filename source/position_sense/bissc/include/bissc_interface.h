@@ -155,6 +155,9 @@ typedef struct bissc_periodic_trigger_cfg_s
     uint8_t iep_cap_event;
     /**< IEP capture event number for periodic CAP mode */
 
+    uint16_t reserved;
+    /**< Reserved for alignment */
+
     uint32_t iep_capture_reg;
     /**< IEP capture register address for periodic CAP mode */
 } bissc_periodic_trigger_cfg;
