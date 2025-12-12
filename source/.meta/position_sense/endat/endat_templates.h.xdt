@@ -71,4 +71,26 @@
 #define  `instance.$name`_PRUICSSx                  (`icssInst`)
 #define `instance.$name`_TX_RX_FIFO_CLOCK_SOURCE    (`instance.Tx_Rx_Clk_Source`)
 
+    % /* Periodic Trigger Mode Configuration */
+    % let iepInstance = (instance.IEP_Instance === "IEP0") ? 0 : 1;
+#define `instance.$name`_IEP_INSTANCE               (`iepInstance`)
+    % if(instance.Multi_Channel_Load_Share)
+    % {
+        % /* Multi-channel load share mode - per channel event configuration */
+#define `instance.$name`_CH0_IEP_CMP_EVENT_NUM      (`instance.CMP_Event_Num_CH0`)
+#define `instance.$name`_CH0_IEP_CAP_EVENT_NUM      (`instance.CAP_Event_Num_CH0`)
+
+#define `instance.$name`_CH1_IEP_CMP_EVENT_NUM      (`instance.CMP_Event_Num_CH1`)
+#define `instance.$name`_CH1_IEP_CAP_EVENT_NUM      (`instance.CAP_Event_Num_CH1`)
+      
+#define `instance.$name`_CH2_IEP_CMP_EVENT_NUM      (`instance.CMP_Event_Num_CH2`)
+#define `instance.$name`_CH2_IEP_CAP_EVENT_NUM      (`instance.CAP_Event_Num_CH2`)
+        
+    % }
+    % else
+    %{
+#define `instance.$name`_IEP_CMP_EVENT_NUM          (`instance.CMP_Event_Num`)
+#define `instance.$name`_IEP_CAP_EVENT_NUM          (`instance.CAP_Event_Num`)
+    %}
+
 % }

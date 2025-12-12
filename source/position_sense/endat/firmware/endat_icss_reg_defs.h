@@ -68,22 +68,6 @@ PRU_TRIGGER_HOST_ENDAT_EVT0  .set         37
 PRU_TRIGGER_HOST_ENDAT_EVT1  .set         35
 PRU_TRIGGER_HOST_ENDAT_EVT2  .set         36
 
-;CMP event for periodic mode
-	.if	$isdefed("SLICE1")
-;CMP event 3 for channel 0
-IEP_CH0_CMP_EVNT					.set    3
-;CMP event 5 for channel 1
-IEP_CH1_CMP_EVNT					.set    5
-;CMP event 6 for channel 2
-IEP_CH2_CMP_EVNT					.set    6
-	.else
-;CMP event 7 for channel 0
-IEP_CH0_CMP_EVNT					.set    7
-;CMP event 8 for channel 1
-IEP_CH1_CMP_EVNT					.set    8
-;CMP event 9 for channel 2
-IEP_CH2_CMP_EVNT					.set    9
-	.endif
 
 ; CLK MODE bits R30[20:19]
 ENDAT_TX_CLK_MODE_FREERUN_STOPLOW	.set	(0 << 3)

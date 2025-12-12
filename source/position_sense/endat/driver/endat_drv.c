@@ -1866,29 +1866,45 @@ void endat_config_host_trigger(Endat_Handle handle)
     /*for loadshare mode trigger set based on connected channels*/
     if(handle->pru_cfg.load_share_enable)
     {
-         pruicss_xchg->config[0].opmode=(pruicss_xchg->config[0].channel&(1<<0))?0x1:0;
-         pruicss_xchg->config[1].opmode=(pruicss_xchg->config[1].channel&(1<<1))?0x1:0;
-         pruicss_xchg->config[2].opmode=(pruicss_xchg->config[2].channel&(1<<2))?0x1:0;
+         pruicss_xchg->config[0].opmode=(pruicss_xchg->config[0].channel&(1<<0))?ENDAT_OPMODE_HOST_TRIGGER:0;
+         pruicss_xchg->config[1].opmode=(pruicss_xchg->config[1].channel&(1<<1))?ENDAT_OPMODE_HOST_TRIGGER:0;
+         pruicss_xchg->config[2].opmode=(pruicss_xchg->config[2].channel&(1<<2))?ENDAT_OPMODE_HOST_TRIGGER:0;
     }
     else
     {
-        pruicss_xchg->config[0].opmode = 0x1;
+        pruicss_xchg->config[0].opmode = ENDAT_OPMODE_HOST_TRIGGER;
     }
 }
 
-void endat_config_periodic_trigger(Endat_Handle handle)
+void endat_config_periodic_trigger_cmp_mode(Endat_Handle handle)
 {
     Endat_PruicssXchg *pruicss_xchg = handle->pruicss_xchg;
     /*for loadshare mode trigger set based on connected channels*/
     if(handle->pru_cfg.load_share_enable)
     {
-         pruicss_xchg->config[0].opmode=(pruicss_xchg->config[0].channel&(1<<0))?0x0:pruicss_xchg->config[0].opmode;
-         pruicss_xchg->config[1].opmode=(pruicss_xchg->config[1].channel&(1<<1))?0x0:pruicss_xchg->config[0].opmode;
-         pruicss_xchg->config[2].opmode=(pruicss_xchg->config[2].channel&(1<<2))?0x0:pruicss_xchg->config[0].opmode;
+         pruicss_xchg->config[0].opmode=(pruicss_xchg->config[0].channel&(1<<0))?ENDAT_OPMODE_CMP_PERIODIC:pruicss_xchg->config[0].opmode;
+         pruicss_xchg->config[1].opmode=(pruicss_xchg->config[1].channel&(1<<1))?ENDAT_OPMODE_CMP_PERIODIC:pruicss_xchg->config[1].opmode;
+         pruicss_xchg->config[2].opmode=(pruicss_xchg->config[2].channel&(1<<2))?ENDAT_OPMODE_CMP_PERIODIC:pruicss_xchg->config[2].opmode;
     }
     else
     {
-        pruicss_xchg->config[0].opmode = 0;
+        pruicss_xchg->config[0].opmode = ENDAT_OPMODE_CMP_PERIODIC;
+    }
+}
+
+void endat_config_periodic_trigger_cap_mode(Endat_Handle handle)
+{
+    Endat_PruicssXchg *pruicss_xchg = handle->pruicss_xchg;
+    /*for loadshare mode trigger set based on connected channels*/
+    if(handle->pru_cfg.load_share_enable)
+    {
+         pruicss_xchg->config[0].opmode = (pruicss_xchg->config[0].channel&(1<<0))?ENDAT_OPMODE_CAP_PERIODIC:pruicss_xchg->config[0].opmode;
+         pruicss_xchg->config[1].opmode = (pruicss_xchg->config[1].channel&(1<<1))?ENDAT_OPMODE_CAP_PERIODIC:pruicss_xchg->config[1].opmode;
+         pruicss_xchg->config[2].opmode = (pruicss_xchg->config[2].channel&(1<<2))?ENDAT_OPMODE_CAP_PERIODIC:pruicss_xchg->config[2].opmode;
+    }
+    else
+    {
+        pruicss_xchg->config[0].opmode = ENDAT_OPMODE_CAP_PERIODIC;
     }
 }
 
@@ -2120,6 +2136,7 @@ static void endat_hw_init(Endat_Handle handle)
 Endat_Handle endat_init(uint32_t index, Endat_Params endat_params)
 {
     Endat_Handle handle = NULL;
+    void *base_addr = NULL;
 
     if(index >=  gEndatConfigNum)
     {
@@ -2176,14 +2193,18 @@ Endat_Handle endat_init(uint32_t index, Endat_Params endat_params)
     handle->pruicss_xchg->endat_delay_50ms = ((endat_params.pru_cfg.pru_clock/1000) * 50);
     handle->pruicss_xchg->endat_delay_380ms = ((endat_params.pru_cfg.pru_clock/1000) * 380);
     handle->pruicss_xchg->endat_delay_900ms = ((endat_params.pru_cfg.pru_clock/1000) * 900);
-    handle->pruicss_xchg->icssg_clk = endat_params.pru_cfg.pru_clock;
+    handle->pruicss_xchg->icss_clk = endat_params.pru_cfg.pru_clock;
     
     handle->clk_cfg = endat_params.endat_clk_config;
     handle->channel_rx_info = endat_params.channel_rx_info;
    
     /*Write Configured memory address to DMEM */
     handle->pruicss_xchg->ch_info_memory_add = endat_params.ch_info_global_addr;
-    
+
+    /*Set IEP base address */
+    base_addr = (void *)((PRUICSS_HwAttrs *)(handle->pru_cfg.pruicss_handle->hwAttrs))->baseAddr;
+
+    handle->pruicss_xchg->endat_iep_base_addr = ((uint32_t)endat_params.pru_cfg.iep_base_addr) - ((uint32_t)base_addr);
     endat_hw_init(handle);
     return handle;
 }
@@ -2254,4 +2275,231 @@ void endat_disable_rt_measurement (Endat_Handle handle)
 uint32_t endat_status_rt_measurement (Endat_Handle handle)
 {
     return handle->pruicss_xchg->ch[handle->current_channel].enableRTM;
+}
+
+int32_t endat_config_iep_cap_event(Endat_Handle handle, uint8_t channel, uint8_t event_num)
+{
+    int32_t ret_val = SystemP_SUCCESS;
+    void *pru_iep = handle->pru_cfg.iep_base_addr;
+    uint32_t reg0;
+    void *base_addr = (void *)((PRUICSS_HwAttrs *)(handle->pru_cfg.pruicss_handle->hwAttrs))->baseAddr;
+
+    if(event_num > 7 || pru_iep == NULL)
+    {
+        ret_val = SystemP_FAILURE;
+        return ret_val;
+    }
+    else
+    {
+        /* Configure the cap event */
+        /* Read the current register value */
+        reg0 = HW_RD_REG32(((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG));
+        /* Set the CAP_EN bit (OR with the new value) */
+        reg0 |= ((uint32_t)1U << event_num);
+        /* Write back the modified value */
+        HW_WR_REG32(((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG), reg0);
+
+        /* Read the current register value */
+        reg0 = HW_RD_REG32(((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG));
+        /* Set the CAP_EN bit (OR with the new value) */
+        reg0 |= ((uint32_t)1U << event_num);
+        /* Write back the modified value */
+        HW_WR_REG32(((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG), reg0);
+    }
+    
+    if(handle->pru_cfg.load_share_enable)
+    {
+        /*write cap even and address in dmem */
+        handle->pruicss_xchg->trigger_params[channel].iep_event_number = event_num;
+        handle->pruicss_xchg->trigger_params[channel].iep_capture_reg = (uint32_t)pru_iep - ((uint32_t)base_addr) + CSL_ICSS_PR1_IEP0_SLV_CAP0_REG0 + 8*(event_num);
+        if(event_num > 6)
+        {
+            handle->pruicss_xchg->trigger_params[channel].iep_capture_reg += 8;
+        }
+    }
+    else{
+        /* write cap event and address in dmem */
+        /* Always 0 in single PRU mode. When load share mode is disabled.
+        In single PRU mode firmware, the channel number is ignored and the firmware always reads data from DMEM using the channel 0 offset, regardless of which channels are connected.*/
+        handle->pruicss_xchg->trigger_params[0].iep_event_number = event_num;
+        handle->pruicss_xchg->trigger_params[0].iep_capture_reg = (uint32_t)pru_iep - ((uint32_t)base_addr) + CSL_ICSS_PR1_IEP0_SLV_CAP0_REG0 + 8*(event_num);
+        if(event_num > 6)
+        {
+            handle->pruicss_xchg->trigger_params[0].iep_capture_reg += 8;
+        }
+    }
+    
+    return ret_val;
+}
+int32_t endat_config_iep_cmp_event(Endat_Handle handle, uint8_t channel, uint64_t trigger_point, uint8_t event_num)
+{
+   
+    int32_t ret_val = SystemP_SUCCESS;
+    void *pru_iep = handle->pru_cfg.iep_base_addr;
+    uint32_t reg0;
+    uint32_t reg1;
+
+    if(event_num > 15 || pru_iep == NULL)
+    {
+        ret_val = SystemP_FAILURE;
+        return ret_val;
+    }
+    else
+    {
+        /* Configure the cmp event */
+        /* Read the current register value */
+        reg0 = HW_RD_REG32(((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG));
+        /* Set the CMP_EN bit (OR with the new value) */
+        reg0 |= ((uint32_t)1U << event_num) << 1;
+        /* Write back the modified value */
+        HW_WR_REG32(((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG), reg0);
+        reg0 = (trigger_point & 0xFFFFFFFF) - handle->pru_cfg.iep_increment;
+        reg1 = (trigger_point >> 32 & 0xFFFFFFFF);
+        if(event_num > 7)
+        {
+            HW_WR_REG32((uint8_t*)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + event_num*8 + 8),  reg0);
+            HW_WR_REG32((uint8_t*)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + event_num*8 + 8),  reg1);
+        }
+        else
+        {
+            HW_WR_REG32((uint8_t*)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + event_num*8),  reg0);
+            HW_WR_REG32((uint8_t*)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + event_num*8),  reg1);
+        }
+        /* Write in dmem */
+        if(handle->pru_cfg.load_share_enable)
+        {
+            handle->pruicss_xchg->trigger_params[channel].iep_event_number = event_num;
+        }
+        else
+        {
+            /* Always 0 in single PRU mode. When load share mode is disabled.
+            In single PRU mode firmware, the channel number is ignored and the firmware always reads data from DMEM using the channel 0 offset, regardless of which channels are connected.*/
+            handle->pruicss_xchg->trigger_params[0].iep_event_number = event_num;
+        }
+    }
+
+    return ret_val;
+}
+
+int32_t endat_disable_cmp_event(Endat_Handle handle, uint8_t event_num)
+{
+    int32_t ret_val = SystemP_SUCCESS;
+    void *pru_iep = handle->pru_cfg.iep_base_addr;
+    uint32_t reg0;
+
+    if(event_num > 15 || pru_iep == NULL)
+    {
+        ret_val = SystemP_FAILURE;
+        return ret_val;
+    }
+    else
+    {
+        /* Disable the cmp event */
+        /* Read the current register value */
+        reg0 = HW_RD_REG32(((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG));
+        /* Clear the CMP_EN bit (AND with the negated new value) */
+        reg0 &= ~(((uint32_t)1U << event_num) << IEP_SLV_CMP_CFG_REG_CMP_EN_SHIFT);
+        /* Write back the modified value */
+        HW_WR_REG32(((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG), reg0);
+    }
+
+    return ret_val;
+}
+
+int32_t endat_disable_cap_event(Endat_Handle handle, uint8_t event_num)
+{
+    int32_t ret_val = SystemP_SUCCESS;
+    void *pru_iep = handle->pru_cfg.iep_base_addr;
+    uint32_t reg0;
+
+    if(event_num > 7 || pru_iep == NULL)
+    {
+        ret_val = SystemP_FAILURE;
+        return ret_val;
+    }
+    else
+    {
+        /* Disable the cap event */
+        /* Read the current register value */
+        reg0 = HW_RD_REG32(((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG));
+        /* Clear the CAP_EN bit (AND with the negated new value) */
+        reg0 &= ~((uint32_t)1U << event_num);
+        /* Write back the modified value */
+        HW_WR_REG32(((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG), reg0);
+    }
+
+    return ret_val;
+}
+int32_t endat_enable_iep_reset_on_cmp0(Endat_Handle handle, uint64_t iep_reset_count)
+{
+    void *pru_iep = handle->pru_cfg.iep_base_addr;
+    uint16_t event;
+    uint32_t event_clear;
+    uint32_t reg0;
+    uint32_t reg1;
+
+    if(handle == NULL || pru_iep == NULL)
+    {
+        return SystemP_FAILURE;
+    }
+
+    reg0 = (iep_reset_count & 0xFFFFFFFF) - handle->pru_cfg.iep_increment;
+    reg1 = (iep_reset_count >> 32 & 0xFFFFFFFF);
+
+    HW_WR_REG32((uint8_t*)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0),  reg0);
+    HW_WR_REG32((uint8_t*)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1),  reg1);
+
+    /* Read CMP CFG register */
+    event = HW_RD_REG16((uint8_t*)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG);
+    event_clear = HW_RD_REG16((uint8_t*)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
+
+    /* Enable IEP reset by CMP0 event */
+    event |= (1 << IEP_SLV_CMP_CFG_REG_CMP_EN_SHIFT);  /* CMP0 enable bit */
+    event |= (1 << IEP_SLV_CMP_CFG_REG_CMP0_RST_CNT_EN_SHIFT);  /* Reset counter enable bit */
+    event_clear |= 1;
+
+    /* Clear event */
+    HW_WR_REG32((uint8_t*)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
+    /* Enable event */
+    HW_WR_REG16((uint8_t*)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG, event);
+
+    return SystemP_SUCCESS;
+}
+
+int32_t endat_enable_iep_counter(Endat_Handle handle)
+{
+    void *pru_iep = handle->pru_cfg.iep_base_addr;
+    uint8_t temp;
+
+    if(handle == NULL || pru_iep == NULL)
+    {
+        return SystemP_FAILURE;
+    }
+
+    /* Write IEP default increment & IEP start */
+    temp = HW_RD_REG8((uint8_t*)pru_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG);
+    temp &= 0x0F;
+    temp |=  (handle->pru_cfg.iep_increment << CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG_DEFAULT_INC_SHIFT);  /* Default increment enable */
+    temp |= 0x01;  /* Counter enable */
+    HW_WR_REG8((uint8_t*)pru_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG, temp);
+
+    return SystemP_SUCCESS;
+}
+
+int32_t endat_disable_iep_counter(Endat_Handle handle)
+{
+    void *pru_iep = handle->pru_cfg.iep_base_addr;
+    uint8_t temp;
+
+    if(handle == NULL || pru_iep == NULL)
+    {
+        return SystemP_FAILURE;
+    }
+
+    /* Clear IEP counter enable bit */
+    temp = HW_RD_REG8((uint8_t*)pru_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG);
+    temp &= 0xFE;  /* Clear counter enable bit (bit 0) */
+    HW_WR_REG8((uint8_t*)pru_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG, temp);
+
+    return SystemP_SUCCESS;
 }

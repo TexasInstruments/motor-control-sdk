@@ -118,9 +118,7 @@ M_ENABLE_PRU_CYCLE_COUNTER .macro
 	.asg	R5.b0,		ENDAT_ENABLE_CHx
 	.asg	R5.b1,		ENDAT_ENABLE_CHx_IN_USE
 	.asg	R1.b2,	ENDAT_CMDTYP_NO_SUPPLEMENT_REG
-	;.asg	c24,	PRUx_DMEM
-	;.asg	c25,	PRU0_DMEM
-
+	
 ENABLE_PROPDELAY_MESUREMENT	.set	1
 
 TRIGGER_ENDAT_COMPLETE_EVENT		.set	19
@@ -666,48 +664,112 @@ ENDAT_SKIP_INIT_SUCCESS:
 	.endif
     ; status update ends here
 
-HANDLE_PERIODIC_TRIGGER_MODE:
-     ; check host trigger is enabled
+HANDLE_PERIODIC_TRIGGER_CAP_MODE:
+    ; Check host trigger is enabled
 	.if $isdefed("ENABLE_MULTI_MAKE_RTU") ; Check RTU host trigger  for ch0
-	    LBCO		&R0.b0,	PRUx_DMEM,	ENDAT_CH0_OPMODE_CONFIG_OFFSET,	1
+	    LBCO		&SCRATCH.b0,	PRUx_DMEM,	ENDAT_CH0_OPMODE_CONFIG_OFFSET,	1
 	.elseif $isdefed("ENABLE_MULTI_MAKE_PRU") ;Check PRU host trigger  for ch1
-	    LBCO		&R0.b0,	PRUx_DMEM,	ENDAT_CH1_OPMODE_CONFIG_OFFSET,	1
+	    LBCO		&SCRATCH.b0,	PRUx_DMEM,	ENDAT_CH1_OPMODE_CONFIG_OFFSET,	1
 	.elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU") ;Check TXPRU host trigger  for ch2
-	    LBCO		&R0.b0,	PRUx_DMEM,	ENDAT_CH2_OPMODE_CONFIG_OFFSET,	1
+	    LBCO		&SCRATCH.b0,	PRUx_DMEM,	ENDAT_CH2_OPMODE_CONFIG_OFFSET,	1
 	.else                                    ;check PRU host trigger for all three channels
-	    LBCO		&R0.b0,	PRUx_DMEM,	ENDAT_CH0_OPMODE_CONFIG_OFFSET,	1
+	    LBCO		&SCRATCH.b0,	PRUx_DMEM,	ENDAT_CH0_OPMODE_CONFIG_OFFSET,	1
 	.endif
-	QBNE	HANDLE_HOST_TRIGGER_MODE,	R0.b0,		0
+	QBEQ	HANDLE_HOST_TRIGGER_MODE,	SCRATCH.b0,		1
 
+	; Get IEP base address from DMEM
+	LBCO    &SCRATCH1,    PRUx_DMEM,    ENDAT_IEP_BASE_ADDR_OFFSET,    4
+	LBBO	&SCRATCH.w0,	SCRATCH1,	ICSS_IEP_CAP_STATUS_REG,	  2
 
-	; Get pending events from IEP
-    LBCO	&R0,	ICSS_IEP,	ICSS_IEP_CMP_STATUS_REG,	2
     .if $isdefed("ENABLE_MULTI_MAKE_RTU")
-	; wait till IEP CMP3 event
-	QBBC	HANDLE_PERIODIC_TRIGGER_MODE,	R0,	IEP_CH0_CMP_EVNT
-	; Clear IEP CMP3 event
-	LDI R0.b0, (1<<IEP_CH0_CMP_EVNT)
-    .elseif $isdefed("ENABLE_MULTI_MAKE_PRU") ;Check PRU host trigger  for ch1
-    ; wait till IEP CMP5 event
-	QBBC	HANDLE_PERIODIC_TRIGGER_MODE,	R0,	IEP_CH1_CMP_EVNT
-	; Clear IEP CMP5 event
-	LDI R0.b0, (1<<IEP_CH1_CMP_EVNT)
+	; Wait till IEP CAP event
+	LBCO    &SCRATCH1.b0, PRUx_DMEM, ENDAT_CH0_IEP_EVENT_OFFSET, 1
+	QBBC	HANDLE_PERIODIC_TRIGGER_CAP_MODE,	SCRATCH,	SCRATCH1.b0
+    ;read cap register offset from dmem
+	LBCO    &SCRATCH,    PRUx_DMEM,    ENDAT_CH0_IEP_CAPTURE_REG_OFFSET,    4
+	;clear capture event by reading capture register value
+	LBBO	&SCRATCH1,	SCRATCH,	0,	4
+    .elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
+	; Wait till IEP CAP event
+	LBCO    &SCRATCH1.b0, PRUx_DMEM, ENDAT_CH1_IEP_EVENT_OFFSET, 1
+	QBBC	HANDLE_PERIODIC_TRIGGER_CAP_MODE,	SCRATCH,	SCRATCH1.b0
+	;read cap register offset from dmem
+	LBCO    &SCRATCH,    PRUx_DMEM,    ENDAT_CH1_IEP_CAPTURE_REG_OFFSET,    4
+	;clear capture event by reading capture register value
+	LBBO	&SCRATCH1,	SCRATCH,	0,	4
     .elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
-    ; wait till IEP CMP6 event
-	QBBC	HANDLE_PERIODIC_TRIGGER_MODE,	R0,	 IEP_CH2_CMP_EVNT
-	; Clear IEP CMP6 event
-	LDI R0.b0, (1<<IEP_CH2_CMP_EVNT)
+	; Wait till IEP CAP event
+	LBCO    &SCRATCH1.b0, PRUx_DMEM, ENDAT_CH2_IEP_EVENT_OFFSET, 1
+	QBBC	HANDLE_PERIODIC_TRIGGER_CAP_MODE,	SCRATCH,	SCRATCH1.b0
+	;read cap register offset from dmem
+	LBCO    &SCRATCH,    PRUx_DMEM,    ENDAT_CH2_IEP_CAPTURE_REG_OFFSET,    4
+	;clear capture event by reading capture register value
+	LBBO	&SCRATCH1,	SCRATCH,	0,	4
     .else
-    ; wait till IEP CMP3 event
-	QBBC	HANDLE_PERIODIC_TRIGGER_MODE,	R0,	IEP_CH0_CMP_EVNT
-	; Clear IEP CMP3 event
-	LDI R0.b0, (1<<IEP_CH0_CMP_EVNT)
+	; Wait till IEP CAP event
+	LBCO    &SCRATCH1.b0, PRUx_DMEM, ENDAT_CH0_IEP_EVENT_OFFSET, 1
+	QBBC	HANDLE_PERIODIC_TRIGGER_CAP_MODE,	SCRATCH,	SCRATCH1.b0
+	;read cap register offset from dmem
+	LBCO    &SCRATCH,    PRUx_DMEM,    ENDAT_CH0_IEP_CAPTURE_REG_OFFSET,    4
+	;clear capture event by reading capture register value
+	LBBO	&SCRATCH1,	SCRATCH,	0,	4
     .endif
 
-	SBCO	&R0,	ICSS_IEP,	ICSS_IEP_CMP_STATUS_REG,	2
+    JMP  CLEAR_TRIGGER_BIT
 
-	; Let the fall thr' to trigger mode happen properly and trigger bit
-	; will be cleared after command processing
+HANDLE_PERIODIC_TRIGGER_CMP_MODE:
+	; Check host trigger is enabled
+	.if $isdefed("ENABLE_MULTI_MAKE_RTU") ; Check RTU host trigger for ch0
+	    LBCO		&SCRATCH.b0,	PRUx_DMEM,	ENDAT_CH0_OPMODE_CONFIG_OFFSET,	1
+	.elseif $isdefed("ENABLE_MULTI_MAKE_PRU") ; Check PRU host trigger for ch1
+	    LBCO		&SCRATCH.b0,	PRUx_DMEM,	ENDAT_CH1_OPMODE_CONFIG_OFFSET,	1
+	.elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU") ; Check TXPRU host trigger for ch2
+	    LBCO		&SCRATCH.b0,	PRUx_DMEM,	ENDAT_CH2_OPMODE_CONFIG_OFFSET,	1
+	.else ; Check PRU host trigger for all three channels
+	    LBCO		&SCRATCH.b0,	PRUx_DMEM,	ENDAT_CH0_OPMODE_CONFIG_OFFSET,	1
+	.endif
+	QBEQ	HANDLE_HOST_TRIGGER_MODE,	SCRATCH.b0,		1
+
+	; Get IEP base address from DMEM
+	LBCO    &SCRATCH1,    PRUx_DMEM,    ENDAT_IEP_BASE_ADDR_OFFSET,    4
+	LBBO	&SCRATCH.w0,	SCRATCH1,	ICSS_IEP_CMP_STATUS_REG,	2
+	
+    .if $isdefed("ENABLE_MULTI_MAKE_RTU")
+	; Wait till IEP CMP event get set
+	LBCO    &SCRATCH1.b0, PRUx_DMEM, ENDAT_CH0_IEP_EVENT_OFFSET, 1
+	QBBC	HANDLE_PERIODIC_TRIGGER_CMP_MODE,	SCRATCH,	SCRATCH1.b0
+	; Clear IEP CMP event
+	LDI	SCRATCH.b0,	1
+	LSL	SCRATCH.w0,	SCRATCH.b0,	SCRATCH1.b0
+    .elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
+	; Wait till IEP CMP event
+	LBCO    &SCRATCH1.b0, PRUx_DMEM, ENDAT_CH1_IEP_EVENT_OFFSET, 1
+	QBBC	HANDLE_PERIODIC_TRIGGER_CMP_MODE,	SCRATCH,	SCRATCH1.b0
+	; Clear IEP CMP event
+	LDI	SCRATCH.b0,	1
+	LSL	SCRATCH.w0,	SCRATCH.b0,	SCRATCH1.b0
+    .elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
+	; Wait till IEP CMP event
+	LBCO    &SCRATCH1.b0, PRUx_DMEM, ENDAT_CH2_IEP_EVENT_OFFSET, 1
+	QBBC	HANDLE_PERIODIC_TRIGGER_CMP_MODE,	SCRATCH,	SCRATCH1.b0
+	; Clear IEP CMP event
+	LDI	SCRATCH.b0,	1
+	LSL	SCRATCH.w0,	SCRATCH.b0,	SCRATCH1.b0
+    .else
+	; Wait till IEP CMP event get set
+	LBCO    &SCRATCH1.b0, PRUx_DMEM, ENDAT_CH0_IEP_EVENT_OFFSET, 1
+	QBBC	HANDLE_PERIODIC_TRIGGER_CMP_MODE,	SCRATCH,	SCRATCH1.b0
+	; Clear IEP CMP event
+	LDI	SCRATCH.b0,	1
+	LSL	SCRATCH.w0,	SCRATCH.b0,	SCRATCH1.b0
+    .endif
+
+    ; Get IEP instance from DMEM
+	LBCO    &SCRATCH1,    PRUx_DMEM,    ENDAT_IEP_BASE_ADDR_OFFSET,    4
+	SBBO	&SCRATCH.w0,	SCRATCH1,	ICSS_IEP_CMP_STATUS_REG,	2
+
+CLEAR_TRIGGER_BIT:
+	;Set the command trigger bit and it will be clear after command processing
 	LDI		R0.b0,	1
 	.if $isdefed("ENABLE_MULTI_MAKE_RTU") ;set command trigger  for ch0
 	    SBCO	&R0.b0,	PRUx_DMEM,	ENDAT_CH0_INTFC_CMD_TRIGGER_OFFSET,	1
@@ -1033,7 +1095,7 @@ ENDAT_RT_CAL_END:
         LBCO		&SCRATCH.b0,	PRUx_DMEM,	ENDAT_CH0_OPMODE_CONFIG_OFFSET,	1 ;check PRU host trigger for all three channels
 	.endif
 
-    QBNE  SKIP_INTERRUPT_TRIGGER,  SCRATCH.b0,  0
+    QBEQ  SKIP_INTERRUPT_TRIGGER,  SCRATCH.b0,  1
     .if $isdefed("ENABLE_MULTI_MAKE_RTU")
         LDI  R31.w0, PRU_TRIGGER_HOST_ENDAT_EVT0
     .elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
@@ -1044,7 +1106,8 @@ ENDAT_RT_CAL_END:
        LDI  R31.w0, PRU_TRIGGER_HOST_ENDAT_EVT0
     .endif
 SKIP_INTERRUPT_TRIGGER:
-	QBEQ		HANDLE_PERIODIC_TRIGGER_MODE,	SCRATCH.b0,		0
+	QBEQ		HANDLE_PERIODIC_TRIGGER_CMP_MODE,	SCRATCH.b0,		0
+	QBEQ        HANDLE_PERIODIC_TRIGGER_CAP_MODE,   SCRATCH.b0,     2
 	JMP		HANDLE_HOST_TRIGGER_MODE
 
 

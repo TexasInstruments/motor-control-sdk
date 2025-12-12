@@ -93,6 +93,9 @@ extern "C" {
 /**    \brief    delay counter increment value */ 
 #define ENDAT_DELAY_COUNTER_INCREMENT  5
 
+/**    \brief    IEP counter increment value */
+#define ENDAT_PRU_IEP_COUNTER_INCREMENT       1
+
 /* ========================================================================== */
 /*                         Structures                                         */
 /* ========================================================================== */
@@ -134,8 +137,7 @@ typedef struct Endat_ChInfo_s
      Endat_CrcInfo crc;
      /**<Crc information*/
      volatile uint32_t   enableRTM;
-     /**< enable Recovery Time Measurement  */
-
+    
 }Endat_ChInfo;
 /**
  * \brief    Structure defining Recovery Time parameters  
@@ -176,8 +178,6 @@ typedef struct Endat_ChRXInfo_s
      Endat_ChRTInfo recoveryTimeParms;
      /*< Recovery Time */
 }Endat_ChRxInfo;
-
-
 
 /**
  *    \brief    Structure defining EnDat command interface
@@ -220,7 +220,7 @@ typedef struct Endat_PruicssCmd_s
 typedef struct Endat_PruicssConfig_s
 {
     volatile uint8_t  opmode;
-    /**< operation mode selection: 0 - periodic trigger, 1 - host trigger */
+    /**< operation mode selection: 0 - periodic trigger mode with IEP compare event, 1 - host trigger, 2- periodic trigger mode with IEP capture  */
     volatile uint8_t  channel;
     /**< channel mask (1 << channel), 0 < channel < 3. This has to be      <br>
          selected before running firmware. Once initialization is complete,<br>
@@ -235,6 +235,12 @@ typedef struct Endat_PruicssConfig_s
     /**< initialization status: 1 - upon successful. Wait around 5 seconds <br>
          after firmware has started running to confirm status */
 }Endat_PruicssConfig;
+
+typedef struct Endat_PeriodicTriggerCfg_s 
+{
+    uint8_t iep_event_number; /**< IEP compare/capture event for periodic trigger */
+    uint32_t iep_capture_reg;  /**< IEP capture register value for IEP capture mode */
+}Endat_PeriodicTriggerCfg;
 
 /**
  *    \brief    Structure defining EnDat interface
@@ -267,7 +273,9 @@ typedef struct Endat_PruicssXchg_s
      volatile uint8_t endat_ch0_syn_bit;
      volatile uint8_t endat_ch1_syn_bit;
      volatile uint8_t endat_ch2_syn_bit;
-     uint64_t icssg_clk;
+     uint64_t icss_clk;
+     uint32_t endat_iep_base_addr;
+     Endat_PeriodicTriggerCfg trigger_params[3];
 }Endat_PruicssXchg;
 /**
  *    \brief    Structure defining EnDat channel Rx information 
