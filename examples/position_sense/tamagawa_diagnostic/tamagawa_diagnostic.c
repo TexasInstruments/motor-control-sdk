@@ -163,7 +163,7 @@ PRUICSS_Handle gPruIcssXHandle = NULL;
 tamagawa_handle gAppTamagawaHandle[CONFIG_TAMAGAWA_NUM_INSTANCES] = {NULL};
 
 /* Tamagawa Periodic Interface Struct Instance */
-tamagawa_periodic_interface gTamagawaPeriodicInterface = {0};
+tamagawa_periodic_interface gTamagawaPeriodicInterface;
 
 /* Global variable to track position loop status */
 volatile int32_t gTamagawaPositionLoopStatus;
@@ -252,16 +252,16 @@ static void tamagawa_pruicss_load_run_fw(void)
 {
     int32_t status = SystemP_FAILURE;
     uint32_t u_status = 0;
-    const uint32_t *pruFirmware = NULL;
-    uint32_t pruFirmwareSize = 0;
+    const uint32_t *pru_firmware = NULL;
+    uint32_t pru_firmware_size = 0;
     uint8_t pru_id = CONFIG_TAMAGAWA0_PRUICSS_PRU_ID;
 
 #if (CONFIG_TAMAGAWA0_PRUICSS_SLICE == 1)
-    pruFirmware = TamagawaFirmwarePru1_0;
-    pruFirmwareSize = sizeof(TamagawaFirmwarePru1_0);
+    pru_firmware = TamagawaFirmwarePru1_0;
+    pru_firmware_size = sizeof(TamagawaFirmwarePru1_0);
 #else
-    pruFirmware = TamagawaFirmwarePru0_0;
-    pruFirmwareSize = sizeof(TamagawaFirmwarePru0_0);
+    pru_firmware = TamagawaFirmwarePru0_0;
+    pru_firmware_size = sizeof(TamagawaFirmwarePru0_0);
 #endif
 
     /* Disable PRU core */
@@ -270,7 +270,7 @@ static void tamagawa_pruicss_load_run_fw(void)
 
     /* Load firmware to PRU instruction RAM */
     u_status = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(CONFIG_TAMAGAWA0_PRUICSS_SLICE), 0,
-                                  (uint32_t *)pruFirmware, pruFirmwareSize);
+                                  (uint32_t *)pru_firmware, pru_firmware_size);
     DebugP_assert(0 != u_status);
 
     /* Reset PRU core */
@@ -284,11 +284,11 @@ static void tamagawa_pruicss_load_run_fw(void)
 
 #if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
 #if (CONFIG_TAMAGAWA1_PRUICSS_SLICE == 1)
-    pruFirmware = TamagawaFirmwarePru1_0;
-    pruFirmwareSize = sizeof(TamagawaFirmwarePru1_0);
+    pru_firmware = TamagawaFirmwarePru1_0;
+    pru_firmware_size = sizeof(TamagawaFirmwarePru1_0);
 #else
-    pruFirmware = TamagawaFirmwarePru0_0;
-    pruFirmwareSize = sizeof(TamagawaFirmwarePru0_0);
+    pru_firmware = TamagawaFirmwarePru0_0;
+    pru_firmware_size = sizeof(TamagawaFirmwarePru0_0);
 #endif
 
     pru_id = CONFIG_TAMAGAWA1_PRUICSS_PRU_ID;
@@ -299,7 +299,7 @@ static void tamagawa_pruicss_load_run_fw(void)
 
     /* Load firmware to PRU instruction RAM */
     u_status = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(CONFIG_TAMAGAWA1_PRUICSS_SLICE), 0,
-                                  (uint32_t *)pruFirmware, pruFirmwareSize);
+                                  (uint32_t *)pru_firmware, pru_firmware_size);
     DebugP_assert(0 != u_status);
 
     /* Reset PRU core */
@@ -915,6 +915,12 @@ void tamagawa_main(void *args)
     /* ========================================================================== */
     /* STEP 4: Interactive menu loop for encoder operations                      */
     /* ========================================================================== */
+
+#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
+    DebugP_log("\r\n| In host trigger mode, same command will be run on both Tamagawa instances    |");
+    DebugP_log("\r\n| one after the other.                                                         |\n\n");
+#endif
+
     while(1)
     {
         /*
@@ -936,6 +942,11 @@ void tamagawa_main(void *args)
         /* Handle periodic trigger mode - continuous position sampling using IEP timer */
         if(cmd == PERIODIC_TRIGGER_CMD)
         {
+
+#if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
+            DebugP_log("\r\n IEP is common for both Tamagawa instances. Same IEP periodic cycle will be used for both instances.\n");
+#endif
+
             DebugP_log("\r\n\n Switching to periodic trigger mode");
 
             /* Switching to periodic mode using tamagawa_config_periodic_trigger() is done
