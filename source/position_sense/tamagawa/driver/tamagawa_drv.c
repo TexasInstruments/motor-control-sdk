@@ -60,7 +60,7 @@ const tamagawa_params gTamagawaDefaultParams = {
 };
 
 /* ========================================================================== */
-/*                          Forward Declarations                              */
+/*                       Function Declarations                                */
 /* ========================================================================== */
 
 /* Internal functions */

@@ -36,9 +36,10 @@
  * \brief Tamagawa periodic trigger mode implementation using IEP timer
  *
  * This file implements periodic trigger mode for Tamagawa encoder interface.
- * In periodic mode, encoder position data is automatically sampled at regular
- * intervals using the PRU-ICSS Industrial Ethernet Peripheral (IEP) timer,
- * eliminating the need for host CPU trigger for each transaction.
+ * In periodic mode, encoder position command is automatically triggered at regular
+ * intervals by PRU using the PRU-ICSS Industrial Ethernet Peripheral (IEP) timer,
+ * eliminating the need for  host (R5F) intervention to trigger a command. After the
+ * response is received, PRU triggers  host (R5F) interrupt.
  *
  * \par IEP Timer Configuration:
  * The IEP timer is a PRU-ICSS instance-level resource shared between slices.
@@ -46,7 +47,7 @@
  * the PRU-ICSS hardware attributes, regardless of how many slices are active.
  * Each slice/instance can have different trigger counts per channel, but they
  * share the same IEP reset count (period).
- * - Trigger Count: IEP counter value when encoder transaction is initiated
+ * - Trigger Count: IEP counter value when Tamagawa command is initiated
  * - Reset Count: IEP counter value when counter resets to 0 (defines period)
  *
  * \par First instance (CONFIG_TAMAGAWA0) is used for shared resources:

@@ -59,7 +59,7 @@ extern "C" {
  *  - **Array bounds checking**: APIs with array parameters or index parameters perform bounds validation
  *  - **Internal structure validation**: Internal structures (attrs, priv, pruicss_xchg, pruicss_handle)
  *    are validated once during bissc_init() and assumed valid in subsequent API calls
- *  - This strategy reduces overhead in time-critical data path functions while maintaining safety
+ *  - This strategy reduces overhead in time-critical data path functions
  *
  *  @{
  */
@@ -85,8 +85,9 @@ void bissc_params_init(bissc_params *params);
  *              This function internally calls the following APIs:
  *              - \ref bissc_hw_init : Initialize hardware interface
  *              - \ref bissc_config_channel : Configure channel mask and total channels
- *              - \ref bissc_config_load_share : Configure load share mode (if multi-channel multi-PRU mode is enabled, applicable for PRU-ICSSG only)
+ *              - bissc_config_load_share (internal) : Configure load share mode (if multi-channel multi-PRU mode is enabled, applicable for PRU-ICSSG only)
  *              - \ref bissc_set_default_initialization : Set default configuration parameters
+ *              - \ref bissc_config_host_trigger : Configure host trigger mode
  *
  *  \param[in]  index           Index of BiSS-C handle to use in the gBisscHandle array
  *  \param[in]  bissc_params    Pointer to structure containing BiSS-C parameters
@@ -153,7 +154,7 @@ int32_t bissc_command_send(bissc_handle handle);
  *  \param[in]  handle     BiSS-C handle
  *
  *  \retval     SystemP_SUCCESS on successful completion
- *  \retval     SystemP_FAILURE on timeout (configured via bissc_params.max_cycle_timeout_ms before calling \ref bissc_init, default: 5ms)
+ *  \retval     SystemP_FAILURE on timeout (configured via bissc_params.max_wait_loop_count before calling \ref bissc_init, default: 5ms)
  *
  */
 int32_t bissc_command_wait(bissc_handle handle);
@@ -179,7 +180,7 @@ int32_t bissc_get_pos(bissc_handle handle);
  *
  *  \details    This function configures the PRU-ICSS clock registers based on the provided
  *              clock configuration structure. After clock configuration, it conditionally calls:
- *              - \ref bissc_enable_load_share_mode : Enable load share mode (if load sharing is enabled)
+ *              - bissc_enable_load_share_mode (internal) : Enable load share mode (if load sharing is enabled)
  *
  *  \param[in]  handle      BiSS-C handle
  *  \param[in]  clk_cfg     pointer to structure containing clock configuration data
@@ -204,46 +205,6 @@ int32_t bissc_config_clock(bissc_handle handle, bissc_clk_cfg *clk_cfg);
  */
 int32_t bissc_config_channel(bissc_handle handle, uint8_t mask, uint8_t total_channels);
 
-/**
- *  \brief      Configure the channels to be used by BiSS-C receiver in load share mode
- *
- *  \details    This function internally calls the following APIs:
- *              - \ref bissc_config_primary_core_mask : Configure primary core mask for load share
- *              - \ref bissc_enable_load_share_mode : Enable load share mode operation
- *
- *  \param[in]  handle  BiSS-C handle
- *  \param[in]  mask    channel mask
- *
- *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE on validation failure
- */
-int32_t bissc_config_load_share(bissc_handle handle, uint8_t mask);
-
-/**
- *  \brief      Enable load share mode for BiSS-C receiver
- *
- *  \details    This function writes to the PRU-ICSS CFG register to enable EnDat/BiSS-C
- *              load share mode. It sets the PRUx_ENDAT_SHARE_EN bit in the appropriate
- *              PRU_ED_TX_CFG_REG register based on the PRU slice being used.
- *
- *  \param[in]  handle    BiSS-C handle
- *
- *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE on validation or hardware access failure
- */
-int32_t bissc_enable_load_share_mode(bissc_handle handle);
-
-/**
- *  \brief      Configure the primary core for load share mode
- *
- *  \details    This function sets the primary core mask in the PRU-ICSS exchange structure
- *              based on the channel configuration. The primary core is responsible for
- *              coordination in multi-channel load share mode.
- *
- *  \param[in]  handle  BiSS-C handle
- *  \param[in]  mask    channel mask
- *
- *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE on validation failure
- */
-int32_t bissc_config_primary_core_mask(bissc_handle handle, uint8_t mask);
 
 /**
  *  \brief      Wait for BiSS-C receiver firmware to initialize
@@ -257,23 +218,22 @@ int32_t bissc_config_primary_core_mask(bissc_handle handle, uint8_t mask);
  *              - ClockP_usleep(): Delay configured via bissc_params.fw_wait_delay_us (before calling \ref bissc_init)
  *                (default: 1000 microseconds) between poll iterations to prevent excessive CPU usage
  *
- *  \param[in]  handle    BiSS-C handle
- *  \param[in]  timeout   timeout value in iterations (not milliseconds)
- *  \param[in]  mask      channel mask
+ *  \param[in]  handle          BiSS-C handle
+ *  \param[in]  loop_count      timeout value in iterations
  *  \retval     SystemP_SUCCESS when all specified channels are initialized
  *  \retval     SystemP_FAILURE on timeout
  *
  */
-int32_t bissc_wait_for_fw_initialization(bissc_handle handle, uint32_t timeout, uint8_t mask);
+int32_t bissc_wait_for_fw_initialization(bissc_handle handle, uint32_t loop_count);
 
 /**
  *  \brief      Initialize BiSS-C hardware interface
  *
  *  \details    This function internally calls the following APIs:
  *              - \ref bissc_calc_clock : Calculate Rx and Tx divisors for the configured frequency
- *              - \ref bissc_config_endat_mode : Configure the receiver for EnDat mode
+ *              - bissc_config_endat_mode (internal) : Configure the receiver for EnDat mode
  *              - \ref bissc_config_clock : Configure the PRU-ICSS clock registers
- *              - \ref bissc_config_clr_cfg0 : Clear the channel specific frame size configuration registers
+ *              - bissc_config_clr_cfg0 (internal) : Clear the channel specific frame size configuration registers
  *
  *  \param[in]  handle    BiSS-C handle
  *
@@ -305,13 +265,13 @@ int32_t bissc_update_max_proc_delay(bissc_handle handle);
  *              - ClockP_usleep(): Delay configured via bissc_params.fw_wait_delay_us (before calling \ref bissc_init)
  *                (default: 1000 microseconds) between poll iterations to prevent excessive CPU usage
  *
- *  \param[in]  handle    BiSS-C handle
- *  \param[in]  timeout   timeout value in iterations (not milliseconds)
+ *  \param[in]  handle       BiSS-C handle
+ *  \param[in]  loop_count   timeout value in iterations
  *  \retval     SystemP_SUCCESS when measurement completes
  *  \retval     SystemP_FAILURE on timeout
  *
  */
-int32_t bissc_wait_measure_proc_delay(bissc_handle handle, uint32_t timeout);
+int32_t bissc_wait_measure_proc_delay(bissc_handle handle, uint32_t loop_count);
 
 /**
  *  \brief      Set default configuration parameters for BiSS-C receiver firmware
@@ -376,7 +336,8 @@ int32_t bissc_update_data_len(bissc_handle handle, uint32_t single_turn_len[], u
  *              proper timing for encoder control communication protocol compliance. After completion,
  *              it reads back the control data from the encoder response.
  *
- *              This function internally calls:
+ *              This function internally calls the following APIs:
+ *              - \ref bissc_command_process : Send command and wait for firmware acknowledgment (called multiple times)
  *              - ClockP_usleep(): Delay between poll iterations and after stop bits
  *
  *  \param[in]  handle            BiSS-C handle
@@ -389,30 +350,6 @@ int32_t bissc_update_data_len(bissc_handle handle, uint32_t single_turn_len[], u
  */
 int32_t bissc_set_ctrl_cmd_and_process(bissc_handle handle, uint32_t ctrl_cmd[]);
 
-/**
- *  \brief      Configure the receiver for Three Channel Peripheral mode of PRU-ICSS
- *
- *  \details    This function configures the PRU-ICSS GPCFG register to set the receiver
- *              in Three Channel Peripheral mode.
- *
- *  \param[in]  handle            BiSS-C handle
- *
- *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE on validation or hardware access failure
- */
-int32_t bissc_config_endat_mode(bissc_handle handle);
-
-/**
- *  \brief      Clear the channel specific frame size configuration registers
- *
- *  \details    This function clears (writes 0) to the PRU-ICSS ED_CHx_CFG0 registers
- *              for all enabled channels. These registers configure the frame size for
- *              BiSS-C communication and must be cleared during initialization.
- *
- *  \param[in]  handle            BiSS-C handle
- *
- *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE on validation failure
- */
-int32_t bissc_config_clr_cfg0(bissc_handle handle);
 
 /**
  *  \brief      Get measured processing delay of individual channel
@@ -473,13 +410,14 @@ int32_t bissc_config_host_trigger(bissc_handle handle);
  *  \brief      Generate control communication Hex equivalent command
  *
  *  \details    This function generates a control communication command according to BiSS-C protocol.
- *              It internally calls bissc_calc_ctrl_crc (static function) to calculate 4-bit CRC
- *              values for different parts of the command.
+ *
+ *              This function internally calls the following APIs:
+ *              - bissc_calc_ctrl_crc (internal) : Calculate 4-bit CRC values for command and data portions
  *
  *  \param[in]  handle              BiSS-C handle
  *  \param[in]  ls_ch               channel in use for load share
- *  \param[in]  ctrl_write_status   status for control commmunication write access
- *  \param[in]  ctrl_reg_address    address of encoder's register for control commuincation access
+ *  \param[in]  ctrl_write_status   status for control communication write access
+ *  \param[in]  ctrl_reg_address    address of encoder's register for control communication access
  *  \param[in]  ctrl_reg_data       data to write in encoder's register in control communication
  *  \param[in]  ctrl_enc_id         ID of encoder based on it's place in daisy chain
  *  \retval     ctrl_cmd            Hex equivalent control communication 32 bit command
@@ -504,6 +442,7 @@ uint32_t bissc_generate_ctrl_cmd(bissc_handle handle,
  *  \retval     0               On NULL handle or invalid ch_idx (>= \ref BISSC_NUM_CH_PER_SLICE_MAX)
  */
 uint32_t bissc_get_current_channel(bissc_handle handle, uint32_t ch_idx);
+
 /**
  *  \brief      Retrieves total number of channels configured
  *
@@ -560,13 +499,13 @@ int32_t bissc_update_clock_freq(bissc_handle handle, uint32_t frequency);
  *
  *  \param[in]  handle          BiSS-C handle
  *  \param[in]  frequency       Desired clock frequency in MHz (valid values: 1/2/5/8/10)
- *  \param[in]  timeout         Timeout used when calling \ref bissc_wait_measure_proc_delay
+ *  \param[in]  loop_count      loop_count used when calling \ref bissc_wait_measure_proc_delay
  *
  *  \retval     SystemP_SUCCESS on successful clock configuration and delay measurement
  *  \retval     SystemP_FAILURE if clock calculation fails or delay measurement times out
  *
  */
-int32_t bissc_clock_config(bissc_handle handle, uint32_t frequency, uint32_t timeout);
+int32_t bissc_clock_config(bissc_handle handle, uint32_t frequency, uint32_t loop_count);
 
 /**
  *  \brief      Enable Safety for connected BiSS-C encoder
@@ -615,8 +554,8 @@ const bissc_attrs* bissc_get_attrs(bissc_handle handle);
  *
  *  \details    This function provides access to the private data structure containing
  *              runtime state information, encoder parameters, processing delays, and
- *              pointers to PRU-ICSS resources. This is primarily used internally by
- *              the driver and should be used with caution. Returns NULL if handle is invalid.
+ *              pointers to PRU-ICSS resources. This function should be used with caution.
+ *              Returns NULL if handle is invalid.
  *
  *  \param[in]  handle            BiSS-C handle
  *  \retval     priv              Pointer to bissc_priv structure, NULL if handle is invalid

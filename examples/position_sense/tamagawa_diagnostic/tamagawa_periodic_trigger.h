@@ -122,7 +122,6 @@ typedef struct tamagawa_periodic_interface_s
  *
  * \note        Call tamagawa_stop_periodic_mode() before returning to host trigger mode
  *
- * \see         tamagawa_stop_periodic_mode()
  */
 int32_t tamagawa_config_periodic_mode(tamagawa_periodic_interface *tamagawa_periodic_interface);
 

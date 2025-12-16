@@ -55,19 +55,12 @@ static bissc_attrs gBisscAttrs[CONFIG_BISSC_NUM_INSTANCES] =
         % /* For ICSSM, use pruicss_slice configuration */
         % pruicss_slice = (instance.PRU_Slice == "PRU1") ? 1 : 0;
     % }
-    % /* Create PRU core ID variables based on slice */
-    % let pru_id = pruicss_slice;              /* PRU0 (0) or PRU1 (1) */
-    % let rtu_pru_id = 2 + pruicss_slice;      /* RTU_PRU0 (2) or RTU_PRU1 (3) */
-    % let tx_pru_id = 4 + pruicss_slice;       /* TX_PRU0 (4) or TX_PRU1 (5) */
     {
         .instance = `i`U,
-        .mode = `mode`U,
+        .mode = `mode`,
         .pruicss_instance = `pruicss_instance`U,
         .pruicss_slice = `pruicss_slice`U,
         .load_share_enabled = `(instance.Multi_Channel_Load_Share) ? "1U" : "0U"`,
-        .pru_id = `pru_id`U,
-        .rtu_pru_id = `rtu_pru_id`U,
-        .tx_pru_id = `tx_pru_id`U,
         .channel_mask = 0x`channel_mask.toString(16).toUpperCase()`U,
         .channel0_enabled = `channel0_enabled`U,
         .channel1_enabled = `channel1_enabled`U,
