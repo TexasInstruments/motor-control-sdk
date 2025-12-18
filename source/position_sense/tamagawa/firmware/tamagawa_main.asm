@@ -129,22 +129,6 @@ TAMAGAWA_INIT:
     .asg    ICSS_CFG_GPCFG1,              ICSS_CFG_PRUx_GPCFG
 	.endif
 
-	; Initalize ENDAT mode
-	; 	ICSS_CFG.GPCFG1[27:26] = 1
-	LDI		R0.b0,	4
-    ;It will initialize Endat Mode for PRU1
-	SBCO	&R0.b0,	ICSS_CFG,	ICSS_CFG_PRUx_GPCFG+3,	1
-
-	; Initialize PRUx_TAMAGAWA_CH0_CFG0/1 by clearing all channel CFG registers
-	ZERO	&R0,	4
-
-	LDI     SCRATCH1.w0, ICSS_CFG_PRUx_ED_CH0_CFG0
-	SBCO	&R0,	ICSS_CFG,	SCRATCH1.w0,	4
-	LDI     SCRATCH1.w0, ICSS_CFG_PRUx_ED_CH1_CFG0
-	SBCO	&R0,	ICSS_CFG,	SCRATCH1.w0,	4
-	LDI     SCRATCH1.w0, ICSS_CFG_PRUx_ED_CH2_CFG0
-	SBCO	&R0,	ICSS_CFG,	SCRATCH1.w0,	4
-
 	; clear all registers
 	ZERO	&R0,	120
 

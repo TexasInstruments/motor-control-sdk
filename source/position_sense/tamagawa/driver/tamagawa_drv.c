@@ -176,6 +176,11 @@ tamagawa_handle tamagawa_init(uint32_t index, const tamagawa_params *params)
         /* Configure channel mask */
         status = tamagawa_config_channel(handle, attrs->channel_mask);
     }
+    /* Set the GP mux selection before any 3 channel interface registers configuration. */
+    if(status == SystemP_SUCCESS)
+    {
+        status = PRUICSS_setGpMuxSelect(priv->pruicss_handle, attrs->pruicss_slice, PRUICSS_GP_MUX_SEL_MODE_ENDAT);
+    }
 
     if(status == SystemP_SUCCESS)
     {
@@ -942,15 +947,15 @@ int32_t tamagawa_config_global_rx_arm_cnt(tamagawa_handle handle, uint16_t rx_en
         /* Slice 1 */
         if(attrs->channel0_enabled)
         {
-            HW_WR_REG16((uint16_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG1_REG + 2, rx_en_cnt);
+            HW_WR_REG16((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH0_CFG1_REG + 2, rx_en_cnt);
         }
         if(attrs->channel1_enabled)
         {
-            HW_WR_REG16((uint16_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH1_CFG1_REG + 2, rx_en_cnt);
+            HW_WR_REG16((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH1_CFG1_REG + 2, rx_en_cnt);
         }
         if(attrs->channel2_enabled)
         {
-            HW_WR_REG16((uint16_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH2_CFG1_REG + 2, rx_en_cnt);
+            HW_WR_REG16((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_CH2_CFG1_REG + 2, rx_en_cnt);
         }
     }
     else
@@ -958,15 +963,15 @@ int32_t tamagawa_config_global_rx_arm_cnt(tamagawa_handle handle, uint16_t rx_en
         /* Slice 0 */
         if(attrs->channel0_enabled)
         {
-            HW_WR_REG16((uint16_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG1_REG + 2, rx_en_cnt);
+            HW_WR_REG16((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH0_CFG1_REG + 2, rx_en_cnt);
         }
         if(attrs->channel1_enabled)
         {
-            HW_WR_REG16((uint16_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH1_CFG1_REG + 2, rx_en_cnt);
+            HW_WR_REG16((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH1_CFG1_REG + 2, rx_en_cnt);
         }
         if(attrs->channel2_enabled)
         {
-            HW_WR_REG16((uint16_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH2_CFG1_REG + 2, rx_en_cnt);
+            HW_WR_REG16((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH2_CFG1_REG + 2, rx_en_cnt);
         }
     }
 
