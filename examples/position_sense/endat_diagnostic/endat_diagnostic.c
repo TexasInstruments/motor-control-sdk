@@ -387,27 +387,45 @@ uint32_t endat_pruicss_load_run_fw(Endat_Handle handle)
 
 #if CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU /*enable loadshare mode*/
     /* Set up variables based on PRU slice*/
+#if CONFIG_ENDAT0_CHANNEL0
     const uint32_t *rtuFirmware;
-    const uint32_t *pruFirmware;
-    const uint32_t *txFirmware;
     uint32_t rtuFirmwareSize;
+#endif
+#if CONFIG_ENDAT0_CHANNEL1
+    const uint32_t *pruFirmware;
     uint32_t pruFirmwareSize;
+#endif
+#if CONFIG_ENDAT0_CHANNEL2
+    const uint32_t *txFirmware;
     uint32_t txFirmwareSize;
+#endif
 
 #if ENDAT0_PRUICSS_SLICEx == 1
+#if CONFIG_ENDAT0_CHANNEL0
     rtuFirmware = EnDatFirmwareMultiMakeRtuPru1_0;
-    pruFirmware = EnDatFirmwareMultiMakePru1_0;
-    txFirmware = EnDatFirmwareMultiMakeTxPru1_0;
     rtuFirmwareSize = sizeof(EnDatFirmwareMultiMakeRtuPru1_0);
+#endif
+#if CONFIG_ENDAT0_CHANNEL1
+    pruFirmware = EnDatFirmwareMultiMakePru1_0;
     pruFirmwareSize = sizeof(EnDatFirmwareMultiMakePru1_0);
+#endif
+#if CONFIG_ENDAT0_CHANNEL2
+    txFirmware = EnDatFirmwareMultiMakeTxPru1_0;
     txFirmwareSize = sizeof(EnDatFirmwareMultiMakeTxPru1_0);
+#endif
 #else
+#if CONFIG_ENDAT0_CHANNEL0
     rtuFirmware = EnDatFirmwareMultiMakeRtuPru0_0;
-    pruFirmware = EnDatFirmwareMultiMakePru0_0;
-    txFirmware = EnDatFirmwareMultiMakeTxPru0_0;
     rtuFirmwareSize = sizeof(EnDatFirmwareMultiMakeRtuPru0_0);
+#endif
+#if CONFIG_ENDAT0_CHANNEL1
+    pruFirmware = EnDatFirmwareMultiMakePru0_0;
     pruFirmwareSize = sizeof(EnDatFirmwareMultiMakePru0_0);
+#endif
+#if CONFIG_ENDAT0_CHANNEL2
+    txFirmware = EnDatFirmwareMultiMakeTxPru0_0;
     txFirmwareSize = sizeof(EnDatFirmwareMultiMakeTxPru0_0);
+#endif
 #endif
 
     /* Load and run RTU firmware when Channel 0 is enabled */

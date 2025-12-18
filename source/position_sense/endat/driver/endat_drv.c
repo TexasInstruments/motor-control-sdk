@@ -2381,7 +2381,7 @@ int32_t endat_config_iep_cmp_event(Endat_Handle handle, uint8_t channel, uint64_
     return ret_val;
 }
 
-int32_t endat_disable_cmp_event(Endat_Handle handle, uint8_t event_num)
+int32_t endat_disable_iep_cmp_event(Endat_Handle handle, uint8_t event_num)
 {
     int32_t ret_val = SystemP_SUCCESS;
     void *pru_iep = handle->pru_cfg.iep_base_addr;
@@ -2406,7 +2406,7 @@ int32_t endat_disable_cmp_event(Endat_Handle handle, uint8_t event_num)
     return ret_val;
 }
 
-int32_t endat_disable_cap_event(Endat_Handle handle, uint8_t event_num)
+int32_t endat_disable_iep_cap_event(Endat_Handle handle, uint8_t event_num)
 {
     int32_t ret_val = SystemP_SUCCESS;
     void *pru_iep = handle->pru_cfg.iep_base_addr;

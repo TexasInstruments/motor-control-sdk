@@ -187,7 +187,7 @@ void endat_config_iep_cap_for_sync(Endat_Handle handle, uint64_t iep_reset_count
     /*Set SYNC OUT0 high pulse time to 10 iep clock cycles  */
     HW_WR_REG32((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_SYNC_PWIDTH_REG, IEP_SYNC0_PULSE_WIDTH);
     /*Set SYNC OUT0 period*/
-    HW_WR_REG32((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_SYNC OUT0_PERIOD_REG, iep_reset_count);
+    HW_WR_REG32((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_SYNC0_PERIOD_REG, iep_reset_count);
 
 #if defined(SOC_AM243X)
     /* Time sync router for IEP sync to latch */

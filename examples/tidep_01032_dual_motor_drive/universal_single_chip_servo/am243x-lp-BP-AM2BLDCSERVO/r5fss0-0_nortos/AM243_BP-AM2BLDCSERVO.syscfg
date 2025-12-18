@@ -1,8 +1,8 @@
 /**
  * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
  * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
- * @cliArgs --device "AM243x_ALX_beta" --part "ALX" --package "ALX" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@10.02.00"
- * @v2CliArgs --device "AM2434" --package "FCCSP (ALX)" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@10.02.00"
+ * @cliArgs --device "AM243x_ALX_beta" --part "ALX" --package "ALX" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@2025.00.00" --product "INDUSTRIAL_COMMUNICATIONS_SDK@2025.00.00" --product "MCU_PLUS_SDK@07.03.01"
+ * @v2CliArgs --device "AM2434" --package "FCCSP (ALX)" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@2025.00.00" --product "INDUSTRIAL_COMMUNICATIONS_SDK@2025.00.00" --product "MCU_PLUS_SDK@07.03.01"
  * @versions {"tool":"1.23.0+4000"}
  */
 
@@ -66,29 +66,15 @@ const endat1          = endat.addInstance();
 /**
  * Write custom configuration values to the imported modules.
  */
-sdfm1.$name                        = "CONFIG_SDFM0";
-sdfm1.SDFM_CLK_GEN                 = "3";
-sdfm1.G_MUX_EN                     = true;
-sdfm1.Enable_Channel_0             = true;
-sdfm1.Enable_Channel_1             = true;
-sdfm1.Enable_Channel_2             = true;
-sdfm1.Ch0_EPWM_SYNC                = true;
-sdfm1.Ch1_EPWM_SYNC                = true;
-sdfm1.Ch2_EPWM_SYNC                = true;
-sdfm1.Enable_Load_Share            = true;
-sdfm1.Enable_Channel_3             = true;
-sdfm1.Enable_Channel_4             = true;
-sdfm1.Enable_Channel_5             = true;
-sdfm1.Ch0_FirstTriggerPoint        = 30;
-sdfm1.Ch1_FirstTriggerPoint        = 30;
-sdfm1.Ch2_FirstTriggerPoint        = 30;
-sdfm1.Ch3_FirstTriggerPoint        = 30;
-sdfm1.Ch4_FirstTriggerPoint        = 30;
-sdfm1.Ch5_FirstTriggerPoint        = 30;
-sdfm1.PRU_ICSSG0_PRU.$assign       = "PRU_ICSSG0_PRU0";
-sdfm1.PRU_ICSSG0_PRU.GPI16.$assign = "PRG0_PRU0_GPO16";
-sdfm1.PRU_ICSSG0_PRU.GPI1.$assign  = "PRG0_PRU0_GPO1";
-sdfm1.PRU_ICSSG0_PRU.GPI3.$assign  = "PRG0_PRU0_GPO3";
+sdfm1.$name             = "CONFIG_SDFM0";
+sdfm1.Enable_Load_Share = true;
+sdfm1.G_MUX_EN          = true;
+sdfm1.Enable_Channel_0  = true;
+sdfm1.Enable_Channel_1  = true;
+sdfm1.Enable_Channel_2  = true;
+sdfm1.Enable_Channel_3  = true;
+sdfm1.Enable_Channel_4  = true;
+sdfm1.Enable_Channel_5  = true;
 
 epwm1.$name            = "EPWM0_AXIS1";
 epwm1.EPWM.$assign     = "EHRPWM0";
@@ -415,8 +401,8 @@ endat1.PRU_ICSSG0_PRU.$assign   = "PRU_ICSSG0_PRU1";
 
 pruicss1.$name                                                                    = "CONFIG_PRU_ICSS0";
 endat1.pru                                                                        = pruicss1;
-sdfm1.pru                                                                         = pruicss1;
 pruicss1.iepClk                                                                   = 300000000;
+sdfm1.pru                                                                         = pruicss1;
 pruicss1.AdditionalICSSSettings[0].$name                                          = "CONFIG_PRU_ICSS_IO0";
 pruicss1.AdditionalICSSSettings[0].PruIepIO.create(1);
 pruicss1.AdditionalICSSSettings[0].PruIepIO[0].$name                              = "CONFIG_PRU_ICSS_IEP_IO0";
@@ -436,6 +422,10 @@ pruicss1.intcMapping[1].channel                                                 
  * version of the tool will not impact the pinmux you originally saw.  These lines can be completely deleted in order to
  * re-solve from scratch.
  */
+sdfm1.PRU_ICSSG0_PRU.$suggestSolution                                                        = "PRU_ICSSG0_PRU0";
+sdfm1.PRU_ICSSG0_PRU.GPI16.$suggestSolution                                                  = "PRG0_PRU0_GPO16";
+sdfm1.PRU_ICSSG0_PRU.GPI1.$suggestSolution                                                   = "PRG0_PRU0_GPO1";
+sdfm1.PRU_ICSSG0_PRU.GPI3.$suggestSolution                                                   = "PRG0_PRU0_GPO3";
 sdfm1.PRU_ICSSG0_PRU.GPI5.$suggestSolution                                                   = "PRG0_PRU0_GPO5";
 sdfm1.PRU_ICSSG0_PRU.GPI7.$suggestSolution                                                   = "PRG0_PRU0_GPO7";
 sdfm1.PRU_ICSSG0_PRU.GPI18.$suggestSolution                                                  = "PRG0_PRU0_GPO18";
