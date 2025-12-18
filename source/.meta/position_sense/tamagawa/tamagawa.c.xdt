@@ -18,6 +18,11 @@ static tamagawa_attrs gTamagawaAttrs[CONFIG_TAMAGAWA_NUM_INSTANCES] =
     % if(((instance.channel_0 & 1) && (instance.channel_1 & 1)) || ((instance.channel_1 & 1) && (instance.channel_2 & 1)) || ((instance.channel_2 & 1) && (instance.channel_0 & 1))) {
         % mode = "TAMAGAWA_MODE_MULTI_CHANNEL_SINGLE_PRU";  /* TAMAGAWA_MODE_MULTI_CHANNEL_SINGLE_PRU */
     % }
+    % if(instance.Multi_Channel_Load_Share)
+    % {
+        % /*Multi-channel load share mode*/
+        % mode = "TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU";  /* TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU */
+    % }
     % let pruicss_instance = 0;
     % let pruicss_slice = 1;  /* Default to PRU1 */
     % /* Determine ICSS type and instance index */
@@ -65,6 +70,7 @@ static tamagawa_attrs gTamagawaAttrs[CONFIG_TAMAGAWA_NUM_INSTANCES] =
         .uart_clk_freq = `instance.pru.$name.toUpperCase()`_UART_CLK_FREQ_HZ,
         .iep_clk_freq = `instance.pru.$name.toUpperCase()`_IEP_CLK_FREQ_HZ,
         .is_core_clk = `instance.Tx_Rx_Clk_Source`U,
+        .load_share_enabled = `(instance.Multi_Channel_Load_Share) ? "1U" : "0U"`,
     },
 % }
 };

@@ -5,11 +5,6 @@
 This page lists all the examples related to position sense.
 \cond SOC_AM64X || SOC_AM243X
 -# \subpage EXAMPLE_MOTORCONTROL_ENDAT
--# \subpage EXAMPLE_MOTORCONTROL_HDSL
--# \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA
-\endcond
-\cond SOC_AM64X || SOC_AM243X
--# \subpage EXAMPLE_MOTORCONTROL_ENDAT
 -# \subpage EXAMPLE_MOTORCONTROL_ENDAT3
 -# \subpage EXAMPLE_MOTORCONTROL_HDSL
 -# \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA

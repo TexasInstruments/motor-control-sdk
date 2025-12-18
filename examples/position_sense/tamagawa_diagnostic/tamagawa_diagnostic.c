@@ -125,6 +125,19 @@
 #endif
 #endif
 
+#if (CONFIG_TAMAGAWA0_MODE == TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU)
+/* Multi-channel load-share mode firmware */
+#if (CONFIG_TAMAGAWA0_PRUICSS_SLICE == 1)
+#include <tamagawa_receiver_multi_rtu_pru1_bin.h>
+#include <tamagawa_receiver_multi_pru1_bin.h>
+#include <tamagawa_receiver_multi_tx_pru1_bin.h>
+#else
+#include <tamagawa_receiver_multi_rtu_pru0_bin.h>
+#include <tamagawa_receiver_multi_pru0_bin.h>
+#include <tamagawa_receiver_multi_tx_pru0_bin.h>
+#endif
+#endif
+
 #if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
 #if !defined(SOC_AM261X) || (CONFIG_TAMAGAWA1_MODE != TAMAGAWA_MODE_SINGLE_CHANNEL_SINGLE_PRU)
 #error "Dual handle example using PRU0 and PRU1 is tested only with TAMAGAWA_MODE_SINGLE_CHANNEL_SINGLE_PRU mode on AM261x. For enabling other combinations, update code and remove this line."
@@ -196,7 +209,20 @@ static void tamagawa_pruicss_init(void)
 {
     int32_t status = SystemP_FAILURE;
     uint32_t u_status = 0;
+
+#if (CONFIG_TAMAGAWA0_MODE == TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU)
+#if (CONFIG_TAMAGAWA0_CHANNEL0_ENABLED == 1)
+    uint8_t rtu_pru_id = CONFIG_TAMAGAWA0_PRUICSS_RTU_PRU_ID;
+#endif
+#if (CONFIG_TAMAGAWA0_CHANNEL1_ENABLED == 1)
     uint8_t pru_id = CONFIG_TAMAGAWA0_PRUICSS_PRU_ID;
+#endif
+#if (CONFIG_TAMAGAWA0_CHANNEL2_ENABLED == 1)
+    uint8_t tx_pru_id = CONFIG_TAMAGAWA0_PRUICSS_TX_PRU_ID;
+#endif
+#else
+    uint8_t pru_id = CONFIG_TAMAGAWA0_PRUICSS_PRU_ID;
+#endif
 
     gPruIcssXHandle = PRUICSS_open(CONFIG_PRU_ICSS0);
 
@@ -233,8 +259,23 @@ static void tamagawa_pruicss_init(void)
     u_status = PRUICSS_initMemory(gPruIcssXHandle, PRUICSS_DATARAM(CONFIG_TAMAGAWA0_PRUICSS_SLICE));
     DebugP_assert(0 != u_status);
 
+#if (CONFIG_TAMAGAWA0_MODE == TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU)
+#if (CONFIG_TAMAGAWA0_CHANNEL0_ENABLED == 1)
+    status = PRUICSS_disableCore(gPruIcssXHandle, rtu_pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+#endif
+#if (CONFIG_TAMAGAWA0_CHANNEL1_ENABLED == 1)
     status = PRUICSS_disableCore(gPruIcssXHandle, pru_id);
     DebugP_assert(SystemP_SUCCESS == status);
+#endif
+#if (CONFIG_TAMAGAWA0_CHANNEL2_ENABLED == 1)
+    status = PRUICSS_disableCore(gPruIcssXHandle, tx_pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+#endif
+#else
+    status = PRUICSS_disableCore(gPruIcssXHandle, pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+#endif
 
 #if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
     pru_id = CONFIG_TAMAGAWA1_PRUICSS_PRU_ID;
@@ -252,18 +293,81 @@ static void tamagawa_pruicss_load_run_fw(void)
 {
     int32_t status = SystemP_FAILURE;
     uint32_t u_status = 0;
-    const uint32_t *pru_firmware = NULL;
-    uint32_t pru_firmware_size = 0;
-    uint8_t pru_id = CONFIG_TAMAGAWA0_PRUICSS_PRU_ID;
 
+#if (CONFIG_TAMAGAWA0_MODE == TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU)
 #if (CONFIG_TAMAGAWA0_PRUICSS_SLICE == 1)
-    pru_firmware = TamagawaFirmwarePru1_0;
-    pru_firmware_size = sizeof(TamagawaFirmwarePru1_0);
+#if (CONFIG_TAMAGAWA0_CHANNEL0_ENABLED == 1)
+    const uint32_t *rtu_pru_firmware = TamagawaFirmwareMultiMakeRtuPru1_0;
+    uint32_t rtu_pru_firmware_size = sizeof(TamagawaFirmwareMultiMakeRtuPru1_0);
+    uint8_t rtu_pru_id = CONFIG_TAMAGAWA0_PRUICSS_RTU_PRU_ID;
+#endif
+#if (CONFIG_TAMAGAWA0_CHANNEL1_ENABLED == 1)
+    const uint32_t *pru_firmware = TamagawaFirmwareMultiMakePru1_0;
+    uint32_t pru_firmware_size = sizeof(TamagawaFirmwareMultiMakePru1_0);
+    uint8_t pru_id = CONFIG_TAMAGAWA0_PRUICSS_PRU_ID;
+#endif
+#if (CONFIG_TAMAGAWA0_CHANNEL2_ENABLED == 1)
+    const uint32_t *tx_pru_firmware = TamagawaFirmwareMultiMakeTxPru1_0;
+    uint32_t tx_pru_firmware_size = sizeof(TamagawaFirmwareMultiMakeTxPru1_0);
+    uint8_t tx_pru_id = CONFIG_TAMAGAWA0_PRUICSS_TX_PRU_ID;
+#endif
 #else
-    pru_firmware = TamagawaFirmwarePru0_0;
-    pru_firmware_size = sizeof(TamagawaFirmwarePru0_0);
+#if (CONFIG_TAMAGAWA0_CHANNEL0_ENABLED == 1)
+    const uint32_t *rtu_pru_firmware = TamagawaFirmwareMultiMakeRtuPru0_0;
+    uint32_t rtu_pru_firmware_size = sizeof(TamagawaFirmwareMultiMakeRtuPru0_0);
+    uint8_t rtu_pru_id = CONFIG_TAMAGAWA0_PRUICSS_RTU_PRU_ID;
+#endif
+#if (CONFIG_TAMAGAWA0_CHANNEL1_ENABLED == 1)
+    const uint32_t *pru_firmware = TamagawaFirmwareMultiMakePru0_0;
+    uint32_t pru_firmware_size = sizeof(TamagawaFirmwareMultiMakePru0_0);
+    uint8_t pru_id = CONFIG_TAMAGAWA0_PRUICSS_PRU_ID;
+#endif
+#if (CONFIG_TAMAGAWA0_CHANNEL2_ENABLED == 1)
+    const uint32_t *tx_pru_firmware = TamagawaFirmwareMultiMakeTxPru0_0;
+    uint32_t tx_pru_firmware_size = sizeof(TamagawaFirmwareMultiMakeTxPru0_0);
+    uint8_t tx_pru_id = CONFIG_TAMAGAWA0_PRUICSS_TX_PRU_ID;
+#endif
+#endif
+#elif (CONFIG_TAMAGAWA0_MODE == TAMAGAWA_MODE_MULTI_CHANNEL_SINGLE_PRU)
+#if (CONFIG_TAMAGAWA0_PRUICSS_SLICE == 1)
+    const uint32_t *pru_firmware = TamagawaFirmwareMultiPru1_0;
+    uint32_t pru_firmware_size = sizeof(TamagawaFirmwareMultiPru1_0);
+#else
+    const uint32_t *pru_firmware = TamagawaFirmwareMultiPru0_0;
+    uint32_t pru_firmware_size = sizeof(TamagawaFirmwareMultiPru0_0);
+#endif
+    uint8_t pru_id = CONFIG_TAMAGAWA0_PRUICSS_PRU_ID;
+#else
+#if (CONFIG_TAMAGAWA0_PRUICSS_SLICE == 1)
+    const uint32_t *pru_firmware = TamagawaFirmwarePru1_0;
+    uint32_t pru_firmware_size = sizeof(TamagawaFirmwarePru1_0);
+#else
+    const uint32_t *pru_firmware = TamagawaFirmwarePru0_0;
+    uint32_t pru_firmware_size = sizeof(TamagawaFirmwarePru0_0);
+#endif
+    uint8_t pru_id = CONFIG_TAMAGAWA0_PRUICSS_PRU_ID;
 #endif
 
+#if (CONFIG_TAMAGAWA0_MODE == TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU)
+#if (CONFIG_TAMAGAWA0_CHANNEL0_ENABLED == 1)
+    /* Disable RTU-PRU core */
+    status = PRUICSS_disableCore(gPruIcssXHandle, rtu_pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+
+    /* Load firmware to RTU-PRU instruction RAM */
+    u_status = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_RTU_PRU(CONFIG_TAMAGAWA0_PRUICSS_SLICE), 0,
+                                  (uint32_t *)rtu_pru_firmware, rtu_pru_firmware_size);
+    DebugP_assert(0 != u_status);
+
+    /* Reset RTU-PRU core */
+    status = PRUICSS_resetCore(gPruIcssXHandle, rtu_pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+
+    /* Enable RTU-PRU core to run firmware */
+    status = PRUICSS_enableCore(gPruIcssXHandle, rtu_pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+#endif
+#if (CONFIG_TAMAGAWA0_CHANNEL1_ENABLED == 1)
     /* Disable PRU core */
     status = PRUICSS_disableCore(gPruIcssXHandle, pru_id);
     DebugP_assert(SystemP_SUCCESS == status);
@@ -280,7 +384,43 @@ static void tamagawa_pruicss_load_run_fw(void)
     /* Enable PRU core to run firmware */
     status = PRUICSS_enableCore(gPruIcssXHandle, pru_id);
     DebugP_assert(SystemP_SUCCESS == status);
+#endif
+#if (CONFIG_TAMAGAWA0_CHANNEL2_ENABLED == 1)
+    /* Disable TX-PRU core */
+    status = PRUICSS_disableCore(gPruIcssXHandle, tx_pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
 
+    /* Load firmware to TX-PRU instruction RAM */
+    u_status = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_TX_PRU(CONFIG_TAMAGAWA0_PRUICSS_SLICE), 0,
+                                  (uint32_t *)tx_pru_firmware, tx_pru_firmware_size);
+    DebugP_assert(0 != u_status);
+
+    /* Reset TX-PRU core */
+    status = PRUICSS_resetCore(gPruIcssXHandle, tx_pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+
+    /* Enable TX-PRU core to run firmware */
+    status = PRUICSS_enableCore(gPruIcssXHandle, tx_pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+#endif
+#else
+    /* Disable PRU core */
+    status = PRUICSS_disableCore(gPruIcssXHandle, pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+
+    /* Load firmware to PRU instruction RAM */
+    u_status = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(CONFIG_TAMAGAWA0_PRUICSS_SLICE), 0,
+                                  (uint32_t *)pru_firmware, pru_firmware_size);
+    DebugP_assert(0 != u_status);
+
+    /* Reset PRU core */
+    status = PRUICSS_resetCore(gPruIcssXHandle, pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+
+    /* Enable PRU core to run firmware */
+    status = PRUICSS_enableCore(gPruIcssXHandle, pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+#endif
 
 #if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
 #if (CONFIG_TAMAGAWA1_PRUICSS_SLICE == 1)
@@ -315,6 +455,8 @@ static void tamagawa_pruicss_load_run_fw(void)
 static void tamagawa_display_result(tamagawa_handle handle, int32_t cmd)
 {
     tamagawa_priv *priv;
+    uint8_t xchg_index;
+    const tamagawa_attrs *attrs;
     /* NULL check on handle */
     if(handle == NULL)
     {
@@ -323,6 +465,16 @@ static void tamagawa_display_result(tamagawa_handle handle, int32_t cmd)
     }
 
     priv = tamagawa_get_priv(handle);
+    attrs = tamagawa_get_attrs(handle);
+    if(attrs->load_share_enabled)
+    {
+        xchg_index = priv->channel;
+    }
+    else
+    {
+        xchg_index = 0;
+    }
+
 
     /* Prints the position value returned by the encoder for a particular command ID */
     switch(cmd)
@@ -330,55 +482,55 @@ static void tamagawa_display_result(tamagawa_handle handle, int32_t cmd)
         case DATA_ID_7:
             /* Reset */
             DebugP_log("\r\n| ");
-            DebugP_log("\r\nABS: 0x%x\tSF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.abs, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.sf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.cf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.crc);
+            DebugP_log("\r\nABS: 0x%x\tSF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", priv->tamagawa_interface[xchg_index].rx_frames_received.abs, priv->tamagawa_interface[xchg_index].rx_frames_received.sf, priv->tamagawa_interface[xchg_index].rx_frames_received.cf, priv->tamagawa_interface[xchg_index].rx_frames_received.crc);
             break;
 
         case DATA_ID_8:
             /* Reset */
             DebugP_log("\r\n| ");
-            DebugP_log("\r\nABS: 0x%x\tSF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.abs, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.sf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.cf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.crc);
+            DebugP_log("\r\nABS: 0x%x\tSF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", priv->tamagawa_interface[xchg_index].rx_frames_received.abs, priv->tamagawa_interface[xchg_index].rx_frames_received.sf, priv->tamagawa_interface[xchg_index].rx_frames_received.cf, priv->tamagawa_interface[xchg_index].rx_frames_received.crc);
             break;
 
         case DATA_ID_C:
             /* Reset */
             DebugP_log("\r\n| ");
-            DebugP_log("\r\nABS: 0x%x\tSF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.abs, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.sf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.cf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.crc);
+            DebugP_log("\r\nABS: 0x%x\tSF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", priv->tamagawa_interface[xchg_index].rx_frames_received.abs, priv->tamagawa_interface[xchg_index].rx_frames_received.sf, priv->tamagawa_interface[xchg_index].rx_frames_received.cf, priv->tamagawa_interface[xchg_index].rx_frames_received.crc);
             break;
 
         case DATA_ID_0:
             /* Data readout: data in one revolution */
             DebugP_log("\r\n| ");
-            DebugP_log("\r\nABS: 0x%x\tSF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.abs, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.sf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.cf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.crc);
+            DebugP_log("\r\nABS: 0x%x\tSF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", priv->tamagawa_interface[xchg_index].rx_frames_received.abs, priv->tamagawa_interface[xchg_index].rx_frames_received.sf, priv->tamagawa_interface[xchg_index].rx_frames_received.cf, priv->tamagawa_interface[xchg_index].rx_frames_received.crc);
             break;
 
         case DATA_ID_1:
             /* Data readout: multi-turn data */
             DebugP_log("\r\n| ");
-            DebugP_log("\r\nABM: 0x%x\tSF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.abm, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.sf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.cf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.crc);
+            DebugP_log("\r\nABM: 0x%x\tSF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", priv->tamagawa_interface[xchg_index].rx_frames_received.abm, priv->tamagawa_interface[xchg_index].rx_frames_received.sf, priv->tamagawa_interface[xchg_index].rx_frames_received.cf, priv->tamagawa_interface[xchg_index].rx_frames_received.crc);
             break;
 
         case DATA_ID_2:
             /*  Data readout: encoder ID */
             DebugP_log("\r\n| ");
-            DebugP_log("\r\nENID: 0x%x\tSF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.enid, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.sf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.cf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.crc);
+            DebugP_log("\r\nENID: 0x%x\tSF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", priv->tamagawa_interface[xchg_index].rx_frames_received.enid, priv->tamagawa_interface[xchg_index].rx_frames_received.sf, priv->tamagawa_interface[xchg_index].rx_frames_received.cf, priv->tamagawa_interface[xchg_index].rx_frames_received.crc);
             break;
 
         case DATA_ID_3:
             /* Data readout: data in one revolution, encoder ID, multi-turn, encoder error */
             DebugP_log("\r\n| ");
-            DebugP_log("\r\nABS: 0x%x\tENID: 0x%x\tABM: 0x%x\tALMC: 0x%x\tSF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.abs, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.enid, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.abm, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.almc, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.sf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.cf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.crc);
+            DebugP_log("\r\nABS: 0x%x\tENID: 0x%x\tABM: 0x%x\tALMC: 0x%x\tSF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", priv->tamagawa_interface[xchg_index].rx_frames_received.abs, priv->tamagawa_interface[xchg_index].rx_frames_received.enid, priv->tamagawa_interface[xchg_index].rx_frames_received.abm, priv->tamagawa_interface[xchg_index].rx_frames_received.almc, priv->tamagawa_interface[xchg_index].rx_frames_received.sf, priv->tamagawa_interface[xchg_index].rx_frames_received.cf, priv->tamagawa_interface[xchg_index].rx_frames_received.crc);
             break;
 
         case DATA_ID_6:
             /* EEPROM Write */
             DebugP_log("\r\n| ");
-            DebugP_log("\r\nEDF: 0x%x\tADF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.edf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.adf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.cf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.crc);
+            DebugP_log("\r\nEDF: 0x%x\tADF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", priv->tamagawa_interface[xchg_index].rx_frames_received.edf, priv->tamagawa_interface[xchg_index].rx_frames_received.adf, priv->tamagawa_interface[xchg_index].rx_frames_received.cf, priv->tamagawa_interface[xchg_index].rx_frames_received.crc);
             break;
 
         case DATA_ID_D:
             /* EEPROM Read */
             DebugP_log("\r\n| ");
-            DebugP_log("\r\nEDF: 0x%x\tADF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.edf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.adf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.cf, priv->tamagawa_xchg->tamagawa_interface.rx_frames_received.crc);
+            DebugP_log("\r\nEDF: 0x%x\tADF: 0x%x\tCF: 0x%x\tCRC: 0x%x\t\n", priv->tamagawa_interface[xchg_index].rx_frames_received.edf, priv->tamagawa_interface[xchg_index].rx_frames_received.adf, priv->tamagawa_interface[xchg_index].rx_frames_received.cf, priv->tamagawa_interface[xchg_index].rx_frames_received.crc);
             break;
 
         default:
@@ -476,7 +628,7 @@ static int32_t tamagawa_get_command(uint8_t *adf, uint8_t *edf)
         {
             attrs = tamagawa_get_attrs(gAppTamagawaHandle[i]);
             uint8_t ch = 0;
-            for(ch = 0 ; ch < TAMAGAWA_MAX_CHANNELS ; ch++)
+            for(ch = 0 ; ch < TAMAGAWA_MAX_CHANNELS_PER_SLICE ; ch++)
             {
                 if(attrs->channel_mask & (1 << ch))
                 {
@@ -523,7 +675,7 @@ static int32_t tamagawa_get_command(uint8_t *adf, uint8_t *edf)
         {
             attrs = tamagawa_get_attrs(gAppTamagawaHandle[i]);
             uint8_t ch = 0;
-            for(ch = 0 ; ch < TAMAGAWA_MAX_CHANNELS ; ch++)
+            for(ch = 0 ; ch < TAMAGAWA_MAX_CHANNELS_PER_SLICE ; ch++)
             {
                 if(attrs->channel_mask & (1 << ch))
                 {
@@ -593,13 +745,47 @@ static void tamagawa_display_menu(void)
 static void tamagawa_display_fw_version(void)
 {
     uint32_t version;
-    /* Prints the firmware version, depending on Single or Multi-channel configuration */
+    /* Prints the firmware version(s) depending on configuration */
+#if (CONFIG_TAMAGAWA0_MODE == TAMAGAWA_MODE_MULTI_CHANNEL_SINGLE_PRU)
+#if (CONFIG_TAMAGAWA0_PRUICSS_SLICE == 1)
+    version = *((uint32_t *)TamagawaFirmwareMultiPru1_0 + 1);
+#else
+    version = *((uint32_t *)TamagawaFirmwareMultiPru0_0 + 1);
+#endif
+    DebugP_log("\r\nTamagawa firmware for Tamagawa instance 0\t: %x.%x.%x (%s)\n\n", (version >> 24) & 0x7F, (version >> 16) & 0xFF, version & 0xFFFF, version & (1 << 31) ? "internal" : "release");
+#elif (CONFIG_TAMAGAWA0_MODE == TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU)
+#if (CONFIG_TAMAGAWA0_CHANNEL0_ENABLED == 1)
+#if (CONFIG_TAMAGAWA0_PRUICSS_SLICE == 1)
+    version = *((uint32_t *)TamagawaFirmwareMultiMakeRtuPru1_0 + 1);
+#else
+    version = *((uint32_t *)TamagawaFirmwareMultiMakeRtuPru0_0 + 1);
+#endif
+    DebugP_log("\r\nTAMAGAWA firmware for channel 0 (RTU-PRU)\t: %x.%x.%x (%s)\n\n", (version >> 24) & 0x7F, (version >> 16) & 0xFF, version & 0xFFFF, version & (1 << 31) ? "internal" : "release");
+#endif
+#if (CONFIG_TAMAGAWA0_CHANNEL1_ENABLED == 1)
+#if (CONFIG_TAMAGAWA0_PRUICSS_SLICE == 1)
+    version = *((uint32_t *)TamagawaFirmwareMultiMakePru1_0 + 1);
+#else
+    version = *((uint32_t *)TamagawaFirmwareMultiMakePru0_0 + 1);
+#endif
+    DebugP_log("\r\nTAMAGAWA firmware for channel 1 (PRU)\t: %x.%x.%x (%s)\n\n", (version >> 24) & 0x7F, (version >> 16) & 0xFF, version & 0xFFFF, version & (1 << 31) ? "internal" : "release");
+#endif
+#if (CONFIG_TAMAGAWA0_CHANNEL2_ENABLED == 1)
+#if (CONFIG_TAMAGAWA0_PRUICSS_SLICE == 1)
+    version = *((uint32_t *)TamagawaFirmwareMultiMakeTxPru1_0 + 1);
+#else
+    version = *((uint32_t *)TamagawaFirmwareMultiMakeTxPru0_0 + 1);
+#endif
+    DebugP_log("\r\nTAMAGAWA firmware for channel 2 (TX-PRU)\t: %x.%x.%x (%s)\n\n", (version >> 24) & 0x7F, (version >> 16) & 0xFF, version & 0xFFFF, version & (1 << 31) ? "internal" : "release");
+#endif
+#elif (CONFIG_TAMAGAWA0_MODE == TAMAGAWA_MODE_SINGLE_CHANNEL_SINGLE_PRU)
 #if (CONFIG_TAMAGAWA0_PRUICSS_SLICE == 1)
     version = *((uint32_t *)TamagawaFirmwarePru1_0 + 1);
 #else
     version = *((uint32_t *)TamagawaFirmwarePru0_0 + 1);
 #endif
     DebugP_log("\r\nTamagawa firmware for Tamagawa instance 0\t: %x.%x.%x (%s)\n\n", (version >> 24) & 0x7F, (version >> 16) & 0xFF, version & 0xFFFF, version & (1 << 31) ? "internal" : "release");
+#endif
 
 #if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
 #if (CONFIG_TAMAGAWA1_PRUICSS_SLICE == 1)
@@ -701,7 +887,7 @@ static void tamagawa_process_periodic_command(tamagawa_handle handle[], int32_t 
         {
             attrs = tamagawa_get_attrs(handle[i]);
             uint8_t ch = 0;
-            for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS; ch++)
+            for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS_PER_SLICE; ch++)
             {
                 if(attrs->channel_mask & (1 << ch))
                 {
@@ -744,7 +930,7 @@ static void tamagawa_process_periodic_command(tamagawa_handle handle[], int32_t 
                     DebugP_log("\r\n Multi-channel mode is enabled for Tamagawa instance %u\n\n", i);
 
                     uint8_t ch;
-                    for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS; ch++)
+                    for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS_PER_SLICE; ch++)
                     {
                         if(attrs->channel_mask & (1 << ch))
                         {
@@ -993,7 +1179,7 @@ void tamagawa_main(void *args)
                 attrs = tamagawa_get_attrs(gAppTamagawaHandle[i]);
                 uint8_t ch = 0;
                 uint8_t crc_failed = 0;
-                for(ch = 0 ; ch < TAMAGAWA_MAX_CHANNELS ; ch++)
+                for(ch = 0 ; ch < TAMAGAWA_MAX_CHANNELS_PER_SLICE ; ch++)
                 {
                     if(attrs->channel_mask & (1 << ch))
                     {
@@ -1038,7 +1224,7 @@ void tamagawa_main(void *args)
                 /* Multi-channel mode: Process each enabled channel separately */
                 DebugP_log("\r\n Multi-channel mode is enabled for Tamagawa instance %u\n\n", i);
                 uint8_t ch;
-                for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS; ch++)
+                for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS_PER_SLICE; ch++)
                 {
                     if(attrs->channel_mask & (1 << ch))
                     {

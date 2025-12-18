@@ -71,6 +71,11 @@ static void tamagawa_prepare_eeprom_command(tamagawa_handle handle, int32_t cmd,
 static void tamagawa_eeprom_crc_reinit(tamagawa_handle handle);
 static void tamagawa_config_clr_cfg0(tamagawa_handle handle);
 
+/* Load-share configuration functions */
+static int32_t tamagawa_enable_load_share_mode(tamagawa_handle handle);
+static int32_t tamagawa_config_primary_core_mask(tamagawa_handle handle, uint8_t mask);
+static int32_t tamagawa_config_load_share(tamagawa_handle handle, uint8_t mask);
+
 /* ========================================================================== */
 /*                          Function Definitions                              */
 /* ========================================================================== */
@@ -89,6 +94,7 @@ tamagawa_handle tamagawa_init(uint32_t index, const tamagawa_params *params)
     tamagawa_handle         handle = NULL;
     tamagawa_priv           *priv = NULL;
     const tamagawa_attrs    *attrs = NULL;
+    uint8_t ch;
 
     if((index >= gTamagawaConfigNum) || (params == NULL))
     {
@@ -120,7 +126,7 @@ tamagawa_handle tamagawa_init(uint32_t index, const tamagawa_params *params)
 
         /* Validate attrs */
         if((attrs->instance >= gTamagawaConfigNum) ||
-           (attrs->mode > TAMAGAWA_MODE_MULTI_CHANNEL_SINGLE_PRU) ||
+           (attrs->mode > TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU) ||
            (attrs->pruicss_instance > 1) ||
            (attrs->pruicss_slice > 1) ||
            (attrs->channel_mask == 0) ||
@@ -133,7 +139,8 @@ tamagawa_handle tamagawa_init(uint32_t index, const tamagawa_params *params)
            (attrs->core_clk_freq == 0) ||
            (attrs->uart_clk_freq == 0) ||
            (attrs->iep_clk_freq == 0) ||
-           (attrs->is_core_clk > 1))
+           (attrs->is_core_clk > 1) ||
+           (attrs->load_share_enabled > 1))
         {
             status = SystemP_FAILURE;
         }
@@ -165,6 +172,16 @@ tamagawa_handle tamagawa_init(uint32_t index, const tamagawa_params *params)
         priv->cmd_wait_delay_us = params->cmd_wait_delay_us;
         priv->max_wait_loop_count = params->max_wait_loop_count;
 
+        /* Initialize sync offsets for load-share mode */
+        if(attrs->mode == TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU)
+        {
+            for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS_PER_SLICE; ch++)
+            {
+                /* Clear sync state offsets (RTU, PRU, TXPRU) */
+                priv->tamagawa_xchg->execution_state[ch] = 0;
+            }
+        }
+
         /* Initialize clock and oversampling configuration */
         priv->clk_cfg.rx_clk_source = attrs->is_core_clk;
         priv->clk_cfg.tx_clk_source = attrs->is_core_clk;
@@ -180,6 +197,11 @@ tamagawa_handle tamagawa_init(uint32_t index, const tamagawa_params *params)
     if(status == SystemP_SUCCESS)
     {
         status = PRUICSS_setGpMuxSelect(priv->pruicss_handle, attrs->pruicss_slice, PRUICSS_GP_MUX_SEL_MODE_ENDAT);
+    }
+
+    if((status == SystemP_SUCCESS) && (attrs->mode == TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU))
+    {
+        status = tamagawa_config_load_share(handle, attrs->channel_mask);
     }
 
     if(status == SystemP_SUCCESS)
@@ -241,8 +263,10 @@ tamagawa_priv* tamagawa_get_priv(tamagawa_handle handle)
 int32_t tamagawa_parse(tamagawa_handle handle, int32_t cmd)
 {
     uint32_t word0, word1, word2;
-    uint8_t ch;
+    uint8_t xchg_index;
     tamagawa_xchg *tamagawa_xchg_ptr;
+    const tamagawa_attrs *attrs;
+    uint8_t ch;
 
     /* NULL check on handle */
     if(handle == NULL)
@@ -257,6 +281,16 @@ int32_t tamagawa_parse(tamagawa_handle handle, int32_t cmd)
     }
 
     tamagawa_xchg_ptr = handle->priv->tamagawa_xchg;
+    attrs = handle->attrs;
+
+    if(attrs->load_share_enabled)
+    {
+        xchg_index = handle->priv->channel;
+    }
+    else
+    {
+        xchg_index = 0;
+    }
     ch = handle->priv->channel;
 
     word0 = tamagawa_xchg_ptr->ch[ch].pos_word0;
@@ -268,91 +302,91 @@ int32_t tamagawa_parse(tamagawa_handle handle, int32_t cmd)
         case DATA_ID_0:
             /* Data readout: data in one revolution */
             /* Data frames: cf(8 bits) + sf(8 bits) + abs(3 frames with 8 bits data each) + crc(8 bits) */
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.cf = (word0 >> 24) & 0xFF;
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.sf = (word0 >> 16) & 0xFF;
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.abs = ((word0 >> 8) & 0xFF) | ((word0) & 0xFF) << 8 | (((word1 >> 8) & 0xFF) << 16);
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.crc = (word1) & 0xFF;
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.cf = (word0 >> 24) & 0xFF;
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.sf = (word0 >> 16) & 0xFF;
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.abs = ((word0 >> 8) & 0xFF) | ((word0) & 0xFF) << 8 | (((word1 >> 8) & 0xFF) << 16);
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.crc = (word1) & 0xFF;
             tamagawa_xchg_ptr->ch[ch].pos_word1 = word1 << 16;
             break;
 
         case DATA_ID_1:
             /* Data readout: multi-turn data */
             /* Data frames: cf(8 bits) + sf(8 bits) + abm(3 frames with 8 bits data each) + crc(8 bits) */
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.cf = (word0 >> 24) & 0xFF;
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.sf = (word0 >> 16) & 0xFF;
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.abm = ((word0 >> 8) & 0xFF) | ((word0) & 0xFF) << 8 | (((word1 >> 8) & 0xFF) << 16);
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.crc = (word1) & 0xFF;
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.cf = (word0 >> 24) & 0xFF;
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.sf = (word0 >> 16) & 0xFF;
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.abm = ((word0 >> 8) & 0xFF) | ((word0) & 0xFF) << 8 | (((word1 >> 8) & 0xFF) << 16);
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.crc = (word1) & 0xFF;
             tamagawa_xchg_ptr->ch[ch].pos_word1 = word1 << 16;
             break;
 
         case DATA_ID_2:
             /* Data readout: encoder ID */
             /* Data frames: cf(8 bits) + sf(8 bits) + enid(8 bits) + crc(8 bits) */
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.cf = (word0 >> 24) & 0xFF;
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.sf = (word0 >> 16) & 0xFF;
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.enid = (word0 >> 8) & 0xFF;
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.crc = (word0) & 0xFF;
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.cf = (word0 >> 24) & 0xFF;
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.sf = (word0 >> 16) & 0xFF;
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.enid = (word0 >> 8) & 0xFF;
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.crc = (word0) & 0xFF;
             break;
 
         case DATA_ID_3:
             /* Data readout: data in one revolution, encoder ID, multi-turn, encoder error */
             /* Data frames: cf(8 bits) + sf(8 bits) + abs(3 frames with 8 bits data each) + enid(8 bits) + abm(3 frames with 8 bits data each) + almc(8 bits) + crc(8 bits) */
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.cf = (word0 >> 24) & 0xFF;
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.sf = (word0 >> 16) & 0xFF;
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.abs = ((word0 >> 8) & 0xFF) | ((word0) & 0xFF) << 8 | (((word1 >> 24) & 0xFF) << 16);
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.enid = (word1 >> 16) & 0xFF;
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.abm = ((word1 >> 8) & 0xFF) | ((word1) & 0xFF) << 8 | (((word2 >> 16) & 0xFF) << 16);
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.almc = (word2 >> 8) & 0xFF;
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.crc = (word2) & 0xFF;
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.cf = (word0 >> 24) & 0xFF;
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.sf = (word0 >> 16) & 0xFF;
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.abs = ((word0 >> 8) & 0xFF) | ((word0) & 0xFF) << 8 | (((word1 >> 24) & 0xFF) << 16);
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.enid = (word1 >> 16) & 0xFF;
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.abm = ((word1 >> 8) & 0xFF) | ((word1) & 0xFF) << 8 | (((word2 >> 16) & 0xFF) << 16);
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.almc = (word2 >> 8) & 0xFF;
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.crc = (word2) & 0xFF;
             tamagawa_xchg_ptr->ch[ch].pos_word2 = word2 << 8;
             break;
 
         case DATA_ID_7:
             /* Reset */
             /* Data frames: cf(8 bits) + sf(8 bits) + abs(3 frames with 8 bits data each) + crc(8 bits) */
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.cf = (word0 >> 24) & 0xFF;
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.sf = (word0 >> 16) & 0xFF;
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.abs = ((word0 >> 8) & 0xFF) | ((word0) & 0xFF) << 8 | (((word1 >> 8) & 0xFF) << 16);
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.crc = (word1) & 0xFF;
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.cf = (word0 >> 24) & 0xFF;
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.sf = (word0 >> 16) & 0xFF;
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.abs = ((word0 >> 8) & 0xFF) | ((word0) & 0xFF) << 8 | (((word1 >> 8) & 0xFF) << 16);
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.crc = (word1) & 0xFF;
             tamagawa_xchg_ptr->ch[ch].pos_word1 = word1 << 16;
             break;
 
         case DATA_ID_8:
             /* Reset */
             /* Data frames: cf(8 bits) + sf(8 bits) + abs(3 frames with 8 bits data each) + crc(8 bits) */
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.cf = (word0 >> 24) & 0xFF;
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.sf = (word0 >> 16) & 0xFF;
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.abs = ((word0 >> 8) & 0xFF) | ((word0) & 0xFF) << 8 | (((word1 >> 8) & 0xFF) << 16);
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.crc = (word1) & 0xFF;
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.cf = (word0 >> 24) & 0xFF;
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.sf = (word0 >> 16) & 0xFF;
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.abs = ((word0 >> 8) & 0xFF) | ((word0) & 0xFF) << 8 | (((word1 >> 8) & 0xFF) << 16);
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.crc = (word1) & 0xFF;
             tamagawa_xchg_ptr->ch[ch].pos_word1 = word1 << 16;
             break;
 
         case DATA_ID_C:
             /* Reset */
             /* Data frames: cf(8 bits) + sf(8 bits) + abs(3 frames with 8 bits data each) + crc(8 bits) */
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.cf = (word0 >> 24) & 0xFF;
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.sf = (word0 >> 16) & 0xFF;
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.abs = ((word0 >> 8) & 0xFF) | ((word0) & 0xFF) << 8 | (((word1 >> 8) & 0xFF) << 16);
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.crc = (word1) & 0xFF;
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.cf = (word0 >> 24) & 0xFF;
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.sf = (word0 >> 16) & 0xFF;
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.abs = ((word0 >> 8) & 0xFF) | ((word0) & 0xFF) << 8 | (((word1 >> 8) & 0xFF) << 16);
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.crc = (word1) & 0xFF;
             tamagawa_xchg_ptr->ch[ch].pos_word1 = word1 << 16;
             break;
 
         case DATA_ID_6:
             /* EEPROM Write */
             /* Data frames: cf(1 frame) + adf(8 bits) + edf(8 bits) + crc(8 bits) */
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.cf = (word0 >> 24) & 0xFF;
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.adf = (word0 >> 16) & 0xFF;
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.edf = (word0 >> 8) & 0xFF;
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.crc = (word0) & 0xFF;
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.cf = (word0 >> 24) & 0xFF;
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.adf = (word0 >> 16) & 0xFF;
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.edf = (word0 >> 8) & 0xFF;
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.crc = (word0) & 0xFF;
             break;
 
         case DATA_ID_D:
             /* EEPROM Read */
             /* Data frames: cf(1 frame) + adf(8 bits) + edf(8 bits) + crc(8 bits) */
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.cf = (word0 >> 24) & 0xFF;
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.adf = (word0 >> 16) & 0xFF;
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.edf = (word0 >> 8) & 0xFF;
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames_received.crc = (word0) & 0xFF;
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.cf = (word0 >> 24) & 0xFF;
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.adf = (word0 >> 16) & 0xFF;
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.edf = (word0 >> 8) & 0xFF;
+            handle->priv->tamagawa_interface[xchg_index].rx_frames_received.crc = (word0) & 0xFF;
             break;
 
         default:
@@ -428,7 +462,7 @@ int32_t tamagawa_update_crc(tamagawa_handle handle, int32_t cmd, uint8_t ch)
     tamagawa_xchg *tamagawa_xchg_ptr;
 
     /* NULL check on handle, channel bounds check */
-    if(handle == NULL || ch >= TAMAGAWA_MAX_CHANNELS)
+    if(handle == NULL || ch >= TAMAGAWA_MAX_CHANNELS_PER_SLICE)
     {
         return SystemP_FAILURE;
     }
@@ -544,17 +578,13 @@ int32_t tamagawa_set_baudrate(tamagawa_handle handle, double baud_rate)
         return ret;
     }
 
-    /* Write in DMEM */
-    handle->priv->tamagawa_xchg->tamagawa_interface.rx_div_factor = rx_div - 1;
-    handle->priv->tamagawa_xchg->tamagawa_interface.tx_div_factor = tx_div - 1;
-    handle->priv->tamagawa_xchg->tamagawa_interface.oversample_rate = clk_cfg.rx_os_rate;
-
     return SystemP_SUCCESS;
 }
 
 int32_t tamagawa_command_build(tamagawa_handle handle, int32_t cmd)
 {
     uint8_t ch;
+    uint8_t xchg_index;
     const tamagawa_attrs *attrs;
     tamagawa_xchg *tamagawa_xchg_ptr;
 
@@ -578,106 +608,275 @@ int32_t tamagawa_command_build(tamagawa_handle handle, int32_t cmd)
 
     switch(cmd)
     {
-        case DATA_ID_0:
-            /* Data readout: data in one revolution */
-            /* After reversing the Control Field and adding the start and stop bits, update the Tx data such that it can be loaded byte-wise */
-            tamagawa_xchg_ptr->cmd.word0 = (0x20) | (0x40 << 8);
-            /* Number of expected Rx frames is 6 */
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames = 6;
-            /* Number of Tx frames being sent to the encoder is 1, and the number of Rx frames to be received is 6 */
-            tamagawa_xchg_ptr->cmd.word1 = (1) | (6 << 8);
+         case DATA_ID_0:
+            if(attrs->load_share_enabled)
+            {
+                for(xchg_index = 0; xchg_index < TAMAGAWA_MAX_CHANNELS_PER_SLICE; xchg_index++)
+                {
+                    if(handle->attrs->channel_mask & (1 << xchg_index))   
+                    {
+                        /* Data readout: data in one revolution */
+                        /* After reversing the Control Field and adding the start and stop bits, update the Tx data such that it can be loaded byte-wise */
+                        tamagawa_xchg_ptr->cmd[xchg_index].word0 = (0x20) | (0x40 << 8);
+                        /* Number of expected Rx frames is 6 */
+                        handle->priv->tamagawa_interface[xchg_index].rx_frames = 6;
+                        /* Number of Tx frames being sent to the encoder is 1, and the number of Rx frames to be received is 6 */
+                        tamagawa_xchg_ptr->cmd[xchg_index].word1 = (1) | (6 << 8);
+                    } 
+                }
+            }
+            else
+            {
+                /* Data readout: data in one revolution */
+                /* After reversing the Control Field and adding the start and stop bits, update the Tx data such that it can be loaded byte-wise */
+                tamagawa_xchg_ptr->cmd[0].word0 = (0x20) | (0x40 << 8);
+                /* Number of expected Rx frames is 6 */
+                handle->priv->tamagawa_interface[0].rx_frames = 6;
+                /* Number of Tx frames being sent to the encoder is 1, and the number of Rx frames to be received is 6 */
+                tamagawa_xchg_ptr->cmd[0].word1 = (1) | (6 << 8);
+            }
             break;
 
         case DATA_ID_1:
-            /* Data readout: multi-turn data */
-            /* After reversing the Control Field and adding the start and stop bits, update the Tx data such that it can be loaded byte-wise  */
-            tamagawa_xchg_ptr->cmd.word0 = (0x28) | (0xC0 << 8);
-            /* Number of expected Rx frames is 6 */
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames = 6;
-            /* Number of Tx frames being sent to the encoder is 1, and the number of Rx frames to be received is 6 */
-            tamagawa_xchg_ptr->cmd.word1 = (1) | (6 << 8);
+            if(attrs->load_share_enabled)
+            {
+                for(xchg_index = 0; xchg_index < TAMAGAWA_MAX_CHANNELS_PER_SLICE; xchg_index++)
+                {
+                    if(handle->attrs->channel_mask & (1 << xchg_index))
+                    {
+                        /* Data readout: multi-turn data */
+                        /* After reversing the Control Field and adding the start and stop bits, update the Tx data such that it can be loaded byte-wise  */
+                        tamagawa_xchg_ptr->cmd[xchg_index].word0 = (0x28) | (0xC0 << 8);
+                        /* Number of expected Rx frames is 6 */
+                        handle->priv->tamagawa_interface[xchg_index].rx_frames = 6;
+                        /* Number of Tx frames being sent to the encoder is 1, and the number of Rx frames to be received is 6 */
+                        tamagawa_xchg_ptr->cmd[xchg_index].word1 = (1) | (6 << 8);
+                    }
+                }
+            }
+            else
+            {
+                /* Data readout: multi-turn data */
+                /* After reversing the Control Field and adding the start and stop bits, update the Tx data such that it can be loaded byte-wise  */
+                tamagawa_xchg_ptr->cmd[0].word0 = (0x28) | (0xC0 << 8);
+                /* Number of expected Rx frames is 6 */
+                handle->priv->tamagawa_interface[0].rx_frames = 6;
+                /* Number of Tx frames being sent to the encoder is 1, and the number of Rx frames to be received is 6 */
+                tamagawa_xchg_ptr->cmd[0].word1 = (1) | (6 << 8);
+            }
             break;
 
         case DATA_ID_2:
-            /* Data readout: encoder ID */
-            /* After reversing the Control Field and adding the start and stop bits, update the Tx data such that it can be loaded byte-wise  */
-            tamagawa_xchg_ptr->cmd.word0 = (0x24) | (0xC0 << 8);
-            /* Number of expected Rx frames is 4 */
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames = 4;
-            /* Number of Tx frames being sent to the encoder is 1, and the number of Rx frames to be received is 4 */
-            tamagawa_xchg_ptr->cmd.word1 = (1) | (4 << 8);
+            if(attrs->load_share_enabled)
+            {
+
+                for(xchg_index = 0; xchg_index < TAMAGAWA_MAX_CHANNELS_PER_SLICE; xchg_index++)
+                {
+                    if(handle->attrs->channel_mask & (1 << xchg_index))
+                    {
+                        /* Data readout: encoder ID */
+                        /* After reversing the Control Field and adding the start and stop bits, update the Tx data such that it can be loaded byte-wise  */
+                        tamagawa_xchg_ptr->cmd[xchg_index].word0 = (0x24) | (0xC0 << 8);
+                        /* Number of expected Rx frames is 4 */
+                        handle->priv->tamagawa_interface[xchg_index].rx_frames = 4;
+                        /* Number of Tx frames being sent to the encoder is 1, and the number of Rx frames to be received is 4 */
+                        tamagawa_xchg_ptr->cmd[xchg_index].word1 = (1) | (4 << 8);
+                    }
+                }
+            }
+            else
+            {
+                /* Data readout: encoder ID */
+                /* After reversing the Control Field and adding the start and stop bits, update the Tx data such that it can be loaded byte-wise  */
+                tamagawa_xchg_ptr->cmd[0].word0 = (0x24) | (0xC0 << 8);
+                /* Number of expected Rx frames is 4 */
+                handle->priv->tamagawa_interface[0].rx_frames = 4;
+                /* Number of Tx frames being sent to the encoder is 1, and the number of Rx frames to be received is 4 */
+                tamagawa_xchg_ptr->cmd[0].word1 = (1) | (4 << 8);
+            }
             break;
 
         case DATA_ID_3:
-            /* Data readout: data in one revolution, encoder ID, multi-turn, encoder error */
-            /* After reversing the Control Field and adding the start and stop bits, update the Tx data such that it can be loaded byte-wise  */
-            tamagawa_xchg_ptr->cmd.word0 = (0x2C) | (0x40 << 8);
-            /* Number of expected Rx frames is 11 */
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames = 11;
-            /* Number of Tx frames being sent to the encoder is 1, and the number of Rx frames to be received is 11 */
-            tamagawa_xchg_ptr->cmd.word1 = (1) | (0xB << 8);
+            if(attrs->load_share_enabled)
+            {
+
+                for(xchg_index = 0; xchg_index < TAMAGAWA_MAX_CHANNELS_PER_SLICE; xchg_index++)
+                {
+                    if(handle->attrs->channel_mask & (1 << xchg_index))
+                    {
+                        /* Data readout: data in one revolution, encoder ID, multi-turn, encoder error */
+                        /* After reversing the Control Field and adding the start and stop bits, update the Tx data such that it can be loaded byte-wise  */
+                        tamagawa_xchg_ptr->cmd[xchg_index].word0 = (0x2C) | (0x40 << 8);
+                        /* Number of expected Rx frames is 11 */
+                        handle->priv->tamagawa_interface[xchg_index].rx_frames = 11;
+                        /* Number of Tx frames being sent to the encoder is 1, and the number of Rx frames to be received is 11 */
+                        tamagawa_xchg_ptr->cmd[xchg_index].word1 = (1) | (0xB << 8);
+                    }
+                }
+            }
+            else
+            {
+                /* Data readout: data in one revolution, encoder ID, multi-turn, encoder error */
+                /* After reversing the Control Field and adding the start and stop bits, update the Tx data such that it can be loaded byte-wise  */
+                tamagawa_xchg_ptr->cmd[0].word0 = (0x2C) | (0x40 << 8);
+                /* Number of expected Rx frames is 11 */
+                handle->priv->tamagawa_interface[0].rx_frames = 11;
+                /* Number of Tx frames being sent to the encoder is 1, and the number of Rx frames to be received is 11 */
+                tamagawa_xchg_ptr->cmd[0].word1 = (1) | (0xB << 8);
+            }
+            break;
+
             break;
 
         case DATA_ID_7:
-            /* Reset */
-            /* After reversing the Control Field and adding the start and stop bits, update the Tx data such that it can be loaded byte-wise  */
-            tamagawa_xchg_ptr->cmd.word0 = (0x2E) | (0xC0 << 8);
-            /* Number of expected Rx frames is 6 */
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames = 6;
-            /* Number of Tx frames being sent to the encoder is 1, and the number of Rx frames to be received is 6 */
-            tamagawa_xchg_ptr->cmd.word1 = (1) | (6 << 8);
+            if(attrs->load_share_enabled)
+            {
+                for(xchg_index = 0; xchg_index < TAMAGAWA_MAX_CHANNELS_PER_SLICE; xchg_index++)
+                {
+                    if(handle->attrs->channel_mask & (1 << xchg_index))
+                    {
+                        /* Reset */
+                        /* After reversing the Control Field and adding the start and stop bits, update the Tx data such that it can be loaded byte-wise  */
+                        tamagawa_xchg_ptr->cmd[xchg_index].word0 = (0x2E) | (0xC0 << 8);
+                        /* Number of expected Rx frames is 6 */
+                        handle->priv->tamagawa_interface[xchg_index].rx_frames = 6;
+                        /* Number of Tx frames being sent to the encoder is 1, and the number of Rx frames to be received is 6 */
+                        tamagawa_xchg_ptr->cmd[xchg_index].word1 = (1) | (6 << 8);
+                    }
+                }
+            }
+            else
+            {
+                /* Reset */
+                /* After reversing the Control Field and adding the start and stop bits, update the Tx data such that it can be loaded byte-wise  */
+                tamagawa_xchg_ptr->cmd[0].word0 = (0x2E) | (0xC0 << 8);
+                /* Number of expected Rx frames is 6 */
+                handle->priv->tamagawa_interface[0].rx_frames = 6;
+                /* Number of Tx frames being sent to the encoder is 1, and the number of Rx frames to be received is 6 */
+                tamagawa_xchg_ptr->cmd[0].word1 = (1) | (6 << 8);
+            }
             break;
 
         case DATA_ID_8:
-            /* Reset */
-            /* After reversing the Control Field and adding the start and stop bits, update the Tx data such that it can be loaded byte-wise  */
-            tamagawa_xchg_ptr->cmd.word0 = (0x21) | (0xC0 << 8);
-            /* Number of expected Rx frames is 6 */
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames = 6;
-            /* Number of Tx frames being sent to the encoder is 1, and the number of Rx frames to be received is 6 */
-            tamagawa_xchg_ptr->cmd.word1 = (1) | (6 << 8);
+            if(attrs->load_share_enabled)
+            {
+                for(xchg_index = 0; xchg_index < TAMAGAWA_MAX_CHANNELS_PER_SLICE; xchg_index++)
+                {
+                    if(handle->attrs->channel_mask & (1 << xchg_index))
+                    {
+                        /* Reset */
+                        /* After reversing the Control Field and adding the start and stop bits, update the Tx data such that it can be loaded byte-wise */
+                        tamagawa_xchg_ptr->cmd[xchg_index].word0 = (0x21) | (0xC0 << 8);
+                        /* Number of expected Rx frames is 6 */
+                        handle->priv->tamagawa_interface[xchg_index].rx_frames = 6;
+                        /* Number of Tx frames being sent to the encoder is 1, and the number of Rx frames to be received is 6 */
+                        tamagawa_xchg_ptr->cmd[xchg_index].word1 = (1) | (6 << 8);
+                    }
+                }
+            }
+            else
+            {
+                /* Reset */
+                /* After reversing the Control Field and adding the start and stop bits, update the Tx data such that it can be loaded byte-wise */
+                tamagawa_xchg_ptr->cmd[0].word0 = (0x21) | (0xC0 << 8);
+                /* Number of expected Rx frames is 6 */
+                handle->priv->tamagawa_interface[0].rx_frames = 6;
+                /* Number of Tx frames being sent to the encoder is 1, and the number of Rx frames to be received is 6 */
+                tamagawa_xchg_ptr->cmd[0].word1 = (1) | (6 << 8);
+            }
             break;
 
         case DATA_ID_C:
-            /* Reset */
-            /* After reversing the Control Field and adding the start and stop bits, update the Tx data such that it can be loaded byte-wise  */
-            tamagawa_xchg_ptr->cmd.word0 = (0x23) | (0x40 << 8);
-            /* Number of expected Rx frames is 6 */
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames = 6;
-            /* Number of Tx frames being sent to the encoder is 1, and the number of Rx frames to be received is 6 */
-            tamagawa_xchg_ptr->cmd.word1 = (1) | (6 << 8);
+            if(attrs->load_share_enabled)
+            {
+                for(xchg_index = 0; xchg_index < TAMAGAWA_MAX_CHANNELS_PER_SLICE; xchg_index++)
+                {
+                    if(handle->attrs->channel_mask & (1 << xchg_index))
+                    {
+                        /* Reset */
+                        /* After reversing the Control Field and adding the start and stop bits, update the Tx data such that it can be loaded byte-wise  */
+                        tamagawa_xchg_ptr->cmd[xchg_index].word0 = (0x23) | (0x40 << 8);
+                        /* Number of expected Rx frames is 6 */
+                        handle->priv->tamagawa_interface[xchg_index].rx_frames = 6;
+                        /* Number of Tx frames being sent to the encoder is 1, and the number of Rx frames to be received is 6 */
+                        tamagawa_xchg_ptr->cmd[xchg_index].word1 = (1) | (6 << 8);
+                    }
+                }
+            }
+            else
+            {
+                /* Reset */
+                /* After reversing the Control Field and adding the start and stop bits, update the Tx data such that it can be loaded byte-wise  */
+                tamagawa_xchg_ptr->cmd[0].word0 = (0x23) | (0x40 << 8);
+                /* Number of expected Rx frames is 6 */
+                handle->priv->tamagawa_interface[0].rx_frames = 6;
+                /* Number of Tx frames being sent to the encoder is 1, and the number of Rx frames to be received is 6 */
+                tamagawa_xchg_ptr->cmd[0].word1 = (1) | (6 << 8);
+            }
             break;
 
         case DATA_ID_D:
             /* EEPROM Read */
             /* Loop through all the selected channels and prepare the EEPROM Read Tx data based on the CF, ADF and CRC data */
-            for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS; ch++)
+            for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS_PER_SLICE; ch++)
             {
                 if(attrs->channel_mask & (1 << ch))
                 {
                     tamagawa_prepare_eeprom_command(handle, cmd, ch);
                 }
             }
-            /* Number of expected Rx frames is 4 */
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames = 4;
-            /* Number of Tx frames being sent to the encoder is 3, and the number of Rx frames to be received is 4 */
-            tamagawa_xchg_ptr->cmd.word1 = (3) | (4 << 8);
+            if(attrs->load_share_enabled)
+            {
+                for(xchg_index = 0; xchg_index < TAMAGAWA_MAX_CHANNELS_PER_SLICE; xchg_index++)
+                {
+                    if(handle->attrs->channel_mask & (1 << xchg_index))
+                    {
+                        /* Number of expected Rx frames is 4 */
+                        handle->priv->tamagawa_interface[xchg_index].rx_frames = 4;
+                        /* Number of Tx frames being sent to the encoder is 3, and the number of Rx frames to be received is 4 */
+                        tamagawa_xchg_ptr->cmd[xchg_index].word1 = (3) | (4 << 8);
+                    }
+                }
+            }
+            else
+            {
+                /* Number of expected Rx frames is 4 */
+                handle->priv->tamagawa_interface[0].rx_frames = 4;
+                /* Number of Tx frames being sent to the encoder is 3, and the number of Rx frames to be received is 4 */
+                tamagawa_xchg_ptr->cmd[0].word1 = (3) | (4 << 8);
+            }
             break;
 
         case DATA_ID_6:
             /* EEPROM Write */
             /* Loop through all the selected channels and prepare the EEPROM Read Tx data based on the CF, ADF, EDF and CRC data */
-            for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS; ch++)
+            for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS_PER_SLICE; ch++)
             {
                 if(attrs->channel_mask & (1 << ch))
                 {
                     tamagawa_prepare_eeprom_command(handle, cmd, ch);
                 }
             }
-            /* Number of expected Rx frames is 4 */
-            tamagawa_xchg_ptr->tamagawa_interface.rx_frames = 4;
-            /* Number of Tx frames being sent to the encoder is 4, and the number of Rx frames to be received is 4 */
-            tamagawa_xchg_ptr->cmd.word1 = (4) | (4 << 8);
+            if(attrs->load_share_enabled)
+            {
+                for(xchg_index = 0; xchg_index < TAMAGAWA_MAX_CHANNELS_PER_SLICE; xchg_index++)
+                {
+                    if(handle->attrs->channel_mask & (1 << xchg_index))
+                    {
+                        /* Number of expected Rx frames is 4 */
+                        handle->priv->tamagawa_interface[xchg_index].rx_frames = 4;
+                        /* Number of Tx frames being sent to the encoder is 4, and the number of Rx frames to be received is 4 */
+                        tamagawa_xchg_ptr->cmd[xchg_index].word1 = (4) | (4 << 8);
+                    }
+                }
+            }
+            else
+            {
+                /* Number of expected Rx frames is 4 */
+                handle->priv->tamagawa_interface[0].rx_frames = 4;
+                /* Number of Tx frames being sent to the encoder is 4, and the number of Rx frames to be received is 4 */
+                tamagawa_xchg_ptr->cmd[0].word1 = (4) | (4 << 8);
+            }
             break;
 
         default:
@@ -690,6 +889,7 @@ int32_t tamagawa_command_build(tamagawa_handle handle, int32_t cmd)
 int32_t tamagawa_command_send(tamagawa_handle handle)
 {
     tamagawa_xchg *tamagawa_xchg_ptr;
+    const tamagawa_attrs    *attrs = NULL;
 
     /* NULL check on handle */
     if(handle == NULL)
@@ -698,8 +898,17 @@ int32_t tamagawa_command_send(tamagawa_handle handle)
     }
 
     tamagawa_xchg_ptr = handle->priv->tamagawa_xchg;
-    /* Set the trigger value as 1 */
-    tamagawa_xchg_ptr->config.trigger = 0x1;
+    attrs = handle->attrs;
+    if(attrs->load_share_enabled)
+    {
+        tamagawa_xchg_ptr->config[0].trigger = (attrs->channel0_enabled)?TAMAGAWA_ENABLE_CYCLE_TRIGGER:TAMAGAWA_DISABLE_CYCLE_TRIGGER;
+        tamagawa_xchg_ptr->config[1].trigger = (attrs->channel1_enabled)?TAMAGAWA_ENABLE_CYCLE_TRIGGER:TAMAGAWA_DISABLE_CYCLE_TRIGGER;
+        tamagawa_xchg_ptr->config[2].trigger = (attrs->channel2_enabled)?TAMAGAWA_ENABLE_CYCLE_TRIGGER:TAMAGAWA_DISABLE_CYCLE_TRIGGER;
+    }
+    else
+    {
+        tamagawa_xchg_ptr->config[0].trigger = TAMAGAWA_ENABLE_CYCLE_TRIGGER;
+    }
 
     return SystemP_SUCCESS;
 }
@@ -709,6 +918,7 @@ int32_t tamagawa_command_wait(tamagawa_handle handle)
     tamagawa_xchg *tamagawa_xchg_ptr;
     tamagawa_priv *priv;
     uint32_t loop_count;
+    const tamagawa_attrs *attrs;
 
     /* NULL check on handle */
     if(handle == NULL)
@@ -719,6 +929,7 @@ int32_t tamagawa_command_wait(tamagawa_handle handle)
     priv = handle->priv;
     tamagawa_xchg_ptr = priv->tamagawa_xchg;
     loop_count = priv->max_wait_loop_count;
+    attrs = handle->attrs;
 
     /* Handle zero loop count case - would cause infinite loop */
     if(loop_count == 0)
@@ -729,7 +940,17 @@ int32_t tamagawa_command_wait(tamagawa_handle handle)
     /* Wait until the trigger value is cleared by firmware with timeout */
     while(1)
     {
-        if((tamagawa_xchg_ptr->config.trigger & 0x1) == 0)
+
+        if(attrs->load_share_enabled)
+        {
+            if((tamagawa_xchg_ptr->config[0].trigger == TAMAGAWA_DISABLE_CYCLE_TRIGGER) &&
+            (tamagawa_xchg_ptr->config[1].trigger == TAMAGAWA_DISABLE_CYCLE_TRIGGER) &&
+            (tamagawa_xchg_ptr->config[2].trigger == TAMAGAWA_DISABLE_CYCLE_TRIGGER))
+            {
+                break;
+            }
+        }
+        else if(tamagawa_xchg_ptr->config[0].trigger == TAMAGAWA_DISABLE_CYCLE_TRIGGER)
         {
             break;
         }
@@ -750,6 +971,7 @@ int32_t tamagawa_command_wait(tamagawa_handle handle)
 int32_t tamagawa_command_process(tamagawa_handle handle, int32_t cmd)
 {
     int32_t ret = SystemP_SUCCESS;
+    uint8_t xchg_index;
 
     /* NULL check on handle */
     if(handle == NULL)
@@ -781,12 +1003,11 @@ int32_t tamagawa_command_process(tamagawa_handle handle, int32_t cmd)
     /* In case of EEPROM commands, reset the command ID for all channels back to 0 */
     if(cmd == DATA_ID_6 || cmd == DATA_ID_D)
     {
-        uint8_t ch;
-        for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS; ch++)
+        for(xchg_index = 0; xchg_index < TAMAGAWA_MAX_CHANNELS_PER_SLICE; xchg_index++)
         {
-            if(handle->attrs->channel_mask & (1 << ch))
+            if(handle->attrs->channel_mask & (1 << xchg_index))
             {
-                handle->priv->tamagawa_xchg->tamagawa_eeprom_interface[ch].cmd = 0;
+                handle->priv->tamagawa_xchg->tamagawa_eeprom_interface[xchg_index].cmd = 0;
             }
         }
     }
@@ -896,6 +1117,8 @@ int32_t tamagawa_config_clock(tamagawa_handle handle, tamagawa_clk_cfg *clk_cfg)
 {
     void *pruicss_cfg;
     const tamagawa_attrs *attrs;
+    uint32_t rx_reg_val;
+    uint32_t tx_reg_val;
 
     /* NULL check on handle and clk_cfg */
     if(handle == NULL || clk_cfg == NULL)
@@ -910,18 +1133,44 @@ int32_t tamagawa_config_clock(tamagawa_handle handle, tamagawa_clk_cfg *clk_cfg)
     if(attrs->pruicss_slice)
     {
         /* Slice 1 */
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG,
-                    (uint32_t)(clk_cfg->rx_div << 16 | clk_cfg->rx_clk_source << 4 | clk_cfg->rx_os_rate));
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG,
-                    (uint32_t)(clk_cfg->tx_div << 16 | clk_cfg->tx_clk_source << 4));
+        rx_reg_val = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG);
+        rx_reg_val &= ~(CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_DIV_FACTOR_MASK |
+                        (0x00000008U) |
+                        CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_SB_POL_MASK |
+                        CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_SAMPLE_SIZE_MASK);
+        rx_reg_val |= (clk_cfg->rx_div << CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_DIV_FACTOR_SHIFT) |
+                      (clk_cfg->rx_clk_source << CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_CLK_SEL_SHIFT) |
+                      (0x0 << CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_SB_POL_SHIFT) |
+                      (clk_cfg->rx_os_rate << CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_SAMPLE_SIZE_SHIFT);
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG, rx_reg_val);
+
+        tx_reg_val = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG);
+        tx_reg_val &= ~(CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG_PRU1_ED_TX_DIV_FACTOR_MASK |
+                        CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG_PRU1_ED_TX_CLK_SEL_MASK);
+        tx_reg_val |= (clk_cfg->tx_div << CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG_PRU1_ED_TX_DIV_FACTOR_SHIFT) |
+                      (clk_cfg->tx_clk_source << CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG_PRU1_ED_TX_CLK_SEL_SHIFT);
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG, tx_reg_val);
     }
     else
     {
         /* Slice 0 */
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG,
-                    (uint32_t)(clk_cfg->rx_div << 16 | clk_cfg->rx_clk_source << 4 | clk_cfg->rx_os_rate));
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG,
-                    (uint32_t)(clk_cfg->tx_div << 16 | clk_cfg->tx_clk_source << 4));
+        rx_reg_val = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG);
+        rx_reg_val &= ~(CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_DIV_FACTOR_MASK |
+                        CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_CLK_SEL_MASK |
+                        CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_SB_POL_MASK |
+                        CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_SAMPLE_SIZE_MASK);
+        rx_reg_val |= (clk_cfg->rx_div << CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_DIV_FACTOR_SHIFT) |
+                      (clk_cfg->rx_clk_source << CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_CLK_SEL_SHIFT) |
+                      (0x0 << CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_SB_POL_SHIFT) |
+                      (clk_cfg->rx_os_rate << CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_SAMPLE_SIZE_SHIFT);
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG, rx_reg_val);
+
+        tx_reg_val = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG);
+        tx_reg_val &= ~(CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG_PRU0_ED_TX_DIV_FACTOR_MASK |
+                        CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG_PRU0_ED_TX_CLK_SEL_MASK);
+        tx_reg_val |= (clk_cfg->tx_div << CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG_PRU0_ED_TX_DIV_FACTOR_SHIFT) |
+                      (clk_cfg->tx_clk_source << CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG_PRU0_ED_TX_CLK_SEL_SHIFT);
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG, tx_reg_val);
     }
 
     return SystemP_SUCCESS;
@@ -980,7 +1229,9 @@ int32_t tamagawa_config_global_rx_arm_cnt(tamagawa_handle handle, uint16_t rx_en
 
 int32_t tamagawa_config_host_trigger(tamagawa_handle handle)
 {
+    uint8_t xchg_index;
     tamagawa_xchg *tamagawa_xchg_ptr;
+    const tamagawa_attrs    *attrs = NULL;
 
     /* NULL check on handle */
     if(handle == NULL)
@@ -989,14 +1240,31 @@ int32_t tamagawa_config_host_trigger(tamagawa_handle handle)
     }
 
     tamagawa_xchg_ptr = handle->priv->tamagawa_xchg;
-    tamagawa_xchg_ptr->config.opmode = TAMAGAWA_OPMODE_HOST_TRIGGER;
+    attrs = handle->attrs;
+
+    if(attrs->load_share_enabled)
+    {
+        for(xchg_index = 0; xchg_index < TAMAGAWA_MAX_CHANNELS_PER_SLICE; xchg_index++)
+        {
+            if(handle->attrs->channel_mask & (1 << xchg_index))
+            {
+                tamagawa_xchg_ptr->config[xchg_index].opmode = TAMAGAWA_OPMODE_HOST_TRIGGER;
+            }
+        }
+    }
+    else
+    {
+        tamagawa_xchg_ptr->config[0].opmode = TAMAGAWA_OPMODE_HOST_TRIGGER;
+    }
 
     return SystemP_SUCCESS;
 }
 
 int32_t tamagawa_config_periodic_trigger(tamagawa_handle handle)
 {
+    uint8_t xchg_index;
     tamagawa_xchg *tamagawa_xchg_ptr;
+    const tamagawa_attrs    *attrs = NULL;
 
     /* NULL check on handle */
     if(handle == NULL)
@@ -1005,13 +1273,29 @@ int32_t tamagawa_config_periodic_trigger(tamagawa_handle handle)
     }
 
     tamagawa_xchg_ptr = handle->priv->tamagawa_xchg;
-    tamagawa_xchg_ptr->config.opmode = TAMAGAWA_OPMODE_PERIODIC;
+    attrs = handle->attrs;
+
+    if(attrs->load_share_enabled)
+    {
+        for(xchg_index = 0; xchg_index < TAMAGAWA_MAX_CHANNELS_PER_SLICE; xchg_index++)
+        {
+            if(handle->attrs->channel_mask & (1 << xchg_index))
+            {
+                tamagawa_xchg_ptr->config[xchg_index].opmode = TAMAGAWA_OPMODE_PERIODIC;
+            }
+        }
+    }
+    else
+    {
+        tamagawa_xchg_ptr->config[0].opmode = TAMAGAWA_OPMODE_PERIODIC;
+    }
 
     return SystemP_SUCCESS;
 }
 
 int32_t tamagawa_config_channel(tamagawa_handle handle, uint8_t mask)
 {
+    uint8_t xchg_index;
     tamagawa_xchg *tamagawa_xchg_ptr;
     const tamagawa_attrs *attrs;
 
@@ -1024,9 +1308,20 @@ int32_t tamagawa_config_channel(tamagawa_handle handle, uint8_t mask)
     attrs = handle->attrs;
     tamagawa_xchg_ptr = handle->priv->tamagawa_xchg;
 
-    /* Configure channel mask */
-    tamagawa_xchg_ptr->config.channel = mask;
-    tamagawa_xchg_ptr->tamagawa_interface.ch_mask = mask;
+    if(attrs->load_share_enabled)
+    {
+        for(xchg_index = 0; xchg_index < TAMAGAWA_MAX_CHANNELS_PER_SLICE; xchg_index++)
+        {
+            if(handle->attrs->channel_mask & (1 << xchg_index))
+            {
+                tamagawa_xchg_ptr->config[xchg_index].channel = mask;
+            }
+        }
+    }
+    else
+    {
+        tamagawa_xchg_ptr->config[0].channel = mask;
+    }
 
     /* For single-channel mode, store the specific channel index in priv->channel */
     if(attrs->total_channels == 1)
@@ -1050,23 +1345,45 @@ int32_t tamagawa_config_channel(tamagawa_handle handle, uint8_t mask)
 
 int32_t tamagawa_update_data_id(tamagawa_handle handle, int32_t cmd)
 {
+    uint8_t xchg_index;
+    const tamagawa_attrs *attrs;
     /* NULL check on handle */
     if(handle == NULL)
     {
         return SystemP_FAILURE;
     }
 
-    handle->priv->tamagawa_xchg->tamagawa_interface.data_id = cmd;
+    attrs = handle->attrs;
+    if(attrs->load_share_enabled)
+    {
+        for(xchg_index = 0; xchg_index < TAMAGAWA_MAX_CHANNELS_PER_SLICE; xchg_index++)
+        {
+            if(handle->attrs->channel_mask & (1 << xchg_index))
+            {
+                handle->priv->tamagawa_interface[xchg_index].data_id = cmd;
+            }
+        }
+    }
+    else
+    {
+        handle->priv->tamagawa_interface[0].data_id = cmd;
+    }
 
     if(cmd == DATA_ID_6 || cmd == DATA_ID_D)
     {
-        uint8_t ch;
-        for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS; ch++)
+        if(attrs->load_share_enabled)
         {
-            if(handle->attrs->channel_mask & (1 << ch))
+            for(xchg_index = 0; xchg_index < TAMAGAWA_MAX_CHANNELS_PER_SLICE; xchg_index++)
             {
-                handle->priv->tamagawa_xchg->tamagawa_eeprom_interface[ch].cmd = cmd;
+                if(handle->attrs->channel_mask & (1 << xchg_index))
+                {
+                    handle->priv->tamagawa_xchg->tamagawa_eeprom_interface[xchg_index].cmd = cmd;
+                }
             }
+        }
+        else
+        {
+            handle->priv->tamagawa_xchg->tamagawa_eeprom_interface[0].cmd = cmd;
         }
     }
 
@@ -1076,7 +1393,7 @@ int32_t tamagawa_update_data_id(tamagawa_handle handle, int32_t cmd)
 int32_t tamagawa_update_adf(tamagawa_handle handle, uint32_t val, uint8_t ch)
 {
     /* NULL check on handle, channel and ADF value bounds check */
-    if(handle == NULL || ch >= TAMAGAWA_MAX_CHANNELS || val > TAMAGAWA_MAX_EEPROM_ADDRESS)
+    if(handle == NULL || ch >= TAMAGAWA_MAX_CHANNELS_PER_SLICE || val > TAMAGAWA_MAX_EEPROM_ADDRESS)
     {
         return SystemP_FAILURE;
     }
@@ -1089,7 +1406,7 @@ int32_t tamagawa_update_adf(tamagawa_handle handle, uint32_t val, uint8_t ch)
 int32_t tamagawa_update_edf(tamagawa_handle handle, uint32_t val, uint8_t ch)
 {
     /* NULL check on handle, channel and EDF value bounds check */
-    if(handle == NULL || ch >= TAMAGAWA_MAX_CHANNELS || val > TAMAGAWA_MAX_EEPROM_WRITE_DATA)
+    if(handle == NULL || ch >= TAMAGAWA_MAX_CHANNELS_PER_SLICE || val > TAMAGAWA_MAX_EEPROM_WRITE_DATA)
     {
         return SystemP_FAILURE;
     }
@@ -1116,7 +1433,7 @@ static void tamagawa_eeprom_crc_reinit(tamagawa_handle handle)
 {
     uint8_t ch;
 
-    for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS; ch++)
+    for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS_PER_SLICE; ch++)
     {
         if(handle->attrs->channel_mask & (1 << ch))
         {
@@ -1130,7 +1447,7 @@ static void tamagawa_eeprom_crc_reinit(tamagawa_handle handle)
 int32_t tamagawa_multi_channel_set_cur(tamagawa_handle handle, uint8_t ch)
 {
     /* NULL check on handle, channel bounds check */
-    if(handle == NULL || ch >= TAMAGAWA_MAX_CHANNELS)
+    if(handle == NULL || ch >= TAMAGAWA_MAX_CHANNELS_PER_SLICE)
     {
         return SystemP_FAILURE;
     }
@@ -1203,5 +1520,129 @@ static void tamagawa_config_clr_cfg0(tamagawa_handle handle)
             HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_CH2_CFG0_REG, 0);
         }
     }
+}
+
+/**
+ * \brief Enable load-share mode for Tamagawa encoder
+ *
+ * \details This internal function enables the load-share mode by setting the ENDAT_SHARE_EN
+ *          register bit based on the PRU slice configuration. This allows multiple PRU cores
+ *          to coordinate and share encoder channel processing with synchronized global reinit.
+ *
+ * \param[in] handle  Tamagawa handle
+ *
+ * \return SystemP_SUCCESS on success, SystemP_FAILURE on validation or hardware access failure
+ *
+ */
+static int32_t tamagawa_enable_load_share_mode(tamagawa_handle handle)
+{
+    /* Validate handle parameter */
+    if(handle == NULL)
+    {
+        return SystemP_FAILURE;
+    }
+
+    tamagawa_priv          *priv = handle->priv;
+    const tamagawa_attrs   *attrs = handle->attrs;
+    void                *pruicss_cfg = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->cfgRegBase);
+    uint32_t            reg_val;
+
+    if(attrs->pruicss_slice)
+    {
+        reg_val = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG);
+        reg_val |= CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG_PRU1_ENDAT_SHARE_EN_MASK;
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG, reg_val);
+    }
+    else
+    {
+        reg_val = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG);
+        reg_val |= CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG_PRU0_ENDAT_SHARE_EN_MASK;
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG, reg_val);
+    }
+    return SystemP_SUCCESS;
+}
+
+/**
+ * \brief Configure primary core mask for load-share mode
+ *
+ * \details This internal function sets the primary core mask in shared memory based on the
+ *          channel mask configuration. The primary core is responsible for executing
+ *          global reinit operations that affect all PRU cores. 
+ *
+ * \param[in] handle  Tamagawa handle
+ * \param[in] mask    Channel mask indicating enabled channels
+ *
+ * \return SystemP_SUCCESS on success, SystemP_FAILURE on validation failure
+ *
+ */
+static int32_t tamagawa_config_primary_core_mask(tamagawa_handle handle, uint8_t mask)
+{
+    /* Validate handle parameter */
+    if(handle == NULL || mask > ((1<<TAMAGAWA_MAX_CHANNELS_PER_SLICE) - 1) || mask == 0)
+    {
+        return SystemP_FAILURE;
+    }
+
+    tamagawa_priv *priv = handle->priv;
+
+    switch (mask)
+    {
+        case 1: /*only channel0 connected*/
+            priv->tamagawa_xchg->primary_core_mask = 0x1;
+            break;
+        case 2: /*channel1 connected*/
+            priv->tamagawa_xchg->primary_core_mask = 0x2;
+            break;
+        case 3: /*channel0 and channel1 connected*/
+            priv->tamagawa_xchg->primary_core_mask = 0x1;
+            break;
+        case 4: /*channel2 connected*/
+            priv->tamagawa_xchg->primary_core_mask = 0x4;
+            break;
+        case 5: /*channel0 and channel2 connnected*/
+            priv->tamagawa_xchg->primary_core_mask = 0x4;
+            break;
+        case 6: /*channel1 and channel2 connected*/
+            priv->tamagawa_xchg->primary_core_mask = 0X4;
+            break;
+        case 7: /*all three channel connected*/
+            priv->tamagawa_xchg->primary_core_mask = 0x4;
+            break;
+    }
+    return SystemP_SUCCESS;
+}
+
+/**
+ * \brief Configure load-share mode for Tamagawa encoder
+ *
+ * \details This internal function configures the load-share mode by setting up the
+ *          primary core mask and enabling load-share hardware. This enables multiple
+ *          PRU cores to coordinate encoder processing with synchronized operations.  
+ *
+ * \param[in] handle  Tamagawa handle
+ * \param[in] mask    Channel mask indicating enabled channels
+ *
+ * \return SystemP_SUCCESS on success, SystemP_FAILURE on validation failure
+ *
+ * \note This is an internal function called from \ref tamagawa_init when
+ *       attrs->mode == TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU.
+ */
+static int32_t tamagawa_config_load_share(tamagawa_handle handle, uint8_t mask)
+{
+    /* Validate handle parameter */
+    if(handle == NULL)
+    {
+        return SystemP_FAILURE;
+    }
+
+    if(tamagawa_config_primary_core_mask(handle, mask) != SystemP_SUCCESS)
+    {
+        return SystemP_FAILURE;
+    }
+    if(tamagawa_enable_load_share_mode(handle) != SystemP_SUCCESS)
+    {
+        return SystemP_FAILURE;
+    }
+    return SystemP_SUCCESS;
 }
 

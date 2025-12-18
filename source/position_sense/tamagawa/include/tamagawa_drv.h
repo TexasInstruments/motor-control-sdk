@@ -82,7 +82,7 @@ extern "C" {
 /**
  *  \brief  Maximum number of channels supported per PRU slice
  */
-#define TAMAGAWA_MAX_CHANNELS (3)
+#define TAMAGAWA_MAX_CHANNELS_PER_SLICE (3)
 
 /** \brief Single PRU - Single channel configuration mode
  *
@@ -97,6 +97,13 @@ extern "C" {
  *  All channels share the same PRU core resources without load sharing.
  */
 #define TAMAGAWA_MODE_MULTI_CHANNEL_SINGLE_PRU     (1U)
+
+/** \brief Multi PRU - Load share configuration mode
+ *
+ *  Multiple channels are distributed across multiple PRU cores with load sharing.
+ *  Each PRU core handles different channels with synchronized global reinit operations.
+ */
+#define TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU      (2U)
 
 /**
  *  \brief  Tamagawa operation mode: Periodic trigger
@@ -113,6 +120,17 @@ extern "C" {
  *  each position readout by setting the trigger bit.
  */
 #define TAMAGAWA_OPMODE_HOST_TRIGGER                (0x1U)
+
+/**
+ *  \brief  Enable cycle trigger for firmware
+ */
+/* Enable cycle trigger for firmware*/
+#define TAMAGAWA_ENABLE_CYCLE_TRIGGER          0x1
+
+/**
+ *  \brief  Disable cycle trigger for firmware
+ */
+#define TAMAGAWA_DISABLE_CYCLE_TRIGGER         0x0
 
 /** \brief Allowed Tamagawa communication frequency: 2.5 MHz */
 #define TAMAGAWA_FREQ_2_5_MHZ                       (2500000U)
@@ -296,14 +314,6 @@ typedef struct tamagawa_rx_frames_s
  */
 typedef struct tamagawa_interface_s
 {
-    uint8_t ch_mask;
-        /**< Mask for what channels are required */
-    volatile uint32_t rx_div_factor;
-        /**< RX divide factor */
-    volatile uint32_t tx_div_factor;
-        /**< TX divide factor */
-    volatile uint32_t oversample_rate;
-        /**< Oversampling rate */
     uint32_t version;
         /**< Firmware version */
     uint8_t data_id;
@@ -365,16 +375,20 @@ typedef struct tamagawa_eeprom_interface_s
  */
 typedef struct tamagawa_xchg_s
 {
-    tamagawa_fw_config config;
-        /**< Firmware configuration interface */
-    tamagawa_cmd cmd;
-        /**< Command interface */
-    tamagawa_ch_info ch[TAMAGAWA_MAX_CHANNELS];
+    tamagawa_fw_config config[TAMAGAWA_MAX_CHANNELS_PER_SLICE];
+        /**< Firmware configuration interface (Only index 0 is used when load share is disabled) */
+    tamagawa_cmd cmd[TAMAGAWA_MAX_CHANNELS_PER_SLICE];
+        /**< Command interface (Only index 0 is used when load share is disabled) */
+    tamagawa_ch_info ch[TAMAGAWA_MAX_CHANNELS_PER_SLICE];
         /**< Per-channel interface array (3 channels) */
-    tamagawa_interface tamagawa_interface;
-        /**< Main Tamagawa interface */
-    tamagawa_eeprom_interface tamagawa_eeprom_interface[TAMAGAWA_MAX_CHANNELS];
-        /**< Tamagawa interface for EEPROM commands (per channel) */
+    tamagawa_eeprom_interface tamagawa_eeprom_interface[TAMAGAWA_MAX_CHANNELS_PER_SLICE];
+        /**< Tamagawa interface for EEPROM commands (Only index 0 is used when load share is disabled)*/
+    volatile uint8_t   execution_state[TAMAGAWA_MAX_CHANNELS_PER_SLICE];
+    /**< PRU firmware execution state for load share mode synchronization.
+     *   Used internally by firmware to coordinate multi-PRU operations */
+    volatile uint8_t primary_core_mask;
+    /**< Primary PRU core mask for load share mode synchronization (0x1, 0x2, or 0x4).
+     *   Indicates which channel's PRU acts as primary coordinator */
 } tamagawa_xchg;
 
 /**
@@ -410,7 +424,8 @@ typedef struct tamagawa_attrs_s
     uint8_t instance;
     /**< Tamagawa configuration mode.
      *   0 = TAMAGAWA_MODE_SINGLE_CHANNEL_SINGLE_PRU (one channel, one PRU)
-     *   1 = TAMAGAWA_MODE_MULTI_CHANNEL_SINGLE_PRU (multiple channels, one PRU) */
+     *   1 = TAMAGAWA_MODE_MULTI_CHANNEL_SINGLE_PRU (multiple channels, one PRU)
+     *   2 = TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU (multiple channels, load-share mode) */
     uint8_t mode;
     /** PRU-ICSS instance (0 or 1) */
     uint8_t pruicss_instance;
@@ -436,6 +451,8 @@ typedef struct tamagawa_attrs_s
     uint32_t iep_clk_freq;
     /** Clock source selection (0: UART clock, 1: Core clock) */
     uint8_t is_core_clk;
+    /** Load-share mode enabled flag (0: disabled, 1: enabled). Used with TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU */
+    uint8_t load_share_enabled;
 } tamagawa_attrs;
 
 /**
@@ -465,6 +482,8 @@ typedef struct tamagawa_priv_s
      *  Actual timeout = max_wait_loop_count × cmd_wait_delay_us microseconds
      *  Copied from params in \ref tamagawa_init. */
     uint32_t max_wait_loop_count;
+    /**< Main Tamagawa interface, (Only index 0 is used when load share is disabled) */
+    tamagawa_interface tamagawa_interface[TAMAGAWA_MAX_CHANNELS_PER_SLICE];
 } tamagawa_priv;
 
 /**
@@ -759,10 +778,10 @@ int32_t tamagawa_config_channel(tamagawa_handle handle, uint8_t mask);
  *              to process the data received on that channel.
  *
  *  \param[in]  handle    Tamagawa handle returned by \ref tamagawa_init
- *  \param[in]  ch        Channel number to be selected (0-2, see \ref TAMAGAWA_MAX_CHANNELS)
+ *  \param[in]  ch        Channel number to be selected (0-2, see \ref TAMAGAWA_MAX_CHANNELS_PER_SLICE)
  *
  *  \retval     SystemP_SUCCESS    Configuration successful
- *  \retval     SystemP_FAILURE    NULL handle or invalid channel (ch >= TAMAGAWA_MAX_CHANNELS)
+ *  \retval     SystemP_FAILURE    NULL handle or invalid channel (ch >= TAMAGAWA_MAX_CHANNELS_PER_SLICE)
  *
  *  \note       NULL check: Strict check on handle. Channel bounds checked (0-2).
  */
@@ -795,10 +814,10 @@ int32_t tamagawa_update_data_id(tamagawa_handle handle, int32_t cmd);
  *
  *  \param[in]  handle    Tamagawa handle returned by \ref tamagawa_init
  *  \param[in]  val       ADF value to be updated (valid range 0-127, see \ref TAMAGAWA_MAX_EEPROM_ADDRESS)
- *  \param[in]  ch        Channel number that is currently selected (0-2, see \ref TAMAGAWA_MAX_CHANNELS)
+ *  \param[in]  ch        Channel number that is currently selected (0-2, see \ref TAMAGAWA_MAX_CHANNELS_PER_SLICE)
  *
  *  \retval     SystemP_SUCCESS    Update successful
- *  \retval     SystemP_FAILURE    NULL handle, invalid channel (ch >= TAMAGAWA_MAX_CHANNELS),
+ *  \retval     SystemP_FAILURE    NULL handle, invalid channel (ch >= TAMAGAWA_MAX_CHANNELS_PER_SLICE),
  *                                 or invalid ADF value (val > TAMAGAWA_MAX_EEPROM_ADDRESS)
  *
  *  \note       NULL check: Strict check on handle. Channel and ADF value bounds checked.
@@ -814,10 +833,10 @@ int32_t tamagawa_update_adf(tamagawa_handle handle, uint32_t val, uint8_t ch);
  *
  *  \param[in]  handle    Tamagawa handle returned by \ref tamagawa_init
  *  \param[in]  val       EDF value to be updated (valid range 0-255, see \ref TAMAGAWA_MAX_EEPROM_WRITE_DATA)
- *  \param[in]  ch        Channel number that is currently selected (0-2, see \ref TAMAGAWA_MAX_CHANNELS)
+ *  \param[in]  ch        Channel number that is currently selected (0-2, see \ref TAMAGAWA_MAX_CHANNELS_PER_SLICE)
  *
  *  \retval     SystemP_SUCCESS    Update successful
- *  \retval     SystemP_FAILURE    NULL handle, invalid channel (ch >= TAMAGAWA_MAX_CHANNELS),
+ *  \retval     SystemP_FAILURE    NULL handle, invalid channel (ch >= TAMAGAWA_MAX_CHANNELS_PER_SLICE),
  *                                 or invalid EDF value (val > TAMAGAWA_MAX_EEPROM_WRITE_DATA)
  *
  *  \note       NULL check: Strict check on handle. Channel and EDF value bounds checked.
@@ -870,10 +889,10 @@ int32_t tamagawa_crc_verify(tamagawa_handle handle);
  *
  *  \param[in]  handle    Tamagawa handle returned by \ref tamagawa_init
  *  \param[in]  cmd       Tamagawa command number (DATA_ID_6 or DATA_ID_D)
- *  \param[in]  ch        Channel number that is currently selected (0-2, see \ref TAMAGAWA_MAX_CHANNELS)
+ *  \param[in]  ch        Channel number that is currently selected (0-2, see \ref TAMAGAWA_MAX_CHANNELS_PER_SLICE)
  *
  *  \retval     SystemP_SUCCESS    CRC update successful
- *  \retval     SystemP_FAILURE    NULL handle or invalid channel (ch >= TAMAGAWA_MAX_CHANNELS)
+ *  \retval     SystemP_FAILURE    NULL handle or invalid channel (ch >= TAMAGAWA_MAX_CHANNELS_PER_SLICE)
  *
  *  \note       NULL check: Strict check on handle. Channel bounds checked (0-2).
  */

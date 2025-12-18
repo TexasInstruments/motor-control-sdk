@@ -1,4 +1,4 @@
-; Copyright (C) 2022 Texas Instruments Incorporated
+; Copyright (C) 2022-2025 Texas Instruments Incorporated
 ;
 ; Redistribution and use in source and binary forms, with or without
 ; modification, are permitted provided that the following conditions
@@ -79,13 +79,32 @@ TAMAGAWA_TX_CH2_SEL	.set					2
 	.asg	R31.t16,	TAMAGAWA_CH2_TX_OVERUN
 	.asg	R31.t17,	TAMAGAWA_CH2_TX_UNDERRUN
 
+
+TAMAGAWA_RTU_PRU_BIT_ID			   .set  0
+TAMAGAWA_PRU_BIT_ID			   	   .set  1
+TAMAGAWA_TX_PRU_BIT_ID			   .set  2
+
+    .if $isdefed("ENABLE_MULTI_MAKE_RTU")
+TAMAGAWA_CHANNEL_BIT_ID			   .set	 TAMAGAWA_RTU_PRU_BIT_ID 
+    .elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
+TAMAGAWA_CHANNEL_BIT_ID			   .set	 TAMAGAWA_PRU_BIT_ID 
+    .elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
+TAMAGAWA_CHANNEL_BIT_ID			   .set	 TAMAGAWA_TX_PRU_BIT_ID 
+	.endif
+
 ;CMP event 3 for periodic mode
 	.if	$isdefed("SLICE1")
-IEP_CMP_EVNT					.set    3
-PRU_TRIGGER_HOST_TAMAGAWA_EVT0  .set    34  ; pr0_pru_mst_intr[2]_intr_req
+IEP_CMP_EVNT						.set    3
+PRU_TRIGGER_HOST_TAMAGAWA_EVT  		.set    34  ; pr0_pru_mst_intr[2]_intr_req
+; Load-share mode interrupt events for SLICE1
+RTU_TRIGGER_HOST_TAMAGAWA_EVT   	.set    36  ; pr0_pru_mst_intr[4]_intr_req  (RTU-PRU)
+TXPRU_TRIGGER_HOST_TAMAGAWA_EVT 	.set    38  ; pr0_pru_mst_intr[6]_intr_req  (TX-PRU)
 	.else
-IEP_CMP_EVNT					.set    4
-PRU_TRIGGER_HOST_TAMAGAWA_EVT0  .set    35  ; pr0_pru_mst_intr[3]_intr_req
+IEP_CMP_EVNT						.set    4
+PRU_TRIGGER_HOST_TAMAGAWA_EVT  		.set    35  ; pr0_pru_mst_intr[3]_intr_req
+; Load-share mode interrupt events for SLICE0
+RTU_TRIGGER_HOST_TAMAGAWA_EVT   	.set    37  ; pr0_pru_mst_intr[5]_intr_req  (RTU-PRU)
+TXPRU_TRIGGER_HOST_TAMAGAWA_EVT 	.set    39  ; pr0_pru_mst_intr[7]_intr_req  (TX-PRU)
 	.endif
 ; TAMAGAWA
 
