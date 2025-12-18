@@ -415,13 +415,13 @@ static int32_t tamagawa_handle_rx(tamagawa_handle handle, int32_t cmd)
     {
         DebugP_log("\r\n CRC success \n");
         tamagawa_display_result(handle, cmd);
-        return SystemP_SUCCESS;
     }
     else
     {
         DebugP_log("\r\n CRC Failure \n");
-        return SystemP_FAILURE;
     }
+    
+    return SystemP_SUCCESS;
 }
 
 static int32_t tamagawa_get_command(uint8_t *adf, uint8_t *edf)
