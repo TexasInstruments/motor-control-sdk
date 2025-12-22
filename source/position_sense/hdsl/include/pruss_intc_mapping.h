@@ -70,8 +70,6 @@ extern "C" {
 #define SYS_EVT_TYPE_EDGE           1
 #define SYS_EVT_TYPE_LEVEL          0
 
-/* ICSS0 / ICSS_L */
-/* Is HDSL_APP_CHANNEL0->PRU0 & HDSL_APP_CHANNEL1->PRU1 reqd ?, seems not reqd */
 #define PRU_ICSS0_INTC_INITDATA { \
         { HIPERFACE_EVENT0, HIPERFACE_EVENT2, HIPERFACE_EVENT3, HIPERFACE_EVENT4, 0xFF  }, \
         { \
@@ -89,19 +87,6 @@ extern "C" {
             {0xFF,0xFF} \
         }, \
         PRU_EVTOUT5_HOSTEN_MASK }
-
-/* Is HDSL_APP_CHANNEL0->PRU0 & HDSL_APP_CHANNEL1->PRU1 reqd ?, seems not reqd */
-#define PRU_ICSS1_INTC_INITDATA { \
-        { ICSS1_PRUSS0_HOST_INTR5, 0xFF },\
-        { \
-            {ICSS1_PRUSS0_HOST_INTR5, HDSL_APP_CHANNEL8,SYS_EVT_POLARITY_HIGH ,SYS_EVT_TYPE_EDGE }, \
-            {0xFF,0xFF,0xFF,0xFF} \
-        }, \
-        { \
-            {HDSL_APP_CHANNEL8, PRU_EVTOUT6}, \
-            {0xFF,0xFF} \
-        }, \
-        PRU_EVTOUT6_HOSTEN_MASK }
 
 #ifdef __cplusplus
 }
