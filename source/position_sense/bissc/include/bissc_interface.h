@@ -246,9 +246,10 @@ typedef struct bissc_pruicss_xchg_s
     /**< Calculated 16-bit safety CRC for BiSS Safety protocol.
      *   Indexed by [encoder][channel], computed by PRU firmware */
 
-    volatile uint32_t delay_40us;
-    /**< Timeout delay in PRU clock cycles equivalent to 40 microseconds.
-     *   Calculated as: (core_clk_freq / 1000000) * 40
+    volatile uint32_t encoder_timeout;
+    /**< Encoder timeout delay in PRU clock cycles (configurable via SysConfig).
+     *   Calculated as: (core_clk_freq / 1000000) * encoder_timeout_us
+     *   Default: 40 microseconds, configurable range: 1-100 microseconds
      *   Used by firmware for BiSS-C timeout detection */
 
     volatile uint32_t delay_100ms;

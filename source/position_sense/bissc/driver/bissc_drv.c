@@ -1192,7 +1192,7 @@ int32_t bissc_set_default_initialization(bissc_handle handle)
     {
         return SystemP_FAILURE;
     }
-    pruicss_xchg->delay_40us          = (uint32_t)((attrs->core_clk_freq / 1000000) * 40);
+    pruicss_xchg->encoder_timeout     = (uint32_t)((attrs->core_clk_freq / 1000000) * attrs->encoder_timeout);
     pruicss_xchg->delay_100ms         = (uint32_t)((attrs->core_clk_freq / 1000000) * 100 * 1000);
     pruicss_xchg->icssg_clk           = (uint64_t)(attrs->core_clk_freq);
     pruicss_xchg->valid_bit_idx       = BISSC_VALID_BIT_IDX;

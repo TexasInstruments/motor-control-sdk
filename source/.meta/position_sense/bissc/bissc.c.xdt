@@ -71,6 +71,7 @@ static bissc_attrs gBisscAttrs[CONFIG_BISSC_NUM_INSTANCES] =
         .uart_clk_freq = `instance.pru.$name.toUpperCase()`_UART_CLK_FREQ_HZ,
         .iep_clk_freq = `instance.pru.$name.toUpperCase()`_IEP_CLK_FREQ_HZ,
         .is_core_clk = `instance.Tx_Rx_Clk_Source`U,
+        .encoder_timeout = `instance.encoder_timeout`U,
     },
 % }
 };
