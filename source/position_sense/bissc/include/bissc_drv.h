@@ -635,6 +635,10 @@ typedef struct bissc_attrs_s
     /**< Clock source selection for BiSS-C communication.
      *   0 = Use UART clock as source (uart_clk_freq)
      *   1 = Use Core clock as source (core_clk_freq) */
+
+    uint32_t encoder_timeout;
+    /**< Encoder timeout value in microseconds.
+     *   Default: 40 microseconds */
 } bissc_attrs;
 
 /**

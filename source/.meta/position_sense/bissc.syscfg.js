@@ -209,6 +209,13 @@ let bissc_module = {
                 },
             ],
         },
+        {
+            name: "encoder_timeout",
+            displayName: "Encoder Timeout (in microseconds)",
+            description: "Encoder timeout value in microseconds. Default is 40us.",
+            default: 40,
+            range: [1, 100],
+        },
     ],
     moduleStatic: {
         modules: function(inst) {

@@ -186,7 +186,7 @@ BISSC_ENC2_CH0_SAFETY_CRC_OFFSET                    .set        0xF8    ;16-bit 
 BISSC_ENC2_CH1_SAFETY_CRC_OFFSET                    .set        0xFA    ;16-bit safety CRC enc2 ch1 offset
 BISSC_ENC2_CH2_SAFETY_CRC_OFFSET                    .set        0xFC    ;16-bit safety CRC enc2 ch2 offset
 
-BISSC_CONFIG_DELAY_40US_OFFSET                      .set        0x100   ;40 micro second delay offest
+BISSC_CONFIG_ENCODER_TIMEOUT_OFFSET                .set        0x100   ;encoder timeout delay offset
 
 BISSC_CONFIG_DELAY_100MS_OFFSET                     .set        0x104   ;100 milli second delay offset
 
