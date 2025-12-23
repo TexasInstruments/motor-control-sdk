@@ -6,6 +6,7 @@ This page lists debug guides related to all the Modules.
 - \ref  ENCODER_EXAMPLES_DEBUG_GUIDE   
     - \ref BISSC_DEBUG_GUIDE
     - \ref ENDAT_DEBUG_GUIDE
+    - \ref ENDAT3_DEBUG_GUIDE
     - \ref HDSL_DEBUG_GUIDE
     - \ref NIKON_DEBUG_GUIDE
     - \ref TAMAGAWA_DEBUG_GUIDE
@@ -18,6 +19,7 @@ This page lists debug guides related to all the Modules.
 - \ref  ENCODER_EXAMPLES_DEBUG_GUIDE   
     - \ref BISSC_DEBUG_GUIDE
     - \ref ENDAT_DEBUG_GUIDE
+    - \ref ENDAT3_DEBUG_GUIDE
     - \ref HDSL_DEBUG_GUIDE
     - \ref NIKON_DEBUG_GUIDE
     - \ref TAMAGAWA_DEBUG_GUIDE
@@ -27,6 +29,7 @@ This page lists debug guides related to all the Modules.
 - \ref  ENCODER_EXAMPLES_DEBUG_GUIDE   
     - \ref BISSC_DEBUG_GUIDE
     - \ref ENDAT_DEBUG_GUIDE
+    - \ref ENDAT3_DEBUG_GUIDE
     - \ref NIKON_DEBUG_GUIDE
     - \ref TAMAGAWA_DEBUG_GUIDE
 \endcond

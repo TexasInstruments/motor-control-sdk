@@ -85,6 +85,7 @@ extern "C" {
 
 /* Reference frequency for delay calculations */
 #define REFERENCE_PRU_FREQ_HZ 1000000ULL        /* 1 MHz reference frequency (base for calculations) */
+#define REFERENCE_PRU_FREQ_HZ_FOR_SAMPLING 5000000ULL  /* 5 MHz reference for sampling delay (gives 60 cycles @ 300MHz, 40 cycles @ 200MHz) */
 
 /* TX Clock frequency defines for different baud rates */
 #define ENDAT3_TX_CLOCK_FREQ_12_5_MBPS  25000000ULL   /* 25 MHz TX clock for 12.5 Mbps mode */
@@ -1310,7 +1311,7 @@ int32_t endat3_clearStartTrigger(endat3_Handle handle);
  */
 int32_t endat3_getStartTriggerStatus(endat3_Handle handle);
 
-/** \ } */ /* End of endat3_INTERFACE_ACCESS_API */
+/** \} */ /* End of ENDAT3_API_MODULE */
 
 
 #ifdef __cplusplus

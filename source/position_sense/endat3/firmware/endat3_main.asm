@@ -253,11 +253,6 @@ wait_for_host_trigger1:
 	qbne wait_for_host_trigger1, TEMP2.b0, 1          ; Loop until flag == 1
 
 process_command:
-	; Clear status flag for host mode
-	ldi TEMP2.b0, 0
-	ldi32 DMEM_OFFSET, ENDAT3_INTERFACE_BUSY_OFFSET
-	sbbo &TEMP2.b0, DMEM_OFFSET, 0, 1
-
 process_command_periodic:
 	; Get number of frames to transmit
 	ldi32 DMEM_OFFSET, ENDAT3_INTERFACE_EXPECTED_TX_FRAMES_OFFSET     ; Get frame count address
