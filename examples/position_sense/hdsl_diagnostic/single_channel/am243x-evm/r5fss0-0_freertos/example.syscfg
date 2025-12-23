@@ -275,11 +275,15 @@ section11.output_section[0].alignment = 0;
 section12.group                       = false;
 section12.load_memory                 = "MSRAM";
 section12.$name                       = "Copy Table for TXPRU";
-section12.output_section.create(2);
+section12.output_section.create(4);
 section12.output_section[0].alignment = 32;
-section12.output_section[0].$name     = ".rodata.Hiperface_DSL_SYNC2_0_TX_PRU_2";
+section12.output_section[0].$name     = ".rodata.HdslFirmwareTxPru1_2";
 section12.output_section[1].alignment = 32;
-section12.output_section[1].$name     = ".rodata.Hiperface_DSL2_0_TX_PRU_2";
+section12.output_section[1].$name     = ".rodata.HdslFirmwareTxPru0_2";
+section12.output_section[2].$name     = ".rodata.HdslFirmwareSyncTxPru1_2";
+section12.output_section[2].alignment = 32;
+section12.output_section[3].$name     = ".rodata.HdslFirmwareSyncTxPru0_2";
+section12.output_section[3].alignment = 32;
 
 section13.$name                       = "HDSL Trace";
 section13.type                        = "NOLOAD";

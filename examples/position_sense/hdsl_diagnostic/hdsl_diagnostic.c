@@ -162,7 +162,7 @@
 /*Timeout in micro-seconds for long message read/write*/
 #define LONG_MSG_TIMEOUT                        (200000)
 /* Sleep in micro-seconds to be used when polling QM during intialization */
-#define HDSL_QM_POLL_SLEEP_US                   (10000)
+#define HDSL_QM_POLL_SLEEP_SEC                  (1)
 
 /* max cycle time for transmission of dsl frame*/
 #define MAX_SYNC_CYCLE_TIME                     (27)
@@ -1225,9 +1225,11 @@ static void hdsl_pruicss_load_run_fw_300m(void)
     /*
     NOTE: As this array is typecasted into a structure with 32-bit variables,
     32b alignment is required. This is done using linker.
+    Validate alignment at runtime to catch linker configuration issues.
     */
+    DebugP_assert(((uint32_t)tx_pru_firmware_2 & 0x3U) == 0U);
 
-    gCopyTable = (HDSL_CopyTable *)&tx_pru_firmware_2;
+    gCopyTable = (HDSL_CopyTable *)tx_pru_firmware_2;
     tx_pru_fw_size = (gCopyTable->size1 > gCopyTable->size2)?(tx_pru_firmware_size + gCopyTable->size1):(tx_pru_firmware_size + gCopyTable->size2);
     DebugP_assert(tx_pru_fw_size <= TXPRU_IRAM_SIZE);
 
@@ -1296,8 +1298,6 @@ static void hdsl_init(void)
     HwiP_Params     hwi_prms;
     uint32_t        intr_num = HDSL_MEMORY_TRACE_R5F_IRQ_NUM;
 #endif
-
-    hdsl_pruicss_init();
 
 #if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_) && !defined(SOC_AM261X)
     /* Register PRU interrupt */
@@ -1382,7 +1382,6 @@ static void hdsl_init_300m(void)
     HwiP_Params     hwi_prms;
     uint32_t        intr_num = HDSL_MEMORY_TRACE_R5F_IRQ_NUM;
 #endif
-    hdsl_pruicss_init_300m();
 #if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_) && !defined(SOC_AM261X)
     /* Register PRU interrupt */
     HwiP_Params_init(&hwi_prms);
@@ -2263,7 +2262,7 @@ void hdsl_diagnostic_main(void *arg)
 {
     int32_t     status;
     uint32_t    val, acc_bits, pos_bits, i, res_value, multi_turn_value, menu;
-    uint8_t     ureg, enc_id0, enc_id1, enc_id2, channel_loop_count;
+    uint8_t     ureg, enc_id0, enc_id1, enc_id2;
 
 #if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_) && !defined(SOC_AM261X)
     int32_t     ret_val = UDMA_SOK;
@@ -2313,6 +2312,9 @@ void hdsl_diagnostic_main(void *arg)
     params.pruicss_handle = gPruIcssXHandle;
 
 #if (PRU_CORE_CLOCK_FREQ == PRU_CORE_CLOCK_FREQ_225M)
+
+    hdsl_pruicss_init();
+
     /* In non-load share mode,
      *  - Ther is no need to configure params.channel
      *  - gAppHdslHandle[CONFIG_HDSLx][0] should be used always, irrespective of channel used
@@ -2336,6 +2338,8 @@ void hdsl_diagnostic_main(void *arg)
 
     hdsl_pruicss_load_run_fw();
 #else
+
+    hdsl_pruicss_init_300m();
 
 #if (CONFIG_HDSL0_CHANNEL0_ENABLED == 1)
     params.channel = 0;
@@ -2384,38 +2388,17 @@ void hdsl_diagnostic_main(void *arg)
 
     DebugP_log( "\r\n HDSL setup finished for PRU-ICSS instance %u slice %u\n\n", attrs->pruicss_instance, attrs->pruicss_slice);
 
-    /* Set channel_loop_count based on load share mode
-     *    - If load share is disabled, application always accesses gAppHdslHandle[instance][0]
-     *      regardless of which physical channel number is configured (0, 1, or 2)
-     *    - If load share is enabled, application uses gAppHdslHandle[instance][channel]
-     *      for each enabled channel
-     */
-
+    /* Poll each enabled channel to establish encoder link and read parameters */
     if(attrs->load_share_enabled)
     {
-        channel_loop_count = HDSL_NUM_CH_PER_SLICE_MAX;
-    }
-    else
-    {
-        channel_loop_count = 1;
-    }
-
-    /* Poll each enabled channel to establish encoder link and read parameters */
-    for(i = 0; i < channel_loop_count; i++)
-    {
-        /* In non-load share mode, always use index 0 regardless of channel number.
-         * In load share mode, check channel_mask to skip disabled channels. */
-        if(attrs->load_share_enabled)
+        for(i = 0; i < HDSL_NUM_CH_PER_SLICE_MAX; i++)
         {
+
             if(!(attrs->channel_mask & (1 << i)))
             {
                 continue;
             }
-        }
 
-        /* In non-load share mode: i is always 0
-         * In load share mode: i represents the actual channel number (0, 1, or 2) */
-        {
             while(1)
             {
                 status = HDSL_get_master_qm(gAppHdslHandle[CONFIG_HDSL0][i], &ureg);
@@ -2424,8 +2407,8 @@ void hdsl_diagnostic_main(void *arg)
                 if((ureg & QM_LINK_ESTABLISHED) != 0)
                     break;
 
-                DebugP_log( "\r\n Hiperface DSL encoder not detected on channel %u\n", i);
-                ClockP_usleep(HDSL_QM_POLL_SLEEP_US);
+                DebugP_log( "\r\n Hiperface DSL encoder not detected on channel %u", i);
+                ClockP_sleep(HDSL_QM_POLL_SLEEP_SEC);
             }
 
             /* Wait until QM is 15 */
@@ -2437,8 +2420,8 @@ void hdsl_diagnostic_main(void *arg)
                 if(ureg == QM_LINK_ESTABLISHED_AND_VALUE_15)
                     break;
 
-                DebugP_log( "\r\n QM is not 15 for channel %u\n", i);
-                ClockP_usleep(HDSL_QM_POLL_SLEEP_US);
+                DebugP_log( "\r\n QM is not 15 for channel %u", i);
+                ClockP_sleep(HDSL_QM_POLL_SLEEP_SEC);
             }
 
             DebugP_log( "\r\n");
@@ -2492,6 +2475,84 @@ void hdsl_diagnostic_main(void *arg)
             }
             DebugP_log("\r\n |-------------------------------------------------------------------------------|");
         }
+    }
+    else
+    {
+        while(1)
+        {
+            status = HDSL_get_master_qm(gAppHdslHandle[CONFIG_HDSL0][0], &ureg);
+            DebugP_assert(status == SystemP_SUCCESS);
+
+            if((ureg & QM_LINK_ESTABLISHED) != 0)
+                break;
+
+            DebugP_log( "\r\n Hiperface DSL encoder not detected");
+            ClockP_sleep(HDSL_QM_POLL_SLEEP_SEC);
+        }
+
+        /* Wait until QM is 15 */
+        while(1)
+        {
+            status = HDSL_get_master_qm(gAppHdslHandle[CONFIG_HDSL0][0], &ureg);
+            DebugP_assert(status == SystemP_SUCCESS);
+
+            if(ureg == QM_LINK_ESTABLISHED_AND_VALUE_15)
+                break;
+
+            DebugP_log( "\r\n QM is not 15");
+            ClockP_sleep(HDSL_QM_POLL_SLEEP_SEC);
+        }
+
+        DebugP_log( "\r\n");
+        DebugP_log( "\r |-------------------------------------------------------------------------------|\n");
+        DebugP_log( "\r |            Hiperface DSL Diagnostic : Channel                                 |\n");
+        DebugP_log( "\r |-------------------------------------------------------------------------------|\n");
+        DebugP_log( "\r |                                                                               |\n");
+        DebugP_log( "\r | Quality monitoring value: %u                                                  |\n", ureg & HDSL_LOWER_NIBBLE_MASK);
+        status = HDSL_get_edges(gAppHdslHandle[CONFIG_HDSL0][0], &ureg);
+        DebugP_assert(status == SystemP_SUCCESS);
+        DebugP_log( "\r | Edges: 0x%x                                                                    |", ureg);
+        status = HDSL_get_delay(gAppHdslHandle[CONFIG_HDSL0][0], &ureg);
+        DebugP_assert(status == SystemP_SUCCESS);
+        DebugP_log("\r\n | Cable delay: %u                                                                |", ureg & HDSL_LOWER_NIBBLE_MASK);
+        DebugP_log("\r\n | RSSI: %u                                                                       |", (ureg & HDSL_UPPER_NIBBLE_MASK) >> HDSL_UPPER_NIBBLE_SHIFT);
+        /* Read encoder parameters: ID, acceleration bits, position bits, and resolution */
+        status = HDSL_get_enc_id(gAppHdslHandle[CONFIG_HDSL0][0], 0, &enc_id0);
+        DebugP_assert(status == SystemP_SUCCESS);
+        status = HDSL_get_enc_id(gAppHdslHandle[CONFIG_HDSL0][0], 1, &enc_id1);
+        DebugP_assert(status == SystemP_SUCCESS);
+        status = HDSL_get_enc_id(gAppHdslHandle[CONFIG_HDSL0][0], 2, &enc_id2);
+        DebugP_assert(status == SystemP_SUCCESS);
+        val = enc_id0 | (enc_id1 << 8) | (enc_id2 << 16);
+
+        acc_bits = val & ENC_ID_ACC_BITS_MASK;
+        acc_bits += HDSL_ENC_ID_ACC_BITS_OFFSET;
+        pos_bits = (val & ENC_ID_POS_BITS_MASK) >> ENC_ID_POS_BITS_SHIFT;
+        pos_bits += acc_bits;
+        DebugP_log("\r\n | Encoder ID: 0x%x", val);
+        DebugP_log( "(");
+        DebugP_log( "Acceleration bits: %u, ", acc_bits);
+        DebugP_log( "Position bits: %u,", pos_bits);
+        DebugP_log( "%s", val & ENC_ID_BIPOLAR_FLAG ? " Bipolar position" : " Unipolar position");
+        DebugP_log(")|");
+        res_value = hdsl_read_encoder_resolution(gAppHdslHandle[CONFIG_HDSL0][0]);
+        multi_turn_value = pos_bits - res_value;
+        status = HDSL_set_res(gAppHdslHandle[CONFIG_HDSL0][0], res_value);
+        DebugP_assert(status == SystemP_SUCCESS);
+        status = HDSL_set_multi_turn(gAppHdslHandle[CONFIG_HDSL0][0], multi_turn_value);
+        DebugP_assert(status == SystemP_SUCCESS);
+        status = HDSL_set_mask(gAppHdslHandle[CONFIG_HDSL0][0], (1ULL << res_value) - 1);
+        DebugP_assert(status == SystemP_SUCCESS);
+
+        if(multi_turn_value)
+        {
+            DebugP_log( "\r\n | Single-turn bits: %u, Multi-turn bits: %u                                     |", pos_bits - multi_turn_value, multi_turn_value);
+        }
+        else
+        {
+            DebugP_log( "\r\n | Single-turn bits: %u                                                          |", pos_bits);
+        }
+        DebugP_log("\r\n |-------------------------------------------------------------------------------|");
     }
 
     /* Enter interactive diagnostic loop - process user menu selections */
