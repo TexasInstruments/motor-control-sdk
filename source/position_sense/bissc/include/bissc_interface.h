@@ -143,6 +143,23 @@ typedef struct bissc_ctrl_res_s
 } bissc_ctrl_res;
 
 /**
+ *    \brief    Structure defining BiSS-C periodic trigger configuration
+ *
+ *    \details  Contains IEP event configuration for periodic trigger mode
+ */
+typedef struct bissc_periodic_trigger_cfg_s
+{
+    uint8_t iep_cmp_event;
+    /**< IEP compare event number for periodic CMP mode */
+
+    uint8_t iep_cap_event;
+    /**< IEP capture event number for periodic CAP mode */
+
+    uint32_t iep_capture_reg;
+    /**< IEP capture register address for periodic CAP mode */
+} bissc_periodic_trigger_cfg;
+
+/**
  *    \brief    Structure defining BiSS-C PRU-ICSS shared memory interface
  *
  *    \details  This is the primary communication structure between ARM R5F CPU and PRU firmware.
@@ -181,7 +198,7 @@ typedef struct bissc_pruicss_xchg_s
      *   ARM polls this in \ref bissc_command_wait to detect completion */
 
     volatile uint8_t measure_proc_delay;
-    /**< Processing delay measurement control flag .
+    /**< Processing delay measurement control flag.
      *   1 = ARM requests PRU to measure encoder delay after configuration change
      *   0 = Measurement complete, PRU has updated proc_delay[] */
 
@@ -257,10 +274,17 @@ typedef struct bissc_pruicss_xchg_s
      *   Calculated as: (core_clk_freq / 1000000) * 100 * 1000
      *   Used by firmware for maximum time between BiSS-C frames */
 
-    volatile uint64_t icssg_clk;
+    volatile uint64_t icss_clk;
     /**< PRU-ICSS core clock frequency in Hz (not MHz).
      *   Example: 200000000 for 200 MHz, 300000000 for 300 MHz
      *   Used by firmware for precise timing and delay calculations */
+
+    volatile uint32_t iep_base_address;
+    /**< IEP base address used for periodic trigger mode */
+
+    bissc_periodic_trigger_cfg trigger_params[BISSC_NUM_CH_PER_SLICE_MAX];
+    /**< Periodic trigger configuration parameters for each channel (ch0, ch1, ch2).
+     *   Contains IEP event numbers and capture register addresses */
 
 } bissc_pruicss_xchg;
 

@@ -98,6 +98,16 @@ static int32_t bissc_config_primary_core_mask(bissc_handle handle, uint8_t mask)
 static int32_t bissc_enable_load_share_mode(bissc_handle handle);
 
 /**
+ * \brief Configure IEP base address in PRU shared memory
+ *
+ * \param handle            BiSS-C handle
+ * \param iep_base_address  IEP base address offset from PRU-ICSS base
+ *
+ * \return SystemP_SUCCESS on success, SystemP_FAILURE on validation failure
+ */
+static int32_t bissc_config_iep_base_address(bissc_handle handle, uint32_t iep_base_address);
+
+/**
  * \brief Configure the channels to be used by BiSS-C receiver in load share mode
  *
  * \param handle        BiSS-C handle
@@ -140,6 +150,8 @@ bissc_handle bissc_init(uint32_t index, const bissc_params *params)
     bissc_priv          *priv = NULL;
     const bissc_attrs   *attrs = NULL;
     bissc_pruicss_xchg  *pruicss_xchg = NULL;
+    uint32_t temp;
+    void *base_addr = NULL;
 
     if((index >= gBisscConfigNum) || (params == NULL))
     {
@@ -185,9 +197,27 @@ bissc_handle bissc_init(uint32_t index, const bissc_params *params)
            (attrs->core_clk_freq == 0) ||
            (attrs->uart_clk_freq == 0) ||
            (attrs->iep_clk_freq == 0) ||
-           (attrs->is_core_clk > 1))
+           (attrs->is_core_clk > 1) ||
+           (attrs->iep_instance > 1) ||
+           (attrs->iep_base_addr == NULL))
         {
             status = SystemP_FAILURE;
+        }
+
+        /* Validate IEP CMP and CAP event numbers for periodic trigger mode */
+        if(status == SystemP_SUCCESS)
+        {
+            uint8_t ch_idx;
+            /* Validate IEP CMP event numbers and CAP event numbers */
+            for(ch_idx = 0; ch_idx < BISSC_NUM_CH_PER_SLICE_MAX; ch_idx++)
+            {
+                if((attrs->iep_cmp_event[ch_idx] >= BISSC_IEP_MAX_CMP_EVENT) ||
+                   (attrs->iep_cap_event[ch_idx] >= BISSC_IEP_MAX_CAP_EVENT))
+                {
+                    status = SystemP_FAILURE;
+                    break;
+                }
+            }
         }
 
         /* Validate baud_rate - must be one of the supported BiSS-C frequencies */
@@ -223,10 +253,18 @@ bissc_handle bissc_init(uint32_t index, const bissc_params *params)
         priv->cmd_process_delay_us = params->cmd_process_delay_us;
         priv->fw_wait_delay_us = params->fw_wait_delay_us;
         priv->max_wait_loop_count = params->max_wait_loop_count;
-
         status = bissc_hw_init(handle);
     }
 
+    if(status == SystemP_SUCCESS)
+    {
+        /*Set IEP base address */
+        base_addr = (void *)((PRUICSS_HwAttrs *)(handle->priv->pruicss_handle->hwAttrs))->baseAddr;
+        temp = ((uint32_t)attrs->iep_base_addr) - ((uint32_t)base_addr);
+
+        /* Initialize IEP base address in pruicss_xchg */
+        status = bissc_config_iep_base_address(handle, temp);
+    }
     if(status == SystemP_SUCCESS)
     {
         status = bissc_config_channel(handle, attrs->channel_mask, attrs->total_channels);
@@ -245,6 +283,32 @@ bissc_handle bissc_init(uint32_t index, const bissc_params *params)
     if(status == SystemP_SUCCESS)
     {
         status = bissc_config_host_trigger(handle);
+    }
+
+    /* Configure IEP CMP and CAP events for enabled channels */
+    if(status == SystemP_SUCCESS)
+    {
+        uint8_t ch_idx;
+        for(ch_idx = 0; ch_idx < BISSC_NUM_CH_PER_SLICE_MAX; ch_idx++)
+        {
+            /* Check if channel is enabled */
+            if(attrs->channel_mask & (1U << ch_idx))
+            {
+                /* Configure IEP CMP event for this channel */
+                status = bissc_config_iep_cmp_event(handle, ch_idx, attrs->iep_cmp_event[ch_idx]);
+                if(status != SystemP_SUCCESS)
+                {
+                    break;
+                }
+
+                /* Configure IEP CAP event for this channel */
+                status = bissc_config_iep_cap_event(handle, ch_idx, attrs->iep_cap_event[ch_idx]);
+                if(status != SystemP_SUCCESS)
+                {
+                    break;
+                }
+            }
+        }
     }
 
     if(status == SystemP_SUCCESS)
@@ -370,7 +434,7 @@ int32_t bissc_command_process(bissc_handle handle)
     return ret;
 }
 
-int32_t bissc_config_periodic_trigger(bissc_handle handle)
+int32_t bissc_config_periodic_trigger_cmp_mode(bissc_handle handle)
 {
     /* Validate handle parameter */
     if(handle == NULL)
@@ -385,13 +449,57 @@ int32_t bissc_config_periodic_trigger(bissc_handle handle)
 
     if(attrs->load_share_enabled)
     {
-        pruicss_xchg->opmode[0] = BISSC_OPMODE_PERIODIC;
-        pruicss_xchg->opmode[1] = BISSC_OPMODE_PERIODIC;
-        pruicss_xchg->opmode[2] = BISSC_OPMODE_PERIODIC;
+        pruicss_xchg->opmode[0] = BISSC_OPMODE_PERIODIC_CMP;
+        pruicss_xchg->opmode[1] = BISSC_OPMODE_PERIODIC_CMP;
+        pruicss_xchg->opmode[2] = BISSC_OPMODE_PERIODIC_CMP;
     }
     else
     {
-        pruicss_xchg->opmode[0] = BISSC_OPMODE_PERIODIC;
+        pruicss_xchg->opmode[0] = BISSC_OPMODE_PERIODIC_CMP;
+    }
+    priv->is_continuous_mode = 1;
+    return SystemP_SUCCESS;
+}
+
+static int32_t bissc_config_iep_base_address(bissc_handle handle, uint32_t iep_base_address)
+{
+    /* Validate handle parameter */
+    if(iep_base_address == 0 || handle == NULL)
+    {
+        return SystemP_FAILURE;
+    }
+
+    /* Configures IEP instance used for periodic trigger mode */
+    bissc_priv          *priv = handle->priv;
+    bissc_pruicss_xchg  *pruicss_xchg = priv->pruicss_xchg;
+
+    pruicss_xchg->iep_base_address = iep_base_address;
+
+    return SystemP_SUCCESS;
+}
+
+int32_t bissc_config_periodic_trigger_cap_mode(bissc_handle handle)
+{
+    /* Validate handle parameter */
+    if(handle == NULL)
+    {
+        return SystemP_FAILURE;
+    }
+
+    /* Configures bissc receiver in periodic trigger CAP mode */
+    bissc_priv          *priv = handle->priv;
+    const bissc_attrs   *attrs = handle->attrs;
+    bissc_pruicss_xchg  *pruicss_xchg = priv->pruicss_xchg;
+
+    if(attrs->load_share_enabled)
+    {
+        pruicss_xchg->opmode[0] = (attrs->channel0_enabled) ? BISSC_OPMODE_PERIODIC_CAP : pruicss_xchg->opmode[0];
+        pruicss_xchg->opmode[1] = (attrs->channel1_enabled) ? BISSC_OPMODE_PERIODIC_CAP : pruicss_xchg->opmode[1];
+        pruicss_xchg->opmode[2] = (attrs->channel2_enabled) ? BISSC_OPMODE_PERIODIC_CAP : pruicss_xchg->opmode[2];
+    }
+    else
+    {
+        pruicss_xchg->opmode[0] = BISSC_OPMODE_PERIODIC_CAP;
     }
     priv->is_continuous_mode = 1;
     return SystemP_SUCCESS;
@@ -1194,7 +1302,7 @@ int32_t bissc_set_default_initialization(bissc_handle handle)
     }
     pruicss_xchg->encoder_timeout     = (uint32_t)((attrs->core_clk_freq / 1000000) * attrs->encoder_timeout);
     pruicss_xchg->delay_100ms         = (uint32_t)((attrs->core_clk_freq / 1000000) * 100 * 1000);
-    pruicss_xchg->icssg_clk           = (uint64_t)(attrs->core_clk_freq);
+    pruicss_xchg->icss_clk           = (uint64_t)(attrs->core_clk_freq);
     pruicss_xchg->valid_bit_idx       = BISSC_VALID_BIT_IDX;
     pruicss_xchg->measure_proc_delay  = 1;
     pruicss_xchg->execution_state[0]  = 0;
@@ -1456,4 +1564,85 @@ bissc_priv* bissc_get_priv(bissc_handle handle)
         return NULL;
     }
     return handle->priv;
+}
+
+int32_t bissc_config_iep_cap_event(bissc_handle handle, uint8_t channel, uint8_t event_num)
+{
+    int32_t ret_val = SystemP_SUCCESS;
+    const bissc_attrs   *attrs;
+    bissc_priv          *priv;
+    bissc_pruicss_xchg  *pruicss_xchg;
+    uint8_t ch_index = 0;
+
+    if(handle == NULL || event_num >= BISSC_IEP_MAX_CAP_EVENT || channel >= BISSC_NUM_CH_PER_SLICE_MAX)
+    {
+        return SystemP_FAILURE;
+    }
+
+    attrs = handle->attrs;
+    priv = handle->priv;
+    pruicss_xchg = priv->pruicss_xchg;
+
+    if(attrs->load_share_enabled)
+    {
+        ch_index = channel;
+    }
+    else
+    {
+        /* Always 0 in single PRU mode. When load share mode is disabled.
+        In single PRU mode firmware, the channel number is ignored and the firmware always reads data from DMEM using the channel 0 offset, regardless of which channels are connected.*/
+        ch_index = 0;
+    }
+
+    /* write cap event and capture register address in DMEM */
+    pruicss_xchg->trigger_params[ch_index].iep_cap_event = event_num;
+    pruicss_xchg->trigger_params[ch_index].iep_capture_reg = pruicss_xchg->iep_base_address + BISSC_CSL_ICSS_PR1_IEP0_SLV_CAP0_REG0  + 8*(event_num);
+
+    /* Offset is not identical after 6th event. The 6th and 7th CAP event have 2 extra registers for Fall captures. */
+    if(event_num > 6)
+    {
+        pruicss_xchg->trigger_params[ch_index].iep_capture_reg += 8;
+    }
+    return ret_val;
+}
+
+int32_t bissc_config_iep_cmp_event(bissc_handle handle, uint8_t channel, uint8_t event_num)
+{
+    int32_t ret_val = SystemP_SUCCESS;
+    bissc_priv          *priv;
+    bissc_pruicss_xchg  *pruicss_xchg;
+    const bissc_attrs   *attrs;
+    uint8_t ch_index = 0;
+
+    /* Validate handle parameter */
+    if(handle == NULL)
+    {
+        return SystemP_FAILURE;
+    }
+    priv = handle->priv;
+    attrs = handle->attrs;
+    pruicss_xchg = priv->pruicss_xchg;
+
+    if((event_num >= BISSC_IEP_MAX_CMP_EVENT) || (channel >= BISSC_NUM_CH_PER_SLICE_MAX))
+    {
+        ret_val = SystemP_FAILURE;
+        return ret_val;
+    }
+
+    /* Determine channel index for DMEM access */
+    if(attrs->load_share_enabled)
+    {
+        ch_index = channel;
+    }
+    else
+    {
+        /* Always 0 in single PRU mode. When load share mode is disabled.
+        In single PRU mode firmware, the channel number is ignored and the firmware always reads data from DMEM using the channel 0 offset, regardless of which channels are connected.*/
+        ch_index = 0;
+    }
+
+    /* Write CMP event number in DMEM */
+    pruicss_xchg->trigger_params[ch_index].iep_cmp_event = event_num;
+
+    return ret_val;
 }

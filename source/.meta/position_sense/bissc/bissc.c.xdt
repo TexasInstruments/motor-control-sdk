@@ -55,6 +55,55 @@ static bissc_attrs gBisscAttrs[CONFIG_BISSC_NUM_INSTANCES] =
         % /* For ICSSM, use pruicss_slice configuration */
         % pruicss_slice = (instance.PRU_Slice == "PRU1") ? 1 : 0;
     % }
+    % /* Determine IEP instance number (0 for IEP0, 1 for IEP1) */
+    % let iep_instance = (instance.IEP_Instance === "IEP0") ? 0 : 1;
+    % /* Determine ICSS type and generate IEP base address using CSL macros */
+    % let is_icssm = (instance.instance === "ICSSM" || instance.instance === "ICSSM0" || instance.instance === "ICSSM1");
+    % let iep_base_addr_expr;
+    % if(is_icssm) {
+        % /* ICSSM only has IEP0 - use CSL_ICSS_M_PR1_IEP0_SLV_REGS_BASE offset */
+        % if(instance.instance === "ICSSM1") {
+            % /* AM261x: ICSSM1 */
+            % iep_base_addr_expr = `(void *)(CSL_ICSSM1_INTERNAL + CSL_ICSS_M_PR1_IEP0_SLV_REGS_BASE)`;
+        % } else {
+            % /* AM263x/AM263Px/AM261x: ICSSM0 */
+            % iep_base_addr_expr = `(void *)(CSL_ICSSM0_INTERNAL_U_BASE + CSL_ICSS_M_PR1_IEP0_SLV_REGS_BASE)`;
+        % }
+    % } else {
+        % /* ICSSG has both IEP0 and IEP1 - use direct CSL macros */
+        % if(instance.instance === "ICSSG1") {
+            % if(iep_instance === 0) {
+                % iep_base_addr_expr = `(void *)CSL_PRU_ICSSG1_IEP0_BASE`;
+            % } else {
+                % iep_base_addr_expr = `(void *)CSL_PRU_ICSSG1_IEP1_BASE`;
+            % }
+        % } else {
+            % /* ICSSG0 */
+            % if(iep_instance === 0) {
+                % iep_base_addr_expr = `(void *)CSL_PRU_ICSSG0_IEP0_BASE`;
+            % } else {
+                % iep_base_addr_expr = `(void *)CSL_PRU_ICSSG0_IEP1_BASE`;
+            % }
+        % }
+    % }
+    % /* Determine IEP CMP and CAP event numbers based on load share mode */
+    % let iep_cmp_ch0, iep_cmp_ch1, iep_cmp_ch2, iep_cap_ch0, iep_cap_ch1, iep_cap_ch2;
+    % if(instance.Multi_Channel_Load_Share) {
+        % iep_cmp_ch0 = instance.CMP_Event_Num_CH0;
+        % iep_cmp_ch1 = instance.CMP_Event_Num_CH1;
+        % iep_cmp_ch2 = instance.CMP_Event_Num_CH2;
+        % iep_cap_ch0 = instance.CAP_Event_Num_CH0;
+        % iep_cap_ch1 = instance.CAP_Event_Num_CH1;
+        % iep_cap_ch2 = instance.CAP_Event_Num_CH2;
+    % } else {
+        % /* Use the same event for all channels in non-load share mode */
+        % iep_cmp_ch0 = instance.CMP_Event_Num;
+        % iep_cmp_ch1 = instance.CMP_Event_Num;
+        % iep_cmp_ch2 = instance.CMP_Event_Num;
+        % iep_cap_ch0 = instance.CAP_Event_Num;
+        % iep_cap_ch1 = instance.CAP_Event_Num;
+        % iep_cap_ch2 = instance.CAP_Event_Num;
+    % }
     {
         .instance = `i`U,
         .mode = `mode`,
@@ -72,6 +121,10 @@ static bissc_attrs gBisscAttrs[CONFIG_BISSC_NUM_INSTANCES] =
         .iep_clk_freq = `instance.pru.$name.toUpperCase()`_IEP_CLK_FREQ_HZ,
         .is_core_clk = `instance.Tx_Rx_Clk_Source`U,
         .encoder_timeout = `instance.encoder_timeout`U,
+        .iep_instance = `iep_instance`U,
+        .iep_cmp_event = {`iep_cmp_ch0`U, `iep_cmp_ch1`U, `iep_cmp_ch2`U},
+        .iep_cap_event = {`iep_cap_ch0`U, `iep_cap_ch1`U, `iep_cap_ch2`U},
+        .iep_base_addr = `iep_base_addr_expr`,
     },
 % }
 };

@@ -380,7 +380,7 @@ int32_t bissc_get_enc_proc_delay(bissc_handle handle);
 int32_t bissc_calc_clock(bissc_handle handle, bissc_clk_cfg *clk_cfg);
 
 /**
- *  \brief      Configure periodic trigger operation mode
+ *  \brief      Configure periodic trigger operation mode using IEP compare event
  *
  *  \details    This function sets the operation mode to \ref BISSC_OPMODE_PERIODIC in the
  *              PRU-ICSS exchange structure. In this mode, the PRU firmware automatically
@@ -391,7 +391,7 @@ int32_t bissc_calc_clock(bissc_handle handle, bissc_clk_cfg *clk_cfg);
  *
  *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE on validation failure
  */
-int32_t bissc_config_periodic_trigger(bissc_handle handle);
+int32_t bissc_config_periodic_trigger_cmp_mode(bissc_handle handle);
 
 /**
  *  \brief      Configure host trigger operation mode
@@ -561,6 +561,51 @@ const bissc_attrs* bissc_get_attrs(bissc_handle handle);
  *  \retval     priv              Pointer to bissc_priv structure, NULL if handle is invalid
  */
 bissc_priv* bissc_get_priv(bissc_handle handle);
+
+/**
+ *  \brief      Configure periodic trigger CAP mode
+ *
+ *  This function configures the BiSS-C channels to operate in periodic trigger mode
+ *  with IEP CAP events.
+ *
+ *  \param[in]  handle  BiSS-C handle
+ *
+ *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE on validation failure
+ */
+int32_t bissc_config_periodic_trigger_cap_mode(bissc_handle handle);
+
+/**
+ *  \brief      Configure IEP CAP event for periodic trigger (DMEM configuration only)
+ *
+ *  \details    This function configures the IEP capture event information in PRU shared
+ *              memory (DMEM) for firmware access. It writes the capture register address
+ *              and event number to trigger_params structure. This function does NOT configure
+ *              IEP hardware registers.
+ *
+ *  \param[in]  handle      BiSS-C handle
+ *  \param[in]  channel     BiSS-C channel number (0-2). Used in load share mode,
+ *                          ignored in single PRU mode (always uses index 0).
+ *  \param[in]  event_num   CAP event number (0-7)
+ *
+ *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE otherwise
+ */
+int32_t bissc_config_iep_cap_event(bissc_handle handle, uint8_t channel, uint8_t event_num);
+
+/**
+ *  \brief      Configure IEP CMP event for periodic trigger (DMEM configuration only)
+ *
+ *  \details    This function configures the IEP compare event information in PRU shared
+ *              memory (DMEM) for firmware access. It writes the event number to trigger_params
+ *              structure. This function does NOT configure IEP hardware registers.
+ *
+ *  \param[in]  handle      BiSS-C handle
+ *  \param[in]  channel     BiSS-C channel number (0-2). Used in load share mode,
+ *                          ignored in single PRU mode (always uses index 0).
+ *  \param[in]  event_num   CMP event number (0-15)
+ *
+ *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE otherwise
+ */
+int32_t bissc_config_iep_cmp_event(bissc_handle handle, uint8_t channel, uint8_t event_num);
 
 /** @} */
 

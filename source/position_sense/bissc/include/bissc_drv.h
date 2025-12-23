@@ -308,12 +308,12 @@ extern "C" {
  */
 #define BISSC_SAFETY_CRC_FIELD_MASK              (0xFFFFU)
 
-/** \brief BiSS-C Periodic/Continuous operation mode
+/** \brief BiSS-C Periodic/Continuous operation mode using IEP compare (CMP) event
  *
  *  In periodic mode, the PRU firmware automatically triggers BiSS-C transactions
- *  at regular intervals using IEP timer events, without host CPU intervention.
+ *  at regular intervals using IEP timer compare events, without host CPU intervention.
  */
-#define BISSC_OPMODE_PERIODIC               (0x0U)
+#define BISSC_OPMODE_PERIODIC_CMP           (0x0U)
 
 /** \brief BiSS-C Host trigger operation mode
  *
@@ -322,11 +322,33 @@ extern "C" {
  */
 #define BISSC_OPMODE_HOST_TRIGGER           (0x1U)
 
+/** \brief BiSS-C Periodic trigger with IEP CAP mode
+ *
+ *  In periodic trigger CAP mode, the PRU firmware automatically triggers BiSS-C transactions
+ *  based on IEP capture input events, without host CPU intervention.
+ */
+#define BISSC_OPMODE_PERIODIC_CAP           (0x2U)
+
 /** \brief Disable encoder processing delay measurement (value = 0x0) */
 #define BISSC_MEASURE_PROC_DELAY_DISABLE    (0x0U)
 
 /** \brief Enable encoder processing delay measurement (value = 0x1) */
 #define BISSC_MEASURE_PROC_DELAY_ENABLE     (0x1U)
+
+
+/**    \brief    IEP cap 0 register , cslr common file does not have defined cap registers 
+ *      FIXME: Remove these definitions once they are available in cslr_common.h
+ */
+#define BISSC_CFG_REG_SIZE         (4U)
+#define BISSC_CSL_ICSS_PR1_IEP0_SLV_CAP0_REG0  (CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG + 2U*BISSC_CFG_REG_SIZE)
+#define BISSC_CSL_ICSS_PR1_IEP0_SLV_CAP0_REG1  (CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG + 3U*BISSC_CFG_REG_SIZE)
+#define BISSC_IEP_SLV_CMP_CFG_REG_CMP_EN_SHIFT                       (0x1)
+#define BISSC_IEP_SLV_CMP_CFG_REG_CMP0_RST_CNT_EN_SHIFT              (0x00000000U)
+
+/** \brief Maximum number of IEP capture events (0-7) */
+#define BISSC_IEP_MAX_CAP_EVENT    (0x8U)
+/** \brief Maximum number of IEP compare events (0-15) */
+#define BISSC_IEP_MAX_CMP_EVENT    (0x10U)
 
 /* ========================================================================== */
 /*                         Structure Declarations                             */
@@ -639,6 +661,19 @@ typedef struct bissc_attrs_s
     uint32_t encoder_timeout;
     /**< Encoder timeout value in microseconds.
      *   Default: 40 microseconds */
+
+    uint8_t iep_instance;
+    /**< IEP instance number used for periodic trigger mode */
+
+    uint8_t iep_cmp_event[BISSC_NUM_CH_PER_SLICE_MAX];
+    /**< IEP compare event number used for periodic trigger mode */
+
+    uint8_t iep_cap_event[BISSC_NUM_CH_PER_SLICE_MAX];
+    /**< IEP capture event number used for periodic trigger mode */
+
+    void *iep_base_addr;
+    /**< IEP base address for IEP timer configuration in periodic trigger mode */
+
 } bissc_attrs;
 
 /**
