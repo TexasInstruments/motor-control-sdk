@@ -10,6 +10,7 @@ This page lists all the examples related to position sense.
 \endcond
 \cond SOC_AM64X || SOC_AM243X
 -# \subpage EXAMPLE_MOTORCONTROL_ENDAT
+-# \subpage EXAMPLE_MOTORCONTROL_ENDAT3
 -# \subpage EXAMPLE_MOTORCONTROL_HDSL
 -# \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA
 -# \subpage EXAMPLE_MOTORCONTROL_BISSC
@@ -25,6 +26,7 @@ This page lists all the examples related to position sense.
 \cond SOC_AM263PX
 -# \subpage EXAMPLE_MOTORCONTROL_BISSC
 -# \subpage EXAMPLE_MOTORCONTROL_ENDAT
+-# \subpage EXAMPLE_MOTORCONTROL_ENDAT3
 -# \subpage EXAMPLE_MOTORCONTROL_NIKON
 -# \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA
 -# \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA_OVER_UART
@@ -32,6 +34,7 @@ This page lists all the examples related to position sense.
 \cond SOC_AM261X
 -# \subpage EXAMPLE_MOTORCONTROL_BISSC
 -# \subpage EXAMPLE_MOTORCONTROL_ENDAT
+-# \subpage EXAMPLE_MOTORCONTROL_ENDAT3
 -# \subpage EXAMPLE_MOTORCONTROL_HDSL
 -# \subpage EXAMPLE_MOTORCONTROL_NIKON
 -# \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA

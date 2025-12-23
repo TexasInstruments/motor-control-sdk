@@ -9,6 +9,7 @@ Applications and PRU-ICSS firmwares for the following position sense encoders ar
 \cond SOC_AM64X || SOC_AM243X
 - \subpage BISS-C
 - \subpage ENDAT
+- \subpage ENDAT3
 - \subpage HDSL
 - \subpage NIKON
 - \subpage TAMAGAWA
@@ -17,6 +18,7 @@ Applications and PRU-ICSS firmwares for the following position sense encoders ar
 \cond (SOC_AM263X || SOC_AM263PX)
 - \subpage BISS-C
 - \subpage ENDAT
+- \subpage ENDAT3
 - \subpage NIKON
 - \subpage TAMAGAWA
 - \subpage TAMAGAWA_OVER_UART (Application only, PRU is not needed)
@@ -25,6 +27,7 @@ Applications and PRU-ICSS firmwares for the following position sense encoders ar
 \cond SOC_AM261X
 - \subpage BISS-C
 - \subpage ENDAT
+- \subpage ENDAT3
 - \subpage HDSL
 - \subpage NIKON
 - \subpage TAMAGAWA
