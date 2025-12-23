@@ -186,22 +186,24 @@ BISSC_ENC2_CH0_SAFETY_CRC_OFFSET                    .set        0xF8    ;16-bit 
 BISSC_ENC2_CH1_SAFETY_CRC_OFFSET                    .set        0xFA    ;16-bit safety CRC enc2 ch1 offset
 BISSC_ENC2_CH2_SAFETY_CRC_OFFSET                    .set        0xFC    ;16-bit safety CRC enc2 ch2 offset
 
-BISSC_CONFIG_ENCODER_TIMEOUT_OFFSET                .set        0x100   ;encoder timeout delay offset
+BISSC_CH0_ENCODER_TIMEOUT_OFFSET             .set        0x100   ;channel 0 encoder timeout offset
+BISSC_CH1_ENCODER_TIMEOUT_OFFSET             .set        0x104   ;channel 1 encoder timeout offset
+BISSC_CH2_ENCODER_TIMEOUT_OFFSET             .set        0x108   ;channel 2 encoder timeout offset
 
-BISSC_CONFIG_DELAY_100MS_OFFSET                     .set        0x104   ;100 milli second delay offset
+BISSC_CONFIG_DELAY_100MS_OFFSET                     .set        0x10C   ;100 milli second delay offset
 
-BISSC_CONFIG_ICSS_CLK_OFFSET                        .set        0x108   ;icssg clock configuration offset
+BISSC_CONFIG_ICSS_CLK_OFFSET                        .set        0x110   ;icssg clock configuration offset
 
-BISSC_IEP_BASE_ADDR_OFFSET                          .set        0x110   ;IEP base address
-BISSC_CH0_IEP_CMP_EVENT_OFFSET                      .set        0x114   ;IEP CMP event number for ch0
-BISSC_CH0_IEP_CAP_EVENT_OFFSET                      .set        0x115   ;IEP CAP event number for ch0
-BISSC_CH0_IEP_RESERVED_OFFSET                       .set        0x116   ;reserved, 2 bytes for alignment
-BISSC_CH0_IEP_CAPTURE_REG_OFFSET                    .set        0x118   ;IEP capture register offset for ch0
-BISSC_CH1_IEP_CMP_EVENT_OFFSET                      .set        0x11C   ;IEP CMP event number for ch1
-BISSC_CH1_IEP_CAP_EVENT_OFFSET                      .set        0x11D   ;IEP CAP event number for ch1
-BISSC_CH1_IEP_RESERVED_OFFSET                       .set        0x11E   ;reserved, 2 bytes for alignment
-BISSC_CH1_IEP_CAPTURE_REG_OFFSET                    .set        0x120   ;IEP capture register offset for ch1
-BISSC_CH2_IEP_CMP_EVENT_OFFSET                      .set        0x124   ;IEP CMP event number for ch2
-BISSC_CH2_IEP_CAP_EVENT_OFFSET                      .set        0x125   ;IEP CAP event number for ch2
-BISSC_CH2_IEP_RESERVED_OFFSET                       .set        0x126   ;reserved, 2 bytes for alignment
-BISSC_CH2_IEP_CAPTURE_REG_OFFSET                    .set        0x128   ;IEP capture register offset for ch2
+BISSC_IEP_BASE_ADDR_OFFSET                          .set        0x118   ;IEP base address
+BISSC_CH0_IEP_CMP_EVENT_OFFSET                      .set        0x11C   ;IEP CMP event number for ch0
+BISSC_CH0_IEP_CAP_EVENT_OFFSET                      .set        0x11D   ;IEP CAP event number for ch0
+BISSC_CH0_IEP_RESERVED_OFFSET                       .set        0x11E   ;reserved, 2 bytes for alignment
+BISSC_CH0_IEP_CAPTURE_REG_OFFSET                    .set        0x120   ;IEP capture register offset for ch0
+BISSC_CH1_IEP_CMP_EVENT_OFFSET                      .set        0x124   ;IEP CMP event number for ch1
+BISSC_CH1_IEP_CAP_EVENT_OFFSET                      .set        0x125   ;IEP CAP event number for ch1
+BISSC_CH1_IEP_RESERVED_OFFSET                       .set        0x126   ;reserved, 2 bytes for alignment
+BISSC_CH1_IEP_CAPTURE_REG_OFFSET                    .set        0x128   ;IEP capture register offset for ch1
+BISSC_CH2_IEP_CMP_EVENT_OFFSET                      .set        0x12C   ;IEP CMP event number for ch2
+BISSC_CH2_IEP_CAP_EVENT_OFFSET                      .set        0x12D   ;IEP CAP event number for ch2
+BISSC_CH2_IEP_RESERVED_OFFSET                       .set        0x12E   ;reserved, 2 bytes for alignment
+BISSC_CH2_IEP_CAPTURE_REG_OFFSET                    .set        0x130   ;IEP capture register offset for ch2

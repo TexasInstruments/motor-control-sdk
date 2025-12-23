@@ -79,6 +79,9 @@ extern "C" {
  */
 #define BISSC_DEFAULT_MAX_WAIT_LOOP_COUNT         (5U)
 
+ /** \brief Default encoder timeout in microseconds */
+#define BISSC_DEFAULT_ENCODER_TIMEOUT_US          (40U)
+
 /** \brief Single PRU - Single channel configuration mode
  *
  *  Only one channel (ch0, ch1, or ch2) is used with a single PRU core.
@@ -461,6 +464,7 @@ typedef struct bissc_params_s
      *   Used in \ref bissc_command_wait.
      *   Must be greater than 0.
      *   Default: 5 (with default cmd_process_delay_us of 1000us results in 5ms timeout) */
+
 } bissc_params;
 
 /**
@@ -589,6 +593,7 @@ typedef struct bissc_priv_s
     /**< PRU-ICSS driver handle obtained from PRUICSS_open().
      *   Used for accessing PRU-ICSS hardware resources.
      *   Copied from params in \ref bissc_init. */
+
 } bissc_priv;
 
 /**
@@ -661,9 +666,6 @@ typedef struct bissc_attrs_s
      *   0 = Use UART clock as source (uart_clk_freq)
      *   1 = Use Core clock as source (core_clk_freq) */
 
-    uint32_t encoder_timeout;
-    /**< Encoder timeout value in microseconds.
-     *   Default: 40 microseconds */
 
     uint8_t iep_instance;
     /**< IEP instance number used for periodic trigger mode */

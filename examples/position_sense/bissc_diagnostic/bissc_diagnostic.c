@@ -181,6 +181,7 @@
 #define BISSC_CMD_PERIODIC_TRIGGER_CMP      (6)
 #define BISSC_CMD_PERIODIC_TRIGGER_CAP      (7)
 #define BISSC_ENABLE_SAFETY                 (8)
+#define BISSC_CMD_ENCODER_TIMEOUT           (9)
 
 #define BISSC_POSITION_LOOP_STOP            0
 #define BISSC_POSITION_LOOP_START           1
@@ -218,6 +219,7 @@ static void bissc_display_fw_version(void);
 static void bissc_display_menu(void);
 static void bissc_get_enc_data_len(bissc_handle handle);
 static void bissc_print_res(bissc_handle handle);
+static int32_t bissc_configure_encoder_timeout(bissc_handle handle, uint32_t instance_num);
 static int32_t bissc_get_command(void);
 static void bissc_position_loop_decide_termination(void *args);
 static int32_t bissc_loop_task_create(void);
@@ -546,6 +548,7 @@ static void bissc_display_menu(void)
     DebugP_log("\r\n| 6 : Start periodic continuous mode (CMP trigger)                             |");
     DebugP_log("\r\n| 7 : Start periodic continuous mode (CAP trigger)                             |");
     DebugP_log("\r\n| 8 : Enable safety mode                                                       |");
+    DebugP_log("\r\n| 9 : Configure encoder timeout                                                |");
     DebugP_log("\r\n| 0 : Exit the application                                                     |");
     DebugP_log("\r\n|------------------------------------------------------------------------------|");
     DebugP_log("\r\n| Enter value:\r\n");
@@ -701,12 +704,73 @@ static int32_t bissc_get_command()
     int32_t cmd;
     DebugP_scanf("%d\n", &cmd);
     /* Check to make sure that the command issued is correct */
-    if( cmd < BISSC_CMD_EXIT_APP || cmd > BISSC_ENABLE_SAFETY )
+    if( cmd < BISSC_CMD_EXIT_APP || cmd > BISSC_CMD_ENCODER_TIMEOUT )
     {
         DebugP_log("\r\n| WARNING: invalid option try again\n");
         return SystemP_FAILURE;
     }
     return cmd;
+}
+
+static int32_t bissc_configure_encoder_timeout(bissc_handle handle, uint32_t instance_num)
+{
+    uint32_t new_timeout, current_timeout;
+    int32_t  ret;
+    uint32_t ch_num, physical_ch;
+    const bissc_attrs *attrs;
+
+    if(handle == NULL)
+    {
+        return SystemP_FAILURE;
+    }
+
+    DebugP_log("\r\n|------------------------------------------------------------------------------|");
+    DebugP_log("\r\n|                        BiSS-C Encoder Timeout Configuration                  |");
+    DebugP_log("\r\n|------------------------------------------------------------------------------|");
+
+    attrs = bissc_get_attrs(handle);
+    for(ch_num = 0; ch_num < attrs->total_channels; ch_num++)
+    {
+        physical_ch = bissc_get_current_channel(handle, ch_num);
+        current_timeout = bissc_get_encoder_timeout(handle, physical_ch);
+        if(current_timeout == 0)
+        {
+            DebugP_log("\r\n|   ERROR: Failed to get timeout for channel %u", physical_ch);
+            continue;
+        }
+        DebugP_log("\r\n|   Channel %u: %u PRU cycles", physical_ch, current_timeout);
+    }
+
+    /* Display PRU cycle calculation instructions */
+    DebugP_log("\r\n|------------------------------------------------------------------------------|");
+    DebugP_log("\r\n|                          PRU Cycle Calculation Guide                         |");
+    DebugP_log("\r\n|------------------------------------------------------------------------------|");
+    DebugP_log("\r\n| Formula: PRU cycles = (Core Clock Freq / 1,000,000) * Timeout (us)           |");
+    DebugP_log("\r\n| Current Core Clock: %u Hz (%u MHz)                                           |", attrs->core_clk_freq, attrs->core_clk_freq/BISSC_MHZ_TO_HZ);
+    DebugP_log("\r\n| Cycles time in ns : %u                                                       |", 1000000000/attrs->core_clk_freq);
+    DebugP_log("\r\n|                                                                              |");
+
+    /* Get new timeout for all enabled channels */
+
+    for(ch_num = 0; ch_num < attrs->total_channels; ch_num++)
+    {
+        physical_ch = bissc_get_current_channel(handle, ch_num);
+        DebugP_log("\r\n| Enter new encoder timeout for instance %u channel %u in PRU cycles: ", instance_num, physical_ch);
+        DebugP_scanf("%u", &new_timeout);
+        ret = bissc_set_encoder_timeout(handle, physical_ch, new_timeout);
+        if(ret == SystemP_SUCCESS)
+        {
+            DebugP_log("\r\n|   Instance %u Channel %u: Timeout set to %u PRU cycles", instance_num, physical_ch, new_timeout);
+        }
+        else
+        {
+            DebugP_log("\r\n|   Instance %u Channel %u: Failed to set timeout!", instance_num, physical_ch);
+        }
+    }
+
+    DebugP_log("\r\n| Encoder timeout configuration completed");
+
+    return SystemP_SUCCESS;
 }
 
 static void bissc_position_loop_decide_termination(void *args)
@@ -752,7 +816,7 @@ static void bissc_process_periodic_command(bissc_handle handle[CONFIG_BISSC_NUM_
     const bissc_attrs *attrs;
 
     for(i = 0; i < CONFIG_BISSC_NUM_INSTANCES; i++)
-    {  
+    {
         if(is_cap_mode)
         {
             if(bissc_config_periodic_trigger_cap_mode(handle[i]) != SystemP_SUCCESS)
@@ -1496,17 +1560,17 @@ void bissc_main(void *args)
         else if(cmd == BISSC_CMD_PERIODIC_TRIGGER_CAP)
         {
             is_cap_mode = 1;
-#if defined(SOC_AM243X) 
+#if defined(SOC_AM243X)
             DebugP_log("\r| Enter IEP SYNC0 period (in IEP cycles, used for CAP mode):");
             DebugP_scanf("%llu\n", &iep_reset_count);
             if(iep_reset_count <= BISSC_IEP_COUNTER_INCREMENT)
             {
                 DebugP_log("\r\n| ERROR: Invalid value entered\n");
                 continue;
-            }       
+            }
 #else
             DebugP_log("\r| Periodic CAP mode cycle time will be equal to EPWM frequency. NOTE: In SysConfig, EPWM and EPWM to IEP LATCH XBAR configuration must be done. \n|\n|\n|\n");
-            
+
 #endif
             DebugP_log("\r\n Switching to periodic trigger mode \n");
 
@@ -1528,7 +1592,18 @@ void bissc_main(void *args)
                 }
             }
         }
-        
+        else if(cmd == BISSC_CMD_ENCODER_TIMEOUT)
+        {
+            /* Configure encoder timeout - Interactive menu for timeout configuration */
+            for(i = 0; i < CONFIG_BISSC_NUM_INSTANCES; i++)
+            {
+                ret = bissc_configure_encoder_timeout(gAppBisscHandle[i], i);
+                if(ret != SystemP_SUCCESS)
+                {
+                    DebugP_log("\r| ERROR: Failed to configure encoder timeout");
+                }
+            }
+        }
     }
 deinit:
 
