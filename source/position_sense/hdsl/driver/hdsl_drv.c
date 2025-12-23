@@ -340,11 +340,14 @@ HDSL_Handle HDSL_open(uint32_t instance, const HDSL_Params *params)
     /* Validate that the requested channel is enabled */
     if(status == SystemP_SUCCESS)
     {
-        if((channel_idx == 0 && attrs->channel0_enabled == 0) ||
-            (channel_idx == 1 && attrs->channel1_enabled == 0) ||
-            (channel_idx == 2 && attrs->channel2_enabled == 0))
+        if(attrs->load_share_enabled == 0)
         {
-            status = SystemP_FAILURE;
+            if((channel_idx == 0 && attrs->channel0_enabled == 0) ||
+                (channel_idx == 1 && attrs->channel1_enabled == 0) ||
+                (channel_idx == 2 && attrs->channel2_enabled == 0))
+            {
+                status = SystemP_FAILURE;
+            }
         }
     }
 
