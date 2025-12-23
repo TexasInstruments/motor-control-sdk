@@ -874,12 +874,6 @@ int32_t HDSL_write_pc_long_msg(HDSL_Handle handle, uint16_t addr, uint8_t offset
         }
     }
 
-    /* Checking for error */
-    if(priv->hdsl_interface->PC_ADD_H & PC_ADD_H_LONG_MSG_ERROR)
-    {
-        return SystemP_FAILURE;
-    }
-
     return SystemP_SUCCESS;
 }
 
@@ -968,13 +962,6 @@ int32_t HDSL_read_pc_long_msg(HDSL_Handle handle, uint16_t addr, uint8_t offsetE
         {
             return SystemP_TIMEOUT;
         }
-    }
-
-    /* Checking for error */
-
-    if(priv->hdsl_interface->PC_ADD_H & PC_ADD_H_LONG_MSG_ERROR)
-    {
-        return SystemP_FAILURE;
     }
 
     return SystemP_SUCCESS;
@@ -1080,6 +1067,30 @@ int32_t HDSL_read_pc_buffer(HDSL_Handle handle, uint8_t buff_off, uint8_t *data)
             break;
         default:
             return SystemP_FAILURE;
+    }
+
+    return SystemP_SUCCESS;
+}
+
+int32_t HDSL_get_pc_long_msg_error(HDSL_Handle handle, uint8_t *error)
+{
+    HDSL_Priv *priv;
+
+    if((handle == NULL) || (error == NULL))
+    {
+        return SystemP_FAILURE;
+    }
+
+    priv = HDSL_get_priv(handle);
+
+    /* Check bit 5 of PC_ADD_H register for encoder error status */
+    if(priv->hdsl_interface->PC_ADD_H & PC_ADD_H_LONG_MSG_ERROR)
+    {
+        *error = 1;
+    }
+    else
+    {
+        *error = 0;
     }
 
     return SystemP_SUCCESS;

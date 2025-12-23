@@ -1558,6 +1558,7 @@ static void hdsl_direct_read_rid0_length4(HDSL_Handle handle)
 {
     int32_t status = SystemP_FAILURE;
     uint8_t pc_buf0, pc_buf1, pc_buf2, pc_buf3;
+    uint8_t enc_error = 0;
 
     DebugP_log("\r\n Parameter channel long message read : RID 0, Length 4");
 
@@ -1586,6 +1587,20 @@ static void hdsl_direct_read_rid0_length4(HDSL_Handle handle)
     if(SystemP_SUCCESS != status)
     {
         DebugP_log("\r\n FAIL: HDSL_read_pc_long_msg() did not return success");
+        return;
+    }
+
+    /* Check if encoder reported parameter error */
+    status = HDSL_get_pc_long_msg_error(handle, &enc_error);
+    if(SystemP_SUCCESS != status)
+    {
+        DebugP_log("\r\n FAIL: HDSL_get_pc_long_msg_error() did not return success");
+        return;
+    }
+
+    if(enc_error != 0)
+    {
+        DebugP_log("\r\n FAIL: Encoder reported parameter error for long message");
         return;
     }
 
@@ -1649,6 +1664,7 @@ static void hdsl_direct_read_rid81_length8(HDSL_Handle handle)
 {
     int32_t status = SystemP_FAILURE;
     uint8_t pc_buf0, pc_buf1, pc_buf2, pc_buf3, pc_buf4, pc_buf5, pc_buf6, pc_buf7;
+    uint8_t enc_error = 0;
 
     DebugP_log("\r\n Parameter channel long message read : RID 0x81, Length 8");
 
@@ -1693,6 +1709,20 @@ static void hdsl_direct_read_rid81_length8(HDSL_Handle handle)
     if(SystemP_SUCCESS != status)
     {
         DebugP_log("\r\n FAIL: HDSL_read_pc_long_msg() did not return success");
+        return;
+    }
+
+    /* Check if encoder reported parameter error */
+    status = HDSL_get_pc_long_msg_error(handle, &enc_error);
+    if(SystemP_SUCCESS != status)
+    {
+        DebugP_log("\r\n FAIL: HDSL_get_pc_long_msg_error() did not return success");
+        return;
+    }
+
+    if(enc_error != 0)
+    {
+        DebugP_log("\r\n FAIL: Encoder reported parameter error for long message");
         return;
     }
 
@@ -1809,6 +1839,7 @@ static void hdsl_direct_read_rid81_length2(HDSL_Handle handle)
 {
     int32_t status = SystemP_FAILURE;
     uint8_t pc_buf0, pc_buf1;
+    uint8_t enc_error = 0;
 
     DebugP_log("\r\n Parameter channel long message read : RID 0x81, Offset 3, Length 2");
 
@@ -1829,6 +1860,20 @@ static void hdsl_direct_read_rid81_length2(HDSL_Handle handle)
     if(SystemP_SUCCESS != status)
     {
         DebugP_log("\r\n FAIL: HDSL_read_pc_long_msg() did not return success");
+        return;
+    }
+
+    /* Check if encoder reported parameter error */
+    status = HDSL_get_pc_long_msg_error(handle, &enc_error);
+    if(SystemP_SUCCESS != status)
+    {
+        DebugP_log("\r\n FAIL: HDSL_get_pc_long_msg_error() did not return success");
+        return;
+    }
+
+    if(enc_error != 0)
+    {
+        DebugP_log("\r\n FAIL: Encoder reported parameter error for long message");
         return;
     }
 
@@ -1867,6 +1912,7 @@ static void hdsl_indirect_write_rid0_length8_offset0(HDSL_Handle handle)
 {
     int32_t status = SystemP_FAILURE;
     uint8_t pc_buf0, pc_buf1;
+    uint8_t enc_error = 0;
 
     DebugP_log("\r\n Parameter channel long message write : RID 0x0, Offset 0, Length 8");
 
@@ -1876,6 +1922,19 @@ static void hdsl_indirect_write_rid0_length8_offset0(HDSL_Handle handle)
     {
         DebugP_log("\r\n FAIL: HDSL_write_pc_long_msg() did not return success");
         return;
+    }
+
+    /* Check if encoder reported parameter error */
+    status = HDSL_get_pc_long_msg_error(handle, &enc_error);
+    if(SystemP_SUCCESS != status)
+    {
+        DebugP_log("\r\n FAIL: HDSL_get_pc_long_msg_error() did not return success");
+        return;
+    }
+
+    if(enc_error != 0)
+    {
+        DebugP_log("\r\n Encoder reported parameter error for long message (expected for parameters used in this API call)");
     }
 
     status = HDSL_read_pc_buffer(handle, 0, &pc_buf0);
@@ -1895,6 +1954,7 @@ static void hdsl_indirect_write_rid0_length8_offset0(HDSL_Handle handle)
         }
         if(pc_buf1 == 0x10)
         {
+            DebugP_log("\r\n PC_BUFFER0 = 0x41, PC_BUFFER1 = 0x10 (Write access not possible)");
             DebugP_log("\r\n PASS ");
         }
         else
@@ -1913,6 +1973,7 @@ static void hdsl_indirect_write_rid0_length8(HDSL_Handle handle)
 {
     int32_t status = SystemP_FAILURE;
     uint8_t pc_buf0, pc_buf1;
+    uint8_t enc_error = 0;
 
     DebugP_log("\r\n Parameter channel long message write : RID 0x0, Length 8");
 
@@ -1922,6 +1983,19 @@ static void hdsl_indirect_write_rid0_length8(HDSL_Handle handle)
     {
         DebugP_log("\r\n FAIL: HDSL_write_pc_long_msg() did not return success");
         return;
+    }
+
+    /* Check if encoder reported parameter error */
+    status = HDSL_get_pc_long_msg_error(handle, &enc_error);
+    if(SystemP_SUCCESS != status)
+    {
+        DebugP_log("\r\n FAIL: HDSL_get_pc_long_msg_error() did not return success");
+        return;
+    }
+
+    if(enc_error != 0)
+    {
+        DebugP_log("\r\n Encoder reported parameter error for long message (expected for parameters used in this API call)");
     }
 
     status = HDSL_read_pc_buffer(handle, 0, &pc_buf0);
@@ -1941,6 +2015,7 @@ static void hdsl_indirect_write_rid0_length8(HDSL_Handle handle)
         }
         if(pc_buf1 == 0x10)
         {
+            DebugP_log("\r\n PC_BUFFER0 = 0x41, PC_BUFFER1 = 0x10 (Write access not possible) ");
             DebugP_log("\r\n PASS ");
         }
         else
@@ -2061,6 +2136,7 @@ static uint32_t hdsl_read_encoder_resolution(HDSL_Handle handle)
     uint8_t pc_buf0, pc_buf1, pc_buf2, pc_buf3;
     uint32_t raw_resolution;
     double log_result;
+    uint8_t enc_error = 0;
 
     /* Set the parameter channel buffers to 0xff */
     status = HDSL_write_pc_buffer(handle, 0, 0xff);
@@ -2088,6 +2164,11 @@ static uint32_t hdsl_read_encoder_resolution(HDSL_Handle handle)
     status = HDSL_read_pc_long_msg(handle, 0x81, HDSL_LONG_MSG_ADDR_WITHOUT_OFFSET, HDSL_LONG_MSG_ADDR_INDIRECT, HDSL_LONG_MSG_LENGTH_4, 0, LONG_MSG_TIMEOUT);
 
     DebugP_assert(SystemP_SUCCESS == status);
+
+    /* Check if encoder reported parameter error */
+    status = HDSL_get_pc_long_msg_error(handle, &enc_error);
+    DebugP_assert(SystemP_SUCCESS == status);
+    DebugP_assert(enc_error == 0);
 
     status = HDSL_read_pc_buffer(handle, 0, &pc_buf0);
     DebugP_assert(SystemP_SUCCESS == status);
