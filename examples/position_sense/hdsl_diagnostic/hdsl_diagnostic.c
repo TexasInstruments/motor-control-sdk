@@ -411,7 +411,6 @@ static void hdsl_isr_fxn(void)
     status = HDSL_get_src_loc(gAppHdslHandle[CONFIG_HDSL0][0], &src_loc);
     if(status != SystemP_SUCCESS)
     {
-        DebugP_log("\r\n FAIL: HDSL_get_src_loc() did not return success in ISR\r\n");
         gTraceErrorCount++;
         return;
     }
@@ -423,7 +422,6 @@ static void hdsl_isr_fxn(void)
     status = HDSL_get_length(gAppHdslHandle[CONFIG_HDSL0][0], &length);
     if(status != SystemP_SUCCESS)
     {
-        DebugP_log("\r\n FAIL: HDSL_get_length() did not return success in ISR\r\n");
         gTraceErrorCount++;
         return;
     }
