@@ -677,10 +677,11 @@ static int32_t endat3_set_delay_cycles(endat3_Handle handle, uint64_t pru_freq_h
      * ENDAT3_TX_START_DELAY_1 = 218 cycles (65535 / 300)
      * ENDAT3_TX_START_DELAY_2 = 1748 cycles (524288 / 300)
      * ENDAT3_TX_START_DELAY_3 = 438 cycles (131328 / 300)
-     * SAMPLING_DELAY_COUNT = 37 cycles
+     * SAMPLING_DELAY_COUNT = 1 cycle per 4MHz (75 cycles @ 300MHz = 1 cycle @ 4MHz)
      * DELAY_10MS = 10486 cycles (3145728 / 300)
      *
-     * Note: Original values were for 300MHz PRU frequency
+     * Note: delay_sampling uses 4MHz reference (REFERENCE_PRU_FREQ_HZ_FOR_SAMPLING)
+     * Gives: 50 cycles @ 200MHz, 75 cycles @ 300MHz, 100 cycles @ 400MHz
      */
     /* Scale delay values based on actual PRU frequency relative to 1MHz reference */
     /* Formula: actual_cycles = (reference_cycles * actual_freq) / reference_freq */
@@ -688,8 +689,8 @@ static int32_t endat3_set_delay_cycles(endat3_Handle handle, uint64_t pru_freq_h
     handle->endat3Interface->delay_tx_start_1 = (uint32_t)((218ULL * pru_freq_hz) / REFERENCE_PRU_FREQ_HZ);
     handle->endat3Interface->delay_tx_start_2 = (uint32_t)((1748ULL * pru_freq_hz) / REFERENCE_PRU_FREQ_HZ);
     handle->endat3Interface->delay_tx_start_3 = (uint32_t)((438ULL * pru_freq_hz) / REFERENCE_PRU_FREQ_HZ);
-    /* delay_sampling: Minimum 37 cycles (encoder-dependent, keep conservative) */
-    handle->endat3Interface->delay_sampling = 37;
+    /* delay_sampling: Scale using 4MHz reference for optimal cross-platform compatibility */
+    handle->endat3Interface->delay_sampling = (uint32_t)(pru_freq_hz / REFERENCE_PRU_FREQ_HZ_FOR_SAMPLING);
     /* delay_10ms: Scale from 10486 cycles at 1MHz */
     handle->endat3Interface->delay_10ms = (uint32_t)((10486ULL * pru_freq_hz) / REFERENCE_PRU_FREQ_HZ);
     return ENDAT3_SUCCESS;
