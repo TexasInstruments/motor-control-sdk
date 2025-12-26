@@ -887,13 +887,17 @@ int32_t HDSL_read_pc_short_msg(HDSL_Handle handle, uint8_t addr, uint8_t *data, 
  *              1. Call \ref HDSL_write_pc_buffer to write data bytes (0-7) to PC_BUFFER registers
  *              2. Call this function to trigger the long message write operation
  *              3. Firmware completes the write within < 3.5 ms (FREL bit unset during operation)
+ *              4. If SystemP_SUCCESS is returned, optionally call \ref HDSL_get_pc_long_msg_error
+ *                 to check if encoder accepted the parameters or reported an error
  *
  *              This function performs internal operations:
  *              - Configures PC_ADD_L, PC_ADD_H registers with address and control bits
  *              - Configures PC_OFF_L, PC_OFF_H registers with offset value
  *              - Sets PC_CTRL register to trigger the operation
  *              - Waits for ONLINE_STATUS_D_L FREL bit transitions
- *              - Checks PC_ADD_H for error status
+ *
+ *                Note: SystemP_SUCCESS return value does not indicate that the encoder accepted the parameters.
+ *                Use \ref HDSL_get_pc_long_msg_error to check if encoder accepted the parameters or reported an error.
  *
  *  \param[in]  handle          HDSL handle obtained from \ref HDSL_open
  *  \param[in]  addr            10 bit address for long message (0-0x3FF)
@@ -903,7 +907,9 @@ int32_t HDSL_read_pc_short_msg(HDSL_Handle handle, uint8_t addr, uint8_t *data, 
  *  \param[in]  offset          15 bit address offset for long message (0-0x7FFF, if offset is enabled in offsetEnable parameter)
  *  \param[in]  timeout         Timeout in microseconds
  *
- *  \return     SystemP_SUCCESS in case of success, SystemP_FAILURE in case of error, SystemP_TIMEOUT in case of timeout
+ *  \return     SystemP_SUCCESS if communication completed (check \ref HDSL_get_pc_long_msg_error to check if encoder accepted the parameters or reported an error)
+ *  \return     SystemP_FAILURE if input parameters are invalid
+ *  \return     SystemP_TIMEOUT if FREL transitions did not complete within timeout
  *
  *  \note       Applications should use reasonable timeout values. Extremely large values
  *              (close to UINT64_MAX) are not recommended as they may cause immediate timeout
@@ -918,15 +924,20 @@ int32_t HDSL_write_pc_long_msg(HDSL_Handle handle, uint16_t addr, uint8_t offset
  *  \details    **Required Workflow:**
  *              1. Call this function to trigger the long message read operation
  *              2. Wait for SystemP_SUCCESS return value
- *              3. Call \ref HDSL_read_pc_buffer to read data bytes (0-7) from PC_BUFFER registers
- *              4. Firmware completes the read within < 3.5 ms (FREL bit unset during operation)
+ *              3. If SystemP_SUCCESS is returned, optionally call \ref HDSL_get_pc_long_msg_error
+ *                 to check if encoder accepted the parameters or reported an error
+ *              4. Call \ref HDSL_read_pc_buffer to read data bytes (0-7) from PC_BUFFER registers
+ *
+ *              \note Firmware completes the read within < 3.5 ms (FREL bit unset during operation).
  *
  *              This function performs internal operations:
  *              - Configures PC_ADD_L, PC_ADD_H registers with address and control bits
  *              - Configures PC_OFF_L, PC_OFF_H registers with offset value
  *              - Sets PC_CTRL register to trigger the operation
  *              - Waits for ONLINE_STATUS_D_L FREL bit transitions
- *              - Checks PC_ADD_H for error status
+ *
+ *                Note: SystemP_SUCCESS return value does not indicate that the encoder accepted the parameters.
+ *                Use \ref HDSL_get_pc_long_msg_error to check if encoder accepted the parameters or reported an error.
  *
  *  \param[in]  handle          HDSL handle obtained from \ref HDSL_open
  *  \param[in]  addr            10 bit address for long message (0-0x3FF)
@@ -936,7 +947,9 @@ int32_t HDSL_write_pc_long_msg(HDSL_Handle handle, uint16_t addr, uint8_t offset
  *  \param[in]  offset          15 bit address offset for long message (0-0x7FFF)
  *  \param[in]  timeout         Timeout in microseconds
  *
- *  \return     SystemP_SUCCESS in case of success, SystemP_FAILURE in case of error, SystemP_TIMEOUT in case of timeout
+ *  \return     SystemP_SUCCESS if communication completed (check \ref HDSL_get_pc_long_msg_error to check if encoder accepted the parameters or reported an error)
+ *  \return     SystemP_FAILURE if input parameters are invalid
+ *  \return     SystemP_TIMEOUT if FREL transitions did not complete within timeout
  *
  *  \note       Applications should use reasonable timeout values. Extremely large values
  *              (close to UINT64_MAX) are not recommended as they may cause immediate timeout
@@ -994,6 +1007,31 @@ int32_t HDSL_write_pc_buffer(HDSL_Handle handle, uint8_t buff_off, uint8_t data)
  *              successful \ref HDSL_open and not rechecked for performance.
  */
 int32_t HDSL_read_pc_buffer(HDSL_Handle handle, uint8_t buff_off, uint8_t *data);
+
+/**
+ *  \brief      Check encoder error status from long message parameter channel operation
+ *
+ *  \details    Reads the error status bit (bit 5) from PC_ADD_H register to determine if
+ *              the encoder reported an error for the last long message operation.
+ *
+ *              This function should be called after \ref HDSL_write_pc_long_msg or
+ *              \ref HDSL_read_pc_long_msg returns SystemP_SUCCESS to check if the encoder
+ *              accepted the parameters or responded with an error.
+ *
+ *              **Typical Usage:**
+ *              1. Call \ref HDSL_write_pc_long_msg or \ref HDSL_read_pc_long_msg
+ *              2. If SystemP_SUCCESS is returned (communication succeeded)
+ *              3. Call this function to check if encoder reported parameter error
+ *              4. Handle error condition if error status is 1
+ *
+ *  \param[in]  handle   HDSL handle obtained from \ref HDSL_open
+ *  \param[out] error    Pointer to store encoder error status (0 = no error, 1 = error)
+ *
+ *  \retval     SystemP_SUCCESS  Error status read successfully
+ *  \retval     SystemP_FAILURE  Invalid handle (NULL) or error pointer (NULL)
+ *
+ */
+int32_t HDSL_get_pc_long_msg_error(HDSL_Handle handle, uint8_t *error);
 
 /**
  *  \brief      Get synchronization control value

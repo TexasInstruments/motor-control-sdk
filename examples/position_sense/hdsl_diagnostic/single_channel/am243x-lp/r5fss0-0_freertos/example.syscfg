@@ -1,8 +1,9 @@
 /**
  * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
  * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
- * @cliArgs --device "AM243x_ALX_beta" --package "ALX" --part "ALX" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@09.01.00"
- * @versions {"tool":"1.19.0+3426"}
+ * @cliArgs --device "AM243x_ALX_beta" --part "ALX" --package "ALX" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@2025.00.00" --product "INDUSTRIAL_COMMUNICATIONS_SDK@2025.00.00" --product "MCU_PLUS_SDK@07.03.01"
+ * @v2CliArgs --device "AM2434" --package "FCCSP (ALX)" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@2025.00.00" --product "INDUSTRIAL_COMMUNICATIONS_SDK@2025.00.00" --product "MCU_PLUS_SDK@07.03.01"
+ * @versions {"tool":"1.23.0+4000"}
  */
 
 /**
@@ -51,10 +52,6 @@ const hdsl1           = hdsl.addInstance();
 i2c1.$name           = "CONFIG_I2C0";
 i2c1.I2C.$assign     = "I2C1";
 i2c1.I2C_child.$name = "drivers_i2c_v0_i2c_v0_template0";
-
-pruicss1.$name                           = "CONFIG_PRU_ICSS1";
-pruicss1.instance                        = "ICSSG1";
-pruicss1.AdditionalICSSSettings[0].$name = "CONFIG_PRU_ICSS_IO1";
 
 udma1.$name                       = "CONFIG_UDMA0";
 udma1.udmaBlkCopyChannel.create(1);
@@ -264,11 +261,15 @@ section11.output_section[0].alignment = 0;
 section12.group                       = false;
 section12.load_memory                 = "MSRAM";
 section12.$name                       = "Copy Table for TXPRU";
-section12.output_section.create(2);
+section12.output_section.create(4);
 section12.output_section[0].alignment = 32;
-section12.output_section[0].$name     = ".rodata.Hiperface_DSL_SYNC2_0_TX_PRU_2";
+section12.output_section[0].$name     = ".rodata.HdslFirmwareTxPru1_2";
 section12.output_section[1].alignment = 32;
-section12.output_section[1].$name     = ".rodata.Hiperface_DSL2_0_TX_PRU_2";
+section12.output_section[1].$name     = ".rodata.HdslFirmwareTxPru0_2";
+section12.output_section[2].$name     = ".rodata.HdslFirmwareSyncTxPru1_2";
+section12.output_section[2].alignment = 32;
+section12.output_section[3].$name     = ".rodata.HdslFirmwareSyncTxPru0_2";
+section12.output_section[3].alignment = 32;
 
 section13.$name                       = "HDSL Trace";
 section13.type                        = "NOLOAD";
@@ -278,21 +279,22 @@ section13.output_section.create(1);
 section13.output_section[0].$name     = ".hdslInterface_mem";
 section13.output_section[0].alignment = 32;
 
-hdsl1.$name                        = "CONFIG_HDSL0";
-hdsl1.coreClk                      = 300000000;
-hdsl1.Booster_Pack                 = true;
-hdsl1.PRU_ICSSG0_PRU.$assign       = "PRU_ICSSG0_PRU1";
-hdsl1.ENC1_EN.$name                = "ENC1_EN";
-hdsl1.ENC1_EN.GPIO.gpioPin.rx      = false;
-hdsl1.ENC1_EN.GPIO.gpioPin.$assign = "MMC1_SDWP";
-hdsl1.ENC2_EN.$name                = "ENC2_EN";
-hdsl1.ENC2_EN.GPIO.gpioPin.rx      = false;
-hdsl1.ENC2_EN.GPIO.gpioPin.$assign = "MMC1_SDCD";
+hdsl1.$name                  = "CONFIG_HDSL0";
+hdsl1.coreClk                = 300000000;
+hdsl1.Booster_Pack           = true;
+hdsl1.PRU_ICSSG0_PRU.$assign = "PRU_ICSSG0_PRU1";
+hdsl1.ENC1_EN.$name          = "ENC1_EN";
+hdsl1.ENC1_EN.GPIO_n.$assign = "MMC1_SDWP";
+hdsl1.ENC2_EN.$name          = "ENC2_EN";
+hdsl1.ENC2_EN.GPIO_n.$assign = "MMC1_SDCD";
 
-const pruicss2                           = pruicss.addInstance({}, false);
-pruicss2.$name                           = "CONFIG_PRU_ICSS0";
-hdsl1.pru                                = pruicss2;
-pruicss2.AdditionalICSSSettings[0].$name = "CONFIG_PRU_ICSS_IO0";
+pruicss1.$name                           = "CONFIG_PRU_ICSS0";
+hdsl1.pru                                = pruicss1;
+pruicss1.AdditionalICSSSettings[0].$name = "CONFIG_PRU_ICSS_IO0";
+pruicss1.intcMapping.create(1);
+pruicss1.intcMapping[0].$name            = "CONFIG_ICSS0_INTC_MAPPING0";
+pruicss1.intcMapping[0].event            = "21";
+pruicss1.intcMapping[0].channel          = "5";
 
 /**
  * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future
@@ -307,5 +309,3 @@ hdsl1.PRU_ICSSG0_PRU.GPO2.$suggestSolution  = "PRG0_PRU1_GPO2";
 hdsl1.PRU_ICSSG0_PRU.GPO1.$suggestSolution  = "PRG0_PRU1_GPO1";
 hdsl1.PRU_ICSSG0_PRU.GPO0.$suggestSolution  = "PRG0_PRU1_GPO0";
 hdsl1.PRU_ICSSG0_PRU.GPI13.$suggestSolution = "PRG0_PRU1_GPO13";
-hdsl1.ENC1_EN.GPIO.$suggestSolution         = "GPIO1";
-hdsl1.ENC2_EN.GPIO.$suggestSolution         = "GPIO1";
