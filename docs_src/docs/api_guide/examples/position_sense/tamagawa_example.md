@@ -103,7 +103,8 @@ event |= IEP_RST_CNT_EN;
  ---------------|-----------
  CPU + OS       | r5fss0-0 freertos
  ICSSG          | ICSSG0
- PRU            | PRU1
+ PRU            | PRU1 (single channel, multi channel using single PRU)
+ ^              | PRU1, RTU-PRU1, TXPRU1 (multi channel using three PRUs - load share mode)
  Toolchain      | ti-arm-clang
  Board          | @VAR_BOARD_NAME_LOWER (3 channel and 1 channel examples), @VAR_LP_BOARD_NAME_LOWER (2 channel and 1 channel examples)
  Example folder | examples/position_sense/tamagawa_diagnostic

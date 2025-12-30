@@ -155,6 +155,13 @@ let tamagawa_module = {
 
         },
         {
+            name: "Multi_Channel_Load_Share",
+            displayName: "Multi Channel Load Share",
+            description: "Selected Channels have different make",
+            hidden :(is_am26x_soc) ? true : false,
+            default: false
+        },
+        {
             name: "baudrate",
             displayName: "Select Baud Rate",
             description: "Data Speed Selection ",

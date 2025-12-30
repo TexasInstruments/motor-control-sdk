@@ -17,6 +17,11 @@
     % if(((instance.channel_0 & 1) && (instance.channel_1 & 1)) || ((instance.channel_1 & 1) && (instance.channel_2 & 1)) || ((instance.channel_2 & 1) && (instance.channel_0 & 1))) {
         % mode = "TAMAGAWA_MODE_MULTI_CHANNEL_SINGLE_PRU";  /* TAMAGAWA_MODE_MULTI_CHANNEL_SINGLE_PRU */
     % }
+    % if(instance.Multi_Channel_Load_Share)
+    % {
+        % /*Multi-channel load share mode*/
+        % mode = "TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU";  /* TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU */
+    % }
     % /* Determine PRU-ICSS Slice (0 or 1) */
     % let pruicss_slice = 1;  /* Default to PRU1 */
     % if(instance.instance === "ICSSG0") {
@@ -31,6 +36,15 @@
         % /* For ICSSM, use pruicss_slice configuration */
         % pruicss_slice = (instance.PRU_Slice == "PRU1") ? 1 : 0;
     % }
+    % /* Create PRU core ID variables based on slice */
+    % let pru_id = "PRUICSS_PRU0";
+    % let rtu_pru_id = "PRUICSS_RTU_PRU0";
+    % let tx_pru_id = "PRUICSS_TX_PRU0";
+    % if(pruicss_slice == 1) {
+        % pru_id = "PRUICSS_PRU1";
+        % rtu_pru_id = "PRUICSS_RTU_PRU1";
+        % tx_pru_id = "PRUICSS_TX_PRU1";
+    % }
     % let pruicss_instance = 0;
     % /* Determine ICSS type and instance index */
     % if(instance.instance === "ICSSM" || instance.instance === "ICSSM0" || instance.instance === "ICSSM1") {
@@ -41,11 +55,6 @@
         % if(instance.instance === "ICSSG1") {
             % pruicss_instance = 1;
         % }
-    % }
-    % /* Create PRU core ID variables based on slice */
-    % let pru_id = "PRUICSS_PRU0";
-    % if(pruicss_slice == 1) {
-        % pru_id = "PRUICSS_PRU1";
     % }
     % /* Calculate individual channel enabled flags */
     % let channel0_enabled = (instance.channel_0 & 1);
@@ -60,6 +69,11 @@
 #define `instance.$name.toUpperCase()`_PRUICSS_INSTANCE                     (`pruicss_instance`U)
 #define `instance.$name.toUpperCase()`_PRUICSS_SLICE                        (`pruicss_slice`U)
 #define `instance.$name.toUpperCase()`_PRUICSS_PRU_ID                       (`pru_id`)
+    % if(instance.Multi_Channel_Load_Share & 1)
+    %{
+#define `instance.$name.toUpperCase()`_PRUICSS_RTU_PRU_ID                   (`rtu_pru_id`)
+#define `instance.$name.toUpperCase()`_PRUICSS_TX_PRU_ID                    (`tx_pru_id`)
+    %}
 #define `instance.$name.toUpperCase()`_CHANNEL0_ENABLED                     (`channel0_enabled`U)
 #define `instance.$name.toUpperCase()`_CHANNEL1_ENABLED                     (`channel1_enabled`U)
 #define `instance.$name.toUpperCase()`_CHANNEL2_ENABLED                     (`channel2_enabled`U)

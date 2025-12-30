@@ -74,6 +74,7 @@
 #include <kernel/dpl/ClockP.h>
 #include "tamagawa_periodic_trigger.h"
 #include <drivers/soc.h>
+#include "ti_drivers_open_close.h"
 
 /* ========================================================================== */
 /*                           Macros & Typedefs                                */
@@ -90,18 +91,28 @@
 /* ICSSG Interrupt Numbers */
 #if (CONFIG_TAMAGAWA0_PRUICSS_INSTANCE == 1)
 #define ICSS_PRU_TAMAGAWA_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_0)
+#define ICSS_RTU_TAMAGAWA_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_1)
+#define ICSS_TX_TAMAGAWA_INT_NUM          (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_2)
 #else
 #define ICSS_PRU_TAMAGAWA_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_0)
+#define ICSS_RTU_TAMAGAWA_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_1)
+#define ICSS_TX_TAMAGAWA_INT_NUM          (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_2)
 #endif /* CONFIG_TAMAGAWA0_PRUICSS_INSTANCE */
 #endif /* SOC_AM243X */
 
-#if (CONFIG_TAMAGAWA0_PRUICSS_PRUx == 1)
+#if (CONFIG_TAMAGAWA0_PRUICSS_SLICE == 1)
 #define IEP_CMP_EVENT       ( 3 )
 #define PRU_TRIGGER_HOST_TAMAGAWA_EVT   ( 2+16 )    /* pr0_pru_mst_intr[2]_intr_req */
+/* Load-share mode events for SLICE1 */
+#define RTU_TRIGGER_HOST_TAMAGAWA_EVT   ( 4+16 )    /* pr0_pru_mst_intr[4]_intr_req (RTU-PRU) */
+#define TX_TRIGGER_HOST_TAMAGAWA_EVT    ( 6+16 )    /* pr0_pru_mst_intr[6]_intr_req (TX-PRU) */
 #else
 #define IEP_CMP_EVENT       ( 4 )
 #define PRU_TRIGGER_HOST_TAMAGAWA_EVT   ( 3+16 )    /* pr0_pru_mst_intr[3]_intr_req */
-#endif /* CONFIG_TAMAGAWA0_PRUICSS_PRUx */
+/* Load-share mode events for SLICE0 */
+#define RTU_TRIGGER_HOST_TAMAGAWA_EVT   ( 5+16 )    /* pr0_pru_mst_intr[5]_intr_req (RTU-PRU) */
+#define TX_TRIGGER_HOST_TAMAGAWA_EVT    ( 7+16 )    /* pr0_pru_mst_intr[7]_intr_req (TX-PRU) */
+#endif /* CONFIG_TAMAGAWA0_PRUICSS_SLICE */
 
 #if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
 /* NOTE: Dual handle example using PRU0 and PRU1 is tested only with
@@ -109,9 +120,9 @@
  * combinations, update code and remove this line.
  */
 #if (CONFIG_TAMAGAWA1_PRUICSS_INSTANCE == 1)
-#define ICSS_PRU_TAMAGAWA_INT_NUM_SECOND_SLICE  (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_1)
+#define ICSS_PRU_TAMAGAWA_INT_NUM_SECOND_SLICE  (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_3)
 #else
-#define ICSS_PRU_TAMAGAWA_INT_NUM_SECOND_SLICE  (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_1)
+#define ICSS_PRU_TAMAGAWA_INT_NUM_SECOND_SLICE  (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_3)
 #endif /* CONFIG_TAMAGAWA1_PRUICSS_INSTANCE */
 
 #if (CONFIG_TAMAGAWA1_PRUICSS_PRUx == 1)
@@ -126,9 +137,8 @@
 /* ========================================================================== */
 /*                            Global Variables                                */
 /* ========================================================================== */
-
-static HwiP_Object gTamagawaHwiObject[CONFIG_TAMAGAWA_NUM_INSTANCES];
-uint32_t gPruTamagawaIrqCnt[CONFIG_TAMAGAWA_NUM_INSTANCES] = {0};
+static HwiP_Object gTamagawaHwiObject[CONFIG_TAMAGAWA_NUM_INSTANCES][TAMAGAWA_MAX_CHANNELS_PER_SLICE];
+uint32_t gPruTamagawaIrqCnt[CONFIG_TAMAGAWA_NUM_INSTANCES][TAMAGAWA_MAX_CHANNELS_PER_SLICE] = {{0}};
 
 /* PRU-ICSS INTC Configuration uses first Tamagawa instance */
 /* ASSUMPTION: Same PRU-ICSS instance is used for multiple Tamagawa handles in this example */
@@ -153,6 +163,12 @@ void tamagawa_pru_irq_handler(void *pruicss_handle);
  * TAMAGAWA_MODE_SINGLE_CHANNEL_SINGLE_PRU mode on AM261x.
  */
 void tamagawa_pru_irq_handler_second_slice(void *pruicss_handle);
+#endif
+
+#if (CONFIG_TAMAGAWA0_MODE == TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU)
+/* Load-share mode interrupt handlers */
+void tamagawa_rtu_pru_irq_handler(void *pruicss_handle);
+void tamagawa_tx_pru_irq_handler(void *pruicss_handle);
 #endif
 
 /* ========================================================================== */
@@ -250,14 +266,54 @@ static void tamagawa_interrupt_config(tamagawa_periodic_interface *tamagawa_peri
     int32_t status;
     HwiP_Params hwi_params;
 
-    /* Register and enable PRU FW interrupt */
+#if (CONFIG_TAMAGAWA0_MODE == TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU)
+    /* Load-share mode: Register interrupts for RTU-PRU, PRU, and TX-PRU */
+
+    /* Register and enable RTU-PRU FW interrupt for Channel 0 - only if channel 0 is enabled */
+#if (CONFIG_TAMAGAWA0_CHANNEL0_ENABLED == 1)
+    HwiP_Params_init(&hwi_params);
+    hwi_params.intNum   = ICSS_RTU_TAMAGAWA_INT_NUM;
+    hwi_params.callback = &tamagawa_rtu_pru_irq_handler;
+    hwi_params.args     = pruicss_handle;
+    hwi_params.isPulse  = FALSE;
+    hwi_params.isFIQ    = FALSE;
+    status              = HwiP_construct(&gTamagawaHwiObject[CONFIG_TAMAGAWA0][0], &hwi_params);
+    DebugP_assert(status == SystemP_SUCCESS);
+#endif
+
+    /* Register and enable PRU FW interrupt for Channel 1 - only if channel 1 is enabled */
+#if (CONFIG_TAMAGAWA0_CHANNEL1_ENABLED == 1)
     HwiP_Params_init(&hwi_params);
     hwi_params.intNum   = ICSS_PRU_TAMAGAWA_INT_NUM;
     hwi_params.callback = &tamagawa_pru_irq_handler;
     hwi_params.args     = pruicss_handle;
     hwi_params.isPulse  = FALSE;
     hwi_params.isFIQ    = FALSE;
-    status              = HwiP_construct(&gTamagawaHwiObject[CONFIG_TAMAGAWA0], &hwi_params);
+    status              = HwiP_construct(&gTamagawaHwiObject[CONFIG_TAMAGAWA0][1], &hwi_params);
+    DebugP_assert(status == SystemP_SUCCESS);
+#endif
+
+    /* Register and enable TX-PRU FW interrupt for Channel 2 - only if channel 2 is enabled */
+#if (CONFIG_TAMAGAWA0_CHANNEL2_ENABLED == 1)
+    HwiP_Params_init(&hwi_params);
+    hwi_params.intNum   = ICSS_TX_TAMAGAWA_INT_NUM;
+    hwi_params.callback = &tamagawa_tx_pru_irq_handler;
+    hwi_params.args     = pruicss_handle;
+    hwi_params.isPulse  = FALSE;
+    hwi_params.isFIQ    = FALSE;
+    status              = HwiP_construct(&gTamagawaHwiObject[CONFIG_TAMAGAWA0][2], &hwi_params);
+    DebugP_assert(status == SystemP_SUCCESS);
+#endif
+
+#else
+    /* Single/dual PRU modes: Register single PRU interrupt */
+    HwiP_Params_init(&hwi_params);
+    hwi_params.intNum   = ICSS_PRU_TAMAGAWA_INT_NUM;
+    hwi_params.callback = &tamagawa_pru_irq_handler;
+    hwi_params.args     = pruicss_handle;
+    hwi_params.isPulse  = FALSE;
+    hwi_params.isFIQ    = FALSE;
+    status              = HwiP_construct(&gTamagawaHwiObject[CONFIG_TAMAGAWA0][0], &hwi_params);
     DebugP_assert(status == SystemP_SUCCESS);
 
 #if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
@@ -268,8 +324,9 @@ static void tamagawa_interrupt_config(tamagawa_periodic_interface *tamagawa_peri
     hwi_params.args     = pruicss_handle;
     hwi_params.isPulse  = FALSE;
     hwi_params.isFIQ    = FALSE;
-    status              = HwiP_construct(&gTamagawaHwiObject[CONFIG_TAMAGAWA1], &hwi_params);
+    status              = HwiP_construct(&gTamagawaHwiObject[CONFIG_TAMAGAWA1][0], &hwi_params);
     DebugP_assert(status == SystemP_SUCCESS);
+#endif
 #endif
 }
 
@@ -354,9 +411,23 @@ int32_t tamagawa_stop_periodic_mode(tamagawa_periodic_interface *tamagawa_period
     temp &= 0xFE;
     HW_WR_REG8((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG, temp);
 
-    HwiP_destruct(&gTamagawaHwiObject[CONFIG_TAMAGAWA0]);
+#if (CONFIG_TAMAGAWA0_MODE == TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU)
+    /* Load-share mode: Destruct PRU interrupts */
+#if (CONFIG_TAMAGAWA0_CHANNEL0_ENABLED == 1)
+    HwiP_destruct(&gTamagawaHwiObject[CONFIG_TAMAGAWA0][0]);  /* RTU-PRU */
+#endif
+#if (CONFIG_TAMAGAWA0_CHANNEL1_ENABLED == 1)
+    HwiP_destruct(&gTamagawaHwiObject[CONFIG_TAMAGAWA0][1]);  /* PRU */
+#endif
+#if (CONFIG_TAMAGAWA0_CHANNEL2_ENABLED == 1)
+    HwiP_destruct(&gTamagawaHwiObject[CONFIG_TAMAGAWA0][2]);  /* TX-PRU */
+#endif
+#else
+    /* Single/dual PRU modes */
+    HwiP_destruct(&gTamagawaHwiObject[CONFIG_TAMAGAWA0][0]);
 #if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
-    HwiP_destruct(&gTamagawaHwiObject[CONFIG_TAMAGAWA1]);
+    HwiP_destruct(&gTamagawaHwiObject[CONFIG_TAMAGAWA1][0]);
+#endif
 #endif
 
     return SystemP_SUCCESS;
@@ -365,8 +436,13 @@ int32_t tamagawa_stop_periodic_mode(tamagawa_periodic_interface *tamagawa_period
 /* PRU FW IRQ handler */
 void tamagawa_pru_irq_handler(void *pruicss_handle)
 {
-    /* Increment IRQ count */
-    gPruTamagawaIrqCnt[CONFIG_TAMAGAWA0]++;
+#if (CONFIG_TAMAGAWA0_MODE == TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU)
+    /* Load-share mode: PRU handles Channel 1 */
+    gPruTamagawaIrqCnt[CONFIG_TAMAGAWA0][1]++;
+#else
+    /* Single PRU mode*/
+    gPruTamagawaIrqCnt[CONFIG_TAMAGAWA0][0]++;
+#endif
 
     /* Clear interrupt at source */
     PRUICSS_clearEvent((PRUICSS_Handle)pruicss_handle, PRU_TRIGGER_HOST_TAMAGAWA_EVT);
@@ -376,9 +452,31 @@ void tamagawa_pru_irq_handler(void *pruicss_handle)
 void tamagawa_pru_irq_handler_second_slice(void *pruicss_handle)
 {
     /* Increment IRQ count */
-    gPruTamagawaIrqCnt[CONFIG_TAMAGAWA1]++;
+    gPruTamagawaIrqCnt[CONFIG_TAMAGAWA1][0]++;
 
     /* Clear interrupt at source */
     PRUICSS_clearEvent((PRUICSS_Handle)pruicss_handle, PRU_TRIGGER_HOST_TAMAGAWA_EVT_SECOND_SLICE);
+}
+#endif
+
+#if (CONFIG_TAMAGAWA0_MODE == TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU)
+/* RTU-PRU FW IRQ handler for Channel 0 */
+void tamagawa_rtu_pru_irq_handler(void *pruicss_handle)
+{
+    /* Increment IRQ count for Channel 0 (RTU-PRU) */
+    gPruTamagawaIrqCnt[CONFIG_TAMAGAWA0][0]++;
+
+    /* Clear interrupt at source - use RTU-PRU event */
+    PRUICSS_clearEvent((PRUICSS_Handle)pruicss_handle, RTU_TRIGGER_HOST_TAMAGAWA_EVT);
+}
+
+/* TX-PRU FW IRQ handler for Channel 2 */
+void tamagawa_tx_pru_irq_handler(void *pruicss_handle)
+{
+    /* Increment IRQ count for Channel 2 (TX-PRU) */
+    gPruTamagawaIrqCnt[CONFIG_TAMAGAWA0][2]++;
+
+    /* Clear interrupt at source - use TX-PRU event */
+    PRUICSS_clearEvent((PRUICSS_Handle)pruicss_handle, TX_TRIGGER_HOST_TAMAGAWA_EVT);
 }
 #endif

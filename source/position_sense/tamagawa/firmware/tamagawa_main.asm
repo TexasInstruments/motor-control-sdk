@@ -1,5 +1,5 @@
 
-; Copyright (C) 2022 Texas Instruments Incorporated
+; Copyright (C) 2022-2025 Texas Instruments Incorporated
 ;
 ; Redistribution and use in source and binary forms, with or without
 ; modification, are permitted provided that the following conditions
@@ -73,10 +73,13 @@ RET2	.macro
     .include "tamagawa_send.h"
     .include "eeprom_read.h"
     .include "eeprom_write.h"
+    .include "tamagawa_sync_macros.h"
 
 	.asg	R28,	SCRATCH
 	.asg	R29,	SCRATCH1
 	.asg	R7.b0,	TAMAGAWA_ENABLE_CHx
+    ;TAMAGAWA_ENABLED_CHANNELS is used only load share mode, to sync channels and do global reint
+    .asg    R9.b0,  TAMAGAWA_ENABLED_CHANNELS
 	.asg	c25,	PRUx_DMEM
 
 	.asg	R27.b0,	TX_DATA0
@@ -100,7 +103,7 @@ main:
 TAMAGAWA_INIT:
 
     ;If PRU0 is defined in symbols, it will select all PRU0 CFG registers.
-    .if	$isdefed("PRU0")
+	.if	$isdefed("PRU0") | $isdefed("RTU_PRU0") | $isdefed("TX_PRU0")
     ;Data Memory address for PRU0 is loaded in PRUx_DMEM
     .asg	PRU0_DMEM,		PRUx_DMEM
 	.asg    ICSS_CFG_PRU0_ENDAT_CH0_CFG1, ICSS_CFG_PRUx_ED_CH0_CFG1
@@ -115,7 +118,7 @@ TAMAGAWA_INIT:
 	.endif
 
     ;If PRU1 is defined in symbols, it will select all PRU1 CFG registers.
-    .if	$isdefed("PRU1")
+	.if	$isdefed("PRU1") | $isdefed("RTU_PRU1") | $isdefed("TX_PRU1")
     ;Data Memory address for PRU1 is loaded in PRUx_DMEM
     .asg	PRU1_DMEM,		PRUx_DMEM
 	.asg    ICSS_CFG_PRU1_ENDAT_CH0_CFG1, ICSS_CFG_PRUx_ED_CH0_CFG1
@@ -133,17 +136,19 @@ TAMAGAWA_INIT:
 	ZERO	&R0,	120
 
     ; (Channel Mask) Record channel enabled by host, save it after zeroing registers (done above)
-	LBCO	&TAMAGAWA_ENABLE_CHx,	PRUx_DMEM,	TAMAGAWA_CHANNEL_CONFIG_OFFSET,	1
-
-	.if	$defined("ENABLE_MULTI_CHANNEL")=0
-        ;  if no channel selected,set channel mask default to ch0
-        ;  if more than 1 channel selected,set channel mask default to ch0
-        AND     TAMAGAWA_ENABLE_CHx,	TAMAGAWA_ENABLE_CHx, 0x7
-        QBEQ    TAMAGAWA_DEFAULT_CH,	TAMAGAWA_ENABLE_CHx, 0x7
-        QBEQ    TAMAGAWA_DEFAULT_CH,	TAMAGAWA_ENABLE_CHx, 0
-        JMP     TAMAGAWA_SKIP_DEFAULT_CH
+	LBCO    &TAMAGAWA_ENABLE_CHx,	PRUx_DMEM,	TAMAGAWA_CHANNEL_CONFIG_OFFSET,	1
+    .if $isdefed("ENABLE_MULTI_MAKE_RTU") | $isdefed("ENABLE_MULTI_MAKE_PRU") | $isdefed("ENABLE_MULTI_MAKE_TXPRU") 
+    MOV     TAMAGAWA_ENABLED_CHANNELS, TAMAGAWA_ENABLE_CHx
+    AND     TAMAGAWA_ENABLE_CHx, TAMAGAWA_ENABLE_CHx, (1<<TAMAGAWA_CHANNEL_BIT_ID)  
+    .elseif	$defined("ENABLE_MULTI_CHANNEL")=0
+    ;  if no channel selected,set channel mask default to ch0
+    ;  if more than 1 channel selected,set channel mask default to ch0
+    AND     TAMAGAWA_ENABLE_CHx,	TAMAGAWA_ENABLE_CHx, 0x7
+    QBEQ    TAMAGAWA_DEFAULT_CH,	TAMAGAWA_ENABLE_CHx, 0x7
+    QBEQ    TAMAGAWA_DEFAULT_CH,	TAMAGAWA_ENABLE_CHx, 0
+    JMP     TAMAGAWA_SKIP_DEFAULT_CH
 TAMAGAWA_DEFAULT_CH:
-        LDI     TAMAGAWA_ENABLE_CHx, 0x1
+    LDI     TAMAGAWA_ENABLE_CHx, 0x1
 TAMAGAWA_SKIP_DEFAULT_CH:
 	.endif
 
@@ -186,7 +191,8 @@ HANDLE_HOST_TRIGGER_MODE:
 	LBCO	&RX_FRAMES , PRUx_DMEM,	TAMAGAWA_WORD_1_OFFSET+1 ,	1
     ;Call SEND RECEIVE FUNCTION
 	CALL	FN_SEND_RECEIVE_TAMAGAWA
-	SET		R31, TAMAGAWA_TX_GLOBAL_REINIT
+    ;Global reinit
+    M_TAMAGAWA_LS_GLOBAL_REINIT
 
 TAMAGAWA_HOST_CMD_END:
 	LDI		R3.w0,	0
@@ -196,10 +202,18 @@ TAMAGAWA_HOST_CMD_END:
     LBCO	&R3.b0,	PRUx_DMEM,	TAMAGAWA_OPMODE_CONFIG_OFFSET,	1 
     ;skip interrupt to R5F in host trigger
     QBNE    SKIP_INTERRUPT_TRIGGER,  R3.b0,  0
-    ;Generate interrupt to R5F
-    LDI     R31.w0, PRU_TRIGGER_HOST_TAMAGAWA_EVT0 
+    ;Generate interrupt to R5F - different events for load-share mode
+    .if $isdefed("ENABLE_MULTI_MAKE_RTU")
+    LDI     R31.w0, RTU_TRIGGER_HOST_TAMAGAWA_EVT   ; RTU-PRU: pr0_pru_mst_intr[4/5]_intr_req
+    .elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
+    LDI     R31.w0, PRU_TRIGGER_HOST_TAMAGAWA_EVT    ; PRU: pr0_pru_mst_intr[2/3]_intr_req
+    .elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
+    LDI     R31.w0, TXPRU_TRIGGER_HOST_TAMAGAWA_EVT  ; TX-PRU: pr0_pru_mst_intr[6/7]_intr_req
+    .else
+    LDI     R31.w0, PRU_TRIGGER_HOST_TAMAGAWA_EVT    ; Single/dual PRU mode
+    .endif 
     ;Global reinit
-    set     R31, TAMAGAWA_TX_GLOBAL_REINIT
+    M_TAMAGAWA_LS_GLOBAL_REINIT
     ;Handle next Postition in periodic trigger
     JMP		HANDLE_PERIODIC_TRIGGER_MODE
 

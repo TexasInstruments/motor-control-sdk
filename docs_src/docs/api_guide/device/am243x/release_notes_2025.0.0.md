@@ -30,6 +30,10 @@
     <td>EnDat3 protocol support with 12.5 Mbps data rate, Manchester encoding, frame-based communication (HPF/LPH/LPF), foreground and background communication channels, host trigger and periodic trigger modes
     <td>Position Sense EnDat3
 </tr>
+<tr>
+    <td>Multi-channel with different communication modes and different numbers of encoders connected across channels under load share mode
+    <td>Position Sense Tamagawa
+</tr>
 </table>
 
 SOC    | Supported CPUs  | Boards                                                                                                      | Host PC
@@ -131,7 +135,7 @@ Mbed-TLS                             | R5F            | mbedtls-2.13.1
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Single channel, Multi channel using single PRU core, absolute position, encoder ID, reset, EEPROM read, EEPROM write, 2.5 Mbps Encoder, continuous mode, BP-AM2BLDCSERVO Boosterpack with LP-AM243
+    <td> Single channel, Multi channel using single PRU core, Multi channel using three PRU cores (load share mode), absolute position, encoder ID, reset, EEPROM read, EEPROM write, 2.5 Mbps Encoder, continuous mode, BP-AM2BLDCSERVO Boosterpack with LP-AM243
     <td> 5 Mbps encoder
 </tr>
 </table>
