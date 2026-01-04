@@ -73,7 +73,10 @@ extern "C" {
  * 1. Initialize params: \ref nikon_params_init
  * 2. Configure pruicss_handle in params
  * 3. Initialize driver: \ref nikon_init (validates all attrs and params)
- * 4. Configure operation mode: \ref nikon_config_host_trigger or \ref nikon_config_periodic_trigger
+ * 4. Configure operation mode:
+ *    - Host trigger mode: \ref nikon_config_host_trigger
+ *    - Periodic CMP mode: \ref nikon_config_periodic_trigger_cmp_mode
+ *    - Periodic CAP mode: \ref nikon_config_periodic_trigger_cap_mode
  * 5. Detect encoder: \ref nikon_wait_for_encoder_detection
  * 6. Update encoder settings: \ref nikon_update_enc_len, \ref nikon_update_enc_addr
  * 7. Get position data: \ref nikon_get_pos
@@ -124,9 +127,20 @@ int32_t nikon_command_wait(nikon_handle handle);
 /**
  *  \brief      Send the Nikon command and wait till firmware acknowledges
  *
- *  \details    This function internally calls the following APIs:
- *              - \ref nikon_command_send : Trigger sending the Nikon command in PRU
- *              - \ref nikon_command_wait : Wait till PRU finishes Nikon transaction
+ *  \details    This function processes a Nikon command transaction. The behavior
+ *              differs based on the operating mode:
+ *
+ *              **Host Trigger Mode**:
+ *              - Calls \ref nikon_command_send to trigger the command in PRU
+ *              - Calls \ref nikon_command_wait to wait for PRU completion
+ *
+ *              **Periodic Trigger Mode (CMP or CAP)**:
+ *              - Skips calling \ref nikon_command_send (PRU triggers automatically)
+ *              - Only calls \ref nikon_command_wait to wait for PRU completion
+ *
+ *              In periodic modes, the PRU firmware automatically initiates Nikon
+ *              transactions based on IEP timer events, so explicit command sending
+ *              by the host is not required.
  *
  *  \param[in]  handle   Nikon handle from \ref nikon_init
  *
@@ -152,8 +166,8 @@ int32_t nikon_command_process(nikon_handle handle);
  *                       - For Nikon V2.1: CMD_0 to CMD_22, CMD_27 to CMD_30
  *                       - For Nikon V3.0: CMD_0 to CMD_30, CMD_1_VEL to CMD_18_VEL
  *                       NOTE: CMD_23 to CMD_26 and CMD_1_VEL to CMD_18_VEL are Nikon 3.0 only.
- *                       Commands ENCODER_ADR_CHANGE, START_CONTINUOUS_MODE, UPDATE_CLOCK_FREQ,
- *                       and UPDATE_ENC_LEN are invalid for this API.
+ *                       Commands ENCODER_ADR_CHANGE, START_CONTINUOUS_CMP_MODE, START_CONTINUOUS_CAP_MODE,
+ *                       UPDATE_CLOCK_FREQ, and UPDATE_ENC_LEN are invalid for this API.
  *
  *  \retval     SystemP_SUCCESS for success
  *  \retval     SystemP_FAILURE for invalid handle, invalid command or communication failure
@@ -273,13 +287,23 @@ uint64_t nikon_reverse_bits(uint64_t bits, uint32_t num_bits);
 int32_t nikon_config_load_share(nikon_handle handle, uint8_t mask);
 
 /**
- *  \brief      Configure periodic trigger operation mode
+ *  \brief      Configure periodic trigger CMP mode operation
+ *
+ *  \details    Configures the Nikon firmware to use IEP CMP (compare) events for periodic triggering.
+ *              Position data is sampled automatically when IEP counter reaches the configured
+ *              CMP event compare value.
+ *
+ *              **Configuration requirements:**
+ *              - IEP hardware CMP registers must be configured separately
+ *              - Use \ref nikon_config_iep_cmp_event to set event number in firmware. This function
+ *                is called inside \ref nikon_init by default.
+ *              - CMP event range: 0-15
  *
  *  \param[in]  handle          Nikon handle from \ref nikon_init
  *
  *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE on error
  */
-int32_t nikon_config_periodic_trigger(nikon_handle handle);
+int32_t nikon_config_periodic_trigger_cmp_mode(nikon_handle handle);
 
 /**
  *  \brief      Configure host trigger operation mode
@@ -289,6 +313,67 @@ int32_t nikon_config_periodic_trigger(nikon_handle handle);
  *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE on error
  */
 int32_t nikon_config_host_trigger(nikon_handle handle);
+
+/**
+ *  \brief      Configure periodic trigger CAP mode operation
+ *
+ *  \details    Configures the Nikon firmware to use IEP CAP (capture) events for periodic triggering.
+ *              Position data is sampled automatically when an external signal triggers
+ *              the IEP capture event.
+ *
+ *              **Configuration requirements:**
+ *              - IEP hardware CAP registers must be configured separately
+ *              - External signal to IEP capture input should be configured
+ *              - Use \ref nikon_config_iep_cap_event to set event number in firmware. This function
+ *                is called inside \ref nikon_init by default.
+ *              - CAP event range: 0-7
+ *
+ *  \param[in]  handle          Nikon handle from \ref nikon_init
+ *
+ *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE on error
+ */
+int32_t nikon_config_periodic_trigger_cap_mode(nikon_handle handle);
+
+/**
+ *  \brief      Configure IEP CAP event for periodic trigger (DMEM configuration only)
+ *
+ *  \details    This function configures the IEP capture event information in PRU shared
+ *              memory (DMEM) for firmware access. It writes the capture register address
+ *              and event number to trigger_params structure. This function does NOT configure
+ *              IEP hardware registers.
+ *
+ *  \param[in]  handle          Nikon handle from \ref nikon_init
+ *  \param[in]  channel         Channel number (0-2 for ch0, ch1, ch2). Used in load share mode,
+ *                              ignored in single PRU mode (always uses index 0).
+ *  \param[in]  event_num       IEP CAP event number (valid range: 0-7)
+ *
+ *  \retval     SystemP_SUCCESS on success
+ *  \retval     SystemP_FAILURE on NULL handle or invalid parameters
+ *
+ *  \note       This function only configures firmware DMEM, not IEP hardware.
+ *              Application must separately configure IEP CAP hardware registers.
+ */
+int32_t nikon_config_iep_cap_event(nikon_handle handle, uint8_t channel, uint8_t event_num);
+
+/**
+ *  \brief      Configure IEP CMP event for periodic trigger (DMEM configuration only)
+ *
+ *  \details    This function configures the IEP compare event information in PRU shared
+ *              memory (DMEM) for firmware access. It writes the event number to trigger_params
+ *              structure. This function does NOT configure IEP hardware registers.
+ *
+ *  \param[in]  handle          Nikon handle from \ref nikon_init
+ *  \param[in]  channel         Channel number (0-2 for ch0, ch1, ch2). Used in load share mode,
+ *                              ignored in single PRU mode (always uses index 0).
+ *  \param[in]  event_num       IEP CMP event number (valid range: 0-15)
+ *
+ *  \retval     SystemP_SUCCESS on success
+ *  \retval     SystemP_FAILURE on NULL handle or invalid parameters
+ *
+ *  \note       This function only configures firmware DMEM, not IEP hardware.
+ *              Application must separately configure IEP CMP hardware registers.
+ */
+int32_t nikon_config_iep_cmp_event(nikon_handle handle, uint8_t channel, uint8_t event_num);
 
 /**
  *  \brief      Detect whether the connected encoder is of selected frequency

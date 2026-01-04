@@ -85,6 +85,26 @@ typedef struct nikon_pos_data_res_s
     /**< Calculated CRC, Received CRC and CRC error count */
 } nikon_pos_data_res;
 /**
+ *    \brief    Structure defining Nikon periodic trigger configuration
+ *
+ *    \details  Contains IEP event numbers and capture register addresses for periodic trigger mode
+ */
+typedef struct nikon_periodic_trigger_cfg_s
+{
+    uint8_t iep_cmp_event;
+    /**< IEP compare event number for periodic CMP mode */
+
+    uint8_t iep_cap_event;
+    /**< IEP capture event number for periodic CAP mode */
+
+    uint16_t reserved;
+    /**< Reserved for alignment */
+
+    uint32_t iep_capture_reg;
+    /**< IEP capture register address for periodic CAP mode */
+} nikon_periodic_trigger_cfg;
+
+/**
  *    \brief    Structure defining Nikon interface
  *
  *    \details  Firmware config, command and channel interface
@@ -134,6 +154,11 @@ typedef struct nikon_pruicss_xchg_s
     /**< ICSS core clock frequency */
     nikon_pos_data_res pos_data_res[NUM_ENCODERS_MAX];
     /**< Results extracted from raw data received */
+    uint32_t iep_base_address;
+    /**< IEP register base address for periodic trigger mode */
+    nikon_periodic_trigger_cfg trigger_params[NIKON_NUM_CH_PER_SLICE_MAX];
+    /**< Periodic trigger configuration parameters for each channel (ch0, ch1, ch2).
+     *   Contains IEP event numbers and capture register addresses */
 } nikon_pruicss_xchg;
 
 #ifdef __cplusplus
