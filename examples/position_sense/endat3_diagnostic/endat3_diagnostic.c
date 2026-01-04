@@ -145,51 +145,53 @@
 /* ========================================================================== */
 
 /** \brief Continuous position loop stop signal value */
-#define ENDAT3_POSITION_LOOP_STOP   (0U)
+#define ENDAT3_POSITION_LOOP_STOP       (0U)
 /** \brief Continuous position loop start/running signal value */
-#define ENDAT3_POSITION_LOOP_START  (1U)
+#define ENDAT3_POSITION_LOOP_START      (1U)
 
 /** \brief Bit mask for 30-bit position data (EnDAT3 standard position resolution) */
-#define POSITION_MASK_30BIT         (0x3FFFFFFF)
+#define POSITION_MASK_30BIT             (0x3FFFFFFF)
 /** \brief Full rotation angle in degrees (360.0) for angle calculation */
-#define ANGLE_FULL_ROTATION         (360.0f)
+#define ANGLE_FULL_ROTATION             (360.0f)
 /** \brief Position data bit resolution (30 bits for EnDAT3 encoders) */
-#define ANGLE_BIT_RESOLUTION        (30U)
+#define ANGLE_BIT_RESOLUTION            (30U)
 /** \brief Maximum position value (2^30) for position data range */
-#define POSITION_MAX_VALUE          (1UL << ANGLE_BIT_RESOLUTION)
+#define POSITION_MAX_VALUE              (1UL << ANGLE_BIT_RESOLUTION)
 
 /** \brief Delay in microseconds between position reads in continuous mode (1 ms) */
-#define CONTINUOUS_MODE_DELAY_US    (1000U)
+#define CONTINUOUS_MODE_DELAY_US        (1000U)
 /** \brief Startup delay for periodic mode initialization (100 ms) */
-#define PERIODIC_MODE_STARTUP_US    (100000U)
+#define PERIODIC_MODE_STARTUP_US        (100000U)
 /** \brief Loop delay between checks in periodic mode (10 ms) */
-#define PERIODIC_MODE_LOOP_DELAY_US (10000U)
+#define PERIODIC_MODE_LOOP_DELAY_US     (10000U)
 /** \brief Delay when switching between operating modes (100 ms) */
-#define MODE_SWITCH_DELAY_US        (100000U)
+#define MODE_SWITCH_DELAY_US            (100000U)
 /** \brief Standard 1 second delay in microseconds */
-#define DELAY_1_SEC                 (1000000U)
+#define DELAY_1_SEC                     (1000000U)
 /** \brief 302 millisecond delay for encoder stabilization */
-#define DELAY_302_MILLISEC          (302000U)
+#define DELAY_302_MILLISEC              (302000U)
 
 /** \brief Fixed value for DATANOP test command (0x0000) */
-#define DATANOP_FIXED_VALUE         (0x0000)
+#define DATANOP_FIXED_VALUE             (0x0000)
 /** \brief Fixed value for HELLO test command (0x2222) */
-#define HELLO_FIXED_VALUE           (0x2222)
+#define HELLO_FIXED_VALUE               (0x2222)
 
 /** \brief Stack size in bytes for continuous mode task (4 KB) */
-#define TASK_STACK_SIZE             (4096U)
+#define TASK_STACK_SIZE                 (4096U)
 /** \brief Priority level for continuous mode task in FreeRTOS */
-#define TASK_PRIORITY               (6U)
+#define TASK_PRIORITY                   (6U)
 
 /* Command Type Defines */
 /** \brief Command type: Foreground command with immediate response */
-#define ENDAT3_CMD_TYPE_FOREGROUND  (0U)
+#define ENDAT3_CMD_TYPE_FOREGROUND      (0U)
 /** \brief Command type: Background command executed during next position read */
-#define ENDAT3_CMD_TYPE_BACKGROUND  (1U)
+#define ENDAT3_CMD_TYPE_BACKGROUND      (1U)
 /** \brief Command type: Continuous position reading mode (loop with host trigger mode) */
-#define ENDAT3_CMD_TYPE_CONTINUOUS  (2U)
-/** \brief Command type: Periodic mode with IEP timer based trigger */
-#define ENDAT3_CMD_TYPE_PERIODIC    (3U)
+#define ENDAT3_CMD_TYPE_CONTINUOUS      (2U)
+/** \brief Command type: Periodic mode with IEP CMP based trigger */
+#define ENDAT3_CMD_TYPE_PERIODIC_CMP    (3U)
+/** \brief Command type: Periodic mode with IEP CAP based trigger */
+#define ENDAT3_CMD_TYPE_PERIODIC_CAP    (4U)
 
 /* ========================================================================== */
 /*                            Global Variables                                */
@@ -221,7 +223,7 @@ static void endat3_pruicss_load_run_fw(void);
 static void endat3_continuous_position_fetch(endat3_handle handle);
 static void endat3_position_loop_decide_termination(void *args);
 static int32_t endat3_loop_task_create(void);
-static void endat3_process_periodic_command(endat3_handle handle[]);
+static void endat3_process_periodic_command(endat3_handle handle[], uint8_t is_cap_mode);
 static void endat3_display_fw_version(void);
 
 /* ========================================================================== */
@@ -643,7 +645,7 @@ static int32_t endat3_loop_task_create(void)
  * - Any function call failure will lead to exit of the function
  * - Switch back to host trigger mode is outside this function
  */
-static void endat3_process_periodic_command(endat3_handle handle[])
+static void endat3_process_periodic_command(endat3_handle handle[], uint8_t is_cap_mode)
 {
     int32_t status;
     uint8_t current_opmode;
@@ -654,30 +656,94 @@ static void endat3_process_periodic_command(endat3_handle handle[])
     uint8_t is_busy;
     uint8_t is_valid;
 
+    memset(&gEndat3PeriodicInterface, 0, sizeof(endat3_periodic_interface));
+
     /* Get IEP timer configuration from user and update gEndat3PeriodicInterface */
-    DebugP_log("\r\n| Enter IEP reset cycle count (must be greater than EnDat3 cycle time including timeout period, in IEP cycles): ");
-    if(DebugP_scanf("%u\n", &gEndat3PeriodicInterface.iep_reset_count) < 0)
+    if(is_cap_mode)
     {
-        DebugP_log("\r| ERROR: invalid value\r\n|\r\n|\r\n|\r\n");
-        return;
+#if defined(SOC_AM243X)
+        DebugP_log("\r| Enter IEP SYNC0 period (must be greater than EnDat3 cycle time including timeout period, in IEP cycles):");
+        if(DebugP_scanf("%llu\n", &gEndat3PeriodicInterface.iep_reset_count) < 0)
+        {
+            DebugP_log("\r| ERROR: invalid value\r\n|\r\n|\r\n|\r\n");
+            return;
+        }
+
+        if((gEndat3PeriodicInterface.iep_reset_count <= ENDAT3_IEP_COUNTER_INCREMENT)  || (gEndat3PeriodicInterface.iep_reset_count > UINT32_MAX))
+        {
+            DebugP_log("\r| ERROR:  ERROR: invalid value entered, maximum value allowed is %u\r\n|\r\n|\r\n|\r\n", UINT32_MAX);
+            return;
+        }
+#else
+        DebugP_log("\r| Periodic CAP mode cycle time will be equal to EPWM SYNC OUT frequency. NOTE: In SysConfig, EPWM and EPWM to IEP LATCH XBAR configuration must be done. \n|\n|\n|\n");
+#endif
+    }
+    else
+    {
+        DebugP_log("\r\n| Enter IEP reset cycle count (must be greater than EnDat3 cycle time including timeout period, in IEP cycles): ");
+        if(DebugP_scanf("%llu\n", &gEndat3PeriodicInterface.iep_reset_count) < 0)
+        {
+            DebugP_log("\r| ERROR: invalid value\r\n|\r\n|\r\n|\r\n");
+            return;
+        }
+
+        if(gEndat3PeriodicInterface.iep_reset_count <= ENDAT3_IEP_COUNTER_INCREMENT)
+        {
+            DebugP_log("\r| ERROR: invalid value\r\n|\r\n|\r\n|\r\n");
+            return;
+        }
+
+        DebugP_log("\r| Enter IEP trigger time(must be less than or equal to IEP reset cycle, in IEP cycles): ");
+        if(DebugP_scanf("%llu\n", &gEndat3PeriodicInterface.periodic_trigger_count[CONFIG_ENDAT3_0]) < 0 )
+        {
+            DebugP_log("\r| ERROR: invalid value\r\n|\r\n|\r\n|\r\n");
+            return;
+        }
+
+        if((gEndat3PeriodicInterface.periodic_trigger_count[CONFIG_ENDAT3_0] > gEndat3PeriodicInterface.iep_reset_count) ||
+           (gEndat3PeriodicInterface.periodic_trigger_count[CONFIG_ENDAT3_0] <= ENDAT3_IEP_COUNTER_INCREMENT))
+        {
+            DebugP_log("\r| ERROR: Trigger time (%u) must be <= Reset cycle (%u) and > %u\r\n", gEndat3PeriodicInterface.periodic_trigger_count[CONFIG_ENDAT3_0], gEndat3PeriodicInterface.iep_reset_count, ENDAT3_IEP_COUNTER_INCREMENT);
+            DebugP_log("\r| ERROR: invalid value\r\n|\r\n|\r\n|\r\n");
+            return;
+        }
     }
 
-    DebugP_log("\r| Enter IEP trigger time(must be less than or equal to IEP reset cycle, in IEP cycles): ");
-    if(DebugP_scanf("%u\n", &gEndat3PeriodicInterface.periodic_trigger_count[CONFIG_ENDAT3_0]) < 0 )
-    {
-        DebugP_log("\r| ERROR: invalid value\r\n|\r\n|\r\n|\r\n");
-        return;
-    }
-
-    if(gEndat3PeriodicInterface.periodic_trigger_count[CONFIG_ENDAT3_0] > gEndat3PeriodicInterface.iep_reset_count)
-    {
-        DebugP_log("\r| ERROR: Trigger time (%u) must be <= Reset cycle (%u)\r\n", gEndat3PeriodicInterface.periodic_trigger_count[CONFIG_ENDAT3_0], gEndat3PeriodicInterface.iep_reset_count);
-        DebugP_log("\r| ERROR: invalid value\r\n|\r\n|\r\n|\r\n");
-        return;
-    }
-
-    /* Update handle in gEndat3PeriodicInterface */
     gEndat3PeriodicInterface.handle[CONFIG_ENDAT3_0] = handle[CONFIG_ENDAT3_0];
+    gEndat3PeriodicInterface.is_cap_mode = is_cap_mode;
+
+    if(is_cap_mode)
+    {
+        /* Set firmware to periodic trigger CAP mode (opmode = 2) */
+        DebugP_log("\r\n| Setting firmware to periodic trigger CAP mode...");
+        status = endat3_set_operating_mode(handle[CONFIG_ENDAT3_0], ENDAT3_OPMODE_PERIODIC_CAP);
+
+        if(status != ENDAT3_SUCCESS)
+        {
+            DebugP_log("\r\n| ERROR: endat3_set_operating_mode() failed with error code: %d", status);
+            if(status == ENDAT3_ERR_INVALID_INPUT)
+            {
+                DebugP_log(" - Invalid parameters\r\n");
+            }
+            return;
+        }
+    }
+    else
+    {
+        /* Set firmware to periodic trigger CMP mode (opmode = 0) */
+        DebugP_log("\r\n| Setting firmware to periodic trigger CMP mode...");
+        status = endat3_set_operating_mode(handle[CONFIG_ENDAT3_0], ENDAT3_OPMODE_PERIODIC_CMP);
+
+        if(status != ENDAT3_SUCCESS)
+        {
+            DebugP_log("\r\n| ERROR: endat3_set_operating_mode() failed with error code: %d", status);
+            if(status == ENDAT3_ERR_INVALID_INPUT)
+            {
+                DebugP_log(" - Invalid parameters\r\n");
+            }
+            return;
+        }
+    }
 
     /* Create task to monitor stop condition */
     if(endat3_loop_task_create() != ENDAT3_SUCCESS)
@@ -696,21 +762,16 @@ static void endat3_process_periodic_command(endat3_handle handle[])
     }
 
     DebugP_log("\r\n| Periodic mode configured successfully");
-    DebugP_log("\r\n| Reset Cycle   : %u IEP cycles", gEndat3PeriodicInterface.periodic_trigger_count[CONFIG_ENDAT3_0]);
-    DebugP_log("\r\n| Trigger Time  : %u IEP cycles", gEndat3PeriodicInterface.iep_reset_count);
-
-    /* Set firmware to periodic trigger mode (opmode = 0) */
-    DebugP_log("\r\n| Setting firmware to periodic trigger mode...");
-    status = endat3_set_operating_mode(handle[CONFIG_ENDAT3_0], ENDAT3_OPMODE_PERIODIC);
-
-    if(status != ENDAT3_SUCCESS)
+    if(is_cap_mode)
     {
-        DebugP_log("\r\n| ERROR: endat3_set_operating_mode() failed with error code: %d", status);
-        if(status == ENDAT3_ERR_INVALID_INPUT)
-        {
-            DebugP_log(" - Invalid parameters\r\n");
-        }
-        return;
+#if defined(SOC_AM243X)
+        DebugP_log("\r\n| Reset Cycle   : %u IEP cycles", gEndat3PeriodicInterface.iep_reset_count);
+#endif
+    }
+    else
+    {
+        DebugP_log("\r\n| Reset Cycle   : %u IEP cycles", gEndat3PeriodicInterface.iep_reset_count);
+        DebugP_log("\r\n| Trigger Time  : %u IEP cycles", gEndat3PeriodicInterface.periodic_trigger_count[CONFIG_ENDAT3_0]);
     }
 
     /* Configure frame information before releasing trigger */
@@ -751,7 +812,7 @@ static void endat3_process_periodic_command(endat3_handle handle[])
         DebugP_log("\r\n| ERROR: Failed to get operating mode\r\n");
         return;
     }
-    DebugP_log("\r\n| Current operating mode: %u (0 = periodic, 1 = host trigger)", current_opmode);
+    DebugP_log("\r\n| Current operating mode: %u (0 = Periodic CMP, 1 = Host trigger, 2 = Periodic CAP)", current_opmode);
 
     gEndat3PositionLoopStatus = ENDAT3_POSITION_LOOP_START;
 
@@ -962,14 +1023,39 @@ void endat3_diagnostic_main(void *args)
         DebugP_log("\r\n 0: Foreground Communication");
         DebugP_log("\r\n 1: Background Communication");
         DebugP_log("\r\n 2: Continuous Position Fetch");
-        DebugP_log("\r\n 3: Periodic Trigger Mode");
+        DebugP_log("\r\n 3: Periodic Trigger Mode (IEP CMP based trigger)");
+        DebugP_log("\r\n 4: Periodic Trigger Mode (IEP CAP based trigger)");
         DebugP_log("\r\n ========================================");
         DebugP_scanf("%d", &cmd_type);
 
-        if(cmd_type == ENDAT3_CMD_TYPE_PERIODIC)
+        if(cmd_type == ENDAT3_CMD_TYPE_PERIODIC_CMP)
         {
             /* Process periodic trigger mode with dedicated function */
-            endat3_process_periodic_command(gAppEndat3Handle);
+            endat3_process_periodic_command(gAppEndat3Handle, 0);
+
+            /* Set firmware back to host trigger mode */
+            DebugP_log("\r\n| Setting firmware to host trigger mode...");
+
+            status = endat3_set_operating_mode(gAppEndat3Handle[CONFIG_ENDAT3_0], ENDAT3_OPMODE_HOST_TRIGGER);
+            if(status != ENDAT3_SUCCESS)
+            {
+                DebugP_log("\r\nERROR: endat3_set_operating_mode() failed with error code: %d", status);
+                if(status == ENDAT3_ERR_INVALID_INPUT)
+                {
+                    DebugP_log(" - Invalid parameters\r\n");
+                }
+                break;
+            }
+
+            /* Wait for mode switch to complete */
+            ClockP_usleep(MODE_SWITCH_DELAY_US);
+
+            DebugP_log("\r\n| Periodic mode stopped, returning to host trigger mode\r\n");
+        }
+        else if(cmd_type == ENDAT3_CMD_TYPE_PERIODIC_CAP)
+        {
+            /* Process periodic trigger mode with dedicated function */
+            endat3_process_periodic_command(gAppEndat3Handle, 1);
 
             /* Set firmware back to host trigger mode */
             DebugP_log("\r\n| Setting firmware to host trigger mode...");

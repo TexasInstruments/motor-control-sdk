@@ -74,11 +74,9 @@
 ;------------------------------------------------------------------------------
 	.asg	r11,            ENCODE_INPUT_REG                ; r11: TX encode 8-bit input
 
-;------------------------------------------------------------------------------
-; r12: Available for future use
-;------------------------------------------------------------------------------
+	.asg	r12,            DMEM_BASE                		; r12: Base address in DMEM
 
-;------------------------------------------------------------------------------
+	;------------------------------------------------------------------------------
 ; r13: TX Encoding Output Register
 ;------------------------------------------------------------------------------
 	.asg	r13,            ENCODE_OUTPUT_REG               ; r13: TX encode 16-bit output
@@ -172,12 +170,6 @@ MIN_LONG_SYMB_COUNT             .set    7
 ;******************************************************************************
 ; Periodic Trigger Configuration Constants
 ;******************************************************************************
-IEP_CMP3_EVENT_FLAG             .set    3       ; Bit 3 for CMP3 event
-IEP_CMP0_EVENT_FLAG             .set    0       ; Bit 0 for CMP0 event
 PRU_TRIGGER_HOST_ENDAT3_EVT0    .set    18      ; (2+16) - Interrupt event
 ; Note: IEP register offsets are defined in icss_iep_regs.inc:
-; ICSS_IEP_CMP_STATUS_REG = 0x0074
-; ICSS_IEP_CMP_CFG_REG = 0x0070
-; ICSS_IEP_CMP0_REG = 0x0078
-; ICSS_IEP_CMP3_REG = 0x0090
 ;******************************************************************************

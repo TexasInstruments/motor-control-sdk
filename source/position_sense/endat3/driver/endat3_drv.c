@@ -115,6 +115,7 @@ static int32_t endat3_validate_crc(uint8_t *buffer, uint32_t length);
 static int32_t endat3_prepare_request(endat3_handle handle, uint8_t cmd, uint32_t *data_array, uint8_t num_frames);
 static int32_t endat3_wait_rx_complete(endat3_handle handle);
 static int32_t endat3_parse_frames(endat3_handle handle, uint8_t *rx_buffer);
+static int32_t endat3_config_iep_base_address(endat3_handle handle, uint32_t iep_base_address);
 
 /* ========================================================================== */
 /*                          Function Definitions                              */
@@ -142,11 +143,12 @@ endat3_handle endat3_init(uint32_t index, const endat3_params *params)
     endat3_priv         *priv = NULL;
     const endat3_attrs  *attrs = NULL;
     endat3_clock_config clock_config;
+    void                *base_addr = NULL;
+    uint32_t            temp;
 
-    /* Comprehensive validation: Index and params (INIT VALIDATION) */
+    /* Index and params validation */
     if((index >= gEndat3ConfigNum) || (params == NULL))
     {
-        /* Invalid index */
         status = ENDAT3_ERR_INVALID_INPUT;
     }
 
@@ -154,15 +156,6 @@ endat3_handle endat3_init(uint32_t index, const endat3_params *params)
     {
         handle = &gEndat3Handle[index];
 
-        if(handle == NULL)
-        {
-            /* Null handle in array */
-            status = ENDAT3_ERR_INVALID_INPUT;
-        }
-    }
-
-    if(status == ENDAT3_SUCCESS)
-    {
         /* Get the pointer to the priv and attrs */
         priv = handle->priv;
         attrs = handle->attrs;
@@ -196,7 +189,11 @@ endat3_handle endat3_init(uint32_t index, const endat3_params *params)
             (attrs->total_channels == 0) ||
             (attrs->total_channels > 3) ||
             (attrs->core_clk_freq == 0) ||
-            (attrs->iep_clk_freq == 0))
+            (attrs->iep_clk_freq == 0) ||
+            (attrs->iep_instance > 1) ||
+            (attrs->iep_cmp_event >= ENDAT3_IEP_MAX_CMP_EVENT) ||
+            (attrs->iep_cap_event >= ENDAT3_IEP_MAX_CAP_EVENT) ||
+            (attrs->iep_base_addr == NULL))
         {
             status = ENDAT3_ERR_INVALID_INPUT;
         }
@@ -234,6 +231,26 @@ endat3_handle endat3_init(uint32_t index, const endat3_params *params)
 
         /* Set delay cycles based on PRU frequency */
         status = endat3_set_delay_cycles(handle);
+    }
+
+    if(status == ENDAT3_SUCCESS)
+    {
+        /*Set IEP base address */
+        base_addr = (void *)((PRUICSS_HwAttrs *)(handle->priv->pruicss_handle->hwAttrs))->baseAddr;
+        temp = ((uint32_t)attrs->iep_base_addr) - ((uint32_t)base_addr);
+
+        /* Initialize IEP base address in endat3_interface */
+        status = endat3_config_iep_base_address(handle, temp);
+    }
+
+    if(status == ENDAT3_SUCCESS)
+    {
+        status = endat3_config_iep_cmp_event(handle, attrs->iep_cmp_event);
+    }
+
+    if(status == ENDAT3_SUCCESS)
+    {
+        status = endat3_config_iep_cap_event(handle, attrs->iep_cap_event);
     }
 
     if(status == ENDAT3_SUCCESS)
@@ -1918,6 +1935,11 @@ int32_t endat3_set_operating_mode(endat3_handle handle, uint8_t opmode)
         return ENDAT3_ERR_INVALID_INPUT;
     }
 
+    if(opmode > ENDAT3_OPMODE_PERIODIC_CAP)
+    {
+        return ENDAT3_ERR_INVALID_OPMODE;
+    }
+
     priv = handle->priv;
     priv->endat3_interface->opmode_config = opmode;
 
@@ -1935,6 +1957,88 @@ int32_t endat3_get_operating_mode(endat3_handle handle, uint8_t *opmode)
 
     priv = handle->priv;
     *opmode = priv->endat3_interface->opmode_config;
+    return ENDAT3_SUCCESS;
+}
+
+/**
+ * \brief Configure IEP base address in PRU shared memory
+ *
+ * \param handle            EnDAT3 handle
+ * \param iep_base_address  IEP base address offset from PRU-ICSS base
+ *
+ * \return ENDAT3_SUCCESS on success, ENDAT3_ERR_INVALID_INPUT on validation failure
+ */
+static int32_t endat3_config_iep_base_address(endat3_handle handle, uint32_t iep_base_address)
+{
+    endat3_priv *priv;
+
+    if((handle == NULL) || (iep_base_address == 0))
+    {
+        return ENDAT3_ERR_INVALID_INPUT;
+    }
+
+    priv = handle->priv;
+
+    /* Write IEP base address to firmware interface */
+    priv->endat3_interface->iep_base_address = iep_base_address;
+
+    return ENDAT3_SUCCESS;
+}
+
+int32_t endat3_config_iep_cap_event(endat3_handle handle, uint8_t event_num)
+{
+    endat3_priv *priv;
+
+    if(handle == NULL)
+    {
+        return ENDAT3_ERR_INVALID_INPUT;
+    }
+
+    /* Validate CAP event number (0-7) */
+    if(event_num >= ENDAT3_IEP_MAX_CAP_EVENT)
+    {
+        return ENDAT3_ERR_INVALID_INPUT;
+    }
+
+    priv = handle->priv;
+
+    /* Update IEP CAP event configuration in PRU DMEM */
+    priv->endat3_interface->trigger_params.iep_cap_event = event_num;
+
+    /* Calculate and store CAP register address for periodic CAP mode */
+    priv->endat3_interface->trigger_params.iep_capture_reg = priv->endat3_interface->iep_base_address + ENDAT3_CSL_ICSS_PR1_IEP0_SLV_CAP0_REG0 + (ENDAT3_8_BYTE_REG_OFFSET * event_num);
+
+    /* CAP6 and CAP7 have 2 extra registers for fall capture values, add extra offset */
+    /* CAP6 and CAP7 has 2 register bits each. So bit 8 needs to be used for CAP7. Only capture rise bits for CAP6 and CAP7 are used. */
+    if(event_num > 6)
+    {
+        priv->endat3_interface->trigger_params.iep_cap_event += 1;
+        priv->endat3_interface->trigger_params.iep_capture_reg += ENDAT3_8_BYTE_REG_OFFSET;
+    }
+
+    return ENDAT3_SUCCESS;
+}
+
+int32_t endat3_config_iep_cmp_event(endat3_handle handle, uint8_t event_num)
+{
+    endat3_priv *priv;
+
+    if(handle == NULL)
+    {
+        return ENDAT3_ERR_INVALID_INPUT;
+    }
+
+    /* Validate CMP event number (0-15) */
+    if(event_num >= ENDAT3_IEP_MAX_CMP_EVENT)
+    {
+        return ENDAT3_ERR_INVALID_INPUT;
+    }
+
+    priv = handle->priv;
+
+    /* Update IEP CMP event configuration in PRU DMEM */
+    priv->endat3_interface->trigger_params.iep_cmp_event = event_num;
+
     return ENDAT3_SUCCESS;
 }
 
