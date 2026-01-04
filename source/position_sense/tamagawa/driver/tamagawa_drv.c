@@ -152,13 +152,27 @@ tamagawa_handle tamagawa_init(uint32_t index, const tamagawa_params *params)
         if(status == SystemP_SUCCESS)
         {
             /* Validate IEP CMP event numbers and CAP event numbers */
-            for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS_PER_SLICE; ch++)
+            if(attrs->load_share_enabled)
             {
-                if((attrs->iep_cmp_event[ch] >= TAMAGAWA_IEP_MAX_CMP_EVENT) ||
-                   (attrs->iep_cap_event[ch] >= TAMAGAWA_IEP_MAX_CAP_EVENT))
+                for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS_PER_SLICE; ch++)
+                {
+                    if(attrs->channel_mask & (1U << ch))
+                    {
+                        if((attrs->iep_cmp_event[ch] >= TAMAGAWA_IEP_MAX_CMP_EVENT) ||
+                           (attrs->iep_cap_event[ch] >= TAMAGAWA_IEP_MAX_CAP_EVENT))
+                        {
+                            status = SystemP_FAILURE;
+                            break;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if((attrs->iep_cmp_event[0] >= TAMAGAWA_IEP_MAX_CMP_EVENT) ||
+                   (attrs->iep_cap_event[0] >= TAMAGAWA_IEP_MAX_CAP_EVENT))
                 {
                     status = SystemP_FAILURE;
-                    break;
                 }
             }
         }

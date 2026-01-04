@@ -41,7 +41,7 @@
 #include <kernel/dpl/DebugP.h>
 #include <drivers/soc.h>
 
-#if defined(SOC_AM243X) || defined(SOC_AM64X)
+#if defined(SOC_AM243X)
 #include <drivers/sciclient.h>
 #endif
 
@@ -96,7 +96,7 @@
 #define ENDAT1_PRUICSS_TXPRUx PRUICSS_TX_PRU0
 #define ENDAT1_PRUICSS_RTUPRUx PRUICSS_RTU_PRU0
 #endif
-#endif 
+#endif
 
 __attribute__((section(".gEnDat1ChInfo")))Endat_ChRxInfoArray gEndat1ChInfo;
 
@@ -116,7 +116,7 @@ static uint32_t gEndat1_2_2_crc_addinfo1_err_cnt[3];
 static uint64_t gEndat1_2_2_pos_val2[3];
 static int32_t gEndat1_2_2_loop_mrs;
 static void (*endat1_fn_position_loop)(unsigned int);
-#endif 
+#endif
 
 #if CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU
 #if ENDAT0_PRUICSS_SLICEx == 1
@@ -506,7 +506,7 @@ uint32_t endat_pruicss_load_run_fw(Endat_Handle handle)
 #endif
 #endif
 
-    /*Validate firmware size*/ 
+    /*Validate firmware size*/
     if(firmwareSize > PRU_IRAM_SIZE)
     {
         DebugP_log("ERROR: Firmware binary size (%d) exceeds available IRAM size (%d)\n", firmwareSize, PRU_IRAM_SIZE);
@@ -637,7 +637,7 @@ uint32_t endat1_pruicss_load_run_fw(Endat_Handle handle)
 #endif
 #endif
 
-    /*Validate firmware size*/ 
+    /*Validate firmware size*/
     if(firmwareSize > PRU_IRAM_SIZE)
     {
         DebugP_log("ERROR: Firmware binary size (%d) exceeds available IRAM size (%d)\n", firmwareSize, PRU_IRAM_SIZE);
@@ -1226,7 +1226,7 @@ static int32_t endat_get_command_supplement(int32_t cmd,
                     DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
                     return -EINVAL;
                 }
-            
+
                 if(!((gEndat1_multi_ch_mask) & (1<<gEndatHandle2->current_channel)))
                 {
                     DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
@@ -1268,7 +1268,7 @@ static int32_t endat_get_command_supplement(int32_t cmd,
                     DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
                     return -EINVAL;
                 }
-            
+
                 if(!((gEndat1_multi_ch_mask) & (1<<gEndatHandle2->current_channel)))
                 {
                     DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
@@ -1310,7 +1310,7 @@ static int32_t endat_get_command_supplement(int32_t cmd,
                     DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
                     return -EINVAL;
                 }
-            
+
                 if(!((gEndat1_multi_ch_mask) & (1<<gEndatHandle2->current_channel)))
                 {
                     DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
@@ -1352,7 +1352,7 @@ static int32_t endat_get_command_supplement(int32_t cmd,
                     DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
                     return -EINVAL;
                 }
-            
+
                 if(!((gEndat1_multi_ch_mask) & (1<<gEndatHandle2->current_channel)))
                 {
                     DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
@@ -1372,7 +1372,7 @@ static int32_t endat_get_command_supplement(int32_t cmd,
                 return -EINVAL;
             }
 #if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
-            if(!(gEndat_multi_ch_mask & 1 << cmd_supplement->address) || 
+            if(!(gEndat_multi_ch_mask & 1 << cmd_supplement->address) ||
                !(gEndat1_multi_ch_mask & 1 << cmd_supplement->address))
 #else
             if(!(gEndat_multi_ch_mask & 1 << cmd_supplement->address))
@@ -1428,7 +1428,7 @@ static int32_t endat_get_command_supplement(int32_t cmd,
                     DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
                     return -EINVAL;
                 }
-            
+
                 if(!((gEndat1_multi_ch_mask) & (1<<gEndatHandle2->current_channel)))
                 {
                     DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
@@ -1505,7 +1505,7 @@ static int32_t endat_get_command_supplement(int32_t cmd,
             break;
 
         case 201:
-#if defined(SOC_AM243X) || defined(SOC_AM64X)
+#if defined(SOC_AM243X)
             DebugP_log("\r| Enter IEP SYNC OUT0 cycle period (in IEP cycles): ");
             if(DebugP_scanf("%u\n", &cmd_supplement->iep_sync0_period) < 0)
             {
@@ -1514,7 +1514,7 @@ static int32_t endat_get_command_supplement(int32_t cmd,
             }
 #else
             DebugP_log("\r| Periodic cap mode cycle time will be equal to EPWM SYNC OUT frequency. \n NOTE: In SysConfig, EPWM and EPWM to IEP LATCH XBAR configuration must be done\n|\n|\n|\n");
-#endif      
+#endif
             break;
 
         default:
@@ -1785,7 +1785,7 @@ static void endat_print_position_header(Endat_Handle handle, int32_t continuous,
     {
         if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
         {
-            /*For multi-channel, we print a general header that accommodates all channels*/ 
+            /*For multi-channel, we print a general header that accommodates all channels*/
             if(continuous)
             {
                 DebugP_log("         position,    [revolution],  f1");
@@ -1856,7 +1856,7 @@ static void endat_print_position_header(Endat_Handle handle, int32_t continuous,
     {
         if(gEndat1_is_multi_ch || gEndat1_is_load_share_mode)
         {
-            /*For multi-channel, we print a general header that accommodates all channels*/ 
+            /*For multi-channel, we print a general header that accommodates all channels*/
             if(continuous)
             {
                 DebugP_log("         position,    [revolution],  f1");
@@ -1926,7 +1926,7 @@ static void endat_print_position_header(Endat_Handle handle, int32_t continuous,
 #else
     if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
     {
-        /*For multi-channel, we print a general header that accommodates all channels*/ 
+        /*For multi-channel, we print a general header that accommodates all channels*/
         if(continuous)
         {
             DebugP_log("         position,    [revolution],  f1");
@@ -2331,10 +2331,10 @@ static void endat_process_host_command(int32_t cmd,
                 }
             }
             else
-            {     
+            {
 
                 endat_handle_prop_delay(handle, gEndat_prop_delay[handle->current_channel]);
-            }   
+            }
         }
         else
         {
@@ -2355,11 +2355,11 @@ static void endat_process_host_command(int32_t cmd,
                 }
             }
             else
-            {     
+            {
 
                 endat_handle_prop_delay(gEndatHandle2, gEndat1_prop_delay[handle->current_channel]);
             }
-            
+
         }
 #else
         if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
@@ -2379,7 +2379,7 @@ static void endat_process_host_command(int32_t cmd,
             }
         }
         else
-        {     
+        {
 
             endat_handle_prop_delay(handle, gEndat_prop_delay[handle->current_channel]);
         }
@@ -2410,9 +2410,9 @@ static void endat_process_host_command(int32_t cmd,
                }
             }
             else
-            {   
+            {
                 endat_process_host_command(103, cmd_supplement, handle);
-            }   
+            }
         }
         else
         {
@@ -2429,7 +2429,7 @@ static void endat_process_host_command(int32_t cmd,
                }
             }
             else
-            {   
+            {
                 endat_process_host_command(103, cmd_supplement, handle);
             }
         }
@@ -2628,11 +2628,11 @@ static void endat_process_host_command(int32_t cmd,
 #if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
 static void endat_process_continuous_mode_command(int32_t cmd,
                                       Endat_CmdSupplement *cmd_supplement, Endat_Handle handle1, Endat_Handle handle2,
-                                      Endat_CmdSupplement *cmd_supplement_copy) 
+                                      Endat_CmdSupplement *cmd_supplement_copy)
 #else
 static void endat_process_continuous_mode_command(int32_t cmd,
-                                      Endat_CmdSupplement *cmd_supplement, Endat_Handle handle1)                                      
-#endif                      
+                                      Endat_CmdSupplement *cmd_supplement, Endat_Handle handle1)
+#endif
 {
     static int32_t timer_init;
 
@@ -3527,7 +3527,7 @@ void endat_main(void *args)
 
     gEndat1_is_multi_ch = CONFIG_ENDAT1_MODE & 1;
     gEndat1_is_load_share_mode = CONFIG_ENDAT1_MODE & 2;
-    
+
 #endif
 
     endat_pre_init();
@@ -3586,7 +3586,7 @@ void endat_main(void *args)
         }
     }
     else
-    {   
+    {
         if(CONFIG_ENDAT1_CHANNEL2 == 1)
         {
             dual_ch = 2;
@@ -3599,7 +3599,7 @@ void endat_main(void *args)
         {
             dual_ch = 0;
         }
-       
+
         if(dual_ch < 0 || dual_ch > 2)
         {
            DebugP_log("\r\nWARNING: invalid channel selected, defaulting to Channel 0\n");
@@ -3622,7 +3622,7 @@ void endat_main(void *args)
     endat_params.pru_cfg.pruicss_handle = gPruIcssXHandle;
     endat_params.pru_cfg.iep_instance = CONFIG_ENDAT0_IEP_INSTANCE;
     endat_params.pru_cfg.iep_increment = ENDAT_PRU_IEP_COUNTER_INCREMENT;
-#if defined SOC_AM64X || defined SOC_AM243X
+#if defined SOC_AM243X
     if(endat_params.pru_cfg.iep_instance)
     {
         endat_params.pru_cfg.iep_base_addr = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->iep1RegBase);
@@ -3637,9 +3637,9 @@ void endat_main(void *args)
     endat_params.pru_cfg.uart_clock = CONFIG_PRU_ICSS0_UART_CLK_FREQ_HZ;
     endat_params.pru_cfg.pru_slice = ENDAT0_PRUICSS_SLICEx;
     endat_params.pru_cfg.load_share_enable = gEndat_is_load_share_mode;
-    
+
     gEndatHandle1 = endat_init(CONFIG_ENDAT0, endat_params);
-   
+
 #if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
     /*Translate the TCM local view addr to globel view addr */
     uint64_t gEndat1ChInfoGlobalAddr = CPU0_BTCM_SOCVIEW((uint64_t)&gEndat1ChInfo);
@@ -3654,7 +3654,7 @@ void endat_main(void *args)
     endat1_params.endat_clk_config = &endat1_clk_config;
     endat1_params.pru_cfg.iep_instance = CONFIG_ENDAT0_IEP_INSTANCE;
     endat1_params.pru_cfg.iep_increment = ENDAT_PRU_IEP_COUNTER_INCREMENT;
-#if defined SOC_AM64X || defined SOC_AM243X
+#if defined SOC_AM243X
     if(endat1_params.pru_cfg.iep_instance)
     {
         endat1_params.pru_cfg.iep_base_addr = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->iep1RegBase);
@@ -3671,7 +3671,7 @@ void endat_main(void *args)
     endat1_params.pru_cfg.iep_instance =  ENDAT_PERIODIC_MODE_IEP_INSTANCE;
     endat1_params.pru_cfg.pru_slice = ENDAT1_PRUICSS_PRUx;
     endat1_params.pru_cfg.load_share_enable = gEndat1_is_load_share_mode;
-    
+
     gEndatHandle2 = endat_init(CONFIG_ENDAT1, endat1_params);
 
 #endif
@@ -3724,7 +3724,7 @@ void endat_main(void *args)
     }
 
 #if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
-    
+
     dual_ch = endat1_pruicss_load_run_fw(gEndatHandle2);
 
     if(dual_ch < 0)
@@ -3852,7 +3852,7 @@ void endat_main(void *args)
         endat_print_encoder_info(gEndatHandle2);
     }
 #endif
-    
+
 
     /* default frequency - 8MHz for 2.2 encoders, 1MHz for 2.1 encoders */
     if(gEndatHandle1->cmd_set_2_2)

@@ -95,7 +95,7 @@
 #include <kernel/dpl/DebugP.h>
 #include <drivers/soc.h>
 
-#if defined(SOC_AM243X) || defined(SOC_AM64X)
+#if defined(SOC_AM243X)
 #include <drivers/sciclient.h>
 #endif
 
@@ -572,7 +572,7 @@ static int32_t tamagawa_handle_rx(tamagawa_handle handle, int32_t cmd)
     {
         DebugP_log("\r\n CRC Failure \n");
     }
-    
+
     return SystemP_SUCCESS;
 }
 
@@ -610,7 +610,7 @@ static int32_t tamagawa_get_command(uint8_t *adf, uint8_t *edf)
                 {
                     if((attrs->channel_mask & (1 << j)))
                     {
-                    
+
                         DebugP_log("\r| Enter IEP trigger time(must be less than or equal to IEP reset cycle, in IEP cycles) for ch %u for Tamagawa instance %u: ", j, i);
                         if(DebugP_scanf("%u\n", &gTamagawaPeriodicInterface.periodic_trigger_count[i][j]) < 0 )
                         {
@@ -629,7 +629,7 @@ static int32_t tamagawa_get_command(uint8_t *adf, uint8_t *edf)
             else
             {
                 DebugP_log("\r| Enter IEP trigger time(must be less than or equal to IEP reset cycle, in IEP cycles) for Tamagawa instance %u: ", i);
-            
+
                 if(DebugP_scanf("%u\n", &gTamagawaPeriodicInterface.periodic_trigger_count[i][0]) < 0 )
                 {
                     DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
@@ -648,7 +648,7 @@ static int32_t tamagawa_get_command(uint8_t *adf, uint8_t *edf)
     else if(cmd == PERIODIC_TRIGGER_CAP_CMD)
     {
         gTamagawaPeriodicInterface.is_cap_mode = 1;  /* CAP mode */
-#if defined(SOC_AM243X) || defined(SOC_AM64X)
+#if defined(SOC_AM243X)
         DebugP_log("\r| Enter IEP SYNC0 period (in IEP cycles, used for CAP mode):");
         if(DebugP_scanf("%u\n", &gTamagawaPeriodicInterface.iep_reset_count) < 0)
         {

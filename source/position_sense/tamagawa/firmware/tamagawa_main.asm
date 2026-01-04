@@ -139,9 +139,9 @@ TAMAGAWA_INIT:
 
     ; (Channel Mask) Record channel enabled by host, save it after zeroing registers (done above)
 	LBCO    &TAMAGAWA_ENABLE_CHx,	PRUx_DMEM,	TAMAGAWA_CHANNEL_CONFIG_OFFSET,	1
-    .if $isdefed("ENABLE_MULTI_MAKE_RTU") | $isdefed("ENABLE_MULTI_MAKE_PRU") | $isdefed("ENABLE_MULTI_MAKE_TXPRU") 
+    .if $isdefed("ENABLE_MULTI_MAKE_RTU") | $isdefed("ENABLE_MULTI_MAKE_PRU") | $isdefed("ENABLE_MULTI_MAKE_TXPRU")
     MOV     TAMAGAWA_ENABLED_CHANNELS, TAMAGAWA_ENABLE_CHx
-    AND     TAMAGAWA_ENABLE_CHx, TAMAGAWA_ENABLE_CHx, (1<<TAMAGAWA_CHANNEL_BIT_ID)  
+    AND     TAMAGAWA_ENABLE_CHx, TAMAGAWA_ENABLE_CHx, (1<<TAMAGAWA_CHANNEL_BIT_ID)
     .elseif	$defined("ENABLE_MULTI_CHANNEL")=0
     ;  if no channel selected,set channel mask default to ch0
     ;  if more than 1 channel selected,set channel mask default to ch0
@@ -180,7 +180,6 @@ HANDLE_PERIODIC_TRIGGER_CAP_MODE:
     LBCO	&SCRATCH3.b0,	PRUx_DMEM,	TAMAGAWA_CH0_IEP_CAP_EVENT_OFFSET,	1
     QBBC	CHECK_OPERATING_MODE,	SCRATCH.w0,	SCRATCH3.b0
     ; Read cap register offset from DMEM
-    ;LDI		SCRATCH1,	TAMAGAWA_CH0_IEP_CAPTURE_REG_OFFSET
     LBCO	&SCRATCH,	PRUx_DMEM,	TAMAGAWA_CH0_IEP_CAPTURE_REG_OFFSET,	4
     ; Clear capture event by reading capture register value
     LBBO	&SCRATCH1,	SCRATCH,	0,	4
@@ -284,7 +283,7 @@ TAMAGAWA_HOST_CMD_END:
     ;Clear Host Trigger
 	SBCO	&R3.b0,	PRUx_DMEM,	TAMAGAWA_INTFC_CMD_TRIGGER_OFFSET,	1
     ;check PRU host trigger for all three channels
-    LBCO	&R3.b0,	PRUx_DMEM,	TAMAGAWA_OPMODE_CONFIG_OFFSET,	1 
+    LBCO	&R3.b0,	PRUx_DMEM,	TAMAGAWA_OPMODE_CONFIG_OFFSET,	1
     ;skip interrupt to R5F in host trigger
     QBEQ    SKIP_INTERRUPT_TRIGGER,  R3.b0,  1
     ;Generate interrupt to R5F - different events for load-share mode
@@ -296,10 +295,10 @@ TAMAGAWA_HOST_CMD_END:
     LDI     R31.w0, TXPRU_TRIGGER_HOST_TAMAGAWA_EVT  ; TX-PRU: pr0_pru_mst_intr[6/7]_intr_req
     .else
     LDI     R31.w0, PRU_TRIGGER_HOST_TAMAGAWA_EVT    ; Single/dual PRU mode
-    .endif 
+    .endif
     ;Global reinit
     M_TAMAGAWA_LS_GLOBAL_REINIT
-    ;Handle next Postition in periodic trigger	
+    ;Handle next Postition in periodic trigger
     JMP     CHECK_OPERATING_MODE
 
 SKIP_INTERRUPT_TRIGGER:
@@ -395,7 +394,7 @@ TX_END:
 
 	.if	$defined("ENABLE_MULTI_CHANNEL")
 MULTI_CHANNEL_RECEIVE:
-    
+
 	RECEIVE_FRAMES_M R2.b1 ,R4.b1 , RX_FRAMES , R4.b2 , SCRATCH, SCRATCH1,TAMAGAWA_ENABLE_CHx,PRUx_DMEM
 CH0_RX_TO_INTERFACE:
     ;If channel 0 enabled,then load Rx data to tamagawa interface

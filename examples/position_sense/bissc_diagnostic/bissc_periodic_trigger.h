@@ -87,6 +87,14 @@
 #define BISSC_IEP_COUNTER_DISABLE        (0U)          /* IEP counter disable value */
 #define BISSC_IEP_COUNTER_INCREMENT      (1U)          /* IEP counter increment value */
 
+/* IEP CMP configuration register bit shifts and masks */
+#define BISSC_IEP_SLV_CMP_CFG_REG_CMP_EN_SHIFT                   (0x1U)        /* CMP enable bit shift */
+#define BISSC_IEP_SLV_CMP_CFG_REG_CMP0_RST_CNT_EN_SHIFT          (0x0U)        /* CMP0 reset counter enable bit shift */
+
+/* Macros to extract lower and upper 32 bits from 64-bit values */
+#define BISSC_GET_LOWER_32BITS(x)                                ((uint32_t)((x) & 0xFFFFFFFFU))           /* Extract lower 32 bits */
+#define BISSC_GET_UPPER_32BITS(x)                                ((uint32_t)(((x) >> 32) & 0xFFFFFFFFU))  /* Extract upper 32 bits */
+
 /* ========================================================================== */
 /*                         Structure Declarations                             */
 /* ========================================================================== */

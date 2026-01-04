@@ -90,6 +90,9 @@
 #define TAMAGAWA_IEP_SLV_CMP_CFG_REG_CMP_EN_SHIFT                   (0x1U)        /* CMP enable bit shift */
 #define TAMAGAWA_IEP_SLV_CMP_CFG_REG_CMP0_RST_CNT_EN_SHIFT          (0x0U)        /* CMP0 reset counter enable bit shift */
 
+/* Macros to extract lower and upper 32 bits from 64-bit values */
+#define TAMAGAWA_GET_LOWER_32BITS(x)                                ((uint32_t)((x) & 0xFFFFFFFFU))           /* Extract lower 32 bits */
+#define TAMAGAWA_GET_UPPER_32BITS(x)                                ((uint32_t)(((x) >> 32) & 0xFFFFFFFFU))  /* Extract upper 32 bits */
 
 /* ========================================================================== */
 /*                         Structure Declarations                             */

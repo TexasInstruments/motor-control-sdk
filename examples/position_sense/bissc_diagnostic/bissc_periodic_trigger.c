@@ -423,8 +423,8 @@ static void bissc_enable_iep_reset_on_cmp0(bissc_handle handle, uint64_t iep_res
     attrs = bissc_get_attrs(handle);
     pru_iep = attrs->iep_base_addr;
 
-    reg0 = (iep_reset_count & 0XFFFFFFFF);
-    reg1 = (iep_reset_count >> 32 & 0XFFFFFFFF);
+    reg0 = BISSC_GET_LOWER_32BITS(iep_reset_count);
+    reg1 = BISSC_GET_UPPER_32BITS(iep_reset_count);
 
     HW_WR_REG32((uint8_t*)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0),  reg0);
     HW_WR_REG32((uint8_t*)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1),  reg1);
@@ -581,8 +581,8 @@ static void bissc_enable_iep_cmp_event(bissc_handle handle, uint64_t trigger_poi
     HW_WR_REG32(((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG), reg0);
 
     /* Write trigger point to CMP registers */
-    reg0 = (trigger_point & 0XFFFFFFFF);
-    reg1 = (trigger_point >> 32 & 0XFFFFFFFF);
+    reg0 = BISSC_GET_LOWER_32BITS(trigger_point);
+    reg1 = BISSC_GET_UPPER_32BITS(trigger_point);
     /* IEP CMP registers 8-15 have a gap in memory layout and require an additional 8-byte offset */
     if(event_num > 7)
     {

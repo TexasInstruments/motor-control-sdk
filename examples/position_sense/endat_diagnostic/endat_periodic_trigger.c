@@ -44,7 +44,7 @@
 #include <position_sense/endat/include/endat_interface.h>
 
 HwiP_Params hwiPrms;
-static HwiP_Object gIcssgEncoder0HwiObject[3];  
+static HwiP_Object gIcssgEncoder0HwiObject[3];
 
 /* ICSS Interrupt settings */
 #ifdef PRUICSSM
@@ -82,7 +82,7 @@ uint32_t gPruEnDatIrqCnt2;
 #endif
 uint32_t gPruEnDat1IrqCnt0;
 void pruEnDat1IrqHandler(void *args);
-static HwiP_Object gIcssgEncoder1HwiObject; 
+static HwiP_Object gIcssgEncoder1HwiObject;
 #endif
 
 /* global variable */
@@ -161,7 +161,7 @@ void endat_config_iep_cap_for_sync(Endat_Handle handle, uint64_t iep_reset_count
     void *pru_iep = handle->pru_cfg.iep_base_addr;
     uint32_t reg_value;
     uint8_t event_num;
-   
+
     /* Configure IEP sync out0*/
 
     /*Configure IEP CMP1 to start sync, after 100 cycles*/
@@ -231,7 +231,7 @@ void endat_config_iep_cap_for_sync(Endat_Handle handle, uint64_t iep_reset_count
 #else
             /* ICSSG0: Connect IEP1 SYNC OUT0 output to LATCH0_IN0 */
             HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + TIMESYNC_EVENT_ROUTER_OUT10_OFFSET),
-                        TIMESYNC_EVENT_ROUTER_IN27);    
+                        TIMESYNC_EVENT_ROUTER_IN27);
 #endif
         }
         if(handle->pruicss_xchg->config[2].channel)
@@ -270,14 +270,14 @@ void endat_config_iep_cap_for_sync(Endat_Handle handle, uint64_t iep_reset_count
     {
         /* ICSSG1: Connect IEP0 SYNC OUT0 output to LATCH0_IN0 */
         HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + TIMESYNC_EVENT_ROUTER_OUT12_OFFSET),
-                    TIMESYNC_EVENT_ROUTER_IN29);     
+                    TIMESYNC_EVENT_ROUTER_IN29);
     }
     else
     {
         /* ICSSG1: Connect IEP1 SYNC OUT0 output to LATCH0_IN0 */
         HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + TIMESYNC_EVENT_ROUTER_OUT14_OFFSET),
-                    TIMESYNC_EVENT_ROUTER_IN31);     
-    }    
+                    TIMESYNC_EVENT_ROUTER_IN31);
+    }
 #else
     if(handle->pru_cfg.iep_instance == 0)
     {
@@ -472,7 +472,7 @@ uint32_t  endat_config_periodic_mode(struct endat_periodic_interface *endat_peri
     {
         if (endat_periodic_interface->is_cap_mode)
         {
-#if defined(SOC_AM243X) || defined(SOC_AM64X)
+#if defined(SOC_AM243X)
            /* Configure IEP for sync and route it to IEP latch*/
             endat_config_iep_cap_for_sync(handle, iep_count);
 #endif
@@ -594,7 +594,7 @@ void endat_stop_periodic_continuous_mode(struct endat_periodic_interface *endat_
         {
             event_num = CONFIG_ENDAT0_IEP_CMP_EVENT_NUM;
             endat_disable_iep_cmp_event(handle, event_num);
-        }   
+        }
 
         HwiP_destruct(&gIcssgEncoder0HwiObject[0]);
     }
@@ -606,14 +606,14 @@ void endat_stop_periodic_continuous_mode(struct endat_periodic_interface *endat_
     if(endat_periodic_interface->is_cap_mode)
 #endif
     {
-#if defined(SOC_AM243X) || defined(SOC_AM64X)
+#if defined(SOC_AM243X)
         /* disable sync event */
         reg_value = HW_RD_REG8((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_SYNC_CTRL_REG);
         reg_value &= ~(IEP_SYNC_CTRL_SYNC01_EN_MASK | IEP_SYNC_CTRL_SYNC0_EN_MASK); /*SYNC OUT0 disable*/
         reg_value &= ~IEP_SYNC_CTRL_SYNC0_CYCLIC_EN_MASK; /*SYNC OUT0 cyclic disable */
-    
+
         HW_WR_REG32((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_SYNC_CTRL_REG, reg_value);
-        
+
         /*disbale cmp1 event*/
         event_num = 1; /* CMP1 event, configured for sync out0  */
         endat_disable_iep_cmp_event(handle, event_num);

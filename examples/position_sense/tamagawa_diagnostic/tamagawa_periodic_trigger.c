@@ -420,8 +420,8 @@ static void tamagawa_enable_iep_reset_on_cmp0(tamagawa_handle handle, uint64_t i
     attrs = tamagawa_get_attrs(handle);
     pru_iep = attrs->iep_base_addr;
 
-    reg0 = (iep_reset_count & 0xFFFFFFFF);
-    reg1 = (iep_reset_count >> 32 & 0xFFFFFFFF);
+    reg0 = TAMAGAWA_GET_LOWER_32BITS(iep_reset_count);
+    reg1 = TAMAGAWA_GET_UPPER_32BITS(iep_reset_count);
 
     HW_WR_REG32((uint8_t*)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0,  reg0);
     HW_WR_REG32((uint8_t*)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1,  reg1);
@@ -486,8 +486,8 @@ static void tamagawa_enable_iep_cmp_event(tamagawa_handle handle, uint64_t trigg
     reg0 |= ((uint32_t)1U << (event_num + 1));
     HW_WR_REG32((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG, reg0);
 
-    reg0 = (trigger_point & 0xFFFFFFFF);
-    reg1 = (trigger_point >> 32 & 0xFFFFFFFF);
+    reg0 = TAMAGAWA_GET_LOWER_32BITS(trigger_point);
+    reg1 = TAMAGAWA_GET_UPPER_32BITS(trigger_point);
 
     /* CMP8 to CMP15 registers have an 8-byte gap after CMP7 in the IEP memory map */
     if(event_num > 7)

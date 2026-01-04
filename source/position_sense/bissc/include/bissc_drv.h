@@ -336,14 +336,12 @@ extern "C" {
 #define BISSC_MEASURE_PROC_DELAY_ENABLE     (0x1U)
 
 
-/**    \brief    IEP cap 0 register , cslr common file does not have defined cap registers 
+/**    \brief    IEP cap 0 register , cslr common file does not have defined cap registers
  *      FIXME: Remove these definitions once they are available in cslr_common.h
  */
 #define BISSC_CFG_REG_SIZE         (4U)
 #define BISSC_CSL_ICSS_PR1_IEP0_SLV_CAP0_REG0  (CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG + 2U*BISSC_CFG_REG_SIZE)
 #define BISSC_CSL_ICSS_PR1_IEP0_SLV_CAP0_REG1  (CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG + 3U*BISSC_CFG_REG_SIZE)
-#define BISSC_IEP_SLV_CMP_CFG_REG_CMP_EN_SHIFT                       (0x1)
-#define BISSC_IEP_SLV_CMP_CFG_REG_CMP0_RST_CNT_EN_SHIFT              (0x00000000U)
 
 /**
  * \brief 8-byte register offset for IEP registers

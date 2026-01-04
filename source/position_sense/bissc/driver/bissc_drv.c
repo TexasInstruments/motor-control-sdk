@@ -209,13 +209,27 @@ bissc_handle bissc_init(uint32_t index, const bissc_params *params)
         if(status == SystemP_SUCCESS)
         {
             /* Validate IEP CMP event numbers and CAP event numbers */
-            for(ch_idx = 0; ch_idx < BISSC_NUM_CH_PER_SLICE_MAX; ch_idx++)
+            if(attrs->load_share_enabled)
             {
-                if((attrs->iep_cmp_event[ch_idx] >= BISSC_IEP_MAX_CMP_EVENT) ||
-                   (attrs->iep_cap_event[ch_idx] >= BISSC_IEP_MAX_CAP_EVENT))
+                for(ch_idx = 0; ch_idx < BISSC_NUM_CH_PER_SLICE_MAX; ch_idx++)
+                {
+                    if(attrs->channel_mask & (1U << ch_idx))
+                    {
+                        if((attrs->iep_cmp_event[ch_idx] >= BISSC_IEP_MAX_CMP_EVENT) ||
+                           (attrs->iep_cap_event[ch_idx] >= BISSC_IEP_MAX_CAP_EVENT))
+                        {
+                            status = SystemP_FAILURE;
+                            break;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if((attrs->iep_cmp_event[0] >= BISSC_IEP_MAX_CMP_EVENT) ||
+                   (attrs->iep_cap_event[0] >= BISSC_IEP_MAX_CAP_EVENT))
                 {
                     status = SystemP_FAILURE;
-                    break;
                 }
             }
         }
