@@ -30,13 +30,25 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* ========================================================================== */
+/*                             Include Files                                  */
+/* ========================================================================== */
+
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 #include <position_sense/endat3/include/endat3_drv.h>
 #include <drivers/hw_include/hw_types.h>
 
+/* ========================================================================== */
+/*                           Macros & Typedefs                                */
+/* ========================================================================== */
+
 #define MANCHESTER_DECODE_LUT_SIZE   256
+
+/* ========================================================================== */
+/*                            Global Variables                                */
+/* ========================================================================== */
 
 /*  8x oversampling lookup table for manchester data (2bits of manchester data in 8 bit oversample data)*/
 /*  Shared LUT with all 3 channels per PRU slice in load share and non-load share mode*/
@@ -75,15 +87,32 @@ static const uint8_t endat3_manchester_decode_lut_data[MANCHESTER_DECODE_LUT_SIZ
     0x80, 0xFF, 0xFF, 0xC0, 0xFF, 0xC0, 0xC0, 0xC0
 };
 
-static void endat3_manchester_decode_lut(endat3_Handle endat3Handle)
+/* ========================================================================== */
+/*                       Function Declarations                                */
+/* ========================================================================== */
+static void endat3_manchester_decode_lut(endat3_handle handle);
+
+/* ========================================================================== */
+/*                          Function Definitions                              */
+/* ========================================================================== */
+
+static void endat3_manchester_decode_lut(endat3_handle handle)
 {
-    /* Copy the lookup table data to DMEM at the start of endat3Interface structure */
-    uint8_t *lut_dest = (uint8_t *)endat3Handle->endat3Interface->lut;
+    endat3_priv *priv = handle->priv;
+    uint8_t     *lut_dest;
+
+    /* Copy the Manchester decode lookup table to the lut member of endat3_interface structure in PRU DMEM */
+    lut_dest = (uint8_t *)priv->endat3_interface->lut;
 
     memcpy(lut_dest, endat3_manchester_decode_lut_data, MANCHESTER_DECODE_LUT_SIZE);
 }
 
-void endat3_generate_memory_image(endat3_Handle endat3Handle, PRUICSS_Handle icssgHandle)
+void endat3_generate_memory_image(endat3_handle handle)
 {
-    endat3_manchester_decode_lut(endat3Handle);
+    if(handle == NULL)
+    {
+        return;
+    }
+
+    endat3_manchester_decode_lut(handle);
 }

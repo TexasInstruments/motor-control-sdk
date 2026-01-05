@@ -15,71 +15,73 @@ function onValidate(inst, validation)
        let instance = inst.$module.$instances[instance_index];
 
         /* Validate that at least one channel is selected */
-        if ((!instance.Channel_0)&&(!instance.Channel_1)&&(!instance.Channel_2))
+        if ((!instance.channel_0)&&(!instance.channel_1)&&(!instance.channel_2))
         {
-            validation.logError("Select atleast one channel",inst,"Channel_0");
+            validation.logError("Select atleast one channel", inst, "channel_0");
         }
 
         /* Calculate total channels for validation */
-        let total_channels = (instance.Channel_0 ? 1 : 0) + (instance.Channel_1 ? 1 : 0) + (instance.Channel_2 ? 1 : 0);
+        let total_channels = (instance.channel_0 ? 1 : 0) + (instance.channel_1 ? 1 : 0) + (instance.channel_2 ? 1 : 0);
 
-        /* AM26x SOC specific validation - only single channel supported */
-        if(is_am26x_soc && total_channels > 1)
+        /* Only single channel supported */
+        if(total_channels > 1)
         {
-            validation.logError("AM26x devices support only single channel operation per PRU core", inst, "Channel_0");
+            validation.logError("Only single channel operation per PRU core/slice", inst, "channel_0");
         }
 
-        /* Channel 0 and channel 2 are supported on am243x-lp */
-        if((device==="am243x-lp") && (instance.Channel_1 ))
+        if((device === "am243x-lp") && (instance.channel_1) && (instance.Booster_Pack))
         {
-            validation.logError("On AM243x-LP, Channel 1 is not supported",inst,"Channel_1");
+            validation.logError("Channel 1 is not supported on BP-AM2BLDCSERVO BoosterPack due to pinout limitations", inst, "Booster_Pack");
         }
 
-        /* Validation for booster pack */
-        if((device!="am243x-lp" && device != "am263x-cc" && device!="am261x-lp" && device != "am263px-cc" )&&(instance.Booster_Pack))
+        /* validation for BP-AM2BLDCSERVO BoosterPack */
+        if((device!="am243x-lp" && device!= "am263x-cc" &&  device!= "am261x-lp" && device != "am263px-cc" )&&(instance.Booster_Pack))
         {
-            validation.logError("Select only when using BP-AM2BLDCSERVO BoosterPack with LP",inst,"Booster_Pack");
+            validation.logError("Select only when using BP-AM2BLDCSERVO BoosterPack with LP", inst, "Booster_Pack");
         }
 
         if(is_am26x_soc)
+        {
+            if(is_am263x_soc || is_am263px_soc)
             {
-                if(is_am263x_soc || is_am263px_soc)
+                if(instance.PRU_Slice == "PRU0" && instance.channel_2)
                 {
-                    if(instance.PRU_Slice == "PRU0" && instance.Channel_2)
-                    {
-                        validation.logError("Channel 2 TX signal is not pinned out at the device level", inst, "Channel_2");
-                    }
-
-                    if((instance.Channel_2 || instance.Channel_0)&&(instance.Booster_Pack))
-                    {
-                        validation.logError("Channel 0 and Channel 2 are not supported with BP-AM2BLDCSERVO BoosterPack",inst,"Booster_Pack");
-                    }
-                }
-                if(is_am261x_soc)
-                {
-
-                    if((instance.Channel_2 || instance.Channel_1)&&(instance.Booster_Pack))
-                    {
-                        validation.logError("Channel 1 and Channel 2 are not supported with BP-AM2BLDCSERVO BoosterPack",inst,"Booster_Pack");
-                    }
+                    validation.logError("Channel 2 TX signal is not pinned out at the device level", inst, "channel_2");
                 }
 
+                if((instance.channel_2 || instance.channel_0)&&(instance.Booster_Pack))
+                {
+                    validation.logError("Channel 0 and Channel 2 are not supported on BP-AM2BLDCSERVO BoosterPack due to pinout limitations", inst, "Booster_Pack");
+                }
             }
+            if(is_am261x_soc)
+            {
+
+                if((instance.channel_2 || instance.channel_1)&&(instance.Booster_Pack))
+                {
+                    validation.logError("Channel 1 and Channel 2 are not supported on BP-AM2BLDCSERVO BoosterPack due to pinout limitations", inst, "Booster_Pack");
+                }
+            }
+        }
     }
 }
 
 let endat3_module = {
     displayName: "EnDat3 Position Encoder",
     templates: {
+        "/drivers/system/system_config.c.xdt": {
+            driver_config: "/position_sense/endat3/endat3.c.xdt",
+            moduleName: endat3_module_name,
+        },
         "/drivers/system/system_config.h.xdt": {
-            driver_config:"/.meta/position_sense/endat3/endat3_templates.h.xdt",
+            driver_config: "/position_sense/endat3/endat3.h.xdt",
             moduleName: endat3_module_name,
         },
         "/drivers/pinmux/pinmux_config.c.xdt": {
             moduleName: endat3_module_name,
         },
     },
-    defaultInstanceName: "CONFIG_ENDAT3_",
+    defaultInstanceName: "CONFIG_ENDAT3",
     config: [
         {
             name: "instance",
@@ -117,18 +119,14 @@ let endat3_module = {
             displayName: "Enable G MUX ",
             description: "Enable G mux in ICSSG_SA_MX_REG Register, Few 3 channel Peripheral pins get remapped to enable different usecase",
             default: false,
-            hidden:  (device == "am243x-lp" ||device == "am243x-evm" ||device == "am64x-evm") ? false : true,
+            hidden:  (device == "am243x-lp" || device == "am243x-evm" || device == "am64x-evm") ? false : true,
         },
         {
             name: "Tx_Rx_Clk_Source",
             displayName: "TX RX FIFO Clock Source",
             description: "TX RX FIFO Clock Source Options. See module specific page in SDK documentation for more details and known limitations.",
-            default: "0",
+            default: "1",
             options: [
-                {
-                    name: "0",
-                    displayName: "ICSS UART Clock",
-                },
                 {
                     name: "1",
                     displayName: "ICSS Core Clock",
@@ -136,31 +134,31 @@ let endat3_module = {
             ],
         },
         {
-            name: "Baud_Rate",
-            displayName: "Baud Rate",
+            name: "baudrate",
+            displayName: "Select Baud Rate(in Mbps)",
             description: "EnDAT3 Communication Baud Rate",
-            default: "0",
+            default: 12,
             options: [
                 {
-                    name: "0",
+                    name: 12,
                     displayName: "12.5 Mbps",
                 },
             ],
         },
         {
-            name: "Channel_0",
+            name: "channel_0",
             displayName: "Enable Channel 0",
             description: "Channel 0 Selection",
             default: true,
         },
         {
-            name: "Channel_1",
+            name: "channel_1",
             displayName: "Enable Channel 1",
             description: "Channel 1 Selection ",
             default: false,
         },
         {
-            name: "Channel_2",
+            name: "channel_2",
             displayName: "Enable Channel 2",
             description: "Channel 2 Selection ",
             default: false,

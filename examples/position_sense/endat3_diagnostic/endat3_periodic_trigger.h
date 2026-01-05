@@ -33,139 +33,122 @@
 #ifndef _ENDAT3_PERIODIC_TRIGGER_H_
 #define _ENDAT3_PERIODIC_TRIGGER_H_
 
+/* ========================================================================== */
+/*                             Include Files                                  */
+/* ========================================================================== */
+
+#include "ti_drivers_config.h"
 #include<stdint.h>
 #include<drivers/pruicss.h>
 #include<position_sense/endat3/include/endat3_drv.h>
 
-/* External global variables - defined in endat3_periodic_trigger.c */
-extern PRUICSS_Handle gPruIcssXHandle;
-extern void *gPruss_iep;
-extern uint32_t gPruEnDat3IrqCnt0;
-extern uint32_t gPruEnDat3IrqCnt1;
-extern uint32_t gPruEnDat3IrqCnt2;
+/* ========================================================================== */
+/*                           Macros & Typedefs                                */
+/* ========================================================================== */
+
+/** \brief IEP counter default increment value (1 per clock cycle) */
+#define IEP_DEFAULT_INC     0x1
+
+/** \brief IEP counter enable bit in Global Config register (start counter) */
+#define IEP_COUNTER_EN      0x1
+
+/** \brief IEP reset counter on CMP0 event enable bit */
+#define IEP_RST_CNT_EN      0x1
+
+/** \brief IEP Compare 0 (CMP0) event enable bit (bit 1 in CMP_CFG_REG) */
+#define IEP_CMP0_ENABLE     (0x1 << 1)
+
+
+/* ========================================================================== */
+/*                         Structure Declarations                             */
+/* ========================================================================== */
 
 /**
- * \brief EnDat3 Periodic Interface Structure
- * 
- * This structure defines the interface for periodic trigger configuration
- * in EnDat3 encoders. It contains pointers to PRU-ICSS resources and
- * compare register values for IEP timer configuration.
+ * \brief   Structure defining ENDAT3 periodic trigger interface configuration
+ *
+ * \details Contains ENDAT3 driver handle, trigger count values and IEP reset
+ *          count for periodic mode operation, in which automatic ENDAT3 transaction
+ *          is triggered at configured intervals.
  */
-struct endat3_periodic_interface
+typedef struct endat3_periodic_interface_s
 {
-  void *pruss_iep;      /**< Pointer to ICSS IEP (Industrial Ethernet Peripheral) timer */
-  void *pruss_dmem;     /**< Pointer to PRU data memory */
-  void *pruss_cfg;      /**< Pointer to PRU configuration */
-  uint8_t load_share;   /**< Load share mode flag (0 or 1) */
-  uint64_t cmp0;        /**< Compare register 0 value (64-bit) - counter reset */
-  uint64_t cmp3;        /**< Compare register 3 value (64-bit) - periodic trigger */
-  uint64_t cmp5;        /**< Compare register 5 value (64-bit) - channel 1 trigger */
-  uint64_t cmp6;        /**< Compare register 6 value (64-bit) - channel 2 trigger */
-};
+  endat3_handle handle[CONFIG_ENDAT3_NUM_INSTANCES];
+  /**< ENDAT3 driver handle obtained from endat3_init().
+   *   Used to access driver configuration and PRU-ICSS resources */
 
-/* IEP Timer Configuration Macros */
-#define IEP_DEFAULT_INC    0x1                /**< IEP default increment value */
-#define IEP_DEFAULT_INC_EN  0x4               /**< IEP default increment enable */
-#define IEP_COUNTER_EN      0x1               /**< IEP counter enable bit */
-#define IEP_RST_CNT_EN      0x1               /**< IEP reset counter enable */
-#define IEP_CMP0_ENABLE     (0x1 << 1)        /**< IEP compare 0 enable */
-#define IEP_CMP3_EVNT       (0x1 << 3)        /**< IEP compare 3 event flag */
-#define IEP_CMP5_EVNT       (0x1 << 5)        /**< IEP compare 5 event flag */
-#define IEP_CMP6_EVNT       (0x1 << 6)        /**< IEP compare 6 event flag */
+  uint64_t periodic_trigger_count[CONFIG_ENDAT3_NUM_INSTANCES];
+  /**< IEP counter value for periodic trigger (in IEP clock cycles). */
 
-/* PRU Interrupt Event Definitions */
-#define PRU_TRIGGER_HOST_ENDAT3_EVT0   (2+16)    /**< pr0_pru_mst_intr[2]_intr_req - Channel 0 */
-#define PRU_TRIGGER_HOST_ENDAT3_EVT1   (3+16)    /**< pr0_pru_mst_intr[3]_intr_req - Channel 1 */
-#define PRU_TRIGGER_HOST_ENDAT3_EVT2   (4+16)    /**< pr0_pru_mst_intr[4]_intr_req - Channel 2 */
+  uint64_t iep_reset_count;
+  /**< IEP counter reset value (in IEP clock cycles) for CMP0 event.
+   *   When IEP counter reaches this value, it resets to 0, creating periodic cycles */
+
+} endat3_periodic_interface;
+
+/* ========================================================================== */
+/*                       Function Declarations                                */
+/* ========================================================================== */
 
 /**
- * \brief Configure EnDat3 periodic mode
- * 
- * Initializes the EnDat3 interface for periodic triggering using the IEP timer.
- * This function configures the IEP timer with compare registers, initializes
- * the ICSS interrupt controller, and sets up interrupt handlers.
+ * \brief   Configure ENDAT3 encoder for periodic trigger mode
  *
- * \param endat3_periodic_interface Pointer to periodic interface configuration structure
- * \param handle PRUICSS handle for the ICSS instance
+ * \details This function configures the ENDAT3 encoder interface to operate in periodic
+ *          trigger mode, where encoder position data is automatically sampled at regular
+ *          intervals using the PRU-ICSS IEP (Industrial Ethernet Peripheral) timer.
  *
- * \return 1 on success, 0 on failure
- * 
- * \note This function must be called after PRUICSS initialization and before
- *       starting periodic communication.
- * 
- * \code
- * struct endat3_periodic_interface periodic_cfg = {
- *     .pruss_iep = iep_base,
- *     .pruss_dmem = dmem_base,
- *     .pruss_cfg = cfg_base,
- *     .load_share = 0,
- *     .cmp0 = 0x100000000,  // 4 seconds at 250MHz
- *     .cmp3 = 0x0FA00000    // 1 second at 250MHz
- * };
- * 
- * if (endat3_config_periodic_mode(&periodic_cfg, pruicss_handle)) {
- *     // Periodic mode configured successfully
- * }
- * \endcode
+ *          The function performs the following operations:
+ *          1. Configures IEP timer with specified periodic trigger count and reset count
+ *          2. Enables IEP Compare 0 (CMP0) event for periodic triggering
+ *          3. Registers interrupt handler for processing periodic samples
+ *          4. Enables PRU interrupt handling
+ *
+ *          In periodic mode:
+ *          - IEP counter increments at IEP clock rate
+ *          - When counter reaches periodic_trigger_count, encoder transaction is triggered
+ *          - When counter reaches iep_reset_count, counter resets to 0 (defines period)
+ *          - Interrupt handler is called on each ENDAT3 transaction completion
+ *
+ *          Requirements:
+ *          - ENDAT3 driver must be initialized with endat3_init() before calling this function
+ *          - periodic_trigger_count must be less than iep_reset_count
+ *          - IEP clock must be configured via SysConfig
+ *
+ * \param[in]   endat3_periodic_interface  Pointer to periodic interface structure containing:
+ *                                           - handle: ENDAT3 driver handle from endat3_init()
+ *                                           - periodic_trigger_count: IEP count value for trigger
+ *                                           - iep_reset_count: IEP count value for counter reset
+ *
+ * \retval      SystemP_SUCCESS    Configuration successful, periodic mode active
+ * \retval      SystemP_FAILURE    Configuration failed (NULL interface pointer, invalid handle,
+ *                                 or configuration error)
+ *
+ * \note        Call endat3_stop_periodic_mode() before returning to host trigger mode
  */
-uint32_t endat3_config_periodic_mode(struct endat3_periodic_interface *endat3_periodic_interface, PRUICSS_Handle handle);
+int32_t endat3_config_periodic_mode(endat3_periodic_interface *endat3_periodic_interface);
 
 /**
- * \brief Stop EnDat3 periodic mode
+ * \brief   Stop ENDAT3 periodic trigger mode
  *
- * Disables the IEP timer and stops periodic triggering. This function
- * resets the IEP counter and disables the counter enable bit.
+ * \details This function disables periodic trigger mode for the ENDAT3 encoder interface.
  *
- * \param endat3_periodic_interface Pointer to periodic interface configuration structure
+ *          The function performs the following operations:
+ *          1. Disables PRU interrupts for periodic trigger events
+ *          2. Disables IEP Compare 0 (CMP0) event
+ *          3. Stops IEP counter
+ *          4. Unregisters interrupt handler
  *
- * \return void
+ *          After calling this function:
+ *          - IEP timer is stopped
+ *          - No automatic encoder transactions occur
+ *          - Application must enable host trigger mode and call
+ *            required functions explicitly for each transaction
  *
- * \code
- * endat3_stop_periodic_continuous_mode(&periodic_cfg);
- * \endcode
+ * \param[in]   endat3_periodic_interface  Pointer to periodic interface structure
+ *
+ * \retval      SystemP_SUCCESS    Periodic mode stopped successfully
+ * \retval      SystemP_FAILURE    Failed to stop periodic mode (NULL interface pointer or invalid handle)
+ *
  */
-void endat3_stop_periodic_continuous_mode(struct endat3_periodic_interface *endat3_periodic_interface);
-
-/**
- * \brief EnDat3 periodic trigger interrupt handler (Channel 0)
- * 
- * Interrupt service routine for channel 0 periodic trigger events.
- * Handles CMP3 event clearing and interrupt acknowledgment.
- *
- * \param args Pointer to arguments (typically NULL)
- *
- * \return void
- * 
- * \note This is an internal function called by the interrupt controller.
- */
-static void pruEnDat3IrqHandler0(void *args);
-
-/**
- * \brief EnDat3 periodic trigger interrupt handler (Channel 1)
- * 
- * Interrupt service routine for channel 1 periodic trigger events.
- * Handles CMP5 event clearing and interrupt acknowledgment.
- *
- * \param args Pointer to arguments (typically NULL)
- *
- * \return void
- * 
- * \note This is an internal function called by the interrupt controller.
- */
-static void pruEnDat3IrqHandler1(void *args);
-
-/**
- * \brief EnDat3 periodic trigger interrupt handler (Channel 2)
- * 
- * Interrupt service routine for channel 2 periodic trigger events.
- * Handles CMP6 event clearing and interrupt acknowledgment.
- *
- * \param args Pointer to arguments (typically NULL)
- *
- * \return void
- * 
- * \note This is an internal function called by the interrupt controller.
- */
-static void pruEnDat3IrqHandler2(void *args);
+int32_t endat3_stop_periodic_mode(endat3_periodic_interface *endat3_periodic_interface);
 
 #endif /* _ENDAT3_PERIODIC_TRIGGER_H_ */

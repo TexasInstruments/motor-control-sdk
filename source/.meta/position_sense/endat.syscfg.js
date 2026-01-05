@@ -15,18 +15,18 @@ function onValidate(inst, validation) {
         let instance = inst.$module.$instances[instance_index];
         /* select atleast one cahnnel */
         if ((!instance.Channel_0)&&(!instance.Channel_2)&&(!instance.Channel_1))
-            validation.logError("Select atleast one channel",inst,"Channel_0");
+            validation.logError("Select atleast one channel", inst, "Channel_0");
 
         /* channel 0 and channel 2 are supported on am243x-lp*/
         if((device === "am243x-lp") && (instance.Channel_1) && (instance.Booster_Pack))
         {
-            validation.logError("Channel 1 is not supported with BP-AM2BLDCSERVO BoosterPack",inst,"Booster_Pack");
+            validation.logError("Channel 1 is not supported on BP-AM2BLDCSERVO BoosterPack due to pinout limitations", inst, "Booster_Pack");
         }
 
         /* validation for BP-AM2BLDCSERVO BoosterPack */
         if((device!="am243x-lp" && device != "am263x-cc" && device!="am261x-lp" && device != "am263px-cc" )&&(instance.Booster_Pack))
         {
-            validation.logError("Select only when using BP-AM2BLDCSERVO BoosterPack with LP",inst,"Booster_Pack");
+            validation.logError("Select only when using BP-AM2BLDCSERVO BoosterPack with LP", inst, "Booster_Pack");
         }
         if(is_am26x_soc)
         {
@@ -39,7 +39,7 @@ function onValidate(inst, validation) {
 
                 if((instance.Channel_2 || instance.Channel_0)&&(instance.Booster_Pack))
                 {
-                    validation.logError("Channel 0 and Channel 2 are not supported with BP-AM2BLDCSERVO BoosterPack",inst,"Booster_Pack");
+                    validation.logError("Channel 0 and Channel 2 are not supported on BP-AM2BLDCSERVO BoosterPack due to pinout limitations", inst, "Booster_Pack");
                 }
             }
             if(is_am261x_soc)
@@ -47,7 +47,7 @@ function onValidate(inst, validation) {
 
                 if((instance.Channel_2 || instance.Channel_1)&&(instance.Booster_Pack))
                 {
-                    validation.logError("Channel 1 and Channel 2 are not supported with BP-AM2BLDCSERVO BoosterPack",inst,"Booster_Pack");
+                    validation.logError("Channel 1 and Channel 2 are not supported on BP-AM2BLDCSERVO BoosterPack due to pinout limitations", inst, "Booster_Pack");
                 }
             }
         }
