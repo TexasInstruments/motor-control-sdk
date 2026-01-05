@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2025 Texas Instruments Incorporated
+ *  Copyright (C) 2024-2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -30,6 +30,61 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/**
+ * \file  nikon_diagnostic.c
+ *
+ * \brief Nikon encoder diagnostic application
+ *
+ * \details This application provides comprehensive diagnostic and testing capabilities for
+ *          Nikon encoders, including position reads, EEPROM operations, continuous position monitoring,
+ *          and periodic trigger mode.
+ *
+ * \par Application Flow:
+ * 1. Initialize SoC drivers and board drivers
+ * 2. Enable booster pack power pins if configured
+ * 3. Wait for encoder power-up (per encoder specification)
+ * 4. Display firmware version information
+ * 5. Initialize PRU-ICSS subsystem
+ * 6. Initialize Nikon driver with default parameters
+ * 7. Get encoder resolution parameters from user
+ * 8. Load and run PRU firmware(s) - driver configures the default host trigger mode
+ * 9. Wait for encoder detection
+ * 10. Enter interactive menu loop for encoder operations
+ * 11. De-initialize on exit
+ *
+ * \par Trigger Modes:
+ * - **Host Trigger Mode (default)**: Each Nikon transaction is initiated by the host (R5F)
+ *   via API calls. The driver configures this mode (as default) during initialization.
+ * - **Periodic Trigger Mode**: Nikon transactions are automatically triggered by IEP timer
+ *   at regular intervals. This mode can be enabled through the interactive menu.
+ *
+ * \par Supported Operations:
+ * - Position data acquisition
+ * - Multi-turn and single-turn data
+ * - Encoder status and alarm monitoring
+ * - EEPROM read/write operations
+ * - Temperature reading
+ * - Identification code operations
+ * - Velocity and acceleration data (Nikon 3.0)
+ * - Encoder address configuration
+ * - Frequency configuration
+ * - Continuous/periodic mode operation
+ *
+ * \par Driver Validation Strategy:
+ * Nikon driver APIs use a simplified validation approach for optimal performance:
+ * - **Handle validation**: All public APIs validate the handle parameter for NULL
+ * - **Array bounds checking**: APIs with array/index parameters perform bounds validation
+ * - **Internal structure validation**: Internal structures (attrs, priv, pruicss_xchg, pruicss_handle)
+ *   are validated once during nikon_init() and assumed valid in subsequent API calls
+ * - **Error handling**: Functions returning data return 0 on validation failures. Functions returning
+ *   status use SystemP_SUCCESS/SystemP_FAILURE. Caller is responsible for explicit state cleanup if
+ *   needed after errors (e.g., nikon_get_pos may leave internal state partially modified on failure).
+ * - Check API documentation for more details.
+ */
+
+/* ========================================================================== */
+/*                             Include Files                                  */
+/* ========================================================================== */
 
 #include <stdio.h>
 #include <stdint.h>
@@ -54,18 +109,18 @@
 #include <position_sense/nikon/include/nikon_api.h>
 #include "nikon_periodic_trigger.h"
 
-#define PRUICSS_SLICEx CONFIG_NIKON0_PRUICSS_PRUx
-
 #if (CONFIG_NIKON0_MODE == NIKON_MODE_MULTI_CHANNEL_SINGLE_PRU)
-#if (PRUICSS_SLICEx == 1)
+/* Multi-channel single PRU mode */
+#if (CONFIG_NIKON0_PRUICSS_SLICE == 1)
 #include  <nikon_receiver_multi_pru1_bin.h>
 #else
 #include  <nikon_receiver_multi_pru0_bin.h>
 #endif
 #endif
 
-#if (CONFIG_NIKON0_MODE == NIKON_MODE_MULTI_CHANNEL_MULTI_PRU )
-#if (PRUICSS_SLICEx == 1)
+#if (CONFIG_NIKON0_MODE == NIKON_MODE_MULTI_CHANNEL_MULTI_PRU)
+/* Multi-channel multi-PRU mode (load share mode) */
+#if (CONFIG_NIKON0_PRUICSS_SLICE == 1)
 #include <nikon_receiver_multi_rtu_pru1_bin.h>
 #include <nikon_receiver_multi_pru1_bin.h>
 #include <nikon_receiver_multi_tx_pru1_bin.h>
@@ -77,182 +132,298 @@
 #endif
 
 #if (CONFIG_NIKON0_MODE == NIKON_MODE_SINGLE_CHANNEL_SINGLE_PRU)
-#if (PRUICSS_SLICEx == 1)
+/* Single channel single PRU mode */
+#if (CONFIG_NIKON0_PRUICSS_SLICE == 1)
 #include  <nikon_receiver_pru1_bin.h>
 #else
 #include  <nikon_receiver_pru0_bin.h>
 #endif
 #endif
+
+/* ========================================================================== */
+/*                           Macros & Typedefs                                */
+/* ========================================================================== */
+
 #define TASK_STACK_SIZE                     (4096)
 #define TASK_PRIORITY                       (6)
+
+#define NIKON_CMD_EXIT_APP                  (0)
+#define NIKON_CMD_ENC_LEN_UPDATE            (1)
+#define NIKON_CMD_ENC_FREQ_UPDATE           (2)
+#define NIKON_CMD_ENC_SEND_POS              (3)
+#define NIKON_CMD_ENC_LOOP_OVER_CYC         (4)
+#define NIKON_CMD_PERIODIC_TRIGGER          (5)
 
 #define NIKON_POSITION_LOOP_STOP            0
 #define NIKON_POSITION_LOOP_START           1
 
-#define ICSS_PRU_CORE_CLOCK CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ
-#define ICSS_PRU_UART_CLOCK CONFIG_PRU_ICSS0_UART_CLK_FREQ_HZ
-
-/* Macro for 0.5 seconds delay - value in microseconds */
+/* Macro for 0.5 seconds delay - value in micro-seconds */
 #define NIKON_POWER_UP_DELAY (0.5 * 1000 * 1000)
 
-/** \brief Global Structure pointer holding Nikon handle */
-struct nikon_priv *priv;
+/* ========================================================================== */
+/*                            Global Variables                                */
+/* ========================================================================== */
 
+/* PRU-ICSS Driver Handle */
+PRUICSS_Handle gPruIcssXHandle = NULL;
+
+/* Nikon Driver Handle */
+nikon_handle gAppNikonHandle[CONFIG_NIKON_NUM_INSTANCES] = {NULL};
+
+/* Nikon Periodic Interface Struct Instance */
+nikon_periodic_interface gNikonPeriodicInterface;
+
+/* Global variable to track position loop status */
+volatile int32_t gNikonPositionLoopStatus;
+
+/* Task related global variables */
 uint32_t gTaskFxnStack[TASK_STACK_SIZE/sizeof(uint32_t)] __attribute__((aligned(32)));
-
-PRUICSS_Handle gPruIcssXHandle;
 TaskP_Object gTaskObject;
 
-static uint32_t nikon_position_loop_status;
-uint32_t totalchannels = 0;
-uint32_t mask = 0;
+/* ========================================================================== */
+/*                       Function Declarations                                */
+/* ========================================================================== */
+
+static void nikon_pruicss_init(void);
+static void nikon_pruicss_load_run_fw(void);
+static void nikon_get_enc_data_len(nikon_handle handle);
+static void nikon_display_fw_version(void);
+static void nikon_display_menu(nikon_handle handle);
+static uint32_t nikon_get_command(nikon_handle handle);
+static void nikon_position_loop_decide_termination(void *args);
+static int32_t nikon_loop_task_create(void);
+static void nikon_process_periodic_command(nikon_handle handle[CONFIG_NIKON_NUM_INSTANCES], uint64_t trigger_count[CONFIG_NIKON_NUM_INSTANCES][NIKON_NUM_CH_PER_SLICE_MAX], uint64_t iep_reset_count);
+void nikon_main(void *args);
+
+/* ========================================================================== */
+/*                          Function Definitions                              */
+/* ========================================================================== */
 
 static void nikon_pruicss_init(void)
 {
     int32_t status = SystemP_FAILURE;
-    uint32_t size;
+    uint32_t u_status = 0;
+
+#if (CONFIG_NIKON0_MODE == NIKON_MODE_MULTI_CHANNEL_MULTI_PRU)
+#if (CONFIG_NIKON0_CHANNEL0_ENABLED == 1)
+    uint8_t rtu_pru_id = CONFIG_NIKON0_PRUICSS_RTU_PRU_ID;
+#endif
+#if (CONFIG_NIKON0_CHANNEL1_ENABLED == 1)
+    uint8_t pru_id = CONFIG_NIKON0_PRUICSS_PRU_ID;
+#endif
+#if (CONFIG_NIKON0_CHANNEL2_ENABLED == 1)
+    uint8_t tx_pru_id = CONFIG_NIKON0_PRUICSS_TX_PRU_ID;
+#endif
+#else
+    uint8_t pru_id = CONFIG_NIKON0_PRUICSS_PRU_ID;
+#endif
+
     gPruIcssXHandle = PRUICSS_open(CONFIG_PRU_ICSS0);
+
 #ifdef CONFIG_NIKON0_G_MUX_EN
-    /* Configure g_mux_en to 1 in ICSSG_SA_MX_REG Register. */
+    /* Configure g_mux_en to 1 in ICSSG_SA_MX_REG Register */
     status = PRUICSS_setSaMuxMode(gPruIcssXHandle, PRUICSS_SA_MUX_MODE_SD_ENDAT);
     DebugP_assert(SystemP_SUCCESS == status);
 #endif
-    /* clear ICSS0 PRUx data RAM */
-    size = PRUICSS_initMemory(gPruIcssXHandle, PRUICSS_DATARAM(PRUICSS_SLICEx));
-    DebugP_assert(size);
-    if(CONFIG_NIKON0_MODE == NIKON_MODE_MULTI_CHANNEL_MULTI_PRU)
-    {
-        status = PRUICSS_disableCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_RTUPRUx);
-        DebugP_assert(SystemP_SUCCESS == status);
-        status = PRUICSS_disableCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_TXPRUx);
-        DebugP_assert(SystemP_SUCCESS == status);
+
+    /* Clear PRU-ICSS DATA RAM for slice*/
+    u_status = PRUICSS_initMemory(gPruIcssXHandle, PRUICSS_DATARAM(CONFIG_NIKON0_PRUICSS_SLICE));
+    DebugP_assert(0 != u_status);
+
+#if (CONFIG_NIKON0_MODE == NIKON_MODE_MULTI_CHANNEL_MULTI_PRU)
+#if (CONFIG_NIKON0_CHANNEL0_ENABLED == 1)
+    status = PRUICSS_disableCore(gPruIcssXHandle, rtu_pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+#endif
+#if (CONFIG_NIKON0_CHANNEL1_ENABLED == 1)
+    status = PRUICSS_disableCore(gPruIcssXHandle, pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+#endif
+#if (CONFIG_NIKON0_CHANNEL2_ENABLED == 1)
+    status = PRUICSS_disableCore(gPruIcssXHandle, tx_pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+#endif
+#else
+    status = PRUICSS_disableCore(gPruIcssXHandle, pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+#endif
+
+#if (CONFIG_NIKON0_MODE == NIKON_MODE_MULTI_CHANNEL_MULTI_PRU)
+#if (CONFIG_NIKON0_CHANNEL2_ENABLED == 1)
     /*
-    * Set the constant table C28 for tx pru
-    * configuring the constant table C28 to point to the TX counter
-    * register (CNTR). The counter is needed in firmware for adding waits and time stemps.
-    */
-#if CONFIG_NIKON0_PRUICSSx == 1
-#if PRUICSS_SLICEx == 1
-    PRUICSS_setConstantTblEntry(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0xA58);
+     * Set the constant table C28 for TXPRU
+     * configuring the constant table C28 to point to the TX counter
+     * register (CNTR). The counter is needed in firmware for adding waits and time stamps.
+     */
+#if (CONFIG_NIKON0_PRUICSS_INSTANCE == 1)
+#if (CONFIG_NIKON0_PRUICSS_SLICE == 1)
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, tx_pru_id, PRUICSS_CONST_TBL_ENTRY_C28, 0xA58);
 #else
-    PRUICSS_setConstantTblEntry(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0xA50);
-#endif /* PRUICSS_SLICEx == 1 */
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, tx_pru_id, PRUICSS_CONST_TBL_ENTRY_C28, 0xA50);
+#endif
 #else
-#if PRUICSS_SLICEx == 1
-    PRUICSS_setConstantTblEntry(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0x258);
+#if (CONFIG_NIKON0_PRUICSS_SLICE == 1)
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, tx_pru_id, PRUICSS_CONST_TBL_ENTRY_C28, 0x258);
 #else
-    PRUICSS_setConstantTblEntry(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0x250);
-#endif /* PRUICSS_SLICEx == 1 */
-#endif /* CONFIG_NIKON0_PRUICSSx == 1 */
-
-    }
-    status = PRUICSS_disableCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_PRUx);
-    DebugP_assert(SystemP_SUCCESS == status);
-
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, tx_pru_id, PRUICSS_CONST_TBL_ENTRY_C28, 0x250);
+#endif
+#endif
+#endif
+#endif
 }
 
-int32_t nikon_pruicss_load_run_fw(struct nikon_priv *priv, uint8_t mask)
+static void nikon_pruicss_load_run_fw(void)
 {
-    int32_t status = SystemP_SUCCESS;
-    uint32_t size;
-#if(CONFIG_NIKON0_MODE == NIKON_MODE_MULTI_CHANNEL_MULTI_PRU) /*enable loadshare mode*/
-#if(CONFIG_NIKON0_CHANNEL0)
-    status = PRUICSS_disableCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_RTUPRUx);
-    DebugP_assert(SystemP_SUCCESS == status);
-#if (PRUICSS_SLICEx == 1)
-    size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_RTU_PRU(PRUICSS_SLICEx),
-                                                        0, (uint32_t *) NikonFirmwareMultiMakeRtuPru1_0,
-                                                        sizeof(NikonFirmwareMultiMakeRtuPru1_0));
-#else
-    size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_RTU_PRU(PRUICSS_SLICEx),
-                                                        0, (uint32_t *) NikonFirmwareMultiMakeRtuPru0_0,
-                                                        sizeof(NikonFirmwareMultiMakeRtuPru0_0));
+    int32_t status = SystemP_FAILURE;
+    uint32_t u_status = 0;
+
+#if (CONFIG_NIKON0_MODE == NIKON_MODE_MULTI_CHANNEL_MULTI_PRU)
+#if (CONFIG_NIKON0_PRUICSS_SLICE == 1)
+#if (CONFIG_NIKON0_CHANNEL0_ENABLED == 1)
+    const uint32_t *rtu_pru_firmware = NikonFirmwareMultiMakeRtuPru1_0;
+    uint32_t rtu_pru_firmware_size = sizeof(NikonFirmwareMultiMakeRtuPru1_0);
+    uint8_t rtu_pru_id = CONFIG_NIKON0_PRUICSS_RTU_PRU_ID;
 #endif
-    DebugP_assert(size);
-    status = PRUICSS_resetCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_RTUPRUx);
-    DebugP_assert(SystemP_SUCCESS == status);
-    status = PRUICSS_enableCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_RTUPRUx);
-    DebugP_assert(SystemP_SUCCESS == status);
+#if (CONFIG_NIKON0_CHANNEL1_ENABLED == 1)
+    const uint32_t *pru_firmware = NikonFirmwareMultiMakePru1_0;
+    uint32_t pru_firmware_size = sizeof(NikonFirmwareMultiMakePru1_0);
+    uint8_t pru_id = CONFIG_NIKON0_PRUICSS_PRU_ID;
 #endif
-#if(CONFIG_NIKON0_CHANNEL1)
-    status=PRUICSS_disableCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_PRUx );
-    DebugP_assert(SystemP_SUCCESS == status);
-#if (PRUICSS_SLICEx == 1)
-    size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_SLICEx),
-                                                      0, (uint32_t *) NikonFirmwareMultiMakePru1_0,
-                                                      sizeof(NikonFirmwareMultiMakePru1_0));
-#else
-    size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_SLICEx),
-                                                      0, (uint32_t *) NikonFirmwareMultiMakePru0_0,
-                                                      sizeof(NikonFirmwareMultiMakePru0_0));
-#endif
-    DebugP_assert(size);
-    status = PRUICSS_resetCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_PRUx);
-    DebugP_assert(SystemP_SUCCESS == status);
-    status = PRUICSS_enableCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_PRUx);
-    DebugP_assert(SystemP_SUCCESS == status);
-#endif
-#if(CONFIG_NIKON0_CHANNEL2)
-    status = PRUICSS_disableCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_TXPRUx);
-    DebugP_assert(SystemP_SUCCESS == status);
-#if (PRUICSS_SLICEx == 1)
-    size = PRUICSS_writeMemory(gPruIcssXHandle,  PRUICSS_IRAM_TX_PRU(PRUICSS_SLICEx),
-                                                        0, (uint32_t *) NikonFirmwareMultiMakeTxPru1_0,
-                                                        sizeof(NikonFirmwareMultiMakeTxPru1_0));
-#else
-    size = PRUICSS_writeMemory(gPruIcssXHandle,  PRUICSS_IRAM_TX_PRU(PRUICSS_SLICEx),
-                                                        0, (uint32_t *) NikonFirmwareMultiMakeTxPru0_0,
-                                                        sizeof(NikonFirmwareMultiMakeTxPru0_0));
-#endif
-    DebugP_assert(size);
-    status = PRUICSS_resetCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_TXPRUx);
-    DebugP_assert(SystemP_SUCCESS == status);
-    status = PRUICSS_enableCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_TXPRUx);
-    DebugP_assert(SystemP_SUCCESS == status);
+#if (CONFIG_NIKON0_CHANNEL2_ENABLED == 1)
+    const uint32_t *tx_pru_firmware = NikonFirmwareMultiMakeTxPru1_0;
+    uint32_t tx_pru_firmware_size = sizeof(NikonFirmwareMultiMakeTxPru1_0);
+    uint8_t tx_pru_id = CONFIG_NIKON0_PRUICSS_TX_PRU_ID;
 #endif
 #else
-    status = PRUICSS_disableCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_PRUx);
-    DebugP_assert(SystemP_SUCCESS == status);
-#if(CONFIG_NIKON0_MODE == NIKON_MODE_MULTI_CHANNEL_SINGLE_PRU)
-#if (PRUICSS_SLICEx == 1)
-    size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(CONFIG_NIKON0_PRUICSS_PRUx),
-                                0, (uint32_t *) NikonFirmwareMultiPru1_0,
-                                sizeof(NikonFirmwareMultiPru1_0));
+#if (CONFIG_NIKON0_CHANNEL0_ENABLED == 1)
+    const uint32_t *rtu_pru_firmware = NikonFirmwareMultiMakeRtuPru0_0;
+    uint32_t rtu_pru_firmware_size = sizeof(NikonFirmwareMultiMakeRtuPru0_0);
+    uint8_t rtu_pru_id = CONFIG_NIKON0_PRUICSS_RTU_PRU_ID;
+#endif
+#if (CONFIG_NIKON0_CHANNEL1_ENABLED == 1)
+    const uint32_t *pru_firmware = NikonFirmwareMultiMakePru0_0;
+    uint32_t pru_firmware_size = sizeof(NikonFirmwareMultiMakePru0_0);
+    uint8_t pru_id = CONFIG_NIKON0_PRUICSS_PRU_ID;
+#endif
+#if (CONFIG_NIKON0_CHANNEL2_ENABLED == 1)
+    const uint32_t *tx_pru_firmware = NikonFirmwareMultiMakeTxPru0_0;
+    uint32_t tx_pru_firmware_size = sizeof(NikonFirmwareMultiMakeTxPru0_0);
+    uint8_t tx_pru_id = CONFIG_NIKON0_PRUICSS_TX_PRU_ID;
+#endif
+#endif
+#elif (CONFIG_NIKON0_MODE == NIKON_MODE_MULTI_CHANNEL_SINGLE_PRU)
+#if (CONFIG_NIKON0_PRUICSS_SLICE == 1)
+    const uint32_t *pru_firmware = NikonFirmwareMultiPru1_0;
+    uint32_t pru_firmware_size = sizeof(NikonFirmwareMultiPru1_0);
 #else
-    size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(CONFIG_NIKON0_PRUICSS_PRUx),
-                                0, (uint32_t *) NikonFirmwareMultiPru0_0,
-                                sizeof(NikonFirmwareMultiPru0_0));
+    const uint32_t *pru_firmware = NikonFirmwareMultiPru0_0;
+    uint32_t pru_firmware_size = sizeof(NikonFirmwareMultiPru0_0);
+#endif
+    uint8_t pru_id = CONFIG_NIKON0_PRUICSS_PRU_ID;
+#else
+#if (CONFIG_NIKON0_PRUICSS_SLICE == 1)
+    const uint32_t *pru_firmware = NikonFirmwarePru1_0;
+    uint32_t pru_firmware_size = sizeof(NikonFirmwarePru1_0);
+#else
+    const uint32_t *pru_firmware = NikonFirmwarePru0_0;
+    uint32_t pru_firmware_size = sizeof(NikonFirmwarePru0_0);
+#endif
+    uint8_t pru_id = CONFIG_NIKON0_PRUICSS_PRU_ID;
+#endif
+
+#if (CONFIG_NIKON0_MODE == NIKON_MODE_MULTI_CHANNEL_MULTI_PRU)
+#if (CONFIG_NIKON0_CHANNEL0_ENABLED == 1)
+    /* Disable RTU-PRU core */
+    status = PRUICSS_disableCore(gPruIcssXHandle, rtu_pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+
+    /* Load firmware to RTU-PRU instruction RAM */
+    u_status = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_RTU_PRU(CONFIG_NIKON0_PRUICSS_SLICE), 0,
+                                  (uint32_t *)rtu_pru_firmware, rtu_pru_firmware_size);
+    DebugP_assert(0 != u_status);
+
+    /* Reset RTU-PRU core */
+    status = PRUICSS_resetCore(gPruIcssXHandle, rtu_pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+
+    /* Enable RTU-PRU core to run firmware */
+    status = PRUICSS_enableCore(gPruIcssXHandle, rtu_pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+#endif
+#if (CONFIG_NIKON0_CHANNEL1_ENABLED == 1)
+    /* Disable PRU core */
+    status = PRUICSS_disableCore(gPruIcssXHandle, pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+
+    /* Load firmware to PRU instruction RAM */
+    u_status = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(CONFIG_NIKON0_PRUICSS_SLICE), 0,
+                                  (uint32_t *)pru_firmware, pru_firmware_size);
+    DebugP_assert(0 != u_status);
+
+    /* Reset PRU core */
+    status = PRUICSS_resetCore(gPruIcssXHandle, pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+
+    /* Enable PRU core to run firmware */
+    status = PRUICSS_enableCore(gPruIcssXHandle, pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+#endif
+#if (CONFIG_NIKON0_CHANNEL2_ENABLED == 1)
+    /* Disable TX-PRU core */
+    status = PRUICSS_disableCore(gPruIcssXHandle, tx_pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+
+    /* Load firmware to TX-PRU instruction RAM */
+    u_status = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_TX_PRU(CONFIG_NIKON0_PRUICSS_SLICE), 0,
+                                  (uint32_t *)tx_pru_firmware, tx_pru_firmware_size);
+    DebugP_assert(0 != u_status);
+
+    /* Reset TX-PRU core */
+    status = PRUICSS_resetCore(gPruIcssXHandle, tx_pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+
+    /* Enable TX-PRU core to run firmware */
+    status = PRUICSS_enableCore(gPruIcssXHandle, tx_pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
 #endif
 #else
-#if (PRUICSS_SLICEx == 1)
-    size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(CONFIG_NIKON0_PRUICSS_PRUx),
-                                0, (uint32_t *) NikonFirmwarePru1_0,
-                                sizeof(NikonFirmwarePru1_0));
-#else
-    size = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(CONFIG_NIKON0_PRUICSS_PRUx),
-                                0, (uint32_t *) NikonFirmwarePru0_0,
-                                sizeof(NikonFirmwarePru0_0));
-#endif
-#endif
-    DebugP_assert(size);
-    status = PRUICSS_resetCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_PRUx);
+    /* Disable PRU core */
+    status = PRUICSS_disableCore(gPruIcssXHandle, pru_id);
     DebugP_assert(SystemP_SUCCESS == status);
-    /*Run firmware */
-    status = PRUICSS_enableCore(gPruIcssXHandle, CONFIG_NIKON0_PRUICSS_PRUx);
+
+    /* Load firmware to PRU instruction RAM */
+    u_status = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(CONFIG_NIKON0_PRUICSS_SLICE), 0,
+                                  (uint32_t *)pru_firmware, pru_firmware_size);
+    DebugP_assert(0 != u_status);
+
+    /* Reset PRU core */
+    status = PRUICSS_resetCore(gPruIcssXHandle, pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+
+    /* Enable PRU core to run firmware */
+    status = PRUICSS_enableCore(gPruIcssXHandle, pru_id);
     DebugP_assert(SystemP_SUCCESS == status);
 #endif
-    status = nikon_wait_for_encoder_detection(priv);
-    return status;
 }
-void nikon_get_enc_data_len(struct nikon_priv *priv)
+
+static void nikon_get_enc_data_len(nikon_handle handle)
 {
+    int32_t ret;
     uint32_t ch_num;
     uint32_t ch;
     uint32_t enc_num;
     uint32_t num_encoders;
     uint32_t single_turn_len[NUM_ENCODERS_MAX];
     uint32_t multi_turn_len[NUM_ENCODERS_MAX];
-    for(ch_num = 0; ch_num < priv->totalchannels; ch_num++)
+    uint32_t total_channels;
+    const nikon_attrs *attrs;
+
+    DebugP_assert(handle != NULL);
+
+    attrs = nikon_get_attrs(handle);
+    total_channels = attrs->total_channels;
+
+    for(ch_num = 0; ch_num < total_channels; ch_num++)
     {
         for(enc_num = 0; enc_num < NUM_ENCODERS_MAX; enc_num++)
         {
@@ -260,79 +431,152 @@ void nikon_get_enc_data_len(struct nikon_priv *priv)
             multi_turn_len[enc_num] = 0;
         }
 
-        ch = nikon_get_current_channel(priv, ch_num);
+        ret = nikon_get_current_channel(handle, ch_num, &ch);
+        DebugP_assert(ret == SystemP_SUCCESS);
+
         DebugP_log("\r\nPlease enter encoder length connected to Channel %d:\n", ch);
 
-        DebugP_log("\r\nPlease enter single turn length for encoder 1: ");
-        DebugP_scanf("%u\n", &single_turn_len[0]);
-        DebugP_log("\r\nPlease enter multi turn length for encoder 1 (0, if not a multi turn encoder): ");
-        DebugP_scanf("%u\n", &multi_turn_len[0]);
+        /* Retry loop for encoder 1 input validation */
+        while(1)
+        {
+            DebugP_log("\r\nPlease enter single turn length for encoder 1: ");
+            DebugP_scanf("%u\n", &single_turn_len[0]);
+            DebugP_log("\r\nPlease enter multi turn length for encoder 1 (0, if not a multi turn encoder): ");
+            DebugP_scanf("%u\n", &multi_turn_len[0]);
+
+            /* Validate first encoder data */
+            if(single_turn_len[0] > NIKON_MAX_ABS_LEN)
+            {
+                DebugP_log("\r\n| ERROR: Invalid single turn length for encoder 1. Valid range: 0-%u\n", NIKON_MAX_ABS_LEN);
+                continue;
+            }
+            if(multi_turn_len[0] > NIKON_MAX_ABS_LEN)
+            {
+                DebugP_log("\r\n| ERROR: Invalid multi turn length for encoder 1. Valid range: 0-%u\n", NIKON_MAX_ABS_LEN);
+                continue;
+            }
+            if((single_turn_len[0] + multi_turn_len[0]) > NIKON_MAX_ABS_LEN)
+            {
+                DebugP_log("\r\n| ERROR: Total encoder length exceeds maximum. Single + Multi turn must be <= %u bits\n", NIKON_MAX_ABS_LEN);
+                continue;
+            }
+
+            /* Validation passed, break out of retry loop */
+            break;
+        }
+
         num_encoders = 1;
 
         for(enc_num = 1; enc_num < NUM_ENCODERS_MAX; enc_num++)
         {
-            DebugP_log("\r\nPlease enter single turn length for encoder %d (0, if not connected): ", (enc_num + 1));
-            DebugP_scanf("%u\n", &single_turn_len[enc_num]);
+            /* Nested retry loop for single turn length input */
+            while(1)
+            {
+                DebugP_log("\r\nPlease enter single turn length for encoder %d (0, if not connected): ", (enc_num + 1));
+                DebugP_scanf("%u\n", &single_turn_len[enc_num]);
+
+                /* Validate single turn length */
+                if(single_turn_len[enc_num] > NIKON_MAX_ABS_LEN)
+                {
+                    DebugP_log("\r\n| ERROR: Invalid single turn length for encoder %d. Valid range: 0-%u\n", (enc_num + 1), NIKON_MAX_ABS_LEN);
+                    continue;  /* Retry same encoder */
+                }
+
+                /* Valid input, exit retry loop */
+                break;
+            }
 
             if(single_turn_len[enc_num] == 0)
             {
                 break;
             }
-            DebugP_log("\r\nPlease enter multi turn length for encoder %d (0, if not a multi turn encoder): ", (enc_num + 1));
-            DebugP_scanf("%u\n", &multi_turn_len[enc_num]);
+
+            /* Nested retry loop for multi turn length input */
+            while(1)
+            {
+                DebugP_log("\r\nPlease enter multi turn length for encoder %d (0, if not a multi turn encoder): ", (enc_num + 1));
+                DebugP_scanf("%u\n", &multi_turn_len[enc_num]);
+
+                /* Validate multi turn length */
+                if(multi_turn_len[enc_num] > NIKON_MAX_ABS_LEN)
+                {
+                    DebugP_log("\r\n| ERROR: Invalid multi turn length for encoder %d. Valid range: 0-%u\n", (enc_num + 1), NIKON_MAX_ABS_LEN);
+                    continue;  /* Retry same encoder */
+                }
+
+                /* Validate total length */
+                if((single_turn_len[enc_num] + multi_turn_len[enc_num]) > NIKON_MAX_ABS_LEN)
+                {
+                    DebugP_log("\r\n| ERROR: Total encoder length exceeds maximum. Single + Multi turn must be <= %u bits\n", NIKON_MAX_ABS_LEN);
+                    continue;  /* Retry same encoder */
+                }
+
+                /* Valid input, exit retry loop */
+                break;
+            }
 
             num_encoders++;
         }
 
-        nikon_update_enc_len(priv, num_encoders, single_turn_len, multi_turn_len, ch);
+        ret = nikon_update_enc_len(handle, num_encoders, single_turn_len, multi_turn_len, ch);
+        DebugP_assert(ret == SystemP_SUCCESS);
     }
 }
 
-uint32_t nikon_get_fw_version(void)
+static void nikon_display_fw_version(void)
 {
+    uint32_t version;
+    /* Prints the firmware version(s) depending on configuration */
 #if (CONFIG_NIKON0_MODE == NIKON_MODE_MULTI_CHANNEL_SINGLE_PRU)
-#if (PRUICSS_SLICEx == 1)
-    return *((uint32_t *)NikonFirmwareMultiPru1_0 + 2);
+#if (CONFIG_NIKON0_PRUICSS_SLICE == 1)
+    version = *((uint32_t *)NikonFirmwareMultiPru1_0 + 2);
 #else
-    return *((uint32_t *)NikonFirmwareMultiPru0_0 + 2);
+    version = *((uint32_t *)NikonFirmwareMultiPru0_0 + 2);
 #endif
-#endif
-#if (CONFIG_NIKON0_CHANNEL0) && (CONFIG_NIKON0_LOAD_SHARE_MODE)
-#if (PRUICSS_SLICEx == 1)
-    return *((uint32_t *)NikonFirmwareMultiMakeRtuPru1_0 + 2);
+    DebugP_log("\r\nNikon firmware \t: %x.%x.%x (%s)\n\n", (version >> 24) & 0x7F, (version >> 16) & 0xFF, version & 0xFFFF, version & (1 << 31) ? "internal" : "release");
+#elif (CONFIG_NIKON0_MODE == NIKON_MODE_MULTI_CHANNEL_MULTI_PRU)
+#if (CONFIG_NIKON0_CHANNEL0_ENABLED == 1)
+#if (CONFIG_NIKON0_PRUICSS_SLICE == 1)
+    version = *((uint32_t *)NikonFirmwareMultiMakeRtuPru1_0 + 2);
 #else
-    return *((uint32_t *)NikonFirmwareMultiMakeRtuPru0_0 + 2);
+    version = *((uint32_t *)NikonFirmwareMultiMakeRtuPru0_0 + 2);
 #endif
+    DebugP_log("\r\nNikon firmware for channel 0 (RTU-PRU)\t: %x.%x.%x (%s)\n\n", (version >> 24) & 0x7F, (version >> 16) & 0xFF, version & 0xFFFF, version & (1 << 31) ? "internal" : "release");
 #endif
-#if (CONFIG_NIKON0_CHANNEL1) && (CONFIG_NIKON0_LOAD_SHARE_MODE)
-#if (PRUICSS_SLICEx == 1)
-    return *((uint32_t *)NikonFirmwareMultiMakePru1_0 + 2);
+#if (CONFIG_NIKON0_CHANNEL1_ENABLED == 1)
+#if (CONFIG_NIKON0_PRUICSS_SLICE == 1)
+    version = *((uint32_t *)NikonFirmwareMultiMakePru1_0 + 2);
 #else
-    return *((uint32_t *)NikonFirmwareMultiMakePru0_0 + 2);
+    version = *((uint32_t *)NikonFirmwareMultiMakePru0_0 + 2);
 #endif
+    DebugP_log("\r\nNikon firmware for channel 1 (PRU)\t: %x.%x.%x (%s)\n\n", (version >> 24) & 0x7F, (version >> 16) & 0xFF, version & 0xFFFF, version & (1 << 31) ? "internal" : "release");
 #endif
-#if (CONFIG_NIKON0_CHANNEL2) && (CONFIG_NIKON0_LOAD_SHARE_MODE)
-#if (PRUICSS_SLICEx == 1)
-    return *((uint32_t *)NikonFirmwareMultiMakeTxPru1_0 + 2);
+#if (CONFIG_NIKON0_CHANNEL2_ENABLED == 1)
+#if (CONFIG_NIKON0_PRUICSS_SLICE == 1)
+    version = *((uint32_t *)NikonFirmwareMultiMakeTxPru1_0 + 2);
 #else
-    return *((uint32_t *)NikonFirmwareMultiMakeTxPru0_0 + 2);
+    version = *((uint32_t *)NikonFirmwareMultiMakeTxPru0_0 + 2);
 #endif
+    DebugP_log("\r\nNikon firmware for channel 2 (TX-PRU)\t: %x.%x.%x (%s)\n\n", (version >> 24) & 0x7F, (version >> 16) & 0xFF, version & 0xFFFF, version & (1 << 31) ? "internal" : "release");
 #endif
-#if (CONFIG_NIKON0_MODE == NIKON_MODE_SINGLE_CHANNEL_SINGLE_PRU)
-#if (PRUICSS_SLICEx == 1)
-    return *((uint32_t *)NikonFirmwarePru1_0 + 2);
+#elif (CONFIG_NIKON0_MODE == NIKON_MODE_SINGLE_CHANNEL_SINGLE_PRU)
+#if (CONFIG_NIKON0_PRUICSS_SLICE == 1)
+    version = *((uint32_t *)NikonFirmwarePru1_0 + 2);
 #else
-    return *((uint32_t *)NikonFirmwarePru0_0 + 2);
+    version = *((uint32_t *)NikonFirmwarePru0_0 + 2);
 #endif
+    DebugP_log("\r\nNikon firmware \t: %x.%x.%x (%s)\n\n", (version >> 24) & 0x7F, (version >> 16) & 0xFF, version & 0xFFFF, version & (1 << 31) ? "internal" : "release");
 #endif
 }
 
-static void nikon_display_menu(void)
+static void nikon_display_menu(nikon_handle handle)
 {
+    const nikon_attrs *attrs = nikon_get_attrs(handle);
+
     DebugP_log("\r\n|-------------------------------------------------------------------------------------- |");
     DebugP_log("\r\n|                             Select input parameters                                   |");
     DebugP_log("\r\n|-------------------------------------------------------------------------------------- |");
-    if (priv->protocol_version == NIKON_PROTOCOL_V3_0)
+    if (attrs->protocol_version == NIKON_PROTOCOL_V3_0)
     {
         DebugP_log("\r\n| 0 : ABS full 40 bit data request                                                      |");
         DebugP_log("\r\n| 1 : ABS lower 24bit data request / ABS full 40bit data + velocity data request        |");
@@ -405,12 +649,14 @@ static void nikon_display_menu(void)
     DebugP_log("\r\n| enter value:\r\n");
 }
 
-static uint32_t nikon_get_command()
+static uint32_t nikon_get_command(nikon_handle handle)
 {
     uint32_t cmd;
+    const nikon_attrs *attrs = nikon_get_attrs(handle);
+
     DebugP_scanf("%u\n", &cmd);
     /* Check to make sure that the command issued is correct */
-    if(((priv->protocol_version == NIKON_PROTOCOL_V2_1) && ((cmd > CMD_22 && cmd < CMD_27))) || (cmd >= CMD_CODE_NUM))
+    if(((attrs->protocol_version == NIKON_PROTOCOL_V2_1) && ((cmd > CMD_22 && cmd < CMD_27))) || (cmd >= CMD_CODE_NUM))
     {
         DebugP_log("\r\n| WARNING: Invalid option, try again\n");
         return SystemP_FAILURE;
@@ -425,7 +671,7 @@ static void nikon_position_loop_decide_termination(void *args)
     while(1)
     {
         DebugP_scanf("%c", &c);
-        nikon_position_loop_status = NIKON_POSITION_LOOP_STOP;
+        gNikonPositionLoopStatus = NIKON_POSITION_LOOP_STOP;
         break;
     }
     TaskP_exit();
@@ -434,106 +680,213 @@ static void nikon_position_loop_decide_termination(void *args)
 static int32_t nikon_loop_task_create(void)
 {
     uint32_t status;
-    TaskP_Params taskParams;
+    TaskP_Params task_params;
 
-    TaskP_Params_init(&taskParams);
-    taskParams.name = "nikon_position_loop_decide_termination";
-    taskParams.stackSize = TASK_STACK_SIZE;
-    taskParams.stack = (uint8_t *)gTaskFxnStack;
-    taskParams.priority = TASK_PRIORITY;
-    taskParams.taskMain = (TaskP_FxnMain)nikon_position_loop_decide_termination;
-    status = TaskP_construct(&gTaskObject, &taskParams);
+    TaskP_Params_init(&task_params);
+    task_params.name = "nikon_position_loop_decide_termination";
+    task_params.stackSize = TASK_STACK_SIZE;
+    task_params.stack = (uint8_t *)gTaskFxnStack;
+    task_params.priority = TASK_PRIORITY;
+    task_params.taskMain = (TaskP_FxnMain)nikon_position_loop_decide_termination;
+    status = TaskP_construct(&gTaskObject, &task_params);
 
     if(status != SystemP_SUCCESS)
     {
-        DebugP_log("\rnikon_position_loop_decide_termination creation failed\n");
+        DebugP_log("\r| ERROR: TaskP_construct() for nikon_position_loop_decide_termination failed\n");
     }
 
     return status;
 }
 
-static void nikon_process_periodic_command(struct nikon_priv *priv, int64_t iep_reset_count, int64_t ch0_trigger_count, int64_t ch1_trigger_count, int64_t ch2_trigger_count)
+static void nikon_process_periodic_command(nikon_handle handle[CONFIG_NIKON_NUM_INSTANCES], uint64_t trigger_count[CONFIG_NIKON_NUM_INSTANCES][NIKON_NUM_CH_PER_SLICE_MAX], uint64_t iep_reset_count)
 {
+    /* Any function call failure will lead to exit of nikon_process_periodic_command function */
     int32_t status;
     int32_t ret;
+    uint32_t i;
     uint32_t ch_num;
     uint32_t ch;
     uint32_t enc_num;
     uint32_t ls_ch;
-    uint32_t pos_fail_cnt = 0;
+    uint32_t pos_fail_cnt[CONFIG_NIKON_NUM_INSTANCES] = {0};
     uint32_t pos_total_cnt = 0;
-    struct nikon_periodic_interface nikon_periodic_interface;
-    nikon_generate_cdf(priv, CMD_4);
-    nikon_config_periodic_trigger(priv);
+    nikon_priv *priv;
+    uint32_t total_channels;
+    const nikon_attrs *attrs;
+    /* CMD_4 is used in this example for 40-bit ABS data with multi-transmission. */
+    uint32_t periodic_cmd = CMD_4;
+
+    DebugP_log("\r\n| Using command %u (CMD_%u) for periodic mode\n", periodic_cmd, periodic_cmd);
+
+    for(i = 0; i < CONFIG_NIKON_NUM_INSTANCES; i++)
+    {
+        ret = nikon_generate_cdf(handle[i], periodic_cmd);
+        if(ret != SystemP_SUCCESS)
+        {
+            DebugP_log("\r| ERROR: Failed to generate command data frame for periodic mode for handle %d\n", i);
+            return;
+        }
+
+        /* Configure periodic trigger mode */
+        ret = nikon_config_periodic_trigger(handle[i]);
+        if(ret != SystemP_SUCCESS)
+        {
+            DebugP_log("\r| ERROR: Failed to configure periodic trigger mode for handle %d\n", i);
+            return;
+        }
+    }
 
     if(nikon_loop_task_create() != SystemP_SUCCESS)
     {
-        DebugP_log("\r| ERROR: OS not allowing continuous mode as related Task creation failed\r\n|\r\n|\n");
-        DebugP_log("Task_create() failed!\n");
         return;
     }
 
-    nikon_periodic_interface_init(priv, &nikon_periodic_interface, iep_reset_count, ch0_trigger_count, ch1_trigger_count, ch2_trigger_count);
+    for(i = 0; i < CONFIG_NIKON_NUM_INSTANCES; i++)
+    {
+        attrs = nikon_get_attrs(handle[i]);
 
-    status = nikon_config_periodic_mode(&nikon_periodic_interface, gPruIcssXHandle);
-    DebugP_assert(0 != status);
-    nikon_position_loop_status = NIKON_POSITION_LOOP_START;
+        if(attrs->load_share_enabled)
+        {
+            if(attrs->channel0_enabled)
+            {
+                gNikonPeriodicInterface.periodic_trigger_count[i][0] = trigger_count[i][0];
+            }
+            if(attrs->channel1_enabled)
+            {
+                gNikonPeriodicInterface.periodic_trigger_count[i][1] = trigger_count[i][1];
+            }
+            if(attrs->channel2_enabled)
+            {
+                gNikonPeriodicInterface.periodic_trigger_count[i][2] = trigger_count[i][2];
+            }
+        }
+        else
+        {
+            gNikonPeriodicInterface.periodic_trigger_count[i][0] = trigger_count[i][0];
+        }
+    }
 
-    DebugP_log("\r|\n\r| press enter to stop the continuous mode\r\n|");
+    for(i = 0; i < CONFIG_NIKON_NUM_INSTANCES; i++)
+    {
+        gNikonPeriodicInterface.handle[i] = handle[i];
+    }
+    gNikonPeriodicInterface.iep_reset_count = iep_reset_count;
+
+
+    status = nikon_config_periodic_mode(&gNikonPeriodicInterface);
+    if(status != SystemP_SUCCESS)
+    {
+        DebugP_log("\r| ERROR: Failed to configure periodic mode\n");
+        return;
+    }
+
+    gNikonPositionLoopStatus = NIKON_POSITION_LOOP_START;
+
+    DebugP_log("\r|\n\r| press Enter to stop the continuous mode\r\n|");
     while(1)
     {
         pos_total_cnt++;
-        if(nikon_position_loop_status == NIKON_POSITION_LOOP_STOP)
+        if(gNikonPositionLoopStatus == NIKON_POSITION_LOOP_STOP)
         {
-            nikon_stop_periodic_mode(&nikon_periodic_interface);
-            nikon_config_host_trigger(priv);
-            DebugP_log("\r\n Failed %u out of %u times\n", pos_fail_cnt, pos_total_cnt);
+            for(i = 0; i < CONFIG_NIKON_NUM_INSTANCES; i++)
+            {
+                DebugP_log("\r\n Failed %u out of %u times for Nikon instance %u\n", pos_fail_cnt[i], pos_total_cnt, i);
+            }
+
+            ret = nikon_stop_periodic_mode(&gNikonPeriodicInterface);
+            if(ret != SystemP_SUCCESS)
+            {
+                DebugP_log("\r| WARNING: Failed to stop periodic mode\n");
+            }
             return;
         }
         else
         {
-            ret = nikon_get_pos(priv, CMD_4);
-            if(ret < 0)
+            for(i = 0; i < CONFIG_NIKON_NUM_INSTANCES; i++)
             {
-                DebugP_log("\r\n ERROR: 40bit ABS measurement failed\n");
-                pos_fail_cnt++;
-                continue;
-            }
-            for(ch_num = 0; ch_num < totalchannels; ch_num++)
-            {
-                ch = nikon_get_current_channel(priv, ch_num);
-                if(totalchannels > 1)
+
+                priv = nikon_get_priv(handle[i]);
+                attrs = nikon_get_attrs(handle[i]);
+                total_channels = attrs->total_channels;
+
+                ret = nikon_get_pos(handle[i], periodic_cmd);
+                if(ret != SystemP_SUCCESS)
                 {
-                    DebugP_log("%s", (ch_num != (totalchannels-1))?"\r":" & ");
-                }
-                else
-                {
-                    DebugP_log("\r");
+                    DebugP_log("\r\n ERROR: 40bit ABS measurement failed\n");
+                    pos_fail_cnt[i]++;
+                    continue;
                 }
 
-                if(CONFIG_NIKON0_LOAD_SHARE_MODE)
+                for(ch_num = 0; ch_num < total_channels; ch_num++)
                 {
-                    ls_ch = ch;
-                }
-                else
-                {
-                    ls_ch = 0;
-                }
-
-                for(enc_num = 0; enc_num < priv->num_enc_access[ls_ch]; enc_num++)
-                {
-                    DebugP_log("Channel:%d-Encoder %d: ", ch, enc_num+1);
-                    if(priv->multi_turn_len[ch][enc_num])
+                    ret = nikon_get_current_channel(handle[i], ch_num, &ch);
+                    if(ret != SystemP_SUCCESS)
                     {
-                        DebugP_log("MT:%u, ", priv->pos_data_info[ch].multi_turn[enc_num]);
+                        DebugP_log("\r\n| ERROR: Failed to get current channel for instance %u\n", i);
+                        continue;
                     }
-                    DebugP_log("Angle:%.12f, CRC Error Count:%u",priv->pos_data_info[ch].angle[enc_num], priv->pos_data_info[ch].crc_err_cnt[enc_num]);
+                    if(total_channels > 1)
+                    {
+                        DebugP_log("%s", (ch_num != (total_channels - 1)) ? "\r" : " & ");
+                    }
+                    else
+                    {
+                        DebugP_log("\r");
+                    }
+
+                    if(attrs->load_share_enabled)
+                    {
+                        ls_ch = ch;
+                    }
+                    else
+                    {
+                        ls_ch = 0;
+                    }
+
+                    for(enc_num = 0; enc_num < priv->num_enc_access[ls_ch]; enc_num++)
+                    {
+                        DebugP_log("Channel:%d-Encoder %d: ", ch, enc_num + 1);
+                        if(priv->multi_turn_len[ch][enc_num])
+                        {
+                            DebugP_log("MT:%u, ", priv->pos_data_info[ch].multi_turn[enc_num]);
+                        }
+                        DebugP_log("Angle:%.12f, CRC Error Count:%u", priv->pos_data_info[ch].angle[enc_num], priv->pos_data_info[ch].crc_err_cnt[enc_num]);
+                    }
                 }
             }
         }
     }
 }
 
+/**
+ * \brief   Nikon diagnostic application main function
+ *
+ * \details This function implements the main diagnostic application flow for Nikon
+ *          encoder interface. It initializes the Nikon driver, loads and starts PRU
+ *          firmware, and provides an interactive menu-driven interface for various
+ *          encoder operations including:
+ *          - Position data acquisition (single-shot and continuous)
+ *          - EEPROM read/write operations
+ *          - Frequency configuration
+ *          - Encoder address configuration
+ *          - Temperature reading
+ *          - Identification code operations
+ *          - Velocity coefficient operations (Nikon 3.0)
+ *          - Periodic trigger mode configuration
+ *
+ *          The function follows this sequence:
+ *          1. Initialize system drivers and board drivers
+ *          2. Enable booster pack power pins (if configured)
+ *          3. Wait for encoder power-up stabilization
+ *          4. Display firmware version information
+ *          5. Initialize PRU-ICSS hardware and Nikon driver
+ *          6. Configure encoder resolution parameters
+ *          7. Load PRU firmware and wait for encoder detection
+ *          8. Enter interactive command loop for encoder operations
+ *          9. Clean up and de-initialize on exit
+ *
+ * \param[in]   args    Unused parameter
+ */
 void nikon_main(void *args)
 {
     int32_t ret;
@@ -543,64 +896,100 @@ void nikon_main(void *args)
     uint32_t pru_num;
     uint32_t ls_ch;
     float_t freq;
-    int64_t iep_reset_count=0;
-    int64_t ch0_trigger_count=0;
-    int64_t ch1_trigger_count=0;
-    int64_t ch2_trigger_count=0;
-    uint64_t icssClk;
-    uint64_t uartClk;
-    uint32_t version;
+    uint64_t iep_reset_count = 0;
+    uint64_t trigger_count[CONFIG_NIKON_NUM_INSTANCES][NIKON_NUM_CH_PER_SLICE_MAX]={0};
+    const nikon_attrs *attrs;
+    nikon_priv *priv;
+    uint32_t total_channels;
 
-    /* Open drivers to open the UART driver for console */
+    /* ========================================================================== */
+    /* INITIALIZATION PHASE                                                       */
+    /* ========================================================================== */
+
+    /* ========================================================================== */
+    /* STEP 1: Initialize SoC drivers and board drivers                          */
+    /* ========================================================================== */
     Drivers_open();
     Board_driversOpen();
-    /*C16 pin High for Enabling ch0 in booster pack */
-#if (CONFIG_NIKON0_BOOSTER_PACK)
-#if (CONFIG_NIKON0_CHANNEL0)
+
+    /* ========================================================================== */
+    /* STEP 2: Enable booster pack power pins if configured                      */
+    /* ========================================================================== */
+#if (CONFIG_NIKON0_BOOSTER_PACK_ENABLE)
+#if (CONFIG_NIKON0_CHANNEL0_ENABLED == 1)
     GPIO_setDirMode(ENC0_EN_BASE_ADDR, ENC0_EN_PIN, ENC0_EN_DIR);
     GPIO_pinWriteHigh(ENC0_EN_BASE_ADDR, ENC0_EN_PIN);
 #endif
-#if (CONFIG_NIKON0_CHANNEL2)
+#if (CONFIG_NIKON0_CHANNEL2_ENABLED == 1)
     GPIO_setDirMode(ENC2_EN_BASE_ADDR, ENC2_EN_PIN, ENC2_EN_DIR);
     GPIO_pinWriteHigh(ENC2_EN_BASE_ADDR, ENC2_EN_PIN);
 #endif
 #endif
 
-    /* As per encoder specification, add 0.5 seconds delay after powering up to ensure that encoder is in normal operation state */
+    /* ========================================================================== */
+    /* STEP 3: Wait for encoder power-up stabilization                           */
+    /* ========================================================================== */
+    /* Allow encoder power supply to stabilize before communication (per encoder datasheet) */
     ClockP_usleep(NIKON_POWER_UP_DELAY);
 
-    version = nikon_get_fw_version();
+    /* ========================================================================== */
+    /* STEP 4: Display firmware version information                              */
+    /* ========================================================================== */
+    nikon_display_fw_version();
 
-    DebugP_log("\r\nNIKON firmware \t: %x.%x.%x (%s)\n", (version >> 24) & 0x7F,
-                (version >> 16) & 0xFF, version & 0xFFFF, version & (1 << 31) ? "internal" : "release");
     DebugP_log("\r\nNIKON Protocol Version selected\t: %s", (CONFIG_NIKON0_PROTOCOL_VERSION == NIKON_PROTOCOL_V2_1)?"2.1":"3.0");
 
+    /* ========================================================================== */
+    /* STEP 5: Initialize PRU-ICSS hardware subsystem                            */
+    /* ========================================================================== */
     nikon_pruicss_init();
 
-    mask = CONFIG_NIKON0_CHANNEL0<<0 | CONFIG_NIKON0_CHANNEL1<<1 | CONFIG_NIKON0_CHANNEL2<<2;
+    /* ========================================================================== */
+    /* STEP 6: Initialize Nikon driver parameters                                */
+    /* ========================================================================== */
+    nikon_params nikon_params_instance;
+    nikon_params_init(&nikon_params_instance);
+    nikon_params_instance.pruicss_handle = gPruIcssXHandle;
 
-    totalchannels = (CONFIG_NIKON0_CHANNEL0 + CONFIG_NIKON0_CHANNEL1 + CONFIG_NIKON0_CHANNEL2);
+    /* ========================================================================== */
+    /* STEP 7: Initialize Nikon driver instance                                   */
+    /* ========================================================================== */
+    /* This internally calls: nikon_hw_init(), nikon_config_channel(),            */
+    /* nikon_config_load_share(), nikon_set_default_initialization().             */
+    /* NOTE: Default host trigger mode is set.                                    */
+    gAppNikonHandle[0] = nikon_init(CONFIG_NIKON0, &nikon_params_instance);
+
+    if(gAppNikonHandle[0] == NULL)
+    {
+        DebugP_log("\r\nERROR: Nikon initialization failed\n");
+        return;
+    }
 
     DebugP_log("\r\n");
 
-    icssClk = ICSS_PRU_CORE_CLOCK;
-    uartClk = ICSS_PRU_UART_CLOCK;
+    /* ========================================================================== */
+    /* STEP 8: Get driver configuration attributes and runtime data              */
+    /* ========================================================================== */
+    attrs = nikon_get_attrs(gAppNikonHandle[0]);
+    priv = nikon_get_priv(gAppNikonHandle[0]);
+    total_channels = attrs->total_channels;
 
-    priv = nikon_init(gPruIcssXHandle, PRUICSS_SLICEx, CONFIG_NIKON0_BAUDRATE, (uint32_t)icssClk, (uint32_t)uartClk, CONFIG_NIKON0_TX_RX_FIFO_CLOCK_SOURCE, mask, totalchannels, CONFIG_NIKON0_PROTOCOL_VERSION);
+    /* ========================================================================== */
+    /* STEP 9: Display channel configuration based on operating mode             */
+    /* ========================================================================== */
 
-    if(CONFIG_NIKON0_MODE == NIKON_MODE_MULTI_CHANNEL_MULTI_PRU)
+    if(attrs->mode == NIKON_MODE_MULTI_CHANNEL_MULTI_PRU)
     {
-        nikon_config_load_share(priv, mask);
         DebugP_log("\r\nNikon Load Share Demo application is running......\n");
-        for(pru_num = 0; pru_num < totalchannels; pru_num++)
+        for(pru_num = 0; pru_num < total_channels; pru_num++)
         {
             DebugP_log("\r\nChannel %d is enabled\n", priv->channel[pru_num]);
         }
     }
-    else if(CONFIG_NIKON0_MODE == NIKON_MODE_MULTI_CHANNEL_SINGLE_PRU)
+    else if(attrs->mode == NIKON_MODE_MULTI_CHANNEL_SINGLE_PRU)
     {
         DebugP_log("\r\nNikon Multi channel, Single PRU Demo application is running......\n");
-        for(ch_num = 0; ch_num < totalchannels; ch_num++)
+        for(ch_num = 0; ch_num < total_channels; ch_num++)
         {
             DebugP_log("\r\nChannel %d is enabled\n", priv->channel[ch_num]);
         }
@@ -610,56 +999,94 @@ void nikon_main(void *args)
         DebugP_log("\r\nNikon Single channel, Single PRU Demo application is running......\n");
         DebugP_log("\r\nChannel %d is enabled\n", priv->channel[0]);
     }
-    nikon_get_enc_data_len(priv);
+
+    /* ========================================================================== */
+    /* STEP 10: Get encoder resolution configuration from user                   */
+    /* ========================================================================== */
+    nikon_get_enc_data_len(gAppNikonHandle[0]);
+
+    /* ========================================================================== */
+    /* STEP 11: Load and run PRU firmware for encoder detection                  */
+    /* ========================================================================== */
     DebugP_log("\r\nRunning CDF4(Multi Transmission command) with maximum encoder address for detecting connected encoder\n");
-    ret = nikon_pruicss_load_run_fw(priv, mask);
-    if(ret < 0)
+
+    nikon_pruicss_load_run_fw();
+
+    /* ========================================================================== */
+    /* STEP 12: Wait for encoder detection and verify communication              */
+    /* ========================================================================== */
+    ret = nikon_wait_for_encoder_detection(gAppNikonHandle[0]);
+    if(ret != SystemP_SUCCESS)
     {
         DebugP_log("\r\nERROR: NIKON initialization failed \n");
         DebugP_log("\r\ncheck whether encoder of selected frequency is connected and ensure proper connections\n");
         DebugP_log("\r\nexit %s due to failed firmware initialization\n", __func__);
         goto deinit;
     }
-    if(((uint8_t)CONFIG_NIKON0_BAUDRATE == 6) || ((uint8_t)CONFIG_NIKON0_BAUDRATE == 2))
+
+    if(((uint8_t)attrs->baud_rate == 6) || ((uint8_t)attrs->baud_rate == 2))
     {
-        DebugP_log("\r\nNIKON encoder/encoders detected and running at frequency %fMHz\n", (float)CONFIG_NIKON0_BAUDRATE);
+        DebugP_log("\r\nNIKON encoder/encoders detected and running at frequency %fMHz\n", (float)attrs->baud_rate);
     }
     else
     {
-        DebugP_log("\r\nNIKON encoder/encoders detected and running at frequency %dMHz\n", CONFIG_NIKON0_BAUDRATE);
+        DebugP_log("\r\nNIKON encoder/encoders detected and running at frequency %dMHz\n", attrs->baud_rate);
     }
 
-    totalchannels = nikon_get_totalchannels(priv);
-
+    /* ========================================================================== */
+    /* MAIN COMMAND LOOP - Interactive encoder operations                        */
+    /* ========================================================================== */
+    /* Process user commands for encoder operations including position reads,     */
+    /* EEPROM access, configuration changes, and periodic mode control           */
     while(1)
     {
         uint32_t cmd;
         int32_t ret;
-        int32_t ch;
+        uint32_t ch;
         uint32_t addr = 0;
         uint32_t data = 0;
         uint32_t bank = 0;
         uint32_t cmd_type;
-        ch = nikon_get_current_channel(priv, 0);
-        nikon_display_menu();
-        cmd = nikon_get_command();
+        uint32_t case_failed = 0;
+
+        /* Get first channel for single channel operations */
+        ret = nikon_get_current_channel(gAppNikonHandle[0], 0, &ch);
+        if(ret != SystemP_SUCCESS)
+        {
+            DebugP_log("\r\n| ERROR: Failed to get current channel. Exiting menu.\n");
+            break;
+        }
+
+        /* Display menu and get user command */
+        nikon_display_menu(gAppNikonHandle[0]);
+        cmd = nikon_get_command(gAppNikonHandle[0]);
 
         switch(cmd)
         {
             case CMD_0:
             case CMD_4:
-                nikon_generate_cdf(priv, cmd);
-                ret = nikon_get_pos(priv, cmd);
-                if(ret < 0)
+                ret = nikon_generate_cdf(gAppNikonHandle[0], cmd);
+                if(ret != SystemP_SUCCESS)
+                {
+                    DebugP_log("\r\n ERROR: Failed to generate command data frame\n");
+                    continue;
+                }
+                ret = nikon_get_pos(gAppNikonHandle[0], cmd);
+                if(ret != SystemP_SUCCESS)
                 {
                     DebugP_log("\r\n ERROR: 40bit ABS measurement failed\n");
                     continue;
                 }
-                for(ch_num = 0; ch_num < totalchannels; ch_num++)
+                for(ch_num = 0; ch_num < total_channels; ch_num++)
                 {
-                    ch = nikon_get_current_channel(priv, ch_num);
-                    DebugP_log("\r\n Channel %d: \n",ch);
-                    if(CONFIG_NIKON0_LOAD_SHARE_MODE)
+                    ret = nikon_get_current_channel(gAppNikonHandle[0], ch_num, &ch);
+                    if(ret != SystemP_SUCCESS)
+                    {
+                        DebugP_log("\r\n| ERROR: Failed to get current channel\n");
+                        continue;
+                    }
+                    DebugP_log("\r\n Channel %d: \n", ch);
+                    if(attrs->load_share_enabled)
                     {
                         ls_ch = ch;
                     }
@@ -671,7 +1098,7 @@ void nikon_main(void *args)
                     {
                         if(cmd == CMD_4)
                         {
-                            DebugP_log("\r\n Encoder %d: \n",enc_num);
+                            DebugP_log("\r\n Encoder %d: \n", enc_num);
                         }
                         DebugP_log("\r\n Info Field: 0x%x, Data Field0: 0x%x, Data Field1: 0x%x, Data Field2: 0x%x \n", priv->pos_data_info[ch].raw_data0[enc_num], priv->pos_data_info[ch].raw_data1[enc_num], priv->pos_data_info[ch].raw_data2[enc_num], priv->pos_data_info[ch].raw_data3[enc_num]);
                         DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u\n", priv->pos_data_info[ch].rcv_crc[enc_num], priv->pos_data_info[ch].otf_crc[enc_num], priv->pos_data_info[ch].crc_err_cnt[enc_num]);
@@ -687,7 +1114,7 @@ void nikon_main(void *args)
             case CMD_5:
             case CMD_6:
 
-                if ((priv->protocol_version == NIKON_PROTOCOL_V3_0) && (cmd == CMD_1 || cmd == CMD_5))
+                if ((attrs->protocol_version == NIKON_PROTOCOL_V3_0) && (cmd == CMD_1 || cmd == CMD_5))
                 {
                     while(1)
                     {
@@ -710,18 +1137,28 @@ void nikon_main(void *args)
                     }
                 }
 
-                nikon_generate_cdf(priv, cmd);
-                ret = nikon_get_pos(priv, cmd);
-                if(ret < 0)
+                ret = nikon_generate_cdf(gAppNikonHandle[0], cmd);
+                if(ret != SystemP_SUCCESS)
+                {
+                    DebugP_log("\r\n ERROR: Failed to generate command data frame\n");
+                    continue;
+                }
+                ret = nikon_get_pos(gAppNikonHandle[0], cmd);
+                if(ret != SystemP_SUCCESS)
                 {
                     DebugP_log("\r\n ERROR: ABS measurement failed \n");
                     continue;
                 }
-                for(ch_num = 0; ch_num < totalchannels; ch_num++)
+                for(ch_num = 0; ch_num < total_channels; ch_num++)
                 {
-                    ch = nikon_get_current_channel(priv, ch_num);
-                    DebugP_log("\r\n Channel %d: \n",ch);
-                    if(CONFIG_NIKON0_LOAD_SHARE_MODE)
+                    ret = nikon_get_current_channel(gAppNikonHandle[0], ch_num, &ch);
+                    if(ret != SystemP_SUCCESS)
+                    {
+                        DebugP_log("\r\n| ERROR: Failed to get current channel\n");
+                        continue;
+                    }
+                    DebugP_log("\r\n Channel %d: \n", ch);
+                    if(attrs->load_share_enabled)
                     {
                         ls_ch = ch;
                     }
@@ -738,7 +1175,7 @@ void nikon_main(void *args)
 
                         DebugP_log("\r\n Info Field: 0x%x, Data Field0: 0x%x, Data Field1: 0x%x\n", priv->pos_data_info[ch].raw_data0[enc_num], priv->pos_data_info[ch].raw_data1[enc_num], priv->pos_data_info[ch].raw_data2[enc_num]);
 
-                        if ((priv->protocol_version == NIKON_PROTOCOL_V3_0) && (cmd == CMD_1_VEL || cmd == CMD_5_VEL))
+                        if ((attrs->protocol_version == NIKON_PROTOCOL_V3_0) && (cmd == CMD_1_VEL || cmd == CMD_5_VEL))
                         {
                             DebugP_log("\r\n Data Field2: 0x%x, Data Field3: 0x%x, Data Field4: 0x%x\n", priv->pos_data_info[ch].raw_data3[enc_num], priv->pos_data_info[ch].raw_data4[enc_num], priv->pos_data_info[ch].raw_data5[enc_num]);
                         }
@@ -750,7 +1187,7 @@ void nikon_main(void *args)
                         {
                             DebugP_log("\r\n Angle: %.12f , Multi Turn Rev: %u \n", priv->pos_data_info[ch].angle[enc_num], priv->pos_data_info[ch].multi_turn[enc_num]);
                         }
-                        if ((priv->protocol_version == NIKON_PROTOCOL_V3_0) && (cmd == CMD_1_VEL || cmd == CMD_5_VEL))
+                        if ((attrs->protocol_version == NIKON_PROTOCOL_V3_0) && (cmd == CMD_1_VEL || cmd == CMD_5_VEL))
                         {
                             DebugP_log("\r\n Velocity: %d \n", priv->pos_data_info[ch].velocity[enc_num]);
                         }
@@ -766,7 +1203,7 @@ void nikon_main(void *args)
             case CMD_11:
             case CMD_12:
 
-                if ((priv->protocol_version == NIKON_PROTOCOL_V3_0) && (cmd >= CMD_8 && cmd <= CMD_12))
+                if ((attrs->protocol_version == NIKON_PROTOCOL_V3_0) && (cmd >= CMD_8 && cmd <= CMD_12))
                 {
                     while(1)
                     {
@@ -808,21 +1245,31 @@ void nikon_main(void *args)
                     }
                 }
 
-                nikon_generate_cdf(priv, cmd);
-                ret = nikon_get_pos(priv, cmd);
+                ret = nikon_generate_cdf(gAppNikonHandle[0], cmd);
+                if(ret != SystemP_SUCCESS)
+                {
+                    DebugP_log("\r\n ERROR: Failed to generate command data frame\n");
+                    continue;
+                }
+                ret = nikon_get_pos(gAppNikonHandle[0], cmd);
 
                 if(cmd >= CMD_8_POS && cmd <= CMD_12_POS)
                 {
-                    if(ret < 0)
+                    if(ret != SystemP_SUCCESS)
                     {
                         DebugP_log("\r\n ERROR: ABS measurement failed \n");
                         continue;
                     }
-                    for(ch_num = 0; ch_num < totalchannels; ch_num++)
+                    for(ch_num = 0; ch_num < total_channels; ch_num++)
                     {
-                        ch = nikon_get_current_channel(priv, ch_num);
-                        DebugP_log("\r\n Channel %d: \n",ch);
-                        if(CONFIG_NIKON0_LOAD_SHARE_MODE)
+                        ret = nikon_get_current_channel(gAppNikonHandle[0], ch_num, &ch);
+                        if(ret != SystemP_SUCCESS)
+                        {
+                            DebugP_log("\r\n| ERROR: Failed to get current channel\n");
+                            continue;
+                        }
+                        DebugP_log("\r\n Channel %d: \n", ch);
+                        if(attrs->load_share_enabled)
                         {
                             ls_ch = ch;
                         }
@@ -845,17 +1292,22 @@ void nikon_main(void *args)
                 }
                 else
                 {
-                    if(ret < 0)
+                    if(ret != SystemP_SUCCESS)
                     {
                         DebugP_log("\r\n ERROR: Encoder's operation request failed \n");
                         continue;
                     }
 
-                    for(ch_num = 0; ch_num < totalchannels; ch_num++)
+                    for(ch_num = 0; ch_num < total_channels; ch_num++)
                     {
-                        ch = nikon_get_current_channel(priv, ch_num);
-                        DebugP_log("\r\n Channel %d: \n",ch);
-                        if(CONFIG_NIKON0_LOAD_SHARE_MODE)
+                        ret = nikon_get_current_channel(gAppNikonHandle[0], ch_num, &ch);
+                        if(ret != SystemP_SUCCESS)
+                        {
+                            DebugP_log("\r\n| ERROR: Failed to get current channel\n");
+                            continue;
+                        }
+                        DebugP_log("\r\n Channel %d: \n", ch);
+                        if(attrs->load_share_enabled)
                         {
                             ls_ch = ch;
                         }
@@ -867,16 +1319,16 @@ void nikon_main(void *args)
                         {
                             if(cmd == CMD_7)
                             {
-                                DebugP_log("\r\n Encoder %d: \n",enc_num);
+                                DebugP_log("\r\n Encoder %d: \n", enc_num);
                             }
                             DebugP_log("\r\n Info Field: 0x%x, Data Field0: 0x%x, Data Field1: 0x%x \n", priv->pos_data_info[ch].raw_data0[enc_num], priv->pos_data_info[ch].raw_data1[enc_num], priv->pos_data_info[ch].raw_data2[enc_num]);
                             DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u\n", priv->pos_data_info[ch].rcv_crc[enc_num], priv->pos_data_info[ch].otf_crc[enc_num], priv->pos_data_info[ch].crc_err_cnt[enc_num]);
                             DebugP_log("\r\n Encoder Address: %u, Encoder Status: 0x%x, Command to Encoder: %u, ", priv->enc_info[ch].enc_addr[enc_num], priv->enc_info[ch].enc_status[enc_num], priv->enc_info[ch].enc_cmd[enc_num]);
                             DebugP_log("\r\n ALM: 0x%x \n", priv->alm_field[ch][enc_num]);
                             DebugP_log("\r\n Batt: %u, MtErr: %u, OverFlow: %u, OverSpeed M: %u, Memory Error: %u, Single Turn Error M: %u \n", priv->alm_bits[ch][enc_num].batt, priv->alm_bits[ch][enc_num].mt_err, priv->alm_bits[ch][enc_num].ov_flow, priv->alm_bits[ch][enc_num].ov_spd, priv->alm_bits[ch][enc_num].mem_err, priv->alm_bits[ch][enc_num].st_err);
-                            DebugP_log("\r\n PS Error M: %u, Busy M: %u, Memory Busy: %u, Over Temperature: %u, Increment Error M: %u \n",priv->alm_bits[ch][enc_num].ps_err, priv->alm_bits[ch][enc_num].busy, priv->alm_bits[ch][enc_num].mem_busy, priv->alm_bits[ch][enc_num].ov_temp, priv->alm_bits[ch][enc_num].inc_err_m);
-                            DebugP_log("\r\n OverSpeed S: %u, Single Turn Error S: %u, PS Error S: %u, Busy S: %u, Increment Error S: %u \n",priv->alm_bits[ch][enc_num].ov_spd_s, priv->alm_bits[ch][enc_num].st_err_s, priv->alm_bits[ch][enc_num].ps_err_s, priv->alm_bits[ch][enc_num].busy_s, priv->alm_bits[ch][enc_num].inc_err_s);
-                            if (priv->protocol_version == NIKON_PROTOCOL_V3_0)
+                            DebugP_log("\r\n PS Error M: %u, Busy M: %u, Memory Busy: %u, Over Temperature: %u, Increment Error M: %u \n", priv->alm_bits[ch][enc_num].ps_err, priv->alm_bits[ch][enc_num].busy, priv->alm_bits[ch][enc_num].mem_busy, priv->alm_bits[ch][enc_num].ov_temp, priv->alm_bits[ch][enc_num].inc_err_m);
+                            DebugP_log("\r\n OverSpeed S: %u, Single Turn Error S: %u, PS Error S: %u, Busy S: %u, Increment Error S: %u \n", priv->alm_bits[ch][enc_num].ov_spd_s, priv->alm_bits[ch][enc_num].st_err_s, priv->alm_bits[ch][enc_num].ps_err_s, priv->alm_bits[ch][enc_num].busy_s, priv->alm_bits[ch][enc_num].inc_err_s);
+                            if (attrs->protocol_version == NIKON_PROTOCOL_V3_0)
                             {
                                 DebugP_log("\r\n PM ALM: 0x%x \n", priv->pm_alm_field[ch][enc_num]);
                                 DebugP_log("\r\n INCW1: %u, INCW2: %u, IFW1:%u, IFW2: %u", priv->pm_alm_bits[ch][enc_num].incw_1, priv->pm_alm_bits[ch][enc_num].incw_2, priv->pm_alm_bits[ch][enc_num].ifw_1, priv->pm_alm_bits[ch][enc_num].ifw_2);
@@ -887,7 +1339,9 @@ void nikon_main(void *args)
                 break;
 
             case CMD_13:
-                if (priv->protocol_version == NIKON_PROTOCOL_V3_0)
+                case_failed = 0;  /* Reset flag for this case */
+
+                if (attrs->protocol_version == NIKON_PROTOCOL_V3_0)
                 {
                     while(1)
                     {
@@ -898,18 +1352,24 @@ void nikon_main(void *args)
                         {
                             cmd = CMD_13_BANK;
 
-                            for(pru_num = 0; pru_num < totalchannels; pru_num++)
+                            for(pru_num = 0; pru_num < total_channels; pru_num++)
                             {
-                                ch = nikon_get_current_channel(priv, pru_num);
-                                if(priv->load_share)
+                                ret = nikon_get_current_channel(gAppNikonHandle[0], pru_num, &ch);
+                                if(ret != SystemP_SUCCESS)
+                                {
+                                    DebugP_log("\r\n| ERROR: Failed to get current channel. Command execution will be skipped for all channels.\n");
+                                    case_failed = 1;
+                                    break;
+                                }
+                                if(attrs->load_share_enabled)
                                 {
                                     ls_ch = ch;
-                                    DebugP_log("\r\n Channel %d: \n",ch);
+                                    DebugP_log("\r\n Channel %d: \n", ch);
                                 }
                                 else
                                 {
                                     ls_ch = 0;
-                                    pru_num = nikon_get_totalchannels(priv);
+                                    pru_num = total_channels;
                                 }
 
                                 while (1)
@@ -927,7 +1387,7 @@ void nikon_main(void *args)
                                     }
                                 }
 
-                                nikon_update_eeprom_bank(priv, (bank & 0xFF), ls_ch);
+                                nikon_update_eeprom_bank(gAppNikonHandle[0], (bank & 0xFF), ls_ch);
                             }
                             break;
                         }
@@ -942,10 +1402,21 @@ void nikon_main(void *args)
                     }
                 }
 
-                for(pru_num = 0; pru_num < totalchannels; pru_num++)
+                if(case_failed)
                 {
-                    ch = nikon_get_current_channel(priv, pru_num);
-                    if(priv->load_share)
+                    break;  /* Exit switch case if first for loop failed */
+                }
+
+                for(pru_num = 0; pru_num < total_channels; pru_num++)
+                {
+                    ret = nikon_get_current_channel(gAppNikonHandle[0], pru_num, &ch);
+                    if(ret != SystemP_SUCCESS)
+                    {
+                        DebugP_log("\r\n| ERROR: Failed to get current channel. Command execution will be skipped for all channels.\n");
+                        case_failed = 1;
+                        break;
+                    }
+                    if(attrs->load_share_enabled)
                     {
                         ls_ch = ch;
                         DebugP_log("\r\nChannel %d: ", ch);
@@ -953,7 +1424,7 @@ void nikon_main(void *args)
                     else
                     {
                         ls_ch = 0;
-                        pru_num = nikon_get_totalchannels(priv);
+                        pru_num = total_channels;
                     }
 
                     while(1)
@@ -967,36 +1438,51 @@ void nikon_main(void *args)
                         }
                         else
                         {
-                            nikon_update_eeprom_addr(priv, (addr & 0xFF), ls_ch);
+                            nikon_update_eeprom_addr(gAppNikonHandle[0], (addr & 0xFF), ls_ch);
                             break;
                         }
                     }
                 }
 
-                nikon_generate_cdf(priv, cmd);
-                ret = nikon_get_pos(priv, cmd);
-                if(ret < 0)
+                if(case_failed)
+                {
+                    break;  /* Exit switch case if second for loop failed */
+                }
+
+                ret = nikon_generate_cdf(gAppNikonHandle[0], cmd);
+                if(ret != SystemP_SUCCESS)
+                {
+                    DebugP_log("\r\n ERROR: Failed to generate command data frame\n");
+                    continue;
+                }
+                ret = nikon_get_pos(gAppNikonHandle[0], cmd);
+                if(ret != SystemP_SUCCESS)
                 {
                     DebugP_log("\r\n ERROR: EEPROM Read access request failed \n");
                     continue;
                 }
                 else
                 {
-                    /* 300 microseconds sleep - wait for read data to be determined*/
-                    ClockP_usleep(300);
-                    ret = nikon_get_pos(priv, cmd);
+                    /* 300 micro-seconds sleep - wait for read data to be determined*/
+                    ClockP_usleep(NIKON_EEPROM_READ_WAIT_US);
+                    ret = nikon_get_pos(gAppNikonHandle[0], cmd);
 
-                    if(ret < 0)
+                    if(ret != SystemP_SUCCESS)
                     {
                         DebugP_log("\r\n ERROR: EEPROM Read access request failed \n");
                         continue;
                     }
                 }
 
-                for(ch_num = 0; ch_num < totalchannels; ch_num++)
+                for(ch_num = 0; ch_num < total_channels; ch_num++)
                 {
-                    ch = nikon_get_current_channel(priv, ch_num);
-                    DebugP_log("\r\n Channel %d: \n",ch);
+                    ret = nikon_get_current_channel(gAppNikonHandle[0], ch_num, &ch);
+                    if(ret != SystemP_SUCCESS)
+                    {
+                        DebugP_log("\r\n| ERROR: Failed to get current channel\n");
+                        continue;
+                    }
+                    DebugP_log("\r\n Channel %d: \n", ch);
                     if(CMD_13_BANK == cmd)
                     {
                         DebugP_log("\r\n Info Field: 0x%x, EEPROM Data: 0x%x, EEPROM Bank: 0x%x, EEPROM Address: 0x%x \n", priv->pos_data_info[ch].raw_data0[0], (uint16_t)nikon_reverse_bits((uint16_t)(priv->pos_data_info[ch].raw_data1[0]), NIKON_RX_ONE_FRAME_LEN), (uint8_t)nikon_reverse_bits((uint8_t)((priv->pos_data_info[ch].raw_data2[0] & 0xFF00) >> 8), NIKON_EEPROM_BANK_LEN), (uint8_t)nikon_reverse_bits((uint8_t)((priv->pos_data_info[ch].raw_data2[0] & 0xFF)), NIKON_EEPROM_ADDR_LEN));
@@ -1021,7 +1507,9 @@ void nikon_main(void *args)
                 break;
 
             case CMD_14:
-                if (priv->protocol_version == NIKON_PROTOCOL_V3_0)
+                case_failed = 0;  /* Reset flag for this case */
+
+                if (attrs->protocol_version == NIKON_PROTOCOL_V3_0)
                 {
                     while(1)
                     {
@@ -1032,18 +1520,24 @@ void nikon_main(void *args)
                         {
                             cmd = CMD_14_BANK;
 
-                            for(pru_num = 0; pru_num < totalchannels; pru_num++)
+                            for(pru_num = 0; pru_num < total_channels; pru_num++)
                             {
-                                ch = nikon_get_current_channel(priv, pru_num);
-                                if(priv->load_share)
+                                ret = nikon_get_current_channel(gAppNikonHandle[0], pru_num, &ch);
+                                if(ret != SystemP_SUCCESS)
+                                {
+                                    DebugP_log("\r\n| ERROR: Failed to get current channel. Command execution will be skipped for all channels.\n");
+                                    case_failed = 1;
+                                    break;
+                                }
+                                if(attrs->load_share_enabled)
                                 {
                                     ls_ch = ch;
-                                    DebugP_log("\r\n Channel %d: \n",ch);
+                                    DebugP_log("\r\n Channel %d: \n", ch);
                                 }
                                 else
                                 {
                                     ls_ch = 0;
-                                    pru_num = nikon_get_totalchannels(priv);
+                                    pru_num = total_channels;
                                 }
 
                                 while (1)
@@ -1061,7 +1555,7 @@ void nikon_main(void *args)
                                     }
                                 }
 
-                                nikon_update_eeprom_bank(priv, (bank & 0xFF), ls_ch);
+                                nikon_update_eeprom_bank(gAppNikonHandle[0], (bank & 0xFF), ls_ch);
                             }
                             break;
                         }
@@ -1076,10 +1570,21 @@ void nikon_main(void *args)
                     }
                 }
 
-                for(pru_num = 0; pru_num < totalchannels; pru_num++)
+                if(case_failed)
                 {
-                    ch = nikon_get_current_channel(priv, pru_num);
-                    if(priv->load_share)
+                    break;  /* Exit switch case if first for loop failed */
+                }
+
+                for(pru_num = 0; pru_num < total_channels; pru_num++)
+                {
+                    ret = nikon_get_current_channel(gAppNikonHandle[0], pru_num, &ch);
+                    if(ret != SystemP_SUCCESS)
+                    {
+                        DebugP_log("\r\n| ERROR: Failed to get current channel. Command execution will be skipped for all channels.\n");
+                        case_failed = 1;
+                        break;
+                    }
+                    if(attrs->load_share_enabled)
                     {
                         ls_ch = ch;
                         DebugP_log("\r\nChannel %d: ", ch);
@@ -1087,7 +1592,7 @@ void nikon_main(void *args)
                     else
                     {
                         ls_ch = 0;
-                        pru_num = nikon_get_totalchannels(priv);
+                        pru_num = total_channels;
                     }
 
                     while(1)
@@ -1111,30 +1616,45 @@ void nikon_main(void *args)
                         }
                         else
                         {
-                            nikon_update_eeprom_addr(priv, (addr & 0xFF), ls_ch);
-                            nikon_update_eeprom_data(priv, (data & 0xFFFF), ls_ch);
+                            nikon_update_eeprom_addr(gAppNikonHandle[0], (addr & 0xFF), ls_ch);
+                            nikon_update_eeprom_data(gAppNikonHandle[0], (data & 0xFFFF), ls_ch);
                             break;
                         }
                     }
                 }
 
-                nikon_generate_cdf(priv, cmd);
-                ret = nikon_get_pos(priv, cmd);
-                if(ret < 0)
+                if(case_failed)
+                {
+                    break;  /* Exit switch case if second for loop failed */
+                }
+
+                ret = nikon_generate_cdf(gAppNikonHandle[0], cmd);
+                if(ret != SystemP_SUCCESS)
+                {
+                    DebugP_log("\r\n ERROR: Failed to generate command data frame\n");
+                    continue;
+                }
+                ret = nikon_get_pos(gAppNikonHandle[0], cmd);
+                if(ret != SystemP_SUCCESS)
                 {
                     DebugP_log("\r\n ERROR: EEPROM Write access request failed \n");
                     continue;
                 }
                 else
                 {
-                    /* 30 miliseconds sleep - wait for write operation to finish*/
-                    ClockP_usleep(30*1000);
+                    /* 30 milli-seconds sleep - wait for write operation to finish*/
+                    ClockP_usleep(NIKON_EEPROM_WRITE_WAIT_US);
                 }
 
-                for(ch_num = 0; ch_num < totalchannels; ch_num++)
+                for(ch_num = 0; ch_num < total_channels; ch_num++)
                 {
-                    ch = nikon_get_current_channel(priv, ch_num);
-                    DebugP_log("\r\n Channel %d: \n",ch);
+                    ret = nikon_get_current_channel(gAppNikonHandle[0], ch_num, &ch);
+                    if(ret != SystemP_SUCCESS)
+                    {
+                        DebugP_log("\r\n| ERROR: Failed to get current channel\n");
+                        continue;
+                    }
+                    DebugP_log("\r\n Channel %d: \n", ch);
 
                     if(CMD_14_BANK == cmd)
                     {
@@ -1155,17 +1675,27 @@ void nikon_main(void *args)
                 break;
 
             case CMD_15:
-                nikon_generate_cdf(priv, cmd);
-                ret = nikon_get_pos(priv, cmd);
-                if(ret < 0)
+                ret = nikon_generate_cdf(gAppNikonHandle[0], cmd);
+                if(ret != SystemP_SUCCESS)
+                {
+                    DebugP_log("\r\n ERROR: Failed to generate command data frame\n");
+                    continue;
+                }
+                ret = nikon_get_pos(gAppNikonHandle[0], cmd);
+                if(ret != SystemP_SUCCESS)
                 {
                     DebugP_log("\r\n ERROR: Encoder's temperature request failed \n");
                     continue;
                 }
-                for(ch_num = 0; ch_num < totalchannels; ch_num++)
+                for(ch_num = 0; ch_num < total_channels; ch_num++)
                 {
-                    ch = nikon_get_current_channel(priv, ch_num);
-                    DebugP_log("\r\n Channel %d: \n",ch);
+                    ret = nikon_get_current_channel(gAppNikonHandle[0], ch_num, &ch);
+                    if(ret != SystemP_SUCCESS)
+                    {
+                        DebugP_log("\r\n| ERROR: Failed to get current channel\n");
+                        continue;
+                    }
+                    DebugP_log("\r\n Channel %d: \n", ch);
                     DebugP_log("\r\n Info Field: 0x%x, Temperature: %u \n", priv->pos_data_info[ch].raw_data0[0], priv->temperature[ch][0]);
                     DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u \n", priv->pos_data_info[ch].rcv_crc[0], priv->pos_data_info[ch].otf_crc[0], priv->pos_data_info[ch].crc_err_cnt[0]);
                     DebugP_log("\r\n Encoder Address: %u, Encoder Status: 0x%x, Command to Encoder: %u\n", priv->enc_info[ch].enc_addr[0], priv->enc_info[ch].enc_status[0], priv->enc_info[ch].enc_cmd[0]);
@@ -1174,7 +1704,7 @@ void nikon_main(void *args)
 
             case CMD_16:
             case CMD_17:
-                if ((priv->protocol_version == NIKON_PROTOCOL_V3_0) && (cmd == CMD_16))
+                if ((attrs->protocol_version == NIKON_PROTOCOL_V3_0) && (cmd == CMD_16))
                 {
                     while(1)
                     {
@@ -1197,21 +1727,31 @@ void nikon_main(void *args)
                     }
                 }
 
-                nikon_generate_cdf(priv, cmd);
-                ret = nikon_get_pos(priv, cmd);
+                ret = nikon_generate_cdf(gAppNikonHandle[0], cmd);
+                if(ret != SystemP_SUCCESS)
+                {
+                    DebugP_log("\r\n ERROR: Failed to generate command data frame\n");
+                    continue;
+                }
+                ret = nikon_get_pos(gAppNikonHandle[0], cmd);
 
                 if(cmd == CMD_16_VEL)
                 {
-                    if(ret < 0)
+                    if(ret != SystemP_SUCCESS)
                     {
                         DebugP_log("\r\n ERROR: Velocity coefficient read request failed \n");
                         continue;
                     }
 
-                    for(ch_num = 0; ch_num < totalchannels; ch_num++)
+                    for(ch_num = 0; ch_num < total_channels; ch_num++)
                     {
-                        ch = nikon_get_current_channel(priv, ch_num);
-                        DebugP_log("\r\n Channel %d: \n",ch);
+                        ret = nikon_get_current_channel(gAppNikonHandle[0], ch_num, &ch);
+                        if(ret != SystemP_SUCCESS)
+                        {
+                            DebugP_log("\r\n| ERROR: Failed to get current channel\n");
+                            continue;
+                        }
+                        DebugP_log("\r\n Channel %d: \n", ch);
                         DebugP_log("\r\n Info Field: 0x%x, Velocity coefficient (Bits [18:0]): 0x%x \n", priv->pos_data_info[ch].raw_data0[0], priv->velocity_coefficient[ch]);
                         DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u \n", priv->pos_data_info[ch].rcv_crc[0], priv->pos_data_info[ch].otf_crc[0], priv->pos_data_info[ch].crc_err_cnt[0]);
                         DebugP_log("\r\n Encoder Address: %u, Encoder Status: 0x%x, Command to Encoder: %u\n", priv->enc_info[ch].enc_addr[0], priv->enc_info[ch].enc_status[0], priv->enc_info[ch].enc_cmd[0]);
@@ -1219,15 +1759,20 @@ void nikon_main(void *args)
                 }
                 else
                 {
-                    if(ret < 0)
+                    if(ret != SystemP_SUCCESS)
                     {
                         DebugP_log("\r\n ERROR: Identification code read request failed \n");
                         continue;
                     }
-                    for(ch_num = 0; ch_num < totalchannels; ch_num++)
+                    for(ch_num = 0; ch_num < total_channels; ch_num++)
                     {
-                        ch = nikon_get_current_channel(priv, ch_num);
-                        DebugP_log("\r\n Channel %d: \n",ch);
+                        ret = nikon_get_current_channel(gAppNikonHandle[0], ch_num, &ch);
+                        if(ret != SystemP_SUCCESS)
+                        {
+                            DebugP_log("\r\n| ERROR: Failed to get current channel\n");
+                            continue;
+                        }
+                        DebugP_log("\r\n Channel %d: \n", ch);
                         DebugP_log("\r\n Info Field: 0x%x, Identification Code (Bits [23:0]): 0x%x \n", priv->pos_data_info[ch].raw_data0[0], priv->identification_code[ch]);
                         DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u \n", priv->pos_data_info[ch].rcv_crc[0], priv->pos_data_info[ch].otf_crc[0], priv->pos_data_info[ch].crc_err_cnt[0]);
                         DebugP_log("\r\n Encoder Address: %u, Encoder Status: 0x%x, Command to Encoder: %u\n", priv->enc_info[ch].enc_addr[0], priv->enc_info[ch].enc_status[0], priv->enc_info[ch].enc_cmd[0]);
@@ -1238,8 +1783,9 @@ void nikon_main(void *args)
             case CMD_18:
             case CMD_19:
             case CMD_20:
+                case_failed = 0;  /* Reset flag for this case */
 
-                if ((priv->protocol_version == NIKON_PROTOCOL_V3_0) && (cmd == CMD_18))
+                if ((attrs->protocol_version == NIKON_PROTOCOL_V3_0) && (cmd == CMD_18))
                 {
                     while(1)
                     {
@@ -1264,10 +1810,16 @@ void nikon_main(void *args)
 
                 if(cmd == CMD_18_VEL)
                 {
-                    for(pru_num = 0; pru_num < totalchannels; pru_num++)
+                    for(pru_num = 0; pru_num < total_channels; pru_num++)
                     {
-                        ch = nikon_get_current_channel(priv, pru_num);
-                        if(priv->load_share)
+                        ret = nikon_get_current_channel(gAppNikonHandle[0], pru_num, &ch);
+                        if(ret != SystemP_SUCCESS)
+                        {
+                            DebugP_log("\r\n| ERROR: Failed to get current channel. Command execution will be skipped for all channels.\n");
+                            case_failed = 1;
+                            break;
+                        }
+                        if(attrs->load_share_enabled)
                         {
                             ls_ch = ch;
                             DebugP_log("\r\nChannel %d: ", ch);
@@ -1275,7 +1827,7 @@ void nikon_main(void *args)
                         else
                         {
                             ls_ch = 0;
-                            pru_num = nikon_get_totalchannels(priv);
+                            pru_num = total_channels;
                         }
 
                         while(1)
@@ -1288,23 +1840,38 @@ void nikon_main(void *args)
                             }
                             else
                             {
-                                nikon_update_velocity_coefficient(priv, data, ls_ch);
+                                nikon_update_velocity_coefficient(gAppNikonHandle[0], data, ls_ch);
                                 break;
                             }
                         }
                     }
 
-                    nikon_generate_cdf(priv, cmd);
-                    ret = nikon_get_pos(priv, cmd);
-                    if(ret < 0)
+                    if(case_failed)
+                    {
+                        break;  /* Exit switch case if for loop failed */
+                    }
+
+                    ret = nikon_generate_cdf(gAppNikonHandle[0], cmd);
+                    if(ret != SystemP_SUCCESS)
+                    {
+                        DebugP_log("\r\n ERROR: Failed to generate command data frame\n");
+                        continue;
+                    }
+                    ret = nikon_get_pos(gAppNikonHandle[0], cmd);
+                    if(ret != SystemP_SUCCESS)
                     {
                         DebugP_log("\r\n ERROR: Encoder's Velocity coefficient code write access failed \n");
                         continue;
                     }
-                    for(ch_num = 0; ch_num < totalchannels; ch_num++)
+                    for(ch_num = 0; ch_num < total_channels; ch_num++)
                     {
-                        ch = nikon_get_current_channel(priv, ch_num);
-                        DebugP_log("\r\n Channel %d: \n",ch);
+                        ret = nikon_get_current_channel(gAppNikonHandle[0], ch_num, &ch);
+                        if(ret != SystemP_SUCCESS)
+                        {
+                            DebugP_log("\r\n| ERROR: Failed to get current channel\n");
+                            continue;
+                        }
+                        DebugP_log("\r\n Channel %d: \n", ch);
                         DebugP_log("\r\n Info Field: 0x%x, Velocity coefficient (Bits [18:0]): 0x%x \n", priv->pos_data_info[ch].raw_data0[0], priv->velocity_coefficient[ch]);
                         DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u \n", priv->pos_data_info[ch].rcv_crc[0], priv->pos_data_info[ch].otf_crc[0], priv->pos_data_info[ch].crc_err_cnt[0]);
                         DebugP_log("\r\n Encoder Address: %u, Encoder Status: 0x%x, Command to Encoder: %u\n", priv->enc_info[ch].enc_addr[0], priv->enc_info[ch].enc_status[0], priv->enc_info[ch].enc_cmd[0]);
@@ -1312,10 +1879,16 @@ void nikon_main(void *args)
                 }
                 else
                 {
-                    for(pru_num = 0; pru_num < totalchannels; pru_num++)
+                    for(pru_num = 0; pru_num < total_channels; pru_num++)
                     {
-                        ch = nikon_get_current_channel(priv, pru_num);
-                        if(priv->load_share)
+                        ret = nikon_get_current_channel(gAppNikonHandle[0], pru_num, &ch);
+                        if(ret != SystemP_SUCCESS)
+                        {
+                            DebugP_log("\r\n| ERROR: Failed to get current channel. Command execution will be skipped for all channels.\n");
+                            case_failed = 1;
+                            break;
+                        }
+                        if(attrs->load_share_enabled)
                         {
                             ls_ch = ch;
                             DebugP_log("\r\nChannel %d: ", ch);
@@ -1323,7 +1896,7 @@ void nikon_main(void *args)
                         else
                         {
                             ls_ch = 0;
-                            pru_num = nikon_get_totalchannels(priv);
+                            pru_num = total_channels;
                         }
 
                         while(1)
@@ -1337,15 +1910,25 @@ void nikon_main(void *args)
                             }
                             else
                             {
-                                nikon_update_id_code(priv, data, ls_ch);
+                                nikon_update_id_code(gAppNikonHandle[0], data, ls_ch);
                                 break;
                             }
                         }
                     }
 
-                    nikon_generate_cdf(priv, cmd);
-                    ret = nikon_get_pos(priv, cmd);
-                    if(ret < 0)
+                    if(case_failed)
+                    {
+                        break;  /* Exit switch case if for loop failed */
+                    }
+
+                    ret = nikon_generate_cdf(gAppNikonHandle[0], cmd);
+                    if(ret != SystemP_SUCCESS)
+                    {
+                        DebugP_log("\r\n ERROR: Failed to generate command data frame\n");
+                        continue;
+                    }
+                    ret = nikon_get_pos(gAppNikonHandle[0], cmd);
+                    if(ret != SystemP_SUCCESS)
                     {
                         if(cmd == CMD_20)
                         {
@@ -1358,10 +1941,15 @@ void nikon_main(void *args)
                         continue;
                     }
 
-                    for(ch_num = 0; ch_num < totalchannels; ch_num++)
+                    for(ch_num = 0; ch_num < total_channels; ch_num++)
                     {
-                        ch = nikon_get_current_channel(priv, ch_num);
-                        DebugP_log("\r\n Channel %d: \n",ch);
+                        ret = nikon_get_current_channel(gAppNikonHandle[0], ch_num, &ch);
+                        if(ret != SystemP_SUCCESS)
+                        {
+                            DebugP_log("\r\n| ERROR: Failed to get current channel\n");
+                            continue;
+                        }
+                        DebugP_log("\r\n Channel %d: \n", ch);
                         DebugP_log("\r\n Info Field: 0x%x, Identification Code (Bits [23:0]): 0x%x \n", priv->pos_data_info[ch].raw_data0[0], priv->identification_code[ch]);
                         DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u \n", priv->pos_data_info[ch].rcv_crc[0], priv->pos_data_info[ch].otf_crc[0], priv->pos_data_info[ch].crc_err_cnt[0]);
                         DebugP_log("\r\n Encoder Address: %u, Encoder Status: 0x%x, Command to Encoder: %u\n", priv->enc_info[ch].enc_addr[0], priv->enc_info[ch].enc_status[0], priv->enc_info[ch].enc_cmd[0]);
@@ -1371,18 +1959,28 @@ void nikon_main(void *args)
 
             case CMD_21:
             case CMD_22:
-                nikon_generate_cdf(priv, cmd);
-                ret = nikon_get_pos(priv, cmd);
-                if(ret < 0)
+                ret = nikon_generate_cdf(gAppNikonHandle[0], cmd);
+                if(ret != SystemP_SUCCESS)
+                {
+                    DebugP_log("\r\n ERROR: Failed to generate command data frame\n");
+                    continue;
+                }
+                ret = nikon_get_pos(gAppNikonHandle[0], cmd);
+                if(ret != SystemP_SUCCESS)
                 {
                     DebugP_log("\r\n ERROR: 17bit ABS measurement failed \n");
                     continue;
                 }
-                for(ch_num = 0; ch_num < totalchannels; ch_num++)
+                for(ch_num = 0; ch_num < total_channels; ch_num++)
                 {
-                    ch = nikon_get_current_channel(priv, ch_num);
-                    DebugP_log("\r\n Channel %d: \n",ch);
-                    if(CONFIG_NIKON0_LOAD_SHARE_MODE)
+                    ret = nikon_get_current_channel(gAppNikonHandle[0], ch_num, &ch);
+                    if(ret != SystemP_SUCCESS)
+                    {
+                        DebugP_log("\r\n| ERROR: Failed to get current channel\n");
+                        continue;
+                    }
+                    DebugP_log("\r\n Channel %d: \n", ch);
+                    if(attrs->load_share_enabled)
                     {
                         ls_ch = ch;
                     }
@@ -1394,7 +1992,7 @@ void nikon_main(void *args)
                     {
                         if(cmd == CMD_22)
                         {
-                            DebugP_log("\r\n Encoder %d: \n",enc_num);
+                            DebugP_log("\r\n Encoder %d: \n", enc_num);
                         }
                         DebugP_log("\r\n Info Field: 0x%x,  Data Field0: 0x%x, ABS: 0x%llx \n", priv->pos_data_info[ch].raw_data0[enc_num], priv->pos_data_info[ch].raw_data1[enc_num], priv->pos_data_info[ch].abs[enc_num]);
                         DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u \n", priv->pos_data_info[ch].rcv_crc[enc_num], priv->pos_data_info[ch].otf_crc[enc_num], priv->pos_data_info[ch].crc_err_cnt[enc_num]);
@@ -1411,21 +2009,31 @@ void nikon_main(void *args)
             case CMD_24:
             case CMD_25:
             case CMD_26:
-                if (priv->protocol_version == NIKON_PROTOCOL_V3_0)
+                if (attrs->protocol_version == NIKON_PROTOCOL_V3_0)
                 {
-                    nikon_generate_cdf(priv, cmd);
-                    ret = nikon_get_pos(priv, cmd);
-                    if(ret < 0)
+                    ret = nikon_generate_cdf(gAppNikonHandle[0], cmd);
+                    if(ret != SystemP_SUCCESS)
+                    {
+                        DebugP_log("\r\n ERROR: Failed to generate command data frame\n");
+                        continue;
+                    }
+                    ret = nikon_get_pos(gAppNikonHandle[0], cmd);
+                    if(ret != SystemP_SUCCESS)
                     {
                         DebugP_log("\r\n ERROR: ABS measurement and velocity/acceleration request failed\n");
                         continue;
                     }
 
-                    for(ch_num = 0; ch_num < totalchannels; ch_num++)
+                    for(ch_num = 0; ch_num < total_channels; ch_num++)
                     {
-                        ch = nikon_get_current_channel(priv, ch_num);
-                        DebugP_log("\r\n Channel %d: \n",ch);
-                        if(CONFIG_NIKON0_LOAD_SHARE_MODE)
+                        ret = nikon_get_current_channel(gAppNikonHandle[0], ch_num, &ch);
+                        if(ret != SystemP_SUCCESS)
+                        {
+                            DebugP_log("\r\n| ERROR: Failed to get current channel\n");
+                            continue;
+                        }
+                        DebugP_log("\r\n Channel %d: \n", ch);
+                        if(attrs->load_share_enabled)
                         {
                             ls_ch = ch;
                         }
@@ -1471,18 +2079,28 @@ void nikon_main(void *args)
                 break;
             case CMD_27:
             case CMD_28:
-                nikon_generate_cdf(priv, cmd);
-                ret = nikon_get_pos(priv, cmd);
-                if(ret < 0)
+                ret = nikon_generate_cdf(gAppNikonHandle[0], cmd);
+                if(ret != SystemP_SUCCESS)
+                {
+                    DebugP_log("\r\n ERROR: Failed to generate command data frame\n");
+                    continue;
+                }
+                ret = nikon_get_pos(gAppNikonHandle[0], cmd);
+                if(ret != SystemP_SUCCESS)
                 {
                     DebugP_log("\r\n ERROR: 24bit ABS and encoder's status request failed \n");
                     continue;
                 }
-                for(ch_num = 0; ch_num < totalchannels; ch_num++)
+                for(ch_num = 0; ch_num < total_channels; ch_num++)
                 {
-                    ch = nikon_get_current_channel(priv, ch_num);
-                    DebugP_log("\r\n Channel %d: \n",ch);
-                    if(CONFIG_NIKON0_LOAD_SHARE_MODE)
+                    ret = nikon_get_current_channel(gAppNikonHandle[0], ch_num, &ch);
+                    if(ret != SystemP_SUCCESS)
+                    {
+                        DebugP_log("\r\n| ERROR: Failed to get current channel\n");
+                        continue;
+                    }
+                    DebugP_log("\r\n Channel %d: \n", ch);
+                    if(attrs->load_share_enabled)
                     {
                         ls_ch = ch;
                     }
@@ -1494,7 +2112,7 @@ void nikon_main(void *args)
                     {
                         if(cmd == CMD_28)
                         {
-                            DebugP_log("\r\n Encoder %d: \n",enc_num);
+                            DebugP_log("\r\n Encoder %d: \n", enc_num);
                         }
                         DebugP_log("\r\n Info Field: 0x%x, Data Field0: 0x%x, Data Field1: 0x%x, Data Field2: 0x%x \n", priv->pos_data_info[ch].raw_data0[enc_num], priv->pos_data_info[ch].raw_data1[enc_num], priv->pos_data_info[ch].raw_data2[enc_num], priv->pos_data_info[ch].raw_data3[enc_num], priv->pos_data_info[ch].abs[enc_num]);
                         DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u \n", priv->pos_data_info[ch].rcv_crc[0], priv->pos_data_info[ch].otf_crc[0], priv->pos_data_info[ch].crc_err_cnt[0]);
@@ -1506,26 +2124,36 @@ void nikon_main(void *args)
                         }
                         DebugP_log("\r\n ALM: 0x%x \n", priv->alm_field[ch][enc_num]);
                         DebugP_log("\r\n Batt: %u, MtErr: %u, OverFlow: %u, OverSpeed M: %u, Memory Error: %u, Single Turn Error M: %u \n", priv->alm_bits[ch][enc_num].batt, priv->alm_bits[ch][enc_num].mt_err, priv->alm_bits[ch][enc_num].ov_flow, priv->alm_bits[ch][enc_num].ov_spd, priv->alm_bits[ch][enc_num].mem_err, priv->alm_bits[ch][enc_num].st_err);
-                        DebugP_log("\r\n PS Error M: %u, Busy M: %u, Memory Busy: %u, Over Temperature: %u, Increment Error M: %u \n",priv->alm_bits[ch][enc_num].ps_err, priv->alm_bits[ch][enc_num].busy, priv->alm_bits[ch][enc_num].mem_busy, priv->alm_bits[ch][enc_num].ov_temp, priv->alm_bits[ch][enc_num].inc_err_m);
-                        DebugP_log("\r\n OverSpeed S: %u, Single Turn Error S: %u, PS Error S: %u, Busy S: %u, Increment Error S: %u \n",priv->alm_bits[ch][enc_num].ov_spd_s, priv->alm_bits[ch][enc_num].st_err_s, priv->alm_bits[ch][enc_num].ps_err_s, priv->alm_bits[ch][enc_num].busy_s, priv->alm_bits[ch][enc_num].inc_err_s);
+                        DebugP_log("\r\n PS Error M: %u, Busy M: %u, Memory Busy: %u, Over Temperature: %u, Increment Error M: %u \n", priv->alm_bits[ch][enc_num].ps_err, priv->alm_bits[ch][enc_num].busy, priv->alm_bits[ch][enc_num].mem_busy, priv->alm_bits[ch][enc_num].ov_temp, priv->alm_bits[ch][enc_num].inc_err_m);
+                        DebugP_log("\r\n OverSpeed S: %u, Single Turn Error S: %u, PS Error S: %u, Busy S: %u, Increment Error S: %u \n", priv->alm_bits[ch][enc_num].ov_spd_s, priv->alm_bits[ch][enc_num].st_err_s, priv->alm_bits[ch][enc_num].ps_err_s, priv->alm_bits[ch][enc_num].busy_s, priv->alm_bits[ch][enc_num].inc_err_s);
                     }
                 }
                 break;
 
             case CMD_29:
             case CMD_30:
-                nikon_generate_cdf(priv, cmd);
-                ret = nikon_get_pos(priv, cmd);
-                if(ret < 0)
+                ret = nikon_generate_cdf(gAppNikonHandle[0], cmd);
+                if(ret != SystemP_SUCCESS)
+                {
+                    DebugP_log("\r\n ERROR: Failed to generate command data frame\n");
+                    continue;
+                }
+                ret = nikon_get_pos(gAppNikonHandle[0], cmd);
+                if(ret != SystemP_SUCCESS)
                 {
                     DebugP_log("\r\n ERROR: 24bit ABS and encoder's temperature request failed \n");
                     continue;
                 }
-                for(ch_num = 0; ch_num < totalchannels; ch_num++)
+                for(ch_num = 0; ch_num < total_channels; ch_num++)
                 {
-                    ch = nikon_get_current_channel(priv, ch_num);
-                    DebugP_log("\r\n Channel %d: \n",ch);
-                    if(CONFIG_NIKON0_LOAD_SHARE_MODE)
+                    ret = nikon_get_current_channel(gAppNikonHandle[0], ch_num, &ch);
+                    if(ret != SystemP_SUCCESS)
+                    {
+                        DebugP_log("\r\n| ERROR: Failed to get current channel\n");
+                        continue;
+                    }
+                    DebugP_log("\r\n Channel %d: \n", ch);
+                    if(attrs->load_share_enabled)
                     {
                         ls_ch = ch;
                     }
@@ -1537,7 +2165,7 @@ void nikon_main(void *args)
                     {
                         if(cmd == CMD_30)
                         {
-                            DebugP_log("\r\n Encoder %d: \n",enc_num);
+                            DebugP_log("\r\n Encoder %d: \n", enc_num);
                         }
                         DebugP_log("\r\n Info Field: 0x%x, Data Field0: 0x%x, Data Field1: 0x%x, Data Field2: 0x%x \n", priv->pos_data_info[ch].raw_data0[enc_num], priv->pos_data_info[ch].raw_data1[enc_num], priv->pos_data_info[ch].raw_data2[enc_num], priv->pos_data_info[ch].raw_data3[enc_num], priv->pos_data_info[ch].abs[enc_num]);
                         DebugP_log("\r\n Received CRC: 0x%x, On-the-fly CRC: 0x%x, CRC Error Count: %u \n", priv->pos_data_info[ch].rcv_crc[enc_num], priv->pos_data_info[ch].otf_crc[enc_num], priv->pos_data_info[ch].crc_err_cnt[enc_num]);
@@ -1553,10 +2181,15 @@ void nikon_main(void *args)
                 break;
 
             case ENCODER_ADR_CHANGE:
-                for(pru_num = 0; pru_num < totalchannels; pru_num++)
+                for(pru_num = 0; pru_num < total_channels; pru_num++)
                 {
-                    ch = nikon_get_current_channel(priv, pru_num);
-                    if(priv->load_share)
+                    ret = nikon_get_current_channel(gAppNikonHandle[0], pru_num, &ch);
+                    if(ret != SystemP_SUCCESS)
+                    {
+                        DebugP_log("\r\n| ERROR: Failed to get current channel\n");
+                        continue;
+                    }
+                    if(attrs->load_share_enabled)
                     {
                         ls_ch = ch;
                         DebugP_log("\r\nChannel %d: ", ch);
@@ -1564,23 +2197,23 @@ void nikon_main(void *args)
                     else
                     {
                         ls_ch = 0;
-                        pru_num = nikon_get_totalchannels(priv);
+                        pru_num = total_channels;
                     }
                     while(1)
                     {
                         DebugP_log("\r\n Current encoder address : %u", (uint32_t)nikon_reverse_bits(priv->eax[ls_ch], NIKON_ENC_ADDR_LEN));
                         DebugP_log("\r\n Please enter the encoder address : ");
-                        DebugP_scanf("%d", &enc_addr);
-                        if(enc_addr > 7)
+                        DebugP_scanf("%u", &enc_addr);
+                        if(enc_addr > NIKON_ENC_ADDR_MAX)
                         {
-                            DebugP_log("\r\n Please enter a 3-bit value(0-7)\n");
+                            DebugP_log("\r\n Please enter a 3-bit value(0-%u)\n", NIKON_ENC_ADDR_MAX);
                         }
                         else
                         {
                             break;
                         }
                     }
-                    nikon_update_enc_addr(priv, enc_addr, ls_ch);
+                    nikon_update_enc_addr(gAppNikonHandle[0], enc_addr, ls_ch);
                 }
                 break;
 
@@ -1592,52 +2225,60 @@ void nikon_main(void *args)
                     DebugP_log("\r\n| WARNING: invalid value entered\n");
                     continue;
                 }
-                if(CONFIG_NIKON0_LOAD_SHARE_MODE)
+                if(attrs->load_share_enabled)
                 {
-                    if(CONFIG_NIKON0_CHANNEL0)
+                    if(attrs->channel0_enabled)
                     {
                         DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) Channel0: \n");
-                        DebugP_scanf("%lld\n", &ch0_trigger_count);
-                        if((ch0_trigger_count > iep_reset_count) || (ch0_trigger_count <= IEP_DEFAULT_INC))
+                        DebugP_scanf("%lld\n", &trigger_count[0][0]);
+                        if((trigger_count[0][0] > iep_reset_count) || (trigger_count[0][0] <= IEP_DEFAULT_INC))
                         {
                             DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
                             continue;
                         }
                     }
-                    if(CONFIG_NIKON0_CHANNEL1)
+                    if(attrs->channel1_enabled)
                     {
                         DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) Channel1: \n");
-                        DebugP_scanf("%lld\n", &ch1_trigger_count);
-                        if((ch1_trigger_count > iep_reset_count) || (ch1_trigger_count <= IEP_DEFAULT_INC))
+                        DebugP_scanf("%lld\n", &trigger_count[0][1]);
+                        if((trigger_count[0][1] > iep_reset_count) || (trigger_count[0][1] <= IEP_DEFAULT_INC))
                         {
                             DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
                             continue;
                         }
                     }
-                    if(CONFIG_NIKON0_CHANNEL2)
+                    if(attrs->channel2_enabled)
                     {
                         DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) Channel2: \n");
-                        DebugP_scanf("%lld\n", &ch2_trigger_count);
-                        if((ch2_trigger_count > iep_reset_count) || (ch2_trigger_count <= IEP_DEFAULT_INC))
+                        DebugP_scanf("%lld\n", &trigger_count[0][2]);
+                        if((trigger_count[0][2] > iep_reset_count) || (trigger_count[0][2] <= IEP_DEFAULT_INC))
                         {
                             DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
                             continue;
                         }
                     }
-
                 }
                 else
                 {
                     DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles): ");
-                    DebugP_scanf("%lld\n", &ch0_trigger_count);
-                    if((ch0_trigger_count > iep_reset_count) || (ch0_trigger_count <= IEP_DEFAULT_INC))
+                    DebugP_scanf("%lld\n", &trigger_count[0][0]);
+                    if((trigger_count[0][0] > iep_reset_count) || (trigger_count[0][0] <= IEP_DEFAULT_INC))
                     {
                         DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
                         continue;
                     }
                 }
-                nikon_process_periodic_command(priv, iep_reset_count, ch0_trigger_count, ch1_trigger_count, ch2_trigger_count);
-                nikon_command_wait(priv);
+                nikon_process_periodic_command(gAppNikonHandle, trigger_count, iep_reset_count);
+                nikon_command_wait(gAppNikonHandle[0]);
+
+                DebugP_log("\r| Revert to host trigger\n");
+
+                ret = nikon_config_host_trigger(gAppNikonHandle[0]);
+                if(ret != SystemP_SUCCESS)
+                {
+                    DebugP_log("\r| ERROR: Failed to revert to host trigger\n");
+                }
+
                 break;
 
             case UPDATE_CLOCK_FREQ:
@@ -1648,18 +2289,31 @@ void nikon_main(void *args)
                     DebugP_log("\r\n CLK divisors will not be possible. Please provide valid freq: 2.5/4/6.67/8/16 \n");
                     continue;
                 }
-                nikon_update_clock_freq(priv, freq);
+                ret = nikon_update_clock_freq(gAppNikonHandle[0], freq);
+                if(ret != SystemP_SUCCESS)
+                {
+                    DebugP_log("\r\n ERROR: Failed to update clock frequency\n");
+                }
                 break;
 
             case UPDATE_ENC_LEN:
-                nikon_get_enc_data_len(priv);
+                nikon_get_enc_data_len(gAppNikonHandle[0]);
                 break;
 
             default:
                 break;
         }
     }
+
+    /* ========================================================================== */
+    /* CLEANUP AND DEINITIALIZATION                                              */
+    /* ========================================================================== */
 deinit:
+    /* De-initialize Nikon driver and close system resources */
+    if(gAppNikonHandle[0] != NULL)
+    {
+        nikon_deinit(gAppNikonHandle[0]);
+    }
 
     Board_driversClose();
     Drivers_close();
