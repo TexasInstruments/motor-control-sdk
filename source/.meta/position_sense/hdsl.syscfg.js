@@ -76,7 +76,7 @@ function onValidate(inst, validation) {
 
         if((device === "am243x-lp") && (instance.channel_1) && (instance.Booster_Pack))
         {
-            validation.logError("Channel 1 is not supported with BP-AM2BLDCSERVO BoosterPack", inst, "Booster_Pack");
+            validation.logError("Channel 1 is not supported on BP-AM2BLDCSERVO BoosterPack due to pinout limitations", inst, "Booster_Pack");
         }
 
         /* validation for BP-AM2BLDCSERVO BoosterPack */
@@ -89,7 +89,7 @@ function onValidate(inst, validation) {
 
             if((instance.Channel_2 || instance.Channel_1)&&(instance.Booster_Pack))
             {
-                validation.logError("Channel 1 and Channel 2 are not supported with BP-AM2BLDCSERVO BoosterPack", inst, "Booster_Pack");
+                validation.logError("Channel 1 and Channel 2 are not supported on BP-AM2BLDCSERVO BoosterPack due to pinout limitations", inst, "Booster_Pack");
             }
         }
     }
