@@ -344,7 +344,6 @@ extern "C" {
  */
 #define BISSC_CFG_REG_SIZE         (4U)
 #define BISSC_CSL_ICSS_PR1_IEP0_SLV_CAP0_REG0  (CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG + 2U*BISSC_CFG_REG_SIZE)
-#define BISSC_CSL_ICSS_PR1_IEP0_SLV_CAP0_REG1  (CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG + 3U*BISSC_CFG_REG_SIZE)
 
 /**
  * \brief 8-byte register offset for IEP registers
