@@ -41,7 +41,7 @@
 #include <kernel/dpl/DebugP.h>
 #include <drivers/soc.h>
 
-#if defined(SOC_AM243X) || defined(SOC_AM64X)
+#if defined(SOC_AM243X)
 #include <drivers/sciclient.h>
 #endif
 

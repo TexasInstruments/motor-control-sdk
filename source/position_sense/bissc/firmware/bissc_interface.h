@@ -195,10 +195,13 @@ BISSC_CONFIG_ICSS_CLK_OFFSET                        .set        0x108   ;icssg c
 BISSC_IEP_BASE_ADDR_OFFSET                          .set        0x110   ;IEP base address
 BISSC_CH0_IEP_CMP_EVENT_OFFSET                      .set        0x114   ;IEP CMP event number for ch0
 BISSC_CH0_IEP_CAP_EVENT_OFFSET                      .set        0x115   ;IEP CAP event number for ch0
+BISSC_CH0_IEP_RESERVED_OFFSET                       .set        0x116   ;reserved, 2 bytes for alignment
 BISSC_CH0_IEP_CAPTURE_REG_OFFSET                    .set        0x118   ;IEP capture register offset for ch0
 BISSC_CH1_IEP_CMP_EVENT_OFFSET                      .set        0x11C   ;IEP CMP event number for ch1
 BISSC_CH1_IEP_CAP_EVENT_OFFSET                      .set        0x11D   ;IEP CAP event number for ch1
+BISSC_CH1_IEP_RESERVED_OFFSET                       .set        0x11E   ;reserved, 2 bytes for alignment
 BISSC_CH1_IEP_CAPTURE_REG_OFFSET                    .set        0x120   ;IEP capture register offset for ch1
 BISSC_CH2_IEP_CMP_EVENT_OFFSET                      .set        0x124   ;IEP CMP event number for ch2
 BISSC_CH2_IEP_CAP_EVENT_OFFSET                      .set        0x125   ;IEP CAP event number for ch2
+BISSC_CH2_IEP_RESERVED_OFFSET                       .set        0x126   ;reserved, 2 bytes for alignment
 BISSC_CH2_IEP_CAPTURE_REG_OFFSET                    .set        0x128   ;IEP capture register offset for ch2

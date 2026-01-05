@@ -110,4 +110,24 @@ TAMAGAWA_LS_EXEC_RTU_STATE           .set       0xD0       ;/*tamagawa offset to
 TAMAGAWA_LS_EXEC_PRU_STATE           .set       0xD1       ;/*tamagawa offset to sync PRU in load share mode*/
 TAMAGAWA_LS_EXEC_TX_PRU_STATE        .set       0xD2       ;/*tamagawa offset to sync TX PRU in load share mode*/
 TAMAGAWA_PRIMARY_CORE_MASK_OFFSET    .set       0xD3       ;/*tamagawa primary core mask for load share mode*/
+
+;/* IEP periodic trigger configuration offsets - Per-channel for load share mode */
+;/* Structure layout: tamagawa_periodic_trigger_cfg[3] - 8 bytes per channel */
+;/* Each channel structure contains: iep_cmp_event(1), iep_cap_event(1), reserved(2), iep_capture_reg(4) */
+TAMAGAWA_IEP_BASE_ADDR_OFFSET        .set 0xD4   ;/* IEP base address (4 bytes) for periodic trigger */
+;/* Channel 0 trigger params at offset 0xD8 */
+TAMAGAWA_CH0_IEP_CMP_EVENT_OFFSET    .set 0xD8   ;/* CH0: iep_cmp_event (1 byte) */
+TAMAGAWA_CH0_IEP_CAP_EVENT_OFFSET    .set 0xD9   ;/* CH0: iep_cap_event (1 byte) */
+TAMAGAWA_CH0_IEP_RESERVED_OFFSET     .set 0xDA   ;/* CH0: reserved (2 bytes) */
+TAMAGAWA_CH0_IEP_CAPTURE_REG_OFFSET  .set 0xDC   ;/* CH0: iep_capture_reg (4 bytes) */
+;/* Channel 1 trigger params at offset 0xE0 (0xD8 + 8) */
+TAMAGAWA_CH1_IEP_CMP_EVENT_OFFSET    .set 0xE0   ;/* CH1: iep_cmp_event (1 byte) */
+TAMAGAWA_CH1_IEP_CAP_EVENT_OFFSET    .set 0xE1   ;/* CH1: iep_cap_event (1 byte) */
+TAMAGAWA_CH1_IEP_RESERVED_OFFSET     .set 0xE2   ;/* CH1: reserved (2 bytes) */
+TAMAGAWA_CH1_IEP_CAPTURE_REG_OFFSET  .set 0xE4   ;/* CH1: iep_capture_reg (4 bytes) */
+;/* Channel 2 trigger params at offset 0xE8 (0xD8 + 16) */
+TAMAGAWA_CH2_IEP_CMP_EVENT_OFFSET    .set 0xE8   ;/* CH2: iep_cmp_event (1 byte) */
+TAMAGAWA_CH2_IEP_CAP_EVENT_OFFSET    .set 0xE9   ;/* CH2: iep_cap_event (1 byte) */
+TAMAGAWA_CH2_IEP_RESERVED_OFFSET     .set 0xEA   ;/* CH2: reserved (2 bytes) */
+TAMAGAWA_CH2_IEP_CAPTURE_REG_OFFSET  .set 0xEC   ;/* CH2: iep_capture_reg (4 bytes) */
 	.endif

@@ -106,12 +106,12 @@ extern "C" {
 #define TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU      (2U)
 
 /**
- *  \brief  Tamagawa operation mode: Periodic trigger
+ *  \brief  Tamagawa operation mode: Periodic trigger mode using iep compare event
  *
  *  In periodic mode, the PRU firmware automatically triggers position readout
  *  at regular intervals configured by IEP timer.
  */
-#define TAMAGAWA_OPMODE_PERIODIC                    (0x0U)
+#define TAMAGAWA_OPMODE_PERIODIC_CMP                (0x0U)
 
 /**
  *  \brief  Tamagawa operation mode: Host trigger
@@ -132,11 +132,31 @@ extern "C" {
  */
 #define TAMAGAWA_DISABLE_CYCLE_TRIGGER         0x0
 
+/**
+ *  \brief  Tamagawa operation mode: Periodic trigger mode using iep capture event
+ *
+ *  In periodic mode, the PRU firmware automatically triggers position readout
+ *  at regular intervals configured by IEP timer.
+ */
+#define TAMAGAWA_OPMODE_PERIODIC_CAP                (0x2U)
+
 /** \brief Allowed Tamagawa communication frequency: 2.5 MHz */
 #define TAMAGAWA_FREQ_2_5_MHZ                       (2500000U)
 
 /** \brief Allowed Tamagawa communication frequency: 5 MHz */
 #define TAMAGAWA_FREQ_5_MHZ                         (5000000U)
+
+/**
+ *  \brief  Maximum IEP CAP event number (0-7)
+ *  \details IEP supports 8 capture events (CAP0-CAP7)
+ */
+#define TAMAGAWA_IEP_MAX_CAP_EVENT                  (0x8U)
+
+/**
+ *  \brief  Maximum IEP CMP event number (0-15)
+ *  \details IEP supports 16 compare events (CMP0-CMP15)
+ */
+#define TAMAGAWA_IEP_MAX_CMP_EVENT                  (0x10U)
 
 /**
  *  \brief  Maximum EEPROM address that can be used for EEPROM Read/Write
@@ -206,6 +226,18 @@ extern "C" {
  *  \brief  Tamagawa EEPROM Control Field value for Read operation
  */
 #define TAMAGAWA_CF_EEPROM_READ (0xEAU)
+/**
+ * \brief IEP CAP0 register offset - cslr common file does not have defined cap registers
+ * FIXME: Remove these definitions once they are available in cslr_common.h
+ */
+#define TAMAGAWA_CFG_REG_SIZE                             (4U)
+#define TAMAGAWA_CSL_ICSS_PR1_IEP0_SLV_CAP0_REG0          (CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG + 2U*TAMAGAWA_CFG_REG_SIZE)
+#define TAMAGAWA_CSL_ICSS_PR1_IEP0_SLV_CAP0_REG1          (CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG + 3U*TAMAGAWA_CFG_REG_SIZE)
+
+/**
+ * \brief 8-byte register offset for IEP registers
+ */
+#define TAMAGAWA_8_BYTE_REG_OFFSET                        (8U)
 
 /**
  *  \brief  Tamagawa Data ID codes
@@ -221,7 +253,8 @@ typedef enum data_id_e
     DATA_ID_8,  /**< Reset */
     DATA_ID_C,  /**< Reset */
     DATA_ID_D,  /**< EEPROM read */
-    PERIODIC_TRIGGER_CMD, /**< Periodic trigger command */
+    PERIODIC_TRIGGER_CMP_CMD, /**< Periodic trigger command */
+    PERIODIC_TRIGGER_CAP_CMD, /**< Periodic trigger command */
     DATA_ID_NUM /**< Number of Data ID codes */
 } data_id;
 
@@ -342,6 +375,26 @@ typedef struct tamagawa_channel_config_s
 } tamagawa_channel_config;
 
 /**
+ * \brief   Tamagawa periodic trigger configuration structure
+ *
+ * \details Contains IEP event configuration for periodic trigger mode per channel
+ */
+typedef struct tamagawa_periodic_trigger_cfg_s
+{
+    uint8_t iep_cmp_event;
+    /**< IEP compare event number for periodic CMP mode */
+
+    uint8_t iep_cap_event;
+    /**< IEP capture event number for periodic CAP mode */
+
+    uint16_t reserved;
+    /**< Reserved for alignment */
+
+    uint32_t iep_capture_reg;
+    /**< IEP capture register address for periodic CAP mode */
+} tamagawa_periodic_trigger_cfg;
+
+/**
  * \brief Tamagawa EEPROM interface structure
  *
  * \details Structure containing EEPROM command parameters and TX data preparation
@@ -389,6 +442,11 @@ typedef struct tamagawa_xchg_s
     volatile uint8_t primary_core_mask;
     /**< Primary PRU core mask for load share mode synchronization (0x1, 0x2, or 0x4).
      *   Indicates which channel's PRU acts as primary coordinator */
+    uint32_t iep_base_addr;
+        /**< IEP base address for periodic trigger mode */
+    tamagawa_periodic_trigger_cfg trigger_params[TAMAGAWA_MAX_CHANNELS_PER_SLICE];
+        /**< Periodic trigger configuration parameters for each channel (ch0, ch1, ch2).
+         *   Contains IEP event numbers and capture register addresses */
 } tamagawa_xchg;
 
 /**
@@ -453,6 +511,16 @@ typedef struct tamagawa_attrs_s
     uint8_t is_core_clk;
     /** Load-share mode enabled flag (0: disabled, 1: enabled). Used with TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU */
     uint8_t load_share_enabled;
+    /**< IEP instance number used for periodic trigger mode */
+    uint8_t iep_instance;
+    /**< IEP compare event number array for each channel [0]=CH0, [1]=CH1, [2]=CH2
+     *   In non-load share mode, all channels use [0] value */
+    uint8_t iep_cmp_event[TAMAGAWA_MAX_CHANNELS_PER_SLICE];
+    /**< IEP capture event number array for each channel [0]=CH0, [1]=CH1, [2]=CH2
+     *   In non-load share mode, all channels use [0] value */
+    uint8_t iep_cap_event[TAMAGAWA_MAX_CHANNELS_PER_SLICE];
+    /**< IEP base address for IEP timer configuration in periodic trigger mode */
+    void *iep_base_addr;
 } tamagawa_attrs;
 
 /**
@@ -734,7 +802,7 @@ int32_t tamagawa_config_clock(tamagawa_handle handle, tamagawa_clk_cfg *clk_cfg)
 int32_t tamagawa_config_host_trigger(tamagawa_handle handle);
 
 /**
- *  \brief      Configure Tamagawa interface for periodic trigger mode
+ *  \brief       Configure periodic trigger mode using CMP events
  *
  *  \details    This function sets the operation mode to periodic trigger mode (opmode = 0).
  *              In this mode, commands are sent periodically by the PRU firmware based on
@@ -748,7 +816,8 @@ int32_t tamagawa_config_host_trigger(tamagawa_handle handle);
  *  \note       NULL check: Strict check on handle. After successful init, internal structures
  *              are assumed valid and not rechecked.
  */
-int32_t tamagawa_config_periodic_trigger(tamagawa_handle handle);
+int32_t tamagawa_config_periodic_trigger_cmp_mode(tamagawa_handle handle);
+
 
 /**
  *  \brief      Configure channel mask for Tamagawa interface
@@ -954,6 +1023,90 @@ const tamagawa_attrs* tamagawa_get_attrs(tamagawa_handle handle);
  *              Use provided APIs for configuration changes.
  */
 tamagawa_priv* tamagawa_get_priv(tamagawa_handle handle);
+
+/**
+ *  \brief      Configure IEP CMP event for periodic trigger 
+ *
+ *  \details    This function writes IEP CMP event configuration to DMEM for PRU firmware access.
+ *
+ *              The function performs the following operations:
+ *              - Validates event_num (0-15)
+ *              - Writes event number to DMEM for firmware access
+ *
+ *  \param[in]  handle          Tamagawa handle returned by \ref tamagawa_init
+ *  \param[in]  event_num       CMP event number (0-15). Must match SysConfig configuration.
+ *
+ *  \retval     SystemP_SUCCESS  CMP event configured successfully
+ *  \retval     SystemP_FAILURE  On NULL handle or invalid event_num/channel
+ *
+ *  \note       This function only handles DMEM writes. IEP register configuration must be
+ *              done separately by the application.
+ */
+int32_t tamagawa_config_iep_cmp_event(tamagawa_handle handle, uint8_t channel, uint8_t event_num);
+
+/**
+ *  \brief      Configure IEP CAP event for periodic trigger 
+ *
+ *  \details    This function writes IEP CAP event configuration to DMEM for PRU firmware access.
+ *
+ *              The function performs the following operations:
+ *              - Validates event_num (0-7)
+ *              - Calculates CAP register address based on event number
+ *              - Writes event number and CAP register address to DMEM for firmware access
+ *
+ *  \param[in]  handle      Tamagawa handle returned by \ref tamagawa_init
+ *  \param[in]  event_num   CAP event number (0-7). CAP6 is default for LATCH0 on AM243x.
+ *
+ *  \retval     SystemP_SUCCESS  CAP event configured successfully
+ *  \retval     SystemP_FAILURE  On NULL handle, invalid event_num/channel, or NULL IEP base address
+ *
+ *  \note       This function only handles DMEM writes. IEP register configuration must be
+ *              done separately by the application.
+ *
+ */
+int32_t tamagawa_config_iep_cap_event(tamagawa_handle handle, uint8_t channel, uint8_t event_num);
+
+/**
+ *  \brief      Configure IEP base address for periodic trigger
+ *
+ *  \details    This function writes the IEP base address to DMEM (PRU Data Memory) so that
+ *              the firmware can access IEP registers for periodic trigger mode operation.
+ *              The address is stored as an offset from the PRU-ICSS base address.
+ *
+ *              This function is automatically called during \ref tamagawa_init and typically
+ *              does not need to be called directly by the application.
+ *
+ *  \param[in]  handle          Tamagawa handle returned by \ref tamagawa_init
+ *  \param[in]  iep_base_addr   IEP base address as offset from PRU-ICSS base address
+ *
+ *  \retval     SystemP_SUCCESS  IEP base address configured successfully
+ *  \retval     SystemP_FAILURE  On NULL handle or zero iep_base_addr
+ *
+ *  \note       This function writes to the tamagawa_xchg structure in DMEM.
+ */
+int32_t tamagawa_config_iep_base_address(tamagawa_handle handle, uint32_t iep_base_addr);
+
+/**
+ *  \brief      Configure periodic trigger mode using CAP events
+ *
+ *  \details    This function configures the Tamagawa encoder to use periodic trigger mode
+ *              with IEP capture events. In CAP mode, firmware waits for IEP CAP event status
+ *              and automatically triggers position readout when the event occurs.
+ *
+ *              The function sets the operation mode to TAMAGAWA_OPMODE_PERIODIC_CAP in the
+ *              PRU-ICSS exchange structure (DMEM)
+ *
+ *  \param[in]  handle  Tamagawa handle returned by \ref tamagawa_init
+ *
+ *  \retval     SystemP_SUCCESS  CAP mode configured successfully
+ *  \retval     SystemP_FAILURE  On NULL handle
+ *
+ *  \note       Before calling this function, configure IEP for CAP mode using
+ *              tamagawa_config_iep_cap_for_sync() and enable IEP counter using
+ *              \ref tamagawa_enable_iep_counter.
+ *  \note       CAP mode is only supported on AM243x/AM64x with Time Sync Event Router.
+ */
+int32_t tamagawa_config_periodic_trigger_cap_mode(tamagawa_handle handle);
 
 /** @} */
 

@@ -10,10 +10,113 @@ let tamagawa_pins = (is_am26x_soc) ? system.getScript("/position_sense/tamagawa/
 
 let tamagawa_module_name = "/position_sense/tamagawa";
 
+function validateCmpEventWarnings(instance, inst, validation) {
+    /* Helper function to check and warn about CMP0 and CMP1 usage */
+    const checkCmpEvent = (cmpEvent, fieldName) => {
+        if (cmpEvent === 0) {
+            validation.logWarning(
+                "CMP0 is used for IEP counter reset in periodic CMP mode. Using CMP0 may cause conflicts.",
+                inst,
+                fieldName
+            );
+        } else if (cmpEvent === 1) {
+            validation.logWarning(
+                "CMP1 is used for SYNC OUT0 generation in periodic CAP mode. Using CMP1 may cause conflicts if CAP mode is used.",
+                inst,
+                fieldName
+            );
+        }
+    };
+
+    if (!instance.Multi_Channel_Load_Share) {
+        /* Non-load share mode - check global CMP event */
+        checkCmpEvent(instance.CMP_Event_Num, "CMP_Event_Num");
+    } else {
+        /* Load share mode - check per-channel CMP events */
+        if (instance.channel_0) {
+            checkCmpEvent(instance.CMP_Event_Num_CH0, "CMP_Event_Num_CH0");
+        }
+        if (instance.channel_1) {
+            checkCmpEvent(instance.CMP_Event_Num_CH1, "CMP_Event_Num_CH1");
+        }
+        if (instance.channel_2) {
+            checkCmpEvent(instance.CMP_Event_Num_CH2, "CMP_Event_Num_CH2");
+        }
+    }
+}
+
 function onValidate(inst, validation) {
     for(let instance_index in inst.$module.$instances)
     {
        let instance = inst.$module.$instances[instance_index];
+
+        /* Validate CMP0 and CMP1 usage warnings */
+        validateCmpEventWarnings(instance, inst, validation);
+
+        /* Validate CMP and CAP event numbers don't conflict across channels in load share mode */
+        if (instance.Multi_Channel_Load_Share) {
+            let enabled_channels = [];
+
+            /* Collect enabled channels and their event numbers */
+            if (instance.channel_0) {
+                enabled_channels.push({
+                    name: "Channel 0",
+                    cmp_event: instance.CMP_Event_Num_CH0,
+                    cap_event: instance.CAP_Event_Num_CH0,
+                    cmp_field: "CMP_Event_Num_CH0",
+                    cap_field: "CAP_Event_Num_CH0"
+                });
+            }
+
+            if (instance.channel_1) {
+                enabled_channels.push({
+                    name: "Channel 1",
+                    cmp_event: instance.CMP_Event_Num_CH1,
+                    cap_event: instance.CAP_Event_Num_CH1,
+                    cmp_field: "CMP_Event_Num_CH1",
+                    cap_field: "CAP_Event_Num_CH1"
+                });
+            }
+
+            if (instance.channel_2) {
+                enabled_channels.push({
+                    name: "Channel 2",
+                    cmp_event: instance.CMP_Event_Num_CH2,
+                    cap_event: instance.CAP_Event_Num_CH2,
+                    cmp_field: "CMP_Event_Num_CH2",
+                    cap_field: "CAP_Event_Num_CH2"
+                });
+            }
+
+            /* Check for CMP event conflicts between channels */
+            for (let i = 0; i < enabled_channels.length; i++) {
+                for (let j = i + 1; j < enabled_channels.length; j++) {
+                    if (enabled_channels[i].cmp_event === enabled_channels[j].cmp_event) {
+                        validation.logError(
+                            enabled_channels[i].name + " and " + enabled_channels[j].name +
+                            " cannot use the same IEP CMP event number (CMP" + enabled_channels[i].cmp_event + ")",
+                            inst,
+                            enabled_channels[j].cmp_field
+                        );
+                    }
+                }
+            }
+
+            /* Check for CAP event conflicts between channels */
+            for (let i = 0; i < enabled_channels.length; i++) {
+                for (let j = i + 1; j < enabled_channels.length; j++) {
+                    if (enabled_channels[i].cap_event === enabled_channels[j].cap_event) {
+                        validation.logError(
+                            enabled_channels[i].name + " and " + enabled_channels[j].name +
+                            " cannot use the same IEP CAP event number (CAP" + enabled_channels[i].cap_event + ")",
+                            inst,
+                            enabled_channels[j].cap_field
+                        );
+                    }
+                }
+            }
+        }
+
         if ((!instance.channel_0)&&(!instance.channel_1)&&(!instance.channel_2))
             validation.logError(
                "Select atleast one channel",inst,"channel_0"
@@ -138,28 +241,66 @@ let tamagawa_module = {
             displayName: "Select Channel 0",
             description: "Channel 0 Selection ",
             default: true,
-
+            onChange: function (inst, ui) {
+                if(inst.Multi_Channel_Load_Share) {
+                    ui.CMP_Event_Num_CH0.hidden = !inst.channel_0;
+                    ui.CAP_Event_Num_CH0.hidden = !inst.channel_0;
+                }
+            },
         },
         {
             name: "channel_1",
             displayName: "Select Channel 1",
             description: "Channel 1 Selection ",
             default: false,
-
+            onChange: function (inst, ui) {
+                if(inst.Multi_Channel_Load_Share) {
+                    ui.CMP_Event_Num_CH1.hidden = !inst.channel_1;
+                    ui.CAP_Event_Num_CH1.hidden = !inst.channel_1;
+                }
+            },
         },
         {
             name: "channel_2",
             displayName: "Select Channel 2",
             description: "Channel 2 Selection ",
             default: false,
-
+            onChange: function (inst, ui) {
+                if(inst.Multi_Channel_Load_Share) {
+                    ui.CMP_Event_Num_CH2.hidden = !inst.channel_2;
+                    ui.CAP_Event_Num_CH2.hidden = !inst.channel_2;
+                }
+            },
         },
         {
             name: "Multi_Channel_Load_Share",
             displayName: "Multi Channel Load Share",
             description: "Selected Channels have different make",
             hidden :(is_am26x_soc) ? true : false,
-            default: false
+            default: false,
+            onChange: function (inst, ui) {
+                if(inst.Multi_Channel_Load_Share) {
+                    // Hide global events, show per-channel events
+                    ui.CMP_Event_Num.hidden = true;
+                    ui.CAP_Event_Num.hidden = true;
+                    ui.CMP_Event_Num_CH0.hidden = !inst.channel_0;
+                    ui.CAP_Event_Num_CH0.hidden = !inst.channel_0;
+                    ui.CMP_Event_Num_CH1.hidden = !inst.channel_1;
+                    ui.CAP_Event_Num_CH1.hidden = !inst.channel_1;
+                    ui.CMP_Event_Num_CH2.hidden = !inst.channel_2;
+                    ui.CAP_Event_Num_CH2.hidden = !inst.channel_2;
+                } else {
+                    // Show global events, hide per-channel events
+                    ui.CMP_Event_Num.hidden = false;
+                    ui.CAP_Event_Num.hidden = false;
+                    ui.CMP_Event_Num_CH0.hidden = true;
+                    ui.CAP_Event_Num_CH0.hidden = true;
+                    ui.CMP_Event_Num_CH1.hidden = true;
+                    ui.CAP_Event_Num_CH1.hidden = true;
+                    ui.CMP_Event_Num_CH2.hidden = true;
+                    ui.CAP_Event_Num_CH2.hidden = true;
+                }
+            },
         },
         {
             name: "baudrate",
@@ -196,6 +337,198 @@ let tamagawa_module = {
                     name: "PRU1",
                 },
             ],
+        },
+        {
+            name: "GROUP_PERIODIC_TRIGGER",
+            displayName: "Periodic Trigger Mode Configuration",
+            description: "Configuration for IEP-based periodic trigger modes (CMP and CAP)",
+            config: [
+                {
+                    name: "IEP_Instance",
+                    displayName: "IEP Instance Number",
+                    description: "IEP instance number for periodic trigger mode.",
+                    default: 0,
+                    options: (is_am26x_soc) ?
+                        [
+                            { name: 0, displayName: "IEP0" },
+                        ]
+                        :
+                        [
+                            { name: 0, displayName: "IEP0" },
+                            { name: 1, displayName: "IEP1" },
+                        ],
+                },
+                {
+                    name: "CMP_Event_Num",
+                    displayName: "IEP CMP Event Number",
+                    description: "CMP event number (0-15) for periodic CMP trigger mode (used when load share is disabled).",
+                    default: 3,
+                    hidden: false,
+                    options: [
+                        { name: 0, displayName: "CMP0" },
+                        { name: 1, displayName: "CMP1" },
+                        { name: 2, displayName: "CMP2" },
+                        { name: 3, displayName: "CMP3" },
+                        { name: 4, displayName: "CMP4" },
+                        { name: 5, displayName: "CMP5" },
+                        { name: 6, displayName: "CMP6" },
+                        { name: 7, displayName: "CMP7" },
+                        { name: 8, displayName: "CMP8" },
+                        { name: 9, displayName: "CMP9" },
+                        { name: 10, displayName: "CMP10" },
+                        { name: 11, displayName: "CMP11" },
+                        { name: 12, displayName: "CMP12" },
+                        { name: 13, displayName: "CMP13" },
+                        { name: 14, displayName: "CMP14" },
+                        { name: 15, displayName: "CMP15" },
+                    ],
+                },
+                {
+                    name: "CAP_Event_Num",
+                    displayName: "IEP CAP Event Number",
+                    description: "CAP event number (0-7) for periodic CAP trigger mode (used when load share is disabled). " +
+                                 "Note: Routing (SYNC out to CAP) is done in application code (tamagawa_config_iep_cap_for_sync). Correct router signal should be configured for selected CAP event if needed.",
+                    default: 6,
+                    hidden: false,
+                    options: [
+                        { name: 0, displayName: "CAP0" },
+                        { name: 1, displayName: "CAP1" },
+                        { name: 2, displayName: "CAP2" },
+                        { name: 3, displayName: "CAP3" },
+                        { name: 4, displayName: "CAP4" },
+                        { name: 5, displayName: "CAP5" },
+                        { name: 6, displayName: "CAP6 (LATCH0 default)" },
+                        { name: 7, displayName: "CAP7 (LATCH1 default)" },
+                    ],
+                },
+                {
+                    name: "CMP_Event_Num_CH0",
+                    displayName: "CH0 IEP CMP Event Number",
+                    description: "CMP event number (0-15) for CH0 periodic CMP trigger (load share mode).",
+                    default: 3,
+                    hidden: true,
+                    options: [
+                        { name: 0, displayName: "CMP0" },
+                        { name: 1, displayName: "CMP1" },
+                        { name: 2, displayName: "CMP2" },
+                        { name: 3, displayName: "CMP3" },
+                        { name: 4, displayName: "CMP4" },
+                        { name: 5, displayName: "CMP5" },
+                        { name: 6, displayName: "CMP6" },
+                        { name: 7, displayName: "CMP7" },
+                        { name: 8, displayName: "CMP8" },
+                        { name: 9, displayName: "CMP9" },
+                        { name: 10, displayName: "CMP10" },
+                        { name: 11, displayName: "CMP11" },
+                        { name: 12, displayName: "CMP12" },
+                        { name: 13, displayName: "CMP13" },
+                        { name: 14, displayName: "CMP14" },
+                        { name: 15, displayName: "CMP15" },
+                    ],
+                },
+                {
+                    name: "CAP_Event_Num_CH0",
+                    displayName: "CH0 IEP CAP Event Number",
+                    description: "CAP event number (0-7) for CH0 periodic CAP trigger (load share mode).",
+                    default: 6,
+                    hidden: true,
+                    options: [
+                        { name: 0, displayName: "CAP0" },
+                        { name: 1, displayName: "CAP1" },
+                        { name: 2, displayName: "CAP2" },
+                        { name: 3, displayName: "CAP3" },
+                        { name: 4, displayName: "CAP4" },
+                        { name: 5, displayName: "CAP5" },
+                        { name: 6, displayName: "CAP6 (LATCH0)" },
+                        { name: 7, displayName: "CAP7 (LATCH1)" },
+                    ],
+                },
+                {
+                    name: "CMP_Event_Num_CH1",
+                    displayName: "CH1 IEP CMP Event Number",
+                    description: "CMP event number (0-15) for CH1 periodic CMP trigger (load share mode).",
+                    default: 5,
+                    hidden: true,
+                    options: [
+                        { name: 0, displayName: "CMP0" },
+                        { name: 1, displayName: "CMP1" },
+                        { name: 2, displayName: "CMP2" },
+                        { name: 3, displayName: "CMP3" },
+                        { name: 4, displayName: "CMP4" },
+                        { name: 5, displayName: "CMP5" },
+                        { name: 6, displayName: "CMP6" },
+                        { name: 7, displayName: "CMP7" },
+                        { name: 8, displayName: "CMP8" },
+                        { name: 9, displayName: "CMP9" },
+                        { name: 10, displayName: "CMP10" },
+                        { name: 11, displayName: "CMP11" },
+                        { name: 12, displayName: "CMP12" },
+                        { name: 13, displayName: "CMP13" },
+                        { name: 14, displayName: "CMP14" },
+                        { name: 15, displayName: "CMP15" },
+                    ],
+                },
+                {
+                    name: "CAP_Event_Num_CH1",
+                    displayName: "CH1 IEP CAP Event Number",
+                    description: "CAP event number (0-7) for CH1 periodic CAP trigger (load share mode).",
+                    default: 7,
+                    hidden: true,
+                    options: [
+                        { name: 0, displayName: "CAP0" },
+                        { name: 1, displayName: "CAP1" },
+                        { name: 2, displayName: "CAP2" },
+                        { name: 3, displayName: "CAP3" },
+                        { name: 4, displayName: "CAP4" },
+                        { name: 5, displayName: "CAP5" },
+                        { name: 6, displayName: "CAP6 (LATCH0)" },
+                        { name: 7, displayName: "CAP7 (LATCH1)" },
+                    ],
+                },
+                {
+                    name: "CMP_Event_Num_CH2",
+                    displayName: "CH2 IEP CMP Event Number",
+                    description: "CMP event number (0-15) for CH2 periodic CMP trigger (load share mode).",
+                    default: 6,
+                    hidden: true,
+                    options: [
+                        { name: 0, displayName: "CMP0" },
+                        { name: 1, displayName: "CMP1" },
+                        { name: 2, displayName: "CMP2" },
+                        { name: 3, displayName: "CMP3" },
+                        { name: 4, displayName: "CMP4" },
+                        { name: 5, displayName: "CMP5" },
+                        { name: 6, displayName: "CMP6" },
+                        { name: 7, displayName: "CMP7" },
+                        { name: 8, displayName: "CMP8" },
+                        { name: 9, displayName: "CMP9" },
+                        { name: 10, displayName: "CMP10" },
+                        { name: 11, displayName: "CMP11" },
+                        { name: 12, displayName: "CMP12" },
+                        { name: 13, displayName: "CMP13" },
+                        { name: 14, displayName: "CMP14" },
+                        { name: 15, displayName: "CMP15" },
+                    ],
+                },
+                {
+                    name: "CAP_Event_Num_CH2",
+                    displayName: "CH2 IEP CAP Event Number",
+                    description: "CAP event number (0-7) for CH2 periodic CAP trigger (load share mode).",
+                    default: 5,
+                    hidden: true,
+                    options: [
+                        { name: 0, displayName: "CAP0" },
+                        { name: 1, displayName: "CAP1" },
+                        { name: 2, displayName: "CAP2" },
+                        { name: 3, displayName: "CAP3" },
+                        { name: 4, displayName: "CAP4" },
+                        { name: 5, displayName: "CAP5" },
+                        { name: 6, displayName: "CAP6 (LATCH0)" },
+                        { name: 7, displayName: "CAP7 (LATCH1)" },
+                    ],
+                },
+            ],
+            collapsed: false,
         },
 
     ],
