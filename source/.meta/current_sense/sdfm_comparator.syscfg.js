@@ -38,9 +38,10 @@ function comparatorSettings(channel)
 		{
 			name: "Ch" + channel.toString() + "_OC_OSR",
 			displayName : "Over Current OSR",
-			description : 'Over Current OSR',
+			description : 'Over Current Over Sampling Ratio for comparator filter',
 			hidden      : true,
 			default     : 16,
+			range       : [4, 256],
 		},
 		{
 			name        : "Ch" + channel.toString() + "_Datarate_CF",
@@ -81,19 +82,21 @@ function comparatorSettings(channel)
 			displayName : "High Level Threshold",
 			description : 'High Level Threshold',
 			hidden      : true,
-            default     : "32767",
+            default     : 32767,
+			range       : [0, 16777216],
 		},
 		{
 			name: "Ch" + channel.toString() + "_LLT",
             displayName : "Low Level Threshold",
             description : 'Low Level Threshold',
             hidden      : true,
-            default     : "0",
+            default     : 0,
+			range       : [0, 16777216],
 		},
 		{
 			name: "Ch" + channel.toString() + "_ZeroCross_Enable",
 			displayName : "Enable Zero Cross Detection",
-			description : 'Enable Zero Cross Detection',
+			description : 'Enable zero-crossing detection',
 			hidden		: true,
 			default     : false,
 			onChange	: onChangeUseZeroCrossSettings,
@@ -109,7 +112,8 @@ function comparatorSettings(channel)
                     displayName : "Zero Cross Threshold",
                     description : 'Zero Cross Threshold',
                     hidden      : true,
-                    default     : "32767",  
+                    default     : 32767,
+					range       : [0, 16777216],
                 },
 
           ]

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-25 Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (C) 2023-2025 Texas Instruments Incorporated - http://www.ti.com/
  *
  *
  * Redistribution and use in source and binary forms, with or without
@@ -106,9 +106,6 @@
  *  - SDFM_measureClockPhaseDelay(): Measure clock phase delay between channels
  *  - SDFM_getClockPhaseDelay(): Get measured phase delay value
  *
- *  ### Load Share Mode
- *  - SDFM_enableLoadShareMode(): Enable multi-PRU load sharing
- *
  *  ### Utility Functions
  *  - SDFM_getFirmwareVersion(): Get PRU firmware version
  *  - SDFM_setSampleOutputInterfaceGlobalAddr(): Set sample output buffer address
@@ -172,49 +169,96 @@ extern "C" {
 
 /**
  *
- *  \brief  Initialize SDFM instance
- *  
- *  \param[in]  index           SDFM Instance index
- *  \param[in]  sdfm_params     SDFM initialization parameters
+ *  \brief  Initialize SDFM parameters structure with default values
  *
- *  \retval SDFM_Handle         SDFM instance handle
+ *  \param[out]  params         Pointer to SDFM_Params structure to initialize
  *
  */
-SDFM_Handle SDFM_init(uint32_t index, SDFM_Params sdfm_params);
+void SDFM_paramsInit(SDFM_Params *params);
+
+/**
+ *
+ *  \brief  Initialize SDFM instance
+ *
+ *  \param[in]  index           SDFM Instance index
+ *  \param[in]  params          Pointer to SDFM initialization parameters
+ *
+ *  \retval SDFM_Handle         SDFM instance handle on success, NULL on failure
+ *
+ */
+SDFM_Handle SDFM_init(uint32_t index, SDFM_Params *params);
+
+/**
+ *
+ *  \brief  Deinitialize SDFM instance and release resources
+ *
+ *  \param[in]  handle          SDFM handle
+ *
+ *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *
+ */
+int32_t SDFM_deinit(SDFM_Handle handle);
+
+/**
+ *
+ *  \brief  Get SDFM attributes (compile-time configuration)
+ *
+ *  \param[in]  handle          SDFM handle
+ *
+ *  \retval const SDFM_Attrs*   Pointer to SDFM attributes, NULL if handle is invalid
+ *
+ */
+const SDFM_Attrs* SDFM_getAttrs(SDFM_Handle handle);
+
+/**
+ *
+ *  \brief  Get SDFM private data (runtime state)
+ *
+ *  \param[in]  handle          SDFM handle
+ *
+ *  \retval SDFM_Priv*          Pointer to SDFM private data, NULL if handle is invalid
+ *
+ */
+SDFM_Priv* SDFM_getPriv(SDFM_Handle handle);
 
 /**
  *
  *  \brief  Configure iep increment & iep count in one epwm cycle
  *
- *  \param[in]  h_sdfm          SDFM handle
- *  \param[in]  iep_reset_freq  IEP reset frequency
+ *  \param[in]  handle          SDFM handle
+ *  \param[in]  iep_reset_freq  IEP counter reset frequency. Typically equal to EPWM output frequency, used to synchronize IEP counter with EPWM cycle
  *
- *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *  \retval SystemP_SUCCESS     Configuration successful
+ *  \retval SystemP_FAILURE     Invalid handle (NULL) or iep_reset_freq is 0
  *
  */
-int32_t SDFM_configIepCount(SDFM_Handle h_sdfm, uint32_t iep_reset_freq);
+int32_t SDFM_configIepCount(SDFM_Handle handle, uint32_t iep_reset_freq);
 
 /**
  *
  *  \brief  Configure ecap parameters for generate SD clock
  *
- *  \param[in]  h_sdfm          SDFM handle
+ *  \param[in]  handle          SDFM handle
  *  \param[in]  ecap_divider    ecap divider for sdfm clock
  *
- *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *  \retval SystemP_SUCCESS     Configuration successful
+ *  \retval SystemP_FAILURE     Invalid handle (NULL) or ecap_divider is 0
  *
  */
-int32_t SDFM_configEcap(SDFM_Handle h_sdfm, uint8_t ecap_divider);
+int32_t SDFM_configEcap(SDFM_Handle handle, uint8_t ecap_divider);
 
 /**
  *
  *  \brief  Configure comparator filter (over current) sampling ratio
  *
- *  \param[in]  h_sdfm          SDFM handle
- *  \param[in]  ch_id           current ch number
- *  \param[in]  osr             comparator filter/Over current sampling ratio
+ *  \param[in]  handle          SDFM handle
+ *  \param[in]  channel         SDFM channel number (0-8)
+ *  \param[in]  osr             comparator filter/Over current sampling ratio. Valid range: 4-256
  *
- *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *  \note The OSR value is validated against the range 4-256 and decremented by 1
+ *        before writing to hardware (user OSR 4-256 -> register 3-255).
+ *
+ *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error (invalid osr range)
  *
  *  \note This API is used to configure the sampling ratio for the over-current
  *        filter. It should be called only when the snoop mode is enabled.
@@ -222,167 +266,181 @@ int32_t SDFM_configEcap(SDFM_Handle h_sdfm, uint8_t ecap_divider);
  *        filter is set through \ref SDFM_setFilterOverSamplingRatio.
  *
  */
-int32_t SDFM_setCompFilterOverSamplingRatio(SDFM_Handle h_sdfm, uint8_t ch_id, uint16_t osr);
+int32_t SDFM_setCompFilterOverSamplingRatio(SDFM_Handle handle, uint8_t channel, uint16_t osr);
 
 /**
  *
- *  \brief  configuration of SDFM threshold values
+ *  \brief  Configure SDFM comparator filter threshold values
  *
- *  \param[in]  h_sdfm          SDFM handle
- *  \param[in]  ch_id           current ch number
- *  \param[in]  thresholdParms  thresholds parametrs (High and Low)
+ *  \param[in]  handle           SDFM handle
+ *  \param[in]  channel          SDFM channel number (0-8)
+ *  \param[in]  threshold_config Threshold configuration structure
  *
- *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *  \retval SystemP_SUCCESS     Configuration successful
+ *  \retval SystemP_FAILURE     Invalid handle (NULL), channel > 8,
+ *                              or threshold values are invalid (high_threshold <= low_threshold or exceeds max)
  *
  */
-int32_t SDFM_setCompFilterThresholds(SDFM_Handle h_sdfm, uint8_t ch_id, uint32_t *thresholdParms);
+int32_t SDFM_setCompFilterThresholds(SDFM_Handle handle, uint8_t channel, SDFM_ThresholdConfig threshold_config);
 
 /**
  *
  *  \brief  configuration of single sample trigger time one Epwm cycle
  *
- *  \param[in]  h_sdfm          SDFM handle
+ *  \param[in]  handle          SDFM handle
  *  \param[in]  samp_trig_time  first sample trigger time in one pwm cycle
  *  \param[in]  pru_core        PRU core ID (0-2): PRU - 0, RTU - 1, TXPRU - 2
  *
- *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *  \retval SystemP_SUCCESS     Configuration successful
+ *  \retval SystemP_FAILURE     Invalid handle (NULL) or pru_core >= 3
  *
  */
-int32_t SDFM_setSampleTriggerTime(SDFM_Handle h_sdfm, float samp_trig_time, uint8_t pru_core);
+int32_t SDFM_setSampleTriggerTime(SDFM_Handle handle, float samp_trig_time, uint8_t pru_core);
 
 /**
  *
  *
  * \brief  configuration and enable second normal current sample starting time one Epwm cycle
  *
- *  \param[in]  h_sdfm          SDFM handle
+ *  \param[in]  handle          SDFM handle
  *  \param[in]  samp_trig_time  second sample trigger time in one PWM cycle
  *  \param[in]  pru_core        PRU core ID (0-2): PRU - 0, RTU - 1, TXPRU - 2
  *
- *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *  \retval SystemP_SUCCESS     Configuration successful
+ *  \retval SystemP_FAILURE     Invalid handle (NULL) or pru_core >= 3
  *
  */
-int32_t SDFM_enableDoubleSampling(SDFM_Handle h_sdfm, float samp_trig_time, uint8_t pru_core);
+int32_t SDFM_enableDoubleSampling(SDFM_Handle handle, float samp_trig_time, uint8_t pru_core);
 
 /**
  *
  *
  * \brief  Disable double normal current update/sampling
  *
- *  \param[in]  h_sdfm          SDFM handle
+ *  \param[in]  handle          SDFM handle
  *  \param[in]  pru_core        PRU core ID (0-2): PRU - 0, RTU - 1, TXPRU - 2
  *
- *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *  \retval SystemP_SUCCESS     Configuration successful
+ *  \retval SystemP_FAILURE     Invalid handle (NULL) or pru_core >= 3
  *
  */
-int32_t SDFM_disableDoubleSampling(SDFM_Handle h_sdfm, uint8_t pru_core);
+int32_t SDFM_disableDoubleSampling(SDFM_Handle handle, uint8_t pru_core);
 
 /**
  *
  *  \brief  Enable the channel specified by the channel number parameter
  *
- *  \param[in]  h_sdfm          SDFM handle
- *  \param[in]  channel_number  channel number
+ *  \param[in]  handle          SDFM handle
+ *  \param[in]  channel_number  channel number (0-8)
  *
- *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *  \retval SystemP_SUCCESS     Channel enabled successfully
+ *  \retval SystemP_FAILURE     Invalid handle (NULL) or channel_number > 8
  *
  */
-int32_t SDFM_setEnableChannel(SDFM_Handle h_sdfm, uint8_t channel_number);
+int32_t SDFM_setEnableChannel(SDFM_Handle handle, uint8_t channel_number);
 
 /**
  *
  *  \brief  configuration of SDFM channel Acc source (sync filter type). <br>
  *          Current SDFM firmware implementation support only SYNC3 filter <br>
  *
- *  \param[in]  h_sdfm          SDFM handle
- *  \param[in]  ch_id           current ch number
- *  \param[in]  filter          filter type (acc source)
+ *  \param[in]  handle          SDFM handle
+ *  \param[in]  channel         SDFM channel number (0-8)
+ *  \param[in]  filter          filter type (acc source). Valid values: 0=SINC3, 1=SINC2, 2=SINC1
  *
- *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *  \retval SystemP_SUCCESS     Configuration successful
+ *  \retval SystemP_FAILURE     Invalid handle (NULL), channel > 8, or filter > 2
  *
  */
-int32_t SDFM_configDataFilter(SDFM_Handle h_sdfm, uint8_t ch_id, uint8_t filter);
+int32_t SDFM_configDataFilter(SDFM_Handle handle, uint8_t channel, uint8_t filter);
 
 /**
  *
- *  \brief  configuration of SDFM channel clock source 
+ *  \brief  configuration of SDFM channel clock source
  *
- *  \param[in]  h_sdfm          SDFM handle
- *  \param[in]  ch_id           current ch number
- *  \param[in]  clk_source      channel clock source type:
+ *  \param[in]  handle          SDFM handle
+ *  \param[in]  channel         SDFM channel number (0-8)
+ *  \param[in]  clk_source      channel clock source type. Valid range: 0-2
  *                              - 0: Use pr<k>_pru<n>_sd8_clk (common SDFM clock pin for all channels)
  *                              - 1: Use pr<k>_pru<n>_sd<i>_clk (channel-specific clock)
  *                              - 2: Use group clocks:
  *                                      - pr<k>_pru<n>_sd0_clk for channels 0, 1, and 2
  *                                      - pr<k>_pru<n>_sd3_clk for channels 3, 4, and 5
- *                                      - pr<k>_pru<n>_sd6_clk for channels 6, 7, and 8 
+ *                                      - pr<k>_pru<n>_sd6_clk for channels 6, 7, and 8
  *
- *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *  \retval SystemP_SUCCESS     Configuration successful
+ *  \retval SystemP_FAILURE     Invalid handle (NULL), channel > 8, or clk_source > 2
  *
  */
-int32_t SDFM_selectClockSource(SDFM_Handle h_sdfm, uint8_t ch_id, uint8_t clk_source);
+int32_t SDFM_selectClockSource(SDFM_Handle handle, uint8_t channel, uint8_t clk_source);
 
 /**
  *
  *  \brief  configuration of SDFM channel clock inversion  
  *
- *  \param[in]  h_sdfm          SDFM handle
- *  \param[in]  ch_id           current ch number
- *  \param[in]  clk_inv         channel clock inversion 
+ *  \param[in]  handle          SDFM handle
+ *  \param[in]  channel         SDFM channel number (0-8)
+ *  \param[in]  clk_inv         channel clock inversion
  *
- *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *  \retval SystemP_SUCCESS     Configuration successful
+ *  \retval SystemP_FAILURE     Invalid handle (NULL) or channel > 8
  *
  */
-int32_t SDFM_setClockInversion(SDFM_Handle h_sdfm, uint8_t ch_id, uint8_t clk_inv);
+int32_t SDFM_setClockInversion(SDFM_Handle handle, uint8_t channel, uint8_t clk_inv);
 
 /**
  *
  *  \brief  This API enables the Comparator for the selected channel.
  *
- *  \param[in]  h_sdfm          SDFM handle
- *  \param[in]  ch              current ch number
+ *  \param[in]  handle          SDFM handle
+ *  \param[in]  channel         SDFM channel number (0-8)
  *
- *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *  \retval SystemP_SUCCESS     Comparator enabled successfully
+ *  \retval SystemP_FAILURE     Invalid handle (NULL) or channel > 8
  *
  */
-int32_t SDFM_enableComparator(SDFM_Handle h_sdfm, uint8_t ch);
+int32_t SDFM_enableComparator(SDFM_Handle handle, uint8_t channel);
 
 /**
  *
  *  \brief  This API disables the Comparator for the selected channel.
  *
- *  \param[in]  h_sdfm          SDFM handle
- *  \param[in]  ch              current ch number
+ *  \param[in]  handle          SDFM handle
+ *  \param[in]  channel         SDFM channel number (0-8)
  *
- *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *  \retval SystemP_SUCCESS     Comparator disabled successfully
+ *  \retval SystemP_FAILURE     Invalid handle (NULL) or channel > 8
  *
  */
-int32_t SDFM_disableComparator(SDFM_Handle h_sdfm, uint8_t ch);
+int32_t SDFM_disableComparator(SDFM_Handle handle, uint8_t channel);
 
 /**
  *
  *  \brief  configure GPIO pin number and address for associate Channel Number
  *
- *  \param[in]  h_sdfm          SDFM handle
- *  \param[in]  ch              current ch number
+ *  \param[in]  handle          SDFM handle
+ *  \param[in]  channel         SDFM channel number (0-8)
  *  \param[in]  gpio_base_addr  GPIO base address
  *  \param[in]  pin_number      GPIO PIN number
  *
- *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *  \retval SystemP_SUCCESS     GPIO pins configured successfully
+ *  \retval SystemP_FAILURE     Invalid handle (NULL) or channel > 8
  *
  */
-int32_t SDFM_configComparatorGpioPins(SDFM_Handle h_sdfm, uint8_t ch, uint32_t gpio_base_addr, uint32_t pin_number);
+int32_t SDFM_configComparatorGpioPins(SDFM_Handle handle, uint8_t channel, uint32_t gpio_base_addr, uint32_t pin_number);
 
 /**
  *
  *  \brief  get sample data from DMEM
- *  \param[in]  h_sdfm          SDFM handle
- *  \param[in]  ch              current ch number
+ *  \param[in]  handle          SDFM handle
+ *  \param[in]  channel         SDFM channel number (0-8)
  *
- *  \retval uint32_t            Current sample value
+ *  \retval uint32_t            Current sample value. Returns 0 on failure (invalid handle or channel).
+ *
+ *  \note A return value of 0 can also represent a valid zero current sample.
  *
  */
-uint32_t SDFM_getFilterData(SDFM_Handle h_sdfm, uint8_t ch);
+uint32_t SDFM_getFilterData(SDFM_Handle handle, uint8_t channel);
 
 /**
  *
@@ -390,223 +448,239 @@ uint32_t SDFM_getFilterData(SDFM_Handle h_sdfm, uint8_t ch);
  *
  *          If Snoop mode is used, it configures IEP count for normal current
  *          sampling.
- *          \note h_sdfm->snoop_mode must be set to 1 before calling this API for snoop mode configuration 
+ *          \note handle->snoop_mode must be set to 1 before calling this API for snoop mode configuration
  *
  *          If Snoop mode is not used, it configures SD HW OSR equal to
  *          matNC OSR.
  *
- *  \param[in]  h_sdfm          SDFM handle
- *  \param[in]  ch              current ch number
- *  \param[in]  nc_osr          Normal current osr value
+ *  \param[in]  handle          SDFM handle
+ *  \param[in]  channel         SDFM channel number (0-8)
+ *  \param[in]  nc_osr          Normal current osr value. Valid range: 4-256
  *
- *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error (invalid osr range)
+ *
+ *  \note The OSR value is validated against the range 4-256 and decremented by 1
+ *        before writing to hardware (user OSR 4-256 -> register 3-255).
  */
-int32_t SDFM_setFilterOverSamplingRatio(SDFM_Handle h_sdfm, uint8_t ch, uint16_t nc_osr);
+int32_t SDFM_setFilterOverSamplingRatio(SDFM_Handle handle, uint8_t channel, uint16_t nc_osr);
 
 /**
  *
  *  \brief  Return Firmware version
  *
- *  \param[in]  h_sdfm          SDFM handle
+ *  \param[in]  handle          SDFM handle
  *
- *  \retval uint32_t            Release version of firmware
+ *  \retval uint32_t            Release version of firmware. Returns 0 on failure (invalid handle).
+ *
+ *  \note A return value of 0 can also represent a valid firmware version.
  *
  */
-uint32_t SDFM_getFirmwareVersion(SDFM_Handle h_sdfm);
+uint32_t SDFM_getFirmwareVersion(SDFM_Handle handle);
 
 /**
  *  \brief  Enable trigger mode for normal current sampling
  *
- *  \param[in]  h_sdfm          SDFM handle
+ *  \param[in]  handle          SDFM handle
  *  \param[in]  pru_core        PRU core ID (0-2): PRU - 0, RTU - 1, TXPRU - 2
  *
  *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
  */
-int32_t SDFM_enableTriggerModeForNormalCurrent(SDFM_Handle h_sdfm, uint8_t pru_core);
+int32_t SDFM_enableTriggerModeForNormalCurrent(SDFM_Handle handle, uint8_t pru_core);
 
 /**
- *  \brief  This API Configure Fast detect block fields.
+ *  \brief  Configure SDFM fast detect block parameters
  *
- *  \param[in]  h_sdfm          SDFM handle
- *  \param[in]  ch              current ch number
- *  \param[in]  fdParms         array of fast detect fields. Size of fdParms should be 4 {fast detect enable, window size, zero max count, zero min count}
+ *  This API configures the fast detect feature for rapid error detection in SDFM channels.
+ *  Fast detect monitors zero crossings within a window to quickly identify sensor faults.
  *
- *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *  \param[in]  handle              SDFM handle
+ *  \param[in]  channel             SDFM channel number (0-8)
+ *  \param[in]  fast_detect_config  Fast detect configuration structure
+ *
+ *  \retval SystemP_SUCCESS     Configuration successful
+ *  \retval SystemP_FAILURE     Invalid handle (NULL), channel > 8,
+ *                              or parameter values out of valid range
+ *
  */
-int32_t SDFM_configFastDetect(SDFM_Handle h_sdfm, uint8_t ch, uint8_t *fdParms);
+int32_t SDFM_configFastDetect(SDFM_Handle handle, uint8_t channel, SDFM_FastDetectConfig fast_detect_config);
 
 /**
  *  \brief This API returns the fast detect error status for specified SDFM channel number.
  *
- *  \param[in]  h_sdfm          SDFM handle
- *  \param[in]  chNum           SDFM channel number : Channel0-Channel8
+ *  \param[in]  handle          SDFM handle
+ *  \param[in]  channel         SDFM channel number (0-8)
  *
  *  \retval int32_t             Status of fd error: 1 means error available & 0 means no error, SystemP_FAILURE on not expected API parameters
  *
  */
-int32_t SDFM_getFastDetectErrorStatus(SDFM_Handle h_sdfm, uint8_t chNum);
+int32_t SDFM_getFastDetectErrorStatus(SDFM_Handle handle, uint8_t channel);
 
 /**
  *  \brief  Clear PWM trip status of the corresponding PWM trip zone block for specified SDFM channel number.
  *
- *  \param[in]  h_sdfm          SDFM handle
- *  \param[in]  chNum           SDFM channel number : Channel0-Channel8
+ *  \param[in]  handle          SDFM handle
+ *  \param[in]  channel         SDFM channel number (0-8)
  *
  *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error or not expected API parameters
  */
-int32_t SDFM_clearPwmTripStatus(SDFM_Handle h_sdfm, uint8_t chNum);
+int32_t SDFM_clearPwmTripStatus(SDFM_Handle handle, uint8_t channel);
 
-/**
- *
- *  \brief  This API enables load share mode
- *
- *  \param[in]  h_sdfm          SDFM handle
- *  \param[in]  sliceId         slice ID
- *
- */
-void SDFM_enableLoadShareMode(SDFM_Handle h_sdfm, uint8_t sliceId);
 
 /**
  *
  *  \brief  Measure Clock phase compensation
  *
- *  \param[in]  h_sdfm          SDFM handle
- *  \param[in]  clkEdg          Clock polarity: 1 -> falling edge, 0 -> raising edge
- *  \param[in]  chNum           SDFM channel number
- * 
- *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *  This function triggers PRU firmware to measure the clock phase delay for the specified channel
+ *  and waits for the measurement to complete with timeout protection.
+ *
+ *  \param[in]  handle          SDFM handle
+ *  \param[in]  clk_edg         Clock polarity: 1 -> falling edge, 0 -> raising edge
+ *  \param[in]  channel         SDFM channel number (0-8)
+ *
+ *  \retval SystemP_SUCCESS     Phase delay measurement completed successfully
+ *  \retval SystemP_FAILURE     Invalid parameters
+ *  \retval SystemP_TIMEOUT     Firmware acknowledgment timeout
+ *
+ *  \note This is a blocking function with timeout protection. Maximum wait time is
+ *        (SDFM_DEFAULT_MAX_WAIT_LOOP_COUNT * SDFM_DEFAULT_FW_WAIT_DELAY_US) microseconds.
+ *        Returns SystemP_TIMEOUT if firmware does not acknowledge within timeout period.
  */
-int32_t SDFM_measureClockPhaseDelay(SDFM_Handle h_sdfm, uint16_t clkEdg, uint8_t chNum);
+int32_t SDFM_measureClockPhaseDelay(SDFM_Handle handle, uint16_t clk_edg, uint8_t channel);
 
 /**
  *
  *  \brief  This API returns Clock phase compensation
  *
- *  \param[in]  h_sdfm          SDFM handle
- *  \param[in]  chNum           SDFM channel number
+ *  \param[in]  handle          SDFM handle
+ *  \param[in]  channel         SDFM channel number (0-8)
  *
  *  \retval float               Phase delay in nano sec, SystemP_FAILURE on error
  */
-float SDFM_getClockPhaseDelay(SDFM_Handle h_sdfm, uint8_t chNum);
+float SDFM_getClockPhaseDelay(SDFM_Handle handle, uint8_t channel);
 
 /**
  *
  *  \brief  This API returns High threshold Status for specified SDFM channel number
  *
- *  \param[in]  h_sdfm          SDFM handle
- *  \param[in]  chNum           SDFM channel number : Channel0-Channel8
+ *  \param[in]  handle          SDFM handle
+ *  \param[in]  channel         SDFM channel number (0-8)
  *
  *  \retval int32_t             Status of over current error for High Threshold, SystemP_FAILURE on error
  */
-int32_t SDFM_getHighThresholdStatus(SDFM_Handle h_sdfm, uint8_t chNum);
+int32_t SDFM_getHighThresholdStatus(SDFM_Handle handle, uint8_t channel);
 
 /**
  *
  *  \brief  This API returns Low threshold Status for specified SDFM channel number
  *
- *  \param[in]  h_sdfm          SDFM handle
- *  \param[in]  chNum           SDFM channel number : Channel0-Channel8
+ *  \param[in]  handle          SDFM handle
+ *  \param[in]  channel         SDFM channel number (0-8)
  *
  *  \retval int32_t             Status of Over current error for Low threshold, SystemP_FAILURE on error
  */
-int32_t SDFM_getLowThresholdStatus(SDFM_Handle h_sdfm, uint8_t chNum);
+int32_t SDFM_getLowThresholdStatus(SDFM_Handle handle, uint8_t channel);
 
 /**
  *
  *  \brief  This API clears Overcurrent error bit of corresponding PWM register for specified SDFM channel number
- *  \param[in]  h_sdfm          SDFM handle
- *  \param[in]  chNum           SDFM channel number : Channel0-Channel8
+ *  \param[in]  handle          SDFM handle
+ *  \param[in]  channel         SDFM channel number (0-8)
  *
  *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on not expected API parameters
  */
-int32_t SDFM_clearOverCurrentError(SDFM_Handle h_sdfm, uint8_t chNum);
+int32_t SDFM_clearOverCurrentError(SDFM_Handle handle, uint8_t channel);
 
 /**
  *
  *  \brief  This API enables zero cross detection for specified SDFM channel number
- *  \param[in]  h_sdfm          SDFM handle
- *  \param[in]  chNum           SDFM channel number : Channel0-Channel8
- *  \param[in]  zcThr           zero cross threshold
+ *  \param[in]  handle          SDFM handle
+ *  \param[in]  channel         SDFM channel number (0-8)
+ *  \param[in]  zc_thr          zero cross threshold
  *
  *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
  */
-int32_t SDFM_enableZeroCrossDetection(SDFM_Handle h_sdfm, uint8_t chNum, uint32_t zcThr);
+int32_t SDFM_enableZeroCrossDetection(SDFM_Handle handle, uint8_t channel, uint32_t zc_thr);
 
 /**
  *
  *  \brief  This API returns Zero cross Status for specified SDFM channel number
- *  \param[in]  h_sdfm          SDFM handle
- *  \param[in]  chNum           SDFM channel number : Channel0-Channel8
+ *  \param[in]  handle          SDFM handle
+ *  \param[in]  channel         SDFM channel number (0-8)
  *
  *  \retval int32_t             Status of zero cross, SystemP_FAILURE on error
  */
-int32_t SDFM_getZeroCrossThresholdStatus(SDFM_Handle h_sdfm, uint8_t chNum);
+int32_t SDFM_getZeroCrossThresholdStatus(SDFM_Handle handle, uint8_t channel);
 
 /**
  *
- *  \brief  This API disbales zero cross detection for specified SDFM channel number
- *  \param[in]  h_sdfm          SDFM handle
- *  \param[in]  chNum           SDFM channel number : Channel0-Channel8
+ *  \brief  This API disables zero cross detection for specified SDFM channel number
+ *  \param[in]  handle          SDFM handle
+ *  \param[in]  channel         SDFM channel number (0-8)
  *
- *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *  \retval SystemP_SUCCESS     Zero cross detection disabled successfully
+ *  \retval SystemP_FAILURE     Invalid handle (NULL) or channel > 8
  */
-int32_t SDFM_disableZeroCrossDetection(SDFM_Handle h_sdfm, uint8_t chNum);
+int32_t SDFM_disableZeroCrossDetection(SDFM_Handle handle, uint8_t channel);
 
 /**
- * 
+ *
  * \brief This API enables EPWM synchronization with SDFM
- * \param[in]  h_sdfm          SDFM handle
- * \param[in]  epwmIns         epwm instance: Only epwm0/epwm3 support synchronization with sdfm 
- * 
- * \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
+ * \param[in]  handle          SDFM handle
+ * \param[in]  epwm_ins        epwm instance: Only epwm0/epwm3 support synchronization with sdfm
+ *
+ * \retval SystemP_SUCCESS     EPWM synchronization enabled successfully
+ * \retval SystemP_FAILURE     Invalid handle (NULL) or unsupported epwm_ins (only 0 or 3 supported)
  */
-int32_t SDFM_enableEpwmSync(SDFM_Handle h_sdfm, uint8_t epwmIns);
+int32_t SDFM_enableEpwmSync(SDFM_Handle handle, uint8_t epwm_ins);
 
 /**
- * 
- * \brief This API disbale EPWM synchronization with SDFM
- * \param[in]  h_sdfm          SDFM handle
- * \param[in]  epwmIns         epwm instance: Only epwm0/epwm3 support synchronization with sdfm
- * 
- * \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *
+ * \brief This API disables EPWM synchronization with SDFM
+ * \param[in]  handle          SDFM handle
+ * \param[in]  epwm_ins        epwm instance: Only epwm0/epwm3 support synchronization with sdfm
+ *
+ * \retval SystemP_SUCCESS     EPWM synchronization disabled successfully
+ * \retval SystemP_FAILURE     Invalid handle (NULL) or unsupported epwm_ins (only 0 or 3 supported)
  */
-int32_t SDFM_disableEpwmSync(SDFM_Handle h_sdfm, uint8_t epwmIns);
+int32_t SDFM_disableEpwmSync(SDFM_Handle handle, uint8_t epwm_ins);
 
 /**
- * 
+ *
  * \brief     This API configures IEP SYNC0 and SYNC1 registers to generate free running clock
- * \param[in]  h_sdfm          SDFM handle
- * \param[in]  highPulseWidth   Number of clock cycles SYNC0/1 will be high.
- *                             0h = 1 clock cycle.
- *                             1h = 2 clock cycles.
- *                             Nh: N+1 clock cycles.
- * \param[in]  periodTime      Period between the rising edges of SYNC0
- *                             1h = 2 clk cycles period
- *                             Nh = N+1 clk cycles period
- * \param[in]  syncStartTime  SYNC0 and SYNC1 activation time
- * 
- * \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
+ * \param[in]  handle            SDFM handle
+ * \param[in]  high_pulse_width  Number of clock cycles SYNC0/1 will be high.
+ *                               0h = 1 clock cycle.
+ *                               1h = 2 clock cycles.
+ *                               Nh: N+1 clock cycles.
+ * \param[in]  period_time       Period between the rising edges of SYNC0
+ *                               1h = 2 clk cycles period
+ *                               Nh = N+1 clk cycles period
+ * \param[in]  sync_start_time   SYNC0 and SYNC1 activation time
+ *
+ * \retval SystemP_SUCCESS       IEP SYNC mode configured successfully
+ * \retval SystemP_FAILURE       Invalid handle (NULL)
  */
-int32_t SDFM_configIepSyncMode(SDFM_Handle h_sdfm, uint32_t highPulseWidth, uint32_t periodTime, uint32_t syncStartTime);
+int32_t SDFM_configIepSyncMode(SDFM_Handle handle, uint32_t high_pulse_width, uint32_t period_time, uint32_t sync_start_time);
 
 /**
  * 
  * \brief This API enables IEP counter
- * 
- * \param[in]  h_sdfm          SDFM handle
- * 
- * \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *
+ * \param[in]  handle          SDFM handle
+ *
+ * \retval SystemP_SUCCESS     IEP counter enabled successfully
+ * \retval SystemP_FAILURE     Invalid handle (NULL)
  */
-int32_t SDFM_enableIep(SDFM_Handle h_sdfm);
+int32_t SDFM_enableIep(SDFM_Handle handle);
 
 /**
  *  \brief  Defines clock cycles from the start of SYNC0 to the start of SYNC1
- *  \param[in]  h_sdfm          SDFM handle
+ *  \param[in]  handle          SDFM handle
  *  \param[in]  delay           Delay before the start of SYNC1
  *                          
  *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
  */
-int32_t SDFM_configSync1Delay(SDFM_Handle h_sdfm, uint32_t delay);
+int32_t SDFM_configSync1Delay(SDFM_Handle handle, uint32_t delay);
 
 /***
  *  \brief  This API configures PRU GPO mode as shift out mode (ICSSG_GPCFG0_REG[14] PRU<n>_GPO_MODE = 1h) and  
@@ -619,80 +693,95 @@ int32_t SDFM_configSync1Delay(SDFM_Handle h_sdfm, uint32_t delay);
  *       .
  *       .
  *       .
- *  \brief  0xID: for divisor 15.5
- *  \brief  0xIE: for divisor 16
+ *  \brief  0x1D: for divisor 15.5
+ *  \brief  0x1E: for divisor 16
  *  \brief  0x1F: reserved
  * 
- *  \param[in]  h_sdfm          SDFM handle
+ *  \param[in]  handle          SDFM handle
  *  \param[in]  div0            PRUx_GPO_DIV0 value
  *  \param[in]  div1            PRUx_GPO_DIV1 value
- * 
- * \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on not expected API parameters
-*/
-int32_t SDFM_configClockFromGPO1(SDFM_Handle h_sdfm, uint8_t div0, uint8_t div1);
+ *
+ * \retval SystemP_SUCCESS     GPO1 clock configured successfully
+ * \retval SystemP_FAILURE     Invalid handle (NULL), div0 out of range, or div1 out of range
+ */
+int32_t SDFM_configClockFromGPO1(SDFM_Handle handle, uint8_t div0, uint8_t div1);
 
 /**
  *  \brief  Enable snoop based normal current sampling for a specific PRU core
- *  \param[in]  h_sdfm          SDFM handle
+ *  \param[in]  handle          SDFM handle
  *  \param[in]  pru_core        PRU core ID (0-2): PRU - 0, RTU - 1, TXPRU - 2
- *  
- *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *
+ *  \retval SystemP_SUCCESS     Snoop mode enabled successfully
+ *  \retval SystemP_FAILURE     Invalid handle (NULL) or pru_core >= 3
  */
-int32_t SDFM_enableSnoopBasedNC(SDFM_Handle h_sdfm, uint8_t pru_core);
+int32_t SDFM_enableSnoopBasedNC(SDFM_Handle handle, uint8_t pru_core);
 
 /**
  *  \brief  Disable snoop based normal current sampling for a specific PRU core
- *  \param[in]  h_sdfm          SDFM handle
+ *  \param[in]  handle          SDFM handle
  *  \param[in]  pru_core        PRU core ID (0-2): PRU - 0, RTU - 1, TXPRU - 2
- *  
- *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *
+ *  \retval SystemP_SUCCESS     Snoop mode disabled successfully
+ *  \retval SystemP_FAILURE     Invalid handle (NULL) or pru_core >= 3
  */
-int32_t SDFM_disableSnoopBasedNC(SDFM_Handle h_sdfm, uint8_t pru_core);
+int32_t SDFM_disableSnoopBasedNC(SDFM_Handle handle, uint8_t pru_core);
 
 /**
  *
  *  \brief  Set sample output interface global address
  *
- *  \param[in]  h_sdfm          SDFM handle
+ *  \param[in]  handle          SDFM handle
  *  \param[in]  addr            sample output interface global address
  *
+ *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
  */
 
-void SDFM_setSampleOutputInterfaceGlobalAddr(SDFM_Handle h_sdfm, uint32_t addr);
+int32_t SDFM_setSampleOutputInterfaceGlobalAddr(SDFM_Handle handle, uint32_t addr);
 
 /**
  *
  *  \brief  Select IEP comparator event for a specific PRU core
  *
- *  \param[in]  h_sdfm          SDFM handle
- *  \param[in]  event           IEP comparator event
+ *  \param[in]  handle          SDFM handle
+ *  \param[in]  event           IEP comparator event (0-15)
  *  \param[in]  pru_core        PRU core ID (0-2): PRU - 0, RTU - 1, TXPRU - 2
  *
- *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *  \retval SystemP_SUCCESS     IEP compare event selected successfully
+ *  \retval SystemP_FAILURE     Invalid handle (NULL), pru_core >= 3, or event > 15
  *
  */
-int32_t SDFM_selectIepCmpEvent(SDFM_Handle h_sdfm, uint8_t event, uint8_t pru_core);
+int32_t SDFM_selectIepCmpEvent(SDFM_Handle handle, uint8_t event, uint8_t pru_core);
 
 /**
  *
  *  \brief  Configure IEP CMP0 to reset IEP counter
  *
- *  \param[in]  h_sdfm          SDFM handle
- *  \param[in]  iep_reset_freq  IEP reset frequency
+ *  \param[in]  handle          SDFM handle
+ *  \param[in]  iep_reset_freq  IEP counter reset frequency. Typically equal to EPWM output frequency, used to synchronize IEP counter with EPWM cycle
  *
  *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
  *
  */
-int32_t SDFM_configIepCmp0ToResetIep(SDFM_Handle h_sdfm, uint32_t iep_reset_freq);
+int32_t SDFM_configIepCmp0ToResetIep(SDFM_Handle handle, uint32_t iep_reset_freq);
 /**
  *
  *  \brief  SDFM global enable for a specific PRU core
  *
- *  \param[in]  h_sdfm          SDFM handle
+ *  This function enables SDFM operation on the specified PRU core and waits for
+ *  firmware acknowledgment with timeout protection.
+ *
+ *  \param[in]  handle          SDFM handle
  *  \param[in]  pru_core        PRU core ID (0-2): PRU - 0, RTU - 1, TXPRU - 2
  *
+ *  \retval SystemP_SUCCESS     SDFM enabled successfully
+ *  \retval SystemP_FAILURE     Invalid handle or pru_core parameter
+ *  \retval SystemP_TIMEOUT     Firmware acknowledgment timeout
+ *
+ *  \note This is a blocking function with timeout protection. Maximum wait time is
+ *        (SDFM_DEFAULT_MAX_WAIT_LOOP_COUNT * SDFM_DEFAULT_FW_WAIT_DELAY_US) microseconds.
+ *        Returns SystemP_TIMEOUT if firmware does not acknowledge within timeout period.
  */
-void SDFM_enable(SDFM_Handle h_sdfm, uint8_t pru_core);
+int32_t SDFM_enable(SDFM_Handle handle, uint8_t pru_core);
 
 /** @} */
 

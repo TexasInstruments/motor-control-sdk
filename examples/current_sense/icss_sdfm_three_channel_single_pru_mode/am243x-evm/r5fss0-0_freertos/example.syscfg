@@ -51,8 +51,6 @@ const pruicss_g_v0_pwm1 = pruicss_g_v0_pwm.addInstance();
  */
 sdfm1.$name                 = "CONFIG_SDFM0";
 sdfm1.G_MUX_EN              = true;
-sdfm1.SDFM_CLK_GEN          = "2";
-sdfm1.SDFM_Clock_Value      = 20000000;
 sdfm1.Enable_Epwm_Sync      = true;
 sdfm1.Enable_Channel_0      = true;
 sdfm1.Enable_Channel_1      = true;
@@ -299,7 +297,6 @@ pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].PRU_ICSSG0_ECAP.IN_APWM_OUT.$use
 pruicss1.intcMapping.create(1);
 pruicss1.intcMapping[0].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING0";
 pruicss1.intcMapping[0].event                                                     = "21";
-pruicss1.intcMapping[0].channel                                                   = "3";
 
 /**
  * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future

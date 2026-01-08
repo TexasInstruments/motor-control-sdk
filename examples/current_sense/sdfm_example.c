@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023-25 Texas Instruments Incorporated
+ *  Copyright (C) 2023-2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -46,15 +46,16 @@
  *    (3 channels each on RTU_PRU, PRU, and TX_PRU cores)
  *
  *  Key Functions:
- *  - SDFM_pruIcssInit()       : Initialize ICSSG subsystem 
- *  - appSdfmPruInit()            : Load firmware and configure SDFM 
- *  - initSdfmFw()             : Internal firmware configuration 
- *  - SDFM_configGpioPins()    : Internal GPIO setup for zero-cross 
-
+ *  - sdfmPruicssInit()           : Initialize ICSSG subsystem and PRU cores
+ *  - sdfmLoadFirmware()          : Load PRU firmware into cores
+ *  - sdfmConfigureAndEnable()    : Configure SDFM parameters and enable firmware
+ *  - sdfmConfigGpioPins()        : Internal GPIO setup for zero-cross detection (static helper)
+ *
  *  Firmware Loading:
  *  - Single PRU mode: Loads SDFM_PRU0/1_image_0 to PRU core
  *  - Load-share mode: Loads separate firmware to RTU_PRU, PRU, and TX_PRU
  *  - Firmware binaries are statically linked from firmware/ directory
+ *
  */
 
 #include <stdio.h>
@@ -127,222 +128,217 @@ static PRUSDFM_PruFwImageInfo gPruFwImageInfo[PRU_SDFM_NUM_PRU_IMAGE] =
 #endif
 };
 
-
-/*
- *  ======== initIcss ========
- */
-/* Initialize ICSSG */
-int32_t SDFM_pruIcssInit(
-    uint8_t icssInstId,
-    uint8_t sliceId,
-    uint8_t saMuxMode,
-    uint8_t loadShareMode,
-    PRUICSS_Handle *pPruIcssHandle
-)
+int32_t sdfmPruicssInit(PRUICSS_Handle *pruicss_handle, uint8_t pruicss_instance, uint8_t pruicss_slice, uint8_t load_share_enabled)
 {
-    PRUICSS_Handle pruIcssHandle;
+    PRUICSS_Handle pru_icss_handle;
     int32_t size;
     int32_t status;
 
     /* Open ICSS PRU instance */
-    pruIcssHandle = PRUICSS_open(icssInstId);
-    if (pruIcssHandle == NULL) {
-        return SDFM_ERR_INIT_ICSSG;
+    pru_icss_handle = PRUICSS_open(pruicss_instance);
+    if (pru_icss_handle == NULL) 
+    {
+        return SystemP_FAILURE;
     }
 
     /* Disable slice PRU cores */
-    if (sliceId == PRUICSS_PRU0)
+    if (pruicss_slice == PRUICSS_PRU0)
     {
-        status = PRUICSS_disableCore(pruIcssHandle, PRUICSS_PRU0);
+        status = PRUICSS_disableCore(pru_icss_handle, PRUICSS_PRU0);
         if (status != SystemP_SUCCESS)
         {
-            return SDFM_ERR_INIT_ICSSG;
+            return status;
         }
 
-        if(loadShareMode)
+        if(load_share_enabled)
         {
-            status = PRUICSS_disableCore(pruIcssHandle, PRUICSS_RTU_PRU0);
-            if (status != SystemP_SUCCESS) 
+            status = PRUICSS_disableCore(pru_icss_handle, PRUICSS_RTU_PRU0);
+            if (status != SystemP_SUCCESS)
             {
-                return SDFM_ERR_INIT_ICSSG;
+                return status;
             }
 
-            status = PRUICSS_disableCore(pruIcssHandle, PRUICSS_TX_PRU0);
-            if (status != SystemP_SUCCESS) 
+            status = PRUICSS_disableCore(pru_icss_handle, PRUICSS_TX_PRU0);
+            if (status != SystemP_SUCCESS)
             {
-                return SDFM_ERR_INIT_ICSSG;
+                return status;
             }
 
         }
     }
-    else if (sliceId == PRUICSS_PRU1)
+    else if (pruicss_slice == PRUICSS_PRU1)
     {
-        status = PRUICSS_disableCore(pruIcssHandle, PRUICSS_PRU1);
-        if (status != SystemP_SUCCESS) 
+        status = PRUICSS_disableCore(pru_icss_handle, PRUICSS_PRU1);
+        if (status != SystemP_SUCCESS)
         {
-            return SDFM_ERR_INIT_ICSSG;
+            return status;
         }
 
-        if(loadShareMode)
+        if(load_share_enabled)
         {
-            status = PRUICSS_disableCore(pruIcssHandle, PRUICSS_RTU_PRU1);
+            status = PRUICSS_disableCore(pru_icss_handle, PRUICSS_RTU_PRU1);
             if (status != SystemP_SUCCESS) 
             {
-                return SDFM_ERR_INIT_ICSSG;
+                return status;
             }
 
-            status = PRUICSS_disableCore(pruIcssHandle, PRUICSS_TX_PRU1);
-            if (status != SystemP_SUCCESS) 
+            status = PRUICSS_disableCore(pru_icss_handle, PRUICSS_TX_PRU1);
+            if (status != SystemP_SUCCESS)
             {
-                return SDFM_ERR_INIT_ICSSG;
+                return status;
             }
 
         }
     }
     else
     {
-        return SDFM_ERR_INIT_ICSSG;
+        return SystemP_FAILURE;
     }
 
     /* Reset slice memories */
-    size = PRUICSS_initMemory(pruIcssHandle, PRUICSS_IRAM_PRU(sliceId));
+    size = PRUICSS_initMemory(pru_icss_handle, PRUICSS_IRAM_PRU(pruicss_slice));
     if (size == 0)
     {
-        return SDFM_ERR_INIT_ICSSG;
+        return SystemP_FAILURE;
     }
-    if(loadShareMode)
+    if(load_share_enabled)
     {
-        size = PRUICSS_initMemory(pruIcssHandle, PRUICSS_IRAM_RTU_PRU(sliceId));
+        size = PRUICSS_initMemory(pru_icss_handle, PRUICSS_IRAM_RTU_PRU(pruicss_slice));
         if (size == 0)
         {
-            return SDFM_ERR_INIT_ICSSG;
+            return SystemP_FAILURE;
         }
-        size = PRUICSS_initMemory(pruIcssHandle, PRUICSS_IRAM_TX_PRU(sliceId));
+        size = PRUICSS_initMemory(pru_icss_handle, PRUICSS_IRAM_TX_PRU(pruicss_slice));
         if (size == 0)
         {
-            return SDFM_ERR_INIT_ICSSG;
+            return SystemP_FAILURE;
         }
     }
-    size = PRUICSS_initMemory(pruIcssHandle, PRUICSS_DATARAM(sliceId));
+    size = PRUICSS_initMemory(pru_icss_handle, PRUICSS_DATARAM(pruicss_slice));
     if (size == 0)
     {
-        return SDFM_ERR_INIT_ICSSG;
+        return SystemP_FAILURE;
     }
 
     /* Set ICSS pin mux */
 #ifdef CONFIG_SDFM0_G_MUX_EN
-    PRUICSS_setSaMuxMode(pruIcssHandle, saMuxMode);
+    status = PRUICSS_setSaMuxMode(pru_icss_handle, PRUICSS_SA_MUX_MODE_SD_ENDAT);
+    if (status != SystemP_SUCCESS)
+    {
+        return SystemP_FAILURE;
+    }
 #endif
     /* Initialize ICSS INTC */
 #if CONFIG_SDFM0_ICSSGx == 1
-    status = PRUICSS_intcInit(pruIcssHandle, &icss1_intc_initdata);
+    status = PRUICSS_intcInit(pru_icss_handle, &icss1_intc_initdata);
 #else
-    status = PRUICSS_intcInit(pruIcssHandle, &icss0_intc_initdata);
+    status = PRUICSS_intcInit(pru_icss_handle, &icss0_intc_initdata);
 #endif
-    if (status != SystemP_SUCCESS) {
-        return SDFM_ERR_INIT_ICSSG;
+    if (status != SystemP_SUCCESS)
+    {
+        return SystemP_FAILURE;
     }
 
-    *pPruIcssHandle = pruIcssHandle;
+    *pruicss_handle = pru_icss_handle;
 
-    return SDFM_ERR_NERR;
+    return SystemP_SUCCESS;
 }
 /*
  *  ======== SDFM_configGpioPins ========
  *  Internal helper function to configure GPIO pins for zero-cross detection.
  *  Called from initSdfmFw() for each enabled channel with zero-cross enabled.
  */
-static void SDFM_configGpioPins(SDFM_Handle h_sdfm, uint8_t channel )
+static void sdfmConfigGpioPins(SDFM_Handle handle, uint8_t channel)
 {
     switch(channel)
     {
         case 0:
 #if (CONFIG_SDFM0_CHANNEL0_OC_EN_ZERO_CROSS != 0)
             {
-                uint32_t gpioBaseAddr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH0_BASE_ADDR);
-                uint32_t pinNum = GPIO_ZC_TH_CH0_PIN;
-                GPIO_setDirMode(gpioBaseAddr, pinNum, GPIO_ZC_TH_CH0_DIR);
-                SDFM_configComparatorGpioPins(h_sdfm, channel, gpioBaseAddr, pinNum);
+                uint32_t gpio_base_addr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH0_BASE_ADDR);
+                uint32_t pin_num = GPIO_ZC_TH_CH0_PIN;
+                GPIO_setDirMode(gpio_base_addr, pin_num, GPIO_ZC_TH_CH0_DIR);
+                SDFM_configComparatorGpioPins(handle, channel, gpio_base_addr, pin_num);
             }
 #endif
             break;
         case 1:
 #if (CONFIG_SDFM0_CHANNEL1_OC_EN_ZERO_CROSS != 0)
             {
-                uint32_t gpioBaseAddr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH1_BASE_ADDR);
-                uint32_t pinNum = GPIO_ZC_TH_CH1_PIN;
-                GPIO_setDirMode(gpioBaseAddr, pinNum, GPIO_ZC_TH_CH1_DIR);
-                SDFM_configComparatorGpioPins(h_sdfm, channel, gpioBaseAddr, pinNum);
+                uint32_t gpio_base_addr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH1_BASE_ADDR);
+                uint32_t pin_num = GPIO_ZC_TH_CH1_PIN;
+                GPIO_setDirMode(gpio_base_addr, pin_num, GPIO_ZC_TH_CH1_DIR);
+                SDFM_configComparatorGpioPins(handle, channel, gpio_base_addr, pin_num);
             }
 #endif
-            break;      
+            break;
         case 2:
 #if (CONFIG_SDFM0_CHANNEL2_OC_EN_ZERO_CROSS != 0)
             {
-                uint32_t gpioBaseAddr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH2_BASE_ADDR);
-                uint32_t pinNum = GPIO_ZC_TH_CH2_PIN;
-                GPIO_setDirMode(gpioBaseAddr, pinNum, GPIO_ZC_TH_CH2_DIR);
-                SDFM_configComparatorGpioPins(h_sdfm, channel, gpioBaseAddr, pinNum);
+                uint32_t gpio_base_addr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH2_BASE_ADDR);
+                uint32_t pin_num = GPIO_ZC_TH_CH2_PIN;
+                GPIO_setDirMode(gpio_base_addr, pin_num, GPIO_ZC_TH_CH2_DIR);
+                SDFM_configComparatorGpioPins(handle, channel, gpio_base_addr, pin_num);
             }
 #endif
             break;
         case 3:
 #if (CONFIG_SDFM0_CHANNEL3_OC_EN_ZERO_CROSS != 0)
             {
-                uint32_t gpioBaseAddr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH3_BASE_ADDR);
-                uint32_t pinNum = GPIO_ZC_TH_CH3_PIN;
-                GPIO_setDirMode(gpioBaseAddr, pinNum, GPIO_ZC_TH_CH3_DIR);
-                SDFM_configComparatorGpioPins(h_sdfm, channel, gpioBaseAddr, pinNum);
+                uint32_t gpio_base_addr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH3_BASE_ADDR);
+                uint32_t pin_num = GPIO_ZC_TH_CH3_PIN;
+                GPIO_setDirMode(gpio_base_addr, pin_num, GPIO_ZC_TH_CH3_DIR);
+                SDFM_configComparatorGpioPins(handle, channel, gpio_base_addr, pin_num);
             }
 #endif
             break;
         case 4:
 #if (CONFIG_SDFM0_CHANNEL4_OC_EN_ZERO_CROSS != 0)
             {
-                uint32_t gpioBaseAddr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH4_BASE_ADDR);
-                uint32_t pinNum = GPIO_ZC_TH_CH4_PIN;
-                GPIO_setDirMode(gpioBaseAddr, pinNum, GPIO_ZC_TH_CH4_DIR);
-                SDFM_configComparatorGpioPins(h_sdfm, channel, gpioBaseAddr, pinNum);
+                uint32_t gpio_base_addr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH4_BASE_ADDR);
+                uint32_t pin_num = GPIO_ZC_TH_CH4_PIN;
+                GPIO_setDirMode(gpio_base_addr, pin_num, GPIO_ZC_TH_CH4_DIR);
+                SDFM_configComparatorGpioPins(handle, channel, gpio_base_addr, pin_num);
             }
 #endif
             break;
         case 5:
 #if (CONFIG_SDFM0_CHANNEL5_OC_EN_ZERO_CROSS != 0)
             {
-                uint32_t gpioBaseAddr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH5_BASE_ADDR);
-                uint32_t pinNum = GPIO_ZC_TH_CH5_PIN;
-                GPIO_setDirMode(gpioBaseAddr, pinNum, GPIO_ZC_TH_CH5_DIR);
-                SDFM_configComparatorGpioPins(h_sdfm, channel, gpioBaseAddr, pinNum);
+                uint32_t gpio_base_addr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH5_BASE_ADDR);
+                uint32_t pin_num = GPIO_ZC_TH_CH5_PIN;
+                GPIO_setDirMode(gpio_base_addr, pin_num, GPIO_ZC_TH_CH5_DIR);
+                SDFM_configComparatorGpioPins(handle, channel, gpio_base_addr, pin_num);
             }
 #endif
-            break;  
+            break;
         case 6:
 #if (CONFIG_SDFM0_CHANNEL6_OC_EN_ZERO_CROSS != 0)
             {
-                uint32_t gpioBaseAddr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH6_BASE_ADDR);
-                uint32_t pinNum = GPIO_ZC_TH_CH6_PIN;
-                GPIO_setDirMode(gpioBaseAddr, pinNum, GPIO_ZC_TH_CH6_DIR);
-                SDFM_configComparatorGpioPins(h_sdfm, channel, gpioBaseAddr, pinNum);
+                uint32_t gpio_base_addr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH6_BASE_ADDR);
+                uint32_t pin_num = GPIO_ZC_TH_CH6_PIN;
+                GPIO_setDirMode(gpio_base_addr, pin_num, GPIO_ZC_TH_CH6_DIR);
+                SDFM_configComparatorGpioPins(handle, channel, gpio_base_addr, pin_num);
             }
 #endif
             break;
         case 7:
 #if (CONFIG_SDFM0_CHANNEL7_OC_EN_ZERO_CROSS != 0)
             {
-                uint32_t gpioBaseAddr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH7_BASE_ADDR);
-                uint32_t pinNum = GPIO_ZC_TH_CH7_PIN;
-                GPIO_setDirMode(gpioBaseAddr, pinNum, GPIO_ZC_TH_CH7_DIR);
-                SDFM_configComparatorGpioPins(h_sdfm, channel, gpioBaseAddr, pinNum);
+                uint32_t gpio_base_addr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH7_BASE_ADDR);
+                uint32_t pin_num = GPIO_ZC_TH_CH7_PIN;
+                GPIO_setDirMode(gpio_base_addr, pin_num, GPIO_ZC_TH_CH7_DIR);
+                SDFM_configComparatorGpioPins(handle, channel, gpio_base_addr, pin_num);
             }
 #endif
             break;
         case 8:
 #if (CONFIG_SDFM0_CHANNEL8_OC_EN_ZERO_CROSS != 0)
             {
-                uint32_t gpioBaseAddr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH8_BASE_ADDR);
-                uint32_t pinNum = GPIO_ZC_TH_CH8_PIN;
-                GPIO_setDirMode(gpioBaseAddr, pinNum, GPIO_ZC_TH_CH8_DIR);
-                SDFM_configComparatorGpioPins(h_sdfm, channel, gpioBaseAddr, pinNum);
+                uint32_t gpio_base_addr = (uint32_t) AddrTranslateP_getLocalAddr(GPIO_ZC_TH_CH8_BASE_ADDR);
+                uint32_t pin_num = GPIO_ZC_TH_CH8_PIN;
+                GPIO_setDirMode(gpio_base_addr, pin_num, GPIO_ZC_TH_CH8_DIR);
+                SDFM_configComparatorGpioPins(handle, channel, gpio_base_addr, pin_num);
             }
 #endif
             break;
@@ -351,239 +347,334 @@ static void SDFM_configGpioPins(SDFM_Handle h_sdfm, uint8_t channel )
     }
 }
 
-/*
- *  ======== initSdfmFw ========
- *  Internal function to initialize SDFM firmware and configure channels.
- *  Called from appSdfmPruInit() after PRU cores are loaded and running.
+/**
+ *  \brief Configure SDFM parameters and enable SDFM firmware
  *
- *  Configures:
- *  - Channel enable/disable
- *  - Filter parameters (OSR, filter type)
- *  - Clock source and inversion
- *  - Comparator thresholds (over-current, zero-cross)
- *  - Fast detect parameters
- *  - IEP configuration for trigger/snoop modes
- *  - EPWM synchronization
- *  - Phase delay compensation
+ *  This function performs comprehensive SDFM configuration including:
+ *  - Enabling all configured SDFM channels
+ *  - Setting up sample output buffer address translation (TCM to SoC global view)
+ *  - Configuring IEP count for EPWM synchronization
+ *  - Configuring operation modes (snoop/trigger) for each PRU core
+ *  - Setting up trigger timing and double sampling if enabled
+ *  - Enabling EPWM synchronization or configuring IEP CMP0
+ *  - Configuring filter parameters for all enabled channels:
+ *    - Overcurrent comparator filter OSR
+ *    - Normal current filter OSR
+ *    - Data filter type (SINC3/SINC2/SINC1)
+ *    - Clock source and inversion
+ *  - Configuring overcurrent comparator and thresholds
+ *  - Configuring fast detect for quick overcurrent detection
+ *  - Configuring zero-cross detection and GPIO output (including phase delay measurement)
+ *  - Enabling SDFM firmware on all configured PRU cores
+ *
+ *  \param[in]  handle  SDFM handle
+ *
+ *  \return SystemP_SUCCESS on success, SystemP_FAILURE on failure
+ *
+ *  \note IMPORTANT: SDFM_enable() is called at the end of this function after all
+ *        configuration is complete. Before calling SDFM_enable(), all configuration
+ *        must be done, including threshold values, memory addresses,comparator
+ *        events, filter parameters, etc. Once SDFM_enable() is executed, the firmware
+ *        starts sampling immediately using the configured parameters. Therefore, ensure
+ *        all configuration is properly set up before calling SDFM_enable().
  */
-static int32_t initSdfmFw(SDFM_Params sdfm_params, SDFM_Handle *pHSdfm)
+int32_t sdfmConfigureAndEnable(SDFM_Handle handle)
 {
-    SDFM_Handle hSdfm;
-    uint8_t channel ;    
+    const SDFM_Attrs *attrs;
+    SDFM_Priv *priv;
+    uint8_t channel;
+    uint32_t i;
+    uint32_t local_addr, global_addr;
+    int32_t status;
+    SDFM_ThresholdConfig threshold_config;
+    SDFM_FastDetectConfig fast_detect_config;
 
-    /* Initialize SDFM instance */
-    hSdfm = SDFM_init(CONFIG_SDFM0, sdfm_params);
-    
-    if (hSdfm == NULL)
-    {
-        return SDFM_ERR_INIT_SDFM;
-    }
+    /* Get attrs and priv using accessor functions */
+    attrs = SDFM_getAttrs(handle);
+    priv = SDFM_getPriv(handle);
 
-    for(int8_t i = 0; i< 9; i++)
+    /* Enable all configured SDFM channels */
+    for(i = 0; i < SDFM_NUM_OF_CH_PER_PRU_SLICE; i++)
     {
-        if(sdfm_params.enable_channel_mask & (1 << i))
+        if(attrs->channel_mask & (1 << i))
         {
-            SDFM_setEnableChannel(hSdfm, i);
+            status = SDFM_setEnableChannel(handle, i);
+            if(status != SystemP_SUCCESS)
+            {
+                return SystemP_FAILURE;
+            }
         }
     }
-    uint32_t i;
-    i = SDFM_getFirmwareVersion(hSdfm);
-    DebugP_log("\n\n\n");
-    DebugP_log("SDFM firmware version \t: %x.%x.%x (%s)\n\n", (i >> 24) & 0x7F,
-                (i >> 16) & 0xFF, i & 0xFFFF, i & (1 << 31) ? "internal" : "release");
 
     /*
+     * Configure sample output buffer address translation (TCM local to SoC global view)
      *
-     * The sample output buffer (gSdfm_sampleOutput) is allocated in R5F BTCM memory.
-     * - R5F driver uses the core-local view address to access the buffer directly
-     * - PRU firmware uses the SoC global view address to write samples via ICSSG memory access
+     * The sample output buffer is allocated in R5F TCM (Tightly Coupled Memory):
+     * - R5F uses core-local view address to access the buffer directly
+     * - PRU firmware uses SoC global view address to write samples via ICSSG memory interface
      *
+     * Address Translation Requirements:
+     * - CPU0_BTCM_SOCVIEW: Used for R5FSS0_CORE0 (default for r5fss0-0_freertos)
+     * - CPU1_BTCM_SOCVIEW: Required if running on R5FSS1_CORE0 (r5fss1-0_freertos)
+     * - CPU0_ATCM_SOCVIEW: Required if buffer allocated in ATCM instead of BTCM
+     *
+     * The macro translates local TCM address (0x00000000-0x0007FFFF) to SoC view:
+     * - R5FSS0 BTCM: 0x70000000-0x7007FFFF
+     * - R5FSS1 BTCM: 0x70100000-0x7017FFFF
+     *
+     * \note Update the address translation macro if using different R5F core or memory region
      */
-    hSdfm->sampleOutputInterface = (SDFM_SampleOutInterface *)(sdfm_params.sample_base_addr);
-    uint32_t sampleOutputInterfaceGlobalAddr = CPU0_BTCM_SOCVIEW(sdfm_params.sample_base_addr);
-    SDFM_setSampleOutputInterfaceGlobalAddr(hSdfm, sampleOutputInterfaceGlobalAddr);
-    
-#if (CONFIG_SDFM0_CLK_FROM_IEP != 0)
-    /* IEP clock 300MHz, SD clk = 20Mhz
-      Div = 300/20 = 15, one period time = 15 IEP cycles, high plus time = 7 IEP cycles  */
-    uint32_t highPulseWidth = 6; /*7 - 1*/
-    uint32_t periodTime = 14;  /* 15 - 1*/
-    uint32_t syncStartTime = 0; /*clock generation start time.*/
-    SDFM_configIepSyncMode(hSdfm, highPulseWidth, periodTime, syncStartTime);
-    SDFM_enableIep(hSdfm);   
-    hSdfm->clk_config.clock_source = SDFM_CLOCK_SOURCE_IEP;
-    hSdfm->clk_config.sdfm_clock_value = CONFIG_SDFM0_CLOCK_VALUE;
-#endif
-     
-    /*configure ecap as PWM code for generate 20 MHz sdfm clock*/
-#if (CONFIG_SDFM0_CLK_FROM_ECAP != 0)
-    uint8_t ecap_divider = 0x0F; /*PRU clock at 300MHz: SD clock = 300/15=20Mhz*/
-    SDFM_configEcap(hSdfm, ecap_divider);
-    hSdfm->clk_config.clock_source = SDFM_CLOCK_SOURCE_ECAP;
-    hSdfm->clk_config.sdfm_clock_value = CONFIG_SDFM0_CLOCK_VALUE;
-#endif
-    
-    /*SD clk configuration from GPO1 */
-#if (CONFIG_SDFM0_CLK_FROM_GPIO1 != 0)
-   /*Setting divisor values for 20MHz, @300Mhz PRU core. two divisors 15 and 1.
-    15*1 = 300/20
-    PRU0_GPO_DIV0 = 1Ch when divisor value 15
-    PRU0_GPO_DIV1 = 0h when divisor value 1
-    */
-   uint8_t div0 = 0x1C;
-   uint8_t div1 = 0x0;
+    local_addr = (uint32_t)priv->sampleOutputInterface;
+    global_addr = CPU0_BTCM_SOCVIEW(local_addr);
+    status = SDFM_setSampleOutputInterfaceGlobalAddr(handle, global_addr);
+    if(status != SystemP_SUCCESS)
+    {
+        return SystemP_FAILURE;
+    }
 
-   SDFM_configClockFromGPO1(hSdfm, div0, div1);
-   hSdfm->clk_config.clock_source = SDFM_CLOCK_SOURCE_PRUGPIO1;
-   hSdfm->clk_config.sdfm_clock_value = CONFIG_SDFM0_CLOCK_VALUE;
-#endif
+    /* Configure IEP count for snoop mode (one EPWM period) */
+    if(attrs->pru_core_config[SDFM_PRU_CORE_INDEX].enable_snoop_mode || attrs->pru_core_config[SDFM_RTUPRU_CORE_INDEX].enable_snoop_mode || attrs->pru_core_config[SDFM_TXPRU_CORE_INDEX].enable_snoop_mode)
+    {
+        status = SDFM_configIepCount(handle, attrs->iep_reset_freq);
+        if(status != SystemP_SUCCESS)
+        {
+            return SystemP_FAILURE;
+        }
+    }
 
-   if(sdfm_params.pru_core_config[SDFM_PRU_CORE_INDEX].enable_snoop_mode || sdfm_params.pru_core_config[SDFM_RTUPRU_CORE_INDEX].enable_snoop_mode || sdfm_params.pru_core_config[SDFM_TXPRU_CORE_INDEX].enable_snoop_mode)
+    /* Configure operation mode (snoop/trigger) for each enabled PRU core */
+    for(i = 0; i < NUM_OF_PRU_CORE_PER_PRU_SLICE; i++)
    {
-        /*configure IEP count for one epwm period*/
-        SDFM_configIepCount(hSdfm, sdfm_params.iep_reset_freq);
-   }
-
-   for(int8_t i = 0; i < 3; i++)
-   {
-        if(sdfm_params.enable_pru_core_mask & (1 << i))
+        if(attrs->pru_core_mask & (1 << i))
         {
 
-            if(sdfm_params.pru_core_config[i].enable_snoop_mode)
+            if(attrs->pru_core_config[i].enable_snoop_mode)
             {
-                SDFM_enableSnoopBasedNC(hSdfm, i);
-            }
-            if(sdfm_params.pru_core_config[i].enable_trigger_mode == 1)
-            {
-                SDFM_enableTriggerModeForNormalCurrent(hSdfm, i);
-                SDFM_setSampleTriggerTime(hSdfm, sdfm_params.pru_core_config[i].first_samp_trig_time, i);
-                if(sdfm_params.pru_core_config[i].en_double_nc_sampling)
+                status = SDFM_enableSnoopBasedNC(handle, i);
+                if(status != SystemP_SUCCESS)
                 {
-                    SDFM_enableDoubleSampling(hSdfm, sdfm_params.pru_core_config[i].second_samp_trig_time, i);
+                    return SystemP_FAILURE;
+                }
+            }
+            if(attrs->pru_core_config[i].enable_trigger_mode == 1)
+            {
+                status = SDFM_enableTriggerModeForNormalCurrent(handle, i);
+                if(status != SystemP_SUCCESS)
+                {
+                    return SystemP_FAILURE;
+                }
+                status = SDFM_setSampleTriggerTime(handle, attrs->pru_core_config[i].first_samp_trig_time, i);
+                if(status != SystemP_SUCCESS)
+                {
+                    return SystemP_FAILURE;
+                }
+                if(attrs->pru_core_config[i].en_double_nc_sampling)
+                {
+                    status = SDFM_enableDoubleSampling(handle, attrs->pru_core_config[i].second_samp_trig_time, i);
+                    if(status != SystemP_SUCCESS)
+                    {
+                        return SystemP_FAILURE;
+                    }
                 }
                 else
                 {
-                    SDFM_disableDoubleSampling(hSdfm, i);
+                    status = SDFM_disableDoubleSampling(handle, i);
+                    if(status != SystemP_SUCCESS)
+                    {
+                        return SystemP_FAILURE;
+                    }
                 }
 
-                SDFM_selectIepCmpEvent(hSdfm, sdfm_params.pru_core_config[i].iep_cmp_event, i);
+                status = SDFM_selectIepCmpEvent(handle, attrs->pru_core_config[i].iep_cmp_event, i);
+                if(status != SystemP_SUCCESS)
+                {
+                    return SystemP_FAILURE;
+                }
             }
         }
-   }
-   
-    /*enable epwm sync*/
-    if(sdfm_params.enable_epwm_sync)
+    }
+
+    /* Configure EPWM synchronization if enabled */
+    if(attrs->enable_epwm_sync)
     {
-        SDFM_enableEpwmSync(hSdfm, sdfm_params.epwm_sync_source);
-        SDFM_enableIep(hSdfm);
+        status = SDFM_enableEpwmSync(handle, attrs->epwm_sync_source);
+        if(status != SystemP_SUCCESS)
+        {
+            return SystemP_FAILURE;
+        }
     }
     else
     {
-        if(sdfm_params.pru_core_config[0].enable_trigger_mode == 1|| sdfm_params.pru_core_config[1].enable_trigger_mode == 1|| sdfm_params.pru_core_config[2].enable_trigger_mode == 1)
+        /* Configure IEP for trigger mode if any PRU core uses trigger mode */
+        if(attrs->pru_core_config[0].enable_trigger_mode == 1|| attrs->pru_core_config[1].enable_trigger_mode == 1|| attrs->pru_core_config[2].enable_trigger_mode == 1)
         {
-            SDFM_configIepCmp0ToResetIep(hSdfm, sdfm_params.iep_reset_freq);
-            SDFM_enableIep(hSdfm);
-        }
-    }
-
-    /*Phase delay calculation for ch0. With single PRU and no load share*/
-    if(sdfm_params.enable_phase_delay)
-    {
-        if(sdfm_params.enable_channel_mask & (1 << 0))
-        {
-            SDFM_measureClockPhaseDelay(hSdfm, sdfm_params.channels[0].clk_inv, 0);
-        }
-    }
-
-    /*below configuration for all three channel*/
-    for(channel  = 0; channel  < 9; channel ++)
-    {
-        if(sdfm_params.enable_channel_mask & (1 << channel))
-        {
-            SDFM_setCompFilterOverSamplingRatio(hSdfm, channel , sdfm_params.channels[channel].over_current_osr);
-
-            SDFM_setFilterOverSamplingRatio(hSdfm, channel , sdfm_params.channels[channel].normal_current_osr);
-
-            /*set ACC source or filter type*/
-            SDFM_configDataFilter(hSdfm, channel, sdfm_params.channels[channel].filter_type);
-
-            /*set clock inversion & clock source for all three channel*/
-            SDFM_selectClockSource(hSdfm, channel, sdfm_params.channels[channel].clk_source);
-
-            /*set clock inversion*/
-            SDFM_setClockInversion(hSdfm, channel, sdfm_params.channels[channel].clk_inv);
-
-            if(sdfm_params.channels[channel].enable_comparator == 1)
+            status = SDFM_configIepCmp0ToResetIep(handle, attrs->iep_reset_freq);
+            if(status != SystemP_SUCCESS)
             {
-                SDFM_enableComparator(hSdfm, channel);
-                /*set high and low thresholds value */
-                uint32_t comThresholds[2];
-                comThresholds[0] = sdfm_params.channels[channel].high_threshold;
-                comThresholds[1] = sdfm_params.channels[channel].low_threshold;   
-                SDFM_setCompFilterThresholds(hSdfm, channel, comThresholds);
-            }
-
-            if(sdfm_params.channels[channel].fd_enable == 1)
-            {
-                /*Fast detect configuration */
-                uint8_t fdFields[NUM_FD_FIELDS];
-                fdFields[0] = sdfm_params.channels[channel].fd_enable;
-                fdFields[1] = sdfm_params.channels[channel].fd_window;
-                fdFields[2] = sdfm_params.channels[channel].fd_zero_max;
-                fdFields[3] = sdfm_params.channels[channel].fd_zero_min;
-                SDFM_configFastDetect(hSdfm, channel, fdFields);
-            }
-
-            if(sdfm_params.channels[channel].en_zero_cross == 1)
-            {
-                /*zero cross configuration*/
-                SDFM_enableZeroCrossDetection(hSdfm, channel, sdfm_params.channels[channel].zero_cross_threshold);
-                /*GPIO pin configuration for zero cross*/
-                SDFM_configGpioPins(hSdfm, channel);
+                return SystemP_FAILURE;
             }
         }
+    }
+
+    /* Measure phase delay for channel 0 if enabled */
+#if CONFIG_SDFM0_PHASE_DELAY
+        DebugP_log("\r\n Current Firmware only supports phase delay measurement on channel 0");
+        if(attrs->channel_mask & (1 << 0))
+        {
+            status = SDFM_measureClockPhaseDelay(handle, attrs->channels[0].clk_inv, 0);
+            if(status == SystemP_TIMEOUT)
+            {
+                DebugP_log("\r\nSDFM_measureClockPhaseDelay timeout error\n");
+                return SystemP_FAILURE;
+            }
+            else if(status != SystemP_SUCCESS)
+            {
+                DebugP_log("\r\nSDFM_measureClockPhaseDelay failed\n");
+                return SystemP_FAILURE;
+            }
+        }
+        else
+        {
+           DebugP_log("\r\n Phase delay measurement skipped as channel 0 is not enabled");
+        }
+#endif
+
+    /* Configure filter parameters for all enabled channels */
+    for(channel  = 0; channel  < SDFM_NUM_OF_CH_PER_PRU_SLICE; channel ++)
+    {
+        if(attrs->channel_mask & (1 << channel))
+        {
+            /* Configure overcurrent comparator filter OSR */
+            status = SDFM_setCompFilterOverSamplingRatio(handle, channel , attrs->channels[channel].over_current_osr);
+            if(status != SystemP_SUCCESS)
+            {
+                return SystemP_FAILURE;
+            }
+
+            /* Configure normal current filter OSR */
+            status = SDFM_setFilterOverSamplingRatio(handle, channel , attrs->channels[channel].normal_current_osr);
+            if(status != SystemP_SUCCESS)
+            {
+                return SystemP_FAILURE;
+            }
+
+            /* Configure data filter type (SINC3/Fast Response) */
+            status = SDFM_configDataFilter(handle, channel, attrs->channels[channel].filter_type);
+            if(status != SystemP_SUCCESS)
+            {
+                return SystemP_FAILURE;
+            }
+
+            /* Configure clock source and inversion for channel */
+            status = SDFM_selectClockSource(handle, channel, attrs->channels[channel].clk_source);
+            if(status != SystemP_SUCCESS)
+            {
+                return SystemP_FAILURE;
+            }
+            status = SDFM_setClockInversion(handle, channel, attrs->channels[channel].clk_inv);
+            if(status != SystemP_SUCCESS)
+            {
+                return SystemP_FAILURE;
+            }
+
+            /* Configure overcurrent comparator if enabled */
+            if(attrs->channels[channel].enable_comparator == 1)
+            {
+                status = SDFM_enableComparator(handle, channel);
+                if(status != SystemP_SUCCESS)
+                {
+                    return SystemP_FAILURE;
+                }
+                /* Set high and low threshold values */
+                threshold_config.high_threshold = attrs->channels[channel].high_threshold;
+                threshold_config.low_threshold = attrs->channels[channel].low_threshold;
+                status = SDFM_setCompFilterThresholds(handle, channel, threshold_config);
+                if(status != SystemP_SUCCESS)
+                {
+                    return SystemP_FAILURE;
+                }
+            }
+
+            /* Configure fast detect for quick overcurrent detection */
+            if(attrs->channels[channel].fd_enable == 1)
+            {
+                fast_detect_config.fd_enable = attrs->channels[channel].fd_enable;
+                fast_detect_config.fd_window_size = attrs->channels[channel].fd_window;
+                fast_detect_config.fd_zero_max = attrs->channels[channel].fd_zero_max;
+                fast_detect_config.fd_zero_min = attrs->channels[channel].fd_zero_min;
+                status = SDFM_configFastDetect(handle, channel, fast_detect_config);
+                if(status != SystemP_SUCCESS)
+                {
+                    return SystemP_FAILURE;
+                }
+            }
+
+            /* Configure zero-cross detection if enabled */
+            if(attrs->channels[channel].en_zero_cross == 1)
+            {
+                status = SDFM_enableZeroCrossDetection(handle, channel, attrs->channels[channel].zero_cross_threshold);
+                if(status != SystemP_SUCCESS)
+                {
+                    return SystemP_FAILURE;
+                }
+                /* Configure GPIO pins for zero-cross output */
+                sdfmConfigGpioPins(handle, channel);
+            }
+        }
 
     }
-    
-    /* Enable (global) SDFM */
-    for(int8_t i = 0; i < 3; i++)
+
+    /* Enable SDFM firmware on all enabled PRU cores to start sampling */
+    for(i = 0; i < NUM_OF_PRU_CORE_PER_PRU_SLICE; i++)
     {
-        if(sdfm_params.enable_pru_core_mask & (1 << i))
+        if(attrs->pru_core_mask & (1 << i))
         {
-            SDFM_enable(hSdfm, i);
+            status = SDFM_enable(handle, i);
+            if(status == SystemP_TIMEOUT)
+            {
+                DebugP_log("\r\nSDFM_enable timeout error for PRU core %d\n", i);
+                return SystemP_FAILURE;
+            }
+            else if(status != SystemP_SUCCESS)
+            {
+                DebugP_log("\r\nSDFM_enable failed for PRU core %d\n", i);
+                return SystemP_FAILURE;
+            }
         }
     }
-    *pHSdfm = hSdfm;
 
- return SDFM_ERR_NERR;
+    return SystemP_SUCCESS;
 }
-/*
- *  ======== appSdfmPruInit ========
+/**
+ *  \brief Load SDFM firmware into PRU cores and enable them
+ *
+ *  Loads appropriate firmware images based on load-share mode configuration.
+ *  For single PRU mode, loads one firmware. For load-share mode, loads
+ *  separate firmware to RTU PRU, PRU, and TX PRU cores.
+ *
+ *  \param pruIcssHandle  [in] PRU-ICSS handle
+ *
+ *  \return SystemP_SUCCESS on success, SystemP_FAILURE on failure
  */
-/* Initialize PRU core for SDFM */
-int32_t appSdfmPruInit(
-    PRUICSS_Handle pruIcssHandle,
-    SDFM_Params pSdfmPrms,
-    SDFM_Handle *pHSdfm
-)
+int32_t sdfmLoadFirmware(PRUICSS_Handle pruIcssHandle)
 {
     uint32_t pruIMem;
     PRUSDFM_PruFwImageInfo *pPruFwImageInfo;
     int32_t size;
-    const uint32_t *sourceMem;          /* Source memory[ Array of uint32_t ] */
-    uint32_t imemOffset;    /* Offset at which write will happen */
+    const uint32_t *sourceMem;          /* Source memory (array of uint32_t) */
+    uint32_t imemOffset;                /* Offset at which write will happen */
     uint32_t byteLen;                   /* Total number of bytes to be written */
     int32_t status;
-      
-    /*Load the firmware image*/
+
+    /* Load firmware images into PRU cores */
     imemOffset = 0;
 #if(CONFIG_SDFM0_LOAD_SHARE == 1)
     {
 #if CONFIG_SDFM0_CHANNEL0 || CONFIG_SDFM0_CHANNEL1 || CONFIG_SDFM0_CHANNEL2
         status = PRUICSS_resetCore(pruIcssHandle, SDFM_RTU_CORE);
-        if (status != SystemP_SUCCESS) 
+        if (status != SystemP_SUCCESS)
         {
-            return SDFM_ERR_INIT_PRU_SDFM;
+            return SystemP_FAILURE;
         }
         pPruFwImageInfo = &gPruFwImageInfo[2];
         pruIMem = PRUICSS_IRAM_RTU_PRU(CONFIG_SDFM0_SLICE);
@@ -593,20 +684,20 @@ int32_t appSdfmPruInit(
         size = PRUICSS_writeMemory(pruIcssHandle, pruIMem, imemOffset, sourceMem, byteLen);
         if (size == 0)
         {
-            return SDFM_ERR_INIT_PRU_SDFM;
+            return SystemP_FAILURE;
         }
         /* Enable PRU core */
         status = PRUICSS_enableCore(pruIcssHandle, SDFM_RTU_CORE);
-        if (status != SystemP_SUCCESS) 
+        if (status != SystemP_SUCCESS)
         {
-            return SDFM_ERR_INIT_PRU_SDFM;
+            return SystemP_FAILURE;
         }
 #endif
 #if CONFIG_SDFM0_CHANNEL3 || CONFIG_SDFM0_CHANNEL4 || CONFIG_SDFM0_CHANNEL5
         status = PRUICSS_resetCore(pruIcssHandle, SDFM_PRU_CORE);
-        if (status != SystemP_SUCCESS) 
+        if (status != SystemP_SUCCESS)
         {
-            return SDFM_ERR_INIT_PRU_SDFM;
+            return SystemP_FAILURE;
         }
         pPruFwImageInfo = &gPruFwImageInfo[1];
         pruIMem = PRUICSS_IRAM_PRU(CONFIG_SDFM0_SLICE);
@@ -616,21 +707,21 @@ int32_t appSdfmPruInit(
         size = PRUICSS_writeMemory(pruIcssHandle, pruIMem, imemOffset, sourceMem, byteLen);
         if (size == 0)
         {
-            return SDFM_ERR_INIT_PRU_SDFM;
-        }   
+            return SystemP_FAILURE;
+        }
 
         /* Enable PRU core */
         status = PRUICSS_enableCore(pruIcssHandle, SDFM_PRU_CORE);
-        if (status != SystemP_SUCCESS) 
+        if (status != SystemP_SUCCESS)
         {
-            return SDFM_ERR_INIT_PRU_SDFM;
+            return SystemP_FAILURE;
         }
 #endif
 #if CONFIG_SDFM0_CHANNEL6 || CONFIG_SDFM0_CHANNEL7 || CONFIG_SDFM0_CHANNEL8
         status = PRUICSS_resetCore(pruIcssHandle, SDFM_TXPRU_CORE);
-        if (status != SystemP_SUCCESS) 
+        if (status != SystemP_SUCCESS)
         {
-            return SDFM_ERR_INIT_PRU_SDFM;
+            return SystemP_FAILURE;
         }
         pPruFwImageInfo = &gPruFwImageInfo[3];
         pruIMem = PRUICSS_IRAM_TX_PRU(CONFIG_SDFM0_SLICE);
@@ -648,14 +739,14 @@ int32_t appSdfmPruInit(
         size = PRUICSS_writeMemory(pruIcssHandle, pruIMem, imemOffset, sourceMem, byteLen);
         if (size == 0)
         {
-            return SDFM_ERR_INIT_PRU_SDFM;
-        }   
+            return SystemP_FAILURE;
+        }
 
         /* Enable PRU core */
         status = PRUICSS_enableCore(pruIcssHandle, SDFM_TXPRU_CORE);
-        if (status != SystemP_SUCCESS) 
+        if (status != SystemP_SUCCESS)
         {
-            return SDFM_ERR_INIT_PRU_SDFM;
+            return SystemP_FAILURE;
         }
 #endif
     }
@@ -664,7 +755,7 @@ int32_t appSdfmPruInit(
         status = PRUICSS_resetCore(pruIcssHandle, SDFM_PRU_CORE);
         if (status != SystemP_SUCCESS)
         {
-            return SDFM_ERR_INIT_PRU_SDFM;
+            return SystemP_FAILURE;
         }
         pPruFwImageInfo = &gPruFwImageInfo[0];
         pruIMem = PRUICSS_IRAM_PRU(CONFIG_SDFM0_SLICE);
@@ -674,22 +765,16 @@ int32_t appSdfmPruInit(
         size = PRUICSS_writeMemory(pruIcssHandle, pruIMem, imemOffset, sourceMem, byteLen);
         if (size == 0)
         {
-            return SDFM_ERR_INIT_PRU_SDFM;
+            return SystemP_FAILURE;
         }
 
         /* Enable PRU */
         status = PRUICSS_enableCore(pruIcssHandle, SDFM_PRU_CORE);
         if (status != SystemP_SUCCESS) {
-            return SDFM_ERR_INIT_PRU_SDFM;
+            return SystemP_FAILURE;
         }
     }
 #endif
-
-    status = initSdfmFw(pSdfmPrms, pHSdfm);
-    if (status != SDFM_ERR_NERR) 
-    {
-        return SDFM_ERR_INIT_PRU_SDFM;
-    }
-    return SDFM_ERR_NERR;
+    return SystemP_SUCCESS;
 
 }

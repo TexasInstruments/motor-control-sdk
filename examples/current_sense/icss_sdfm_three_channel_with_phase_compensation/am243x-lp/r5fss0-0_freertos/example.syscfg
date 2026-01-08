@@ -52,10 +52,10 @@ const pruicss_g_v0_pwm1 = pruicss_g_v0_pwm.addInstance();
 sdfm1.$name                     = "CONFIG_SDFM0";
 sdfm1.G_MUX_EN                  = true;
 sdfm1.Enable_Phase_Compensation = true;
-sdfm1.SDFM_CLK_GEN              = "3";
 sdfm1.Enable_Channel_0          = true;
 sdfm1.Enable_Channel_1          = true;
 sdfm1.Enable_Channel_2          = true;
+sdfm1.SDFM_CLK_GEN              = "0";
 sdfm1.PRU_ICSSG0_PRU.$assign    = "PRU_ICSSG0_PRU0";
 
 epwm1.$name            = "CONFIG_EPWM0";
@@ -302,7 +302,6 @@ pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].PRU_ICSSG0_ECAP.IN_APWM_OUT.$use
 pruicss1.intcMapping.create(1);
 pruicss1.intcMapping[0].$name                                                       = "CONFIG_ICSS0_INTC_MAPPING0";
 pruicss1.intcMapping[0].event                                                       = "21";
-pruicss1.intcMapping[0].channel                                                     = "3";
 
 /**
  * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future

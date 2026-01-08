@@ -67,16 +67,16 @@ function SDmodulatorSettings(channel)
 
 		{
 			name        : "Ch" + channel.toString() + "_Theoritical_DataFilterOutput",
-			displayName : "Theoritical Data Filter Output",
-			description : 'Theoritical Data filter Output',
+			displayName : "Theoretical Data Filter Output",
+			description : 'Theoretical Data Filter Output',
 			hidden      : true,
 			getValue    : Theoretical_Data_Filter,
 		    default     : 0,
 		},
 		{
 			name        : "Ch" + channel.toString() + "_Theoritical_ComparatorFilterOutput",
-			displayName : "Theoritical Comparator Filter Output",
-			description : 'Theoritical Comparator filter Output',
+			displayName : "Theoretical Comparator Filter Output",
+			description : 'Theoretical Comparator Filter Output',
 			hidden      : true,
 			getValue    : Theoretical_Comparator_Filter,
 		    default     : 0,
@@ -96,9 +96,10 @@ function SDnormalCurrentConfigs(channel)
 		{
 			name: "Ch" + channel.toString() + "_NC_OSR",
 			displayName : "Normal Current OSR",
-			description : 'Normal Current OSR',
+			description : 'Normal Current Over Sampling Ratio (Valid range: 4-256)',
 			hidden      : true,
 			default     : 64,
+			range       : [4, 256],
 		},
         {
 			name        : "Ch" + channel.toString() + "_Datarate_DF",
@@ -169,7 +170,7 @@ function fill_channel_array(channel)
             {
 				name: "Ch" + channel.toString() + "_AccSource",
 				displayName : "SD Accumulator Source",
-				description : 'SD Accumulator Source',
+				description : 'Selects the SINC filter type for sigma-delta data filtering.',
 				hidden      : true,
 				default     : "0",
                 options: [
@@ -217,7 +218,7 @@ function fill_channel_array(channel)
 		    
             {
 				name: "GROUP_NormalCurrent",
-				displayName : "Normal Current Configurtion",
+				displayName : "Normal Current Configuration",
 				collapsed   : false,
 				config     : SDnormalCurrentConfigs(channel),
 			},

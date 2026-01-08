@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-25 Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (C) 2023-2025 Texas Instruments Incorporated - http://www.ti.com/
  *
  *
  * Redistribution and use in source and binary forms, with or without
@@ -112,656 +112,1061 @@
 #include <drivers/soc.h>
 #include <drivers/gpio.h>
 #include <kernel/dpl/AddrTranslateP.h>
+#include <kernel/dpl/ClockP.h>
 
 /* ========================================================================== */
 /*                            Global Variables                                */
 /* ========================================================================== */
 extern SDFM_Config gSdfmHandle[];
 extern uint32_t gSdfmConfigNum;
+
+/* ========================================================================== */
+/*                      Static Function Declarations                          */
+/* ========================================================================== */
+static int32_t SDFM_enableLoadShareMode(SDFM_Handle handle, uint8_t sliceId);
+
 /* ========================================================================== */
 /*                          Function Definitions                              */
 /* ========================================================================== */
-/* Initialize SDFM instance */
-SDFM_Handle SDFM_init(uint32_t index, SDFM_Params sdfm_params)
+
+/**
+ * \brief Initialize SDFM parameters structure with default values
+ *
+ * \param params Pointer to SDFM_Params structure to initialize
+ */
+void SDFM_paramsInit(SDFM_Params *params)
 {
+    if (params != NULL)
+    {
+        params->pruicss_handle = NULL;
+        params->pwm_handle = NULL;
+        params->sample_base_addr = 0U;
+    }
+}
+
+/**
+ * \brief Initialize SDFM instance
+ *
+ * \param index SDFM instance index
+ * \param params Pointer to SDFM initialization parameters
+ *
+ * \return SDFM handle on success, NULL on failure
+ */
+SDFM_Handle SDFM_init(uint32_t index, SDFM_Params *params)
+{
+    int32_t status = SystemP_SUCCESS;
     SDFM_Handle handle = NULL;
-    if(sdfm_params.pruicss_handle == NULL || (index >= gSdfmConfigNum))
+    SDFM_Priv *priv = NULL;
+    const SDFM_Attrs *attrs = NULL;
+    PRUICSS_HwAttrs *pruicss_hw_attrs = NULL;
+    uint8_t ch_idx;
+
+    /* Validate index and params */
+    if ((index >= gSdfmConfigNum) || (params == NULL))
+    {
+        status = SystemP_FAILURE;
+    }
+
+    if (status == SystemP_SUCCESS)
+    {
+        /* Get handle, priv, and attrs */
+        handle = (SDFM_Handle)&gSdfmHandle[index];
+        priv = handle->priv;
+        attrs = handle->attrs;
+
+        /* Validate priv and attrs pointers */
+        if ((priv == NULL) || (attrs == NULL))
+        {
+            status = SystemP_FAILURE;
+        }
+    }
+
+    if (status == SystemP_SUCCESS)
+    {
+        /* Check if driver already open */
+        if (priv->is_open == 1U)
+        {
+            status = SystemP_FAILURE;
+        }
+    }
+
+    if (status == SystemP_SUCCESS)
+    {
+        /* Validate params structure fields */
+        if ((params->pruicss_handle == NULL) ||
+            (params->sample_base_addr == 0U))
+        {
+            status = SystemP_FAILURE;
+        }
+
+        /* Validate attrs structure fields */
+        if ((attrs->instance >= gSdfmConfigNum) ||
+            (attrs->pruicss_instance > 1U) ||
+            (attrs->pruicss_slice > 1U) ||
+            (attrs->load_share_enabled > 1U) ||
+            (attrs->channel_mask == 0U) ||
+            (attrs->channel_mask > SDFM_NINE_CH_MASK) ||
+            (attrs->core_clk_freq == 0U) ||
+            (attrs->iep_clk_freq == 0U) ||
+            (attrs->iep_reset_freq == 0U) ||
+            (attrs->iep_instance > 1U) ||
+            (attrs->sdfm_clock_source > SDFM_EXTERNAL_CLOCK_SRC) ||
+            (attrs->sdfm_sampling_freq == 0U) ||
+            (attrs->enable_epwm_sync > 1U) ||
+            (attrs->pru_core_mask == 0U))
+        {
+            status = SystemP_FAILURE;
+        }
+
+        /* Validate PRU core configuration for each enabled core */
+        if (status == SystemP_SUCCESS)
+        {
+            for (ch_idx = 0U; ch_idx < NUM_OF_PRU_CORE_PER_PRU_SLICE; ch_idx++)
+            {
+                if (attrs->pru_core_mask & (1U << ch_idx))
+                {
+                    if ((attrs->pru_core_config[ch_idx].enable_trigger_mode > 1U) ||
+                        (attrs->pru_core_config[ch_idx].en_double_nc_sampling > 1U) ||
+                        (attrs->pru_core_config[ch_idx].enable_snoop_mode > 1U) ||
+                        (attrs->pru_core_config[ch_idx].iep_cmp_event > SDFM_IEP_CMP_EVENT_MAX))
+                    {
+                        status = SystemP_FAILURE;
+                        break;
+                    }
+                }
+            }
+        }
+
+        /* Validate channel configuration for each enabled channel */
+        if (status == SystemP_SUCCESS)
+        {
+            for (ch_idx = 0U; ch_idx < SDFM_NUM_OF_CH_PER_PRU_SLICE; ch_idx++)
+            {
+                if (attrs->channel_mask & (1U << ch_idx))
+                {
+                    if ((attrs->channels[ch_idx].ch_id >= SDFM_NUM_OF_CH_PER_PRU_SLICE) ||
+                        (attrs->channels[ch_idx].enabled > 1U) ||
+                        (attrs->channels[ch_idx].filter_type > SDFM_ACC_FILTER_MAX) ||
+                        (attrs->channels[ch_idx].normal_current_osr < SDFM_OSR_MIN) ||
+                        (attrs->channels[ch_idx].normal_current_osr > SDFM_OSR_MAX) ||
+                        (attrs->channels[ch_idx].over_current_osr < SDFM_OSR_MIN) ||
+                        (attrs->channels[ch_idx].over_current_osr > SDFM_OSR_MAX) ||
+                        (attrs->channels[ch_idx].sdfm_clk == 0U) ||
+                        (attrs->channels[ch_idx].enable_comparator > 1U) ||
+                        (attrs->channels[ch_idx].fd_enable > 1U) ||
+                        (attrs->channels[ch_idx].clk_source > SDFM_CLK_SOURCE_MAX) ||
+                        (attrs->channels[ch_idx].clk_inv > 1U) ||
+                        (attrs->channels[ch_idx].en_zero_cross > 1U))
+                    {
+                        status = SystemP_FAILURE;
+                        break;
+                    }
+
+                    /* Validate fast detect configuration if enabled */
+                    if (attrs->channels[ch_idx].fd_enable == 1U)
+                    {
+                        if ((attrs->channels[ch_idx].fd_window < SDFM_FD_WINDOW_SIZE_MIN) ||
+                            (attrs->channels[ch_idx].fd_window > SDFM_FD_WINDOW_SIZE_MAX) ||
+                            (attrs->channels[ch_idx].fd_zero_max > SDFM_FD_THRESHOLD_MAX) ||
+                            (attrs->channels[ch_idx].fd_zero_min > SDFM_FD_THRESHOLD_MAX))
+                        {
+                            status = SystemP_FAILURE;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (status != SystemP_SUCCESS)
     {
         return NULL;
     }
-    else
+    /* Initialize PRU DMEM interface address based on PRU slice */
+    pruicss_hw_attrs = (PRUICSS_HwAttrs *)(params->pruicss_handle->hwAttrs);
+    if (attrs->pruicss_slice == PRUICSS_PRU0)
     {
-        handle = (SDFM_Handle)(&gSdfmHandle[index]);
-        /* Initialize SDFM interface address */
-        if(sdfm_params.pru_slice == PRUICSS_PRU0)
-        {              
-            handle->sdfm_interface = (void *)(((PRUICSS_HwAttrs *)(sdfm_params.pruicss_handle->hwAttrs))->pru0DramBase);
-        }
-        else if (sdfm_params.pru_slice == PRUICSS_PRU1)
-        {
-             handle->sdfm_interface = (void *)(((PRUICSS_HwAttrs *)(sdfm_params.pruicss_handle->hwAttrs))->pru1DramBase);
-        }
-        else
-        {
-             return NULL;
-        }
-        /* Initialize SDFM handle parameters*/
-        handle->pru_config.load_share_enable = sdfm_params.load_share_enable;
-        handle->pru_config.pru_slice = sdfm_params.pru_slice;
-        handle->pru_config.pru_clock = sdfm_params.pru_clock;
-        handle->pru_config.iep_clock = sdfm_params.iep_clock;
-        /* Always configure IEP counter increment value as 1. All cmp event configurations assume IEP counter increment by 1. */
-        handle->pru_config.iep_instance = sdfm_params.iep_instance;
-        handle->pru_config.iep_inc_value = IEP_DEFAULT_INC;
-        /* Initialize SDFM control settings */
-        handle->sdfm_interface->control[SDFM_PRU_CORE_INDEX].enable_snoop_nc = sdfm_params.pru_core_config[SDFM_PRU_CORE_INDEX].enable_snoop_mode;
-        handle->sdfm_interface->control[SDFM_RTUPRU_CORE_INDEX].enable_snoop_nc = sdfm_params.pru_core_config[SDFM_RTUPRU_CORE_INDEX].enable_snoop_mode;
-        handle->sdfm_interface->control[SDFM_TXPRU_CORE_INDEX].enable_snoop_nc = sdfm_params.pru_core_config[SDFM_TXPRU_CORE_INDEX].enable_snoop_mode;
-        handle->pru_config.pwm_handle = sdfm_params.pwm_handle;
-        handle->pru_config.pruicss_handle = sdfm_params.pruicss_handle;
-
-        if(sdfm_params.load_share_enable == 1)
-        {
-            SDFM_enableLoadShareMode(handle, sdfm_params.pru_slice);
-        }
-        /* Enable SDFM mode */
-        PRUICSS_setGpiMode(sdfm_params.pruicss_handle, sdfm_params.pru_slice, PRUICSS_GP_MUX_SEL_MODE_SD);
+        priv->sdfm_interface = (SDFM_Interface *)(pruicss_hw_attrs->pru0DramBase);
     }
+    else 
+    {
+        priv->sdfm_interface = (SDFM_Interface *)(pruicss_hw_attrs->pru1DramBase);
+    }
+
+    /* Store handles in priv */
+    priv->pruicss_handle = params->pruicss_handle;
+    priv->pwm_handle = params->pwm_handle;
+
+    /* Initialize sample output interface */
+    priv->sampleOutputInterface = (SDFM_SampleOutInterface *)params->sample_base_addr;
+    
+    /* Enable SDFM mode */
+    status = PRUICSS_setGpMuxSelect(params->pruicss_handle, attrs->pruicss_slice, PRUICSS_GP_MUX_SEL_MODE_SD);
+    if(status != SystemP_SUCCESS)
+    {
+        return NULL;
+    }
+
+    /* Enable load share mode if configured */
+    if (attrs->load_share_enabled == 1U)
+    {
+        SDFM_enableLoadShareMode(handle, attrs->pruicss_slice);
+    }
+
+    /* Mark driver as open */
+    priv->is_open = 1U;
 
     return handle;
 }
 
-/* Configuration of IEP reset cycle time period */
-int32_t SDFM_configIepCount(SDFM_Handle h_sdfm, uint32_t iep_reset_freq)
+/**
+ * \brief Deinitialize SDFM instance and release resources
+ *
+ * \param handle SDFM handle
+ *
+ * \return SystemP_SUCCESS on success, SystemP_FAILURE on failure
+ */
+int32_t SDFM_deinit(SDFM_Handle handle)
 {
-    if( h_sdfm == NULL || iep_reset_freq == 0)
+    SDFM_Priv *priv;
+
+    /* Validate handle */
+    if (handle == NULL)
     {
         return SystemP_FAILURE;
     }
+
+    priv = handle->priv;
+
+    /* Check if driver is open */
+    if (priv->is_open != 1U)
+    {
+        return SystemP_FAILURE;
+    }
+
+    /* Mark driver as closed */
+    priv->is_open = 0U;
+
+    return SystemP_SUCCESS;
+}
+
+const SDFM_Attrs* SDFM_getAttrs(SDFM_Handle handle)
+{
+    if (handle == NULL)
+    {
+        return NULL;
+    }
+
+    return handle->attrs;
+}
+
+SDFM_Priv* SDFM_getPriv(SDFM_Handle handle)
+{
+    if (handle == NULL)
+    {
+        return NULL;
+    }
+
+    return handle->priv;
+}
+
+/* Configuration of IEP reset cycle time period */
+int32_t SDFM_configIepCount(SDFM_Handle handle, uint32_t iep_reset_freq)
+{
+    SDFM_Priv *priv;
+    const SDFM_Attrs *attrs;
+    uint32_t max_iep_cnt;
+
+    if (handle == NULL || iep_reset_freq == 0U)
+    {
+        return SystemP_FAILURE;
+    }
+
+    priv = handle->priv;
+    attrs = handle->attrs;
+
     /* Max IEP0 count value for one EPWM period */
-    uint32_t max_iep_cnt = (h_sdfm->pru_config.iep_clock/iep_reset_freq)*(h_sdfm->pru_config.iep_inc_value);
-    h_sdfm->sdfm_interface->trigger_config[SDFM_PRU_CORE_INDEX].max_iep_cnt_per_epwm_prd = max_iep_cnt;
-    h_sdfm->sdfm_interface->trigger_config[SDFM_RTUPRU_CORE_INDEX].max_iep_cnt_per_epwm_prd = max_iep_cnt;
-    h_sdfm->sdfm_interface->trigger_config[SDFM_TXPRU_CORE_INDEX].max_iep_cnt_per_epwm_prd = max_iep_cnt;
+    max_iep_cnt = (attrs->iep_clk_freq / iep_reset_freq) * IEP_DEFAULT_INC;
+    priv->sdfm_interface->trigger_config[SDFM_PRU_CORE_INDEX].max_iep_cnt_per_epwm_prd = max_iep_cnt;
+    priv->sdfm_interface->trigger_config[SDFM_RTUPRU_CORE_INDEX].max_iep_cnt_per_epwm_prd = max_iep_cnt;
+    priv->sdfm_interface->trigger_config[SDFM_TXPRU_CORE_INDEX].max_iep_cnt_per_epwm_prd = max_iep_cnt;
 
     return SystemP_SUCCESS;
 }
 
 /* ECAP configuration for SD clock */
-int32_t SDFM_configEcap(SDFM_Handle h_sdfm, uint8_t ecap_divider)
+int32_t SDFM_configEcap(SDFM_Handle handle, uint8_t ecap_divider)
 {
-    if(h_sdfm == NULL || ecap_divider == 0)
+    SDFM_Priv *priv;
+    void *pruicss_ecap;
+    uint32_t rgval;
+    uint32_t count;
+
+    if (handle == NULL || ecap_divider == 0U)
     {
         return SystemP_FAILURE;
     }
 
-    void *pruicssEcap = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->ecapRegBase);
-    uint32_t rgval;
-    uint32_t count;
+    priv = handle->priv;
+    pruicss_ecap = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->ecapRegBase);
 
-    /* Set eCAP APWM mode */ 
-    rgval = HW_RD_REG32((uint8_t *)pruicssEcap + CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_ECCTL2_ECCTL1);
-    rgval |= (0<<CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_ECCTL2_ECCTL1_SYNCI_EN_SHIFT) | (2<<CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_ECCTL2_ECCTL1_SYNCO_SEL_SHIFT) | (1<<CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_ECCTL2_ECCTL1_CAP_APWM_SHIFT) | (0<<CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_ECCTL2_ECCTL1_APWMPOL_SHIFT);
-    HW_WR_REG32((uint8_t *)pruicssEcap + CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_ECCTL2_ECCTL1, rgval);
+    /* Set eCAP APWM mode */
+    rgval = HW_RD_REG32((uint8_t *)pruicss_ecap + CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_ECCTL2_ECCTL1);
+    rgval |= (0U << CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_ECCTL2_ECCTL1_SYNCI_EN_SHIFT) |
+             (2U << CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_ECCTL2_ECCTL1_SYNCO_SEL_SHIFT) |
+             (1U << CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_ECCTL2_ECCTL1_CAP_APWM_SHIFT) |
+             (0U << CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_ECCTL2_ECCTL1_APWMPOL_SHIFT);
+    HW_WR_REG32((uint8_t *)pruicss_ecap + CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_ECCTL2_ECCTL1, rgval);
 
     /* Set period count */
-    count = ecap_divider - 1;
-    HW_WR_REG32((uint8_t *)pruicssEcap + CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_CAP1, count);
+    count = ecap_divider - 1U;
+    HW_WR_REG32((uint8_t *)pruicss_ecap + CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_CAP1, count);
 
     /* Compute & set Duty Cycle count.
      * Divide period count by 2, biased rounding. */
-    count = count + 1;
-    count = count/2;
-    HW_WR_REG32((uint8_t *)pruicssEcap + CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_CAP2, count);
+    count = count + 1U;
+    count = count / 2U;
+    HW_WR_REG32((uint8_t *)pruicss_ecap + CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_CAP2, count);
 
     /* Clear counter phase and Reset eCAP PWM Counter */
-    HW_WR_REG32((uint8_t *)pruicssEcap + CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_CNTPHS, 0);
-    HW_WR_REG32((uint8_t *)pruicssEcap + CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_TSCNT, 0);
+    HW_WR_REG32((uint8_t *)pruicss_ecap + CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_CNTPHS, 0U);
+    HW_WR_REG32((uint8_t *)pruicss_ecap + CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_TSCNT, 0U);
 
     /* Enable eCAP APWM */
-    rgval = HW_RD_REG32((uint8_t *)pruicssEcap + CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_ECCTL2_ECCTL1);
-    rgval |=  (1 << CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_ECCTL2_ECCTL1_TSCNTSTP_SHIFT);
-    HW_WR_REG32((uint8_t *)pruicssEcap + CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_ECCTL2_ECCTL1, rgval);
+    rgval = HW_RD_REG32((uint8_t *)pruicss_ecap + CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_ECCTL2_ECCTL1);
+    rgval |= (1U << CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_ECCTL2_ECCTL1_TSCNTSTP_SHIFT);
+    HW_WR_REG32((uint8_t *)pruicss_ecap + CSL_ICSS_G_PR1_ICSS_ECAP0_ECAP_SLV_ECCTL2_ECCTL1, rgval);
 
     return SystemP_SUCCESS;
 
 }
 
 /* SDFM HW OSR configuration */
- int32_t SDFM_setCompFilterOverSamplingRatio(SDFM_Handle h_sdfm, uint8_t ch_id, uint16_t osr)
- {
-    PRUICSS_HwAttrs const   *hwAttrs;
-    int32_t                 retVal = SystemP_FAILURE;
+int32_t SDFM_setCompFilterOverSamplingRatio(SDFM_Handle handle, uint8_t channel, uint16_t osr)
+{
+    SDFM_Priv *priv;
+    const SDFM_Attrs *attrs;
+    PRUICSS_HwAttrs const *hw_attrs;
 
-    if(ch_id > SDFM_CHANNEL8)
+    if (handle == NULL)
     {
         return SystemP_FAILURE;
     }
-    if(h_sdfm != NULL)
+
+    if (channel > SDFM_CHANNEL8)
     {
-        retVal = SystemP_SUCCESS;
-        hwAttrs = (PRUICSS_HwAttrs const *)((h_sdfm->pru_config.pruicss_handle)->hwAttrs);
-        if(h_sdfm->pru_config.pru_slice == PRUICSS_PRU0)
-        {
-            HW_WR_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_SDPRU0SAMPLESIZEREGISTER0 + (ch_id * 8)),
-            CSL_ICSSCFG_SDPRU0SAMPLESIZEREGISTER0_PRU0_SD_SAMPLE_SIZE0, osr - 1);
-        }
-        else if (h_sdfm->pru_config.pru_slice == PRUICSS_PRU1)
-        {
-            HW_WR_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_SDPRU1SAMPLESIZEREGISTER0 + (ch_id * 8)),
-            CSL_ICSSCFG_SDPRU1SAMPLESIZEREGISTER0_PRU1_SD_SAMPLE_SIZE0, osr - 1);
-        }
-        else
-        {
-            return SystemP_FAILURE;
-        }
+        return SystemP_FAILURE;
     }
+
+    /* Validate OSR against hardware register limits */
+    if ((osr < SDFM_OSR_MIN) || (osr > SDFM_OSR_MAX))
+    {
+        return SystemP_FAILURE;
+    }
+
+    priv = handle->priv;
+    attrs = handle->attrs;
+
+    hw_attrs = (PRUICSS_HwAttrs const *)((priv->pruicss_handle)->hwAttrs);
+    if (attrs->pruicss_slice == PRUICSS_PRU0)
+    {
+        HW_WR_FIELD32((hw_attrs->cfgRegBase + CSL_ICSSCFG_SDPRU0SAMPLESIZEREGISTER0 + (channel * 8U)),
+        CSL_ICSSCFG_SDPRU0SAMPLESIZEREGISTER0_PRU0_SD_SAMPLE_SIZE0, osr - 1U);
+    }
+    else if (attrs->pruicss_slice == PRUICSS_PRU1)
+    {
+        HW_WR_FIELD32((hw_attrs->cfgRegBase + CSL_ICSSCFG_SDPRU1SAMPLESIZEREGISTER0 + (channel * 8U)),
+        CSL_ICSSCFG_SDPRU1SAMPLESIZEREGISTER0_PRU1_SD_SAMPLE_SIZE0, osr - 1U);
+    }
+    else
+    {
+        return SystemP_FAILURE;
+    }
+
     /* Over current OSR */
-    h_sdfm->sdfm_interface->channels[ch_id].over_current_osr = osr - 1;
-    return retVal;
- }
+    priv->sdfm_interface->channels[channel].over_current_osr = osr - 1U;
+    return SystemP_SUCCESS;
+}
 
 /* SDFM high, low threshold config */
-int32_t SDFM_setCompFilterThresholds(SDFM_Handle h_sdfm, uint8_t ch_id, uint32_t *thresholdParms)
+int32_t SDFM_setCompFilterThresholds(SDFM_Handle handle, uint8_t channel, SDFM_ThresholdConfig threshold_config)
 {
-    if(thresholdParms == NULL || h_sdfm == NULL || ch_id > SDFM_CHANNEL8)
+    SDFM_Priv *priv;
+
+    if ((handle == NULL) || (channel > SDFM_CHANNEL8))
     {
         return SystemP_FAILURE;
     }
-   /* SD Over current high threshold */
-    h_sdfm->sdfm_interface->channels[ch_id].threshold_config.high_threshold = thresholdParms[0];
+
+    /* Validate threshold values */
+    if ((threshold_config.high_threshold > SDFM_THRESHOLD_MAX) ||
+        (threshold_config.low_threshold > SDFM_THRESHOLD_MAX) ||
+        (threshold_config.high_threshold <= threshold_config.low_threshold))
+    {
+        return SystemP_FAILURE;
+    }
+
+    priv = handle->priv;
+
+    /* SD Over current high threshold */
+    priv->sdfm_interface->channels[channel].threshold_config.high_threshold = threshold_config.high_threshold;
     /* SD Over current low threshold */
-    h_sdfm->sdfm_interface->channels[ch_id].threshold_config.low_threshold = thresholdParms[1];
+    priv->sdfm_interface->channels[channel].threshold_config.low_threshold = threshold_config.low_threshold;
     return SystemP_SUCCESS;
 }
 
 /* SDFM sampling time configuration */
-int32_t SDFM_setSampleTriggerTime(SDFM_Handle h_sdfm, float samp_trig_time, uint8_t pru_core)
+int32_t SDFM_setSampleTriggerTime(SDFM_Handle handle, float samp_trig_time, uint8_t pru_core)
 {
-    if(pru_core > NUM_OF_PRU_CORE_PER_PRU_SLICE || pru_core < 0 || h_sdfm == NULL)
+    SDFM_Priv *priv;
+    const SDFM_Attrs *attrs;
+    uint32_t count;
+
+    if (handle == NULL)
     {
         return SystemP_FAILURE;
     }
+
+    if (pru_core >= NUM_OF_PRU_CORE_PER_PRU_SLICE)
+    {
+        return SystemP_FAILURE;
+    }
+
+    priv = handle->priv;
+    attrs = handle->attrs;
+
     /* Convert sample time into IEP count */
     /* Sample time in us */
-    int32_t count = (h_sdfm->pru_config.iep_clock /1000000)*((float)samp_trig_time);
-    h_sdfm->sdfm_interface->trigger_config[pru_core].first_samp_trig_time = count;
+    count = (uint32_t)((attrs->iep_clk_freq / 1000000U) * samp_trig_time);
+    priv->sdfm_interface->trigger_config[pru_core].first_samp_trig_time = count;
     return SystemP_SUCCESS;
 }
 /* Second normal current sampling configuration */
-int32_t SDFM_enableDoubleSampling(SDFM_Handle h_sdfm, float samp_trig_time, uint8_t pru_core)
+int32_t SDFM_enableDoubleSampling(SDFM_Handle handle, float samp_trig_time, uint8_t pru_core)
 {
-    if(pru_core > NUM_OF_PRU_CORE_PER_PRU_SLICE || pru_core < 0 || h_sdfm == NULL)
+    SDFM_Priv *priv;
+    const SDFM_Attrs *attrs;
+    uint32_t count;
+
+    if (handle == NULL)
     {
         return SystemP_FAILURE;
     }
+
+    if (pru_core >= NUM_OF_PRU_CORE_PER_PRU_SLICE)
+    {
+        return SystemP_FAILURE;
+    }
+
+    priv = handle->priv;
+    attrs = handle->attrs;
+
     /* Enable double normal current sampling */
-    h_sdfm->sdfm_interface->trigger_config[pru_core].en_double_nc_sampling = 1;
+    priv->sdfm_interface->trigger_config[pru_core].en_double_nc_sampling = 1U;
     /* Second sample point */
-    int32_t count = (h_sdfm->pru_config.iep_clock /1000000)*((float)samp_trig_time);
-    h_sdfm->sdfm_interface->trigger_config[pru_core].second_samp_trig_time = count;
+    count = (uint32_t)((attrs->iep_clk_freq / 1000000U) * samp_trig_time);
+    priv->sdfm_interface->trigger_config[pru_core].second_samp_trig_time = count;
 
     return SystemP_SUCCESS;
 }
 
 /* Disable double update */
-int32_t SDFM_disableDoubleSampling(SDFM_Handle h_sdfm, uint8_t pru_core)
+int32_t SDFM_disableDoubleSampling(SDFM_Handle handle, uint8_t pru_core)
 {
-    if(pru_core > NUM_OF_PRU_CORE_PER_PRU_SLICE || pru_core < 0 || h_sdfm == NULL)
+    SDFM_Priv *priv;
+
+    if (handle == NULL)
     {
         return SystemP_FAILURE;
     }
-    h_sdfm->sdfm_interface->trigger_config[pru_core].en_double_nc_sampling = 0;
+
+    if (pru_core >= NUM_OF_PRU_CORE_PER_PRU_SLICE)
+    {
+        return SystemP_FAILURE;
+    }
+
+    priv = handle->priv;
+
+    priv->sdfm_interface->trigger_config[pru_core].en_double_nc_sampling = 0U;
     return SystemP_SUCCESS;
 }
 /* Enable the channel specified by the channel number parameter */
-int32_t SDFM_setEnableChannel(SDFM_Handle h_sdfm, uint8_t channel_number)
+int32_t SDFM_setEnableChannel(SDFM_Handle handle, uint8_t channel_number)
 {
-    int32_t                 retVal = SystemP_FAILURE;
-    if(channel_number > SDFM_CHANNEL8)
+    SDFM_Priv *priv;
+
+    if (handle == NULL)
     {
         return SystemP_FAILURE;
     }
 
-    if(h_sdfm != NULL)
+    if (channel_number > SDFM_CHANNEL8)
     {
-        retVal = SystemP_SUCCESS;
-        h_sdfm->sdfm_interface->channels[channel_number].ch_id = channel_number;
-        h_sdfm->sdfm_interface->channels[channel_number].enabled = 1;
-        h_sdfm->sdfm_interface->active_channels_mask |= (1 << channel_number);
+        return SystemP_FAILURE;
     }
-    
-    return retVal;
+
+    priv = handle->priv;
+
+    priv->sdfm_interface->channels[channel_number].ch_id = channel_number;
+    priv->sdfm_interface->channels[channel_number].enabled = 1U;
+    priv->sdfm_interface->active_channels_mask |= (1U << channel_number);
+
+    return SystemP_SUCCESS;
 }
 /* set SDFM channel acc source */
-int32_t SDFM_configDataFilter(SDFM_Handle h_sdfm, uint8_t ch_id, uint8_t filter)
+int32_t SDFM_configDataFilter(SDFM_Handle handle, uint8_t channel, uint8_t filter)
 {
-    PRUICSS_HwAttrs const   *hwAttrs;
-    int32_t                 retVal = SystemP_FAILURE;
+    SDFM_Priv *priv;
+    const SDFM_Attrs *attrs;
+    PRUICSS_HwAttrs const *hw_attrs;
 
-    if(ch_id > SDFM_CHANNEL8)
+    if (handle == NULL)
     {
         return SystemP_FAILURE;
     }
-    if(h_sdfm != NULL)
+
+    if (channel > SDFM_CHANNEL8)
     {
-        retVal = SystemP_SUCCESS;
-        hwAttrs = (PRUICSS_HwAttrs const *)((h_sdfm->pru_config.pruicss_handle)->hwAttrs);
-        if(h_sdfm->pru_config.pru_slice == PRUICSS_PRU0)
-        {
-            HW_WR_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_SDPRU0CLKSELREGISTER0 + (ch_id * 8)),
-            CSL_ICSSCFG_SDPRU0CLKSELREGISTER0_PRU0_SD_ACC_SEL0, filter);
-        }
-        else if (h_sdfm->pru_config.pru_slice == PRUICSS_PRU1)
-        {
-            HW_WR_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_SDPRU1CLKSELREGISTER0 + (ch_id * 8)),
-            CSL_ICSSCFG_SDPRU1CLKSELREGISTER0_PRU1_SD_ACC_SEL0, filter);
-        }
-        else
-        {
-            return SystemP_FAILURE;
-        }
-        
+        return SystemP_FAILURE;
     }
 
-    h_sdfm->sdfm_interface->channels[ch_id].filter_type = filter;
-    return retVal;
+    /* Validate filter selection against hardware register limits */
+    if (filter > SDFM_ACC_FILTER_MAX)
+    {
+        return SystemP_FAILURE;
+    }
+
+    priv = handle->priv;
+    attrs = handle->attrs;
+
+    hw_attrs = (PRUICSS_HwAttrs const *)((priv->pruicss_handle)->hwAttrs);
+    if (attrs->pruicss_slice == PRUICSS_PRU0)
+    {
+        HW_WR_FIELD32((hw_attrs->cfgRegBase + CSL_ICSSCFG_SDPRU0CLKSELREGISTER0 + (channel * 8U)),
+        CSL_ICSSCFG_SDPRU0CLKSELREGISTER0_PRU0_SD_ACC_SEL0, filter);
+    }
+    else if (attrs->pruicss_slice == PRUICSS_PRU1)
+    {
+        HW_WR_FIELD32((hw_attrs->cfgRegBase + CSL_ICSSCFG_SDPRU1CLKSELREGISTER0 + (channel * 8U)),
+        CSL_ICSSCFG_SDPRU1CLKSELREGISTER0_PRU1_SD_ACC_SEL0, filter);
+    }
+    else
+    {
+        return SystemP_FAILURE;
+    }
+
+    priv->sdfm_interface->channels[channel].filter_type = filter;
+    return SystemP_SUCCESS;
 }
 
 /* Set clock source for SDFM channel */
-int32_t SDFM_selectClockSource(SDFM_Handle h_sdfm, uint8_t ch_id, uint8_t clk_source)
+int32_t SDFM_selectClockSource(SDFM_Handle handle, uint8_t channel, uint8_t clk_source)
 {
-    PRUICSS_HwAttrs const   *hwAttrs;
-    int32_t                 retVal = SystemP_FAILURE;
+    SDFM_Priv *priv;
+    const SDFM_Attrs *attrs;
+    PRUICSS_HwAttrs const *hw_attrs;
 
-    if(ch_id > SDFM_CHANNEL8)
+    if (handle == NULL)
     {
         return SystemP_FAILURE;
     }
 
-    if(h_sdfm != NULL)
-    {
-        retVal = SystemP_SUCCESS;
-        hwAttrs = (PRUICSS_HwAttrs const *)((h_sdfm->pru_config.pruicss_handle)->hwAttrs);
-        if(h_sdfm->pru_config.pru_slice == PRUICSS_PRU0)
-        {
-            HW_WR_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_SDPRU0CLKSELREGISTER0 + (ch_id * 8)),
-            CSL_ICSSCFG_SDPRU0CLKSELREGISTER0_PRU0_SD_CLK_SEL0, clk_source);
-        }
-        else if (h_sdfm->pru_config.pru_slice == PRUICSS_PRU1)
-        {
-            HW_WR_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_SDPRU1CLKSELREGISTER0 + (ch_id * 8)),
-            CSL_ICSSCFG_SDPRU1CLKSELREGISTER0_PRU1_SD_CLK_SEL0, clk_source);
-        }
-        else
-        {
-            return SystemP_FAILURE;
-        }
-        
-    }
-    h_sdfm->sdfm_interface->channels[ch_id].clk_source = clk_source;
-    return retVal;
-}
-/* Set clock inversion for SDFM channel */
-int32_t SDFM_setClockInversion(SDFM_Handle h_sdfm, uint8_t ch_id, uint8_t clk_inv)
-{
-    PRUICSS_HwAttrs const   *hwAttrs;
-    int32_t                 retVal = SystemP_FAILURE;
-
-    if(ch_id > SDFM_CHANNEL8)
-    {
-        return SystemP_FAILURE;
-    }
-    
-    if(h_sdfm != NULL)
-    {
-        retVal = SystemP_SUCCESS;
-        hwAttrs = (PRUICSS_HwAttrs const *)((h_sdfm->pru_config.pruicss_handle)->hwAttrs);
-        if(h_sdfm->pru_config.pru_slice == PRUICSS_PRU0)
-        {
-            HW_WR_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_SDPRU0CLKSELREGISTER0 + (ch_id * 8)),
-            CSL_ICSSCFG_SDPRU0CLKSELREGISTER0_PRU0_SD_CLK_INV0, clk_inv);
-        }
-        else if (h_sdfm->pru_config.pru_slice == PRUICSS_PRU1)
-        {
-            HW_WR_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_SDPRU1CLKSELREGISTER0 + (ch_id * 8)),
-            CSL_ICSSCFG_SDPRU1CLKSELREGISTER0_PRU1_SD_CLK_INV0, clk_inv);
-        }
-        else
-        {
-            return SystemP_FAILURE;
-        }
-        
-    }
-
-    h_sdfm->sdfm_interface->channels[ch_id].clk_inv = clk_inv;
-
-    return retVal;
-}
-/* Enable the comparator feature for a specified filter/channel */
-int32_t SDFM_enableComparator(SDFM_Handle h_sdfm, uint8_t ch)
-{
-    uint8_t pwmSet = 0;
-    uint16_t trip_mask; 
-    int32_t  retVal = SystemP_SUCCESS;
-    PRUICSS_PWM_Handle pwm_handle = h_sdfm->pru_config.pwm_handle;
-
-    if (ch > SDFM_CHANNEL8)
+    if (channel > SDFM_CHANNEL8)
     {
         return SystemP_FAILURE;
     }
 
-    if(ch < SDFM_CHANNEL3)
+    /* Validate clock source selection against hardware register limits */
+    if (clk_source > SDFM_CLK_SOURCE_MAX)
     {
-        pwmSet = 0;
+        return SystemP_FAILURE;
     }
-    else if (ch > SDFM_CHANNEL2 && ch < SDFM_CHANNEL6)
+
+    priv = handle->priv;
+    attrs = handle->attrs;
+
+    hw_attrs = (PRUICSS_HwAttrs const *)((priv->pruicss_handle)->hwAttrs);
+    if (attrs->pruicss_slice == PRUICSS_PRU0)
     {
-        pwmSet = 1;
+        HW_WR_FIELD32((hw_attrs->cfgRegBase + CSL_ICSSCFG_SDPRU0CLKSELREGISTER0 + (channel * 8U)),
+        CSL_ICSSCFG_SDPRU0CLKSELREGISTER0_PRU0_SD_CLK_SEL0, clk_source);
     }
-    else if (ch > SDFM_CHANNEL5 && ch <= SDFM_CHANNEL8)
+    else if (attrs->pruicss_slice == PRUICSS_PRU1)
     {
-        pwmSet = 2;
+        HW_WR_FIELD32((hw_attrs->cfgRegBase + CSL_ICSSCFG_SDPRU1CLKSELREGISTER0 + (channel * 8U)),
+        CSL_ICSSCFG_SDPRU1CLKSELREGISTER0_PRU1_SD_CLK_SEL0, clk_source);
     }
     else
     {
         return SystemP_FAILURE;
     }
 
-    retVal = PRUICSS_PWM_getPwmTripMask(pwm_handle, pwmSet, &trip_mask);
-    if(retVal != SystemP_SUCCESS)
-    {
-        return retVal;
-    }
-    trip_mask |= 0x2; /* Set the trip mask for over current trip */
+    priv->sdfm_interface->channels[channel].clk_source = clk_source;
+    return SystemP_SUCCESS;
+}
+/* Set clock inversion for SDFM channel */
+int32_t SDFM_setClockInversion(SDFM_Handle handle, uint8_t channel, uint8_t clk_inv)
+{
+    SDFM_Priv *priv;
+    const SDFM_Attrs *attrs;
+    PRUICSS_HwAttrs const *hw_attrs;
 
-    retVal = PRUICSS_PWM_setPwmTripMask(pwm_handle, pwmSet, trip_mask);
-
-    if(retVal != SystemP_SUCCESS)
+    if (handle == NULL)
     {
-        return retVal;
+        return SystemP_FAILURE;
     }
-    h_sdfm->sdfm_interface->channels[ch].enable_comparator = 1;
-    return retVal;
+
+    if ((channel > SDFM_CHANNEL8) || (clk_inv > SDFM_CLK_INV_MAX))
+    {
+        return SystemP_FAILURE;
+    }
+
+    priv = handle->priv;
+    attrs = handle->attrs;
+
+    hw_attrs = (PRUICSS_HwAttrs const *)((priv->pruicss_handle)->hwAttrs);
+    if (attrs->pruicss_slice == PRUICSS_PRU0)
+    {
+        HW_WR_FIELD32((hw_attrs->cfgRegBase + CSL_ICSSCFG_SDPRU0CLKSELREGISTER0 + (channel * 8U)),
+        CSL_ICSSCFG_SDPRU0CLKSELREGISTER0_PRU0_SD_CLK_INV0, clk_inv);
+    }
+    else if (attrs->pruicss_slice == PRUICSS_PRU1)
+    {
+        HW_WR_FIELD32((hw_attrs->cfgRegBase + CSL_ICSSCFG_SDPRU1CLKSELREGISTER0 + (channel * 8U)),
+        CSL_ICSSCFG_SDPRU1CLKSELREGISTER0_PRU1_SD_CLK_INV0, clk_inv);
+    }
+    else
+    {
+        return SystemP_FAILURE;
+    }
+
+    priv->sdfm_interface->channels[channel].clk_inv = clk_inv;
+
+    return SystemP_SUCCESS;
+}
+/* Enable the comparator feature for a specified filter/channel */
+int32_t SDFM_enableComparator(SDFM_Handle handle, uint8_t channel)
+{
+    SDFM_Priv *priv;
+    uint8_t pwm_set;
+    uint16_t trip_mask;
+    int32_t ret_val;
+
+    /* Validate input parameters */
+    if (handle == NULL)
+    {
+        return SystemP_FAILURE;
+    }
+
+    /* Assign variables after validation */
+    priv = handle->priv;
+
+    if (channel < SDFM_CHANNEL3)
+    {
+        pwm_set = 0U;
+    }
+    else if (channel > SDFM_CHANNEL2 && channel < SDFM_CHANNEL6)
+    {
+        pwm_set = 1U;
+    }
+    else if (channel > SDFM_CHANNEL5 && channel <= SDFM_CHANNEL8)
+    {
+        pwm_set = 2U;
+    }
+    else
+    {
+        return SystemP_FAILURE;
+    }
+
+    ret_val = PRUICSS_PWM_getPwmTripMask(priv->pwm_handle, pwm_set, &trip_mask);
+    if (ret_val != SystemP_SUCCESS)
+    {
+        return ret_val;
+    }
+    trip_mask |= 0x2U; /* Set the trip mask for over current trip */
+
+    ret_val = PRUICSS_PWM_setPwmTripMask(priv->pwm_handle, pwm_set, trip_mask);
+
+    if (ret_val != SystemP_SUCCESS)
+    {
+        return ret_val;
+    }
+    priv->sdfm_interface->channels[channel].enable_comparator = 1U;
+    return ret_val;
 }
 
 /* Disable the comparator feature for a specified filter/channel */
-int32_t SDFM_disableComparator(SDFM_Handle h_sdfm, uint8_t ch)
+int32_t SDFM_disableComparator(SDFM_Handle handle, uint8_t channel)
 {
-    uint8_t pwmSet;
-    uint16_t trip_mask; 
-    int32_t                 retVal = SystemP_SUCCESS;
-    PRUICSS_PWM_Handle pwm_handle = h_sdfm->pru_config.pwm_handle;
+    SDFM_Priv *priv;
+    uint8_t pwm_set;
+    uint16_t trip_mask;
+    int32_t ret_val;
 
-    if (ch > SDFM_CHANNEL8)
+    /* Validate input parameters */
+    if (handle == NULL)
     {
         return SystemP_FAILURE;
     }
 
-    if(ch < SDFM_CHANNEL3)
+    /* Assign variables after validation */
+    priv = handle->priv;
+
+    if (channel < SDFM_CHANNEL3)
     {
-        pwmSet = 0;
+        pwm_set = 0U;
     }
-    else if (ch > SDFM_CHANNEL2 && ch < SDFM_CHANNEL6)
+    else if (channel > SDFM_CHANNEL2 && channel < SDFM_CHANNEL6)
     {
-        pwmSet = 1;
+        pwm_set = 1U;
     }
-    else if (ch > SDFM_CHANNEL5 && ch <= SDFM_CHANNEL8)
+    else if (channel > SDFM_CHANNEL5 && channel <= SDFM_CHANNEL8)
     {
-        pwmSet = 2;
+        pwm_set = 2U;
     }
     else
     {
         return SystemP_FAILURE;
     }
-    
-    retVal = PRUICSS_PWM_getPwmTripMask(pwm_handle, pwmSet, &trip_mask);
-    if(retVal != SystemP_SUCCESS)
-    {
-        return retVal;
-    }
-    trip_mask &= 0xFFFD; /* Clear the trip mask for over current trip */
 
-    retVal = PRUICSS_PWM_setPwmTripMask(pwm_handle, pwmSet, trip_mask);
-
-    if(retVal != SystemP_SUCCESS)
+    ret_val = PRUICSS_PWM_getPwmTripMask(priv->pwm_handle, pwm_set, &trip_mask);
+    if (ret_val != SystemP_SUCCESS)
     {
-        return retVal;
+        return ret_val;
     }
-    h_sdfm->sdfm_interface->channels[ch].enable_comparator = 0;
-    
-    return retVal;
+    trip_mask &= 0xFFFDU; /* Clear the trip mask for over current trip */
+
+    ret_val = PRUICSS_PWM_setPwmTripMask(priv->pwm_handle, pwm_set, trip_mask);
+
+    if (ret_val != SystemP_SUCCESS)
+    {
+        return ret_val;
+    }
+    priv->sdfm_interface->channels[channel].enable_comparator = 0U;
+
+    return ret_val;
 }
 /* GPIO configuration */
-int32_t SDFM_configComparatorGpioPins(SDFM_Handle h_sdfm, uint8_t ch, uint32_t gpio_base_addr, uint32_t pin_number)
+int32_t SDFM_configComparatorGpioPins(SDFM_Handle handle, uint8_t channel, uint32_t gpio_base_addr, uint32_t pin_number)
 {
+    SDFM_Priv *priv;
+    volatile CSL_GpioRegs *h_gpio;
+    uint32_t reg_index;
+    uint32_t reg_val;
+    uint32_t clr_data_addr;
+    uint32_t set_data_addr;
 
-    if(ch > SDFM_CHANNEL8)
+    /* Validate input parameters */
+    if (handle == NULL)
     {
         return SystemP_FAILURE;
     }
-    volatile CSL_GpioRegs*  hGpio = (volatile CSL_GpioRegs*)((uintptr_t) gpio_base_addr);
-    uint32_t reg_index = GPIO_GET_REG_INDEX(pin_number);
-    uint32_t reg_val = GPIO_GET_BIT_MASK(pin_number);
-    uint32_t clr_data_addr = (uint32_t)&hGpio->BANK_REGISTERS[reg_index].CLR_DATA;
-    uint32_t set_data_addr = (uint32_t)&hGpio->BANK_REGISTERS[reg_index].SET_DATA;
 
-    h_sdfm->sdfm_interface->channels[ch].gpio_params.write_val = reg_val;
-    h_sdfm->sdfm_interface->channels[ch].gpio_params.set_val_addr = set_data_addr;
-    h_sdfm->sdfm_interface->channels[ch].gpio_params.clr_val_addr = clr_data_addr;
+    if (channel > SDFM_CHANNEL8)
+    {
+        return SystemP_FAILURE;
+    }
+
+    if (gpio_base_addr == 0)
+    {
+        return SystemP_FAILURE;
+    }
+
+    /* Assign variables after validation */
+    priv = handle->priv;
+
+    h_gpio = (volatile CSL_GpioRegs *)((uintptr_t)gpio_base_addr);
+    reg_index = GPIO_GET_REG_INDEX(pin_number);
+    reg_val = GPIO_GET_BIT_MASK(pin_number);
+    clr_data_addr = (uint32_t)&h_gpio->BANK_REGISTERS[reg_index].CLR_DATA;
+    set_data_addr = (uint32_t)&h_gpio->BANK_REGISTERS[reg_index].SET_DATA;
+
+    priv->sdfm_interface->channels[channel].gpio_params.write_val = reg_val;
+    priv->sdfm_interface->channels[channel].gpio_params.set_val_addr = set_data_addr;
+    priv->sdfm_interface->channels[channel].gpio_params.clr_val_addr = clr_data_addr;
 
     return SystemP_SUCCESS;
 }
 
 /* Get current (or latest) sample for the specified channel */
-uint32_t SDFM_getFilterData(SDFM_Handle h_sdfm, uint8_t ch)
+uint32_t SDFM_getFilterData(SDFM_Handle handle, uint8_t channel)
 {
-    if(ch > SDFM_CHANNEL8)
+    SDFM_Priv *priv;
+
+    if (handle == NULL)
     {
-        return SystemP_FAILURE;
+        return 0U;
     }
-    else{
-        return (uint32_t)(h_sdfm->sampleOutputInterface->sampleOutput[ch]);
+
+    if (channel > SDFM_CHANNEL8)
+    {
+        return 0U;
     }
+
+    priv = handle->priv;
+
+    return (uint32_t)(priv->sampleOutputInterface->sampleOutput[channel]);
 }
 
 /* Configure normal current OSR for data filter */
-int32_t SDFM_setFilterOverSamplingRatio(SDFM_Handle h_sdfm, uint8_t ch, uint16_t nc_osr)
+int32_t SDFM_setFilterOverSamplingRatio(SDFM_Handle handle, uint8_t channel, uint16_t nc_osr)
 {
+    SDFM_Priv *priv;
+    const SDFM_Attrs *attrs;
     uint8_t pru_core;
+    uint16_t count;
+    uint32_t iep_freq;
+    uint32_t sd_clock;
 
-    if(ch < SDFM_CHANNEL3)
+    if (handle == NULL)
     {
-        pru_core = 0;
+        return SystemP_FAILURE;
     }
-    else if (ch > SDFM_CHANNEL2 && ch < SDFM_CHANNEL6)
+
+    /* Validate OSR against hardware register limits */
+    if ((nc_osr < SDFM_OSR_MIN) || (nc_osr > SDFM_OSR_MAX))
     {
-        pru_core = 1;
+        return SystemP_FAILURE;
     }
-    else if (ch > SDFM_CHANNEL5 && ch <= SDFM_CHANNEL8)
+
+    if (channel < SDFM_CHANNEL3)
     {
-        pru_core = 2;
+        pru_core = 0U;
+    }
+    else if (channel > SDFM_CHANNEL2 && channel < SDFM_CHANNEL6)
+    {
+        pru_core = 1U;
+    }
+    else if (channel > SDFM_CHANNEL5 && channel <= SDFM_CHANNEL8)
+    {
+        pru_core = 2U;
     }
     else
     {
         return SystemP_FAILURE;
     }
-    
-    if(h_sdfm->sdfm_interface->control[pru_core].enable_snoop_nc == 1)
+
+    priv = handle->priv;
+    attrs = handle->attrs;
+
+    if (priv->sdfm_interface->control[pru_core].enable_snoop_nc == 1U)
     {
         /* IEP0 counts in normal current sampling period */
-        uint16_t count;
-        uint32_t iep_freq = h_sdfm->pru_config.iep_clock;
-        uint32_t sd_clock = h_sdfm->clk_config.sdfm_clock_value;
-        count = (int)((float)nc_osr*((float)iep_freq/(float)sd_clock));
-        h_sdfm->sdfm_interface->trigger_config[pru_core].nc_prd_iep_cnt = count;
+        iep_freq = attrs->iep_clk_freq;
+        sd_clock = attrs->sdfm_sampling_freq;
+        count = (uint16_t)((float)nc_osr * ((float)iep_freq / (float)sd_clock));
+        priv->sdfm_interface->trigger_config[pru_core].nc_prd_iep_cnt = count;
     }
     else
     {
         /* Setting SDFM hardware OSR for normal current without snoop mode */
-        SDFM_setCompFilterOverSamplingRatio(h_sdfm, ch, nc_osr);
+        SDFM_setCompFilterOverSamplingRatio(handle, channel, nc_osr);
     }
 
-    h_sdfm->sdfm_interface->channels[ch].normal_current_osr = nc_osr;
+    priv->sdfm_interface->channels[channel].normal_current_osr = nc_osr - 1;
     return SystemP_SUCCESS;
 }
 /* Return firmware version */
-uint32_t SDFM_getFirmwareVersion(SDFM_Handle h_sdfm)
+uint32_t SDFM_getFirmwareVersion(SDFM_Handle handle)
 {
-   return h_sdfm->sdfm_interface->firmwareVersion >> SDFM_FW_VERSION_BIT_SHIFT;
+    SDFM_Priv *priv;
+
+    if (handle == NULL)
+    {
+        return 0U;
+    }
+
+    priv = handle->priv;
+
+    return priv->sdfm_interface->firmwareVersion >> SDFM_FW_VERSION_BIT_SHIFT;
 }
 /* Trigger based normal current */
-int32_t SDFM_enableTriggerModeForNormalCurrent(SDFM_Handle h_sdfm, uint8_t pru_core)
+int32_t SDFM_enableTriggerModeForNormalCurrent(SDFM_Handle handle, uint8_t pru_core)
 {
-    if(pru_core > NUM_OF_PRU_CORE_PER_PRU_SLICE || pru_core < 0)
+    SDFM_Priv *priv;
+
+    if (handle == NULL)
     {
         return SystemP_FAILURE;
     }
-    h_sdfm->sdfm_interface->trigger_config[pru_core].enable_trigger_mode = 1;
+
+    if (pru_core >= NUM_OF_PRU_CORE_PER_PRU_SLICE)
+    {
+        return SystemP_FAILURE;
+    }
+
+    priv = handle->priv;
+
+    priv->sdfm_interface->trigger_config[pru_core].enable_trigger_mode = 1U;
     return SystemP_SUCCESS;
 }
 /* FD block configuration */
-int32_t SDFM_configFastDetect(SDFM_Handle h_sdfm, uint8_t ch, uint8_t *fdParms)
+int32_t SDFM_configFastDetect(SDFM_Handle handle, uint8_t channel, SDFM_FastDetectConfig fast_detect_config)
 {
-    PRUICSS_HwAttrs const   *hwAttrs;
-    uint8_t pwmSet = 0; /* Initialize to prevent uninitialized use */ 
-    uint16_t trip_mask; 
-    int32_t retVal = SystemP_SUCCESS;
-    PRUICSS_PWM_Handle pwm_handle = h_sdfm->pru_config.pwm_handle;
+    SDFM_Priv *priv;
+    const SDFM_Attrs *attrs;
+    PRUICSS_HwAttrs const *hw_attrs;
+    uint8_t pwm_set;
+    uint16_t trip_mask;
+    int32_t ret_val;
 
-    if (ch > SDFM_CHANNEL8)
+    if (handle == NULL)
     {
         return SystemP_FAILURE;
     }
 
-    if(ch < SDFM_CHANNEL3)
+    /* Validate fast detect parameters against hardware register limits */
+    if ((fast_detect_config.fd_enable > 1U) ||
+        (fast_detect_config.fd_window_size < SDFM_FD_WINDOW_SIZE_MIN) ||
+        (fast_detect_config.fd_window_size > SDFM_FD_WINDOW_SIZE_MAX) ||
+        (fast_detect_config.fd_zero_max > SDFM_FD_THRESHOLD_MAX) ||
+        (fast_detect_config.fd_zero_max < SDFM_FD_THRESHOLD_MIN) ||
+        (fast_detect_config.fd_zero_min > SDFM_FD_THRESHOLD_MAX) ||
+        (fast_detect_config.fd_zero_min < SDFM_FD_THRESHOLD_MIN))
     {
-        pwmSet = 0;
+        return SystemP_FAILURE;
     }
-    else if (ch > SDFM_CHANNEL2 && ch < SDFM_CHANNEL6)
+
+    priv = handle->priv;
+    attrs = handle->attrs;
+
+    if (channel < SDFM_CHANNEL3)
     {
-        pwmSet = 1;
+        pwm_set = 0U;
     }
-    else if (ch > SDFM_CHANNEL5 && ch <= SDFM_CHANNEL8)
+    else if (channel > SDFM_CHANNEL2 && channel < SDFM_CHANNEL6)
     {
-        pwmSet = 2;
+        pwm_set = 1U;
+    }
+    else if (channel > SDFM_CHANNEL5 && channel <= SDFM_CHANNEL8)
+    {
+        pwm_set = 2U;
     }
     else
     {
         return SystemP_FAILURE;
     }
 
-    h_sdfm->sdfm_interface->channels[ch].fd_enable = fdParms[0];
-    h_sdfm->sdfm_interface->channels[ch].fd_window = fdParms[1];
-    h_sdfm->sdfm_interface->channels[ch].fd_zero_max = fdParms[2];
-    h_sdfm->sdfm_interface->channels[ch].fd_zero_min = fdParms[3];
+    priv->sdfm_interface->channels[channel].fd_enable = fast_detect_config.fd_enable;
+    priv->sdfm_interface->channels[channel].fd_window = fast_detect_config.fd_window_size;
+    priv->sdfm_interface->channels[channel].fd_zero_max = fast_detect_config.fd_zero_max - 1U;
+    priv->sdfm_interface->channels[channel].fd_zero_min = fast_detect_config.fd_zero_min - 1U;
 
     /* Configure one max to window size + 1 and one min to 0, so they never get set */
-    h_sdfm->sdfm_interface->channels[ch].fd_one_max = (fdParms[1] + 1) * 4 + 1;
-    h_sdfm->sdfm_interface->channels[ch].fd_one_min = 0;
-    
-    hwAttrs = (PRUICSS_HwAttrs const *)((h_sdfm->pru_config.pruicss_handle)->hwAttrs);
+    priv->sdfm_interface->channels[channel].fd_one_max = (fast_detect_config.fd_window_size + 1U) * 4U + 1U;
+    priv->sdfm_interface->channels[channel].fd_one_min = 0U;
 
-    if(h_sdfm->pru_config.pru_slice == PRUICSS_PRU0)
+    hw_attrs = (PRUICSS_HwAttrs const *)((priv->pruicss_handle)->hwAttrs);
+
+    if (attrs->pruicss_slice == PRUICSS_PRU0)
     {
-        HW_WR_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_SDPRU0CLKSELREGISTER0 + (ch * 8)),
-        CSL_ICSSCFG_SDPRU0CLKSELREGISTER0_PRU0_FD_ZERO_MAX_LIMIT_0, h_sdfm->sdfm_interface->channels[ch].fd_zero_max);
-        HW_WR_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_SDPRU0CLKSELREGISTER0 + (ch * 8)),
-        CSL_ICSSCFG_SDPRU0CLKSELREGISTER0_PRU0_FD_ZERO_MIN_LIMIT_0, h_sdfm->sdfm_interface->channels[ch].fd_zero_min);
+        HW_WR_FIELD32((hw_attrs->cfgRegBase + CSL_ICSSCFG_SDPRU0CLKSELREGISTER0 + (channel * 8)),
+        CSL_ICSSCFG_SDPRU0CLKSELREGISTER0_PRU0_FD_ZERO_MAX_LIMIT_0, priv->sdfm_interface->channels[channel].fd_zero_max);
+        HW_WR_FIELD32((hw_attrs->cfgRegBase + CSL_ICSSCFG_SDPRU0CLKSELREGISTER0 + (channel * 8)),
+        CSL_ICSSCFG_SDPRU0CLKSELREGISTER0_PRU0_FD_ZERO_MIN_LIMIT_0, priv->sdfm_interface->channels[channel].fd_zero_min);
 
-        HW_WR_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_SDPRU0SAMPLESIZEREGISTER0 + (ch * 8)),
+        HW_WR_FIELD32((hw_attrs->cfgRegBase + CSL_ICSSCFG_SDPRU0SAMPLESIZEREGISTER0 + (channel * 8)),
         CSL_ICSSCFG_SDPRU0SAMPLESIZEREGISTER0_PRU0_FD_EN_0, 1);
-        HW_WR_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_SDPRU0SAMPLESIZEREGISTER0 + (ch * 8)),
-        CSL_ICSSCFG_SDPRU0SAMPLESIZEREGISTER0_PRU0_FD_ONE_MAX_LIMIT_0,  h_sdfm->sdfm_interface->channels[ch].fd_one_max);
-        HW_WR_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_SDPRU0SAMPLESIZEREGISTER0 + (ch * 8)),
-        CSL_ICSSCFG_SDPRU0SAMPLESIZEREGISTER0_PRU0_FD_ONE_MIN_LIMIT_0, h_sdfm->sdfm_interface->channels[ch].fd_one_min);
-        HW_WR_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_SDPRU0SAMPLESIZEREGISTER0 + (ch * 8)),
-        CSL_ICSSCFG_SDPRU0SAMPLESIZEREGISTER0_PRU0_FD_WINDOW_SIZE_0, h_sdfm->sdfm_interface->channels[ch].fd_window);
+        HW_WR_FIELD32((hw_attrs->cfgRegBase + CSL_ICSSCFG_SDPRU0SAMPLESIZEREGISTER0 + (channel * 8)),
+        CSL_ICSSCFG_SDPRU0SAMPLESIZEREGISTER0_PRU0_FD_ONE_MAX_LIMIT_0,  priv->sdfm_interface->channels[channel].fd_one_max);
+        HW_WR_FIELD32((hw_attrs->cfgRegBase + CSL_ICSSCFG_SDPRU0SAMPLESIZEREGISTER0 + (channel * 8)),
+        CSL_ICSSCFG_SDPRU0SAMPLESIZEREGISTER0_PRU0_FD_ONE_MIN_LIMIT_0, priv->sdfm_interface->channels[channel].fd_one_min);
+        HW_WR_FIELD32((hw_attrs->cfgRegBase + CSL_ICSSCFG_SDPRU0SAMPLESIZEREGISTER0 + (channel * 8)),
+        CSL_ICSSCFG_SDPRU0SAMPLESIZEREGISTER0_PRU0_FD_WINDOW_SIZE_0, priv->sdfm_interface->channels[channel].fd_window);
     }
-    else if (h_sdfm->pru_config.pru_slice == PRUICSS_PRU1)
+    else if (attrs->pruicss_slice == PRUICSS_PRU1)
     {
-        HW_WR_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_SDPRU1CLKSELREGISTER0 + (ch * 8)),
-        CSL_ICSSCFG_SDPRU1CLKSELREGISTER0_PRU1_FD_ZERO_MAX_LIMIT_0, h_sdfm->sdfm_interface->channels[ch].fd_zero_max);
-        HW_WR_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_SDPRU1CLKSELREGISTER0 + (ch * 8)),
-        CSL_ICSSCFG_SDPRU1CLKSELREGISTER0_PRU1_FD_ZERO_MIN_LIMIT_0, h_sdfm->sdfm_interface->channels[ch].fd_zero_min);
+        HW_WR_FIELD32((hw_attrs->cfgRegBase + CSL_ICSSCFG_SDPRU1CLKSELREGISTER0 + (channel * 8)),
+        CSL_ICSSCFG_SDPRU1CLKSELREGISTER0_PRU1_FD_ZERO_MAX_LIMIT_0, priv->sdfm_interface->channels[channel].fd_zero_max);
+        HW_WR_FIELD32((hw_attrs->cfgRegBase + CSL_ICSSCFG_SDPRU1CLKSELREGISTER0 + (channel * 8)),
+        CSL_ICSSCFG_SDPRU1CLKSELREGISTER0_PRU1_FD_ZERO_MIN_LIMIT_0, priv->sdfm_interface->channels[channel].fd_zero_min);
 
-        HW_WR_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_SDPRU1SAMPLESIZEREGISTER0 + (ch * 8)),
+        HW_WR_FIELD32((hw_attrs->cfgRegBase + CSL_ICSSCFG_SDPRU1SAMPLESIZEREGISTER0 + (channel * 8)),
         CSL_ICSSCFG_SDPRU1SAMPLESIZEREGISTER0_PRU1_FD_EN_0, 1);
-        HW_WR_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_SDPRU1SAMPLESIZEREGISTER0 + (ch * 8)),
-        CSL_ICSSCFG_SDPRU1SAMPLESIZEREGISTER0_PRU1_FD_ONE_MAX_LIMIT_0,  h_sdfm->sdfm_interface->channels[ch].fd_one_max);
-        HW_WR_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_SDPRU1SAMPLESIZEREGISTER0 + (ch * 8)),
-        CSL_ICSSCFG_SDPRU1SAMPLESIZEREGISTER0_PRU1_FD_ONE_MIN_LIMIT_0, h_sdfm->sdfm_interface->channels[ch].fd_one_min);
-        HW_WR_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_SDPRU1SAMPLESIZEREGISTER0 + (ch * 8)),
-        CSL_ICSSCFG_SDPRU1SAMPLESIZEREGISTER0_PRU1_FD_WINDOW_SIZE_0, h_sdfm->sdfm_interface->channels[ch].fd_window);
+        HW_WR_FIELD32((hw_attrs->cfgRegBase + CSL_ICSSCFG_SDPRU1SAMPLESIZEREGISTER0 + (channel * 8)),
+        CSL_ICSSCFG_SDPRU1SAMPLESIZEREGISTER0_PRU1_FD_ONE_MAX_LIMIT_0,  priv->sdfm_interface->channels[channel].fd_one_max);
+        HW_WR_FIELD32((hw_attrs->cfgRegBase + CSL_ICSSCFG_SDPRU1SAMPLESIZEREGISTER0 + (channel * 8)),
+        CSL_ICSSCFG_SDPRU1SAMPLESIZEREGISTER0_PRU1_FD_ONE_MIN_LIMIT_0, priv->sdfm_interface->channels[channel].fd_one_min);
+        HW_WR_FIELD32((hw_attrs->cfgRegBase + CSL_ICSSCFG_SDPRU1SAMPLESIZEREGISTER0 + (channel * 8)),
+        CSL_ICSSCFG_SDPRU1SAMPLESIZEREGISTER0_PRU1_FD_WINDOW_SIZE_0, priv->sdfm_interface->channels[channel].fd_window);
     }
     else
     {
         return SystemP_FAILURE;
-    } 
-
-    retVal = PRUICSS_PWM_getPwmTripMask(pwm_handle, pwmSet, &trip_mask);
-    if(retVal != SystemP_SUCCESS)
-    {
-        return retVal;
     }
-    trip_mask |= (1<<(ch+2)); /* Set the trip mask for fast detect trip */
 
-    retVal = PRUICSS_PWM_setPwmTripMask(pwm_handle, pwmSet, trip_mask);
+    ret_val = PRUICSS_PWM_getPwmTripMask(priv->pwm_handle, pwm_set, &trip_mask);
+    if(ret_val != SystemP_SUCCESS)
+    {
+        return ret_val;
+    }
+    trip_mask |= (1<<(channel+2)); /* Set the trip mask for fast detect trip */
 
-    return retVal;
+    ret_val = PRUICSS_PWM_setPwmTripMask(priv->pwm_handle, pwm_set, trip_mask);
+
+    return ret_val;
 }
 
 /* Return status of PWM trip vector status bit */
-int32_t SDFM_getFastDetectErrorStatus(SDFM_Handle h_sdfm, uint8_t chNum) 
+int32_t SDFM_getFastDetectErrorStatus(SDFM_Handle handle, uint8_t channel)
 {
-    uint8_t pwmSet;
-    int32_t                 retVal = SystemP_SUCCESS;
-    PRUICSS_PWM_Handle pwm_handle = h_sdfm->pru_config.pwm_handle;
-    if(chNum < SDFM_CHANNEL3)
+    uint8_t pwm_set;
+    int32_t ret_val = SystemP_SUCCESS;
+    PRUICSS_PWM_Handle pwm_handle;
+    uint32_t temp;
+
+    if (handle == NULL)
     {
-        pwmSet = 0;
+        return SystemP_FAILURE;
     }
-    else if (chNum > SDFM_CHANNEL2 && chNum < SDFM_CHANNEL6)
+
+    if(channel < SDFM_CHANNEL3)
     {
-        pwmSet = 1;
+        pwm_set = 0;
     }
-    else if (chNum > SDFM_CHANNEL5 && chNum <= SDFM_CHANNEL8)
+    else if (channel > SDFM_CHANNEL2 && channel < SDFM_CHANNEL6)
     {
-        pwmSet = 2;
+        pwm_set = 1;
+    }
+    else if (channel > SDFM_CHANNEL5 && channel <= SDFM_CHANNEL8)
+    {
+        pwm_set = 2;
     }
     else
     {
-        retVal = SystemP_FAILURE;
+        ret_val = SystemP_FAILURE;
     }
-    
-    if(retVal == SystemP_FAILURE)
+
+    if(ret_val == SystemP_FAILURE)
     {
-        return retVal;
+        return ret_val;
     }
+
+    pwm_handle = handle->priv->pwm_handle;
 
     /* PWM trip vector */
-    retVal = PRUICSS_PWM_getPwmTripTriggerCauseVector(pwm_handle, pwmSet);
-    if(retVal == SystemP_FAILURE)
+    ret_val = PRUICSS_PWM_getPwmTripTriggerCauseVector(pwm_handle, pwm_set);
+    if(ret_val == SystemP_FAILURE)
     {
-        return retVal;
+        return ret_val;
     }
     else
     {
 
-        retVal =  retVal >> 2;
-        uint32_t temp;
-        temp  = 1 << chNum;
+        ret_val =  ret_val >> 2;
+        temp  = 1 << channel;
         if(temp & SDFM_CH_MASK_FOR_CH0_CH3_CH6)
         {
-            return ((retVal) & (1 << SDFM_CHANNEL0)) ? 1 : 0;
+            return ((ret_val) & (1 << SDFM_CHANNEL0)) ? 1 : 0;
         }
         else if(temp & SDFM_CH_MASK_FOR_CH1_CH4_CH7)
         {
-            return ((retVal) & (1 << SDFM_CHANNEL1))? 1 : 0;
+            return ((ret_val) & (1 << SDFM_CHANNEL1))? 1 : 0;
         }
-        else 
+        else
         {
-            return ((retVal) & (1 << SDFM_CHANNEL2)) ? 1 : 0;
+            return ((ret_val) & (1 << SDFM_CHANNEL2)) ? 1 : 0;
         }
 
     }
@@ -769,237 +1174,314 @@ int32_t SDFM_getFastDetectErrorStatus(SDFM_Handle h_sdfm, uint8_t chNum)
 }
 
 /* Clear Trip status bit */
-int32_t SDFM_clearPwmTripStatus(SDFM_Handle h_sdfm, uint8_t chNum)
+int32_t SDFM_clearPwmTripStatus(SDFM_Handle handle, uint8_t channel)
 {
-    uint8_t pwmSet;
-    int32_t                 retVal = SystemP_SUCCESS;
-    PRUICSS_PWM_Handle pwm_handle = h_sdfm->pru_config.pwm_handle;
+    uint8_t pwm_set;
+    int32_t ret_val = SystemP_SUCCESS;
+    PRUICSS_PWM_Handle pwm_handle;
 
-    if(chNum < SDFM_CHANNEL3)
+    if (handle == NULL)
     {
-        pwmSet = 0;
+        return SystemP_FAILURE;
     }
-    else if (chNum > SDFM_CHANNEL2 && chNum < SDFM_CHANNEL6)
+
+    if(channel < SDFM_CHANNEL3)
     {
-        pwmSet = 1;
+        pwm_set = 0;
     }
-    else if (chNum > SDFM_CHANNEL5 && chNum <= SDFM_CHANNEL8)
+    else if (channel > SDFM_CHANNEL2 && channel < SDFM_CHANNEL6)
     {
-        pwmSet = 2;
+        pwm_set = 1;
+    }
+    else if (channel > SDFM_CHANNEL5 && channel <= SDFM_CHANNEL8)
+    {
+        pwm_set = 2;
     }
     else
     {
-        retVal = SystemP_FAILURE;
-    }
-    
-    if(retVal == SystemP_FAILURE)
-    {
-        return retVal;
+        ret_val = SystemP_FAILURE;
     }
 
-    /* Clear trip status */
-    retVal = PRUICSS_PWM_generatePwmTripReset(pwm_handle, pwmSet);
-    if(retVal == SystemP_FAILURE)
+    if(ret_val == SystemP_FAILURE)
     {
-        return retVal;
+        return ret_val;
+    }
+
+    pwm_handle = handle->priv->pwm_handle;
+
+    /* Clear trip status */
+    ret_val = PRUICSS_PWM_generatePwmTripReset(pwm_handle, pwm_set);
+    if(ret_val == SystemP_FAILURE)
+    {
+        return ret_val;
     }
 
     /* Clear trip reset status */
-    retVal = PRUICSS_PWM_clearPwmTripResetStatus(pwm_handle, pwmSet);
+    ret_val = PRUICSS_PWM_clearPwmTripResetStatus(pwm_handle, pwm_set);
 
-    return retVal;
+    return ret_val;
 }
-/* Enable Load share mode */
-void SDFM_enableLoadShareMode(SDFM_Handle h_sdfm, uint8_t sliceId)
+/* Enable Load share mode (static helper function) */
+static int32_t SDFM_enableLoadShareMode(SDFM_Handle handle, uint8_t sliceId)
 {
-    void *pruicssCfg = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->cfgRegBase);
-
+    SDFM_Priv *priv;
+    void *pruicss_cfg;
     uint32_t rgval;
-    if(sliceId)
+
+    if (handle == NULL)
     {
-       rgval = HW_RD_REG32((uint8_t *)pruicssCfg + CSL_ICSSCFG_SDPRU1CLKDIV);
-       rgval |= CSL_ICSSCFG_SDPRU1CLKDIV_PRU1_SD_SHARE_EN_MASK;
-       HW_WR_REG32((uint8_t *)pruicssCfg + CSL_ICSSCFG_SDPRU1CLKDIV, rgval);
+        return SystemP_FAILURE;
+    }
+
+    priv = handle->priv;
+
+    pruicss_cfg = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->cfgRegBase);
+
+    if (sliceId != 0U)
+    {
+        rgval = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_SDPRU1CLKDIV);
+        rgval |= CSL_ICSSCFG_SDPRU1CLKDIV_PRU1_SD_SHARE_EN_MASK;
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_SDPRU1CLKDIV, rgval);
     }
     else
     {
-        rgval = HW_RD_REG32((uint8_t *)pruicssCfg + CSL_ICSSCFG_SDPRU0CLKDIV);
+        rgval = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_SDPRU0CLKDIV);
         rgval |= CSL_ICSSCFG_SDPRU0CLKDIV_PRU0_SD_SHARE_EN_MASK;
-        HW_WR_REG32((uint8_t *)pruicssCfg + CSL_ICSSCFG_SDPRU0CLKDIV, rgval);
-    }
-
-}
-/* Measure Phase delay */
-int32_t SDFM_measureClockPhaseDelay(SDFM_Handle h_sdfm, uint16_t clkEdg, uint8_t chNum)
-{
-    if(chNum > SDFM_CHANNEL8)
-    {
-        return SystemP_FAILURE;
-    }
-    /* Enable phase delay measurement */
-    h_sdfm->sdfm_interface->channels[chNum].en_phase_delay = 1;
-    /* Waiting till measurement done */
-    uint8_t ack = h_sdfm->sdfm_interface->channels[chNum].en_phase_delay & SDFM_PHASE_DELAY_ACK_BIT_MASK;
-    while(ack)
-    {
-       ack = h_sdfm->sdfm_interface->channels[chNum].en_phase_delay & SDFM_PHASE_DELAY_ACK_BIT_MASK ;
-    }
-
-   uint16_t nEdge = h_sdfm->sdfm_interface->channels[chNum].clock_edge;
-   float temp = h_sdfm->sdfm_interface->channels[chNum].clock_phase_delay;
-   /* Average */
-    temp = temp/SDFM_PHASE_DELAY_CAL_LOOP_SIZE;
-   /* Check data reading edge(clk polarity) & nearest edge */
-   if(nEdge == clkEdg)
-   {
-      /* PRU cycles for half SD clock period */
-      uint32_t pruCycles = ceil(((float)h_sdfm->pru_config.pru_clock)/(2*h_sdfm->sdfm_interface->channels[chNum].sdfm_clk));
-      h_sdfm->sdfm_interface->channels[chNum].clock_phase_delay = pruCycles - temp;
-   }
-   else
-   {
-      /* PRU cycles for one SD clock period */
-      uint32_t pruCycles = ceil((float)(h_sdfm->pru_config.pru_clock/(h_sdfm->sdfm_interface->channels[chNum].sdfm_clk)));
-      h_sdfm->sdfm_interface->channels[chNum].clock_phase_delay = pruCycles - temp;
-   }
-
-   return SystemP_SUCCESS;
-}
-float SDFM_getClockPhaseDelay(SDFM_Handle h_sdfm, uint8_t chNum)
-{
-    /* Conversion from PRU cycle to ns */
-    float phaseDelay =  ((float)h_sdfm->sdfm_interface->channels[chNum].clock_phase_delay * 1000000000)/h_sdfm->pru_config.pru_clock;
-    return phaseDelay;
-}
-int32_t SDFM_getHighThresholdStatus(SDFM_Handle h_sdfm, uint8_t chNum)
-{
-    if(chNum > SDFM_CHANNEL8)
-    {
-        return SystemP_FAILURE;
-    }
-    else
-    {
-        return h_sdfm->sdfm_interface->channels[chNum].threshold_config.high_th_status;
-    }
-}
-int32_t SDFM_getLowThresholdStatus(SDFM_Handle h_sdfm, uint8_t chNum)
-{
-    if(chNum > SDFM_CHANNEL8)
-    {
-        return SystemP_FAILURE;
-    }
-    else
-    {
-        return  h_sdfm->sdfm_interface->channels[chNum].threshold_config.low_th_status;
-    }
-}
-
-int32_t SDFM_clearOverCurrentError(SDFM_Handle h_sdfm, uint8_t chNum)
-{
-    uint8_t pwmSet;
-    int32_t retVal = SystemP_SUCCESS;
-    PRUICSS_PWM_Handle pwm_handle = h_sdfm->pru_config.pwm_handle;
-    if(chNum < SDFM_CHANNEL3)
-    {
-        pwmSet = 0;
-    }
-    else if (chNum > SDFM_CHANNEL2 && chNum < SDFM_CHANNEL6)
-    {
-        pwmSet = 1;
-    }
-    else if (chNum > SDFM_CHANNEL5 && chNum <= SDFM_CHANNEL8)
-    {
-        pwmSet = 2;
-    }
-    else
-    {
-        retVal = SystemP_FAILURE;
-    }
-
-    if(retVal == SystemP_FAILURE)
-    {
-        return retVal;
-    }
-
-    /* Clear over current Error PWM trip */
-    retVal = PRUICSS_PWM_clearPwmOverCurrentErrorTrip(pwm_handle, pwmSet);
-    if(retVal == SystemP_FAILURE)
-    {
-        return retVal;
-    }
-
-    /* Clear PWM trip */
-    retVal = SDFM_clearPwmTripStatus(h_sdfm, chNum);
-    return retVal;
-}
-int32_t SDFM_enableZeroCrossDetection(SDFM_Handle h_sdfm, uint8_t chNum, uint32_t zcThr)
-{
-
-    if(chNum <= SDFM_CHANNEL8 && chNum >= SDFM_CHANNEL0)
-    {
-        h_sdfm->sdfm_interface->channels[chNum].threshold_config.en_zero_cross = 1;
-        h_sdfm->sdfm_interface->channels[chNum].threshold_config.zero_cross_threshold = zcThr;
-    }
-    else
-    {
-        return SystemP_FAILURE;
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSSCFG_SDPRU0CLKDIV, rgval);
     }
 
     return SystemP_SUCCESS;
 }
-int32_t SDFM_getZeroCrossThresholdStatus(SDFM_Handle h_sdfm, uint8_t chNum)
+/* Measure Phase delay */
+int32_t SDFM_measureClockPhaseDelay(SDFM_Handle handle, uint16_t clk_edg, uint8_t channel)
 {
+    SDFM_Priv *priv;
+    const SDFM_Attrs *attrs;
+    uint16_t n_edge;
+    float temp;
+    uint8_t ack;
+    uint32_t pru_cycles;
+    uint32_t i;
 
-    if(chNum <= SDFM_CHANNEL8 && chNum >= SDFM_CHANNEL0)
-    {
-        return h_sdfm->sdfm_interface->channels[chNum].threshold_config.zero_cross_th_status;
-    }
-    else
+    if(channel > SDFM_CHANNEL8 || clk_edg > 1)
     {
         return SystemP_FAILURE;
     }
 
-}
-int32_t SDFM_disableZeroCrossDetection(SDFM_Handle h_sdfm, uint8_t chNum)
-{
-    int32_t   retVal = SystemP_FAILURE;
+    priv = handle->priv;
+    attrs = handle->attrs;
 
-    if(chNum <= SDFM_CHANNEL8 && chNum >= SDFM_CHANNEL0)
+    /* Enable phase delay measurement */
+    priv->sdfm_interface->channels[channel].en_phase_delay = 1;
+    /* Waiting till measurement done with timeout */
+    for(i = 0; i < SDFM_DEFAULT_MAX_WAIT_LOOP_COUNT; i++)
     {
-        h_sdfm->sdfm_interface->channels[chNum].threshold_config.en_zero_cross = 0;
-        retVal = SystemP_SUCCESS;
+       ack = priv->sdfm_interface->channels[channel].en_phase_delay & SDFM_PHASE_DELAY_ACK_BIT_MASK;
+       if(!ack)
+       {
+           break;
+       }
+       ClockP_usleep(SDFM_DEFAULT_FW_WAIT_DELAY_US);
+    }
+
+    /* Check for timeout */
+    if(i >= SDFM_DEFAULT_MAX_WAIT_LOOP_COUNT)
+    {
+        return SystemP_TIMEOUT;
+    }
+
+   n_edge = priv->sdfm_interface->channels[channel].clock_edge;
+   temp = priv->sdfm_interface->channels[channel].clock_phase_delay;
+   /* Average */
+    temp = temp/SDFM_PHASE_DELAY_CAL_LOOP_SIZE;
+   /* Check data reading edge(clk polarity) & nearest edge */
+   if(n_edge == clk_edg)
+   {
+      /* PRU cycles for half SD clock period */
+      pru_cycles = ceil(((float)attrs->core_clk_freq)/(2*priv->sdfm_interface->channels[channel].sdfm_clk));
+      priv->sdfm_interface->channels[channel].clock_phase_delay = pru_cycles - temp;
+   }
+   else
+   {
+      /* PRU cycles for one SD clock period */
+      pru_cycles = ceil((float)(attrs->core_clk_freq/(priv->sdfm_interface->channels[channel].sdfm_clk)));
+      priv->sdfm_interface->channels[channel].clock_phase_delay = pru_cycles - temp;
+   }
+
+   return SystemP_SUCCESS;
+}
+float SDFM_getClockPhaseDelay(SDFM_Handle handle, uint8_t channel)
+{
+    SDFM_Priv *priv;
+    const SDFM_Attrs *attrs;
+    float phase_delay;
+
+    if (handle == NULL || channel > SDFM_CHANNEL8)
+    {
+        return 0.0f;
+    }
+
+    priv = handle->priv;
+    attrs = handle->attrs;
+
+    /* Conversion from PRU cycle to ns */
+    phase_delay =  ((float)priv->sdfm_interface->channels[channel].clock_phase_delay * SDFM_NANOSECONDS_PER_SECOND)/attrs->core_clk_freq;
+    return phase_delay;
+}
+int32_t SDFM_getHighThresholdStatus(SDFM_Handle handle, uint8_t channel)
+{
+    if(channel > SDFM_CHANNEL8 || handle == NULL)
+    {
+        return SystemP_FAILURE;
     }
     else
+    {
+        return handle->priv->sdfm_interface->channels[channel].threshold_config.high_th_status;
+    }
+}
+int32_t SDFM_getLowThresholdStatus(SDFM_Handle handle, uint8_t channel)
+{
+    if(channel > SDFM_CHANNEL8 || handle == NULL)
+    {
+        return SystemP_FAILURE;
+    }
+    else
+    {
+        return  handle->priv->sdfm_interface->channels[channel].threshold_config.low_th_status;
+    }
+}
+
+int32_t SDFM_clearOverCurrentError(SDFM_Handle handle, uint8_t channel)
+{
+    uint8_t pwm_set;
+    int32_t ret_val = SystemP_SUCCESS;
+    PRUICSS_PWM_Handle pwm_handle;
+
+    if (handle == NULL)
     {
         return SystemP_FAILURE;
     }
 
-    return retVal;
+    if(channel < SDFM_CHANNEL3)
+    {
+        pwm_set = 0;
+    }
+    else if (channel > SDFM_CHANNEL2 && channel < SDFM_CHANNEL6)
+    {
+        pwm_set = 1;
+    }
+    else if (channel > SDFM_CHANNEL5 && channel <= SDFM_CHANNEL8)
+    {
+        pwm_set = 2;
+    }
+    else
+    {
+        ret_val = SystemP_FAILURE;
+    }
+
+    if(ret_val == SystemP_FAILURE)
+    {
+        return ret_val;
+    }
+
+    pwm_handle = handle->priv->pwm_handle;
+
+    /* Clear over current Error PWM trip */
+    ret_val = PRUICSS_PWM_clearPwmOverCurrentErrorTrip(pwm_handle, pwm_set);
+    if(ret_val == SystemP_FAILURE)
+    {
+        return ret_val;
+    }
+
+    /* Clear PWM trip */
+    ret_val = SDFM_clearPwmTripStatus(handle, channel);
+    return ret_val;
+}
+int32_t SDFM_enableZeroCrossDetection(SDFM_Handle handle, uint8_t channel, uint32_t zc_thr)
+{
+    SDFM_Priv *priv;
+
+    if ((handle == NULL) || (channel > SDFM_CHANNEL8))
+    {
+        return SystemP_FAILURE;
+    }
+
+    /* Validate zero cross threshold value */
+    if (zc_thr > SDFM_THRESHOLD_MAX)
+    {
+        return SystemP_FAILURE;
+    }
+
+    priv = handle->priv;
+    priv->sdfm_interface->channels[channel].threshold_config.en_zero_cross = 1;
+    priv->sdfm_interface->channels[channel].threshold_config.zero_cross_threshold = zc_thr;
+
+    return SystemP_SUCCESS;
+}
+int32_t SDFM_getZeroCrossThresholdStatus(SDFM_Handle handle, uint8_t channel)
+{
+    if(handle == NULL || channel > SDFM_CHANNEL8)
+    {
+        return SystemP_FAILURE;
+    }
+
+    return handle->priv->sdfm_interface->channels[channel].threshold_config.zero_cross_th_status;
+}
+int32_t SDFM_disableZeroCrossDetection(SDFM_Handle handle, uint8_t channel)
+{
+    SDFM_Priv *priv;
+
+    if(handle == NULL || channel > SDFM_CHANNEL8)
+    {
+        return SystemP_FAILURE;
+    }
+
+    priv = handle->priv;
+    priv->sdfm_interface->channels[channel].threshold_config.en_zero_cross = 0;
+
+    return SystemP_SUCCESS;
 }
 
-int32_t SDFM_enableEpwmSync(SDFM_Handle h_sdfm, uint8_t epwmIns)
+int32_t SDFM_enableEpwmSync(SDFM_Handle handle, uint8_t epwm_ins)
 {
+    SDFM_Priv *priv;
+    const SDFM_Attrs *attrs;
     void *pru_iep;
-    int32_t   retVal = SystemP_FAILURE;
+    int32_t ret_val = SystemP_FAILURE;
 
-    if(h_sdfm->pru_config.iep_instance == PRUICSS_IEP_INST0)
+    /* Validate input parameters */
+    if(handle == NULL)
     {
-        pru_iep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->iep0RegBase);
+        return SystemP_FAILURE;
     }
-    else if(h_sdfm->pru_config.iep_instance == PRUICSS_IEP_INST1)
+
+    if(epwm_ins != 0 && epwm_ins != 3)
     {
-        pru_iep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->iep1RegBase);
+        return SystemP_FAILURE;
+    }
+
+    /* Assign variables after validation */
+    priv = handle->priv;
+    attrs = handle->attrs;
+
+    if(attrs->iep_instance == PRUICSS_IEP_INST0)
+    {
+        pru_iep = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->iep0RegBase);
+    }
+    else if(attrs->iep_instance == PRUICSS_IEP_INST1)
+    {
+        pru_iep = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->iep1RegBase);
     }
     else
     {
         return SystemP_FAILURE;
     }
-    
-    if(pru_iep != NULL && (epwmIns == 0 || epwmIns == 3))
-    {
-        retVal = SystemP_SUCCESS;
 
-        switch (epwmIns)
+    if(pru_iep != NULL)
+    {
+        ret_val = SystemP_SUCCESS;
+
+        switch (epwm_ins)
         {
             case 0:
                 HW_WR_FIELD32(((uint8_t *)pru_iep + CSL_ICSS_G_PR1_IEP0_SLV_PWM_REG),
@@ -1011,34 +1493,50 @@ int32_t SDFM_enableEpwmSync(SDFM_Handle h_sdfm, uint8_t epwmIns)
                 break;
         }
     }
-    h_sdfm->enable_sync_with_epwm = 1;
-    h_sdfm->sync_epwm_src = epwmIns;
 
-    return retVal;
+    return ret_val;
 }
 
-int32_t SDFM_disableEpwmSync(SDFM_Handle h_sdfm, uint8_t epwmIns)
+int32_t SDFM_disableEpwmSync(SDFM_Handle handle, uint8_t epwm_ins)
 {
+    SDFM_Priv *priv;
+    const SDFM_Attrs *attrs;
     void *pru_iep;
-    int32_t   retVal = SystemP_FAILURE;
-    if(h_sdfm->pru_config.iep_instance == PRUICSS_IEP_INST0)
+    int32_t ret_val = SystemP_FAILURE;
+
+    /* Validate input parameters */
+    if(handle == NULL)
     {
-        pru_iep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->iep0RegBase);
+        return SystemP_FAILURE;
     }
-    else if(h_sdfm->pru_config.iep_instance == PRUICSS_IEP_INST1)
+
+    if(epwm_ins != 0 && epwm_ins != 3)
     {
-        pru_iep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->iep1RegBase);
+        return SystemP_FAILURE;
+    }
+
+    /* Assign variables after validation */
+    priv = handle->priv;
+    attrs = handle->attrs;
+
+    if(attrs->iep_instance == PRUICSS_IEP_INST0)
+    {
+        pru_iep = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->iep0RegBase);
+    }
+    else if(attrs->iep_instance == PRUICSS_IEP_INST1)
+    {
+        pru_iep = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->iep1RegBase);
     }
     else
     {
         return SystemP_FAILURE;
     }
-    
-    if(pru_iep != NULL && (epwmIns == 0 || epwmIns == 3))
-    {
-        retVal = SystemP_SUCCESS;
 
-        switch (epwmIns)
+    if(pru_iep != NULL)
+    {
+        ret_val = SystemP_SUCCESS;
+
+        switch (epwm_ins)
         {
             case 0:
                 HW_WR_FIELD32(((uint8_t *)pru_iep + CSL_ICSS_G_PR1_IEP0_SLV_PWM_REG),
@@ -1050,85 +1548,107 @@ int32_t SDFM_disableEpwmSync(SDFM_Handle h_sdfm, uint8_t epwmIns)
                 break;
         }
     }
-    h_sdfm->enable_sync_with_epwm = 0;
-    h_sdfm->sync_epwm_src = 0;
-    return retVal;
+
+    return ret_val;
 }
 
-int32_t SDFM_configIepSyncMode(SDFM_Handle h_sdfm, uint32_t highPulseWidth, uint32_t periodTime, uint32_t syncStartTime)
+int32_t SDFM_configIepSyncMode(SDFM_Handle handle, uint32_t high_pulse_width, uint32_t period_time, uint32_t sync_start_time)
 {
+    SDFM_Priv *priv;
+    const SDFM_Attrs *attrs;
+    void        *pru_iep;
+    int32_t     ret_val = SystemP_FAILURE;
+    uint32_t    reg_val ;
 
-    void        *pruIep;
-    int32_t     retVal = SystemP_FAILURE;
-    uint32_t    regVal ;
-
-    if(h_sdfm->pru_config.iep_instance == PRUICSS_IEP_INST0)
+    /* Validate input parameters */
+    if(handle == NULL)
     {
-        pruIep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->iep0RegBase);
+        return SystemP_FAILURE;
     }
-    else if(h_sdfm->pru_config.iep_instance == PRUICSS_IEP_INST1)
+
+    /* Assign variables after validation */
+    priv = handle->priv;
+    attrs = handle->attrs;
+
+    if(attrs->iep_instance == PRUICSS_IEP_INST0)
     {
-        pruIep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->iep1RegBase);
+        pru_iep = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->iep0RegBase);
+    }
+    else if(attrs->iep_instance == PRUICSS_IEP_INST1)
+    {
+        pru_iep = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->iep1RegBase);
     }
     else
     {
         return SystemP_FAILURE;
     }
 
-    if(pruIep != NULL)
+    if(pru_iep != NULL)
     {
 
         /* Set CMP1 period - SYNC0 trigger */
-        HW_WR_REG32((uint8_t *)pruIep + CSL_ICSS_G_PR1_IEP0_SLV_CMP1_REG0, syncStartTime);
+        HW_WR_REG32((uint8_t *)pru_iep + CSL_ICSS_G_PR1_IEP0_SLV_CMP1_REG0, sync_start_time);
 
         /* Set CMP2 period - SYNC1 trigger */
-        HW_WR_REG32((uint8_t *)pruIep + CSL_ICSS_G_PR1_IEP0_SLV_CMP2_REG0, syncStartTime);
+        HW_WR_REG32((uint8_t *)pru_iep + CSL_ICSS_G_PR1_IEP0_SLV_CMP2_REG0, sync_start_time);
 
         /* Set sync ctrl register: SYNC1 dependent, cyclic generation , SYNC0 and SYNC1 enable, SYNC enable */
-        regVal = HW_RD_REG8((uint8_t *)pruIep + CSL_ICSS_G_PR1_IEP0_SLV_SYNC_CTRL_REG);
-        regVal |= (1<<CSL_ICSS_G_PR1_IEP0_SLV_SYNC_CTRL_REG_SYNC_EN_SHIFT) | (1<<CSL_ICSS_G_PR1_IEP0_SLV_SYNC_CTRL_REG_SYNC0_EN_SHIFT)|(1<<CSL_ICSS_G_PR1_IEP0_SLV_SYNC_CTRL_REG_SYNC1_EN_SHIFT);
-        regVal |= (1<<CSL_ICSS_G_PR1_IEP0_SLV_SYNC_CTRL_REG_SYNC0_CYCLIC_EN_SHIFT) | (1<<CSL_ICSS_G_PR1_IEP0_SLV_SYNC_CTRL_REG_SYNC1_CYCLIC_EN_SHIFT) | (0<<CSL_ICSS_G_PR1_IEP0_SLV_SYNC_CTRL_REG_SYNC1_IND_EN_SHIFT);
-        HW_WR_REG32((uint8_t *)pruIep + CSL_ICSS_G_PR1_IEP0_SLV_SYNC_CTRL_REG, regVal);
+        reg_val = HW_RD_REG8((uint8_t *)pru_iep + CSL_ICSS_G_PR1_IEP0_SLV_SYNC_CTRL_REG);
+        reg_val |= (1<<CSL_ICSS_G_PR1_IEP0_SLV_SYNC_CTRL_REG_SYNC_EN_SHIFT) | (1<<CSL_ICSS_G_PR1_IEP0_SLV_SYNC_CTRL_REG_SYNC0_EN_SHIFT)|(1<<CSL_ICSS_G_PR1_IEP0_SLV_SYNC_CTRL_REG_SYNC1_EN_SHIFT);
+        reg_val |= (1<<CSL_ICSS_G_PR1_IEP0_SLV_SYNC_CTRL_REG_SYNC0_CYCLIC_EN_SHIFT) | (1<<CSL_ICSS_G_PR1_IEP0_SLV_SYNC_CTRL_REG_SYNC1_CYCLIC_EN_SHIFT) | (0<<CSL_ICSS_G_PR1_IEP0_SLV_SYNC_CTRL_REG_SYNC1_IND_EN_SHIFT);
+        HW_WR_REG32((uint8_t *)pru_iep + CSL_ICSS_G_PR1_IEP0_SLV_SYNC_CTRL_REG, reg_val);
 
         /* Set SYNC0/1 high pulse time in IEP clock cycles */
-        HW_WR_REG32((uint8_t *)pruIep + CSL_ICSS_G_PR1_IEP0_SLV_SYNC_PWIDTH_REG, highPulseWidth);
+        HW_WR_REG32((uint8_t *)pru_iep + CSL_ICSS_G_PR1_IEP0_SLV_SYNC_PWIDTH_REG, high_pulse_width);
 
         /* Set SYNC0/1 period */
-        HW_WR_REG32((uint8_t *)pruIep + CSL_ICSS_G_PR1_IEP0_SLV_SYNC0_PERIOD_REG, periodTime);
+        HW_WR_REG32((uint8_t *)pru_iep + CSL_ICSS_G_PR1_IEP0_SLV_SYNC0_PERIOD_REG, period_time);
 
         /* Set offset from cpm hit */
-        HW_WR_REG32( (uint8_t *)pruIep + CSL_ICSS_G_PR1_IEP0_SLV_SYNC_START_REG, 0);
+        HW_WR_REG32( (uint8_t *)pru_iep + CSL_ICSS_G_PR1_IEP0_SLV_SYNC_START_REG, 0);
 
         /* Enable cmp1 and cmp2 for sync start trigger generation */
-        regVal = HW_RD_REG8((uint8_t *)pruIep + CSL_ICSS_G_PR1_IEP0_SLV_CMP_CFG_REG);
-        regVal |= (1<<SDFM_IEP_CMP1_EN_SHIFT)|(1<<SDFM_IEP_CMP2_EN_SHIFT);
-        HW_WR_REG32((uint8_t *)pruIep + CSL_ICSS_G_PR1_IEP0_SLV_CMP_CFG_REG, regVal);
+        reg_val = HW_RD_REG8((uint8_t *)pru_iep + CSL_ICSS_G_PR1_IEP0_SLV_CMP_CFG_REG);
+        reg_val |= (1<<SDFM_IEP_CMP1_EN_SHIFT)|(1<<SDFM_IEP_CMP2_EN_SHIFT);
+        HW_WR_REG32((uint8_t *)pru_iep + CSL_ICSS_G_PR1_IEP0_SLV_CMP_CFG_REG, reg_val);
 
         /* Set default and compensation increment to 1 */
-        regVal = HW_RD_REG32((uint8_t *)pruIep + CSL_ICSS_G_PR1_IEP0_SLV_GLOBAL_CFG_REG);
-        regVal |= (1<<CSL_ICSS_G_PR1_IEP0_SLV_GLOBAL_CFG_REG_DEFAULT_INC_SHIFT)|(1<<CSL_ICSS_G_PR1_IEP0_SLV_GLOBAL_CFG_REG_CMP_INC_SHIFT );
-        HW_WR_REG8((uint8_t *)pruIep + CSL_ICSS_G_PR1_IEP0_SLV_GLOBAL_CFG_REG, regVal);
+        reg_val = HW_RD_REG32((uint8_t *)pru_iep + CSL_ICSS_G_PR1_IEP0_SLV_GLOBAL_CFG_REG);
+        reg_val |= (1<<CSL_ICSS_G_PR1_IEP0_SLV_GLOBAL_CFG_REG_DEFAULT_INC_SHIFT)|(1<<CSL_ICSS_G_PR1_IEP0_SLV_GLOBAL_CFG_REG_CMP_INC_SHIFT );
+        HW_WR_REG8((uint8_t *)pru_iep + CSL_ICSS_G_PR1_IEP0_SLV_GLOBAL_CFG_REG, reg_val);
 
-        retVal = SystemP_SUCCESS;
+        ret_val = SystemP_SUCCESS;
 
     }
 
-    return retVal;
+    return ret_val;
 }
 
-int32_t SDFM_enableIep(SDFM_Handle h_sdfm)
+int32_t SDFM_enableIep(SDFM_Handle handle)
 {
+    SDFM_Priv *priv;
+    const SDFM_Attrs *attrs;
     void       *pruIep;
     int32_t    retVal = SystemP_FAILURE;
     uint32_t   regVal ;
 
-    if(h_sdfm->pru_config.iep_instance == PRUICSS_IEP_INST0)
+    /* Validate input parameters */
+    if(handle == NULL)
     {
-        pruIep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->iep0RegBase);
+        return SystemP_FAILURE;
     }
-    else if(h_sdfm->pru_config.iep_instance == PRUICSS_IEP_INST1)
+
+    /* Assign variables after validation */
+    priv = handle->priv;
+    attrs = handle->attrs;
+
+    if(attrs->iep_instance == PRUICSS_IEP_INST0)
     {
-        pruIep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->iep1RegBase);
+        pruIep = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->iep0RegBase);
+    }
+    else if(attrs->iep_instance == PRUICSS_IEP_INST1)
+    {
+        pruIep = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->iep1RegBase);
     }
     else
     {
@@ -1139,7 +1659,7 @@ int32_t SDFM_enableIep(SDFM_Handle h_sdfm)
     {
         /* IEP Counter increment value */
         HW_WR_FIELD32((uint8_t *)pruIep + CSL_ICSS_G_PR1_IEP0_SLV_GLOBAL_CFG_REG,
-        CSL_ICSS_G_PR1_IEP0_SLV_GLOBAL_CFG_REG_DEFAULT_INC, h_sdfm->pru_config.iep_inc_value);
+        CSL_ICSS_G_PR1_IEP0_SLV_GLOBAL_CFG_REG_DEFAULT_INC, IEP_DEFAULT_INC);
         /* Start iep0_timer */
         regVal = HW_RD_REG8((uint8_t *)pruIep + CSL_ICSS_G_PR1_IEP0_SLV_GLOBAL_CFG_REG);
         regVal |= 0x1;
@@ -1151,18 +1671,30 @@ int32_t SDFM_enableIep(SDFM_Handle h_sdfm)
     return retVal;
 }
 
-int32_t SDFM_configSync1Delay(SDFM_Handle h_sdfm, uint32_t delay)
+int32_t SDFM_configSync1Delay(SDFM_Handle handle, uint32_t delay)
 {
+    SDFM_Priv *priv;
+    const SDFM_Attrs *attrs;
     void      *pruIep;
     int32_t   retVal = SystemP_FAILURE;
 
-    if(h_sdfm->pru_config.iep_instance == PRUICSS_IEP_INST0)
+    /* Validate input parameters */
+    if(handle == NULL)
     {
-        pruIep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->iep0RegBase);
+        return SystemP_FAILURE;
     }
-    else if(h_sdfm->pru_config.iep_instance == PRUICSS_IEP_INST1)
+
+    /* Assign variables after validation */
+    priv = handle->priv;
+    attrs = handle->attrs;
+
+    if(attrs->iep_instance == PRUICSS_IEP_INST0)
     {
-        pruIep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->iep1RegBase);
+        pruIep = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->iep0RegBase);
+    }
+    else if(attrs->iep_instance == PRUICSS_IEP_INST1)
+    {
+        pruIep = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->iep1RegBase);
     }
     else
     {
@@ -1180,20 +1712,32 @@ int32_t SDFM_configSync1Delay(SDFM_Handle h_sdfm, uint32_t delay)
     return retVal;
 }
 
-int32_t SDFM_configClockFromGPO1(SDFM_Handle h_sdfm, uint8_t div0, uint8_t div1)
+int32_t SDFM_configClockFromGPO1(SDFM_Handle handle, uint8_t div0, uint8_t div1)
 {
-
+    SDFM_Priv *priv;
+    const SDFM_Attrs *attrs;
     uint32_t rgval;
-    void *pruicssCfg =(void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->cfgRegBase);
+    void *pruicssCfg;
     int32_t   retVal = SystemP_SUCCESS;
 
-    if( div0 >= CSL_ICSSCFG_GPCFG1_PRU1_GPO_DIV0_MAX || div1 >= CSL_ICSSCFG_GPCFG1_PRU1_GPO_DIV1_MAX )
+    /* Validate input parameters */
+    if(handle == NULL)
     {
-        retVal = SystemP_FAILURE;
-        return retVal;
+        return SystemP_FAILURE;
     }
+
+    if(div0 >= CSL_ICSSCFG_GPCFG1_PRU1_GPO_DIV0_MAX || div1 >= CSL_ICSSCFG_GPCFG1_PRU1_GPO_DIV1_MAX)
+    {
+        return SystemP_FAILURE;
+    }
+
+    /* Assign variables after validation */
+    priv = handle->priv;
+    attrs = handle->attrs;
+
+    pruicssCfg = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->cfgRegBase);
     /* Configure divider */
-    if(h_sdfm->pru_config.pru_slice == 1)
+    if(attrs->pruicss_slice == 1)
     {
         rgval = HW_RD_REG32((uint8_t *)pruicssCfg + CSL_ICSSCFG_GPCFG1);
         rgval |= (div0<<CSL_ICSSCFG_GPCFG1_PRU1_GPO_DIV0_SHIFT)&(CSL_ICSSCFG_GPCFG1_PRU1_GPO_DIV0_MASK);
@@ -1202,8 +1746,13 @@ int32_t SDFM_configClockFromGPO1(SDFM_Handle h_sdfm, uint8_t div0, uint8_t div1)
         rgval = HW_RD_REG32((uint8_t *)pruicssCfg + CSL_ICSSCFG_GPCFG1);
         rgval |= (div1<<CSL_ICSSCFG_GPCFG1_PRU1_GPO_DIV1_SHIFT)&(CSL_ICSSCFG_GPCFG1_PRU1_GPO_DIV1_MASK);
         HW_WR_REG32((uint8_t *)pruicssCfg + CSL_ICSSCFG_GPCFG1, rgval);
+
+        /* Enabling shift mode */
+        rgval = HW_RD_REG32((uint8_t *)pruicssCfg + CSL_ICSSCFG_GPCFG1);
+        rgval |= (CSL_ICSSCFG_GPCFG1_PRU1_GPO_MODE_MAX<<CSL_ICSSCFG_GPCFG1_PRU1_GPO_MODE_SHIFT)&(CSL_ICSSCFG_GPCFG1_PRU1_GPO_MODE_MASK);
+        HW_WR_REG32((uint8_t *)pruicssCfg + CSL_ICSSCFG_GPCFG1, rgval);
     }
-    else if (h_sdfm->pru_config.pru_slice == 0)
+    else if (attrs->pruicss_slice == 0)
     {
         rgval = HW_RD_REG32((uint8_t *)pruicssCfg + CSL_ICSSCFG_GPCFG0);
         rgval |= (div0<<CSL_ICSSCFG_GPCFG0_PRU0_GPO_DIV0_SHIFT)&(CSL_ICSSCFG_GPCFG0_PRU0_GPO_DIV0_MASK);
@@ -1212,22 +1761,8 @@ int32_t SDFM_configClockFromGPO1(SDFM_Handle h_sdfm, uint8_t div0, uint8_t div1)
         rgval = HW_RD_REG32((uint8_t *)pruicssCfg + CSL_ICSSCFG_GPCFG0);
         rgval |= (div1<<CSL_ICSSCFG_GPCFG0_PRU0_GPO_DIV1_SHIFT)&(CSL_ICSSCFG_GPCFG0_PRU0_GPO_DIV1_MASK);
         HW_WR_REG32((uint8_t *)pruicssCfg + CSL_ICSSCFG_GPCFG0, rgval);
-    }
-    else
-    {
-        retVal = SystemP_FAILURE;
-        return retVal;
-    }
 
-    /* Enabling shift mode */
-    if(h_sdfm->pru_config.pru_slice == 1)
-    {
-        rgval = HW_RD_REG32((uint8_t *)pruicssCfg + CSL_ICSSCFG_GPCFG1);
-        rgval |= (CSL_ICSSCFG_GPCFG1_PRU1_GPO_MODE_MAX<<CSL_ICSSCFG_GPCFG1_PRU1_GPO_MODE_SHIFT)&(CSL_ICSSCFG_GPCFG1_PRU1_GPO_MODE_MASK);
-        HW_WR_REG32((uint8_t *)pruicssCfg + CSL_ICSSCFG_GPCFG1, rgval);
-    }
-    else if(h_sdfm->pru_config.pru_slice == 0)
-    {
+         /* Enabling shift mode */
         rgval = HW_RD_REG32((uint8_t *)pruicssCfg + CSL_ICSSCFG_GPCFG0);
         rgval |= (CSL_ICSSCFG_GPCFG0_PRU0_GPO_MODE_MAX<<CSL_ICSSCFG_GPCFG0_PRU0_GPO_MODE_SHIFT)&(CSL_ICSSCFG_GPCFG0_PRU0_GPO_MODE_MASK);
         HW_WR_REG32((uint8_t *)pruicssCfg + CSL_ICSSCFG_GPCFG0, rgval);
@@ -1243,50 +1778,67 @@ int32_t SDFM_configClockFromGPO1(SDFM_Handle h_sdfm, uint8_t div0, uint8_t div1)
 }
 
 /* Enable snoop based NC sampling */
-int32_t SDFM_enableSnoopBasedNC(SDFM_Handle h_sdfm, uint8_t pru_core)
+int32_t SDFM_enableSnoopBasedNC(SDFM_Handle handle, uint8_t pru_core)
 {
-    if(h_sdfm == NULL || pru_core > NUM_OF_PRU_CORE_PER_PRU_SLICE || pru_core < 0)
+    SDFM_Priv *priv;
+
+    if(handle == NULL || pru_core >= NUM_OF_PRU_CORE_PER_PRU_SLICE)
     {
         return SystemP_FAILURE;
     }
+
+    priv = handle->priv;
+
     /* Enable snoop based NC sampling */
-    h_sdfm->sdfm_interface->control[pru_core].enable_snoop_nc = 1;
+    priv->sdfm_interface->control[pru_core].enable_snoop_nc = 1;
 
     return SystemP_SUCCESS;
 }
 
 /* Disable snoop based NC sampling */
-int32_t SDFM_disableSnoopBasedNC(SDFM_Handle h_sdfm, uint8_t pru_core)
+int32_t SDFM_disableSnoopBasedNC(SDFM_Handle handle, uint8_t pru_core)
 {
-    if(h_sdfm == NULL || pru_core > NUM_OF_PRU_CORE_PER_PRU_SLICE || pru_core < 0)
+    SDFM_Priv *priv;
+
+    if(handle == NULL || pru_core >= NUM_OF_PRU_CORE_PER_PRU_SLICE)
     {
         return SystemP_FAILURE;
     }
+
+    priv = handle->priv;
+
     /* Disable snoop based NC sampling */
-    h_sdfm->sdfm_interface->control[pru_core].enable_snoop_nc = 0;
+    priv->sdfm_interface->control[pru_core].enable_snoop_nc = 0;
     return SystemP_SUCCESS;
 }
-int32_t SDFM_selectIepCmpEvent(SDFM_Handle h_sdfm, uint8_t event, uint8_t pru_core)
+int32_t SDFM_selectIepCmpEvent(SDFM_Handle handle, uint8_t event, uint8_t pru_core)
 {
+    SDFM_Priv *priv;
+    const SDFM_Attrs *attrs;
     void      *pruIep;
     uint32_t  iep_cmp_reg;
     uint32_t  iep_cmp_status_reg;
-    uint32_t regVal; 
-    if(h_sdfm == NULL || pru_core > NUM_OF_PRU_CORE_PER_PRU_SLICE || pru_core < 0)
+    uint32_t regVal;
+
+    if(handle == NULL || pru_core >= NUM_OF_PRU_CORE_PER_PRU_SLICE || event > SDFM_IEP_CMP_EVENT_MAX)
     {
         return SystemP_FAILURE;
     }
-    if(h_sdfm->pru_config.iep_instance == PRUICSS_IEP_INST0)
+
+    priv = handle->priv;
+    attrs = handle->attrs;
+
+    if(attrs->iep_instance == PRUICSS_IEP_INST0)
     {
         /* Enable IEP0 as trigger source */
-        pruIep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->iep0RegBase);
+        pruIep = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->iep0RegBase);
         iep_cmp_reg = CSL_ICSS_G_PR1_IEP0_SLV_REGS_BASE + CSL_ICSS_G_PR1_IEP0_SLV_CMP0_REG0 + (event * 8);
         iep_cmp_status_reg = CSL_ICSS_G_PR1_IEP0_SLV_REGS_BASE + CSL_ICSS_G_PR1_IEP0_SLV_CMP_STATUS_REG;
     }
-    else if(h_sdfm->pru_config.iep_instance == PRUICSS_IEP_INST1)
+    else if(attrs->iep_instance == PRUICSS_IEP_INST1)
     {
         /* Enable IEP1 as trigger source */
-        pruIep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->iep0RegBase);
+        pruIep = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->iep0RegBase);
         iep_cmp_reg = CSL_ICSS_G_PR1_IEP1_SLV_REGS_BASE + CSL_ICSS_G_PR1_IEP0_SLV_CMP0_REG0 + (event * 8);
         iep_cmp_status_reg = CSL_ICSS_G_PR1_IEP1_SLV_REGS_BASE + CSL_ICSS_G_PR1_IEP0_SLV_CMP_STATUS_REG;
     }
@@ -1313,43 +1865,50 @@ int32_t SDFM_selectIepCmpEvent(SDFM_Handle h_sdfm, uint8_t event, uint8_t pru_co
      * - CMP8-CMP15 : Continuous
      *
      */
-    if(event > 7)
+    if(event > SDFM_IEP_CMP_EVENT_CMP7)
     {
-        iep_cmp_reg += 8;  /* Skip 8-byte gap (2 reserved registers) after CMP7 */
+        iep_cmp_reg += SDFM_IEP_CMP_REG_GAP_SIZE;  /* Skip 8-byte gap (2 reserved registers) after CMP7 */
     }
 
    /* Select IEP CMP event as trigger source */
-    h_sdfm->sdfm_interface->trigger_config[pru_core].iep_cmp_event = event;
-    h_sdfm->sdfm_interface->trigger_config[pru_core].iep_cmp_event_reg = iep_cmp_reg;
-    h_sdfm->sdfm_interface->trigger_config[pru_core].iep_cmp_status_reg = iep_cmp_status_reg;
+    priv->sdfm_interface->trigger_config[pru_core].iep_cmp_event = event;
+    priv->sdfm_interface->trigger_config[pru_core].iep_cmp_event_reg = iep_cmp_reg;
+    priv->sdfm_interface->trigger_config[pru_core].iep_cmp_status_reg = iep_cmp_status_reg;
 
     return SystemP_SUCCESS;
 }
 
-int32_t SDFM_configIepCmp0ToResetIep(SDFM_Handle h_sdfm, uint32_t iep_reset_freq)
+int32_t SDFM_configIepCmp0ToResetIep(SDFM_Handle handle, uint32_t iep_reset_freq)
 {
+    SDFM_Priv *priv;
+    const SDFM_Attrs *attrs;
     void      *pruIep;
     int64_t    iep_count;
-    uint32_t regVal; 
-    if(h_sdfm == NULL || iep_reset_freq == 0)
+    uint32_t regVal;
+
+    if(handle == NULL || iep_reset_freq == 0)
     {
         return SystemP_FAILURE;
     }
-    if(h_sdfm->pru_config.iep_instance == PRUICSS_IEP_INST0)
+
+    priv = handle->priv;
+    attrs = handle->attrs;
+
+    if(attrs->iep_instance == PRUICSS_IEP_INST0)
     {
         /* Enable IEP0 as trigger source */
-        pruIep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->iep0RegBase);
+        pruIep = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->iep0RegBase);
     }
-    else if(h_sdfm->pru_config.iep_instance == PRUICSS_IEP_INST1)
+    else if(attrs->iep_instance == PRUICSS_IEP_INST1)
     {
         /* Enable IEP1 as trigger source */
-        pruIep = (void *)(((PRUICSS_HwAttrs *)(h_sdfm->pru_config.pruicss_handle->hwAttrs))->iep1RegBase);
+        pruIep = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->iep1RegBase);
     }
     else
     {
         return SystemP_FAILURE;
     }
-    iep_count = h_sdfm->pru_config.iep_clock / iep_reset_freq;
+    iep_count = attrs->iep_clk_freq / iep_reset_freq;
     /* Configure the cmp0 register to generate reset at required frequency */
     HW_WR_REG32((uint8_t *)pruIep + CSL_ICSS_G_PR1_IEP0_SLV_CMP0_REG0, (iep_count & 0xffffffff) - 1);
     HW_WR_REG32((uint8_t *)pruIep + CSL_ICSS_G_PR1_IEP0_SLV_CMP0_REG1, (iep_count>>32) & 0xffffffff);
@@ -1370,23 +1929,69 @@ int32_t SDFM_configIepCmp0ToResetIep(SDFM_Handle h_sdfm, uint32_t iep_reset_freq
     return SystemP_SUCCESS;
 }
 
-void SDFM_setSampleOutputInterfaceGlobalAddr(SDFM_Handle h_sdfm, uint32_t addr)
+int32_t SDFM_setSampleOutputInterfaceGlobalAddr(SDFM_Handle handle, uint32_t addr)
 {
-    h_sdfm->sdfm_interface->trigger_config[0].sample_buff_base_addr = addr;
-    h_sdfm->sdfm_interface->trigger_config[1].sample_buff_base_addr = addr + 12;
-    h_sdfm->sdfm_interface->trigger_config[2].sample_buff_base_addr = addr + 24;
+    SDFM_Priv *priv;
+
+    /* Validate input parameters */
+    if (handle == NULL)
+    {
+        return SystemP_FAILURE;
+    }
+
+    if (addr == 0)
+    {
+        return SystemP_FAILURE;
+    }
+
+    /* Assign variables after validation */
+    priv = handle->priv;
+
+    priv->sdfm_interface->trigger_config[0].sample_buff_base_addr = addr;
+    priv->sdfm_interface->trigger_config[1].sample_buff_base_addr = addr + 12U;
+    priv->sdfm_interface->trigger_config[2].sample_buff_base_addr = addr + 24U;
+
+    return SystemP_SUCCESS;
 }
 
 /* SDFM global enable */
-void SDFM_enable(SDFM_Handle h_sdfm, uint8_t pru_core)
+int32_t SDFM_enable(SDFM_Handle handle, uint8_t pru_core)
 {
+    SDFM_Priv *priv;
     uint8_t sdfm_en_ack;
+    uint32_t i;
+
+    if (handle == NULL)
+    {
+        return SystemP_FAILURE;
+    }
+
+    if (pru_core >= NUM_OF_PRU_CORE_PER_PRU_SLICE)
+    {
+        return SystemP_FAILURE;
+    }
+
+    priv = handle->priv;
 
     /* Enable SDFM */
-    h_sdfm->sdfm_interface->control[pru_core].enable = 1;
+    priv->sdfm_interface->control[pru_core].enable = 1U;
 
-    /* wait for ACK */
-    do {
-        sdfm_en_ack = h_sdfm->sdfm_interface->control[pru_core].enable_ack;
-    } while (sdfm_en_ack != BF_SDFM_EN_ENABLE);
+    /* wait for ACK with timeout */
+    for(i = 0; i < SDFM_DEFAULT_MAX_WAIT_LOOP_COUNT; i++)
+    {
+        sdfm_en_ack = priv->sdfm_interface->control[pru_core].enable_ack;
+        if(sdfm_en_ack == BF_SDFM_EN_ENABLE)
+        {
+            break;
+        }
+        ClockP_usleep(SDFM_DEFAULT_FW_WAIT_DELAY_US);
+    }
+
+    /* Check for timeout */
+    if(i >= SDFM_DEFAULT_MAX_WAIT_LOOP_COUNT)
+    {
+        return SystemP_TIMEOUT;
+    }
+
+    return SystemP_SUCCESS;
 }
