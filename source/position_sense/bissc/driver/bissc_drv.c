@@ -1313,9 +1313,18 @@ int32_t bissc_set_default_initialization(bissc_handle handle)
     {
         return SystemP_FAILURE;
     }
-    pruicss_xchg->encoder_timeout     = (uint32_t)((attrs->core_clk_freq / 1000000) * attrs->encoder_timeout);
-    pruicss_xchg->delay_100ms         = (uint32_t)((attrs->core_clk_freq / 1000000) * 100 * 1000);
-    pruicss_xchg->icss_clk           = (uint64_t)(attrs->core_clk_freq);
+    for(ch_num = 0; ch_num < total_channels; ch_num++)
+    {
+        if(attrs->load_share_enabled)
+            ls_ch = priv->channel[ch_num];
+        else
+            ls_ch = 0;
+
+        /* Initialize encoder timeout with default value (40us converted to PRU cycles) */
+        pruicss_xchg->encoder_timeout[ls_ch] = (uint32_t)((attrs->core_clk_freq / BISSC_MHZ_TO_HZ) * BISSC_DEFAULT_ENCODER_TIMEOUT_US);
+    }
+    pruicss_xchg->delay_100ms         = (uint32_t)((attrs->core_clk_freq / BISSC_MHZ_TO_HZ) * 100 * 1000);
+    pruicss_xchg->icss_clk            = (uint64_t)(attrs->core_clk_freq);
     pruicss_xchg->valid_bit_idx       = BISSC_VALID_BIT_IDX;
     pruicss_xchg->measure_proc_delay  = 1;
     pruicss_xchg->execution_state[0]  = 0;
@@ -1577,6 +1586,66 @@ bissc_priv* bissc_get_priv(bissc_handle handle)
         return NULL;
     }
     return handle->priv;
+}
+
+int32_t bissc_set_encoder_timeout(bissc_handle handle, uint32_t ch_num, uint32_t encoder_timeout)
+{
+    bissc_priv *priv;
+    bissc_pruicss_xchg *pruicss_xchg;
+    const bissc_attrs *attrs;
+    uint32_t ls_ch;
+
+    /* Input validation */
+    if((handle == NULL) || (ch_num >= BISSC_NUM_CH_PER_SLICE_MAX))
+    {
+        return SystemP_FAILURE;
+    }
+
+    priv = handle->priv;
+    pruicss_xchg = priv->pruicss_xchg;
+    attrs = handle->attrs;
+
+    /* Determine load share channel index based on mode */
+    if(attrs->load_share_enabled)
+    {
+        ls_ch = ch_num;
+    }
+    else
+    {
+        ls_ch = 0;
+    }
+
+    pruicss_xchg->encoder_timeout[ls_ch] = encoder_timeout;
+
+    return SystemP_SUCCESS;
+}
+
+uint32_t bissc_get_encoder_timeout(bissc_handle handle, uint32_t ch_num)
+{
+    bissc_priv *priv;
+    const bissc_attrs *attrs;
+    uint32_t ls_ch;
+
+    /* Input validation */
+    if((handle == NULL) || (ch_num >= BISSC_NUM_CH_PER_SLICE_MAX))
+    {
+        return 0;
+    }
+
+    priv = handle->priv;
+    attrs = handle->attrs;
+
+    /* Determine load share channel index based on mode */
+    if(attrs->load_share_enabled)
+    {
+        ls_ch = ch_num;
+    }
+    else
+    {
+        ls_ch = 0;
+    }
+
+    return priv->pruicss_xchg->encoder_timeout[ls_ch];
 }
 
 int32_t bissc_config_iep_cap_event(bissc_handle handle, uint8_t channel, uint8_t event_num)

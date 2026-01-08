@@ -266,15 +266,14 @@ typedef struct bissc_pruicss_xchg_s
     /**< Calculated 16-bit safety CRC for BiSS Safety protocol.
      *   Indexed by [encoder][channel], computed by PRU firmware */
 
-    volatile uint32_t encoder_timeout;
-    /**< Encoder timeout delay in PRU clock cycles (configurable via SysConfig).
-     *   Calculated as: (core_clk_freq / 1000000) * encoder_timeout_us
-     *   Default: 40 microseconds, configurable range: 1-100 microseconds
-     *   Used by firmware for BiSS-C timeout detection */
+    volatile uint32_t encoder_timeout[BISSC_NUM_CH_PER_SLICE_MAX];
+     /**< Per-channel encoder timeout delay in PRU clock cycles.
+      *   Default: 40 microseconds
+      *   Used by firmware for per-channel BiSS-C encoder timeout */
 
     volatile uint32_t delay_100ms;
     /**< Maximum interframe delay in PRU clock cycles equivalent to 100 milliseconds.
-     *   Calculated as: (core_clk_freq / 1000000) * 100 * 1000
+     *   Calculated as: (core_clk_freq / BISSC_MHZ_TO_HZ) * 100 * 1000
      *   Used by firmware for maximum time between BiSS-C frames */
 
     volatile uint64_t icss_clk;
@@ -288,6 +287,7 @@ typedef struct bissc_pruicss_xchg_s
     bissc_periodic_trigger_cfg trigger_params[BISSC_NUM_CH_PER_SLICE_MAX];
     /**< Periodic trigger configuration parameters for each channel (ch0, ch1, ch2).
      *   Contains IEP event numbers and capture register addresses */
+
 
 } bissc_pruicss_xchg;
 

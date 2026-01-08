@@ -563,6 +563,39 @@ const bissc_attrs* bissc_get_attrs(bissc_handle handle);
 bissc_priv* bissc_get_priv(bissc_handle handle);
 
 /**
+ *  \brief      Set encoder timeout value for a specific channel
+ *
+ *  \details    This function allows setting the encoder timeout value in PRU cycles
+ *              for a specific channel. This parameter decides how long the clock signal is
+ *              stretched according to polarity of CDM bit during control communication.
+ *
+ *  \param[in]  handle            BiSS-C handle
+ *  \param[in]  ch_num            Channel number (0-2 for ch0, ch1, ch2). Used in load share mode,
+ *                                ignored in single PRU mode (always uses index 0).
+ *  \param[in]  encoder_timeout   Timeout value in PRU cycles
+ *
+ *  \retval     SystemP_SUCCESS   On success
+ *  \retval     SystemP_FAILURE   On validation failure (NULL handle or invalid ch_num)
+ */
+int32_t bissc_set_encoder_timeout(bissc_handle handle, uint32_t ch_num, uint32_t encoder_timeout);
+
+/**
+ *  \brief      Get encoder timeout value for a specific channel
+ *
+ *  \details    This function retrieves the current encoder timeout value in PRU cycles
+ *              for a specific channel. This parameter decides how long the clock signal is
+ *              stretched according to polarity of CDM bit during control communication.
+ *
+ *  \param[in]  handle            BiSS-C handle
+ *  \param[in]  ch_num            Channel number (0-2 for ch0, ch1, ch2). Used in load share mode,
+ *                                ignored in single PRU mode (always uses index 0).
+ *
+ *  \retval     encoder_timeout   Current timeout value in PRU cycles
+ *  \retval     0                 On validation failure (NULL handle or invalid ch_num)
+ */
+uint32_t bissc_get_encoder_timeout(bissc_handle handle, uint32_t ch_num);
+
+/**
  *  \brief      Configure periodic trigger CAP mode
  *
  *  This function configures the BiSS-C channels to operate in periodic trigger mode

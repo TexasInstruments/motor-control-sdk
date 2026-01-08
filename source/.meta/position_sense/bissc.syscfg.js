@@ -353,13 +353,6 @@ let bissc_module = {
             ],
         },
         {
-            name: "encoder_timeout",
-            displayName: "Encoder Timeout (in microseconds)",
-            description: "Encoder timeout value in microseconds. Default is 40us.",
-            default: 40,
-            range: [1, 100],
-        },
-        {
             name: "Periodic_Trigger_Mode_Config",
             displayName: "Periodic Trigger Mode Configuration",
             description: "Configure periodic trigger mode using IEP CMP and CAP events.",
