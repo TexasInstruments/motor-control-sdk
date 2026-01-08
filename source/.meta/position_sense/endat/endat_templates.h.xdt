@@ -2,95 +2,81 @@
     let module = system.modules[args[0]];
 %%}
 /*
- * EnDat
+ * EnDAT
  */
 
-/* EnDat Instance Macros */
-#define CONFIG_ENDAT_NUM_INSTANCES               `module.$instances.length`
-%for(let i = 0; i < module.$instances.length; i++) {
+#include <position_sense/endat/include/endat_api.h>
+
+/* EnDAT Instance Macros */
+#define CONFIG_ENDAT_NUM_INSTANCES               (`module.$instances.length`U)
+% for(let i = 0; i < module.$instances.length; i++) {
     % let instance = module.$instances[i];
-    % let Mode = 0;
-    % let Slice = 0 ;
-    % let icssInst = 0;
-    % let isIcssm = 0;
-    %if(instance.instance === "ICSSG1")
-    %{
-       % if(instance.PRU_ICSSG1_PRU.$assign === "PRU_ICSSG1_PRU1")
-       %{
-          % Slice = 1;
-       %}
-        % icssInst = 1;
-
-    %}
-    %else if(instance.instance === "ICSSG0")
-    %{
-       %if(instance.PRU_ICSSG0_PRU.$assign === "PRU_ICSSG0_PRU1")
-       %{
-          % Slice = 1;
-       %}
-
-    %}
-     /*Macro for am263x/am261x */
-    % if(instance.instance === "ICSSM" || instance.instance === "ICSSM0" || instance.instance === "ICSSM1")
-    % {
-        % if(instance.PRU_Slice == "PRU1")
-        % {
-            % Slice = 1;
-        % }
-#define  PRUICSSM                                   (1)
-        %if(instance.instance === "ICSSM1")
-        %{
-        % icssInst = 1;
-        %}
+    % /* Calculate mode based on channel configuration and load share (for compile-time firmware selection) */
+    % let mode = "ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU";  /* Default: ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU */
+    % /* Check if multiple channels are enabled */
+    % if(((instance.Channel_0 & 1) && (instance.Channel_1 & 1)) || ((instance.Channel_1 & 1) && (instance.Channel_2 & 1)) || ((instance.Channel_2 & 1) && (instance.Channel_0 & 1))) {
+        % mode = "ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU";  /* ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU */
     % }
-    %if(((instance.Channel_0 & 1)&&(instance.Channel_1 & 1))||((instance.Channel_1 & 1)&&(instance.Channel_2 & 1))||((instance.Channel_2 & 1)&&(instance.Channel_0 & 1)))
+    % /* Load share mode overrides multi-channel mode */
+    % if(instance.Multi_Channel_Load_Share & 1) {
+        % mode = "ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU";  /* ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU */
+    % }
+    % /* Determine PRU-ICSS Slice (0 or 1) */
+    % let pruicss_slice = 1;  /* Default to PRU1 */
+    % if(instance.instance === "ICSSG0") {
+        % if(instance.PRU_ICSSG0_PRU.$assign === "PRU_ICSSG0_PRU0") {
+            % pruicss_slice = 0;
+        % }
+    % } else if(instance.instance === "ICSSG1") {
+        % if(instance.PRU_ICSSG1_PRU.$assign === "PRU_ICSSG1_PRU0") {
+            % pruicss_slice = 0;
+        % }
+    % } else {
+        % /* For ICSSM, use pruicss_slice configuration */
+        % pruicss_slice = (instance.PRU_Slice == "PRU1") ? 1 : 0;
+    % }
+    % /* Create PRU core ID variables based on slice */
+    % let pru_id = "PRUICSS_PRU0";
+    % let rtu_pru_id = "PRUICSS_RTU_PRU0";
+    % let tx_pru_id = "PRUICSS_TX_PRU0";
+    % if(pruicss_slice == 1) {
+        % pru_id = "PRUICSS_PRU1";
+        % rtu_pru_id = "PRUICSS_RTU_PRU1";
+        % tx_pru_id = "PRUICSS_TX_PRU1";
+    % }
+    % let pruicss_instance = 0;
+    % /* Determine ICSS type and instance index */
+    % if(instance.instance === "ICSSM" || instance.instance === "ICSSM0" || instance.instance === "ICSSM1") {
+        % if(instance.instance === "ICSSM1") {
+            % pruicss_instance = 1;
+        % }
+    % } else {
+        % if(instance.instance === "ICSSG1") {
+            % pruicss_instance = 1;
+        % }
+    % }
+    % /* Calculate individual channel enabled flags */
+    % let channel0_enabled = (instance.Channel_0 & 1);
+    % let channel1_enabled = (instance.Channel_1 & 1);
+    % let channel2_enabled = (instance.Channel_2 & 1);
+    % /* Determine booster pack enable flag */
+    % let booster_pack_enable = (instance.Booster_Pack & 1);
+#define `instance.$name.toUpperCase()`                                    (`i`U)
+#define `instance.$name.toUpperCase()`_MODE                               (`mode`)
+#define `instance.$name.toUpperCase()`_PRUICSS_INSTANCE                   (`pruicss_instance`U)
+#define `instance.$name.toUpperCase()`_PRUICSS_SLICE                      (`pruicss_slice`U)
+#define `instance.$name.toUpperCase()`_PRUICSS_PRU_ID                     (`pru_id`)
+    % if(instance.Multi_Channel_Load_Share & 1)
     %{
-        % Mode = 1;
+#define `instance.$name.toUpperCase()`_PRUICSS_RTU_PRU_ID                 (`rtu_pru_id`)
+#define `instance.$name.toUpperCase()`_PRUICSS_TX_PRU_ID                  (`tx_pru_id`)
     %}
-    %if(instance.Multi_Channel_Load_Share & 1)
-    %{
-        % Mode = 2;
-    %}
-
+#define `instance.$name.toUpperCase()`_CHANNEL0_ENABLED                   (`channel0_enabled`U)
+#define `instance.$name.toUpperCase()`_CHANNEL1_ENABLED                   (`channel1_enabled`U)
+#define `instance.$name.toUpperCase()`_CHANNEL2_ENABLED                   (`channel2_enabled`U)
+#define `instance.$name.toUpperCase()`_BOOSTER_PACK_ENABLE                (`booster_pack_enable`U)
     %if ((instance.instance === "ICSSG1" || instance.instance === "ICSSG0") && (instance.G_MUX_EN))
     %{
-#define `instance.$name`_G_MUX_EN                   (`instance["G_MUX_EN"] & 1`)
+#define `instance.$name.toUpperCase()`_G_MUX_EN                           (`instance["G_MUX_EN"] & 1`U)
     %}
-
-#define `instance.$name`                            (`i`)
-#define `instance.$name`_CHANNEL0                   (`instance.Channel_0 & 1`)
-#define `instance.$name`_CHANNEL1                   (`instance.Channel_1 & 1`)
-#define `instance.$name`_CHANNEL2                   (`instance.Channel_2 & 1`)
-    %if(instance.Multi_Channel_Load_Share)
-    %{
-#define `instance.$name`_LOAD_SHARE_MODE            (`instance.Multi_Channel_Load_Share & 1`)
-    %}
-#define  `instance.$name`_MODE                      (`Mode`)
-#define  `instance.$name`_BOOSTER_PACK              (`instance.Booster_Pack & 1`)
-#define  `instance.$name`_PRUICSS_PRUx              (`Slice`)
-#define  `instance.$name`_PRUICSSx                  (`icssInst`)
-#define `instance.$name`_TX_RX_FIFO_CLOCK_SOURCE    (`instance.Tx_Rx_Clk_Source`)
-
-    % /* Periodic Trigger Mode Configuration */
-    % let iepInstance = (instance.IEP_Instance === "IEP0") ? 0 : 1;
-#define `instance.$name`_IEP_INSTANCE               (`iepInstance`)
-    % if(instance.Multi_Channel_Load_Share)
-    % {
-        % /* Multi-channel load share mode - per channel event configuration */
-#define `instance.$name`_CH0_IEP_CMP_EVENT_NUM      (`instance.CMP_Event_Num_CH0`)
-#define `instance.$name`_CH0_IEP_CAP_EVENT_NUM      (`instance.CAP_Event_Num_CH0`)
-
-#define `instance.$name`_CH1_IEP_CMP_EVENT_NUM      (`instance.CMP_Event_Num_CH1`)
-#define `instance.$name`_CH1_IEP_CAP_EVENT_NUM      (`instance.CAP_Event_Num_CH1`)
-      
-#define `instance.$name`_CH2_IEP_CMP_EVENT_NUM      (`instance.CMP_Event_Num_CH2`)
-#define `instance.$name`_CH2_IEP_CAP_EVENT_NUM      (`instance.CAP_Event_Num_CH2`)
-        
-    % }
-    % else
-    %{
-#define `instance.$name`_IEP_CMP_EVENT_NUM          (`instance.CMP_Event_Num`)
-#define `instance.$name`_IEP_CAP_EVENT_NUM          (`instance.CAP_Event_Num`)
-    %}
-
 % }

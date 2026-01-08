@@ -9,10 +9,49 @@ let is_am263px_soc = (device === "am263px-cc") ? true : false;
 
 let hdsl_endat_pins = (is_am26x_soc) ? system.getScript("/position_sense/endat/am26x_pins.js") : system.getScript("/position_sense/hdsl_endat_pins.js");
 
+function validateCmpEventWarnings(instance, inst, validation) {
+    /* Helper function to check and warn about CMP0 and CMP1 usage */
+    const checkCmpEvent = (cmpEvent, fieldName) => {
+        if (cmpEvent === 0) {
+            validation.logWarning(
+                "CMP0 is used for IEP counter reset in periodic CMP mode. Using CMP0 may cause conflicts.",
+                inst,
+                fieldName
+            );
+        } else if (cmpEvent === 1) {
+            validation.logWarning(
+                "CMP1 is used for SYNC OUT0 generation in periodic CAP mode. Using CMP1 may cause conflicts if CAP mode is used.",
+                inst,
+                fieldName
+            );
+        }
+    };
+
+    if (!instance.Multi_Channel_Load_Share) {
+        /* Non-load share mode - check global CMP event */
+        checkCmpEvent(instance.CMP_Event_Num, "CMP_Event_Num");
+    } else {
+        /* Load share mode - check per-channel CMP events */
+        if (instance.Channel_0) {
+            checkCmpEvent(instance.CMP_Event_Num_CH0, "CMP_Event_Num_CH0");
+        }
+        if (instance.Channel_1) {
+            checkCmpEvent(instance.CMP_Event_Num_CH1, "CMP_Event_Num_CH1");
+        }
+        if (instance.Channel_2) {
+            checkCmpEvent(instance.CMP_Event_Num_CH2, "CMP_Event_Num_CH2");
+        }
+    }
+}
+
 function onValidate(inst, validation) {
     for (let instance_index in inst.$module.$instances)
     {
         let instance = inst.$module.$instances[instance_index];
+
+        /* Validate CMP0 and CMP1 usage warnings */
+        validateCmpEventWarnings(instance, inst, validation);
+
         /* select atleast one cahnnel */
         if ((!instance.Channel_0)&&(!instance.Channel_2)&&(!instance.Channel_1))
             validation.logError("Select atleast one channel", inst, "Channel_0");

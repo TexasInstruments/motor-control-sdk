@@ -134,7 +134,7 @@ ENDAT_CONFIG_CLOCK_RX_EN_CNT_OFFSET	.set	0x6C ; rx arm delay
 
 ; Delay Configuration
 ENDAT_CONFIG_DELAY_125NS_OFFSET  .set   0x70
-ENDAT_CONFIG_DELAY_5US_OFFSET  .set    0x74
+ENDAT_CONFIG_DELAY_5US_OFFSET  .set     0x74
 ENDAT_CONFIG_DELAY_51US_OFFSET  .set    0x78
 ENDAT_CONFIG_DELAY_1MS_OFFSET   .set    0x7C
 ENDAT_CONFIG_DELAY_2MS_OFFSET	.set	0x80  ; delay for 2ms counter
@@ -154,12 +154,18 @@ ENDAT_CH2_CONFIG_SYN_BIT        .set    0x97 ;0th bit for ch0
 PRUICSS_CLOCK         .set  0x98; 64 bit icssg clock
 
 ENDAT_IEP_BASE_ADDR_OFFSET	.set	        0xA0  ;IEP instance, 0: IEP0, 1: IEP1
-ENDAT_CH0_IEP_EVENT_OFFSET	.set	        0xA4  ;IEP event number for ch0
-ENDAT_CH0_IEP_CAPTURE_REG_OFFSET	.set	0xA8  ;IEP capture register value for ch0
-ENDAT_CH1_IEP_EVENT_OFFSET	.set	        0xAC  
-ENDAT_CH1_IEP_CAPTURE_REG_OFFSET	.set	0xB0  ;IEP capture register value for ch1
-ENDAT_CH2_IEP_EVENT_OFFSET	.set	        0xB4  
-ENDAT_CH2_IEP_CAPTURE_REG_OFFSET	.set	0xB8  ;IEP capture register value for ch2
+ENDAT_CH0_IEP_CMP_EVENT_OFFSET	.set	        0xA4  ;IEP CMP event number for ch0
+ENDAT_CH0_IEP_CAP_EVENT_OFFSET	.set	        0xA5  ;IEP CAP event number for ch0
+ENDAT_CH0_IEP_RESERVED_OFFSET	.set	        0xA6  ;IEP reserved 2 byte
+ENDAT_CH0_IEP_CAPTURE_REG_OFFSET	.set	0xA8  ;IEP capture register offset for ch0
+ENDAT_CH1_IEP_CMP_EVENT_OFFSET	.set	        0xAC  ;IEP CMP event number for ch1
+ENDAT_CH1_IEP_CAP_EVENT_OFFSET	.set	        0xAD  ;IEP CAP event number for ch1
+ENDAT_CH1_IEP_RESERVED_OFFSET	.set	        0xAE  ;IEP reserved 2 byte
+ENDAT_CH1_IEP_CAPTURE_REG_OFFSET	.set	0xB0  ;IEP capture register offset for ch1
+ENDAT_CH2_IEP_CMP_EVENT_OFFSET	.set	        0xB4  ;IEP CMP event number for ch2
+ENDAT_CH2_IEP_CAP_EVENT_OFFSET	.set	        0xB5  ;IEP CAP event number for ch2
+ENDAT_CH2_IEP_RESERVED_OFFSET	.set	        0xB6  ;IEP reserved 2 byte
+ENDAT_CH2_IEP_CAPTURE_REG_OFFSET	.set	0xB8  ;IEP capture register offset for ch2
 
 ;;;;;;;;;; EnDat channel Rx info offset ;;;;;;;;
 ; NOTE: For ENDAT_CHx_POSITION_DATA_LSW_OFFSET: Bit0 is Error flag (EnDat2.1) and Bit0,Bit1 are Error flags (EnDat2.2)

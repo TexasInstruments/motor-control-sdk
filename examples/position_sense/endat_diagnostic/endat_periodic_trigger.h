@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023-24 Texas Instruments Incorporated
+ *  Copyright (C) 2023-25 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -30,86 +30,159 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ENDAT_H_
-#define _ENDAT_H_
+#ifndef _ENDAT_PERIODIC_TRIGGER_H_
+#define _ENDAT_PERIODIC_TRIGGER_H_
+
+/* ========================================================================== */
+/*                             Include Files                                  */
+/* ========================================================================== */
 
 #include<stdint.h>
 #include <position_sense/endat/include/endat_drv.h>
 #include "ti_drivers_open_close.h"
-#include "ti_board_open_close.h"
 
-struct endat_periodic_interface
-{
-  Endat_Handle endat_handle;
-  uint64_t iep_reset_count;
-  uint64_t ch_trigger_count[3];
-  uint8_t  is_cap_mode;
-  uint64_t iep_sync0_period;
-};
-/* IEP trigger host event numbers */
-#if CONFIG_ENDAT0_PRUICSS_PRUx == 1
-#define PRU_TRIGGER_HOST_ENDAT_EVT0   ( 2+16 )    /* pr0_pru_mst_intr[2]_intr_req */
-#else
-#define PRU_TRIGGER_HOST_ENDAT_EVT0   ( 5+16 )    /* pr0_pru_mst_intr[5]_intr_req */
-#endif
-
-#define PRU_TRIGGER_HOST_ENDAT_EVT1   ( 3+16 )    /* pr0_pru_mst_intr[3]_intr_req */
-#define PRU_TRIGGER_HOST_ENDAT_EVT2   ( 4+16 )    /* pr0_pru_mst_intr[4]_intr_req */
-
-#if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
-#if CONFIG_ENDAT1_PRUICSS_PRUx == 1
-#define PRU_TRIGGER_HOST_ENDAT1_EVT   ( 2+16 )    /* pr0_pru_mst_intr[2]_intr_req */
-#else
-#define PRU_TRIGGER_HOST_ENDAT1_EVT   ( 5+16 )    /* pr0_pru_mst_intr[5]_intr_req */
-#endif
-#endif
-
-uint32_t endat_config_periodic_mode(struct endat_periodic_interface *endat_periodic_interface);
-
-void endat_stop_periodic_continuous_mode(struct endat_periodic_interface *endat_periodic_interface);
+/* ========================================================================== */
+/*                           Macros & Typedefs                                */
+/* ========================================================================== */
 
 /* TIMESYNC router configuration register offsets and values */
-#define TIMESYNC_EVENT_ROUTER_REG_SIZE         (4U)
-#define TIMESYNC_EVENT_ROUTER_OUT8_OFFSET      (8U * TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U)  /*ICSSG0 PRG0_IEP0_LATCH0_IN0*/
-#define TIMESYNC_EVENT_ROUTER_OUT9_OFFSET      (9U * TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U)  /*ICSSG0 PRG0_IEP0_LATCH1_IN0*/
-#define TIMESYNC_EVENT_ROUTER_OUT10_OFFSET     (10U * TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG0 PRG0_IEP1_LATCH0_IN0*/
-#define TIMESYNC_EVENT_ROUTER_OUT11_OFFSET     (11U * TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG0 PRG0_IEP1_LATCH1_IN0*/
-#define TIMESYNC_EVENT_ROUTER_OUT12_OFFSET     (12U * TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG1 PRG1_IEP0_LATCH0_IN0*/
-#define TIMESYNC_EVENT_ROUTER_OUT13_OFFSET     (13U * TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG1 PRG1_IEP0_LATCH1_IN0*/
-#define TIMESYNC_EVENT_ROUTER_OUT14_OFFSET     (14U * TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG1 PRG1_IEP1_LATCH0_IN0*/
-#define TIMESYNC_EVENT_ROUTER_OUT15_OFFSET     (15U * TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG1 PRG1_IEP1_LATCH1_IN0*/
+#define ENDAT_TIMESYNC_EVENT_ROUTER_REG_SIZE         (4U)
+#define ENDAT_TIMESYNC_EVENT_ROUTER_OUT8_OFFSET      (8U * ENDAT_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U)  /*ICSSG0 PRG0_IEP0_LATCH0_IN0*/
+#define ENDAT_TIMESYNC_EVENT_ROUTER_OUT9_OFFSET      (9U * ENDAT_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U)  /*ICSSG0 PRG0_IEP0_LATCH1_IN0*/
+#define ENDAT_TIMESYNC_EVENT_ROUTER_OUT10_OFFSET     (10U * ENDAT_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG0 PRG0_IEP1_LATCH0_IN0*/
+#define ENDAT_TIMESYNC_EVENT_ROUTER_OUT11_OFFSET     (11U * ENDAT_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG0 PRG0_IEP1_LATCH1_IN0*/
+#define ENDAT_TIMESYNC_EVENT_ROUTER_OUT12_OFFSET     (12U * ENDAT_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG1 PRG1_IEP0_LATCH0_IN0*/
+#define ENDAT_TIMESYNC_EVENT_ROUTER_OUT13_OFFSET     (13U * ENDAT_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG1 PRG1_IEP0_LATCH1_IN0*/
+#define ENDAT_TIMESYNC_EVENT_ROUTER_OUT14_OFFSET     (14U * ENDAT_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG1 PRG1_IEP1_LATCH0_IN0*/
+#define ENDAT_TIMESYNC_EVENT_ROUTER_OUT15_OFFSET     (15U * ENDAT_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG1 PRG1_IEP1_LATCH1_IN0*/
 
 /*CAP0 is used for Channel1 for periodic contimuos cap mode, to changes cap event different cap number offset can be found at TRM section 9.3.2.2 GPIOMUX_INTRTR0 Integration.*/
-#define GPIOMUX_INTROUTER0_IEP0_CAP_OFFSET     (18U * TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U)  /*GPIOMUX0 IEP0_CAP_IN*/
-#define GPIOMUX_INTROUTER0_IEP1_CAP_OFFSET     (24U * TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U)  /*GPIOMUX0 IEP1_CAP_IN*/
+#define ENDAT_GPIOMUX_INTROUTER0_IEP0_CAP_OFFSET     (18U * ENDAT_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U)  /*GPIOMUX0 IEP0_CAP_IN*/
+#define ENDAT_GPIOMUX_INTROUTER0_IEP1_CAP_OFFSET     (24U * ENDAT_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U)  /*GPIOMUX0 IEP1_CAP_IN*/
 
-
-#define TIMESYNC_EVENT_ROUTER_IN25              (0x00010019U)  /* PRU_ICSSG0_PR1_EDC0_SYNC0_OUT_0 */
-#define TIMESYNC_EVENT_ROUTER_IN27              (0x0001001BU)  /* PRU_ICSSG0_PR1_EDC1_SYNC0_OUT_0 */
-#define TIMESYNC_EVENT_ROUTER_IN29              (0x0001001DU)  /* PRU_ICSSG1_PR1_EDC0_SYNC0_OUT_0 */
-#define TIMESYNC_EVENT_ROUTER_IN31              (0x0001001FU)  /* PRU_ICSSG1_PR1_EDC1_SYNC0_OUT_0 */
+#define ENDAT_TIMESYNC_EVENT_ROUTER_IN25              (0x00010019U)  /* PRU_ICSSG0_PR1_EDC0_SYNC0_OUT_0 */
+#define ENDAT_TIMESYNC_EVENT_ROUTER_IN27              (0x0001001BU)  /* PRU_ICSSG0_PR1_EDC1_SYNC0_OUT_0 */
+#define ENDAT_TIMESYNC_EVENT_ROUTER_IN29              (0x0001001DU)  /* PRU_ICSSG1_PR1_EDC0_SYNC0_OUT_0 */
+#define ENDAT_TIMESYNC_EVENT_ROUTER_IN31              (0x0001001FU)  /* PRU_ICSSG1_PR1_EDC1_SYNC0_OUT_0 */
 
 /* GPIO number need to be configured based on the input source GPIO pin number.
  * Refer to the GPIOMUX_INTRTR0 Interrupt Map section in the TRM (9.4.1.8) for details. */
-#define GPIOMUX_INTROUTER0_CAP_GPIO_IN          (0x00010004U)  /* PINFUNCTION_PRG0_IEP_CAP_IN */
+#define ENDAT_GPIOMUX_INTROUTER0_CAP_GPIO_IN          (0x00010004U)  /* PINFUNCTION_PRG0_IEP_CAP_IN */
 
 /* IEP SYNC control register bit definitions */
-#define IEP_SYNC_CTRL_SYNC01_EN_SHIFT            (0U)           /* SYNC01 enable bit position */
-#define IEP_SYNC_CTRL_SYNC01_EN_MASK             (0x00000001U)  /* SYNC01 enable bit mask */
-#define IEP_SYNC_CTRL_SYNC0_EN_SHIFT            (1U)           /* SYNC1 enable bit position */
-#define IEP_SYNC_CTRL_SYNC0_EN_MASK             (0x00000002U)  /* SYNC1 enable bit mask */
-#define IEP_SYNC_CTRL_SYNC0_CYCLIC_EN_SHIFT     (5U)           /* SYNC0 cyclic generation bit position */
-#define IEP_SYNC_CTRL_SYNC0_CYCLIC_EN_MASK      (0x00000020U)  /* SYNC0 cyclic generation bit mask */
+#define ENDAT_IEP_SYNC_CTRL_SYNC01_EN_SHIFT            (0U)           /* SYNC01 enable bit position */
+#define ENDAT_IEP_SYNC_CTRL_SYNC01_EN_MASK             (0x00000001U)  /* SYNC01 enable bit mask */
+#define ENDAT_IEP_SYNC_CTRL_SYNC0_EN_SHIFT            (1U)           /* SYNC1 enable bit position */
+#define ENDAT_IEP_SYNC_CTRL_SYNC0_EN_MASK             (0x00000002U)  /* SYNC1 enable bit mask */
+#define ENDAT_IEP_SYNC_CTRL_SYNC0_CYCLIC_EN_SHIFT     (5U)           /* SYNC0 cyclic generation bit position */
+#define ENDAT_IEP_SYNC_CTRL_SYNC0_CYCLIC_EN_MASK      (0x00000020U)  /* SYNC0 cyclic generation bit mask */
 
 /* IEP SYNC configuration values */
-#define IEP_CMP1_START_DELAY             (100U)         /* IEP CMP1 start delay in cycles */
-#define IEP_SYNC0_PULSE_WIDTH            (10U)          /* SYNC0 high pulse time in IEP clock cycles */
-#define IEP_CMP_EVENT_FOR_SYNC0          (1U)           /* IEP CMP event number used for SYNC0 generation */
-#define IEP_CMP_EVENT_FOR_IEP_RESET      (0U)           /* IEP CMP event number used for IEP counter reset */
+#define ENDAT_IEP_CMP1_START_DELAY             (100U)         /* IEP CMP1 start delay in cycles */
+#define ENDAT_IEP_SYNC0_PULSE_WIDTH            (10U)          /* SYNC0 high pulse time in IEP clock cycles */
+#define ENDAT_IEP_CMP_EVENT_FOR_SYNC0          (1U)           /* CMP event number used for SYNC0 generation */
 
+/*IEP Counter configuration*/
+#define ENDAT_IEP_COUNTER_ENABLE         (1U)          /* IEP counter enable value */
+#define ENDAT_IEP_COUNTER_DISABLE        (0U)          /* IEP counter disable value */
+#define ENDAT_IEP_COUNTER_INCREMENT      (1U)          /* IEP counter increment value */
 
-static void pruEnDatIrqHandler(void *handle);
-static void rtuEnDatIrqHandler(void *handle);
-static void txpruEnDatIrqHandler(void *handle);
+/* ========================================================================== */
+/*                         Structure Declarations                             */
+/* ========================================================================== */
 
-#endif /* _ENDAT_H_ */
+/**
+ * \brief   Structure defining EnDAT periodic trigger interface configuration
+ *
+ * \details Contains EnDAT driver handle, trigger count values and IEP reset
+ *          count for periodic mode operation, in which automatic EnDAT transaction
+ *          is triggered at configured intervals.
+ */
+typedef struct endat_periodic_interface_s
+{
+  endat_handle handle[CONFIG_ENDAT_NUM_INSTANCES];
+  /**< EnDAT driver handle obtained from endat_init().
+   *   Used to access driver configuration and PRU-ICSS resources */
+
+  uint64_t periodic_trigger_count[CONFIG_ENDAT_NUM_INSTANCES][ENDAT_NUM_CH_PER_SLICE_MAX];
+  /**< IEP counter value for periodic trigger (in IEP clock cycles) per instance and channel. */
+
+  uint64_t iep_reset_count;
+  /**< IEP counter reset value (in IEP clock cycles) for CMP0 event.
+   *   When IEP counter reaches this value, it resets to 0, creating periodic cycles */
+
+  uint8_t is_cap_mode;
+  /**< Flag indicating periodic trigger mode: 0 = CMP mode, 1 = CAP mode */
+} endat_periodic_interface;
+
+/* ========================================================================== */
+/*                       Function Declarations                                */
+/* ========================================================================== */
+
+/**
+ * \brief   Configure EnDAT encoder for periodic trigger mode
+ *
+ * \details This function configures the EnDAT encoder interface to operate in periodic
+ *          trigger mode, where encoder position data is automatically sampled at regular
+ *          intervals using the PRU-ICSS IEP (Industrial Ethernet Peripheral) timer.
+ *
+ *          The function performs the following operations:
+ *          1. Configures IEP timer with specified periodic trigger count and reset count
+ *          2. Enables IEP Compare 0 (CMP0) event for periodic triggering
+ *          3. Registers interrupt handler for processing periodic samples
+ *          4. Enables PRU interrupt handling
+ *
+ *          In periodic mode:
+ *          - IEP counter increments at IEP clock rate (default: 200 MHz)
+ *          - When counter reaches periodic_trigger_count, encoder transaction is triggered for that channel
+ *          - When counter reaches iep_reset_count, counter resets to 0 (defines period)
+ *          - Interrupt handler is called on each EnDAT transaction completion
+ *
+ *          Requirements:
+ *          - EnDAT driver must be initialized with endat_init() before calling this function
+ *          - periodic_trigger_count must be less than iep_reset_count
+ *          - IEP clock must be configured via SysConfig
+ *
+ * \param[in]   endat_periodic_interface  Pointer to periodic interface structure containing:
+ *                                           - handle: EnDAT driver handle from endat_init()
+ *                                           - periodic_trigger_count[]: IEP count value for trigger
+ *                                             per channel
+ *                                           - iep_reset_count: IEP count value for counter reset
+ *
+ * \retval      SystemP_SUCCESS    Configuration successful, periodic mode active
+ * \retval      SystemP_FAILURE    Configuration failed (NULL interface pointer, invalid handle,
+ *                                 or configuration error)
+ *
+ * \note        Call endat_stop_periodic_mode() before returning to host trigger mode
+ *
+ */
+
+int32_t endat_config_periodic_mode(endat_periodic_interface *endat_periodic_interface);
+
+/**
+ * \brief   Stop EnDAT periodic trigger mode
+ *
+ * \details This function disables periodic trigger mode for the EnDAT encoder interface.
+ *
+ *          The function performs the following operations:
+ *          1. Disables PRU interrupts for periodic trigger events
+ *          2. Disables IEP Compare 0 (CMP0) event
+ *          3. Stops IEP counter
+ *          4. Unregisters interrupt handler
+ *
+ *          After calling this function:
+ *          - IEP timer is stopped
+ *          - No automatic encoder transactions occur
+ *          - Application must enable host trigger mode and call
+ *            endat_command_process() explicitly for each transaction
+ *
+ * \param[in]   endat_periodic_interface  Pointer to periodic interface structure containing
+ *                                        the EnDAT driver handle(s) to stop
+ *
+ * \retval      SystemP_SUCCESS    Periodic mode stopped successfully
+ * \retval      SystemP_FAILURE    Failed to stop periodic mode (NULL interface pointer or invalid handle)
+ *
+ */
+int32_t endat_stop_periodic_mode(endat_periodic_interface *endat_periodic_interface);
+
+#endif /* _ENDAT_PERIODIC_TRIGGER_H_ */
