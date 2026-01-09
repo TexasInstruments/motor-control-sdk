@@ -572,8 +572,8 @@ ch_set_done?:
 ; Loads the channel enable mask from DMEM into ENDAT_ENABLE_CHx register.
 ;------------------------------------------------------------------------------
 LOAD_CH_MASK .macro
-    ldi32   DMEM_OFFSET, ENDAT3_CHANNEL_ENABLE_MASK_OFFSET
-    lbbo    &ENDAT_ENABLE_CHx, DMEM_OFFSET, 0, 1     ; Load channel enable mask into r16.b0
+    ldi     DMEM_OFFSET, ENDAT3_CHANNEL_ENABLE_MASK_OFFSET
+    lbbo    &ENDAT_ENABLE_CHx, DMEM_BASE, DMEM_OFFSET, 1     ; Load channel enable mask into r16.b0
     .endm
 
 ;------------------------------------------------------------------------------

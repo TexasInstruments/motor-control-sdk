@@ -126,12 +126,12 @@ extern "C" {
 /** \} */
 
 /**
- *  \brief  EnDat3 Operation Mode: Periodic trigger
+ *  \brief  EnDat3 Operation Mode: Periodic trigger with CMP event
  *
- *  In periodic mode, the PRU firmware automatically triggers position readout
- *  at regular intervals configured by IEP timer.
+ *  In periodic CMP mode, the PRU firmware automatically triggers position readout
+ *  at regular intervals using IEP CMP (Compare) events.
  */
-#define ENDAT3_OPMODE_PERIODIC                  (0x0U)
+#define ENDAT3_OPMODE_PERIODIC_CMP              (0x0U)
 
 /**
  *  \brief  EnDat3 Operation Mode: Host trigger
@@ -141,10 +141,18 @@ extern "C" {
  */
 #define ENDAT3_OPMODE_HOST_TRIGGER              (0x1U)
 
+/**
+ *  \brief  EnDat3 Operation Mode: Periodic trigger with CAP event
+ *
+ *  In periodic CAP mode, the PRU firmware automatically triggers position readout
+ *  at regular intervals using IEP CAP (Capture) events.
+ */
+#define ENDAT3_OPMODE_PERIODIC_CAP              (0x2U)
+
 /* EnDAT3 Driver Return Codes
  * Values for APIs to return ENDAT3_SUCCESS (0) on success
  * or detailed ENDAT3_ERR_* codes on failure.
- * Error codes range from ENDAT3_ERR_INVALID_INPUT (-1) to ENDAT3_ERR_SAMPLING_ERROR (-7).
+ * Error codes range from ENDAT3_ERR_INVALID_INPUT (-1) to ENDAT3_ERR_INVALID_OPMODE (-8).
  */
 #define ENDAT3_SUCCESS                          (0)     /**< Success code */
 #define ENDAT3_ERR_INVALID_INPUT                (-1)    /**< Invalid input parameter (NULL pointer, invalid value, out of bounds) */
@@ -154,6 +162,7 @@ extern "C" {
 #define ENDAT3_ERR_HPF_CRC_FAIL                 (-5)    /**< HPF (High Priority Frame) CRC mismatch */
 #define ENDAT3_ERR_LPF_CRC_FAIL                 (-6)    /**< LPF (Low Priority Frame) CRC mismatch */
 #define ENDAT3_ERR_SAMPLING_ERROR               (-7)    /**< Encoder sampling/timing error */
+#define ENDAT3_ERR_INVALID_OPMODE               (-8)    /**< Invalid operating mode (mode > 2) */
 
 /* Encoder busy/error status defines */
 #define ENCODER_IDLE                            (0x0)  /**< Encoder idle, ready for communication */
@@ -193,6 +202,21 @@ extern "C" {
  */
 #define ENDAT3_BAUD_RATE_12_5_MBPS_VALUE        (12500000U)     /**< 12.5 Mbps baud rate value in Hz */
 #define ENDAT3_BAUD_RATE_25_MBPS_VALUE          (25000000U)     /**< 25 Mbps baud rate value in Hz */
+/** \} */
+
+/** IEP (Industrial Ethernet Peripheral) event limits for periodic trigger mode
+ * \{
+ */
+#define ENDAT3_IEP_MAX_CAP_EVENT                (0x8U)          /**< Maximum IEP CAP events (0-7) */
+#define ENDAT3_IEP_MAX_CMP_EVENT                (0x10U)         /**< Maximum IEP CMP events (0-15) */
+/** \} */
+
+/** IEP register offsets for periodic trigger mode
+ * \{
+ */
+#define ENDAT3_CFG_REG_SIZE                     (4U)            /**< IEP configuration register size in bytes */
+#define ENDAT3_CSL_ICSS_PR1_IEP0_SLV_CAP0_REG0  (CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG + 2U*ENDAT3_CFG_REG_SIZE)  /**< IEP CAP0 register 0 offset */
+#define ENDAT3_8_BYTE_REG_OFFSET                (8U)            /**< 8-byte register offset for IEP CMP/CAP registers */
 /** \} */
 
 #define ENDAT3_OVERSAMPLE_RATE_8X               (8U)            /**< 8x oversampling rate for RX clock */
@@ -501,6 +525,18 @@ typedef struct endat3_attrs_s {
 
     uint32_t iep_clk_freq;
     /**< PRU-ICSS IEP (Industrial Ethernet Peripheral) timer clock frequency in Hz. */
+
+    uint8_t iep_instance;
+    /**< IEP instance number used for periodic trigger mode (0=IEP0, 1=IEP1) */
+
+    uint8_t iep_cmp_event;
+    /**< IEP compare event number (0-15) used for periodic CMP trigger mode */
+
+    uint8_t iep_cap_event;
+    /**< IEP capture event number (0-7) used for periodic CAP trigger mode */
+
+    void *iep_base_addr;
+    /**< IEP base address for IEP timer configuration in periodic trigger mode */
 } endat3_attrs;
 
 /**
@@ -538,6 +574,26 @@ typedef struct endat3_lpf_s {
 } endat3_lpf;
 
 /**
+ *    \brief    Structure defining ENDAT3 periodic trigger configuration
+ *
+ *    \details  Contains IEP event configuration for periodic trigger mode
+ */
+typedef struct endat3_periodic_trigger_cfg_s
+{
+    uint8_t iep_cmp_event;
+    /**< IEP compare event number for periodic CMP mode */
+
+    uint8_t iep_cap_event;
+    /**< IEP capture event number for periodic CAP mode */
+
+    uint16_t reserved;
+    /**< Reserved for alignment */
+
+    uint32_t iep_capture_reg;
+    /**< IEP capture register address for periodic CAP mode */
+} endat3_periodic_trigger_cfg;
+
+/**
  * \brief EnDAT3 Interface structure
  *
  * Main structure for storing communication buffers and status information.
@@ -572,7 +628,7 @@ typedef struct endat3_interface_s {
     uint32_t background_op_code;        /**< Background operation code */
 
     /* Periodic trigger configuration */
-    uint8_t opmode_config;              /**< Operating mode: 0=periodic, 1=host */
+    uint8_t opmode_config;              /**< Operating mode: 0=periodic CMP, 1=host, 2=periodic CAP */
     uint8_t reserved2;                  /**< Reserved for alignment */
     uint8_t reserved3;                  /**< Reserved for alignment */
     uint8_t reserved4;                  /**< Reserved for alignment */
@@ -590,6 +646,17 @@ typedef struct endat3_interface_s {
 
     /* Channel Enable Mask */
     uint8_t channel_enable_mask;        /**< Channel enable mask: bit 0=CH0, bit 1=CH1, bit 2=CH2 */
+
+    uint8_t reserved5;                  /**< Reserved for alignment */
+    uint8_t reserved6;                  /**< Reserved for alignment */
+
+    volatile uint32_t iep_base_address;
+    /**< IEP base address used for periodic trigger mode */
+
+    endat3_periodic_trigger_cfg trigger_params;
+    /**< Periodic trigger configuration parameters.
+     *   Contains IEP event numbers and capture register addresses */
+
 } endat3_interface;
 
 /**
@@ -1509,13 +1576,29 @@ endat3_interface* endat3_get_interface(endat3_handle handle);
  * \brief Set operating mode (host trigger or periodic trigger)
  *
  * Configures the firmware operating mode for the EnDAT3 interface.
- * This determines whether the encoder is triggered by host commands
- * or by periodic IEP timer events.
+ * This determines whether the encoder is triggered by host command,
+ * or sampled automatically when IEP counter reaches the configured
+ * CMP event compare value, or sampled automatically when an external
+ * signal triggers the IEP capture event.
+ *
+ ***Configuration requirements for \ref ENDAT3_OPMODE_PERIODIC_CMP:**
+ *- IEP hardware CMP registers must be configured separately
+ *- Use \ref endat3_config_iep_cmp_event to set event number in firmware. This function
+ *  is called inside \ref endat3_init by default.
+ *- CMP event range: 0-15
+ *
+ ***Configuration requirements for \ref ENDAT3_OPMODE_PERIODIC_CMP:**
+ *- IEP hardware CAP registers must be configured separately
+ *- External signal to IEP capture input should be configured
+ *- Use \ref endat3_config_iep_cap_event to set event number in firmware. This function
+ *  is called inside \ref endat3_init by default.
+ *- CAP event range: 0-7
  *
  * \param handle EnDAT3 handle
- * \param opmode Operating mode: 0 = periodic trigger, 1 = host trigger
+ * \param opmode Operating mode: 0 = periodic CMP trigger, 1 = host trigger, 2 = periodic CAP trigger
  * \return ENDAT3_SUCCESS (0) on success
  *         ENDAT3_ERR_INVALID_INPUT (-1) if handle is NULL
+ *         ENDAT3_ERR_INVALID_OPMODE (-8) if opmode > 2
  *         **CRITICAL**: Check return value - wrong operating mode causes complete communication failure
  *
  * \code
@@ -1526,8 +1609,8 @@ endat3_interface* endat3_get_interface(endat3_handle handle);
  *     return;
  * }
  *
- * // Set to periodic trigger mode
- * if(endat3_set_operating_mode(handle, ENDAT3_OPMODE_PERIODIC) != ENDAT3_SUCCESS)
+ * // Set to periodic trigger CMP mode
+ * if(endat3_set_operating_mode(handle, ENDAT3_OPMODE_PERIODIC_CMP) != ENDAT3_SUCCESS)
  * {
  *     DebugP_log("ERROR: Failed to set operating mode\r\n");
  *     return;
@@ -1542,11 +1625,39 @@ int32_t endat3_set_operating_mode(endat3_handle handle, uint8_t opmode);
  * Retrieves the current firmware operating mode.
  *
  * \param handle EnDAT3 handle
- * \param opmode Pointer to store operating mode (0 = periodic trigger, 1 = host trigger)
+ * \param opmode Pointer to store operating mode (0 = periodic trigger, 1 = host trigger, 2 = periodic CAP)
  * \return ENDAT3_SUCCESS (0) on success
  *         ENDAT3_ERR_INVALID_INPUT (-1) if handle or opmode is NULL
  */
 int32_t endat3_get_operating_mode(endat3_handle handle, uint8_t *opmode);
+
+/**
+ * \brief Configure IEP CAP event number in PRU DMEM
+ *
+ * \param handle EnDAT3 handle
+ * \param event_num CAP event number (0-7) to use for periodic triggering
+ * \return ENDAT3_SUCCESS (0) on success
+ *         ENDAT3_ERR_INVALID_INPUT (-1) if handle is NULL or event_num > 7
+ *
+ * \note This only updates the DMEM configuration. The operating mode must be set to
+ *       ENDAT3_OPMODE_PERIODIC_CAP separately via endat3_set_operating_mode(). This
+ *       function does NOT configure IEP hardware registers.
+ */
+int32_t endat3_config_iep_cap_event(endat3_handle handle, uint8_t event_num);
+
+/**
+ * \brief Configure IEP CMP event number in PRU DMEM
+ *
+ * \param handle EnDAT3 handle
+ * \param event_num CMP event number (0-15) to use for periodic triggering
+ * \return ENDAT3_SUCCESS (0) on success
+ *         ENDAT3_ERR_INVALID_INPUT (-1) if handle is NULL or event_num > 15
+ *
+ * \note This only updates the DMEM configuration. The operating mode must be set to
+ *       ENDAT3_OPMODE_PERIODIC_CMP separately via endat3_set_operating_mode(). This
+ *       function does NOT configure IEP hardware registers.
+ */
+int32_t endat3_config_iep_cmp_event(endat3_handle handle, uint8_t event_num);
 
 /**
  * \brief Release start trigger to firmware
@@ -1554,7 +1665,7 @@ int32_t endat3_get_operating_mode(endat3_handle handle, uint8_t *opmode);
  * Signals the firmware to begin processing by setting the start_trigger flag.
  * The firmware will process the command based on the current operating mode:
  * - In host mode: processes the command immediately
- * - In periodic mode: waits for the next IEP CMP3 event
+ * - In periodic mode: waits for the next IEP CMP/CAP event
  *
  * \param handle EnDAT3 handle
  * \return ENDAT3_SUCCESS (0) on success

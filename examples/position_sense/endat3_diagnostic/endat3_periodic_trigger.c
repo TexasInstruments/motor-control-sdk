@@ -30,6 +30,26 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/**
+ * \file  endat3_periodic_trigger.c
+ *
+ * \brief EnDAT3 periodic trigger mode implementation using IEP timer
+ *
+ * This file implements periodic trigger mode for EnDAT3 encoder interface.
+ * In periodic mode, encoder position command is automatically triggered at regular
+ * intervals by PRU using the PRU-ICSS Industrial Ethernet Peripheral (IEP) timer,
+ * eliminating the need for host (R5F) intervention to trigger a command. After the
+ * response is received, PRU triggers host (R5F) interrupt.
+ *
+ * \par Periodic Trigger Modes:
+ * The EnDAT3 driver supports two IEP-based periodic trigger modes:
+ * - **CMP Mode (Compare)**: Time-based periodic sampling using IEP compare events (CMP0-CMP15)
+ *   - Firmware monitors IEP counter and triggers when counter matches compare value
+ * - **CAP Mode (Capture)**: Event-driven sampling using IEP capture events (CAP0-CAP7)
+ *   - Firmware waits for external hardware signal routed through TIMESYNC router (AM243x)
+ *     or XBAR (AM26x)
+ */
+
 /* ========================================================================== */
 /*                             Include Files                                  */
 /* ========================================================================== */
@@ -37,12 +57,14 @@
 #include<stdio.h>
 #include<stdint.h>
 #include<math.h>
+
 #include <drivers/pruicss.h>
 #include <drivers/hw_include/hw_types.h>
 #include <drivers/hw_include/tistdtypes.h>
 #include <kernel/dpl/ClockP.h>
 #include "endat3_periodic_trigger.h"
 #include <drivers/soc.h>
+#include <position_sense/endat3/include/endat3_drv.h>
 
 /* ========================================================================== */
 /*                           Macros & Typedefs                                */
@@ -64,9 +86,8 @@
 #endif
 #endif
 
-#define IEP_CMP_EVENT                   (3)
-/** \brief PRU interrupt event number (18 = 2 + 16) */
-#define PRU_TRIGGER_HOST_ENDAT3_EVT     (2+16)    /* pr0_pru_mst_intr[2]_intr_req */
+/** \brief PRU EnDAT3 interrupt event number (18 = 2 + 16) */
+#define PRU_TRIGGER_HOST_ENDAT3_EVT      (2+16)
 
 /* ========================================================================== */
 /*                            Global Variables                                */
@@ -75,6 +96,7 @@
 static HwiP_Object gEndat3HwiObject[CONFIG_ENDAT3_NUM_INSTANCES];
 uint32_t gPruEndat3IrqCnt[CONFIG_ENDAT3_NUM_INSTANCES] = {0};
 
+/* PRU-ICSS INTC Configuration */
 #if(CONFIG_ENDAT3_0_PRUICSS_INSTANCE == 1)
 extern PRUICSS_IntcInitData icss1_intc_initdata;
 #else
@@ -85,78 +107,458 @@ extern PRUICSS_IntcInitData icss0_intc_initdata;
 /*                       Function Declarations                                */
 /* ========================================================================== */
 
+/* IEP Configuration Functions */
+#if defined(SOC_AM243X)
+static void endat3_config_iep_cap_for_sync(endat3_handle handle, uint32_t iep_sync0_period);
+static void endat3_disable_iep_cap_sync(void *pru_iep);
+#endif /* SOC_AM243X */
+
 static void endat3_config_iep(endat3_periodic_interface *endat3_periodic_interface);
 
-static void endat3_interrupt_config(endat3_periodic_interface *endat3_periodic_interface);
+/* IEP Counter Control */
+static void endat3_enable_iep_counter(endat3_handle handle);
+static void endat3_disable_iep_counter(endat3_handle handle);
 
+/* IEP Reset Control */
+static void endat3_enable_iep_reset_on_cmp0(void *pru_iep, uint64_t iep_reset_count);
+static void endat3_disable_iep_reset_on_cmp0(void *pru_iep);
+
+/* IEP CAP Event Functions */
+static void endat3_enable_iep_cap_event(void *pru_iep, uint8_t event_num);
+static void endat3_disable_iep_cap_event(void *pru_iep, uint8_t event_num);
+
+/* IEP CMP Event Functions */
+static void endat3_enable_iep_cmp_event(void *pru_iep, uint64_t trigger_point, uint8_t event_num);
+static void endat3_disable_iep_cmp_event(void *pru_iep, uint8_t event_num);
+
+/* Interrupt Configuration */
+static void endat3_interrupt_config(void *pruicss_handle);
+
+/* IRQ Handler */
 void endat3_pru_irq_handler(void *pruicss_handle);
 
 /* ========================================================================== */
 /*                          Function Definitions                              */
 /* ========================================================================== */
 
-static void endat3_config_iep(endat3_periodic_interface *endat3_periodic_interface)
+/**
+ * \brief Configure IEP CAP mode for periodic trigger using SYNC signal
+ *
+ * \details This function configures IEP SYNC OUT0 generation and routes it to CAP6 (LATCH0_IN0) via TIMESYNC router
+ *
+ * \param handle EnDAT3 driver handle
+ * \param iep_sync0_period IEP SYNC OUT0 period in IEP clock cycles
+ */
+#if defined(SOC_AM243X)
+static void endat3_config_iep_cap_for_sync(endat3_handle handle, uint32_t iep_sync0_period)
 {
-    endat3_priv *priv = endat3_get_priv(endat3_periodic_interface->handle[CONFIG_ENDAT3_0]);
-    void *pruicss_iep = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->iep0RegBase);
-    uint8_t temp;
-    uint32_t event;
-    uint32_t event_clear;
-    uint32_t cmp_reg0;
-    uint32_t cmp_reg1;
-    uint64_t iep_reset_count = 0;
+    const endat3_attrs *attrs = endat3_get_attrs(handle);
+    void *pru_iep = attrs->iep_base_addr;
+    uint32_t reg_value;
 
-    /* Clear IEP */
-    temp = HW_RD_REG8((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG);
-    temp &= 0xFE;
-    HW_WR_REG8((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG, temp);
+    /* Configure IEP CMP1 to start SYNC OUT0 after 100 cycles */
+    endat3_enable_iep_cmp_event(pru_iep, ENDAT3_IEP_CMP1_START_DELAY, ENDAT3_IEP_CMP_EVENT_FOR_SYNC0);
 
-    event = HW_RD_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG);
-    event_clear = HW_RD_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
+    /* Enable SYNC OUT0 cyclic generation */
+    reg_value = HW_RD_REG32((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_SYNC_CTRL_REG);
+    reg_value |= (ENDAT3_IEP_SYNC_CTRL_SYNC01_EN_MASK | ENDAT3_IEP_SYNC_CTRL_SYNC0_EN_MASK);
+    reg_value |= ENDAT3_IEP_SYNC_CTRL_SYNC0_CYCLIC_EN_MASK;
+    HW_WR_REG32((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_SYNC_CTRL_REG, reg_value);
 
-    /* Enable IEP reset by cmp0 event */
-    event |= IEP_CMP0_ENABLE;
-    event |= IEP_RST_CNT_EN;
-    event_clear |= 1;
+    /* Configure SYNC OUT0 pulse width and period */
+    HW_WR_REG32((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_SYNC_PWIDTH_REG, ENDAT3_IEP_SYNC0_PULSE_WIDTH);
+    HW_WR_REG32((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_SYNC0_PERIOD_REG, (iep_sync0_period-1));
 
-    /* Set IEP counter to ZERO */
-    HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG0, 0);
-    HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG1, 0);
+    /* Route SYNC OUT0 to LATCH inputs via TIMESYNC router */
+    if(attrs->iep_instance == 0)
+    {
+        if(attrs->pruicss_instance == 1)
+        {
+            /* ICSSG1: Connect IEP0 SYNC OUT0 output to LATCH0_IN0 */
+            HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + ENDAT3_TIMESYNC_EVENT_ROUTER_OUT12_OFFSET),
+                        ENDAT3_TIMESYNC_EVENT_ROUTER_IN29);
+        }
+        else
+        {
+            /* ICSSG0: Connect IEP0 SYNC OUT0 output to LATCH0_IN0 */
+            HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + ENDAT3_TIMESYNC_EVENT_ROUTER_OUT8_OFFSET),
+                        ENDAT3_TIMESYNC_EVENT_ROUTER_IN25);
+        }
+    }
+    else
+    {
+        if(attrs->pruicss_instance == 1)
+        {
+            /* ICSSG1: Connect IEP1 SYNC OUT0 output to LATCH0_IN0 */
+            HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + ENDAT3_TIMESYNC_EVENT_ROUTER_OUT14_OFFSET),
+                        ENDAT3_TIMESYNC_EVENT_ROUTER_IN31);
+        }
+        else
+        {
+            /* ICSSG0: Connect IEP1 SYNC OUT0 output to LATCH0_IN0 */
+            HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + ENDAT3_TIMESYNC_EVENT_ROUTER_OUT10_OFFSET),
+                        ENDAT3_TIMESYNC_EVENT_ROUTER_IN27);
+        }
+    }
 
-    /* Configure CMP based on periodic_trigger_count of first handle */
-    event |= (0x1 << (IEP_CMP_EVENT + 1));
-    event_clear |= (0x1 << (IEP_CMP_EVENT));
-    cmp_reg0 = (endat3_periodic_interface->periodic_trigger_count[CONFIG_ENDAT3_0] & 0xffffffff) - IEP_DEFAULT_INC;
-    cmp_reg1 = (endat3_periodic_interface->periodic_trigger_count[CONFIG_ENDAT3_0]>>32 & 0xffffffff);
+}
+#endif /* SOC_AM243X */
 
-    HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + IEP_CMP_EVENT*8,  cmp_reg0);
-    HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + IEP_CMP_EVENT*8,  cmp_reg1);
+/**
+ * \brief Disable IEP CAP mode SYNC generation
+ *
+ * \details This function disables IEP SYNC OUT0 generation and CMP1 event used for sync.
+ * This is typically called during periodic mode shutdown.
+ *
+ * \param pru_iep Pointer to PRU-ICSS IEP Base Address
+ */
+#if defined(SOC_AM243X)
+/**
+ * \brief Disable IEP SYNC OUT0 generation for CAP mode
+ *
+ * \details This function disables IEP SYNC OUT0 signal generation that was
+ *          configured for CAP mode periodic triggering. Called during cleanup
+ *          when stopping periodic mode.
+ *
+ *          **Operations performed:**
+ *          - Disables SYNC OUT0 enable bit
+ *          - Disables SYNC OUT0 cyclic generation
+ *          - Disables CMP1 event
+ *
+ * \param[in] pru_iep IEP register base address
+ *
+ * \note Only used on AM243x for CAP mode cleanup
+ * \note Companion function to endat3_config_iep_cap_for_sync()
+ */
+static void endat3_disable_iep_cap_sync(void *pru_iep)
+{
+    uint32_t reg_value;
+
+    /* Disable SYNC OUT0 generation */
+    reg_value = HW_RD_REG32((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_SYNC_CTRL_REG);
+    reg_value &= ~(ENDAT3_IEP_SYNC_CTRL_SYNC01_EN_MASK | ENDAT3_IEP_SYNC_CTRL_SYNC0_EN_MASK); /* SYNC OUT0 disable */
+    reg_value &= ~ENDAT3_IEP_SYNC_CTRL_SYNC0_CYCLIC_EN_MASK; /* SYNC OUT0 cyclic disable */
+    HW_WR_REG32((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_SYNC_CTRL_REG, reg_value);
+
+    /* Disable CMP1 event (configured for SYNC OUT0) */
+    endat3_disable_iep_cmp_event(pru_iep, ENDAT3_IEP_CMP_EVENT_FOR_SYNC0);
+}
+#endif /* SOC_AM243X */
+
+/**
+ * \brief Enable IEP reset on CMP0 event
+ *
+ * \param pru_iep Pointer to PRU-ICSS IEP Base Address
+ * \param iep_reset_count IEP counter value for reset (period)
+ */
+static void endat3_enable_iep_reset_on_cmp0(void *pru_iep, uint64_t iep_reset_count)
+{
+    uint16_t event;
+    uint32_t reg0;
+    uint32_t reg1;
 
     /* Clear event */
-    HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
+    HW_WR_REG16((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, (1 << ENDAT3_IEP_CMP_EVENT_FOR_RESET));
+
+    /* Set IEP_CMP0_REG0 and IEP_CMP0_REG1 registers */
+    reg0 = ENDAT3_GET_LOWER_32BITS(iep_reset_count);
+    reg1 = ENDAT3_GET_UPPER_32BITS(iep_reset_count);
+
+    HW_WR_REG32((uint8_t *)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0), reg0);
+    HW_WR_REG32((uint8_t *)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1), reg1);
+
+    /* Read CMP CFG register */
+    event = HW_RD_REG16((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG);
+
+    /* Enable IEP reset by CMP0 event */
+    event |= (1 << ENDAT3_IEP_SLV_CMP_CFG_REG_CMP_EN_SHIFT);  /* CMP0 enable bit */
+    event |= (1 << ENDAT3_IEP_SLV_CMP_CFG_REG_CMP0_RST_CNT_EN_SHIFT);  /* Reset counter enable bit */
+
     /* Enable event */
-    HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG, event);
-
-    iep_reset_count = endat3_periodic_interface->iep_reset_count;
-
-    /* Configure cmp0 registers */
-    cmp_reg0 = (iep_reset_count & 0xffffffff) - IEP_DEFAULT_INC;
-    cmp_reg1 = (iep_reset_count>>32 & 0xffffffff);
-    HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0, cmp_reg0);
-    HW_WR_REG32((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1, cmp_reg1);
-
-    /* Write IEP default increment and IEP start */
-    temp = HW_RD_REG8((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG);
-    temp &= 0x0F;
-    temp |= 0x10;
-    temp |= IEP_COUNTER_EN;
-    HW_WR_REG8((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG, temp);
+    HW_WR_REG16((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG, event);
 }
 
-static void endat3_interrupt_config(endat3_periodic_interface *endat3_periodic_interface)
+/**
+ * \brief Disable IEP reset on CMP0 event
+ *
+ * \param pru_iep Pointer to PRU-ICSS IEP Base Address
+ */
+static void endat3_disable_iep_reset_on_cmp0(void *pru_iep)
 {
-    endat3_priv *priv = endat3_get_priv(endat3_periodic_interface->handle[CONFIG_ENDAT3_0]);
-    void *pruicss_handle = (void *)(priv->pruicss_handle);
+    uint16_t event;
+
+    /* Read CMP CFG register */
+    event = HW_RD_REG16((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG);
+
+    /* Disable IEP reset by CMP0 event */
+    event &= ~(1 << ENDAT3_IEP_SLV_CMP_CFG_REG_CMP_EN_SHIFT);  /* Clear CMP0 enable bit */
+    event &= ~(1 << ENDAT3_IEP_SLV_CMP_CFG_REG_CMP0_RST_CNT_EN_SHIFT);  /* Clear Reset counter enable bit */
+
+    /* Write back the modified value */
+    HW_WR_REG16((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG, event);
+
+    /* Clear IEP_CMP0_REG0 and IEP_CMP0_REG1 registers */
+    HW_WR_REG32((uint8_t *)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0), 0);
+    HW_WR_REG32((uint8_t *)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1), 0);
+}
+
+/**
+ * \brief Enable IEP counter
+ *
+ * \param handle EnDAT3 driver handle
+ */
+static void endat3_enable_iep_counter(endat3_handle handle)
+{
+    endat3_priv *priv;
+    const endat3_attrs *attrs;
+    int32_t status;
+
+    priv = endat3_get_priv(handle);
+    attrs = endat3_get_attrs(handle);
+
+    /* Configure and enable IEP counter */
+    status = PRUICSS_setIepCounterIncrementValue(priv->pruicss_handle, attrs->iep_instance, ENDAT3_IEP_COUNTER_INCREMENT);
+    DebugP_assert(status == SystemP_SUCCESS);
+
+    status = PRUICSS_controlIepCounter(priv->pruicss_handle, attrs->iep_instance, ENDAT3_IEP_COUNTER_ENABLE);
+    DebugP_assert(status == SystemP_SUCCESS);
+}
+
+/**
+ * \brief Disable IEP counter
+ *
+ * \param handle EnDAT3 driver handle
+ */
+static void endat3_disable_iep_counter(endat3_handle handle)
+{
+    endat3_priv *priv;
+    const endat3_attrs *attrs;
+    int32_t status;
+
+    priv = endat3_get_priv(handle);
+    attrs = endat3_get_attrs(handle);
+
+    /* Disable IEP counter */
+    status = PRUICSS_controlIepCounter(priv->pruicss_handle, attrs->iep_instance, ENDAT3_IEP_COUNTER_DISABLE);
+    DebugP_assert(status == SystemP_SUCCESS);
+}
+
+/**
+ * \brief Disable IEP CMP event
+ *
+ * \param pru_iep Pointer to PRU-ICSS IEP Base Address
+ * \param event_num CMP event number (0-15)
+ */
+static void endat3_disable_iep_cmp_event(void *pru_iep, uint8_t event_num)
+{
+    uint32_t reg0;
+
+    /* Disable the CMP event */
+    /* Read the current register value */
+    reg0 = HW_RD_REG32(((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG));
+    /* Clear the CMP_EN bit (AND with the negated new value) */
+    reg0 &= ~(((uint32_t)1U << event_num) << ENDAT3_IEP_SLV_CMP_CFG_REG_CMP_EN_SHIFT);
+    /* Write back the modified value */
+    HW_WR_REG32(((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG), reg0);
+
+    /* Clear CMP register values */
+    /* IEP CMP registers 8-15 have a gap in memory layout and require an additional 8-byte offset */
+    if(event_num > 7)
+    {
+        HW_WR_REG32((uint8_t *)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + event_num*ENDAT3_8_BYTE_REG_OFFSET + ENDAT3_8_BYTE_REG_OFFSET), 0);
+        HW_WR_REG32((uint8_t *)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + event_num*ENDAT3_8_BYTE_REG_OFFSET + ENDAT3_8_BYTE_REG_OFFSET), 0);
+    }
+    else
+    {
+        HW_WR_REG32((uint8_t *)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + event_num*ENDAT3_8_BYTE_REG_OFFSET), 0);
+        HW_WR_REG32((uint8_t *)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + event_num*ENDAT3_8_BYTE_REG_OFFSET), 0);
+    }
+}
+
+/**
+ * \brief Disable IEP CAP event
+ *
+ * \param pru_iep Pointer to PRU-ICSS IEP Base Address
+ * \param event_num CAP event number (0-7)
+ */
+static void endat3_disable_iep_cap_event(void *pru_iep, uint8_t event_num)
+{
+    uint32_t reg0;
+
+    /* Disable the CAP event */
+    /* Read the current register value */
+    reg0 = HW_RD_REG32(((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG));
+
+    /*
+     * Clear the CAP_EN bit (AND with the negated new value)
+     * NOTE: IEP CAP6 and CAP7 has 2 register bits each. So bit 8 needs
+     * to be cleared for CAP7. Only clearing capture rise bit for CAP6 and CAP7.
+     */
+    if(event_num == 7)
+    {
+        reg0 &= ~((uint32_t)1U << (event_num + 1));
+    }
+    else
+    {
+        reg0 &= ~((uint32_t)1U << event_num);
+    }
+    /* Write back the modified value */
+    HW_WR_REG32(((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG), reg0);
+}
+
+/**
+ * \brief Enable IEP CAP event
+ *
+ * \param pru_iep Pointer to PRU-ICSS IEP Base Address
+ * \param event_num CAP event number (0-7)
+ */
+static void endat3_enable_iep_cap_event(void *pru_iep, uint8_t event_num)
+{
+    uint32_t reg0;
+
+    /* Configure the CAP event in IEP hardware register */
+    /* Read the current register value */
+    reg0 = HW_RD_REG32(((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG));
+
+    /*
+     * Set the CAP_EN bit (OR with the new value)
+     * NOTE: IEP CAP6 and CAP7 has 2 register bits each. So bit 8 needs
+     * to be set for CAP7. Only setting capture rise bit for CAP6 and CAP7.
+     */
+    if(event_num == 7)
+    {
+        reg0 |= ((uint32_t)1U << (event_num + 1));
+    }
+    else
+    {
+        reg0 |= ((uint32_t)1U << event_num);
+    }
+    /* Write back the modified value */
+    HW_WR_REG32(((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG), reg0);
+}
+
+/**
+ * \brief Enable IEP CMP event
+ *
+ * \param pru_iep Pointer to PRU-ICSS IEP Base Address
+ * \param trigger_point IEP counter value for trigger
+ * \param event_num CMP event number (0-15)
+ */
+static void endat3_enable_iep_cmp_event(void *pru_iep, uint64_t trigger_point, uint8_t event_num)
+{
+    uint32_t reg0;
+    uint32_t reg1;
+
+    /* Clear event */
+    HW_WR_REG16((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, (uint16_t)(1 << event_num));
+
+    /* Write trigger point to CMP registers */
+    reg0 = ENDAT3_GET_LOWER_32BITS(trigger_point);
+    reg1 = ENDAT3_GET_UPPER_32BITS(trigger_point);
+    /* IEP CMP registers 8-15 have a gap in memory layout and require an additional 8-byte offset */
+    if(event_num > 7)
+    {
+        HW_WR_REG32((uint8_t *)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + event_num*ENDAT3_8_BYTE_REG_OFFSET + ENDAT3_8_BYTE_REG_OFFSET), reg0);
+        HW_WR_REG32((uint8_t *)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + event_num*ENDAT3_8_BYTE_REG_OFFSET + ENDAT3_8_BYTE_REG_OFFSET), reg1);
+    }
+    else
+    {
+        HW_WR_REG32((uint8_t *)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + event_num*ENDAT3_8_BYTE_REG_OFFSET), reg0);
+        HW_WR_REG32((uint8_t *)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + event_num*ENDAT3_8_BYTE_REG_OFFSET), reg1);
+    }
+
+    /* Configure the IEP CMP event in hardware registers */
+    /* Read the current register value */
+    reg0 = HW_RD_REG32(((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG));
+
+    /* Set the CMP_EN bit (OR with the new value) */
+    reg0 |= ((uint32_t)1U << event_num) << ENDAT3_IEP_SLV_CMP_CFG_REG_CMP_EN_SHIFT;
+
+    /* Write back the modified value */
+    HW_WR_REG32(((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG), reg0);
+}
+
+/**
+ * \brief Configure IEP timer for EnDAT3 periodic trigger mode
+ *
+ * \details This function configures the PRU-ICSS IEP (Industrial Ethernet Peripheral) timer
+ *          to support periodic trigger mode for EnDAT3 encoder transactions. It handles
+ *          both CMP (compare) and CAP (capture) modes based on configuration.
+ *
+ *          **Configuration performed:**
+ *          1. Disables IEP counter
+ *          2. Resets IEP counter to zero
+ *          3. **CMP Mode (is_cap_mode = 0):**
+ *             - Enables IEP counter reset on CMP0 event (defines period)
+ *             - Configures CMP event with trigger counts
+ *             - IEP counter automatically resets when reaching iep_reset_count
+ *          4. **CAP Mode (is_cap_mode = 1):**
+ *             - On AM243x: Configures IEP SYNC output and routes to capture pins
+ *             - Enables CAP event
+ *             - CAP events triggered by external signals
+ *          5. Re-enables IEP counter
+ *
+ * \param[in] endat3_periodic_interface Pointer to periodic interface structure
+ * \note This function assumes the handle and IEP base address are valid (set by endat3_init())
+ */
+static void endat3_config_iep(endat3_periodic_interface *endat3_periodic_interface)
+{
+    const endat3_attrs *attrs = endat3_get_attrs(endat3_periodic_interface->handle[CONFIG_ENDAT3_0]);
+    uint64_t iep_count = endat3_periodic_interface->iep_reset_count;
+    void *pru_iep = attrs->iep_base_addr;
+
+    /* Disable IEP counter */
+    endat3_disable_iep_counter(endat3_periodic_interface->handle[CONFIG_ENDAT3_0]);
+
+    /* Set IEP counter to ZERO */
+    HW_WR_REG32((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG0, 0);
+    HW_WR_REG32((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG1, 0);
+
+    /* Configure IEP reset/sync based on mode */
+    if(endat3_periodic_interface->is_cap_mode)
+    {
+#if defined(SOC_AM243X)
+        /*
+         * Configure IEP for generating SYNC and route it to IEP capture pins using TIMESYNC router on AM243x.
+         *
+         * If CONFIG_ENDAT3_NUM_INSTANCES > 1 and CAP mode is used, configuration for signal routing to
+         * capture pins needs to be added based on availability.
+         */
+        endat3_config_iep_cap_for_sync(endat3_periodic_interface->handle[CONFIG_ENDAT3_0], ENDAT3_GET_LOWER_32BITS(iep_count));
+#endif
+        /* Configure CAP events for channels */
+        endat3_enable_iep_cap_event(pru_iep, attrs->iep_cap_event);
+
+    }
+    else
+    {
+        /* CMP mode: Enable IEP reset on CMP0 */
+        endat3_enable_iep_reset_on_cmp0(pru_iep, iep_count);
+
+        /* Configure CMP events for channels */
+        endat3_enable_iep_cmp_event(pru_iep, endat3_periodic_interface->periodic_trigger_count[CONFIG_ENDAT3_0], attrs->iep_cmp_event);
+
+    }
+
+    /* Enable IEP counter */
+    endat3_enable_iep_counter(endat3_periodic_interface->handle[CONFIG_ENDAT3_0]);
+}
+
+/**
+ * \brief Configure and register PRU interrupt handlers for EnDAT3 periodic mode
+ *
+ * \details This function registers interrupt service routines (ISRs) for PRU firmware
+ *          interrupts in periodic trigger mode. When PRU firmware completes a EnDAT3
+ *          encoder transaction, it triggers an interrupt to notify the R5F host.
+ *
+ * \param[in] pruicss_handle PRU-ICSS handle obtained from endat3_priv structure.
+ *                           Passed to ISR callbacks for PRU-ICSS register access.
+ *
+ * \note This function uses HwiP_construct() which asserts on failure
+ * \note Interrupt numbers are device and configuration specific (defined by macros)
+ */
+static void endat3_interrupt_config(void *pruicss_handle)
+{
     int32_t status;
     HwiP_Params hwi_params;
 
@@ -173,14 +575,23 @@ static void endat3_interrupt_config(endat3_periodic_interface *endat3_periodic_i
 
 int32_t endat3_config_periodic_mode(endat3_periodic_interface *endat3_periodic_interface)
 {
-    int32_t         status;
-    endat3_priv   *priv;
-    void            *pruicss_handle;
+    int32_t status;
+    uint32_t    i;
+    endat3_priv  *priv;
+    void        *pruicss_handle;
 
-    /* NULL check on interface pointer and handle */
-    if(endat3_periodic_interface == NULL || endat3_periodic_interface->handle[CONFIG_ENDAT3_0] == NULL)
+    /* NULL check on interface pointer and handle(s) */
+    if(endat3_periodic_interface == NULL)
     {
         return SystemP_FAILURE;
+    }
+
+    for(i = 0; i < CONFIG_ENDAT3_NUM_INSTANCES; i++)
+    {
+        if(endat3_periodic_interface->handle[i] == NULL)
+        {
+            return SystemP_FAILURE;
+        }
     }
 
     priv = endat3_get_priv(endat3_periodic_interface->handle[CONFIG_ENDAT3_0]);
@@ -189,6 +600,7 @@ int32_t endat3_config_periodic_mode(endat3_periodic_interface *endat3_periodic_i
     /* Configure IEP */
     endat3_config_iep(endat3_periodic_interface);
 
+    /* Initialize PRU-ICSS Interrupt Controller */
 #if(CONFIG_ENDAT3_0_PRUICSS_INSTANCE == 1)
     status = PRUICSS_intcInit(pruicss_handle, &icss1_intc_initdata);
     if(status != SystemP_SUCCESS)
@@ -203,32 +615,57 @@ int32_t endat3_config_periodic_mode(endat3_periodic_interface *endat3_periodic_i
     }
 #endif
     /* Configure Interrupts */
-    endat3_interrupt_config(endat3_periodic_interface);
+    endat3_interrupt_config(pruicss_handle);
     return SystemP_SUCCESS;
 }
 
 int32_t endat3_stop_periodic_mode(endat3_periodic_interface *endat3_periodic_interface)
 {
-    endat3_priv *priv;
-    void *pruicss_iep;
-    uint8_t temp;
+    const endat3_attrs *attrs;
+    uint32_t i;
+    void *pru_iep;
 
-    /* NULL check on interface pointer and handle */
-    if(endat3_periodic_interface == NULL || endat3_periodic_interface->handle[CONFIG_ENDAT3_0] == NULL)
+    /* NULL check on interface pointer and handle(s) */
+    if(endat3_periodic_interface == NULL)
     {
         return SystemP_FAILURE;
     }
 
-    priv = endat3_get_priv(endat3_periodic_interface->handle[CONFIG_ENDAT3_0]);
-    pruicss_iep = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->iep0RegBase);
+    for(i = 0; i < CONFIG_ENDAT3_NUM_INSTANCES; i++)
+    {
+        if(endat3_periodic_interface->handle[i] == NULL)
+        {
+            return SystemP_FAILURE;
+        }
+    }
 
-    /* Stop IEP */
-    temp = HW_RD_REG8((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG);
-    temp &= 0xFE;
-    HW_WR_REG8((uint8_t *)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG, temp);
+    attrs = endat3_get_attrs(endat3_periodic_interface->handle[CONFIG_ENDAT3_0]);
+    pru_iep = attrs->iep_base_addr;
+
+    /* Disable IEP counter first */
+    endat3_disable_iep_counter(endat3_periodic_interface->handle[CONFIG_ENDAT3_0]);
+
+    /* Disable events based on mode */
+    if(endat3_periodic_interface->is_cap_mode)
+    {
+        /* CAP mode: Disable capture events */
+        endat3_disable_iep_cap_event(pru_iep, attrs->iep_cap_event);
+
+        /* Disable IEP SYNC generation for CAP mode */
+#if defined(SOC_AM243X)
+        endat3_disable_iep_cap_sync(pru_iep);
+#endif /* SOC_AM243X */
+    }
+    else
+    {
+        /* CMP mode: Disable compare events */
+        endat3_disable_iep_cmp_event(pru_iep, attrs->iep_cmp_event);
+
+        /* Disable IEP reset on CMP0 event */
+        endat3_disable_iep_reset_on_cmp0(pru_iep);
+    }
 
     HwiP_destruct(&gEndat3HwiObject[CONFIG_ENDAT3_0]);
-
     return SystemP_SUCCESS;
 }
 

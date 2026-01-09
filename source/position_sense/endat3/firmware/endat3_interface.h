@@ -96,8 +96,9 @@ ENDAT3_OPMODE_CONFIG_OFFSET                     .set    0x01D4
 ENDAT3_OPMODE_RESERVED2_OFFSET                  .set    0x01D5
 ENDAT3_OPMODE_RESERVED3_OFFSET                  .set    0x01D6
 ENDAT3_OPMODE_RESERVED4_OFFSET                  .set    0x01D7
-ENDAT3_OPMODE_PERIODIC                          .set    0       ; Periodic trigger mode
+ENDAT3_OPMODE_PERIODIC_CMP                      .set    0       ; Periodic CMP mode
 ENDAT3_OPMODE_HOST                              .set    1       ; Host trigger mode
+ENDAT3_OPMODE_PERIODIC_CAP                      .set    2       ; Periodic CAP mode
 
 ; Delay Cycle Configuration (frequency-independent timing)
 ; These values are calculated by R5F based on actual PRU frequency
@@ -115,7 +116,16 @@ ENDAT3_INTERFACE_START_TRIGGER_OFFSET            .set    0x01EC
 ; Bit 1: Channel 1 enable
 ; Bit 2: Channel 2 enable
 ENDAT3_CHANNEL_ENABLE_MASK_OFFSET                .set    0x01ED
+ENDAT3_RESERVED5_OFFSET                          .set    0x01EE
+ENDAT3_RESERVED6_OFFSET                          .set    0x01EF
 
-; Total Size (reduced from 0x022E to 0x01EE, saving 64 bytes)
-ENDAT3_INTERFACE_TOTAL_SIZE                     .set    0x01EE
+; IEP Periodic Trigger Configuration (for CMP and CAP modes)
+ENDAT3_IEP_BASE_ADDR_OFFSET                      .set    0x01F0  ;IEP base address (4 bytes, 32-bit aligned)
+ENDAT3_IEP_CMP_EVENT_NUM_OFFSET                  .set    0x01F4  ;IEP CMP event number (1 byte)
+ENDAT3_IEP_CAP_EVENT_NUM_OFFSET                  .set    0x01F5  ;IEP CAP event number (1 byte)
+ENDAT3_PERIODIC_RESERVED_OFFSET                  .set    0x01F6  ;Reserved for alignment (2 bytes)
+ENDAT3_IEP_CAP_REG_ADDR_OFFSET                   .set    0x01F8  ;IEP capture register address (4 bytes, 32-bit aligned)
+
+; Total Size
+ENDAT3_INTERFACE_TOTAL_SIZE                     .set    0x01FC
 

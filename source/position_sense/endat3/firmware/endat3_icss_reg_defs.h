@@ -37,6 +37,7 @@
 ;************************************************************************************
     .include "pru_io/firmware/common/icss_regs.inc"
     .include "pru_io/firmware/common/icss_cfg_regs.inc"
+    .include "pru_io/firmware/common/icss_iep_regs.inc"
     .include "pru_io/firmware/common/icss_constant_defines.inc"
     .include "pru_io/firmware/common/icss_xfer_defines.inc"
 ;******************************************************************************

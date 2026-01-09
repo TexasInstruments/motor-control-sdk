@@ -62,6 +62,40 @@ static endat3_attrs gEndat3Attrs[CONFIG_ENDAT3_NUM_INSTANCES] =
     % }
     % let baud_rate = "ENDAT3_BAUD_RATE_12_5_MBPS";
     % /* Calculate PRU core ID based on slice */
+    % /* Determine IEP instance number (0 for IEP0, 1 for IEP1) */
+    % let iep_instance = (instance.IEP_Instance === "IEP0") ? 0 : 1;
+    % /* Determine ICSS type and generate IEP base address using CSL macros */
+    % let is_icssm = (instance.instance === "ICSSM" || instance.instance === "ICSSM0" || instance.instance === "ICSSM1");
+    % let iep_base_addr_expr;
+    % if(is_icssm) {
+        % /* ICSSM only has IEP0 - use CSL_ICSS_M_PR1_IEP0_SLV_REGS_BASE offset */
+        % if(instance.instance === "ICSSM1") {
+            % /* AM261x: ICSSM1 */
+            % iep_base_addr_expr = `(void *)(CSL_ICSSM1_INTERNAL + CSL_ICSS_M_PR1_IEP0_SLV_REGS_BASE)`;
+        % } else {
+            % /* AM263x/AM263Px/AM261x: ICSSM0 */
+            % iep_base_addr_expr = `(void *)(CSL_ICSSM0_INTERNAL_U_BASE + CSL_ICSS_M_PR1_IEP0_SLV_REGS_BASE)`;
+        % }
+    % } else {
+        % /* ICSSG has both IEP0 and IEP1 - use direct CSL macros */
+        % if(instance.instance === "ICSSG1") {
+            % if(iep_instance === 0) {
+                % iep_base_addr_expr = `(void *)CSL_PRU_ICSSG1_IEP0_BASE`;
+            % } else {
+                % iep_base_addr_expr = `(void *)CSL_PRU_ICSSG1_IEP1_BASE`;
+            % }
+        % } else {
+            % /* ICSSG0 */
+            % if(iep_instance === 0) {
+                % iep_base_addr_expr = `(void *)CSL_PRU_ICSSG0_IEP0_BASE`;
+            % } else {
+                % iep_base_addr_expr = `(void *)CSL_PRU_ICSSG0_IEP1_BASE`;
+            % }
+        % }
+    % }
+    % /* Get IEP CMP and CAP event numbers (single-channel mode) */
+    % let iep_cmp_event = instance.CMP_Event_Num;
+    % let iep_cap_event = instance.CAP_Event_Num;
     {
         .instance = `i`U,
         .mode = `mode`,
@@ -75,6 +109,10 @@ static endat3_attrs gEndat3Attrs[CONFIG_ENDAT3_NUM_INSTANCES] =
         .baud_rate = `baud_rate`,
         .core_clk_freq = `instance.pru.$name.toUpperCase()`_CORE_CLK_FREQ_HZ,
         .iep_clk_freq = `instance.pru.$name.toUpperCase()`_IEP_CLK_FREQ_HZ,
+        .iep_instance = `iep_instance`U,
+        .iep_cmp_event = `iep_cmp_event`U,
+        .iep_cap_event = `iep_cap_event`U,
+        .iep_base_addr = `iep_base_addr_expr`,
     },
 % }
 };

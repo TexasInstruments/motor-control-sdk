@@ -40,11 +40,12 @@
 ; - Transmitting commands to encoders
 ; - Receiving and decoding position data and status information
 ; - Error detection and handling
-; - Periodic trigger support using IEP timer (CMP3 event)
+; - Periodic trigger support using IEP timer
 ;
 ; Operating Modes:
-; - Periodic Mode (opmode=0): Automatic timer-driven reads via IEP CMP3 event
+; - Periodic CMP Mode (opmode=0): Automatic timer-driven reads via IEP CMP event
 ; - Host Mode (opmode=1): Traditional host-triggered reads
+; - Periodic CAP Mode (opmode=2): External signal driven via IEP CAP event
 ;
 ; Register Aliases:
 ; - Uses labels from icss_cfg_regs.inc for ICSS configuration registers
@@ -67,7 +68,7 @@
 	.retainrefs
 
 ; Main Entry Point
-; 
+;
 ; Sets up firmware release version and initializes the PRU for EnDat3 operation
 ;******************************************************************************
 endat3_init:
@@ -79,6 +80,9 @@ endat_main:
     ; Load channel enable mask from DMEM
     ; This mask is used by TX_EN and RX_EN macros for runtime channel determination
     LOAD_CH_MASK
+
+	; DMEM Base Address set to 0
+	ldi32	DMEM_BASE, 0
 
     ; Initialize system
 
@@ -117,14 +121,14 @@ endat_main:
 ;******************************************************************************
 fn_init_system:
 	; Configure TX Channel
-	TX_EN                                           ; Enable TX mode 
+	TX_EN                                           ; Enable TX mode
 	SET_TX_CH                                      ; Select dedicated channel
-	
+
 	; Reset channel and initialize
 	REINIT_TX                                       ; Reinitialize TX hardware
 	TX_FRAME_SIZE		0, TEMP0                    ; Set TX frame size to 0
 	TX_EN                                           ; Re-enable TX mode
-	SET_TX_CH                                      ; Re-select dedicated channel 
+	SET_TX_CH                                      ; Re-select dedicated channel
 
 ;******************************************************************************
 ; Hello Sequence
@@ -136,8 +140,8 @@ init_seq_hello:
 	; Reset clock and prepare for transmission
 	RESET_FIFO_SETTING                               ; Reset clock settings for TX
 	; Load delay from interface structure (frequency-independent)
-	ldi32 DMEM_OFFSET, ENDAT3_DELAY_TX_START_1_OFFSET
-	lbbo &ADD_DELAY, DMEM_OFFSET, 0, 4                  ; Load delay_tx_start_1 from R5F-calculated value
+	ldi DMEM_OFFSET, ENDAT3_DELAY_TX_START_1_OFFSET
+	lbbo &ADD_DELAY, DMEM_BASE, DMEM_OFFSET, 4                  ; Load delay_tx_start_1 from R5F-calculated value
 	WAIT ADD_DELAY
 
 	; Prepare and send hello sequence
@@ -148,8 +152,8 @@ init_seq_hello:
 	SEND_TX TX_PREAMBLE, TX_ENCODED_HIGH, TX_ENCODED_LOW
 
 	; Wait after hello transmission to pass Rx (no need to store rx for hello command used for encoder startup sequence)
-	ldi32 DMEM_OFFSET, ENDAT3_DELAY_TX_START_2_OFFSET
-	lbbo &ADD_DELAY, DMEM_OFFSET, 0, 4                  ; Load delay_tx_start_2 from R5F-calculated value
+	ldi DMEM_OFFSET, ENDAT3_DELAY_TX_START_2_OFFSET
+	lbbo &ADD_DELAY, DMEM_BASE, DMEM_OFFSET, 4                  ; Load delay_tx_start_2 from R5F-calculated value
 	WAIT ADD_DELAY
 wait_for_hello_command:
 
@@ -162,15 +166,15 @@ wait_for_hello_command:
 ;******************************************************************************
 	; Clear start trigger flag to indicate ready for command
 	ldi TEMP2.b0, 0
-	ldi32 DMEM_OFFSET, ENDAT3_INTERFACE_START_TRIGGER_OFFSET
-	sbbo &TEMP2.b0, DMEM_OFFSET, 0, 1                  ; Write 0 to start trigger flag
+	ldi DMEM_OFFSET, ENDAT3_INTERFACE_START_TRIGGER_OFFSET
+	sbbo &TEMP2.b0, DMEM_BASE, DMEM_OFFSET, 1                  ; Write 0 to start trigger flag
 
 wait_for_start_trigger:
 	; Wait for R5F core to set start trigger flag to 1
-	ldi32 DMEM_OFFSET, ENDAT3_INTERFACE_START_TRIGGER_OFFSET
-	lbbo &TEMP2.b0, DMEM_OFFSET, 0, 1                  ; Read start trigger flag
+	ldi DMEM_OFFSET, ENDAT3_INTERFACE_START_TRIGGER_OFFSET
+	lbbo &TEMP2.b0, DMEM_BASE, DMEM_OFFSET, 1                  ; Read start trigger flag
 	qbne wait_for_start_trigger, TEMP2.b0, 1          ; Loop until flag == 1
-	
+
 	; Reset system for new transmission
 	ZERO    &TEMP0, 116                             ; Clear registers
 
@@ -187,50 +191,88 @@ wait_for_start_trigger:
 	SEND_TX TX_PREAMBLE, TX_ENCODED_HIGH, TX_ENCODED_LOW
 
 	; Wait after transmission to pass Rx as we dont need to store rx for HELLO command for encoder wakeup
-	ldi32 DMEM_OFFSET, ENDAT3_DELAY_TX_START_2_OFFSET
-	lbbo &ADD_DELAY, DMEM_OFFSET, 0, 4                  ; Load delay_tx_start_2 from R5F-calculated value
+	ldi DMEM_OFFSET, ENDAT3_DELAY_TX_START_2_OFFSET
+	lbbo &ADD_DELAY, DMEM_BASE, DMEM_OFFSET, 4                  ; Load delay_tx_start_2 from R5F-calculated value
 	WAIT ADD_DELAY
 
 	; Clear start trigger flag for next command
 	ldi TEMP2.b0, 0
-	ldi32 DMEM_OFFSET, ENDAT3_INTERFACE_START_TRIGGER_OFFSET
-	sbbo &TEMP2.b0, DMEM_OFFSET, 0, 1
+	ldi DMEM_OFFSET, ENDAT3_INTERFACE_START_TRIGGER_OFFSET
+	sbbo &TEMP2.b0, DMEM_BASE, DMEM_OFFSET, 1
 
 ;******************************************************************************
 ; Operating Mode Check
 ;
-; Determines whether to use periodic trigger mode or host trigger mode
+; Determines whether to use periodic CMP mode, periodic CAP mode, or host trigger mode
 ; based on ENDAT3_OPMODE_CONFIG_OFFSET in DMEM
 ;******************************************************************************
 check_operating_mode:
 	; Read operating mode from DMEM
-	ldi32 DMEM_OFFSET, ENDAT3_OPMODE_CONFIG_OFFSET
-	lbbo &TEMP2.b0, DMEM_OFFSET, 0, 1              ; Read opmode (0=periodic, 1=host)
-	qbne wait_for_host_trigger1, TEMP2.b0, 0       ; If opmode != 0, use host trigger
+	ldi DMEM_OFFSET, ENDAT3_OPMODE_CONFIG_OFFSET
+	lbbo &TEMP2.b0, DMEM_BASE, DMEM_OFFSET, 1              ; Read opmode (0=CMP, 1=host, 2=CAP)
+	qbeq wait_for_host_trigger1, TEMP2.b0, 1       ; If opmode == 1, use host trigger
+	qbeq handle_periodic_trigger_cmp_mode, TEMP2.b0, 0  ; If opmode == 0, use CMP mode
+	; Otherwise fall through to CAP mode
 
 ;******************************************************************************
-; Periodic Trigger Mode
-;
-; Waits for IEP CMP3 event to trigger encoder reads automatically.
-; Generates interrupts to host after each read.
-; Checks for operating mode changes to allow switching back to host mode.
+; Periodic CAP Mode: Wait for external event captured by IEP
+; - Reads IEP base address dynamically from DMEM
+; - Monitors CAP event status register for configured event
+; - Clears event by reading capture register value
 ;******************************************************************************
-handle_periodic_trigger_mode:
-	; Check if operating mode has changed to host mode
-	ldi32 DMEM_OFFSET, ENDAT3_OPMODE_CONFIG_OFFSET
-	lbbo &TEMP2.b0, DMEM_OFFSET, 0, 1              ; Read opmode (0=periodic, 1=host)
-	qbne check_operating_mode, TEMP2.b0, 0         ; If opmode changed to 1, exit periodic mode
-	
-	; Get compare event status from IEP (offset 0x0074)
-	lbco &TEMP0, ICSS_IEP, ICSS_IEP_CMP_STATUS_REG, 4
-	
-	; Check if CMP3 event is set (bit 3)
-	qbbc handle_periodic_trigger_mode, TEMP0, IEP_CMP3_EVENT_FLAG
-	
-	; Clear CMP3 event flag by writing 1 to bit 3
-	set TEMP0, TEMP0, IEP_CMP3_EVENT_FLAG
-	sbco &TEMP0, ICSS_IEP, ICSS_IEP_CMP_STATUS_REG, 4
-	
+handle_periodic_trigger_cap_mode:
+	; Load IEP base address from DMEM
+	ldi DMEM_OFFSET, ENDAT3_IEP_BASE_ADDR_OFFSET
+	lbbo &TEMP1, DMEM_BASE, DMEM_OFFSET, 4                  ; TEMP1 = IEP base address
+
+	; Get CAP status register from IEP
+	lbbo &TEMP0.w0, TEMP1, ICSS_IEP_CAP_STATUS_REG, 2
+
+	; Load CAP event number from DMEM
+	ldi DMEM_OFFSET, ENDAT3_IEP_CAP_EVENT_NUM_OFFSET
+	lbbo &TEMP2.b0, DMEM_BASE, DMEM_OFFSET, 1               ; TEMP2.b0 = CAP event number
+
+	; Wait until IEP CAP event is set
+	qbbc check_operating_mode, TEMP0.w0, TEMP2.b0
+
+	; Clear CAP event by reading the capture register (hardware auto-clears on read)
+	ldi DMEM_OFFSET, ENDAT3_IEP_CAP_REG_ADDR_OFFSET
+	lbbo &TEMP1, DMEM_BASE, DMEM_OFFSET, 4                  ; TEMP1 = CAP register address
+	lbbo &TEMP0, TEMP1, 0, 4                        ; Read CAP register to clear event
+
+	; Jump directly to process_command (skip host trigger wait)
+	qba process_command_periodic
+
+;******************************************************************************
+; Periodic CMP Mode: Wait for IEP counter to match compare value
+; - Reads IEP base address dynamically from DMEM
+; - Monitors CMP event status register for configured event
+; - Clears event by writing to CMP status register
+;******************************************************************************
+handle_periodic_trigger_cmp_mode:
+	; Load IEP base address from DMEM
+	ldi DMEM_OFFSET, ENDAT3_IEP_BASE_ADDR_OFFSET
+	lbbo &TEMP1, DMEM_BASE, DMEM_OFFSET, 4                  ; TEMP1 = IEP base address
+
+	; Get CMP status register from IEP
+	lbbo &TEMP0.w0, TEMP1, ICSS_IEP_CMP_STATUS_REG, 2
+
+	; Load CMP event number from DMEM
+	ldi DMEM_OFFSET, ENDAT3_IEP_CMP_EVENT_NUM_OFFSET
+	lbbo &TEMP2.b0, DMEM_BASE, DMEM_OFFSET, 1               ; TEMP2.b0 = CMP event number
+
+	; Wait until IEP CMP event is set
+	qbbc check_operating_mode, TEMP0.w0, TEMP2.b0
+
+	; Clear CMP event by setting the corresponding bit
+	ldi TEMP_REG1.w0, 1
+	lsl TEMP_REG1.w0, TEMP_REG1.w0, TEMP2.b0       ; Create bitmask: 1 << event_number
+
+	; Load IEP base address again and write to clear the event
+	ldi DMEM_OFFSET, ENDAT3_IEP_BASE_ADDR_OFFSET
+	lbbo &TEMP1, DMEM_BASE, DMEM_OFFSET, 4                  ; TEMP1 = IEP base address
+	sbbo &TEMP_REG1.w0, TEMP1, ICSS_IEP_CMP_STATUS_REG, 2  ; Write bitmask to clear event
+
 	; Jump directly to process_command (skip host trigger wait)
 	qba process_command_periodic
 
@@ -242,21 +284,21 @@ handle_periodic_trigger_mode:
 ;******************************************************************************
 new_request_start:
 	; Check operating mode before waiting for trigger
-	ldi32 DMEM_OFFSET, ENDAT3_OPMODE_CONFIG_OFFSET
-	lbbo &TEMP2.b0, DMEM_OFFSET, 0, 1              ; Read opmode (0=periodic, 1=host)
+	ldi DMEM_OFFSET, ENDAT3_OPMODE_CONFIG_OFFSET
+	lbbo &TEMP2.b0, DMEM_BASE, DMEM_OFFSET, 1              ; Read opmode (0=periodic, 1=host)
 	qbeq process_command, TEMP2.b0, 0               ; If periodic mode, skip host trigger wait
 
 wait_for_host_trigger1:
 	; Wait for new command trigger (host mode only)
-	ldi32 DMEM_OFFSET, ENDAT3_INTERFACE_BUSY_OFFSET
-	lbbo &TEMP2.b0, DMEM_OFFSET, 0, 1
+	ldi DMEM_OFFSET, ENDAT3_INTERFACE_BUSY_OFFSET
+	lbbo &TEMP2.b0, DMEM_BASE, DMEM_OFFSET, 1
 	qbne wait_for_host_trigger1, TEMP2.b0, 1          ; Loop until flag == 1
 
 process_command:
 process_command_periodic:
 	; Get number of frames to transmit
-	ldi32 DMEM_OFFSET, ENDAT3_INTERFACE_EXPECTED_TX_FRAMES_OFFSET     ; Get frame count address
-	lbbo &TX_FRAMES_LEFT, DMEM_OFFSET, 0, 1            ; Load frame count
+	ldi DMEM_OFFSET, ENDAT3_INTERFACE_EXPECTED_TX_FRAMES_OFFSET     ; Get frame count address
+	lbbo &TX_FRAMES_LEFT, DMEM_BASE, DMEM_OFFSET, 1            ; Load frame count
 	ldi CURR_TX_FRAME_MEM_OFFSET, 0                  ; Reset buffer offset
 
 ;******************************************************************************
@@ -267,21 +309,21 @@ process_command_periodic:
 ;******************************************************************************
 send_encoded_tx_pattern:
 	; Wait between next transmissions to follow protocol timings
-	ldi32 DMEM_OFFSET, ENDAT3_DELAY_TX_START_3_OFFSET
-	lbbo &ADD_DELAY, DMEM_OFFSET, 0, 4                  ; Load delay_tx_start_3 from R5F-calculated value
+	ldi DMEM_OFFSET, ENDAT3_DELAY_TX_START_3_OFFSET
+	lbbo &ADD_DELAY, DMEM_BASE, DMEM_OFFSET, 4                  ; Load delay_tx_start_3 from R5F-calculated value
 	WAIT ADD_DELAY
-	
+
 data_id_x:
 	; Check if special timing is needed
-	ldi32 DMEM_OFFSET, ENDAT3_INTERFACE_BACKGROUND_OP_CODE_OFFSET
-	lbbo &TEMP1, DMEM_OFFSET, 0, 1                     ; Read opcode
+	ldi DMEM_OFFSET, ENDAT3_INTERFACE_BACKGROUND_OP_CODE_OFFSET
+	lbbo &TEMP1, DMEM_BASE, DMEM_OFFSET, 1                     ; Read opcode
 	qbne no_wait_for_10ms, TEMP1.b0, WRITE_BG_OPCODE  ; Skip if not write opcode
 	qbne no_wait_for_10ms, TX_FRAMES_LEFT, 1          ; Skip if not last frame
 
 wait_10ms:
 	; Special timing delay (10ms) - load from interface structure
-	ldi32 DMEM_OFFSET, ENDAT3_DELAY_10MS_OFFSET
-	lbbo &ADD_DELAY, DMEM_OFFSET, 0, 4                  ; Load delay_10ms from R5F-calculated value
+	ldi DMEM_OFFSET, ENDAT3_DELAY_10MS_OFFSET
+	lbbo &ADD_DELAY, DMEM_BASE, DMEM_OFFSET, 4                  ; Load delay_10ms from R5F-calculated value
 	WAIT ADD_DELAY
 
 no_wait_for_10ms:
@@ -294,8 +336,13 @@ no_wait_for_10ms:
 	RESET_FIFO_SETTING
 	; Prepare and send data frame
 	ldi32 TX_PREAMBLE, FIXED_TX_PREAMBLE             ; Load preamble pattern
-	ldi32 DMEM_OFFSET, ENDAT3_INTERFACE_TX_BUFFER_OFFSET    ; Get buffer address
+
+	ldi	DMEM_OFFSET, ENDAT3_INTERFACE_TX_BUFFER_OFFSET    ; Get buffer address
+	; FIXME: NOP to maintain timing requirement
+	nop
+	add DMEM_OFFSET, DMEM_OFFSET, DMEM_BASE
 	lbbo &TX_CMD_DATA, DMEM_OFFSET, CURR_TX_FRAME_MEM_OFFSET, 4 ; Load data from memory
+
 	add CURR_TX_FRAME_MEM_OFFSET, CURR_TX_FRAME_MEM_OFFSET, 4 ; Update offset
 
 	; Encode and send the data
@@ -323,20 +370,22 @@ rx_main_loop:
 one_tx_frame_left:
     ; Clear registers and prepare for reception
     zero			&TEMP0, 116                     ; Clear registers
-	
+
     ; Reload channel mask after register clear
     LOAD_CH_MASK
 
     ; Setup lookup tables and decoding resources
     ldi32	DECODED_DATA_REG, ENDAT3_INTERFACE_RX_BUFFER_OFFSET    ; Set decoded data destination
-	
+
 	; Wait for TX to complete before enabling rx
 	WAIT_TX_DONE                                    ; Wait until TX is completely done
 
 	; Small delay before enabling rx depending upon encoder types
 	; Load sampling delay from interface structure (frequency-independent)
-	ldi32 DMEM_OFFSET, ENDAT3_DELAY_SAMPLING_OFFSET
-	lbbo &ADD_DELAY, DMEM_OFFSET, 0, 4                  ; Load delay_sampling from R5F-calculated value
+	ldi DMEM_OFFSET, ENDAT3_DELAY_SAMPLING_OFFSET
+	; FIXME: NOP to maintain timing requirement
+	nop
+	lbbo &ADD_DELAY, DMEM_BASE, DMEM_OFFSET, 4                  ; Load delay_sampling from R5F-calculated value
 	loop sampling_delay,ADD_DELAY  ; Use dynamic sampling delay
 	add TEMP0, TEMP0, 0
 sampling_delay:
@@ -358,7 +407,7 @@ sampling_delay:
     ; Receive first bit of preamble
     RECEIVE_PREAMBLE 1                              ; Get first preamble bit
     ;;Now FIRST_DATA_HALF_BIT contain start of preamble (first half bit)
-    
+
 start_bits:
     ; Continue receiving preamble bits
     RECEIVE_PREAMBLE 1                              ; Get next bit
@@ -367,24 +416,24 @@ start_bits:
 short_symbol_detected:
     ; Process short symbol (pattern recognition)
     RECEIVE_PREAMBLE 5                              ; Get 5 more bits
-	
+
 	; Mask and analyze the bit pattern
     and TEMP_REG1.b0, BIT_CAPTURE_REG.b0, 0xff        ; Mask lower bits
     and TEMP_REG1.b1, BIT_CAPTURE_REG.b1, 0xf         ; Mask upper bits
     lsr TEMP_REG1, TEMP_REG1, 1                       ; Right shift
-	
+
 	; Check for errors and validate pattern
     qbeq error_detected, ERROR_STATUS_REG, 0          ; Error check
     qbne error_detected, TEMP_REG1.b0, RX_FIXED_PREAMBLE_LOW  ; Pattern check low
     qbne error_detected, TEMP_REG1.b1, RX_FIXED_PREAMBLE_HIGH ; Pattern check high
-	
+
 	; Preamble is valid, prepare for data reception
     and FIRST_DATA_HALF_BIT, BIT_CAPTURE_REG.b0, 0x1  ; Save first data half bit
     lsl FIRST_DATA_HALF_BIT, FIRST_DATA_HALF_BIT, 7   ; Shift to position
 	ldi BIT_CAPTURE_REG, 0                           ; Clear bit capture register
 	ldi32 TEMP1, 0                                   ; Clear TEMP1
     qba receive_data_frames                         ; Start receiving data
-    
+
 ;******************************************************************************
 ; Data Reception and Decoding
 ;
@@ -395,11 +444,11 @@ short_symbol_detected:
 receive_data_frames:
     ; Receive and decode 8 bits of Manchester data
     RECEIVE_MANCHESTER_DATA 8                       ; Get 8 bits (16 half-bits)
-    
+
     ; Store the decoded byte
     sbbo &BIT_CAPTURE_REG.b0, DECODED_DATA_REG, RX_BUFFER_OFFSET, 1 ; Save byte
     add RX_BUFFER_OFFSET, RX_BUFFER_OFFSET, 1         ; Update buffer offset
-    
+
     ; Check for errors in received data
     qbeq error_detected_in_data_frames, ERROR_STATUS_REG, 0 ; Check for Manchester error
     qba receive_data_frames                         ; Continue receiving data
@@ -407,7 +456,7 @@ receive_data_frames:
 ;******************************************************************************
 ; Response Processing
 ;
-; Processes the received response including error detection, postamble 
+; Processes the received response including error detection, postamble
 ; detection, and handling of special commands.
 ;******************************************************************************
 error_detected_in_data_frames:
@@ -418,21 +467,21 @@ error_detected_in_data_frames:
 rx_sampling_done:
     ; Successful reception complete
 	ldi TEMP2.b0, 0                                  ; Clear status
-	ldi32 DMEM_OFFSET, ENDAT3_INTERFACE_BUSY_OFFSET      ; Get status flag address
-	sbbo &TEMP2.b0, DMEM_OFFSET, 0, 1                  ; Clear flag
+	ldi DMEM_OFFSET, ENDAT3_INTERFACE_BUSY_OFFSET      ; Get status flag address
+	sbbo &TEMP2.b0, DMEM_BASE, DMEM_OFFSET, 1                  ; Clear flag
 
 	; Check operating mode for next action
-	ldi32 DMEM_OFFSET, ENDAT3_OPMODE_CONFIG_OFFSET
-	lbbo &TEMP2.b0, DMEM_OFFSET, 0, 1              ; Read opmode
-	qbne host_trigger_next_cmd, TEMP2.b0, 0        ; If host mode, wait for next host trigger
+	ldi DMEM_OFFSET, ENDAT3_OPMODE_CONFIG_OFFSET
+	lbbo &TEMP2.b0, DMEM_BASE, DMEM_OFFSET, 1              ; Read opmode
+	qbeq host_trigger_next_cmd, TEMP2.b0, 1        ; If host mode, wait for next host trigger
 
 	; Periodic mode: Generate interrupt and loop back
 	ldi R31.w0, PRU_TRIGGER_HOST_ENDAT3_EVT0        ; Generate interrupt to host
-	qba handle_periodic_trigger_mode                ; Loop back for next periodic trigger
+	qba check_operating_mode                ; Loop back for next periodic trigger
 host_trigger_next_cmd:
 	; Check if this was a reset command
     ldi DMEM_OFFSET, ENDAT3_INTERFACE_FOREGROUND_OP_CODE_OFFSET              ; Get command ID address
-    lbbo &TEMP2.b0, DMEM_OFFSET, 0, 1                  ; Read command ID
+    lbbo &TEMP2.b0, DMEM_BASE, DMEM_OFFSET, 1                  ; Read command ID
     qbne skip_reset, TEMP2.b0, RESET_CMD             ; If not reset, skip
     jmp init_seq_hello                                 ; Jump to hello sequence for reset (long jump)
 skip_reset:
@@ -447,18 +496,18 @@ skip_reset:
 error_detected:
     ; Report error to host
 	ldi TEMP2.b0, SAMPLING_ERROR_FLAG                ; Set error flag value
-	ldi32 DMEM_OFFSET, ENDAT3_INTERFACE_BUSY_OFFSET      ; Get status flag address
-	sbbo &TEMP2.b0, DMEM_OFFSET, 0, 1                  ; Set error flag
-	
+	ldi DMEM_OFFSET, ENDAT3_INTERFACE_BUSY_OFFSET      ; Get status flag address
+	sbbo &TEMP2.b0, DMEM_BASE, DMEM_OFFSET, 1                  ; Set error flag
+
 	; Check operating mode for next action
-	ldi32 DMEM_OFFSET, ENDAT3_OPMODE_CONFIG_OFFSET
-	lbbo &TEMP2.b0, DMEM_OFFSET, 0, 1              ; Read opmode
+	ldi DMEM_OFFSET, ENDAT3_OPMODE_CONFIG_OFFSET
+	lbbo &TEMP2.b0, DMEM_BASE, DMEM_OFFSET, 1              ; Read opmode
 	qbne host_trigger_error_cmd, TEMP2.b0, 0       ; If host mode, wait for next host trigger
-	
+
 	; Periodic mode: Generate interrupt and loop back
 	ldi R31.w0, PRU_TRIGGER_HOST_ENDAT3_EVT0        ; Generate interrupt to host
-	qba handle_periodic_trigger_mode                ; Loop back for next periodic trigger
-	
+	qba check_operating_mode                ; Loop back for next periodic trigger
+
 host_trigger_error_cmd:
 	; Host mode: Update frame counter and prepare for next command
 	sub TX_FRAMES_LEFT, TX_FRAMES_LEFT, 1             ; Update frame counter
