@@ -214,6 +214,16 @@ static void nikon_get_alm_bits(nikon_handle handle, uint32_t enc_num, uint32_t c
  */
 static void nikon_get_pm_alm_bits(nikon_handle handle, uint32_t enc_num, uint32_t ch);
 
+/**
+ * \brief Configure IEP base address in PRU shared memory
+ *
+ *  \param[in]  handle              Nikon handle from \ref nikon_init
+ *  \param[in]  iep_base_address    IEP base address offset from PRU-ICSS base
+ *
+ * \return SystemP_SUCCESS on success, SystemP_FAILURE on validation failure
+ */
+static int32_t nikon_config_iep_base_address(nikon_handle handle, uint32_t iep_base_address);
+
 /* ========================================================================== */
 /*                         Structure Declarations                             */
 /* ========================================================================== */
@@ -716,6 +726,7 @@ int32_t nikon_command_wait(nikon_handle handle)
 int32_t nikon_command_process(nikon_handle handle)
 {
     int32_t ret = SystemP_FAILURE;
+    nikon_priv *priv;
 
     /* Validate handle parameter */
     if(handle == NULL)
@@ -723,17 +734,22 @@ int32_t nikon_command_process(nikon_handle handle)
         return SystemP_FAILURE;
     }
 
-    ret = nikon_command_send(handle);
-    if(ret != SystemP_SUCCESS)
+    priv = handle->priv;
+
+    if(priv->is_continuous_mode == NIKON_CLEAR_STATUS_FLAG)
     {
-        return ret;
+        ret = nikon_command_send(handle);
+        if(ret != SystemP_SUCCESS)
+        {
+            return ret;
+        }
     }
 
     ret = nikon_command_wait(handle);
     return ret;
 }
 
-int32_t nikon_config_periodic_trigger(nikon_handle handle)
+int32_t nikon_config_periodic_trigger_cmp_mode(nikon_handle handle)
 {
     nikon_priv *priv;
     const nikon_attrs *attrs;
@@ -748,7 +764,7 @@ int32_t nikon_config_periodic_trigger(nikon_handle handle)
     priv = handle->priv;
     attrs = handle->attrs;
 
-    /* Configures Nikon in periodic trigger mode */
+    /* Configures Nikon in periodic trigger CMP mode */
     pruicss_xchg = priv->pruicss_xchg;
 
     if(attrs->load_share_enabled)
@@ -757,13 +773,13 @@ int32_t nikon_config_periodic_trigger(nikon_handle handle)
         {
             if(attrs->channel_mask & (1U << pru_num))
             {
-                pruicss_xchg->opmode[pru_num] = NIKON_CONFIG_PERIODIC_TRIGGER_MODE;
+                pruicss_xchg->opmode[pru_num] = NIKON_CONFIG_PERIODIC_TRIGGER_CMP_MODE;
             }
         }
     }
     else
     {
-        pruicss_xchg->opmode[0] = NIKON_CONFIG_PERIODIC_TRIGGER_MODE;
+        pruicss_xchg->opmode[0] = NIKON_CONFIG_PERIODIC_TRIGGER_CMP_MODE;
     }
     priv->is_continuous_mode = NIKON_SET_STATUS_FLAG;
 
@@ -805,6 +821,139 @@ int32_t nikon_config_host_trigger(nikon_handle handle)
     priv->is_continuous_mode = NIKON_CLEAR_STATUS_FLAG;
 
     return SystemP_SUCCESS;
+}
+
+int32_t nikon_config_periodic_trigger_cap_mode(nikon_handle handle)
+{
+    nikon_priv *priv;
+    const nikon_attrs *attrs;
+    nikon_pruicss_xchg *pruicss_xchg;
+    uint8_t pru_num;
+
+    /* Validate handle parameter */
+    if(handle == NULL)
+    {
+        return SystemP_FAILURE;
+    }
+
+    priv = handle->priv;
+    attrs = handle->attrs;
+
+    /* Configures Nikon receiver in periodic trigger CAP mode */
+    pruicss_xchg = priv->pruicss_xchg;
+
+    if(attrs->load_share_enabled)
+    {
+        for(pru_num = 0; pru_num < NIKON_NUM_CH_PER_SLICE_MAX; pru_num++)
+        {
+            if(attrs->channel_mask & (1U << pru_num))
+            {
+                pruicss_xchg->opmode[pru_num] = NIKON_CONFIG_PERIODIC_TRIGGER_CAP_MODE;
+            }
+        }
+    }
+    else
+    {
+        pruicss_xchg->opmode[0] = NIKON_CONFIG_PERIODIC_TRIGGER_CAP_MODE;
+    }
+    priv->is_continuous_mode = NIKON_SET_STATUS_FLAG;
+
+    return SystemP_SUCCESS;
+}
+
+static int32_t nikon_config_iep_base_address(nikon_handle handle, uint32_t iep_base_address)
+{
+    /* Validate handle parameter */
+    if(iep_base_address == 0 || handle == NULL)
+    {
+        return SystemP_FAILURE;
+    }
+
+    /* Configures IEP instance used for periodic trigger mode */
+    nikon_priv          *priv = handle->priv;
+    nikon_pruicss_xchg  *pruicss_xchg = priv->pruicss_xchg;
+
+    pruicss_xchg->iep_base_address = iep_base_address;
+
+    return SystemP_SUCCESS;
+}
+
+int32_t nikon_config_iep_cap_event(nikon_handle handle, uint8_t channel, uint8_t event_num)
+{
+    int32_t ret_val = SystemP_SUCCESS;
+    const nikon_attrs *attrs;
+    nikon_priv *priv;
+    nikon_pruicss_xchg *pruicss_xchg;
+    uint8_t ch_index = 0;
+
+    if(handle == NULL || event_num >= NIKON_IEP_MAX_CAP_EVENT || channel >= NIKON_NUM_CH_PER_SLICE_MAX)
+    {
+        return SystemP_FAILURE;
+    }
+
+    attrs = handle->attrs;
+    priv = handle->priv;
+    pruicss_xchg = priv->pruicss_xchg;
+
+    if(attrs->load_share_enabled)
+    {
+        ch_index = channel;
+    }
+    else
+    {
+        /* Always 0 in single PRU mode. When load share mode is disabled.
+        In single PRU mode firmware, the channel number is ignored and the firmware always reads data from DMEM using the channel 0 offset, regardless of which channels are connected.*/
+        ch_index = 0;
+    }
+
+    /* Write cap event and capture register address in DMEM */
+    pruicss_xchg->trigger_params[ch_index].iep_cap_event = event_num;
+    pruicss_xchg->trigger_params[ch_index].iep_capture_reg = pruicss_xchg->iep_base_address + NIKON_CSL_ICSS_PR1_IEP0_SLV_CAP0_REG0 + NIKON_8_BYTE_REG_OFFSET*(event_num);
+
+    /* CAP6 and CAP7 have 2 extra registers for fall capture values, add extra offset */
+    /* CAP6 and CAP7 has 2 register bits each. So bit 8 needs to be used for CAP7. Only capture rise bits for CAP6 and CAP7 are used. */
+    if(event_num > 6)
+    {
+        pruicss_xchg->trigger_params[ch_index].iep_cap_event += 1;
+        pruicss_xchg->trigger_params[ch_index].iep_capture_reg += NIKON_8_BYTE_REG_OFFSET;
+    }
+
+    return ret_val;
+}
+
+int32_t nikon_config_iep_cmp_event(nikon_handle handle, uint8_t channel, uint8_t event_num)
+{
+    int32_t ret_val = SystemP_SUCCESS;
+    const nikon_attrs *attrs;
+    nikon_priv *priv;
+    nikon_pruicss_xchg *pruicss_xchg;
+    uint8_t ch_index = 0;
+
+    if(handle == NULL || event_num >= NIKON_IEP_MAX_CMP_EVENT || channel >= NIKON_NUM_CH_PER_SLICE_MAX)
+    {
+        return SystemP_FAILURE;
+    }
+
+    attrs = handle->attrs;
+    priv = handle->priv;
+    pruicss_xchg = priv->pruicss_xchg;
+
+    /* Determine channel index for DMEM access */
+    if(attrs->load_share_enabled)
+    {
+        ch_index = channel;
+    }
+    else
+    {
+        /* Always 0 in single PRU mode. When load share mode is disabled.
+        In single PRU mode firmware, the channel number is ignored and the firmware always reads data from DMEM using the channel 0 offset, regardless of which channels are connected.*/
+        ch_index = 0;
+    }
+
+    /* Write CMP event number in DMEM */
+    pruicss_xchg->trigger_params[ch_index].iep_cmp_event = event_num;
+
+    return ret_val;
 }
 
 static void nikon_config_clr_cfg0(nikon_handle handle)
@@ -1220,6 +1369,9 @@ nikon_handle nikon_init(uint32_t index, const nikon_params *params)
     nikon_priv                  *priv = NULL;
     const nikon_attrs           *attrs = NULL;
     nikon_pruicss_xchg          *pruicss_xchg = NULL;
+    uint32_t                    temp;
+    void                        *base_addr = NULL;
+    uint8_t                     ch_idx;
 
     /* Validate index and params - gNikonHandle and gNikonConfigNum are generated by SysConfig */
     if((index >= gNikonConfigNum) || (params == NULL))
@@ -1263,7 +1415,9 @@ nikon_handle nikon_init(uint32_t index, const nikon_params *params)
            (attrs->core_clk_freq == 0) ||
            (attrs->uart_clk_freq == 0) ||
            (attrs->iep_clk_freq == 0) ||
-           (attrs->is_core_clk > 1))
+           (attrs->is_core_clk > 1) ||
+           (attrs->iep_instance > 1) ||
+           (attrs->iep_base_addr == NULL))
         {
             status = SystemP_FAILURE;
         }
@@ -1288,6 +1442,35 @@ nikon_handle nikon_init(uint32_t index, const nikon_params *params)
                (attrs->protocol_version != NIKON_PROTOCOL_V3_0))
             {
                 status = SystemP_FAILURE;
+            }
+        }
+
+        /* Validate IEP CMP and CAP event numbers for periodic trigger mode */
+        if(status == SystemP_SUCCESS)
+        {
+            /* Validate IEP CMP event numbers and CAP event numbers */
+            if(attrs->load_share_enabled)
+            {
+                for(ch_idx = 0; ch_idx < NIKON_NUM_CH_PER_SLICE_MAX; ch_idx++)
+                {
+                    if(attrs->channel_mask & (1U << ch_idx))
+                    {
+                        if((attrs->iep_cmp_event[ch_idx] >= NIKON_IEP_MAX_CMP_EVENT) ||
+                        (attrs->iep_cap_event[ch_idx] >= NIKON_IEP_MAX_CAP_EVENT))
+                        {
+                            status = SystemP_FAILURE;
+                            break;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if((attrs->iep_cmp_event[0] >= NIKON_IEP_MAX_CMP_EVENT) ||
+                (attrs->iep_cap_event[0] >= NIKON_IEP_MAX_CAP_EVENT))
+                {
+                    status = SystemP_FAILURE;
+                }
             }
         }
     }
@@ -1320,6 +1503,55 @@ nikon_handle nikon_init(uint32_t index, const nikon_params *params)
     {
         /* Hardware initialization */
         status = nikon_hw_init(handle);
+    }
+
+    if(status == SystemP_SUCCESS)
+    {
+        /*Set IEP base address */
+        base_addr = (void *)((PRUICSS_HwAttrs *)(handle->priv->pruicss_handle->hwAttrs))->baseAddr;
+        temp = ((uint32_t)attrs->iep_base_addr) - ((uint32_t)base_addr);
+
+        /* Initialize IEP base address in pruicss_xchg */
+        status = nikon_config_iep_base_address(handle, temp);
+    }
+
+    /* Configure IEP CMP and CAP events for enabled channels */
+    if(status == SystemP_SUCCESS)
+    {
+        if(attrs->load_share_enabled)
+        {
+            for(ch_idx = 0; ch_idx < NIKON_NUM_CH_PER_SLICE_MAX; ch_idx++)
+            {
+                /* Check if channel is enabled */
+                if(attrs->channel_mask & (1U << ch_idx))
+                {
+                    /* Configure IEP CMP event for this channel */
+                    status = nikon_config_iep_cmp_event(handle, ch_idx, attrs->iep_cmp_event[ch_idx]);
+                    if(status != SystemP_SUCCESS)
+                    {
+                        break;
+                    }
+
+                    /* Configure IEP CAP event for this channel */
+                    status = nikon_config_iep_cap_event(handle, ch_idx, attrs->iep_cap_event[ch_idx]);
+                    if(status != SystemP_SUCCESS)
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+        else
+        {
+            /* Configure IEP CMP event */
+            status = nikon_config_iep_cmp_event(handle, 0, attrs->iep_cmp_event[0]);
+
+            if(status == SystemP_SUCCESS)
+            {
+                /* Configure IEP CAP event */
+                status = nikon_config_iep_cap_event(handle, 0, attrs->iep_cap_event[0]);
+            }
+        }
     }
 
     if(status == SystemP_SUCCESS)

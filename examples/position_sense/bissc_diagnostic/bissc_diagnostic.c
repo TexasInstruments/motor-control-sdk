@@ -1563,9 +1563,9 @@ void bissc_main(void *args)
 #if defined(SOC_AM243X)
             DebugP_log("\r| Enter IEP SYNC0 period (in IEP cycles, used for CAP mode):");
             DebugP_scanf("%llu\n", &iep_reset_count);
-            if(iep_reset_count <= BISSC_IEP_COUNTER_INCREMENT)
+            if((iep_reset_count <= BISSC_IEP_COUNTER_INCREMENT) || (iep_reset_count > UINT32_MAX))
             {
-                DebugP_log("\r\n| ERROR: Invalid value entered\n");
+                DebugP_log("\r\n| ERROR: invalid value entered, maximum value allowed is %u\n", UINT32_MAX);
                 continue;
             }
 #else

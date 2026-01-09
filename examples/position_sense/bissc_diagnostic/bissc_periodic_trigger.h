@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2025 Texas Instruments Incorporated
+ *  Copyright (C) 2024-2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -56,7 +56,7 @@
 #define BISSC_TIMESYNC_EVENT_ROUTER_OUT14_OFFSET     (14U * BISSC_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG1 PRG1_IEP1_LATCH0_IN0*/
 #define BISSC_TIMESYNC_EVENT_ROUTER_OUT15_OFFSET     (15U * BISSC_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG1 PRG1_IEP1_LATCH1_IN0*/
 
-/*CAP0 is used for Channel1 for periodic contimuos cap mode, to changes cap event different cap number offset can be found at TRM section 9.3.2.2 GPIOMUX_INTRTR0 Integration.*/
+/*CAP0 is used for Channel 1 for CAP mode. To use a different CAP event, check TRM section 9.3.2.2 GPIOMUX_INTRTR0 Integration */
 #define BISSC_GPIOMUX_INTROUTER0_IEP0_CAP_OFFSET     (18U * BISSC_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U)  /*GPIOMUX0 IEP0_CAP_IN*/
 #define BISSC_GPIOMUX_INTROUTER0_IEP1_CAP_OFFSET     (24U * BISSC_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U)  /*GPIOMUX0 IEP1_CAP_IN*/
 
@@ -66,8 +66,9 @@
 #define BISSC_TIMESYNC_EVENT_ROUTER_IN31              (0x0001001FU)  /* PRU_ICSSG1_PR1_EDC1_SYNC0_OUT_0 */
 
 /* GPIO number need to be configured based on the input source GPIO pin number.
- * Refer to the GPIOMUX_INTRTR0 Interrupt Map section in the TRM (9.4.1.8) for details. */
-#define BISSC_GPIOMUX_INTROUTER0_CAP_GPIO_IN          (0x00010004U)  /* PINFUNCTION_PRG0_IEP_CAP_IN */
+ * GPIO0_GPIO_4 is used in this example.
+ * Refer to the GPIOMUX_INTRTR0 Interrupt Map section in the TRM (9.4.1.8) for more details. */
+#define BISSC_GPIOMUX_INTROUTER0_CAP_GPIO_IN          (0x00010004U)
 
 /* IEP SYNC control register bit definitions */
 #define BISSC_IEP_SYNC_CTRL_SYNC01_EN_SHIFT            (0U)           /* SYNC01 enable bit position */
@@ -80,6 +81,7 @@
 /* IEP SYNC configuration values */
 #define BISSC_IEP_CMP1_START_DELAY             (100U)         /* IEP CMP1 start delay in cycles */
 #define BISSC_IEP_SYNC0_PULSE_WIDTH            (10U)          /* SYNC0 high pulse time in IEP clock cycles */
+#define BISSC_IEP_CMP_EVENT_FOR_RESET          (0U)           /* CMP event number used for IEP Reset */
 #define BISSC_IEP_CMP_EVENT_FOR_SYNC0          (1U)           /* CMP event number used for SYNC0 generation */
 
 /*IEP Counter configuration*/
@@ -136,26 +138,34 @@ typedef struct bissc_periodic_interface_s
  *
  *          The function performs the following operations:
  *          1. Configures IEP timer with specified periodic trigger count and reset count
- *          2. Enables IEP Compare 0 (CMP0) event for periodic triggering
+ *          2. Enables IEP Compare or Capture events based on is_cap_mode setting
  *          3. Registers interrupt handler for processing periodic samples
  *          4. Enables PRU interrupt handling
  *
- *          In periodic mode:
+ *          **CMP Mode (is_cap_mode = 0):**
  *          - IEP counter increments at IEP clock rate (default: 200 MHz)
- *          - When counter reaches periodic_trigger_count, encoder transaction is triggered for that channel
+ *          - When counter reaches periodic_trigger_count, encoder transaction is triggered
  *          - When counter reaches iep_reset_count, counter resets to 0 (defines period)
+ *          - Interrupt handler is called on each BiSS-C transaction completion
+ *
+ *          **CAP Mode (is_cap_mode = 1):**
+ *          - IEP captures counter value when external signal triggers CAP event
+ *          - Encoder transaction is triggered on each external event
+ *          - Requires TIMESYNC/GPIOMUX router configuration (AM243x), or
+ *            XBAR configuration (AM26x)
+ *          - Suitable for event-driven sampling synchronized with external signals
  *          - Interrupt handler is called on each BiSS-C transaction completion
  *
  *          Requirements:
  *          - BiSS-C driver must be initialized with bissc_init() before calling this function
- *          - periodic_trigger_count must be less than iep_reset_count
- *          - IEP clock must be configured via SysConfig
+ *          - CMP mode: periodic_trigger_count must be less than iep_reset_count
+ *          - CAP mode: TIMESYNC/GPIOMUX router (AM243x) or XBAR (AM26x) must be configured
  *
  * \param[in]   bissc_periodic_interface  Pointer to periodic interface structure containing:
  *                                           - handle: BiSS-C driver handle from bissc_init()
- *                                           - periodic_trigger_count[]: IEP count value for trigger
- *                                             per channel
- *                                           - iep_reset_count: IEP count value for counter reset
+ *                                           - periodic_trigger_count[]: IEP count for trigger (CMP mode)
+ *                                           - iep_reset_count: IEP count for counter reset
+ *                                           - is_cap_mode: 0 = CMP mode, 1 = CAP mode
  *
  * \retval      SystemP_SUCCESS    Configuration successful, periodic mode active
  * \retval      SystemP_FAILURE    Configuration failed (NULL interface pointer, invalid handle,
@@ -181,8 +191,7 @@ int32_t bissc_config_periodic_mode(bissc_periodic_interface *bissc_periodic_inte
  *          After calling this function:
  *          - IEP timer is stopped
  *          - No automatic encoder transactions occur
- *          - Application must enable host trigger mode and call
- *            bissc_command_process() explicitly for each transaction
+ *          - Application must enable host trigger mode
  *
  * \param[in]   bissc_periodic_interface  Pointer to periodic interface structure containing
  *                                        the BiSS-C driver handle(s) to stop

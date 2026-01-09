@@ -125,7 +125,3 @@ NON_EEPROM_CMD							.set 	0			;status flag for Non-EEPROM command
 NIKON_RTU_TRIGGER_HOST_EVT			.set	34			;( pr0_pru_mst_intr[2]_intr_req )
 NIKON_PRU_TRIGGER_HOST_EVT			.set	35			;( pr0_pru_mst_intr[3]_intr_req )
 NIKON_TXPRU_TRIGGER_HOST_EVT			.set	36			;( pr0_pru_mst_intr[4]_intr_req )
-
-IEP_CH0_CMP_EVNT					.set    3       ;IEP CMP3 event
-IEP_CH1_CMP_EVNT					.set    5		;IEP CMP5 event
-IEP_CH2_CMP_EVNT					.set    6		;IEP CMP6 event

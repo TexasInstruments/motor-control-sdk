@@ -99,10 +99,12 @@ extern "C" {
 #define NIKON_ENABLE_CYCLE_TRIGGER              (0x1)
  /* Disable cycle trigger */
 #define NIKON_DISABLE_CYCLE_TRIGGER             (0x0)
-/* Configure firmware in continuous mode*/
-#define NIKON_CONFIG_PERIODIC_TRIGGER_MODE      (0x0)
-/* Configure firmware in host trigger mode*/
+/* Configure firmware in periodic CMP trigger mode */
+#define NIKON_CONFIG_PERIODIC_TRIGGER_CMP_MODE  (0x0)
+/* Configure firmware in host trigger mode */
 #define NIKON_CONFIG_HOST_TRIGGER_MODE          (0x1)
+/* Configure firmware in periodic CAP trigger mode */
+#define NIKON_CONFIG_PERIODIC_TRIGGER_CAP_MODE  (0x2)
 
 /* General Macro for clearing any status flag */
 #define NIKON_CLEAR_STATUS_FLAG                 (0x0)
@@ -112,6 +114,15 @@ extern "C" {
 #define NIKON_CHANNEL0_MASK                     (0x1)   /* Mask for channel 0 */
 #define NIKON_CHANNEL1_MASK                     (0x2)   /* Mask for channel 1 */
 #define NIKON_CHANNEL2_MASK                     (0x4)   /* Mask for channel 2 */
+
+/* IEP event limits for periodic trigger mode */
+#define NIKON_IEP_MAX_CAP_EVENT                 (0x8U)  /* Maximum CAP event number (0-7) */
+#define NIKON_IEP_MAX_CMP_EVENT                 (0x10U) /* Maximum CMP event number (0-15) */
+
+/* IEP register offsets for periodic trigger mode */
+#define NIKON_CFG_REG_SIZE                      (4U)
+#define NIKON_CSL_ICSS_PR1_IEP0_SLV_CAP0_REG0   (CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG + 2U*NIKON_CFG_REG_SIZE)
+#define NIKON_8_BYTE_REG_OFFSET                 (8U)
 
 /* 1000usec sleep for timeout count*/
 #define NIKON_1MILLISEC_SLEEP_TIME              (1000U)
@@ -328,7 +339,8 @@ typedef enum nikon_cmd_e
     CMD_29,                         /**< ABS lower 24bit data + Temperature data request */
     CMD_30,                         /**< ABS lower 24bit data + Temperature data request (MT) */
     ENCODER_ADR_CHANGE = 31,        /**< Update Encoder address(EAX) in APP local context */
-    START_CONTINUOUS_MODE,          /**< Start periodic trigger mode */
+    START_CONTINUOUS_CMP_MODE,      /**< Start periodic trigger CMP mode */
+    START_CONTINUOUS_CAP_MODE,      /**< Start periodic trigger CAP mode */
     UPDATE_CLOCK_FREQ,              /**< Update operating baud rate as specified by user */
     UPDATE_ENC_LEN,                 /**< Update encoder's single turn and multi turn resolution */
     CMD_1_VEL,                      /**< ABS full 40bit data + velocity data request (Nikon 3.0 only) */
@@ -587,6 +599,18 @@ typedef struct nikon_attrs_s
 
     uint8_t protocol_version;
     /**< Nikon protocol version (NIKON_PROTOCOL_V2_1 or NIKON_PROTOCOL_V3_0) */
+
+    uint8_t iep_instance;
+    /**< IEP instance (0 or 1) for periodic trigger mode */
+
+    uint8_t iep_cmp_event[NIKON_NUM_CH_PER_SLICE_MAX];
+    /**< IEP CMP event numbers for periodic CMP trigger mode (per channel) */
+
+    uint8_t iep_cap_event[NIKON_NUM_CH_PER_SLICE_MAX];
+    /**< IEP CAP event numbers for periodic CAP trigger mode (per channel) */
+
+    void *iep_base_addr;
+    /**< IEP register base address for periodic trigger mode */
 
 } nikon_attrs;
 
