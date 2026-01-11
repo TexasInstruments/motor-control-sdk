@@ -572,6 +572,12 @@ static void bissc_get_enc_data_len(bissc_handle handle)
     else
         total_channels = 1;
 
+    if(total_channels > BISSC_NUM_CH_PER_SLICE_MAX)
+    {
+        DebugP_log("\r| ERROR: Invalid number of channels (%u), maximum allowed is %u per slice \n", total_channels, BISSC_NUM_CH_PER_SLICE_MAX);
+        return;
+    }
+
     for(ch_num = 0; ch_num < total_channels; ch_num++)
     {
         for(enc_num = 0; enc_num < BISSC_NUM_ENCODERS_IN_DAISY_CHAIN_MAX; enc_num++)
