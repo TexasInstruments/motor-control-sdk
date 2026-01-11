@@ -57,6 +57,16 @@ function onValidate(inst, validation)
         {
             validation.logError("Select atleast one channel", inst, "channel_0");
         }
+
+        /* Calculate total channels for validation */
+        let total_channels = (instance.channel_0 ? 1 : 0) + (instance.channel_1 ? 1 : 0) + (instance.channel_2 ? 1 : 0);
+
+        /* AM26x SOC specific validation - only single channel supported */
+        if(is_am26x_soc && total_channels > 1)
+        {
+            validation.logError("AM26x devices support only single channel operation per PRU core", inst, "channel_0");
+        }
+
         if((device === "am243x-lp") && (instance.channel_1) && (instance.Booster_Pack))
         {
             validation.logError("Channel 1 is not supported on BP-AM2BLDCSERVO BoosterPack due to pinout limitations", inst, "Booster_Pack");
@@ -443,7 +453,7 @@ let nikon_module = {
                 {
                     name: "CAP_Event_Num",
                     displayName: "IEP CAP Event Number",
-                    description: "CAP event number (0-7) for periodic CAP trigger mode. Note: Routing (SYNC out to CAP) is done in application code (nikon_config_iep_cap_for_sync). Correct router signal should be configured for selected CAP event if needed",
+                    description: "CAP event number (0-7) for periodic CAP trigger mode. Note: Routing (SYNC out to CAP) is done in application code (nikon_config_iep_cap_for_sync). Correct router signal should be configured for selected CAP event if needed.",
                     default: 6,
                     hidden: false,
                     options: [
@@ -453,8 +463,8 @@ let nikon_module = {
                         { name: 3, displayName: "CAP3" },
                         { name: 4, displayName: "CAP4" },
                         { name: 5, displayName: "CAP5" },
-                        { name: 6, displayName: "CAP6" },
-                        { name: 7, displayName: "CAP7" },
+                        { name: 6, displayName: "CAP6 (LATCH_IN0)" },
+                        { name: 7, displayName: "CAP7 (LATCH_IN1)" },
                     ],
                 },
                 /* Channel event numbers (only shown when load share is enabled) */
@@ -487,7 +497,7 @@ let nikon_module = {
                 {
                     name: "CAP_Event_Num_CH0",
                     displayName: "Channel 0 - CAP Event Number",
-                    description: "CAP event number (0-7) for Channel 0 periodic CAP trigger mode. Note: Routing (SYNC out to CAP) is done in application code (nikon_config_iep_cap_for_sync). Correct router signal should be configured for selected CAP event if needed",
+                    description: "CAP event number (0-7) for Channel 0 periodic CAP trigger mode. Note: Routing (SYNC out to CAP) is done in application code (nikon_config_iep_cap_for_sync). Correct router signal should be configured for selected CAP event if needed.",
                     default: 6,
                     hidden: true,
                     options: [
@@ -497,8 +507,8 @@ let nikon_module = {
                         { name: 3, displayName: "CAP3" },
                         { name: 4, displayName: "CAP4" },
                         { name: 5, displayName: "CAP5" },
-                        { name: 6, displayName: "CAP6" },
-                        { name: 7, displayName: "CAP7" },
+                        { name: 6, displayName: "CAP6 (LATCH_IN0)" },
+                        { name: 7, displayName: "CAP7 (LATCH_IN1)" },
                     ],
                 },
                 {
@@ -529,7 +539,7 @@ let nikon_module = {
                 {
                     name: "CAP_Event_Num_CH1",
                     displayName: "Channel 1 - CAP Event Number",
-                    description: "CAP event number (0-7) for Channel 1 periodic CAP trigger mode. Note: Routing (SYNC out to CAP) is done in application code (nikon_config_iep_cap_for_sync). Correct router signal should be configured for selected CAP event if needed",
+                    description: "CAP event number (0-7) for Channel 1 periodic CAP trigger mode. Note: Routing (SYNC out to CAP) is done in application code (nikon_config_iep_cap_for_sync). Correct router signal should be configured for selected CAP event if needed.",
                     default: 0,
                     hidden: true,
                     options: [
@@ -539,8 +549,8 @@ let nikon_module = {
                         { name: 3, displayName: "CAP3" },
                         { name: 4, displayName: "CAP4" },
                         { name: 5, displayName: "CAP5" },
-                        { name: 6, displayName: "CAP6" },
-                        { name: 7, displayName: "CAP7" },
+                        { name: 6, displayName: "CAP6 (LATCH_IN0)" },
+                        { name: 7, displayName: "CAP7 (LATCH_IN1)" },
                     ],
                 },
                 {
@@ -571,7 +581,7 @@ let nikon_module = {
                 {
                     name: "CAP_Event_Num_CH2",
                     displayName: "Channel 2 - CAP Event Number",
-                    description: "CAP event number (0-7) for Channel 2 periodic CAP trigger mode. Note: Routing (SYNC out to CAP) is done in application code (nikon_config_iep_cap_for_sync). Correct router signal should be configured for selected CAP event if needed",
+                    description: "CAP event number (0-7) for Channel 2 periodic CAP trigger mode. Note: Routing (SYNC out to CAP) is done in application code (nikon_config_iep_cap_for_sync). Correct router signal should be configured for selected CAP event if needed.",
                     default: 7,
                     hidden: true,
                     options: [
@@ -581,8 +591,8 @@ let nikon_module = {
                         { name: 3, displayName: "CAP3" },
                         { name: 4, displayName: "CAP4" },
                         { name: 5, displayName: "CAP5" },
-                        { name: 6, displayName: "CAP6" },
-                        { name: 7, displayName: "CAP7" },
+                        { name: 6, displayName: "CAP6 (LATCH_IN0)" },
+                        { name: 7, displayName: "CAP7 (LATCH_IN1)" },
                     ],
                 },
             ],
@@ -609,6 +619,7 @@ let nikon_module = {
 function moduleInstances(instance){
     let modInstances = new Array();
     let BoosterPack = instance["Booster_Pack"];
+    let total_channels = (instance["channel_0"] ? 1 : 0) + (instance["channel_1"] ? 1 : 0) + (instance["channel_2"] ? 1 : 0);
 
     if(device == "am243x-lp" || is_am26x_soc)
     {
@@ -623,7 +634,8 @@ function moduleInstances(instance){
                     defaultValue: "1",
                 },
             });
-            if(device == "am243x-lp")
+
+            if((device == "am243x-lp") && (total_channels > 1))
             {
                 modInstances.push({
                     name: "ENC2_EN",
@@ -635,8 +647,6 @@ function moduleInstances(instance){
                     },
                 });
             }
-
-
         }
         if(is_am263x_soc)
         {

@@ -55,12 +55,13 @@ const soc_timesync_xbar11 = soc_timesync_xbar1.addInstance();
 /**
  * Write custom configuration values to the imported modules.
  */
-ioexp1.$name                                    = "CONFIG_IOEXP0";
-ioexp1.TCA6408ARGTR_port0_pinBP_BO_MUX_EN_mode  = 0;
-ioexp1.TCA6408ARGTR_port0_pinBP_BO_MUX_EN_state = 1;
-ioexp1.TCA6408ARGTR_port0_pinBP_MUX_SW_S1_mode  = 0;
-ioexp1.TCA6408ARGTR_port0_pinBP_MUX_SW_SO_mode  = 0;
-ioexp1.TCA6408ARGTR_port0_pinBP_MUX_SW_SO_state = 1;
+ioexp1.$name                                   = "CONFIG_IOEXP0";
+ioexp1.i2cAddress                              = "LP-RevA 0x20";
+ioexp1.TCA6408ARGT_port0_pinBP_BO_MUX_EN_mode  = 0;
+ioexp1.TCA6408ARGT_port0_pinBP_BO_MUX_EN_state = 1;
+ioexp1.TCA6408ARGT_port0_pinBP_MUX_SW_S1_mode  = 0;
+ioexp1.TCA6408ARGT_port0_pinBP_MUX_SW_SO_mode  = 0;
+ioexp1.TCA6408ARGT_port0_pinBP_MUX_SW_SO_state = 1;
 
 epwm1.$name                         = "CONFIG_EPWM0";
 epwm1.epwmTimebase_period           = 25000;
@@ -336,24 +337,20 @@ nikon1.$name                               = "CONFIG_NIKON0";
 nikon1.Booster_Pack                        = true;
 nikon1.PRU_Slice                           = "PRU0";
 nikon1.protocolVersion                     = 3;
-nikon1.ENC0_EN.$name                       = "ENC0_EN";
+nikon1.ENC0_EN.$name                       = "NIKON0_BP_POWER_EN0";
 nikon1.ENC0_EN.GPIO_n.$assign              = "GPIO21";
 nikon1["PRU-ICSS1"].$assign                = "PRU-ICSS1";
 nikon1["PRU-ICSS1"].PR1_PRU0_GPIO2.$assign = "GPIO83";
-nikon1["PRU-ICSS1"].PR1_PRU0_GPIO2.$used   = true;
 nikon1["PRU-ICSS1"].PR1_PRU0_GPIO1.$assign = "GPIO82";
-nikon1["PRU-ICSS1"].PR1_PRU0_GPIO1.$used   = true;
 nikon1["PRU-ICSS1"].PR1_PRU0_GPIO0.$assign = "GPIO81";
-nikon1["PRU-ICSS1"].PR1_PRU0_GPIO0.$used   = true;
 nikon1["PRU-ICSS1"].PR1_PRU0_GPIO9.$assign = "GPIO80";
-nikon1["PRU-ICSS1"].PR1_PRU0_GPIO9.$used   = true;
 
 pruicss1.$name                           = "CONFIG_PRU_ICSS0";
 nikon1.pru                               = pruicss1;
 pruicss1.AdditionalICSSSettings[0].$name = "CONFIG_PRU_ICSS_IO0";
 pruicss1.intcMapping.create(1);
 pruicss1.intcMapping[0].$name            = "CONFIG_ICSS1_INTC_MODE1_MAPPING0";
-pruicss1.intcMapping[0].event            = "18";
+pruicss1.intcMapping[0].event            = "21";
 
 epwm_syncout_xbar1.$name      = "CONFIG_EPWM_SYNCOUT_XBAR0";
 epwm_syncout_xbar1.xbarOutput = ["EPWM0_SYNCOUT"];

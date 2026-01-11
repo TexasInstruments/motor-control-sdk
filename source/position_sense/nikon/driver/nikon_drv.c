@@ -656,7 +656,7 @@ int32_t nikon_command_wait(nikon_handle handle)
             loop_count--;
             if(loop_count == 0)
             {
-                return SystemP_FAILURE;
+                return SystemP_TIMEOUT;
             }
         }
     }
@@ -1200,6 +1200,7 @@ int32_t nikon_update_clock_freq(nikon_handle handle, float_t frequency)
     {
         return SystemP_FAILURE;
     }
+
     priv = handle->priv;
     attrs = handle->attrs;
 
@@ -1672,6 +1673,7 @@ int32_t nikon_wait_for_encoder_detection(nikon_handle handle)
     const nikon_attrs *attrs;
     uint32_t pru_num;
     uint32_t ls_ch;
+    int32_t ret;
 
     /* Validate handle and internal structure pointers */
     if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->pruicss_xchg == NULL))
@@ -1717,10 +1719,12 @@ int32_t nikon_wait_for_encoder_detection(nikon_handle handle)
         priv->eax[ls_ch] = 0;
     }
 
-    if(nikon_command_process(handle) != SystemP_SUCCESS)
+    ret = nikon_command_process(handle);
+    if(ret != SystemP_SUCCESS)
     {
-        return SystemP_FAILURE;
+        return ret;
     }
+
     return SystemP_SUCCESS;
 }
 
@@ -1738,6 +1742,7 @@ int32_t nikon_get_pos(nikon_handle handle, uint32_t cmd)
     uint32_t loop_cnt;
     uint32_t pru_num;
     uint32_t mdf_num;
+    int32_t ret;
 
     /* Validate handle and internal structure pointers */
     if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->pruicss_xchg == NULL))
@@ -1882,15 +1887,20 @@ int32_t nikon_get_pos(nikon_handle handle, uint32_t cmd)
         loop_cnt = NIKON_NUM_OF_CYCLE_FOR_RESET;
         do
         {
-            if(nikon_command_process(handle) != SystemP_SUCCESS)
+            ret = nikon_command_process(handle);
+            if(ret != SystemP_SUCCESS)
             {
-                return SystemP_FAILURE;
+                return ret;
             }
         } while(loop_cnt--);
     }
-    else if(nikon_command_process(handle) != SystemP_SUCCESS)
+    else
     {
-        return SystemP_FAILURE;
+        ret = nikon_command_process(handle);
+        if(ret != SystemP_SUCCESS)
+        {
+            return ret;
+        }
     }
 
     for(ch_num = 0; ch_num < attrs->total_channels; ch_num++)

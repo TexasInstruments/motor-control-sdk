@@ -176,10 +176,6 @@
 #endif
 
 #if defined(NIKON_DUAL_PRU_SLICE_ENABLE)
-#if !defined(SOC_AM261X) || (CONFIG_NIKON1_MODE != NIKON_MODE_SINGLE_CHANNEL_SINGLE_PRU)
-#error "Dual handle example using PRU0 and PRU1 is tested only with NIKON_MODE_SINGLE_CHANNEL_SINGLE_PRU mode on AM261x. For enabling other combinations, update code and remove this line."
-#endif
-
 /* Single channel mode firmware */
 #if (CONFIG_NIKON1_PRUICSS_SLICE == 1)
 #include  <nikon_receiver_pru1_bin.h>
@@ -208,6 +204,8 @@
 /* Macro for 0.5 seconds delay - value in micro-seconds */
 #define NIKON_POWER_UP_DELAY (0.5 * 1000 * 1000)
 
+#define NIKON_PERIODIC_MODE_POLL_SLEEP_US   (1)
+
 /* ========================================================================== */
 /*                            Global Variables                                */
 /* ========================================================================== */
@@ -223,6 +221,9 @@ nikon_periodic_interface gNikonPeriodicInterface;
 
 /* Global variable to track position loop status */
 volatile int32_t gNikonPositionLoopStatus;
+
+/* IRQ count from periodic trigger (defined in nikon_periodic_trigger.c) */
+extern volatile uint32_t gPruNikonIrqCnt[CONFIG_NIKON_NUM_INSTANCES][NIKON_NUM_CH_PER_SLICE_MAX];
 
 /* Task related global variables */
 uint32_t gTaskFxnStack[TASK_STACK_SIZE/sizeof(uint32_t)] __attribute__((aligned(32)));
@@ -275,6 +276,10 @@ static void nikon_pruicss_init(void)
     }
 
 #if defined(NIKON_DUAL_PRU_SLICE_ENABLE)
+#if !defined(SOC_AM261X) || (CONFIG_NIKON0_MODE != NIKON_MODE_SINGLE_CHANNEL_SINGLE_PRU) || (CONFIG_NIKON1_MODE != NIKON_MODE_SINGLE_CHANNEL_SINGLE_PRU)
+    DebugP_log("Dual handle example using PRU0 and PRU1 is tested only with NIKON_MODE_SINGLE_CHANNEL_SINGLE_PRU mode on AM261x. For enabling other combinations, update code and remove this check.");
+    DebugP_assert(0);
+#endif
     /*
      * These checks are applicable only if both Nikon instances
      * use same PRU-ICSSG instance. If different instances are used,
@@ -854,6 +859,10 @@ static int32_t nikon_process_periodic_command(nikon_handle handle[CONFIG_NIKON_N
     nikon_priv *priv[CONFIG_NIKON_NUM_INSTANCES] = {NULL};
     uint32_t total_channels = 0;
     const nikon_attrs *attrs[CONFIG_NIKON_NUM_INSTANCES] = {NULL};
+    uint32_t prev_irq_cnt[CONFIG_NIKON_NUM_INSTANCES] = {0};
+    uint32_t curr_irq_cnt;
+    uint32_t irq_ch_idx[CONFIG_NIKON_NUM_INSTANCES] = {0};
+
     /* CMD_4 is used in this example for 40-bit ABS data with multi-transmission. */
     uint32_t periodic_cmd = CMD_4;
 
@@ -879,7 +888,7 @@ static int32_t nikon_process_periodic_command(nikon_handle handle[CONFIG_NIKON_N
 #else
     if((is_cap_mode == 0) && (iep_reset_count == 0))
     {
-        /* For AM26x, check iep_reset_count for 0 only in CAP mode.
+        /* For AM26x, check iep_reset_count for 0 only in CMP mode.
          * In CAP mode, iep_reset_count is not used.
          */
         DebugP_log("\r\n\n| ERROR: Invalid iep_reset_count value\n");
@@ -939,7 +948,14 @@ static int32_t nikon_process_periodic_command(nikon_handle handle[CONFIG_NIKON_N
         ret = nikon_get_pos(handle[i], periodic_cmd);
         if(ret != SystemP_SUCCESS)
         {
-            DebugP_log("\r\n ERROR: 40bit ABS measurement failed\n");
+            if(ret == SystemP_TIMEOUT)
+            {
+                DebugP_log("\r\n ERROR: ABS measurement timed out for handle %d\n", i);
+            }
+            else
+            {
+                DebugP_log("\r\n ERROR: ABS measurement failed for handle %d\n", i);
+            }
             return SystemP_FAILURE;
         }
 
@@ -1011,12 +1027,39 @@ static int32_t nikon_process_periodic_command(nikon_handle handle[CONFIG_NIKON_N
         return SystemP_FAILURE;
     }
 
+    /* Determine IRQ channel index for each instance (based on load share mode) */
+    for(i = 0; i < CONFIG_NIKON_NUM_INSTANCES; i++)
+    {
+        if(attrs[i]->load_share_enabled)
+        {
+            /* In load share mode, use channel index for first enabled channel */
+            if(attrs[i]->channel0_enabled)
+            {
+                irq_ch_idx[i] = 0;
+            }
+            else if(attrs[i]->channel1_enabled)
+            {
+                irq_ch_idx[i] = 1;
+            }
+            else if(attrs[i]->channel2_enabled)
+            {
+                irq_ch_idx[i] = 2;
+            }
+        }
+        else
+        {
+            irq_ch_idx[i] = 0;
+        }
+
+        /* Initialize previous IRQ count with current value */
+        prev_irq_cnt[i] = gPruNikonIrqCnt[i][irq_ch_idx[i]];
+    }
+
     gNikonPositionLoopStatus = NIKON_POSITION_LOOP_START;
 
     DebugP_log("\r|\n\r| press Enter to stop the continuous mode\r\n|");
     while(1)
     {
-        pos_total_cnt++;
         if(gNikonPositionLoopStatus == NIKON_POSITION_LOOP_STOP)
         {
             for(i = 0; i < CONFIG_NIKON_NUM_INSTANCES; i++)
@@ -1034,6 +1077,45 @@ static int32_t nikon_process_periodic_command(nikon_handle handle[CONFIG_NIKON_N
         }
         else
         {
+            /* Wait for IRQ count to increment for at least one instance before reading position */
+            for(i = 0; i < CONFIG_NIKON_NUM_INSTANCES; i++)
+            {
+                /* Wait for IRQ count to increment */
+                while(1)
+                {
+                    curr_irq_cnt = gPruNikonIrqCnt[i][irq_ch_idx[i]];
+                    if(gNikonPositionLoopStatus == NIKON_POSITION_LOOP_STOP)
+                    {
+                        break;
+                    }
+                    /* Break as soon as IRQ count increments to avoid missing IRQs at high rates */
+                    if(curr_irq_cnt != prev_irq_cnt[i])
+                    {
+                        break;
+                    }
+                    ClockP_usleep(NIKON_PERIODIC_MODE_POLL_SLEEP_US);
+                }
+
+                /* Check stop condition before updating prev_irq_cnt */
+                if(gNikonPositionLoopStatus == NIKON_POSITION_LOOP_STOP)
+                {
+                    break;
+                }
+
+                prev_irq_cnt[i] = curr_irq_cnt;
+            }
+
+            /* If stop was requested during IRQ wait, continue for proper cleanup */
+            if(gNikonPositionLoopStatus == NIKON_POSITION_LOOP_STOP)
+            {
+                continue;
+            }
+
+            pos_total_cnt++;
+
+            /* Start with \r to overwrite the same line for all instances */
+            DebugP_log("\r");
+
             for(i = 0; i < CONFIG_NIKON_NUM_INSTANCES; i++)
             {
                 total_channels = attrs[i]->total_channels;
@@ -1041,7 +1123,14 @@ static int32_t nikon_process_periodic_command(nikon_handle handle[CONFIG_NIKON_N
                 ret = nikon_get_pos(handle[i], periodic_cmd);
                 if(ret != SystemP_SUCCESS)
                 {
-                    DebugP_log("\r\n ERROR: 40bit ABS measurement failed\n");
+                    if(ret == SystemP_TIMEOUT)
+                    {
+                        DebugP_log("\r\n ERROR: ABS measurement timed out for instance %u\n", i);
+                    }
+                    else
+                    {
+                        DebugP_log("\r\n ERROR: ABS measurement failed for instance %u\n", i);
+                    }
                     pos_fail_cnt[i]++;
                     continue;
                 }
@@ -1146,7 +1235,14 @@ static int32_t nikon_handle_command(nikon_handle handle, uint32_t cmd)
             ret = nikon_get_pos(handle, cmd);
             if(ret != SystemP_SUCCESS)
             {
-                DebugP_log("\r\n ERROR: 40bit ABS measurement failed\n");
+                if(ret == SystemP_TIMEOUT)
+                {
+                    DebugP_log("\r\n ERROR: ABS measurement timed out\n");
+                }
+                else
+                {
+                    DebugP_log("\r\n ERROR: ABS measurement failed\n");
+                }
                 return SystemP_FAILURE;
             }
             for(ch_num = 0; ch_num < total_channels; ch_num++)
@@ -1218,7 +1314,14 @@ static int32_t nikon_handle_command(nikon_handle handle, uint32_t cmd)
             ret = nikon_get_pos(handle, cmd);
             if(ret != SystemP_SUCCESS)
             {
-                DebugP_log("\r\n ERROR: ABS measurement failed \n");
+                if(ret == SystemP_TIMEOUT)
+                {
+                    DebugP_log("\r\n ERROR: ABS measurement timed out\n");
+                }
+                else
+                {
+                    DebugP_log("\r\n ERROR: ABS measurement failed\n");
+                }
                 return SystemP_FAILURE;
             }
             for(ch_num = 0; ch_num < total_channels; ch_num++)
@@ -1329,7 +1432,14 @@ static int32_t nikon_handle_command(nikon_handle handle, uint32_t cmd)
             {
                 if(ret != SystemP_SUCCESS)
                 {
-                    DebugP_log("\r\n ERROR: ABS measurement failed \n");
+                    if(ret == SystemP_TIMEOUT)
+                    {
+                        DebugP_log("\r\n ERROR: ABS measurement timed out\n");
+                    }
+                    else
+                    {
+                        DebugP_log("\r\n ERROR: ABS measurement failed\n");
+                    }
                     return SystemP_FAILURE;
                 }
                 for(ch_num = 0; ch_num < total_channels; ch_num++)
@@ -1530,7 +1640,14 @@ static int32_t nikon_handle_command(nikon_handle handle, uint32_t cmd)
             ret = nikon_get_pos(handle, cmd);
             if(ret != SystemP_SUCCESS)
             {
-                DebugP_log("\r\n ERROR: EEPROM Read access request failed \n");
+                if(ret == SystemP_TIMEOUT)
+                {
+                    DebugP_log("\r\n ERROR: EEPROM Read access request timed out\n");
+                }
+                else
+                {
+                    DebugP_log("\r\n ERROR: EEPROM Read access request failed\n");
+                }
                 return SystemP_FAILURE;
             }
             else
@@ -1541,7 +1658,14 @@ static int32_t nikon_handle_command(nikon_handle handle, uint32_t cmd)
 
                 if(ret != SystemP_SUCCESS)
                 {
-                    DebugP_log("\r\n ERROR: EEPROM Read access request failed \n");
+                    if(ret == SystemP_TIMEOUT)
+                    {
+                        DebugP_log("\r\n ERROR: EEPROM Read access request timed out\n");
+                    }
+                    else
+                    {
+                        DebugP_log("\r\n ERROR: EEPROM Read access request failed\n");
+                    }
                     return SystemP_FAILURE;
                 }
             }
@@ -1709,7 +1833,14 @@ static int32_t nikon_handle_command(nikon_handle handle, uint32_t cmd)
             ret = nikon_get_pos(handle, cmd);
             if(ret != SystemP_SUCCESS)
             {
-                DebugP_log("\r\n ERROR: EEPROM Write access request failed \n");
+                if(ret == SystemP_TIMEOUT)
+                {
+                    DebugP_log("\r\n ERROR: EEPROM Write access request timed out\n");
+                }
+                else
+                {
+                    DebugP_log("\r\n ERROR: EEPROM Write access request failed\n");
+                }
                 return SystemP_FAILURE;
             }
             else
@@ -1756,7 +1887,14 @@ static int32_t nikon_handle_command(nikon_handle handle, uint32_t cmd)
             ret = nikon_get_pos(handle, cmd);
             if(ret != SystemP_SUCCESS)
             {
-                DebugP_log("\r\n ERROR: Encoder's temperature request failed \n");
+                if(ret == SystemP_TIMEOUT)
+                {
+                    DebugP_log("\r\n ERROR: Encoder's temperature request timed out\n");
+                }
+                else
+                {
+                    DebugP_log("\r\n ERROR: Encoder's temperature request failed\n");
+                }
                 return SystemP_FAILURE;
             }
             for(ch_num = 0; ch_num < total_channels; ch_num++)
@@ -1811,7 +1949,14 @@ static int32_t nikon_handle_command(nikon_handle handle, uint32_t cmd)
             {
                 if(ret != SystemP_SUCCESS)
                 {
-                    DebugP_log("\r\n ERROR: Velocity coefficient read request failed \n");
+                    if(ret == SystemP_TIMEOUT)
+                    {
+                        DebugP_log("\r\n ERROR: Velocity coefficient read request timed out\n");
+                    }
+                    else
+                    {
+                        DebugP_log("\r\n ERROR: Velocity coefficient read request failed\n");
+                    }
                     return SystemP_FAILURE;
                 }
 
@@ -1833,7 +1978,14 @@ static int32_t nikon_handle_command(nikon_handle handle, uint32_t cmd)
             {
                 if(ret != SystemP_SUCCESS)
                 {
-                    DebugP_log("\r\n ERROR: Identification code read request failed \n");
+                    if(ret == SystemP_TIMEOUT)
+                    {
+                        DebugP_log("\r\n ERROR: Identification code read request timed out\n");
+                    }
+                    else
+                    {
+                        DebugP_log("\r\n ERROR: Identification code read request failed\n");
+                    }
                     return SystemP_FAILURE;
                 }
                 for(ch_num = 0; ch_num < total_channels; ch_num++)
@@ -1932,7 +2084,14 @@ static int32_t nikon_handle_command(nikon_handle handle, uint32_t cmd)
                 ret = nikon_get_pos(handle, cmd);
                 if(ret != SystemP_SUCCESS)
                 {
-                    DebugP_log("\r\n ERROR: Encoder's Velocity coefficient code write access failed \n");
+                    if(ret == SystemP_TIMEOUT)
+                    {
+                        DebugP_log("\r\n ERROR: Encoder's Velocity coefficient code write access timed out\n");
+                    }
+                    else
+                    {
+                        DebugP_log("\r\n ERROR: Encoder's Velocity coefficient code write access failed\n");
+                    }
                     return SystemP_FAILURE;
                 }
                 for(ch_num = 0; ch_num < total_channels; ch_num++)
@@ -2004,11 +2163,25 @@ static int32_t nikon_handle_command(nikon_handle handle, uint32_t cmd)
                 {
                     if(cmd == CMD_20)
                     {
-                        DebugP_log("\r\n ERROR: Encoder's address setting failed \n");
+                        if(ret == SystemP_TIMEOUT)
+                        {
+                            DebugP_log("\r\n ERROR: Encoder's address setting timed out\n");
+                        }
+                        else
+                        {
+                            DebugP_log("\r\n ERROR: Encoder's address setting failed\n");
+                        }
                     }
                     else
                     {
-                        DebugP_log("\r\n ERROR: Encoder's identification code write access failed \n");
+                        if(ret == SystemP_TIMEOUT)
+                        {
+                            DebugP_log("\r\n ERROR: Encoder's identification code write access timed out\n");
+                        }
+                        else
+                        {
+                            DebugP_log("\r\n ERROR: Encoder's identification code write access failed\n");
+                        }
                     }
                     return SystemP_FAILURE;
                 }
@@ -2040,7 +2213,14 @@ static int32_t nikon_handle_command(nikon_handle handle, uint32_t cmd)
             ret = nikon_get_pos(handle, cmd);
             if(ret != SystemP_SUCCESS)
             {
-                DebugP_log("\r\n ERROR: 17bit ABS measurement failed \n");
+                if(ret == SystemP_TIMEOUT)
+                {
+                    DebugP_log("\r\n ERROR: 17bit ABS measurement timed out\n");
+                }
+                else
+                {
+                    DebugP_log("\r\n ERROR: 17bit ABS measurement failed\n");
+                }
                 return SystemP_FAILURE;
             }
             for(ch_num = 0; ch_num < total_channels; ch_num++)
@@ -2092,7 +2272,14 @@ static int32_t nikon_handle_command(nikon_handle handle, uint32_t cmd)
                 ret = nikon_get_pos(handle, cmd);
                 if(ret != SystemP_SUCCESS)
                 {
-                    DebugP_log("\r\n ERROR: ABS measurement and velocity/acceleration request failed\n");
+                    if(ret == SystemP_TIMEOUT)
+                    {
+                        DebugP_log("\r\n ERROR: ABS measurement and velocity/acceleration request timed out\n");
+                    }
+                    else
+                    {
+                        DebugP_log("\r\n ERROR: ABS measurement and velocity/acceleration request failed\n");
+                    }
                     return SystemP_FAILURE;
                 }
 
@@ -2160,7 +2347,14 @@ static int32_t nikon_handle_command(nikon_handle handle, uint32_t cmd)
             ret = nikon_get_pos(handle, cmd);
             if(ret != SystemP_SUCCESS)
             {
-                DebugP_log("\r\n ERROR: 24bit ABS and encoder's status request failed \n");
+                if(ret == SystemP_TIMEOUT)
+                {
+                    DebugP_log("\r\n ERROR: 24bit ABS and encoder's status request timed out\n");
+                }
+                else
+                {
+                    DebugP_log("\r\n ERROR: 24bit ABS and encoder's status request failed\n");
+                }
                 return SystemP_FAILURE;
             }
             for(ch_num = 0; ch_num < total_channels; ch_num++)
@@ -2213,7 +2407,14 @@ static int32_t nikon_handle_command(nikon_handle handle, uint32_t cmd)
             ret = nikon_get_pos(handle, cmd);
             if(ret != SystemP_SUCCESS)
             {
-                DebugP_log("\r\n ERROR: 24bit ABS and encoder's temperature request failed \n");
+                if(ret == SystemP_TIMEOUT)
+                {
+                    DebugP_log("\r\n ERROR: 24bit ABS and encoder's temperature request timed out\n");
+                }
+                else
+                {
+                    DebugP_log("\r\n ERROR: 24bit ABS and encoder's temperature request failed\n");
+                }
                 return SystemP_FAILURE;
             }
             for(ch_num = 0; ch_num < total_channels; ch_num++)
@@ -2290,6 +2491,7 @@ static int32_t nikon_handle_command(nikon_handle handle, uint32_t cmd)
             break;
 
         case UPDATE_CLOCK_FREQ:
+            DebugP_log("\r\nNOTE: Source clock selection for Nikon (PRU-ICSS Core Clock or PRU-ICSS UART Clock) is not changed in this option\n");
             DebugP_log("\r\nPlease enter frequency in MHz:\n");
             DebugP_scanf("%f\n", &freq);
             if(!((freq == NIKON_FREQ_2_5MHZ) || (freq == NIKON_FREQ_4MHZ) || (((uint8_t)freq % NIKON_FREQ_6_67MHZ) < 1) || (freq == NIKON_FREQ_8MHZ) || (freq == NIKON_FREQ_16MHZ)))
@@ -2465,7 +2667,15 @@ void nikon_main(void *args)
         ret = nikon_wait_for_encoder_detection(gAppNikonHandle[i]);
         if(ret != SystemP_SUCCESS)
         {
-            DebugP_log("\r\nERROR: NIKON initialization failed for instance %u\n", i);
+            if(ret == SystemP_TIMEOUT)
+            {
+                DebugP_log("\r\nERROR: NIKON encoder detection timed out for instance %u\n", i);
+                DebugP_log("\r\n Encoder is not responding within the configured timeout period\n");
+            }
+            else
+            {
+                DebugP_log("\r\nERROR: NIKON initialization failed for instance %u\n", i);
+            }
             DebugP_log("\r\n Check whether encoder of selected frequency is connected and ensure proper connections\n");
             DebugP_log("\r\n Exit %s due to failed firmware initialization\n", __func__);
             goto deinit;
@@ -2503,6 +2713,9 @@ void nikon_main(void *args)
             {
                 is_cmd_continuous = 1;
                 is_cap_mode = (cmd[i] == START_CONTINUOUS_CAP_MODE) ? 1 : 0;
+
+                /* is_cmd_continuous and is_cap_mode are used for continuous mode processing below.
+                   cmd[i] is used below only when is_cmd_continuous = 0.*/
 #if defined(NIKON_DUAL_PRU_SLICE_ENABLE)
             DebugP_log("\r\n| Continuous mode command will be executed on all encoders \n\n");
 #endif
@@ -2613,7 +2826,7 @@ void nikon_main(void *args)
             /* Handle commands other than periodic mode */
             for(i = 0; i < CONFIG_NIKON_NUM_INSTANCES; i++)
             {
-                DebugP_log("\r\n| Nikon instance %u: Received response for command %u", i, cmd[i]);
+                DebugP_log("\r\n| Nikon instance %u: Command %u", i, cmd[i]);
                 ret = nikon_handle_command(gAppNikonHandle[i], cmd[i]);;
                 if(ret != SystemP_SUCCESS)
                 {

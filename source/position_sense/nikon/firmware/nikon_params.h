@@ -122,6 +122,25 @@ EEPROM_READ_CMD 						.set 	1			;status flag for EEPROM read command
 EEPROM_WRITE_CMD 						.set 	2			;status flag for EEPROM write command
 NON_EEPROM_CMD							.set 	0			;status flag for Non-EEPROM command
 
-NIKON_RTU_TRIGGER_HOST_EVT			.set	34			;( pr0_pru_mst_intr[2]_intr_req )
-NIKON_PRU_TRIGGER_HOST_EVT			.set	35			;( pr0_pru_mst_intr[3]_intr_req )
-NIKON_TXPRU_TRIGGER_HOST_EVT			.set	36			;( pr0_pru_mst_intr[4]_intr_req )
+	.if	$isdefed("SLICE1")
+	.if $isdefed("ENABLE_MULTI_MAKE_RTU") | $isdefed("ENABLE_MULTI_MAKE_PRU") | $isdefed("ENABLE_MULTI_MAKE_TXPRU")
+	; Multi-channel load share using multiple PRUs
+NIKON_RTU_TRIGGER_HOST_EVT              .set	34			;( (0x20 | 2), pr0_pru_mst_intr[2]_intr_req )
+NIKON_PRU_TRIGGER_HOST_EVT              .set	35			;( (0x20 | 3), pr0_pru_mst_intr[3]_intr_req )
+NIKON_TXPRU_TRIGGER_HOST_EVT            .set	36			;( (0x20 | 4), pr0_pru_mst_intr[4]_intr_req )
+	.else
+	; Single PRU
+NIKON_PRU_TRIGGER_HOST_EVT              .set	34			;( (0x20 | 2), pr0_pru_mst_intr[2]_intr_req )
+	.endif
+	.else
+	; "SLICE0"
+	.if $isdefed("ENABLE_MULTI_MAKE_RTU") | $isdefed("ENABLE_MULTI_MAKE_PRU") | $isdefed("ENABLE_MULTI_MAKE_TXPRU")
+	; Multi-channel load share using multiple PRUs
+NIKON_RTU_TRIGGER_HOST_EVT              .set	37			;( (0x20 | 5), pr0_pru_mst_intr[5]_intr_req )
+NIKON_PRU_TRIGGER_HOST_EVT              .set	38			;( (0x20 | 6), pr0_pru_mst_intr[6]_intr_req )
+NIKON_TXPRU_TRIGGER_HOST_EVT            .set	39			;( (0x20 | 7), pr0_pru_mst_intr[7]_intr_req )
+	.else
+	; Single PRU
+NIKON_PRU_TRIGGER_HOST_EVT              .set	37			;( (0x20 | 5), pr0_pru_mst_intr[5]_intr_req )
+	.endif
+	.endif

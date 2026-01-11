@@ -339,30 +339,26 @@ nikon1.$name                               = "CONFIG_NIKON0";
 nikon1.Booster_Pack                        = true;
 nikon1.protocolVersion                     = 3;
 nikon1.PRU_Slice                           = "PRU0";
-nikon1.ENC0_EN.$name                       = "ENC0_EN";
+nikon1.ENC0_EN.$name                       = "NIKON0_BP_POWER_EN0";
 nikon1.ENC0_EN.GPIO_n.$assign              = "GPIO21";
 nikon1["PRU-ICSS1"].$assign                = "PRU-ICSS1";
 nikon1["PRU-ICSS1"].PR1_PRU0_GPIO2.$assign = "GPIO83";
-nikon1["PRU-ICSS1"].PR1_PRU0_GPIO2.$used   = true;
 nikon1["PRU-ICSS1"].PR1_PRU0_GPIO1.$assign = "GPIO82";
-nikon1["PRU-ICSS1"].PR1_PRU0_GPIO1.$used   = true;
 nikon1["PRU-ICSS1"].PR1_PRU0_GPIO0.$assign = "GPIO81";
-nikon1["PRU-ICSS1"].PR1_PRU0_GPIO0.$used   = true;
 nikon1["PRU-ICSS1"].PR1_PRU0_GPIO9.$assign = "GPIO80";
-nikon1["PRU-ICSS1"].PR1_PRU0_GPIO9.$used   = true;
 
-nikon2.$name                             = "CONFIG_NIKON1";
-nikon2.Booster_Pack                      = true;
-nikon2.protocolVersion                   = 3;
-nikon2.CMP_Event_Num                     = 3;
-nikon2.CAP_Event_Num                     = 7;
-nikon2.ENC0_EN.$name                     = "ENC1_EN";
-nikon2.ENC0_EN.GPIO_n.$assign            = "GPIO22";
-nikon2["PRU-ICSS1"].$assign              = "PRU-ICSS1";
-nikon2["PRU-ICSS1"].PR1_PRU1_GPIO2.$used = true;
-nikon2["PRU-ICSS1"].PR1_PRU1_GPIO1.$used = true;
-nikon2["PRU-ICSS1"].PR1_PRU1_GPIO0.$used = true;
-nikon2["PRU-ICSS1"].PR1_PRU1_GPIO9.$used = true;
+nikon2.$name                               = "CONFIG_NIKON1";
+nikon2.Booster_Pack                        = true;
+nikon2.protocolVersion                     = 3;
+nikon2.CMP_Event_Num                       = 3;
+nikon2.CAP_Event_Num                       = 7;
+nikon2.ENC0_EN.$name                       = "NIKON1_BP_POWER_EN0";
+nikon2.ENC0_EN.GPIO_n.$assign              = "GPIO22";
+nikon2["PRU-ICSS1"].$assign                = "PRU-ICSS1";
+nikon2["PRU-ICSS1"].PR1_PRU1_GPIO2.$assign = "GPIO73";
+nikon2["PRU-ICSS1"].PR1_PRU1_GPIO1.$assign = "GPIO72";
+nikon2["PRU-ICSS1"].PR1_PRU1_GPIO0.$assign = "GPIO71";
+nikon2["PRU-ICSS1"].PR1_PRU1_GPIO9.$assign = "GPIO74";
 
 pruicss1.$name                           = "CONFIG_PRU_ICSS0";
 nikon1.pru                               = pruicss1;
@@ -370,10 +366,10 @@ nikon2.pru                               = pruicss1;
 pruicss1.AdditionalICSSSettings[0].$name = "CONFIG_PRU_ICSS_IO0";
 pruicss1.intcMapping.create(2);
 pruicss1.intcMapping[0].$name            = "CONFIG_ICSS1_INTC_MODE1_MAPPING0";
-pruicss1.intcMapping[0].event            = "18";
+pruicss1.intcMapping[0].event            = "21";
 pruicss1.intcMapping[1].$name            = "CONFIG_ICSS1_INTC_MODE1_MAPPING1";
-pruicss1.intcMapping[1].event            = "19";
 pruicss1.intcMapping[1].channel          = "3";
+pruicss1.intcMapping[1].event            = "18";
 
 epwm_syncout_xbar1.$name      = "CONFIG_EPWM_SYNCOUT_XBAR0";
 epwm_syncout_xbar1.xbarOutput = ["EPWM0_SYNCOUT"];
@@ -391,9 +387,5 @@ soc_timesync_xbar12.instance   = "SOC_TIMESYNC_XBAR1_ICSS_MODULE_1";
  * version of the tool will not impact the pinmux you originally saw.  These lines can be completely deleted in order to
  * re-solve from scratch.
  */
-epwm1.EPWM.A.$suggestSolution                       = "GPIO43";
-epwm1.EPWM.B.$suggestSolution                       = "GPIO44";
-nikon2["PRU-ICSS1"].PR1_PRU1_GPIO2.$suggestSolution = "GPIO73";
-nikon2["PRU-ICSS1"].PR1_PRU1_GPIO1.$suggestSolution = "GPIO72";
-nikon2["PRU-ICSS1"].PR1_PRU1_GPIO0.$suggestSolution = "GPIO71";
-nikon2["PRU-ICSS1"].PR1_PRU1_GPIO9.$suggestSolution = "GPIO74";
+epwm1.EPWM.A.$suggestSolution = "GPIO43";
+epwm1.EPWM.B.$suggestSolution = "GPIO44";
