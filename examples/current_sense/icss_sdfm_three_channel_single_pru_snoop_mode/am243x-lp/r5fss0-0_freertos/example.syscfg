@@ -72,12 +72,6 @@ sdfm1.Ch1_ZeroCross_Enable   = true;
 sdfm1.Ch2_ComparatorEnable   = true;
 sdfm1.Ch2_ZeroCross_Enable   = true;
 sdfm1.Ch1_NC_OSR             = 128;
-sdfm1.Ch2_HLT                = "4096";
-sdfm1.Ch2_ZCT                = "2000";
-sdfm1.Ch1_ZCT                = "2000";
-sdfm1.Ch1_HLT                = "4000";
-sdfm1.Ch0_ZCT                = "2000";
-sdfm1.Ch0_HLT                = "4000";
 
 epwm1.$name            = "CONFIG_EPWM0";
 epwm1.EPWM.$assign     = "EHRPWM0";
@@ -327,7 +321,6 @@ pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].PRU_ICSSG0_ECAP.IN_APWM_OUT.$use
 pruicss1.intcMapping.create(1);
 pruicss1.intcMapping[0].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING0";
 pruicss1.intcMapping[0].event                                                     = "21";
-pruicss1.intcMapping[0].channel                                                   = "3";
 
 /**
  * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future

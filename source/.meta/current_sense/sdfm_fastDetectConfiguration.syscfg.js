@@ -24,31 +24,31 @@ function fastDetectConfigs(channel)
                 options: [
                     {
                         name: "0",
-                        displayName: "4-bit"
+                        displayName: "4 samples"
                     },
                     {
                         name: "1",
-                        displayName: "8-bit"
+                        displayName: "8 samples"
                     },
                     {
                         name: "2",
-                        displayName: "12-bit"
+                        displayName: "12 samples"
                     },
                     {
                         name: "3",
-                        displayName: "16-bit"
+                        displayName: "16 samples"
                     },
                     {
                         name: "4",
-                        displayName: "20-bit"
+                        displayName: "20 samples"
                     },
                     {
                         name: "5",
-                        displayName: "24-bit"
+                        displayName: "24 samples"
                     },
                     {
                         name: "6",
-                        displayName: "28-bit"
+                        displayName: "28 samples"
                     },
                 ],
 			},
@@ -58,6 +58,7 @@ function fastDetectConfigs(channel)
 				description : 'Zero Count Max Threshold',
 				default: 18,
                 hidden: true,
+                range: [1, 28],
 			},
             {
 				name: "Ch" + channel.toString() + "_ZeroMinTh",
@@ -65,6 +66,7 @@ function fastDetectConfigs(channel)
 				description : 'Zero Count Min Threshold',
 				default: 18,
                 hidden: true,
+                range: [1, 28],
 			},
 
         ]

@@ -262,7 +262,7 @@ function pinmuxRequirements(inst) {
                 pinResource.used = false;
             }
         }
-        if((inst["SDFM_CLK_GEN"] == "1"))
+        if((inst["SDFM_CLK_GEN"] == "2"))
         {
             if((pin.pinName == "GPI1"))
             {

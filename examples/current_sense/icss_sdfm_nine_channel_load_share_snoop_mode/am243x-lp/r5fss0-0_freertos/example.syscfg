@@ -58,13 +58,10 @@ sdfm1.G_MUX_EN                = true;
 sdfm1.Enable_Load_Share       = true;
 sdfm1.PRU_EnableSnoopNC       = true;
 sdfm1.PRU_EnableTriggerMode   = true;
-sdfm1.PRU_SelectIepCmpEvent   = "4";
 sdfm1.RTU_EnableSnoopNC       = true;
 sdfm1.RTU_EnableTriggerMode   = true;
-sdfm1.RTU_SelectIepCmpEvent   = "7";
 sdfm1.TXPRU_EnableSnoopNC     = true;
 sdfm1.TXPRU_EnableTriggerMode = true;
-sdfm1.TXPRU_SelectIepCmpEvent = "8";
 sdfm1.Enable_Channel_0        = true;
 sdfm1.Enable_Channel_1        = true;
 sdfm1.Enable_Channel_2        = true;
@@ -75,6 +72,9 @@ sdfm1.Enable_Channel_6        = true;
 sdfm1.Enable_Channel_7        = true;
 sdfm1.Enable_Channel_8        = true;
 sdfm1.Enable_Epwm_Sync        = true;
+sdfm1.PRU_SelectIepCmpEvent   = "3";
+sdfm1.RTU_SelectIepCmpEvent   = "4";
+sdfm1.TXPRU_SelectIepCmpEvent = "5";
 sdfm1.PRU_ICSSG0_PRU.$assign  = "PRU_ICSSG0_PRU0";
 
 epwm1.$name            = "CONFIG_EPWM0";
@@ -333,13 +333,12 @@ pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].PRU_ICSSG0_ECAP.IN_APWM_OUT.$use
 pruicss1.intcMapping.create(3);
 pruicss1.intcMapping[0].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING0";
 pruicss1.intcMapping[0].event                                                     = "21";
-pruicss1.intcMapping[0].channel                                                   = "3";
 pruicss1.intcMapping[1].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING1";
 pruicss1.intcMapping[1].event                                                     = "24";
-pruicss1.intcMapping[1].channel                                                   = "6";
+pruicss1.intcMapping[1].channel                                                   = "5";
 pruicss1.intcMapping[2].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING2";
 pruicss1.intcMapping[2].event                                                     = "27";
-pruicss1.intcMapping[2].channel                                                   = "9";
+pruicss1.intcMapping[2].channel                                                   = "8";
 
 /**
  * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future

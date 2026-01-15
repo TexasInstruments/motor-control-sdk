@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023-25 Texas Instruments Incorporated
+ *  Copyright (C) 2023-2025 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -39,8 +39,9 @@
  *  (Sigma-Delta Filter Module) current sensing on TI AM243x devices.
  *
  *  Key Functions:
- *  - SDFM_pruIcssInit()  : Initialize ICSSG PRU subsystem for SDFM
- *  - appSdfmPruInit()       : Load PRU firmware and configure SDFM parameters
+ *  - sdfm_pruicss_init()      : Initialize ICSSG PRU subsystem for SDFM
+ *  - sdfm_load_firmware()     : Load PRU firmware
+ *  - sdfm_configure_and_enable() : Configure SDFM parameters and enable
  */
 
 #ifndef _SDFM_H_
@@ -53,15 +54,6 @@
 /* ========================================================================== */
 /*                           Macros & Typedefs                                */
 /* ========================================================================== */
-
-/* Status codes */
-#define SDFM_ERR_NERR               (  0 )  /* no error */
-#define SDFM_ERR_CFG_PIN_MUX        ( -1 )  /* pin mux configuration error */
-#define SDFM_ERR_CFG_ICSSG_CLKCFG   ( -2 )  /* ICSSG clock configuration error */
-#define SDFM_ERR_INIT_ICSSG         ( -3 )  /* initialize ICSSG error */
-#define SDFM_ERR_CFG_MCU_INTR       ( -4 )  /* interrupt configuration error */
-#define SDFM_ERR_INIT_PRU_SDFM      ( -5 )  /* initialize PRU for SDFM error */
-#define SDFM_ERR_INIT_SDFM          ( -6 )  /* initialize SDFM error */
 
 /**
  * \brief Address translation macros for TCM to SoC view
@@ -87,38 +79,36 @@
  *
  *  Disables PRU cores, resets memories, sets pin mux, and initializes INTC.
  *
- *  \param icssInstId     [in] ICSSG instance ID (CONFIG_PRU_ICSS0, etc.)
- *  \param sliceId        [in] PRU slice ID (ICSSG_SLICE_ID_0 or ICSSG_SLICE_ID_1)
- *  \param saMuxMode      [in] SA MUX mode for pin configuration
- *  \param loadShareMode  [in] Load share mode enable (0=single PRU, 1=multi-PRU)
- *  \param pPruIcssHandle [out] Pointer to store PRUICSS handle
+ *  \param pruicss_handle     [out] Pointer to store PRUICSS handle (output parameter)
+ *  \param pruicss_instance   [in] ICSSG instance ID (CONFIG_PRU_ICSS0, etc.)
+ *  \param pruicss_slice      [in] PRU slice ID (ICSSG_SLICE_ID_0 or ICSSG_SLICE_ID_1)
+ *  \param load_share_enabled [in] Load share mode enable (0=single PRU, 1=multi-PRU)
  *
- *  \return SDFM_ERR_NERR on success, error code otherwise
+ *  \return SystemP_SUCCESS on success, SystemP_FAILURE on failure
  */
-int32_t SDFM_pruIcssInit(
-    uint8_t icssInstId,
-    uint8_t sliceId,
-    uint8_t saMuxMode,
-    uint8_t loadShareMode,
-    PRUICSS_Handle *pPruIcssHandle
-);
+int32_t sdfmPruicssInit(PRUICSS_Handle *pruicss_handle, uint8_t pruicss_instance, uint8_t pruicss_slice, uint8_t load_share_enabled);
 
 /**
- *  \brief Initialize PRU cores for SDFM
+ *  \brief Load PRU firmware for SDFM
  *
- *  Loads PRU firmware, configures SDFM parameters, enables PRU cores,
- *  and initializes SDFM driver.
+ *  Loads PRU firmware into PRU cores and enables them.
  *
- *  \param pruIcssHandle [in] PRUICSS handle from SDFM_pruIcssInit()
- *  \param pSdfmPrms     [in] SDFM parameters structure (from SysConfig)
- *  \param pHSdfm        [out] Pointer to store SDFM handle
+ *  \param pruIcssHandle [in] PRUICSS handle from sdfmPruicssInit()
  *
- *  \return SDFM_ERR_NERR on success, error code otherwise
+ *  \return SystemP_SUCCESS on success, SystemP_FAILURE on failure
  */
-int32_t appSdfmPruInit(
-    PRUICSS_Handle pruIcssHandle,
-    SDFM_Params pSdfmPrms,
-    SDFM_Handle *pHSdfm
-);
+int32_t sdfmLoadFirmware(PRUICSS_Handle pruIcssHandle);
+
+/**
+ *  \brief Configure SDFM settings and enable SDFM firmware
+ *
+ *  Enables channels, configures sample buffers, sets up snoop/trigger modes,
+ *  configures comparators and overcurrent detection, and enables SDFM to start sampling.
+ *
+ *  \param handle [in] SDFM handle
+ *
+ *  \return SystemP_SUCCESS on success, error code otherwise
+ */
+int32_t sdfmConfigureAndEnable(SDFM_Handle handle);
 
 #endif /* _SDFM_H_ */

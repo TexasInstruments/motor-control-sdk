@@ -293,13 +293,12 @@ pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].PRU_ICSSG0_ECAP.IN_APWM_OUT.$use
 pruicss1.intcMapping.create(3);
 pruicss1.intcMapping[0].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING1";
 pruicss1.intcMapping[0].event                                                     = "21";
-pruicss1.intcMapping[0].channel                                                   = "3";
 pruicss1.intcMapping[1].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING0";
 pruicss1.intcMapping[1].event                                                     = "22";
-pruicss1.intcMapping[1].channel                                                   = "4";
+pruicss1.intcMapping[1].channel                                                   = "3";
 pruicss1.intcMapping[2].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING2";
 pruicss1.intcMapping[2].event                                                     = "23";
-pruicss1.intcMapping[2].channel                                                   = "5";
+pruicss1.intcMapping[2].channel                                                   = "4";
 
 /**
  * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future

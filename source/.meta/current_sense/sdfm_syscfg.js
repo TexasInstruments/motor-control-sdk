@@ -53,7 +53,7 @@ config = config.concat([
     {
         name: "Enable_Load_Share",
         displayName: "Enable Load Share",
-        description: "Enable Load Share",
+        description: "Enable load sharing across multiple PRU cores (PRU, RTU_PRU, TX_PRU). RTU_PRU handles Ch0-2, PRU handles Ch3-5, TX_PRU handles Ch6-8.",
         default: false,
         hidden: false,
         onChange: addOtherPru,
@@ -68,7 +68,7 @@ config = config.concat([
     {
         name: "Enable_Epwm_Sync",
         displayName: "Enable Epwm Sync",
-        description: "Enable Sdfm synchronization with ePWM module",
+        description: "Enable SDFM synchronization with ePWM module.",
         default: false,
         hidden: false,
         onChange: addEpwmSource,
@@ -94,7 +94,7 @@ config = config.concat([
     {
         name: "IEP_Instance",
         displayName : "PRU ICSS IEP Instance",
-		description : 'PRU ICSS IEP Instance',
+		description : 'Select IEP timer instance (IEP0 or IEP1).',
 		hidden      : true,
 		default     : "0",
 		options     :
@@ -112,31 +112,32 @@ config = config.concat([
     {
         name: "IEP_Reset_Freq",
         displayName : "IEP Reset Frequency (Hz)",
-		description : 'IEP Reset Frequency (Hz)',
+		description : 'IEP counter reset frequency in Hz. Typically matches PWM frequency',
 		hidden      : true,
-		default     : "8000",
+		default     : 8000,
+        range       : [1, 0xFFFFFFFF],
     },
     {
         name: "SDFM_CLK_GEN",
         displayName: "SDCLK Generation From",
         description: "SDCLK Generation From",
 		hidden	: false,
-        default: "2",
+        default: "1",
         options: [
                 {
-                    name: "0",
-                    displayName: "None"
-                },
-                {
-                    name: "1",
-                    displayName: "PRU-ICSSG (PR<k>_PRU0_GPO1)"
+                    name: "3",
+                    displayName: "None (External Clock)"
                 },
                 {
                     name: "2",
+                    displayName: "PRU-ICSSG (PR<k>_PRU0_GPO1)"
+                },
+                {
+                    name: "1",
                     displayName: "eCAP"
                 },
                 {
-                    name: "3",
+                    name: "0",
                     displayName: "IEP"
                 },
         ],
@@ -145,9 +146,10 @@ config = config.concat([
     {
         name: "SDFM_Clock_Value",
         displayName: "SDFM Frequency (Hz)",
-        description: "Generated SDFM clock frequency from the selected clock source (IEP, ECAP, or GPIO1). It generates a macro like `CONFIG_SDFM0_CLOCK_VALUE` in ti_drivers_config.h for use in application code. Note: Clock divider values need to be set manually in application initialization based on this frequency.",
-        hidden: true,
+        description: "SDFM clock frequency in Hz. For internal clock sources (IEP, ECAP, GPIO1), this is the generated clock frequency. For external clock source (None), specify the externally provided clock frequency. This value is used by the driver for timing calculations. Note: Clock divider values need to be set manually in application initialization based on this frequency.",
+        hidden: false,
         default: 20000000,
+        range: [1, 0xFFFFFFFF],
         onChange: propagateClockToChannels,
     },
     {
@@ -167,27 +169,27 @@ config = config.concat([
                 description : 'Enable NC trigger Mode',
                 hidden      : false,
                 default     : false,
-                onChange	: configNCsamplingMode,        
+                onChange	: configNCsamplingMode,
             },
             {
                 name        : "PRU_SelectIepCmpEvent",
                 displayName : "Select IEP Compare Event for NC Trigger Mode",
-                description : 'Select IEP Compare Event for NC Trigger Mode',
+                description : "IEP compare event (CMP0-CMP15) that triggers normal current sampling.",
                 hidden      : true,
                 default: SDFM_IepCmpEvnt[0].name,
-                options: SDFM_IepCmpEvnt       
+                options: SDFM_IepCmpEvnt
             },
             {
                 name        : "PRU_FirstTriggerPoint",
                 displayName : "First Trigger Point (us)",
-                description : 'First Trigger Point (us)',
+                description : 'First trigger time point in microseconds within IEP reset period. Normal current samples are captured at this time',
                 hidden      : true,
                 default     : 15,
             },
             {
                 name        : "PRU_EnableDoubleUpdate",
                 displayName : "Enable Double Update",
-                description : 'Enable Double Update',
+                description : 'Enable double update mode to capture two normal current samples per PWM cycle',
                 hidden      : true,
                 default     : false,
                 onChange    : doubleUpdateConfig,
@@ -195,7 +197,7 @@ config = config.concat([
             {
                 name        : "PRU_SecondTriggerPoint",
                 displayName : "Second Trigger Point (us)",
-                description : 'Second Trigger Point (us)',
+                description : 'Second trigger time point in microseconds within IEP reset period. Only used when double update mode is enabled',
                 hidden      : true,
                 default     : 30,
             },
@@ -459,21 +461,14 @@ function addOtherPru(inst, ui)
 
 function updateClockSourceVisibility(inst, ui)
 {
-    if (inst.SDFM_CLK_GEN == "0")
-    {
-        ui.SDFM_Clock_Value.hidden = true;
-    }
-    else
-    {
-        ui.SDFM_Clock_Value.hidden = false;
-    }
+    ui.SDFM_Clock_Value.hidden = false;
 
     // Update read-only status for all channel clock fields
     for (let channel = 0; channel < 9; channel++)
     {
         if (inst["Enable_Channel_" + channel.toString()])
         {
-            ui["Ch" + channel.toString() + "_SDFM_Clock"].readOnly = (inst.SDFM_CLK_GEN != "0");
+            ui["Ch" + channel.toString() + "_SDFM_Clock"].readOnly = (inst.SDFM_CLK_GEN != "3");
         }
     }
 
@@ -482,7 +477,7 @@ function updateClockSourceVisibility(inst, ui)
 
 function propagateClockToChannels(inst, ui)
 {
-    if (inst.SDFM_CLK_GEN != "0")
+    if (inst.SDFM_CLK_GEN != "3")
     {
         let clockValue = inst.SDFM_Clock_Value;
         for (let channel = 0; channel < 9; channel++)
@@ -504,9 +499,9 @@ function onChangeEnableChannel(inst, ui)
 		ui["Ch" + channel.toString() + "_SDCLKSEL"].hidden = !status;
         ui["Ch" + channel.toString() + "_CLKINV"].hidden = !status;
         ui["Ch" + channel.toString() + "_SDFM_Clock"].hidden = !status;
-        ui["Ch" + channel.toString() + "_SDFM_Clock"].readOnly = (inst.SDFM_CLK_GEN != "0");
+        ui["Ch" + channel.toString() + "_SDFM_Clock"].readOnly = (inst.SDFM_CLK_GEN != "3");
 
-        if (status && inst.SDFM_CLK_GEN != "0")
+        if (status && inst.SDFM_CLK_GEN != "3")
         {
             inst["Ch" + channel.toString() + "_SDFM_Clock"] = inst.SDFM_Clock_Value;
         }

@@ -7,16 +7,16 @@ function onValidate(inst, validation) {
 
         if (nosr < 4 || nosr > 256) {
             validation.logError(
-                "NC OSR should be between 4 to 256 (inclusive)! - Check Channel_" + channel + " NC OSR = " + nosr,
+                "NC OSR should be between 4 and 256 (inclusive)! - Check Channel_" + channel + " NC OSR = " + nosr,
                 inst, inst_name);
         }
 
         inst_name = "Ch" + channel.toString() + "_OC_OSR";
         let cosr = inst[inst_name];
 
-        if (cosr < 8 || cosr > 256) {
+        if (cosr < 4 || cosr > 256) {
             validation.logError(
-                "OC OSR should be between 8 and 256 (inclusive)! - Check Channel_" + channel + " OC OSR = " + cosr,
+                "OC OSR should be between 4 and 256 (inclusive)! - Check Channel_" + channel + " OC OSR = " + cosr,
                 inst, inst_name);
         }
 
@@ -25,7 +25,7 @@ function onValidate(inst, validation) {
 
         if (HLT < 0 || HLT > 16777216) {
             validation.logError(
-                "HLT should be between 0 to 16777216(inclusive)! - Check Channel_" + channel + " HLT = " + HLT,
+                "HLT should be between 0 and 16777216 (inclusive)! - Check Channel_" + channel + " HLT = " + HLT,
                 inst, inst_name);
         }
 
@@ -34,7 +34,7 @@ function onValidate(inst, validation) {
 
         if (LLT < 0 || LLT > 16777216) {
             validation.logError(
-                "LLT should be between 0 to 16777216(inclusive)! - Check Channel_" + channel + " LLT = " + LLT,
+                "LLT should be between 0 and 16777216 (inclusive)! - Check Channel_" + channel + " LLT = " + LLT,
                 inst, inst_name);
         }
     }
@@ -53,9 +53,9 @@ function onValidate(inst, validation) {
     inst_name = "SDFM_CLK_GEN";
     let clock_gen = inst[inst_name];
 
-    if ((clock_gen != "3") && Phase_Delay) {
+    if ((clock_gen != "0") && Phase_Delay) {
         validation.logError(
-            "Select SDFM clock generation from IEP0 (option 3) for phase compensation",
+            "Select SDFM clock generation from IEP for phase compensation",
             inst, inst_name);
     }
 

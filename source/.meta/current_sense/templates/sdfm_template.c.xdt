@@ -1,25 +1,63 @@
 %%{
     let module = system.modules[args[0]];
 %%}
-
-#include <current_sense/sdfm/include/sdfm_drv.h>
+/*
+ * SDFM
+ */
 
 %if(module)
 %{
-/* Config structure array */
-SDFM_Config gSdfmHandle[CONFIG_SDFM_NUM_INSTANCES];
-uint32_t gSdfmConfigNum = CONFIG_SDFM_NUM_INSTANCES;
+#include <current_sense/sdfm/include/sdfm_drv.h>
 
-/* SDFM Parameters - Fully initialized by SysConfig */
+/* SDFM attributes (compile-time data only) */
+static SDFM_Attrs gSdfmAttrs[CONFIG_SDFM_NUM_INSTANCES] =
+{
 %for(let i = 0; i < module.$instances.length; i++) {
     % let instance = module.$instances[i];
-SDFM_Params gSdfmParams = {
-    /* Handles - will be set at runtime by application */
-    .pruicss_handle = NULL,
-    .pwm_handle = NULL,
-
-    /* PRU core configuration (trigger + snoop mode) */
-    .pru_core_config = {
+    % /* Determine PRUICSS instance (0 for ICSSG0, 1 for ICSSG1) */
+    % let pruicss_instance = (instance.instance === "ICSSG1") ? 1 : 0;
+    % /* Determine PRU slice (0 or 1) based on PRU assignment */
+    % let pruicss_slice = 0;
+    % if(instance.instance === "ICSSG1") {
+    %     if(instance.PRU_ICSSG1_PRU && instance.PRU_ICSSG1_PRU.$solution && instance.PRU_ICSSG1_PRU.$solution.peripheralName.includes("PRU1")) {
+    %         pruicss_slice = 1;
+    %     }
+    % } else {
+    %     if(instance.PRU_ICSSG0_PRU && instance.PRU_ICSSG0_PRU.$solution && instance.PRU_ICSSG0_PRU.$solution.peripheralName.includes("PRU1")) {
+    %         pruicss_slice = 1;
+    %     }
+    % }
+    % /* Calculate channel mask */
+    % let channel_mask = ((instance["Enable_Channel_0"] & 1) << 0) | ((instance["Enable_Channel_1"] & 1) << 1) | ((instance["Enable_Channel_2"] & 1) << 2) | ((instance["Enable_Channel_3"] & 1) << 3) | ((instance["Enable_Channel_4"] & 1) << 4) | ((instance["Enable_Channel_5"] & 1) << 5) | ((instance["Enable_Channel_6"] & 1) << 6) | ((instance["Enable_Channel_7"] & 1) << 7) | ((instance["Enable_Channel_8"] & 1) << 8);
+    % /* Calculate PRU core enable mask */
+    % let pru_core_mask;
+    % if(instance["Enable_Load_Share"] == 0) {
+    %     pru_core_mask = 1;  /* Single PRU mode - only PRU core (bit 0) */
+    % } else {
+    %     /* Load share: RTU_PRU (bit 1), PRU (bit 0), TX_PRU (bit 2) */
+    %     pru_core_mask = ((instance["Enable_Channel_0"] || instance["Enable_Channel_1"] || instance["Enable_Channel_2"]) ? (1 << 1) : 0) | ((instance["Enable_Channel_3"] || instance["Enable_Channel_4"] || instance["Enable_Channel_5"]) ? (1 << 0) : 0) | ((instance["Enable_Channel_6"] || instance["Enable_Channel_7"] || instance["Enable_Channel_8"]) ? (1 << 2) : 0);
+    % }
+    {
+        .instance = `i`U,
+        .pruicss_instance = `pruicss_instance`U,
+        .pruicss_slice = `pruicss_slice`U,
+        .load_share_enabled = `(instance["Enable_Load_Share"] & 1)`U,
+        .channel_mask = 0x`channel_mask.toString(16).toUpperCase()`U,
+        .channel_enabled = {`instance["Enable_Channel_0"] & 1`, `instance["Enable_Channel_1"] & 1`, `instance["Enable_Channel_2"] & 1`, `instance["Enable_Channel_3"] & 1`, `instance["Enable_Channel_4"] & 1`, `instance["Enable_Channel_5"] & 1`, `instance["Enable_Channel_6"] & 1`, `instance["Enable_Channel_7"] & 1`, `instance["Enable_Channel_8"] & 1`},
+        .core_clk_freq = `instance.pru.$name.toUpperCase()`_CORE_CLK_FREQ_HZ,
+        .iep_clk_freq = `instance.pru.$name.toUpperCase()`_IEP_CLK_FREQ_HZ,
+        .iep_reset_freq = `instance["IEP_Reset_Freq"]`U,
+        .iep_instance = `instance["IEP_Instance"]`U,
+        .sdfm_clock_source = `instance["SDFM_CLK_GEN"]`U,
+        .sdfm_sampling_freq = `instance["SDFM_Clock_Value"]`U,
+        .pru_core_mask = `pru_core_mask`U,
+        .enable_epwm_sync = `(instance["Enable_Epwm_Sync"] & 1)`U,
+%   if(instance["Enable_Epwm_Sync"]) {
+        .epwm_sync_source = `instance["Epwm_Source"]`U,
+%   } else {
+        .epwm_sync_source = 0U,
+%   }
+        .pru_core_config = {
         /* PRU core (index 0 - channels 3-5 in load share, all channels in single PRU) */
         {
             .enable_trigger_mode = `instance["PRU_EnableTriggerMode"] & 1`,
@@ -109,8 +147,8 @@ SDFM_Params gSdfmParams = {
             .enabled = `instance["Enable_Channel_" + ch.toString()] & 1`,
 %       if(instance["Enable_Channel_" + ch.toString()]) {
             .filter_type = `instance["Ch" + ch.toString() + "_AccSource"]`,
-            .normal_current_osr = `instance["Ch" + ch.toString() + "_NC_OSR"]`,
-            .over_current_osr = `instance["Ch" + ch.toString() + "_OC_OSR"]`,
+            .normal_current_osr = `instance["Ch" + ch.toString() + "_NC_OSR"] - 1`,  /* Convert user OSR (4-256) to register value (3-255) */
+            .over_current_osr = `instance["Ch" + ch.toString() + "_OC_OSR"] - 1`,  /* Convert user OSR (4-256) to register value (3-255) */
             .sdfm_clk = `instance["Ch" + ch.toString() + "_SDFM_Clock"]`,
             .enable_comparator = `instance["Ch" + ch.toString() + "_ComparatorEnable"] & 1`,
             .fd_enable = `instance["Ch" + ch.toString() + "_FastDetect"] & 1`,
@@ -123,8 +161,6 @@ SDFM_Params gSdfmParams = {
             .fd_zero_max = 0,
             .fd_zero_min = 0,
 %           }
-            .fd_one_max = 0,
-            .fd_one_min = 0,
             .clk_source = `instance["Ch" + ch.toString() + "_SDCLKSEL"]`,
             .clk_inv = `instance["Ch" + ch.toString() + "_CLKINV"] & 1`,
             /* Threshold fields - flattened (no nested threshold_config) */
@@ -152,8 +188,6 @@ SDFM_Params gSdfmParams = {
             .fd_window = 0,
             .fd_zero_max = 0,
             .fd_zero_min = 0,
-            .fd_one_max = 0,
-            .fd_one_min = 0,
             .clk_source = 0,
             .clk_inv = 0,
             .high_threshold = 0,
@@ -164,61 +198,26 @@ SDFM_Params gSdfmParams = {
         },
 %   }
     },
-
-    /* Global configuration fields */
-    .load_share_enable = `instance["Enable_Load_Share"] & 1`,
-%   let IcssgIns = (instance.instance === "ICSSG1") ? 1 : 0;
-    .icss_instance = `IcssgIns`,
-%   let Slice = 0;
-%   if(instance.instance === "ICSSG1") {
-%       if(instance.PRU_ICSSG1_PRU && instance.PRU_ICSSG1_PRU.$solution && instance.PRU_ICSSG1_PRU.$solution.peripheralName.includes("PRU1")) {
-%           Slice = 1;
-%       }
-%   } else {
-%       if(instance.PRU_ICSSG0_PRU && instance.PRU_ICSSG0_PRU.$solution && instance.PRU_ICSSG0_PRU.$solution.peripheralName.includes("PRU1")) {
-%           Slice = 1;
-%       }
-%   }
-    .pru_slice = `Slice`,
-%   if(instance["TXPRU_EnableTriggerMode"] || instance["PRU_EnableTriggerMode"] || instance["RTU_EnableTriggerMode"]) {
-    .iep_instance = `instance["IEP_Instance"]`,
-    .iep_reset_freq = `instance["IEP_Reset_Freq"]`,
-%   } else {
-    .iep_instance = 0,
-    .iep_reset_freq = 0,
-%   }
-    .pru_clock = CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ,
-    .iep_clock = CONFIG_PRU_ICSS0_IEP_CLK_FREQ_HZ,
-
-    /* Channel mask */
-    .enable_channel_mask = `((instance["Enable_Channel_0"] & 1) << 0) | ((instance["Enable_Channel_1"] & 1) << 1) | ((instance["Enable_Channel_2"] & 1) << 2) | ((instance["Enable_Channel_3"] & 1) << 3) | ((instance["Enable_Channel_4"] & 1) << 4) | ((instance["Enable_Channel_5"] & 1) << 5) | ((instance["Enable_Channel_6"] & 1) << 6) | ((instance["Enable_Channel_7"] & 1) << 7) | ((instance["Enable_Channel_8"] & 1) << 8)`,
-
-    /* PRU core enable mask */
-%   if(instance["Enable_Load_Share"] == 0) {
-    .enable_pru_core_mask = 1,  /* Single PRU mode */
-%   } else {
-    .enable_pru_core_mask = `((instance["Enable_Channel_0"] || instance["Enable_Channel_1"] || instance["Enable_Channel_2"]) ? (1 << 1) : 0) | ((instance["Enable_Channel_3"] || instance["Enable_Channel_4"] || instance["Enable_Channel_5"]) ? (1 << 0) : 0) | ((instance["Enable_Channel_6"] || instance["Enable_Channel_7"] || instance["Enable_Channel_8"]) ? (1 << 2) : 0)`,
-%   }
-
-    /* EPWM sync configuration */
-%   if(instance["Enable_Epwm_Sync"]) {
-    .enable_epwm_sync = 1,
-    .epwm_sync_source = `instance["Epwm_Source"]`,
-%   } else {
-    .enable_epwm_sync = 0,
-    .epwm_sync_source = 0,
-%   }
-
-    /* Sample output base address - will be set at runtime */
-    .sample_base_addr = 0,
-
-    /* Phase delay configuration */
-%   if(instance["Enable_Phase_Compensation"]) {
-    .enable_phase_delay = 1,
-%   } else {
-    .enable_phase_delay = 0,
-%   }
+    },
+% }
 };
-%}
+
+/* SDFM priv objects - initialized by the driver */
+static SDFM_Priv gSdfmPriv[CONFIG_SDFM_NUM_INSTANCES];
+
+/* SDFM driver configuration */
+SDFM_Config gSdfmHandle[CONFIG_SDFM_NUM_INSTANCES] =
+{
+% for(let i = 0; i < module.$instances.length; i++) {
+    % let instance = module.$instances[i];
+    {
+        .priv = &gSdfmPriv[`instance.$name.toUpperCase()`],
+        .attrs = &gSdfmAttrs[`instance.$name.toUpperCase()`],
+    },
+% }
+};
+
+uint32_t gSdfmConfigNum = CONFIG_SDFM_NUM_INSTANCES;
+
 %}
 

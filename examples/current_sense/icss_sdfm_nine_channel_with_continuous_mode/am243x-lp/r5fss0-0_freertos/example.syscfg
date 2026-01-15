@@ -304,28 +304,30 @@ pruicss1.AdditionalICSSSettings[0].PruEcapIO.create(1);
 pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].$name                             = "CONFIG_PRU_ICSS_ECAP_IO0";
 pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].PRU_ICSSG0_ECAP.$assign           = "PRU_ICSSG0_ECAP0";
 pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].PRU_ICSSG0_ECAP.IN_APWM_OUT.$used = true;
-pruicss1.intcMapping.create(7);
+pruicss1.intcMapping.create(8);
 pruicss1.intcMapping[0].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING0";
 pruicss1.intcMapping[0].event                                                     = "21";
-pruicss1.intcMapping[0].channel                                                   = "3";
 pruicss1.intcMapping[1].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING1";
 pruicss1.intcMapping[1].event                                                     = "22";
-pruicss1.intcMapping[1].channel                                                   = "4";
+pruicss1.intcMapping[1].channel                                                   = "3";
 pruicss1.intcMapping[2].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING2";
 pruicss1.intcMapping[2].event                                                     = "23";
-pruicss1.intcMapping[2].channel                                                   = "5";
+pruicss1.intcMapping[2].channel                                                   = "4";
 pruicss1.intcMapping[3].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING3";
 pruicss1.intcMapping[3].event                                                     = "24";
-pruicss1.intcMapping[3].channel                                                   = "6";
+pruicss1.intcMapping[3].channel                                                   = "5";
 pruicss1.intcMapping[4].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING4";
 pruicss1.intcMapping[4].event                                                     = "25";
-pruicss1.intcMapping[4].channel                                                   = "7";
+pruicss1.intcMapping[4].channel                                                   = "6";
 pruicss1.intcMapping[5].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING5";
 pruicss1.intcMapping[5].event                                                     = "26";
-pruicss1.intcMapping[5].channel                                                   = "8";
+pruicss1.intcMapping[5].channel                                                   = "7";
 pruicss1.intcMapping[6].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING6";
 pruicss1.intcMapping[6].event                                                     = "27";
-pruicss1.intcMapping[6].channel                                                   = "9";
+pruicss1.intcMapping[6].channel                                                   = "8";
+pruicss1.intcMapping[7].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING7";
+pruicss1.intcMapping[7].event                                                     = "28";
+pruicss1.intcMapping[7].channel                                                   = "9";
 
 /**
  * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future
