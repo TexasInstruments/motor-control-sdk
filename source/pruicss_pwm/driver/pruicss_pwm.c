@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023 Texas Instruments Incorporated
+ *  Copyright (C) 2023-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -1393,7 +1393,7 @@ int32_t PRUICSS_PWM_signalEnable(PRUICSS_PWM_Handle handle, uint8_t pwmSet, uint
     return retVal;
 }
 
-int32_t PRUICSS_PWM_config(PRUICSS_PWM_Handle handle, uint8_t pwmSet, uint8_t instance,  uint32_t dutyCycle, uint32_t riseEdgeDelay, uint32_t fallEdgeDelay)
+int32_t PRUICSS_PWM_config(PRUICSS_PWM_Handle handle, uint8_t pwmSet, uint8_t instance,  float dutyCycle, float riseEdgeDelay, float fallEdgeDelay)
 {
     int32_t retVal = SystemP_FAILURE;
     /*Updates parameters of pwm signal with specified duty cycle, fall edge & rise edge delay*/
@@ -1581,6 +1581,8 @@ int32_t PRUICSS_PWM_pruIcssPwmFrequencyInit(PRUICSS_PWM_Handle handle, uint32_t 
 int32_t PRUICSS_PWM_iepConfig(PRUICSS_PWM_Handle handle)
 {
     int32_t status = SystemP_FAILURE;
+    uint8_t  currentPwmInstance, currentPwmSet;
+
     if((handle!=NULL))
     {
         status = SystemP_SUCCESS;
@@ -1595,14 +1597,26 @@ int32_t PRUICSS_PWM_iepConfig(PRUICSS_PWM_Handle handle)
             if(SystemP_SUCCESS == status)
             {
                 /*Intialize IEP0 count value*/
-                status= PRUICSS_PWM_setIepCounterLower_32bitValue(handle, PRUICSS_IEP_INST0, 0xFFFFFFFF);
+                status= PRUICSS_PWM_setIepCounterLower_32bitValue(handle, PRUICSS_IEP_INST0, PRUICSS_IEP_COUNTER_LOWER_32_BIT_INIT_VALUE);
             }
 
             if(SystemP_SUCCESS == status)
             {
-                status= PRUICSS_PWM_setIepCounterUpper_32bitValue(handle, PRUICSS_IEP_INST0, 0xFFFFFFFF);
+                status= PRUICSS_PWM_setIepCounterUpper_32bitValue(handle, PRUICSS_IEP_INST0, PRUICSS_IEP_COUNTER_UPPER_32_BIT_INIT_VALUE);
             }
-            
+
+            for(currentPwmSet=PRUICSS_PWM_SET0; (currentPwmSet < PRUICSS_NUM_PWM_SETS) && (SystemP_SUCCESS == status); currentPwmSet++)
+            {
+                for(currentPwmInstance=0; (currentPwmInstance < PRUICSS_NUM_OF_PWMINSTANCES_PER_PWM_SET) && (SystemP_SUCCESS == status); currentPwmInstance++)
+                {
+                    if(((handle)->pwmAttrs[currentPwmSet][currentPwmInstance]).enable == 1)
+                    {
+                            /*configure cmp  value of current pwm*/
+                            status = PRUICSS_PWM_setIepCompareEventUpper_32bitValue(handle, (handle->pwmAttrs[currentPwmSet][currentPwmInstance]).iepInstance, (handle->pwmAttrs[currentPwmSet][currentPwmInstance]).compareEvent, PRUICSS_IEP_COUNT_REG_MAX);
+                    }
+                }
+            }  
+
             if(SystemP_SUCCESS == status)
             {
                 /*Enable or disable shadow mode of IEP0*/
@@ -1662,13 +1676,13 @@ int32_t PRUICSS_PWM_iepConfig(PRUICSS_PWM_Handle handle)
             if(SystemP_SUCCESS == status)
             {
                /*Intialize IEP1 count value*/
-                status= PRUICSS_PWM_setIepCounterLower_32bitValue(handle, PRUICSS_IEP_INST1, 0xFFFFFFFF);
+                status= PRUICSS_PWM_setIepCounterLower_32bitValue(handle, PRUICSS_IEP_INST1, PRUICSS_IEP_COUNTER_LOWER_32_BIT_INIT_VALUE);
             }
 
             
             if(SystemP_SUCCESS == status)
             {
-                status= PRUICSS_PWM_setIepCounterUpper_32bitValue(handle, PRUICSS_IEP_INST1, 0xFFFFFFFF);
+                status= PRUICSS_PWM_setIepCounterUpper_32bitValue(handle, PRUICSS_IEP_INST1, PRUICSS_IEP_COUNTER_UPPER_32_BIT_INIT_VALUE);
             }
             
             if(SystemP_SUCCESS == status)

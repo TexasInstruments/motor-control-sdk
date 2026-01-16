@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2024 Texas Instruments Incorporated
+ *  Copyright (C) 2024-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -277,9 +277,6 @@ void App_epwmSync0Irq(void *args)
     {
         EPWM_etIntrClear(AppEpwmSync0IrqArgs->EpwmBaseAddr);
     }
-
-    /*Change state of all pwm signals to intial*/
-    PRUICSS_PWM_changePwmSetToIntialState(AppEpwmSync0IrqArgs->handle, 0xF);
 
     /* compare0_val is calculated based on pwm period */
     uint32_t compare0_val = (float)((((AppEpwmSync0IrqArgs->handle)->iepAttrs)->pruIcssIepClkFrequency)*(((AppEpwmSync0IrqArgs->handle)->iepAttrs)->iep0IncrementValue))/(((AppEpwmSync0IrqArgs->handle)->iepAttrs)->pruIcssPwmFrequency);

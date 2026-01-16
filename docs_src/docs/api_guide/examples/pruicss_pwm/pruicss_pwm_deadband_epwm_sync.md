@@ -114,6 +114,11 @@ This example uses EPWM0 sync out to reset IEP at the PWM period, PRUICSS IEP CMP
 - **When using makefiles to build**, note the required combination and build using make command (see <a href="@VAR_MCU_SDK_DOCS_PATH/MAKEFILE_BUILD_PAGE.html" target="_blank"> Using SDK with Makefiles </a>)
 - Launch a CCS debug session and run the executable, see <a href="@VAR_MCU_SDK_DOCS_PATH/CCS_LAUNCH_PAGE.html" target="_blank">  CCS Launch, Load and Run </a>
 - To probe the PRUICSS PWM output please refer to setup details as mentioned above in Introduction section
+- When the R5F processor is halted during PWM signal generation, the PWM outputs enter an undesired state characterized by 50% duty cycle and double the intended frequency.
+   - Perform one of the following recovery actions:
+      - System reset
+      - Hardware reset
+      - Power cycle the board
 
 # PRUICSS PWM Deadband Example Debug Guide {#PRUICSS_PWM_DEADBAND_EXAMPLE_DEBUG_GUIDE}
 
