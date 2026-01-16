@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023 Texas Instruments Incorporated
+ *  Copyright (C) 2023-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -196,6 +196,13 @@ typedef struct PRUICSS_PWM_Config_s         *PRUICSS_PWM_Handle;
  */
 #define PRUICSS_IEP_COUNT_REG_MAX                           (0xFFFFFFFFU)
 
+
+/**
+ * \brief PRUICSS IEP count register init value
+ */
+#define PRUICSS_IEP_COUNTER_LOWER_32_BIT_INIT_VALUE         (0x00000000U)
+#define PRUICSS_IEP_COUNTER_UPPER_32_BIT_INIT_VALUE         (0x00000000U)
+
 /**
  *  
  *  \anchor PRUICSS_IEP_COMPARE_EVENT
@@ -311,11 +318,11 @@ typedef struct PRUICSS_PWM_Attrs_s
      */
 
     /*duty cycle of current pwm signal*/
-    uint32_t dutyCycle;
+    float dutyCycle;
     /*fall edge of current pwm signal*/
-    uint32_t fallEdgeDelay;
+    float fallEdgeDelay;
     /*rise edge of current pwm signal*/
-    uint32_t riseEdgeDelay;
+    float riseEdgeDelay;
     /*current pwm signal output in intial state*/
     uint8_t  outputCfgInitialState;
     /*current pwm signal output in active state*/
@@ -799,7 +806,7 @@ int32_t PRUICSS_PWM_signalEnable(PRUICSS_PWM_Handle handle, uint8_t pwmSet, uint
  *
  * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  */
-int32_t PRUICSS_PWM_config(PRUICSS_PWM_Handle handle, uint8_t pwmSet, uint8_t instance,  uint32_t dutyCycle, uint32_t riseEdgeDelay, uint32_t fallEdgeDelay);
+int32_t PRUICSS_PWM_config(PRUICSS_PWM_Handle handle, uint8_t pwmSet, uint8_t instance,  float dutyCycle, float riseEdgeDelay, float fallEdgeDelay);
 
 /**
  * \brief   If pwm signal is enabled, This function  Configures output state defined in PRUICSS_PWM_Handle.

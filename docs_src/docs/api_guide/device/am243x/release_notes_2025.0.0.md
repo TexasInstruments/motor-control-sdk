@@ -326,6 +326,12 @@ previous SDK version. Also refer to older SDK version release notes to see chang
     <th> Change
     <th> Additional Remarks
 </tr>
+<tr>
+    <td> PRUICSS PWM
+    <td> App_epwmSync0Irq
+    <td> Remove calling \ref PRUICSS_PWM_changePwmSetToIntialState API call
+    <td> PWM is not changed to init state when it is being generated
+</tr>
 </table>
 
 ### Drivers
@@ -336,6 +342,18 @@ previous SDK version. Also refer to older SDK version release notes to see chang
     <th> Affected API or structure
     <th> Change
     <th> Additional Remarks
+</tr>
+<tr>
+    <td> PRUICSS PWM
+    <td> \ref PRUICSS_PWM_config
+    <td> Change dutyCycle, riseEdgeDelay, fallEdgeDelay data type to float
+    <td> -
+</tr>
+<tr>
+    <td> PRUICSS PWM
+    <td> \ref PRUICSS_PWM_iepConfig
+    <td> Initialize IEP counter value with zero and compare values with \ref PRUICSS_IEP_COUNT_REG_MAX
+    <td> -
 </tr>
 </table>
 
