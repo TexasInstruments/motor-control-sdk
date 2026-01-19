@@ -161,13 +161,18 @@ TAMAGAWA_SKIP_INIT_SUCCESS:
 
 CHECK_OPERATING_MODE:
 	LBCO	&R0.b0,	PRUx_DMEM,	TAMAGAWA_OPMODE_CONFIG_OFFSET,	1
-    ;If opmode=1, Host trigger is done
-	;If opmode=0, Periodic trigger (CMP mode) is done
-	;If opmode=2, Periodic trigger (CAP mode) is done
+	;  opmode=0: Periodic CMP trigger mode - uses IEP compare events (0-15)
+    ;  opmode=1: Host trigger mode - software-triggered by R5F
+	;  opmode=2: Periodic CAP trigger mode - uses IEP capture events (0-7)
 	QBEQ	HANDLE_HOST_TRIGGER_MODE,	R0.b0,		1
 	QBEQ	HANDLE_PERIODIC_TRIGGER_CMP_MODE,	R0.b0,		0
 
 HANDLE_PERIODIC_TRIGGER_CAP_MODE:
+	; Periodic CAP Mode: Wait for external event captured by IEP
+	; - Reads IEP base address dynamically from DMEM
+	; - Monitors CAP event status register for configured event
+	; - Clears event by reading capture register value
+
     ; Load IEP base address from DMEM (offset from PRU-ICSS base)
     LBCO	&SCRATCH1,	PRUx_DMEM,	TAMAGAWA_IEP_BASE_ADDR_OFFSET,	4
 
@@ -215,6 +220,11 @@ HANDLE_PERIODIC_TRIGGER_CAP_MODE:
     JMP     HANDLE_HOST_TRIGGER_MODE
 
 HANDLE_PERIODIC_TRIGGER_CMP_MODE:
+	; Periodic CMP Mode: Wait for IEP counter to match compare value
+	; - Reads IEP base address dynamically from DMEM
+	; - Monitors CMP event status register for configured event
+	; - Clears event by writing to CMP status register
+
     ; Load IEP base address from DMEM (offset from PRU-ICSS base)
     LBCO	&SCRATCH1,	PRUx_DMEM,	TAMAGAWA_IEP_BASE_ADDR_OFFSET,	4
 
@@ -264,7 +274,7 @@ HANDLE_HOST_TRIGGER_MODE:
     ;If Host Trigger=1, request made by R5F to Firmware, now Firmware do processing and when done set trigger to 0 so that R5F application can act further.
     LBCO	&R0.b0,	PRUx_DMEM,	TAMAGAWA_INTFC_CMD_TRIGGER_OFFSET,	1
     ;wait till host trigger is set to 1.
-	QBEQ            HANDLE_HOST_TRIGGER_MODE, R0.b0,	0
+	QBEQ            CHECK_OPERATING_MODE, R0.b0,	0
     ;load Tx data which will be loaded in Tx FIFO.
 	LBCO	&TX_DATA0,	PRUx_DMEM,	TAMAGAWA_WORD_0_OFFSET,	1
     ;load Tx data which will be loaded in Tx FIFO.
@@ -275,8 +285,6 @@ HANDLE_HOST_TRIGGER_MODE:
 	LBCO	&RX_FRAMES , PRUx_DMEM,	TAMAGAWA_WORD_1_OFFSET+1 ,	1
     ;Call SEND RECEIVE FUNCTION
 	CALL	FN_SEND_RECEIVE_TAMAGAWA
-    ;Global reinit
-    M_TAMAGAWA_LS_GLOBAL_REINIT
 
 TAMAGAWA_HOST_CMD_END:
 	LDI		R3.w0,	0
@@ -296,15 +304,11 @@ TAMAGAWA_HOST_CMD_END:
     .else
     LDI     R31.w0, PRU_TRIGGER_HOST_TAMAGAWA_EVT    ; Single/dual PRU mode
     .endif
+SKIP_INTERRUPT_TRIGGER:
     ;Global reinit
     M_TAMAGAWA_LS_GLOBAL_REINIT
-    ;Handle next Postition in periodic trigger
+    ;Handle next request
     JMP     CHECK_OPERATING_MODE
-
-SKIP_INTERRUPT_TRIGGER:
-    ;Handle next Position request by user.
-    JMP		HANDLE_HOST_TRIGGER_MODE
-
 
 ;******************************************************************************************************************************************************
 ;	Function: FN_SEND_RECEIVE_TAMAGAWA

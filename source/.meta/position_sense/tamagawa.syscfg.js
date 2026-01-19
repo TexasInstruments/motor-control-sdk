@@ -239,10 +239,10 @@ let tamagawa_module = {
         {
             name: "channel_0",
             displayName: "Select Channel 0",
-            description: "Channel 0 Selection ",
+            description: "Channel 0 Selection",
             default: true,
-            onChange: function (inst, ui) {
-                if(inst.Multi_Channel_Load_Share) {
+            onChange: function(inst, ui) {
+                if (inst.Multi_Channel_Load_Share) {
                     ui.CMP_Event_Num_CH0.hidden = !inst.channel_0;
                     ui.CAP_Event_Num_CH0.hidden = !inst.channel_0;
                 }
@@ -251,10 +251,10 @@ let tamagawa_module = {
         {
             name: "channel_1",
             displayName: "Select Channel 1",
-            description: "Channel 1 Selection ",
+            description: "Channel 1 Selection",
             default: false,
-            onChange: function (inst, ui) {
-                if(inst.Multi_Channel_Load_Share) {
+            onChange: function(inst, ui) {
+                if (inst.Multi_Channel_Load_Share) {
                     ui.CMP_Event_Num_CH1.hidden = !inst.channel_1;
                     ui.CAP_Event_Num_CH1.hidden = !inst.channel_1;
                 }
@@ -263,10 +263,10 @@ let tamagawa_module = {
         {
             name: "channel_2",
             displayName: "Select Channel 2",
-            description: "Channel 2 Selection ",
+            description: "Channel 2 Selection",
             default: false,
-            onChange: function (inst, ui) {
-                if(inst.Multi_Channel_Load_Share) {
+            onChange: function(inst, ui) {
+                if (inst.Multi_Channel_Load_Share) {
                     ui.CMP_Event_Num_CH2.hidden = !inst.channel_2;
                     ui.CAP_Event_Num_CH2.hidden = !inst.channel_2;
                 }
@@ -278,11 +278,13 @@ let tamagawa_module = {
             description: "Selected Channels have different make",
             hidden :(is_am26x_soc) ? true : false,
             default: false,
-            onChange: function (inst, ui) {
-                if(inst.Multi_Channel_Load_Share) {
-                    // Hide global events, show per-channel events
+            onChange: function(inst, ui) {
+                /* When load share is toggled, update visibility of event selectors */
+                if (inst.Multi_Channel_Load_Share) {
+                    /* Hide global CMP and CAP event selectors */
                     ui.CMP_Event_Num.hidden = true;
                     ui.CAP_Event_Num.hidden = true;
+                    /* Show per-channel CMP and CAP selectors based on enabled channels */
                     ui.CMP_Event_Num_CH0.hidden = !inst.channel_0;
                     ui.CAP_Event_Num_CH0.hidden = !inst.channel_0;
                     ui.CMP_Event_Num_CH1.hidden = !inst.channel_1;
@@ -290,9 +292,10 @@ let tamagawa_module = {
                     ui.CMP_Event_Num_CH2.hidden = !inst.channel_2;
                     ui.CAP_Event_Num_CH2.hidden = !inst.channel_2;
                 } else {
-                    // Show global events, hide per-channel events
+                    /* Show global CMP and CAP event selectors */
                     ui.CMP_Event_Num.hidden = false;
                     ui.CAP_Event_Num.hidden = false;
+                    /* Hide all per-channel selectors */
                     ui.CMP_Event_Num_CH0.hidden = true;
                     ui.CAP_Event_Num_CH0.hidden = true;
                     ui.CMP_Event_Num_CH1.hidden = true;
@@ -305,7 +308,7 @@ let tamagawa_module = {
         {
             name: "baudrate",
             displayName: "Select Baud Rate",
-            description: "Data Speed Selection ",
+            description: "Data Speed Selection",
             default: 2500000,
             options: [
                 {
@@ -339,30 +342,36 @@ let tamagawa_module = {
             ],
         },
         {
-            name: "GROUP_PERIODIC_TRIGGER",
+            name: "Periodic_Trigger_Mode_Config",
             displayName: "Periodic Trigger Mode Configuration",
-            description: "Configuration for IEP-based periodic trigger modes (CMP and CAP)",
+            description: "Configure periodic trigger mode using IEP CMP and CAP events.",
             config: [
                 {
                     name: "IEP_Instance",
-                    displayName: "IEP Instance Number",
-                    description: "IEP instance number for periodic trigger mode.",
-                    default: 0,
+                    displayName: "Select IEP Instance",
+                    description: "Select IEP instance for periodic trigger",
+                    default: "IEP0",
                     options: (is_am26x_soc) ?
                         [
-                            { name: 0, displayName: "IEP0" },
+                            {
+                                name: "IEP0",
+                            },
                         ]
                         :
                         [
-                            { name: 0, displayName: "IEP0" },
-                            { name: 1, displayName: "IEP1" },
+                            {
+                                name: "IEP0",
+                            },
+                            {
+                                name: "IEP1",
+                            },
                         ],
                 },
                 {
                     name: "CMP_Event_Num",
                     displayName: "IEP CMP Event Number",
-                    description: "CMP event number (0-15) for periodic CMP trigger mode (used when load share is disabled).",
-                    default: 3,
+                    description: "CMP event number (0-15) for periodic CMP trigger mode",
+                    default: 2,
                     hidden: false,
                     options: [
                         { name: 0, displayName: "CMP0" },
@@ -386,8 +395,7 @@ let tamagawa_module = {
                 {
                     name: "CAP_Event_Num",
                     displayName: "IEP CAP Event Number",
-                    description: "CAP event number (0-7) for periodic CAP trigger mode (used when load share is disabled). " +
-                                 "Note: Routing (SYNC out to CAP) is done in application code (tamagawa_config_iep_cap_for_sync). Correct router signal should be configured for selected CAP event if needed.",
+                    description: "CAP event number (0-7) for periodic CAP trigger mode. Note: Routing (SYNC out to CAP) is done in application code (tamagawa_config_iep_cap_for_sync). Correct router signal should be configured for selected CAP event if needed",
                     default: 6,
                     hidden: false,
                     options: [
@@ -397,15 +405,17 @@ let tamagawa_module = {
                         { name: 3, displayName: "CAP3" },
                         { name: 4, displayName: "CAP4" },
                         { name: 5, displayName: "CAP5" },
-                        { name: 6, displayName: "CAP6 (LATCH0 default)" },
-                        { name: 7, displayName: "CAP7 (LATCH1 default)" },
+                        { name: 6, displayName: "CAP6" },
+                        { name: 7, displayName: "CAP7" },
                     ],
                 },
+                /* Channel event numbers (only shown when load share is enabled) */
+                /* CMP Event Numbers for each channel */
                 {
                     name: "CMP_Event_Num_CH0",
-                    displayName: "CH0 IEP CMP Event Number",
-                    description: "CMP event number (0-15) for CH0 periodic CMP trigger (load share mode).",
-                    default: 3,
+                    displayName: "Channel 0 - CMP Event Number",
+                    description: "CMP event number (0-15) for Channel 0 periodic CMP trigger mode",
+                    default: 2,
                     hidden: true,
                     options: [
                         { name: 0, displayName: "CMP0" },
@@ -428,8 +438,8 @@ let tamagawa_module = {
                 },
                 {
                     name: "CAP_Event_Num_CH0",
-                    displayName: "CH0 IEP CAP Event Number",
-                    description: "CAP event number (0-7) for CH0 periodic CAP trigger (load share mode).",
+                    displayName: "Channel 0 - CAP Event Number",
+                    description: "CAP event number (0-7) for Channel 0 periodic CAP trigger mode. Note: Routing (SYNC out to CAP) is done in application code (tamagawa_config_iep_cap_for_sync). Correct router signal should be configured for selected CAP event if needed",
                     default: 6,
                     hidden: true,
                     options: [
@@ -439,15 +449,15 @@ let tamagawa_module = {
                         { name: 3, displayName: "CAP3" },
                         { name: 4, displayName: "CAP4" },
                         { name: 5, displayName: "CAP5" },
-                        { name: 6, displayName: "CAP6 (LATCH0)" },
-                        { name: 7, displayName: "CAP7 (LATCH1)" },
+                        { name: 6, displayName: "CAP6" },
+                        { name: 7, displayName: "CAP7" },
                     ],
                 },
                 {
                     name: "CMP_Event_Num_CH1",
-                    displayName: "CH1 IEP CMP Event Number",
-                    description: "CMP event number (0-15) for CH1 periodic CMP trigger (load share mode).",
-                    default: 5,
+                    displayName: "Channel 1 - CMP Event Number",
+                    description: "CMP event number (0-15) for Channel 1 periodic CMP trigger mode",
+                    default: 3,
                     hidden: true,
                     options: [
                         { name: 0, displayName: "CMP0" },
@@ -470,9 +480,9 @@ let tamagawa_module = {
                 },
                 {
                     name: "CAP_Event_Num_CH1",
-                    displayName: "CH1 IEP CAP Event Number",
-                    description: "CAP event number (0-7) for CH1 periodic CAP trigger (load share mode).",
-                    default: 7,
+                    displayName: "Channel 1 - CAP Event Number",
+                    description: "CAP event number (0-7) for Channel 1 periodic CAP trigger mode. Note: Routing (SYNC out to CAP) is done in application code (tamagawa_config_iep_cap_for_sync). Correct router signal should be configured for selected CAP event if needed",
+                    default: 0,
                     hidden: true,
                     options: [
                         { name: 0, displayName: "CAP0" },
@@ -481,15 +491,15 @@ let tamagawa_module = {
                         { name: 3, displayName: "CAP3" },
                         { name: 4, displayName: "CAP4" },
                         { name: 5, displayName: "CAP5" },
-                        { name: 6, displayName: "CAP6 (LATCH0)" },
-                        { name: 7, displayName: "CAP7 (LATCH1)" },
+                        { name: 6, displayName: "CAP6" },
+                        { name: 7, displayName: "CAP7" },
                     ],
                 },
                 {
                     name: "CMP_Event_Num_CH2",
-                    displayName: "CH2 IEP CMP Event Number",
-                    description: "CMP event number (0-15) for CH2 periodic CMP trigger (load share mode).",
-                    default: 6,
+                    displayName: "Channel 2 - CMP Event Number",
+                    description: "CMP event number (0-15) for Channel 2 periodic CMP trigger mode",
+                    default: 4,
                     hidden: true,
                     options: [
                         { name: 0, displayName: "CMP0" },
@@ -512,9 +522,9 @@ let tamagawa_module = {
                 },
                 {
                     name: "CAP_Event_Num_CH2",
-                    displayName: "CH2 IEP CAP Event Number",
-                    description: "CAP event number (0-7) for CH2 periodic CAP trigger (load share mode).",
-                    default: 5,
+                    displayName: "Channel 2 - CAP Event Number",
+                    description: "CAP event number (0-7) for Channel 2 periodic CAP trigger mode. Note: Routing (SYNC out to CAP) is done in application code (tamagawa_config_iep_cap_for_sync). Correct router signal should be configured for selected CAP event if needed",
+                    default: 7,
                     hidden: true,
                     options: [
                         { name: 0, displayName: "CAP0" },
@@ -523,14 +533,13 @@ let tamagawa_module = {
                         { name: 3, displayName: "CAP3" },
                         { name: 4, displayName: "CAP4" },
                         { name: 5, displayName: "CAP5" },
-                        { name: 6, displayName: "CAP6 (LATCH0)" },
-                        { name: 7, displayName: "CAP7 (LATCH1)" },
+                        { name: 6, displayName: "CAP6" },
+                        { name: 7, displayName: "CAP7" },
                     ],
                 },
             ],
             collapsed: false,
         },
-
     ],
     moduleStatic: {
         modules: function(inst) {
