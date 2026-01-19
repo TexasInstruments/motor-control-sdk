@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Texas Instruments Incorporated
+ * Copyright (C) 2023-2026 Texas Instruments Incorporated
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -130,11 +130,12 @@ struct tamagawa_uart_interface
  *  \param[in]  cmd             tamagawa command number
  *
  *
- *  \retval     0       success
- *  \retval     -EINVAL failure
+ *  \retval     SystemP_SUCCESS on success
+ *  \retval     SystemP_FAILURE on failure
  *
  */
 int32_t tamagawa_command_process(volatile struct tamagawa_uart_interface *tamagawa_interface, UARTLLD_Handle *gUartHandle, int32_t cmd);
+
 /**
  *  \brief      Compare Received CRC and Calculated CRC
  *
@@ -142,12 +143,13 @@ int32_t tamagawa_command_process(volatile struct tamagawa_uart_interface *tamaga
  *
  *
  *  \retval     1       CRC Success
- *  \retval     0       CRC failure
+ *  \retval     0       CRC Failure
  *
  */
 int32_t tamagawa_crc_verify(volatile struct tamagawa_uart_interface *tamagawa_interface);
+
 /**
- *  \brief      Configure GOPIO pin for RTSn(sw flow control)
+ *  \brief      Initialize tamagawa_uart_interface structure and configure GPIO pin for RTSn (SW flow control)
  *
  *  \param[in]  tamagawa_interface         Tamagawa Interface
  *  \param[in]  instance                   UART communication instance
@@ -155,11 +157,10 @@ int32_t tamagawa_crc_verify(volatile struct tamagawa_uart_interface *tamagawa_in
  *  \param[in]  pin_number                 GPIO PIN Number
  *  \param[in]  pin_direction              GPIO pin direction (output/input)
  *
- *
- *
+ *  \retval     SystemP_SUCCESS on success
+ *  \retval     SystemP_FAILURE on failure
  */
-
-void tamagawa_init(volatile struct tamagawa_uart_interface *tamagawa_interface, uint32_t instance , uint32_t base_address, uint32_t pin_number, uint32_t pin_direction);
+int32_t tamagawa_init(volatile struct tamagawa_uart_interface *tamagawa_interface, uint32_t instance , uint32_t base_address, uint32_t pin_number, uint32_t pin_direction);
 
 /** @} */
 

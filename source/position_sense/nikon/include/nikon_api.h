@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2024-2025 Texas Instruments Incorporated
+ *  Copyright (C) 2024-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -55,13 +55,13 @@ extern "C" {
  *
  * ## Validation Strategy
  *
- * Nikon driver APIs use a simplified validation approach:
+ * Nikon driver APIs use following validation approach:
  * - **Public API validation**: All public APIs validate the handle parameter for NULL and perform
  *   array bounds checking for index parameters (ch, ls_ch, ch_idx)
  * - **Internal function validation**: Internal static functions assume valid parameters. The caller
  *   is responsible for ensuring parameters are valid before calling internal functions
  * - **Internal structure validation**: Internal structures (attrs, priv, pruicss_xchg, pruicss_handle)
- *   are validated once during nikon_init() and assumed valid in subsequent API calls
+ *   are validated for NULL before dereferencing to prevent undefined behavior
  * - **Return behavior on errors**: All functions return SystemP_SUCCESS/SystemP_FAILURE. Data-returning
  *   functions use output pointer parameters. Check API documentation for specific details.
  * - **Error state handling**: Some functions may leave internal state partially modified on error
@@ -190,12 +190,10 @@ int32_t nikon_get_pos(nikon_handle handle, uint32_t cmd);
  *
  *  \param[in]  index       Index of Nikon handle to use in the gNikonHandle array
  *  \param[in]  params      Pointer to structure containing Nikon parameters.
- *                          Must have pruicss_handle != NULL and max_wait_loop_count > 0.
  *
  *  \retval     handle      Pointer to initialized nikon_handle instance
  *  \retval     NULL        On validation failure (invalid index, NULL params, NULL priv/attrs,
- *                          invalid pruicss_handle, max_wait_loop_count == 0,
- *                          invalid attrs values, or failed hardware initialization)
+ *                          invalid params, invalid attrs values, or failed hardware initialization)
  *
  */
 nikon_handle nikon_init(uint32_t index, const nikon_params *params);
@@ -260,9 +258,18 @@ int32_t nikon_calc_clock(nikon_handle handle, nikon_clk_cfg *clk_cfg);
  *  \brief      Generate CDF command to be sent to encoder. Update encoder ID appropriately with \ref nikon_update_enc_addr API.
  *
  *  \param[in]  handle          Nikon handle from \ref nikon_init
- *  \param[in]  cmd             command code requested by the user.
+ *  \param[in]  cmd             command code requested by the user. Valid commands:
+ *                              - For Nikon V2.1: CMD_0 to CMD_22, CMD_27 to CMD_30
+ *                              - For Nikon V3.0: CMD_0 to CMD_30, CMD_1_VEL to CMD_18_VEL
+ *                              NOTE: CMD_23 to CMD_26 and CMD_1_VEL to CMD_18_VEL are Nikon 3.0 only.
  *
- *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *  \retval     SystemP_SUCCESS on success
+ *  \retval     SystemP_FAILURE on validation failure:
+ *                              - NULL handle
+ *                              - NULL handle->priv
+ *                              - NULL handle->attrs
+ *                              - For Nikon V2.1: (cmd > CMD_22 and cmd < CMD_27) or cmd > CMD_30
+ *                              - (cmd > CMD_30 and cmd < CMD_1_VEL) or cmd >= CMD_CODE_NUM
  */
 int32_t nikon_generate_cdf(nikon_handle handle, uint32_t cmd);
 
@@ -458,7 +465,12 @@ int32_t nikon_get_current_channel(nikon_handle handle, uint32_t ch_idx, uint32_t
  *  \param[in]  enc_addr        encoder address specified by the user
  *  \param[in]  ls_ch           channel in use in load share or 0 in case of single channel mode
  *
- *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *  \retval     SystemP_SUCCESS on success
+ *  \retval     SystemP_FAILURE on validation failure:
+ *                              - NULL handle
+ *                              - NULL handle->priv
+ *                              - ls_ch >= NIKON_NUM_CH_PER_SLICE_MAX
+ *                              - enc_addr > NIKON_ENC_ADDR_MAX
  */
 int32_t nikon_update_enc_addr(nikon_handle handle, uint32_t enc_addr, uint32_t ls_ch);
 
@@ -491,7 +503,12 @@ int32_t nikon_update_eeprom_data(nikon_handle handle, uint16_t data, uint32_t ls
  *  \param[in]  data            data to assign as ID code (Bits [23:0] in data will be used)
  *  \param[in]  ls_ch           channel in use in load share or 0 in case of single channel mode
  *
- *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *  \retval     SystemP_SUCCESS on success
+ *  \retval     SystemP_FAILURE on validation failure:
+ *                              - NULL handle
+ *                              - NULL handle->priv
+ *                              - ls_ch >= NIKON_NUM_CH_PER_SLICE_MAX
+ *                              - data > 0xFFFFFF (exceeds 24-bit width)
  */
 int32_t nikon_update_id_code(nikon_handle handle, uint32_t data, uint32_t ls_ch);
 
@@ -502,7 +519,12 @@ int32_t nikon_update_id_code(nikon_handle handle, uint32_t data, uint32_t ls_ch)
  *  \param[in]  data            data to assign as velocity coefficient (Bits [18:0] in data will be used)
  *  \param[in]  ls_ch           channel in use in load share or 0 in case of single channel mode
  *
- *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *  \retval     SystemP_SUCCESS on success
+ *  \retval     SystemP_FAILURE on validation failure:
+ *                              - NULL handle
+ *                              - NULL handle->priv
+ *                              - ls_ch >= NIKON_NUM_CH_PER_SLICE_MAX
+ *                              - data > 0x7FFFF (exceeds 19-bit width)
  */
 int32_t nikon_update_velocity_coefficient(nikon_handle handle, uint32_t data, uint32_t ls_ch);
 

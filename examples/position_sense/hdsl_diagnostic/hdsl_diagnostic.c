@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2021-2025 Texas Instruments Incorporated
+ *  Copyright (C) 2021-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -52,19 +52,12 @@
  *    * Channel 1 uses PRU
  *    * Channel 2 uses TX_PRU
  *
- *  \section hdsl_app_validation HDSL Driver Validation Strategy for Applications
+ *  **Driver Validation includes:**
  *
- *  The HDSL driver uses a simplified validation approach optimized for real-time
- *  performance. Applications using this driver should be aware of the following:
- *
- *  **What the Driver Validates:**
- *  - Handle parameter (checked in every API call for NULL)
- *  - Array indices and buffer offsets (bounds checked)
- *  - Output pointer parameters (checked for NULL before dereferencing)
- *
- *  **What the Driver Does NOT Re-validate:**
- *  - Internal structures (priv, attrs, pruicss_handle, hdsl_interface)
- *    These are validated once during HDSL_open() and assumed valid thereafter
+ *  - Handle Parameter Validation.
+ *  - Array Bounds and Index Validation.
+ *  - Internal Structure Validation.
+ *  - Pointer Parameter Validation.
  *
  *  **Application Responsibilities:**
  *  1. Always check return value of HDSL_open() before proceeding
@@ -379,6 +372,12 @@ static void hdsl_udma_copy(uint8_t *src_buf, uint8_t *dest_buf, uint32_t length)
     uint8_t        *trpd_mem = &gUdmaTestTrpdMem[0U];
     uint64_t        trpd_mem_phy = (uint64_t) Udma_defaultVirtToPhyFxn(trpd_mem, 0U, NULL);
 
+    if((src_buf == NULL) || (dest_buf == NULL))
+    {
+        gTraceErrorCount++;
+        return;
+    }
+
     /* Init TR packet descriptor */
     hdsl_udma_trpd_init(gChHandle, trpd_mem, dest_buf, src_buf, length);
 
@@ -413,6 +412,12 @@ static void hdsl_isr_fxn(void)
     uint32_t        length;
     void            *src_loc;
     int32_t         status;
+
+    if(gAppHdslHandle[CONFIG_HDSL0][0] == NULL)
+    {
+        gTraceErrorCount++;
+        return;
+    }
 
     status = HDSL_get_src_loc(gAppHdslHandle[CONFIG_HDSL0][0], &src_loc);
     if(status != SystemP_SUCCESS)
@@ -461,6 +466,12 @@ static void hdsl_traces_into_memory(HDSL_Handle handle)
     uint32_t i = 0;
     int32_t status;
     uint32_t length;
+
+    if(handle == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: hdsl_traces_into_memory() failed due to NULL handle");
+        return;
+    }
 
     status = HDSL_get_length(handle, &length);
     if(status != SystemP_SUCCESS)
@@ -562,6 +573,13 @@ static int32_t hdsl_sync_calculation(HDSL_Handle handle)
     uint32_t counter, period, index;
     volatile uint32_t cap6_rise0, cap6_rise1, cap6_fall0, cap6_fall1;
     HDSL_Priv *priv;
+    priv = HDSL_get_priv(handle);
+
+    if((handle == NULL) || (priv == NULL))
+    {
+        DebugP_log("\r\n\n|ERROR: hdsl_sync_calculation() failed due to NULL handle/priv");
+        return SystemP_FAILURE;
+    }
 
     /* Extra edge lookup table for SYNC timing calculations */
     static const uint8_t extra_edge_arr[HDSL_EXTRA_EDGE_LOOKUP_SIZE] = {0x00, 0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE};
@@ -674,7 +692,6 @@ static int32_t hdsl_sync_calculation(HDSL_Handle handle)
     DebugP_log("\r\n SYNC MODE: stuffing_remainder = %d", stuffing_remainder);
     DebugP_log("\r\n ********************************************************************");
 
-    priv = HDSL_get_priv(handle);
     sync_param_mem_start = sync_param_mem_start + (uint32_t)priv->base_mem_addr;
 
     HW_WR_REG8(sync_param_mem_start, extra_size);
@@ -705,6 +722,12 @@ static void hdsl_process_request(HDSL_Handle handle, uint32_t menu)
     uint64_t mask_value;
     uint32_t res_value;
     uint32_t multi_turn_value;
+
+    if(handle == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: hdsl_process_request() failed due to NULL handle");
+        return;
+    }
 
     switch(menu)
     {
@@ -765,22 +788,25 @@ static void hdsl_process_request(HDSL_Handle handle, uint32_t menu)
                 status = HDSL_get_qm(handle, &ureg1);
             }
 
-            if(status == SystemP_SUCCESS && multi_turn_value)
+            if(status == SystemP_SUCCESS)
             {
-                for(i = 0; i < 3; i++)
+                if(multi_turn_value)
                 {
-                    turn[i] = val[i] & ~mask_value;
-                    turn[i] >>= res_value;
-                }
-                DebugP_log("\r\n Angle: %10.6f\tTurn: %llu\t", pos[0], turn[0]);
-                DebugP_log("\r\n SafePos1: %10.6f\tTurn: %llu", pos[1], turn[1]);
-                DebugP_log("\r\n SafePos2: %10.6f\tTurn: %llu", pos[2], turn[2]);
-                DebugP_log("\r\n RSSI: %u\t QM:  %u", ureg, ureg1 );
+                    for(i = 0; i < 3; i++)
+                    {
+                        turn[i] = val[i] & ~mask_value;
+                        turn[i] >>= res_value;
+                    }
+                    DebugP_log("\r\n Angle: %10.6f\tTurn: %llu\t", pos[0], turn[0]);
+                    DebugP_log("\r\n SafePos1: %10.6f\tTurn: %llu", pos[1], turn[1]);
+                    DebugP_log("\r\n SafePos2: %10.6f\tTurn: %llu", pos[2], turn[2]);
+                    DebugP_log("\r\n RSSI: %u\t QM:  %u", ureg, ureg1 );
 
-            }
-            else
-            {
-                DebugP_log("\r\n Angle: %10.6f", pos[0]);
+                }
+                else
+                {
+                    DebugP_log("\r\n Angle: %10.6f", pos[0]);
+                }
             }
             break;
         case MENU_QUALITY_MONITORING:
@@ -1376,7 +1402,20 @@ static void hdsl_init_300m(void)
     int32_t         status;
     uint32_t        i;
     uint8_t         es = 0;
-    const HDSL_Attrs *attrs = HDSL_get_attrs(gAppHdslHandle[CONFIG_HDSL0][0]);
+    const HDSL_Attrs *attrs;
+
+    if(gAppHdslHandle[CONFIG_HDSL0][0] == NULL)
+    {
+        DebugP_log("\r\n FAIL: hdsl_init_300m() failed due to NULL handle");
+        return;
+    }
+
+    attrs = HDSL_get_attrs(gAppHdslHandle[CONFIG_HDSL0][0]);
+    if(attrs == NULL)
+    {
+        DebugP_log("\r\n FAIL: hdsl_init_300m() failed due to NULL attrs");
+        return;
+    }
 
 #if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_) && !defined(SOC_AM261X)
     HwiP_Params     hwi_prms;
@@ -1477,6 +1516,13 @@ static void hdsl_read_pc_short_msg(HDSL_Handle handle)
 {
     int32_t status = SystemP_FAILURE;
     uint8_t pc_data;
+
+    if(handle == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: hdsl_read_pc_short_msg() failed due to NULL handle");
+        return;
+    }
+
     status = HDSL_read_pc_short_msg(handle, ENCODER_RSSI_REG_ADDRESS, &pc_data, SHORT_MSG_TIMEOUT);
     if(SystemP_SUCCESS != status)
     {
@@ -1500,6 +1546,12 @@ static void hdsl_write_pc_short_msg(HDSL_Handle handle)
 {
     int32_t status = SystemP_FAILURE;
     uint8_t pc_data;
+
+    if(handle == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: hdsl_write_pc_short_msg() failed due to NULL handle");
+        return;
+    }
 
     DebugP_log("\r\n Parameter channel short message write : 0xab to PING register (address 0x7F)");
 
@@ -1573,6 +1625,12 @@ static void hdsl_direct_read_rid0_length4(HDSL_Handle handle)
     int32_t status = SystemP_FAILURE;
     uint8_t pc_buf0, pc_buf1, pc_buf2, pc_buf3;
     uint8_t enc_error = 0;
+
+    if(handle == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: hdsl_direct_read_rid0_length4() failed due to NULL handle");
+        return;
+    }
 
     DebugP_log("\r\n Parameter channel long message read : RID 0, Length 4");
 
@@ -1679,6 +1737,12 @@ static void hdsl_direct_read_rid81_length8(HDSL_Handle handle)
     int32_t status = SystemP_FAILURE;
     uint8_t pc_buf0, pc_buf1, pc_buf2, pc_buf3, pc_buf4, pc_buf5, pc_buf6, pc_buf7;
     uint8_t enc_error = 0;
+
+    if(handle == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: hdsl_direct_read_rid81_length8() failed due to NULL handle");
+        return;
+    }
 
     DebugP_log("\r\n Parameter channel long message read : RID 0x81, Length 8");
 
@@ -1855,6 +1919,12 @@ static void hdsl_direct_read_rid81_length2(HDSL_Handle handle)
     uint8_t pc_buf0, pc_buf1;
     uint8_t enc_error = 0;
 
+    if(handle == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: hdsl_direct_read_rid81_length2() failed due to NULL handle");
+        return;
+    }
+
     DebugP_log("\r\n Parameter channel long message read : RID 0x81, Offset 3, Length 2");
 
     /* Set the parameter channel buffers to 0xaa */
@@ -1928,6 +1998,12 @@ static void hdsl_indirect_write_rid0_length8_offset0(HDSL_Handle handle)
     uint8_t pc_buf0, pc_buf1;
     uint8_t enc_error = 0;
 
+    if(handle == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: hdsl_indirect_write_rid0_length8_offset0() failed due to NULL handle");
+        return;
+    }
+
     DebugP_log("\r\n Parameter channel long message write : RID 0x0, Offset 0, Length 8");
 
     status = HDSL_write_pc_long_msg(handle, 0x0, HDSL_LONG_MSG_ADDR_WITH_OFFSET, HDSL_LONG_MSG_ADDR_INDIRECT, HDSL_LONG_MSG_LENGTH_8, 0, LONG_MSG_TIMEOUT);
@@ -1988,6 +2064,12 @@ static void hdsl_indirect_write_rid0_length8(HDSL_Handle handle)
     int32_t status = SystemP_FAILURE;
     uint8_t pc_buf0, pc_buf1;
     uint8_t enc_error = 0;
+
+    if(handle == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: hdsl_indirect_write_rid0_length8() failed due to NULL handle");
+        return;
+    }
 
     DebugP_log("\r\n Parameter channel long message write : RID 0x0, Length 8");
 
@@ -2152,6 +2234,12 @@ static uint32_t hdsl_read_encoder_resolution(HDSL_Handle handle)
     double log_result;
     uint8_t enc_error = 0;
 
+    if(handle == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: hdsl_read_encoder_resolution() failed due to NULL handle");
+        return 0;
+    }
+
     /* Set the parameter channel buffers to 0xff */
     status = HDSL_write_pc_buffer(handle, 0, 0xff);
     if(status == SystemP_SUCCESS)
@@ -2260,9 +2348,11 @@ static uint32_t hdsl_read_encoder_resolution(HDSL_Handle handle)
  */
 void hdsl_diagnostic_main(void *arg)
 {
-    int32_t     status;
-    uint32_t    val, acc_bits, pos_bits, i, res_value, multi_turn_value, menu;
-    uint8_t     ureg, enc_id0, enc_id1, enc_id2;
+    int32_t             status;
+    uint32_t            val, acc_bits, pos_bits, i, res_value, multi_turn_value, menu;
+    uint8_t             ureg, enc_id0, enc_id1, enc_id2;
+    HDSL_Params         params;
+    const HDSL_Attrs    *attrs;
 
 #if !defined(HDSL_MULTI_CHANNEL) && defined(_DEBUG_) && !defined(SOC_AM261X)
     int32_t     ret_val = UDMA_SOK;
@@ -2275,7 +2365,11 @@ void hdsl_diagnostic_main(void *arg)
     gChHandle = gConfigUdma0BlkCopyChHandle[0];  /* Has to be done after driver open */
     /* Channel enable */
     ret_val = Udma_chEnable(gChHandle);
-    DebugP_assert(UDMA_SOK == ret_val);
+    if(UDMA_SOK != ret_val)
+    {
+        DebugP_log("\r\n FAIL: Udma_chEnable() did not return success, exiting hdsl_diagnostic_main()\r\n");
+        return;
+    }
 #endif
     /*C16 pin High for Enabling ch0 in booster pack */
 #if (CONFIG_HDSL0_BOOSTER_PACK_ENABLE && CONFIG_HDSL0_CHANNEL0_ENABLED)
@@ -2288,7 +2382,11 @@ void hdsl_diagnostic_main(void *arg)
         GPIO_pinWriteHigh(ENC2_EN_BASE_ADDR, ENC2_EN_PIN);
 #endif
     gPruIcssXHandle = PRUICSS_open(CONFIG_PRU_ICSS0);
-    DebugP_assert(gPruIcssXHandle != NULL);
+    if(gPruIcssXHandle == NULL)
+    {
+        DebugP_log("\r\n FAIL: PRUICSS_open() did not return valid handle, exiting hdsl_diagnostic_main()\r\n");
+        return;
+    }
 #ifndef HDSL_AM64xE1_TRANSCEIVER
 #ifdef CONFIG_HDSL0_G_MUX_EN
     /* Configure g_mux_en to 1 in ICSSG_SA_MX_REG Register. This is required to remap EnDAT signals correctly via Interface card.*/
@@ -2307,7 +2405,6 @@ void hdsl_diagnostic_main(void *arg)
 
     /* Initialize HDSL handle */
     DebugP_log( "\n\n Hiperface DSL Diagnostic\n");
-    HDSL_Params params;
     HDSL_params_init(&params);
     params.pruicss_handle = gPruIcssXHandle;
 
@@ -2320,7 +2417,12 @@ void hdsl_diagnostic_main(void *arg)
      *  - gAppHdslHandle[CONFIG_HDSLx][0] should be used always, irrespective of channel used
      */
     gAppHdslHandle[CONFIG_HDSL0][0] = HDSL_open(CONFIG_HDSL0, &params);
-    DebugP_assert(gAppHdslHandle[CONFIG_HDSL0][0] != NULL);
+
+    if(gAppHdslHandle[CONFIG_HDSL0][0] == NULL)
+    {
+        DebugP_log("\r\n FAIL: HDSL_open() did not return valid handle, exiting hdsl_diagnostic_main()\r\n");
+        return;
+    }
 
     hdsl_init();
 
@@ -2332,7 +2434,7 @@ void hdsl_diagnostic_main(void *arg)
     status = HDSL_hw_init(gAppHdslHandle[CONFIG_HDSL0][0]);
     if(status != SystemP_SUCCESS)
     {
-        DebugP_log("\r\n FAIL: HDSL_hw_init() did not return success\r\n");
+        DebugP_log("\r\n FAIL: HDSL_hw_init() did not return success, exiting hdsl_diagnostic_main()\r\n");
         return;
     }
 
@@ -2344,17 +2446,32 @@ void hdsl_diagnostic_main(void *arg)
 #if (CONFIG_HDSL0_CHANNEL0_ENABLED == 1)
     params.channel = 0;
     gAppHdslHandle[CONFIG_HDSL0][0] = HDSL_open(CONFIG_HDSL0, &params);
-    DebugP_assert(gAppHdslHandle[CONFIG_HDSL0][0] != NULL);
+
+    if(gAppHdslHandle[CONFIG_HDSL0][0] == NULL)
+    {
+        DebugP_log("\r\n FAIL: HDSL_open() did not return valid handle, exiting hdsl_diagnostic_main()\r\n");
+        return;
+    }
 #endif
 #if (CONFIG_HDSL0_CHANNEL1_ENABLED == 1)
     params.channel = 1;
     gAppHdslHandle[CONFIG_HDSL0][1] = HDSL_open(CONFIG_HDSL0, &params);
-    DebugP_assert(gAppHdslHandle[CONFIG_HDSL0][1] != NULL);
+
+    if(gAppHdslHandle[CONFIG_HDSL0][1] == NULL)
+    {
+        DebugP_log("\r\n FAIL: HDSL_open() did not return valid handle, exiting hdsl_diagnostic_main()\r\n");
+        return;
+    }
 #endif
 #if (CONFIG_HDSL0_CHANNEL2_ENABLED == 1)
     params.channel = 2;
     gAppHdslHandle[CONFIG_HDSL0][2] = HDSL_open(CONFIG_HDSL0, &params);
-    DebugP_assert(gAppHdslHandle[CONFIG_HDSL0][2] != NULL);
+
+    if(gAppHdslHandle[CONFIG_HDSL0][2] == NULL)
+    {
+        DebugP_log("\r\n FAIL: HDSL_open() did not return valid handle, exiting hdsl_diagnostic_main()\r\n");
+        return;
+    }
 #endif
 
     hdsl_init_300m();
@@ -2376,7 +2493,7 @@ void hdsl_diagnostic_main(void *arg)
     status = HDSL_hw_init(gAppHdslHandle[CONFIG_HDSL0][gFirstEnabledChannel]);
     if(status != SystemP_SUCCESS)
     {
-        DebugP_log("\r\n FAIL: HDSL_hw_init() did not return success\r\n");
+        DebugP_log("\r\n FAIL: HDSL_hw_init() did not return success, exiting hdsl_diagnostic_main()\r\n");
         return;
     }
 
@@ -2384,7 +2501,13 @@ void hdsl_diagnostic_main(void *arg)
 #endif
 
     /* Get attrs from first handle (shared across all channels) */
-    const HDSL_Attrs *attrs = HDSL_get_attrs(gAppHdslHandle[CONFIG_HDSL0][0]);
+    attrs = HDSL_get_attrs(gAppHdslHandle[CONFIG_HDSL0][0]);
+
+    if(attrs == NULL)
+    {
+        DebugP_log("\r\n FAIL: HDSL_get_attrs() did not return valid attrs, exiting hdsl_diagnostic_main()\r\n");
+        return;
+    }
 
     DebugP_log( "\r\n HDSL setup finished for PRU-ICSS instance %u slice %u\n\n", attrs->pruicss_instance, attrs->pruicss_slice);
 

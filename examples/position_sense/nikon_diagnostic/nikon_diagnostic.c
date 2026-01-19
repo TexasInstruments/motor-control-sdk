@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2024-2025 Texas Instruments Incorporated
+ *  Copyright (C) 2024-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -53,9 +53,9 @@
  * 11. De-initialize on exit
  *
  * \par Trigger Modes:
- * - **Host Trigger Mode (default)**: Each Nikon transaction is initiated by the host (R5F)
+ * - **Host Trigger Mode (default)**: Each encoder transaction is initiated by the host (R5F)
  *   via API calls. The driver configures this mode (as default) during initialization.
- * - **Periodic Trigger Mode**: Nikon transactions are automatically triggered by IEP timer
+ * - **Periodic Trigger Mode**: encoder transactions are automatically triggered by IEP timer
  *   at regular intervals. This mode can be enabled through the interactive menu.
  *
  * \par Supported Operations:
@@ -71,11 +71,11 @@
  * - Continuous/periodic mode operation
  *
  * \par Driver Validation Strategy:
- * Nikon driver APIs use a simplified validation approach for optimal performance:
+ * Nikon driver APIs use following validation approach:
  * - **Handle validation**: All public APIs validate the handle parameter for NULL
  * - **Array bounds checking**: APIs with array/index parameters perform bounds validation
  * - **Internal structure validation**: Internal structures (attrs, priv, pruicss_xchg, pruicss_handle)
- *   are validated once during nikon_init() and assumed valid in subsequent API calls
+ *   are validated for NULL before dereferencing to prevent undefined behavior
  * - **Error handling**: Functions returning data return 0 on validation failures. Functions returning
  *   status use SystemP_SUCCESS/SystemP_FAILURE. Caller is responsible for explicit state cleanup if
  *   needed after errors (e.g., nikon_get_pos may leave internal state partially modified on failure).
@@ -192,7 +192,7 @@ static void nikon_display_menu(nikon_handle handle);
 static uint32_t nikon_get_command(nikon_handle handle);
 static void nikon_position_loop_decide_termination(void *args);
 static int32_t nikon_loop_task_create(void);
-static void nikon_process_periodic_command(nikon_handle handle[CONFIG_NIKON_NUM_INSTANCES], uint64_t trigger_count[CONFIG_NIKON_NUM_INSTANCES][NIKON_NUM_CH_PER_SLICE_MAX], uint64_t iep_reset_count, uint8_t is_cap_mode);
+static int32_t nikon_process_periodic_command(nikon_handle handle[CONFIG_NIKON_NUM_INSTANCES], uint64_t trigger_count[CONFIG_NIKON_NUM_INSTANCES][NIKON_NUM_CH_PER_SLICE_MAX], uint64_t iep_reset_count, uint8_t is_cap_mode);
 void nikon_main(void *args);
 
 /* ========================================================================== */
@@ -219,6 +219,11 @@ static void nikon_pruicss_init(void)
 #endif
 
     gPruIcssXHandle = PRUICSS_open(CONFIG_PRU_ICSS0);
+    if(gPruIcssXHandle == NULL)
+    {
+        DebugP_log("\r\n ERROR: PRUICSS_open failed - NULL handle returned\n");
+        DebugP_assert(0);
+    }
 
 #ifdef CONFIG_NIKON0_G_MUX_EN
     /* Configure g_mux_en to 1 in ICSSG_SA_MX_REG Register */
@@ -416,11 +421,14 @@ static void nikon_get_enc_data_len(nikon_handle handle)
     uint32_t single_turn_len[NUM_ENCODERS_MAX];
     uint32_t multi_turn_len[NUM_ENCODERS_MAX];
     uint32_t total_channels;
-    const nikon_attrs *attrs;
+    const nikon_attrs *attrs = nikon_get_attrs(handle);
 
-    DebugP_assert(handle != NULL);
+    if((handle == NULL) || (attrs == NULL))
+    {
+        DebugP_log("\r\n\n| ERROR: NULL handle/attrs");
+        return;
+    }
 
-    attrs = nikon_get_attrs(handle);
     total_channels = attrs->total_channels;
 
     for(ch_num = 0; ch_num < total_channels; ch_num++)
@@ -573,6 +581,12 @@ static void nikon_display_menu(nikon_handle handle)
 {
     const nikon_attrs *attrs = nikon_get_attrs(handle);
 
+    if((handle == NULL) || (attrs == NULL))
+    {
+        DebugP_log("\r\n\n| ERROR: NULL handle/attrs");
+        return;
+    }
+
     DebugP_log("\r\n|-------------------------------------------------------------------------------------- |");
     DebugP_log("\r\n|                             Select input parameters                                   |");
     DebugP_log("\r\n|-------------------------------------------------------------------------------------- |");
@@ -655,12 +669,18 @@ static uint32_t nikon_get_command(nikon_handle handle)
     uint32_t cmd;
     const nikon_attrs *attrs = nikon_get_attrs(handle);
 
+    if((handle == NULL) || (attrs == NULL))
+    {
+        DebugP_log("\r\n\n| ERROR: NULL handle/attrs, nikon_get_command() will return 0");
+        return 0;
+    }
+
     DebugP_scanf("%u\n", &cmd);
     /* Check to make sure that the command issued is correct */
     if(((attrs->protocol_version == NIKON_PROTOCOL_V2_1) && ((cmd > CMD_22 && cmd < CMD_27))) || (cmd >= CMD_CODE_NUM))
     {
-        DebugP_log("\r\n| WARNING: Invalid option, try again\n");
-        return SystemP_FAILURE;
+        DebugP_log("\r\n| WARNING: Invalid option, nikon_get_command() will return 0\n");
+        return 0;
     }
     return cmd;
 }
@@ -699,9 +719,9 @@ static int32_t nikon_loop_task_create(void)
     return status;
 }
 
-static void nikon_process_periodic_command(nikon_handle handle[CONFIG_NIKON_NUM_INSTANCES], uint64_t trigger_count[CONFIG_NIKON_NUM_INSTANCES][NIKON_NUM_CH_PER_SLICE_MAX], uint64_t iep_reset_count, uint8_t is_cap_mode)
+/* NOTE: Validation error for any module instance will lead to failure of this function */
+static int32_t nikon_process_periodic_command(nikon_handle handle[CONFIG_NIKON_NUM_INSTANCES], uint64_t trigger_count[CONFIG_NIKON_NUM_INSTANCES][NIKON_NUM_CH_PER_SLICE_MAX], uint64_t iep_reset_count, uint8_t is_cap_mode)
 {
-    /* Any function call failure will lead to exit of nikon_process_periodic_command function */
     int32_t status;
     int32_t ret;
     uint32_t i;
@@ -711,11 +731,57 @@ static void nikon_process_periodic_command(nikon_handle handle[CONFIG_NIKON_NUM_
     uint32_t ls_ch;
     uint32_t pos_fail_cnt[CONFIG_NIKON_NUM_INSTANCES] = {0};
     uint32_t pos_total_cnt = 0;
-    nikon_priv *priv;
-    uint32_t total_channels;
-    const nikon_attrs *attrs;
+    nikon_priv *priv[CONFIG_NIKON_NUM_INSTANCES] = {NULL};
+    uint32_t total_channels = 0;
+    const nikon_attrs *attrs[CONFIG_NIKON_NUM_INSTANCES] = {NULL};
     /* CMD_4 is used in this example for 40-bit ABS data with multi-transmission. */
     uint32_t periodic_cmd = CMD_4;
+
+    if((handle == NULL) || (trigger_count == NULL))
+    {
+        DebugP_log("\r\n\n| ERROR: NULL handle[] or trigger_count[]\n");
+        return SystemP_FAILURE;
+    }
+
+    if((is_cap_mode > 1) || (iep_reset_count == 0))
+    {
+        DebugP_log("\r\n\n| ERROR: Invalid is_cap_mode/iep_reset_count value\n");
+        return SystemP_FAILURE;
+    }
+
+    for(i = 0; i < CONFIG_NIKON_NUM_INSTANCES; i++)
+    {
+        priv[i] = nikon_get_priv(handle[i]);
+        attrs[i] = nikon_get_attrs(handle[i]);
+
+        if((handle[i] == NULL) || (priv[i] == NULL) || (attrs[i] == NULL))
+        {
+            DebugP_log("\r\n\n| ERROR: NULL handle/priv/attrs\n");
+            return SystemP_FAILURE;
+        }
+
+        if(is_cap_mode == 0)
+        {
+            if(attrs[i]->load_share_enabled)
+            {
+                if(((attrs[i]->channel0_enabled) && (trigger_count[i][0] > iep_reset_count)) ||
+                   ((attrs[i]->channel1_enabled) && (trigger_count[i][1] > iep_reset_count)) ||
+                   ((attrs[i]->channel2_enabled) && (trigger_count[i][2] > iep_reset_count)))
+                {
+                    DebugP_log("\r\n\n| ERROR: Channel trigger count exceeds IEP reset count for instance %u\n", i);
+                    return SystemP_FAILURE;
+                }
+            }
+            else
+            {
+                if(trigger_count[i][0] > iep_reset_count)
+                {
+                    DebugP_log("\r\n\n| ERROR: Channel trigger count exceeds IEP reset count for instance %u\n", i);
+                    return SystemP_FAILURE;
+                }
+            }
+        }
+    }
 
     DebugP_log("\r\n| Using command %u (CMD_%u) for periodic mode\n", periodic_cmd, periodic_cmd);
 
@@ -730,14 +796,14 @@ static void nikon_process_periodic_command(nikon_handle handle[CONFIG_NIKON_NUM_
         if(ret != SystemP_SUCCESS)
         {
             DebugP_log("\r| ERROR: Failed to generate command data frame for periodic mode for handle %d\n", i);
-            return;
+            return SystemP_FAILURE;
         }
 
         ret = nikon_get_pos(handle[i], periodic_cmd);
         if(ret != SystemP_SUCCESS)
         {
             DebugP_log("\r\n ERROR: 40bit ABS measurement failed\n");
-            return;
+            return SystemP_FAILURE;
         }
 
         /* Configure periodic trigger mode */
@@ -747,7 +813,7 @@ static void nikon_process_periodic_command(nikon_handle handle[CONFIG_NIKON_NUM_
             if(ret != SystemP_SUCCESS)
             {
                 DebugP_log("\r| ERROR: Failed to configure periodic trigger CAP mode for handle %d\n", i);
-                return;
+                return SystemP_FAILURE;
             }
         }
         else
@@ -756,33 +822,33 @@ static void nikon_process_periodic_command(nikon_handle handle[CONFIG_NIKON_NUM_
             if(ret != SystemP_SUCCESS)
             {
                 DebugP_log("\r| ERROR: Failed to configure periodic trigger CMP mode for handle %d\n", i);
-                return;
+                return SystemP_FAILURE;
             }
         }
     }
 
+    memset(&gNikonPeriodicInterface, 0, sizeof(gNikonPeriodicInterface));
+
     if(nikon_loop_task_create() != SystemP_SUCCESS)
     {
-        return;
+        return SystemP_FAILURE;
     }
 
     if(is_cap_mode == 0)
     {
         for(i = 0; i < CONFIG_NIKON_NUM_INSTANCES; i++)
         {
-            attrs = nikon_get_attrs(handle[i]);
-
-            if(attrs->load_share_enabled)
+            if(attrs[i]->load_share_enabled)
             {
-                if(attrs->channel0_enabled)
+                if(attrs[i]->channel0_enabled)
                 {
                     gNikonPeriodicInterface.periodic_trigger_count[i][0] = trigger_count[i][0];
                 }
-                if(attrs->channel1_enabled)
+                if(attrs[i]->channel1_enabled)
                 {
                     gNikonPeriodicInterface.periodic_trigger_count[i][1] = trigger_count[i][1];
                 }
-                if(attrs->channel2_enabled)
+                if(attrs[i]->channel2_enabled)
                 {
                     gNikonPeriodicInterface.periodic_trigger_count[i][2] = trigger_count[i][2];
                 }
@@ -805,7 +871,7 @@ static void nikon_process_periodic_command(nikon_handle handle[CONFIG_NIKON_NUM_
     if(status != SystemP_SUCCESS)
     {
         DebugP_log("\r| ERROR: Failed to configure periodic mode\n");
-        return;
+        return SystemP_FAILURE;
     }
 
     gNikonPositionLoopStatus = NIKON_POSITION_LOOP_START;
@@ -825,17 +891,15 @@ static void nikon_process_periodic_command(nikon_handle handle[CONFIG_NIKON_NUM_
             if(ret != SystemP_SUCCESS)
             {
                 DebugP_log("\r| WARNING: Failed to stop periodic mode\n");
+                return SystemP_FAILURE;
             }
-            return;
+            return SystemP_SUCCESS;
         }
         else
         {
             for(i = 0; i < CONFIG_NIKON_NUM_INSTANCES; i++)
             {
-
-                priv = nikon_get_priv(handle[i]);
-                attrs = nikon_get_attrs(handle[i]);
-                total_channels = attrs->total_channels;
+                total_channels = attrs[i]->total_channels;
 
                 ret = nikon_get_pos(handle[i], periodic_cmd);
                 if(ret != SystemP_SUCCESS)
@@ -862,7 +926,7 @@ static void nikon_process_periodic_command(nikon_handle handle[CONFIG_NIKON_NUM_
                         DebugP_log("\r");
                     }
 
-                    if(attrs->load_share_enabled)
+                    if(attrs[i]->load_share_enabled)
                     {
                         ls_ch = ch;
                     }
@@ -871,19 +935,21 @@ static void nikon_process_periodic_command(nikon_handle handle[CONFIG_NIKON_NUM_
                         ls_ch = 0;
                     }
 
-                    for(enc_num = 0; enc_num < priv->num_enc_access[ls_ch]; enc_num++)
+                    for(enc_num = 0; enc_num < priv[i]->num_enc_access[ls_ch]; enc_num++)
                     {
                         DebugP_log("Channel:%d-Encoder %d: ", ch, enc_num + 1);
-                        if(priv->multi_turn_len[ch][enc_num])
+                        if(priv[i]->multi_turn_len[ch][enc_num])
                         {
-                            DebugP_log("MT:%u, ", priv->pos_data_info[ch].multi_turn[enc_num]);
+                            DebugP_log("MT:%u, ", priv[i]->pos_data_info[ch].multi_turn[enc_num]);
                         }
-                        DebugP_log("Angle:%.12f, CRC Error Count:%u", priv->pos_data_info[ch].angle[enc_num], priv->pos_data_info[ch].crc_err_cnt[enc_num]);
+                        DebugP_log("Angle:%.12f, CRC Error Count:%u", priv[i]->pos_data_info[ch].angle[enc_num], priv[i]->pos_data_info[ch].crc_err_cnt[enc_num]);
                     }
                 }
             }
         }
     }
+
+    return SystemP_SUCCESS;
 }
 
 /**
@@ -986,8 +1052,10 @@ void nikon_main(void *args)
     /* nikon_config_load_share(), nikon_set_default_initialization().             */
     /* NOTE: Default host trigger mode is set.                                    */
     gAppNikonHandle[0] = nikon_init(CONFIG_NIKON0, &nikon_params_instance);
+    attrs = nikon_get_attrs(gAppNikonHandle[0]);
+    priv = nikon_get_priv(gAppNikonHandle[0]);
 
-    if(gAppNikonHandle[0] == NULL)
+    if((gAppNikonHandle[0] == NULL) || (attrs == NULL) || (priv == NULL))
     {
         DebugP_log("\r\nERROR: Nikon initialization failed\n");
         return;
@@ -998,8 +1066,6 @@ void nikon_main(void *args)
     /* ========================================================================== */
     /* STEP 8: Get driver configuration attributes and runtime data              */
     /* ========================================================================== */
-    attrs = nikon_get_attrs(gAppNikonHandle[0]);
-    priv = nikon_get_priv(gAppNikonHandle[0]);
     total_channels = attrs->total_channels;
 
     /* ========================================================================== */
@@ -2248,7 +2314,7 @@ void nikon_main(void *args)
             case START_CONTINUOUS_CMP_MODE:
                 DebugP_log("\r| Enter IEP cycle count(must be greater than Nikon cycle time, in IEP cycles): ");
                 DebugP_scanf("%llu\n", &iep_reset_count);
-                if(iep_reset_count <= NIKON_IEP_COUNTER_INCREMENT)
+                if((iep_reset_count == 0) || (iep_reset_count <= NIKON_IEP_COUNTER_INCREMENT))
                 {
                     DebugP_log("\r\n| WARNING: invalid value entered\n");
                     continue;
@@ -2296,9 +2362,13 @@ void nikon_main(void *args)
                         continue;
                     }
                 }
-                DebugP_log("\r\n| Switching to periodic trigger mode \n");
+                DebugP_log("\r\n| Switching to periodic trigger CMP mode \n");
 
-                nikon_process_periodic_command(gAppNikonHandle, trigger_count, iep_reset_count, 0);
+                ret = nikon_process_periodic_command(gAppNikonHandle, trigger_count, iep_reset_count, 0);
+                if(ret != SystemP_SUCCESS)
+                {
+                    DebugP_log("\r| ERROR: nikon_process_periodic_command() failed\n");
+                }
 
                 DebugP_log("\r| Revert to host trigger\n");
 
@@ -2315,18 +2385,22 @@ void nikon_main(void *args)
 #if defined(SOC_AM243X)
                 DebugP_log("\r| Enter IEP SYNC0 period (in IEP cycles, used for CAP mode):");
                 DebugP_scanf("%llu\n", &iep_reset_count);
-                if((iep_reset_count <= NIKON_IEP_COUNTER_INCREMENT) || (iep_reset_count > UINT32_MAX))
+                if((iep_reset_count == 0) || (iep_reset_count <= NIKON_IEP_COUNTER_INCREMENT) || (iep_reset_count > UINT32_MAX))
                 {
-                    DebugP_log("\r\n| ERROR: invalid value entered, maximum value allowed is %u\n", UINT32_MAX);
+                    DebugP_log("\r\n| ERROR: invalid value entered. 0 is not allowed and maximum value allowed is %u\n", UINT32_MAX);
                     continue;
                 }
 #else
                 DebugP_log("\r| Periodic CAP mode cycle time will be equal to EPWM frequency. NOTE: In SysConfig, EPWM and EPWM to IEP LATCH XBAR configuration must be done. \n|\n|\n|\n");
 
 #endif
-                DebugP_log("\r\n| Switching to periodic trigger mode \n");
+                DebugP_log("\r\n| Switching to periodic trigger CAP mode \n");
 
-                nikon_process_periodic_command(gAppNikonHandle, trigger_count, iep_reset_count, 1);
+                ret = nikon_process_periodic_command(gAppNikonHandle, trigger_count, iep_reset_count, 1);
+                if(ret != SystemP_SUCCESS)
+                {
+                    DebugP_log("\r| ERROR: nikon_process_periodic_command() failed\n");
+                }
 
                 DebugP_log("\r| Revert to host trigger\n");
 

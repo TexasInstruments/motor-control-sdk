@@ -252,9 +252,9 @@ typedef struct endat_pruicss_cmd_s
     /**< Packed command word containing command code, address, and parameter bits.
      *   Byte 0 bit 7:   Dummy bit (0)
      *   Byte 0 bit 6-1: EnDAT command code
-     *   Byte 0 bit 0:   Address bit 7 
+     *   Byte 0 bit 0:   Address bit 7
      *   Byte 1 bit 7-1: Address bits 6-0
-     *   Byte 1 bit 0:   Parameter bit 15 
+     *   Byte 1 bit 0:   Parameter bit 15
      *   Byte 2 bit 7-0: Parameter bits 14-7
      *   Byte 3 bit 7-1: Parameter bits 6-0
      *   Byte 3 bit 0:   Dummy bit (0) */

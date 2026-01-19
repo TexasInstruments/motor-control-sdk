@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2025 Texas Instruments Incorporated
+ *  Copyright (C) 2025-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -96,7 +96,7 @@
 static HwiP_Object gEndat3HwiObject[CONFIG_ENDAT3_NUM_INSTANCES];
 uint32_t gPruEndat3IrqCnt[CONFIG_ENDAT3_NUM_INSTANCES] = {0};
 
-/* PRU-ICSS INTC Configuration */
+/* PRU-ICSS INTC Initialization Data Structure */
 #if(CONFIG_ENDAT3_0_PRUICSS_INSTANCE == 1)
 extern PRUICSS_IntcInitData icss1_intc_initdata;
 #else
@@ -109,15 +109,15 @@ extern PRUICSS_IntcInitData icss0_intc_initdata;
 
 /* IEP Configuration Functions */
 #if defined(SOC_AM243X)
-static void endat3_config_iep_cap_for_sync(endat3_handle handle, uint32_t iep_sync0_period);
+static int32_t endat3_config_iep_cap_for_sync(endat3_handle handle, uint32_t iep_sync0_period);
 static void endat3_disable_iep_cap_sync(void *pru_iep);
 #endif /* SOC_AM243X */
 
-static void endat3_config_iep(endat3_periodic_interface *endat3_periodic_interface);
+static int32_t endat3_config_iep(endat3_periodic_interface *endat3_periodic_interface);
 
 /* IEP Counter Control */
-static void endat3_enable_iep_counter(endat3_handle handle);
-static void endat3_disable_iep_counter(endat3_handle handle);
+static int32_t endat3_enable_iep_counter(PRUICSS_Handle pruicss_handle, uint8_t iep_instance);
+static int32_t endat3_disable_iep_counter(PRUICSS_Handle pruicss_handle, uint8_t iep_instance);
 
 /* IEP Reset Control */
 static void endat3_enable_iep_reset_on_cmp0(void *pru_iep, uint64_t iep_reset_count);
@@ -150,11 +150,25 @@ void endat3_pru_irq_handler(void *pruicss_handle);
  * \param iep_sync0_period IEP SYNC OUT0 period in IEP clock cycles
  */
 #if defined(SOC_AM243X)
-static void endat3_config_iep_cap_for_sync(endat3_handle handle, uint32_t iep_sync0_period)
+static int32_t endat3_config_iep_cap_for_sync(endat3_handle handle, uint32_t iep_sync0_period)
 {
-    const endat3_attrs *attrs = endat3_get_attrs(handle);
-    void *pru_iep = attrs->iep_base_addr;
+    const endat3_attrs *attrs = NULL;
+    void *pru_iep;
     uint32_t reg_value;
+
+    attrs = endat3_get_attrs(handle);
+    if((handle == NULL) || (attrs == NULL))
+    {
+        DebugP_log("\r\n\n|ERROR: endat3_config_iep_cap_for_sync() failed due to NULL handle/attrs");
+        return SystemP_FAILURE;
+    }
+
+    pru_iep = attrs->iep_base_addr;
+    if(pru_iep == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat3_config_iep_cap_for_sync() failed due to NULL iep_base_addr");
+        return SystemP_FAILURE;
+    }
 
     /* Configure IEP CMP1 to start SYNC OUT0 after 100 cycles */
     endat3_enable_iep_cmp_event(pru_iep, ENDAT3_IEP_CMP1_START_DELAY, ENDAT3_IEP_CMP_EVENT_FOR_SYNC0);
@@ -201,6 +215,7 @@ static void endat3_config_iep_cap_for_sync(endat3_handle handle, uint32_t iep_sy
         }
     }
 
+    return SystemP_SUCCESS;
 }
 #endif /* SOC_AM243X */
 
@@ -234,6 +249,12 @@ static void endat3_disable_iep_cap_sync(void *pru_iep)
 {
     uint32_t reg_value;
 
+    if(pru_iep == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat3_disable_iep_cap_sync() failed due to NULL pru_iep");
+        return;
+    }
+
     /* Disable SYNC OUT0 generation */
     reg_value = HW_RD_REG32((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_SYNC_CTRL_REG);
     reg_value &= ~(ENDAT3_IEP_SYNC_CTRL_SYNC01_EN_MASK | ENDAT3_IEP_SYNC_CTRL_SYNC0_EN_MASK); /* SYNC OUT0 disable */
@@ -256,6 +277,12 @@ static void endat3_enable_iep_reset_on_cmp0(void *pru_iep, uint64_t iep_reset_co
     uint16_t event;
     uint32_t reg0;
     uint32_t reg1;
+
+    if(pru_iep == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat3_enable_iep_reset_on_cmp0() failed due to NULL pru_iep");
+        return;
+    }
 
     /* Clear event */
     HW_WR_REG16((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, (1 << ENDAT3_IEP_CMP_EVENT_FOR_RESET));
@@ -287,6 +314,12 @@ static void endat3_disable_iep_reset_on_cmp0(void *pru_iep)
 {
     uint16_t event;
 
+    if(pru_iep == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat3_disable_iep_reset_on_cmp0() failed due to NULL pru_iep");
+        return;
+    }
+
     /* Read CMP CFG register */
     event = HW_RD_REG16((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG);
 
@@ -307,21 +340,25 @@ static void endat3_disable_iep_reset_on_cmp0(void *pru_iep)
  *
  * \param handle EnDAT3 driver handle
  */
-static void endat3_enable_iep_counter(endat3_handle handle)
+static int32_t endat3_enable_iep_counter(PRUICSS_Handle pruicss_handle, uint8_t iep_instance)
 {
-    endat3_priv *priv;
-    const endat3_attrs *attrs;
     int32_t status;
 
-    priv = endat3_get_priv(handle);
-    attrs = endat3_get_attrs(handle);
+    if(pruicss_handle == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat3_enable_iep_counter() failed due to NULL pruicss_handle");
+        return SystemP_FAILURE;
+    }
 
     /* Configure and enable IEP counter */
-    status = PRUICSS_setIepCounterIncrementValue(priv->pruicss_handle, attrs->iep_instance, ENDAT3_IEP_COUNTER_INCREMENT);
-    DebugP_assert(status == SystemP_SUCCESS);
+    status = PRUICSS_setIepCounterIncrementValue(pruicss_handle, iep_instance, ENDAT3_IEP_COUNTER_INCREMENT);
 
-    status = PRUICSS_controlIepCounter(priv->pruicss_handle, attrs->iep_instance, ENDAT3_IEP_COUNTER_ENABLE);
-    DebugP_assert(status == SystemP_SUCCESS);
+    if(status == SystemP_SUCCESS)
+    {
+        status = PRUICSS_controlIepCounter(pruicss_handle, iep_instance, ENDAT3_IEP_COUNTER_ENABLE);
+    }
+
+    return status;
 }
 
 /**
@@ -329,18 +366,19 @@ static void endat3_enable_iep_counter(endat3_handle handle)
  *
  * \param handle EnDAT3 driver handle
  */
-static void endat3_disable_iep_counter(endat3_handle handle)
+static int32_t endat3_disable_iep_counter(PRUICSS_Handle pruicss_handle, uint8_t iep_instance)
 {
-    endat3_priv *priv;
-    const endat3_attrs *attrs;
     int32_t status;
 
-    priv = endat3_get_priv(handle);
-    attrs = endat3_get_attrs(handle);
+    if(pruicss_handle == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat3_disable_iep_counter() failed due to NULL pruicss_handle");
+        return SystemP_FAILURE;
+    }
 
     /* Disable IEP counter */
-    status = PRUICSS_controlIepCounter(priv->pruicss_handle, attrs->iep_instance, ENDAT3_IEP_COUNTER_DISABLE);
-    DebugP_assert(status == SystemP_SUCCESS);
+    status = PRUICSS_controlIepCounter(pruicss_handle, iep_instance, ENDAT3_IEP_COUNTER_DISABLE);
+    return status;
 }
 
 /**
@@ -352,6 +390,12 @@ static void endat3_disable_iep_counter(endat3_handle handle)
 static void endat3_disable_iep_cmp_event(void *pru_iep, uint8_t event_num)
 {
     uint32_t reg0;
+
+    if(pru_iep == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat3_disable_iep_cmp_event() failed due to NULL pru_iep");
+        return;
+    }
 
     /* Disable the CMP event */
     /* Read the current register value */
@@ -385,6 +429,12 @@ static void endat3_disable_iep_cap_event(void *pru_iep, uint8_t event_num)
 {
     uint32_t reg0;
 
+    if(pru_iep == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat3_disable_iep_cap_event() failed due to NULL pru_iep");
+        return;
+    }
+
     /* Disable the CAP event */
     /* Read the current register value */
     reg0 = HW_RD_REG32(((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG));
@@ -415,6 +465,12 @@ static void endat3_disable_iep_cap_event(void *pru_iep, uint8_t event_num)
 static void endat3_enable_iep_cap_event(void *pru_iep, uint8_t event_num)
 {
     uint32_t reg0;
+
+    if(pru_iep == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat3_enable_iep_cap_event() failed due to NULL pru_iep");
+        return;
+    }
 
     /* Configure the CAP event in IEP hardware register */
     /* Read the current register value */
@@ -449,6 +505,12 @@ static void endat3_enable_iep_cmp_event(void *pru_iep, uint64_t trigger_point, u
     uint32_t reg0;
     uint32_t reg1;
 
+    if(pru_iep == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat3_enable_iep_cmp_event() failed due to NULL pru_iep");
+        return;
+    }
+
     /* Clear event */
     HW_WR_REG16((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, (uint16_t)(1 << event_num));
 
@@ -482,7 +544,7 @@ static void endat3_enable_iep_cmp_event(void *pru_iep, uint64_t trigger_point, u
  * \brief Configure IEP timer for EnDAT3 periodic trigger mode
  *
  * \details This function configures the PRU-ICSS IEP (Industrial Ethernet Peripheral) timer
- *          to support periodic trigger mode for EnDAT3 encoder transactions. It handles
+ *          to support periodic trigger mode for encoder transactions. It handles
  *          both CMP (compare) and CAP (capture) modes based on configuration.
  *
  *          **Configuration performed:**
@@ -490,7 +552,7 @@ static void endat3_enable_iep_cmp_event(void *pru_iep, uint64_t trigger_point, u
  *          2. Resets IEP counter to zero
  *          3. **CMP Mode (is_cap_mode = 0):**
  *             - Enables IEP counter reset on CMP0 event (defines period)
- *             - Configures CMP event with trigger counts
+ *             - Configures CMP event
  *             - IEP counter automatically resets when reaching iep_reset_count
  *          4. **CAP Mode (is_cap_mode = 1):**
  *             - On AM243x: Configures IEP SYNC output and routes to capture pins
@@ -501,14 +563,53 @@ static void endat3_enable_iep_cmp_event(void *pru_iep, uint64_t trigger_point, u
  * \param[in] endat3_periodic_interface Pointer to periodic interface structure
  * \note This function assumes the handle and IEP base address are valid (set by endat3_init())
  */
-static void endat3_config_iep(endat3_periodic_interface *endat3_periodic_interface)
+static int32_t endat3_config_iep(endat3_periodic_interface *endat3_periodic_interface)
 {
-    const endat3_attrs *attrs = endat3_get_attrs(endat3_periodic_interface->handle[CONFIG_ENDAT3_0]);
-    uint64_t iep_count = endat3_periodic_interface->iep_reset_count;
-    void *pru_iep = attrs->iep_base_addr;
+    const endat3_attrs *attrs[CONFIG_ENDAT3_NUM_INSTANCES] = {NULL};
+    endat3_priv *priv[CONFIG_ENDAT3_NUM_INSTANCES] = {NULL};
+    uint32_t i;
+    void *pru_iep;
+    int32_t status;
+
+    /* NULL check on interface pointer and handle(s) */
+    if(endat3_periodic_interface == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat3_config_iep() failed due to NULL endat3_periodic_interface pointer");
+        return SystemP_FAILURE;
+    }
+
+    for(i = 0; i < CONFIG_ENDAT3_NUM_INSTANCES; i++)
+    {
+        attrs[i] = endat3_get_attrs(endat3_periodic_interface->handle[i]);
+        priv[i] = endat3_get_priv(endat3_periodic_interface->handle[i]);
+        if((endat3_periodic_interface->handle[i] == NULL) || (attrs[i] == NULL) || (priv[i] == NULL))
+        {
+            DebugP_log("\r\n\n|ERROR: endat3_config_iep() failed due to NULL handle/attrs/priv");
+            return SystemP_FAILURE;
+        }
+    }
+
+    /* PRU-ICSS Level Global Configuration uses first EnDAT3 handle */
+    pru_iep = attrs[CONFIG_ENDAT3_0]->iep_base_addr;
+    if(pru_iep == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat3_config_iep() failed due to NULL iep_base_addr");
+        return SystemP_FAILURE;
+    }
+
+    if(priv[CONFIG_ENDAT3_0]->pruicss_handle == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat3_config_iep() failed due to NULL pruicss_handle");
+        return SystemP_FAILURE;
+    }
 
     /* Disable IEP counter */
-    endat3_disable_iep_counter(endat3_periodic_interface->handle[CONFIG_ENDAT3_0]);
+    status = endat3_disable_iep_counter(priv[CONFIG_ENDAT3_0]->pruicss_handle, attrs[CONFIG_ENDAT3_0]->iep_instance);
+    if(status == SystemP_FAILURE)
+    {
+        DebugP_log("\r\n\n|ERROR: endat3_disable_iep_counter() failed");
+        return SystemP_FAILURE;
+    }
 
     /* Set IEP counter to ZERO */
     HW_WR_REG32((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG0, 0);
@@ -524,24 +625,41 @@ static void endat3_config_iep(endat3_periodic_interface *endat3_periodic_interfa
          * If CONFIG_ENDAT3_NUM_INSTANCES > 1 and CAP mode is used, configuration for signal routing to
          * capture pins needs to be added based on availability.
          */
-        endat3_config_iep_cap_for_sync(endat3_periodic_interface->handle[CONFIG_ENDAT3_0], ENDAT3_GET_LOWER_32BITS(iep_count));
+        status = endat3_config_iep_cap_for_sync(endat3_periodic_interface->handle[CONFIG_ENDAT3_0], ENDAT3_GET_LOWER_32BITS(endat3_periodic_interface->iep_reset_count));
+        if(status == SystemP_FAILURE)
+        {
+            DebugP_log("\r\n\n|ERROR: endat3_config_iep_cap_for_sync() failed");
+            return SystemP_FAILURE;
+        }
 #endif
-        /* Configure CAP events for channels */
-        endat3_enable_iep_cap_event(pru_iep, attrs->iep_cap_event);
-
+        for(i = 0; i < CONFIG_ENDAT3_NUM_INSTANCES; i++)
+        {
+            /* Configure CAP events for channels */
+            endat3_enable_iep_cap_event(pru_iep, attrs[i]->iep_cap_event);
+        }
     }
     else
     {
         /* CMP mode: Enable IEP reset on CMP0 */
-        endat3_enable_iep_reset_on_cmp0(pru_iep, iep_count);
+        endat3_enable_iep_reset_on_cmp0(pru_iep, endat3_periodic_interface->iep_reset_count);
 
-        /* Configure CMP events for channels */
-        endat3_enable_iep_cmp_event(pru_iep, endat3_periodic_interface->periodic_trigger_count[CONFIG_ENDAT3_0], attrs->iep_cmp_event);
-
+        for(i = 0; i < CONFIG_ENDAT3_NUM_INSTANCES; i++)
+        {
+            /* Configure CMP events for channels */
+            endat3_enable_iep_cmp_event(pru_iep, endat3_periodic_interface->periodic_trigger_count[i], attrs[i]->iep_cmp_event);
+        }
     }
 
+    /* PRU-ICSS Level Global Configuration uses first EnDAT3 handle */
+
     /* Enable IEP counter */
-    endat3_enable_iep_counter(endat3_periodic_interface->handle[CONFIG_ENDAT3_0]);
+    status = endat3_enable_iep_counter(priv[CONFIG_ENDAT3_0]->pruicss_handle, attrs[CONFIG_ENDAT3_0]->iep_instance);
+    if(status == SystemP_FAILURE)
+    {
+        DebugP_log("\r\n\n|ERROR: endat3_enable_iep_counter() failed");
+        return SystemP_FAILURE;
+    }
+    return SystemP_SUCCESS;
 }
 
 /**
@@ -562,6 +680,12 @@ static void endat3_interrupt_config(void *pruicss_handle)
     int32_t status;
     HwiP_Params hwi_params;
 
+    if(pruicss_handle == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat3_interrupt_config() failed due to NULL pruicss_handle");
+        return;
+    }
+
     /* Register and enable PRU FW interrupt */
     HwiP_Params_init(&hwi_params);
     hwi_params.intNum   = ICSS_PRU_ENDAT3_INT_NUM;
@@ -576,13 +700,14 @@ static void endat3_interrupt_config(void *pruicss_handle)
 int32_t endat3_config_periodic_mode(endat3_periodic_interface *endat3_periodic_interface)
 {
     int32_t status;
-    uint32_t    i;
-    endat3_priv  *priv;
-    void        *pruicss_handle;
+    uint32_t i;
+    endat3_priv *priv = NULL;
+    void *pruicss_handle = NULL;
 
     /* NULL check on interface pointer and handle(s) */
     if(endat3_periodic_interface == NULL)
     {
+        DebugP_log("\r\n\n|ERROR: endat3_config_periodic_mode() failed due to NULL endat3_periodic_interface pointer");
         return SystemP_FAILURE;
     }
 
@@ -590,27 +715,47 @@ int32_t endat3_config_periodic_mode(endat3_periodic_interface *endat3_periodic_i
     {
         if(endat3_periodic_interface->handle[i] == NULL)
         {
+            DebugP_log("\r\n\n|ERROR: endat3_config_periodic_mode() failed due to NULL handle");
             return SystemP_FAILURE;
         }
     }
 
+    /* PRU-ICSS Level Global Configuration uses first EnDAT3 handle */
     priv = endat3_get_priv(endat3_periodic_interface->handle[CONFIG_ENDAT3_0]);
+    if(priv == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat3_config_periodic_mode() failed due to NULL priv pointer");
+        return SystemP_FAILURE;
+    }
+
     pruicss_handle = (void *)(priv->pruicss_handle);
+    if(pruicss_handle == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat3_config_periodic_mode() failed due to NULL pruicss_handle");
+        return SystemP_FAILURE;
+    }
 
     /* Configure IEP */
-    endat3_config_iep(endat3_periodic_interface);
+    status = endat3_config_iep(endat3_periodic_interface);
+    if(status != SystemP_SUCCESS)
+    {
+        DebugP_log("\r\n\n|ERROR: endat3_config_iep() failed inside endat3_config_periodic_mode()");
+        return status;
+    }
 
     /* Initialize PRU-ICSS Interrupt Controller */
 #if(CONFIG_ENDAT3_0_PRUICSS_INSTANCE == 1)
     status = PRUICSS_intcInit(pruicss_handle, &icss1_intc_initdata);
     if(status != SystemP_SUCCESS)
     {
+        DebugP_log("\r\n\n|ERROR: PRUICSS_intcInit() failed inside endat3_config_periodic_mode()");
         return status;
     }
 #else
     status = PRUICSS_intcInit(pruicss_handle, &icss0_intc_initdata);
     if(status != SystemP_SUCCESS)
     {
+        DebugP_log("\r\n\n|ERROR: PRUICSS_intcInit() failed inside endat3_config_periodic_mode()");
         return status;
     }
 #endif
@@ -621,36 +766,60 @@ int32_t endat3_config_periodic_mode(endat3_periodic_interface *endat3_periodic_i
 
 int32_t endat3_stop_periodic_mode(endat3_periodic_interface *endat3_periodic_interface)
 {
-    const endat3_attrs *attrs;
+    const endat3_attrs *attrs[CONFIG_ENDAT3_NUM_INSTANCES] = {NULL};
+    endat3_priv *priv[CONFIG_ENDAT3_NUM_INSTANCES] = {NULL};
     uint32_t i;
     void *pru_iep;
+    int32_t status;
 
     /* NULL check on interface pointer and handle(s) */
     if(endat3_periodic_interface == NULL)
     {
+        DebugP_log("\r\n\n|ERROR: endat3_stop_periodic_mode() failed due to NULL endat3_periodic_interface pointer");
         return SystemP_FAILURE;
     }
 
     for(i = 0; i < CONFIG_ENDAT3_NUM_INSTANCES; i++)
     {
-        if(endat3_periodic_interface->handle[i] == NULL)
+        attrs[i] = endat3_get_attrs(endat3_periodic_interface->handle[i]);
+        priv[i] = endat3_get_priv(endat3_periodic_interface->handle[i]);
+        if((endat3_periodic_interface->handle[i] == NULL) || (attrs[i] == NULL) || (priv[i] == NULL))
         {
+            DebugP_log("\r\n\n|ERROR: endat3_config_iep() failed due to NULL handle/attrs/priv");
             return SystemP_FAILURE;
         }
     }
 
-    attrs = endat3_get_attrs(endat3_periodic_interface->handle[CONFIG_ENDAT3_0]);
-    pru_iep = attrs->iep_base_addr;
+    /* PRU-ICSS Level Global Configuration uses first EnDAT3 handle */
+    pru_iep = attrs[CONFIG_ENDAT3_0]->iep_base_addr;
+    if(pru_iep == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat3_stop_periodic_mode() failed due to NULL iep_base_addr");
+        return SystemP_FAILURE;
+    }
+
+    if(priv[CONFIG_ENDAT3_0]->pruicss_handle == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat3_stop_periodic_mode() failed due to NULL pruicss_handle");
+        return SystemP_FAILURE;
+    }
 
     /* Disable IEP counter first */
-    endat3_disable_iep_counter(endat3_periodic_interface->handle[CONFIG_ENDAT3_0]);
+    status = endat3_disable_iep_counter(priv[CONFIG_ENDAT3_0]->pruicss_handle, attrs[CONFIG_ENDAT3_0]->iep_instance);
+    if(status == SystemP_FAILURE)
+    {
+        DebugP_log("\r\n\n|ERROR: endat3_disable_iep_counter() failed");
+        return SystemP_FAILURE;
+    }
 
     /* Disable events based on mode */
     if(endat3_periodic_interface->is_cap_mode)
     {
-        /* CAP mode: Disable capture events */
-        endat3_disable_iep_cap_event(pru_iep, attrs->iep_cap_event);
-
+        for(i = 0; i < CONFIG_ENDAT3_NUM_INSTANCES; i++)
+        {
+            /* CAP mode: Disable capture events */
+            endat3_disable_iep_cap_event(pru_iep, attrs[i]->iep_cap_event);
+        }
         /* Disable IEP SYNC generation for CAP mode */
 #if defined(SOC_AM243X)
         endat3_disable_iep_cap_sync(pru_iep);
@@ -658,20 +827,28 @@ int32_t endat3_stop_periodic_mode(endat3_periodic_interface *endat3_periodic_int
     }
     else
     {
-        /* CMP mode: Disable compare events */
-        endat3_disable_iep_cmp_event(pru_iep, attrs->iep_cmp_event);
-
+        for(i = 0; i < CONFIG_ENDAT3_NUM_INSTANCES; i++)
+        {
+            /* CMP mode: Disable compare events */
+            endat3_disable_iep_cmp_event(pru_iep, attrs[i]->iep_cmp_event);
+        }
         /* Disable IEP reset on CMP0 event */
         endat3_disable_iep_reset_on_cmp0(pru_iep);
     }
 
     HwiP_destruct(&gEndat3HwiObject[CONFIG_ENDAT3_0]);
+
     return SystemP_SUCCESS;
 }
 
 /* PRU FW IRQ handler */
 void endat3_pru_irq_handler(void *pruicss_handle)
 {
+    if(pruicss_handle == NULL)
+    {
+        return;
+    }
+
     /* Increment IRQ count */
     gPruEndat3IrqCnt[CONFIG_ENDAT3_0]++;
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2022-2025 Texas Instruments Incorporated
+ *  Copyright (C) 2022-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -165,17 +165,6 @@
 #define HDSL_SB_POLARITY                (1U)
 
 /* ========================================================================== */
-/*                       Internal Functions Note                              */
-/* ========================================================================== */
-/**
- *  \details After successful HDSL_open(), the priv pointer returned by HDSL_get_priv()
- *           is guaranteed to be valid and non-NULL for the lifetime of the handle.
- *           Driver functions rely on this guarantee and do not perform redundant NULL
- *           checks on priv for performance. Applications must not call driver APIs
- *           with handles that failed to open (NULL handles are checked at API entry).
- */
-
-/* ========================================================================== */
 /*                       Global Variables                                     */
 /* ========================================================================== */
 /**
@@ -253,8 +242,10 @@ HDSL_Handle HDSL_open(uint32_t instance, const HDSL_Params *params)
     HDSL_Handle         handle = NULL;
     HDSL_Priv           *priv = NULL;
     const HDSL_Attrs    *attrs = NULL;
+    PRUICSS_HwAttrs     *hw_attrs;
     uint32_t            channel_idx;
     uint32_t            offset = 0;
+
     /* Validate instance and params */
     if((instance >= gHdslConfigNum) || (params == NULL))
     {
@@ -263,7 +254,9 @@ HDSL_Handle HDSL_open(uint32_t instance, const HDSL_Params *params)
 
     /* Validate params fields: channel and pruicss_handle */
     if((status == SystemP_SUCCESS) &&
-       ((params->channel >= HDSL_NUM_CH_PER_SLICE_MAX) || (params->pruicss_handle == NULL)))
+       ((params->channel >= HDSL_NUM_CH_PER_SLICE_MAX) ||
+        (params->pruicss_handle == NULL) ||
+        (params->pruicss_handle->hwAttrs == NULL)))
     {
         status = SystemP_FAILURE;
     }
@@ -407,7 +400,7 @@ HDSL_Handle HDSL_open(uint32_t instance, const HDSL_Params *params)
         priv->pruicss_handle = params->pruicss_handle;
 
         /* Configure base memory address based on PRU core */
-        PRUICSS_HwAttrs *hw_attrs = (PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs);
+        hw_attrs = (PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs);
 
         if(attrs->load_share_enabled == 0)
         {
@@ -481,12 +474,13 @@ void HDSL_close(HDSL_Handle handle)
 {
     HDSL_Priv *priv;
 
-    if(handle == NULL)
+    /* Validate handle and priv pointer */
+    if((handle == NULL) || (handle->priv == NULL))
     {
         return;
     }
 
-    priv = HDSL_get_priv(handle);
+    priv = handle->priv;
 
     /* Reset is_open in priv structure */
     priv->is_open = 0;
@@ -496,7 +490,8 @@ void HDSL_close(HDSL_Handle handle)
 
 const HDSL_Attrs* HDSL_get_attrs(HDSL_Handle handle)
 {
-    if(handle == NULL)
+    /* Validate handle and attrs pointer */
+    if((handle == NULL) || (handle->attrs == NULL))
     {
         return NULL;
     }
@@ -506,7 +501,8 @@ const HDSL_Attrs* HDSL_get_attrs(HDSL_Handle handle)
 
 HDSL_Priv* HDSL_get_priv(HDSL_Handle handle)
 {
-    if(handle == NULL)
+    /* Validate handle and priv pointer */
+    if((handle == NULL) || (handle->priv == NULL))
     {
         return NULL;
     }
@@ -519,19 +515,17 @@ int32_t HDSL_get_pos(HDSL_Handle handle, uint32_t position_id, uint64_t *positio
     HDSL_Interface *hdsl_interface_struct;
     HDSL_Priv *priv;
 
-    /* Validate inputs */
-    if((handle == NULL) || (position == NULL))
+    /* Validate parameters, priv, and hdsl_interface pointers */
+    if((handle == NULL) ||
+       (handle->priv == NULL) ||
+       (handle->priv->hdsl_interface == NULL) ||
+       (position == NULL) ||
+       (position_id > HDSL_MAX_POSITION_ID))
     {
         return SystemP_FAILURE;
     }
 
-    if(position_id > HDSL_MAX_POSITION_ID)
-    {
-        return SystemP_FAILURE;
-    }
-
-    priv = HDSL_get_priv(handle);
-
+    priv = handle->priv;
     hdsl_interface_struct = priv->hdsl_interface;
 
     switch(position_id)
@@ -566,147 +560,156 @@ int32_t HDSL_get_pos(HDSL_Handle handle, uint32_t position_id, uint64_t *positio
 
 int32_t HDSL_get_qm(HDSL_Handle handle, uint8_t *qm)
 {
-    int32_t status = SystemP_FAILURE;
     HDSL_Priv *priv;
 
-    if((handle != NULL) && (qm != NULL))
+    /* Validate paramters, priv, and hdsl_interface pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (qm == NULL))
     {
-        priv = HDSL_get_priv(handle);
-
-        *qm = priv->hdsl_interface->MASTER_QM & HDSL_QM_VALUE_MASK;
-        status = SystemP_SUCCESS;
+        return SystemP_FAILURE;
     }
 
-    return status;
+    priv = handle->priv;
+
+    *qm = priv->hdsl_interface->MASTER_QM & HDSL_QM_VALUE_MASK;
+
+    return SystemP_SUCCESS;
 }
 
 
 int32_t HDSL_get_events(HDSL_Handle handle, uint16_t *events)
 {
-    int32_t status = SystemP_FAILURE;
     HDSL_Priv *priv;
 
-    if((handle != NULL) && (events != NULL))
+    /* Validate paramters, priv, and hdsl_interface pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (events == NULL))
     {
-        priv = HDSL_get_priv(handle);
-
-        *events = priv->hdsl_interface->EVENT_L | (priv->hdsl_interface->EVENT_H << 8);
-        status = SystemP_SUCCESS;
+        return SystemP_FAILURE;
     }
 
-    return status;
+    priv = handle->priv;
+
+    *events = priv->hdsl_interface->EVENT_L | (priv->hdsl_interface->EVENT_H << 8);
+
+    return SystemP_SUCCESS;
 }
 
 int32_t HDSL_get_safe_events(HDSL_Handle handle, uint8_t *events)
 {
-    int32_t status = SystemP_FAILURE;
     HDSL_Priv *priv;
 
-    if((handle != NULL) && (events != NULL))
+    /* Validate paramters, priv, and hdsl_interface pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (events == NULL))
     {
-        priv = HDSL_get_priv(handle);
-
-        *events = priv->hdsl_interface->EVENT_S;
-        status = SystemP_SUCCESS;
+        return SystemP_FAILURE;
     }
 
-    return status;
+    priv = handle->priv;
+
+    *events = priv->hdsl_interface->EVENT_S;
+
+    return SystemP_SUCCESS;
 }
 
 int32_t HDSL_get_online_status_d(HDSL_Handle handle, uint16_t *status)
 {
-    int32_t ret_status = SystemP_FAILURE;
     HDSL_Priv *priv;
 
-    if((handle != NULL) && (status != NULL))
+    /* Validate paramters, priv, and hdsl_interface pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (status == NULL))
     {
-        priv = HDSL_get_priv(handle);
-
-        *status = priv->hdsl_interface->ONLINE_STATUS_D_L | (priv->hdsl_interface->ONLINE_STATUS_D_H << 8);
-        ret_status = SystemP_SUCCESS;
+        return SystemP_FAILURE;
     }
 
-    return ret_status;
+    priv = handle->priv;
+
+    *status = priv->hdsl_interface->ONLINE_STATUS_D_L | (priv->hdsl_interface->ONLINE_STATUS_D_H << 8);
+
+    return SystemP_SUCCESS;
 }
 
 int32_t HDSL_get_online_status_1(HDSL_Handle handle, uint16_t *status)
 {
-    int32_t ret_status = SystemP_FAILURE;
     HDSL_Priv *priv;
 
-    if((handle != NULL) && (status != NULL))
+    /* Validate paramters, priv, and hdsl_interface pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (status == NULL))
     {
-        priv = HDSL_get_priv(handle);
-
-        *status = priv->hdsl_interface->ONLINE_STATUS_1_L | (priv->hdsl_interface->ONLINE_STATUS_1_H << 8);
-        ret_status = SystemP_SUCCESS;
+        return SystemP_FAILURE;
     }
 
-    return ret_status;
+    priv = handle->priv;
+
+    *status = priv->hdsl_interface->ONLINE_STATUS_1_L | (priv->hdsl_interface->ONLINE_STATUS_1_H << 8);
+
+    return SystemP_SUCCESS;
 }
 
 int32_t HDSL_get_online_status_2(HDSL_Handle handle, uint16_t *status)
 {
-    int32_t ret_status = SystemP_FAILURE;
     HDSL_Priv *priv;
 
-    if((handle != NULL) && (status != NULL))
+    /* Validate paramters, priv, and hdsl_interface pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (status == NULL))
     {
-        priv = HDSL_get_priv(handle);
-
-        *status = priv->hdsl_interface->ONLINE_STATUS_2_L | (priv->hdsl_interface->ONLINE_STATUS_2_H << 8);
-        ret_status = SystemP_SUCCESS;
+        return SystemP_FAILURE;
     }
 
-    return ret_status;
+    priv = handle->priv;
+
+    *status = priv->hdsl_interface->ONLINE_STATUS_2_L | (priv->hdsl_interface->ONLINE_STATUS_2_H << 8);
+
+    return SystemP_SUCCESS;
 }
 
 int32_t HDSL_get_sum(HDSL_Handle handle, uint8_t *sum)
 {
-    int32_t status = SystemP_FAILURE;
     HDSL_Priv *priv;
 
-    if((handle != NULL) && (sum != NULL))
+    /* Validate paramters, priv, and hdsl_interface pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (sum == NULL))
     {
-        priv = HDSL_get_priv(handle);
-
-        *sum = priv->hdsl_interface->SAFE_SUM;
-        status = SystemP_SUCCESS;
+        return SystemP_FAILURE;
     }
 
-    return status;
+    priv = handle->priv;
+
+    *sum = priv->hdsl_interface->SAFE_SUM;
+
+    return SystemP_SUCCESS;
 }
 
 int32_t HDSL_get_acc_err_cnt(HDSL_Handle handle, uint8_t *count)
 {
-    int32_t status = SystemP_FAILURE;
     HDSL_Priv *priv;
 
-    if((handle != NULL) && (count != NULL))
+    /* Validate paramters, priv, and hdsl_interface pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (count == NULL))
     {
-        priv = HDSL_get_priv(handle);
-
-        *count = (uint8_t)(priv->hdsl_interface->ACC_ERR_CNT & HDSL_ACC_ERR_CNT_MASK);
-        status = SystemP_SUCCESS;
+        return SystemP_FAILURE;
     }
 
-    return status;
+    priv = handle->priv;
+
+    *count = (uint8_t)(priv->hdsl_interface->ACC_ERR_CNT & HDSL_ACC_ERR_CNT_MASK);
+
+    return SystemP_SUCCESS;
 }
 
 int32_t HDSL_get_rssi(HDSL_Handle handle, uint8_t *rssi)
 {
-    int32_t status = SystemP_FAILURE;
     HDSL_Priv *priv;
 
-    if((handle != NULL) && (rssi != NULL))
+    /* Validate paramters, priv, and hdsl_interface pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (rssi == NULL))
     {
-        priv = HDSL_get_priv(handle);
-
-        *rssi = (priv->hdsl_interface->DELAY & HDSL_RSSI_MASK) >> HDSL_RSSI_SHIFT;
-        status = SystemP_SUCCESS;
+        return SystemP_FAILURE;
     }
 
-    return status;
+    priv = handle->priv;
+
+    *rssi = (priv->hdsl_interface->DELAY & HDSL_RSSI_MASK) >> HDSL_RSSI_SHIFT;
+
+    return SystemP_SUCCESS;
 }
 
 int32_t HDSL_write_pc_short_msg(HDSL_Handle handle, uint8_t addr, uint8_t data, uint64_t timeout)
@@ -714,12 +717,13 @@ int32_t HDSL_write_pc_short_msg(HDSL_Handle handle, uint8_t addr, uint8_t data, 
     uint64_t end;
     HDSL_Priv *priv;
 
-    if(handle == NULL)
+    /* Validate handle, priv, and hdsl_interface pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (addr > 0x3F))
     {
         return SystemP_FAILURE;
     }
 
-    priv = HDSL_get_priv(handle);
+    priv = handle->priv;
 
     end = ClockP_getTimeUsec() + timeout;
 
@@ -731,7 +735,7 @@ int32_t HDSL_write_pc_short_msg(HDSL_Handle handle, uint8_t addr, uint8_t data, 
         }
     }
     priv->hdsl_interface->S_PC_DATA = data;
-    priv->hdsl_interface->SLAVE_REG_CTRL =  addr;
+    priv->hdsl_interface->SLAVE_REG_CTRL = addr;
     while((priv->hdsl_interface->ONLINE_STATUS_1_L & ONLINE_STATUS_1_L_FRES) != 0)
     {
         if(ClockP_getTimeUsec() > end)
@@ -754,12 +758,13 @@ int32_t HDSL_read_pc_short_msg(HDSL_Handle handle, uint8_t addr, uint8_t *data, 
     uint64_t end;
     HDSL_Priv *priv;
 
-    if((handle == NULL) || (data == NULL))
+    /* Validate parameters, priv, and hdsl_interface pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (addr > 0x3F)|| (data == NULL))
     {
         return SystemP_FAILURE;
     }
 
-    priv = HDSL_get_priv(handle);
+    priv = handle->priv;
 
     end = ClockP_getTimeUsec() + timeout;
 
@@ -790,27 +795,25 @@ int32_t HDSL_read_pc_short_msg(HDSL_Handle handle, uint8_t addr, uint8_t *data, 
     return SystemP_SUCCESS;
 }
 
-int32_t HDSL_write_pc_long_msg(HDSL_Handle handle, uint16_t addr, uint8_t offsetEnable, uint8_t addrType, uint8_t length, uint16_t offset, uint64_t timeout)
+int32_t HDSL_write_pc_long_msg(HDSL_Handle handle, uint16_t addr, uint8_t offset_enable, uint8_t addr_type, uint8_t length, uint16_t offset, uint64_t timeout)
 {
     uint64_t end;
     HDSL_Priv *priv;
 
-    if(handle == NULL)
+    /* Validate parameters, priv, and hdsl_interface pointers */
+    if((handle == NULL) ||
+       (handle->priv == NULL) ||
+       (handle->priv->hdsl_interface == NULL) ||
+       (addr > 0x3FF) ||                                    /* 10-bit address */
+       (offset_enable > HDSL_LONG_MSG_ADDR_WITH_OFFSET) ||  /* Boolean: 0 or 1 */
+       (addr_type > HDSL_LONG_MSG_ADDR_INDIRECT) ||         /* DIRECT = 0, INDIRECT = 1 */
+       (length > HDSL_LONG_MSG_LENGTH_8) ||                 /* 0-3 valid */
+       (offset > 0x7FFF))                                   /* 15-bit offset */
     {
         return SystemP_FAILURE;
     }
 
-    /* Validate parameters */
-    if((addr > 0x3FF) ||                              /* 10-bit address */
-       (offsetEnable > 1) ||                          /* Boolean: 0 or 1 */
-       (addrType > 1) ||                              /* DIRECT=0, INDIRECT=1 */
-       (length > HDSL_LONG_MSG_LENGTH_8) ||           /* 0-3 valid */
-       (offset > 0x7FFF))                             /* 15-bit offset */
-    {
-        return SystemP_FAILURE;
-    }
-
-    priv = HDSL_get_priv(handle);
+    priv = handle->priv;
 
     end = ClockP_getTimeUsec() + timeout;
 
@@ -838,11 +841,11 @@ int32_t HDSL_write_pc_long_msg(HDSL_Handle handle, uint16_t addr, uint8_t offset
         Bits 1:0 contain bits 9:8 of 10 bit address for long message
     */
     priv->hdsl_interface->PC_ADD_H = (PC_ADD_H_LONG_MSG_ENABLE) |
-                                          (PC_ADD_H_LONG_MSG_WRITE) |
-                                          (offsetEnable << PC_ADD_H_OFFSET_EN_SHIFT) |
-                                          (addrType << PC_ADD_H_ADDR_TYPE_SHIFT) |
-                                          (length << PC_ADD_H_LENGTH_SHIFT) |
-                                          ((addr & PC_ADD_H_ADDR_HIGH_MASK) >> 8);
+                                     (PC_ADD_H_LONG_MSG_WRITE) |
+                                     (offset_enable << PC_ADD_H_OFFSET_EN_SHIFT) |
+                                     (addr_type << PC_ADD_H_ADDR_TYPE_SHIFT) |
+                                     (length << PC_ADD_H_LENGTH_SHIFT) |
+                                     ((addr & PC_ADD_H_ADDR_HIGH_MASK) >> 8);
 
     /*
         Setting PC_OFF_L
@@ -880,27 +883,25 @@ int32_t HDSL_write_pc_long_msg(HDSL_Handle handle, uint16_t addr, uint8_t offset
     return SystemP_SUCCESS;
 }
 
-int32_t HDSL_read_pc_long_msg(HDSL_Handle handle, uint16_t addr, uint8_t offsetEnable, uint8_t addrType, uint8_t length, uint16_t offset, uint64_t timeout)
+int32_t HDSL_read_pc_long_msg(HDSL_Handle handle, uint16_t addr, uint8_t offset_enable, uint8_t addr_type, uint8_t length, uint16_t offset, uint64_t timeout)
 {
     uint64_t end;
     HDSL_Priv *priv;
 
-    if(handle == NULL)
-    {
-        return SystemP_FAILURE;
-    }
-
-    /* Validate parameters */
-    if((addr > 0x3FF) ||                                    /* 10-bit address */
-       (offsetEnable > HDSL_LONG_MSG_ADDR_WITH_OFFSET) ||   /* Boolean: 0 or 1 */
-       (addrType > HDSL_LONG_MSG_ADDR_INDIRECT) ||          /* DIRECT = 0, INDIRECT = 1 */
+    /* Validate parameters, priv, and hdsl_interface pointers */
+    if((handle == NULL) ||
+       (handle->priv == NULL) ||
+       (handle->priv->hdsl_interface == NULL) ||
+       (addr > 0x3FF) ||                                    /* 10-bit address */
+       (offset_enable > HDSL_LONG_MSG_ADDR_WITH_OFFSET) ||  /* Boolean: 0 or 1 */
+       (addr_type > HDSL_LONG_MSG_ADDR_INDIRECT) ||         /* DIRECT = 0, INDIRECT = 1 */
        (length > HDSL_LONG_MSG_LENGTH_8) ||                 /* 0-3 valid */
        (offset > 0x7FFF))                                   /* 15-bit offset */
     {
         return SystemP_FAILURE;
     }
 
-    priv = HDSL_get_priv(handle);
+    priv = handle->priv;
 
     end = ClockP_getTimeUsec() + timeout;
 
@@ -928,11 +929,11 @@ int32_t HDSL_read_pc_long_msg(HDSL_Handle handle, uint16_t addr, uint8_t offsetE
         Bits 1:0 contain bits 9:8 of 10 bit address for long message
     */
     priv->hdsl_interface->PC_ADD_H = (PC_ADD_H_LONG_MSG_ENABLE) |
-                                          (PC_ADD_H_LONG_MSG_READ) |
-                                          (offsetEnable << PC_ADD_H_OFFSET_EN_SHIFT) |
-                                          (addrType << PC_ADD_H_ADDR_TYPE_SHIFT) |
-                                          (length << PC_ADD_H_LENGTH_SHIFT) |
-                                          ((addr & PC_ADD_H_ADDR_HIGH_MASK) >> 8);
+                                     (PC_ADD_H_LONG_MSG_READ) |
+                                     (offset_enable << PC_ADD_H_OFFSET_EN_SHIFT) |
+                                     (addr_type << PC_ADD_H_ADDR_TYPE_SHIFT) |
+                                     (length << PC_ADD_H_LENGTH_SHIFT) |
+                                     ((addr & PC_ADD_H_ADDR_HIGH_MASK) >> 8);
 
     /*
         Setting PC_OFF_L
@@ -974,18 +975,13 @@ int32_t HDSL_write_pc_buffer(HDSL_Handle handle, uint8_t buff_off, uint8_t data)
 {
     HDSL_Priv *priv;
 
-    if(handle == NULL)
+    /* Validate parameters, priv, and hdsl_interface pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (buff_off > HDSL_PC_BUFFER_MAX_INDEX))
     {
         return SystemP_FAILURE;
     }
 
-    priv = HDSL_get_priv(handle);
-
-    /* Bounds check on buff_off parameter (0-7) */
-    if(buff_off > HDSL_PC_BUFFER_MAX_INDEX)
-    {
-        return SystemP_FAILURE;
-    }
+    priv = handle->priv;
 
     switch(buff_off)
     {
@@ -1024,23 +1020,13 @@ int32_t HDSL_read_pc_buffer(HDSL_Handle handle, uint8_t buff_off, uint8_t *data)
 {
     HDSL_Priv *priv;
 
-    if(handle == NULL)
+    /* Validate parameters, priv, and hdsl_interface pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (data == NULL) || (buff_off > HDSL_PC_BUFFER_MAX_INDEX))
     {
         return SystemP_FAILURE;
     }
 
-    if(data == NULL)
-    {
-        return SystemP_FAILURE;
-    }
-
-    priv = HDSL_get_priv(handle);
-
-    /* Bounds check on buff_off parameter (0-7) */
-    if(buff_off > HDSL_PC_BUFFER_MAX_INDEX)
-    {
-        return SystemP_FAILURE;
-    }
+    priv = handle->priv;
 
     switch(buff_off)
     {
@@ -1079,12 +1065,13 @@ int32_t HDSL_get_pc_long_msg_error(HDSL_Handle handle, uint8_t *error)
 {
     HDSL_Priv *priv;
 
-    if((handle == NULL) || (error == NULL))
+    /* Validate parameters, priv, and hdsl_interface pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (error == NULL))
     {
         return SystemP_FAILURE;
     }
 
-    priv = HDSL_get_priv(handle);
+    priv = handle->priv;
 
     /* Check bit 5 of PC_ADD_H register for encoder error status */
     if(priv->hdsl_interface->PC_ADD_H & PC_ADD_H_LONG_MSG_ERROR)
@@ -1101,30 +1088,32 @@ int32_t HDSL_get_pc_long_msg_error(HDSL_Handle handle, uint8_t *error)
 
 int32_t HDSL_get_sync_ctrl(HDSL_Handle handle, uint8_t *ctrl)
 {
-    int32_t status = SystemP_FAILURE;
     HDSL_Priv *priv;
 
-    if((handle != NULL) && (ctrl != NULL))
+    /* Validate parameters, priv, and hdsl_interface pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (ctrl == NULL))
     {
-        priv = HDSL_get_priv(handle);
-
-        *ctrl = (uint8_t)(priv->hdsl_interface->SYNC_CTRL);
-        status = SystemP_SUCCESS;
+        return SystemP_FAILURE;
     }
 
-    return status;
+    priv = handle->priv;
+
+    *ctrl = (uint8_t)(priv->hdsl_interface->SYNC_CTRL);
+
+    return SystemP_SUCCESS;
 }
 
 int32_t HDSL_set_sync_ctrl(HDSL_Handle handle, uint8_t val)
 {
     HDSL_Priv *priv;
 
-    if(handle == NULL)
+    /* Validate handle, priv, and hdsl_interface pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL))
     {
         return SystemP_FAILURE;
     }
 
-    priv = HDSL_get_priv(handle);
+    priv = handle->priv;
 
     priv->hdsl_interface->SYNC_CTRL = val;
     return SystemP_SUCCESS;
@@ -1132,46 +1121,49 @@ int32_t HDSL_set_sync_ctrl(HDSL_Handle handle, uint8_t val)
 
 int32_t HDSL_get_master_qm(HDSL_Handle handle, uint8_t *qm)
 {
-    int32_t status = SystemP_FAILURE;
     HDSL_Priv *priv;
 
-    if((handle != NULL) && (qm != NULL))
+    /* Validate parameters, priv, and hdsl_interface pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (qm == NULL))
     {
-        priv = HDSL_get_priv(handle);
-
-        *qm = (uint8_t)priv->hdsl_interface->MASTER_QM;
-        status = SystemP_SUCCESS;
+        return SystemP_FAILURE;
     }
 
-    return status;
+    priv = handle->priv;
+
+    *qm = (uint8_t)priv->hdsl_interface->MASTER_QM;
+
+    return SystemP_SUCCESS;
 }
 
 int32_t HDSL_get_edges(HDSL_Handle handle, uint8_t *edges)
 {
-    int32_t status = SystemP_FAILURE;
     HDSL_Priv *priv;
 
-    if((handle != NULL) && (edges != NULL))
+    /* Validate parameters, priv, and hdsl_interface pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (edges == NULL))
     {
-        priv = HDSL_get_priv(handle);
-
-        *edges = (uint8_t)priv->hdsl_interface->EDGES;
-        status = SystemP_SUCCESS;
+        return SystemP_FAILURE;
     }
 
-    return status;
+    priv = handle->priv;
+
+    *edges = (uint8_t)priv->hdsl_interface->EDGES;
+
+    return SystemP_SUCCESS;
 }
 
 int32_t HDSL_set_pc_addr(HDSL_Handle handle, uint8_t pc_addrh, uint8_t pc_addrl, uint8_t pc_offh, uint8_t pc_offl)
 {
     HDSL_Priv *priv;
 
-    if(handle == NULL)
+    /* Validate handle, priv, and hdsl_interface pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL))
     {
         return SystemP_FAILURE;
     }
 
-    priv = HDSL_get_priv(handle);
+    priv = handle->priv;
 
     priv->hdsl_interface->PC_ADD_L = pc_addrl;
     priv->hdsl_interface->PC_ADD_H = pc_addrh;
@@ -1185,12 +1177,13 @@ int32_t HDSL_set_pc_ctrl(HDSL_Handle handle, uint8_t value)
 {
     HDSL_Priv *priv;
 
-    if(handle == NULL)
+    /* Validate handle, priv, and hdsl_interface pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL))
     {
         return SystemP_FAILURE;
     }
 
-    priv = HDSL_get_priv(handle);
+    priv = handle->priv;
 
     priv->hdsl_interface->PC_CTRL = value;
     return SystemP_SUCCESS;
@@ -1198,86 +1191,84 @@ int32_t HDSL_set_pc_ctrl(HDSL_Handle handle, uint8_t value)
 
 int32_t HDSL_get_delay(HDSL_Handle handle, uint8_t *delay)
 {
-    int32_t status = SystemP_FAILURE;
     HDSL_Priv *priv;
 
-    if((handle != NULL) && (delay != NULL))
+    /* Validate parameters, priv, and hdsl_interface pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (delay == NULL))
     {
-        priv = HDSL_get_priv(handle);
-
-        *delay = (uint8_t)priv->hdsl_interface->DELAY;
-        status = SystemP_SUCCESS;
+        return SystemP_FAILURE;
     }
 
-    return status;
+    priv = handle->priv;
+
+    *delay = (uint8_t)priv->hdsl_interface->DELAY;
+
+    return SystemP_SUCCESS;
 }
 
 int32_t HDSL_get_enc_id(HDSL_Handle handle, uint32_t byte, uint8_t *enc_id)
 {
-    int32_t status = SystemP_FAILURE;
     HDSL_Priv *priv;
 
-    if((handle != NULL) && (enc_id != NULL))
+    /* Validate parameters, priv, and hdsl_interface pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (enc_id == NULL) || (byte >= HDSL_NUM_ENC_ID_BYTES))
     {
-        priv = HDSL_get_priv(handle);
-
-        /* Bounds check on byte parameter (0-2) */
-        if(byte < HDSL_NUM_ENC_ID_BYTES)
-        {
-            switch(byte)
-            {
-                case 0:
-                    *enc_id = (uint8_t)priv->hdsl_interface->ENC_ID0;
-                    status = SystemP_SUCCESS;
-                    break;
-                case 1:
-                    *enc_id = (uint8_t)priv->hdsl_interface->ENC_ID1;
-                    status = SystemP_SUCCESS;
-                    break;
-                case 2:
-                    *enc_id = (uint8_t)priv->hdsl_interface->ENC_ID2;
-                    status = SystemP_SUCCESS;
-                    break;
-                default:
-                    break;
-            }
-        }
+        return SystemP_FAILURE;
     }
 
-    return status;
+    priv = handle->priv;
+
+    switch(byte)
+    {
+        case 0:
+            *enc_id = (uint8_t)priv->hdsl_interface->ENC_ID0;
+            break;
+        case 1:
+            *enc_id = (uint8_t)priv->hdsl_interface->ENC_ID1;
+            break;
+        case 2:
+            *enc_id = (uint8_t)priv->hdsl_interface->ENC_ID2;
+            break;
+        default:
+            return SystemP_FAILURE;
+    }
+
+    return SystemP_SUCCESS;
 }
 
 int32_t HDSL_get_src_loc(HDSL_Handle handle, void **src_loc)
 {
-    int32_t status = SystemP_FAILURE;
     HDSL_Priv *priv;
 
-    if((handle != NULL) && (src_loc != NULL))
+    /* Validate parameters, priv, and hdsl_interface pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (src_loc == NULL))
     {
-        priv = HDSL_get_priv(handle);
-
-        /* returns HDSL interface struct memory location */
-        *src_loc = (void *)priv->hdsl_interface;
-        status = SystemP_SUCCESS;
+        return SystemP_FAILURE;
     }
 
-    return status;
+    priv = handle->priv;
+
+    /* returns HDSL interface struct memory location */
+    *src_loc = (void *)priv->hdsl_interface;
+
+    return SystemP_SUCCESS;
 }
 
 int32_t HDSL_get_length(HDSL_Handle handle, uint32_t *length)
 {
-    int32_t status = SystemP_FAILURE;
     HDSL_Priv *priv;
 
-    if((handle != NULL) && (length != NULL))
+    /* Validate parameters, priv, and hdsl_interface pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (length == NULL))
     {
-        priv = HDSL_get_priv(handle);
-
-        *length = sizeof(*(priv->hdsl_interface));
-        status = SystemP_SUCCESS;
+        return SystemP_FAILURE;
     }
 
-    return status;
+    priv = handle->priv;
+
+    *length = sizeof(*(priv->hdsl_interface));
+
+    return SystemP_SUCCESS;
 }
 
 
@@ -1285,7 +1276,8 @@ int32_t HDSL_config_copy_table(HDSL_Handle handle, const HDSL_CopyTable *copy_ta
 {
     HDSL_Priv *priv;
 
-    if((handle == NULL) || (copy_table == NULL))
+    /* Validate parameters, priv, and base_mem_addr pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->base_mem_addr == NULL) || (copy_table == NULL))
     {
         return SystemP_FAILURE;
     }
@@ -1298,7 +1290,7 @@ int32_t HDSL_config_copy_table(HDSL_Handle handle, const HDSL_CopyTable *copy_ta
         return SystemP_FAILURE;
     }
 
-    priv = HDSL_get_priv(handle);
+    priv = handle->priv;
 
     HW_WR_REG16((uint8_t *)priv->base_mem_addr + PART1_LOAD_START_OFFSET, (uint16_t)copy_table->load_addr1);
     HW_WR_REG16((uint8_t *)priv->base_mem_addr + PART1_RUN_START_OFFSET, (uint16_t)copy_table->run_addr1);
@@ -1333,8 +1325,12 @@ int32_t HDSL_hw_init(HDSL_Handle handle)
      *   0 = Use UART clock
      *   1 = Use Core clock */
 
-    /* Validate handle */
-    if(handle == NULL)
+    /* Validate handle, priv, attrs, pruicss_handle, and hwAttrs pointers */
+    if((handle == NULL) ||
+       (handle->priv == NULL) ||
+       (handle->attrs == NULL) ||
+       (handle->priv->pruicss_handle == NULL) ||
+       (handle->priv->pruicss_handle->hwAttrs == NULL))
     {
         return SystemP_FAILURE;
     }
@@ -1436,12 +1432,13 @@ int32_t HDSL_set_res(HDSL_Handle handle, uint32_t res)
 {
     HDSL_Priv *priv;
 
-    if(handle == NULL)
+    /* Validate handle and priv pointer */
+    if((handle == NULL) || (handle->priv == NULL))
     {
         return SystemP_FAILURE;
     }
 
-    priv = HDSL_get_priv(handle);
+    priv = handle->priv;
 
     priv->res = res;
     return SystemP_SUCCESS;
@@ -1449,30 +1446,31 @@ int32_t HDSL_set_res(HDSL_Handle handle, uint32_t res)
 
 int32_t HDSL_get_res(HDSL_Handle handle, uint32_t *res)
 {
-    int32_t status = SystemP_FAILURE;
     HDSL_Priv *priv;
 
-    if((handle != NULL) && (res != NULL))
+    /* Validate parameters and priv pointer */
+    if((handle == NULL) || (handle->priv == NULL) || (res == NULL))
     {
-        priv = HDSL_get_priv(handle);
-
-        *res = priv->res;
-        status = SystemP_SUCCESS;
+        return SystemP_FAILURE;
     }
 
-    return status;
+    priv = handle->priv;
+
+    *res = priv->res;
+    return SystemP_SUCCESS;
 }
 
 int32_t HDSL_set_multi_turn(HDSL_Handle handle, uint32_t multi_turn)
 {
     HDSL_Priv *priv;
 
-    if(handle == NULL)
+    /* Validate handle and priv pointer */
+    if((handle == NULL) || (handle->priv == NULL))
     {
         return SystemP_FAILURE;
     }
 
-    priv = HDSL_get_priv(handle);
+    priv = handle->priv;
 
     priv->multi_turn = multi_turn;
     return SystemP_SUCCESS;
@@ -1480,30 +1478,31 @@ int32_t HDSL_set_multi_turn(HDSL_Handle handle, uint32_t multi_turn)
 
 int32_t HDSL_get_multi_turn(HDSL_Handle handle, uint32_t *multi_turn)
 {
-    int32_t status = SystemP_FAILURE;
     HDSL_Priv *priv;
 
-    if((handle != NULL) && (multi_turn != NULL))
+    /* Validate parameters and priv pointer */
+    if((handle == NULL) || (handle->priv == NULL) || (multi_turn == NULL))
     {
-        priv = HDSL_get_priv(handle);
-
-        *multi_turn = priv->multi_turn;
-        status = SystemP_SUCCESS;
+        return SystemP_FAILURE;
     }
 
-    return status;
+    priv = handle->priv;
+
+    *multi_turn = priv->multi_turn;
+    return SystemP_SUCCESS;
 }
 
 int32_t HDSL_set_mask(HDSL_Handle handle, uint64_t mask)
 {
     HDSL_Priv *priv;
 
-    if(handle == NULL)
+    /* Validate handle and priv pointer */
+    if((handle == NULL) || (handle->priv == NULL))
     {
         return SystemP_FAILURE;
     }
 
-    priv = HDSL_get_priv(handle);
+    priv = handle->priv;
 
     priv->mask = mask;
     return SystemP_SUCCESS;
@@ -1511,16 +1510,16 @@ int32_t HDSL_set_mask(HDSL_Handle handle, uint64_t mask)
 
 int32_t HDSL_get_mask(HDSL_Handle handle, uint64_t *mask)
 {
-    int32_t status = SystemP_FAILURE;
     HDSL_Priv *priv;
 
-    if((handle != NULL) && (mask != NULL))
+    /* Validate parameters and priv pointer */
+    if((handle == NULL) || (handle->priv == NULL) || (mask == NULL))
     {
-        priv = HDSL_get_priv(handle);
-
-        *mask = priv->mask;
-        status = SystemP_SUCCESS;
+        return SystemP_FAILURE;
     }
 
-    return status;
+    priv = handle->priv;
+
+    *mask = priv->mask;
+    return SystemP_SUCCESS;
 }

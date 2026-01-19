@@ -109,7 +109,7 @@
  * - **Handle validation**: All public APIs validate the handle parameter for NULL
  * - **Array bounds checking**: APIs with array/index parameters validate bounds before access
  * - **Internal structure validation**: Internal structures (attrs, priv, endat3_interface,
- *   pruicss_handle) are validated once during endat3_init() and assumed valid in subsequent calls
+ *   pruicss_handle) are validated for NULL before dereferencing to prevent undefined behavior
  */
 
 /* ========================================================================== */
@@ -223,7 +223,7 @@ static void endat3_pruicss_load_run_fw(void);
 static void endat3_continuous_position_fetch(endat3_handle handle);
 static void endat3_position_loop_decide_termination(void *args);
 static int32_t endat3_loop_task_create(void);
-static void endat3_process_periodic_command(endat3_handle handle[], uint8_t is_cap_mode);
+static int32_t endat3_process_periodic_command(endat3_handle handle[], uint8_t is_cap_mode);
 static void endat3_display_fw_version(void);
 
 /* ========================================================================== */
@@ -417,6 +417,11 @@ static void endat3_pruicss_init(void)
     uint8_t pru_id = CONFIG_ENDAT3_0_PRUICSS_PRU_ID;
 
     gPruIcssXHandle = PRUICSS_open(CONFIG_PRU_ICSS0);
+    if(gPruIcssXHandle == NULL)
+    {
+        DebugP_log("\r\n ERROR: PRUICSS_open failed - NULL handle returned\n");
+        DebugP_assert(0);
+    }
 
     /* Configure g_mux_en to 1 in ICSSG_SA_MX_REG Register. */
 #ifdef CONFIG_ENDAT3_0_G_MUX_EN
@@ -642,10 +647,9 @@ static int32_t endat3_loop_task_create(void)
  *
  * This function implements the complete periodic trigger mode workflow
  * NOTE:
- * - Any function call failure will lead to exit of the function
  * - Switch back to host trigger mode is outside this function
  */
-static void endat3_process_periodic_command(endat3_handle handle[], uint8_t is_cap_mode)
+static int32_t endat3_process_periodic_command(endat3_handle handle[], uint8_t is_cap_mode)
 {
     int32_t status;
     uint8_t current_opmode;
@@ -655,6 +659,28 @@ static void endat3_process_periodic_command(endat3_handle handle[], uint8_t is_c
     uint16_t cmd;
     uint8_t is_busy;
     uint8_t is_valid;
+    uint32_t i;
+
+    if(handle == NULL)
+    {
+        DebugP_log("\r\n\n| ERROR: NULL handle[]\n");
+        return SystemP_FAILURE;
+    }
+
+    for(i = 0; i < CONFIG_ENDAT3_NUM_INSTANCES; i++)
+    {
+        if(handle[i] == NULL)
+        {
+            DebugP_log("\r\n\n| ERROR: NULL handle\n");
+            return SystemP_FAILURE;
+        }
+    }
+
+    if(is_cap_mode > 1)
+    {
+        DebugP_log("\r\n\n| ERROR: Invalid is_cap_mode value\n");
+        return SystemP_FAILURE;
+    }
 
     memset(&gEndat3PeriodicInterface, 0, sizeof(endat3_periodic_interface));
 
@@ -666,13 +692,13 @@ static void endat3_process_periodic_command(endat3_handle handle[], uint8_t is_c
         if(DebugP_scanf("%llu\n", &gEndat3PeriodicInterface.iep_reset_count) < 0)
         {
             DebugP_log("\r| ERROR: invalid value\r\n|\r\n|\r\n|\r\n");
-            return;
+            return SystemP_FAILURE;
         }
 
-        if((gEndat3PeriodicInterface.iep_reset_count <= ENDAT3_IEP_COUNTER_INCREMENT)  || (gEndat3PeriodicInterface.iep_reset_count > UINT32_MAX))
+        if((gEndat3PeriodicInterface.iep_reset_count == 0) || (gEndat3PeriodicInterface.iep_reset_count <= ENDAT3_IEP_COUNTER_INCREMENT) || (gEndat3PeriodicInterface.iep_reset_count > UINT32_MAX))
         {
-            DebugP_log("\r| ERROR:  ERROR: invalid value entered, maximum value allowed is %u\r\n|\r\n|\r\n|\r\n", UINT32_MAX);
-            return;
+            DebugP_log("\r| ERROR:  ERROR: invalid value entered. 0 is not allowed and maximum value allowed is %u\r\n|\r\n|\r\n|\r\n", UINT32_MAX);
+            return SystemP_FAILURE;
         }
 #else
         DebugP_log("\r| Periodic CAP mode cycle time will be equal to EPWM SYNC OUT frequency. NOTE: In SysConfig, EPWM and EPWM to IEP LATCH XBAR configuration must be done. \n|\n|\n|\n");
@@ -684,20 +710,20 @@ static void endat3_process_periodic_command(endat3_handle handle[], uint8_t is_c
         if(DebugP_scanf("%llu\n", &gEndat3PeriodicInterface.iep_reset_count) < 0)
         {
             DebugP_log("\r| ERROR: invalid value\r\n|\r\n|\r\n|\r\n");
-            return;
+            return SystemP_FAILURE;
         }
 
-        if(gEndat3PeriodicInterface.iep_reset_count <= ENDAT3_IEP_COUNTER_INCREMENT)
+        if((gEndat3PeriodicInterface.iep_reset_count == 0) || (gEndat3PeriodicInterface.iep_reset_count <= ENDAT3_IEP_COUNTER_INCREMENT))
         {
             DebugP_log("\r| ERROR: invalid value\r\n|\r\n|\r\n|\r\n");
-            return;
+            return SystemP_FAILURE;
         }
 
         DebugP_log("\r| Enter IEP trigger time(must be less than or equal to IEP reset cycle, in IEP cycles): ");
         if(DebugP_scanf("%llu\n", &gEndat3PeriodicInterface.periodic_trigger_count[CONFIG_ENDAT3_0]) < 0 )
         {
             DebugP_log("\r| ERROR: invalid value\r\n|\r\n|\r\n|\r\n");
-            return;
+            return SystemP_FAILURE;
         }
 
         if((gEndat3PeriodicInterface.periodic_trigger_count[CONFIG_ENDAT3_0] > gEndat3PeriodicInterface.iep_reset_count) ||
@@ -705,7 +731,7 @@ static void endat3_process_periodic_command(endat3_handle handle[], uint8_t is_c
         {
             DebugP_log("\r| ERROR: Trigger time (%u) must be <= Reset cycle (%u) and > %u\r\n", gEndat3PeriodicInterface.periodic_trigger_count[CONFIG_ENDAT3_0], gEndat3PeriodicInterface.iep_reset_count, ENDAT3_IEP_COUNTER_INCREMENT);
             DebugP_log("\r| ERROR: invalid value\r\n|\r\n|\r\n|\r\n");
-            return;
+            return SystemP_FAILURE;
         }
     }
 
@@ -725,7 +751,7 @@ static void endat3_process_periodic_command(endat3_handle handle[], uint8_t is_c
             {
                 DebugP_log(" - Invalid parameters\r\n");
             }
-            return;
+            return SystemP_FAILURE;
         }
     }
     else
@@ -741,7 +767,7 @@ static void endat3_process_periodic_command(endat3_handle handle[], uint8_t is_c
             {
                 DebugP_log(" - Invalid parameters\r\n");
             }
-            return;
+            return SystemP_FAILURE;
         }
     }
 
@@ -751,14 +777,14 @@ static void endat3_process_periodic_command(endat3_handle handle[], uint8_t is_c
         DebugP_log("\r\n| ERROR: OS not allowing continuous mode as related Task creation failed\r\n|\r\n|\r\n");
         DebugP_log("Task_create() failed!\n");
         gEndat3PositionLoopStatus = ENDAT3_POSITION_LOOP_STOP;
-        return;
+        return SystemP_FAILURE;
     }
 
     /* Configure and start periodic mode */
     if(endat3_config_periodic_mode(&gEndat3PeriodicInterface) != ENDAT3_SUCCESS)
     {
         DebugP_log("\r| ERROR: endat3_config_periodic_mode failed\r\n|\r\n|\r\n");
-        return;
+        return SystemP_FAILURE;
     }
 
     DebugP_log("\r\n| Periodic mode configured successfully");
@@ -781,26 +807,26 @@ static void endat3_process_periodic_command(endat3_handle handle[], uint8_t is_c
     if(endat3_set_expected_tx_frame_count(handle[CONFIG_ENDAT3_0], 1) != ENDAT3_SUCCESS)
     {
         DebugP_log("\r\n| ERROR: Failed to set expected frame count\r\n");
-        return;
+        return SystemP_FAILURE;
     }
 
     if(endat3_send_command(handle[CONFIG_ENDAT3_0], cmd, 1) != ENDAT3_SUCCESS)
     {
         DebugP_log("\r\n| ERROR: Failed to send command\r\n");
-        return;
+        return SystemP_FAILURE;
     }
 
     if(endat3_set_busy(handle[CONFIG_ENDAT3_0], ENCODER_BUSY) != ENDAT3_SUCCESS)
     {
         DebugP_log("\r\n| ERROR: Failed to set encoder busy state\r\n");
-        return;
+        return SystemP_FAILURE;
     }
 
     /* Release start trigger for periodic mode operation */
     if(endat3_release_start_trigger(handle[CONFIG_ENDAT3_0]) != ENDAT3_SUCCESS)
     {
         DebugP_log("\r\n| ERROR: Failed to release start trigger\r\n");
-        return;
+        return SystemP_FAILURE;
     }
 
     /* Wait for periodic mode to start */
@@ -810,7 +836,7 @@ static void endat3_process_periodic_command(endat3_handle handle[], uint8_t is_c
     if(endat3_get_operating_mode(handle[CONFIG_ENDAT3_0], &current_opmode) != ENDAT3_SUCCESS)
     {
         DebugP_log("\r\n| ERROR: Failed to get operating mode\r\n");
-        return;
+        return SystemP_FAILURE;
     }
     DebugP_log("\r\n| Current operating mode: %u (0 = Periodic CMP, 1 = Host trigger, 2 = Periodic CAP)", current_opmode);
 
@@ -832,8 +858,9 @@ static void endat3_process_periodic_command(endat3_handle handle[], uint8_t is_c
             if(endat3_stop_periodic_mode(&gEndat3PeriodicInterface) != ENDAT3_SUCCESS)
             {
                 DebugP_log("\r| ERROR: endat3_stop_periodic_mode failed\r\n|\r\n|\r\n");
+                return SystemP_FAILURE;
             }
-            return;
+            return SystemP_SUCCESS;
         }
         else
         {
@@ -874,6 +901,7 @@ static void endat3_process_periodic_command(endat3_handle handle[], uint8_t is_c
             ClockP_usleep(PERIODIC_MODE_LOOP_DELAY_US);
         }
     }
+    return SystemP_SUCCESS;
 }
 
 static void endat3_display_fw_version(void)
@@ -1031,7 +1059,11 @@ void endat3_diagnostic_main(void *args)
         if(cmd_type == ENDAT3_CMD_TYPE_PERIODIC_CMP)
         {
             /* Process periodic trigger mode with dedicated function */
-            endat3_process_periodic_command(gAppEndat3Handle, 0);
+            status = endat3_process_periodic_command(gAppEndat3Handle, 0);
+            if(status != SystemP_SUCCESS)
+            {
+                DebugP_log("\r\nERROR: endat3_process_periodic_command() failed ");
+            }
 
             /* Set firmware back to host trigger mode */
             DebugP_log("\r\n| Setting firmware to host trigger mode...");
@@ -1055,7 +1087,11 @@ void endat3_diagnostic_main(void *args)
         else if(cmd_type == ENDAT3_CMD_TYPE_PERIODIC_CAP)
         {
             /* Process periodic trigger mode with dedicated function */
-            endat3_process_periodic_command(gAppEndat3Handle, 1);
+            status = endat3_process_periodic_command(gAppEndat3Handle, 1);
+            if(status != SystemP_SUCCESS)
+            {
+                DebugP_log("\r\nERROR: endat3_process_periodic_command() failed ");
+            }
 
             /* Set firmware back to host trigger mode */
             DebugP_log("\r\n| Setting firmware to host trigger mode...");

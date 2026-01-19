@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023 Texas Instruments Incorporated
+ *  Copyright (C) 2023-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -48,8 +48,6 @@
         } \
     } while(0) \
 
-
-
 uint8_t tamagawa_calculate_crc(uint8_t *s, uint8_t len)
 {
     uint8_t crc = 0;
@@ -75,7 +73,7 @@ uint8_t tamagawa_calculate_crc(uint8_t *s, uint8_t len)
 
 int32_t tamagawa_handle_rx(volatile struct tamagawa_uart_interface *tamagawa_interface, uint8_t *p)
 {
-    int ret = 0;
+    int32_t ret = SystemP_SUCCESS;
     switch(tamagawa_interface->data_id)
     {
         case DATA_ID_0:
@@ -121,7 +119,7 @@ int32_t tamagawa_handle_rx(volatile struct tamagawa_uart_interface *tamagawa_int
             break;
 
         default:
-            ret = -1;
+            ret = SystemP_FAILURE;
             break;
     }
 
@@ -131,7 +129,7 @@ int32_t tamagawa_handle_rx(volatile struct tamagawa_uart_interface *tamagawa_int
 
 int32_t tamagawa_command_build(volatile struct tamagawa_uart_interface *tamagawa_interface, uint8_t *tx, uint8_t *tx_size, uint8_t *rx_size)
 {
-    int ret = 0;
+    int32_t ret = SystemP_SUCCESS;
 
     switch(tamagawa_interface->data_id)
     {
@@ -195,7 +193,7 @@ int32_t tamagawa_command_build(volatile struct tamagawa_uart_interface *tamagawa
             break;
 
         default:
-            ret = -1;
+            ret = SystemP_FAILURE;
             break;
     }
 
@@ -207,41 +205,40 @@ int32_t tamagawa_command_process(volatile struct tamagawa_uart_interface *tamaga
 {
     int32_t          transferOK;
     UART_Transaction trans;
+    uint8_t          tx[MAX_TX_FRAME];
+    uint8_t          rx[MAX_RX_FRAME];
+    uint8_t          tx_size = 0, rx_size = 0;
 
     UART_lld_Transaction_init(&trans);
-    uint8_t tx[MAX_TX_FRAME];
-    uint8_t rx[MAX_RX_FRAME];
-    uint8_t tx_size = 0, rx_size = 0;
     tamagawa_interface->data_id = cmd;
 
     /* Command build */
     cmd = tamagawa_command_build(tamagawa_interface, tx, &tx_size, &rx_size);
-    if(cmd < 0)
+    if(cmd != SystemP_SUCCESS)
     {
         return cmd;
     }
 
-    /* Write data into Tx fifo*/
+    /* Write data into Tx FIFO */
     trans.buf   = &tx[0U];
     trans.count = tx_size;
-    /*configure GPIO pin high just before TX start (RTSn high)*/
+    /*configure GPIO pin high just before TX start (RTSn high) */
     GPIO_pinWriteHigh(tamagawa_interface->gpio_base_address, tamagawa_interface->gpio_pin_number);
     transferOK = UART_lld_write(gUartHandle[tamagawa_interface->uart_instance], trans.buf, trans.count, trans.timeout, NULL);
-    /*configure GPIO pin low just after TX complete (RTSn low)*/
+    /*configure GPIO pin low just after TX complete (RTSn low) */
     GPIO_pinWriteLow(tamagawa_interface->gpio_base_address, tamagawa_interface->gpio_pin_number);
     APP_UART_ASSERT_ON_FAILURE(transferOK, trans);
 
-    /* Read data from Rx fifo */
+    /* Read data from Rx FIFO */
     trans.buf   = &rx[0U];
     trans.count = rx_size + tx_size;
     transferOK = UART_lld_read(gUartHandle[tamagawa_interface->uart_instance], trans.buf, trans.count, trans.timeout, NULL);
     APP_UART_ASSERT_ON_FAILURE(transferOK, trans);
 
-    /* parsing of recevied data*/
-     cmd = tamagawa_handle_rx(tamagawa_interface, rx + tx_size);
+    /* Parsing of recevied data */
+    cmd = tamagawa_handle_rx(tamagawa_interface, rx + tx_size);
 
-
-    /* CRC calculation*/
+    /* CRC calculation */
     tamagawa_interface->rx_crc = tamagawa_calculate_crc(rx + tx_size, rx_size - 1);
 
     return cmd;
@@ -252,11 +249,18 @@ int32_t tamagawa_crc_verify(volatile struct tamagawa_uart_interface *tamagawa_in
     return (tamagawa_interface->rx.crc == tamagawa_interface->rx_crc) ? 1 : 0;
 }
 
-void tamagawa_init(volatile struct tamagawa_uart_interface *tamagawa_interface, uint32_t instance , uint32_t base_address, uint32_t pin_number, uint32_t pin_direction)
+int32_t tamagawa_init(volatile struct tamagawa_uart_interface *tamagawa_interface, uint32_t instance , uint32_t base_address, uint32_t pin_number, uint32_t pin_direction)
 {
+    if(tamagawa_interface == NULL)
+    {
+        return SystemP_FAILURE;
+    }
+
     tamagawa_interface->uart_instance = instance;
     tamagawa_interface->gpio_base_address = base_address;
     tamagawa_interface->gpio_pin_number = pin_number;
     /*GPIO pin configurtaion for RTSn*/
     GPIO_setDirMode(base_address, pin_number, pin_direction);
+
+    return SystemP_SUCCESS;
 }

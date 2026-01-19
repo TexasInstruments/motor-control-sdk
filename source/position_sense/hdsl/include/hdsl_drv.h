@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2021-2025 Texas Instruments Incorporated
+ *  Copyright (C) 2021-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -61,30 +61,27 @@
  *  - Prevents buffer overruns and out-of-bounds memory access
  *
  *  **Internal Structure Validation:**
- *  - Internal structures (priv, attrs, pruicss_handle, hdsl_interface) are validated
- *    once during \ref HDSL_open and assumed valid in all subsequent API calls
- *  - These structures are initialized by SysConfig or application at compile time
- *  - Once validated in init, they remain constant for the driver's lifetime
- *  - This eliminates redundant validation overhead in data path functions
+ *  - All APIs validate internal structure pointers before dereferencing them
+ *  - Each function validates only the pointers it uses.
+ *  - Provides protection against NULL pointer dereferences
  *
  *  **Pointer Parameter Validation:**
  *  - Output pointer parameters (position, data, copy_table) are checked for NULL
  *  - Ensures safe dereferencing before writing output data
  *
- *  This simplified validation strategy:
- *  - Reduces instruction count in time-critical getter/setter functions
- *  - Eliminates redundant checks for structures guaranteed valid after init
- *  - Maintains safety by validating handle (most common error) and array bounds
+ *  This validation strategy:
+ *  - Validates all pointers used in each function before dereferencing
+ *  - Provides error detection and graceful failure handling
  *
- *  \subsection hdsl_validation_assumptions Safety Assumptions
- *  This validation strategy assumes:
- *  1. Applications call \ref HDSL_open successfully before using other APIs
- *  2. Applications do not modify internal driver structures (priv, attrs)
- *  3. SysConfig-generated configuration arrays are correct and immutable
- *  4. PRU-ICSS hardware remains accessible after successful init
+ *  \subsection hdsl_validation_assumptions Safety Guidelines
+ *  1. Always call \ref HDSL_open successfully before using other APIs
+ *  2. Check return values of all API calls for error detection
+ *  3. Do not modify internal driver structures (priv, attrs) directly
+ *  4. Ensure SysConfig-generated configuration is correct
  *
- *  If these assumptions are violated, undefined behavior may occur. Applications
- *  should always check the return value of \ref HDSL_open before proceeding.
+ *  The validation strategy ensures graceful failure even if these
+ *  guidelines are not followed, returning appropriate error codes rather than
+ *  causing undefined behavior.
  */
 
 /* ========================================================================== */
@@ -160,7 +157,7 @@ extern "C" {
 /** \brief Addressing of long messages without offset */
 #define HDSL_LONG_MSG_ADDR_WITHOUT_OFFSET   (0U)
 /** \brief Addressing of long messages with offset */
-#define HDSL_LONG_MSG_ADDR_WITH_OFFSET (1U)
+#define HDSL_LONG_MSG_ADDR_WITH_OFFSET      (1U)
 /** @} */
 
 
@@ -626,17 +623,7 @@ void HDSL_params_init(HDSL_Params *params);
  *                           - Non-load share: gHdslHandle[instance][0]
  *  \retval     NULL         On validation failure (invalid instance/channel, disabled channel,
  *                           NULL params, NULL priv/attrs, invalid pruicss_handle,
- *                           out of range configuration values, non-load share with >1 channel enabled)
- *
- *  \note       After successful initialization, priv, attrs, pruicss_handle, and hdsl_interface
- *              are guaranteed to be non-NULL and validated. Subsequent API calls do not re-check
- *              these pointers. Only strict NULL checks on handle parameter and array bounds are
- *              performed in APIs.
- *
- *  \note       **Assumptions**: This function assumes that pruicss_handle->hwAttrs is non-NULL
- *              after a successful PRUICSS_open(). This is guaranteed by the PRUICSS driver design
- *              where hwAttrs is initialized from compile-time configuration. Applications must
- *              ensure PRUICSS_open() succeeded before calling HDSL_open().
+ *                           out of range configuration values, non-load share with > 1 channel enabled)
  *
  */
 HDSL_Handle HDSL_open(uint32_t instance, const HDSL_Params *params);
@@ -848,11 +835,13 @@ int32_t HDSL_get_rssi(HDSL_Handle handle, uint8_t *rssi);
  *          for completing short message write operation, i.e. FRES bit will be unset for < 250 us.
  *
  *  \param[in]  handle  HDSL handle obtained from \ref HDSL_open
- *  \param[in]  addr    Address
+ *  \param[in]  addr    Address (must be 6-bit: 0x00 to 0x3F)
  *  \param[in]  data    Data
  *  \param[in]  timeout Timeout in microseconds
  *
- *  \return     SystemP_SUCCESS in case of success, SystemP_TIMEOUT in case of timeout
+ *  \return     SystemP_SUCCESS in case of success
+ *  \return     SystemP_FAILURE if handle is NULL, addr > 0x3F, or internal structures are NULL
+ *  \return     SystemP_TIMEOUT in case of timeout
  *
  *  \note       Applications should use reasonable timeout values. Extremely large values
  *              (close to UINT64_MAX) are not recommended as they may cause immediate timeout
@@ -867,11 +856,13 @@ int32_t HDSL_write_pc_short_msg(HDSL_Handle handle, uint8_t addr, uint8_t data, 
  *              for completing short message read operation, i.e. FRES bit will be unset for < 250 us.
  *
  *  \param[in]  handle  HDSL handle obtained from \ref HDSL_open
- *  \param[in]  addr    Address
+ *  \param[in]  addr    Address (must be 6-bit: 0x00 to 0x3F)
  *  \param[in]  data    Pointer to data buffer where read data will be stored
  *  \param[in]  timeout Timeout in microseconds
  *
- *  \return     SystemP_SUCCESS in case of success, SystemP_TIMEOUT in case of timeout
+ *  \return     SystemP_SUCCESS in case of success
+ *  \return     SystemP_FAILURE if handle is NULL, addr > 0x3F, data is NULL, or internal structures are NULL
+ *  \return     SystemP_TIMEOUT in case of timeout
  *
  *  \note       Applications should use reasonable timeout values. Extremely large values
  *              (close to UINT64_MAX) are not recommended as they may cause immediate timeout
@@ -901,10 +892,10 @@ int32_t HDSL_read_pc_short_msg(HDSL_Handle handle, uint8_t addr, uint8_t *data, 
  *
  *  \param[in]  handle          HDSL handle obtained from \ref HDSL_open
  *  \param[in]  addr            10 bit address for long message (0-0x3FF)
- *  \param[in]  offsetEnable    Addressing with offset enable/disable from \ref HDSL_LongMessageAddrOffsetModes (0 or 1)
- *  \param[in]  addrType        Addressing Type from \ref HDSL_LongMessageAddrTypes (0 or 1)
+ *  \param[in]  offset_enable   Addressing with offset enable/disable from \ref HDSL_LongMessageAddrOffsetModes (0 or 1)
+ *  \param[in]  addr_type       Addressing Type from \ref HDSL_LongMessageAddrTypes (0 or 1)
  *  \param[in]  length          Length from \ref HDSL_LongMessageLengths (0-3)
- *  \param[in]  offset          15 bit address offset for long message (0-0x7FFF, if offset is enabled in offsetEnable parameter)
+ *  \param[in]  offset          15 bit address offset for long message (0-0x7FFF, if offset is enabled in offset_enable parameter)
  *  \param[in]  timeout         Timeout in microseconds
  *
  *  \return     SystemP_SUCCESS if communication completed (check \ref HDSL_get_pc_long_msg_error to check if encoder accepted the parameters or reported an error)
@@ -916,7 +907,7 @@ int32_t HDSL_read_pc_short_msg(HDSL_Handle handle, uint8_t addr, uint8_t *data, 
  *              due to potential arithmetic overflow in the timeout calculation.
  *
  */
-int32_t HDSL_write_pc_long_msg(HDSL_Handle handle, uint16_t addr, uint8_t offsetEnable, uint8_t addrType, uint8_t length, uint16_t offset, uint64_t timeout);
+int32_t HDSL_write_pc_long_msg(HDSL_Handle handle, uint16_t addr, uint8_t offset_enable, uint8_t addr_type, uint8_t length, uint16_t offset, uint64_t timeout);
 
 /**
  *  \brief      Trigger a long message read operation using parameters channel
@@ -941,8 +932,8 @@ int32_t HDSL_write_pc_long_msg(HDSL_Handle handle, uint16_t addr, uint8_t offset
  *
  *  \param[in]  handle          HDSL handle obtained from \ref HDSL_open
  *  \param[in]  addr            10 bit address for long message (0-0x3FF)
- *  \param[in]  offsetEnable    Addressing with offset enable/disable from \ref HDSL_LongMessageAddrOffsetModes (0 or 1)
- *  \param[in]  addrType        Addressing Type from \ref HDSL_LongMessageAddrTypes (0 or 1)
+ *  \param[in]  offset_enable   Addressing with offset enable/disable from \ref HDSL_LongMessageAddrOffsetModes (0 or 1)
+ *  \param[in]  addr_type       Addressing Type from \ref HDSL_LongMessageAddrTypes (0 or 1)
  *  \param[in]  length          Length from \ref HDSL_LongMessageLengths (0-3)
  *  \param[in]  offset          15 bit address offset for long message (0-0x7FFF)
  *  \param[in]  timeout         Timeout in microseconds
@@ -956,7 +947,7 @@ int32_t HDSL_write_pc_long_msg(HDSL_Handle handle, uint16_t addr, uint8_t offset
  *              due to potential arithmetic overflow in the timeout calculation.
  *
  */
-int32_t HDSL_read_pc_long_msg(HDSL_Handle handle, uint16_t addr, uint8_t offsetEnable, uint8_t addrType, uint8_t length, uint16_t offset, uint64_t timeout);
+int32_t HDSL_read_pc_long_msg(HDSL_Handle handle, uint16_t addr, uint8_t offset_enable, uint8_t addr_type, uint8_t length, uint16_t offset, uint64_t timeout);
 
 /**
  *  \brief      Write Parameters channel buffer for different bytes(bytes 0-7)

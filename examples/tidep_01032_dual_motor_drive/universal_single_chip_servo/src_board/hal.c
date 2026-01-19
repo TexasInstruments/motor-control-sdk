@@ -191,7 +191,7 @@ HAL_MTR_Handle HAL_MTR_init(void *pMemory, const size_t numBytes)
         // Invalid motor number
         return((HAL_MTR_Handle)NULL);
     }
-   
+
     if(obj->motorNum == MTR_1)
     {
         // Assign gateEnableGPIO
@@ -314,7 +314,7 @@ void HAL_setupPWMs(HAL_MTR_Handle handle)
         /* Time Sync Router input 29 (ICSSG1 IEP0 SYNC0) -> Time Sync Router output 40 (0x26 + 4 = 0x2A + Time Sync Router Base */
         CSL_REG32_WR(CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + ((40 * 4) + 4), (0x10000 | 29));
     }
-   
+
     /* Configure PWMs */
     appEpwmCfg.epwmBaseAddr = gEpwm0BaseAddr;
     appEpwmCfg.epwmCh = EPWM_OUTPUT_CH_A;
@@ -419,13 +419,18 @@ void HAL_setupPWMs(HAL_MTR_Handle handle)
  *       compatibility with existing application code and provide fine-grained
  *       control over clock and delay parameters.
  */
-static void endat_process_host_command(endat_handle handle, int32_t cmd,
-                                       endat_cmd_supplement *cmd_supplement)
+static void endat_process_host_command(endat_handle handle, int32_t cmd, endat_cmd_supplement *cmd_supplement)
 {
     const endat_attrs *attrs = endat_get_attrs(handle);
     int32_t status;
     int32_t i;
     uint32_t val;
+
+    if((handle == NULL) || (attrs == NULL) || (cmd_supplement == NULL))
+    {
+        DebugP_log("\r\n\nERROR: NULL handle/attrs/cmd_supplement\n");
+        return;
+    }
 
     /* clock configuration */
     if(cmd == CLOCK_UPDATE)
@@ -510,7 +515,7 @@ static void endat_process_host_command(endat_handle handle, int32_t cmd,
  *
  * \par Configuration Overview:
  *      - **Load Share Mode**: Channel 0 for Motor 1, Channel 2 for Motor 2
- *      - **Protocol**: EnDat 2.2 
+ *      - **Protocol**: EnDat 2.2
  *      - **Trigger Mode**: Periodic trigger using IEP compare events
  *      - **Operating Frequency**: 8 MHz (default for EnDat 2.2)
  *      - **Position Command**: Command 8 (encoder send position values)
@@ -547,7 +552,7 @@ static void endat_process_host_command(endat_handle handle, int32_t cmd,
  *      IEP counter is enabled in HAL_setupSDFM() function. This function only configures
  *      IEP compare events for periodic position sampling:
  *      - **Trigger Point**: ENDAT_TRIGGER_POINT defines when position is sampled
- *      - **Command 8**: "Encoder send position values" - provides position 
+ *      - **Command 8**: "Encoder send position values" - provides position
  *
  * \par Feature Limitations:
  *      This implementation is configured for specific dual motor use case. For additional
@@ -582,7 +587,7 @@ void HAL_setupEncoder(HAL_Handle handle)
 
     /* PRU ICSS configuration */
     /*Set in constant table C29 for  tx pru*/
-#if defined(MOTOR1_ABS_ENC) 
+#if defined(MOTOR1_ABS_ENC)
 #if ENDAT_PRUICSS_INSTANCE == 1
 #if (ENDAT_PRUICSS_SLICE == PRUICSS_PRU1)
     PRUICSS_setConstantTblEntry(gPruIcssXHandle, MOTOR1_ENDAT_PRUICSS_CORE, PRUICSS_CONST_TBL_ENTRY_C29, 0xA58);
@@ -595,18 +600,18 @@ void HAL_setupEncoder(HAL_Handle handle)
     PRUICSS_setConstantTblEntry(gPruIcssXHandle, MOTOR2_ENDAT_PRUICSS_CORE, PRUICSS_CONST_TBL_ENTRY_C28, 0x258);
 #else
     PRUICSS_setConstantTblEntry(gPruIcssXHandle, MOTOR2_ENDAT_PRUICSS_CORE, PRUICSS_CONST_TBL_ENTRY_C28, 0x250);
-#endif 
-#endif 
+#endif
+#endif
 #endif /*MOTOR1_ABS_ENC*/
 
-#if defined(MOTOR1_ABS_ENC) 
+#if defined(MOTOR1_ABS_ENC)
     status = PRUICSS_disableCore(gPruIcssXHandle, MOTOR1_ENDAT_PRUICSS_CORE);
     DebugP_assert(SystemP_SUCCESS == status);
     status = PRUICSS_resetCore(gPruIcssXHandle, MOTOR1_ENDAT_PRUICSS_CORE);
     DebugP_assert(SystemP_SUCCESS == status);
 #endif
 
-#if defined(MOTOR2_ABS_ENC) 
+#if defined(MOTOR2_ABS_ENC)
     status = PRUICSS_disableCore(gPruIcssXHandle, MOTOR2_ENDAT_PRUICSS_CORE);
     DebugP_assert(SystemP_SUCCESS == status);
     status = PRUICSS_resetCore(gPruIcssXHandle, MOTOR2_ENDAT_PRUICSS_CORE);
@@ -642,7 +647,7 @@ void HAL_setupEncoder(HAL_Handle handle)
     }
 
     /*Load and run firmware*/
-#if defined(MOTOR1_ABS_ENC) 
+#if defined(MOTOR1_ABS_ENC)
 #if ENDAT_PRUICSS_SLICE == 1
     status = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_RTU_PRU(ENDAT_PRUICSS_SLICE), 0, (uint32_t *) EnDatFirmwareMultiMakeRtuPru1_0, sizeof(EnDatFirmwareMultiMakeRtuPru1_0));
 #else
@@ -661,7 +666,7 @@ void HAL_setupEncoder(HAL_Handle handle)
     }
 #endif
 
-#if defined(MOTOR2_ABS_ENC) 
+#if defined(MOTOR2_ABS_ENC)
 #if ENDAT_PRUICSS_SLICE == 1
     status = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_TX_PRU(ENDAT_PRUICSS_SLICE), 0, (uint32_t *) EnDatFirmwareMultiMakeTxPru1_0, sizeof(EnDatFirmwareMultiMakeTxPru1_0));
 #else
@@ -682,12 +687,11 @@ void HAL_setupEncoder(HAL_Handle handle)
 
     /* Check initialization acknowledgment from firmware with 5 second timeout */
     status = endat_wait_initialization(gMotorEncoderHandle, ENDAT_WAIT_5_SECOND, attrs->channel_mask);
-    if(status < 0)
+    if(status != SystemP_SUCCESS)
     {
         DebugP_log("\r\t Check whether encoder is connected properly\n");
         goto deinit;
     }
-
     /* Read encoder info at low frequency (200KHz) to avoid cable length issues */
     status = endat_config_clock(gMotorEncoderHandle, 200 * 1000);
     if(status != SystemP_SUCCESS)
@@ -695,7 +699,7 @@ void HAL_setupEncoder(HAL_Handle handle)
         DebugP_log("\r\nERROR: endat_config_clock failed\n");
         goto deinit;
     }
-    
+
 
     /* Initialize RT measurement and get encoder info for all channels */
     for(j = 0; j < ENDAT_NUM_CH_PER_SLICE_MAX; j++)
@@ -709,7 +713,7 @@ void HAL_setupEncoder(HAL_Handle handle)
                 goto deinit;
             }
             /* Get encoder information */
-            if(endat_get_encoder_info(gMotorEncoderHandle) < 0)
+            if(endat_get_encoder_info(gMotorEncoderHandle) != SystemP_SUCCESS)
             {
                 DebugP_log("\rEnDat initialization channel %d failed\n", j);
                 DebugP_log("\rexit %s due to failed initialization\n", __func__);
@@ -789,7 +793,7 @@ void HAL_setupEncoder(HAL_Handle handle)
     HW_WR_REG8(pruicss_iep + CSL_ICSS_G_PR1_IEP1_SLV_CMP_CFG_REG, event);
 
     status = endat_command_process(gMotorEncoderHandle, 8, NULL);
-    if(status < 0)
+    if(status != SystemP_SUCCESS)
     {
         DebugP_log("\r\nERROR: endat_command_process failed\n");
         goto deinit;
@@ -824,7 +828,7 @@ void HAL_getMtrEncoderPosition(ENC_Handle handle, uint32_t motorNum)
             gEndatPosReadFailCountM1++;
             return;
         }
-        else 
+        else
         {
             /*Clear the CRC status*/
             gEndatChInfo.ch[MOTOR1_ENDAT_ENABLE_CHANNEL].crc_status = 0;
@@ -856,10 +860,10 @@ void HAL_getMtrEncoderPosition(ENC_Handle handle, uint32_t motorNum)
     asm("rbit %0,%1" : "=r"(pos) : "r"(pos));
     asm("rbit %0,%1" : "=r"(rev) : "r"(rev));
     /* Cobble the multiturn data together from pos0 and pos1 and create singleturn by shifting out F1/F2 and masking the multiturn bits */
-    
+
     rev = ((rev & 0x07F00000) >> 15) | ((pos & 0xF8000000) >> 27);
     pos = (pos >> 2) & 0x1FFFFFF;
-    
+
     obj->thetaMech_pu = obj->mechanicalScaler * pos;
 
     obj->thetaMech_rad = obj->thetaMech_pu * MATH_TWO_PI;
@@ -896,7 +900,7 @@ void HAL_getMtrEncoderPosition(ENC_Handle handle, uint32_t motorNum)
 
     return;
 }
-#endif  
+#endif
 
 void HAL_setMtrCMPSSDACValue(HAL_MTR_Handle handle,
                              const uint16_t dacValH, const uint16_t dacValL)
@@ -1084,7 +1088,7 @@ void HAL_setupSDFM(HAL_Handle handle)
         goto deinit;
     }
 #endif
-    
+
     /*Initialize SDFM parameters structure */
     SDFM_paramsInit(&sdfmParams);
     sdfmParams.pruicss_handle = gPruIcssXHandle;
