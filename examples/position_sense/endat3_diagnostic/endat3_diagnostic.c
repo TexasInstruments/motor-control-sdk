@@ -890,7 +890,7 @@ static void endat3_display_fw_version(void)
 
 void endat3_diagnostic_main(void *args)
 {
-    uint16_t cmd;
+    uint16_t cmd = 0;
     int32_t status = 0;
     uint8_t cmd_type = 0;
     uint16_t req_data = 0;
@@ -1291,6 +1291,7 @@ void endat3_diagnostic_main(void *args)
             }
             else if(cmd_type == ENDAT3_CMD_TYPE_BACKGROUND)
             {
+                cmd = ENDAT3_REQ_DATA0; /* Sendlist 0 needs to be selected for Background communication commands*/
                 DebugP_log("\r\n Select background request operation:");
                 DebugP_log("\r\n 1: No Operation (NOP)");
                 DebugP_log("\r\n 2: Read from encoder memory");
