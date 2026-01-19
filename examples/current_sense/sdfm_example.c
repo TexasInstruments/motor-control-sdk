@@ -106,7 +106,7 @@ extern PRUICSS_IntcInitData icss0_intc_initdata;
 #endif
 
 /* PRU SDFM FW image info */
-typedef struct PRUSDFM_PruFwImageInfo_s 
+typedef struct PRUSDFM_PruFwImageInfo_s
 {
     const uint32_t *pPruImemImg;
     const uint32_t pruImemImgSz;
@@ -119,12 +119,12 @@ static PRUSDFM_PruFwImageInfo gPruFwImageInfo[PRU_SDFM_NUM_PRU_IMAGE] =
     {SDFM_PRU1_image_0, sizeof(SDFM_PRU1_image_0)}, /* single PRU FW binary */
     {pru_SDFM_PRU1_image_0, sizeof(pru_SDFM_PRU1_image_0)}, /* load share PRU FW binary */
     {pru_SDFM_RTU1_image_0, sizeof(pru_SDFM_RTU1_image_0)}, /*load share RTU FW binary */
-    {pru_SDFM_TXPRU1_image_0, sizeof(pru_SDFM_TXPRU1_image_0)} /*load share TXPRU binary*/ 
+    {pru_SDFM_TXPRU1_image_0, sizeof(pru_SDFM_TXPRU1_image_0)} /*load share TXPRU binary*/
 #else
     {SDFM_PRU0_image_0, sizeof(SDFM_PRU0_image_0)}, /* single PRU FW binary */
     {pru_SDFM_PRU0_image_0, sizeof(pru_SDFM_PRU0_image_0)}, /* load share PRU FW binary */
     {pru_SDFM_RTU0_image_0, sizeof(pru_SDFM_RTU0_image_0)}, /*load share RTU FW binary */
-    {pru_SDFM_TXPRU0_image_0, sizeof(pru_SDFM_TXPRU0_image_0)} /*load share TXPRU binary*/ 
+    {pru_SDFM_TXPRU0_image_0, sizeof(pru_SDFM_TXPRU0_image_0)} /*load share TXPRU binary*/
 #endif
 };
 
@@ -136,7 +136,7 @@ int32_t sdfmPruicssInit(PRUICSS_Handle *pruicss_handle, uint8_t pruicss_instance
 
     /* Open ICSS PRU instance */
     pru_icss_handle = PRUICSS_open(pruicss_instance);
-    if (pru_icss_handle == NULL) 
+    if (pru_icss_handle == NULL)
     {
         return SystemP_FAILURE;
     }
@@ -177,7 +177,7 @@ int32_t sdfmPruicssInit(PRUICSS_Handle *pruicss_handle, uint8_t pruicss_instance
         if(load_share_enabled)
         {
             status = PRUICSS_disableCore(pru_icss_handle, PRUICSS_RTU_PRU1);
-            if (status != SystemP_SUCCESS) 
+            if (status != SystemP_SUCCESS)
             {
                 return status;
             }
@@ -392,6 +392,12 @@ int32_t sdfmConfigureAndEnable(SDFM_Handle handle)
     /* Get attrs and priv using accessor functions */
     attrs = SDFM_getAttrs(handle);
     priv = SDFM_getPriv(handle);
+
+    if((handle == NULL) || (attrs == NULL) || (priv == NULL))
+    {
+        DebugP_log("\r\n ERROR: NULL handle/attrs/priv");
+        return SystemP_FAILURE;
+    }
 
     /* Enable all configured SDFM channels */
     for(i = 0; i < SDFM_NUM_OF_CH_PER_PRU_SLICE; i++)

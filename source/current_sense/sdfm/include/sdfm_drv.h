@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (C) 2023-2026 Texas Instruments Incorporated - http://www.ti.com/
  *
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,10 @@
  *  This header file defines the core data structures, macros, and types used by
  *  the SDFM (Sigma-Delta Filter Module) driver for current sensing on TI AM243x
  *  processors using PRU-ICSS.
+ *
+ *  ## Pointer Validation
+ *
+ *  All APIs validate internal structure pointers.
  *
  *  ## Architecture
  *
@@ -288,7 +292,7 @@ typedef struct SDFM_ThresholdParms_s
     volatile uint8_t    zero_cross_th_status;
     /**< Zero Cross Threshold*/
     volatile uint32_t    zero_cross_threshold;
-}SDFM_ThresholdParms;
+} SDFM_ThresholdParms;
 /**
  *    \brief    Structure defining configuration for a single SDFM channel
  *
@@ -367,10 +371,10 @@ typedef struct SDFM_Control_s
 {
     /**< SDFM Enable */
     volatile uint8_t enable;
-    
+
     /**< SDFM Enable Ack */
     volatile uint8_t enable_ack;
-    
+
     /**< Enable snoop based Normal current sampling */
     volatile uint8_t enable_snoop_nc;
 } SDFM_Control;
@@ -384,7 +388,7 @@ typedef struct SDFM_Interface_s
 {
     /**< Global SDFM control settings for each PRU core */
     SDFM_Control control[NUM_OF_PRU_CORE_PER_PRU_SLICE];
-    
+
     /**< Channel mask indicating which channels are active */
     volatile uint16_t active_channels_mask;
 
@@ -393,22 +397,22 @@ typedef struct SDFM_Interface_s
 
     /**< Trigger configuration */
     SDFM_CfgTrigger trigger_config[NUM_OF_PRU_CORE_PER_PRU_SLICE];
-    
+
     /**< Channel-specific configurations - array of 9 channels */
     SDFM_ChannelConfig channels[SDFM_NUM_OF_CH_PER_PRU_SLICE];
 
-    
+
 } SDFM_Interface;
 /**
  *    \brief    Structure defining SDFM sample output address
  *
  *    \details  SDFM sample output address, used by application/driver to read output samples
- *             
+ *
  */
 typedef struct SDFM_SampleOutInterface_s
 {
-   uint32_t sampleOutput[NUM_CH_SUPPORTED_PER_AXIS];
-}SDFM_SampleOutInterface;
+   uint32_t sampleOutput[SDFM_NUM_OF_CH_PER_PRU_SLICE];
+} SDFM_SampleOutInterface;
 
 /**
  *    \brief    Structure defining SDFM interface with channel-based organization
@@ -430,7 +434,7 @@ typedef struct SDFM_Priv_s
 
     /**< PRU ICSS Handle */
     PRUICSS_Handle pruicss_handle;
-    
+
     /**< PRU PWM Handle */
     PRUICSS_PWM_Handle pwm_handle;
 
@@ -582,7 +586,7 @@ typedef struct SDFM_Attrs_s
  *    \details  This structure combines pointers to both runtime state (priv) and compile-time
  *              configuration (attrs). The handle is returned by SDFM_init() and passed to all
  *              SDFM driver APIs to identify the specific SDFM instance being operated on.
- *            
+ *
  */
 typedef struct sdfm_config_s
 {

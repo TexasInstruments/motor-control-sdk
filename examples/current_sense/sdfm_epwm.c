@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2025 Texas Instruments Incorporated
+ *  Copyright (C) 2025-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -101,18 +101,34 @@ volatile uint32_t gEpwmIsrCnt1 = 0;
  */
 void sdfmEpwmConfig(SdfmEpwmCfg_t *config)
 {
+    uint32_t baseAddr;
+    uint32_t ch;
+    uint32_t funcClk;
+    uint32_t tbFreq;
+    uint32_t outFreq;
+    uint32_t dutyCycle;
+    uint32_t tbCounterDir;
+    uint32_t period;
+    uint32_t duty;
+
     if (config == NULL)
     {
         return;
     }
 
-    uint32_t baseAddr = config->epwmBaseAddr;
-    uint32_t ch = config->epwmCh;
-    uint32_t funcClk = config->epwmFuncClk;
-    uint32_t tbFreq = config->epwmTbFreq;
-    uint32_t outFreq = config->epwmOutFreq;
-    uint32_t dutyCycle = config->epwmDutyCycle;
-    uint32_t tbCounterDir = config->epwmTbCounterDir;
+    baseAddr = config->epwmBaseAddr;
+    ch = config->epwmCh;
+    funcClk = config->epwmFuncClk;
+    tbFreq = config->epwmTbFreq;
+    outFreq = config->epwmOutFreq;
+    dutyCycle = config->epwmDutyCycle;
+    tbCounterDir = config->epwmTbCounterDir;
+
+    /* Validate parameters to prevent division by zero */
+    if (outFreq == 0U)
+    {
+        return;
+    }
 
     /* Configure Time Base submodule */
     EPWM_tbTimebaseClkCfg(baseAddr, tbFreq, funcClk);
@@ -120,7 +136,7 @@ void sdfmEpwmConfig(SdfmEpwmCfg_t *config)
                       EPWM_SHADOW_REG_CTRL_ENABLE);
 
     /* Configure TB Sync In Mode */
-    if (config->cfgTbSyncIn == FALSE)
+    if (!config->cfgTbSyncIn)
     {
         EPWM_tbSyncDisable(baseAddr);
     }
@@ -131,7 +147,7 @@ void sdfmEpwmConfig(SdfmEpwmCfg_t *config)
     }
 
     /* Configure TB Sync Out Mode */
-    if (config->cfgTbSyncOut == FALSE)
+    if (!config->cfgTbSyncOut)
     {
         EPWM_tbSetSyncOutMode(baseAddr, EPWM_TB_SYNC_OUT_EVT_DISABLE);
     }
@@ -146,13 +162,14 @@ void sdfmEpwmConfig(SdfmEpwmCfg_t *config)
     /*
      *  Compute period and duty cycle
      */
-    uint32_t period = tbFreq / outFreq;
+    period = tbFreq / outFreq;
     if (tbCounterDir == EPWM_TB_COUNTER_DIR_UP_DOWN)
     {
         period /= 2U;
     }
 
-    uint32_t duty = period - ((dutyCycle * period) / 100U);
+    /* Calculate duty cycle value, avoiding integer overflow */
+    duty = (period * (100U - dutyCycle)) / 100U;
 
     /* Configure counter compare submodule */
     EPWM_counterComparatorCfg(baseAddr, EPWM_CC_CMP_A,
@@ -167,7 +184,7 @@ void sdfmEpwmConfig(SdfmEpwmCfg_t *config)
     /* Configure Action Qualifier Submodule */
     EPWM_aqActionOnOutputCfg(baseAddr, ch, &config->aqCfg);
 
-    if (config->cfgDb == TRUE)
+    if (config->cfgDb)
     {
         /* Configure Dead Band Submodule */
         EPWM_deadbandCfg(baseAddr, &config->dbCfg);
@@ -185,7 +202,7 @@ void sdfmEpwmConfig(SdfmEpwmCfg_t *config)
     EPWM_tzTripEventDisable(baseAddr, EPWM_TZ_EVENT_ONE_SHOT, 0U);
     EPWM_tzTripEventDisable(baseAddr, EPWM_TZ_EVENT_CYCLE_BY_CYCLE, 0U);
 
-    if (config->cfgEt == TRUE)
+    if (config->cfgEt)
     {
         /* Configure event trigger Submodule */
         EPWM_etIntrCfg(baseAddr, config->intSel, config->intPrd);
