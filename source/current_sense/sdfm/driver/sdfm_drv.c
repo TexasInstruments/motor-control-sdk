@@ -1834,6 +1834,7 @@ int32_t SDFM_configIepCmp0ToResetIep(SDFM_Handle handle, uint32_t iep_reset_freq
 int32_t SDFM_setSampleOutputInterfaceGlobalAddr(SDFM_Handle handle, uint32_t addr)
 {
     SDFM_Priv *priv;
+    const SDFM_Attrs *attrs;
 
     /* Validate input parameters */
     if ((handle == NULL) || (handle->priv == NULL) || (handle->priv->sdfm_interface == NULL))
@@ -1843,10 +1844,19 @@ int32_t SDFM_setSampleOutputInterfaceGlobalAddr(SDFM_Handle handle, uint32_t add
 
     /* Assign variables after validation */
     priv = handle->priv;
-
-    priv->sdfm_interface->trigger_config[0].sample_buff_base_addr = addr;
-    priv->sdfm_interface->trigger_config[1].sample_buff_base_addr = addr + 12U;
-    priv->sdfm_interface->trigger_config[2].sample_buff_base_addr = addr + 24U;
+    attrs = handle->attrs;
+    if(!attrs->load_share_enabled)
+    {
+        priv->sdfm_interface->trigger_config[SDFM_PRU_CORE_INDEX].sample_buff_base_addr = addr;     
+    }
+    else
+    {
+        /* In load share mode, all PRU cores must have different base addresses */
+        /* To maintain continuous memory allocation for all nine channels in load share mode, RTU core should store channel samples for first channel */
+        priv->sdfm_interface->trigger_config[SDFM_RTUPRU_CORE_INDEX].sample_buff_base_addr = addr;
+        priv->sdfm_interface->trigger_config[SDFM_PRU_CORE_INDEX].sample_buff_base_addr = addr + 12U;
+        priv->sdfm_interface->trigger_config[SDFM_TXPRU_CORE_INDEX].sample_buff_base_addr = addr + 24U;
+    }
 
     return SystemP_SUCCESS;
 }

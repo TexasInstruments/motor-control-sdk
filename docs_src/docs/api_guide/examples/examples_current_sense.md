@@ -229,6 +229,125 @@ The Fast Detect is used for fast over current detection and trip generation. It 
 - Zero count maximum limit in fast detect window
 - Zero count minimum limit in fast detect window
 
+## SDFM IEP CMP Event Configuration {#SDFM_IEP_CMP_CONFIG}
+The Industrial Ethernet Peripheral (IEP) compare events are used to trigger %SDFM normal current sampling in trigger mode. %SDFM now supports user-selectable IEP CMP events via SysConfig, providing flexibility for different system configurations.
+
+### IEP CMP Event Selection via SysConfig
+Users can select IEP compare events (CMP0-CMP15) via SysConfig to trigger %SDFM sampling. The selection depends on the system configuration and resource availability.
+
+### IEP CMP Event Reservation Table
+The following table shows the typical usage and availability of IEP CMP events:
+
+<table>
+<tr>
+    <th>CMP Event</th>
+    <th>Default Usage</th>
+    <th>Availability</th>
+    <th>Notes</th>
+</tr>
+<tr>
+    <td>CMP0</td>
+    <td>IEP Counter Reset</td>
+    <td>Reserved</td>
+    <td>Used for EPWM synchronization via <code>iep_reset_freq</code>. Do not use for sampling trigger.</td>
+</tr>
+<tr>
+    <td>CMP1</td>
+    <td>Available / SYNC0</td>
+    <td>Conditional</td>
+    <td>May conflict with IEP SYNC0 output generation. Avoid if using IEP for clock generation.</td>
+</tr>
+<tr>
+    <td>CMP2</td>
+    <td>Available / SYNC1</td>
+    <td>Conditional</td>
+    <td>May conflict with IEP SYNC1 output generation. Avoid if using IEP for clock generation.</td>
+</tr>
+<tr>
+    <td>CMP3</td>
+    <td>Available</td>
+    <td>Selectable</td>
+    <td>Safe for user configuration</td>
+</tr>
+<tr>
+    <td>CMP4</td>
+    <td>PRU Core Sampling</td>
+    <td>Default</td>
+    <td>Default and recommended for single PRU or PRU core in load-share mode</td>
+</tr>
+<tr>
+    <td>CMP5</td>
+    <td>Available</td>
+    <td>Selectable</td>
+    <td>Safe for user configuration</td>
+</tr>
+<tr>
+    <td>CMP6</td>
+    <td>Available</td>
+    <td>Selectable</td>
+    <td>Safe for user configuration</td>
+</tr>
+<tr>
+    <td>CMP7</td>
+    <td>RTU-PRU Sampling</td>
+    <td>Load-Share</td>
+    <td>Default for RTU core in load-share mode</td>
+</tr>
+<tr>
+    <td>CMP8</td>
+    <td>TX-PRU Sampling</td>
+    <td>Load-Share</td>
+    <td>Default for TX PRU core in load-share mode</td>
+</tr>
+<tr>
+    <td>CMP9-15</td>
+    <td>Available</td>
+    <td>Selectable</td>
+    <td>Safe for user configuration</td>
+</tr>
+</table>
+
+### CMP Event Conflict Warnings
+
+> **Important:** The following CMP events require special attention to avoid conflicts:
+
+- **CMP0 - IEP Counter Reset**: CMP0 is always reserved for IEP counter reset to maintain EPWM synchronization. Never use CMP0 for %SDFM sampling trigger as it will interfere with the EPWM sync period configured via `iep_reset_freq`.
+
+- **CMP1 and CMP2 - SYNC0/SYNC1 Outputs**: When using IEP SYNC mode for %SDFM clock generation:
+  - CMP1 may be used internally for IEP SYNC0 output timing
+  - CMP2 may be used internally for IEP SYNC1 output timing
+  - If your application uses IEP for clock generation, select CMP3-CMP6 or CMP9-CMP15 for sampling triggers to avoid conflicts
+
+### Recommended CMP Event Configurations
+
+<table>
+<tr>
+    <th>Configuration</th>
+    <th>Recommended CMP Events</th>
+    <th>Notes</th>
+</tr>
+<tr>
+    <td>Single PRU (3-9 channels)</td>
+    <td>CMP4 (default)</td>
+    <td>Use CMP4 for all channels on the single PRU core</td>
+</tr>
+<tr>
+    <td>Load-Share Mode (9 channels, 3 PRU cores)</td>
+    <td>CMP4 (PRU), CMP7 (RTU-PRU), CMP8 (TX-PRU)</td>
+    <td>Each PRU core uses its dedicated CMP event</td>
+</tr>
+<tr>
+    <td>Snoop Mode with IEP Clock</td>
+    <td>CMP3, CMP5, CMP6, CMP9-15</td>
+    <td>Avoid CMP1/CMP2 to prevent conflicts with SYNC0/SYNC1</td>
+</tr>
+<tr>
+    <td>Multiple Independent Triggers</td>
+    <td>CMP3-CMP6, CMP9-15</td>
+    <td>Use any available CMP events based on system requirements</td>
+</tr>
+</table>
+
 ## SDFM INTC Mapping {#SDFM_INTC_MAPPING}
 <table>
   <tr>
@@ -408,9 +527,7 @@ Following are different examples for ICSS %SDFM:
     <td>
         - OSR values must be identical for both normal current and over current<br>
         - Normal current trigger mode does not support over current<br>
-        - Zero cross detection is not supported<br>
-        - Support for nine channels in trigger mode
-            - **Note:** An example of nine channels using a single PRU for trigger mode will be available in the next release
+        - Zero cross detection is not supported
     </td>
 </tr>
 <tr>

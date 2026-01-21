@@ -8,27 +8,29 @@ There are three different examples based on the number of %SDFM channels and the
 
 > **Note:** Normal Current trigger mode examples do not support Over Current. 
 
-## Three Channels
+## Nine Channels (Single PRU)
 
-Only one core, PRU, is used for these examples.
+Only one core, PRU, is used for these examples. The single PRU core supports nine channels (channels 0-8) in normal mode (non-snoop, non-load-share).
 
-1. **Continuous Mode Example**  
-        - Continuous Normal Current sampling.  
-        - Three channels: Channel 0, Channel 1, and Channel 2.  
-        - Each channel has an individual interrupt to Arm® Cortex®-R5F.  
+1. **Continuous Mode Example**
+        - Continuous Normal Current sampling.
+        - Nine channels: Channel 0 to Channel 8.
+        - Each channel has an individual interrupt to Arm® Cortex®-R5F.
+        - ICSS PWM trip-based Fast Detect. ICSS PWM0 instance is used to generate the PWM trip.
+        - ICSS PWM trip-based Over Current detection. ICSS PWM0 instance is used to generate the PWM trip.
+                - **Note:** Over Current OSR should be equal to Normal Current OSR.
+
+2. **Trigger Mode Example**
+        - Nine channels: Channel 0 to Channel 8.
+        - Trigger-based Normal Current sampling synchronized with EPWM.
+        - A common interrupt is used for all nine channels.
         - ICSS PWM trip-based Fast Detect. ICSS PWM0 instance is used to generate the PWM trip.  
-        - ICSS PWM trip-based Over Current detection. ICSS PWM0 instance is used to generate the PWM trip.  
-                - **Note:** Over Current OSR should be equal to Normal Current OSR.  
 
-2. **Trigger Mode Example**  
-        - Three channels: Channel 0, Channel 1, and Channel 2.  
-        - Trigger-based Normal Current sampling synchronized with EPWM.  
-        - A common interrupt is used for all three channels.  
-        - ICSS PWM trip-based Fast Detect. ICSS PWM0 instance is used to generate the PWM trip.  
+## Nine Channels (Load-Share Mode)
 
-## Nine Channels
+The load share mode of PRU-ICSSG is enabled for this example. Three cores—RTU-PRU, PRU, and TX-PRU—are used. This mode distributes the nine channels across three PRU cores for enhanced performance.
 
-The load share mode of PRU-ICSSG is enabled for this example. Three cores—RTU-PRU, PRU, and TX-PRU—are used.
+\note This is different from the single PRU nine-channel mode described above. Load-share mode provides additional capabilities and performance benefits by utilizing multiple PRU cores.
 
 \note Channels 6 to 8 Fast Detect is not mapped with any ICSS PWM trip zone block. This is a hardware limitation. A software-based solution can be used as described in \ref OC_FD_TRIP.
 
@@ -50,15 +52,15 @@ The load share mode of PRU-ICSSG is enabled for this example. Three cores—RTU-
 </tr>
 <tr>
     <td> ${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_three_channel_single_pru_mode</td>
-    <td> Application specific sources for ICSS %SDFM for trigger based normal current sampling for three channels </td>
+    <td> Application specific sources for ICSS %SDFM for trigger based normal current sampling using single PRU core (supports nine channels, channels 0-8) </td>
 </tr>
 <tr>
     <td> ${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_nine_channel_with_continuous_mode</td>
-    <td> Application specific sources for ICSS %SDFM for continuous normal current sampling for nine channels </td>
+    <td> Application specific sources for ICSS %SDFM for continuous normal current sampling for nine channels using load-share mode (3 PRU cores) </td>
 </tr>
 <tr>
     <td> ${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_three_channel_with_continuous_mode</td>
-    <td> Application specific sources for ICSS %SDFM for continuous normal current sampling for three channels </td>
+    <td> Application specific sources for ICSS %SDFM for continuous normal current sampling using single PRU core (supports nine channels, channels 0-8) </td>
 </tr>
 <tr>
     <td>${SDK_INSTALL_PATH}/examples/current_sense</td>

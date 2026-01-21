@@ -11,7 +11,7 @@ ICSS %SDFM is a sigma delta interface for phase current measurement in high-perf
 \note This implementation using SD input/output mode of PRU-ICSS. Refer \ref PRUICSS_SD_MODE for more details.
 
 ## Features Supported
-- 3 %SDFM channels on a single PRU core
+- 9 %SDFM channels on a single PRU core (channels 0-8)
 - Normal Current (NC) for data read: SINC3 filter with an Over-Sampling Ratio (OSR) ranging from 8 to 256
 - Over-Current (OC) for comparator: free-running SINC3 filter with an OSR ranging from 8 to 256
 - Event generation:
@@ -54,16 +54,34 @@ ICSS %SDFM is a sigma delta interface for phase current measurement in high-perf
    <td>DMEM: from offset <code>0x00</code> to <code>0x200</code> Offset <br> IMEM: <code>4.1 KB</code></td>
    <td>
     PRU-ICSS EVENT:
-     - INTC event/input number <code>21</code> (<code>pr[0/1]_pru_mst_intr[5]_intr_req</code>) is used to trigger interrupt to Arm® Cortex®-R5F for Channel <code>0</code>
-     - INTC event/input number <code>22</code> (<code>pr[0/1]_pru_mst_intr[6]_intr_req</code>) is used to trigger interrupt to R5F for Channel <code>1</code>
-     - INTC event/input number <code>23</code> (<code>pr[0/1]_pru_mst_intr[7]_intr_req</code>) is used to trigger interrupt to R5F for Channel <code>2</code>
+
+    **PRU Slice0 - Interrupt Mapping:**
+    <table>
+    <tr><th>Channel</th><th>INTC Event (pr[0/1]_pru_mst_intr)</th><th>Usage</th></tr>
+    <tr><td>0</td><td>18 (intr[2]_intr_req)</td><td>Continuous mode: Channel 0<br>Trigger mode: All channels (common interrupt)</td></tr>
+    <tr><td>1-8</td><td>19-26 (intr[3-10]_intr_req)</td><td>Continuous mode only (individual interrupts per channel)</td></tr>
+    </table>
+
+    **PRU Slice1 - Interrupt Mapping:**
+    <table>
+    <tr><th>Channel</th><th>INTC Event (pr[0/1]_pru_mst_intr)</th><th>Usage</th></tr>
+    <tr><td>0</td><td>21 (intr[5]_intr_req)</td><td>Continuous mode: Channel 0<br>Trigger mode: All channels (common interrupt)</td></tr>
+    <tr><td>1-8</td><td>22-29 (intr[6-13]_intr_req)</td><td>Continuous mode only (individual interrupts per channel)</td></tr>
+    </table>
+
     PRU-ICSS PWM:
      - PWM0 TRIP ZONE to generate a trip for overcurrent and fast detection error
 
     PRU-ICSS IEP:
-     - IEP0 CMP4 is used to trigger sampling
+     - IEP0 CMP5 is the default event for triggering sampling (user-selectable via SysConfig)
+     - Without EPWM synchronization, CMP0 is used for IEP counter reset in trigger mode
+     - CMP1/CMP2 are used to generate clock from IEP SYNC0/SYNC1 if IEP is used as the clock generation source
+
+    \note CMP0, CMP1, and CMP2 are reserved for specific purposes when those features are enabled. To avoid conflicts with the CMP event used for sampling trigger, it is recommended to select CMP events greater than 2 (CMP3 and above). 
+
     PRU-ICSS Task Manager:
      - PRU T1_S1 task is used for normal current task
+    
    </td>
    <td>
     \note Individual channel events are used for continuous mode when snoop mode is disabled,
@@ -83,15 +101,27 @@ ICSS %SDFM is a sigma delta interface for phase current measurement in high-perf
    </td>
    <td rowspan="3">
     PRU-ICSS EVENT:
-     - INTC event/input number <code>21</code> (<code>pr[0/1]_pru_mst_intr[5]_intr_req</code>) is used to trigger interrupt to R5F for Channel <code>0</code>
-     - INTC event/input number <code>22</code> (<code>pr[0/1]_pru_mst_intr[6]_intr_req</code>) is used to trigger interrupt to R5F for Channel <code>1</code>
-     - INTC event/input number <code>23</code> (<code>pr[0/1]_pru_mst_intr[7]_intr_req</code>) is used to trigger interrupt to R5F for Channel <code>2</code>
-     - INTC event/input number <code>24</code> (<code>pr[0/1]_pru_mst_intr[8]_intr_req</code>) is used to trigger interrupt to R5F for Channel <code>3</code>
-     - INTC event/input number <code>25</code> (<code>pr[0/1]_pru_mst_intr[9]_intr_req</code>) is used to trigger interrupt to R5F for Channel <code>4</code>
-     - INTC event/input number <code>26</code> (<code>pr[0/1]_pru_mst_intr[10]_intr_req</code>) is used to trigger interrupt to R5F for Channel <code>5</code>
-     - INTC event/input number <code>27</code> (<code>pr[0/1]_pru_mst_intr[11]_intr_req</code>) is used to trigger interrupt to R5F for Channel <code>6</code>
-     - INTC event/input number <code>28</code> (<code>pr[0/1]_pru_mst_intr[12]_intr_req</code>) is used to trigger interrupt to R5F for Channel <code>7</code>
-     - INTC event/input number <code>29</code> (<code>pr[0/1]_pru_mst_intr[13]_intr_req</code>) is used to trigger interrupt to R5F for Channel <code>8</code>
+
+    **PRU Core - Channels 0-2:**
+    <table>
+    <tr><th>Channel</th><th>INTC Event (pr[0/1]_pru_mst_intr)</th><th>Usage</th></tr>
+    <tr><td>0</td><td>18 (Slice0) / 21 (Slice1) (intr[2/5]_intr_req)</td><td>Continuous mode: Channel 0<br>Trigger mode: Channels 0-2 (common)</td></tr>
+    <tr><td>1-2</td><td>19-20 (Slice0) / 22-23 (Slice1)</td><td>Continuous mode only</td></tr>
+    </table>
+
+    **RTU-PRU Core - Channels 3-5:**
+    <table>
+    <tr><th>Channel</th><th>INTC Event (pr[0/1]_pru_mst_intr)</th><th>Usage</th></tr>
+    <tr><td>3</td><td>21 (Slice0) / 24 (Slice1) (intr[5/8]_intr_req)</td><td>Continuous mode: Channel 3<br>Trigger mode: Channels 3-5 (common)</td></tr>
+    <tr><td>4-5</td><td>22-23 (Slice0) / 25-26 (Slice1)</td><td>Continuous mode only</td></tr>
+    </table>
+
+    **TX-PRU Core - Channels 6-8:**
+    <table>
+    <tr><th>Channel</th><th>INTC Event (pr[0/1]_pru_mst_intr)</th><th>Usage</th></tr>
+    <tr><td>6</td><td>24 (Slice0) / 27 (Slice1) (intr[8/11]_intr_req)</td><td>Continuous mode: Channel 6<br>Trigger mode: Channels 6-8 (common)</td></tr>
+    <tr><td>7-8</td><td>25-26 (Slice0) / 28-29 (Slice1)</td><td>Continuous mode only</td></tr>
+    </table>
 
     PRU-ICSS PWM:
      - PWM0 TRIP ZONE to generate a trip for overcurrent and fast detection error
@@ -99,9 +129,14 @@ ICSS %SDFM is a sigma delta interface for phase current measurement in high-perf
      - PWM2 TRIP ZONE to generate a trip for overcurrent
 
     PRU-ICSS IEP:
-     - IEP0 CMP4 is used to trigger sampling for PRU core channels
-     - IEP0 CMP7 is used to trigger sampling for RTU core channels
-     - IEP0 CMP8 is used to trigger sampling for TX PRU core channels
+     - IEP0 CMP5 is the default event for PRU core channels (user-selectable via SysConfig)
+     - IEP0 CMP6 is the default event for RTU core channels (user-selectable via SysConfig)
+     - IEP0 CMP7 is the default event for TX PRU core channels (user-selectable via SysConfig)
+     - Without EPWM synchronization, CMP0 is used for IEP counter reset in trigger mode
+     - CMP1/CMP2 are used to generate clock from IEP SYNC0/SYNC1 if IEP is used as the clock generation source
+
+    \note CMP0, CMP1, and CMP2 are reserved for specific purposes when those features are enabled. To avoid conflicts with the CMP event used for sampling trigger, it is recommended to select CMP events greater than 2 (CMP3 and above). 
+
 
     PRU-ICSS Task Manager:
      - Each PRU core T1_S1 task is used for normal current task
