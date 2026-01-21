@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2024 Texas Instruments Incorporated
+ *  Copyright (C) 2024-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -60,53 +60,53 @@
  * This example uses the PRUICSS PWM module to generate a signal
  * with a specified duty cycle and deadband at rise edge and fall edge of pwm
  *
- * The default parameters are in the example are: 
- * 
- * Frequency : 16kHz  
- * PWM0_0_POS(alias signal PWM0_A0) is configured with duty cycle of 25% , rise edge delay as 0ns and fall edge delay as 0ns 
- * PWM0_0_NEG(alias signal PWM0_B0) is configured with duty cycle of 25% , rise edge delay as 200ns and fall edge delay as 400ns 
- * PWM2_0_POS(alias signal PWM2_A0) is configured with duty cycle of 75% , rise edge delay as 0ns and fall edge delay as 0ns 
- * PWM2_0_NEG(alias signal PWM2_B0) is configured with duty cycle of 75% , rise edge delay as 600ns and fall edge delay as 800ns 
+ * The default parameters are in the example are:
+ *
+ * Frequency : 16kHz
+ * PWM0_0_POS(alias signal PWM0_A0) is configured with duty cycle of 25% , rise edge delay as 0ns and fall edge delay as 0ns
+ * PWM0_0_NEG(alias signal PWM0_B0) is configured with duty cycle of 25% , rise edge delay as 200ns and fall edge delay as 400ns
+ * PWM2_0_POS(alias signal PWM2_A0) is configured with duty cycle of 75% , rise edge delay as 0ns and fall edge delay as 0ns
+ * PWM2_0_NEG(alias signal PWM2_B0) is configured with duty cycle of 75% , rise edge delay as 600ns and fall edge delay as 800ns
  * All these parameters are configurable.
- * 
- * PWM0_0_POS, PWM0_0_NEG, PWM2_0_POS, PWM2_0_NEG uses IEP0 CMP0 & EPWM0 sync out signal to achieve pwm synchronization 
- * 
+ *
+ * PWM0_0_POS, PWM0_0_NEG, PWM2_0_POS, PWM2_0_NEG uses IEP0 CMP0 & EPWM0 sync out signal to achieve pwm synchronization
+ *
  * Individual compare event mapped to PWM_x signals controls duty cycle
- * 
- * Code Flow :-  
- * 
+ *
+ * Code Flow :-
+ *
  * PRUICSS IEP configuration:
- * 
+ *
  * IEP shadow mode and slave mode are enabled (Refer section 6.4.13 of Technical Reference Manual) & IEP is configured to reset twice on every pwm period as mentioned below
- * 
- * EPWM0 sync out is configured to generate every PRUICSS PWM period, PRUICSS IEP COMPARE 0 is configured with one IEP cycle delay ((PWM_PERIOD/2)+1). 
+ *
+ * EPWM0 sync out is configured to generate every PRUICSS PWM period, PRUICSS IEP COMPARE 0 is configured with one IEP cycle delay ((PWM_PERIOD/2)+1).
  * By configuring PRUICSS IEP COMPARE 0 with one IEP cycle delay, IEP COMPARE 0 event is missed at the end of PRUICSS PWM period.
  * PRUICSS IEP CMP0 resets IEP couter in middle of PRUICSS PWM period.
- * EPWM0 sync out resets IEP counter at end of PRUICSS PWM period.   
- * 
+ * EPWM0 sync out resets IEP counter at end of PRUICSS PWM period.
+ *
  * PRUICSS PWM configuration:
- * 
+ *
  * PWM signal is configured to low in Intial state, Toggle in Active state, Change of state from Active to Intial is disabled on IEP0 CMP0 event
- * 
+ *
  * PWM Duty cycle, rise edge delay, fall edge delay can configured or updated using PRUICSS_PWM_config api call.
- * 
- * PWM Period can be Configured or updated using PRUICSS_PWM_pruIcssPwmFrequencyInit api call. 
- * 
- * Below two steps are executed once in pwm period: 
- * 
+ *
+ * PWM Period can be Configured or updated using PRUICSS_PWM_pruIcssPwmFrequencyInit api call.
+ *
+ * Below two steps are executed once in pwm period:
+ *
  * Step1 : When EPWM0 sync out resets IEP counter, PWM signals are moved to intial state on software reset
- * shadow compare register values which decides rise edge are moved to active register values, 
+ * shadow compare register values which decides rise edge are moved to active register values,
  * next compare value which decides fall edge of PWM signal are computed & shadow compare register field is updated
- * 
- * Step2 : When PRUICSS IEP CMP0 resets IEP counter, 
+ *
+ * Step2 : When PRUICSS IEP CMP0 resets IEP counter,
  * shadow compare register values which decides fall edge are moved to active register values,
- * new compare values which decides rise edge of PWM signal are computed from updated duty cycle 
+ * new compare values which decides rise edge of PWM signal are computed from updated duty cycle
  * & shadow compare register field is updated
- * 
+ *
  * The pruicss pwm signal generated is similar to epwm signal when epwm counter is configured in up-down mode.
- * 
+ *
  * This example showcases deadband feature of pruicss pwm, syncing pruicss pwm with epwm sync cout
- * 
+ *
  * Note: This example uses EPWM0 sync out to reset IEP at the pwm period, PRUICSS IEP CMP0 can also be used to do this when EPWM sync out signal is disabled.
  */
 
@@ -125,11 +125,13 @@ static TCA6424_Config  gTCA6424_Config;
 
 static void i2c_io_expander(void *args)
 {
-    int32_t             status = SystemP_SUCCESS;
+    int32_t             status;
     TCA6424_Params      tca6424Params;
+    uint32_t            ioIndex;
+
+    status = SystemP_SUCCESS;
     TCA6424_Params_init(&tca6424Params);
     status = TCA6424_open(&gTCA6424_Config, &tca6424Params);
-    uint32_t            ioIndex;
 
     if(status == SystemP_SUCCESS)
     {
@@ -190,11 +192,11 @@ void App_epwmConfig(uint32_t epwmBaseAddr, uint32_t epwmCh, uint32_t epwmFuncClk
 
 void App_pruIcssPwmDeadbandMain(void *args)
 {
+    int32_t status;
+
     /* Open drivers to open the UART driver for console */
     Drivers_open();
     Board_driversOpen();
-
-    int status;
 
     gpruIcssHandle = PRUICSS_open(CONFIG_PRU_ICSS0);
     DebugP_assert(gpruIcssHandle != NULL);
@@ -202,10 +204,10 @@ void App_pruIcssPwmDeadbandMain(void *args)
     gPruIcssPwmHandle = PRUICSS_PWM_open(CONFIG_PRUICSS_PWM0, gpruIcssHandle);
     DebugP_assert(gPruIcssPwmHandle != NULL);
 
-    #if defined(am243x_evm) || defined(am64x_evm)
+#if defined(am243x_evm) || defined(am64x_evm)
     /* Configure the IO Expander to connect the PRU IOs to HSE */
     i2c_io_expander(NULL);
-    #endif
+#endif
 
     /*Intializes the pwm parameters with default values, output in intial, active, trip states and disables all pwm signals*/
     status = PRUICSS_PWM_attrsInit(gPruIcssPwmHandle);

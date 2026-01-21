@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Texas Instruments Incorporated
+ * Copyright (C) 2025-2026 Texas Instruments Incorporated
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -98,8 +98,10 @@ static void endat3_manchester_decode_lut(endat3_handle handle);
 
 static void endat3_manchester_decode_lut(endat3_handle handle)
 {
-    endat3_priv *priv = handle->priv;
+    endat3_priv *priv;
     uint8_t     *lut_dest;
+
+    priv = handle->priv;
 
     /* Copy the Manchester decode lookup table to the lut member of endat3_interface structure in PRU DMEM */
     lut_dest = (uint8_t *)priv->endat3_interface->lut;
@@ -109,10 +111,5 @@ static void endat3_manchester_decode_lut(endat3_handle handle)
 
 void endat3_generate_memory_image(endat3_handle handle)
 {
-    if(handle == NULL)
-    {
-        return;
-    }
-
     endat3_manchester_decode_lut(handle);
 }

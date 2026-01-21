@@ -114,11 +114,11 @@ M_ENABLE_PRU_CYCLE_COUNTER .macro
 
 	.asg	R4,		SCRATCH
 	.asg	R13,	SCRATCH1
-	.asg	R14,	SCRATCH2    
+	.asg	R14,	SCRATCH2
 	.asg	R5.b0,		ENDAT_ENABLE_CHx
 	.asg	R5.b1,		ENDAT_ENABLE_CHx_IN_USE
 	.asg	R1.b2,	ENDAT_CMDTYP_NO_SUPPLEMENT_REG
-	
+
 ENABLE_PROPDELAY_MESUREMENT	.set	1
 
 TRIGGER_ENDAT_COMPLETE_EVENT		.set	19
@@ -291,7 +291,7 @@ ENDAT_SKIP_DEFAULT_CH:
 	LDI		R1.b2,	ENDAT_CMDTYP_2_1
 	CALL	FN_SEND_RECEIVE_ENDAT
 ; Need to save the response and extract the clock pulses info
-     
+
 	.if	$isdefed("ENABLE_MULTI_CHANNEL")
         LSL		R15, R15, 3
         LSL		R19, R19, 3
@@ -396,7 +396,7 @@ ENDAT_SKIP4_CH1:
 ENDAT_SKIP4_CH2:
     .endif
 	.endif	; ENABLE_MULTI_CHANNEL
-    
+
 
     .if	$isdefed("ENDAT_FW_HW_INIT")
        ;set syn_bits of all channels for clock configuration
@@ -418,8 +418,8 @@ ENDAT_SKIP4_CH2:
 	; Perform propagation delay compensation
 	; Create a function to support per channel delay computation
 	.if	$isdefed("ENABLE_PROPDELAY_MESUREMENT")
-    
-	
+
+
 	 .if	$isdefed("ENDAT_FW_HW_INIT")
      ; tx 200KHz, rx 8*12MHz
 	LDI		R0.w0,	1 ;  RX_CLK: 8*12MHz
@@ -455,7 +455,7 @@ ENDAT_SKIP4_CH2:
 	.endif ;;ENDAT_FW_HW_INIT
 
 SKIP_CLOCK_CONFIG1:
-      
+
 ;set syn_bits of all channels for delay calculation
      .if $isdefed("ENABLE_MULTI_MAKE_RTU")
 	    LDI SCRATCH2.b0, 0x1 ;set  syn_bit  bit for ch0
@@ -467,7 +467,7 @@ SKIP_CLOCK_CONFIG1:
 	    LDI SCRATCH2.b0, 0x4 ; set syn_bit bit for ch2
 	    SBCO	&SCRATCH2.b0,	PRUx_DMEM,	ENDAT_CH2_CONFIG_SYN_BIT,	1
     .endif
-	
+
 
 	.if	$isdefed("ENABLE_MULTI_CHANNEL")
 
@@ -538,7 +538,7 @@ ENDAT_SKIP5A_CH2:
    .endif
 
 
-    
+
     .if $isdefed("ENABLE_MULTI_MAKE_RTU") ;store prop_delay value in DMEM for ch0
 		SBCO	&R9,	PRUx_DMEM,	ENDAT_CH0_MEAS_PROPDELAY_OFFSET,	4
 	.elseif $isdefed("ENABLE_MULTI_MAKE_PRU") ;store prop_delay value in  DMEM for ch1
@@ -664,8 +664,7 @@ ENDAT_SKIP_INIT_SUCCESS:
 	.endif
     ; status update ends here
 
-HANDLE_PERIODIC_TRIGGER_CAP_MODE:
-    ; Check host trigger is enabled
+ENDAT_CHECK_OPERATING_MODE:
 	.if $isdefed("ENABLE_MULTI_MAKE_RTU") ; Check RTU host trigger  for ch0
 	    LBCO		&SCRATCH.b0,	PRUx_DMEM,	ENDAT_CH0_OPMODE_CONFIG_OFFSET,	1
 	.elseif $isdefed("ENABLE_MULTI_MAKE_PRU") ;Check PRU host trigger  for ch1
@@ -675,7 +674,18 @@ HANDLE_PERIODIC_TRIGGER_CAP_MODE:
 	.else                                    ;check PRU host trigger for all three channels
 	    LBCO		&SCRATCH.b0,	PRUx_DMEM,	ENDAT_CH0_OPMODE_CONFIG_OFFSET,	1
 	.endif
+	;Operating mode configuration:
+	;  opmode=0: Periodic CMP trigger mode - uses IEP compare events (0-15)
+    ;  opmode=1: Host trigger mode - software-triggered by R5F
+	;  opmode=2: Periodic CAP trigger mode - uses IEP capture events (0-7)
 	QBEQ	HANDLE_HOST_TRIGGER_MODE,	SCRATCH.b0,		1
+	QBEQ	HANDLE_PERIODIC_TRIGGER_CMP_MODE,	SCRATCH.b0,		0
+
+HANDLE_PERIODIC_TRIGGER_CAP_MODE:
+	; Periodic CAP Mode: Wait for external event captured by IEP
+	; - Reads IEP base address dynamically from DMEM
+	; - Monitors CAP event status register for configured event
+	; - Clears event by reading capture register value
 
 	; Get IEP base address from DMEM
 	LBCO    &SCRATCH1,    PRUx_DMEM,    ENDAT_IEP_BASE_ADDR_OFFSET,    4
@@ -684,7 +694,7 @@ HANDLE_PERIODIC_TRIGGER_CAP_MODE:
     .if $isdefed("ENABLE_MULTI_MAKE_RTU")
 	; Wait till IEP CAP event
 	LBCO    &SCRATCH1.b0, PRUx_DMEM, ENDAT_CH0_IEP_CAP_EVENT_OFFSET, 1
-	QBBC	HANDLE_PERIODIC_TRIGGER_CAP_MODE,	SCRATCH,	SCRATCH1.b0
+	QBBC	ENDAT_CHECK_OPERATING_MODE,	SCRATCH.w0,	SCRATCH1.b0
     ;read cap register offset from dmem
 	LBCO    &SCRATCH,    PRUx_DMEM,    ENDAT_CH0_IEP_CAPTURE_REG_OFFSET,    4
 	;clear capture event by reading capture register value
@@ -692,7 +702,7 @@ HANDLE_PERIODIC_TRIGGER_CAP_MODE:
     .elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
 	; Wait till IEP CAP event
 	LBCO    &SCRATCH1.b0, PRUx_DMEM, ENDAT_CH1_IEP_CAP_EVENT_OFFSET, 1
-	QBBC	HANDLE_PERIODIC_TRIGGER_CAP_MODE,	SCRATCH,	SCRATCH1.b0
+	QBBC	ENDAT_CHECK_OPERATING_MODE,	SCRATCH.w0,	SCRATCH1.b0
 	;read cap register offset from dmem
 	LBCO    &SCRATCH,    PRUx_DMEM,    ENDAT_CH1_IEP_CAPTURE_REG_OFFSET,    4
 	;clear capture event by reading capture register value
@@ -700,7 +710,7 @@ HANDLE_PERIODIC_TRIGGER_CAP_MODE:
     .elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
 	; Wait till IEP CAP event
 	LBCO    &SCRATCH1.b0, PRUx_DMEM, ENDAT_CH2_IEP_CAP_EVENT_OFFSET, 1
-	QBBC	HANDLE_PERIODIC_TRIGGER_CAP_MODE,	SCRATCH,	SCRATCH1.b0
+	QBBC	ENDAT_CHECK_OPERATING_MODE,	SCRATCH.w0,	SCRATCH1.b0
 	;read cap register offset from dmem
 	LBCO    &SCRATCH,    PRUx_DMEM,    ENDAT_CH2_IEP_CAPTURE_REG_OFFSET,    4
 	;clear capture event by reading capture register value
@@ -708,57 +718,50 @@ HANDLE_PERIODIC_TRIGGER_CAP_MODE:
     .else
 	; Wait till IEP CAP event
 	LBCO    &SCRATCH1.b0, PRUx_DMEM, ENDAT_CH0_IEP_CAP_EVENT_OFFSET, 1
-	QBBC	HANDLE_PERIODIC_TRIGGER_CAP_MODE,	SCRATCH,	SCRATCH1.b0
+	QBBC	ENDAT_CHECK_OPERATING_MODE,	SCRATCH.w0,	SCRATCH1.b0
 	;read cap register offset from dmem
 	LBCO    &SCRATCH,    PRUx_DMEM,    ENDAT_CH0_IEP_CAPTURE_REG_OFFSET,    4
 	;clear capture event by reading capture register value
 	LBBO	&SCRATCH1,	SCRATCH,	0,	4
     .endif
 
-    JMP  CLEAR_TRIGGER_BIT
+    JMP  SET_TRIGGER_BIT
 
 HANDLE_PERIODIC_TRIGGER_CMP_MODE:
-	; Check host trigger is enabled
-	.if $isdefed("ENABLE_MULTI_MAKE_RTU") ; Check RTU host trigger for ch0
-	    LBCO		&SCRATCH.b0,	PRUx_DMEM,	ENDAT_CH0_OPMODE_CONFIG_OFFSET,	1
-	.elseif $isdefed("ENABLE_MULTI_MAKE_PRU") ; Check PRU host trigger for ch1
-	    LBCO		&SCRATCH.b0,	PRUx_DMEM,	ENDAT_CH1_OPMODE_CONFIG_OFFSET,	1
-	.elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU") ; Check TXPRU host trigger for ch2
-	    LBCO		&SCRATCH.b0,	PRUx_DMEM,	ENDAT_CH2_OPMODE_CONFIG_OFFSET,	1
-	.else ; Check PRU host trigger for all three channels
-	    LBCO		&SCRATCH.b0,	PRUx_DMEM,	ENDAT_CH0_OPMODE_CONFIG_OFFSET,	1
-	.endif
-	QBEQ	HANDLE_HOST_TRIGGER_MODE,	SCRATCH.b0,		1
+	; Periodic CMP Mode: Wait for IEP counter to match compare value
+	; - Reads IEP base address dynamically from DMEM
+	; - Monitors CMP event status register for configured event
+	; - Clears event by writing to CMP status register
 
 	; Get IEP base address from DMEM
 	LBCO    &SCRATCH1,    PRUx_DMEM,    ENDAT_IEP_BASE_ADDR_OFFSET,    4
 	LBBO	&SCRATCH.w0,	SCRATCH1,	ICSS_IEP_CMP_STATUS_REG,	2
-	
+
     .if $isdefed("ENABLE_MULTI_MAKE_RTU")
 	; Wait till IEP CMP event get set
 	LBCO    &SCRATCH1.b0, PRUx_DMEM, ENDAT_CH0_IEP_CMP_EVENT_OFFSET, 1
-	QBBC	HANDLE_PERIODIC_TRIGGER_CMP_MODE,	SCRATCH,	SCRATCH1.b0
+	QBBC	ENDAT_CHECK_OPERATING_MODE,	SCRATCH.w0,	SCRATCH1.b0
 	; Clear IEP CMP event
 	LDI	SCRATCH.w0,	1
 	LSL	SCRATCH.w0,	SCRATCH.w0,	SCRATCH1.b0
     .elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
 	; Wait till IEP CMP event
 	LBCO    &SCRATCH1.b0, PRUx_DMEM, ENDAT_CH1_IEP_CMP_EVENT_OFFSET, 1
-	QBBC	HANDLE_PERIODIC_TRIGGER_CMP_MODE,	SCRATCH,	SCRATCH1.b0
+	QBBC	ENDAT_CHECK_OPERATING_MODE,	SCRATCH.w0,	SCRATCH1.b0
 	; Clear IEP CMP event
 	LDI	SCRATCH.w0,	1
 	LSL	SCRATCH.w0,	SCRATCH.w0,	SCRATCH1.b0
     .elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
 	; Wait till IEP CMP event
 	LBCO    &SCRATCH1.b0, PRUx_DMEM, ENDAT_CH2_IEP_CMP_EVENT_OFFSET, 1
-	QBBC	HANDLE_PERIODIC_TRIGGER_CMP_MODE,	SCRATCH,	SCRATCH1.b0
+	QBBC	ENDAT_CHECK_OPERATING_MODE,	SCRATCH.w0,	SCRATCH1.b0
 	; Clear IEP CMP event
 	LDI	SCRATCH.w0,	1
 	LSL	SCRATCH.w0,	SCRATCH.w0,	SCRATCH1.b0
     .else
 	; Wait till IEP CMP event get set
 	LBCO    &SCRATCH1.b0, PRUx_DMEM, ENDAT_CH0_IEP_CMP_EVENT_OFFSET, 1
-	QBBC	HANDLE_PERIODIC_TRIGGER_CMP_MODE,	SCRATCH,	SCRATCH1.b0
+	QBBC	ENDAT_CHECK_OPERATING_MODE,	SCRATCH.w0,	SCRATCH1.b0
 	; Clear IEP CMP event
 	LDI	SCRATCH.w0,	1
 	LSL	SCRATCH.w0,	SCRATCH.w0,	SCRATCH1.b0
@@ -768,7 +771,7 @@ HANDLE_PERIODIC_TRIGGER_CMP_MODE:
 	LBCO    &SCRATCH1,    PRUx_DMEM,    ENDAT_IEP_BASE_ADDR_OFFSET,    4
 	SBBO	&SCRATCH.w0,	SCRATCH1,	ICSS_IEP_CMP_STATUS_REG,	2
 
-CLEAR_TRIGGER_BIT:
+SET_TRIGGER_BIT:
 	;Set the command trigger bit and it will be clear after command processing
 	LDI		R0.b0,	1
 	.if $isdefed("ENABLE_MULTI_MAKE_RTU") ;set command trigger  for ch0
@@ -791,14 +794,9 @@ HANDLE_HOST_TRIGGER_MODE:
 	  .else
 	    LBCO	&R0.b0,	PRUx_DMEM,	ENDAT_CH0_INTFC_CMD_TRIGGER_OFFSET,	1 ; without load share mode(one command trigger for all three channels)
 	  .endif
-
-	    QBBC            HANDLE_HOST_TRIGGER_MODE, R0.b0,	0
-
+	    QBBC            ENDAT_CHECK_OPERATING_MODE, R0.b0,	0
 	    QBBC            ENDAT_SKIP_CONTINUOUS_MODE, R0.b0,	7
-
         CALL    FN_CONTINUOUS_MODE
-
-
         JMP             ENDAT_HOST_CMD_END
 
 ENDAT_SKIP_CONTINUOUS_MODE:
@@ -827,7 +825,7 @@ ENDAT_SKIP_CONTINUOUS_MODE:
 	CALL	FN_SEND_ENDAT22_COMMAND_SUPPLEMENT
 ENDAT_HOST_CMD_DONE:
         ;  result in R15-R18, R0.b0 holds CRC status, R2.b0 indicates addinfo presence
-		;SCRATCH2 contain address of TCM 
+		;SCRATCH2 contain address of TCM
         LBCO    &SCRATCH2,    PRUx_DMEM, ENDAT_CONFIG_CH_INFO_MEMORY_ADDRESS, 4
    .if $isdefed("ENABLE_MULTI_MAKE_RTU") ;ch0: store encoder response and crc in DMEM
         ; R0.b0 has CRC status
@@ -1021,7 +1019,7 @@ ENDAT_SKIP14_CH2:
 
 ENDAT_HOST_CMD_END:
 
-	;Recovery Time calculation 
+	;Recovery Time calculation
 	LBCO    &SCRATCH,    PRUx_DMEM, ENDAT_CONFIG_CH_INFO_MEMORY_ADDRESS, 4
 	.if $isdefed("ENABLE_MULTI_MAKE_RTU")
 	;Channel Ch0
@@ -1059,7 +1057,7 @@ ENDAT_HOST_CMD_END:
 	;Update current counter
 	ADD   	R1, R1, R0
     SBBO    &R1,  SCRATCH,  ENDAT_CH0_CURRENT_RT_COUNTER_OFFSET, 4
-SKIP_RTM_CH0:    
+SKIP_RTM_CH0:
 	;Channel Ch1
 	LBCO    &R3,    PRUx_DMEM, 	ENDAT_CH1_RTM_ENABLE_OFFSET, 4
 	QBBC    SKIP_RTM_CH1, R3, 0
@@ -1106,17 +1104,20 @@ ENDAT_RT_CAL_END:
        LDI  R31.w0, PRU_TRIGGER_HOST_ENDAT_EVT0
     .endif
 SKIP_INTERRUPT_TRIGGER:
+	;Operating mode configuration:
+	;  opmode=0: Periodic CMP trigger mode - uses IEP compare events (0-15)
+    ;  opmode=1: Host trigger mode - software-triggered by R5F
+	;  opmode=2: Periodic CAP trigger mode - uses IEP capture events (0-7)
 	QBEQ		HANDLE_PERIODIC_TRIGGER_CMP_MODE,	SCRATCH.b0,		0
 	QBEQ        HANDLE_PERIODIC_TRIGGER_CAP_MODE,   SCRATCH.b0,     2
 	JMP		HANDLE_HOST_TRIGGER_MODE
-
 
 	.if	$isdefed("ENABLE_MULTI_CHANNEL")
 M_CALC_RECOV_TIME_MULTI_CH .macro
     ;enable PRU cycle counter
     M_ENABLE_PRU_CYCLE_COUNTER
 	ZERO		&SCRATCH2,	4
-	;Load memory base address 
+	;Load memory base address
 	LBCO    &SCRATCH,    PRUx_DMEM, ENDAT_CONFIG_CH_INFO_MEMORY_ADDRESS, 4
  ; waiting for raising edge of clock for all connected channels
 ENDAT_TD_LAST_RISING_CLOCK_MULTI_CH?:
@@ -1124,7 +1125,7 @@ ENDAT_TD_LAST_RISING_CLOCK_MULTI_CH?:
 	LBCO	&R27.w0,	ICSS_CFG,	SCRATCH1.w0,	2
     AND     R27.b2, R27.b1, ENDAT_ENABLE_CHx_IN_USE  ; doing  AND of 8th(ch0), 9th(ch1) and 10th(ch2) bits with channel mask
     QBNE   ENDAT_TD_LAST_RISING_CLOCK_MULTI_CH?,  R27.b2, ENDAT_ENABLE_CHx_IN_USE ; check clock_status bits for all connected channels
-    ;read the PRU counter value 
+    ;read the PRU counter value
 	LBCO 	&SCRATCH2, c11, PRUx_CNTL_CYCLE_COUNT_OFFSET, 4
 
 ;waiting for RX complete
@@ -1413,7 +1414,7 @@ ENDAT_TD_LAST_RISING_CLOCK_CH0?:
 	LBCO	&R27.w0,	ICSS_CFG,	SCRATCH1.w0,	2
     QBBC            ENDAT_TD_LAST_RISING_CLOCK_CH0?,  R27.w0,  8
 
-    ; read the PRU counter value 
+    ; read the PRU counter value
 	LBCO 	&SCRATCH2, c11, PRUx_CNTL_CYCLE_COUNT_OFFSET, 4
 
     ;wait for rx complete
@@ -1436,7 +1437,7 @@ WRXCH0?:
 	SUB     R27, R27, SCRATCH2
 ENDAT_SKIP_PDELAY_FOR_NSP_CMD2_2_CH0?:
     ; store in DMEM
-	;Load memory address 
+	;Load memory address
 	LBCO    &SCRATCH2,    PRUx_DMEM, ENDAT_CONFIG_CH_INFO_MEMORY_ADDRESS, 4
     SBBO    &R27, SCRATCH2,  ENDAT_CH0_RT_OFFSET, 4
 
@@ -1451,7 +1452,7 @@ ENDAT_TD_LAST_RISING_CLOCK_CH1?:
 	LBCO	&R27.w0,	ICSS_CFG,	SCRATCH1.w0,	2
     QBBC            ENDAT_TD_LAST_RISING_CLOCK_CH1?,  R27.w0,  9
 
-    ;read the pru counter value 
+    ;read the pru counter value
 	LBCO 	&SCRATCH2, c11, PRUx_CNTL_CYCLE_COUNT_OFFSET, 4
 
     ; wait for rx complete
@@ -1472,7 +1473,7 @@ WRXCH1?:
 	LBCO	&SCRATCH2,	PRUx_DMEM,	ENDAT_CH1_MEAS_PROPDELAY_OFFSET,	4
 	SUB     R27, R27, SCRATCH2
 ENDAT_SKIP_PDELAY_FOR_NSP_CMD2_2_CH1?:
-    ;Load memory address 
+    ;Load memory address
 	LBCO    &SCRATCH2,    PRUx_DMEM, ENDAT_CONFIG_CH_INFO_MEMORY_ADDRESS, 4
     ; store in DMEM
     SBBO    &R27,  SCRATCH2,  ENDAT_CH1_RT_OFFSET, 4
@@ -1517,7 +1518,7 @@ WRXCH2?:
 	SUB     R27, R27, SCRATCH2
 ENDAT_SKIP_PDELAY_FOR_NSP_CMD2_2_CH2?:
     ; store in DMEM
-	;Load memory address 
+	;Load memory address
 	LBCO    &SCRATCH2,    PRUx_DMEM, ENDAT_CONFIG_CH_INFO_MEMORY_ADDRESS, 4
     SBBO    &R27, SCRATCH2,  ENDAT_CH2_RT_OFFSET, 4
    .endm
@@ -1767,9 +1768,9 @@ ENDAT_SKIP34_PRE_CH1:
 ENDAT_SKIP34_PRE_CH2:
     .endif
 
-   ;disable calculation of RT for free run continuous mode 
+   ;disable calculation of RT for free run continuous mode
     LDI  R27.b0,  0
-    
+
 	.if	$isdefed("ENABLE_MULTI_CHANNEL")
 	M_OTF_RECEIVE	R15,	R16,	R19,	R20,	R23,	R24,	R27.b0,   0
 	.else
@@ -1794,7 +1795,7 @@ ENDAT_SKIP35_CH1:
 	CLR             R30.b3,	R30.b3.t2 ;  disable rx
 ENDAT_SKIP35_CH2:
     .endif
-   
+
     ;load memory address inot SCRATCH2
     LBCO    &SCRATCH2,    PRUx_DMEM, ENDAT_CONFIG_CH_INFO_MEMORY_ADDRESS, 4
     .if $isdefed("ENABLE_MULTI_MAKE_RTU")
@@ -2278,7 +2279,7 @@ WB_TX_FIFO_COM_CH0:
 WAIT_TX_DONE_CH0:
     QBBS   WAIT_TX_DONE_CH0, R31, ENDAT_TX_BUSY_CH0
 
-  
+
 
     M_CALC_RECOV_TIME_CH0
 

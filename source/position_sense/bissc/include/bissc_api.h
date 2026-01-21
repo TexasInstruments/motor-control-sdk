@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023-2025 Texas Instruments Incorporated
+ *  Copyright (C) 2023-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -54,12 +54,11 @@ extern "C" {
  * Here is the list of APIs used for BiSS-C encoder communication protocol
  *
  *  \par Validation Strategy
- *  BiSS-C driver APIs use a simplified validation approach for optimal performance:
+ *  BiSS-C driver APIs use following validation approach:
  *  - **Handle validation**: All public APIs validate the handle parameter for NULL
  *  - **Array bounds checking**: APIs with array parameters or index parameters perform bounds validation
- *  - **Internal structure validation**: Internal structures (attrs, priv, pruicss_xchg, pruicss_handle)
- *    are validated once during bissc_init() and assumed valid in subsequent API calls
- *  - This strategy reduces overhead in time-critical data path functions
+ *  - **Internal structure validation**: All APIs validate internal structure pointers (attrs, priv,
+ *    pruicss_xchg, pruicss_handle) for NULL before dereferencing to prevent undefined behavior
  *
  *  @{
  */
@@ -105,11 +104,11 @@ bissc_handle bissc_init(uint32_t index, const bissc_params *bissc_params);
  *  \details    This function de-initializes the BiSS-C instance by marking the handle
  *              as closed (is_open = 0). It does not free memory or disable PRU cores.
  *
- *  \param[in]  bissc_handle     Handle to BiSS-C instance
+ *  \param[in]  handle            BiSS-C handle
  *
  *  \note       On NULL handle or NULL priv, function returns without performing any operation
  */
-void bissc_deinit(bissc_handle bissc_handle);
+void bissc_deinit(bissc_handle handle);
 
 /**
  *  \brief      Send the BiSS-C command and wait till firmware acknowledges
@@ -224,14 +223,23 @@ int32_t bissc_config_channel(bissc_handle handle, uint8_t mask, uint8_t total_ch
  *              initialization. It checks the status flags based on the channel mask
  *              to ensure all enabled channels are initialized.
  *
+ *              In load share mode: Checks status for all channels specified in channel_mask (1-7).
+ *              In non-load share mode: Checks only status[0] regardless of channel configuration.
+ *
+ *              The function returns immediately when initialization is detected, or after
+ *              loop_count iterations if initialization does not complete (timeout).
+ *
+ *              Timeout calculation: Total timeout will be approximately loop_count × fw_wait_delay_us microseconds
+ *              Example: loop_count=5000 with default fw_wait_delay_us=1000µs gives 5 seconds
+ *
  *              This function internally calls:
  *              - ClockP_usleep(): Delay configured via bissc_params.fw_wait_delay_us (before calling \ref bissc_init)
- *                (default: 1000 microseconds) between poll iterations to prevent excessive CPU usage
+ *                (default: \ref BISSC_DEFAULT_FW_WAIT_DELAY_US = 1000 microseconds) between poll iterations
  *
  *  \param[in]  handle          BiSS-C handle
- *  \param[in]  loop_count      timeout value in iterations
- *  \retval     SystemP_SUCCESS when all specified channels are initialized
- *  \retval     SystemP_FAILURE on timeout
+ *  \param[in]  loop_count      Maximum number of polling iterations before timeout
+ *  \retval     SystemP_SUCCESS When all specified channels are initialized
+ *  \retval     SystemP_FAILURE On NULL handle, invalid internal structures, timeout, or invalid channel_mask in load share mode
  *
  */
 int32_t bissc_wait_for_fw_initialization(bissc_handle handle, uint32_t loop_count);
@@ -432,11 +440,15 @@ int32_t bissc_config_host_trigger(bissc_handle handle);
  *  \param[in]  handle              BiSS-C handle
  *  \param[in]  ls_ch               channel in use for load share
  *  \param[in]  ctrl_write_status   status for control communication write access
- *  \param[in]  ctrl_reg_address    address of encoder's register for control communication access
- *  \param[in]  ctrl_reg_data       data to write in encoder's register in control communication
- *  \param[in]  ctrl_enc_id         ID of encoder based on it's place in daisy chain
+ *                                  - 0: Read access
+ *                                  - 1: Write access
+ *  \param[in]  ctrl_reg_address    address of encoder's register for control communication access (7-bit: 0x00-0x7F)
+ *  \param[in]  ctrl_reg_data       data to write in encoder's register in control communication (8-bit: 0x00-0xFF)
+ *  \param[in]  ctrl_enc_id         ID of encoder based on it's place in daisy chain (3-bit: 0x0-0x7)
  *  \retval     ctrl_cmd            Hex equivalent control communication 32 bit command
- *  \retval     0                   On NULL handle or invalid ls_ch (>= \ref BISSC_NUM_CH_PER_SLICE_MAX)
+ *  \retval     0                   On NULL handle, invalid ls_ch (>= \ref BISSC_NUM_CH_PER_SLICE_MAX), invalid ctrl_write_status (> 1),
+ *                                  invalid ctrl_reg_address (> \ref BISSC_REG_ADDR_MASK), invalid ctrl_reg_data (> \ref BISSC_REG_DATA_MASK),
+ *                                  or invalid ctrl_enc_id (> \ref BISSC_ENC_ID_MASK)
  */
 uint32_t bissc_generate_ctrl_cmd(bissc_handle handle,
                                  uint8_t ls_ch,

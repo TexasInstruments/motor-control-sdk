@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2024-2025 Texas Instruments Incorporated
+ *  Copyright (C) 2024-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -48,50 +48,18 @@ extern nikon_config gNikonHandle[];
 extern uint32_t gNikonConfigNum;
 
 /* ========================================================================== */
-/*                           Validation Strategy                              */
-/* ========================================================================== */
-
-/**
- * \brief Driver Validation Strategy
- *
- * This driver uses a two-tier validation approach to balance safety and performance:
- *
- * **Public APIs (nikon_api.h):**
- * - Validate all input parameters including handle, array pointers, and index bounds
- * - Perform array bounds checking for ch, ls_ch, ch_idx parameters against
- *   NIKON_NUM_CH_PER_SLICE_MAX and NUM_ENCODERS_MAX
- * - Return SystemP_FAILURE or 0 (for data-returning functions) on validation errors
- *
- * **Internal Static Functions:**
- * - Assume parameters are valid (lightweight validation)
- * - Caller is responsible for ensuring valid parameters
- * - Documented with "NOTE: This internal function does not validate handle parameter"
- * - This reduces overhead in frequently called internal functions
- *
- * **Initialization Validation:**
- * - nikon_init() performs comprehensive validation of all attrs fields
- * - Internal structures (priv, attrs, pruicss_xchg, pruicss_handle) are validated
- *   once during initialization and assumed valid thereafter
- *
- * **Error State Handling:**
- * - Some functions (e.g., nikon_get_pos) may leave internal state partially modified
- *   on error. This is documented in the API header
- * - Subsequent successful API calls will overwrite these values
- * - Explicit state cleanup is the caller's responsibility if needed
- */
-
-/* ========================================================================== */
 /*                      Internal Function Declarations                        */
 /* ========================================================================== */
+
+/* NOTE: These internal static functions do not validate handle parameter or pointers.
+ * Caller must ensure that pointers are not NULL. */
 
 /**
  * \brief Calculate 3-bit CRC for Nikon communication frame
  *
  * \details Internal function for CRC calculation used by command generation functions.
- *          Caller must ensure handle is not NULL.
  *
  * \param handle        Nikon handle from \ref nikon_init
- *                      NOTE: Caller must ensure handle is not NULL
  * \param cmd           Command bits for CRC calculation
  *
  * \return Calculated 3-bit CRC value with frame padding
@@ -102,7 +70,6 @@ static uint32_t nikon_calc_3bitcrc(nikon_handle handle, uint32_t cmd);
  *  \brief Generate Memory Data Frame (MDF) for EEPROM access
  *
  *  \details    Internal function that does not validate handle parameter.
- *              Caller must ensure handle is not NULL.
  *
  *  \param[in]  handle          Nikon handle from \ref nikon_init
  *  \param[in]  mem_idx         Memory data index (0-3)
@@ -113,9 +80,6 @@ static void nikon_generate_mdf(nikon_handle handle, uint32_t mem_idx, uint32_t m
 /**
  * \brief Clear CFG0 registers for all channels
  *
- * \details Internal function that does not validate handle parameter.
- *          Caller must ensure handle is not NULL.
- *
  * \param handle        Nikon handle from \ref nikon_init
  */
 static void nikon_config_clr_cfg0(nikon_handle handle);
@@ -125,16 +89,11 @@ static void nikon_config_clr_cfg0(nikon_handle handle);
  *
  * \param handle        Nikon handle from \ref nikon_init
  * \param clk_cfg       Clock configuration structure
- *
- * \return SystemP_SUCCESS on success, SystemP_FAILURE on error
  */
-static int32_t nikon_config_clock(nikon_handle handle, nikon_clk_cfg *clk_cfg);
+static void nikon_config_clock(nikon_handle handle, nikon_clk_cfg *clk_cfg);
 
 /**
  * \brief Enable load share mode in PRU-ICSS
- *
- * \details Internal function that does not validate handle parameter.
- *          Caller must ensure handle is not NULL.
  *
  * \param handle        Nikon handle from \ref nikon_init
  */
@@ -165,9 +124,6 @@ static int32_t nikon_hw_init(nikon_handle handle);
 /**
  * \brief Set default initialization values in PRU-ICSS exchange structure
  *
- * \details Internal function that does not validate handle parameter.
- *          Caller must ensure handle is not NULL.
- *
  * \param handle        Nikon handle from \ref nikon_init
  * \param icss_clk      ICSS core clock frequency in Hz
  */
@@ -175,9 +131,6 @@ static void nikon_set_default_initialization(nikon_handle handle, uint64_t icss_
 
 /**
  * \brief Configure channel mapping based on channel mask
- *
- * \details Internal function that does not validate handle parameter.
- *          Caller must ensure handle is not NULL.
  *
  * \param handle        Nikon handle from \ref nikon_init
  * \param mask          Channel mask
@@ -190,8 +143,6 @@ static void nikon_config_channel(nikon_handle handle, uint32_t mask);
  *  \details    This function parses the alarm field (ALM) from the encoder response and populates
  *              the alarm bits structure. Called internally by \ref nikon_get_pos for commands
  *              that return alarm information.
- *              Internal function that does not validate handle parameter.
- *              Caller must ensure handle is not NULL.
  *
  *  \param[in]  handle          Nikon handle from \ref nikon_init
  *  \param[in]  enc_num         Encoder number (0 to NUM_ENCODERS_MAX-1)
@@ -205,8 +156,6 @@ static void nikon_get_alm_bits(nikon_handle handle, uint32_t enc_num, uint32_t c
  *  \details    This function parses the PM alarm field from the encoder response and populates
  *              the PM alarm bits structure. Called internally by \ref nikon_get_pos for Nikon 3.0
  *              encoders that return PM alarm information.
- *              Internal function that does not validate handle parameter.
- *              Caller must ensure handle is not NULL.
  *
  *  \param[in]  handle          Nikon handle from \ref nikon_init
  *  \param[in]  enc_num         Encoder number (0 to NUM_ENCODERS_MAX-1)
@@ -247,8 +196,8 @@ int32_t nikon_command_send(nikon_handle handle)
     const nikon_attrs *attrs;
     nikon_pruicss_xchg *pruicss_xchg;
 
-    /* Validate handle parameter */
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->pruicss_xchg == NULL))
     {
         return SystemP_FAILURE;
     }
@@ -278,9 +227,10 @@ int32_t nikon_update_enc_len(nikon_handle handle, uint32_t num_encoders, uint32_
     nikon_priv *priv;
     const nikon_attrs *attrs;
 
-    /* Validate handle parameter, array parameters and array bounds
-     * NOTE: priv, attrs, pruicss_xchg are validated during nikon_init() and assumed valid thereafter */
+    /* Validate handle, internal structure pointers, array parameters and array bounds */
     if((handle == NULL) ||
+       (handle->priv == NULL) ||
+       (handle->attrs == NULL) ||
        (single_turn_len == NULL) ||
        (multi_turn_len == NULL) ||
        (ch >= NIKON_NUM_CH_PER_SLICE_MAX) ||
@@ -342,9 +292,8 @@ int32_t nikon_get_current_channel(nikon_handle handle, uint32_t ch_idx, uint32_t
 {
     nikon_priv *priv;
 
-    /* Validate handle, output pointer, and array bounds
-     * NOTE: priv is validated during nikon_init() and assumed valid thereafter */
-    if((handle == NULL) || (channel == NULL) || (ch_idx >= NIKON_NUM_CH_PER_SLICE_MAX))
+    /* Validate handle, internal structure pointer, output pointer, and array bounds */
+    if((handle == NULL) || (handle->priv == NULL) || (channel == NULL) || (ch_idx >= NIKON_NUM_CH_PER_SLICE_MAX))
     {
         return SystemP_FAILURE;
     }
@@ -359,15 +308,13 @@ int32_t nikon_update_enc_addr(nikon_handle handle, uint32_t enc_addr, uint32_t l
 {
     nikon_priv *priv;
 
-    /* Validate handle parameter and array bounds
-     * NOTE: priv is validated during nikon_init() and assumed valid thereafter */
-    if((handle == NULL) || (ls_ch >= NIKON_NUM_CH_PER_SLICE_MAX))
+    /* Validate parameters, internal structure pointer and array bounds */
+    if((handle == NULL) || (handle->priv == NULL) || (ls_ch >= NIKON_NUM_CH_PER_SLICE_MAX) || (enc_addr > NIKON_ENC_ADDR_MAX))
     {
         return SystemP_FAILURE;
     }
 
     priv = handle->priv;
-
     priv->eax[ls_ch] = (uint32_t)nikon_reverse_bits(enc_addr, NIKON_ENC_ADDR_LEN);
 
     return SystemP_SUCCESS;
@@ -377,15 +324,13 @@ int32_t nikon_update_eeprom_addr(nikon_handle handle, uint8_t addr, uint32_t ls_
 {
     nikon_priv *priv;
 
-    /* Validate handle parameter and array bounds
-     * NOTE: priv is validated during nikon_init() and assumed valid thereafter */
-    if((handle == NULL) || (ls_ch >= NIKON_NUM_CH_PER_SLICE_MAX))
+    /* Validate handle, internal structure pointer and array bounds */
+    if((handle == NULL) || (handle->priv == NULL) || (ls_ch >= NIKON_NUM_CH_PER_SLICE_MAX))
     {
         return SystemP_FAILURE;
     }
 
     priv = handle->priv;
-
     priv->mem_data[ls_ch][NIKON_MEM_ADDRESS_INDEX] = (uint32_t)nikon_reverse_bits(addr, NIKON_EEPROM_ADDR_LEN);
 
     return SystemP_SUCCESS;
@@ -395,15 +340,13 @@ int32_t nikon_update_eeprom_data(nikon_handle handle, uint16_t data, uint32_t ls
 {
     nikon_priv *priv;
 
-    /* Validate handle parameter and array bounds
-     * NOTE: priv is validated during nikon_init() and assumed valid thereafter */
-    if((handle == NULL) || (ls_ch >= NIKON_NUM_CH_PER_SLICE_MAX))
+    /* Validate handle, internal structure pointer and array bounds */
+    if((handle == NULL) || (handle->priv == NULL) || (ls_ch >= NIKON_NUM_CH_PER_SLICE_MAX))
     {
         return SystemP_FAILURE;
     }
 
     priv = handle->priv;
-
     priv->mem_data[ls_ch][NIKON_MEM_DATA_LOW_INDEX] = (uint32_t)nikon_reverse_bits((data & 0xFFU), NIKON_EEPROM_DATA_BYTE_LEN);
     priv->mem_data[ls_ch][NIKON_MEM_DATA_HIGH_INDEX] = (uint32_t)nikon_reverse_bits(((data & 0xFF00U) >> NIKON_BYTE_SHIFT), NIKON_EEPROM_DATA_BYTE_LEN);
 
@@ -414,15 +357,13 @@ int32_t nikon_update_eeprom_bank(nikon_handle handle, uint8_t bank, uint32_t ls_
 {
     nikon_priv *priv;
 
-    /* Validate handle parameter and array bounds
-     * NOTE: priv is validated during nikon_init() and assumed valid thereafter */
-    if((handle == NULL) || (ls_ch >= NIKON_NUM_CH_PER_SLICE_MAX))
+    /* Validate handle, internal structure pointer and array bounds */
+    if((handle == NULL) || (handle->priv == NULL) || (ls_ch >= NIKON_NUM_CH_PER_SLICE_MAX))
     {
         return SystemP_FAILURE;
     }
 
     priv = handle->priv;
-
     priv->mem_data[ls_ch][NIKON_MEM_BANK_INDEX] = (uint32_t)nikon_reverse_bits(bank, NIKON_EEPROM_BANK_LEN);
 
     return SystemP_SUCCESS;
@@ -432,9 +373,8 @@ int32_t nikon_update_id_code(nikon_handle handle, uint32_t data, uint32_t ls_ch)
 {
     nikon_priv *priv;
 
-    /* Validate handle parameter and array bounds
-     * NOTE: priv is validated during nikon_init() and assumed valid thereafter */
-    if((handle == NULL) || (ls_ch >= NIKON_NUM_CH_PER_SLICE_MAX))
+    /* Validate parameters, internal structure pointer and array bounds */
+    if((handle == NULL) || (handle->priv == NULL) || (ls_ch >= NIKON_NUM_CH_PER_SLICE_MAX) || (data > 0xFFFFFFU))
     {
         return SystemP_FAILURE;
     }
@@ -454,9 +394,8 @@ int32_t nikon_update_velocity_coefficient(nikon_handle handle, uint32_t data, ui
 {
     nikon_priv *priv;
 
-    /* Validate handle parameter and array bounds
-     * NOTE: priv is validated during nikon_init() and assumed valid thereafter */
-    if((handle == NULL) || (ls_ch >= NIKON_NUM_CH_PER_SLICE_MAX))
+    /* Validate parameters, internal structure pointer and array bounds */
+    if((handle == NULL) || (handle->priv == NULL) || (ls_ch >= NIKON_NUM_CH_PER_SLICE_MAX) || (data > 0x7FFFF))
     {
         return SystemP_FAILURE;
     }
@@ -484,8 +423,6 @@ static uint32_t nikon_calc_3bitcrc(nikon_handle handle, uint32_t cmd)
     uint32_t i;
     nikon_priv *priv;
 
-    /* NOTE: This internal function does not validate handle parameter.
-     * Caller must ensure handle is not NULL. */
     priv = handle->priv;
 
     /* Initialize with all 1s.
@@ -536,13 +473,19 @@ int32_t nikon_generate_cdf(nikon_handle handle, uint32_t cmd)
     uint32_t ls_ch;
     uint32_t res;
 
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL))
     {
         return SystemP_FAILURE;
     }
 
     priv = handle->priv;
     attrs = handle->attrs;
+
+    if(((attrs->protocol_version == NIKON_PROTOCOL_V2_1) && (((cmd > CMD_22) && (cmd < CMD_27)) || (cmd > CMD_30))) || ((cmd > CMD_30) && (cmd < CMD_1_VEL)) || (cmd >= CMD_CODE_NUM))
+    {
+        return SystemP_FAILURE;
+    }
 
     /*
      * Padding of 12 1's has be provided at the beginning to compensate for 2 micro-seconds
@@ -642,8 +585,6 @@ static void nikon_generate_mdf(nikon_handle handle, uint32_t mem_idx, uint32_t m
      * memory data = MEM[0:7], crc = CRC[2:0], stop bit = 1
      */
 
-    /* NOTE: This internal function does not validate handle parameter.
-     * Caller must ensure handle is not NULL. */
     priv = handle->priv;
     attrs = handle->attrs;
 
@@ -673,7 +614,8 @@ int32_t nikon_command_wait(nikon_handle handle)
     nikon_pruicss_xchg *pruicss_xchg;
     uint32_t loop_count;
 
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->pruicss_xchg == NULL))
     {
         return SystemP_FAILURE;
     }
@@ -728,8 +670,8 @@ int32_t nikon_command_process(nikon_handle handle)
     int32_t ret = SystemP_FAILURE;
     nikon_priv *priv;
 
-    /* Validate handle parameter */
-    if(handle == NULL)
+    /* Validate handle and internal structure pointer */
+    if((handle == NULL) || (handle->priv == NULL))
     {
         return SystemP_FAILURE;
     }
@@ -756,17 +698,17 @@ int32_t nikon_config_periodic_trigger_cmp_mode(nikon_handle handle)
     nikon_pruicss_xchg *pruicss_xchg;
     uint8_t pru_num;
 
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->pruicss_xchg == NULL))
     {
         return SystemP_FAILURE;
     }
 
     priv = handle->priv;
     attrs = handle->attrs;
-
-    /* Configures Nikon in periodic trigger CMP mode */
     pruicss_xchg = priv->pruicss_xchg;
 
+    /* Configures Nikon receiver in periodic trigger CMP mode */
     if(attrs->load_share_enabled)
     {
         for(pru_num = 0; pru_num < NIKON_NUM_CH_PER_SLICE_MAX; pru_num++)
@@ -793,17 +735,17 @@ int32_t nikon_config_host_trigger(nikon_handle handle)
     nikon_pruicss_xchg *pruicss_xchg;
     uint8_t pru_num;
 
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->pruicss_xchg == NULL))
     {
         return SystemP_FAILURE;
     }
 
     priv = handle->priv;
     attrs = handle->attrs;
-
-    /* Configures Nikon receiver in host trigger mode */
     pruicss_xchg = priv->pruicss_xchg;
 
+    /* Configures Nikon receiver in host trigger mode */
     if(attrs->load_share_enabled)
     {
         for(pru_num = 0; pru_num < NIKON_NUM_CH_PER_SLICE_MAX; pru_num++)
@@ -830,18 +772,17 @@ int32_t nikon_config_periodic_trigger_cap_mode(nikon_handle handle)
     nikon_pruicss_xchg *pruicss_xchg;
     uint8_t pru_num;
 
-    /* Validate handle parameter */
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->pruicss_xchg == NULL))
     {
         return SystemP_FAILURE;
     }
 
     priv = handle->priv;
     attrs = handle->attrs;
-
-    /* Configures Nikon receiver in periodic trigger CAP mode */
     pruicss_xchg = priv->pruicss_xchg;
 
+    /* Configures Nikon receiver in periodic trigger CAP mode */
     if(attrs->load_share_enabled)
     {
         for(pru_num = 0; pru_num < NIKON_NUM_CH_PER_SLICE_MAX; pru_num++)
@@ -863,15 +804,17 @@ int32_t nikon_config_periodic_trigger_cap_mode(nikon_handle handle)
 
 static int32_t nikon_config_iep_base_address(nikon_handle handle, uint32_t iep_base_address)
 {
-    /* Validate handle parameter */
-    if(iep_base_address == 0 || handle == NULL)
+    nikon_priv          *priv;
+    nikon_pruicss_xchg  *pruicss_xchg;
+
+    if(iep_base_address == 0)
     {
         return SystemP_FAILURE;
     }
 
     /* Configures IEP instance used for periodic trigger mode */
-    nikon_priv          *priv = handle->priv;
-    nikon_pruicss_xchg  *pruicss_xchg = priv->pruicss_xchg;
+    priv = handle->priv;
+    pruicss_xchg = priv->pruicss_xchg;
 
     pruicss_xchg->iep_base_address = iep_base_address;
 
@@ -886,7 +829,8 @@ int32_t nikon_config_iep_cap_event(nikon_handle handle, uint8_t channel, uint8_t
     nikon_pruicss_xchg *pruicss_xchg;
     uint8_t ch_index = 0;
 
-    if(handle == NULL || event_num >= NIKON_IEP_MAX_CAP_EVENT || channel >= NIKON_NUM_CH_PER_SLICE_MAX)
+    /* Validate handle, internal structure pointers and parameters */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->pruicss_xchg == NULL) || (event_num >= NIKON_IEP_MAX_CAP_EVENT) || (channel >= NIKON_NUM_CH_PER_SLICE_MAX))
     {
         return SystemP_FAILURE;
     }
@@ -929,7 +873,8 @@ int32_t nikon_config_iep_cmp_event(nikon_handle handle, uint8_t channel, uint8_t
     nikon_pruicss_xchg *pruicss_xchg;
     uint8_t ch_index = 0;
 
-    if(handle == NULL || event_num >= NIKON_IEP_MAX_CMP_EVENT || channel >= NIKON_NUM_CH_PER_SLICE_MAX)
+    /* Validate handle, internal structure pointers and parameters */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->pruicss_xchg == NULL) || (event_num >= NIKON_IEP_MAX_CMP_EVENT) || (channel >= NIKON_NUM_CH_PER_SLICE_MAX))
     {
         return SystemP_FAILURE;
     }
@@ -962,8 +907,6 @@ static void nikon_config_clr_cfg0(nikon_handle handle)
     const nikon_attrs *attrs;
     void *pruicss_cfg;
 
-    /* NOTE: This internal function does not validate handle parameter.
-     * Caller must ensure handle is not NULL. */
     priv = handle->priv;
     attrs = handle->attrs;
     pruicss_cfg = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->cfgRegBase);
@@ -1000,18 +943,13 @@ static void nikon_config_clr_cfg0(nikon_handle handle)
     }
 }
 
-static int32_t nikon_config_clock(nikon_handle handle, nikon_clk_cfg *clk_cfg)
+static void nikon_config_clock(nikon_handle handle, nikon_clk_cfg *clk_cfg)
 {
     nikon_priv *priv;
     const nikon_attrs *attrs;
     void *pruicss_cfg;
     uint32_t rx_reg_val;
     uint32_t tx_reg_val;
-
-    if((handle == NULL) || (clk_cfg == NULL))
-    {
-        return SystemP_FAILURE;
-    }
 
     priv = handle->priv;
     attrs = handle->attrs;
@@ -1062,8 +1000,6 @@ static int32_t nikon_config_clock(nikon_handle handle, nikon_clk_cfg *clk_cfg)
                       (clk_cfg->is_core_clk << CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG_PRU0_ED_TX_CLK_SEL_SHIFT);
         HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG, tx_reg_val);
     }
-
-    return SystemP_SUCCESS;
 }
 
 int32_t nikon_calc_clock(nikon_handle handle, nikon_clk_cfg *clk_cfg)
@@ -1073,9 +1009,8 @@ int32_t nikon_calc_clock(nikon_handle handle, nikon_clk_cfg *clk_cfg)
     double freq;
     nikon_pruicss_xchg *pruicss_xchg;
 
-    /* Validate handle and clk_cfg parameters
-     * NOTE: priv and attrs are validated during nikon_init() and assumed valid thereafter */
-    if((handle == NULL) || (clk_cfg == NULL))
+    /* Validate handle, internal structure pointers and clk_cfg parameters */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->pruicss_xchg == NULL) || (clk_cfg == NULL))
     {
         return SystemP_FAILURE;
     }
@@ -1171,8 +1106,6 @@ static void nikon_enable_load_share_mode(nikon_handle handle)
     void *pruicss_cfg;
     uint32_t reg_val;
 
-    /* NOTE: This internal function does not validate handle parameter.
-     * Caller must ensure handle is not NULL. */
     priv = handle->priv;
     attrs = handle->attrs;
     pruicss_cfg = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->cfgRegBase);
@@ -1195,8 +1128,6 @@ static int32_t nikon_config_primary_core_mask(nikon_handle handle, uint8_t mask)
 {
     nikon_priv *priv;
 
-    /* NOTE: This internal function does not validate handle parameter.
-     * Caller must ensure handle is not NULL. */
     priv = handle->priv;
 
     switch (mask)
@@ -1234,8 +1165,6 @@ static int32_t nikon_hw_init(nikon_handle handle)
     nikon_clk_cfg clk_cfg;
     int32_t status;
 
-    /* NOTE: This internal function does not validate handle parameter.
-     * Caller must ensure handle is not NULL. */
 
     status = nikon_calc_clock(handle, &clk_cfg);
     if(status != SystemP_SUCCESS)
@@ -1243,13 +1172,9 @@ static int32_t nikon_hw_init(nikon_handle handle)
         return status;
     }
 
-    status = nikon_config_clock(handle, &clk_cfg);
-    if(status != SystemP_SUCCESS)
-    {
-        return status;
-    }
-
+    nikon_config_clock(handle, &clk_cfg);
     nikon_config_clr_cfg0(handle);
+
     return SystemP_SUCCESS;
 }
 
@@ -1258,7 +1183,16 @@ int32_t nikon_update_clock_freq(nikon_handle handle, float_t frequency)
     nikon_priv *priv;
     const nikon_attrs *attrs;
 
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) ||
+       (handle->priv == NULL) ||
+       (handle->attrs == NULL) ||
+       (handle->priv->pruicss_xchg == NULL) ||
+       (handle->priv->pruicss_handle == NULL) ||
+       (handle->priv->pruicss_handle->hwAttrs == NULL))
+    {
+        return SystemP_FAILURE;
+    }
     {
         return SystemP_FAILURE;
     }
@@ -1270,6 +1204,7 @@ int32_t nikon_update_clock_freq(nikon_handle handle, float_t frequency)
     {
         frequency = (float_t)20/3;
     }
+
     priv->baud_rate = frequency;
     priv->pruicss_xchg->rx_clk_freq = priv->baud_rate;
 
@@ -1292,8 +1227,6 @@ static void nikon_set_default_initialization(nikon_handle handle, uint64_t icss_
     nikon_pruicss_xchg *pruicss_xchg;
     uint8_t pru_num;
 
-    /* NOTE: This internal function does not validate handle parameter.
-     * Caller must ensure handle is not NULL. */
     priv = handle->priv;
     pruicss_xchg = priv->pruicss_xchg;
 
@@ -1326,8 +1259,6 @@ static void nikon_config_channel(nikon_handle handle, uint32_t mask)
     nikon_pruicss_xchg *pruicss_xchg;
     uint32_t ch_num;
 
-    /* NOTE: This internal function does not validate handle parameter.
-     * Caller must ensure handle is not NULL. */
     priv = handle->priv;
     attrs = handle->attrs;
     pruicss_xchg = priv->pruicss_xchg;
@@ -1396,12 +1327,14 @@ nikon_handle nikon_init(uint32_t index, const nikon_params *params)
     if(status == SystemP_SUCCESS)
     {
         /* Validate params */
-        if((params->pruicss_handle == NULL) || (params->max_wait_loop_count == 0))
+        if((params->pruicss_handle == NULL) ||
+           (params->pruicss_handle->hwAttrs == NULL) ||
+           (params->max_wait_loop_count == 0))
         {
             status = SystemP_FAILURE;
         }
 
-        /* Comprehensive validation of attrs */
+        /* Validation of attrs */
         if((attrs->instance >= gNikonConfigNum) ||
            (attrs->mode > NIKON_MODE_MULTI_CHANNEL_MULTI_PRU) ||
            (attrs->pruicss_instance > 1) ||
@@ -1590,14 +1523,14 @@ void nikon_deinit(nikon_handle handle)
 {
     nikon_priv *priv;
 
-    if(handle != NULL)
+    if((handle == NULL) || (handle->priv == NULL))
     {
-        priv = handle->priv;
-        if(priv != NULL)
-        {
-            priv->is_open = 0;
-        }
+        return;
     }
+
+    priv = handle->priv;
+    /* Mark as closed */
+    priv->is_open = 0;
 }
 
 void nikon_params_init(nikon_params *params)
@@ -1611,33 +1544,39 @@ void nikon_params_init(nikon_params *params)
 
 const nikon_attrs* nikon_get_attrs(nikon_handle handle)
 {
-    const nikon_attrs *attrs = NULL;
-
-    if(handle != NULL)
+    /* Validate handle and attrs pointer */
+    if((handle == NULL) || (handle->attrs == NULL))
     {
-        attrs = handle->attrs;
+        return NULL;
     }
-
-    return attrs;
+    return handle->attrs;
 }
 
 nikon_priv* nikon_get_priv(nikon_handle handle)
 {
-    nikon_priv *priv = NULL;
-
-    if(handle != NULL)
+    /* Validate handle and priv pointer */
+    if((handle == NULL) || (handle->priv == NULL))
     {
-        priv = handle->priv;
+        return NULL;
     }
-
-    return priv;
+    return handle->priv;
 }
 
 int32_t nikon_config_load_share(nikon_handle handle, uint8_t mask)
 {
     int32_t status;
 
-    if(handle == NULL)
+    if((handle == NULL) ||
+       (handle->priv == NULL) ||
+       (handle->attrs == NULL) ||
+       (handle->priv->pruicss_xchg == NULL) ||
+       (handle->priv->pruicss_handle == NULL) ||
+       (handle->priv->pruicss_handle->hwAttrs == NULL) ||
+       (mask == 0) ||
+       (mask > 7))
+    {
+        return SystemP_FAILURE;
+    }
     {
         return SystemP_FAILURE;
     }
@@ -1649,6 +1588,7 @@ int32_t nikon_config_load_share(nikon_handle handle, uint8_t mask)
     }
 
     nikon_enable_load_share_mode(handle);
+
     return SystemP_SUCCESS;
 }
 
@@ -1658,8 +1598,6 @@ static void nikon_get_alm_bits(nikon_handle handle, uint32_t enc_num, uint32_t c
     const nikon_attrs *attrs;
     uint32_t alm;
 
-    /* NOTE: This internal function does not validate handle parameter.
-     * Caller must ensure handle is not NULL. */
     priv = handle->priv;
     attrs = handle->attrs;
     alm = priv->alm_field[ch][enc_num];
@@ -1711,8 +1649,6 @@ static void nikon_get_pm_alm_bits(nikon_handle handle, uint32_t enc_num, uint32_
     const nikon_attrs *attrs;
     uint32_t pm_alm;
 
-    /* NOTE: This internal function does not validate handle parameter.
-     * Caller must ensure handle is not NULL. */
     priv = handle->priv;
     attrs = handle->attrs;
     pm_alm = priv->pm_alm_field[ch][enc_num];
@@ -1737,7 +1673,8 @@ int32_t nikon_wait_for_encoder_detection(nikon_handle handle)
     uint32_t pru_num;
     uint32_t ls_ch;
 
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->pruicss_xchg == NULL))
     {
         return SystemP_FAILURE;
     }
@@ -1802,7 +1739,8 @@ int32_t nikon_get_pos(nikon_handle handle, uint32_t cmd)
     uint32_t pru_num;
     uint32_t mdf_num;
 
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->pruicss_xchg == NULL))
     {
         return SystemP_FAILURE;
     }

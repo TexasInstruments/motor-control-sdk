@@ -105,6 +105,7 @@ function onValidate(inst, validation) {
                     cap_field: "CAP_Event_Num_CH0"
                 });
             }
+
             if (instance.Channel_1) {
                 enabled_channels.push({
                     name: "Channel 1",
@@ -114,6 +115,7 @@ function onValidate(inst, validation) {
                     cap_field: "CAP_Event_Num_CH1"
                 });
             }
+
             if (instance.Channel_2) {
                 enabled_channels.push({
                     name: "Channel 2",
@@ -241,7 +243,7 @@ let endat_module = {
         {
             name: "Channel_1",
             displayName: "Enable Channel 1",
-            description: "Channel 1 Selection ",
+            description: "Channel 1 Selection",
             default: false,
             onChange: function(inst, ui) {
                 if (inst.Multi_Channel_Load_Share) {
@@ -253,7 +255,7 @@ let endat_module = {
         {
             name: "Channel_2",
             displayName: "Enable Channel 2",
-            description: "Channel 2 Selection ",
+            description: "Channel 2 Selection",
             default: false,
             onChange: function(inst, ui) {
                 if (inst.Multi_Channel_Load_Share) {
@@ -262,7 +264,6 @@ let endat_module = {
                 }
             },
         },
-
         {
             name: "Multi_Channel_Load_Share",
             displayName: "Multi Channel Load Share",
@@ -347,8 +348,8 @@ let endat_module = {
                 {
                     name: "CMP_Event_Num",
                     displayName: "IEP CMP Event Number",
-                    description: "CMP event number (0-15) for periodic CMP trigger mode (cmd 200)",
-                    default: 0,
+                    description: "CMP event number (0-15) for periodic CMP trigger mode",
+                    default: 2,
                     hidden: false,
                     options: [
                         { name: 0, displayName: "CMP0" },
@@ -372,7 +373,7 @@ let endat_module = {
                 {
                     name: "CAP_Event_Num",
                     displayName: "IEP CAP Event Number",
-                    description: "CAP event number (0-7) for periodic CAP trigger mode (cmd 201)",
+                    description: "CAP event number (0-7) for periodic CAP trigger mode. Note: Routing (SYNC out to CAP) is done in application code (endat_config_iep_cap_for_sync). Correct router signal should be configured for selected CAP event if needed",
                     default: 6,
                     hidden: false,
                     options: [
@@ -391,8 +392,8 @@ let endat_module = {
                 {
                     name: "CMP_Event_Num_CH0",
                     displayName: "Channel 0 - CMP Event Number",
-                    description: "CMP event number (0-15) for Channel 0 periodic CMP trigger mode (cmd 200)",
-                    default: 0,
+                    description: "CMP event number (0-15) for Channel 0 periodic CMP trigger mode",
+                    default: 2,
                     hidden: true,
                     options: [
                         { name: 0, displayName: "CMP0" },
@@ -416,8 +417,8 @@ let endat_module = {
                 {
                     name: "CAP_Event_Num_CH0",
                     displayName: "Channel 0 - CAP Event Number",
-                    description: "CAP event number (0-7) for Channel 0 periodic CAP trigger mode (cmd 201)",
-                    default: 0,
+                    description: "CAP event number (0-7) for Channel 0 periodic CAP trigger mode. Note: Routing (SYNC out to CAP) is done in application code (endat_config_iep_cap_for_sync). Correct router signal should be configured for selected CAP event if needed",
+                    default: 6,
                     hidden: true,
                     options: [
                         { name: 0, displayName: "CAP0" },
@@ -433,8 +434,8 @@ let endat_module = {
                 {
                     name: "CMP_Event_Num_CH1",
                     displayName: "Channel 1 - CMP Event Number",
-                    description: "CMP event number (0-15) for Channel 1 periodic CMP trigger mode (cmd 200)",
-                    default: 1,
+                    description: "CMP event number (0-15) for Channel 1 periodic CMP trigger mode",
+                    default: 3,
                     hidden: true,
                     options: [
                         { name: 0, displayName: "CMP0" },
@@ -458,8 +459,8 @@ let endat_module = {
                 {
                     name: "CAP_Event_Num_CH1",
                     displayName: "Channel 1 - CAP Event Number",
-                    description: "CAP event number (0-7) for Channel 1 periodic CAP trigger mode (cmd 201)",
-                    default: 1,
+                    description: "CAP event number (0-7) for Channel 1 periodic CAP trigger mode. Note: Routing (SYNC out to CAP) is done in application code (endat_config_iep_cap_for_sync). Correct router signal should be configured for selected CAP event if needed",
+                    default: 0,
                     hidden: true,
                     options: [
                         { name: 0, displayName: "CAP0" },
@@ -475,8 +476,8 @@ let endat_module = {
                 {
                     name: "CMP_Event_Num_CH2",
                     displayName: "Channel 2 - CMP Event Number",
-                    description: "CMP event number (0-15) for Channel 2 periodic CMP trigger mode (cmd 200)",
-                    default: 2,
+                    description: "CMP event number (0-15) for Channel 2 periodic CMP trigger mode",
+                    default: 4,
                     hidden: true,
                     options: [
                         { name: 0, displayName: "CMP0" },
@@ -500,8 +501,8 @@ let endat_module = {
                 {
                     name: "CAP_Event_Num_CH2",
                     displayName: "Channel 2 - CAP Event Number",
-                    description: "CAP event number (0-7) for Channel 2 periodic CAP trigger mode (cmd 201)",
-                    default: 2,
+                    description: "CAP event number (0-7) for Channel 2 periodic CAP trigger mode. Note: Routing (SYNC out to CAP) is done in application code (endat_config_iep_cap_for_sync). Correct router signal should be configured for selected CAP event if needed",
+                    default: 7,
                     hidden: true,
                     options: [
                         { name: 0, displayName: "CAP0" },

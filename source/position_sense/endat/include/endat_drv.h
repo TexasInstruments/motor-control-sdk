@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2021-25 Texas Instruments Incorporated
+ *  Copyright (C) 2021-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -183,7 +183,7 @@ extern "C" {
  *  \brief  EnDAT operation mode: Periodic trigger mode using IEP capture event
  *
  *  The PRU firmware automatically triggers position readout at regular
- *  intervals configured by IEP timer capture events.
+ *  intervals based on IEP timer capture events.
  */
 #define ENDAT_OPMODE_CAP_PERIODIC                           (0x2U)
 
@@ -237,12 +237,6 @@ extern "C" {
 
 /**    \brief    IEP capture register 0 address */
 #define ENDAT_CSL_ICSS_PR1_IEP0_SLV_CAP0_REG0                     (CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG + 2U*ENDAT_CFG_REG_SIZE)
-/**    \brief    IEP capture register 1 address */
-#define ENDAT_CSL_ICSS_PR1_IEP0_SLV_CAP0_REG1                     (CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG + 3U*ENDAT_CFG_REG_SIZE)
-/**    \brief    IEP compare enable bit shift value */
-#define ENDAT_IEP_SLV_CMP_CFG_REG_CMP_EN_SHIFT                    (0x1U)
-/**    \brief    IEP compare 0 reset counter enable bit shift value */
-#define ENDAT_IEP_SLV_CMP_CFG_REG_CMP0_RST_CNT_EN_SHIFT           (0x00000000U)
 
 /** \brief Validate EnDAT 2.1 command codes (1-7) */
 #define VALID_2_1_CMD(x) (((x) == 1) || ((x) == 2) || ((x) == 3) || ((x) == 4) || ((x) == 5) || ((x) == 6) || ((x) == 7) )
@@ -317,7 +311,7 @@ extern "C" {
 /* ========================================================================== */
 
 /**    \brief    Encoder types */
-enum endat_encoder_type_e 
+enum endat_encoder_type_e
 {
     ENDAT_ENCODER_TYPE_LINEAR,
     ENDAT_ENCODER_TYPE_ROTARY
@@ -348,7 +342,7 @@ typedef struct endat_clk_cfg_s
 
     uint16_t rx_div_attr;
     /**< RX over sampling rate.
-     *  Number of samples taken per bit period 
+     *  Number of samples taken per bit period
      *  Bit  [2:0] : Oversampling divisor (7 = 8x, 5 = 6x, 3 = 4x)
      *  Bits [3]   : Start bit polarity (0 or 1)
      *  Bit  [15]  : Fractional divider enable (1=enable 1.5x fractional division) */
@@ -367,7 +361,7 @@ typedef struct endat_flags_s
 {
     uint32_t info1 : 1;
     /**< Info1 availability flag.
-     *   0 = Additional info1 not available 
+     *   0 = Additional info1 not available
      *   1 = Additional info1 available  */
 
     uint32_t info2 : 1;
@@ -430,9 +424,9 @@ typedef struct endat_cmd_supplement_s
     uint32_t frequency;
     /**< Frequency parameter for clock configuration commands. */
 
-    uint32_t delay; 
+    uint32_t delay;
     /**< used to take delay from user delay parameter*/
-    
+
     uint8_t enable_rt;
     /**<Enable/disable Recovery time counter */
 
@@ -539,7 +533,7 @@ typedef struct endat_test_values_s
 } endat_test_values;
 
 /**
- *  \brief EnDAT formatted response data 
+ *  \brief EnDAT formatted response data
  *
  */
 typedef union endat_format_data_u
@@ -562,7 +556,7 @@ typedef union endat_format_data_u
  *           configuration and operational mode of the EnDAT driver instance.
  *
  *           All fields are validated once during \ref endat_init and assumed valid
- *           thereafter for optimal performance in time-critical operations.
+ *           thereafter.
  *
  *           This structure is typically declared as const and placed in read-only
  *           memory, as these parameters do not change during driver operation.
@@ -592,8 +586,8 @@ typedef struct endat_attrs_s
     uint8_t pruicss_slice;
     /**< PRU slice (core) selection within the PRU-ICSS instance.
      *   Valid values:
-     *   - 0 = PRU0 
-     *   - 1 = PRU1 
+     *   - 0 = PRU0
+     *   - 1 = PRU1
      *   Determines which PRU core executes the EnDAT firmware */
 
     uint8_t load_share_enabled;
@@ -823,7 +817,7 @@ typedef struct endat_priv_s
       *   0 = Encoder supports EnDAT 2.1 only
       *   1 = Encoder supports EnDAT 2.2 command set
       *   Determined during encoder identification */
- 
+
     endat_flags flags[ENDAT_NUM_CH_PER_SLICE_MAX];
      /**< Status flags structure containing info1 and info2 flags for each channel.
       *   Indexed by [channel]. Used to indicate availability of additional information from encoder.

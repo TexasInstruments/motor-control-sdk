@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2022-2025 Texas Instruments Incorporated
+ *  Copyright (C) 2022-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -198,7 +198,7 @@ static int32_t tamagawa_handle_rx(tamagawa_handle handle, int32_t cmd);
 static int32_t tamagawa_get_command(uint8_t *adf, uint8_t *edf);
 static void tamagawa_position_loop_decide_termination(void *args);
 static int32_t tamagawa_loop_task_create(void);
-static void tamagawa_process_periodic_command(tamagawa_handle handle[], int32_t process_dataid_cmd);
+static int32_t tamagawa_process_periodic_command(tamagawa_handle handle[], int32_t process_dataid_cmd);
 void tamagawa_main(void *args);
 
 /* ========================================================================== */
@@ -225,6 +225,11 @@ static void tamagawa_pruicss_init(void)
 #endif
 
     gPruIcssXHandle = PRUICSS_open(CONFIG_PRU_ICSS0);
+    if(gPruIcssXHandle == NULL)
+    {
+        DebugP_log("\r\n ERROR: PRUICSS_open failed - NULL handle returned\n");
+        DebugP_assert(0);
+    }
 
 #ifdef CONFIG_TAMAGAWA0_G_MUX_EN
     /* Configure g_mux_en to 1 in ICSSG_SA_MX_REG Register */
@@ -454,18 +459,17 @@ static void tamagawa_pruicss_load_run_fw(void)
 
 static void tamagawa_display_result(tamagawa_handle handle, int32_t cmd)
 {
-    tamagawa_priv *priv;
+    tamagawa_priv *priv = tamagawa_get_priv(handle);
     uint8_t xchg_index;
-    const tamagawa_attrs *attrs;
-    /* NULL check on handle */
-    if(handle == NULL)
+    const tamagawa_attrs *attrs = tamagawa_get_attrs(handle);
+
+    /* NULL check on handle/priv/attrs */
+    if((handle == NULL) || (priv == NULL) || (attrs == NULL))
     {
-        DebugP_log("\r\n ERROR: NULL handle in tamagawa_display_result\n");
+        DebugP_log("\r\n ERROR: NULL handle/priv/attrs in tamagawa_display_result\n");
         return;
     }
 
-    priv = tamagawa_get_priv(handle);
-    attrs = tamagawa_get_attrs(handle);
     if(attrs->load_share_enabled)
     {
         xchg_index = priv->channel;
@@ -474,7 +478,6 @@ static void tamagawa_display_result(tamagawa_handle handle, int32_t cmd)
     {
         xchg_index = 0;
     }
-
 
     /* Prints the position value returned by the encoder for a particular command ID */
     switch(cmd)
@@ -541,15 +544,14 @@ static void tamagawa_display_result(tamagawa_handle handle, int32_t cmd)
 
 static int32_t tamagawa_handle_rx(tamagawa_handle handle, int32_t cmd)
 {
-    tamagawa_priv *priv;
+    tamagawa_priv *priv = tamagawa_get_priv(handle);
 
-    /* NULL check on handle */
-    if(handle == NULL)
+    /* NULL check on handle/priv */
+    if((handle == NULL) || (priv == NULL))
     {
-        DebugP_log("\r\n ERROR: NULL handle\n");
+        DebugP_log("\r\n ERROR: NULL handle/priv\n");
         return SystemP_FAILURE;
     }
-    priv = tamagawa_get_priv(handle);
 
     DebugP_log("\r\n Parsing process started\n");
     /* Case of parsing failure */
@@ -581,7 +583,23 @@ static int32_t tamagawa_get_command(uint8_t *adf, uint8_t *edf)
     int32_t cmd;
     uint32_t val;
     uint32_t i, j;
-    const tamagawa_attrs *attrs;
+    const tamagawa_attrs *attrs[CONFIG_TAMAGAWA_NUM_INSTANCES] = {NULL};
+    uint8_t ch = 0;
+
+    if((adf == NULL) || (edf == NULL))
+    {
+        return SystemP_FAILURE;
+    }
+
+    for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
+    {
+        attrs[i] = tamagawa_get_attrs(gAppTamagawaHandle[i]);
+
+        if((gAppTamagawaHandle[i] == NULL) || (attrs[i] == NULL))
+        {
+            return SystemP_FAILURE;
+        }
+    }
 
     /* Check to make sure that the command issued is correct */
     if(DebugP_scanf("%d\n", &cmd) < 0)
@@ -592,6 +610,8 @@ static int32_t tamagawa_get_command(uint8_t *adf, uint8_t *edf)
     /* If the command is 9, start periodic trigger CMP mode with DATA ID as 0*/
     if(cmd == PERIODIC_TRIGGER_CMP_CMD)
     {
+        memset(&gTamagawaPeriodicInterface, 0, sizeof(gTamagawaPeriodicInterface));
+
         gTamagawaPeriodicInterface.is_cap_mode = 0;  /* CMP mode */
 
         DebugP_log("\r| Enter IEP reset cycle count (must be greater than Tamagawa cycle time including timeout period, in IEP cycles):");
@@ -601,14 +621,19 @@ static int32_t tamagawa_get_command(uint8_t *adf, uint8_t *edf)
             return SystemP_FAILURE;
         }
 
+        if((gTamagawaPeriodicInterface.iep_reset_count == 0) || (gTamagawaPeriodicInterface.iep_reset_count <= TAMAGAWA_IEP_COUNTER_INCREMENT))
+        {
+            DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+            return SystemP_FAILURE;
+        }
+
         for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
         {
-            attrs = tamagawa_get_attrs(gAppTamagawaHandle[i]);
-            if(attrs->load_share_enabled)
+            if(attrs[i]->load_share_enabled)
             {
                 for(j = 0; j < TAMAGAWA_MAX_CHANNELS_PER_SLICE; j++)
                 {
-                    if((attrs->channel_mask & (1 << j)))
+                    if((attrs[i]->channel_mask & (1 << j)))
                     {
 
                         DebugP_log("\r| Enter IEP trigger time(must be less than or equal to IEP reset cycle, in IEP cycles) for ch %u for Tamagawa instance %u: ", j, i);
@@ -647,12 +672,21 @@ static int32_t tamagawa_get_command(uint8_t *adf, uint8_t *edf)
     /* If the command is 10, start periodic trigger CAP mode with DATA ID as 0*/
     else if(cmd == PERIODIC_TRIGGER_CAP_CMD)
     {
+        memset(&gTamagawaPeriodicInterface, 0, sizeof(gTamagawaPeriodicInterface));
+
         gTamagawaPeriodicInterface.is_cap_mode = 1;  /* CAP mode */
 #if defined(SOC_AM243X)
         DebugP_log("\r| Enter IEP SYNC0 period (in IEP cycles, used for CAP mode):");
         if(DebugP_scanf("%u\n", &gTamagawaPeriodicInterface.iep_reset_count) < 0)
         {
             DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+            return SystemP_FAILURE;
+        }
+        if((gTamagawaPeriodicInterface.iep_reset_count == 0) ||
+           (gTamagawaPeriodicInterface.iep_reset_count <= TAMAGAWA_IEP_COUNTER_INCREMENT) ||
+           (gTamagawaPeriodicInterface.iep_reset_count > UINT32_MAX))
+        {
+            DebugP_log("\r| ERROR: invalid value. 0 is not allowed and maximum value allowed is %u\n|\n|\n|\n", UINT32_MAX);
             return SystemP_FAILURE;
         }
 #else
@@ -670,13 +704,12 @@ static int32_t tamagawa_get_command(uint8_t *adf, uint8_t *edf)
     {
         for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
         {
-            attrs = tamagawa_get_attrs(gAppTamagawaHandle[i]);
-            uint8_t ch = 0;
+            ch = 0;
             for(ch = 0 ; ch < TAMAGAWA_MAX_CHANNELS_PER_SLICE ; ch++)
             {
-                if(attrs->channel_mask & (1 << ch))
+                if(attrs[i]->channel_mask & (1 << ch))
                 {
-                    if(attrs->total_channels == 1)
+                    if(attrs[i]->total_channels == 1)
                     {
                         DebugP_log("\r\n| Enter EEPROM address (hex value) for Tamagawa instance %u: ", i);
                     }
@@ -712,18 +745,17 @@ static int32_t tamagawa_get_command(uint8_t *adf, uint8_t *edf)
         }
 
     }
+
     /* In case of EEPROM Write, take input for Address field for different channels selected*/
     if(cmd == DATA_ID_6)
     {
         for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
         {
-            attrs = tamagawa_get_attrs(gAppTamagawaHandle[i]);
-            uint8_t ch = 0;
             for(ch = 0 ; ch < TAMAGAWA_MAX_CHANNELS_PER_SLICE ; ch++)
             {
-                if(attrs->channel_mask & (1 << ch))
+                if(attrs[i]->channel_mask & (1 << ch))
                 {
-                    if(attrs->total_channels == 1)
+                    if(attrs[i]->total_channels == 1)
                     {
                         DebugP_log("\r\n| Enter EEPROM data (hex value) for Tamagawa instance %u: ", i);
                     }
@@ -876,64 +908,72 @@ static int32_t tamagawa_loop_task_create(void)
     return status;
 }
 
-static void tamagawa_process_periodic_command(tamagawa_handle handle[], int32_t process_dataid_cmd)
+/* NOTE:
+ *  - Validation error for any module instance will lead to failure of this function
+ *  - Switch back to host trigger mode is outside this function
+ */
+static int32_t tamagawa_process_periodic_command(tamagawa_handle handle[], int32_t process_dataid_cmd)
 {
-    /* NOTE:
-     * - Any function call failure will lead to exit of tamagawa_process_periodic_command function
-     * - Switch back to host trigger mode is outside this function
-     */
     uint32_t i;
-    const tamagawa_attrs *attrs;
+    const tamagawa_attrs *attrs[CONFIG_TAMAGAWA_NUM_INSTANCES] = {NULL};
 
-    for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
+    if(handle == NULL)
     {
-        if(gTamagawaPeriodicInterface.is_cap_mode)
-        {
-            if(tamagawa_config_periodic_trigger_cap_mode(handle[i]) != SystemP_SUCCESS)
-            {
-                DebugP_log("\r| ERROR: tamagawa_config_periodic_trigger_cap_mode failed for Tamagawa instance %u\r\n|\r\n|\n", i);
-                return;
-            }
-        }
-        else
-        {
-            if(tamagawa_config_periodic_trigger_cmp_mode(handle[i]) != SystemP_SUCCESS)
-            {
-                DebugP_log("\r| ERROR: tamagawa_config_periodic_trigger_cmp_mode failed for Tamagawa instance %u\r\n|\r\n|\n", i);
-                return;
-            }
-
-        }
+        DebugP_log("\r\n\n| ERROR: NULL handle[]\n");
+        return SystemP_FAILURE;
     }
 
-    if(tamagawa_loop_task_create() != SystemP_SUCCESS)
+    if((gTamagawaPeriodicInterface.is_cap_mode > 1) || (gTamagawaPeriodicInterface.iep_reset_count == 0))
     {
-        return;
+        DebugP_log("\r\n\n| ERROR: Invalid is_cap_mode/iep_reset_count value\n");
+        return SystemP_FAILURE;
     }
 
     for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
     {
-        gTamagawaPeriodicInterface.handle[i] = handle[i];
+        attrs[i] = tamagawa_get_attrs(handle[i]);
+        if((handle[i] == NULL) || (attrs[i] == NULL))
+        {
+            DebugP_log("\r\n\n| ERROR: NULL handle/attrs\n");
+            return SystemP_FAILURE;
+        }
+
+        if(gTamagawaPeriodicInterface.is_cap_mode == 0)
+        {
+
+            if(attrs[i]->load_share_enabled)
+            {
+                if(((attrs[i]->channel0_enabled) && (gTamagawaPeriodicInterface.periodic_trigger_count[i][0] > gTamagawaPeriodicInterface.iep_reset_count)) ||
+                   ((attrs[i]->channel1_enabled) && (gTamagawaPeriodicInterface.periodic_trigger_count[i][1] > gTamagawaPeriodicInterface.iep_reset_count)) ||
+                   ((attrs[i]->channel2_enabled) && (gTamagawaPeriodicInterface.periodic_trigger_count[i][2] > gTamagawaPeriodicInterface.iep_reset_count)))
+                {
+                    DebugP_log("\r\n\n| ERROR: Channel trigger count exceeds IEP reset count for instance %u\n", i);
+                    return SystemP_FAILURE;
+                }
+            }
+            else
+            {
+                if(gTamagawaPeriodicInterface.periodic_trigger_count[i][0] > gTamagawaPeriodicInterface.iep_reset_count)
+                {
+                    DebugP_log("\r\n\n| ERROR: Channel trigger count exceeds IEP reset count for instance %u\n", i);
+                    return SystemP_FAILURE;
+                }
+            }
+        }
     }
-    /* Assuming that periodic_trigger_count[] and iep_reset_count values are set in tamagawa_get_command() */
 
-
-    if(tamagawa_config_periodic_mode(&gTamagawaPeriodicInterface) != SystemP_SUCCESS)
-    {
-        DebugP_log("\r| ERROR: tamagawa_config_periodic_mode failed\r\n|\r\n|\n");
-        return;
-    }
-
-    gTamagawaPositionLoopStatus = TAMAGAWA_POSITION_LOOP_START;
-
-    DebugP_log("\r|\n\r| Press Enter to stop the continuous mode\r\n|\r\n|         position, f1\r\n| ");
+    /*
+     * Send command once in host trigger mode, to ensure that command data is
+     * populated in PRU shared memory as required.
+     * ASSUMPTION: Host trigger mode is active when this function is called.
+     */
 
     for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
     {
         if(tamagawa_update_data_id(handle[i], process_dataid_cmd) != SystemP_SUCCESS)
         {
             DebugP_log("\r| ERROR: tamagawa_update_data_id failed for Tamagawa instance %u\r\n|\r\n|\n", i);
-            return;
+            return SystemP_FAILURE;
         }
     }
 
@@ -942,16 +982,15 @@ static void tamagawa_process_periodic_command(tamagawa_handle handle[], int32_t 
     {
         for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
         {
-            attrs = tamagawa_get_attrs(handle[i]);
             uint8_t ch = 0;
             for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS_PER_SLICE; ch++)
             {
-                if(attrs->channel_mask & (1 << ch))
+                if(attrs[i]->channel_mask & (1 << ch))
                 {
                     if(tamagawa_update_crc(handle[i], process_dataid_cmd, ch) != SystemP_SUCCESS)
                     {
                         DebugP_log("\r| ERROR: tamagawa_update_crc failed for channel %d of Tamagawa instance %u\r\n|\r\n|\n", ch, i);
-                        return;
+                        return SystemP_FAILURE;
                     }
                 }
             }
@@ -963,9 +1002,51 @@ static void tamagawa_process_periodic_command(tamagawa_handle handle[], int32_t 
         if(tamagawa_command_process(handle[i], process_dataid_cmd) != SystemP_SUCCESS)
         {
             DebugP_log("\r| ERROR: tamagawa_command_process failed for Tamagawa instance %u\r\n|\r\n|\n", i);
-            return;
+            return SystemP_FAILURE;
         }
     }
+
+    for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
+    {
+        if(gTamagawaPeriodicInterface.is_cap_mode)
+        {
+            if(tamagawa_config_periodic_trigger_cap_mode(handle[i]) != SystemP_SUCCESS)
+            {
+                DebugP_log("\r| ERROR: tamagawa_config_periodic_trigger_cap_mode failed for Tamagawa instance %u\r\n|\r\n|\n", i);
+                return SystemP_FAILURE;
+            }
+        }
+        else
+        {
+            if(tamagawa_config_periodic_trigger_cmp_mode(handle[i]) != SystemP_SUCCESS)
+            {
+                DebugP_log("\r| ERROR: tamagawa_config_periodic_trigger_cmp_mode failed for Tamagawa instance %u\r\n|\r\n|\n", i);
+                return SystemP_FAILURE;
+            }
+        }
+    }
+
+    if(tamagawa_loop_task_create() != SystemP_SUCCESS)
+    {
+        return SystemP_FAILURE;
+    }
+
+    for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
+    {
+        gTamagawaPeriodicInterface.handle[i] = handle[i];
+    }
+
+    /* ASSUMPTION: periodic_trigger_count[] and iep_reset_count values are set in tamagawa_get_command() */
+
+    if(tamagawa_config_periodic_mode(&gTamagawaPeriodicInterface) != SystemP_SUCCESS)
+    {
+        DebugP_log("\r| ERROR: tamagawa_config_periodic_mode failed\r\n|\r\n|\n");
+        return SystemP_FAILURE;
+    }
+
+    gTamagawaPositionLoopStatus = TAMAGAWA_POSITION_LOOP_START;
+
+    DebugP_log("\r|\n\r| Press Enter to stop the continuous mode\r\n|\r\n|         position, f1\r\n| ");
 
     while(1)
     {
@@ -974,33 +1055,33 @@ static void tamagawa_process_periodic_command(tamagawa_handle handle[], int32_t 
             if(tamagawa_stop_periodic_mode(&gTamagawaPeriodicInterface) != SystemP_SUCCESS)
             {
                 DebugP_log("\r| ERROR: tamagawa_stop_periodic_mode failed\r\n|\r\n|\n");
+                return SystemP_FAILURE;
             }
-            return;
+            return SystemP_SUCCESS;
         }
         else
         {
             for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
             {
-                attrs = tamagawa_get_attrs(handle[i]);
-                if(attrs->total_channels > 1)
+                if(attrs[i]->total_channels > 1)
                 {
                     DebugP_log("\r\n Multi-channel mode is enabled for Tamagawa instance %u\n\n", i);
 
                     uint8_t ch;
                     for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS_PER_SLICE; ch++)
                     {
-                        if(attrs->channel_mask & (1 << ch))
+                        if(attrs[i]->channel_mask & (1 << ch))
                         {
                             if(tamagawa_multi_channel_set_cur(handle[i], ch) != SystemP_SUCCESS)
                             {
                                 DebugP_log("\r| ERROR: tamagawa_multi_channel_set_cur failed for channel %d of Tamagawa instance %u\r\n|\r\n|\n", ch, i);
-                                return;
+                                return SystemP_FAILURE;
                             }
                             DebugP_log("\r\n\r|\n|\t\t\t\tCHANNEL %d\n", ch);
                             if(tamagawa_handle_rx(handle[i], process_dataid_cmd) != SystemP_SUCCESS)
                             {
                                 DebugP_log("\r| ERROR: tamagawa_handle_rx failed for channel %d of Tamagawa instance %u\r\n|\r\n|\n", ch, i);
-                                return;
+                                return SystemP_FAILURE;
                             }
                         }
                     }
@@ -1011,7 +1092,7 @@ static void tamagawa_process_periodic_command(tamagawa_handle handle[], int32_t 
                     if(tamagawa_handle_rx(handle[i], process_dataid_cmd) != SystemP_SUCCESS)
                     {
                         DebugP_log("\r| ERROR: tamagawa_handle_rx failed for Tamagawa instance %u\r\n|\r\n|\n", i);
-                        return;
+                        return SystemP_FAILURE;
                     }
                 }
             }
@@ -1019,7 +1100,7 @@ static void tamagawa_process_periodic_command(tamagawa_handle handle[], int32_t 
             ClockP_usleep(TAMAGAWA_PERIODIC_MODE_LOG_SLEEP_US);
         }
     }
-    return;
+    return SystemP_SUCCESS;
 }
 
 /**
@@ -1049,12 +1130,11 @@ static void tamagawa_process_periodic_command(tamagawa_handle handle[], int32_t 
  *          9. De-initialize on exit
  *
  *          NOTE on driver APIs:
- *          Tamagawa driver APIs use a simplified validation approach for optimal performance:
+ *          Tamagawa driver APIs use following validation approach:
  *          - **Handle validation**: All public APIs validate the handle parameter for NULL
  *          - **Array bounds checking**: APIs with array parameters or index parameters perform bounds validation
  *          - **Internal structure validation**: Internal structures (attrs, priv, pruicss_xchg, pruicss_handle)
- *            are validated once during tamagawa_init() and assumed valid in subsequent API calls
- *          - This strategy reduces overhead in time-critical data path functions.
+ *            are validated for NULL before dereferencing to prevent undefined behavior
  *
  *          Supported encoder operations:
  *          - Single-shot position readout using host trigger mode
@@ -1069,8 +1149,13 @@ static void tamagawa_process_periodic_command(tamagawa_handle handle[], int32_t 
 void tamagawa_main(void *args)
 {
     uint32_t i;
-    const tamagawa_attrs *attrs;
+    uint8_t adf = 0, edf = 0;
+    int32_t cmd;
+    uint8_t ch = 0;
+    uint8_t crc_failed = 0;
+    const tamagawa_attrs *attrs[CONFIG_TAMAGAWA_NUM_INSTANCES];
     tamagawa_params tamagawa_params;
+
     /* ========================================================================== */
     /* STEP 1: Initialize SoC drivers and board drivers                          */
     /* ========================================================================== */
@@ -1117,16 +1202,17 @@ void tamagawa_main(void *args)
          * This calls: tamagawa_config_clr_cfg0(), tamagawa_config_channel(), tamagawa_set_baudrate(),
          * and tamagawa_config_host_trigger() */
         gAppTamagawaHandle[i] = tamagawa_init(i, &tamagawa_params);
-        if(gAppTamagawaHandle[i] == NULL)
+        attrs[i] = tamagawa_get_attrs(gAppTamagawaHandle[i]);
+
+        if((gAppTamagawaHandle[i] == NULL) || (attrs[i] == NULL))
         {
             DebugP_log("\r\nERROR: Tamagawa initialization failed for instance %u\n", i);
             return;
         }
 
         /* Display HW instances used, operation mode and enabled channels */
-        attrs = tamagawa_get_attrs(gAppTamagawaHandle[i]);
-        DebugP_log("\r\n PRU-ICSS instance: %u, PRU-ICSS slice number: %u\n", attrs->pruicss_instance, attrs->pruicss_slice);
-        if(attrs->mode == TAMAGAWA_MODE_MULTI_CHANNEL_SINGLE_PRU)
+        DebugP_log("\r\n PRU-ICSS instance: %u, PRU-ICSS slice number: %u\n", attrs[i]->pruicss_instance, attrs[i]->pruicss_slice);
+        if(attrs[i]->mode == TAMAGAWA_MODE_MULTI_CHANNEL_SINGLE_PRU)
         {
             /* Multi-channel single PRU mode: Multiple channels handled by one PRU core */
             DebugP_log("\r\nTamagawa Multi channel, Single PRU Demo application is running......\n");
@@ -1138,9 +1224,9 @@ void tamagawa_main(void *args)
         }
 
         DebugP_log("\r\nChannel(s) selected: %s %s %s \n\n\n",
-                    attrs->channel_mask & (1 << 0) ? "0" : "",
-                    attrs->channel_mask & (1 << 1) ? "1" : "",
-                    attrs->channel_mask & (1 << 2) ? "2" : "");
+                    attrs[i]->channel_mask & (1 << 0) ? "0" : "",
+                    attrs[i]->channel_mask & (1 << 1) ? "1" : "",
+                    attrs[i]->channel_mask & (1 << 2) ? "2" : "");
         DebugP_log("\r\n|------------------------------------------------------------------------------|\n\n");
     }
 
@@ -1167,11 +1253,10 @@ void tamagawa_main(void *args)
 
     while(1)
     {
-        /*
-         * Initialized to zero to remove the compiler warning about the variable being uninitialized.
-         */
-        uint8_t adf = 0, edf = 0;
-        int32_t cmd;
+        adf = 0;
+        edf = 0;
+        ch = 0;
+        crc_failed = 0;
 
         /* Display menu and get user command input */
         tamagawa_display_menu();
@@ -1197,7 +1282,10 @@ void tamagawa_main(void *args)
              * inside tamagawa_process_periodic_command */
 
             /* Process continuous position readout using DATA_ID_0 */
-            tamagawa_process_periodic_command(gAppTamagawaHandle, TAMAGAWA_PERIODIC_MODE_CMD);
+            if(tamagawa_process_periodic_command(gAppTamagawaHandle, TAMAGAWA_PERIODIC_MODE_CMD) != SystemP_SUCCESS)
+            {
+                DebugP_log("\r| ERROR: tamagawa_process_periodic_command failed\r\n|\r\n|\n");
+            }
 
             /* Switch back to host trigger mode for menu-driven operation */
             DebugP_log("\r\n\n Switching to host trigger mode");
@@ -1234,12 +1322,11 @@ void tamagawa_main(void *args)
             * CRC is required to ensure data integrity when accessing encoder EEPROM. */
             if((cmd == DATA_ID_6) || (cmd == DATA_ID_D))
             {
-                attrs = tamagawa_get_attrs(gAppTamagawaHandle[i]);
-                uint8_t ch = 0;
-                uint8_t crc_failed = 0;
+                ch = 0;
+                crc_failed = 0;
                 for(ch = 0 ; ch < TAMAGAWA_MAX_CHANNELS_PER_SLICE ; ch++)
                 {
-                    if(attrs->channel_mask & (1 << ch))
+                    if(attrs[i]->channel_mask & (1 << ch))
                     {
                         if(tamagawa_update_crc(gAppTamagawaHandle[i], cmd, ch) != SystemP_SUCCESS)
                         {
@@ -1260,7 +1347,6 @@ void tamagawa_main(void *args)
         /* Execute Tamagawa command transaction with encoder.
          * This triggers PRU firmware to send command to encoder and wait for response. */
 
-
         for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
         {
             if(tamagawa_command_process(gAppTamagawaHandle[i], cmd) != SystemP_SUCCESS)
@@ -1274,17 +1360,14 @@ void tamagawa_main(void *args)
 
         for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
         {
-            attrs = tamagawa_get_attrs(gAppTamagawaHandle[i]);
-
             /* Parse and display received encoder data based on channel configuration */
-            if(attrs->total_channels > 1)
+            if(attrs[i]->total_channels > 1)
             {
                 /* Multi-channel mode: Process each enabled channel separately */
                 DebugP_log("\r\n Multi-channel mode is enabled for Tamagawa instance %u\n\n", i);
-                uint8_t ch;
                 for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS_PER_SLICE; ch++)
                 {
-                    if(attrs->channel_mask & (1 << ch))
+                    if(attrs[i]->channel_mask & (1 << ch))
                     {
                         if(tamagawa_multi_channel_set_cur(gAppTamagawaHandle[i], ch) != SystemP_SUCCESS)
                         {

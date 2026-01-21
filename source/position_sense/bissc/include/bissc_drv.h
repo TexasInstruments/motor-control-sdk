@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023-2025 Texas Instruments Incorporated
+ *  Copyright (C) 2023-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -549,7 +549,8 @@ typedef struct bissc_priv_s
      *   Configured via bissc_update_data_len() */
 
     uint8_t ctrl_write_status[BISSC_NUM_CH_PER_SLICE_MAX];
-    /**< Control communication read/write status for each channel. */
+    /**< Control communication read/write status for each channel.
+     *   Valid values: 0 (Read access) or 1 (Write access) */
 
     uint32_t ctrl_reg_address[BISSC_NUM_CH_PER_SLICE_MAX];
     /**< Target register address for control communication (0x00-0x7F).
@@ -561,7 +562,7 @@ typedef struct bissc_priv_s
     uint32_t ctrl_enc_id[BISSC_NUM_CH_PER_SLICE_MAX];
     /**< Encoder ID for control communication in daisy chain */
 
-    uint16_t  proc_delay[BISSC_NUM_CH_PER_SLICE_MAX];
+    uint16_t proc_delay[BISSC_NUM_CH_PER_SLICE_MAX];
     /**< Measured encoder processing delay in clock cycles for each channel.
      *   Automatically measured by PRU firmware during initialization */
 

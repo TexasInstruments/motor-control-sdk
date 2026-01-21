@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2025 Texas Instruments Incorporated
+ *  Copyright (C) 2025-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -43,24 +43,20 @@
  *
  *  \section endat3_param_validation Parameter Validation Strategy
  *
- *  The EnDAT3 driver implements a two-tier parameter validation approach:
+ *  The EnDAT3 driver implements following parameter validation approach:
  *
  *  - **Initialization-time validation**: During \ref endat3_init, all configuration
  *    parameters are thoroughly validated including: handle, attrs (configuration structure),
  *    params (including pruicss_handle), and all their member fields. This ensures the
  *    driver is properly initialized with valid configuration before any operations begin.
  *
- *  - **Runtime validation**: After initialization, all public APIs validate the handle
- *    parameter for NULL to ensure safe operation. Internal structure pointers (attrs, priv,
- *    pruicss_handle, endat3_interface) are not re-validated since they were
- *    already validated during initialization and remain valid throughout the driver lifecycle.
+ *  - **Runtime validation**: All public APIs validate the handle parameter and internal
+ *    structure pointers (priv, endat3_interface, attrs, pruicss_handle) for NULL before
+ *    dereferencing to prevent undefined behavior.
  *
  *  - **Array bounds checking**: All array accesses include explicit bounds checking to
  *    prevent buffer overruns. Array indices are validated before use, and array sizes
  *    are checked against defined limits.
- *
- *  This strategy provides robust error detection while minimizing redundant checks in
- *  critical code paths.
  *
  *  \section endat3_usage_flow Typical Usage Flow
  *
@@ -902,9 +898,9 @@ const char* endat3_get_error_action(endat3_error_code error_code);
  * \param handle EnDAT3 handle
  * \param params Pointer to background command parameters structure (endat3_bg_cmd_params)
  * \param mode Pointer to store mode value (optional, can be NULL if not needed).
- *             Only populated when op_code is ENDAT3_BGREQ_PROTECT.
+ *             Only populated when op_code is ENDAT3_BGREQ_PROTECT and mode is not NULL.
  * \param acclevelDesc Pointer to store access level description string (optional, can be NULL if not needed).
- *                     Only populated when op_code is ENDAT3_BGREQ_PROTECT.
+ *                     Only populated when op_code is ENDAT3_BGREQ_PROTECT and acc_level_desc is not NULL.
  *
  * \retval ENDAT3_SUCCESS (0) on success
  * \retval ENDAT3_ERR_INVALID_INPUT (-1) on validation failure (NULL handle, NULL params, or index >= ENDAT3_MAX_BG_CMD_INDEX)
@@ -1260,7 +1256,7 @@ int32_t endat3_is_busy(endat3_handle handle, uint8_t *is_busy);
  * \param handle EnDAT3 handle
  * \param busy Busy state to set (1 for busy, 0 for not busy)
  * \return ENDAT3_SUCCESS (0) on success
- *         ENDAT3_ERR_INVALID_INPUT (-1) if handle is NULL
+ * \return ENDAT3_ERR_INVALID_INPUT (-1) if handle is NULL, busy > 1, or internal structures are NULL
  *
  * \note Check return value to ensure state was set properly
  */
@@ -1333,7 +1329,7 @@ int32_t endat3_get_foreground_op_code(endat3_handle handle, uint32_t *opcode);
  * Sets the foreground operation code for the next command.
  *
  * \param handle EnDAT3 handle
- * \param opcode Operation code to set (use endat3_ReqCode_t enum values)
+ * \param opcode Operation code to set (use endat3_req_code enum values)
  * \return ENDAT3_SUCCESS (0) on success
  *         ENDAT3_ERR_INVALID_INPUT (-1) if handle is NULL
  *         **CRITICAL**: Check return value before calling \ref endat3_send_command() - wrong opcode sends wrong command
@@ -1432,13 +1428,15 @@ int32_t endat3_get_all_bg_data(endat3_handle handle, uint32_t *data);
 /**
  * \brief Set all background data
  *
- * Sets all background data words from the provided buffer.
+ * Sets all background data words from the provided buffer. Copies exactly BG_DATA_SIZE (6) words
+ * (24 bytes) from the source buffer to the internal background data array.
  *
  * \param handle EnDAT3 handle
  * \param data Buffer containing background data (must be at least BG_DATA_SIZE words = 6 words = 24 bytes)
  * \return ENDAT3_SUCCESS (0) on success
- *         ENDAT3_ERR_INVALID_INPUT (-1) if handle is NULL or data buffer is NULL
+ * \return ENDAT3_ERR_INVALID_INPUT (-1) if handle is NULL, data buffer is NULL, or internal structures are NULL
  *
+ * \note This function copies a fixed size of BG_DATA_SIZE (6) words regardless of actual data content
  * \note Check return value to ensure data was set successfully
  */
 int32_t endat3_set_all_bg_data(endat3_handle handle, const uint32_t *data);

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2021-25 Texas Instruments Incorporated
+ *  Copyright (C) 2021-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -35,7 +35,7 @@
 #include <drivers/hw_include/tistdtypes.h>
 #include <drivers/hw_include/hw_types.h>
 #include <stdlib.h>
-#include <string.h> 
+#include <string.h>
 
 extern uint32_t gEndatConfigNum;
 extern endat_config gEndatHandle[];
@@ -52,7 +52,7 @@ extern endat_config gEndatHandle[];
  * All public APIs perform handle NULL validation before invoking internal functions.
  */
 static int32_t endat_recvd_organize(endat_handle handle, int32_t cmd, endat_data *endat_data);
-static int64_t endat_recvd_format(endat_handle handle, int32_t cmd, endat_data *endat_data, endat_format_data *u);
+static int32_t endat_recvd_format(endat_handle handle, int32_t cmd, endat_data *endat_data, endat_format_data *u);
 static int32_t endat_addinfo_format(endat_handle handle, endat_data *endat_data, endat_format_data *u);
 static int32_t endat_position_addinfo_format(endat_handle handle, endat_data *endat_data, endat_format_data *u);
 static int32_t endat_addr_params_format(endat_handle handle, endat_data *endat_data, endat_format_data *u);
@@ -67,8 +67,8 @@ static int32_t endat_get_command_set(endat_handle handle);
 static int32_t endat_get_type(endat_handle handle);
 static int32_t endat_get_step(endat_handle handle, int32_t *step);
 static int32_t endat_config_global_rx_arm_cnt(endat_handle handle, uint16_t val);
-static void endat_set_continuous_mode(endat_handle handle);
-static void endat_clear_continuous_mode(endat_handle handle);
+static int32_t endat_set_continuous_mode(endat_handle handle);
+static int32_t endat_clear_continuous_mode(endat_handle handle);
 static int32_t endat_config_clr_cfg0(endat_handle handle);
 static int32_t endat_config_endat_mode(endat_handle handle);
 static int32_t endat_config_clock_reg(endat_handle handle, endat_clk_cfg *clk_cfg);
@@ -82,26 +82,31 @@ static int32_t endat_enable_load_share_mode(endat_handle handle);
 static int32_t endat_config_primary_core_mask(endat_handle handle, uint8_t mask);
 
 /* ========================================================================== */
+/*                         Structure Declarations                             */
+/* ========================================================================== */
+
+/* Default EnDAT parameters structure */
+const endat_params gEndatDefaultParams =
+{
+    NULL,                               /* pruicss_handle */
+    ENDAT_DEFAULT_MAX_WAIT_LOOP_COUNT,  /* max_wait_loop_count */
+    ENDAT_DEFAULT_CMD_PROCESS_DELAY_US, /* cmd_process_delay_us */
+    ENDAT_DEFAULT_FW_WAIT_DELAY_US,     /* fw_wait_delay_us */
+    NULL,                               /* channel_rx_info */
+    0U,                                 /* ch_info_global_addr */
+};
+
+/* ========================================================================== */
 /*                          Function Definitions                              */
 /* ========================================================================== */
 
-int32_t endat_params_init(endat_params *params)
+void endat_params_init(endat_params *params)
 {
-    /* Validate params parameter */
-    if(params == NULL)
+    /* Input parameter validation */
+    if (params != NULL)
     {
-        return SystemP_FAILURE;
+        *params = gEndatDefaultParams;
     }
-
-    /* Initialize with default values */
-    params->pruicss_handle = NULL;
-    params->max_wait_loop_count = ENDAT_DEFAULT_MAX_WAIT_LOOP_COUNT;
-    params->cmd_process_delay_us = ENDAT_DEFAULT_CMD_PROCESS_DELAY_US;
-    params->fw_wait_delay_us = ENDAT_DEFAULT_FW_WAIT_DELAY_US;
-    params->channel_rx_info = NULL;
-    params->ch_info_global_addr = 0U;
-
-    return SystemP_SUCCESS;
 }
 
 endat_handle endat_init(uint32_t index, const endat_params *params)
@@ -113,7 +118,7 @@ endat_handle endat_init(uint32_t index, const endat_params *params)
     uint8_t ch_idx;
     uint32_t i;
 
-    /* Phase 1: Parameter validation */
+    /* Parameter validation */
     if((index >= gEndatConfigNum) || (params == NULL))
     {
         status = SystemP_FAILURE;
@@ -136,6 +141,7 @@ endat_handle endat_init(uint32_t index, const endat_params *params)
     {
         /* Validate params */
         if((params->pruicss_handle == NULL) ||
+           (params->pruicss_handle->hwAttrs == NULL) ||
            (params->max_wait_loop_count == 0) ||
            (params->channel_rx_info == NULL) ||
            (params->ch_info_global_addr == 0U))
@@ -143,7 +149,7 @@ endat_handle endat_init(uint32_t index, const endat_params *params)
             status = SystemP_FAILURE;
         }
 
-        /* Validate all attrs fields (comprehensive range checking) */
+        /* Validate all attrs fields (range checking) */
         if((attrs->instance >= gEndatConfigNum) ||
            (attrs->mode > ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU) ||
            (attrs->pruicss_instance > 1) ||
@@ -169,17 +175,29 @@ endat_handle endat_init(uint32_t index, const endat_params *params)
         /* Validate IEP event numbers for enabled channels only */
         if(status == SystemP_SUCCESS)
         {
-            for(i = 0; i < ENDAT_NUM_CH_PER_SLICE_MAX; i++)
+            if(attrs->load_share_enabled)
             {
-                /* Only validate IEP events for enabled channels */
-                if(attrs->channel_mask & (1U << i))
+                for(i = 0; i < ENDAT_NUM_CH_PER_SLICE_MAX; i++)
                 {
-                    if((attrs->iep_cmp_event[i] >= ENDAT_IEP_CMP_EVENT_MAX) ||
-                       (attrs->iep_cap_event[i] >= ENDAT_IEP_CAP_EVENT_MAX))
+                    /* Only validate IEP events for enabled channels */
+                    if(attrs->channel_mask & (1U << i))
                     {
-                        status = SystemP_FAILURE;
-                        break;
+                        if((attrs->iep_cmp_event[i] >= ENDAT_IEP_CMP_EVENT_MAX) ||
+                           (attrs->iep_cap_event[i] >= ENDAT_IEP_CAP_EVENT_MAX))
+                        {
+                            status = SystemP_FAILURE;
+                            break;
+                        }
                     }
+                }
+            }
+            else
+            {
+                /* Non-load share mode: Use index 0 always */
+                if((attrs->iep_cmp_event[0] >= ENDAT_IEP_CMP_EVENT_MAX) ||
+                   (attrs->iep_cap_event[0] >= ENDAT_IEP_CAP_EVENT_MAX))
+                {
+                    status = SystemP_FAILURE;
                 }
             }
         }
@@ -225,24 +243,38 @@ endat_handle endat_init(uint32_t index, const endat_params *params)
     /* Configure IEP CMP and CAP events for enabled channels */
     if(status == SystemP_SUCCESS)
     {
-        for(ch_idx = 0; ch_idx < ENDAT_NUM_CH_PER_SLICE_MAX; ch_idx++)
+        if(attrs->load_share_enabled)
         {
-            /* Check if channel is enabled */
-            if(attrs->channel_mask & (1U << ch_idx))
+            for(ch_idx = 0; ch_idx < ENDAT_NUM_CH_PER_SLICE_MAX; ch_idx++)
             {
-                /* Configure IEP CMP event for this channel */
-                status = endat_config_iep_cmp_event(handle, ch_idx, attrs->iep_cmp_event[ch_idx]);
-                if(status != SystemP_SUCCESS)
+                /* Check if channel is enabled */
+                if(attrs->channel_mask & (1U << ch_idx))
                 {
-                    break;
-                }
+                    /* Configure IEP CMP event for this channel */
+                    status = endat_config_iep_cmp_event(handle, ch_idx, attrs->iep_cmp_event[ch_idx]);
+                    if(status != SystemP_SUCCESS)
+                    {
+                        break;
+                    }
 
-                /* Configure IEP CAP event for this channel */
-                status = endat_config_iep_cap_event(handle, ch_idx, attrs->iep_cap_event[ch_idx]);
-                if(status != SystemP_SUCCESS)
-                {
-                    break;
+                    /* Configure IEP CAP event for this channel */
+                    status = endat_config_iep_cap_event(handle, ch_idx, attrs->iep_cap_event[ch_idx]);
+                    if(status != SystemP_SUCCESS)
+                    {
+                        break;
+                    }
                 }
+            }
+        }
+        else
+        {
+            /* Non-load share mode: Use index 0 always */
+            /* Configure IEP CMP event for this channel */
+            status = endat_config_iep_cmp_event(handle, 0, attrs->iep_cmp_event[0]);
+            if(status == SystemP_SUCCESS)
+            {
+                /* Configure IEP CAP event for this channel */
+                status = endat_config_iep_cap_event(handle, 0, attrs->iep_cap_event[0]);
             }
         }
     }
@@ -302,21 +334,18 @@ endat_handle endat_init(uint32_t index, const endat_params *params)
     return handle;
 }
 
-int32_t endat_deinit(endat_handle handle)
+void endat_deinit(endat_handle handle)
 {
-    /* Validate handle parameter */
-    if(handle == NULL)
+    endat_priv *priv;
+
+    if((handle == NULL) || (handle->priv == NULL))
     {
-        return SystemP_FAILURE;
+        return;
     }
 
-    endat_priv *priv = handle->priv;
-    if(priv != NULL)
-    {
-        priv->is_open = 0;
-    }
-
-    return SystemP_SUCCESS;
+    priv = handle->priv;
+    /* Mark as closed */
+    priv->is_open = 0;
 }
 
 /*
@@ -329,19 +358,22 @@ int32_t endat_deinit(endat_handle handle)
  * will normally be called after endat_get_command
  */
 
-static int32_t endat_recvd_organize(endat_handle handle, int32_t cmd,
-                                endat_data *endat_data)
+static int32_t endat_recvd_organize(endat_handle handle, int32_t cmd, endat_data *endat_data)
 {
     uint32_t word0, word1, word2, word3;
     uint32_t pos_bits, shift;
+    endat_priv *priv;
+    const endat_attrs *attrs;
+    endat_ch_rx_info_array *channel_rx_info;
+    int32_t flags_idx;
 
     /* Get priv and attrs pointers */
-    endat_priv *priv = endat_get_priv(handle);
-    const endat_attrs *attrs = endat_get_attrs(handle);
-    endat_ch_rx_info_array *channel_rx_info = priv->channel_rx_info;
+    priv = handle->priv;
+    attrs = handle->attrs;
+    channel_rx_info = priv->channel_rx_info;
 
     /* Determine flags index: 0 for non-load-share, current_channel for load-share */
-    int32_t flags_idx = attrs->load_share_enabled ? priv->current_channel : 0;
+    flags_idx = attrs->load_share_enabled ? priv->current_channel : 0;
 
     memset(endat_data, 0, sizeof(*endat_data));
 
@@ -417,8 +449,7 @@ static int32_t endat_recvd_organize(endat_handle handle, int32_t cmd,
 }
 
 /* value to be reflected should be aligned to lsb, reflected value would be aligned to lsb */
-static uint64_t endat_reflect_ull_nbits(uint64_t input,
-        uint32_t n)
+static uint64_t endat_reflect_ull_nbits(uint64_t input, uint32_t n)
 {
     uint32_t i;
     uint64_t val = 0;
@@ -437,15 +468,16 @@ static uint64_t endat_reflect_ull_nbits(uint64_t input,
     return val;
 }
 
-static int64_t endat_recvd_format(endat_handle handle, int32_t cmd,
-                              endat_data *endat_data, endat_format_data *u)
+static int32_t endat_recvd_format(endat_handle handle, int32_t cmd, endat_data *endat_data, endat_format_data *u)
 {
     uint64_t pos, rev;
+    endat_priv *priv;
+    const endat_attrs *attrs;
+    uint8_t flags_idx;
 
-    /* Get priv pointer */
-    endat_priv *priv = endat_get_priv(handle);
-    const endat_attrs *attrs = endat_get_attrs(handle);
-    uint8_t flags_idx = attrs->load_share_enabled ? priv->current_channel : 0;
+    priv = handle->priv;
+    attrs = handle->attrs;
+    flags_idx = attrs->load_share_enabled ? priv->current_channel : 0;
 
     switch(cmd)
     {
@@ -543,17 +575,21 @@ static int64_t endat_recvd_format(endat_handle handle, int32_t cmd,
     return SystemP_SUCCESS;
 }
 
-int32_t endat_recvd_process(endat_handle handle, int32_t cmd,
-                        endat_format_data *u)
+int32_t endat_recvd_process(endat_handle handle, int32_t cmd, endat_format_data *u)
 {
-    /* Validate handle parameter */
-    if(handle == NULL)
+    endat_data endat_data;
+    int32_t ret;
+
+    /* Validate parameters and pointers used in this function */
+    if((handle == NULL) ||
+       (handle->priv == NULL) ||
+       (handle->attrs == NULL) ||
+       (handle->priv->channel_rx_info == NULL) ||
+       (handle->priv->current_channel >= ENDAT_NUM_CH_PER_SLICE_MAX) ||
+       (u == NULL))
     {
         return SystemP_FAILURE;
     }
-
-    endat_data endat_data;
-    int32_t ret;
 
     ret = endat_recvd_organize(handle, cmd, &endat_data);
 
@@ -562,7 +598,9 @@ int32_t endat_recvd_process(endat_handle handle, int32_t cmd,
         return ret;
     }
 
-    return endat_recvd_format(handle, cmd, &endat_data, u);
+    ret = endat_recvd_format(handle, cmd, &endat_data, u);
+
+    return ret;
 }
 
 #define ENDAT_USE_OTF_CRC_STATUS
@@ -693,22 +731,11 @@ static uint32_t endat_make_crc_pos(uint32_t clocks, uint32_t error1,
 #endif
 
 /* return crc status: bit0 - position/address params/test, bit1 - additional info1, bit2 - additional info2. return -EINVAL on failure */
-uint32_t endat_recvd_validate(endat_handle handle, int32_t cmd,
-                              endat_format_data *u)
+uint32_t endat_recvd_validate(endat_handle handle, int32_t cmd, endat_format_data *u)
 {
-    /* Validate handle parameter */
-    if(handle == NULL)
-    {
-        return 0;
-    }
-
-    /* Get priv and attrs pointers */
-    endat_priv *priv = endat_get_priv(handle);
-    const endat_attrs *attrs = endat_get_attrs(handle);
-
-    /* Determine flags index: 0 for non-load-share, current_channel for load-share */
-    int32_t flags_idx = attrs->load_share_enabled ? priv->current_channel : 0;
-
+    endat_priv *priv;
+    const endat_attrs *attrs;
+    int32_t flags_idx;
     uint32_t status = 0;
 #ifdef ENDAT_USE_OTF_CRC_STATUS
     uint8_t val;
@@ -717,6 +744,31 @@ uint32_t endat_recvd_validate(endat_handle handle, int32_t cmd,
     uint64_t highpos, lowpos;
     uint64_t test;
 #endif
+
+    /* Validate handle and pointers used in this function */
+    if((handle == NULL) ||
+       (handle->priv == NULL) ||
+       (handle->attrs == NULL) ||
+       (handle->priv->channel_rx_info == NULL) ||
+       (handle->priv->current_channel >= ENDAT_NUM_CH_PER_SLICE_MAX))
+    {
+        return 0;
+    }
+
+#ifndef ENDAT_USE_OTF_CRC_STATUS
+    /* Validate u parameter when software CRC validation is used */
+    if(u == NULL)
+    {
+        return 0;
+    }
+#endif
+
+    /* Get priv and attrs pointers */
+    priv = handle->priv;
+    attrs = handle->attrs;
+
+    /* Determine flags index: 0 for non-load-share, current_channel for load-share */
+    flags_idx = attrs->load_share_enabled ? priv->current_channel : 0;
 
 #ifdef ENDAT_USE_OTF_CRC_STATUS
     val = priv->channel_rx_info->ch[priv->current_channel].crc_status;
@@ -900,8 +952,7 @@ static inline void endat_calc_loadshare_info_counts(const endat_priv *priv,
  * will handle and it is assumed that this function will be called either after endat_get_command
  * or by diagnostic initialization code where it is only 2.1 commands used
  */
-int32_t endat_command_build(endat_handle handle, int32_t cmd,
-                        endat_cmd_supplement *cmd_supplement)
+int32_t endat_command_build(endat_handle handle, int32_t cmd, endat_cmd_supplement *cmd_supplement)
 {
     endat_priv *priv;
     const endat_attrs *attrs;
@@ -909,16 +960,27 @@ int32_t endat_command_build(endat_handle handle, int32_t cmd,
     uint32_t info[ENDAT_NUM_CH_PER_SLICE_MAX];
     uint32_t ch;
 
-    /* Validate handle parameter */
-    if(handle == NULL)
+    /* Validate handle and pointers used in this function */
+    if((handle == NULL) ||
+       (handle->priv == NULL) ||
+       (handle->attrs == NULL) ||
+       (handle->priv->pruicss_xchg == NULL) ||
+       (handle->priv->current_channel >= ENDAT_NUM_CH_PER_SLICE_MAX))
     {
         return SystemP_FAILURE;
     }
 
-    /* Get priv pointer */
-    priv = endat_get_priv(handle);
-    attrs = endat_get_attrs(handle);
+    /* Validate cmd_supplement for commands that require it */
+    if((cmd == 2) || (cmd == 3) || (cmd == 4) || (cmd == 7) || (cmd >= 9 && cmd <= 11) || (cmd == 13) || (cmd == 14))
+    {
+        if(cmd_supplement == NULL)
+        {
+            return SystemP_FAILURE;
+        }
+    }
 
+    priv = handle->priv;
+    attrs = handle->attrs;
     endat_pruicss_xchg = priv->pruicss_xchg;
 
     /* first clear command parameters to be safe */
@@ -1434,17 +1496,19 @@ int32_t endat_command_build(endat_handle handle, int32_t cmd,
 
 int32_t endat_command_send(endat_handle handle)
 {
-    /* Validate handle parameter */
-    if(handle == NULL)
+    endat_priv *priv;
+    const endat_attrs *attrs;
+    endat_pruicss_xchg *pruicss_xchg;
+
+    /* Validate handle and pointers used in this function */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->pruicss_xchg == NULL))
     {
         return SystemP_FAILURE;
     }
 
-    /* Get priv pointer */
-    endat_priv *priv = endat_get_priv(handle);
-    const endat_attrs *attrs = endat_get_attrs(handle);
-
-    endat_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
+    priv = handle->priv;
+    attrs = handle->attrs;
+    pruicss_xchg = priv->pruicss_xchg;
     /*for load share mode set mask for all connected channels*/
     if(attrs->load_share_enabled)
     {
@@ -1470,16 +1534,14 @@ int32_t endat_command_wait(endat_handle handle)
     uint8_t all_cleared;
     uint32_t ch;
 
-    /* Validate handle parameter */
-    if(handle == NULL)
+    /* Validate handle and pointers used in this function */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->pruicss_xchg == NULL))
     {
         return SystemP_FAILURE;
     }
 
-    /* Get priv and attrs */
-    priv = endat_get_priv(handle);
-    attrs = endat_get_attrs(handle);
-
+    priv = handle->priv;
+    attrs = handle->attrs;
     pruicss_xchg = priv->pruicss_xchg;
 
     /* Wait for command completion with timeout
@@ -1536,16 +1598,15 @@ int32_t endat_command_wait(endat_handle handle)
     return SystemP_SUCCESS;
 }
 
-int32_t endat_command_process(endat_handle handle, int32_t cmd,
-                          endat_cmd_supplement *cmd_supplement)
+int32_t endat_command_process(endat_handle handle, int32_t cmd, endat_cmd_supplement *cmd_supplement)
 {
-    /* Validate handle parameter */
+    int32_t status;
+
+    /* Validate handle */
     if(handle == NULL)
     {
         return SystemP_FAILURE;
     }
-
-    int32_t status;
 
     status = endat_command_build(handle, cmd, cmd_supplement);
 
@@ -1569,7 +1630,6 @@ int32_t endat_command_process(endat_handle handle, int32_t cmd,
     return SystemP_SUCCESS;
 }
 
-
 static int32_t endat_get_pos_res(endat_handle handle, int32_t *pos_res)
 {
     endat_priv *priv;
@@ -1581,13 +1641,18 @@ static int32_t endat_get_pos_res(endat_handle handle, int32_t *pos_res)
     const endat_attrs *attrs;
     int32_t status;
 
-    priv = endat_get_priv(handle);
+    if(pos_res == NULL)
+    {
+        return SystemP_FAILURE;
+    }
+
+    priv = handle->priv;
     ch = priv->current_channel;
     channel_rx_info = priv->channel_rx_info;
-    attrs = endat_get_attrs(handle);
+    attrs = handle->attrs;
 
     /* select memory area encoder manufacturer page 0 */
-    cmd = 2; 
+    cmd = 2;
     cmd_supplement.address[0] = ENDAT_MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE0;
     if(attrs->load_share_enabled)
     {
@@ -1640,13 +1705,18 @@ static int32_t endat_get_multi_turn_res(endat_handle handle, int32_t *multi_turn
     const endat_attrs *attrs;
     int32_t status;
 
-    priv = endat_get_priv(handle);
+    if(multi_turn_res == NULL)
+    {
+        return SystemP_FAILURE;
+    }
+
+    priv = handle->priv;
     ch = priv->current_channel;
     channel_rx_info = priv->channel_rx_info;
-    attrs = endat_get_attrs(handle);
+    attrs = handle->attrs;
 
     /* select memory area encoder manufacturer page 0 */
-    cmd = 2; 
+    cmd = 2;
     cmd_supplement.address[0] = ENDAT_MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE1;
 
     if(attrs->load_share_enabled)
@@ -1691,13 +1761,18 @@ static int32_t endat_get_multi_turn_res(endat_handle handle, int32_t *multi_turn
 
 static int32_t endat_get_id(endat_handle handle)
 {
-    endat_priv *priv = endat_get_priv(handle);
+    endat_priv *priv;
     int32_t cmd;
     endat_cmd_supplement cmd_supplement;
     uint32_t word0, word1, word2;
-    int32_t ch = priv->current_channel;
-    endat_ch_rx_info_array *channel_rx_info = priv->channel_rx_info;
-    const endat_attrs *attrs = endat_get_attrs(handle);
+    int32_t ch;
+    endat_ch_rx_info_array *channel_rx_info;
+    const endat_attrs *attrs;
+
+    priv = handle->priv;
+    ch = priv->current_channel;
+    channel_rx_info = priv->channel_rx_info;
+    attrs = handle->attrs;
 
     /* select memory area encoder manufacturer page 1 */
     cmd = 2;
@@ -1708,7 +1783,7 @@ static int32_t endat_get_id(endat_handle handle)
         cmd_supplement.address[2] = ENDAT_MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE1;
     }
 
-    if(endat_command_process(handle, cmd, &cmd_supplement) < 0)
+    if(endat_command_process(handle, cmd, &cmd_supplement) != SystemP_SUCCESS)
     {
         return SystemP_FAILURE;
     }
@@ -1725,7 +1800,7 @@ static int32_t endat_get_id(endat_handle handle)
         cmd_supplement.address[2] = APP_ENDAT_WORD_8;
     }
 
-    if(endat_command_process(handle, cmd, &cmd_supplement) < 0)
+    if(endat_command_process(handle, cmd, &cmd_supplement) != SystemP_SUCCESS)
     {
         return SystemP_FAILURE;
     }
@@ -1745,7 +1820,7 @@ static int32_t endat_get_id(endat_handle handle)
         cmd_supplement.address[2] = APP_ENDAT_WORD_9;
     }
 
-    if(endat_command_process(handle, cmd, &cmd_supplement) < 0)
+    if(endat_command_process(handle, cmd, &cmd_supplement) != SystemP_SUCCESS)
     {
         return SystemP_FAILURE;
     }
@@ -1765,7 +1840,7 @@ static int32_t endat_get_id(endat_handle handle)
         cmd_supplement.address[2] = APP_ENDAT_WORD_10;
     }
 
-    if(endat_command_process(handle, cmd, &cmd_supplement) < 0)
+    if(endat_command_process(handle, cmd, &cmd_supplement) != SystemP_SUCCESS)
     {
         return SystemP_FAILURE;
     }
@@ -1784,19 +1859,24 @@ static int32_t endat_get_id(endat_handle handle)
 
 static int32_t endat_get_sn(endat_handle handle)
 {
-    endat_priv *priv = endat_get_priv(handle);
+    endat_priv *priv;
     int32_t cmd;
     endat_cmd_supplement cmd_supplement;
     uint32_t word0, word1, word2;
-    int32_t ch = priv->current_channel;
-    endat_ch_rx_info_array *channel_rx_info = priv->channel_rx_info;
-    const endat_attrs *attrs = endat_get_attrs(handle);
+    int32_t ch;
+    endat_ch_rx_info_array *channel_rx_info;
+    const endat_attrs *attrs;
+
+    priv = handle->priv;
+    ch = priv->current_channel;
+    channel_rx_info = priv->channel_rx_info;
+    attrs = handle->attrs;
 
     /* select memory area encoder manufacturer page 1 */
     cmd = 2;
     cmd_supplement.address[0] = ENDAT_MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE1;
 
-    if(endat_command_process(handle, cmd, &cmd_supplement) < 0)
+    if(endat_command_process(handle, cmd, &cmd_supplement) != SystemP_SUCCESS)
     {
         return SystemP_FAILURE;
     }
@@ -1813,7 +1893,7 @@ static int32_t endat_get_sn(endat_handle handle)
         cmd_supplement.address[1] = APP_ENDAT_WORD_11;
         cmd_supplement.address[2] = APP_ENDAT_WORD_11;
     }
-    if(endat_command_process(handle, cmd, &cmd_supplement) < 0)
+    if(endat_command_process(handle, cmd, &cmd_supplement) != SystemP_SUCCESS)
     {
         return SystemP_FAILURE;
     }
@@ -1832,7 +1912,7 @@ static int32_t endat_get_sn(endat_handle handle)
         cmd_supplement.address[2] = APP_ENDAT_WORD_12;
     }
 
-    if(endat_command_process(handle, cmd, &cmd_supplement) < 0)
+    if(endat_command_process(handle, cmd, &cmd_supplement) != SystemP_SUCCESS)
     {
         return SystemP_FAILURE;
     }
@@ -1843,7 +1923,7 @@ static int32_t endat_get_sn(endat_handle handle)
     ClockP_usleep(ENDAT_PARAM_READ_DELAY_2MS_US);
 
     /* send parameter for word13 */
-    cmd = 4; 
+    cmd = 4;
     cmd_supplement.address[0] = APP_ENDAT_WORD_13;
     if(attrs->load_share_enabled)
     {
@@ -1851,7 +1931,7 @@ static int32_t endat_get_sn(endat_handle handle)
         cmd_supplement.address[2] = APP_ENDAT_WORD_13;
     }
 
-    if(endat_command_process(handle, cmd, &cmd_supplement) < 0)
+    if(endat_command_process(handle, cmd, &cmd_supplement) != SystemP_SUCCESS)
     {
         return SystemP_FAILURE;
     }
@@ -1871,13 +1951,18 @@ static int32_t endat_get_sn(endat_handle handle)
 
 static int32_t endat_get_command_set(endat_handle handle)
 {
-    endat_priv *priv = endat_get_priv(handle);
+    endat_priv *priv;
     int32_t cmd;
     endat_cmd_supplement cmd_supplement;
     uint32_t word;
-    int32_t ch = priv->current_channel;
-    endat_ch_rx_info_array *channel_rx_info = priv->channel_rx_info;
-    const endat_attrs *attrs = endat_get_attrs(handle);
+    int32_t ch;
+    endat_ch_rx_info_array *channel_rx_info;
+    const endat_attrs *attrs;
+
+    priv = handle->priv;
+    ch = priv->current_channel;
+    channel_rx_info = priv->channel_rx_info;
+    attrs = handle->attrs;
 
     /* select memory area encoder manufacturer page 2 */
     cmd = 2;
@@ -1889,7 +1974,7 @@ static int32_t endat_get_command_set(endat_handle handle)
         cmd_supplement.address[2] = ENDAT_MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE2;
     }
 
-    if(endat_command_process(handle, cmd, &cmd_supplement) < 0)
+    if(endat_command_process(handle, cmd, &cmd_supplement) != SystemP_SUCCESS)
     {
         return SystemP_FAILURE;
     }
@@ -1907,7 +1992,7 @@ static int32_t endat_get_command_set(endat_handle handle)
         cmd_supplement.address[2] = APP_ENDAT_WORD_5;
     }
 
-    if(endat_command_process(handle, cmd, &cmd_supplement) < 0)
+    if(endat_command_process(handle, cmd, &cmd_supplement) != SystemP_SUCCESS)
     {
         return SystemP_FAILURE;
     }
@@ -1925,16 +2010,21 @@ static int32_t endat_get_command_set(endat_handle handle)
 
 static int32_t endat_get_type(endat_handle handle)
 {
-    endat_priv *priv = endat_get_priv(handle);
+    endat_priv *priv;
     int32_t cmd;
     endat_cmd_supplement cmd_supplement;
     uint32_t word;
-    int32_t ch = priv->current_channel;
-    endat_ch_rx_info_array *channel_rx_info = priv->channel_rx_info;
-    const endat_attrs *attrs = endat_get_attrs(handle);
+    int32_t ch;
+    endat_ch_rx_info_array *channel_rx_info;
+    const endat_attrs *attrs;
+
+    priv = handle->priv;
+    ch = priv->current_channel;
+    channel_rx_info = priv->channel_rx_info;
+    attrs = handle->attrs;
 
     /* select memory area encoder manufacturer page 0 */
-    cmd = 2; 
+    cmd = 2;
     cmd_supplement.address[0] = ENDAT_MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE0;
 
     if(attrs->load_share_enabled)
@@ -1943,7 +2033,7 @@ static int32_t endat_get_type(endat_handle handle)
         cmd_supplement.address[2] = ENDAT_MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE0;
     }
 
-    if(endat_command_process(handle, cmd, &cmd_supplement) < 0)
+    if(endat_command_process(handle, cmd, &cmd_supplement) != SystemP_SUCCESS)
     {
         return SystemP_FAILURE;
     }
@@ -1961,7 +2051,7 @@ static int32_t endat_get_type(endat_handle handle)
         cmd_supplement.address[2] = APP_ENDAT_WORD_14;
     }
 
-    if(endat_command_process(handle, cmd, &cmd_supplement) < 0)
+    if(endat_command_process(handle, cmd, &cmd_supplement) != SystemP_SUCCESS)
     {
         return SystemP_FAILURE;
     }
@@ -1987,13 +2077,18 @@ static int32_t endat_get_step(endat_handle handle, int32_t *step)
     const endat_attrs *attrs;
     int32_t status;
 
-    priv = endat_get_priv(handle);
+    if(step == NULL)
+    {
+        return SystemP_FAILURE;
+    }
+
+    priv = handle->priv;
     ch = priv->current_channel;
     channel_rx_info = priv->channel_rx_info;
-    attrs = endat_get_attrs(handle);
+    attrs = handle->attrs;
 
     /* select memory area encoder manufacturer page 0 */
-    cmd = 2; 
+    cmd = 2;
     cmd_supplement.address[0] = ENDAT_MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE1;
 
     if(attrs->load_share_enabled)
@@ -2033,7 +2128,7 @@ static int32_t endat_get_step(endat_handle handle, int32_t *step)
                 1 << ENDAT_NUM_BITS_PARAMETER) - 1);
 
     /* send parameter for word5 */
-    cmd = 4; 
+    cmd = 4;
     cmd_supplement.address[0] = APP_ENDAT_WORD_5;
 
     status = endat_command_process(handle, cmd, &cmd_supplement);
@@ -2056,14 +2151,17 @@ int32_t endat_get_encoder_info(endat_handle handle)
     endat_priv *priv;
     int32_t ret;
 
-    /* Validate handle parameter */
-    if(handle == NULL)
+    /* Validate handle and pointers used in this function */
+    if((handle == NULL) ||
+       (handle->priv == NULL) ||
+       (handle->attrs == NULL) ||
+       (handle->priv->channel_rx_info == NULL) ||
+       (handle->priv->current_channel >= ENDAT_NUM_CH_PER_SLICE_MAX))
     {
         return SystemP_FAILURE;
     }
 
-    /* Get priv pointer */
-    priv = endat_get_priv(handle);
+    priv = handle->priv;
 
     ret = endat_get_pos_res(handle, &priv->pos_res);
     if(ret != SystemP_SUCCESS)
@@ -2093,74 +2191,70 @@ int32_t endat_get_encoder_info(endat_handle handle)
         return ret;
     }
     /* Calculate rx frame size for all three channels and store in different variables */
-  
+
     priv->pos_rx_bits_21_cmd[priv->current_channel] = priv->pos_res + ENDAT_NUM_BITS_POSITION_CRC +
             ENDAT_NUM_BITS_F1;
     priv->pos_rx_bits_22_cmd[priv->current_channel] = priv->pos_rx_bits_21_cmd[priv->current_channel] + ENDAT_NUM_BITS_F2;
 
     ret = endat_get_id(handle);
 
-    if(ret)
+    if(ret != SystemP_SUCCESS)
     {
         return ret;
     }
 
     ret = endat_get_sn(handle);
 
-    if(ret)
+    if(ret != SystemP_SUCCESS)
     {
         return ret;
     }
 
     ret = endat_get_type(handle);
 
-    if(ret)
+    if(ret != SystemP_SUCCESS)
     {
         return ret;
     }
 
     ret = endat_get_command_set(handle);
 
-    if(ret)
-    {
-        return ret;
-    }
-
-    return SystemP_SUCCESS;
+    return ret;
 }
 
 int32_t endat_get_prop_delay(endat_handle handle, uint32_t *prop_delay)
 {
     endat_priv *priv;
 
-    /* Validate handle parameter */
-    if(handle == NULL || prop_delay == NULL)
+    /* Validate parameters and pointers used in this function */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->pruicss_xchg == NULL) || (prop_delay == NULL) ||
+       (handle->priv->current_channel >= ENDAT_NUM_CH_PER_SLICE_MAX))
     {
         return SystemP_FAILURE;
     }
 
-    /* Get priv pointer */
-    priv = endat_get_priv(handle);
+    priv = handle->priv;
 
     *prop_delay = priv->pruicss_xchg->ch[priv->current_channel].prop_delay;
     return SystemP_SUCCESS;
 }
 
-int32_t endat_addinfo_track(endat_handle handle, int32_t cmd,
-                         endat_cmd_supplement *cmd_supplement)
+int32_t endat_addinfo_track(endat_handle handle, int32_t cmd, endat_cmd_supplement *cmd_supplement)
 {
-    /* Validate handle parameter */
-    if(handle == NULL)
+    endat_priv *priv;
+    const endat_attrs *attrs;
+    int32_t c7_c4, c3_c0;
+    int32_t ch;
+
+    /* Validate handle and pointers used in this function */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL))
     {
         return SystemP_FAILURE;
     }
 
     /* Get priv and attrs pointers */
-    endat_priv *priv = endat_get_priv(handle);
-    const endat_attrs *attrs = endat_get_attrs(handle);
-
-    int32_t c7_c4, c3_c0;
-    int32_t ch;
+    priv = handle->priv;
+    attrs = handle->attrs;
 
     /* reset stops additional info's */
     if(cmd == 5)
@@ -2189,6 +2283,12 @@ int32_t endat_addinfo_track(endat_handle handle, int32_t cmd,
     if(cmd != 9)
     {
         return SystemP_SUCCESS;
+    }
+
+    /* Validate cmd_supplement for command 9 (MRS - Memory Read Select) */
+    if(cmd_supplement == NULL)
+    {
+        return SystemP_FAILURE;
     }
 
     /* Command 9: MRS (Memory Read Select) - Process address fields */
@@ -2277,23 +2377,16 @@ int32_t endat_addinfo_track(endat_handle handle, int32_t cmd,
     return SystemP_SUCCESS;
 }
 
-static int32_t endat_config_global_rx_arm_cnt(endat_handle handle,
-        uint16_t val)
+static int32_t endat_config_global_rx_arm_cnt(endat_handle handle, uint16_t val)
 {
     endat_priv *priv;
     const endat_attrs *attrs;
     void *pruicss_cfg;
 
-    /* Validate handle */
-    if(handle == NULL)
-    {
-        return SystemP_FAILURE;
-    }
+    priv = handle->priv;
+    attrs = handle->attrs;
 
-    priv = endat_get_priv(handle);
-    attrs = endat_get_attrs(handle);
-
-    pruicss_cfg = (void *)((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->cfgRegBase;
+    pruicss_cfg = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->cfgRegBase);
 
     /* Configure only enabled channels based on channel mask */
     if(attrs->pruicss_slice == 1)
@@ -2337,17 +2430,21 @@ int32_t endat_config_rx_arm_cnt(endat_handle handle, uint16_t val)
     void *pruicss_cfg;
     int32_t ch;
 
-    /* Validate handle parameter */
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) ||
+       (handle->priv == NULL) ||
+       (handle->attrs == NULL) ||
+       (handle->priv->pruicss_handle == NULL) ||
+       (handle->priv->pruicss_handle->hwAttrs == NULL) ||
+       (handle->priv->current_channel >= ENDAT_NUM_CH_PER_SLICE_MAX))
     {
         return SystemP_FAILURE;
     }
 
-    /* Get priv pointer */
-    priv = endat_get_priv(handle);
-    attrs = endat_get_attrs(handle);
+    priv = handle->priv;
+    attrs = handle->attrs;
 
-    pruicss_cfg = (void *)((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->cfgRegBase;
+    pruicss_cfg = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->cfgRegBase);
     ch = priv->current_channel;
     if(attrs->pruicss_slice == 1)
     {
@@ -2369,17 +2466,21 @@ int32_t endat_config_wire_delay(endat_handle handle, uint16_t val)
     int32_t ch;
     uint16_t regval;
 
-    /* Validate handle parameter */
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) ||
+       (handle->priv == NULL) ||
+       (handle->attrs == NULL) ||
+       (handle->priv->pruicss_handle == NULL) ||
+       (handle->priv->pruicss_handle->hwAttrs == NULL) ||
+       (handle->priv->current_channel >= ENDAT_NUM_CH_PER_SLICE_MAX))
     {
         return SystemP_FAILURE;
     }
 
-    /* Get priv pointer */
-    priv = endat_get_priv(handle);
-    attrs = endat_get_attrs(handle);
+    priv = handle->priv;
+    attrs = handle->attrs;
 
-    pruicss_cfg = (void *)((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->cfgRegBase;
+    pruicss_cfg = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->cfgRegBase);
     ch = priv->current_channel;
     if(attrs->pruicss_slice == 1)
     {
@@ -2409,8 +2510,7 @@ int32_t endat_config_wire_delay(endat_handle handle, uint16_t val)
     return SystemP_SUCCESS;
 }
 
-static int32_t endat_config_clock_reg(endat_handle handle,
-                        endat_clk_cfg *clk_cfg)
+static int32_t endat_config_clock_reg(endat_handle handle, endat_clk_cfg *clk_cfg)
 {
     void *pruicss_cfg;
     const endat_attrs *attrs;
@@ -2418,17 +2518,10 @@ static int32_t endat_config_clock_reg(endat_handle handle,
     uint32_t rx_reg_val;
     uint32_t tx_reg_val;
 
-    /* Validate handle parameter */
-    if(handle == NULL)
-    {
-        return SystemP_FAILURE;
-    }
+    priv = handle->priv;
+    attrs = handle->attrs;
 
-    /* Get priv pointer */
-    priv = endat_get_priv(handle);
-    attrs = endat_get_attrs(handle);
-
-    pruicss_cfg = (void *)((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->cfgRegBase;
+    pruicss_cfg = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->cfgRegBase);
 
     /* Configure RX and TX CFG registers based on PRU slice */
     if(attrs->pruicss_slice)
@@ -2488,17 +2581,21 @@ int32_t endat_config_tst_delay(endat_handle handle, uint16_t delay)
     void *pruicss_cfg;
     int32_t ch;
 
-    /* Validate handle parameter */
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) ||
+       (handle->priv == NULL) ||
+       (handle->attrs == NULL) ||
+       (handle->priv->pruicss_handle == NULL) ||
+       (handle->priv->pruicss_handle->hwAttrs == NULL) ||
+       (handle->priv->current_channel >= ENDAT_NUM_CH_PER_SLICE_MAX))
     {
         return SystemP_FAILURE;
     }
 
-    /* Get priv pointer */
-    priv = endat_get_priv(handle);
-    attrs = endat_get_attrs(handle);
+    priv = handle->priv;
+    attrs = handle->attrs;
 
-    pruicss_cfg = (void *)((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->cfgRegBase;
+    pruicss_cfg = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->cfgRegBase);
     ch = priv->current_channel;
     if(attrs->pruicss_slice == 1)
     {
@@ -2512,20 +2609,23 @@ int32_t endat_config_tst_delay(endat_handle handle, uint16_t delay)
     return SystemP_SUCCESS;
 }
 
-int32_t endat_config_rx_clock_disable(endat_handle handle,
-                                   uint16_t val)
+int32_t endat_config_rx_clock_disable(endat_handle handle, uint16_t val)
 {
-    /* Validate handle parameter */
-    if(handle == NULL)
+    endat_priv *priv;
+    endat_pruicss_xchg *pruicss_xchg;
+    int32_t ch;
+
+    /* Validate handle and pointers used in this function */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->pruicss_xchg == NULL) ||
+       (handle->priv->current_channel >= ENDAT_NUM_CH_PER_SLICE_MAX))
     {
         return SystemP_FAILURE;
     }
 
-    /* Get priv pointer */
-    endat_priv *priv = endat_get_priv(handle);
 
-    endat_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
-    int32_t ch = priv->current_channel;
+    priv = handle->priv;
+    pruicss_xchg = priv->pruicss_xchg;
+    ch = priv->current_channel;
     pruicss_xchg->ch[ch].rx_clk_less = val;
 
     return SystemP_SUCCESS;
@@ -2535,9 +2635,19 @@ static int32_t endat_handle_prop_delay(endat_handle handle, uint32_t prop_delay)
 {
     uint16_t clock_dis;
     uint16_t temp;
-    endat_priv *priv = endat_get_priv(handle);
+    endat_priv *priv;
+    const endat_attrs *attrs;
     float ct;
     int32_t status;
+
+    priv = handle->priv;
+    attrs = handle->attrs;
+
+    /* Validate endat_freq is not zero to avoid division by zero */
+    if(priv->endat_freq == 0)
+    {
+        return SystemP_FAILURE;
+    }
 
     /* One cycle period for endat clock is 1/endat_freq */
     ct = (float)1000000000 / priv->endat_freq;
@@ -2548,7 +2658,7 @@ static int32_t endat_handle_prop_delay(endat_handle handle, uint32_t prop_delay)
     {
         clock_dis = floor(prop_delay/ct);
         /* convert propagation delay into rx arm counts */
-        temp = ((uint16_t)(((float)prop_delay * endat_get_attrs(handle)->core_clk_freq )/1000000000)) * ENDAT_DELAY_COUNTER_INCREMENT;
+        temp = ((uint16_t)(((float)prop_delay * attrs->core_clk_freq )/1000000000)) * ENDAT_DELAY_COUNTER_INCREMENT;
 
         status = endat_config_rx_arm_cnt(handle, temp);
         if(status != SystemP_SUCCESS)
@@ -2581,6 +2691,7 @@ static int32_t endat_handle_prop_delay(endat_handle handle, uint32_t prop_delay)
 
     return SystemP_SUCCESS;
 }
+
 /*function to set propagation delay, val always will be in ns*/
 int32_t endat_config_propagation_delay(endat_handle handle, uint32_t val)
 {
@@ -2590,15 +2701,15 @@ int32_t endat_config_propagation_delay(endat_handle handle, uint32_t val)
     endat_pruicss_xchg *pruicss_xchg;
     int32_t ch;
 
-    /* Validate handle parameter */
-    if(handle == NULL)
+    /* Validate handle and pointers used in this function */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->pruicss_xchg == NULL) ||
+       (handle->priv->current_channel >= ENDAT_NUM_CH_PER_SLICE_MAX))
     {
         return SystemP_FAILURE;
     }
 
-    /* Get priv pointer */
-    priv = endat_get_priv(handle);
-    attrs = endat_get_attrs(handle);
+    priv = handle->priv;
+    attrs = handle->attrs;
 
     /*handle propagation delay*/
     ret = endat_handle_prop_delay(handle, val);
@@ -2606,6 +2717,7 @@ int32_t endat_config_propagation_delay(endat_handle handle, uint32_t val)
     {
         return ret;
     }
+
     /*convert from ns to pru count*/
     val =  ((uint16_t)(((float)val * attrs->core_clk_freq)/1000000000));
 
@@ -2615,22 +2727,29 @@ int32_t endat_config_propagation_delay(endat_handle handle, uint32_t val)
 
     return SystemP_SUCCESS;
 }
-static void endat_set_continuous_mode(endat_handle handle)
+
+static int32_t endat_set_continuous_mode(endat_handle handle)
 {
-    endat_priv *priv = endat_get_priv(handle);
-    const endat_attrs *attrs = endat_get_attrs(handle);
-    endat_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
+    endat_priv *priv;
+    const endat_attrs *attrs;
+    endat_pruicss_xchg *pruicss_xchg;
+
+    priv = handle->priv;
+    attrs = handle->attrs;
+    pruicss_xchg = priv->pruicss_xchg;
+
     if(attrs->load_share_enabled)
     {
         pruicss_xchg->config[0].trigger |= pruicss_xchg->config[0].channel==1?(0x1 << 7 | 0x1):0;
         pruicss_xchg->config[1].trigger |= pruicss_xchg->config[1].channel==2?(0x1 << 7 | 0x1):0;
-        pruicss_xchg->config[2].trigger |= pruicss_xchg->config[2].channel==4?(0x1 << 7 | 0x1):0;      
+        pruicss_xchg->config[2].trigger |= pruicss_xchg->config[2].channel==4?(0x1 << 7 | 0x1):0;
     }
     else
     {
         pruicss_xchg->config[0].trigger |= (0x1 << 7 | 0x1);
     }
 
+    return SystemP_SUCCESS;
 }
 
 static int32_t endat_calc_clock(endat_handle handle, uint32_t freq, endat_clk_cfg *clk_cfg)
@@ -2638,18 +2757,29 @@ static int32_t endat_calc_clock(endat_handle handle, uint32_t freq, endat_clk_cf
     uint32_t ns;
     uint64_t rx_source_freq;
     uint64_t tx_source_freq;
-    const endat_attrs *attrs = endat_get_attrs(handle);
+    const endat_attrs *attrs = handle->attrs;
 
+    /* Validate freq is not zero to avoid division by zero */
+    if(freq == 0)
+    {
+        return SystemP_FAILURE;
+    }
 
     if(attrs->is_core_clk == 1)
     {
         rx_source_freq = attrs->core_clk_freq;
         tx_source_freq = attrs->core_clk_freq;
     }
-    else 
+    else
     {
         rx_source_freq = attrs->uart_clk_freq;
         tx_source_freq = attrs->uart_clk_freq;
+    }
+
+    /* Validate source frequencies are not zero */
+    if((rx_source_freq == 0) || (tx_source_freq == 0))
+    {
+        return SystemP_FAILURE;
     }
 
     if(freq > 16000000 || (freq > 12000000 && freq < 16000000))
@@ -2691,14 +2821,21 @@ int32_t endat_config_clock(endat_handle handle, uint32_t freq)
     const endat_attrs *attrs;
     int32_t ret;
 
-    /* Validate handle parameter */
-    if(handle == NULL)
+    /* Validate core_clk_freq is not zero to avoid division by zero */
+    /* Validate handle and pointers used in this function */
+    if((handle == NULL) ||
+       (handle->priv == NULL) ||
+       (handle->attrs == NULL) ||
+       (handle->priv->pruicss_handle == NULL) ||
+       (handle->priv->pruicss_handle->hwAttrs == NULL) ||
+       (handle->attrs->core_clk_freq == 0) ||
+       (handle->priv->current_channel >= ENDAT_NUM_CH_PER_SLICE_MAX))
     {
         return SystemP_FAILURE;
     }
-    /* Get priv pointer */
-    priv = endat_get_priv(handle);
-    attrs = endat_get_attrs(handle);
+
+    priv = handle->priv;
+    attrs = handle->attrs;
 
     ret = endat_calc_clock(handle, freq, &clk_cfg);
     if(ret != SystemP_SUCCESS)
@@ -2746,11 +2883,16 @@ int32_t endat_config_clock(endat_handle handle, uint32_t freq)
     }
     return SystemP_SUCCESS;
 }
-static void endat_clear_continuous_mode(endat_handle handle)
+
+static int32_t endat_clear_continuous_mode(endat_handle handle)
 {
-    endat_priv *priv = endat_get_priv(handle);
-    const endat_attrs *attrs = endat_get_attrs(handle);
-    endat_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
+    endat_priv *priv;
+    const endat_attrs *attrs;
+    endat_pruicss_xchg *pruicss_xchg;
+
+    priv = handle->priv;
+    attrs = handle->attrs;
+    pruicss_xchg = priv->pruicss_xchg;
 
     if(attrs->load_share_enabled)
     {
@@ -2763,17 +2905,18 @@ static void endat_clear_continuous_mode(endat_handle handle)
         pruicss_xchg->config[0].trigger &= ~(0x1 << 7);
     }
 
+    return SystemP_SUCCESS;
 }
 
 int32_t endat_start_continuous_mode(endat_handle handle)
 {
-    /* Validate handle parameter */
-    if(handle == NULL)
+    int32_t cmd;
+
+    /* Validate handle and pointers used in this function */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->pruicss_xchg == NULL))
     {
         return SystemP_FAILURE;
     }
-
-    int32_t cmd;
 
     cmd = endat_command_build(handle, 1, NULL);
 
@@ -2782,7 +2925,10 @@ int32_t endat_start_continuous_mode(endat_handle handle)
         return cmd;
     }
 
-    endat_set_continuous_mode(handle);
+    if(endat_set_continuous_mode(handle) != SystemP_SUCCESS)
+    {
+        return SystemP_FAILURE;
+    }
 
     return SystemP_SUCCESS;
 }
@@ -2791,13 +2937,16 @@ int32_t endat_stop_continuous_mode(endat_handle handle)
 {
     int32_t status;
 
-    /* Validate handle parameter */
-    if(handle == NULL)
+    /* Validate handle and pointers used in this function */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->pruicss_xchg == NULL))
     {
         return SystemP_FAILURE;
     }
 
-    endat_clear_continuous_mode(handle);
+    if(endat_clear_continuous_mode(handle) != SystemP_SUCCESS)
+    {
+        return SystemP_FAILURE;
+    }
 
     status = endat_command_wait(handle);
     if(status != SystemP_SUCCESS)
@@ -2810,17 +2959,19 @@ int32_t endat_stop_continuous_mode(endat_handle handle)
 
 int32_t endat_config_host_trigger(endat_handle handle)
 {
-    /* Validate handle parameter */
-    if(handle == NULL)
+    endat_priv *priv;
+    const endat_attrs *attrs;
+    endat_pruicss_xchg *pruicss_xchg;
+
+    /* Validate handle and pointers used in this function */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->pruicss_xchg == NULL))
     {
         return SystemP_FAILURE;
     }
 
-    /* Get priv pointer */
-    endat_priv *priv = endat_get_priv(handle);
-    const endat_attrs *attrs = endat_get_attrs(handle);
-
-    endat_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
+    priv = handle->priv;
+    attrs = handle->attrs;
+    pruicss_xchg = priv->pruicss_xchg;
     /*for loadshare mode trigger set based on connected channels*/
     if(attrs->load_share_enabled)
     {
@@ -2838,17 +2989,19 @@ int32_t endat_config_host_trigger(endat_handle handle)
 
 int32_t endat_config_periodic_trigger_cmp_mode(endat_handle handle)
 {
-    /* Validate handle parameter */
-    if(handle == NULL)
+    endat_priv *priv;
+    const endat_attrs *attrs;
+    endat_pruicss_xchg *pruicss_xchg;
+
+    /* Validate handle and pointers used in this function */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->pruicss_xchg == NULL))
     {
         return SystemP_FAILURE;
     }
 
-    /* Get priv pointer */
-    endat_priv *priv = endat_get_priv(handle);
-    const endat_attrs *attrs = endat_get_attrs(handle);
-
-    endat_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
+    priv = handle->priv;
+    attrs = handle->attrs;
+    pruicss_xchg = priv->pruicss_xchg;
     /*for loadshare mode trigger set based on connected channels*/
     if(attrs->load_share_enabled)
     {
@@ -2866,17 +3019,19 @@ int32_t endat_config_periodic_trigger_cmp_mode(endat_handle handle)
 
 int32_t endat_config_periodic_trigger_cap_mode(endat_handle handle)
 {
-    /* Validate handle parameter */
-    if(handle == NULL)
+    endat_priv *priv;
+    const endat_attrs *attrs;
+    endat_pruicss_xchg *pruicss_xchg;
+
+    /* Validate handle and pointers used in this function */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->pruicss_xchg == NULL))
     {
         return SystemP_FAILURE;
     }
 
-    /* Get priv pointer */
-    endat_priv *priv = endat_get_priv(handle);
-    const endat_attrs *attrs = endat_get_attrs(handle);
-
-    endat_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
+    priv = handle->priv;
+    attrs = handle->attrs;
+    pruicss_xchg = priv->pruicss_xchg;
     /*for loadshare mode trigger set based on connected channels*/
     if(attrs->load_share_enabled)
     {
@@ -2894,22 +3049,17 @@ int32_t endat_config_periodic_trigger_cap_mode(endat_handle handle)
 
 int32_t endat_config_channel(endat_handle handle, uint32_t ch)
 {
-    /* Validate handle parameter */
-    if(handle == NULL)
+    endat_priv *priv;
+    endat_pruicss_xchg *pruicss_xchg;
+
+    /* Validate parameters and pointers used in this function */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->pruicss_xchg == NULL) || (ch >= ENDAT_NUM_CH_PER_SLICE_MAX))
     {
         return SystemP_FAILURE;
     }
 
-    /* Get priv pointer */
-    endat_priv *priv = endat_get_priv(handle);
-
-    /* Validate channel parameter */
-    if(ch >= ENDAT_NUM_CH_PER_SLICE_MAX)
-    {
-        return SystemP_FAILURE;
-    }
-
-    endat_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
+    priv = handle->priv;
+    pruicss_xchg = priv->pruicss_xchg;
 
     pruicss_xchg->config[0].channel = 1 << ch;
     priv->current_channel = ch;
@@ -2917,20 +3067,23 @@ int32_t endat_config_channel(endat_handle handle, uint32_t ch)
     return SystemP_SUCCESS;
 }
 
-int32_t endat_config_multi_channel_mask(endat_handle handle,
-                                     uint8_t mask,
-                                     uint8_t load_share_enabled)
+int32_t endat_config_multi_channel_mask(endat_handle handle, uint8_t mask, uint8_t load_share_enabled)
 {
+    endat_priv *priv;
     int32_t status;
 
-    /* Validate handle parameter */
-    if(handle == NULL || (mask > ENDAT_CHANNEL_MASK) || load_share_enabled > 1 || mask == 0)
+    /* Validate parameters and internal structure pointers */
+    if((handle == NULL) ||
+       (handle->priv == NULL) ||
+       (handle->priv->pruicss_xchg == NULL) ||
+       (mask == 0) ||
+       (mask > ENDAT_CHANNEL_MASK) ||
+       (load_share_enabled > 1))
     {
         return SystemP_FAILURE;
     }
 
-    /* Get priv pointer */
-    endat_priv *priv = endat_get_priv(handle);
+    priv = handle->priv;
 
     if(load_share_enabled)
     {
@@ -2959,129 +3112,115 @@ int32_t endat_config_multi_channel_mask(endat_handle handle,
 
 static int32_t endat_config_syn_bits(endat_handle handle, uint8_t mask)
 {
-    /* Validate handle parameter */
-    if(handle == NULL)
-    {
-        return SystemP_FAILURE;
-    }
+    endat_priv *priv;
 
-    /* Get priv pointer */
-    endat_priv *priv = endat_get_priv(handle);
+    priv = handle->priv;
 
-    priv->pruicss_xchg->endat_ch0_syn_bit=mask&(1<<0)?0x1:0;
-    priv->pruicss_xchg->endat_ch1_syn_bit=mask&(1<<1)?0x2:0;
-    priv->pruicss_xchg->endat_ch2_syn_bit=mask&(1<<2)?0x4:0;
+    priv->pruicss_xchg->endat_ch0_syn_bit = (mask&(1<<0))?0x1:0;
+    priv->pruicss_xchg->endat_ch1_syn_bit = (mask&(1<<1))?0x2:0;
+    priv->pruicss_xchg->endat_ch2_syn_bit = (mask&(1<<2))?0x4:0;
 
     return SystemP_SUCCESS;
 }
+
 static int32_t endat_enable_load_share_mode(endat_handle handle)
 {
     endat_priv *priv;
     const endat_attrs *attrs;
     void *pruicss_cfg;
-    uint32_t rgval;
+    uint32_t reg_val;
 
-    /* Validate handle parameter */
-    if(handle == NULL)
-    {
-        return SystemP_FAILURE;
-    }
+    priv = handle->priv;
+    attrs = handle->attrs;
 
-    /* Get priv pointer */
-    priv = endat_get_priv(handle);
-    attrs = endat_get_attrs(handle);
+    pruicss_cfg = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->cfgRegBase);
 
-    pruicss_cfg = (void *)((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->cfgRegBase;
     if(attrs->pruicss_slice == 1)
     {
-       rgval = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG);
-       rgval |= ENDAT_LOAD_SHARE_EN_MASK;
-      HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG, rgval);
+        reg_val = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG);
+        reg_val |= ENDAT_LOAD_SHARE_EN_MASK;
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG, reg_val);
     }
     else
     {
-        rgval = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG);
-        rgval |= ENDAT_LOAD_SHARE_EN_MASK;
-      HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG, rgval);
+        reg_val = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG);
+        reg_val |= ENDAT_LOAD_SHARE_EN_MASK;
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG, reg_val);
     }
 
     return SystemP_SUCCESS;
 }
+
 static int32_t endat_config_primary_core_mask(endat_handle handle, uint8_t mask)
 {
-    /* Validate handle parameter */
-    if(handle == NULL)
+    endat_priv *priv;
+    priv = handle->priv;
+
+    switch(mask)
     {
-        return SystemP_FAILURE;
-    }
-
-    /* Get priv pointer */
-    endat_priv *priv = endat_get_priv(handle);
-
-    switch (mask)
-    {
-
         case 1:  /*only channel0 connected*/
-            priv->pruicss_xchg->endat_primary_core_mask=0x1;
-                        break;
+            priv->pruicss_xchg->endat_primary_core_mask = 0x1;
+            break;
         case 2: /*channel1 connected*/
-            priv->pruicss_xchg->endat_primary_core_mask=0x2;
-                        break;
+            priv->pruicss_xchg->endat_primary_core_mask = 0x2;
+            break;
         case 3:               /*channel0 and channel1 connected*/
-            priv->pruicss_xchg->endat_primary_core_mask=0x1;
-                        break;
+            priv->pruicss_xchg->endat_primary_core_mask = 0x1;
+            break;
         case 4:  /*channel2 connected*/
-            priv->pruicss_xchg->endat_primary_core_mask=0x4;
-                        break;
+            priv->pruicss_xchg->endat_primary_core_mask = 0x4;
+            break;
         case 5:               /*channel0 and channel2 connected*/
-            priv->pruicss_xchg->endat_primary_core_mask=0x4;
-                        break;
+            priv->pruicss_xchg->endat_primary_core_mask = 0x4;
+            break;
         case 6:                    /*channel1 and channel2 connected*/
-            priv->pruicss_xchg->endat_primary_core_mask=0X4;
-                        break;
+            priv->pruicss_xchg->endat_primary_core_mask = 0x4;
+            break;
         case 7:                       /*all three channel connected*/
-            priv->pruicss_xchg->endat_primary_core_mask=0x4;
-                        break;
-
-     }
+            priv->pruicss_xchg->endat_primary_core_mask = 0x4;
+            break;
+        default:
+            return SystemP_FAILURE;
+    }
 
     return SystemP_SUCCESS;
 }
+
 uint8_t endat_multi_channel_detected(endat_handle handle)
 {
-    /* Validate handle parameter */
-    if(handle == NULL)
+    endat_priv *priv;
+    const endat_attrs *attrs;
+
+    /* Validate handle and pointers used in this function */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->pruicss_xchg == NULL))
     {
         return 0;
     }
 
-    /* Get priv pointer */
-    endat_priv *priv = endat_get_priv(handle);
-    const endat_attrs *attrs = endat_get_attrs(handle);
+    priv = handle->priv;
+    attrs = handle->attrs;
 
     if(attrs->load_share_enabled)  /* for loadshare mode*/
-        return (priv->pruicss_xchg->config[0].channel|priv->pruicss_xchg->config[1].channel|priv->pruicss_xchg->config[2].channel);
-       else
-       return priv->pruicss_xchg->config[0].channel;
-
+    {
+        return (priv->pruicss_xchg->config[0].channel | priv->pruicss_xchg->config[1].channel | priv->pruicss_xchg->config[2].channel);
+    }
+    else
+    {
+        return priv->pruicss_xchg->config[0].channel;
+    }
 }
 
 int32_t endat_multi_channel_set_cur(endat_handle handle, uint32_t ch)
 {
-    /* Validate handle parameter */
-    if(handle == NULL)
+    endat_priv *priv;
+
+    /* Validate parameters and pointers used in this function */
+    if((handle == NULL) || (handle->priv == NULL) || (ch >= ENDAT_NUM_CH_PER_SLICE_MAX))
     {
         return SystemP_FAILURE;
     }
 
-    /* Get priv pointer */
-    endat_priv *priv = endat_get_priv(handle);
-
-    /* Validate channel parameter */
-    if(ch >= ENDAT_NUM_CH_PER_SLICE_MAX)
-    {
-        return SystemP_FAILURE;
-    }
+    priv = handle->priv;
 
     priv->current_channel = ch;
     priv->pos_res =  priv->pos_rx_bits_21_cmd[ch] - (ENDAT_NUM_BITS_POSITION_CRC + ENDAT_NUM_BITS_F1);
@@ -3091,33 +3230,35 @@ int32_t endat_multi_channel_set_cur(endat_handle handle, uint32_t ch)
 
 int32_t endat_wait_initialization(endat_handle handle, uint32_t timeout, uint8_t mask)
 {
-    /* Validate handle parameter */
-    if(handle == NULL)
+    endat_priv *priv;
+    const endat_attrs *attrs;
+    endat_pruicss_xchg *pruicss_xchg;
+    int32_t i;
+
+    /* Validate handle and pointers used in this function */
+    if((handle == NULL) ||
+       (handle->priv == NULL) ||
+       (handle->attrs == NULL) ||
+       (handle->priv->pruicss_xchg == NULL) ||
+       (mask == 0) ||
+       (mask > ENDAT_CHANNEL_MASK))
     {
         return SystemP_FAILURE;
     }
 
-    /* Get priv pointer */
-    endat_priv *priv = endat_get_priv(handle);
-    const endat_attrs *attrs = endat_get_attrs(handle);
-
-    int32_t i;
-
-    endat_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
+    priv = handle->priv;
+    attrs = handle->attrs;
+    pruicss_xchg = priv->pruicss_xchg;
 
     for(i = 0; i < timeout; i++)
     {
-
-
         if(attrs->load_share_enabled)  /* for loadshare mode*/
         {
             switch (mask)
             {
-
              case 1:  /*channel 0 connected*/
                      if((pruicss_xchg->config[0].status & 1))
                          return SystemP_SUCCESS;
-
                     break;
              case 2: /*channel 1 connected*/
                        if((pruicss_xchg->config[1].status & 1))
@@ -3145,7 +3286,6 @@ int32_t endat_wait_initialization(endat_handle handle, uint32_t timeout, uint8_t
                     break;
             }
             ClockP_usleep(priv->fw_wait_delay_us);
-
         }
         else if(pruicss_xchg->config[0].status & 1)
         {
@@ -3171,15 +3311,10 @@ static int32_t endat_config_clr_cfg0(endat_handle handle)
     const endat_attrs *attrs;
     void *pruicss_cfg;
 
-    if(handle == NULL)
-    {
-        return SystemP_FAILURE;
-    }
+    priv = handle->priv;
+    attrs = handle->attrs;
 
-    priv = endat_get_priv(handle);
-    attrs = endat_get_attrs(handle);
-
-    pruicss_cfg = (void *)((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->cfgRegBase;
+    pruicss_cfg = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->cfgRegBase);
 
     /* Clear configuration only for enabled channels based on channel mask */
     if(attrs->pruicss_slice)
@@ -3219,13 +3354,11 @@ static int32_t endat_config_clr_cfg0(endat_handle handle)
 static int32_t endat_config_endat_mode(endat_handle handle)
 {
     int32_t status;
-    if(handle == NULL)
-    {
-        return SystemP_FAILURE;
-    }
+    endat_priv *priv;
+    const endat_attrs *attrs;
 
-    endat_priv *priv = endat_get_priv(handle);
-    const endat_attrs *attrs = endat_get_attrs(handle);
+    priv = handle->priv;
+    attrs = handle->attrs;
 
     status = PRUICSS_setGpMuxSelect(priv->pruicss_handle, attrs->pruicss_slice, PRUICSS_GP_MUX_SEL_MODE_ENDAT);
     return status;
@@ -3234,21 +3367,21 @@ static int32_t endat_config_endat_mode(endat_handle handle)
 static int32_t endat_hw_init(endat_handle handle)
 {
     endat_clk_cfg clk_cfg;
-    /* Validate handle */
-    if(handle == NULL)
+    const endat_attrs *attrs;
+
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) ||
+       (handle->priv == NULL) ||
+       (handle->attrs == NULL) ||
+       (handle->priv->pruicss_handle == NULL) ||
+       (handle->priv->pruicss_handle->hwAttrs == NULL))
     {
         return SystemP_FAILURE;
     }
 
-    /* Get attrs */
-    const endat_attrs *attrs = endat_get_attrs(handle);
+    attrs = handle->attrs;
 
-    if(attrs == NULL)
-    {
-        return SystemP_FAILURE;
-    }
-
-    /* set initial clock to 200KHz */
+    /* Set initial clock to 200KHz */
     if(attrs->is_core_clk == 1)
     {
         clk_cfg.rx_div = attrs->core_clk_freq /(ENDAT_RX_OVERSAMPLING_RATE*(ENDAT_INIT_FREQ)) - 1;
@@ -3320,14 +3453,10 @@ static int32_t endat_hw_init(endat_handle handle)
 static int32_t endat_set_default_initialization(endat_handle handle)
 {
     uint32_t i = 0;
-    /* Validate handle */
-    if(handle == NULL)
-    {
-        return SystemP_FAILURE;
-    }
+    endat_priv *priv;
+    endat_pruicss_xchg *pruicss_xchg;
 
-    /* Get priv and attrs */
-    endat_priv *priv = endat_get_priv(handle);
+    priv = handle->priv;
 
     /* Initialize runtime state variables to defaults */
     priv->is_open = 0;
@@ -3356,7 +3485,7 @@ static int32_t endat_set_default_initialization(endat_handle handle)
     memset(&priv->sn, 0, sizeof(endat_sn));
 
     /* Configure PRU exchange interface */
-    endat_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
+    pruicss_xchg = priv->pruicss_xchg;
 
     for(i = 0; i < ENDAT_NUM_CH_PER_SLICE_MAX; i++)
     {
@@ -3382,17 +3511,14 @@ static int32_t endat_set_default_initialization(endat_handle handle)
  */
 static int32_t endat_config_timing_delays(endat_handle handle)
 {
-    /* Validate handle */
-    if(handle == NULL)
-    {
-        return SystemP_FAILURE;
-    }
+    endat_priv *priv;
+    const endat_attrs *attrs;
+    endat_pruicss_xchg *pruicss_xchg;
 
-    /* Get priv and attrs */
-    endat_priv *priv = endat_get_priv(handle);
-    const endat_attrs *attrs = endat_get_attrs(handle);
+    priv = handle->priv;
+    attrs = handle->attrs;
 
-    endat_pruicss_xchg *pruicss_xchg = priv->pruicss_xchg;
+    pruicss_xchg = priv->pruicss_xchg;
 
     /* Configure timing delays based on PRU core clock frequency */
     pruicss_xchg->endat_delay_125ns = (uint32_t)(((float)attrs->core_clk_freq * 125.0f) / 1000000000.0f);
@@ -3423,16 +3549,11 @@ static int32_t endat_config_timing_delays(endat_handle handle)
 static int32_t endat_config_iep_base_addr(endat_handle handle)
 {
     void *base_addr = NULL;
+    endat_priv *priv;
+    const endat_attrs *attrs;
 
-    /* Validate handle */
-    if(handle == NULL)
-    {
-        return SystemP_FAILURE;
-    }
-
-    /* Get priv and attrs */
-    endat_priv *priv = endat_get_priv(handle);
-    const endat_attrs *attrs = endat_get_attrs(handle);
+    priv = handle->priv;
+    attrs = handle->attrs;
 
     /* Calculate relative IEP address from PRUICSS base */
     base_addr = (void *)((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->baseAddr;
@@ -3455,49 +3576,36 @@ static int32_t endat_config_iep_base_addr(endat_handle handle)
  */
 static int32_t endat_config_channel_info_addr(endat_handle handle, uint32_t ch_info_global_addr)
 {
-    /* Validate handle */
-    if(handle == NULL)
-    {
-        return SystemP_FAILURE;
-    }
+    endat_priv *priv;
 
-    /* Get priv and attrs */
-    endat_priv *priv = endat_get_priv(handle);
+    priv = handle->priv;
 
-    /* Set channel info memory address for DMA */
+    /* Set channel info memory address */
     priv->pruicss_xchg->ch_info_memory_add = (uint64_t)ch_info_global_addr;
 
     return SystemP_SUCCESS;
 }
 
-/**
- *  \brief      Initialize trigger parameters from attrs
- *
- *  \details    This function initializes trigger parameters for enabled channels
- *              using the IEP CMP and CAP event numbers from attrs. It calculates
- *              the IEP capture register addresses relative to PRUICSS base and
- *              writes them to DMEM for PRU firmware access.
- *
- *              The function handles both load-share and non-load-share modes:
- *              - Load-share mode: Configures only enabled channels (checks channel_mask)
- *              - Non-load-share mode: Configures only channel 0 (firmware reads from channel 0 offset)
- *
- *  \param[in]  handle  EnDAT driver handle
- *
- *  \retval     SystemP_SUCCESS on success
- *  \retval     SystemP_FAILURE on validation failure
- */
-
 int32_t endat_get_recovery_time(endat_handle handle, uint32_t *recovery_time)
 {
-    /* Validate handle parameter */
-    if(handle == NULL || recovery_time == NULL)
+    endat_priv *priv;
+    const endat_attrs *attrs;
+
+    /* Validate parameters and pointers used in this function */
+    /* Validate core_clk_freq is not zero to avoid division by zero */
+    if((handle == NULL) ||
+       (handle->priv == NULL) ||
+       (handle->attrs == NULL) ||
+       (handle->priv->channel_rx_info == NULL) ||
+       (recovery_time == NULL) ||
+       (handle->priv->current_channel >= ENDAT_NUM_CH_PER_SLICE_MAX) ||
+       (handle->attrs->core_clk_freq == 0))
     {
         return SystemP_FAILURE;
     }
 
-    endat_priv *priv = endat_get_priv(handle);
-    const endat_attrs *attrs = endat_get_attrs(handle);
+    priv = handle->priv;
+    attrs = handle->attrs;
 
     /* Convert clock cycles to nanoseconds */
     *recovery_time = (uint32_t)(((float)priv->channel_rx_info->ch[priv->current_channel].recovery_time_parms.recovery_time * 1000000000.0f) / (float)attrs->core_clk_freq);
@@ -3513,14 +3621,21 @@ int32_t endat_check_rt_error(endat_handle handle, int8_t *error_code)
     uint32_t lastCounterValue;
     uint32_t currentCounterValue;
 
-    /* Validate handle parameter */
-    if(handle == NULL || error_code == NULL)
+    /* Validate parameters and pointers used in this function */
+    /* Validate core_clk_freq is not zero to avoid division by zero */
+    if((handle == NULL) ||
+       (handle->priv == NULL) ||
+       (handle->attrs == NULL) ||
+       (handle->priv->channel_rx_info == NULL) ||
+       (error_code == NULL) ||
+       (handle->priv->current_channel >= ENDAT_NUM_CH_PER_SLICE_MAX) ||
+       (handle->attrs->core_clk_freq == 0))
     {
         return SystemP_FAILURE;
     }
 
-    priv = endat_get_priv(handle);
-    attrs = endat_get_attrs(handle);
+    priv = handle->priv;
+    attrs = handle->attrs;
 
     lastCounterValue =  priv->channel_rx_info->ch[priv->current_channel].recovery_time_parms.last_counter_value;
     currentCounterValue = priv->channel_rx_info->ch[priv->current_channel].recovery_time_parms.current_counter_value;
@@ -3566,21 +3681,23 @@ int32_t endat_check_rt_error(endat_handle handle, int8_t *error_code)
 
 int32_t endat_init_rt_measurement(endat_handle handle)
 {
+    endat_priv *priv;
+    const endat_attrs *attrs;
     uint32_t i;
-    /* Validate handle parameter */
-    if(handle == NULL)
+
+    /* Validate handle and pointers used in this function */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->channel_rx_info == NULL))
     {
         return SystemP_FAILURE;
     }
 
-    /* Get priv and attrs */
-    endat_priv *priv = endat_get_priv(handle);
-    const endat_attrs *attrs = endat_get_attrs(handle);
+    priv = handle->priv;
+    attrs = handle->attrs;
 
     for(i = 0; i < ENDAT_NUM_CH_PER_SLICE_MAX; i++)
     {
         if(attrs->channel_mask & (1U << i))  /* Initialize only enabled channels */
-        { 
+        {
             priv->channel_rx_info->ch[i].recovery_time_parms.recovery_time = 0;
             priv->channel_rx_info->ch[i].recovery_time_parms.last_counter_value = 0;
             priv->channel_rx_info->ch[i].recovery_time_parms.starting_value = ENDAT_RT_COUNTER_STARTING_VALUE + ENDAT_RT_COUNTERS_STARTING_DIFFERENCE*(i); /* Assign a unique starting value for each channel; */
@@ -3591,46 +3708,52 @@ int32_t endat_init_rt_measurement(endat_handle handle)
 
     return SystemP_SUCCESS;
 }
+
 int32_t endat_enable_rt_measurement(endat_handle handle)
 {
-    /* Validate handle parameter */
-    if(handle == NULL)
+    endat_priv *priv;
+
+    /* Validate handle and pointers used in this function */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->pruicss_xchg == NULL) || (handle->priv->current_channel >= ENDAT_NUM_CH_PER_SLICE_MAX))
     {
         return SystemP_FAILURE;
     }
 
-    /* Get priv pointer */
-    endat_priv *priv = endat_get_priv(handle);
+    priv = handle->priv;
 
     priv->pruicss_xchg->ch[priv->current_channel].enable_rtm = 1;
 
     return SystemP_SUCCESS;
 }
-int32_t endat_disable_rt_measurement (endat_handle handle)
+
+int32_t endat_disable_rt_measurement(endat_handle handle)
 {
-    /* Validate handle parameter */
-    if(handle == NULL)
+    endat_priv *priv;
+
+    /* Validate handle and pointers used in this function */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->pruicss_xchg == NULL) || (handle->priv->current_channel >= ENDAT_NUM_CH_PER_SLICE_MAX))
     {
         return SystemP_FAILURE;
     }
 
-    /* Get priv pointer */
-    endat_priv *priv = endat_get_priv(handle);
+    priv = handle->priv;
 
     priv->pruicss_xchg->ch[priv->current_channel].enable_rtm = 0;
 
     return SystemP_SUCCESS;
 }
+
 int32_t endat_status_rt_measurement(endat_handle handle, uint32_t *status)
 {
-    /* Validate handle parameter */
-    if(handle == NULL || status == NULL)
+    endat_priv *priv;
+
+    /* Validate parameters and pointers used in this function */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->pruicss_xchg == NULL) || (status == NULL) || (handle->priv->current_channel >= ENDAT_NUM_CH_PER_SLICE_MAX))
     {
         return SystemP_FAILURE;
     }
 
-    /* Get priv pointer */
-    endat_priv *priv = endat_get_priv(handle);
+    priv = handle->priv;
 
     *status = priv->pruicss_xchg->ch[priv->current_channel].enable_rtm;
 
@@ -3639,13 +3762,19 @@ int32_t endat_status_rt_measurement(endat_handle handle, uint32_t *status)
 
 int32_t endat_config_iep_cap_event(endat_handle handle, uint8_t channel, uint8_t event_num)
 {
-    int32_t ret_val = SystemP_SUCCESS;
+    int32_t             ret_val = SystemP_SUCCESS;
     const endat_attrs   *attrs;
     endat_priv          *priv;
     endat_pruicss_xchg  *pruicss_xchg;
-    uint8_t ch_index = 0;
+    uint8_t             ch_index = 0;
 
-    if(handle == NULL || event_num >= ENDAT_IEP_CAP_EVENT_MAX || channel >= ENDAT_NUM_CH_PER_SLICE_MAX)
+    /* Validate parameters and pointers used in this function */
+    if((handle == NULL) ||
+       (handle->priv == NULL) ||
+       (handle->attrs == NULL) ||
+       (handle->priv->pruicss_xchg == NULL) ||
+       (event_num >= ENDAT_IEP_CAP_EVENT_MAX) ||
+       (channel >= ENDAT_NUM_CH_PER_SLICE_MAX))
     {
         return SystemP_FAILURE;
     }
@@ -3665,14 +3794,16 @@ int32_t endat_config_iep_cap_event(endat_handle handle, uint8_t channel, uint8_t
         ch_index = 0;
     }
 
-    /* write cap event and capture register address in DMEM */
+    /* Write cap event and capture register address in DMEM */
     pruicss_xchg->trigger_params[ch_index].cap_event = event_num;
     pruicss_xchg->trigger_params[ch_index].iep_capture_reg =
         (uint32_t)attrs->iep_base_addr + ENDAT_CSL_ICSS_PR1_IEP0_SLV_CAP0_REG0  + ENDAT_8_BYTE_REG_OFFSET*(event_num);
 
-    /* Offset is not identical after 6th event. The 6th and 7th CAP event have 2 extra registers for Fall captures. */
+    /* CAP6 and CAP7 have 2 extra registers for fall capture values, add extra offset */
+    /* CAP6 and CAP7 has 2 register bits each. So bit 8 needs to be used for CAP7. Only capture rise bits for CAP6 and CAP7 are used. */
     if(event_num > 6)
     {
+        pruicss_xchg->trigger_params[ch_index].cap_event += 1;
         pruicss_xchg->trigger_params[ch_index].iep_capture_reg += ENDAT_8_BYTE_REG_OFFSET;
     }
     return ret_val;
@@ -3680,13 +3811,19 @@ int32_t endat_config_iep_cap_event(endat_handle handle, uint8_t channel, uint8_t
 
 int32_t endat_config_iep_cmp_event(endat_handle handle, uint8_t channel, uint8_t event_num)
 {
-    int32_t ret_val = SystemP_SUCCESS;
+    int32_t             ret_val = SystemP_SUCCESS;
     const endat_attrs   *attrs;
     endat_priv          *priv;
     endat_pruicss_xchg  *pruicss_xchg;
-    uint8_t ch_index = 0;
+    uint8_t             ch_index = 0;
 
-    if(handle == NULL || event_num >= ENDAT_IEP_CMP_EVENT_MAX || channel >= ENDAT_NUM_CH_PER_SLICE_MAX)
+    /* Validate parameters and pointers used in this function */
+    if((handle == NULL) ||
+      (handle->priv == NULL) ||
+      (handle->attrs == NULL) ||
+      (handle->priv->pruicss_xchg == NULL) ||
+      (event_num >= ENDAT_IEP_CMP_EVENT_MAX) ||
+      (channel >= ENDAT_NUM_CH_PER_SLICE_MAX))
     {
         return SystemP_FAILURE;
     }
@@ -3714,8 +3851,8 @@ int32_t endat_config_iep_cmp_event(endat_handle handle, uint8_t channel, uint8_t
 
 const endat_attrs* endat_get_attrs(endat_handle handle)
 {
-    /* Validate handle parameter */
-    if(handle == NULL)
+    /* Validate handle and pointers used in this function */
+    if((handle == NULL) || (handle->attrs == NULL))
     {
         return NULL;
     }
@@ -3725,8 +3862,8 @@ const endat_attrs* endat_get_attrs(endat_handle handle)
 
 endat_priv* endat_get_priv(endat_handle handle)
 {
-    /* Validate handle parameter */
-    if(handle == NULL)
+    /* Validate handle and pointers used in this function */
+    if((handle == NULL) || (handle->priv == NULL))
     {
         return NULL;
     }

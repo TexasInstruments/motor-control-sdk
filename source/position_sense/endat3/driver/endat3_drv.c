@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2025 Texas Instruments Incorporated
+ *  Copyright (C) 2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -171,7 +171,8 @@ endat3_handle endat3_init(uint32_t index, const endat3_params *params)
     if(status == ENDAT3_SUCCESS)
     {
         /* Validate params */
-        if(params->pruicss_handle == NULL)
+        if((params->pruicss_handle == NULL) ||
+           (params->pruicss_handle->hwAttrs == NULL))
         {
             status = ENDAT3_ERR_INVALID_INPUT;
         }
@@ -306,7 +307,7 @@ void endat3_deinit(endat3_handle handle)
 {
     endat3_priv *priv;
 
-    if(handle == NULL)
+    if((handle == NULL) || (handle->priv == NULL))
     {
         return;
     }
@@ -318,7 +319,7 @@ void endat3_deinit(endat3_handle handle)
 
 const endat3_attrs* endat3_get_attrs(endat3_handle handle)
 {
-    if(handle == NULL)
+    if((handle == NULL) || (handle->attrs == NULL))
     {
         return NULL;
     }
@@ -328,7 +329,7 @@ const endat3_attrs* endat3_get_attrs(endat3_handle handle)
 
 endat3_priv* endat3_get_priv(endat3_handle handle)
 {
-    if(handle == NULL)
+    if((handle == NULL) || (handle->priv == NULL))
     {
         return NULL;
     }
@@ -358,12 +359,6 @@ static int32_t endat3_calculate_clock(endat3_handle handle, endat3_clock_config 
 {
     const endat3_attrs      *attrs;
     uint32_t                freq;
-
-    /* Validate handle and clock_config parameter */
-    if((handle == NULL) || (clock_config == NULL))
-    {
-        return ENDAT3_ERR_INVALID_INPUT;
-    }
 
     attrs = handle->attrs;
 
@@ -413,12 +408,6 @@ static int32_t endat3_config_clock(endat3_handle handle, endat3_clock_config *cl
     void                    *pruicss_cfg;
     uint32_t                rx_reg_val;
     uint32_t                tx_reg_val;
-
-    /* Validate handle and clock_cfg parameter */
-    if((handle == NULL) || (clock_config == NULL))
-    {
-        return ENDAT3_ERR_INVALID_INPUT;
-    }
 
     priv = handle->priv;
     attrs = handle->attrs;
@@ -504,12 +493,6 @@ static int32_t endat3_prepare_request(endat3_handle handle, uint8_t cmd, uint32_
     uint8_t temp;
     uint8_t frame_length;
 
-    /* Validate input parameters - buffer overflow protection */
-    if(handle == NULL)
-    {
-        return ENDAT3_ERR_INVALID_INPUT;  /* Invalid handle */
-    }
-
     /* Buffer overflow protection - check against actual buffer capacity (6) */
     if(num_frames > ENDAT3_MAX_TX_FRAMES || num_frames == 0)
     {
@@ -568,11 +551,6 @@ static int32_t endat3_wait_rx_complete(endat3_handle handle)
 {
     endat3_priv *priv;
 
-    if(handle == NULL)
-    {
-        return ENDAT3_ERR_INVALID_INPUT;
-    }
-
     priv = handle->priv;
 
     /* Return sampling error if encoder detected an error condition */
@@ -610,11 +588,6 @@ static int32_t endat3_parse_frames(endat3_handle handle, uint8_t *rx_buffer)
     endat3_priv *priv;
     uint8_t j;
 
-    if(handle == NULL || rx_buffer == NULL)
-    {
-        return ENDAT3_ERR_INVALID_INPUT;
-    }
-
     priv = handle->priv;
     /* Parse HPF (bytes 0-7) */
     memcpy(priv->endat3_interface->hpf.data, rx_buffer, HPF_DATA_SIZE);
@@ -649,8 +622,8 @@ int32_t endat3_send_command(endat3_handle handle, uint8_t cmd, uint8_t frames)
     endat3_priv *priv;
     int32_t status;
 
-    /* Validate handle */
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -673,8 +646,8 @@ int32_t endat3_receive_response(endat3_handle handle)
     endat3_priv *priv;
     int32_t status;
 
-    /* Validate handle */
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -734,7 +707,7 @@ int32_t endat3_receive_response(endat3_handle handle)
  *
  * \return Bit-reflected value
  */
-static uint16_t endat3_reflect_general (uint16_t value, uint16_t width)
+static uint16_t endat3_reflect_general(uint16_t value, uint16_t width)
 {
     uint16_t result = 0;
     uint16_t i;
@@ -897,11 +870,6 @@ static int32_t endat3_config_clr_cfg0(endat3_handle handle)
     const endat3_attrs  *attrs;
     void                *pruicss_cfg;
 
-    if(handle == NULL)
-    {
-        return ENDAT3_ERR_INVALID_INPUT;
-    }
-
     priv = handle->priv;
     attrs = handle->attrs;
     pruicss_cfg = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->cfgRegBase);
@@ -960,11 +928,6 @@ static int32_t endat3_set_delay_cycles(endat3_handle handle)
     endat3_priv         *priv;
     uint64_t            core_clk_freq;
 
-    if(handle == NULL)
-    {
-        return ENDAT3_ERR_INVALID_INPUT;
-    }
-
     priv = handle->priv;
     core_clk_freq = handle->attrs->core_clk_freq;
     /* Scale delay values based on actual PRU frequency relative to 1MHz reference.
@@ -1000,7 +963,7 @@ static int32_t endat3_set_channel_mask(endat3_handle handle, uint8_t channel_mas
 {
     endat3_priv *priv;
 
-    if((handle == NULL) || (channel_mask == 0) || (channel_mask > ENDAT3_CHANNEL_MASK_MAX))
+    if((channel_mask == 0) || (channel_mask > ENDAT3_CHANNEL_MASK_MAX))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1030,8 +993,10 @@ int32_t endat3_handle_background_command_request(endat3_handle handle, const end
     const char  *acc_level_desc_val = NULL;
     uint8_t     acclevel;
 
-    /* Validate handle and params */
-    if(handle == NULL || params == NULL)
+    /* Validate handle, parameters, and internal structure pointers */
+    /* Validate index bounds (bg_data array has 6 elements, each command uses 4 indices starting at index) */
+
+    if((handle == NULL) || (params == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL) || (params->index >= ENDAT3_MAX_BG_CMD_INDEX))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1045,12 +1010,6 @@ int32_t endat3_handle_background_command_request(endat3_handle handle, const end
     addr_msb = params->addr_msb;
     addr_lsb = params->addr_lsb;
     data = params->data;
-
-    /* Validate index bounds (bg_data array has 6 elements, each command uses 4 indices starting at index) */
-    if(index >= ENDAT3_MAX_BG_CMD_INDEX)
-    {
-        return ENDAT3_ERR_INVALID_INPUT;
-    }
 
     switch(op_code)
     {
@@ -1272,7 +1231,8 @@ int32_t endat3_get_hpf_status(endat3_handle handle, uint8_t *status)
 {
     endat3_priv *priv;
 
-    if(handle == NULL || status == NULL)
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (status == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1287,7 +1247,8 @@ int32_t endat3_get_hpf_data(endat3_handle handle, uint8_t *data)
     endat3_priv *priv;
     uint8_t     i;
 
-    if(handle == NULL || data == NULL)
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (data == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1306,7 +1267,8 @@ int32_t endat3_get_hpf_crc(endat3_handle handle, uint8_t *crc)
 {
     endat3_priv *priv;
 
-    if(handle == NULL || crc == NULL)
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (crc == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1322,7 +1284,8 @@ int32_t endat3_get_hpf_data_64_bit(endat3_handle handle, uint64_t *data)
     uint64_t result = 0;
     uint8_t *hpf_data, i;
 
-    if(handle == NULL || data == NULL)
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (data == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1344,7 +1307,8 @@ int32_t endat3_is_hpf_data_valid(endat3_handle handle, uint8_t *is_valid)
 {
     endat3_priv *priv;
 
-    if((handle == NULL) || (is_valid == NULL))
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (is_valid == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1358,7 +1322,8 @@ int32_t endat3_has_hpf_error(endat3_handle handle, uint8_t *has_error)
 {
     endat3_priv *priv;
 
-    if((handle == NULL) || (has_error == NULL))
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (has_error == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1372,7 +1337,8 @@ int32_t endat3_has_hpf_warning(endat3_handle handle, uint8_t *has_warning)
 {
     endat3_priv *priv;
 
-    if((handle == NULL) || (has_warning == NULL))
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (has_warning == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1386,7 +1352,8 @@ int32_t endat3_has_absolute_value(endat3_handle handle, uint8_t *has_absolute)
 {
     endat3_priv *priv;
 
-    if((handle == NULL) || (has_absolute == NULL))
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (has_absolute == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1404,7 +1371,8 @@ int32_t endat3_get_lph_status(endat3_handle handle, uint8_t *status)
 {
     endat3_priv *priv;
 
-    if(handle == NULL || status == NULL)
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (status == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1418,7 +1386,8 @@ int32_t endat3_get_lph_lpf_count(endat3_handle handle, uint8_t *num_lpf)
 {
     endat3_priv *priv;
 
-    if(handle == NULL || num_lpf == NULL)
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (num_lpf == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1432,7 +1401,8 @@ int32_t endat3_get_lph_crc(endat3_handle handle, uint8_t *crc)
 {
     endat3_priv *priv;
 
-    if(handle == NULL || crc == NULL)
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (crc == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1446,7 +1416,8 @@ int32_t endat3_get_lph_state(endat3_handle handle, endat3_lph_status *state)
 {
     endat3_priv *priv;
 
-    if((handle == NULL) || (state == NULL))
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (state == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1460,7 +1431,8 @@ int32_t endat3_has_bg_error(endat3_handle handle, uint8_t *has_error)
 {
     endat3_priv *priv;
 
-    if((handle == NULL) || (has_error == NULL))
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (has_error == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1474,7 +1446,8 @@ int32_t endat3_is_bg_busy(endat3_handle handle, uint8_t *is_busy)
 {
     endat3_priv *priv;
 
-    if((handle == NULL) || (is_busy == NULL))
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (is_busy == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1488,7 +1461,8 @@ int32_t endat3_has_bg_rtx_error(endat3_handle handle, uint8_t *has_error)
 {
     endat3_priv *priv;
 
-    if((handle == NULL) || (has_error == NULL))
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (has_error == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1506,7 +1480,8 @@ int32_t endat3_get_lpf_status(endat3_handle handle, uint8_t index, uint8_t *stat
 {
     endat3_priv *priv;
 
-    if((handle == NULL) || (status == NULL) || (index >= MAX_LPF_COUNT))
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (status == NULL) || (index >= MAX_LPF_COUNT) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1521,7 +1496,8 @@ int32_t endat3_get_lpf_data(endat3_handle handle, uint8_t index, uint8_t *data)
     endat3_priv *priv;
     uint8_t     i;
 
-    if(handle == NULL || data == NULL || index >= MAX_LPF_COUNT)
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (data == NULL) || (index >= MAX_LPF_COUNT) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1540,7 +1516,8 @@ int32_t endat3_get_lpf_crc(endat3_handle handle, uint8_t index, uint8_t *crc)
 {
     endat3_priv *priv;
 
-    if((handle == NULL) || (crc == NULL) || (index >= MAX_LPF_COUNT))
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (crc == NULL) || (index >= MAX_LPF_COUNT) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1554,7 +1531,8 @@ int32_t endat3_get_lpf_fid(endat3_handle handle, uint8_t index, uint8_t *fid)
 {
     endat3_priv *priv;
 
-    if((handle == NULL) || (fid == NULL) || (index >= MAX_LPF_COUNT))
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (fid == NULL) || (index >= MAX_LPF_COUNT) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1573,7 +1551,8 @@ int32_t endat3_is_connected(endat3_handle handle, uint8_t *is_connected)
 {
     endat3_priv *priv;
 
-    if((handle == NULL) || (is_connected == NULL))
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (is_connected == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1587,7 +1566,8 @@ int32_t endat3_is_busy(endat3_handle handle, uint8_t *is_busy)
 {
     endat3_priv *priv;
 
-    if((handle == NULL) || (is_busy == NULL))
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (is_busy == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1601,13 +1581,14 @@ int32_t endat3_set_busy(endat3_handle handle, uint8_t busy)
 {
     endat3_priv *priv;
 
-    if(handle == NULL)
+    /* Validate parameters and internal structure pointers */
+    if((handle == NULL) || (busy > 1) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
 
     priv = handle->priv;
-    priv->endat3_interface->busy = busy ? 1 : 0;
+    priv->endat3_interface->busy = busy;
 
     return ENDAT3_SUCCESS;
 }
@@ -1616,7 +1597,8 @@ int32_t endat3_get_expected_tx_frame_count(endat3_handle handle, uint32_t *count
 {
     endat3_priv *priv;
 
-    if(handle == NULL || count == NULL)
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (count == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1630,7 +1612,8 @@ int32_t endat3_set_expected_tx_frame_count(endat3_handle handle, uint32_t count)
 {
     endat3_priv *priv;
 
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1645,7 +1628,8 @@ int32_t endat3_get_propagation_time(endat3_handle handle, uint32_t *prop_time)
 {
     endat3_priv *priv;
 
-    if(handle == NULL || prop_time == NULL)
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (prop_time == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1663,7 +1647,8 @@ int32_t endat3_get_foreground_op_code(endat3_handle handle, uint32_t *opcode)
 {
     endat3_priv *priv;
 
-    if(handle == NULL || opcode == NULL)
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (opcode == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1677,7 +1662,8 @@ int32_t endat3_set_foreground_op_code(endat3_handle handle, uint32_t opcode)
 {
     endat3_priv *priv;
 
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1692,7 +1678,8 @@ int32_t endat3_get_background_op_code(endat3_handle handle, uint32_t *opcode)
 {
     endat3_priv *priv;
 
-    if(handle == NULL || opcode == NULL)
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (opcode == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1706,7 +1693,8 @@ int32_t endat3_set_background_op_code(endat3_handle handle, uint32_t opcode)
 {
     endat3_priv *priv;
 
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1721,7 +1709,8 @@ int32_t endat3_get_bg_data(endat3_handle handle, uint8_t index, uint32_t *data)
 {
     endat3_priv *priv;
 
-    if(handle == NULL || data == NULL || index >= BG_DATA_SIZE)
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (data == NULL) || (index >= BG_DATA_SIZE) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1735,7 +1724,8 @@ int32_t endat3_set_bg_data(endat3_handle handle, uint8_t index, uint32_t data)
 {
     endat3_priv *priv;
 
-    if(handle == NULL || index >= BG_DATA_SIZE)
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (index >= BG_DATA_SIZE) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1750,7 +1740,8 @@ int32_t endat3_get_all_bg_data(endat3_handle handle, uint32_t *data)
 {
     endat3_priv *priv;
 
-    if(handle == NULL || data == NULL)
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (data == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1765,7 +1756,8 @@ int32_t endat3_set_all_bg_data(endat3_handle handle, const uint32_t *data)
 {
     endat3_priv *priv;
 
-    if(handle == NULL || data == NULL)
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (data == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1784,7 +1776,8 @@ const uint8_t* endat3_get_rx_buffer(endat3_handle handle)
 {
     endat3_priv *priv;
 
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return NULL;
     }
@@ -1797,7 +1790,8 @@ const uint8_t* endat3_get_tx_buffer(endat3_handle handle)
 {
     endat3_priv *priv;
 
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return NULL;
     }
@@ -1810,12 +1804,8 @@ int32_t endat3_set_tx_buffer(endat3_handle handle, const uint8_t *data, uint32_t
 {
     endat3_priv *priv;
 
-    if(handle == NULL || data == NULL)
-    {
-        return ENDAT3_ERR_INVALID_INPUT;
-    }
-
-    if(length == 0 || length > TX_BUFFER_SIZE)
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (data == NULL) || (length == 0) || (length > TX_BUFFER_SIZE) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1834,7 +1824,8 @@ int32_t endat3_get_hpf_frame(endat3_handle handle, endat3_hpf *hpf)
 {
     endat3_priv *priv;
 
-    if(handle == NULL || hpf == NULL)
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (hpf == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1849,7 +1840,8 @@ int32_t endat3_get_lph_frame(endat3_handle handle, endat3_lph *lph)
 {
     endat3_priv *priv;
 
-    if(handle == NULL || lph == NULL)
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (lph == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1864,7 +1856,8 @@ int32_t endat3_get_lpf_frame(endat3_handle handle, uint8_t index, endat3_lpf *lp
 {
     endat3_priv *priv;
 
-    if(handle == NULL || lpf == NULL || index >= MAX_LPF_COUNT)
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (lpf == NULL) || (index >= MAX_LPF_COUNT) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1880,7 +1873,8 @@ int32_t endat3_get_error_code(endat3_handle handle, endat3_error_code *error_cod
     endat3_priv *priv;
     uint32_t error_val = 0;
 
-    if((handle == NULL) || (error_code == NULL))
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (error_code == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1917,7 +1911,8 @@ endat3_interface* endat3_get_interface(endat3_handle handle)
 {
     endat3_priv *priv;
 
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return NULL;
     }
@@ -1930,14 +1925,10 @@ int32_t endat3_set_operating_mode(endat3_handle handle, uint8_t opmode)
 {
     endat3_priv *priv;
 
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL) || (opmode > ENDAT3_OPMODE_PERIODIC_CAP))
     {
         return ENDAT3_ERR_INVALID_INPUT;
-    }
-
-    if(opmode > ENDAT3_OPMODE_PERIODIC_CAP)
-    {
-        return ENDAT3_ERR_INVALID_OPMODE;
     }
 
     priv = handle->priv;
@@ -1950,7 +1941,8 @@ int32_t endat3_get_operating_mode(endat3_handle handle, uint8_t *opmode)
 {
     endat3_priv *priv;
 
-    if((handle == NULL) || (opmode == NULL))
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (opmode == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1972,7 +1964,7 @@ static int32_t endat3_config_iep_base_address(endat3_handle handle, uint32_t iep
 {
     endat3_priv *priv;
 
-    if((handle == NULL) || (iep_base_address == 0))
+    if(iep_base_address == 0)
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -1989,13 +1981,8 @@ int32_t endat3_config_iep_cap_event(endat3_handle handle, uint8_t event_num)
 {
     endat3_priv *priv;
 
-    if(handle == NULL)
-    {
-        return ENDAT3_ERR_INVALID_INPUT;
-    }
-
-    /* Validate CAP event number (0-7) */
-    if(event_num >= ENDAT3_IEP_MAX_CAP_EVENT)
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (event_num >= ENDAT3_IEP_MAX_CAP_EVENT) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -2023,13 +2010,8 @@ int32_t endat3_config_iep_cmp_event(endat3_handle handle, uint8_t event_num)
 {
     endat3_priv *priv;
 
-    if(handle == NULL)
-    {
-        return ENDAT3_ERR_INVALID_INPUT;
-    }
-
-    /* Validate CMP event number (0-15) */
-    if(event_num >= ENDAT3_IEP_MAX_CMP_EVENT)
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (event_num >= ENDAT3_IEP_MAX_CMP_EVENT) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -2046,7 +2028,8 @@ int32_t endat3_release_start_trigger(endat3_handle handle)
 {
     endat3_priv *priv;
 
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -2061,7 +2044,8 @@ int32_t endat3_clear_start_trigger(endat3_handle handle)
 {
     endat3_priv *priv;
 
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }
@@ -2076,7 +2060,8 @@ int32_t endat3_get_start_trigger_status(endat3_handle handle, uint8_t *trigger_s
 {
     endat3_priv *priv;
 
-    if((handle == NULL) || (trigger_status == NULL))
+    /* Validate handle, parameters, and internal structure pointers */
+    if((handle == NULL) || (trigger_status == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
     }

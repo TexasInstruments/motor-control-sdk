@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (C) 2023-2026 Texas Instruments Incorporated - http://www.ti.com/
  *
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,10 @@
  *  \details
  *  This header file contains all public API function declarations for the SDFM driver.
  *
+ *  ## Pointer Validation
+ *
+ *  All APIs validate internal structure pointers.
+ *
  *  ## API Categories
  *
  *  ### Initialization and Configuration
@@ -52,7 +56,7 @@
  *                              - 2: Use group clocks:
  *                                      - pr<k>_pru<n>_sd0_clk for channels 0, 1, and 2
  *                                      - pr<k>_pru<n>_sd3_clk for channels 3, 4, and 5
- *                                      - pr<k>_pru<n>_sd6_clk for channels 6, 7, and 8 
+ *                                      - pr<k>_pru<n>_sd6_clk for channels 6, 7, and 8
  *  - SDFM_setClockInversion(): Configure clock polarity
  *  - SDFM_configEcap(): Configure ECAP for SD clock generation
  *  - SDFM_configClockFromGPO1(): Configure PRU GPO shift-out mode for clock
@@ -61,7 +65,7 @@
  *  ### Filter Configuration
  *  - SDFM_configDataFilter(): Select filter type (SINC1/SINC2/SINC3)
  *  - SDFM_setFilterOverSamplingRatio(): Configure normal current OSR
- *  - SDFM_setCompFilterOverSamplingRatio(): Configure over-current OSR 
+ *  - SDFM_setCompFilterOverSamplingRatio(): Configure over-current OSR
  *
  *  ### Threshold and Comparator Configuration
  *  - SDFM_setCompFilterThresholds(): Set high/low over-current thresholds
@@ -190,14 +194,12 @@ SDFM_Handle SDFM_init(uint32_t index, SDFM_Params *params);
 
 /**
  *
- *  \brief  Deinitialize SDFM instance and release resources
+ *  \brief  Deinitialize SDFM instance
  *
  *  \param[in]  handle          SDFM handle
  *
- *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
- *
  */
-int32_t SDFM_deinit(SDFM_Handle handle);
+void SDFM_deinit(SDFM_Handle handle);
 
 /**
  *
@@ -376,7 +378,7 @@ int32_t SDFM_selectClockSource(SDFM_Handle handle, uint8_t channel, uint8_t clk_
 
 /**
  *
- *  \brief  configuration of SDFM channel clock inversion  
+ *  \brief  configuration of SDFM channel clock inversion
  *
  *  \param[in]  handle          SDFM handle
  *  \param[in]  channel         SDFM channel number (0-8)
@@ -663,7 +665,7 @@ int32_t SDFM_disableEpwmSync(SDFM_Handle handle, uint8_t epwm_ins);
 int32_t SDFM_configIepSyncMode(SDFM_Handle handle, uint32_t high_pulse_width, uint32_t period_time, uint32_t sync_start_time);
 
 /**
- * 
+ *
  * \brief This API enables IEP counter
  *
  * \param[in]  handle          SDFM handle
@@ -677,15 +679,15 @@ int32_t SDFM_enableIep(SDFM_Handle handle);
  *  \brief  Defines clock cycles from the start of SYNC0 to the start of SYNC1
  *  \param[in]  handle          SDFM handle
  *  \param[in]  delay           Delay before the start of SYNC1
- *                          
+ *
  *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
  */
 int32_t SDFM_configSync1Delay(SDFM_Handle handle, uint32_t delay);
 
 /***
- *  \brief  This API configures PRU GPO mode as shift out mode (ICSSG_GPCFG0_REG[14] PRU<n>_GPO_MODE = 1h) and  
+ *  \brief  This API configures PRU GPO mode as shift out mode (ICSSG_GPCFG0_REG[14] PRU<n>_GPO_MODE = 1h) and
  *          shift out mode's clock divisors to output the SD clock on PR<k>_PRUx_GPO1 pin.
- *  \brief  PRU0_GPO_DIV0 and PRU0_GPO_DIV1 configuration values 
+ *  \brief  PRU0_GPO_DIV0 and PRU0_GPO_DIV1 configuration values
  *  \brief  0x0:  for divisor 1
  *  \brief  0x1:  for divisor 1.5
  *  \brief  0x2:  for divisor 2
@@ -696,7 +698,7 @@ int32_t SDFM_configSync1Delay(SDFM_Handle handle, uint32_t delay);
  *  \brief  0x1D: for divisor 15.5
  *  \brief  0x1E: for divisor 16
  *  \brief  0x1F: reserved
- * 
+ *
  *  \param[in]  handle          SDFM handle
  *  \param[in]  div0            PRUx_GPO_DIV0 value
  *  \param[in]  div1            PRUx_GPO_DIV1 value
@@ -731,7 +733,7 @@ int32_t SDFM_disableSnoopBasedNC(SDFM_Handle handle, uint8_t pru_core);
  *  \brief  Set sample output interface global address
  *
  *  \param[in]  handle          SDFM handle
- *  \param[in]  addr            sample output interface global address
+ *  \param[in]  addr            Sample output interface global address
  *
  *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
  */

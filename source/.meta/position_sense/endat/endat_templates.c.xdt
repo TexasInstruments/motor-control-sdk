@@ -87,23 +87,23 @@ static endat_attrs gEndatAttrs[CONFIG_ENDAT_NUM_INSTANCES] =
             % }
         % }
     % }
-    % /* Extract IEP CMP and CAP event arrays */
-    % let iep_cmp_event = [0, 0, 0];
-    % let iep_cap_event = [6, 6, 6];
+    % /* Determine IEP CMP and CAP event numbers based on load share mode */
+    % let iep_cmp_ch0, iep_cmp_ch1, iep_cmp_ch2, iep_cap_ch0, iep_cap_ch1, iep_cap_ch2;
     % if(instance.Multi_Channel_Load_Share) {
-        % /* Load share mode - per channel events */
-        % iep_cmp_event[0] = instance.CMP_Event_Num_CH0;
-        % iep_cap_event[0] = instance.CAP_Event_Num_CH0;
-        % iep_cmp_event[1] = instance.CMP_Event_Num_CH1;
-        % iep_cap_event[1] = instance.CAP_Event_Num_CH1;
-        % iep_cmp_event[2] = instance.CMP_Event_Num_CH2;
-        % iep_cap_event[2] = instance.CAP_Event_Num_CH2;
+        % iep_cmp_ch0 = instance.CMP_Event_Num_CH0;
+        % iep_cmp_ch1 = instance.CMP_Event_Num_CH1;
+        % iep_cmp_ch2 = instance.CMP_Event_Num_CH2;
+        % iep_cap_ch0 = instance.CAP_Event_Num_CH0;
+        % iep_cap_ch1 = instance.CAP_Event_Num_CH1;
+        % iep_cap_ch2 = instance.CAP_Event_Num_CH2;
     % } else {
-        % /* Non-load share - shared events */
-        % let shared_cmp = instance.CMP_Event_Num;
-        % let shared_cap = instance.CAP_Event_Num;
-        % iep_cmp_event = [shared_cmp, shared_cmp, shared_cmp];
-        % iep_cap_event = [shared_cap, shared_cap, shared_cap];
+        % /* Use the same event for all channels in non-load share mode */
+        % iep_cmp_ch0 = instance.CMP_Event_Num;
+        % iep_cmp_ch1 = instance.CMP_Event_Num;
+        % iep_cmp_ch2 = instance.CMP_Event_Num;
+        % iep_cap_ch0 = instance.CAP_Event_Num;
+        % iep_cap_ch1 = instance.CAP_Event_Num;
+        % iep_cap_ch2 = instance.CAP_Event_Num;
     % }
     {
         .instance = `i`U,
@@ -121,8 +121,8 @@ static endat_attrs gEndatAttrs[CONFIG_ENDAT_NUM_INSTANCES] =
         .iep_clk_freq = `instance.pru.$name.toUpperCase()`_IEP_CLK_FREQ_HZ,
         .is_core_clk = `instance.Tx_Rx_Clk_Source`U,
         .iep_instance = `iep_instance`U,
-        .iep_cmp_event = {`iep_cmp_event[0]`U, `iep_cmp_event[1]`U, `iep_cmp_event[2]`U},
-        .iep_cap_event = {`iep_cap_event[0]`U, `iep_cap_event[1]`U, `iep_cap_event[2]`U},
+        .iep_cmp_event = {`iep_cmp_ch0`U, `iep_cmp_ch1`U, `iep_cmp_ch2`U},
+        .iep_cap_event = {`iep_cap_ch0`U, `iep_cap_ch1`U, `iep_cap_ch2`U},
         .iep_base_addr = `iep_base_addr_expr`,
     },
 % }

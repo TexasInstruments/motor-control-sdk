@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023-2025 Texas Instruments Incorporated
+ *  Copyright (C) 2023-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -199,6 +199,12 @@ static void sdfmDisplayModeInfo(SDFM_Handle handle)
     /* Get attrs using accessor function */
     attrs = SDFM_getAttrs(handle);
 
+    if((handle == NULL) || (attrs == NULL))
+    {
+        DebugP_log("\r\n ERROR: NULL handle/attrs");
+        return;
+    }
+
     DebugP_log("\r\n|------------------------------------------------------------------------------|");
     DebugP_log("\r\n PRU-ICSS instance: %u, PRU-ICSS slice: %u", attrs->pruicss_instance, attrs->pruicss_slice);
 
@@ -343,8 +349,9 @@ static void sdfmConfigIrq(SDFM_Handle handle)
 
     /* Get attrs using accessor function */
     attrs = SDFM_getAttrs(handle);
-    if (attrs == NULL)
+    if((handle == NULL) || (attrs == NULL))
     {
+        DebugP_log("\r\n ERROR: NULL handle/attrs");
         return;
     }
 
@@ -409,7 +416,7 @@ static void sdfmConfigIrq(SDFM_Handle handle)
                     DebugP_assert(status == SystemP_SUCCESS);
                 }
             }
-         
+
         }
         if(attrs->pru_core_mask & (1U << SDFM_PRU_CORE_INDEX))
         {
@@ -453,7 +460,7 @@ static void sdfmConfigIrq(SDFM_Handle handle)
                     sdfm_hwi_prms.isPulse = FALSE;
                     sdfm_hwi_prms.isFIQ = FALSE;
                     status = HwiP_construct(&gSdfmHwiObject[SDFM_CHANNEL4], &sdfm_hwi_prms);
-                    DebugP_assert(status == SystemP_SUCCESS);       
+                    DebugP_assert(status == SystemP_SUCCESS);
                 }
                 if(attrs->channel_mask & (1<<SDFM_CHANNEL5))
                 {
@@ -592,7 +599,7 @@ static void sdfmConfigIrq(SDFM_Handle handle)
                 sdfm_hwi_prms.callback = &sdfmIrqHandlerCh3;
                 sdfm_hwi_prms.args = 0;
                 sdfm_hwi_prms.isPulse = FALSE;
-                sdfm_hwi_prms.isFIQ = FALSE;          
+                sdfm_hwi_prms.isFIQ = FALSE;
                 status = HwiP_construct(&gSdfmHwiObject[SDFM_CHANNEL3], &sdfm_hwi_prms);
                 DebugP_assert(status == SystemP_SUCCESS);
             }
@@ -604,9 +611,9 @@ static void sdfmConfigIrq(SDFM_Handle handle)
                 sdfm_hwi_prms.callback = &sdfmIrqHandlerCh4;
                 sdfm_hwi_prms.args = 0;
                 sdfm_hwi_prms.isPulse = FALSE;
-                sdfm_hwi_prms.isFIQ = FALSE;          
+                sdfm_hwi_prms.isFIQ = FALSE;
                 status = HwiP_construct(&gSdfmHwiObject[SDFM_CHANNEL4], &sdfm_hwi_prms);
-                DebugP_assert(status == SystemP_SUCCESS);       
+                DebugP_assert(status == SystemP_SUCCESS);
             }
             if(attrs->channel_mask & (1<<SDFM_CHANNEL5))
             {
@@ -616,7 +623,7 @@ static void sdfmConfigIrq(SDFM_Handle handle)
                 sdfm_hwi_prms.callback = &sdfmIrqHandlerCh5;
                 sdfm_hwi_prms.args = 0;
                 sdfm_hwi_prms.isPulse = FALSE;
-                sdfm_hwi_prms.isFIQ = FALSE;          
+                sdfm_hwi_prms.isFIQ = FALSE;
                 status = HwiP_construct(&gSdfmHwiObject[SDFM_CHANNEL5], &sdfm_hwi_prms);
                 DebugP_assert(status == SystemP_SUCCESS);
             }
@@ -706,7 +713,7 @@ void sdfmMain(void *args)
     }
     DebugP_log("EPWM Configured!\r\n");
 #endif
-    
+
     /* ========================================================================== */
     /* STEP 3: Initialize PRU-ICSS                                                */
     /* ========================================================================== */
@@ -738,17 +745,11 @@ void sdfmMain(void *args)
 
     /* Initialize SDFM driver with configured parameters */
     gPruIcssSdfmHandle = SDFM_init(CONFIG_SDFM0, &sdfm_params);
-    if(gPruIcssSdfmHandle == NULL)
-    {
-        DebugP_log("\r\nERROR: SDFM initialization failed\n");
-        goto deinit;
-    }
-
     /* Get SDFM attrs and priv data for configuration */
     attrs = SDFM_getAttrs(gPruIcssSdfmHandle);
     priv = SDFM_getPriv(gPruIcssSdfmHandle);
 
-    if(attrs == NULL || priv == NULL)
+    if((gPruIcssSdfmHandle == NULL) || (attrs == NULL) || (priv == NULL))
     {
         DebugP_log("\r\nERROR: SDFM initialization failed\n");
         goto deinit;
@@ -780,7 +781,7 @@ void sdfmMain(void *args)
                 (i >> 16) & 0xFFU, i & 0xFFFFU, i & (1U << 31) ? "internal" : "release");
     DebugP_log("\n\n\n");
     /* ========================================================================== */
-    /* STEP 7: Configure SDFM clock source to generate SDFM clock                 */       
+    /* STEP 7: Configure SDFM clock source to generate SDFM clock                 */
     /* ========================================================================== */
     if(attrs->sdfm_clock_source == SDFM_CLOCK_SOURCE_IEP)
     {
@@ -850,9 +851,9 @@ void sdfmMain(void *args)
     }
 
     /*Enable IEP counter if trigger mode is enabled or IEP is used to generate clock*/
-    if(attrs->sdfm_clock_source == SDFM_CLOCK_SOURCE_IEP || 
+    if(attrs->sdfm_clock_source == SDFM_CLOCK_SOURCE_IEP ||
         attrs->pru_core_config[0].enable_trigger_mode == 1||
-        attrs->pru_core_config[1].enable_trigger_mode == 1|| 
+        attrs->pru_core_config[1].enable_trigger_mode == 1||
         attrs->pru_core_config[2].enable_trigger_mode == 1)
     {
         status = SDFM_enableIep(gPruIcssSdfmHandle);
@@ -862,7 +863,7 @@ void sdfmMain(void *args)
             goto deinit;
         }
     }
-   
+
 
 #if (CONFIG_SDFM0_PHASE_DELAY != 0)
     /* Configure IEP SYNC1 delay for phase compensation based on measured clock delay */
@@ -949,6 +950,10 @@ void sdfmIrqHandlerCh0(void *args)
 
     /* Get attrs from handle */
     attrs = SDFM_getAttrs(gPruIcssSdfmHandle);
+    if(attrs == NULL)
+    {
+        return;
+    }
 
     if(attrs->load_share_enabled == 1U)
     {
@@ -1050,6 +1055,10 @@ void sdfmIrqHandlerCh3(void *args)
 
     /* Get attrs from handle */
     attrs = SDFM_getAttrs(gPruIcssSdfmHandle);
+    if(attrs == NULL)
+    {
+        return;
+    }
 
     if(attrs->load_share_enabled == 1U)
     {
@@ -1137,6 +1146,10 @@ void sdfmIrqHandlerCh6(void *args)
 
     /* Get attrs from handle */
     attrs = SDFM_getAttrs(gPruIcssSdfmHandle);
+    if(attrs == NULL)
+    {
+        return;
+    }
 
     if(attrs->load_share_enabled == 1U)
     {
@@ -1182,6 +1195,10 @@ void sdfmIrqHandlerCh7(void *args)
 
     /* Get attrs from handle */
     attrs = SDFM_getAttrs(gPruIcssSdfmHandle);
+    if(attrs == NULL)
+    {
+        return;
+    }
 
     if(attrs->channel_mask & (1U << SDFM_CHANNEL8))
     {

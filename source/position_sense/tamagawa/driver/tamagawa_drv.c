@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2022-2025 Texas Instruments Incorporated
+ *  Copyright (C) 2022-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -70,6 +70,7 @@ static uint64_t tamagawa_prepare_eeprom_tx_data(uint64_t eeprom_tx_data, volatil
 static void tamagawa_prepare_eeprom_command(tamagawa_handle handle, int32_t cmd, uint8_t ch);
 static void tamagawa_eeprom_crc_reinit(tamagawa_handle handle);
 static void tamagawa_config_clr_cfg0(tamagawa_handle handle);
+static int32_t tamagawa_config_iep_base_address(tamagawa_handle handle, uint32_t iep_base_addr);
 
 /* Load-share configuration functions */
 static int32_t tamagawa_enable_load_share_mode(tamagawa_handle handle);
@@ -94,8 +95,9 @@ tamagawa_handle tamagawa_init(uint32_t index, const tamagawa_params *params)
     tamagawa_handle         handle = NULL;
     tamagawa_priv           *priv = NULL;
     const tamagawa_attrs    *attrs = NULL;
-    uint8_t ch;
-    uint32_t iep_address;
+    uint8_t                 ch;
+    uint32_t                iep_address;
+    void                    *base_addr;
 
     if((index >= gTamagawaConfigNum) || (params == NULL))
     {
@@ -120,7 +122,9 @@ tamagawa_handle tamagawa_init(uint32_t index, const tamagawa_params *params)
     if(status == SystemP_SUCCESS)
     {
         /* Validate params */
-        if((params->pruicss_handle == NULL) || (params->max_wait_loop_count == 0))
+        if((params->pruicss_handle == NULL) ||
+           (params->pruicss_handle->hwAttrs == NULL) ||
+           (params->max_wait_loop_count == 0))
         {
             status = SystemP_FAILURE;
         }
@@ -169,6 +173,7 @@ tamagawa_handle tamagawa_init(uint32_t index, const tamagawa_params *params)
             }
             else
             {
+                /* Non-load share mode: Use index 0 always */
                 if((attrs->iep_cmp_event[0] >= TAMAGAWA_IEP_MAX_CMP_EVENT) ||
                    (attrs->iep_cap_event[0] >= TAMAGAWA_IEP_MAX_CAP_EVENT))
                 {
@@ -234,7 +239,7 @@ tamagawa_handle tamagawa_init(uint32_t index, const tamagawa_params *params)
     if(status == SystemP_SUCCESS)
     {
         /*Set IEP base address */
-        void *base_addr = (void *)((PRUICSS_HwAttrs *)(params->pruicss_handle->hwAttrs))->baseAddr;
+        base_addr = (void *)((PRUICSS_HwAttrs *)(params->pruicss_handle->hwAttrs))->baseAddr;
         iep_address = ((uint32_t)attrs->iep_base_addr) - ((uint32_t)base_addr);
 
         /* Initialize IEP base address in pruicss_xchg */
@@ -244,24 +249,39 @@ tamagawa_handle tamagawa_init(uint32_t index, const tamagawa_params *params)
     /* Configure IEP CMP and CAP events for enabled channels */
     if(status == SystemP_SUCCESS)
     {
-        for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS_PER_SLICE; ch++)
+        if(attrs->load_share_enabled)
         {
-            /* Check if channel is enabled */
-            if(attrs->channel_mask & (1U << ch))
+            for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS_PER_SLICE; ch++)
             {
-                /* Configure IEP CMP event for this channel */
-                status = tamagawa_config_iep_cmp_event(handle, ch, attrs->iep_cmp_event[ch]);
-                if(status != SystemP_SUCCESS)
+                /* Check if channel is enabled */
+                if(attrs->channel_mask & (1U << ch))
                 {
-                    break;
-                }
+                    /* Configure IEP CMP event for this channel */
+                    status = tamagawa_config_iep_cmp_event(handle, ch, attrs->iep_cmp_event[ch]);
+                    if(status != SystemP_SUCCESS)
+                    {
+                        break;
+                    }
 
-                /* Configure IEP CAP event for this channel */
-                status = tamagawa_config_iep_cap_event(handle, ch, attrs->iep_cap_event[ch]);
-                if(status != SystemP_SUCCESS)
-                {
-                    break;
+                    /* Configure IEP CAP event for this channel */
+                    status = tamagawa_config_iep_cap_event(handle, ch, attrs->iep_cap_event[ch]);
+                    if(status != SystemP_SUCCESS)
+                    {
+                        break;
+                    }
                 }
+            }
+        }
+        else
+        {
+            /* Non-load share mode: Use index 0 always */
+            /* Configure IEP CMP event */
+            status = tamagawa_config_iep_cmp_event(handle, 0, attrs->iep_cmp_event[0]);
+
+            if(status == SystemP_SUCCESS)
+            {
+                /* Configure IEP CAP event */
+                status = tamagawa_config_iep_cap_event(handle, 0, attrs->iep_cap_event[0]);
             }
         }
     }
@@ -299,19 +319,19 @@ tamagawa_handle tamagawa_init(uint32_t index, const tamagawa_params *params)
 
 void tamagawa_deinit(tamagawa_handle handle)
 {
-    /* NULL check on handle */
-    if(handle == NULL)
+    /* Validate handle and priv structure pointer */
+    if((handle == NULL) || (handle->priv == NULL))
     {
         return;
     }
-
     /* Mark handle as closed */
     handle->priv->is_open = 0;
 }
 
 const tamagawa_attrs* tamagawa_get_attrs(tamagawa_handle handle)
 {
-    if(handle == NULL)
+    /* Validate handle and attrs structure pointer */
+    if((handle == NULL) || (handle->attrs == NULL))
     {
         return NULL;
     }
@@ -320,7 +340,8 @@ const tamagawa_attrs* tamagawa_get_attrs(tamagawa_handle handle)
 
 tamagawa_priv* tamagawa_get_priv(tamagawa_handle handle)
 {
-    if(handle == NULL)
+    /* Validate handle and priv structure pointer */
+    if((handle == NULL) || (handle->priv == NULL))
     {
         return NULL;
     }
@@ -335,8 +356,8 @@ int32_t tamagawa_parse(tamagawa_handle handle, int32_t cmd)
     const tamagawa_attrs *attrs;
     uint8_t ch;
 
-    /* NULL check on handle */
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->tamagawa_xchg == NULL))
     {
         return SystemP_FAILURE;
     }
@@ -528,8 +549,8 @@ int32_t tamagawa_update_crc(tamagawa_handle handle, int32_t cmd, uint8_t ch)
     uint32_t word0;
     tamagawa_xchg *tamagawa_xchg_ptr;
 
-    /* NULL check on handle, channel bounds check */
-    if(handle == NULL || ch >= TAMAGAWA_MAX_CHANNELS_PER_SLICE)
+    /* Validate handle and internal structure pointers, channel bounds check */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->tamagawa_xchg == NULL) || (ch >= TAMAGAWA_MAX_CHANNELS_PER_SLICE))
     {
         return SystemP_FAILURE;
     }
@@ -567,8 +588,8 @@ int32_t tamagawa_crc_verify(tamagawa_handle handle)
     uint8_t ch;
     tamagawa_xchg *tamagawa_xchg_ptr;
 
-    /* NULL check on handle */
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->tamagawa_xchg == NULL))
     {
         return SystemP_FAILURE;
     }
@@ -594,8 +615,8 @@ int32_t tamagawa_set_baudrate(tamagawa_handle handle, double baud_rate)
     tamagawa_clk_cfg clk_cfg;
     int32_t ret;
 
-    /* NULL check on handle */
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL))
     {
         return SystemP_FAILURE;
     }
@@ -655,8 +676,8 @@ int32_t tamagawa_command_build(tamagawa_handle handle, int32_t cmd)
     const tamagawa_attrs *attrs;
     tamagawa_xchg *tamagawa_xchg_ptr;
 
-    /* NULL check on handle */
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->tamagawa_xchg == NULL))
     {
         return SystemP_FAILURE;
     }
@@ -680,7 +701,7 @@ int32_t tamagawa_command_build(tamagawa_handle handle, int32_t cmd)
             {
                 for(xchg_index = 0; xchg_index < TAMAGAWA_MAX_CHANNELS_PER_SLICE; xchg_index++)
                 {
-                    if(handle->attrs->channel_mask & (1 << xchg_index))   
+                    if(handle->attrs->channel_mask & (1 << xchg_index))
                     {
                         /* Data readout: data in one revolution */
                         /* After reversing the Control Field and adding the start and stop bits, update the Tx data such that it can be loaded byte-wise */
@@ -689,7 +710,7 @@ int32_t tamagawa_command_build(tamagawa_handle handle, int32_t cmd)
                         handle->priv->tamagawa_interface[xchg_index].rx_frames = 6;
                         /* Number of Tx frames being sent to the encoder is 1, and the number of Rx frames to be received is 6 */
                         tamagawa_xchg_ptr->cmd[xchg_index].word1 = (1) | (6 << 8);
-                    } 
+                    }
                 }
             }
             else
@@ -958,8 +979,8 @@ int32_t tamagawa_command_send(tamagawa_handle handle)
     tamagawa_xchg *tamagawa_xchg_ptr;
     const tamagawa_attrs    *attrs = NULL;
 
-    /* NULL check on handle */
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->tamagawa_xchg == NULL))
     {
         return SystemP_FAILURE;
     }
@@ -987,8 +1008,8 @@ int32_t tamagawa_command_wait(tamagawa_handle handle)
     uint32_t loop_count;
     const tamagawa_attrs *attrs;
 
-    /* NULL check on handle */
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->tamagawa_xchg == NULL))
     {
         return SystemP_FAILURE;
     }
@@ -1040,8 +1061,8 @@ int32_t tamagawa_command_process(tamagawa_handle handle, int32_t cmd)
     int32_t ret = SystemP_SUCCESS;
     uint8_t xchg_index;
 
-    /* NULL check on handle */
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->tamagawa_xchg == NULL))
     {
         return SystemP_FAILURE;
     }
@@ -1187,14 +1208,19 @@ int32_t tamagawa_config_clock(tamagawa_handle handle, tamagawa_clk_cfg *clk_cfg)
     uint32_t rx_reg_val;
     uint32_t tx_reg_val;
 
-    /* NULL check on handle and clk_cfg */
-    if(handle == NULL || clk_cfg == NULL)
+    /* Validate handle and internal structure pointers, clk_cfg parameter */
+    if((handle == NULL) ||
+       (handle->priv == NULL) ||
+       (handle->attrs == NULL) ||
+       (handle->priv->pruicss_handle == NULL) ||
+       (handle->priv->pruicss_handle->hwAttrs == NULL) ||
+       (clk_cfg == NULL))
     {
         return SystemP_FAILURE;
     }
 
     attrs = handle->attrs;
-    pruicss_cfg = (void *)((PRUICSS_HwAttrs *)(handle->priv->pruicss_handle->hwAttrs))->cfgRegBase;
+    pruicss_cfg = (void *)(((PRUICSS_HwAttrs *)(handle->priv->pruicss_handle->hwAttrs))->cfgRegBase);
 
     /* Configure RX and TX CFG registers based on PRU slice */
     if(attrs->pruicss_slice)
@@ -1253,14 +1279,18 @@ int32_t tamagawa_config_global_rx_arm_cnt(tamagawa_handle handle, uint16_t rx_en
     void *pruicss_cfg;
     const tamagawa_attrs *attrs;
 
-    /* NULL check on handle */
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) ||
+       (handle->priv == NULL) ||
+       (handle->attrs == NULL) ||
+       (handle->priv->pruicss_handle == NULL) ||
+       (handle->priv->pruicss_handle->hwAttrs == NULL))
     {
         return SystemP_FAILURE;
     }
 
     attrs = handle->attrs;
-    pruicss_cfg = (void *)((PRUICSS_HwAttrs *)(handle->priv->pruicss_handle->hwAttrs))->cfgRegBase;
+    pruicss_cfg = (void *)(((PRUICSS_HwAttrs *)(handle->priv->pruicss_handle->hwAttrs))->cfgRegBase);
 
     /* Write RX Global Auto Arm Counter for all channels based on PRU slice */
     if(attrs->pruicss_slice)
@@ -1305,8 +1335,8 @@ int32_t tamagawa_config_host_trigger(tamagawa_handle handle)
     tamagawa_xchg *tamagawa_xchg_ptr;
     const tamagawa_attrs    *attrs = NULL;
 
-    /* NULL check on handle */
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->tamagawa_xchg == NULL))
     {
         return SystemP_FAILURE;
     }
@@ -1338,8 +1368,8 @@ int32_t tamagawa_config_periodic_trigger_cmp_mode(tamagawa_handle handle)
     tamagawa_xchg *tamagawa_xchg_ptr;
     const tamagawa_attrs    *attrs = NULL;
 
-    /* NULL check on handle */
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->tamagawa_xchg == NULL))
     {
         return SystemP_FAILURE;
     }
@@ -1365,12 +1395,28 @@ int32_t tamagawa_config_periodic_trigger_cmp_mode(tamagawa_handle handle)
     return SystemP_SUCCESS;
 }
 
-int32_t tamagawa_config_iep_base_address(tamagawa_handle handle, uint32_t iep_base_addr)
+/**
+ *  \brief      Configure IEP base address for periodic trigger
+ *
+ *  \details    This function writes the IEP base address to DMEM (PRU Data Memory) so that
+ *              the firmware can access IEP registers for periodic trigger mode operation.
+ *              The address is stored as an offset from the PRU-ICSS base address.
+ *
+ *              This function is called during \ref tamagawa_init.
+ *
+ *  \param[in]  handle          Tamagawa handle returned by \ref tamagawa_init
+ *  \param[in]  iep_base_addr   IEP base address as offset from PRU-ICSS base address
+ *
+ *  \retval     SystemP_SUCCESS  IEP base address configured successfully
+ *  \retval     SystemP_FAILURE  On zero iep_base_addr
+ *
+ *  \note       This function writes to the tamagawa_xchg structure in DMEM.
+ */
+static int32_t tamagawa_config_iep_base_address(tamagawa_handle handle, uint32_t iep_base_addr)
 {
     tamagawa_xchg *tamagawa_xchg_ptr;
 
-    /* NULL check on handle */
-    if(handle == NULL || iep_base_addr == 0)    
+    if(iep_base_addr == 0)
     {
         return SystemP_FAILURE;
     }
@@ -1387,8 +1433,8 @@ int32_t tamagawa_config_periodic_trigger_cap_mode(tamagawa_handle handle)
     tamagawa_xchg *tamagawa_xchg_ptr;
     const tamagawa_attrs *attrs = NULL;
 
-    /* NULL check on handle */
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->tamagawa_xchg == NULL))
     {
         return SystemP_FAILURE;
     }
@@ -1413,14 +1459,16 @@ int32_t tamagawa_config_periodic_trigger_cap_mode(tamagawa_handle handle)
 
     return SystemP_SUCCESS;
 }
+
 int32_t tamagawa_config_channel(tamagawa_handle handle, uint8_t mask)
 {
     uint8_t xchg_index;
     tamagawa_xchg *tamagawa_xchg_ptr;
     const tamagawa_attrs *attrs;
 
-    /* NULL check on handle, mask bounds check */
-    if(handle == NULL || mask == 0 || mask > 0x07)
+    /* Validate handle and internal structure pointers, mask bounds check */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) ||
+       (handle->priv->tamagawa_xchg == NULL) || (mask == 0) || (mask > 0x07))
     {
         return SystemP_FAILURE;
     }
@@ -1467,8 +1515,8 @@ int32_t tamagawa_update_data_id(tamagawa_handle handle, int32_t cmd)
 {
     uint8_t xchg_index;
     const tamagawa_attrs *attrs;
-    /* NULL check on handle */
-    if(handle == NULL)
+    /* Validate handle and internal structure pointers */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->tamagawa_xchg == NULL))
     {
         return SystemP_FAILURE;
     }
@@ -1512,8 +1560,12 @@ int32_t tamagawa_update_data_id(tamagawa_handle handle, int32_t cmd)
 
 int32_t tamagawa_update_adf(tamagawa_handle handle, uint32_t val, uint8_t ch)
 {
-    /* NULL check on handle, channel and ADF value bounds check */
-    if(handle == NULL || ch >= TAMAGAWA_MAX_CHANNELS_PER_SLICE || val > TAMAGAWA_MAX_EEPROM_ADDRESS)
+    /* Validate handle and internal structure pointers, channel and ADF value bounds check */
+    if((handle == NULL) ||
+       (handle->priv == NULL) ||
+       (handle->priv->tamagawa_xchg == NULL) ||
+       (ch >= TAMAGAWA_MAX_CHANNELS_PER_SLICE) ||
+       (val > TAMAGAWA_MAX_EEPROM_ADDRESS))
     {
         return SystemP_FAILURE;
     }
@@ -1525,8 +1577,12 @@ int32_t tamagawa_update_adf(tamagawa_handle handle, uint32_t val, uint8_t ch)
 
 int32_t tamagawa_update_edf(tamagawa_handle handle, uint32_t val, uint8_t ch)
 {
-    /* NULL check on handle, channel and EDF value bounds check */
-    if(handle == NULL || ch >= TAMAGAWA_MAX_CHANNELS_PER_SLICE || val > TAMAGAWA_MAX_EEPROM_WRITE_DATA)
+    /* Validate handle and internal structure pointers, channel and EDF value bounds check */
+    if((handle == NULL) ||
+       (handle->priv == NULL) ||
+       (handle->priv->tamagawa_xchg == NULL) ||
+       (ch >= TAMAGAWA_MAX_CHANNELS_PER_SLICE) ||
+       (val > TAMAGAWA_MAX_EEPROM_WRITE_DATA))
     {
         return SystemP_FAILURE;
     }
@@ -1566,8 +1622,8 @@ static void tamagawa_eeprom_crc_reinit(tamagawa_handle handle)
 
 int32_t tamagawa_multi_channel_set_cur(tamagawa_handle handle, uint8_t ch)
 {
-    /* NULL check on handle, channel bounds check */
-    if(handle == NULL || ch >= TAMAGAWA_MAX_CHANNELS_PER_SLICE)
+    /* Validate handle and internal structure pointers, channel bounds check */
+    if((handle == NULL) || (handle->priv == NULL) || (ch >= TAMAGAWA_MAX_CHANNELS_PER_SLICE))
     {
         return SystemP_FAILURE;
     }
@@ -1594,17 +1650,16 @@ int32_t tamagawa_multi_channel_set_cur(tamagawa_handle handle, uint8_t ch)
  *          - PRU0_ED_CH1_CFG0_REG / PRU1_ED_CH1_CFG0_REG (if channel 1 enabled)
  *          - PRU0_ED_CH2_CFG0_REG / PRU1_ED_CH2_CFG0_REG (if channel 2 enabled)
  *
- * \param[in] handle  Tamagawa handle (validated by caller during init, not checked here)
+ * \param[in] handle  Tamagawa handle
  *
- * \note This is an internal function called only from \ref tamagawa_init after all
- *       parameters have been validated. No NULL or bounds checking is performed here.
+ * \note This is an internal function called only from \ref tamagawa_init.
  */
 static void tamagawa_config_clr_cfg0(tamagawa_handle handle)
 {
     void *pruicss_cfg;
     const tamagawa_attrs *attrs;
 
-    pruicss_cfg = (void *)((PRUICSS_HwAttrs *)(handle->priv->pruicss_handle->hwAttrs))->cfgRegBase;
+    pruicss_cfg = (void *)(((PRUICSS_HwAttrs *)(handle->priv->pruicss_handle->hwAttrs))->cfgRegBase);
     attrs = handle->attrs;
 
     /* Clear CFG0 registers only for enabled channels based on PRU slice */
@@ -1650,7 +1705,10 @@ int32_t tamagawa_config_iep_cmp_event(tamagawa_handle handle, uint8_t channel, u
     tamagawa_xchg *tamagawa_xchg_ptr;
     uint8_t ch_index = 0;
 
-    if(handle == NULL || event_num >= TAMAGAWA_IEP_MAX_CMP_EVENT || channel >= TAMAGAWA_MAX_CHANNELS_PER_SLICE)
+    /* Validate handle and internal structure pointers, event and channel bounds check */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) ||
+       (handle->priv->tamagawa_xchg == NULL) || (event_num >= TAMAGAWA_IEP_MAX_CMP_EVENT) ||
+       (channel >= TAMAGAWA_MAX_CHANNELS_PER_SLICE))
     {
         return SystemP_FAILURE;
     }
@@ -1685,7 +1743,10 @@ int32_t tamagawa_config_iep_cap_event(tamagawa_handle handle, uint8_t channel, u
     tamagawa_xchg *tamagawa_xchg_ptr;
     uint8_t ch_index = 0;
 
-    if(handle == NULL || event_num >= TAMAGAWA_IEP_MAX_CAP_EVENT || channel >= TAMAGAWA_MAX_CHANNELS_PER_SLICE)
+    /* Validate handle and internal structure pointers, event and channel bounds check */
+    if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) ||
+       (handle->priv->tamagawa_xchg == NULL) || (event_num >= TAMAGAWA_IEP_MAX_CAP_EVENT) ||
+       (channel >= TAMAGAWA_MAX_CHANNELS_PER_SLICE))
     {
         return SystemP_FAILURE;
     }
@@ -1705,13 +1766,15 @@ int32_t tamagawa_config_iep_cap_event(tamagawa_handle handle, uint8_t channel, u
         ch_index = 0;
     }
 
-    /* write cap event and capture register address in DMEM */
+    /* Write cap event and capture register address in DMEM */
     tamagawa_xchg_ptr->trigger_params[ch_index].iep_cap_event = event_num;
     tamagawa_xchg_ptr->trigger_params[ch_index].iep_capture_reg = tamagawa_xchg_ptr->iep_base_addr + TAMAGAWA_CSL_ICSS_PR1_IEP0_SLV_CAP0_REG0  + TAMAGAWA_8_BYTE_REG_OFFSET*(event_num);
 
-    /* Offset is not identical after 6th event. The 6th and 7th CAP event have 2 extra registers for Fall captures. */
+    /* CAP6 and CAP7 have 2 extra registers for fall capture values, add extra offset */
+    /* CAP6 and CAP7 has 2 register bits each. So bit 8 needs to be used for CAP7. Only capture rise bits for CAP6 and CAP7 are used. */
     if(event_num > 6)
     {
+        tamagawa_xchg_ptr->trigger_params[ch_index].iep_cap_event += 1;
         tamagawa_xchg_ptr->trigger_params[ch_index].iep_capture_reg += TAMAGAWA_8_BYTE_REG_OFFSET;
     }
     return ret_val;
@@ -1726,21 +1789,19 @@ int32_t tamagawa_config_iep_cap_event(tamagawa_handle handle, uint8_t channel, u
  *
  * \param[in] handle  Tamagawa handle
  *
- * \return SystemP_SUCCESS on success, SystemP_FAILURE on validation or hardware access failure
+ * \return SystemP_SUCCESS on success
  *
  */
 static int32_t tamagawa_enable_load_share_mode(tamagawa_handle handle)
 {
-    /* Validate handle parameter */
-    if(handle == NULL)
-    {
-        return SystemP_FAILURE;
-    }
+    tamagawa_priv           *priv;
+    const tamagawa_attrs    *attrs;
+    void                    *pruicss_cfg;
+    uint32_t                reg_val;
 
-    tamagawa_priv          *priv = handle->priv;
-    const tamagawa_attrs   *attrs = handle->attrs;
-    void                *pruicss_cfg = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->cfgRegBase);
-    uint32_t            reg_val;
+    priv = handle->priv;
+    attrs = handle->attrs;
+    pruicss_cfg = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->cfgRegBase);
 
     if(attrs->pruicss_slice)
     {
@@ -1754,6 +1815,7 @@ static int32_t tamagawa_enable_load_share_mode(tamagawa_handle handle)
         reg_val |= CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG_PRU0_ENDAT_SHARE_EN_MASK;
         HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG, reg_val);
     }
+
     return SystemP_SUCCESS;
 }
 
@@ -1762,7 +1824,7 @@ static int32_t tamagawa_enable_load_share_mode(tamagawa_handle handle)
  *
  * \details This internal function sets the primary core mask in shared memory based on the
  *          channel mask configuration. The primary core is responsible for executing
- *          global reinit operations that affect all PRU cores. 
+ *          global reinit operations that affect all PRU cores.
  *
  * \param[in] handle  Tamagawa handle
  * \param[in] mask    Channel mask indicating enabled channels
@@ -1772,13 +1834,15 @@ static int32_t tamagawa_enable_load_share_mode(tamagawa_handle handle)
  */
 static int32_t tamagawa_config_primary_core_mask(tamagawa_handle handle, uint8_t mask)
 {
+    tamagawa_priv *priv;
+
     /* Validate handle parameter */
-    if(handle == NULL || mask > ((1<<TAMAGAWA_MAX_CHANNELS_PER_SLICE) - 1) || mask == 0)
+    if((mask == 0) || (mask > 7))
     {
         return SystemP_FAILURE;
     }
 
-    tamagawa_priv *priv = handle->priv;
+    priv = handle->priv;
 
     switch (mask)
     {
@@ -1812,7 +1876,7 @@ static int32_t tamagawa_config_primary_core_mask(tamagawa_handle handle, uint8_t
  *
  * \details This internal function configures the load-share mode by setting up the
  *          primary core mask and enabling load-share hardware. This enables multiple
- *          PRU cores to coordinate encoder processing with synchronized operations.  
+ *          PRU cores to coordinate encoder processing with synchronized operations.
  *
  * \param[in] handle  Tamagawa handle
  * \param[in] mask    Channel mask indicating enabled channels
@@ -1834,10 +1898,11 @@ static int32_t tamagawa_config_load_share(tamagawa_handle handle, uint8_t mask)
     {
         return SystemP_FAILURE;
     }
-    if(tamagawa_enable_load_share_mode(handle) != SystemP_SUCCESS)
+
+    if(tamagawa_enable_load_share_mode(handle)!= SystemP_SUCCESS)
     {
         return SystemP_FAILURE;
     }
+
     return SystemP_SUCCESS;
 }
-

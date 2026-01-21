@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2024-2025 Texas Instruments Incorporated
+ *  Copyright (C) 2024-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -46,56 +46,56 @@
 /* ========================================================================== */
 
 /* TIMESYNC router configuration register offsets and values */
-#define NIKON_TIMESYNC_EVENT_ROUTER_REG_SIZE         (4U)
-#define NIKON_TIMESYNC_EVENT_ROUTER_OUT8_OFFSET      (8U * NIKON_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U)  /*ICSSG0 PRG0_IEP0_LATCH0_IN0*/
-#define NIKON_TIMESYNC_EVENT_ROUTER_OUT9_OFFSET      (9U * NIKON_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U)  /*ICSSG0 PRG0_IEP0_LATCH1_IN0*/
-#define NIKON_TIMESYNC_EVENT_ROUTER_OUT10_OFFSET     (10U * NIKON_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG0 PRG0_IEP1_LATCH0_IN0*/
-#define NIKON_TIMESYNC_EVENT_ROUTER_OUT11_OFFSET     (11U * NIKON_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG0 PRG0_IEP1_LATCH1_IN0*/
-#define NIKON_TIMESYNC_EVENT_ROUTER_OUT12_OFFSET     (12U * NIKON_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG1 PRG1_IEP0_LATCH0_IN0*/
-#define NIKON_TIMESYNC_EVENT_ROUTER_OUT13_OFFSET     (13U * NIKON_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG1 PRG1_IEP0_LATCH1_IN0*/
-#define NIKON_TIMESYNC_EVENT_ROUTER_OUT14_OFFSET     (14U * NIKON_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG1 PRG1_IEP1_LATCH0_IN0*/
-#define NIKON_TIMESYNC_EVENT_ROUTER_OUT15_OFFSET     (15U * NIKON_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG1 PRG1_IEP1_LATCH1_IN0*/
+#define NIKON_TIMESYNC_EVENT_ROUTER_REG_SIZE            (4U)
+#define NIKON_TIMESYNC_EVENT_ROUTER_OUT8_OFFSET         (8U * NIKON_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U)  /*ICSSG0 PRG0_IEP0_LATCH0_IN0*/
+#define NIKON_TIMESYNC_EVENT_ROUTER_OUT9_OFFSET         (9U * NIKON_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U)  /*ICSSG0 PRG0_IEP0_LATCH1_IN0*/
+#define NIKON_TIMESYNC_EVENT_ROUTER_OUT10_OFFSET        (10U * NIKON_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG0 PRG0_IEP1_LATCH0_IN0*/
+#define NIKON_TIMESYNC_EVENT_ROUTER_OUT11_OFFSET        (11U * NIKON_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG0 PRG0_IEP1_LATCH1_IN0*/
+#define NIKON_TIMESYNC_EVENT_ROUTER_OUT12_OFFSET        (12U * NIKON_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG1 PRG1_IEP0_LATCH0_IN0*/
+#define NIKON_TIMESYNC_EVENT_ROUTER_OUT13_OFFSET        (13U * NIKON_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG1 PRG1_IEP0_LATCH1_IN0*/
+#define NIKON_TIMESYNC_EVENT_ROUTER_OUT14_OFFSET        (14U * NIKON_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG1 PRG1_IEP1_LATCH0_IN0*/
+#define NIKON_TIMESYNC_EVENT_ROUTER_OUT15_OFFSET        (15U * NIKON_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U) /*ICSSG1 PRG1_IEP1_LATCH1_IN0*/
 
-/*CAP0 is used for Channel 1 for CAP mode. To use a different CAP event, check TRM section 9.3.2.2 GPIOMUX_INTRTR0 Integration */
-#define NIKON_GPIOMUX_INTROUTER0_IEP0_CAP_OFFSET     (18U * NIKON_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U)  /*GPIOMUX0 IEP0_CAP_IN*/
-#define NIKON_GPIOMUX_INTROUTER0_IEP1_CAP_OFFSET     (24U * NIKON_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U)  /*GPIOMUX0 IEP1_CAP_IN*/
+/*CAP0 is used for Channel 1 for CAP mode. To use a different CAP event, check AM243x TRM section 9.3.2.2 GPIOMUX_INTRTR0 Integration */
+#define NIKON_GPIOMUX_INTROUTER0_IEP0_CAP_OFFSET        (18U * NIKON_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U)  /*GPIOMUX0 IEP0_CAP_IN*/
+#define NIKON_GPIOMUX_INTROUTER0_IEP1_CAP_OFFSET        (24U * NIKON_TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U)  /*GPIOMUX0 IEP1_CAP_IN*/
 
-#define NIKON_TIMESYNC_EVENT_ROUTER_IN25              (0x00010019U)  /* PRU_ICSSG0_PR1_EDC0_SYNC0_OUT_0 */
-#define NIKON_TIMESYNC_EVENT_ROUTER_IN27              (0x0001001BU)  /* PRU_ICSSG0_PR1_EDC1_SYNC0_OUT_0 */
-#define NIKON_TIMESYNC_EVENT_ROUTER_IN29              (0x0001001DU)  /* PRU_ICSSG1_PR1_EDC0_SYNC0_OUT_0 */
-#define NIKON_TIMESYNC_EVENT_ROUTER_IN31              (0x0001001FU)  /* PRU_ICSSG1_PR1_EDC1_SYNC0_OUT_0 */
+#define NIKON_TIMESYNC_EVENT_ROUTER_IN25                (0x00010019U)  /* PRU_ICSSG0_PR1_EDC0_SYNC0_OUT_0 */
+#define NIKON_TIMESYNC_EVENT_ROUTER_IN27                (0x0001001BU)  /* PRU_ICSSG0_PR1_EDC1_SYNC0_OUT_0 */
+#define NIKON_TIMESYNC_EVENT_ROUTER_IN29                (0x0001001DU)  /* PRU_ICSSG1_PR1_EDC0_SYNC0_OUT_0 */
+#define NIKON_TIMESYNC_EVENT_ROUTER_IN31                (0x0001001FU)  /* PRU_ICSSG1_PR1_EDC1_SYNC0_OUT_0 */
 
 /* GPIO number need to be configured based on the input source GPIO pin number.
  * GPIO0_GPIO_4 is used in this example.
- * Refer to the GPIOMUX_INTRTR0 Interrupt Map section in the TRM (9.4.1.8) for more details. */
-#define NIKON_GPIOMUX_INTROUTER0_CAP_GPIO_IN          (0x00010004U)
+ * Refer to the GPIOMUX_INTRTR0 Interrupt Map in 9.4.1.8 section of the AM243x TRM for more details. */
+#define NIKON_GPIOMUX_INTROUTER0_CAP_GPIO_IN            (0x00010004U)
 
 /* IEP SYNC control register bit definitions */
-#define NIKON_IEP_SYNC_CTRL_SYNC01_EN_SHIFT            (0U)           /* SYNC01 enable bit position */
-#define NIKON_IEP_SYNC_CTRL_SYNC01_EN_MASK             (0x00000001U)  /* SYNC01 enable bit mask */
-#define NIKON_IEP_SYNC_CTRL_SYNC0_EN_SHIFT            (1U)           /* SYNC1 enable bit position */
-#define NIKON_IEP_SYNC_CTRL_SYNC0_EN_MASK             (0x00000002U)  /* SYNC1 enable bit mask */
-#define NIKON_IEP_SYNC_CTRL_SYNC0_CYCLIC_EN_SHIFT     (5U)           /* SYNC0 cyclic generation bit position */
-#define NIKON_IEP_SYNC_CTRL_SYNC0_CYCLIC_EN_MASK      (0x00000020U)  /* SYNC0 cyclic generation bit mask */
+#define NIKON_IEP_SYNC_CTRL_SYNC01_EN_SHIFT             (0U)           /* SYNC01 enable bit position */
+#define NIKON_IEP_SYNC_CTRL_SYNC01_EN_MASK              (0x00000001U)  /* SYNC01 enable bit mask */
+#define NIKON_IEP_SYNC_CTRL_SYNC0_EN_SHIFT              (1U)           /* SYNC1 enable bit position */
+#define NIKON_IEP_SYNC_CTRL_SYNC0_EN_MASK               (0x00000002U)  /* SYNC1 enable bit mask */
+#define NIKON_IEP_SYNC_CTRL_SYNC0_CYCLIC_EN_SHIFT       (5U)           /* SYNC0 cyclic generation bit position */
+#define NIKON_IEP_SYNC_CTRL_SYNC0_CYCLIC_EN_MASK        (0x00000020U)  /* SYNC0 cyclic generation bit mask */
 
 /* IEP SYNC configuration values */
-#define NIKON_IEP_CMP1_START_DELAY             (100U)         /* IEP CMP1 start delay in cycles */
-#define NIKON_IEP_SYNC0_PULSE_WIDTH            (10U)          /* SYNC0 high pulse time in IEP clock cycles */
-#define NIKON_IEP_CMP_EVENT_FOR_RESET          (0U)           /* CMP event number used for IEP Reset */
-#define NIKON_IEP_CMP_EVENT_FOR_SYNC0          (1U)           /* CMP event number used for SYNC0 generation */
+#define NIKON_IEP_CMP1_START_DELAY                      (100U)         /* IEP CMP1 start delay in cycles */
+#define NIKON_IEP_SYNC0_PULSE_WIDTH                     (10U)          /* SYNC0 high pulse time in IEP clock cycles */
+#define NIKON_IEP_CMP_EVENT_FOR_RESET                   (0U)           /* CMP event number used for IEP Reset */
+#define NIKON_IEP_CMP_EVENT_FOR_SYNC0                   (1U)           /* CMP event number used for SYNC0 generation */
 
 /*IEP Counter configuration*/
-#define NIKON_IEP_COUNTER_ENABLE         (1U)          /* IEP counter enable value */
-#define NIKON_IEP_COUNTER_DISABLE        (0U)          /* IEP counter disable value */
-#define NIKON_IEP_COUNTER_INCREMENT      (1U)          /* IEP counter increment value */
+#define NIKON_IEP_COUNTER_ENABLE                        (1U)          /* IEP counter enable value */
+#define NIKON_IEP_COUNTER_DISABLE                       (0U)          /* IEP counter disable value */
+#define NIKON_IEP_COUNTER_INCREMENT                     (1U)          /* IEP counter increment value */
 
 /* IEP CMP configuration register bit shifts and masks */
-#define NIKON_IEP_SLV_CMP_CFG_REG_CMP_EN_SHIFT                   (0x1U)        /* CMP enable bit shift */
-#define NIKON_IEP_SLV_CMP_CFG_REG_CMP0_RST_CNT_EN_SHIFT          (0x0U)        /* CMP0 reset counter enable bit shift */
+#define NIKON_IEP_SLV_CMP_CFG_REG_CMP_EN_SHIFT          (0x1U)        /* CMP enable bit shift */
+#define NIKON_IEP_SLV_CMP_CFG_REG_CMP0_RST_CNT_EN_SHIFT (0x0U)        /* CMP0 reset counter enable bit shift */
 
 /* Macros to extract lower and upper 32 bits from 64-bit values */
-#define NIKON_GET_LOWER_32BITS(x)                                ((uint32_t)((x) & 0xFFFFFFFFU))           /* Extract lower 32 bits */
-#define NIKON_GET_UPPER_32BITS(x)                                ((uint32_t)(((x) >> 32) & 0xFFFFFFFFU))  /* Extract upper 32 bits */
+#define NIKON_GET_LOWER_32BITS(x)                       ((uint32_t)((x) & 0xFFFFFFFFU))           /* Extract lower 32 bits */
+#define NIKON_GET_UPPER_32BITS(x)                       ((uint32_t)(((x) >> 32) & 0xFFFFFFFFU))  /* Extract upper 32 bits */
 
 /* ========================================================================== */
 /*                         Structure Declarations                             */
@@ -105,7 +105,7 @@
  * \brief   Structure defining Nikon periodic trigger interface configuration
  *
  * \details Contains Nikon driver handle, trigger count values and IEP reset
- *          count for periodic mode operation, in which automatic Nikon transaction
+ *          count for periodic mode operation, in which automatic encoder transaction
  *          is triggered at configured intervals.
  */
 typedef struct nikon_periodic_interface_s
@@ -143,10 +143,10 @@ typedef struct nikon_periodic_interface_s
  *          4. Enables PRU interrupt handling
  *
  *          **CMP Mode (is_cap_mode = 0):**
- *          - IEP counter increments at IEP clock rate (default: 200 MHz)
+ *          - IEP counter increments at IEP clock rate
  *          - When counter reaches periodic_trigger_count, encoder transaction is triggered
  *          - When counter reaches iep_reset_count, counter resets to 0 (defines period)
- *          - Interrupt handler is called on each Nikon transaction completion
+ *          - Interrupt handler is called on each encoder transaction completion
  *
  *          **CAP Mode (is_cap_mode = 1):**
  *          - IEP captures counter value when external signal triggers CAP event
@@ -154,7 +154,7 @@ typedef struct nikon_periodic_interface_s
  *          - Requires TIMESYNC/GPIOMUX router configuration (AM243x), or
  *            XBAR configuration (AM26x)
  *          - Suitable for event-driven sampling synchronized with external signals
- *          - Interrupt handler is called on each Nikon transaction completion
+ *          - Interrupt handler is called on each encoder transaction completion
  *
  *          Requirements:
  *          - Nikon driver must be initialized with nikon_init() before calling this function

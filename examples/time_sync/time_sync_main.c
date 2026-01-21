@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2025 Texas Instruments Incorporated
+ *  Copyright (C) 2025-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -128,7 +128,7 @@ void pru_icss_with_time_sync_main(void *args)
 {
     Drivers_open();
 
-    int status;
+    int32_t status;
     status = Board_driversOpen();
     DebugP_assert(SystemP_SUCCESS == status);
 

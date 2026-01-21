@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2024-2025 Texas Instruments Incorporated
+ *  Copyright (C) 2024-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -164,7 +164,7 @@
 static HwiP_Object gNikonHwiObject[CONFIG_NIKON_NUM_INSTANCES][NIKON_NUM_CH_PER_SLICE_MAX];
 uint32_t gPruNikonIrqCnt[CONFIG_NIKON_NUM_INSTANCES][NIKON_NUM_CH_PER_SLICE_MAX] = {0};
 
-/* PRU-ICSS INTC Configuration uses first Nikon instance */
+/* PRU-ICSS INTC Initialization Data Structure */
 /* ASSUMPTION: Same PRU-ICSS instance is used for multiple Nikon handles in this example */
 #if(CONFIG_NIKON0_PRUICSS_INSTANCE == 1)
 extern PRUICSS_IntcInitData icss1_intc_initdata;
@@ -178,15 +178,15 @@ extern PRUICSS_IntcInitData icss0_intc_initdata;
 
 /* IEP Configuration Functions */
 #if defined(SOC_AM243X)
-static void nikon_config_iep_cap_for_sync(nikon_handle handle, uint32_t iep_sync0_period);
+static int32_t nikon_config_iep_cap_for_sync(nikon_handle handle, uint32_t iep_sync0_period);
 static void nikon_disable_iep_cap_sync(void *pru_iep);
 #endif /* SOC_AM243X */
 
-static void nikon_config_iep(nikon_periodic_interface *nikon_periodic_interface);
+static int32_t nikon_config_iep(nikon_periodic_interface *nikon_periodic_interface);
 
 /* IEP Counter Control */
-static void nikon_enable_iep_counter(nikon_handle handle);
-static void nikon_disable_iep_counter(nikon_handle handle);
+static int32_t nikon_enable_iep_counter(PRUICSS_Handle pruicss_handle, uint8_t iep_instance);
+static int32_t nikon_disable_iep_counter(PRUICSS_Handle pruicss_handle, uint8_t iep_instance);
 
 /* IEP Reset Control */
 static void nikon_enable_iep_reset_on_cmp0(void *pru_iep, uint64_t iep_reset_count);
@@ -238,11 +238,25 @@ void nikon_pru_irq_handler_second_slice(void *pruicss_handle);
  * \param iep_sync0_period IEP SYNC OUT0 period in IEP clock cycles
  */
 #if defined(SOC_AM243X)
-static void nikon_config_iep_cap_for_sync(nikon_handle handle, uint32_t iep_sync0_period)
+static int32_t nikon_config_iep_cap_for_sync(nikon_handle handle, uint32_t iep_sync0_period)
 {
-    const nikon_attrs *attrs = nikon_get_attrs(handle);
-    void *pru_iep = attrs->iep_base_addr;
+    const nikon_attrs *attrs = NULL;
+    void *pru_iep;
     uint32_t reg_value;
+
+    attrs = nikon_get_attrs(handle);
+    if((handle == NULL) || (attrs == NULL))
+    {
+        DebugP_log("\r\n\n|ERROR: nikon_config_iep_cap_for_sync() failed due to NULL handle/attrs");
+        return SystemP_FAILURE;
+    }
+
+    pru_iep = attrs->iep_base_addr;
+    if(pru_iep == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: nikon_config_iep_cap_for_sync() failed due to NULL iep_base_addr");
+        return SystemP_FAILURE;
+    }
 
     /* Configure IEP CMP1 to start SYNC OUT0 after 100 cycles */
     nikon_enable_iep_cmp_event(pru_iep, NIKON_IEP_CMP1_START_DELAY, NIKON_IEP_CMP_EVENT_FOR_SYNC0);
@@ -333,7 +347,7 @@ static void nikon_config_iep_cap_for_sync(nikon_handle handle, uint32_t iep_sync
             if(attrs->pruicss_instance == 1)
             {
                 DebugP_log("\r\n ERROR: GPIOMUX router can not be configured for routing event to PRU-ICSSG1\r\n");
-                DebugP_assert(0);
+                return SystemP_FAILURE;
             }
 
             /* Route GPIO to IEP CAP0 input*/
@@ -385,6 +399,7 @@ static void nikon_config_iep_cap_for_sync(nikon_handle handle, uint32_t iep_sync
             }
         }
     }
+    return SystemP_SUCCESS;
 }
 #endif /* SOC_AM243X */
 
@@ -418,6 +433,12 @@ static void nikon_disable_iep_cap_sync(void *pru_iep)
 {
     uint32_t reg_value;
 
+    if(pru_iep == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: nikon_disable_iep_cap_sync() failed due to NULL pru_iep");
+        return;
+    }
+
     /* Disable SYNC OUT0 generation */
     reg_value = HW_RD_REG32((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_SYNC_CTRL_REG);
     reg_value &= ~(NIKON_IEP_SYNC_CTRL_SYNC01_EN_MASK | NIKON_IEP_SYNC_CTRL_SYNC0_EN_MASK); /* SYNC OUT0 disable */
@@ -440,6 +461,12 @@ static void nikon_enable_iep_reset_on_cmp0(void *pru_iep, uint64_t iep_reset_cou
     uint16_t event;
     uint32_t reg0;
     uint32_t reg1;
+
+    if(pru_iep == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: nikon_enable_iep_reset_on_cmp0() failed due to NULL pru_iep");
+        return;
+    }
 
     /* Clear event */
     HW_WR_REG16((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, (1 << NIKON_IEP_CMP_EVENT_FOR_RESET));
@@ -471,6 +498,12 @@ static void nikon_disable_iep_reset_on_cmp0(void *pru_iep)
 {
     uint16_t event;
 
+    if(pru_iep == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: nikon_disable_iep_reset_on_cmp0() failed due to NULL pru_iep");
+        return;
+    }
+
     /* Read CMP CFG register */
     event = HW_RD_REG16((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG);
 
@@ -491,21 +524,25 @@ static void nikon_disable_iep_reset_on_cmp0(void *pru_iep)
  *
  * \param handle Nikon driver handle
  */
-static void nikon_enable_iep_counter(nikon_handle handle)
+static int32_t nikon_enable_iep_counter(PRUICSS_Handle pruicss_handle, uint8_t iep_instance)
 {
-    nikon_priv *priv;
-    const nikon_attrs *attrs;
     int32_t status;
 
-    priv = nikon_get_priv(handle);
-    attrs = nikon_get_attrs(handle);
+    if(pruicss_handle == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: nikon_enable_iep_counter() failed due to NULL pruicss_handle");
+        return SystemP_FAILURE;
+    }
 
     /* Configure and enable IEP counter */
-    status = PRUICSS_setIepCounterIncrementValue(priv->pruicss_handle, attrs->iep_instance, NIKON_IEP_COUNTER_INCREMENT);
-    DebugP_assert(status == SystemP_SUCCESS);
+    status = PRUICSS_setIepCounterIncrementValue(pruicss_handle, iep_instance, NIKON_IEP_COUNTER_INCREMENT);
 
-    status = PRUICSS_controlIepCounter(priv->pruicss_handle, attrs->iep_instance, NIKON_IEP_COUNTER_ENABLE);
-    DebugP_assert(status == SystemP_SUCCESS);
+    if(status == SystemP_SUCCESS)
+    {
+        status = PRUICSS_controlIepCounter(pruicss_handle, iep_instance, NIKON_IEP_COUNTER_ENABLE);
+    }
+
+    return status;
 }
 
 /**
@@ -513,18 +550,19 @@ static void nikon_enable_iep_counter(nikon_handle handle)
  *
  * \param handle Nikon driver handle
  */
-static void nikon_disable_iep_counter(nikon_handle handle)
+static int32_t nikon_disable_iep_counter(PRUICSS_Handle pruicss_handle, uint8_t iep_instance)
 {
-    nikon_priv *priv;
-    const nikon_attrs *attrs;
     int32_t status;
 
-    priv = nikon_get_priv(handle);
-    attrs = nikon_get_attrs(handle);
+    if(pruicss_handle == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: nikon_disable_iep_counter() failed due to NULL pruicss_handle");
+        return SystemP_FAILURE;
+    }
 
     /* Disable IEP counter */
-    status = PRUICSS_controlIepCounter(priv->pruicss_handle, attrs->iep_instance, NIKON_IEP_COUNTER_DISABLE);
-    DebugP_assert(status == SystemP_SUCCESS);
+    status = PRUICSS_controlIepCounter(pruicss_handle, iep_instance, NIKON_IEP_COUNTER_DISABLE);
+    return status;
 }
 
 /**
@@ -536,6 +574,12 @@ static void nikon_disable_iep_counter(nikon_handle handle)
 static void nikon_disable_iep_cmp_event(void *pru_iep, uint8_t event_num)
 {
     uint32_t reg0;
+
+    if(pru_iep == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: nikon_disable_iep_cmp_event() failed due to NULL pru_iep");
+        return;
+    }
 
     /* Disable the CMP event */
     /* Read the current register value */
@@ -569,6 +613,12 @@ static void nikon_disable_iep_cap_event(void *pru_iep, uint8_t event_num)
 {
     uint32_t reg0;
 
+    if(pru_iep == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: nikon_disable_iep_cap_event() failed due to NULL pru_iep");
+        return;
+    }
+
     /* Disable the CAP event */
     /* Read the current register value */
     reg0 = HW_RD_REG32(((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG));
@@ -599,6 +649,12 @@ static void nikon_disable_iep_cap_event(void *pru_iep, uint8_t event_num)
 static void nikon_enable_iep_cap_event(void *pru_iep, uint8_t event_num)
 {
     uint32_t reg0;
+
+    if(pru_iep == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: nikon_enable_iep_cap_event() failed due to NULL pru_iep");
+        return;
+    }
 
     /* Configure the CAP event in IEP hardware register */
     /* Read the current register value */
@@ -633,6 +689,12 @@ static void nikon_enable_iep_cmp_event(void *pru_iep, uint64_t trigger_point, ui
     uint32_t reg0;
     uint32_t reg1;
 
+    if(pru_iep == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: nikon_enable_iep_cmp_event() failed due to NULL pru_iep");
+        return;
+    }
+
     /* Clear event */
     HW_WR_REG16((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, (uint16_t)(1 << event_num));
 
@@ -666,7 +728,7 @@ static void nikon_enable_iep_cmp_event(void *pru_iep, uint64_t trigger_point, ui
  * \brief Configure IEP timer for Nikon periodic trigger mode
  *
  * \details This function configures the PRU-ICSS IEP (Industrial Ethernet Peripheral) timer
- *          to support periodic trigger mode for Nikon encoder transactions. It handles
+ *          to support periodic trigger mode for encoder transactions. It handles
  *          both CMP (compare) and CAP (capture) modes based on configuration.
  *
  *          **Configuration performed:**
@@ -694,21 +756,55 @@ static void nikon_enable_iep_cmp_event(void *pru_iep, uint64_t trigger_point, ui
  * \param[in] nikon_periodic_interface Pointer to periodic interface structure
  * \note This function assumes the handle and IEP base address are valid (set by nikon_init())
  */
-static void nikon_config_iep(nikon_periodic_interface *nikon_periodic_interface)
+static int32_t nikon_config_iep(nikon_periodic_interface *nikon_periodic_interface)
 {
-    const nikon_attrs *attrs = nikon_get_attrs(nikon_periodic_interface->handle[CONFIG_NIKON0]);
+    const nikon_attrs *attrs[CONFIG_NIKON_NUM_INSTANCES] = {NULL};
+    nikon_priv *priv[CONFIG_NIKON_NUM_INSTANCES] = {NULL};
     uint8_t ch_idx;
-    uint64_t iep_count = nikon_periodic_interface->iep_reset_count;
-    void *pru_iep = attrs->iep_base_addr;
-#if defined(NIKON_DUAL_PRU_SLICE_ENABLE)
-    const nikon_attrs *attrs1 = nikon_get_attrs(nikon_periodic_interface->handle[CONFIG_NIKON1]);
-#endif
+    uint32_t i;
+    void *pru_iep;
+    int32_t status;
+
+    /* NULL check on interface pointer and handle(s) */
+    if(nikon_periodic_interface == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: nikon_config_iep() failed due to NULL nikon_periodic_interface pointer");
+        return SystemP_FAILURE;
+    }
+
+    for(i = 0; i < CONFIG_NIKON_NUM_INSTANCES; i++)
+    {
+        attrs[i] = nikon_get_attrs(nikon_periodic_interface->handle[i]);
+        priv[i] = nikon_get_priv(nikon_periodic_interface->handle[i]);
+        if((nikon_periodic_interface->handle[i] == NULL) || (attrs[i] == NULL) || (priv[i] == NULL))
+        {
+            DebugP_log("\r\n\n|ERROR: nikon_config_iep() failed due to NULL handle/attrs/priv");
+            return SystemP_FAILURE;
+        }
+    }
 
     /* PRU-ICSS Level Global Configuration uses first Nikon handle */
     /* ASSUMPTION: Same PRU-ICSS instance and IEP instance are used for multiple Nikon handles in this example */
+    pru_iep = attrs[CONFIG_NIKON0]->iep_base_addr;
+    if(pru_iep == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: nikon_config_iep() failed due to NULL iep_base_addr");
+        return SystemP_FAILURE;
+    }
+
+    if(priv[CONFIG_NIKON0]->pruicss_handle == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: nikon_config_iep() failed due to NULL pruicss_handle");
+        return SystemP_FAILURE;
+    }
 
     /* Disable IEP counter */
-    nikon_disable_iep_counter(nikon_periodic_interface->handle[CONFIG_NIKON0]);
+    status = nikon_disable_iep_counter(priv[CONFIG_NIKON0]->pruicss_handle, attrs[CONFIG_NIKON0]->iep_instance);
+    if(status == SystemP_FAILURE)
+    {
+        DebugP_log("\r\n\n|ERROR: nikon_disable_iep_counter() failed");
+        return SystemP_FAILURE;
+    }
 
     /* Set IEP counter to ZERO */
     HW_WR_REG32((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG0, 0);
@@ -724,74 +820,72 @@ static void nikon_config_iep(nikon_periodic_interface *nikon_periodic_interface)
          * If CONFIG_NIKON_NUM_INSTANCES > 1 and CAP mode is used, configuration for signal routing to
          * capture pins needs to be added based on availability.
          */
-        nikon_config_iep_cap_for_sync(nikon_periodic_interface->handle[CONFIG_NIKON0], NIKON_GET_LOWER_32BITS(iep_count));
-#endif
-        /* Configure CAP events for channels */
-        if(attrs->load_share_enabled)
+        status = nikon_config_iep_cap_for_sync(nikon_periodic_interface->handle[CONFIG_NIKON0], NIKON_GET_LOWER_32BITS(nikon_periodic_interface->iep_reset_count));
+        if(status == SystemP_FAILURE)
         {
-            /* Load share mode: Iterate through enabled channels using channel_mask */
-            for(ch_idx = 0; ch_idx < NIKON_NUM_CH_PER_SLICE_MAX; ch_idx++)
+            DebugP_log("\r\n\n|ERROR: nikon_config_iep_cap_for_sync() failed");
+            return SystemP_FAILURE;
+        }
+#endif
+        for(i = 0; i < CONFIG_NIKON_NUM_INSTANCES; i++)
+        {
+            /* Configure CAP events for channels */
+            if(attrs[i]->load_share_enabled)
             {
-                if(attrs->channel_mask & (1U << ch_idx))
+                /* Load share mode: Iterate through enabled channels using channel_mask */
+                for(ch_idx = 0; ch_idx < NIKON_NUM_CH_PER_SLICE_MAX; ch_idx++)
                 {
-                    nikon_enable_iep_cap_event(pru_iep, attrs->iep_cap_event[ch_idx]);
+                    if(attrs[i]->channel_mask & (1U << ch_idx))
+                    {
+                        nikon_enable_iep_cap_event(pru_iep, attrs[i]->iep_cap_event[ch_idx]);
+                    }
                 }
             }
+            else
+            {
+                /* Non-load share mode*/
+                nikon_enable_iep_cap_event(pru_iep, attrs[i]->iep_cap_event[0]);
+            }
         }
-        else
-        {
-            /* Non-load share mode*/
-            nikon_enable_iep_cap_event(pru_iep, attrs->iep_cap_event[0]);
-        }
-#if defined(NIKON_DUAL_PRU_SLICE_ENABLE)
-        /* Configure CAP event for second slice if enabled */
-        /* Configuring CAP events for SINGLE_CHANNEL_SINGLE_PRU mode, For load share mode it is not added*/
-        /* This code is only tested on AM261x with DUAL PRU SLICE MODE*/
-        if(attrs1->load_share_enabled == 0)
-        {
-            nikon_enable_iep_cap_event(pru_iep, attrs1->iep_cap_event[0]);
-        }
-#endif
     }
     else
     {
         /* CMP mode: Enable IEP reset on CMP0 */
-        /* PRU-ICSS Level Global Configuration uses first Nikon handle */
-        /* ASSUMPTION: Same PRU-ICSS instance and IEP instance are used for multiple Nikon handles in this example */
-        nikon_enable_iep_reset_on_cmp0(pru_iep, iep_count);
+        nikon_enable_iep_reset_on_cmp0(pru_iep, nikon_periodic_interface->iep_reset_count);
 
-        /* Configure CMP events for channels */
-        if(attrs->load_share_enabled)
+        for(i = 0; i < CONFIG_NIKON_NUM_INSTANCES; i++)
         {
-            /* Load share mode: Iterate through enabled channels using channel_mask */
-            for(ch_idx = 0; ch_idx < NIKON_NUM_CH_PER_SLICE_MAX; ch_idx++)
+            /* Configure CMP events for channels */
+            if(attrs[i]->load_share_enabled)
             {
-                if(attrs->channel_mask & (1U << ch_idx))
+                /* Load share mode: Iterate through enabled channels using channel_mask */
+                for(ch_idx = 0; ch_idx < NIKON_NUM_CH_PER_SLICE_MAX; ch_idx++)
                 {
-                    nikon_enable_iep_cmp_event(pru_iep, nikon_periodic_interface->periodic_trigger_count[CONFIG_NIKON0][ch_idx], attrs->iep_cmp_event[ch_idx]);
+                    if(attrs[i]->channel_mask & (1U << ch_idx))
+                    {
+                        nikon_enable_iep_cmp_event(pru_iep, nikon_periodic_interface->periodic_trigger_count[i][ch_idx], attrs[i]->iep_cmp_event[ch_idx]);
+                    }
                 }
             }
+            else
+            {
+                /* Non-load share mode: Use index 0 always */
+                nikon_enable_iep_cmp_event(pru_iep, nikon_periodic_interface->periodic_trigger_count[i][0], attrs[i]->iep_cmp_event[0]);
+            }
         }
-        else
-        {
-            /* Non-load share mode: Use index 0 always */
-            nikon_enable_iep_cmp_event(pru_iep, nikon_periodic_interface->periodic_trigger_count[CONFIG_NIKON0][0], attrs->iep_cmp_event[0]);
-        }
-#if defined(NIKON_DUAL_PRU_SLICE_ENABLE)
-        /* Configure CMP event for second slice if enabled */
-        /* Configuring CMP events for SINGLE_CHANNEL_SINGLE_PRU mode, For load share mode it is not added*/
-        /* This code is only tested on AM261x with DUAL PRU SLICE MODE*/
-        if(attrs1->load_share_enabled == 0)
-        {
-            nikon_enable_iep_cmp_event(pru_iep, nikon_periodic_interface->periodic_trigger_count[CONFIG_NIKON1][0], attrs1->iep_cmp_event[0]);
-        }
-#endif
     }
 
     /* PRU-ICSS Level Global Configuration uses first Nikon handle */
     /* ASSUMPTION: Same PRU-ICSS instance and IEP instance are used for multiple Nikon handles in this example */
+
     /* Enable IEP counter */
-    nikon_enable_iep_counter(nikon_periodic_interface->handle[CONFIG_NIKON0]);
+    status = nikon_enable_iep_counter(priv[CONFIG_NIKON0]->pruicss_handle, attrs[CONFIG_NIKON0]->iep_instance);
+    if(status == SystemP_FAILURE)
+    {
+        DebugP_log("\r\n\n|ERROR: nikon_enable_iep_counter() failed");
+        return SystemP_FAILURE;
+    }
+    return SystemP_SUCCESS;
 }
 
 /**
@@ -825,6 +919,12 @@ static void nikon_interrupt_config(void *pruicss_handle)
 {
     int32_t status;
     HwiP_Params hwi_params;
+
+    if(pruicss_handle == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: nikon_interrupt_config() failed due to NULL pruicss_handle");
+        return;
+    }
 
 #if(CONFIG_NIKON0_MODE == NIKON_MODE_MULTI_CHANNEL_MULTI_PRU)
 #if(CONFIG_NIKON0_CHANNEL0_ENABLED == 1)
@@ -893,13 +993,14 @@ static void nikon_interrupt_config(void *pruicss_handle)
 int32_t nikon_config_periodic_mode(nikon_periodic_interface *nikon_periodic_interface)
 {
     int32_t status;
-    uint32_t    i;
-    nikon_priv  *priv;
-    void        *pruicss_handle;
+    uint32_t i;
+    nikon_priv *priv = NULL;
+    void *pruicss_handle = NULL;
 
     /* NULL check on interface pointer and handle(s) */
     if(nikon_periodic_interface == NULL)
     {
+        DebugP_log("\r\n\n|ERROR: nikon_config_periodic_mode() failed due to NULL nikon_periodic_interface pointer");
         return SystemP_FAILURE;
     }
 
@@ -907,16 +1008,34 @@ int32_t nikon_config_periodic_mode(nikon_periodic_interface *nikon_periodic_inte
     {
         if(nikon_periodic_interface->handle[i] == NULL)
         {
+            DebugP_log("\r\n\n|ERROR: nikon_config_periodic_mode() failed due to NULL handle");
             return SystemP_FAILURE;
         }
     }
+
     /* PRU-ICSS Level Global Configuration uses first Nikon handle */
     /* ASSUMPTION: Same PRU-ICSS instance is used for multiple Nikon handles in this example */
     priv = nikon_get_priv(nikon_periodic_interface->handle[CONFIG_NIKON0]);
+    if(priv == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: nikon_config_periodic_mode() failed due to NULL priv pointer");
+        return SystemP_FAILURE;
+    }
+
     pruicss_handle = (void *)(priv->pruicss_handle);
+    if(pruicss_handle == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: nikon_config_periodic_mode() failed due to NULL pruicss_handle");
+        return SystemP_FAILURE;
+    }
 
     /* Configure IEP */
-    nikon_config_iep(nikon_periodic_interface);
+    status = nikon_config_iep(nikon_periodic_interface);
+    if(status != SystemP_SUCCESS)
+    {
+        DebugP_log("\r\n\n|ERROR: nikon_config_iep() failed inside nikon_config_periodic_mode()");
+        return status;
+    }
 
     /* Initialize PRU-ICSS Interrupt Controller */
     /* ASSUMPTION: Same PRU-ICSS instance is used for multiple Nikon handles in this example */
@@ -924,12 +1043,14 @@ int32_t nikon_config_periodic_mode(nikon_periodic_interface *nikon_periodic_inte
     status = PRUICSS_intcInit(pruicss_handle, &icss1_intc_initdata);
     if(status != SystemP_SUCCESS)
     {
+        DebugP_log("\r\n\n|ERROR: PRUICSS_intcInit() failed inside nikon_config_periodic_mode()");
         return status;
     }
 #else
     status = PRUICSS_intcInit(pruicss_handle, &icss0_intc_initdata);
     if(status != SystemP_SUCCESS)
     {
+        DebugP_log("\r\n\n|ERROR: PRUICSS_intcInit() failed inside nikon_config_periodic_mode()");
         return status;
     }
 #endif
@@ -940,107 +1061,105 @@ int32_t nikon_config_periodic_mode(nikon_periodic_interface *nikon_periodic_inte
 
 int32_t nikon_stop_periodic_mode(nikon_periodic_interface *nikon_periodic_interface)
 {
-    const nikon_attrs *attrs;
+    const nikon_attrs *attrs[CONFIG_NIKON_NUM_INSTANCES] = {NULL};
+    nikon_priv *priv[CONFIG_NIKON_NUM_INSTANCES] = {NULL};
     uint8_t ch_idx;
     uint32_t i;
     void *pru_iep;
-#if defined(NIKON_DUAL_PRU_SLICE_ENABLE)
-    const nikon_attrs *attrs1;
-#endif
+    int32_t status;
 
     /* NULL check on interface pointer and handle(s) */
     if(nikon_periodic_interface == NULL)
     {
+        DebugP_log("\r\n\n|ERROR: nikon_stop_periodic_mode() failed due to NULL nikon_periodic_interface pointer");
         return SystemP_FAILURE;
     }
 
     for(i = 0; i < CONFIG_NIKON_NUM_INSTANCES; i++)
     {
-        if(nikon_periodic_interface->handle[i] == NULL)
+        attrs[i] = nikon_get_attrs(nikon_periodic_interface->handle[i]);
+        priv[i] = nikon_get_priv(nikon_periodic_interface->handle[i]);
+        if((nikon_periodic_interface->handle[i] == NULL) || (attrs[i] == NULL) || (priv[i] == NULL))
         {
+            DebugP_log("\r\n\n|ERROR: nikon_config_iep() failed due to NULL handle/attrs/priv");
             return SystemP_FAILURE;
         }
     }
 
-    attrs = nikon_get_attrs(nikon_periodic_interface->handle[CONFIG_NIKON0]);
-    pru_iep = attrs->iep_base_addr;
-#if defined(NIKON_DUAL_PRU_SLICE_ENABLE)
-    attrs1 = nikon_get_attrs(nikon_periodic_interface->handle[CONFIG_NIKON1]);
-#endif
-
-    /* Disable IEP counter first */
     /* PRU-ICSS Level Global Configuration uses first Nikon handle */
     /* ASSUMPTION: Same PRU-ICSS instance and IEP instance is used for multiple Nikon handles in this example */
-    nikon_disable_iep_counter(nikon_periodic_interface->handle[CONFIG_NIKON0]);
+    pru_iep = attrs[CONFIG_NIKON0]->iep_base_addr;
+    if(pru_iep == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: nikon_stop_periodic_mode() failed due to NULL iep_base_addr");
+        return SystemP_FAILURE;
+    }
+
+    if(priv[CONFIG_NIKON0]->pruicss_handle == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: nikon_stop_periodic_mode() failed due to NULL pruicss_handle");
+        return SystemP_FAILURE;
+    }
+
+    /* Disable IEP counter first */
+    status = nikon_disable_iep_counter(priv[CONFIG_NIKON0]->pruicss_handle, attrs[CONFIG_NIKON0]->iep_instance);
+    if(status == SystemP_FAILURE)
+    {
+        DebugP_log("\r\n\n|ERROR: nikon_disable_iep_counter() failed");
+        return SystemP_FAILURE;
+    }
 
     /* Disable events based on mode */
     if(nikon_periodic_interface->is_cap_mode)
     {
-        /* CAP mode: Disable capture events */
-        if(attrs->load_share_enabled)
+        for(i = 0; i < CONFIG_NIKON_NUM_INSTANCES; i++)
         {
-            /* Load share mode: Iterate through enabled channels using channel_mask */
-            for(ch_idx = 0; ch_idx < NIKON_NUM_CH_PER_SLICE_MAX; ch_idx++)
+            /* CAP mode: Disable capture events */
+            if(attrs[i]->load_share_enabled)
             {
-                if(attrs->channel_mask & (1U << ch_idx))
+                /* Load share mode: Iterate through enabled channels using channel_mask */
+                for(ch_idx = 0; ch_idx < NIKON_NUM_CH_PER_SLICE_MAX; ch_idx++)
                 {
-                    nikon_disable_iep_cap_event(pru_iep, attrs->iep_cap_event[ch_idx]);
+                    if(attrs[i]->channel_mask & (1U << ch_idx))
+                    {
+                        nikon_disable_iep_cap_event(pru_iep, attrs[i]->iep_cap_event[ch_idx]);
+                    }
                 }
             }
+            else
+            {
+                /* Non-load share mode: Use index 0 always */
+                nikon_disable_iep_cap_event(pru_iep, attrs[i]->iep_cap_event[0]);
+            }
         }
-        else
-        {
-            /* Non-load share mode: Use index 0 always */
-            nikon_disable_iep_cap_event(pru_iep, attrs->iep_cap_event[0]);
-        }
-#if defined(NIKON_DUAL_PRU_SLICE_ENABLE)
-        /* Disable CAP event for second slice if enabled */
-        /* Configuring CAP events for SINGLE_CHANNEL_SINGLE_PRU mode, For load share mode it is not added*/
-        /* This code is only tested on AM261x with DUAL PRU SLICE MODE*/
-        if(attrs1->load_share_enabled == 0)
-        {
-            nikon_disable_iep_cap_event(pru_iep, attrs1->iep_cap_event[0]);
-        }
-#endif
-
         /* Disable IEP SYNC generation for CAP mode */
-        /* ASSUMPTION: Same PRU-ICSS instance and IEP instance is used for multiple Nikon handles in this example */
 #if defined(SOC_AM243X)
         nikon_disable_iep_cap_sync(pru_iep);
 #endif /* SOC_AM243X */
     }
     else
     {
-        /* CMP mode: Disable compare events */
-        if(attrs->load_share_enabled)
+        for(i = 0; i < CONFIG_NIKON_NUM_INSTANCES; i++)
         {
-            /* Load share mode: Iterate through enabled channels using channel_mask */
-            for(ch_idx = 0; ch_idx < NIKON_NUM_CH_PER_SLICE_MAX; ch_idx++)
+            /* CMP mode: Disable compare events */
+            if(attrs[i]->load_share_enabled)
             {
-                if(attrs->channel_mask & (1U << ch_idx))
+                /* Load share mode: Iterate through enabled channels using channel_mask */
+                for(ch_idx = 0; ch_idx < NIKON_NUM_CH_PER_SLICE_MAX; ch_idx++)
                 {
-                    nikon_disable_iep_cmp_event(pru_iep, attrs->iep_cmp_event[ch_idx]);
+                    if(attrs[i]->channel_mask & (1U << ch_idx))
+                    {
+                        nikon_disable_iep_cmp_event(pru_iep, attrs[i]->iep_cmp_event[ch_idx]);
+                    }
                 }
             }
+            else
+            {
+                /* Non-load share mode: Use index 0 always */
+                nikon_disable_iep_cmp_event(pru_iep, attrs[i]->iep_cmp_event[0]);
+            }
         }
-        else
-        {
-            /* Non-load share mode: Use index 0 always */
-            nikon_disable_iep_cmp_event(pru_iep, attrs->iep_cmp_event[0]);
-        }
-#if defined(NIKON_DUAL_PRU_SLICE_ENABLE)
-        /* Disable CMP event for second slice if enabled */
-        /* Configuring CMP events for SINGLE_CHANNEL_SINGLE_PRU mode, For load share mode it is not added*/
-        /* This code is only tested on AM261x with DUAL PRU SLICE MODE*/
-        if(attrs1->load_share_enabled == 0)
-        {
-            nikon_disable_iep_cmp_event(pru_iep, attrs1->iep_cmp_event[0]);
-        }
-#endif
-
         /* Disable IEP reset on CMP0 event */
-        /* PRU-ICSS Level Global Configuration uses first Nikon handle */
-        /* ASSUMPTION: Same PRU-ICSS instance and IEP instance is used for multiple Nikon handles in this example */
         nikon_disable_iep_reset_on_cmp0(pru_iep);
     }
 
@@ -1071,6 +1190,11 @@ int32_t nikon_stop_periodic_mode(nikon_periodic_interface *nikon_periodic_interf
 /* PRU FW IRQ handler */
 void nikon_pru_irq_handler(void *pruicss_handle)
 {
+    if(pruicss_handle == NULL)
+    {
+        return;
+    }
+
     /* Increment IRQ count */
 #if(CONFIG_NIKON0_MODE == NIKON_MODE_MULTI_CHANNEL_MULTI_PRU)
     /* In load share mode, index 1 is used for channel 1 connected to PRU */
@@ -1087,6 +1211,11 @@ void nikon_pru_irq_handler(void *pruicss_handle)
 /* RTU-PRU FW IRQ handler */
 void nikon_rtupru_irq_handler(void *pruicss_handle)
 {
+    if(pruicss_handle == NULL)
+    {
+        return;
+    }
+
     /* Increment IRQ count */
     gPruNikonIrqCnt[CONFIG_NIKON0][0]++;
 
@@ -1097,6 +1226,11 @@ void nikon_rtupru_irq_handler(void *pruicss_handle)
 /* TX-PRU FW IRQ handler */
 void nikon_txpru_irq_handler(void *pruicss_handle)
 {
+    if(pruicss_handle == NULL)
+    {
+        return;
+    }
+
     /* Increment IRQ count */
     gPruNikonIrqCnt[CONFIG_NIKON0][2]++;
 
@@ -1114,11 +1248,16 @@ void nikon_txpru_irq_handler(void *pruicss_handle)
 /* PRU FW IRQ handler */
 void nikon_pru_irq_handler_second_slice(void *pruicss_handle)
 {
+    if(pruicss_handle == NULL)
+    {
+        return;
+    }
+
     /* Increment IRQ count */
     /* In single PRU mode, index 0 is used for any channel connected to PRU */
     gPruNikonIrqCnt[CONFIG_NIKON1][0]++;
 
     /* Clear interrupt at source */
-    PRUICSS_clearEvent((PRUICSS_Handle)pruicss_handle, PRU_TRIGGER_HOST_NIKON_EVT);
+    PRUICSS_clearEvent((PRUICSS_Handle)pruicss_handle, PRU_TRIGGER_HOST_NIKON_EVT_SECOND_SLICE);
 }
 #endif

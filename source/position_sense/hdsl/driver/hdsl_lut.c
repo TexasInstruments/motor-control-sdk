@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2025 Texas Instruments Incorporated
+ * Copyright (C) 2021-2026 Texas Instruments Incorporated
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -76,18 +76,16 @@ static void hdsl_configure_register_if(HDSL_Handle handle);
 static void hdsl_enc_dec_lut(HDSL_Handle handle)
 {
     HDSL_Priv *priv;
+    void *enc_5b6b;
+    void *enc_3b4b;
+    void *dec_5b6b;
+    void *dec_3b4b;
 
-    if(handle == NULL)
-    {
-        return;
-    }
-
-    priv = HDSL_get_priv(handle);
-
-    void *enc_5b6b = (void *)((uint32_t)(priv->base_mem_addr) + ENC_5B6B_OFFS);
-    void *enc_3b4b = (void *)((uint32_t)(priv->base_mem_addr) + ENC_3B4B_OFFS);
-    void *dec_5b6b = (void *)((uint32_t)(priv->base_mem_addr) + DEC_5B6B_OFFS);
-    void *dec_3b4b = (void *)((uint32_t)(priv->base_mem_addr) + DEC_3B4B_OFFS);
+    priv = handle->priv;
+    enc_5b6b = (void *)((uint32_t)(priv->base_mem_addr) + ENC_5B6B_OFFS);
+    enc_3b4b = (void *)((uint32_t)(priv->base_mem_addr) + ENC_3B4B_OFFS);
+    dec_5b6b = (void *)((uint32_t)(priv->base_mem_addr) + DEC_5B6B_OFFS);
+    dec_3b4b = (void *)((uint32_t)(priv->base_mem_addr) + DEC_3B4B_OFFS);
 
     /* Encoding LUTs (input MSB first, output LSB first) */
     /* LUT 5b/6b encoding */
@@ -223,15 +221,10 @@ static void hdsl_enc_dec_lut(HDSL_Handle handle)
 static void hdsl_generate_bit_cnt_lut(HDSL_Handle handle)
 {
     HDSL_Priv *priv;
+    void *bitcnt;
 
-    if(handle == NULL)
-    {
-        return;
-    }
-
-    priv = HDSL_get_priv(handle);
-
-    void *bitcnt = (void *)((uint32_t)(priv->base_mem_addr) + BITCNT_OFFS);
+    priv = handle->priv;
+    bitcnt = (void *)((uint32_t)(priv->base_mem_addr) + BITCNT_OFFS);
 
     HW_WR_REG8((uint32_t)bitcnt + 0x0, 0);
     HW_WR_REG8((uint32_t)bitcnt + 0x1, 1);
@@ -495,15 +488,10 @@ static void hdsl_generate_bit_cnt_lut(HDSL_Handle handle)
 static void hdsl_generate_crc5_lut(HDSL_Handle handle)
 {
     HDSL_Priv *priv;
+    void *lut_crc5;
 
-    if(handle == NULL)
-    {
-        return;
-    }
-
-    priv = HDSL_get_priv(handle);
-
-    void *lut_crc5 = (void *)((uint32_t)(priv->base_mem_addr) + LUT_CRC5_OFFS);
+    priv = handle->priv;
+    lut_crc5 = (void *)((uint32_t)(priv->base_mem_addr) + LUT_CRC5_OFFS);
 
     HW_WR_REG8((uint32_t)lut_crc5 + 0x0, 0x0);
     HW_WR_REG8((uint32_t)lut_crc5 + 0x1, 0x5);
@@ -767,15 +755,10 @@ static void hdsl_generate_crc5_lut(HDSL_Handle handle)
 static void hdsl_generate_crc16_lut(HDSL_Handle handle)
 {
     HDSL_Priv *priv;
+    void *lut_crc16;
 
-    if(handle == NULL)
-    {
-        return;
-    }
-
-    priv = HDSL_get_priv(handle);
-
-    void *lut_crc16 = (void *)((uint32_t)(priv->base_mem_addr) + LUT_CRC16_OFFS);
+    priv = handle->priv;
+    lut_crc16 = (void *)((uint32_t)(priv->base_mem_addr) + LUT_CRC16_OFFS);
 
     HW_WR_REG16((uint32_t)lut_crc16 + 0x0, 0x0);
     HW_WR_REG16((uint32_t)lut_crc16 + 0x2, 0x90d9);
@@ -1039,15 +1022,10 @@ static void hdsl_generate_crc16_lut(HDSL_Handle handle)
 static void hdsl_generate_bit_to_byte_lut(HDSL_Handle handle)
 {
     HDSL_Priv *priv;
+    void *lut_bittobyte;
 
-    if(handle == NULL)
-    {
-        return;
-    }
-
-    priv = HDSL_get_priv(handle);
-
-    void *lut_bittobyte = (void *)((uint32_t)(priv->base_mem_addr) + LUT_BITTOBYTE_OFFS);
+    priv = handle->priv;
+    lut_bittobyte = (void *)((uint32_t)(priv->base_mem_addr) + LUT_BITTOBYTE_OFFS);
 
     HW_WR_REG32((uint32_t)lut_bittobyte + 0x0, 0x0);
     HW_WR_REG32((uint32_t)lut_bittobyte + 0x4, 0x1);
@@ -1071,15 +1049,10 @@ static void hdsl_generate_bit_to_byte_lut(HDSL_Handle handle)
 static void hdsl_generate_rssi_lut(HDSL_Handle handle)
 {
     HDSL_Priv *priv;
+    void *lut_rssi;
 
-    if(handle == NULL)
-    {
-        return;
-    }
-
-    priv = HDSL_get_priv(handle);
-
-    void *lut_rssi = (void *)((uint32_t)(priv->base_mem_addr) + LUT_RSSI_OFFS);
+    priv = handle->priv;
+    lut_rssi = (void *)((uint32_t)(priv->base_mem_addr) + LUT_RSSI_OFFS);
 
     HW_WR_REG8((uint32_t)lut_rssi + 0x0, 0xc);
     HW_WR_REG8((uint32_t)lut_rssi + 0x1, 0xc);
@@ -1342,15 +1315,10 @@ static void hdsl_generate_rssi_lut(HDSL_Handle handle)
 static void hdsl_generate_extra_edge_lut(HDSL_Handle handle)
 {
     HDSL_Priv *priv;
+    void *lut_ee;
 
-    if(handle == NULL)
-    {
-        return;
-    }
-
-    priv = HDSL_get_priv(handle);
-
-    void *lut_ee = (void *)((uint32_t)(priv->base_mem_addr) + LUT_EE_OFFS);
+    priv = handle->priv;
+    lut_ee = (void *)((uint32_t)(priv->base_mem_addr) + LUT_EE_OFFS);
 
     HW_WR_REG8((uint32_t)lut_ee + 0xff, 0);
     HW_WR_REG8((uint32_t)lut_ee + 0xfe, 3);
@@ -1366,12 +1334,7 @@ static void hdsl_configure_register_if(HDSL_Handle handle)
 {
     HDSL_Priv *priv;
 
-    if(handle == NULL)
-    {
-        return;
-    }
-
-    priv = HDSL_get_priv(handle);
+    priv = handle->priv;
 
     priv->hdsl_interface->PC_ADD_H             = 0x80;
     priv->hdsl_interface->PC_OFF_H             = 0x80;
@@ -1384,7 +1347,8 @@ static void hdsl_configure_register_if(HDSL_Handle handle)
 
 int32_t HDSL_generate_memory_image(HDSL_Handle handle)
 {
-    if(handle == NULL)
+
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (handle->priv->base_mem_addr == NULL))
     {
         return SystemP_FAILURE;
     }

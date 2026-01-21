@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2021-25 Texas Instruments Incorporated
+ *  Copyright (C) 2021-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -60,11 +60,10 @@ extern "C" {
 
 /**
  *  \par Validation Strategy
- *  EnDAT driver APIs use a simplified validation approach for optimal performance:
+ *  EnDAT driver APIs perform following validation:
  *  - **Handle validation**: All public APIs validate the handle parameter for NULL
  *  - **Array bounds checking**: APIs with array parameters or index parameters perform bounds validation
- *  - **Internal structure validation**: Internal structures (attrs, priv, pruicss_xchg, pruicss_handle)
- *    are validated once during endat_init() and assumed valid in subsequent API calls
+ *  - **Targeted internal structure validation**: Each function validates the pointers it dereferences
  */
 
 /**
@@ -84,10 +83,9 @@ extern "C" {
  *
  *  \param[out] params  Pointer to parameters structure to initialize
  *
- *  \retval     SystemP_SUCCESS     Parameters initialized successfully
- *  \retval     SystemP_FAILURE     params is NULL
+ *  \note       On NULL params, function returns without performing any operation
  */
-int32_t endat_params_init(endat_params *params);
+void endat_params_init(endat_params *params);
 
 /**
  *  \brief      Initialize an EnDAT instance
@@ -131,22 +129,20 @@ endat_handle endat_init(uint32_t index, const endat_params *params);
 /**
  *  \brief      Deinitialize an EnDAT instance
  *
- *  \details    This function marks the EnDAT instance as closed and releases resources.
- *              After calling this function, the handle should not be used for further
- *              operations until reinitialized with \ref endat_init.
+ *  \details    This function marks the EnDAT instance as closed. After calling this function,
+ *              the handle should not be used for further operations until reinitialized
+ *              with \ref endat_init.
  *
  *              Operations performed:
  *              - Sets priv->is_open to 0 to mark handle as closed
- *              - No hardware resources are released (PRU firmware continues running)
  *
  *  \param[in]  handle          EnDAT handle to deinitialize
  *
- *  \retval     SystemP_SUCCESS     Handle deinitialized successfully
- *  \retval     SystemP_FAILURE     handle is NULL
+ *  \note       On NULL handle or NULL priv, function returns without performing any operation
  *
  *  \note       This function does not stop PRU firmware or release PRUICSS resources.
  */
-int32_t endat_deinit(endat_handle handle);
+void endat_deinit(endat_handle handle);
 
 /**
  *  \brief      Process raw received data and format based on the command
@@ -182,13 +178,13 @@ int32_t endat_deinit(endat_handle handle);
  *              the target channel before calling this function.
  */
 int32_t endat_recvd_process(endat_handle handle, int32_t cmd,
-                        endat_format_data *u);
+                            endat_format_data *u);
 
 /**
  *  \brief      Validate CRC for received data
  *
  *  \details    This function validates the CRC (Cyclic Redundancy Check) for the
- *              received data after processing. 
+ *              received data after processing.
  *
  *              This function should be called after:
  *              - \ref endat_recvd_process has formatted the received data
@@ -231,7 +227,7 @@ uint32_t endat_recvd_validate(endat_handle handle, int32_t cmd,
  *              - \ref endat_command_wait : Wait for PRU to complete the transaction
  *
  *              This function blocks until the firmware completes the command transaction
- *              or a timeout occurs. 
+ *              or a timeout occurs.
  *
  *              Typical usage sequence:
  *              1. Call this function to execute command
@@ -339,7 +335,7 @@ int32_t endat_command_send(endat_handle handle);
  *
  *              The maximum wait time is controlled by the fw_wait_delay_us parameter
  *              configured during initialization. The function performs busy-wait
- *              polling for optimal timing accuracy.
+ *              polling.
  *
  *              After this function returns, the received data is available in the
  *              PRU interface buffer and can be processed using \ref endat_recvd_process.
@@ -357,16 +353,15 @@ int32_t endat_command_wait(endat_handle handle);
  *  \brief      Get encoder recovery time from memory
  *
  *  \details    This function retrieves the recovery time (tD) parameter from the
- *              PRU interface memory. 
+ *              PRU interface memory.
  *
  *              The recovery time value is:
  *              - Read from the PRU interface buffer
- *              - measured and stored by firmware during latest command execution 
- *           
+ *              - measured and stored by firmware during latest command execution
  *
  *              Prerequisites:
  *              - \ref endat_command_process must have been called successfully
- * 
+ *
  *  \param[in]  handle      EnDAT driver handle obtained from \ref endat_init
  *  \param[out] recovery_time  Pointer to store recovery time in nanoseconds
  *
@@ -421,10 +416,9 @@ int32_t endat_get_encoder_info(endat_handle handle);
  *              The propagation delay is:
  *              - Automatically measured during firmware initialization
  *              - Used to compensate timing for accurate communication
- *   
  *
  *  \param[in]  handle      EnDAT driver handle obtained from \ref endat_init
- *  \param[out] prop_delay  Pointer to store propagation delay in pru cycle count 
+ *  \param[out] prop_delay  Pointer to store propagation delay in pru cycle count
  *
  *  \retval     SystemP_SUCCESS     Propagation delay retrieved successfully
  *  \retval     SystemP_FAILURE     On NULL handle, NULL prop_delay pointer, or read failure
@@ -442,11 +436,9 @@ int32_t endat_get_prop_delay(endat_handle handle, uint32_t *prop_delay);
  *              (addinfo1, addinfo2) along with position data, and this function
  *              helps the driver know when to expect and process these fields.
  *
- *
  *              The tracking information is stored in the handle and used by:
  *              - \ref endat_recvd_process : To parse the correct number of fields
  *              - \ref endat_recvd_validate : To validate CRC for all present fields
- *
  *
  *  \param[in]  handle          EnDAT driver handle obtained from \ref endat_init
  *  \param[in]  cmd             EnDAT command number
@@ -457,8 +449,7 @@ int32_t endat_get_prop_delay(endat_handle handle, uint32_t *prop_delay);
  *
  *  \note       Not all EnDAT commands support additional information.
  */
-int32_t endat_addinfo_track(endat_handle handle, int32_t cmd,
-                         endat_cmd_supplement *cmd_supplement);
+int32_t endat_addinfo_track(endat_handle handle, int32_t cmd, endat_cmd_supplement *cmd_supplement);
 
 /**
  *  \brief      Configure propagation delay for EnDAT channel
@@ -471,7 +462,6 @@ int32_t endat_addinfo_track(endat_handle handle, int32_t cmd,
  *              - Converts nanosecond delay to delay register counter value
  *              - Updates the propagation delay tracking
  *              - Configures the channel-specific delay register
- *
  *
  *  \param[in]  handle  EnDAT driver handle obtained from \ref endat_init
  *  \param[in]  val     Propagation delay value in nanoseconds
@@ -497,7 +487,7 @@ int32_t endat_config_propagation_delay(endat_handle handle, uint32_t val);
  *
  *              This function:
  *              - Updates PRU 3 channel interface clock registers
- *              
+ *
  *  \param[in]  handle      EnDAT driver handle obtained from \ref endat_init
  *  \param[in]  freq        Clock frequency in Hz
  *
@@ -510,11 +500,11 @@ int32_t endat_config_propagation_delay(endat_handle handle, uint32_t val);
  *              for both RX and TX clock.
  *
  *  \note       The RX clock frequency is always configured as 8x the endat clock.
- */  
+ */
 int32_t endat_config_clock(endat_handle handle, uint32_t freq);
 
 /**
- *  \brief      Configure tST delay 
+ *  \brief      Configure tST delay
  *
  *  \details    This function configures the tST (start delay) timing parameter
  *
@@ -563,10 +553,7 @@ int32_t endat_config_rx_arm_cnt(endat_handle handle, uint16_t val);
  *  \brief      Configure cable/wire delay compensation for selected channel
  *
  *  \details    This function configures the cable delay compensation for the currently
- *              selected EnDAT channel. 
- *
- *         
- *
+ *              selected EnDAT channel.
  *
  *              In multi-channel configurations, different channels may have
  *              different cable lengths requiring individual compensation.
@@ -590,10 +577,8 @@ int32_t endat_config_wire_delay(endat_handle handle, uint16_t val);
  *  \details    This function configures the number of clock cycles to be disabled
  *              at the end of the receive phase to account for tD (cable delay time).
  *
- *
  *              The value represents how many clock cycles should be suppressed
  *              at the end of reception to maintain proper timing margins.
- *
  *
  *  \param[in]  handle      EnDAT driver handle obtained from \ref endat_init
  *  \param[in]  val         Number of endat clock cycles to disable at end of RX
@@ -612,7 +597,7 @@ int32_t endat_config_rx_clock_disable(endat_handle handle,
  *
  *  \details    This function starts continuous mode operation where the encoder
  *              automatically sends position updates at regular intervals without
- *              requiring individual command transactions. 
+ *              requiring individual command transactions.
  *
  *              In continuous mode:
  *              - Position data is automatically transmitted by encoder
@@ -622,7 +607,6 @@ int32_t endat_config_rx_clock_disable(endat_handle handle,
  *              This function configures:
  *              - PRU firmware for continuous mode operation
  *              - Encoder to enable continuous transmission
- *
  *
  *              Use \ref endat_stop_continuous_mode to return to command mode.
  *
@@ -647,7 +631,6 @@ int32_t endat_start_continuous_mode(endat_handle handle);
  *              - Disables continuous transmission in the encoder
  *              - Reconfigures PRU firmware for command mode operation
  *
- *
  *  \param[in]  handle      EnDAT driver handle obtained from \ref endat_init
  *
  *  \retval     SystemP_SUCCESS     Continuous mode stopped successfully
@@ -665,7 +648,6 @@ int32_t endat_stop_continuous_mode(endat_handle handle);
  *              mode, where position updates are initiated by explicit host commands
  *              rather than by periodic timers or external hardware triggers.
  *
- *
  *  \param[in]  handle      EnDAT driver handle obtained from \ref endat_init
  *
  *  \retval     SystemP_SUCCESS     Host trigger mode configured successfully
@@ -675,18 +657,15 @@ int32_t endat_stop_continuous_mode(endat_handle handle);
 int32_t endat_config_host_trigger(endat_handle handle);
 
 /**
- *  \brief      Configure EnDAT for periodic trigger using IEP compare mode
+ *  \details    Configures the EnDAT firmware to use IEP CMP (compare) events for periodic triggering.
+ *              Position data is sampled automatically when IEP counter reaches the configured
+ *              CMP event compare value.
  *
- *  \details    This function configures the EnDAT to operate with periodic
- *              triggers generated by IEP (Industrial Ethernet Peripheral) compare
- *              events. In this mode, position updates are automatically triggered
- *              at precise intervals defined by IEP timer compare registers.
- *
- *           
- *              Operation:
- *              - IEP timer continuously counts
- *              - When counter matches compare value, position update triggers
- *             
+ *              **Configuration requirements:**
+ *              - IEP hardware CMP registers must be configured separately
+ *              - Use \ref endat_config_iep_cmp_event to set event number in firmware. This function
+ *                is called inside \ref endat_init by default.
+ *              - CMP event range: 0-15
  *
  *  \param[in]  handle      EnDAT driver handle obtained from \ref endat_init
  *
@@ -708,7 +687,6 @@ int32_t endat_config_periodic_trigger_cmp_mode(endat_handle handle);
  *              - All command transactions target the selected channel
  *              - Configuration operations apply to the selected channel
  *              - Position data is read from the selected channel
- *
  *
  *              In multi-channel scenarios, use \ref endat_multi_channel_set_cur to
  *              switch between channels when processing data from multiple encoders.
@@ -738,9 +716,8 @@ int32_t endat_config_channel(endat_handle handle, uint32_t ch);
  *              - Example: 0x07 (0b111) enables all three channels
  *
  *              The loadshare parameter controls load sharing mode:
- *              - 0: Load share disabled 
- *              - 1: Load share enabled 
- *
+ *              - 0: Load share disabled
+ *              - 1: Load share enabled
  *
  *              This function should be called during initialization to set up
  *              the multi-channel configuration before loading the firmware and starting transactions.
@@ -752,8 +729,7 @@ int32_t endat_config_channel(endat_handle handle, uint32_t ch);
  *  \retval     SystemP_SUCCESS     Multi-channel mask configured successfully
  *  \retval     SystemP_FAILURE     handle is NULL
  *
- *  \note       Use loadshare=1 when encoders have different characteristics.
- *  \note       See \ref endat_enable_load_share_mode for more on load sharing.
+ *  \note       Use loadshare = 1 when encoders, when using load share mode for "Multi-channel using Multiple PRUs" mode.
  */
 int32_t endat_config_multi_channel_mask(endat_handle handle,
                                      uint8_t mask,
@@ -763,8 +739,7 @@ int32_t endat_config_multi_channel_mask(endat_handle handle,
  *  \brief      Get detected channels in multi-channel configuration
  *
  *  \details    This function retrieves the mask of encoder channels that were
- *              successfully detected by the firmware during initialization. 
- *
+ *              successfully detected by the firmware during initialization.
  *
  *              Return value interpretation:
  *              - Bit 0: Channel 0 detected (1) or not detected (0)
@@ -790,7 +765,6 @@ uint8_t endat_multi_channel_detected(endat_handle handle);
  *              data should be processed when calling send and receive processing APIs. After a
  *              multi-channel transaction completes, call this function to iterate through
  *              each channel and process its data separately.
- *
  *
  *  \param[in]  handle      EnDAT driver handle obtained from \ref endat_init
  *  \param[in]  ch          Channel number to select for data processing (0-2)
@@ -848,7 +822,7 @@ int32_t endat_wait_initialization(endat_handle handle, uint32_t timeout, uint8_t
  *
  *  \note       Call this function once during initialization.
  */
-int32_t endat_init_rt_measurement (endat_handle handle);
+int32_t endat_init_rt_measurement(endat_handle handle);
 
 /**
  *  \brief      Validate measured recovery time against acceptable range
@@ -865,7 +839,6 @@ int32_t endat_init_rt_measurement (endat_handle handle);
  *              - ENDAT_RT_NO_ERROR (0x0): Recovery time is within acceptable range
  *              - ENDAT_RT_OUT_OF_RANGE_ERROR (0x1): Recovery time is outside valid ranges
  *              - ENDAT_RT_COUNTER_STUCK_ERROR (0x2): Recovery time counter is not incrementing
- *
  *
  *  \param[in]  handle      EnDAT driver handle obtained from \ref endat_init
  *  \param[out] error_code  Pointer to store recovery time error code
@@ -920,7 +893,7 @@ int32_t endat_disable_rt_measurement(endat_handle handle);
  *
  *  \note       Recovery time counter must be initialized before enabling.
  */
-int32_t endat_enable_rt_measurement (endat_handle handle);
+int32_t endat_enable_rt_measurement(endat_handle handle);
 /**
  *  \brief      Get recovery time counter enable status
  *
@@ -936,22 +909,26 @@ int32_t endat_enable_rt_measurement (endat_handle handle);
  *
  */
 int32_t endat_status_rt_measurement(endat_handle handle, uint32_t *status);
+
 /**
  *  \brief      Configure EnDAT for periodic trigger using IEP capture mode
  *
- *  \details    This function configures the EnDAT to operate with periodic
- *              triggers generated by IEP (Industrial Ethernet Peripheral) capture
- *              events.
+ *  \details    Configures the EnDAT firmware to use IEP CAP (capture) events for periodic triggering.
+ *              Position data is sampled automatically when an external signal triggers
+ *              the IEP capture event.
  *
- *              Use \ref endat_config_iep_cap_event to configure specific capture
- *              events and assign them to channels.
+ *              **Configuration requirements:**
+ *              - IEP hardware CAP registers must be configured separately
+ *              - External signal to IEP capture input should be configured
+ *              - Use \ref endat_config_iep_cap_event to set event number in firmware. This function
+ *                is called inside \ref endat_init by default.
+ *              - CAP event range: 0-7
  *
  *  \param[in]  handle      EnDAT driver handle obtained from \ref endat_init
  *
  *  \retval     SystemP_SUCCESS     Periodic trigger capture mode configured successfully
  *  \retval     SystemP_FAILURE     handle is NULL
  *
- *  \note       Configure specific capture events using \ref endat_config_iep_cap_event.
  */
 int32_t endat_config_periodic_trigger_cap_mode(endat_handle handle);
 
@@ -969,8 +946,10 @@ int32_t endat_config_periodic_trigger_cap_mode(endat_handle handle);
  *  \param[in]  event_num   CAP event number (0-7)
  *
  *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE otherwise
- * 
- *  \note       This is configured during the endat_init call. 
+ *
+ *  \note       This is configured during the \ref endat_init call.
+ *  \note       This function only configures firmware DMEM, not IEP hardware.
+ *              Application must separately configure IEP CMP hardware registers.
  */
 int32_t endat_config_iep_cap_event(endat_handle handle, uint8_t channel, uint8_t event_num);
 
@@ -987,8 +966,10 @@ int32_t endat_config_iep_cap_event(endat_handle handle, uint8_t channel, uint8_t
  *  \param[in]  event_num   CMP event number (0-15)
  *
  *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE otherwise
- * 
- *  \note       This is configured during the endat_init call. 
+ *
+ *  \note       This is configured during the \ref endat_init call.
+ *  \note       This function only configures firmware DMEM, not IEP hardware.
+ *              Application must separately configure IEP CMP hardware registers.
  */
 int32_t endat_config_iep_cmp_event(endat_handle handle, uint8_t channel, uint8_t event_num);
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2025 Texas Instruments Incorporated
+ *  Copyright (C) 2025-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -67,9 +67,9 @@ uint32_t gpioBaseAddr, pinNum;
 
 /**
  * \brief Main time synchronization state machine execution
- * 
+ *
  * \param handle Handle to timesync instance
- * 
+ *
  * Performs one iteration of the synchronization process:
  * - Captures new timestamp
  * - Calculates offset from expected time
@@ -82,6 +82,8 @@ void timesync_run(TimesyncHandle handle)
     uint32_t iepBaseAddress = handle->iepBaseAddress;
     uint64_t expectedTimestamp;
     uint32_t timeElapsed;
+    uint8_t count;
+    int32_t avgCorrection;
 
 #ifdef ENABLE_DEBUG_LOGS
     TimesyncDebug *timesyncDebugPtr = handle->timesyncDebugPtr;
@@ -104,7 +106,7 @@ void timesync_run(TimesyncHandle handle)
         timesync_do_first_adjustment(iepBaseAddress, timeElapsed);
 
         handle->state = TIMESYNC_STATE_FIRST_ADJUSTMENT_DONE;
- 
+
         /* configure compare 1 with sync period after first sync and enable compare events */
         HW_WR_REG32((uint32_t)(iepBaseAddress + CSL_ICSS_G_PR1_IEP0_SLV_CMP1_REG0),(SYNC_PERIOD_IN_NS));
         HW_WR_REG32((uint32_t)(iepBaseAddress + CSL_ICSS_G_PR1_IEP0_SLV_CMP_CFG_REG), 0x1FFFE);
@@ -241,8 +243,8 @@ void timesync_run(TimesyncHandle handle)
             else
             {
                 /*get average of all offsets*/
-                int32_t avgCorrection = 0;
-                for(uint8_t count = 0; count < OFFSET_ALGO_BIN_SIZE; count++)
+                avgCorrection = 0;
+                for(count = 0; count < OFFSET_ALGO_BIN_SIZE; count++)
                 {
                     avgCorrection += handle->correction[count];
                 }
@@ -276,6 +278,8 @@ void timesync_run(TimesyncHandle handle)
  */
 TimesyncHandle timesync_init(TimesyncParams *params, uint32_t iepBaseAddress)
 {
+    TimesyncHandle handle;
+
     DebugP_assert(params != NULL);
 
 #ifdef ENABLE_DEBUG_GPIO
@@ -285,7 +289,7 @@ TimesyncHandle timesync_init(TimesyncParams *params, uint32_t iepBaseAddress)
     GPIO_setDirMode(gpioBaseAddr, pinNum, TIMESYNC_DEBUG_DIR);
 #endif
 
-    TimesyncHandle handle = (TimesyncHandle)params;
+    handle = (TimesyncHandle)params;
     timesync_reset(handle);
     handle->iepBaseAddress = iepBaseAddress;
     handle->resetCount = 0;
@@ -433,11 +437,13 @@ void timesync_adjust_slow_compensation(TimesyncHandle handle, int32_t adjOffset)
  */
 void timesync_reset(TimesyncHandle handle)
 {
-
-    uint32_t iepBaseAddress = handle->iepBaseAddress;
-    uint32_t iepGlobalConfigValue = ((handle->iepIncrementValue << CSL_ICSS_G_PR1_IEP0_SLV_GLOBAL_CFG_REG_DEFAULT_INC_SHIFT) | 1);
+    uint32_t iepBaseAddress;
+    uint32_t iepGlobalConfigValue;
 
     DebugP_assert(handle != NULL);
+
+    iepBaseAddress = handle->iepBaseAddress;
+    iepGlobalConfigValue = ((handle->iepIncrementValue << CSL_ICSS_G_PR1_IEP0_SLV_GLOBAL_CFG_REG_DEFAULT_INC_SHIFT) | 1);
 
     /* set compensation increment = 5ns (default val) */
     HW_WR_REG32(iepBaseAddress + CSL_ICSS_G_PR1_IEP0_SLV_GLOBAL_CFG_REG, iepGlobalConfigValue);
@@ -469,7 +475,7 @@ void timesync_debug_reset(TimesyncDebug *timesyncDebugPtr)
 {
     if (timesyncDebugPtr == NULL) {
         return;
-    }    
+    }
     timesyncDebugPtr->Mindex = 0;
     timesyncDebugPtr->MinitialOffset = 0;
     timesyncDebugPtr->MmaxOffset = 0;
@@ -478,7 +484,7 @@ void timesync_debug_reset(TimesyncDebug *timesyncDebugPtr)
 
 /**
  * \brief Sets the initial count value for the IEP counter in first latch in event.
- * 
+ *
  * \param iepBaseAddress Base address of the IEP module
  * \param initialCount Initial counter value to set (64-bit)
  */

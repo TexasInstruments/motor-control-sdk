@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2022-2025 Texas Instruments Incorporated
+ *  Copyright (C) 2022-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -40,12 +40,11 @@
  * Here is the list of APIs used for Tamagawa encoder communication protocol
  *
  *  \par Validation Strategy
- *  Tamagawa driver APIs use a simplified validation approach for optimal performance:
+ *  Tamagawa driver APIs use following validation approach:
  *  - **Handle validation**: All public APIs validate the handle parameter for NULL
  *  - **Array bounds checking**: APIs with array parameters or index parameters perform bounds validation
- *  - **Internal structure validation**: Internal structures (attrs, priv, pruicss_xchg, pruicss_handle)
- *    are validated once during \ref tamagawa_init and assumed valid in subsequent API calls
- *  - This strategy reduces overhead in time-critical data path functions.
+ *  - **Internal structure validation**: All APIs validate internal structure pointers (attrs, priv, tamagawa_xchg, pruicss_handle, etc.)
+ *    for NULL before dereferencing to provide protection against NULL pointer dereferences
  *
  *  @{
  */
@@ -82,34 +81,34 @@ extern "C" {
 /**
  *  \brief  Maximum number of channels supported per PRU slice
  */
-#define TAMAGAWA_MAX_CHANNELS_PER_SLICE (3)
+#define TAMAGAWA_MAX_CHANNELS_PER_SLICE             (3)
 
 /** \brief Single PRU - Single channel configuration mode
  *
  *  Only one channel (ch0, ch1, or ch2) is used with a single PRU core.
  *  This is the simplest configuration for single encoder applications.
  */
-#define TAMAGAWA_MODE_SINGLE_CHANNEL_SINGLE_PRU    (0U)
+#define TAMAGAWA_MODE_SINGLE_CHANNEL_SINGLE_PRU     (0U)
 
 /** \brief Single PRU - Multichannel configuration mode
  *
  *  Multiple channels (up to 3: ch0, ch1, ch2) are managed by a single PRU core.
  *  All channels share the same PRU core resources without load sharing.
  */
-#define TAMAGAWA_MODE_MULTI_CHANNEL_SINGLE_PRU     (1U)
+#define TAMAGAWA_MODE_MULTI_CHANNEL_SINGLE_PRU      (1U)
 
 /** \brief Multi PRU - Load share configuration mode
  *
  *  Multiple channels are distributed across multiple PRU cores with load sharing.
  *  Each PRU core handles different channels with synchronized global reinit operations.
  */
-#define TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU      (2U)
+#define TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU       (2U)
 
 /**
  *  \brief  Tamagawa operation mode: Periodic trigger mode using iep compare event
  *
  *  In periodic mode, the PRU firmware automatically triggers position readout
- *  at regular intervals configured by IEP timer.
+ *  based on IEP compare events.
  */
 #define TAMAGAWA_OPMODE_PERIODIC_CMP                (0x0U)
 
@@ -122,23 +121,23 @@ extern "C" {
 #define TAMAGAWA_OPMODE_HOST_TRIGGER                (0x1U)
 
 /**
+ *  \brief  Tamagawa operation mode: Periodic trigger mode using iep capture event
+ *
+ *  In periodic mode, the PRU firmware automatically triggers position readout
+ *  based on IEP capture events.
+ */
+#define TAMAGAWA_OPMODE_PERIODIC_CAP                (0x2U)
+
+/**
  *  \brief  Enable cycle trigger for firmware
  */
 /* Enable cycle trigger for firmware*/
-#define TAMAGAWA_ENABLE_CYCLE_TRIGGER          0x1
+#define TAMAGAWA_ENABLE_CYCLE_TRIGGER               (0x1)
 
 /**
  *  \brief  Disable cycle trigger for firmware
  */
-#define TAMAGAWA_DISABLE_CYCLE_TRIGGER         0x0
-
-/**
- *  \brief  Tamagawa operation mode: Periodic trigger mode using iep capture event
- *
- *  In periodic mode, the PRU firmware automatically triggers position readout
- *  at regular intervals configured by IEP timer.
- */
-#define TAMAGAWA_OPMODE_PERIODIC_CAP                (0x2U)
+#define TAMAGAWA_DISABLE_CYCLE_TRIGGER              (0x0)
 
 /** \brief Allowed Tamagawa communication frequency: 2.5 MHz */
 #define TAMAGAWA_FREQ_2_5_MHZ                       (2500000U)
@@ -161,44 +160,44 @@ extern "C" {
 /**
  *  \brief  Maximum EEPROM address that can be used for EEPROM Read/Write
  */
-#define TAMAGAWA_MAX_EEPROM_ADDRESS (127)
+#define TAMAGAWA_MAX_EEPROM_ADDRESS                 (127)
 
 /**
  *  \brief  Maximum value that can be written to EEPROM
  */
-#define TAMAGAWA_MAX_EEPROM_WRITE_DATA (255)
+#define TAMAGAWA_MAX_EEPROM_WRITE_DATA              (255)
 
 /**
  *  \brief  RX oversampling rate. Set 7 for 8x oversampling.
  */
-#define TAMAGAWA_RX_OVERSAMPLING_RATE (7)
+#define TAMAGAWA_RX_OVERSAMPLING_RATE               (7)
 
 /**
  *  \brief  Delay counter increment value. 5 ns based on 200 MHz clock,
  *          as Three Channel Peripheral interface needs this value in
  *          200 MHz clock units.
  */
-#define TAMAGAWA_DELAY_COUNTER_INCREMENT (5)
+#define TAMAGAWA_DELAY_COUNTER_INCREMENT            (5)
 
 /**
  *  \brief  Number of bytes in CRC calculation for EEPROM Write (CF + ADF + EDF)
  */
-#define TAMAGAWA_EEPROM_WRITE_CRC_BYTES (3)
+#define TAMAGAWA_EEPROM_WRITE_CRC_BYTES             (3)
 
 /**
  *  \brief  Number of bytes in CRC calculation for EEPROM Read (CF + ADF)
  */
-#define TAMAGAWA_EEPROM_READ_CRC_BYTES (2)
+#define TAMAGAWA_EEPROM_READ_CRC_BYTES              (2)
 
 /**
  *  \brief  Number of bits in a byte
  */
-#define TAMAGAWA_BITS_PER_BYTE (8)
+#define TAMAGAWA_BITS_PER_BYTE                      (8)
 
 /**
  *  \brief  CRC calculation array size for storing frame data
  */
-#define TAMAGAWA_CRC_DATA_ARRAY_SIZE (12)
+#define TAMAGAWA_CRC_DATA_ARRAY_SIZE                (12)
 
 /**
  *  \brief  Default command process delay in microseconds
@@ -206,7 +205,7 @@ extern "C" {
  *  This delay is used in command wait loops to prevent busy-waiting and
  *  allow timeout detection. Can be overridden via tamagawa_params.
  */
-#define TAMAGAWA_DEFAULT_CMD_WAIT_DELAY_US (100)
+#define TAMAGAWA_DEFAULT_CMD_WAIT_DELAY_US          (100)
 
 /**
  *  \brief  Default maximum wait loop count
@@ -215,29 +214,28 @@ extern "C" {
  *  communication failures. The actual timeout is: max_wait_loop_count × cmd_wait_delay_us.
  *  With defaults (50 × 100 us = 5000 us). Can be overridden via tamagawa_params.
  */
-#define TAMAGAWA_DEFAULT_MAX_WAIT_LOOP_COUNT (50U)
+#define TAMAGAWA_DEFAULT_MAX_WAIT_LOOP_COUNT        (50U)
 
 /**
  *  \brief  Tamagawa EEPROM Control Field value for Write operation
  */
-#define TAMAGAWA_CF_EEPROM_WRITE (0x32U)
+#define TAMAGAWA_CF_EEPROM_WRITE                    (0x32U)
 
 /**
  *  \brief  Tamagawa EEPROM Control Field value for Read operation
  */
-#define TAMAGAWA_CF_EEPROM_READ (0xEAU)
+#define TAMAGAWA_CF_EEPROM_READ                     (0xEAU)
 /**
  * \brief IEP CAP0 register offset - cslr common file does not have defined cap registers
  * FIXME: Remove these definitions once they are available in cslr_common.h
  */
-#define TAMAGAWA_CFG_REG_SIZE                             (4U)
-#define TAMAGAWA_CSL_ICSS_PR1_IEP0_SLV_CAP0_REG0          (CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG + 2U*TAMAGAWA_CFG_REG_SIZE)
-#define TAMAGAWA_CSL_ICSS_PR1_IEP0_SLV_CAP0_REG1          (CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG + 3U*TAMAGAWA_CFG_REG_SIZE)
+#define TAMAGAWA_CFG_REG_SIZE                       (4U)
+#define TAMAGAWA_CSL_ICSS_PR1_IEP0_SLV_CAP0_REG0    (CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG + 2U*TAMAGAWA_CFG_REG_SIZE)
 
 /**
  * \brief 8-byte register offset for IEP registers
  */
-#define TAMAGAWA_8_BYTE_REG_OFFSET                        (8U)
+#define TAMAGAWA_8_BYTE_REG_OFFSET                  (8U)
 
 /**
  *  \brief  Tamagawa Data ID codes
@@ -381,16 +379,13 @@ typedef struct tamagawa_channel_config_s
  */
 typedef struct tamagawa_periodic_trigger_cfg_s
 {
-    uint8_t iep_cmp_event;
+    volatile uint8_t iep_cmp_event;
     /**< IEP compare event number for periodic CMP mode */
-
-    uint8_t iep_cap_event;
+    volatile uint8_t iep_cap_event;
     /**< IEP capture event number for periodic CAP mode */
-
-    uint16_t reserved;
+    volatile uint16_t reserved;
     /**< Reserved for alignment */
-
-    uint32_t iep_capture_reg;
+    volatile uint32_t iep_capture_reg;
     /**< IEP capture register address for periodic CAP mode */
 } tamagawa_periodic_trigger_cfg;
 
@@ -436,13 +431,13 @@ typedef struct tamagawa_xchg_s
         /**< Per-channel interface array (3 channels) */
     tamagawa_eeprom_interface tamagawa_eeprom_interface[TAMAGAWA_MAX_CHANNELS_PER_SLICE];
         /**< Tamagawa interface for EEPROM commands (Only index 0 is used when load share is disabled)*/
-    volatile uint8_t   execution_state[TAMAGAWA_MAX_CHANNELS_PER_SLICE];
+    volatile uint8_t execution_state[TAMAGAWA_MAX_CHANNELS_PER_SLICE];
     /**< PRU firmware execution state for load share mode synchronization.
      *   Used internally by firmware to coordinate multi-PRU operations */
     volatile uint8_t primary_core_mask;
     /**< Primary PRU core mask for load share mode synchronization (0x1, 0x2, or 0x4).
      *   Indicates which channel's PRU acts as primary coordinator */
-    uint32_t iep_base_addr;
+    volatile uint32_t iep_base_addr;
         /**< IEP base address for periodic trigger mode */
     tamagawa_periodic_trigger_cfg trigger_params[TAMAGAWA_MAX_CHANNELS_PER_SLICE];
         /**< Periodic trigger configuration parameters for each channel (ch0, ch1, ch2).
@@ -645,12 +640,8 @@ void tamagawa_params_init(tamagawa_params *params);
  *  \retval     handle           Pointer to initialized tamagawa_handle instance
  *  \retval     NULL             On validation failure (invalid index, NULL params, invalid configuration, or internal API call failure)
  *
- *  \note       Validation strategy: This function performs strict validation on all input parameters.
- *              After successful initialization, internal structures (attrs, priv, pruicss_handle) are
- *              assumed to be valid and are not rechecked in subsequent API calls for performance reasons.
  *  \note       Channel configuration, trigger mode, and baud rate are automatically set during initialization based on
- *              SysConfig parameters. Applications do not need to call configuration functions separately unless
- *              they need to change the mode after initialization.
+ *              SysConfig parameters. Applications do not need to call configuration functions separately.
  */
 tamagawa_handle tamagawa_init(uint32_t index, const tamagawa_params *params);
 
@@ -687,9 +678,6 @@ void tamagawa_deinit(tamagawa_handle handle);
  *
  *  \retval     SystemP_SUCCESS  Command processed successfully
  *  \retval     SystemP_FAILURE  Command processing failed (invalid handle, invalid command, or timeout)
- *
- *  \note       NULL check: Strict check on handle. After successful init, internal structures
- *              are assumed valid and not rechecked.
  */
 int32_t tamagawa_command_process(tamagawa_handle handle, int32_t cmd);
 
@@ -708,9 +696,6 @@ int32_t tamagawa_command_process(tamagawa_handle handle, int32_t cmd);
  *
  *  \retval     SystemP_SUCCESS  Command built successfully
  *  \retval     SystemP_FAILURE  Command build failed (invalid handle, unsupported command)
- *
- *  \note       NULL check: Strict check on handle. After successful init, internal structures
- *              are assumed valid and not rechecked.
  */
 int32_t tamagawa_command_build(tamagawa_handle handle, int32_t cmd);
 
@@ -725,9 +710,6 @@ int32_t tamagawa_command_build(tamagawa_handle handle, int32_t cmd);
  *
  *  \retval     SystemP_SUCCESS    Command trigger successful
  *  \retval     SystemP_FAILURE    NULL handle provided
- *
- *  \note       NULL check: Strict check on handle. After successful init, internal structures
- *              are assumed valid and not rechecked.
  */
 int32_t tamagawa_command_send(tamagawa_handle handle);
 
@@ -744,9 +726,6 @@ int32_t tamagawa_command_send(tamagawa_handle handle);
  *  \retval     SystemP_FAILURE    NULL handle provided or timeout occurred (configured via
  *                                 tamagawa_params.max_wait_loop_count before calling \ref tamagawa_init,
  *                                 default: 5000 us = 50 loops × 100 us/loop)
- *
- *  \note       NULL check: Strict check on handle. After successful init, internal structures
- *              are assumed valid and not rechecked.
  */
 int32_t tamagawa_command_wait(tamagawa_handle handle);
 
@@ -761,9 +740,6 @@ int32_t tamagawa_command_wait(tamagawa_handle handle);
  *
  *  \retval     SystemP_SUCCESS    Configuration successful
  *  \retval     SystemP_FAILURE    NULL handle provided
- *
- *  \note       NULL check: Strict check on handle. After successful init, internal structures
- *              are assumed valid and not rechecked.
  */
 int32_t tamagawa_config_global_rx_arm_cnt(tamagawa_handle handle, uint16_t  rx_en_cnt);
 
@@ -778,43 +754,40 @@ int32_t tamagawa_config_global_rx_arm_cnt(tamagawa_handle handle, uint16_t  rx_e
  *
  *  \retval     SystemP_SUCCESS    Configuration successful
  *  \retval     SystemP_FAILURE    NULL handle or NULL clk_cfg provided
- *
- *  \note       NULL check: Strict check on handle and clk_cfg. After successful init,
- *              internal structures are assumed valid and not rechecked.
  */
 int32_t tamagawa_config_clock(tamagawa_handle handle, tamagawa_clk_cfg *clk_cfg);
 
 /**
  *  \brief      Configure Tamagawa interface for host trigger mode
  *
- *  \details    This function sets the operation mode to host trigger mode (opmode = 1).
- *              In this mode, commands are sent when explicitly triggered by the host using
+ *  \details    In this mode, commands are sent when explicitly triggered by the host using
  *              \ref tamagawa_command_send.
  *
  *  \param[in]  handle    Tamagawa handle returned by \ref tamagawa_init
  *
  *  \retval     SystemP_SUCCESS    Configuration successful
  *  \retval     SystemP_FAILURE    NULL handle provided
- *
- *  \note       NULL check: Strict check on handle. After successful init, internal structures
- *              are assumed valid and not rechecked.
  */
 int32_t tamagawa_config_host_trigger(tamagawa_handle handle);
 
 /**
- *  \brief       Configure periodic trigger mode using CMP events
+ *  \brief      Configure Tamagawa interface for periodic trigger using IEP compare mode
  *
- *  \details    This function sets the operation mode to periodic trigger mode (opmode = 0).
- *              In this mode, commands are sent periodically by the PRU firmware based on
- *              IEP timer configuration.
+ *  \details    Configures the Tamagawa firmware to use IEP CAP (capture) events for periodic triggering.
+ *              Position data is sampled automatically when an external signal triggers
+ *              the IEP capture event.
+ *
+ *              **Configuration requirements:**
+ *              - IEP hardware CAP registers must be configured separately
+ *              - External signal to IEP capture input should be configured
+ *              - Use \ref tamagawa_config_iep_cap_event to set event number in firmware. This function
+ *                is called inside \ref tamagawa_init by default.
+ *              - CAP event range: 0-7
  *
  *  \param[in]  handle    Tamagawa handle returned by \ref tamagawa_init
  *
  *  \retval     SystemP_SUCCESS    Configuration successful
  *  \retval     SystemP_FAILURE    NULL handle provided
- *
- *  \note       NULL check: Strict check on handle. After successful init, internal structures
- *              are assumed valid and not rechecked.
  */
 int32_t tamagawa_config_periodic_trigger_cmp_mode(tamagawa_handle handle);
 
@@ -868,9 +841,6 @@ int32_t tamagawa_multi_channel_set_cur(tamagawa_handle handle, uint8_t ch);
  *
  *  \retval     SystemP_SUCCESS    Update successful
  *  \retval     SystemP_FAILURE    NULL handle provided
- *
- *  \note       NULL check: Strict check on handle. After successful init, internal structures
- *              are assumed valid and not rechecked.
  */
 int32_t tamagawa_update_data_id(tamagawa_handle handle, int32_t cmd);
 
@@ -924,9 +894,6 @@ int32_t tamagawa_update_edf(tamagawa_handle handle, uint32_t val, uint8_t ch);
  *
  *  \retval     SystemP_SUCCESS    Data parsed successfully
  *  \retval     SystemP_FAILURE    Parsing failed (invalid handle or unsupported command)
- *
- *  \note       NULL check: Strict check on handle. After successful init, internal structures
- *              are assumed valid and not rechecked.
  */
 int32_t tamagawa_parse(tamagawa_handle handle, int32_t cmd);
 
@@ -941,9 +908,6 @@ int32_t tamagawa_parse(tamagawa_handle handle, int32_t cmd);
  *
  *  \retval     SystemP_SUCCESS    CRC verification passed
  *  \retval     SystemP_FAILURE    CRC verification failed or NULL handle
- *
- *  \note       NULL check: Strict check on handle. After successful init, internal structures
- *              are assumed valid and not rechecked.
  */
 int32_t tamagawa_crc_verify(tamagawa_handle handle);
 
@@ -984,8 +948,6 @@ int32_t tamagawa_update_crc(tamagawa_handle handle, int32_t cmd, uint8_t ch);
  *  \retval     SystemP_SUCCESS    Configuration successful
  *  \retval     SystemP_FAILURE    NULL handle provided
  *
- *  \note       NULL check: Strict check on handle. After successful init, internal structures
- *              are assumed valid and not rechecked.
  *  \note       The RX auto arm counter is configured for 1us delay. This may need adjustment
  *              based on specific encoder requirements.
  */
@@ -1025,16 +987,17 @@ const tamagawa_attrs* tamagawa_get_attrs(tamagawa_handle handle);
 tamagawa_priv* tamagawa_get_priv(tamagawa_handle handle);
 
 /**
- *  \brief      Configure IEP CMP event for periodic trigger 
+ *  \brief      Configure IEP CMP event for periodic trigger (DMEM configuration only)
  *
- *  \details    This function writes IEP CMP event configuration to DMEM for PRU firmware access.
- *
- *              The function performs the following operations:
- *              - Validates event_num (0-15)
- *              - Writes event number to DMEM for firmware access
+ *  \details    This function configures the IEP capture event information in PRU shared
+ *              memory (DMEM) for firmware access. It writes the capture register address
+ *              and event number to trigger_params structure. This function does NOT configure
+ *              IEP hardware registers.
  *
  *  \param[in]  handle          Tamagawa handle returned by \ref tamagawa_init
- *  \param[in]  event_num       CMP event number (0-15). Must match SysConfig configuration.
+ *  \param[in]  channel         Tamagawa channel number (0-2). Used in load share mode,
+ *                              ignored in single PRU mode (always uses index 0).
+ *  \param[in]  event_num       CMP event number (0-15)
  *
  *  \retval     SystemP_SUCCESS  CMP event configured successfully
  *  \retval     SystemP_FAILURE  On NULL handle or invalid event_num/channel
@@ -1045,66 +1008,47 @@ tamagawa_priv* tamagawa_get_priv(tamagawa_handle handle);
 int32_t tamagawa_config_iep_cmp_event(tamagawa_handle handle, uint8_t channel, uint8_t event_num);
 
 /**
- *  \brief      Configure IEP CAP event for periodic trigger 
+ *  \brief      Configure IEP CAP event for periodic trigger (DMEM configuration only)
  *
- *  \details    This function writes IEP CAP event configuration to DMEM for PRU firmware access.
+ *  \details    This function configures the IEP compare event information in PRU shared
+ *              memory (DMEM) for firmware access. It writes the event number to trigger_params
+ *              structure. This function does NOT configure IEP hardware registers.
  *
- *              The function performs the following operations:
- *              - Validates event_num (0-7)
- *              - Calculates CAP register address based on event number
- *              - Writes event number and CAP register address to DMEM for firmware access
- *
- *  \param[in]  handle      Tamagawa handle returned by \ref tamagawa_init
- *  \param[in]  event_num   CAP event number (0-7). CAP6 is default for LATCH0 on AM243x.
+ *  \param[in]  handle          Tamagawa handle returned by \ref tamagawa_init
+ *  \param[in]  channel         Tamagawa channel number (0-2). Used in load share mode,
+ *                              ignored in single PRU mode (always uses index 0).
+ *  \param[in]  event_num       CAP event number (0-7)
  *
  *  \retval     SystemP_SUCCESS  CAP event configured successfully
  *  \retval     SystemP_FAILURE  On NULL handle, invalid event_num/channel, or NULL IEP base address
  *
- *  \note       This function only handles DMEM writes. IEP register configuration must be
- *              done separately by the application.
+ *  \note       This function only configures firmware DMEM, not IEP hardware.
+ *              Application must separately configure IEP CAP hardware registers.
  *
  */
 int32_t tamagawa_config_iep_cap_event(tamagawa_handle handle, uint8_t channel, uint8_t event_num);
 
 /**
- *  \brief      Configure IEP base address for periodic trigger
+ *  \brief      Configure Tamagawa interface for periodic trigger using IEP capture mode
  *
- *  \details    This function writes the IEP base address to DMEM (PRU Data Memory) so that
- *              the firmware can access IEP registers for periodic trigger mode operation.
- *              The address is stored as an offset from the PRU-ICSS base address.
+ *  \details    Configures the Tamagawa firmware to use IEP CAP (capture) events for periodic triggering.
+ *              Position data is sampled automatically when an external signal triggers
+ *              the IEP capture event.
  *
- *              This function is automatically called during \ref tamagawa_init and typically
- *              does not need to be called directly by the application.
- *
- *  \param[in]  handle          Tamagawa handle returned by \ref tamagawa_init
- *  \param[in]  iep_base_addr   IEP base address as offset from PRU-ICSS base address
- *
- *  \retval     SystemP_SUCCESS  IEP base address configured successfully
- *  \retval     SystemP_FAILURE  On NULL handle or zero iep_base_addr
- *
- *  \note       This function writes to the tamagawa_xchg structure in DMEM.
- */
-int32_t tamagawa_config_iep_base_address(tamagawa_handle handle, uint32_t iep_base_addr);
-
-/**
- *  \brief      Configure periodic trigger mode using CAP events
- *
- *  \details    This function configures the Tamagawa encoder to use periodic trigger mode
- *              with IEP capture events. In CAP mode, firmware waits for IEP CAP event status
- *              and automatically triggers position readout when the event occurs.
- *
- *              The function sets the operation mode to TAMAGAWA_OPMODE_PERIODIC_CAP in the
- *              PRU-ICSS exchange structure (DMEM)
+ *              **Configuration requirements:**
+ *              - IEP hardware CAP registers must be configured separately
+ *              - External signal to IEP capture input should be configured
+ *              - Use \ref tamagawa_config_iep_cap_event to set event number in firmware. This function
+ *                is called inside \ref tamagawa_init by default.
+ *              - CAP event range: 0-7
  *
  *  \param[in]  handle  Tamagawa handle returned by \ref tamagawa_init
  *
  *  \retval     SystemP_SUCCESS  CAP mode configured successfully
  *  \retval     SystemP_FAILURE  On NULL handle
  *
- *  \note       Before calling this function, configure IEP for CAP mode using
- *              tamagawa_config_iep_cap_for_sync() and enable IEP counter using
- *              \ref tamagawa_enable_iep_counter.
- *  \note       CAP mode is only supported on AM243x/AM64x with Time Sync Event Router.
+ *  \note       This function only configures firmware DMEM, not IEP hardware.
+ *              Application must separately configure IEP CAP hardware registers.
  */
 int32_t tamagawa_config_periodic_trigger_cap_mode(tamagawa_handle handle);
 
