@@ -1591,7 +1591,7 @@ int32_t endat_command_wait(endat_handle handle)
         loop_count--;
         if(loop_count == 0)
         {
-            return SystemP_FAILURE;
+            return SystemP_TIMEOUT;
         }
     }
 
@@ -1762,7 +1762,7 @@ static int32_t endat_get_multi_turn_res(endat_handle handle, int32_t *multi_turn
 static int32_t endat_get_id(endat_handle handle)
 {
     endat_priv *priv;
-    int32_t cmd;
+    int32_t cmd, status;
     endat_cmd_supplement cmd_supplement;
     uint32_t word0, word1, word2;
     int32_t ch;
@@ -1782,10 +1782,11 @@ static int32_t endat_get_id(endat_handle handle)
         cmd_supplement.address[1] = ENDAT_MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE1;
         cmd_supplement.address[2] = ENDAT_MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE1;
     }
-
-    if(endat_command_process(handle, cmd, &cmd_supplement) != SystemP_SUCCESS)
+    
+    status = endat_command_process(handle, cmd, &cmd_supplement);
+    if(status != SystemP_SUCCESS)
     {
-        return SystemP_FAILURE;
+        return status;
     }
 
     /* delay copied from fw */
@@ -1799,10 +1800,11 @@ static int32_t endat_get_id(endat_handle handle)
         cmd_supplement.address[1] = APP_ENDAT_WORD_8;
         cmd_supplement.address[2] = APP_ENDAT_WORD_8;
     }
-
-    if(endat_command_process(handle, cmd, &cmd_supplement) != SystemP_SUCCESS)
+    
+    status = endat_command_process(handle, cmd, &cmd_supplement);
+    if(status != SystemP_SUCCESS)
     {
-        return SystemP_FAILURE;
+        return status;
     }
 
     word0 = (channel_rx_info->ch[ch].pos_word0 >> (ENDAT_NUM_BITS_POSITION_CRC))
@@ -1819,10 +1821,11 @@ static int32_t endat_get_id(endat_handle handle)
         cmd_supplement.address[1] = APP_ENDAT_WORD_9;
         cmd_supplement.address[2] = APP_ENDAT_WORD_9;
     }
-
-    if(endat_command_process(handle, cmd, &cmd_supplement) != SystemP_SUCCESS)
+    
+    status = endat_command_process(handle, cmd, &cmd_supplement);
+    if(status != SystemP_SUCCESS)
     {
-        return SystemP_FAILURE;
+        return status;
     }
 
     word1 = (channel_rx_info->ch[ch].pos_word0 >> (ENDAT_NUM_BITS_POSITION_CRC))
@@ -1840,9 +1843,10 @@ static int32_t endat_get_id(endat_handle handle)
         cmd_supplement.address[2] = APP_ENDAT_WORD_10;
     }
 
-    if(endat_command_process(handle, cmd, &cmd_supplement) != SystemP_SUCCESS)
+    status = endat_command_process(handle, cmd, &cmd_supplement);
+    if(status != SystemP_SUCCESS)
     {
-        return SystemP_FAILURE;
+        return status;
     }
 
     word2 = (channel_rx_info->ch[ch].pos_word0 >> (ENDAT_NUM_BITS_POSITION_CRC))
@@ -1860,7 +1864,7 @@ static int32_t endat_get_id(endat_handle handle)
 static int32_t endat_get_sn(endat_handle handle)
 {
     endat_priv *priv;
-    int32_t cmd;
+    int32_t cmd, status;
     endat_cmd_supplement cmd_supplement;
     uint32_t word0, word1, word2;
     int32_t ch;
@@ -1875,10 +1879,11 @@ static int32_t endat_get_sn(endat_handle handle)
     /* select memory area encoder manufacturer page 1 */
     cmd = 2;
     cmd_supplement.address[0] = ENDAT_MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE1;
-
-    if(endat_command_process(handle, cmd, &cmd_supplement) != SystemP_SUCCESS)
+    
+    status = endat_command_process(handle, cmd, &cmd_supplement);
+    if(status != SystemP_SUCCESS)
     {
-        return SystemP_FAILURE;
+        return status;
     }
 
     /* delay copied from fw */
@@ -1893,9 +1898,11 @@ static int32_t endat_get_sn(endat_handle handle)
         cmd_supplement.address[1] = APP_ENDAT_WORD_11;
         cmd_supplement.address[2] = APP_ENDAT_WORD_11;
     }
-    if(endat_command_process(handle, cmd, &cmd_supplement) != SystemP_SUCCESS)
+
+    status = endat_command_process(handle, cmd, &cmd_supplement);
+    if(status != SystemP_SUCCESS)
     {
-        return SystemP_FAILURE;
+        return status;
     }
 
     word0 = (channel_rx_info->ch[ch].pos_word0 >> (ENDAT_NUM_BITS_POSITION_CRC))
@@ -1911,10 +1918,11 @@ static int32_t endat_get_sn(endat_handle handle)
         cmd_supplement.address[1] = APP_ENDAT_WORD_12;
         cmd_supplement.address[2] = APP_ENDAT_WORD_12;
     }
-
-    if(endat_command_process(handle, cmd, &cmd_supplement) != SystemP_SUCCESS)
+    
+    status = endat_command_process(handle, cmd, &cmd_supplement);
+    if(status != SystemP_SUCCESS)
     {
-        return SystemP_FAILURE;
+        return status;
     }
 
     word1 = (channel_rx_info->ch[ch].pos_word0 >> (ENDAT_NUM_BITS_POSITION_CRC))
@@ -1930,10 +1938,11 @@ static int32_t endat_get_sn(endat_handle handle)
         cmd_supplement.address[1] = APP_ENDAT_WORD_13;
         cmd_supplement.address[2] = APP_ENDAT_WORD_13;
     }
-
-    if(endat_command_process(handle, cmd, &cmd_supplement) != SystemP_SUCCESS)
+    
+    status = endat_command_process(handle, cmd, &cmd_supplement);
+    if(status != SystemP_SUCCESS)
     {
-        return SystemP_FAILURE;
+        return status;
     }
 
     word2 = (channel_rx_info->ch[ch].pos_word0 >> (ENDAT_NUM_BITS_POSITION_CRC))
@@ -1952,7 +1961,7 @@ static int32_t endat_get_sn(endat_handle handle)
 static int32_t endat_get_command_set(endat_handle handle)
 {
     endat_priv *priv;
-    int32_t cmd;
+    int32_t cmd, status;
     endat_cmd_supplement cmd_supplement;
     uint32_t word;
     int32_t ch;
@@ -1973,10 +1982,11 @@ static int32_t endat_get_command_set(endat_handle handle)
         cmd_supplement.address[1] = ENDAT_MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE2;
         cmd_supplement.address[2] = ENDAT_MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE2;
     }
-
-    if(endat_command_process(handle, cmd, &cmd_supplement) != SystemP_SUCCESS)
+    
+    status = endat_command_process(handle, cmd, &cmd_supplement);
+    if(status != SystemP_SUCCESS)
     {
-        return SystemP_FAILURE;
+        return status;
     }
 
     /* delay copied from fw */
@@ -1991,10 +2001,11 @@ static int32_t endat_get_command_set(endat_handle handle)
         cmd_supplement.address[1] = APP_ENDAT_WORD_5;
         cmd_supplement.address[2] = APP_ENDAT_WORD_5;
     }
-
-    if(endat_command_process(handle, cmd, &cmd_supplement) != SystemP_SUCCESS)
+    
+    status = endat_command_process(handle, cmd, &cmd_supplement);
+    if(status != SystemP_SUCCESS)
     {
-        return SystemP_FAILURE;
+        return status;
     }
 
     /* delay copied from fw */
@@ -2011,7 +2022,7 @@ static int32_t endat_get_command_set(endat_handle handle)
 static int32_t endat_get_type(endat_handle handle)
 {
     endat_priv *priv;
-    int32_t cmd;
+    int32_t cmd, status;
     endat_cmd_supplement cmd_supplement;
     uint32_t word;
     int32_t ch;
@@ -2032,10 +2043,11 @@ static int32_t endat_get_type(endat_handle handle)
         cmd_supplement.address[1] = ENDAT_MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE0;
         cmd_supplement.address[2] = ENDAT_MRS_CODE_PARAM_ENCODER_MANUFACTURER_PAGE0;
     }
-
-    if(endat_command_process(handle, cmd, &cmd_supplement) != SystemP_SUCCESS)
+    
+    status = endat_command_process(handle, cmd, &cmd_supplement);
+    if(status != SystemP_SUCCESS)
     {
-        return SystemP_FAILURE;
+        return status;
     }
 
     /* delay copied from fw, absence of delay here resulted in wrong values for pos_res */
@@ -2051,9 +2063,10 @@ static int32_t endat_get_type(endat_handle handle)
         cmd_supplement.address[2] = APP_ENDAT_WORD_14;
     }
 
-    if(endat_command_process(handle, cmd, &cmd_supplement) != SystemP_SUCCESS)
+    status = endat_command_process(handle, cmd, &cmd_supplement);
+    if(status != SystemP_SUCCESS)
     {
-        return SystemP_FAILURE;
+        return status;
     }
 
     /* delay copied from fw */
@@ -2529,8 +2542,8 @@ static int32_t endat_config_clock_reg(endat_handle handle, endat_clk_cfg *clk_cf
         /* Slice 1 - Read-Modify-Write for RX CFG */
         rx_reg_val = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG);
         rx_reg_val &= ~(CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_DIV_FACTOR_MASK |
-                        (0x00000008U) |
-                        CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_SB_POL_MASK |
+                        CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_SB_POL_MASK |
+                        CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_CLK_SEL_MASK |
                         CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_DIV_FACTOR_FRAC_MASK |
                         CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_SAMPLE_SIZE_MASK);
         rx_reg_val |= (clk_cfg->rx_div << CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_DIV_FACTOR_SHIFT) |
@@ -2542,7 +2555,8 @@ static int32_t endat_config_clock_reg(endat_handle handle, endat_clk_cfg *clk_cf
         /* Slice 1 - Read-Modify-Write for TX CFG */
         tx_reg_val = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG);
         tx_reg_val &= ~(CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG_PRU1_ED_TX_DIV_FACTOR_MASK |
-                        CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG_PRU1_ED_TX_CLK_SEL_MASK);
+                        CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG_PRU1_ED_TX_CLK_SEL_MASK |
+                        CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG_PRU1_ED_TX_DIV_FACTOR_FRAC_MASK);
         tx_reg_val |= (clk_cfg->tx_div << CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG_PRU1_ED_TX_DIV_FACTOR_SHIFT) |
                       (attrs->is_core_clk << CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG_PRU1_ED_TX_CLK_SEL_SHIFT);
         HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG, tx_reg_val);
@@ -2565,7 +2579,8 @@ static int32_t endat_config_clock_reg(endat_handle handle, endat_clk_cfg *clk_cf
         /* Slice 0 - Read-Modify-Write for TX CFG */
         tx_reg_val = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG);
         tx_reg_val &= ~(CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG_PRU0_ED_TX_DIV_FACTOR_MASK |
-                        CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG_PRU0_ED_TX_CLK_SEL_MASK);
+                        CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG_PRU0_ED_TX_CLK_SEL_MASK |
+                        CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG_PRU0_ED_TX_DIV_FACTOR_FRAC_MASK);
         tx_reg_val |= (clk_cfg->tx_div << CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG_PRU0_ED_TX_DIV_FACTOR_SHIFT) |
                       (attrs->is_core_clk << CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG_PRU0_ED_TX_CLK_SEL_SHIFT);
         HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG, tx_reg_val);
@@ -3299,7 +3314,7 @@ int32_t endat_wait_initialization(endat_handle handle, uint32_t timeout, uint8_t
 
     if(i == timeout)
     {
-        return SystemP_FAILURE;
+        return SystemP_TIMEOUT;
     }
 
   return SystemP_SUCCESS;
@@ -3797,7 +3812,7 @@ int32_t endat_config_iep_cap_event(endat_handle handle, uint8_t channel, uint8_t
     /* Write cap event and capture register address in DMEM */
     pruicss_xchg->trigger_params[ch_index].cap_event = event_num;
     pruicss_xchg->trigger_params[ch_index].iep_capture_reg =
-        (uint32_t)attrs->iep_base_addr + ENDAT_CSL_ICSS_PR1_IEP0_SLV_CAP0_REG0  + ENDAT_8_BYTE_REG_OFFSET*(event_num);
+        (uint32_t)pruicss_xchg->endat_iep_base_addr + ENDAT_CSL_ICSS_PR1_IEP0_SLV_CAP0_REG0  + ENDAT_8_BYTE_REG_OFFSET*(event_num);
 
     /* CAP6 and CAP7 have 2 extra registers for fall capture values, add extra offset */
     /* CAP6 and CAP7 has 2 register bits each. So bit 8 needs to be used for CAP7. Only capture rise bits for CAP6 and CAP7 are used. */

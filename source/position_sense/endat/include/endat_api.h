@@ -344,7 +344,8 @@ int32_t endat_command_send(endat_handle handle);
  *
  *  \retval     SystemP_SUCCESS     Transaction completed successfully
  *  \retval     SystemP_FAILURE     On NULL handle, internal structure validation failure,
- *                                  zero loop count configuration, or firmware timeout
+ *                                  or zero loop count configuration
+ *  \retval     SystemP_TIMEOUT     Firmware did not complete transaction within configured timeout
  *
  */
 int32_t endat_command_wait(endat_handle handle);
@@ -803,7 +804,8 @@ int32_t endat_multi_channel_set_cur(endat_handle handle, uint32_t ch);
  *                          (bit 0 = channel 0, bit 1 = channel 1, etc.)
  *
  *  \retval     SystemP_SUCCESS     All specified channels initialized successfully
- *  \retval     SystemP_FAILURE     Handle is NULL, timeout occurred, or initialization failed
+ *  \retval     SystemP_FAILURE     Handle is NULL or initialization failed
+ *  \retval     SystemP_TIMEOUT     Initialization did not complete within timeout period
  *
  *  \note       This function blocks until initialization completes or timeout.
  */

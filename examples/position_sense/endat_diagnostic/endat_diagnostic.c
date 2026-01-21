@@ -171,6 +171,7 @@
 #define HAVE_COMMAND_SUPPLEMENT(x) (((x) == 2) || ((x) == 3) || ((x) == 4) || ((x) == 7) || \
                                     ((x) == 9) || ((x) == 10) || ((x) == 11) || ((x) == 13) || ((x) == 14) || \
                                     ((x) == 100) || ((x) == 101) || ((x)== 103) || ((x) == 105) || ((x) == 106) || ((x) == 107) || ((x) == 108) || ((x) == 109)  || ((x) == 200) || ((x) == 201) || ((x) == 112))
+#define ENDAT_POSITION_CMD(x) (((x) == 1) || ((x) == 8) ||((x) == 9) || ((x) == 10) || ((x) == 11) || ((x) == 13))
 
 
 /* Size of the PRU instruction memory in bytes.*/
@@ -219,6 +220,9 @@ static uint32_t gAppEndatPropDelayMax[CONFIG_ENDAT_NUM_INSTANCES];
 
 /* Global variable to track position loop status */
 volatile int32_t gEndatPositionLoopStatus;
+
+/* IRQ count from periodic trigger (defined in endat_periodic_trigger.c) */
+extern volatile uint32_t gPruEndatIrqCnt[CONFIG_ENDAT_NUM_INSTANCES][ENDAT_NUM_CH_PER_SLICE_MAX];
 
 volatile uint64_t gPositionLoopIrqCount = 0;
 
@@ -390,6 +394,11 @@ static void endat_pruicss_init(void)
 #endif
 
 #if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
+
+#if !defined(SOC_AM261X) || (CONFIG_ENDAT0_MODE != ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU) || (CONFIG_ENDAT1_MODE != ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU)
+    DebugP_log("Dual handle example using PRU0 and PRU1 is tested only with ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU mode on AM261x. For enabling other combinations, update code and remove this check.");
+    DebugP_assert(0);
+#endif
     /*
      * These checks are applicable only if both EnDAT instances
      * use same PRU-ICSSG instance. If different instances are used,
@@ -1597,7 +1606,14 @@ static void endat_process_2_1_position_command(endat_handle handle)
     status = endat_command_process(handle, 1, NULL);
     if(status != SystemP_SUCCESS)
     {
-        DebugP_log("\r| ERROR: endat_command_process failed with status %d\n", status);
+        if(status == SystemP_TIMEOUT)
+        {
+            DebugP_log("\r| ERROR: endat_command_process, Timeout occurred while waiting for response\n");
+        }
+        else
+        {
+            DebugP_log("\r| ERROR: endat_command_process failed with status %d\n", status);
+        }
         return;
     }
 
@@ -1738,7 +1754,14 @@ static void endat_process_2_2_position_command(endat_handle handle)
     status = endat_command_process(handle, cmd, &cmd_supplement);
     if(status != SystemP_SUCCESS)
     {
-        DebugP_log("\r| ERROR: endat_command_process failed with status %d\n", status);
+        if(status == SystemP_TIMEOUT)
+        {
+            DebugP_log("\r| ERROR: endat_command_process, Timeout occurred while waiting for response\n");
+        }
+        else
+        {
+            DebugP_log("\r| ERROR: endat_command_process failed with status %d\n", status);
+        }
         return;
     }
 
@@ -1748,6 +1771,12 @@ static void endat_process_2_2_position_command(endat_handle handle)
         {
             if(attrs->channel_mask & (1 << i))
             {
+                status = endat_multi_channel_set_cur(handle, i);
+                if(status != SystemP_SUCCESS)
+                {
+                    DebugP_log("\r| ERROR: endat_multi_channel_set_cur failed with status %d\n", status);
+                    return;
+                }
                 pos_word = endat_handle_2_2_position_command(handle, cmd, &cmd_supplement, i);
 
                 if (!priv->has_safety[i] || attrs->mode == ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU)
@@ -2355,7 +2384,10 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
     uint64_t irq_count;
     uint64_t multi_turn, single_turn, position_read, max;
     endat_position_type position;
-    int32_t us;
+    int32_t us, ret;
+    uint32_t prev_irq_cnt[CONFIG_ENDAT_NUM_INSTANCES] = {0};
+    uint32_t curr_irq_cnt;
+    uint32_t irq_ch_idx[CONFIG_ENDAT_NUM_INSTANCES] = {0};
 
     if(cmd == 200)
     {
@@ -2367,11 +2399,13 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
     }
     else if(cmd == 201)
     {
+#if defined(SOC_AM243X)
         if(cmd_supplement[CONFIG_ENDAT0].iep_sync0_period == 0)
         {
             DebugP_log("\r\n\n| ERROR: Invalid iep_sync0_period value\n");
             return SystemP_FAILURE;
         }
+#endif
     }
 
     for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
@@ -2420,9 +2454,9 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
         for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
         {
 #if (CONFIG_ENDAT_NUM_INSTANCES > 1)
-            DebugP_log("\r| Enter command for periodic mode EnDat Module %d: ", i);
+            DebugP_log("\r| Enter position command for periodic mode EnDat Module %d: ", i);
 #else
-            DebugP_log("\r| Enter command for periodic mode: ");
+            DebugP_log("\r| Enter position command for periodic mode: ");
 #endif
             /* Get periodic command for continuous mode */
             periodic_cmd[i] = endat_get_command(handle[i]);
@@ -2433,7 +2467,7 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
                 return SystemP_FAILURE;
             }
 
-            if(VALID_2_1_CMD(periodic_cmd[i]) || VALID_2_2_CMD(periodic_cmd[i]))
+            if(ENDAT_POSITION_CMD(periodic_cmd[i]))
             {
                 if(HAVE_COMMAND_SUPPLEMENT(periodic_cmd[i]))
                 {
@@ -2486,10 +2520,17 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
             * populated in PRU shared memory as required.
             * ASSUMPTION: Host trigger mode is active when this function is called.
             */
-
-            if(endat_command_process(handle[i], periodic_cmd[i], &periodic_cmd_supplement[i]) != SystemP_SUCCESS)
+           ret = endat_command_process(handle[i], periodic_cmd[i], &periodic_cmd_supplement[i]);
+            if(ret != SystemP_SUCCESS)
             {
-                DebugP_log("\r| ERROR: Failed to process command, endat_command_process failed\r\n|\r\n|\n");
+                if(ret == SystemP_TIMEOUT)
+                {
+                    DebugP_log("\r| ERROR: Command processing timed out, endat_command_process failed\r\n|\r\n|\n");
+                }
+                else
+                {
+                    DebugP_log("\r| ERROR: Failed to process command, endat_command_process failed\r\n|\r\n|\n");
+                }
                 return SystemP_FAILURE;
             }
 
@@ -2540,6 +2581,34 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
             return SystemP_FAILURE;
         }
 
+        /* Determine IRQ channel index for each instance (based on load share mode) */
+        for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
+        {
+            if(attrs[i]->mode == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
+            {
+                /* In load share mode, use channel index for first enabled channel */
+                if(attrs[i]->channel0_enabled)
+                {
+                    irq_ch_idx[i] = 0;
+                }
+                else if(attrs[i]->channel1_enabled)
+                {
+                    irq_ch_idx[i] = 1;
+                }
+                else if(attrs[i]->channel2_enabled)
+                {
+                    irq_ch_idx[i] = 2;
+                }
+            }
+            else
+            {
+                irq_ch_idx[i] = 0;
+            }
+
+            /* Initialize previous IRQ count with current value */
+            prev_irq_cnt[i] = gPruEndatIrqCnt[i][irq_ch_idx[i]];
+        }
+
         DebugP_log("\r|\n\r| Press enter to stop the continuous mode\r\n|\r\n");
 
         while(1)
@@ -2554,7 +2623,44 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
             }
             else
             {
+                /* Wait for IRQ count to increment for at least one instance before reading position */
+                for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
+                {
+                    /* Wait for IRQ count to increment */
+                    while(1)
+                    {
+                        curr_irq_cnt = gPruEndatIrqCnt[i][irq_ch_idx[i]];
+                        if(gEndatPositionLoopStatus == ENDAT_POSITION_LOOP_STOP)
+                        {
+                            break;
+                        }
+                        /* Break as soon as IRQ count increments to avoid missing IRQs at high rates */
+                        if(curr_irq_cnt != prev_irq_cnt[i])
+                        {
+                            break;
+                        }
+                    }
+
+                    /* Check stop condition before updating prev_irq_cnt */
+                    if(gEndatPositionLoopStatus == ENDAT_POSITION_LOOP_STOP)
+                    {
+                        break;
+                    }
+
+                    prev_irq_cnt[i] = curr_irq_cnt;
+                }
+
+                /* If stop was requested during IRQ wait, continue for proper cleanup */
+                if(gEndatPositionLoopStatus == ENDAT_POSITION_LOOP_STOP)
+                {
+                    continue;
+                }
+
                 char_count = 0;
+
+                /* Start with \r to overwrite the same line for all instances */
+                DebugP_log("\r");
+
 
                 for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
                 {
@@ -2562,7 +2668,7 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
 #if (CONFIG_ENDAT_NUM_INSTANCES > 1)
                     DebugP_log("\r| --- EnDat Module %d --- \r\n| ", i);
 #endif
-                    endat_print_position_header(handle[i], 1, priv[i]->cmd_set_2_2);
+                    endat_print_position_header(handle[i], 0, VALID_2_2_CMD(periodic_cmd[i]));
 
                     if(attrs[i]->mode != ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU)
                     {
@@ -2582,9 +2688,9 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
                                     DebugP_log("\r| ERROR: Recvd process failed: %d\n", status);
                                     continue;
                                 }
-                                char_count += endat_get_position_loop_chars(priv[i]->multi_turn_res[priv[i]->current_channel], 0, priv[i]->cmd_set_2_2);
-                                DebugP_log("| Ch-%d: ", j);
-                                endat_print_position_loop(handle[i], 1, priv[i]->cmd_set_2_2, j);
+                                char_count += endat_get_position_loop_chars(priv[i]->multi_turn_res[priv[i]->current_channel], 0, VALID_2_2_CMD(periodic_cmd[i]));
+                                DebugP_log("\r\n| Ch-%d: \n", j);
+                                endat_print_position_loop(handle[i], 0, VALID_2_2_CMD(periodic_cmd[i]), j);
                                 DebugP_log("\n| ");
                                 char_count += 3;
                             }
@@ -2598,8 +2704,8 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
                             DebugP_log("\r| ERROR: Recvd process failed: %d\n", status);
                             continue;
                         }
-                        char_count = endat_get_position_loop_chars(priv[i]->multi_turn_res[priv[i]->current_channel], 1, priv[i]->cmd_set_2_2);
-                        endat_print_position_loop(handle[i], 1, priv[i]->cmd_set_2_2, 0);
+                        char_count = endat_get_position_loop_chars(priv[i]->multi_turn_res[priv[i]->current_channel], 0, VALID_2_2_CMD(periodic_cmd[i]));
+                        endat_print_position_loop(handle[i], 0, VALID_2_2_CMD(periodic_cmd[i]), 0);
                         DebugP_log("\n| ");
                     }
                 }
@@ -2675,7 +2781,7 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
                                     continue;
                                 }
                                 char_count += endat_get_position_loop_chars(priv[i]->multi_turn_res[priv[i]->current_channel], 0, 0);
-                                DebugP_log("| Ch-%d: ", j);
+                                DebugP_log("\r\n| Ch-%d: \n", j);
                                 endat_print_position_loop(handle[i], 0, 0, j);
                                 DebugP_log("\n| ");
                                 char_count += 3;
@@ -2757,7 +2863,7 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
                                     continue;
                                 }
                                 char_count += endat_get_position_loop_chars(priv[i]->multi_turn_res[priv[i]->current_channel], 0, 0);
-                                DebugP_log("| Ch-%d: ", j);
+                                DebugP_log("\r\n| Ch-%d: \n", j);
                                 endat_print_position_loop(handle[i], 1, 0, j);
                                 DebugP_log("\n| ");
                                 char_count += 3;
@@ -2812,7 +2918,14 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
             status = endat_command_process(handle[i], 5, NULL);
             if(status != SystemP_SUCCESS)
             {
-                DebugP_log("\r| ERROR: endat_command_process failed for instance %d with status %d\n", i, status);
+                if(status == SystemP_TIMEOUT)
+                {
+                    DebugP_log("\r| ERROR: Command processing timed out, endat_command_process failed for instance %d with status %d\n", i, status);
+                }
+                else
+                {
+                    DebugP_log("\r| ERROR: endat_command_process failed for instance %d with status %d\n", i, status);
+                }
             }
             status = endat_addinfo_track(handle[i], 5, NULL);
             if(status != SystemP_SUCCESS)
@@ -2860,7 +2973,15 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
                     status = endat_command_process(handle[i], 5, NULL);
                     if(status != SystemP_SUCCESS)
                     {
-                        DebugP_log("\r| ERROR: endat_command_process failed for instance %d with status %d\n", i, status);
+                        if(status == SystemP_TIMEOUT)
+                        {
+                            DebugP_log("\r| ERROR: Command processing timed out, endat_command_process failed for instance %d with status %d\n", i, status);
+                        }
+                        else
+                        {
+                            DebugP_log("\r| ERROR: endat_command_process failed for instance %d with status %d\n", i, status);
+                        }
+                        
                     }
                     status = endat_addinfo_track(handle[i], 5, NULL);
                     if(status != SystemP_SUCCESS)
@@ -2906,7 +3027,7 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
                                     continue;
                                 }
                                 char_count += endat_get_position_loop_chars(priv[i]->multi_turn_res[priv[i]->current_channel], 0, 1);
-                                DebugP_log("| Ch-%d: ", j);
+                                DebugP_log("\r\n| Ch-%d: \n", j);
                                 endat_print_position_loop(handle[i], 0, 1, j);
 
                                 if(priv[i]->has_safety[priv[i]->current_channel])
@@ -3370,11 +3491,22 @@ void endat_main(void *args)
 
         if(status != SystemP_SUCCESS)
         {
+            if(status == SystemP_TIMEOUT)
+            {
 #if (CONFIG_ENDAT_NUM_INSTANCES > 1)
-            DebugP_log("\rERROR: EnDAT initialization failed for instance %d -\n\n", i);
+                DebugP_log("\rERROR: EnDAT initialization timeout for instance %d -\n\n", i);
 #else
-            DebugP_log("\rERROR: EnDAT initialization failed -\n\n");
-#endif
+                DebugP_log("\rERROR: EnDAT initialization timeout -\n\n");
+#endif 
+            }
+            else
+            {
+#if (CONFIG_ENDAT_NUM_INSTANCES > 1)
+                DebugP_log("\rERROR: EnDAT initialization failed for instance %d -\n\n", i);
+#else
+                DebugP_log("\rERROR: EnDAT initialization failed -\n\n");
+#endif 
+            }
 
         if(attrs[i]->mode != ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU)
         {
@@ -3420,9 +3552,17 @@ void endat_main(void *args)
         if(attrs[i]->mode == ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU)
         {
 
-            if(endat_get_encoder_info(gAppEndatHandle[i]) != SystemP_SUCCESS)
+            status = endat_get_encoder_info(gAppEndatHandle[i]);
+            if(status != SystemP_SUCCESS)
             {
-                DebugP_log("\rEnDat initialization failed during channel information read\n");
+                if(status == SystemP_TIMEOUT)
+                {
+                    DebugP_log("\rEnDat initialization timeout during channel information read\n");
+                }
+                else
+                {
+                    DebugP_log("\rEnDat initialization failed during channel information read\n");
+                }
                 DebugP_log("\rexit %s due to failed initialization\n", __func__);
                 goto deinit;
             }
@@ -3451,9 +3591,18 @@ void endat_main(void *args)
                         DebugP_log("\rCh %d switch failed: %d\n", j, status);
                         goto deinit;
                     }
-                    if(endat_get_encoder_info(gAppEndatHandle[i]) != SystemP_SUCCESS)
+
+                    status = endat_get_encoder_info(gAppEndatHandle[i]);
+                    if(status != SystemP_SUCCESS)
                     {
-                        DebugP_log("\rEnDat initialization channel %d failed\n", j);
+                        if(status == SystemP_TIMEOUT)
+                        {
+                            DebugP_log("\rEnDat initialization timeout during channel information read\n");
+                        }
+                        else
+                        {
+                            DebugP_log("\rEnDat initialization failed during channel information read\n");
+                        }
                         DebugP_log("\rexit %s due to failed initialization\n", __func__);
                         goto deinit;
                     }
@@ -3638,6 +3787,9 @@ void endat_main(void *args)
 
         for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
         {
+#if (CONFIG_ENDAT_NUM_INSTANCES > 1)
+            DebugP_log("\r\n| Command execution for Endat Module: %d |\n", i);
+#endif
             cmd = cmd_supplement[i].cmd_type;
 
             /*Host command*/
@@ -3647,10 +3799,17 @@ void endat_main(void *args)
                 DebugP_log("\r|\n\r|\n");
                 continue;
             }
-
-            if(endat_command_process(gAppEndatHandle[i], cmd, &cmd_supplement[i]) != SystemP_SUCCESS)
+            status = endat_command_process(gAppEndatHandle[i], cmd, &cmd_supplement[i]);
+            if(status != SystemP_SUCCESS)
             {
-                DebugP_log("\r| ERROR: Failed to process command, endat_command_process failed\r\n|\r\n|\n");
+                if(status == SystemP_TIMEOUT)
+                {
+                    DebugP_log("\r| ERROR: Command %d timeout occurred\n", cmd);
+                }
+                else
+                {
+                    DebugP_log("\r| ERROR: Failed to process command, endat_command_process failed\r\n|\r\n|\n");
+                }
                 continue;
             }
 

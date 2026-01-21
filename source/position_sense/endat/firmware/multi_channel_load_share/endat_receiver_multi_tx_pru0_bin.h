@@ -54,7 +54,7 @@
 const uint32_t EnDatFirmwareMultiMakeTxPru0_0[] = {
 0x21000300,
 0x00000207,
-0x01000007,
+0x01000008,
 0x91003c8e,
 0x1d03eeee,
 0x81003c8e,
@@ -207,7 +207,7 @@ const uint32_t EnDatFirmwareMultiMakeTxPru0_0[] = {
 0x810a1803,
 0x91081804,
 0x51010402,
-0x2400249f,
+0x2400279f,
 0x570004cf,
 0x570204c7,
 0x21007500,

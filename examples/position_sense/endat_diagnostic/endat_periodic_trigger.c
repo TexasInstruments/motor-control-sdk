@@ -85,6 +85,19 @@
 /*                           Macros & Typedefs                                */
 /* ========================================================================== */
 
+/*
+ * NOTE: Host Interrupt Number Synchronization
+ *
+ * The host interrupt numbers defined below (e.g., ICSS_PRU_ENDAT_INT_NUM)
+ * must match the interrupt channel assignments in SysConfig:
+ *     PRU(ICSS) module -> INTC section -> INTC Host Interrupt
+ *
+ * Host interrupt channels route PRU events to the R5F core. The mapping is:
+ *     Host Interrupt 2-9 in SysConfig = HOST_INTR_PEND_0-7 registers
+ *
+ * If you change the host interrupt assignments in SysConfig, update these
+ * macros accordingly to maintain proper interrupt delivery from PRU to R5F.
+ */
 #ifndef SOC_AM243X
 /* ICSSM Interrupt Numbers */
 #if(CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
@@ -125,16 +138,43 @@
 #endif
 #endif
 
+/*
+ * NOTE: The INTC event numbers defined below must match the corresponding
+ * definitions in the PRU firmware header file:
+ *     "source/position_sense/endat/firmware/endat_icss_reg_defs.h"
+ *
+ * These event numbers are used for communication between the R5F and
+ * PRU firmware. Any changes to these values must be synchronized between
+ * both files to ensure proper interrupt handling.
+ */
 #if(CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
-/** \brief RTU-PRU EnDAT interrupt event number (18 = 2 + 16) */
-#define RTU_TRIGGER_HOST_ENDAT_EVT      (2+16)
-/** \brief PRU EnDAT interrupt event number (19 = 3 + 16) */
-#define PRU_TRIGGER_HOST_ENDAT_EVT      (3+16)
-/** \brief TX-PRU EnDAT interrupt event number (20 = 4 + 16) */
-#define TXPRU_TRIGGER_HOST_ENDAT_EVT    (4+16)
+#if(CONFIG_ENDAT0_PRUICSS_SLICE == 1)
+    /* SLICE1 Multi-PRU: Events 34,35,36 -> 18,19,20 */
+    /** \brief RTU-PRU EnDAT interrupt event number (18 = 34 - 16) */
+    #define RTU_TRIGGER_HOST_ENDAT_EVT      (34-16)
+    /** \brief PRU EnDAT interrupt event number (19 = 35 - 16) */
+    #define PRU_TRIGGER_HOST_ENDAT_EVT      (35-16)
+    /** \brief TX-PRU EnDAT interrupt event number (20 = 36 - 16) */
+    #define TXPRU_TRIGGER_HOST_ENDAT_EVT    (36-16)
 #else
-/** \brief PRU EnDAT interrupt event number (18 = 2 + 16) */
-#define PRU_TRIGGER_HOST_ENDAT_EVT      (2+16)
+    /* SLICE0 Multi-PRU: Events 37,38,39 -> 21,22,23 */
+    /** \brief RTU-PRU EnDAT interrupt event number (21 = 37 - 16) */
+    #define RTU_TRIGGER_HOST_ENDAT_EVT      (37-16)
+    /** \brief PRU EnDAT interrupt event number (22 = 38 - 16) */
+    #define PRU_TRIGGER_HOST_ENDAT_EVT      (38-16)
+    /** \brief TX-PRU EnDAT interrupt event number (23 = 39 - 16) */
+    #define TXPRU_TRIGGER_HOST_ENDAT_EVT    (39-16)
+#endif
+#else
+#if(CONFIG_ENDAT0_PRUICSS_SLICE == 1)
+    /* SLICE1 Single-PRU: Event 34 -> 18 */
+    /** \brief PRU EnDAT interrupt event number (18 = 34 - 16) */
+    #define PRU_TRIGGER_HOST_ENDAT_EVT      (34-16)
+#else
+    /* SLICE0 Single-PRU: Event 37 -> 21 */
+    /** \brief PRU EnDAT interrupt event number (21 = 37 - 16) */
+    #define PRU_TRIGGER_HOST_ENDAT_EVT      (37-16)
+#endif
 #endif
 
 #if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
@@ -143,16 +183,41 @@
  * combinations, update code and remove this line.
  */
 
+/*
+ * NOTE: Host Interrupt Number Synchronization
+ *
+ * The host interrupt numbers defined below (e.g., ICSS_PRU_ENDAT_INT_NUM)
+ * must match the interrupt channel assignments in SysConfig:
+ *     PRU(ICSS) module -> INTC section -> INTC Host Interrupt
+ *
+ * Host interrupt channels route PRU events to the R5F core. The mapping is:
+ *     Host Interrupt 2-9 in SysConfig = HOST_INTR_PEND_0-7 registers
+ *
+ * If you change the host interrupt assignments in SysConfig, update these
+ * macros accordingly to maintain proper interrupt delivery from PRU to R5F.
+ */
 #if(CONFIG_ENDAT1_PRUICSS_INSTANCE == 1)
 #define ICSS_PRU_ENDAT_INT_NUM_SECOND_SLICE         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_1)
 #else
 #define ICSS_PRU_ENDAT_INT_NUM_SECOND_SLICE         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_1)
 #endif
 
+
+/*
+ * NOTE: The INTC event numbers defined below must match the corresponding
+ * definitions in the PRU firmware header file:
+ *     "source/position_sense/endat/firmware/endat_icss_reg_defs.h"
+ *
+ * These event numbers are used for communication between the R5F and
+ * PRU firmware. Any changes to these values must be synchronized between
+ * both files to ensure proper interrupt handling.
+ */
 #if(CONFIG_ENDAT1_PRUICSS_SLICE == 1)
-#define PRU_TRIGGER_HOST_ENDAT_EVT_SECOND_SLICE     (2+16)
+/* Second instance SLICE1: Event 34 -> 18 */
+#define PRU_TRIGGER_HOST_ENDAT_EVT_SECOND_SLICE     (34-16)
 #else
-#define PRU_TRIGGER_HOST_ENDAT_EVT_SECOND_SLICE     (3+16)
+/* Second instance SLICE0: Event 37 -> 21 */
+#define PRU_TRIGGER_HOST_ENDAT_EVT_SECOND_SLICE     (37-16)
 #endif /* CONFIG_ENDAT1_PRUICSS_SLICE */
 
 #endif /* ENDAT_DUAL_PRU_SLICE_ENABLE */

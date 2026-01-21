@@ -53,7 +53,7 @@
 
 const uint32_t TamagawaFirmwareMultiPru0_0[] = {
 0x00000208,
-0x01010006,
+0x01010007,
 0x2effbb80,
 0x91011807,
 0x24000100,
@@ -91,7 +91,7 @@ const uint32_t TamagawaFirmwareMultiPru0_0[] = {
 0x81021803,
 0x91001803,
 0x51010302,
-0x2400239f,
+0x2400259f,
 0x1f13ffff,
 0x21000600,
 0xc9000702,

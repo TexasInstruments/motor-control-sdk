@@ -53,7 +53,7 @@
 
 const uint32_t TamagawaFirmwarePru1_0[] = {
 0x00000208,
-0x01010006,
+0x01010007,
 0x2effbb80,
 0x91011807,
 0x11070707,

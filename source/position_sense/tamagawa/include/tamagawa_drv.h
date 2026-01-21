@@ -723,9 +723,9 @@ int32_t tamagawa_command_send(tamagawa_handle handle);
  *  \param[in]  handle    Tamagawa handle returned by \ref tamagawa_init
  *
  *  \retval     SystemP_SUCCESS    Command completed successfully
- *  \retval     SystemP_FAILURE    NULL handle provided or timeout occurred (configured via
- *                                 tamagawa_params.max_wait_loop_count before calling \ref tamagawa_init,
- *                                 default: 5000 us = 50 loops × 100 us/loop)
+ *  \retval     SystemP_FAILURE    NULL handle provided
+ *  \retval     SystemP_TIMEOUT    Timeout occurred (configured via tamagawa_params.max_wait_loop_count
+ *                                 before calling \ref tamagawa_init, default: 5000 us = 50 loops × 100 us/loop)
  */
 int32_t tamagawa_command_wait(tamagawa_handle handle);
 

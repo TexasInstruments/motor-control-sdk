@@ -92,18 +92,41 @@ TAMAGAWA_CHANNEL_BIT_ID			   .set	 TAMAGAWA_PRU_BIT_ID
 TAMAGAWA_CHANNEL_BIT_ID			   .set	 TAMAGAWA_TX_PRU_BIT_ID 
 	.endif
 
-;CMP event 3 for periodic mode
-	.if	$isdefed("SLICE1")
-PRU_TRIGGER_HOST_TAMAGAWA_EVT  		.set    34  ; pr0_pru_mst_intr[2]_intr_req
-; Load-share mode interrupt events for SLICE1
-RTU_TRIGGER_HOST_TAMAGAWA_EVT   	.set    36  ; pr0_pru_mst_intr[4]_intr_req  (RTU-PRU)
-TXPRU_TRIGGER_HOST_TAMAGAWA_EVT 	.set    38  ; pr0_pru_mst_intr[6]_intr_req  (TX-PRU)
-	.else
-PRU_TRIGGER_HOST_TAMAGAWA_EVT  		.set    35  ; pr0_pru_mst_intr[3]_intr_req
-; Load-share mode interrupt events for SLICE0
-RTU_TRIGGER_HOST_TAMAGAWA_EVT   	.set    37  ; pr0_pru_mst_intr[5]_intr_req  (RTU-PRU)
-TXPRU_TRIGGER_HOST_TAMAGAWA_EVT 	.set    39  ; pr0_pru_mst_intr[7]_intr_req  (TX-PRU)
-	.endif
-; TAMAGAWA
+;=============================================================================
+; PRU Event Numbers for Host Interrupt Triggering 
+;=============================================================================
+; These event numbers are used by PRU firmware to trigger host interrupts
+; after completing encoder operations in periodic mode.
+;
+; Event number mapping follows the same pattern as EnDAT:
+; - SLICE1 Multi-PRU: RTU=34, PRU=35, TXPRU=36
+; - SLICE1 Single-PRU: PRU=34
+; - SLICE0 Multi-PRU: RTU=37, PRU=38, TXPRU=39
+; - SLICE0 Single-PRU: PRU=37
+;
+; Application side uses (event - 16) for R5F interrupt mapping
+;=============================================================================
 
+	.if	$isdefed("SLICE1")
+	.if $isdefed("ENABLE_MULTI_MAKE_RTU") | $isdefed("ENABLE_MULTI_MAKE_PRU") | $isdefed("ENABLE_MULTI_MAKE_TXPRU")
+	; Multi-channel load share using multiple PRUs
+TAMAGAWA_RTU_TRIGGER_HOST_EVT              .set	34			;( (0x20 | 2), pr0_pru_mst_intr[2]_intr_req )
+TAMAGAWA_PRU_TRIGGER_HOST_EVT              .set	35			;( (0x20 | 3), pr0_pru_mst_intr[3]_intr_req )
+TAMAGAWA_TXPRU_TRIGGER_HOST_EVT            .set	36			;( (0x20 | 4), pr0_pru_mst_intr[4]_intr_req )
+	.else
+	; Single PRU
+TAMAGAWA_PRU_TRIGGER_HOST_EVT              .set	34			;( (0x20 | 2), pr0_pru_mst_intr[2]_intr_req )
+	.endif
+	.else
+	; "SLICE0"
+	.if $isdefed("ENABLE_MULTI_MAKE_RTU") | $isdefed("ENABLE_MULTI_MAKE_PRU") | $isdefed("ENABLE_MULTI_MAKE_TXPRU")
+	; Multi-channel load share using multiple PRUs
+TAMAGAWA_RTU_TRIGGER_HOST_EVT              .set	37			;( (0x20 | 5), pr0_pru_mst_intr[5]_intr_req )
+TAMAGAWA_PRU_TRIGGER_HOST_EVT              .set	38			;( (0x20 | 6), pr0_pru_mst_intr[6]_intr_req )
+TAMAGAWA_TXPRU_TRIGGER_HOST_EVT            .set	39			;( (0x20 | 7), pr0_pru_mst_intr[7]_intr_req )
+	.else
+	; Single PRU
+TAMAGAWA_PRU_TRIGGER_HOST_EVT              .set	37			;( (0x20 | 5), pr0_pru_mst_intr[5]_intr_req )
+	.endif
+	.endif
 	.endif

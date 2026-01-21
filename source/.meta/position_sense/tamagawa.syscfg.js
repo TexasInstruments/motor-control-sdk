@@ -405,8 +405,8 @@ let tamagawa_module = {
                         { name: 3, displayName: "CAP3" },
                         { name: 4, displayName: "CAP4" },
                         { name: 5, displayName: "CAP5" },
-                        { name: 6, displayName: "CAP6" },
-                        { name: 7, displayName: "CAP7" },
+                        { name: 6, displayName: "CAP6 (LATCH_IN0)" },
+                        { name: 7, displayName: "CAP7 (LATCH_IN1)" },
                     ],
                 },
                 /* Channel event numbers (only shown when load share is enabled) */
@@ -449,8 +449,8 @@ let tamagawa_module = {
                         { name: 3, displayName: "CAP3" },
                         { name: 4, displayName: "CAP4" },
                         { name: 5, displayName: "CAP5" },
-                        { name: 6, displayName: "CAP6" },
-                        { name: 7, displayName: "CAP7" },
+                        { name: 6, displayName: "CAP6 (LATCH_IN0)" },
+                        { name: 7, displayName: "CAP7 (LATCH_IN1)" },
                     ],
                 },
                 {
@@ -491,8 +491,8 @@ let tamagawa_module = {
                         { name: 3, displayName: "CAP3" },
                         { name: 4, displayName: "CAP4" },
                         { name: 5, displayName: "CAP5" },
-                        { name: 6, displayName: "CAP6" },
-                        { name: 7, displayName: "CAP7" },
+                        { name: 6, displayName: "CAP6 (LATCH_IN0)" },
+                        { name: 7, displayName: "CAP7 (LATCH_IN1)" },
                     ],
                 },
                 {
@@ -533,8 +533,8 @@ let tamagawa_module = {
                         { name: 3, displayName: "CAP3" },
                         { name: 4, displayName: "CAP4" },
                         { name: 5, displayName: "CAP5" },
-                        { name: 6, displayName: "CAP6" },
-                        { name: 7, displayName: "CAP7" },
+                        { name: 6, displayName: "CAP6 (LATCH_IN0)" },
+                        { name: 7, displayName: "CAP7 (LATCH_IN1)" },
                     ],
                 },
             ],
@@ -560,7 +560,7 @@ let tamagawa_module = {
 function moduleInstances(instance){
     let modInstances = new Array();
     let BoosterPack = instance["Booster_Pack"];
-
+    let total_channels = (instance["channel_0"] ? 1 : 0) + (instance["channel_1"] ? 1 : 0) + (instance["channel_2"] ? 1 : 0);
     if(device == "am243x-lp" || is_am26x_soc)
     {
         if(BoosterPack)
@@ -574,7 +574,7 @@ function moduleInstances(instance){
                     defaultValue: "1",
                 },
             });
-            if(device == "am243x-lp")
+            if((device == "am243x-lp")&& (total_channels > 1))
             {
                 modInstances.push({
                     name: "ENC2_EN",

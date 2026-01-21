@@ -139,10 +139,6 @@
 #endif
 
 #if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
-#if !defined(SOC_AM261X) || (CONFIG_TAMAGAWA1_MODE != TAMAGAWA_MODE_SINGLE_CHANNEL_SINGLE_PRU)
-#error "Dual handle example using PRU0 and PRU1 is tested only with TAMAGAWA_MODE_SINGLE_CHANNEL_SINGLE_PRU mode on AM261x. For enabling other combinations, update code and remove this line."
-#endif
-
 /* Single channel mode firmware */
 #if (CONFIG_TAMAGAWA1_PRUICSS_SLICE == 1)
 #include <tamagawa_receiver_single_channel_pru1_bin.h>
@@ -185,6 +181,8 @@ volatile int32_t gTamagawaPositionLoopStatus;
 uint32_t gTaskFxnStack[TASK_STACK_SIZE/sizeof(uint32_t)] __attribute__((aligned(32)));
 TaskP_Object gTaskObject;
 
+/* IRQ count from periodic trigger (defined in tamagawa_periodic_trigger.c) */
+extern volatile uint32_t gPruTamagawaIrqCnt[CONFIG_TAMAGAWA_NUM_INSTANCES][TAMAGAWA_MAX_CHANNELS_PER_SLICE];
 /* ========================================================================== */
 /*                       Function Declarations                                */
 /* ========================================================================== */
@@ -238,6 +236,12 @@ static void tamagawa_pruicss_init(void)
 #endif
 
 #if defined(TAMAGAWA_DUAL_PRU_SLICE_ENABLE)
+
+#if !defined(SOC_AM261X) || (CONFIG_TAMAGAWA0_MODE != TAMAGAWA_MODE_SINGLE_CHANNEL_SINGLE_PRU) || (CONFIG_TAMAGAWA1_MODE != TAMAGAWA_MODE_SINGLE_CHANNEL_SINGLE_PRU)
+    DebugP_log("Dual handle example using PRU0 and PRU1 is tested only with TAMAGAWA_MODE_SINGLE_CHANNEL_SINGLE_PRU mode on AM261x. For enabling other combinations, update code and remove this check.");
+    DebugP_assert(0);
+#endif
+
     /*
      * These checks are applicable only if both Tamagawa instances
      * use same PRU-ICSSG instance. If different instances are used,
@@ -916,6 +920,10 @@ static int32_t tamagawa_process_periodic_command(tamagawa_handle handle[], int32
 {
     uint32_t i;
     const tamagawa_attrs *attrs[CONFIG_TAMAGAWA_NUM_INSTANCES] = {NULL};
+    uint32_t prev_irq_cnt[CONFIG_TAMAGAWA_NUM_INSTANCES] = {0};
+    uint32_t curr_irq_cnt;
+    uint32_t irq_ch_idx[CONFIG_TAMAGAWA_NUM_INSTANCES] = {0};
+    int32_t ret;
 
     if(handle == NULL)
     {
@@ -923,11 +931,29 @@ static int32_t tamagawa_process_periodic_command(tamagawa_handle handle[], int32
         return SystemP_FAILURE;
     }
 
-    if((gTamagawaPeriodicInterface.is_cap_mode > 1) || (gTamagawaPeriodicInterface.iep_reset_count == 0))
+    if(gTamagawaPeriodicInterface.is_cap_mode > 1)
     {
-        DebugP_log("\r\n\n| ERROR: Invalid is_cap_mode/iep_reset_count value\n");
+        DebugP_log("\r\n\n| ERROR: Invalid is_cap_mode value\n");
         return SystemP_FAILURE;
     }
+
+#if defined(SOC_AM243X)
+    /* For AM243x, check iep_reset_count for 0 in both modes */
+    if(gTamagawaPeriodicInterface.iep_reset_count == 0)
+    {
+        DebugP_log("\r\n\n| ERROR: Invalid iep_reset_count value\n");
+        return SystemP_FAILURE;
+    }
+#else
+    if((gTamagawaPeriodicInterface.is_cap_mode == 0) && (gTamagawaPeriodicInterface.iep_reset_count == 0))
+    {
+        /* For AM26x, check iep_reset_count for 0 only in CAP mode.
+         * In CAP mode, iep_reset_count is not used.
+         */
+        DebugP_log("\r\n\n| ERROR: Invalid iep_reset_count value\n");
+        return SystemP_FAILURE;
+    }
+#endif
 
     for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
     {
@@ -999,9 +1025,17 @@ static int32_t tamagawa_process_periodic_command(tamagawa_handle handle[], int32
 
     for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
     {
-        if(tamagawa_command_process(handle[i], process_dataid_cmd) != SystemP_SUCCESS)
+        ret = tamagawa_command_process(handle[i], process_dataid_cmd); 
+        if(ret!= SystemP_SUCCESS)
         {
-            DebugP_log("\r| ERROR: tamagawa_command_process failed for Tamagawa instance %u\r\n|\r\n|\n", i);
+            if(ret == SystemP_TIMEOUT)
+            {
+                DebugP_log("\r| ERROR: tamagawa_command_process timeout for Tamagawa instance %u\r\n|\r\n|\n", i);
+            }
+            else
+            {
+                DebugP_log("\r| ERROR: tamagawa_command_process failed for Tamagawa instance %u\r\n|\r\n|\n", i);
+            }
             return SystemP_FAILURE;
         }
     }
@@ -1044,6 +1078,34 @@ static int32_t tamagawa_process_periodic_command(tamagawa_handle handle[], int32
         return SystemP_FAILURE;
     }
 
+    /* Determine IRQ channel index for each instance (based on load share mode) */
+    for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
+    {
+        if(attrs[i]->load_share_enabled)
+        {
+            /* In load share mode, use channel index for first enabled channel */
+            if(attrs[i]->channel0_enabled)
+            {
+                irq_ch_idx[i] = 0;
+            }
+            else if(attrs[i]->channel1_enabled)
+            {
+                irq_ch_idx[i] = 1;
+            }
+            else if(attrs[i]->channel2_enabled)
+            {
+                irq_ch_idx[i] = 2;
+            }
+        }
+        else
+        {
+            irq_ch_idx[i] = 0;
+        }
+
+        /* Initialize previous IRQ count with current value */
+        prev_irq_cnt[i] = gPruTamagawaIrqCnt[i][irq_ch_idx[i]];
+    }
+
     gTamagawaPositionLoopStatus = TAMAGAWA_POSITION_LOOP_START;
 
     DebugP_log("\r|\n\r| Press Enter to stop the continuous mode\r\n|\r\n|         position, f1\r\n| ");
@@ -1061,6 +1123,42 @@ static int32_t tamagawa_process_periodic_command(tamagawa_handle handle[], int32
         }
         else
         {
+            /* Wait for IRQ count to increment for at least one instance before reading position */
+            for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
+            {
+                /* Wait for IRQ count to increment */
+                while(1)
+                {
+                    curr_irq_cnt = gPruTamagawaIrqCnt[i][irq_ch_idx[i]];
+                    if(gTamagawaPositionLoopStatus == TAMAGAWA_POSITION_LOOP_STOP)
+                    {
+                        break;
+                    }
+                    /* Break as soon as IRQ count increments to avoid missing IRQs at high rates */
+                    if(curr_irq_cnt != prev_irq_cnt[i])
+                    {
+                        break;
+                    }
+                }
+
+                /* Check stop condition before updating prev_irq_cnt */
+                if(gTamagawaPositionLoopStatus == TAMAGAWA_POSITION_LOOP_STOP)
+                {
+                    break;
+                }
+
+                prev_irq_cnt[i] = curr_irq_cnt;
+            }
+
+            /* If stop was requested during IRQ wait, continue for proper cleanup */
+            if(gTamagawaPositionLoopStatus == TAMAGAWA_POSITION_LOOP_STOP)
+            {
+                continue;
+            }
+
+            /* Start with \r to overwrite the same line for all instances */
+            DebugP_log("\r");
+
             for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
             {
                 if(attrs[i]->total_channels > 1)
@@ -1150,7 +1248,7 @@ void tamagawa_main(void *args)
 {
     uint32_t i;
     uint8_t adf = 0, edf = 0;
-    int32_t cmd;
+    int32_t cmd, ret;
     uint8_t ch = 0;
     uint8_t crc_failed = 0;
     const tamagawa_attrs *attrs[CONFIG_TAMAGAWA_NUM_INSTANCES];
@@ -1349,11 +1447,19 @@ void tamagawa_main(void *args)
 
         for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
         {
-            if(tamagawa_command_process(gAppTamagawaHandle[i], cmd) != SystemP_SUCCESS)
+            ret = tamagawa_command_process(gAppTamagawaHandle[i], cmd); 
+            if(ret!= SystemP_SUCCESS)
             {
                 /* NOTE: If command processing fails, no valid data is available to parse.
-                 * Skip data processing for this slice to prevent parsing invalid/stale data. */
-                DebugP_log("\r\n| ERROR: tamagawa_command_process failed for Tamagawa instance %u\n", i);
+                    * Skip data processing for this slice to prevent parsing invalid/stale data. */
+                if(ret == SystemP_TIMEOUT)
+                {
+                    DebugP_log("\r\n| ERROR: tamagawa_command_process timeout for Tamagawa instance %u\n", i);
+                }
+                else
+                {
+                    DebugP_log("\r\n| ERROR: tamagawa_command_process failed for Tamagawa instance %u\n", i);
+                }
                 continue;
             }
         }

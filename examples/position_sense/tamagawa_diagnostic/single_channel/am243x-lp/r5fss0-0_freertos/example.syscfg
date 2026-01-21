@@ -251,9 +251,6 @@ tamagawa1.PRU_ICSSG0_PRU.$assign = "PRU_ICSSG0_PRU1";
 tamagawa1.ENC1_EN.$name          = "ENC1_EN";
 tamagawa1.ENC1_EN.pu_pd          = "pu";
 tamagawa1.ENC1_EN.GPIO_n.$assign = "MMC1_SDWP";
-tamagawa1.ENC2_EN.$name          = "ENC2_EN";
-tamagawa1.ENC2_EN.pu_pd          = "pu";
-tamagawa1.ENC2_EN.GPIO_n.$assign = "MMC1_SDCD";
 
 const pruicss                            = scripting.addModule("/drivers/pruicss/pruicss", {}, false);
 const pruicss1                           = pruicss.addInstance({}, false);
