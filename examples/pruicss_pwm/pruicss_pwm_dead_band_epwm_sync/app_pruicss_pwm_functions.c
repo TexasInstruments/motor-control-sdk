@@ -60,20 +60,22 @@ uint32_t gCpuCyclesInNextFallEdgeCmpValUpdate;
 
 int32_t App_updateNextRisingEdgeCmpValue(PRUICSS_PWM_Handle handle)
 {
+    int32_t status;
+    int32_t retVal;
+    uint32_t compare0_val;
+    uint32_t compare_val;
+    uint8_t currentPwmInstance;
+    uint8_t currentPwmSet;
 
-    int status;
-    int32_t retVal = SystemP_FAILURE;
+    retVal = SystemP_FAILURE;
 
     if((handle!=NULL))
     {
         /* compare0_val is calculated based on pwm period */
-        uint32_t compare0_val = (float)((((handle->iepAttrs)->pruIcssIepClkFrequency *((handle->iepAttrs)->iep0IncrementValue)))/((handle->iepAttrs)->pruIcssPwmFrequency));
+        compare0_val = (float)((((handle->iepAttrs)->pruIcssIepClkFrequency *((handle->iepAttrs)->iep0IncrementValue)))/((handle->iepAttrs)->pruIcssPwmFrequency));
 
         /*div by 2 is done to update compare values half of the pwm period, as IEP cannot be configured in up-down mode*/
         compare0_val = (float)(compare0_val)/2;
-
-        uint32_t compare_val;
-        uint8_t  currentPwmInstance, currentPwmSet;
 
         /*Next compare value which decides rising edge of PWM signal are computed & shadow compare register field is updated*/
         for(currentPwmSet=PRUICSS_PWM_SET0; currentPwmSet < PRUICSS_NUM_PWM_SETS; currentPwmSet++)
@@ -101,30 +103,31 @@ int32_t App_updateNextRisingEdgeCmpValue(PRUICSS_PWM_Handle handle)
 
         status = PRUICSS_PWM_setIepCompareEventUpper_32bitValue(handle, PRUICSS_IEP_INST1, CMP_EVENT0, compare0_val + 1);
         DebugP_assert(SystemP_SUCCESS == status);
-        
+
         retVal = SystemP_SUCCESS;
     }
 
-    #if defined(ENABLE_PROFILING)
-
+#if defined(ENABLE_PROFILING)
     /*Assuming there will not be overflow of 32 bit counter*/
     gCpuCyclesInNextRiseEdgeCmpValUpdate = CycleCounterP_getCount32();
-    #endif
+#endif
 
     return retVal;
 }
 
 int32_t App_sciclientCmpEventRouterIrqset(PRUICSS_PWM_Handle handle)
 {
-    int32_t retVal = SystemP_FAILURE;
+    int32_t retVal;
+    PRUICSS_HwAttrs const *hwAttrs;
+    struct tisci_msg_rm_irq_set_req rmIrqReq;
+    struct tisci_msg_rm_irq_set_resp rmIrqResp;
+
+    retVal = SystemP_FAILURE;
+
     if((handle!=NULL))
     {
-        PRUICSS_HwAttrs const   *hwAttrs;
         hwAttrs = (PRUICSS_HwAttrs const *)handle->pruIcssHandle->hwAttrs;
 
-        int32_t                             retVal;
-        struct tisci_msg_rm_irq_set_req     rmIrqReq;
-        struct tisci_msg_rm_irq_set_resp    rmIrqResp;
         rmIrqReq.valid_params           = 0U;
         rmIrqReq.valid_params          |= TISCI_MSG_VALUE_RM_DST_ID_VALID;
         rmIrqReq.valid_params          |= TISCI_MSG_VALUE_RM_DST_HOST_IRQ_VALID;
@@ -225,13 +228,12 @@ int32_t App_pruicssIep1Compare0IrqSet(PRUICSS_PWM_Handle handle)
 
 int32_t App_epwm0Sync0IrqSet(PRUICSS_PWM_Handle handle, uint32_t epwmBaseAddr)
 {
-
-    HwiP_Params     hwiPrms;
-    HwiP_Object     compHwiObject;
-
+    HwiP_Params hwiPrms;
+    HwiP_Object compHwiObject;
     static AppEpwmSync0IrqArgs_t AppEpwmSync0IrqArgs;
+    int32_t retVal;
 
-    int32_t retVal = SystemP_FAILURE;
+    retVal = SystemP_FAILURE;
 
     if((handle!=NULL))
     {
@@ -240,7 +242,7 @@ int32_t App_epwm0Sync0IrqSet(PRUICSS_PWM_Handle handle, uint32_t epwmBaseAddr)
     }
     else
     {
-        return retVal; 
+        return retVal;
     }
 
     HwiP_Params_init(&hwiPrms);
@@ -249,28 +251,34 @@ int32_t App_epwm0Sync0IrqSet(PRUICSS_PWM_Handle handle, uint32_t epwmBaseAddr)
     hwiPrms.args     = (void *)(&AppEpwmSync0IrqArgs);
     hwiPrms.isPulse     = CONFIG_EPWM0_INTR_IS_PULSE;
     retVal = HwiP_construct(&compHwiObject, &hwiPrms);
-    return retVal; 
+    return retVal;
 }
 
 void App_pruIcssPwmHalfDoneIrq(void *args)
 {
     /* enable and reset CPU cycle coutner */
-    #if defined(ENABLE_PROFILING)
+#if defined(ENABLE_PROFILING)
     CycleCounterP_reset();
-    #endif
+#endif
 
     gUpdateNextRisingEdgeCmpValue  = 1;
 }
 
 void App_epwmSync0Irq(void *args)
 {
-    #if defined(ENABLE_PROFILING)
+    volatile uint16_t status;
+    AppEpwmSync0IrqArgs_t *AppEpwmSync0IrqArgs;
+    uint32_t compare0_val;
+    uint32_t compare_val;
+    uint8_t currentPwmInstance;
+    uint8_t currentPwmSet;
+
+#if defined(ENABLE_PROFILING)
     /* enable and reset CPU cycle coutner */
     CycleCounterP_reset();
-    #endif
-    volatile uint16_t status;
+#endif
 
-    AppEpwmSync0IrqArgs_t *AppEpwmSync0IrqArgs = (AppEpwmSync0IrqArgs_t *)args;
+    AppEpwmSync0IrqArgs = (AppEpwmSync0IrqArgs_t *)args;
 
     status = EPWM_etIntrStatus(AppEpwmSync0IrqArgs->EpwmBaseAddr);
     if(status & EPWM_ETFLG_INT_MASK)
@@ -279,13 +287,10 @@ void App_epwmSync0Irq(void *args)
     }
 
     /* compare0_val is calculated based on pwm period */
-    uint32_t compare0_val = (float)((((AppEpwmSync0IrqArgs->handle)->iepAttrs)->pruIcssIepClkFrequency)*(((AppEpwmSync0IrqArgs->handle)->iepAttrs)->iep0IncrementValue))/(((AppEpwmSync0IrqArgs->handle)->iepAttrs)->pruIcssPwmFrequency);
+    compare0_val = (float)((((AppEpwmSync0IrqArgs->handle)->iepAttrs)->pruIcssIepClkFrequency)*(((AppEpwmSync0IrqArgs->handle)->iepAttrs)->iep0IncrementValue))/(((AppEpwmSync0IrqArgs->handle)->iepAttrs)->pruIcssPwmFrequency);
 
     /*div by 2 is done to update compare values half of the pwm period, as IEP cannot be configured in up-down mode*/
     compare0_val = (float)(compare0_val)/2;
-
-    uint32_t compare_val;
-    uint8_t  currentPwmInstance, currentPwmSet;
 
     /*Next compare value which decides fall edge of PWM signal are computed & shadow compare register field is updated*/
     for(currentPwmSet=PRUICSS_PWM_SET0; currentPwmSet < PRUICSS_NUM_PWM_SETS; currentPwmSet++)
@@ -305,9 +310,9 @@ void App_epwmSync0Irq(void *args)
 
         }
     }
-    #if defined(ENABLE_PROFILING)
+#if defined(ENABLE_PROFILING)
     /*Assuming there will not be overflow of 32 bit counter*/
     gCpuCyclesInNextFallEdgeCmpValUpdate = CycleCounterP_getCount32();
-    #endif
+#endif
     return;
 }
