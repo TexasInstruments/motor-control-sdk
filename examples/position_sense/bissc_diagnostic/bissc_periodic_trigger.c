@@ -85,6 +85,21 @@
 /*                           Macros & Typedefs                                */
 /* ========================================================================== */
 
+
+/*
+ * NOTE: Host Interrupt Number Synchronization
+ *
+ * The host interrupt numbers defined below (e.g., ICSS_PRU_BISSC_INT_NUM)
+ * must match the interrupt channel assignments in SysConfig:
+ *     PRU(ICSS) module -> INTC section -> INTC Host Interrupt
+ *
+ * Host interrupt channels route PRU events to the R5F core. The mapping is:
+ *     Host Interrupt 2-9 in SysConfig = HOST_INTR_PEND_0-7 registers
+ *
+ * If the host interrupt assignments are changed in SysConfig, following macros need
+ * to be updated accordingly to maintain proper interrupt delivery from PRU to R5F.
+ */
+
 #ifndef SOC_AM243X
 /* ICSSM Interrupt Numbers */
 #if(CONFIG_BISSC0_MODE == BISSC_MODE_MULTI_CHANNEL_MULTI_PRU)
@@ -125,7 +140,17 @@
 #endif
 #endif
 
+/*
+ * NOTE: The INTC event numbers defined below must match the corresponding
+ * definitions in the PRU firmware header file:
+ *     "source/position_sense/bissc/firmware/bissc_params.h"
+ *
+ * These event numbers are used for communication between the R5F and
+ * PRU firmware. Any changes to these values must be synchronized between
+ * both files to ensure proper interrupt handling.
+ */
 #if(CONFIG_BISSC0_MODE == BISSC_MODE_MULTI_CHANNEL_MULTI_PRU)
+#if(CONFIG_BISSC0_PRUICSS_SLICE == 1)
 /** \brief RTU-PRU BiSS-C interrupt event number (18 = 2 + 16) */
 #define RTU_TRIGGER_HOST_BISSC_EVT      (2+16)
 /** \brief PRU BiSS-C interrupt event number (19 = 3 + 16) */
@@ -133,8 +158,21 @@
 /** \brief TX-PRU BiSS-C interrupt event number (20 = 4 + 16) */
 #define TXPRU_TRIGGER_HOST_BISSC_EVT    (4+16)
 #else
+/** \brief RTU-PRU BiSS-C interrupt event number (21 = 5 + 16) */
+#define RTU_TRIGGER_HOST_BISSC_EVT      (5+16)
+/** \brief PRU BiSS-C interrupt event number (22 = 6 + 16) */
+#define PRU_TRIGGER_HOST_BISSC_EVT      (6+16)
+/** \brief TX-PRU BiSS-C interrupt event number (23 = 7 + 16) */
+#define TXPRU_TRIGGER_HOST_BISSC_EVT    (7+16)
+#endif
+#else
+#if(CONFIG_BISSC0_PRUICSS_SLICE == 1)
 /** \brief PRU BiSS-C interrupt event number (18 = 2 + 16) */
 #define PRU_TRIGGER_HOST_BISSC_EVT      (2+16)
+#else
+/** \brief PRU BiSS-C interrupt event number (21 = 5 + 16) */
+#define PRU_TRIGGER_HOST_BISSC_EVT      (5+16)
+#endif
 #endif
 
 #if defined(BISSC_DUAL_PRU_SLICE_ENABLE)
@@ -143,17 +181,41 @@
  * combinations, update code and remove this line.
  */
 
+ /*
+ * NOTE: Host Interrupt Number Synchronization
+ *
+ * The host interrupt numbers defined below (e.g., ICSS_PRU_BISSC_INT_NUM)
+ * must match the interrupt channel assignments in SysConfig:
+ *     PRU(ICSS) module -> INTC section -> INTC Host Interrupt
+ *
+ * Host interrupt channels route PRU events to the R5F core. The mapping is:
+ *     Host Interrupt 2-9 in SysConfig = HOST_INTR_PEND_0-7 registers
+ *
+ * If the host interrupt assignments are changed in SysConfig, following macros need
+ * to be updated accordingly to maintain proper interrupt delivery from PRU to R5F.
+ */
 #if(CONFIG_BISSC1_PRUICSS_INSTANCE == 1)
 #define ICSS_PRU_BISSC_INT_NUM_SECOND_SLICE         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_1)
 #else
 #define ICSS_PRU_BISSC_INT_NUM_SECOND_SLICE         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_1)
 #endif
 
+/*
+ * NOTE: The INTC event numbers defined below must match the corresponding
+ * definitions in the PRU firmware header file:
+ *     "source/position_sense/bissc/firmware/bissc_params.h"
+ *
+ * These event numbers are used for communication between the R5F and
+ * PRU firmware. Any changes to these values must be synchronized between
+ * both files to ensure proper interrupt handling.
+ */
 #if(CONFIG_BISSC1_PRUICSS_SLICE == 1)
-#define PRU_TRIGGER_HOST_BISSC_EVT_SECOND_SLICE     (2+16)
+/** \brief PRU BiSS-C interrupt event number (18 = 2 + 16) */
+#define PRU_TRIGGER_HOST_BISSC_EVT_SECOND_SLICE      (2+16)
 #else
-#define PRU_TRIGGER_HOST_BISSC_EVT_SECOND_SLICE     (3+16)
-#endif /* CONFIG_BISSC1_PRUICSS_SLICE */
+/** \brief PRU BiSS-C interrupt event number (21 = 5 + 16) */
+#define PRU_TRIGGER_HOST_BISSC_EVT_SECOND_SLICE      (5+16)
+#endif
 
 #endif /* BISSC_DUAL_PRU_SLICE_ENABLE */
 

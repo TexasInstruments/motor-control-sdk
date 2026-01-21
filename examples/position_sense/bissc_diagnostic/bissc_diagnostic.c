@@ -149,10 +149,6 @@
 #endif
 
 #if defined(BISSC_DUAL_PRU_SLICE_ENABLE)
-#if !defined(SOC_AM261X) || (CONFIG_BISSC1_MODE != BISSC_MODE_SINGLE_CHANNEL_SINGLE_PRU)
-#error "Dual handle example using PRU0 and PRU1 is tested only with BISSC_MODE_SINGLE_CHANNEL_SINGLE_PRU mode on AM261x. For enabling other combinations, update code and remove this line."
-#endif
-
 /* Single channel single PRU mode for second slice */
 #if (CONFIG_BISSC1_PRUICSS_SLICE == 1)
 #include  <bissc_receiver_pru1_bin.h>
@@ -168,6 +164,7 @@
 
 #define WAIT_5_SECOND                       (5000)
 #define WAIT_2_SECOND                       (2000)
+#define BISSC_PERIODIC_MODE_POLL_SLEEP_US   (1)
 
 #define TASK_STACK_SIZE                     (4096)
 #define TASK_PRIORITY                       (6)
@@ -204,6 +201,9 @@ bissc_periodic_interface gBisscPeriodicInterface;
 
 /* Global variable to track position loop status */
 volatile int32_t gBisscPositionLoopStatus;
+
+/* IRQ count from periodic trigger (defined in bissc_periodic_trigger.c) */
+extern volatile uint32_t gPruBisscIrqCnt[CONFIG_BISSC_NUM_INSTANCES][BISSC_NUM_CH_PER_SLICE_MAX];
 
 /* Task related global variables */
 uint32_t gTaskFxnStack[TASK_STACK_SIZE/sizeof(uint32_t)] __attribute__((aligned(32)));
@@ -263,6 +263,10 @@ static void bissc_pruicss_init(void)
 #endif
 
 #if defined(BISSC_DUAL_PRU_SLICE_ENABLE)
+#if !defined(SOC_AM261X) || (CONFIG_BISSC0_MODE != BISSC_MODE_SINGLE_CHANNEL_SINGLE_PRU) || (CONFIG_BISSC1_MODE != BISSC_MODE_SINGLE_CHANNEL_SINGLE_PRU)
+    DebugP_log("Dual handle example using PRU0 and PRU1 is tested only with BISSC_MODE_SINGLE_CHANNEL_SINGLE_PRU mode on AM261x. For enabling other combinations, update code and remove this check.");
+    DebugP_assert(0);
+#endif
     /*
      * These checks are applicable only if both BiSS-C instances
      * use same PRU-ICSSG instance. If different instances are used,
@@ -592,66 +596,74 @@ static void bissc_get_enc_data_len(bissc_handle handle)
 
     for(ch_num = 0; ch_num < total_channels; ch_num++)
     {
-        for(enc_num = 0; enc_num < BISSC_NUM_ENCODERS_IN_DAISY_CHAIN_MAX; enc_num++)
+        /* Retry loop for encoder input validation */
+        while(1)
         {
-            single_turn_len[enc_num] = 0;
-            multi_turn_len[enc_num] = 0;
-        }
 
-        /* BiSS-C Frame Size Constraints:
-         * BiSS-C protocol uses 64-bit data frames. Total frame size must not exceed 64 bits.
-         *
-         * Frame structure WITHOUT Safety mode:
-         * Position Data + E/W(2) + CRC(6) <= 64 bits
-         *
-         *   Therefore: single_turn + multi_turn <= 56 bits
-         *
-         * Frame structure WITH Safety mode:
-         *   Position Data + E/W(2) + sign-of-life(6) + safety CRC(16) <= 64 bits
-         *   Therefore: single_turn + multi_turn <= 40 bits
-         *
-         * Examples:
-         *   - Without Safety: 32-bit single-turn + 12-bit multi-turn = 44 bits (valid, <= 56)
-         *   - With Safety: 32-bit single-turn + 8-bit multi-turn = 40 bits (valid, <= 40)
-         *   - Without Safety: 40-bit single-turn + 20-bit multi-turn = 60 bits (invalid, > 56)
-         */
-
-        DebugP_log("\r\n=======================================================================\n");
-        DebugP_log("BiSS-C Frame Size Constraints:\n");
-        DebugP_log("  - Without Safety: single_turn + multi_turn <= 56 bits\n");
-        DebugP_log("  - With Safety: single_turn + multi_turn <= 40 bits\n");
-        DebugP_log("=======================================================================\n");
-        DebugP_log("\r\nPlease enter encoder lengths connected to Channel %u:\n", priv->channel[ch_num]);
-        DebugP_log("\r\nPlease enter 1st encoder single turn length\n");
-        DebugP_scanf("%u\n", &single_turn_len[0]);
-        if(single_turn_len[0])
-        {
-            DebugP_log("\r\nPlease enter 1st encoder multiturn length, 0 if not multiturn\n");
-            DebugP_scanf("%u\n", &multi_turn_len[0]);
-        }
-        DebugP_log("\r\nPlease enter 0 as data length if daisy chain is not used\n");
-        DebugP_log("\r\nPlease enter 2nd encoder single turn length\n");
-        DebugP_scanf("%u\n", &single_turn_len[1]);
-        if(single_turn_len[1])
-        {
-            DebugP_log("\r\nPlease enter 2nd encoder multiturn length, 0 if not multiturn\n");
-            DebugP_scanf("%u\n", &multi_turn_len[1]);
-        }
-        if(single_turn_len[1])
-        {
-            DebugP_log("\r\nPlease enter 3rd encoder single turn length\n");
-            DebugP_scanf("%u\n", &single_turn_len[2]);
-            if(single_turn_len[2])
+            for(enc_num = 0; enc_num < BISSC_NUM_ENCODERS_IN_DAISY_CHAIN_MAX; enc_num++)
             {
-                DebugP_log("\r\nPlease enter 3rd encoder multiturn length, 0 if not multiturn\n");
-                DebugP_scanf("%u\n", &multi_turn_len[2]);
+                single_turn_len[enc_num] = 0;
+                multi_turn_len[enc_num] = 0;
             }
-        }
-        ret = bissc_update_data_len(handle, single_turn_len, multi_turn_len, ch_num);
-        if(ret != SystemP_SUCCESS)
-        {
-            DebugP_log("\r\n[BiSS-C] ERROR: Invalid encoder configuration for channel %u\n", ch_num);
-            return;
+
+            /* BiSS-C Frame Size Constraints:
+            * BiSS-C protocol uses 64-bit data frames. Total frame size must not exceed 64 bits.
+            *
+            * Frame structure WITHOUT Safety mode:
+            * Position Data + E/W(2) + CRC(6) <= 64 bits
+            *
+            *   Therefore: single_turn + multi_turn <= 56 bits
+            *
+            * Frame structure WITH Safety mode:
+            *   Position Data + E/W(2) + sign-of-life(6) + safety CRC(16) <= 64 bits
+            *   Therefore: single_turn + multi_turn <= 40 bits
+            *
+            * Examples:
+            *   - Without Safety: 32-bit single-turn + 12-bit multi-turn = 44 bits (valid, <= 56)
+            *   - With Safety: 32-bit single-turn + 8-bit multi-turn = 40 bits (valid, <= 40)
+            *   - Without Safety: 40-bit single-turn + 20-bit multi-turn = 60 bits (invalid, > 56)
+            */
+
+            DebugP_log("\r\n=======================================================================\n");
+            DebugP_log("BiSS-C Frame Size Constraints:\n");
+            DebugP_log("  - Without Safety: single_turn + multi_turn <= 56 bits\n");
+            DebugP_log("  - With Safety: single_turn + multi_turn <= 40 bits\n");
+            DebugP_log("=======================================================================\n");
+            DebugP_log("\r\nPlease enter encoder lengths connected to Channel %u:\n", priv->channel[ch_num]);
+            DebugP_log("\r\nPlease enter 1st encoder single turn length\n");
+            DebugP_scanf("%u\n", &single_turn_len[0]);
+            if(single_turn_len[0])
+            {
+                DebugP_log("\r\nPlease enter 1st encoder multiturn length, 0 if not multiturn\n");
+                DebugP_scanf("%u\n", &multi_turn_len[0]);
+            }
+            DebugP_log("\r\nPlease enter 0 as data length if daisy chain is not used\n");
+            DebugP_log("\r\nPlease enter 2nd encoder single turn length\n");
+            DebugP_scanf("%u\n", &single_turn_len[1]);
+            if(single_turn_len[1])
+            {
+                DebugP_log("\r\nPlease enter 2nd encoder multiturn length, 0 if not multiturn\n");
+                DebugP_scanf("%u\n", &multi_turn_len[1]);
+            }
+            if(single_turn_len[1])
+            {
+                DebugP_log("\r\nPlease enter 3rd encoder single turn length\n");
+                DebugP_scanf("%u\n", &single_turn_len[2]);
+                if(single_turn_len[2])
+                {
+                    DebugP_log("\r\nPlease enter 3rd encoder multiturn length, 0 if not multiturn\n");
+                    DebugP_scanf("%u\n", &multi_turn_len[2]);
+                }
+            }
+            ret = bissc_update_data_len(handle, single_turn_len, multi_turn_len, ch_num);
+            if(ret != SystemP_SUCCESS)
+            {
+                DebugP_log("\r\n[BiSS-C] ERROR: Invalid encoder configuration for channel %u\n", ch_num);
+            }
+            else
+            {
+                break;
+            }
         }
     }
 }
@@ -675,22 +687,25 @@ static void bissc_print_res(bissc_handle handle)
             ls_ch = ch;
         else
             ls_ch = 0;
-        if((attrs->mode == BISSC_MODE_MULTI_CHANNEL_SINGLE_PRU) || (attrs->mode == BISSC_MODE_MULTI_CHANNEL_MULTI_PRU))
-            DebugP_log("%s", (ch_num != (attrs->total_channels-1))?"\r":" & ");
-        else
-            DebugP_log("\r");
+
+        /* Separator between channels */
+        if(ch_num > 0)
+        {
+            DebugP_log(", ");
+        }
+
         if(priv->data_len[ls_ch][1])
         {
             if(priv->data_len[ls_ch][2])
             {
                 if(priv->multi_turn_len[ls_ch][2])
                 {
-                    DebugP_log("Channel:%u - Enc3: MT rev:%u, Angle:%.12f, Enc2: MT rev:%u, Angle:%.12f, Enc1: MT rev:%u, Angle:%.12f, crc error count enc3:%u, crc error count enc2:%u, crc error count enc_1:%u ", ch, priv->enc_pos_data[ch].num_of_turns[2], priv->enc_pos_data[ch].angle[2], priv->enc_pos_data[ch].num_of_turns[1], priv->enc_pos_data[ch].angle[1],
+                    DebugP_log("Ch:%u-Enc3: MT:%u, Ang:%.12f, Enc2: MT:%u, Ang:%.12f, Enc1: MT:%u, Ang:%.12f, crc_err enc3:%u, crc_err enc2:%u, crc_err enc_1:%u ", ch, priv->enc_pos_data[ch].num_of_turns[2], priv->enc_pos_data[ch].angle[2], priv->enc_pos_data[ch].num_of_turns[1], priv->enc_pos_data[ch].angle[1],
                     priv->enc_pos_data[ch].num_of_turns[0], priv->enc_pos_data[ch].angle[0], priv->pd_crc_err_cnt[ch][2], priv->pd_crc_err_cnt[ch][1], priv->pd_crc_err_cnt[ch][0]);
                 }
                 else
                 {
-                    DebugP_log("Channel:%u - Enc3: Angle:%.12f, Enc2: Angle:%.12f, Enc1: Angle:%.12f, crc error count enc3:%u, crc error count enc2:%u, crc error count enc1:%u ", ch, priv->enc_pos_data[ch].angle[2], priv->enc_pos_data[ch].angle[1],
+                    DebugP_log("Ch:%u-Enc3: Ang:%.12f, Enc2: Ang:%.12f, Enc1: Ang:%.12f, crc_err enc3:%u, crc_err enc2:%u, crc_err enc1:%u ", ch, priv->enc_pos_data[ch].angle[2], priv->enc_pos_data[ch].angle[1],
                     priv->enc_pos_data[ch].angle[0], priv->pd_crc_err_cnt[ch][2], priv->pd_crc_err_cnt[ch][1], priv->pd_crc_err_cnt[ch][0]);
                 }
             }
@@ -698,12 +713,12 @@ static void bissc_print_res(bissc_handle handle)
             {
                 if(priv->multi_turn_len[ls_ch][1])
                 {
-                    DebugP_log("Channel:%u - Enc2: MT rev:%u, Angle:%.12f, Enc1: MT rev:%u, Angle:%.12f, crc error count enc2:%u, crc error count enc1:%u ", ch, priv->enc_pos_data[ch].num_of_turns[1], priv->enc_pos_data[ch].angle[1],
+                    DebugP_log("Ch:%u-Enc2: MT:%u, Ang:%.12f, Enc1: MT:%u, Ang:%.12f, crc_err enc2:%u, crc_err enc1:%u ", ch, priv->enc_pos_data[ch].num_of_turns[1], priv->enc_pos_data[ch].angle[1],
                     priv->enc_pos_data[ch].num_of_turns[0], priv->enc_pos_data[ch].angle[0], priv->pd_crc_err_cnt[ch][1], priv->pd_crc_err_cnt[ch][0]);
                 }
                 else
                 {
-                    DebugP_log("Channel:%u - Enc2: Angle:%.12f, Enc1: Angle:%.12f, crc error count enc2:%u, crc error count enc1:%u ", ch, priv->enc_pos_data[ch].angle[1], priv->enc_pos_data[ch].angle[0], priv->pd_crc_err_cnt[ch][1],
+                    DebugP_log("Ch:%u-Enc2: Ang:%.12f, Enc1: Ang:%.12f, crc_err enc2:%u, crc_err enc1:%u ", ch, priv->enc_pos_data[ch].angle[1], priv->enc_pos_data[ch].angle[0], priv->pd_crc_err_cnt[ch][1],
                     priv->pd_crc_err_cnt[ch][0]);
                 }
             }
@@ -712,12 +727,12 @@ static void bissc_print_res(bissc_handle handle)
         {
             if(priv->multi_turn_len[ls_ch][0])
             {
-                DebugP_log("Channel:%u - Enc1: MT rev:%u, Angle:%.12f, crc error count enc1:%u ", ch, priv->enc_pos_data[ch].num_of_turns[0], priv->enc_pos_data[ch].angle[0],
+                DebugP_log("Ch:%u-Enc1: MT:%u, Ang:%.12f, crc_err enc1:%u ", ch, priv->enc_pos_data[ch].num_of_turns[0], priv->enc_pos_data[ch].angle[0],
                 priv->pd_crc_err_cnt[ch][0]);
             }
             else
             {
-                DebugP_log("Channel:%u - Enc1: Angle:%.12f, crc error count enc1:%u ", ch, priv->enc_pos_data[ch].angle[0],
+                DebugP_log("Ch:%u-Enc1: Ang:%.12f, crc_err enc1:%u ", ch, priv->enc_pos_data[ch].angle[0],
                 priv->pd_crc_err_cnt[ch][0]);
             }
         }
@@ -839,6 +854,9 @@ static int32_t bissc_process_periodic_command(bissc_handle handle[CONFIG_BISSC_N
     uint32_t i;
     uint32_t pos_fail_cnt[CONFIG_BISSC_NUM_INSTANCES] = {0}, pos_total_cnt = 0;
     const bissc_attrs *attrs[CONFIG_BISSC_NUM_INSTANCES] = {NULL};
+    uint32_t prev_irq_cnt[CONFIG_BISSC_NUM_INSTANCES] = {0};
+    uint32_t curr_irq_cnt;
+    uint32_t irq_ch_idx[CONFIG_BISSC_NUM_INSTANCES] = {0};
 
     /* Validate input array pointers */
     if((handle == NULL) || (trigger_count == NULL))
@@ -847,11 +865,29 @@ static int32_t bissc_process_periodic_command(bissc_handle handle[CONFIG_BISSC_N
         return SystemP_FAILURE;
     }
 
-    if((is_cap_mode > 1) || (iep_reset_count == 0))
+    if(is_cap_mode > 1)
     {
-        DebugP_log("\r\n\n| ERROR: Invalid is_cap_mode/iep_reset_count value\n");
+        DebugP_log("\r\n\n| ERROR: Invalid is_cap_mode value\n");
         return SystemP_FAILURE;
     }
+
+#if defined(SOC_AM243X)
+    /* For AM243x, check iep_reset_count for 0 in both modes */
+    if(iep_reset_count == 0)
+    {
+        DebugP_log("\r\n\n| ERROR: Invalid iep_reset_count value\n");
+        return SystemP_FAILURE;
+    }
+#else
+    if((is_cap_mode == 0) && (iep_reset_count == 0))
+    {
+        /* For AM26x, check iep_reset_count for 0 only in CMP mode.
+         * In CAP mode, iep_reset_count is not used.
+         */
+        DebugP_log("\r\n\n| ERROR: Invalid iep_reset_count value\n");
+        return SystemP_FAILURE;
+    }
+#endif
 
     for(i = 0; i < CONFIG_BISSC_NUM_INSTANCES; i++)
     {
@@ -951,13 +987,40 @@ static int32_t bissc_process_periodic_command(bissc_handle handle[CONFIG_BISSC_N
         return SystemP_FAILURE;
     }
 
+    /* Determine IRQ channel index for each instance (based on load share mode) */
+    for(i = 0; i < CONFIG_BISSC_NUM_INSTANCES; i++)
+    {
+        if(attrs[i]->load_share_enabled)
+        {
+            /* In load share mode, use channel index for first enabled channel */
+            if(attrs[i]->channel0_enabled)
+            {
+                irq_ch_idx[i] = 0;
+            }
+            else if(attrs[i]->channel1_enabled)
+            {
+                irq_ch_idx[i] = 1;
+            }
+            else if(attrs[i]->channel2_enabled)
+            {
+                irq_ch_idx[i] = 2;
+            }
+        }
+        else
+        {
+            irq_ch_idx[i] = 0;
+        }
+
+        /* Initialize previous IRQ count with current value */
+        prev_irq_cnt[i] = gPruBisscIrqCnt[i][irq_ch_idx[i]];
+    }
+
     gBisscPositionLoopStatus = BISSC_POSITION_LOOP_START;
 
     DebugP_log("\r|\n\r| Press Enter to stop the continuous mode\r\n|");
 
     while(1)
     {
-        pos_total_cnt++;
         if(gBisscPositionLoopStatus == BISSC_POSITION_LOOP_STOP)
         {
             for(i = 0; i < CONFIG_BISSC_NUM_INSTANCES; i++)
@@ -973,16 +1036,75 @@ static int32_t bissc_process_periodic_command(bissc_handle handle[CONFIG_BISSC_N
         }
         else
         {
+            /* Wait for IRQ count to increment for at least one instance before reading position */
+            for(i = 0; i < CONFIG_BISSC_NUM_INSTANCES; i++)
+            {
+                /* Wait for IRQ count to increment */
+                while(1)
+                {
+                    curr_irq_cnt = gPruBisscIrqCnt[i][irq_ch_idx[i]];
+                    if(gBisscPositionLoopStatus == BISSC_POSITION_LOOP_STOP)
+                    {
+                        break;
+                    }
+                    /* Break as soon as IRQ count increments to avoid missing IRQs at high rates */
+                    if(curr_irq_cnt != prev_irq_cnt[i])
+                    {
+                        break;
+                    }
+                    ClockP_usleep(BISSC_PERIODIC_MODE_POLL_SLEEP_US);
+                }
+
+                /* Check stop condition before updating prev_irq_cnt */
+                if(gBisscPositionLoopStatus == BISSC_POSITION_LOOP_STOP)
+                {
+                    break;
+                }
+
+                prev_irq_cnt[i] = curr_irq_cnt;
+            }
+
+            /* If stop was requested during IRQ wait, continue for proper cleanup */
+            if(gBisscPositionLoopStatus == BISSC_POSITION_LOOP_STOP)
+            {
+                continue;
+            }
+
+            pos_total_cnt++;
+
+            /* Start with \r to overwrite the same line for all instances */
+            DebugP_log("\r");
+
             for(i = 0; i < CONFIG_BISSC_NUM_INSTANCES; i++)
             {
                 ret = bissc_get_pos(handle[i]);
                 if(ret != SystemP_SUCCESS)
                 {
-                    DebugP_log("\r\n ERROR: Position data measurement failed for BiSS-C instance %u\n", i);
+                    if(ret == SystemP_TIMEOUT)
+                    {
+                        DebugP_log("\r\n ERROR: Position data measurement timeout for BiSS-C instance %u\n", i);
+                    }
+                    else
+                    {
+                        DebugP_log("\r\n ERROR: Position data measurement failed for BiSS-C instance %u\n", i);
+                    }
                     pos_fail_cnt[i]++;
                     continue;
                 }
+
+                /* For multi-instance, add instance prefix */
+                if(CONFIG_BISSC_NUM_INSTANCES > 1)
+                {
+                    DebugP_log("Inst[%u]:", i);
+                }
+
                 bissc_print_res(handle[i]);
+
+                /* Separator between instances */
+                if(CONFIG_BISSC_NUM_INSTANCES > 1 && i < (CONFIG_BISSC_NUM_INSTANCES - 1))
+                {
+                    DebugP_log(" | ");
+                }
             }
         }
     }
@@ -997,6 +1119,7 @@ static int32_t bissc_process_periodic_command(bissc_handle handle[CONFIG_BISSC_N
  *          firmware, and provides an interactive menu-driven interface for various
  *          encoder operations including:
  *          - Position data acquisition (single-shot and continuous)
+ *          - Daisy chain operation
  *          - Control communication (register read/write)
  *          - Frequency configuration
  *          - Safety mode operations
@@ -1004,14 +1127,13 @@ static int32_t bissc_process_periodic_command(bissc_handle handle[CONFIG_BISSC_N
  *
  *          Flow:
  *          1. Initialize SoC drivers and board drivers
- *          2. Enable booster pack power pins if configured
- *          3. Initialize PRU-ICSS subsystem
- *          4. Initialize BiSS-C driver
- *          5. Get encoder resolution parameters from user
- *          6. Load and run PRU firmware(s) and configure host trigger mode (default)
- *          7. Validate encoder processing delays (multi-channel mode)
- *          8. Enter interactive menu loop for encoder operations
- *          9. De-initialize on exit
+ *          2. Initialize PRU-ICSS subsystem
+ *          3. Initialize BiSS-C driver
+ *          4. Get encoder resolution parameters from user
+ *          5. Load and run PRU firmware(s) and configure host trigger mode (default)
+ *          6. Validate encoder processing delays (multi-channel mode)
+ *          7. Enter interactive menu loop for encoder operations
+ *          8. De-initialize on exit
  *
  *          Trigger Modes:
  *          - Host Trigger Mode (default): Each encoder transaction is initiated by the host (R5F)
@@ -1043,17 +1165,6 @@ void bissc_main(void *args)
     /* ========================================================================== */
     Drivers_open();          /* Open SoC drivers */
     Board_driversOpen();     /* Open board-specific drivers */
-    /*C16 pin High for Enabling ch0 in booster pack */
-#if (CONFIG_BISSC0_BOOSTER_PACK)
-#if (CONFIG_BISSC0_CHANNEL0)
-    GPIO_setDirMode(ENC0_EN_BASE_ADDR, ENC0_EN_PIN, ENC0_EN_DIR);
-    GPIO_pinWriteHigh(ENC0_EN_BASE_ADDR, ENC0_EN_PIN);
-#endif
-#if (CONFIG_BISSC0_CHANNEL2)
-    GPIO_setDirMode(ENC2_EN_BASE_ADDR, ENC2_EN_PIN, ENC2_EN_DIR);
-    GPIO_pinWriteHigh(ENC2_EN_BASE_ADDR, ENC2_EN_PIN);
-#endif
-#endif
 
     /* ========================================================================== */
     /* STEP 2: Initialize PRU-ICSS and BiSS-C driver                              */
@@ -1160,7 +1271,14 @@ void bissc_main(void *args)
 
         if(ret != SystemP_SUCCESS)
         {
-            DebugP_log("\r\nERROR: BiSS-C initialization failed for BiSS-C instance %u\n", i);
+            if(ret == SystemP_TIMEOUT)
+            {
+                DebugP_log("\r\nERROR: BiSS-C firmware initialization timeout for BiSS-C instance %u\n", i);
+            }
+            else
+            {
+                DebugP_log("\r\nERROR: BiSS-C firmware initialization failed for BiSS-C instance %u\n", i);
+            }
             DebugP_log("\r\nCheck whether encoder is connected and ensure proper connections\n");
             DebugP_log("\r\nExit %s due to failed firmware initialization\n", __func__);
             goto deinit;
@@ -1258,6 +1376,7 @@ void bissc_main(void *args)
         {
             /* Change BiSS-C communication frequency (1/2/5/8/10 MHz)
              * Calls: bissc_clock_config() which internally calls multiple functions */
+            DebugP_log("\r\nNOTE: Source clock selection for BiSS-C (PRU-ICSS Core Clock or PRU-ICSS UART Clock) is not changed in this option\n");
             DebugP_log("\r\nPlease enter frequency in MHz:\n");
             DebugP_scanf("%u\n", &freq);
 
@@ -1274,7 +1393,14 @@ void bissc_main(void *args)
                 ret = bissc_clock_config(gAppBisscHandle[i], freq, WAIT_5_SECOND);
                 if(ret != SystemP_SUCCESS)
                 {
-                    DebugP_log("\r\nERROR: Processing time measurement failed for BiSS-C instance %u\n", i);
+                    if(ret == SystemP_TIMEOUT)
+                    {
+                        DebugP_log("\r\nERROR: Clock configuration timeout error for BiSS-C instance %u\n", i);
+                    }
+                    else
+                    {
+                        DebugP_log("\r\nERROR: Clock configuration failed for BiSS-C instance %u\n", i);
+                    }
                     DebugP_log("\r\nCheck whether encoder is connected and ensure proper connections\n");
                     DebugP_log("\r\nExiting application!\n");
                     break;
@@ -1292,7 +1418,14 @@ void bissc_main(void *args)
                 ret = bissc_get_pos(gAppBisscHandle[i]);
                 if(ret != SystemP_SUCCESS)
                 {
-                    DebugP_log("\r\n ERROR: Position data measurement failed \n");
+                    if(ret == SystemP_TIMEOUT)
+                    {
+                        DebugP_log("\r\n ERROR: Position data measurement timeout for BiSS-C instance %u\n", i);
+                    }
+                    else
+                    {
+                        DebugP_log("\r\n ERROR: Position data measurement failed for BiSS-C instance %u\n", i);
+                    }
                 }
                 for(ch_num = 0; ch_num < attrs[i]->total_channels; ch_num++)
                 {
@@ -1511,7 +1644,14 @@ void bissc_main(void *args)
                 ret = bissc_set_ctrl_cmd_and_process(gAppBisscHandle[i], ctrl_cmd);
                 if(ret != SystemP_SUCCESS)
                 {
-                    DebugP_log("\r\n ERROR: Control communication failed for BiSS-C instance %u:\n", i);
+                    if(ret == SystemP_TIMEOUT)
+                    {
+                        DebugP_log("\r\n ERROR: Control communication timeout for BiSS-C instance %u\n", i);
+                    }
+                    else
+                    {
+                        DebugP_log("\r\n ERROR: Control communication failed for BiSS-C instance %u\n", i);
+                    }
                 }
 
                 for(ch_num = 0; ch_num < attrs[i]->total_channels; ch_num++)
@@ -1534,14 +1674,37 @@ void bissc_main(void *args)
             {
                 do
                 {
+                    /* Start with \r to overwrite the same line for all instances */
+                    DebugP_log("\r");
+
                     for(i = 0; i < CONFIG_BISSC_NUM_INSTANCES; i++)
                     {
                         ret = bissc_get_pos(gAppBisscHandle[i]);
                         if(ret != SystemP_SUCCESS)
                         {
-                            DebugP_log("\r\n ERROR: Position data measurement failed for BiSS-C instance %u:\n", i);
+                            if(ret == SystemP_TIMEOUT)
+                            {
+                                DebugP_log("\r\n ERROR: Position data measurement timeout for BiSS-C instance %u\n", i);
+                            }
+                            else
+                            {
+                                DebugP_log("\r\n ERROR: Position data measurement failed for BiSS-C instance %u\n", i);
+                            }
                         }
+
+                        /* For multi-instance, add instance prefix */
+                        if(CONFIG_BISSC_NUM_INSTANCES > 1)
+                        {
+                            DebugP_log("Inst[%u]:", i);
+                        }
+
                         bissc_print_res(gAppBisscHandle[i]);
+
+                        /* Separator between instances */
+                        if(CONFIG_BISSC_NUM_INSTANCES > 1 && i < (CONFIG_BISSC_NUM_INSTANCES - 1))
+                        {
+                            DebugP_log(" | ");
+                        }
                     }
                     loop_cnt--;
                 }
@@ -1614,7 +1777,7 @@ void bissc_main(void *args)
                     }
                 }
             }
-            DebugP_log("\r\n Switching to periodic trigger mode\n");
+            DebugP_log("\r\n Switching to periodic trigger CMP mode\n");
 
             /* Switching to periodic mode using bissc_config_periodic_trigger_cmp_mode() is done
              * inside bissc_process_periodic_command */
@@ -1694,7 +1857,7 @@ void bissc_main(void *args)
             DebugP_log("\r| Periodic CAP mode cycle time will be equal to EPWM frequency. NOTE: In SysConfig, EPWM and EPWM to IEP LATCH XBAR configuration must be done. \n|\n|\n|\n");
 
 #endif
-            DebugP_log("\r\n Switching to periodic trigger mode \n");
+            DebugP_log("\r\n Switching to periodic trigger CAP mode \n");
 
             /* Switching to periodic mode using bissc_config_periodic_trigger_cap_mode() is done
              * inside bissc_process_periodic_command */

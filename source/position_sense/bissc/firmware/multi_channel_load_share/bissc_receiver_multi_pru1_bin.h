@@ -54,7 +54,7 @@
 const uint32_t BiSSFirmwareMultiMakePru1_0[] = {
 0x21000300,
 0x00000208,
-0x01010005,
+0x01010006,
 0x2effbb80,
 0x83d07880,
 0x911c1809,

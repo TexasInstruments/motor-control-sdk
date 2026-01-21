@@ -130,7 +130,9 @@ void bissc_deinit(bissc_handle handle);
  *
  *  \param[in]  handle            BiSS-C handle
  *
- *  \retval     SystemP_SUCCESS for success, SystemP_FAILURE for failure
+ *  \retval     SystemP_SUCCESS   On successful completion
+ *  \retval     SystemP_TIMEOUT   On timeout waiting for firmware acknowledgment (propagated from \ref bissc_command_wait)
+ *  \retval     SystemP_FAILURE   On validation failure (NULL handle or invalid internal structures)
  */
 int32_t bissc_command_process(bissc_handle handle);
 
@@ -162,8 +164,9 @@ int32_t bissc_command_send(bissc_handle handle);
  *
  *  \param[in]  handle     BiSS-C handle
  *
- *  \retval     SystemP_SUCCESS on successful completion
- *  \retval     SystemP_FAILURE on timeout (configured via bissc_params.max_wait_loop_count before calling \ref bissc_init, default: 5ms)
+ *  \retval     SystemP_SUCCESS   On successful completion
+ *  \retval     SystemP_TIMEOUT   On timeout (configured via bissc_params.max_wait_loop_count before calling \ref bissc_init, default: 5ms)
+ *  \retval     SystemP_FAILURE   On validation failure (NULL handle or invalid internal structures)
  *
  */
 int32_t bissc_command_wait(bissc_handle handle);
@@ -179,7 +182,9 @@ int32_t bissc_command_wait(bissc_handle handle);
  *
  *  \param[in]  handle     BiSS-C handle
  *
- *  \retval     SystemP_SUCCESS for success, SystemP_FAILURE for failure
+ *  \retval     SystemP_SUCCESS   On successful position data retrieval
+ *  \retval     SystemP_TIMEOUT   On timeout waiting for firmware acknowledgment (propagated from \ref bissc_command_process)
+ *  \retval     SystemP_FAILURE   On validation failure (NULL handle or invalid internal structures)
  *
  */
 int32_t bissc_get_pos(bissc_handle handle);
@@ -239,7 +244,8 @@ int32_t bissc_config_channel(bissc_handle handle, uint8_t mask, uint8_t total_ch
  *  \param[in]  handle          BiSS-C handle
  *  \param[in]  loop_count      Maximum number of polling iterations before timeout
  *  \retval     SystemP_SUCCESS When all specified channels are initialized
- *  \retval     SystemP_FAILURE On NULL handle, invalid internal structures, timeout, or invalid channel_mask in load share mode
+ *  \retval     SystemP_TIMEOUT On timeout (loop_count iterations exhausted before initialization completed)
+ *  \retval     SystemP_FAILURE On validation failure (NULL handle, invalid internal structures, or invalid channel_mask in load share mode)
  *
  */
 int32_t bissc_wait_for_fw_initialization(bissc_handle handle, uint32_t loop_count);
@@ -284,9 +290,10 @@ int32_t bissc_update_max_proc_delay(bissc_handle handle);
  *                (default: 1000 microseconds) between poll iterations to prevent excessive CPU usage
  *
  *  \param[in]  handle       BiSS-C handle
- *  \param[in]  loop_count   timeout value in iterations
- *  \retval     SystemP_SUCCESS when measurement completes
- *  \retval     SystemP_FAILURE on timeout
+ *  \param[in]  loop_count   Maximum number of polling iterations before timeout
+ *  \retval     SystemP_SUCCESS When measurement completes successfully
+ *  \retval     SystemP_TIMEOUT On timeout (loop_count iterations exhausted before measurement completed)
+ *  \retval     SystemP_FAILURE On validation failure (NULL handle or invalid internal structures)
  *
  */
 int32_t bissc_wait_measure_proc_delay(bissc_handle handle, uint32_t loop_count);
@@ -360,7 +367,9 @@ int32_t bissc_update_data_len(bissc_handle handle, uint32_t single_turn_len[], u
  *
  *  \param[in]  handle            BiSS-C handle
  *  \param[in]  ctrl_cmd          Hex equivalent of control command array (per channel)
- *  \retval     SystemP_SUCCESS for success, SystemP_FAILURE for failure
+ *  \retval     SystemP_SUCCESS   On successful control communication completion
+ *  \retval     SystemP_TIMEOUT   On timeout waiting for firmware acknowledgment (propagated from \ref bissc_command_process)
+ *  \retval     SystemP_FAILURE   On validation failure (NULL handle, NULL ctrl_cmd array, or invalid internal structures)
  *
  *  \note       The ctrl_cmd array must contain \ref BISSC_NUM_CH_PER_SLICE_MAX
  *              elements. Passing an array with fewer elements will result in
@@ -528,8 +537,9 @@ int32_t bissc_update_clock_freq(bissc_handle handle, uint32_t frequency);
  *  \param[in]  frequency       Desired clock frequency in MHz (valid values: 1/2/5/8/10)
  *  \param[in]  loop_count      loop_count used when calling \ref bissc_wait_measure_proc_delay
  *
- *  \retval     SystemP_SUCCESS on successful clock configuration and delay measurement
- *  \retval     SystemP_FAILURE if clock calculation fails or delay measurement times out
+ *  \retval     SystemP_SUCCESS On successful clock configuration and delay measurement
+ *  \retval     SystemP_TIMEOUT On timeout during delay measurement (propagated from \ref bissc_wait_measure_proc_delay)
+ *  \retval     SystemP_FAILURE On validation failure (NULL handle, invalid frequency, or clock calculation failure)
  *
  */
 int32_t bissc_clock_config(bissc_handle handle, uint32_t frequency, uint32_t loop_count);
