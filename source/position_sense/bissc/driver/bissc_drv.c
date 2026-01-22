@@ -445,7 +445,7 @@ int32_t bissc_command_wait(bissc_handle handle)
         loop_count--;
         if(loop_count == 0)
         {
-            return SystemP_FAILURE;
+            return SystemP_TIMEOUT;
         }
 
     }
@@ -765,6 +765,7 @@ int32_t bissc_get_pos(bissc_handle handle)
     const bissc_attrs   *attrs;
     uint32_t            raw_data0, raw_data1, shift, sl_num, max, ch_num, num_encoders, ls_ch;
     uint32_t            ch;
+    int32_t             ret;
 
     /* Validate handle and internal structure pointers */
     if((handle == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->pruicss_xchg == NULL))
@@ -776,10 +777,12 @@ int32_t bissc_get_pos(bissc_handle handle)
     attrs = handle->attrs;
     ch = 0;
 
-    if(bissc_command_process(handle) != SystemP_SUCCESS)
+    ret = bissc_command_process(handle);
+    if(ret != SystemP_SUCCESS)
     {
-        return SystemP_FAILURE;
+        return ret;
     }
+
     for(ch_num = 0; ch_num < attrs->total_channels; ch_num++)
     {
         ch = priv->channel[ch_num];
@@ -858,6 +861,8 @@ int32_t bissc_config_clock(bissc_handle handle, bissc_clk_cfg *clk_cfg)
     const bissc_attrs   *attrs;
     void                *pruicss_cfg;
     bissc_pruicss_xchg  *pruicss_xchg;
+    uint32_t            rx_reg_val;
+    uint32_t            tx_reg_val;
 
     /* Validate parameters and internal structure pointers */
     if((handle == NULL) ||
@@ -876,26 +881,57 @@ int32_t bissc_config_clock(bissc_handle handle, bissc_clk_cfg *clk_cfg)
     pruicss_cfg = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->cfgRegBase);
     pruicss_xchg = priv->pruicss_xchg;
 
-    /* Set PRUx_ED_RX_SB_POL polarity bit to 0 for BiSS-C */
+    /* Configure RX and TX CFG registers based on PRU slice */
+    /* Polarity of Start bit is 0 for Nikon */
     if(attrs->pruicss_slice)
     {
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG,
-        ((clk_cfg->rx_div << CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_DIV_FACTOR_SHIFT) |
-         (clk_cfg->is_core_clk << CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_CLK_SEL_SHIFT) |
-         (clk_cfg->rx_div_attr)));
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG,
-        (clk_cfg->tx_div << CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG_PRU1_ED_TX_DIV_FACTOR_SHIFT) |
-        (clk_cfg->is_core_clk << CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG_PRU1_ED_TX_CLK_SEL_SHIFT));
+        /* Slice 1 - Read-Modify-Write for RX CFG */
+        rx_reg_val = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG);
+        /*
+         * NOTE: Using CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_SB_POL_MASK instead of
+         * CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_SB_POL_MASK because of incorrect definition.
+         */
+        rx_reg_val &= ~(CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_DIV_FACTOR_MASK |
+                        CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_DIV_FACTOR_FRAC_MASK |
+                        CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_CLK_SEL_MASK |
+                        CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_SB_POL_MASK |
+                        CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_SAMPLE_SIZE_MASK);
+        rx_reg_val |= (clk_cfg->rx_div << CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_DIV_FACTOR_SHIFT) |
+                      (clk_cfg->is_core_clk << CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_CLK_SEL_SHIFT) |
+                      (clk_cfg->rx_div_attr);
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG, rx_reg_val);
+
+        /* Slice 1 - Read-Modify-Write for TX CFG */
+        tx_reg_val = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG);
+        tx_reg_val &= ~(CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG_PRU1_ED_TX_DIV_FACTOR_MASK |
+                        CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG_PRU1_ED_TX_DIV_FACTOR_FRAC_MASK |
+                        CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG_PRU1_ED_TX_CLK_SEL_MASK);
+        tx_reg_val |= (clk_cfg->tx_div << CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG_PRU1_ED_TX_DIV_FACTOR_SHIFT) |
+                      (clk_cfg->is_core_clk << CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG_PRU1_ED_TX_CLK_SEL_SHIFT);
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG, tx_reg_val);
     }
     else
     {
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG,
-        ((clk_cfg->rx_div << CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_DIV_FACTOR_SHIFT) |
-         (clk_cfg->is_core_clk << CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_CLK_SEL_SHIFT) |
-         (clk_cfg->rx_div_attr)));
-        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG,
-        (clk_cfg->tx_div << CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG_PRU0_ED_TX_DIV_FACTOR_SHIFT) |
-        (clk_cfg->is_core_clk << CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG_PRU0_ED_TX_CLK_SEL_SHIFT));
+        /* Slice 0 - Read-Modify-Write for RX CFG */
+        rx_reg_val = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG);
+        rx_reg_val &= ~(CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_DIV_FACTOR_MASK |
+                        CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_DIV_FACTOR_FRAC_MASK |
+                        CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_CLK_SEL_MASK |
+                        CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_SB_POL_MASK |
+                        CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_SAMPLE_SIZE_MASK);
+        rx_reg_val |= (clk_cfg->rx_div << CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_DIV_FACTOR_SHIFT) |
+                      (clk_cfg->is_core_clk << CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_CLK_SEL_SHIFT) |
+                      (clk_cfg->rx_div_attr);
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG, rx_reg_val);
+
+        /* Slice 0 - Read-Modify-Write for TX CFG */
+        tx_reg_val = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG);
+        tx_reg_val &= ~(CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG_PRU0_ED_TX_DIV_FACTOR_MASK |
+                        CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG_PRU0_ED_TX_DIV_FACTOR_FRAC_MASK |
+                        CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG_PRU0_ED_TX_CLK_SEL_MASK);
+        tx_reg_val |= (clk_cfg->tx_div << CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG_PRU0_ED_TX_DIV_FACTOR_SHIFT) |
+                      (clk_cfg->is_core_clk << CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG_PRU0_ED_TX_CLK_SEL_SHIFT);
+        HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG, tx_reg_val);
     }
 
     if(attrs->load_share_enabled)
@@ -1046,7 +1082,7 @@ int32_t bissc_wait_for_fw_initialization(bissc_handle handle, uint32_t loop_coun
     /* Timeout occurred */
     if(i == loop_count)
     {
-        return SystemP_FAILURE;
+        return SystemP_TIMEOUT;
     }
     return SystemP_SUCCESS;
 }
@@ -1299,7 +1335,7 @@ int32_t bissc_wait_measure_proc_delay(bissc_handle handle, uint32_t loop_count)
     }
     if(i == loop_count)
     {
-        return SystemP_FAILURE;
+        return SystemP_TIMEOUT;
     }
     return SystemP_SUCCESS;
 }
@@ -1603,6 +1639,7 @@ int32_t bissc_set_ctrl_cmd_and_process(bissc_handle handle, uint32_t ctrl_cmd[])
     const bissc_attrs   *attrs;
     bissc_pruicss_xchg  *pruicss_xchg;
     uint32_t            ch = 0, ch_num;
+    int32_t             ret;
 
     /* Validate handle, array parameter, and internal structure pointers */
     if((handle == NULL) || (ctrl_cmd == NULL) || (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->pruicss_xchg == NULL))
@@ -1624,9 +1661,10 @@ int32_t bissc_set_ctrl_cmd_and_process(bissc_handle handle, uint32_t ctrl_cmd[])
         pruicss_xchg->ctrl_cmd_status[2] = attrs->channel2_enabled ? 1 : 0;
         while(pruicss_xchg->ctrl_cmd_status[0] + pruicss_xchg->ctrl_cmd_status[1] + pruicss_xchg->ctrl_cmd_status[2])
         {
-            if(bissc_command_process(handle) != SystemP_SUCCESS)
+            ret = bissc_command_process(handle);
+            if(ret != SystemP_SUCCESS)
             {
-                return SystemP_FAILURE;
+                return ret;
             }
             ClockP_usleep(priv->fw_wait_delay_us);
         }
@@ -1636,24 +1674,27 @@ int32_t bissc_set_ctrl_cmd_and_process(bissc_handle handle, uint32_t ctrl_cmd[])
         pruicss_xchg->ctrl_cmd_status[0] = 1;
         while(pruicss_xchg->ctrl_cmd_status[0] & 1)
         {
-            if(bissc_command_process(handle) != SystemP_SUCCESS)
+            ret = bissc_command_process(handle);
+            if(ret != SystemP_SUCCESS)
             {
-                return SystemP_FAILURE;
+                return ret;
             }
             ClockP_usleep(priv->fw_wait_delay_us);
         }
     }
 
     /*supplying 2 extra cycles for ctrl communication stop bit */
-    if(bissc_command_process(handle) != SystemP_SUCCESS)
+    ret = bissc_command_process(handle);
+    if(ret != SystemP_SUCCESS)
     {
-        return SystemP_FAILURE;
+        return ret;
     }
     ClockP_usleep(priv->fw_wait_delay_us);
 
-    if(bissc_command_process(handle) != SystemP_SUCCESS)
+    ret = bissc_command_process(handle);
+    if(ret != SystemP_SUCCESS)
     {
-        return SystemP_FAILURE;
+        return ret;
     }
     ClockP_usleep(priv->fw_wait_delay_us);
 

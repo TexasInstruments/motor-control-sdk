@@ -54,7 +54,7 @@
 const uint32_t BiSSFirmwareMultiMakeRtuPru0_0[] = {
 0x21000300,
 0x00000208,
-0x01010005,
+0x01010006,
 0x2effbb80,
 0x83d07880,
 0x911c1809,
@@ -963,7 +963,7 @@ const uint32_t BiSSFirmwareMultiMakeRtuPru0_0[] = {
 0x910c1857,
 0x2400007e,
 0x51015702,
-0x2400229f,
+0x2400259f,
 0x24000117,
 0x81c81817,
 0x91031819,
