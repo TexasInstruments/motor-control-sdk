@@ -172,9 +172,9 @@
         "resourceSubClass": [
             "example.general"
         ],
-        "description": "A Endat3 Diagnostic Single Channel Example. CPU is R5FSS0-0 running FREERTOS.",
-        "name": "endat3_diagnostic_single_channel",
-        "location": "../../examples/position_sense/endat3_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "description": "A Hdsl Diagnostic Single Channel Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "hdsl_diagnostic_single_channel",
+        "location": "../../examples/position_sense/hdsl_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "LP-AM261"
         ],
@@ -186,7 +186,7 @@
         ],
         "subCategories": [
             "position_sense",
-            "endat3_diagnostic",
+            "hdsl_diagnostic",
             "single_channel",
             "r5fss0-0_freertos"
         ],
@@ -205,9 +205,9 @@
         "resourceSubClass": [
             "example.general"
         ],
-        "description": "A Hdsl Diagnostic Single Channel Example. CPU is R5FSS0-0 running FREERTOS.",
-        "name": "hdsl_diagnostic_single_channel",
-        "location": "../../examples/position_sense/hdsl_diagnostic/single_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "description": "A Nikon Diagnostic Dual Channel Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "nikon_diagnostic_dual_channel",
+        "location": "../../examples/position_sense/nikon_diagnostic/dual_channel/am261x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "LP-AM261"
         ],
@@ -219,8 +219,8 @@
         ],
         "subCategories": [
             "position_sense",
-            "hdsl_diagnostic",
-            "single_channel",
+            "nikon_diagnostic",
+            "dual_channel",
             "r5fss0-0_freertos"
         ],
         "mainCategories": [

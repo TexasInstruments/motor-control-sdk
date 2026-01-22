@@ -47,10 +47,12 @@ const section11           = section.addInstance();
 const section12           = section.addInstance();
 const nikon               = scripting.addModule("/position_sense/nikon", {}, false);
 const nikon1              = nikon.addInstance();
+const nikon2              = nikon.addInstance();
 const epwm_syncout_xbar   = scripting.addModule("/xbar/epwm_syncout_xbar/epwm_syncout_xbar", {}, false);
 const epwm_syncout_xbar1  = epwm_syncout_xbar.addInstance();
 const soc_timesync_xbar1  = scripting.addModule("/xbar/soc_timesync_xbar1/soc_timesync_xbar1", {}, false);
 const soc_timesync_xbar11 = soc_timesync_xbar1.addInstance();
+const soc_timesync_xbar12 = soc_timesync_xbar1.addInstance();
 
 /**
  * Write custom configuration values to the imported modules.
@@ -335,8 +337,8 @@ section12.output_section[0].alignment = 0;
 
 nikon1.$name                               = "CONFIG_NIKON0";
 nikon1.Booster_Pack                        = true;
-nikon1.PRU_Slice                           = "PRU0";
 nikon1.protocolVersion                     = 3;
+nikon1.PRU_Slice                           = "PRU0";
 nikon1.ENC0_EN.$name                       = "NIKON0_BP_POWER_EN0";
 nikon1.ENC0_EN.GPIO_n.$assign              = "GPIO21";
 nikon1["PRU-ICSS1"].$assign                = "PRU-ICSS1";
@@ -345,12 +347,29 @@ nikon1["PRU-ICSS1"].PR1_PRU0_GPIO1.$assign = "GPIO82";
 nikon1["PRU-ICSS1"].PR1_PRU0_GPIO0.$assign = "GPIO81";
 nikon1["PRU-ICSS1"].PR1_PRU0_GPIO9.$assign = "GPIO80";
 
+nikon2.$name                               = "CONFIG_NIKON1";
+nikon2.Booster_Pack                        = true;
+nikon2.protocolVersion                     = 3;
+nikon2.CMP_Event_Num                       = 3;
+nikon2.CAP_Event_Num                       = 7;
+nikon2.ENC0_EN.$name                       = "NIKON1_BP_POWER_EN0";
+nikon2.ENC0_EN.GPIO_n.$assign              = "GPIO22";
+nikon2["PRU-ICSS1"].$assign                = "PRU-ICSS1";
+nikon2["PRU-ICSS1"].PR1_PRU1_GPIO2.$assign = "GPIO73";
+nikon2["PRU-ICSS1"].PR1_PRU1_GPIO1.$assign = "GPIO72";
+nikon2["PRU-ICSS1"].PR1_PRU1_GPIO0.$assign = "GPIO71";
+nikon2["PRU-ICSS1"].PR1_PRU1_GPIO9.$assign = "GPIO74";
+
 pruicss1.$name                           = "CONFIG_PRU_ICSS0";
 nikon1.pru                               = pruicss1;
+nikon2.pru                               = pruicss1;
 pruicss1.AdditionalICSSSettings[0].$name = "CONFIG_PRU_ICSS_IO0";
-pruicss1.intcMapping.create(1);
+pruicss1.intcMapping.create(2);
 pruicss1.intcMapping[0].$name            = "CONFIG_ICSS1_INTC_MODE1_MAPPING0";
 pruicss1.intcMapping[0].event            = "21";
+pruicss1.intcMapping[1].$name            = "CONFIG_ICSS1_INTC_MODE1_MAPPING1";
+pruicss1.intcMapping[1].channel          = "3";
+pruicss1.intcMapping[1].event            = "18";
 
 epwm_syncout_xbar1.$name      = "CONFIG_EPWM_SYNCOUT_XBAR0";
 epwm_syncout_xbar1.xbarOutput = ["EPWM0_SYNCOUT"];
@@ -358,6 +377,10 @@ epwm_syncout_xbar1.xbarOutput = ["EPWM0_SYNCOUT"];
 soc_timesync_xbar11.$name      = "CONFIG_SOC_TIMESYNC_XBAR1_0";
 soc_timesync_xbar11.xbarOutput = "SOC_TIMESYNC_XBAR1_PWM_SYNCOUT_XBAR_OUT_0";
 soc_timesync_xbar11.instance   = "SOC_TIMESYNC_XBAR1_ICSS_MODULE_0";
+
+soc_timesync_xbar12.$name      = "CONFIG_SOC_TIMESYNC_XBAR1_1";
+soc_timesync_xbar12.xbarOutput = "SOC_TIMESYNC_XBAR1_PWM_SYNCOUT_XBAR_OUT_0";
+soc_timesync_xbar12.instance   = "SOC_TIMESYNC_XBAR1_ICSS_MODULE_1";
 
 /**
  * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future

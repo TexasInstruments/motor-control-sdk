@@ -1,8 +1,8 @@
 /**
  * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
  * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
- * @cliArgs --device "AM243x_ALX_beta" --part "ALX" --package "ALX" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@11.00.00"
- * @v2CliArgs --device "AM2434" --package "FCCSP (ALX)" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@11.00.00"
+ * @cliArgs --device "AM243x_ALX_beta" --part "ALX" --package "ALX" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@2025.00.00" --product "INDUSTRIAL_COMMUNICATIONS_SDK@2025.00.00" --product "MCU_PLUS_SDK@07.03.01"
+ * @v2CliArgs --device "AM2434" --package "FCCSP (ALX)" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@2025.00.00" --product "INDUSTRIAL_COMMUNICATIONS_SDK@2025.00.00" --product "MCU_PLUS_SDK@07.03.01"
  * @versions {"tool":"1.23.0+4000"}
  */
 
@@ -251,9 +251,9 @@ nikon1.channel_2                = true;
 nikon1.G_MUX_EN                 = true;
 nikon1.Booster_Pack             = true;
 nikon1.PRU_ICSSG0_PRU.$assign   = "PRU_ICSSG0_PRU1";
-nikon1.ENC0_EN.$name            = "ENC0_EN";
+nikon1.ENC0_EN.$name            = "NIKON0_BP_POWER_EN0";
 nikon1.ENC0_EN.GPIO_n.$assign   = "MMC1_SDCD";
-nikon1.ENC2_EN.$name            = "ENC2_EN";
+nikon1.ENC2_EN.$name            = "NIKON0_BP_POWER_EN2";
 nikon1.ENC2_EN.GPIO_n.$assign   = "MMC1_SDWP";
 
 pruicss1.$name                           = "CONFIG_PRU_ICSS0";
@@ -263,11 +263,11 @@ pruicss1.intcMapping.create(3);
 pruicss1.intcMapping[0].$name            = "CONFIG_ICSS0_INTC_MAPPING0";
 pruicss1.intcMapping[0].event            = "18";
 pruicss1.intcMapping[1].$name            = "CONFIG_ICSS0_INTC_MAPPING1";
-pruicss1.intcMapping[1].event            = "19";
 pruicss1.intcMapping[1].channel          = "3";
+pruicss1.intcMapping[1].event            = "19";
 pruicss1.intcMapping[2].$name            = "CONFIG_ICSS0_INTC_MAPPING2";
-pruicss1.intcMapping[2].event            = "20";
 pruicss1.intcMapping[2].channel          = "4";
+pruicss1.intcMapping[2].event            = "20";
 
 /**
  * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future

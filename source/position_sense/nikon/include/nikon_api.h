@@ -115,7 +115,9 @@ int32_t nikon_command_send(nikon_handle handle);
  *  \param[in]  handle   Nikon handle from \ref nikon_init
  *
  *  \retval     SystemP_SUCCESS on successful completion
- *  \retval     SystemP_FAILURE on timeout or on NULL handle
+ *  \retval     SystemP_TIMEOUT when communication timeout occurs (encoder not responding or
+ *              transaction takes longer than configured timeout)
+ *  \retval     SystemP_FAILURE on NULL handle or invalid internal structures
  *
  *  \note       Timeout is calculated as: max_wait_loop_count * cmd_process_delay_us / 1000 (in ms)
  *              With defaults (max_wait_loop_count=35, cmd_process_delay_us=1000us), timeout is 35ms.
@@ -144,7 +146,9 @@ int32_t nikon_command_wait(nikon_handle handle);
  *
  *  \param[in]  handle   Nikon handle from \ref nikon_init
  *
- *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *  \retval     SystemP_SUCCESS on success
+ *  \retval     SystemP_TIMEOUT when communication timeout occurs (forwarded from \ref nikon_command_wait)
+ *  \retval     SystemP_FAILURE on error (NULL handle or \ref nikon_command_send failure)
  *
  */
 int32_t nikon_command_process(nikon_handle handle);
@@ -170,11 +174,12 @@ int32_t nikon_command_process(nikon_handle handle);
  *                       UPDATE_CLOCK_FREQ, and UPDATE_ENC_LEN are invalid for this API.
  *
  *  \retval     SystemP_SUCCESS for success
+ *  \retval     SystemP_TIMEOUT when communication timeout occurs (forwarded from \ref nikon_command_process)
  *  \retval     SystemP_FAILURE for invalid handle, invalid command or communication failure
  *
  *  \note       Results are stored in handle->priv and can be accessed via \ref nikon_get_priv
  *
- *  \note       Error Handling: On communication failure, this function may leave internal state
+ *  \note       Error Handling: On communication failure or timeout, this function may leave internal state
  *              partially modified (pruicss_xchg->is_memory_access, pruicss_xchg->num_mdf,
  *              priv->num_rx_frames). Subsequent calls will overwrite these values. If explicit state
  *              cleanup is needed after errors, the caller is responsible for resetting these fields.
@@ -387,7 +392,9 @@ int32_t nikon_config_iep_cmp_event(nikon_handle handle, uint8_t channel, uint8_t
  *
  *  \param[in]  handle          Nikon handle from \ref nikon_init
  *
- *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE on error
+ *  \retval     SystemP_SUCCESS on success
+ *  \retval     SystemP_TIMEOUT when communication timeout occurs (forwarded from \ref nikon_command_process)
+ *  \retval     SystemP_FAILURE on error (invalid handle or communication failure)
  */
 int32_t nikon_wait_for_encoder_detection(nikon_handle handle);
 

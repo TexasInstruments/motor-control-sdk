@@ -54,7 +54,7 @@
 const uint32_t NikonFirmwareMultiMakeTxPru0_0[] = {
 0x21000300,
 0x00000208,
-0x01010008,
+0x01010009,
 0x2effbb80,
 0x9103184d,
 0x2400044d,
@@ -421,7 +421,7 @@ const uint32_t NikonFirmwareMultiMakeTxPru0_0[] = {
 0x911a1812,
 0x2400007e,
 0x51011202,
-0x2400249f,
+0x2400279f,
 0x24000450,
 0x81161850,
 0x91031811,
