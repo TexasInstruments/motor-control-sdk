@@ -45,17 +45,19 @@ const section12           = section.addInstance();
 const section13           = section.addInstance();
 const hdsl                = scripting.addModule("/position_sense/hdsl", {}, false);
 const hdsl1               = hdsl.addInstance();
+const hdsl2               = hdsl.addInstance();
 const soc_timesync_xbar1  = scripting.addModule("/xbar/soc_timesync_xbar1/soc_timesync_xbar1", {}, false);
 const soc_timesync_xbar11 = soc_timesync_xbar1.addInstance();
+const soc_timesync_xbar12 = soc_timesync_xbar1.addInstance();
 
 /**
  * Write custom configuration values to the imported modules.
  */
 ioexp1.$name                                   = "CONFIG_IOEXP0";
 ioexp1.i2cAddress                              = "LP-RevA 0x20";
+ioexp1.TCA6408ARGT_port0_pinBP_MUX_SW_S1_mode  = 0;
 ioexp1.TCA6408ARGT_port0_pinBP_BO_MUX_EN_mode  = 0;
 ioexp1.TCA6408ARGT_port0_pinBP_BO_MUX_EN_state = 1;
-ioexp1.TCA6408ARGT_port0_pinBP_MUX_SW_S1_mode  = 0;
 ioexp1.TCA6408ARGT_port0_pinBP_MUX_SW_SO_mode  = 0;
 ioexp1.TCA6408ARGT_port0_pinBP_MUX_SW_SO_state = 1;
 
@@ -66,7 +68,7 @@ i2c1.I2C_child.$name    = "drivers_i2c_v1_i2c_v1_template0";
 
 pruicss2.$name                                                                               = "CONFIG_PRU_ICSS1";
 pruicss2.iepSyncMode                                                                         = true;
-pruicss2.AdditionalICSSSettings[0].$name                                                     = "CONFIG_PRU_ICSS_IO1";
+pruicss2.AdditionalICSSSettings[0].$name                                                     = "CONFIG_PRU_ICSS_IO0";
 pruicss2.AdditionalICSSSettings[0].PruIepIO.create(1);
 pruicss2.AdditionalICSSSettings[0].PruIepIO[0].$name                                         = "CONFIG_PRU_ICSS_IEP0";
 pruicss2.AdditionalICSSSettings[0].PruIepIO[0]["PRU-ICSS0-IEP"].PR0_IEP0_EDC_SYNC_OUT0.$used = true;
@@ -78,8 +80,6 @@ debug_log.uartLog.UART.$assign     = "UART0";
 debug_log.uartLog.UART.RXD.$assign = "GPIO27";
 debug_log.uartLog.UART.TXD.$assign = "GPIO28";
 debug_log.uartLog.child.$name      = "drivers_uart_v2_uart_v2_template0";
-
-dpl_cfg.hwiPEnable = false;
 
 mpu_armv71.$name             = "CONFIG_MPU_REGION0";
 mpu_armv71.size              = 31;
@@ -298,8 +298,8 @@ section13.output_section[0].alignment = 4;
 
 hdsl1.$name                               = "CONFIG_HDSL0";
 hdsl1.PRU_Slice                           = "PRU0";
-hdsl1.Mode                                = "SYNC";
 hdsl1.Booster_Pack                        = true;
+hdsl1.Mode                                = "SYNC";
 hdsl1["PRU-ICSS1"].$assign                = "PRU-ICSS1";
 hdsl1["PRU-ICSS1"].PR1_PRU0_GPIO2.$assign = "GPIO83";
 hdsl1["PRU-ICSS1"].PR1_PRU0_GPIO1.$assign = "GPIO82";
@@ -308,14 +308,30 @@ hdsl1["PRU-ICSS1"].PR1_PRU0_GPIO9.$assign = "GPIO80";
 hdsl1.ENC0_EN.$name                       = "HDSL0_BP_POWER_EN0";
 hdsl1.ENC0_EN.GPIO_n.$assign              = "GPIO21";
 
+hdsl2.$name                               = "CONFIG_HDSL1";
+hdsl2.Booster_Pack                        = true;
+hdsl2.Mode                                = "SYNC";
+hdsl2["PRU-ICSS1"].$assign                = "PRU-ICSS1";
+hdsl2["PRU-ICSS1"].PR1_PRU1_GPIO2.$assign = "GPIO73";
+hdsl2["PRU-ICSS1"].PR1_PRU1_GPIO1.$assign = "GPIO72";
+hdsl2["PRU-ICSS1"].PR1_PRU1_GPIO0.$assign = "GPIO71";
+hdsl2["PRU-ICSS1"].PR1_PRU1_GPIO9.$assign = "GPIO74";
+hdsl2.ENC0_EN.$name                       = "HDSL1_BP_POWER_EN2";
+hdsl2.ENC0_EN.GPIO_n.$assign              = "GPIO22";
+
 pruicss1.$name                           = "CONFIG_PRU_ICSS0";
 pruicss1.iepSyncMode                     = true;
 hdsl1.pru                                = pruicss1;
-pruicss1.AdditionalICSSSettings[0].$name = "CONFIG_PRU_ICSS_IO0";
+hdsl2.pru                                = pruicss1;
+pruicss1.AdditionalICSSSettings[0].$name = "CONFIG_PRU_ICSS_IO1";
 
 soc_timesync_xbar11.$name      = "CONFIG_SOC_TIMESYNC_XBAR1_0";
 soc_timesync_xbar11.xbarOutput = "SOC_TIMESYNC_XBAR1_ICSSM0_EDC0_SYNC_OUT_0";
 soc_timesync_xbar11.instance   = "SOC_TIMESYNC_XBAR1_ICSS_MODULE_1";
+
+soc_timesync_xbar12.$name      = "CONFIG_SOC_TIMESYNC_XBAR1_1";
+soc_timesync_xbar12.xbarOutput = "SOC_TIMESYNC_XBAR1_ICSSM0_EDC0_SYNC_OUT_0";
+soc_timesync_xbar12.instance   = "SOC_TIMESYNC_XBAR1_ICSS_MODULE_0";
 
 /**
  * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future
