@@ -288,7 +288,7 @@ VEL0		.set						0x17
 ;SUMMARY		.set					0x18
 	.if $defined("HDSL_CHECK_ALIGNMENT_PHASE")
 CURRENT_ALIGN_PHASE .set 				0x18 ; For debug only for checking current align phase
-	.endif   
+	.endif
 VPOS4		.set						0x19
 VPOS3		.set						0x1A
 VPOS2		.set						0x1B
@@ -418,6 +418,7 @@ ECAP_ECCLR	.set						0x30
 ECAP_ECCTL1	.set						0x28
 IEP_CNT		.set						0x10
 IEP_CAPR6_RISE .set                     0x50
+IEP_CAPR7_RISE .set                     0x60
 TXPRU1_CTRL .set 						0x00025800
 TXPRU1_IMEM_BASE .set 					0x0000C000
 

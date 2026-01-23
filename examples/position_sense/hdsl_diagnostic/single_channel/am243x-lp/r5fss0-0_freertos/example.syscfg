@@ -283,10 +283,8 @@ hdsl1.$name                  = "CONFIG_HDSL0";
 hdsl1.coreClk                = 300000000;
 hdsl1.Booster_Pack           = true;
 hdsl1.PRU_ICSSG0_PRU.$assign = "PRU_ICSSG0_PRU1";
-hdsl1.ENC1_EN.$name          = "ENC1_EN";
-hdsl1.ENC1_EN.GPIO_n.$assign = "MMC1_SDWP";
-hdsl1.ENC2_EN.$name          = "ENC2_EN";
-hdsl1.ENC2_EN.GPIO_n.$assign = "MMC1_SDCD";
+hdsl1.ENC0_EN.$name          = "HDSL0_BP_POWER_EN0";
+hdsl1.ENC0_EN.GPIO_n.$assign = "MMC1_SDWP";
 
 pruicss1.$name                           = "CONFIG_PRU_ICSS0";
 hdsl1.pru                                = pruicss1;

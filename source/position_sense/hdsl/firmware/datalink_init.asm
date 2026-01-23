@@ -100,9 +100,15 @@ check_test_pattern_false:
 ;--------------------------------------------------------------------------------------------------
 ;stores sync pulse period in R20 in unit of cycles
 sync_pulse:
+	.if $defined(SLICE1)
 	lbco        &REG_TMP1, IEP_BASE_CONST, IEP_CAPR6_RISE, 4
 wait_next_pulse:
 	lbco        &R20, IEP_BASE_CONST, IEP_CAPR6_RISE, 4
+	.else
+	lbco        &REG_TMP1, IEP_BASE_CONST, IEP_CAPR7_RISE, 4
+wait_next_pulse:
+	lbco        &R20, IEP_BASE_CONST, IEP_CAPR7_RISE, 4
+	.endif
 	QBEQ		wait_next_pulse, R20, REG_TMP1
 	SUB         R20, R20, REG_TMP1
 	RET1
@@ -564,7 +570,7 @@ push_3b_0:
 ; we are in oversample mode (3 PRU clocks per bit)
 ; extra NOPs should make it shorter
 	NOP_n 2
-	NOP_n 2
+	NOP_n 1
     .endif
 ; we are in oversample mode (4 PRU clocks per bit)
 ; extra NOPs should make it shorter
@@ -573,14 +579,15 @@ push_3b_0:
     .endif
     .if !$defined("HDSL_MULTICHANNEL")
     TX_CLK_DIV		CLKDIV_SLOW, REG_TMP2
-;2 dummy cycles
-	NOP_n 2
     .endif
 ;reset DISPARITY
 	ldi			DISPARITY, 0
 ;1 dummy cycles
 	nop
     .if !$defined("HDSL_MULTICHANNEL")
+;Removed manual delay (NOP_n) and poll for clock state for precise clock switch
+	WAIT_CLK_HIGH		REG_TMP0
+	WAIT_CLK_LOW		REG_TMP0
     TX_CLK_DIV		CLKDIV_NORMAL, REG_TMP2
     .endif
 

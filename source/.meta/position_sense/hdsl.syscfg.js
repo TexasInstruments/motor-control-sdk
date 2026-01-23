@@ -87,7 +87,7 @@ function onValidate(inst, validation) {
         if(is_am261x_soc)
         {
 
-            if((instance.Channel_2 || instance.Channel_1)&&(instance.Booster_Pack))
+            if((instance.channel_2 || instance.channel_1)&&(instance.Booster_Pack))
             {
                 validation.logError("Channel 1 and Channel 2 are not supported on BP-AM2BLDCSERVO BoosterPack due to pinout limitations", inst, "Booster_Pack");
             }
@@ -212,6 +212,7 @@ let hdsl_module = {
             displayName: "Multi Channel Load Share",
             description: "Multiple channels with one PRU-ICSS Slice. At 225 MHz, multi-channel is not possible. At 300 MHz, multi-channel is possible with load share mode enabled.",
             default: false,
+            hidden :(is_am261x_soc) ? true : false,
             readOnly: true,
             onChange: function(inst, ui) {
                 if (inst.coreClk === 225*1000000) {
@@ -262,20 +263,23 @@ let hdsl_module = {
 function moduleInstances(instance){
     let modInstances = new Array();
     let BoosterPack = instance["Booster_Pack"];
+    let total_channels = (instance["channel_0"] ? 1 : 0) + (instance["channel_1"] ? 1 : 0) + (instance["channel_2"] ? 1 : 0);
+
     if(device == "am243x-lp" || is_am261x_soc)
     {
         if(BoosterPack)
         {
             modInstances.push({
-                name: "ENC1_EN",
+                name: "ENC0_EN",
                 displayName: "BP-AM2BLDCSERVO BoosterPack Axis1 Power Enable Pin",
                 moduleName: "/drivers/gpio/gpio",
                 requiredArgs: {
                     pinDir: "OUTPUT",
                     defaultValue: "1",
-                    },
-                });
-            if(device == "am243x-lp")
+                },
+            });
+
+            if((device == "am243x-lp") && (total_channels > 1))
             {
                 modInstances.push({
                     name: "ENC2_EN",
@@ -284,9 +288,9 @@ function moduleInstances(instance){
                     requiredArgs: {
                         pinDir: "OUTPUT",
                         defaultValue: "1",
-                        },
-            });
-           }
+                    },
+                });
+            }
         }
     }
     return (modInstances);

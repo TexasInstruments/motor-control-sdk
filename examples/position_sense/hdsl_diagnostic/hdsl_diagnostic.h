@@ -63,19 +63,23 @@ extern "C" {
 #define SYNCEVENT_INTRTR_IN_27              (27)
 
 /** \brief TSR output event: SYNC0_OUT Pin - Selectable timesync event 24 Edge (4+(24*4) = 0x64) */
-#define SYNCEVT_RTR_SYNC28_EVT              (0x64)
+#define SYNCEVT_RTR_SYNC24_EVT              (0x64)
 
 /** \brief TSR output event: SYNC1_OUT Pin - Selectable timesync event 25 Edge (4+(25*4) = 0x68) */
-#define SYNCEVT_RTR_SYNC29_EVT              (0x68)
+#define SYNCEVT_RTR_SYNC25_EVT              (0x68)
 
 /** \brief TSR output event: SYNC2_OUT Pin - Selectable timesync event 26 Edge (4+(26*4) = 0x6C) */
-#define SYNCEVT_RTR_SYNC30_EVT              (0x6C)
+#define SYNCEVT_RTR_SYNC26_EVT              (0x6C)
 
 /** \brief TSR output event: SYNC3_OUT Pin - Selectable timesync event 27 Edge (4+(27*4) = 0x70) */
-#define SYNCEVT_RTR_SYNC31_EVT              (0x70)
+#define SYNCEVT_RTR_SYNC27_EVT              (0x70)
 
 /** \brief TSR output event: ICSSG0_PR1_EDC1_LATCH0_IN PRU_ICSSG0 (4+(10*4) = 0x2C) */
 #define SYNCEVT_RTR_SYNC10_EVT              (0x2C)
+
+/** \brief TSR output event: ICSSG0_PR1_EDC1_LATCH1_IN PRU_ICSSG0 (4+(11*4) = 0x30) */
+#define SYNCEVT_RTR_SYNC11_EVT              (0x30)
+
 /** @} */
 
 /* IEP (Industrial Ethernet Peripheral) Configuration Values */
