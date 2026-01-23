@@ -264,7 +264,7 @@ let endat3_module = {
                 {
                     name: "CAP_Event_Num",
                     displayName: "IEP CAP Event Number",
-                    description: "CAP event number (0-7) for periodic CAP trigger mode. Note: Routing (SYNC out to CAP) is done in application code (endat3_config_iep_cap_for_sync). Correct router signal should be configured for selected CAP event if needed",
+                    description: "CAP event number (0-7) for periodic CAP trigger mode. Note: Routing (SYNC out to CAP) is done in application code (endat3_config_iep_cap_for_sync). Correct router signal should be configured for selected CAP event if needed.",
                     default: 6,
                     options: [
                         { name: 0, displayName: "CAP0" },
@@ -273,8 +273,8 @@ let endat3_module = {
                         { name: 3, displayName: "CAP3" },
                         { name: 4, displayName: "CAP4" },
                         { name: 5, displayName: "CAP5" },
-                        { name: 6, displayName: "CAP6" },
-                        { name: 7, displayName: "CAP7" },
+                        { name: 6, displayName: "CAP6 (LATCH_IN0)" },
+                        { name: 7, displayName: "CAP7 (LATCH_IN1)" },
                     ],
                 },
             ],
@@ -301,6 +301,8 @@ let endat3_module = {
 function moduleInstances(instance){
     let modInstances = new Array();
     let BoosterPack = instance["Booster_Pack"];
+    let total_channels = (instance["channel_0"] ? 1 : 0) + (instance["channel_1"] ? 1 : 0) + (instance["channel_2"] ? 1 : 0);
+
     if((device == "am243x-lp") || is_am26x_soc)
     {
         if(BoosterPack)
@@ -314,7 +316,8 @@ function moduleInstances(instance){
                     defaultValue: "1",
                     },
                 });
-            if(device == "am243x-lp")
+
+            if((device == "am243x-lp") && (total_channels > 1))
             {
                 modInstances.push({
                     name: "ENC2_EN",

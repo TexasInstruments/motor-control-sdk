@@ -1036,7 +1036,7 @@ static int32_t bissc_process_periodic_command(bissc_handle handle[CONFIG_BISSC_N
         }
         else
         {
-            /* Wait for IRQ count to increment for at least one instance before reading position */
+            /* Wait for IRQ count to increment before reading position */
             for(i = 0; i < CONFIG_BISSC_NUM_INSTANCES; i++)
             {
                 /* Wait for IRQ count to increment */

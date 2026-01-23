@@ -53,7 +53,7 @@
 
 const uint32_t EnDat3FirmwarePru1_0[] = {
 0x00000209,
-0x01000001,
+0x01000002,
 0x2effbb80,
 0x2401ede5,
 0xf0e50c10,
@@ -921,7 +921,7 @@ const uint32_t EnDat3FirmwarePru1_0[] = {
 0x2401d4e5,
 0xf0e50c14,
 0x51011403,
-0x2400129f,
+0x2400229f,
 0x7d000026,
 0x2401cce5,
 0xf0e50c14,
@@ -934,7 +934,7 @@ const uint32_t EnDat3FirmwarePru1_0[] = {
 0x2401d4e5,
 0xf0e50c14,
 0x69001403,
-0x2400129f,
+0x2400229f,
 0x7d000019,
 0x05011d1d,
 0x7d000031};

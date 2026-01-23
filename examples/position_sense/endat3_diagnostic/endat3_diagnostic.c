@@ -48,7 +48,6 @@
  *
  * **STEP 1: System Initialization**
  * - Initialize SoC drivers
- * - Configure GPIO for booster pack support (if enabled)
  * - Set up PRU-ICSS instance
  *
  * **STEP 2: PRU-ICSS and EnDat3 Driver Initialization**
@@ -158,12 +157,10 @@
 /** \brief Maximum position value (2^30) for position data range */
 #define POSITION_MAX_VALUE              (1UL << ANGLE_BIT_RESOLUTION)
 
+/** \brief Delay in microseconds between IRQ counter polling in periodic mode (1 us) */
+#define PERIODIC_MODE_POLL_SLEEP_US     (1U)
 /** \brief Delay in microseconds between position reads in continuous mode (1 ms) */
 #define CONTINUOUS_MODE_DELAY_US        (1000U)
-/** \brief Startup delay for periodic mode initialization (100 ms) */
-#define PERIODIC_MODE_STARTUP_US        (100000U)
-/** \brief Loop delay between checks in periodic mode (10 ms) */
-#define PERIODIC_MODE_LOOP_DELAY_US     (10000U)
 /** \brief Delay when switching between operating modes (100 ms) */
 #define MODE_SWITCH_DELAY_US            (100000U)
 /** \brief Standard 1 second delay in microseconds */
@@ -207,6 +204,9 @@ endat3_handle gAppEndat3Handle[CONFIG_ENDAT3_NUM_INSTANCES] = {NULL};
 endat3_periodic_interface gEndat3PeriodicInterface;
 
 static volatile int32_t gEndat3PositionLoopStatus;
+
+/* IRQ count from periodic trigger (defined in endat3_periodic_trigger.c) */
+extern volatile uint32_t gPruEndat3IrqCnt[CONFIG_ENDAT3_NUM_INSTANCES];
 
 /* Task management for periodic mode */
 uint32_t gTaskFxnStack[TASK_STACK_SIZE/sizeof(uint32_t)] __attribute__((aligned(32)));
@@ -561,6 +561,9 @@ static void endat3_continuous_position_fetch(endat3_handle handle)
         /* Receive response from encoder */
         status = endat3_receive_response(handle);
 
+        /* Start with \r to overwrite the same line */
+        DebugP_log("\r");
+
         /* Process response if successful */
         if(status == ENDAT3_SUCCESS)
         {
@@ -659,21 +662,14 @@ static int32_t endat3_process_periodic_command(endat3_handle handle[], uint8_t i
     uint16_t cmd;
     uint8_t is_busy;
     uint8_t is_valid;
-    uint32_t i;
+    uint32_t pos_fail_cnt[CONFIG_ENDAT3_NUM_INSTANCES] = {0}, pos_total_cnt = 0;
+    uint32_t prev_irq_cnt[CONFIG_ENDAT3_NUM_INSTANCES] = {0};
+    uint32_t curr_irq_cnt;
 
-    if(handle == NULL)
+    if((handle == NULL) || handle[CONFIG_ENDAT3_0] == NULL)
     {
-        DebugP_log("\r\n\n| ERROR: NULL handle[]\n");
+        DebugP_log("\r\n\n| ERROR: NULL handle\n");
         return SystemP_FAILURE;
-    }
-
-    for(i = 0; i < CONFIG_ENDAT3_NUM_INSTANCES; i++)
-    {
-        if(handle[i] == NULL)
-        {
-            DebugP_log("\r\n\n| ERROR: NULL handle\n");
-            return SystemP_FAILURE;
-        }
     }
 
     if(is_cap_mode > 1)
@@ -780,27 +776,13 @@ static int32_t endat3_process_periodic_command(endat3_handle handle[], uint8_t i
         return SystemP_FAILURE;
     }
 
-    /* Configure and start periodic mode */
-    if(endat3_config_periodic_mode(&gEndat3PeriodicInterface) != ENDAT3_SUCCESS)
-    {
-        DebugP_log("\r| ERROR: endat3_config_periodic_mode failed\r\n|\r\n|\r\n");
-        return SystemP_FAILURE;
-    }
+    /* Configure frame information before releasing trigger
+     *
+     * Send command once in host trigger mode, to ensure that command data is
+     * populated in PRU shared memory as required.
+     * ASSUMPTION: Host trigger mode is active when this function is called.
+     */
 
-    DebugP_log("\r\n| Periodic mode configured successfully");
-    if(is_cap_mode)
-    {
-#if defined(SOC_AM243X)
-        DebugP_log("\r\n| Reset Cycle   : %u IEP cycles", gEndat3PeriodicInterface.iep_reset_count);
-#endif
-    }
-    else
-    {
-        DebugP_log("\r\n| Reset Cycle   : %u IEP cycles", gEndat3PeriodicInterface.iep_reset_count);
-        DebugP_log("\r\n| Trigger Time  : %u IEP cycles", gEndat3PeriodicInterface.periodic_trigger_count[CONFIG_ENDAT3_0]);
-    }
-
-    /* Configure frame information before releasing trigger */
     cmd = ENDAT3_REQ_DATA0;
     DebugP_log("\r\n| Configuring frame information for periodic mode based on ENDAT3_REQ_DATA0 command...");
 
@@ -822,15 +804,32 @@ static int32_t endat3_process_periodic_command(endat3_handle handle[], uint8_t i
         return SystemP_FAILURE;
     }
 
-    /* Release start trigger for periodic mode operation */
+    /* Release start trigger */
     if(endat3_release_start_trigger(handle[CONFIG_ENDAT3_0]) != ENDAT3_SUCCESS)
     {
         DebugP_log("\r\n| ERROR: Failed to release start trigger\r\n");
         return SystemP_FAILURE;
     }
 
-    /* Wait for periodic mode to start */
-    ClockP_usleep(PERIODIC_MODE_STARTUP_US);
+    /* Configure and start periodic mode */
+    if(endat3_config_periodic_mode(&gEndat3PeriodicInterface) != ENDAT3_SUCCESS)
+    {
+        DebugP_log("\r| ERROR: endat3_config_periodic_mode failed\r\n|\r\n|\r\n");
+        return SystemP_FAILURE;
+    }
+
+    DebugP_log("\r\n| Periodic mode configured successfully");
+    if(is_cap_mode)
+    {
+#if defined(SOC_AM243X)
+        DebugP_log("\r\n| Reset Cycle   : %u IEP cycles", gEndat3PeriodicInterface.iep_reset_count);
+#endif
+    }
+    else
+    {
+        DebugP_log("\r\n| Reset Cycle   : %u IEP cycles", gEndat3PeriodicInterface.iep_reset_count);
+        DebugP_log("\r\n| Trigger Time  : %u IEP cycles", gEndat3PeriodicInterface.periodic_trigger_count[CONFIG_ENDAT3_0]);
+    }
 
     /* Verify operating mode was set correctly */
     if(endat3_get_operating_mode(handle[CONFIG_ENDAT3_0], &current_opmode) != ENDAT3_SUCCESS)
@@ -843,8 +842,11 @@ static int32_t endat3_process_periodic_command(endat3_handle handle[], uint8_t i
     gEndat3PositionLoopStatus = ENDAT3_POSITION_LOOP_START;
 
     DebugP_log("\r\n|\n\r\n| Firmware will now trigger automatically on IEP Compare Event");
-    DebugP_log("\r\n| Waiting for periodic triggers ...");
+    DebugP_log("\r\n| Waiting for periodic triggers...");
     DebugP_log("\r\n| Press Enter to stop the continuous mode\r\n|\r\n|");
+
+    /* Initialize previous IRQ count with current value */
+    prev_irq_cnt[CONFIG_ENDAT3_0] = gPruEndat3IrqCnt[CONFIG_ENDAT3_0];
 
     /* Main periodic loop - continuously display position data */
     while(1)
@@ -853,6 +855,7 @@ static int32_t endat3_process_periodic_command(endat3_handle handle[], uint8_t i
         {
             /* Stop periodic mode and restore host trigger */
             DebugP_log("\r\n| Stopping periodic mode...");
+            DebugP_log("\r\n Failed %u out of %u times\n", pos_fail_cnt[CONFIG_ENDAT3_0], pos_total_cnt);
 
             /* Stop IEP timer */
             if(endat3_stop_periodic_mode(&gEndat3PeriodicInterface) != ENDAT3_SUCCESS)
@@ -864,9 +867,38 @@ static int32_t endat3_process_periodic_command(endat3_handle handle[], uint8_t i
         }
         else
         {
-            /* In periodic mode, continuously try to receive data */
+
+            /* Wait for IRQ count to increment before reading position */
+            while(1)
+            {
+                curr_irq_cnt = gPruEndat3IrqCnt[CONFIG_ENDAT3_0];
+                if(gEndat3PositionLoopStatus == ENDAT3_POSITION_LOOP_STOP)
+                {
+                    break;
+                }
+                /* Break as soon as IRQ count increments to avoid missing IRQs at high rates */
+                if(curr_irq_cnt != prev_irq_cnt[CONFIG_ENDAT3_0])
+                {
+                    break;
+                }
+                ClockP_usleep(PERIODIC_MODE_POLL_SLEEP_US);
+            }
+
+            /* Check stop condition before updating prev_irq_cnt */
+            if(gEndat3PositionLoopStatus == ENDAT3_POSITION_LOOP_STOP)
+            {
+                continue;
+            }
+
+            prev_irq_cnt[CONFIG_ENDAT3_0] = curr_irq_cnt;
+
+            pos_total_cnt++;
+
             while(endat3_is_busy(handle[CONFIG_ENDAT3_0], &is_busy) == ENDAT3_SUCCESS && is_busy);
             status = endat3_receive_response(handle[CONFIG_ENDAT3_0]);
+
+            /* Start with \r to overwrite the same line */
+            DebugP_log("\r");
 
             /* Process response if successful */
             if(status == ENDAT3_SUCCESS)
@@ -876,11 +908,15 @@ static int32_t endat3_process_periodic_command(endat3_handle handle[], uint8_t i
                 {
                     /* Extract position data */
                     rx_buffer = endat3_get_rx_buffer(handle[CONFIG_ENDAT3_0]);
+
                     if(rx_buffer == NULL)
                     {
                         DebugP_log("\r\nERROR: endat3_get_rx_buffer() returned NULL - Invalid handle or interface\r\n");
-                        break;
+                        pos_fail_cnt[CONFIG_ENDAT3_0]++;
+                        gEndat3PositionLoopStatus = ENDAT3_POSITION_LOOP_STOP;
+                        continue;
                     }
+
                     position = (rx_buffer[0]) |
                                ((rx_buffer[1]) << 8) |
                                ((rx_buffer[2]) << 16) |
@@ -896,9 +932,10 @@ static int32_t endat3_process_periodic_command(endat3_handle handle[], uint8_t i
                     DebugP_log("\r Position: 0x%x, Angle: %f degrees", position, angle);
                 }
             }
-
-            /* Small delay to prevent CPU hogging */
-            ClockP_usleep(PERIODIC_MODE_LOOP_DELAY_US);
+            else
+            {
+                pos_fail_cnt[CONFIG_ENDAT3_0]++;
+            }
         }
     }
     return SystemP_SUCCESS;
@@ -956,35 +993,20 @@ void endat3_diagnostic_main(void *args)
     uint8_t is_valid;
 
     /* ========================================================================== */
-    /* STEP 1: Initialize system drivers and board peripherals                   */
+    /* STEP 1: Initialize system drivers and board peripherals                    */
     /* ========================================================================== */
     /* Open UART console and other board drivers */
     Drivers_open();
     Board_driversOpen();
 
     /* ========================================================================== */
-    /* STEP 2: Configure booster pack GPIO for encoder channel enable            */
-    /* ========================================================================== */
-    /*C16 pin High for Enabling ch0 in booster pack */
-#if(CONFIG_ENDAT3_0_BOOSTER_PACK && CONFIG_ENDAT3_0_CHANNEL0)
-    GPIO_setDirMode(ENC0_EN_BASE_ADDR, ENC0_EN_PIN, ENC0_EN_DIR);
-    GPIO_pinWriteHigh(ENC0_EN_BASE_ADDR, ENC0_EN_PIN);
-#endif
-
-    /*B17 pin High for Enabling ch2 in booster pack */
-#if(CONFIG_ENDAT3_0_BOOSTER_PACK && CONFIG_ENDAT3_0_CHANNEL2)
-    GPIO_setDirMode(ENC2_EN_BASE_ADDR, ENC2_EN_PIN, ENC2_EN_DIR);
-    GPIO_pinWriteHigh(ENC2_EN_BASE_ADDR, ENC2_EN_PIN);
-#endif
-
-    /* ========================================================================== */
-    /* STEP 3: Initialize PRU-ICSS subsystem and memory mapping                  */
+    /* STEP 2: Initialize PRU-ICSS subsystem and memory mapping                   */
     /* ========================================================================== */
     /* Configure PRU-ICSS instance, load shared memory structures */
     endat3_pruicss_init();
 
     /* ========================================================================== */
-    /* STEP 4: Initialize EnDat3 driver and configure interface parameters       */
+    /* STEP 3: Initialize EnDat3 driver and configure interface parameters        */
     /* ========================================================================== */
     /* Initialize EnDat3 parameters and driver */
     endat3_params_init(&params);
@@ -1002,7 +1024,7 @@ void endat3_diagnostic_main(void *args)
     }
 
     /* ========================================================================== */
-    /* STEP 5: Load and execute PRU firmware for EnDat3 protocol                 */
+    /* STEP 4: Load and execute PRU firmware for EnDat3 protocol                  */
     /* ========================================================================== */
     /* Load firmware binary to PRU instruction memory and start execution */
     endat3_pruicss_load_run_fw();
@@ -1010,7 +1032,7 @@ void endat3_diagnostic_main(void *args)
     endat3_display_fw_version();
 
     /* ========================================================================== */
-    /* STEP 6: Configure trigger initialization       */
+    /* STEP 5: Configure trigger initialization                                   */
     /* ========================================================================== */
     /* Clear any previous trigger state */
     status = endat3_clear_start_trigger(gAppEndat3Handle[CONFIG_ENDAT3_0]);
@@ -1023,6 +1045,7 @@ void endat3_diagnostic_main(void *args)
         }
         goto deinit;
     }
+
     /* It can therefore take up to 300 ms to respond to a HELLO command for initial startup */
     ClockP_usleep(DELAY_1_SEC);
 
@@ -1041,7 +1064,7 @@ void endat3_diagnostic_main(void *args)
     ClockP_usleep(DELAY_1_SEC);
 
     /* ========================================================================== */
-    /* STEP 7: Interactive diagnostic menu loop - Process encoder commands       */
+    /* STEP 6: Interactive diagnostic menu loop - Process encoder commands        */
     /* ========================================================================== */
     /* Main command loop allowing user to select foreground, background, continuous, or periodic modes */
     while(1)
@@ -1117,7 +1140,7 @@ void endat3_diagnostic_main(void *args)
             if(cmd_type == ENDAT3_CMD_TYPE_CONTINUOUS)
             {
                 /* Continuous position fetch mode */
-                DebugP_log("\r\n Starting continuous position fetch mode with ENDAT3_REQ_DATA0 ...");
+                DebugP_log("\r\n Starting continuous position fetch mode with ENDAT3_REQ_DATA0...");
                 endat3_continuous_position_fetch(gAppEndat3Handle[CONFIG_ENDAT3_0]);
             }
             else if(cmd_type == ENDAT3_CMD_TYPE_FOREGROUND)
@@ -1872,7 +1895,7 @@ void endat3_diagnostic_main(void *args)
     }
 
     /* ========================================================================== */
-    /* STEP 8: Cleanup and graceful shutdown                                      */
+    /* STEP 7: Cleanup and graceful shutdown                                      */
     /* ========================================================================== */
 
 deinit:
