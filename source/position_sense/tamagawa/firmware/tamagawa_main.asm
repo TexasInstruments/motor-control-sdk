@@ -296,13 +296,13 @@ TAMAGAWA_HOST_CMD_END:
     QBEQ    SKIP_INTERRUPT_TRIGGER,  R3.b0,  1
     ;Generate interrupt to R5F - different events for load-share mode
     .if $isdefed("ENABLE_MULTI_MAKE_RTU")
-    LDI     R31.w0, RTU_TRIGGER_HOST_TAMAGAWA_EVT   ; RTU-PRU: pr0_pru_mst_intr[4/5]_intr_req
+    LDI     R31.w0, TAMAGAWA_RTU_TRIGGER_HOST_EVT   
     .elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
-    LDI     R31.w0, PRU_TRIGGER_HOST_TAMAGAWA_EVT    ; PRU: pr0_pru_mst_intr[2/3]_intr_req
+    LDI     R31.w0, TAMAGAWA_PRU_TRIGGER_HOST_EVT    
     .elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
-    LDI     R31.w0, TXPRU_TRIGGER_HOST_TAMAGAWA_EVT  ; TX-PRU: pr0_pru_mst_intr[6/7]_intr_req
+    LDI     R31.w0, TAMAGAWA_TXPRU_TRIGGER_HOST_EVT  
     .else
-    LDI     R31.w0, PRU_TRIGGER_HOST_TAMAGAWA_EVT    ; Single/dual PRU mode
+    LDI     R31.w0, TAMAGAWA_PRU_TRIGGER_HOST_EVT    ; Single/dual PRU mode
     .endif
 SKIP_INTERRUPT_TRIGGER:
     ;Global reinit

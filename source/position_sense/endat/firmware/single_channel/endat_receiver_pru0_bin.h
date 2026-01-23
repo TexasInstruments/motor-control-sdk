@@ -54,7 +54,7 @@
 const uint32_t EnDatFirmwarePru0_0[] = {
 0x21000300,
 0x00000207,
-0x01000007,
+0x01000008,
 0x91002b8e,
 0x1d03eeee,
 0x81002b8e,

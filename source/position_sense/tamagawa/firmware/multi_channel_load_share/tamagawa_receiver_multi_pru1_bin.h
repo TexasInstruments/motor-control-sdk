@@ -53,7 +53,7 @@
 
 const uint32_t TamagawaFirmwareMultiMakePru1_0[] = {
 0x00000208,
-0x01010006,
+0x01010007,
 0x2effbb80,
 0x91051807,
 0x10070709,
@@ -93,7 +93,7 @@ const uint32_t TamagawaFirmwareMultiMakePru1_0[] = {
 0x81061803,
 0x91041803,
 0x51010302,
-0x2400229f,
+0x2400239f,
 0x2400021c,
 0x2400d19d,
 0x809d181c,

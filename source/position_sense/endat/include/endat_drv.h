@@ -191,10 +191,10 @@ extern "C" {
 #define ENDAT_DELAY_COUNTER_INCREMENT                       (5U)
 
 /**    \brief    Maximum IEP compare event number (0-15) */
-#define ENDAT_IEP_CMP_EVENT_MAX                             (15U)
+#define ENDAT_IEP_CMP_EVENT_MAX                             (16U)
 
 /**    \brief    Maximum IEP capture event number (0-7) */
-#define ENDAT_IEP_CAP_EVENT_MAX                             (7U)
+#define ENDAT_IEP_CAP_EVENT_MAX                             (8U)
 
 /**    \brief    EnDat channel mask */
 #define ENDAT_CHANNEL_MASK                                  (7U)
