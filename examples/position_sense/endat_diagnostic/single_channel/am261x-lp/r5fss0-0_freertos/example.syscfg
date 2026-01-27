@@ -50,9 +50,6 @@ const endat               = scripting.addModule("/position_sense/endat", {}, fal
 const endat1              = endat.addInstance();
 const epwm_syncout_xbar   = scripting.addModule("/xbar/epwm_syncout_xbar/epwm_syncout_xbar", {}, false);
 const epwm_syncout_xbar1  = epwm_syncout_xbar.addInstance();
-const epwm_syncout_xbar2  = epwm_syncout_xbar.addInstance();
-const output_xbar         = scripting.addModule("/xbar/output_xbar/output_xbar", {}, false);
-const output_xbar1        = output_xbar.addInstance();
 const soc_timesync_xbar1  = scripting.addModule("/xbar/soc_timesync_xbar1/soc_timesync_xbar1", {}, false);
 const soc_timesync_xbar11 = soc_timesync_xbar1.addInstance();
 
