@@ -240,6 +240,7 @@ uint32_t endat_recvd_validate(endat_handle handle, int32_t cmd,
  *                              setup (can be NULL for commands without supplements)
  *
  *  \retval     SystemP_SUCCESS     Command processed successfully
+ *  \retval     SystemP_TIMEOUT     On timeout waiting for firmware acknowledgment (propagated from \ref endat_command_wait)
  *  \retval     SystemP_FAILURE     Handle is NULL or invalid parameters
  *
  *  \note       This function blocks until command completion. Use individual
@@ -399,6 +400,7 @@ int32_t endat_get_recovery_time(endat_handle handle, uint32_t *recovery_time);
  *  \param[in]  handle      EnDAT driver handle obtained from \ref endat_init
  *
  *  \retval     SystemP_SUCCESS     Encoder information retrieved and stored successfully
+ *  \retval     SystemP_TIMEOUT     On timeout waiting for firmware acknowledgment (propagated from \ref endat_command_process)
  *  \retval     SystemP_FAILURE     Handle is NULL or command execution failed
  *
  *  \note       This function must be called after \ref endat_init and before any command is sent
@@ -631,12 +633,13 @@ int32_t endat_start_continuous_mode(endat_handle handle);
  *              This function:
  *              - Disables continuous transmission in the encoder
  *              - Reconfigures PRU firmware for command mode operation
+ *              - Waits for firmware command completion via endat_command_wait
  *
  *  \param[in]  handle      EnDAT driver handle obtained from \ref endat_init
  *
  *  \retval     SystemP_SUCCESS     Continuous mode stopped successfully
- *  \retval     SystemP_FAILURE     On NULL handle, internal structure validation failure,
- *                                  or firmware command completion timeout
+ *  \retval     SystemP_FAILURE     handle is NULL or internal structure validation failure
+ *  \retval     On timeout waiting for firmware acknowledgment (propagated from \ref endat_command_wait)
  *
  *  \note       Use \ref endat_start_continuous_mode to restart continuous mode.
  */

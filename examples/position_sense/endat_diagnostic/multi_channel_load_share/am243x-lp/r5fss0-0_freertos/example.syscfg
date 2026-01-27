@@ -274,10 +274,10 @@ endat1.PRU_ICSSG0_PRU.GPO6.$assign  = "PRG0_PRU1_GPO6";
 endat1.PRU_ICSSG0_PRU.GPI11.$assign = "PRG0_PRU1_GPO11";
 endat1.PRU_ICSSG0_PRU.GPI13.$assign = "PRG0_PRU1_GPO13";
 endat1.PRU_ICSSG0_PRU.GPO12.$assign = "PRG0_PRU1_GPO12";
-endat1.ENC1_EN.$name                = "ENC1_EN";
+endat1.ENC1_EN.$name                = "ENDAT0_BP_POWER_EN0";
 endat1.ENC1_EN.pu_pd                = "pu";
 endat1.ENC1_EN.GPIO_n.$assign       = "MMC1_SDWP";
-endat1.ENC2_EN.$name                = "ENC2_EN";
+endat1.ENC2_EN.$name                = "ENDAT0_BP_POWER_EN1";
 endat1.ENC2_EN.pu_pd                = "pu";
 endat1.ENC2_EN.GPIO_n.$assign       = "MMC1_SDCD";
 

@@ -323,22 +323,20 @@ section12.output_section[0].alignment = 0;
 tamagawa1.$name                               = "CONFIG_TAMAGAWA0";
 tamagawa1.Booster_Pack                        = true;
 tamagawa1.PRU_Slice                           = "PRU0";
-tamagawa1.ENC1_EN.$name                       = "ENC1_EN";
+tamagawa1.ENC1_EN.$name                       = "TAMAGAWA0_BP_POWER_EN0";
 tamagawa1.ENC1_EN.GPIO_n.$assign              = "GPIO21";
 tamagawa1["PRU-ICSS1"].$assign                = "PRU-ICSS1";
 tamagawa1["PRU-ICSS1"].PR1_PRU0_GPIO2.$assign = "GPIO83";
 tamagawa1["PRU-ICSS1"].PR1_PRU0_GPIO1.$assign = "GPIO82";
 tamagawa1["PRU-ICSS1"].PR1_PRU0_GPIO0.$assign = "GPIO81";
 tamagawa1["PRU-ICSS1"].PR1_PRU0_GPIO9.$assign = "GPIO80";
-tamagawa1["PRU-ICSS1"].PR1_PRU0_GPIO10.rx     = false;
-tamagawa1["PRU-ICSS1"].PR1_PRU0_GPIO11.rx     = false;
 
 tamagawa2.$name                  = "CONFIG_TAMAGAWA1";
 tamagawa2.Booster_Pack           = true;
 tamagawa2.CMP_Event_Num          = 3;
 tamagawa2.CAP_Event_Num          = 7;
 tamagawa2["PRU-ICSS1"].$assign   = "PRU-ICSS1";
-tamagawa2.ENC1_EN.$name          = "ENC2_EN";
+tamagawa2.ENC1_EN.$name          = "TAMAGAWA1_BP_POWER_EN0";
 tamagawa2.ENC1_EN.GPIO_n.$assign = "GPIO22";
 
 pruicss1.$name                           = "CONFIG_PRU_ICSS0";

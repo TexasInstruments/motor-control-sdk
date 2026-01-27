@@ -149,31 +149,31 @@
  */
 #if(CONFIG_TAMAGAWA0_MODE == TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU)
 #if(CONFIG_TAMAGAWA0_PRUICSS_SLICE == 1)
-    /* SLICE1 Multi-PRU: Events 34,35,36 -> 18,19,20 */
-    /** \brief RTU-PRU Tamagawa interrupt event number (18 = 34 - 16) */
-    #define RTU_TRIGGER_HOST_TAMAGAWA_EVT      (34-16)
-    /** \brief PRU Tamagawa interrupt event number (19 = 35 - 16) */
-    #define PRU_TRIGGER_HOST_TAMAGAWA_EVT      (35-16)
-    /** \brief TX-PRU Tamagawa interrupt event number (20 = 36 - 16) */
-    #define TXPRU_TRIGGER_HOST_TAMAGAWA_EVT    (36-16)
+/* SLICE1 Multi-PRU: Events 34,35,36 -> 18,19,20 */
+/** \brief RTU-PRU Tamagawa interrupt event number (18 = 34 - 16) */
+#define RTU_TRIGGER_HOST_TAMAGAWA_EVT      (34-16)
+/** \brief PRU Tamagawa interrupt event number (19 = 35 - 16) */
+#define PRU_TRIGGER_HOST_TAMAGAWA_EVT      (35-16)
+/** \brief TX-PRU Tamagawa interrupt event number (20 = 36 - 16) */
+#define TXPRU_TRIGGER_HOST_TAMAGAWA_EVT    (36-16)
 #else
-    /* SLICE0 Multi-PRU: Events 37,38,39 -> 21,22,23 */
-    /** \brief RTU-PRU Tamagawa interrupt event number (21 = 37 - 16) */
-    #define RTU_TRIGGER_HOST_TAMAGAWA_EVT      (37-16)
-    /** \brief PRU Tamagawa interrupt event number (22 = 38 - 16) */
-    #define PRU_TRIGGER_HOST_TAMAGAWA_EVT      (38-16)
-    /** \brief TX-PRU Tamagawa interrupt event number (23 = 39 - 16) */
-    #define TXPRU_TRIGGER_HOST_TAMAGAWA_EVT    (39-16)
+/* SLICE0 Multi-PRU: Events 37,38,39 -> 21,22,23 */
+/** \brief RTU-PRU Tamagawa interrupt event number (21 = 37 - 16) */
+#define RTU_TRIGGER_HOST_TAMAGAWA_EVT      (37-16)
+/** \brief PRU Tamagawa interrupt event number (22 = 38 - 16) */
+#define PRU_TRIGGER_HOST_TAMAGAWA_EVT      (38-16)
+/** \brief TX-PRU Tamagawa interrupt event number (23 = 39 - 16) */
+#define TXPRU_TRIGGER_HOST_TAMAGAWA_EVT    (39-16)
 #endif
 #else
 #if(CONFIG_TAMAGAWA0_PRUICSS_SLICE == 1)
-    /* SLICE1 Single-PRU: Event 34 -> 18 */
-    /** \brief PRU Tamagawa interrupt event number (18 = 34 - 16) */
-    #define PRU_TRIGGER_HOST_TAMAGAWA_EVT      (34-16)
+/* SLICE1 Single-PRU: Event 34 -> 18 */
+/** \brief PRU Tamagawa interrupt event number (18 = 34 - 16) */
+#define PRU_TRIGGER_HOST_TAMAGAWA_EVT      (34-16)
 #else
-    /* SLICE0 Single-PRU: Event 37 -> 21 */
-    /** \brief PRU Tamagawa interrupt event number (21 = 37 - 16) */
-    #define PRU_TRIGGER_HOST_TAMAGAWA_EVT      (37-16)
+/* SLICE0 Single-PRU: Event 37 -> 21 */
+/** \brief PRU Tamagawa interrupt event number (21 = 37 - 16) */
+#define PRU_TRIGGER_HOST_TAMAGAWA_EVT      (37-16)
 #endif
 #endif
 

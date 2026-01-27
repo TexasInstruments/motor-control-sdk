@@ -149,31 +149,31 @@
  */
 #if(CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
 #if(CONFIG_ENDAT0_PRUICSS_SLICE == 1)
-    /* SLICE1 Multi-PRU: Events 34,35,36 -> 18,19,20 */
-    /** \brief RTU-PRU EnDAT interrupt event number (18 = 34 - 16) */
-    #define RTU_TRIGGER_HOST_ENDAT_EVT      (34-16)
-    /** \brief PRU EnDAT interrupt event number (19 = 35 - 16) */
-    #define PRU_TRIGGER_HOST_ENDAT_EVT      (35-16)
-    /** \brief TX-PRU EnDAT interrupt event number (20 = 36 - 16) */
-    #define TXPRU_TRIGGER_HOST_ENDAT_EVT    (36-16)
+/* SLICE1 Multi-PRU: Events 34,35,36 -> 18,19,20 */
+/** \brief RTU-PRU EnDAT interrupt event number (18 = 34 - 16) */
+#define RTU_TRIGGER_HOST_ENDAT_EVT      (34-16)
+/** \brief PRU EnDAT interrupt event number (19 = 35 - 16) */
+#define PRU_TRIGGER_HOST_ENDAT_EVT      (35-16)
+/** \brief TX-PRU EnDAT interrupt event number (20 = 36 - 16) */
+#define TXPRU_TRIGGER_HOST_ENDAT_EVT    (36-16)
 #else
-    /* SLICE0 Multi-PRU: Events 37,38,39 -> 21,22,23 */
-    /** \brief RTU-PRU EnDAT interrupt event number (21 = 37 - 16) */
-    #define RTU_TRIGGER_HOST_ENDAT_EVT      (37-16)
-    /** \brief PRU EnDAT interrupt event number (22 = 38 - 16) */
-    #define PRU_TRIGGER_HOST_ENDAT_EVT      (38-16)
-    /** \brief TX-PRU EnDAT interrupt event number (23 = 39 - 16) */
-    #define TXPRU_TRIGGER_HOST_ENDAT_EVT    (39-16)
+/* SLICE0 Multi-PRU: Events 37,38,39 -> 21,22,23 */
+/** \brief RTU-PRU EnDAT interrupt event number (21 = 37 - 16) */
+#define RTU_TRIGGER_HOST_ENDAT_EVT      (37-16)
+/** \brief PRU EnDAT interrupt event number (22 = 38 - 16) */
+#define PRU_TRIGGER_HOST_ENDAT_EVT      (38-16)
+/** \brief TX-PRU EnDAT interrupt event number (23 = 39 - 16) */
+#define TXPRU_TRIGGER_HOST_ENDAT_EVT    (39-16)
 #endif
 #else
 #if(CONFIG_ENDAT0_PRUICSS_SLICE == 1)
-    /* SLICE1 Single-PRU: Event 34 -> 18 */
-    /** \brief PRU EnDAT interrupt event number (18 = 34 - 16) */
-    #define PRU_TRIGGER_HOST_ENDAT_EVT      (34-16)
+/* SLICE1 Single-PRU: Event 34 -> 18 */
+/** \brief PRU EnDAT interrupt event number (18 = 34 - 16) */
+#define PRU_TRIGGER_HOST_ENDAT_EVT      (34-16)
 #else
-    /* SLICE0 Single-PRU: Event 37 -> 21 */
-    /** \brief PRU EnDAT interrupt event number (21 = 37 - 16) */
-    #define PRU_TRIGGER_HOST_ENDAT_EVT      (37-16)
+/* SLICE0 Single-PRU: Event 37 -> 21 */
+/** \brief PRU EnDAT interrupt event number (21 = 37 - 16) */
+#define PRU_TRIGGER_HOST_ENDAT_EVT      (37-16)
 #endif
 #endif
 

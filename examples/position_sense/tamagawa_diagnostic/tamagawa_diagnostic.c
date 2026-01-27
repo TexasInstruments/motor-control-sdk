@@ -159,7 +159,7 @@
 #define TAMAGAWA_POSITION_LOOP_START            (1)
 
 #define TAMAGAWA_PERIODIC_MODE_CMD              (DATA_ID_0)
-#define TAMAGAWA_PERIODIC_MODE_LOG_SLEEP_US     (100)
+#define TAMAGAWA_PERIODIC_MODE_POLL_SLEEP_US    (1)
 
 /* ========================================================================== */
 /*                            Global Variables                                */
@@ -924,6 +924,7 @@ static int32_t tamagawa_process_periodic_command(tamagawa_handle handle[], int32
     uint32_t curr_irq_cnt;
     uint32_t irq_ch_idx[CONFIG_TAMAGAWA_NUM_INSTANCES] = {0};
     int32_t ret;
+    uint8_t ch;
 
     if(handle == NULL)
     {
@@ -947,7 +948,7 @@ static int32_t tamagawa_process_periodic_command(tamagawa_handle handle[], int32
 #else
     if((gTamagawaPeriodicInterface.is_cap_mode == 0) && (gTamagawaPeriodicInterface.iep_reset_count == 0))
     {
-        /* For AM26x, check iep_reset_count for 0 only in CAP mode.
+        /* For AM26x, check iep_reset_count for 0 only in CMP mode.
          * In CAP mode, iep_reset_count is not used.
          */
         DebugP_log("\r\n\n| ERROR: Invalid iep_reset_count value\n");
@@ -1141,6 +1142,8 @@ static int32_t tamagawa_process_periodic_command(tamagawa_handle handle[], int32
                     }
                 }
 
+                ClockP_usleep(TAMAGAWA_PERIODIC_MODE_POLL_SLEEP_US);
+
                 /* Check stop condition before updating prev_irq_cnt */
                 if(gTamagawaPositionLoopStatus == TAMAGAWA_POSITION_LOOP_STOP)
                 {
@@ -1156,16 +1159,12 @@ static int32_t tamagawa_process_periodic_command(tamagawa_handle handle[], int32
                 continue;
             }
 
-            /* Start with \r to overwrite the same line for all instances */
-            DebugP_log("\r");
-
             for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
             {
                 if(attrs[i]->total_channels > 1)
                 {
                     DebugP_log("\r\n Multi-channel mode is enabled for Tamagawa instance %u\n\n", i);
 
-                    uint8_t ch;
                     for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS_PER_SLICE; ch++)
                     {
                         if(attrs[i]->channel_mask & (1 << ch))
@@ -1194,8 +1193,6 @@ static int32_t tamagawa_process_periodic_command(tamagawa_handle handle[], int32
                     }
                 }
             }
-
-            ClockP_usleep(TAMAGAWA_PERIODIC_MODE_LOG_SLEEP_US);
         }
     }
     return SystemP_SUCCESS;
@@ -1259,17 +1256,6 @@ void tamagawa_main(void *args)
     /* ========================================================================== */
     Drivers_open();          /* Open SoC drivers */
     Board_driversOpen();     /* Open board-specific drivers */
-
-/* Set pin high for Enabling ch0 in booster pack */
-#if (CONFIG_TAMAGAWA0_BOOSTER_PACK && CONFIG_TAMAGAWA0_CHANNEL0_ENABLED)
-    GPIO_setDirMode(ENC1_EN_BASE_ADDR, ENC1_EN_PIN, ENC1_EN_DIR);
-    GPIO_pinWriteHigh(ENC1_EN_BASE_ADDR, ENC1_EN_PIN);
-#endif
-/* Set pin high for Enabling ch2 in booster pack */
-#if (CONFIG_TAMAGAWA0_BOOSTER_PACK && CONFIG_TAMAGAWA0_CHANNEL2_ENABLED)
-    GPIO_setDirMode(ENC2_EN_BASE_ADDR, ENC2_EN_PIN, ENC2_EN_DIR);
-    GPIO_pinWriteHigh(ENC2_EN_BASE_ADDR, ENC2_EN_PIN);
-#endif
 
     /* ========================================================================== */
     /* STEP 2: Initialize PRU-ICSS and Tamagawa driver                           */

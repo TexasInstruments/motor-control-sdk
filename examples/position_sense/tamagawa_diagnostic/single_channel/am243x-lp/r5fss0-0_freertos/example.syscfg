@@ -248,7 +248,7 @@ tamagawa1.Booster_Pack           = true;
 tamagawa1.G_MUX_EN               = true;
 tamagawa1.Tx_Rx_Clk_Source       = "1";
 tamagawa1.PRU_ICSSG0_PRU.$assign = "PRU_ICSSG0_PRU1";
-tamagawa1.ENC1_EN.$name          = "ENC1_EN";
+tamagawa1.ENC1_EN.$name          = "TAMAGAWA0_BP_POWER_EN0";
 tamagawa1.ENC1_EN.pu_pd          = "pu";
 tamagawa1.ENC1_EN.GPIO_n.$assign = "MMC1_SDWP";
 

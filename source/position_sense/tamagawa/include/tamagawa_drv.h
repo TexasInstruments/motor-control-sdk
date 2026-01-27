@@ -677,7 +677,8 @@ void tamagawa_deinit(tamagawa_handle handle);
  *  \param[in]  cmd              Tamagawa command number (see \ref tamagawa_data_id)
  *
  *  \retval     SystemP_SUCCESS  Command processed successfully
- *  \retval     SystemP_FAILURE  Command processing failed (invalid handle, invalid command, or timeout)
+ *  \retval     SystemP_TIMEOUT  On timeout waiting for firmware acknowledgment (propagated from \ref tamagawa_command_wait)
+ *  \retval     SystemP_FAILURE  Command processing failed (invalid handle or invalid command)
  */
 int32_t tamagawa_command_process(tamagawa_handle handle, int32_t cmd);
 

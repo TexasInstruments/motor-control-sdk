@@ -257,10 +257,10 @@ tamagawa1.PRU_ICSSG0_PRU.GPO6.$assign  = "PRG0_PRU1_GPO6";
 tamagawa1.PRU_ICSSG0_PRU.GPI11.$assign = "PRG0_PRU1_GPO11";
 tamagawa1.PRU_ICSSG0_PRU.GPI13.$assign = "PRG0_PRU1_GPO13";
 tamagawa1.PRU_ICSSG0_PRU.GPO12.$assign = "PRG0_PRU1_GPO12";
-tamagawa1.ENC1_EN.$name                = "ENC1_EN";
+tamagawa1.ENC1_EN.$name                = "TAMAGAWA0_BP_POWER_EN0";
 tamagawa1.ENC1_EN.pu_pd                = "pu";
 tamagawa1.ENC1_EN.GPIO_n.$assign       = "MMC1_SDWP";
-tamagawa1.ENC2_EN.$name                = "ENC2_EN";
+tamagawa1.ENC2_EN.$name                = "TAMAGAWA0_BP_POWER_EN1";
 tamagawa1.ENC2_EN.pu_pd                = "pu";
 tamagawa1.ENC2_EN.GPIO_n.$assign       = "MMC1_SDCD";
 
