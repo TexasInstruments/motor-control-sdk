@@ -70,6 +70,20 @@
 /*                           Macros & Typedefs                                */
 /* ========================================================================== */
 
+/*
+ * NOTE: Host Interrupt Number Synchronization
+ *
+ * The host interrupt numbers defined below (e.g., ICSS_PRU_ENDAT3_INT_NUM)
+ * must match the interrupt channel assignments in SysConfig:
+ *     PRU(ICSS) module -> INTC section -> INTC Host Interrupt
+ *
+ * Host interrupt channels route PRU events to the R5F core. The mapping is:
+ *     Host Interrupt 2-9 in SysConfig = HOST_INTR_PEND_0-7 registers
+ *
+ * If the host interrupt assignments are changed in SysConfig, following macros need
+ * to be updated accordingly to maintain proper interrupt delivery from PRU to R5F.
+ */
+
 #ifndef SOC_AM243X
 /* ICSSM Interrupt Numbers */
 #if(CONFIG_ENDAT3_0_PRUICSS_INSTANCE == 1)
@@ -86,8 +100,22 @@
 #endif
 #endif
 
+/*
+ * NOTE: The INTC event numbers defined below must match the corresponding
+ * definitions in the PRU firmware header file:
+ *     "source/position_sense/endat3/firmware/endat3_params.h"
+ *
+ * These event numbers are used for communication between the R5F and
+ * PRU firmware. Any changes to these values must be synchronized between
+ * both files to ensure proper interrupt handling.
+ */
+#if(CONFIG_ENDAT3_0_PRUICSS_SLICE == 1)
 /** \brief PRU EnDAT3 interrupt event number (18 = 2 + 16) */
 #define PRU_TRIGGER_HOST_ENDAT3_EVT      (2+16)
+#else
+/** \brief PRU EnDAT3 interrupt event number (21 = 5 + 16) */
+#define PRU_TRIGGER_HOST_ENDAT3_EVT      (5+16)
+#endif
 
 /* ========================================================================== */
 /*                            Global Variables                                */

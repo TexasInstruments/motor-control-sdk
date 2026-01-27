@@ -170,6 +170,11 @@ MIN_LONG_SYMB_COUNT             .set    7
 ;******************************************************************************
 ; Periodic Trigger Configuration Constants
 ;******************************************************************************
-PRU_TRIGGER_HOST_ENDAT3_EVT0    .set    18      ; (2+16) - Interrupt event
+	.if	$isdefed("SLICE1")
+PRU_TRIGGER_HOST_ENDAT3_EVT		.set	34			;( (0x20 | 2), pr0_pru_mst_intr[2]_intr_req )
+	.else
+	; "SLICE0"
+PRU_TRIGGER_HOST_ENDAT3_EVT		.set	37			;( (0x20 | 5), pr0_pru_mst_intr[5]_intr_req )
+	.endif
 ; Note: IEP register offsets are defined in icss_iep_regs.inc:
 ;******************************************************************************

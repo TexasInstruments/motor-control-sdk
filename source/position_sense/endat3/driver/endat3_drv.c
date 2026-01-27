@@ -103,8 +103,8 @@ const endat3_params gEndat3DefaultParams =
 extern void endat3_generate_memory_image(endat3_handle handle);
 
 /* Static internal functions */
-static int32_t endat3_calculate_clock(endat3_handle handle, endat3_clock_config *clock_config);
-static int32_t endat3_config_clock(endat3_handle handle, endat3_clock_config *clock_config);
+static int32_t endat3_calculate_clock(endat3_handle handle, endat3_clock_config *clk_cfg);
+static int32_t endat3_config_clock(endat3_handle handle, endat3_clock_config *clk_cfg);
 static int32_t endat3_set_delay_cycles(endat3_handle handle);
 static int32_t endat3_set_channel_mask(endat3_handle handle, uint8_t channel_mask);
 static int32_t endat3_config_clr_cfg0(endat3_handle handle);
@@ -142,7 +142,7 @@ endat3_handle endat3_init(uint32_t index, const endat3_params *params)
     endat3_handle       handle = NULL;
     endat3_priv         *priv = NULL;
     const endat3_attrs  *attrs = NULL;
-    endat3_clock_config clock_config;
+    endat3_clock_config clk_cfg;
     void                *base_addr = NULL;
     uint32_t            temp;
 
@@ -277,12 +277,12 @@ endat3_handle endat3_init(uint32_t index, const endat3_params *params)
 
     if(status == ENDAT3_SUCCESS)
     {
-        status = endat3_calculate_clock(handle, &clock_config);
+        status = endat3_calculate_clock(handle, &clk_cfg);
     }
 
     if(status == ENDAT3_SUCCESS)
     {
-        status = endat3_config_clock(handle, &clock_config);
+        status = endat3_config_clock(handle, &clk_cfg);
     }
 
     if(status == ENDAT3_SUCCESS)
@@ -345,17 +345,17 @@ endat3_priv* endat3_get_priv(endat3_handle handle)
  *          Always uses core clock (not UART clock) for EnDAT3 communication.
  *
  * \param handle      EnDAT3 handle
- * \param clock_config Pointer to clock configuration structure to be populated
+ * \param clk_cfg Pointer to clock configuration structure to be populated
  *
  * \retval ENDAT3_SUCCESS (0) on success
- * \retval ENDAT3_ERR_INVALID_INPUT (-1) if handle or clock_config is NULL
+ * \retval ENDAT3_ERR_INVALID_INPUT (-1) if handle or clk_cfg is NULL
  *
- * \note Validation: Handle and clock_config pointer are validated
+ * \note Validation: Handle and clk_cfg pointer are validated
  * \note Clock calculations:
  *       - For 12.5 Mbps: TX=25MHz, RX=100MHz (8x oversampling)
  *       - For 25 Mbps: NOT SUPPORTED (FIXME)
  */
-static int32_t endat3_calculate_clock(endat3_handle handle, endat3_clock_config *clock_config)
+static int32_t endat3_calculate_clock(endat3_handle handle, endat3_clock_config *clk_cfg)
 {
     const endat3_attrs      *attrs;
     uint32_t                freq;
@@ -373,14 +373,14 @@ static int32_t endat3_calculate_clock(endat3_handle handle, endat3_clock_config 
 
     /* ENDAT3 always uses Core clock (no UART clock support) */
     /* For 8x oversampling, use value of 7. Use "0" as start bit for receive */
-    clock_config->rx_div_attr = (ENDAT3_SB_POLARITY << 3) | (ENDAT3_OVERSAMPLE_RATE_8X - 1);
+    clk_cfg->rx_div_attr = (ENDAT3_SB_POLARITY << 3) | (ENDAT3_OVERSAMPLE_RATE_8X - 1);
 
     /* For 12.5 Mbps, TX clock = 25 MHz, RX clock = 100 MHz */
     /* For   25 Mbps, TX clock = 50 MHz, RX clock = 200 MHz */
 
-    clock_config->tx_div = (attrs->core_clk_freq / (freq * (ENDAT3_TX_CLOCK_MULTIPLIER))) - 1;
-    clock_config->rx_div = (attrs->core_clk_freq / (freq * (ENDAT3_OVERSAMPLE_RATE_8X))) - 1;
-    clock_config->is_core_clk = 1;  /* Always use core clock */
+    clk_cfg->tx_div = (attrs->core_clk_freq / (freq * (ENDAT3_TX_CLOCK_MULTIPLIER))) - 1;
+    clk_cfg->rx_div = (attrs->core_clk_freq / (freq * (ENDAT3_OVERSAMPLE_RATE_8X))) - 1;
+    clk_cfg->is_core_clk = 1;  /* Always use core clock */
 
     return ENDAT3_SUCCESS;
 }
@@ -392,16 +392,16 @@ static int32_t endat3_calculate_clock(endat3_handle handle, endat3_clock_config 
  *          Configures appropriate registers based on PRU slice (PRU0 or PRU1).
  *
  * \param handle       EnDAT3 handle
- * \param clock_config Pointer to clock configuration with calculated divisors
+ * \param clk_cfg Pointer to clock configuration with calculated divisors
  *
  * \retval ENDAT3_SUCCESS (0) on success
- * \retval ENDAT3_ERR_INVALID_INPUT (-1) if handle or clock_config is NULL
+ * \retval ENDAT3_ERR_INVALID_INPUT (-1) if handle or clk_cfg is NULL
  *
- * \note Validation: Handle and clock_config pointer are validated
+ * \note Validation: Handle and clk_cfg pointer are validated
  * \note Hardware access: Writes to PRU-ICSS CFG registers (PRUx_ED_RX_CFG_REG, PRUx_ED_TX_CFG_REG)
  * \note PRU slice determines which register set (PRU0 or PRU1) is configured
  */
-static int32_t endat3_config_clock(endat3_handle handle, endat3_clock_config *clock_config)
+static int32_t endat3_config_clock(endat3_handle handle, endat3_clock_config *clk_cfg)
 {
     endat3_priv             *priv;
     const endat3_attrs      *attrs;
@@ -414,48 +414,55 @@ static int32_t endat3_config_clock(endat3_handle handle, endat3_clock_config *cl
     pruicss_cfg = (void *)(((PRUICSS_HwAttrs *)(priv->pruicss_handle->hwAttrs))->cfgRegBase);
 
     /* Configure RX and TX CFG registers based on PRU slice */
+    /* Polarity of Start bit is 0 for EnDAT3 */
     if(attrs->pruicss_slice)
     {
-        /* Slice 1 */
+        /* Slice 1 - Read-Modify-Write for RX CFG */
         rx_reg_val = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG);
         /*
-         * Using (0x00000008U) to clear UART/Core clock selection bit as CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_CLK_SEL_MASK
-         * is not available in CSL.
+         * NOTE: Using CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_SB_POL_MASK instead of
+         * CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_SB_POL_MASK because of incorrect definition.
          */
         rx_reg_val &= ~(CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_DIV_FACTOR_MASK |
-                        (0x00000008U) |
-                        CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_SB_POL_MASK |
+                        CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_DIV_FACTOR_FRAC_MASK |
+                        CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_CLK_SEL_MASK |
+                        CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_SB_POL_MASK |
                         CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_SAMPLE_SIZE_MASK);
-        rx_reg_val |= (clock_config->rx_div << CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_DIV_FACTOR_SHIFT) |
-                      (clock_config->is_core_clk << CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_CLK_SEL_SHIFT) |
-                      (clock_config->rx_div_attr);
+        rx_reg_val |= (clk_cfg->rx_div << CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_DIV_FACTOR_SHIFT) |
+                      (clk_cfg->is_core_clk << CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG_PRU1_ED_RX_CLK_SEL_SHIFT) |
+                      (clk_cfg->rx_div_attr);
         HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_RX_CFG_REG, rx_reg_val);
 
+        /* Slice 1 - Read-Modify-Write for TX CFG */
         tx_reg_val = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG);
         tx_reg_val &= ~(CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG_PRU1_ED_TX_DIV_FACTOR_MASK |
+                        CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG_PRU1_ED_TX_DIV_FACTOR_FRAC_MASK |
                         CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG_PRU1_ED_TX_CLK_SEL_MASK);
-        tx_reg_val |= (clock_config->tx_div << CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG_PRU1_ED_TX_DIV_FACTOR_SHIFT) |
-                      (clock_config->is_core_clk << CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG_PRU1_ED_TX_CLK_SEL_SHIFT);
+        tx_reg_val |= (clk_cfg->tx_div << CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG_PRU1_ED_TX_DIV_FACTOR_SHIFT) |
+                      (clk_cfg->is_core_clk << CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG_PRU1_ED_TX_CLK_SEL_SHIFT);
         HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU1_ED_TX_CFG_REG, tx_reg_val);
     }
     else
     {
-        /* Slice 0 */
+        /* Slice 0 - Read-Modify-Write for RX CFG */
         rx_reg_val = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG);
         rx_reg_val &= ~(CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_DIV_FACTOR_MASK |
+                        CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_DIV_FACTOR_FRAC_MASK |
                         CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_CLK_SEL_MASK |
                         CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_SB_POL_MASK |
                         CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_SAMPLE_SIZE_MASK);
-        rx_reg_val |= (clock_config->rx_div << CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_DIV_FACTOR_SHIFT) |
-                      (clock_config->is_core_clk << CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_CLK_SEL_SHIFT) |
-                      (clock_config->rx_div_attr);
+        rx_reg_val |= (clk_cfg->rx_div << CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_DIV_FACTOR_SHIFT) |
+                      (clk_cfg->is_core_clk << CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG_PRU0_ED_RX_CLK_SEL_SHIFT) |
+                      (clk_cfg->rx_div_attr);
         HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_RX_CFG_REG, rx_reg_val);
 
+        /* Slice 0 - Read-Modify-Write for TX CFG */
         tx_reg_val = HW_RD_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG);
         tx_reg_val &= ~(CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG_PRU0_ED_TX_DIV_FACTOR_MASK |
+                        CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG_PRU0_ED_TX_DIV_FACTOR_FRAC_MASK |
                         CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG_PRU0_ED_TX_CLK_SEL_MASK);
-        tx_reg_val |= (clock_config->tx_div << CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG_PRU0_ED_TX_DIV_FACTOR_SHIFT) |
-                      (clock_config->is_core_clk << CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG_PRU0_ED_TX_CLK_SEL_SHIFT);
+        tx_reg_val |= (clk_cfg->tx_div << CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG_PRU0_ED_TX_DIV_FACTOR_SHIFT) |
+                      (clk_cfg->is_core_clk << CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG_PRU0_ED_TX_CLK_SEL_SHIFT);
         HW_WR_REG32((uint8_t *)pruicss_cfg + CSL_ICSS_PR1_CFG_SLV_PRU0_ED_TX_CFG_REG, tx_reg_val);
     }
 

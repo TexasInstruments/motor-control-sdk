@@ -476,7 +476,7 @@ rx_sampling_done:
 	qbeq host_trigger_next_cmd, TEMP2.b0, 1        ; If host mode, wait for next host trigger
 
 	; Periodic mode: Generate interrupt and loop back
-	ldi R31.w0, PRU_TRIGGER_HOST_ENDAT3_EVT0        ; Generate interrupt to host
+	ldi R31.w0, PRU_TRIGGER_HOST_ENDAT3_EVT        ; Generate interrupt to host
 	qba check_operating_mode                ; Loop back for next periodic trigger
 host_trigger_next_cmd:
 	; Check if this was a reset command
@@ -505,7 +505,7 @@ error_detected:
 	qbne host_trigger_error_cmd, TEMP2.b0, 0       ; If host mode, wait for next host trigger
 
 	; Periodic mode: Generate interrupt and loop back
-	ldi R31.w0, PRU_TRIGGER_HOST_ENDAT3_EVT0        ; Generate interrupt to host
+	ldi R31.w0, PRU_TRIGGER_HOST_ENDAT3_EVT        ; Generate interrupt to host
 	qba check_operating_mode                ; Loop back for next periodic trigger
 
 host_trigger_error_cmd:
