@@ -1065,33 +1065,46 @@ static int32_t endat_get_command_supplement(endat_handle handle, int32_t cmd, en
 
     /* Clear previous command supplement data to avoid stale values */
     memset(cmd_supplement, 0, sizeof(*cmd_supplement));
-    loop_count = (attrs->mode == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU ) ? ENDAT_NUM_CH_PER_SLICE_MAX :  1;
+    loop_count = ENDAT_NUM_CH_PER_SLICE_MAX;
 
     cmd_supplement->cmd_type = cmd;
     switch(cmd)
     {
         case 2:
             DebugP_log("\n\r| Enter MRS code (hex value): ");
-            for(i = 0; i < loop_count; i++)
+            if(attrs->mode == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
             {
-                if(attrs->channel_mask & (1 << i))
+                for(i = 0; i < loop_count; i++)
                 {
-                    if(loop_count > 1)
+                    if(attrs->channel_mask & (1 << i))
                     {
                         DebugP_log("\n\r| for channel %d: ", i);
-                    }
+                        if(DebugP_scanf("%x", &cmd_supplement->address[i]) < 0)
+                        {
+                            DebugP_log("\r| ERROR: invalid MRS code|\n");
+                            return SystemP_FAILURE;
+                        }
 
-                    if(DebugP_scanf("%x", &cmd_supplement->address[i]) < 0)
-                    {
-                        DebugP_log("\r| ERROR: invalid MRS code\n|\n|\n|\n");
-                        return SystemP_FAILURE;
+                        if(cmd_supplement->address[i] > 0xFF)
+                        {
+                            DebugP_log("\r| ERROR: invalid MRS code|\n");
+                            return SystemP_FAILURE;
+                        }
                     }
+                }
+            }
+            else
+            {
+                if(DebugP_scanf("%x", &cmd_supplement->address[0]) < 0)
+                {
+                    DebugP_log("\r| ERROR: invalid MRS code|\n");
+                    return SystemP_FAILURE;
+                }
 
-                    if(cmd_supplement->address[i] > 0xFF)
-                    {
-                        DebugP_log("\r| ERROR: invalid MRS code\n|\n|\n|\n");
-                        return SystemP_FAILURE;
-                    }
+                if(cmd_supplement->address[0] > 0xFF)
+                {
+                    DebugP_log("\r| ERROR: invalid MRS code|\n");
+                    return SystemP_FAILURE;
                 }
             }
 
@@ -1099,46 +1112,80 @@ static int32_t endat_get_command_supplement(endat_handle handle, int32_t cmd, en
 
         case 9:
             DebugP_log("\n\r| Enter MRS code (hex value): ");
-            for(i = 0; i < loop_count; i++)
+            if(attrs->mode == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
             {
-                if(attrs->channel_mask & (1 << i))
+                for(i = 0; i < loop_count; i++)
                 {
-                    if(loop_count > 1)
+                    if(attrs->channel_mask & (1 << i))
                     {
                         DebugP_log("\n\r| for channel %d: ", i);
-                    }
 
-                    if(DebugP_scanf("%x", &cmd_supplement->address[i]) < 0)
-                    {
-                        DebugP_log("\r| ERROR: invalid MRS code\n|\n|\n|\n");
-                        return SystemP_FAILURE;
-                    }
-
-                    if(cmd_supplement->address[i] > 0xFF)
-                    {
-                    DebugP_log("\r| ERROR: invalid MRS code\n|\n|\n|\n");
-                        return SystemP_FAILURE;
-                    }
-
-                    if(cmd_supplement->address[i] == ENDAT_SECTION2_MEMORY)
-                    {
-                        DebugP_log("\n\r| Enter block address (hex value): ");
-
-                        if(DebugP_scanf("%x", &cmd_supplement->block[i]) < 0)
+                        if(DebugP_scanf("%x", &cmd_supplement->address[i]) < 0)
                         {
-                            DebugP_log("\r| ERROR: invalid block address\n|\n|\n|\n");
+                            DebugP_log("\r| ERROR: invalid MRS code|\n");
                             return SystemP_FAILURE;
                         }
 
-                        /* better compare it with number of blocks information available in eeprom */
-                        if(cmd_supplement->block[i] > 0xFF)
+                        if(cmd_supplement->address[i] > 0xFF)
                         {
-                            DebugP_log("\r| ERROR: invalid block address\n|\n|\n|\n");
+                            DebugP_log("\r| ERROR: invalid MRS code|\n");
                             return SystemP_FAILURE;
                         }
 
-                        cmd_supplement->has_block_address[i] = TRUE;
+                        if(cmd_supplement->address[i] == ENDAT_SECTION2_MEMORY)
+                        {
+                            DebugP_log("\n\r| Enter block address (hex value): ");
+
+                            if(DebugP_scanf("%x", &cmd_supplement->block[i]) < 0)
+                            {
+                                DebugP_log("\r| ERROR: invalid block address|\n");
+                                return SystemP_FAILURE;
+                            }
+
+                            /* better compare it with number of blocks information available in eeprom */
+                            if(cmd_supplement->block[i] > 0xFF)
+                            {
+                                DebugP_log("\r| ERROR: invalid block address|\n");
+                                return SystemP_FAILURE;
+                            }
+
+                            cmd_supplement->has_block_address[i] = TRUE;
+                        }
                     }
+                }
+            }
+            else
+            {
+                if(DebugP_scanf("%x", &cmd_supplement->address[0]) < 0)
+                {
+                    DebugP_log("\r| ERROR: invalid MRS code|\n");
+                    return SystemP_FAILURE;
+                }
+
+                if(cmd_supplement->address[0] > 0xFF)
+                {
+                    DebugP_log("\r| ERROR: invalid MRS code|\n");
+                    return SystemP_FAILURE;
+                }
+
+                if(cmd_supplement->address[0] == ENDAT_SECTION2_MEMORY)
+                {
+                    DebugP_log("\n\r| Enter block address (hex value): ");
+
+                    if(DebugP_scanf("%x", &cmd_supplement->block[0]) < 0)
+                    {
+                        DebugP_log("\r| ERROR: invalid block address|\n");
+                        return SystemP_FAILURE;
+                    }
+
+                    /* better compare it with number of blocks information available in eeprom */
+                    if(cmd_supplement->block[0] > 0xFF)
+                    {
+                        DebugP_log("\r| ERROR: invalid block address|\n");
+                        return SystemP_FAILURE;
+                    }
+
+                    cmd_supplement->has_block_address[0] = TRUE;
                 }
             }
 
@@ -1147,40 +1194,68 @@ static int32_t endat_get_command_supplement(endat_handle handle, int32_t cmd, en
         case 3:
         case 10:
             DebugP_log("\n\r| Enter parameter address (hex value): ");
-            for(i = 0; i < loop_count; i++)
+            if(attrs->mode == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
             {
-                if(attrs->channel_mask & (1 << i))
+                for(i = 0; i < loop_count; i++)
                 {
-                    if(loop_count > 1)
+                    if(attrs->channel_mask & (1 << i))
                     {
                         DebugP_log("\n\r| for channel %d: ", i);
-                    }
 
-                    if(DebugP_scanf("%x", &cmd_supplement->address[i]) < 0)
-                    {
-                        DebugP_log("\r| ERROR: invalid parameter address\n|\n|\n|\n");
-                        return SystemP_FAILURE;
-                    }
+                        if(DebugP_scanf("%x", &cmd_supplement->address[i]) < 0)
+                        {
+                            DebugP_log("\r| ERROR: invalid parameter address|\n");
+                            return SystemP_FAILURE;
+                        }
 
-                    if(cmd_supplement->address[i] > 0xFF)
-                    {
-                        DebugP_log("\r| ERROR: invalid parameter address\n|\n|\n|\n");
-                        return SystemP_FAILURE;
-                    }
+                        if(cmd_supplement->address[i] > 0xFF)
+                        {
+                            DebugP_log("\r| ERROR: invalid parameter address|\n");
+                            return SystemP_FAILURE;
+                        }
 
-                    DebugP_log("\n\r| Enter parameter (hex value): ");
+                        DebugP_log("\n\r| Enter parameter (hex value): ");
 
-                    if(DebugP_scanf("%x", &cmd_supplement->data[i]) < 0)
-                    {
-                        DebugP_log("\r| ERROR: invalid parameter\n|\n|\n|\n");
-                        return SystemP_FAILURE;
-                    }
+                        if(DebugP_scanf("%x", &cmd_supplement->data[i]) < 0)
+                        {
+                            DebugP_log("\r| ERROR: invalid parameter|\n");
+                            return SystemP_FAILURE;
+                        }
 
-                    if(cmd_supplement->data[i] > 0xFFFF)
-                    {
-                        DebugP_log("\r| ERROR: invalid parameter\n|\n|\n|\n");
-                        return SystemP_FAILURE;
+                        if(cmd_supplement->data[i] > 0xFFFF)
+                        {
+                            DebugP_log("\r| ERROR: invalid parameter|\n");
+                            return SystemP_FAILURE;
+                        }
                     }
+                }
+            }
+            else
+            {
+                if(DebugP_scanf("%x", &cmd_supplement->address[0]) < 0)
+                {
+                    DebugP_log("\r| ERROR: invalid parameter address|\n");
+                    return SystemP_FAILURE;
+                }
+
+                if(cmd_supplement->address[0] > 0xFF)
+                {
+                    DebugP_log("\r| ERROR: invalid parameter address|\n");
+                    return SystemP_FAILURE;
+                }
+
+                DebugP_log("\n\r| Enter parameter (hex value): ");
+
+                if(DebugP_scanf("%x", &cmd_supplement->data[0]) < 0)
+                {
+                    DebugP_log("\r| ERROR: invalid parameter|\n");
+                    return SystemP_FAILURE;
+                }
+
+                if(cmd_supplement->data[0] > 0xFFFF)
+                {
+                    DebugP_log("\r| ERROR: invalid parameter|\n");
+                    return SystemP_FAILURE;
                 }
             }
 
@@ -1189,26 +1264,40 @@ static int32_t endat_get_command_supplement(endat_handle handle, int32_t cmd, en
         case 4:
         case 11:
             DebugP_log("\n\r| Enter parameter address (hex value): ");
-            for(i = 0; i < loop_count; i++)
+            if(attrs->mode == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
             {
-                if(attrs->channel_mask & (1 << i))
+                for(i = 0; i < loop_count; i++)
                 {
-                    if(loop_count > 1)
+                    if(attrs->channel_mask & (1 << i))
                     {
                         DebugP_log("\n\r| for channel %d: ", i);
-                    }
 
-                    if(DebugP_scanf("%x", &cmd_supplement->address[i]) < 0)
-                    {
-                        DebugP_log("\r| ERROR: invalid parameter address\n|\n|\n|\n");
-                        return SystemP_FAILURE;
-                    }
+                        if(DebugP_scanf("%x", &cmd_supplement->address[i]) < 0)
+                        {
+                            DebugP_log("\r| ERROR: invalid parameter address|\n");
+                            return SystemP_FAILURE;
+                        }
 
-                    if(cmd_supplement->address[i] > 0xFF)
-                    {
-                        DebugP_log("\r| ERROR: invalid parameter address\n|\n|\n|\n");
-                        return SystemP_FAILURE;
+                        if(cmd_supplement->address[i] > 0xFF)
+                        {
+                            DebugP_log("\r| ERROR: invalid parameter address|\n");
+                            return SystemP_FAILURE;
+                        }
                     }
+                }
+            }
+            else
+            {
+                if(DebugP_scanf("%x", &cmd_supplement->address[0]) < 0)
+                {
+                    DebugP_log("\r| ERROR: invalid parameter address|\n");
+                    return SystemP_FAILURE;
+                }
+
+                if(cmd_supplement->address[0] > 0xFF)
+                {
+                    DebugP_log("\r| ERROR: invalid parameter address|\n");
+                    return SystemP_FAILURE;
                 }
             }
 
@@ -1217,26 +1306,40 @@ static int32_t endat_get_command_supplement(endat_handle handle, int32_t cmd, en
         case 7:
         case 13:
             DebugP_log("\n\r| Enter port address (hex value): ");
-            for(i = 0; i < loop_count; i++)
+            if(attrs->mode == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
             {
-                if(attrs->channel_mask & (1 << i))
+                for(i = 0; i < loop_count; i++)
                 {
-                    if(loop_count > 1)
+                    if(attrs->channel_mask & (1 << i))
                     {
                         DebugP_log("\n\r| for channel %d: ", i);
-                    }
 
-                    if(DebugP_scanf("%x", &cmd_supplement->address[i]) < 0)
-                    {
-                        DebugP_log("\r| ERROR: invalid port address\n|\n|\n|\n");
-                        return SystemP_FAILURE;
-                    }
+                        if(DebugP_scanf("%x", &cmd_supplement->address[i]) < 0)
+                        {
+                            DebugP_log("\r| ERROR: invalid port address|\n");
+                            return SystemP_FAILURE;
+                        }
 
-                    if(cmd_supplement->address[i] > 0xFF)
-                    {
-                        DebugP_log("\r| ERROR: invalid port address\n|\n|\n|\n");
-                        return SystemP_FAILURE;
+                        if(cmd_supplement->address[i] > 0xFF)
+                        {
+                            DebugP_log("\r| ERROR: invalid port address|\n");
+                            return SystemP_FAILURE;
+                        }
                     }
+                }
+            }
+            else
+            {
+                if(DebugP_scanf("%x", &cmd_supplement->address[0]) < 0)
+                {
+                    DebugP_log("\r| ERROR: invalid port address|\n");
+                    return SystemP_FAILURE;
+                }
+
+                if(cmd_supplement->address[0] > 0xFF)
+                {
+                    DebugP_log("\r| ERROR: invalid port address|\n");
+                    return SystemP_FAILURE;
                 }
             }
 
@@ -1244,40 +1347,71 @@ static int32_t endat_get_command_supplement(endat_handle handle, int32_t cmd, en
 
         case 14:
             DebugP_log("\n\r| Enter encoder address (hex value): ");
-            for(i = 0; i < loop_count; i++)
+            if(attrs->mode == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
             {
-                if(attrs->channel_mask & (1 << i))
+                for(i = 0; i < loop_count; i++)
                 {
-                    if(loop_count > 1)
+                    if(attrs->channel_mask & (1 << i))
                     {
-                        DebugP_log("\n\r| for channel %d: ", i);
-                    }
+                        if(loop_count > 1)
+                        {
+                            DebugP_log("\n\r| for channel %d: ", i);
+                        }
 
-                    if(DebugP_scanf("%x", &cmd_supplement->address[i]) < 0)
-                    {
-                        DebugP_log("\r| ERROR: invalid encoder address\n|\n|\n|\n");
-                        return SystemP_FAILURE;
-                    }
+                        if(DebugP_scanf("%x", &cmd_supplement->address[i]) < 0)
+                        {
+                            DebugP_log("\r| ERROR: invalid encoder address|\n");
+                            return SystemP_FAILURE;
+                        }
 
-                    if(cmd_supplement->address[i] > 0xFF)
-                    {
-                        DebugP_log("\r| ERROR: invalid encoder address\n|\n|\n|\n");
-                        return SystemP_FAILURE;
-                    }
+                        if(cmd_supplement->address[i] > 0xFF)
+                        {
+                            DebugP_log("\r| ERROR: invalid encoder address|\n");
+                            return SystemP_FAILURE;
+                        }
 
-                    DebugP_log("\n\r| Enter instruction (hex value): ");
+                        DebugP_log("\n\r| Enter instruction (hex value): ");
 
-                    if(DebugP_scanf("%x", &cmd_supplement->data[i]) < 0)
-                    {
-                        DebugP_log("\r| ERROR: invalid instruction\n|\n|\n|\n");
-                        return SystemP_FAILURE;
-                    }
+                        if(DebugP_scanf("%x", &cmd_supplement->data[i]) < 0)
+                        {
+                            DebugP_log("\r| ERROR: invalid instruction|\n");
+                            return SystemP_FAILURE;
+                        }
 
-                    if(cmd_supplement->data[i] > 0xFFFF)
-                    {
-                        DebugP_log("\r| ERROR: invalid instruction\n|\n|\n|\n");
-                        return SystemP_FAILURE;
+                        if(cmd_supplement->data[i] > 0xFFFF)
+                        {
+                            DebugP_log("\r| ERROR: invalid instruction|\n");
+                            return SystemP_FAILURE;
+                        }
                     }
+                }
+            }
+            else
+            {
+                if(DebugP_scanf("%x", &cmd_supplement->address[0]) < 0)
+                {
+                    DebugP_log("\r| ERROR: invalid encoder address|\n");
+                    return SystemP_FAILURE;
+                }
+
+                if(cmd_supplement->address[0] > 0xFF)
+                {
+                    DebugP_log("\r| ERROR: invalid encoder address|\n");
+                    return SystemP_FAILURE;
+                }
+
+                DebugP_log("\n\r| Enter instruction (hex value): ");
+
+                if(DebugP_scanf("%x", &cmd_supplement->data[0]) < 0)
+                {
+                    DebugP_log("\r| ERROR: invalid instruction|\n");
+                    return SystemP_FAILURE;
+                }
+
+                if(cmd_supplement->data[0] > 0xFFFF)
+                {
+                    DebugP_log("\r| ERROR: invalid instruction|\n");
+                    return SystemP_FAILURE;
                 }
             }
 
@@ -1290,7 +1424,7 @@ static int32_t endat_get_command_supplement(endat_handle handle, int32_t cmd, en
 
             if(DebugP_scanf("%u", &cmd_supplement->frequency) < 0)
             {
-                DebugP_log("\r| ERROR: invalid frequency\n|\n|\n|\n");
+                DebugP_log("\r| ERROR: invalid frequency|\n");
                 return SystemP_FAILURE;
             }
 
@@ -1330,7 +1464,7 @@ static int32_t endat_get_command_supplement(endat_handle handle, int32_t cmd, en
             /* Get the delay value */
             if(DebugP_scanf("%u", &cmd_supplement->delay) < 0)
             {
-                DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                DebugP_log("\r| ERROR: invalid value|\n");
                 return SystemP_FAILURE;
             }
             /* For multi-channel mode, select the target channel first */
@@ -1339,13 +1473,13 @@ static int32_t endat_get_command_supplement(endat_handle handle, int32_t cmd, en
                 DebugP_log("\n\r| Select Channel: ");
                 if(DebugP_scanf("%hhu", &selected_ch) < 0)
                 {
-                    DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
+                    DebugP_log("\r| ERROR: invalid channel|\n");
                     return SystemP_FAILURE;
                 }
 
                 if(!((attrs->channel_mask) & (1 << selected_ch)))
                 {
-                    DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
+                    DebugP_log("\r| ERROR: invalid channel|\n");
                     return SystemP_FAILURE;
                 }
                 cmd_supplement->selected_channel = selected_ch;
@@ -1358,12 +1492,12 @@ static int32_t endat_get_command_supplement(endat_handle handle, int32_t cmd, en
 
             if(DebugP_scanf("%hhu", &cmd_supplement->enable_rt) < 0)
             {
-                DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                DebugP_log("\r| ERROR: invalid value|\n");
                 return SystemP_FAILURE;
             }
             if(cmd_supplement->enable_rt > 1)
             {
-                DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                DebugP_log("\r| ERROR: invalid value|\n");
                 return SystemP_FAILURE;
             }
 
@@ -1374,13 +1508,13 @@ static int32_t endat_get_command_supplement(endat_handle handle, int32_t cmd, en
                 DebugP_log("\n\r| Select Channel: ");
                 if(DebugP_scanf("%hhu", &selected_ch) < 0)
                 {
-                    DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
+                    DebugP_log("\r| ERROR: invalid channel|\n");
                     return SystemP_FAILURE;
                 }
 
                 if(!((attrs->channel_mask) & (1 << selected_ch)))
                 {
-                    DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
+                    DebugP_log("\r| ERROR: invalid channel|\n");
                     return SystemP_FAILURE;
                 }
 
@@ -1393,30 +1527,41 @@ static int32_t endat_get_command_supplement(endat_handle handle, int32_t cmd, en
             DebugP_log("\n\r| Enter IEP reset cycle count (must be greater than EnDat cycle time including timeout period, in IEP cycles): ");
             if(DebugP_scanf("%llu", &cmd_supplement->iep_reset_count) < 0)
             {
-                DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                DebugP_log("\r| ERROR: invalid value|\n");
                 return SystemP_FAILURE;
             }
             if((cmd_supplement->iep_reset_count == 0) || (cmd_supplement->iep_reset_count <= ENDAT_IEP_COUNTER_INCREMENT))
             {
-                DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                DebugP_log("\r| ERROR: invalid value|\n");
                 return SystemP_FAILURE;
             }
 
             DebugP_log("\n\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles): ");
-            for(i = 0; i < loop_count; i++)
+            if(attrs->mode == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
             {
-                if(attrs->channel_mask & (1 << i))
+                for(i = 0; i < loop_count; i++)
                 {
-                    if(loop_count > 1)
+                    if(attrs->channel_mask & (1 << i))
                     {
-                        DebugP_log("\n\r| for channel %d: ", i);
-                    }
+                        if(loop_count > 1)
+                        {
+                            DebugP_log("\n\r| for channel %d: ", i);
+                        }
 
-                    if(DebugP_scanf("%llu", &cmd_supplement->ch_trigger_count[i]) < 0)
-                    {
-                        DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
-                        return SystemP_FAILURE;
+                        if(DebugP_scanf("%llu", &cmd_supplement->ch_trigger_count[i]) < 0)
+                        {
+                            DebugP_log("\r| ERROR: invalid value|\n");
+                            return SystemP_FAILURE;
+                        }
                     }
+                }
+            }
+            else
+            {
+                if(DebugP_scanf("%llu", &cmd_supplement->ch_trigger_count[0]) < 0)
+                {
+                    DebugP_log("\r| ERROR: invalid value|\n");
+                    return SystemP_FAILURE;
                 }
             }
             break;
@@ -1426,16 +1571,16 @@ static int32_t endat_get_command_supplement(endat_handle handle, int32_t cmd, en
             DebugP_log("\n\r| Enter IEP SYNC OUT0 cycle period (in IEP cycles): ");
             if(DebugP_scanf("%llu", &cmd_supplement->iep_sync0_period) < 0)
             {
-                DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
+                DebugP_log("\r| ERROR: invalid value|\n");
                 return SystemP_FAILURE;
             }
             if((cmd_supplement->iep_sync0_period == 0) || (cmd_supplement->iep_sync0_period <= ENDAT_IEP_COUNTER_INCREMENT) || (cmd_supplement->iep_sync0_period > UINT32_MAX))
             {
-                DebugP_log("\r| ERROR: invalid value. 0 is not allowed and maximum value allowed is %u\n|\n|\n|\n", UINT32_MAX);
+                DebugP_log("\r| ERROR: invalid value. 0 is not allowed and maximum value allowed is %u|\n", UINT32_MAX);
                 return SystemP_FAILURE;
             }
 #else
-            DebugP_log("\r| Periodic cap mode cycle time will be equal to EPWM SYNC OUT frequency. \n NOTE: In SysConfig, EPWM and EPWM to IEP LATCH XBAR configuration must be done\n|\n|\n|\n");
+            DebugP_log("\r| Periodic cap mode cycle time will be equal to EPWM SYNC OUT frequency. \r\n NOTE: In SysConfig, EPWM and EPWM to IEP LATCH XBAR configuration must be done|\n");
 #endif
             break;
 
@@ -2578,7 +2723,7 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
         status = endat_config_periodic_mode(&gEndatPeriodicInterface);
         if(SystemP_SUCCESS != status)
         {
-            DebugP_log("\r| ERROR: Failed to configure periodic %s mode\n|\n|\n|\n", is_cap_mode ? "CAP" : "CMP");
+            DebugP_log("\r| ERROR: Failed to configure periodic %s mode|\n", is_cap_mode ? "CAP" : "CMP");
             return SystemP_FAILURE;
         }
 
@@ -2789,7 +2934,7 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
                     else
                     {
                         char_count = endat_get_position_loop_chars(priv[i]->multi_turn_res[priv[i]->current_channel], 0, 0);
-                        endat_print_position_loop(handle[i], 0, 0, 0);
+                        endat_print_position_loop(handle[i], 0, 0, priv[i]->current_channel);
                         DebugP_log("\n| ");
                     }
                 }
@@ -2877,14 +3022,14 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
                     }
                     else
                     {
-                        status = endat_recvd_process(handle[i], 1, &gAppEndatFormatDataMtrCtrl[i][0]);
+                        status = endat_recvd_process(handle[i], 1, &gAppEndatFormatDataMtrCtrl[i][priv[i]->current_channel]);
                         if(status != SystemP_SUCCESS)
                         {
                             DebugP_log("\r| ERROR: Recvd process failed: %d\n", status);
                             continue;
                         }
                         char_count = endat_get_position_loop_chars(priv[i]->multi_turn_res[priv[i]->current_channel], 1, 0);
-                        endat_print_position_loop(handle[i], 1, 0, 0);
+                        endat_print_position_loop(handle[i], 1, 0, priv[i]->current_channel);
                         DebugP_log("\n| ");
                     }
                 }
@@ -3080,7 +3225,7 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
                     else
                     {
                         char_count = endat_get_position_loop_chars(priv[i]->multi_turn_res[priv[i]->current_channel], 0, 1);
-                        endat_print_position_loop(handle[i], 0, 1, 0);
+                        endat_print_position_loop(handle[i], 0, 1, priv[i]->current_channel);
 
                         if(priv[i]->has_safety[priv[i]->current_channel])
                         {
@@ -3650,10 +3795,10 @@ void endat_main(void *args)
     {
         if(priv[i]->cmd_set_2_2)
         {
-#if defined(SOC_AM243X)
-            cmd_supplement[i].frequency = 8 * 1000 * 1000;
-#else
+#if defined(SOC_AM261X)
             cmd_supplement[i].frequency = 5 * 1000 * 1000;
+#else
+            cmd_supplement[i].frequency = 8 * 1000 * 1000;
 #endif
         }
         else
@@ -3882,4 +4027,3 @@ deinit:
     Drivers_close();
     return;
 }
-
