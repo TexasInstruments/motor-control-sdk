@@ -16,14 +16,14 @@
  *
  * Example main.c
  *
- * Copyright (C) 2022 Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (C) 2022-2026 Texas Instruments Incorporated - http://www.ti.com/
  * ALL RIGHTS RESERVED
  */
 `
 
     else
          license = `/*
- *  Copyright (C) 2025 Texas Instruments Incorporated
+ *  Copyright (C) 2025-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -87,9 +87,9 @@ int main(void)
     System_init();
     Board_init();
 
-    /* This task is created at highest priority, it should create more tasks and then delete itself. 
+    /* This task is created at highest priority, it should create more tasks and then delete itself.
      * This task should be in privileged mode to be able to create semaphore, other tasks, etc.
-     * Refer "System calls restrictions" in https://www.freertos.org/Security/04-FreeRTOS-MPU-memory-protection-unit 
+     * Refer "System calls restrictions" in https://www.freertos.org/Security/04-FreeRTOS-MPU-memory-protection-unit
      * for more details. */
     gMainTask = xTaskCreateStatic( freertos_main,   /* Pointer to the function that implements the task. */
                                   "freertos_main", /* Text name for the task.  This is to facilitate debugging only. */

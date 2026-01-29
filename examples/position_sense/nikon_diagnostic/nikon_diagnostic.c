@@ -1177,7 +1177,7 @@ static int32_t nikon_process_periodic_command(nikon_handle handle[CONFIG_NIKON_N
                 }
 
                 /* Separator between instances */
-                if(CONFIG_NIKON_NUM_INSTANCES > 1 && i < (CONFIG_NIKON_NUM_INSTANCES - 1))
+                if(CONFIG_NIKON_NUM_INSTANCES > 1 && ((i + 1) < CONFIG_NIKON_NUM_INSTANCES))
                 {
                     DebugP_log(" | ");
                 }

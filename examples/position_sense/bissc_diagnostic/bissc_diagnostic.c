@@ -1101,7 +1101,7 @@ static int32_t bissc_process_periodic_command(bissc_handle handle[CONFIG_BISSC_N
                 bissc_print_res(handle[i]);
 
                 /* Separator between instances */
-                if(CONFIG_BISSC_NUM_INSTANCES > 1 && i < (CONFIG_BISSC_NUM_INSTANCES - 1))
+                if(CONFIG_BISSC_NUM_INSTANCES > 1 && ((i + 1) < CONFIG_BISSC_NUM_INSTANCES))
                 {
                     DebugP_log(" | ");
                 }
@@ -1701,7 +1701,7 @@ void bissc_main(void *args)
                         bissc_print_res(gAppBisscHandle[i]);
 
                         /* Separator between instances */
-                        if(CONFIG_BISSC_NUM_INSTANCES > 1 && i < (CONFIG_BISSC_NUM_INSTANCES - 1))
+                        if(CONFIG_BISSC_NUM_INSTANCES > 1 && ((i + 1) < CONFIG_BISSC_NUM_INSTANCES))
                         {
                             DebugP_log(" | ");
                         }
