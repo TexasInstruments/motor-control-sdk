@@ -718,7 +718,7 @@ int32_t HDSL_write_pc_short_msg(HDSL_Handle handle, uint8_t addr, uint8_t data, 
     HDSL_Priv *priv;
 
     /* Validate handle, priv, and hdsl_interface pointers */
-    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (addr > 0x3F))
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (addr > 0x7F))
     {
         return SystemP_FAILURE;
     }
@@ -759,7 +759,7 @@ int32_t HDSL_read_pc_short_msg(HDSL_Handle handle, uint8_t addr, uint8_t *data, 
     HDSL_Priv *priv;
 
     /* Validate parameters, priv, and hdsl_interface pointers */
-    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (addr > 0x3F)|| (data == NULL))
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (data == NULL)|| (addr > 0x7F))
     {
         return SystemP_FAILURE;
     }

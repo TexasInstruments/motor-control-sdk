@@ -36,7 +36,7 @@ FIRMWARE_VERSION_MAJOR	.set			0x1
 ;  bit3..0		minor number
 FIRMWARE_VERSION_MINOR	.set			0x1
 ICSS_FIRMWARE_RELEASE	.set            ((FIRMWARE_VERSION_MAJOR << 4) | (FIRMWARE_VERSION_MINOR << 0))
-ICSS_BUILD_VERSION	.set                0x4
+ICSS_BUILD_VERSION	.set                0x5
 
 ;number of cycles for 1 bit
     .if $isdefed("FREERUN_300_MHZ") | $isdefed("SYNC_300_MHZ")
@@ -341,3 +341,6 @@ MAX_ALLOWED_CYCLE_DIFF .set             10000
 
 ;MAX cycle differene allowed between the SYNC pulse and extra edge
 CAPPING_CYCLE_DIFF .set             18
+
+;4 bit pru cycles for 225m f/w
+PRU_CYCLES_4BITS .set               96; 24cycles/bit * 4 bits
