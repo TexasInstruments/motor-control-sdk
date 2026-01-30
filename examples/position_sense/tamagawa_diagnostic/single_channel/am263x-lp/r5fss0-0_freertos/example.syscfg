@@ -270,7 +270,7 @@ tamagawa1.PRU_MUX_SEL_GPIO64.$name          = "PRU_MUX_SEL_GPIO64";
 tamagawa1.PRU_MUX_SEL_GPIO64.GPIO_n.$assign = "EPWM7_B";
 tamagawa1.MUX_EN_GPIO58.$name               = "MUX_EN_GPIO58";
 tamagawa1.MUX_EN_GPIO58.GPIO_n.$assign      = "EPWM10_B";
-tamagawa1.ENC1_EN.$name                     = "ENC1_EN";
+tamagawa1.ENC1_EN.$name                     = "TAMAGAWA0_BP_POWER_EN0";
 tamagawa1.ENC1_EN.GPIO_n.$assign            = "SDFM0_D1";
 
 pruicss1.$name                           = "CONFIG_PRU_ICSS0";

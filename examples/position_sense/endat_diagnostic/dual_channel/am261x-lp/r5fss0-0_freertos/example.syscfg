@@ -346,16 +346,14 @@ endat1["PRU-ICSS1"].PR1_PRU0_GPIO2.$assign = "GPIO83";
 endat1["PRU-ICSS1"].PR1_PRU0_GPIO1.$assign = "GPIO82";
 endat1["PRU-ICSS1"].PR1_PRU0_GPIO0.$assign = "GPIO81";
 endat1["PRU-ICSS1"].PR1_PRU0_GPIO9.$assign = "GPIO80";
-endat1["PRU-ICSS1"].PR1_PRU0_GPIO10.rx     = false;
-endat1["PRU-ICSS1"].PR1_PRU0_GPIO11.rx     = false;
-endat1.ENC1_EN.$name                       = "ENC1_EN";
+endat1.ENC1_EN.$name                       = "ENDAT0_BP_POWER_EN0";
 endat1.ENC1_EN.GPIO_n.$assign              = "GPIO21";
 
 endat2.$name                  = "CONFIG_ENDAT1";
 endat2.Booster_Pack           = true;
 endat2.CAP_Event_Num          = 7;
 endat2.CMP_Event_Num          = 3;
-endat2.ENC1_EN.$name          = "ENC2_EN";
+endat2.ENC1_EN.$name          = "ENDAT1_BP_POWER_EN0";
 endat2.ENC1_EN.slewRate       = "high";
 endat2.ENC1_EN.GPIO_n.$assign = "GPIO22";
 

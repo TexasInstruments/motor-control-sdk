@@ -309,7 +309,7 @@ endat1.Channel_1              = true;
 endat1.Channel_0              = false;
 endat1.Booster_Pack           = true;
 endat1.PRU_Slice              = "PRU0";
-endat1.ENC1_EN.$name          = "ENC1_EN";
+endat1.ENC1_EN.$name          = "ENDAT0_BP_POWER_EN0";
 endat1.ENC1_EN.GPIO_n.$assign = "SDFM0_D1";
 endat1["PRU-ICSS"].$assign    = "PRU-ICSS";
 

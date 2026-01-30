@@ -141,6 +141,7 @@
 #define POSITION_LOOP_DISPLAY_DELAY_US      (100U)   /* Delay between position display updates */
 #define POSITION_LOOP_2_1_DELAY_US          (500U)   /* Delay for EnDAT 2.1 position loop display */
 #define POSITION_VAL2_READY_DELAY_MULT      (3U)     /* Multiplier for position value 2 ready wait (us * 3) */
+#define ENDAT_PERIODIC_MODE_POLL_SLEEP_US   (1)
 
 /* Position Loop Control */
 #define ENDAT_POSITION_LOOP_STOP            (0)
@@ -1608,7 +1609,7 @@ static void endat_process_2_1_position_command(endat_handle handle)
     {
         if(status == SystemP_TIMEOUT)
         {
-            DebugP_log("\r| ERROR: endat_command_process, Timeout occurred while waiting for response\n");
+            DebugP_log("\r| ERROR: endat_command_process timed out\n");
         }
         else
         {
@@ -1756,7 +1757,7 @@ static void endat_process_2_2_position_command(endat_handle handle)
     {
         if(status == SystemP_TIMEOUT)
         {
-            DebugP_log("\r| ERROR: endat_command_process, Timeout occurred while waiting for response\n");
+            DebugP_log("\r| ERROR: endat_command_process timed out\n");
         }
         else
         {
@@ -2397,16 +2398,16 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
             return SystemP_FAILURE;
         }
     }
+#if defined(SOC_AM243X)
     else if(cmd == 201)
     {
-#if defined(SOC_AM243X)
         if(cmd_supplement[CONFIG_ENDAT0].iep_sync0_period == 0)
         {
             DebugP_log("\r\n\n| ERROR: Invalid iep_sync0_period value\n");
             return SystemP_FAILURE;
         }
-#endif
     }
+#endif
 
     for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
     {
@@ -2520,7 +2521,7 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
             * populated in PRU shared memory as required.
             * ASSUMPTION: Host trigger mode is active when this function is called.
             */
-           ret = endat_command_process(handle[i], periodic_cmd[i], &periodic_cmd_supplement[i]);
+            ret = endat_command_process(handle[i], periodic_cmd[i], &periodic_cmd_supplement[i]);
             if(ret != SystemP_SUCCESS)
             {
                 if(ret == SystemP_TIMEOUT)
@@ -2641,6 +2642,8 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
                         }
                     }
 
+                    ClockP_usleep(ENDAT_PERIODIC_MODE_POLL_SLEEP_US);
+
                     /* Check stop condition before updating prev_irq_cnt */
                     if(gEndatPositionLoopStatus == ENDAT_POSITION_LOOP_STOP)
                     {
@@ -2658,15 +2661,11 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
 
                 char_count = 0;
 
-                /* Start with \r to overwrite the same line for all instances */
-                DebugP_log("\r");
-
-
                 for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
                 {
 
 #if (CONFIG_ENDAT_NUM_INSTANCES > 1)
-                    DebugP_log("\r| --- EnDat Module %d --- \r\n| ", i);
+                    DebugP_log("\r| --- EnDat Module %d --- |\r\n", i);
 #endif
                     endat_print_position_header(handle[i], 0, VALID_2_2_CMD(periodic_cmd[i]));
 
@@ -2709,7 +2708,6 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
                         DebugP_log("\n| ");
                     }
                 }
-                ClockP_usleep(POSITION_LOOP_DISPLAY_DELAY_US);
                 while(char_count--)
                 {
                     DebugP_log("%c", 8);
@@ -2763,7 +2761,7 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
                     endat_process_2_1_position_command(handle[i]);
 
 #if(CONFIG_ENDAT_NUM_INSTANCES > 1)
-                        DebugP_log("\r| --- EnDat Module %d --- \r\n| ", i);
+                        DebugP_log("\r| --- EnDat Module %d ---|\r\n", i);
 #endif
 
                     endat_print_position_header(handle[i], 0, 0);
@@ -2827,7 +2825,14 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
                     status = endat_stop_continuous_mode(handle[i]);
                     if(status != SystemP_SUCCESS)
                     {
-                        DebugP_log("\r| ERROR: endat_stop_continuous_mode failed for instance %d with status %d\n", i, status);
+                        if(status == SystemP_TIMEOUT)
+                        {
+                            DebugP_log("\r| ERROR: endat_stop_continuous_mode timed out for instance %d \n", i);
+                        }
+                        else
+                        {
+                            DebugP_log("\r| ERROR: endat_stop_continuous_mode failed for instance %d with status %d\n", i, status);
+                        }
                     }
                 }
                 return SystemP_SUCCESS;
@@ -2840,7 +2845,7 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
                 for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
                 {
 #if (CONFIG_ENDAT_NUM_INSTANCES > 1)
-                    DebugP_log("\r| --- EnDat Module %d --- \r\n| ", i);
+                    DebugP_log("\r| --- EnDat Module %d ---|\r\n", i);
 #endif
                     endat_print_position_header(handle[i], 1, 0);
 
@@ -2981,7 +2986,6 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
                         {
                             DebugP_log("\r| ERROR: endat_command_process failed for instance %d with status %d\n", i, status);
                         }
-                        
                     }
                     status = endat_addinfo_track(handle[i], 5, NULL);
                     if(status != SystemP_SUCCESS)
@@ -3009,7 +3013,7 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
 
                     if(CONFIG_ENDAT_NUM_INSTANCES > 1)
                     {
-                        DebugP_log("\r|\n\r| --- EnDat Module %d ---\r\n| ", i);
+                        DebugP_log("\r|\n\r| --- EnDat Module %d ---|\r\n", i);
                     }
 
                     endat_print_position_header(handle[i], 0, 1);
@@ -3155,7 +3159,7 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
                 {
                     if(CONFIG_ENDAT_NUM_INSTANCES > 1)
                     {
-                        DebugP_log("\r| --- EnDat Module %d --- \r\n| ", i);
+                        DebugP_log("\r| --- EnDat Module %d ---|\r\n", i);
                     }
                     if(attrs[i]->mode != ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU)
                     {
@@ -3358,17 +3362,6 @@ void endat_main(void *args)
     /* ========================================================================== */
     Drivers_open();  /*Open SoC drivers*/
     Board_driversOpen(); /*Open board-specific drivers*/
-
-/*C16 pin High for Enabling ch0 in booster pack */
-#if(CONFIG_ENDAT0_BOOSTER_PACK_ENABLE && CONFIG_ENDAT0_CHANNEL0_ENABLED)
-    GPIO_setDirMode(ENC1_EN_BASE_ADDR, ENC1_EN_PIN, ENC1_EN_DIR);
-    GPIO_pinWriteHigh(ENC1_EN_BASE_ADDR, ENC1_EN_PIN);
-#endif
-/*B17 pin High for Enabling ch2 in booster pack */
-#if(CONFIG_ENDAT0_BOOSTER_PACK_ENABLE && CONFIG_ENDAT0_CHANNEL2_ENABLED)
-    GPIO_setDirMode(ENC2_EN_BASE_ADDR, ENC2_EN_PIN, ENC2_EN_DIR);
-    GPIO_pinWriteHigh(ENC2_EN_BASE_ADDR, ENC2_EN_PIN);
-#endif
 
     /* ========================================================================== */
     /* STEP 2: Initialize PRU-ICSS and ENDAT driver                              */

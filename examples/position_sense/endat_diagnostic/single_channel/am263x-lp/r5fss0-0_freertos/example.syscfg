@@ -284,7 +284,7 @@ endat1.PRU_MUX_SEL_GPIO64.$name          = "PRU_MUX_SEL_GPIO64";
 endat1.PRU_MUX_SEL_GPIO64.GPIO_n.$assign = "EPWM7_B";
 endat1.MUX_EN_GPIO58.$name               = "MUX_EN_GPIO58";
 endat1.MUX_EN_GPIO58.GPIO_n.$assign      = "EPWM10_B";
-endat1.ENC1_EN.$name                     = "ENC1_EN";
+endat1.ENC1_EN.$name                     = "ENDAT0_BP_POWER_EN0";
 endat1.ENC1_EN.GPIO_n.$assign            = "SDFM0_D1";
 
 pruicss1.$name                           = "CONFIG_PRU_ICSS0";
