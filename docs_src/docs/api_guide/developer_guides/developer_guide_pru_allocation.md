@@ -1,4 +1,4 @@
-\cond SOC_AM64X || SOC_AM243X
+\cond SOC_AM243X
 # How to allocate PRUs for different functions within one PRU-ICSSG ? {#DEVELOPER_GUIDE_PRU_ALLOCATION}
 
 [TOC]

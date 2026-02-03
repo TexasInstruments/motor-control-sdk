@@ -500,19 +500,19 @@ This section lists changes which could affect user applications developed using 
 
 <tr>
     <td> Current Sense %SDFM
-    <td> Structure: \ref SDFM_ChCtrl
+    <td> Structure: `SDFM_ChCtrl`
     <td> Added new variables: `en_fast_detect`, `en_phase_delay`, `clock_phase_delay` & `clock_edge`.
     <td> -
 </tr>
 <tr>
     <td> Current Sense %SDFM
-    <td> Structure: \ref SDFM_ThresholdParms
+    <td> Structure: `SDFM_ThresholdParms`
     <td> Added new variables: `zeroCrossTh`, `zeroCrossThstatus`, `zeroCrossEn`, `lowThStatus` and `highThStatus`.
     <td> -
 </tr>
 <tr>
     <td> Current Sense %SDFM
-    <td> Structure: \ref SDFM_Cfg
+    <td> Structure: `SDFM_Cfg`
     <td> Added new variables: `fd_window`, `fd_zero_max`, `fd_zero_min`, `fd_one_max` and `fd_one_min`.
     <td> -
 </tr>

@@ -1,7 +1,7 @@
 # Debug Guides {#MODULE_SPECIFIC_DEBUG_GUIDES}
 
 This page lists debug guides related to all the Modules.
-\cond SOC_AM64X || SOC_AM243X
+\cond SOC_AM243X
 - \ref  SDFM_EXAMPLES_DEBUG_GUIDE
 - \ref  ENCODER_EXAMPLES_DEBUG_GUIDE   
     - \ref BISSC_DEBUG_GUIDE

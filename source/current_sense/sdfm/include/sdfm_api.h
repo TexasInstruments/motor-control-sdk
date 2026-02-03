@@ -51,12 +51,12 @@
  *  - SDFM_enable(): Global enable for SDFM on specific PRU core
  *
  *  ### Clock Configuration
- *  - SDFM_selectClockSource(): - 0: Use pr<k>_pru<n>_sd8_clk (common SDFM clock pin for all channels)
- *                              - 1: Use pr<k>_pru<n>_sd<i>_clk (channel-specific clock)
+ *  - SDFM_selectClockSource(): - 0: Use pr\<k\>_pru\<n\>_sd8_clk (common SDFM clock pin for all channels)
+ *                              - 1: Use pr\<k\>_pru\<n\>_sd\<i\>_clk (channel-specific clock)
  *                              - 2: Use group clocks:
- *                                      - pr<k>_pru<n>_sd0_clk for channels 0, 1, and 2
- *                                      - pr<k>_pru<n>_sd3_clk for channels 3, 4, and 5
- *                                      - pr<k>_pru<n>_sd6_clk for channels 6, 7, and 8
+ *                                      - pr\<k\>_pru\<n\>_sd0_clk for channels 0, 1, and 2
+ *                                      - pr\<k\>_pru\<n\>_sd3_clk for channels 3, 4, and 5
+ *                                      - pr\<k\>_pru\<n\>_sd6_clk for channels 6, 7, and 8
  *  - SDFM_setClockInversion(): Configure clock polarity
  *  - SDFM_configEcap(): Configure ECAP for SD clock generation
  *  - SDFM_configClockFromGPO1(): Configure PRU GPO shift-out mode for clock
@@ -363,12 +363,12 @@ int32_t SDFM_configDataFilter(SDFM_Handle handle, uint8_t channel, uint8_t filte
  *  \param[in]  handle          SDFM handle
  *  \param[in]  channel         SDFM channel number (0-8)
  *  \param[in]  clk_source      channel clock source type. Valid range: 0-2
- *                              - 0: Use pr<k>_pru<n>_sd8_clk (common SDFM clock pin for all channels)
- *                              - 1: Use pr<k>_pru<n>_sd<i>_clk (channel-specific clock)
+ *                              - 0: Use pr\<k\>_pru\<n\>_sd8_clk (common SDFM clock pin for all channels)
+ *                              - 1: Use pr\<k\>_pru\<n\>_sd\<i\>_clk (channel-specific clock)
  *                              - 2: Use group clocks:
- *                                      - pr<k>_pru<n>_sd0_clk for channels 0, 1, and 2
- *                                      - pr<k>_pru<n>_sd3_clk for channels 3, 4, and 5
- *                                      - pr<k>_pru<n>_sd6_clk for channels 6, 7, and 8
+ *                                      - pr\<k\>_pru\<n\>_sd0_clk for channels 0, 1, and 2
+ *                                      - pr\<k\>_pru\<n\>_sd3_clk for channels 3, 4, and 5
+ *                                      - pr\<k\>_pru\<n\>_sd6_clk for channels 6, 7, and 8
  *
  *  \retval SystemP_SUCCESS     Configuration successful
  *  \retval SystemP_FAILURE     Invalid handle (NULL), channel > 8, or clk_source > 2
@@ -686,7 +686,7 @@ int32_t SDFM_configSync1Delay(SDFM_Handle handle, uint32_t delay);
 
 /***
  *  \brief  This API configures PRU GPO mode as shift out mode (ICSSG_GPCFG0_REG[14] PRU<n>_GPO_MODE = 1h) and
- *          shift out mode's clock divisors to output the SD clock on PR<k>_PRUx_GPO1 pin.
+ *          shift out mode's clock divisors to output the SD clock on PR\<k\>_PRUx_GPO1 pin.
  *  \brief  PRU0_GPO_DIV0 and PRU0_GPO_DIV1 configuration values
  *  \brief  0x0:  for divisor 1
  *  \brief  0x1:  for divisor 1.5

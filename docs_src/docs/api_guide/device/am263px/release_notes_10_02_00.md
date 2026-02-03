@@ -356,44 +356,44 @@ previous SDK version. Also refer to older SDK version release notes to see chang
 </tr>
 <tr>
     <td> Position Sense Nikon A-format
-    <td> structure \ref pos_data_info
+    <td> structure `pos_data_info`
     <td> Added variables `raw_data4`, `raw_data5`, `velocity` and `acc`
     <td> Needed for Nikon A-format version 3.0
 </tr>
 <tr>
     <td> Position Sense Nikon A-format
-    <td> structure \ref alm_bits
+    <td> structure `alm_bits`
     <td> Added variables `ov_spd_s`, `st_err_s`, `ps_err_s`, `busy_s` and `inc_err_s`
     <td> Needed for Nikon A-format version 3.0
 </tr>
 <tr>
     <td> Position Sense Nikon A-format
-    <td> structure \ref alm_bits
+    <td> structure `alm_bits`
     <td> Updated variable `inc_err`'s name to `inc_err`
     <td> Updated as per Nikon A-format version 3.0
 </tr>
 <tr>
     <td> Position Sense Nikon A-format
-    <td> structure \ref nikon_priv
+    <td> structure `nikon_priv`
     <td> Added parameters `tx_rx_clock_source` and `protocol_version`
     <td> Needed for configuring clock source selection and specifying protocol version respectively
 </tr>
 <tr>
     <td> Position Sense Nikon A-format
-    <td> structure \ref nikon_priv
+    <td> structure `nikon_priv`
     <td> Updated parameter `tx_mdf`
     <td> Updated the variable type from `uint32_t` to 2D array of type `uint32_t` to store different `tx_mdf` data for each channel and each MDF
 </tr>
 
 <tr>
     <td> Position Sense Nikon A-format
-    <td> structure \ref nikon_priv
+    <td> structure `nikon_priv`
     <td> Updated parameter `mem_data`
     <td> Updated the variable type from 1D array of type `uint32_t` to 2D array of type `uint32_t` to store different `mem_data` data for each channel and each MDF
 </tr>
 <tr>
     <td> Position Sense Nikon A-format
-    <td> structure \ref nikon_priv
+    <td> structure `nikon_priv`
     <td> Added variable `velocity_coefficient`, `pm_alm_field`, and `bank_error`
     <td> Needed for Nikon A-format version 3.0
 </tr>

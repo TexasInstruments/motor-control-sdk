@@ -302,7 +302,7 @@ int32_t bissc_wait_measure_proc_delay(bissc_handle handle, uint32_t loop_count);
  *  \brief      Set default configuration parameters for BiSS-C receiver firmware
  *
  *  \details    This function internally calls the following APIs:
- *              - \ref bissc_update_max_proc_delay: Update maximum processing delay based on configured frequency
+ *              - \ref bissc_update_max_proc_delay : Update maximum processing delay based on configured frequency
  *
  *  \param[in]  handle        BiSS-C handle
  *

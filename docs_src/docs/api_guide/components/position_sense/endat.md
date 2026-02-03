@@ -14,7 +14,7 @@ EnDat is a bidirectional interface for position encoders. During EnDat operation
    -  EnDat 2.1 command set
    -  Interrupted and continuous clock mode
    -  Cable length up to 100m @8MHz
-   -  Propagation delay compensation  \if (SOC_AM243X ||SOC_AM64X) (capable of handling different
+   -  Propagation delay compensation  \if (SOC_AM243X || SOC_AM64X) (capable of handling different
       propagation delays of different channels in concurrent multi-channel configuration) \endif
    -  Automatic estimation of propagation delay
    -  Receive on-the-fly CRC verification of position, parameters and additional information

@@ -403,19 +403,19 @@ previous SDK version. Also refer to older SDK version release notes to see chang
 </tr>
 <tr>
     <td> Position Sense Nikon A-format
-    <td> structure \ref pos_data_info
+    <td> structure `pos_data_info`
     <td> Added variables `raw_data4`, `raw_data5`, `velocity` and `acc`
     <td> Needed for Nikon A-format version 3.0
 </tr>
 <tr>
     <td> Position Sense Nikon A-format
-    <td> structure \ref alm_bits
+    <td> structure `alm_bits`
     <td> Added variables `ov_spd_s`, `st_err_s`, `ps_err_s`, `busy_s` and `inc_err_s`
     <td> Needed for Nikon A-format version 3.0
 </tr>
 <tr>
     <td> Position Sense Nikon A-format
-    <td> structure \ref alm_bits
+    <td> structure `alm_bits`
     <td> Updated variable `inc_err`'s name to `inc_err`
     <td> Updated as per Nikon A-format version 3.0
 </tr>

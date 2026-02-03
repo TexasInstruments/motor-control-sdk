@@ -559,13 +559,13 @@ This section lists changes which could affect user applications developed using 
 </tr>
 <tr>
     <td> Position Sense BiSS-C
-    <td> \ref bissc_get_totalchannels, \ref bissc_get_current_channel, \ref bissc_clear_data_len
+    <td> `bissc_get_totalchannels`, `bissc_get_current_channel`, `bissc_clear_data_len`
     <td> Added API: bissc_get_totalchannels, bissc_get_current_channel, bissc_clear_data_len.
     <td> Required to offload priv variable assignments from examples
 </tr>
 <tr>
     <td> Position Sense BiSS-C
-    <td> \ref bissc_config_host_trigger, \ref bissc_config_periodic_trigger
+    <td> `bissc_config_host_trigger`, `bissc_config_periodic_trigger`
     <td> Updating priv->is_continuous_mode
     <td> Required for continuous mode
 </tr>

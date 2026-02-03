@@ -763,7 +763,7 @@ previous SDK version. Also refer to older SDK version release notes to see chang
 </tr>
 <tr>
     <td rowspan="2"> Current Sense %SDFM
-    <td> \ref SDFM_Ctrl
+    <td> `SDFM_Ctrl`
     <td> Added variable: `sdfm_en_snoop_nc`
     <td> -
 </tr>
@@ -791,7 +791,7 @@ previous SDK version. Also refer to older SDK version release notes to see chang
 </tr>
 <tr>
     <td> structure \ref endat_init
-    <td> Added new parameter: \ref endat_clock_config
+    <td> Added new parameter: `endat_clock_config`
     <td> -
 </tr>
 <tr>
@@ -800,7 +800,7 @@ previous SDK version. Also refer to older SDK version release notes to see chang
     <td> -
 </tr>
 <tr>
-    <td> structure \ref cmd_supplement
+    <td> structure `cmd_supplement`
     <td> Renamed variables: `cmp0` to `iep_reset_count`, `cmp3` to `ch0_trigger_count`, `cmp5` to `ch1_trigger_count`, and `cmp6` to `ch2_trigger_count`
     <td> -
 </tr>
@@ -816,17 +816,17 @@ previous SDK version. Also refer to older SDK version release notes to see chang
 </tr>
 <tr>
     <td rowspan="15"> Position Sense Nikon A-format
-    <td> structure \ref pos_data_info
+    <td> structure `pos_data_info`
     <td> Added variables `raw_data4`, `raw_data5`, `velocity` and `acc`
     <td> Needed for Nikon A-format version 3.0
 </tr>
 <tr>
-    <td> structure \ref alm_bits
+    <td> structure `alm_bits`
     <td> Added variables `ov_spd_s`, `st_err_s`, `ps_err_s`, `busy_s` and `inc_err_s`
     <td> Needed for Nikon A-format version 3.0
 </tr>
 <tr>
-    <td> structure \ref alm_bits
+    <td> structure `alm_bits`
     <td> Updated variable `inc_err`'s name to `inc_err`
     <td> Updated as per Nikon A-format version 3.0
 </tr>

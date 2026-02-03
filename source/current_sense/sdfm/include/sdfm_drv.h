@@ -174,7 +174,7 @@ extern "C" {
 #define SDFM_OSR_MIN                 ( 4U )   /**< Minimum user-facing OSR value (register: OSR-1 = 3) */
 #define SDFM_OSR_MAX                 ( 256U ) /**< Maximum user-facing OSR value (register: OSR-1 = 255) */
 #define SDFM_ACC_FILTER_MAX          ( 2U )   /**< Maximum accumulator filter selection (0=acc3, 1=acc2, 2=acc1) */
-#define SDFM_CLK_SOURCE_MAX          ( 2U )   /**< Maximum clock source selection (0=sd8_clk, 1=sd<i>_clk, 2=group clk) */
+#define SDFM_CLK_SOURCE_MAX          ( 2U )   /**< Maximum clock source selection (0=sd8_clk, 1=sd\<i\>_clk, 2=group clk) */
 #define SDFM_CLK_INV_MAX             ( 1U )   /**< Maximum clock inversion value (0=normal, 1=inverted) */
 #define SDFM_FD_WINDOW_SIZE_MIN      ( 0U )   /**< Minimum FD window size (4 samples, register value 0) */
 #define SDFM_FD_WINDOW_SIZE_MAX      ( 6U )   /**< Maximum FD window size (28 samples, register value 6) */

@@ -434,7 +434,7 @@ typedef struct endat3_bg_cmd_params_s {
 /**
  *    \brief    Structure defining ENDAT3 clock configuration for selected frequency
  *
- *    \details  Contains clock divisors and configuration calculated by \ref endat3_calc_clock
+ *    \details  Contains clock divisors and configuration calculated internally
  *              for achieving the desired baud rate. These values are written to PRU-ICSS
  *              registers during hardware initialization.
  *
@@ -899,7 +899,7 @@ const char* endat3_get_error_action(endat3_error_code error_code);
  * \param params Pointer to background command parameters structure (endat3_bg_cmd_params)
  * \param mode Pointer to store mode value (optional, can be NULL if not needed).
  *             Only populated when op_code is ENDAT3_BGREQ_PROTECT and mode is not NULL.
- * \param acclevelDesc Pointer to store access level description string (optional, can be NULL if not needed).
+ * \param acc_level_desc Pointer to store access level description string (optional, can be NULL if not needed).
  *                     Only populated when op_code is ENDAT3_BGREQ_PROTECT and acc_level_desc is not NULL.
  *
  * \retval ENDAT3_SUCCESS (0) on success
@@ -1383,6 +1383,7 @@ int32_t endat3_set_background_op_code(endat3_handle handle, uint32_t opcode);
  *
  * \param handle EnDAT3 handle
  * \param index Data word index (0 to BG_DATA_SIZE-1)
+ * \param data Pointer to store the retrieved data value
  * \return Background data word, or 0 if handle is NULL or index is invalid
  */
 int32_t endat3_get_bg_data(endat3_handle handle, uint8_t index, uint32_t *data);
@@ -1579,18 +1580,18 @@ endat3_interface* endat3_get_interface(endat3_handle handle);
  * CMP event compare value, or sampled automatically when an external
  * signal triggers the IEP capture event.
  *
- ***Configuration requirements for \ref ENDAT3_OPMODE_PERIODIC_CMP:**
- *- IEP hardware CMP registers must be configured separately
- *- Use \ref endat3_config_iep_cmp_event to set event number in firmware. This function
- *  is called inside \ref endat3_init by default.
- *- CMP event range: 0-15
- *
- ***Configuration requirements for \ref ENDAT3_OPMODE_PERIODIC_CMP:**
- *- IEP hardware CAP registers must be configured separately
- *- External signal to IEP capture input should be configured
- *- Use \ref endat3_config_iep_cap_event to set event number in firmware. This function
- *  is called inside \ref endat3_init by default.
- *- CAP event range: 0-7
+ *  **Configuration requirements for \ref ENDAT3_OPMODE_PERIODIC_CMP :**
+ *  - IEP hardware CMP registers must be configured separately
+ *  - Use \ref endat3_config_iep_cmp_event to set event number in firmware. This function
+ *    is called inside \ref endat3_init by default.
+ *  - CMP event range: 0-15
+ *  
+ *  **Configuration requirements for \ref ENDAT3_OPMODE_PERIODIC_CAP :**
+ *  - IEP hardware CAP registers must be configured separately
+ *  - External signal to IEP capture input should be configured
+ *  - Use \ref endat3_config_iep_cap_event to set event number in firmware. This function
+ *    is called inside \ref endat3_init by default.
+ *  - CAP event range: 0-7
  *
  * \param handle EnDAT3 handle
  * \param opmode Operating mode: 0 = periodic CMP trigger, 1 = host trigger, 2 = periodic CAP trigger
@@ -1638,7 +1639,7 @@ int32_t endat3_get_operating_mode(endat3_handle handle, uint8_t *opmode);
  *         ENDAT3_ERR_INVALID_INPUT (-1) if handle is NULL or event_num > 7
  *
  * \note This only updates the DMEM configuration. The operating mode must be set to
- *       ENDAT3_OPMODE_PERIODIC_CAP separately via endat3_set_operating_mode(). This
+ *       \ref ENDAT3_OPMODE_PERIODIC_CAP separately via endat3_set_operating_mode(). This
  *       function does NOT configure IEP hardware registers.
  */
 int32_t endat3_config_iep_cap_event(endat3_handle handle, uint8_t event_num);
@@ -1652,7 +1653,7 @@ int32_t endat3_config_iep_cap_event(endat3_handle handle, uint8_t event_num);
  *         ENDAT3_ERR_INVALID_INPUT (-1) if handle is NULL or event_num > 15
  *
  * \note This only updates the DMEM configuration. The operating mode must be set to
- *       ENDAT3_OPMODE_PERIODIC_CMP separately via endat3_set_operating_mode(). This
+ *       \ref ENDAT3_OPMODE_PERIODIC_CMP separately via endat3_set_operating_mode(). This
  *       function does NOT configure IEP hardware registers.
  */
 int32_t endat3_config_iep_cmp_event(endat3_handle handle, uint8_t event_num);
