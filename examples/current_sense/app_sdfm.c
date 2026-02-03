@@ -38,6 +38,7 @@
  *  \details
  *  Architecture:
  *  - 9 independent interrupt handlers (SDFM_irqHandlerCh0-8), one per channel
+ *  - Common IRQ handlers for load share continuous mode (SDFM_LOAD_SHARE_COMMON_IRQ_ENABLE)
  *  - 9 separate sample buffers and index counters for independent timing
  *  - 9 HWI objects for flexible interrupt registration
  *  - Conditional compilation eliminates unused code at build time
@@ -107,6 +108,27 @@
 /*                           Macros & Typedefs                                */
 /* ========================================================================== */
 
+/*
+ * SDFM_LOAD_SHARE_COMMON_IRQ_ENABLE: Macro to enable optimized interrupt handling for load share mode with continuous operation
+ *
+ * When enabled (=1):
+ * - Uses common IRQ per PRU core (instead of individual channel IRQs)
+ * - Each PRU core uses one shared interrupt handler for all its channels:
+ *   - RTU PRU: sdfmCommonIrqHandlerRTU() handles channels 0-2
+ *   - PRU:     sdfmCommonIrqHandlerPRU() handles channels 3-5
+ *   - TX PRU:  sdfmCommonIrqHandlerTXPRU() handles channels 6-8
+ * - IRQ handler reads raw PRU interrupt status registers to clear all triggered events
+ * - Requires SysConfig mapping: all three channels per PRU core map to first channel's host event:
+ *   - Channels 0-2 → CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_0
+ *   - Channels 3-5 → CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_3
+ *   - Channels 6-8 → CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_6
+ *
+ * When disabled (=0):
+ * - Uses original individual IRQ per channel approach
+ * - Each channel has its own dedicated interrupt handler (sdfmIrqHandlerChX)
+ */
+#define SDFM_LOAD_SHARE_COMMON_IRQ_ENABLE   (1)
+
 /* R5F interrupt numbers for ICSSG SDFM - Continuous CH0-CH8 */
 #define ICSSG_SDFM_HOST_INTR_NUM_CH0              (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_0)
 #define ICSSG_SDFM_HOST_INTR_NUM_CH1              (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_1)
@@ -148,6 +170,14 @@ void sdfmIrqHandlerCh8(void *args);
 /* Local function declarations */
 static void sdfmDisplayModeInfo(SDFM_Handle handle);
 static void sdfmConfigIrq(SDFM_Handle handle);
+
+#if (SDFM_LOAD_SHARE_COMMON_IRQ_ENABLE == 1)
+/* Helper functions for new common IRQ handling */
+static inline uint32_t sdfmCheckPruInterruptStatus(uint32_t pru_event_base, uint32_t num_channels);
+static void sdfmCommonIrqHandlerRTU(void *args);
+static void sdfmCommonIrqHandlerPRU(void *args);
+static void sdfmCommonIrqHandlerTXPRU(void *args);
+#endif
 
 /* ========================================================================== */
 /*                            Global Variables                                */
@@ -375,6 +405,21 @@ static void sdfmConfigIrq(SDFM_Handle handle)
                 status = HwiP_construct(&gSdfmHwiObject[SDFM_CHANNEL0], &sdfm_hwi_prms);
                 DebugP_assert(status == SystemP_SUCCESS);
             }
+#if (SDFM_LOAD_SHARE_COMMON_IRQ_ENABLE == 1)
+            else if((attrs->channel_mask & 0x07) != 0) /* Check if any RTU PRU channels (0-2) are enabled */
+            {
+                /* New: Common interrupt handler for all three RTU PRU channels (continuous mode) */
+                DebugP_log("\r\nRTU PRU core: Common interrupt used for continuous mode (new approach).");
+                HwiP_Params_init(&sdfm_hwi_prms);
+                sdfm_hwi_prms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH0;
+                sdfm_hwi_prms.callback = &sdfmCommonIrqHandlerRTU;
+                sdfm_hwi_prms.args = 0;
+                sdfm_hwi_prms.isPulse = FALSE;
+                sdfm_hwi_prms.isFIQ = FALSE;
+                status = HwiP_construct(&gSdfmHwiObject[SDFM_CHANNEL0], &sdfm_hwi_prms);
+                DebugP_assert(status == SystemP_SUCCESS);
+            }
+#endif
             else
             {
                 /* Individual interrupt handler for each channel (continuous mode) */
@@ -434,6 +479,21 @@ static void sdfmConfigIrq(SDFM_Handle handle)
                 status = HwiP_construct(&gSdfmHwiObject[SDFM_CHANNEL3], &sdfm_hwi_prms);
                 DebugP_assert(status == SystemP_SUCCESS);
             }
+#if (SDFM_LOAD_SHARE_COMMON_IRQ_ENABLE == 1)
+            else if((attrs->channel_mask & 0x38) != 0) /* Check if any PRU channels (3-5) are enabled */
+            {
+                /* New: Common interrupt handler for all three PRU channels (continuous mode) */
+                DebugP_log("\r\nPRU core: Common interrupt used for continuous mode (new approach).");
+                HwiP_Params_init(&sdfm_hwi_prms);
+                sdfm_hwi_prms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH3;
+                sdfm_hwi_prms.callback = &sdfmCommonIrqHandlerPRU;
+                sdfm_hwi_prms.args = 0;
+                sdfm_hwi_prms.isPulse = FALSE;
+                sdfm_hwi_prms.isFIQ = FALSE;
+                status = HwiP_construct(&gSdfmHwiObject[SDFM_CHANNEL3], &sdfm_hwi_prms);
+                DebugP_assert(status == SystemP_SUCCESS);
+            }
+#endif
             else
             {
                 /* Individual interrupt handler for each channel (continuous mode) */
@@ -493,6 +553,21 @@ static void sdfmConfigIrq(SDFM_Handle handle)
                 status = HwiP_construct(&gSdfmHwiObject[SDFM_CHANNEL6], &sdfm_hwi_prms);
                 DebugP_assert(status == SystemP_SUCCESS);
             }
+#if (SDFM_LOAD_SHARE_COMMON_IRQ_ENABLE == 1)
+            else if((attrs->channel_mask & 0x1C0) != 0) /* Check if any TX PRU channels (6-8) are enabled */
+            {
+                /* New: Common interrupt handler for all three TX PRU channels (continuous mode) */
+                DebugP_log("\r\nTX PRU core: Common interrupt used for continuous mode (new approach).");
+                HwiP_Params_init(&sdfm_hwi_prms);
+                sdfm_hwi_prms.intNum = ICSSG_SDFM_HOST_INTR_NUM_CH6;
+                sdfm_hwi_prms.callback = &sdfmCommonIrqHandlerTXPRU;
+                sdfm_hwi_prms.args = 0;
+                sdfm_hwi_prms.isPulse = FALSE;
+                sdfm_hwi_prms.isFIQ = FALSE;
+                status = HwiP_construct(&gSdfmHwiObject[SDFM_CHANNEL6], &sdfm_hwi_prms);
+                DebugP_assert(status == SystemP_SUCCESS);
+            }
+#endif
             else
             {
                 /* Individual interrupt handler for each channel (continuous mode) */
@@ -929,6 +1004,237 @@ deinit:
 /* ========================================================================== */
 /*                       Interrupt Handler Definitions                        */
 /* ========================================================================== */
+
+#if (SDFM_LOAD_SHARE_COMMON_IRQ_ENABLE == 1)
+/**
+ *  \brief Helper function to check PRU interrupt raw status for SDFM channels
+ *
+ *  This function reads the raw interrupt status directly from the PRU-ICSS interrupt
+ *  controller (INTC) registers to determine if a specific PRU event is pending.
+ *  It accesses the System Interrupt Raw Set Register 0 (SRSR0) which covers
+ *
+ *  \param[in] pru_event_num   PRU system event number to check (e.g., ICSS_SDFM_TRIGGER_EVNT_CH0 = 21)
+ *                             Valid range: 16-31 for PRU host interrupt events
+ *                             SDFM events: CH0=21, CH1=22, CH2=23, CH3=24, CH4=25,
+ *                             CH5=26, CH6=27, CH7=28, CH8=29
+ *
+ *  \return 1 if the specified PRU event is pending (raw status bit set), 0 otherwise
+ *
+ *  \note This function is used by the common IRQ handlers when
+ *        SDFM_LOAD_SHARE_COMMON_IRQ_ENABLE is enabled to efficiently determine
+ *        which specific channels have triggered interrupts within a PRU core.
+ */
+static inline uint32_t sdfmCheckPruInterruptStatus(uint32_t pru_event_num)
+{
+    uint32_t status = 0;
+    uintptr_t baseaddr;
+    PRUICSS_HwAttrs const *hwAttrs;
+
+    /* Get PRUICSS hardware attributes to access interrupt controller base address */
+    hwAttrs = (PRUICSS_HwAttrs const *)gPruIcssHandle->hwAttrs;
+    if (hwAttrs == NULL)
+    {
+        return 0;
+    }
+
+    baseaddr = hwAttrs->intcRegBase;
+
+    /*
+     * Read the raw status of the PRU events from the appropriate SRSR register
+     */
+    if (pru_event_num <= 31)
+    {
+        /* Events 0-31: Read from SRSR0 (System Interrupt Raw Set Register 0) */
+        status = HW_RD_REG32((baseaddr + CSL_ICSS_G_PR1_ICSS_INTC_INTC_SLV_RAW_STATUS_REG0));
+        status = (status >> pru_event_num) & 0x1;  /* Extract specific event bit */
+    }
+    else
+    {
+        /* Invalid event number for SDFM (events > 31 not used) */
+        status = 0;
+    }
+
+    return status;
+}
+
+/**
+ *  \brief Common IRQ handler for RTU PRU core (Channels 0-2) in continuous mode
+ *
+ *  This handler checks PRU interrupt status, clears events for triggered channels,
+ *  and reads data from memory for each active channel.
+ */
+static void sdfmCommonIrqHandlerRTU(void *args)
+{
+    const SDFM_Attrs *attrs;
+    uint32_t channel_status, ch;
+    uint32_t active_channels[3] = {SDFM_CHANNEL0, SDFM_CHANNEL1, SDFM_CHANNEL2};
+    uint32_t pru_events[3] = {ICSS_SDFM_TRIGGER_EVNT_CH0, ICSS_SDFM_TRIGGER_EVNT_CH1, ICSS_SDFM_TRIGGER_EVNT_CH2};
+
+    /* Get attrs from handle */
+    attrs = SDFM_getAttrs(gPruIcssSdfmHandle);
+    if(attrs == NULL)
+    {
+        return;
+    }
+
+    /* Increment IRQ counter for channel 0 (used as common counter for RTU PRU) */
+    gSdfmIrqCnt[SDFM_CHANNEL0]++;
+
+    /* Process each channel that has a pending interrupt and is enabled */
+    for(uint32_t i = 0; i < 3; i++)
+    {
+        ch = active_channels[i];
+
+        /* Check if this channel is enabled in the configuration */
+        if((attrs->channel_mask & (1U << ch)) == 0)
+        {
+            continue; /* Skip disabled channels */
+        }
+  
+        /* Check which channels have pending interrupts */
+        channel_status = sdfmCheckPruInterruptStatus(pru_events[i]);
+
+        /* Check if this channel has a pending interrupt */
+        if(channel_status & (1U << i))
+        {
+            /* Clear the PRU interrupt event for this channel */
+            PRUICSS_clearEvent(gPruIcssHandle, pru_events[i]);
+
+            /* Update sample index */
+            if (gSdfmIdxCnt[ch] >= MAX_SAMPLES)
+            {
+                gSdfmIdxCnt[ch] = 0U;
+            }
+
+            /* Read sample data for this channel */
+            gSdfmChSamples[ch][gSdfmIdxCnt[ch]] = SDFM_getFilterData(gPruIcssSdfmHandle, ch);
+            gSdfmIdxCnt[ch]++;
+
+            /* Update individual channel IRQ counters for debugging */
+            gSdfmIrqCnt[ch]++;
+        }
+    }
+}
+
+/**
+ *  \brief Common IRQ handler for PRU core (Channels 3-5) in continuous mode
+ *
+ *  This handler checks PRU interrupt status, clears events for triggered channels,
+ *  and reads data from memory for each active channel.
+ */
+static void sdfmCommonIrqHandlerPRU(void *args)
+{
+    const SDFM_Attrs *attrs;
+    uint32_t channel_status, ch;
+    uint32_t active_channels[3] = {SDFM_CHANNEL3, SDFM_CHANNEL4, SDFM_CHANNEL5};
+    uint32_t pru_events[3] = {ICSS_SDFM_TRIGGER_EVNT_CH3, ICSS_SDFM_TRIGGER_EVNT_CH4, ICSS_SDFM_TRIGGER_EVNT_CH5};
+
+    /* Get attrs from handle */
+    attrs = SDFM_getAttrs(gPruIcssSdfmHandle);
+    if(attrs == NULL)
+    {
+        return;
+    }
+
+    /* Increment IRQ counter for channel 3 (used as common counter for PRU) */
+    gSdfmIrqCnt[SDFM_CHANNEL3]++;
+
+    /* Process each channel that has a pending interrupt and is enabled */
+    for(uint32_t i = 0; i < 3; i++)
+    {
+        ch = active_channels[i];
+
+        /* Check if this channel is enabled in the configuration */
+        if((attrs->channel_mask & (1U << ch)) == 0)
+        {
+            continue; /* Skip disabled channels */
+        }
+
+        /* Check which channels have pending interrupts */
+        channel_status = sdfmCheckPruInterruptStatus(pru_events[i]);
+
+        /* Check if this channel has a pending interrupt */
+        if(channel_status & (1U << i))
+        {
+
+            /* Clear the PRU interrupt event for this channel */
+            PRUICSS_clearEvent(gPruIcssHandle, pru_events[i]);
+
+            /* Update sample index */
+            if (gSdfmIdxCnt[ch] >= MAX_SAMPLES)
+            {
+                gSdfmIdxCnt[ch] = 0U;
+            }
+
+            /* Read sample data for this channel */
+            gSdfmChSamples[ch][gSdfmIdxCnt[ch]] = SDFM_getFilterData(gPruIcssSdfmHandle, ch);
+            gSdfmIdxCnt[ch]++;
+
+            /* Update individual channel IRQ counters for debugging */
+            gSdfmIrqCnt[ch]++;
+        }
+    }
+}
+
+/**
+ *  \brief Common IRQ handler for TX PRU core (Channels 6-8) in continuous mode
+ *
+ *  This handler checks PRU interrupt status, clears events for triggered channels,
+ *  and reads data from memory for each active channel.
+ */
+static void sdfmCommonIrqHandlerTXPRU(void *args)
+{
+    const SDFM_Attrs *attrs;
+    uint32_t channel_status, ch;
+    uint32_t active_channels[3] = {SDFM_CHANNEL6, SDFM_CHANNEL7, SDFM_CHANNEL8};
+    uint32_t pru_events[3] = {ICSS_SDFM_TRIGGER_EVNT_CH6, ICSS_SDFM_TRIGGER_EVNT_CH7, ICSS_SDFM_TRIGGER_EVNT_CH8};
+
+    /* Get attrs from handle */
+    attrs = SDFM_getAttrs(gPruIcssSdfmHandle);
+    if(attrs == NULL)
+    {
+        return;
+    }
+
+    /* Increment IRQ counter for channel 6 (used as common counter for TX PRU) */
+    gSdfmIrqCnt[SDFM_CHANNEL6]++;
+
+    /* Process each channel that has a pending interrupt and is enabled */
+    for(uint32_t i = 0; i < 3; i++)
+    {
+        ch = active_channels[i];
+
+        /* Check if this channel is enabled in the configuration */
+        if((attrs->channel_mask & (1U << ch)) == 0)
+        {
+            continue; /* Skip disabled channels */
+        }
+
+        /* Check which channels have pending interrupts */
+        channel_status = sdfmCheckPruInterruptStatus(pru_events[i]);
+
+        /* Check if this channel has a pending interrupt (or process all for simplicity) */
+        if(channel_status & (1U << i))
+        {
+            /* Clear the PRU interrupt event for this channel */
+            PRUICSS_clearEvent(gPruIcssHandle, pru_events[i]);
+
+            /* Update sample index */
+            if (gSdfmIdxCnt[ch] >= MAX_SAMPLES)
+            {
+                gSdfmIdxCnt[ch] = 0U;
+            }
+
+            /* Read sample data for this channel */
+            gSdfmChSamples[ch][gSdfmIdxCnt[ch]] = SDFM_getFilterData(gPruIcssSdfmHandle, ch);
+            gSdfmIdxCnt[ch]++;
+
+            /* Update individual channel IRQ counters for debugging */
+            gSdfmIrqCnt[ch]++;
+        }
+    }
+}
+#endif /* SDFM_LOAD_SHARE_COMMON_IRQ_ENABLE */
 
 /**
  *  \brief SDFM IRQ handler for Channel 0
