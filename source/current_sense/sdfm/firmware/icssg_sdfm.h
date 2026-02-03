@@ -42,7 +42,7 @@
 #define ICSS_SDFM_TRIGGER_EVNT_CH5   ( 8+18 )   
 #define ICSS_SDFM_TRIGGER_EVNT_CH6   ( 9+18 )  
 #define ICSS_SDFM_TRIGGER_EVNT_CH7   ( 10+18 )    
-#define ICSS_SDFM_TRIGGER_EVNT_CH8   ( 11+18 )   
+#define ICSS_SDFM_TRIGGER_EVNT_CH8   ( 11+18 ) 
 
 /* Number of SDFM channels per PRU */
 #if defined (SDFM_LOAD_SHARE_MODE)

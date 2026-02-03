@@ -170,6 +170,7 @@ config = config.concat([
                 description: "Enable NC Snoop Mode",
                 hidden: false,
                 default: false,
+                onChange: updateChannelVisibilityOnSnoopMode,
             },
             {
                 name        : "PRU_EnableTriggerMode",
@@ -182,9 +183,9 @@ config = config.concat([
             {
                 name        : "PRU_SelectIepCmpEvent",
                 displayName : "Select IEP Compare Event for NC Trigger Mode",
-                description : "IEP compare event (CMP0-CMP15) that triggers normal current sampling.",
+                description : "IEP compare event (CMP0-CMP15) that triggers normal current sampling. Note: Avoid using CMP0-CMP2, if CMP0 is used for IEP reset or CMP1/CMP2 are used for clock generation.",
                 hidden      : true,
-                default: SDFM_IepCmpEvnt[0].name,
+                default: SDFM_IepCmpEvnt[3].name,
                 options: SDFM_IepCmpEvnt
             },
             {
@@ -234,10 +235,10 @@ config = config.concat([
             {
                 name        : "RTU_SelectIepCmpEvent",
                 displayName : "Select IEP Compare Event for NC Trigger Mode",
-                description : 'Select IEP Compare Event for NC Trigger Mode',
+                description : "IEP compare event (CMP0-CMP15) that triggers normal current sampling. Note: Avoid using CMP0-CMP2, if CMP0 is used for IEP reset or CMP1/CMP2 are used for clock generation.",
                 hidden      : true,
-                default: SDFM_IepCmpEvnt[0].name,
-                options: SDFM_IepCmpEvnt       
+                default: SDFM_IepCmpEvnt[4].name,
+                options: SDFM_IepCmpEvnt
             },
             {
                 name        : "RTU_EnableDoubleUpdate",
@@ -288,10 +289,10 @@ config = config.concat([
             {
                 name        : "TXPRU_SelectIepCmpEvent",
                 displayName : "Select IEP Compare Event for NC Trigger Mode",
-                description : 'Select IEP Compare Event for NC Trigger Mode',
+                description : "IEP compare event (CMP0-CMP15) that triggers normal current sampling. Note: Avoid using CMP0-CMP2, if CMP0 is used for IEP reset or CMP1/CMP2 are used for clock generation.",
                 hidden      : true,
-                default: SDFM_IepCmpEvnt[0].name,
-                options: SDFM_IepCmpEvnt       
+                default: SDFM_IepCmpEvnt[5].name,
+                options: SDFM_IepCmpEvnt
             },
             {
                 name        : "TXPRU_EnableDoubleUpdate",
@@ -465,6 +466,9 @@ function addOtherPru(inst, ui)
     ui.TXPRU_EnableTriggerMode.hidden = hideConfigs;
     ui.RTU_EnableSnoopNC.hidden = hideConfigs;
     ui.TXPRU_EnableSnoopNC.hidden = hideConfigs;
+
+    // Update channel visibility when load share mode changes
+    updateChannelVisibilityOnSnoopMode(inst, ui);
 }
 
 function updateClockSourceVisibility(inst, ui)
@@ -494,6 +498,24 @@ function propagateClockToChannels(inst, ui)
             {
                 inst["Ch" + channel.toString() + "_SDFM_Clock"] = clockValue;
             }
+        }
+    }
+}
+
+function updateChannelVisibilityOnSnoopMode(inst, ui)
+{
+    // Hide channels 3-8 when PRU snoop mode is enabled and load share is not enabled
+    // Only channels 0-2 should be visible in this mode
+    let hideChannels = inst.PRU_EnableSnoopNC && !inst.Enable_Load_Share;
+
+    for (let ch = 3; ch < 9; ch++)
+    {
+        ui["Enable_Channel_" + ch.toString()].hidden = hideChannels;
+
+        // If channels are being hidden, disable them
+        if (hideChannels)
+        {
+            inst["Enable_Channel_" + ch.toString()] = false;
         }
     }
 }

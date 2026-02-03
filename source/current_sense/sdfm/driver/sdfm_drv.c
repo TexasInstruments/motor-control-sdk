@@ -1183,6 +1183,7 @@ int32_t SDFM_measureClockPhaseDelay(SDFM_Handle handle, uint16_t clk_edg, uint8_
     uint8_t ack;
     uint32_t pru_cycles;
     uint32_t i;
+    int32_t status;
 
     if ((handle == NULL) || (channel > SDFM_CHANNEL8) || (clk_edg > 1) ||
         (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->sdfm_interface == NULL))
@@ -1193,8 +1194,16 @@ int32_t SDFM_measureClockPhaseDelay(SDFM_Handle handle, uint16_t clk_edg, uint8_
     priv = handle->priv;
     attrs = handle->attrs;
 
+    /*Enable GPIO mode for phase delay measurement*/
+    status = PRUICSS_setGpMuxSelect(priv->pruicss_handle, attrs->pruicss_slice, PRUICSS_GP_MUX_SEL_MODE_GP);
+    if(status != SystemP_SUCCESS)
+    {
+        return status;
+    }
+
     /* Enable phase delay measurement */
     priv->sdfm_interface->channels[channel].en_phase_delay = 1;
+
     /* Waiting till measurement done with timeout */
     for(i = 0; i < SDFM_DEFAULT_MAX_WAIT_LOOP_COUNT; i++)
     {
@@ -1228,6 +1237,13 @@ int32_t SDFM_measureClockPhaseDelay(SDFM_Handle handle, uint16_t clk_edg, uint8_
       /* PRU cycles for one SD clock period */
       pru_cycles = ceil((float)(attrs->core_clk_freq/(priv->sdfm_interface->channels[channel].sdfm_clk)));
       priv->sdfm_interface->channels[channel].clock_phase_delay = pru_cycles - temp;
+   }
+
+   /*Enable SDFM mode after phase delay measurement done */
+   status = PRUICSS_setGpMuxSelect(priv->pruicss_handle, attrs->pruicss_slice, PRUICSS_GP_MUX_SEL_MODE_SD);
+   if(status != SystemP_SUCCESS)
+   {
+       return status;
    }
 
    return SystemP_SUCCESS;
@@ -1834,19 +1850,29 @@ int32_t SDFM_configIepCmp0ToResetIep(SDFM_Handle handle, uint32_t iep_reset_freq
 int32_t SDFM_setSampleOutputInterfaceGlobalAddr(SDFM_Handle handle, uint32_t addr)
 {
     SDFM_Priv *priv;
+    const SDFM_Attrs *attrs;
 
     /* Validate input parameters */
-    if ((handle == NULL) || (handle->priv == NULL) || (handle->priv->sdfm_interface == NULL))
+    if ((handle == NULL) || (handle->priv == NULL) || (handle->priv->sdfm_interface == NULL) || (handle->attrs == NULL))
     {
         return SystemP_FAILURE;
     }
 
     /* Assign variables after validation */
     priv = handle->priv;
-
-    priv->sdfm_interface->trigger_config[0].sample_buff_base_addr = addr;
-    priv->sdfm_interface->trigger_config[1].sample_buff_base_addr = addr + 12U;
-    priv->sdfm_interface->trigger_config[2].sample_buff_base_addr = addr + 24U;
+    attrs = handle->attrs;
+    if(!attrs->load_share_enabled)
+    {
+        priv->sdfm_interface->trigger_config[SDFM_PRU_CORE_INDEX].sample_buff_base_addr = addr;     
+    }
+    else
+    {
+        /* In load share mode, all PRU cores must have different base addresses */
+        /* To maintain continuous memory allocation for all nine channels in load share mode, RTU core should store channel samples for first channel */
+        priv->sdfm_interface->trigger_config[SDFM_RTUPRU_CORE_INDEX].sample_buff_base_addr = addr;
+        priv->sdfm_interface->trigger_config[SDFM_PRU_CORE_INDEX].sample_buff_base_addr = addr + 12U;
+        priv->sdfm_interface->trigger_config[SDFM_TXPRU_CORE_INDEX].sample_buff_base_addr = addr + 24U;
+    }
 
     return SystemP_SUCCESS;
 }

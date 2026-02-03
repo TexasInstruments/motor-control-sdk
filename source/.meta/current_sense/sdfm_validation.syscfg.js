@@ -108,18 +108,21 @@ function onValidate(inst, validation) {
         channel_nc_osr[i] = inst["Ch" + i + "_NC_OSR"];
         channel_clock[i] = inst["Ch" + i + "_SDFM_Clock"];
     }
+    // Validate IEP compare event selection - each PRU core must use different compare event
+    validateIepCompareEvents(inst, validation, pru_trig_mode, rtu_trig_mode, txpru_trig_mode, Load_Share);
+
     // VALIDATION FOR LOAD SHARE MODE
     if(Load_Share) {
         // RTU manages channels 0-2
         if(rtu_trig_mode ) {
             validateChannelsConsistency(inst, validation, 0, 2, channel_enabled, channel_acc_source, channel_nc_osr, channel_clock);
         }
-        
+
         // PRU manages channels 3-5
         if(pru_trig_mode ) {
             validateChannelsConsistency(inst, validation, 3, 5, channel_enabled, channel_acc_source, channel_nc_osr, channel_clock);
         }
-        
+
         // TXPRU manages channels 6-8
         if(txpru_trig_mode ) {
             validateChannelsConsistency(inst, validation, 6, 8, channel_enabled, channel_acc_source, channel_nc_osr, channel_clock);
@@ -239,6 +242,41 @@ function validateAllChannelsConsistency(inst, validation, enabled, acc_source, n
                 "SDFM clock value should be same for all channels in trigger mode",
                 inst, inst_name);
             break;
+        }
+    }
+}
+
+function validateIepCompareEvents(inst, validation, pru_trig, rtu_trig, txpru_trig, load_share) {
+    // Only validate if at least one trigger mode is enabled
+    if(!pru_trig && !rtu_trig && !txpru_trig) {
+        return;
+    }
+
+    let pru_cmp = inst["PRU_SelectIepCmpEvent"];
+    let rtu_cmp = inst["RTU_SelectIepCmpEvent"];
+    let txpru_cmp = inst["TXPRU_SelectIepCmpEvent"];
+
+    // In load share mode, validate between enabled PRU cores
+    if(load_share) {
+        // Check PRU vs RTU
+        if(pru_trig && rtu_trig && pru_cmp === rtu_cmp) {
+            validation.logError(
+                "PRU and RTU cannot use the same IEP compare event. PRU uses CMP" + pru_cmp + ", RTU uses CMP" + rtu_cmp,
+                inst, "PRU_SelectIepCmpEvent");
+        }
+
+        // Check PRU vs TXPRU
+        if(pru_trig && txpru_trig && pru_cmp === txpru_cmp) {
+            validation.logError(
+                "PRU and TXPRU cannot use the same IEP compare event. PRU uses CMP" + pru_cmp + ", TXPRU uses CMP" + txpru_cmp,
+                inst, "PRU_SelectIepCmpEvent");
+        }
+
+        // Check RTU vs TXPRU
+        if(rtu_trig && txpru_trig && rtu_cmp === txpru_cmp) {
+            validation.logError(
+                "RTU and TXPRU cannot use the same IEP compare event. RTU uses CMP" + rtu_cmp + ", TXPRU uses CMP" + txpru_cmp,
+                inst, "RTU_SelectIepCmpEvent");
         }
     }
 }
