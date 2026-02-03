@@ -1,6 +1,6 @@
 
 ;
-; Copyright (C) 2021-23 Texas Instruments Incorporated
+; Copyright (C) 2021-26 Texas Instruments Incorporated
 ;
 ; Redistribution and use in source and binary forms, with or without
 ; modification, are permitted provided that the following conditions
@@ -85,6 +85,17 @@ M_ENABLE_PRU_CYCLE_COUNTER .macro
 	SET 	SCRATCH2, SCRATCH2, 3
 	SBCO	&SCRATCH2, c11, 0, 4
 	.endif
+  .endm
+
+; macro to make clock high at end of transmission
+; endat_clk_out_override_en will get cleared before starting next transmission while configuring tx and rx frame size
+; USE: SCRATCH1.w0, SCRATCH2.b0
+M_SET_CLOCK_HIGH_AT_END_OF_TRANSMISSION .macro cfg_offset
+	LDI     SCRATCH1.w0, cfg_offset+3
+	LBCO	&SCRATCH2.b0,	ICSS_CFG,	SCRATCH1.w0,	1
+	SET     SCRATCH2.b0, SCRATCH2.t5 ; set endat_clk_out_override_en
+	SET     SCRATCH2.b0, SCRATCH2.t6 ; set clock high
+	SBCO	&SCRATCH2.b0,	ICSS_CFG,	SCRATCH1.w0,	1
   .endm
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;/
 ; Assembler Directives Section
@@ -1948,7 +1959,7 @@ ENDAT_SKIP37_CH2:
         QBBS            LOOP_CONTINUOUS_MODE, R0.b0,	7
 
         .if $isdefed("ENABLE_MULTI_MAKE_RTU")
-	 LDI  SCRATCH2.b0 , 0 ;clear Syn_bit of ch0
+	 LDI  SCRATCH2.b0 , 0 ;clear syn_bit of ch0
 	 SBCO	&SCRATCH2.b0,	PRUx_DMEM,	ENDAT_CH0_CONFIG_SYN_BIT,	1
      M_WAIT_FOR_ENABLED_CHANNELS
      LBCO  &SCRATCH2.b2,    PRUx_DMEM,  MASK_FOR_PRIMARY_CORE, 1
@@ -1974,8 +1985,6 @@ ENDAT_SKIP37_CH2:
     .endif
 
 SKIP_GLOBAL_CTX_REINIT1:
-
-
 
 	  .if $isdefed("ENABLE_MULTI_MAKE_RTU")
         CLR             R30.b3,	R30.b3.t0 ;  disable rx
@@ -2218,7 +2227,10 @@ WB_RTU_17:
 WAIT_TX_DONE_CH0:
     QBBS   WAIT_TX_DONE_CH0, R31, ENDAT_TX_BUSY_CH0
 
-    ;RT claculation
+	;Make clock high at end of transmission
+	M_SET_CLOCK_HIGH_AT_END_OF_TRANSMISSION ICSS_CFG_PRUx_ENDAT_CH0_CFG0
+
+    ;RT calculation
     M_CALC_RECOV_TIME_CH0
     .elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
 ;waiting for Tx fifo complete
@@ -2228,7 +2240,11 @@ WB_PRU_17:
 ; wait until the last TX bit is on the wire
 WAIT_TX_DONE_CH1:
     QBBS   WAIT_TX_DONE_CH1, R31, ENDAT_TX_BUSY_CH1
-    ;RT Calculation
+
+	;Make clock high at end of transmission
+	M_SET_CLOCK_HIGH_AT_END_OF_TRANSMISSION ICSS_CFG_PRUx_ENDAT_CH1_CFG0
+
+	;RT Calculation
     M_CALC_RECOV_TIME_CH1
     .elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
 ;waiting for Tx fifo complete
@@ -2238,6 +2254,10 @@ WB_TXPRU_17:
 ; wait until the last TX bit is on the wire
 WAIT_TX_DONE_CH2:
     QBBS   WAIT_TX_DONE_CH2, R31, ENDAT_TX_BUSY_CH2
+
+	;Make clock high at end of transmission
+	M_SET_CLOCK_HIGH_AT_END_OF_TRANSMISSION ICSS_CFG_PRUx_ENDAT_CH2_CFG0
+
     ;RT Calculation
     M_CALC_RECOV_TIME_CH2
     .elseif	$isdefed("ENABLE_MULTI_CHANNEL")
@@ -2323,16 +2343,18 @@ ENDAT_SKIP19_CH2:
 ; 8-bit block address
 ; Uses: R30
 ; Invokes: FN_SEND_2_2  - TODO: check whether both can be merged
+; Note: In load share mode different clock settings are used compared to single pru mode due to required reinit to configure different clock stop mode after transmit
+; Stop free run stop low mode is used and after last bit is sent clock is set manually high by overriding clock output
 ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
 FN_SEND_ENDAT22_COMMAND_SUPPLEMENT:
 	; Send zero pad bits+start_bit+MRS_code+16bit Data (Low/zero)+8bit(block address)
-	.if $isdefed("ENABLE_MULTI_MAKE_RTU") ;set clock high after txfor ch0 in RTU
-    LDI		R30.w2,	(ENDAT_TX_CLK_MODE_STOPHIGH_AFTER_TX | ENDAT_TX_CH0_SEL)
-    .elseif $isdefed("ENABLE_MULTI_MAKE_PRU") ;set clock  high after tx for ch1 in PRU
-    LDI		R30.w2,	(ENDAT_TX_CLK_MODE_STOPHIGH_AFTER_TX | ENDAT_TX_CH1_SEL)
-    .elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU") ;set clock  high after tx for ch1 in TXPRU
-    LDI		R30.w2,	(ENDAT_TX_CLK_MODE_STOPHIGH_AFTER_TX | ENDAT_TX_CH2_SEL)
-   .elseif	$isdefed("ENABLE_MULTI_CHANNEL")
+	.if $isdefed("ENABLE_MULTI_MAKE_RTU") ;set clock low after tx for ch0 in RTU
+	LDI		R30.w2,	(ENDAT_TX_CLK_MODE_FREERUN_STOPLOW | ENDAT_TX_CH0_SEL)
+    .elseif $isdefed("ENABLE_MULTI_MAKE_PRU") ;set clock low after tx for ch1 in PRU
+	LDI		R30.w2,	(ENDAT_TX_CLK_MODE_FREERUN_STOPLOW | ENDAT_TX_CH1_SEL)
+    .elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU") ;set clock low after tx for ch1 in TXPRU
+	LDI		R30.w2,	(ENDAT_TX_CLK_MODE_FREERUN_STOPLOW | ENDAT_TX_CH2_SEL)
+    .elseif	$isdefed("ENABLE_MULTI_CHANNEL")
 	LDI		R30.w2,	(ENDAT_TX_CLK_MODE_STOPHIGH_AFTER_TX | ENDAT_TX_CH0_SEL)
 	LOOP	FN_SEND_ENDAT22_MULTI_CHANNEL,	3 ; TODO: assumption all 3 channels are enabled in multi channel mode
 	.else
@@ -2359,6 +2381,43 @@ FN_SEND_ENDAT22_MULTI_CHANNEL:
 
 	; FIFO is full at this point, now monitor the FIFO level and send the remaining bytes
 	CALL2		FN_SEND_2_2
+
+	;perform reinit
+    .if $isdefed("ENABLE_MULTI_MAKE_RTU")
+	LDI  SCRATCH2.b0 , 0 ;clear syn_bit of ch0
+	SBCO	&SCRATCH2.b0,	PRUx_DMEM,	ENDAT_CH0_CONFIG_SYN_BIT,	1
+    M_WAIT_FOR_ENABLED_CHANNELS
+    LBCO  &SCRATCH2.b2,    PRUx_DMEM,  MASK_FOR_PRIMARY_CORE, 1
+    QBBC  SKIP_GLOBAL_TX_REINIT6, SCRATCH2.b2, 0  ; check RTU is  primary core
+	SET		R31,	ENDAT_TX_GLOBAL_REINIT
+	.elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
+	LDI SCRATCH2.b0, 0  ;clear syn_bit of ch1
+	SBCO	&SCRATCH2.b0,	PRUx_DMEM,	ENDAT_CH1_CONFIG_SYN_BIT,	1
+    M_WAIT_FOR_ENABLED_CHANNELS
+    LBCO  &SCRATCH2.b2,    PRUx_DMEM,  MASK_FOR_PRIMARY_CORE, 1
+    QBBC  SKIP_GLOBAL_TX_REINIT6, SCRATCH2.b2, 1   ; check PRU is  primary core
+	SET		R31,	ENDAT_TX_GLOBAL_REINIT
+	.elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
+	LDI SCRATCH2.b0, 0 ;clear syn_bit of ch2
+	SBCO	&SCRATCH2.b0,	PRUx_DMEM,	ENDAT_CH2_CONFIG_SYN_BIT,	1
+    M_WAIT_FOR_ENABLED_CHANNELS
+    LBCO  &SCRATCH2.b2,    PRUx_DMEM,  MASK_FOR_PRIMARY_CORE, 1
+    QBBC  SKIP_GLOBAL_TX_REINIT6, SCRATCH2.b2, 2; check TXPRU is  primary core
+	SET		R31,	ENDAT_TX_GLOBAL_REINIT
+    .endif
+SKIP_GLOBAL_TX_REINIT6:
+
+    .if $isdefed("ENABLE_MULTI_MAKE_RTU") ; ch0 wait to complete TX_GLOBAL_INIT action
+WBRTU28_1:
+	QBBS		WBRTU28_1,	R31,	5
+    .elseif $isdefed("ENABLE_MULTI_MAKE_PRU") ;ch1 wait to complete TX_GLOBAL_INIT action
+WBPRU29_1:
+	QBBS		WBPRU29_1,	R31,	13
+    .elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU");ch2 ; wait to complete TX_GLOBAL_INIT action
+WBTXPRU30_1:
+	QBBS		WBTXPRU30_1,	R31,	21
+	.endif
+
 	RET
 
 ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ; ;
@@ -2387,7 +2446,7 @@ FN_SEND_RECEIVE_RTU_ENDAT22:
 FN_SEND_RECEIVE_PRU_ENDAT22:
     LDI		R30.w2,	(ENDAT_TX_CLK_MODE_FREERUN_STOPLOW | ENDAT_TX_CH1_SEL)
     .elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU") ;set clock low or high for ch1 in TXPRU
-   QBBC	        FN_SEND_RECEIVE_TXPRU_ENDAT22,        ENDAT_CMDTYP_NO_SUPPLEMENT_REG,	0
+    QBBC	        FN_SEND_RECEIVE_TXPRU_ENDAT22,      ENDAT_CMDTYP_NO_SUPPLEMENT_REG,	0
 	LDI		R30.w2,	(ENDAT_TX_CLK_MODE_FREERUN_STOPHIGH | ENDAT_TX_CH2_SEL)
 	JMP		FN_SEND_START
 FN_SEND_RECEIVE_TXPRU_ENDAT22:
@@ -2532,9 +2591,10 @@ ENDAT_RT_FOR_NSP_CMD2_2:
 	.endif
 
 ENDAT_END_OF_RX:
+    ;set syn_bit of all connected channels for TX_GLOBAL_REINIT
 	QBBC            SKIP_FOR_ENDAT_2_2,     ENDAT_CMDTYP_NO_SUPPLEMENT_REG,	0
 	.if $isdefed("ENABLE_MULTI_MAKE_RTU")
-	 LDI  SCRATCH2.b0 , 0 ;clear Syn_bit of ch0
+	 LDI  SCRATCH2.b0 , 0 ;clear syn_bit of ch0
 	 SBCO	&SCRATCH2.b0,	PRUx_DMEM,	ENDAT_CH0_CONFIG_SYN_BIT,	1
      M_WAIT_FOR_ENABLED_CHANNELS
      LBCO  &SCRATCH2.b2,    PRUx_DMEM,  MASK_FOR_PRIMARY_CORE, 1
