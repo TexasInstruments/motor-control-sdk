@@ -47,7 +47,7 @@ Default SDK examples three channel peripheral interface in \if (SOC_AM263X || SO
 <tr>
     <td>Maximum Frequency
     <td>16 MHz
-	<td>Supports up to 20m cable \if (SOC_AM243X ||SOC_AM64X) \note Tested up to 8MHz in multi-channel single PRU mode \endif
+	<td>Supports up to 20m cable \if (SOC_AM243X || SOC_AM64X) \note Tested up to 8MHz in multi-channel single PRU mode \endif
 </tr>
 <tr>
     <td>Startup/Initialization Frequency
@@ -76,7 +76,7 @@ Following section describes the firmware implementation of EnDat receiver on PRU
 Deterministic behavior of the 32 bit RISC core provides resolution on sampling external signals and generating external signals.
 It makes use of EnDat hardware support in PRU for data transmission.
 
-\if (SOC_AM243X ||SOC_AM64X)
+\if (SOC_AM243X || SOC_AM64X)
 There are three different variations of PRU-ICSS firmware.
 1. Single Channel
 2. Multi Channel with encoders of same make
@@ -87,7 +87,7 @@ Single core of PRU-ICSS slice is used in this configuration.
 
 \image html endat_module_integration.png "Arm-based core, PRU, EnDat module Integration for Single PRU configuration"
 
-\if (SOC_AM243X ||SOC_AM64X)
+\if (SOC_AM243X || SOC_AM64X)
 #### Implementation for Multi Channel with encoders of different make
 Each of PRU, TX-PRU and RTU-PRU handle one channel in this configuration. Load share mode is enabled in case of multi make encoders.
 
@@ -112,10 +112,10 @@ User can wait on this bit to know that the command has been completed.
 EnDat driver provides API to achieve this.
 
 #####	 Initialization
-######  Initialization for "Single Channel" \if (SOC_AM243X ||SOC_AM64X)  and "Multi Channel with encoders of same make" \endif configurations
+######  Initialization for "Single Channel" \if (SOC_AM243X || SOC_AM64X)  and "Multi Channel with encoders of same make" \endif configurations
 \image html endat_initialization.png "Initialization for Single PRU mode"
 
-\if (SOC_AM243X ||SOC_AM64X)
+\if (SOC_AM243X || SOC_AM64X)
 ###### Initialization for "Single Channel" and "Multi Channel with encoders of different make" configuration
 \image html endat_load_share_mode_initialization.png "Initialization for Load share mode"
 
@@ -127,7 +127,7 @@ Firmware sets up the command and its attribute for all the commands that are sen
 Firmware then determines number of clock pulses for position and whether encoder supports EnDat 2.2. Propagation delay is then estimated.
 If user has required for clock to be configured, it is obeyed, else it defaults to 8MHz. At the end of the initialization status is updated.
 
-\if (SOC_AM243X ||SOC_AM64X)
+\if (SOC_AM243X || SOC_AM64X)
 ###### Synchronization among PRU cores for "Multi Channel with encoders of different make" configuration
 
 If using "Multi Channel with encoders of different make" configuration where load share mode is enabled, one of the cores among enabled cores will be set as the primary core for performing global configurations of PRU-ICSS's EnDat interface. These global configurations include clock frequency configuration and TX global re-initialization.
@@ -246,7 +246,7 @@ To enhance fault detection, especially in systems with multiple EnDat receivers,
 6. Read the PRU cycle counter which gives the value of Recovery Time in PRU Clock Cycle units
 7. Update the recovery time counters
 
-\if (SOC_AM243X ||SOC_AM64X)
+\if (SOC_AM243X || SOC_AM64X)
 ##### NOTE for Multi-channel Single PRU Mode
  As the same PRU has to poll for three channels in this mode, sequential polling is done for each channel. Accuracy of recovery time measurement will be less than single channel mode or multi channel load share mode.
 

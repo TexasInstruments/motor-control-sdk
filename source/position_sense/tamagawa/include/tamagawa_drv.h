@@ -240,7 +240,7 @@ extern "C" {
 /**
  *  \brief  Tamagawa Data ID codes
  */
-typedef enum data_id_e
+typedef enum tamagawa_data_id_e
 {
     DATA_ID_0,  /**< Data readout: data in one revolution */
     DATA_ID_1,  /**< Data readout: multi-turn data */
@@ -254,7 +254,7 @@ typedef enum data_id_e
     PERIODIC_TRIGGER_CMP_CMD, /**< Periodic trigger command */
     PERIODIC_TRIGGER_CAP_CMD, /**< Periodic trigger command */
     DATA_ID_NUM /**< Number of Data ID codes */
-} data_id;
+} tamagawa_data_id;
 
 /* ========================================================================== */
 /*                         Structure Declarations                             */
@@ -615,7 +615,7 @@ void tamagawa_params_init(tamagawa_params *params);
  *              The function validates all input parameters and initializes the PRU-ICSS interface.
  *
  *              This function performs the following operations:
- *              - Validates index against \ref gTamagawaConfigNum
+ *              - Validates index against the number of configured instances (gTamagawaConfigNum)
  *              - Validates PRUICSS handle is not NULL
  *              - Validates PRU slice value (0 or 1)
  *              - Validates IEP comparator event (0-15)
@@ -633,7 +633,7 @@ void tamagawa_params_init(tamagawa_params *params);
  *              - \ref tamagawa_config_host_trigger() - Sets default trigger mode to host trigger
  *              - \ref tamagawa_set_baudrate() - Configures communication baud rate from attrs configuration
  *
- *  \param[in]  index            Index of Tamagawa handle to use in the \ref gTamagawaHandle array
+ *  \param[in]  index            Index of Tamagawa handle to use in the gTamagawaHandle handle array
  *  \param[in]  params           Pointer to structure containing Tamagawa parameters. Use \ref tamagawa_params_init
  *                               to initialize with defaults before setting custom values. Must not be NULL.
  *
@@ -1058,5 +1058,7 @@ int32_t tamagawa_config_periodic_trigger_cap_mode(tamagawa_handle handle);
 #ifdef __cplusplus
 }
 #endif
+
+/** @} */
 
 #endif /* TAMAGAWA_DRV_H_ */

@@ -335,7 +335,7 @@ typedef struct HDSL_CopyTable_s {
 typedef struct HDSL_Params_s
 {
     PRUICSS_Handle pruicss_handle;
-    /**< PRU-ICSS Handle obtained from \ref PRUICSS_open().
+    /**< PRU-ICSS Handle obtained from PRUICSS_open().
      *   Must not be NULL. */
 
     uint32_t channel;
@@ -393,7 +393,7 @@ typedef struct HDSL_Priv_s
     /**< Position data mask for extracting valid position bits */
 
     PRUICSS_Handle pruicss_handle;
-    /**< PRU-ICSS driver handle obtained from \ref PRUICSS_open().
+    /**< PRU-ICSS driver handle obtained from PRUICSS_open().
      *   Used for accessing PRU-ICSS hardware resources.
      *   Copied from params in \ref HDSL_open. */
 
