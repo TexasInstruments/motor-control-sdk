@@ -10,21 +10,28 @@ There are three different examples based on the number of %SDFM channels and the
 
 ## Nine Channels (Single PRU)
 
-Only one core, PRU, is used for these examples. The single PRU core supports nine channels (channels 0-8) in normal mode (non-snoop, non-load-share).
+Only one core (PRU) is used for these examples. The single PRU core supports all nine channels (channels 0-8) in normal mode (non-snoop, non-load-share).
 
 1. **Continuous Mode Example**
         - Continuous Normal Current sampling.
         - Nine channels: Channel 0 to Channel 8.
-        - Each channel has an individual interrupt to Arm® Cortex®-R5F.
-        - ICSS PWM trip-based Fast Detect. ICSS PWM0 instance is used to generate the PWM trip.
-        - ICSS PWM trip-based Over Current detection. ICSS PWM0 instance is used to generate the PWM trip.
+        - ICSS PWM trip-based Fast Detect for channels 0 to 5.
+        - ICSS PWM trip-based Over Current detection. ICSS PWM instances are used to generate the PWM trip.
                 - **Note:** Over Current OSR should be equal to Normal Current OSR.
 
 2. **Trigger Mode Example**
         - Nine channels: Channel 0 to Channel 8.
         - Trigger-based Normal Current sampling synchronized with EPWM.
         - A common interrupt is used for all nine channels.
-        - ICSS PWM trip-based Fast Detect. ICSS PWM0 instance is used to generate the PWM trip.  
+        - ICSS PWM trip-based Fast Detect for channels 0 to 5.  
+                **Note:** Over Current is not supported.
+
+\note **Fast Detect Hardware Limitation:** Channels 6-8 Fast Detect errors cannot trigger ICSS PWM trip zone blocks due to hardware constraints. For applications requiring trip generation from these channels, refer to the software-based workaround described in \ref OC_FD_TRIP.
+
+\note **Normal Current and Over Current Cycle Budget Constraints:** Simultaneous normal current and over current operation on a single PRU core has processing limitations:
+- **More than 3 channels enabled:** Not recommended to enable both NC and OC together due to insufficient processing time per channel.
+- **3 or fewer channels enabled:** Both NC and OC may work together, but success depends on the configured OSR and SDFM clock rate. Lower OSR values and higher clock rates increase the risk of cycle budget issues.
+- **Recommendation:** When using more than 3 channels or operating with low OSR values, use Fast Detect instead of Over Current for trip generation. Fast Detect is more suitable for multi-channel configurations.
 
 ## Nine Channels (Load-Share Mode)
 
@@ -32,16 +39,23 @@ The load share mode of PRU-ICSSG is enabled for this example. Three cores—RTU-
 
 \note This is different from the single PRU nine-channel mode described above. Load-share mode provides additional capabilities and performance benefits by utilizing multiple PRU cores.
 
-\note Channels 6 to 8 Fast Detect is not mapped with any ICSS PWM trip zone block. This is a hardware limitation. A software-based solution can be used as described in \ref OC_FD_TRIP.
+\note **Fast Detect Hardware Limitation:** Channels 6-8 Fast Detect errors cannot trigger ICSS PWM trip zone blocks due to hardware constraints. For applications requiring trip generation from these channels, refer to the software-based workaround described in \ref OC_FD_TRIP.
 
-1. **Continuous Mode Example**  
-        - Continuous Normal Current sampling.  
-        - Nine channels with load share mode.  
-        - ICSS PWM trip-based Fast Detect for channels 0 to 5.  
-        - ICSS PWM trip-based Over Current detection for all nine channels.  
-                - **Note:** Over Current OSR should be equal to Normal Current OSR.  
-        - Each channel has an individual interrupt.  
-                - **Note:** Due to the unavailability of host interrupts, only the Channel 0 interrupt is configured for the TX PRU (Channels 6 to 8) in the application.  
+1. **Continuous Mode Example**
+        - Continuous Normal Current sampling.
+        - Nine channels with load share mode.
+        - **Common IRQ mode enabled:** Each PRU core uses one shared interrupt handler for its channels (RTU-PRU: Ch0-2, PRU: Ch3-5, TX-PRU: Ch6-8).
+        - ICSS PWM trip-based Fast Detect for channels 0 to 5.
+        - ICSS PWM trip-based Over Current detection for all nine channels.
+                - **Note:** Over Current OSR should be equal to Normal Current OSR.
+
+\note **IRQ Configuration Options:** The SDK provides two interrupt handler configurations for continuous mode examples:
+- **Common IRQ (Load Share Mode):** The nine-channel load share example uses common IRQ mode where each PRU core has one shared interrupt handler for its three channels. This reduces interrupt overhead and is recommended for multi-channel applications.
+- **Individual IRQ (Three Channel Mode):** The three-channel continuous mode example uses individual IRQ handlers where each channel has its own dedicated interrupt handler. This provides independent per-channel interrupt handling.
+
+Users can choose the configuration that best suits their application:
+- For nine channels with single PRU: Reference the load share example and implement common IRQ for all nine channels by grouping them appropriately
+- For load share mode with fewer channels or higher OSR: Disable `SDFM_LOAD_SHARE_COMMON_IRQ_ENABLE` macro in app_sdfm.c to use individual IRQ configuration for each channel
 
 # Important files and directory structure
 
@@ -51,16 +65,16 @@ The load share mode of PRU-ICSSG is enabled for this example. Three cores—RTU-
     <th>Description
 </tr>
 <tr>
-    <td> ${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_three_channel_single_pru_mode</td>
+    <td> ${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_nine_channel_single_pru_mode</td>
     <td> Application specific sources for ICSS %SDFM for trigger based normal current sampling using single PRU core (supports nine channels, channels 0-8) </td>
 </tr>
 <tr>
-    <td> ${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_nine_channel_with_continuous_mode</td>
-    <td> Application specific sources for ICSS %SDFM for continuous normal current sampling for nine channels using load-share mode (3 PRU cores) </td>
+    <td> ${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_nine_channel_load_share_continuous_mode</td>
+    <td> Application specific sources for ICSS %SDFM for continuous normal current sampling for nine channels using load-share mode (3 PRU cores). Uses common IRQ mode.</td>
 </tr>
 <tr>
-    <td> ${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_three_channel_with_continuous_mode</td>
-    <td> Application specific sources for ICSS %SDFM for continuous normal current sampling using single PRU core (supports nine channels, channels 0-8) </td>
+    <td> ${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_three_channel_single_pru_continuous_mode</td>
+    <td> Application specific sources for ICSS %SDFM for continuous normal current sampling using single PRU core (supports up to nine channels, recommend not using more than three channels together when OSR is below 128 to avoid interrupt overload).</td>
 </tr>
 <tr>
     <td>${SDK_INSTALL_PATH}/examples/current_sense</td>
@@ -89,7 +103,7 @@ The load share mode of PRU-ICSSG is enabled for this example. Three cores—RTU-
  ----------------|-----------
  CPU + OS        | r5fss0-0 freertos
  ICSSG           | ICSSG0
- PRU             | PRU0 (single channel)
+ PRU             | PRU0 (single PRU)
  ^               | PRU0, RTU-PRU0, TXPRU0 (multi channel using three PRUs - load share mode)
  Toolchain       | ti-arm-clang
  Board           | @VAR_BOARD_NAME_LOWER, @VAR_LP_BOARD_NAME_LOWER
@@ -152,7 +166,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 </tr>
 <tr>
         <td></td>
-        <td>2. Draw the graph of raw the graph of sdfm_ch_samples array</td>
+        <td>2. Draw the graph of sdfm_ch_samples array</td>
         <td>\image html SDFM_Continuous_mode_sample.PNG "NC sample data"</td>
  </tr>
 
@@ -284,7 +298,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 </tr>
 <tr>
         <td></td>
-        <td>2. Set ecap_divider variable in sdfm_example.c file for different sd clock generation</td>
+        <td>2. Set ecap_divider variable in app_sdfm.c file for different sd clock generation</td>
         <td></td>
  </tr>
  <tr>
@@ -449,7 +463,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 </tr>
 <tr>
         <td></td>
-        <td>3. Configure SYNC_OUT0 and SYNC_OUT0 pins inside PRU ICSSG IEP SysConfig module </td>
+        <td>3. Configure SYNC_OUT0 and SYNC_OUT1 pins inside PRU ICSSG IEP SysConfig module </td>
         <td> </td>
 </tr>
 <tr>

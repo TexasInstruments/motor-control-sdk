@@ -1,8 +1,8 @@
 /**
  * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
  * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
- * @cliArgs --device "AM243x_ALV_beta" --part "ALV" --package "ALV" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@2025.00.00"
- * @v2CliArgs --device "AM2434" --package "FCBGA (ALV)" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@2025.00.00"
+ * @cliArgs --device "AM243x_ALV_beta" --part "ALV" --package "ALV" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@2025.00.00" --product "INDUSTRIAL_COMMUNICATIONS_SDK@2025.00.00" --product "MCU_PLUS_SDK@07.03.01"
+ * @v2CliArgs --device "AM2434" --package "FCBGA (ALV)" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@2025.00.00" --product "INDUSTRIAL_COMMUNICATIONS_SDK@2025.00.00" --product "MCU_PLUS_SDK@07.03.01"
  * @versions {"tool":"1.23.0+4000"}
  */
 
@@ -61,7 +61,6 @@ sdfm1.Enable_Channel_1      = true;
 sdfm1.Enable_Channel_2      = true;
 sdfm1.PRU_EnableSnoopNC     = true;
 sdfm1.PRU_EnableTriggerMode = true;
-sdfm1.PRU_SelectIepCmpEvent = "4";
 
 epwm1.$name              = "CONFIG_EPWM0";
 epwm1.EPWM.$assign       = "EHRPWM0";

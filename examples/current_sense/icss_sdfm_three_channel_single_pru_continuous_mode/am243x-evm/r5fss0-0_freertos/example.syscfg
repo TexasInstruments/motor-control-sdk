@@ -1,8 +1,8 @@
 /**
  * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
  * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
- * @cliArgs --device "AM243x_ALV_beta" --part "ALV" --package "ALV" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@2025.00.00"
- * @v2CliArgs --device "AM2434" --package "FCBGA (ALV)" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@2025.00.00"
+ * @cliArgs --device "AM243x_ALV_beta" --part "ALV" --package "ALV" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@2025.00.00" --product "INDUSTRIAL_COMMUNICATIONS_SDK@2025.00.00" --product "MCU_PLUS_SDK@07.03.01"
+ * @v2CliArgs --device "AM2434" --package "FCBGA (ALV)" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@2025.00.00" --product "INDUSTRIAL_COMMUNICATIONS_SDK@2025.00.00" --product "MCU_PLUS_SDK@07.03.01"
  * @versions {"tool":"1.23.0+4000"}
  */
 
@@ -292,7 +292,7 @@ pruicss1.AdditionalICSSSettings[0].$name                                        
 pruicss1.AdditionalICSSSettings[0].PruEcapIO.create(1);
 pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].$name                             = "CONFIG_PRU_ICSS_ECAP_IO0";
 pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].PRU_ICSSG0_ECAP.IN_APWM_OUT.$used = true;
-pruicss1.intcMapping.create(3);
+pruicss1.intcMapping.create(9);
 pruicss1.intcMapping[0].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING0";
 pruicss1.intcMapping[0].event                                                     = "21";
 pruicss1.intcMapping[1].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING1";
@@ -301,6 +301,23 @@ pruicss1.intcMapping[1].channel                                                 
 pruicss1.intcMapping[2].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING2";
 pruicss1.intcMapping[2].event                                                     = "23";
 pruicss1.intcMapping[2].channel                                                   = "4";
+pruicss1.intcMapping[3].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING3";
+pruicss1.intcMapping[3].event                                                     = "24";
+pruicss1.intcMapping[3].channel                                                   = "5";
+pruicss1.intcMapping[4].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING4";
+pruicss1.intcMapping[4].event                                                     = "25";
+pruicss1.intcMapping[4].channel                                                   = "6";
+pruicss1.intcMapping[5].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING5";
+pruicss1.intcMapping[5].event                                                     = "26";
+pruicss1.intcMapping[5].channel                                                   = "7";
+pruicss1.intcMapping[6].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING6";
+pruicss1.intcMapping[6].event                                                     = "27";
+pruicss1.intcMapping[6].channel                                                   = "8";
+pruicss1.intcMapping[7].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING7";
+pruicss1.intcMapping[7].event                                                     = "28";
+pruicss1.intcMapping[7].channel                                                   = "9";
+pruicss1.intcMapping[8].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING8";
+pruicss1.intcMapping[8].event                                                     = "29";
 
 /**
  * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future

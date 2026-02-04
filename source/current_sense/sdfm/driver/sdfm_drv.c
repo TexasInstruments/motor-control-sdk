@@ -1183,6 +1183,7 @@ int32_t SDFM_measureClockPhaseDelay(SDFM_Handle handle, uint16_t clk_edg, uint8_
     uint8_t ack;
     uint32_t pru_cycles;
     uint32_t i;
+    int32_t status;
 
     if ((handle == NULL) || (channel > SDFM_CHANNEL8) || (clk_edg > 1) ||
         (handle->priv == NULL) || (handle->attrs == NULL) || (handle->priv->sdfm_interface == NULL))
@@ -1194,7 +1195,10 @@ int32_t SDFM_measureClockPhaseDelay(SDFM_Handle handle, uint16_t clk_edg, uint8_
     attrs = handle->attrs;
 
     /* Enable phase delay measurement */
-    priv->sdfm_interface->channels[channel].en_phase_delay = 1;
+    priv->sdfm_interface->channels[channel].en_phase_delay = 1; 
+
+    /*Enable GPIO mode for phase delay measurement*/
+    status = PRUICSS_setGpMuxSelect(priv->pruicss_handle, attrs->pruicss_slice, PRUICSS_GP_MUX_SEL_MODE_GP);
     /* Waiting till measurement done with timeout */
     for(i = 0; i < SDFM_DEFAULT_MAX_WAIT_LOOP_COUNT; i++)
     {
@@ -1228,6 +1232,13 @@ int32_t SDFM_measureClockPhaseDelay(SDFM_Handle handle, uint16_t clk_edg, uint8_
       /* PRU cycles for one SD clock period */
       pru_cycles = ceil((float)(attrs->core_clk_freq/(priv->sdfm_interface->channels[channel].sdfm_clk)));
       priv->sdfm_interface->channels[channel].clock_phase_delay = pru_cycles - temp;
+   }
+
+   /*Enable SDFM mode after phase delay measurement done */
+   status = PRUICSS_setGpMuxSelect(priv->pruicss_handle, attrs->pruicss_slice, PRUICSS_GP_MUX_SEL_MODE_SD);
+   if(status != SystemP_SUCCESS)
+   {
+       return status;
    }
 
    return SystemP_SUCCESS;

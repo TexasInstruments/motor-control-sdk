@@ -1,8 +1,8 @@
 /**
  * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
  * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
- * @cliArgs --device "AM243x_ALV_beta" --part "ALV" --package "ALV" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@2025.00.00"
- * @v2CliArgs --device "AM2434" --package "FCBGA (ALV)" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@2025.00.00"
+ * @cliArgs --device "AM243x_ALV_beta" --part "ALV" --package "ALV" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@2025.00.00" --product "INDUSTRIAL_COMMUNICATIONS_SDK@2025.00.00" --product "MCU_PLUS_SDK@07.03.01"
+ * @v2CliArgs --device "AM2434" --package "FCBGA (ALV)" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@2025.00.00" --product "INDUSTRIAL_COMMUNICATIONS_SDK@2025.00.00" --product "MCU_PLUS_SDK@07.03.01"
  * @versions {"tool":"1.23.0+4000"}
  */
 
@@ -56,6 +56,8 @@ sdfm1.SDFM_CLK_GEN              = "0";
 sdfm1.Enable_Channel_0          = true;
 sdfm1.Enable_Channel_1          = true;
 sdfm1.Enable_Channel_2          = true;
+sdfm1.PRU_EnableTriggerMode     = true;
+sdfm1.Enable_Epwm_Sync          = true;
 sdfm1.PRU_ICSSG0_PRU.$assign    = "PRU_ICSSG0_PRU0";
 
 epwm1.$name              = "CONFIG_EPWM0";
@@ -293,14 +295,9 @@ pruicss1.AdditionalICSSSettings[0].PruIepIO[0].$name                            
 pruicss1.AdditionalICSSSettings[0].PruIepIO[0].PRU_ICSSG0_IEP.$assign             = "PRU_ICSSG0_IEP0";
 pruicss1.AdditionalICSSSettings[0].PruIepIO[0].PRU_ICSSG0_IEP.EDC_SYNC_OUT0.$used = true;
 pruicss1.AdditionalICSSSettings[0].PruIepIO[0].PRU_ICSSG0_IEP.EDC_SYNC_OUT1.$used = true;
-pruicss1.AdditionalICSSSettings[0].PruEcapIO.create(1);
-pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].$name                             = "CONFIG_PRU_ICSS_ECAP_IO0";
-pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].PRU_ICSSG0_ECAP.$assign           = "PRU_ICSSG0_ECAP0";
-pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].PRU_ICSSG0_ECAP.IN_APWM_OUT.$used = true;
 pruicss1.intcMapping.create(1);
 pruicss1.intcMapping[0].$name                                                     = "CONFIG_ICSS0_INTC_MAPPING0";
 pruicss1.intcMapping[0].event                                                     = "21";
-pruicss1.intcMapping[0].channel                                                   = "3";
 
 /**
  * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future
@@ -318,4 +315,3 @@ pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[0].PRU_ICSSG0_PWM.pwmPin.$suggestSolution 
 pruicss_g_v0_pwm1.PRUICSS_PWM_TRIPZONE[0].PRU_ICSSG0_PWM.$suggestSolution                    = "PRU_ICSSG0_PWM0";
 pruicss1.AdditionalICSSSettings[0].PruIepIO[0].PRU_ICSSG0_IEP.EDC_SYNC_OUT0.$suggestSolution = "PRG0_PRU0_GPO19";
 pruicss1.AdditionalICSSSettings[0].PruIepIO[0].PRU_ICSSG0_IEP.EDC_SYNC_OUT1.$suggestSolution = "PRG0_PRU0_GPO17";
-pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].PRU_ICSSG0_ECAP.IN_APWM_OUT.$suggestSolution = "PRG0_PRU1_GPO15";
