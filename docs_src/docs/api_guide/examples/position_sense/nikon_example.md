@@ -68,20 +68,48 @@ The Nikon receiver firmware running on ICSS-PRU provides a defined interface. Th
 
 \endcond
 
-### Periodic Continuous Mode
-Current SDK example uses IEP CMP event to trigger periodic mode. CMP0 is used to get periodic CMP events by resetting the IEP counter continuously. Firmware triggers an Arm® Cortex®-R5F interrupt after getting a response from the encoder. The application code uses a callback function to clear the PRU interrupt, which can be modified as per the use case. Currently, command 32 is used to demonstrate the periodic mode, which informs the firmware to use position cmd 4. It prints the response written by the firmware on the UART terminal.
-CMP3 is used for single channel and single PRU multi-channel mode. For multi-channel load share mode, CMP3 is used for RTU core, CMP5 is used for PRU core and CMP6 is used for TX PRU core channel. To use changes in CMP event, the following macros need to be updated in the application `nikon_periodic_trigger.h` file and source file `nikon_params.h`:
-```c
-#define IEP_CH0_CMP_EVNT ( 3 )
-#define IEP_CH1_CMP_EVNT ( 5 )
-#define IEP_CH2_CMP_EVNT ( 6 )
-```
+## Periodic Trigger Modes {#NIKON_EXAMPLE_PERIODIC_MODE}
 
-> **Note:** To disable IEP counter rest by CMP0 event, the following code needs to be disabled in `nikon_periodic_trigger.c`:
-```c
-event |= IEP_CMP0_ENABLE;
-event |= IEP_RST_CNT_EN;
-```
+The Nikon diagnostic application supports two types of periodic trigger modes for continuous position sampling as described in \ref NIKON_PERIODIC_MODES.
+
+### CMP Mode (Compare Event Mode)
+- Implementation: Command 32 demonstrates this mode using position command CMD_4
+- Configuration: Uses a user-defined compare value to trigger sampling events
+- IEP Counter Reset: Uses CMP0 by default (skip if reset is handled differently)
+- Notification: Firmware triggers an Arm® Cortex®-R5F interrupt after receiving encoder response
+
+### CAP Mode (Capture Event Mode)
+- Implementation: Command 33 demonstrates this mode using position command CMD_4
+\cond SOC_AM243X
+- Router Configuration for CAP6/CAP7 (LATCH_IN0/LATCH_IN1) via TIMESYNC router and CAP0 via GPIOMUX router (requires external GPIO connection)
+    - This example configures the TIMESYNC/GPIOMUX router to use IEP SYNC OUT0 as an input signal for the CAP6/CAP7/CAP0 events. This configuration includes:
+        - CMP0: Configures IEP counter reset (skip if using alternative reset method)
+        - CMP1: Generates SYNC OUT0 signal (skip if not using SYNC OUT0)
+    - NOTE: All router configuration is optional if this signal path isn't needed\endcond
+\cond (SOC_AM263PX || SOC_AM261X)
+- XBAR Configuration for CAP6/CAP7 (LATCH_IN0/LATCH_IN1)
+    - This example configures the XBAR for routing EPWM SYNC OUT as input to CAP using SysConfig
+    - Customization: XBAR settings can be modified for alternative inputs
+    - NOTE: XBAR routing configuration is optional if not needed
+\endcond
+- NOTE: When using different CAP events instead of the ones used in SDK example, ensure all related configurations (source selection, signal routing, etc.) are properly done.
+- Notification: Firmware triggers an R5F interrupt after receiving encoder response
+
+### Important Notes for Periodic Mode
+
+1. Initialization: Call nikon_command_process() once in host trigger mode before switching to periodic mode
+2. Automatic Behavior: In periodic mode, nikon_command_process() skips sending operations (PRU firmware handles triggering via IEP events)
+3. CMP Resource Allocation
+    - Avoid using CMP0 if it's already used to IEP counter reset
+    - Avoid using CMP1/CMP2 if they're used to SYNC OUT generation
+    - Avoid sharing CMP events across different channels or instances of Nikon or other encoders. Each CMP event must be assigned exclusively to a single encoder channel. 
+4. Modifying Commands in Periodic Mode
+    - Default: Position Command 4 (CMD_4) is used by default
+    - To use a different command:
+        - First modify the `nikon_process_periodic_command()` function in example code
+        - Before switching to periodic mode, send this command once using `nikon_get_pos()` in host trigger mode
+        - Ensure all prerequisite APIs are called before `nikon_get_pos()` to properly set up command data (e.g., `nikon_generate_cdf()`). Refer the `nikon_handle_command()` function in the example code to identify all required API calls for specific command
+
 ## Important files and directory structure
 
 <table>
@@ -116,8 +144,27 @@ event |= IEP_RST_CNT_EN;
  PRU            | PRU1 (single channel, multi channel using single PRU)
  ^              | PRU1, RTU-PRU1, TXPRU1 (multi channel using three PRUs - load share mode)
  Toolchain      | ti-arm-clang
- Board          | @VAR_LP_BOARD_NAME_LOWER (2 channel and 1 channel examples)
- Example folder | examples/position_sense/nikon_diagnostic
+ Board          | @VAR_LP_BOARD_NAME_LOWER
+ Example folder | examples/position_sense/nikon_diagnostic/single_channel
+ ^              | examples/position_sense/nikon_diagnostic/multi_channel_single_pru
+ ^              | examples/position_sense/nikon_diagnostic/multi_channel_load_share
+
+## Multi Channel Single PRU Example
+This example supports up to three Nikon channels using one PRU. In this example:
+- Encoders of the same frequency must be connected to all configured channels.
+- Data transmission and reception must happen simultaneously on all channels.
+- The encoder configuration and cable length should be the same on all channels.
+- If encoders across channels don't respond at the same time, this example will not work. Load share configuration should be used instead.
+- 1 Nikon driver instance and corresponding SysConfig Nikon module instance is used for all channels.
+
+## Multi Channel Load Share Example
+This example supports up to three Nikon channels using three PRUs from same PRU-ICSSG slice. In this example:
+- Load share mode is used. Refer \ref PRUICSSG_LOAD_SHARE_MODE for more details.
+- Encoders of different make and different numbers of encoders connected across channels can be connected.
+- Encoders of the same frequency must be connected to all configured channels.
+- In this mode, data transmission and reception can start independently on all channels.
+- After a command is sent, all channels wait for a response and process the response independently. However, all channels must finish processing before the next command can be triggered.
+- 1 Nikon driver instance and corresponding SysConfig Nikon module instance is used for all channels.
 
 \endcond
 
@@ -126,11 +173,11 @@ event |= IEP_RST_CNT_EN;
  Parameter      | Value
  ---------------|-----------
  CPU + OS       | r5fss0-0 freertos
- ICSS           | ICSSM
+ ICSSM          | ICSSM0
  PRU            | PRU0
  Toolchain      | ti-arm-clang
- Board          | @VAR_LP_BOARD_NAME_LOWER (Single channel example)
- Example folder | examples/position_sense/nikon_diagnostic
+ Board          | @VAR_LP_BOARD_NAME_LOWER
+ Example folder | examples/position_sense/nikon_diagnostic/single_channel
 
 \endcond
 
@@ -139,12 +186,20 @@ event |= IEP_RST_CNT_EN;
  Parameter      | Value
  ---------------|-----------
  CPU + OS       | r5fss0-0 freertos
- ICSS           | ICSSM1
- PRU            | PRU0 (single channel)
+ ICSSM          | ICSSM1
+ PRU            | PRU0 (single channel, dual channel)
+ ^              | PRU1 (dual channel)
  Toolchain      | ti-arm-clang
  Board          | @VAR_LP_BOARD_NAME_LOWER
- Example folder | examples/position_sense/nikon_diagnostic
+ Example folder | examples/position_sense/nikon_diagnostic/single_channel
+ ^              | examples/position_sense/nikon_diagnostic/dual_channel
 
+## Dual Channel Example
+This example supports two Nikon channels using two PRUs from same PRU-ICSSM. In this example:
+- Two independent Nikon driver instances run simultaneously. Each driver instance has a corresponding SysConfig Nikon module instance.
+- Each instance operates independently on a different PRU slice (PRU0 or PRU1).
+- Both instances share common PRU-ICSS level resources.
+- Different PRUs can handle encoders with different frequencies simultaneously. For example, you can connect a 4 MHz encoder to a PRU0 channel, while connecting an 8 MHz encoder to a PRU1 channel.
 \endcond
 
 # Steps to Run the Example
@@ -181,18 +236,20 @@ event |= IEP_RST_CNT_EN;
 - <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
 
 \endcond
+
 ## Hardware Setup
 
 \cond SOC_AM243X
-### Hardware Setup(Using Booster Pack & LP-AM243)
+### Hardware Setup(Using BP-AM2BLDCSERVO Booster Pack & LP-AM243)
 \imageStyle{AM243x_lp_bp_nikon_encoder_setup.png,width:40%}
-\image html AM243x_lp_bp_nikon_encoder_setup.png  "Hardware Setup of Booster Pack + LP for Nikon"
+\image html AM243x_lp_bp_nikon_encoder_setup.png  "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for Nikon"
 
 \note
-    - The PROC109A version of LP supports two channels
+    - The PROC109A version of LP-AM243 with BP-AM2BLDCSERVO Booster Pack supports two channels
     - To enable the second channel on LP, SW6 needs to be turn OFF
+    - To enable VSENSOR1/VSENSOR2, BoosterPack pins J8.73/J8.74 must be set high (In this example, this pin is configured in GPIO mode and pulled high)
 
-#### Booster Pack Jumper Configuration
+#### BP-AM2BLDCSERVO Booster Pack Jumper Configuration
 <table>
 <tr>
     <th>Designator</th>
@@ -264,9 +321,9 @@ event |= IEP_RST_CNT_EN;
 \endcond
 
 \cond SOC_AM261X
-### Hardware Setup(Using Booster Pack & LP-AM261)
+### Hardware Setup(Using BP-AM2BLDCSERVO Booster Pack & LP-AM261)
 \imageStyle{AM261x_lp_bp_nikon_encoder_setup.png,width:40%}
-\image html AM261x_lp_bp_nikon_encoder_setup.png  "Hardware Setup of Booster Pack + LP for Nikon"
+\image html AM261x_lp_bp_nikon_encoder_setup.png  "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for Nikon"
 
 #### LP-AM261 Jumper Configuration
 <table>
@@ -287,7 +344,11 @@ event |= IEP_RST_CNT_EN;
 </tr>
 </table>
 
-#### Booster Pack Jumper Configuration
+\note
+    - The Rev. A version of LP-AM261 with BP-AM2BLDCSERVO Booster Pack supports two channels
+    - To enable VSENSOR1/VSENSOR2, BoosterPack pins J8.73/J8.74 must be set high (In this example, this pin is configured in GPIO mode and pulled high)
+
+#### BP-AM2BLDCSERVO Booster Pack Jumper Configuration
 <table>
 <tr>
     <th>Designator</th>
@@ -362,18 +423,18 @@ event |= IEP_RST_CNT_EN;
 
 \cond SOC_AM263X
 
-### Hardware Setup(Using Booster Pack & LP-AM263)
+### Hardware Setup(Using BP-AM2BLDCSERVO Booster Pack & LP-AM263)
 \imageStyle{AM263x_lp_bp_nikon_encoder_setup.png,width:40%}
-\image html AM263x_lp_bp_nikon_encoder_setup.png  "Hardware Setup of Booster Pack + LP for Nikon"
+\image html AM263x_lp_bp_nikon_encoder_setup.png  "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for Nikon"
 
 #### LP-AM263 Jumper Configuration
 
 \endcond
 
 \cond SOC_AM263PX
-### Hardware Setup(Using Booster Pack & LP-AM263P)
+### Hardware Setup(Using BP-AM2BLDCSERVO Booster Pack & LP-AM263P)
 \imageStyle{AM263Px_lp_bp_nikon_encoder_setup.png,width:40%}
-\image html AM263Px_lp_bp_nikon_encoder_setup.png  "Hardware Setup of Booster Pack + LP for Nikon"
+\image html AM263Px_lp_bp_nikon_encoder_setup.png  "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for Nikon"
 
 #### LP-AM263P Jumper Configuration
 
@@ -397,7 +458,10 @@ event |= IEP_RST_CNT_EN;
 </tr>
 </table>
 
-#### Booster Pack Jumper Configuration
+\note
+    - To enable VSENSOR1, BoosterPack pin J8.73 must be set high (In this example, this pin is configured in GPIO mode and pulled high)
+
+#### BP-AM2BLDCSERVO Booster Pack Jumper Configuration
 <table>
 <tr>
     <th>Designator</th>
@@ -847,9 +911,17 @@ Troubleshooting steps:
         </td>
     </tr>
     <tr>
-        <td>32 (Note: This is not a command with ID 32, it is UART option number 32)</td>
-        <td>Start Continuous Mode</td>
-        <td>In this command, encoder sends absolute lower 40 bit data for encoders connected in point to point / bus.
+        <td>32 (NOTE: This is not a command with ID 32, it is UART option number 32)</td>
+        <td>Start Periodic CMP Mode</td>
+        <td>In this command, encoder sends absolute lower 40 bit data for encoders connected in point to point / bus based on IEP CMP event.
+		</td>
+        <td>CRC success with rotor angle, number of rotations and CRC stats printed in the terminal.
+        </td>
+    </tr>
+    <tr>
+        <td>33 (NOTE: This is not a command with ID 33, it is UART option number 33)</td>
+        <td>Start Periodic CAP Mode</td>
+        <td>In this command, encoder sends absolute lower 40 bit data for encoders connected in point to point / bus based on IEP CAP event.
 		</td>
         <td>CRC success with rotor angle, number of rotations and CRC stats printed in the terminal.
         </td>

@@ -96,7 +96,15 @@ After the PRU starts executing, the Nikon interface is operational and the appli
 
 ### Firmware Architecture {#NIKON_DESIGN_FLOW}
 
-The firmware first initializes the local variables. Then it checks whether it is host trigger mode or periodic trigger mode. In host trigger mode, it waits until a command has been triggered through the interface. In periodic trigger mode, the firmware sets host trigger bit based on IEP compare 3 event configured. Upon triggering, the transmit data is set up based on the command code and the data is transmitted. The application then waits until receiving all the data that depends on the command code. The on-the-fly CRC over the received data then commences, and the interface is updated with the result. The CRC verification occurs next and the interface indicates command completion. The firmware then waits for the next command trigger from the interface.
+The firmware first initializes the local variables. Then it checks the operation mode: host trigger mode, periodic CMP mode, or periodic CAP mode.
+
+**Host Trigger Mode:** The firmware waits until a command has been triggered through the interface by the host application.
+
+**Periodic CMP Mode:** The firmware monitors the configured IEP compare event and sets the host trigger bit when the event occurs, automatically initiating Nikon transactions at regular intervals.
+
+**Periodic CAP Mode:** The firmware monitors the configured IEP capture event and sets the host trigger bit when an external signal triggers the capture event, synchronizing Nikon transactions with external events.
+
+Upon triggering (from any mode), the transmit data is set up based on the command code and the data is transmitted. The application then waits until receiving all the data that depends on the command code. The on-the-fly CRC over the received data then commences, and the interface is updated with the result. The CRC verification occurs next and the interface indicates command completion. The firmware then waits for the next command trigger from the interface or IEP compare/capture event.
 
 \image html nikon_firmware_flow.png "Overview Flow Chart"
 
@@ -126,13 +134,24 @@ In case of 16 Mbps, the Data is received and downsampled without On-the-fly CRC 
 \image html nikon_receive_16mhz_data.png "16 MHz Rx frames receive Flow Chart"
 \image html nikon_post_processing.png "16 MHz post-processing Flow Chart"
 
-### Continuous mode
+### Periodic Trigger Modes
 
-\image html nikon_continuous_mode.png "Continuous mode"
+The Nikon receiver supports two types of periodic trigger modes for continuous position sampling: CMP (Compare) mode and CAP (Capture) mode as described in \ref NIKON_PERIODIC_MODES.
 
-Nikon receiver application has the support for continuous mode in which periodically MT Command is transmitted to encoder and its position data is read and the CRC is computed.
-User can stop continuous mode by hitting any key in UART console.
-Input cycle time should be greater than or equal to the Nikon cycle time by considering the maximum encoder address and timeouts.
+Following is the operation flow for periodic mode:
+1. Firmware polls IEP CMP/CAP status register and clears status after event is detected
+2. On event detection, firmware initiates Nikon transaction
+3. Position data is automatically updated in shared memory
+
+\image html nikon_periodic_mode.png "Periodic Trigger Mode"
+
+\cond SOC_AM243X
+\note In load share mode, each channel can have independent IEP CMP/CAP event configuration.
+\endcond
+
+\attention Input cycle time should be greater than or equal to the Nikon cycle time by considering the maximum encoder address and timeouts.
+
+User can stop periodic mode by switching to host trigger mode.
 
 ### Receive CRC
 
@@ -214,7 +233,7 @@ The CRC is the last byte of the last received data frame. The firmware then stor
 </table>
 
 \cond SOC_AM243X
-##### LP-AM243 Booster Pack Pin Multiplexing
+##### LP-AM243 + BP-AM2BLDCSERVO Booster Pack Pin Multiplexing
 <table>
 <tr>
     <th>Pin name
@@ -281,7 +300,7 @@ The CRC is the last byte of the last received data frame. The firmware then stor
 \endcond
 
 \cond  SOC_AM261X
-##### LP-AM261 Booster Pack Pin Multiplexing
+##### LP-AM261 + BP-AM2BLDCSERVO Booster Pack Pin Multiplexing
 <table>
 <tr>
     <th>Pin name
@@ -318,7 +337,7 @@ The CRC is the last byte of the last received data frame. The firmware then stor
 
 \cond (SOC_AM263X || SOC_AM263PX)
 
-##### @VAR_LP_BOARD_NAME Booster Pack Pin Multiplexing
+##### @VAR_LP_BOARD_NAME + BP-AM2BLDCSERVO Booster Pack Pin Multiplexing
 <table>
 <tr>
     <th>Pin name

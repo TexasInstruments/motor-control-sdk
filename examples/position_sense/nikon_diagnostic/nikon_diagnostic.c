@@ -81,7 +81,7 @@
  *   needed after errors (e.g., nikon_get_pos may leave internal state partially modified on failure).
  * - Check API documentation for more details.
  *
-* \par Dual Slice Support (tested only on AM261x with Single PRU Single Channel mode):
+ * \par Dual Slice Support (tested only on AM261x with Single PRU Single Channel mode):
  * This diagnostic application supports dual PRU slice operation when compiled with
  * NIKON_DUAL_PRU_SLICE_ENABLE defined. In dual slice mode:
  * - Two independent Nikon instances (CONFIG_NIKON0, CONFIG_NIKON1) run simultaneously
