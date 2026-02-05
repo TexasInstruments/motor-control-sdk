@@ -216,7 +216,15 @@ let tamagawa_module = {
         {
             name: "G_MUX_EN",
             displayName: "Enable G Mux",
-            description: "Enable G Mux in ICSSG_SA_MX_REG Register, Few 3 channel Peripheral pins get remapped to enable different usecase",
+            longDescription : `The G_MUX_EN bit (bit 7) in the ICSSG_SA_MX_REG register is a multiplexer control bit that enables alternative pin configurations for the PRUICSS Peripheral Interface mode. 
+                               This bit allows remapping of receive pins to support different hardware configurations and use cases.
+                                
+#### Pin Multiplexing Behavior
+
+| G_MUX_EN Value | Channel 0 Receive | Channel 1 Receive | Channel 2 Transmit | Description                    |
+|----------------|-------------------|-------------------|--------------------|--------------------------------|
+| 0 (Default)    | GPI9              | GPI10             | GPO7               | Default pinmux configuration   |
+| 1 (Enabled)    | GPI13             | GPI14             | GPO12              | Alternate pinmux configuration |`,
             default: false,
             hidden:  (device == "am243x-lp" ||device == "am243x-evm" ||device == "am64x-evm") ? false : true,
         },

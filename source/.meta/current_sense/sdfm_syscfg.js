@@ -46,7 +46,15 @@ config = config.concat([
     {
         name: "G_MUX_EN",
         displayName: "Enable G Mux",
-        description: "Enable G Mux in ICSSG_SA_MX_REG Register, Few SD pins get remapped to enable different usecase",
+        longDescription : `The G_MUX_EN bit (bit 7) in the ICSSG_SA_MX_REG register is a multiplexer control bit that enables alternative pin configurations for the SDFM mode. 
+        This bit allows remapping of Data and Clock pins to support different hardware configurations and use cases.
+         
+#### Pin Multiplexing Behavior
+
+| G_MUX_EN Value | SD_CHANNEL4_DATA  | SD5_CLK             | Description                    |
+|----------------|-------------------|---------------------|--------------------------------|
+| 0 (Default)    | GPI9              | GPI10               | Default pinmux configuration   |
+| 1 (Enabled)    | GPI18             | GPI19               | Alternate pinmux configuration |`,
         default: false,
         hidden:  (device == "am243x-lp" ||device == "am243x-evm" ||device == "am64x-evm") ? false : true,
     },
