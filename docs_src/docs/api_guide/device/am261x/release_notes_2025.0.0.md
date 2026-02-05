@@ -22,6 +22,10 @@
     <td>EnDat3 protocol support with 12.5 Mbps data rate, Manchester encoding, frame-based communication (HPF/LPH/LPF), foreground and background communication channels, host trigger and periodic trigger modes
     <td>Position Sense EnDat3
 </tr>
+<tr>
+    <td>Dual channel support using two independent PRU cores, handle-based API architecture, periodic trigger modes (CMP and CAP), SysConfig-based initialization, per-channel encoder timeout configuration
+    <td>Position Sense BiSS-C
+</tr>
 </table>
 
 ## Device and Validation Information
@@ -59,7 +63,7 @@ Mbed-TLS                | R5F            | 2.13.1
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Single channel, point-to-point connection, control communication, automatic processing delay detection and compensation, Interface speed of 1, 2, 5, 8, and 10 MHz, Boosterpack with LP-AM261
+    <td> Single channel, dual channel using two independent PRU cores, point-to-point connection, control communication, automatic processing delay detection and compensation, interface speed of 1, 2, 5, 8, and 10 MHz, periodic trigger modes (CMP and CAP), Boosterpack with LP-AM261
     <td> Daisy chaining, safety mode (safety CRC and sign-of-life counter)
 </tr>
 <tr>

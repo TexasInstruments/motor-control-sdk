@@ -4,6 +4,7 @@
 
 Following pages contain details on changes which can affect migration of applications based on Motor Control SDK 9.x/10.x/11.x to Motor Control SDK 2025.00.00.
 
+- \subpage BISSC_MIGRATION_GUIDE_2025_00
 - \subpage NIKON_MIGRATION_GUIDE_2025_00
 
 ## Migration Details for Motor Control SDK 9.x/10.x/11.x

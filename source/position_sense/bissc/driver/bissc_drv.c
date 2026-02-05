@@ -882,7 +882,7 @@ int32_t bissc_config_clock(bissc_handle handle, bissc_clk_cfg *clk_cfg)
     pruicss_xchg = priv->pruicss_xchg;
 
     /* Configure RX and TX CFG registers based on PRU slice */
-    /* Polarity of Start bit is 0 for Nikon */
+    /* Polarity of Start bit is 0 for BiSS-C */
     if(attrs->pruicss_slice)
     {
         /* Slice 1 - Read-Modify-Write for RX CFG */

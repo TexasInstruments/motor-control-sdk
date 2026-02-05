@@ -111,7 +111,7 @@ The following sections contain a brief overview of different modes.
 - RX Start Bit of '1' or '0'
 - Flexible HW-assisted clock output generation to allow free running, stop high and stop low (after last RX data), or stop high (after last TX data) operation with optional software clock override feature
 
-#### Signal Configuration
+#### Signal Configuration {#PRUICSS_PERIPHERAL_IF_MODE_SIGNAL_CONFIGURATION}
 
 <table>
 <tr>

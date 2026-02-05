@@ -34,6 +34,10 @@
     <td>Multi-channel with different communication modes and different numbers of encoders connected across channels under load share mode
     <td>Position Sense Tamagawa
 </tr>
+<tr>
+    <td>Handle-based API architecture, periodic trigger modes (CMP and CAP), SysConfig-based initialization, per-channel encoder timeout configuration
+    <td>Position Sense BiSS-C
+</tr>
 </table>
 
 SOC    | Supported CPUs  | Boards                                                                                                      | Host PC
@@ -95,7 +99,7 @@ Mbed-TLS                             | R5F            | mbedtls-2.13.1
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Single channel, Multi channel using single PRU core and three PRU cores (load share mode),point-to-point connection, control communication, automatic processing delay detection and compensation, interface speed of 1, 2, 5, 8, and 10 MHz, long cable (upto 100 meters), continuous mode, BP-AM2BLDCSERVO Boosterpack with LP-AM243
+    <td> Single channel, Multi channel using single PRU core and three PRU cores (load share mode), point-to-point connection, control communication, automatic processing delay detection and compensation, interface speed of 1, 2, 5, 8, and 10 MHz, long cable (upto 100 meters), periodic trigger modes (CMP and CAP), continuous mode, BP-AM2BLDCSERVO Boosterpack with LP-AM243
     <td> Daisy chaining, safety mode (safety CRC and sign-of-life counter)
 </tr>
 <tr>
