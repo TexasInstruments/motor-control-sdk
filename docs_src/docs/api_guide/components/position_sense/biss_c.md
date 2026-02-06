@@ -105,7 +105,6 @@ BiSS Safety is a profile definition for BiSS that has been certified by TÜV Rhe
    -  Support for control communication
    -  Support for automatic processing delay detection and compensation
    -  Support for multiple encoders connected via daisy-chain configuration (up to 3 encoders)
-   -  Support for concurrent multi-channel support on a single PRU (up to 3 identical encoders)
    -  Support for up to 100 meter cable
    -  Readiness for BiSS Safety profile by supporting 16 bit CRC and sign-of-life counter
 
@@ -152,7 +151,6 @@ BiSS Safety is a profile definition for BiSS that has been certified by TÜV Rhe
    -  Support for control communication
    -  Support for automatic processing delay detection and compensation
    -  Support for multiple encoders connected via daisy-chain configuration (up to 3 encoders)
-   -  Support for concurrent multi-channel support on a single PRU (up to 3 identical encoders)
    -  Support for up to 100 meter cable
    -  Readiness for BiSS Safety profile by supporting 16 bit CRC and sign-of-life counter
 
