@@ -293,10 +293,10 @@ void tamagawa_pru_irq_handler_second_slice(void *pruicss_handle);
  * \details This function configures IEP SYNC OUT0 generation and routes it to CAP inputs via TIMESYNC/GPIOMUX router
  *
  * Channel Configuration:
- * - Non-Load Share: CAP6 (LATCH0_IN0) via TIMESYNC router
- * - Load Share Ch0: CAP6 (LATCH0_IN0) via TIMESYNC router
+ * - Non-Load Share: CAP6 (LATCH_IN0) via TIMESYNC router
+ * - Load Share Ch0: CAP6 (LATCH_IN0) via TIMESYNC router
  * - Load Share Ch1: CAP0 from GPIO0_GPIO_4 via GPIOMUX router (requires external GPIO connection)
- * - Load Share Ch2: CAP7 (LATCH1_IN0) via TIMESYNC router
+ * - Load Share Ch2: CAP7 (LATCH_IN1) via TIMESYNC router
  *
  * \param handle Tamagawa driver handle
  * \param iep_sync0_period IEP SYNC OUT0 period in IEP clock cycles
@@ -344,13 +344,13 @@ static int32_t tamagawa_config_iep_cap_for_sync(tamagawa_handle handle, uint32_t
             {
                 if(attrs->pruicss_instance == 1)
                 {
-                    /* ICSSG1: Connect IEP0 SYNC OUT0 output to LATCH0_IN0 */
+                    /* ICSSG1: Connect IEP0 SYNC OUT0 output to LATCH_IN0 */
                     HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + TAMAGAWA_TIMESYNC_EVENT_ROUTER_OUT12_OFFSET),
                                 TAMAGAWA_TIMESYNC_EVENT_ROUTER_IN29);
                 }
                 else
                 {
-                    /* ICSSG0: Connect IEP0 SYNC OUT0 output to LATCH0_IN0 */
+                    /* ICSSG0: Connect IEP0 SYNC OUT0 output to LATCH_IN0 */
                     HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + TAMAGAWA_TIMESYNC_EVENT_ROUTER_OUT8_OFFSET),
                                 TAMAGAWA_TIMESYNC_EVENT_ROUTER_IN25);
                 }
@@ -359,13 +359,13 @@ static int32_t tamagawa_config_iep_cap_for_sync(tamagawa_handle handle, uint32_t
             {
                 if(attrs->pruicss_instance == 1)
                 {
-                    /* ICSSG1: Connect IEP0 SYNC OUT0 output to LATCH1_IN0 */
+                    /* ICSSG1: Connect IEP0 SYNC OUT0 output to LATCH_IN1 */
                     HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + TAMAGAWA_TIMESYNC_EVENT_ROUTER_OUT13_OFFSET),
                                 TAMAGAWA_TIMESYNC_EVENT_ROUTER_IN29);
                 }
                 else
                 {
-                    /* ICSSG0: Connect IEP0 SYNC OUT0 output to LATCH1_IN0 */
+                    /* ICSSG0: Connect IEP0 SYNC OUT0 output to LATCH_IN1 */
                     HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + TAMAGAWA_TIMESYNC_EVENT_ROUTER_OUT9_OFFSET),
                                 TAMAGAWA_TIMESYNC_EVENT_ROUTER_IN25);
                 }
@@ -377,13 +377,13 @@ static int32_t tamagawa_config_iep_cap_for_sync(tamagawa_handle handle, uint32_t
             {
                 if(attrs->pruicss_instance == 1)
                 {
-                    /* ICSSG1: Connect IEP1 SYNC OUT0 output to LATCH0_IN0 */
+                    /* ICSSG1: Connect IEP1 SYNC OUT0 output to LATCH_IN0 */
                     HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + TAMAGAWA_TIMESYNC_EVENT_ROUTER_OUT14_OFFSET),
                                 TAMAGAWA_TIMESYNC_EVENT_ROUTER_IN31);
                 }
                 else
                 {
-                    /* ICSSG0: Connect IEP1 SYNC OUT0 output to LATCH0_IN0 */
+                    /* ICSSG0: Connect IEP1 SYNC OUT0 output to LATCH_IN0 */
                     HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + TAMAGAWA_TIMESYNC_EVENT_ROUTER_OUT10_OFFSET),
                                 TAMAGAWA_TIMESYNC_EVENT_ROUTER_IN27);
                 }
@@ -392,13 +392,13 @@ static int32_t tamagawa_config_iep_cap_for_sync(tamagawa_handle handle, uint32_t
             {
                 if(attrs->pruicss_instance == 1)
                 {
-                    /* ICSSG1: Connect IEP1 SYNC OUT0 output to LATCH1_IN0 */
+                    /* ICSSG1: Connect IEP1 SYNC OUT0 output to LATCH_IN1 */
                     HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + TAMAGAWA_TIMESYNC_EVENT_ROUTER_OUT15_OFFSET),
                                 TAMAGAWA_TIMESYNC_EVENT_ROUTER_IN31);
                 }
                 else
                 {
-                    /* ICSSG0: Connect IEP1 SYNC OUT0 output to LATCH1_IN0 */
+                    /* ICSSG0: Connect IEP1 SYNC OUT0 output to LATCH_IN1 */
                     HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + TAMAGAWA_TIMESYNC_EVENT_ROUTER_OUT11_OFFSET),
                                 TAMAGAWA_TIMESYNC_EVENT_ROUTER_IN27);
                 }
@@ -431,18 +431,18 @@ static int32_t tamagawa_config_iep_cap_for_sync(tamagawa_handle handle, uint32_t
     }
     else
     {
-        /* Non-load share mode: Route SYNC OUT0 to LATCH0_IN0 for single channel */
+        /* Non-load share mode: Route SYNC OUT0 to LATCH_IN0 for single channel */
         if(attrs->iep_instance == 0)
         {
             if(attrs->pruicss_instance == 1)
             {
-                /* ICSSG1: Connect IEP0 SYNC OUT0 output to LATCH0_IN0 */
+                /* ICSSG1: Connect IEP0 SYNC OUT0 output to LATCH_IN0 */
                 HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + TAMAGAWA_TIMESYNC_EVENT_ROUTER_OUT12_OFFSET),
                             TAMAGAWA_TIMESYNC_EVENT_ROUTER_IN29);
             }
             else
             {
-                /* ICSSG0: Connect IEP0 SYNC OUT0 output to LATCH0_IN0 */
+                /* ICSSG0: Connect IEP0 SYNC OUT0 output to LATCH_IN0 */
                 HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + TAMAGAWA_TIMESYNC_EVENT_ROUTER_OUT8_OFFSET),
                             TAMAGAWA_TIMESYNC_EVENT_ROUTER_IN25);
             }
@@ -451,13 +451,13 @@ static int32_t tamagawa_config_iep_cap_for_sync(tamagawa_handle handle, uint32_t
         {
             if(attrs->pruicss_instance == 1)
             {
-                /* ICSSG1: Connect IEP1 SYNC OUT0 output to LATCH0_IN0 */
+                /* ICSSG1: Connect IEP1 SYNC OUT0 output to LATCH_IN0 */
                 HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + TAMAGAWA_TIMESYNC_EVENT_ROUTER_OUT14_OFFSET),
                             TAMAGAWA_TIMESYNC_EVENT_ROUTER_IN31);
             }
             else
             {
-                /* ICSSG0: Connect IEP1 SYNC OUT0 output to LATCH0_IN0 */
+                /* ICSSG0: Connect IEP1 SYNC OUT0 output to LATCH_IN0 */
                 HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + TAMAGAWA_TIMESYNC_EVENT_ROUTER_OUT10_OFFSET),
                             TAMAGAWA_TIMESYNC_EVENT_ROUTER_IN27);
             }
