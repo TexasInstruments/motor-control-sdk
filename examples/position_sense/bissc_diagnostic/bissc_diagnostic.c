@@ -1415,6 +1415,7 @@ void bissc_main(void *args)
              *        bissc_command_send() and bissc_command_wait() */
             for(i = 0; i < CONFIG_BISSC_NUM_INSTANCES; i++)
             {
+                DebugP_log("\r\n Instance %u:\n", i);
                 ret = bissc_get_pos(gAppBisscHandle[i]);
                 if(ret != SystemP_SUCCESS)
                 {
