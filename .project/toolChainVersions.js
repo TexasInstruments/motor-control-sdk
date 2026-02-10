@@ -169,8 +169,8 @@ const versions = {
         },
         am243x: {
             ccsVersion: "ccs2020",
-            icsdkVersion: "2025_00_00_05",
-            mcusdkVersion: "11_01_00_17",
+            icsdkVersion: "2025_00_00_08",
+            mcusdkVersion: "11_01_00_19",
             cgtPruVersion: "ti-cgt-pru_2.3.3",
             cgtArmClangVersion: "ti-cgt-armllvm_4.0.1.LTS",
             cgtC6000Version: "ti-cgt-c6000_8.3.12",
@@ -183,7 +183,7 @@ const versions = {
         },
         am263px: {
             ccsVersion: "ccs2030",
-            icsdkVersion: "2025_00_00_05",
+            icsdkVersion: "2025_00_00_08",
             mcusdkVersion: "11_00_00_19",
             cgtPruVersion: "ti-cgt-pru_2.3.3",
             cgtArmClangVersion: "ti-cgt-armllvm_4.0.3.LTS",
@@ -211,7 +211,7 @@ const versions = {
         },
         am261x: {
             ccsVersion: "ccs2030",
-            icsdkVersion: "2025_00_00_05",
+            icsdkVersion: "2025_00_00_08",
             mcusdkVersion: "11_00_00_29",
             cgtPruVersion: "ti-cgt-pru_2.3.3",
             cgtArmClangVersion: "ti-cgt-armllvm_4.0.3.LTS",
@@ -237,16 +237,16 @@ const versions = {
             version: "2025.00.00.01"
         },
         am243x: {
-            version: "2025.00.00.01"
+            version: "2025.00.00.03"
         },
         am263px: {
-            version: "2025.00.00.01"
+            version: "2025.00.00.03"
         },
         am263x: {
             version: "2025.00.00.01"
         },
         am261x: {
-            version: "2025.00.00.01"
+            version: "2025.00.00.03"
         }
     },
 
@@ -261,13 +261,13 @@ const versions = {
             version: "11.01.00.17"
         },
         am243x: {
-            version: "11.01.00.17"
+            version: "11.01.00.19"
         },
         am263px: {
-            version: "11.01.00.19"
+            version: "11.00.00.19"
         },
         am263x: {
-            version: "11.01.00.19"
+            version: "11.00.00.19"
         },
         am261x: {
             version: "11.00.00.29"
@@ -285,16 +285,16 @@ const versions = {
             version: "2025.00.00.05"
         },
         am243x: {
-            version: "2025.00.00.05"
+            version: "2025.00.00.08"
         },
         am263px: {
-            version: "2025.00.00.05"
+            version: "2025.00.00.08"
         },
         am263x: {
             version: "2025.00.00.05"
         },
         am261x: {
-            version: "2025.00.00.05"
+            version: "2025.00.00.08"
         }
     },
 };
