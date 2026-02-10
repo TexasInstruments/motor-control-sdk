@@ -68,9 +68,46 @@ At start-up, the application running on the Arm®-based core initializes the mod
 
 After the PRU starts executing, the Tamagawa interface is operational and the application can use it to communicate with an encoder. Use the Tamagawa diagnostic example to learn more about initialization and communication with the Tamagawa interface. This Tamagawa diagnostic example also provides an easy way to validate the Tamagawa transactions. The diagnostic example provides menu options on the host PC in a serial terminal application, where the user can select the data ID code to be sent. Based on the data ID code, the application updates the Tamagawa interface with the data ID code and triggers transaction. The application then waits until it receives an indication of complete transaction by the firmware through the interface before displaying the result.
 
-### PRU Firmware Flow {#TAMAGAWA_DESIGN_FLOW}
+### Firmware Architecture
 
-The firmware first initializes the PRU hardware. Then it checks whether it is host trigger mode or periodic trigger mode. In host trigger mode, it waits until a command has been triggered through the interface. In periodic trigger mode, the firmware sets host trigger bit based on compare 3 event configured. Upon triggering, the transmit data is set up based on the data ID code and the data is transmitted. The data ID code then waits until receiving all the data that depends on the data ID. The parsing over the received data then commences, which is again based on the data ID, and the interface is updated with the result. The CRC verification occurs next and the interface indicates command completion. The firmware then waits for the next command trigger from the interface.
+\cond SOC_AM243X
+
+Deterministic behavior of the 32 bit RISC core running up to 333 MHz provides resolution on sampling external signals and generating external signals. It makes use of 3 channel peripheral interface support in PRU for data transmission/reception.
+
+The PRU-ICSS firmware supports the following configurations:
+1. Single Channel per PRU slice
+2. Multi Channel with encoders of same make per PRU slice
+3. Multi Channel with encoders of different make under load share mode per PRU slice
+
+\endcond
+
+\cond SOC_AM261X
+
+Deterministic behavior of the 32 bit RISC core running up to 225 MHz provides resolution on sampling external signals and generating external signals. It makes use of 3 channel peripheral interface support in PRU for data transmission/reception.
+
+The PRU-ICSS firmware supports the following configuration:
+1. Single Channel per PRU slice
+
+\endcond
+
+\cond (SOC_AM263X || SOC_AM263PX)
+
+Deterministic behavior of the 32 bit RISC core running up to 200 MHz provides resolution on sampling external signals and generating external signals. It makes use of 3 channel peripheral interface support in PRU for data transmission/reception.
+
+The PRU-ICSS firmware supports the following configuration:
+1. Single Channel per PRU slice
+
+\endcond
+
+#### Tamagawa Firmware Flow {#TAMAGAWA_DESIGN_FLOW}
+
+The firmware first initializes the PRU hardware. Then it checks the operation mode: host trigger mode, periodic CMP mode, or periodic CAP mode.
+
+**Host Trigger Mode:** The firmware waits until a command has been triggered through the interface by the host application.
+
+**Periodic CMP/CAP Mode:** The firmware monitors the configured IEP compare/capture event and sets the host trigger bit when the event occurs, automatically initiating Tamagawa transactions at regular intervals.
+
+Upon triggering (from any mode), the transmit data is set up based on the data ID code and the data is transmitted. The data ID code then waits until receiving all the data that depends on the data ID. The parsing over the received data then commences, which is again based on the data ID, and the interface is updated with the result. The CRC verification occurs next and the interface indicates command completion. The firmware then waits for the next command trigger from the interface or IEP compare/capture event.
 
 \image html Tamagawa_flowchart.JPG "Overview Flow Chart"
 
@@ -110,6 +147,9 @@ The CRC is the last byte of the received data. The firmware then calculates the 
 \image html Tamagawa_verify_crc.png "Verify CRC Flow Chart"
 
 #### Pin Multiplexing {#TAMAGAWA_PIN_USAGE}
+
+\attention \ref PRUICSS_PERIPHERAL_IF_MODE_SIGNAL_CONFIGURATION section has details on PRU pin functions in Peripheral IF mode
+
 \note
     - k = 0,1 (PRU-ICSS Instance) for AM243x/AM261x/AM64x and k = 0 for AM263x/AM263Px
     - n = 0,1 (PRU-ICSS Slice)
@@ -183,7 +223,7 @@ The CRC is the last byte of the received data. The firmware then calculates the 
 </table>
 \cond SOC_AM243X
 
-##### LP-AM243 Booster Pack Pin Multiplexing
+##### LP-AM243 + BP-AM2BLDCSERVO Booster Pack Pin Multiplexing for SDK example
 <table>
 <tr>
     <th>Pin name
@@ -193,58 +233,58 @@ The CRC is the last byte of the received data. The firmware then calculates the 
 <tr>
     <td>PRG0_PRU1_GPO0
     <td>pru1_endat0_clk
-	<td>Channel 0 clock
+	<td>PRU1 Channel 0 clock
 </tr>
 <tr>
     <td>PRG0_PRU1_GPO1
     <td>pru1_endat0_out
-	<td>Channel 0 transmit
+	<td>PRU1 Channel 0 transmit
 </tr>
 <tr>
     <td>PRG0_PRU1_GPO2
     <td>pru1_endat0_outen
-	<td>Channel 0 transmit enable
+	<td>PRU1 Channel 0 transmit enable
 </tr>
 <tr>
     <td>PRG0_PRU1_GPI13
     <td>pru1_endat0_in
-	<td>Channel 0 receive
+	<td>PRU1 Channel 0 receive when SA mux selection is enabled (ICSSG_SA_MX_REG[7] G_MUX_EN = 1)
 </tr>
 <tr>
-    <td>GPIO1_78 Pin (J8.73)
-    <td>ENC1_EN (J8.73)
-    <td>Enable 3 channel peripheral interface in Axis 1 of BP (C16 GPIO pin)
+    <td>GPIO Pin (GPIO1_78/C16)
+    <td>ENC0_EN
+    <td>Enable encoder voltage in Axis 1 of BP (Fix this pin to high with SoC GPIO mode)
 </tr>
 <tr>
     <td>PRG0_PRU1_GPO6
     <td>pru1_endat2_clk
-	<td>Channel 2 clock
+	<td>PRU1 Channel 2 clock
 </tr>
 <tr>
     <td>PRG0_PRU1_GPO12
     <td>pru1_endat2_out
-	<td>Channel 2 transmit
+	<td>PRU1 Channel 2 transmit when SA mux selection is enabled (ICSSG_SA_MX_REG[7] G_MUX_EN = 1)
 </tr>
 <tr>
     <td>PRG0_PRU1_GPO8
     <td>pru1_endat2_outen
-	<td>Channel 2 transmit enable
+	<td>PRU1 Channel 2 transmit enable
 </tr>
 <tr>
     <td>PRG0_PRU1_GPI11
     <td>pru1_endat2_in
-	<td>Channel 2 receive
+	<td>PRU1 Channel 2 receive
 </tr>
 <tr>
-    <td>GPIO1_77 Pin (J8.74)
+    <td>GPIO Pin (GPIO1_77/B17)
     <td>ENC2_EN
-    <td>Enable 3 channel peripheral interface in Axis 2 of BP (B17 GPIO pin)
+    <td>Enable encoder voltage in Axis 2 of BP (Fix this pin to high with SoC GPIO mode)
 </tr>
 </table>
 \endcond
 
 \cond  SOC_AM261X
-##### LP-AM261 Booster Pack Pin Multiplexing
+##### LP-AM261 + BP-AM2BLDCSERVO Booster Pack Pin Multiplexing for SDK example
 <table>
 <tr>
     <th>Pin name
@@ -253,35 +293,60 @@ The CRC is the last byte of the received data. The firmware then calculates the 
 </tr>
 <tr>
     <td>PR1_PRU0_GPIO0
-    <td>pru1_endat0_clk
-	<td>Channel 0 clock
+    <td>pru0_endat0_clk
+	<td>PRU0 Channel 0 clock
 </tr>
 <tr>
     <td>PR1_PRU0_GPIO1
-    <td>pru1_endat0_out
-	<td>Channel 0 transmit
+    <td>pru0_endat0_out
+	<td>PRU0 Channel 0 transmit
 </tr>
 <tr>
-    <td>PR1_PRU0_GPIO3
-    <td>pru1_endat0_outen
-	<td>Channel 0 transmit enable
+    <td>PR1_PRU0_GPIO2
+    <td>pru0_endat0_outen
+	<td>PRU0 Channel 0 transmit enable
 </tr>
 <tr>
     <td>PR1_PRU0_GPI9
-    <td>pru1_endat0_in
-	<td>Channel 0 receive
+    <td>pru0_endat0_in
+	<td>PRU0 Channel 0 receive
 </tr>
 <tr>
-    <td>GPIO21 Pin (J8.73)
-    <td>ENC1_EN
-    <td>Enable 3 channel peripheral interface in Axis 1 of BP (B10 GPIO pin)
+    <td>GPIO Pin (GPIO_21/B10)
+    <td>ENC0_EN (PRU0)
+    <td>Enable encoder voltage in Axis 1 of BP (Fix this pin to high with SoC GPIO mode)
+</tr>
+<tr>
+    <td>PR1_PRU1_GPIO0
+    <td>pru1_endat0_clk
+	<td>PRU1 Channel 0 clock
+</tr>
+<tr>
+    <td>PR1_PRU1_GPIO1
+    <td>pru1_endat0_out
+	<td>PRU1 Channel 0 transmit
+</tr>
+<tr>
+    <td>PR1_PRU1_GPIO2
+    <td>pru1_endat0_outen
+	<td>PRU1 Channel 0 transmit enable
+</tr>
+<tr>
+    <td>PR1_PRU1_GPI9
+    <td>pru1_endat0_in
+	<td>PRU1 Channel 0 receive
+</tr>
+<tr>
+    <td>GPIO Pin (GPIO_22/A10)
+    <td>ENC0_EN (PRU1)
+    <td>Enable encoder voltage in Axis 2 of BP (Fix this pin to high with SoC GPIO mode)
 </tr>
 </table>
 \endcond
 
 \cond (SOC_AM263X || SOC_AM263PX)
 
-##### @VAR_LP_BOARD_NAME Booster Pack Pin Multiplexing
+##### @VAR_LP_BOARD_NAME + BP-AM2BLDCSERVO Booster Pack Pin Multiplexing for SDK example
 <table>
 <tr>
     <th>Pin name
@@ -290,28 +355,28 @@ The CRC is the last byte of the received data. The firmware then calculates the 
 </tr>
 <tr>
     <td>PR0_PRU0_GPIO3
-    <td>pru1_endat1_clk
-	<td>Channel 1 clock
+    <td>pru0_endat1_clk
+	<td>PRU0 Channel 1 clock
 </tr>
 <tr>
     <td>PR0_PRU0_GPO4
-    <td>pru1_endat1_out
-	<td>Channel 1 transmit
+    <td>pru0_endat1_out
+	<td>PRU0 Channel 1 transmit
 </tr>
 <tr>
     <td>PR0_PRU0_GPO5
-    <td>pru1_endat1_outen
-	<td>Channel 1 transmit enable
+    <td>pru0_endat1_outen
+	<td>PRU0 Channel 1 transmit enable
 </tr>
 <tr>
     <td>PR0_PRU0_GPI10
-    <td>pru1_endat1_in
-	<td>Channel 1 receive
+    <td>pru0_endat1_in
+	<td>PRU0 Channel 1 receive
 </tr>
 <tr>
-    <td>SDFM0_D1 Pin (J8.73)
+    <td>GPIO Pin (SDFM0_D1/D13)
     <td>ENC1_EN
-    <td>Enable 3 channel peripheral interface in Axis 1 of BP (D13 GPIO pin)
+    <td>Enable encoder voltage in Axis 1 of BP (Fix this pin to high with SoC GPIO mode)
 </tr>
 </table>
 \endcond

@@ -131,7 +131,6 @@ extern "C" {
 /**
  *  \brief  Enable cycle trigger for firmware
  */
-/* Enable cycle trigger for firmware*/
 #define TAMAGAWA_ENABLE_CYCLE_TRIGGER               (0x1)
 
 /**
@@ -299,9 +298,12 @@ typedef struct tamagawa_cmd_s
 typedef struct tamagawa_fw_config_s
 {
     volatile uint8_t opmode;
-        /**< Operation mode selection: 0 - periodic trigger, 1 - host trigger */
+        /**< Operation mode selection:
+         *   - 0: TAMAGAWA_OPMODE_PERIODIC_CMP (periodic trigger using IEP compare event)
+         *   - 1: TAMAGAWA_OPMODE_HOST_TRIGGER (host trigger mode)
+         *   - 2: TAMAGAWA_OPMODE_PERIODIC_CAP (periodic trigger using IEP capture event) */
     volatile uint8_t channel;
-        /**< Channel mask (1 << channel), 0 < channel < 3. This must be selected before running firmware.
+        /**< Channel mask (1 << channel), channel = 0, 1, or 2. This must be selected before running firmware.
              Once initialization is complete, it will reflect the detected channels in the selected mask.
              Multi-channel can have up to 3 channels selected, single channel only one */
     volatile uint8_t trigger;
@@ -774,16 +776,14 @@ int32_t tamagawa_config_host_trigger(tamagawa_handle handle);
 /**
  *  \brief      Configure Tamagawa interface for periodic trigger using IEP compare mode
  *
- *  \details    Configures the Tamagawa firmware to use IEP CAP (capture) events for periodic triggering.
- *              Position data is sampled automatically when an external signal triggers
- *              the IEP capture event.
+ *  \details    Configures the Tamagawa firmware to use IEP CMP (compare) events for periodic triggering.
+ *              Position data is sampled automatically when the IEP compare event occurs.
  *
  *              **Configuration requirements:**
- *              - IEP hardware CAP registers must be configured separately
- *              - External signal to IEP capture input should be configured
- *              - Use \ref tamagawa_config_iep_cap_event to set event number in firmware. This function
+ *              - IEP hardware CMP registers must be configured separately
+ *              - Use \ref tamagawa_config_iep_cmp_event to set event number in firmware. This function
  *                is called inside \ref tamagawa_init by default.
- *              - CAP event range: 0-7
+ *              - CMP event range: 0-15
  *
  *  \param[in]  handle    Tamagawa handle returned by \ref tamagawa_init
  *
@@ -990,10 +990,9 @@ tamagawa_priv* tamagawa_get_priv(tamagawa_handle handle);
 /**
  *  \brief      Configure IEP CMP event for periodic trigger (DMEM configuration only)
  *
- *  \details    This function configures the IEP capture event information in PRU shared
- *              memory (DMEM) for firmware access. It writes the capture register address
- *              and event number to trigger_params structure. This function does NOT configure
- *              IEP hardware registers.
+ *  \details    This function configures the IEP compare event information in PRU shared
+ *              memory (DMEM) for firmware access. It writes the event number to trigger_params
+ *              structure. This function does NOT configure IEP hardware registers.
  *
  *  \param[in]  handle          Tamagawa handle returned by \ref tamagawa_init
  *  \param[in]  channel         Tamagawa channel number (0-2). Used in load share mode,
@@ -1003,17 +1002,18 @@ tamagawa_priv* tamagawa_get_priv(tamagawa_handle handle);
  *  \retval     SystemP_SUCCESS  CMP event configured successfully
  *  \retval     SystemP_FAILURE  On NULL handle or invalid event_num/channel
  *
- *  \note       This function only handles DMEM writes. IEP register configuration must be
- *              done separately by the application.
+ *  \note       This function only configures firmware DMEM, not IEP hardware.
+ *              Application must separately configure IEP CMP hardware registers.
  */
 int32_t tamagawa_config_iep_cmp_event(tamagawa_handle handle, uint8_t channel, uint8_t event_num);
 
 /**
  *  \brief      Configure IEP CAP event for periodic trigger (DMEM configuration only)
  *
- *  \details    This function configures the IEP compare event information in PRU shared
- *              memory (DMEM) for firmware access. It writes the event number to trigger_params
- *              structure. This function does NOT configure IEP hardware registers.
+ *  \details    This function configures the IEP capture event information in PRU shared
+ *              memory (DMEM) for firmware access. It writes the capture register address
+ *              and event number to trigger_params structure. This function does NOT configure
+ *              IEP hardware registers.
  *
  *  \param[in]  handle          Tamagawa handle returned by \ref tamagawa_init
  *  \param[in]  channel         Tamagawa channel number (0-2). Used in load share mode,

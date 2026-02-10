@@ -31,7 +31,7 @@
     <td>Position Sense EnDat3
 </tr>
 <tr>
-    <td>Multi-channel with different communication modes and different numbers of encoders connected across channels under load share mode
+    <td>Multi-channel with different communication modes and different numbers of encoders connected across channels under load share mode, Handle-based API architecture, Periodic trigger modes (CMP and CAP), SysConfig-based initialization
     <td>Position Sense Tamagawa
 </tr>
 <tr>
@@ -147,7 +147,7 @@ Mbed-TLS                             | R5F            | mbedtls-2.13.1
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Single channel, Multi channel using single PRU core, Multi channel using three PRU cores (load share mode), absolute position, encoder ID, reset, EEPROM read, EEPROM write, 2.5 Mbps Encoder, continuous mode, BP-AM2BLDCSERVO Boosterpack with LP-AM243
+    <td> Single channel, Multi channel using single PRU core, Multi channel using three PRU cores (load share mode), absolute position, encoder ID, reset, EEPROM read, EEPROM write, 2.5 Mbps Encoder, periodic trigger modes (CMP and CAP), BP-AM2BLDCSERVO Boosterpack with LP-AM243
     <td> 5 Mbps encoder
 </tr>
 </table>
