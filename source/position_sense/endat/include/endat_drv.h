@@ -127,6 +127,16 @@ extern "C" {
 /**    \brief    EnDAT initialization frequency in Hz (200 kHz) */
 #define ENDAT_INIT_FREQ                                     (200000U)
 
+/**    \brief    EnDAT clock cycle period at initialization frequency (ns)
+ *             Clock period = 1 / 200kHz = 5000ns */
+#define ENDAT_INIT_FREQ_CLOCK_PERIOD_NS                     (5000U)
+
+/**    \brief    Number of propagation delay samples for averaging */
+#define ENDAT_PROP_DELAY_NUM_SAMPLES                        (8U)
+
+/**    \brief    Nanoseconds per second conversion factor */
+#define ENDAT_NS_PER_SECOND                                 (1000000000U)
+
 /**    \brief    Minimum short recovery time in nanoseconds (2.45 μs) */
 #define ENDAT_SHORT_RECOVERY_TIME_MIN                       (2450U)
 

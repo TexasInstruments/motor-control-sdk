@@ -3221,18 +3221,17 @@ ENDAT_SKIP39_CH2:
 	LBCO      &R0, PRUx_DMEM,	ENDAT_CONFIG_DELAY_51US_OFFSET, 4;51 us (10.2T @200KHz, 0.2T to avoid boundary ambiguities)
 	CALL2	   FN_DELAY_CYCLES
 
-
-        ; wait for rising clock edge
+    ; wait for rising clock edge
+    LDI     SCRATCH1.w0, ICSS_CFG_PRUx_ENDAT_TXCFG
+    ZERO    &SCRATCH2, 4
 ENDAT_TD_RISING_CLOCK:
-	LDI     SCRATCH1.w0, ICSS_CFG_PRUx_ENDAT_TXCFG
 	LBCO	&R0.w0,	ICSS_CFG,	SCRATCH1.w0,	2
-        QBBC            ENDAT_TD_RISING_CLOCK,  R0.w0,  R3.b1
-  ;set pru counter to zero
-	ZERO		&R0,	4
+    QBBC            ENDAT_TD_RISING_CLOCK,  R0.w0,  R3.b1
+
     .if $isdefed("ENABLE_MULTI_MAKE_TXPRU")
-	SBCO 	&R0, c28, PRUx_CNTL_CYCLE_COUNT_OFFSET, 4
+	SBCO 	&SCRATCH2, c28, PRUx_CNTL_CYCLE_COUNT_OFFSET, 4
     .else
-	SBCO 	&R0, c11, PRUx_CNTL_CYCLE_COUNT_OFFSET, 4
+	SBCO 	&SCRATCH2, c11, PRUx_CNTL_CYCLE_COUNT_OFFSET, 4
 	.endif
 
      ; wait for start rx
@@ -3259,10 +3258,8 @@ W_RX_HIGH:
 	LBCO	&R0,	ICSS_CFG,	SCRATCH1.w0,	4
 	QBBC		W_RX_HIGH,	R0,	28
 
-
     ; read pru counter at time when rx start
     .if $isdefed("ENABLE_MULTI_MAKE_TXPRU")
-
 	LBCO 	&R0, c28, PRUx_CNTL_CYCLE_COUNT_OFFSET, 4
     .else
 	LBCO 	&R0, c11, PRUx_CNTL_CYCLE_COUNT_OFFSET, 4
@@ -3311,7 +3308,6 @@ SKIP_GLOBAL_TX_REINIT5:
 WB4:
 	QBBS		WB4,	R31,	R3.b3
 
-
     LBCO      &R0, PRUx_DMEM,	ENDAT_CONFIG_DELAY_2MS_OFFSET, 4
 	CALL2	FN_DELAY_CYCLES
     .if $isdefed("ENABLE_MULTI_MAKE_RTU")
@@ -3325,19 +3321,10 @@ WB4:
 	SBCO	&SCRATCH2.b0,	PRUx_DMEM,	ENDAT_CH2_CONFIG_SYN_BIT,	1
     .endif
 
-
 	ADD		R8.w2,	R8.w2,	1
 	QBGT	PROPAGATION_DELAY_CALC_LOOP,	R8.w2,	8
-	LSR		R9,	R9,	3 ; Average the 8 samples
-
 
     LBCO	&R27,	PRUx_DMEM,	ENDAT_CONFIG_DELAY_5US_OFFSET,	4
-
-ENDAT_PROP_DELAY_MODULUS:
-        QBGT            ENDAT_SKIP_PROP_DELAY_MODULUS, R9,   R27
-	SUB		R9,     R9,     R27
-        JMP             ENDAT_PROP_DELAY_MODULUS
-ENDAT_SKIP_PROP_DELAY_MODULUS:
 
 	RET
 	.endif
