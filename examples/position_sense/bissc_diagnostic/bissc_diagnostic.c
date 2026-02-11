@@ -1769,7 +1769,7 @@ void bissc_main(void *args)
                 }
                 else
                 {
-                    DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles): ");
+                    DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) for instance %u: \n", i);
                     DebugP_scanf("%llu\n", &trigger_count[i][0]);
                     if((trigger_count[i][0] > iep_reset_count) || (trigger_count[i][0] <= BISSC_IEP_COUNTER_INCREMENT))
                     {
