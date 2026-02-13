@@ -172,7 +172,7 @@ void endat3_pru_irq_handler(void *pruicss_handle);
 /**
  * \brief Configure IEP CAP mode for periodic trigger using SYNC signal
  *
- * \details This function configures IEP SYNC OUT0 generation and routes it to CAP6 (LATCH0_IN0) via TIMESYNC router
+ * \details This function configures IEP SYNC OUT0 generation and routes it to CAP6 (LATCH_IN0) via TIMESYNC router
  *
  * \param handle EnDAT3 driver handle
  * \param iep_sync0_period IEP SYNC OUT0 period in IEP clock cycles
@@ -216,13 +216,13 @@ static int32_t endat3_config_iep_cap_for_sync(endat3_handle handle, uint32_t iep
     {
         if(attrs->pruicss_instance == 1)
         {
-            /* ICSSG1: Connect IEP0 SYNC OUT0 output to LATCH0_IN0 */
+            /* ICSSG1: Connect IEP0 SYNC OUT0 output to LATCH_IN0 */
             HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + ENDAT3_TIMESYNC_EVENT_ROUTER_OUT12_OFFSET),
                         ENDAT3_TIMESYNC_EVENT_ROUTER_IN29);
         }
         else
         {
-            /* ICSSG0: Connect IEP0 SYNC OUT0 output to LATCH0_IN0 */
+            /* ICSSG0: Connect IEP0 SYNC OUT0 output to LATCH_IN0 */
             HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + ENDAT3_TIMESYNC_EVENT_ROUTER_OUT8_OFFSET),
                         ENDAT3_TIMESYNC_EVENT_ROUTER_IN25);
         }
@@ -231,13 +231,13 @@ static int32_t endat3_config_iep_cap_for_sync(endat3_handle handle, uint32_t iep
     {
         if(attrs->pruicss_instance == 1)
         {
-            /* ICSSG1: Connect IEP1 SYNC OUT0 output to LATCH0_IN0 */
+            /* ICSSG1: Connect IEP1 SYNC OUT0 output to LATCH_IN0 */
             HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + ENDAT3_TIMESYNC_EVENT_ROUTER_OUT14_OFFSET),
                         ENDAT3_TIMESYNC_EVENT_ROUTER_IN31);
         }
         else
         {
-            /* ICSSG0: Connect IEP1 SYNC OUT0 output to LATCH0_IN0 */
+            /* ICSSG0: Connect IEP1 SYNC OUT0 output to LATCH_IN0 */
             HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + ENDAT3_TIMESYNC_EVENT_ROUTER_OUT10_OFFSET),
                         ENDAT3_TIMESYNC_EVENT_ROUTER_IN27);
         }

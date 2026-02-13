@@ -74,10 +74,10 @@ extern "C" {
 /** \brief TSR output event: SYNC3_OUT Pin - Selectable timesync event 27 Edge (4+(27*4) = 0x70) */
 #define SYNCEVT_RTR_SYNC27_EVT              (0x70)
 
-/** \brief TSR output event: ICSSG0_PR1_EDC1_LATCH0_IN PRU_ICSSG0 (4+(10*4) = 0x2C) */
+/** \brief TSR output event: ICSSG0_PR1_EDC1_LATCH_IN0 PRU_ICSSG0 (4+(10*4) = 0x2C) */
 #define SYNCEVT_RTR_SYNC10_EVT              (0x2C)
 
-/** \brief TSR output event: ICSSG0_PR1_EDC1_LATCH1_IN PRU_ICSSG0 (4+(11*4) = 0x30) */
+/** \brief TSR output event: ICSSG0_PR1_EDC1_LATCH_IN1 PRU_ICSSG0 (4+(11*4) = 0x30) */
 #define SYNCEVT_RTR_SYNC11_EVT              (0x30)
 
 /** @} */

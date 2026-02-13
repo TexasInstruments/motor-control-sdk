@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2024-2025 Texas Instruments Incorporated
+ *  Copyright (C) 2024-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -408,21 +408,23 @@ typedef struct nikon_position_info_s
     uint32_t raw_data5[NUM_ENCODERS_MAX];
     /**< Raw data receive from encoder - DF4 */
     uint32_t rcv_crc[NUM_ENCODERS_MAX];
-    /**< 8-bit receive position sense crc*/
+    /**< 8-bit receive position sense crc */
     uint32_t otf_crc[NUM_ENCODERS_MAX];
     /**< 8-bit calculated otf crc*/
     uint32_t crc_err_cnt[NUM_ENCODERS_MAX];
-    /**< Position data crc error count*/
+    /**< Position data crc error count */
     uint64_t abs[NUM_ENCODERS_MAX];
     /**< Absolute data(position data) received from the encoder */
     uint32_t multi_turn[NUM_ENCODERS_MAX];
     /**< Total number of complete rotations(360) */
     float angle[NUM_ENCODERS_MAX];
-    /**< Angle of encoder shaft*/
+    /**< Angle of encoder shaft */
     int32_t velocity[NUM_ENCODERS_MAX];
-    /* Velocity data */
+    /**< Velocity data (signed, Nikon 3.0 only).
+     *   32-bit signed integer velocity value received from the encoder */
     int16_t acc[NUM_ENCODERS_MAX];
-    /* Acceleration data */
+    /**< Acceleration data (signed, Nikon 3.0 only).
+     *   16-bit signed integer acceleration value received from the encoder */
 } nikon_position_info;
 
 typedef struct nikon_encoder_info_s
@@ -728,7 +730,7 @@ typedef struct nikon_priv_s
     /**< Flag for continuous mode triggered */
 
     uint8_t bank_error;
-    /**< Incorrect bank error indication in response */
+    /**< Incorrect bank error indication in response (Nikon 3.0 only) */
 
 } nikon_priv;
 

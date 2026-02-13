@@ -180,7 +180,7 @@ static int32_t nikon_config_iep_base_address(nikon_handle handle, uint32_t iep_b
 /* Default nikon parameters structure */
 const nikon_params gNikonDefaultParams =
 {
-    NULL,                                    /* pruicss_handle */
+    NULL,                                   /* pruicss_handle */
     NIKON_DEFAULT_CMD_PROCESS_DELAY_US,     /* cmd_process_delay_us */
     NIKON_DEFAULT_FW_WAIT_DELAY_US,         /* fw_wait_delay_us */
     NIKON_DEFAULT_MAX_WAIT_LOOP_COUNT,      /* max_wait_loop_count */

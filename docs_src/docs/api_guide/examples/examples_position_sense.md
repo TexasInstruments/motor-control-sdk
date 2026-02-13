@@ -273,9 +273,9 @@ For PRU-related issues, verify that the application is loading the PRU firmware 
 
 \note This subsection is applicable for BiSS-C, EnDat, Nikon A-format and Tamagawa only. Load share mode is not available for Tamagawa.
 
-SDK examples uses IEP CMP event to trigger periodic mode. CMP0 is used to get periodic CMP events by resetting the IEP counter continuously. Firmware triggers a R5F interrupt after getting a response from the encoder. The application code uses a callback function to clear the PRU interrupt, which can be modified as per the use case. CMP3 is used for single channel and single PRU multi-channel mode. For multi-channel load share mode, CMP3 is used for RTU core, CMP5 is used for PRU core and CMP6 is used for TX PRU core channel. Refer the example specific page for details on how to modify the compare events.
+SDK examples uses IEP compare/capture event(s) to trigger commands in periodic mode. Firmware triggers a R5F interrupt after getting a response from the encoder. The application code uses a callback function to clear the PRU interrupt, which can be modified as per the use case. CMP/CAP event number can be configured using SysConfig module of encoder. Refer the example specific page for details (see \ref NIKON_EXAMPLE_PERIODIC_MODE).
 
-When programming the values for CMP based trigger events, ensure that the command send and receive can complete within the cycle time (configured with CMP0). In multi-channel, ensure that command completion for timings for all channels are considered. Incorrect values may send PRU FW in bad state. Also, refer to encoder specifications to ensure that requirement for mimimum interval between two commands is met.
+When programming the values for periodic trigger CMP/CAP mode, ensure that the command send and receive can complete within the cycle time (configured with CMP0). In multi-channel, ensure that command completion for timings for all channels are considered. Incorrect values may send PRU FW in bad state. Also, refer to encoder specifications to ensure that requirement for mimimum interval between two commands is met.
 
 ### IEP Registers Configuration
 
