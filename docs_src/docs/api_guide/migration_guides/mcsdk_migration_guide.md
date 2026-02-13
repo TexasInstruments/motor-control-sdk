@@ -6,6 +6,7 @@ Following pages contain details on changes which can affect migration of applica
 
 - \subpage BISSC_MIGRATION_GUIDE_2025_00
 - \subpage NIKON_MIGRATION_GUIDE_2025_00
+- \subpage ENDAT_MIGRATION_GUIDE_2025_00
 
 ## Migration Details for Motor Control SDK 9.x/10.x/11.x
 \cond SOC_AM64X || SOC_AM243X

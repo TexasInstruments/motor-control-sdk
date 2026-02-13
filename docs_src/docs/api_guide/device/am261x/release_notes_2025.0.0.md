@@ -30,6 +30,10 @@
     <td>Dual channel support using two independent PRU cores, handle-based API architecture, periodic trigger modes (CMP and CAP), SysConfig-based initialization
     <td>Position Sense Nikon A-format
 </tr>
+<tr>
+    <td>Dual channel support using two independent PRU cores, handle-based API architecture, periodic trigger modes (CMP and CAP), SysConfig-based initialization
+    <td>Position Sense EnDat
+</tr>
 </table>
 
 ## Device and Validation Information
@@ -75,7 +79,7 @@ Mbed-TLS                | R5F            | 2.13.1
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Single channel, Continuous mode, Recovery Time for 2.2 command set, Interface speed of 5 and 10 MHz, BP-AM2BLDCSERVO Boosterpack with LP-AM261
+    <td> Single channel, dual channel using two independent PRU cores, Recovery Time for 2.2 command set, Interface speed of 5 and 10 MHz, periodic trigger modes (CMP and CAP), Continuous mode, BP-AM2BLDCSERVO Boosterpack with LP-AM261
     <td> Encoder receive communication command
 </tr>
 <tr>
