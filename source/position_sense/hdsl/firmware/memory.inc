@@ -419,6 +419,11 @@ ECAP_ECCTL1	.set						0x28
 IEP_CNT		.set						0x10
 IEP_CAPR6_RISE .set                     0x50
 IEP_CAPR7_RISE .set                     0x60
+	.if $defined(SLICE1)
+IEP_CAPR_RISE	.set IEP_CAPR6_RISE
+	.else
+IEP_CAPR_RISE	.set IEP_CAPR7_RISE
+	.endif
 TXPRU1_CTRL .set 						0x00025800
 TXPRU1_IMEM_BASE .set 					0x0000C000
 

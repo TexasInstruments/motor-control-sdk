@@ -835,12 +835,12 @@ int32_t HDSL_get_rssi(HDSL_Handle handle, uint8_t *rssi);
  *          for completing short message write operation, i.e. FRES bit will be unset for < 250 us.
  *
  *  \param[in]  handle  HDSL handle obtained from \ref HDSL_open
- *  \param[in]  addr    Address (must be 6-bit: 0x00 to 0x3F)
+ *  \param[in]  addr    Address (must be 7-bit: 0x00 to 0x7F)
  *  \param[in]  data    Data
  *  \param[in]  timeout Timeout in microseconds
  *
  *  \return     SystemP_SUCCESS in case of success
- *  \return     SystemP_FAILURE if handle is NULL, addr > 0x3F, or internal structures are NULL
+ *  \return     SystemP_FAILURE if handle is NULL, addr > 0x7F, or internal structures are NULL
  *  \return     SystemP_TIMEOUT in case of timeout
  *
  *  \note       Applications should use reasonable timeout values. Extremely large values
@@ -856,12 +856,12 @@ int32_t HDSL_write_pc_short_msg(HDSL_Handle handle, uint8_t addr, uint8_t data, 
  *              for completing short message read operation, i.e. FRES bit will be unset for < 250 us.
  *
  *  \param[in]  handle  HDSL handle obtained from \ref HDSL_open
- *  \param[in]  addr    Address (must be 6-bit: 0x00 to 0x3F)
+ *  \param[in]  addr    Address (must be 7-bit: 0x00 to 0x7F)
  *  \param[in]  data    Pointer to data buffer where read data will be stored
  *  \param[in]  timeout Timeout in microseconds
  *
  *  \return     SystemP_SUCCESS in case of success
- *  \return     SystemP_FAILURE if handle is NULL, addr > 0x3F, data is NULL, or internal structures are NULL
+ *  \return     SystemP_FAILURE if handle is NULL, addr > 0x7F, data is NULL, or internal structures are NULL
  *  \return     SystemP_TIMEOUT in case of timeout
  *
  *  \note       Applications should use reasonable timeout values. Extremely large values
