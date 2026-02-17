@@ -30,9 +30,9 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* This example demonstrates the UART RX and TX operation by echoing char
- * that it recieves in blocking, interrupt mode of operation.
- * When user types 'quit', the application ends.
+/* This example demonstrates Tamagawa encoder communication over SoC UART.
+ * It provides a menu-driven interface for executing Tamagawa Data ID commands
+ * and displays the encoder response with CRC verification.
  */
 #include <stdio.h>
 #include <string.h>
@@ -202,7 +202,7 @@ void uart_tamagawa(void *args)
         return;
     }
 
-    ret = tamagawa_init(tamagawa_interface, uart_communication_instance, uart_gpio_base_address, uart_gpio_pin_number,  uart_gpio_pin_direction);
+    ret = tamagawa_init(tamagawa_interface, uart_communication_instance, uart_gpio_base_address, uart_gpio_pin_number, uart_gpio_pin_direction);
 
     if(ret != SystemP_SUCCESS)
     {

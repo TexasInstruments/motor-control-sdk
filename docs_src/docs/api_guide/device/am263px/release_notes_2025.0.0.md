@@ -120,6 +120,14 @@ Mbed-TLS                             | R5F            | mbedtls-2.13.1
     <td> Single channel, Multi channel using single PRU core, absolute position, encoder ID, reset, EEPROM read, EEPROM write, 2.5 Mbps Encoder, continuous mode, BP-AM2BLDCSERVO Boosterpack with LP-AM263P
     <td> 5 Mbps encoder
 </tr>
+<tr>
+    <td> Tamagawa over SOC UART
+    <td> R5F
+    <td> YES
+    <td> FreeRTOS
+    <td> Single channel, absolute position, encoder ID, reset, EEPROM read, EEPROM write, 2.5 Mbps Encoder, CRC verification
+    <td> 5 Mbps encoder, long cable length
+</tr>
 </table>
 
 ### Real Time Libraries
@@ -257,6 +265,18 @@ SDK drivers underwent significant architectural changes including a move to hand
     <th> Affected API or structure
     <th> Change
     <th> Additional Remarks
+</tr>
+<tr>
+    <td> Tamagawa over SOC UART
+    <td> tamagawa_init()
+    <td> Return type changed from void to int32_t (`SystemP_SUCCESS` / `SystemP_FAILURE`). Added NULL pointer validation.
+    <td> -
+</tr>
+<tr>
+    <td> Tamagawa over SOC UART
+    <td> tamagawa_command_process()
+    <td> Return values standardized to `SystemP_SUCCESS` / `SystemP_FAILURE`
+    <td> -
 </tr>
 </table>
 
