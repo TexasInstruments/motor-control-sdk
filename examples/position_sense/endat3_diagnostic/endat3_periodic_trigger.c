@@ -612,7 +612,7 @@ static int32_t endat3_config_iep(endat3_periodic_interface *endat3_periodic_inte
         priv[i] = endat3_get_priv(endat3_periodic_interface->handle[i]);
         if((endat3_periodic_interface->handle[i] == NULL) || (attrs[i] == NULL) || (priv[i] == NULL))
         {
-            DebugP_log("\r\n\n|ERROR: endat3_config_iep() failed due to NULL handle/attrs/priv");
+            DebugP_log("\r\n\n|ERROR: endat3_config_iep() failed due to NULL handle/attrs/priv for EnDAT3 instance %u", i);
             return SystemP_FAILURE;
         }
     }
@@ -743,7 +743,7 @@ int32_t endat3_config_periodic_mode(endat3_periodic_interface *endat3_periodic_i
     {
         if(endat3_periodic_interface->handle[i] == NULL)
         {
-            DebugP_log("\r\n\n|ERROR: endat3_config_periodic_mode() failed due to NULL handle");
+            DebugP_log("\r\n\n|ERROR: endat3_config_periodic_mode() failed due to NULL handle for EnDAT3 instance %u", i);
             return SystemP_FAILURE;
         }
     }
@@ -813,7 +813,7 @@ int32_t endat3_stop_periodic_mode(endat3_periodic_interface *endat3_periodic_int
         priv[i] = endat3_get_priv(endat3_periodic_interface->handle[i]);
         if((endat3_periodic_interface->handle[i] == NULL) || (attrs[i] == NULL) || (priv[i] == NULL))
         {
-            DebugP_log("\r\n\n|ERROR: endat3_config_iep() failed due to NULL handle/attrs/priv");
+            DebugP_log("\r\n\n|ERROR: endat3_stop_periodic_mode() failed due to NULL handle/attrs/priv for EnDAT3 instance %u", i);
             return SystemP_FAILURE;
         }
     }

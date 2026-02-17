@@ -601,6 +601,7 @@ static int32_t tamagawa_get_command(uint8_t *adf, uint8_t *edf)
 
         if((gAppTamagawaHandle[i] == NULL) || (attrs[i] == NULL))
         {
+            DebugP_log("\r\n| ERROR: NULL handle/attrs for Tamagawa instance %u", i);
             return SystemP_FAILURE;
         }
     }
@@ -961,7 +962,7 @@ static int32_t tamagawa_process_periodic_command(tamagawa_handle handle[], int32
         attrs[i] = tamagawa_get_attrs(handle[i]);
         if((handle[i] == NULL) || (attrs[i] == NULL))
         {
-            DebugP_log("\r\n\n| ERROR: NULL handle/attrs\n");
+            DebugP_log("\r\n\n| ERROR: NULL handle/attrs for Tamagawa instance %u\n", i);
             return SystemP_FAILURE;
         }
 
@@ -974,7 +975,7 @@ static int32_t tamagawa_process_periodic_command(tamagawa_handle handle[], int32
                    ((attrs[i]->channel1_enabled) && (gTamagawaPeriodicInterface.periodic_trigger_count[i][1] > gTamagawaPeriodicInterface.iep_reset_count)) ||
                    ((attrs[i]->channel2_enabled) && (gTamagawaPeriodicInterface.periodic_trigger_count[i][2] > gTamagawaPeriodicInterface.iep_reset_count)))
                 {
-                    DebugP_log("\r\n\n| ERROR: Channel trigger count exceeds IEP reset count for instance %u\n", i);
+                    DebugP_log("\r\n\n| ERROR: Channel trigger count exceeds IEP reset count for Tamagawa instance %u\n", i);
                     return SystemP_FAILURE;
                 }
             }
@@ -982,7 +983,7 @@ static int32_t tamagawa_process_periodic_command(tamagawa_handle handle[], int32
             {
                 if(gTamagawaPeriodicInterface.periodic_trigger_count[i][0] > gTamagawaPeriodicInterface.iep_reset_count)
                 {
-                    DebugP_log("\r\n\n| ERROR: Channel trigger count exceeds IEP reset count for instance %u\n", i);
+                    DebugP_log("\r\n\n| ERROR: Channel trigger count exceeds IEP reset count for Tamagawa instance %u\n", i);
                     return SystemP_FAILURE;
                 }
             }
@@ -1026,7 +1027,7 @@ static int32_t tamagawa_process_periodic_command(tamagawa_handle handle[], int32
 
     for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
     {
-        ret = tamagawa_command_process(handle[i], process_dataid_cmd); 
+        ret = tamagawa_command_process(handle[i], process_dataid_cmd);
         if(ret!= SystemP_SUCCESS)
         {
             if(ret == SystemP_TIMEOUT)
@@ -1290,7 +1291,7 @@ void tamagawa_main(void *args)
 
         if((gAppTamagawaHandle[i] == NULL) || (attrs[i] == NULL))
         {
-            DebugP_log("\r\nERROR: Tamagawa initialization failed for instance %u\n", i);
+            DebugP_log("\r\nERROR: Tamagawa initialization failed for Tamagawa instance %u\n", i);
             return;
         }
 
@@ -1433,7 +1434,7 @@ void tamagawa_main(void *args)
 
         for(i = 0; i < CONFIG_TAMAGAWA_NUM_INSTANCES; i++)
         {
-            ret = tamagawa_command_process(gAppTamagawaHandle[i], cmd); 
+            ret = tamagawa_command_process(gAppTamagawaHandle[i], cmd);
             if(ret!= SystemP_SUCCESS)
             {
                 /* NOTE: If command processing fails, no valid data is available to parse.

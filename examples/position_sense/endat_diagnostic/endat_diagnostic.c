@@ -1688,7 +1688,7 @@ static int32_t endat_calc_position_period(uint32_t freq)
 
         if((gAppEndatHandle[i] == NULL) || (attrs[i] == NULL))
         {
-            DebugP_log("\r\n\nERROR: NULL handle/attrs, exiting endat_calc_position_period()\n");
+            DebugP_log("\r\n\nERROR: NULL handle/attrs for EnDAT instance %u, exiting endat_calc_position_period()\n", i);
             return -1;
         }
     }
@@ -2564,7 +2564,7 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
 
         if((handle[i] == NULL) || (priv[i] == NULL) || (attrs[i] == NULL))
         {
-            DebugP_log("\r\n\nERROR: NULL handle/priv/attrs\n");
+            DebugP_log("\r\n\nERROR: NULL handle/priv/attrs for EnDAT instance %u\n", i);
             return SystemP_FAILURE;
         }
 
@@ -2576,7 +2576,7 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
                    ((attrs[i]->channel1_enabled) && (cmd_supplement[i].ch_trigger_count[1] > cmd_supplement[CONFIG_ENDAT0].iep_reset_count)) ||
                    ((attrs[i]->channel2_enabled) && (cmd_supplement[i].ch_trigger_count[2] > cmd_supplement[CONFIG_ENDAT0].iep_reset_count)))
                 {
-                    DebugP_log("\r\n\nERROR: Channel trigger count exceeds IEP reset count for instance %u\n", i);
+                    DebugP_log("\r\n\nERROR: Channel trigger count exceeds IEP reset count for EnDAT instance %u\n", i);
                     return SystemP_FAILURE;
                 }
             }
@@ -2584,7 +2584,7 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
             {
                 if(cmd_supplement[i].ch_trigger_count[0] > cmd_supplement[CONFIG_ENDAT0].iep_reset_count)
                 {
-                    DebugP_log("\r\n\nERROR: Channel trigger count exceeds IEP reset count for instance %u\n", i);
+                    DebugP_log("\r\n\nERROR: Channel trigger count exceeds IEP reset count for EnDAT instance %u\n", i);
                     return SystemP_FAILURE;
                 }
             }
@@ -2612,7 +2612,7 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
 
             if(periodic_cmd[i] == SystemP_FAILURE)
             {
-                DebugP_log("\r| ERROR: endat_get_command() failed\n");
+                DebugP_log("\r| ERROR: endat_get_command() failed for EnDAT instance %u\n", i);
                 return SystemP_FAILURE;
             }
 
@@ -2623,14 +2623,14 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
                     status = endat_get_command_supplement(handle[i], periodic_cmd[i], &periodic_cmd_supplement[i]);
                     if(status == SystemP_FAILURE)
                     {
-                        DebugP_log("\r| ERROR: Failed to get command supplement for periodic command\n");
+                        DebugP_log("\r| ERROR: Failed to get command supplement for periodic command for EnDAT instance %u\n", i);
                         return SystemP_FAILURE;
                     }
                 }
             }
             else
             {
-                DebugP_log("\r| ERROR: Invalid command for periodic mode\r\n|\r\n|\n");
+                DebugP_log("\r| ERROR: Invalid command for periodic mode for EnDAT instance %u\r\n|\r\n|\n", i);
                 return SystemP_FAILURE;
             }
         }
@@ -2674,11 +2674,11 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
             {
                 if(ret == SystemP_TIMEOUT)
                 {
-                    DebugP_log("\r| ERROR: Command processing timed out, endat_command_process failed\r\n|\r\n|\n");
+                    DebugP_log("\r| ERROR: Command processing timed out, endat_command_process failed for EnDAT instance %u\r\n|\r\n|\n", i);
                 }
                 else
                 {
-                    DebugP_log("\r| ERROR: Failed to process command, endat_command_process failed\r\n|\r\n|\n");
+                    DebugP_log("\r| ERROR: Failed to process command, endat_command_process failed for EnDAT instance %u\r\n|\r\n|\n", i);
                 }
                 return SystemP_FAILURE;
             }
@@ -2689,7 +2689,7 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
                 status = endat_config_periodic_trigger_cap_mode(handle[i]);
                 if(status != SystemP_SUCCESS)
                 {
-                    DebugP_log("\r| ERROR: CAP trigger config failed: %d\n", status);
+                    DebugP_log("\r| ERROR: CAP trigger config failed for EnDAT instance %u: %d\n", i, status);
                     return SystemP_FAILURE;
                 }
             }
@@ -2698,7 +2698,7 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
                 status = endat_config_periodic_trigger_cmp_mode(handle[i]);
                 if(status != SystemP_SUCCESS)
                 {
-                    DebugP_log("\r| ERROR: CMP trigger config failed: %d\n", status);
+                    DebugP_log("\r| ERROR: CMP trigger config failed for EnDAT instance %u: %d\n", i, status);
                     return SystemP_FAILURE;
                 }
                 if(attrs[i]->mode == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
@@ -3006,13 +3006,13 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
                                 status = endat_multi_channel_set_cur(handle[i], j);
                                 if(status != SystemP_SUCCESS)
                                 {
-                                    DebugP_log("\r| ERROR: Ch set failed: %d\n", status);
+                                    DebugP_log("\r| ERROR: Ch set failed for EnDAT instance %u ch %u: %d\n", i, j, status);
                                     continue;
                                 }
                                 status = endat_recvd_process(handle[i], 1, &gAppEndatFormatDataMtrCtrl[i][j]);
                                 if(status != SystemP_SUCCESS)
                                 {
-                                    DebugP_log("\r| ERROR: Recvd process failed: %d\n", status);
+                                    DebugP_log("\r| ERROR: Recvd process failed for EnDAT instance %u ch %u: %d\n", i, j, status);
                                     continue;
                                 }
                                 char_count += endat_get_position_loop_chars(priv[i]->multi_turn_res[priv[i]->current_channel], 0, 0);
@@ -3028,7 +3028,7 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
                         status = endat_recvd_process(handle[i], 1, &gAppEndatFormatDataMtrCtrl[i][priv[i]->current_channel]);
                         if(status != SystemP_SUCCESS)
                         {
-                            DebugP_log("\r| ERROR: Recvd process failed: %d\n", status);
+                            DebugP_log("\r| ERROR: Recvd process failed for EnDAT instance %u: %d\n", i, status);
                             continue;
                         }
                         char_count = endat_get_position_loop_chars(priv[i]->multi_turn_res[priv[i]->current_channel], 1, 0);
@@ -3175,7 +3175,7 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
                                 status = endat_multi_channel_set_cur(handle[i], j);
                                 if(status != SystemP_SUCCESS)
                                 {
-                                    DebugP_log("\r| ERROR: Ch set failed: %d\n", status);
+                                    DebugP_log("\r| ERROR: Ch set failed for EnDAT instance %u ch %u: %d\n", i, j, status);
                                     continue;
                                 }
                                 char_count += endat_get_position_loop_chars(priv[i]->multi_turn_res[priv[i]->current_channel], 0, 1);
@@ -3341,7 +3341,6 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
                 for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
                 {
                     endat_process_2_1_position_command(handle[i]);
-
                 }
                 /* increase sleep value if glitches in display to be prevented (and would result in slower position display freq) */
                 ClockP_usleep(POSITION_LOOP_2_1_DELAY_US);
@@ -3567,7 +3566,7 @@ void endat_main(void *args)
 
         if((gAppEndatHandle[i] == NULL) || (attrs[i] == NULL) || (priv[i] == NULL))
         {
-            DebugP_log("\r\nERROR: EnDAT initialization failed\n");
+            DebugP_log("\r\nERROR: EnDAT initialization failed for EnDAT instance %u\n", i);
             return;
         }
 
@@ -3698,21 +3697,21 @@ void endat_main(void *args)
             {
                 if(status == SystemP_TIMEOUT)
                 {
-                    DebugP_log("\rEnDat initialization timeout during channel information read\n");
+                    DebugP_log("\rEnDat initialization timeout during channel information read for EnDAT instance %u\n", i);
                 }
                 else
                 {
-                    DebugP_log("\rEnDat initialization failed during channel information read\n");
+                    DebugP_log("\rEnDat initialization failed during channel information read for EnDAT instance %u\n", i);
                 }
-                DebugP_log("\rexit %s due to failed initialization\n", __func__);
+                DebugP_log("\rexit %s due to failed initialization for EnDAT instance %u\n", __func__, i);
                 goto deinit;
             }
 
             status = endat_get_prop_delay(gAppEndatHandle[i], &prop_delay_cnt);
             if(status != SystemP_SUCCESS)
             {
-                DebugP_log("\rEnDat get propagation delay failed\n");
-                DebugP_log("\rexit %s due to failed propagation delay read\n", __func__);
+                DebugP_log("\rEnDat get propagation delay failed for EnDAT instance %u\n", i);
+                DebugP_log("\rexit %s due to failed propagation delay read for EnDAT instance %u\n", __func__, i);
                 goto deinit;
             }
             gAppEndatPropDelay[i][priv[i]->current_channel] = prop_delay_cnt*((float)(1000000000)/attrs[i]->core_clk_freq);
@@ -3941,11 +3940,11 @@ void endat_main(void *args)
             {
                 if(status == SystemP_TIMEOUT)
                 {
-                    DebugP_log("\r| ERROR: Command %d timeout occurred\n", cmd);
+                    DebugP_log("\r| ERROR: Command %d timeout occurred for EnDAT instance %u\n", cmd, i);
                 }
                 else
                 {
-                    DebugP_log("\r| ERROR: Failed to process command, endat_command_process failed\r\n|\r\n|\n");
+                    DebugP_log("\r| ERROR: Failed to process command, endat_command_process failed for EnDAT instance %u\r\n|\r\n|\n", i);
                 }
                 continue;
             }
@@ -3961,7 +3960,7 @@ void endat_main(void *args)
                         status = endat_multi_channel_set_cur(gAppEndatHandle[i], j);
                         if(status != SystemP_SUCCESS)
                         {
-                            DebugP_log("\r| ERROR: Ch set failed: %d\n", status);
+                            DebugP_log("\r| ERROR: Ch set failed for EnDAT instance %u ch %u: %d\n", i, j, status);
                             continue;
                         }
                         DebugP_log("\r|\n|\t\t\t\tCHANNEL %d\n", j);

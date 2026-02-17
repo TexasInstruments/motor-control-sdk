@@ -840,7 +840,7 @@ static int32_t bissc_config_iep(bissc_periodic_interface *bissc_periodic_interfa
         priv[i] = bissc_get_priv(bissc_periodic_interface->handle[i]);
         if((bissc_periodic_interface->handle[i] == NULL) || (attrs[i] == NULL) || (priv[i] == NULL))
         {
-            DebugP_log("\r\n\n|ERROR: bissc_config_iep() failed due to NULL handle/attrs/priv");
+            DebugP_log("\r\n\n|ERROR: bissc_config_iep() failed due to NULL handle/attrs/priv for BiSS-C instance %u", i);
             return SystemP_FAILURE;
         }
     }
@@ -1070,7 +1070,7 @@ int32_t bissc_config_periodic_mode(bissc_periodic_interface *bissc_periodic_inte
     {
         if(bissc_periodic_interface->handle[i] == NULL)
         {
-            DebugP_log("\r\n\n|ERROR: bissc_config_periodic_mode() failed due to NULL handle");
+            DebugP_log("\r\n\n|ERROR: bissc_config_periodic_mode() failed due to NULL handle for BiSS-C instance %u\n", i);
             return SystemP_FAILURE;
         }
     }
@@ -1143,7 +1143,7 @@ int32_t bissc_stop_periodic_mode(bissc_periodic_interface *bissc_periodic_interf
         priv[i] = bissc_get_priv(bissc_periodic_interface->handle[i]);
         if((bissc_periodic_interface->handle[i] == NULL) || (attrs[i] == NULL) || (priv[i] == NULL))
         {
-            DebugP_log("\r\n\n|ERROR: bissc_config_iep() failed due to NULL handle/attrs/priv");
+            DebugP_log("\r\n\n|ERROR: bissc_stop_periodic_mode() failed due to NULL handle/attrs/priv for BiSS-C instance %u", i);
             return SystemP_FAILURE;
         }
     }
