@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2026 Texas Instruments Incorporated
+ *  Copyright (C) 2025-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -1973,9 +1973,14 @@ int32_t endat3_set_operating_mode(endat3_handle handle, uint8_t opmode)
     endat3_priv *priv;
 
     /* Validate handle and internal structure pointers */
-    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL) || (opmode > ENDAT3_OPMODE_PERIODIC_CAP))
+    if((handle == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
     {
         return ENDAT3_ERR_INVALID_INPUT;
+    }
+
+    if(opmode > ENDAT3_OPMODE_PERIODIC_CAP)
+    {
+        return ENDAT3_ERR_INVALID_OPMODE;
     }
 
     priv = handle->priv;

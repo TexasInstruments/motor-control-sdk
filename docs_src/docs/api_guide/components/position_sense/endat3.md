@@ -17,43 +17,44 @@ EnDat3 introduces several key improvements over previous versions:
 
 ## Features Supported
 
-   - EnDat3 protocol specification compliance
-   - Data transfer rates: 12.5 Mbps (25 Mbps not currently supported)
-   - Single channel operation
-   - Two modes of operation:
-     - Host trigger mode: Commands initiated by host controller
-     - Periodic trigger mode: Automatic position updates triggered by IEP timer
-   - Frame-based protocol with three frame types:
-     - High Priority Frame (HPF): Position data and critical status
-     - Low Priority Header (LPH): Information about following LPF frames
-     - Low Priority Frame (LPF): Additional data and diagnostics
-   - Foreground communication commands:
-     - DATA0-DATA7: Activate LPF send lists
-     - DATA: General data with background data
-     - DATANOP: Data without background data
-     - RESET: Encoder reset
-     - CLEAR: Reset encoder states
-     - ECHO: Propagation time measurement
-     - RATE: Set data transfer rate
-     - HELLO: Switch to EnDat3 mode
-     - FORCE: Forced dynamic sampling
-     - BUSBC: Bus broadcast command
-     - BUSP2P: Bus point-to-point command
-     - BUSINIT: Bus initialization
-   - Background communication commands:
-     - NOP: No operation
-     - READ: Read from encoder memory
-     - WRITE: Write to encoder memory
-     - RECONFIGURE: Reconfigure parameters
-     - AUTH: Authentication with user levels
-     - PROTECT: Set memory protection
-     - SETPASS: Set password for user level
-     - LOCATE: Encoder location function
-   - Continuous position fetch mode for real-time applications
-   - Automatic CRC verification for all frame types
-   - Error detection and reporting with detailed error codes
-   - Manchester encoding support for robust data transmission
-   - Flexible channel configuration
+- EnDat3 protocol specification compliance
+- Data transfer rates: 12.5 Mbps (25 Mbps not currently supported)
+- Single channel operation
+- Three modes of operation:
+   - Host trigger mode: Commands initiated by host controller
+   - Periodic CMP trigger mode: Automatic position updates triggered by IEP compare events
+   - Periodic CAP trigger mode: Automatic position updates triggered by IEP capture events
+- Frame-based protocol with three frame types:
+   - High Priority Frame (HPF): Position data and critical status
+   - Low Priority Header (LPH): Information about following LPF frames
+   - Low Priority Frame (LPF): Additional data and diagnostics
+- Foreground communication commands:
+   - DATA0-DATA7: Activate LPF send lists
+   - DATA: General data with background data
+   - DATANOP: Data without background data
+   - RESET: Encoder reset
+   - CLEAR: Reset encoder states
+   - ECHO: Propagation time measurement
+   - RATE: Set data transfer rate
+   - HELLO: Switch to EnDat3 mode
+   - FORCE: Forced dynamic sampling
+   - BUSBC: Bus broadcast command
+   - BUSP2P: Bus point-to-point command
+   - BUSINIT: Bus initialization
+- Background communication commands:
+   - NOP: No operation
+   - READ: Read from encoder memory
+   - WRITE: Write to encoder memory
+   - RECONFIGURE: Reconfigure parameters
+   - AUTH: Authentication with user levels
+   - PROTECT: Set memory protection
+   - SETPASS: Set password for user level
+   - LOCATE: Encoder location function
+- Continuous position fetch mode for real-time applications
+- Automatic CRC verification for all frame types
+- Error detection and reporting with detailed error codes
+- Manchester encoding support for robust data transmission
+- Flexible channel configuration
 
 \cond SOC_AM243X
    - Supported on PRU-ICSSG0
@@ -87,49 +88,113 @@ supported in this release, including the below:
 - RESET command may take up to 300ms for encoder restart
 - RATE command switching occurs after 2ms of no communication and may take up to 300ms
 
-## SysConfig Features
+## SysConfig Features {#ENDAT3_SYSCONFIG_FEATURES}
 
 @VAR_SYSCFG_USAGE_NOTE
 
-SysConfig can be used to configure things mentioned below:
-- Selecting the ICSS instance
+\attention One module instance should be created in SysConfig per PRU-ICSS slice being used for EnDat3.
+
 \cond SOC_AM243X
+SysConfig can be used to configure the following:
+- Selecting the ICSSG instance (Tested on ICSSG0)
 - Selecting the ICSSG PRU slice (Tested on ICSSG0-PRU1)
+- Configuring PINMUX
+- Enabling SA Mux mode
+- Channel selection (Channel 0, Channel 1, or Channel 2)
+- Selecting baud rate (12.5 Mbps)
+- IEP instance and IEP event selection for periodic trigger mode
+- Booster Pack Support: Enable when using BP-AM2BLDCSERVO
+
+\note EnDAT3 firmware supports operation with ICSS Core Clock running at 200 MHz/300 MHz frequency only. ICSS Core Clock at 225/250/333 MHz is not supported due to clock divider requirements.
+
 \endcond
+
 \cond SOC_AM261X
+SysConfig can be used to configure the following:
+- Selecting the ICSSM instance (Tested on ICSSM1)
 - Selecting the ICSSM PRU slice (Tested on ICSSM1-PRU0)
-\endcond
-\cond SOC_AM263PX
-- Selecting the ICSSM PRU slice (Tested on ICSSM-PRU0)
-\endcond
 - Configuring PINMUX
 - Channel selection (Channel 0, Channel 1, or Channel 2)
-- Selecting baud rate (12.5 Mbps - 25 Mbps not currently supported)
-- Selecting operating mode (Single channel only)
-- Core clock frequency configuration
+- Selecting baud rate (12.5 Mbps)
+- IEP event selection for periodic trigger mode
+- Booster Pack Support: Enable when using BP-AM2BLDCSERVO
 
-## ICSS PRU Resource Usage
+\note EnDAT3 firmware supports operation with ICSS Core Clock running at 200 MHz only (R5F Core Clock has to be 400 MHz) due to clock divider requirements.
+
+\endcond
+
+\cond SOC_AM263PX
+SysConfig can be used to configure the following:
+- Selecting the ICSSM instance (Tested on ICSSM)
+- Selecting the ICSSM PRU slice (Tested on ICSSM-PRU0)
+- Configuring PINMUX
+- Channel selection (Channel 0, Channel 1, or Channel 2)
+- Selecting baud rate (12.5 Mbps)
+- IEP event selection for periodic trigger mode
+- Booster Pack Support: Enable when using BP-AM2BLDCSERVO
+
+\note EnDAT3 firmware supports operation with ICSS Core Clock running at 200 MHz frequency only due to clock divider requirements.
+\endcond
+
+## PRU-ICSS Resource Usage
+
+- Utilizes the Peripheral IF mode (3-channel peripheral interface mode) for EnDAT3 communication. Maximum of 3 channels are available per PRU slice. (Refer \ref PRUICSS_PERIPHERAL_IF_MODE for more details)
+- Each channel has 4 pins (Clock, Data out, Data in, Output enable)
+- Following table contains details of memory usage, IEP usage and interrupt controller usage:
+
+\cond SOC_AM243X
+
+\attention In addition to the following resources used by PRU firmware, SDK examples also configure IEPx CMP0 for IEP counter reset in periodic trigger CMP mode and IEPx CMP1 for generating SYNC OUT0 used as input to CAP in periodic trigger CAP mode.
 
 <table>
 <tr>
-   <th>Configuration</th>
-   <th>PRU Core</th>
-   <th>Memory Usage</th>
-   <th>IEP Usage</th>
-   <th>Other Peripheral Usage</th>
-   <th>Description</th>
+    <th> Configuration per slice
+    <th> PRU Core
+    <th> Memory Usage
+    <th> IEP Usage
+    <th> Interrupt Controller (INTC) Usage
+    <th> Description
 </tr>
 <tr>
-   <td>Single channel</td>
-   <td>PRUx</td>
-   <td>DMEM: 495 Bytes, from offset <code>0x00</code> to <code>0x1EE</code><br>IMEM: 3.56 KB</td>
-   <td>IEP0: CMP0 and CMP3</td>
-   <td>INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger interrupt to Arm® Cortex®-R5F</td>
-   <td>IEP, CMP events and INTC signal are used only in periodic continuous mode. Manchester encoding/decoding performed in firmware.</td>
+    <td> Single channel
+    <td> PRUx
+    <td> DMEM: 508 Bytes (0x0000 to 0x01FB) <br> IMEM: ~ 3.55 kB
+    <td> <b>CMP Mode:</b> IEPx CMPy for trigger (IEPx and CMPy selected in SysConfig)<br><b>CAP Mode:</b> IEPx CAPy for trigger (IEPx and CAPy selected in SysConfig)
+    <td> INTC event/input number 18 or 21 (prx_pru_mst_intr[2/5]_intr_req) is used to trigger interrupt to Arm® Cortex®-R5F based on slice
+    <td> IEP events and INTC signals are used only in periodic trigger modes
 </tr>
 </table>
 
 \note For pin usage, see \ref ENDAT3_PIN_USAGE section.
+
+\endcond
+
+\cond (SOC_AM261X || SOC_AM263PX)
+
+\attention In addition to the following resources used by PRU firmware, SDK examples also configure IEP0 CMP0 for IEP counter reset in periodic trigger CMP mode.
+
+<table>
+<tr>
+    <th> Configuration per slice
+    <th> PRU Core
+    <th> Memory Usage
+    <th> IEP Usage
+    <th> Interrupt Controller (INTC) Usage
+    <th> Description
+</tr>
+<tr>
+    <td> Single channel
+    <td> PRUx
+    <td> DMEM: 508 Bytes (0x0000 to 0x01FB) <br> IMEM: ~ 3.55 kB
+    <td> <b>CMP Mode:</b> IEP0 CMPy for trigger (IEP0 CMPy selected in SysConfig)<br><b>CAP Mode:</b> IEP0 CAPy for trigger (IEP0 CAPy selected in SysConfig)
+    <td> INTC event/input number 18 or 21 (prx_pru_mst_intr[2/5]_intr_req) is used to trigger interrupt to Arm® Cortex®-R5F based on slice
+    <td> IEP events and INTC signals are used only in periodic trigger modes
+</tr>
+</table>
+
+\note For pin usage, see \ref ENDAT3_PIN_USAGE section.
+
+\endcond
 
 ## Interface Clock Frequencies
 
@@ -146,13 +211,13 @@ The EnDat3 interface supports two standard data transfer rates:
    <td>12.5 Mbps</td>
    <td>25 MHz</td>
    <td>100 MHz (8x oversampling)</td>
-   <td>supported in this release</th>
+   <td>Supported in this release</td>
 </tr>
 <tr>
    <td>25 Mbps</td>
    <td>50 MHz</td>
    <td>200 MHz (8x oversampling)</td>
-   <td>not-supported in this release</th>
+   <td>Not supported in this release</td>
 </tr>
 </table>
 
@@ -168,7 +233,7 @@ The PRU core clock must be configured to support the required TX and RX clock fr
 </tr>
 <tr>
    <td>200 MHz</td>
-   <td>12.5 Mbps </td>
+   <td>12.5 Mbps</td>
 </tr>
 </table>
 \endcond
@@ -181,7 +246,7 @@ The PRU core clock must be configured to support the required TX and RX clock fr
 </tr>
 <tr>
    <td>200 MHz</td>
-   <td>12.5 Mbps </td>
+   <td>12.5 Mbps</td>
 </tr>
 </table>
 \endcond
@@ -194,7 +259,7 @@ The PRU core clock must be configured to support the required TX and RX clock fr
 </tr>
 <tr>
    <td>300 MHz</td>
-   <td>12.5 Mbps </td>
+   <td>12.5 Mbps</td>
 </tr>
 </table>
 \endcond
@@ -230,18 +295,33 @@ EnDat3 uses a frame-based protocol with three types of frames:
 4. Encoder sends configured number of LPF frames
 5. All frames are CRC-verified by receiver
 
-### Operating Modes
+### Operating Modes {#ENDAT3_OPERATING_MODES}
 
-**Host Trigger Mode:**
+#### Host Trigger Mode
+
 - Application controls command timing
-- Suitable for event-driven position updates
-- Lower CPU overhead when position updates not needed
+- Suitable for R5F driven position updates
 
-**Periodic Trigger Mode:**
-- IEP timer automatically triggers position requests
-- Deterministic update rate
-- Ideal for real-time control loops
-- Configurable update period via CMP registers
+#### Periodic CMP Trigger Mode
+
+- IEP timer compare events trigger position sampling based on compare events
+- A compare event occurs when the IEP timer reaches the configured compare value
+- This is useful for applications requiring position sampling at regular intervals
+
+#### Periodic CAP Trigger Mode
+
+- External signals trigger position sampling based on IEP capture events
+- A capture event is triggered on rising edge of the input pulse
+- This is useful for synchronizing position capture with external inputs
+\cond SOC_AM243X
+- Internal signals can also be mapped to IEP capture events via TIMESYNC/GPIOMUX router.
+\endcond
+
+\cond (SOC_AM261X || SOC_AM263X || SOC_AM263PX)
+- Internal signals can also be mapped to IEP capture events via XBAR.
+\endcond
+
+\note CAP6 and CAP7 support falling edge detection as well. In EnDat3, rising edge is used always.
 
 ## EnDAT3 Design
 

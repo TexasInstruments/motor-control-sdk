@@ -676,10 +676,6 @@ typedef struct endat3_priv_s {
 } endat3_priv;
 
 /**
- * \brief Clock configuration structure
- */
-
-/**
  * \brief EnDAT3 configuration handle structure
  *
  * \details This structure combines pointers to both runtime state (priv) and compile-time
@@ -933,7 +929,7 @@ int32_t endat3_handle_background_command_request(endat3_handle handle, const end
  * uint8_t status;
  * if(endat3_get_hpf_status(handle, &status) == ENDAT3_SUCCESS)
  * {
- *     if(status & endat3_HPF_STATUS_F)
+ *     if(status & ENDAT3_HPF_STATUS_F)
  * {
  *         // Handle error condition
  *     }
@@ -1384,7 +1380,7 @@ int32_t endat3_set_background_op_code(endat3_handle handle, uint32_t opcode);
  * \param handle EnDAT3 handle
  * \param index Data word index (0 to BG_DATA_SIZE-1)
  * \param data Pointer to store the retrieved data value
- * \return Background data word, or 0 if handle is NULL or index is invalid
+ * \return ENDAT3_SUCCESS (0) on success, ENDAT3_ERR_INVALID_INPUT (-1) if handle, data is NULL, or index is invalid
  */
 int32_t endat3_get_bg_data(endat3_handle handle, uint8_t index, uint32_t *data);
 
@@ -1624,7 +1620,7 @@ int32_t endat3_set_operating_mode(endat3_handle handle, uint8_t opmode);
  * Retrieves the current firmware operating mode.
  *
  * \param handle EnDAT3 handle
- * \param opmode Pointer to store operating mode (0 = periodic trigger, 1 = host trigger, 2 = periodic CAP)
+ * \param opmode Pointer to store operating mode (0 = periodic CMP, 1 = host trigger, 2 = periodic CAP)
  * \return ENDAT3_SUCCESS (0) on success
  *         ENDAT3_ERR_INVALID_INPUT (-1) if handle or opmode is NULL
  */
@@ -1714,4 +1710,4 @@ int32_t endat3_get_start_trigger_status(endat3_handle handle, uint8_t *trigger_s
 }
 #endif
 
-#endif /* endat3_DRV_H_ */
+#endif /* ENDAT3_DRV_H_ */

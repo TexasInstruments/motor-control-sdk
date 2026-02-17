@@ -6,14 +6,26 @@ The EnDAT3 diagnostic application demonstrates the EnDAT3 receiver operation wit
 
 EnDAT3 is the next generation bidirectional interface for position encoders, offering significant improvements over EnDAT 2.2. During EnDAT3 operation, the EnDAT3 receiver communicates with the EnDAT3 position encoder using Manchester encoding with data rates up to 25 Mbps.
 
-\note This implementation uses Peripheral input/output mode of PRU-ICSS. Refer \ref PRUICSS_PERIPHERAL_IF_MODE for more details.
+\attention This implementation uses Peripheral input/output mode of PRU-ICSS. Refer \ref PRUICSS_PERIPHERAL_IF_MODE for more details.
+
+\cond SOC_AM243X
+\note EnDAT3 firmware supports operation with ICSS Core Clock running at 200 MHz/300 MHz frequency only. ICSS Core Clock at 225/250/333 MHz is not supported due to clock divider requirements.
+\endcond
+
+\cond SOC_AM261X
+\note EnDAT3 firmware supports operation with ICSS Core Clock running at 200 MHz only (R5F Core Clock has to be 400 MHz) due to clock divider requirements.
+\endcond
+
+\cond SOC_AM263PX
+\note EnDAT3 firmware supports operation with ICSS Core Clock running at 200 MHz frequency only due to clock divider requirements.
+\endcond
 
 The EnDAT3 driver provides a well-defined set of APIs to expose the EnDAT3 receiver interface with enhanced safety features and higher data rates compared to EnDAT 2.2.
 
 The diagnostic invokes these APIs to:
 - Initialize EnDAT3 interface
 - Select channel configuration based on SysConfig
-- Configure host trigger mode or periodic trigger mode
+- Configure host trigger mode, periodic CMP trigger mode, or periodic CAP trigger mode
 - Run the firmware on the selected PRU core
 
 Once these steps are executed:
@@ -93,37 +105,76 @@ EnDAT3 protocol specification defines two primary data rates:
 ## Features Demonstrated
 
 The diagnostic application demonstrates:
-- **Foreground Communication:**
-  - DATA0-DATA7: Activate different LPF send lists (configurable encoder data)
-  - DATA: General data with background data
-  - DATANOP: Data without background data
-  - RESET: Encoder reset functionality (hard reset or soft reset)
-  - CLEAR: Reset encoder states (F, W, REF flags)
-  - ECHO: Measure propagation time for cable delay compensation
-  - RATE: Data rate configuration command (note: only 12.5 Mbps is currently supported)
-  - HELLO: Initialization sequence to wake up encoder on power-up and establish EnDAT3 communication
 
-- **Background Communication:**
-  - NOP: No operation
-  - READ: Read from encoder memory
-  - WRITE: Write to encoder memory
-  - RECONFIGURE: Reconfigure encoder parameters
-  - AUTH: Authenticate with user level and password
-  - PROTECT: Set memory protection levels
-  - SETPASS: Set password for user level
-  - LOCATE: Encoder location function
+### Foreground Communication
+- DATA0-DATA7: Activate different LPF send lists (configurable encoder data)
+- DATA: General data with background data
+- DATANOP: Data without background data
+- RESET: Encoder reset functionality (hard reset or soft reset)
+- CLEAR: Reset encoder states (F, W, REF flags)
+- ECHO: Measure propagation time for cable delay compensation
+- RATE: Data rate configuration command (note: only 12.5 Mbps is currently supported)
+- HELLO: Initialization sequence to wake up encoder on power-up and establish EnDAT3 communication
 
-- **Operating Modes:**
-  - Host trigger mode: Command-driven communication
-  - Periodic trigger mode: Automatic position updates via IEP timer
-  - Continuous mode: Non-stop position fetching
+### Background Communication
+- NOP: No operation
+- READ: Read from encoder memory
+- WRITE: Write to encoder memory
+- RECONFIGURE: Reconfigure encoder parameters
+- AUTH: Authenticate with user level and password
+- PROTECT: Set memory protection levels
+- SETPASS: Set password for user level
+- LOCATE: Encoder location function
 
-- **Data Display:**
-  - High Priority Frame (HPF): Position data and status
-  - Low Priority Header (LPH): Frame count and communication status
-  - Low Priority Frame (LPF): Additional data with Frame ID
-  - CRC verification for all frame types
-  - Error and warning flag interpretation
+### Operating Modes
+- Host trigger mode: Command-driven communication
+- Periodic CMP/CAP trigger mode: Automatic position updates via IEP compare/capture events
+
+The EnDAT3 diagnostic application supports two types of periodic trigger modes for continuous position sampling as described in \ref ENDAT3_OPERATING_MODES.
+
+#### CMP Mode (Compare Event Mode)
+- Implementation: UART command 3 demonstrates this mode using position command `ENDAT3_REQ_DATA0`
+- Configuration: Uses a user-defined compare value to trigger sampling events
+- IEP Counter Reset: Uses CMP0 by default (skip if reset is handled differently)
+- Notification: Firmware triggers an Arm® Cortex®-R5F interrupt after receiving encoder response
+
+#### CAP Mode (Capture Event Mode)
+- Implementation: UART command 4 demonstrates this mode using position command `ENDAT3_REQ_DATA0`
+\cond SOC_AM243X
+- Router Configuration for CAP6/CAP7 (LATCH_IN0/LATCH_IN1) via TIMESYNC router and CAP0 via GPIOMUX router (requires external GPIO connection)
+    - This example configures the TIMESYNC/GPIOMUX router to use IEP SYNC OUT0 as an input signal for the CAP6/CAP7/CAP0 events. This configuration includes:
+        - CMP1: Generates SYNC OUT0 signal (skip if not using SYNC OUT0)
+    - NOTE: All router configuration is optional if this signal path isn't needed
+\endcond
+\cond (SOC_AM263PX || SOC_AM261X)
+- XBAR Configuration for CAP6/CAP7 (LATCH_IN0/LATCH_IN1)
+    - This example configures the XBAR for routing EPWM SYNC OUT as input to CAP using SysConfig
+    - Customization: XBAR settings can be modified for alternative inputs
+    - NOTE: XBAR routing configuration is optional if not needed
+\endcond
+- NOTE: When using different CAP events instead of the ones used in SDK example, ensure all related configurations (source selection, signal routing, etc.) are properly done.
+- Notification: Firmware triggers an R5F interrupt after receiving encoder response
+
+#### Important Notes for Periodic Mode
+
+1. Initialization: Send the command once in host trigger mode before switching to periodic mode. Refer the `endat3_process_periodic_command()` function in the example code, which calls required functions for `ENDAT3_REQ_DATA0`.
+2. CMP Resource Allocation
+    - Avoid using CMP0 if it's already used to IEP counter reset
+    - Avoid using CMP1/CMP2 if they're used to SYNC OUT generation
+    - Avoid sharing CMP events across different channels or instances of EnDAT3 or other encoders. Each CMP event must be assigned exclusively to a single encoder channel.
+3. Modifying Commands in Periodic Mode
+    - Default: `ENDAT3_REQ_DATA0` is used by default
+    - To use a different command:
+        - First modify the `endat3_process_periodic_command()` function in example code
+        - Before switching to periodic mode, send this command once using in host trigger mode
+        - Ensure all prerequisite APIs are called to properly set up command data. Refer the `endat3_diagnostic_main()` function in the example code to identify all required API calls for specific command.
+
+### Data Display
+- High Priority Frame (HPF): Position data and status
+- Low Priority Header (LPH): Frame count and communication status
+- Low Priority Frame (LPF): Additional data with Frame ID
+- CRC verification for all frame types
+- Error and warning flag interpretation
 
 ## Features Not Supported
 
@@ -143,75 +194,25 @@ This section describes known limitations of the current implementation:
 
 ## SysConfig Features
 
-@VAR_SYSCFG_USAGE_NOTE
-
-SysConfig can be used to configure the following settings for EnDAT3:
-
-- **ICSS Instance Selection:**
-\cond SOC_AM243X
-  - Selecting the ICSSG instance (Tested on ICSSG0-PRU1)
-\endcond
-\cond SOC_AM261X
-  - Selecting the ICSSM instance (Tested on ICSSM1-PRU0)
-\endcond
-\cond SOC_AM263PX
-  - Selecting the ICSSM instance (Tested on ICSSM-PRU0)
-\endcond
-
-- **PRU Core Selection:** Configure which PRU core (PRU0 or PRU1) runs the EnDAT3 firmware
-- **PINMUX Configuration:** Automatic pin configuration for:
-  - Clock signal (TX_CLK)
-  - Data output signal (TX)
-  - Data input signal (RX)
-  - Transmit enable signal (TX_EN)
-- **Channel Selection:** Enable and configure encoder channels
-- **Booster Pack Support:** Enable GPIO-based channel control when using BP-AM2BLDCSERVO
-- **Clock Source Selection:** Choose between different TX/RX clock source options:
-\cond SOC_AM243X
-  - PRU Core Clock (300 MHz) - configured for 12.5 Mbps data rate
-\endcond
-\cond SOC_AM261X
-  - PRU UART Clock (160 MHz) or PRU Core Clock (200 MHz) - configured for 12.5 Mbps data rate
-\endcond
-\cond SOC_AM263PX
-  - PRU UART Clock (192 MHz) or PRU Core Clock (200 MHz) - configured for 12.5 Mbps data rate
-\endcond
+SysConfig can be used to configure different settings for EnDAT3. Refer \ref ENDAT3_SYSCONFIG_FEATURES section for more details.
 
 ### Channel Selection In SysConfig
 
 The SysConfig GUI allows easy configuration of the EnDAT3 interface channels. Below are examples showing channel selection for different platforms:
 
 \cond SOC_AM243X
-
 \imageStyle{Endat3_sysconfig1_am243x.png,width:70%}
 \image html Endat3_sysconfig1_am243x.png "EnDAT3 SysConfig - Channel Selection for AM243x"
-
-\imageStyle{Endat3_sysconfig2_am243x.png,width:70%}
-\image html Endat3_sysconfig2_am243x.png "EnDAT3 SysConfig - Booster pack pin selection for AM243x"
-
-For AM243x, channels can be enabled through GPIO control when using the booster pack configuration. The example uses GPIO to enable Channel 0 or Channel 2 via the ENC0_EN and ENC2_EN GPIO pins.
 \endcond
 
 \cond SOC_AM261X
-
 \imageStyle{Endat3_sysconfig1_am261x.png,width:70%}
 \image html Endat3_sysconfig1_am261x.png "EnDAT3 SysConfig - Channel Selection for AM261x"
-
-\imageStyle{Endat3_sysconfig2_am261x.png,width:70%}
-\image html Endat3_sysconfig2_am261x.png "EnDAT3 SysConfig - IOEXP configuration for AM261x"
-
-For AM261x, the channel is selected via the IOEXP (I/O Expander) configuration in SysConfig. The TCA6408 I/O expander on the LaunchPad controls the booster pack multiplexer settings to route signals to the appropriate encoder channel.
 \endcond
 
 \cond SOC_AM263PX
-
 \imageStyle{Endat3_sysconfig1_am263px.png,width:70%}
 \image html Endat3_sysconfig1_am263px.png "EnDAT3 SysConfig - Channel Selection for AM263Px"
-
-\imageStyle{Endat3_sysconfig2_am263px.png,width:70%}
-\image html Endat3_sysconfig2_am263px.png "EnDAT3 SysConfig - IOEXP configuration for AM263Px"
-
-For AM263Px, similar to AM261x, the channel selection is controlled via the TCA6416 I/O expander configuration in SysConfig, which manages the booster pack MUX selection.
 \endcond
 
 ## Important Files and Directory Structure
@@ -257,10 +258,10 @@ For AM263Px, similar to AM261x, the channel selection is controlled via the TCA6
  ---------------|-----------
  CPU + OS       | r5fss0-0 freertos
  ICSSG          | ICSSG0
- PRU            | PRU0 or PRU1 (configurable via SysConfig)
+ PRU            | PRU1
  Toolchain      | ti-arm-clang
- Board          | @VAR_LP_BOARD_NAME_LOWER (Single channel)
- Example folder | examples/position_sense/endat3_diagnostic
+ Board          | @VAR_LP_BOARD_NAME_LOWER
+ Example folder | examples/position_sense/endat3_diagnostic/single_channel
 
 \endcond
 
@@ -270,10 +271,10 @@ For AM263Px, similar to AM261x, the channel selection is controlled via the TCA6
  ---------------|-----------
  CPU + OS       | r5fss0-0 freertos
  ICSSM          | ICSSM1
- PRU            | PRU0 or PRU1 (configurable via SysConfig)
+ PRU            | PRU0
  Toolchain      | ti-arm-clang
- Board          | @VAR_LP_BOARD_NAME_LOWER (Single channel)
- Example folder | examples/position_sense/endat3_diagnostic
+ Board          | @VAR_LP_BOARD_NAME_LOWER
+ Example folder | examples/position_sense/endat3_diagnostic/single_channel
 
 \endcond
 
@@ -282,13 +283,17 @@ For AM263Px, similar to AM261x, the channel selection is controlled via the TCA6
  Parameter      | Value
  ---------------|-----------
  CPU + OS       | r5fss0-0 freertos
- ICSSM          | ICSSM
- PRU            | PRU0 or PRU1 (configurable via SysConfig)
+ ICSSM          | ICSSM0
+ PRU            | PRU0
  Toolchain      | ti-arm-clang
- Board          | @VAR_LP_BOARD_NAME_LOWER (Single channel)
- Example folder | examples/position_sense/endat3_diagnostic
+ Board          | @VAR_LP_BOARD_NAME_LOWER
+ Example folder | examples/position_sense/endat3_diagnostic/single_channel
 
 \endcond
+
+## Single Channel with Single PRU Example
+This example supports one EnDAT3 channel using one PRU. In this example:
+- 1 EnDAT3 driver instance and corresponding SysConfig EnDAT3 module instance is used.
 
 # Steps to Run the Example
 
@@ -321,28 +326,26 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 - <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
 \endcond
 
+## Hardware Setup
+
 \cond SOC_AM243X
 
-## Hardware Setup with LP-AM243
-
-\note
-    - The PROC109A version of LP supports single channel EnDAT3
-    - Enable channel via GPIO as configured in SysConfig
+### Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack & LP-AM243)
 
 \imageStyle{Endat3_am243x_hw_setup.PNG,width:70%}
-\image html Endat3_am243x_hw_setup.PNG "EnDAT3 Hardware Setup with LP-AM243 and BP-AM2BLDCSERVO"
+\image html Endat3_am243x_hw_setup.PNG "EnDAT3 Hardware Setup with LP-AM243 and BP-AM2BLDCSERVO Booster Pack"
 
 #### EnDAT3 Connector Pinout
 
 <table>
 <tr>
     <th>S.No</th>
-    <th>Booster Pack Axis I Pins</th>
-    <th>EnDAT3 Connector No. (15 pin)</th>
+    <th>Booster Pack Axis I Pin</th>
+    <th>EnDAT3 Connector No. (15 pins)</th>
 </tr>
 <tr>
     <td>1</td>
-    <td>VENCODER</td>
+    <td>VENCODER </td>
     <td>4, 12</td>
 </tr>
 <tr>
@@ -352,12 +355,12 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 </tr>
 <tr>
     <td>3</td>
-    <td>DATP1 (data+)</td>
+    <td>DATAP1 (Data +)</td>
     <td>8</td>
 </tr>
 <tr>
     <td>4</td>
-    <td>DATM1 (data-)</td>
+    <td>DATAM1 (Data -)</td>
     <td>15</td>
 </tr>
 </table>
@@ -399,21 +402,17 @@ The EnDAT3 interface on AM243x uses ICSSG0-PRU1 with the following pin mapping:
 </tr>
 <tr>
     <td>ENC0_EN (Channel Enable)</td>
-    <td>GPIO (MMC1_SDWP)</td>
+    <td>GPIO (MMC1_SDWP/GPIO1_78/C16)</td>
     <td>Controlled by R5F</td>
-    <td>Enable Channel 0 encoder path</td>
-</tr>
-<tr>
-    <td>ENC2_EN (Channel Enable)</td>
-    <td>GPIO (MMC1_SDCD)</td>
-    <td>Controlled by R5F</td>
-    <td>Enable Channel 1 encoder path</td>
+    <td>Enable Booster Pack Axis 1 encoder voltage</td>
 </tr>
 </table>
 
-\note The PRU core clock is configured to 300 MHz to support EnDAT3 data rates (12.5 Mbps and 25 Mbps).
+#### BP-AM2BLDCSERVO Booster Pack Jumper Configuration
 
-#### Booster Pack Jumper Configuration
+\note
+    - To enable VSENSOR1, BoosterPack pin J8.73 must be set high (In this example, this pin is configured in GPIO mode and pulled high)
+
 <table>
 <tr>
     <th>Designator</th>
@@ -485,22 +484,22 @@ The EnDAT3 interface on AM243x uses ICSSG0-PRU1 with the following pin mapping:
 
 \cond (SOC_AM263PX)
 
-## Hardware Setup with LP-AM263P
+### Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack & LP-AM263P)
 
 \imageStyle{Endat3_am263px_hw_setup.png,width:70%}
-\image html Endat3_am263px_hw_setup.png "EnDAT3 Hardware Setup with LP-AM263P and BP-AM2BLDCSERVO"
+\image html Endat3_am263px_hw_setup.png "EnDAT3 Hardware Setup with LP-AM263P and BP-AM2BLDCSERVO Booster Pack"
 
 #### EnDAT3 Connector Pinout
 
 <table>
 <tr>
     <th>S.No</th>
-    <th>Booster Pack Axis I Pins</th>
-    <th>EnDAT3 Connector No. (15 pin)</th>
+    <th>Booster Pack Axis I Pin</th>
+    <th>EnDAT3 Connector No. (15 pins)</th>
 </tr>
 <tr>
     <td>1</td>
-    <td>VENCODER</td>
+    <td>VENCODER </td>
     <td>4, 12</td>
 </tr>
 <tr>
@@ -510,19 +509,35 @@ The EnDAT3 interface on AM243x uses ICSSG0-PRU1 with the following pin mapping:
 </tr>
 <tr>
     <td>3</td>
-    <td>DATP1 (data+)</td>
+    <td>DATAP1 (Data +)</td>
     <td>8</td>
 </tr>
 <tr>
     <td>4</td>
-    <td>DATM1 (data-)</td>
+    <td>DATAM1 (Data -)</td>
     <td>15</td>
 </tr>
 </table>
 
-#### LaunchPad Jumper Configuration
+#### LP-AM263P Jumper Configuration
 
-Connect the jumpers J13 and J26 for providing 3.3V and 5V to boosterpack.
+<table>
+<tr>
+    <th>Designator</th>
+    <th>ON/OFF</th>
+    <th>Description</th>
+</tr>
+<tr>
+    <td>J13</td>
+    <td>Pin 1-2 Connected</td>
+    <td>3V3 Supply to Booster Pack</td>
+</tr>
+<tr>
+    <td>J14</td>
+    <td>Pin 1-2 Connected</td>
+    <td>5V0 Supply to Booster Pack</td>
+</tr>
+</table>
 
 #### Pin Configuration (AM263Px)
 
@@ -560,19 +575,18 @@ The EnDAT3 interface on AM263Px uses ICSSM-PRU0 with the following pin mapping:
     <td>Encoder response data input</td>
 </tr>
 <tr>
-    <td>ENC1_EN (Channel Enable)</td>
-    <td>GPIO (SDFM0_D1)</td>
+    <td>ENC0_EN (Channel Enable)</td>
+    <td>GPIO (SDFM0_D1/D13)</td>
     <td>Controlled by R5F</td>
-    <td>Enable encoder channel 1 via GPIO</td>
+    <td>Enable Booster Pack Axis 1 encoder voltage</td>
 </tr>
 </table>
 
-\note
-- The PRU core clock and IEP clock are configured to 200 MHz
-- I/O Expander (TCA6416) controls booster pack MUX configuration via I2C1
-- Default example configuration uses Channel 1 (Channel 0 disabled)
+#### BP-AM2BLDCSERVO Booster Pack Jumper Configuration
 
-#### Booster Pack Jumper Configuration
+\note
+    - To enable VSENSOR1, BoosterPack pin J8.73 must be set high (In this example, this pin is configured in GPIO mode and pulled high)
+
 <table>
 <tr>
     <th>Designator</th>
@@ -645,22 +659,22 @@ The EnDAT3 interface on AM263Px uses ICSSM-PRU0 with the following pin mapping:
 
 \cond SOC_AM261X
 
-## Hardware Setup with LP-AM261
+### Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack & LP-AM261)
 
 \imageStyle{Endat3_am261x_hw_setup.png,width:70%}
-\image html Endat3_am261x_hw_setup.png "EnDAT3 Hardware Setup with LP-AM261 and BP-AM2BLDCSERVO"
+\image html Endat3_am261x_hw_setup.png "EnDAT3 Hardware Setup with LP-AM261 and BP-AM2BLDCSERVO Booster Pack"
 
 #### EnDAT3 Connector Pinout
 
 <table>
 <tr>
     <th>S.No</th>
-    <th>Booster Pack Axis I Pins</th>
-    <th>EnDAT3 Connector Pin No. (15 pins)</th>
+    <th>Booster Pack Axis I Pin</th>
+    <th>EnDAT3 Connector No. (15 pins)</th>
 </tr>
 <tr>
     <td>1</td>
-    <td>VENCODER</td>
+    <td>VENCODER </td>
     <td>4, 12</td>
 </tr>
 <tr>
@@ -670,19 +684,34 @@ The EnDAT3 interface on AM263Px uses ICSSM-PRU0 with the following pin mapping:
 </tr>
 <tr>
     <td>3</td>
-    <td>DATP1 (data+)</td>
+    <td>DATAP1 (Data +)</td>
     <td>8</td>
 </tr>
 <tr>
     <td>4</td>
-    <td>DATM1 (data-)</td>
+    <td>DATAM1 (Data -)</td>
     <td>15</td>
 </tr>
 </table>
 
-#### LaunchPad Jumper Configuration
-
-Connect the jumpers J13 and J26 for providing 3.3V and 5V to boosterpack.
+#### LP-AM261 Jumper Configuration
+<table>
+<tr>
+    <th>Designator</th>
+    <th>ON/OFF</th>
+    <th>Description</th>
+</tr>
+<tr>
+    <td>J13</td>
+    <td>Pin 1-2 Connected</td>
+    <td>3V3 Supply to Booster Pack</td>
+</tr>
+<tr>
+    <td>J26</td>
+    <td>Pin 1-2 Connected</td>
+    <td>5V0 Supply to Booster Pack</td>
+</tr>
+</table>
 
 #### Pin Configuration (AM261x)
 
@@ -721,17 +750,17 @@ The EnDAT3 interface on AM261x uses ICSSM1-PRU0 with the following pin mapping:
 </tr>
 <tr>
     <td>ENC0_EN (Channel Enable)</td>
-    <td>GPIO21</td>
+    <td>GPIO (GPIO_21/B10)</td>
     <td>Controlled by R5F</td>
-    <td>Enable encoder channel via GPIO</td>
+    <td>Enable Booster Pack Axis 1 encoder voltage</td>
 </tr>
 </table>
 
-\note
-- The PRU core clock and IEP clock are configured to 200 MHz
-- I/O Expander (TCA6408) controls booster pack MUX configuration via I2C0
+#### BP-AM2BLDCSERVO Booster Pack Jumper Configuration
 
-#### Booster Pack Jumper Configuration
+\note
+    - To enable VSENSOR1, BoosterPack pin J8.73 must be set high (In this example, this pin is configured in GPIO mode and pulled high)
+
 <table>
 <tr>
     <th>Designator</th>
@@ -831,7 +860,7 @@ The following flowchart shows the complete application flow from initialization 
    - Configure GPIO pins for encoder channel enable signals
 
 2. **EnDAT3 Interface Initialization**
-   - Open EnDAT3 interface with `endat3_open()`
+   - Initialize EnDAT3 interface with `endat3_init()`
    - Load PRU firmware binary to selected PRU core
    - Configure PRU-ICSS INTC (Interrupt Controller) for event mapping
    - Initialize shared memory interface between R5F and PRU
@@ -878,8 +907,10 @@ The application presents four command type options:
    - Real-time data display
    - User-initiated stop
 
-4. **Periodic Trigger Mode (3)**
-   - IEP timer-driven updates
+4. **Periodic Trigger Mode (3 or 4)**
+   - Two modes: CMP (compare event) and CAP (capture event)
+   - CMP mode: IEP timer-driven updates at regular intervals
+   - CAP mode: External signal-driven position capture
    - Deterministic cycle time
    - Automatic position requests
 
@@ -986,9 +1017,9 @@ Background communication requires multiple command cycles depending on LPH statu
 ```
 User selects: 2 (Read)
 Menu prompts:
-  "Enter number of words to read:" → 1
-  "Enter address (MSB byte):" → 0xA1
-  "Enter address (LSB 2 bytes):" → 0x0000
+  "Enter number of words to read:" -> 1
+  "Enter address (MSB byte):" -> 0xA1
+  "Enter address (LSB 2 bytes):" -> 0x0000
 
 Application checks LPH status:
   If IDLE (0):
@@ -1005,8 +1036,8 @@ Response processing:
 ```
 User selects: 5 (Authentication)
 Menu prompts:
-  "Enter user level (0-255):" → 1 (OEM2)
-  "Enter password (hex, up to 32 bits):" → 0x12345678
+  "Enter user level (0-255):" -> 1 (OEM2)
+  "Enter password (hex, up to 32 bits):" -> 0x12345678
 
 Application formats:
   addr_msb = 1 (user level)
@@ -1047,43 +1078,96 @@ When user selects continuous mode (option 2):
 
 ### Periodic Trigger Mode
 
-When user selects periodic mode (option 3):
+When user selects periodic mode (option 3 or 4):
 
-1. **Configuration:**
+1. **CMP Mode Configuration:**
    ```
    Menu prompts:
-     "Enter IEP reset cycle count (in IEP cycles):" → cmp0_val
-     "Enter IEP trigger time (in IEP cycles):" → cmp3_val
+     "Enter IEP reset cycle count (must be greater than EnDat3 cycle time including timeout period, in IEP cycles)" -> iep_reset_count
+     "Enter IEP trigger time(must be less than or equal to IEP reset cycle, in IEP cycles):" -> periodic_trigger_count
 
-   Validation: cmp3_val ≤ cmp0_val
+   Validation: periodic_trigger_count <= iep_reset_count
    ```
 
-2. **IEP Setup:**
-   - Configure IEP CMP0 for counter reset (defines period)
-   - Configure IEP CMP3 for trigger event (defines trigger point)
-   - Enable IEP counter
-   - Set firmware to periodic mode (opmode = 0)
 
-3. **Firmware Operation:**
+   **CMP Mode Example Configuration:**
+   ```
+   PRU Core Clock: 200 MHz (AM261x/AM263Px) or 300 MHz (AM243x)
+   Desired Position Update Rate: 1 kHz (1ms period)
+
+   For 200 MHz IEP clock:
+   iep_reset_count = 200 MHz / 1 kHz = 200,000 cycles
+   periodic_trigger_count = 10,000 cycles (trigger after reset)
+
+   For 300 MHz IEP clock:
+   iep_reset_count = 300 MHz / 1 kHz = 300,000 cycles
+   periodic_trigger_count = 10,000 cycles (trigger after reset)
+   ```
+
+   **CMP Mode Timing Diagram:**
+   ```
+   Counter: 0 ----------> CMPy ----------------------> CMP0 --> 0
+           |             |                            |         |
+           Reset         Trigger                     Reset     Trigger
+                       (CMPy)                      (CMP0)    (CMPy)
+                       Command Sent                Command Sent
+   ```
+
+2. **CAP Mode Configuration:**
+\cond SOC_AM243X
+   ```
+   Menu prompts:
+     "Enter IEP SYNC0 period (must be greater than EnDat3 cycle time including timeout period, in IEP cycles):" -> iep_reset_count
+   ```
+\endcond
+
+\cond (SOC_AM261X || SOC_AM263PX)
+- Periodic CAP mode cycle time will be equal to EPWM SYNC OUT frequency. NOTE: In SysConfig, EPWM and EPWM to IEP LATCH XBAR configuration must be done.
+\endcond
+
+3. **Operating Mode and firmware setup:**
+   - Update the operating mode of firmware using endat3_set_operating_mode() API call
    - Pre-configure command (DATA0)
    - Set expected TX frame count to 1
    - Release start trigger to firmware
-   - IEP CMP3 events automatically trigger commands
+   - CMP/CAP events automatically trigger commands
 
-4. **Data Display Loop:**
+4. **IEP Setup (CMP Mode):**
+   - Disable IEP counter
+   - Configure IEP CMP0 for counter reset (defines period)
+   - Configure IEP CMPy for trigger event (CMPy selected in SysConfig)
+   - Enable IEP counter
+
+5. **IEP Setup (CAP Mode):**
+   - Disable IEP counter
+\cond SOC_AM243X
+   - Configure IEP CMP1 for SYNC OUT0 generation
+   - Configure TIMESYNC router to route SYNC OUT0 to CAP input
+\endcond
+\cond (SOC_AM261X || SOC_AM263PX)
+   - SysConfig configures XBAR to route EPWM SYNC OUT to CAP input
+\endcond
+   - Configure IEP CAPy for capture event (CAPy selected in SysConfig)
+   - Enable IEP counter
+
+6. **IRQ Callback:**
+
+In periodic mode, firmware generates R5F interrupt after encoder response is ready.
+
+6. **Data Display Loop:**
    ```
    while (loop_status == START):
+     Wait for IRQ count to increment
      Wait for firmware busy flag to clear
      Receive response
      If successful and HPF valid:
        Extract position and angle
        Display values
-     Delay 10ms
      Check if user pressed Enter to stop
    ```
 
-5. **Stop and Cleanup:**
-   - Stop IEP timer
+7. **Stop and Cleanup:**
+   - Call endat3_stop_periodic_mode() to stop IEP timer and disable interrupts
    - Set firmware back to host trigger mode (opmode = 1)
    - Wait for mode switch to complete
    - Return to main menu
@@ -1125,51 +1209,7 @@ HPF and LPH Status:
  Description: Voltage supply too low
  Recommended action: Check encoder power supply
 ```
-
-The application uses `endat3_getErrorCode()`, `endat3_getErrorDescription()`, and `endat3_getErrorAction()` to provide detailed error information.
-
-## Periodic Trigger Mode Configuration
-
-### IEP Timer Configuration
-
-The periodic mode uses IEP (Industrial Ethernet Peripheral) timer events:
-
-- **CMP0 Event:** Resets IEP counter to create periodic behavior
-- **CMP3 Event:** Triggers command transmission to encoder
-
-**Example Configuration:**
-```
-PRU Core Clock: 300 MHz
-Desired Position Update Rate: 1 kHz (1ms period)
-
-IEP counter runs at PRU core clock frequency
-CMP0 value = 300 MHz / 1 kHz = 300,000 cycles
-CMP3 value = 10,000 cycles (trigger 10,000 cycles after reset)
-
-User enters:
-  IEP reset cycle count: 300000
-  IEP trigger time: 10000
-```
-
-**Timing Diagram:**
-```
-Counter: 0 ──────────> 10000 ───────────────────> 300000 ─> 0
-         ↑             ↑                           ↑          ↑
-         Reset         Trigger                    Reset      Trigger
-                       (CMP3)                     (CMP0)     (CMP3)
-                       Command Sent               Command Sent
-```
-
-### IRQ Callback
-
-In periodic mode, firmware generates R5F interrupt after encoder response:
-```c
-void endat3_iep_isr_callback(void *args) {
-    // Called by firmware after receiving encoder response
-    // Application can clear interrupt and process new position data
-    // Currently prints position to UART in diagnostic
-}
-```
+The application uses endat3_get_error_code(), endat3_get_error_description() and endat3_get_error_action() to provide detailed error information including description and recommended action.
 
 ## Firmware Flow
 
@@ -1269,12 +1309,15 @@ If background commands fail:
 If periodic mode doesn't trigger:
 
 1. **Verify IEP configuration:**
-   - CMP0 and CMP3 values properly set
+   - CMP0 reset count properly set
+   - For CMP mode: CMPy trigger value properly set and less than CMP0
+   - For CAP mode: CAPy capture event configured properly
    - IEP counter enabled and running
-   - CMP events properly configured
+   - CMP/CAP events properly configured in SysConfig
+   - Verify IEP CMP/CAP event status in IEP registers
 
 2. **Check firmware mode:**
-   - Operating mode must be set to 0 (periodic)
+   - Operating mode must be set to 0 (periodic CMP) or 2 (periodic CAP)
    - Start trigger must be released
    - Command parameters pre-configured
 
@@ -1283,13 +1326,23 @@ If periodic mode doesn't trigger:
    - R5F ISR should be called
    - Check INTC configuration
 
+4. **CAP mode specific checks:**
+\cond SOC_AM243X
+   - Verify SYNC OUT0 signal is generated by CMP1
+   - Verify TIMESYNC router configuration is correct, if routing is needed
+\endcond
+\cond (SOC_AM261X || SOC_AM263PX)
+   - Verify XBAR routing is correct, if routing is needed
+\endcond
+   - Verify CAP event is detecting the input signal edge
+
 > **Note:** For detailed PRU firmware debugging, connect to the PRU core using CCS and set breakpoints in the firmware code as described in \ref ENCODER_EXAMPLES_DEBUG_GUIDE.
 
 ## Test Case Summary
 
-The EnDAT3 diagnostic application provides comprehensive UART menu-based test coverage for all protocol features. The test suite covers 33 functional test cases accessible through the interactive UART terminal interface, organized into the following categories:
+The EnDAT3 diagnostic application provides comprehensive UART menu-based test coverage for all protocol features. The test suite covers multiple functional test cases accessible through the interactive UART terminal interface, organized into the following categories:
 
-### 1. Foreground Communication Tests (13 Test Cases)
+### 1. Foreground Communication Tests (15 Test Cases)
 
 Foreground commands are accessed via menu option `0` and provide single-cycle position and control operations:
 
@@ -1331,19 +1384,20 @@ Background commands are accessed via menu option `1` and require multi-cycle ope
 - **SETPASS** (Menu option 7): Set password for user authentication levels with prompts for user level and new password
 - **LOCATE** (Menu option 8): Encoder location function for physical identification with control value input
 
-### 3. Continuous Position Fetch Tests (2 Test Cases)
+### 3. Continuous Position Fetch Tests (1 Test Case)
 
 Continuous mode is accessed via menu option `2`:
 
 - **Continuous Mode Start/Stop**: Non-stop position updates displaying "Position: 0x________, Angle: ___.___ degrees" continuously at ~1000 Hz until Enter key pressed
-- **Position Value Verification**: Verify 30-bit position values and angle calculations (360° = 2^30 counts = 1073741824) while rotating encoder
+- **Position Value Verification**: Verify 30-bit position values and angle calculations (360 degrees = 2^30 counts = 1073741824) while rotating encoder
 
-### 4. Periodic Trigger Mode Tests (1 Test Case with 3 Scenarios)
+### 4. Periodic Trigger Mode Tests (2 Test Cases with Multiple Scenarios)
 
-Periodic mode is accessed via menu option `3` with IEP timer configuration:
+Periodic mode is accessed via menu option `3` or `4` with mode selection (CMP or CAP) and IEP timer configuration:
 
-- **Invalid Configuration Handling**: Test CMP3 > CMP0 validation with error message "ERROR: Trigger time (CMP3=X) must be <= Reset cycle (CMP0=Y)"
-- **Normal Frequency Operation**: Test periodic updates at configurable rates (e.g., 5 Hz with CMP0=20000000, CMP3=10000000 at 100 MHz IEP clock)
-- **High Frequency Operation**: Test 1 kHz position updates (CMP0=100000, CMP3=50000) for real-time performance validation
+**CMP/CAP Mode Tests:**
+- **Invalid Configuration Handling**: Test periodic_trigger_count > iep_reset_count validation
+- **Normal Frequency Operation**: Test periodic updates at configurable rates (e.g., 5 Hz with iep_reset_count=40000000, periodic_trigger_count=10000000 at 200 MHz IEP clock)
+- **High Frequency Operation**: Test 1 kHz position updates (iep_reset_count=200000, periodic_trigger_count=10000) for real-time performance validation
 
 \note Arm is a registered trademark of Arm Limited (or its subsidiaries or affiliates) in the US and/or elsewhere.
