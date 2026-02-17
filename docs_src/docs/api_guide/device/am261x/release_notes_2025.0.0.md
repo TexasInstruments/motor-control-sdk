@@ -27,6 +27,10 @@
     <td>Position Sense BiSS-C
 </tr>
 <tr>
+    <td>Handle-based API architecture, different IEP CAP signal per slice, SysConfig-based initialization
+    <td>Position Sense HDSL
+</tr>
+<tr>
     <td>Dual channel support using two independent PRU cores, handle-based API architecture, periodic trigger modes (CMP and CAP), SysConfig-based initialization
     <td>Position Sense Nikon A-format
 </tr>
@@ -235,7 +239,14 @@ This section lists changes which could affect user applications developed using 
 Read this carefully to see if you need to do any changes in your existing application when migrating to this SDK version relative to
 previous SDK version. Also refer to older SDK version release notes to see changes in earlier SDKs.
 
-SDK drivers underwent significant architectural changes including a move to handle-based APIs, enhanced periodic trigger modes, improved SysConfig integration, etc. For module specific migration details, refer to links from \ref MIGRATION_SECTION_2025_00.
+SDK drivers for following modules underwent significant architectural changes including a move to handle-based APIs, enhanced periodic trigger modes, improved SysConfig integration, etc. For module specific migration details, refer to links from \ref MIGRATION_SECTION_2025_00.
+
+- Position Sense
+    - BiSS-C
+    - EnDAT 2
+    - HDSL
+    - Nikon A-format
+    - Tamagawa
 
 ### Examples
 <table>

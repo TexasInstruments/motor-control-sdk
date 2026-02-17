@@ -30,7 +30,24 @@ Refer to the PRU-ICSS chapter of the AM261x Technical Reference Manual.
 
 ## Software Architecture
 
-The Hiperface DSL function is implemented in one slice of PRU-ICSS.
+\cond SOC_AM243X
+
+Following section describes the firmware implementation of Hiperface DSL receiver on PRU-ICSS. Deterministic behavior of the 32 bit RISC core running up to 333 MHz provides resolution on sampling external signals and generating external signals. It makes use of 3 channel peripheral interface support in PRU for data transmission.
+
+The PRU-ICSS firmware supports the following configurations:
+1. Single Channel per PRU slice (with 225 MHz PRU core clock frequency only)
+2. Multi Channel with encoders of different make under load share mode per PRU slice (with 300 MHz PRU core clock frequency only)
+
+\endcond
+
+\cond SOC_AM261X
+
+Following section describes the firmware implementation of Hiperface DSL receiver on PRU-ICSS. Deterministic behavior of the 32 bit RISC core running up to 225 MHz provides resolution on sampling external signals and generating external signals. It makes use of 3 channel peripheral interface support in PRU for data transmission.
+
+The PRU-ICSS firmware supports the following configuration:
+1. Single Channel per PRU slice (with 225 MHz PRU core clock frequency only)
+
+\endcond
 
 The firmware consists of two layers:
 
@@ -42,6 +59,7 @@ Both layers have direct access to the register interface that is provided to the
 Figure "Layer Model" illustrates the relationship between the two layers.
 
 \image html hdsl_layer_model.png "Layer Model"
+
 \cond SOC_AM243X
 
 ### Overlay Scheme for TX-PRU {#HDSL_DESIGN_TXPRU_OVERLAY}
@@ -129,7 +147,11 @@ Remote (DSL motor feedback system) registers that indicate interface information
 Note: It should be noted that a "short message" can be triggered during a running "long message" transaction.
 
 ## Synchronization with External Pulse {#HDSL_DESIGN_SYNC}
+
 According to the Hiperface DSL specification, the falling edge inside the EXTRA window should coincide with the external synchronization pulse.
+
+The external synchronization pulse is captured using the IEP CAP (capture) feature. The firmware uses IEP CAP6 for PRU slice 1 and IEP CAP7 for PRU slice 0 to capture the external pulse edge timestamp. CAP6 and CAP7 support falling edge detection as well. In HDSL, rising edge is used always.
+
 At the beginning of the startup phase, the firmware measures the time interval of the external pulse and calculates the required number of bits for the H-Frame.
 Based on this number the stuffing length and EXTRA window size is derived.
 Afterwards, the PRU waits to match its timing with the timing of the external synchronization pulse and starts the transmission.
@@ -184,147 +206,144 @@ For further improvement of the synchronization, the time difference (∆t) betwe
 
 ## Pin Multiplexing {#HDSL_PIN_USAGE}
 
+\attention \ref PRUICSS_PERIPHERAL_IF_MODE_SIGNAL_CONFIGURATION section has details on PRU pin functions in Peripheral IF mode
+
 \note
-    - k = 0,1 (PRU-ICSS Instance) for AM243x/AM261x/AM64x
+    - k = 0,1 (PRU-ICSS Instance) for AM243x/AM261x
     - n = 0,1 (PRU-ICSS Slice)
 
 <table>
 <tr>
     <th>Pin name
     <th>Signal name
-	<th>Function
+    <th>Function
 </tr>
 <tr>
     <td>\if (SOC_AM261X) PR<%k>_PRU<n>_GPO0 \else PRG<%k>_PRU<n>_GPO0 \endif
     <td>pru<n>_hdsl0_clk
-	<td>Channel 0 clock
+    <td>Channel 0 clock
 </tr>
 <tr>
     <td>\if (SOC_AM261X) PR<%k>_PRU<n>_GPO1 \else PRG<%k>_PRU<n>_GPO1 \endif
     <td>pru<n>_hdsl0_out
-	<td>Channel 0 transmit
+    <td>Channel 0 transmit
 </tr>
 <tr>
     <td>\if (SOC_AM261X) PR<%k>_PRU<n>_GPO2 \else PRG<%k>_PRU<n>_GPO2 \endif
-    <td>pru<n>_hdsl0_outen
-	<td>Channel 0 transmit enable
+    <td>pru<n>_hdsl0_out_en
+    <td>Channel 0 transmit enable
 </tr>
 <tr>
     <td>\if (SOC_AM261X) PR<%k>_PRU<n>_GPI9 \else PRG<%k>_PRU<n>_GPI13/PRG<%k>_PRU<n>_GPI9 \endif
     <td>pru<n>_hdsl0_in
-	<td>Channel 0 receive
+    <td>Channel 0 receive
 </tr>
 <tr>
     <td>\if (SOC_AM261X) PR<%k>_PRU<n>_GPO3 \else PRG<%k>_PRU<n>_GPO3 \endif
     <td>pru<n>_hdsl1_clk
-	<td>Channel 1 clock
+    <td>Channel 1 clock
 </tr>
 <tr>
     <td>\if (SOC_AM261X) PR<%k>_PRU<n>_GPO4 \else PRG<%k>_PRU<n>_GPO4 \endif
     <td>pru<n>_hdsl1_out
-	<td>Channel 1 transmit
+    <td>Channel 1 transmit
 </tr>
 <tr>
     <td>\if (SOC_AM261X) PR<%k>_PRU<n>_GPO5 \else PRG<%k>_PRU<n>_GPO5 \endif
-    <td>pru<n>_hdsl1_outen
-	<td>Channel 1 transmit enable
+    <td>pru<n>_hdsl1_out_en
+    <td>Channel 1 transmit enable
 </tr>
 <tr>
     <td>\if (SOC_AM261X) PR<%k>_PRU<n>_GPI10 \else PRG<%k>_PRU<n>_GPI14/PRG<%k>_PRU<n>_GPI10 \endif
     <td>pru<n>_hdsl1_in
-	<td>Channel 1 receive
+    <td>Channel 1 receive
 </tr>
 <tr>
     <td>\if (SOC_AM261X) PR<%k>_PRU<n>_GPO6 \else PRG<%k>_PRU<n>_GPO6 \endif
     <td>pru<n>_hdsl2_clk
-	<td>Channel 2 clock
+    <td>Channel 2 clock
 </tr>
 <tr>
     <td>\if (SOC_AM261X) PR<%k>_PRU<n>_GPO7 \else PRG<%k>_PRU<n>_GPO12/PRG<%k>_PRU<n>_GPO7 \endif
     <td>pru<n>_hdsl2_out
-	<td>Channel 2 transmit
+    <td>Channel 2 transmit
 </tr>
 <tr>
     <td>\if (SOC_AM261X) PR<%k>_PRU<n>_GPO8 \else PRG<%k>_PRU<n>_GPO8 \endif
-    <td>pru<n>_hdsl2_outen
-	<td>Channel 2 transmit enable
+    <td>pru<n>_hdsl2_out_en
+    <td>Channel 2 transmit enable
 </tr>
 <tr>
     <td>\if (SOC_AM261X) PR<%k>_PRU<n>_GPI11 \else PRG<%k>_PRU<n>_GPI11 \endif
     <td>pru<n>_hdsl2_in
-	<td>Channel 2 receive
+    <td>Channel 2 receive
 </tr>
 </table>
 
 \cond SOC_AM243X
-### LP-AM243 Booster Pack Pin Multiplexing
+### LP-AM243 + BP-AM2BLDCSERVO Booster Pack Pin Multiplexing for SDK example
 <table>
 <tr>
     <th>Pin name
     <th>Signal name
-	<th>Function
+    <th>Function
 </tr>
 <tr>
     <td>PRG0_PRU1_GPO0
     <td>pru1_hdsl0_clk
-	<td>Channel 0 clock
+    <td>PRU1 Channel 0 clock
 </tr>
 <tr>
     <td>PRG0_PRU1_GPO1
     <td>pru1_hdsl0_out
-	<td>Channel 0 transmit
+    <td>PRU1 Channel 0 transmit
 </tr>
 <tr>
     <td>PRG0_PRU1_GPO2
     <td>pru1_hdsl0_out_en
-	<td>Channel 0 transmit enable
-</tr>
-<tr>
-    <td>PRG0_PRU1_GPI9
-    <td>pru1_hdsl0_in
-	<td>Channel 0 receive (if(G_MUX_EN==0))
+    <td>PRU1 Channel 0 transmit enable
 </tr>
 <tr>
     <td>PRG0_PRU1_GPI13
     <td>pru1_hdsl0_in
-	<td>Channel 0 receive (if(G_MUX_EN==1))
+    <td>PRU1 Channel 0 receive when SA mux selection is enabled (ICSSG_SA_MX_REG[7] G_MUX_EN = 1)
 </tr>
 <tr>
     <td>PRG0_PRU1_GPO6
     <td>pru1_hdsl2_clk
-	<td>Channel 2 clock
+    <td>PRU1 Channel 2 clock
 </tr>
 <tr>
     <td>PRG0_PRU1_GPO12
     <td>pru1_hdsl2_out
-	<td>Channel 2 transmit
+    <td>PRU1 Channel 2 transmit when SA mux selection is enabled (ICSSG_SA_MX_REG[7] G_MUX_EN = 1)
 </tr>
 <tr>
     <td>PRG0_PRU1_GPO8
     <td>pru1_hdsl2_out_en
-	<td>Channel 2 transmit enable
+    <td>PRU1 Channel 2 transmit enable
 </tr>
 <tr>
     <td>PRG0_PRU1_GPI11
     <td>pru1_hdsl2_in
-	<td>Channel 2 receive
+    <td>PRU1 Channel 2 receive
 </tr>
 <tr>
-    <td>GPIO Pin(GPIO1_78)
+    <td>GPIO Pin (GPIO1_78/C16)
     <td>ENC0_EN
-    <td>Enable 3 channel peripheral interface mode in Axis 1 of BP (C16 GPIO pin)
+    <td>Enable encoder voltage in Axis 1 of BP (Fix this pin to high with SoC GPIO mode)
 </tr>
 <tr>
-    <td>GPIO Pin(GPIO1_77)
+    <td>GPIO Pin (GPIO1_77/B17)
     <td>ENC2_EN
-    <td>Enable 3 channel peripheral interface mode in Axis 2 of BP (B17 GPIO pin)
+    <td>Enable encoder voltage in Axis 2 of BP (Fix this pin to high with SoC GPIO mode)
 </tr>
 </table>
 
 \endcond
 
-\cond  SOC_AM261X
-### LP-AM261 Booster Pack Pin Multiplexing
+\cond SOC_AM261X
+### LP-AM261 + BP-AM2BLDCSERVO Booster Pack Pin Multiplexing for SDK example
 <table>
 <tr>
     <th>Pin name
@@ -333,28 +352,53 @@ For further improvement of the synchronization, the time difference (∆t) betwe
 </tr>
 <tr>
     <td>PR1_PRU0_GPIO0
-    <td>pru1_hdsl0_clk
-    <td>Channel 0 clock
+    <td>pru0_hdsl0_clk
+    <td>PRU0 Channel 0 clock
 </tr>
 <tr>
     <td>PR1_PRU0_GPIO1
-    <td>pru1_hdsl0_out
-    <td>Channel 0 transmit
+    <td>pru0_hdsl0_out
+    <td>PRU0 Channel 0 transmit
 </tr>
 <tr>
     <td>PR1_PRU0_GPIO2
-    <td>pru1_hdsl0_out_en
-    <td>Channel 0 transmit enable
+    <td>pru0_hdsl0_out_en
+    <td>PRU0 Channel 0 transmit enable
 </tr>
 <tr>
     <td>PR1_PRU0_GPI9
-    <td>pru1_hdsl0_in
-    <td>Channel 0 receive
+    <td>pru0_hdsl0_in
+    <td>PRU0 Channel 0 receive
 </tr>
 <tr>
-    <td>GPIO Pin (GPIO_21)
-    <td>ENC0_EN
-    <td>Enable 3 channel peripheral interface in Axis 1 of BP (B10 GPIO pin)
+    <td>PR1_PRU1_GPIO0
+    <td>pru1_hdsl0_clk
+    <td>PRU1 Channel 0 clock
+</tr>
+<tr>
+    <td>PR1_PRU1_GPIO1
+    <td>pru1_hdsl0_out
+    <td>PRU1 Channel 0 transmit
+</tr>
+<tr>
+    <td>PR1_PRU1_GPIO2
+    <td>pru1_hdsl0_out_en
+    <td>PRU1 Channel 0 transmit enable
+</tr>
+<tr>
+    <td>PR1_PRU1_GPI9
+    <td>pru1_hdsl0_in
+    <td>PRU1 Channel 0 receive
+</tr>
+<tr>
+    <td>GPIO Pin (GPIO_21/B10)
+    <td>ENC0_EN (PRU0)
+    <td>Enable encoder voltage in Axis 1 of BP (Fix this pin to high with SoC GPIO mode)
+</tr>
+<tr>
+    <td>GPIO Pin (GPIO_22/A10)
+    <td>ENC0_EN (PRU1)
+    <td>Enable encoder voltage in Axis 2 of BP (Fix this pin to high with SoC GPIO mode)
 </tr>
 </table>
 \endcond

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2021-2025 Texas Instruments Incorporated
+ *  Copyright (C) 2021-2026 Texas Instruments Incorporated
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -46,7 +46,7 @@ extern "C" {
 
 #define HDSL_EXTRA_EDGE_LOOKUP_SIZE         (8U)
 
-/*Bit 7 will be set in QM when link is establised*/
+/*Bit 7 will be set in QM when link is established*/
 #define QM_LINK_ESTABLISHED                 (0x80)
 #define QM_LINK_ESTABLISHED_AND_VALUE_15    (0x8F)
 
