@@ -3850,10 +3850,6 @@ void endat_main(void *args)
      * - Each instance can have independent settings via cmd_supplement array
      * - Continuous mode commands run simultaneously on all instances
      */
-
-#if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
-    DebugP_log("\r\n| In host trigger mode, same command will be run on both ENDAT instances      |");
-#endif
     while(1)
     {
         j = 0;

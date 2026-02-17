@@ -54,7 +54,7 @@
 const uint32_t EnDatFirmwareMultiPru0_0[] = {
 0x21000300,
 0x00000207,
-0x01000009,
+0x01000010,
 0x91002b8e,
 0x1d03eeee,
 0x81002b8e,
@@ -1703,10 +1703,10 @@ const uint32_t EnDatFirmwareMultiPru0_0[] = {
 0x91783880,
 0x230602dd,
 0x2400e48d,
+0x2eff818e,
 0x908d0480,
-0xce2380fe,
-0x2eff8180,
-0x810c2b80,
+0xce2380ff,
+0x810c2b8e,
 0x69000303,
 0x2400e88d,
 0x21067f00,
@@ -1728,10 +1728,6 @@ const uint32_t EnDatFirmwareMultiPru0_0[] = {
 0x230602dd,
 0x0101c8c8,
 0x6708c8da,
-0x0b03e9e9,
 0x9174389b,
-0x60fbe903,
-0x04fbe9e9,
-0x21068e00,
 0x209d0000};
 

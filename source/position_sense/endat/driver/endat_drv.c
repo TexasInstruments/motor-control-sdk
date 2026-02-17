@@ -36,6 +36,7 @@
 #include <drivers/hw_include/hw_types.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 extern uint32_t gEndatConfigNum;
 extern endat_config gEndatHandle[];
@@ -80,6 +81,7 @@ static int32_t endat_config_iep_base_addr(endat_handle handle);
 static int32_t endat_config_syn_bits(endat_handle handle, uint8_t mask);
 static int32_t endat_enable_load_share_mode(endat_handle handle);
 static int32_t endat_config_primary_core_mask(endat_handle handle, uint8_t mask);
+static int32_t endat_calculate_propagation_delay(endat_handle handle);
 
 /* ========================================================================== */
 /*                         Structure Declarations                             */
@@ -3249,6 +3251,8 @@ int32_t endat_wait_initialization(endat_handle handle, uint32_t timeout, uint8_t
     const endat_attrs *attrs;
     endat_pruicss_xchg *pruicss_xchg;
     int32_t i;
+    int32_t status = SystemP_SUCCESS;
+    uint8_t init_complete = 0;
 
     /* Validate handle and pointers used in this function */
     if((handle == NULL) ||
@@ -3265,46 +3269,49 @@ int32_t endat_wait_initialization(endat_handle handle, uint32_t timeout, uint8_t
     attrs = handle->attrs;
     pruicss_xchg = priv->pruicss_xchg;
 
-    for(i = 0; i < timeout; i++)
+    for(i = 0; (i < timeout) && (init_complete == 0); i++)
     {
         if(attrs->load_share_enabled)  /* for loadshare mode*/
         {
             switch (mask)
             {
-             case 1:  /*channel 0 connected*/
-                     if((pruicss_xchg->config[0].status & 1))
-                         return SystemP_SUCCESS;
+                case 1:  /*channel 0 connected*/
+                    if((pruicss_xchg->config[0].status & 1))
+                        init_complete = 1;
                     break;
-             case 2: /*channel 1 connected*/
-                       if((pruicss_xchg->config[1].status & 1))
-                          return SystemP_SUCCESS;
+                case 2: /*channel 1 connected*/
+                    if((pruicss_xchg->config[1].status & 1))
+                        init_complete = 1;
                     break;
-             case 3:               /*channel 0 and 1 connected*/
+                case 3:               /*channel 0 and 1 connected*/
                     if((pruicss_xchg->config[0].status & 1)&&(pruicss_xchg->config[1].status & 1))
-                          return SystemP_SUCCESS;
+                        init_complete = 1;
                     break;
-             case 4:  /*channel 2 connected*/
-                       if((pruicss_xchg->config[2].status & 1))
-                           return SystemP_SUCCESS;
+                case 4:  /*channel 2 connected*/
+                    if((pruicss_xchg->config[2].status & 1))
+                        init_complete = 1;
                     break;
-             case 5:               /*channel 0 and 2 connected*/
-                 if((pruicss_xchg->config[0].status & 1)&&(pruicss_xchg->config[2].status & 1))
-                           return SystemP_SUCCESS;
+                case 5:               /*channel 0 and 2 connected*/
+                    if((pruicss_xchg->config[0].status & 1)&&(pruicss_xchg->config[2].status & 1))
+                        init_complete = 1;
                     break;
-             case 6:                    /*channel 1 and 2 connected*/
-                 if((pruicss_xchg->config[1].status & 1)&&(pruicss_xchg->config[2].status & 1))
-                            return SystemP_SUCCESS;
+                case 6:                    /*channel 1 and 2 connected*/
+                    if((pruicss_xchg->config[1].status & 1)&&(pruicss_xchg->config[2].status & 1))
+                        init_complete = 1;
                     break;
-             case 7:                       /*all three channel connected*/
-                 if((pruicss_xchg->config[0].status & 1)&&(pruicss_xchg->config[1].status & 1)&&( pruicss_xchg->config[2].status & 1))
-                            return SystemP_SUCCESS;
+                case 7:                       /*all three channel connected*/
+                    if((pruicss_xchg->config[0].status & 1)&&(pruicss_xchg->config[1].status & 1)&&( pruicss_xchg->config[2].status & 1))
+                        init_complete = 1;
                     break;
             }
-            ClockP_usleep(priv->fw_wait_delay_us);
+            if(init_complete == 0)
+            {
+                ClockP_usleep(priv->fw_wait_delay_us);
+            }
         }
         else if(pruicss_xchg->config[0].status & 1)
         {
-            break;
+            init_complete = 1;
         }
         else
         {
@@ -3312,12 +3319,36 @@ int32_t endat_wait_initialization(endat_handle handle, uint32_t timeout, uint8_t
         }
     }
 
-    if(i == timeout)
+    if(init_complete == 0)
     {
         return SystemP_TIMEOUT;
     }
+    /* Calculate propagation delay for all enabled channels */
+    if(attrs->mode == ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU)
+    {
+       status = endat_calculate_propagation_delay(handle);
+    }
+    else
+    {
+        for(i = 0; i < ENDAT_NUM_CH_PER_SLICE_MAX; i++)
+        {
+            if(attrs->channel_mask & (1 << i))
+            {
+                status = endat_multi_channel_set_cur(handle, i);
+                if(status != SystemP_SUCCESS)
+                {
+                    return status;
+                }
+                status = endat_calculate_propagation_delay(handle);
+                if(status != SystemP_SUCCESS)
+                {
+                    return status;
+                }
+            }
+        }
+    }
 
-  return SystemP_SUCCESS;
+    return status;
 }
 
 static int32_t endat_config_clr_cfg0(endat_handle handle)
@@ -3862,6 +3893,46 @@ int32_t endat_config_iep_cmp_event(endat_handle handle, uint8_t channel, uint8_t
     pruicss_xchg->trigger_params[ch_index].cmp_event = event_num;
 
     return ret_val;
+}
+
+static int32_t endat_calculate_propagation_delay(endat_handle handle)
+{
+    float delay_cycles;
+    float endat_clock_period_cycles;
+
+    /* Validate handle and pointers used in this function */
+    /* Validate core_clk_freq is not zero to avoid division by zero */
+    if((handle == NULL) ||
+       (handle->priv == NULL) ||
+       (handle->attrs == NULL) ||
+       (handle->attrs->core_clk_freq == 0))
+    {
+        return SystemP_FAILURE;
+    }
+
+    /* Get accumulated propagation delay in PRU cycles */
+    delay_cycles = handle->priv->pruicss_xchg->ch[handle->priv->current_channel].prop_delay;
+
+    /* Calculate average of accumulated samples */
+    delay_cycles = delay_cycles / (float)ENDAT_PROP_DELAY_NUM_SAMPLES;
+
+    /* Calculate EnDAT clock period in PRU cycles */
+    endat_clock_period_cycles = ((float)handle->attrs->core_clk_freq * (float)ENDAT_INIT_FREQ_CLOCK_PERIOD_NS) / (float)ENDAT_NS_PER_SECOND;
+
+    /* Validate clock period is non-zero to prevent division by zero in fmodf */
+    if(endat_clock_period_cycles <= 0.0f)
+    {
+        return SystemP_FAILURE;
+    }
+
+    /* Normalize delay to be less than one EnDAT clock period using fmodf */
+    delay_cycles = fmodf(delay_cycles, endat_clock_period_cycles);
+
+    /* Store calculated delay in PRU cycles with rounding to minimize truncation error */
+    /* Adding 0.5 before truncation provides round-to-nearest behavior */
+    handle->priv->pruicss_xchg->ch[handle->priv->current_channel].prop_delay = (uint32_t)(delay_cycles + 0.5f);
+
+    return SystemP_SUCCESS;
 }
 
 const endat_attrs* endat_get_attrs(endat_handle handle)

@@ -781,20 +781,25 @@ uint8_t endat_multi_channel_detected(endat_handle handle);
 int32_t endat_multi_channel_set_cur(endat_handle handle, uint32_t ch);
 
 /**
- *  \brief      Wait for EnDAT firmware initialization to complete
+ *  \brief      Wait for EnDAT firmware initialization and calculate propagation delay
  *
  *  \details    This function blocks until the PRU firmware completes its initialization
  *              sequence for the specified encoder channels, or until the timeout expires.
  *              Firmware initialization includes encoder detection, timing calibration,
  *              and establishment of communication.
  *
+ *              After successful initialization, this function automatically calculates
+ *              the propagation delay for all enabled channels. 
+ *
  *              The mask parameter specifies which channels to wait for:
  *              - Bit 0: Wait for channel 0
  *              - Bit 1: Wait for channel 1
  *              - Bit 2: Wait for channel 2
  *              - Example: 0x03 waits for channels 0 and 1
+ *              
  *
- *              This function is typically called immediately after firmware load done and PRU core is enabled
+ *              This function is typically called immediately after firmware load is done
+ *              and PRU core is enabled.
  *
  *              If initialization fails, use \ref endat_multi_channel_detected to
  *              determine which channels failed to initialize.
@@ -804,13 +809,17 @@ int32_t endat_multi_channel_set_cur(endat_handle handle, uint32_t ch);
  *  \param[in]  timeout     Timeout for iterations. Each iteration of the wait loop
  *                          uses priv->fw_wait_delay_us microseconds.
  *  \param[in]  mask        Channel mask indicating which channels to wait for
- *                          (bit 0 = channel 0, bit 1 = channel 1, etc.)
+ *                          (bit 0 = channel 0, bit 1 = channel 1, bit 2 = channel 2)
  *
- *  \retval     SystemP_SUCCESS     All specified channels initialized successfully
- *  \retval     SystemP_FAILURE     Handle is NULL or initialization failed
+ *  \retval     SystemP_SUCCESS     All specified channels initialized successfully and
+ *                                  propagation delay calculated
+ *  \retval     SystemP_FAILURE     Handle is NULL, mask is invalid (0 or >7), or
+ *                                  initialization failed
  *  \retval     SystemP_TIMEOUT     Initialization did not complete within timeout period
  *
- *  \note       This function blocks until initialization completes or timeout.
+ *  \note       This function blocks until initialization completes or timeout occurs.
+ *  \note       Propagation delay calculation is performed automatically after successful
+ *              initialization for all enabled channels.
  */
 int32_t endat_wait_initialization(endat_handle handle, uint32_t timeout, uint8_t mask);
 /**

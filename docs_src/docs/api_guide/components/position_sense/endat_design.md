@@ -125,6 +125,8 @@ The entire EnDat configuration MMRs are cleared. Through the defined interface (
 Then power-on-init as per specification is implemented, after which encoder is reset by sending reset command.
 Firmware sets up the command and its attribute for all the commands that are sent during initialization. Alarms, errors and warning are cleared.
 Firmware then determines number of clock pulses for position and whether encoder supports EnDat 2.2. Propagation delay is then estimated.
+\note The propagation delay is measured by the PRU firmware using the PRU cycle counter during initialization. The delay is averaged over 8 samples. The calculated propagation delay can vary by a maximum of -/+ 2 PRU cycles between measurements.
+
 If user has required for clock to be configured, it is obeyed, else it defaults to 8MHz. At the end of the initialization status is updated.
 
 \if (SOC_AM243X || SOC_AM64X)
