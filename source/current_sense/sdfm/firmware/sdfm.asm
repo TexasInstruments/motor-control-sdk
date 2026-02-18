@@ -1,4 +1,4 @@
-; Copyright (c) 2023-25, Texas Instruments Incorporated
+; Copyright (c) 2023-26, Texas Instruments Incorporated
 ; All rights reserved.
 ;
 ;  Redistribution and use in source and binary forms, with or without
@@ -174,9 +174,7 @@ CHECK_SDFM_EN:
 INIT_SDFM:
 
     ;read connected channel mask 
-    LBCO    &TEMP_REG0, PRUx_DMEM,  SDFM_CFG_SD_CH_MASK_OFFSET,  2
-    LSR  TEMP_REG0, TEMP_REG0, ICSS_PRU_SD_FIRST_CH
-    MOV SD_CHANNEL_MASK, TEMP_REG0.w0
+    LBCO    &SD_CHANNEL_MASK, PRUx_DMEM,  SDFM_CFG_SD_CH_MASK_OFFSET,  2
 
     ; Reset SDFM state
     JAL     RET_ADDR_REG, FN_RESET_SDFM_STATE
