@@ -352,16 +352,9 @@ endat31.pru                              = pruicss1;
 pruicss1.iepClk                          = 200000000;
 pruicss1.coreClk                         = 200000000;
 pruicss1.AdditionalICSSSettings[0].$name = "CONFIG_PRU_ICSS_IO0";
-pruicss1.intcMapping.create(3);
+pruicss1.intcMapping.create(1);
 pruicss1.intcMapping[0].$name            = "CONFIG_ICSS0_INTC_MAPPING0";
-pruicss1.intcMapping[0].event            = "18";
-pruicss1.intcMapping[1].$name            = "CONFIG_ICSS0_INTC_MAPPING1";
-pruicss1.intcMapping[1].event            = "19";
-pruicss1.intcMapping[1].host             = "3";
-pruicss1.intcMapping[1].channel          = "3";
-pruicss1.intcMapping[2].$name            = "CONFIG_ICSS0_INTC_MAPPING2";
-pruicss1.intcMapping[2].event            = "20";
-pruicss1.intcMapping[2].channel          = "4";
+pruicss1.intcMapping[0].event            = "21";
 
 epwm_syncout_xbar1.$name      = "CONFIG_EPWM_SYNCOUT_XBAR0";
 epwm_syncout_xbar1.xbarOutput = ["EPWM0_SYNCOUT"];

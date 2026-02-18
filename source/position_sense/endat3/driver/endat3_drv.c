@@ -1022,9 +1022,9 @@ int32_t endat3_handle_background_command_request(endat3_handle handle, const end
     {
         case ENDAT3_BGREQ_NOP:
             /* NOP operation: Just need to send arbitrary data */
-            priv->endat3_interface->bg_data[index + 0] = data & 0xFF;              /* Arbitrary data */
-            priv->endat3_interface->bg_data[index + 1] = (data >> 8) & 0xFF;       /* Arbitrary data */
-            priv->endat3_interface->bg_data[index + 2] = ENDAT3_BGREQ_NOP;         /* OpCode */
+            priv->endat3_interface->bg_data[index + 0] = data & 0xFFFF;              /* Arbitrary data */
+            priv->endat3_interface->bg_data[index + 1] = (data >> 16) & 0xFFFF;       /* Arbitrary data */
+            priv->endat3_interface->bg_data[index + 2] = (ENDAT3_BGREQ_NOP << 8);         /* OpCode */
             break;
 
         case ENDAT3_BGREQ_READ:
@@ -1124,7 +1124,10 @@ int32_t endat3_handle_background_command_request(endat3_handle handle, const end
     priv->endat3_interface->bg_data[index + 3] = 0x0;
     /* Set the frame count for all operations */
     priv->endat3_interface->expected_tx_frames_count = frame_cnt;
-
+    if(op_code == ENDAT3_BGREQ_RECONFIGURE)
+    {
+        priv->endat3_interface->expected_tx_frames_count++;
+    }
     /* Populate output parameters if provided */
     if(mode != NULL)
     {
@@ -1879,6 +1882,8 @@ int32_t endat3_get_error_code(endat3_handle handle, endat3_error_code *error_cod
 {
     endat3_priv *priv;
     uint32_t error_val = 0;
+    volatile uint8_t *lpf_data_ptr;
+    uint8_t byte0, byte1;
 
     /* Validate handle, parameters, and internal structure pointers */
     if((handle == NULL) || (error_code == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
@@ -1902,9 +1907,12 @@ int32_t endat3_get_error_code(endat3_handle handle, endat3_error_code *error_cod
     /* Check if BG.ERR_EXEC bit is set in LPH status */
     if((priv->endat3_interface->lph.status & ENDAT3_LPH_BG_ERR_EXEC) == ENDAT3_LPH_BG_ERR_EXEC)
     {
-        /* Extract error code from LPF data bytes 0-1 */
-        error_val = (priv->endat3_interface->lpf[0].data[1] << 8) |
-                    priv->endat3_interface->lpf[0].data[0];
+        lpf_data_ptr = (volatile uint8_t *)&priv->endat3_interface->lpf[0].data[0];
+        /* Read bytes individually with volatile access to ensure proper memory ordering */
+        byte0 = lpf_data_ptr[0];
+        byte1 = lpf_data_ptr[1];
+        /* Combine bytes to form error code */
+        error_val = ((uint32_t)byte1 << 8) | (uint32_t)byte0;
 
         *error_code = (endat3_error_code)error_val;
         return ENDAT3_SUCCESS;

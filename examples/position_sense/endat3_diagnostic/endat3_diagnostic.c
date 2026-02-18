@@ -1770,6 +1770,11 @@ void endat3_diagnostic_main(void *args)
                             DebugP_log("\r\n - Custom Reset Type: 0x%04X", reset_type);
                         }
                         ClockP_usleep(DELAY_302_MILLISEC);
+                        /* Release start trigger */
+                        if(endat3_release_start_trigger(gAppEndat3Handle[CONFIG_ENDAT3_0]) != ENDAT3_SUCCESS)
+                        {
+                            DebugP_log("\r\n| ERROR: Failed to release start trigger\r\n");
+                        }
                         break;
                     case ENDAT3_REQ_CLEAR:
                         DebugP_log("\r\n State Reset Response:");
