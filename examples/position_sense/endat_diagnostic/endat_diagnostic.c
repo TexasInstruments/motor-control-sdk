@@ -2785,9 +2785,9 @@ static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_
                         {
                             break;
                         }
+                        
+                        ClockP_usleep(ENDAT_PERIODIC_MODE_POLL_SLEEP_US);
                     }
-
-                    ClockP_usleep(ENDAT_PERIODIC_MODE_POLL_SLEEP_US);
 
                     /* Check stop condition before updating prev_irq_cnt */
                     if(gEndatPositionLoopStatus == ENDAT_POSITION_LOOP_STOP)
