@@ -3332,7 +3332,7 @@ int32_t endat_wait_initialization(endat_handle handle, uint32_t timeout, uint8_t
     {
         for(i = 0; i < ENDAT_NUM_CH_PER_SLICE_MAX; i++)
         {
-            if(attrs->channel_mask & (1 << i))
+            if(mask & (1 << i))
             {
                 status = endat_multi_channel_set_cur(handle, i);
                 if(status != SystemP_SUCCESS)
