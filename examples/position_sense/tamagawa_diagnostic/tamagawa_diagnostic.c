@@ -1140,9 +1140,9 @@ static int32_t tamagawa_process_periodic_command(tamagawa_handle handle[], int32
                     {
                         break;
                     }
-                }
 
-                ClockP_usleep(TAMAGAWA_PERIODIC_MODE_POLL_SLEEP_US);
+                    ClockP_usleep(TAMAGAWA_PERIODIC_MODE_POLL_SLEEP_US);
+                }
 
                 /* Check stop condition before updating prev_irq_cnt */
                 if(gTamagawaPositionLoopStatus == TAMAGAWA_POSITION_LOOP_STOP)
