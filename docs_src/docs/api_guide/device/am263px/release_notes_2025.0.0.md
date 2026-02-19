@@ -32,13 +32,17 @@
     <td>Handle-based API architecture, periodic trigger modes (CMP and CAP), SysConfig-based initialization, per-channel encoder timeout configuration
     <td>Position Sense BiSS-C
 </tr>
+<tr>
+    <td>Handle-based API architecture, periodic trigger modes (CMP and CAP), SysConfig-based initialization
+    <td>Position Sense Nikon A-format
+</tr>
 </table>
 
 SOC    | Supported CPUs  | Boards                                                                                                      | Host PC
 -------|-----------------|-------------------------------------------------------------------------------------------------------------|-----------------------------------
-AM263Px| R5F             | AM263Px ControlCard Rev A    (referred to as am263px-cc in code). 
+AM263Px| R5F             | AM263Px ControlCard Rev A    (referred to as am263px-cc in code).
          | Windows 10 64b or Ubuntu 18.04 64b or MacOS or MacOS
-AM263Px| R5F             | AM263Px LaunchPad  Rev E2    (referred to as am263px-lp in code). 
+AM263Px| R5F             | AM263Px LaunchPad  Rev E2    (referred to as am263px-lp in code).
          | Windows 10 64b or Ubuntu 18.04 64b or MacOS or MacOS
 
 ## Tools, Compiler and Other Open Source SW Module Information
@@ -73,8 +77,8 @@ Mbed-TLS                             | R5F            | mbedtls-2.13.1
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Single channel, Multi channel using single PRU core and three PRU cores (load share mode), point-to-point connection, control communication, automatic processing delay detection and compensation, interface speed of 1, 2, 5, 8, and 10 MHz, long cable (upto 100 meters), periodic trigger modes (CMP and CAP), continuous mode, BP-AM2BLDCSERVO Boosterpack with LP-AM263P
-    <td> Daisy chaining, safety mode (safety CRC and sign-of-life counter)
+    <td> Single channel, Multi channel using single PRU core and three PRU cores (load share mode), point-to-point connection, control communication, automatic processing delay detection and compensation, interface speed of 1, 2, 5, 8, and 10 MHz, long cable (upto 100 meters), periodic trigger modes (CMP and CAP), daisy chaining, safety mode (safety CRC and sign-of-life counter), BP-AM2BLDCSERVO Boosterpack with LP-AM263P
+    <td> -
 </tr>
 <tr>
     <td> EnDat
@@ -105,7 +109,7 @@ Mbed-TLS                             | R5F            | mbedtls-2.13.1
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Nikon A-format version 2.1 and version 3.0, Single channel, Multi channel using single PRU core and three PRU cores (load share mode), point-to-point connection, bus connection up to 8 encoders, individual and multiple transmission mode with encoder addresses ranging between ENC1-ENC8, baud rates from 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz, up to 40-bit absolute position (single turn + multi turn) data with additional information, long cable (upto 100 meters), continuous mode, BP-AM2BLDCSERVO Boosterpack with LP-AM263P
+    <td> Nikon A-format version 2.1 and version 3.0, Single channel, Multi channel using single PRU core and three PRU cores (load share mode), point-to-point connection, bus connection up to 8 encoders, individual and multiple transmission mode with encoder addresses ranging between ENC1-ENC8, baud rates from 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz, up to 40-bit absolute position (single turn + multi turn) data with additional information, long cable (upto 100 meters), BP-AM2BLDCSERVO Boosterpack with LP-AM263P
     <td> -
 </tr>
 <tr>

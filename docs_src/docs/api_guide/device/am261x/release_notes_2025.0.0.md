@@ -26,6 +26,10 @@
     <td>Dual channel support using two independent PRU cores, handle-based API architecture, periodic trigger modes (CMP and CAP), SysConfig-based initialization, per-channel encoder timeout configuration
     <td>Position Sense BiSS-C
 </tr>
+<tr>
+    <td>Dual channel support using two independent PRU cores, handle-based API architecture, periodic trigger modes (CMP and CAP), SysConfig-based initialization
+    <td>Position Sense Nikon A-format
+</tr>
 </table>
 
 ## Device and Validation Information
@@ -63,8 +67,8 @@ Mbed-TLS                | R5F            | 2.13.1
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Single channel, dual channel using two independent PRU cores, point-to-point connection, control communication, automatic processing delay detection and compensation, interface speed of 1, 2, 5, 8, and 10 MHz, periodic trigger modes (CMP and CAP), Boosterpack with LP-AM261
-    <td> Daisy chaining, safety mode (safety CRC and sign-of-life counter)
+    <td> Single channel, dual channel using two independent PRU cores, point-to-point connection, control communication, automatic processing delay detection and compensation, interface speed of 1, 2, 5, 8, and 10 MHz, periodic trigger modes (CMP and CAP), daisy chaining, safety mode (safety CRC and sign-of-life counter), Boosterpack with LP-AM261
+    <td> -
 </tr>
 <tr>
     <td> EnDat
