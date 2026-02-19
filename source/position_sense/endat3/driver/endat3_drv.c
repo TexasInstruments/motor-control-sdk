@@ -109,12 +109,12 @@ static int32_t endat3_set_delay_cycles(endat3_handle handle);
 static int32_t endat3_set_channel_mask(endat3_handle handle, uint8_t channel_mask);
 static int32_t endat3_config_clr_cfg0(endat3_handle handle);
 static uint16_t endat3_reflect_general(uint16_t value, uint16_t width);
-static uint16_t endat3_compute_crc(const uint8_t *bytes, size_t length, uint16_t poly, uint16_t crcsize, uint16_t initialValue, uint8_t inputReflected, uint8_t resultReflected, uint16_t finalXor);
-static uint8_t endat3_calculate_crc(uint8_t *data, uint32_t len);
-static int32_t endat3_validate_crc(uint8_t *buffer, uint32_t length);
-static int32_t endat3_prepare_request(endat3_handle handle, uint8_t cmd, uint32_t *data_array, uint8_t num_frames);
+static uint16_t endat3_compute_crc(const volatile uint8_t *bytes, size_t length, uint16_t poly, uint16_t crcsize, uint16_t initialValue, uint8_t inputReflected, uint8_t resultReflected, uint16_t finalXor);
+static uint8_t endat3_calculate_crc(const volatile uint8_t *data, uint32_t len);
+static int32_t endat3_validate_crc(const volatile uint8_t *buffer, uint32_t length);
+static int32_t endat3_prepare_request(endat3_handle handle, uint8_t cmd, volatile uint32_t *data_array, uint8_t num_frames);
 static int32_t endat3_wait_rx_complete(endat3_handle handle);
-static int32_t endat3_parse_frames(endat3_handle handle, uint8_t *rx_buffer);
+static int32_t endat3_parse_frames(endat3_handle handle, volatile uint8_t *rx_buffer);
 static int32_t endat3_config_iep_base_address(endat3_handle handle, uint32_t iep_base_address);
 
 /* ========================================================================== */
@@ -493,7 +493,7 @@ static int32_t endat3_config_clock(endat3_handle handle, endat3_clock_config *cl
  * \note CRC is calculated for each frame independently using \ref endat3_calculate_crc()
  * \note Byte order is reversed for PRU firmware consumption
  */
-static int32_t endat3_prepare_request(endat3_handle handle, uint8_t cmd, uint32_t *data_array, uint8_t num_frames)
+static int32_t endat3_prepare_request(endat3_handle handle, uint8_t cmd, volatile uint32_t *data_array, uint8_t num_frames)
 {
     endat3_priv *priv;
     uint8_t i, k;
@@ -590,14 +590,17 @@ static int32_t endat3_wait_rx_complete(endat3_handle handle)
  * \note Does not validate CRC - caller must use \ref endat3_validate_crc() for each frame
  * \note On validation failure, does not modify interface structures
  */
-static int32_t endat3_parse_frames(endat3_handle handle, uint8_t *rx_buffer)
+static int32_t endat3_parse_frames(endat3_handle handle, volatile uint8_t *rx_buffer)
 {
     endat3_priv *priv;
-    uint8_t j;
+    uint8_t i, j;
 
     priv = handle->priv;
-    /* Parse HPF (bytes 0-7) */
-    memcpy(priv->endat3_interface->hpf.data, rx_buffer, HPF_DATA_SIZE);
+    /* Parse HPF (bytes 0-7) - byte-by-byte copy to preserve volatile semantics */
+    for(i = 0; i < HPF_DATA_SIZE; i++)
+    {
+        priv->endat3_interface->hpf.data[i] = rx_buffer[i];
+    }
     priv->endat3_interface->hpf.status = rx_buffer[6];
     priv->endat3_interface->hpf.crc = rx_buffer[7];
 
@@ -745,7 +748,7 @@ static uint16_t endat3_reflect_general(uint16_t value, uint16_t width)
  *
  * \return Computed CRC value
  */
-static uint16_t endat3_compute_crc(const uint8_t *bytes, size_t length,
+static uint16_t endat3_compute_crc(const volatile uint8_t *bytes, size_t length,
                           uint16_t poly, uint16_t crcsize,
                           uint16_t initialValue, uint8_t inputReflected,
                           uint8_t resultReflected, uint16_t finalXor)
@@ -811,7 +814,7 @@ static uint16_t endat3_compute_crc(const uint8_t *bytes, size_t length,
  *
  * \return 8-bit CRC value
  */
-static uint8_t endat3_calculate_crc(uint8_t *data, uint32_t len)
+static uint8_t endat3_calculate_crc(const volatile uint8_t *data, uint32_t len)
 {
     /* CRC parameters: polynomial=0xA7, crcsize=8, initialValue=0xFF,
      * inputReflected=1, resultReflected=1, finalXor=0x00 */
@@ -837,7 +840,7 @@ static uint8_t endat3_calculate_crc(uint8_t *data, uint32_t len)
  * \note CRC calculation: Uses \ref endat3_calculate_crc() on all bytes except last
  * \note Generic error: Returns ENDAT3_ERR_RX_FAIL on CRC failure, not frame-specific error
  */
-static int32_t endat3_validate_crc(uint8_t *buffer, uint32_t length)
+static int32_t endat3_validate_crc(const volatile uint8_t *buffer, uint32_t length)
 {
     uint8_t received_crc;
     uint8_t calculated_crc;
@@ -1292,7 +1295,8 @@ int32_t endat3_get_hpf_data_64_bit(endat3_handle handle, uint64_t *data)
 {
     endat3_priv *priv;
     uint64_t result = 0;
-    uint8_t *hpf_data, i;
+    volatile uint8_t *hpf_data;
+    uint8_t i;
 
     /* Validate handle, parameters, and internal structure pointers */
     if((handle == NULL) || (data == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
@@ -1749,6 +1753,7 @@ int32_t endat3_set_bg_data(endat3_handle handle, uint8_t index, uint32_t data)
 int32_t endat3_get_all_bg_data(endat3_handle handle, uint32_t *data)
 {
     endat3_priv *priv;
+    uint32_t i;
 
     /* Validate handle, parameters, and internal structure pointers */
     if((handle == NULL) || (data == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
@@ -1757,7 +1762,11 @@ int32_t endat3_get_all_bg_data(endat3_handle handle, uint32_t *data)
     }
 
     priv = handle->priv;
-    memcpy(data, priv->endat3_interface->bg_data, sizeof(priv->endat3_interface->bg_data));
+    /* Copy element by element to preserve volatile semantics */
+    for(i = 0; i < (sizeof(priv->endat3_interface->bg_data) / sizeof(uint32_t)); i++)
+    {
+        data[i] = priv->endat3_interface->bg_data[i];
+    }
 
     return ENDAT3_SUCCESS;
 }
@@ -1765,6 +1774,7 @@ int32_t endat3_get_all_bg_data(endat3_handle handle, uint32_t *data)
 int32_t endat3_set_all_bg_data(endat3_handle handle, const uint32_t *data)
 {
     endat3_priv *priv;
+    uint32_t i;
 
     /* Validate handle, parameters, and internal structure pointers */
     if((handle == NULL) || (data == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
@@ -1773,7 +1783,11 @@ int32_t endat3_set_all_bg_data(endat3_handle handle, const uint32_t *data)
     }
 
     priv = handle->priv;
-    memcpy(priv->endat3_interface->bg_data, data, sizeof(priv->endat3_interface->bg_data));
+    /* Copy element by element to preserve volatile semantics */
+    for(i = 0; i < (sizeof(priv->endat3_interface->bg_data) / sizeof(uint32_t)); i++)
+    {
+        priv->endat3_interface->bg_data[i] = data[i];
+    }
 
     return ENDAT3_SUCCESS;
 }
@@ -1782,7 +1796,7 @@ int32_t endat3_set_all_bg_data(endat3_handle handle, const uint32_t *data)
 /*                    Buffer Access APIs                                      */
 /* ========================================================================== */
 
-const uint8_t* endat3_get_rx_buffer(endat3_handle handle)
+const volatile uint8_t* endat3_get_rx_buffer(endat3_handle handle)
 {
     endat3_priv *priv;
 
@@ -1796,7 +1810,7 @@ const uint8_t* endat3_get_rx_buffer(endat3_handle handle)
     return priv->endat3_interface->rx_buffer;
 }
 
-const uint8_t* endat3_get_tx_buffer(endat3_handle handle)
+const volatile uint8_t* endat3_get_tx_buffer(endat3_handle handle)
 {
     endat3_priv *priv;
 
@@ -1813,6 +1827,7 @@ const uint8_t* endat3_get_tx_buffer(endat3_handle handle)
 int32_t endat3_set_tx_buffer(endat3_handle handle, const uint8_t *data, uint32_t length)
 {
     endat3_priv *priv;
+    uint32_t i;
 
     /* Validate handle, parameters, and internal structure pointers */
     if((handle == NULL) || (data == NULL) || (length == 0) || (length > TX_BUFFER_SIZE) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
@@ -1821,7 +1836,11 @@ int32_t endat3_set_tx_buffer(endat3_handle handle, const uint8_t *data, uint32_t
     }
 
     priv = handle->priv;
-    memcpy(priv->endat3_interface->tx_buffer, data, length);
+    /* Copy byte by byte to preserve volatile semantics */
+    for(i = 0; i < length; i++)
+    {
+        priv->endat3_interface->tx_buffer[i] = data[i];
+    }
 
     return ((int32_t)length);
 }
@@ -1833,6 +1852,7 @@ int32_t endat3_set_tx_buffer(endat3_handle handle, const uint8_t *data, uint32_t
 int32_t endat3_get_hpf_frame(endat3_handle handle, endat3_hpf *hpf)
 {
     endat3_priv *priv;
+    uint8_t i;
 
     /* Validate handle, parameters, and internal structure pointers */
     if((handle == NULL) || (hpf == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
@@ -1841,7 +1861,13 @@ int32_t endat3_get_hpf_frame(endat3_handle handle, endat3_hpf *hpf)
     }
 
     priv = handle->priv;
-    memcpy(hpf, &priv->endat3_interface->hpf, sizeof(endat3_hpf));
+    /* Copy field by field to preserve volatile semantics */
+    for(i = 0; i < HPF_DATA_SIZE; i++)
+    {
+        hpf->data[i] = priv->endat3_interface->hpf.data[i];
+    }
+    hpf->status = priv->endat3_interface->hpf.status;
+    hpf->crc = priv->endat3_interface->hpf.crc;
 
     return ENDAT3_SUCCESS;
 }
@@ -1857,7 +1883,11 @@ int32_t endat3_get_lph_frame(endat3_handle handle, endat3_lph *lph)
     }
 
     priv = handle->priv;
-    memcpy(lph, &priv->endat3_interface->lph, sizeof(endat3_lph));
+    /* Copy field by field to preserve volatile semantics */
+    lph->status = priv->endat3_interface->lph.status;
+    lph->num_lpf = priv->endat3_interface->lph.num_lpf;
+    lph->reserved = priv->endat3_interface->lph.reserved;
+    lph->crc = priv->endat3_interface->lph.crc;
 
     return ENDAT3_SUCCESS;
 }
@@ -1865,6 +1895,7 @@ int32_t endat3_get_lph_frame(endat3_handle handle, endat3_lph *lph)
 int32_t endat3_get_lpf_frame(endat3_handle handle, uint8_t index, endat3_lpf *lpf)
 {
     endat3_priv *priv;
+    uint8_t i;
 
     /* Validate handle, parameters, and internal structure pointers */
     if((handle == NULL) || (lpf == NULL) || (index >= MAX_LPF_COUNT) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
@@ -1873,7 +1904,13 @@ int32_t endat3_get_lpf_frame(endat3_handle handle, uint8_t index, endat3_lpf *lp
     }
 
     priv = handle->priv;
-    memcpy(lpf, &priv->endat3_interface->lpf[index], sizeof(endat3_lpf));
+    /* Copy field by field to preserve volatile semantics */
+    lpf->status = priv->endat3_interface->lpf[index].status;
+    for(i = 0; i < LPF_DATA_SIZE; i++)
+    {
+        lpf->data[i] = priv->endat3_interface->lpf[index].data[i];
+    }
+    lpf->crc = priv->endat3_interface->lpf[index].crc;
 
     return ENDAT3_SUCCESS;
 }
@@ -1882,8 +1919,6 @@ int32_t endat3_get_error_code(endat3_handle handle, endat3_error_code *error_cod
 {
     endat3_priv *priv;
     uint32_t error_val = 0;
-    volatile uint8_t *lpf_data_ptr;
-    uint8_t byte0, byte1;
 
     /* Validate handle, parameters, and internal structure pointers */
     if((handle == NULL) || (error_code == NULL) || (handle->priv == NULL) || (handle->priv->endat3_interface == NULL))
@@ -1907,12 +1942,9 @@ int32_t endat3_get_error_code(endat3_handle handle, endat3_error_code *error_cod
     /* Check if BG.ERR_EXEC bit is set in LPH status */
     if((priv->endat3_interface->lph.status & ENDAT3_LPH_BG_ERR_EXEC) == ENDAT3_LPH_BG_ERR_EXEC)
     {
-        lpf_data_ptr = (volatile uint8_t *)&priv->endat3_interface->lpf[0].data[0];
-        /* Read bytes individually with volatile access to ensure proper memory ordering */
-        byte0 = lpf_data_ptr[0];
-        byte1 = lpf_data_ptr[1];
-        /* Combine bytes to form error code */
-        error_val = ((uint32_t)byte1 << 8) | (uint32_t)byte0;
+        /* Extract error code from LPF[0] data bytes 0-1 */
+        error_val = (priv->endat3_interface->lpf[0].data[1] << 8) |
+                    priv->endat3_interface->lpf[0].data[0];
 
         *error_code = (endat3_error_code)error_val;
         return ENDAT3_SUCCESS;

@@ -99,14 +99,19 @@ static void endat3_manchester_decode_lut(endat3_handle handle);
 static void endat3_manchester_decode_lut(endat3_handle handle)
 {
     endat3_priv *priv;
-    uint8_t     *lut_dest;
+    volatile uint8_t *lut_dest;
+    uint32_t i;
 
     priv = handle->priv;
 
     /* Copy the Manchester decode lookup table to the lut member of endat3_interface structure in PRU DMEM */
-    lut_dest = (uint8_t *)priv->endat3_interface->lut;
+    /* Use byte-by-byte copy to preserve volatile semantics for PRU-shared memory */
+    lut_dest = (volatile uint8_t *)priv->endat3_interface->lut;
 
-    memcpy(lut_dest, endat3_manchester_decode_lut_data, MANCHESTER_DECODE_LUT_SIZE);
+    for(i = 0; i < MANCHESTER_DECODE_LUT_SIZE; i++)
+    {
+        lut_dest[i] = endat3_manchester_decode_lut_data[i];
+    }
 }
 
 void endat3_generate_memory_image(endat3_handle handle)
