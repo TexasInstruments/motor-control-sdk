@@ -596,60 +596,60 @@ typedef struct endat3_periodic_trigger_cfg_s
  */
 typedef struct endat3_interface_s {
     /* Communication buffers */
-    uint32_t lut[LUT_SIZE];             /**< Lookup table */
-    uint8_t rx_buffer[RX_BUFFER_SIZE];  /**< Receive buffer */
+    volatile uint32_t lut[LUT_SIZE];             /**< Lookup table */
+    volatile uint8_t rx_buffer[RX_BUFFER_SIZE];  /**< Receive buffer */
 
     /* Frame structures */
-    endat3_hpf hpf;                     /**< High Priority Frame */
-    endat3_lph lph;                     /**< Low Priority Header */
-    endat3_lpf lpf[MAX_LPF_COUNT];      /**< Low Priority Frames array */
+    volatile endat3_hpf hpf;                     /**< High Priority Frame */
+    volatile endat3_lph lph;                     /**< Low Priority Header */
+    volatile endat3_lpf lpf[MAX_LPF_COUNT];      /**< Low Priority Frames array */
 
     /* Status flags */
-    uint8_t connected;                  /**< Connection status */
-    uint8_t busy;                       /**< Transfer in progress */
-    uint8_t comm_cycle_flag;            /**< Communication cycle flag */
-    uint8_t reserved1;                  /**< Reserved for alignment */
+    volatile uint8_t connected;                  /**< Connection status */
+    volatile uint8_t busy;                       /**< Transfer in progress */
+    volatile uint8_t comm_cycle_flag;            /**< Communication cycle flag */
+    volatile uint8_t reserved1;                  /**< Reserved for alignment */
 
     /* Frame control */
-    uint32_t expected_tx_frames_count;  /**< Expected number of TX frames */
-    uint32_t current_tx_frame_offset;   /**< Current TX frame offset */
+    volatile uint32_t expected_tx_frames_count;  /**< Expected number of TX frames */
+    volatile uint32_t current_tx_frame_offset;   /**< Current TX frame offset */
 
     /* Data buffers */
-    uint8_t tx_buffer[TX_BUFFER_SIZE];  /**< Transmit buffer */
-    uint32_t bg_data[BG_DATA_SIZE];     /**< Background data */
+    volatile uint8_t tx_buffer[TX_BUFFER_SIZE];  /**< Transmit buffer */
+    volatile uint32_t bg_data[BG_DATA_SIZE];     /**< Background data */
 
     /* Timing and operation codes */
-    uint32_t propagation_time;          /**< Measured propagation time */
-    uint32_t foreground_op_code;        /**< Foreground operation code */
-    uint32_t background_op_code;        /**< Background operation code */
+    volatile uint32_t propagation_time;          /**< Measured propagation time */
+    volatile uint32_t foreground_op_code;        /**< Foreground operation code */
+    volatile uint32_t background_op_code;        /**< Background operation code */
 
     /* Periodic trigger configuration */
-    uint8_t opmode_config;              /**< Operating mode: 0=periodic CMP, 1=host, 2=periodic CAP */
-    uint8_t reserved2;                  /**< Reserved for alignment */
-    uint8_t reserved3;                  /**< Reserved for alignment */
-    uint8_t reserved4;                  /**< Reserved for alignment */
+    volatile uint8_t opmode_config;              /**< Operating mode: 0=periodic CMP, 1=host, 2=periodic CAP */
+    volatile uint8_t reserved2;                  /**< Reserved for alignment */
+    volatile uint8_t reserved3;                  /**< Reserved for alignment */
+    volatile uint8_t reserved4;                  /**< Reserved for alignment */
 
     /* Delay Cycle Configuration (frequency-independent timing) */
     /* These values are calculated by R5F based on actual PRU frequency */
-    uint32_t delay_tx_start_1;          /**< TX start delay 1 in PRU cycles */
-    uint32_t delay_tx_start_2;          /**< TX start delay 2 in PRU cycles */
-    uint32_t delay_tx_start_3;          /**< TX start delay 3 in PRU cycles */
-    uint32_t delay_sampling;            /**< Sampling delay in PRU cycles */
-    uint32_t delay_10ms;                /**< 10ms delay in PRU cycles */
+    volatile uint32_t delay_tx_start_1;          /**< TX start delay 1 in PRU cycles */
+    volatile uint32_t delay_tx_start_2;          /**< TX start delay 2 in PRU cycles */
+    volatile uint32_t delay_tx_start_3;          /**< TX start delay 3 in PRU cycles */
+    volatile uint32_t delay_sampling;            /**< Sampling delay in PRU cycles */
+    volatile uint32_t delay_10ms;                /**< 10ms delay in PRU cycles */
 
     /* Trigger Control */
-    uint8_t start_trigger;              /**< Start trigger: released by R5F core based on operating mode */
+    volatile uint8_t start_trigger;              /**< Start trigger: released by R5F core based on operating mode */
 
     /* Channel Enable Mask */
-    uint8_t channel_enable_mask;        /**< Channel enable mask: bit 0=CH0, bit 1=CH1, bit 2=CH2 */
+    volatile uint8_t channel_enable_mask;        /**< Channel enable mask: bit 0=CH0, bit 1=CH1, bit 2=CH2 */
 
-    uint8_t reserved5;                  /**< Reserved for alignment */
-    uint8_t reserved6;                  /**< Reserved for alignment */
+    volatile uint8_t reserved5;                  /**< Reserved for alignment */
+    volatile uint8_t reserved6;                  /**< Reserved for alignment */
 
     volatile uint32_t iep_base_address;
     /**< IEP base address used for periodic trigger mode */
 
-    endat3_periodic_trigger_cfg trigger_params;
+    volatile endat3_periodic_trigger_cfg trigger_params;
     /**< Periodic trigger configuration parameters.
      *   Contains IEP event numbers and capture register addresses */
 
@@ -1456,7 +1456,7 @@ int32_t endat3_set_all_bg_data(endat3_handle handle, const uint32_t *data);
  *
  * \warning Do not modify the returned buffer. Use for read-only access.
  */
-const uint8_t* endat3_get_rx_buffer(endat3_handle handle);
+const volatile uint8_t* endat3_get_rx_buffer(endat3_handle handle);
 
 /**
  * \brief Get TX buffer pointer
@@ -1468,7 +1468,7 @@ const uint8_t* endat3_get_rx_buffer(endat3_handle handle);
  *
  * \warning Do not modify the returned buffer. Use for read-only access.
  */
-const uint8_t* endat3_get_tx_buffer(endat3_handle handle);
+const volatile uint8_t* endat3_get_tx_buffer(endat3_handle handle);
 
 /**
  * \brief Copy data to TX buffer
