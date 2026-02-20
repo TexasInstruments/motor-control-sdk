@@ -496,7 +496,7 @@ static void endat3_continuous_position_fetch(endat3_handle handle)
     float angle = 0.0f;
     uint16_t cmd = ENDAT3_REQ_DATA0;
     int32_t error;
-    const uint8_t *rx_buffer;
+    const volatile uint8_t *rx_buffer;
     uint8_t is_busy;
 
     /* Create task to monitor stop condition */
@@ -656,7 +656,7 @@ static int32_t endat3_process_periodic_command(endat3_handle handle[], uint8_t i
 {
     int32_t status;
     uint8_t current_opmode;
-    const uint8_t* rx_buffer;
+    const volatile uint8_t* rx_buffer;
     uint32_t position;
     float angle;
     uint16_t cmd;
