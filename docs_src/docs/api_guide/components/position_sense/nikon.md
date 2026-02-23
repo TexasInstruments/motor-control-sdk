@@ -174,7 +174,7 @@ supported in this release, including the following:
     3. Command 20 is sent with ID not matching the encoder connected with the device
 \endcond
 
-## SysConfig Features
+## SysConfig Features {#NIKON_SYSCONFIG_FEATURES}
 
 @VAR_SYSCFG_USAGE_NOTE
 
@@ -239,17 +239,28 @@ SysConfig can be used to configure the following:
 The Nikon driver supports two types of periodic trigger modes for continuous position sampling:
 
 ### CMP Mode (Compare Event Mode)
-In CMP mode, IEP timer compare event trigger position sampling based on compare events. Compare event occurs when IEP timer hits the configured compare value. This is useful for applications requiring position sampling at regular intervals.
+In CMP mode, IEP timer compare events trigger position sampling based on compare events. Compare event occurs when IEP timer hits the configured compare value. This is useful for applications requiring position sampling at regular intervals.
 
 ### CAP Mode (Capture Event Mode)
-In CAP mode, external signals trigger position sampling based on IEP capture events. Capture event is triggered on rising edge of the input pulse. This is useful for synchronizing position capture with external inputs.
+\cond SOC_AM243X
+In CAP mode, external signals trigger position sampling based on IEP capture events. Capture event is triggered on rising edge of the input pulse. This is useful for synchronizing position capture with external inputs. Internal signals can also be mapped to IEP capture events via TIMESYNC/GPIOMUX router.
+\endcond
+
+\cond (SOC_AM261X || SOC_AM263X || SOC_AM263PX)
+In CAP mode, external signals trigger position sampling based on IEP capture events. Capture event is triggered on rising edge of the input pulse. This is useful for synchronizing position capture with external inputs. Internal signals can also be mapped to IEP capture events via XBAR.
+\endcond
 
 \note CAP6 and CAP7 support falling edge detection as well. In Nikon, rising edge is used always.
 
 ## PRU-ICSS Resource Usage
+
+- Utilizes the Peripheral IF mode (3-channel peripheral interface mode) for Nikon communication. Maximum of 3 channels are available per PRU slice. (Refer \ref PRUICSS_PERIPHERAL_IF_MODE for more details)
+- Each channel has 4 pins (Clock, Data out, Data in, Output enable)
+- Following table contains details of memory usage, IEP usage and interrupt controller usage:
+
 \cond SOC_AM243X
 
-\attention In addition to following resources used by PRU firmwares, SDK examples also configure IEPx CMP0 for IEP counter reset in periodic trigger CMP/CAP mode and IEPx CMP1 for generating SYNC OUT0 used as input to CAP in periodic trigger CAP mode.
+\attention In addition to following resources used by PRU firmwares, SDK examples also configure IEPx CMP0 for IEP counter reset in periodic trigger CMP mode and IEPx CMP1 for generating SYNC OUT0 used as input to CAP in periodic trigger CAP mode.
 
 <table>
 <tr>
@@ -263,7 +274,7 @@ In CAP mode, external signals trigger position sampling based on IEP capture eve
 <tr>
     <td> Single channel
     <td> PRUx
-    <td> DMEM: 580 Bytes (0x0 to 0x244) <br>  IMEM: ~ 1.4 kB
+    <td> DMEM: 580 Bytes (0x0 to 0x243) <br>IMEM: ~ 1.4 kB
 	<td> <b>CMP Mode:</b> IEPx CMPy for trigger (IEPx and CMPy selected in SysConfig)<br><b>CAP Mode:</b> IEPx CAPy for trigger (IEPx and CAPy selected in SysConfig)
     <td> INTC event/input number 18 or 21 (prx_pru_mst_intr[2/3]_intr_req) is used to trigger interrupt to Arm® Cortex®-R5F based on slice
     <td> IEP events and INTC signals are used only in periodic trigger modes
@@ -271,7 +282,7 @@ In CAP mode, external signals trigger position sampling based on IEP capture eve
 <tr>
     <td> Multi-channel with single PRU core
     <td> PRUx
-    <td> DMEM: 580 Bytes (0x0 to 0x244) <br>  IMEM: ~ 1.73 kB
+    <td> DMEM: 580 Bytes (0x0 to 0x243) <br>IMEM: ~ 1.73 kB
 	<td> <b>CMP Mode:</b> IEPx CMPy for trigger (IEPx and CMPy selected in SysConfig)<br><b>CAP Mode:</b> IEPx CAPy for trigger (IEPx and CAPy selected in SysConfig)
     <td> INTC event/input number 18 or 21 (prx_pru_mst_intr[2/3]_intr_req) is used to trigger interrupt to R5F based on slice
     <td> IEP events and INTC signals are used only in periodic trigger modes
@@ -279,7 +290,7 @@ In CAP mode, external signals trigger position sampling based on IEP capture eve
 <tr>
     <td rowspan="3"> Multi-channel with load share across 3 PRU cores
     <td> PRUx
-    <td rowspan="3"> DMEM: 580 Bytes (0x0 to 0x244) <br>  IMEM: ~ 1.6 kB
+    <td rowspan="3"> DMEM: 580 Bytes (0x0 to 0x243) <br>IMEM: ~ 1.6 kB
 	<td rowspan="3"> <b>CMP Mode:</b> IEPx CMPy for trigger per channel (IEPx and CMPy selected in SysConfig)<br><b>CAP Mode:</b> IEPx CAPy for trigger per channel (IEPx and CAPy selected in SysConfig)
     <td rowspan="3"> INTC events/inputs number 18, 19, 20 or 21, 22, 23(prx_pru_mst_intr[2/3/4/5/6/7]_intr_req) are used to trigger interrupts to R5F
     <td rowspan="3"> IEP events and INTC signals are used only in periodic trigger modes</td>
@@ -312,7 +323,7 @@ In CAP mode, external signals trigger position sampling based on IEP capture eve
 <tr>
     <td> Single channel
     <td> PRUx
-    <td> DMEM: 580 Bytes (0x0 to 0x244) <br>  IMEM: ~ 1.4 kB
+    <td> DMEM: 580 Bytes (0x0 to 0x243) <br>IMEM: ~ 1.4 kB
 	<td> <b>CMP Mode:</b> IEP0 CMPy for trigger (IEP0 CMPy selected in SysConfig)<br><b>CAP Mode:</b> IEP0 CAPy for trigger (IEP0 CAPy selected in SysConfig)
     <td> INTC event/input number 18 or 21 (prx_pru_mst_intr[2/3]_intr_req) is used to trigger interrupt to Arm® Cortex®-R5F based on slice
     <td> IEP events and INTC signals are used only in periodic trigger modes

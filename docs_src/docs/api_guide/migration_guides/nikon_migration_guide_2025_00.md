@@ -65,8 +65,7 @@ The initialization process was completely redesigned to use SysConfig-generated 
     <pre>
     nikon_params params;
     nikon_params_init(&params);
-    params.pruicss_handle = pruHandle;
-
+    // Update params
     nikon_handle handle = nikon_init(CONFIG_NIKON0, &params);
     </pre>
     </td>
@@ -74,6 +73,12 @@ The initialization process was completely redesigned to use SysConfig-generated 
 </table>
 
 ## API Changes
+
+Driver APIs use following validation approach now:
+- **Public API validation**: All public APIs validate the handle parameter for NULL and perform array bounds checking for index parameters (ch, ls_ch, ch_idx)
+- **Internal function validation**: Internal static functions assume valid parameters. The caller is responsible for ensuring parameters are valid before calling internal functions
+- **Internal structure validation**: Each API validates the internal structure pointers it accesses (e.g., attrs, priv, pruicss_xchg, pruicss_handle) for NULL before dereferencing
+ - **Error state handling**: Error in \ref nikon_get_pos may leave internal state partially modified. Subsequent calls will overwrite these values. Caller is responsible for explicit state cleanup if needed.
 
 ### New APIs Added
 
@@ -114,14 +119,14 @@ The initialization process was completely redesigned to use SysConfig-generated 
     <td>Combines send and wait operations</td>
 </tr>
 <tr>
-    <td>nikon_config_periodic_trigger_cap_mode()</td>
-    <td>Configure IEP CAP event based periodic triggering</td>
-    <td>Replaces nikon_config_periodic_trigger() for CAP mode</td>
+    <td>nikon_config_periodic_trigger_cmp_mode()</td>
+    <td>Configure IEP CMP event based periodic triggering mode</td>
+    <td>Replaces nikon_config_periodic_trigger()</td>
 </tr>
 <tr>
-    <td>nikon_config_periodic_trigger_cmp_mode()</td>
-    <td>Configure IEP CMP event based periodic triggering</td>
-    <td>Replaces nikon_config_periodic_trigger() for CMP mode</td>
+    <td>nikon_config_periodic_trigger_cap_mode()</td>
+    <td>Configure IEP CAP event based periodic triggering mode </td>
+    <td>-</td>
 </tr>
 <tr>
     <td>nikon_config_iep_cap_event()</td>
@@ -164,7 +169,7 @@ The initialization process was completely redesigned to use SysConfig-generated 
     <td>Parameter type change only</td>
 </tr>
 <tr>
-    <td>nikon_command_send()<br>nikon_generate_cdf()<br>nikon_config_load_share()<br>nikon_config_host_trigger()<br>nikon_update_eeprom_addr()<br>nikon_update_eeprom_data()<br>nikon_update_eeprom_bank()<br>nikon_update_clock_freq()</td>
+    <td>nikon_generate_cdf()<br>nikon_config_load_share()<br>nikon_config_host_trigger()<br>nikon_update_eeprom_addr()<br>nikon_update_eeprom_data()<br>nikon_update_eeprom_bank()<br>nikon_update_clock_freq()</td>
     <td>- <code>void</code> to <code>int32_t</code> return<br>- <code>priv</code> to <code>handle</code></td>
     <td>Returns status code</td>
 </tr>
@@ -200,39 +205,7 @@ The initialization process was completely redesigned to use SysConfig-generated 
 </tr>
 </table>
 
-## Structure Changes
-
-### Type Changes
-
-<table>
-<tr>
-    <th>Type of Change</th>
-    <th>Old Type</th>
-    <th>New Type</th>
-    <th>Description</th>
-</tr>
-<tr>
-    <td rowspan="3">Renamed Types</td>
-    <td>enum cmd_code</td>
-    <td>typedef enum nikon_cmd_e ... nikon_cmd</td>
-    <td>- Renamed with nikon_ prefix and typedef<br>- Added START_CONTINUOUS_CAP_MODE at index 33<br>- Renamed START_CONTINUOUS_MODE to START_CONTINUOUS_CMP_MODE<br>- Removed explicit index assignment for CMD_27<br>
-</tr>
-<tr>
-    <td>struct nikon_clk_cfg<br>struct nikon_priv<br>struct pos_data_res<br>struct nikon_pruicss_xchg</td>
-    <td>typedef struct nikon_clk_cfg_s ... nikon_clk_cfg<br>typedef struct nikon_priv_s ... nikon_priv<br>typedef struct nikon_pos_data_res_s ... nikon_pos_data_res<br>typedef struct nikon_pruicss_xchg_s ... nikon_pruicss_xchg</td>
-    <td>Converted to typedef (usage remains same, implementation changed to typedef pattern)</td>
-</tr>
-<tr>
-    <td>struct raw_data<br>struct crc</td>
-    <td>typedef struct nikon_raw_data_s ... nikon_raw_data<br>typedef struct nikon_crc_s ... nikon_crc</td>
-    <td>Added nikon_ prefix to type name and changed to typedef</td>
-</tr>
-<tr>
-    <td>struct pos_data_info<br>struct enc_info<br>struct pm_alm_bits<br>struct alm_bits</td>
-    <td>typedef struct nikon_position_info_s ... nikon_position_info<br>typedef struct nikon_encoder_info_s ... nikon_encoder_info<br>typedef struct nikon_pm_alarm_bits_s ... nikon_pm_alarm_bits<br>typedef struct nikon_alarm_bits_s ... nikon_alarm_bits</td>
-    <td>Type name completely changed and converted to typedef</td>
-</tr>
-</table>
+## Structure and Type Changes
 
 ### nikon_priv Structure
 
@@ -363,9 +336,45 @@ The initialization process was completely redesigned to use SysConfig-generated 
     <td>protocol_version, PRU-ICSS attributes, channel configuration, clock settings, IEP event configuration</td>
 </tr>
 <tr>
+    <td>nikon_config</td>
+    <td>Internal configuration structure</td>
+    <td>priv (pointer to nikon_priv), attrs (pointer to nikon_attrs)</td>
+</tr>
+<tr>
     <td>nikon_periodic_trigger_cfg</td>
     <td>IEP event configuration for periodic trigger</td>
     <td>iep_cmp_event, iep_cap_event, iep_capture_reg</td>
+</tr>
+</table>
+
+
+### Type Changes
+
+<table>
+<tr>
+    <th>Old Type</th>
+    <th>New Type</th>
+    <th>Description</th>
+</tr>
+<tr>
+    <td>enum cmd_code</td>
+    <td>typedef enum nikon_cmd_e ... nikon_cmd</td>
+    <td>- Renamed with nikon_ prefix and converted to typedef<br>- Added START_CONTINUOUS_CAP_MODE at index 33<br>- Renamed START_CONTINUOUS_MODE to START_CONTINUOUS_CMP_MODE<br>- Removed explicit index assignment for CMD_27<br>
+</tr>
+<tr>
+    <td>struct nikon_clk_cfg<br>struct nikon_priv<br>struct nikon_pruicss_xchg</td>
+    <td>typedef struct nikon_clk_cfg_s ... nikon_clk_cfg<br>typedef struct nikon_priv_s ... nikon_priv<br>typedef struct nikon_pruicss_xchg_s ... nikon_pruicss_xchg</td>
+    <td>Converted to typedef</td>
+</tr>
+<tr>
+    <td>struct raw_data<br>struct crc<br>struct pos_data_res</td>
+    <td>typedef struct nikon_raw_data_s ... nikon_raw_data<br>typedef struct nikon_crc_s ... nikon_crc<br>typedef struct nikon_pos_data_res_s ... nikon_pos_data_res</td>
+    <td>Added nikon_ prefix to type name and converted to typedef</td>
+</tr>
+<tr>
+    <td>struct pos_data_info<br>struct enc_info<br>struct pm_alm_bits<br>struct alm_bits</td>
+    <td>typedef struct nikon_position_info_s ... nikon_position_info<br>typedef struct nikon_encoder_info_s ... nikon_encoder_info<br>typedef struct nikon_pm_alarm_bits_s ... nikon_pm_alarm_bits<br>typedef struct nikon_alarm_bits_s ... nikon_alarm_bits</td>
+    <td>Changed type name and converted to typedef</td>
 </tr>
 </table>
 
@@ -392,42 +401,97 @@ The initialization process was completely redesigned to use SysConfig-generated 
     <td>typedef nikon_config *nikon_handle</td>
     <td>Opaque handle type for all APIs</td>
 </tr>
+<tr>
+    <td>typedef struct nikon_periodic_trigger_cfg_s ... nikon_periodic_trigger_cfg</td>
+    <td>IEP event configuration structure for periodic trigger</td>
+</tr>
 </table>
 
-## Macro Changes
+## Macro and Constant Changes
 
 \note Only important macro changes are listed below.
 
+### New Macros
+
 <table>
 <tr>
-    <th>Old Macro</th>
-    <th>New Macro</th>
+    <th>Macro</th>
+    <th>Value</th>
     <th>Description</th>
+</tr>
+<tr>
+    <td>NIKON_DEFAULT_CMD_PROCESS_DELAY_US</td>
+    <td>1000U</td>
+    <td>Default command process delay</td>
+</tr>
+<tr>
+    <td>NIKON_DEFAULT_FW_WAIT_DELAY_US</td>
+    <td>1000U</td>
+    <td>Default firmware wait delay</td>
+</tr>
+<tr>
+    <td>NIKON_DEFAULT_MAX_WAIT_LOOP_COUNT</td>
+    <td>35U</td>
+    <td>Default timeout loop count</td>
+</tr>
+<tr>
+    <td>NIKON_CONFIG_HOST_TRIGGER_MODE</td>
+    <td>0x1U</td>
+    <td>Host-triggered mode</td>
+</tr>
+<tr>
+    <td>NIKON_CONFIG_PERIODIC_TRIGGER_CAP_MODE</td>
+    <td>0x2U</td>
+    <td>IEP CAP-based periodic mode</td>
+</tr>
+<tr>
+    <td>NIKON_IEP_MAX_CAP_EVENT</td>
+    <td>0x8U</td>
+    <td>Maximum IEP CAP event number</td>
+</tr>
+<tr>
+    <td>NIKON_IEP_MAX_CMP_EVENT</td>
+    <td>0x10U</td>
+    <td>Maximum IEP CMP event number</td>
+</tr>
+<tr>
+    <td>NIKON_EEPROM_READ_WAIT_US</td>
+    <td>300U</td>
+    <td>EEPROM read wait time (microseconds)</td>
+</tr>
+</table>
+
+### Renamed Macros
+
+<table>
+<tr>
+    <th>Old Name</th>
+    <th>New Name</th>
 </tr>
 <tr>
     <td>NUM_ED_CH_MAX</td>
     <td>NIKON_NUM_CH_PER_SLICE_MAX</td>
-    <td>Renamed for consistency with nikon_ prefix naming convention. Value remains the same (3). This affects array dimensions in multiple structures including nikon_raw_data, nikon_crc, nikon_pruicss_xchg, and nikon_priv.</td>
 </tr>
 <tr>
     <td>NIKON_CONFIG_PERIODIC_TRIGGER_MODE</td>
     <td>NIKON_CONFIG_PERIODIC_TRIGGER_CMP_MODE</td>
-    <td>Renamed to explicitly indicate CMP mode</td>
-</tr>
-<tr>
-    <td>-</td>
-    <td>NIKON_CONFIG_PERIODIC_TRIGGER_CAP_MODE</td>
-    <td>Added new mode for CAP-based triggering</td>
 </tr>
 <tr>
     <td>NIKON_30_MILLI_SEC_DELAY</td>
     <td>NIKON_EEPROM_WRITE_WAIT_US</td>
-    <td>Renamed and value remains 30000us</td>
+</tr>
+</table>
+
+### Removed Macros
+
+<table>
+<tr>
+    <th>Name</th>
+    <th>Details</th>
 </tr>
 <tr>
     <td>NIKON_MAX_CYCLE_TIMEOUT</td>
-    <td>Removed</td>
-    <td>This macro (value: 35) has been removed. Timeout configuration now done via nikon_params structure members (cmd_process_delay_us, max_wait_loop_count)</td>
+    <td>Removed. Timeout configuration should be done via nikon_params structure members (cmd_process_delay_us, max_wait_loop_count)</td>
 </tr>
 </table>
 
@@ -460,45 +524,24 @@ Many APIs that previously returned void return int32_t for proper error handling
 
 ## New Features
 
-### 1. Periodic Trigger Mode Updates
+### 1. Periodic CAP Mode
 
 In addition to the existing CMP (compare) mode, a new CAP (capture) mode was added for periodic triggering:
 
 - **CMP Mode**: Triggers based on IEP timer compare events
-- **CAP Mode**: Triggers based on external signal capture events
-
-```c
-/* Old API (only one periodic mode) */
-nikon_config_periodic_trigger(priv);
-
-/* New API (choose appropriate mode) */
-nikon_config_periodic_trigger_cmp_mode(handle);
-/* OR */
-nikon_config_periodic_trigger_cap_mode(handle);
-```
+- **CAP Mode**: Triggers based on IEP capture events
 
 IEP event configuration can be done using nikon_config_iep_cmp_event() or nikon_config_iep_cap_event() APIs. These APIs are called in nikon_init() with the values configured in SysConfig.
 
 ### 2. Enhanced Timeout Handling
 
-Configurable timeout parameters with clear timeout detection:
+Configurable timeout parameters with clear timeout detection for APIs waiting for firmware to signal completion.
 
-```c
-nikon_params params;
-nikon_params_init(&params);
-params.cmd_process_delay_us = 1000;    /* 1ms between polls */
-params.max_wait_loop_count = 35;       /* 35ms total timeout */
-params.pruicss_handle = pruHandle;
+### 3. Encoder Resolution Validation
 
-nikon_handle handle = nikon_init(CONFIG_NIKON0, &params);
+The driver validates total frame size to ensure it doesn't exceed 40 bits:
 
-/* Check for timeout */
-int32_t ret = nikon_command_wait(handle);
-if (ret == SystemP_TIMEOUT)
-{
-    /* Handle timeout condition */
-}
-```
+- single_turn_len + multi_turn_len <= Max ABS length (40 bits)
 
 ## Migration Examples
 
@@ -528,9 +571,10 @@ if (priv == NULL)
 nikon_handle handle;
 nikon_params params;
 
-/* Initialize params with defaults */
+/* Initialize params */
 nikon_params_init(&params);
 params.pruicss_handle = pruicssHandle;
+/* update other params */
 
 /* Initialize Nikon (CONFIG_NIKON0 is generated by SysConfig) */
 handle = nikon_init(CONFIG_NIKON0, &params);
@@ -580,6 +624,10 @@ nikon_config_periodic_trigger(priv);
 ```c
 /* For CMP mode */
 ret = nikon_config_periodic_trigger_cmp_mode(handle);
+if (ret != SystemP_SUCCESS)
+{
+    /* Handle error */
+}
 
 /* OR for CAP mode */
 ret = nikon_config_periodic_trigger_cap_mode(handle);
@@ -617,14 +665,14 @@ if (ret != SystemP_SUCCESS)
 
 1. Open your project's `.syscfg` file
 2. Add the Nikon module under Position Sense, if not added already
-3. Configure the parameters as per the requirement
+3. Configure the parameters as per the requirement. Refer \ref NIKON_SYSCONFIG_FEATURES for more details.
 
 ### Generated Code
 
 SysConfig will generate:
 - `nikon_attrs` structures with compile-time configuration
 - `gNikonHandle` array with nikon_config entries
-- Initialization code in `ti_drivers_config.c`
+- Code is generated in `ti_drivers_config.c` and `ti_drivers_config.h`
 
 ## Common Migration Issues
 
@@ -636,8 +684,8 @@ SysConfig will generate:
    - Use `nikon_get_attrs()` to access total_channels instead
 
 3. **Timeout Errors**
-   - Timeout detection is added in certain APIs
-   - Adjust timeout parameters if needed via nikon_params
+   - Timeout detection is added in certain APIs waiting for firmware.
+   - Adjust timeout parameters if needed via nikon_params before calling nikon_init().
 
 4. **SysConfig Errors**
    - Ensure Nikon module is added and configured in `.syscfg` file

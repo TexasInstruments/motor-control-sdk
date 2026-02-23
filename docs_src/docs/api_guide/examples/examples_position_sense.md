@@ -269,17 +269,17 @@ For PRU-related issues, verify that the application is loading the PRU firmware 
 - In this mode, data transmission and reception can happen independently on all channels.
 - After a command is sent, all channels wait for a response and process the response independently. However, all channels must finish processing before the next command can be triggered. (This restriction does not apply to HDSL. HDSL channels can continue operating independently.)
 
-### Periodic Continuous Mode
+### Periodic Trigger Mode
 
 \note This subsection is applicable for BiSS-C, EnDat, Nikon A-format and Tamagawa only. Load share mode is not available for Tamagawa.
 
 SDK examples uses IEP compare/capture event(s) to trigger commands in periodic mode. Firmware triggers a R5F interrupt after getting a response from the encoder. The application code uses a callback function to clear the PRU interrupt, which can be modified as per the use case. CMP/CAP event number can be configured using SysConfig module of encoder. Refer the example specific page for details (see \ref NIKON_EXAMPLE_PERIODIC_MODE).
 
-When programming the values for periodic trigger CMP/CAP mode, ensure that the command send and receive can complete within the cycle time (configured with CMP0). In multi-channel, ensure that command completion for timings for all channels are considered. Incorrect values may send PRU FW in bad state. Also, refer to encoder specifications to ensure that requirement for mimimum interval between two commands is met.
+When programming the values for periodic trigger CMP/CAP mode, ensure that the command send and receive can complete within the cycle time. In multi-channel, ensure that command completion for timings for all channels are considered. Incorrect values may send PRU FW in bad state. Also, refer to encoder specifications to ensure that requirement for mimimum interval between two commands is met.
 
 ### IEP Registers Configuration
 
-The Industrial Ethernet Peripheral (IEP) is used for periodic continuous mode. If the IEP is not configured correctly, periodic continuous mode will not work.
+The Industrial Ethernet Peripheral (IEP) is used for periodic trigger mode. If the IEP is not configured correctly, periodic trigger mode will not work.
 
 To verify IEP configuration:
 

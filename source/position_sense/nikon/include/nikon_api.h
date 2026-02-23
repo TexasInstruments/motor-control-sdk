@@ -60,13 +60,11 @@ extern "C" {
  *   array bounds checking for index parameters (ch, ls_ch, ch_idx)
  * - **Internal function validation**: Internal static functions assume valid parameters. The caller
  *   is responsible for ensuring parameters are valid before calling internal functions
- * - **Internal structure validation**: Internal structures (attrs, priv, pruicss_xchg, pruicss_handle)
- *   are validated for NULL before dereferencing to prevent undefined behavior
- * - **Return behavior on errors**: All functions return SystemP_SUCCESS/SystemP_FAILURE. Data-returning
- *   functions use output pointer parameters. Check API documentation for specific details.
- * - **Error state handling**: Some functions may leave internal state partially modified on error
- *   (e.g., nikon_get_pos). Subsequent calls will overwrite these values. Caller is responsible for
- *   explicit state cleanup if needed.
+ * - **Internal structure validation**: Each API validates the internal structure pointers it accesses
+ *   (e.g., attrs, priv, pruicss_xchg, pruicss_handle) for NULL before dereferencing
+ * - **Error state handling**: Error in \ref nikon_get_pos may leave internal state partially modified.
+ *   Subsequent calls will overwrite these values. Caller is responsible for explicit state cleanup if
+ *   needed.
  *
  * ## Typical API Call Sequence
  *

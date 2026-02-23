@@ -83,9 +83,9 @@ The Nikon diagnostic application supports two types of periodic trigger modes fo
 \cond SOC_AM243X
 - Router Configuration for CAP6/CAP7 (LATCH_IN0/LATCH_IN1) via TIMESYNC router and CAP0 via GPIOMUX router (requires external GPIO connection)
     - This example configures the TIMESYNC/GPIOMUX router to use IEP SYNC OUT0 as an input signal for the CAP6/CAP7/CAP0 events. This configuration includes:
-        - CMP0: Configures IEP counter reset (skip if using alternative reset method)
         - CMP1: Generates SYNC OUT0 signal (skip if not using SYNC OUT0)
-    - NOTE: All router configuration is optional if this signal path isn't needed\endcond
+    - NOTE: All router configuration is optional if this signal path isn't needed
+\endcond
 \cond (SOC_AM263PX || SOC_AM261X)
 - XBAR Configuration for CAP6/CAP7 (LATCH_IN0/LATCH_IN1)
     - This example configures the XBAR for routing EPWM SYNC OUT as input to CAP using SysConfig
@@ -125,11 +125,11 @@ The Nikon diagnostic application supports two types of periodic trigger modes fo
 <tr><td colspan="2" bgcolor=#F0F0F0> ${SDK_INSTALL_PATH}/source/position_sense/nikon</td></tr>
 <tr>
     <td>firmware/</td>
-    <td>Folder containing Nikon PRU firmware sources.</td>
+    <td>Folder containing Nikon PRU firmware sources</td>
 </tr>
 <tr>
     <td>driver/</td>
-    <td>Nikon diagnostic driver.</td>
+    <td>Nikon diagnostic driver</td>
 </tr>
 </table>
 
@@ -149,7 +149,11 @@ The Nikon diagnostic application supports two types of periodic trigger modes fo
  ^              | examples/position_sense/nikon_diagnostic/multi_channel_single_pru
  ^              | examples/position_sense/nikon_diagnostic/multi_channel_load_share
 
-## Multi Channel Single PRU Example
+## Single Channel with Single PRU Example
+This example supports one Nikon channel using one PRU. In this example:
+- 1 Nikon driver instance and corresponding SysConfig Nikon module instance is used.
+
+## Multi Channel with Single PRU Example
 This example supports up to three Nikon channels using one PRU. In this example:
 - Encoders of the same frequency must be connected to all configured channels.
 - Data transmission and reception must happen simultaneously on all channels.
@@ -157,7 +161,7 @@ This example supports up to three Nikon channels using one PRU. In this example:
 - If encoders across channels don't respond at the same time, this example will not work. Load share configuration should be used instead.
 - 1 Nikon driver instance and corresponding SysConfig Nikon module instance is used for all channels.
 
-## Multi Channel Load Share Example
+## Multi Channel with Multiple PRUs (Load Share) Example
 This example supports up to three Nikon channels using three PRUs from same PRU-ICSSG slice. In this example:
 - Load share mode is used. Refer \ref PRUICSSG_LOAD_SHARE_MODE for more details.
 - Encoders of different make and different numbers of encoders connected across channels can be connected.
@@ -179,6 +183,10 @@ This example supports up to three Nikon channels using three PRUs from same PRU-
  Board          | @VAR_LP_BOARD_NAME_LOWER
  Example folder | examples/position_sense/nikon_diagnostic/single_channel
 
+## Single Channel with Single PRU Example
+This example supports one Nikon channel using one PRU. In this example:
+- 1 Nikon driver instance and corresponding SysConfig Nikon module instance is used.
+
 \endcond
 
 \cond SOC_AM261X
@@ -187,14 +195,18 @@ This example supports up to three Nikon channels using three PRUs from same PRU-
  ---------------|-----------
  CPU + OS       | r5fss0-0 freertos
  ICSSM          | ICSSM1
- PRU            | PRU0 (single channel, dual channel)
- ^              | PRU1 (dual channel)
+ PRU            | PRU0 (single channel)
+ ^              | PRU0, PRU1 (dual channel)
  Toolchain      | ti-arm-clang
  Board          | @VAR_LP_BOARD_NAME_LOWER
  Example folder | examples/position_sense/nikon_diagnostic/single_channel
  ^              | examples/position_sense/nikon_diagnostic/dual_channel
 
-## Dual Channel Example
+## Single Channel with Single PRU Example
+This example supports one Nikon channel using one PRU. In this example:
+- 1 Nikon driver instance and corresponding SysConfig Nikon module instance is used.
+
+## Dual Channel with Two PRUs Example
 This example supports two Nikon channels using two PRUs from same PRU-ICSSM. In this example:
 - Two independent Nikon driver instances run simultaneously. Each driver instance has a corresponding SysConfig Nikon module instance.
 - Each instance operates independently on a different PRU slice (PRU0 or PRU1).

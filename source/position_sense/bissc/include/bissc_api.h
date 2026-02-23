@@ -57,8 +57,8 @@ extern "C" {
  *  BiSS-C driver APIs use following validation approach:
  *  - **Handle validation**: All public APIs validate the handle parameter for NULL
  *  - **Array bounds checking**: APIs with array parameters or index parameters perform bounds validation
- *  - **Internal structure validation**: All APIs validate internal structure pointers (attrs, priv,
- *    pruicss_xchg, pruicss_handle) for NULL before dereferencing to prevent undefined behavior
+ *  - **Internal structure validation**: Each API validates the internal structure pointers it accesses
+ *    (e.g., attrs, priv, pruicss_xchg, pruicss_handle) for NULL before dereferencing
  *
  *  @{
  */
@@ -190,7 +190,8 @@ int32_t bissc_command_wait(bissc_handle handle);
 int32_t bissc_get_pos(bissc_handle handle);
 
 /**
- *  \brief      Configure BiSS-C clock
+ *  \brief      Configure BiSS-C clock configuration into PRU-ICSS register, enable load share (if needed), and
+ *              indicate firmware to measure the delay again
  *
  *  \details    This function configures the PRU-ICSS clock registers based on the provided
  *              clock configuration structure. After clock configuration, it conditionally calls:
