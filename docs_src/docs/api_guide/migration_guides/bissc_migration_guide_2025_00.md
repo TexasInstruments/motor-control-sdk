@@ -796,7 +796,7 @@ SysConfig will generate:
 - Also, timeout detection is added in certain APIs waiting for firmware. Adjust timeout parameters if needed via bissc_params before calling bissc_init().
 
 5. **SysConfig Errors**
-   - Ensure Nikon module is added and configured in `.syscfg` file
+   - Ensure BiSS-C module is added and configured in `.syscfg` file
    - Review the configured parameters
 
 6. **Periodic Mode Not Working**

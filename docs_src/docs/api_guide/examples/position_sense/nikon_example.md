@@ -102,7 +102,7 @@ The Nikon diagnostic application supports two types of periodic trigger modes fo
 3. CMP Resource Allocation
     - Avoid using CMP0 if it's already used to IEP counter reset
     - Avoid using CMP1/CMP2 if they're used to SYNC OUT generation
-    - Avoid sharing CMP events across different channels or instances of Nikon or other encoders. Each CMP event must be assigned exclusively to a single encoder channel. 
+    - Avoid sharing CMP events across different channels or instances of Nikon or other encoders. Each CMP event must be assigned exclusively to a single encoder channel.
 4. Modifying Commands in Periodic Mode
     - Default: Position Command 4 (CMD_4) is used by default
     - To use a different command:
@@ -252,7 +252,7 @@ This example supports two Nikon channels using two PRUs from same PRU-ICSSM. In 
 ## Hardware Setup
 
 \cond SOC_AM243X
-### Hardware Setup(Using BP-AM2BLDCSERVO Booster Pack & LP-AM243)
+### Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack & LP-AM243)
 \imageStyle{AM243x_lp_bp_nikon_encoder_setup.png,width:40%}
 \image html AM243x_lp_bp_nikon_encoder_setup.png  "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for Nikon"
 
@@ -262,6 +262,7 @@ This example supports two Nikon channels using two PRUs from same PRU-ICSSM. In 
     - To enable VSENSOR1/VSENSOR2, BoosterPack pins J8.73/J8.74 must be set high (In this example, this pin is configured in GPIO mode and pulled high)
 
 #### BP-AM2BLDCSERVO Booster Pack Jumper Configuration
+
 <table>
 <tr>
     <th>Designator</th>
@@ -333,9 +334,15 @@ This example supports two Nikon channels using two PRUs from same PRU-ICSSM. In 
 \endcond
 
 \cond SOC_AM261X
-### Hardware Setup(Using BP-AM2BLDCSERVO Booster Pack & LP-AM261)
+
+### Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack & LP-AM261)
+
 \imageStyle{AM261x_lp_bp_nikon_encoder_setup.png,width:40%}
 \image html AM261x_lp_bp_nikon_encoder_setup.png  "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for Nikon"
+
+\note
+    - The Rev. A version of LP-AM261 with BP-AM2BLDCSERVO Booster Pack supports two channels
+    - To enable VSENSOR1/VSENSOR2, BoosterPack pins J8.73/J8.74 must be set high (In this example, this pin is configured in GPIO mode and pulled high)
 
 #### LP-AM261 Jumper Configuration
 <table>
@@ -356,11 +363,9 @@ This example supports two Nikon channels using two PRUs from same PRU-ICSSM. In 
 </tr>
 </table>
 
-\note
-    - The Rev. A version of LP-AM261 with BP-AM2BLDCSERVO Booster Pack supports two channels
-    - To enable VSENSOR1/VSENSOR2, BoosterPack pins J8.73/J8.74 must be set high (In this example, this pin is configured in GPIO mode and pulled high)
 
 #### BP-AM2BLDCSERVO Booster Pack Jumper Configuration
+
 <table>
 <tr>
     <th>Designator</th>
@@ -435,7 +440,7 @@ This example supports two Nikon channels using two PRUs from same PRU-ICSSM. In 
 
 \cond SOC_AM263X
 
-### Hardware Setup(Using BP-AM2BLDCSERVO Booster Pack & LP-AM263)
+### Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack & LP-AM263)
 \imageStyle{AM263x_lp_bp_nikon_encoder_setup.png,width:40%}
 \image html AM263x_lp_bp_nikon_encoder_setup.png  "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for Nikon"
 
@@ -444,9 +449,14 @@ This example supports two Nikon channels using two PRUs from same PRU-ICSSM. In 
 \endcond
 
 \cond SOC_AM263PX
-### Hardware Setup(Using BP-AM2BLDCSERVO Booster Pack & LP-AM263P)
+
+### Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack & LP-AM263P)
+
 \imageStyle{AM263Px_lp_bp_nikon_encoder_setup.png,width:40%}
 \image html AM263Px_lp_bp_nikon_encoder_setup.png  "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for Nikon"
+
+\note
+    - To enable VSENSOR1, BoosterPack pin J8.73 must be set high (In this example, this pin is configured in GPIO mode and pulled high)
 
 #### LP-AM263P Jumper Configuration
 
@@ -470,10 +480,8 @@ This example supports two Nikon channels using two PRUs from same PRU-ICSSM. In 
 </tr>
 </table>
 
-\note
-    - To enable VSENSOR1, BoosterPack pin J8.73 must be set high (In this example, this pin is configured in GPIO mode and pulled high)
-
 #### BP-AM2BLDCSERVO Booster Pack Jumper Configuration
+
 <table>
 <tr>
     <th>Designator</th>

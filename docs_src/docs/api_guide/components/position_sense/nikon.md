@@ -183,17 +183,17 @@ supported in this release, including the following:
 \attention For each PRU-ICSS slice being used for Nikon, one module instance should be created in SysConfig. For up to 3 channels using 1 slice, only 1 instance needs to be added.
 
 SysConfig can be used to configure the following:
-- Selecting the ICSSG instance. (Tested on ICSSG0)
-- Selecting the ICSSG0PRUx instance. (Tested on ICSSG0-PRU1)
+- Selecting the ICSSG instance (Tested on ICSSG0)
+- Selecting the ICSSG PRU slice (Tested on ICSSG0-PRU1)
 - Configuring PINMUX
 - Frequency selection
 - Channel selection
 - Selecting Multi Channel with encoders connected in Different Configurations (bus or one-to-one) using load share mode.
 - Enabling SA Mux mode.
-- Selecting source clock.
+- Selecting source clock
 - Selecting Nikon protocol version (2.1 or 3.0)
-- IEP instance and IEP event selection for periodic mode
-
+- IEP instance and IEP event selection for periodic trigger mode
+- Booster Pack Support: Enable when using BP-AM2BLDCSERVO
 \note Nikon firmware supports operation with ICSS Core Clock running at 200 MHz/300 MHz frequency or ICSS UART Clock running at 192 MHz only. ICSS Core Clock at 225/250/333 MHz is not supported due to clock divider requirements.
 
 \endcond
@@ -203,15 +203,15 @@ SysConfig can be used to configure the following:
 \attention For each PRU-ICSS slice being used for Nikon, one module instance should be created in SysConfig. For 2 channel example using 2 PRUs, 2 instances need to be added.
 
 SysConfig can be used to configure the following:
-- Selecting the ICSS instance. (Tested on ICSSM1)
-- Selecting the ICSS PRU slice. (Tested on ICSSM1-PRU0)
+- Selecting the ICSSM instance (Tested on ICSSM1)
+- Selecting the ICSSM PRU slice (Tested on ICSSM1-PRU0 and ICSSM1-PRU1)
 - Configuring PINMUX
 - Frequency selection
 - Channel selection
-- Selecting source clock.
+- Selecting source clock
 - Selecting Nikon protocol version (2.1 or 3.0)
-- IEP event selection for periodic mode
-
+- IEP event selection for periodic trigger mode
+- Booster Pack Support: Enable when using BP-AM2BLDCSERVO
 \note Nikon firmware supports operation with ICSS UART Clock running at 160 MHz only, when ICSS Core Clock is 225 MHz due to clock divider requirements.
 
 \endcond
@@ -221,16 +221,16 @@ SysConfig can be used to configure the following:
 \attention For each PRU-ICSS slice being used for Nikon, one module instance should be created in SysConfig.
 
 SysConfig can be used to configure the following:
-- Selecting the ICSS instance. (Tested on ICSSM)
-- Selecting the ICSS PRU slice. (Tested on ICSSM-PRU0)
+- Selecting the ICSSM instance (Tested on ICSSM)
+- Selecting the ICSSM PRU slice (Tested on ICSSM-PRU0)
 - Configuring PINMUX
 - Frequency selection
 - Channel selection
-- Selecting source clock.
+- Selecting source clock
 - Selecting Nikon protocol version (2.1 or 3.0)
-- IEP event selection for periodic mode
-
-\note Nikon firmware supports operation with ICSS Core Clock running at 200 MHz frequency or ICSS UART Clock running at 192 MHz frequency only.
+- IEP event selection for periodic trigger mode
+- Booster Pack Support: Enable when using BP-AM2BLDCSERVO
+\note Nikon firmware supports operation with ICSS Core Clock running at 200 MHz frequency or ICSS UART Clock running at 192 MHz frequency only due to clock divider requirements.
 
 \endcond
 
