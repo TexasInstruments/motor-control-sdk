@@ -77,7 +77,7 @@ Mbed-TLS                             | R5F            | mbedtls-2.13.1
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Single channel, Multi channel using single PRU core and three PRU cores (load share mode), point-to-point connection, control communication, automatic processing delay detection and compensation, interface speed of 1, 2, 5, 8, and 10 MHz, long cable (upto 100 meters), periodic trigger modes (CMP and CAP), daisy chaining, safety mode (safety CRC and sign-of-life counter), BP-AM2BLDCSERVO Boosterpack with LP-AM263P
+    <td> Single channel, Multi channel using single PRU core and three PRU cores (load share mode), point-to-point connection, control communication, automatic processing delay detection and compensation, interface speed of 1, 2, 5, 8, and 10 MHz, long cable (upto 100 meters), host trigger mode, periodic trigger modes (CMP and CAP), daisy chaining, safety mode (safety CRC and sign-of-life counter), BP-AM2BLDCSERVO Boosterpack with LP-AM263P
     <td> -
 </tr>
 <tr>
@@ -93,7 +93,7 @@ Mbed-TLS                             | R5F            | mbedtls-2.13.1
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Single channel, Manchester encoding, data transfer rate of 12.5 Mbps, frame-based protocol (HPF/LPH/LPF), foreground communication commands (DATA0-DATA7, DATA, DATANOP, RESET, CLEAR, ECHO, RATE, HELLO), background communication commands (NOP, READ, WRITE, RECONFIGURE, AUTH, PROTECT, SETPASS, LOCATE), host trigger mode, periodic trigger mode, automatic CRC verification, BP-AM2BLDCSERVO Boosterpack with LP-AM263P
+    <td> Single channel, Manchester encoding, data transfer rate of 12.5 Mbps, frame-based protocol (HPF/LPH/LPF), foreground communication commands (DATA0-DATA7, DATA, DATANOP, RESET, CLEAR, ECHO, RATE, HELLO), background communication commands (NOP, READ, WRITE, RECONFIGURE, AUTH, PROTECT, SETPASS, LOCATE), host trigger mode, periodic trigger modes (CMP and CAP), automatic CRC verification, BP-AM2BLDCSERVO Boosterpack with LP-AM263P
     <td> 25 Mbps data rate, Multi-channel concurrent operation, Daisy chain topology, Long cable (upto 100 meters)
 </tr>
 <tr>
@@ -109,8 +109,8 @@ Mbed-TLS                             | R5F            | mbedtls-2.13.1
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Nikon A-format version 2.1 and version 3.0, Single channel, Multi channel using single PRU core and three PRU cores (load share mode), point-to-point connection, bus connection up to 8 encoders, individual and multiple transmission mode with encoder addresses ranging between ENC1-ENC8, baud rates from 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz, up to 40-bit absolute position (single turn + multi turn) data with additional information, long cable (upto 100 meters), BP-AM2BLDCSERVO Boosterpack with LP-AM263P
-    <td> -
+    <td> Nikon A-format version 2.1 and version 3.0, Single channel, Multi channel using single PRU core and three PRU cores (load share mode), point-to-point connection, bus connection up to 7 encoders, individual and multiple transmission mode with encoder addresses ranging between ENC1-ENC8, baud rates from 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz, up to 40-bit absolute position (single turn + multi turn) data with additional information, long cable (upto 100 meters), host trigger mode, periodic trigger modes (CMP and CAP), BP-AM2BLDCSERVO Boosterpack with LP-AM263P
+    <td> Bus connection with 8 encoders
 </tr>
 <tr>
     <td> Tamagawa

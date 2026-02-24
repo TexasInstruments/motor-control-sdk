@@ -67,7 +67,7 @@ Mbed-TLS                | R5F            | 2.13.1
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Single channel, dual channel using two independent PRU cores, point-to-point connection, control communication, automatic processing delay detection and compensation, interface speed of 1, 2, 5, 8, and 10 MHz, periodic trigger modes (CMP and CAP), daisy chaining, safety mode (safety CRC and sign-of-life counter), Boosterpack with LP-AM261
+    <td> Single channel, dual channel using two independent PRU cores, point-to-point connection, control communication, automatic processing delay detection and compensation, interface speed of 1, 2, 5, 8, and 10 MHz, host trigger mode, periodic trigger modes (CMP and CAP), daisy chaining, safety mode (safety CRC and sign-of-life counter), BP-AM2BLDCSERVO Boosterpack with LP-AM261
     <td> -
 </tr>
 <tr>
@@ -75,7 +75,7 @@ Mbed-TLS                | R5F            | 2.13.1
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Single channel, Continuous mode, Recovery Time for 2.2 command set, Interface speed of 5 and 10 MHz, Boosterpack with LP-AM261
+    <td> Single channel, Continuous mode, Recovery Time for 2.2 command set, Interface speed of 5 and 10 MHz, BP-AM2BLDCSERVO Boosterpack with LP-AM261
     <td> Encoder receive communication command
 </tr>
 <tr>
@@ -83,7 +83,7 @@ Mbed-TLS                | R5F            | 2.13.1
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Single channel, Manchester encoding, data transfer rate of 12.5 Mbps, frame-based protocol (HPF/LPH/LPF), foreground communication commands (DATA0-DATA7, DATA, DATANOP, RESET, CLEAR, ECHO, RATE, HELLO), background communication commands (NOP, READ, WRITE, RECONFIGURE, AUTH, PROTECT, SETPASS, LOCATE), host trigger mode, periodic trigger mode, automatic CRC verification, Boosterpack with LP-AM261
+    <td> Single channel, Manchester encoding, data transfer rate of 12.5 Mbps, frame-based protocol (HPF/LPH/LPF), foreground communication commands (DATA0-DATA7, DATA, DATANOP, RESET, CLEAR, ECHO, RATE, HELLO), background communication commands (NOP, READ, WRITE, RECONFIGURE, AUTH, PROTECT, SETPASS, LOCATE), host trigger mode, periodic trigger modes (CMP and CAP), automatic CRC verification, BP-AM2BLDCSERVO Boosterpack with LP-AM261
     <td> 25 Mbps data rate, Multi-channel concurrent operation, Daisy chain topology, Long cable (upto 100 meters)
 </tr>
 <tr>
@@ -91,7 +91,7 @@ Mbed-TLS                | R5F            | 2.13.1
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Single channel, Free Run mode, Sync mode, Short Message Read and Write, Long Message Read and Write, Pipeline Channel Data, Long cable (upto 100 meters) with single channel Free Run mode, Boosterpack with LP-AM261, 225 MHz PRU firmware
+    <td> Single channel, Free Run mode, Sync mode, Short Message Read and Write, Long Message Read and Write, Pipeline Channel Data, Long cable (upto 100 meters) with single channel Free Run mode, BP-AM2BLDCSERVO Boosterpack with LP-AM261, 225 MHz PRU firmware
     <td> Long cable (upto 100 meters) with sync mode, Trace feature for logging registers
 </tr>
 <tr>
@@ -99,15 +99,15 @@ Mbed-TLS                | R5F            | 2.13.1
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Nikon A-format version 2.1 and version 3.0, Single channel, Multi channel using single PRU core, point-to-point connection, bus connection up to 8 encoders, Individual and multiple transmission mode with encoder addresses ranging between ENC1-ENC8, baud rates from 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz, up to 40-bit absolute position (single turn + multi turn) data with additional information, long cable (upto 100 meters), Boosterpack with LP-AM261
-    <td> -
+    <td> Nikon A-format version 2.1 and version 3.0, Single channel, Multi channel using single PRU core, point-to-point connection, bus connection up to 7 encoders, Individual and multiple transmission mode with encoder addresses ranging between ENC1-ENC8, baud rates from 2.5 MHz, 4 MHz, 6.67 MHz, 8 MHz, and 16 MHz, up to 40-bit absolute position (single turn + multi turn) data with additional information, long cable (upto 100 meters), host trigger mode, periodic trigger modes (CMP and CAP), BP-AM2BLDCSERVO Boosterpack with LP-AM261
+    <td> Bus connection with 8 encoders
 </tr>
 <tr>
     <td> Tamagawa
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Absolute position, Encoder ID, Reset, EEPROM Read, EEPROM Write, 2.5 Mbps Encoder, Boosterpack with LP-AM261
+    <td> Absolute position, Encoder ID, Reset, EEPROM Read, EEPROM Write, 2.5 Mbps Encoder, BP-AM2BLDCSERVO Boosterpack with LP-AM261
     <td> 5 Mbps encoder
 </tr>
 </table>
