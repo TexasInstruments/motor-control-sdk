@@ -87,6 +87,7 @@ Nikon A-format absolute encoder receiver implementation on the TI PRU-ICSS inter
     <td>5x
 </tr>
 </table>
+   -  Support for dual channel configuration using two independent PRU cores
 \endcond
 
 \cond (SOC_AM263X || SOC_AM263PX)
