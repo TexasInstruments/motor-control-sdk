@@ -171,6 +171,7 @@ Following is the operation flow for periodic mode:
 1. Firmware polls IEP CMP/CAP status register and clears status after event is detected
 2. On event detection, firmware initiates Nikon transaction
 3. Position data is automatically updated in shared memory
+4. R5F interrupt notifies application of new data
 
 \image html nikon_periodic_mode.png "Periodic Trigger Mode"
 
@@ -188,7 +189,7 @@ The CRC is the last byte of the last received data frame. The firmware then stor
 
 \image html nikon_verify_crc.png "Verify CRC Flow Chart"
 
-#### Pin Multiplexing {#NIKON_PIN_USAGE}
+## Pin Multiplexing {#NIKON_PIN_USAGE}
 
 \attention \ref PRUICSS_PERIPHERAL_IF_MODE_SIGNAL_CONFIGURATION section has details on PRU pin functions in Peripheral IF mode
 
@@ -265,7 +266,7 @@ The CRC is the last byte of the last received data frame. The firmware then stor
 </table>
 
 \cond SOC_AM243X
-##### LP-AM243 + BP-AM2BLDCSERVO Booster Pack Pin Multiplexing for SDK example
+### LP-AM243 + BP-AM2BLDCSERVO Booster Pack Pin Multiplexing for SDK example
 <table>
 <tr>
     <th>Pin name
@@ -327,7 +328,7 @@ The CRC is the last byte of the last received data frame. The firmware then stor
 \endcond
 
 \cond  SOC_AM261X
-##### LP-AM261 + BP-AM2BLDCSERVO Booster Pack Pin Multiplexing for SDK example
+### LP-AM261 + BP-AM2BLDCSERVO Booster Pack Pin Multiplexing for SDK example
 <table>
 <tr>
     <th>Pin name
@@ -376,19 +377,19 @@ The CRC is the last byte of the last received data frame. The firmware then stor
 <tr>
     <td>GPIO Pin (GPIO_21/B10)
     <td>ENC0_EN (PRU0)
-    <td>Enable 3 channel peripheral interface in Axis 1 of BP (Fix this pin to high with SoC GPIO mode)
+    <td>Enable encoder voltage in Axis 1 of BP (Fix this pin to high with SoC GPIO mode)
 </tr>
 <tr>
     <td>GPIO Pin (GPIO_22/A10)
     <td>ENC0_EN (PRU1)
-    <td>Enable 3 channel peripheral interface in Axis 2 of BP (Fix this pin to high with SoC GPIO mode)
+    <td>Enable encoder voltage in Axis 2 of BP (Fix this pin to high with SoC GPIO mode)
 </tr>
 </table>
 \endcond
 
 \cond (SOC_AM263X || SOC_AM263PX)
 
-##### @VAR_LP_BOARD_NAME + BP-AM2BLDCSERVO Booster Pack Pin Multiplexing for SDK example
+### @VAR_LP_BOARD_NAME + BP-AM2BLDCSERVO Booster Pack Pin Multiplexing for SDK example
 <table>
 <tr>
     <th>Pin name
@@ -418,7 +419,7 @@ The CRC is the last byte of the last received data frame. The firmware then stor
 <tr>
     <td>GPIO Pin (SDFM0_D1/D13)
     <td>ENC1_EN
-    <td>Enable 3 channel peripheral interface in Axis 1 of BP (Fix this pin to high with SoC GPIO mode)
+    <td>Enable encoder voltage in Axis 1 of BP (Fix this pin to high with SoC GPIO mode)
 </tr>
 </table>
 \endcond

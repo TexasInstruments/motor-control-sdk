@@ -233,16 +233,17 @@ This example supports two BiSS-C channels using two PRUs from same PRU-ICSSM. In
 
 \cond SOC_AM243X
 
-### Hardware Setup (Using <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a> & LP-AM243)
+### Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack & LP-AM243)
 \imageStyle{AM243x_lp_bp_bissc_encoder_setup.png,width:40%}
-\image html AM243x_lp_bp_bissc_encoder_setup.png  "Hardware Setup of BP-AM2BLDCSERVO + LP for BISS-C"
+\image html AM243x_lp_bp_bissc_encoder_setup.png  "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for BISS-C"
 
 \note
-    - The PROC109A version of LP supports two channels
-    - To enable the second channel on LP, SW6 needs to be turned OFF
-    - Ensure VSENSOR pins are enabled via jumper settings (J18/J19, J20/J21) to power the encoders
+    - The PROC109A version of LP-AM243 with BP-AM2BLDCSERVO Booster Pack supports two channels
+    - To enable the second channel on LP, SW6 needs to be turn OFF
+    - To enable VSENSOR1/VSENSOR2, BoosterPack pins J8.73/J8.74 must be set high (In this example, this pin is configured in GPIO mode and pulled high)
 
-#### Booster Pack Jumper Configuration
+#### BP-AM2BLDCSERVO Booster Pack Jumper Configuration
+
 <table>
 <tr>
     <th>Designator</th>
@@ -315,11 +316,13 @@ This example supports two BiSS-C channels using two PRUs from same PRU-ICSSM. In
 
 \cond SOC_AM261X
 
-### Hardware Setup (Using <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a> & LP-AM261)
+### Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack & LP-AM261)
 \imageStyle{AM261x_lp_bp_bissc_encoder_setup.png,width:40%}
-\image html AM261x_lp_bp_bissc_encoder_setup.png  "Hardware Setup of BP-AM2BLDCSERVO + LP for BISS-C"
+\image html AM261x_lp_bp_bissc_encoder_setup.png  "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for BISS-C"
 
-\note Ensure VSENSOR pins are enabled via jumper settings (J18/J19, J20/J21) to power the encoders.
+\note
+    - The Rev. A version of LP-AM261 with BP-AM2BLDCSERVO Booster Pack supports two channels
+    - To enable VSENSOR1/VSENSOR2, BoosterPack pins J8.73/J8.74 must be set high (In this example, this pin is configured in GPIO mode and pulled high)
 
 #### LP-AM261 Jumper Configuration
 
@@ -341,7 +344,8 @@ This example supports two BiSS-C channels using two PRUs from same PRU-ICSSM. In
 </tr>
 </table>
 
-#### Booster Pack Jumper Configuration
+#### BP-AM2BLDCSERVO Booster Pack Jumper Configuration
+
 <table>
 <tr>
     <th>Designator</th>
@@ -416,9 +420,12 @@ This example supports two BiSS-C channels using two PRUs from same PRU-ICSSM. In
 
 \cond SOC_AM263X
 
-### Hardware Setup (Using <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a> & LP-AM263)
+### Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack & LP-AM263)
 \imageStyle{AM263x_lp_bp_bissc_encoder_setup.png,width:40%}
-\image html AM263x_lp_bp_bissc_encoder_setup.png  "Hardware Setup of BP-AM2BLDCSERVO + LP for BISS-C"
+\image html AM263x_lp_bp_bissc_encoder_setup.png  "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for BISS-C"
+
+\note
+    - To enable VSENSOR1, BoosterPack pin J8.73 must be set high (In this example, this pin is configured in GPIO mode and pulled high)
 
 #### LP-AM263 Jumper Configuration
 
@@ -426,9 +433,9 @@ This example supports two BiSS-C channels using two PRUs from same PRU-ICSSM. In
 
 \cond SOC_AM263PX
 
-### Hardware Setup (Using <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a> & LP-AM263P)
+### Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack & LP-AM263P)
 \imageStyle{AM263Px_lp_bp_bissc_encoder_setup.png,width:40%}
-\image html AM263Px_lp_bp_bissc_encoder_setup.png  "Hardware Setup of BP-AM2BLDCSERVO + LP for BISS-C"
+\image html AM263Px_lp_bp_bissc_encoder_setup.png  "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for BISS-C"
 
 #### LP-AM263P Jumper Configuration
 
@@ -452,7 +459,8 @@ This example supports two BiSS-C channels using two PRUs from same PRU-ICSSM. In
 </tr>
 </table>
 
-#### Booster Pack Jumper Configuration
+#### BP-AM2BLDCSERVO Booster Pack Jumper Configuration
+
 <table>
 <tr>
     <th>Designator</th>

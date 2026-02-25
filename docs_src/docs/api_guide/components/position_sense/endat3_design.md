@@ -13,7 +13,7 @@ Key improvements in EnDat3:
 - Enhanced CRC protection on all frame types
 - Support for both foreground and background communication channels
 - Improved error detection and status reporting
-- Flexible operating modes (host trigger and periodic trigger)
+- Flexible operating modes (host trigger, periodic CMP trigger, and periodic CAP trigger)
 
 Only two differential signal pairs are required: bidirectional data.
 Clock is not needed here and data is bidirectional and asynchronous. Transfer between receiver and encoder at the physical layer is in accordance with RS485, with transceivers at both ends.
@@ -104,10 +104,14 @@ Refer to the device TRM for details on PRU-ICSS peripheral interface configurati
 
 ### EnDat3 Firmware Implementation
 
-The following section describes the firmware implementation of EnDat3 receiver on PRU-ICSS.
-The deterministic behavior of the 32-bit RISC core provides precise control for sampling external signals and generating timing-critical outputs.
+The following section describes the firmware implementation of EnDat3 receiver on PRU-ICSS. The deterministic behavior of the 32-bit RISC core provides precise control for sampling external signals and generating timing-critical outputs. It makes use of 3 channel peripheral interface support in PRU for data transmission/reception.
 
 #### Firmware Architecture
+
+The PRU-ICSS firmware supports the following configuration:
+1. Single Channel per PRU slice
+
+The firmware first initializes the local variables and configures the PRU-ICSS peripheral interface. Then it checks the operating mode: host trigger mode, periodic CMP mode, or periodic CAP mode.
 
 The firmware operates in a state machine architecture with the following main phases:
 
@@ -115,10 +119,10 @@ The firmware operates in a state machine architecture with the following main ph
    - Configure PRU-ICSS peripheral interface
    - Initialize Manchester encoding/decoding lookup tables
    - Set initial communication parameters
-   - Configure operating mode (host trigger or periodic)
+   - Configure operating mode (host trigger, periodic CMP, or periodic CAP)
 
 2. **Command Phase**
-   - Wait for command trigger (from R5F application or IEP timer)
+   - Wait for command trigger (from R5F application, IEP compare event, or IEP capture event)
    - Parse command type (foreground/background)
    - Set up transmission parameters
    - Configure expected frame counts
@@ -242,38 +246,30 @@ Reception sequence:
 
 ##### Operating Modes
 
-###### Host Trigger Mode (opmode = 1)
+The firmware supports three operating modes: host trigger mode, periodic CMP mode, and periodic CAP mode.
 
-In host trigger mode:
+Upon triggering (from any mode), the transmit data is set up based on the command code and the data is transmitted. The firmware then waits until receiving all frames from the encoder. CRC verification is performed on all received frames and the interface is updated with the result. The firmware then waits for the next command trigger from the interface or IEP compare/capture event.
+
+**Host Trigger Mode:** The firmware waits until a command has been triggered through the interface by the host application.
+
+Following is the operation flow for host trigger mode:
 1. Application sets up command parameters
 2. Application triggers command via start trigger flag
 3. Firmware executes complete command/response cycle
 4. Firmware clears trigger flag upon completion
 5. Application reads response data
 
-Advantages:
-- Event-driven operation
-- Lower CPU overhead when updates not needed
-- Flexible command timing
+**Periodic CMP/CAP Mode:** The firmware monitors the configured IEP compare/capture event and sets the host trigger bit when the event occurs, automatically initiating EnDat3 transactions at regular intervals.
 
-###### Periodic Trigger Mode (opmode = 0)
+Following is the operation flow for periodic mode:
+1. Firmware polls IEP CMP/CAP status register and clears status after event is detected
+2. On event detection, firmware initiates EnDAT3 transaction
+3. Position data is automatically updated in shared memory
+4. R5F interrupt notifies application of new data
 
-In periodic trigger mode:
-1. IEP timer generates periodic CMP events
-2. CMP event triggers firmware automatically
-3. Firmware executes pre-configured command
-4. Position data updated at deterministic rate
-5. R5F interrupt notifies application of new data
+User can stop periodic mode by switching to host trigger mode.
 
-IEP Configuration:
-- CMP0: Reset counter (defines update period)
-- CMP3: Trigger point for command transmission
-- Counter reset on CMP0 match for continuous operation
-
-Advantages:
-- Deterministic update rate
-- Ideal for closed-loop control
-- Minimal application intervention
+\attention Input cycle time (CMP mode) or external trigger period (CAP mode) should be greater than or equal to the EnDat3 communication cycle time.
 
 ##### Background Communication State Machine
 
@@ -295,22 +291,6 @@ Depending on LPH status, different numbers of command cycles are required:
 | 1 | RX_START | 6 | Send request for 2 NOP cycles, then send request acc. to IDLE state|
 | 2 | RX_LAST | 5 | Send request for 1 NOP cycle, then send request acc. to IDLE state |
 | 3 | BUSY | N/A | Wait, cannot send request |
-
-##### Continuous Mode Operation
-
-Continuous mode provides non-stop position updates:
-
-1. Application initiates continuous mode
-2. Firmware continuously sends DATA0 command
-3. After each response, immediately send next command
-4. Minimal delay between cycles
-5. Application polls for new position data
-6. User input monitored for stop request
-
-Timing considerations:
-- Cycle time depends on baud rate and cable delay
-- At 12.5 Mbps, typical cycle time ~100-200 μs
-- Application must process data faster than update rate
 
 ##### Delay Cycle Configuration
 
@@ -334,172 +314,185 @@ EnDat3 receiver and encoder are connected using RS-485 transceivers. Data is tra
 
 #### Pin Multiplexing {#ENDAT3_PIN_USAGE}
 
+\attention \ref PRUICSS_PERIPHERAL_IF_MODE_SIGNAL_CONFIGURATION section has details on PRU pin functions in Peripheral IF mode
+
 \note
     - k = 0,1 (PRU-ICSS Instance) for AM243x/AM261x and k = 0 for AM263Px
     - n = 0,1 (PRU-ICSS Slice)
 
 <table>
 <tr>
-    <th>Pin name</th>
-    <th>Signal name</th>
-    <th>Function</th>
+    <th>Pin name
+    <th>Signal name
+    <th>Function
 </tr>
 <tr>
-    <td>\if (SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO0 \else PRG<%k>_PRU<n>_GPO0 \endif</td>
-    <td>pru<n>_endat3_ch<X>_clk</td>
-    <td>Channel X clock</td>
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO0 \else PRG<%k>_PRU<n>_GPO0 \endif
+    <td>pru<n>_endat3_0_clk
+    <td>Channel 0 clock
 </tr>
 <tr>
-    <td>\if (SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO1 \else PRG<%k>_PRU<n>_GPO1 \endif</td>
-    <td>pru<n>_endat3_ch<X>_out</td>
-    <td>Channel X transmit</td>
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO1 \else PRG<%k>_PRU<n>_GPO1 \endif
+    <td>pru<n>_endat3_0_out
+    <td>Channel 0 transmit
 </tr>
 <tr>
-    <td>\if (SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO2 \else PRG<%k>_PRU<n>_GPO2 \endif</td>
-    <td>pru<n>_endat3_ch<X>_outen</td>
-    <td>Channel X transmit enable</td>
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO2 \else PRG<%k>_PRU<n>_GPO2 \endif
+    <td>pru<n>_endat3_0_outen
+    <td>Channel 0 transmit enable
 </tr>
 <tr>
-    <td>\if (SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPI9 \else PRG<%k>_PRU<n>_GPI13 \endif</td>
-    <td>pru<n>_endat3_ch<X>_in</td>
-    <td>Channel X receive</td>
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPI9 \else PRG<%k>_PRU<n>_GPI13/PRG<%k>_PRU<n>_GPI9 \endif
+    <td>pru<n>_endat3_0_in
+    <td>Channel 0 receive
+</tr>
+<tr>
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO3 \else PRG<%k>_PRU<n>_GPO3 \endif
+    <td>pru<n>_endat3_1_clk
+    <td>Channel 1 clock
+</tr>
+<tr>
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO4 \else PRG<%k>_PRU<n>_GPO4 \endif
+    <td>pru<n>_endat3_1_out
+    <td>Channel 1 transmit
+</tr>
+<tr>
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO5 \else PRG<%k>_PRU<n>_GPO5 \endif
+    <td>pru<n>_endat3_1_outen
+    <td>Channel 1 transmit enable
+</tr>
+<tr>
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPI10 \else PRG<%k>_PRU<n>_GPI14/PRG<%k>_PRU<n>_GPI10 \endif
+    <td>pru<n>_endat3_1_in
+    <td>Channel 1 receive
+</tr>
+<tr>
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO6 \else PRG<%k>_PRU<n>_GPO6 \endif
+    <td>pru<n>_endat3_2_clk
+    <td>Channel 2 clock
+</tr>
+<tr>
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO7 \else PRG<%k>_PRU<n>_GPO12/PRG<%k>_PRU<n>_GPO7 \endif
+    <td>pru<n>_endat3_2_out
+    <td>Channel 2 transmit
+</tr>
+<tr>
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO8 \else PRG<%k>_PRU<n>_GPO8 \endif
+    <td>pru<n>_endat3_2_outen
+    <td>Channel 2 transmit enable
+</tr>
+<tr>
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPI11 \else PRG<%k>_PRU<n>_GPI11 \endif
+    <td>pru<n>_endat3_2_in
+    <td>Channel 2 receive
 </tr>
 </table>
 
 \cond SOC_AM243X
-
-##### LP-AM243 Booster Pack Pin Multiplexing
-
+##### LP-AM243 + BP-AM2BLDCSERVO Booster Pack Pin Multiplexing for SDK example
 <table>
 <tr>
-    <th>Pin name</th>
-    <th>Signal name</th>
-    <th>Function</th>
+    <th>Pin name
+    <th>Signal name
+	<th>Function
 </tr>
 <tr>
-    <td>PRG0_PRU1_GPO0</td>
-    <td>pru1_endat3_ch0_clk</td>
-    <td>Channel 0 clock</td>
+    <td>PRG0_PRU1_GPO0
+    <td>pru1_endat3_0_clk
+    <td>PRU1 Channel 0 clock
 </tr>
 <tr>
-    <td>PRG0_PRU1_GPO1</td>
-    <td>pru1_endat3_ch0_out</td>
-    <td>Channel 0 transmit</td>
+    <td>PRG0_PRU1_GPO1
+    <td>pru1_endat3_0_out
+    <td>PRU1 Channel 0 transmit
 </tr>
 <tr>
-    <td>PRG0_PRU1_GPO2</td>
-    <td>pru1_endat3_ch0_outen</td>
-    <td>Channel 0 transmit enable</td>
+    <td>PRG0_PRU1_GPO2
+    <td>pru1_endat3_0_out_en
+    <td>PRU1 Channel 0 transmit enable
 </tr>
 <tr>
-    <td>PRG0_PRU1_GPI13</td>
-    <td>pru1_endat3_ch0_in</td>
-    <td>Channel 0 receive</td>
+    <td>PRG0_PRU1_GPI13
+    <td>pru1_endat3_0_in
+    <td>PRU1 Channel 0 receive when SA mux selection is enabled (ICSSG_SA_MX_REG[7] G_MUX_EN = 1)
 </tr>
 <tr>
-    <td>GPIO1_78 Pin (J8.73)</td>
-    <td>ENC0_EN (J8.73)</td>
-    <td>Enable peripheral interface in Axis 0 of BP (C16 GPIO pin)</td>
+    <td>GPIO Pin (GPIO1_78/C16)
+    <td>ENC0_EN
+    <td>Enable encoder voltage in Axis 1 of BP (Fix this pin to high with SoC GPIO mode)
+</tr>
+</table>
+
+\endcond
+
+\cond  SOC_AM261X
+##### LP-AM261 + BP-AM2BLDCSERVO Booster Pack Pin Multiplexing for SDK example
+<table>
+<tr>
+    <th>Pin name
+    <th>Signal name
+    <th>Function</tr>
+<tr>
+    <td>PR1_PRU0_GPIO0
+    <td>pru0_endat3_0_clk
+    <td>PRU0 Channel 0 clock
 </tr>
 <tr>
-    <td>PRG0_PRU1_GPO6</td>
-    <td>pru1_endat3_ch2_clk</td>
-    <td>Channel 2 clock</td>
+    <td>PR1_PRU0_GPIO1
+    <td>pru0_endat3_0_out
+    <td>PRU0 Channel 0 transmit
 </tr>
 <tr>
-    <td>PRG0_PRU1_GPO12</td>
-    <td>pru1_endat3_ch2_out</td>
-    <td>Channel 2 transmit</td>
+    <td>PR1_PRU0_GPIO2
+    <td>pru0_endat3_0_out_en
+    <td>PRU0 Channel 0 transmit enable
 </tr>
 <tr>
-    <td>PRG0_PRU1_GPO8</td>
-    <td>pru1_endat3_ch2_outen</td>
-    <td>Channel 2 transmit enable</td>
+    <td>PR1_PRU0_GPI9
+    <td>pru0_endat3_0_in
+    <td>PRU0 Channel 0 receive
 </tr>
 <tr>
-    <td>PRG0_PRU1_GPI11</td>
-    <td>pru1_endat3_ch2_in</td>
-    <td>Channel 2 receive</td>
-</tr>
-<tr>
-    <td>GPIO1_77 Pin (J8.74)</td>
-    <td>ENC2_EN</td>
-    <td>Enable peripheral interface in Axis 2 of BP (B17 GPIO pin)</td>
+    <td>GPIO Pin (GPIO_21/B10)
+    <td>ENC0_EN (PRU0)
+    <td>Enable encoder voltage in Axis 1 of BP (Fix this pin to high with SoC GPIO mode)
 </tr>
 </table>
 \endcond
 
-\cond SOC_AM261X
-##### LP-AM261 Booster Pack Pin Multiplexing
+\cond (SOC_AM263X || SOC_AM263PX)
 
+##### @VAR_LP_BOARD_NAME + BP-AM2BLDCSERVO Booster Pack Pin Multiplexing for SDK example
 <table>
 <tr>
-    <th>Pin name</th>
-    <th>Signal name</th>
-    <th>Function</th>
+    <th>Pin name
+    <th>Signal name
+	<th>Function
 </tr>
 <tr>
-    <td>PR1_PRU0_GPIO0</td>
-    <td>pru1_endat3_ch0_clk</td>
-    <td>Channel 0 clock</td>
+    <td>PR0_PRU0_GPIO3
+    <td>pru0_endat3_1_clk
+    <td>PRU0 Channel 1 clock
 </tr>
 <tr>
-    <td>PR1_PRU0_GPIO1</td>
-    <td>pru1_endat3_ch0_out</td>
-    <td>Channel 0 transmit</td>
+    <td>PR0_PRU0_GPO4
+    <td>pru0_endat3_1_out
+    <td>PRU0 Channel 1 transmit
 </tr>
 <tr>
-    <td>PR1_PRU0_GPIO3</td>
-    <td>pru1_endat3_ch0_outen</td>
-    <td>Channel 0 transmit enable</td>
+    <td>PR0_PRU0_GPO5
+    <td>pru0_endat3_1_outen
+    <td>PRU0 Channel 1 transmit enable
 </tr>
 <tr>
-    <td>PR1_PRU0_GPI9</td>
-    <td>pru1_endat3_ch0_in</td>
-    <td>Channel 0 receive</td>
+    <td>PR0_PRU0_GPI10
+    <td>pru0_endat3_1_in
+    <td>PRU0 Channel 1 receive
 </tr>
 <tr>
-    <td>GPIO21 Pin (J8.73)</td>
-    <td>ENC1_EN</td>
-    <td>Enable peripheral interface in Axis 1 of BP (B10 GPIO pin)</td>
-</tr>
-</table>
-\endcond
-
-\cond SOC_AM263PX
-
-##### @VAR_LP_BOARD_NAME Booster Pack Pin Multiplexing
-
-<table>
-<tr>
-    <th>Pin name</th>
-    <th>Signal name</th>
-    <th>Function</th>
-</tr>
-<tr>
-    <td>PR0_PRU0_GPIO3</td>
-    <td>pru1_endat3_ch1_clk</td>
-    <td>Channel 1 clock</td>
-</tr>
-<tr>
-    <td>PR0_PRU0_GPO4</td>
-    <td>pru1_endat3_ch1_out</td>
-    <td>Channel 1 transmit</td>
-</tr>
-<tr>
-    <td>PR0_PRU0_GPO5</td>
-    <td>pru1_endat3_ch1_outen</td>
-    <td>Channel 1 transmit enable</td>
-</tr>
-<tr>
-    <td>PR0_PRU0_GPI10</td>
-    <td>pru1_endat3_ch1_in</td>
-    <td>Channel 1 receive</td>
-</tr>
-<tr>
-    <td>SDFM0_D1 Pin (J8.73)</td>
-    <td>ENC1_EN</td>
-    <td>Enable peripheral interface in Axis 1 of BP (D13 GPIO pin)</td>
+    <td>GPIO Pin (SDFM0_D1/D13)
+    <td>ENC1_EN
+    <td>Enable encoder voltage in Axis 1 of BP (Fix this pin to high with SoC GPIO mode)
 </tr>
 </table>
 \endcond
@@ -532,41 +525,42 @@ The EnDat3 software is organized into three layers:
 The driver provides comprehensive APIs for EnDat3 communication:
 
 **Initialization APIs:**
-- `endat3_open()` - Initialize EnDat3 interface
-- `endat3_setOperatingMode()` - Configure host/periodic trigger mode
-- `endat3_releaseStartTrigger()` - Enable communication
-- `endat3_clearStartTrigger()` - Disable communication
+- `endat3_init()` - Initialize EnDat3 interface
+- `endat3_set_operating_mode()` - Configure operating mode (host trigger, periodic CMP, or periodic CAP)
+- `endat3_release_start_trigger()` - Enable communication
+- `endat3_clear_start_trigger()` - Disable communication
 
 **Command APIs:**
-- `endat3_setForegroundOpCode()` - Set foreground command
-- `endat3_setBackgroundOpCode()` - Set background command
-- `endat3_setExpectedTxFrameCount()` - Configure frame count
-- `endat3_setBgData()` - Set background data
+- `endat3_set_foreground_op_code()` - Set foreground command
+- `endat3_set_background_op_code()` - Set background command
+- `endat3_set_expected_tx_frame_count()` - Configure frame count
+- `endat3_set_bg_data()` - Set background data
 - `endat3_send_command()` - Transmit command
 - `endat3_receive_response()` - Receive and parse response
 
 **Data Access APIs:**
-- `endat3_getHpfData()` - Get position data from HPF
-- `endat3_getHpfStatus()` - Get HPF status
-- `endat3_getHpfCrc()` - Get HPF CRC
-- `endat3_getLphStatus()` - Get LPH status
-- `endat3_getLphState()` - Get background communication state
-- `endat3_getLpfStatus()` - Get LPF status for frame N
-- `endat3_getLpfData()` - Get LPF data for frame N
-- `endat3_getLpfCrc()` - Get LPF CRC for frame N
+- `endat3_get_hpf_data()` - Get position data from HPF
+- `endat3_get_hpf_status()` - Get HPF status
+- `endat3_get_hpf_crc()` - Get HPF CRC
+- `endat3_get_lph_status()` - Get LPH status
+- `endat3_get_lph_state()` - Get background communication state
+- `endat3_get_lpf_status()` - Get LPF status for frame N
+- `endat3_get_lpf_data()` - Get LPF data for frame N
+- `endat3_get_lpf_crc()` - Get LPF CRC for frame N
 
 **Status Check APIs:**
-- `endat3_hasHpfError()` - Check HPF error flag
-- `endat3_hasHpfWarning()` - Check HPF warning flag
-- `endat3_isHpfDataValid()` - Check HPF data validity
-- `endat3_hasAbsoluteValue()` - Check absolute value availability
-- `endat3_isBusy()` - Check if transfer in progress
-- `endat3_getErrorCode()` - Get detailed error code
+- `endat3_has_hpf_error()` - Check HPF error flag
+- `endat3_has_hpf_warning()` - Check HPF warning flag
+- `endat3_is_hpf_data_valid()` - Check HPF data validity
+- `endat3_has_absolute_value()` - Check absolute value availability
+- `endat3_is_busy()` - Check if transfer in progress
+- `endat3_get_error_code()` - Get detailed error code
 
-**Utility APIs:**
-- `endat3_getErrorDescription()` - Get error description string
-- `endat3_getErrorAction()` - Get recommended action for error
-- `endat3_getLastError()` - Get last driver error code
+**Periodic Trigger APIs:**
+- `endat3_config_iep_cmp_event()` - Configure IEP CMP event number for periodic CMP mode
+- `endat3_config_iep_cap_event()` - Configure IEP CAP event number for periodic CAP mode
+- `endat3_config_periodic_mode()` - Configure and start periodic trigger mode (example code)
+- `endat3_stop_periodic_mode()` - Stop periodic trigger mode (example code)
 
 ### Error Handling
 

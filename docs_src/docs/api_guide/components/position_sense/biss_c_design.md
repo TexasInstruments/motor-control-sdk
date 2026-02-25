@@ -72,9 +72,7 @@ Refer to TRM for details
 
 \cond SOC_AM243X
 
-Following section describes the firmware implementation of BISS-C receiver on PRU-ICSS.
-Deterministic behavior of the 32 bit RISC core running up to 333 MHz provides resolution on sampling external signals and generating external signals.
-It makes use of 3 channel peripheral interface support in PRU for data transmission.
+Following section describes the firmware implementation of BISS-C receiver on PRU-ICSS. Deterministic behavior of the 32 bit RISC core running up to 333 MHz provides resolution on sampling external signals and generating external signals. It makes use of 3 channel peripheral interface support in PRU for data transmission.
 
 The PRU-ICSS firmware supports the following configurations:
 1. Single Channel per PRU slice
@@ -95,9 +93,7 @@ Each of PRU, TX-PRU and RTU-PRU handle one channel in this configuration. Load s
 
 \cond SOC_AM261X
 
-Following section describes the firmware implementation of BISS-C receiver on PRU-ICSS.
-Deterministic behavior of the 32 bit RISC core running up to 225 MHz provides resolution on sampling external signals and generating external signals.
-It makes use of 3 channel peripheral interface support in PRU for data transmission.
+Following section describes the firmware implementation of BISS-C receiver on PRU-ICSS. Deterministic behavior of the 32 bit RISC core running up to 225 MHz provides resolution on sampling external signals and generating external signals. It makes use of 3 channel peripheral interface support in PRU for data transmission.
 
 The PRU-ICSS firmware supports the following configuration:
 1. Single Channel per PRU slice
@@ -111,9 +107,7 @@ Single core of PRU-ICSS slice is used in this configuration.
 
 \cond (SOC_AM263X || SOC_AM263PX)
 
-Following section describes the firmware implementation of BISS-C receiver on PRU-ICSS.
-Deterministic behavior of the 32 bit RISC core running up to 200 MHz provides resolution on sampling external signals and generating external signals.
-It makes use of 3 channel peripheral interface support in PRU for data transmission.
+Following section describes the firmware implementation of BISS-C receiver on PRU-ICSS. Deterministic behavior of the 32 bit RISC core running up to 200 MHz provides resolution on sampling external signals and generating external signals. It makes use of 3 channel peripheral interface support in PRU for data transmission.
 
 The PRU-ICSS firmware supports the following configuration:
 1. Single Channel per PRU slice
@@ -129,13 +123,19 @@ Single core of PRU-ICSS slice is used in this configuration.
 
 \image html bissc_overall_firmware.png "Overall Block Diagram"
 
-Firmware first detects and estimates the processing delay of the encoder as part of the initialization. Then it waits for the user to provide command (user after setting up the command, user sets command trigger bit), upon detecting trigger, first it checks whether the clock frequency has changed and if yes, it re-estimates the processing delay for the new clock frequency.
+Firmware first detects and estimates the processing delay of the encoder as part of the initialization. Then it checks the operation mode: host trigger mode, periodic CMP mode, or periodic CAP mode.
 
-Then it reads the position data and checks if a control communication is in process. It verifies the position data CRC by comparing it with the on-the-fly computation of CRC. In case of control communication mode, it backs up the CDS bit and transmits the CDM bit by overriding the clock pulse during the BISS-C cycle timeout phase. If the control communication is in progress it goes back to read the position data for the next cycle. If the control communication is completed, it updates the control command status, position data status and returns to wait for the next trigger command from Arm-based core.
+**Host Trigger Mode:** The firmware waits until a command has been triggered through the interface by the host application.
 
-In case of Safety mode enabled, firmware will be executed as explained below:
+**Periodic CMP/CAP Mode:** The firmware monitors the configured IEP compare/capture event and sets the host trigger bit when the event occurs, automatically initiating Nikon transactions at regular intervals.
 
-\image html bissc_safety_rx_flow.png "RX flow when Safety is enabled "
+Upon detecting trigger, first it checks whether the clock frequency has changed and if yes, it re-estimates the processing delay for the new clock frequency.
+
+Then it reads the position data and checks if a control communication is in process. It verifies the position data CRC by comparing it with the on-the-fly computation of CRC. In case of control communication mode, it backs up the CDS bit and transmits the CDM bit by overriding the clock pulse during the BISS-C cycle timeout phase. If the control communication is in progress it goes back to read the position data for the next cycle. If the control communication is completed, it updates the control command status, position data status and returns to wait for the next trigger from the interface or IEP compare/capture event.
+
+In case the "safety mode" is enabled, firmware will be executed as explained below:
+
+\image html bissc_safety_rx_flow.png "RX flow when Safety is enabled"
 
 Firmware will perform configuration as usual and then before entering into RX it checks whether safety is enabled for that particular encoder or not. If enabled, firmware will perform receive and downsample and CRC computation is excluded, after all the encoders data bits are read successfully, before going into timeout firmware will perform post-processing to compute the 16 bit CRC for safety enabled encoders. Please note that post-processing will be applicable only for the encoders for which safety is enabled using control communication. Please find below an image that explains CPW and SPW as per BiSS-C safety specifications.
 
@@ -185,6 +185,7 @@ Following is the operation flow for periodic mode:
 1. Firmware polls IEP CMP/CAP status register and clears status after event is detected
 2. On event detection, firmware initiates BiSS-C transaction
 3. Position data is automatically updated in shared memory
+4. R5F interrupt notifies application of new data
 
 \image html bissc_periodic_mode.png "Periodic Trigger Mode"
 
@@ -203,7 +204,6 @@ The physical data transmission in 3 channel peripheral interface is done using R
 The receiver sends the clock to the BISS-C encoder, data transmission in either direction (one at a time) occurs in synchronism with the clock. The design uses two differential signals for each of the lines (clock and data).
 
 BISS-C receiver and the encoder are connected using the RS-485 transceiver. Data is transmitted differentially over RS-485. It has the advantages of high noise immunity and long distance transmission capabilities.
-
 
 #### Pin Multiplexing {#BISSC_PIN_USAGE}
 
@@ -360,12 +360,12 @@ BISS-C receiver and the encoder are connected using the RS-485 transceiver. Data
 <tr>
     <td>GPIO Pin (GPIO_21/B10)
     <td>ENC0_EN (PRU0)
-    <td>Enable 3 channel peripheral interface in Axis 1 of BP (Fix this pin to high with SoC GPIO mode)
+    <td>Enable encoder voltage in Axis 1 of BP (Fix this pin to high with SoC GPIO mode)
 </tr>
 <tr>
     <td>GPIO Pin (GPIO_22/A10)
     <td>ENC0_EN (PRU1)
-    <td>Enable 3 channel peripheral interface in Axis 2 of BP (Fix this pin to high with SoC GPIO mode)
+    <td>Enable encoder voltage in Axis 2 of BP (Fix this pin to high with SoC GPIO mode)
 </tr>
 </table>
 
@@ -398,7 +398,7 @@ BISS-C receiver and the encoder are connected using the RS-485 transceiver. Data
 <tr>
     <td>GPIO Pin (SDFM0_D1/D13)
     <td>ENC1_EN
-    <td>Enable 3 channel peripheral interface in Axis 1 of BP (Fix this pin to high with SoC GPIO mode)
+    <td>Enable encoder voltage in Axis 1 of BP (Fix this pin to high with SoC GPIO mode)
 </tr>
 </table>
 \endcond

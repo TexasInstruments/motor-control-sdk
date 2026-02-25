@@ -61,18 +61,19 @@ BiSS Safety is a profile definition for BiSS that has been certified by TÜV Rhe
    -  Support for control communication
    -  Support for automatic processing delay detection and compensation
    -  Support for multiple encoders connected via daisy-chain configuration (up to 3 encoders)
-   -  Support for concurrent multi-channel support on a single PRU (up to 3 identical encoders)
+   -  Support for concurrent multi-channel support on a single PRU
+        - Up to 3 channels with identical number of encoders of the same frequency connected to all configured channels.
         - In this mode, data transmission and reception must happen simultaneously on all channels.
         - The encoder configuration and cable length should be the same on all channels.
         - If encoders across channels don't respond at the same time, this mode will not work. Load share configuration should be used instead.
-   -  Support for multi-channel encoders of different make under load share mode (Refer \ref PRUICSSG_LOAD_SHARE_MODE for more details)
+   -  Support for multi-channel with encoders of different make and different numbers of encoders connected across channels under load share mode (Refer \ref PRUICSSG_LOAD_SHARE_MODE for more details).
+        - Up to 3 channels with encoders of the same frequency connected to all configured channels.
         - In this mode, data transmission and reception can happen independently on all channels.
         - After a command is sent, all channels wait for a response and process the response independently. However, all channels must finish processing before the next command can be triggered.
    -  Same clock frequency for all channels in multi channel mode within the same PRU-ICSS slice
         - Different PRU slices can simultaneously handle encoders operating at different frequencies
    -  Support for up to 100 meter cable
    -  Readiness for BiSS Safety profile by supporting 16 bit CRC and sign-of-life counter
-
 \endcond
 
 \cond SOC_AM261X
@@ -166,7 +167,7 @@ BiSS Safety is a profile definition for BiSS that has been certified by TÜV Rhe
 
 In general, peripherals or features not mentioned as part of "Features Supported" section are not
 supported in this release, including the following:
--  BISS Line
+-  BiSS Line
 -  Independent clock frequency for each channel in multi channel mode within the same PRU-ICSS slice
     - Clock frequency is a PRU-ICSS slice level configuration
     - Each channel within the same PRU-ICSS slice in multi-channel mode will have same clock frequencies
@@ -180,16 +181,16 @@ supported in this release, including the following:
 \attention For each PRU-ICSS slice being used for BiSS-C, one module instance should be created in SysConfig. For up to 3 channels using 1 slice, only 1 instance needs to be added.
 
 SysConfig can be used to configure the following:
-- Selecting the ICSSG instance. (Tested on ICSSG0)
-- Selecting the ICSSG PRU slice. (Tested on ICSSG0-PRU1)
+- Selecting the ICSSG instance (Tested on ICSSG0)
+- Selecting the ICSSG PRU slice (Tested on ICSSG0-PRU1)
 - Configuring PINMUX
 - Frequency selection
 - Channel selection
 - Selecting Multi Channel with encoders of different make using load share mode
 - Enabling SA Mux mode
 - Selecting clock source
-- IEP instance and IEP event selection for periodic mode
-
+- IEP instance and IEP event selection for periodic trigger mode
+- Booster Pack Support: Enable when using BP-AM2BLDCSERVO
 \note BiSS-C firmware supports operation with ICSS Core Clock running at 200 MHz/300 MHz frequency or ICSS UART Clock running at 192 MHz only. ICSS Core Clock at 225/250/333 MHz is not supported due to clock divider requirements.
 \endcond
 
@@ -200,14 +201,14 @@ SysConfig can be used to configure the following:
 \attention For each PRU-ICSS slice being used for BiSS-C, one module instance should be created in SysConfig. For dual channel example using 2 PRUs, 2 instances need to be added.
 
 SysConfig can be used to configure the following:
-- Selecting the ICSS instance. (Tested on ICSSM1)
-- Selecting the ICSS PRU slice. (Tested on ICSSM1-PRU0)
+- Selecting the ICSSM instance (Tested on ICSSM1)
+- Selecting the ICSSM PRU slice (Tested on ICSSM1-PRU0 and ICSSM1-PRU1)
 - Configuring PINMUX
 - Frequency selection
 - Channel selection
 - Selecting clock source
-- IEP event selection for periodic mode
-
+- IEP event selection for periodic trigger mode
+- Booster Pack Support: Enable when using BP-AM2BLDCSERVO
 \note BiSS-C firmware supports operation with ICSS UART Clock running at 160 MHz only, when ICSS Core Clock is 225 MHz due to clock divider requirements.
 
 \endcond
@@ -219,15 +220,15 @@ SysConfig can be used to configure the following:
 \attention For each PRU-ICSS slice being used for BiSS-C, one module instance should be created in SysConfig.
 
 SysConfig can be used to configure the following:
-- Selecting the ICSS instance. (Tested on ICSSM)
-- Selecting the ICSS PRU slice. (Tested on ICSSM-PRU0)
+- Selecting the ICSSM instance (Tested on ICSSM)
+- Selecting the ICSSM PRU slice (Tested on ICSSM-PRU0)
 - Configuring PINMUX
 - Frequency selection
 - Channel selection
 - Selecting clock source
-- IEP event selection for periodic mode
-
-\note BiSS-C firmware supports operation with ICSS Core Clock running at 200 MHz frequency or ICSS UART Clock running at 192 MHz frequency only.
+- IEP event selection for periodic trigger mode
+- Booster Pack Support: Enable when using BP-AM2BLDCSERVO
+\note BiSS-C firmware supports operation with ICSS Core Clock running at 200 MHz frequency or ICSS UART Clock running at 192 MHz frequency only due to clock divider requirements.
 
 \endcond
 
@@ -249,7 +250,7 @@ In CAP mode, external signals trigger position sampling based on IEP capture eve
 
 \note CAP6 and CAP7 support falling edge detection as well. In BiSS-C, rising edge is used always.
 
-## ICSS PRU Resource Usage
+## PRU-ICSS Resource Usage
 
 - Utilizes the Peripheral IF mode (3-channel peripheral interface mode) for BiSS-C communication. Maximum of 3 channels are available per PRU slice. (Refer \ref PRUICSS_PERIPHERAL_IF_MODE for more details)
 - Each channel has 4 pins (Clock, Data out, Data in, Output enable)

@@ -264,14 +264,14 @@ For PRU-related issues, verify that the application is loading the PRU firmware 
 
 #### Multi-channel with load share mode
 
-\note This subsection is applicable for BiSS-C, EnDat, HDSL, and Nikon A-format only.
+\note This subsection is not applicable for EnDAT3.
 
 - In this mode, data transmission and reception can happen independently on all channels.
 - After a command is sent, all channels wait for a response and process the response independently. However, all channels must finish processing before the next command can be triggered. (This restriction does not apply to HDSL. HDSL channels can continue operating independently.)
 
 ### Periodic Trigger Mode
 
-\note This subsection is applicable for BiSS-C, EnDat, Nikon A-format and Tamagawa only. Load share mode is not available for Tamagawa.
+\note This subsection is not applicable for HDSL.
 
 SDK examples uses IEP compare/capture event(s) to trigger commands in periodic mode. Firmware triggers a R5F interrupt after getting a response from the encoder. The application code uses a callback function to clear the PRU interrupt, which can be modified as per the use case. CMP/CAP event number can be configured using SysConfig module of encoder. Refer the example specific page for details (see \ref NIKON_EXAMPLE_PERIODIC_MODE).
 

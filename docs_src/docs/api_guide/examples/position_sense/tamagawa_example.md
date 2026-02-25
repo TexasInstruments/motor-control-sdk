@@ -555,12 +555,12 @@ This issue can be troubleshot by debugging the firmware and examining register v
         <td>Readout from EEPROM</td>
         <td>Transmit following data:
         <br>Proper address of the EEPROM that you want to read.<br>
-		<br>Receive following data:
-        <br>Control Field for EEPROM Write command
-        <br>EEPROM address that you want to write to
-        <br>Data that you want to write to the EEPROM
+        <br>Receive following data:
+        <br>Control Field for EEPROM Read command
+        <br>EEPROM address that was read from
+        <br>Data read from the EEPROM
         <br>CRC value
-		</td>
+        </td>
         <td>CRC success with EDF, ADF, CF and CRC values printed in the terminal.</td>
     </tr>
 	<tr>

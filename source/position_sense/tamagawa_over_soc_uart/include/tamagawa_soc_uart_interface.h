@@ -42,7 +42,29 @@
  *  \defgroup TAMAGAWA_UART_API_MODULE APIs for Tamagawa Encoder Over UART
  *  \ingroup POSITION_SENSE_API
  *
- * Here is the list of APIs used for Tamagawa encoder communication protocol
+ *  The Tamagawa UART API module provides functions for communicating with
+ *  Tamagawa absolute encoders over standard UART interface. This driver supports
+ *  various Tamagawa data IDs for reading position data, encoder ID, EEPROM access,
+ *  and encoder reset commands.
+ *
+ *
+ *  \section tamagawa_uart_usage Typical Usage Flow
+ *
+ *  **1. Initialization:**
+ *  - Open and configure UART peripheral using UART driver
+ *  - Call \ref tamagawa_init() to initialize interface structure and configure GPIO for RTSn
+ *
+ *  **2. Command Execution:**
+ *  - For EEPROM operations, set tx.adf (address) and tx.edf (data) fields
+ *  - Call \ref tamagawa_command_process() to execute command desired data_id
+ *  - Check return value for success/failure
+ *
+ *  **3. Data Validation:**
+ *  - Call \ref tamagawa_crc_verify() to validate received data CRC
+ *  - If CRC passes, read data from rx structure fields
+ *
+ *  **4. Data Retrieval:**
+ *  - Access data via rx structure of tamagawa_uart_interface
  *
  *  @{
  */
@@ -55,15 +77,27 @@ extern "C" {
 /* ========================================================================== */
 
 /**
- *  \brief  Used to set the maximum address that can be used for EEPROM Read/Write
+ *  \brief  Maximum EEPROM address for read/write operations
+ *
+ *  The Tamagawa encoder EEPROM supports addresses in the range 0-127.
+ *  Valid address range: 0 to \ref MAX_EEPROM_ADDRESS (inclusive)
  */
 #define MAX_EEPROM_ADDRESS (127)
+
 /**
-* \brief Used to set the maximum value that can be written in EEPROM
-*/
+ *  \brief Maximum data value that can be written to EEPROM
+ *
+ *  Each EEPROM location stores an 8-bit value (0-255).
+ *  Valid data range: 0 to \ref MAX_EEPROM_WRITE_DATA (inclusive)
+ */
 #define MAX_EEPROM_WRITE_DATA (255)
+
 /**
- *    @brief    Data ID codes
+ *  \brief Tamagawa encoder Data ID codes
+ *
+ *  Data IDs specify which command/operation to execute on the encoder.
+ *  Different Data IDs return different combinations of position data,
+ *  encoder status, and configuration information.
  */
 enum data_id
 {
@@ -82,16 +116,23 @@ enum data_id
 /*                         Structure Declarations                             */
 /* ========================================================================== */
 /**
- * @brief Tamagawa Interface Transmit data
+ * \brief Tamagawa over SoC UART transmit data structure
+ *
+ * Contains data to be transmitted to the encoder for EEPROM read/write operations.
+ * These fields are only used with DATA_ID_6 (EEPROM write) and DATA_ID_D (EEPROM read).
  */
 struct tamagawa_tx
 {
-    uint8_t  adf;   /**< EEPROM address */
-    uint8_t  edf;   /**< EEPROM data */
+    uint8_t  adf;   /**< Address field: EEPROM address to read from or write to (0-127, see \ref MAX_EEPROM_ADDRESS) */
+    uint8_t  edf;   /**< Encoder data field: Data value to write to EEPROM (0-255, see \ref MAX_EEPROM_WRITE_DATA). Not used for EEPROM read. */
 };
 
 /**
- * @brief Tamagawa Interface Received data
+ * \brief Tamagawa over SoC UART receive data structure
+ *
+ * Contains all possible data fields that can be received from the encoder.
+ * Fields are populated based on the Data ID used in the command.
+ * It is recommended to verify the CRC field using \ref tamagawa_crc_verify() before using received data.
  */
 struct tamagawa_rx
 {
@@ -106,59 +147,106 @@ struct tamagawa_rx
     uint8_t  crc;   /**< CRC */
 };
 /**
- * @brief Tamagawa Interface
+ * \brief Tamagawa over SoC UART interface structure
+ *
+ * Main interface structure for Tamagawa encoder communication over UART.
+ * This structure maintains all state and configuration needed for encoder operations.
+ *
  */
 struct tamagawa_uart_interface
 {
-    uint8_t  data_id;  /**< Data ID code */
-    struct tamagawa_tx tx;      /**< Transmit data */
-    struct tamagawa_rx rx;      /**< Received data */
-    uint8_t  rx_crc;   /**< Calculated CRC */
-    uint32_t uart_instance; /**< Uart instance*/
-    uint32_t gpio_base_address; /**< GPIO pin base address*/
-    uint32_t gpio_pin_number;   /**<GPIO Pin number*/
+    uint8_t             data_id;            /**< Data ID code */
+    struct tamagawa_tx  tx;                 /**< Transmit data */
+    struct tamagawa_rx  rx;                 /**< Received data */
+    uint8_t             rx_crc;             /**< Calculated CRC */
+    uint32_t            uart_instance;      /**< Uart instance*/
+    uint32_t            gpio_base_address;  /**< GPIO pin base address*/
+    uint32_t            gpio_pin_number;    /**<GPIO Pin number*/
 };
 
 /* ========================================================================== */
 /*                       Function Declarations                                */
 /* ========================================================================== */
 /**
- *  \brief      Process The Tamagawa Command
+ *  \brief Process and execute a Tamagawa encoder command
  *
- *  \param[in]  tamagawa_interface         Tamagawa Interface
- *  \param[in]  gUartHandle    uart handle
- *  \param[in]  cmd             tamagawa command number
+ *  \details This function executes a complete Tamagawa command transaction:
+ *           1. Builds the command frame based on the specified Data ID
+ *           2. Controls RTSn GPIO pin (HIGH) to enable encoder listening mode
+ *           3. Transmits command via UART
+ *           4. Controls RTSn GPIO pin (LOW) to disable transmit and enable receive
+ *           5. Receives response from encoder via UART
+ *           6. Parses received data into tamagawa_interface->rx structure
+ *           7. Calculates CRC on received data and stores in tamagawa_interface->rx_crc
  *
+ *           After this function returns successfully, it is recommended to call
+ *           \ref tamagawa_crc_verify() to validate the received data integrity before
+ *           using rx structure fields.
  *
- *  \retval     SystemP_SUCCESS on success
- *  \retval     SystemP_FAILURE on failure
+ *  \param[in,out]  tamagawa_interface  Pointer to Tamagawa interface structure.
+ *                                      - INPUT: data_id field must be set to desired command
+ *                                      - INPUT: For DATA_ID_6 or DATA_ID_D, tx.adf and tx.edf must be populated
+ *                                      - OUTPUT: rx structure populated with encoder response
+ *                                      - OUTPUT: rx_crc calculated from received data
+ *  \param[in]      gUartHandle         Array of UART LLD handles. The handle at index
+ *                                      tamagawa_interface->uart_instance will be used.
+ *  \param[in]      cmd                 Data ID command code from \ref data_id enum
+ *                                      (DATA_ID_0, DATA_ID_1, etc.). This parameter
+ *                                      updates tamagawa_interface->data_id internally.
+ *
+ *  \retval         SystemP_SUCCESS     Command executed successfully. Data received and parsed.
+ *                                      Call \ref tamagawa_crc_verify() before using rx data.
+ *  \retval         SystemP_FAILURE     Command failed due to:
+ *                                      - Invalid Data ID
+ *                                      - Response parsing error
+ *
+ *  \note The function asserts (DebugP_assert) on UART transfer failures
+ *  \note RTSn GPIO pin must be properly configured before calling this API
+ *  \note UART peripheral must be opened and configured before calling this function
+ *  \note This function uses UART_lld_write() and UART_lld_read() for communication
  *
  */
 int32_t tamagawa_command_process(volatile struct tamagawa_uart_interface *tamagawa_interface, UARTLLD_Handle *gUartHandle, int32_t cmd);
 
 /**
- *  \brief      Compare Received CRC and Calculated CRC
+ *  \brief Verify CRC integrity of received encoder data
  *
- *  \param[in]  tamagawa_interface         Tamagawa Interface
+ *  \param[in]  tamagawa_interface  Pointer to Tamagawa interface structure
  *
- *
- *  \retval     1       CRC Success
- *  \retval     0       CRC Failure
+ *  \retval     1   CRC verification passed. Received data is valid and can be used safely.
+ *  \retval     0   CRC verification failed. Received data is corrupted and should not be used.
  *
  */
 int32_t tamagawa_crc_verify(volatile struct tamagawa_uart_interface *tamagawa_interface);
 
 /**
- *  \brief      Initialize tamagawa_uart_interface structure and configure GPIO pin for RTSn (SW flow control)
+ *  \brief Initialize Tamagawa UART interface and configure RTSn GPIO pin
  *
- *  \param[in]  tamagawa_interface         Tamagawa Interface
- *  \param[in]  instance                   UART communication instance
- *  \param[in]  base_address               GPIO PIN address
- *  \param[in]  pin_number                 GPIO PIN Number
- *  \param[in]  pin_direction              GPIO pin direction (output/input)
+ *  \details Initializes the Tamagawa interface structure and configures the GPIO pin
+ *           used for software flow control (RTSn signal). This function must be called
+ *           before using any other Tamagawa driver functions.
  *
- *  \retval     SystemP_SUCCESS on success
- *  \retval     SystemP_FAILURE on failure
+ *           The RTSn GPIO pin is used to control half-duplex communication.
+ *
+ *  \param[in,out]  tamagawa_interface  Pointer to Tamagawa interface structure to initialize.
+ *                                      Must be allocated by caller. On success, all fields
+ *                                      are initialized with provided parameters.
+ *  \param[in]      instance            UART peripheral instance number. This value is used to index
+ *                                      into the UART handle array passed to \ref tamagawa_command_process().
+ *  \param[in]      base_address        GPIO peripheral base address containing the RTSn pin.
+ *  \param[in]      pin_number          GPIO pin number for RTSn control signal within the
+ *                                      GPIO port specified by base_address.
+ *  \param[in]      pin_direction       GPIO pin direction configuration. Use GPIO driver
+ *                                      defines: GPIO_DIRECTION_OUTPUT for RTSn control pin.
+ *
+ *  \retval         SystemP_SUCCESS     Initialization successful.
+ *  \retval         SystemP_FAILURE     Initialization failed due to NULL tamagawa_interface pointer.
+ *
+ *  \note The GPIO pin is configured as specified direction using GPIO_setDirMode()
+ *  \note Typically pin_direction should be GPIO_DIRECTION_OUTPUT for RTSn control
+ *  \note UART peripheral must still be opened separately using UART driver APIs
+ *  \note The GPIO pin initial state is not set by this function
+ *
  */
 int32_t tamagawa_init(volatile struct tamagawa_uart_interface *tamagawa_interface, uint32_t instance , uint32_t base_address, uint32_t pin_number, uint32_t pin_direction);
 
