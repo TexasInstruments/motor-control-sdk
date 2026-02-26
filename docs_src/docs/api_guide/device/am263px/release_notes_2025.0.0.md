@@ -40,6 +40,10 @@
     <td>Handle-based API architecture, periodic trigger modes (CMP and CAP), SysConfig-based initialization, per-channel encoder timeout configuration
     <td>Position Sense EnDat
 </tr>
+<tr>
+    <td>Handle-based API architecture, Periodic trigger modes (CMP and CAP), SysConfig-based initialization
+    <td>Position Sense Tamagawa
+</tr>
 </table>
 
 SOC    | Supported CPUs  | Boards                                                                                                      | Host PC
@@ -121,7 +125,7 @@ Mbed-TLS                             | R5F            | mbedtls-2.13.1
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Single channel, Multi channel using single PRU core, absolute position, encoder ID, reset, EEPROM read, EEPROM write, 2.5 Mbps Encoder, continuous mode, BP-AM2BLDCSERVO Boosterpack with LP-AM263P
+    <td> Single channel, Multi channel using single PRU core, absolute position, encoder ID, reset, EEPROM read, EEPROM write, 2.5 Mbps Encoder, periodic trigger modes (CMP and CAP), BP-AM2BLDCSERVO Boosterpack with LP-AM263P
     <td> 5 Mbps encoder
 </tr>
 <tr>

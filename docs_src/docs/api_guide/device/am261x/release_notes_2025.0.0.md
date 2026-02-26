@@ -34,6 +34,10 @@
     <td>Dual channel support using two independent PRU cores, handle-based API architecture, periodic trigger modes (CMP and CAP), SysConfig-based initialization
     <td>Position Sense EnDat
 </tr>
+<tr>
+    <td>Dual channel support using two independent PRU cores, Handle-based API architecture, Periodic trigger modes (CMP and CAP), SysConfig-based initialization
+    <td>Position Sense Tamagawa
+</tr>
 </table>
 
 ## Device and Validation Information
@@ -111,7 +115,7 @@ Mbed-TLS                | R5F            | 2.13.1
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Absolute position, Encoder ID, Reset, EEPROM Read, EEPROM Write, 2.5 Mbps Encoder, BP-AM2BLDCSERVO Boosterpack with LP-AM261
+    <td> Absolute position, Encoder ID, Reset, EEPROM Read, EEPROM Write, 2.5 Mbps Encoder, periodic trigger modes (CMP and CAP), BP-AM2BLDCSERVO Boosterpack with LP-AM261
     <td> 5 Mbps encoder
 </tr>
 </table>

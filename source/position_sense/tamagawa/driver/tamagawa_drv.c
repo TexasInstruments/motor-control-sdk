@@ -814,8 +814,6 @@ int32_t tamagawa_command_build(tamagawa_handle handle, int32_t cmd)
             }
             break;
 
-            break;
-
         case DATA_ID_7:
             if(attrs->load_share_enabled)
             {
@@ -1726,7 +1724,9 @@ int32_t tamagawa_config_iep_cmp_event(tamagawa_handle handle, uint8_t channel, u
     else
     {
         /* Always 0 in single PRU mode. When load share mode is disabled.
-        In single PRU mode firmware, the channel number is ignored and the firmware always reads data from DMEM using the channel 0 offset, regardless of which channels are connected.*/
+         * In single PRU mode firmware, the channel number is ignored and the firmware
+         * always reads data from DMEM using the channel 0 offset, regardless of which
+         * channels are connected. */
         ch_index = 0;
     }
 
@@ -1763,7 +1763,9 @@ int32_t tamagawa_config_iep_cap_event(tamagawa_handle handle, uint8_t channel, u
     else
     {
         /* Always 0 in single PRU mode. When load share mode is disabled.
-        In single PRU mode firmware, the channel number is ignored and the firmware always reads data from DMEM using the channel 0 offset, regardless of which channels are connected.*/
+         * In single PRU mode firmware, the channel number is ignored and the firmware
+         * always reads data from DMEM using the channel 0 offset, regardless of which
+         * channels are connected. */
         ch_index = 0;
     }
 

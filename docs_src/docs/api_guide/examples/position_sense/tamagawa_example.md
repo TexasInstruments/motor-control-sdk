@@ -46,18 +46,48 @@ The Tamagawa receiver firmware running on ICSSM1-PRU0 provides a defined interfa
 
 The Tamagawa diagnostic application interacts with the Tamagawa receiver firmware interface. It then presents the user with menu options to select Data ID code (as defined by Tamagawa) to be sent to the encoder. The application collects the data entered by the user and configures the relevant interface. Then via the Tamagawa receiver interface, the command is triggered. Once the command completion is indicated by the interface, the status of the transaction is checked. If the Status indicates success, the result is presented to the user.
 
-## Periodic Continuous Mode
-Current SDK example uses IEP CMP3 event to trigger periodic mode. CMP0 is used to get periodic CMP events by resetting the IEP counter continuously. Firmware triggers an Arm® Cortex®-R5F interrupt after getting a response from the encoder. The application code uses a callback function to clear the PRU interrupt, which can be modified as per the use case. Currently, command 9 is used to demonstrate the periodic mode, which informs the firmware to use position cmd 1. It prints the response written by the firmware on the UART terminal.
-To use changes in CMP event, the following macros need to be updated in the application `tamagawa_periodic_trigger.h` file and source file `tamagawa_icss_reg_defs.h`:
-```c
-#define IEP_CMP_EVNT       ( 3 )
-```
+## Periodic Trigger Modes {#TAMAGAWA_EXAMPLE_PERIODIC_MODE}
 
-> **Note:** To disable IEP counter reset by CMP0 event, the following code needs to be disabled in `tamagawa_periodic_trigger.c`:
-```c
-event |= IEP_CMP0_ENABLE;
-event |= IEP_RST_CNT_EN;
-```
+The Tamagawa diagnostic application supports two types of periodic trigger modes for continuous position sampling as described in \ref TAMAGAWA_PERIODIC_MODES.
+
+### CMP Mode (Compare Event Mode)
+- Implementation: Command 9 demonstrates this mode using position command 1
+- Configuration: Uses a user-defined compare value to trigger sampling events
+- IEP Counter Reset: Uses CMP0 by default (skip if reset is handled differently)
+- Notification: Firmware triggers an Arm® Cortex®-R5F interrupt after receiving encoder response
+
+### CAP Mode (Capture Event Mode)
+- Implementation: Command 10 demonstrates this mode using position command 1
+\cond SOC_AM243X
+- Router Configuration for CAP6/CAP7 (LATCH_IN0/LATCH_IN1) via TIMESYNC router and CAP0 via GPIOMUX router (requires external GPIO connection)
+    - This example configures the TIMESYNC/GPIOMUX router to use IEP SYNC OUT0 as an input signal for the CAP6/CAP7/CAP0 events. This configuration includes:
+        - CMP1: Generates SYNC OUT0 signal (skip if not using SYNC OUT0)
+    - NOTE: All router configuration is optional if this signal path isn't needed
+
+\endcond
+\cond (SOC_AM263PX || SOC_AM261X)
+- XBAR Configuration for CAP6/CAP7 (LATCH_IN0/LATCH_IN1)
+    - This example configures the XBAR for routing EPWM SYNC OUT as input to CAP using SysConfig
+    - Customization: XBAR settings can be modified for alternative inputs
+    - NOTE: XBAR routing configuration is optional if not needed
+\endcond
+- NOTE: When using different CAP events instead of the ones used in SDK example, ensure all related configurations (source selection, signal routing, etc.) are properly done.
+- Notification: Firmware triggers an R5F interrupt after receiving encoder response
+
+### Important Notes for Periodic Mode
+
+1. Initialization: Call \ref tamagawa_command_process() once in host trigger mode before switching to periodic mode
+2. Automatic Behavior: In periodic mode, \ref tamagawa_command_process() skips sending operations (PRU firmware handles triggering via IEP events)
+3. CMP Resource Allocation
+    - Avoid using CMP0 if it's already used to IEP counter reset
+    - Avoid using CMP1/CMP2 if they're used to SYNC OUT generation
+    - Avoid sharing CMP events across different channels or instances of Tamagawa or other encoders. Each CMP event must be assigned exclusively to a single encoder channel. 
+4. Modifying Commands in Periodic Mode
+    - Default: cmd 1 is used by default
+    - To use a different command:
+        - First modify the `tamagawa_process_periodic_command()` function in example code
+        - Before switching to periodic mode, send this command once using appropriate API in host trigger mode
+        - Ensure all prerequisite APIs are called before the command API to properly set up command data. Refer the `tamagawa_handle_command()` function in the example code to identify all required API calls for specific command
 
 ## Important files and directory structure
 
@@ -74,11 +104,11 @@ event |= IEP_RST_CNT_EN;
 <tr><td colspan="2" bgcolor=#F0F0F0> ${SDK_INSTALL_PATH}/source/position_sense/tamagawa</td></tr>
 <tr>
     <td>firmware/</td>
-    <td>Folder containing TAMAGAWA PRU firmware sources.</td>
+    <td>Folder containing Tamagawa PRU firmware sources</td>
 </tr>
 <tr>
     <td>driver/</td>
-    <td>Tamagawa diagnostic driver.</td>
+    <td>Tamagawa diagnostic driver</td>
 </tr>
 </table>
 
@@ -106,8 +136,31 @@ event |= IEP_RST_CNT_EN;
  PRU            | PRU1 (single channel, multi channel using single PRU)
  ^              | PRU1, RTU-PRU1, TXPRU1 (multi channel using three PRUs - load share mode)
  Toolchain      | ti-arm-clang
- Board          | @VAR_BOARD_NAME_LOWER (3 channel and 1 channel examples), @VAR_LP_BOARD_NAME_LOWER (2 channel and 1 channel examples)
- Example folder | examples/position_sense/tamagawa_diagnostic
+ Board          | @VAR_BOARD_NAME_LOWER (single channel, multi channel using single PRU), @VAR_LP_BOARD_NAME_LOWER (single channel, multi channel using single PRU, multi channel using three PRUs - load share mode)
+ Example folder | examples/position_sense/tamagawa_diagnostic/single_channel
+ ^              | examples/position_sense/tamagawa_diagnostic/multi_channel_single_pru 
+ ^              | examples/position_sense/tamagawa_diagnostic/multi_channel_load_share
+
+ ## Single Channel with Single PRU Example
+This example supports one Tamagawa channel using one PRU. In this example:
+- 1 Tamagawa driver instance and corresponding SysConfig Tamagawa module instance is used.
+
+## Multi Channel with Single PRU Example
+This example supports up to three Tamagawa channels using one PRU. In this example:
+- Encoders of the same frequency must be connected to all configured channels.
+- Data reception must happen simultaneously on all channels.
+- The encoder configuration and cable length should be the same on all channels.
+- If encoders across channels don't respond at the same time, this example will not work. Load share configuration should be used instead.
+- 1 Tamagawa driver instance and corresponding SysConfig Tamagawa module instance is used for all channels.
+
+## Multi Channel with Multiple PRUs (Load Share) Example
+This example supports up to three Tamagawa channels using three PRUs from same PRU-ICSSG slice. In this example:
+- Load share mode is used. Refer \ref PRUICSSG_LOAD_SHARE_MODE for more details.
+- Encoders of different make and different numbers of encoders connected across channels can be connected.
+- Encoders of the same frequency must be connected to all configured channels.
+- In this mode, data reception can start independently on all channels.
+- After clock transmission, all channels wait for a response and process the response independently. However, all channels must finish processing before the next command can be triggered.
+- 1 Tamagawa driver instance and corresponding SysConfig Tamagawa module instance is used for all channels.
 
 \endcond
 
@@ -120,7 +173,11 @@ event |= IEP_RST_CNT_EN;
  PRU            | PRU0
  Toolchain      | ti-arm-clang
  Board          | @VAR_LP_BOARD_NAME_LOWER (Single channel example)
- Example folder | examples/position_sense/tamagawa_diagnostic
+ Example folder | examples/position_sense/tamagawa_diagnostic/single_channel
+
+## Single Channel with Single PRU Example
+This example supports one Tamagawa channel using one PRU. In this example:
+- 1 Tamagawa driver instance and corresponding SysConfig Tamagawa module instance is used.
 
 \endcond
 
@@ -130,10 +187,23 @@ event |= IEP_RST_CNT_EN;
  ---------------|-----------
  CPU + OS       | r5fss0-0 freertos
  ICSSM          | ICSSM1
- PRU            | PRU0
+ PRU            | PRU0 (single channel)
+ ^              | PRU0, PRU1 (dual channel)
  Toolchain      | ti-arm-clang
- Board          |  @VAR_LP_BOARD_NAME_LOWER (Single channel example)
- Example folder | examples/position_sense/tamagawa_diagnostic
+ Board          |  @VAR_LP_BOARD_NAME_LOWER (Single channel and dual channel examples)
+ Example folder | examples/position_sense/tamagawa_diagnostic/single_channel
+ ^              | examples/position_sense/tamagawa_diagnostic/dual_channel
+
+## Single Channel with Single PRU Example
+This example supports one Tamagawa channel using one PRU. In this example:
+- 1 Tamagawa driver instance and corresponding SysConfig Tamagawa module instance is used.
+
+## Dual Channel with Two PRUs Example
+This example supports two Tamagawa channels using two PRUs from same PRU-ICSSM. In this example:
+- Two independent Tamagawa driver instances run simultaneously. Each driver instance has a corresponding SysConfig Tamagawa module instance.
+- Each instance operates independently on a different PRU slice (PRU0 or PRU1).
+- Both instances share common PRU-ICSS level resources.
+- Different PRUs can handle encoders with different frequencies simultaneously. For example, you can configure 4 MHz encoder on PRU0 channel, while configuring 8 MHz on PRU1 channel.
 
 \endcond
 
@@ -192,14 +262,15 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 \imageStyle{Tamagawa_connections.JPG,width:60%}
 \image html Tamagawa_connections.JPG "Tamagawa Encoder Hardware Setup for 3 channels"
 
-## Hardware Setup with LP-AM243
+## Hardware Setup(Using BP-AM2BLDCSERVO Booster Pack & LP-AM243)
 \imageStyle{Tamagawa_Booster_Pack.png,width:40%}
 \image html Tamagawa_Booster_Pack.png  "Hardware Setup with LP-AM243"
 \note
-    - The PROC109A version of LP supports two channels
+    - The PROC109A version of LP-AM243 with BP-AM2BLDCSERVO Booster Pack supports two channels
     - To enable the second channel on LP, SW6 needs to be turned OFF
+    - To enable VSENSOR1/VSENSOR2, BoosterPack pins J8.73/J8.74 must be set high (In this example, this pin is configured in GPIO mode and pulled high)
 
-#### Booster Pack Jumper Configuration
+#### BP-AM2BLDCSERVO Booster Pack Jumper Configuration
 <table>
 <tr>
     <th>Designator</th>
@@ -273,23 +344,24 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 \cond (SOC_AM263X || SOC_AM263PX)
 
 \cond (SOC_AM263X)
-## Hardware Setup with LP-AM263
+## Hardware Setup(Using BP-AM2BLDCSERVO Booster Pack & LP-AM263)
 \imageStyle{Tamagawa_am263x_hw_Setup.jpeg,width:60%}
 \image html Tamagawa_am263x_hw_Setup.jpeg "Hardware Setup for single channel on LP-AM263 + BP"
 \endcond
 
 \cond (SOC_AM263PX)
-## Hardware Setup with LP-AM263P
+## Hardware Setup(Using BP-AM2BLDCSERVO Booster Pack & LP-AM263P)
 \imageStyle{Tamagawa_am263px_hw_Setup.jpeg,width:60%}
 \image html Tamagawa_am263px_hw_Setup.jpeg "Hardware Setup for single channel on LP-AM263P + BP"
 \endcond
 
 #### LaunchPad Jumper Configuration
+\note
+    - Connect the jumpers J13 and J26 for providing 3.3V and 5V to boosterpack.
+    - To enable VSENSOR1, BoosterPack pin J8.73 must be set high (In this example, this pin is configured in GPIO mode and pulled high)
 
-Connect the jumpers J13 and J26 for providing 3.3V and 5V to boosterpack.
 
-
-#### Booster Pack Jumper Configuration
+#### BP-AM2BLDCSERVO Booster Pack Jumper Configuration
 <table>
 <tr>
     <th>Designator</th>
@@ -362,16 +434,18 @@ Connect the jumpers J13 and J26 for providing 3.3V and 5V to boosterpack.
 
 \cond SOC_AM261X
 
-## Hardware Setup with LP-AM261
+## Hardware Setup(Using BP-AM2BLDCSERVO Booster Pack & LP-AM261)
 
 \imageStyle{Tamagawa_am261x_hw_Setup.jpeg,width:60%}
 \image html Tamagawa_am261x_hw_Setup.jpeg "Hardware Setup with LP-AM261"
 
 #### LaunchPad Jumper Configuration
+\note
+    - Connect the jumpers J13 and J26 for providing 3.3V and 5V to boosterpack.
+    - The Rev. A version of LP-AM261 with BP-AM2BLDCSERVO Booster Pack supports two channels
+    - To enable VSENSOR1/VSENSOR2, BoosterPack pins J8.73/J8.74 must be set high (In this example, this pin is configured in GPIO mode and pulled high)
 
-Connect the jumpers J13 and J26 for providing 3.3V and 5V to boosterpack.
-
-#### Booster Pack Jumper Configuration
+#### BP-AM2BLDCSERVO Booster Pack Jumper Configuration
 <table>
 <tr>
     <th>Designator</th>
@@ -455,8 +529,8 @@ Connect the jumpers J13 and J26 for providing 3.3V and 5V to boosterpack.
 
 Shown below is a sample output when the application is run:
 
-\imageStyle{Tamagawa_SampleOutput.JPG,width:60%}
-\image html Tamagawa_SampleOutput.JPG "Tamagawa Sample Output"
+\imageStyle{Tamagawa_SampleOutput.png,width:60%}
+\image html Tamagawa_SampleOutput.png "Tamagawa Sample Output"
 
 ## Tamagawa Debug Guide {#TAMAGAWA_DEBUG_GUIDE}
 
@@ -579,6 +653,22 @@ This issue can be troubleshot by debugging the firmware and examining register v
         <td>Reset - multiturn</td>
         <td>This command is used to reset multi-turn data(ABM). In order to reset the ABM value, send this command 10 times and send Data ID 1. </td>
         <td>CRC success with ABM value set to 0 along with SF, CF and CRC values printed in the terminal.</td>
+    </tr>
+    <tr>
+        <td>9 (NOTE: This is not a command with Data ID 9, it is UART option number 9)</td>
+        <td>Start Periodic CMP Mode</td>
+        <td>In this command, encoder sends absolute position data based on IEP CMP event.
+		</td>
+        <td>CRC success with ABS, SF, CF and CRC stats printed in the terminal.
+        </td>
+    </tr>
+    <tr>
+        <td>10 (NOTE: This is not a command with Data ID 10, it is UART option number 10)</td>
+        <td>Start Periodic CAP Mode</td>
+        <td>In this command, encoder sends absolute position data based on IEP CAP event.
+		</td>
+        <td>CRC success with ABS, SF, CF and CRC stats printed in the terminal.
+        </td>
     </tr>
 </table>
 
