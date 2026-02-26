@@ -133,6 +133,22 @@
  
 #define SDFM_LOAD_SHARE_COMMON_IRQ_ENABLE   (1)
 
+#if CONFIG_SDFM0_ICSSGx == 1
+/* R5F interrupt numbers for ICSSG SDFM - Continuous CH0-CH8 */
+#define ICSSG_SDFM_HOST_INTR_NUM_CH0              (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_0)
+#define ICSSG_SDFM_HOST_INTR_NUM_CH1              (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_1)
+#define ICSSG_SDFM_HOST_INTR_NUM_CH2              (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_2)
+#define ICSSG_SDFM_HOST_INTR_NUM_CH3              (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_3)
+#define ICSSG_SDFM_HOST_INTR_NUM_CH4              (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_4)
+#define ICSSG_SDFM_HOST_INTR_NUM_CH5              (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_5)
+#define ICSSG_SDFM_HOST_INTR_NUM_CH6              (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_6)
+#define ICSSG_SDFM_HOST_INTR_NUM_CH7              (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_7)
+
+/* Due to host interrupt limitation, channel 8 uses CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_0 which is also mapped to channel 0 in continuous mode.
+ * This causes a conflict if both channel 0 and channel 8 are running together in continuous mode.
+ * In such cases, this mapping should be updated here and in SysConfig INTC to use any free host event for channel 8. */
+#define ICSSG_SDFM_HOST_INTR_NUM_CH8              (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_0)
+#else
 /* R5F interrupt numbers for ICSSG SDFM - Continuous CH0-CH8 */
 #define ICSSG_SDFM_HOST_INTR_NUM_CH0              (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_0)
 #define ICSSG_SDFM_HOST_INTR_NUM_CH1              (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_1)
@@ -147,6 +163,7 @@
  * This causes a conflict if both channel 0 and channel 8 are running together in continuous mode.
  * In such cases, this mapping should be updated here and in SysConfig INTC to use any free host event for channel 8. */
 #define ICSSG_SDFM_HOST_INTR_NUM_CH8              (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_0)
+#endif
 
 /* Sample buffer size */
 #define MAX_SAMPLES                         (128)

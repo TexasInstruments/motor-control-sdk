@@ -225,7 +225,7 @@ SDFM_Priv* SDFM_getPriv(SDFM_Handle handle);
 
 /**
  *
- *  \brief  Configure iep increment & iep count in one epwm cycle
+ *  \brief  Configure IEP counter reset cycle time period
  *
  *  \param[in]  handle          SDFM handle
  *  \param[in]  iep_reset_freq  IEP counter reset frequency. Typically equal to EPWM output frequency, used to synchronize IEP counter with EPWM cycle
@@ -238,7 +238,7 @@ int32_t SDFM_configIepCount(SDFM_Handle handle, uint32_t iep_reset_freq);
 
 /**
  *
- *  \brief  Configure ecap parameters for generate SD clock
+ *  \brief  Configure eCAP parameters for SD clock generation
  *
  *  \param[in]  handle          SDFM handle
  *  \param[in]  ecap_divider    ecap divider for sdfm clock
@@ -287,7 +287,7 @@ int32_t SDFM_setCompFilterThresholds(SDFM_Handle handle, uint8_t channel, SDFM_T
 
 /**
  *
- *  \brief  configuration of single sample trigger time one Epwm cycle
+ *  \brief  Configure the first sample trigger time within one EPWM cycle
  *
  *  \param[in]  handle          SDFM handle
  *  \param[in]  samp_trig_time  first sample trigger time in one pwm cycle
@@ -302,7 +302,7 @@ int32_t SDFM_setSampleTriggerTime(SDFM_Handle handle, float samp_trig_time, uint
 /**
  *
  *
- * \brief  configuration and enable second normal current sample starting time one Epwm cycle
+ * \brief  Configure and enable second normal current sample trigger time within one EPWM cycle
  *
  *  \param[in]  handle          SDFM handle
  *  \param[in]  samp_trig_time  second sample trigger time in one PWM cycle
@@ -317,7 +317,7 @@ int32_t SDFM_enableDoubleSampling(SDFM_Handle handle, float samp_trig_time, uint
 /**
  *
  *
- * \brief  Disable double normal current update/sampling
+ * \brief  Disable double normal current sampling
  *
  *  \param[in]  handle          SDFM handle
  *  \param[in]  pru_core        PRU core ID (0-2): PRU - 0, RTU - 1, TXPRU - 2
@@ -343,8 +343,7 @@ int32_t SDFM_setEnableChannel(SDFM_Handle handle, uint8_t channel_number);
 
 /**
  *
- *  \brief  configuration of SDFM channel Acc source (sync filter type). <br>
- *          Current SDFM firmware implementation support only SYNC3 filter <br>
+ *  \brief  Configure SDFM channel accumulator filter type (SINC1/SINC2/SINC3)
  *
  *  \param[in]  handle          SDFM handle
  *  \param[in]  channel         SDFM channel number (0-8)
@@ -358,7 +357,7 @@ int32_t SDFM_configDataFilter(SDFM_Handle handle, uint8_t channel, uint8_t filte
 
 /**
  *
- *  \brief  configuration of SDFM channel clock source
+ *  \brief  Configure SDFM channel clock source
  *
  *  \param[in]  handle          SDFM handle
  *  \param[in]  channel         SDFM channel number (0-8)
@@ -378,7 +377,7 @@ int32_t SDFM_selectClockSource(SDFM_Handle handle, uint8_t channel, uint8_t clk_
 
 /**
  *
- *  \brief  configuration of SDFM channel clock inversion
+ *  \brief  Configure SDFM channel clock inversion
  *
  *  \param[in]  handle          SDFM handle
  *  \param[in]  channel         SDFM channel number (0-8)
@@ -450,7 +449,7 @@ uint32_t SDFM_getFilterData(SDFM_Handle handle, uint8_t channel);
  *
  *          If Snoop mode is used, it configures IEP count for normal current
  *          sampling.
- *          \note handle->snoop_mode must be set to 1 before calling this API for snoop mode configuration
+ *          \note Snoop mode must be enabled via SDFM_enableSnoopBasedNC() before calling this API for snoop mode configuration
  *
  *          If Snoop mode is not used, it configures SD HW OSR equal to
  *          matNC OSR.
@@ -536,7 +535,7 @@ int32_t SDFM_clearPwmTripStatus(SDFM_Handle handle, uint8_t channel);
  *  and waits for the measurement to complete with timeout protection.
  *
  *  \param[in]  handle          SDFM handle
- *  \param[in]  clk_edg         Clock polarity: 1 -> falling edge, 0 -> raising edge
+ *  \param[in]  clk_edg         Clock polarity: 1 -> falling edge, 0 -> rising edge
  *  \param[in]  channel         SDFM channel number (0-8)
  *
  *  \retval SystemP_SUCCESS     Phase delay measurement completed successfully

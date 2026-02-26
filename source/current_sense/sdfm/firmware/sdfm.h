@@ -86,7 +86,7 @@ __sdfm_h    .set    1
 
     .asg    R28.b0, SAMP_CNT_REG                ; NC sample count
     .asg    R28.b1, SAMP_NAME                   ; First/second sample number
-    .asg    R28.w2, SD_CHANNEL_MASK             ; NC channel mask, FIXME: for nine channels 
+    .asg    R28.w2, SD_CHANNEL_MASK             ; NC channel mask (bits 0-8 for channels 0-8)
 
     .asg    R29, GPIO_TGL_ADDR                  ; Address to write to for the GPIO toggle
 
