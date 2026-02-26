@@ -35,32 +35,32 @@ Default SDK examples three channel peripheral interface in \if (SOC_AM263X || SO
 <tr>
     <th>Parameter
     <th>Value
-	<th>Details
+    <th>Details
 </tr>
 <tr>
     <td>Maximum Cable Length
     <td>100m
-	<td>Supports up to 10MHz with delay compensation
+    <td>Supports up to 10MHz with delay compensation
 </tr>
 <tr>
     <td>Startup/Initialization Frequency
     <td>1 MHz
-	<td>After power on or reset
+    <td>After power on or reset
 </tr>
 <tr>
     <td>Frequencies supported
     <td>Up to 10 MHz
-	<td>Changeable at run-time
+    <td>Changeable at run-time
 </tr>
 <tr>
     <td>CRC
     <td>6/16 bits
-	<td>Position-data/control-data verification
+    <td>Position-data/control-data verification
 </tr>
 <tr>
     <td>Receive oversample ratio
     <td>1x to 8x
-	<td>Tested with 4x, 6x & 8x (Frequency specific)
+    <td>Tested with 4x, 6x & 8x (Frequency specific)
 </tr>
 </table>
 
@@ -127,7 +127,7 @@ Firmware first detects and estimates the processing delay of the encoder as part
 
 **Host Trigger Mode:** The firmware waits until a command has been triggered through the interface by the host application.
 
-**Periodic CMP/CAP Mode:** The firmware monitors the configured IEP compare/capture event and sets the host trigger bit when the event occurs, automatically initiating Nikon transactions at regular intervals.
+**Periodic CMP/CAP Mode:** The firmware monitors the configured IEP compare/capture event and sets the host trigger bit when the event occurs, automatically initiating BiSS-C transactions at regular intervals.
 
 Upon detecting trigger, first it checks whether the clock frequency has changed and if yes, it re-estimates the processing delay for the new clock frequency.
 
@@ -179,13 +179,27 @@ In case safety is enabled, only receive and downsample for the RX bits will be p
 
 ###### Periodic Trigger Modes
 
-The BiSS-C receiver supports two types of periodic trigger modes for continuous position sampling: CMP (Compare) mode and CAP (Capture) mode as described in \ref BISSC_PERIODIC_MODES.
+The BiSS-C receiver supports two types of periodic trigger modes for continuous position sampling: CMP (Compare) mode and CAP (Capture) mode.
+
+**Periodic CMP Mode (Compare Event Mode):** In CMP mode, IEP timer compare event triggers position sampling. The firmware monitors the configured IEP compare event and automatically initiates BiSS-C transactions when the IEP timer counter matches the compare value. This enables fixed-rate periodic sampling.
+- Compare event range: CMP0-CMP15 (0-15)
+- Configured via \ref bissc_config_periodic_trigger_cmp_mode() API
+- IEP compare event number set via \ref bissc_config_iep_cmp_event() API
+- Event selection can be done in SysConfig
+
+**Periodic CAP Mode (Capture Event Mode):** In CAP mode, external signals trigger position sampling through IEP capture events. The capture event is triggered on the rising edge of the external input pulse, enabling event-driven position capture. \if (SOC_AM243X || SOC_AM64X) Internal signals can also be mapped to IEP capture events via TIMESYNC/GPIOMUX router. \else Internal signals can also be mapped to IEP capture events via XBAR. \endif
+- Capture event range: CAP0-CAP7 (0-7)
+- Configured via \ref bissc_config_periodic_trigger_cap_mode() API
+- IEP capture event number set via \ref bissc_config_iep_cap_event() API
+- Event selection can be done in SysConfig
+- CAP6 and CAP7 support falling edge detection as well. In BiSS-C, rising edge is used always.
 
 Following is the operation flow for periodic mode:
 1. Firmware polls IEP CMP/CAP status register and clears status after event is detected
 2. On event detection, firmware initiates BiSS-C transaction
 3. Position data is automatically updated in shared memory
 4. R5F interrupt notifies application of new data
+5. The firmware checks the current trigger mode. If still in periodic mode, it returns to step 1 to wait for the next IEP CMP/CAP event. If the mode has been switched to host trigger mode, the firmware stops periodic operation.
 
 \image html bissc_periodic_mode.png "Periodic Trigger Mode"
 
@@ -195,7 +209,7 @@ Following is the operation flow for periodic mode:
 
 \attention Input cycle time should be greater than or equal to the BiSS-C cycle time by considering the position data bits, E, W, CRC and timeout.
 
-User can stop periodic mode by switching to host trigger mode.
+\note Both IEP event configuration APIs (bissc_config_iep_cmp_event() and bissc_config_iep_cap_event()) are automatically called during bissc_init() with values configured in SysConfig.
 
 ### 3 Channel Peripheral Interface
 
@@ -210,59 +224,59 @@ BISS-C receiver and the encoder are connected using the RS-485 transceiver. Data
 \attention \ref PRUICSS_PERIPHERAL_IF_MODE_SIGNAL_CONFIGURATION section has details on PRU pin functions in Peripheral IF mode
 
 \note
-    - k = 0,1 (PRU-ICSS Instance) for AM243x/AM261x/AM64x and k = 0 for AM263x/AM263Px
+    - k = 0,1 (PRU-ICSS Instance) for AM243x/AM261x and k = 0 for AM263Px
     - n = 0,1 (PRU-ICSS Slice)
 
 <table>
 <tr>
     <th>Pin name
     <th>Signal name
-	<th>Function
+    <th>Function
 </tr>
 <tr>
     <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO0 \else PRG<%k>_PRU<n>_GPO0 \endif
     <td>pru<n>_bissc0_clk
-	<td>Channel 0 clock
+    <td>Channel 0 clock
 </tr>
 <tr>
     <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO2 \else PRG<%k>_PRU<n>_GPO2 \endif
-    <td>pru<n>_bissc0_outen
-	<td>Channel 0 transmit enable (Fix this pin to low with SoC GPIO mode)
+    <td>pru<n>_bissc0_out_en
+    <td>Channel 0 transmit enable (Fix this pin to low with SoC GPIO mode)
 </tr>
 <tr>
     <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPI9 \else PRG<%k>_PRU<n>_GPI13/PRG<%k>_PRU<n>_GPI9 \endif
     <td>pru<n>_bissc0_in
-	<td>Channel 0 receive
+    <td>Channel 0 receive
 </tr>
 <tr>
     <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO3 \else PRG<%k>_PRU<n>_GPO3 \endif
     <td>pru<n>_bissc1_clk
-	<td>Channel 1 clock
+    <td>Channel 1 clock
 </tr>
 <tr>
     <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO5 \else PRG<%k>_PRU<n>_GPO5 \endif
-    <td>pru<n>_bissc1_outen
-	<td>Channel 1 transmit enable (Fix this pin to low with SoC GPIO mode)
+    <td>pru<n>_bissc1_out_en
+    <td>Channel 1 transmit enable (Fix this pin to low with SoC GPIO mode)
 </tr>
 <tr>
     <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPI10 \else PRG<%k>_PRU<n>_GPI14/PRG<%k>_PRU<n>_GPI10 \endif
     <td>pru<n>_bissc1_in
-	<td>Channel 1 receive
+    <td>Channel 1 receive
 </tr>
 <tr>
     <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO6 \else PRG<%k>_PRU<n>_GPO6 \endif
     <td>pru<n>_bissc2_clk
-	<td>Channel 2 clock
+    <td>Channel 2 clock
 </tr>
 <tr>
     <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO8 \else PRG<%k>_PRU<n>_GPO8 \endif
-    <td>pru<n>_bissc2_outen
-	<td>Channel 2 transmit enable (Fix this pin to low with SoC GPIO mode)
+    <td>pru<n>_bissc2_out_en
+    <td>Channel 2 transmit enable (Fix this pin to low with SoC GPIO mode)
 </tr>
 <tr>
     <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPI11 \else PRG<%k>_PRU<n>_GPI11 \endif
     <td>pru<n>_bissc2_in
-	<td>Channel 2 receive
+    <td>Channel 2 receive
 </tr>
 </table>
 
@@ -272,45 +286,45 @@ BISS-C receiver and the encoder are connected using the RS-485 transceiver. Data
 <tr>
     <th>Pin name
     <th>Signal name
-	<th>Function
+    <th>Function
 </tr>
 <tr>
     <td>PRG0_PRU1_GPO0
     <td>pru1_bissc0_clk
-	<td>PRU1 Channel 0 clock
+    <td>PRU1 Channel 0 clock
 </tr>
 <tr>
     <td>GPIO Pin (PRG0_PRU1_GPO2/M2)
-    <td>BISSC_CH0_OUT_EN
-	<td>PRU1 Channel 0 transmit enable (Fix this pin to low with SoC GPIO mode)
+    <td>pru1_bissc0_out_en
+    <td>PRU1 Channel 0 transmit enable (Fix this pin to low with SoC GPIO mode)
 </tr>
 <tr>
     <td>PRG0_PRU1_GPI13
     <td>pru1_bissc0_in
-	<td>PRU1 Channel 0 receive when SA mux selection is enabled (ICSSG_SA_MX_REG[7] G_MUX_EN = 1)
+    <td>PRU1 Channel 0 receive when SA mux selection is enabled (ICSSG_SA_MX_REG[7] G_MUX_EN = 1)
 </tr>
 <tr>
     <td>PRG0_PRU1_GPO6
     <td>pru1_bissc2_clk
-	<td>PRU1 Channel 2 clock
+    <td>PRU1 Channel 2 clock
 </tr>
 <tr>
     <td>GPIO Pin (PRG0_PRU1_GPO8/F4)
-    <td>BISSC_CH2_OUT_EN
-	<td>PRU1 Channel 2 transmit enable (Fix this pin to low with SoC GPIO mode)
+    <td>pru1_bissc2_out_en
+    <td>PRU1 Channel 2 transmit enable (Fix this pin to low with SoC GPIO mode)
 </tr>
 <tr>
     <td>PRG0_PRU1_GPI11
     <td>pru1_bissc2_in
-	<td>PRU1 Channel 2 receive
+    <td>PRU1 Channel 2 receive
 </tr>
 <tr>
-    <td>GPIO Pin (MMC1_SDWP/C16)
+    <td>GPIO Pin (GPIO1_78/C16)
     <td>ENC0_EN
     <td>Enable encoder voltage in Axis 1 of BP (Fix this pin to high with SoC GPIO mode)
 </tr>
 <tr>
-    <td>GPIO Pin (MMC1_SDCD/B17)
+    <td>GPIO Pin (GPIO1_77/B17)
     <td>ENC2_EN
     <td>Enable encoder voltage in Axis 2 of BP (Fix this pin to high with SoC GPIO mode)
 </tr>
@@ -320,7 +334,6 @@ BISS-C receiver and the encoder are connected using the RS-485 transceiver. Data
 
 \cond SOC_AM261X
 ##### LP-AM261 + BP-AM2BLDCSERVO Booster Pack Pin Multiplexing for SDK example
-
 <table>
 <tr>
     <th>Pin name
@@ -334,7 +347,7 @@ BISS-C receiver and the encoder are connected using the RS-485 transceiver. Data
 </tr>
 <tr>
     <td>GPIO Pin (GPIO_83/B4)
-    <td>BISSC_CH0_OUT_EN
+    <td>pru0_bissc0_out_en
     <td>PRU0 Channel 0 transmit enable (Fix this pin to low with SoC GPIO mode)
 </tr>
 <tr>
@@ -349,7 +362,7 @@ BISS-C receiver and the encoder are connected using the RS-485 transceiver. Data
 </tr>
 <tr>
     <td>GPIO Pin (GPIO_73/W17)
-    <td>BISSC_CH1_OUT_EN
+    <td>pru1_bissc0_out_en
     <td>PRU1 Channel 0 transmit enable (Fix this pin to low with SoC GPIO mode)
 </tr>
 <tr>
@@ -368,7 +381,6 @@ BISS-C receiver and the encoder are connected using the RS-485 transceiver. Data
     <td>Enable encoder voltage in Axis 2 of BP (Fix this pin to high with SoC GPIO mode)
 </tr>
 </table>
-
 \endcond
 
 \cond (SOC_AM263X || SOC_AM263PX)
@@ -378,22 +390,22 @@ BISS-C receiver and the encoder are connected using the RS-485 transceiver. Data
 <tr>
     <th>Pin name
     <th>Signal name
-	<th>Function
+    <th>Function
 </tr>
 <tr>
     <td>PR0_PRU0_GPIO3
     <td>pru0_bissc1_clk
-	<td>PRU0 Channel 1 clock
+    <td>PRU0 Channel 1 clock
 </tr>
 <tr>
     <td>GPIO Pin (PR0_PRU0_GPIO5)
-    <td>BISSC_CH0_OUT_EN
+    <td>pru0_bissc1_out_en
     <td>PRU0 Channel 1 transmit enable (Fix this pin to low with SoC GPIO mode)
 </tr>
 <tr>
     <td>PR0_PRU0_GPI10
     <td>pru0_bissc1_in
-	<td>PRU0 Channel 1 receive
+    <td>PRU0 Channel 1 receive
 </tr>
 <tr>
     <td>GPIO Pin (SDFM0_D1/D13)

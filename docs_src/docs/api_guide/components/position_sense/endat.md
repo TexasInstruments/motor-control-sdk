@@ -33,6 +33,12 @@ EnDat is a bidirectional interface for position encoders. During EnDat operation
       - In this mode, data transmission and reception can happen independently on all channels.
       - After a command is sent, all channels wait for a response and process the response independently. However, all channels must finish processing before the next command can be triggered.
 \endcond
+\cond SOC_AM261X
+   -  Dual channel support using two independent PRU cores (PRU0 and PRU1)
+      - Each PRU core handles one encoder channel independently
+      - Different PRU slices can operate encoders at different frequencies
+      - Each channel requires a separate EnDat instance in SysConfig
+\endcond
    -  Safety Readiness: Recovery time
    -  Clock up to 16MHz with single channel \if (SOC_AM243X || SOC_AM64X) and load share mode (multi-channel) \endif
       \note In three channel interface of PRU-ICSS, receive (Rx) is oversampled at 8x of send (Tx). Therefore, the encoder interface frequency "f" should be such that Tx source clock value is divisible by "f" and Rx source clock value is divisible by "8*f".
@@ -146,41 +152,42 @@ In CAP mode, external signals trigger position sampling through IEP capture even
 \attention For each PRU-ICSS slice being used for EnDat, one module instance should be created in SysConfig.
 \endcond
 
-SysConfig can be used to configure things mentioned below:
-- Selecting the ICSS instance.
+SysConfig can be used to configure the following:
+- Selecting the ICSS instance
 \if (SOC_AM263X || SOC_AM263PX || SOC_AM261X)
-- Selecting the ICSSM PRU slice. (\if (SOC_AM263X || SOC_AM263PX) Tested on ICSSM-PRU0 \else Tested on ICSSM1-PRU0  and ICSSM1-PRU1 \endif)
+- Selecting the ICSSM PRU slice (\if (SOC_AM263X || SOC_AM263PX) Tested on ICSSM-PRU0 \else Tested on ICSSM1-PRU0 and ICSSM1-PRU1 \endif)
 \else
-- Selecting the ICSSG PRU slice. (Tested on ICSSG0-PRU1)
+- Selecting the ICSSG PRU slice (Tested on ICSSG0-PRU1)
 \endif
-- Configuring PINMUX.
-- Channel selection.
+- Configuring PINMUX
+- Channel selection
 \cond SOC_AM243X || SOC_AM64X
-- Selecting "Multi Channel with encoders of different make" using load share mode.
+- Selecting Multi Channel with encoders of different make using load share mode
 - Enabling SA Mux mode
-- IEP instance and IEP event selection for periodic mode
+- IEP instance and IEP event selection for periodic trigger mode
 \endcond
 \cond SOC_AM261X
-- IEP event selection for periodic mode
+- IEP event selection for periodic trigger mode
 \endcond
 \cond (SOC_AM263X || SOC_AM263PX)
-- IEP event selection for periodic mode
+- IEP event selection for periodic trigger mode
 \endcond
 - Selecting RX and TX source clock
+- Booster Pack Support: Enable when using BP-AM2BLDCSERVO
 
 
 ## PRU-ICSS Resource Usage
 
 - Utilizes the Peripheral IF mode (3-channel peripheral interface mode) for EnDat communication. Maximum of 3 channels are available per PRU slice. (Refer \ref PRUICSS_PERIPHERAL_IF_MODE for more details)
 - Each channel has 4 pins (Clock, Data out, Data in, Output enable)
-- Following table contains details of memory usage, IEP usage and interrupt controller usage
+- Following table contains details of memory usage, IEP usage and interrupt controller usage:
 
 \cond SOC_AM243X || SOC_AM64X
-\attention In addition to following resources used by PRU firmware, SDK examples also configure IEPx CMP0 for IEP counter reset in periodic trigger CMP mode and IEPx CMP1 for generating SYNC OUT0 used as input to CAP in periodic trigger CAP mode.
+\attention In addition to the following resources used by PRU firmware, SDK examples also configure IEPx CMP0 for IEP counter reset in periodic trigger CMP mode and IEPx CMP1 for generating SYNC OUT0 used as input to CAP in periodic trigger CAP mode.
 \endcond
 
 \cond (SOC_AM261X || SOC_AM263X || SOC_AM263PX)
-\attention In addition to following resources used by PRU firmware, SDK examples also configure IEP0 CMP0 for IEP counter reset in periodic trigger CMP mode.
+\attention In addition to the following resources used by PRU firmware, SDK examples also configure IEP0 CMP0 for IEP counter reset in periodic trigger CMP mode.
 \endcond
 
 <table>
@@ -202,7 +209,7 @@ SysConfig can be used to configure things mentioned below:
    <td>IEP, CMP/CAP events and INTC signal are used only in periodic trigger modes</td>
 </tr>
 \endcond
-\cond (SOC_AM261X || SOC_AM263X || SOC_AM263PX)
+\cond (SOC_AM263X || SOC_AM263PX)
 <tr>
    <td>Single channel</td>
    <td>PRUx</td>
@@ -210,6 +217,24 @@ SysConfig can be used to configure things mentioned below:
    <td><b>CMP Mode:</b> IEP0 CMPy for trigger (CMPy selected in SysConfig)<br><b>CAP Mode:</b> IEP0 CAPy for trigger (CAPy selected in SysConfig)</td>
    <td>INTC event/input number 18 or 21 (pr0_pru_mst_intr[2/5]_intr_req) is used to trigger interrupt to R5F</td>
    <td>IEP, CMP/CAP events and INTC signal are used only in periodic trigger modes</td>
+</tr>
+\endcond
+\cond SOC_AM261X
+<tr>
+   <td>Single channel</td>
+   <td>PRUx</td>
+   <td>DMEM:160 Bytes, from offset <code>0x00</code> to <code>0xA0</code> offset <br>  IMEM: 5.4 KB  <br>TCMB0: 40 Bytes, 40 Bytes of memory can be located anywhere within the offset range 0x00 to 0x78, depending on the selected channel.</td>
+   <td><b>CMP Mode:</b> IEP0 CMPy for trigger (CMPy selected in SysConfig)<br><b>CAP Mode:</b> IEP0 CAPy for trigger (CAPy selected in SysConfig)</td>
+   <td>INTC event/input number 18 or 21 (pr0_pru_mst_intr[2/5]_intr_req) is used to trigger interrupt to R5F</td>
+   <td>IEP, CMP/CAP events and INTC signal are used only in periodic trigger modes</td>
+</tr>
+<tr>
+   <td>Dual channel using two independent PRU cores</td>
+   <td>PRU0 and PRU1</td>
+   <td>DMEM:160 Bytes per PRU, from offset <code>0x00</code> to <code>0xA0</code> <br> IMEM: 5.4 KB per PRU <br>TCMB0: 40 Bytes per PRU, 40 Bytes of memory can be located anywhere within the offset range 0x00 to 0x78, depending on the selected channel.</td>
+   <td><b>CMP Mode:</b> IEP0 CMPy for trigger (CMPy selected in SysConfig per instance)<br><b>CAP Mode:</b> IEP0 CAPy for trigger (CAPy selected in SysConfig per instance)</td>
+   <td>INTC events/inputs number 18 and 21 (pr0_pru_mst_intr[2/5]_intr_req) are used to trigger interrupts to R5F</td>
+   <td>Each PRU operates independently. IEP, CMP/CAP events and INTC signals are used only in periodic trigger modes. Two separate EnDat instances are required in SysConfig.</td>
 </tr>
 \endcond
 \cond SOC_AM243X || SOC_AM64X
