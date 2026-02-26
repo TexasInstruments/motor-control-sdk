@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2021-25 Texas Instruments Incorporated
+ *  Copyright (C) 2021-26 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -45,9 +45,9 @@ extern "C" {
 #define ENDAT_CMD_SEND_POSITION_VALUES  (0x1C >> 1)
 /**    \brief    2.1 select memory area */
 #define ENDAT_CMD_SEL_MEM_AREA          (0x38 >> 1)
-/**    \brief    2.1 receive paramter */
+/**    \brief    2.1 receive parameter */
 #define ENDAT_CMD_RECEIVE_PARAMETERS    (0x70 >> 1)
-/**    \brief    2.1 send paramter */
+/**    \brief    2.1 send parameter */
 #define ENDAT_CMD_SEND_PARAMETERS       (0x8C >> 1)
 /**    \brief    2.1 receive reset */
 #define ENDAT_CMD_RECEIVE_RESET         (0xA8 >> 1)
