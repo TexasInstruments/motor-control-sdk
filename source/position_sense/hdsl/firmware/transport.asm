@@ -1,5 +1,5 @@
 
-; Copyright (C) 2021-2023 Texas Instruments Incorporated
+; Copyright (C) 2021-2026 Texas Instruments Incorporated
 ;
 ; Redistribution and use in source and binary forms, with or without
 ; modification, are permitted provided that the following conditions
@@ -625,7 +625,7 @@ transport_layer_check_for_new_msg:
 	or		REG_TMP0.b0, REG_TMP0.b0, REG_TMP0.b1
 	and		REG_TMP0.b0, REG_TMP0.b0, 0x0f
 	or		REG_TMP11.b3, REG_TMP11.b3, REG_TMP0.b0
-	.if $defined("HDSL_MULTICHANNEL")
+	.if $defined("FREERUN_300_MHZ")
 	CALL2 WAIT_TX_FIFO_FREE
 	CALL3 PUSH_FIFO_3_8x
 	.endif
