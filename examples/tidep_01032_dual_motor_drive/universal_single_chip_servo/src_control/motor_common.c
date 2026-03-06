@@ -51,11 +51,20 @@ void calcMotorOverCurrentThreshold(MOTOR_Handle handle)
     MOTOR_SetVars_t *objSets = (MOTOR_SetVars_t *)(handle->motorSetsHandle);
 
     float32_t overCurrent_A;
+    int16_t cmpValue;
+    float32_t cmpValueF;
 
     overCurrent_A = (objSets->overCurrent_A > objSets->maxPeakCurrent_A) ?
                      objSets->maxPeakCurrent_A : objSets->overCurrent_A;
 
-    int16_t cmpValue = (int16_t)(overCurrent_A * objSets->currentInv_sf);
+    cmpValueF = overCurrent_A * objSets->currentInv_sf;
+
+    if(cmpValueF > 32767.0f)
+    {
+        cmpValueF = 32767.0f;
+    }
+
+    cmpValue = (int16_t)(cmpValueF);
 
 #if defined(MOTOR1_DCLINKSS)    // Single Shunt
 
