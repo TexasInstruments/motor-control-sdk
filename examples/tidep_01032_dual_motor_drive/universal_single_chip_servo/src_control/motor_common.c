@@ -59,9 +59,9 @@ void calcMotorOverCurrentThreshold(MOTOR_Handle handle)
 
     cmpValueF = overCurrent_A * objSets->currentInv_sf;
 
-    if(cmpValueF > 32767.0f)
+    if(cmpValueF > (float32_t)INT16_MAX)
     {
-        cmpValueF = 32767.0f;
+        cmpValueF = (float32_t)INT16_MAX;
     }
 
     cmpValue = (int16_t)(cmpValueF);

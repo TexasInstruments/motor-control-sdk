@@ -164,6 +164,26 @@ All EPWM configuration and parameter settings are configured in `hal.c`, `hal.h`
 
 Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_SETUP_PAGE.html" target="_blank">EVM Setup</a>, the following additional hardware is required to run this demo:
 
+## Single Motor Operation
+
+The default example requires two motors and two encoders connected to the LP + BP (Axis 1 and Axis 2). To run a single motor, follow the guidelines below.
+
+### Running Single Motor on Axis 1 Only
+
+To run only Motor 1 on Axis 1, undefine the Motor 2 predefined symbols in the project build settings:
+- Remove or undefine all `MOTOR2_*` predefined symbols (e.g., `MOTOR2_ENC`, `MOTOR2_CONNECTED`, etc.)
+- Rebuild the project
+- Only Motor 1 on Axis 1 will be active
+
+### Running Single Motor on Axis 2 Only
+
+To run only a single motor on Axis 2, code changes are required. The Motor 1 code must be eliminated from the build, similar to how Motor 2 code is guarded using `#if defined(MOTOR2_CONNECTED)`. The Motor 1 code paths need to be wrapped with a discrete predefined symbol (e.g., `MOTOR1_CONNECTED`) or removed, so that only Motor 2 on Axis 2 is active. This approach follows the same pattern already used for Motor 2 conditional compilation.
+
+Steps:
+- Add `#if defined(MOTOR1_CONNECTED)` / `#endif` guards around Motor 1 specific code (similar to existing `#if defined(MOTOR2_CONNECTED)` guards for Motor 2)
+- Undefine or remove the `MOTOR1_*` predefined symbols from the project build settings
+- Rebuild the project
+
 ## Hardware, Software, Testing Requirements, and Test Results
 
 ### Hardware Requirements

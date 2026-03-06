@@ -63,7 +63,7 @@ extern PRUICSS_IntcInitData icss0_intc_initdata;
 
 /*SDFM handle */
 SDFM_Handle gMotorSdfm = NULL;
-int32_t gSdfmInitStatus = 0;
+static int32_t gSdfmInitStatus = 0;
 
 /* Sdfm output samples, written by PRU cores */
 __attribute__((section(".gSddfChSampsRaw"))) uint32_t gSdfmSampleOutput[6] = { 0 };
@@ -586,14 +586,18 @@ void HAL_setupEncoder(HAL_Handle handle)
     uint16_t event = 0, event_clear = 0;
 
     /* PRU ICSS configuration */
-    /*Set in constant table C29 for  tx pru*/
-#if defined(MOTOR1_ABS_ENC)
+    /*
+     * Set the constant table C28 for TX-PRU used for MOTOR2.
+     * Configuring the constant table C28 to point to the TX counter
+     * register (CNTR). The counter is needed in firmware for adding waits and time stamps.
+     */
+#if defined(MOTOR2_ABS_ENC)
 #if ENDAT_PRUICSS_INSTANCE == 1
 #if (ENDAT_PRUICSS_SLICE == PRUICSS_PRU1)
-    PRUICSS_setConstantTblEntry(gPruIcssXHandle, MOTOR1_ENDAT_PRUICSS_CORE, PRUICSS_CONST_TBL_ENTRY_C29, 0xA58);
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, MOTOR2_ENDAT_PRUICSS_CORE, PRUICSS_CONST_TBL_ENTRY_C28, 0xA58);
 
 #else
-    PRUICSS_setConstantTblEntry(gPruIcssXHandle, MOTOR1_ENDAT_PRUICSS_CORE, PRUICSS_CONST_TBL_ENTRY_C29, 0xA50);
+    PRUICSS_setConstantTblEntry(gPruIcssXHandle, MOTOR2_ENDAT_PRUICSS_CORE, PRUICSS_CONST_TBL_ENTRY_C28, 0xA50);
 #endif
 #else
 #if (ENDAT_PRUICSS_SLICE == PRUICSS_PRU1)
@@ -602,7 +606,7 @@ void HAL_setupEncoder(HAL_Handle handle)
     PRUICSS_setConstantTblEntry(gPruIcssXHandle, MOTOR2_ENDAT_PRUICSS_CORE, PRUICSS_CONST_TBL_ENTRY_C28, 0x250);
 #endif
 #endif
-#endif /*MOTOR1_ABS_ENC*/
+#endif /*MOTOR2_ABS_ENC*/
 
 #if defined(MOTOR1_ABS_ENC)
     status = PRUICSS_disableCore(gPruIcssXHandle, MOTOR1_ENDAT_PRUICSS_CORE);
@@ -838,6 +842,7 @@ void HAL_getMtrEncoderPosition(ENC_Handle handle, uint32_t motorNum)
     }
     else if(motorNum == MTR_2)
     {
+#if defined(MOTOR2_ABS_ENC)
         if(!(gEndatChInfo.ch[MOTOR2_ENDAT_ENABLE_CHANNEL].crc_status & ENDAT_CRC_DATA))
         {
             gEndatPosReadFailCountM2++;
@@ -850,6 +855,7 @@ void HAL_getMtrEncoderPosition(ENC_Handle handle, uint32_t motorNum)
         }
         pos = gEndatChInfo.ch[MOTOR2_ENDAT_ENABLE_CHANNEL].pos_word0;
         rev = gEndatChInfo.ch[MOTOR2_ENDAT_ENABLE_CHANNEL].pos_word1;
+#endif
     }
     else
     {
@@ -1180,10 +1186,20 @@ void HAL_setupSDFM(HAL_Handle handle)
 
             if(attrs->pru_core_config[i].enable_trigger_mode == 1)
             {
+                status = SDFM_enableTriggerModeForNormalCurrent(gMotorSdfm, i);
+                if(status != SystemP_SUCCESS)
+                {
+                    goto deinit;
+                }
                 status = SDFM_setSampleTriggerTime(gMotorSdfm, attrs->pru_core_config[i].first_samp_trig_time, i);
                 if(status != SystemP_SUCCESS)
                 {
                     DebugP_log("\r\nERROR: SDFM_setSampleTriggerTime failed for core %d\n", i);
+                    goto deinit;
+                }
+                status = SDFM_selectIepCmpEvent(gMotorSdfm, attrs->pru_core_config[i].iep_cmp_event, i);
+                if(status != SystemP_SUCCESS)
+                {
                     goto deinit;
                 }
             }
@@ -1191,7 +1207,7 @@ void HAL_setupSDFM(HAL_Handle handle)
     }
 
     /* Configure filter parameters for enabled channels using attrs */
-    for(ch = 0; ch < NUM_OF_PRU_CORE_PER_PRU_SLICE; ch++)
+    for(ch = 0; ch < SDFM_NUM_OF_CH_PER_PRU_SLICE; ch++)
     {
         if(attrs->channel_mask & (1 << ch))
         {
