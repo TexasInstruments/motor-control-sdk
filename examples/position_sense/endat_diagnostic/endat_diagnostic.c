@@ -2462,9 +2462,12 @@ static void endat_process_host_command(endat_handle handle, int32_t cmd, endat_c
                         continue;
                     }
                     DebugP_log("\r Recovery Time: %10u ns \n", val);
-                    DebugP_log("\r Current value of RT counter: %10u \n", priv->channel_rx_info->ch[priv->current_channel].recovery_time_parms.current_counter_value);
-                    DebugP_log("\r Previous value of RT counter: %10u \n", priv->channel_rx_info->ch[priv->current_channel].recovery_time_parms.last_counter_value);
-                    DebugP_log("\r Starting value of RT counter: %10u \n", priv->channel_rx_info->ch[priv->current_channel].recovery_time_parms.starting_value);
+                    if(priv->current_channel < ENDAT_NUM_CH_PER_SLICE_MAX)
+                    {
+                        DebugP_log("\r Current value of RT counter: %10u \n", priv->channel_rx_info->ch[priv->current_channel].recovery_time_parms.current_counter_value);
+                        DebugP_log("\r Previous value of RT counter: %10u \n", priv->channel_rx_info->ch[priv->current_channel].recovery_time_parms.last_counter_value);
+                        DebugP_log("\r Starting value of RT counter: %10u \n", priv->channel_rx_info->ch[priv->current_channel].recovery_time_parms.starting_value);
+                    }
                 }
             }
         }

@@ -1280,7 +1280,7 @@ static void nikon_config_channel(nikon_handle handle, uint32_t mask)
      * if ch1 & ch2 are selected --> priv->channel[0] = 1, priv->channel[1] = 2;
      * if ch0, ch1 & ch2 are selected --> priv->channel[0] = 0, priv->channel[1] = 1, priv->channel[2] = 2;
      */
-    for(ch_num = 0; ch_num < attrs->total_channels; ch_num++)
+    for(ch_num = 0; ch_num < attrs->total_channels && ch_num < NIKON_NUM_CH_PER_SLICE_MAX; ch_num++)
     {
         if((mask & NIKON_CHANNEL0_MASK) && ch_num == 0)
         {
