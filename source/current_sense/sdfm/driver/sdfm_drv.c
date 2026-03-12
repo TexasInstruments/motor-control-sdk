@@ -72,8 +72,8 @@
  *  - Used for precise motor control current measurements
  *
  *  **Snoop Mode** (SDFM_enableSnoopBasedNC):
- *  - Used when OC osr and normal current OSR is different
- *  - Clock should internal and not external
+ *  - Used when over-current OSR and normal current OSR values differ
+ *  - Requires internal clock source (not external)
  *
  *  **Load-Share Mode** (SDFM_enableLoadShareMode):
  *  - Distributes 9 channels across 3 PRU cores (RTU_PRU, PRU, TX_PRU)
@@ -360,7 +360,7 @@ SDFM_Priv* SDFM_getPriv(SDFM_Handle handle)
     return handle->priv;
 }
 
-/* Configuration of IEP reset cycle time period */
+/* Configure IEP counter reset cycle time period */
 int32_t SDFM_configIepCount(SDFM_Handle handle, uint32_t iep_reset_freq)
 {
     SDFM_Priv *priv;
@@ -385,7 +385,7 @@ int32_t SDFM_configIepCount(SDFM_Handle handle, uint32_t iep_reset_freq)
     return SystemP_SUCCESS;
 }
 
-/* ECAP configuration for SD clock */
+/* Configure eCAP parameters for SD clock generation */
 int32_t SDFM_configEcap(SDFM_Handle handle, uint8_t ecap_divider)
 {
     SDFM_Priv *priv;
@@ -433,7 +433,7 @@ int32_t SDFM_configEcap(SDFM_Handle handle, uint8_t ecap_divider)
 
 }
 
-/* SDFM HW OSR configuration */
+/* Configure comparator filter (over-current) sampling ratio in hardware registers */
 int32_t SDFM_setCompFilterOverSamplingRatio(SDFM_Handle handle, uint8_t channel, uint16_t osr)
 {
     SDFM_Priv *priv;
@@ -471,7 +471,7 @@ int32_t SDFM_setCompFilterOverSamplingRatio(SDFM_Handle handle, uint8_t channel,
     return SystemP_SUCCESS;
 }
 
-/* SDFM high, low threshold config */
+/* Configure SDFM comparator filter high and low threshold values */
 int32_t SDFM_setCompFilterThresholds(SDFM_Handle handle, uint8_t channel, SDFM_ThresholdConfig threshold_config)
 {
     SDFM_Priv *priv;
@@ -495,7 +495,7 @@ int32_t SDFM_setCompFilterThresholds(SDFM_Handle handle, uint8_t channel, SDFM_T
     return SystemP_SUCCESS;
 }
 
-/* SDFM sampling time configuration */
+/* Configure the first sample trigger time within one EPWM cycle */
 int32_t SDFM_setSampleTriggerTime(SDFM_Handle handle, float samp_trig_time, uint8_t pru_core)
 {
     SDFM_Priv *priv;
@@ -518,7 +518,7 @@ int32_t SDFM_setSampleTriggerTime(SDFM_Handle handle, float samp_trig_time, uint
     return SystemP_SUCCESS;
 }
 
-/* Second normal current sampling configuration */
+/* Configure and enable second normal current sample trigger time within one EPWM cycle */
 int32_t SDFM_enableDoubleSampling(SDFM_Handle handle, float samp_trig_time, uint8_t pru_core)
 {
     SDFM_Priv *priv;
@@ -543,7 +543,7 @@ int32_t SDFM_enableDoubleSampling(SDFM_Handle handle, float samp_trig_time, uint
     return SystemP_SUCCESS;
 }
 
-/* Disable double update */
+/* Disable double normal current sampling */
 int32_t SDFM_disableDoubleSampling(SDFM_Handle handle, uint8_t pru_core)
 {
     SDFM_Priv *priv;
@@ -580,7 +580,7 @@ int32_t SDFM_setEnableChannel(SDFM_Handle handle, uint8_t channel_number)
     return SystemP_SUCCESS;
 }
 
-/* set SDFM channel acc source */
+/* Configure SDFM channel accumulator filter type (SINC1/SINC2/SINC3) */
 int32_t SDFM_configDataFilter(SDFM_Handle handle, uint8_t channel, uint8_t filter)
 {
     SDFM_Priv *priv;
@@ -617,7 +617,7 @@ int32_t SDFM_configDataFilter(SDFM_Handle handle, uint8_t channel, uint8_t filte
     return SystemP_SUCCESS;
 }
 
-/* Set clock source for SDFM channel */
+/* Configure SDFM channel clock source */
 int32_t SDFM_selectClockSource(SDFM_Handle handle, uint8_t channel, uint8_t clk_source)
 {
     SDFM_Priv *priv;
@@ -654,7 +654,7 @@ int32_t SDFM_selectClockSource(SDFM_Handle handle, uint8_t channel, uint8_t clk_
     return SystemP_SUCCESS;
 }
 
-/* Set clock inversion for SDFM channel */
+/* Configure SDFM channel clock inversion */
 int32_t SDFM_setClockInversion(SDFM_Handle handle, uint8_t channel, uint8_t clk_inv)
 {
     SDFM_Priv *priv;
@@ -795,7 +795,7 @@ int32_t SDFM_disableComparator(SDFM_Handle handle, uint8_t channel)
     return ret_val;
 }
 
-/* GPIO configuration */
+/* Configure GPIO pin number and address for comparator threshold events */
 int32_t SDFM_configComparatorGpioPins(SDFM_Handle handle, uint8_t channel, uint32_t gpio_base_addr, uint32_t pin_number)
 {
     SDFM_Priv *priv;
@@ -860,30 +860,33 @@ int32_t SDFM_setFilterOverSamplingRatio(SDFM_Handle handle, uint8_t channel, uin
         (handle->priv->sdfm_interface == NULL) ||
         (nc_osr < SDFM_OSR_MIN) ||
         (nc_osr > SDFM_OSR_MAX) ||
-        (handle->attrs->sdfm_sampling_freq == 0))
+        (handle->attrs->sdfm_sampling_freq == 0)||
+        channel > SDFM_CHANNEL8)
     {
         return SystemP_FAILURE;
     }
+    priv = handle->priv;
+    attrs = handle->attrs;
 
-    if (channel < SDFM_CHANNEL3)
+    if(attrs->load_share_enabled == 1U)
     {
-        pru_core = 0U;
-    }
-    else if (channel > SDFM_CHANNEL2 && channel < SDFM_CHANNEL6)
-    {
-        pru_core = 1U;
-    }
-    else if (channel > SDFM_CHANNEL5 && channel <= SDFM_CHANNEL8)
-    {
-        pru_core = 2U;
+        if (channel < SDFM_CHANNEL3)
+        {
+            pru_core = 1U;
+        }
+        else if (channel > SDFM_CHANNEL2 && channel < SDFM_CHANNEL6)
+        {
+            pru_core = 0U;
+        }
+        else
+        {
+            pru_core = 2U;
+        }
     }
     else
     {
-        return SystemP_FAILURE;
+        pru_core = 0U;
     }
-
-    priv = handle->priv;
-    attrs = handle->attrs;
 
     if (priv->sdfm_interface->control[pru_core].enable_snoop_nc == 1U)
     {
@@ -918,7 +921,7 @@ uint32_t SDFM_getFirmwareVersion(SDFM_Handle handle)
     return priv->sdfm_interface->firmwareVersion >> SDFM_FW_VERSION_BIT_SHIFT;
 }
 
-/* Trigger based normal current */
+/* Enable trigger mode for normal current sampling */
 int32_t SDFM_enableTriggerModeForNormalCurrent(SDFM_Handle handle, uint8_t pru_core)
 {
     SDFM_Priv *priv;
@@ -935,7 +938,7 @@ int32_t SDFM_enableTriggerModeForNormalCurrent(SDFM_Handle handle, uint8_t pru_c
     return SystemP_SUCCESS;
 }
 
-/* FD block configuration */
+/* Configure fast detect block parameters for rapid error detection */
 int32_t SDFM_configFastDetect(SDFM_Handle handle, uint8_t channel, SDFM_FastDetectConfig fast_detect_config)
 {
     SDFM_Priv *priv;
@@ -1100,7 +1103,7 @@ int32_t SDFM_getFastDetectErrorStatus(SDFM_Handle handle, uint8_t channel)
     }
 }
 
-/* Clear Trip status bit */
+/* Clear PWM trip status of the corresponding PWM trip zone block */
 int32_t SDFM_clearPwmTripStatus(SDFM_Handle handle, uint8_t channel)
 {
     uint8_t pwm_set;
@@ -1173,7 +1176,7 @@ static void SDFM_enableLoadShareMode(SDFM_Handle handle, uint8_t sliceId)
     }
 }
 
-/* Measure Phase delay */
+/* Measure clock phase delay between data and clock edges for specified channel */
 int32_t SDFM_measureClockPhaseDelay(SDFM_Handle handle, uint16_t clk_edg, uint8_t channel)
 {
     SDFM_Priv *priv;
@@ -1532,7 +1535,7 @@ int32_t SDFM_configIepSyncMode(SDFM_Handle handle, uint32_t high_pulse_width, ui
     /* Set SYNC0/1 period */
     HW_WR_REG32((uint8_t *)pru_iep + CSL_ICSS_G_PR1_IEP0_SLV_SYNC0_PERIOD_REG, period_time);
 
-    /* Set offset from cpm hit */
+    /* Set offset from CMP hit */
     HW_WR_REG32( (uint8_t *)pru_iep + CSL_ICSS_G_PR1_IEP0_SLV_SYNC_START_REG, 0);
 
     /* Enable cmp1 and cmp2 for sync start trigger generation */

@@ -33,7 +33,22 @@
 #ifndef _ICSS_SDFM_H_
 #define _ICSS_SDFM_H_
 
-/* ICSSG INTC events */
+/**
+ *  \file   icssg_sdfm.h
+ *
+ *  \brief  SDFM firmware/driver shared memory layout definitions.
+ *
+ *  \details
+ *  This header defines the DMEM memory offsets used for communication between
+ *  the R5F host driver and the PRU SDFM firmware. It includes INTC event
+ *  definitions, channel configuration offsets, trigger mode offsets, and
+ *  local storage offsets for each PRU core type (RTU, PRU, TX_PRU).
+ *
+ *  The memory layout must match exactly between firmware and driver to ensure
+ *  correct operation.
+ */
+
+/* ICSSG INTC system event numbers (base event + PRU-specific offset of 18) */
 #define ICSS_SDFM_TRIGGER_EVNT_CH0   ( 3+18 )   
 #define ICSS_SDFM_TRIGGER_EVNT_CH1   ( 4+18 )   
 #define ICSS_SDFM_TRIGGER_EVNT_CH2   ( 5+18 )    
@@ -59,10 +74,10 @@
 #define ICSS_PRU_MAX_NUM_OF_SD_CH         ( 9 )
 #endif
 
-/* DMEM MEMORY OFFSETS BETWEEN CHANNELS*/
+/* DMEM MEMORY OFFSETS BETWEEN CHANNELS */
 #define ICSSG_SDFM_CH_MEM_OFFSET        ( 0x3C )    /* 60 bytes offset between channels */
 
-/*DMEM MEMORY OFFSETS*/
+/* DMEM MEMORY OFFSETS */
 
 /* SDFM Control */
 #if defined (SDFM_PRU_CORE)
@@ -85,7 +100,7 @@
 #define SDFM_CFG_SD_CH_MASK_OFFSET           ( 0x0A )
 #define SDFM_FIRMWARE_VERSION_OFFSET         ( 0x10 )
 
-/*trigger mode offsets*/
+/* Trigger mode offsets */
 #if defined (SDFM_PRU_CORE)
 #define SDFM_CFG_EN_NC_TRIGGER_MODE                 ( 0x18 )
 #define SDFM_CFG_EN_DOUBLE_UPDATE                   ( 0x19 )
@@ -123,7 +138,7 @@
 #define SDFM_CFG_OUT_SAMP_BUF_BASE_ADD_OFFSET       ( 0xA0 )
 #endif
 
-/*SDFM Channel offsets*/
+/* SDFM Channel offsets */
 #if defined (SDFM_LOAD_SHARE_MODE)
 #if defined (SDFM_RTU_CORE)
 /* Channel 0 offsets*/
@@ -476,7 +491,7 @@
 #define SDFM_CFG_ZC_THR_CH2_CLR_VAL_ADDR_OFFSET  (0x158)
 #endif
 
-/*DMEM memory offsets for local uses*/
+/* DMEM memory offsets for local uses */
 #if defined (SDFM_PRU_CORE) 
 /*Zero cross local storage*/
 #define SDFM_CFG_BF_SD_CH0_ZC_START_OFFSET               (0x2E0)
@@ -527,7 +542,7 @@
 #endif
 
 
-/*Local defines*/
+/* Local defines */
 /* Defines for comparator  */
 #define SDFM_CFG_BF_SD_CH0_EN_COMP_BIT                  ( 0x01 )
 #define SDFM_CFG_BF_SD_CH1_EN_COMP_BIT                  ( 0x02 )
@@ -539,7 +554,7 @@
 #define SDFM_CFG_BF_SD_CH7_EN_COMP_BIT                  ( 0x08 )
 #define SDFM_CFG_BF_SD_CH8_EN_COMP_BIT                  ( 0x09 )
 
-/*Zero cross fields*/ 
+/* Zero cross fields */
 #define SDFM_CFG_BF_SD_CH0_ZC_EN_BIT         ( 0 )
 #define SDFM_CFG_BF_SD_CH1_ZC_EN_BIT         ( 1 )
 #define SDFM_CFG_BF_SD_CH2_ZC_EN_BIT         ( 2 )
@@ -550,7 +565,7 @@
 #define SDFM_THREE_BYTE                     ( 3 )
 #define SDFM_FOUR_BYTE                      ( 4 )
 
-/*Output sample offset*/ 
+/* Output sample offset */
 #define SDFM_CFG_OUT_SAMP_BUF_OFFSET                   (0x00)
 
 #endif

@@ -55,7 +55,7 @@ __sdfm_macros_h .set    1
 ;       cn5 = cn5 & 0x0FFFFFFF
 ;       (endcode) 
 ;   Parameters:
-;      DN1, DN3, DN5 : Sinc3 differntiator state variables
+;      DN1, DN3, DN5 : Sinc3 differentiator state variables
 ;
 ;   Result:
 ;      CN5 : Output sample
@@ -89,10 +89,10 @@ M_ACC3_PROCESS  .macro  DN1, DN3, DN5
 ;       dn1 = dn0;
 ;       cn4 = cn3 - dn3;
 ;       dn3 = cn3;
-;       cn5 = cn5 & 0x0FFFFFFF
+;       cn5 = cn4 & 0x0FFFFFFF
 ;       (endcode) 
 ;   Parameters:
-;      DN1, DN3: Sinc2 differntiator state variables
+;      DN1, DN3: Sinc2 differentiator state variables
 ;
 ;   Result:
 ;      CN5 : Output sample
@@ -125,7 +125,7 @@ M_ACC2_PROCESS  .macro  DN1, DN3
 ;       cn5 = cn3 & 0x0FFFFFFF
 ;       (endcode) 
 ;   Parameters:
-;      DN1 : Sinc1 differntiator state variables
+;      DN1 : Sinc1 differentiator state variables
 ;
 ;   Result:
 ;      CN5 : Output sample
@@ -189,7 +189,7 @@ M_PRU_TM_DISABLE .macro
 ;
 ;   Macro: M_SDFM_PHASE_DELAY_FOR_RAISING_EDGE
 ;
-;   Calculate number of PRU cycles between data raising edge  and upcoming nearest clock raising edge 
+;   Calculate number of PRU cycles between data rising edge and upcoming nearest clock rising edge 
 ;
 ;   Invokes:
 ;       None
@@ -198,8 +198,8 @@ M_PRU_TM_DISABLE .macro
 ;      None
 ;
 ;   Results: TEMP_REG1.w0 -> PRU cycles
-;            TEMP_REG1.w2 -> Raising Edge status 
-;            TEMP_REG2    -> MAX PRU cyles between clk & data edge 
+;            TEMP_REG1.w2 -> Rising edge status
+;            TEMP_REG2    -> MAX PRU cycles between clk & data edge 
 ;
 ;
 ;************************************************************************************
@@ -295,7 +295,7 @@ DELAY_DONE:
 ;
 ;   Macro: M_SDFM_PHASE_DELAY_FOR_FALLING_EDGE
 ;
-;  Calculate number of PRU cycles between data raising edge  and upcoming nearest clock falling edge 
+;  Calculate number of PRU cycles between data rising edge and upcoming nearest clock falling edge 
 ;
 ;   Invokes:
 ;       None
@@ -304,8 +304,8 @@ DELAY_DONE:
 ;      None
 ;
 ;   Results: TEMP_REG1.w0 -> PRU cycles
-;            TEMP_REG1.w2 -> falling edage status 
-;            TEMP_REG2    -> MAX PRU cyles between clk & data edge 
+;            TEMP_REG1.w2 -> Falling edge status
+;            TEMP_REG2    -> MAX PRU cycles between clk & data edge 
 ;
 ;
 ;************************************************************************************ 

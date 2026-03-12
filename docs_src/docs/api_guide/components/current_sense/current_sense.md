@@ -175,7 +175,7 @@ ICSS %SDFM is a sigma delta interface for phase current measurement in high-perf
 
 ### Over Sample Ratio
 
-- OSR Below 16 at SD clock greater than 20MHz. The normal current task takes 300ns to 400ns to complete and its execution is based on compare event and task manager. When OSR below 16 is configured for SD clock greater than 20 MHz, the normal current task will not be able to complete its processing until the next sample is ready, which will cause the normal current samples to be inaccurate.
+- OSR below 16 at SD clock greater than 20MHz. The normal current task takes 300ns to 400ns to complete and its execution is based on compare event and task manager. When OSR below 16 is configured for SD clock greater than 20 MHz, the normal current task will not be able to complete its processing until the next sample is ready, which will cause the normal current samples to be inaccurate.
 
 ### PRU-ICSS PWM TripZone (TZ) Block Inputs and Outputs
  - Fixed mapping between the fast detect errors and PWM TZ blocks

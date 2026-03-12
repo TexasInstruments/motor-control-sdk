@@ -46,6 +46,10 @@
     <td>Handle-based API architecture, periodic trigger modes (CMP and CAP), SysConfig-based initialization
     <td>Position Sense Nikon A-format
 </tr>
+<tr>
+    <td>Handle-based API architecture, SysConfig-based initialization, improved error handling with return codes, support for 9 channels on a single PRU core
+    <td>Current Sense %SDFM
+</tr>
 </table>
 
 SOC    | Supported CPUs  | Boards                                                                                                      | Host PC
@@ -346,6 +350,12 @@ SDK drivers underwent significant architectural changes including a move to hand
     <td> Remove calling \ref PRUICSS_PWM_changePwmSetToIntialState API call
     <td> PWM is not changed to init state when it is being generated
 </tr>
+<tr>
+    <td> Current Sense %SDFM
+    <td> SDFM_init(), SDFM_enable(), and all SDFM APIs
+    <td> Handle type changed from sdfm_handle to \ref SDFM_Handle, initialization uses SysConfig index and \ref SDFM_Params
+    <td> Refer \ref SDFM_MIGRATION_GUIDE_2025_00
+</tr>
 </table>
 
 ### Drivers
@@ -368,6 +378,30 @@ SDK drivers underwent significant architectural changes including a move to hand
     <td> \ref PRUICSS_PWM_iepConfig
     <td> Initialize IEP counter value with zero and compare values with \ref PRUICSS_IEP_COUNT_REG_MAX
     <td> -
+</tr>
+<tr>
+    <td> Current Sense %SDFM
+    <td> SDFM_init()
+    <td> Signature changed from (PRUICSS_Handle, uint8_t, uint8_t) to (uint32_t index, \ref SDFM_Params *params). Returns \ref SDFM_Handle instead of sdfm_handle.
+    <td> Refer \ref SDFM_MIGRATION_GUIDE_2025_00
+</tr>
+<tr>
+    <td> Current Sense %SDFM
+    <td> All SDFM APIs
+    <td> Handle type changed from sdfm_handle to \ref SDFM_Handle. Most APIs now return int32_t (SystemP_SUCCESS/FAILURE/TIMEOUT) instead of void.
+    <td> Refer \ref SDFM_MIGRATION_GUIDE_2025_00
+</tr>
+<tr>
+    <td> Current Sense %SDFM
+    <td> SDFM_setCompFilterThresholds(), SDFM_configFastDetect()
+    <td> Parameter types changed from raw pointers (uint32_t*, uint8_t*) to \ref SDFM_ThresholdConfig and \ref SDFM_FastDetectConfig structures
+    <td> Refer \ref SDFM_MIGRATION_GUIDE_2025_00
+</tr>
+<tr>
+    <td> Current Sense %SDFM
+    <td> SDFM_enableContinuousNormalCurrent(), SDFM_enableLoadShareMode()
+    <td> APIs removed. Use SDFM_enableTriggerModeForNormalCurrent() and SysConfig configuration respectively.
+    <td> Refer \ref SDFM_MIGRATION_GUIDE_2025_00
 </tr>
 </table>
 
