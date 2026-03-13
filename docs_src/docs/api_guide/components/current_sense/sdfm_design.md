@@ -36,37 +36,37 @@ The SDK example uses the %SDFM hardware capability in Slice 1 of PRU-ICSSG0.
 <tr>
     <td>Over Current OSR
     <td>16
-	<td>Tested with 8, 16, 32, 64, 128 and 256
+    <td>Tested with 8, 16, 32, 64, 128 and 256
 </tr>
 <tr>
     <td>SINC Filter Types
     <td>SINC3
-	<td>Tested with SINC1, SINC2 and SINC3
+    <td>Tested with SINC1, SINC2 and SINC3
 </tr>
 <tr>
     <td>Clock Source
     <td>Common clock source for all nine channels
-	<td>Tested with: Independent clock source for each channel, Shared clock source for three channels and Common clock source for all nine channels.
+    <td>Tested with: Independent clock source for each channel, Shared clock source for three channels and Common clock source for all nine channels.
 </tr>
 <tr>
     <td>%SDFM Clock generation source
     <td>ICSSG eCAP
-	<td>ICSSG PRU GPO1, ICSSG eCAP and ICSSG IEP
+    <td>ICSSG PRU GPO1, ICSSG eCAP and ICSSG IEP
 </tr>
 <tr>
     <td>Sigma Delta Modulator Clock
     <td>20 MHz
-	<td>Tested with 5MHz, 10MHz and 20MHz clock from PRU-ICSSG ECAP and 5MHz clock from SoC EPWM1
+    <td>Tested with 5MHz, 10MHz and 20MHz clock from PRU-ICSSG ECAP and 5MHz clock from SoC EPWM1
 </tr>
 <tr>
     <td>Simulated EPWM frequency
     <td>8 KHz
-	<td>Tested up to 20KHz
+    <td>Tested up to 20KHz
 </tr>
 <tr>
     <td>IEP frequency
     <td>300 MHz
-	<td>Tested with 200MHz, 225MHz and 300MHz
+    <td>Tested with 200MHz, 225MHz and 300MHz
 </tr>
 </table>
 
@@ -228,52 +228,52 @@ To change the core in project properties, you can develop firmware for other PRU
 <tr>
     <th>Pin name
     <th>Signal name
-	<th>Function
+    <th>Function
 </tr>
 <tr>
     <td>GPIO_ZC_TH_CH0
     <td>MCU_SPI0_D1/B6
-	<td>Ch0 High threshold output
+    <td>Ch0 High threshold output
 </tr>
 <tr>
     <td>GPIO_ZC_TH_CH1
     <td>MCU_SPI1_CS0/A7
-	<td>Ch1 High threshold output
+    <td>Ch1 High threshold output
 </tr>
 <tr>
     <td>GPIO_ZC_TH_CH2
     <td>MCU_SPI1_D1/C8
-	<td>Ch2 High threshold output
+    <td>Ch2 High threshold output
 </tr>
 <tr>
     <td>SD0_D
     <td>PIN_PRG0_PRU0_GPO1
-	<td>Channel0 data input
+    <td>Channel0 data input
 </tr>
 <tr>
     <td>SD1_D
     <td>PIN_PRG0_PRU0_GPO3
-	<td>Channel1 data input
+    <td>Channel1 data input
 </tr>
 <tr>
     <td>SD2_D
     <td>PIN_PRG0_PRU0_GPO5
-	<td>Channel2 data input
+    <td>Channel2 data input
 </tr>
 <tr>
     <td>PRG0_ECAP0_IN_APWM_OUT
     <td>PIN_PRG0_PRU1_GPO15
-	<td>ECAP output frequency
+    <td>ECAP output frequency
 </tr>
 <tr>
     <td>GPIO_MTR_1_PWM_EN
     <td>GPMC0_AD15/Y20
-	<td>Enable EPWM0 on 3-axis board
+    <td>Enable EPWM0 on 3-axis board
 </tr>
 <tr>
     <td>SD8_CLK
     <td>PIN_PRG0_PRU0_GPO16
-	<td>Common %SDFM clock input pin
+    <td>Common %SDFM clock input pin
 </tr>
 </table>
 
@@ -283,72 +283,72 @@ To change the core in project properties, you can develop firmware for other PRU
 <tr>
     <th>Pin name
     <th>Signal name
-	<th>Function
+    <th>Function
 </tr>
 <tr>
     <td>GPIO_ZC_TH_CH0
     <td>PRG1_PRU0_GPO18
-	<td>(J7.64)Ch0 Zero cross output
+    <td>(J7.64)Ch0 Zero cross output
 </tr>
 <tr>
     <td>GPIO_ZC_TH_CH1
     <td>PRG0_PRU1_GPO2
-	<td>(J7.65)Ch1 Zero cross output
+    <td>(J7.65)Ch1 Zero cross output
 </tr>
 <tr>
     <td>GPIO_ZC_TH_CH2
     <td>PRG0_PRU1_GPO1
-	<td>(J7.67)Ch2 Zero cross output
+    <td>(J7.67)Ch2 Zero cross output
 </tr>
 <tr>
     <td>SD0_D
     <td>PIN_PRG0_PRU0_GPO1
-	<td>(J4.32)Channel0 data input
+    <td>(J4.32)Channel0 data input
 </tr>
 <tr>
     <td>SD1_D
     <td>PIN_PRG0_PRU0_GPO3
-	<td>(J2.19)Channel1 data input
+    <td>(J2.19)Channel1 data input
 </tr>
 <tr>
     <td>SD2_D
     <td>PIN_PRG0_PRU0_GPO5
-	<td>(J2.13)Channel2 data input
+    <td>(J2.13)Channel2 data input
 </tr>
 <tr>
     <td>PRG0_ECAP0_IN_APWM_OUT
     <td>PIN_PRG0_PRU1_GPO15
-	<td>(J6.59)ECAP output frequency
+    <td>(J6.59)ECAP output frequency
 </tr>
 <tr>
     <td>SD8_CLK
     <td>PIN_PRG0_PRU0_GPO16
-	<td>(J1.7)Common %SDFM clock input pin
+    <td>(J1.7)Common %SDFM clock input pin
 </tr>
 <tr>
     <td>PWM0_TZ_OUT
     <td>PIN_PRG0_PRU0_GPO19
-	<td>(J5.45)TZ output pin for Axis-1
+    <td>(J5.45)TZ output pin for Axis-1
 </tr>
 <tr>
     <td>PWM1_TZ_OUT
     <td>PIN_PRG0_PRU1_GPO19
-	<td>(J8.76)TZ output pin for Axis-2
+    <td>(J8.76)TZ output pin for Axis-2
 </tr>
 <tr>
     <td>PWM2_TZ_OUT
     <td>PIN_PRG0_PRU1_GPO8
-	<td>(J6.57)TZ output pin for Axis-3
+    <td>(J6.57)TZ output pin for Axis-3
 </tr>
 <tr>
     <td>PRG0_IEP0_EDC_SYNC_OUT0
     <td>PIN_PRG0_PRU0_GPO19
-	<td>(J5.45)SYNC_OUT0
+    <td>(J5.45)SYNC_OUT0
 </tr>
 <tr>
     <td>PRG0_IEP0_EDC_SYNC_OUT1
     <td>PIN_PRG0_PRU0_GPO17
-	<td>(J2.18) SYNC_OUT1
+    <td>(J2.18) SYNC_OUT1
 </tr>
 </table>
 \endcond
