@@ -84,6 +84,7 @@ void timesync_run(TimesyncHandle handle)
     uint32_t timeElapsed;
     uint8_t count;
     int32_t avgCorrection;
+    uint32_t index;
 
 #ifdef ENABLE_DEBUG_LOGS
     TimesyncDebug *timesyncDebugPtr = handle->timesyncDebugPtr;
@@ -236,8 +237,8 @@ void timesync_run(TimesyncHandle handle)
             if(handle->num_entries_index < OFFSET_ALGO_BIN_SIZE)
             {
                 /*Store the value for averaging later*/
-                handle->correction[handle->num_entries_index++]
-                    =  handle->currOffset;
+                index = handle->num_entries_index++;
+                handle->correction[index] = handle->currOffset;
             }
 
             else
