@@ -290,6 +290,13 @@ Mbed-TLS                             | R5F            | mbedtls-2.13.1
     <th> Applicable Releases
     <th> Resolution/Comments
 </tr>
+<tr>
+    <td> PINDSW-10322
+    <td> TIDEP-01032: USER_M1_IS_OFFSET_CMPSS macro type mismatch causes data abort at -O1 optimization
+    <td> TIDEP-01032 Reference Design
+    <td> 2025.0.0
+    <td> The USER_M1_IS_OFFSET_CMPSS macro for the BP_AM2BLDCSERVO board was casting SDFM_HALF_SCALE (131072.0f) to uint16_t, which exceeds the uint16_t range (max 65535). This float-to-integer undefined behavior caused the compiler to eliminate the calcMotorOverCurrentThreshold function body at -O1 optimization. Fixed by setting the macro to 0 for SDFM-based boards where ADC CMPSS is not applicable.
+</tr>
 </table>
 
 ## Known Issues
@@ -355,6 +362,12 @@ SDK drivers underwent significant architectural changes including a move to hand
     <td> SDFM_init(), SDFM_enable(), and all SDFM APIs
     <td> Handle type changed from sdfm_handle to \ref SDFM_Handle, initialization uses SysConfig index and \ref SDFM_Params
     <td> Refer \ref SDFM_MIGRATION_GUIDE_2025_00
+</tr>
+<tr>
+    <td> TIDEP-01032 Reference Design
+    <td> HAL_setupSDFM, HAL_readMtrSdfmData, HAL_setupEncoder, HAL_getMtrEncoderPosition in hal.c
+    <td> The %SDFM and EnDat driver code in hal.c has been updated to use the new handle-based API architecture. The %SDFM initialization now uses SDFM_init with params-based configuration, and data reads use SDFM_getFilterData with handle. The EnDat initialization now uses endat_init with params-based configuration, and position reads use endat_command_build/endat_command_process with handle. These changes are required due to SDK driver migration to handle-based APIs.
+    <td> For more information on %SDFM and EnDat driver migration, refer the migration guide of EnDat and %SDFM.
 </tr>
 </table>
 

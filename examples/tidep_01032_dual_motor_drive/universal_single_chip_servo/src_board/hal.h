@@ -187,7 +187,7 @@ PRUICSS_Handle gPruIcssXHandle;
 #endif
 /* R5F interrupt settings for ICSSG */
 #define MOTOR1_ICSSG_PRU_SDFM_INT_NUM               ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_3 )  /* VIM interrupt number */
-#define MOTOR1_PRU_TRIGGER_HOST_SDFM_EVT_NUMBER     ( 6 + 18 ) /* PRU event number for SDFM interrupt */
+#define MOTOR1_PRU_TRIGGER_HOST_SDFM_EVT_NUMBER     ( 3 + 18 ) /* PRU event number for SDFM interrupt */
 #endif
 
 #if defined (MOTOR2_INLINE_SDFM)
@@ -199,7 +199,7 @@ PRUICSS_Handle gPruIcssXHandle;
 
 /* R5F interrupt settings for ICSSG */
 #define MOTOR2_ICSSG_PRU_SDFM_INT_NUM               ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_4 )  /* VIM interrupt number */
-#define MOTOR2_PRU_TRIGGER_HOST_SDFM_EVT_NUMBER     ( 3+18 ) /* PRU event number for SDFM interrupt */
+#define MOTOR2_PRU_TRIGGER_HOST_SDFM_EVT_NUMBER     ( 6 + 18 ) /* PRU event number for SDFM interrupt */
 #endif
 
 #define BP_AM2BLDCSERVO_VDC_BUS_VOLTAGE             24.0f
@@ -284,8 +284,10 @@ static inline void HAL_ackMtrSdfmInt(uint8_t motorNum)
     }
     else if(motorNum == 1)
     {
+#if defined(MOTOR2_INLINE_SDFM)
         // clear the SDFM interrupt flag for motor 2
         PRUICSS_clearEvent(gPruIcssXHandle, MOTOR2_PRU_TRIGGER_HOST_SDFM_EVT_NUMBER);
+#endif
     }
     else
     {

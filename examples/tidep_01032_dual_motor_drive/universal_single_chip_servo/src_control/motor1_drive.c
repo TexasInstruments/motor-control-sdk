@@ -496,8 +496,10 @@ void initMotorCtrlParameters(MOTOR_Handle handle)
     }
     else
     {
+#if defined(MOTOR2_ENC)
         /*(obj->motorNum == MTR_2)*/
         obj->angleGenHandle = ANGLE_GEN_init(&angleGen_M2, sizeof(angleGen_M2));
+#endif
     }
    
 
@@ -517,8 +519,10 @@ void initMotorCtrlParameters(MOTOR_Handle handle)
     }
     else
     {
+#if defined(MOTOR2_ENC)
         /*(obj->motorNum == MTR_2)*/
         obj->VsFreqHandle = VS_FREQ_init(&VsFreq_M2, sizeof(VsFreq_M2));
+#endif
     }
 
     VS_FREQ_setVsMagPu(obj->VsFreqHandle, objUser->maxVsMag_pu);
@@ -539,8 +543,10 @@ void initMotorCtrlParameters(MOTOR_Handle handle)
     }
     else
     {
+#if defined(MOTOR2_ENC)
         /*(obj->motorNum == MTR_2)*/
         obj->encHandle = ENC_init(&enc_M2, sizeof(enc_M2));
+#endif
     }
 
     // set the ENC controller parameters
@@ -558,8 +564,10 @@ void initMotorCtrlParameters(MOTOR_Handle handle)
     }
     else
     {
+#if defined(MOTOR2_ENC)
         /*(obj->motorNum == MTR_2)*/
         obj->spdcalcHandle = SPDCALC_init(&speedcalc_M2, sizeof(speedcalc_M2));
+#endif
     }
    
 
@@ -599,6 +607,7 @@ void initMotorCtrlParameters(MOTOR_Handle handle)
     }
     else
     {
+#if defined(MOTOR2_ENC)
         /*(obj->motorNum == MTR_2)*/
         obj->piHandle_Id  = PI_init(&pi_Id_M2, sizeof(pi_Id_M2));
         obj->piHandle_Iq  = PI_init(&pi_Iq_M2, sizeof(pi_Iq_M2));
@@ -606,7 +615,7 @@ void initMotorCtrlParameters(MOTOR_Handle handle)
     
         // initialize the speed reference trajectory
         obj->trajHandle_spd = TRAJ_init(&traj_spd_M2, sizeof(traj_spd_M2));
-    
+#endif
     }
     
     // configure the speed reference trajectory (Hz)
@@ -1329,14 +1338,14 @@ __attribute__ ((section(".tcm_code"))) void motor1CtrlISR(void *handle)
     motorCtrlISR(motorHandle_M1);
     return;
 }
+#if defined(MOTOR2_ENC)
 __attribute__ ((section(".tcm_code"))) void motor2CtrlISR(void *handle)
 {
     motorVars_M2.ISRCount++;
-   
     motorCtrlISR(motorHandle_M2);
     return;
 }
-
+#endif
 void motorCtrlISR(MOTOR_Handle handle)
 {
 
@@ -2543,7 +2552,9 @@ void motorCtrlISR(MOTOR_Handle handle)
    }
    else
    {
+#if defined(MOTOR2_ENC)
        collectRMSData(motorHandle_M2);
+#endif
    }
 
 

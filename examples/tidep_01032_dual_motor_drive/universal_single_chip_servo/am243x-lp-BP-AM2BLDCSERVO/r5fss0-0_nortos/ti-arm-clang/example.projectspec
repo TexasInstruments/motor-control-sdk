@@ -83,6 +83,7 @@
             -DMOTOR1_INLINE_SDFM
             -DMOTOR2_ABS_ENC
             -DMOTOR2_ENC
+            -DMOTOR2_CONNECTED
             -DMOTOR2_INLINE_SDFM
             -DHALL_CAL_N
             -DMOTOR1_OVM_N
