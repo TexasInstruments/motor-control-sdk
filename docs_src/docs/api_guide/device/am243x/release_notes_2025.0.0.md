@@ -90,7 +90,7 @@ Mbed-TLS                             | R5F            | mbedtls-2.13.1
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Three %SDFM channels using single PRU core, Nine %SDFM channels using three PRU cores (load share mode), %SDFM Sync with EPWM, Single/Double Normal Current Sampling per EPWM cycle, Continuous Normal Current Sampling, High and Low Threshold Comparator (Over-current detction), Fast Detect, Phase Compensation, Zero Cross Detection, Trip Generation using PRU-ICSS TripZone, Tested with %SDFM clock from ECAP/IEP, Tested with 5MHz Clock from EPWM
+    <td> Three %SDFM channels using single PRU core, Nine %SDFM channels using three PRU cores (load share mode), %SDFM Sync with EPWM, Single/Double Normal Current Sampling per EPWM cycle, Continuous Normal Current Sampling, High and Low Threshold Comparator (Over-current detection), Fast Detect, Phase Compensation, Zero Cross Detection, Trip Generation using PRU-ICSS TripZone, Tested with %SDFM clock from ECAP/IEP, Tested with 5MHz Clock from EPWM
     <td> -
 </tr>
 </table>
@@ -358,12 +358,6 @@ SDK drivers underwent significant architectural changes including a move to hand
     <td> PWM is not changed to init state when it is being generated
 </tr>
 <tr>
-    <td> Current Sense %SDFM
-    <td> SDFM_init(), SDFM_enable(), and all SDFM APIs
-    <td> Handle type changed from sdfm_handle to \ref SDFM_Handle, initialization uses SysConfig index and \ref SDFM_Params
-    <td> Refer \ref SDFM_MIGRATION_GUIDE_2025_00
-</tr>
-<tr>
     <td> TIDEP-01032 Reference Design
     <td> HAL_setupSDFM, HAL_readMtrSdfmData, HAL_setupEncoder, HAL_getMtrEncoderPosition in hal.c
     <td> The %SDFM and EnDat driver code in hal.c has been updated to use the new handle-based API architecture. The %SDFM initialization now uses SDFM_init with params-based configuration, and data reads use SDFM_getFilterData with handle. The EnDat initialization now uses endat_init with params-based configuration, and position reads use endat_command_build/endat_command_process with handle. These changes are required due to SDK driver migration to handle-based APIs.
@@ -392,30 +386,7 @@ SDK drivers underwent significant architectural changes including a move to hand
     <td> Initialize IEP counter value with zero and compare values with \ref PRUICSS_IEP_COUNT_REG_MAX
     <td> -
 </tr>
-<tr>
-    <td> Current Sense %SDFM
-    <td> SDFM_init()
-    <td> Signature changed from (PRUICSS_Handle, uint8_t, uint8_t) to (uint32_t index, \ref SDFM_Params *params). Returns \ref SDFM_Handle instead of sdfm_handle.
-    <td> Refer \ref SDFM_MIGRATION_GUIDE_2025_00
-</tr>
-<tr>
-    <td> Current Sense %SDFM
-    <td> All SDFM APIs
-    <td> Handle type changed from sdfm_handle to \ref SDFM_Handle. Most APIs now return int32_t (SystemP_SUCCESS/FAILURE/TIMEOUT) instead of void.
-    <td> Refer \ref SDFM_MIGRATION_GUIDE_2025_00
-</tr>
-<tr>
-    <td> Current Sense %SDFM
-    <td> SDFM_setCompFilterThresholds(), SDFM_configFastDetect()
-    <td> Parameter types changed from raw pointers (uint32_t*, uint8_t*) to \ref SDFM_ThresholdConfig and \ref SDFM_FastDetectConfig structures
-    <td> Refer \ref SDFM_MIGRATION_GUIDE_2025_00
-</tr>
-<tr>
-    <td> Current Sense %SDFM
-    <td> SDFM_enableContinuousNormalCurrent(), SDFM_enableLoadShareMode()
-    <td> APIs removed. Use SDFM_enableTriggerModeForNormalCurrent() and SysConfig configuration respectively.
-    <td> Refer \ref SDFM_MIGRATION_GUIDE_2025_00
-</tr>
+
 </table>
 
 \note Arm is a registered trademark of Arm Limited (or its subsidiaries or affiliates) in the US and/or elsewhere.
