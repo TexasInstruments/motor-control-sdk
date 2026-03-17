@@ -267,7 +267,9 @@ typedef enum
 __attribute__ ((section(".tcm_code"))) extern void motor1CtrlISR(void  *handle);
 
 //! \brief The main interrupt service (ISR) routine
+#if defined(MOTOR2_CONNECTED)
 __attribute__ ((section(".tcm_code"))) extern void motor2CtrlISR(void *handle);
+#endif
 
 #if defined(MOTOR1_INLINE_SDFM) || defined(MOTOR2_INLINE_SDFM)
 //! \brief     Acknowledges an interrupt from the SDFM so that another SDFM

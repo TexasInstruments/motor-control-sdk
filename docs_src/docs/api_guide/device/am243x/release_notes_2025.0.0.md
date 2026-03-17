@@ -369,6 +369,12 @@ SDK drivers underwent significant architectural changes including a move to hand
     <td> The %SDFM and EnDat driver code in hal.c has been updated to use the new handle-based API architecture. The %SDFM initialization now uses SDFM_init with params-based configuration, and data reads use SDFM_getFilterData with handle. The EnDat initialization now uses endat_init with params-based configuration, and position reads use endat_command_build/endat_command_process with handle. These changes are required due to SDK driver migration to handle-based APIs.
     <td> For more information on %SDFM and EnDat driver migration, refer the migration guide of EnDat and %SDFM.
 </tr>
+<tr>
+    <td> TIDEP-01032 Reference Design
+    <td> PRUICSS INTC mapping in SysCfg, MOTOR1_PRU_TRIGGER_HOST_SDFM_EVT_NUMBER and MOTOR2_PRU_TRIGGER_HOST_SDFM_EVT_NUMBER in hal.h
+    <td> The PRU INTC event-to-channel mapping for %SDFM interrupts has been updated. MOTOR1 now uses PRU event 21 (channel 5) and MOTOR2 uses PRU event 24 (channel 6). The SysCfg INTC mapping configuration has been updated accordingly. Additionally, SDFM_selectIepCmpEvent() API call has been added to configure the IEP compare event for %SDFM sampling trigger.
+    <td> Update the SysCfg INTC mapping and hal.h PRU event number defines to match the new assignment.
+</tr>
 </table>
 
 ### Drivers

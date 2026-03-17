@@ -1338,7 +1338,7 @@ __attribute__ ((section(".tcm_code"))) void motor1CtrlISR(void *handle)
     motorCtrlISR(motorHandle_M1);
     return;
 }
-#if defined(MOTOR2_ENC)
+#if defined(MOTOR2_CONNECTED)
 __attribute__ ((section(".tcm_code"))) void motor2CtrlISR(void *handle)
 {
     motorVars_M2.ISRCount++;
