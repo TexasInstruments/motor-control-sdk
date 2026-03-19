@@ -59,9 +59,9 @@
  *  - Simpler configuration
  *
  *  **Load-Share Mode**: 9 channels distributed across 3 PRU cores
- *  - CH0,CH3,CH6 on RTU_PRU
- *  - CH1,CH4,CH7 on PRU
- *  - CH2,CH5,CH8 on TX_PRU
+ *  - CH0-CH2 on RTU_PRU (pru_core index 1)
+ *  - CH3-CH5 on PRU     (pru_core index 0)
+ *  - CH6-CH8 on TX_PRU  (pru_core index 2)
  *  - Enables higher sampling rates and parallel processing
  *
  *  **Trigger Mode**: IEP-based synchronized sampling at specific PWM phase points
@@ -165,10 +165,15 @@ extern "C" {
 #define SDFM_IEP_CMP_EVENT_CMP7    ( 7U )   /**< IEP compare event CMP7 (boundary before register gap) */
 #define SDFM_IEP_CMP_REG_GAP_SIZE  ( 8U )   /**< Register offset gap after CMP7 (2 reserved registers * 4 bytes) */
 
-/* PRU core indices */
-#define SDFM_PRU_CORE_INDEX          0U  /**< PRU core index */
-#define SDFM_RTUPRU_CORE_INDEX       1U  /**< RTU PRU core index */
-#define SDFM_TXPRU_CORE_INDEX        2U  /**< TX PRU core index */
+/* PRU core indices
+ * In load-share mode, the channel-to-core mapping is:
+ *   Channels 0-2 -> RTU_PRU (index 1)
+ *   Channels 3-5 -> PRU     (index 0)
+ *   Channels 6-8 -> TX_PRU  (index 2)
+ */
+#define SDFM_PRU_CORE_INDEX          0U  /**< PRU core index (channels 3-5 in load-share mode) */
+#define SDFM_RTUPRU_CORE_INDEX       1U  /**< RTU PRU core index (channels 0-2 in load-share mode) */
+#define SDFM_TXPRU_CORE_INDEX        2U  /**< TX PRU core index (channels 6-8 in load-share mode) */
 
 /* Hardware register limits (from ICSSG_PRU0_SD_CLK_SEL_REG0 and ICSSG_PRU0_SD_SAMPLE_SIZE_REG0) */
 #define SDFM_OSR_MIN                 ( 4U )   /**< Minimum user-facing OSR value (register: OSR-1 = 3) */

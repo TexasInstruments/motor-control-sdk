@@ -291,7 +291,7 @@ int32_t SDFM_setCompFilterThresholds(SDFM_Handle handle, uint8_t channel, SDFM_T
  *
  *  \param[in]  handle          SDFM handle
  *  \param[in]  samp_trig_time  first sample trigger time in one pwm cycle
- *  \param[in]  pru_core        PRU core ID (0-2): PRU - 0, RTU - 1, TXPRU - 2
+ *  \param[in]  pru_core        PRU core ID (0-2): PRU - 0 (Ch 3-5 in load-share), RTU - 1 (Ch 0-2 in load-share), TXPRU - 2 (Ch 6-8 in load-share)
  *
  *  \retval SystemP_SUCCESS     Configuration successful
  *  \retval SystemP_FAILURE     Invalid handle (NULL) or pru_core >= 3
@@ -306,7 +306,7 @@ int32_t SDFM_setSampleTriggerTime(SDFM_Handle handle, float samp_trig_time, uint
  *
  *  \param[in]  handle          SDFM handle
  *  \param[in]  samp_trig_time  second sample trigger time in one PWM cycle
- *  \param[in]  pru_core        PRU core ID (0-2): PRU - 0, RTU - 1, TXPRU - 2
+ *  \param[in]  pru_core        PRU core ID (0-2): PRU - 0 (Ch 3-5 in load-share), RTU - 1 (Ch 0-2 in load-share), TXPRU - 2 (Ch 6-8 in load-share)
  *
  *  \retval SystemP_SUCCESS     Configuration successful
  *  \retval SystemP_FAILURE     Invalid handle (NULL) or pru_core >= 3
@@ -320,7 +320,7 @@ int32_t SDFM_enableDoubleSampling(SDFM_Handle handle, float samp_trig_time, uint
  * \brief  Disable double normal current sampling
  *
  *  \param[in]  handle          SDFM handle
- *  \param[in]  pru_core        PRU core ID (0-2): PRU - 0, RTU - 1, TXPRU - 2
+ *  \param[in]  pru_core        PRU core ID (0-2): PRU - 0 (Ch 3-5 in load-share), RTU - 1 (Ch 0-2 in load-share), TXPRU - 2 (Ch 6-8 in load-share)
  *
  *  \retval SystemP_SUCCESS     Configuration successful
  *  \retval SystemP_FAILURE     Invalid handle (NULL) or pru_core >= 3
@@ -482,7 +482,7 @@ uint32_t SDFM_getFirmwareVersion(SDFM_Handle handle);
  *  \brief  Enable trigger mode for normal current sampling
  *
  *  \param[in]  handle          SDFM handle
- *  \param[in]  pru_core        PRU core ID (0-2): PRU - 0, RTU - 1, TXPRU - 2
+ *  \param[in]  pru_core        PRU core ID (0-2): PRU - 0 (Ch 3-5 in load-share), RTU - 1 (Ch 0-2 in load-share), TXPRU - 2 (Ch 6-8 in load-share)
  *
  *  \retval int32_t             SystemP_SUCCESS on success, SystemP_FAILURE on error
  */
@@ -710,7 +710,7 @@ int32_t SDFM_configClockFromGPO1(SDFM_Handle handle, uint8_t div0, uint8_t div1)
 /**
  *  \brief  Enable snoop based normal current sampling for a specific PRU core
  *  \param[in]  handle          SDFM handle
- *  \param[in]  pru_core        PRU core ID (0-2): PRU - 0, RTU - 1, TXPRU - 2
+ *  \param[in]  pru_core        PRU core ID (0-2): PRU - 0 (Ch 3-5 in load-share), RTU - 1 (Ch 0-2 in load-share), TXPRU - 2 (Ch 6-8 in load-share)
  *
  *  \retval SystemP_SUCCESS     Snoop mode enabled successfully
  *  \retval SystemP_FAILURE     Invalid handle (NULL) or pru_core >= 3
@@ -720,7 +720,7 @@ int32_t SDFM_enableSnoopBasedNC(SDFM_Handle handle, uint8_t pru_core);
 /**
  *  \brief  Disable snoop based normal current sampling for a specific PRU core
  *  \param[in]  handle          SDFM handle
- *  \param[in]  pru_core        PRU core ID (0-2): PRU - 0, RTU - 1, TXPRU - 2
+ *  \param[in]  pru_core        PRU core ID (0-2): PRU - 0 (Ch 3-5 in load-share), RTU - 1 (Ch 0-2 in load-share), TXPRU - 2 (Ch 6-8 in load-share)
  *
  *  \retval SystemP_SUCCESS     Snoop mode disabled successfully
  *  \retval SystemP_FAILURE     Invalid handle (NULL) or pru_core >= 3
@@ -745,7 +745,7 @@ int32_t SDFM_setSampleOutputInterfaceGlobalAddr(SDFM_Handle handle, uint32_t add
  *
  *  \param[in]  handle          SDFM handle
  *  \param[in]  event           IEP comparator event (0-15)
- *  \param[in]  pru_core        PRU core ID (0-2): PRU - 0, RTU - 1, TXPRU - 2
+ *  \param[in]  pru_core        PRU core ID (0-2): PRU - 0 (Ch 3-5 in load-share), RTU - 1 (Ch 0-2 in load-share), TXPRU - 2 (Ch 6-8 in load-share)
  *
  *  \retval SystemP_SUCCESS     IEP compare event selected successfully
  *  \retval SystemP_FAILURE     Invalid handle (NULL), pru_core >= 3, or event > 15
@@ -772,7 +772,7 @@ int32_t SDFM_configIepCmp0ToResetIep(SDFM_Handle handle, uint32_t iep_reset_freq
  *  firmware acknowledgment with timeout protection.
  *
  *  \param[in]  handle          SDFM handle
- *  \param[in]  pru_core        PRU core ID (0-2): PRU - 0, RTU - 1, TXPRU - 2
+ *  \param[in]  pru_core        PRU core ID (0-2): PRU - 0 (Ch 3-5 in load-share), RTU - 1 (Ch 0-2 in load-share), TXPRU - 2 (Ch 6-8 in load-share)
  *
  *  \retval SystemP_SUCCESS     SDFM enabled successfully
  *  \retval SystemP_FAILURE     Invalid handle or pru_core parameter

@@ -860,7 +860,7 @@ int32_t SDFM_setFilterOverSamplingRatio(SDFM_Handle handle, uint8_t channel, uin
         (handle->priv->sdfm_interface == NULL) ||
         (nc_osr < SDFM_OSR_MIN) ||
         (nc_osr > SDFM_OSR_MAX) ||
-        (handle->attrs->sdfm_sampling_freq == 0)||
+        (handle->attrs->sdfm_sampling_freq == 0) ||
         channel > SDFM_CHANNEL8)
     {
         return SystemP_FAILURE;
@@ -870,22 +870,23 @@ int32_t SDFM_setFilterOverSamplingRatio(SDFM_Handle handle, uint8_t channel, uin
 
     if(attrs->load_share_enabled == 1U)
     {
+        /* In load-share mode: RTU handles Ch 0-2, PRU handles Ch 3-5, TX_PRU handles Ch 6-8 */
         if (channel < SDFM_CHANNEL3)
         {
-            pru_core = 1U;
+            pru_core = SDFM_RTUPRU_CORE_INDEX;
         }
         else if (channel > SDFM_CHANNEL2 && channel < SDFM_CHANNEL6)
         {
-            pru_core = 0U;
+            pru_core = SDFM_PRU_CORE_INDEX;
         }
         else
         {
-            pru_core = 2U;
+            pru_core = SDFM_TXPRU_CORE_INDEX;
         }
     }
     else
     {
-        pru_core = 0U;
+        pru_core = SDFM_PRU_CORE_INDEX;
     }
 
     if (priv->sdfm_interface->control[pru_core].enable_snoop_nc == 1U)
