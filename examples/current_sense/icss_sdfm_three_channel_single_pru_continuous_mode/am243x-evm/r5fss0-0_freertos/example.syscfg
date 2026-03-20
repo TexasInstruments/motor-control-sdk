@@ -86,6 +86,7 @@ mpu_armv73.$name             = "CONFIG_MPU_REGION2";
 mpu_armv73.baseAddr          = 0x41010000;
 mpu_armv73.size              = 15;
 mpu_armv73.accessPermissions = "Supervisor RD+WR, User RD";
+mpu_armv73.attributes        = "Cached+Sharable";
 
 mpu_armv74.$name             = "CONFIG_MPU_REGION3";
 mpu_armv74.accessPermissions = "Supervisor RD+WR, User RD";
