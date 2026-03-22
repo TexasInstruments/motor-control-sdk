@@ -562,7 +562,7 @@ int32_t HDSL_get_qm(HDSL_Handle handle, uint8_t *qm)
 {
     HDSL_Priv *priv;
 
-    /* Validate paramters, priv, and hdsl_interface pointers */
+    /* Validate parameters, priv, and hdsl_interface pointers */
     if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (qm == NULL))
     {
         return SystemP_FAILURE;
@@ -580,7 +580,7 @@ int32_t HDSL_get_events(HDSL_Handle handle, uint16_t *events)
 {
     HDSL_Priv *priv;
 
-    /* Validate paramters, priv, and hdsl_interface pointers */
+    /* Validate parameters, priv, and hdsl_interface pointers */
     if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (events == NULL))
     {
         return SystemP_FAILURE;
@@ -597,7 +597,7 @@ int32_t HDSL_get_safe_events(HDSL_Handle handle, uint8_t *events)
 {
     HDSL_Priv *priv;
 
-    /* Validate paramters, priv, and hdsl_interface pointers */
+    /* Validate parameters, priv, and hdsl_interface pointers */
     if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (events == NULL))
     {
         return SystemP_FAILURE;
@@ -614,7 +614,7 @@ int32_t HDSL_get_online_status_d(HDSL_Handle handle, uint16_t *status)
 {
     HDSL_Priv *priv;
 
-    /* Validate paramters, priv, and hdsl_interface pointers */
+    /* Validate parameters, priv, and hdsl_interface pointers */
     if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (status == NULL))
     {
         return SystemP_FAILURE;
@@ -631,7 +631,7 @@ int32_t HDSL_get_online_status_1(HDSL_Handle handle, uint16_t *status)
 {
     HDSL_Priv *priv;
 
-    /* Validate paramters, priv, and hdsl_interface pointers */
+    /* Validate parameters, priv, and hdsl_interface pointers */
     if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (status == NULL))
     {
         return SystemP_FAILURE;
@@ -648,7 +648,7 @@ int32_t HDSL_get_online_status_2(HDSL_Handle handle, uint16_t *status)
 {
     HDSL_Priv *priv;
 
-    /* Validate paramters, priv, and hdsl_interface pointers */
+    /* Validate parameters, priv, and hdsl_interface pointers */
     if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (status == NULL))
     {
         return SystemP_FAILURE;
@@ -665,7 +665,7 @@ int32_t HDSL_get_sum(HDSL_Handle handle, uint8_t *sum)
 {
     HDSL_Priv *priv;
 
-    /* Validate paramters, priv, and hdsl_interface pointers */
+    /* Validate parameters, priv, and hdsl_interface pointers */
     if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (sum == NULL))
     {
         return SystemP_FAILURE;
@@ -682,7 +682,7 @@ int32_t HDSL_get_acc_err_cnt(HDSL_Handle handle, uint8_t *count)
 {
     HDSL_Priv *priv;
 
-    /* Validate paramters, priv, and hdsl_interface pointers */
+    /* Validate parameters, priv, and hdsl_interface pointers */
     if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (count == NULL))
     {
         return SystemP_FAILURE;
@@ -699,7 +699,7 @@ int32_t HDSL_get_rssi(HDSL_Handle handle, uint8_t *rssi)
 {
     HDSL_Priv *priv;
 
-    /* Validate paramters, priv, and hdsl_interface pointers */
+    /* Validate parameters, priv, and hdsl_interface pointers */
     if((handle == NULL) || (handle->priv == NULL) || (handle->priv->hdsl_interface == NULL) || (rssi == NULL))
     {
         return SystemP_FAILURE;

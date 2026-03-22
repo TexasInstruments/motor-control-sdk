@@ -2577,7 +2577,7 @@ void hdsl_diagnostic_main(void *arg)
 
         if((gAppHdslHandle[i][0] == NULL) || (attrs[i] == NULL))
         {
-            DebugP_log("\r\n FAIL: HDSL_open()/HDSL_get_attrs() did not return valid handle/attrs, exiting hdsl_diagnostic_main()\r\n");
+            DebugP_log("\r\n FAIL: HDSL_open()/HDSL_get_attrs() did not return valid handle/attrs for HDSL instance %u, exiting hdsl_diagnostic_main()\r\n", i);
             return;
         }
     }
@@ -2594,7 +2594,7 @@ void hdsl_diagnostic_main(void *arg)
         status = HDSL_hw_init(gAppHdslHandle[i][0]);
         if(status != SystemP_SUCCESS)
         {
-            DebugP_log("\r\n FAIL: HDSL_hw_init() for instance %u did not return success\r\n", i);
+            DebugP_log("\r\n FAIL: HDSL_hw_init() for HDSL instance %u did not return success\r\n", i);
             return;
         }
     }
@@ -2773,7 +2773,7 @@ void hdsl_diagnostic_main(void *arg)
                 if((ureg & QM_LINK_ESTABLISHED) != 0)
                     break;
 
-                DebugP_log( "\r\n Hiperface DSL encoder not detected for instance %u", i);
+                DebugP_log( "\r\n Hiperface DSL encoder not detected for HDSL instance %u", i);
                 ClockP_sleep(HDSL_QM_POLL_SLEEP_SEC);
             }
 
@@ -2786,7 +2786,7 @@ void hdsl_diagnostic_main(void *arg)
                 if(ureg == QM_LINK_ESTABLISHED_AND_VALUE_15)
                     break;
 
-                DebugP_log( "\r\n QM is not 15 for instance %u", i);
+                DebugP_log( "\r\n QM is not 15 for HDSL instance %u", i);
                 ClockP_sleep(HDSL_QM_POLL_SLEEP_SEC);
             }
 

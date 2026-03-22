@@ -237,18 +237,35 @@ SysConfig can be used to configure the following:
 The BiSS-C driver supports two types of periodic trigger modes for continuous position sampling:
 
 ### CMP Mode (Compare Event Mode)
-In CMP mode, IEP timer compare events trigger position sampling based on compare events. Compare event occurs when IEP timer hits the configured compare value. This is useful for applications requiring position sampling at regular intervals.
+In CMP mode, the IEP timer compare event triggers position sampling. Compare events occur when the IEP timer counter matches the configured compare value. This mode enables fixed-rate periodic sampling.
+
+**Configuration:**
+- Compare event range: CMP0-CMP15 (0-15)
+- Configured via \ref bissc_config_periodic_trigger_cmp_mode() API
+- IEP compare event number set via \ref bissc_config_iep_cmp_event() API
+- Event selection can be done in SysConfig
+\note IEP configuration and CMP event configuration should be done in application. Driver uses these APIs to inform firmware to enable CMP periodic mode and uses the configured CMP event to start sampling periodically.
 
 ### CAP Mode (Capture Event Mode)
 \cond SOC_AM243X
-In CAP mode, external signals trigger position sampling based on IEP capture events. Capture event is triggered on rising edge of the input pulse. This is useful for synchronizing position capture with external inputs. Internal signals can also be mapped to IEP capture events via TIMESYNC/GPIOMUX router.
+In CAP mode, external signals trigger position sampling through IEP capture events. The capture event is triggered on the rising edge of the external input pulse, enabling event-driven position capture. Internal signals can also be mapped to IEP capture events via TIMESYNC/GPIOMUX router.
 \endcond
 
 \cond (SOC_AM261X || SOC_AM263X || SOC_AM263PX)
-In CAP mode, external signals trigger position sampling based on IEP capture events. Capture event is triggered on rising edge of the input pulse. This is useful for synchronizing position capture with external inputs. Internal signals can also be mapped to IEP capture events via XBAR.
+In CAP mode, external signals trigger position sampling through IEP capture events. The capture event is triggered on the rising edge of the external input pulse, enabling event-driven position capture. Internal signals can also be mapped to IEP capture events via XBAR.
 \endcond
 
+**Configuration:**
+- Capture event range: CAP0-CAP7 (0-7)
+- Configured via \ref bissc_config_periodic_trigger_cap_mode() API
+- IEP capture event number set via \ref bissc_config_iep_cap_event() API
+- Event selection can be done in SysConfig
+
+\note External signal must be routed to IEP capture input (via XBAR or router configuration) in application or SysConfig
+
 \note CAP6 and CAP7 support falling edge detection as well. In BiSS-C, rising edge is used always.
+
+\note Both IEP event configuration APIs (bissc_config_iep_cmp_event() and bissc_config_iep_cap_event()) are automatically called during bissc_init() with values configured in SysConfig.
 
 ## PRU-ICSS Resource Usage
 
@@ -260,7 +277,7 @@ In CAP mode, external signals trigger position sampling based on IEP capture eve
 
 \cond SOC_AM243X
 
-\attention In addition to the following resources used by PRU firmwares, SDK examples also configure IEPx CMP0 for IEP counter reset in periodic trigger CMP mode and IEPx CMP1 for generating SYNC OUT0 used as input to CAP in periodic trigger CAP mode.
+\attention In addition to the following resources used by PRU firmware, SDK examples also configure IEPx CMP0 for IEP counter reset in periodic trigger CMP mode and IEPx CMP1 for generating SYNC OUT0 used as input to CAP in periodic trigger CAP mode.
 
 <table>
 <tr>
@@ -276,7 +293,7 @@ In CAP mode, external signals trigger position sampling based on IEP capture eve
     <td> PRUx
     <td> DMEM: (0x0 to 0x133) 308 Bytes <br>IMEM: ~ 3.13 kB
 	<td> <b>CMP Mode:</b> IEPx CMPy for trigger (IEPx and CMPy selected in SysConfig)<br><b>CAP Mode:</b> IEPx CAPy for trigger (IEPx and CAPy selected in SysConfig)
-    <td> INTC event/input number 18 or 21 (prx_pru_mst_intr[2/3]_intr_req) is used to trigger interrupt to Arm(R) Cortex(R)-R5F based on slice
+    <td> INTC event/input number 18 or 21 (prx_pru_mst_intr[2/3]_intr_req) is used to trigger interrupt to Arm® Cortex®-R5F based on slice
     <td> IEP events and INTC signals are used only in periodic trigger modes
 </tr>
 <tr>
@@ -309,7 +326,7 @@ In CAP mode, external signals trigger position sampling based on IEP capture eve
 
 \cond (SOC_AM261X || SOC_AM263X || SOC_AM263PX)
 
-\attention In addition to the following resources used by PRU firmwares, SDK examples also configure IEP0 CMP0 for IEP counter reset in periodic trigger CMP mode.
+\attention In addition to the following resources used by PRU firmware, SDK examples also configure IEP0 CMP0 for IEP counter reset in periodic trigger CMP mode.
 
 <table>
 <tr>
@@ -325,7 +342,7 @@ In CAP mode, external signals trigger position sampling based on IEP capture eve
     <td> PRUx
     <td> DMEM: (0x0 to 0x133) 308 Bytes <br>IMEM: ~ 3.13 kB
 	<td> <b>CMP Mode:</b> IEP0 CMPy for trigger (IEP0 CMPy selected in SysConfig)<br><b>CAP Mode:</b> IEP0 CAPy for trigger (IEP0 CAPy selected in SysConfig)
-    <td> INTC event/input number 18 or 21 (prx_pru_mst_intr[2/3]_intr_req) is used to trigger interrupt to Arm(R) Cortex(R)-R5F based on slice
+    <td> INTC event/input number 18 or 21 (prx_pru_mst_intr[2/3]_intr_req) is used to trigger interrupt to Arm® Cortex®-R5F based on slice
     <td> IEP events and INTC signals are used only in periodic trigger modes
 </tr>
 </table>

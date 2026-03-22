@@ -180,7 +180,7 @@ The `HAL_setupEncoder` function is used to initialize the encoder interface. The
 
 ##### How to modify encoder interface
 
-To enable support for another encoder, first add the encoder module in sysconfig. The encoder initialization code can be added in the `HAL_setupEncoder` function. The position response data can be read and converted in the `HAL_getMtrEncoderPosition` function. Additional encoder parameters and the encoder handle can be defined in the `hal.h` and `hal.c` files, similar to EnDAT.
+To enable support for another encoder, first add the encoder module in SysConfig. The encoder initialization code can be added in the `HAL_setupEncoder` function. The position response data can be read and converted in the `HAL_getMtrEncoderPosition` function. Additional encoder parameters and the encoder handle can be defined in the `hal.h` and `hal.c` files, similar to EnDAT.
 
 #### SDFM Interface
 

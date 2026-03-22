@@ -842,7 +842,7 @@ static int32_t tamagawa_config_iep(tamagawa_periodic_interface *tamagawa_periodi
         priv[i] = tamagawa_get_priv(tamagawa_periodic_interface->handle[i]);
         if((tamagawa_periodic_interface->handle[i] == NULL) || (attrs[i] == NULL) || (priv[i] == NULL))
         {
-            DebugP_log("\r\n\n|ERROR: tamagawa_config_iep() failed due to NULL handle/attrs/priv");
+            DebugP_log("\r\n\n|ERROR: tamagawa_config_iep() failed due to NULL handle/attrs/priv for Tamagawa instance %u", i);
             return SystemP_FAILURE;
         }
     }
@@ -1072,7 +1072,7 @@ int32_t tamagawa_config_periodic_mode(tamagawa_periodic_interface *tamagawa_peri
     {
         if(tamagawa_periodic_interface->handle[i] == NULL)
         {
-            DebugP_log("\r\n\n|ERROR: tamagawa_config_periodic_mode() failed due to NULL handle");
+            DebugP_log("\r\n\n|ERROR: tamagawa_config_periodic_mode() failed due to NULL handle for Tamagawa instance %u", i);
             return SystemP_FAILURE;
         }
     }
@@ -1145,7 +1145,7 @@ int32_t tamagawa_stop_periodic_mode(tamagawa_periodic_interface *tamagawa_period
         priv[i] = tamagawa_get_priv(tamagawa_periodic_interface->handle[i]);
         if((tamagawa_periodic_interface->handle[i] == NULL) || (attrs[i] == NULL) || (priv[i] == NULL))
         {
-            DebugP_log("\r\n\n|ERROR: tamagawa_config_iep() failed due to NULL handle/attrs/priv");
+            DebugP_log("\r\n\n|ERROR: tamagawa_stop_periodic_mode() failed due to NULL handle/attrs/priv for Tamagawa instance %u", i);
             return SystemP_FAILURE;
         }
     }

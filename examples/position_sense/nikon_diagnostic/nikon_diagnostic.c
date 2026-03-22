@@ -713,7 +713,7 @@ static void nikon_display_menu(nikon_handle handle, uint32_t instance)
     }
 
     DebugP_log("\r\n|-------------------------------------------------------------------------------------- |");
-    DebugP_log("\r\n|                      Select input parameters for instance %u                           |", instance);
+    DebugP_log("\r\n|                      Select input parameters for Nikon instance %u                    |", instance);
     DebugP_log("\r\n|-------------------------------------------------------------------------------------- |");
     if (attrs->protocol_version == NIKON_PROTOCOL_V3_0)
     {
@@ -902,7 +902,7 @@ static int32_t nikon_process_periodic_command(nikon_handle handle[CONFIG_NIKON_N
 
         if((handle[i] == NULL) || (priv[i] == NULL) || (attrs[i] == NULL))
         {
-            DebugP_log("\r\n\n| ERROR: NULL handle/priv/attrs\n");
+            DebugP_log("\r\n\n| ERROR: NULL handle/priv/attrs for Nikon instance %u\n", i);
             return SystemP_FAILURE;
         }
 
@@ -914,7 +914,7 @@ static int32_t nikon_process_periodic_command(nikon_handle handle[CONFIG_NIKON_N
                    ((attrs[i]->channel1_enabled) && (trigger_count[i][1] > iep_reset_count)) ||
                    ((attrs[i]->channel2_enabled) && (trigger_count[i][2] > iep_reset_count)))
                 {
-                    DebugP_log("\r\n\n| ERROR: Channel trigger count exceeds IEP reset count for instance %u\n", i);
+                    DebugP_log("\r\n\n| ERROR: Channel trigger count exceeds IEP reset count for Nikon instance %u\n", i);
                     return SystemP_FAILURE;
                 }
             }
@@ -922,7 +922,7 @@ static int32_t nikon_process_periodic_command(nikon_handle handle[CONFIG_NIKON_N
             {
                 if(trigger_count[i][0] > iep_reset_count)
                 {
-                    DebugP_log("\r\n\n| ERROR: Channel trigger count exceeds IEP reset count for instance %u\n", i);
+                    DebugP_log("\r\n\n| ERROR: Channel trigger count exceeds IEP reset count for Nikon instance %u\n", i);
                     return SystemP_FAILURE;
                 }
             }
@@ -941,7 +941,7 @@ static int32_t nikon_process_periodic_command(nikon_handle handle[CONFIG_NIKON_N
         ret = nikon_generate_cdf(handle[i], periodic_cmd);
         if(ret != SystemP_SUCCESS)
         {
-            DebugP_log("\r| ERROR: Failed to generate command data frame for periodic mode for handle %d\n", i);
+            DebugP_log("\r| ERROR: Failed to generate command data frame for periodic mode for Nikon instance %u\n", i);
             return SystemP_FAILURE;
         }
 
@@ -950,11 +950,11 @@ static int32_t nikon_process_periodic_command(nikon_handle handle[CONFIG_NIKON_N
         {
             if(ret == SystemP_TIMEOUT)
             {
-                DebugP_log("\r\n ERROR: ABS measurement timed out for handle %d\n", i);
+                DebugP_log("\r\n ERROR: ABS measurement timed out for Nikon instance %u\n", i);
             }
             else
             {
-                DebugP_log("\r\n ERROR: ABS measurement failed for handle %d\n", i);
+                DebugP_log("\r\n ERROR: ABS measurement failed for Nikon instance %u\n", i);
             }
             return SystemP_FAILURE;
         }
@@ -965,7 +965,7 @@ static int32_t nikon_process_periodic_command(nikon_handle handle[CONFIG_NIKON_N
             ret = nikon_config_periodic_trigger_cap_mode(handle[i]);
             if(ret != SystemP_SUCCESS)
             {
-                DebugP_log("\r| ERROR: Failed to configure periodic trigger CAP mode for handle %d\n", i);
+                DebugP_log("\r| ERROR: Failed to configure periodic trigger CAP mode for Nikon instance %u\n", i);
                 return SystemP_FAILURE;
             }
         }
@@ -974,7 +974,7 @@ static int32_t nikon_process_periodic_command(nikon_handle handle[CONFIG_NIKON_N
             ret = nikon_config_periodic_trigger_cmp_mode(handle[i]);
             if(ret != SystemP_SUCCESS)
             {
-                DebugP_log("\r| ERROR: Failed to configure periodic trigger CMP mode for handle %d\n", i);
+                DebugP_log("\r| ERROR: Failed to configure periodic trigger CMP mode for Nikon instance %u\n", i);
                 return SystemP_FAILURE;
             }
         }
@@ -1125,11 +1125,11 @@ static int32_t nikon_process_periodic_command(nikon_handle handle[CONFIG_NIKON_N
                 {
                     if(ret == SystemP_TIMEOUT)
                     {
-                        DebugP_log("\r\n ERROR: ABS measurement timed out for instance %u\n", i);
+                        DebugP_log("\r\n ERROR: ABS measurement timed out for Nikon instance %u\n", i);
                     }
                     else
                     {
-                        DebugP_log("\r\n ERROR: ABS measurement failed for instance %u\n", i);
+                        DebugP_log("\r\n ERROR: ABS measurement failed for Nikon instance %u\n", i);
                     }
                     pos_fail_cnt[i]++;
                     continue;
@@ -1146,7 +1146,7 @@ static int32_t nikon_process_periodic_command(nikon_handle handle[CONFIG_NIKON_N
                     ret = nikon_get_current_channel(handle[i], ch_num, &ch);
                     if(ret != SystemP_SUCCESS)
                     {
-                        DebugP_log("\r\n| ERROR: Failed to get current channel for instance %u\n", i);
+                        DebugP_log("\r\n| ERROR: Failed to get current channel for Nikon instance %u\n", i);
                         continue;
                     }
 
@@ -2612,7 +2612,7 @@ void nikon_main(void *args)
 
         if((gAppNikonHandle[i] == NULL) || (attrs[i] == NULL) || (priv[i] == NULL))
         {
-            DebugP_log("\r\nERROR: Nikon initialization failed\n");
+            DebugP_log("\r\nERROR: Nikon initialization failed for Nikon instance %u\n", i);
             return;
         }
 
@@ -2669,25 +2669,25 @@ void nikon_main(void *args)
         {
             if(ret == SystemP_TIMEOUT)
             {
-                DebugP_log("\r\nERROR: NIKON encoder detection timed out for instance %u\n", i);
-                DebugP_log("\r\n Encoder is not responding within the configured timeout period\n");
+                DebugP_log("\r\nERROR: NIKON encoder detection timed out for Nikon instance %u\n", i);
+                DebugP_log("\r\n Encoder is not responding within the configured timeout period for Nikon instance %u\n", i);
             }
             else
             {
-                DebugP_log("\r\nERROR: NIKON initialization failed for instance %u\n", i);
+                DebugP_log("\r\nERROR: NIKON initialization failed for Nikon instance %u\n", i);
             }
-            DebugP_log("\r\n Check whether encoder of selected frequency is connected and ensure proper connections\n");
-            DebugP_log("\r\n Exit %s due to failed firmware initialization\n", __func__);
+            DebugP_log("\r\n Check whether encoder of selected frequency is connected and ensure proper connections for Nikon instance %u\n", i);
+            DebugP_log("\r\n Exit %s due to failed firmware initialization for Nikon instance %u\n", __func__, i);
             goto deinit;
         }
 
         if(((uint8_t)attrs[i]->baud_rate == 6) || ((uint8_t)attrs[i]->baud_rate == 2))
         {
-            DebugP_log("\r\nNIKON encoder/encoders detected and running at frequency %fMHz for instance %u\n", (float)attrs[i]->baud_rate, i);
+            DebugP_log("\r\nNIKON encoder/encoders detected and running at frequency %fMHz for Nikon instance %u\n", (float)attrs[i]->baud_rate, i);
         }
         else
         {
-            DebugP_log("\r\nNIKON encoder/encoders detected and running at frequency %dMHz for instance %u\n", attrs[i]->baud_rate, i);
+            DebugP_log("\r\nNIKON encoder/encoders detected and running at frequency %dMHz for Nikon instance %u\n", attrs[i]->baud_rate, i);
         }
     }
 #if defined(NIKON_DUAL_PRU_SLICE_ENABLE)
@@ -2741,7 +2741,7 @@ void nikon_main(void *args)
 
                 for(i = 0; i < CONFIG_NIKON_NUM_INSTANCES; i++)
                 {
-                    DebugP_log("\n\r| Enter IEP trigger time for instance %u: \n", i);
+                    DebugP_log("\n\r| Enter IEP trigger time for Nikon instance %u: \n", i);
 
                     if(attrs[i]->load_share_enabled)
                     {
@@ -2817,7 +2817,7 @@ void nikon_main(void *args)
                 ret = nikon_config_host_trigger(gAppNikonHandle[i]);
                 if(ret != SystemP_SUCCESS)
                 {
-                    DebugP_log("\r| ERROR: Failed to revert to host trigger\n");
+                    DebugP_log("\r| ERROR: Failed to revert to host trigger for Nikon instance %u\n", i);
                 }
             }
         }
@@ -2830,7 +2830,7 @@ void nikon_main(void *args)
                 ret = nikon_handle_command(gAppNikonHandle[i], cmd[i]);;
                 if(ret != SystemP_SUCCESS)
                 {
-                    DebugP_log("\r\n| ERROR: nikon_handle_command() failed for instance %u\n", i);
+                    DebugP_log("\r\n| ERROR: nikon_handle_command() failed for Nikon instance %u\n", i);
                 }
             }
         }

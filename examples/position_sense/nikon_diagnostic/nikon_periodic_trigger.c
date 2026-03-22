@@ -840,7 +840,7 @@ static int32_t nikon_config_iep(nikon_periodic_interface *nikon_periodic_interfa
         priv[i] = nikon_get_priv(nikon_periodic_interface->handle[i]);
         if((nikon_periodic_interface->handle[i] == NULL) || (attrs[i] == NULL) || (priv[i] == NULL))
         {
-            DebugP_log("\r\n\n|ERROR: nikon_config_iep() failed due to NULL handle/attrs/priv");
+            DebugP_log("\r\n\n|ERROR: nikon_config_iep() failed due to NULL handle/attrs/priv for Nikon instance %u", i);
             return SystemP_FAILURE;
         }
     }
@@ -1070,7 +1070,7 @@ int32_t nikon_config_periodic_mode(nikon_periodic_interface *nikon_periodic_inte
     {
         if(nikon_periodic_interface->handle[i] == NULL)
         {
-            DebugP_log("\r\n\n|ERROR: nikon_config_periodic_mode() failed due to NULL handle");
+            DebugP_log("\r\n\n|ERROR: nikon_config_periodic_mode() failed due to NULL handle for Nikon instance %u", i);
             return SystemP_FAILURE;
         }
     }
@@ -1143,7 +1143,7 @@ int32_t nikon_stop_periodic_mode(nikon_periodic_interface *nikon_periodic_interf
         priv[i] = nikon_get_priv(nikon_periodic_interface->handle[i]);
         if((nikon_periodic_interface->handle[i] == NULL) || (attrs[i] == NULL) || (priv[i] == NULL))
         {
-            DebugP_log("\r\n\n|ERROR: nikon_config_iep() failed due to NULL handle/attrs/priv");
+            DebugP_log("\r\n\n|ERROR: nikon_stop_periodic_mode() failed due to NULL handle/attrs/priv for Nikon instance %u", i);
             return SystemP_FAILURE;
         }
     }

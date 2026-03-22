@@ -37,32 +37,32 @@ Default SDK examples three channel peripheral interface in \if (SOC_AM263X || SO
 <tr>
     <th>Parameter
     <th>Value
-	<th>Details
+    <th>Details
 </tr>
 <tr>
     <td>Maximum Cable Length
     <td>100m
-	<td>Supports up to 8MHz with delay compensation
+    <td>Supports up to 8MHz with delay compensation
 </tr>
 <tr>
     <td>Maximum Frequency
     <td>16 MHz
-	<td>Supports up to 20m cable \if (SOC_AM243X || SOC_AM64X) \note Tested up to 8MHz in multi-channel single PRU mode \endif
+    <td>Supports up to 20m cable \if (SOC_AM243X || SOC_AM64X) \note Tested up to 8MHz in multi-channel single PRU mode \endif
 </tr>
 <tr>
     <td>Startup/Initialization Frequency
     <td>200 KHz
-	<td>After power on or reset
+    <td>After power on or reset
 </tr>
 <tr>
     <td>CRC
     <td>6 bits
-	<td>Position/data verification
+    <td>Position/data verification
 </tr>
 <tr>
     <td>Receive oversample ratio
     <td>8
-	<td>
+    <td>
 </tr>
 </table>
 
@@ -124,7 +124,18 @@ Then it checks the operation mode: host trigger mode, periodic CMP mode, or peri
 
 **Host Trigger Mode:** The firmware waits until a command has been triggered through the interface by the host application.
 
-**Periodic CMP/CAP Mode:** The firmware monitors the configured IEP compare/capture event and sets the host trigger bit when the event occurs, automatically initiating EnDat transactions at regular intervals.
+**Periodic CMP Mode (Compare Event Mode):** In CMP mode, IEP timer compare event triggers position sampling. The firmware monitors the configured IEP compare event and automatically initiates EnDat transactions when the IEP timer counter matches the compare value. This enables fixed-rate periodic sampling.
+- Compare event range: CMP0-CMP15 (0-15)
+- Configured via \ref endat_config_periodic_trigger_cmp_mode() API
+- IEP compare event number set via \ref endat_config_iep_cmp_event() API
+- Event selection can be done in SysConfig
+
+**Periodic CAP Mode (Capture Event Mode):** In CAP mode, external signals trigger position sampling through IEP capture events. The capture event is triggered on the rising edge of the external input pulse, enabling event-driven position capture. \if (SOC_AM243X || SOC_AM64X) Internal signals can also be mapped to IEP capture events via TIMESYNC/GPIOMUX router. \else Internal signals can also be mapped to IEP capture events via XBAR. \endif
+- Capture event range: CAP0-CAP7 (0-7)
+- Configured via \ref endat_config_periodic_trigger_cap_mode() API
+- IEP capture event number set via \ref endat_config_iep_cap_event() API
+- Event selection can be done in SysConfig
+- CAP6 and CAP7 support falling edge detection as well. In EnDat, rising edge is used always.
 
 The following is the operation flow for the periodic mode:
 
@@ -132,7 +143,15 @@ The following is the operation flow for the periodic mode:
 2. When the event is detected, the firmware initiates an EnDat transaction.
 3. The position data is automatically updated in the shared memory.
 4. After the transaction is complete, the firmware triggers a R5F interrupt.
-5. The firmware then goes back to waiting for the next IEP CMP/CAP event.
+5. The firmware checks the current trigger mode. If still in periodic mode, it returns to step 1 to wait for the next IEP CMP/CAP event. If the mode has been switched to host trigger mode, the firmware stops periodic operation.
+
+\cond SOC_AM243X
+\note In load share mode, each channel can have independent IEP CMP/CAP event configuration.
+\endcond
+
+\attention Input cycle time (CMP mode) or external trigger period (CAP mode) should be greater than or equal to the EnDat communication cycle time.
+
+\note Both IEP event configuration APIs (endat_config_iep_cmp_event() and endat_config_iep_cap_event()) are automatically called during endat_init() with values configured in SysConfig.
 
 If it is a normal command, it reads command, its attributes like transmit bits, receive bits etc., then it transmits the data and collects the data sent by the encoder stored onto a buffer with one byte representing a bit (since oversample ratio of 8 is used).
 Next it checks whether there is 2.2 command supplement to be transmitted based on attributes, if so it transmits it.
@@ -303,104 +322,124 @@ EnDat receiver and the encoder are connected using the RS-485 transceiver. Data 
 \attention \ref PRUICSS_PERIPHERAL_IF_MODE_SIGNAL_CONFIGURATION section has details on PRU pin functions in Peripheral IF mode
 
 \note
-    - k = 0,1 (PRU-ICSS Instance) for AM243x/AM261x/AM64x and k = 0 for AM263x/AM263Px
+    - k = 0,1 (PRU-ICSS Instance) for AM243x/AM261x and k = 0 for AM263Px
     - n = 0,1 (PRU-ICSS Slice)
 
 <table>
 <tr>
     <th>Pin name
     <th>Signal name
-	<th>Function
+    <th>Function
 </tr>
 <tr>
     <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO0 \else PRG<%k>_PRU<n>_GPO0 \endif
     <td>pru<n>_endat0_clk
-	<td>Channel 0 clock
+    <td>Channel 0 clock
 </tr>
 <tr>
     <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO1 \else PRG<%k>_PRU<n>_GPO1 \endif
     <td>pru<n>_endat0_out
-	<td>Channel 0 transmit
+    <td>Channel 0 transmit
 </tr>
 <tr>
     <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO2 \else PRG<%k>_PRU<n>_GPO2 \endif
-    <td>pru<n>_endat0_outen
-	<td>Channel 0 transmit enable
+    <td>pru<n>_endat0_out_en
+    <td>Channel 0 transmit enable
 </tr>
 <tr>
     <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPI9 \else PRG<%k>_PRU<n>_GPI13/PRG<%k>_PRU<n>_GPI9 \endif
     <td>pru<n>_endat0_in
-	<td>Channel 0 receive
+    <td>Channel 0 receive
 </tr>
 <tr>
     <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO3 \else PRG<%k>_PRU<n>_GPO3 \endif
     <td>pru<n>_endat1_clk
-	<td>Channel 1 clock
+    <td>Channel 1 clock
 </tr>
 <tr>
     <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO4 \else PRG<%k>_PRU<n>_GPO4 \endif
     <td>pru<n>_endat1_out
-	<td>Channel 1 transmit
+    <td>Channel 1 transmit
 </tr>
 <tr>
     <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO5 \else PRG<%k>_PRU<n>_GPO5 \endif
-    <td>pru<n>_endat1_outen
-	<td>Channel 1 transmit enable
+    <td>pru<n>_endat1_out_en
+    <td>Channel 1 transmit enable
 </tr>
 <tr>
     <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPI10 \else PRG<%k>_PRU<n>_GPI14/PRG<%k>_PRU<n>_GPI10 \endif
     <td>pru<n>_endat1_in
-	<td>Channel 1 receive
+    <td>Channel 1 receive
 </tr>
 <tr>
     <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO6 \else PRG<%k>_PRU<n>_GPO6 \endif
     <td>pru<n>_endat2_clk
-	<td>Channel 2 clock
+    <td>Channel 2 clock
 </tr>
 <tr>
     <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO7 \else PRG<%k>_PRU<n>_GPO12/PRG<%k>_PRU<n>_GPO7 \endif
     <td>pru<n>_endat2_out
-	<td>Channel 2 transmit
+    <td>Channel 2 transmit
 </tr>
 <tr>
     <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO8 \else PRG<%k>_PRU<n>_GPO8 \endif
-    <td>pru<n>_endat2_outen
-	<td>Channel 2 transmit enable
+    <td>pru<n>_endat2_out_en
+    <td>Channel 2 transmit enable
 </tr>
 <tr>
     <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPI11 \else PRG<%k>_PRU<n>_GPI11 \endif
     <td>pru<n>_endat2_in
-	<td>Channel 2 receive
+    <td>Channel 2 receive
 </tr>
 </table>
-\cond SOC_AM243X
 
-##### LP-AM243 + BP-AM2BLDCSERVO Pin Multiplexing for SDK example
+\cond SOC_AM243X
+##### LP-AM243 + BP-AM2BLDCSERVO Booster Pack Pin Multiplexing for SDK example
 <table>
 <tr>
     <th>Pin name
     <th>Signal name
-	<th>Function
+    <th>Function
 </tr>
 <tr>
     <td>PRG0_PRU1_GPO0
     <td>pru1_endat0_clk
-	<td>PRU1 Channel 0 clock
+    <td>PRU1 Channel 0 clock
 </tr>
 <tr>
     <td>PRG0_PRU1_GPO1
     <td>pru1_endat0_out
-	<td>PRU1 Channel 0 transmit
+    <td>PRU1 Channel 0 transmit
 </tr>
 <tr>
     <td>PRG0_PRU1_GPO2
-    <td>pru1_endat0_outen
-	<td>PRU1 Channel 0 transmit enable
+    <td>pru1_endat0_out_en
+    <td>PRU1 Channel 0 transmit enable
 </tr>
 <tr>
     <td>PRG0_PRU1_GPI13
     <td>pru1_endat0_in
-	<td>PRU1 Channel 0 receive when SA mux selection is enabled (ICSSG_SA_MX_REG[7] G_MUX_EN = 1)
+    <td>PRU1 Channel 0 receive when SA mux selection is enabled (ICSSG_SA_MX_REG[7] G_MUX_EN = 1)
+</tr>
+<tr>
+    <td>PRG0_PRU1_GPO6
+    <td>pru1_endat2_clk
+    <td>PRU1 Channel 2 clock
+</tr>
+<tr>
+    <td>PRG0_PRU1_GPO12
+    <td>pru1_endat2_out
+    <td>PRU1 Channel 2 transmit when SA mux selection is enabled (ICSSG_SA_MX_REG[7] G_MUX_EN = 1)
+</tr>
+<tr>
+    <td>PRG0_PRU1_GPO8
+    <td>pru1_endat2_out_en
+    <td>PRU1 Channel 2 transmit enable
+</tr>
+<tr>
+    <td>PRG0_PRU1_GPI11
+    <td>pru1_endat2_in
+    <td>PRU1 Channel 2 receive
 </tr>
 <tr>
     <td>GPIO Pin (GPIO1_78/C16)
@@ -408,80 +447,61 @@ EnDat receiver and the encoder are connected using the RS-485 transceiver. Data 
     <td>Enable encoder voltage in Axis 1 of BP (Fix this pin to high with SoC GPIO mode)
 </tr>
 <tr>
-    <td>PRG0_PRU1_GPO6
-    <td>pru1_endat2_clk
-	<td>PRU1 Channel 2 clock
-</tr>
-<tr>
-    <td>PRG0_PRU1_GPO12
-    <td>pru1_endat2_out
-	<td>PRU1 Channel 2 transmit when SA mux selection is enabled (ICSSG_SA_MX_REG[7] G_MUX_EN = 1)
-</tr>
-<tr>
-    <td>PRG0_PRU1_GPO8
-    <td>pru1_endat2_outen
-	<td>PRU1 Channel 2 transmit enable
-</tr>
-<tr>
-    <td>PRG0_PRU1_GPI11
-    <td>pru1_endat2_in
-	<td>PRU1 Channel 2 receive
-</tr>
-<tr>
     <td>GPIO Pin (GPIO1_77/B17)
     <td>ENC2_EN
     <td>Enable encoder voltage in Axis 2 of BP (Fix this pin to high with SoC GPIO mode)
 </tr>
 </table>
+
 \endcond
 
 \cond SOC_AM261X
-##### LP-AM261 + BP-AM2BLDCSERVO Pin Multiplexing for SDK example
+##### LP-AM261 + BP-AM2BLDCSERVO Booster Pack Pin Multiplexing for SDK example
 <table>
 <tr>
     <th>Pin name
     <th>Signal name
-	<th>Function
+    <th>Function
 </tr>
 <tr>
     <td>PR1_PRU0_GPIO0
     <td>pru0_endat0_clk
-	<td>PRU0 Channel 0 clock
+    <td>PRU0 Channel 0 clock
 </tr>
 <tr>
     <td>PR1_PRU0_GPIO1
     <td>pru0_endat0_out
-	<td>PRU0 Channel 0 transmit
+    <td>PRU0 Channel 0 transmit
 </tr>
 <tr>
     <td>PR1_PRU0_GPIO2
-    <td>pru0_endat0_outen
-	<td>PRU0 Channel 0 transmit enable
+    <td>pru0_endat0_out_en
+    <td>PRU0 Channel 0 transmit enable
 </tr>
 <tr>
     <td>PR1_PRU0_GPI9
     <td>pru0_endat0_in
-	<td>PRU0 Channel 0 receive
+    <td>PRU0 Channel 0 receive
 </tr>
 <tr>
     <td>PR1_PRU1_GPIO0
     <td>pru1_endat0_clk
-	<td>PRU1 Channel 0 clock
+    <td>PRU1 Channel 0 clock
 </tr>
 <tr>
     <td>PR1_PRU1_GPIO1
     <td>pru1_endat0_out
-	<td>PRU1 Channel 0 transmit
+    <td>PRU1 Channel 0 transmit
 </tr>
 <tr>
     <td>PR1_PRU1_GPIO2
-    <td>pru1_endat0_outen
-	<td>PRU1 Channel 0 transmit enable
+    <td>pru1_endat0_out_en
+    <td>PRU1 Channel 0 transmit enable
 </tr>
 <tr>
     <td>PR1_PRU1_GPI9
     <td>pru1_endat0_in
-	<td>PRU1 Channel 0 receive
+    <td>PRU1 Channel 0 receive
 </tr>
 <tr>
     <td>GPIO Pin (GPIO_21/B10)
@@ -498,36 +518,36 @@ EnDat receiver and the encoder are connected using the RS-485 transceiver. Data 
 
 \cond (SOC_AM263X || SOC_AM263PX)
 
-##### @VAR_LP_BOARD_NAME + BP-AM2BLDCSERVO Pin Multiplexing for SDK example
+##### @VAR_LP_BOARD_NAME + BP-AM2BLDCSERVO Booster Pack Pin Multiplexing for SDK example
 <table>
 <tr>
     <th>Pin name
     <th>Signal name
-	<th>Function
+    <th>Function
 </tr>
 <tr>
     <td>PR0_PRU0_GPIO3
     <td>pru0_endat1_clk
-	<td>PRU0 Channel 1 clock
+    <td>PRU0 Channel 1 clock
 </tr>
 <tr>
     <td>PR0_PRU0_GPO4
     <td>pru0_endat1_out
-	<td>PRU0 Channel 1 transmit
+    <td>PRU0 Channel 1 transmit
 </tr>
 <tr>
     <td>PR0_PRU0_GPO5
-    <td>pru0_endat1_outen
-	<td>PRU0 Channel 1 transmit enable
+    <td>pru0_endat1_out_en
+    <td>PRU0 Channel 1 transmit enable
 </tr>
 <tr>
     <td>PR0_PRU0_GPI10
     <td>pru0_endat1_in
-	<td>PRU0 Channel 1 receive
+    <td>PRU0 Channel 1 receive
 </tr>
 <tr>
     <td>GPIO Pin (SDFM0_D1/D13)
-    <td>ENC0_EN
+    <td>ENC1_EN
     <td>Enable encoder voltage in Axis 1 of BP (Fix this pin to high with SoC GPIO mode)
 </tr>
 </table>

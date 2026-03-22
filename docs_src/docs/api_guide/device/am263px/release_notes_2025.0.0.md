@@ -37,7 +37,7 @@
     <td>Position Sense Nikon A-format
 </tr>
 <tr>
-    <td>Handle-based API architecture, periodic trigger modes (CMP and CAP), SysConfig-based initialization, per-channel encoder timeout configuration
+    <td>Handle-based API architecture, periodic trigger modes (CMP and CAP), SysConfig-based initialization
     <td>Position Sense EnDat
 </tr>
 <tr>
@@ -103,14 +103,6 @@ Mbed-TLS                             | R5F            | mbedtls-2.13.1
     <td> FreeRTOS, NORTOS
     <td> Single channel, Manchester encoding, data transfer rate of 12.5 Mbps, frame-based protocol (HPF/LPH/LPF), foreground communication commands (DATA0-DATA7, DATA, DATANOP, RESET, CLEAR, ECHO, RATE, HELLO), background communication commands (NOP, READ, WRITE, RECONFIGURE, AUTH, PROTECT, SETPASS, LOCATE), host trigger mode, periodic trigger modes (CMP and CAP), automatic CRC verification, BP-AM2BLDCSERVO Boosterpack with LP-AM263P
     <td> 25 Mbps data rate, Multi-channel concurrent operation, Daisy chain topology, Long cable (upto 100 meters)
-</tr>
-<tr>
-    <td> HDSL
-    <td> R5F
-    <td> YES
-    <td> FreeRTOS, NORTOS
-    <td> Single channel, Multi channel using three PRU cores (load share mode), Free Run mode, Sync mode, Short Message Read and Write, Long Message Read and Write, Pipeline Channel Data, Long cable (upto 100 meters) with single channel Free Run mode, BP-AM2BLDCSERVO Boosterpack with LP-AM263P, 225 MHz PRU firmware
-    <td> Long cable (upto 100 meters) with sync mode
 </tr>
 <tr>
     <td> Nikon A-format
@@ -253,7 +245,13 @@ This section lists changes which could affect user applications developed using 
 Read this carefully to see if you need to do any changes in your existing application when migrating to this SDK version relative to
 previous SDK version. Also refer to older SDK version release notes to see changes in earlier SDKs.
 
-SDK drivers underwent significant architectural changes including a move to handle-based APIs, enhanced periodic trigger modes, improved SysConfig integration, etc. For module specific migration details, refer to links from \ref MIGRATION_SECTION_2025_00.
+SDK drivers for following modules underwent significant architectural changes including a move to handle-based APIs, enhanced periodic trigger modes, improved SysConfig integration, etc. For module specific migration details, refer to links from \ref MIGRATION_SECTION_2025_00.
+
+- Position Sense
+    - BiSS-C
+    - EnDAT 2
+    - Nikon A-format
+    - Tamagawa
 
 ### Examples
 <table>

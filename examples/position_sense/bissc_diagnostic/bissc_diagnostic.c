@@ -795,7 +795,7 @@ static int32_t bissc_configure_encoder_timeout(bissc_handle handle, uint32_t ins
     for(ch_num = 0; ch_num < attrs->total_channels; ch_num++)
     {
         physical_ch = bissc_get_current_channel(handle, ch_num);
-        DebugP_log("\r\n| Enter new encoder timeout for instance %u channel %u in PRU cycles: ", instance_num, physical_ch);
+        DebugP_log("\r\n| Enter new encoder timeout for BiSS-C instance %u channel %u in PRU cycles: ", instance_num, physical_ch);
         DebugP_scanf("%u", &new_timeout);
         ret = bissc_set_encoder_timeout(handle, physical_ch, new_timeout);
         if(ret == SystemP_SUCCESS)
@@ -895,7 +895,7 @@ static int32_t bissc_process_periodic_command(bissc_handle handle[CONFIG_BISSC_N
 
         if((handle[i] == NULL) || (attrs[i] == NULL))
         {
-            DebugP_log("\r\n\n| ERROR: NULL handle/attrs for instance %u\n", i);
+            DebugP_log("\r\n\n| ERROR: NULL handle/attrs for BiSS-C instance %u\n", i);
             return SystemP_FAILURE;
         }
 
@@ -907,7 +907,7 @@ static int32_t bissc_process_periodic_command(bissc_handle handle[CONFIG_BISSC_N
                    ((attrs[i]->channel1_enabled) && (trigger_count[i][1] > iep_reset_count)) ||
                    ((attrs[i]->channel2_enabled) && (trigger_count[i][2] > iep_reset_count)))
                 {
-                    DebugP_log("\r\n\n| ERROR: Channel trigger count exceeds IEP reset count for instance %u\n", i);
+                    DebugP_log("\r\n\n| ERROR: Channel trigger count exceeds IEP reset count for BiSS-C instance %u\n", i);
                     return SystemP_FAILURE;
                 }
             }
@@ -915,7 +915,7 @@ static int32_t bissc_process_periodic_command(bissc_handle handle[CONFIG_BISSC_N
             {
                 if(trigger_count[i][0] > iep_reset_count)
                 {
-                    DebugP_log("\r\n\n| ERROR: Channel trigger count exceeds IEP reset count for instance %u\n", i);
+                    DebugP_log("\r\n\n| ERROR: Channel trigger count exceeds IEP reset count for BiSS-C instance %u\n", i);
                     return SystemP_FAILURE;
                 }
             }
@@ -928,7 +928,7 @@ static int32_t bissc_process_periodic_command(bissc_handle handle[CONFIG_BISSC_N
         {
             if(bissc_config_periodic_trigger_cap_mode(handle[i]) != SystemP_SUCCESS)
             {
-                DebugP_log("\r| ERROR: Failed to configure periodic trigger in CAP mode\n");
+                DebugP_log("\r| ERROR: Failed to configure periodic trigger in CAP mode for BiSS-C instance %u\n", i);
                 return SystemP_FAILURE;
             }
         }
@@ -936,7 +936,7 @@ static int32_t bissc_process_periodic_command(bissc_handle handle[CONFIG_BISSC_N
         {
             if(bissc_config_periodic_trigger_cmp_mode(handle[i]) != SystemP_SUCCESS)
             {
-                DebugP_log("\r| ERROR: Failed to configure periodic trigger in CMP mode\n");
+                DebugP_log("\r| ERROR: Failed to configure periodic trigger in CMP mode for BiSS-C instance %u\n", i);
                 return SystemP_FAILURE;
             }
         }
@@ -1210,7 +1210,7 @@ void bissc_main(void *args)
 
         if((gAppBisscHandle[i] == NULL) || (attrs[i] == NULL) || (priv[i] == NULL))
         {
-            DebugP_log("\r\nERROR: BiSS-C initialization failed\n");
+            DebugP_log("\r\nERROR: BiSS-C initialization failed for BiSS-C instance %u\n", i);
             return;
         }
 
@@ -1279,8 +1279,8 @@ void bissc_main(void *args)
             {
                 DebugP_log("\r\nERROR: BiSS-C firmware initialization failed for BiSS-C instance %u\n", i);
             }
-            DebugP_log("\r\nCheck whether encoder is connected and ensure proper connections\n");
-            DebugP_log("\r\nExit %s due to failed firmware initialization\n", __func__);
+            DebugP_log("\r\nCheck whether encoder is connected and ensure proper connections for BiSS-C instance %u\n", i);
+            DebugP_log("\r\nExit %s due to failed firmware initialization for BiSS-C instance %u\n", __func__, i);
             goto deinit;
         }
 
@@ -1401,9 +1401,8 @@ void bissc_main(void *args)
                     {
                         DebugP_log("\r\nERROR: Clock configuration failed for BiSS-C instance %u\n", i);
                     }
-                    DebugP_log("\r\nCheck whether encoder is connected and ensure proper connections\n");
                     DebugP_log("\r\nExiting application!\n");
-                    break;
+                    goto deinit;
                 }
             }
             ClockP_sleep(BISSC_CLOCK_CONFIG_DELAY_SEC);
@@ -1415,7 +1414,7 @@ void bissc_main(void *args)
              *        bissc_command_send() and bissc_command_wait() */
             for(i = 0; i < CONFIG_BISSC_NUM_INSTANCES; i++)
             {
-                DebugP_log("\r\n Instance %u:\n", i);
+                DebugP_log("\r\n BiSS-C instance %u:\n", i);
                 ret = bissc_get_pos(gAppBisscHandle[i]);
                 if(ret != SystemP_SUCCESS)
                 {
@@ -1736,7 +1735,7 @@ void bissc_main(void *args)
                 {
                     if(attrs[i]->channel0_enabled)  /* Channel 0 */
                     {
-                        DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) for channel 0: \n");
+                        DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) for BiSS-C instance %u channel 0: \n", i);
                         DebugP_scanf("%llu\n", &trigger_count[i][0]);
                         if((trigger_count[i][0] > iep_reset_count) || (trigger_count[i][0] <= BISSC_IEP_COUNTER_INCREMENT))
                         {
@@ -1747,7 +1746,7 @@ void bissc_main(void *args)
 
                     if(attrs[i]->channel1_enabled)  /* Channel 1 */
                     {
-                        DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) for channel 1: \n");
+                        DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) for BiSS-C instance %u channel 1: \n", i);
                         DebugP_scanf("%llu\n", &trigger_count[i][1]);
                         if((trigger_count[i][1] > iep_reset_count) || (trigger_count[i][1] <= BISSC_IEP_COUNTER_INCREMENT))
                         {
@@ -1757,7 +1756,7 @@ void bissc_main(void *args)
                     }
                     if(attrs[i]->channel2_enabled)  /* Channel 2 */
                     {
-                        DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) for channel 2: \n");
+                        DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) for BiSS-C instance %u channel 2: \n", i);
                         DebugP_scanf("%llu\n", &trigger_count[i][2]);
                         if((trigger_count[i][2] > iep_reset_count) || (trigger_count[i][2] <= BISSC_IEP_COUNTER_INCREMENT))
                         {
@@ -1765,11 +1764,10 @@ void bissc_main(void *args)
                             continue;
                         }
                     }
-
                 }
                 else
                 {
-                    DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) for instance %u: \n", i);
+                    DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) for BiSS-C instance %u: \n", i);
                     DebugP_scanf("%llu\n", &trigger_count[i][0]);
                     if((trigger_count[i][0] > iep_reset_count) || (trigger_count[i][0] <= BISSC_IEP_COUNTER_INCREMENT))
                     {
@@ -1891,7 +1889,7 @@ void bissc_main(void *args)
                 ret = bissc_configure_encoder_timeout(gAppBisscHandle[i], i);
                 if(ret != SystemP_SUCCESS)
                 {
-                    DebugP_log("\r| ERROR: Failed to configure encoder timeout");
+                    DebugP_log("\r| ERROR: Failed to configure encoder timeout for BiSS-C instance %u\n", i);
                 }
             }
         }

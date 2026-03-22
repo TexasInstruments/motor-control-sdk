@@ -137,18 +137,18 @@ SysConfig can be used to configure the following:
 \cond (SOC_AM263X || SOC_AM263PX)
 - Selecting the ICSSM PRU slice (Tested on ICSSM-PRU0)
 - Configuring PINMUX and GPIO
-- IEP event selection for periodic mode
+- IEP event selection for periodic trigger mode
 \endcond
 \if SOC_AM261X
 - Selecting the ICSSM PRU slice (Tested on ICSSM1-PRU0)
 - Configuring PINMUX and GPIO
-- IEP event selection for periodic mode
+- IEP event selection for periodic trigger mode
 \else
 - Selecting the ICSSG instance
 - Selecting the ICSSG PRU slice (Tested on ICSSG0-PRU1)
 - Configuring PINMUX, GPIO and ICSS clock to 200 MHz
 - Enabling SA Mux mode
-- IEP instance and IEP event selection for periodic mode
+- IEP instance and IEP event selection for periodic trigger mode
 \endif
 - Channel selection
 - Baud rate selection
@@ -158,10 +158,10 @@ SysConfig can be used to configure the following:
 
 - Utilizes the Peripheral IF mode (3-channel peripheral interface mode) for Tamagawa communication. Maximum of 3 channels are available per PRU slice. (Refer \ref PRUICSS_PERIPHERAL_IF_MODE for more details)
 - Each channel has 4 pins (Clock, Data out, Data in, Output enable)
-- Following table contains details of memory usage, IEP usage and interrupt controller usage
+- Following table contains details of memory usage, IEP usage and interrupt controller usage:
 
 \cond SOC_AM243X || SOC_AM64X
-\attention In addition to following resources used by PRU firmwares, SDK examples also configure IEPx CMP0 for IEP counter reset in periodic trigger CMP mode and IEPx CMP1 for generating SYNC OUT0 used as input to CAP in periodic trigger CAP mode.
+\attention In addition to the following resources used by PRU firmware, SDK examples also configure IEPx CMP0 for IEP counter reset in periodic trigger CMP mode and IEPx CMP1 for generating SYNC OUT0 used as input to CAP in periodic trigger CAP mode.
 
 <table>
 <tr>
@@ -209,7 +209,7 @@ SysConfig can be used to configure the following:
 \endcond
 
 \cond (SOC_AM261X || SOC_AM263X || SOC_AM263PX)
-\attention In addition to following resources used by PRU firmwares, SDK examples also configure IEP0 CMP0 for IEP counter reset in periodic trigger CMP mode.
+\attention In addition to the following resources used by PRU firmware, SDK examples also configure IEP0 CMP0 for IEP counter reset in periodic trigger CMP mode.
 
 <table>
 <tr>
