@@ -12,7 +12,7 @@ The HDSL diagnostic application does the following:
 - Configures pinmux, GPIO, ICSS clock to 300MHz,
 - Initializes ICSSG0-PRU1, ICSSG0-IEP0 and IEP1 (for SYNC mode support. Timesync router is used to latch the loopback.),
 - Loads lookup table for encoding/decoding of Hiperface data,
-- Loads the initialization section of PRU firmware & executes it.
+- Loads the initialization section of PRU firmware and executes it.
 
 The firmware is split into three sections: initialization, datalink and transport.
 At startup, the application displays details about the encoder and status.
@@ -41,7 +41,7 @@ The HDSL diagnostic application does the following:
 - Configures pinmux, GPIO, ICSS clock to 225MHz,
 - Initializes ICSSM1-PRU0, ICSSM0-IEP0 and ICSSM1-IEP0 (for SYNC mode support. Timesync router is used to latch the loopback.),
 - Loads lookup table for encoding/decoding of Hiperface data,
-- Loads the initialization section of PRU firmware & executes it.
+- Loads the initialization section of PRU firmware and executes it.
 
 The firmware is split into three sections: initialization, datalink and transport.
 At startup, the application displays details about the encoder and status.
@@ -132,6 +132,7 @@ This example supports two HDSL channels using two PRUs from same PRU-ICSSM. In t
 - Each instance operates independently on a different PRU slice (PRU0 or PRU1).
 - Both instances share common PRU-ICSS level resources.
 - PRU-ICSS Core Clock frequency should be 225 MHz
+- For dual channel example testing, the application takes UART command input from user, then calls the APIs one by one for each channel.
 
 \endcond
 
@@ -157,32 +158,32 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 
 \note For more design details of the TIDEP-01015 3 Axis Board, Interface card connecting EVM and TIDEP-01015 3 Axis, or HDSL AM64xE1 Transceiver card, please contact TI via E2E/FAE.
 
-## Hardware Prerequisites for BP-AM2BLDCSERVO Booster Pack & LP-AM243
+## Hardware Prerequisites for BP-AM2BLDCSERVO Booster Pack and LP-AM243
 
 - HDSL Encoder(s)
 - <a href="https://www.ti.com/tool/LP-AM243" target="_blank"> LP-AM243 Board </a>
 - <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
 
-## Hardware Setup (Using TIDA-00179, TIDEP-01015 and Interface board)
+## Hardware Setup (Using TMDS243EVM, TIDA-00179, TIDEP-01015 and Interface board)
 
 \imageStyle{HDSL_Connections.png,width:40%}
-\image html HDSL_Connections.png "Hardware Setup"
+\image html HDSL_Connections.png "Hardware Setup using TMDS243EVM, TIDA-00179, TIDEP-01015 and Interface board for HDSL"
 
-## Hardware Setup (Using HDSL AM64xE1 Transceiver)
+## Hardware Setup (Using TMDS243EVM and HDSL AM64xE1 Transceiver)
 
 \imageStyle{HDSL_AM64xE1.png,width:60%}
-\image html HDSL_AM64xE1.png "Hardware Setup"
+\image html HDSL_AM64xE1.png "Hardware Setup using TMDS243EVM and HDSL AM64xE1 Transceiver for HDSL"
 
-## Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack & LP-AM243)
+## Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack and LP-AM243)
 \imageStyle{HDSL_Booster_Pack.png,width:40%}
-\image html HDSL_Booster_Pack.png  "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for HDSL"
+\image html HDSL_Booster_Pack.png "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for HDSL"
 
 \note
     - The PROC109A version of LP-AM243 with BP-AM2BLDCSERVO Booster Pack supports two channels
     - To enable the second channel on LP, SW6 needs to be turn OFF
     - To enable VSENSOR1/VSENSOR2, BoosterPack pins J8.73/J8.74 must be set high (In this example, this pin is configured in GPIO mode and pulled high)
 
-#### BP-AM2BLDCSERVO Booster Pack Jumper Configuration
+### BP-AM2BLDCSERVO Booster Pack Jumper Configuration
 <table>
 <tr>
     <th>Designator</th>
@@ -255,16 +256,16 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 \cond SOC_AM261X
 # Steps to Run the Example
 
-## Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack & LP-AM261)
+## Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack and LP-AM261)
 
 \imageStyle{HDSL_AM261xLP_SETUP.jpg,width:40%}
-\image html HDSL_AM261xLP_SETUP.jpg  "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for HDSL"
+\image html HDSL_AM261xLP_SETUP.jpg "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for HDSL"
 
 \note
     - The Rev. A version of LP-AM261 with BP-AM2BLDCSERVO Booster Pack supports two channels
     - To enable VSENSOR1/VSENSOR2, BoosterPack pins J8.73/J8.74 must be set high (In this example, this pin is configured in GPIO mode and pulled high)
 
-#### LP-AM261 Jumper Configuration
+### LP-AM261 Jumper Configuration
 
 <table>
 <tr>
@@ -284,7 +285,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 </tr>
 </table>
 
-#### BP-AM2BLDCSERVO Booster Pack Jumper Configuration
+### BP-AM2BLDCSERVO Booster Pack Jumper Configuration
 <table>
 <tr>
     <th>Designator</th>
@@ -355,7 +356,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 \endcond
 \cond SOC_AM261X
 # Steps to Run the Example
-## Hardware Prerequisites for BP-AM2BLDCSERVO Booster Pack & LP-AM261
+## Hardware Prerequisites for BP-AM2BLDCSERVO Booster Pack and LP-AM261
 
 - HDSL Encoder(s)
 - <a href="https://www.ti.com/tool/LP-AM261" target="_blank"> LP-AM261 Board </a>

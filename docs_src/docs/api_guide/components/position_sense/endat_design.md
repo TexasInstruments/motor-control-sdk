@@ -125,17 +125,8 @@ Then it checks the operation mode: host trigger mode, periodic CMP mode, or peri
 **Host Trigger Mode:** The firmware waits until a command has been triggered through the interface by the host application.
 
 **Periodic CMP Mode (Compare Event Mode):** In CMP mode, IEP timer compare event triggers position sampling. The firmware monitors the configured IEP compare event and automatically initiates EnDat transactions when the IEP timer counter matches the compare value. This enables fixed-rate periodic sampling.
-- Compare event range: CMP0-CMP15 (0-15)
-- Configured via \ref endat_config_periodic_trigger_cmp_mode() API
-- IEP compare event number set via \ref endat_config_iep_cmp_event() API
-- Event selection can be done in SysConfig
 
 **Periodic CAP Mode (Capture Event Mode):** In CAP mode, external signals trigger position sampling through IEP capture events. The capture event is triggered on the rising edge of the external input pulse, enabling event-driven position capture. \if (SOC_AM243X || SOC_AM64X) Internal signals can also be mapped to IEP capture events via TIMESYNC/GPIOMUX router. \else Internal signals can also be mapped to IEP capture events via XBAR. \endif
-- Capture event range: CAP0-CAP7 (0-7)
-- Configured via \ref endat_config_periodic_trigger_cap_mode() API
-- IEP capture event number set via \ref endat_config_iep_cap_event() API
-- Event selection can be done in SysConfig
-- CAP6 and CAP7 support falling edge detection as well. In EnDat, rising edge is used always.
 
 The following is the operation flow for the periodic mode:
 
@@ -150,8 +141,6 @@ The following is the operation flow for the periodic mode:
 \endcond
 
 \attention Input cycle time (CMP mode) or external trigger period (CAP mode) should be greater than or equal to the EnDat communication cycle time.
-
-\note Both IEP event configuration APIs (endat_config_iep_cmp_event() and endat_config_iep_cap_event()) are automatically called during endat_init() with values configured in SysConfig.
 
 If it is a normal command, it reads command, its attributes like transmit bits, receive bits etc., then it transmits the data and collects the data sent by the encoder stored onto a buffer with one byte representing a bit (since oversample ratio of 8 is used).
 Next it checks whether there is 2.2 command supplement to be transmitted based on attributes, if so it transmits it.
@@ -212,7 +201,7 @@ If transmit was going on, it will wait till it has finished and then transmit GO
 
 Receive bits obtained via command attribute are stored as header (initial 2 bytes) in the receive buffer.
 Then it waits till receive valid flag has been set. Once set, 1 byte corresponding to 1 bit (because of oversampling of 8) is read and stored in receive buffer and the flags are cleared.
-Receive buffer pointer is incremented & receive bit count decremented. This continues till count is zero, once zero, it extracts receive data one more time to take care of SB (receive count excludes SB).
+Receive buffer pointer is incremented and receive bit count decremented. This continues till count is zero, once zero, it extracts receive data one more time to take care of SB (receive count excludes SB).
 If 2.2 command supplement is not present, transmit re-init is done.
 If using "Multi Channel with encoders of different make" configuration where load share mode is enabled, the primary core waits for synchronization bits for active channels to be cleared before performing TX Global Init.
 
@@ -222,7 +211,7 @@ If using "Multi Channel with encoders of different make" configuration where loa
 
 \image html endat_2_2_supplement_send.png "EnDAT 2.2 command supplement send"
 
-Clock mode is configured to stop low after transmit. 2.2 command supplement to be transmitted is written to FIFO preceded by 7 dummy bits & SB.
+Clock mode is configured to stop low after transmit. 2.2 command supplement to be transmitted is written to FIFO preceded by 7 dummy bits and SB.
 Transmission is configured to transmit till end of the FIFO. Transmission is started after making sure that transmit module is not busy.
 
 ###### Receive Downsample
@@ -230,12 +219,12 @@ Transmission is configured to transmit till end of the FIFO. Transmission is sta
 \image html endat_receive_downsampling.png "Downsampling"
 
 This is the most complex portion of the firmware. Received data is exposed through PRU interface in four bytes.
-First two words (word = 4 bytes) holds the position data, third holds additional information 2 (if only second additional info is present or both present) or 1 (if only first additional info is present) & the last additional information 1 (if both present).
+First two words (word = 4 bytes) holds the position data, third holds additional information 2 (if only second additional info is present or both present) or 1 (if only first additional info is present) and the last additional information 1 (if both present).
 The order is as mentioned in EnDat 2.2 specification. Splitting the received data on word boundaries when additional info's are present causes the complexity here.
 
 If command is neither 2.2 nor position request or if no additional info is present, handling is easy – just copy the received data into initial 2 words in the order it is received.
 If command is 2.2 position command and depending on the number of additional info's, markers (used in the downsampling loop) are set to write additional info's to next word boundaries.
-If only one addinfo is present, marker "rx pos bits" stores clocks required to receive position (inclusive of CRC, F1 & F2).
+If only one addinfo is present, marker "rx pos bits" stores clocks required to receive position (inclusive of CRC, F1 and F2).
 If both addinfo's are present another marker is set to 2 words (first 2 words holds the position) plus 30 bit to account for addinfo.
 If markers are not required, then their values are set so that they never match the counting receive bits, hence the value "0xff".
 

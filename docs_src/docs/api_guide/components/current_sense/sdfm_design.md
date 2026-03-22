@@ -5,7 +5,7 @@
 ## Introduction
 This design implements Sigma delta interface on TI Sitara™ processors using PRU-ICSS.
 ICSS %SDFM is a Sigma delta filter for phase current measurement.
-Only two lines are required for each channel, a differential pair each for %SDFM clock & %SDFM data.
+Only two lines are required for each channel, a differential pair each for %SDFM clock and %SDFM data.
 Clock is provided by an external device or internal device and data comes from a sigma delta modulator in the form of a digital bit stream.
 
 ## System Overview

@@ -5,10 +5,6 @@
 Starting with MCU+ SDK version 08.05.00, the Tamagawa firmware and examples are based on EnDAT hardware interface from PRU-ICSSG.
 \endif
 
-\cond SOC_AM261X
-\note ICSSM1 PRU Core clock is set to 225 MHz.
-\endcond
-
 ## Introduction
 
 The Tamagawa diagnostic application does the following:
@@ -32,17 +28,17 @@ A serial terminal application (like teraterm/ hyperterminal/ minicom) is then ru
 To configure, select the serial port corresponding to the port emulated over USB by the EVM.
 The host serial port should be configured to 115200 baud, no parity, 1 stop bit and no flow control.
 
-\if (SOC_AM243X || SOC_AM64X)
-The Tamagawa receiver firmware running on ICSSG0-PRU1 provides a defined interface.
-\endif
+\cond SOC_AM243X || SOC_AM64X
+\note Tamagawa firmware is tested with ICSS Core Clock running at 200 MHz frequency.
+\endcond
 
-\if (SOC_AM263X || SOC_AM263PX)
-The Tamagawa receiver firmware running on ICSSM-PRU0 provides a defined interface.
-\endif
+\cond SOC_AM261X
+\note Tamagawa firmware is tested with ICSS Core Clock running at 225 MHz frequency or ICSS UART Clock running at 160 MHz only.
+\endcond
 
-\if (SOC_AM261X)
-The Tamagawa receiver firmware running on ICSSM1-PRU0 provides a defined interface.
-\endif
+\cond (SOC_AM263X || SOC_AM263PX)
+\note Tamagawa firmware is tested with ICSS Core Clock running at 200 MHz frequency only.
+\endcond
 
 The Tamagawa diagnostic application interacts with the Tamagawa receiver firmware interface. It then presents the user with menu options to select Data ID code (as defined by Tamagawa) to be sent to the encoder. The application collects the data entered by the user and configures the relevant interface. Then via the Tamagawa receiver interface, the command is triggered. Once the command completion is indicated by the interface, the status of the transaction is checked. If the Status indicates success, the result is presented to the user.
 
@@ -51,13 +47,13 @@ The Tamagawa diagnostic application interacts with the Tamagawa receiver firmwar
 The Tamagawa diagnostic application supports two types of periodic trigger modes for continuous position sampling as described in \ref TAMAGAWA_PERIODIC_MODES.
 
 ### CMP Mode (Compare Event Mode)
-- Implementation: Command 9 demonstrates this mode using position command 1
+- Implementation: Command 9 demonstrates this mode using position command `DATA_ID_0`
 - Configuration: Uses a user-defined compare value to trigger sampling events
 - IEP Counter Reset: Uses CMP0 by default (skip if reset is handled differently)
 - Notification: Firmware triggers an Arm® Cortex®-R5F interrupt after receiving encoder response
 
 ### CAP Mode (Capture Event Mode)
-- Implementation: Command 10 demonstrates this mode using position command 1
+- Implementation: Command 10 demonstrates this mode using position command `DATA_ID_0`
 \cond SOC_AM243X
 - Router Configuration for CAP6/CAP7 (LATCH_IN0/LATCH_IN1) via TIMESYNC router and CAP0 via GPIOMUX router (requires external GPIO connection)
     - This example configures the TIMESYNC/GPIOMUX router to use IEP SYNC OUT0 as an input signal for the CAP6/CAP7/CAP0 events. This configuration includes:
@@ -81,13 +77,10 @@ The Tamagawa diagnostic application supports two types of periodic trigger modes
 3. CMP Resource Allocation
     - Avoid using CMP0 if it's already used to IEP counter reset
     - Avoid using CMP1/CMP2 if they're used to SYNC OUT generation
-    - Avoid sharing CMP events across different channels or instances of Tamagawa or other encoders. Each CMP event must be assigned exclusively to a single encoder channel. 
+    - Avoid sharing CMP events across different channels or instances of Tamagawa or other encoders. Each CMP event must be assigned exclusively to a single encoder channel.
 4. Modifying Commands in Periodic Mode
-    - Default: cmd 1 is used by default
-    - To use a different command:
-        - First modify the `tamagawa_process_periodic_command()` function in example code
-        - Before switching to periodic mode, send this command once using appropriate API in host trigger mode
-        - Ensure all prerequisite APIs are called before the command API to properly set up command data. Refer the `tamagawa_handle_command()` function in the example code to identify all required API calls for specific command
+    - Default: `DATA_ID_0` is used by default
+    - To use a different command, modify the `TAMAGAWA_PERIODIC_MODE_CMD` macro value in example code
 
 ## Important files and directory structure
 
@@ -138,7 +131,7 @@ The Tamagawa diagnostic application supports two types of periodic trigger modes
  Toolchain      | ti-arm-clang
  Board          | @VAR_BOARD_NAME_LOWER (single channel, multi channel using single PRU), @VAR_LP_BOARD_NAME_LOWER (single channel, multi channel using single PRU, multi channel using three PRUs - load share mode)
  Example folder | examples/position_sense/tamagawa_diagnostic/single_channel
- ^              | examples/position_sense/tamagawa_diagnostic/multi_channel_single_pru 
+ ^              | examples/position_sense/tamagawa_diagnostic/multi_channel_single_pru
  ^              | examples/position_sense/tamagawa_diagnostic/multi_channel_load_share
 
  ## Single Channel with Single PRU Example
@@ -158,7 +151,7 @@ This example supports up to three Tamagawa channels using three PRUs from same P
 - Load share mode is used. Refer \ref PRUICSSG_LOAD_SHARE_MODE for more details.
 - Encoders of different make and different numbers of encoders connected across channels can be connected.
 - Encoders of the same frequency must be connected to all configured channels.
-- In this mode, data reception can start independently on all channels.
+- Data reception can start independently on all channels.
 - After clock transmission, all channels wait for a response and process the response independently. However, all channels must finish processing before the next command can be triggered.
 - 1 Tamagawa driver instance and corresponding SysConfig Tamagawa module instance is used for all channels.
 
@@ -169,10 +162,10 @@ This example supports up to three Tamagawa channels using three PRUs from same P
  Parameter      | Value
  ---------------|-----------
  CPU + OS       | r5fss0-0 freertos
- ICSS           | ICSSM
+ ICSS           | ICSSM0
  PRU            | PRU0
  Toolchain      | ti-arm-clang
- Board          | @VAR_LP_BOARD_NAME_LOWER (Single channel example)
+ Board          | @VAR_LP_BOARD_NAME_LOWER
  Example folder | examples/position_sense/tamagawa_diagnostic/single_channel
 
 ## Single Channel with Single PRU Example
@@ -190,7 +183,7 @@ This example supports one Tamagawa channel using one PRU. In this example:
  PRU            | PRU0 (single channel)
  ^              | PRU0, PRU1 (dual channel)
  Toolchain      | ti-arm-clang
- Board          |  @VAR_LP_BOARD_NAME_LOWER (Single channel and dual channel examples)
+ Board          | @VAR_LP_BOARD_NAME_LOWER
  Example folder | examples/position_sense/tamagawa_diagnostic/single_channel
  ^              | examples/position_sense/tamagawa_diagnostic/dual_channel
 
@@ -204,6 +197,8 @@ This example supports two Tamagawa channels using two PRUs from same PRU-ICSSM. 
 - Each instance operates independently on a different PRU slice (PRU0 or PRU1).
 - Both instances share common PRU-ICSS level resources.
 - Different PRUs can handle encoders with different frequencies simultaneously. For example, you can configure 4 MHz encoder on PRU0 channel, while configuring 8 MHz on PRU1 channel.
+- For dual channel example testing, the application takes UART command input from user, then sends the commands one by one for each channel.
+- When using two instances example, avoid selecting the same CMP event or CAP event for both instances. Each instance must use a different IEP event number to prevent conflicts.
 
 \endcond
 
@@ -255,22 +250,22 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 
 \cond SOC_AM243X
 
-## Hardware Setup with TMDS243EVM
+## Hardware Setup (Using TMDS243EVM, TIDA-00179, TIDEP-01015 and Interface board)
 \imageStyle{Tamagawa_setup.jpg,width:60%}
-\image html Tamagawa_setup.jpg "Hardware Setup for 3 channels on EVM"
+\image html Tamagawa_setup.jpg "Hardware Setup using TMDS243EVM, TIDA-00179, TIDEP-01015 and Interface board for Tamagawa"
 
 \imageStyle{Tamagawa_connections.JPG,width:60%}
 \image html Tamagawa_connections.JPG "Tamagawa Encoder Hardware Setup for 3 channels"
 
-## Hardware Setup(Using BP-AM2BLDCSERVO Booster Pack & LP-AM243)
+## Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack and LP-AM243)
 \imageStyle{Tamagawa_Booster_Pack.png,width:40%}
-\image html Tamagawa_Booster_Pack.png  "Hardware Setup with LP-AM243"
+\image html Tamagawa_Booster_Pack.png "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for Tamagawa"
 \note
     - The PROC109A version of LP-AM243 with BP-AM2BLDCSERVO Booster Pack supports two channels
     - To enable the second channel on LP, SW6 needs to be turned OFF
     - To enable VSENSOR1/VSENSOR2, BoosterPack pins J8.73/J8.74 must be set high (In this example, this pin is configured in GPIO mode and pulled high)
 
-#### BP-AM2BLDCSERVO Booster Pack Jumper Configuration
+### BP-AM2BLDCSERVO Booster Pack Jumper Configuration
 <table>
 <tr>
     <th>Designator</th>
@@ -344,24 +339,30 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 \cond (SOC_AM263X || SOC_AM263PX)
 
 \cond (SOC_AM263X)
-## Hardware Setup(Using BP-AM2BLDCSERVO Booster Pack & LP-AM263)
+## Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack and LP-AM263)
 \imageStyle{Tamagawa_am263x_hw_Setup.jpeg,width:60%}
-\image html Tamagawa_am263x_hw_Setup.jpeg "Hardware Setup for single channel on LP-AM263 + BP"
+\image html Tamagawa_am263x_hw_Setup.jpeg "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for Tamagawa"
 \endcond
 
 \cond (SOC_AM263PX)
-## Hardware Setup(Using BP-AM2BLDCSERVO Booster Pack & LP-AM263P)
+## Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack and LP-AM263P)
 \imageStyle{Tamagawa_am263px_hw_Setup.jpeg,width:60%}
-\image html Tamagawa_am263px_hw_Setup.jpeg "Hardware Setup for single channel on LP-AM263P + BP"
+\image html Tamagawa_am263px_hw_Setup.jpeg "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for Tamagawa"
 \endcond
 
-#### LaunchPad Jumper Configuration
 \note
-    - Connect the jumpers J13 and J26 for providing 3.3V and 5V to boosterpack.
     - To enable VSENSOR1, BoosterPack pin J8.73 must be set high (In this example, this pin is configured in GPIO mode and pulled high)
 
+\cond (SOC_AM263X)
+### LP-AM263 Jumper Configuration
+\endcond
+\cond (SOC_AM263PX)
+### LP-AM263P Jumper Configuration
+\endcond
 
-#### BP-AM2BLDCSERVO Booster Pack Jumper Configuration
+Connect the jumpers J13 and J26 for providing 3.3V and 5V to boosterpack.
+
+### BP-AM2BLDCSERVO Booster Pack Jumper Configuration
 <table>
 <tr>
     <th>Designator</th>
@@ -434,18 +435,20 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 
 \cond SOC_AM261X
 
-## Hardware Setup(Using BP-AM2BLDCSERVO Booster Pack & LP-AM261)
+## Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack and LP-AM261)
 
 \imageStyle{Tamagawa_am261x_hw_Setup.jpeg,width:60%}
-\image html Tamagawa_am261x_hw_Setup.jpeg "Hardware Setup with LP-AM261"
+\image html Tamagawa_am261x_hw_Setup.jpeg "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for Tamagawa"
 
-#### LaunchPad Jumper Configuration
 \note
-    - Connect the jumpers J13 and J26 for providing 3.3V and 5V to boosterpack.
     - The Rev. A version of LP-AM261 with BP-AM2BLDCSERVO Booster Pack supports two channels
     - To enable VSENSOR1/VSENSOR2, BoosterPack pins J8.73/J8.74 must be set high (In this example, this pin is configured in GPIO mode and pulled high)
 
-#### BP-AM2BLDCSERVO Booster Pack Jumper Configuration
+### LP-AM261 Jumper Configuration
+
+Connect the jumpers J13 and J26 for providing 3.3V and 5V to boosterpack.
+
+### BP-AM2BLDCSERVO Booster Pack Jumper Configuration
 <table>
 <tr>
     <th>Designator</th>

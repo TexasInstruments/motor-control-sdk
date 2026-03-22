@@ -105,7 +105,7 @@ SysConfig can be used to configure the following:
 - IEP instance and IEP event selection for periodic trigger mode
 - Booster Pack Support: Enable when using BP-AM2BLDCSERVO
 
-\note EnDAT3 firmware supports operation with ICSS Core Clock running at 200 MHz/300 MHz frequency only. ICSS Core Clock at 225/250/333 MHz is not supported due to clock divider requirements.
+\note EnDAT3 firmware is tested with ICSS Core Clock running at 200 MHz/300 MHz frequency only. ICSS Core Clock at 225/250/333 MHz is not supported due to clock divider requirements.
 
 \endcond
 
@@ -119,13 +119,12 @@ SysConfig can be used to configure the following:
 - IEP event selection for periodic trigger mode
 - Booster Pack Support: Enable when using BP-AM2BLDCSERVO
 
-\note EnDAT3 firmware supports operation with ICSS Core Clock running at 200 MHz only (R5F Core Clock has to be 400 MHz) due to clock divider requirements.
+\note EnDAT3 firmware is tested with ICSS Core Clock running at 200 MHz only (R5F Core Clock has to be 400 MHz) due to clock divider requirements.
 
 \endcond
 
 \cond SOC_AM263PX
 SysConfig can be used to configure the following:
-- Selecting the ICSSM instance (Tested on ICSSM)
 - Selecting the ICSSM PRU slice (Tested on ICSSM-PRU0)
 - Configuring PINMUX
 - Channel selection (Channel 0, Channel 1, or Channel 2)
@@ -133,7 +132,7 @@ SysConfig can be used to configure the following:
 - IEP event selection for periodic trigger mode
 - Booster Pack Support: Enable when using BP-AM2BLDCSERVO
 
-\note EnDAT3 firmware supports operation with ICSS Core Clock running at 200 MHz frequency only due to clock divider requirements.
+\note EnDAT3 firmware is tested with ICSS Core Clock running at 200 MHz frequency only due to clock divider requirements.
 \endcond
 
 ## PRU-ICSS Resource Usage
@@ -161,7 +160,7 @@ SysConfig can be used to configure the following:
     <td> DMEM: 508 Bytes (0x0000 to 0x01FB) <br> IMEM: ~ 3.55 kB
     <td> <b>CMP Mode:</b> IEPx CMPy for trigger (IEPx and CMPy selected in SysConfig)<br><b>CAP Mode:</b> IEPx CAPy for trigger (IEPx and CAPy selected in SysConfig)
     <td> INTC event/input number 18 or 21 (prx_pru_mst_intr[2/5]_intr_req) is used to trigger interrupt to Arm® Cortex®-R5F based on slice
-    <td> IEP events and INTC signals are used only in periodic trigger modes
+    <td> IEP, CMP/CAP events and INTC signals are used only in periodic trigger modes
 </tr>
 </table>
 
@@ -188,7 +187,7 @@ SysConfig can be used to configure the following:
     <td> DMEM: 508 Bytes (0x0000 to 0x01FB) <br> IMEM: ~ 3.55 kB
     <td> <b>CMP Mode:</b> IEP0 CMPy for trigger (IEP0 CMPy selected in SysConfig)<br><b>CAP Mode:</b> IEP0 CAPy for trigger (IEP0 CAPy selected in SysConfig)
     <td> INTC event/input number 18 or 21 (prx_pru_mst_intr[2/5]_intr_req) is used to trigger interrupt to Arm® Cortex®-R5F based on slice
-    <td> IEP events and INTC signals are used only in periodic trigger modes
+    <td> IEP, CMP/CAP events and INTC signals are used only in periodic trigger modes
 </tr>
 </table>
 
@@ -304,24 +303,43 @@ EnDat3 uses a frame-based protocol with three types of frames:
 
 #### Periodic CMP Trigger Mode
 
-- IEP timer compare events trigger position sampling based on compare events
-- A compare event occurs when the IEP timer reaches the configured compare value
-- This is useful for applications requiring position sampling at regular intervals
+- IEP timer compare event triggers position sampling
+- Compare events occur when the IEP timer counter matches the configured compare value
+- Enables fixed-rate periodic sampling
+
+**Configuration:**
+- Compare event range: CMP0-CMP15 (0-15)
+- Mode configured via \ref endat3_set_operating_mode() API
+- IEP compare event number set via \ref endat3_config_iep_cmp_event() API
+- Event selection can be done in SysConfig
+- IEP configuration and CMP event configuration should be done in application. Driver uses above APIs to inform firmware to enable CMP periodic mode and uses the configured CMP event to start sampling periodically.
 
 #### Periodic CAP Trigger Mode
 
-- External signals trigger position sampling based on IEP capture events
-- A capture event is triggered on rising edge of the input pulse
-- This is useful for synchronizing position capture with external inputs
 \cond SOC_AM243X
-- Internal signals can also be mapped to IEP capture events via TIMESYNC/GPIOMUX router.
+- External signals trigger position sampling through IEP capture events
+- The capture event is triggered on the rising edge of the external input pulse, enabling event-driven position capture
+- Internal signals can also be mapped to IEP capture events via TIMESYNC/GPIOMUX router
 \endcond
 
 \cond (SOC_AM261X || SOC_AM263X || SOC_AM263PX)
-- Internal signals can also be mapped to IEP capture events via XBAR.
+- External signals trigger position sampling through IEP capture events
+- The capture event is triggered on the rising edge of the external input pulse, enabling event-driven position capture
+- Internal signals can also be mapped to IEP capture events via XBAR
 \endcond
 
-\note CAP6 and CAP7 support falling edge detection as well. In EnDat3, rising edge is used always.
+**Configuration:**
+- Capture event range: CAP0-CAP7 (0-7)
+- Mode configured via \ref endat3_set_operating_mode() API
+- IEP capture event number set via \ref endat3_config_iep_cap_event() API
+- Event selection can be done in SysConfig
+- IEP configuration and CAP event configuration should be done in application. Driver uses above APIs to inform firmware to enable CAP periodic mode and uses the configured CAP event to start sampling periodically.
+
+\note
+    - External signal must be routed to IEP capture input (if needed) in application
+    - CAP6 and CAP7 support falling edge detection as well. In EnDAT3, rising edge is used always.
+
+\attention Both IEP event configuration APIs (endat3_config_iep_cmp_event() and endat3_config_iep_cap_event()) are automatically called during endat3_init() with values configured in SysConfig.
 
 ## EnDAT3 Design
 

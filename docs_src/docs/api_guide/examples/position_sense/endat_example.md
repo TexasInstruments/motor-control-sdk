@@ -12,6 +12,17 @@ receiver interface.
 \note ICSSM UART clock set to 160 MHz is used to drive the EnDat interface. In three channel interface of PRU-ICSS, receive (Rx) is oversampled at 8x of send (Tx). Therefore, the encoder interface frequency "f" should be such that 160 MHz is divisible by "f" and "8 times f".
 \endcond
 
+\cond SOC_AM243X || SOC_AM64X
+\note EnDat firmware is tested with ICSS Core Clock running at 200 MHz/300 MHz frequency or ICSS UART Clock running at 192 MHz only.
+\endcond
+
+\cond SOC_AM261X
+\note EnDat firmware is tested with ICSS Core Clock running at 225 MHz frequency or ICSS UART Clock running at 160 MHz only.
+\endcond
+
+\cond (SOC_AM263X || SOC_AM263PX)
+\note EnDat firmware is tested with ICSS Core Clock running at 200 MHz frequency or ICSS UART Clock running at 192 MHz only.
+\endcond
 
 The diagnostic invokes these APIs to:
 - initialize EnDat,
@@ -76,7 +87,7 @@ After the user selects an EnDat command:
 The EnDat diagnostic application supports two types of periodic trigger modes for continuous position sampling as described in \ref ENDAT_PERIODIC_MODES.
 
 ### CMP Mode (Compare Event Mode)
-- Implementation: Command 200 demonstrates this mode, user can select any position command 
+- Implementation: Command 200 demonstrates this mode, user can select any position command
 - Configuration: Uses a user-defined compare value to trigger sampling events
 - IEP Counter Reset: Uses CMP0 by default (skip if reset is handled differently)
 - Notification: Firmware triggers an Arm® Cortex®-R5F interrupt after receiving encoder response
@@ -106,7 +117,7 @@ The EnDat diagnostic application supports two types of periodic trigger modes fo
 3. CMP Resource Allocation
     - Avoid using CMP0 if it's already used to IEP counter reset
     - Avoid using CMP1/CMP2 if they're used to SYNC OUT generation
-    - Avoid sharing CMP events across different channels or instances of EnDat or other encoders. Each CMP event must be assigned exclusively to a single encoder channel. 
+    - Avoid sharing CMP events across different channels or instances of EnDat or other encoders. Each CMP event must be assigned exclusively to a single encoder channel.
 
 ### Endat Example Implementation
 
@@ -160,6 +171,9 @@ This example supports one EnDat channel using one PRU. In this example:
 ##  Multi Channel with Single PRU Example
 This example supports up to three EnDat channels using one PRU. In this example:
 - Encoders of the same frequency must be connected to all configured channels.
+- Data reception must happen simultaneously on all channels.
+- The encoder configuration and cable length should be the same on all channels.
+- If encoders across channels don't respond at the same time, this example will not work. Load share configuration should be used instead.
 - 1 EnDat driver instance and corresponding SysConfig EnDat module instance is used for all channels.
 
 ## Multi Channel with Multiple PRUs (Load Share) Example
@@ -167,7 +181,8 @@ This example supports up to three EnDat channels using three PRUs from same PRU-
 - Load share mode is used. Refer \ref PRUICSSG_LOAD_SHARE_MODE for more details.
 - Encoders of different make and different numbers of encoders connected across channels can be connected.
 - Encoders of the same frequency must be connected to all configured channels.
-- In load share mode, each channel can have different memory areas, MRS codes, or parameters (command type remains the same).
+- Data reception can start independently on all channels.
+- Each channel can have different memory areas, MRS codes, or parameters (command type remains the same).
 - After a command is sent, all channels wait for a response and process the response independently. However, all channels must finish processing before the next command can be triggered.
 - 1 EnDat driver instance and corresponding SysConfig EnDat module instance is used for all channels.
 
@@ -196,7 +211,7 @@ This example supports two EnDat channels using two PRUs from same PRU-ICSSM. In 
 - Each instance operates independently on a different PRU slice (PRU0 or PRU1).
 - Both instances share common PRU-ICSS level resources.
 - Different PRUs can handle encoders with different frequencies simultaneously. For example, you can connect a 4 MHz encoder to a PRU0 channel, while connecting an 8 MHz encoder to a PRU1 channel.
-- For dual channel example testing, the application takes commands for both instances from user, then sends the commands one by one. So the user needs to ensure that the entered command for both instances is correct to perform the correct operation. For continuous/periodic modes, always enter the same command and parameters for both instances, as it uses the same command for both.
+- For dual channel example testing, the application takes commands for both instances from user, then sends the commands one by one for each channel. So the user needs to ensure that the entered command for both instances is correct to perform the correct operation. For continuous/periodic modes, always enter the same command and parameters for both instances, as it uses the same command for both.
 - When using two instances example, avoid selecting the same CMP event or CAP event for both instances. Each instance must use a different IEP event number to prevent conflicts.
 
 \endcond
@@ -206,7 +221,7 @@ This example supports two EnDat channels using two PRUs from same PRU-ICSSM. In 
  Parameter      | Value
  ---------------|-----------
  CPU + OS       | r5fss0-0 freertos
- ICSSM          | ICSSM
+ ICSSM          | ICSSM0
  PRU            | PRU0
  Toolchain      | ti-arm-clang
  Board          | @VAR_LP_BOARD_NAME_LOWER
@@ -269,19 +284,19 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 
 \cond SOC_AM243X
 
-## Hardware Setup with TMDS243EVM
+## Hardware Setup (Using TMDS243EVM, TIDA-00179, TIDEP-01015 and Interface board)
 \imageStyle{EnDAT_Connections.png,width:40%}
-\image html EnDAT_Connections.png "Hardware Setup with TMDS243EVM"
+\image html EnDAT_Connections.png "Hardware Setup using TMDS243EVM, TIDA-00179, TIDEP-01015 and Interface board for EnDat"
 
-## Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack & LP-AM243)
+## Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack and LP-AM243)
 \imageStyle{EnDat_Booster_Pack.png,width:40%}
-\image html EnDat_Booster_Pack.png  "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP-AM243 for EnDat"
+\image html EnDat_Booster_Pack.png "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for EnDat"
 \note
     - The PROC109A version of LP-AM243 with BP-AM2BLDCSERVO Booster Pack supports two channels
     - To enable the second channel on LP, SW6 needs to be turned OFF
     - To enable VSENSOR1/VSENSOR2, BoosterPack pins J8.73/J8.74 must be set high (In this example, this pin is configured in GPIO mode and pulled high)
 
-#### BP-AM2BLDCSERVO Booster Pack Jumper Configuration
+### BP-AM2BLDCSERVO Booster Pack Jumper Configuration
 <table>
 <tr>
     <th>Designator</th>
@@ -353,24 +368,29 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 
 \cond (SOC_AM263X || SOC_AM263PX)
 
+\if SOC_AM263X
+## Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack and LP-AM263)
+\imageStyle{EnDat_am263x_hw_Setup.jpeg,width:60%}
+\image html EnDat_am263x_hw_Setup.jpeg "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for EnDat"
+\else
+## Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack and LP-AM263P)
+\imageStyle{EnDat_am263px_hw_Setup.jpeg,width:60%}
+\image html EnDat_am263px_hw_Setup.jpeg "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for EnDat"
+\endif
+
 \note
     - To enable VSENSOR1, BoosterPack pin J8.73 must be set high (In this example, this pin is configured in GPIO mode and pulled high)
 
-\if SOC_AM263X
-## Hardware Setup with LP-AM263
-\imageStyle{EnDat_am263x_hw_Setup.jpeg,width:60%}
-\image html EnDat_am263x_hw_Setup.jpeg "Hardware Setup for single channel on LP-AM263 + BP"
-\else
-## Hardware Setup with LP-AM263PX
-\imageStyle{EnDat_am263px_hw_Setup.jpeg,width:60%}
-\image html EnDat_am263px_hw_Setup.jpeg "Hardware Setup for single channel on LP-AM263P + BP"
-\endif
-
-#### LaunchPad Jumper Configuration
+\cond (SOC_AM263X)
+### LP-AM263 Jumper Configuration
+\endcond
+\cond (SOC_AM263PX)
+### LP-AM263P Jumper Configuration
+\endcond
 
 Connect the jumpers J13 and J26 for providing 3.3V and 5V to boosterpack.
 
-#### Booster Pack Jumper Configuration
+### BP-AM2BLDCSERVO Booster Pack Jumper Configuration
 <table>
 <tr>
     <th>Designator</th>
@@ -442,19 +462,19 @@ Connect the jumpers J13 and J26 for providing 3.3V and 5V to boosterpack.
 \endcond
 \cond SOC_AM261X
 
-## Hardware Setup(Using BP-AM2BLDCSERVO Booster Pack & LP-AM261)
+## Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack and LP-AM261)
 \note
     - The Rev. A version of LP-AM261 with BP-AM2BLDCSERVO Booster Pack supports two channels
     - To enable VSENSOR1/VSENSOR2, BoosterPack pins J8.73/J8.74 must be set high (In this example, this pin is configured in GPIO mode and pulled high)
 
 \imageStyle{EnDat_am261x_hw_Setup.jpeg,width:40%}
-\image html EnDat_am261x_hw_Setup.jpeg  "Hardware Setup with LP-AM261"
+\image html EnDat_am261x_hw_Setup.jpeg "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for EnDat"
 
-#### LaunchPad Jumper Configuration
+### LP-AM261 Jumper Configuration
 
 Connect the jumpers J13 and J26 for providing 3.3V and 5V to boosterpack.
 
-#### BP-AM2BLDCSERVO Booster Pack Jumper Configuration
+### BP-AM2BLDCSERVO Booster Pack Jumper Configuration
 <table>
 <tr>
     <th>Designator</th>

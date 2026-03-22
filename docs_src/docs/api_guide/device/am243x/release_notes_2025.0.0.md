@@ -353,6 +353,7 @@ SDK drivers for following modules underwent significant architectural changes in
     - HDSL
     - Nikon A-format
     - Tamagawa
+- Current Sense
 
 ### Examples
 <table>

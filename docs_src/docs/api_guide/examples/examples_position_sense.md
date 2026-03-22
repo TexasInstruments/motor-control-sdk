@@ -258,7 +258,7 @@ For PRU-related issues, verify that the application is loading the PRU firmware 
 
 \note This subsection is applicable for BiSS-C, EnDat, Nikon A-format, and Tamagawa only.
 
-- In this mode, data transmission and reception must happen simultaneously on all channels.
+- Data transmission and reception must happen simultaneously on all channels.
 - The encoder configuration and cable length should be the same on all channels.
 - If encoders across channels don't respond at the same time, this mode will not work. Load share configuration should be used instead.
 
@@ -266,7 +266,7 @@ For PRU-related issues, verify that the application is loading the PRU firmware 
 
 \note This subsection is not applicable for EnDAT3.
 
-- In this mode, data transmission and reception can happen independently on all channels.
+- Data transmission and reception can happen independently on all channels.
 - After a command is sent, all channels wait for a response and process the response independently. However, all channels must finish processing before the next command can be triggered. (This restriction does not apply to HDSL. HDSL channels can continue operating independently.)
 
 ### Periodic Trigger Mode

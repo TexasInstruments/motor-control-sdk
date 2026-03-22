@@ -92,7 +92,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 
 ### EVM Hardware Setup
 \image html SDFM_HwSetup_image.PNG  "Hardware Setup SDFM"
-\image html SDFM_EVM_HW_setup.png  "SDFM: EVM and 3axis board setup view"
+\image html SDFM_EVM_HW_setup.png "SDFM: EVM and 3axis board setup view"
 \cond SOC_AM243X
 ## Hardware Prerequisites for LP
 - AMC1035EVM
@@ -100,8 +100,8 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 - Signal generator
 
 ### LP Hardware Setup
-\image html SDFM_LpHwSetup_image.png  "LP Hardware setup"
-\image html SDFM_LpHwSetup.png  "SDFM: LP setup view"
+\image html SDFM_LpHwSetup_image.png "LP Hardware setup"
+\image html SDFM_LpHwSetup.png "SDFM: LP setup view"
 \endcond
 ## Build, load and run
 
@@ -286,7 +286,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 <tr>
         <td></td>
         <td>5. 1) Observe TZ_OUT PIN.
-               2) Check zero/one count max & zero/one count min threshold hit bits in memory map</td>
+               2) Check zero/one count max and zero/one count min threshold hit bits in memory map</td>
         <td></td>
 </tr>
 <tr>

@@ -9,15 +9,15 @@ EnDAT3 is the next generation bidirectional interface for position encoders, off
 \attention This implementation uses Peripheral input/output mode of PRU-ICSS. Refer \ref PRUICSS_PERIPHERAL_IF_MODE for more details.
 
 \cond SOC_AM243X
-\note EnDAT3 firmware supports operation with ICSS Core Clock running at 200 MHz/300 MHz frequency only. ICSS Core Clock at 225/250/333 MHz is not supported due to clock divider requirements.
+\note EnDAT3 firmware is tested with ICSS Core Clock running at 200 MHz/300 MHz frequency only. ICSS Core Clock at 225/250/333 MHz is not supported due to clock divider requirements.
 \endcond
 
 \cond SOC_AM261X
-\note EnDAT3 firmware supports operation with ICSS Core Clock running at 200 MHz only (R5F Core Clock has to be 400 MHz) due to clock divider requirements.
+\note EnDAT3 firmware is tested with ICSS Core Clock running at 200 MHz only (R5F Core Clock has to be 400 MHz) due to clock divider requirements.
 \endcond
 
 \cond SOC_AM263PX
-\note EnDAT3 firmware supports operation with ICSS Core Clock running at 200 MHz frequency only due to clock divider requirements.
+\note EnDAT3 firmware is tested with ICSS Core Clock running at 200 MHz frequency only due to clock divider requirements.
 \endcond
 
 The EnDAT3 driver provides a well-defined set of APIs to expose the EnDAT3 receiver interface with enhanced safety features and higher data rates compared to EnDAT 2.2.
@@ -330,7 +330,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 
 \cond SOC_AM243X
 
-### Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack & LP-AM243)
+### Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack and LP-AM243)
 
 \imageStyle{Endat3_am243x_hw_setup.PNG,width:70%}
 \image html Endat3_am243x_hw_setup.PNG "EnDAT3 Hardware Setup with LP-AM243 and BP-AM2BLDCSERVO Booster Pack"
@@ -484,7 +484,7 @@ The EnDAT3 interface on AM243x uses ICSSG0-PRU1 with the following pin mapping:
 
 \cond (SOC_AM263PX)
 
-### Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack & LP-AM263P)
+### Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack and LP-AM263P)
 
 \imageStyle{Endat3_am263px_hw_setup.png,width:70%}
 \image html Endat3_am263px_hw_setup.png "EnDAT3 Hardware Setup with LP-AM263P and BP-AM2BLDCSERVO Booster Pack"
@@ -659,7 +659,7 @@ The EnDAT3 interface on AM263Px uses ICSSM-PRU0 with the following pin mapping:
 
 \cond SOC_AM261X
 
-### Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack & LP-AM261)
+### Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack and LP-AM261)
 
 \imageStyle{Endat3_am261x_hw_setup.png,width:70%}
 \image html Endat3_am261x_hw_setup.png "EnDAT3 Hardware Setup with LP-AM261 and BP-AM2BLDCSERVO Booster Pack"

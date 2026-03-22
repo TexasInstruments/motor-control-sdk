@@ -4,7 +4,7 @@
 
 ## Introduction
 
-The Sitara™ & C2000™ Digital Control Library (DCL) provides a suite of robust software functions for developers of digital control applications using the Texas Instruments Sitara™ or C2000™ MCUs.
+The Sitara™ and C2000™ Digital Control Library (DCL) provides a suite of robust software functions for developers of digital control applications using the Texas Instruments Sitara™ or C2000™ MCUs.
 
 DCL is a header-only library, and all functions in the library are provided in the form of C source-code.
 
@@ -190,7 +190,7 @@ Shown below lists all the past software revision history for this software:
 <tr>
     <td> v4.03.00
     <td> Changes:
-        - Merge C29 & Sitara™ DCL to be a common library across the two platforms
+        - Merge C29 and Sitara™ DCL to be a common library across the two platforms
         - Ported Gain Scheduler Module (GSM)
         - Fix incorrect NLPID default variables
         - Reduce PID/NLPID control arithmetic

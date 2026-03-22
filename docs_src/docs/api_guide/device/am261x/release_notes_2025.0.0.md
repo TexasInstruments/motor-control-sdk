@@ -87,7 +87,7 @@ Mbed-TLS                | R5F            | 2.13.1
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Single channel, dual channel using two independent PRU cores, Recovery Time for 2.2 command set, Interface speed of 5 and 10 MHz, periodic trigger modes (CMP and CAP), Continuous mode, BP-AM2BLDCSERVO Boosterpack with LP-AM261
+    <td> Single channel, dual channel using two independent PRU cores, Recovery Time for 2.2 command set, Interface speed of 5 and 10 MHz, periodic trigger modes (CMP and CAP), continuous mode, BP-AM2BLDCSERVO Boosterpack with LP-AM261
     <td> Encoder receive communication command
 </tr>
 <tr>
@@ -103,7 +103,7 @@ Mbed-TLS                | R5F            | 2.13.1
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Single channel, Dual channel using two independent PRU cores, Free Run mode, Sync mode, Short Message Read and Write, Long Message Read and Write, Pipeline Channel Data, Long cable (upto 100 meters) with single channel Free Run mode, BP-AM2BLDCSERVO Boosterpack with LP-AM261, 225 MHz PRU firmware
+    <td> Single channel, Dual channel using two independent PRU cores, Free Run mode, Sync mode, Short Message Read and Write, Long Message Read and Write, Pipeline Channel Data, Long cable (upto 100 meters) with single channel Free Run mode, BP-AM2BLDCSERVO Boosterpack with LP-AM261
     <td> Long cable (upto 100 meters) with sync mode, Trace feature for logging registers
 </tr>
 <tr>

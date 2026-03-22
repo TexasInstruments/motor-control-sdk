@@ -207,7 +207,7 @@ Normal current processing time for its different execution flows
   \image html SDFM_NC_Task_time_for_double_update.png "NC Task duration for double update"
 - Task duration for continuous mode is 360ns
 \image html SDFM_NC_Task_time_for_continuous_mode.png "NC Task duration for continuous mode"
-- Worst case Normal current task duration = 360ns + 3-4 PRU cycles time (Task switch, task exit & scratch pad switch)
+- Worst case Normal current task duration = 360ns + 3-4 PRU cycles time (Task switch, task exit and scratch pad switch)
 
 ## ICSS SDFM Design
 \subpage SDFM_DESIGN explains the design in detail.

@@ -60,7 +60,7 @@ Default SDK examples three channel peripheral interface in \if (SOC_AM263X || SO
 <tr>
     <td>Receive oversample ratio
     <td>1x to 8x
-    <td>Tested with 4x, 6x & 8x (Frequency specific)
+    <td>Tested with 4x, 6x and 8x (Frequency specific)
 </tr>
 </table>
 
@@ -182,17 +182,8 @@ In case safety is enabled, only receive and downsample for the RX bits will be p
 The BiSS-C receiver supports two types of periodic trigger modes for continuous position sampling: CMP (Compare) mode and CAP (Capture) mode.
 
 **Periodic CMP Mode (Compare Event Mode):** In CMP mode, IEP timer compare event triggers position sampling. The firmware monitors the configured IEP compare event and automatically initiates BiSS-C transactions when the IEP timer counter matches the compare value. This enables fixed-rate periodic sampling.
-- Compare event range: CMP0-CMP15 (0-15)
-- Configured via \ref bissc_config_periodic_trigger_cmp_mode() API
-- IEP compare event number set via \ref bissc_config_iep_cmp_event() API
-- Event selection can be done in SysConfig
 
 **Periodic CAP Mode (Capture Event Mode):** In CAP mode, external signals trigger position sampling through IEP capture events. The capture event is triggered on the rising edge of the external input pulse, enabling event-driven position capture. \if (SOC_AM243X || SOC_AM64X) Internal signals can also be mapped to IEP capture events via TIMESYNC/GPIOMUX router. \else Internal signals can also be mapped to IEP capture events via XBAR. \endif
-- Capture event range: CAP0-CAP7 (0-7)
-- Configured via \ref bissc_config_periodic_trigger_cap_mode() API
-- IEP capture event number set via \ref bissc_config_iep_cap_event() API
-- Event selection can be done in SysConfig
-- CAP6 and CAP7 support falling edge detection as well. In BiSS-C, rising edge is used always.
 
 Following is the operation flow for periodic mode:
 1. Firmware polls IEP CMP/CAP status register and clears status after event is detected
@@ -208,8 +199,6 @@ Following is the operation flow for periodic mode:
 \endcond
 
 \attention Input cycle time should be greater than or equal to the BiSS-C cycle time by considering the position data bits, E, W, CRC and timeout.
-
-\note Both IEP event configuration APIs (bissc_config_iep_cmp_event() and bissc_config_iep_cap_event()) are automatically called during bissc_init() with values configured in SysConfig.
 
 ### 3 Channel Peripheral Interface
 

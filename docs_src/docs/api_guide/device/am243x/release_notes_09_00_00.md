@@ -420,7 +420,7 @@ This section lists changes which could affect user applications developed using 
 </tr>
 <tr>
     <td> Current Sense %SDFM
-    <td> Structure `SDFM_Cfg`Trigger
+    <td> Structure `SDFM_CfgTrigger`
     <td> Removed variables `trig_samp_time`, `oc_prd_iep_cnt` and `sample_count`, and added variables `en_double_nc_sampling`, `first_samp_trig_time` and `second_samp_trig_time`
     <td> -
 </tr>
