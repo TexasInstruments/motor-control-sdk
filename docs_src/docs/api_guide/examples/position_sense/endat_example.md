@@ -1153,7 +1153,7 @@ Troubleshooting steps:
         <td style="text-align: center"> </td>
     </tr>
     <tr>
-        <td><b>Note:</b> Step 2. valid for AM243x examples, For AM26x it is configured in sysconfig </td>
+        <td><b>Note:</b> Step 2. valid for AM243x examples, For AM26x it is configured in SysConfig </td>
         <td style="text-align: center"> </td>
     </tr>
     <tr>

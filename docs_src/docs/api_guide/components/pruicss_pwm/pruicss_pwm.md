@@ -79,7 +79,8 @@ SysConfig can be used to configure things mentioned below:
 - Each PWM output can have distinct PWM period (NOTE: Current SDK examples uses same period, but it can be modified)
 
 ## SysConfig Features supported
-    - Pinmuxing can be done from Additional Settings of PRU(ICSS) sysconfig module
+
+- Pinmuxing can be done from Additional Settings of PRU(ICSS) SysConfig module
 
 ## Example Usage
 
