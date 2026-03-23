@@ -91,6 +91,8 @@ Assuming the oversampled data is exactly aligned with one bit, the best position
 
 E=(4+n)%8
 
+To ensure optimal sampling stability, the firmware implements precise TX-to-RX transition timing. After transmitting the last bit on the wire, the receiver waits exactly one HDSL bit time(dir_switch bit) before enabling the RX sampling. This timing ensures that the sampling edge occurs at the optimal position (approximately 3/4 bit time into the received signal), providing maximum noise immunity and signal stability. This precise timing control has been validated through extended stress testing, demonstrating significantly improved sampling reliability and error-free operation over long test durations.
+
 \image html hdsl_sampling.png "Sampling"
 
 #### Delay Measurement and Compensation
