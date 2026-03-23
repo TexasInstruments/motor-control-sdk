@@ -1,5 +1,5 @@
 
-; Copyright (C) 2021-2023 Texas Instruments Incorporated
+; Copyright (C) 2021-2026 Texas Instruments Incorporated
 ;
 ; Redistribution and use in source and binary forms, with or without
 ; modification, are permitted provided that the following conditions
@@ -36,7 +36,7 @@ FIRMWARE_VERSION_MAJOR	.set			0x1
 ;  bit3..0		minor number
 FIRMWARE_VERSION_MINOR	.set			0x1
 ICSS_FIRMWARE_RELEASE	.set            ((FIRMWARE_VERSION_MAJOR << 4) | (FIRMWARE_VERSION_MINOR << 0))
-ICSS_BUILD_VERSION	.set                0x5
+ICSS_BUILD_VERSION	.set                0x6
 
 ;number of cycles for 1 bit
     .if $isdefed("FREERUN_300_MHZ") | $isdefed("SYNC_300_MHZ")

@@ -224,6 +224,7 @@ CHANNEL .sassign r18, channel_s
 	.asg							r25.w0, RET_ADDR3
 	.asg							r25.b2, MODIFIED_HEADER_STARTED
 	.asg							r25.b3, FIFO_L ;load fifo
+	.asg							r25.b3, BYTE_LEVEL ;checking tx_fifo byte level before tx end
 
 short_msg_s .struct
 crc		.short

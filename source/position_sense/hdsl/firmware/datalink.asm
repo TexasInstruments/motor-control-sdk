@@ -1,6 +1,6 @@
 
 ;
-; Copyright (C) 2021-2023 Texas Instruments Incorporated
+; Copyright (C) 2021-2026 Texas Instruments Incorporated
 ;
 ; Redistribution and use in source and binary forms, with or without
 ; modification, are permitted provided that the following conditions
@@ -362,10 +362,16 @@ datalink_receive_signal_last_received_0_1:
 	CLEAR_VAL
 ; same delay code as in learn
 	.if $defined("HDSL_MULTICHANNEL")
-	ldi			REG_TMP1, (74*CYCLES_BIT+9); -9 for 100 m
+	;300m
+	.if $defined("FREERUN_300_MHZ")
+	ldi			REG_TMP1, (74*CYCLES_BIT+9) ;freerun 300m
 	.else
-	ldi			REG_TMP1, (72*CYCLES_BIT+9); -9 for 100 m
+	ldi			REG_TMP1, (74*CYCLES_BIT)   ;syncmode 300m
 	.endif
+	.else
+	;225m
+	ldi			REG_TMP1, (72*CYCLES_BIT -1) ;syncmode + freerun 225m
+	.endif; HDSL_MULTICHANNEL
 	READ_CYCLCNT		REG_TMP0
 	qble	    receive_skip_wait, REG_TMP0, REG_TMP1
 	sub			REG_TMP0, REG_TMP1, REG_TMP0
@@ -828,21 +834,24 @@ recv_dec_acc_no_special_character:
 ;switch to TX
 	TX_EN
 ;wait 61+1sw+12delay bits - slave delay
-	.if !$defined("HDSL_MULTICHANNEL")
-	.if $defined("EXT_SYNC_ENABLE")
+	.if $defined(EXT_SYNC_ENABLE)
 ;receive message processing (moved from tx part to rx wait delay bits part as more cycles are available here)
 ;TODO: Can offload some more post processing here if needed
 	jmp transport_layer_recv_msg
 transport_layer_recv_msg_done:
 	.endif
-	.endif
 	READ_CYCLCNT		REG_TMP0
 	.if $defined("HDSL_MULTICHANNEL")
-	ldi			REG_TMP1, (74*CYCLES_BIT+9)  ; -9 for 100m
+	;300m
+	.if $defined("FREERUN_300_MHZ")
+	ldi			REG_TMP1, (74*CYCLES_BIT+9) ;freerun 300m
 	.else
-	;last 2 delay bits are actually part of first 2 trailer bits so keeping delay cycles less (by 2 bits) here.
-	ldi			REG_TMP1, (72*CYCLES_BIT+9 +3)  ; -9 for 100m
+	ldi			REG_TMP1, (74*CYCLES_BIT)   ;syncmode 300m
 	.endif
+	.else
+	;225m
+	ldi			REG_TMP1, (72*CYCLES_BIT) ;syncmode + freerun 225m
+	.endif; HDSL_MULTICHANNEL
 	qble	    datalink_receive_signal_no_delay_wait_0, REG_TMP0, REG_TMP1
 	sub			REG_TMP0, REG_TMP1, REG_TMP0
 	WAIT		REG_TMP0
@@ -1266,10 +1275,14 @@ transport_layer_recv_msg_done:
 	qbbs			send_header_dont_send_01_send_11, REG_FNC.b2, 6
 	PUSH_FIFO_CONST		0x00
 	ldi			LAST_BIT_SENT, 0
+	ldi REG_TMP2.b0, 0x1F
+	sbco &REG_TMP2.b0, ICSS_CFGx, EDRXCFG, 1
 	qba			send_header_dont_send_01_send_next1
 send_header_dont_send_01_send_11:
 	PUSH_FIFO_CONST		0xff
 	ldi			LAST_BIT_SENT, 1
+	ldi REG_TMP2.b0, 0x17
+	sbco &REG_TMP2.b0, ICSS_CFGx, EDRXCFG, 1
 send_header_dont_send_01_send_next1:
 	.if $defined(EXT_SYNC_ENABLE)
 	WAIT_CLK_HIGH		REG_TMP0
@@ -1626,7 +1639,9 @@ Push_done:
 	jmp			transport_layer_recv_msg
 
 comp_logic_done:
+	.if $defined("FREERUN_300_MHZ")
 transport_layer_recv_msg_done:
+	.endif
 ;send last 2 parameter bits
     CALL2 WAIT_TX_FIFO_FREE
 ;overclock
@@ -1948,12 +1963,21 @@ qm_add_end:
 ;--------------------------------------------------------------------------------------------------
 wait_delay:
 	WAIT_TX_DONE
-    .if $defined("HDSL_MULTICHANNEL")
-	NOP_n 12
-	.if $defined(EXT_SYNC_ENABLE)
-	NOP_n 1
-	.endif ;EXT_SYNC_ENABLE
-	.endif  ;HDSL_MULTICHANNEL
+	.if $defined("HDSL_MULTICHANNEL")
+;300m
+	.if $defined("FREERUN_300_MHZ")
+;freerun 300m
+	NOP_n 12 
+	.else
+;syncmode 300m
+;Maintain 1 bit time delay between last tx bit and rx_en to start sampling at exactly after 1 bit time
+	NOP_n 21  
+	.endif
+	.else
+;225m
+;Maintain 1 bit time delay between last tx bit and rx_en to start sampling at exactly after 1 bit time 
+	NOP_n 13 ;syncmode + freerun 225m
+	.endif; HDSL_MULTICHANNEL
 ; same code as in learn
 ; with 4 or 3 bit encoder does not respond after time, starts working with 2 set it to 1
 wait_on_rx_transtion_in_wait_delay:
@@ -2044,9 +2068,7 @@ comp_logic_starts:
 	.if $defined(EXT_SYNC_ENABLE)
 	;compensation logic for diff between sync signal and extra edge starts;
 	qbne        num_pulses_is_not_one2, NUM_PULSES, 1 ;not the last frame of period
-	.if $defined("HDSL_MULTICHANNEL")
-	CALL3 PUSH_FIFO_2B_8x														;;1st push (300m f/w)
-	.endif
+
 
 	mov         EXTRA_EDGE_COMP, EXTRA_EDGE
 	mov         EXTRA_SIZE_COMP, EXTRA_SIZE
@@ -2054,6 +2076,9 @@ comp_logic_starts:
 
 	lbco		&REG_TMP0, MASTER_REGS_CONST, EXTRA_EDGE_TIMESTAMP, 4
 	lbco        &REG_TMP1, IEP_BASE_CONST, IEP_CAPR_RISE, 4
+	.if $defined("HDSL_MULTICHANNEL")
+	CALL3 PUSH_FIFO_2B_8x														;;1st push (300m f/w)
+	.endif
 	.if !$defined("HDSL_MULTICHANNEL")
 	CALL3 PUSH_FIFO_2B_8x    													;;1st push (225m f/w)
 	.endif
@@ -2073,9 +2098,7 @@ no_capping1:
 	mov			REG_FNC.w0, REG_TMP0
 	ldi			REG_FNC.w2, 3;3
 	CALL1		int_div
-	.if !$defined("HDSL_MULTICHANNEL")
-	CALL3 PUSH_FIFO_2B_8x													     ;2nd push (225m f/w)
-	.endif
+	CALL3 PUSH_FIFO_2B_8x											;2nd push (225m f/w + 300m f/w)
 	mov         REG_TMP0.b0, REG_FNC.b2
 	qbeq        no_reminder1, REG_FNC.w0, 0
 	add         REG_TMP0.b0, REG_TMP0.b0,1
@@ -2111,9 +2134,7 @@ child_overhead_more1:
 	qbne        time_rest_comp_not_8_1, REG_TMP1.b0, 8
 	ldi         REG_TMP1.b0, 0
 time_rest_comp_not_8_1:
-	.if !$defined("HDSL_MULTICHANNEL")
-	CALL3 PUSH_FIFO_2B_8x   											 ;2nd push (225m f/w)
-	.endif
+	CALL3 PUSH_FIFO_2B_8x											;2nd push (225m f/w + 300m f/w)
 	mov         TIME_REST_COMP, TIME_REST
 	add         TIME_REST_COMP, TIME_REST_COMP, 16
 	sub         EXTRA_SIZE_COMP, EXTRA_SIZE_COMP, 2
@@ -2142,7 +2163,7 @@ check_time_rest_size_violation1:
 comp_done1:
 	mov			REG_TMP0.b1, TIME_REST_COMP
 	ldi			EXTRA_EDGE_COMP, 0
-	CALL3 PUSH_FIFO_2B_8x 												;3rd push (225m f/w) ;2nd push (300m f/w)
+	CALL3 PUSH_FIFO_2B_8x 												;3rd push (225m f/w + 300m f/w)
 	qbeq		extra_edge_bit_setting_loop_end1, REG_TMP0.b1, 0
 	ldi			REG_TMP0.b2, 7
 extra_edge_bit_setting1:
@@ -2169,17 +2190,10 @@ send_header_extra_not_too_small1:
 	add			NUM_STUFFING_COMP, NUM_STUFFING_COMP, 1
 	jmp extra_size_validation_done1
 num_pulses_is_not_one2:
-	.if $defined("HDSL_MULTICHANNEL")
-	;;2 Pushes for 300m f/w
-	loop extra_size_validation_done1,2
-	CALL3 PUSH_FIFO_2B_8x
-extra_size_validation_done1:
-	.else
-	;;3 Pushes for 225m f/w
+	;;3 Pushes for 300m + 225m f/w
 	loop extra_size_validation_done1,3
 	CALL3 PUSH_FIFO_2B_8x
 extra_size_validation_done1:
-	.endif
 	;compensation logic for diff between sync signal and extra edge ends;
 	.else ;free run mode starts
 	.if $defined("HDSL_MULTICHANNEL")
@@ -2195,7 +2209,8 @@ push_2B_c:
 	.if $defined("HDSL_MULTICHANNEL")
 	;;300m f/w
 comp_logic_ends:
-
+	;300M FREERUN_MODE
+	.if $defined("FREERUN_300_MHZ")
 	qbeq	comp2,LEARN_STATE_STARTED,2
 	qbeq	comp1,LEARN_STATE_STARTED,3
 	ldi			LEARN_STATE_STARTED , 1
@@ -2208,6 +2223,12 @@ comp2:
 	CALL3 PUSH_FIFO_3_8x                 ;;3rd,4th push (300m f/w)
 	ldi			LEARN_STATE_STARTED , 1
 	jmp transport_layer_recv_msg
+	.else 
+	;300M SYNC_MODE
+	CALL3 PUSH_FIFO_2B_8x                ;;4th push (300m f/w)
+	ldi			LEARN_STATE_STARTED , 1
+	jmp comp_logic_done
+	.endif;FREERUN_300_MHZ
 	.else
 	;;225m f/w
 comp_logic_ends:

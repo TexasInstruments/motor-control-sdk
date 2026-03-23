@@ -1,6 +1,6 @@
 
 ;
-; Copyright (C) 2021-2023 Texas Instruments Incorporated
+; Copyright (C) 2021-2026 Texas Instruments Incorporated
 ;
 ; Redistribution and use in source and binary forms, with or without
 ; modification, are permitted provided that the following conditions
@@ -410,26 +410,23 @@ datalink_sync_end:
 	ldi			LOOP_CNT.b1, 9			;9
 
 datalink_learn:
+	.if $defined("FREERUN_300_MHZ")
+;300m freerun mode
+
 ;send m_par_reset 8b/10b: 5b/6b and 3b/4b, first=0,vsync=0,reserved=0
 	ldi			REG_FNC.w0, (0x0000 | M_PAR_START)
-	.if $defined("HDSL_MULTICHANNEL")
 	CALL			send_header_300m
-	.else
-	CALL			send_header
-	.endif
 ; indication of TX_DONE comes about 53ns after wire timing
 	WAIT_TX_DONE
-	.if $defined("HDSL_MULTICHANNEL")
 	NOP_n 11
-   .endif
 ; measured starting point at 0 cable length
 ; first 8 bits will be all ones is delay from encoder and transceiver
 ; second 8 bits is oversampled DSL bit which is 0 on test pattern
 ; channel enable will always hit a high state which allows for save EDGE detection
 ; and SLAVE_DELAY determination
 ; the measured offset used below is 4 bits (OVS) * (13.333 / 4.444) + 4.444 ns.
-        loop	wait_on_rx_transtion_in_learn_state, 1 ; (4*7) for 100m
-        add		r0,r0,0
+	loop	wait_on_rx_transtion_in_learn_state, 1 ; (4*7) for 100m
+	add		r0,r0,0
 wait_on_rx_transtion_in_learn_state:
 ; now receive starts in save high state. First VAL comes after 180ns. Following ones in DSL
 ; bit times of 106.66 ns. Make sure code before next VAL is less than 106 ns!!!
@@ -452,7 +449,60 @@ wait_on_rx_transtion_in_learn_state:
 	ldi			r1.b0, &r21.b0
 ; reset flag that indicates first rising edge detected in this DSL frame
 	ldi 		REG_TMP11.b0, 0
+	.else
+;300m sync_mode + 225m sync+freerun
+
+;send m_par_reset 8b/10b: 5b/6b and 3b/4b, first=0,vsync=0,reserved=0
+	ldi			REG_FNC.w0, (0x0000 | M_PAR_START)
+	.if $defined("HDSL_MULTICHANNEL")
+	CALL			send_header_300m
+	.else
+	CALL			send_header
+	.endif
+; indication of TX_DONE comes about 53ns after wire timing
+	;DSL data will be stored to r20-r18
+	ldi			LOOP_CNT.b0, 72
+	zero			&r18, (4*3)
+	ldi			r1.b0, &r21.b0
+; reset flag that indicates first rising edge detected in this DSL frame
+	ldi 		REG_TMP11.b0, 0
+	ldi			REG_TMP1.b1, 0
+	ldi			LOOP_CNT.b2, 8
+	WAIT_TX_DONE
+;Maintain 1 bit time delay between last tx bit and rx_en to start sampling at exactly after 1 bit time
+;To maintain ovs bit to come in middle of ovs data for better sampling
+
+	.if $defined("HDSL_MULTICHANNEL")
+	NOP_n 21
+	.else
+	NOP_n 13
+   	.endif
+; measured starting point at 0 cable length
+; first 8 bits will be all ones is delay from encoder and transceiver
+; second 8 bits is oversampled DSL bit which is 0 on test pattern
+; channel enable will always hit a high state which allows for save EDGE detection
+; and SLAVE_DELAY determination
+; the measured offset used below is 4 bits (OVS) * (13.333 / 4.444) + 4.444 ns.
+    loop	wait_on_rx_transtion_in_learn_state, 1 ; (4*7) for 100m
+    add		r0,r0,0
+wait_on_rx_transtion_in_learn_state:
+; now receive starts in save high state. First VAL comes after 180ns. Following ones in DSL
+; bit times of 106.66 ns. Make sure code before next VAL is less than 106 ns!!!
+	RX_EN
+; measue the time of receive window, 2 cycles
+; compensation value should be
+;  108 bits
+;      - 12 cycles (53 ns)
+;      - 2 cycles (RESET_CYCLCNT)
+;      - time to switch to TX and start sending trailer
+	RESET_CYCLCNT
+	qba datalink_learn_recv_loop
+;read 61+11 bits
+;Channel is already tiggered. First 0-1 transition will be from bit 1 to bit 2 of test pattern
+;response from encoder.
+
 ; this loop executes one DSL byte in oversample mode
+	.endif;FREERUN_300_MHZ 
 datalink_learn_recv_oloop:
 	ldi			REG_TMP1.b1, 0
 	ldi			LOOP_CNT.b2, 8
@@ -467,8 +517,8 @@ datalink_learn_recv_loop:
 
 ; for each frame, detect the SAMPLE_EDGE,
 ; detect first falling edge which is received byte < 255
-    	qbne			datalink_learn_recv_loop_not_first,REG_TMP11.b0, 0
-    	qbeq			datalink_learn_recv_loop_not_first,REG_TMP0.b0,0xff
+	qbne			datalink_learn_recv_loop_not_first,REG_TMP11.b0, 0
+	qbeq			datalink_learn_recv_loop_not_first,REG_TMP0.b0,0xff
 ; result is in SAMPLE_EDGE and gives the sampling bit number
 	FIND_EDGE		REG_TMP0.b0, REG_TMP2
 ; bits are counted from LSB to MSB with SET cmd
@@ -478,7 +528,7 @@ datalink_learn_recv_loop:
 ; at the 100 meter boundary do not move to next sample with
 ; this is 10 bits delay, and SAMPLE_EDGE with wrap around
 	qbne			datalink_learn_recv_loop_100m, LOOP_CNT.b0, 64
-    	qbne		    datalink_learn_recv_loop_100m, LOOP_CNT.b2, 6
+	qbne		    datalink_learn_recv_loop_100m, LOOP_CNT.b2, 6
 	qbge			datalink_learn_recv_loop_100m, SAMPLE_EDGE, 3
 ; cap SAMPLE_EDGE to last bit position at 100 meter
 	ldi				SAMPLE_EDGE, 0
@@ -509,12 +559,17 @@ datalink_learn_skip_one_bit_1:
 
 ; pre-load register to save time on last bit
 ;	ldi			REG_TMP2, (74*CYCLES_BIT-9) ; 100 m
-    .if $defined("FREERUN_300_MHZ") | $defined("SYNC_300_MHZ")
-	ldi			r3, (74*CYCLES_BIT+9)
-    .else
-    ldi			r3, (74*CYCLES_BIT+9)
-    .endif
-
+	.if $defined("HDSL_MULTICHANNEL")
+	;300m
+	.if $defined("FREERUN_300_MHZ")
+	ldi			r3, (74*CYCLES_BIT+9)  ;freerun 300m
+	.else
+	ldi			r3, (73*CYCLES_BIT+27) ;syncmode 300m
+	.endif
+	.else
+	;225m
+	ldi			r3, (73*CYCLES_BIT+15) ;syncmode + freerun 225m
+	.endif; HDSL_MULTICHANNEL
 datalink_learn_recv_loop_last_bit:
 
 	qbbc			datalink_learn_recv_loop_last_bit, r31, RX_VALID_FLAG
@@ -660,7 +715,7 @@ push_2_bit:
 	qbne		datalink_learn_delay, REG_FNC.b0, 1
 datalink_learn_end_test:
 ; SLAVE_DELAY has no switch bit
-    	mov			SLAVE_DELAY, LOOP_CNT.b3
+	mov			SLAVE_DELAY, LOOP_CNT.b3
 ;send STUFFING
 	.if $defined(EXT_SYNC_ENABLE)
 	CALL1			send_stuffing
