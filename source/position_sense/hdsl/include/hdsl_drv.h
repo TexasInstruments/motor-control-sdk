@@ -62,7 +62,7 @@
  *
  *  **Internal Structure Validation:**
  *  - All APIs validate internal structure pointers before dereferencing them
- *  - Each function validates only the pointers it uses.
+ *  - Each function validates only the pointers it uses
  *  - Provides protection against NULL pointer dereferences
  *
  *  **Pointer Parameter Validation:**
@@ -268,7 +268,7 @@ typedef struct HDSL_Interface_s {
     volatile uint8_t resvd7;            /**< Reserved 7 */
     volatile uint8_t SAFE_CTRL;         /**< Safe System Control */
     volatile uint8_t SAFE_SUM;          /**< Summarized slave status */
-    volatile uint8_t S_PC_DATA;         /**< Response of Short message parameters channel Read for safe1 channel */
+    volatile uint8_t S_PC_DATA;         /**< Short message parameters channel data */
     volatile uint8_t ACC_ERR_CNT;       /**< Fast position error counter */
     volatile uint8_t resvd8;            /**< Reserved 8 */
     volatile uint8_t resvd9;            /**< Reserved 9 */
@@ -705,8 +705,8 @@ HDSL_Priv* HDSL_get_priv(HDSL_Handle handle);
  *                       In non-load share mode: always use handle at index 0 (gAppHdslHandle[instance][0])
  *                       In load share mode: use any valid handle from the enabled channels
  *
- *  \return     SystemP_SUCCESS on successful hardware initialization
- *  \return     SystemP_FAILURE if handle is invalid or GP MUX configuration fails
+ *  \retval     SystemP_SUCCESS on successful hardware initialization
+ *  \retval     SystemP_FAILURE on validation failure
  *
  *  \note       Must be called after HDSL_open and before loading PRU firmware
  *  \note       Configures the hardware registers based on the
@@ -717,26 +717,26 @@ HDSL_Priv* HDSL_get_priv(HDSL_Handle handle);
 int32_t HDSL_hw_init(HDSL_Handle handle);
 
 /**
- *  \brief      Calculate fast position, safe position 1, or safe position 2
+ *  \brief      Read fast position, safe position 1, or safe position 2
  *
  *  \param[in]  handle          HDSL handle obtained from \ref HDSL_open
  *  \param[in]  position_id     Position selector: 0=Fast position, 1=Safe position 1, 2=Safe position 2
  *  \param[out] position        Pointer to store 40-bit position value (must not be NULL)
  *
  *  \retval     SystemP_SUCCESS  Position read successfully
- *  \retval     SystemP_FAILURE  Invalid handle, NULL position pointer, or invalid position_id
+ *  \retval     SystemP_FAILURE  on validation failure (NULL handle, NULL position, position_id > 2, or NULL internal structures)
  *
  */
 int32_t HDSL_get_pos(HDSL_Handle handle, uint32_t position_id, uint64_t *position);
 
 /**
- *  \brief      Get quality monitoring value
+ *  \brief      Get masked quality monitoring value (lower 4 bits)
  *
  *  \param[in]  handle   HDSL handle obtained from \ref HDSL_open
- *  \param[out] qm       Pointer to store 8-bit QM value
+ *  \param[out] qm       Pointer to store 4-bit QM value (lower 4 bits of MASTER_QM register, range 0-15)
  *
- *  \return     SystemP_SUCCESS on success
- *  \return     SystemP_FAILURE if handle is invalid or qm pointer is NULL
+ *  \retval     SystemP_SUCCESS on success
+ *  \retval     SystemP_FAILURE on validation failure
  */
 int32_t HDSL_get_qm(HDSL_Handle handle, uint8_t *qm);
 
@@ -746,8 +746,8 @@ int32_t HDSL_get_qm(HDSL_Handle handle, uint8_t *qm);
  *  \param[in]  handle   HDSL handle obtained from \ref HDSL_open
  *  \param[out] events   Pointer to store 16-bit concatenated values of EVENT_H and EVENT_L
  *
- *  \return     SystemP_SUCCESS on success
- *  \return     SystemP_FAILURE if handle is invalid or events pointer is NULL
+ *  \retval     SystemP_SUCCESS on success
+ *  \retval     SystemP_FAILURE on validation failure
  */
 int32_t HDSL_get_events(HDSL_Handle handle, uint16_t *events);
 
@@ -757,8 +757,8 @@ int32_t HDSL_get_events(HDSL_Handle handle, uint16_t *events);
  *  \param[in]  handle   HDSL handle obtained from \ref HDSL_open
  *  \param[out] events   Pointer to store 8-bit EVENT_S value
  *
- *  \return     SystemP_SUCCESS on success
- *  \return     SystemP_FAILURE if handle is invalid or events pointer is NULL
+ *  \retval     SystemP_SUCCESS on success
+ *  \retval     SystemP_FAILURE on validation failure
  */
 int32_t HDSL_get_safe_events(HDSL_Handle handle, uint8_t *events);
 
@@ -769,8 +769,8 @@ int32_t HDSL_get_safe_events(HDSL_Handle handle, uint8_t *events);
  *  \param[in]  handle   HDSL handle obtained from \ref HDSL_open
  *  \param[out] status   Pointer to store 16-bit ONLINE_STATUS_D value
  *
- *  \return     SystemP_SUCCESS on success
- *  \return     SystemP_FAILURE if handle is invalid or status pointer is NULL
+ *  \retval     SystemP_SUCCESS on success
+ *  \retval     SystemP_FAILURE on validation failure
  */
 int32_t HDSL_get_online_status_d(HDSL_Handle handle, uint16_t *status);
 
@@ -780,8 +780,8 @@ int32_t HDSL_get_online_status_d(HDSL_Handle handle, uint16_t *status);
  *  \param[in]  handle   HDSL handle obtained from \ref HDSL_open
  *  \param[out] status   Pointer to store 16-bit ONLINE_STATUS_1 value
  *
- *  \return     SystemP_SUCCESS on success
- *  \return     SystemP_FAILURE if handle is invalid or status pointer is NULL
+ *  \retval     SystemP_SUCCESS on success
+ *  \retval     SystemP_FAILURE on validation failure
  */
 int32_t HDSL_get_online_status_1(HDSL_Handle handle, uint16_t *status);
 
@@ -791,8 +791,8 @@ int32_t HDSL_get_online_status_1(HDSL_Handle handle, uint16_t *status);
  *  \param[in]  handle   HDSL handle obtained from \ref HDSL_open
  *  \param[out] status   Pointer to store 16-bit ONLINE_STATUS_2 value
  *
- *  \return     SystemP_SUCCESS on success
- *  \return     SystemP_FAILURE if handle is invalid or status pointer is NULL
+ *  \retval     SystemP_SUCCESS on success
+ *  \retval     SystemP_FAILURE on validation failure
  */
 int32_t HDSL_get_online_status_2(HDSL_Handle handle, uint16_t *status);
 
@@ -802,8 +802,8 @@ int32_t HDSL_get_online_status_2(HDSL_Handle handle, uint16_t *status);
  *  \param[in]  handle   HDSL handle obtained from \ref HDSL_open
  *  \param[out] sum      Pointer to store 8-bit summarized status value
  *
- *  \return     SystemP_SUCCESS on success
- *  \return     SystemP_FAILURE if handle is invalid or sum pointer is NULL
+ *  \retval     SystemP_SUCCESS on success
+ *  \retval     SystemP_FAILURE on validation failure
  */
 int32_t HDSL_get_sum(HDSL_Handle handle, uint8_t *sum);
 
@@ -811,10 +811,10 @@ int32_t HDSL_get_sum(HDSL_Handle handle, uint8_t *sum);
  *  \brief      Get acceleration error counter
  *
  *  \param[in]  handle   HDSL handle obtained from \ref HDSL_open
- *  \param[out] count    Pointer to store 8-bit acceleration error counter value
+ *  \param[out] count    Pointer to store 5-bit acceleration error counter value (lower 5 bits of ACC_ERR_CNT register, range 0-31)
  *
- *  \return     SystemP_SUCCESS on success
- *  \return     SystemP_FAILURE if handle is invalid or count pointer is NULL
+ *  \retval     SystemP_SUCCESS on success
+ *  \retval     SystemP_FAILURE on validation failure
  */
 int32_t HDSL_get_acc_err_cnt(HDSL_Handle handle, uint8_t *count);
 
@@ -822,10 +822,10 @@ int32_t HDSL_get_acc_err_cnt(HDSL_Handle handle, uint8_t *count);
  *  \brief      Read RSSI value
  *
  *  \param[in]  handle   HDSL handle obtained from \ref HDSL_open
- *  \param[out] rssi     Pointer to store 8-bit RSSI value
+ *  \param[out] rssi     Pointer to store 4-bit RSSI value (upper 4 bits of DELAY register, range 0-15)
  *
- *  \return     SystemP_SUCCESS on success
- *  \return     SystemP_FAILURE if handle is invalid or rssi pointer is NULL
+ *  \retval     SystemP_SUCCESS on success
+ *  \retval     SystemP_FAILURE on validation failure
  */
 int32_t HDSL_get_rssi(HDSL_Handle handle, uint8_t *rssi);
 
@@ -839,9 +839,9 @@ int32_t HDSL_get_rssi(HDSL_Handle handle, uint8_t *rssi);
  *  \param[in]  data    Data
  *  \param[in]  timeout Timeout in microseconds
  *
- *  \return     SystemP_SUCCESS in case of success
- *  \return     SystemP_FAILURE if handle is NULL, addr > 0x7F, or internal structures are NULL
- *  \return     SystemP_TIMEOUT in case of timeout
+ *  \retval     SystemP_SUCCESS in case of success
+ *  \retval     SystemP_FAILURE on validation failure
+ *  \retval     SystemP_TIMEOUT in case of timeout
  *
  *  \note       Applications should use reasonable timeout values. Extremely large values
  *              (close to UINT64_MAX) are not recommended as they may cause immediate timeout
@@ -857,12 +857,12 @@ int32_t HDSL_write_pc_short_msg(HDSL_Handle handle, uint8_t addr, uint8_t data, 
  *
  *  \param[in]  handle  HDSL handle obtained from \ref HDSL_open
  *  \param[in]  addr    Address (must be 7-bit: 0x00 to 0x7F)
- *  \param[in]  data    Pointer to data buffer where read data will be stored
+ *  \param[out] data    Pointer to data buffer where read data will be stored
  *  \param[in]  timeout Timeout in microseconds
  *
- *  \return     SystemP_SUCCESS in case of success
- *  \return     SystemP_FAILURE if handle is NULL, addr > 0x7F, data is NULL, or internal structures are NULL
- *  \return     SystemP_TIMEOUT in case of timeout
+ *  \retval     SystemP_SUCCESS in case of success
+ *  \retval     SystemP_FAILURE on validation failure
+ *  \retval     SystemP_TIMEOUT in case of timeout
  *
  *  \note       Applications should use reasonable timeout values. Extremely large values
  *              (close to UINT64_MAX) are not recommended as they may cause immediate timeout
@@ -898,9 +898,9 @@ int32_t HDSL_read_pc_short_msg(HDSL_Handle handle, uint8_t addr, uint8_t *data, 
  *  \param[in]  offset          15 bit address offset for long message (0-0x7FFF, if offset is enabled in offset_enable parameter)
  *  \param[in]  timeout         Timeout in microseconds
  *
- *  \return     SystemP_SUCCESS if communication completed (check \ref HDSL_get_pc_long_msg_error to check if encoder accepted the parameters or reported an error)
- *  \return     SystemP_FAILURE if input parameters are invalid
- *  \return     SystemP_TIMEOUT if FREL transitions did not complete within timeout
+ *  \retval     SystemP_SUCCESS if communication completed (check \ref HDSL_get_pc_long_msg_error to check if encoder accepted the parameters or reported an error)
+ *  \retval     SystemP_FAILURE on validation failure
+ *  \retval     SystemP_TIMEOUT if FREL transitions did not complete within timeout
  *
  *  \note       Applications should use reasonable timeout values. Extremely large values
  *              (close to UINT64_MAX) are not recommended as they may cause immediate timeout
@@ -938,9 +938,9 @@ int32_t HDSL_write_pc_long_msg(HDSL_Handle handle, uint16_t addr, uint8_t offset
  *  \param[in]  offset          15 bit address offset for long message (0-0x7FFF)
  *  \param[in]  timeout         Timeout in microseconds
  *
- *  \return     SystemP_SUCCESS if communication completed (check \ref HDSL_get_pc_long_msg_error to check if encoder accepted the parameters or reported an error)
- *  \return     SystemP_FAILURE if input parameters are invalid
- *  \return     SystemP_TIMEOUT if FREL transitions did not complete within timeout
+ *  \retval     SystemP_SUCCESS if communication completed (check \ref HDSL_get_pc_long_msg_error to check if encoder accepted the parameters or reported an error)
+ *  \retval     SystemP_FAILURE on validation failure
+ *  \retval     SystemP_TIMEOUT if FREL transitions did not complete within timeout
  *
  *  \note       Applications should use reasonable timeout values. Extremely large values
  *              (close to UINT64_MAX) are not recommended as they may cause immediate timeout
@@ -965,12 +965,7 @@ int32_t HDSL_read_pc_long_msg(HDSL_Handle handle, uint16_t addr, uint8_t offset_
  *  \param[in]  data         Data byte to write
  *
  *  \retval     SystemP_SUCCESS on successful write
- *  \retval     SystemP_FAILURE on invalid parameters (NULL handle or buff_off > 7)
- *
- *  \note       This function performs NULL check on handle and bounds check on buff_off.
- *              Returns SystemP_FAILURE if buff_off is out of range (0-7).
- *              Internal structures (priv, hdsl_interface) are guaranteed valid after
- *              successful \ref HDSL_open and not rechecked for performance.
+ *  \retval     SystemP_FAILURE on validation failure (NULL handle, buff_off > 7, or NULL internal structures)
  *
  */
 int32_t HDSL_write_pc_buffer(HDSL_Handle handle, uint8_t buff_off, uint8_t data);
@@ -992,10 +987,7 @@ int32_t HDSL_write_pc_buffer(HDSL_Handle handle, uint8_t buff_off, uint8_t data)
  *  \param[out] data     Pointer to store the 8-bit PC_BUFFER value (must not be NULL)
  *
  *  \retval     SystemP_SUCCESS  Data read successfully
- *  \retval     SystemP_FAILURE  Invalid handle, NULL data pointer, or invalid buff_off > 7
- *
- *  \note       Internal structures (priv, hdsl_interface) are guaranteed valid after
- *              successful \ref HDSL_open and not rechecked for performance.
+ *  \retval     SystemP_FAILURE  on validation failure (NULL handle, NULL data, buff_off > 7, or NULL internal structures)
  */
 int32_t HDSL_read_pc_buffer(HDSL_Handle handle, uint8_t buff_off, uint8_t *data);
 
@@ -1019,7 +1011,7 @@ int32_t HDSL_read_pc_buffer(HDSL_Handle handle, uint8_t buff_off, uint8_t *data)
  *  \param[out] error    Pointer to store encoder error status (0 = no error, 1 = error)
  *
  *  \retval     SystemP_SUCCESS  Error status read successfully
- *  \retval     SystemP_FAILURE  Invalid handle (NULL) or error pointer (NULL)
+ *  \retval     SystemP_FAILURE  on validation failure
  *
  */
 int32_t HDSL_get_pc_long_msg_error(HDSL_Handle handle, uint8_t *error);
@@ -1030,8 +1022,8 @@ int32_t HDSL_get_pc_long_msg_error(HDSL_Handle handle, uint8_t *error);
  *  \param[in]  handle   HDSL handle obtained from \ref HDSL_open
  *  \param[out] ctrl     Pointer to store 8-bit SYNC_CTRL value
  *
- *  \return     SystemP_SUCCESS on success
- *  \return     SystemP_FAILURE if handle is invalid or ctrl pointer is NULL
+ *  \retval     SystemP_SUCCESS on success
+ *  \retval     SystemP_FAILURE on validation failure
  */
 int32_t HDSL_get_sync_ctrl(HDSL_Handle handle, uint8_t *ctrl);
 
@@ -1042,18 +1034,18 @@ int32_t HDSL_get_sync_ctrl(HDSL_Handle handle, uint8_t *ctrl);
  *  \param[in]  val      Synchronization control value to write
  *
  *  \retval     SystemP_SUCCESS on successful write
- *  \retval     SystemP_FAILURE on invalid parameters (NULL handle)
+ *  \retval     SystemP_FAILURE on validation failure
  */
 int32_t HDSL_set_sync_ctrl(HDSL_Handle handle, uint8_t val);
 
 /**
- *  \brief      Get quality monitoring value
+ *  \brief      Get full MASTER_QM register value (8-bit, unmasked)
  *
  *  \param[in]  handle   HDSL handle obtained from \ref HDSL_open
  *  \param[out] qm       Pointer to store 8-bit MASTER_QM value
  *
- *  \return     SystemP_SUCCESS on success
- *  \return     SystemP_FAILURE if handle is invalid or qm pointer is NULL
+ *  \retval     SystemP_SUCCESS on success
+ *  \retval     SystemP_FAILURE on validation failure
  */
 int32_t HDSL_get_master_qm(HDSL_Handle handle, uint8_t *qm);
 
@@ -1063,8 +1055,8 @@ int32_t HDSL_get_master_qm(HDSL_Handle handle, uint8_t *qm);
  *  \param[in]  handle   HDSL handle obtained from \ref HDSL_open
  *  \param[out] edges    Pointer to store 8-bit EDGES value
  *
- *  \return     SystemP_SUCCESS on success
- *  \return     SystemP_FAILURE if handle is invalid or edges pointer is NULL
+ *  \retval     SystemP_SUCCESS on success
+ *  \retval     SystemP_FAILURE on validation failure
  */
 int32_t HDSL_get_edges(HDSL_Handle handle, uint8_t *edges);
 
@@ -1074,8 +1066,8 @@ int32_t HDSL_get_edges(HDSL_Handle handle, uint8_t *edges);
  *  \param[in]  handle   HDSL handle obtained from \ref HDSL_open
  *  \param[out] delay    Pointer to store 8-bit DELAY value
  *
- *  \return     SystemP_SUCCESS on success
- *  \return     SystemP_FAILURE if handle is invalid or delay pointer is NULL
+ *  \retval     SystemP_SUCCESS on success
+ *  \retval     SystemP_FAILURE on validation failure
  */
 int32_t HDSL_get_delay(HDSL_Handle handle, uint8_t *delay);
 
@@ -1089,7 +1081,7 @@ int32_t HDSL_get_delay(HDSL_Handle handle, uint8_t *delay);
  *  \param[in]  pc_offl      Low byte of PC offset
  *
  *  \retval     SystemP_SUCCESS on successful write
- *  \retval     SystemP_FAILURE on invalid parameters (NULL handle)
+ *  \retval     SystemP_FAILURE on validation failure
  *
  */
 int32_t HDSL_set_pc_addr(HDSL_Handle handle, uint8_t pc_addrh, uint8_t pc_addrl, uint8_t pc_offh, uint8_t pc_offl);
@@ -1101,7 +1093,7 @@ int32_t HDSL_set_pc_addr(HDSL_Handle handle, uint8_t pc_addrh, uint8_t pc_addrl,
  *  \param[in]  value        Control value to write
  *
  *  \retval     SystemP_SUCCESS on successful write
- *  \retval     SystemP_FAILURE on invalid parameters (NULL handle)
+ *  \retval     SystemP_FAILURE on validation failure
  *
  */
 int32_t HDSL_set_pc_ctrl(HDSL_Handle handle, uint8_t value);
@@ -1122,7 +1114,7 @@ int32_t HDSL_set_pc_ctrl(HDSL_Handle handle, uint8_t value);
  *  \param[out] enc_id   Pointer to store 8-bit encoder ID byte data
  *
  *  \retval     SystemP_SUCCESS  Encoder ID byte read successfully
- *  \retval     SystemP_FAILURE  Invalid handle (NULL), byte index out of range (>2), or enc_id pointer (NULL)
+ *  \retval     SystemP_FAILURE  on validation failure (NULL handle, byte > 2, NULL enc_id, or NULL internal structures)
  */
 int32_t HDSL_get_enc_id(HDSL_Handle handle, uint32_t byte, uint8_t *enc_id);
 
@@ -1146,7 +1138,7 @@ int32_t HDSL_get_enc_id(HDSL_Handle handle, uint32_t byte, uint8_t *enc_id);
  *  \param[in]  handle   HDSL handle obtained from \ref HDSL_open
  *
  *  \retval     SystemP_SUCCESS  LUT generation completed successfully
- *  \retval     SystemP_FAILURE  Invalid handle (NULL)
+ *  \retval     SystemP_FAILURE  on validation failure
  */
 int32_t HDSL_generate_memory_image(HDSL_Handle handle);
 
@@ -1160,8 +1152,8 @@ int32_t HDSL_generate_memory_image(HDSL_Handle handle);
  *  \param[in]  handle    HDSL handle obtained from \ref HDSL_open
  *  \param[out] src_loc   Pointer to store address of HDSL_Interface structure in PRU memory
  *
- *  \return     SystemP_SUCCESS on success
- *  \return     SystemP_FAILURE if handle is invalid or src_loc pointer is NULL
+ *  \retval     SystemP_SUCCESS on success
+ *  \retval     SystemP_FAILURE on validation failure
  *
  *  \warning    Direct memory access through this pointer bypasses API safety checks.
  *              Use with caution. Prefer using standard HDSL_get_* and HDSL_set_* APIs.
@@ -1177,8 +1169,8 @@ int32_t HDSL_get_src_loc(HDSL_Handle handle, void **src_loc);
  *  \param[in]  handle   HDSL handle obtained from \ref HDSL_open
  *  \param[out] length   Pointer to store size of HDSL_Interface structure in bytes
  *
- *  \return     SystemP_SUCCESS on success
- *  \return     SystemP_FAILURE if handle is invalid or length pointer is NULL
+ *  \retval     SystemP_SUCCESS on success
+ *  \retval     SystemP_FAILURE on validation failure
  */
 int32_t HDSL_get_length(HDSL_Handle handle, uint32_t *length);
 
@@ -1190,12 +1182,12 @@ int32_t HDSL_get_length(HDSL_Handle handle, uint32_t *length);
  *              overlayed firmware parts that are loaded and executed sequentially.
  *
  *              The copy_table structure specifies:
- *              - part1_load_addr: Load address in PRU memory for firmware part 1
- *              - part1_run_addr: Execution address for firmware part 1
- *              - part1_size: Size in bytes of firmware part 1
- *              - part2_load_addr: Load address in PRU memory for firmware part 2
- *              - part2_run_addr: Execution address for firmware part 2
- *              - part2_size: Size in bytes of firmware part 2
+ *              - load_addr1: Load address in PRU memory for firmware part 1
+ *              - run_addr1: Execution address for firmware part 1
+ *              - size1: Size in bytes of firmware part 1
+ *              - load_addr2: Load address in PRU memory for firmware part 2
+ *              - run_addr2: Execution address for firmware part 2
+ *              - size2: Size in bytes of firmware part 2
  *
  *              This configuration is required for TX_PRU (channel 2) in multi-channel
  *              load share mode where firmware sections are overlayed to optimize memory usage.
@@ -1204,7 +1196,7 @@ int32_t HDSL_get_length(HDSL_Handle handle, uint32_t *length);
  *  \param[in]  copy_table   Pointer to HDSL_CopyTable structure containing firmware part configuration
  *
  *  \retval     SystemP_SUCCESS  Copy table configured successfully
- *  \retval     SystemP_FAILURE  Invalid handle (NULL) or copy_table pointer (NULL)
+ *  \retval     SystemP_FAILURE  on validation failure (NULL handle, NULL copy_table, any address/size > 0xFFFF, or NULL internal structures)
  */
 int32_t HDSL_config_copy_table(HDSL_Handle handle, const HDSL_CopyTable *copy_table);
 
@@ -1215,7 +1207,7 @@ int32_t HDSL_config_copy_table(HDSL_Handle handle, const HDSL_CopyTable *copy_ta
  *  \param[in]  res      Single-turn resolution value in bits
  *
  *  \retval     SystemP_SUCCESS on successful write
- *  \retval     SystemP_FAILURE on invalid parameters (NULL handle)
+ *  \retval     SystemP_FAILURE on validation failure
  */
 int32_t HDSL_set_res(HDSL_Handle handle, uint32_t res);
 
@@ -1225,8 +1217,8 @@ int32_t HDSL_set_res(HDSL_Handle handle, uint32_t res);
  *  \param[in]  handle   HDSL handle obtained from \ref HDSL_open
  *  \param[out] res      Pointer to store single-turn resolution value in bits
  *
- *  \return     SystemP_SUCCESS on success
- *  \return     SystemP_FAILURE if handle is invalid or res pointer is NULL
+ *  \retval     SystemP_SUCCESS on success
+ *  \retval     SystemP_FAILURE on validation failure
  */
 int32_t HDSL_get_res(HDSL_Handle handle, uint32_t *res);
 
@@ -1237,7 +1229,7 @@ int32_t HDSL_get_res(HDSL_Handle handle, uint32_t *res);
  *  \param[in]  multi_turn   Multi-turn resolution value in bits
  *
  *  \retval     SystemP_SUCCESS on successful write
- *  \retval     SystemP_FAILURE on invalid parameters (NULL handle)
+ *  \retval     SystemP_FAILURE on validation failure
  */
 int32_t HDSL_set_multi_turn(HDSL_Handle handle, uint32_t multi_turn);
 
@@ -1247,8 +1239,8 @@ int32_t HDSL_set_multi_turn(HDSL_Handle handle, uint32_t multi_turn);
  *  \param[in]  handle       HDSL handle obtained from \ref HDSL_open
  *  \param[out] multi_turn   Pointer to store multi-turn resolution value in bits
  *
- *  \return     SystemP_SUCCESS on success
- *  \return     SystemP_FAILURE if handle is invalid or multi_turn pointer is NULL
+ *  \retval     SystemP_SUCCESS on success
+ *  \retval     SystemP_FAILURE on validation failure
  */
 int32_t HDSL_get_multi_turn(HDSL_Handle handle, uint32_t *multi_turn);
 
@@ -1259,7 +1251,7 @@ int32_t HDSL_get_multi_turn(HDSL_Handle handle, uint32_t *multi_turn);
  *  \param[in]  mask     Position data mask for extracting valid position bits
  *
  *  \retval     SystemP_SUCCESS on successful write
- *  \retval     SystemP_FAILURE on invalid parameters (NULL handle)
+ *  \retval     SystemP_FAILURE on validation failure
  */
 int32_t HDSL_set_mask(HDSL_Handle handle, uint64_t mask);
 
@@ -1269,8 +1261,8 @@ int32_t HDSL_set_mask(HDSL_Handle handle, uint64_t mask);
  *  \param[in]  handle   HDSL handle obtained from \ref HDSL_open
  *  \param[out] mask     Pointer to store position data mask for extracting valid position bits
  *
- *  \return     SystemP_SUCCESS on success
- *  \return     SystemP_FAILURE if handle is invalid or mask pointer is NULL
+ *  \retval     SystemP_SUCCESS on success
+ *  \retval     SystemP_FAILURE on validation failure
  */
 int32_t HDSL_get_mask(HDSL_Handle handle, uint64_t *mask);
 

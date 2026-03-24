@@ -72,6 +72,30 @@ The initialization process was completely redesigned to use SysConfig-generated 
 
 ## API Changes
 
+Driver APIs use following validation approach now:
+
+**Handle Parameter Validation:**
+- All public APIs validate the handle parameter for NULL
+- Returns appropriate error value if handle is invalid:
+  - Functions returning int32_t status: SystemP_FAILURE
+  - Functions returning pointers: NULL
+  - Functions returning void: early return
+- This catches programming errors where uninitialized handles are used
+
+**Array Bounds and Index Validation:**
+- APIs with array parameters or index parameters perform bounds checking
+- Examples: buff_off (0-7), byte (0-2), position_id (0-2)
+- Prevents buffer overruns and out-of-bounds memory access
+
+**Internal Structure Validation:**
+- All APIs validate internal structure pointers before dereferencing them
+- Each function validates only the pointers it uses
+- Provides protection against NULL pointer dereferences
+
+**Pointer Parameter Validation:**
+- Output pointer parameters (position, data, copy_table) are checked for NULL
+- Ensures safe dereferencing before writing output data
+
 ### New APIs Added
 
 <table>
@@ -102,8 +126,8 @@ The initialization process was completely redesigned to use SysConfig-generated 
 </tr>
 <tr>
     <td>HDSL_hw_init()</td>
-    <td>Initialize hardware (clock, GP MUX, load share)</td>
-    <td>Call after HDSL_open(), replaces manual hardware setup and hdsl_enable_load_share_mode()</td>
+    <td>Initialize hardware (clock divider, GP MUX, load share)</td>
+    <td>Call after HDSL_open(), replaces manual hardware setup in application and hdsl_enable_load_share_mode()</td>
 </tr>
 <tr>
     <td>HDSL_get_pc_long_msg_error()</td>
@@ -128,7 +152,7 @@ The initialization process was completely redesigned to use SysConfig-generated 
 <tr>
     <td>HDSL_set_pc_addr()</td>
     <td>Set parameters channel address registers</td>
-    <td>Configure PC_ADD and PC_OFF registers</td>
+    <td>Configure PC_ADD_L, PC_ADD_H, PC_OFF_L and PC_OFF_H registers</td>
 </tr>
 <tr>
     <td>HDSL_set_pc_ctrl()</td>
@@ -148,7 +172,7 @@ The initialization process was completely redesigned to use SysConfig-generated 
 <tr>
     <td>HDSL_open()</td>
     <td>- Complete signature change<br>- 3 parameters to 2 parameters<br>- Old: <code>HDSL_open(icssHandle, icssCore, pruMode)</code><br>- New: <code>HDSL_open(instance, params)</code></td>
-    <td>Uses SysConfig-generated instance index and HDSL_Params structure. Hardware configuration (clock, GP MUX) moved to HDSL_hw_init().</td>
+    <td>Uses SysConfig-generated instance index and HDSL_Params structure. Hardware configuration (clock divider, GP MUX) moved to HDSL_hw_init().</td>
 </tr>
 <tr>
     <td>HDSL_get_pos()</td>
@@ -171,24 +195,29 @@ The initialization process was completely redesigned to use SysConfig-generated 
     <td>Returns status code, encoder ID byte via output pointer</td>
 </tr>
 <tr>
-    <td>HDSL_read_pc_buffer()</td>
-    <td>- Return type: <code>uint8_t</code> to <code>int32_t</code><br>- Added <code>uint8_t *data</code> output param</td>
-    <td>Returns status code, buffer data via output pointer</td>
+    <td>HDSL_write_pc_buffer()</td>
+    <td>- Return type: <code>void</code> to <code>int32_t</code></td>
+    <td>- Validates buffer offset range <br>- Returns SystemP_SUCCESS or SystemP_FAILURE</td>
 </tr>
 <tr>
-    <td>HDSL_write_pc_buffer()<br>HDSL_set_sync_ctrl()<br>HDSL_generate_memory_image()</td>
+    <td>HDSL_read_pc_buffer()</td>
+    <td>- Return type: <code>uint8_t</code> to <code>int32_t</code><br>- Added <code>uint8_t *data</code> output param</td>
+    <td>- Validates buffer offset range <br>- Returns status code, buffer data via output pointer</td>
+</tr>
+<tr>
+    <td>HDSL_set_sync_ctrl()<br>HDSL_generate_memory_image()</td>
     <td>- Return type: <code>void</code> to <code>int32_t</code></td>
     <td>Returns SystemP_SUCCESS or SystemP_FAILURE</td>
 </tr>
 <tr>
     <td>HDSL_write_pc_short_msg()<br>HDSL_read_pc_short_msg()</td>
     <td>- Added input validation<br>- Returns SystemP_FAILURE for invalid params</td>
-    <td>Now validates address range (0x00-0x7F), handle, and internal pointers</td>
+    <td>Validates address range (0x00-0x7F)</td>
 </tr>
 <tr>
     <td>HDSL_write_pc_long_msg()<br>HDSL_read_pc_long_msg()</td>
-    <td>- Parameter names: camelCase to snake_case<br>- <code>offsetEnable</code> to <code>offset_enable</code><br>- <code>addrType</code> to <code>addr_type</code><br>- Added input validation</td>
-    <td>Validates all parameter ranges. Returns SystemP_FAILURE for invalid params.</td>
+    <td>- Parameter names: camelCase to snake_case<br>- <code>offsetEnable</code> to <code>offset_enable</code><br>- <code>addrType</code> to <code>addr_type</code><br>- Added input validation<br>- Returns SystemP_FAILURE for invalid params</td>
+    <td>- Validates all parameter ranges<br>- Call HDSL_get_pc_long_msg_error() after HDSL_write_pc_long_msg() or HDSL_read_pc_long_msg() to check encoder error from long message operation</td>
 </tr>
 <tr>
     <td>HDSL_get_src_loc()</td>
@@ -249,6 +278,12 @@ The initialization process was completely redesigned to use SysConfig-generated 
     <td>enum { MENU_SAFE_POSITION, ... }</td>
     <td>typedef enum HDSL_MenuOption_e { ... } HDSL_MenuOption</td>
     <td>Converted to typedef with HDSL_ prefix</td>
+</tr>
+<tr>
+    <td>Tagged</td>
+    <td>typedef struct { ... } HDSL_Interface</td>
+    <td>typedef struct HDSL_Interface_s { ... } HDSL_Interface</td>
+    <td>Struct tag added to allow forward declaration using <code>struct HDSL_Interface_s</code></td>
 </tr>
 </table>
 
@@ -356,8 +391,6 @@ The monolithic HDSL_Config structure has been replaced by the HDSL_Object, HDSL_
 
 ## Macro and Constant Changes
 
-\note Only macros relevant for backward compatibility are listed below.
-
 <table>
 <tr>
     <th>Old Macro</th>
@@ -377,12 +410,12 @@ The monolithic HDSL_Config structure has been replaced by the HDSL_Object, HDSL_
 <tr>
     <td>MAX_WAIT</td>
     <td>Removed</td>
-    <td>Timeout is now passed as parameter to APIs that require it.</td>
+    <td>-</td>
 </tr>
 <tr>
     <td>SYNCEVENT_INTRTR_IN_27<br>SYNCEVT_RTR_SYNC28_EVT<br>SYNCEVT_RTR_SYNC29_EVT<br>SYNCEVT_RTR_SYNC30_EVT<br>SYNCEVT_RTR_SYNC31_EVT<br>SYNCEVT_RTR_SYNC10_EVT</td>
     <td>Removed</td>
-    <td>Sync event routing macros moved to application or configured via SysConfig.</td>
+    <td>Sync event routing macros moved to application</td>
 </tr>
 <tr>
     <td>-</td>
@@ -395,6 +428,12 @@ The monolithic HDSL_Config structure has been replaced by the HDSL_Object, HDSL_
     <td>New macros for PRU-ICSS type identification.</td>
 </tr>
 </table>
+
+## PRU-ICSS Interrupt Controller (INTC) related changes
+
+The file `source/position_sense/hdsl/include/pruss_intc_mapping.h` has been deleted. Applications that previously included this file must remove the `#include` directive.
+
+INTC configuration is now handled via SysConfig.
 
 ## Return Value Changes
 
@@ -428,19 +467,12 @@ Many APIs that previously returned data values or void now return int32_t status
 ### 1. Hardware Initialization API
 
 The new HDSL_hw_init() API consolidates hardware configuration:
-- Clock configuration (IEP, UART, ECAP)
+- Clock divider configuration for HDSL
 - GP MUX configuration
 - Load share mode enablement
 - Replaces manual hardware setup and hdsl_enable_load_share_mode()
 
-### 2. Enhanced Timeout Handling
-
-Improved timeout handling with SystemP_TIMEOUT return codes for parameter channel communication:
-- HDSL_read_pc_short_msg() and HDSL_write_pc_short_msg() now return SystemP_TIMEOUT when encoder doesn't respond
-- HDSL_read_pc_long_msg() and HDSL_write_pc_long_msg() provide clear timeout detection
-- Configurable timeout parameters for all blocking operations
-
-### 3. Improved Input Validation
+### 2. Improved Input Validation
 
 All public APIs now include comprehensive input validation:
 - Handle validation (NULL check)
@@ -448,9 +480,9 @@ All public APIs now include comprehensive input validation:
 - Internal structure pointer validation
 - Early failure detection with SystemP_FAILURE return code
 
-### 4. Long Message Error Reporting
+### 3. Long Message Error Reporting
 
-New HDSL_get_pc_long_msg_error() API provides encoder-specific error information after long message operations, enabling better diagnostics and error handling.
+New HDSL_get_pc_long_msg_error() API provides error information after long message operations.
 
 ## Migration Examples
 
@@ -484,7 +516,7 @@ if (handle == NULL)
     /* Handle error */
 }
 
-/* Initialize hardware (clock, GP MUX, load share) */
+/* Initialize hardware (clock divider, GP MUX, load share) */
 int32_t status = HDSL_hw_init(handle);
 if (status != SystemP_SUCCESS)
 {
@@ -518,50 +550,7 @@ if (status != SystemP_SUCCESS)
 }
 ```
 
-### Example 3: Reading Quality Monitoring
-
-**Old Code:**
-```c
-uint8_t qm = HDSL_get_qm(hdslHandle);
-```
-
-**New Code:**
-```c
-uint8_t qm;
-int32_t status = HDSL_get_qm(handle, &qm);
-if (status != SystemP_SUCCESS)
-{
-    /* Handle error */
-}
-```
-
-### Example 4: Short Message Read
-
-**Old Code:**
-```c
-uint8_t data;
-int32_t ret = HDSL_read_pc_short_msg(hdslHandle, addr, &data, timeout);
-if (ret != SystemP_SUCCESS)
-{
-    /* Handle error */
-}
-```
-
-**New Code:**
-```c
-uint8_t data;
-int32_t ret = HDSL_read_pc_short_msg(handle, addr, &data, timeout);
-if (ret == SystemP_TIMEOUT)
-{
-    /* Handle timeout */
-}
-else if (ret == SystemP_FAILURE)
-{
-    /* Handle validation failure (invalid handle, addr > 0x7F, etc.) */
-}
-```
-
-### Example 5: Accessing Configuration
+### Example 3: Accessing Configuration
 
 **Old Code:**
 ```c
@@ -583,7 +572,7 @@ HDSL_get_res(handle, &res);
 HDSL_set_mask(handle, (uint64_t)(1 << (multi_turn + res)) - 1);
 ```
 
-### Example 6: Load Share Mode Setup
+### Example 4: Load Share Mode Setup
 
 **Old Code:**
 ```c
@@ -605,11 +594,7 @@ HDSL_hw_init(handle);
 
 1. Open your project's `.syscfg` file
 2. Add the HDSL module under Position Sense, if not added already
-3. Configure the parameters:
-   - PRU-ICSS instance and slice
-   - Operational mode (Free Run or Sync)
-   - Core clock frequency (225 MHz or 300 MHz)
-   - Channel selection (for load share mode)
+3. Configure the parameters as per the requirement. Refer \ref HDSL_SYSCONFIG_FEATURES for more details.
 
 ### Generated Code
 
@@ -641,12 +626,17 @@ SysConfig will generate:
 
 5. **SysConfig errors**
    - Ensure HDSL module is added and configured in `.syscfg` file
+\cond SOC_AM243X
    - 225 MHz supports single channel only
-   - 300 MHz requires load share mode (AM243x ICSSG only)
+   - 300 MHz requires load share mode to be enabled
+   - 300 MHz is needed when multiple channels are enabled
    - Channel 2 requires channel 0 to be enabled (TX_PRU overlay dependency)
+\endcond
 
-6. **CopyTable member name changes**
-   - Update loadAddr1/runAddr1 to load_addr1/run_addr1 etc.
+6. <b><code>\#include "pruss_intc_mapping.h"</code> causes compilation error</b>
+   - The file `pruss_intc_mapping.h` has been deleted
+   - Remove the `#include` directive from your application
+   - INTC configuration is now handled via SysConfig
 
 ## Additional Resources
 

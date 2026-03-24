@@ -139,8 +139,8 @@ Mbed-TLS                             | R5F            | mbedtls-2.13.1
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Single channel, Multi channel using three PRU cores (load share mode), Free Run mode, Sync mode, Short Message Read and Write, Long Message Read and Write, Pipeline Channel Data, Long cable (upto 100 meters) with single channel Free Run mode, BP-AM2BLDCSERVO Boosterpack with LP-AM243
-    <td> Long cable (upto 100 meters) with sync mode
+    <td> Single channel, Multi channel using three PRU cores (load share mode), Free Run mode, Sync mode, Short Message Read and Write, Long Message Read and Write, Pipeline Channel Data, Cable length upto 10 meters, Long cable upto 100 meters with single channel Free Run mode and PRU core running at 300 MHz, BP-AM2BLDCSERVO Boosterpack with LP-AM243
+    <td> Long cable upto 100 meters (except single channel Free Run mode and PRU core running at 300 MHz)
 </tr>
 <tr>
     <td> Nikon A-format
@@ -311,6 +311,20 @@ Mbed-TLS                             | R5F            | mbedtls-2.13.1
     <th> Module
     <th> Applicable Releases
     <th> Workaround
+</tr>
+<tr>
+    <td> PINDSW-7474
+    <td> HDSL: Sync mode does not work with cable length > 10 meters
+    <td> Position Sense HDSL
+    <td> 9.0 onwards
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-10391
+    <td> HDSL: Free run mode does not work with cable length > 10 meters when PRU runs at 225 MHz
+    <td> Position Sense HDSL
+    <td> 9.0 onwards
+    <td> -
 </tr>
 </table>
 
