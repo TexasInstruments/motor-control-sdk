@@ -43,7 +43,7 @@
     <td>Position Sense BiSS-C
 </tr>
 <tr>
-    <td>Handle-based API architecture, different IEP CAP signal per slice, SysConfig-based initialization
+    <td>Improved sampling for RX data, Handle-based API architecture, different IEP CAP signal per slice, SysConfig-based initialization
     <td>Position Sense HDSL
 </tr>
 <tr>
