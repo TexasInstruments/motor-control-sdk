@@ -472,9 +472,14 @@ ALL_CHANNEL_DONE:
 
 FN_SEND:
 	; Program tx_frame_size ICSS_CFG_PRUx_ED_CH0_CFG0[15:11] to 10
-	; Program rx_frame_size in ICSS_CFG_PRUx_ED_CH0_CFG0[27:16]	to 110
-    ; loading rx frame size to maximum bits we can receive from tamagawa encoder for a particular command ID
-    LDI     R2.w1 , 110
+	; Program rx_frame_size in ICSS_CFG_PRUx_ED_CH0_CFG0[27:16]
+    ; Load number of TX and RX frames
+    LBCO	&SCRATCH1.w0, PRUx_DMEM, TAMAGAWA_WORD_1_OFFSET, 2
+    ; Total frames in response = TX data frames + RX data frames
+    ADD     SCRATCH1.w0, SCRATCH1.b0, SCRATCH1.b1
+    ; Multiply by 8 to convert from bytes to bits
+    LSL     SCRATCH1.w0, SCRATCH1.w0, 3
+    MOV     R2.w1, SCRATCH1.w0
     ; if channel 0 is enabled, updation of frame sizes will be done.
     QBBC    TAMAGAWA_SKIP15_CH0, TAMAGAWA_ENABLE_CHx,	0
     ;loading PRUx_ED_CFG0 Register for updating Tx frame size
