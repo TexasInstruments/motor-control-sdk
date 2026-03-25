@@ -49,19 +49,20 @@ const pruicss_g_v0_pwm1 = pruicss_g_v0_pwm.addInstance();
 /**
  * Write custom configuration values to the imported modules.
  */
-sdfm1.$name                 = "CONFIG_SDFM0";
-sdfm1.G_MUX_EN              = true;
-sdfm1.Enable_Epwm_Sync      = true;
-sdfm1.Enable_Channel_0      = true;
-sdfm1.Enable_Channel_1      = true;
-sdfm1.Enable_Channel_2      = true;
-sdfm1.PRU_EnableTriggerMode = true;
-sdfm1.Enable_Channel_3      = true;
-sdfm1.Enable_Channel_4      = true;
-sdfm1.Enable_Channel_5      = true;
-sdfm1.Enable_Channel_6      = true;
-sdfm1.Enable_Channel_7      = true;
-sdfm1.Enable_Channel_8      = true;
+sdfm1.$name                  = "CONFIG_SDFM0";
+sdfm1.G_MUX_EN               = true;
+sdfm1.Enable_Epwm_Sync       = true;
+sdfm1.Enable_Channel_0       = true;
+sdfm1.Enable_Channel_1       = true;
+sdfm1.Enable_Channel_2       = true;
+sdfm1.PRU_EnableTriggerMode  = true;
+sdfm1.Enable_Channel_3       = true;
+sdfm1.Enable_Channel_4       = true;
+sdfm1.Enable_Channel_5       = true;
+sdfm1.Enable_Channel_6       = true;
+sdfm1.Enable_Channel_7       = true;
+sdfm1.Enable_Channel_8       = true;
+sdfm1.PRU_ICSSG0_PRU.$assign = "PRU_ICSSG0_PRU0";
 
 epwm1.$name              = "CONFIG_EPWM0";
 epwm1.EPWM.$assign       = "EHRPWM0";
@@ -309,20 +310,19 @@ pruicss1.intcMapping[0].event                                                   
  * version of the tool will not impact the pinmux you originally saw.  These lines can be completely deleted in order to
  * re-solve from scratch.
  */
-sdfm1.PRU_ICSSG0_PRU.$suggestSolution                                                        = "PRU_ICSSG0_PRU1";
-sdfm1.PRU_ICSSG0_PRU.GPI16.$suggestSolution                                                  = "PRG0_PRU1_GPO16";
-sdfm1.PRU_ICSSG0_PRU.GPI1.$suggestSolution                                                   = "PRG0_PRU1_GPO1";
-sdfm1.PRU_ICSSG0_PRU.GPI3.$suggestSolution                                                   = "PRG0_PRU1_GPO3";
-sdfm1.PRU_ICSSG0_PRU.GPI5.$suggestSolution                                                   = "PRG0_PRU1_GPO5";
-sdfm1.PRU_ICSSG0_PRU.GPI7.$suggestSolution                                                   = "PRG0_PRU1_GPO7";
-sdfm1.PRU_ICSSG0_PRU.GPI18.$suggestSolution                                                  = "PRG0_PRU1_GPO18";
-sdfm1.PRU_ICSSG0_PRU.GPI11.$suggestSolution                                                  = "PRG0_PRU1_GPO11";
-sdfm1.PRU_ICSSG0_PRU.GPI13.$suggestSolution                                                  = "PRG0_PRU1_GPO13";
-sdfm1.PRU_ICSSG0_PRU.GPI15.$suggestSolution                                                  = "PRG0_PRU1_GPO15";
-sdfm1.PRU_ICSSG0_PRU.GPI17.$suggestSolution                                                  = "PRG0_PRU1_GPO17";
+sdfm1.PRU_ICSSG0_PRU.GPI16.$suggestSolution                                                  = "PRG0_PRU0_GPO16";
+sdfm1.PRU_ICSSG0_PRU.GPI1.$suggestSolution                                                   = "PRG0_PRU0_GPO1";
+sdfm1.PRU_ICSSG0_PRU.GPI3.$suggestSolution                                                   = "PRG0_PRU0_GPO3";
+sdfm1.PRU_ICSSG0_PRU.GPI5.$suggestSolution                                                   = "PRG0_PRU0_GPO5";
+sdfm1.PRU_ICSSG0_PRU.GPI7.$suggestSolution                                                   = "PRG0_PRU0_GPO7";
+sdfm1.PRU_ICSSG0_PRU.GPI18.$suggestSolution                                                  = "PRG0_PRU0_GPO18";
+sdfm1.PRU_ICSSG0_PRU.GPI11.$suggestSolution                                                  = "PRG0_PRU0_GPO11";
+sdfm1.PRU_ICSSG0_PRU.GPI13.$suggestSolution                                                  = "PRG0_PRU0_GPO13";
+sdfm1.PRU_ICSSG0_PRU.GPI15.$suggestSolution                                                  = "PRG0_PRU0_GPO15";
+sdfm1.PRU_ICSSG0_PRU.GPI17.$suggestSolution                                                  = "PRG0_PRU0_GPO17";
 debug_log.uartLog.UART.RXD.$suggestSolution                                                  = "UART0_RXD";
 debug_log.uartLog.UART.TXD.$suggestSolution                                                  = "UART0_TXD";
 pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[0].PRU_ICSSG0_PWM.$suggestSolution                     = "PRU_ICSSG0_PWM0";
 pruicss_g_v0_pwm1.PRUICSS_PWM_CHANNEL[0].PRU_ICSSG0_PWM.pwmPin.$suggestSolution              = "PRG0_PRU0_GPO12";
 pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].PRU_ICSSG0_ECAP.$suggestSolution             = "PRU_ICSSG0_ECAP0";
-pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].PRU_ICSSG0_ECAP.IN_APWM_OUT.$suggestSolution = "PRG0_PRU1_GPO19";
+pruicss1.AdditionalICSSSettings[0].PruEcapIO[0].PRU_ICSSG0_ECAP.IN_APWM_OUT.$suggestSolution = "PRG0_PRU1_GPO15";
