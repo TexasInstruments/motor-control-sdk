@@ -1,8 +1,8 @@
 [review_agent]
 # Only show the most critical issues inline
 inline_comments_severity_threshold = 2
-# Show feedback primarily in the summary
-comments_location_policy = "summary"
+# Show feedback only as inline
+comments_location_policy = "inline"
 
 # Ignore low-signal PRs and generated code
 [config]
