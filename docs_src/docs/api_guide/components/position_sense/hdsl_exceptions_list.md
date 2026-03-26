@@ -59,7 +59,7 @@ Notable exceptions in TI HDSL Solution when compared with SICK HDSL IP Core rele
         <td> ACC_ERR_CNT
         <td> **Different implementation from SICK HDSL IP Core**<br/>
              - This register gives the count of transmitted fast position values with consecutive transmission errors.
-             - Writing to this register does not set any threshold for setting an error signal. ACC_ERR_CNT_TRESH (0x41) register allows triggering protocol reset if ACC_ERR_CNT crosses a threshold.
+             - Writing to this register does not set any threshold for setting an error signal. ACC_ERR_CNT_THRESH (0x41) register allows triggering protocol reset if ACC_ERR_CNT crosses a threshold.
              - This count is an 8 bit value.
     </tr>
     <tr>
