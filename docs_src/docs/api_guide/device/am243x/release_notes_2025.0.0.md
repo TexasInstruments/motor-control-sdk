@@ -295,11 +295,67 @@ Mbed-TLS                             | R5F            | mbedtls-2.13.1
     <th> Resolution/Comments
 </tr>
 <tr>
+    <td> PINDSW-5690
+    <td> HDSL: EDGE register is not updated
+    <td> Position Sense HDSL
+    <td> 9.0 onwards
+    <td> NOTE: This register is not implemented in TI HDSL solution. It is documented as a known difference in \ref HDSL_EXCEPTIONS_LIST.
+</tr>
+<tr>
+    <td> PINDSW-9707
+    <td> %SDFM: Changing OSR values at runtime does not have any effect on sample output
+    <td> Current Sense %SDFM
+    <td> 9.0 onwards
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-10139
+    <td> EnDat: Supplement 2_2 commands do not work with periodic mode when channels 0 and 1 both are enabled
+    <td> Position Sense EnDat
+    <td> 9.0 onwards
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-10244
+    <td> EnDat: Variations seen in propagation delay measurement with different PRU Clock frequencies
+    <td> Position Sense EnDat
+    <td> 9.0 onwards
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-10284
+    <td> %SDFM: Trigger mode requires all three channels to be connected
+    <td> Current Sense %SDFM
+    <td> 9.0 onwards
+    <td> -
+</tr>
+<tr>
     <td> PINDSW-10322
     <td> TIDEP-01032: USER_M1_IS_OFFSET_CMPSS macro type mismatch causes data abort at -O1 optimization
     <td> TIDEP-01032 Reference Design
-    <td> 2025.0.0
+    <td> 9.1 onwards
     <td> The USER_M1_IS_OFFSET_CMPSS macro for the BP_AM2BLDCSERVO board was casting SDFM_HALF_SCALE (131072.0f) to uint16_t, which exceeds the uint16_t range (max 65535). This float-to-integer undefined behavior caused the compiler to eliminate the calcMotorOverCurrentThreshold function body at -O1 optimization. Fixed by setting the macro to 0 for SDFM-based boards where ADC CMPSS is not applicable.
+</tr>
+<tr>
+    <td> PINDSW-10364
+    <td> TIDEP-01032: Incorrect constant table configuration for PRU-ICSSG1
+    <td> TIDEP-01032 Reference Design
+    <td> 11.0
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-10365
+    <td> Shared memory region located in TCM marked as Cached in SDK examples
+    <td> TIDEP-01032 Reference Design, Position Sense EnDat, Current Sense %SDFM
+    <td> 9.0 onwards
+    <td> In SDK examples, PRU firmwares for %SDFM and EnDat store the data into R5F TCM memory.
+</tr>
+<tr>
+    <td> PINDSW-10389
+    <td> Tamagawa: Periodic command does not work with a lower cycle period
+    <td> Position Sense Tamagawa
+    <td> 9.0 onwards
+    <td> Due to maximum value of RX frame size being configured always for all commands, the periodic mode does not work for lower periods for certain commands.
 </tr>
 </table>
 
@@ -313,10 +369,38 @@ Mbed-TLS                             | R5F            | mbedtls-2.13.1
     <th> Workaround
 </tr>
 <tr>
+    <td> PINDSW-6486
+    <td> HDSL: RSSI register shows higher values than expected for a non-noisy setup
+    <td> Position Sense HDSL
+    <td> 9.0 onwards
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-7130
+    <td> HDSL: Few protocol resets seen during initialization with Free Run mode on LP-AM243
+    <td> Position Sense HDSL
+    <td> 9.0 onwards
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-7163
+    <td> HDSL: Trailer data contains 4 zeros instead of 5
+    <td> Position Sense HDSL
+    <td> 9.0 onwards
+    <td> -
+</tr>
+<tr>
     <td> PINDSW-7474
     <td> HDSL: Sync mode does not work with cable length > 10 meters
     <td> Position Sense HDSL
     <td> 9.0 onwards
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-9179
+    <td> Nikon: PRU Firmware gets stuck if encoder does not respond with number of bytes expected by driver
+    <td> Position Sense Nikon A-format
+    <td> 9.2 onwards
     <td> -
 </tr>
 <tr>
@@ -345,9 +429,16 @@ Mbed-TLS                             | R5F            | mbedtls-2.13.1
     <td> MCUSDK-208
     <td> gmake with -j can sometimes lock up Windows command prompt
     <td> Build
-    <td> 7.3.0 onwards
+    <td> 9.0 onwards
     <td> AM64x, AM243x
     <td> Use bash for windows as part of git for windows or don't use -j option
+</tr>
+<tr>
+    <td> PINDSW-9370
+    <td> Nikon: Only 7 encoders can be tested in bus connection with BP-AM2BLDCSERVO
+    <td> Position Sense Nikon
+    <td> 9.2 onwards
+    <td> Unable to test 8 encoders because of voltage drop when using BP-AM2BLDCSERVO is used
 </tr>
 </table>
 
