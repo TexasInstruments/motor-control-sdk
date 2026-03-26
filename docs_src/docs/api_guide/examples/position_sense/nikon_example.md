@@ -7,22 +7,22 @@
 
 Nikon diagnostic application does the following:
 
-- Configures pinmux, GPIO, UART, ICSS clock to 200MHz,
-- Initializes ICSS0-PRU1,
-- Initializes default parameters, loads the PRU firmware & executes it.
+- Configures pinmux, GPIO, UART, ICSS clock to 200MHz
+- Initializes PRU-ICSS
+- Initializes default parameters, loads the PRU firmware and executes it
 
-\note Nikon firmware supports operation with ICSS Core Clock running at 200 MHz/300 MHz frequency or ICSS UART Clock running at 192 MHz only. ICSS Core Clock at 225/250/333 MHz is not supported due to clock divider requirements.
+\note Nikon firmware is tested with ICSS Core Clock running at 200 MHz/300 MHz frequency or ICSS UART Clock running at 192 MHz only. ICSS Core Clock at 225/250/333 MHz is not supported due to clock divider requirements.
 \endcond
 
 \cond SOC_AM261X
 
 Nikon diagnostic application does the following:
 
-- Configures pinmux, GPIO, UART, ICSS clock to 225MHz,
-- Initializes ICSS0-PRU1,
-- Initializes default parameters, loads the PRU firmware & executes it.
+- Configures pinmux, GPIO, UART, ICSS clock to 225MHz
+- Initializes PRU-ICSS
+- Initializes default parameters, loads the PRU firmware and executes it
 
-\note Nikon firmware supports operation with ICSS UART Clock running at 160 MHz only, when ICSS Core Clock is 225 MHz due to clock divider requirements.
+\note Nikon firmware is tested with ICSS UART Clock running at 160 MHz only, when ICSS Core Clock is 225 MHz due to clock divider requirements.
 
 \endcond
 
@@ -30,11 +30,11 @@ Nikon diagnostic application does the following:
 
 Nikon diagnostic application does the following:
 
-- Configures pinmux, GPIO, UART, ICSS clock to 200MHz,
-- Initializes ICSS-PRU0,
-- Initializes default parameters, loads the PRU firmware & executes it.
+- Configures pinmux, GPIO, UART, ICSS clock to 200MHz
+- Initializes PRU-ICSS
+- Initializes default parameters, loads the PRU firmware and executes it
 
-\note Nikon firmware supports operation with ICSS Core Clock running at 200 MHz frequency or ICSS UART Clock running at 192 MHz frequency only.
+\note Nikon firmware is tested with ICSS Core Clock running at 200 MHz frequency or ICSS UART Clock running at 192 MHz frequency only.
 
 \endcond
 
@@ -166,7 +166,7 @@ This example supports up to three Nikon channels using three PRUs from same PRU-
 - Load share mode is used. Refer \ref PRUICSSG_LOAD_SHARE_MODE for more details.
 - Encoders of different make and different numbers of encoders connected across channels can be connected.
 - Encoders of the same frequency must be connected to all configured channels.
-- In this mode, data transmission and reception can start independently on all channels.
+- Data transmission and reception can start independently on all channels.
 - After a command is sent, all channels wait for a response and process the response independently. However, all channels must finish processing before the next command can be triggered.
 - 1 Nikon driver instance and corresponding SysConfig Nikon module instance is used for all channels.
 
@@ -212,6 +212,9 @@ This example supports two Nikon channels using two PRUs from same PRU-ICSSM. In 
 - Each instance operates independently on a different PRU slice (PRU0 or PRU1).
 - Both instances share common PRU-ICSS level resources.
 - Different PRUs can handle encoders with different frequencies simultaneously. For example, you can connect a 4 MHz encoder to a PRU0 channel, while connecting an 8 MHz encoder to a PRU1 channel.
+- For dual channel example testing, the application takes commands for both instances from user, then sends the commands one by one for each channel.
+- When using two instances example, avoid selecting the same CMP event or CAP event for both instances. Each instance must use a different IEP event number to prevent conflicts.
+
 \endcond
 
 # Steps to Run the Example
@@ -252,9 +255,9 @@ This example supports two Nikon channels using two PRUs from same PRU-ICSSM. In 
 ## Hardware Setup
 
 \cond SOC_AM243X
-### Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack & LP-AM243)
+### Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack and LP-AM243)
 \imageStyle{AM243x_lp_bp_nikon_encoder_setup.png,width:40%}
-\image html AM243x_lp_bp_nikon_encoder_setup.png  "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for Nikon"
+\image html AM243x_lp_bp_nikon_encoder_setup.png "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for Nikon"
 
 \note
     - The PROC109A version of LP-AM243 with BP-AM2BLDCSERVO Booster Pack supports two channels
@@ -335,10 +338,10 @@ This example supports two Nikon channels using two PRUs from same PRU-ICSSM. In 
 
 \cond SOC_AM261X
 
-### Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack & LP-AM261)
+### Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack and LP-AM261)
 
 \imageStyle{AM261x_lp_bp_nikon_encoder_setup.png,width:40%}
-\image html AM261x_lp_bp_nikon_encoder_setup.png  "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for Nikon"
+\image html AM261x_lp_bp_nikon_encoder_setup.png "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for Nikon"
 
 \note
     - The Rev. A version of LP-AM261 with BP-AM2BLDCSERVO Booster Pack supports two channels
@@ -440,9 +443,12 @@ This example supports two Nikon channels using two PRUs from same PRU-ICSSM. In 
 
 \cond SOC_AM263X
 
-### Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack & LP-AM263)
+### Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack and LP-AM263)
 \imageStyle{AM263x_lp_bp_nikon_encoder_setup.png,width:40%}
-\image html AM263x_lp_bp_nikon_encoder_setup.png  "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for Nikon"
+\image html AM263x_lp_bp_nikon_encoder_setup.png "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for Nikon"
+
+\note
+    - To enable VSENSOR1, BoosterPack pin J8.73 must be set high (In this example, this pin is configured in GPIO mode and pulled high)
 
 #### LP-AM263 Jumper Configuration
 
@@ -450,10 +456,10 @@ This example supports two Nikon channels using two PRUs from same PRU-ICSSM. In 
 
 \cond SOC_AM263PX
 
-### Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack & LP-AM263P)
+### Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack and LP-AM263P)
 
 \imageStyle{AM263Px_lp_bp_nikon_encoder_setup.png,width:40%}
-\image html AM263Px_lp_bp_nikon_encoder_setup.png  "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for Nikon"
+\image html AM263Px_lp_bp_nikon_encoder_setup.png "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for Nikon"
 
 \note
     - To enable VSENSOR1, BoosterPack pin J8.73 must be set high (In this example, this pin is configured in GPIO mode and pulled high)

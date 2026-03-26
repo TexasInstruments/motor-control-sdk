@@ -115,7 +115,7 @@ SysConfig can be used to configure the following:
 <tr>
     <td rowspan="3"> Multi-channel with load share across 3 PRU cores (Refer \ref PRUICSSG_LOAD_SHARE_MODE for more details)
     <td> PRUx
-    <td rowspan="3"> DMEM: 5101 Bytes: 3 * 256B for HDSL Registers per channel (0x0 to 0xFF, 0x700 to 0x7FF and 0xE00 to 0xEFF) + 1517B for LUTs (0x100 to 0x6EC) + 2816 Bytes for instructions storage related to TXPRU dynamic overlay (0x1500 to 0x1FFF) <br> IMEM: ~ 7.44 kB (For Sync mode. For Free Run mode, less IMEM is used)
+    <td rowspan="3"> DMEM: 5101 Bytes: 3 * 256B for HDSL Registers per channel (0x0 to 0xFF, 0x700 to 0x7FF and 0xE00 to 0xEFF) + 1517B for LUTs (0x100 to 0x6EC) + 2816 Bytes for instructions storage related to TXPRU dynamic overlay (0x1500 to 0x1FFF) <br> IMEM (per core): ~ 7.44 kB (For Sync mode. For Free Run mode, less IMEM is used)
     <td rowspan="3"> IEP1: CAP7 (slice 0) or CAP6 (slice 1) </td>
     <td rowspan="3"> INTC events/inputs numbers 16, 18, 19, 20, 21, 22 (pr[0/1]_pru_mst_intr[0/2/3/4/5/6]_intr_req) are used to trigger interrupts to Arm® Cortex®-R5F for EVENT, V-frame, H-frame, EVENT_S and H-frame respectively </td>
     <td rowspan="3"> IEP CAP event is used for external pulse synchronization in Sync mode only</td>

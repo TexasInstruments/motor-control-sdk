@@ -260,17 +260,8 @@ Following is the operation flow for host trigger mode:
 5. Application reads response data
 
 **Periodic CMP Mode (Compare Event Mode):** In CMP mode, IEP timer compare event triggers position sampling. The firmware monitors the configured IEP compare event and automatically initiates EnDat3 transactions when the IEP timer counter matches the compare value. This enables fixed-rate periodic sampling.
-- Compare event range: CMP0-CMP15 (0-15)
-- Configured via \ref endat3_set_operating_mode() API
-- IEP compare event number set via \ref endat3_config_iep_cmp_event() API
-- Event selection can be done in SysConfig
 
 **Periodic CAP Mode (Capture Event Mode):** In CAP mode, external signals trigger position sampling through IEP capture events. The capture event is triggered on the rising edge of the external input pulse, enabling event-driven position capture. \if (SOC_AM243X || SOC_AM64X) Internal signals can also be mapped to IEP capture events via TIMESYNC/GPIOMUX router. \else Internal signals can also be mapped to IEP capture events via XBAR. \endif
-- Capture event range: CAP0-CAP7 (0-7)
-- Configured via \ref endat3_set_operating_mode() API
-- IEP capture event number set via \ref endat3_config_iep_cap_event() API
-- Event selection can be done in SysConfig
-- CAP6 and CAP7 support falling edge detection as well. In EnDat3, rising edge is used always.
 
 Following is the operation flow for periodic mode:
 1. Firmware polls IEP CMP/CAP status register and clears status after event is detected
@@ -280,8 +271,6 @@ Following is the operation flow for periodic mode:
 5. The firmware checks the current trigger mode. If still in periodic mode, it returns to step 1 to wait for the next IEP CMP/CAP event. If the mode has been switched to host trigger mode, the firmware stops periodic operation.
 
 \attention Input cycle time (CMP mode) or external trigger period (CAP mode) should be greater than or equal to the EnDat3 communication cycle time.
-
-\note Both IEP event configuration APIs (endat3_config_iep_cmp_event() and endat3_config_iep_cap_event()) are automatically called during endat3_init() with values configured in SysConfig.
 
 ##### Background Communication State Machine
 

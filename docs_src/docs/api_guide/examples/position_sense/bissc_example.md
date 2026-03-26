@@ -5,10 +5,10 @@
 BISS-C diagnostic application does the following:
 
 - Configures pinmux, GPIO, UART, ICSS clock to 200MHz (default is 200 MHz, 300 MHz can also be used)
-- Initializes ICSS0-PRU1
-- Initializes default parameters, loads the PRU firmware & executes it.
+- Initializes PRU-ICSS
+- Initializes default parameters, loads the PRU firmware and executes it.
 
-\note BiSS-C firmware supports operation with ICSS Core Clock running at 200 MHz/300 MHz frequency or ICSS UART Clock running at 192 MHz only. ICSS Core Clock at 225/250/333 MHz is not supported due to clock divider requirements.
+\note BiSS-C firmware is tested with ICSS Core Clock running at 200 MHz/300 MHz frequency or ICSS UART Clock running at 192 MHz only. ICSS Core Clock at 225/250/333 MHz is not supported due to clock divider requirements.
 
 \endcond
 
@@ -17,10 +17,10 @@ BISS-C diagnostic application does the following:
 BISS-C diagnostic application does the following:
 
 - Configures pinmux, GPIO, UART, ICSS clock to 225MHz
-- Initializes ICSS0-PRU0
-- Initializes default parameters, loads the PRU firmware & executes it.
+- Initializes PRU-ICSS
+- Initializes default parameters, loads the PRU firmware and executes it.
 
-\note BiSS-C firmware supports operation with ICSS UART Clock running at 160 MHz only, when ICSS Core Clock is 225 MHz due to clock divider requirements.
+\note BiSS-C firmware is tested with ICSS UART Clock running at 160 MHz only, when ICSS Core Clock is 225 MHz due to clock divider requirements.
 
 \endcond
 
@@ -29,10 +29,10 @@ BISS-C diagnostic application does the following:
 BISS-C diagnostic application does the following:
 
 - Configures pinmux, GPIO, UART, ICSS clock to 200MHz
-- Initializes ICSS-PRU0
-- Initializes default parameters, loads the PRU firmware & executes it.
+- Initializes PRU-ICSS
+- Initializes default parameters, loads the PRU firmware and executes it.
 
-\note BiSS-C firmware supports operation with ICSS Core Clock running at 200 MHz frequency or ICSS UART Clock running at 192 MHz frequency only.
+\note BiSS-C firmware is tested with ICSS Core Clock running at 200 MHz frequency or ICSS UART Clock running at 192 MHz frequency only.
 
 \endcond
 
@@ -42,7 +42,7 @@ A serial terminal application (like teraterm/ hyperterminal/ minicom) is then ru
 To configure, select the serial port corresponding to the port emulated over USB by the EVM.
 The host serial port should be configured to 115200 baud, no parity, 1 stop bit and no flow control.
 
-The BISS-C receiver firmware running on ICSS0-PRU1 provides a defined interface. The BISS-C diagnostic application interacts with the BISS-C receiver firmware interface. It then presents the user with menu options to select Data ID code. The application collects the data entered by the user and configures the relevant interface. Then via the BISS-C receiver interface, the command is triggered. Once the command completion is indicated by the interface, the status of the transaction is checked. If the status indicates success, the result is presented to the user.
+The BISS-C receiver firmware running on PRU provides a defined interface. The BISS-C diagnostic application interacts with the BISS-C receiver firmware interface. It then presents the user with menu options to select Data ID code. The application collects the data entered by the user and configures the relevant interface. Then via the BISS-C receiver interface, the command is triggered. Once the command completion is indicated by the interface, the status of the transaction is checked. If the status indicates success, the result is presented to the user.
 
 \cond SOC_AM243X
 ## Channel Selection In Sysconfig
@@ -144,7 +144,7 @@ This example supports up to three BiSS-C channels using three PRUs from same PRU
 - Load share mode is used. Refer \ref PRUICSSG_LOAD_SHARE_MODE for more details.
 - Encoders of different make and different numbers of encoders connected across channels can be connected.
 - Encoders of the same frequency must be connected to all configured channels.
-- In this mode, data reception can start independently on all channels.
+- Data reception can start independently on all channels.
 - After clock transmission, all channels wait for a response and process the response independently. However, all channels must finish processing before the next command can be triggered.
 - 1 BiSS-C driver instance and corresponding SysConfig BiSS-C module instance is used for all channels.
 
@@ -190,6 +190,8 @@ This example supports two BiSS-C channels using two PRUs from same PRU-ICSSM. In
 - Each instance operates independently on a different PRU slice (PRU0 or PRU1).
 - Both instances share common PRU-ICSS level resources.
 - Different PRUs can handle encoders with different frequencies simultaneously. For example, you can configure 4 MHz encoder on PRU0 channel, while configuring 8 MHz on PRU1 channel.
+- For dual channel example testing, the application takes UART command input from user, then does the operation one by one for each channel.
+- When using two instances example, avoid selecting the same CMP event or CAP event for both instances. Each instance must use a different IEP event number to prevent conflicts.
 
 \endcond
 
@@ -233,9 +235,9 @@ This example supports two BiSS-C channels using two PRUs from same PRU-ICSSM. In
 
 \cond SOC_AM243X
 
-### Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack & LP-AM243)
+### Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack and LP-AM243)
 \imageStyle{AM243x_lp_bp_bissc_encoder_setup.png,width:40%}
-\image html AM243x_lp_bp_bissc_encoder_setup.png  "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for BISS-C"
+\image html AM243x_lp_bp_bissc_encoder_setup.png "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for BISS-C"
 
 \note
     - The PROC109A version of LP-AM243 with BP-AM2BLDCSERVO Booster Pack supports two channels
@@ -316,9 +318,9 @@ This example supports two BiSS-C channels using two PRUs from same PRU-ICSSM. In
 
 \cond SOC_AM261X
 
-### Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack & LP-AM261)
+### Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack and LP-AM261)
 \imageStyle{AM261x_lp_bp_bissc_encoder_setup.png,width:40%}
-\image html AM261x_lp_bp_bissc_encoder_setup.png  "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for BISS-C"
+\image html AM261x_lp_bp_bissc_encoder_setup.png "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for BISS-C"
 
 \note
     - The Rev. A version of LP-AM261 with BP-AM2BLDCSERVO Booster Pack supports two channels
@@ -420,9 +422,9 @@ This example supports two BiSS-C channels using two PRUs from same PRU-ICSSM. In
 
 \cond SOC_AM263X
 
-### Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack & LP-AM263)
+### Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack and LP-AM263)
 \imageStyle{AM263x_lp_bp_bissc_encoder_setup.png,width:40%}
-\image html AM263x_lp_bp_bissc_encoder_setup.png  "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for BISS-C"
+\image html AM263x_lp_bp_bissc_encoder_setup.png "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for BISS-C"
 
 \note
     - To enable VSENSOR1, BoosterPack pin J8.73 must be set high (In this example, this pin is configured in GPIO mode and pulled high)
@@ -433,9 +435,12 @@ This example supports two BiSS-C channels using two PRUs from same PRU-ICSSM. In
 
 \cond SOC_AM263PX
 
-### Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack & LP-AM263P)
+### Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack and LP-AM263P)
 \imageStyle{AM263Px_lp_bp_bissc_encoder_setup.png,width:40%}
-\image html AM263Px_lp_bp_bissc_encoder_setup.png  "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for BISS-C"
+\image html AM263Px_lp_bp_bissc_encoder_setup.png "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for BISS-C"
+
+\note
+    - To enable VSENSOR1, BoosterPack pin J8.73 must be set high (In this example, this pin is configured in GPIO mode and pulled high)
 
 #### LP-AM263P Jumper Configuration
 

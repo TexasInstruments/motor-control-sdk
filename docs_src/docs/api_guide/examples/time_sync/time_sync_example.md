@@ -68,7 +68,7 @@ The Time Synchronization System provides precise clock synchronization between m
 ##### Board 1
 - PRG0_IEP0_EDC_SYNC_OUT0 can be probed from IO Breakout board on J4.3
 - DEBUG_GPIO(PRG0_PRU0_GPO1) can be probed from IO Breakout board on J2.3
-- PRG1_IEP0_EDC_SYNC_OUT0 can be probed from TMDS243EVM on J16.1
+- PRG1_IEP0_EDC_SYNC_OUT0 can be probed from TMDS243EVM on J18.1
 
 ##### Board 2
 - PRG0_IEP0_EDC_SYNC_OUT0 can be probed from IO Breakout board on J4.3

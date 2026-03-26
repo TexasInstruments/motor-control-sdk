@@ -108,17 +108,8 @@ Then it checks the operation mode: host trigger mode, periodic CMP mode, or peri
 **Host Trigger Mode:** The firmware waits until a command has been triggered through the interface by the host application.
 
 **Periodic CMP Mode (Compare Event Mode):** In CMP mode, IEP timer compare event triggers position sampling. The firmware monitors the configured IEP compare event and automatically initiates Tamagawa transactions when the IEP timer counter matches the compare value. This enables fixed-rate periodic sampling.
-- Compare event range: CMP0-CMP15 (0-15)
-- Configured via \ref tamagawa_config_periodic_trigger_cmp_mode() API
-- IEP compare event number set via \ref tamagawa_config_iep_cmp_event() API
-- Event selection can be done in SysConfig
 
 **Periodic CAP Mode (Capture Event Mode):** In CAP mode, external signals trigger position sampling through IEP capture events. The capture event is triggered on the rising edge of the external input pulse, enabling event-driven position capture. \if (SOC_AM243X || SOC_AM64X) Internal signals can also be mapped to IEP capture events via TIMESYNC/GPIOMUX router. \else Internal signals can also be mapped to IEP capture events via XBAR. \endif
-- Capture event range: CAP0-CAP7 (0-7)
-- Configured via \ref tamagawa_config_periodic_trigger_cap_mode() API
-- IEP capture event number set via \ref tamagawa_config_iep_cap_event() API
-- Event selection can be done in SysConfig
-- CAP6 and CAP7 support falling edge detection as well. In Tamagawa, rising edge is used always.
 
 The following is the operation flow for the periodic mode:
 
@@ -133,8 +124,6 @@ The following is the operation flow for the periodic mode:
 \endcond
 
 \attention Input cycle time (CMP mode) or external trigger period (CAP mode) should be greater than or equal to the Tamagawa communication cycle time.
-
-\note Both IEP event configuration APIs (tamagawa_config_iep_cmp_event() and tamagawa_config_iep_cap_event()) are automatically called during tamagawa_init() with values configured in SysConfig.
 
 Upon triggering (from any mode), the transmit data is set up based on the data ID code and the data is transmitted. The data ID code then waits until receiving all the data that depends on the data ID. The parsing over the received data then commences, which is again based on the data ID, and the interface is updated with the result. The CRC verification occurs next and the interface indicates command completion. The firmware then waits for the next command trigger from the interface or IEP compare/capture event.
 
