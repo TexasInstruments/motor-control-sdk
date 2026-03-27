@@ -142,9 +142,9 @@ let endat3_module = {
         {
             name: "G_MUX_EN",
             displayName: "Enable G MUX ",
-            longDescription : `The G_MUX_EN bit (bit 7) in the ICSSG_SA_MX_REG register is a multiplexer control bit that enables alternative pin configurations for the PRUICSS Peripheral Interface mode. 
+            longDescription : `The G_MUX_EN bit (bit 7) in the ICSSG_SA_MX_REG register is a multiplexer control bit that enables alternative pin configurations for the PRUICSS Peripheral Interface mode.
                                This bit allows remapping of receive pins to support different hardware configurations and use cases.
-                                
+
 #### Pin Multiplexing Behavior
 
 | G_MUX_EN Value | Channel 0 Receive | Channel 1 Receive | Channel 2 Transmit | Description                    |

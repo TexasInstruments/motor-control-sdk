@@ -122,6 +122,15 @@ function onValidate(inst, validation) {
                "Select atleast one channel", inst, "channel_0"
         );
 
+        /* Calculate total channels for validation */
+        let total_channels = (instance.channel_0 ? 1 : 0) + (instance.channel_1 ? 1 : 0) + (instance.channel_2 ? 1 : 0);
+
+        /* AM26x SOC specific validation - only single channel supported */
+        if(is_am26x_soc && total_channels > 1)
+        {
+            validation.logError("AM26x devices support only single channel operation per PRU core", inst, "channel_0");
+        }
+
         /* channel 0 and channel 2 are supported on am243x-lp*/
         if((device === "am243x-lp") && (instance.channel_1) && (instance.Booster_Pack))
         {
@@ -216,9 +225,9 @@ let tamagawa_module = {
         {
             name: "G_MUX_EN",
             displayName: "Enable G Mux",
-            longDescription : `The G_MUX_EN bit (bit 7) in the ICSSG_SA_MX_REG register is a multiplexer control bit that enables alternative pin configurations for the PRUICSS Peripheral Interface mode. 
+            longDescription : `The G_MUX_EN bit (bit 7) in the ICSSG_SA_MX_REG register is a multiplexer control bit that enables alternative pin configurations for the PRUICSS Peripheral Interface mode.
                                This bit allows remapping of receive pins to support different hardware configurations and use cases.
-                                
+
 #### Pin Multiplexing Behavior
 
 | G_MUX_EN Value | Channel 0 Receive | Channel 1 Receive | Channel 2 Transmit | Description                    |

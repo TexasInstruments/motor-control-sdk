@@ -201,6 +201,48 @@ Mbed-TLS                             | R5F            | mbedtls-2.13.1
     <th> Applicable Releases
     <th> Resolution/Comments
 </tr>
+<tr>
+    <td> PINDSW-9371
+    <td> SysConfig allows multiple channels to be selected simultaneously from 1 PRU
+    <td> Position Sense BiSS-C, Position Sense EnDat, Position Sense Nikon A-format, Position Sense Tamagawa
+    <td> 10.0 onwards
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-9784
+    <td> Position Sense: PR0_PRU0_GPIO7 pin is not available in SoC, but shown in SysConfig modules
+    <td> Position Sense BiSS-C, Position Sense EnDat, Position Sense Nikon, Position Sense Tamagawa
+    <td> 10.0 onwards
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-10139
+    <td> EnDat: Supplement 2_2 commands do not work with periodic mode when channels 0 and 1 both are enabled
+    <td> Position Sense EnDat
+    <td> 10.0 onwards
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-10244
+    <td> EnDat: Variations seen in propagation delay measurement with different PRU Clock frequencies
+    <td> Position Sense EnDat
+    <td> 10.0 onwards
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-10365
+    <td> Shared memory region located in TCM marked as Cached in SDK examples
+    <td> Position Sense EnDat
+    <td> 10.0 onwards
+    <td> In SDK examples, PRU firmware for EnDat store the data into R5F TCM memory.
+</tr>
+<tr>
+    <td> PINDSW-10389
+    <td> Tamagawa: Periodic command does not work with a lower cycle period
+    <td> Position Sense Tamagawa
+    <td> 10.0 onwards
+    <td> Due to maximum value of RX frame size being configured always for all commands, the periodic mode does not work for lower periods for certain commands.
+</tr>
 </table>
 
 ## Known Issues
@@ -211,6 +253,13 @@ Mbed-TLS                             | R5F            | mbedtls-2.13.1
     <th> Module
     <th> Applicable Releases
     <th> Workaround
+</tr>
+<tr>
+    <td> PINDSW-9179
+    <td> Nikon: PRU Firmware gets stuck if encoder does not respond with number of bytes expected by driver
+    <td> Position Sense Nikon A-format
+    <td> 10.0 onwards
+    <td> -
 </tr>
 </table>
 
@@ -231,9 +280,16 @@ Mbed-TLS                             | R5F            | mbedtls-2.13.1
     <td> MCUSDK-208
     <td> gmake with -j can sometimes lock up Windows command prompt
     <td> Build
-    <td> 7.3.0 onwards
+    <td> 10.0 onwards
     <td> AM64x, AM243x
     <td> Use bash for windows as part of git for windows or don't use -j option
+</tr>
+<tr>
+    <td> PINDSW-9370
+    <td> Nikon: Only 7 encoders can be tested in bus connection with BP-AM2BLDCSERVO
+    <td> Position Sense Nikon
+    <td> 10.0 onwards
+    <td> Unable to test 8 encoders because of voltage drop when using BP-AM2BLDCSERVO is used
 </tr>
 </table>
 

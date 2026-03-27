@@ -58,6 +58,12 @@ function onValidate(inst, validation) {
             validation.logError("Only single channel is supported when core clock is 225 MHz", inst, "channel_0");
         }
 
+        /* AM261x SOC specific validation - only single channel supported */
+        if(is_am261x_soc && total_channels > 1)
+        {
+            validation.logError("AM261x device supports only single channel operation per PRU core", inst, "channel_0");
+        }
+
         /* Validate load share setting based on core clock */
         if (instance.coreClk === 225*1000000 && instance.Multi_Channel_Load_Share === true)
         {
@@ -139,9 +145,9 @@ let hdsl_module = {
         {
             name: "G_MUX_EN",
             displayName: "Enable G Mux",
-            longDescription : `The G_MUX_EN bit (bit 7) in the ICSSG_SA_MX_REG register is a multiplexer control bit that enables alternative pin configurations for the PRUICSS Peripheral Interface mode. 
+            longDescription : `The G_MUX_EN bit (bit 7) in the ICSSG_SA_MX_REG register is a multiplexer control bit that enables alternative pin configurations for the PRUICSS Peripheral Interface mode.
                                This bit allows remapping of receive pins to support different hardware configurations and use cases.
-                                
+
 #### Pin Multiplexing Behavior
 
 | G_MUX_EN Value | Channel 0 Receive | Channel 1 Receive | Channel 2 Transmit | Description                    |

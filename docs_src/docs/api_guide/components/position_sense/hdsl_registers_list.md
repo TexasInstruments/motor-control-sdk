@@ -1372,7 +1372,7 @@ TI HDSL Solution's register map is compatible with SICK HDSL IP Core release ver
     <td> 6 bit address for a "short message" operation
 </tr>
 <tr>
-    <td> ACC_ERR_CNT_TRESH
+    <td> ACC_ERR_CNT_THRESH
     <td> 0x41
     <td>
     <td> Fast Position Error Counter Threshold

@@ -56,6 +56,15 @@ function onValidate(inst, validation) {
         if ((!instance.Channel_0)&&(!instance.Channel_2)&&(!instance.Channel_1))
             validation.logError("Select atleast one channel", inst, "Channel_0");
 
+        /* Calculate total channels for validation */
+        let total_channels = (instance.Channel_0 ? 1 : 0) + (instance.Channel_1 ? 1 : 0) + (instance.Channel_2 ? 1 : 0);
+
+        /* AM26x SOC specific validation - only single channel supported */
+        if(is_am26x_soc && total_channels > 1)
+        {
+            validation.logError("AM26x devices support only single channel operation per PRU core", inst, "Channel_0");
+        }
+
         /* channel 0 and channel 2 are supported on am243x-lp*/
         if((device === "am243x-lp") && (instance.Channel_1) && (instance.Booster_Pack))
         {
