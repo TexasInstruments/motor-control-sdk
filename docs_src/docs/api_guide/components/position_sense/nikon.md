@@ -159,7 +159,7 @@ supported in this release, including the following:
         - The example code and PRU firmware are designed to handle 8 encoders
 
 \cond SOC_AM243X
-- PRU Firmware gets stuck if encoder does not respond with the number of bytes expected by the driver as per PINDSW-9179 in \ref RELEASE_NOTES_2025_0_0_PAGE
+- PRU Firmware gets stuck if encoder does not respond with the number of bytes expected by the driver as per PINDSW-9179 in \ref RELEASE_NOTES_2025_00_00_PAGE
  - Example cases when firmware gets stuck
     1. Any command is sent with encoder address not matching that of the encoder connected with the device
     2. In bus mode, if encoders with addresses 0, 1, 2 are connected and MT command is sent with encoder address 3 or more
@@ -167,7 +167,7 @@ supported in this release, including the following:
 \endcond
 
 \cond (SOC_AM263PX || SOC_AM261X)
-- PRU Firmware gets stuck if encoder does not respond with the number of bytes expected by the driver as per PINDSW-9179 in \ref RELEASE_NOTES_2025_0_0_PAGE
+- PRU Firmware gets stuck if encoder does not respond with the number of bytes expected by the driver as per PINDSW-9179 in \ref RELEASE_NOTES_2025_00_00_PAGE
  - Example cases when firmware gets stuck
     1. Any command is sent with encoder address not matching that of the encoder connected with the device
     2. In bus mode, if encoders with addresses 0, 1, 2 are connected and MT command is sent with encoder address 3 or more

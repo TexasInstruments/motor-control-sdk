@@ -1,15 +1,17 @@
-# Release Notes 2025.0.0 {#RELEASE_NOTES_2025_0_0_PAGE}
+# Release Notes 2025.00.00 {#RELEASE_NOTES_2025_00_00_PAGE}
 
 [TOC]
 
-\attention Also refer to individual module pages for more details on each feature, unsupported features, important usage guidelines.
+\attention
+    1. Please refer to individual module pages for more details on each feature, unsupported features, important usage guidelines.
+    2. Motor Control SDK 10.x included the Industrial Communications SDK and MCU+ SDK in bundled ind_comms_sdk and mcu_plus_sdk folders. Starting with Motor Control SDK 2025.00.00, these folders are no longer included and must be downloaded separately. Motor Control SDK installer provides an option to install the required Industrial Communications SDK and MCU+ SDK.
+    3. For release notes of Industrial Communications SDK and MCU+ SDK, please refer to <a href="@VAR_IC_SDK_DOCS_PATH/RELEASE_NOTES_2025_00_00_PAGE.html" target="_blank"> @VAR_SOC_NAME Industrial Communications SDK Release Notes 2025.00.00</a> and <a href="@VAR_MCU_SDK_DOCS_PATH/RELEASE_NOTES_11_00_00_PAGE.html" target="_blank"> @VAR_SOC_NAME MCU+ SDK Release Notes 11.00.00</a> respectively.
 
-\attention For release notes of Industrial Communications SDK and MCU+ SDK, please refer to <a href="@VAR_IC_SDK_DOCS_PATH/RELEASE_NOTES_2025_0_0_PAGE.html" target="_blank"> @VAR_SOC_NAME Industrial Communications SDK Release Notes 2025.0.0</a> and <a href="@VAR_MCU_SDK_DOCS_PATH/RELEASE_NOTES_2025_0_0_PAGE.html" target="_blank"> @VAR_SOC_NAME MCU+ SDK Release Notes 2025.0.0</a> respectively.
-
-\note The examples will show usage of SW modules and APIs on a specific CPU instance and OS combination. \n
-      Unless noted otherwise, the SW modules would work in both FreeRTOS and NORTOS environment. \n
-      Unless noted otherwise, the SW modules would work on any of the R5F's present on the SOC. \n
-      Unless noted otherwise, the SW modules would work on all supported EVMs \n
+\note
+    These examples will show usage of SW modules and APIs on a specific CPU instance and OS combination. \n
+    Unless noted otherwise, the SW modules would work in both FreeRTOS and NORTOS environment. \n
+    Unless noted otherwise, the SW modules would work on any of the R5F's present on the SOC. \n
+    Unless noted otherwise, the SW modules would work on all supported EVMs \n
 
 ## New in this Release
 
@@ -48,18 +50,21 @@
 
 SOC    | Supported CPUs  | EVM                                                                          | Host PC
 -------|-----------------|------------------------------------------------------------------------------|-----------------------------------------------
-AM261x | R5F             | AM261x Launchpad (referred to as am261x-lp in code). \n                      | Windows 10 64b or Ubuntu 18.04 64b or MacOS
+AM261x | R5F             | AM261x LaunchPad Revision A  (referred to as am261x-lp in code). \n          | Windows 10 64b or Ubuntu 18.04 64b or MacOS
 
 ## Dependent Tools and Compiler Information
 
-Tools                   | Supported CPUs | Version
-------------------------|----------------|-----------------------
-Code Composer Studio    | R5F            | 12.8.1
-SysConfig               | R5F            | 1.23.0 build, build 4000
-TI ARM CLANG            | R5F            | 4.0.1.LTS
-FreeRTOS Kernel         | R5F            | 11.1.0
-LwIP                    | R5F            | STABLE-2_2_0_RELEASE
-Mbed-TLS                | R5F            | 2.13.1
+Tools                                | Supported CPUs | Version
+-------------------------------------|----------------|-----------------------
+AM261x Industrial Communications SDK | R5F            | 2025.00.00.08
+AM261x MCU+ SDK                      | R5F, M4F       | 11.00.00.29
+Code Composer Studio                 | R5F            | 20.3.0
+SysConfig                            | R5F            | 1.25.0, build 4268
+TI ARM CLANG                         | R5F            | 4.0.3.LTS
+FreeRTOS Kernel                      | R5F            | 11.1.0
+LwIP                                 | R5F            | STABLE-2_2_1_RELEASE
+Mbed-TLS                             | R5F            | 2.13.1
+Uniflash                             | R5F            | 9.3.0
 
 ## Key Features
 
