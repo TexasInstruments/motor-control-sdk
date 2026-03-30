@@ -637,8 +637,6 @@ typedef struct SDFM_Params_s
     uint32_t sample_base_addr;
 } SDFM_Params;
 
-#include "sdfm_api.h"
-
 #ifdef __cplusplus
 }
 #endif
