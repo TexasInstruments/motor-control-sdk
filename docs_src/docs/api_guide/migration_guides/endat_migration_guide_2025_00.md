@@ -11,10 +11,10 @@
 ## Introduction
 
 \cond SOC_AM243X || SOC_AM64X
-This guide helps developers migrate EnDat encoder applications from Motor Control SDK v11.00.00 to v2025.00.00 and later versions. The driver underwent significant architectural changes including a move to handle-based APIs, enhanced periodic trigger modes, and improved SysConfig integration.
+This guide helps developers migrate EnDat encoder applications from Motor Control SDK v11.00.00 to v2025.00.00. The driver underwent significant architectural changes including a move to handle-based APIs, enhanced periodic trigger modes, and improved SysConfig integration.
 \endcond
 \cond (SOC_AM263PX || SOC_AM261X || SOC_AM263X)
-This guide helps developers migrate EnDat encoder applications from Motor Control SDK v10.02.00 to v2025.00.00 and later versions. The driver underwent significant architectural changes including a move to handle-based APIs, enhanced periodic trigger modes, and improved SysConfig integration.
+This guide helps developers migrate EnDat encoder applications from Motor Control SDK v10.02.00 to v2025.00.00. The driver underwent significant architectural changes including a move to handle-based APIs, enhanced periodic trigger modes, and improved SysConfig integration.
 \endcond
 
 ## Major Architectural Changes
@@ -78,6 +78,8 @@ Driver APIs use following validation approach now:
 - **Internal structure validation**: Each API validates the internal structure pointers it accesses (e.g., attrs, priv, pruicss_xchg, pruicss_handle) for NULL before dereferencing
  - **Error state handling**: Error in \ref endat_recvd_process may leave internal state partially modified. Subsequent calls will overwrite these values. Caller is responsible for explicit state cleanup if needed.
 
+\note These changes are not mentioned in the "Additional Details" column of the \ref ENDAT_MIGRATION_GUIDE_2025_00_APIS_MODIFIED section below. The \ref ENDAT_MIGRATION_GUIDE_2025_00_APIS_MODIFIED section describes changes in addition to the points mentioned above.
+
 ### New APIs Added
 
 <table>
@@ -133,7 +135,7 @@ Driver APIs use following validation approach now:
 </tr>
 </table>
 
-### APIs Modified
+### APIs Modified {#ENDAT_MIGRATION_GUIDE_2025_00_APIS_MODIFIED}
 
 \note Most APIs that previously returned <code>void</code> now return <code>int32_t</code> status codes (<code>SystemP_SUCCESS</code>, <code>SystemP_FAILURE</code>, or <code>SystemP_TIMEOUT</code>) to enable proper error handling.
 
@@ -146,32 +148,32 @@ Driver APIs use following validation approach now:
 <tr>
     <td>endat_init()</td>
     <td>- Complete signature change<br>- 7 parameters to 2 parameters<br>- Returns <code>endat_handle</code> instead of <code>priv*</code></td>
-    <td>Uses SysConfig-generated index and params structure as arguments</td>
+    <td>- Uses SysConfig-generated index and params structure as arguments<br>- Validates parameter limits</td>
 </tr>
 <tr>
     <td>endat_command_build()<br>endat_command_process()<br>endat_addinfo_track()</td>
     <td>- <code>priv</code> to <code>handle</code><br>- <code>struct cmd_supplement</code> to <code>endat_cmd_supplement</code></td>
-    <td>Type definition change for supplement parameter</td>
+    <td>- Type definition change for supplement parameter</td>
 </tr>
 <tr>
     <td>endat_recvd_process()<br>endat_recvd_validate()</td>
     <td>- <code>priv</code> to <code>handle</code><br>- <code>union endat_format_data</code> to <code>endat_format_data</code></td>
-    <td>Type definition change for format data parameter</td>
+    <td>- Type definition change for format data parameter</td>
 </tr>
 <tr>
     <td>endat_config_clock()</td>
     <td>- <code>priv</code> to <code>handle</code><br>- <code>struct endat_clk_cfg*</code> to <code>uint32_t freq</code><br>- <code>void</code> to <code>int32_t</code> return</td>
-    <td>Simplified clock configuration with frequency value</td>
+    <td>- Simplified clock configuration with frequency value</td>
 </tr>
 <tr>
     <td>endat_config_rx_arm_cnt()<br>endat_config_wire_delay()<br>endat_config_rx_clock_disable()<br>endat_config_tst_delay()<br>endat_config_host_trigger()<br>endat_config_channel()<br>endat_config_multi_channel_mask()<br>endat_start_continuous_mode() <br>endat_multi_channel_set_cur()<br>endat_multi_channel_detected()<br>endat_stop_continuous_mode()<br>endat_wait_initialization()<br>endat_init_rt_measurement()<br>endat_enable_rt_measurement()<br>endat_disable_rt_measurement() <br>endat_get_encoder_info()<br>endat_command_send()<br>endat_command_wait() </td>
     <td>- <code>void</code> to <code>int32_t</code> return<br>- <code>priv</code> to <code>handle</code></td>
-    <td>Returns status code</td>
+    <td>- Returns status code</td>
 </tr>
 <tr>
     <td>endat_get_recovery_time()<br>endat_get_prop_delay()<br>endat_check_rt_error()<br>endat_status_rt_measurement()</td>
     <td>- Returns via output parameter<br>- <code>priv</code> to <code>handle</code><br>- Added output pointer param</td>
-    <td>Returns status, provides value via pointer</td>
+    <td>- Returns status, provides value via pointer</td>
 </tr>
 </table>
 
@@ -666,59 +668,36 @@ The following structures in endat_interface.h have been renamed to follow consis
 <table>
 <tr>
     <th>Structure</th>
+    <th>Typedef</th>
     <th>Purpose</th>
     <th>Key Members</th>
 </tr>
 <tr>
     <td>endat_params</td>
+    <td><code>typedef struct endat_params_s endat_params</code></td>
     <td>Initialization parameters</td>
     <td>pruicss_handle, channel_rx_info, ch_info_global_addr, cmd_process_delay_us, fw_wait_delay_us, max_wait_loop_count</td>
 </tr>
 <tr>
     <td>endat_attrs</td>
+    <td><code>typedef struct endat_attrs_s endat_attrs</code></td>
     <td>Compile-time attributes from SysConfig</td>
     <td>PRU-ICSS attributes, channel configuration, clock settings, IEP event configuration</td>
 </tr>
 <tr>
     <td>endat_config</td>
+    <td><code>typedef struct endat_config_s endat_config</code><br><code>typedef endat_config *endat_handle</code></td>
     <td>Internal configuration structure</td>
     <td>priv (pointer to endat_priv), attrs (pointer to endat_attrs)</td>
 </tr>
 <tr>
     <td>endat_periodic_trigger_cfg</td>
+    <td><code>typedef struct endat_periodic_trigger_cfg_s endat_periodic_trigger_cfg</code></td>
     <td>IEP event configuration for periodic trigger</td>
     <td>iep_cmp_event, iep_cap_event, iep_capture_reg</td>
 </tr>
 </table>
 
-### New Types
-
-<table>
-<tr>
-    <th>New Type</th>
-    <th>Description</th>
-</tr>
-<tr>
-    <td>typedef struct endat_params_s ... endat_params</td>
-    <td>Initialization parameters structure</td>
-</tr>
-<tr>
-    <td>typedef struct endat_attrs_s ... endat_attrs</td>
-    <td>Compile-time attributes structure from SysConfig</td>
-</tr>
-<tr>
-    <td>typedef struct endat_config_s ... endat_config</td>
-    <td>Internal configuration structure</td>
-</tr>
-<tr>
-    <td>typedef endat_config *endat_handle</td>
-    <td>Opaque handle type for all APIs</td>
-</tr>
-<tr>
-    <td>typedef struct endat_periodic_trigger_cfg_s ... endat_periodic_trigger_cfg</td>
-    <td>IEP event configuration structure for periodic trigger</td>
-</tr>
-</table>
 
 ### Type Changes
 

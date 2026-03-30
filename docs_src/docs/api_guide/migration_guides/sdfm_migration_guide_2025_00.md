@@ -6,7 +6,7 @@
 
 ## Introduction
 
-This guide helps developers migrate SDFM current sense applications from Motor Control SDK v11.00.00 to v2025.00.00 and later versions. The driver underwent significant architectural changes including a move to handle-based APIs, SysConfig-based initialization, error return codes, new configuration structures, and per-PRU-core trigger mode support.
+This guide helps developers migrate SDFM current sense applications from Motor Control SDK v11.00.00 to v2025.00.00. The driver underwent significant architectural changes including a move to handle-based APIs, SysConfig-based initialization, error return codes, new configuration structures, and per-PRU-core trigger mode support.
 
 ## Major Architectural Changes
 
@@ -67,6 +67,8 @@ Driver APIs use following validation approach now:
 - **Public API validation**: All public APIs validate the handle parameter for NULL and perform array bounds checking for index parameters (channel, pru_core)
 - **Internal structure validation**: Each API validates the internal structure pointers it accesses (e.g., attrs, priv, sdfm_interface) for NULL before dereferencing
 
+\note These changes are not mentioned in the "Additional Details" column of the \ref SDFM_MIGRATION_GUIDE_2025_00_APIS_MODIFIED section below. The \ref SDFM_MIGRATION_GUIDE_2025_00_APIS_MODIFIED section describes changes in addition to the points mentioned above.
+
 ### New APIs Added
 
 <table>
@@ -117,7 +119,7 @@ Driver APIs use following validation approach now:
 </tr>
 </table>
 
-### APIs Modified
+### APIs Modified {#SDFM_MIGRATION_GUIDE_2025_00_APIS_MODIFIED}
 
 <table>
 <tr>
@@ -128,67 +130,112 @@ Driver APIs use following validation approach now:
 <tr>
     <td>SDFM_init()</td>
     <td>- Complete signature change<br>- 3 parameters to 2 parameters<br>- Returns \ref SDFM_Handle instead of sdfm_handle</td>
-    <td>Uses SysConfig-generated index and \ref SDFM_Params structure as arguments</td>
+    <td>- Uses SysConfig-generated index and \ref SDFM_Params structure as arguments<br>- Validates parameter limits</td>
 </tr>
 <tr>
-    <td>SDFM_enable()<br>SDFM_setSampleTriggerTime()<br>SDFM_enableDoubleSampling()<br>SDFM_disableDoubleSampling()<br>SDFM_enableSnoopBasedNC()<br>SDFM_disableSnoopBasedNC()</td>
+    <td>SDFM_enable()</td>
     <td>- <code>void</code> to <code>int32_t</code> return<br>- sdfm_handle to \ref SDFM_Handle <br>- Added <code>pru_core</code> parameter</td>
-    <td>Returns status code. Added pru_core (0=PRU, 1=RTU, 2=TXPRU) for per-core configuration</td>
+    <td>- Validates parameter limits<br>- Returns status code<br>- Added pru_core (0=PRU, 1=RTU, 2=TXPRU) for per-core configuration<br>- Returns SystemP_TIMEOUT on firmware acknowledgment timeout</td>
 </tr>
 <tr>
-    <td>SDFM_configEcap()<br>SDFM_setEnableChannel()<br>SDFM_configIepCount()</td>
+    <td>SDFM_setSampleTriggerTime()<br>SDFM_enableDoubleSampling()<br>SDFM_disableDoubleSampling()<br>SDFM_enableSnoopBasedNC()<br>SDFM_disableSnoopBasedNC()</td>
+    <td>- <code>void</code> to <code>int32_t</code> return<br>- sdfm_handle to \ref SDFM_Handle <br>- Added <code>pru_core</code> parameter</td>
+    <td>- Validates parameter limits<br>- Returns status code<br>- Added pru_core (0=PRU, 1=RTU, 2=TXPRU) for per-core configuration <br>- SDFM_enableSnoopBasedNC() and SDFM_disableSnoopBasedNC() were also renamed from SDFM_enableShadowRegBasedNC() and SDFM_disableShadowRegBasedNC() respectively</td>
+</tr>
+<tr>
+    <td>SDFM_configEcap()</td>
     <td>- <code>void</code> to <code>int32_t</code> return<br>- sdfm_handle to \ref SDFM_Handle</td>
-    <td>Returns status code. SDFM_configIepCount() also renamed parameter from epwm_out_freq to iep_reset_freq</td>
+    <td>- Validates parameter limits<br>- Returns status code<br>- ECAP register configuration is moved to driver from PRU firmware</td>
 </tr>
 <tr>
-    <td>SDFM_setCompFilterOverSamplingRatio()<br>SDFM_configDataFilter()<br>SDFM_selectClockSource()<br>SDFM_setClockInversion()<br>SDFM_enableComparator()<br>SDFM_disableComparator()<br>SDFM_configComparatorGpioPins()<br>SDFM_setFilterOverSamplingRatio()<br>SDFM_disableZeroCrossDetection()</td>
+    <td>SDFM_setEnableChannel()</td>
+    <td>- <code>void</code> to <code>int32_t</code> return<br>- sdfm_handle to \ref SDFM_Handle</td>
+    <td>- Validates parameter limits<br>- Returns status code</td>
+</tr>
+<tr>
+    <td>SDFM_configIepCount()</td>
+    <td>- <code>void</code> to <code>int32_t</code> return<br>- sdfm_handle to \ref SDFM_Handle <br>- Parameter renamed: <code>epwm_out_freq</code> to <code>iep_reset_freq</code></td>
+    <td>- Validates parameter limits<br>- Returns status code</td>
+</tr>
+<tr>
+    <td>SDFM_setCompFilterOverSamplingRatio()</td>
+    <td>- <code>void</code> to <code>int32_t</code> return<br>- sdfm_handle to \ref SDFM_Handle <br>- Parameter renamed: <code>ch_id</code> to <code>channel</code></td>
+    <td>- Validates parameter limits<br>- Returns status code<br>- Should only be called when snoop mode is enabled (via SDFM_enableSnoopBasedNC()) <br>- When snoop mode is disabled, the over-current filter OSR is set through SDFM_setFilterOverSamplingRatio()</td>
+</tr>
+<tr>
+    <td>SDFM_configDataFilter()<br>SDFM_configComparatorGpioPins()<br>SDFM_disableZeroCrossDetection()</td>
     <td>- <code>void</code> to <code>int32_t</code> return<br>- sdfm_handle to \ref SDFM_Handle <br>- Parameter renamed: <code>ch_id</code>/<code>ch</code>/<code>chNum</code> to <code>channel</code></td>
-    <td>Returns status code</td>
+    <td>- Validates parameter limits<br>- Returns status code</td>
+</tr>
+<tr>
+    <td>SDFM_selectClockSource()<br>SDFM_setClockInversion()</td>
+    <td>- <code>void</code> to <code>int32_t</code> return<br>- sdfm_handle to \ref SDFM_Handle <br>- Parameter renamed: <code>ch_id</code>/<code>ch</code>/<code>chNum</code> to <code>channel</code></td>
+    <td>- Validates parameter limits<br>- Returns status code<br>- SDFM register configuration is moved to driver from PRU firmware</td>
+</tr>
+<tr>
+    <td>SDFM_enableComparator()<br>SDFM_disableComparator()</td>
+    <td>- <code>void</code> to <code>int32_t</code> return<br>- sdfm_handle to \ref SDFM_Handle <br>- Parameter renamed: <code>ch_id</code>/<code>ch</code>/<code>chNum</code> to <code>channel</code></td>
+    <td>- Validates parameter limits<br>- Returns status code<br>- PWM Trip configuration is moved to driver from PRU firmware</td>
+</tr>
+<tr>
+    <td>SDFM_setFilterOverSamplingRatio()</td>
+    <td>- <code>void</code> to <code>int32_t</code> return<br>- sdfm_handle to \ref SDFM_Handle <br>- New <code>channel</code> parameter added (was not present in old API)</td>
+    <td>- Previously had no channel parameter <br>- Now configures OSR per-channel <br>- Behavior depends on snoop mode <br>- When snoop mode is enabled (via SDFM_enableSnoopBasedNC()), configures IEP count for normal current sampling <br>- When snoop mode is disabled, configures SD HW OSR directly</td>
 </tr>
 <tr>
     <td>SDFM_enableZeroCrossDetection()</td>
     <td>- <code>void</code> to <code>int32_t</code> return<br>- sdfm_handle to \ref SDFM_Handle <br>- Parameter renamed:<code>chNum</code> to <code>channel</code><br>- Parameter renamed: <code>zcThr</code> to <code>zc_thr</code></td>
-    <td>Returns status code</td>
+    <td>- Validates parameter limits<br>- Returns status code</td>
 </tr>
 <tr>
     <td>SDFM_setCompFilterThresholds()</td>
-    <td>- <code>void</code> to <code>int32_t</code> return<br>- sdfm_handle to \ref SDFM_Handle <br>- Parameter <code>uint32_t *thresholdParms</code> changed to \ref SDFM_ThresholdConfig<br>- Parameter renamed: <code>ch_id</code> to <code>channel</code></td>
-    <td>Uses structured threshold configuration instead of raw pointer</td>
+    <td>- <code>void</code> to <code>int32_t</code> return<br>- sdfm_handle to \ref SDFM_Handle <br>- Parameter <code>uint32_t *thresholdParms</code> changed to \ref SDFM_ThresholdConfig <br>- Parameter renamed: <code>ch_id</code> to <code>channel</code></td>
+    <td>- Validates parameter limits<br>- Returns status code<br>- Uses structured threshold configuration instead of raw pointer</td>
 </tr>
 <tr>
     <td>SDFM_configFastDetect()</td>
-    <td>- <code>void</code> to <code>int32_t</code> return<br>- sdfm_handle to \ref SDFM_Handle <br>- Parameter <code>uint8_t *fdParms</code> changed to \ref SDFM_FastDetectConfig<br>- Parameter renamed: <code>ch</code> to <code>channel</code></td>
-    <td>Uses structured fast detect configuration instead of raw pointer</td>
+    <td>- <code>void</code> to <code>int32_t</code> return<br>- sdfm_handle to \ref SDFM_Handle <br>- Parameter <code>uint8_t *fdParms</code> changed to \ref SDFM_FastDetectConfig <br>- Parameter renamed: <code>ch</code> to <code>channel</code></td>
+    <td>- Validates parameter limits<br>- Returns status code<br>- Uses structured fast detect configuration instead of raw pointer</td>
 </tr>
 <tr>
-    <td>SDFM_measureClockPhaseDelay()<br>SDFM_getClockPhaseDelay()</td>
-    <td>- sdfm_handle to \ref SDFM_Handle <br>- Added <code>channel</code> parameter<br>- SDFM_measureClockPhaseDelay(): Parameter renamed: <code>clkEd</code> to <code>clk_edge</code></td>
-    <td> SDFM_measureClockPhaseDelay() also returns int32_t (was void)</td>
+    <td>SDFM_measureClockPhaseDelay()</td>
+    <td>- <code>void</code> to <code>int32_t</code> return<br>- sdfm_handle to \ref SDFM_Handle <br>- Added <code>channel</code> parameter<br>- Parameter renamed: <code>clkEd</code> to <code>clk_edg</code></td>
+    <td>- Validates parameter limits<br>- Returns SystemP_TIMEOUT on firmware acknowledgment timeout</td>
+</tr>
+<tr>
+    <td>SDFM_getClockPhaseDelay()</td>
+    <td>- sdfm_handle to \ref SDFM_Handle <br>- Added <code>channel</code> parameter</td>
+    <td>- Validates parameter limits</td>
 </tr>
 <tr>
     <td>SDFM_getHighThresholdStatus()<br>SDFM_getLowThresholdStatus()<br>SDFM_getZeroCrossThresholdStatus()</td>
-    <td>- Return type <code>uint8_t</code> changed to <code>int32_t</code><br>- sdfm_handle to \ref SDFM_Handle <br>- Parameter renamed: <code>ch_id</code>/<code>ch</code>/<code>chNum</code> to <code>channel</code></td>
-    <td>Returns SystemP_FAILURE on invalid parameters</td>
+    <td>- Return type <code>uint8_t</code> changed to <code>int32_t</code><br>- sdfm_handle to \ref SDFM_Handle <br>- Parameter renamed: <code>chNum</code> to <code>channel</code></td>
+    <td>- Returns SystemP_FAILURE on invalid parameters</td>
 </tr>
 <tr>
     <td>SDFM_configIepSyncMode()</td>
     <td>- sdfm_handle to \ref SDFM_Handle <br>- Parameter names: camelCase to snake_case</td>
-    <td>highPulseWidth to high_pulse_width, periodTime to period_time, syncStartTime to sync_start_time</td>
+    <td>-</td>
 </tr>
 <tr>
     <td>SDFM_enableEpwmSync()<br>SDFM_disableEpwmSync()</td>
     <td>- sdfm_handle to \ref SDFM_Handle <br>- Parameter name: epwmIns to epwm_ins</td>
-    <td>Parameter rename only</td>
+    <td>-</td>
 </tr>
 <tr>
-    <td>SDFM_getFilterData()<br>SDFM_getFastDetectErrorStatus()<br>SDFM_clearPwmTripStatus()<br>SDFM_clearOverCurrentError()</td>
-    <td>- sdfm_handle to \ref SDFM_Handle <br>- Parameter renamed: <code>ch_id</code>/<code>ch</code>/<code>chNum</code> to <code>channel</code></td>
-    <td>Handle and parameter rename only</td>
+    <td>SDFM_getFilterData()</td>
+    <td>- sdfm_handle to \ref SDFM_Handle <br>- Parameter renamed: <code>ch</code> to <code>channel</code></td>
+    <td>- Validates parameter limits</td>
+</tr>
+<tr>
+    <td>SDFM_getFastDetectErrorStatus()<br>SDFM_clearPwmTripStatus()<br>SDFM_clearOverCurrentError()</td>
+    <td>- sdfm_handle to \ref SDFM_Handle <br>- Parameter renamed: <code>chNum</code> to <code>channel</code></td>
+    <td>-</td>
 </tr>
 <tr>
     <td>SDFM_getFirmwareVersion()<br>SDFM_enableIep()<br>SDFM_configSync1Delay()<br>SDFM_configClockFromGPO1()</td>
     <td>- sdfm_handle to \ref SDFM_Handle</td>
-    <td>Handle change only</td>
+    <td>-</td>
 </tr>
 </table>
 
@@ -210,52 +257,70 @@ Driver APIs use following validation approach now:
     <td>SysConfig configuration</td>
     <td>Load share mode is now configured through SysConfig (load_share_enabled in \ref SDFM_Attrs)</td>
 </tr>
+<tr>
+    <td>SDFM_enableShadowRegBasedNC()</td>
+    <td>SDFM_enableSnoopBasedNC()</td>
+    <td>Renamed to reflect snoop-mode terminology; also added pru_core parameter</td>
+</tr>
+<tr>
+    <td>SDFM_disableShadowRegBasedNC()</td>
+    <td>SDFM_disableSnoopBasedNC()</td>
+    <td>Renamed to reflect snoop-mode terminology; also added pru_core parameter</td>
+</tr>
 </table>
 
 ## Structure and Type Changes
 
-### Removed Structures
+### Removed Structures {#SDFM_MIGRATION_GUIDE_2025_00_REMOVED_STRUCTURES}
 
 <table>
 <tr>
     <th>Old Structure</th>
-    <th>Replacement</th>
+    <th>Old Typedef</th>
+    <th>Replacement Structure</th>
     <th>Notes</th>
 </tr>
 <tr>
     <td>SDFM (main driver struct)</td>
-    <td>\ref SDFM_Config + \ref SDFM_Priv</td>
-    <td>Split into config handle and private data structures</td>
+    <td><code>typedef struct SDFM_s SDFM</code><br><code>typedef SDFM *sdfm_handle</code></td>
+    <td>\ref SDFM_Config (\ref SDFM_Attrs + \ref SDFM_Priv)</td>
+    <td>Split into compile-time attributes from SysConfig and private data structures. <code>iepInc</code>, <code>pruicssCfg</code>, <code>pruicssIep</code> and <code>pruicssEcap</code> fields are removed. <code>sdfm_handle</code> renamed to \ref SDFM_Handle.</td>
 </tr>
 <tr>
     <td>SDFM_Cfg</td>
-    <td>\ref SDFM_ChannelConfig</td>
+    <td><code>typedef struct SDFM_Cfg_s SDFM_Cfg</code></td>
+    <td>Fields distributed into \ref SDFM_ChannelConfig and \ref SDFM_ChannelAttrs</td>
     <td>Reorganized per-channel configuration</td>
 </tr>
 <tr>
     <td>SDFM_Ctrl</td>
+    <td><code>typedef struct SDFM_Ctrl_s SDFM_Ctrl</code></td>
     <td>\ref SDFM_Control</td>
-    <td>Per-PRU-core control with array of 3 entries</td>
+    <td>Per-PRU-core control with array of 3 entries. Fields are renamed.</td>
 </tr>
 <tr>
     <td>SDFM_ChCtrl</td>
-    <td>Fields distributed into \ref SDFM_ChannelConfig and \ref SDFM_Interface</td>
-    <td>Channel enable is now per-channel in SDFM_ChannelConfig.enabled</td>
+    <td><code>typedef struct SDFM_ChCtrl_s SDFM_ChCtrl</code></td>
+    <td>Fields distributed into \ref SDFM_ChannelConfig, \ref SDFM_ChannelAttrs and \ref SDFM_Attrs</td>
+    <td>Reorganized per-channel configuration</td>
 </tr>
 <tr>
     <td>SDFM_CfgSdClk</td>
-    <td>Fields moved to \ref SDFM_ChannelConfig and \ref SDFM_Attrs</td>
-    <td>Clock configuration is per-channel</td>
+    <td><code>typedef struct SDFM_CfgSdClk_s SDFM_CfgSdClk</code></td>
+    <td>Fields moved to \ref SDFM_ChannelConfig and \ref SDFM_ChannelAttrs</td>
+    <td>Reorganized per-channel clock configuration. <code>sd_prd_clocks</code> field is removed.</td>
 </tr>
 <tr>
     <td>SDFM_CfgIep</td>
-    <td>Fields distributed into \ref SDFM_CfgTrigger and \ref SDFM_Attrs</td>
-    <td>IEP configuration merged with trigger configuration</td>
+    <td><code>typedef struct SDFM_CfgIep_s SDFM_CfgIep</code></td>
+    <td>Fields distributed into \ref SDFM_CfgTrigger</td>
+    <td>IEP configuration merged with trigger configuration. <code>iep_inc_value</code> field is removed.</td>
 </tr>
 <tr>
     <td>SDFM_ClkSourceParms</td>
-    <td>Fields moved to \ref SDFM_ChannelConfig</td>
-    <td>Clock source and inversion are per-channel fields</td>
+    <td><code>typedef struct SDFM_ClkSourceParms_s SDFM_ClkSourceParms</code></td>
+    <td>Fields moved to \ref SDFM_ChannelConfig and \ref SDFM_ChannelAttrs</td>
+    <td>Reorganized per-channel configuration</td>
 </tr>
 </table>
 
@@ -263,59 +328,80 @@ Driver APIs use following validation approach now:
 
 <table>
 <tr>
-    <th>Structure</th>
+    <th>New Structure</th>
+    <th>Typedef</th>
     <th>Purpose</th>
     <th>Key Members</th>
 </tr>
 <tr>
     <td>\ref SDFM_Config</td>
+    <td><code>typedef struct sdfm_config_s SDFM_Config</code><br><code>typedef SDFM_Config *SDFM_Handle</code></td>
     <td>Driver configuration handle</td>
     <td>priv (pointer to SDFM_Priv), attrs (pointer to SDFM_Attrs)</td>
 </tr>
 <tr>
     <td>\ref SDFM_Priv</td>
+    <td><code>typedef struct SDFM_Priv_s SDFM_Priv</code></td>
     <td>Runtime private data</td>
     <td>is_open, sdfm_interface, sampleOutputInterface, pruicss_handle, pwm_handle</td>
 </tr>
 <tr>
     <td>\ref SDFM_Attrs</td>
+    <td><code>typedef struct SDFM_Attrs_s SDFM_Attrs</code></td>
     <td>Compile-time attributes from SysConfig</td>
     <td>PRU instance, channel configuration, clock frequencies, operation mode settings</td>
 </tr>
 <tr>
     <td>\ref SDFM_ChannelConfig</td>
+    <td><code>typedef struct SDFM_ChannelConfig_s SDFM_ChannelConfig</code></td>
     <td>Per-channel runtime configuration in DMEM</td>
     <td>ch_id, enabled, filter_type, OSR, threshold, GPIO, clock settings</td>
 </tr>
 <tr>
     <td>\ref SDFM_ChannelAttrs</td>
+    <td><code>typedef struct SDFM_ChannelAttrs_s SDFM_ChannelAttrs</code></td>
     <td>Per-channel compile-time attributes</td>
     <td>ch_id, enabled, filter_type, OSR, thresholds, clock settings</td>
 </tr>
 <tr>
     <td>\ref SDFM_PruCoreAttrs</td>
+    <td><code>typedef struct SDFM_PruCoreAttrs_s SDFM_PruCoreAttrs</code></td>
     <td>Per-PRU-core compile-time attributes</td>
     <td>enable_trigger_mode, en_double_nc_sampling, trigger times, iep_cmp_event</td>
 </tr>
 <tr>
     <td>\ref SDFM_Control</td>
+    <td><code>typedef struct SDFM_Control_s SDFM_Control</code></td>
     <td>Per-PRU-core control settings</td>
     <td>enable, enable_ack, enable_snoop_nc</td>
 </tr>
 <tr>
     <td>\ref SDFM_Params</td>
+    <td><code>typedef struct SDFM_Params_s SDFM_Params</code></td>
     <td>Initialization parameters</td>
     <td>pruicss_handle, pwm_handle, sample_base_addr</td>
 </tr>
 <tr>
     <td>\ref SDFM_ThresholdConfig</td>
+    <td><code>typedef struct SDFM_ThresholdConfig_s SDFM_ThresholdConfig</code></td>
     <td>Threshold configuration for SDFM_setCompFilterThresholds()</td>
     <td>high_threshold, low_threshold</td>
 </tr>
 <tr>
     <td>\ref SDFM_FastDetectConfig</td>
+    <td><code>typedef struct SDFM_FastDetectConfig_s SDFM_FastDetectConfig</code></td>
     <td>Fast detect configuration for SDFM_configFastDetect()</td>
     <td>fd_enable, fd_window_size, fd_zero_max, fd_zero_min</td>
+</tr>
+</table>
+
+### New Enumerations
+
+<table>
+<tr>
+    <th>Enumeration</th>
+    <th>Purpose</th>
+    <th>Values</th>
 </tr>
 <tr>
     <td>\ref SDFM_ClockSource</td>
@@ -325,8 +411,6 @@ Driver APIs use following validation approach now:
 </table>
 
 ### SDFM_CfgTrigger Structure Changes
-
-The \ref SDFM_CfgTrigger structure is retained but modified. In v2025.00.00 there is an array of 3 entries (one per PRU core) instead of a single instance.
 
 <table>
 <tr>
@@ -389,6 +473,62 @@ The \ref SDFM_CfgTrigger structure is retained but modified. In v2025.00.00 ther
 </tr>
 </table>
 
+### SDFM_Interface Structure Changes
+
+The \ref SDFM_Interface structure is retained but significantly reorganized to support per-PRU-core control and all 9 channels.
+
+<table>
+<tr>
+    <th>Change Type</th>
+    <th>Old Member</th>
+    <th>New Member</th>
+    <th>Notes</th>
+</tr>
+<tr>
+    <td>Replaced</td>
+    <td>SDFM_Ctrl sdfm_ctrl</td>
+    <td>SDFM_Control control[3]</td>
+    <td>Single control struct replaced by array of 3 (one per PRU core: PRU, RTU-PRU, TX-PRU). Fields renamed: sdfm_en→enable, sdfm_en_ack→enable_ack, sdfm_en_shadow_nc→enable_snoop_nc. Field sdfm_pru_id is removed.</td>
+</tr>
+<tr>
+    <td rowspan="4">Removed</td>
+    <td>SDFM_CfgIep sdfm_cfg_iep_ptr</td>
+    <td rowspan="4">-</td>
+    <td rowspan="4">See \ref SDFM_MIGRATION_GUIDE_2025_00_REMOVED_STRUCTURES</td>
+</tr>
+<tr>
+    <td>SDFM_CfgSdClk sd_clk</td>
+</tr>
+<tr>
+    <td>SDFM_ChCtrl sdfm_ch_ctrl</td>
+</tr>
+<tr>
+    <td>SDFM_Cfg sdfm_cfg_ptr[3]</td>
+</tr>
+<tr>
+    <td>Replaced</td>
+    <td>SDFM_CfgTrigger sdfm_cfg_trigger</td>
+    <td>SDFM_CfgTrigger trigger_config[3]</td>
+    <td>Single trigger configuration replaced by array of 3 (one per PRU core) for independent per-core trigger configuration</td>
+</tr>
+<tr>
+    <td>Removed</td>
+    <td>volatile uint32_t sampleBufferBaseAdd</td>
+    <td>-</td>
+    <td>Moved into SDFM_CfgTrigger.sample_buff_base_addr (per PRU core)</td>
+</tr>
+<tr>
+    <td rowspan="2">Added</td>
+    <td rowspan="2">-</td>
+    <td>volatile uint16_t active_channels_mask</td>
+    <td>Bitmask of active/enabled channels</td>
+</tr>
+<tr>
+    <td>SDFM_ChannelConfig channels[9]</td>
+    <td>Per-channel runtime configuration</td>
+</tr>
+</table>
+
 ### SDFM_ThresholdParms Field Renames
 
 The \ref SDFM_ThresholdParms structure field names changed from camelCase to snake_case.
@@ -417,21 +557,6 @@ The \ref SDFM_ThresholdParms structure field names changed from camelCase to sna
 <tr>
     <td>zeroCrossTh</td>
     <td>zero_cross_threshold</td>
-</tr>
-</table>
-
-### Type Changes
-
-<table>
-<tr>
-    <th>Old Type</th>
-    <th>New Type</th>
-    <th>Description</th>
-</tr>
-<tr>
-    <td>typedef SDFM *sdfm_handle</td>
-    <td>typedef SDFM_Config *SDFM_Handle</td>
-    <td>Opaque handle type for all APIs</td>
 </tr>
 </table>
 
@@ -508,31 +633,31 @@ The \ref SDFM_ThresholdParms structure field names changed from camelCase to sna
 </tr>
 <tr>
     <td>NUM_PRU</td>
-    <td>Removed. Use NUM_OF_PRU_CORE_PER_PRU_SLICE instead</td>
+    <td>Use NUM_OF_PRU_CORE_PER_PRU_SLICE instead</td>
 </tr>
 <tr>
     <td>PRU_ID_0, PRU_ID_1</td>
-    <td>Removed. Use SDFM_PRU_CORE_INDEX, SDFM_RTUPRU_CORE_INDEX, SDFM_TXPRU_CORE_INDEX instead</td>
+    <td>-</td>
 </tr>
 <tr>
     <td>NUM_SD_CH</td>
-    <td>Removed. Use SDFM_NUM_OF_CH_PER_PRU_SLICE instead</td>
+    <td>Use SDFM_NUM_OF_CH_PER_PRU_SLICE instead</td>
 </tr>
 <tr>
     <td>SDFM_EVT</td>
-    <td>Removed. Event configuration handled internally by driver</td>
+    <td>Event configuration handled internally by driver</td>
 </tr>
 <tr>
     <td>PRUx_DMEM_BASE_ADD<br>RTUx_DMEM_BASE_ADD<br>TXPRUx_DMEM_BASE_ADD</td>
-    <td>Removed. DMEM base addresses are managed internally by driver</td>
+    <td>DMEM base addresses are managed internally by driver</td>
 </tr>
 <tr>
     <td>SDFM_CH_CTRL_CH_EN_* (all channel enable masks)</td>
-    <td>Removed. Channel enable is now per-channel via SDFM_setEnableChannel()</td>
+    <td>Channel enable is now per-channel via SDFM_setEnableChannel()</td>
 </tr>
 <tr>
     <td>SDFM_RECFG_* (all reconfiguration flags)</td>
-    <td>Removed. Reconfiguration is handled through individual API calls</td>
+    <td>Reconfiguration is handled through individual API calls</td>
 </tr>
 </table>
 
@@ -751,24 +876,30 @@ SysConfig will generate:
 3. **Missing SDFM_enableLoadShareMode()**
    - Load share mode is now configured through SysConfig (load_share_enabled in \ref SDFM_Attrs)
 
-4. **Missing NUM_PRU, PRU_ID_0, PRU_ID_1 macros**
-   - Use SDFM_PRU_CORE_INDEX, SDFM_RTUPRU_CORE_INDEX, SDFM_TXPRU_CORE_INDEX instead
-
-5. **Missing NUM_SD_CH macro**
+4. **Missing NUM_SD_CH macro**
    - Use SDFM_NUM_OF_CH_PER_PRU_SLICE instead
 
-6. **SDFM_setCompFilterThresholds() parameter change**
+5. **SDFM_setCompFilterThresholds() parameter change**
    - Replace `uint32_t*` array with \ref SDFM_ThresholdConfig structure
 
-7. **SDFM_configFastDetect() parameter change**
+6. **SDFM_configFastDetect() parameter change**
    - Replace `uint8_t*` array with \ref SDFM_FastDetectConfig structure
 
-8. **SysConfig Errors**
+7. **SysConfig Errors**
    - Ensure SDFM module is added and configured in `.syscfg` file
    - Review the configured parameters
+
+8. **Missing SDFM_enableShadowRegBasedNC() / SDFM_disableShadowRegBasedNC()**
+   - These APIs were renamed. Use `SDFM_enableSnoopBasedNC()` and `SDFM_disableSnoopBasedNC()` with the new `pru_core` parameter
+
+9. **SDFM_setFilterOverSamplingRatio() requires a new channel parameter**
+    - The old API had no channel parameter: `SDFM_setFilterOverSamplingRatio(h_sdfm, nc_osr)`
+    - The new API requires a `channel` argument (0-8): `SDFM_setFilterOverSamplingRatio(handle, channel, nc_osr)`
+    - Update all call sites to supply the target channel number
 
 ## Additional Resources
 
 - \ref EXAMPLES_CURRENT_SENSE
 - \ref SDFM_API_MODULE
+- \ref CURRENT_SENSE
 - \ref SDFM_DESIGN

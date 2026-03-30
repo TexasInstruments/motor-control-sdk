@@ -11,10 +11,10 @@
 ## Introduction
 
 \cond SOC_AM243X
-This guide helps developers migrate BiSS-C encoder driver applications from Motor Control SDK v11.00.00 to v2025.00.00 and later versions. The driver underwent significant architectural changes including a move to handle-based APIs, enhanced periodic trigger modes with CAP support, per-channel timeout configuration, and improved SysConfig integration.
+This guide helps developers migrate BiSS-C encoder driver applications from Motor Control SDK v11.00.00 to v2025.00.00. The driver underwent significant architectural changes including a move to handle-based APIs, enhanced periodic trigger modes with CAP support, per-channel timeout configuration, and improved SysConfig integration.
 \endcond
 \cond (SOC_AM263PX || SOC_AM261X)
-This guide helps developers migrate BiSS-C encoder driver applications from Motor Control SDK v10.02.00 to v2025.00.00 and later versions. The driver underwent significant architectural changes including a move to handle-based APIs, enhanced periodic trigger modes with CAP support, per-channel timeout configuration, and improved SysConfig integration.
+This guide helps developers migrate BiSS-C encoder driver applications from Motor Control SDK v10.02.00 to v2025.00.00. The driver underwent significant architectural changes including a move to handle-based APIs, enhanced periodic trigger modes with CAP support, per-channel timeout configuration, and improved SysConfig integration.
 \endcond
 
 ## Major Architectural Changes
@@ -91,6 +91,8 @@ Driver APIs use following validation approach now:
 - **Array bounds checking**: APIs with array parameters or index parameters perform bounds validation
 - **Internal structure validation**: Each API validates the internal structure pointers it accesses (e.g., attrs, priv, pruicss_xchg, pruicss_handle) for NULL before dereferencing
 
+\note These changes are not mentioned in the "Additional Details" column of the \ref BISSC_MIGRATION_GUIDE_2025_00_APIS_MODIFIED section below. The \ref BISSC_MIGRATION_GUIDE_2025_00_APIS_MODIFIED section describes changes in addition to the points mentioned above.
+
 ### New APIs Added
 
 <table>
@@ -126,7 +128,7 @@ Driver APIs use following validation approach now:
 </tr>
 <tr>
     <td>bissc_get_encoder_timeout()</td>
-    <td>Get per-channel encoder timeout</td>
+    <td>Get per-channel encoder timeout in PRU cycles</td>
     <td>Read current timeout configuration</td>
 </tr>
 <tr>
@@ -140,14 +142,14 @@ Driver APIs use following validation approach now:
     <td>-</td>
 </tr>
 <tr>
-    <td>bissc_config_iep_cap_event()</td>
-    <td>Configure IEP CAP event number in firmware DMEM</td>
-    <td>Set CAP event (0-7) for each channel</td>
-</tr>
-<tr>
     <td>bissc_config_iep_cmp_event()</td>
     <td>Configure IEP CMP event number in firmware DMEM</td>
     <td>Set CMP event (0-15) for each channel</td>
+</tr>
+<tr>
+    <td>bissc_config_iep_cap_event()</td>
+    <td>Configure IEP CAP event number in firmware DMEM</td>
+    <td>Set CAP event (0-7) for each channel</td>
 </tr>
 <tr>
     <td>bissc_clock_config()</td>
@@ -156,7 +158,7 @@ Driver APIs use following validation approach now:
 </tr>
 </table>
 
-### APIs Modified
+### APIs Modified {#BISSC_MIGRATION_GUIDE_2025_00_APIS_MODIFIED}
 
 <table>
 <tr>
@@ -167,72 +169,72 @@ Driver APIs use following validation approach now:
 <tr>
     <td>bissc_init()</td>
     <td>- Complete signature change<br>- 6 parameters to 2 parameters<br>- Returns <code>bissc_handle</code> instead of <code>priv*</code></td>
-    <td>Uses SysConfig-generated index and params structure as arguments</td>
+    <td>- Uses SysConfig-generated index and params structure as arguments<br>- Validates parameter limits</td>
 </tr>
 <tr>
     <td>bissc_command_process()<br>bissc_command_wait()<br>bissc_get_pos()</td>
     <td>- <code>priv</code> to <code>handle</code></td>
-    <td>Returns SystemP_TIMEOUT on timeout</td>
+    <td>- Returns SystemP_TIMEOUT on timeout</td>
 </tr>
 <tr>
     <td>bissc_set_ctrl_cmd_and_process()</td>
     <td>- <code>priv</code> to <code>handle</code><br></td>
-    <td>Returns SystemP_TIMEOUT on timeout and SystemP_FAILURE on validation failure </td>
+    <td>- Returns SystemP_TIMEOUT on timeout<br>- Returns SystemP_FAILURE on validation failure</td>
 </tr>
 <tr>
     <td>bissc_command_send()</td>
     <td>- <code>void</code> to <code>int32_t</code> return<br>- <code>priv</code> to <code>handle</code></td>
-    <td>Returns status code</td>
+    <td>- Returns status code</td>
 </tr>
 <tr>
     <td>bissc_config_clock()<br>bissc_hw_init()<br>bissc_update_max_proc_delay()<br>bissc_get_enc_proc_delay()<br>bissc_config_host_trigger()<br>bissc_clear_data_len()<br>bissc_update_clock_freq()<br>bissc_enable_safety()<br>bissc_disable_safety()</td>
     <td>- <code>void</code> to <code>int32_t</code> return<br>- <code>priv</code> to <code>handle</code></td>
-    <td>Returns status code with validation</td>
+    <td>- Returns status code with validation</td>
 </tr>
 <tr>
     <td>bissc_config_channel()</td>
     <td>- <code>void</code> to <code>int32_t</code> return<br>- <code>priv</code> to <code>handle</code><br>- <code>mask</code> type: <code>int32_t</code> to <code>uint8_t</code><br>- <code>totalch</code> renamed to <code>total_channels</code> with type: <code>int32_t</code> to <code>uint8_t</code></td>
-    <td>Returns status code with validation</td>
+    <td>- Returns status code with validation</td>
 </tr>
 <tr>
     <td>bissc_wait_for_fw_initialization()</td>
     <td>- <code>priv</code> to <code>handle</code><br>- Removed <code>mask</code> parameter<br>- <code>timeout</code> renamed to <code>loop_count</code></td>
-    <td>Channel mask used from attrs, and returns SystemP_TIMEOUT on timeout</td>
+    <td>- Channel mask used from attrs<br>- Returns SystemP_TIMEOUT on timeout</td>
 </tr>
 <tr>
     <td>bissc_wait_measure_proc_delay()</td>
     <td>- <code>priv</code> to <code>handle</code><br>- <code>timeout</code> renamed to <code>loop_count</code></td>
-    <td>More explicit parameter naming, and returns SystemP_TIMEOUT on timeout</td>
+    <td>- More explicit parameter naming<br>- Returns SystemP_TIMEOUT on timeout</td>
 </tr>
 <tr>
     <td>bissc_set_default_initialization()</td>
     <td>- Removed <code>icssgclk</code> parameter<br>- <code>void</code> to <code>int32_t</code> return<br>- <code>priv</code> to <code>handle</code></td>
-    <td>Clock info used from attrs</td>
+    <td>- Clock info used from attrs<br>- Returns status code</td>
 </tr>
 <tr>
     <td>bissc_update_data_len()</td>
     <td>- <code>ch_num</code> type: <code>int32_t</code> to <code>uint32_t</code><br>- Added frame size validation<br>- <code>void</code> to <code>int32_t</code> return<br>- <code>priv</code> to <code>handle</code></td>
-    <td>Validates total frame size <= 64 bits. Updates the data in PRU data memory only if all validations pass (no partial configuration on failure).</td>
+    <td>- Validates total frame size <= 64 bits<br>- Updates the data in PRU data memory only if all validations pass (no partial configuration on failure)</td>
 </tr>
 <tr>
     <td>bissc_calc_clock()</td>
     <td>- <code>priv</code> to <code>handle</code></td>
-    <td>Parameter type change only</td>
+    <td>-</td>
 </tr>
 <tr>
     <td>bissc_generate_ctrl_cmd()</td>
     <td>- <code>ls_ch</code> type: <code>int8_t</code> to <code>uint8_t</code><br>- <code>ctrl_write_status</code> type: <code>uint32_t</code> to <code>uint8_t</code><br>- <code>priv</code> to <code>handle</code></td>
-    <td>More appropriate data types, added parameter validation, and returns 0 on validation failure</td>
+    <td>- More appropriate data types<br>- Added parameter validation<br>- Returns 0 on validation failure</td>
 </tr>
 <tr>
     <td>bissc_get_current_channel()</td>
     <td>- <code>priv</code> to <code>handle</code></td>
-    <td>Returns 0 on validation error</td>
+    <td>- Returns 0 on validation error</td>
 </tr>
 <tr>
     <td>bissc_get_total_channels()</td>
     <td>- Renamed from <code>bissc_get_totalchannels()</code><br>- <code>priv</code> to <code>handle</code></td>
-    <td>Function name changed to use underscore between "total" and "channels", and returns 0 on validation error</td>
+    <td>- Function name changed to use underscore between "total" and "channels"<br>- Returns 0 on validation error</td>
 </tr>
 </table>
 
@@ -302,13 +304,7 @@ Driver APIs use following validation approach now:
     <td>Store PRUICSS handle</td>
 </tr>
 <tr>
-    <td rowspan="2">Removed</td>
-    <td>pruicss_slicex<br>load_share<br>totalchannels</td>
-    <td>int32_t</td>
-    <td>Moved to attrs</td>
-    <td>Compile-time configuration</td>
-</tr>
-<tr>
+    <td>Removed</td>
     <td>pruicss_cfg<br>pruicss_iep<br>cmp3</td>
     <td>void*</td>
     <td>-</td>
@@ -316,13 +312,13 @@ Driver APIs use following validation approach now:
 </tr>
 <tr>
     <td rowspan="1">Moved to attrs</td>
-    <td>tx_rx_clock_source<br>core_clk_freq<br>uart_clk_freq</td>
+    <td>tx_rx_clock_source<br>core_clk_freq<br>uart_clk_freq<br>pruicss_slicex<br>load_share<br>totalchannels</td>
     <td>In bissc_priv</td>
-    <td>bissc_attrs->is_core_clk<br>bissc_attrs->core_clk_freq<br>bissc_attrs->uart_clk_freq<br>bissc_attrs->iep_base_addr<br>Removed (replaced by trigger_params)</td>
+    <td>bissc_attrs->is_core_clk<br>bissc_attrs->core_clk_freq<br>bissc_attrs->uart_clk_freq<br>bissc_attrs->pruicss_slice<br>bissc_attrs->load_share_enabled<br>bissc_attrs->total_channels</td>
     <td>Compile-time configuration</td>
 </tr>
 <tr>
-    <td rowspan="6">Type Changed</td>
+    <td rowspan="5">Type Changed</td>
     <td>data_len<br>single_turn_len<br>multi_turn_len<br>channel<br>num_encoders<br>pd_crc_err_cnt<br>ctrl_crc_err_cnt</td>
     <td>int32_t</td>
     <td>uint32_t</td>
@@ -352,13 +348,9 @@ Driver APIs use following validation approach now:
     <td>uint8_t</td>
     <td>More appropriate data type</td>
 </tr>
-<tr>
-    <td>baud_rate<br>core_clk_freq<br>uart_clk_freq</td>
-    <td>In bissc_priv</td>
-    <td>bissc_attrs (and copied to bissc_priv)</td>
-    <td>Clock parameters also available in attrs</td>
-</tr>
 </table>
+
+\note Intial value bissc_priv->baud_rate is copied from bissc_attrs->baud_rate. Run-time modification of bissc_priv->baud_rate is done in bissc_update_clock_freq().
 
 ### bissc_pruicss_xchg Structure
 
@@ -404,26 +396,31 @@ Driver APIs use following validation approach now:
 <table>
 <tr>
     <th>Structure</th>
+    <th>Typedef</th>
     <th>Purpose</th>
     <th>Key Members</th>
 </tr>
 <tr>
     <td>bissc_params</td>
+    <td><code>typedef struct bissc_params_s bissc_params</code></td>
     <td>Initialization parameters</td>
     <td>pruicss_handle, cmd_process_delay_us, fw_wait_delay_us, max_wait_loop_count</td>
 </tr>
 <tr>
     <td>bissc_attrs</td>
+    <td><code>typedef struct bissc_attrs_s bissc_attrs</code></td>
     <td>Compile-time attributes from SysConfig</td>
     <td>instance, mode, pruicss_instance, pruicss_slice, load_share_enabled, channel_mask, channel0/1/2_enabled, total_channels, baud_rate, core_clk_freq, uart_clk_freq, iep_clk_freq, is_core_clk, iep_instance, iep_cmp_event[BISSC_NUM_CH_PER_SLICE_MAX], iep_cap_event[BISSC_NUM_CH_PER_SLICE_MAX], iep_base_addr</td>
 </tr>
 <tr>
     <td>bissc_config</td>
+    <td><code>typedef struct bissc_config_s bissc_config</code><br><code>typedef bissc_config *bissc_handle</code></td>
     <td>Internal configuration structure</td>
     <td>priv (pointer to bissc_priv), attrs (pointer to bissc_attrs)</td>
 </tr>
 <tr>
     <td>bissc_periodic_trigger_cfg</td>
+    <td><code>typedef struct bissc_periodic_trigger_cfg_s bissc_periodic_trigger_cfg</code></td>
     <td>IEP event configuration for periodic trigger</td>
     <td>iep_cmp_event, iep_cap_event, iep_capture_reg</td>
 </tr>
@@ -450,34 +447,6 @@ Driver APIs use following validation approach now:
 </tr>
 </table>
 
-### New Types
-
-<table>
-<tr>
-    <th>New Type</th>
-    <th>Description</th>
-</tr>
-<tr>
-    <td>typedef struct bissc_params_s ... bissc_params</td>
-    <td>Initialization parameters structure</td>
-</tr>
-<tr>
-    <td>typedef struct bissc_attrs_s ... bissc_attrs</td>
-    <td>Compile-time attributes structure from SysConfig</td>
-</tr>
-<tr>
-    <td>typedef struct bissc_config_s ... bissc_config</td>
-    <td>Internal configuration structure</td>
-</tr>
-<tr>
-    <td>typedef bissc_config *bissc_handle</td>
-    <td>Opaque handle type for all APIs</td>
-</tr>
-<tr>
-    <td>typedef struct bissc_periodic_trigger_cfg_s ... bissc_periodic_trigger_cfg</td>
-    <td>IEP event configuration structure for periodic trigger</td>
-</tr>
-</table>
 
 \attention **Additional Note on Interface Structures**: All hardcoded array sizes `[3]` in interface structures (bissc_pruicss_xchg, bissc_enc_len, bissc_pos_data_res, etc.) have been replaced with named constants `[BISSC_NUM_CH_PER_SLICE_MAX]` or `[BISSC_NUM_ENCODERS_IN_DAISY_CHAIN_MAX]` for better code maintainability. This change is functionally equivalent (both evaluate to 3) but improves code readability and maintainability.
 
@@ -644,7 +613,8 @@ priv = bissc_init(pruicssHandle,
                   192,  /* UART clock 192 MHz */
                   1);   /* Use core clock */
 
-if (priv == NULL) {
+if (priv == NULL)
+{
     /* Handle error */
 }
 
@@ -667,10 +637,11 @@ params.max_wait_loop_count = 5;
 
 /* Initialize BiSS-C (CONFIG_BISSC0 is generated by SysConfig) */
 handle = bissc_init(CONFIG_BISSC0, &params);
-if (handle == NULL) {
+if (handle == NULL)
+{
     /* Handle error */
 }
-/* Channels and load share should be configured via SysConfig */
+/* Channels and load share configured in bissc_init() based on SysConfig selection */
 ```
 
 ### Example 2: Getting Position Data
@@ -679,30 +650,36 @@ if (handle == NULL) {
 ```c
 bissc_command_send(priv);
 int32_t ret = bissc_command_wait(priv);
-if (ret != 0) {
+if (ret != 0)
+{
     /* Handle error */
 }
 /* Access data directly from priv */
-uint64_t position = priv->enc0_pos_data[0];
+/* enc_pos_data[channel_idx].position[encoder_idx] */
+uint64_t position = priv->enc_pos_data[0].position[0];
 ```
 
 **New Code:**
 ```c
 int32_t ret = bissc_command_send(handle);
-if (ret != SystemP_SUCCESS) {
+if (ret != SystemP_SUCCESS)
+{
     /* Handle error */
 }
 
 ret = bissc_command_wait(handle);
-if (ret == SystemP_TIMEOUT) {
+if (ret == SystemP_TIMEOUT)
+{
     /* Handle timeout */
-} else if (ret != SystemP_SUCCESS) {
+} else if (ret != SystemP_SUCCESS)
+{
     /* Handle other errors */
 }
 
 /* Access data via priv pointer */
 bissc_priv *priv = bissc_get_priv(handle);
-uint64_t position = priv->enc0_pos_data[0];
+/* enc_pos_data[channel_idx].position[encoder_idx] */
+uint64_t position = priv->enc_pos_data[0].position[0];
 ```
 
 ### Example 3: Configuring Periodic Mode
@@ -717,14 +694,16 @@ bissc_config_periodic_trigger(priv);
 /* For CMP mode (timer-based) */
 ret = bissc_config_periodic_trigger_cmp_mode(handle);
 
-if (ret != SystemP_SUCCESS) {
+if (ret != SystemP_SUCCESS)
+{
     /* Handle error */
 }
 
 /* OR for CAP mode (external signal) */
 ret = bissc_config_periodic_trigger_cap_mode(handle);
 
-if (ret != SystemP_SUCCESS) {
+if (ret != SystemP_SUCCESS)
+{
     /* Handle error */
 }
 ```
@@ -739,7 +718,8 @@ ret = bissc_set_encoder_timeout(handle, 0, 8000);   /* Ch0: 40us */
 ret = bissc_set_encoder_timeout(handle, 1, 12000);  /* Ch1: 60us */
 ret = bissc_set_encoder_timeout(handle, 2, 10000);  /* Ch2: 50us */
 
-if (ret != SystemP_SUCCESS) {
+if (ret != SystemP_SUCCESS)
+{
     /* Handle error */
 }
 
@@ -781,28 +761,28 @@ SysConfig will generate:
 ## Common Migration Issues
 
 1. **Compilation Errors with priv pointer**
-- Replace all `struct bissc_priv *priv` with `bissc_handle handle`
-- Use `bissc_get_priv()` when you need access to priv structure
+    - Replace all `struct bissc_priv *priv` with `bissc_handle handle`
+    - Use `bissc_get_priv()` when you need access to priv structure
 
 2. **Missing bissc_get_totalchannels()**
-- Replace `bissc_get_totalchannels()` with `bissc_get_total_channels()` (function renamed)
+    - Replace `bissc_get_totalchannels()` with `bissc_get_total_channels()` (function renamed)
 
 3. **Missing Load Share Configuration APIs**
-- Load share configuration should be done via SysConfig
-- No need to call bissc_config_load_share() or bissc_enable_load_share_mode() as bissc_init() will call it automatically
+    - Load share configuration should be done via SysConfig
+    - No need to call bissc_config_load_share() or bissc_enable_load_share_mode() as bissc_init() will call it automatically
 
 4. **Timeout Configuration**
-- Use bissc_set_encoder_timeout() for per-channel timeout. Convert microseconds to PRU cycles based on PRU clock frequency.
-- Also, timeout detection is added in certain APIs waiting for firmware. Adjust timeout parameters if needed via bissc_params before calling bissc_init().
+    - Use bissc_set_encoder_timeout() for per-channel timeout. Convert microseconds to PRU cycles based on PRU clock frequency.
+    - Also, timeout detection is added in certain APIs waiting for firmware. Adjust timeout parameters if needed via bissc_params before calling bissc_init().
 
 5. **SysConfig Errors**
    - Ensure BiSS-C module is added and configured in `.syscfg` file
    - Review the configured parameters
 
 6. **Periodic Mode Not Working**
-- Explicitly choose between CMP and CAP modes
-- Configure IEP events properly for each channel
-- For CAP mode, ensure external trigger signal is properly routed
+    - Explicitly choose between CMP and CAP modes
+    - Configure IEP events properly for each channel
+    - For CAP mode, ensure external trigger signal is properly routed
 
 ## Additional Resources
 
