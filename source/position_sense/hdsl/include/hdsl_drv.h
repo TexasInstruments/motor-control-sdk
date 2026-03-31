@@ -294,13 +294,13 @@ typedef struct HDSL_Interface_s {
     volatile uint8_t VPOSCRC2_L;        /**< CRC of Safe Position 2, byte 0 */
     volatile uint8_t POSTX;             /**< Position transmission status */
     volatile uint8_t resvd14;           /**< Reserved 14 */
-	/* Online Status*/
-	volatile uint8_t ONLINE_STATUS_D_H; /**< Online Status D, high byte*/
-    volatile uint8_t ONLINE_STATUS_D_L; /**< Online Status D, low byte*/
-	volatile uint8_t ONLINE_STATUS_1_H; /**< Online Status 1, high byte*/
-    volatile uint8_t ONLINE_STATUS_1_L; /**< Online Status 1, low byte*/
-	volatile uint8_t ONLINE_STATUS_2_H; /**< Online Status 2, high byte*/
-    volatile uint8_t ONLINE_STATUS_2_L; /**< Online Status 2, low byte*/
+    /* Online Status */
+    volatile uint8_t ONLINE_STATUS_D_H; /**< Online Status D, high byte */
+    volatile uint8_t ONLINE_STATUS_D_L; /**< Online Status D, low byte */
+    volatile uint8_t ONLINE_STATUS_1_H; /**< Online Status 1, high byte */
+    volatile uint8_t ONLINE_STATUS_1_L; /**< Online Status 1, low byte */
+    volatile uint8_t ONLINE_STATUS_2_H; /**< Online Status 2, high byte */
+    volatile uint8_t ONLINE_STATUS_2_L; /**< Online Status 2, low byte */
 } HDSL_Interface;
 /** @} */
 

@@ -423,15 +423,15 @@ typedef struct endat_pruicss_xchg_s
 
     volatile uint8_t endat_ch0_syn_bit;
     /**< Synchronization bit for channel 0.
-     *   Used in load share mode mode to ensure channel 0 is ready for global reinit */
+     *   Used in load share mode to ensure channel 0 is ready for global reinit */
 
     volatile uint8_t endat_ch1_syn_bit;
     /**< Synchronization bit for channel 1.
-     *   Used in load share mode mode to ensure channel 1 is ready for global reinit */
+     *   Used in load share mode to ensure channel 1 is ready for global reinit */
 
     volatile uint8_t endat_ch2_syn_bit;
     /**< Synchronization bit for channel 2.
-     *   Used in load share mode mode to ensure channel 2 is ready for global reinit */
+     *   Used in load share mode to ensure channel 2 is ready for global reinit */
 
     uint64_t icss_clk;
     /**< PRU-ICSS core clock frequency in Hz.

@@ -1532,7 +1532,7 @@ uint32_t bissc_generate_ctrl_cmd(bissc_handle handle,
         ctrl_cmd = (ctrl_cmd << BISSC_REG_DATA_LEN) | (priv->ctrl_reg_data[ls_ch] & BISSC_REG_DATA_MASK);
         /* 4-bit CRC for given register data */
         ctrl_cmd = (ctrl_cmd << BISSC_CTRL_CMD_CRC_LEN) | (crc & BISSC_CTRL_CMD_CRC_MASK);
-        /* 2-stop bits "SP" S: stop bit for one control communication command, P: stop bit for series of comtrol communication*/
+        /* 2-stop bits "SP" S: stop bit for one control communication command, P: stop bit for series of control communication*/
         ctrl_cmd = ctrl_cmd << BISSC_CTRL_STOP_LEN;
     }
     else

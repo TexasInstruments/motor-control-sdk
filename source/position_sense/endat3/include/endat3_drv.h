@@ -729,8 +729,9 @@ void endat3_params_init(endat3_params *params);
  *
  * \note This function internally calls: PRUICSS_setGpMuxSelect(), endat3_config_clr_cfg0(),
  *       endat3_calculate_clock(), endat3_config_clock(), endat3_set_delay_cycles(),
- *       endat3_set_channel_mask(), endat3_generate_memory_image(), and
- *       \ref endat3_set_operating_mode().
+ *       endat3_set_channel_mask(), endat3_generate_memory_image(),
+ *       endat3_config_iep_base_address(), \ref endat3_config_iep_cmp_event(),
+ *       \ref endat3_config_iep_cap_event(), and \ref endat3_set_operating_mode().
  *
  * \param[in]  index           Index of EnDAT3 (0 to gEndat3ConfigNum - 1)
  * \param[in]  endat3_params   Pointer to structure containing EnDAT3 initialization parameters
@@ -907,7 +908,7 @@ const char* endat3_get_error_action(endat3_error_code error_code);
  *       - Index bounds check (index must be 0-2)
  *       - Individual parameter members (op_code, addr_msb, addr_lsb, data, frame_cnt) are NOT validated
  *
- * \note Output parameters (mode, acclevelDesc) are only meaningful for ENDAT3_BGREQ_PROTECT operation
+ * \note Output parameters (mode, acc_level_desc) are only meaningful for ENDAT3_BGREQ_PROTECT operation
  */
 int32_t endat3_handle_background_command_request(endat3_handle handle, const endat3_bg_cmd_params *params, uint8_t *mode, const char **acc_level_desc);
 
@@ -1176,7 +1177,6 @@ int32_t endat3_get_lpf_status(endat3_handle handle, uint8_t index, uint8_t *stat
  * \note Validation performed:
  *       - Handle and data buffer validation
  *       - Index bounds checking (index < MAX_LPF_COUNT)
- *       Internal structures assumed valid after successful \ref endat3_init().
  *
  * \code
  * uint8_t lpf_data[6];
@@ -1245,9 +1245,10 @@ int32_t endat3_is_connected(endat3_handle handle, uint8_t *is_connected);
 int32_t endat3_is_busy(endat3_handle handle, uint8_t *is_busy);
 
 /**
- * \brief Set busy status
+ * \brief Set or clear busy status
  *
- * Sets the busy flag to indicate a transfer is in progress.
+ * Sets or clears the busy flag. Set busy=1 to mark a transfer as in progress;
+ * set busy=0 to clear the busy state when no transfer is active.
  *
  * \param handle EnDAT3 handle
  * \param busy Busy state to set (1 for busy, 0 for not busy)
@@ -1581,7 +1582,7 @@ endat3_interface* endat3_get_interface(endat3_handle handle);
  *  - Use \ref endat3_config_iep_cmp_event to set event number in firmware. This function
  *    is called inside \ref endat3_init by default.
  *  - CMP event range: 0-15
- *  
+ *
  *  **Configuration requirements for \ref ENDAT3_OPMODE_PERIODIC_CAP :**
  *  - IEP hardware CAP registers must be configured separately
  *  - External signal to IEP capture input should be configured

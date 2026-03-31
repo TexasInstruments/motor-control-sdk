@@ -137,16 +137,16 @@ extern "C" {
 /**    \brief    Nanoseconds per second conversion factor */
 #define ENDAT_NS_PER_SECOND                                 (1000000000U)
 
-/**    \brief    Minimum short recovery time in nanoseconds (2.45 μs) */
+/**    \brief    Minimum short recovery time in nanoseconds (2.45 us) */
 #define ENDAT_SHORT_RECOVERY_TIME_MIN                       (2450U)
 
-/**    \brief    Maximum short recovery time in nanoseconds (3.75 μs) */
+/**    \brief    Maximum short recovery time in nanoseconds (3.75 us) */
 #define ENDAT_SHORT_RECOVERY_TIME_MAX                       (3750U)
 
-/**    \brief    Minimum long recovery time in nanoseconds (18.5 μs) */
+/**    \brief    Minimum long recovery time in nanoseconds (18.5 us) */
 #define ENDAT_LONG_RECOVERY_TIME_MIN                        (18500U)
 
-/**    \brief    Maximum long recovery time in nanoseconds (30.0 μs) */
+/**    \brief    Maximum long recovery time in nanoseconds (30.0 us) */
 #define ENDAT_LONG_RECOVERY_TIME_MAX                        (30000U)
 
 /**    \brief    Maximum valid recovery time counter value (2^32 - 1) */
@@ -565,9 +565,6 @@ typedef union endat_format_data_u
  *           from SysConfig during code generation. These values define the hardware
  *           configuration and operational mode of the EnDAT driver instance.
  *
- *           All fields are validated once during \ref endat_init and assumed valid
- *           thereafter.
- *
  *           This structure is typically declared as const and placed in read-only
  *           memory, as these parameters do not change during driver operation.
  */
@@ -719,7 +716,7 @@ typedef struct endat_params_s
      *   Actual timeout (ms) = max_wait_loop_count * cmd_process_delay_us / 1000
      *   Used in \ref endat_command_wait for timeout detection.
      *   Must be greater than 0.
-     *   Default: 5 */
+     *   Default: 1000 */
 
     uint32_t cmd_process_delay_us;
     /**< Delay in microseconds for command processing polling loop.

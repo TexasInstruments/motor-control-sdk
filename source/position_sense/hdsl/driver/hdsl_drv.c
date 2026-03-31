@@ -45,7 +45,7 @@
 /** \brief FRES bit position in ONLINE_STATUS_1_L register */
 #define ONLINE_STATUS_1_L_FRES          (1<<0)
 
-/** \brief FREL bit value in ONLINE_STATUS_D_L register */
+/** \brief FREL bit shift position in ONLINE_STATUS_D_L register */
 #define ONLINE_STATUS_D_L_FREL          (1)
 
 /** \brief Enable bit for long message transaction in PC_ADD_H register (bit 7)

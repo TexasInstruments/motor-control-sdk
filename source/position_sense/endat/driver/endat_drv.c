@@ -351,13 +351,12 @@ void endat_deinit(endat_handle handle)
 }
 
 /*
- * check 2.2 command case with 2.2 capability in encoder, can live w/o as endat_get_command
+ * check 2.2 command case with 2.2 capability in encoder, can live w/o as endat_command_process
  * will handle and it is assumed that functions,
  * endat_recvd_organize()
  * endat_recvd_format()
  * endat_recvd_validate()
- * endat_recvd_print()
- * will normally be called after endat_get_command
+ * will normally be called after endat_command_process
  */
 
 static int32_t endat_recvd_organize(endat_handle handle, int32_t cmd, endat_data *endat_data)
@@ -2055,7 +2054,7 @@ static int32_t endat_get_type(endat_handle handle)
     /* delay copied from fw, absence of delay here resulted in wrong values for pos_res */
     ClockP_usleep(ENDAT_CMD_PROCESS_DELAY_12MS_US);
 
-    /* send parameter for word13 */
+    /* send parameter for word14 */
     cmd = 4;
     cmd_supplement.address[0] = APP_ENDAT_WORD_14;
 
@@ -2288,7 +2287,7 @@ int32_t endat_addinfo_track(endat_handle handle, int32_t cmd, endat_cmd_suppleme
         }
         else
         {
-            /* Reset flags for */
+            /* Reset flags for non-load-share mode */
             priv->flags[0].info1 = FALSE;
             priv->flags[0].info2 = FALSE;
         }
