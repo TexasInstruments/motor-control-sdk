@@ -2,13 +2,19 @@
 
 ## Migration Details for Motor Control SDK 2025.00.00 {#MIGRATION_SECTION_2025_00}
 
-\attention Motor Control SDK 9.x/10.x/11.x included the Industrial Communications SDK and MCU+ SDK in bundled ind_comms_sdk and mcu_plus_sdk folders. Starting with Motor Control SDK 2025.00.00, these folders are no longer included and must be downloaded separately.
+\cond SOC_AM243X
+\attention Motor Control SDK 9.x/11.x included the Industrial Communications SDK and MCU+ SDK in bundled ind_comms_sdk and mcu_plus_sdk folders. Starting with Motor Control SDK 2025.00.00, these folders are no longer included and must be downloaded separately. Motor Control SDK installer provides an option to install the required Industrial Communications SDK and MCU+ SDK.
+\endcond
+
+\cond (SOC_AM261X || SOC_AM263PX)
+\attention Motor Control SDK 10.x included the Industrial Communications SDK and MCU+ SDK in bundled ind_comms_sdk and mcu_plus_sdk folders. Starting with Motor Control SDK 2025.00.00, these folders are no longer included and must be downloaded separately. Motor Control SDK installer provides an option to install the required Industrial Communications SDK and MCU+ SDK.
+\endcond
 
 Following pages contain details on changes which can affect migration of applications based on Motor Control SDK 9.x/10.x/11.x to Motor Control SDK 2025.00.00.
 
 - \subpage BISSC_MIGRATION_GUIDE_2025_00
 - \subpage ENDAT_MIGRATION_GUIDE_2025_00
-\cond SOC_AM261X || SOC_AM243X
+\cond (SOC_AM261X || SOC_AM243X)
 - \subpage HDSL_MIGRATION_GUIDE_2025_00
 \endcond
 - \subpage NIKON_MIGRATION_GUIDE_2025_00
@@ -54,9 +60,7 @@ Components under Motor Control SDK were available in MCU+ SDK 7.x and 8.x releas
 Components under Motor Control SDK were available in MCU+ SDK 8.x releases.
 \endcond
 
-If you are a user of MCU+ SDK, the items listed on this page will assist you in migrating to Motor Control SDK.
-
-- To build examples from Industrial Communications SDK and MCU+ SDK using CCS projects, users have to add <b>${SDK_INSTALL_PATH}/ind_comms_sdk</b> path and <b>${SDK_INSTALL_PATH}/mcu_plus_sdk</b> path to "Product discovery path" respectively in CCS (from Window->Preferences->Code Composer Studio->Products).
+If you are a user of MCU+ SDK, the items listed in this section will assist you in migrating to Motor Control SDK.
 
 \cond (SOC_AM64X || SOC_AM243X)
 

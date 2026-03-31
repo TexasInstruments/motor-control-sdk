@@ -1,23 +1,19 @@
-# Release Notes 2025.0.0 {#RELEASE_NOTES_2025_0_0_PAGE}
+# Release Notes 2025.00.00 {#RELEASE_NOTES_2025_00_00_PAGE}
 
 [TOC]
 
-\attention Please refer to individual module pages for more details on each feature, unsupported features, important usage guidelines.
-
-\attention For release notes of Industrial Communications SDK and MCU+ SDK, please refer to <a href="@VAR_IC_SDK_DOCS_PATH/RELEASE_NOTES_2025_0_0_PAGE.html" target="_blank"> @VAR_SOC_NAME Industrial Communications SDK Release Notes 2025.0.0</a> and <a href="@VAR_MCU_SDK_DOCS_PATH/RELEASE_NOTES_2025_0_0_PAGE.html" target="_blank"> @VAR_SOC_NAME MCU+ SDK Release Notes 2025.0.0</a> respectively.
+\attention
+    1. Please refer to individual module pages for more details on each feature, unsupported features, important usage guidelines.
+    2. Motor Control SDK 9.x/11.x included the Industrial Communications SDK and MCU+ SDK in bundled ind_comms_sdk and mcu_plus_sdk folders. Starting with Motor Control SDK 2025.00.00, these folders are no longer included and must be downloaded separately. Motor Control SDK installer provides an option to install the required Industrial Communications SDK and MCU+ SDK.
+    3. For release notes of Industrial Communications SDK and MCU+ SDK, please refer to <a href="@VAR_IC_SDK_DOCS_PATH/RELEASE_NOTES_2025_00_00_PAGE.html" target="_blank"> @VAR_SOC_NAME Industrial Communications SDK Release Notes 2025.00.00</a> and <a href="@VAR_MCU_SDK_DOCS_PATH/RELEASE_NOTES_11_01_00_PAGE.html" target="_blank"> @VAR_SOC_NAME MCU+ SDK Release Notes 11.01.00</a> respectively.
 
 \note
-        1. In Motor Control SDK 2025.0.0 (production package), using the EtherCAT example from Industrial Communications SDK or EtherCAT example for TIDEP-01032 EtherCAT-Connected Single-Chip Dual-Servo Motor Drive Reference Design requires downloading the Beckhoff SSC stack from the ETG website and rebuilding the library as described in the following documentation:
-            - <a href="../../ind_comms_sdk/docs/am243x/ethercat_subdevice/beckhoff__s_c_c.html" target="_blank">Beckhoff SSC</a>
-            - <a href="@VAR_IC_SDK_DOCS_PATH/EXAMPLES_INDUSTRIAL_COMMS_ETHERCAT_SLAVE_BECKHOFF_SSC_DEMO.html#STEPS_TO_RUN_ECAT_BECKHOFF_SSC_DEMO" target="_blank"> Steps to Run the Example</a>
-            - For EtherCAT example evaluation without access to Beckhoff SSC, please use the evaluation package.
+    1. These examples will show usage of SW modules and APIs on a specific CPU instance and OS combination. \n
+        Unless noted otherwise, the SW modules would work in both FreeRTOS and NORTOS environment. \n
+        Unless noted otherwise, the SW modules would work on any of the R5F's present on the SOC. \n
+        Unless noted otherwise, the SW modules would work on all supported EVMs \n
 
-        2. These examples will show usage of SW modules and APIs on a specific CPU instance and OS combination. \n
-          Unless noted otherwise, the SW modules would work in both FreeRTOS and NORTOS environment. \n
-          Unless noted otherwise, the SW modules would work on any of the R5F's present on the SOC. \n
-          Unless noted otherwise, the SW modules would work on all supported EVMs \n
-
-        3. Tamagawa over SoC UART example is not supported for AM243x.
+    2. Tamagawa over SoC UART example is not supported for AM243x.
 
 ## New in this Release
 
@@ -57,22 +53,22 @@
 </table>
 
 SOC    | Supported CPUs  | Boards                                                                                                      | Host PC
--------|-----------------|-------------------------------------------------------------------------------------------------------------|-----------------------------------
-AM243x | R5F             | AM243x GP EVM (referred to as am243x-evm in code), \n AM243x LAUNCHPAD (referred to as am243x-lp in code)   | Windows 10 64b or Ubuntu 18.04 64b
+-------|-----------------|-------------------------------------------------------------------------------------------------------------|-----------------------------------------------
+AM243x | R5F             | AM243x GP EVM (referred to as am243x-evm in code), \n AM243x LAUNCHPAD (referred to as am243x-lp in code)   |Windows 10 64b or Ubuntu 18.04 64b or MacOS
 
 ## Tools, Compiler and Other Open Source SW Module Information
 
 Tools / SW module                    | Supported CPUs | Version
 -------------------------------------|----------------|-----------------------
-AM243x Industrial Communications SDK | R5F            | 11.00.00.13
-AM243x MCU+ SDK                      | R5F, M4F       | 11.00.00.18
-Code Composer Studio                 | R5F, M4F       | 12.8.1
-SysConfig                            | R5F, M4F       | 1.22.0, build 3893
-TI ARM CLANG                         | R5F, M4F       | 4.1.0.LTS
+AM243x Industrial Communications SDK | R5F            | 2025.00.00.08
+AM243x MCU+ SDK                      | R5F, M4F       | 11.01.00.19
+Code Composer Studio                 | R5F, M4F       | 20.2.0
+SysConfig                            | R5F, M4F       | 1.23.0, build 4000
+TI ARM CLANG                         | R5F, M4F       | 4.0.1.LTS
 FreeRTOS Kernel                      | R5F, M4F       | 11.1.0
 Tiny USB                             | R5F            | 0.14.0
 LwIP                                 | R5F            | STABLE-2_2_0_RELEASE
-Mbed-TLS                             | R5F            | mbedtls-2.13.1
+Mbed-TLS                             | R5F            | 2.13.1
 
 ## Key Features
 

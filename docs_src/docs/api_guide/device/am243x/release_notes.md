@@ -4,7 +4,7 @@
 
 Refer the below pages for release specific information
 
-- \subpage RELEASE_NOTES_2025_0_0_PAGE
+- \subpage RELEASE_NOTES_2025_00_00_PAGE
 - \subpage RELEASE_NOTES_11_00_00_PAGE
 - \subpage RELEASE_NOTES_09_02_00_PAGE
 - \subpage RELEASE_NOTES_09_01_00_PAGE
