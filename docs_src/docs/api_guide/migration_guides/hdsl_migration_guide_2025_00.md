@@ -11,10 +11,10 @@
 ## Introduction
 
 \cond SOC_AM243X
-This guide helps developers migrate HDSL (Hiperface DSL) encoder applications from Motor Control SDK v11.00.00 to v2025.00.00 and later versions. The driver underwent significant architectural changes including a move to handle-based APIs, SysConfig-based initialization, and standardized return values with input validation.
+This guide helps developers migrate HDSL (Hiperface DSL) encoder applications from Motor Control SDK v11.00.00 to v2025.00.00. The driver underwent significant architectural changes including a move to handle-based APIs, SysConfig-based initialization, and standardized return values with input validation.
 \endcond
 \cond SOC_AM261X
-This guide helps developers migrate HDSL (Hiperface DSL) encoder applications from Motor Control SDK v10.02.00 to v2025.00.00 and later versions. The driver underwent significant architectural changes including a move to handle-based APIs, SysConfig-based initialization, and standardized return values with input validation.
+This guide helps developers migrate HDSL (Hiperface DSL) encoder applications from Motor Control SDK v10.02.00 to v2025.00.00. The driver underwent significant architectural changes including a move to handle-based APIs, SysConfig-based initialization, and standardized return values with input validation.
 \endcond
 
 ## Major Architectural Changes
@@ -96,6 +96,8 @@ Driver APIs use following validation approach now:
 - Output pointer parameters (position, data, copy_table) are checked for NULL
 - Ensures safe dereferencing before writing output data
 
+\note These changes are not mentioned in the "Additional Details" column of the \ref HDSL_MIGRATION_GUIDE_2025_00_APIS_MODIFIED section below. The \ref HDSL_MIGRATION_GUIDE_2025_00_APIS_MODIFIED section describes changes in addition to the points mentioned above.
+
 ### New APIs Added
 
 <table>
@@ -161,7 +163,7 @@ Driver APIs use following validation approach now:
 </tr>
 </table>
 
-### APIs Modified
+### APIs Modified {#HDSL_MIGRATION_GUIDE_2025_00_APIS_MODIFIED}
 
 <table>
 <tr>
@@ -172,27 +174,27 @@ Driver APIs use following validation approach now:
 <tr>
     <td>HDSL_open()</td>
     <td>- Complete signature change<br>- 3 parameters to 2 parameters<br>- Old: <code>HDSL_open(icssHandle, icssCore, pruMode)</code><br>- New: <code>HDSL_open(instance, params)</code></td>
-    <td>Uses SysConfig-generated instance index and HDSL_Params structure. Hardware configuration (clock divider, GP MUX) moved to HDSL_hw_init().</td>
+    <td>- Uses SysConfig-generated instance index and HDSL_Params structure<br>- Hardware configuration (clock divider, GP MUX) moved to HDSL_hw_init()<br>- Validates parameter limits</td>
 </tr>
 <tr>
     <td>HDSL_get_pos()</td>
     <td>- Return type: <code>uint64_t</code> to <code>int32_t</code><br>- Added <code>uint64_t *position</code> output param<br>- <code>int position_id</code> to <code>uint32_t position_id</code></td>
-    <td>Returns status code, position value via output pointer</td>
+    <td>- Returns status code, position value via output pointer</td>
 </tr>
 <tr>
     <td>HDSL_get_qm()<br>HDSL_get_safe_events()<br>HDSL_get_sum()<br>HDSL_get_acc_err_cnt()<br>HDSL_get_rssi()<br>HDSL_get_sync_ctrl()<br>HDSL_get_master_qm()<br>HDSL_get_edges()<br>HDSL_get_delay()</td>
     <td>- Return type: <code>uint8_t</code> to <code>int32_t</code><br>- Added <code>uint8_t *</code> output param</td>
-    <td>Returns status code, data value via output pointer</td>
+    <td>- Returns status code, data value via output pointer</td>
 </tr>
 <tr>
     <td>HDSL_get_events()<br>HDSL_get_online_status_d()<br>HDSL_get_online_status_1()<br>HDSL_get_online_status_2()</td>
     <td>- Return type: <code>uint16_t</code> to <code>int32_t</code><br>- Added <code>uint16_t *</code> output param</td>
-    <td>Returns status code, data value via output pointer</td>
+    <td>- Returns status code, data value via output pointer</td>
 </tr>
 <tr>
     <td>HDSL_get_enc_id()</td>
     <td>- Return type: <code>uint8_t</code> to <code>int32_t</code><br>- Added <code>uint8_t *enc_id</code> output param<br>- <code>int byte</code> to <code>uint32_t byte</code></td>
-    <td>Returns status code, encoder ID byte via output pointer</td>
+    <td>- Returns status code, encoder ID byte via output pointer</td>
 </tr>
 <tr>
     <td>HDSL_write_pc_buffer()</td>
@@ -207,12 +209,12 @@ Driver APIs use following validation approach now:
 <tr>
     <td>HDSL_set_sync_ctrl()<br>HDSL_generate_memory_image()</td>
     <td>- Return type: <code>void</code> to <code>int32_t</code></td>
-    <td>Returns SystemP_SUCCESS or SystemP_FAILURE</td>
+    <td>- Returns SystemP_SUCCESS or SystemP_FAILURE</td>
 </tr>
 <tr>
     <td>HDSL_write_pc_short_msg()<br>HDSL_read_pc_short_msg()</td>
     <td>- Added input validation<br>- Returns SystemP_FAILURE for invalid params</td>
-    <td>Validates address range (0x00-0x7F)</td>
+    <td>- Validates address range (0x00-0x7F)</td>
 </tr>
 <tr>
     <td>HDSL_write_pc_long_msg()<br>HDSL_read_pc_long_msg()</td>
@@ -222,17 +224,17 @@ Driver APIs use following validation approach now:
 <tr>
     <td>HDSL_get_src_loc()</td>
     <td>- Return type: <code>void*</code> to <code>int32_t</code><br>- Added <code>void **src_loc</code> output param</td>
-    <td>Returns status code, memory address via output pointer</td>
+    <td>- Returns status code, memory address via output pointer</td>
 </tr>
 <tr>
     <td>HDSL_get_length()</td>
     <td>- Return type: <code>uint32_t</code> to <code>int32_t</code><br>- Added <code>uint32_t *length</code> output param</td>
-    <td>Returns status code, length via output pointer</td>
+    <td>- Returns status code, length via output pointer</td>
 </tr>
 <tr>
     <td>HDSL_config_copy_table()</td>
     <td>- <code>HDSL_CopyTable *</code> to <code>const HDSL_CopyTable *</code><br>- Structure members renamed (camelCase to snake_case)</td>
-    <td>Added const qualifier and input validation for 16-bit address/size limits</td>
+    <td>- Added const qualifier and input validation for 16-bit address/size limits</td>
 </tr>
 </table>
 
@@ -364,26 +366,31 @@ The monolithic HDSL_Config structure has been replaced by the HDSL_Object, HDSL_
 <table>
 <tr>
     <th>Structure</th>
+    <th>Typedef</th>
     <th>Purpose</th>
     <th>Key Members</th>
 </tr>
 <tr>
     <td>HDSL_Params</td>
+    <td><code>typedef struct HDSL_Params_s HDSL_Params</code></td>
     <td>Initialization parameters</td>
     <td>pruicss_handle, channel</td>
 </tr>
 <tr>
     <td>HDSL_Priv</td>
+    <td><code>typedef struct HDSL_Priv_s HDSL_Priv</code></td>
     <td>Per-channel runtime state</td>
     <td>is_open, base_mem_addr, hdsl_interface, multi_turn, res, mask, pruicss_handle</td>
 </tr>
 <tr>
     <td>HDSL_Attrs</td>
+    <td><code>typedef struct HDSL_Attrs_s HDSL_Attrs</code></td>
     <td>Compile-time attributes from SysConfig</td>
     <td>instance, pruicss_instance, pruicss_type, pruicss_slice, mode, load_share_enabled, channel_mask, channel0/1/2_enabled, total_channels, core_clk_freq, iep_clk_freq</td>
 </tr>
 <tr>
     <td>HDSL_Object</td>
+    <td><code>typedef struct HDSL_Object_s HDSL_Object</code><br><code>typedef struct HDSL_Object_s *HDSL_Handle</code></td>
     <td>Per-channel handle combining priv and attrs</td>
     <td>priv (HDSL_Priv *), attrs (const HDSL_Attrs *)</td>
 </tr>

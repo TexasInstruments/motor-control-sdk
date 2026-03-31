@@ -11,10 +11,10 @@
 ## Introduction
 
 \cond SOC_AM243X
-This guide helps developers migrate Tamagawa encoder applications from Motor Control SDK v11.00.00 to v2025.00.00 and later versions. The driver underwent significant architectural changes including a move to handle-based APIs, enhanced periodic trigger modes, and improved SysConfig integration.
+This guide helps developers migrate Tamagawa encoder applications from Motor Control SDK v11.00.00 to v2025.00.00. The driver underwent significant architectural changes including a move to handle-based APIs, enhanced periodic trigger modes, and improved SysConfig integration.
 \endcond
 \cond (SOC_AM263PX || SOC_AM261X || SOC_AM263X)
-This guide helps developers migrate Tamagawa encoder applications from Motor Control SDK v10.02.00 to v2025.00.00 and later versions. The driver underwent significant architectural changes including a move to handle-based APIs, enhanced periodic trigger modes, and improved SysConfig integration.
+This guide helps developers migrate Tamagawa encoder applications from Motor Control SDK v10.02.00 to v2025.00.00. The driver underwent significant architectural changes including a move to handle-based APIs, enhanced periodic trigger modes, and improved SysConfig integration.
 \endcond
 
 ## Major Architectural Changes
@@ -84,6 +84,8 @@ Driver APIs use following validation approach now:
 - **Internal structure validation**: Each API validates the internal structure pointers it accesses (e.g., attrs, priv, tamagawa_xchg, pruicss_handle) for NULL before dereferencing
  - **Error state handling**: Error in command processing may leave internal state partially modified. Subsequent calls will overwrite these values. Caller is responsible for explicit state cleanup if needed.
 
+\note These changes are not mentioned in the "Additional Details" column of the \ref TAMAGAWA_MIGRATION_GUIDE_2025_00_APIS_MODIFIED section below. The \ref TAMAGAWA_MIGRATION_GUIDE_2025_00_APIS_MODIFIED section describes changes in addition to the points mentioned above.
+
 ### New APIs Added
 
 <table>
@@ -139,7 +141,7 @@ Driver APIs use following validation approach now:
 </tr>
 </table>
 
-### APIs Modified
+### APIs Modified {#TAMAGAWA_MIGRATION_GUIDE_2025_00_APIS_MODIFIED}
 
 <table>
 <tr>
@@ -150,42 +152,42 @@ Driver APIs use following validation approach now:
 <tr>
     <td>tamagawa_init()</td>
     <td>- Old: Multiple parameters (7+ params) returning <code>struct tamagawa_priv*</code><br>- New: 2 params (<code>uint32_t</code>, <code>tamagawa_params*</code>) returning <code>tamagawa_handle</code></td>
-    <td>Complete signature change - use SysConfig instance ID and params structure</td>
+    <td>- Complete signature change - use SysConfig instance ID and params structure<br>- Validates parameter limits</td>
 </tr>
 <tr>
     <td>tamagawa_command_process() <br>tamagawa_command_build() </td>
     <td>- <code>priv</code> to <code>handle</code><br>- Removed gTamagawa_multi_ch_mask parameter</td>
-    <td>Channel mask now determined from attrs</td>
+    <td>- Channel mask now determined from attrs</td>
 </tr>
 <tr>
     <td>tamagawa_command_send() <br>tamagawa_command_wait() <br>tamagawa_config_clock() <br>tamagawa_config_host_trigger() <br>tamagawa_update_data_id() </td>
     <td>- <code>void</code> to <code>int32_t</code> return<br>- <code>priv</code> to <code>handle</code></td>
-    <td>Returns status code</td>
+    <td>- Returns status code</td>
 </tr>
 <tr>
     <td>tamagawa_config_channel()</td>
     <td>- <code>void</code> to <code>int32_t</code> return<br>- <code>priv</code> to <code>handle</code><br>- Parameter changed from uint32_t ch to uint8_t mask</td>
-    <td>Returns status code</td>
+    <td>- Returns status code</td>
 </tr>
 <tr>
     <td>tamagawa_multi_channel_set_cur()<br>tamagawa_update_adf()<br>tamagawa_update_edf()<br>tamagawa_update_crc()</td>
     <td>- <code>void</code> to <code>int32_t</code> return<br>- <code>priv</code> to <code>handle</code><br>- Parameter ch changed from uint32_t to uint8_t</td>
-    <td>Update parameters type and returns status code</td>
+    <td>- Update parameters type<br>- Returns status code</td>
 </tr>
 <tr>
     <td>tamagawa_parse()</td>
     <td>- <code>priv</code> to <code>handle</code><br>- Parameter order changed (handle first, cmd second)</td>
-    <td>Parameter type change only</td>
+    <td>-</td>
 </tr>
 <tr>
     <td>tamagawa_crc_verify()</td>
     <td>- <code>priv</code> to <code>handle</code></td>
-    <td>Parameter type change only</td>
+    <td>-</td>
 </tr>
 <tr>
     <td>tamagawa_set_baudrate()</td>
     <td>- <code>void</code> to <code>int32_t</code> return<br>- <code>priv</code> to <code>handle</code><br>- Parameter renamed from baudrate to baud_rate</td>
-    <td>Returns status code</td>
+    <td>- Returns status code</td>
 </tr>
 </table>
 
@@ -443,60 +445,42 @@ Driver APIs use following validation approach now:
 <table>
 <tr>
     <th>Structure</th>
+    <th>Typedef</th>
     <th>Purpose</th>
     <th>Key Members</th>
 </tr>
 <tr>
     <td>tamagawa_params</td>
+    <td><code>typedef struct tamagawa_params_s tamagawa_params</code></td>
     <td>Initialization parameters</td>
     <td>pruicss_handle, cmd_wait_delay_us, max_wait_loop_count</td>
 </tr>
 <tr>
     <td>tamagawa_attrs</td>
+    <td><code>typedef struct tamagawa_attrs_s tamagawa_attrs</code></td>
     <td>Compile-time attributes from SysConfig</td>
     <td>instance, mode, PRU-ICSS config, channel_mask, baud_rate, clock frequencies, IEP event arrays</td>
 </tr>
 <tr>
     <td>tamagawa_periodic_trigger_cfg</td>
+    <td><code>typedef struct tamagawa_periodic_trigger_cfg_s tamagawa_periodic_trigger_cfg</code></td>
     <td>IEP event configuration for periodic trigger</td>
     <td>iep_cmp_event, iep_cap_event, iep_capture_reg</td>
 </tr>
 <tr>
     <td>tamagawa_channel_config</td>
+    <td><code>typedef struct tamagawa_channel_config_s tamagawa_channel_config</code></td>
     <td>Channel enable/disable configuration</td>
     <td>Channel enable state</td>
 </tr>
 <tr>
     <td>tamagawa_config</td>
+    <td><code>typedef struct tamagawa_config_s tamagawa_config</code><br><code>typedef tamagawa_config *tamagawa_handle</code></td>
     <td>Internal configuration structure (handle)</td>
     <td>priv, attrs pointers</td>
 </tr>
 </table>
 
-### New Types
-
-<table>
-<tr>
-    <th>New Type</th>
-    <th>Description</th>
-</tr>
-<tr>
-    <td>typedef struct tamagawa_params_s ... tamagawa_params</td>
-    <td>Initialization parameters structure</td>
-</tr>
-<tr>
-    <td>typedef struct tamagawa_attrs_s ... tamagawa_attrs</td>
-    <td>Compile-time attributes structure from SysConfig</td>
-</tr>
-<tr>
-    <td>typedef struct tamagawa_config_s ... tamagawa_config</td>
-    <td>Internal configuration structure (handle)</td>
-</tr>
-<tr>
-    <td>typedef tamagawa_config *tamagawa_handle</td>
-    <td>Opaque handle type for all APIs</td>
-</tr>
-</table>
 
 ### Type Changes
 
@@ -792,40 +776,6 @@ uint8_t channel_mask = attrs->channel_mask;
 tamagawa_priv *priv = tamagawa_get_priv(handle);
 uint8_t channel = priv->channel;
 ```
-
-## Key Migration Steps
-
-1. **Replace init sequence**:
-   - Remove manual PRU base address setup
-   - Use tamagawa_params_init() and tamagawa_init()
-   - Configuration now comes from SysConfig
-
-2. **Update function calls**:
-   - Replace struct tamagawa_priv *priv with tamagawa_handle handle
-   - Remove multi-channel mask parameters from command APIs
-   - Check return values (now int32_t instead of void for many APIs)
-
-3. **Update configuration**:
-   - Use SysConfig for compile-time configuration (channel mask, mode, baud rate, etc.)
-   - For periodic trigger, choose between CMP and CAP modes
-   - IEP event numbers configured via SysConfig and set during init
-
-4. **Handle errors**:
-   - Check return codes from all APIs
-   - Handle SystemP_TIMEOUT for command wait operations
-   - All APIs now return error codes for validation failures
-
-5. **Update channel parameter types**:
-   - Change uint32_t ch to uint8_t ch in update APIs
-
-6. **Remove deprecated macros**:
-   - Replace TAMAGAWA_MULTI_CHx with direct bit masks (1<<0, 1<<1, 1<<2)
-   - Replace MAX_CHANNELS with TAMAGAWA_MAX_CHANNELS_PER_SLICE
-   - Replace MAX_EEPROM_ADDRESS with TAMAGAWA_MAX_EEPROM_ADDRESS
-   - Replace MAX_EEPROM_WRITE_DATA with TAMAGAWA_MAX_EEPROM_WRITE_DATA
-
-7. **Add cleanup**:
-   - Call tamagawa_deinit(handle) when done
 
 ## SysConfig Migration
 

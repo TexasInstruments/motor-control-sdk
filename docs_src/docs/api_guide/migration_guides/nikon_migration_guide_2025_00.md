@@ -11,10 +11,10 @@
 ## Introduction
 
 \cond SOC_AM243X
-This guide helps developers migrate Nikon encoder applications from Motor Control SDK v11.00.00 to v2025.00.00 and later versions. The driver underwent significant architectural changes including a move to handle-based APIs, enhanced periodic trigger modes, and improved SysConfig integration.
+This guide helps developers migrate Nikon encoder applications from Motor Control SDK v11.00.00 to v2025.00.00. The driver underwent significant architectural changes including a move to handle-based APIs, enhanced periodic trigger modes, and improved SysConfig integration.
 \endcond
 \cond (SOC_AM263PX || SOC_AM261X)
-This guide helps developers migrate Nikon encoder applications from Motor Control SDK v10.02.00 to v2025.00.00 and later versions. The driver underwent significant architectural changes including a move to handle-based APIs, enhanced periodic trigger modes, and improved SysConfig integration.
+This guide helps developers migrate Nikon encoder applications from Motor Control SDK v10.02.00 to v2025.00.00. The driver underwent significant architectural changes including a move to handle-based APIs, enhanced periodic trigger modes, and improved SysConfig integration.
 \endcond
 
 ## Major Architectural Changes
@@ -78,7 +78,9 @@ Driver APIs use following validation approach now:
 - **Public API validation**: All public APIs validate the handle parameter for NULL and perform array bounds checking for index parameters (ch, ls_ch, ch_idx)
 - **Internal function validation**: Internal static functions assume valid parameters. The caller is responsible for ensuring parameters are valid before calling internal functions
 - **Internal structure validation**: Each API validates the internal structure pointers it accesses (e.g., attrs, priv, pruicss_xchg, pruicss_handle) for NULL before dereferencing
- - **Error state handling**: Error in \ref nikon_get_pos may leave internal state partially modified. Subsequent calls will overwrite these values. Caller is responsible for explicit state cleanup if needed.
+- **Error state handling**: Error in \ref nikon_get_pos may leave internal state partially modified. Subsequent calls will overwrite these values. Caller is responsible for explicit state cleanup if needed.
+
+\note These changes are not mentioned in the "Additional Details" column of the \ref NIKON_MIGRATION_GUIDE_2025_00_APIS_MODIFIED section below. The \ref NIKON_MIGRATION_GUIDE_2025_00_APIS_MODIFIED section describes changes in addition to the points mentioned above.
 
 ### New APIs Added
 
@@ -129,18 +131,18 @@ Driver APIs use following validation approach now:
     <td>-</td>
 </tr>
 <tr>
-    <td>nikon_config_iep_cap_event()</td>
-    <td>Configure IEP CAP event number in firmware DMEM</td>
-    <td>Set CAP event (0-7) for each channel</td>
-</tr>
-<tr>
     <td>nikon_config_iep_cmp_event()</td>
     <td>Configure IEP CMP event number in firmware DMEM</td>
     <td>Set CMP event (0-15) for each channel</td>
 </tr>
+<tr>
+    <td>nikon_config_iep_cap_event()</td>
+    <td>Configure IEP CAP event number in firmware DMEM</td>
+    <td>Set CAP event (0-7) for each channel</td>
+</tr>
 </table>
 
-### APIs Modified
+### APIs Modified {#NIKON_MIGRATION_GUIDE_2025_00_APIS_MODIFIED}
 
 <table>
 <tr>
@@ -151,32 +153,32 @@ Driver APIs use following validation approach now:
 <tr>
     <td>nikon_init()</td>
     <td>- Complete signature change<br>- 9 parameters to 2 parameters<br>- Returns <code>nikon_handle</code> instead of <code>priv*</code></td>
-    <td>Uses SysConfig-generated index and params structure as arguments</td>
+    <td>- Uses SysConfig-generated index and params structure as arguments<br>- Validates parameter limits</td>
 </tr>
 <tr>
     <td>nikon_get_current_channel()</td>
     <td>- Returns via output parameter<br>- <code>priv</code> to <code>handle</code><br>- Added <code>uint32_t *channel</code> param</td>
-    <td>Returns status, provides channel value via pointer</td>
+    <td>- Returns status, provides channel value via pointer</td>
 </tr>
 <tr>
     <td>nikon_command_wait()<br>nikon_get_pos()<br>nikon_wait_for_encoder_detection()</td>
     <td>- <code>priv</code> to <code>handle</code></td>
-    <td>Returns SystemP_TIMEOUT on timeout</td>
+    <td>- Returns SystemP_TIMEOUT on timeout</td>
 </tr>
 <tr>
     <td>nikon_calc_clock()</td>
     <td>- <code>priv</code> to <code>handle</code></td>
-    <td>Parameter type change only</td>
+    <td>-</td>
 </tr>
 <tr>
-    <td>nikon_generate_cdf()<br>nikon_config_load_share()<br>nikon_config_host_trigger()<br>nikon_update_eeprom_addr()<br>nikon_update_eeprom_data()<br>nikon_update_eeprom_bank()<br>nikon_update_clock_freq()</td>
+    <td>nikon_config_host_trigger()<br>nikon_update_eeprom_addr()<br>nikon_update_eeprom_data()<br>nikon_update_eeprom_bank()<br>nikon_update_clock_freq()</td>
     <td>- <code>void</code> to <code>int32_t</code> return<br>- <code>priv</code> to <code>handle</code></td>
-    <td>Returns status code</td>
+    <td>- Returns status code</td>
 </tr>
 <tr>
-    <td>nikon_update_enc_addr()<br>nikon_update_id_code()<br>nikon_update_velocity_coefficient()<br>nikon_update_enc_len()</td>
+    <td>nikon_generate_cdf()<br>nikon_config_load_share()<br>nikon_update_enc_addr()<br>nikon_update_id_code()<br>nikon_update_velocity_coefficient()<br>nikon_update_enc_len()</td>
     <td>- <code>void</code> to <code>int32_t</code> return<br>- <code>priv</code> to <code>handle</code></td>
-    <td>Validates parameter limits and returns status code</td>
+    <td>- Validates parameter limits<br>- Returns status code</td>
 </tr>
 </table>
 
@@ -264,6 +266,8 @@ Driver APIs use following validation approach now:
 </tr>
 </table>
 
+\note Intial value nikon_priv->baud_rate is copied from nikon_attrs->baud_rate. Run-time modification of nikon_priv->baud_rate is done in nikon_update_clock_freq().
+
 \cond (SOC_AM261X)
 ### nikon_position_info Structure
 
@@ -322,26 +326,31 @@ Driver APIs use following validation approach now:
 <table>
 <tr>
     <th>Structure</th>
+    <th>Typedef</th>
     <th>Purpose</th>
     <th>Key Members</th>
 </tr>
 <tr>
     <td>nikon_params</td>
+    <td><code>typedef struct nikon_params_s nikon_params</code></td>
     <td>Initialization parameters</td>
     <td>pruicss_handle, cmd_process_delay_us, fw_wait_delay_us, max_wait_loop_count</td>
 </tr>
 <tr>
     <td>nikon_attrs</td>
+    <td><code>typedef struct nikon_attrs_s nikon_attrs</code></td>
     <td>Compile-time attributes from SysConfig</td>
     <td>protocol_version, PRU-ICSS attributes, channel configuration, clock settings, IEP event configuration</td>
 </tr>
 <tr>
     <td>nikon_config</td>
+    <td><code>typedef struct nikon_config_s nikon_config</code><br><code>typedef nikon_config *nikon_handle</code></td>
     <td>Internal configuration structure</td>
     <td>priv (pointer to nikon_priv), attrs (pointer to nikon_attrs)</td>
 </tr>
 <tr>
     <td>nikon_periodic_trigger_cfg</td>
+    <td><code>typedef struct nikon_periodic_trigger_cfg_s nikon_periodic_trigger_cfg</code></td>
     <td>IEP event configuration for periodic trigger</td>
     <td>iep_cmp_event, iep_cap_event, iep_capture_reg</td>
 </tr>
@@ -378,34 +387,6 @@ Driver APIs use following validation approach now:
 </tr>
 </table>
 
-### New Types
-
-<table>
-<tr>
-    <th>New Type</th>
-    <th>Description</th>
-</tr>
-<tr>
-    <td>typedef struct nikon_params_s ... nikon_params</td>
-    <td>Initialization parameters structure</td>
-</tr>
-<tr>
-    <td>typedef struct nikon_attrs_s ... nikon_attrs</td>
-    <td>Compile-time attributes structure from SysConfig</td>
-</tr>
-<tr>
-    <td>typedef struct nikon_config_s ... nikon_config</td>
-    <td>Internal configuration structure</td>
-</tr>
-<tr>
-    <td>typedef nikon_config *nikon_handle</td>
-    <td>Opaque handle type for all APIs</td>
-</tr>
-<tr>
-    <td>typedef struct nikon_periodic_trigger_cfg_s ... nikon_periodic_trigger_cfg</td>
-    <td>IEP event configuration structure for periodic trigger</td>
-</tr>
-</table>
 
 ## Macro and Constant Changes
 
@@ -433,11 +414,6 @@ Driver APIs use following validation approach now:
     <td>NIKON_DEFAULT_MAX_WAIT_LOOP_COUNT</td>
     <td>35U</td>
     <td>Default timeout loop count</td>
-</tr>
-<tr>
-    <td>NIKON_CONFIG_HOST_TRIGGER_MODE</td>
-    <td>0x1U</td>
-    <td>Host-triggered mode</td>
 </tr>
 <tr>
     <td>NIKON_CONFIG_PERIODIC_TRIGGER_CAP_MODE</td>
