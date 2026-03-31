@@ -257,9 +257,16 @@ Uniflash                             | R5F            | 9.3.0
     <td> -
 </tr>
 <tr>
-    <td> PINDSW-10139
-    <td> EnDat: Supplement 2_2 commands do not work with periodic mode when channels 0 and 1 both are enabled
-    <td> Position Sense EnDat
+    <td> PINDSW-9605
+    <td> Unable to open example.syscfg directly from SysConfig tool
+    <td> All examples
+    <td> 10.0.0 onwards
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-9788
+    <td> BiSS-C/Nikon: SysConfig does not enable the required PRU GPIO pins
+    <td> Position Sense BiSS-C, Position Sense Nikon A-format
     <td> 10.0.0 onwards
     <td> -
 </tr>
@@ -343,6 +350,13 @@ Uniflash                             | R5F            | 9.3.0
     <td> Position Sense HDSL
     <td> 10.0.1 onwards
     <td> -
+</tr>
+<tr>
+    <td> PINDSW-10641
+    <td> Unable to create a new .syscfg with MCSDK directly from SysConfig tool
+    <td> SysConfig
+    <td> 2025.0 onwards
+    <td> Copy an example.syscfg file from SDK example and use it
 </tr>
 </table>
 

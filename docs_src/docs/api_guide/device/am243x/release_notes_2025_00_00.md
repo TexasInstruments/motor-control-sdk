@@ -298,6 +298,13 @@ Mbed-TLS                             | R5F            | 2.13.1
     <td> NOTE: This register is not implemented in TI HDSL solution. It is documented as a known difference in \ref HDSL_EXCEPTIONS_LIST.
 </tr>
 <tr>
+    <td> PINDSW-9605
+    <td> Unable to open example.syscfg directly from SysConfig tool
+    <td> All examples
+    <td> 9.0 onwards
+    <td> -
+</tr>
+<tr>
     <td> PINDSW-9707
     <td> %SDFM: Changing OSR values at runtime does not have any effect on sample output
     <td> Current Sense %SDFM
@@ -419,6 +426,13 @@ Mbed-TLS                             | R5F            | 2.13.1
     <td> Position Sense HDSL
     <td> 9.0 onwards
     <td> -
+</tr>
+<tr>
+    <td> PINDSW-10641
+    <td> Unable to create a new .syscfg with MCSDK directly from SysConfig tool
+    <td> SysConfig
+    <td> 2025.0 onwards
+    <td> Copy an example.syscfg file from SDK example and use it
 </tr>
 </table>
 

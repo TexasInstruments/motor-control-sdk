@@ -203,23 +203,23 @@ Uniflash                              | R5F            | 9.3.0
     <td> -
 </tr>
 <tr>
+    <td> PINDSW-9605
+    <td> Unable to open example.syscfg directly from SysConfig tool
+    <td> All examples
+    <td> 10.0 onwards
+    <td> -
+</tr>
+<tr>
+    <td> PINDSW-9788
+    <td> BiSS-C/Nikon: SysConfig does not enable the required PRU GPIO pins
+    <td> Position Sense BiSS-C, Position Sense Nikon A-format
+    <td> 10.0 onwards
+    <td> -
+</tr>
+<tr>
     <td> PINDSW-9784
     <td> Position Sense: PR0_PRU0_GPIO7 pin is not available in SoC, but shown in SysConfig modules
     <td> Position Sense BiSS-C, Position Sense EnDat, Position Sense Nikon, Position Sense Tamagawa
-    <td> 10.0 onwards
-    <td> -
-</tr>
-<tr>
-    <td> PINDSW-10139
-    <td> EnDat: Supplement 2_2 commands do not work with periodic mode when channels 0 and 1 both are enabled
-    <td> Position Sense EnDat
-    <td> 10.0 onwards
-    <td> -
-</tr>
-<tr>
-    <td> PINDSW-10244
-    <td> EnDat: Variations seen in propagation delay measurement with different PRU Clock frequencies
-    <td> Position Sense EnDat
     <td> 10.0 onwards
     <td> -
 </tr>
@@ -254,6 +254,13 @@ Uniflash                              | R5F            | 9.3.0
     <td> Position Sense Nikon A-format
     <td> 10.0 onwards
     <td> -
+</tr>
+<tr>
+    <td> PINDSW-10641
+    <td> Unable to create a new .syscfg with MCSDK directly from SysConfig tool
+    <td> SysConfig
+    <td> 2025.0 onwards
+    <td> Copy an example.syscfg file from SDK example and use it
 </tr>
 </table>
 
