@@ -609,7 +609,7 @@ SysConfig will generate:
 - `HDSL_Attrs gHdslAttrs[]` structures with compile-time configuration
 - `HDSL_Priv gHdslPriv[][]` array for per-channel runtime state
 - `HDSL_Object gHdslHandle[][]` array with per-channel handles
-- Initialization code in `ti_drivers_config.c`
+- Code is generated in `ti_drivers_config.c` and `ti_drivers_config.h`
 
 ## Common Migration Issues
 
