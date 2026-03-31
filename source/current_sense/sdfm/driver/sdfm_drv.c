@@ -511,8 +511,7 @@ int32_t SDFM_setSampleTriggerTime(SDFM_Handle handle, float samp_trig_time, uint
     priv = handle->priv;
     attrs = handle->attrs;
 
-    /* Convert sample time into IEP count */
-    /* Sample time in us */
+    /* Convert sample trigger time (in microseconds) to IEP counter count value */
     count = (uint32_t)((attrs->iep_clk_freq / 1000000U) * samp_trig_time);
     priv->sdfm_interface->trigger_config[pru_core].first_samp_trig_time = count;
     return SystemP_SUCCESS;
@@ -536,7 +535,7 @@ int32_t SDFM_enableDoubleSampling(SDFM_Handle handle, float samp_trig_time, uint
 
     /* Enable double normal current sampling */
     priv->sdfm_interface->trigger_config[pru_core].en_double_nc_sampling = 1U;
-    /* Second sample point */
+    /* Convert second sample trigger time (in microseconds) to IEP counter count value */
     count = (uint32_t)((attrs->iep_clk_freq / 1000000U) * samp_trig_time);
     priv->sdfm_interface->trigger_config[pru_core].second_samp_trig_time = count;
 
@@ -1867,7 +1866,7 @@ int32_t SDFM_setSampleOutputInterfaceGlobalAddr(SDFM_Handle handle, uint32_t add
     attrs = handle->attrs;
     if(!attrs->load_share_enabled)
     {
-        priv->sdfm_interface->trigger_config[SDFM_PRU_CORE_INDEX].sample_buff_base_addr = addr;     
+        priv->sdfm_interface->trigger_config[SDFM_PRU_CORE_INDEX].sample_buff_base_addr = addr;
     }
     else
     {

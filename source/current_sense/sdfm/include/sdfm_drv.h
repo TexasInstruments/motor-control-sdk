@@ -314,10 +314,10 @@ typedef struct SDFM_ChannelConfig_s
     /**< Filter type - sinc1, sinc2, sinc3 */
     volatile uint8_t   filter_type;
 
-    /**< Normal current Over Sampling Rate (OSR) */
+    /**< Normal current Over Sampling Rate (OSR), stored as (OSR - 1), range 3-255 */
     volatile uint8_t   normal_current_osr;
 
-    /**< Over current Over Sampling Rate (OSR) */
+    /**< Over current Over Sampling Rate (OSR), stored as (OSR - 1), range 3-255 */
     volatile uint8_t   over_current_osr;
 
     /**< SDFM clock frequency for this channel */
@@ -332,16 +332,16 @@ typedef struct SDFM_ChannelConfig_s
     /**< Fast detect window size */
     volatile uint8_t   fd_window;
 
-    /**< Fast detect max count of zero */
+    /**< Fast detect max zero count threshold, stored as (value - 1) */
     volatile uint8_t   fd_zero_max;
 
-    /**< Fast detect min count of zero */
+    /**< Fast detect min zero count threshold, stored as (value - 1) */
     volatile uint8_t   fd_zero_min;
 
-    /**< Fast detect max count of one */
+    /**< Fast detect max one count threshold (set to (window_size+1)*4+1 to disable one-count trip) */
     volatile uint8_t   fd_one_max;
 
-    /**< Fast detect min count of one */
+    /**< Fast detect min one count threshold (set to 0 to disable one-count trip) */
     volatile uint8_t   fd_one_min;
 
     /**< Clock source for this channel */
