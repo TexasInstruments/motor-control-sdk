@@ -172,7 +172,17 @@ Driver APIs use following validation approach now:
     <td>- Uses SysConfig-generated index and params structure as arguments<br>- Validates parameter limits</td>
 </tr>
 <tr>
-    <td>bissc_command_process()<br>bissc_command_wait()<br>bissc_get_pos()</td>
+    <td>bissc_command_process()</td>
+    <td>- <code>priv</code> to <code>handle</code></td>
+    <td>- Returns SystemP_TIMEOUT on timeout<br>- Skips calling \ref bissc_command_send if periodic trigger mode is enabled</td>
+</tr>
+<tr>
+    <td>bissc_command_wait()</td>
+    <td>- <code>priv</code> to <code>handle</code></td>
+    <td>- Returns SystemP_TIMEOUT on timeout<br>- Sleep is enabled between poll iterations for periodic trigger mode as well (host trigger mode already had this)</td>
+</tr>
+<tr>
+    <td>bissc_get_pos()</td>
     <td>- <code>priv</code> to <code>handle</code></td>
     <td>- Returns SystemP_TIMEOUT on timeout</td>
 </tr>
