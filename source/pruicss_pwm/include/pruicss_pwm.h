@@ -253,7 +253,7 @@ typedef struct PRUICSS_PWM_Config_s         *PRUICSS_PWM_Handle;
  *  \brief      PRUICSS PWM IEP Attributes
  *
  *  PRUICSS PWM driver IEP Attributes. It contains PRUICSS PWM
- *  IEP to which should be configured.
+ *  IEP configuration attributes which should be configured.
  *
  *  The application must access any member variables of this structure using PRUICSS_PWM_Handle.
  */
@@ -417,7 +417,7 @@ int32_t PRUICSS_PWM_setIepCounterLower_32bitValue(PRUICSS_PWM_Handle handle, uin
 int32_t PRUICSS_PWM_setIepCounterUpper_32bitValue(PRUICSS_PWM_Handle handle, uint8_t iepInstance, uint32_t value);
 
 /**
- * \brief  This API sets enables/disables of IEP shadow mode
+ * \brief  This API enables or disables IEP shadow mode
  *
  * \param   handle      #PRUICSS_PWM_Handle returned from #PRUICSS_PWM_open()
  * \param   iepInstance 0 for IEP0, 1 for IEP1
@@ -428,7 +428,7 @@ int32_t PRUICSS_PWM_setIepCounterUpper_32bitValue(PRUICSS_PWM_Handle handle, uin
 int32_t PRUICSS_PWM_configureIepShadowModeEnable(PRUICSS_PWM_Handle handle, uint8_t iepInstance, uint8_t enable);
 
 /**
- * \brief  This API sets enables/disables of IEP counter reset on compare 0 event in IEP module.
+ * \brief  This API enables or disables IEP counter reset on compare 0 event in IEP module.
  *
  * \param   handle      #PRUICSS_PWM_Handle returned from #PRUICSS_PWM_open()
  * \param   iepInstance 0 for IEP0, 1 for IEP1
@@ -487,20 +487,21 @@ int32_t PRUICSS_PWM_setPwmDebounceValue(PRUICSS_PWM_Handle handle, uint8_t pwmSe
 /**
  * \brief  This API updates TripMask Value for specified pwm set
  *
- * \brief  Software TripMask
- * \brief  0x0: PWM0_POS_ERR_TRIP (trip_e5)
- * \brief  0x1: PWM0_OVER_ERR_TRIP (trip_e4)
- * \brief  0x2: PWM0_0_SD_SHORT_ERR_TRIP (trip_e3_0)
- * \brief  0x3: PWM0_1_SD_SHORT_ERR_TRIP (trip_e3_1)
- * \brief  0x4: PWM0_2_SD_SHORT_ERR_TRIP (trip_e3_2)
- * \brief  0x5: PWM0_DEBOUNCE_TRIP_IN (trip_e2)
- * \brief  0x6: PWM0_0_DEBOUNCE_TRIP (trip_e1_0)
- * \brief  0x7: PWM0_1_DEBOUNCE_TRIP (trip_e1_1)
- * \brief  0x8: PWM0_2_DEBOUNCE_TRIP (trip_e1_2)
+ * Each bit in the 9-bit maskValue field enables (1) or disables (0) the corresponding
+ * trip error signal as input to the trip zone output logic:
+ * - Bit 0: PWMn_POS_ERR_TRIP (trip_e5)
+ * - Bit 1: PWMn_OVER_ERR_TRIP (trip_e4)
+ * - Bit 2: PWMn_0_SD_SHORT_ERR_TRIP (trip_e3_0)
+ * - Bit 3: PWMn_1_SD_SHORT_ERR_TRIP (trip_e3_1)
+ * - Bit 4: PWMn_2_SD_SHORT_ERR_TRIP (trip_e3_2)
+ * - Bit 5: PWMn_DEBOUNCE_TRIP_IN (trip_e2)
+ * - Bit 6: PWMn_0_DEBOUNCE_TRIP (trip_e1_0)
+ * - Bit 7: PWMn_1_DEBOUNCE_TRIP (trip_e1_1)
+ * - Bit 8: PWMn_2_DEBOUNCE_TRIP (trip_e1_2)
  *
  * \param   handle      #PRUICSS_PWM_Handle returned from #PRUICSS_PWM_open()
  * \param   pwmSet      0 for PWM0, 1 for PWM1, 2 for PWM2, 3 for PWM3
- * \param   maskValue   Pwmset maskValue
+ * \param   maskValue   9-bit trip mask value (valid range: 0 to #PRUICSS_PWM_TRIP_MASK_MAX_VALUE)
  * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  *
 */
@@ -509,21 +510,22 @@ int32_t PRUICSS_PWM_setPwmTripMask(PRUICSS_PWM_Handle handle, uint8_t pwmSet, ui
 /**
  * \brief  Get trip mask Value for specified pwm set
  *
- * \brief  Software TripMask
- * \brief  0x0: PWM0_POS_ERR_TRIP (trip_e5)
- * \brief  0x1: PWM0_OVER_ERR_TRIP (trip_e4)
- * \brief  0x2: PWM0_0_SD_SHORT_ERR_TRIP (trip_e3_0)
- * \brief  0x3: PWM0_1_SD_SHORT_ERR_TRIP (trip_e3_1)
- * \brief  0x4: PWM0_2_SD_SHORT_ERR_TRIP (trip_e3_2)
- * \brief  0x5: PWM0_DEBOUNCE_TRIP_IN (trip_e2)
- * \brief  0x6: PWM0_0_DEBOUNCE_TRIP (trip_e1_0)
- * \brief  0x7: PWM0_1_DEBOUNCE_TRIP (trip_e1_1)
- * \brief  0x8: PWM0_2_DEBOUNCE_TRIP (trip_e1_2)
+ * Each bit in the returned 9-bit mask value indicates whether the corresponding
+ * trip error signal is enabled (1) or disabled (0) as input to the trip zone output logic:
+ * - Bit 0: PWMn_POS_ERR_TRIP (trip_e5)
+ * - Bit 1: PWMn_OVER_ERR_TRIP (trip_e4)
+ * - Bit 2: PWMn_0_SD_SHORT_ERR_TRIP (trip_e3_0)
+ * - Bit 3: PWMn_1_SD_SHORT_ERR_TRIP (trip_e3_1)
+ * - Bit 4: PWMn_2_SD_SHORT_ERR_TRIP (trip_e3_2)
+ * - Bit 5: PWMn_DEBOUNCE_TRIP_IN (trip_e2)
+ * - Bit 6: PWMn_0_DEBOUNCE_TRIP (trip_e1_0)
+ * - Bit 7: PWMn_1_DEBOUNCE_TRIP (trip_e1_1)
+ * - Bit 8: PWMn_2_DEBOUNCE_TRIP (trip_e1_2)
  *
  * \param   handle      #PRUICSS_PWM_Handle returned from #PRUICSS_PWM_open()
  * \param   pwmSet      0 for PWM0, 1 for PWM1, 2 for PWM2, 3 for PWM3
- * \param   maskValuePtr [out]   Pwmset maskValue
- * \return  It returns SystemP_SUCCESS on success and stores mask value in maskValuePtr, SystemP_FAILURE on error
+ * \param   maskValuePtr [out]   Pointer to store the 9-bit trip mask value
+ * \return  SystemP_SUCCESS on success and stores mask value in maskValuePtr, SystemP_FAILURE on error
  *
 */
 int32_t PRUICSS_PWM_getPwmTripMask(PRUICSS_PWM_Handle handle, uint8_t pwmSet, uint16_t *maskValuePtr);
@@ -620,8 +622,8 @@ int32_t PRUICSS_PWM_getPwmTripTriggerCauseVector(PRUICSS_PWM_Handle handle, uint
 int32_t PRUICSS_PWM_getPwmTripStatus(PRUICSS_PWM_Handle handle, uint8_t pwmSet);
 
 /**
- * \brief  This API clears Trip status and makes state transition to Intial state as follows (Active->Intial)
- *  or (Trip->Intial) for specified pwm set
+ * \brief  This API clears Trip status and makes state transition to Initial state as follows (Active->Initial)
+ *  or (Trip->Initial) for specified pwm set
  *
  * \param   handle      #PRUICSS_PWM_Handle returned from #PRUICSS_PWM_open()
  * \param   pwmSet      0 for PWM0, 1 for PWM1, 2 for PWM2, 3 for PWM3
@@ -635,7 +637,7 @@ int32_t PRUICSS_PWM_clearPwmTripStatus(PRUICSS_PWM_Handle handle, uint8_t pwmSet
  *
  * \param   handle      #PRUICSS_PWM_Handle returned from #PRUICSS_PWM_open()
  * \param   pwmSet      0 for PWM0, 1 for PWM1, 2 for PWM2, 3 for PWM3
- * \param   state       0 for Intial, 1 for Active, 2 for Safe(alias Trip) state
+ * \param   state       0 for Initial, 1 for Active, 2 for Safe(alias Trip) state
  * \param   action      0 for Toggle, 1 for Low, 2 for High
  * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  *
@@ -647,7 +649,7 @@ int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalA0(PRUICSS_PWM_Handle handle, uint
  *
  * \param   handle      #PRUICSS_PWM_Handle returned from #PRUICSS_PWM_open()
  * \param   pwmSet      0 for PWM0, 1 for PWM1, 2 for PWM2, 3 for PWM3
- * \param   state       0 for Intial, 1 for Active, 2 for Safe(alias Trip) state
+ * \param   state       0 for Initial, 1 for Active, 2 for Safe(alias Trip) state
  * \param   action      0 for Toggle, 1 for Low, 2 for High
  * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  *
@@ -659,7 +661,7 @@ int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalA1(PRUICSS_PWM_Handle handle, uint
  *
  * \param   handle      #PRUICSS_PWM_Handle returned from #PRUICSS_PWM_open()
  * \param   pwmSet      0 for PWM0, 1 for PWM1, 2 for PWM2, 3 for PWM3
- * \param   state       0 for Intial, 1 for Active, 2 for Safe(alias Trip) state
+ * \param   state       0 for Initial, 1 for Active, 2 for Safe(alias Trip) state
  * \param   action      0 for Toggle, 1 for Low, 2 for High
  * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  *
@@ -671,7 +673,7 @@ int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalA2(PRUICSS_PWM_Handle handle, uint
  *
  * \param   handle      #PRUICSS_PWM_Handle returned from #PRUICSS_PWM_open()
  * \param   pwmSet      0 for PWM0, 1 for PWM1, 2 for PWM2, 3 for PWM3
- * \param   state       0 for Intial, 1 for Active, 2 for Safe(alias Trip) state
+ * \param   state       0 for Initial, 1 for Active, 2 for Safe(alias Trip) state
  * \param   action      0 for Toggle, 1 for Low, 2 for High
  * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  *
@@ -683,7 +685,7 @@ int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalB0(PRUICSS_PWM_Handle handle, uint
  *
  * \param   handle      #PRUICSS_PWM_Handle returned from #PRUICSS_PWM_open()
  * \param   pwmSet      0 for PWM0, 1 for PWM1, 2 for PWM2, 3 for PWM3
- * \param   state       0 for Intial, 1 for Active, 2 for Safe(alias Trip) state
+ * \param   state       0 for Initial, 1 for Active, 2 for Safe(alias Trip) state
  * \param   action      0 for Toggle, 1 for Low, 2 for High
  * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  *
@@ -695,7 +697,7 @@ int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalB1(PRUICSS_PWM_Handle handle, uint
  *
  * \param   handle      #PRUICSS_PWM_Handle returned from #PRUICSS_PWM_open()
  * \param   pwmSet      0 for PWM0, 1 for PWM1, 2 for PWM2, 3 for PWM3
- * \param   state       0 for Intial, 1 for Active, 2 for Safe(alias Trip) state
+ * \param   state       0 for Initial, 1 for Active, 2 for Safe(alias Trip) state
  * \param   action      0 for Toggle, 1 for Low, 2 for High
  * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  *
@@ -716,10 +718,10 @@ int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalB2(PRUICSS_PWM_Handle handle, uint
 int32_t PRUICSS_PWM_configurePwmEfficiencyModeEnable(PRUICSS_PWM_Handle handle, uint8_t enable);
 
 /**
- * \brief   This function enables IEP1 counter follow IEP0 counter
- *  when Enabled IEP1 counter acts as slave
- *  IEP1 counter[63:0] is from IEP0 during 64-bit mode
- *  IEP1 counter[31:0] is from IEP0 during 32-bit mode
+ * \brief   This function enables IEP1 slave mode so that IEP1 counter follows IEP0 counter.
+ *  When enabled, IEP1 counter acts as a slave:
+ *  IEP1 counter[63:0] mirrors IEP0 during 64-bit mode
+ *  IEP1 counter[31:0] mirrors IEP0 during 32-bit mode
  *
  * \param   handle      #PRUICSS_PWM_Handle returned from #PRUICSS_PWM_open()
  * \param   enable      0 for disable, 1 for enable
@@ -728,7 +730,7 @@ int32_t PRUICSS_PWM_configurePwmEfficiencyModeEnable(PRUICSS_PWM_Handle handle, 
 int32_t PRUICSS_PWM_enableIEP1Slave(PRUICSS_PWM_Handle handle, uint8_t enable);
 
 /**
- * \brief  This API sets enables/disables of IEP counter reset on EPWM0 SYNC OUT event in IEP module.
+ * \brief  This API enables or disables IEP counter reset on EPWM0 SYNC OUT event in IEP module.
  *
  * \param   handle      #PRUICSS_PWM_Handle returned from #PRUICSS_PWM_open()
  * \param   iepInstance 0 for IEP0, 1 for IEP1
@@ -739,7 +741,7 @@ int32_t PRUICSS_PWM_enableIEP1Slave(PRUICSS_PWM_Handle handle, uint8_t enable);
 int32_t PRUICSS_PWM_enableIEPResetOnEPWM0SyncOut(PRUICSS_PWM_Handle handle, uint8_t iepInstance, uint8_t enable);
 
 /**
- * \brief  This API sets enables/disables of IEP counter reset on EPWM3 SYNCOUT in IEP module.
+ * \brief  This API enables or disables IEP counter reset on EPWM3 SYNC OUT in IEP module.
  *
  * \param   handle      #PRUICSS_PWM_Handle returned from #PRUICSS_PWM_open()
  * \param   iepInstance 0 for IEP0, 1 for IEP1
@@ -750,7 +752,7 @@ int32_t PRUICSS_PWM_enableIEPResetOnEPWM0SyncOut(PRUICSS_PWM_Handle handle, uint
 int32_t PRUICSS_PWM_enableIEPResetOnEPWM3SyncOut(PRUICSS_PWM_Handle handle, uint8_t iepInstance, uint8_t enable);
 
 /**
- * \brief  This function Intializes pwm attributes to default values & disables all pwm signals.
+ * \brief  This function initializes pwm attributes to default values & disables all pwm signals.
  *
  * \param   handle          #PRUICSS_PWM_Handle returned from #PRUICSS_PWM_open()
  *
@@ -759,7 +761,7 @@ int32_t PRUICSS_PWM_enableIEPResetOnEPWM3SyncOut(PRUICSS_PWM_Handle handle, uint
 int32_t PRUICSS_PWM_attrsInit(PRUICSS_PWM_Handle handle);
 
 /**
- * \brief  This function Intializes the pwm output configuration of pwm states from the parameters specified.
+ * \brief  This function initializes the pwm output configuration of pwm states from the parameters specified.
  *
  * \param   handle          #PRUICSS_PWM_Handle returned from #PRUICSS_PWM_open()
  *
@@ -768,7 +770,7 @@ int32_t PRUICSS_PWM_attrsInit(PRUICSS_PWM_Handle handle);
  * \param   instance        pwm set instance number from \ref PRUICSS_PWM_SET_INSTANCE
  *
  * \param   outputCfgInitialState       pwm set instance output config
- *                                      in intial state \ref PRUICSS_PWM_OUTPUT_ACTION
+ *                                      in initial state \ref PRUICSS_PWM_OUTPUT_ACTION
  *
  * \param   outputCfgActiveState        pwm set instance output config
  *                                      in active state \ref PRUICSS_PWM_OUTPUT_ACTION
@@ -822,19 +824,19 @@ int32_t PRUICSS_PWM_config(PRUICSS_PWM_Handle handle, uint8_t pwmSet, uint8_t in
 int32_t PRUICSS_PWM_stateConfig(PRUICSS_PWM_Handle handle);
 
 /**
- * \brief   This function  Changes pwmSet signals to intial state if pwmSet is enabled in pwmSetMask.
+ * \brief   This function changes pwmSet signals to initial state if pwmSet is enabled in pwmSetMask.
  *
  * \param   handle          #PRUICSS_PWM_Handle returned from #PRUICSS_PWM_open()
  *
- * \param   pwmSetMask      pwmSet enabled mask
-                            \ref PRUICSS_PWM_SET to find bit id mapped to pwm set number
+ * \param   pwmSetMask      pwmSet enabled mask.
+ *                          Refer \ref PRUICSS_PWM_SET to find bit id mapped to pwm set number.
  *
  * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  */
 int32_t PRUICSS_PWM_changePwmSetToIntialState(PRUICSS_PWM_Handle handle, uint8_t pwmSetMask);
 
 /**
- * \brief   This function  Intializes or updates pwm frequency to specified value  in PRUICSS_PWM_Handle.
+ * \brief   This function initializes or updates pwm frequency to specified value in PRUICSS_PWM_Handle.
  *
  * \param   handle                #PRUICSS_PWM_Handle returned from #PRUICSS_PWM_open()
  *
@@ -845,13 +847,12 @@ int32_t PRUICSS_PWM_changePwmSetToIntialState(PRUICSS_PWM_Handle handle, uint8_t
 int32_t PRUICSS_PWM_pruIcssPwmFrequencyInit(PRUICSS_PWM_Handle handle, uint32_t pruIcssPwmFrequency);
 
 /**
- * \brief   If pwm signal is enabled, This function  Configures  the Iep parameters defined in PRUICSS_PWM_Handle.
+ * \brief   This function configures the IEP parameters defined in PRUICSS_PWM_Handle for enabled PWM signals.
  *
  * \param   handle          #PRUICSS_PWM_Handle returned from #PRUICSS_PWM_open()
  *
  * \return  SystemP_SUCCESS on success, SystemP_FAILURE on error
  */
-/* */
 int32_t PRUICSS_PWM_iepConfig(PRUICSS_PWM_Handle handle);
 /** @} */
 
