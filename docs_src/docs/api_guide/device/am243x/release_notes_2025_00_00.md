@@ -353,6 +353,13 @@ Mbed-TLS                             | R5F            | 2.13.1
     <td> 9.0 onwards
     <td> Due to maximum value of RX frame size being configured always for all commands, the periodic mode does not work for lower periods for certain commands.
 </tr>
+<tr>
+    <td> PINDSW-10435
+    <td> PRUICSS PWM: PRUICSS_PWM_enableIEP1Slave always uses 1 instead of using enable parameter
+    <td> PRUICSS PWM
+    <td> 9.1 onwards
+    <td> -
+</tr>
 </table>
 
 ## Known Issues

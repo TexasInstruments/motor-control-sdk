@@ -1281,7 +1281,7 @@ int32_t PRUICSS_PWM_enableIEP1Slave(PRUICSS_PWM_Handle handle, uint8_t enable)
         hwAttrs = (PRUICSS_HwAttrs const *)((handle->pruIcssHandle)->hwAttrs);
 
         HW_WR_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_IEPCLK),
-                      CSL_ICSSCFG_IEPCLK_IEP1_SLV_EN, 1);
+                      CSL_ICSSCFG_IEPCLK_IEP1_SLV_EN, enable);
     }
     return retVal;
 
