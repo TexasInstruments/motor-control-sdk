@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2025 Texas Instruments Incorporated
+ *  Copyright (C) 2025-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -149,7 +149,7 @@ typedef struct {
     volatile uint8_t     iepIncrementValue;  /**< IEP increment value for this instance */
     volatile uint64_t    currentTimestamp;   /**< Most recently captured timestamp from master */
     volatile uint64_t    prevTimestamp;      /**< Previously captured timestamp for interval calculation */
-    volatile uint64_t    processingDelay;    /**< Initial IEP count */
+    volatile uint64_t    processingDelay;    /**< Processing delay in nanoseconds (includes propagation delay and CPU latency) */
 
     /* Offset Tracking */
     volatile int32_t     currOffset;         /**< Current measured offset from master time */
@@ -178,21 +178,17 @@ typedef struct {
     TimesyncDebug *timesyncDebugPtr;/**< Pointer to debug structure when debugging enabled */
 #endif
 
-    /*Below are used by stable algorithm */
+    /* Below are used by stable algorithm */
 
-    /**Count for last sync which had drift
-     * lower than threshold. This index keeps incrementing
-     * for every sync frame and gets reset to 0 if it
-     * crosses a threshold.
-     */
+    /**< Index of the last sync cycle that had drift below threshold.
+     *   Increments each sync frame and resets to 0 when it crosses OFFSET_ALGO_CLUSTER_SIZE. */
     volatile uint8_t lastSeen_good_drift_index;
 
-    /**Counter for recording the offsets*/
+    /**< Counter tracking the number of correction values currently stored in the correction array */
     volatile uint8_t num_entries_index;
 
-    /**Array of correction values with
-     * low drift which are clustered together
-     */
+    /**< Array of correction offset values with low drift that are clustered together.
+     *   Averaged when OFFSET_ALGO_BIN_SIZE entries are collected. */
     volatile int32_t correction[OFFSET_ALGO_BIN_SIZE];
 } TimesyncParams;
 
@@ -206,27 +202,31 @@ typedef TimesyncParams *TimesyncHandle;
 
 /**
  * \brief Initializes time synchronization parameters and hardware
+ *
  * \param params Pointer to TimesyncParams structure to initialize
  * \param iepBaseAddress Base address of the IEP module
+ *
  * \return Handle to the initialized timesync instance
  */
 TimesyncHandle timesync_init(TimesyncParams *params, uint32_t iepBaseAddress);
 
 /**
  * \brief Main time synchronization state machine execution
- * \param handle Handle to timesync instance
  *
- * Performs one iteration of the synchronization process:
- * - Captures new timestamp
- * - Calculates offset from expected time
- * - Updates filtering and statistics
- * - Applies compensation
- * - Manages state transitions
+ *        Performs one iteration of the synchronization process:
+ *        - Captures new timestamp
+ *        - Calculates offset from expected time
+ *        - Updates filtering and statistics
+ *        - Applies compensation
+ *        - Manages state transitions
+ *
+ * \param handle Handle to timesync instance
  */
 void timesync_run(TimesyncHandle handle);
 
 /**
  * \brief Reads the current IEP latch0 input value
+ *
  * \param iepBaseAddress Base address of the IEP module
  * \return 64-bit timestamp value from latch register
  */
@@ -234,61 +234,66 @@ volatile uint64_t timesync_read_latch_input(uint32_t iepBaseAddress);
 
 /**
  * \brief Reads the current IEP counter value
+ *
  * \param iepBaseAddress Base address of the IEP module
  * \return 64-bit current counter value
+ *
+ * Uses a double-read technique to safely read the 64-bit counter over a 32-bit bus:
+ * reads high word, then low word, then high word again. If the high word changed
+ * between the two reads (indicating a carry from low to high occurred mid-read),
+ * both words are re-read to obtain a consistent 64-bit value.
  */
 volatile uint64_t timesync_read_iep_count(uint32_t iepBaseAddress);
 
 /**
  * \brief Resets the time synchronization mechanism to initial state
- * \param handle Handle to timesync instance
  *
- * Resets all synchronization parameters and state machine to restart
- * the synchronization process.
+ * \param handle Handle to timesync instance
  */
 void timesync_reset(TimesyncHandle handle);
 
 /**
  * \brief Enables the latch0 capture mechanism for timestamp capture
- * \param iepBaseAddress Base address of the IEP module
  *
- * Configures IEP capture registers and enables capture channel 6
- * for sync pulse detection.
+ * \param iepBaseAddress Base address of the IEP module
  */
 void timesync_enable_latch(uint32_t iepBaseAddress);
 
 /**
- * \brief Waits for IEP latch event to occur
+ * \brief Waits for an IEP latch0 event to occur
+ *
  * \param iepBaseAddress Base address of the IEP module
- * \param sleepTime Time to sleep between checks in microseconds
+ * \param sleepTime Time to sleep between polling attempts in microseconds (0 for busy-wait)
+ *
  * \return 0 if latch event detected, 1 if timeout
- * Polls the latch status register until event is detected or timeout occurs.
  */
 uint8_t timesync_wait_iep_latch0_event(uint32_t iepBaseAddress, uint32_t sleepTime);
 
 /**
  * \brief Applies slow compensation adjustment to synchronize clocks
+ *
+ *        Updates IEP increment value and compensation period based on
+ *        measured offset to gradually synchronize clocks.
+ *
  * \param handle Handle to timesync instance
  * \param adjOffset Calculated adjustment offset to apply
  *
- * Updates IEP increment value and compensation period based on
- * measured offset to gradually synchronize clocks.
+
  */
 void timesync_adjust_slow_compensation(TimesyncHandle handle, int32_t adjOffset);
 
 /**
- * \brief Performs first time adjustment after initial sync
- * \param iepBaseAddress Base address of the IEP module
- * \param initialCount Initial counter value to set
+/**
+ * \brief Sets the IEP counter to align the local clock after the first sync event
  *
- * Sets the initial IEP counter value when first sync event occurs.
+ * \param iepBaseAddress    Base address of the IEP module
+ * \param initialCount      Initial counter value to set
  */
 void timesync_do_first_adjustment(uint32_t iepBaseAddress, uint64_t initialCount);
 
 /**
- * \brief Resets debug statistics and buffers
- * \param timesyncDebugPtr Pointer to debug structure to reset
+ * \brief Resets the time synchronization debug structure to initial state
  *
- * Clears selected debug counters and resets circular buffer index.
+ * \param timesyncDebugPtr Pointer to the timesync debug structure
  */
 void timesync_debug_reset(TimesyncDebug *timesyncDebugPtr);
