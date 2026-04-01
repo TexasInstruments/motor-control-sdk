@@ -360,6 +360,13 @@ Mbed-TLS                             | R5F            | 2.13.1
     <td> 9.1 onwards
     <td> -
 </tr>
+<tr>
+    <td> PINDSW-10647
+    <td> PRUICSS PWM: PRUICSS_PWM_iepConfig uses incorrect variable for IEP shadow mode check
+    <td> PRUICSS PWM
+    <td> 9.1 onwards
+    <td> -
+</tr>
 </table>
 
 ## Known Issues
