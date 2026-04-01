@@ -118,7 +118,7 @@ Driver APIs use following validation approach now:
 <tr>
     <td>nikon_command_process()</td>
     <td>Send command and wait for firmware acknowledgment</td>
-    <td>Combines send and wait operations</td>
+    <td>Combines send and wait operations. Skips calling send API if periodic trigger mode is enabled.</td>
 </tr>
 <tr>
     <td>nikon_config_periodic_trigger_cmp_mode()</td>

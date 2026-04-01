@@ -437,18 +437,17 @@ int32_t nikon_update_enc_len(nikon_handle handle,
                               uint32_t ch);
 
 /**
- *  \brief      Update the operating baud rate as user specified baud rate
- *              through UART menu
+ *  \brief      Update the operating baud rate to the specified frequency
  *
  *  \param[in]  handle          Nikon handle from \ref nikon_init
- *  \param[in]  frequency       frequency as specified by the user
+ *  \param[in]  frequency       Frequency in MHz as specified by the user
  *
  *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE on error
  */
 int32_t nikon_update_clock_freq(nikon_handle handle, float_t frequency);
 
 /**
- *  \brief      Retrives the current channel in use
+ *  \brief      Retrieves the current channel in use
  *
  *  \details    This function returns the physical channel number at the specified index
  *              in the internal channel array. For example, if channels 0 and 2 are enabled,

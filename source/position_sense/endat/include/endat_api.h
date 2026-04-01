@@ -101,9 +101,9 @@ void endat_params_init(endat_params *params);
  *
  *              This function internally calls:
  *              - endat_hw_init : Initialize hardware interface
- *              - endat_config_channel : Configure channel mask
+ *              - endat_config_channel : Configure channel mask (single-channel mode)
+ *              - endat_config_multi_channel_mask : Configure channel mask (multi-channel mode)
  *              - endat_set_default_initialization : Set default configuration
- *              - endat_config_host_trigger : Configure host trigger mode
  *
  *              Validation performed:
  *              - Validates index is within valid range (< gEndatConfigNum)
@@ -170,8 +170,6 @@ void endat_deinit(endat_handle handle);
  *  \retval     SystemP_SUCCESS     Data processed and formatted successfully
  *  \retval     SystemP_FAILURE     Handle is NULL or invalid command
  *
- *  \note       Handle parameter is validated for NULL. Internal structures
- *              are validated once during \ref endat_init and assumed valid.
  *  \note       The output union format varies based on the command type.
  *              Caller must interpret the union correctly for the given command.
  *  \note       In multi-channel mode, call \ref endat_multi_channel_set_cur to select
@@ -208,8 +206,6 @@ int32_t endat_recvd_process(endat_handle handle, int32_t cmd,
  *                          - Bit 1 set: Additional info 1 CRC valid (if present)
  *                          - Bit 2 set: Additional info 2 CRC valid (if present)
  *
- *  \note       Handle parameter is validated for NULL. Internal structures
- *              are validated once during \ref endat_init and assumed valid.
  *  \note       Not all commands have additional information fields. Unused bits
  *              should be ignored for commands without additional info.
  */
@@ -245,8 +241,6 @@ uint32_t endat_recvd_validate(endat_handle handle, int32_t cmd,
  *
  *  \note       This function blocks until command completion. Use individual
  *              build/send/wait functions for non-blocking operation.
- *  \note       Handle parameter is validated for NULL. Internal structures
- *              are validated once during \ref endat_init and assumed valid.
  */
 int32_t endat_command_process(endat_handle handle, int32_t cmd,
                           endat_cmd_supplement *cmd_supplement);
@@ -284,8 +278,6 @@ int32_t endat_command_process(endat_handle handle, int32_t cmd,
  *
  *  \note       This function does not trigger command execution. Call
  *              \ref endat_command_send after building to execute.
- *  \note       Handle parameter is validated for NULL. Internal structures
- *              are validated once during \ref endat_init and assumed valid.
  */
 int32_t endat_command_build(endat_handle handle, int32_t cmd,
                         endat_cmd_supplement *cmd_supplement);
@@ -313,7 +305,7 @@ int32_t endat_command_build(endat_handle handle, int32_t cmd,
  *  \param[in]  handle      EnDAT driver handle obtained from \ref endat_init
  *
  *  \retval     SystemP_SUCCESS     Command sent successfully
- *  \retval     SystemP_FAILURE     handle is NULL
+ *  \retval     SystemP_FAILURE     Handle is NULL
  *
  *  \note       This function does not wait for command completion. Always call
  *              \ref endat_command_wait after this function to ensure the command
@@ -344,8 +336,7 @@ int32_t endat_command_send(endat_handle handle);
  *  \param[in]  handle      EnDAT driver handle obtained from \ref endat_init
  *
  *  \retval     SystemP_SUCCESS     Transaction completed successfully
- *  \retval     SystemP_FAILURE     On NULL handle, internal structure validation failure,
- *                                  or zero loop count configuration
+ *  \retval     SystemP_FAILURE     On NULL handle or zero loop count configuration
  *  \retval     SystemP_TIMEOUT     Firmware did not complete transaction within configured timeout
  *
  */
@@ -368,8 +359,7 @@ int32_t endat_command_wait(endat_handle handle);
  *  \param[out] recovery_time  Pointer to store recovery time in nanoseconds
  *
  *  \retval     SystemP_SUCCESS     Transaction completed successfully
- *  \retval     SystemP_FAILURE     On NULL handle, NULL recovery_time pointer, or internal
- *                                  structure validation failure
+ *  \retval     SystemP_FAILURE     On NULL handle or NULL recovery_time pointer
  *
  */
 int32_t endat_get_recovery_time(endat_handle handle, uint32_t *recovery_time);
@@ -448,7 +438,7 @@ int32_t endat_get_prop_delay(endat_handle handle, uint32_t *prop_delay);
  *  \param[in]  cmd_supplement  Pointer to command supplement containing addinfo flags
  *
  *  \retval     SystemP_SUCCESS     Additional info tracking updated successfully
- *  \retval     SystemP_FAILURE     handle is NULL
+ *  \retval     SystemP_FAILURE     Handle is NULL
  *
  *  \note       Not all EnDAT commands support additional information.
  */
@@ -495,7 +485,7 @@ int32_t endat_config_propagation_delay(endat_handle handle, uint32_t val);
  *  \param[in]  freq        Clock frequency in Hz
  *
  *  \retval     SystemP_SUCCESS     Clock configured successfully
- *  \retval     SystemP_FAILURE     handle is NULL or invalid clock frequency
+ *  \retval     SystemP_FAILURE     Handle is NULL or invalid clock frequency
  *
  *  \note       Clock frequency changes take effect immediately. Ensure no
  *              transactions are in progress before calling this function.
@@ -515,7 +505,7 @@ int32_t endat_config_clock(endat_handle handle, uint32_t freq);
  *  \param[in]  delay       tST delay value in delay register counter units
  *
  *  \retval     SystemP_SUCCESS     tST delay configured successfully
- *  \retval     SystemP_FAILURE     handle is NULL
+ *  \retval     SystemP_FAILURE     Handle is NULL
  *
  *  \note       Incorrect tST delay can cause communication errors or CRC failures.
  *  \note       delay register counter units (5 ns)
@@ -542,7 +532,7 @@ int32_t endat_config_tst_delay(endat_handle handle, uint16_t delay);
  *  \param[in]  val         RX arm counter value in delay register counter units
  *
  *  \retval     SystemP_SUCCESS     RX arm counter configured successfully
- *  \retval     SystemP_FAILURE     handle is NULL
+ *  \retval     SystemP_FAILURE     Handle is NULL
  *
  *  \note       This parameter affects data sampling timing. Incorrect values
  *              can cause bit errors or CRC failures.
@@ -565,7 +555,7 @@ int32_t endat_config_rx_arm_cnt(endat_handle handle, uint16_t val);
  *  \param[in]  val         Wire delay in delay register counter units
  *
  *  \retval     SystemP_SUCCESS     Wire delay configured successfully
- *  \retval     SystemP_FAILURE     handle is NULL
+ *  \retval     SystemP_FAILURE     Handle is NULL
  *
  *  \note       This function operates on the currently selected channel. Use
  *              \ref endat_config_channel to select channel before calling.
@@ -587,7 +577,7 @@ int32_t endat_config_wire_delay(endat_handle handle, uint16_t val);
  *  \param[in]  val         Number of endat clock cycles to disable at end of RX
  *
  *  \retval     SystemP_SUCCESS     RX clock disable configured successfully
- *  \retval     SystemP_FAILURE     handle is NULL
+ *  \retval     SystemP_FAILURE     Handle is NULL
  *
  *  \note       Incorrect configuration may violate encoder timing requirements
  *              and cause protocol errors.
@@ -638,8 +628,8 @@ int32_t endat_start_continuous_mode(endat_handle handle);
  *  \param[in]  handle      EnDAT driver handle obtained from \ref endat_init
  *
  *  \retval     SystemP_SUCCESS     Continuous mode stopped successfully
- *  \retval     SystemP_FAILURE     handle is NULL or internal structure validation failure
- *  \retval     On timeout waiting for firmware acknowledgment (propagated from \ref endat_command_wait)
+ *  \retval     SystemP_FAILURE     Handle is NULL
+ *  \retval     SystemP_TIMEOUT     On timeout waiting for firmware acknowledgment (propagated from \ref endat_command_wait)
  *
  *  \note       Use \ref endat_start_continuous_mode to restart continuous mode.
  */
@@ -655,12 +645,14 @@ int32_t endat_stop_continuous_mode(endat_handle handle);
  *  \param[in]  handle      EnDAT driver handle obtained from \ref endat_init
  *
  *  \retval     SystemP_SUCCESS     Host trigger mode configured successfully
- *  \retval     SystemP_FAILURE     handle is NULL
+ *  \retval     SystemP_FAILURE     Handle is NULL
  *
  */
 int32_t endat_config_host_trigger(endat_handle handle);
 
 /**
+ *  \brief      Configure EnDAT for periodic trigger using IEP compare mode
+ *
  *  \details    Configures the EnDAT firmware to use IEP CMP (compare) events for periodic triggering.
  *              Position data is sampled automatically when IEP counter reaches the configured
  *              CMP event compare value.
@@ -674,7 +666,7 @@ int32_t endat_config_host_trigger(endat_handle handle);
  *  \param[in]  handle      EnDAT driver handle obtained from \ref endat_init
  *
  *  \retval     SystemP_SUCCESS     Periodic trigger compare mode configured successfully
- *  \retval     SystemP_FAILURE     handle is NULL
+ *  \retval     SystemP_FAILURE     Handle is NULL
  *
  */
 int32_t endat_config_periodic_trigger_cmp_mode(endat_handle handle);
@@ -699,7 +691,7 @@ int32_t endat_config_periodic_trigger_cmp_mode(endat_handle handle);
  *  \param[in]  ch          Channel number to select (0-2 depending on connected hardware)
  *
  *  \retval     SystemP_SUCCESS     Channel configured successfully
- *  \retval     SystemP_FAILURE     handle is NULL or invalid channel number
+ *  \retval     SystemP_FAILURE     Handle is NULL or invalid channel number
  *
  */
 int32_t endat_config_channel(endat_handle handle, uint32_t ch);
@@ -731,7 +723,7 @@ int32_t endat_config_channel(endat_handle handle, uint32_t ch);
  *  \param[in]  loadshare   Load share mode enable (0 = disabled, 1 = enabled)
  *
  *  \retval     SystemP_SUCCESS     Multi-channel mask configured successfully
- *  \retval     SystemP_FAILURE     handle is NULL
+ *  \retval     SystemP_FAILURE     Handle is NULL
  *
  *  \note       Use loadshare = 1 when encoders, when using load share mode for "Multi-channel using Multiple PRUs" mode.
  */
@@ -774,7 +766,7 @@ uint8_t endat_multi_channel_detected(endat_handle handle);
  *  \param[in]  ch          Channel number to select for data processing (0-2)
  *
  *  \retval     SystemP_SUCCESS     Current channel set successfully
- *  \retval     SystemP_FAILURE     handle is NULL or invalid channel number
+ *  \retval     SystemP_FAILURE     Handle is NULL or invalid channel number
  *
  *  \note       Must be called before processing each channel's data in multi-channel mode.
  */
@@ -832,7 +824,7 @@ int32_t endat_wait_initialization(endat_handle handle, uint32_t timeout, uint8_t
  *  \param[in]  handle      EnDAT driver handle obtained from \ref endat_init
  *
  *  \retval     SystemP_SUCCESS     Recovery time measurement initialized successfully
- *  \retval     SystemP_FAILURE     On NULL handle or internal structure validation failure
+ *  \retval     SystemP_FAILURE     On NULL handle
  *
  *  \note       Call this function once during initialization.
  */
@@ -846,8 +838,8 @@ int32_t endat_init_rt_measurement(endat_handle handle);
  *              and configured limits.
  *
  *              The function compares measured recovery time against:
- *              - Short recovery time range (2.45-3.75 μs)
- *              - Long recovery time range (18.5-30.0 μs)
+ *              - Short recovery time range (2.45-3.75 us)
+ *              - Long recovery time range (18.5-30.0 us)
  *
  *              Error codes returned via error_code parameter:
  *              - ENDAT_RT_NO_ERROR (0x0): Recovery time is within acceptable range
@@ -858,8 +850,7 @@ int32_t endat_init_rt_measurement(endat_handle handle);
  *  \param[out] error_code  Pointer to store recovery time error code
  *
  *  \retval     SystemP_SUCCESS     Recovery time check completed successfully
- *  \retval     SystemP_FAILURE     On NULL handle, NULL error_code pointer, or internal
- *                                  structure validation failure
+ *  \retval     SystemP_FAILURE     On NULL handle or NULL error_code pointer
  *
  */
 int32_t endat_check_rt_error(endat_handle handle, int8_t *error_code);
@@ -876,7 +867,7 @@ int32_t endat_check_rt_error(endat_handle handle, int8_t *error_code);
  *  \param[in]  handle      EnDAT driver handle obtained from \ref endat_init
  *
  *  \retval     SystemP_SUCCESS     Recovery time measurement disabled successfully
- *  \retval     SystemP_FAILURE     handle is NULL
+ *  \retval     SystemP_FAILURE     Handle is NULL
  *
  *  \note       Measurement must have been initialized with \ref endat_init_rt_measurement.
  */
@@ -903,7 +894,7 @@ int32_t endat_disable_rt_measurement(endat_handle handle);
  *  \param[in]  handle      EnDAT driver handle obtained from \ref endat_init
  *
  *  \retval     SystemP_SUCCESS     Recovery time measurement enabled successfully
- *  \retval     SystemP_FAILURE     handle is NULL
+ *  \retval     SystemP_FAILURE     Handle is NULL
  *
  *  \note       Recovery time counter must be initialized before enabling.
  */
@@ -918,8 +909,7 @@ int32_t endat_enable_rt_measurement(endat_handle handle);
  *  \param[out] status      Pointer to store measurement enable status (1 = enabled, 0 = disabled)
  *
  *  \retval     SystemP_SUCCESS     Status retrieved successfully
- *  \retval     SystemP_FAILURE     On NULL handle, NULL status pointer, or internal
- *                                  structure validation failure
+ *  \retval     SystemP_FAILURE     On NULL handle or NULL status pointer
  *
  */
 int32_t endat_status_rt_measurement(endat_handle handle, uint32_t *status);
@@ -941,7 +931,7 @@ int32_t endat_status_rt_measurement(endat_handle handle, uint32_t *status);
  *  \param[in]  handle      EnDAT driver handle obtained from \ref endat_init
  *
  *  \retval     SystemP_SUCCESS     Periodic trigger capture mode configured successfully
- *  \retval     SystemP_FAILURE     handle is NULL
+ *  \retval     SystemP_FAILURE     Handle is NULL
  *
  */
 int32_t endat_config_periodic_trigger_cap_mode(endat_handle handle);
@@ -959,7 +949,8 @@ int32_t endat_config_periodic_trigger_cap_mode(endat_handle handle);
  *                          ignored in single PRU mode (always uses index 0).
  *  \param[in]  event_num   CAP event number (0-7)
  *
- *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE otherwise
+ *  \retval     SystemP_SUCCESS on success
+ *  \retval     SystemP_FAILURE otherwise
  *
  *  \note       This is configured during the \ref endat_init call.
  *  \note       This function only configures firmware DMEM, not IEP hardware.
@@ -979,7 +970,8 @@ int32_t endat_config_iep_cap_event(endat_handle handle, uint8_t channel, uint8_t
  *                          ignored in single PRU mode (always uses index 0).
  *  \param[in]  event_num   CMP event number (0-15)
  *
- *  \retval     SystemP_SUCCESS on success, SystemP_FAILURE otherwise
+ *  \retval     SystemP_SUCCESS on success
+ *  \retval     SystemP_FAILURE otherwise
  *
  *  \note       This is configured during the \ref endat_init call.
  *  \note       This function only configures firmware DMEM, not IEP hardware.
@@ -996,10 +988,10 @@ int32_t endat_config_iep_cmp_event(endat_handle handle, uint8_t channel, uint8_t
  *
  *  \param[in]  handle  EnDAT driver handle obtained from endat_init()
  *
- *  \retval     Pointer to const endat_attrs structure, or NULL if handle is invalid
+ *  \retval     Pointer to const endat_attrs structure
+ *  \retval     NULL if handle is invalid
  *
  *  \note       This function performs NULL validation on the handle parameter only.
- *              The attrs pointer is validated once during endat_init().
  */
 const endat_attrs* endat_get_attrs(endat_handle handle);
 
@@ -1013,10 +1005,10 @@ const endat_attrs* endat_get_attrs(endat_handle handle);
  *
  *  \param[in]  handle  EnDAT driver handle obtained from endat_init()
  *
- *  \retval     Pointer to endat_priv structure, or NULL if handle is invalid
+ *  \retval     Pointer to endat_priv structure
+ *  \retval     NULL if handle is invalid
  *
  *  \note       This function performs NULL validation on the handle parameter only.
- *              The priv pointer is validated once during endat_init().
  */
 endat_priv* endat_get_priv(endat_handle handle);
 

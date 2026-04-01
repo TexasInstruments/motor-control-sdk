@@ -1,31 +1,36 @@
 # Migration Guide {#MIGRATION_GUIDES}
 
-## Migration Details for Motor Control SDK 2025.00.00 {#MIGRATION_SECTION_2025_00}
 
 \cond SOC_AM243X
+## Migration Details for Motor Control SDK 11.00.00 to Motor Control SDK 2025.00.00 {#MIGRATION_SECTION_2025_00}
 \attention Motor Control SDK 9.x/11.x included the Industrial Communications SDK and MCU+ SDK in bundled ind_comms_sdk and mcu_plus_sdk folders. Starting with Motor Control SDK 2025.00.00, these folders are no longer included and must be downloaded separately. Motor Control SDK installer provides an option to install the required Industrial Communications SDK and MCU+ SDK.
+
+Following pages contain details on changes which can affect migration of applications based on Motor Control SDK 11.00.00 to Motor Control SDK 2025.00.00.
 \endcond
 
 \cond (SOC_AM261X || SOC_AM263PX)
+## Migration Details for Motor Control SDK 10.02.00 to Motor Control SDK 2025.00.00 {#MIGRATION_SECTION_2025_00}
 \attention Motor Control SDK 10.x included the Industrial Communications SDK and MCU+ SDK in bundled ind_comms_sdk and mcu_plus_sdk folders. Starting with Motor Control SDK 2025.00.00, these folders are no longer included and must be downloaded separately. Motor Control SDK installer provides an option to install the required Industrial Communications SDK and MCU+ SDK.
+
+Following pages contain details on changes which can affect migration of applications based on Motor Control SDK 10.02.00 to Motor Control SDK 2025.00.00.
 \endcond
 
-Following pages contain details on changes which can affect migration of applications based on Motor Control SDK 9.x/10.x/11.x to Motor Control SDK 2025.00.00.
-
-- \subpage BISSC_MIGRATION_GUIDE_2025_00
-- \subpage ENDAT_MIGRATION_GUIDE_2025_00
-\cond (SOC_AM261X || SOC_AM243X)
-- \subpage HDSL_MIGRATION_GUIDE_2025_00
-\endcond
-- \subpage NIKON_MIGRATION_GUIDE_2025_00
-- \subpage TAMAGAWA_MIGRATION_GUIDE_2025_00
 \cond SOC_AM243X
-- \subpage SDFM_MIGRATION_GUIDE_2025_00
+- Current Sense
+   - \subpage SDFM_MIGRATION_GUIDE_2025_00
 \endcond
+- Position Sense
+   - \subpage BISSC_MIGRATION_GUIDE_2025_00
+   - \subpage ENDAT_MIGRATION_GUIDE_2025_00
+\cond (SOC_AM261X || SOC_AM243X)
+   - \subpage HDSL_MIGRATION_GUIDE_2025_00
+\endcond
+   - \subpage NIKON_MIGRATION_GUIDE_2025_00
+   - \subpage TAMAGAWA_MIGRATION_GUIDE_2025_00
 
 ## Migration Details for Motor Control SDK 9.x/10.x/11.x
 
-\cond SOC_AM64X || SOC_AM243X
+\cond (SOC_AM64X || SOC_AM243X)
 
 - \ref UPGRADE_AND_COMPATIBILITY_INFORMATION_11_0_0 has details on changes which can affect migration of applications based on Motor Control SDK 09.02.00 to Motor Control SDK 11.00.00.
 - \ref UPGRADE_AND_COMPATIBILITY_INFORMATION_9_2_0 has details on changes which can affect migration of applications based on Motor Control SDK 09.01.00 to Motor Control SDK 09.02.00.

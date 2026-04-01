@@ -2,7 +2,7 @@
 # Tamagawa Encoder Migration Guide (v11.00.00 to v2025.00.00) {#TAMAGAWA_MIGRATION_GUIDE_2025_00}
 \endcond
 
-\cond (SOC_AM263PX || SOC_AM261X || SOC_AM263X)
+\cond (SOC_AM263PX || SOC_AM261X)
 # Tamagawa Encoder Migration Guide (v10.02.00 to v2025.00.00) {#TAMAGAWA_MIGRATION_GUIDE_2025_00}
 \endcond
 
@@ -13,7 +13,7 @@
 \cond SOC_AM243X
 This guide helps developers migrate Tamagawa encoder applications from Motor Control SDK v11.00.00 to v2025.00.00. The driver underwent significant architectural changes including a move to handle-based APIs, enhanced periodic trigger modes, and improved SysConfig integration.
 \endcond
-\cond (SOC_AM263PX || SOC_AM261X || SOC_AM263X)
+\cond (SOC_AM263PX || SOC_AM261X)
 This guide helps developers migrate Tamagawa encoder applications from Motor Control SDK v10.02.00 to v2025.00.00. The driver underwent significant architectural changes including a move to handle-based APIs, enhanced periodic trigger modes, and improved SysConfig integration.
 \endcond
 
@@ -68,7 +68,7 @@ The initialization process was completely redesigned to use SysConfig-generated 
     tamagawa_params_init(&params);
     params.pruicss_handle = pruHandle;
 
-    /* SysConfig provides compile-time config */
+    /* SysConfig provides compile-time configuration */
     tamagawa_handle handle = tamagawa_init(
         CONFIG_TAMAGAWA0, &params);
     </pre>
@@ -79,10 +79,9 @@ The initialization process was completely redesigned to use SysConfig-generated 
 ## API Changes
 
 Driver APIs use following validation approach now:
-- **Public API validation**: All public APIs validate the handle parameter for NULL and perform array bounds checking for index parameters (ch)
-- **Internal function validation**: Internal static functions assume valid parameters. The caller is responsible for ensuring parameters are valid before calling internal functions
-- **Internal structure validation**: Each API validates the internal structure pointers it accesses (e.g., attrs, priv, tamagawa_xchg, pruicss_handle) for NULL before dereferencing
- - **Error state handling**: Error in command processing may leave internal state partially modified. Subsequent calls will overwrite these values. Caller is responsible for explicit state cleanup if needed.
+ - **Handle validation**: All public APIs validate the handle parameter for NULL
+ - **Array bounds checking**: APIs with array parameters or index parameters perform bounds validation
+ - **Internal structure validation**: All APIs validate internal structure pointers (attrs, priv, tamagawa_xchg, pruicss_handle, etc.) for NULL before dereferencing to provide protection against NULL pointer dereferences
 
 \note These changes are not mentioned in the "Additional Details" column of the \ref TAMAGAWA_MIGRATION_GUIDE_2025_00_APIS_MODIFIED section below. The \ref TAMAGAWA_MIGRATION_GUIDE_2025_00_APIS_MODIFIED section describes changes in addition to the points mentioned above.
 
@@ -151,28 +150,38 @@ Driver APIs use following validation approach now:
 </tr>
 <tr>
     <td>tamagawa_init()</td>
-    <td>- Old: Multiple parameters (7+ params) returning <code>struct tamagawa_priv*</code><br>- New: 2 params (<code>uint32_t</code>, <code>tamagawa_params*</code>) returning <code>tamagawa_handle</code></td>
-    <td>- Complete signature change - use SysConfig instance ID and params structure<br>- Validates parameter limits</td>
+    <td>- Complete signature change<br>- 4 parameters to 2 parameters<br>- Returns <code>tamagawa_handle</code> instead of <code>tamagawa_priv priv *</code></td>
+    <td>- Complete signature change<br>- Use SysConfig instance ID and params structure<br>- Validates parameter limits</td>
 </tr>
 <tr>
-    <td>tamagawa_command_process() <br>tamagawa_command_build() </td>
+    <td>tamagawa_command_process()</td>
     <td>- <code>priv</code> to <code>handle</code><br>- Removed gTamagawa_multi_ch_mask parameter</td>
-    <td>- Channel mask now determined from attrs</td>
+    <td>- Channel mask now determined from attrs<br>- Returns SystemP_TIMEOUT on timeout</td>
 </tr>
 <tr>
-    <td>tamagawa_command_send() <br>tamagawa_command_wait() <br>tamagawa_config_clock() <br>tamagawa_config_host_trigger() <br>tamagawa_update_data_id() </td>
+    <td>tamagawa_command_build()</td>
+    <td>- <code>priv</code> to <code>handle</code><br>- Removed gTamagawa_multi_ch_mask parameter</td>
+    <td>- Channel mask now determined from attrs<br>- Validates parameter limits</td>
+</tr>
+<tr>
+    <td>tamagawa_command_send()<br>tamagawa_config_clock()<br>tamagawa_config_host_trigger()<br>tamagawa_update_data_id() </td>
     <td>- <code>void</code> to <code>int32_t</code> return<br>- <code>priv</code> to <code>handle</code></td>
     <td>- Returns status code</td>
 </tr>
 <tr>
+    <td>tamagawa_command_wait()</td>
+    <td>- <code>void</code> to <code>int32_t</code> return<br>- <code>priv</code> to <code>handle</code></td>
+    <td>- Returns status code<br>- Returns SystemP_TIMEOUT on timeout</td>
+</tr>
+<tr>
     <td>tamagawa_config_channel()</td>
     <td>- <code>void</code> to <code>int32_t</code> return<br>- <code>priv</code> to <code>handle</code><br>- Parameter changed from uint32_t ch to uint8_t mask</td>
-    <td>- Returns status code</td>
+    <td>- Returns status code<br>- Validates parameter limits</td>
 </tr>
 <tr>
     <td>tamagawa_multi_channel_set_cur()<br>tamagawa_update_adf()<br>tamagawa_update_edf()<br>tamagawa_update_crc()</td>
     <td>- <code>void</code> to <code>int32_t</code> return<br>- <code>priv</code> to <code>handle</code><br>- Parameter ch changed from uint32_t to uint8_t</td>
-    <td>- Update parameters type<br>- Returns status code</td>
+    <td>- Update parameters type<br>- Returns status code<br>- Validates parameter limits</td>
 </tr>
 <tr>
     <td>tamagawa_parse()</td>
@@ -182,12 +191,12 @@ Driver APIs use following validation approach now:
 <tr>
     <td>tamagawa_crc_verify()</td>
     <td>- <code>priv</code> to <code>handle</code></td>
-    <td>-</td>
+    <td>- Returns SystemP_SUCCESS/SystemP_FAILURE instead of 1/-1</td>
 </tr>
 <tr>
     <td>tamagawa_set_baudrate()</td>
     <td>- <code>void</code> to <code>int32_t</code> return<br>- <code>priv</code> to <code>handle</code><br>- Parameter renamed from baudrate to baud_rate</td>
-    <td>- Returns status code</td>
+    <td>- Returns status code<br>- Divider configuration and oversampling rate configuration moved to driver from PRU firmware</td>
 </tr>
 </table>
 
@@ -211,12 +220,11 @@ Driver APIs use following validation approach now:
 </tr>
 <tr>
     <td>tamagawa_multi_channel_detected()</td>
-    <td>Use handle->attrs->channel_mask</td>
-    <td>Access via tamagawa_get_attrs()->channel_mask</td>
+    <td>-</td>
+    <td>-</td>
 </tr>
-
 <tr>
-    <td>tamagawa_eeprom_crc_reinit() <br>tamagawa_reverse_bits()<br>tamagawa_prepare_eeprom_tx_data()<br>tamagawa_prepare_eeprom_command() </td>
+    <td>tamagawa_eeprom_crc_reinit()<br>tamagawa_reverse_bits()<br>tamagawa_prepare_eeprom_tx_data()<br>tamagawa_prepare_eeprom_command() </td>
     <td>Made internal (static)</td>
     <td>No longer accessible from application</td>
 </tr>
@@ -230,12 +238,10 @@ Driver APIs use following validation approach now:
 <table>
 <tr>
     <th>Structure</th>
-    <th>Previous Members</th>
     <th>Migration Action</th>
 </tr>
 <tr>
     <td>struct register_offsets</td>
-    <td>ICSS_CFG_PRUx_ED_CH0_CFG0, ICSS_CFG_PRUx_ED_CH1_CFG0, ICSS_CFG_PRUx_ED_CH2_CFG0, ICSS_CFG_PRUx_ED_CH0_CFG1, ICSS_CFG_PRUx_ED_CH1_CFG1, ICSS_CFG_PRUx_ED_CH2_CFG1, ICSS_CFG_GPCFGx, ICSS_CFG_PRUx_ED_RXCFG, ICSS_CFG_PRUx_ED_TXCFG</td>
     <td>Register offset management is now internal to the driver. No replacement needed.</td>
 </tr>
 </table>
@@ -292,13 +298,13 @@ Driver APIs use following validation approach now:
     <td>slice_value</td>
     <td>int32_t</td>
     <td>attrs->pruicss_slice</td>
-    <td>PRU slice value moved to attrs</td>
+    <td>PRU slice value moved to tamagawa_attrs</td>
 </tr>
 <tr>
     <td>rx_en_cnt</td>
     <td>uint16_t</td>
     <td>clk_cfg.rx_en_cnt</td>
-    <td>Moved to clk_cfg structure within priv</td>
+    <td>Moved to tamagawa_clk_cfg clk_cfg within tamagawa_priv</td>
 </tr>
 <tr>
     <td>pruss_cfg</td>
@@ -310,14 +316,24 @@ Driver APIs use following validation approach now:
     <td>pruss_iep</td>
     <td>void *</td>
     <td>attrs->iep_base_addr</td>
-    <td>ICSS IEP base address moved to attrs</td>
+    <td>ICSS IEP base address moved to tamagawa_attrs</td>
 </tr>
+\cond SOC_AM243X
 <tr>
-    <td>cmp0, cmp3<br>pru_clock, pru_uart_clock<br>rx_clock_source, tx_clock_source</td>
+    <td>iep_reset_count<br>periodic_trigger_count<br>pru_clock<br>pru_uart_clock<br>rx_clock_source<br>tx_clock_source</td>
     <td>uint64_t / uint8_t</td>
     <td>-</td>
-    <td>IEP CMP registers and clock config (replaced by attrs and trigger_params)</td>
+    <td>IEP configuration and clock configuration moved to tamagawa_attrs and tamagawa_periodic_trigger_cfg</td>
 </tr>
+\endcond
+\cond (SOC_AM263PX || SOC_AM261X)
+<tr>
+    <td>cmp0<br>cmp3<br>pru_clock<br>pru_uart_clock<br>rx_clock_source<br>tx_clock_source</td>
+    <td>uint64_t / uint8_t</td>
+    <td>-</td>
+    <td>IEP configuration and clock configuration moved to tamagawa_attrs and tamagawa_periodic_trigger_cfg</td>
+</tr>
+\endcond
 <tr>
     <td>Type Changed</td>
     <td>channel</td>
@@ -459,19 +475,13 @@ Driver APIs use following validation approach now:
     <td>tamagawa_attrs</td>
     <td><code>typedef struct tamagawa_attrs_s tamagawa_attrs</code></td>
     <td>Compile-time attributes from SysConfig</td>
-    <td>instance, mode, PRU-ICSS config, channel_mask, baud_rate, clock frequencies, IEP event arrays</td>
+    <td>instance, mode, PRU-ICSS configuration, channel_mask, baud_rate, clock frequencies, IEP event arrays</td>
 </tr>
 <tr>
     <td>tamagawa_periodic_trigger_cfg</td>
     <td><code>typedef struct tamagawa_periodic_trigger_cfg_s tamagawa_periodic_trigger_cfg</code></td>
     <td>IEP event configuration for periodic trigger</td>
     <td>iep_cmp_event, iep_cap_event, iep_capture_reg</td>
-</tr>
-<tr>
-    <td>tamagawa_channel_config</td>
-    <td><code>typedef struct tamagawa_channel_config_s tamagawa_channel_config</code></td>
-    <td>Channel enable/disable configuration</td>
-    <td>Channel enable state</td>
 </tr>
 <tr>
     <td>tamagawa_config</td>
@@ -491,27 +501,26 @@ Driver APIs use following validation approach now:
     <th>Description</th>
 </tr>
 <tr>
-    <td>struct tamagawa_clk_cfg<br>struct tamagawa_priv<br>struct tamagawa_xchg<br>struct tamagawa_interface</td>
-    <td>typedef struct tamagawa_clk_cfg_s ... tamagawa_clk_cfg<br>typedef struct tamagawa_priv_s ... tamagawa_priv<br>typedef struct tamagawa_xchg_s ... tamagawa_xchg<br>typedef struct tamagawa_interface_s ... tamagawa_interface</td>
-    <td>Converted to typedef (usage remains same, implementation changed to typedef pattern)</td>
+    <td>struct tamagawa_clk_cfg<br>struct tamagawa_priv<br>struct tamagawa_xchg<br>struct tamagawa_interface<br>struct tamagawa_ch_info<br>struct tamagawa_cmd<br>struct tamagawa_eeprom_interface</td>
+    <td>typedef struct tamagawa_clk_cfg_s ... tamagawa_clk_cfg<br>typedef struct tamagawa_priv_s ... tamagawa_priv<br>typedef struct tamagawa_xchg_s ... tamagawa_xchg<br>typedef struct tamagawa_interface_s ... tamagawa_interface<br>typedef struct tamagawa_ch_info_s ... tamagawa_ch_info<br>typedef struct tamagawa_cmd_s ... tamagawa_cmd<br>typedef struct tamagawa_eeprom_interface_s ... tamagawa_eeprom_interface</td>
+    <td>Converted to typedef pattern</td>
 </tr>
 <tr>
     <td>struct `%tamagawa_config`</td>
     <td>typedef struct tamagawa_fw_config_s ... tamagawa_fw_config</td>
-    <td>Renamed to tamagawa_fw_config to avoid confusion with new tamagawa_config handle structure</td>
+    <td>Renamed to tamagawa_fw_config to avoid confusion with new tamagawa_config handle structure and converted to typedef</td>
 </tr>
 <tr>
-    <td>struct tamagawa_ch_info<br>struct tamagawa_cmd<br>struct tamagawa_eeprom_interface</td>
-    <td>typedef struct tamagawa_ch_info_s ... tamagawa_ch_info<br>typedef struct tamagawa_cmd_s ... tamagawa_cmd<br>typedef struct tamagawa_eeprom_interface_s ... tamagawa_eeprom_interface</td>
-    <td>Converted to typedef pattern</td>
-</tr>
-<tr>
-    <td>struct rx_frames_received<br>struct config</td>
-    <td>typedef struct tamagawa_rx_frames_s ... tamagawa_rx_frames<br>typedef struct tamagawa_channel_config_s ... tamagawa_channel_config</td>
+    <td>struct `rx_frames_received`</td>
+    <td>typedef struct tamagawa_rx_frames_s ... tamagawa_rx_frames</td>
     <td>Renamed with tamagawa_ prefix and converted to typedef</td>
+</tr><tr>
+    <td>struct `config`</td>
+    <td>typedef struct tamagawa_channel_config_s ... tamagawa_channel_config</td>
+    <td>Renamed to tamagawa_channel_config to avoid confusion with new tamagawa_config handle structure and converted to typedef</td>
 </tr>
 <tr>
-    <td>enum data_id</td>
+    <td>enum `data_id`</td>
     <td>typedef enum tamagawa_data_id_e ... tamagawa_data_id</td>
     <td>Named enum with typedef. PERIODIC_TRIGGER_CMD renamed to PERIODIC_TRIGGER_CMP_CMD, added PERIODIC_TRIGGER_CAP_CMD</td>
 </tr>
@@ -526,11 +535,78 @@ Driver APIs use following validation approach now:
 <table>
 <tr>
     <th>Macro</th>
+    <th>Value</th>
     <th>Description</th>
 </tr>
 <tr>
-    <td>TAMAGAWA_CONFIG_PERIODIC_TRIGGER_CAP_MODE</td>
-    <td>IEP CAP-based periodic mode</td>
+    <td>TAMAGAWA_MODE_SINGLE_CHANNEL_SINGLE_PRU</td>
+    <td>0U</td>
+    <td>Configuration mode for single channel, single PRU</td>
+</tr>
+<tr>
+    <td>TAMAGAWA_MODE_MULTI_CHANNEL_SINGLE_PRU</td>
+    <td>1U</td>
+    <td>Configuration mode for multi-channel, single PRU</td>
+</tr>
+<tr>
+    <td>TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU</td>
+    <td>2U</td>
+    <td>Configuration mode for multi-channel with load-share across multiple PRUs</td>
+</tr>
+<tr>
+    <td>TAMAGAWA_OPMODE_PERIODIC_CMP</td>
+    <td>0x0U</td>
+    <td>Operation mode: periodic trigger using IEP compare event</td>
+</tr>
+<tr>
+    <td>TAMAGAWA_OPMODE_HOST_TRIGGER</td>
+    <td>0x1U</td>
+    <td>Operation mode: host trigger</td>
+</tr>
+<tr>
+    <td>TAMAGAWA_OPMODE_PERIODIC_CAP</td>
+    <td>0x2U</td>
+    <td>Operation mode: periodic trigger using IEP capture event</td>
+</tr>
+<tr>
+    <td>TAMAGAWA_ENABLE_CYCLE_TRIGGER</td>
+    <td>0x1</td>
+    <td>Enable cycle trigger for firmware</td>
+</tr>
+<tr>
+    <td>TAMAGAWA_DISABLE_CYCLE_TRIGGER</td>
+    <td>0x0</td>
+    <td>Disable cycle trigger for firmware</td>
+</tr>
+<tr>
+    <td>TAMAGAWA_FREQ_2_5_MHZ</td>
+    <td>2500000U</td>
+    <td>Allowed Tamagawa communication frequency (2.5 MHz)</td>
+</tr>
+<tr>
+    <td>TAMAGAWA_FREQ_5_MHZ</td>
+    <td>5000000U</td>
+    <td>Allowed Tamagawa communication frequency (5 MHz)</td>
+</tr>
+<tr>
+    <td>TAMAGAWA_DEFAULT_CMD_WAIT_DELAY_US</td>
+    <td>100</td>
+    <td>Default command wait delay in microseconds</td>
+</tr>
+<tr>
+    <td>TAMAGAWA_DEFAULT_MAX_WAIT_LOOP_COUNT</td>
+    <td>50U</td>
+    <td>Default maximum wait loop count. Actual timeout = max_wait_loop_count × cmd_wait_delay_us (default: 5000 us)</td>
+</tr>
+<tr>
+    <td>TAMAGAWA_IEP_MAX_CAP_EVENT</td>
+    <td>0x8U</td>
+    <td>Maximum IEP CAP event number</td>
+</tr>
+<tr>
+    <td>TAMAGAWA_IEP_MAX_CMP_EVENT</td>
+    <td>0x10U</td>
+    <td>Maximum IEP CMP event number</td>
 </tr>
 </table>
 
@@ -546,16 +622,29 @@ Driver APIs use following validation approach now:
     <td>TAMAGAWA_MAX_CHANNELS_PER_SLICE</td>
 </tr>
 <tr>
-    <td>TAMAGAWA_CONFIG_PERIODIC_TRIGGER_MODE</td>
-    <td>TAMAGAWA_CONFIG_PERIODIC_TRIGGER_CMP_MODE</td>
-</tr>
-<tr>
     <td>MAX_EEPROM_ADDRESS</td>
     <td>TAMAGAWA_MAX_EEPROM_ADDRESS</td>
 </tr>
 <tr>
     <td>MAX_EEPROM_WRITE_DATA</td>
     <td>TAMAGAWA_MAX_EEPROM_WRITE_DATA</td>
+</tr>
+</table>
+
+### Changed Macros
+
+<table>
+<tr>
+    <th>Macro</th>
+    <th>Old Value</th>
+    <th>New Value</th>
+    <th>Notes</th>
+</tr>
+<tr>
+    <td>TAMAGAWA_RX_OVERSAMPLING_RATE</td>
+    <td>8</td>
+    <td>7</td>
+    <td>Set to 7 to configure 8x oversampling (hardware expects a 0-based value)</td>
 </tr>
 </table>
 
@@ -640,7 +729,6 @@ Configurable timeout parameters with clear timeout detection for APIs waiting fo
 
 Multi-PRU load-share mode allows distributing channels across multiple PRU cores:
 - Mode controlled by attrs->mode and attrs->load_share_enabled
-- Synchronization via execution_state[] and primary_core_mask in tamagawa_xchg
 - Each channel can use separate PRU core
 - Global reinit operations synchronized across PRUs
 
@@ -687,54 +775,7 @@ if (handle == NULL)
 }
 ```
 
-### Example 2: Getting Position Data
-
-**Old Code:**
-```c
-/* Configure channel mask manually */
-uint8_t mask = TAMAGAWA_MULTI_CH0 | TAMAGAWA_MULTI_CH1;
-tamagawa_config_multi_channel_mask(priv, mask);
-
-/* Send command (no error checking on send/wait) */
-tamagawa_command_build(priv, DATA_ID_0, mask);
-tamagawa_command_send(priv);
-tamagawa_command_wait(priv);
-
-/* Parse response */
-if(tamagawa_parse(DATA_ID_0, priv) == 0)
-{
-    /* Success */
-}
-```
-
-**New Code:**
-```c
-int32_t ret = tamagawa_command_process(handle, DATA_ID_0);
-if (ret == SystemP_TIMEOUT)
-{
-    /* Handle timeout */
-}
-else if (ret != SystemP_SUCCESS)
-{
-    /* Handle other errors */
-}
-
-/* Parse response */
-ret = tamagawa_parse(handle, DATA_ID_0);
-if (ret != SystemP_SUCCESS)
-{
-    /* Parse failed */
-}
-
-/* Verify CRC */
-ret = tamagawa_crc_verify(handle);
-if (ret != SystemP_SUCCESS)
-{
-    /* CRC verification failed */
-}
-```
-
-### Example 3: Configuring Periodic Mode
+### Example 2: Configuring Periodic Mode
 
 **Old Code:**
 ```c
@@ -759,7 +800,7 @@ if (ret != SystemP_SUCCESS)
 }
 ```
 
-### Example 4: Accessing Configuration
+### Example 3: Accessing Configuration
 
 **Old Code:**
 ```c
@@ -814,30 +855,6 @@ SysConfig will generate:
 5. **Periodic Mode Not Working**
    - Explicitly choose between CMP and CAP modes
    - Configure IEP events properly for each channel
-
-## Compatibility Notes
-
-### Binary Compatibility: BROKEN
-
-The driver is NOT binary compatible due to:
-- Complete structure layout changes (tamagawa_xchg, tamagawa_priv)
-- Function signature changes (handle type, parameter types, return types)
-- Removed functions
-
-### Source Compatibility: BROKEN
-
-The driver requires source code changes due to:
-- Init/deinit pattern changed
-- Function signatures changed
-- Error handling changed (void to int32_t returns)
-- Configuration approach changed (SysConfig-based)
-
-### Firmware Compatibility
-
-PRU firmware must match driver version:
-- Firmware interface structure (tamagawa_xchg) layout changed
-- Firmware must be updated to match new DMEM layout
-- New firmware supports load-share mode and IEP capture mode
 
 ## Additional Resources
 

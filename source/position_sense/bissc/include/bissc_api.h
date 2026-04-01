@@ -154,13 +154,13 @@ int32_t bissc_command_send(bissc_handle handle);
  *  \brief      Wait till PRU finishes BiSS-C transaction
  *
  *  \details    This function polls the cycle_trigger flag(s) in PRU-ICSS exchange structure
- *              to detect when the PRU firmware has completed the BiSS-C transaction. In host
- *              trigger mode (non-continuous mode), it adds a delay between poll iterations
- *              to prevent excessive CPU usage, and implements a timeout mechanism.
+ *              to detect when the PRU firmware has completed the BiSS-C transaction. It adds
+ *              a delay between poll iterations to prevent excessive CPU usage, and implements
+ *              a timeout mechanism.
  *
  *              This function internally calls:
  *              - ClockP_usleep(): Delay configured via bissc_params.cmd_process_delay_us before calling \ref bissc_init
- *                (default: 1000 microseconds) between poll iterations (in host trigger mode only)
+ *                (default: 1000 microseconds) between poll iterations
  *
  *  \param[in]  handle     BiSS-C handle
  *

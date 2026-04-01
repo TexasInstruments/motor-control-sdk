@@ -63,9 +63,9 @@ repositories that need to be cloned and are listed below:
 
 Prebuilt SDK installers for specific devices are available at below links. Please note that installers are packaged specific to each device to reduce size.
 
-- [AM243x MCU+ SDK](https://www.ti.com/tool/download/MOTOR-CONTROL-SDK-AM243X)
-- [AM263Px MCU+ SDK](https://www.ti.com/tool/download/MOTOR-CONTROL-SDK-AM263X)
-- [AM261x MCU+ SDK](https://www.ti.com/tool/download/MOTOR-CONTROL-SDK-AM261X)
+- [AM243x Motor Control SDK](https://www.ti.com/tool/download/MOTOR-CONTROL-SDK-AM243X)
+- [AM263Px Motor Control SDK](https://www.ti.com/tool/download/MOTOR-CONTROL-SDK-AM263PX)
+- [AM261x Motor Control SDK](https://www.ti.com/tool/download/MOTOR-CONTROL-SDK-AM261X)
 
 ## Learn
 

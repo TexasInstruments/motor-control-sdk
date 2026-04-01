@@ -662,7 +662,7 @@ typedef struct nikon_priv_s
     /**< Multi turn resolution */
 
     uint32_t channel[NIKON_NUM_CH_PER_SLICE_MAX];
-    /**< Array of all configured channel */
+    /**< Array of all configured channels */
 
     nikon_pruicss_xchg *pruicss_xchg;
     /**< Structure defining NIKON interface */

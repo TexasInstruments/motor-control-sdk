@@ -169,12 +169,12 @@ Driver APIs use following validation approach now:
 </tr>
 <tr>
     <td>SDFM_selectClockSource()<br>SDFM_setClockInversion()</td>
-    <td>- <code>void</code> to <code>int32_t</code> return<br>- sdfm_handle to \ref SDFM_Handle <br>- Parameter renamed: <code>ch_id</code>/<code>ch</code>/<code>chNum</code> to <code>channel</code></td>
+    <td>- <code>void</code> to <code>int32_t</code> return<br>- sdfm_handle to \ref SDFM_Handle <br>- Parameter renamed: <code>ch_id</code> to <code>channel</code></td>
     <td>- Validates parameter limits<br>- Returns status code<br>- SDFM register configuration is moved to driver from PRU firmware</td>
 </tr>
 <tr>
     <td>SDFM_enableComparator()<br>SDFM_disableComparator()</td>
-    <td>- <code>void</code> to <code>int32_t</code> return<br>- sdfm_handle to \ref SDFM_Handle <br>- Parameter renamed: <code>ch_id</code>/<code>ch</code>/<code>chNum</code> to <code>channel</code></td>
+    <td>- <code>void</code> to <code>int32_t</code> return<br>- sdfm_handle to \ref SDFM_Handle <br>- Parameter renamed: <code>ch</code> to <code>channel</code></td>
     <td>- Validates parameter limits<br>- Returns status code<br>- PWM Trip configuration is moved to driver from PRU firmware</td>
 </tr>
 <tr>

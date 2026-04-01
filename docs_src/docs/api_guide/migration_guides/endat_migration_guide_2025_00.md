@@ -1,8 +1,8 @@
-\cond SOC_AM243X || SOC_AM64X
+\cond SOC_AM243X
 # EnDat Encoder Migration Guide (v11.00.00 to v2025.00.00) {#ENDAT_MIGRATION_GUIDE_2025_00}
 \endcond
 
-\cond (SOC_AM263PX || SOC_AM261X || SOC_AM263X)
+\cond (SOC_AM263PX || SOC_AM261X)
 # EnDat Encoder Migration Guide (v10.02.00 to v2025.00.00) {#ENDAT_MIGRATION_GUIDE_2025_00}
 \endcond
 
@@ -10,10 +10,10 @@
 
 ## Introduction
 
-\cond SOC_AM243X || SOC_AM64X
+\cond SOC_AM243X
 This guide helps developers migrate EnDat encoder applications from Motor Control SDK v11.00.00 to v2025.00.00. The driver underwent significant architectural changes including a move to handle-based APIs, enhanced periodic trigger modes, and improved SysConfig integration.
 \endcond
-\cond (SOC_AM263PX || SOC_AM261X || SOC_AM263X)
+\cond (SOC_AM263PX || SOC_AM261X)
 This guide helps developers migrate EnDat encoder applications from Motor Control SDK v10.02.00 to v2025.00.00. The driver underwent significant architectural changes including a move to handle-based APIs, enhanced periodic trigger modes, and improved SysConfig integration.
 \endcond
 
@@ -73,10 +73,9 @@ The initialization process was completely redesigned to use SysConfig-generated 
 ## API Changes
 
 Driver APIs use following validation approach now:
-- **Public API validation**: All public APIs validate the handle parameter for NULL and perform array bounds checking for index parameters
-- **Internal function validation**: Internal static functions assume valid parameters. The caller is responsible for ensuring parameters are valid before calling internal functions
-- **Internal structure validation**: Each API validates the internal structure pointers it accesses (e.g., attrs, priv, pruicss_xchg, pruicss_handle) for NULL before dereferencing
- - **Error state handling**: Error in \ref endat_recvd_process may leave internal state partially modified. Subsequent calls will overwrite these values. Caller is responsible for explicit state cleanup if needed.
+- **Handle validation**: All public APIs validate the handle parameter for NULL
+- **Array bounds checking**: APIs with array parameters or index parameters perform bounds validation
+- **Targeted internal structure validation**: Each function validates the pointers it dereferences
 
 \note These changes are not mentioned in the "Additional Details" column of the \ref ENDAT_MIGRATION_GUIDE_2025_00_APIS_MODIFIED section below. The \ref ENDAT_MIGRATION_GUIDE_2025_00_APIS_MODIFIED section describes changes in addition to the points mentioned above.
 
@@ -151,9 +150,19 @@ Driver APIs use following validation approach now:
     <td>- Uses SysConfig-generated index and params structure as arguments<br>- Validates parameter limits</td>
 </tr>
 <tr>
-    <td>endat_command_build()<br>endat_command_process()<br>endat_addinfo_track()</td>
+    <td>endat_command_build()</td>
     <td>- <code>priv</code> to <code>handle</code><br>- <code>struct cmd_supplement</code> to <code>endat_cmd_supplement</code></td>
     <td>- Type definition change for supplement parameter</td>
+</tr>
+<tr>
+    <td>endat_command_process()</td>
+    <td>- <code>priv</code> to <code>handle</code><br>- <code>struct cmd_supplement</code> to <code>endat_cmd_supplement</code></td>
+    <td>- Type definition change for supplement parameter<br>- Can return <code>SystemP_TIMEOUT</code> if firmware does not respond within timeout</td>
+</tr>
+<tr>
+    <td>endat_addinfo_track()</td>
+    <td>- <code>void</code> to <code>int32_t</code> return<br>- <code>priv</code> to <code>handle</code><br>- <code>struct cmd_supplement</code> to <code>endat_cmd_supplement</code></td>
+    <td>- Returns status code<br>- Type definition change for supplement parameter</td>
 </tr>
 <tr>
     <td>endat_recvd_process()<br>endat_recvd_validate()</td>
@@ -162,18 +171,58 @@ Driver APIs use following validation approach now:
 </tr>
 <tr>
     <td>endat_config_clock()</td>
-    <td>- <code>priv</code> to <code>handle</code><br>- <code>struct endat_clk_cfg*</code> to <code>uint32_t freq</code><br>- <code>void</code> to <code>int32_t</code> return</td>
+    <td>- <code>void</code> to <code>int32_t</code> return<br>- <code>priv</code> to <code>handle</code><br>- <code>struct endat_clk_cfg*</code> to <code>uint32_t freq</code></td>
     <td>- Simplified clock configuration with frequency value</td>
 </tr>
 <tr>
-    <td>endat_config_rx_arm_cnt()<br>endat_config_wire_delay()<br>endat_config_rx_clock_disable()<br>endat_config_tst_delay()<br>endat_config_host_trigger()<br>endat_config_channel()<br>endat_config_multi_channel_mask()<br>endat_start_continuous_mode() <br>endat_multi_channel_set_cur()<br>endat_multi_channel_detected()<br>endat_stop_continuous_mode()<br>endat_wait_initialization()<br>endat_init_rt_measurement()<br>endat_enable_rt_measurement()<br>endat_disable_rt_measurement() <br>endat_get_encoder_info()<br>endat_command_send()<br>endat_command_wait() </td>
+    <td>endat_config_rx_arm_cnt()<br>endat_config_wire_delay()<br>endat_config_rx_clock_disable()<br>endat_config_tst_delay()<br>endat_config_host_trigger()<br>endat_config_multi_channel_mask()<br>endat_init_rt_measurement()<br>endat_enable_rt_measurement()<br>endat_disable_rt_measurement()<br>endat_command_send()</td>
     <td>- <code>void</code> to <code>int32_t</code> return<br>- <code>priv</code> to <code>handle</code></td>
     <td>- Returns status code</td>
 </tr>
 <tr>
-    <td>endat_get_recovery_time()<br>endat_get_prop_delay()<br>endat_check_rt_error()<br>endat_status_rt_measurement()</td>
-    <td>- Returns via output parameter<br>- <code>priv</code> to <code>handle</code><br>- Added output pointer param</td>
-    <td>- Returns status, provides value via pointer</td>
+    <td>endat_config_channel()<br>endat_multi_channel_set_cur()</td>
+    <td>- <code>void</code> to <code>int32_t</code> return<br>- <code>priv</code> to <code>handle</code><br>- <code>int32_t ch</code> to <code>uint32_t ch</code></td>
+    <td>- Returns status code<br>- Channel parameter type changed to unsigned</td>
+</tr>
+<tr>
+    <td>endat_command_wait()</td>
+    <td>- <code>void</code> to <code>int32_t</code> return<br>- <code>priv</code> to <code>handle</code></td>
+    <td>- Returns status code<br>- Can return <code>SystemP_TIMEOUT</code> if firmware does not complete transaction within configured timeout</td>
+</tr>
+<tr>
+    <td>endat_stop_continuous_mode()</td>
+    <td>- <code>void</code> to <code>int32_t</code> return<br>- <code>priv</code> to <code>handle</code></td>
+    <td>- Returns status code<br>- Can return <code>SystemP_TIMEOUT</code> if firmware does not respond within timeout</td>
+</tr>
+<tr>
+    <td>endat_start_continuous_mode()</td>
+    <td>- <code>priv</code> to <code>handle</code></td>
+    <td>- Return type unchanged (was already <code>int32_t</code>)</td>
+</tr>
+<tr>
+    <td>endat_wait_initialization()</td>
+    <td>- <code>priv</code> to <code>handle</code></td>
+    <td>- Return type unchanged (was already <code>int32_t</code>)<br>- Can return <code>SystemP_TIMEOUT</code> if initialization does not complete within timeout period</td>
+</tr>
+<tr>
+    <td>endat_get_encoder_info()</td>
+    <td>- <code>priv</code> to <code>handle</code></td>
+    <td>- Return type unchanged (was already <code>int32_t</code>)<br>- Can return <code>SystemP_TIMEOUT</code> if firmware does not respond within timeout (propagated from <code>endat_command_process()</code>)</td>
+</tr>
+<tr>
+    <td>endat_multi_channel_detected()</td>
+    <td>- <code>priv</code> to <code>handle</code></td>
+    <td>- Return type unchanged (<code>uint8_t</code>)</td>
+</tr>
+<tr>
+    <td>endat_get_recovery_time()<br>endat_get_prop_delay()<br>endat_status_rt_measurement()</td>
+    <td>- <code>uint32_t</code> to <code>int32_t</code> return<br>- <code>priv</code> to <code>handle</code><br>- Added output pointer param</td>
+    <td>- Return value moved to output pointer; returns status code</td>
+</tr>
+<tr>
+    <td>endat_check_rt_error()</td>
+    <td>- <code>int8_t</code> to <code>int32_t</code> return<br>- <code>priv</code> to <code>handle</code><br>- Added <code>int8_t *error_code</code> output param</td>
+    <td>- Error code moved to output pointer; returns status code</td>
 </tr>
 </table>
 
@@ -206,445 +255,256 @@ Driver APIs use following validation approach now:
 
 ### endat_priv Structure
 
-#### Added Members
-
 <table>
 <tr>
-    <th>Member</th>
-    <th>Type</th>
-    <th>Description</th>
-</tr>
-<tr>
-    <td>is_open</td>
-    <td>uint8_t</td>
-    <td>Initialization state flag (0 = closed, 1 = open)</td>
-</tr>
-<tr>
-    <td>pruicss_handle</td>
-    <td>PRUICSS_Handle</td>
-    <td>PRU-ICSS driver handle from params</td>
-</tr>
-<tr>
-    <td>channel_rx_info</td>
-    <td>endat_ch_rx_info_array*</td>
-    <td>Pointer to channel RX info array (replaces endatChRxInfo)</td>
-</tr>
-<tr>
-    <td>cmd_process_delay_us</td>
-    <td>uint32_t</td>
-    <td>Delay in microseconds for command processing</td>
-</tr>
-<tr>
-    <td>fw_wait_delay_us</td>
-    <td>uint32_t</td>
-    <td>Delay between firmware status checks</td>
-</tr>
-<tr>
-    <td>max_wait_loop_count</td>
-    <td>uint32_t</td>
-    <td>Maximum wait loop count for timeout</td>
-</tr>
-<tr>
-    <td>endat_freq</td>
-    <td>uint32_t</td>
-    <td>Configured EnDAT communication clock frequency</td>
-</tr>
-</table>
-
-#### Removed Members
-
-<table>
-<tr>
-    <th>Member</th>
-    <th>Old Type</th>
-    <th>Migration Action</th>
-</tr>
-<tr>
-    <td>pruicss_slicex</td>
-    <td>int32_t</td>
-    <td>Moved to endat_attrs->pruicss_slice (via SysConfig)</td>
-</tr>
-<tr>
-    <td>load_share</td>
-    <td>int32_t</td>
-    <td>Moved to endat_attrs->load_share_enabled (via SysConfig)</td>
-</tr>
-<tr>
-    <td>pruss_cfg</td>
-    <td>void*</td>
-    <td> Can be obtained from the `pruicss_handle` member of the `endat_priv`.</td>
-</tr>
-<tr>
-    <td>pruss_iep</td>
-    <td>void*</td>
-    <td>Can be obtained from the `iep_base_addr` member of the `endat_attrs`</td>
-</tr>
-\cond (SOC_AM263PX || SOC_AM261X || SOC_AM263X)
-<tr>
-    <td>cmp0, cmp3, cmp5, cmp6</td>
-    <td>uint64_t</td>
-    <td>Moved to endat_cmd_supplement</td>
-</tr>
-\endcond
-\cond SOC_AM243X || SOC_AM64X
-<tr>
-    <td>iep_reset_count</td>
-    <td>uint64_t</td>
-    <td>Moved to endat_cmd_supplement</td>
-</tr>
-<tr>
-    <td>ch0_trigger_count<br>ch1_trigger_count<br>ch2_trigger_count</td>
-    <td>uint64_t</td>
-    <td>Moved to endat_cmd_supplement->ch_trigger_count[]</td>
-</tr>
-\endcond
-<tr>
-    <td>pru_clock</td>
-    <td>uint64_t</td>
-    <td>Now in endat_attrs via SysConfig</td>
-</tr>
-<tr>
-    <td>pru_uart_clock</td>
-    <td>uint64_t</td>
-    <td>Now in endat_attrs via SysConfig</td>
-</tr>
-<tr>
-    <td>rx_clock_source</td>
-    <td>uint8_t</td>
-    <td>Now in endat_attrs via SysConfig</td>
-</tr>
-<tr>
-    <td>tx_clock_source</td>
-    <td>uint8_t</td>
-    <td>Now in endat_attrs via SysConfig</td>
-</tr>
-<tr>
-    <td>endatChRxInfo</td>
-    <td>struct endatChRxInfo*</td>
-    <td>Replaced by channel_rx_info</td>
-</tr>
-</table>
-
-#### Modified Members
-
-<table>
-<tr>
-    <th>Member</th>
-    <th>Old Type</th>
-    <th>New Type</th>
+    <th>Change Type</th>
+    <th>Old Member</th>
+    <th>New Member</th>
     <th>Notes</th>
 </tr>
 <tr>
-    <td>flags</td>
-    <td>struct flags</td>
-    <td>endat_flags[ENDAT_NUM_CH_PER_SLICE_MAX]</td>
-    <td>Changed to array per channel with renamed type</td>
+    <td rowspan="6">Added</td>
+    <td rowspan="6">-</td>
+    <td>uint8_t is_open</td>
+    <td>Initialization state flag (0 = closed, 1 = open)</td>
 </tr>
 <tr>
-    <td>id</td>
-    <td>struct id</td>
-    <td>endat_id</td>
-    <td>Renamed type with endat_ prefix</td>
+    <td>PRUICSS_Handle pruicss_handle</td>
+    <td>PRU-ICSS driver handle from params</td>
 </tr>
 <tr>
-    <td>sn</td>
-    <td>struct sn</td>
-    <td>endat_sn</td>
-    <td>Renamed type with endat_ prefix</td>
+    <td>uint32_t cmd_process_delay_us</td>
+    <td>Delay in microseconds for command processing</td>
 </tr>
 <tr>
-    <td>pruicss_xchg</td>
-    <td>struct endat_pruss_xchg*</td>
-    <td>endat_pruicss_xchg*</td>
-    <td>Renamed type with typedef</td>
-</tr>
-</table>
-
-### PRU-ICSS Interface Structures (endat_interface.h)
-
-The following structures in endat_interface.h have been renamed to follow consistent naming conventions (CamelCase to snake_case with typedef pattern):
-
-#### Structure Type Changes
-
-<table>
-<tr>
-    <th>Old Type</th>
-    <th>New Type</th>
-    <th>Description</th>
+    <td>uint32_t fw_wait_delay_us</td>
+    <td>Delay between firmware status checks</td>
 </tr>
 <tr>
-    <td>Endat_CrcInfo</td>
-    <td>endat_crc_info</td>
-    <td>CRC error tracking information</td>
+    <td>uint32_t max_wait_loop_count</td>
+    <td>Maximum wait loop count for timeout</td>
 </tr>
 <tr>
-    <td>Endat_ChInfo</td>
-    <td>endat_ch_info</td>
-    <td>Channel configuration and status</td>
+    <td>uint32_t endat_freq</td>
+    <td>Configured EnDAT communication clock frequency</td>
 </tr>
 <tr>
-    <td>Endat_ChRTInfo</td>
-    <td>endat_ch_rt_info</td>
-    <td>Recovery time parameters</td>
+    <td rowspan="4">Removed</td>
+    <td>void* pruss_cfg</td>
+    <td>-</td>
+    <td>Can be obtained from the `pruicss_handle` member of endat_priv</td>
 </tr>
 <tr>
-    <td>Endat_ChRxInfo</td>
-    <td>endat_ch_rx_info</td>
-    <td>Channel received data structure</td>
+    <td>void* pruss_iep</td>
+    <td>-</td>
+    <td>Can be obtained from the `iep_base_addr` member of endat_attrs</td>
+</tr>
+\cond (SOC_AM263PX || SOC_AM261X)
+<tr>
+    <td>uint64_t cmp0<br>uint64_t cmp3<br>uint64_t cmp5<br>uint64_t cmp6</td>
+    <td>-</td>
+    <td>-</td>
+</tr>
+\endcond
+\cond SOC_AM243X
+<tr>
+    <td>uint64_t iep_reset_count<br>uint64_t ch0_trigger_count<br>uint64_t ch1_trigger_count<br>uint64_t ch2_trigger_count</td>
+    <td>-</td>
+    <td>-</td>
+</tr>
+\endcond
+<tr>
+    <td>int32_t pruicss_slicex<br>int32_t load_share<br>uint64_t pru_clock<br>uint64_t pru_uart_clock<br>uint8_t rx_clock_source<br>uint8_t tx_clock_source</td>
+    <td>-</td>
+    <td>Moved to endat_attrs</td>
 </tr>
 <tr>
-    <td>struct endat_pruss_cmd</td>
-    <td>endat_pruicss_cmd</td>
-    <td>Command interface (typedef added, pruss→pruicss)</td>
+    <td rowspan="2">Modified</td>
+    <td>struct flags flags</td>
+    <td>endat_flags flags[ENDAT_NUM_CH_PER_SLICE_MAX]</td>
+    <td>Changed to per-channel array</td>
 </tr>
 <tr>
-    <td>struct endat_pruss_config</td>
-    <td>endat_pruicss_config</td>
-    <td>Configuration interface (typedef added, pruss→pruicss)</td>
-</tr>
-<tr>
-    <td>struct endat_pruss_xchg</td>
-    <td>endat_pruicss_xchg</td>
-    <td>PRU-ICSS exchange interface (typedef added, pruss→pruicss)</td>
-</tr>
-<tr>
-    <td>struct endatChRxInfo</td>
-    <td>endat_ch_rx_info_array</td>
-    <td>Channel RX info array structure</td>
+    <td>struct endatChRxInfo* endatChRxInfo</td>
+    <td>endat_ch_rx_info_array* channel_rx_info</td>
+    <td>Renamed</td>
 </tr>
 </table>
 
-#### Member Name Changes (endat_crc_info)
+### endat_cmd_supplement Structure
+
+The `struct cmd_supplement` was renamed to `endat_cmd_supplement` with typedef. In addition to the type rename, the following member changes were made:
 
 <table>
 <tr>
-    <th>Old Member</th>
-    <th>New Member</th>
+    <th>Change Type</th>
+    <th>Member</th>
+    <th>Old</th>
+    <th>New</th>
+    <th>Notes</th>
+</tr>
+\cond (SOC_AM263PX || SOC_AM261X)
+<tr>
+    <td rowspan="4">Modified</td>
+    <td>cmp0</td>
+    <td>uint64_t cmp0</td>
+    <td>uint64_t iep_reset_count</td>
+    <td>Renamed</td>
 </tr>
 <tr>
-    <td>errCntData</td>
-    <td>err_cnt_data</td>
+    <td>cmp3</td>
+    <td>uint64_t cmp3</td>
+    <td>uint64_t ch_trigger_count[0]</td>
+    <td rowspan="3">Renamed and consolidated into per-channel array</td>
 </tr>
 <tr>
-    <td>errCntAddinfox</td>
-    <td>err_cnt_addinfox</td>
+    <td>cmp5</td>
+    <td>uint64_t cmp5</td>
+    <td>uint64_t ch_trigger_count[1]</td>
 </tr>
 <tr>
-    <td>errCntAddinfo1</td>
-    <td>err_cnt_addinfo1</td>
+    <td>cmp6</td>
+    <td>uint64_t cmp6</td>
+    <td>uint64_t ch_trigger_count[2]</td>
+</tr>
+\endcond
+\cond SOC_AM243X
+<tr>
+    <td rowspan="3">Modified</td>
+    <td>ch0_trigger_count</td>
+    <td>uint64_t ch0_trigger_count</td>
+    <td>uint64_t ch_trigger_count[0]</td>
+    <td rowspan="3">Consolidated into per-channel array</td>
 </tr>
 <tr>
-    <td>resvdInt1</td>
-    <td>resvd_int1</td>
-</tr>
-</table>
-
-#### Member Name Changes (endat_ch_info)
-
-<table>
-<tr>
-    <th>Old Member</th>
-    <th>New Member</th>
+    <td>ch1_trigger_count</td>
+    <td>uint64_t ch1_trigger_count</td>
+    <td>uint64_t ch_trigger_count[1]</td>
 </tr>
 <tr>
-    <td>numClkPulse</td>
-    <td>num_clk_pulse</td>
+    <td>ch2_trigger_count</td>
+    <td>uint64_t ch2_trigger_count</td>
+    <td>uint64_t ch_trigger_count[2]</td>
+</tr>
+\endcond
+<tr>
+    <td rowspan="4">Type Changed</td>
+    <td>address</td>
+    <td>uint32_t</td>
+    <td>uint32_t address[ENDAT_NUM_CH_PER_SLICE_MAX]</td>
+    <td rowspan="4">Per-channel member for multi-channel support using load share mode (on AM243x only)</td>
 </tr>
 <tr>
-    <td>endat22Stat</td>
-    <td>endat22_stat</td>
+    <td>data</td>
+    <td>uint32_t</td>
+    <td>uint32_t data[ENDAT_NUM_CH_PER_SLICE_MAX]</td>
 </tr>
 <tr>
-    <td>rxClkLess</td>
-    <td>rx_clk_less</td>
+    <td>block</td>
+    <td>uint32_t</td>
+    <td>uint32_t block[ENDAT_NUM_CH_PER_SLICE_MAX]</td>
 </tr>
 <tr>
-    <td>propDelay</td>
-    <td>prop_delay</td>
+    <td>has_block_address</td>
+    <td>uint8_t</td>
+    <td>uint8_t has_block_address[ENDAT_NUM_CH_PER_SLICE_MAX]</td>
 </tr>
 <tr>
-    <td>enableRTM</td>
-    <td>enable_rtm</td>
-</tr>
-</table>
-
-#### Member Name Changes (endat_ch_rt_info)
-
-<table>
-<tr>
-    <th>Old Member</th>
-    <th>New Member</th>
+    <td rowspan="6">Added</td>
+    <td>cmd_type</td>
+    <td>-</td>
+    <td>uint32_t</td>
+    <td>Command type identifier</td>
 </tr>
 <tr>
-    <td>recoveryTime</td>
-    <td>recovery_time</td>
+    <td>delay</td>
+    <td>-</td>
+    <td>uint32_t</td>
+    <td>User-specified delay parameter</td>
 </tr>
 <tr>
-    <td>currentCounterValue</td>
-    <td>current_counter_value</td>
+    <td>enable_rt</td>
+    <td>-</td>
+    <td>uint8_t</td>
+    <td>Enable/disable recovery time counter</td>
 </tr>
 <tr>
-    <td>lastCounterValue</td>
-    <td>last_counter_value</td>
+    <td>selected_channel</td>
+    <td>-</td>
+    <td>uint8_t</td>
+    <td>Selected channel for multi-channel operations</td>
 </tr>
 <tr>
-    <td>startingValue</td>
-    <td>starting_value</td>
+    <td>periodic_mode_cmd</td>
+    <td>-</td>
+    <td>uint32_t</td>
+    <td>Command for periodic mode configuration</td>
 </tr>
 <tr>
-    <td>isCounterStuck</td>
-    <td>is_counter_stuck</td>
-</tr>
-</table>
-
-#### Member Name Changes (endat_ch_rx_info)
-
-<table>
-<tr>
-    <th>Old Member</th>
-    <th>New Member</th>
-</tr>
-<tr>
-    <td>posWord0</td>
-    <td>pos_word0</td>
-</tr>
-<tr>
-    <td>posWord1</td>
-    <td>pos_word1</td>
-</tr>
-<tr>
-    <td>posWord2</td>
-    <td>pos_word2</td>
-</tr>
-<tr>
-    <td>posWord3</td>
-    <td>pos_word3</td>
-</tr>
-<tr>
-    <td>crcStatus</td>
-    <td>crc_status</td>
-</tr>
-<tr>
-    <td>recoveryTimeParms</td>
-    <td>recovery_time_parms</td>
+    <td>iep_sync0_period</td>
+    <td>-</td>
+    <td>uint64_t</td>
+    <td>IEP SYNC OUT0 period</td>
 </tr>
 </table>
 
 ### endat_pruicss_xchg Structure
 
-#### Added Members
-
 <table>
 <tr>
-    <th>Member</th>
-    <th>Type</th>
-    <th>Description</th>
-</tr>
-<tr>
-    <td>endat_iep_base_addr</td>
-    <td>uint32_t</td>
-    <td>IEP timer base address for periodic trigger mode</td>
-</tr>
-<tr>
-    <td>trigger_params</td>
-    <td>endat_periodic_trigger_cfg[ENDAT_NUM_CH_PER_SLICE_MAX]</td>
-    <td>Periodic trigger configuration for each channel</td>
-</tr>
-<tr>
-    <td>reserved</td>
-    <td>uint64_t</td>
-    <td>Reserved for alignment</td>
-</tr>
-</table>
-
-#### Removed Members
-
-<table>
-<tr>
-    <th>Member</th>
-    <th>Old Type</th>
-    <th>Migration Action</th>
-</tr>
-<tr>
-    <td>endat_rx_clk_config</td>
-    <td>uint16_t</td>
-    <td>Configured internally by driver</td>
-</tr>
-<tr>
-    <td>endat_tx_clk_config</td>
-    <td>uint16_t</td>
-    <td>Configured internally by driver</td>
-</tr>
-<tr>
-    <td>endat_rx_clk_cnten</td>
-    <td>uint32_t</td>
-    <td>Configured internally by driver</td>
-</tr>
-</table>
-
-#### Modified Members
-
-<table>
-<tr>
-    <th>Member</th>
-    <th>Old Name/Type</th>
-    <th>New Name/Type</th>
+    <th>Change Type</th>
+    <th>Old Member</th>
+    <th>New Member</th>
     <th>Notes</th>
 </tr>
 <tr>
-    <td>Channel info memory address</td>
+    <td rowspan="3">Added</td>
+    <td rowspan="3">-</td>
+    <td>uint32_t endat_iep_base_addr</td>
+    <td>IEP timer base address for periodic trigger mode</td>
+</tr>
+<tr>
+    <td>endat_periodic_trigger_cfg trigger_params[ENDAT_NUM_CH_PER_SLICE_MAX]</td>
+    <td>Periodic trigger configuration for each channel</td>
+</tr>
+<tr>
+    <td>uint64_t reserved</td>
+    <td>Reserved for alignment</td>
+</tr>
+<tr>
+    <td rowspan="3">Removed</td>
+    <td>uint16_t endat_rx_clk_config</td>
+    <td rowspan="3">-</td>
+    <td rowspan="3">Configured internally by driver</td>
+</tr>
+<tr>
+    <td>uint16_t endat_tx_clk_config</td>
+</tr>
+<tr>
+    <td>uint32_t endat_rx_clk_cnten</td>
+</tr>
+<tr>
+    <td rowspan="5">Modified</td>
     <td>endatChInfoMemoryAdd</td>
     <td>ch_info_memory_add</td>
-    <td>Renamed to snake_case</td>
+    <td rowspan="2">Renamed</td>
 </tr>
 <tr>
-    <td>ICSS clock</td>
     <td>icssg_clk</td>
     <td>icss_clk</td>
-    <td>Renamed (icssg→icss)</td>
 </tr>
 <tr>
-    <td>config array</td>
     <td>struct endat_pruss_config config[3]</td>
     <td>endat_pruicss_config config[ENDAT_NUM_CH_PER_SLICE_MAX]</td>
-    <td>Type renamed, uses macro for array size</td>
+    <td rowspan="3">Use macro for array size</td>
 </tr>
 <tr>
-    <td>cmd array</td>
     <td>struct endat_pruss_cmd cmd[3]</td>
     <td>endat_pruicss_cmd cmd[ENDAT_NUM_CH_PER_SLICE_MAX]</td>
-    <td>Type renamed, uses macro for array size</td>
 </tr>
 <tr>
-    <td>ch array</td>
     <td>Endat_ChInfo ch[3]</td>
     <td>endat_ch_info ch[ENDAT_NUM_CH_PER_SLICE_MAX]</td>
-    <td>Type renamed, uses macro for array size</td>
-</tr>
-</table>
-
-### New Structures (endat_interface.h)
-
-<table>
-<tr>
-    <th>Structure</th>
-    <th>Purpose</th>
-</tr>
-<tr>
-    <td>endat_pruicss_cmd</td>
-    <td>PRU-ICSS command interface (typedef version of struct endat_pruss_cmd)</td>
-</tr>
-<tr>
-    <td>endat_pruicss_config</td>
-    <td>PRU-ICSS configuration interface (typedef version of struct endat_pruss_config)</td>
-</tr>
-<tr>
-    <td>endat_periodic_trigger_cfg</td>
-    <td>IEP event configuration for periodic mode (cmp_event, cap_event, iep_capture_reg)</td>
-</tr>
-<tr>
-    <td>endat_ch_rx_info_array</td>
-    <td>Array structure for channel RX info (replaces struct endatChRxInfo)</td>
 </tr>
 </table>
 
@@ -659,7 +519,7 @@ The following structures in endat_interface.h have been renamed to follow consis
 <tr>
     <td>endat_clock_config</td>
     <td>rx_clock_source, tx_clock_source, pru_clock, pru_uart_clock</td>
-    <td>Clock configuration now handled via SysConfig and endat_attrs structure. Configure clock sources in SysConfig instead.</td>
+    <td>Clock configuration now handled via endat_attrs structure</td>
 </tr>
 </table>
 
@@ -691,7 +551,7 @@ The following structures in endat_interface.h have been renamed to follow consis
     <td>priv (pointer to endat_priv), attrs (pointer to endat_attrs)</td>
 </tr>
 <tr>
-    <td>endat_periodic_trigger_cfg</td>
+    <td>\ref endat_periodic_trigger_cfg</td>
     <td><code>typedef struct endat_periodic_trigger_cfg_s endat_periodic_trigger_cfg</code></td>
     <td>IEP event configuration for periodic trigger</td>
     <td>iep_cmp_event, iep_cap_event, iep_capture_reg</td>
@@ -699,7 +559,7 @@ The following structures in endat_interface.h have been renamed to follow consis
 </table>
 
 
-### Type Changes
+### Type and Name Changes
 
 <table>
 <tr>
@@ -708,18 +568,8 @@ The following structures in endat_interface.h have been renamed to follow consis
     <th>Description</th>
 </tr>
 <tr>
-    <td>struct endat_clk_cfg<br>struct endat_priv</td>
-    <td>typedef struct endat_clk_cfg_s ... endat_clk_cfg<br>typedef struct endat_priv_s ... endat_priv</td>
-    <td>Converted to typedef</td>
-</tr>
-<tr>
-    <td>struct endat_data<br>struct endat_position<br>struct endat_addinfo<br>struct endat_position_addinfo<br>struct endat_addr_params<br>struct endat_test_values</td>
-    <td>typedef struct endat_data_s ... endat_data<br>typedef struct endat_position_s ... endat_position<br>typedef struct endat_addinfo_s ... endat_addinfo<br>typedef struct endat_position_addinfo_s ... endat_position_addinfo<br>typedef struct endat_addr_params_s ... endat_addr_params<br>typedef struct endat_test_values_s ... endat_test_values</td>
-    <td>Converted to typedef</td>
-</tr>
-<tr>
-    <td>union endat_format_data</td>
-    <td>typedef union endat_format_data_u ... endat_format_data</td>
+    <td>struct endat_clk_cfg<br>struct endat_priv<br>struct endat_data<br>struct endat_position<br>struct endat_addinfo<br>struct endat_position_addinfo<br>struct endat_addr_params<br>struct endat_test_values<br>union endat_format_data</td>
+    <td>typedef struct endat_clk_cfg_s ... endat_clk_cfg<br>typedef struct endat_priv_s ... endat_priv<br>typedef struct endat_data_s ... endat_data<br>typedef struct endat_position_s ... endat_position<br>typedef struct endat_addinfo_s ... endat_addinfo<br>typedef struct endat_position_addinfo_s ... endat_position_addinfo<br>typedef struct endat_addr_params_s ... endat_addr_params<br>typedef struct endat_test_values_s ... endat_test_values<br>typedef union endat_format_data_u ... endat_format_data</td>
     <td>Converted to typedef</td>
 </tr>
 <tr>
@@ -728,13 +578,119 @@ The following structures in endat_interface.h have been renamed to follow consis
     <td>Added endat_ prefix to type name and converted to typedef</td>
 </tr>
 <tr>
+    <td>Endat_CrcInfo<br>Endat_ChInfo<br>Endat_ChRTInfo<br>Endat_ChRxInfo</td>
+    <td>endat_crc_info<br>endat_ch_info<br>endat_ch_rt_info<br>endat_ch_rx_info</td>
+    <td>Renamed</td>
+</tr>
+<tr>
+    <td>struct endat_pruss_cmd<br>struct endat_pruss_config<br>struct endat_pruss_xchg<br>struct endatChRxInfo</td>
+    <td>typedef endat_pruicss_cmd_s ... endat_pruicss_cmd<br>typedef endat_pruicss_config_s ... endat_pruicss_config<br>typedef endat_pruicss_xchg_s ... endat_pruicss_xchg<br>typedef endat_ch_rx_info_array_s ... endat_ch_rx_info_array</td>
+    <td>Renamed with typedef</td>
+</tr>
+<tr>
     <td>enum { linear, rotary }</td>
-    <td>enum endat_encoder_type_e { ENDAT_ENCODER_TYPE_LINEAR, ENDAT_ENCODER_TYPE_ROTARY }</td>
-    <td>Named enum with ENDAT_ prefixed values</td>
+    <td>enum endat_encoder_type_e <br>{ ENDAT_ENCODER_TYPE_LINEAR, ENDAT_ENCODER_TYPE_ROTARY} <br> endat_encoder_type</td>
+    <td>Named enum with updated values containing ENDAT_ENCODER_TYPE_ prefix</td>
+</tr>
+</table>
+
+### Member Name Changes
+
+<table>
+<tr>
+    <th>Structure</th>
+    <th>Old Member</th>
+    <th>New Member</th>
+</tr>
+<tr>
+    <td rowspan="4">endat_crc_info</td>
+    <td>errCntData</td>
+    <td>err_cnt_data</td>
+</tr>
+<tr>
+    <td>errCntAddinfox</td>
+    <td>err_cnt_addinfox</td>
+</tr>
+<tr>
+    <td>errCntAddinfo1</td>
+    <td>err_cnt_addinfo1</td>
+</tr>
+<tr>
+    <td>resvdInt1</td>
+    <td>resvd_int1</td>
+</tr>
+<tr>
+    <td rowspan="5">endat_ch_info</td>
+    <td>numClkPulse</td>
+    <td>num_clk_pulse</td>
+</tr>
+<tr>
+    <td>endat22Stat</td>
+    <td>endat22_stat</td>
+</tr>
+<tr>
+    <td>rxClkLess</td>
+    <td>rx_clk_less</td>
+</tr>
+<tr>
+    <td>propDelay</td>
+    <td>prop_delay</td>
+</tr>
+<tr>
+    <td>enableRTM</td>
+    <td>enable_rtm</td>
+</tr>
+<tr>
+    <td rowspan="5">endat_ch_rt_info</td>
+    <td>recoveryTime</td>
+    <td>recovery_time</td>
+</tr>
+<tr>
+    <td>currentCounterValue</td>
+    <td>current_counter_value</td>
+</tr>
+<tr>
+    <td>lastCounterValue</td>
+    <td>last_counter_value</td>
+</tr>
+<tr>
+    <td>startingValue</td>
+    <td>starting_value</td>
+</tr>
+<tr>
+    <td>isCounterStuck</td>
+    <td>is_counter_stuck</td>
+</tr>
+<tr>
+    <td rowspan="6">endat_ch_rx_info</td>
+    <td>posWord0</td>
+    <td>pos_word0</td>
+</tr>
+<tr>
+    <td>posWord1</td>
+    <td>pos_word1</td>
+</tr>
+<tr>
+    <td>posWord2</td>
+    <td>pos_word2</td>
+</tr>
+<tr>
+    <td>posWord3</td>
+    <td>pos_word3</td>
+</tr>
+<tr>
+    <td>crcStatus</td>
+    <td>crc_status</td>
+</tr>
+<tr>
+    <td>recoveryTimeParms</td>
+    <td>recovery_time_parms</td>
 </tr>
 </table>
 
 ## Macro and Constant Changes
+
+\note Only important macro changes are listed below.
 
 ### New Macros
 
@@ -742,14 +698,6 @@ The following structures in endat_interface.h have been renamed to follow consis
 <tr>
     <th>New Macro</th>
     <th>Description</th>
-</tr>
-<tr>
-    <td>ENDAT_CONFIG_PERIODIC_TRIGGER_CAP_MODE</td>
-    <td>CAP-based periodic triggering</td>
-</tr>
-<tr>
-    <td>ENDAT_RX_FRAC_DIV</td>
-    <td>RX fractional divider enable</td>
 </tr>
 <tr>
     <td>ENDAT_OPMODE_CMP_PERIODIC</td>
@@ -786,10 +734,6 @@ The following structures in endat_interface.h have been renamed to follow consis
 <tr>
     <td>ENDAT_DEFAULT_MAX_WAIT_LOOP_COUNT</td>
     <td>Default timeout loop count (1000)</td>
-</tr>
-<tr>
-    <td>ENDAT_DELAY_COUNTER_INCREMENT</td>
-    <td>Delay counter increment value</td>
 </tr>
 <tr>
     <td>ENDAT_CMD_PROCESS_DELAY_12MS_US</td>
@@ -864,9 +808,20 @@ The following structures in endat_interface.h have been renamed to follow consis
     <td>RT_COUNTER_STARTING_VALUE</td>
     <td>ENDAT_RT_COUNTER_STARTING_VALUE</td>
 </tr>
+</table>
+
+### Modified Macros
+
+<table>
 <tr>
-    <td>ENDAT_CONFIG_PERIODIC_TRIGGER_MODE</td>
-    <td>ENDAT_CONFIG_PERIODIC_TRIGGER_CMP_MODE</td>
+    <th>Macro</th>
+    <th>Key Changes</th>
+    <th>Additional Details</th>
+</tr>
+<tr>
+    <td>ENDAT_GET_POS_MULTI_TURN(pos, handle)<br>ENDAT_GET_POS_SINGLE_TURN(pos, handle)</td>
+    <td>- Parameter renamed: <code>priv</code> to <code>handle</code><br>- Type cast changed: <code>unsigned long long</code> to <code>uint64_t</code></td>
+    <td>- Update all call sites to pass <code>handle</code> instead of <code>priv</code></td>
 </tr>
 </table>
 
@@ -879,13 +834,13 @@ The following structures in endat_interface.h have been renamed to follow consis
 </tr>
 <tr>
     <td>EINVAL</td>
-    <td>Removed - use SystemP return codes instead</td>
+    <td>Removed, replaced with SystemP return codes</td>
 </tr>
 </table>
 
 ## Return Value Changes
 
-Many APIs that previously returned void return int32_t for proper error handling:
+Many APIs that previously returned void return int32_t for proper error handling.
 
 <table>
 <tr>
@@ -969,8 +924,6 @@ if (handle == NULL)
 **Old Code:**
 ```c
 endat_command_process(priv, cmd, cmd_supplement, &val);
-endat_position_update(priv);
-position = endat_get_position(priv);
 ```
 
 **New Code:**
@@ -984,8 +937,6 @@ else if (ret != SystemP_SUCCESS)
 {
     /* Handle other errors */
 }
-endat_position_update(handle);
-position = endat_get_position(handle);
 ```
 
 ### Example 3: Configuring Periodic Mode
@@ -1046,30 +997,23 @@ SysConfig will generate:
    - Replace all `struct endat_priv *priv` with `endat_handle handle`
    - Use `endat_get_priv()` when you need access to priv structure
 
-2. **Channel access**
-   - Use `endat_get_attrs()` to access total_channels instead
-
-3. **Timeout Errors**
+2. **Timeout Errors**
    - Timeout detection is added in certain APIs waiting for firmware.
    - Adjust timeout parameters if needed via endat_params before calling endat_init().
 
-5. **SysConfig Errors**
+3. **SysConfig Errors**
    - Ensure EnDat module is added and configured in `.syscfg` file
    - Review the configured parameters
 
-6. **Periodic Mode Not Working**
+4. **Periodic Mode Not Working**
    - Explicitly choose between CMP and CAP modes
-   - Use `endat_config_periodic_trigger_cmp_mode()` for timer-based
-   - Use `endat_config_periodic_trigger_cap_mode()` for event-based
+   - Use `endat_config_periodic_trigger_cmp_mode()` for IEP compare event based trigger
+   - Use `endat_config_periodic_trigger_cap_mode()` for IEP capture event based trigger
    - Configure IEP events properly for each channel
-
-5. **Missing Configuration Parameters**
-   - Configuration was hardcoded in old implementation
-   - Move configuration to SysConfig
 
 ## Additional Resources
 
-- \ref ENDAT - EnDat Driver Documentation
-- \ref ENDAT_PERIODIC_MODES - Periodic Trigger Modes Details
-- \ref EXAMPLE_MOTORCONTROL_ENDAT - EnDat Example Application
-- \ref ENDAT_API_MODULE - Complete API Reference
+- \ref EXAMPLE_MOTORCONTROL_ENDAT
+- \ref ENDAT_API_MODULE
+- \ref ENDAT
+- \ref ENDAT_DESIGN

@@ -291,7 +291,7 @@ int32_t SDFM_setCompFilterThresholds(SDFM_Handle handle, uint8_t channel, SDFM_T
  *  \brief  Configure the first sample trigger time within one EPWM cycle
  *
  *  \param[in]  handle          SDFM handle
- *  \param[in]  samp_trig_time  first sample trigger time in one pwm cycle
+ *  \param[in]  samp_trig_time  First sample trigger time in one PWM cycle, in microseconds
  *  \param[in]  pru_core        PRU core ID (0-2): PRU - 0 (Ch 3-5 in load-share), RTU - 1 (Ch 0-2 in load-share), TXPRU - 2 (Ch 6-8 in load-share)
  *
  *  \retval SystemP_SUCCESS     Configuration successful
@@ -306,7 +306,7 @@ int32_t SDFM_setSampleTriggerTime(SDFM_Handle handle, float samp_trig_time, uint
  * \brief  Configure and enable second normal current sample trigger time within one EPWM cycle
  *
  *  \param[in]  handle          SDFM handle
- *  \param[in]  samp_trig_time  second sample trigger time in one PWM cycle
+ *  \param[in]  samp_trig_time  Second sample trigger time in one PWM cycle, in microseconds
  *  \param[in]  pru_core        PRU core ID (0-2): PRU - 0 (Ch 3-5 in load-share), RTU - 1 (Ch 0-2 in load-share), TXPRU - 2 (Ch 6-8 in load-share)
  *
  *  \retval SystemP_SUCCESS     Configuration successful
@@ -453,7 +453,7 @@ uint32_t SDFM_getFilterData(SDFM_Handle handle, uint8_t channel);
  *          \note Snoop mode must be enabled via SDFM_enableSnoopBasedNC() before calling this API for snoop mode configuration
  *
  *          If Snoop mode is not used, it configures SD HW OSR equal to
- *          matNC OSR.
+ *          the normal current (NC) OSR.
  *
  *  \param[in]  handle          SDFM handle
  *  \param[in]  channel         SDFM channel number (0-8)

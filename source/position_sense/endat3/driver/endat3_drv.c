@@ -930,8 +930,9 @@ static int32_t endat3_config_clr_cfg0(endat3_handle handle)
  * \retval ENDAT3_ERR_INVALID_INPUT (-1) if handle is NULL
  *
  * \note Validation: Handle pointer is validated
- * \note Scaling formula: actual_cycles = (reference_cycles * actual_freq) / 1MHz
- * \note Delay types: TX start delays, RX start delays, propagation time delays, CRC delays
+ * \note Scaling formula for TX start and 10ms delays: actual_cycles = (reference_cycles * actual_freq) / 1MHz
+ * \note Scaling formula for sampling delay: actual_cycles = actual_freq / 5MHz
+ * \note Delay types computed: TX start delays (3 values), 10ms delay, and sampling delay
  */
 static int32_t endat3_set_delay_cycles(endat3_handle handle)
 {
@@ -940,18 +941,20 @@ static int32_t endat3_set_delay_cycles(endat3_handle handle)
 
     priv = handle->priv;
     core_clk_freq = handle->attrs->core_clk_freq;
-    /* Scale delay values based on actual PRU frequency relative to 1MHz reference.
-     * Formula: actual_cycles = (reference_cycles * actual_freq) / reference_freq
+    /* Scale TX start and 10ms delay values using 1MHz reference frequency.
+     * Formula: actual_cycles = (reference_cycles * actual_freq) / 1MHz
      * Reference values are defined as macros and represent cycles at 1MHz base frequency.
      *
      * 64-bit arithmetic prevents overflow: Cast to uint64_t ensures safe intermediate result before division scales back to uint32_t range
      */
-
     priv->endat3_interface->delay_tx_start_1    = (uint32_t)(((uint64_t)ENDAT3_TX_START_DELAY_1_REF_CYCLES * core_clk_freq) / REFERENCE_PRU_FREQ_HZ);
     priv->endat3_interface->delay_tx_start_2    = (uint32_t)(((uint64_t)ENDAT3_TX_START_DELAY_2_REF_CYCLES * core_clk_freq) / REFERENCE_PRU_FREQ_HZ);
     priv->endat3_interface->delay_tx_start_3    = (uint32_t)(((uint64_t)ENDAT3_TX_START_DELAY_3_REF_CYCLES * core_clk_freq) / REFERENCE_PRU_FREQ_HZ);
     priv->endat3_interface->delay_10ms          = (uint32_t)(((uint64_t)ENDAT3_DELAY_10MS_REF_CYCLES * core_clk_freq) / REFERENCE_PRU_FREQ_HZ);
 
+    /* Sampling delay uses 5MHz reference: actual_cycles = actual_freq / 5MHz
+     * Results in 40 cycles at 200MHz and 60 cycles at 300MHz PRU frequency.
+     */
     priv->endat3_interface->delay_sampling      = (uint32_t)(core_clk_freq / REFERENCE_PRU_FREQ_HZ_FOR_SAMPLING);
 
     return ENDAT3_SUCCESS;

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023-2025 Texas Instruments Incorporated
+ *  Copyright (C) 2023-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -207,8 +207,9 @@ typedef struct bissc_pruicss_xchg_s
 
     volatile uint8_t opmode[BISSC_NUM_CH_PER_SLICE_MAX];
     /**< Operation mode for each channel.
-     *   0 (BISSC_OPMODE_PERIODIC) = Automatic periodic triggering via IEP timer
-     *   1 (BISSC_OPMODE_HOST_TRIGGER) = Manual trigger by ARM via cycle_trigger */
+     *   0 (BISSC_OPMODE_PERIODIC_CMP) = Automatic periodic triggering via IEP compare event
+     *   1 (BISSC_OPMODE_HOST_TRIGGER) = Manual trigger by ARM via cycle_trigger
+     *   2 (BISSC_OPMODE_PERIODIC_CAP) = Automatic periodic triggering via IEP capture event */
 
     bissc_enc_len  enc_len[BISSC_NUM_CH_PER_SLICE_MAX];
     /**< Encoder resolution configuration for each channel.

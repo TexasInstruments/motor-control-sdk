@@ -935,7 +935,7 @@ int32_t tamagawa_command_build(tamagawa_handle handle, int32_t cmd)
 
         case DATA_ID_6:
             /* EEPROM Write */
-            /* Loop through all the selected channels and prepare the EEPROM Read Tx data based on the CF, ADF, EDF and CRC data */
+            /* Loop through all the selected channels and prepare the EEPROM Write Tx data based on the CF, ADF, EDF and CRC data */
             for(ch = 0; ch < TAMAGAWA_MAX_CHANNELS_PER_SLICE; ch++)
             {
                 if(attrs->channel_mask & (1 << ch))

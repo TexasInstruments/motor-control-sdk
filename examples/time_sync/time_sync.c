@@ -65,18 +65,6 @@ extern TimesyncHandle timesyncHandle1;
 uint32_t gpioBaseAddr, pinNum;
 #endif
 
-/**
- * \brief Main time synchronization state machine execution
- *
- * \param handle Handle to timesync instance
- *
- * Performs one iteration of the synchronization process:
- * - Captures new timestamp
- * - Calculates offset from expected time
- * - Updates filtering and statistics
- * - Applies compensation
- * - Manages state transitions
- */
 void timesync_run(TimesyncHandle handle)
 {
     uint32_t iepBaseAddress = handle->iepBaseAddress;
@@ -270,13 +258,6 @@ void timesync_run(TimesyncHandle handle)
     return;
 }
 
-/**
- * \brief Initializes time synchronization parameters and hardware
- *
- * \param params Pointer to TimesyncParams structure to initialize
- * \param iepBaseAddress Base address of the IEP module
- * \return Handle to the initialized timesync instance
- */
 TimesyncHandle timesync_init(TimesyncParams *params, uint32_t iepBaseAddress)
 {
     TimesyncHandle handle;
@@ -301,11 +282,6 @@ TimesyncHandle timesync_init(TimesyncParams *params, uint32_t iepBaseAddress)
     return params;
 }
 
-/**
- * \brief Waits for an IEP latch0 event to occur
- * \param iepBaseAddress Base address of the IEP module
- * \return 0 if latch event detected, 1 if timeout
- */
 uint8_t timesync_wait_iep_latch0_event(uint32_t iepBaseAddress, uint32_t sleepTime)
 {
     volatile uint32_t capRegValue = 0;
@@ -343,10 +319,6 @@ uint8_t timesync_wait_iep_latch0_event(uint32_t iepBaseAddress, uint32_t sleepTi
     return 0;
 }
 
-/**
- * \brief Enables the IEP latch0 functionality
- * \param iepBaseAddress Base address of the IEP module
- */
 void timesync_enable_latch(uint32_t iepBaseAddress)
 {
     uint32_t captureCtrlRegValue = 0;
@@ -372,18 +344,6 @@ void timesync_enable_latch(uint32_t iepBaseAddress)
     return;
 }
 
-/**
- * \brief Applies gradual clock rate adjustments to minimize offset
- * \param handle Handle to timesync instance
- * \param adjOffset Calculated adjustment offset to apply
- *
- * - Calculates required compensation period based on measured offset
- * - Adjusts IEP counter increment value:
- *   - Normal: 5ns increment
- *   - Speed up: 10ns increment
- *   - Slow down: 0ns increment
- * - Updates compensation period register
- */
 void timesync_adjust_slow_compensation(TimesyncHandle handle, int32_t adjOffset)
 {
     uint32_t iepBaseAddress = handle->iepBaseAddress;
@@ -429,13 +389,6 @@ void timesync_adjust_slow_compensation(TimesyncHandle handle, int32_t adjOffset)
     return;
 }
 
-/**
- * \brief Resets the time synchronization mechanism to initial state
- * \param handle Handle to timesync instance
- *
- * Resets all synchronization parameters and state machine to restart
- * the synchronization process.
- */
 void timesync_reset(TimesyncHandle handle)
 {
     uint32_t iepBaseAddress;
@@ -468,10 +421,6 @@ void timesync_reset(TimesyncHandle handle)
     handle->timeOutErrorCount = 0;
 }
 
-/**
- * \brief Resets the time synchronization debug structure to initial state
- * \param timesyncDebugPtr Pointer to the timesync debug structure
- */
 void timesync_debug_reset(TimesyncDebug *timesyncDebugPtr)
 {
     if (timesyncDebugPtr == NULL) {
@@ -483,24 +432,12 @@ void timesync_debug_reset(TimesyncDebug *timesyncDebugPtr)
     timesyncDebugPtr->MminOffset = INT32_MAX;
 }
 
-/**
- * \brief Sets the initial count value for the IEP counter in first latch in event.
- *
- * \param iepBaseAddress Base address of the IEP module
- * \param initialCount Initial counter value to set (64-bit)
- */
 void timesync_do_first_adjustment(uint32_t iepBaseAddress, uint64_t initialCount)
 {
     HW_WR_REG32(iepBaseAddress + CSL_ICSS_G_PR1_IEP0_SLV_COUNT_REG0, initialCount & LOW32_MASK);
     HW_WR_REG32(iepBaseAddress + CSL_ICSS_G_PR1_IEP0_SLV_COUNT_REG1, (initialCount & HIGH32_MASK) >> 32);
 }
 
-/**
- * \brief Reads the current IEP latch0 input value
- *
- * \param iepBaseAddress Base address of the IEP module
- * \return 64-bit timestamp value from latch register
- */
 volatile uint64_t timesync_read_latch_input(uint32_t iepBaseAddress)
 {
     uint32_t capr6LowOffset = iepBaseAddress + CSL_ICSS_G_PR1_IEP0_SLV_CAPR6_REG0;
@@ -512,12 +449,6 @@ volatile uint64_t timesync_read_latch_input(uint32_t iepBaseAddress)
     return currentTimestamp;
 }
 
-/**
- * \brief Reads the current IEP counter value
- *
- * \param iepBaseAddress Base address of the IEP module
- * \return 64-bit current counter value
- */
 volatile uint64_t timesync_read_iep_count(uint32_t iepBaseAddress)
 {
     uint32_t lowOffset = iepBaseAddress + CSL_ICSS_G_PR1_IEP0_SLV_COUNT_REG0;

@@ -57,30 +57,44 @@ extern "C" {
 /**
  *    \brief    Structure defining Nikon Position data results.
  *
- *    \details  IF frame, Data field 0, Data field 1, Data field 2.
+ *    \details  IF frame, Data field 0 to Data field 4. The number of valid
+ *              data fields depends on the command issued (1 to NUM_DATA_FIELDS_MAX).
  */
 typedef struct nikon_raw_data_s
 {
     volatile uint16_t    info_field[NIKON_NUM_CH_PER_SLICE_MAX];
-    /**<Information Field receive from the encoder*/
+    /**< Information field received from the encoder */
     volatile uint16_t    data_field[NUM_DATA_FIELDS_MAX][NIKON_NUM_CH_PER_SLICE_MAX];
-    /**<Data fields receive from the encoder*/
+    /**< Data fields received from the encoder (DF0 to DF4) */
 } nikon_raw_data;
 
+/**
+ *    \brief    Structure defining Nikon CRC data
+ *
+ *    \details  Contains on-the-fly calculated CRC, received CRC from encoder,
+ *              and cumulative CRC error count per channel.
+ */
 typedef struct nikon_crc_s
 {
     volatile uint32_t pd_crc_err_cnt[NIKON_NUM_CH_PER_SLICE_MAX];
-    /**< Position data crc error count*/
+    /**< Position data CRC error count */
     volatile uint8_t pos_otf_crc[NIKON_NUM_CH_PER_SLICE_MAX];
-    /**< Position data otf crc bits*/
+    /**< Position data on-the-fly calculated CRC bits */
     volatile uint8_t pos_rcv_crc[NIKON_NUM_CH_PER_SLICE_MAX];
-    /**< Position data receive crc bits*/
+    /**< Position data received CRC bits */
 } nikon_crc;
 
+/**
+ *    \brief    Structure defining Nikon position data result (raw data + CRC)
+ *
+ *    \details  Contains raw data frames received from the encoder and the
+ *              corresponding CRC information (received CRC, calculated CRC,
+ *              and error count).
+ */
 typedef struct nikon_pos_data_res_s
 {
     nikon_raw_data raw_data;
-    /**< Raw data receive from encoder*/
+    /**< Raw data received from encoder */
     nikon_crc crc;
     /**< Calculated CRC, Received CRC and CRC error count */
 } nikon_pos_data_res;
@@ -140,8 +154,10 @@ typedef struct nikon_pruicss_xchg_s
     volatile uint8_t primary_core_mask;
     /**< Primary core mask incase of load share */
     volatile uint8_t opmode[NIKON_NUM_CH_PER_SLICE_MAX];
-    /**< operation mode status: '0' for periodic trigger
-     * and '1' for host trigger */
+    /**< Operation mode per channel:
+     *   0 = periodic trigger CMP mode (NIKON_CONFIG_PERIODIC_TRIGGER_CMP_MODE)
+     *   1 = host trigger mode (NIKON_CONFIG_HOST_TRIGGER_MODE)
+     *   2 = periodic trigger CAP mode (NIKON_CONFIG_PERIODIC_TRIGGER_CAP_MODE) */
     volatile uint32_t cdf_frame[NIKON_NUM_CH_PER_SLICE_MAX];
     /**< Command to be transmitted to encoder */
     volatile uint32_t mdf_frame[NIKON_NUM_CH_PER_SLICE_MAX][NUM_MDF_MAX];
@@ -155,7 +171,7 @@ typedef struct nikon_pruicss_xchg_s
     nikon_pos_data_res pos_data_res[NUM_ENCODERS_MAX];
     /**< Results extracted from raw data received */
     uint32_t iep_base_address;
-    /**< IEP register base address for periodic trigger mode */
+    /**< IEP register base address offset from PRU-ICSS base, used for periodic trigger mode */
     nikon_periodic_trigger_cfg trigger_params[NIKON_NUM_CH_PER_SLICE_MAX];
     /**< Periodic trigger configuration parameters for each channel (ch0, ch1, ch2).
      *   Contains IEP event numbers and capture register addresses */

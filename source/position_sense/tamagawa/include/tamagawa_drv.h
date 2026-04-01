@@ -250,8 +250,8 @@ typedef enum tamagawa_data_id_e
     DATA_ID_8,  /**< Reset */
     DATA_ID_C,  /**< Reset */
     DATA_ID_D,  /**< EEPROM read */
-    PERIODIC_TRIGGER_CMP_CMD, /**< Periodic trigger command */
-    PERIODIC_TRIGGER_CAP_CMD, /**< Periodic trigger command */
+    PERIODIC_TRIGGER_CMP_CMD, /**< Periodic trigger command using IEP compare event */
+    PERIODIC_TRIGGER_CAP_CMD, /**< Periodic trigger command using IEP capture event */
     DATA_ID_NUM /**< Number of Data ID codes */
 } tamagawa_data_id;
 
@@ -620,20 +620,24 @@ void tamagawa_params_init(tamagawa_params *params);
  *              - Validates index against the number of configured instances (gTamagawaConfigNum)
  *              - Validates PRUICSS handle is not NULL
  *              - Validates PRU slice value (0 or 1)
- *              - Validates IEP comparator event (0-15)
+ *              - Validates IEP compare event (0-15) and capture event (0-7) for enabled channels
  *              - Validates clock frequencies (must be positive)
  *              - Validates IEP instance (0 or 1)
  *              - Validates clock source selection (0 or 1)
- *              - Validates oversampling rate (0-7)
+ *              - Validates baud rate (must be TAMAGAWA_FREQ_2_5_MHZ or TAMAGAWA_FREQ_5_MHZ)
  *              - Sets up PRU DRAM base address for firmware interface
- *              - Initializes register offsets based on PRU slice
  *              - Marks handle as open
  *
  *              Internal API calls (in order):
- *              - tamagawa_config_clr_cfg0() - Clears PRU Tamagawa CFG0 registers
+ *              - tamagawa_config_clr_cfg0() - Clears PRU Three Channel Peripheral Interface CFG0 registers
  *              - \ref tamagawa_config_channel() - Configures channel mask for both single and multi-channel modes
- *              - \ref tamagawa_config_host_trigger() - Sets default trigger mode to host trigger
+ *              - PRUICSS_setGpMuxSelect() - Sets GP mux selection for Three Channel Peripheral Interface
+ *              - tamagawa_config_iep_base_address() - Writes IEP base address offset to PRU DRAM
+ *              - \ref tamagawa_config_iep_cmp_event() - Configures IEP CMP event number in PRU DRAM for enabled channels
+ *              - \ref tamagawa_config_iep_cap_event() - Configures IEP CAP event number and capture register in PRU DRAM for enabled channels
+ *              - tamagawa_config_load_share() - Configures primary core mask and enables load-share hardware (for TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU mode only)
  *              - \ref tamagawa_set_baudrate() - Configures communication baud rate from attrs configuration
+ *              - \ref tamagawa_config_host_trigger() - Sets default trigger mode to host trigger
  *
  *  \param[in]  index            Index of Tamagawa handle to use in the gTamagawaHandle handle array
  *  \param[in]  params           Pointer to structure containing Tamagawa parameters. Use \ref tamagawa_params_init
