@@ -425,7 +425,8 @@ In Linux, the tools are installed by default in ${HOME}/ti.
 ## Licenses
 
 The licensing information of this SDK, as well as any third-party components included which are made available under a number of other open-source licenses are enumerated as part of the manifest.
-A complete manifest along with export control information is detailed in "${SDK_INSTALL_PATH}/docs/motor_control_sdk_*_manifest.html" file and the SDK Software License Agreement (SLA) is here [\htmllink{../../license.txt,LINK}]
+
+A complete manifest along with export control information is detailed in "${SDK_INSTALL_PATH}/docs/manifest.html" file.
 
 ## Help and Support
 
