@@ -23,7 +23,7 @@ The implementation features dual-axis BLDC motor control where the control loop 
     - Essential for accurate current measurements
 
 4. Interrupt Configuration
-    - Sets up %SDFM interrupts for both motors 
+    - Sets up %SDFM interrupts for both motors
     - Configures interrupt handlers for motors
 
 5. System Enable Sequence
@@ -45,7 +45,7 @@ The implementation features dual-axis BLDC motor control where the control loop 
     - Disables PWM outputs
     - Closes drivers and board interfaces
 
-## Supported/Tested Features 
+## Supported/Tested Features
 
 - EPWM frequency up to 50KHz
 - Both Open loop and closed loop
@@ -64,13 +64,13 @@ The single-chip dual-axis servo motor drive implementation is architected around
 
 - ICSSG1
     - EtherCAT client controller firmware
-- ICSSG0 
+- ICSSG0
     - %SDFM and EnDAT 2.2 decoding
-    - Sigma-Delta filtering firmware with Load Sharing between RTU and PRU cores in PRU0 for phase current feedback from two directly connected motors 
+    - Sigma-Delta filtering firmware with Load Sharing between RTU and PRU cores in PRU0 for phase current feedback from two directly connected motors
     - EnDat2.2 decoding firmware with Load Sharing between RTU and TXPRU cores in PRU1 for position feedback from two directly connected absolute encoders
 - R5F_1_0
     - EtherCAT client stack implementing CiA402 using FreeRTOS
-- R5F_0_0 
+- R5F_0_0
     - Two independent closed-loop FOC capable of current, speed, or position closed-loop control for two directly connected motors with absolute encoders
     - EPWM
         - Six channels of enhanced PWM peripherals to generate waveforms based on the output of two FOC loops
@@ -139,10 +139,10 @@ The following settings are used in the SDK example:
 - Frequency: 20MHz
 - Normal current trigger point: 30us
 
-`HAL_setupSDFM` and `HAL_readMtrSdfmData` functions are used to initialize %SDFM and to get %SDFM samples, respectively. Other relevant macros and %SDFM handle are defined in `hal.h` and `hal.c`. The current example uses a common configuration for both motors and PRU0 channel and RTU channels in load share mode for sampling. The IEP SYNC output is used to generate a 20 MHz %SDFM clock. Parameter configuration can be changed in `hal.h` file and %SDFM Sysconfig.
+`HAL_setupSDFM` and `HAL_readMtrSdfmData` functions are used to initialize %SDFM and to get %SDFM samples, respectively. Other relevant macros and %SDFM handle are defined in `hal.h` and `hal.c`. The current example uses a common configuration for both motors and PRU0 channel and RTU channels in load share mode for sampling. The IEP SYNC output is used to generate a 20 MHz %SDFM clock. Parameter configuration can be changed in `hal.h` file and %SDFM SysConfig.
 
-\note 
-- The following macros should be updated according to the OSR values and SINC filter types when the OSR value and filter type are changed in the Sysconfig.
+\note
+- The following macros should be updated according to the OSR values and SINC filter types when the OSR value and filter type are changed in the SysConfig.
 ```c
    /* Sigma delta filter output range for SINC3 OSR64: 64*64*64 */
    #define SDFM_FULL_SCALE         262144.0f
@@ -196,7 +196,7 @@ The following equipment is required to test this reference design:
 - Two BLY342D-48V-3200 Anaheim Automation 3-phase Brushless DC motors
 - Two ROQ-437 EnDat2.2 Encoders with cables
 
-\note 
+\note
 - The PROC109A version of LP supports two channels
 - To enable the second channel on LP, SW6 needs to be turned OFF
 
@@ -304,7 +304,7 @@ The system is gradually tested and verified in multiple stages to ensure the fin
 After importing and building the system project, the executable binary files for R5F_0_0 and R5F_1_0 appear in the CCS workspace directory:
 
 1. Connect to the target AM243x LP using the target configuration file
-2. Load and run R5F_0_0 example 
+2. Load and run R5F_0_0 example
 
 #### Build Level 1
 
@@ -393,7 +393,7 @@ In this build level, the system runs with open-loop control. The %SDFM values ar
     datalogObj->iptr[3] = (float32_t*) &motorVars_M1.angleFOC_rad;
     ```
     - Enable DATALOG in predefined symbols
-    - Rebuild the example and import data log file in Graph tool window from `<workspace>\universal_motorcontrol_am243x_r5fss0-0_nortos_ti-armclang\src_control\debug\` 
+    - Rebuild the example and import data log file in Graph tool window from `<workspace>\universal_motorcontrol_am243x_r5fss0-0_nortos_ti-armclang\src_control\debug\`
     - sampling signals waveform displayed on the graph tool as shown in Figure
 
 \note With DATALOG enabled, any variables can be observed using the Graph tool. Just the required variables need to be configured in `sys_main.c` as described.
@@ -439,12 +439,12 @@ Required motor parameters must be defined in user_mtr1.h as per motor specificat
 
 ```c
 #define USER_MOTOR1_TYPE              MOTOR_TYPE_PM
-#define USER_MOTOR1_NUM_POLE_PAIRS    
-#define USER_MOTOR1_Rr_Ohm           
-#define USER_MOTOR1_Rs_Ohm           
-#define USER_MOTOR1_Ls_d_H           
-#define USER_MOTOR1_Ls_q_H           
-#define USER_MOTOR1_RATED_FLUX_VpHz  
+#define USER_MOTOR1_NUM_POLE_PAIRS
+#define USER_MOTOR1_Rr_Ohm
+#define USER_MOTOR1_Rs_Ohm
+#define USER_MOTOR1_Ls_d_H
+#define USER_MOTOR1_Ls_q_H
+#define USER_MOTOR1_RATED_FLUX_VpHz
 ```
 
 ##### Run and Results

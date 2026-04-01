@@ -64,18 +64,18 @@ After the user selects an EnDat command:
 - Then the EnDat APIs are invoked to process the command set, set the host trigger bit, and wait until the host trigger bit is cleared. \if (SOC_AM243X || SOC_AM64X) If multi channel with encoders of different make is used, these operations are done for each channel.\endif
 - The received EnDat data is processed & validated using the defined APIs. The result is then presented to the user.
 
-### Channel Selection In Sysconfig
+### Channel Selection In SysConfig
 
 \cond SOC_AM243X || SOC_AM64X
-\image html EnDat_channel_selection_In_sysconfig.PNG      "Channel Selection In Sysconfig"
+\image html EnDat_channel_selection_In_sysconfig.PNG "Channel Selection In SysConfig"
 \endcond
 
 \cond SOC_AM261X
-\image html EnDat_channel_selection_In_sysconfig_for_am261x.PNG   "Channel Selection In Sysconfig"
+\image html EnDat_channel_selection_In_sysconfig_for_am261x.PNG "Channel Selection In SysConfig"
 \endcond
 
 \cond (SOC_AM263X || SOC_AM263PX )
-\image html EnDat_channel_selection_In_sysconfig_for_am263x.PNG   "Channel Selection In Sysconfig"
+\image html EnDat_channel_selection_In_sysconfig_for_am263x.PNG "Channel Selection In SysConfig"
 \endcond
 
 \cond (SOC_AM243X || SOC_AM64X)
