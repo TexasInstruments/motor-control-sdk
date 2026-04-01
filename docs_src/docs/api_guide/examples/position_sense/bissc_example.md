@@ -49,7 +49,7 @@ The BISS-C receiver firmware running on PRU provides a defined interface. The BI
 
 \image html bissc_syscfg_ch_sel.png "Channel Selection In SysConfig"
 
-\image html Endat_channel_selection_configuration.png     "BiSS-C configuration selection between Single/Multi channel"
+\image html Endat_channel_selection_configuration.png "Mode selection based on number of channels and encoder type"
 
 \endcond
 

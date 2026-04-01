@@ -79,7 +79,7 @@ After the user selects an EnDat command:
 \endcond
 
 \cond (SOC_AM243X || SOC_AM64X)
-\image html Endat_channel_selection_configuration.png     "EnDat configuration selection between Single/Multi channel "
+\image html Endat_channel_selection_configuration.png "Mode selection based on number of channels and encoder type"
 \endcond
 
 ## Periodic Trigger Modes {#ENDAT_EXAMPLE_PERIODIC_MODE}

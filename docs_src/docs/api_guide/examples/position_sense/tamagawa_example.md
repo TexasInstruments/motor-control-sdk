@@ -42,6 +42,13 @@ The host serial port should be configured to 115200 baud, no parity, 1 stop bit 
 
 The Tamagawa diagnostic application interacts with the Tamagawa receiver firmware interface. It then presents the user with menu options to select Data ID code (as defined by Tamagawa) to be sent to the encoder. The application collects the data entered by the user and configures the relevant interface. Then via the Tamagawa receiver interface, the command is triggered. Once the command completion is indicated by the interface, the status of the transaction is checked. If the Status indicates success, the result is presented to the user.
 
+\cond SOC_AM243X
+## Channel Selection In SysConfig
+
+\image html Endat_channel_selection_configuration.png "Mode selection based on number of channels and encoder type"
+
+\endcond
+
 ## Periodic Trigger Modes {#TAMAGAWA_EXAMPLE_PERIODIC_MODE}
 
 The Tamagawa diagnostic application supports two types of periodic trigger modes for continuous position sampling as described in \ref TAMAGAWA_PERIODIC_MODES.
