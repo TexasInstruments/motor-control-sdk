@@ -45,11 +45,11 @@ The host serial port should be configured to 115200 baud, no parity, 1 stop bit 
 The BISS-C receiver firmware running on PRU provides a defined interface. The BISS-C diagnostic application interacts with the BISS-C receiver firmware interface. It then presents the user with menu options to select Data ID code. The application collects the data entered by the user and configures the relevant interface. Then via the BISS-C receiver interface, the command is triggered. Once the command completion is indicated by the interface, the status of the transaction is checked. If the status indicates success, the result is presented to the user.
 
 \cond SOC_AM243X
-## Channel Selection In Sysconfig
+## Channel Selection In SysConfig
 
-\image html bissc_syscfg_ch_sel.png      "Channel Selection In Sysconfig"
+\image html bissc_syscfg_ch_sel.png "Channel Selection In SysConfig"
 
-\image html Endat_channel_selection_configuration.png     "BiSS-C configuration selection between Single/Multi channel"
+\image html Endat_channel_selection_configuration.png "Mode selection based on number of channels and encoder type"
 
 \endcond
 
@@ -550,11 +550,6 @@ Shown below is a sample output when the application is run:
 
 \imageStyle{bissc_sample_output.png,width:60%}
 \image html bissc_sample_output.png "BISS-C Sample Output"
-
-Shown below is a sample output to enable safety and the safety encoder results:
-\imageStyle{bissc_safety_sample_output.png,width:60%}
-\image html bissc_safety_sample_output.png "BISS-C Sample Output when safety is enabled"
-
 
 ## BiSS-C Debug Guide {#BISSC_DEBUG_GUIDE}
 This section describes how to debug the BiSS-C application, including a guide to debugging the BiSS-C example and firmware. Several common debugging steps on verifying the configuration of key registers, hardware details for probing pins, debugging firmware, common issues with multi-channel or continuous mode, etc. are described in \ref ENCODER_EXAMPLES_DEBUG_GUIDE.

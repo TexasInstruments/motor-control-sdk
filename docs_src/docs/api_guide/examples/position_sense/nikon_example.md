@@ -60,11 +60,11 @@ The Nikon receiver firmware running on ICSS-PRU provides a defined interface. Th
 
 \cond SOC_AM243X
 
-## Channel Selection In Sysconfig
+## Channel Selection In SysConfig
 
-\image html nikon_syscfg_ch_sel.png      "Channel Selection In Sysconfig"
+\image html nikon_syscfg_ch_sel.png "Channel Selection In SysConfig"
 
-\image html Endat_channel_selection_configuration.png     "Nikon configuration selection between Single/Multi channel "
+\image html Endat_channel_selection_configuration.png "Mode selection based on number of channels and encoder type"
 
 \endcond
 

@@ -210,16 +210,16 @@ Uniflash                              | R5F            | 9.3.0
     <td> -
 </tr>
 <tr>
-    <td> PINDSW-9788
-    <td> BiSS-C/Nikon: SysConfig does not enable the required PRU GPIO pins
-    <td> Position Sense BiSS-C, Position Sense Nikon A-format
+    <td> PINDSW-9784
+    <td> Position Sense: PR0_PRU0_GPIO7 pin is not available in SoC, but shown in SysConfig modules
+    <td> Position Sense BiSS-C, Position Sense EnDat, Position Sense Nikon, Position Sense Tamagawa
     <td> 10.0 onwards
     <td> -
 </tr>
 <tr>
-    <td> PINDSW-9784
-    <td> Position Sense: PR0_PRU0_GPIO7 pin is not available in SoC, but shown in SysConfig modules
-    <td> Position Sense BiSS-C, Position Sense EnDat, Position Sense Nikon, Position Sense Tamagawa
+    <td> PINDSW-9788
+    <td> BiSS-C/Nikon: SysConfig does not enable the required PRU GPIO pins
+    <td> Position Sense BiSS-C, Position Sense Nikon A-format
     <td> 10.0 onwards
     <td> -
 </tr>
