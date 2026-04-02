@@ -36,6 +36,15 @@
 #define ENABLE_DEBUG_LOGS
 #define ENABLE_DEBUG_GPIO
 
+/**
+ * \brief State definitions for time synchronization state machine
+ *
+ * Defines the possible states during the synchronization process:
+ * - RESET: Initial state or after sync loss
+ * - FIRST_ADJUSTMENT_DONE: Initial sync completed
+ * - SLOW_COMPENSATION: Normal operation with drift compensation
+ * - TIMER_IN_SYNC: System is synchronized with master
+ */
 #define TIMESYNC_STATE_RESET                    (0U) /**< Initial/reset state */
 #define TIMESYNC_STATE_FIRST_ADJUSTMENT_DONE    (1U) /**< First sync completed */
 #define TIMESYNC_STATE_SLOW_COMPENSATION        (2U) /**< Applying drift compensation */
@@ -101,16 +110,6 @@
  *      Number of entries used for clustering
  */
 #define OFFSET_ALGO_CLUSTER_SIZE   3
-
-/**
- * \brief State definitions for time synchronization state machine
- *
- * Defines the possible states during the synchronization process:
- * - RESET: Initial state or after sync loss
- * - FIRST_ADJUSTMENT_DONE: Initial sync completed
- * - SLOW_COMPENSATION: Normal operation with drift compensation
- * - TIMER_IN_SYNC: System is synchronized with master
- */
 
 
 /**
@@ -278,11 +277,9 @@ uint8_t timesync_wait_iep_latch0_event(uint32_t iepBaseAddress, uint32_t sleepTi
  * \param handle Handle to timesync instance
  * \param adjOffset Calculated adjustment offset to apply
  *
-
  */
 void timesync_adjust_slow_compensation(TimesyncHandle handle, int32_t adjOffset);
 
-/**
 /**
  * \brief Sets the IEP counter to align the local clock after the first sync event
  *
