@@ -551,6 +551,11 @@ Shown below is a sample output when the application is run:
 \imageStyle{bissc_sample_output.png,width:60%}
 \image html bissc_sample_output.png "BISS-C Sample Output"
 
+Shown below is a sample output when two encoders are in daisy chain and safety is enabled in one of encoders:
+
+\imageStyle{bissc_safety_sample_output.png,width:60%}
+\image html bissc_safety_sample_output.png "BISS-C Sample Output when safety is enabled"
+
 ## BiSS-C Debug Guide {#BISSC_DEBUG_GUIDE}
 This section describes how to debug the BiSS-C application, including a guide to debugging the BiSS-C example and firmware. Several common debugging steps on verifying the configuration of key registers, hardware details for probing pins, debugging firmware, common issues with multi-channel or continuous mode, etc. are described in \ref ENCODER_EXAMPLES_DEBUG_GUIDE.
 
