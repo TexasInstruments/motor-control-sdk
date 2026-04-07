@@ -267,7 +267,7 @@ Uniflash (included in AM261x MCU+ SDK)              | R5F            | 9.3.0
     <td> PINDSW-9788
     <td> BiSS-C/Nikon: SysConfig does not enable the required PRU GPIO pins
     <td> Position Sense BiSS-C, Position Sense Nikon A-format
-    <td> 10.0.0 onwards
+    <td> 10.0.1 onwards
     <td> -
 </tr>
 <tr>
