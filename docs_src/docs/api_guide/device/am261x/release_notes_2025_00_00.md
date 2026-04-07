@@ -229,7 +229,7 @@ Uniflash (included in AM261x MCU+ SDK)              | R5F            | 9.3.0
     <td> -
 </tr>
 <tr>
-    <td> PINDSW-9317
+    <td> \htmllink{https://sir.ext.ti.com/jira/browse/EXT_EP-13295, EXT_EP-13295}, PINDSW-9317
     <td> BiSS-C: bissc_update_data_len does not set number of encoders correctly
     <td> Position Sense BiSS-C
     <td> 10.0.1 onwards
@@ -271,7 +271,7 @@ Uniflash (included in AM261x MCU+ SDK)              | R5F            | 9.3.0
     <td> -
 </tr>
 <tr>
-    <td> PINDSW-10244
+    <td> \htmllink{https://sir.ext.ti.com/jira/browse/EXT_EP-13298, EXT_EP-13298}, PINDSW-10244
     <td> EnDat: Variations seen in propagation delay measurement with different PRU Clock frequencies
     <td> Position Sense EnDat
     <td> 10.0.0 onwards
@@ -285,21 +285,21 @@ Uniflash (included in AM261x MCU+ SDK)              | R5F            | 9.3.0
     <td> -
 </tr>
 <tr>
-    <td> PINDSW-10365
+    <td> \htmllink{https://sir.ext.ti.com/jira/browse/EXT_EP-13300, EXT_EP-13300}, PINDSW-10365
     <td> Shared memory region located in TCM marked as Cached in SDK examples
     <td> Position Sense EnDat
     <td> 10.0.0 onwards
     <td> In SDK examples, PRU firmware for EnDat store the data into R5F TCM memory.
 </tr>
 <tr>
-    <td> PINDSW-10389
+    <td> \htmllink{https://sir.ext.ti.com/jira/browse/EXT_EP-13301, EXT_EP-13301}, PINDSW-10389
     <td> Tamagawa: Periodic command does not work with a lower cycle period
     <td> Position Sense Tamagawa
     <td> 10.0.0 onwards
     <td> Due to maximum value of RX frame size being configured always for all commands, the periodic mode does not work for lower periods for certain commands.
 </tr>
 <tr>
-    <td> PINDSW-10670
+    <td> \htmllink{https://sir.ext.ti.com/jira/browse/EXT_EP-13294, EXT_EP-13294}, PINDSW-10670
     <td> HDSL: Communication drops seen in SYNC mode
     <td> Position Sense HDSL
     <td> 10.0.1 onwards

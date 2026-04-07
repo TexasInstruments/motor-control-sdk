@@ -307,31 +307,31 @@ Mbed-TLS (included in AM243x MCU+ SDK)              | R5F            | 2.13.1
     <td> -
 </tr>
 <tr>
-    <td> PINDSW-9707
+    <td> \htmllink{https://sir.ext.ti.com/jira/browse/EXT_EP-13296, EXT_EP-13296}, PINDSW-9707
     <td> %SDFM: Changing OSR values at runtime does not have any effect on sample output
     <td> Current Sense %SDFM
     <td> 9.0 onwards
     <td> -
 </tr>
 <tr>
-    <td> PINDSW-10139
+    <td> \htmllink{https://sir.ext.ti.com/jira/browse/EXT_EP-13297, EXT_EP-13297}, PINDSW-10139
     <td> EnDat: Supplement 2_2 commands do not work with periodic mode when channels 0 and 1 both are enabled
     <td> Position Sense EnDat
     <td> 9.0 onwards
     <td> -
 </tr>
 <tr>
-    <td> PINDSW-10244
+    <td> \htmllink{https://sir.ext.ti.com/jira/browse/EXT_EP-13298, EXT_EP-13298}, PINDSW-10244
     <td> EnDat: Variations seen in propagation delay measurement with different PRU Clock frequencies
     <td> Position Sense EnDat
     <td> 9.0 onwards
     <td> -
 </tr>
 <tr>
-    <td> PINDSW-10284
-    <td> %SDFM: Trigger mode requires all three channels to be connected
+    <td> \htmllink{https://sir.ext.ti.com/jira/browse/EXT_EP-13299, EXT_EP-13299}, PINDSW-10284
+    <td> %SDFM: Trigger mode requires channel 2 to be connected for icss_sdfm_three_channel_single_pru_mode example
     <td> Current Sense %SDFM
-    <td> 9.0 onwards
+    <td> 11.0
     <td> -
 </tr>
 <tr>
@@ -349,14 +349,14 @@ Mbed-TLS (included in AM243x MCU+ SDK)              | R5F            | 2.13.1
     <td> -
 </tr>
 <tr>
-    <td> PINDSW-10365
+    <td> \htmllink{https://sir.ext.ti.com/jira/browse/EXT_EP-13300, EXT_EP-13300}, PINDSW-10365
     <td> Shared memory region located in TCM marked as Cached in SDK examples
     <td> TIDEP-01032 Reference Design, Position Sense EnDat, Current Sense %SDFM
     <td> 9.0 onwards
     <td> In SDK examples, PRU firmwares for %SDFM and EnDat store the data into R5F TCM memory.
 </tr>
 <tr>
-    <td> PINDSW-10389
+    <td> \htmllink{https://sir.ext.ti.com/jira/browse/EXT_EP-13301, EXT_EP-13301}, PINDSW-10389
     <td> Tamagawa: Periodic command does not work with a lower cycle period
     <td> Position Sense Tamagawa
     <td> 9.0 onwards
@@ -377,7 +377,7 @@ Mbed-TLS (included in AM243x MCU+ SDK)              | R5F            | 2.13.1
     <td> -
 </tr>
 <tr>
-    <td> PINDSW-10670
+    <td> \htmllink{https://sir.ext.ti.com/jira/browse/EXT_EP-13294, EXT_EP-13294}, PINDSW-10670
     <td> HDSL: Communication drops seen in SYNC mode
     <td> Position Sense HDSL
     <td> 9.0 onwards
