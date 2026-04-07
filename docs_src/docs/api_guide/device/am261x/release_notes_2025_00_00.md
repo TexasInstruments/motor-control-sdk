@@ -52,19 +52,19 @@ SOC    | Supported CPUs  | EVM                                                  
 -------|-----------------|------------------------------------------------------------------------------|-----------------------------------------------
 AM261x | R5F             | AM261x LaunchPad Revision A  (referred to as am261x-lp in code). \n          | Windows 10 64b or Ubuntu 18.04 64b or MacOS
 
-## Dependent Tools and Compiler Information
+## Dependent Tools, Compiler and Other Open Source SW Module Information
 
-Tools                                | Supported CPUs | Version
--------------------------------------|----------------|-----------------------
-AM261x Industrial Communications SDK | R5F            | 2025.00.00.08
-AM261x MCU+ SDK                      | R5F, M4F       | 11.00.00.29
-Code Composer Studio                 | R5F            | 20.3.0
-SysConfig                            | R5F            | 1.25.0, build 4268
-TI ARM CLANG                         | R5F            | 4.0.3.LTS
-FreeRTOS Kernel                      | R5F            | 11.1.0
-LwIP                                 | R5F            | STABLE-2_2_1_RELEASE
-Mbed-TLS                             | R5F            | 2.13.1
-Uniflash                             | R5F            | 9.3.0
+Tools                                               | Supported CPUs | Version
+----------------------------------------------------|----------------|-----------------------
+AM261x Industrial Communications SDK                | R5F            | 2025.00.00.08
+AM261x MCU+ SDK                                     | R5F, M4F       | 11.00.00.29
+Code Composer Studio                                | R5F            | 20.3.0
+SysConfig                                           | R5F            | 1.25.0, build 4268
+TI ARM CLANG                                        | R5F            | 4.0.3.LTS
+FreeRTOS Kernel (included in AM261x MCU+ SDK)       | R5F            | 11.1.0
+LwIP (included in AM261x MCU+ SDK)                  | R5F            | STABLE-2_2_1_RELEASE
+Mbed-TLS (included in AM261x MCU+ SDK)              | R5F            | 2.13.1
+Uniflash (included in AM261x MCU+ SDK)              | R5F            | 9.3.0
 
 ## Key Features
 
@@ -297,6 +297,13 @@ Uniflash                             | R5F            | 9.3.0
     <td> Position Sense Tamagawa
     <td> 10.0.0 onwards
     <td> Due to maximum value of RX frame size being configured always for all commands, the periodic mode does not work for lower periods for certain commands.
+</tr>
+<tr>
+    <td> PINDSW-10670
+    <td> HDSL: Communication drops seen in SYNC mode
+    <td> Position Sense HDSL
+    <td> 10.0.1 onwards
+    <td> -
 </tr>
 </table>
 
