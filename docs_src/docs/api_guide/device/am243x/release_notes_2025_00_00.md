@@ -374,6 +374,13 @@ Mbed-TLS                             | R5F            | 2.13.1
     <td> 9.1 onwards
     <td> -
 </tr>
+<tr>
+    <td> PINDSW-10670
+    <td> HDSL: Communication drops seen in SYNC mode
+    <td> Position Sense HDSL
+    <td> 9.0 onwards
+    <td> -
+</tr>
 </table>
 
 ## Known Issues

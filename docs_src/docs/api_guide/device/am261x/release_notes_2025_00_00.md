@@ -298,6 +298,13 @@ Uniflash                             | R5F            | 9.3.0
     <td> 10.0.0 onwards
     <td> Due to maximum value of RX frame size being configured always for all commands, the periodic mode does not work for lower periods for certain commands.
 </tr>
+<tr>
+    <td> PINDSW-10670
+    <td> HDSL: Communication drops seen in SYNC mode
+    <td> Position Sense HDSL
+    <td> 10.0.1 onwards
+    <td> -
+</tr>
 </table>
 
 ## Known Issues
