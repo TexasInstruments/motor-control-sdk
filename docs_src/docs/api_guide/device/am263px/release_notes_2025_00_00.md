@@ -226,14 +226,14 @@ Uniflash (included in AM263Px MCU+ SDK)             | R5F            | 9.3.0
     <td> -
 </tr>
 <tr>
-    <td> PINDSW-10365
+    <td> \htmllink{https://sir.ext.ti.com/jira/browse/EXT_EP-13300, EXT_EP-13300}, PINDSW-10365
     <td> Shared memory region located in TCM marked as Cached in SDK examples
     <td> Position Sense EnDat
     <td> 10.0 onwards
     <td> In SDK examples, PRU firmware for EnDat store the data into R5F TCM memory.
 </tr>
 <tr>
-    <td> PINDSW-10389
+    <td> \htmllink{https://sir.ext.ti.com/jira/browse/EXT_EP-13301, EXT_EP-13301}, PINDSW-10389
     <td> Tamagawa: Periodic command does not work with a lower cycle period
     <td> Position Sense Tamagawa
     <td> 10.0 onwards
