@@ -52,23 +52,25 @@
 </tr>
 </table>
 
+## Device and Validation Information
+
 SOC    | Supported CPUs  | Boards                                                                                                      | Host PC
 -------|-----------------|-------------------------------------------------------------------------------------------------------------|-----------------------------------------------
 AM243x | R5F             | AM243x GP EVM (referred to as am243x-evm in code), \n AM243x LAUNCHPAD (referred to as am243x-lp in code)   |Windows 10 64b or Ubuntu 18.04 64b or MacOS
 
-## Tools, Compiler and Other Open Source SW Module Information
+## Dependent Tools, Compiler and Other Open Source SW Module Information
 
-Tools / SW module                    | Supported CPUs | Version
--------------------------------------|----------------|-----------------------
-AM243x Industrial Communications SDK | R5F            | 2025.00.00.08
-AM243x MCU+ SDK                      | R5F, M4F       | 11.01.00.19
-Code Composer Studio                 | R5F, M4F       | 20.2.0
-SysConfig                            | R5F, M4F       | 1.23.0, build 4000
-TI ARM CLANG                         | R5F, M4F       | 4.0.1.LTS
-FreeRTOS Kernel                      | R5F, M4F       | 11.1.0
-Tiny USB                             | R5F            | 0.14.0
-LwIP                                 | R5F            | STABLE-2_2_0_RELEASE
-Mbed-TLS                             | R5F            | 2.13.1
+Tools / SW module                                   | Supported CPUs | Version
+----------------------------------------------------|----------------|-----------------------
+AM243x Industrial Communications SDK                | R5F            | 2025.00.00.08
+AM243x MCU+ SDK                                     | R5F, M4F       | 11.01.00.19
+Code Composer Studio                                | R5F, M4F       | 20.2.0
+SysConfig                                           | R5F, M4F       | 1.23.0, build 4000
+TI ARM CLANG                                        | R5F, M4F       | 4.0.1.LTS
+FreeRTOS Kernel (included in AM243x MCU+ SDK)       | R5F, M4F       | 11.1.0
+Tiny USB (included in AM243x MCU+ SDK)              | R5F            | 0.14.0
+LwIP (included in AM243x MCU+ SDK)                  | R5F            | STABLE-2_2_0_RELEASE
+Mbed-TLS (included in AM243x MCU+ SDK)              | R5F            | 2.13.1
 
 ## Key Features
 
