@@ -58,7 +58,7 @@ BiSS Safety is a profile definition for BiSS that has been certified by TÜV Rhe
 
    -  Two modes of operation - host trigger and periodic trigger
    -  Support for periodic trigger using PRU-ICSS IEP timer module
-   -  Support for control communication
+   -  Support for single byte register communication using control communication
    -  Support for automatic processing delay detection and compensation
    -  Support for multiple encoders connected via daisy-chain configuration (up to 3 encoders)
    -  Support for concurrent multi-channel support on a single PRU
@@ -167,6 +167,11 @@ BiSS Safety is a profile definition for BiSS that has been certified by TÜV Rhe
 
 In general, peripherals or features not mentioned as part of "Features Supported" section are not
 supported in this release, including the following:
+- Control communication
+    - BiSS-C Commands (Control Select bit (CTS) = 0)
+    - Following features with Register Communication (Control Select bit (CTS) = 1):
+        - Start bit delay
+        - Sequential multi-byte access
 -  BiSS Line
 -  Independent clock frequency for each channel in multi channel mode within the same PRU-ICSS slice
     - Clock frequency is a PRU-ICSS slice level configuration

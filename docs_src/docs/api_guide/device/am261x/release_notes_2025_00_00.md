@@ -84,8 +84,8 @@ Uniflash (included in AM261x MCU+ SDK)              | R5F            | 9.3.0
     <td> R5F
     <td> YES
     <td> FreeRTOS, NORTOS
-    <td> Single channel, dual channel using two independent PRU cores, point-to-point connection, control communication, automatic processing delay detection and compensation, interface speed of 1, 2, 5, 8, and 10 MHz, host trigger mode, periodic trigger modes (CMP and CAP), daisy chaining, safety mode (safety CRC and sign-of-life counter), BP-AM2BLDCSERVO Boosterpack with LP-AM261
-    <td> -
+    <td> Single channel, dual channel using two independent PRU cores, point-to-point connection, single byte register communication using control communication, automatic processing delay detection and compensation, interface speed of 1, 2, 5, 8, and 10 MHz, host trigger mode, periodic trigger modes (CMP and CAP), daisy chaining, safety mode (safety CRC and sign-of-life counter), BP-AM2BLDCSERVO Boosterpack with LP-AM261
+    <td> Control communication: BiSS-C Commands (Control Select bit (CTS) = 0), start bit delay and sequential multi-byte access with Register Communication (Control Select bit (CTS) = 1)
 </tr>
 <tr>
     <td> EnDat
