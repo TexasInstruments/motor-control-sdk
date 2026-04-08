@@ -4,9 +4,9 @@
 
 \cond SOC_AM243X
 
-Welcome to **@VAR_SDK_NAME for @VAR_SOC_NAME**. This SDK contains examples, libraries and tools to develop **RTOS and no-RTOS** based applications enabling real-time communication for position and current sense from motors, and real-time control libraries for **Arm® Cortex®-R5F CPU** and related peripherals.
+Welcome to **@VAR_SDK_NAME for @VAR_SOC_NAME**. This SDK contains examples, libraries, and tools to develop **RTOS and no-RTOS** based applications for real-time motor control on the **Arm® Cortex®-R5F CPU** and related peripherals. It includes position sense examples, current sense examples, PRU-ICSS PWM examples, real-time control library examples, time synchronization examples, and a universal single-chip servo drive reference design (TIDEP-01032).
 
-Real-time communication with encoders and current sensing is typically handled by the Programmable Real-Time Unit Industrial Communication Subsystem (PRU-ICSS). The PRU-ICSS is a co-processor subsystem containing Programmable Real-Time (PRU) cores which implement the low level firmware. The PRU-ICSS frees up the main Arm-based cores in the device for other functions, such as control and data processing.
+Real-time communication with encoders and current sensing is typically handled by the Programmable Real-Time Unit Industrial Communication Subsystem (PRU-ICSS). The PRU-ICSS is a co-processor subsystem containing Programmable Real-Time (PRU) cores that implement the low-level firmware. The PRU-ICSS frees up the main Arm-based cores in the device for other functions, such as control and data processing.
 
 Applications and PRU-ICSS firmwares for position sense and current sense are provided in the SDK.
 
@@ -16,9 +16,9 @@ Applications and PRU-ICSS firmwares for position sense and current sense are pro
 
 \cond (SOC_AM263X || SOC_AM263PX)
 
-Welcome to **@VAR_SDK_NAME for @VAR_SOC_NAME**. This SDK contains examples, libraries and tools to develop **RTOS and no-RTOS** based applications enabling real-time communication for position sense from motors, and real-time control libraries for **Arm® Cortex®-R5F CPU** and related peripherals.
+Welcome to **@VAR_SDK_NAME for @VAR_SOC_NAME**. This SDK contains examples, libraries, and tools to develop **RTOS and no-RTOS** based applications for real-time motor control on the **Arm® Cortex®-R5F CPU** and related peripherals. It includes position sense examples and real-time control library examples.
 
-Real-time communication with encoders is typically handled by the Programmable Real-Time Unit Industrial Communication Subsystem (PRU-ICSS). The PRU-ICSS is a co-processor subsystem containing Programmable Real-Time (PRU) cores which implement the low level firmware. The PRU-ICSS frees up the main Arm-based cores in the device for other functions, such as control and data processing.
+Real-time communication with encoders is typically handled by the Programmable Real-Time Unit Industrial Communication Subsystem (PRU-ICSS). The PRU-ICSS is a co-processor subsystem containing Programmable Real-Time (PRU) cores that implement the low-level firmware. The PRU-ICSS frees up the main Arm-based cores in the device for other functions, such as control and data processing.
 
 Applications and PRU-ICSS firmwares for position sense are provided in the SDK.
 
@@ -28,9 +28,9 @@ Applications and PRU-ICSS firmwares for position sense are provided in the SDK.
 
 \cond SOC_AM261X
 
-Welcome to **@VAR_SDK_NAME for @VAR_SOC_NAME**. This SDK contains examples, libraries and tools to develop **RTOS and no-RTOS** based applications enabling real-time communication for position sense from motors for **Arm® Cortex®-R5F CPU** and related peripherals.
+Welcome to **@VAR_SDK_NAME for @VAR_SOC_NAME**. This SDK contains examples, libraries, and tools to develop **RTOS and no-RTOS** based applications for real-time motor control on the **Arm® Cortex®-R5F CPU** and related peripherals. It includes position sense examples and real-time control library examples.
 
-Real-time communication with encoders is typically handled by the Programmable Real-Time Unit Industrial Communication Subsystem (PRU-ICSS). The PRU-ICSS is a co-processor subsystem containing Programmable Real-Time (PRU) cores which implement the low level firmware. The PRU-ICSS frees up the main Arm-based cores in the device for other functions, such as control and data processing.
+Real-time communication with encoders is typically handled by the Programmable Real-Time Unit Industrial Communication Subsystem (PRU-ICSS). The PRU-ICSS is a co-processor subsystem containing Programmable Real-Time (PRU) cores that implement the low-level firmware. The PRU-ICSS frees up the main Arm-based cores in the device for other functions, such as control and data processing.
 
 Applications and PRU-ICSS firmwares for position sense are provided in the SDK.
 
