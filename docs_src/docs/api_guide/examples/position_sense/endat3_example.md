@@ -113,7 +113,7 @@ The diagnostic application demonstrates:
 - RESET: Encoder reset functionality (hard reset or soft reset)
 - CLEAR: Reset encoder states (F, W, REF flags)
 - ECHO: Measure propagation time for cable delay compensation
-- RATE: Data rate configuration command (note: only 12.5 Mbps is currently supported)
+- RATE: Data rate configuration command (NOTE: only 12.5 Mbps is currently supported)
 - HELLO: Initialization sequence to wake up encoder on power-up and establish EnDAT3 communication
 
 ### Background Communication
@@ -831,6 +831,20 @@ The EnDAT3 interface on AM261x uses ICSSM1-PRU0 with the following pin mapping:
 \endcond
 
 ## Build, Load and Run
+
+\cond SOC_AM261X
+
+\note EnDAT3 firmware is tested with ICSS Core Clock running at 200 MHz only, due to clock divider requirements. For this configuration, R5F Core Clock has to be 400 MHz.
+
+- To configure the R5F to 400 MHz, follow the steps for SBL based flow (as described in <a href="@VAR_MCU_SDK_DOCS_PATH/RUNNING_APPLICATION.html" target="_blank"> Running an Application </a>):
+    - The SBL sets the initial clock before handing off to the application, so it must be updated first.
+    - Import the required SBL example from ${MCU_PLUS_SDK_INSTALL_PATH}/examples/drivers/boot. For more details on SBL examples, see <a href="@VAR_MCU_SDK_DOCS_PATH/EXAMPLES_DRIVERS_SBL.html" target="_blank"> Secondary Bootloader (SBL)</a>.
+    - Open the example's .syscfg file and switch the variant as described in <a href="@VAR_MCU_SDK_DOCS_PATH/CLOCKTREE.html#CLOCKTREE_VARIANT_SWITCHING" target="_blank"> Switching between 500 MHz and 400 MHz in ZFG package</a>.
+    - Rebuild the SBL example.
+    - Flash the updated SBL image.
+    - NOTE: When debugging an application using SBL NULL, ensure that the "Initialization script" field for the GEL file path is left empty in the "Target Configuration". Otherwise, the GEL file will override the configuration set by SBL NULL.
+
+\endcond
 
 - **When using CCS projects to build**, import the CCS project and build it using the CCS project menu (see <a href="@VAR_MCU_SDK_DOCS_PATH/CCS_PROJECTS_PAGE.html" target="_blank"> Using SDK with CCS Projects </a>).
 - **When using makefiles to build**, note the required combination and build using

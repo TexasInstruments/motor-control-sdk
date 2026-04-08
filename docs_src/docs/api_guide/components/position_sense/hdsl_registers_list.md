@@ -401,6 +401,15 @@ TI HDSL Solution's register map is compatible with SICK HDSL IP Core release ver
     <td>
     <td>
     <td> 7:4
+    <td> RSSI: Indication of the received signal strength
+         - 4 bit value for the cable signal strength, from "0" to "12".
+         - Higher values indicate better connection quality.
+         - RSSI is continuously updated during operation and used for signal monitoring during run time.
+</tr>
+<tr>
+    <td>
+    <td>
+    <td> 3:0
     <td> Cable delay
          - 4 bit value for cable delay, which gives the cable signal round trip delay of cable and transceivers in bits.
          - This value enables a rough estimate of cable length to be made.
@@ -462,15 +471,6 @@ TI HDSL Solution's register map is compatible with SICK HDSL IP Core release ver
     <td> 90-100
 </tr>
 </table>
-</tr>
-<tr>
-    <td>
-    <td>
-    <td> 3:0
-    <td> RSSI: Indication of the received signal strength
-         - 4 bit value for the cable signal strength, from "0" to "12".
-         - Higher values indicate better connection quality.
-         - RSSI is continuously updated during operation and used for signal monitoring during run time.
 </tr>
 <tr>
     <td> VERSION
