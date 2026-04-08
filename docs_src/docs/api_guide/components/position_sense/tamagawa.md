@@ -19,7 +19,7 @@ The Tamagawa receiver firmware running on PRU-ICSS provides a well-defined inter
     - Data transmission and reception must happen simultaneously on all channels.
     - The encoder configuration and cable length should be the same on all channels.
     - If encoders across channels don't respond at the same time, this mode will not work. Load share configuration should be used instead.
--  Support for multi-channel with different communication modes and different numbers of encoders connected across channels under load share mode (Refer \ref PRUICSSG_LOAD_SHARE_MODE for more details).
+-  Support for multi-channel with load share mode (Refer \ref PRUICSSG_LOAD_SHARE_MODE for more details).
     - Up to 3 channels with encoders of the same frequency connected to all configured channels.
     - Data transmission and reception can happen independently on all channels.
     - After a command is sent, all channels wait for a response and process the response independently. However, all channels must finish processing before the next command can be triggered.

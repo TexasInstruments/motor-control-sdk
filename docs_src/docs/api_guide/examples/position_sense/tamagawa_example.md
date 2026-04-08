@@ -156,7 +156,6 @@ This example supports up to three Tamagawa channels using one PRU. In this examp
 ## Multi Channel with Multiple PRUs (Load Share) Example
 This example supports up to three Tamagawa channels using three PRUs from same PRU-ICSSG slice. In this example:
 - Load share mode is used. Refer \ref PRUICSSG_LOAD_SHARE_MODE for more details.
-- Encoders of different make and different numbers of encoders connected across channels can be connected.
 - Encoders of the same frequency must be connected to all configured channels.
 - Data reception can start independently on all channels.
 - After clock transmission, all channels wait for a response and process the response independently. However, all channels must finish processing before the next command can be triggered.

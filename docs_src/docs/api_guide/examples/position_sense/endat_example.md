@@ -179,7 +179,7 @@ This example supports up to three EnDat channels using one PRU. In this example:
 ## Multi Channel with Multiple PRUs (Load Share) Example
 This example supports up to three EnDat channels using three PRUs from same PRU-ICSSG slice. In this example:
 - Load share mode is used. Refer \ref PRUICSSG_LOAD_SHARE_MODE for more details.
-- Encoders of different make and different numbers of encoders connected across channels can be connected.
+- Encoders of different make can be connected across channels.
 - Encoders of the same frequency must be connected to all configured channels.
 - Data reception can start independently on all channels.
 - Each channel can have different memory areas, MRS codes, or parameters (command type remains the same).
