@@ -5,7 +5,7 @@ function onChangeFastDetectEnable(inst, ui)
 		let status = inst["Ch" + channel.toString() + "_FastDetect"];
 
 		ui["Ch" + channel.toString() + "_FD_SIZE"].hidden = !status;
-		
+
 		ui["Ch" + channel.toString() + "_ZeroMaxTh"].hidden = !status;
 		ui["Ch" + channel.toString() + "_ZeroMinTh"].hidden = !status;
 
@@ -74,7 +74,7 @@ function fastDetectConfigs(channel)
 }
 
 
-exports = 
+exports =
 {
     fastDetectConfigs : fastDetectConfigs,
     onChangeFastDetectEnable : onChangeFastDetectEnable,

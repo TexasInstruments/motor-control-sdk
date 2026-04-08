@@ -67,10 +67,10 @@
 %}
 
    %for(let channel = 0; channel < 9; channel++)
-   %{     
-#define `instance.$name`_CHANNEL`channel`         `instance["Enable_Channel_" + channel.toString()] & 1`      
+   %{
+#define `instance.$name`_CHANNEL`channel`         `instance["Enable_Channel_" + channel.toString()] & 1`
    %}
-   
+
 	/* SDFM Channel macros - Zero Cross Enable for GPIO configuration */
    %for(let channel = 0; channel < 9; channel++)
    %{

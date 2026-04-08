@@ -46,9 +46,9 @@ config = config.concat([
     {
         name: "G_MUX_EN",
         displayName: "Enable G Mux",
-        longDescription : `The G_MUX_EN bit (bit 7) in the ICSSG_SA_MX_REG register is a multiplexer control bit that enables alternative pin configurations for the SDFM mode. 
+        longDescription : `The G_MUX_EN bit (bit 7) in the ICSSG_SA_MX_REG register is a multiplexer control bit that enables alternative pin configurations for the SDFM mode.
         This bit allows remapping of Data and Clock pins to support different hardware configurations and use cases.
-         
+
 #### Pin Multiplexing Behavior
 
 | G_MUX_EN Value | SD_CHANNEL4_DATA  | SD5_CLK             | Description                    |
@@ -211,7 +211,7 @@ config = config.concat([
                 default     : 30,
             },
         ]
-  
+
     },
     {
         name: "GROUP_rtuSettings",
@@ -375,10 +375,10 @@ function doubleUpdateConfig(inst, ui)
     {
         ui.PRU_SecondTriggerPoint.hidden = true;
     }
-   
+
     if(inst.RTU_EnableDoubleUpdate == true)
     {
-        ui.RTU_SecondTriggerPoint.hidden = false; 
+        ui.RTU_SecondTriggerPoint.hidden = false;
     }
     else
     {
@@ -386,7 +386,7 @@ function doubleUpdateConfig(inst, ui)
     }
     if(inst.TXPRU_EnableDoubleUpdate == true)
     {
-        ui.TXPRU_SecondTriggerPoint.hidden = false; 
+        ui.TXPRU_SecondTriggerPoint.hidden = false;
     }
     else
     {
@@ -408,7 +408,7 @@ function configNCsamplingMode(inst, ui)
         ui.PRU_SelectIepCmpEvent.hidden = true;
         ui.PRU_EnableDoubleUpdate.hidden = true;
     }
-    
+
     if(inst.RTU_EnableTriggerMode == true)
     {
         ui.RTU_FirstTriggerPoint.hidden = false;
@@ -421,7 +421,7 @@ function configNCsamplingMode(inst, ui)
         ui.RTU_SelectIepCmpEvent.hidden = true;
         ui.RTU_EnableDoubleUpdate.hidden = true;
     }
-    
+
     if(inst.TXPRU_EnableTriggerMode == true)
     {
         ui.TXPRU_FirstTriggerPoint.hidden = false;
@@ -444,8 +444,9 @@ function configNCsamplingMode(inst, ui)
         ui.IEP_Instance.hidden = true;
         ui.IEP_Reset_Freq.hidden = true;
     }
-    
+
 }
+
 function addEpwmSource(inst, ui)
 {
     let hideEpwmSource = true;
@@ -455,6 +456,7 @@ function addEpwmSource(inst, ui)
     }
     ui.Epwm_Source.hidden = hideEpwmSource;
 }
+
 function addOtherPru(inst, ui)
 {
     let hideConfigs = true;
@@ -467,21 +469,39 @@ function addOtherPru(inst, ui)
     ui.RTU_EnableSnoopNC.hidden = hideConfigs;
     ui.TXPRU_EnableSnoopNC.hidden = hideConfigs;
 
-    // Update channel visibility when load share mode changes
+    /* When load share is disabled, reset RTU/TXPRU snoop and trigger modes to false
+     * to prevent invalid configuration states from persisting. */
+    if (hideConfigs)
+    {
+        inst.RTU_EnableSnoopNC = false;
+        inst.TXPRU_EnableSnoopNC = false;
+        inst.RTU_EnableTriggerMode = false;
+        inst.TXPRU_EnableTriggerMode = false;
+        inst.RTU_EnableDoubleUpdate = false;
+        inst.TXPRU_EnableDoubleUpdate = false;
+    }
+
+    configNCsamplingMode(inst, ui);
+    doubleUpdateConfig(inst, ui);
+
+    /* Update channel visibility when load share mode changes */
     updateChannelVisibilityOnSnoopMode(inst, ui);
 }
 
 function updateClockSourceVisibility(inst, ui)
 {
+    /* SDFM_Clock_Value is always visible: for internal clock sources it drives the
+     * generated frequency; for external clock it must be set to the external clock
+     * frequency so the driver can compute snoop-mode IEP counts correctly. */
     ui.SDFM_Clock_Value.hidden = false;
 
-    // Update read-only status for all channel clock fields
+    /* Update read-only status for all channel clock fields based on clock source.
+     * Internal clock sources: Ch*_SDFM_Clock is readOnly, synced from SDFM_Clock_Value
+     * External clock source: Ch*_SDFM_Clock is writable per-channel */
+    let isReadOnly = (inst.SDFM_CLK_GEN != "3");
     for (let channel = 0; channel < 9; channel++)
     {
-        if (inst["Enable_Channel_" + channel.toString()])
-        {
-            ui["Ch" + channel.toString() + "_SDFM_Clock"].readOnly = (inst.SDFM_CLK_GEN != "3");
-        }
+        ui["Ch" + channel.toString() + "_SDFM_Clock"].readOnly = isReadOnly;
     }
 
     propagateClockToChannels(inst, ui);
@@ -489,34 +509,44 @@ function updateClockSourceVisibility(inst, ui)
 
 function propagateClockToChannels(inst, ui)
 {
+    /* Synchronize all channel clock values with SDFM_Clock_Value for internal clock sources.
+     * All channels (enabled and disabled) are updated so that re-enabling a channel always
+     * shows the current clock value rather than a stale one. */
     if (inst.SDFM_CLK_GEN != "3")
     {
         let clockValue = inst.SDFM_Clock_Value;
         for (let channel = 0; channel < 9; channel++)
         {
-            if (inst["Enable_Channel_" + channel.toString()] == true)
-            {
-                inst["Ch" + channel.toString() + "_SDFM_Clock"] = clockValue;
-            }
+            inst["Ch" + channel.toString() + "_SDFM_Clock"] = clockValue;
         }
     }
 }
 
 function updateChannelVisibilityOnSnoopMode(inst, ui)
 {
-    // Hide channels 3-8 when PRU snoop mode is enabled and load share is not enabled
-    // Only channels 0-2 should be visible in this mode
+    /* Hide channels 3-8 when PRU snoop mode is enabled and load share is not enabled
+     * Only channels 0-2 should be visible in this mode */
     let hideChannels = inst.PRU_EnableSnoopNC && !inst.Enable_Load_Share;
 
     for (let ch = 3; ch < 9; ch++)
     {
         ui["Enable_Channel_" + ch.toString()].hidden = hideChannels;
-
-        // If channels are being hidden, disable them
         if (hideChannels)
         {
             inst["Enable_Channel_" + ch.toString()] = false;
+            /* Clear sub-configuration state for hidden channels to prevent orphaned settings
+             * from persisting in the instance object. */
+            inst["Ch" + ch.toString() + "_ComparatorEnable"] = false;
+            inst["Ch" + ch.toString() + "_FastDetect"] = false;
+            inst["Ch" + ch.toString() + "_AccSource"] = "0";
         }
+    }
+
+    /* When channels 3-8 are force-disabled, sync their sub-config visibility so
+     * settings for disabled channels are not left visible on screen. */
+    if (hideChannels)
+    {
+        onChangeEnableChannel(inst, ui);
     }
 }
 
@@ -529,12 +559,18 @@ function onChangeEnableChannel(inst, ui)
 		ui["Ch" + channel.toString() + "_SDCLKSEL"].hidden = !status;
         ui["Ch" + channel.toString() + "_CLKINV"].hidden = !status;
         ui["Ch" + channel.toString() + "_SDFM_Clock"].hidden = !status;
-        ui["Ch" + channel.toString() + "_SDFM_Clock"].readOnly = (inst.SDFM_CLK_GEN != "3");
-
-        if (status && inst.SDFM_CLK_GEN != "3")
+        if (status)
         {
-            inst["Ch" + channel.toString() + "_SDFM_Clock"] = inst.SDFM_Clock_Value;
+            /* Re-apply readOnly when making a channel visible so it matches the
+             * current clock source, regardless of when updateClockSourceVisibility
+             * last ran relative to this call. */
+            ui["Ch" + channel.toString() + "_SDFM_Clock"].readOnly = (inst.SDFM_CLK_GEN != "3");
+            if (inst.SDFM_CLK_GEN != "3")
+            {
+                inst["Ch" + channel.toString() + "_SDFM_Clock"] = inst.SDFM_Clock_Value;
+            }
         }
+
         ui["Ch" + channel.toString() + "_AccSource"].hidden = !status;
         ui["Ch" + channel.toString() + "_ComparatorEnable"].hidden = !status;
         ui["Ch" + channel.toString() + "_NC_OSR"].hidden = !status;
@@ -585,7 +621,7 @@ let sdfm_module = {
         },
     },
     defaultInstanceName: "CONFIG_SDFM",
-    config: config, 
+    config: config,
     moduleStatic: {
         modules: function(inst) {
             return [{
