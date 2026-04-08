@@ -27,7 +27,7 @@
     <td>Position Sense EnDat3
 </tr>
 <tr>
-    <td>Multi-channel with different communication modes and different numbers of encoders connected across channels under load share mode, Handle-based API architecture, Periodic trigger modes (CMP and CAP), SysConfig-based initialization
+    <td>Multi-channel with load share mode, handle-based API architecture, Periodic trigger modes (CMP and CAP), SysConfig-based initialization
     <td>Position Sense Tamagawa
 </tr>
 <tr>
