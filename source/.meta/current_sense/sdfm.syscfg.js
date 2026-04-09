@@ -9,4 +9,3 @@ function getModule() {
 }
 
 exports = getModule();
-

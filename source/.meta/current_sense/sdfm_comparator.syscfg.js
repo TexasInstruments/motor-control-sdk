@@ -5,7 +5,7 @@ function onChangeComparatorEnable(inst, ui)
 		let status = inst["Ch" + channel.toString() + "_ComparatorEnable"];
 
 		ui["Ch" + channel.toString() + "_OC_OSR"].hidden = !status;
-		
+
 		ui["Ch" + channel.toString() + "_Datarate_CF"].hidden = !status;
 		ui["Ch" + channel.toString() + "_Latency_CF"].hidden = !status;
 
@@ -13,6 +13,7 @@ function onChangeComparatorEnable(inst, ui)
 		ui["Ch" + channel.toString() + "_LLT"].hidden = !status;
 
 		ui["Ch" + channel.toString() + "_ZeroCross_Enable"].hidden = !status;
+		ui["Ch" + channel.toString() + "_ZCT"].hidden = !(status && inst["Ch" + channel.toString() + "_ZeroCross_Enable"]);
 
 	}
 
@@ -26,14 +27,15 @@ function onChangeUseZeroCrossSettings(inst, ui)
         ui["Ch" + channel.toString() + "_ZCT"].hidden = !status;
     }
 }
-// Comparator settings //
+
+/* Comparator settings */
 function comparatorSettings(channel)
 {
 	let Settings = [];
 	let order = 0;
 
 	Settings =
-    
+
 	  [
 		{
 			name: "Ch" + channel.toString() + "_OC_OSR",
@@ -119,7 +121,7 @@ function comparatorSettings(channel)
           ]
         },
 	]
-    
+
     return(Settings);
 }
 

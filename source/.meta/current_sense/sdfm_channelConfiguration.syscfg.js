@@ -15,7 +15,7 @@ function SDmodulatorSettings(channel)
 	density_1s = (inst) => {
                 let temp= (inst["Ch" + channel.toString() + "_DC_Input"] + inst["Ch" + channel.toString() + "_Vclipping"]) / (2 * inst["Ch" + channel.toString() + "_Vclipping"]);
                 return temp;}
-				
+
 	Theoretical_Data_Filter = (inst) => {
 					let temp = Math.floor((Math.abs(inst["Ch" + channel.toString() + "_DC_Input"]) / inst["Ch" + channel.toString() + "_Vclipping"])*sd_definition.getFilterOutputRange(inst["Ch" + channel.toString() + "_AccSource"], inst["Ch" + channel.toString() + "_NC_OSR"]));
 					if(inst["Ch" + channel.toString() + "_DC_Input"] < 0)
@@ -23,11 +23,11 @@ function SDmodulatorSettings(channel)
 						temp = -1 * temp;
 					}
 					return temp;}
-	
+
 	Theoretical_Comparator_Filter = (inst) => {
 					let temp = (inst["Ch" + channel.toString() + "_DC_Input"] + inst["Ch" + channel.toString() + "_Vclipping"]) / (2 * inst["Ch" + channel.toString() + "_Vclipping"]) * sd_definition.getFilterOutputRange(inst["Ch" + channel.toString() + "_AccSource"], inst["Ch" + channel.toString() + "_OC_OSR"]);
 					return temp;}
-	
+
 
 	Settings =
 	[
@@ -82,7 +82,7 @@ function SDmodulatorSettings(channel)
 		    default     : 0,
 		},
 
-	
+
 	]
 	return(Settings);
 }
@@ -215,7 +215,7 @@ function fill_channel_array(channel)
 				displayName : "Fast Detect Configuration",
 				config      : useFastDetect.fastDetectConfigs(channel)
 			},
-		    
+
             {
 				name: "GROUP_NormalCurrent",
 				displayName : "Normal Current Configuration",

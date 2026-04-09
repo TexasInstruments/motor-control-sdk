@@ -1,5 +1,5 @@
 let common   = system.getScript("/common");
- 
+
 let SDFM_ClockSource = [
 	{ name: "0", displayName: "Source is SD8_CLK common for all nine channels" },
 	{ name: "1", displayName: "Source is respective channel clock" },
@@ -27,6 +27,7 @@ for (let channel = 0; channel < 9; channel++)
         description: "Channel" + channel.toString() + " SDFM Clock (Hz)",
         hidden: true,
         default: 20000000,
+        readOnly: true,
       },
       {
         name: "Ch" + channel.toString() + "_CLKINV",
@@ -34,7 +35,7 @@ for (let channel = 0; channel < 9; channel++)
         description: "Enable Channel" + channel.toString() + " Clock Inversion",
         hidden: true,
         default: false,
-	    },  
+	    },
 	  ]
 	);
 }

@@ -13,13 +13,13 @@ function getInterfacePinList(inst)
 
     /*SDFM SD8_CLK clock*/
     pinList.push({ pinName: "GPI16", displayName: "SD8_CLK", rx: true});
-    
+
     /*SD0_D*/
     pinList.push({ pinName: "GPI1", displayName: "SD_CHANNEL0_DATA", rx: true});
 
     /*SD1_D*/
     pinList.push({ pinName: "GPI3", displayName: "SD_CHANNEL1_DATA", rx: true});
-    
+
     /*SD2_D*/
     pinList.push({ pinName: "GPI5", displayName: "SD_CHANNEL2_DATA", rx: true});
 
@@ -38,7 +38,7 @@ function getInterfacePinList(inst)
 
     /*SD5_D*/
     pinList.push({ pinName: "GPI11", displayName: "SD_CHANNEL5_DATA", rx: true});
-   
+
     /*SD6_D*/
     pinList.push({ pinName: "GPI13", displayName: "SD_CHANNEL6_DATA", rx: true});
 
@@ -96,7 +96,7 @@ function pinmuxRequirements(inst) {
         }else{
            if( (pin.pinName == "GPI1")){
                pinResource.used = false;
-           }    
+           }
         }
         if(inst["Enable_Channel_1"] == true){
            if((pin.pinName == "GPI3")){
@@ -115,7 +115,7 @@ function pinmuxRequirements(inst) {
         }else{
            if( (pin.pinName == "GPI3")||(pin.pinName == "GPI2")){
                pinResource.used = false;
-           }  
+           }
         }
         if(inst["Enable_Channel_2"]==true){
            if((pin.pinName == "GPI5")){
@@ -134,7 +134,7 @@ function pinmuxRequirements(inst) {
         }else{
            if( (pin.pinName == "GPI5")||(pin.pinName == "GPI4")){
                pinResource.used = false;
-            }  
+            }
         }
         if(inst["Enable_Channel_3"]==true){
            if((pin.pinName == "GPI7")){
@@ -143,7 +143,7 @@ function pinmuxRequirements(inst) {
         }else{
            if( (pin.pinName == "GPI7")){
                pinResource.used = false;
-           }    
+           }
         }
         if(inst["Enable_Channel_4"]==true){
            if((pin.pinName == "GPI9") || (pin.pinName == "GPI18")){
@@ -162,7 +162,7 @@ function pinmuxRequirements(inst) {
         }else{
            if( (pin.pinName == "GPI9")||(pin.pinName == "GPI8") || (pin.pinName == "GPI18")){
                pinResource.used = false;
-            } 
+            }
         }
         if(inst["Enable_Channel_5"]==true){
            if((pin.pinName == "GPI11")){
@@ -181,7 +181,7 @@ function pinmuxRequirements(inst) {
         }else{
            if( (pin.pinName == "GPI11") ||((pin.pinName == "GPI10") || (pin.pinName == "GPI19"))){
                pinResource.used = false;
-           } 
+           }
         }
         if(inst["Enable_Channel_6"]==true){
            if((pin.pinName == "GPI13")){
@@ -190,7 +190,7 @@ function pinmuxRequirements(inst) {
         }else{
            if( (pin.pinName == "GPI13")){
                pinResource.used = false;
-           }    
+           }
         }
         if(inst["Enable_Channel_7"]==true){
            if((pin.pinName == "GPI15")){
@@ -209,7 +209,7 @@ function pinmuxRequirements(inst) {
         }else{
            if( (pin.pinName == "GPI15")||(pin.pinName == "GPI14")){
                pinResource.used = false;
-            }    
+            }
         }
         if(inst["Enable_Channel_8"]==true){
            if((pin.pinName == "GPI17")){
@@ -218,8 +218,8 @@ function pinmuxRequirements(inst) {
         }else{
            if((pin.pinName == "GPI17")){
                pinResource.used = false;
-           }    
-        }  
+           }
+        }
         if((inst["Ch0_SDCLKSEL"]== "1") ||(inst["Ch0_SDCLKSEL"]== "2")||((inst["Ch1_SDCLKSEL"]== "2"))||((inst["Ch2_SDCLKSEL"]== "2")))
         {
             if((pin.pinName == "GPI0"))
@@ -233,7 +233,7 @@ function pinmuxRequirements(inst) {
             {
                 pinResource.used = false;
             }
-        }  
+        }
         if((inst["Ch3_SDCLKSEL"]== "1") ||(inst["Ch3_SDCLKSEL"]== "2")||((inst["Ch4_SDCLKSEL"]== "2"))||((inst["Ch5_SDCLKSEL"]== "2")))
         {
             if((pin.pinName == "GPI6"))
@@ -269,7 +269,7 @@ function pinmuxRequirements(inst) {
                 pinResource.used = false;
             }
             if(pin.pinName == "GPO1")
-            {    
+            {
                 pinResource.used = true;
             }
         }
@@ -278,16 +278,16 @@ function pinmuxRequirements(inst) {
             if(inst["Enable_Channel_0"] == true)
             {
                 if(pin.pinName == "GPI1")
-                {    
+                {
                     pinResource.used = true;
                 }
             }
             if(pin.pinName == "GPO1")
-            {    
+            {
                 pinResource.used = false;
             }
         }
-     
+
         resources.push( pinResource );
     }
 

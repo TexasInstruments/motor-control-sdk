@@ -63,6 +63,7 @@ ifeq ($(OS),Windows_NT)
 	$(RM) \*.appimage
 	$(RM) \*.appimage.signed
 	$(RM) \*.appimage.hs
+	$(RM) \*.appimage.hs_fs
 	$(RM) \*.tmp
 	$(RM) \*.out
 	$(RM) \*.map
@@ -75,7 +76,8 @@ else
 	$(RM) *.lnkxml
 	$(RM) *.appimage
 	$(RM) *.appimage.signed
-	$(RM) \*.appimage.hs
+	$(RM) *.appimage.hs
+	$(RM) *.appimage.hs_fs
 	$(RM) *.appimage_xip
 endif
 
