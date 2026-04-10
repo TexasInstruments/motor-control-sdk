@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2021-23 Texas Instruments Incorporated
+ *  Copyright (C) 2021-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -45,9 +45,9 @@ extern "C" {
 #define ENDAT_CMD_SEND_POSITION_VALUES  (0x1C >> 1)
 /**    \brief    2.1 select memory area */
 #define ENDAT_CMD_SEL_MEM_AREA          (0x38 >> 1)
-/**    \brief    2.1 receive paramter */
+/**    \brief    2.1 receive parameter */
 #define ENDAT_CMD_RECEIVE_PARAMETERS    (0x70 >> 1)
-/**    \brief    2.1 send paramter */
+/**    \brief    2.1 send parameter */
 #define ENDAT_CMD_SEND_PARAMETERS       (0x8C >> 1)
 /**    \brief    2.1 receive reset */
 #define ENDAT_CMD_RECEIVE_RESET         (0xA8 >> 1)
@@ -90,195 +90,380 @@ extern "C" {
 /**    \brief    additional info 1 CRC status mask (if both present) */
 #define ENDAT_CRC_ADDINFO1  (0x1 << 2)
 
-/**    \brief    delay counter increment value */ 
-#define ENDAT_DELAY_COUNTER_INCREMENT  5
+/* Maximum number of EnDat Encoders connected with one PRU Slice*/
+#define ENDAT_NUM_CH_PER_SLICE_MAX                    (3)
 
 /* ========================================================================== */
 /*                         Structures                                         */
 /* ========================================================================== */
 
 /**
- *    \brief    Structure defining per channel CRC information
+ *  \brief EnDAT CRC error tracking information
  *
- *    \details  Firmware per channel CRC information interface
+ *  \details This structure maintains CRC error counters for different data fields
+ *           received from the encoder. Counters are maintained by PRU firmware and
+ *           wrap around after 255 errors.
  */
-typedef struct Endat_CrcInfo_s
+typedef struct endat_crc_info_s
 {
-     volatile uint8_t  errCntData;
-     /**< CRC position/data error count (will wraparound after 255) */
-     volatile uint8_t  errCntAddinfox;
-     /**< CRC additional info1/2 error count (will wraparound after 255) */
-     volatile uint8_t  errCntAddinfo1;
-     /**< CRC additional info1 error count (will wraparound after 255)     <br>
-          applicable only when both additional info's are present */
-     volatile uint8_t   resvdInt1;
-     /**< reserved */
-}Endat_CrcInfo;
+    volatile uint8_t err_cnt_data;
+    /**< CRC error count for position/data field.
+     *   Increments on each CRC failure for position data
+     *   Wraps around to 0 after 255 errors */
+
+    volatile uint8_t err_cnt_addinfox;
+    /**< CRC error count for additional information (info1 or info2).
+     *   Used when only one additional info field is present
+     *   Wraps around to 0 after 255 errors */
+
+    volatile uint8_t err_cnt_addinfo1;
+    /**< CRC error count specifically for additional info1.
+     *   Only applicable when both addinfo1 and addinfo2 are present
+     *   Wraps around to 0 after 255 errors */
+
+    volatile uint8_t resvd_int1;
+    /**< Reserved  */
+} endat_crc_info;
 /**
- *  \brief    Structure defining EnDat channel Info
- *  \details  Firmware per channel interface 
- * 
- * 
-*/
-typedef struct Endat_ChInfo_s
-{
-     volatile uint8_t  numClkPulse;
-     /**< position bits excluding SB, error, CRC (updated upon initialization) */
-     volatile uint8_t  endat22Stat;
-     /**< encoder command set type, 1 - 2.2 supported, 0 - 2.2 not supported  */
-     volatile uint16_t rxClkLess;
-     /**< receive clocks to be reduced to handle propagation delay (to be  <br>
-          updated by host, if applicable) */
-     volatile uint32_t   propDelay;
-     /**< automatically estimated propagation delay */
-     Endat_CrcInfo crc;
-     /**<Crc information*/
-     volatile uint32_t   enableRTM;
-     /**< enable Recovery Time Measurement  */
-
-}Endat_ChInfo;
-/**
- * \brief    Structure defining Recovery Time parameters  
- * \details  
- * 
-*/
-typedef struct Endat_ChRTInfo_s
-{
-     volatile uint32_t recoveryTime;
-     volatile uint32_t currentCounterValue;
-     volatile uint32_t lastCounterValue;
-     volatile uint32_t startingValue;
-     volatile uint8_t isCounterStuck; 
-
-}Endat_ChRTInfo;
-/**
- * \brief    Structure defining EnDat channel Rx Info 
- * \details  Firmware per channel interface for store Rx data (command response)
- * 
- * 
- * 
-*/
-typedef struct Endat_ChRXInfo_s
-{
-     volatile uint32_t   posWord0;
-     /**< Initial (<=32) position bits received including error bits */
-     volatile uint32_t   posWord1;
-     /**< position bits received after the initial 32 bits (if applicable) */
-     volatile uint32_t   posWord2;
-     /**< additional info 1/2 (will be additional info 2 if both present) */
-     volatile uint32_t   posWord3;
-     /**< additional info 1 (if both additional 1 & 2 present) */
-     volatile uint8_t    crcStatus;
-     /**< CRC status,
-         bit0: 1 - position/data success, 0 - position/data failure       <br>
-         bit1: 1 - additional info1 success, 0 - additioanl info1 failure <br>
-         bit2: 1 - additional info2 success, 0 - additioanl info2 failure */
-     Endat_ChRTInfo recoveryTimeParms;
-     /*< Recovery Time */
-}Endat_ChRxInfo;
-
-
-
-/**
- *    \brief    Structure defining EnDat command interface
+ *  \brief EnDAT channel configuration and status information
  *
- *    \details  Firmware command interface
+ *  \details This structure contains per-channel configuration and runtime status
+ *           information shared between the host and PRU firmware. It includes
+ *           encoder capabilities, propagation delay compensation, and CRC error tracking.
+ *
+ *           This structure is part of the PRU-ICSS shared memory interface and is
+ *           accessed by both the ARM host and PRU firmware cores.
  */
-struct endat_pruss_cmd
+typedef struct endat_ch_info_s
 {
-    volatile uint32_t   word0;
-    /**< command,                                                         <br>
-         [Byte 0] bit 7: 0(dummy), bit 6-1: command, bit 0: address bit 7 <br>
-         [Byte 1] bit 7-1: address bit 6-0, bit 0: parameter bit 15       <br>
-         [Byte 2] bit 7-0: parameter bit 14-7                             <br>
-         [Byte 2] bit 7-1: parameter bit 6-0, bit 0: 0(dummy) */
-    volatile uint32_t   word1;
-    /**< command parameters,                                              <br>
-         [Byte 0] receive bits, includes SB & dummy (for additional info) for PRU <br>
-         [Byte 1] transmit bit                                            <br>
-         [Byte 2] attributes,                                             <br>
-          bit0: 1 - no command supplement, 0 - command supplement present <br>
-          bit1: 1 - position command, 0 - not position command            <br>
-          bit2: 1 - EnDat 2.2 command, 0 - EnDat 2.1 command              <br>
-          bit3: 1 - additional info1 present, 0 - no additional info1     <br>
-          bit4: 1 - additional info2 present, 0 - no additional info2     <br>
-         [Byte 3] 1 - block address selected, 0 - block address not selected */
-    volatile uint32_t   word2;
-    /**< command supplement,                                              <br>
-         [Byte 0] address                                                 <br>
-         [Byte 1] parameter MSByte                                        <br>
-         [Byte 2] parameter LSByte                                        <br>
-         [Byte 3] block address */
+    volatile uint8_t num_clk_pulse;
+    /**< Number of clock pulses for position data transfer.
+     *   Excludes start bit, error bits, and CRC bits
+     *   Updated during encoder initialization based on encoder resolution
+     *   Used by PRU firmware to determine receive window timing */
 
-};
+    volatile uint8_t endat22_stat;
+    /**< EnDAT 2.2 command set support status.
+     *   0 = Encoder supports EnDAT 2.1 only
+     *   1 = Encoder supports EnDAT 2.2 command set
+     *   Determined during encoder identification */
+
+    volatile uint16_t rx_clk_less;
+    /**< RX clock reduction for propagation delay compensation.
+     *   Number of receive clock cycles to subtract to account for
+     *   cable propagation delay and encoder processing time */
+
+    volatile uint32_t prop_delay;
+    /**< Automatically estimated propagation delay in PRU clock cycles.
+     *   Measured by PRU firmware during initialization */
+
+    endat_crc_info crc;
+    /**< CRC error tracking information for this channel. */
+
+    volatile uint32_t enable_rtm;
+    /**< Recovery time counter flag.
+     *   0 = Recovery time counter disabled
+     *   1 = Recovery time counter enabled
+     *   Controls recovery time counter  */
+} endat_ch_info;
+/**
+ *  \brief EnDAT channel recovery time parameters
+ *
+ *  \details This structure contains parameters for encoder
+ *           recovery time.
+ */
+typedef struct endat_ch_rt_info_s
+{
+    volatile uint32_t recovery_time;
+    /**< Measured recovery time in PRU clock cycles. */
+
+    volatile uint32_t current_counter_value;
+    /**< update counter value after current measurement.
+     *   Updated by PRU firmware for each transaction */
+
+    volatile uint32_t last_counter_value;
+    /**< Recovery Time counter value until current measurement. */
+
+    volatile uint32_t starting_value;
+    /**< Initial recovery time counter value at start of measurement.
+     *   Reference point for recovery time calculation */
+
+    volatile uint8_t is_counter_stuck;
+    /**< Counter stuck detection flag.
+     *   0 = Counter incrementing normally
+     *   1 = Counter appears to be stuck  */
+} endat_ch_rt_info;
+/**
+ *  \brief EnDAT channel received data structure
+ *
+ *  \details This structure stores the raw received data from an encoder for a single
+ *           channel. It contains the position words, additional information words,
+ *           CRC validation status, and recovery time information.
+ *
+ *           This structure is written by PRU firmware after each encoder transaction
+ *           and read by the host driver for data processing and validation.
+ */
+typedef struct endat_ch_rx_info_s
+{
+    volatile uint32_t pos_word0;
+    /**< First position data word (up to 32 bits). */
+
+    volatile uint32_t pos_word1;
+    /**< Second position data word (if applicable).
+     *   Contains position bits beyond the first 32 bits
+     *   Used for high-resolution encoders (>32 bit position)
+     *   Zero if not applicable */
+
+    volatile uint32_t pos_word2;
+    /**< Additional information word 1 or 2.
+     *   If both addinfo1 and addinfo2 are present, this contains addinfo2
+     *   If only one addinfo is present, this contains that addinfo
+     *   Content depends on encoder and command type */
+
+    volatile uint32_t pos_word3;
+    /**< Additional information word 1 (when both present).
+     *   Only valid if both addinfo1 and addinfo2 are received
+     *   Zero if not applicable */
+
+    volatile uint8_t crc_status;
+    /**< CRC validation status bitfield.
+     *   Bit 0: Position/data CRC status (1=pass, 0=fail)
+     *   Bit 1: Additional info1 CRC status (1=pass, 0=fail)
+     *   Bit 2: Additional info2 CRC status (1=pass, 0=fail)
+     *   Updated by PRU firmware after CRC calculation */
+
+    endat_ch_rt_info recovery_time_parms;
+    /**< Recovery time parameters for this channel. */
+} endat_ch_rx_info;
 
 /**
- *    \brief    Structure defining EnDat configuration interface
+ *  \brief EnDAT command interface
  *
- *    \details  Firmware configuration interface
+ *  \details This structure defines the command interface for sending EnDAT commands
+ *           from the host to the PRU firmware. It contains the packed command word,
+ *           command parameters, and command supplement data.
+ *
+ *           The host writes to this structure to initiate encoder commands, and the
+ *           PRU firmware reads and executes the commands.
  */
-struct endat_pruss_config
+typedef struct endat_pruicss_cmd_s
 {
-    volatile uint8_t  opmode;
-    /**< operation mode selection: 0 - periodic trigger, 1 - host trigger */
-    volatile uint8_t  channel;
-    /**< channel mask (1 << channel), 0 < channel < 3. This has to be      <br>
-         selected before running firmware. Once initialization is complete,<br>
-         it will reflect the detected channels in the selected mask.       <br>
-         Multichannel can have upto 3 selected, while single channel only one */
-    volatile uint8_t  trigger;
-    /**< command trigger. Set LSB to send cmd, will be cleared upon cmd    <br>
-         completion. Set/clear MSB to start/stop continuous clock mode.    <br>
-         To start continuous mode LSB also has to be set. Note that cmd    <br>
-         has to be setup before trigger */
-    volatile uint8_t  status;
-    /**< initialization status: 1 - upon successful. Wait around 5 seconds <br>
-         after firmware has started running to confirm status */
-};
+    volatile uint32_t word0;
+    /**< Packed command word containing command code, address, and parameter bits.
+     *   Byte 0 bit 7:   Dummy bit (0)
+     *   Byte 0 bit 6-1: EnDAT command code
+     *   Byte 0 bit 0:   Address bit 7
+     *   Byte 1 bit 7-1: Address bits 6-0
+     *   Byte 1 bit 0:   Parameter bit 15
+     *   Byte 2 bit 7-0: Parameter bits 14-7
+     *   Byte 3 bit 7-1: Parameter bits 6-0
+     *   Byte 3 bit 0:   Dummy bit (0) */
+
+    volatile uint32_t word1;
+    /**< Command parameters and attributes.
+     *   Byte 0: Number of receive bits (includes start bit and dummy bits for addinfo)
+     *   Byte 1: Number of transmit bits
+     *   Byte 2: Command attributes bitfield:
+     *           bit 0: Command supplement flag (1=no supplement, 0=supplement present)
+     *           bit 1: Position command flag (1=position, 0=not position)
+     *           bit 2: EnDAT version flag (1=2.2 command, 0=2.1 command)
+     *           bit 3: Additional info1 present flag (1=present, 0=not present)
+     *           bit 4: Additional info2 present flag (1=present, 0=not present)
+     *   Byte 3: Block address selection flag (1=selected, 0=not selected) */
+
+    volatile uint32_t word2;
+    /**< Command supplement data for MRS (Memory Read Select) commands.
+     *   Byte 0: Memory address
+     *   Byte 1: Parameter MSB (most significant byte)
+     *   Byte 2: Parameter LSB (least significant byte)
+     *   Byte 3: Block address */
+} endat_pruicss_cmd;
 
 /**
- *    \brief    Structure defining EnDat interface
+ *  \brief EnDAT configuration interface
  *
- *    \details  Firmware config, command interface
+ *  \details This structure defines the configuration and control interface for
+ *           the EnDAT. It contains operational mode settings,
+ *           channel selection, command triggers, and initialization status.
  *
+ *           This structure is bidirectional - the host writes configuration
+ *           and trigger bits, while the PRU firmware writes status information.
  */
-struct endat_pruss_xchg
+typedef struct endat_pruicss_config_s
 {
-     struct endat_pruss_config   config[3];
-     /**< config interface */
-     struct endat_pruss_cmd      cmd[3];
-     /**< command interface */
-     Endat_ChInfo ch[3];
-     /**<channel interface */
-     uint64_t endatChInfoMemoryAdd;
-     uint16_t endat_rx_clk_config;
-     uint16_t endat_tx_clk_config;
-     uint32_t endat_rx_clk_cnten;
-     uint32_t endat_delay_125ns;
-     uint32_t endat_delay_5us;
-     uint32_t endat_delay_51us;
-     uint32_t endat_delay_1ms;
-     uint32_t endat_delay_2ms;
-     uint32_t endat_delay_12ms;
-     uint32_t endat_delay_50ms;
-     uint32_t endat_delay_380ms;
-     uint32_t endat_delay_900ms;
-     volatile uint8_t endat_primary_core_mask;
-     volatile uint8_t endat_ch0_syn_bit;
-     volatile uint8_t endat_ch1_syn_bit;
-     volatile uint8_t endat_ch2_syn_bit;
-     uint64_t icssg_clk;
-};
+    volatile uint8_t opmode;
+    /**< Operational mode selection.
+     *   0 = Periodic trigger mode with IEP compare event
+     *   1 = Host trigger mode (software-initiated commands)
+     *   2 = Periodic trigger mode with IEP capture event
+     *   Set by host before starting firmware operations */
+
+    volatile uint8_t channel;
+    /**< Channel mask for encoder selection.
+     *   Bit 0: Channel 0 enable (1 << 0)
+     *   Bit 1: Channel 1 enable (1 << 1)
+     *   Bit 2: Channel 2 enable (1 << 2)
+     *   Must be set before running firmware
+     *   After initialization, reflects detected/active channels
+     *   Multi-channel mode: up to 3 channels (0x1-0x7)
+     *   Single-channel mode: exactly 1 channel (0x1, 0x2, or 0x4) */
+
+    volatile uint8_t trigger;
+    /**< Command trigger and continuous mode control.
+     *   Bit 0 (LSB): Command trigger (1=send command, cleared by firmware on completion)
+     *   Bit 7 (MSB): Continuous clock mode (1=start, 0=stop)
+     *   Note: Command must be set up in endat_pruicss_cmd before setting trigger bit
+     *   For continuous mode, both LSB and MSB must be set to start */
+
+    volatile uint8_t status;
+    /**< Firmware initialization status.
+     *   0 = Initialization in progress or failed
+     *   1 = Initialization successful, ready for commands
+     *   Written by PRU firmware after initialization sequence
+     *   Host should wait approximately 5 seconds after firmware start to verify status */
+} endat_pruicss_config;
+
 /**
- *    \brief    Structure defining EnDat channel Rx information 
+ *  \brief EnDAT periodic trigger mode configuration
  *
- *    \details   
- *
+ *  \details This structure contains configuration parameters for periodic trigger
+ *           mode operation. In periodic mode, the IEP timer automatically triggers
+ *           encoder position reads at regular intervals without host intervention.
  */
-struct endatChRxInfo
+typedef struct endat_periodic_trigger_cfg_s
 {
-    Endat_ChRxInfo ch[3];
-};
+    uint8_t cmp_event;
+    /**< IEP compare event number for this channel (0-15).
+     *   Used when opmode=0 (IEP compare trigger mode)
+     *   Specifies which IEP compare event triggers position updates
+     *   The selected event triggers automatic position readout */
+
+    uint8_t cap_event;
+    /**< IEP capture event number for this channel (0-7).
+     *   Used when opmode=2 (IEP capture trigger mode) */
+
+    uint16_t reserved;
+    /**< Reserved for alignment */
+
+    uint32_t iep_capture_reg;
+    /**< IEP capture register value for capture mode.
+     *   Only used when opmode=2 (IEP capture mode) */
+} endat_periodic_trigger_cfg;
+
+/**
+ *  \brief EnDAT exchange interface
+ *
+ *  \details This structure defines the shared memory interface between the host
+ *           processor and PRU firmware for EnDAT communication. It contains
+ *           configuration, command, and data exchange structures along with
+ *           timing parameters required by the firmware.
+ *
+ *           This structure is mapped to PRU shared memory and accessed by both
+ *           the host driver and PRU firmware for bidirectional communication.
+ */
+typedef struct endat_pruicss_xchg_s
+{
+    endat_pruicss_config config[ENDAT_NUM_CH_PER_SLICE_MAX];
+    /**< Per-channel configuration interface.
+     *   Contains operational parameters for each of the 3 channels */
+
+    endat_pruicss_cmd cmd[ENDAT_NUM_CH_PER_SLICE_MAX];
+    /**< Per-channel command interface for EnDAT protocol commands.
+     *   Host writes commands, PRU executes and writes status
+     *   Bidirectional communication structure */
+
+    endat_ch_info ch[ENDAT_NUM_CH_PER_SLICE_MAX];
+    /**< Per-channel status and data exchange interface.
+     *   Contains received encoder data, error flags, and channel status */
+
+    uint64_t ch_info_memory_add;
+    /**< Global memory address of channel RX info structure.
+     *   Allows PRU direct access to write received data to host memory
+     *   Set by host during initialization */
+
+    uint64_t reserved;
+    /**< Reserved for alignment */
+
+    uint32_t endat_delay_125ns;
+    /**< PRU counts for 125 nanosecond delay.
+     *   Calculated based on PRU clock frequency */
+
+    uint32_t endat_delay_5us;
+    /**<  PRU counts for 5 microsecond delay. Calculated based on PRU clock frequency. */
+
+    uint32_t endat_delay_51us;
+    /**< PRU counts for 51 microsecond delay. Calculated based on PRU clock frequency. */
+
+    uint32_t endat_delay_1ms;
+    /**< PRU counts for 1 millisecond delay. Calculated based on PRU clock frequency. */
+
+    uint32_t endat_delay_2ms;
+    /**< PRU counts for 2 millisecond delay. Calculated based on PRU clock frequency. */
+
+    uint32_t endat_delay_12ms;
+    /**< PRU counts for 12 millisecond delay. Calculated based on PRU clock frequency. */
+
+    uint32_t endat_delay_50ms;
+    /**< PRU counts for 50 millisecond delay. Calculated based on PRU clock frequency. */
+
+    uint32_t endat_delay_380ms;
+    /**< PRU counts for 380 millisecond delay. Calculated based on PRU clock frequency. */
+
+    uint32_t endat_delay_900ms;
+    /**< PRU counts for 900 millisecond delay. Calculated based on PRU clock frequency. */
+
+    volatile uint8_t endat_primary_core_mask;
+    /**< Bitmask indicating which PRU core is primary in load-share mode to execute global reinit.
+     *
+     *   bitmask values:
+     *   0x1 - RTU is primary
+     *   0x2 - PRU is primary
+     *   0x4 - TXPRU is primary
+     */
+
+    volatile uint8_t endat_ch0_syn_bit;
+    /**< Synchronization bit for channel 0.
+     *   Used in load share mode to ensure channel 0 is ready for global reinit */
+
+    volatile uint8_t endat_ch1_syn_bit;
+    /**< Synchronization bit for channel 1.
+     *   Used in load share mode to ensure channel 1 is ready for global reinit */
+
+    volatile uint8_t endat_ch2_syn_bit;
+    /**< Synchronization bit for channel 2.
+     *   Used in load share mode to ensure channel 2 is ready for global reinit */
+
+    uint64_t icss_clk;
+    /**< PRU-ICSS core clock frequency in Hz.
+     *   Used by firmware for timing calculations */
+
+    uint32_t endat_iep_base_addr;
+    /**< IEP (Industrial Ethernet Peripheral) timer base address.
+     *   Used for periodic trigger mode */
+
+    endat_periodic_trigger_cfg trigger_params[ENDAT_NUM_CH_PER_SLICE_MAX];
+    /**< Per-channel periodic trigger configuration. */
+} endat_pruicss_xchg;
+/**
+ *  \brief EnDAT channel receive information array
+ *
+ *  \details This structure contains an array of receive information structures
+ *           for all EnDAT channels. It holds the decoded encoder data received
+ *           from each channel including position, additional info, CRC status,
+ *           and error flags.
+ *
+ *           This structure is allocated by the application and passed to the
+ *           driver during initialization. The PRU firmware writes received
+ *           encoder data directly to this structure.
+ */
+typedef struct endat_ch_rx_info_array_s
+{
+    endat_ch_rx_info ch[ENDAT_NUM_CH_PER_SLICE_MAX];
+    /**< Array of per-channel receive information structures.
+     *   Index 0 = Channel 0, Index 1 = Channel 1, Index 2 = Channel 2
+     *   Each element contains decoded position, addinfo, and status data */
+} endat_ch_rx_info_array;
+
 #ifdef __cplusplus
 }
 #endif

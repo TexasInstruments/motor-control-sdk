@@ -1,8 +1,11 @@
+export MOTOR_CONTROL_SDK_PATH?=$(abspath .)
+include $(MOTOR_CONTROL_SDK_PATH)/imports.mak
 
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL =
 # Various Example Projectspec Build Targets
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += bissc_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += endat_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += endat3_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += nikon_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += tamagawa_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_ALL += tamagawa_diagnostic_soc_uart_am263px-lp_r5fss0-0_freertos_ti-arm-clang_build
@@ -28,6 +31,8 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += bissc_peripheral_interface_
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += bissc_peripheral_interface_single_ch_am263px-lp_icss_m0_pru1_fw_ti-pru-cgt_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += endat_peripheral_interface_single_ch_am263px-lp_icss_m0_pru0_fw_ti-pru-cgt_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += endat_peripheral_interface_single_ch_am263px-lp_icss_m0_pru1_fw_ti-pru-cgt_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += endat3_peripheral_interface_single_channel_am263px-lp_icss_m0_pru1_fw_ti-pru-cgt_build
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += endat3_peripheral_interface_single_channel_am263px-lp_icss_m0_pru0_fw_ti-pru-cgt_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += nikon_peripheral_interface_single_ch_am263px-lp_icss_m0_pru0_fw_ti-pru-cgt_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += nikon_peripheral_interface_single_ch_am263px-lp_icss_m0_pru1_fw_ti-pru-cgt_build
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL += tamagawa_single_channel_am263px-lp_icss_m0_pru0_fw_ti-pru-cgt_build
@@ -43,6 +48,9 @@ all-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL)
 
  endat_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_build:
 	$(MAKE) -C examples/position_sense/endat_diagnostic/single_channel/am263px-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
+
+ endat3_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_build:
+	$(MAKE) -C examples/position_sense/endat3_diagnostic/single_channel/am263px-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
 
  nikon_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_build:
 	$(MAKE) -C examples/position_sense/nikon_diagnostic/single_channel/am263px-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec all
@@ -107,6 +115,12 @@ all-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_BUILD_PRIVATE_ALL)
  endat_peripheral_interface_single_ch_am263px-lp_icss_m0_pru1_fw_ti-pru-cgt_build:
 	$(MAKE) -C source/position_sense/endat/firmware/single_channel/am263px-lp/icss_m0_pru1_fw/ti-pru-cgt -f makefile_projectspec all
 
+ endat3_peripheral_interface_single_channel_am263px-lp_icss_m0_pru1_fw_ti-pru-cgt_build:
+	$(MAKE) -C source/position_sense/endat3/firmware/single_channel/am263px-lp/icss_m0_pru1_fw/ti-pru-cgt -f makefile_projectspec all
+
+ endat3_peripheral_interface_single_channel_am263px-lp_icss_m0_pru0_fw_ti-pru-cgt_build:
+	$(MAKE) -C source/position_sense/endat3/firmware/single_channel/am263px-lp/icss_m0_pru0_fw/ti-pru-cgt -f makefile_projectspec all
+
  nikon_peripheral_interface_single_ch_am263px-lp_icss_m0_pru0_fw_ti-pru-cgt_build:
 	$(MAKE) -C source/position_sense/nikon/firmware/single_channel/am263px-lp/icss_m0_pru0_fw/ti-pru-cgt -f makefile_projectspec all
 
@@ -125,6 +139,7 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL =
 # Various Example Projectspec Clean Targets
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += bissc_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += endat_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += endat3_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += nikon_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += tamagawa_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_ALL += tamagawa_diagnostic_soc_uart_am263px-lp_r5fss0-0_freertos_ti-arm-clang_clean
@@ -150,6 +165,8 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += bissc_peripheral_interface_
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += bissc_peripheral_interface_single_ch_am263px-lp_icss_m0_pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += endat_peripheral_interface_single_ch_am263px-lp_icss_m0_pru0_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += endat_peripheral_interface_single_ch_am263px-lp_icss_m0_pru1_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += endat3_peripheral_interface_single_channel_am263px-lp_icss_m0_pru1_fw_ti-pru-cgt_clean
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += endat3_peripheral_interface_single_channel_am263px-lp_icss_m0_pru0_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += nikon_peripheral_interface_single_ch_am263px-lp_icss_m0_pru0_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += nikon_peripheral_interface_single_ch_am263px-lp_icss_m0_pru1_fw_ti-pru-cgt_clean
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL += tamagawa_single_channel_am263px-lp_icss_m0_pru0_fw_ti-pru-cgt_clean
@@ -165,6 +182,9 @@ clean-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL)
 
  endat_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_clean:
 	$(MAKE) -C examples/position_sense/endat_diagnostic/single_channel/am263px-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
+
+ endat3_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_clean:
+	$(MAKE) -C examples/position_sense/endat3_diagnostic/single_channel/am263px-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
 
  nikon_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_clean:
 	$(MAKE) -C examples/position_sense/nikon_diagnostic/single_channel/am263px-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec clean
@@ -229,6 +249,12 @@ clean-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_CLEAN_PRIVATE_ALL)
  endat_peripheral_interface_single_ch_am263px-lp_icss_m0_pru1_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/endat/firmware/single_channel/am263px-lp/icss_m0_pru1_fw/ti-pru-cgt -f makefile_projectspec clean
 
+ endat3_peripheral_interface_single_channel_am263px-lp_icss_m0_pru1_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/position_sense/endat3/firmware/single_channel/am263px-lp/icss_m0_pru1_fw/ti-pru-cgt -f makefile_projectspec clean
+
+ endat3_peripheral_interface_single_channel_am263px-lp_icss_m0_pru0_fw_ti-pru-cgt_clean:
+	$(MAKE) -C source/position_sense/endat3/firmware/single_channel/am263px-lp/icss_m0_pru0_fw/ti-pru-cgt -f makefile_projectspec clean
+
  nikon_peripheral_interface_single_ch_am263px-lp_icss_m0_pru0_fw_ti-pru-cgt_clean:
 	$(MAKE) -C source/position_sense/nikon/firmware/single_channel/am263px-lp/icss_m0_pru0_fw/ti-pru-cgt -f makefile_projectspec clean
 
@@ -247,6 +273,7 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL =
 # Various Example Projectspec Export Targets
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += bissc_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += endat_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += endat3_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += nikon_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += tamagawa_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_ALL += tamagawa_diagnostic_soc_uart_am263px-lp_r5fss0-0_freertos_ti-arm-clang_export
@@ -272,6 +299,8 @@ BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += bissc_peripheral_interface
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += bissc_peripheral_interface_single_ch_am263px-lp_icss_m0_pru1_fw_ti-pru-cgt_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += endat_peripheral_interface_single_ch_am263px-lp_icss_m0_pru0_fw_ti-pru-cgt_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += endat_peripheral_interface_single_ch_am263px-lp_icss_m0_pru1_fw_ti-pru-cgt_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += endat3_peripheral_interface_single_channel_am263px-lp_icss_m0_pru1_fw_ti-pru-cgt_export
+BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += endat3_peripheral_interface_single_channel_am263px-lp_icss_m0_pru0_fw_ti-pru-cgt_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += nikon_peripheral_interface_single_ch_am263px-lp_icss_m0_pru0_fw_ti-pru-cgt_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += nikon_peripheral_interface_single_ch_am263px-lp_icss_m0_pru1_fw_ti-pru-cgt_export
 BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL += tamagawa_single_channel_am263px-lp_icss_m0_pru0_fw_ti-pru-cgt_export
@@ -287,6 +316,9 @@ export-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL)
 
  endat_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_export:
 	$(MAKE) -C examples/position_sense/endat_diagnostic/single_channel/am263px-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
+
+ endat3_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_export:
+	$(MAKE) -C examples/position_sense/endat3_diagnostic/single_channel/am263px-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
 
  nikon_diagnostic_single_channel_am263px-lp_r5fss0-0_freertos_ti-arm-clang_export:
 	$(MAKE) -C examples/position_sense/nikon_diagnostic/single_channel/am263px-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec export
@@ -351,6 +383,12 @@ export-private: $(BUILD_COMBO_EXAMPLE_PROJECTSPEC_EXPORT_PRIVATE_ALL)
  endat_peripheral_interface_single_ch_am263px-lp_icss_m0_pru1_fw_ti-pru-cgt_export:
 	$(MAKE) -C source/position_sense/endat/firmware/single_channel/am263px-lp/icss_m0_pru1_fw/ti-pru-cgt -f makefile_projectspec export
 
+ endat3_peripheral_interface_single_channel_am263px-lp_icss_m0_pru1_fw_ti-pru-cgt_export:
+	$(MAKE) -C source/position_sense/endat3/firmware/single_channel/am263px-lp/icss_m0_pru1_fw/ti-pru-cgt -f makefile_projectspec export
+
+ endat3_peripheral_interface_single_channel_am263px-lp_icss_m0_pru0_fw_ti-pru-cgt_export:
+	$(MAKE) -C source/position_sense/endat3/firmware/single_channel/am263px-lp/icss_m0_pru0_fw/ti-pru-cgt -f makefile_projectspec export
+
  nikon_peripheral_interface_single_ch_am263px-lp_icss_m0_pru0_fw_ti-pru-cgt_export:
 	$(MAKE) -C source/position_sense/nikon/firmware/single_channel/am263px-lp/icss_m0_pru0_fw/ti-pru-cgt -f makefile_projectspec export
 
@@ -385,6 +423,7 @@ help:
 	@echo  ==================================
 	@echo  $(MAKE) -s -C examples/position_sense/bissc_diagnostic/single_channel/am263px-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/position_sense/endat_diagnostic/single_channel/am263px-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C examples/position_sense/endat3_diagnostic/single_channel/am263px-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/position_sense/nikon_diagnostic/single_channel/am263px-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/position_sense/tamagawa_diagnostic/single_channel/am263px-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C examples/position_sense/tamagawa_diagnostic_over_soc_uart/am263px-lp/r5fss0-0_freertos/ti-arm-clang -f makefile_projectspec [export all clean]
@@ -406,6 +445,8 @@ help:
 	@echo  $(MAKE) -s -C source/position_sense/bissc/firmware/single_channel/am263px-lp/icss_m0_pru1_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C source/position_sense/endat/firmware/single_channel/am263px-lp/icss_m0_pru0_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C source/position_sense/endat/firmware/single_channel/am263px-lp/icss_m0_pru1_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C source/position_sense/endat3/firmware/single_channel/am263px-lp/icss_m0_pru1_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
+	@echo  $(MAKE) -s -C source/position_sense/endat3/firmware/single_channel/am263px-lp/icss_m0_pru0_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C source/position_sense/nikon/firmware/single_channel/am263px-lp/icss_m0_pru0_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C source/position_sense/nikon/firmware/single_channel/am263px-lp/icss_m0_pru1_fw/ti-pru-cgt -f makefile_projectspec [export all clean]
 	@echo  $(MAKE) -s -C source/position_sense/tamagawa/firmware/single_channel/am263px-lp/icss_m0_pru0_fw/ti-pru-cgt -f makefile_projectspec [export all clean]

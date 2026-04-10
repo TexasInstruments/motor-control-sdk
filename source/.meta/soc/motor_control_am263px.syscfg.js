@@ -3,6 +3,7 @@ let common = system.getScript("/common");
 const topModules_main = [
     "/position_sense/bissc",
     "/position_sense/endat",
+    "/position_sense/endat3",
     "/position_sense/nikon",
     "/position_sense/tamagawa",
 ];

@@ -5,10 +5,8 @@ let device = "am243x";
 const files = {
     common: [
         "app_sdfm.c",
-        "epwm_dc.c",
-        "epwm_drv_aux.c",
-        "epwm_mod.c",
         "sdfm_example.c",
+        "sdfm_epwm.c",
         "main.c",
     ],
 };
@@ -26,9 +24,9 @@ const filedirs = {
 
 const libdirs_freertos = {
     common: [
-        "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/lib",
-        "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers/lib",
-        "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/board/lib",
+        "${MCU_PLUS_SDK_PATH}/source/kernel/freertos/lib",
+        "${MCU_PLUS_SDK_PATH}/source/drivers/lib",
+        "${MCU_PLUS_SDK_PATH}/source/board/lib",
         "${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/lib",
         "${MOTOR_CONTROL_SDK_PATH}/source/pruicss_pwm/lib",
     ],
@@ -36,9 +34,9 @@ const libdirs_freertos = {
 
 const includes_freertos_r5f = {
     common: [
-        "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/FreeRTOS-Kernel/include",
-        "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F",
-        "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/am243x/r5f",
+        "${MCU_PLUS_SDK_PATH}/source/kernel/freertos/FreeRTOS-Kernel/include",
+        "${MCU_PLUS_SDK_PATH}/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F",
+        "${MCU_PLUS_SDK_PATH}/source/kernel/freertos/config/am243x/r5f",
         "${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/include",
         "${MOTOR_CONTROL_SDK_PATH}/examples/current_sense/icss_sdfm_three_channel_single_pru_snoop_mode",
         "${MOTOR_CONTROL_SDK_PATH}/examples/current_sense",
@@ -72,7 +70,7 @@ const templates_freertos_r5f =
         input: ".project/templates/am243x/freertos/main_freertos.c.xdt",
         output: "../main.c",
         options: {
-            entryFunction: "sdfm_main",
+            entryFunction: "sdfmMain",
         },
     }
 ];

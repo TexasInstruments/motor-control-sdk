@@ -53,12 +53,14 @@ Nikon A-format absolute encoder receiver implementation on the TI PRU-ICSS inter
     <td>Not tested
 </tr>
 </table>
-   -  Support for concurrent multi-channel support on a single PRU (up to 3 channels with identical number of encoders of the same frequency connected to all configured channels).
-       - In this mode, data transmission and reception must happen simultaneously on all channels.
+   -  Support for concurrent multi-channel support on a single PRU
+       - Up to 3 channels with identical number of encoders of the same frequency connected to all configured channels.
+       - Data transmission and reception must happen simultaneously on all channels.
        - The encoder configuration and cable length should be the same on all channels.
        - If encoders across channels don't respond at the same time, this mode will not work. Load share configuration should be used instead.
-   -  Support for multi-channel with different communication modes and different numbers of encoders connected across channels under load share mode (Refer \ref PRUICSSG_LOAD_SHARE_MODE for more details).
-       - In this mode, data transmission and reception can happen independently on all channels.
+   -  Support for multi-channel with encoders of different make and different numbers of encoders connected across channels under load share mode (Refer \ref PRUICSSG_LOAD_SHARE_MODE for more details).
+       - Up to 3 channels with encoders of the same frequency connected to all configured channels.
+       - Data transmission and reception can happen independently on all channels.
        - After a command is sent, all channels wait for a response and process the response independently. However, all channels must finish processing before the next command can be triggered.
 \endcond
 
@@ -85,7 +87,7 @@ Nikon A-format absolute encoder receiver implementation on the TI PRU-ICSS inter
     <td>5x
 </tr>
 </table>
-
+   -  Support for dual channel configuration using two independent PRU cores
 \endcond
 
 \cond (SOC_AM263X || SOC_AM263PX)
@@ -119,6 +121,8 @@ Nikon A-format absolute encoder receiver implementation on the TI PRU-ICSS inter
     <td>Not tested
 </tr>
 </table>
+\endcond
+
    -  Support for up to 40-bit absolute position (single turn + multi turn) data with additional information.
    -  Support for position preset, temperature information and alarms.
    -  Support for non-volatile (EEPROM) read and write.
@@ -132,13 +136,17 @@ Nikon A-format absolute encoder receiver implementation on the TI PRU-ICSS inter
         -  Support for factory setting modes which change the command response behavior:
             - CMD1/CMD5 for reading ABS 40-bit data and velocity.
             - CMD8/CMD9/CMD10/CMD11/CMD12 for reading lower ABS 24-bit data.
-\endcond
+   - Support for periodic trigger using PRU-ICSS IEP timer module
+   - Same clock frequency for all channels in multi channel mode within the same PRU-ICSS slice
+        - Different PRU slices can simultaneously handle encoders operating at different frequencies
 
 ## Features Not Supported
 
 In general, peripherals or features not mentioned as part of the "Features Supported" section are not
 supported in this release, including the following:
--  Independent clocks on multi channel mode.
+-  Independent clock frequency for each channel in multi channel mode within the same PRU-ICSS slice
+    - Clock frequency is a PRU-ICSS slice level configuration
+    - Each channel within the same PRU-ICSS slice in multi-channel mode will have same clock frequencies
 
 ### Known Limitations
 
@@ -147,12 +155,11 @@ supported in this release, including the following:
         - Only up to 7 encoders in bus connection have been tested with BP-AM2BLDCSERVO
         - This limitation is due to insufficient voltage when attempting to power 8 encoders
         - Attempting to connect 8 encoders may result in unreliable operation
-
     - Software Support
         - The example code and PRU firmware are designed to handle 8 encoders
 
 \cond SOC_AM243X
-- PRU Firmware gets stuck if encoder does not respond with the number of bytes expected by the driver as per PINDSW-9179 in \ref RELEASE_NOTES_11_00_00_PAGE
+- PRU Firmware gets stuck if encoder does not respond with the number of bytes expected by the driver as per PINDSW-9179 in \ref RELEASE_NOTES_2025_00_00_PAGE
  - Example cases when firmware gets stuck
     1. Any command is sent with encoder address not matching that of the encoder connected with the device
     2. In bus mode, if encoders with addresses 0, 1, 2 are connected and MT command is sent with encoder address 3 or more
@@ -160,98 +167,150 @@ supported in this release, including the following:
 \endcond
 
 \cond (SOC_AM263PX || SOC_AM261X)
-- PRU Firmware gets stuck if encoder does not respond with the number of bytes expected by the driver as per PINDSW-9179 in \ref RELEASE_NOTES_10_02_00_PAGE
+- PRU Firmware gets stuck if encoder does not respond with the number of bytes expected by the driver as per PINDSW-9179 in \ref RELEASE_NOTES_2025_00_00_PAGE
  - Example cases when firmware gets stuck
     1. Any command is sent with encoder address not matching that of the encoder connected with the device
     2. In bus mode, if encoders with addresses 0, 1, 2 are connected and MT command is sent with encoder address 3 or more
     3. Command 20 is sent with ID not matching the encoder connected with the device
 \endcond
 
-## SysConfig Features
+## SysConfig Features {#NIKON_SYSCONFIG_FEATURES}
 
 @VAR_SYSCFG_USAGE_NOTE
 
 \cond SOC_AM243X
 
+\attention For each PRU-ICSS slice being used for Nikon, one module instance should be created in SysConfig. For up to 3 channels using 1 slice, only 1 instance needs to be added.
+
 SysConfig can be used to configure the following:
-- Selecting the ICSSG instance. (Tested on ICSSG0)
-- Selecting the ICSSG0PRUx instance. (Tested on ICSSG0-PRU1)
-- Configuring PINMUX.
-- Frequency selection.
-- Channel selection.
+- Selecting the ICSSG instance (Tested on ICSSG0)
+- Selecting the ICSSG PRU slice (Tested on ICSSG0-PRU1)
+- Configuring PINMUX
+- Frequency selection
+- Channel selection
 - Selecting Multi Channel with encoders connected in Different Configurations (bus or one-to-one) using load share mode.
 - Enabling SA Mux mode.
-- Selecting source clock.
+- Selecting source clock
 - Selecting Nikon protocol version (2.1 or 3.0)
-
-\note Nikon firmware supports operation with ICSS Core Clock running at 200 MHz/300 MHz frequency or ICSS UART Clock running at 192 MHz only. ICSS Core Clock at 225/250/333 MHz is not supported due to clock divider requirements.
+- IEP instance and IEP event selection for periodic trigger mode
+- Booster Pack Support: Enable when using BP-AM2BLDCSERVO
+\note Nikon firmware is tested with ICSS Core Clock running at 200 MHz/300 MHz frequency or ICSS UART Clock running at 192 MHz only. ICSS Core Clock at 225/250/333 MHz is not supported due to clock divider requirements.
 
 \endcond
 
 \cond SOC_AM261X
 
-SysConfig can be used to configure the following:
-- Selecting the ICSS instance. (Tested on ICSSM1)
-- Selecting the ICSS PRU slice. (Tested on ICSSM1-PRU0)
-- Configuring PINMUX.
-- Frequency selection.
-- Channel selection.
-- Selecting source clock.
-- Selecting Nikon protocol version (2.1 or 3.0)
+\attention For each PRU-ICSS slice being used for Nikon, one module instance should be created in SysConfig. For 2 channel example using 2 PRUs, 2 instances need to be added.
 
-\note Nikon firmware supports operation with ICSS UART Clock running at 160 MHz only, when ICSS Core Clock is 225 MHz due to clock divider requirements.
+SysConfig can be used to configure the following:
+- Selecting the ICSSM instance (Tested on ICSSM1)
+- Selecting the ICSSM PRU slice (Tested on ICSSM1-PRU0 and ICSSM1-PRU1)
+- Configuring PINMUX
+- Frequency selection
+- Channel selection
+- Selecting source clock
+- Selecting Nikon protocol version (2.1 or 3.0)
+- IEP event selection for periodic trigger mode
+- Booster Pack Support: Enable when using BP-AM2BLDCSERVO
+\note Nikon firmware is tested with ICSS UART Clock running at 160 MHz only, when ICSS Core Clock is 225 MHz due to clock divider requirements.
 
 \endcond
 
-\cond  (SOC_AM263X || SOC_AM263PX)
+\cond (SOC_AM263X || SOC_AM263PX)
+
+\attention For each PRU-ICSS slice being used for Nikon, one module instance should be created in SysConfig.
 
 SysConfig can be used to configure the following:
-- Selecting the ICSS instance. (Tested on ICSSM)
-- Selecting the ICSS PRU slice. (Tested on ICSSM-PRU0)
-- Configuring PINMUX.
-- Frequency selection.
-- Channel selection.
-- Selecting source clock.
+- Selecting the ICSSM PRU slice (Tested on ICSSM-PRU0)
+- Configuring PINMUX
+- Frequency selection
+- Channel selection
+- Selecting source clock
 - Selecting Nikon protocol version (2.1 or 3.0)
-
-\note Nikon firmware supports operation with ICSS Core Clock running at 200 MHz frequency or ICSS UART Clock running at 192 MHz frequency only.
+- IEP event selection for periodic trigger mode
+- Booster Pack Support: Enable when using BP-AM2BLDCSERVO
+\note Nikon firmware is tested with ICSS Core Clock running at 200 MHz frequency or ICSS UART Clock running at 192 MHz frequency only due to clock divider requirements.
 
 \endcond
 
-## ICSS PRU Resource Usage
+## Periodic Trigger Modes {#NIKON_PERIODIC_MODES}
+
+The Nikon driver supports two types of periodic trigger modes for continuous position sampling:
+
+### CMP Mode (Compare Event Mode)
+In CMP mode, the IEP timer compare event triggers position sampling. Compare events occur when the IEP timer counter matches the configured compare value. This mode enables fixed-rate periodic sampling.
+
+**Configuration:**
+- Compare event range: CMP0-CMP15 (0-15)
+- Configured via \ref nikon_config_periodic_trigger_cmp_mode() API
+- IEP compare event number set via \ref nikon_config_iep_cmp_event() API
+- Event selection can be done in SysConfig
+- IEP configuration and CMP event configuration should be done in application. Driver uses above APIs to inform firmware to enable CMP periodic mode and uses the configured CMP event to start sampling periodically.
+
+### CAP Mode (Capture Event Mode)
 \cond SOC_AM243X
+In CAP mode, external signals trigger position sampling through IEP capture events. The capture event is triggered on the rising edge of the external input pulse, enabling event-driven position capture. Internal signals can also be mapped to IEP capture events via TIMESYNC/GPIOMUX router.
+\endcond
+
+\cond (SOC_AM261X || SOC_AM263X || SOC_AM263PX)
+In CAP mode, external signals trigger position sampling through IEP capture events. The capture event is triggered on the rising edge of the external input pulse, enabling event-driven position capture. Internal signals can also be mapped to IEP capture events via XBAR.
+\endcond
+
+**Configuration:**
+- Capture event range: CAP0-CAP7 (0-7)
+- Configured via \ref nikon_config_periodic_trigger_cap_mode() API
+- IEP capture event number set via \ref nikon_config_iep_cap_event() API
+- Event selection can be done in SysConfig
+- IEP configuration and CAP event configuration should be done in application. Driver uses above APIs to inform firmware to enable CAP periodic mode and uses the configured CAP event to start sampling periodically.
+
+\note
+    - External signal must be routed to IEP capture input (if needed) in application
+    - CAP6 and CAP7 support falling edge detection as well. In Nikon, rising edge is used always.
+
+\attention Both IEP event configuration APIs (nikon_config_iep_cmp_event() and nikon_config_iep_cap_event()) are automatically called during nikon_init() with values configured in SysConfig.
+
+## PRU-ICSS Resource Usage
+
+- Utilizes the Peripheral IF mode (3-channel peripheral interface mode) for Nikon communication. Maximum of 3 channels are available per PRU slice. (Refer \ref PRUICSS_PERIPHERAL_IF_MODE for more details)
+- Each channel has 4 pins (Clock, Data out, Data in, Output enable)
+- Following table contains details of memory usage, IEP usage and interrupt controller usage:
+
+\cond SOC_AM243X
+
+\attention In addition to the following resources used by PRU firmware, SDK examples also configure IEPx CMP0 for IEP counter reset in periodic trigger CMP mode and IEPx CMP1 for generating SYNC OUT0 used as input to CAP in periodic trigger CAP mode.
+
 <table>
 <tr>
-    <th> Configuration
-    <th> PRU Core
+    <th> Configuration per slice
+    <th> PRU Core(s)
     <th> Memory Usage
     <th> IEP Usage
-    <th> Other Peripheral Usage
+    <th> Interrupt Controller (INTC) Usage
     <th> Description
 </tr>
 <tr>
     <td> Single channel
     <td> PRUx
-    <td> DMEM: 549 Bytes (0x0 to 0x225) <br>  IMEM: ~ 1.4 kB
-	<td> IEP0: CMP0 and CMP3
-    <td> INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger interrupt to Arm® Cortex®-R5F
-    <td> IEP, CMP events and INTC signal are used only in periodic continuous mode.
+    <td> DMEM: 580 Bytes (0x0 to 0x243) <br>IMEM: ~ 1.4 kB
+	<td> <b>CMP Mode:</b> IEPx CMPy for trigger (IEPx and CMPy selected in SysConfig)<br><b>CAP Mode:</b> IEPx CAPy for trigger (IEPx and CAPy selected in SysConfig)
+    <td> INTC event/input number 18 or 21 (prx_pru_mst_intr[2/3]_intr_req) is used to trigger interrupt to Arm® Cortex®-R5F based on slice
+    <td> IEP, CMP/CAP events and INTC signals are used only in periodic trigger modes
 </tr>
 <tr>
     <td> Multi-channel with single PRU core
     <td> PRUx
-    <td> DMEM: 549 Bytes (0x0 to 0x225) <br>  IMEM: 1700 Bytes
-	<td> IEP0: CMP0 and CMP3
-    <td> INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger interrupt to R5F
-    <td> IEP, CMP events and INTC signal are used only in periodic continuous mode.
+    <td> DMEM: 580 Bytes (0x0 to 0x243) <br>IMEM: ~ 1.73 kB
+	<td> <b>CMP Mode:</b> IEPx CMPy for trigger (IEPx and CMPy selected in SysConfig)<br><b>CAP Mode:</b> IEPx CAPy for trigger (IEPx and CAPy selected in SysConfig)
+    <td> INTC event/input number 18 or 21 (prx_pru_mst_intr[2/3]_intr_req) is used to trigger interrupt to R5F based on slice
+    <td> IEP, CMP/CAP events and INTC signals are used only in periodic trigger modes
 </tr>
 <tr>
     <td rowspan="3"> Multi-channel with load share across 3 PRU cores
     <td> PRUx
-    <td rowspan="3"> DMEM: 549 Bytes (0x0 to 0x225) <br>  IMEM: 1604 Bytes
-	<td rowspan="3"> IEP0: CMP0, CMP3, CMP5 and CMP6 </td>
-    <td rowspan="3"> INTC events/inputs number 18, 19 and 20 (pr[0/1]_pru_mst_intr[2/3/4]_intr_req) are used to trigger interrupts to R5F
-    <td rowspan="3"> IEP, CMP events and INTC signals are used only in periodic continuous mode.</td>
+    <td rowspan="3"> DMEM: 580 Bytes (0x0 to 0x243) <br>IMEM (per core): ~ 1.6 kB
+	<td rowspan="3"> <b>CMP Mode:</b> IEPx CMPy for trigger per channel (IEPx and CMPy selected in SysConfig)<br><b>CAP Mode:</b> IEPx CAPy for trigger per channel (IEPx and CAPy selected in SysConfig)
+    <td rowspan="3"> INTC events/inputs number 18, 19, 20 or 21, 22, 23(prx_pru_mst_intr[2/3/4/5/6/7]_intr_req) are used to trigger interrupts to R5F
+    <td rowspan="3"> IEP, CMP/CAP events and INTC signals are used only in periodic trigger modes</td>
 </tr>
 <tr>
     <td> RTU_PRUx
@@ -266,24 +325,28 @@ SysConfig can be used to configure the following:
 \endcond
 
 \cond (SOC_AM261X || SOC_AM263X || SOC_AM263PX)
+
+\attention In addition to the following resources used by PRU firmware, SDK examples also configure IEP0 CMP0 for IEP counter reset in periodic trigger CMP mode.
+
 <table>
 <tr>
-    <th> Configuration
+    <th> Configuration per slice
     <th> PRU Core
     <th> Memory Usage
     <th> IEP Usage
-    <th> Other Peripheral Usage
+    <th> Interrupt Controller (INTC) Usage
     <th> Description
 </tr>
 <tr>
     <td> Single channel
     <td> PRUx
-    <td> DMEM: 549 Bytes (0x0 to 0x225) <br>  IMEM: ~ 1.4 kB
-	<td> IEP0: CMP0 and CMP3
-    <td> INTC event/input number 18 (pr[0/1]_pru_mst_intr[2]_intr_req) is used to trigger interrupt to R5F
-    <td> IEP, CMP events and INTC signal are used only in periodic continuous mode.
+    <td> DMEM: 580 Bytes (0x0 to 0x243) <br>IMEM: ~ 1.4 kB
+	<td> <b>CMP Mode:</b> IEP0 CMPy for trigger (IEP0 CMPy selected in SysConfig)<br><b>CAP Mode:</b> IEP0 CAPy for trigger (IEP0 CAPy selected in SysConfig)
+    <td> INTC event/input number 18 or 21 (prx_pru_mst_intr[2/3]_intr_req) is used to trigger interrupt to Arm® Cortex®-R5F based on slice
+    <td> IEP, CMP/CAP events and INTC signals are used only in periodic trigger modes
 </tr>
 </table>
+
 \note For pin usage, see \ref NIKON_PIN_USAGE section.
 
 \endcond

@@ -1,5 +1,5 @@
-/*
- *  Copyright (C) 2021-24 Texas Instruments Incorporated
+﻿/*
+ *  Copyright (C) 2021-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -30,7 +30,34 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/**
+ * \file  endat_diagnostic.c
+ *
+ * \brief EnDAT 2.2 encoder diagnostic application
+ *
+ * This application provides comprehensive diagnostic and testing capabilities for
+ * EnDAT 2.2 encoders, including position reads, parameter access via MRS commands,
+ * continuous monitoring, recovery time measurement, and periodic trigger mode.
+ *
+ * \par Key Features:
+ * - Support for EnDAT 2.1 and 2.2 protocol commands
+ * - Single-channel and load-share (multi-channel) operation modes
+ * - MRS (Memory Range Selection) parameter read/write operations
+ * - Recovery time testing with error detection
+ * - Position value validation and safety information handling
+ * - IEP timer-based periodic trigger mode for real-time updates
+ *
+ * \par Application Flow:
+ * 1. Initialize PRU-ICSS and disable cores
+ * 2. Initialize EnDAT driver (endat_init)
+ * 3. Load and run PRU firmware
+ * 4. Get encoder configuration and resolution
+ * 5. Run diagnostic tests via interactive menu
+ */
 
+/* ========================================================================== */
+/*                             Include Files                                  */
+/* ========================================================================== */
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -41,48 +68,20 @@
 #include <kernel/dpl/DebugP.h>
 #include <drivers/soc.h>
 
-#if defined(SOC_AM243X) || defined(SOC_AM64X)
+#if defined(SOC_AM243X)
 #include <drivers/sciclient.h>
 #endif
 
 #include <kernel/dpl/TaskP.h>
 #include <drivers/pinmux.h>
 #include <drivers/hw_include/hw_types.h>
+#include <position_sense/endat/include/endat_drv.h>
 #include "ti_drivers_open_close.h"
 #include "ti_board_open_close.h"
-#include <position_sense/endat/include/endat_drv.h>
-
 #include "endat_periodic_trigger.h"
 
-/* Size of the PRU instruction memory in bytes.*/
-#define PRU_IRAM_SIZE   ( 12 * 1024 )    /* 12KB */
-
-/* Size of the RTU PRU instruction memory in bytes. */
-#define RTUPRU_IRAM_SIZE   ( 8 * 1024 )    /* 8KB */
-
-/* Size of the TX PRU instruction memory in bytes.*/
-#define TXPRU_IRAM_SIZE   ( 6 * 1024 )    /* 6KB */
-
-#define PRUICSS_SLICEx CONFIG_ENDAT0_PRUICSS_PRUx
-
-#if (PRUICSS_SLICEx == 1)
-#define PRUICSS_PRUx PRUICSS_PRU1
-#ifndef PRUICSSM
-#define PRUICSS_TXPRUx PRUICSS_TX_PRU1
-#define PRUICSS_RTUPRUx PRUICSS_RTU_PRU1
-#endif
-#else
-#define PRUICSS_PRUx PRUICSS_PRU0
-#ifndef PRUICSSM
-#define PRUICSS_TXPRUx PRUICSS_TX_PRU0
-#define PRUICSS_RTUPRUx PRUICSS_RTU_PRU0
-#endif
-#endif
-
-
-
 #if CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU
-#if PRUICSS_SLICEx == 1
+#if CONFIG_ENDAT0_PRUICSS_SLICE == 1
 #include <endat_receiver_multi_pru1_bin.h>
 #else
 #include <endat_receiver_multi_pru0_bin.h>
@@ -90,35 +89,68 @@
 #endif
 
 #if (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
-#if PRUICSS_SLICEx == 1
+#if CONFIG_ENDAT0_PRUICSS_SLICE == 1
+#if CONFIG_ENDAT0_CHANNEL0_ENABLED
 #include <endat_receiver_multi_rtu_pru1_bin.h>
+#endif
+#if CONFIG_ENDAT0_CHANNEL1_ENABLED
 #include <endat_receiver_multi_pru1_bin.h>
+#endif
+#if CONFIG_ENDAT0_CHANNEL2_ENABLED
 #include <endat_receiver_multi_tx_pru1_bin.h>
+#endif
 #else
+#if CONFIG_ENDAT0_CHANNEL0_ENABLED
 #include <endat_receiver_multi_rtu_pru0_bin.h>
+#endif
+#if CONFIG_ENDAT0_CHANNEL1_ENABLED
 #include <endat_receiver_multi_pru0_bin.h>
+#endif
+#if CONFIG_ENDAT0_CHANNEL2_ENABLED
 #include <endat_receiver_multi_tx_pru0_bin.h>
+#endif
 #endif
 #endif
 
 #if CONFIG_ENDAT0_MODE == ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU
-#if PRUICSS_SLICEx == 1
+#if CONFIG_ENDAT0_PRUICSS_SLICE == 1
 #include <endat_receiver_pru1_bin.h>
 #else
 #include <endat_receiver_pru0_bin.h>
 #endif
 #endif
 
-#define WAIT_5_SECOND  (5000)
-#define TASK_STACK_SIZE (4096)
-#define TASK_PRIORITY   (6)
+#if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
+#if CONFIG_ENDAT1_PRUICSS_SLICE == 1
+#include <endat_receiver_pru1_bin.h>
+#else
+#include <endat_receiver_pru0_bin.h>
+#endif
+#endif
 
-#define ENDAT_RX_SAMPLE_SIZE    7
-#define ENDAT_RX_SESQUI_DIV (1 << 15)
+/* ========================================================================== */
+/*                           Macros & Typedefs                                */
+/* ========================================================================== */
 
-#define MRS_POS_VAL2_WORD1  0x42
-#define MRS_POS_VAL2_WORD2  0x43
-#define MRS_POS_VAL2_WORD3  0x44
+/* Timeout and Task Configuration */
+#define WAIT_5_SECOND                       (5000)
+#define TASK_STACK_SIZE                     (4096)
+#define TASK_PRIORITY                       (6)
+
+/* Delay Values (in microseconds) */
+#define POSITION_LOOP_DISPLAY_DELAY_US      (100U)   /* Delay between position display updates */
+#define POSITION_LOOP_2_1_DELAY_US          (500U)   /* Delay for EnDAT 2.1 position loop display */
+#define POSITION_VAL2_READY_DELAY_MULT      (3U)     /* Multiplier for position value 2 ready wait (us * 3) */
+#define ENDAT_PERIODIC_MODE_POLL_SLEEP_US   (1)
+
+/* Position Loop Control */
+#define ENDAT_POSITION_LOOP_STOP            (0)
+#define ENDAT_POSITION_LOOP_START           (1)
+
+/* MRS Position Value 2 Word Addresses */
+#define MRS_POS_VAL2_WORD1                  (0x42U)
+#define MRS_POS_VAL2_WORD2                  (0x43U)
+#define MRS_POS_VAL2_WORD3                  (0x44U)
 
 #if defined(SOC_AM261X) || defined(SOC_AM263X) || defined(SOC_AM263PX)
 /* Translate the TCM local view addr to SoC view addr */
@@ -131,112 +163,195 @@
 #define CPU1_BTCM_SOCVIEW(x) (CSL_R5FSS1_CORE0_BTCM_BASE+(x - CSL_R5FSS1_BTCM_BASE))
 #endif
 
-/*Use soc driver instead it when available */
-#if SOC_AM263PX
-/**
- *  \anchor TCA6416_Mode
- *  \name IO pin mode - Input or Output
- *  @{
- */
-/** \brief Configure IO pin as input */
-#define TCA6416_MODE_INPUT              (0U)
-/** \brief Configure IO pin as output */
-#define TCA6416_MODE_OUTPUT             (1U)
-/** @} */
+/* Command Validation Macros */
+#define VALID_CONT_MODE_CMD(x) ((x) == 101 || (x) == 104 || (x) == 107 || (x) == 111 || (x) == 200 || (x) == 201)
 
-/**
- *  \anchor TCA6416_OutState
- *  \name IO pin output state - HIGH or LOW
- *  @{
- */
-/** \brief Configure IO pin output as LOW */
-#define TCA6416_OUT_STATE_LOW           (0U)
-/** \brief Configure IO pin output as HIGH */
-#define TCA6416_OUT_STATE_HIGH          (1U)
-/** @} */
-
-
-#define TCA6416_REG_INPUT_PORT_0        (0x00U)
-#define TCA6416_REG_INPUT_PORT_1        (0x01U)
-#define TCA6416_REG_OUTPUT_PORT_0       (0x02U)
-#define TCA6416_REG_OUTPUT_PORT_1       (0x03U)
-#define TCA6416_REG_POL_INV_PORT_0      (0x04U)
-#define TCA6416_REG_POL_INV_PORT_1      (0x05U)
-#define TCA6416_REG_CONFIG_PORT_0       (0x06U)
-#define TCA6416_REG_CONFIG_PORT_1       (0x07U)
-#endif
-
-static union endat_format_data gEndat_format_data_mtrctrl[3];
-static uint32_t gEndat_mtrctrl_crc_err[3];
-static uint32_t gEndat_2_2_crc_position_err_cnt[3];
-static uint32_t gEndat_2_2_crc_addinfo1_err_cnt[3];
-static uint64_t gEndat_2_2_pos_val2[3];
-static int32_t gEndat_2_2_loop_mrs;
-static void (*endat_fn_position_loop)(unsigned int);
-
-uint32_t gTaskFxnStack[TASK_STACK_SIZE/sizeof(uint32_t)] __attribute__((aligned(32)));
-TaskP_Object gTaskObject;
-#define VALID_PERIODIC_CMD(x) ((x) == 200)
-
-#define VALID_HOST_CMD(x) ((x == 100) || ((x) == 101) || ((x) == 102) || ((x) == 103) || ((x) == 104) || ((x) == 105) || \
-                           ((x) == 106) || ((x) == 107) || ((x) == 108) || ((x) == 109) || ((x) == 110) || ((x) == 111) ||((x)== 112))
+#define VALID_HOST_CMD(x) ((x == 100) || ((x) == 102) || ((x) == 103) || ((x) == 105) || \
+                           ((x) == 106) || ((x) == 108) || ((x) == 109) || ((x) == 110) || ((x)== 112))
 
 #define HAVE_COMMAND_SUPPLEMENT(x) (((x) == 2) || ((x) == 3) || ((x) == 4) || ((x) == 7) || \
                                     ((x) == 9) || ((x) == 10) || ((x) == 11) || ((x) == 13) || ((x) == 14) || \
-                                    ((x) == 100) || ((x) == 101) || ((x)== 103) || ((x) == 105) || ((x) == 106) || ((x) == 107) || ((x) == 108) || ((x) == 109)  || ((x) == 200) || ((x) == 112))
+                                    ((x) == 100) || ((x) == 101) || ((x)== 103) || ((x) == 105) || ((x) == 106) || ((x) == 107) || ((x) == 108) || ((x) == 109)  || ((x) == 200) || ((x) == 201) || ((x) == 112))
+#define ENDAT_POSITION_CMD(x) (((x) == 1) || ((x) == 8) ||((x) == 9) || ((x) == 10) || ((x) == 11) || ((x) == 13))
 
 
-#define ICSS_PRU_CORE_CLOCK CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ
-#define ENDAT_INPUT_CLOCK_UART_FREQUENCY CONFIG_PRU_ICSS0_UART_CLK_FREQ_HZ
+/* Size of the PRU instruction memory in bytes.*/
+#define PRU_IRAM_SIZE   ( 12 * 1024 )    /* 12KB */
 
-#if CONFIG_ENDAT0_TX_RX_FIFO_CLOCK_SOURCE == 1
-#define ENDAT_RX_INPUT_CLOCK_FREQUENCY ICSS_PRU_CORE_CLOCK
-#define ENDAT_TX_INPUT_CLOCK_FREQUENCY ICSS_PRU_CORE_CLOCK
-#else
-#define ENDAT_RX_INPUT_CLOCK_FREQUENCY ENDAT_INPUT_CLOCK_UART_FREQUENCY
-#define ENDAT_TX_INPUT_CLOCK_FREQUENCY ENDAT_INPUT_CLOCK_UART_FREQUENCY
-#endif
+/* Size of the RTU PRU instruction memory in bytes. */
+#define RTUPRU_IRAM_SIZE   ( 8 * 1024 )    /* 8KB */
 
-#define ENDAT_POSITION_LOOP_STOP    0
-#define ENDAT_POSITION_LOOP_START   1
+/* Size of the TX PRU instruction memory in bytes.*/
+#define TXPRU_IRAM_SIZE   ( 6 * 1024 )    /* 6KB */
 
+/* ========================================================================== */
+/*                         Structure Definitions                              */
+/* ========================================================================== */
 
-union position
+typedef union endat_position_type_u
 {
     float angle;
     uint64_t length;
-};
+} endat_position_type;
 
-struct endat_priv *priv;
+/* ========================================================================== */
+/*                            Global Variables                                */
+/* ========================================================================== */
 
-#define PRUSS_PRU1_CTRL_CTPPR1      (CSL_ICSS_G_PR1_PDSP1_IRAM_REGS_BASE + 0x2C)
+/* PRU-ICSS Driver Handle */
+PRUICSS_Handle gPruIcssXHandle = NULL;
 
-#define ENDAT_MULTI_CH0 (1 << 0)
-#define ENDAT_MULTI_CH1 (1 << 1)
-#define ENDAT_MULTI_CH2 (1 << 2)
-static uint32_t gEndat_prop_delay[3];
-static uint32_t gEndat_prop_delay_max;
-static uint8_t gEndat_is_multi_ch;
-static uint8_t gEndat_multi_ch_mask;
-static uint8_t  gEndat_is_load_share_mode;
-static char gUart_buffer[256];
+/* EnDAT Driver Handle Array - indexed by instance (0 to CONFIG_ENDAT_NUM_INSTANCES-1) */
+endat_handle gAppEndatHandle[CONFIG_ENDAT_NUM_INSTANCES] = {NULL};
 
-/** \brief Global Structure pointer holding PRUSS1 memory Map. */
-PRUICSS_Handle gPruIcssXHandle;
+/* EnDAT Periodic Interface Struct Instance */
+endat_periodic_interface gEndatPeriodicInterface;
 
-/* buffer to handle long long printf */
-char gPrintf_dump_buffer[21];
+/* Multi-instance Position Data Arrays [instance][channel] */
+static endat_format_data gAppEndatFormatDataMtrCtrl[CONFIG_ENDAT_NUM_INSTANCES][ENDAT_NUM_CH_PER_SLICE_MAX];
+static uint32_t gAppEndatMtrCtrlCrcErr[CONFIG_ENDAT_NUM_INSTANCES][ENDAT_NUM_CH_PER_SLICE_MAX];
+static uint32_t gAppEndat22CrcPositionErrCnt[CONFIG_ENDAT_NUM_INSTANCES][ENDAT_NUM_CH_PER_SLICE_MAX];
+static uint32_t gAppEndat22CrcAddinfo1ErrCnt[CONFIG_ENDAT_NUM_INSTANCES][ENDAT_NUM_CH_PER_SLICE_MAX];
+static uint64_t gAppEndat22PosVal2[CONFIG_ENDAT_NUM_INSTANCES][ENDAT_NUM_CH_PER_SLICE_MAX];
+static uint32_t gAppEndat22LoopMrs[CONFIG_ENDAT_NUM_INSTANCES];
 
-/* This function is used to convert uint64_t
- * variable tp a string as printf doesn't support
- * printing 64-bit variables
+/* Propagation Delay Arrays [instance][channel] */
+static uint32_t gAppEndatPropDelay[CONFIG_ENDAT_NUM_INSTANCES][ENDAT_NUM_CH_PER_SLICE_MAX];
+static uint32_t gAppEndatPropDelayMax[CONFIG_ENDAT_NUM_INSTANCES];
+
+/* Global variable to track position loop status */
+volatile int32_t gEndatPositionLoopStatus;
+
+/* IRQ count from periodic trigger (defined in endat_periodic_trigger.c) */
+extern volatile uint32_t gPruEndatIrqCnt[CONFIG_ENDAT_NUM_INSTANCES][ENDAT_NUM_CH_PER_SLICE_MAX];
+
+volatile uint64_t gPositionLoopIrqCount = 0;
+
+/* Task related global variables */
+uint32_t gTaskFxnStack[TASK_STACK_SIZE/sizeof(uint32_t)] __attribute__((aligned(32)));
+TaskP_Object gTaskObject;
+
+/* Utility buffers */
+static char gUartBuffer[256];
+static char gPrintfDumpBuffer[21];
+
+/* EnDAT channel Info, written by PRU cores */
+__attribute__((section(".gEnDatChInfo"))) endat_ch_rx_info_array gEndatChInfo[CONFIG_ENDAT_NUM_INSTANCES];
+
+/* ========================================================================== */
+/*                       Function Declarations                                */
+/* ========================================================================== */
+
+/* Utility functions */
+char *uint64_to_str(uint64_t x);
+
+/* PRU-ICSS initialization and firmware loading */
+
+/**
+ * \brief   Initialize PRU-ICSS for EnDAT operation
+ *
+ * \details Opens PRU-ICSS instance, configures G_MUX, sets constant tables,
+ *          clears data RAM, and disables PRU cores in preparation for firmware loading.
+ *
+ *          Implemented configurations:
+ *          - Instance 0: All modes implemented (single-channel single-PRU,
+ *            multi-channel single-PRU, multi-channel multi-PRU load-share)
+ *          - Instance 1 (dual slice): Only single-channel single-PRU mode
+ *            implemented. Tested on AM261x platform.
+ *
+ * \note    In dual slice mode (ENDAT_DUAL_PRU_SLICE_ENABLE), this function
+ *          initializes both PRU slices. Instance 0 uses CONFIG_ENDAT0_* settings,
+ *          Instance 1 uses CONFIG_ENDAT1_* settings. Only single-channel single-PRU
+ *          configuration is implemented for Instance 1.
  */
+static void endat_pruicss_init(void);
+/**
+ * \brief   Load and run PRU firmware for EnDAT encoder interface
+ *
+ * \details This function loads the appropriate PRU firmware binary into PRUICSS
+ *          instruction memory and starts the PRU core(s). Firmware selection is
+ *          based on the EnDAT mode (single/multi-channel, load-share) and PRU
+ *          slice configuration.
+ *
+ *          Implemented configurations:
+ *          - Instance 0: All modes implemented (single-channel single-PRU,
+ *            multi-channel single-PRU, multi-channel multi-PRU load-share)
+ *          - Instance 1 (dual slice): Only single-channel single-PRU mode
+ *            implemented. Tested on AM261x platform.
+ *
+ * \note    This function does NOT call endat_wait_initialization(). Caller must
+ *          wait for firmware initialization separately after calling this function.
+ *
+ * \note    In dual slice mode (ENDAT_DUAL_PRU_SLICE_ENABLE), this function is
+ *          called for both instances. Instance 0 uses CONFIG_ENDAT0_* settings,
+ *          Instance 1 uses CONFIG_ENDAT1_* settings. Only single-channel single-PRU
+ *          configuration is implemented for Instance 1.
+ *
+ * \param   handle    EnDAT driver handle for the instance
+ *
+ * \retval  SystemP_SUCCESS    Firmware loaded and started successfully
+ * \retval  SystemP_FAILURE    Firmware load/start failed
+ */
+static void endat_pruicss_load_run_fw(void);
 
-/* EnDat channel Info, written by PRU cores */
-__attribute__((section(".gEnDatChInfo"))) struct endatChRxInfo gEndatChInfo;
+/**
+ * \brief   Display PRU firmware version information
+ *
+ * \details Reads and displays the firmware version from the loaded PRU firmware
+ *          binary. Version format: major.minor.patch (release/internal).
+ *
+ *          Implemented configurations:
+ *          - Instance 0 single-channel single-PRU: Displays firmware version
+ *          - Instance 0 multi-channel single-PRU: Displays firmware version
+ *          - Instance 0 multi-channel multi-PRU: Displays version for each enabled
+ *            channel (RTU-PRU for channel 0, PRU for channel 1, TX-PRU for channel 2)
+ *          - Instance 1 (dual slice): Displays firmware version for single-channel
+ *            single-PRU configuration only
+ */
+static void endat_display_fw_version(void);
+/**
+ * \brief   Display interactive diagnostic command menu
+ */
+static void endat_print_menu(endat_handle handle);
+/* Get command from user */
+static int32_t endat_get_command(endat_handle handle);
+
+static void endat_recvd_print(endat_handle handle, int32_t cmd, endat_format_data *endat_data, int32_t crc);
+static void endat_display_raw_data(endat_handle handle, int32_t cmd);
+static void endat_print_encoder_info(endat_handle handle);
+static void endat_print_position_header(endat_handle handle, uint32_t continuous, uint32_t is_2_2);
+static void endat_print_position_loop(endat_handle handle, uint32_t continuous, uint32_t is_2_2, uint32_t ch);
+
+/* Position command processing */
+void endat_position_loop(void);
+static void endat_process_2_1_position_command(endat_handle handle);
+static void endat_process_2_2_position_command(endat_handle handle);
+static uint16_t endat_handle_2_2_position_command(endat_handle handle, uint32_t cmd, endat_cmd_supplement *cmd_supplement, uint32_t a0);
+
+/* Command processing and handling */
+static int32_t endat_get_command_supplement(endat_handle handle, int32_t cmd, endat_cmd_supplement *cmd_supplement);
+static int32_t endat_handle_user(endat_handle handle[CONFIG_ENDAT_NUM_INSTANCES], endat_cmd_supplement cmd_supplement[CONFIG_ENDAT_NUM_INSTANCES]);
+static void endat_process_host_command(endat_handle handle, int32_t cmd, endat_cmd_supplement *cmd_supplement);
+static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_ENDAT_NUM_INSTANCES], int32_t cmd, endat_cmd_supplement cmd_supplement[CONFIG_ENDAT_NUM_INSTANCES]);
+static void endat_handle_rx(endat_handle handle, int32_t cmd);
+
+/* Position loop control */
+static int32_t endat_calc_position_period(uint32_t freq);
+static uint32_t endat_get_position_loop_chars(uint32_t multi_turn_res, uint32_t continuous, uint32_t is_2_2);
+static int32_t endat_loop_task_create(void);
+static void endat_position_loop_decide_termination(void *args);
+static void endat_loop_timer_create(int32_t us);
+
+/* Testing and diagnostics */
+static uint32_t endat_do_sanity_tst_delay(uint32_t delay);
+
+/* ========================================================================== */
+/*                       Function Definitions                                 */
+/* ========================================================================== */
+
 char * uint64_to_str (uint64_t x)
 {
-    char *b = gPrintf_dump_buffer + sizeof(gPrintf_dump_buffer);
+    char *b = gPrintfDumpBuffer + sizeof(gPrintfDumpBuffer);
     *(--b) = '\0';
     do
     {
@@ -247,326 +362,395 @@ char * uint64_to_str (uint64_t x)
     return b;
 }
 
-#if defined(SOC_AM263PX)
-I2C_Handle          i2cHandle;
-
-int32_t TCA6416_open()
-{
-    int32_t status = SystemP_SUCCESS;
-
-    i2cHandle = I2C_getHandle(CONFIG_I2C0);
-
-    return (status);
-}
-
-int32_t TCA6416_config(uint32_t ioIndex, uint32_t mode)
-{
-
-    int32_t         status = SystemP_SUCCESS;
-    I2C_Transaction i2cTransaction;
-    uint32_t        port, portPin, i2cAddress;
-    uint8_t         buffer[2U] = {0};
-
-    i2cAddress  = 0x20;
-
-    if(status == SystemP_SUCCESS)
-    {
-        /* Each port contains 8 IOs */
-        port        = 0;
-        portPin     = ioIndex;
-
-        /* Set config register address - needed for next read */
-        I2C_Transaction_init(&i2cTransaction);
-        buffer[0] = TCA6416_REG_CONFIG_PORT_0 + port;
-        i2cTransaction.writeBuf     = buffer;
-        i2cTransaction.writeCount   = 1U;
-        i2cTransaction.targetAddress = i2cAddress;
-        status += I2C_transfer(i2cHandle, &i2cTransaction);
-
-        /* Read config register value */
-        I2C_Transaction_init(&i2cTransaction);
-        i2cTransaction.readBuf      = buffer;
-        i2cTransaction.readCount    = 1;
-        i2cTransaction.targetAddress = i2cAddress;
-        status += I2C_transfer(i2cHandle, &i2cTransaction);
-
-        /* Set output or input mode to particular IO pin - read/modify/write */
-        I2C_Transaction_init(&i2cTransaction);
-        if(TCA6416_MODE_INPUT == mode)
-        {
-            buffer[1] = buffer[0] | (0x01 << portPin);
-        }
-        else
-        {
-            buffer[1] = buffer[0] & ~(0x01 << portPin);
-        }
-        buffer[0] = TCA6416_REG_CONFIG_PORT_0 + port;
-        i2cTransaction.writeBuf     = buffer;
-        i2cTransaction.writeCount   = 2;
-        i2cTransaction.targetAddress = i2cAddress;
-        status += I2C_transfer(i2cHandle, &i2cTransaction);
-    }
-
-    return (status);
-}
-
-int32_t TCA6416_setOutput(uint32_t ioIndex, uint32_t state)
-{
-    int32_t         status = SystemP_SUCCESS;
-    I2C_Transaction i2cTransaction;
-    uint32_t        port, portPin, i2cAddress;
-    uint8_t         buffer[2U] = {0};
-
-    i2cAddress  = 0x20;
-
-    if(status == SystemP_SUCCESS)
-    {
-        /* Each port contains 8 IOs */
-        port        = 0;
-        portPin     = ioIndex;
-
-        /* Set output prt register address - needed for next read */
-        I2C_Transaction_init(&i2cTransaction);
-        buffer[0] = TCA6416_REG_OUTPUT_PORT_0 + port;
-        i2cTransaction.writeBuf     = buffer;
-        i2cTransaction.writeCount   = 1U;
-        i2cTransaction.targetAddress = i2cAddress;
-        status += I2C_transfer(i2cHandle, &i2cTransaction);
-
-        /* Read config register value */
-        I2C_Transaction_init(&i2cTransaction);
-        i2cTransaction.readBuf      = buffer;
-        i2cTransaction.readCount    = 1;
-        i2cTransaction.targetAddress = i2cAddress;
-        status += I2C_transfer(i2cHandle, &i2cTransaction);
-
-        /* Set output or input mode to particular IO pin - read/modify/write */
-        I2C_Transaction_init(&i2cTransaction);
-        if(TCA6416_OUT_STATE_HIGH == state)
-        {
-            buffer[1] = buffer[0] | (0x01 << portPin);
-        }
-        else
-        {
-            buffer[1] = buffer[0] & ~(0x01 << portPin);
-        }
-        buffer[0] = TCA6416_REG_OUTPUT_PORT_0 + port;
-        i2cTransaction.writeBuf     = buffer;
-        i2cTransaction.writeCount   = 2;
-        i2cTransaction.targetAddress = i2cAddress;
-        status += I2C_transfer(i2cHandle, &i2cTransaction);
-    }
-
-    return (status);
-}
-
-void lp_bp_mux_mode_config()
-{
-    int32_t status = SystemP_FAILURE;
-    status = TCA6416_open();
-    DebugP_assert(status == SystemP_SUCCESS);
-
-    /* Configure pins 6 and 7 as outputs */
-    status = TCA6416_config(6, TCA6416_MODE_OUTPUT);
-    DebugP_assert(status == SystemP_SUCCESS);
-    status = TCA6416_config(7, TCA6416_MODE_OUTPUT);
-    DebugP_assert(status == SystemP_SUCCESS);
-
-    /* Set value 1 in pin 7 - BP Mux 0 */
-    status = TCA6416_setOutput(7, TCA6416_OUT_STATE_HIGH);
-    DebugP_assert(status == SystemP_SUCCESS);
-
-     /* Set value 1 in pin 6 - BP Mux 1 */
-    status = TCA6416_setOutput(6, TCA6416_OUT_STATE_HIGH);
-    DebugP_assert(status == SystemP_SUCCESS);
-}
-#endif
-
 static void endat_pruicss_init(void)
 {
+    int32_t status = SystemP_FAILURE;
+    uint32_t u_status = 0;
+
+#if (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
+#if (CONFIG_ENDAT0_CHANNEL0_ENABLED == 1)
+    uint8_t rtu_pru_id = CONFIG_ENDAT0_PRUICSS_RTU_PRU_ID;
+#endif
+#if (CONFIG_ENDAT0_CHANNEL1_ENABLED == 1)
+    uint8_t pru_id = CONFIG_ENDAT0_PRUICSS_PRU_ID;
+#endif
+#if (CONFIG_ENDAT0_CHANNEL2_ENABLED == 1)
+    uint8_t tx_pru_id = CONFIG_ENDAT0_PRUICSS_TX_PRU_ID;
+#endif
+#else
+    uint8_t pru_id = CONFIG_ENDAT0_PRUICSS_PRU_ID;
+#endif
 
     gPruIcssXHandle = PRUICSS_open(CONFIG_PRU_ICSS0);
-     /* Configure g_mux_en to 1 in ICSSG_SA_MX_REG Register. */
+    if(gPruIcssXHandle == NULL)
+    {
+        DebugP_log("\r\n ERROR: PRUICSS_open failed - NULL handle returned\n");
+        DebugP_assert(0);
+    }
+
 #ifdef CONFIG_ENDAT0_G_MUX_EN
-    PRUICSS_setSaMuxMode(gPruIcssXHandle, PRUICSS_SA_MUX_MODE_SD_ENDAT);
+    /* Configure g_mux_en to 1 in ICSSG_SA_MX_REG Register */
+    status = PRUICSS_setSaMuxMode(gPruIcssXHandle, PRUICSS_SA_MUX_MODE_SD_ENDAT);
+    DebugP_assert(SystemP_SUCCESS == status);
 #endif
-    /* Set in constant table C30 to shared RAM 0x40300000 */
-    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_PRUx, PRUICSS_CONST_TBL_ENTRY_C30, ((0x40300000 & 0x00FFFF00) >> 8));
-#ifdef CONFIG_ENDAT0_LOAD_SHARE_MODE
 
-        PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C30, ((0x40300000 & 0x00FFFF00) >> 8));
-        PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_RTUPRUx, PRUICSS_CONST_TBL_ENTRY_C30, ((0x40300000 & 0x00FFFF00) >> 8));
+#if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
+
+#if !defined(SOC_AM261X) || (CONFIG_ENDAT0_MODE != ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU) || (CONFIG_ENDAT1_MODE != ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU)
+    DebugP_log("Dual handle example using PRU0 and PRU1 is tested only with ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU mode on AM261x. For enabling other combinations, update code and remove this check.");
+    DebugP_assert(0);
+#endif
     /*
-    * Set the constant table C28 for tx pru
-    * configuring the constant table C28 to point to the TX counter
-    * register (CNTR). The counter is needed in firmware for adding waits and time stemps.
-    */
-#if CONFIG_ENDAT0_PRUICSSx == 1
-#if PRUICSS_SLICEx == 1
-    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0xA58);
-#else
-    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0xA50);
-#endif /* PRUICSS_SLICEx == 1 */
-#else
-#if PRUICSS_SLICEx == 1
-    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0x258);
-#else
-    PRUICSS_setConstantTblEntry(gPruIcssXHandle, PRUICSS_TXPRUx, PRUICSS_CONST_TBL_ENTRY_C28, 0x250);
-#endif /* PRUICSS_SLICEx == 1 */
-#endif /* CONFIG_ENDAT0_PRUICSSx == 1 */
+     * These checks are applicable only if both EnDAT instances
+     * use same PRU-ICSSG instance. If different instances are used,
+     * these checks can be removed.
+     */
+#if (CONFIG_ENDAT0_PRUICSS_INSTANCE != CONFIG_ENDAT1_PRUICSS_INSTANCE)
+    /* ASSUMPTION: Same PRU-ICSS instance is used for multiple EnDAT handles in this example */
+    DebugP_log("\r\n PRU-ICSS instance should be set uniformly for both EnDAT instances in SysConfig.");
+    DebugP_assert(0);
 #endif
 
-     /* clear ICSS0 PRU1 data RAM */
-    PRUICSS_initMemory(gPruIcssXHandle, PRUICSS_DATARAM(PRUICSS_SLICEx));
-#ifdef CONFIG_ENDAT0_LOAD_SHARE_MODE
-        PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_RTUPRUx);
-        PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_TXPRUx);
+#if defined(CONFIG_ENDAT0_G_MUX_EN) && !defined(CONFIG_ENDAT1_G_MUX_EN)
+    DebugP_log("\r\n G_MUX_EN should be set uniformly for both EnDAT instances in SysConfig. G_MUX_EN is a PRU-ICSSG instance level configuration.");
+    DebugP_assert(0);
 #endif
-    PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_PRUx);
 
+#if defined(CONFIG_ENDAT1_G_MUX_EN) && !defined(CONFIG_ENDAT0_G_MUX_EN)
+    DebugP_log("\r\n G_MUX_EN should be set uniformly for both EnDAT instances in SysConfig. G_MUX_EN is a PRU-ICSSG instance level configuration.");
+    DebugP_assert(0);
+#endif
+#endif
 
+#if (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
+    /*
+     * Set the constant table C28 for tx pru
+     * configuring the constant table C28 to point to the TX counter
+     * register (CNTR). The counter is needed in firmware for adding waits and time stamps.
+     */
+#if CONFIG_ENDAT0_PRUICSS_INSTANCE == 1
+#if CONFIG_ENDAT0_PRUICSS_SLICE == 1
+    status = PRUICSS_setConstantTblEntry(gPruIcssXHandle, CONFIG_ENDAT0_PRUICSS_TX_PRU_ID, PRUICSS_CONST_TBL_ENTRY_C28, 0xA58);
+    DebugP_assert(SystemP_SUCCESS == status);
+#else
+    status = PRUICSS_setConstantTblEntry(gPruIcssXHandle, CONFIG_ENDAT0_PRUICSS_TX_PRU_ID, PRUICSS_CONST_TBL_ENTRY_C28, 0xA50);
+    DebugP_assert(SystemP_SUCCESS == status);
+#endif /* CONFIG_ENDAT0_PRUICSS_SLICE == 1 */
+#else
+#if CONFIG_ENDAT0_PRUICSS_SLICE == 1
+    status = PRUICSS_setConstantTblEntry(gPruIcssXHandle, CONFIG_ENDAT0_PRUICSS_TX_PRU_ID, PRUICSS_CONST_TBL_ENTRY_C28, 0x258);
+    DebugP_assert(SystemP_SUCCESS == status);
+#else
+    status = PRUICSS_setConstantTblEntry(gPruIcssXHandle, CONFIG_ENDAT0_PRUICSS_TX_PRU_ID, PRUICSS_CONST_TBL_ENTRY_C28, 0x250);
+    DebugP_assert(SystemP_SUCCESS == status);
+#endif /* CONFIG_ENDAT0_PRUICSS_SLICE == 1 */
+#endif /* CONFIG_ENDAT0_PRUICSS_INSTANCE == 1 */
+#endif /* CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU */
+
+    /* Clear PRU-ICSS DATA RAM based on slice */
+    u_status = PRUICSS_initMemory(gPruIcssXHandle, PRUICSS_DATARAM(CONFIG_ENDAT0_PRUICSS_SLICE));
+    DebugP_assert(0 != u_status);
+
+#if (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
+#if (CONFIG_ENDAT0_CHANNEL0_ENABLED == 1)
+    status = PRUICSS_disableCore(gPruIcssXHandle, rtu_pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+#endif
+#if (CONFIG_ENDAT0_CHANNEL1_ENABLED == 1)
+    status = PRUICSS_disableCore(gPruIcssXHandle, pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+#endif
+#if (CONFIG_ENDAT0_CHANNEL2_ENABLED == 1)
+    status = PRUICSS_disableCore(gPruIcssXHandle, tx_pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+#endif
+#else
+    status = PRUICSS_disableCore(gPruIcssXHandle, pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+#endif
+
+#if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
+    pru_id = CONFIG_ENDAT1_PRUICSS_PRU_ID;
+
+    /* Clear PRU-ICSS DATA RAM based on slice */
+    u_status = PRUICSS_initMemory(gPruIcssXHandle, PRUICSS_DATARAM(CONFIG_ENDAT1_PRUICSS_SLICE));
+    DebugP_assert(0 != u_status);
+
+    /* Disable PRU cores for second slice */
+    status = PRUICSS_disableCore(gPruIcssXHandle, pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+#endif
 }
 
-void endat_pre_init(void)
+static void endat_pruicss_load_run_fw(void)
 {
-    endat_pruicss_init();
-#if defined(SOC_AM263PX)
-    lp_bp_mux_mode_config();
+    int32_t status = SystemP_FAILURE;
+    uint32_t u_status = 0;
+
+#if (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
+#if (CONFIG_ENDAT0_PRUICSS_SLICE == 1)
+#if (CONFIG_ENDAT0_CHANNEL0_ENABLED == 1)
+    const uint32_t *rtu_pru_firmware = EnDatFirmwareMultiMakeRtuPru1_0;
+    uint32_t rtu_pru_firmware_size = sizeof(EnDatFirmwareMultiMakeRtuPru1_0);
+    uint8_t rtu_pru_id = CONFIG_ENDAT0_PRUICSS_RTU_PRU_ID;
 #endif
-}
-
-uint32_t endat_pruicss_load_run_fw(struct endat_priv *priv)
-{
-
-    uint32_t status = SystemP_FAILURE;
-
-#if CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU /*enable loadshare mode*/
-
-
-           /*validate binary size*/
-           if((sizeof(EnDatFirmwareMultiMakeRTU_0)) > RTUPRU_IRAM_SIZE)
-           {
-               DebugP_log("ERROR: Firmware binary size (%d) exceeds available IRAM size (%d)\n", sizeof(EnDatFirmwareMultiMakeRTU_0), RTUPRU_IRAM_SIZE);
-           }
-            status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_RTUPRUx);
-            DebugP_assert(SystemP_SUCCESS == status);
-            status=PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_RTU_PRU(PRUICSS_SLICEx),
-                                                        0, (uint32_t *) EnDatFirmwareMultiMakeRTU_0,
-                                                        sizeof(EnDatFirmwareMultiMakeRTU_0));
-            DebugP_assert(0 != status);
-            status = PRUICSS_resetCore(gPruIcssXHandle, PRUICSS_RTUPRUx);
-            DebugP_assert(SystemP_SUCCESS == status);
-            status = PRUICSS_enableCore(gPruIcssXHandle, PRUICSS_RTUPRUx);
-            DebugP_assert(SystemP_SUCCESS == status);
-
-            /*validate binary size*/
-           if((sizeof(EnDatFirmwareMultiMakePRU_0)) > PRU_IRAM_SIZE)
-           {
-               DebugP_log("ERROR: Firmware binary size (%d) exceeds available IRAM size (%d)\n", sizeof(EnDatFirmwareMultiMakePRU_0), PRU_IRAM_SIZE);
-           }
-
-            status=PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_PRUx );
-            DebugP_assert(SystemP_SUCCESS == status);
-            status = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_SLICEx),
-                                                      0, (uint32_t *) EnDatFirmwareMultiMakePRU_0,
-                                                      sizeof(EnDatFirmwareMultiMakePRU_0));
-            DebugP_assert(0 != status);
-            status = PRUICSS_resetCore(gPruIcssXHandle, PRUICSS_PRUx);
-            DebugP_assert(SystemP_SUCCESS == status);
-            status = PRUICSS_enableCore(gPruIcssXHandle, PRUICSS_PRUx);
-            DebugP_assert(SystemP_SUCCESS == status);
-
-           /*validate binary size*/
-           if((sizeof(EnDatFirmwareMultiMakeTXPRU_0)) > TXPRU_IRAM_SIZE)
-           {
-               DebugP_log("ERROR: Firmware binary size (%d) exceeds available IRAM size (%d)\n", sizeof(EnDatFirmwareMultiMakeTXPRU_0), TXPRU_IRAM_SIZE);
-           }
-           status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_TXPRUx);
-             DebugP_assert(SystemP_SUCCESS == status);
-            status = PRUICSS_writeMemory(gPruIcssXHandle,  PRUICSS_IRAM_TX_PRU(PRUICSS_SLICEx),
-                                                        0, (uint32_t *) EnDatFirmwareMultiMakeTXPRU_0,
-                                                        sizeof(EnDatFirmwareMultiMakeTXPRU_0));
-            DebugP_assert(0 != status);
-            status = PRUICSS_resetCore(gPruIcssXHandle, PRUICSS_TXPRUx);
-            DebugP_assert(SystemP_SUCCESS == status);
-            status = PRUICSS_enableCore(gPruIcssXHandle, PRUICSS_TXPRUx);
-            DebugP_assert(SystemP_SUCCESS == status);
-
-
-        status=endat_wait_initialization(priv, WAIT_5_SECOND, gEndat_multi_ch_mask);
-
-
+#if (CONFIG_ENDAT0_CHANNEL1_ENABLED == 1)
+    const uint32_t *pru_firmware = EnDatFirmwareMultiMakePru1_0;
+    uint32_t pru_firmware_size = sizeof(EnDatFirmwareMultiMakePru1_0);
+    uint8_t pru_id = CONFIG_ENDAT0_PRUICSS_PRU_ID;
+#endif
+#if (CONFIG_ENDAT0_CHANNEL2_ENABLED == 1)
+    const uint32_t *tx_pru_firmware = EnDatFirmwareMultiMakeTxPru1_0;
+    uint32_t tx_pru_firmware_size = sizeof(EnDatFirmwareMultiMakeTxPru1_0);
+    uint8_t tx_pru_id = CONFIG_ENDAT0_PRUICSS_TX_PRU_ID;
+#endif
 #else
-
-        status = PRUICSS_disableCore(gPruIcssXHandle, PRUICSS_PRUx);
-        DebugP_assert(SystemP_SUCCESS == status);
-
-#if(CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU)
-           
-           
-            /*validate binary size*/
-           if((sizeof(EnDatFirmwareMulti_0)) > PRU_IRAM_SIZE)
-           {
-               DebugP_log("ERROR: Firmware binary size (%d) exceeds available IRAM size (%d)\n", sizeof(EnDatFirmwareMulti_0), PRU_IRAM_SIZE);
-           }
-
-            status = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_SLICEx),
-                                0, (uint32_t *) EnDatFirmwareMulti_0,
-                                sizeof(EnDatFirmwareMulti_0));
-
+#if (CONFIG_ENDAT0_CHANNEL0_ENABLED == 1)
+    const uint32_t *rtu_pru_firmware = EnDatFirmwareMultiMakeRtuPru0_0;
+    uint32_t rtu_pru_firmware_size = sizeof(EnDatFirmwareMultiMakeRtuPru0_0);
+    uint8_t rtu_pru_id = CONFIG_ENDAT0_PRUICSS_RTU_PRU_ID;
+#endif
+#if (CONFIG_ENDAT0_CHANNEL1_ENABLED == 1)
+    const uint32_t *pru_firmware = EnDatFirmwareMultiMakePru0_0;
+    uint32_t pru_firmware_size = sizeof(EnDatFirmwareMultiMakePru0_0);
+    uint8_t pru_id = CONFIG_ENDAT0_PRUICSS_PRU_ID;
+#endif
+#if (CONFIG_ENDAT0_CHANNEL2_ENABLED == 1)
+    const uint32_t *tx_pru_firmware = EnDatFirmwareMultiMakeTxPru0_0;
+    uint32_t tx_pru_firmware_size = sizeof(EnDatFirmwareMultiMakeTxPru0_0);
+    uint8_t tx_pru_id = CONFIG_ENDAT0_PRUICSS_TX_PRU_ID;
+#endif
+#endif
+#elif (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU)
+#if (CONFIG_ENDAT0_PRUICSS_SLICE == 1)
+    const uint32_t *pru_firmware = EnDatFirmwareMultiPru1_0;
+    uint32_t pru_firmware_size = sizeof(EnDatFirmwareMultiPru1_0);
 #else
-           
-           /*validate binary size*/
-           if((sizeof(EnDatFirmware_0)) > PRU_IRAM_SIZE)
-           {
-               DebugP_log("ERROR: Firmware binary size (%d) exceeds available IRAM size (%d)\n", sizeof(EnDatFirmware_0), PRU_IRAM_SIZE);
-           }
-            status = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(PRUICSS_SLICEx),
-                                0, (uint32_t *) EnDatFirmware_0,
-                                sizeof(EnDatFirmware_0));
+    const uint32_t *pru_firmware = EnDatFirmwareMultiPru0_0;
+    uint32_t pru_firmware_size = sizeof(EnDatFirmwareMultiPru0_0);
 #endif
-        DebugP_assert(0 != status);
-
-        status = PRUICSS_resetCore(gPruIcssXHandle, PRUICSS_PRUx);
-        DebugP_assert(SystemP_SUCCESS == status);
-
-         /*Run firmware */
-        status = PRUICSS_enableCore(gPruIcssXHandle, PRUICSS_PRUx);
-        DebugP_assert(SystemP_SUCCESS == status);
-
-        /* check initialization ack from firmware, with a timeout of 5 second */
-        status = endat_wait_initialization(priv, WAIT_5_SECOND, gEndat_multi_ch_mask);
+    uint8_t pru_id = CONFIG_ENDAT0_PRUICSS_PRU_ID;
+#else
+#if (CONFIG_ENDAT0_PRUICSS_SLICE == 1)
+    const uint32_t *pru_firmware = EnDatFirmwarePru1_0;
+    uint32_t pru_firmware_size = sizeof(EnDatFirmwarePru1_0);
+#else
+    const uint32_t *pru_firmware = EnDatFirmwarePru0_0;
+    uint32_t pru_firmware_size = sizeof(EnDatFirmwarePru0_0);
+#endif
+    uint8_t pru_id = CONFIG_ENDAT0_PRUICSS_PRU_ID;
 #endif
 
-    return status;
+#if (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
+#if (CONFIG_ENDAT0_CHANNEL0_ENABLED == 1)
+    /*Validate firmware size*/
+    if(rtu_pru_firmware_size > RTUPRU_IRAM_SIZE)
+    {
+        DebugP_log("ERROR: RTU Firmware binary size (%d) exceeds available IRAM size (%d)\n", rtu_pru_firmware_size, RTUPRU_IRAM_SIZE);
+    }
+
+    /* Disable RTU-PRU core */
+    status = PRUICSS_disableCore(gPruIcssXHandle, rtu_pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+
+    /* Load firmware to RTU-PRU instruction RAM */
+    u_status = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_RTU_PRU(CONFIG_ENDAT0_PRUICSS_SLICE), 0,
+                                  (uint32_t *)rtu_pru_firmware, rtu_pru_firmware_size);
+    DebugP_assert(0 != u_status);
+
+    /* Reset RTU-PRU core */
+    status = PRUICSS_resetCore(gPruIcssXHandle, rtu_pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+
+    /* Enable RTU-PRU core to run firmware */
+    status = PRUICSS_enableCore(gPruIcssXHandle, rtu_pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+#endif
+#if (CONFIG_ENDAT0_CHANNEL1_ENABLED == 1)
+    /*Validate firmware size*/
+    if(pru_firmware_size > PRU_IRAM_SIZE)
+    {
+        DebugP_log("ERROR: PRU Firmware binary size (%d) exceeds available IRAM size (%d)\n", pru_firmware_size, PRU_IRAM_SIZE);
+    }
+
+    /* Disable PRU core */
+    status = PRUICSS_disableCore(gPruIcssXHandle, pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+
+    /* Load firmware to PRU instruction RAM */
+    u_status = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(CONFIG_ENDAT0_PRUICSS_SLICE), 0,
+                                  (uint32_t *)pru_firmware, pru_firmware_size);
+    DebugP_assert(0 != u_status);
+
+    /* Reset PRU core */
+    status = PRUICSS_resetCore(gPruIcssXHandle, pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+
+    /* Enable PRU core to run firmware */
+    status = PRUICSS_enableCore(gPruIcssXHandle, pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+#endif
+#if (CONFIG_ENDAT0_CHANNEL2_ENABLED == 1)
+    /*Validate firmware size*/
+    if(tx_pru_firmware_size > TXPRU_IRAM_SIZE)
+    {
+        DebugP_log("ERROR: TX PRU Firmware binary size (%d) exceeds available IRAM size (%d)\n", tx_pru_firmware_size, TXPRU_IRAM_SIZE);
+    }
+
+    /* Disable TX-PRU core */
+    status = PRUICSS_disableCore(gPruIcssXHandle, tx_pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+
+    /* Load firmware to TX-PRU instruction RAM */
+    u_status = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_TX_PRU(CONFIG_ENDAT0_PRUICSS_SLICE), 0,
+                                  (uint32_t *)tx_pru_firmware, tx_pru_firmware_size);
+    DebugP_assert(0 != u_status);
+
+    /* Reset TX-PRU core */
+    status = PRUICSS_resetCore(gPruIcssXHandle, tx_pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+
+    /* Enable TX-PRU core to run firmware */
+    status = PRUICSS_enableCore(gPruIcssXHandle, tx_pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+#endif
+#else
+    /*Validate firmware size*/
+    if(pru_firmware_size > PRU_IRAM_SIZE)
+    {
+        DebugP_log("ERROR: PRU Firmware binary size (%d) exceeds available IRAM size (%d)\n", pru_firmware_size, PRU_IRAM_SIZE);
+    }
+
+    /* Disable PRU core */
+    status = PRUICSS_disableCore(gPruIcssXHandle, pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+
+    /* Load firmware to PRU instruction RAM */
+    u_status = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(CONFIG_ENDAT0_PRUICSS_SLICE), 0,
+                                  (uint32_t *)pru_firmware, pru_firmware_size);
+    DebugP_assert(0 != u_status);
+
+    /* Reset PRU core */
+    status = PRUICSS_resetCore(gPruIcssXHandle, pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+
+    /* Enable PRU core to run firmware */
+    status = PRUICSS_enableCore(gPruIcssXHandle, pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+#endif
+  /* End Instance 0 firmware loading */
+
+/* ========================================================================== */
+/* Load firmware for Instance 1 (CONFIG_ENDAT1) - Dual Slice Mode           */
+/* ========================================================================== */
+/*
+ * NOTE: Dual slice mode (Instance 1) only implements single-channel single-PRU
+ *       configuration. This mode has been tested on AM261x platform.
+ *       Multi-channel and multi-PRU modes are NOT implemented for dual slice.
+ */
+#if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
+    /* Load and run firmware for second slice */
+#if (CONFIG_ENDAT1_PRUICSS_SLICE == 1)
+    pru_firmware = EnDatFirmwarePru1_0;
+    pru_firmware_size = sizeof(EnDatFirmwarePru1_0);
+#else
+    pru_firmware = EnDatFirmwarePru0_0;
+    pru_firmware_size = sizeof(EnDatFirmwarePru0_0);
+#endif
+    pru_id = CONFIG_ENDAT1_PRUICSS_PRU_ID;
+
+    /*Validate firmware size*/
+    if(pru_firmware_size > PRU_IRAM_SIZE)
+    {
+        DebugP_log("ERROR: PRU Firmware binary size (%d) exceeds available IRAM size (%d)\n", pru_firmware_size, PRU_IRAM_SIZE);
+    }
+
+    /* Disable PRU core */
+    status = PRUICSS_disableCore(gPruIcssXHandle, pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+
+    /* Load firmware to PRU instruction RAM */
+    u_status = PRUICSS_writeMemory(gPruIcssXHandle, PRUICSS_IRAM_PRU(CONFIG_ENDAT1_PRUICSS_SLICE), 0,
+                                  (uint32_t *)pru_firmware, pru_firmware_size);
+    DebugP_assert(0 != u_status);
+
+    /* Reset PRU core */
+    status = PRUICSS_resetCore(gPruIcssXHandle, pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+
+    /* Enable PRU core to run firmware */
+    status = PRUICSS_enableCore(gPruIcssXHandle, pru_id);
+    DebugP_assert(SystemP_SUCCESS == status);
+#endif
 }
 
-uint64_t endat_get_fw_version(void)
+static void endat_display_fw_version(void)
 {
-#if CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU
-    return *((unsigned long *)EnDatFirmwareMulti_0 + 2);
+    uint32_t version;
+    /* Prints the firmware version(s) depending on configuration */
+#if (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU)
+#if (CONFIG_ENDAT0_PRUICSS_SLICE == 1)
+    version = *((uint32_t *)EnDatFirmwareMultiPru1_0 + 2);
+#else
+    version = *((uint32_t *)EnDatFirmwareMultiPru0_0 + 2);
+#endif
+    DebugP_log("\r\nEnDAT firmware \t: %x.%x.%x (%s)\n\n", (version >> 24) & 0x7F, (version >> 16) & 0xFF, version & 0xFFFF, version & (1 << 31) ? "internal" : "release");
+#elif (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
+#if (CONFIG_ENDAT0_CHANNEL0_ENABLED)
+#if (CONFIG_ENDAT0_PRUICSS_SLICE == 1)
+    version = *((uint32_t *)EnDatFirmwareMultiMakeRtuPru1_0 + 2);
+#else
+    version = *((uint32_t *)EnDatFirmwareMultiMakeRtuPru0_0 + 2);
+#endif
+    DebugP_log("\r\nEnDAT firmware for channel 0 (RTU-PRU)\t: %x.%x.%x (%s)\n\n", (version >> 24) & 0x7F, (version >> 16) & 0xFF, version & 0xFFFF, version & (1 << 31) ? "internal" : "release");
+#endif
+#if (CONFIG_ENDAT0_CHANNEL1_ENABLED)
+#if (CONFIG_ENDAT0_PRUICSS_SLICE == 1)
+    version = *((uint32_t *)EnDatFirmwareMultiMakePru1_0 + 2);
+#else
+    version = *((uint32_t *)EnDatFirmwareMultiMakePru0_0 + 2);
+#endif
+    DebugP_log("\r\nEnDAT firmware for channel 1 (PRU)\t: %x.%x.%x (%s)\n\n", (version >> 24) & 0x7F, (version >> 16) & 0xFF, version & 0xFFFF, version & (1 << 31) ? "internal" : "release");
+#endif
+#if (CONFIG_ENDAT0_CHANNEL2_ENABLED)
+#if (CONFIG_ENDAT0_PRUICSS_SLICE == 1)
+    version = *((uint32_t *)EnDatFirmwareMultiMakeTxPru1_0 + 2);
+#else
+    version = *((uint32_t *)EnDatFirmwareMultiMakeTxPru0_0 + 2);
+#endif
+    DebugP_log("\r\nEnDAT firmware for channel 2 (TX-PRU)\t: %x.%x.%x (%s)\n\n", (version >> 24) & 0x7F, (version >> 16) & 0xFF, version & 0xFFFF, version & (1 << 31) ? "internal" : "release");
+#endif
+#elif (CONFIG_ENDAT0_MODE == ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU)
+#if (CONFIG_ENDAT0_PRUICSS_SLICE == 1)
+    version = *((uint32_t *)EnDatFirmwarePru1_0 + 2);
+#else
+    version = *((uint32_t *)EnDatFirmwarePru0_0 + 2);
+#endif
+    DebugP_log("\r\nEnDAT firmware \t: %x.%x.%x (%s)\n\n", (version >> 24) & 0x7F, (version >> 16) & 0xFF, version & 0xFFFF, version & (1 << 31) ? "internal" : "release");
 #endif
 
-#if (CONFIG_ENDAT0_CHANNEL0) && (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
-    return *((unsigned long *)EnDatFirmwareMultiMakeRTU_0 + 2);
+#if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
+    /* Print firmware version for second slice */
+#if (CONFIG_ENDAT1_PRUICSS_SLICE == 1)
+    version = *((uint32_t *)EnDatFirmwarePru1_0 + 2);
+#else
+    version = *((uint32_t *)EnDatFirmwarePru0_0 + 2);
 #endif
-
-#if (CONFIG_ENDAT0_CHANNEL1) && (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
-    return *((unsigned long *)EnDatFirmwareMultiMakePRU_0 + 2);
+    DebugP_log("\r\nEnDAT firmware for second slice \t: %x.%x.%x (%s)\n\n", (version >> 24) & 0x7F, (version >> 16) & 0xFF, version & 0xFFFF, version & (1 << 31) ? "internal" : "release");
 #endif
-
-#if (CONFIG_ENDAT0_CHANNEL2) && (CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
-    return *((unsigned long *)EnDatFirmwareMultiMakeTXPRU_0 + 2);
-#endif
-
-#if CONFIG_ENDAT0_MODE == ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU
-    return *((unsigned long *)EnDatFirmware_0 + 2);
-#endif
-
 }
 
-static void endat_print_menu(void)
+static void endat_print_menu(endat_handle handle)
 {
+    endat_priv *priv = endat_get_priv(handle);
+    const endat_attrs *attrs = endat_get_attrs(handle);
+
+    if((handle == NULL) || (priv == NULL) || (attrs == NULL))
+    {
+        DebugP_log("\r\n\nERROR: NULL handle/priv/attrs\n");
+        return;
+    }
+
     DebugP_log("\r|------------------------------------------------------------------------------|\n");
     DebugP_log("\r|              Select value for the encoder command from following             |\n");
     DebugP_log("\r|------------------------------------------------------------------------------|\n");
@@ -577,7 +761,6 @@ static void endat_print_menu(void)
     DebugP_log("\r| 5 : Encoder receive reset                                                    |\n");
     DebugP_log("\r| 6 : Encoder send test values                                                 |\n");
     DebugP_log("\r| 7 : Encoder receive test command                                             |\n");
-
     if(priv->cmd_set_2_2)
     {
         DebugP_log("\r| 8 : Encoder to send position + AI(s)                                         |\n");
@@ -588,53 +771,69 @@ static void endat_print_menu(void)
         DebugP_log("\r| 13: Encoder to send position + AI(s) and receive test command                |\n");
         DebugP_log("\r| 14: Encoder receive communication command                                    |\n");
     }
-
     DebugP_log("\r|                                                                              |\n");
     DebugP_log("\r|100: Configure clock                                                          |\n");
     DebugP_log("\r|101: Simulate motor control 2.1 position loop                                 |\n");
     DebugP_log("\r|102: Toggle raw data display                                                  |\n");
     DebugP_log("\r|103: Configure tST delay                                                      |\n");
     DebugP_log("\r|104: Start continuous mode                                                    |\n");
-
-
     DebugP_log("\r|105: Configure rx arm counter (account tD)                                    |\n");
     DebugP_log("\r|106: Configure rx clock disable time (for tD)                                 |\n");
 
     if(priv->cmd_set_2_2)
     {
         DebugP_log("\r|107: Simulate motor control 2.2 position loop %s                        |\n",
-                    gEndat_is_multi_ch || gEndat_is_load_share_mode ? "        " : "(safety)");
+            (attrs->mode == ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU) ? "        " : "(safety)");
     }
 
     DebugP_log("\r|108: Configure propagation delay (tD)                                         |\n");
-
-    if((gEndat_is_multi_ch) || (gEndat_is_load_share_mode))
+    if(attrs->mode == ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU)
     {
-        DebugP_log("\r|109: Configure wire delay                                                     |\n");
+        DebugP_log("\r|109: Configure wire delay                                                 |\n");
     }
 
     DebugP_log("\r|110: Recovery Time (RT)                                                       |\n");
     DebugP_log("\r|111: Simulate motor control 2.1 position loop for long time                   |\n");
-    DebugP_log("\r|112: Start/Stop Recovery Time measurement                                     |\n");
-    DebugP_log("\r|200: Start periodic continuous mode                                           |\n");
+    DebugP_log("\r|112: Start/Stop Recovery Time counter                                         |\n");
+    DebugP_log("\r|200: Start periodic continuous mode (CMP trigger)                             |\n");
+    DebugP_log("\r|201: Start periodic continuous mode (CAP trigger)                             |\n");
 
     DebugP_log("\r|------------------------------------------------------------------------------|\n\r|\n");
     DebugP_log("\r| enter value: ");
 }
 
-static inline int32_t endat_get_command(void)
+static int32_t endat_get_command(endat_handle handle)
 {
-    volatile int32_t cmd = -1;
+    volatile int32_t cmd = SystemP_FAILURE;
+    endat_priv *priv = endat_get_priv(handle);
+    const endat_attrs *attrs = endat_get_attrs(handle);
 
+    if((handle == NULL) || (priv == NULL) || (attrs == NULL))
+    {
+        DebugP_log("\r\n\nERROR: NULL handle/priv/attrs\n");
+        DebugP_log("\r| WARNING: EnDat 2.1 send position values command will be sent\n");
+        return SystemP_FAILURE;
+    }
 
     if(DebugP_scanf("%d", &cmd) < 0)
     {
-        cmd = -1;
+        cmd = SystemP_FAILURE;
     }
 
     if(VALID_2_1_CMD(cmd) || (priv->cmd_set_2_2 && VALID_2_2_CMD(cmd))
-            || VALID_HOST_CMD(cmd) || VALID_PERIODIC_CMD(cmd))
+            || VALID_HOST_CMD(cmd) || VALID_CONT_MODE_CMD(cmd))
     {
+        if(attrs->mode != ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU && (cmd == 109))
+        {
+            DebugP_log("\r| WARNING: command 109 is only available in multi-channel single PRU mode, EnDat 2.1 send position values command will be sent\n");
+            return 1;
+        }
+
+        if(!priv->cmd_set_2_2 && (cmd == 107))
+        {
+            DebugP_log("\r| WARNING: invalid command, EnDat 2.1 send position values command will be sent\n");
+            return 1;
+        }
         return cmd;
     }
 
@@ -642,23 +841,37 @@ static inline int32_t endat_get_command(void)
     return 1;
 }
 
-static void endat_recvd_print(int32_t cmd, struct endat_priv *priv,
-                              union endat_format_data *u, int32_t crc)
+static void endat_recvd_print(endat_handle handle, int32_t cmd, endat_format_data *u, int32_t crc)
 {
+    endat_priv *priv = endat_get_priv(handle);
+    uint32_t current_channel;
     uint32_t addinfo, byte1;
-    uint64_t max = pow(2, priv->single_turn_res[priv->current_channel]);
-    union position position;
+    uint64_t max;
+    endat_position_type position;
+    uint8_t flag_idx;
+    const endat_attrs *attrs = endat_get_attrs(handle);
 
-    /* this would give wrong values if cmd is not position related, but that is okay as then this value won't be used */
-    if(priv->type[priv->current_channel] == rotary)
+    if((handle == NULL) || (priv == NULL) || (attrs == NULL) || (priv->current_channel >= ENDAT_NUM_CH_PER_SLICE_MAX))
+    {
+        DebugP_log("\r\n\nERROR: NULL handle/priv/attrs or invalid current_channel\n");
+        return;
+    }
+
+    current_channel = priv->current_channel;
+    max = (uint64_t)1 << priv->single_turn_res[current_channel];
+    flag_idx = (attrs->load_share_enabled) ? current_channel : 0;
+
+    /* Calculate position value (angle for rotary, length for linear encoders)
+     * Note: This would give wrong values if cmd is not position related, but that
+     * is okay as then this value won't be used */
+    if(priv->type[current_channel] == ENDAT_ENCODER_TYPE_ROTARY)
     {
         position.angle = ((float) u->position_addinfo.position.position) /
                          (float)max * (float)360;
     }
-
     else
     {
-        position.length = u->position_addinfo.position.position * priv->step[priv->current_channel];
+        position.length = u->position_addinfo.position.position * priv->step[current_channel];
     }
 
 
@@ -689,24 +902,24 @@ static void endat_recvd_print(int32_t cmd, struct endat_priv *priv,
             break;
 
         case 1:
-            if(priv->multi_turn_res[priv->current_channel])
+            if(priv->multi_turn_res[current_channel])
             {
-                sprintf(gUart_buffer, "\r| position: %.12f, revolution: %s, ",
+                sprintf(gUartBuffer, "\r| position: %.12f, revolution: %s, ",
                         position.angle, uint64_to_str(u->position_addinfo.position.revolution));
             }
             else
             {
-                if(priv->type[priv->current_channel] == rotary)
+                if(priv->type[current_channel] == ENDAT_ENCODER_TYPE_ROTARY)
                 {
-                    sprintf(gUart_buffer, "\r| position: %.12f ", position.angle);
+                    sprintf(gUartBuffer, "\r| position: %.12f ", position.angle);
                 }
                 else
                 {
-                    sprintf(gUart_buffer, "\r| position: %s ", uint64_to_str(position.length));
+                    sprintf(gUartBuffer, "\r| position: %s ", uint64_to_str(position.length));
                 }
             }
 
-            DebugP_log("%s", gUart_buffer);
+            DebugP_log("%s", gUartBuffer);
 
             DebugP_log("f1: %x, crc: %s\n", u->position_addinfo.position.f1,
                         crc & 0x1 ? "success" : "failure");
@@ -720,24 +933,24 @@ static void endat_recvd_print(int32_t cmd, struct endat_priv *priv,
         case 11:
         case 12:
         case 13:
-            if(priv->multi_turn_res[priv->current_channel])
+            if(priv->multi_turn_res[current_channel])
             {
-                sprintf(gUart_buffer, "\r| position: %.12f, revolution: %s, ",
+                sprintf(gUartBuffer, "\r| position: %.12f, revolution: %s, ",
                         position.angle, uint64_to_str(u->position_addinfo.position.revolution));
             }
             else
             {
-                if(priv->type[priv->current_channel] == rotary)
+                if(priv->type[current_channel] == ENDAT_ENCODER_TYPE_ROTARY)
                 {
-                    sprintf(gUart_buffer, "\r| position: %.12f ", position.angle);
+                    sprintf(gUartBuffer, "\r| position: %.12f ", position.angle);
                 }
                 else
                 {
-                    sprintf(gUart_buffer, "\r| position: %s ", uint64_to_str(position.length));
+                    sprintf(gUartBuffer, "\r| position: %s ", uint64_to_str(position.length));
                 }
             }
 
-            DebugP_log("%s", gUart_buffer);
+            DebugP_log("%s", gUartBuffer);
 
             DebugP_log("f1/f2: %x/%x, crc: %s\n", u->position_addinfo.position.f1,
                         u->position_addinfo.position.f2,
@@ -745,7 +958,7 @@ static void endat_recvd_print(int32_t cmd, struct endat_priv *priv,
 
             DebugP_logInfo("| crc: %x\n", u->position_addinfo.position.crc);
 
-            if(priv->flags.info1)
+            if(priv->flags[flag_idx].info1)
             {
                 addinfo = u->position_addinfo.addinfo1.addinfo;
                 byte1 = (addinfo >> 16) & ((1 << 8) - 1);
@@ -761,7 +974,7 @@ static void endat_recvd_print(int32_t cmd, struct endat_priv *priv,
                                 u->position_addinfo.addinfo1.crc);
             }
 
-            if(priv->flags.info2)
+            if(priv->flags[flag_idx].info2)
             {
                 addinfo = u->position_addinfo.addinfo2.addinfo;
                 byte1 = (addinfo >> 16) & ((1 << 8) - 1);
@@ -782,10 +995,20 @@ static void endat_recvd_print(int32_t cmd, struct endat_priv *priv,
     DebugP_log("\r|\n\r|\n");
 }
 
-static void endat_display_raw_data(int32_t cmd, struct endat_priv *priv)
+static void endat_display_raw_data(endat_handle handle, int32_t cmd)
 {
-    int32_t ch = priv->current_channel;
-    struct endatChRxInfo *endatChRxInfo = priv->endatChRxInfo;
+    int32_t ch;
+    endat_ch_rx_info_array *channel_rx_info;
+    endat_priv *priv = endat_get_priv(handle);
+
+    if((handle == NULL) || (priv == NULL) || (handle->priv->channel_rx_info == NULL) || (priv->current_channel >= ENDAT_NUM_CH_PER_SLICE_MAX))
+    {
+        DebugP_log("\r\n\nERROR: NULL handle/priv/channel_rx_info or invalid current_channel\n");
+        return;
+    }
+
+    ch = priv->current_channel;
+    channel_rx_info = priv->channel_rx_info;
 
     switch(cmd)
     {
@@ -804,8 +1027,8 @@ static void endat_display_raw_data(int32_t cmd, struct endat_priv *priv)
         case 13:
         case 14:
             DebugP_log("\r|\n| raw data: %x %x %x %x\n|\n",
-                        endatChRxInfo->ch[ch].posWord0, endatChRxInfo->ch[ch].posWord1,
-                        endatChRxInfo->ch[ch].posWord2, endatChRxInfo->ch[ch].posWord3);
+                        channel_rx_info->ch[ch].pos_word0, channel_rx_info->ch[ch].pos_word1,
+                        channel_rx_info->ch[ch].pos_word2, channel_rx_info->ch[ch].pos_word3);
             break;
 
         default:
@@ -814,167 +1037,382 @@ static void endat_display_raw_data(int32_t cmd, struct endat_priv *priv)
     }
 }
 
-/*
- * check 2.2 command case with 2.2 capability in encoder, can live w/o as endat_get_command
- * will handle and it is assumed that this function will be called after endat_get_command
+/**
+ * \brief Get command supplement data from user input
+ *
+ * Prompts user for additional parameters required by specific EnDAT commands
+ * (MRS address, parameters, block address, etc.). This function should be called
+ * after endat_get_command() validates the command.
+ *
+ * \param handle    EnDAT driver handle
+ * \param cmd       Command code
+ * \param cmd_supplement Pointer to structure to store supplement data
+ *
+ * \return Command code on success, negative error code on failure
  */
-static int32_t endat_get_command_supplement(int32_t cmd,
-                                        struct cmd_supplement *cmd_supplement)
+static int32_t endat_get_command_supplement(endat_handle handle, int32_t cmd, endat_cmd_supplement *cmd_supplement)
 {
-    /* erase previous cmd supplements */
-    memset(cmd_supplement, 0, sizeof(*cmd_supplement));
+    uint32_t i;
+    uint8_t loop_count;
+    const endat_attrs *attrs = endat_get_attrs(handle);
+    uint8_t selected_ch;
 
+    if((handle == NULL) || (attrs == NULL) || (cmd_supplement == NULL))
+    {
+        DebugP_log("\r\n\nERROR: NULL handle/attrs/cmd_supplement\n");
+        return SystemP_FAILURE;
+    }
+
+    /* Clear previous command supplement data to avoid stale values */
+    memset(cmd_supplement, 0, sizeof(*cmd_supplement));
+    loop_count = ENDAT_NUM_CH_PER_SLICE_MAX;
+
+    cmd_supplement->cmd_type = cmd;
     switch(cmd)
     {
         case 2:
-            DebugP_log("\r| enter MRS code (hex value): ");
-
-            if(DebugP_scanf("%x\n", &cmd_supplement->address) < 0)
+            DebugP_log("\n\r| Enter MRS code (hex value): ");
+            if(attrs->mode == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
             {
-                DebugP_log("\r| ERROR: invalid MRS code\n|\n|\n|\n");
-                return -EINVAL;
+                for(i = 0; i < loop_count; i++)
+                {
+                    if(attrs->channel_mask & (1 << i))
+                    {
+                        DebugP_log("\n\r| for channel %d: ", i);
+                        if(DebugP_scanf("%x", &cmd_supplement->address[i]) < 0)
+                        {
+                            DebugP_log("\r| ERROR: invalid MRS code|\n");
+                            return SystemP_FAILURE;
+                        }
+
+                        if(cmd_supplement->address[i] > 0xFF)
+                        {
+                            DebugP_log("\r| ERROR: invalid MRS code|\n");
+                            return SystemP_FAILURE;
+                        }
+                    }
+                }
             }
-
-            if(cmd_supplement->address > 0xFF)
+            else
             {
-                DebugP_log("\r| ERROR: invalid MRS code\n|\n|\n|\n");
-                return -EINVAL;
+                if(DebugP_scanf("%x", &cmd_supplement->address[0]) < 0)
+                {
+                    DebugP_log("\r| ERROR: invalid MRS code|\n");
+                    return SystemP_FAILURE;
+                }
+
+                if(cmd_supplement->address[0] > 0xFF)
+                {
+                    DebugP_log("\r| ERROR: invalid MRS code|\n");
+                    return SystemP_FAILURE;
+                }
             }
 
             break;
 
         case 9:
-            DebugP_log("\r| enter MRS code (hex value): ");
-
-            if(DebugP_scanf("%x\n", &cmd_supplement->address) < 0)
+            DebugP_log("\n\r| Enter MRS code (hex value): ");
+            if(attrs->mode == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
             {
-                DebugP_log("\r| ERROR: invalid MRS code\n|\n|\n|\n");
-                return -EINVAL;
-            }
-
-            if(cmd_supplement->address > 0xFF)
-            {
-                DebugP_log("\r| ERROR: invalid MRS code\n|\n|\n|\n");
-                return -EINVAL;
-            }
-
-            if(cmd_supplement->address == ENDAT_SECTION2_MEMORY)
-            {
-                DebugP_log("\r| enter block address (hex value): ");
-
-                if(DebugP_scanf("%x\n", &cmd_supplement->block) < 0)
+                for(i = 0; i < loop_count; i++)
                 {
-                    DebugP_log("\r| ERROR: invalid block address\n|\n|\n|\n");
-                    return -EINVAL;
+                    if(attrs->channel_mask & (1 << i))
+                    {
+                        DebugP_log("\n\r| for channel %d: ", i);
+
+                        if(DebugP_scanf("%x", &cmd_supplement->address[i]) < 0)
+                        {
+                            DebugP_log("\r| ERROR: invalid MRS code|\n");
+                            return SystemP_FAILURE;
+                        }
+
+                        if(cmd_supplement->address[i] > 0xFF)
+                        {
+                            DebugP_log("\r| ERROR: invalid MRS code|\n");
+                            return SystemP_FAILURE;
+                        }
+
+                        if(cmd_supplement->address[i] == ENDAT_SECTION2_MEMORY)
+                        {
+                            DebugP_log("\n\r| Enter block address (hex value): ");
+
+                            if(DebugP_scanf("%x", &cmd_supplement->block[i]) < 0)
+                            {
+                                DebugP_log("\r| ERROR: invalid block address|\n");
+                                return SystemP_FAILURE;
+                            }
+
+                            /* better compare it with number of blocks information available in eeprom */
+                            if(cmd_supplement->block[i] > 0xFF)
+                            {
+                                DebugP_log("\r| ERROR: invalid block address|\n");
+                                return SystemP_FAILURE;
+                            }
+
+                            cmd_supplement->has_block_address[i] = TRUE;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if(DebugP_scanf("%x", &cmd_supplement->address[0]) < 0)
+                {
+                    DebugP_log("\r| ERROR: invalid MRS code|\n");
+                    return SystemP_FAILURE;
                 }
 
-                /* better compare it with number of blocks information available in eeprom */
-                if(cmd_supplement->block > 0xFF)
+                if(cmd_supplement->address[0] > 0xFF)
                 {
-                    DebugP_log("\r| ERROR: invalid block address\n|\n|\n|\n");
-                    return -EINVAL;
+                    DebugP_log("\r| ERROR: invalid MRS code|\n");
+                    return SystemP_FAILURE;
                 }
 
-                cmd_supplement->has_block_address = TRUE;
+                if(cmd_supplement->address[0] == ENDAT_SECTION2_MEMORY)
+                {
+                    DebugP_log("\n\r| Enter block address (hex value): ");
+
+                    if(DebugP_scanf("%x", &cmd_supplement->block[0]) < 0)
+                    {
+                        DebugP_log("\r| ERROR: invalid block address|\n");
+                        return SystemP_FAILURE;
+                    }
+
+                    /* better compare it with number of blocks information available in eeprom */
+                    if(cmd_supplement->block[0] > 0xFF)
+                    {
+                        DebugP_log("\r| ERROR: invalid block address|\n");
+                        return SystemP_FAILURE;
+                    }
+
+                    cmd_supplement->has_block_address[0] = TRUE;
+                }
             }
 
             break;
 
         case 3:
         case 10:
-            DebugP_log("\r| enter parameter address (hex value): ");
-
-            if(DebugP_scanf("%x\n", &cmd_supplement->address) < 0)
+            DebugP_log("\n\r| Enter parameter address (hex value): ");
+            if(attrs->mode == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
             {
-                DebugP_log("\r| ERROR: invalid parameter address\n|\n|\n|\n");
-                return -EINVAL;
+                for(i = 0; i < loop_count; i++)
+                {
+                    if(attrs->channel_mask & (1 << i))
+                    {
+                        DebugP_log("\n\r| for channel %d: ", i);
+
+                        if(DebugP_scanf("%x", &cmd_supplement->address[i]) < 0)
+                        {
+                            DebugP_log("\r| ERROR: invalid parameter address|\n");
+                            return SystemP_FAILURE;
+                        }
+
+                        if(cmd_supplement->address[i] > 0xFF)
+                        {
+                            DebugP_log("\r| ERROR: invalid parameter address|\n");
+                            return SystemP_FAILURE;
+                        }
+
+                        DebugP_log("\n\r| Enter parameter (hex value): ");
+
+                        if(DebugP_scanf("%x", &cmd_supplement->data[i]) < 0)
+                        {
+                            DebugP_log("\r| ERROR: invalid parameter|\n");
+                            return SystemP_FAILURE;
+                        }
+
+                        if(cmd_supplement->data[i] > 0xFFFF)
+                        {
+                            DebugP_log("\r| ERROR: invalid parameter|\n");
+                            return SystemP_FAILURE;
+                        }
+                    }
+                }
             }
-
-            if(cmd_supplement->address > 0xFF)
+            else
             {
-                DebugP_log("\r| ERROR: invalid parameter address\n|\n|\n|\n");
-                return -EINVAL;
-            }
+                if(DebugP_scanf("%x", &cmd_supplement->address[0]) < 0)
+                {
+                    DebugP_log("\r| ERROR: invalid parameter address|\n");
+                    return SystemP_FAILURE;
+                }
 
-            DebugP_log("\r| enter parameter (hex value): ");
+                if(cmd_supplement->address[0] > 0xFF)
+                {
+                    DebugP_log("\r| ERROR: invalid parameter address|\n");
+                    return SystemP_FAILURE;
+                }
 
-            if(DebugP_scanf("%x\n", &cmd_supplement->data) < 0)
-            {
-                DebugP_log("\r| ERROR: invalid parameter\n|\n|\n|\n");
-                return -EINVAL;
-            }
+                DebugP_log("\n\r| Enter parameter (hex value): ");
 
-            if(cmd_supplement->data > 0xFFFF)
-            {
-                DebugP_log("\r| ERROR: invalid parameter\n|\n|\n|\n");
-                return -EINVAL;
+                if(DebugP_scanf("%x", &cmd_supplement->data[0]) < 0)
+                {
+                    DebugP_log("\r| ERROR: invalid parameter|\n");
+                    return SystemP_FAILURE;
+                }
+
+                if(cmd_supplement->data[0] > 0xFFFF)
+                {
+                    DebugP_log("\r| ERROR: invalid parameter|\n");
+                    return SystemP_FAILURE;
+                }
             }
 
             break;
 
         case 4:
         case 11:
-            DebugP_log("\r| enter parameter address (hex value): ");
-
-            if(DebugP_scanf("%x\n", &cmd_supplement->address) < 0)
+            DebugP_log("\n\r| Enter parameter address (hex value): ");
+            if(attrs->mode == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
             {
-                DebugP_log("\r| ERROR: invalid parameter address\n|\n|\n|\n");
-                return -EINVAL;
+                for(i = 0; i < loop_count; i++)
+                {
+                    if(attrs->channel_mask & (1 << i))
+                    {
+                        DebugP_log("\n\r| for channel %d: ", i);
+
+                        if(DebugP_scanf("%x", &cmd_supplement->address[i]) < 0)
+                        {
+                            DebugP_log("\r| ERROR: invalid parameter address|\n");
+                            return SystemP_FAILURE;
+                        }
+
+                        if(cmd_supplement->address[i] > 0xFF)
+                        {
+                            DebugP_log("\r| ERROR: invalid parameter address|\n");
+                            return SystemP_FAILURE;
+                        }
+                    }
+                }
             }
-
-            if(cmd_supplement->address > 0xFF)
+            else
             {
-                DebugP_log("\r| ERROR: invalid parameter address\n|\n|\n|\n");
-                return -EINVAL;
+                if(DebugP_scanf("%x", &cmd_supplement->address[0]) < 0)
+                {
+                    DebugP_log("\r| ERROR: invalid parameter address|\n");
+                    return SystemP_FAILURE;
+                }
+
+                if(cmd_supplement->address[0] > 0xFF)
+                {
+                    DebugP_log("\r| ERROR: invalid parameter address|\n");
+                    return SystemP_FAILURE;
+                }
             }
 
             break;
 
         case 7:
         case 13:
-            DebugP_log("\r| enter port address (hex value):");
-
-            if(DebugP_scanf("%x\n", &cmd_supplement->address) < 0)
+            DebugP_log("\n\r| Enter port address (hex value): ");
+            if(attrs->mode == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
             {
-                DebugP_log("\r| ERROR: invalid port address\n|\n|\n|\n");
-                return -EINVAL;
+                for(i = 0; i < loop_count; i++)
+                {
+                    if(attrs->channel_mask & (1 << i))
+                    {
+                        DebugP_log("\n\r| for channel %d: ", i);
+
+                        if(DebugP_scanf("%x", &cmd_supplement->address[i]) < 0)
+                        {
+                            DebugP_log("\r| ERROR: invalid port address|\n");
+                            return SystemP_FAILURE;
+                        }
+
+                        if(cmd_supplement->address[i] > 0xFF)
+                        {
+                            DebugP_log("\r| ERROR: invalid port address|\n");
+                            return SystemP_FAILURE;
+                        }
+                    }
+                }
             }
-
-            if(cmd_supplement->address > 0xFF)
+            else
             {
-                DebugP_log("| ERROR: invalid port address\n|\n|\n|\n");
-                return -EINVAL;
+                if(DebugP_scanf("%x", &cmd_supplement->address[0]) < 0)
+                {
+                    DebugP_log("\r| ERROR: invalid port address|\n");
+                    return SystemP_FAILURE;
+                }
+
+                if(cmd_supplement->address[0] > 0xFF)
+                {
+                    DebugP_log("\r| ERROR: invalid port address|\n");
+                    return SystemP_FAILURE;
+                }
             }
 
             break;
 
         case 14:
-            DebugP_log("\r| enter encoder address (hex value): ");
-
-            if(DebugP_scanf("%x\n", &cmd_supplement->address) < 0)
+            DebugP_log("\n\r| Enter encoder address (hex value): ");
+            if(attrs->mode == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
             {
-                DebugP_log("\r| ERROR: invalid encoder address\n|\n|\n|\n");
-                return -EINVAL;
+                for(i = 0; i < loop_count; i++)
+                {
+                    if(attrs->channel_mask & (1 << i))
+                    {
+                        if(loop_count > 1)
+                        {
+                            DebugP_log("\n\r| for channel %d: ", i);
+                        }
+
+                        if(DebugP_scanf("%x", &cmd_supplement->address[i]) < 0)
+                        {
+                            DebugP_log("\r| ERROR: invalid encoder address|\n");
+                            return SystemP_FAILURE;
+                        }
+
+                        if(cmd_supplement->address[i] > 0xFF)
+                        {
+                            DebugP_log("\r| ERROR: invalid encoder address|\n");
+                            return SystemP_FAILURE;
+                        }
+
+                        DebugP_log("\n\r| Enter instruction (hex value): ");
+
+                        if(DebugP_scanf("%x", &cmd_supplement->data[i]) < 0)
+                        {
+                            DebugP_log("\r| ERROR: invalid instruction|\n");
+                            return SystemP_FAILURE;
+                        }
+
+                        if(cmd_supplement->data[i] > 0xFFFF)
+                        {
+                            DebugP_log("\r| ERROR: invalid instruction|\n");
+                            return SystemP_FAILURE;
+                        }
+                    }
+                }
             }
-
-            if(cmd_supplement->address > 0xFF)
+            else
             {
-                DebugP_log("\r| ERROR: invalid encoder address\n|\n|\n|\n");
-                return -EINVAL;
-            }
+                if(DebugP_scanf("%x", &cmd_supplement->address[0]) < 0)
+                {
+                    DebugP_log("\r| ERROR: invalid encoder address|\n");
+                    return SystemP_FAILURE;
+                }
 
-            DebugP_log("\r| enter instruction (hex value): ");
+                if(cmd_supplement->address[0] > 0xFF)
+                {
+                    DebugP_log("\r| ERROR: invalid encoder address|\n");
+                    return SystemP_FAILURE;
+                }
 
-            if(DebugP_scanf("%x\n", &cmd_supplement->data) < 0)
-            {
-                DebugP_log("\r| ERROR: invalid instruction\n|\n|\n|\n");
-                return -EINVAL;
-            }
+                DebugP_log("\n\r| Enter instruction (hex value): ");
 
-            if(cmd_supplement->data > 0xFFFF)
-            {
-                DebugP_log("\r| ERROR: invalid instruction\n|\n|\n|\n");
-                return -EINVAL;
+                if(DebugP_scanf("%x", &cmd_supplement->data[0]) < 0)
+                {
+                    DebugP_log("\r| ERROR: invalid instruction|\n");
+                    return SystemP_FAILURE;
+                }
+
+                if(cmd_supplement->data[0] > 0xFFFF)
+                {
+                    DebugP_log("\r| ERROR: invalid instruction|\n");
+                    return SystemP_FAILURE;
+                }
             }
 
             break;
@@ -982,295 +1420,239 @@ static int32_t endat_get_command_supplement(int32_t cmd,
         case 100:
         case 101:
         case 107:
-            DebugP_log("\r| enter frequency in Hz: ");
+            DebugP_log("\n\r| Enter frequency in Hz: ");
 
-            if(DebugP_scanf("%u\n", &cmd_supplement->frequency) < 0)
+            if(DebugP_scanf("%u", &cmd_supplement->frequency) < 0)
             {
-                DebugP_log("\r| ERROR: invalid frequency\n|\n|\n|\n");
-                return -EINVAL;
+                DebugP_log("\r| ERROR: invalid frequency|\n");
+                return SystemP_FAILURE;
             }
 
             break;
 
         case 103:
-            DebugP_log("\r| enter tST delay counter value in ns: ");
-
-            if(DebugP_scanf("%u\n", &cmd_supplement->frequency) < 0)
-            {
-                DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
-                return -EINVAL;
-            }
-            if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
-            {
-                DebugP_log("\r| Select Channel: ");
-                if(DebugP_scanf("%u\n", &priv->current_channel) < 0)
-                {
-                    DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
-                    return -EINVAL;
-                }
-
-                if(!((gEndat_multi_ch_mask) & (1<<priv->current_channel)))
-                {
-                    DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
-                    return -EINVAL;
-                }
-            }
-            break;
-
         case 105:
-            DebugP_log("\r| enter rx arm counter in ns: ");
-
-            if(DebugP_scanf("%u\n", &cmd_supplement->frequency) < 0)
-            {
-                DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
-                return -EINVAL;
-            }
-            if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
-            {
-                DebugP_log("\r| Select Channel: ");
-                if(DebugP_scanf("%u\n", &priv->current_channel) < 0)
-                {
-                    DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
-                    return -EINVAL;
-                }
-
-                if(!((gEndat_multi_ch_mask) & (1<<priv->current_channel)))
-                {
-                    DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
-                    return -EINVAL;
-                }
-            }
-            break;
-
-
         case 106:
-            DebugP_log("\r| enter rx clock disable time (for tD) in ns: ");
-
-            if(DebugP_scanf("%u\n", &cmd_supplement->frequency) < 0)
-            {
-                DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
-                return -EINVAL;
-            }
-            if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
-            {
-                DebugP_log("\r| Select Channel: ");
-                if(DebugP_scanf("%u\n", &priv->current_channel) < 0)
-                {
-                    DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
-                    return -EINVAL;
-                }
-
-                if(!((gEndat_multi_ch_mask) & (1<<priv->current_channel)))
-                {
-                    DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
-                    return -EINVAL;
-                }
-            }
-            break;
-
         case 108:
-            DebugP_log("\r| enter propagation delay in ns: ");
-
-            if(DebugP_scanf("%u\n", &cmd_supplement->frequency) < 0)
-            {
-                DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
-                return -EINVAL;
-            }
-            if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
-            {
-                DebugP_log("\r| Select Channel: ");
-                if(DebugP_scanf("%u\n", &priv->current_channel) < 0)
-                {
-                    DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
-                    return -EINVAL;
-                }
-
-                if(!((gEndat_multi_ch_mask) & (1<<priv->current_channel)))
-                {
-                    DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
-                    return -EINVAL;
-                }
-            }
-
-            break;
-
         case 109:
-            DebugP_log("\r| enter channel number: ");
-
-            if(DebugP_scanf("%x\n", &cmd_supplement->address) < 0)
+            /* Channel-specific delay configuration commands
+             * 103: tST delay counter value
+             * 105: RX arm counter
+             * 106: RX clock disable time (tD)
+             * 108: Propagation delay
+             * 109: Wire delay
+             */
+            switch(cmd)
             {
-                DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
-                return -EINVAL;
+                case 103:
+                    DebugP_log("\n\r| Enter tST delay counter value in ns: ");
+                    break;
+                case 105:
+                    DebugP_log("\n\r| Enter rx arm counter in ns: ");
+                    break;
+                case 106:
+                    DebugP_log("\n\r| Enter rx clock disable time (for tD) in ns: ");
+                    break;
+                case 108:
+                    DebugP_log("\n\r| Enter propagation delay in ns: ");
+                    break;
+                case 109:
+                    DebugP_log("\n\r| Enter wire delay in ns: ");
+                    break;
             }
 
-            if(!(gEndat_multi_ch_mask & 1 << cmd_supplement->address))
+            /* Get the delay value */
+            if(DebugP_scanf("%u", &cmd_supplement->delay) < 0)
             {
-                DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
-                return -EINVAL;
+                DebugP_log("\r| ERROR: invalid value|\n");
+                return SystemP_FAILURE;
             }
-
-            DebugP_log("\r| enter wire delay in ns: ");
-
-            if(DebugP_scanf("%u\n", &cmd_supplement->frequency) < 0)
+            /* For multi-channel mode, select the target channel first */
+            if(attrs->mode != ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU)
             {
-                DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
-                return -EINVAL;
+                DebugP_log("\n\r| Select Channel: ");
+                if(DebugP_scanf("%hhu", &selected_ch) < 0)
+                {
+                    DebugP_log("\r| ERROR: invalid channel|\n");
+                    return SystemP_FAILURE;
+                }
+
+                if(!((attrs->channel_mask) & (1 << selected_ch)))
+                {
+                    DebugP_log("\r| ERROR: invalid channel|\n");
+                    return SystemP_FAILURE;
+                }
+                cmd_supplement->selected_channel = selected_ch;
             }
 
             break;
+
         case 112:
-            DebugP_log("\r| enter 1 to enable recovery time measurement and 0 to disable recovery time measurement: ");
+            DebugP_log("\n\r| Enter 1 to enable recovery time measurement and 0 to disable recovery time measurement: ");
 
-            if(DebugP_scanf("%u\n", &cmd_supplement->frequency) < 0)
+            if(DebugP_scanf("%hhu", &cmd_supplement->enable_rt) < 0)
             {
-                DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
-                return -EINVAL;
+                DebugP_log("\r| ERROR: invalid value|\n");
+                return SystemP_FAILURE;
             }
-            if(cmd_supplement->frequency > 1)
+            if(cmd_supplement->enable_rt > 1)
             {
-                DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
-                               return -EINVAL;
+                DebugP_log("\r| ERROR: invalid value|\n");
+                return SystemP_FAILURE;
             }
-            if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
+
+            /* For multi-channel mode, select the target channel first */
+            if(attrs->mode != ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU)
             {
-                DebugP_log("\r| Select Channel: ");
-                if(DebugP_scanf("%u\n", &priv->current_channel) < 0)
+
+                DebugP_log("\n\r| Select Channel: ");
+                if(DebugP_scanf("%hhu", &selected_ch) < 0)
                 {
-                    DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
-                    return -EINVAL;
+                    DebugP_log("\r| ERROR: invalid channel|\n");
+                    return SystemP_FAILURE;
                 }
 
-                if(!((gEndat_multi_ch_mask) & (1<<priv->current_channel)))
+                if(!((attrs->channel_mask) & (1 << selected_ch)))
                 {
-                    DebugP_log("\r| ERROR: invalid channel\n|\n|\n|\n");
-                    return -EINVAL;
+                    DebugP_log("\r| ERROR: invalid channel|\n");
+                    return SystemP_FAILURE;
                 }
+
+                /* Store selected channel in cmd_supplement for use in host command processing */
+                cmd_supplement->selected_channel = selected_ch;
             }
             break;
+
         case 200:
-
-
-            DebugP_log("\r| Enter IEP reset cycle count (must be greater than EnDat cycle time including timeout period, in IEP cycles): ");
-            if(DebugP_scanf("%u\n", &cmd_supplement->iep_reset_count))
+            DebugP_log("\n\r| Enter IEP reset cycle count (must be greater than EnDat cycle time including timeout period, in IEP cycles): ");
+            if(DebugP_scanf("%llu", &cmd_supplement->iep_reset_count) < 0)
             {
-                DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
-                return -EINVAL;
+                DebugP_log("\r| ERROR: invalid value|\n");
+                return SystemP_FAILURE;
+            }
+            if((cmd_supplement->iep_reset_count == 0) || (cmd_supplement->iep_reset_count <= ENDAT_IEP_COUNTER_INCREMENT))
+            {
+                DebugP_log("\r| ERROR: invalid value|\n");
+                return SystemP_FAILURE;
             }
 
-            if(gEndat_is_load_share_mode)
+            DebugP_log("\n\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles): ");
+            if(attrs->mode == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
             {
-
-                if(gEndat_multi_ch_mask & (1<<0))
+                for(i = 0; i < loop_count; i++)
                 {
-                    DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) Channel0: \n");
-                    if(DebugP_scanf("%u\n", &cmd_supplement->ch0_trigger_count) < 0)
+                    if(attrs->channel_mask & (1 << i))
                     {
-                        DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
-                        return -EINVAL;
+                        if(loop_count > 1)
+                        {
+                            DebugP_log("\n\r| for channel %d: ", i);
+                        }
+
+                        if(DebugP_scanf("%llu", &cmd_supplement->ch_trigger_count[i]) < 0)
+                        {
+                            DebugP_log("\r| ERROR: invalid value|\n");
+                            return SystemP_FAILURE;
+                        }
                     }
                 }
-
-                if(gEndat_multi_ch_mask & (1<<1))
-                {
-                    DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) Channel1: \n");
-                    if(DebugP_scanf("%u\n", &cmd_supplement->ch1_trigger_count) < 0)
-                    {
-                        DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
-                        return -EINVAL;
-                    }
-                }
-                if(gEndat_multi_ch_mask & (1<<2))
-                {
-                    DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles) Channel2: \n");
-                    if(DebugP_scanf("%u\n", &cmd_supplement->ch2_trigger_count) < 0)
-                    {
-                        DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
-                        return -EINVAL;
-                    }
-                }
-
             }
             else
             {
-                DebugP_log("\r| Enter IEP trigger time (must be less than or equal to IEP reset cycle, in IEP cycles): ");
-                if(DebugP_scanf("%u\n", &cmd_supplement->ch0_trigger_count) < 0)
+                if(DebugP_scanf("%llu", &cmd_supplement->ch_trigger_count[0]) < 0)
                 {
-                    DebugP_log("\r| ERROR: invalid value\n|\n|\n|\n");
-                    return -EINVAL;
+                    DebugP_log("\r| ERROR: invalid value|\n");
+                    return SystemP_FAILURE;
                 }
             }
             break;
 
-        default:
-            cmd = -EINVAL;
-            DebugP_log("\r| ERROR: no command data required for the command\n");
+        case 201:
+#if defined(SOC_AM243X)
+            DebugP_log("\n\r| Enter IEP SYNC OUT0 cycle period (in IEP cycles): ");
+            if(DebugP_scanf("%llu", &cmd_supplement->iep_sync0_period) < 0)
+            {
+                DebugP_log("\r| ERROR: invalid value|\n");
+                return SystemP_FAILURE;
+            }
+            if((cmd_supplement->iep_sync0_period == 0) || (cmd_supplement->iep_sync0_period <= ENDAT_IEP_COUNTER_INCREMENT) || (cmd_supplement->iep_sync0_period > UINT32_MAX))
+            {
+                DebugP_log("\r| ERROR: invalid value. 0 is not allowed and maximum value allowed is %u|\n", UINT32_MAX);
+                return SystemP_FAILURE;
+            }
+#else
+            DebugP_log("\r| Periodic cap mode cycle time will be equal to EPWM SYNC OUT frequency. \r\n NOTE: In SysConfig, EPWM and EPWM to IEP LATCH XBAR configuration must be done|\n");
+#endif
             break;
+
+        default:
+            DebugP_log("\r| ERROR: no command data required for the command\n");
+            return SystemP_FAILURE;
     }
 
-    return cmd;
+    return SystemP_SUCCESS;
 }
 
-static int32_t endat_handle_user(struct cmd_supplement *cmd_supplement)
+static int32_t endat_handle_user(endat_handle handle[CONFIG_ENDAT_NUM_INSTANCES], endat_cmd_supplement cmd_supplement[CONFIG_ENDAT_NUM_INSTANCES])
 {
     int32_t cmd;
+    uint32_t i = 0;
+    int32_t ret = SystemP_SUCCESS;
 
-    endat_print_menu();
-    cmd = endat_get_command();
-
-    if(HAVE_COMMAND_SUPPLEMENT(cmd))
+    for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
     {
-        return endat_get_command_supplement(cmd, cmd_supplement);
+#if (CONFIG_ENDAT_NUM_INSTANCES > 1)
+        DebugP_log("\r|------------------ EnDat Module %d Command Menu ------------------|\n", i);
+#else
+        DebugP_log("\r|------------------ EnDat Command Menu ------------------|\n");
+#endif
+        endat_print_menu(handle[i]);
+
+#if (CONFIG_ENDAT_NUM_INSTANCES > 1)
+        DebugP_log("\r| Enter command for EnDat Module %d: ", i);
+#else
+        DebugP_log("\r| Enter command: ");
+#endif
+        cmd = endat_get_command(handle[i]);
+
+        if(cmd == SystemP_FAILURE)
+        {
+#if (CONFIG_ENDAT_NUM_INSTANCES > 1)
+            DebugP_log("\r| ERROR: endat_get_command() failed for instance %d\n", i);
+#else
+            DebugP_log("\r| ERROR: endat_get_command() failed\n");
+#endif
+            ret = SystemP_FAILURE;
+        }
+
+        cmd_supplement[i].cmd_type = cmd;
+
+        if(HAVE_COMMAND_SUPPLEMENT(cmd))
+        {
+            cmd = endat_get_command_supplement(handle[i], cmd, &cmd_supplement[i]);
+            if(cmd == SystemP_FAILURE)
+            {
+#if (CONFIG_ENDAT_NUM_INSTANCES > 1)
+                DebugP_log("\r| ERROR: Failed to get command supplement data for instance %d\n", i);
+#else
+                DebugP_log("\r| ERROR: Failed to get command supplement data\n");
+#endif
+                ret = SystemP_FAILURE;
+                continue;
+            }
+        }
     }
 
-    return cmd;
+    return ret;
 }
 
-static int32_t endat_calc_clock(uint32_t freq, struct endat_clk_cfg *clk_cfg)
-{
-    uint32_t ns;
-
-    if(freq > 16000000 || (freq > 12000000 && freq < 16000000))
-    {
-        DebugP_log("\r| ERROR: frequency above 16MHz, between 12 & 16MHz not allowed\n|\n|\n");
-        return -1;
-    }
-
-    if((freq != 16000000) && (ENDAT_RX_INPUT_CLOCK_FREQUENCY % (freq * 8))&&(ENDAT_TX_INPUT_CLOCK_FREQUENCY % (freq)))
-        DebugP_log("\r| WARNING: exact clock divider is not possible, frequencies set would be tx: %u\trx: %u\n",
-                    ENDAT_TX_INPUT_CLOCK_FREQUENCY / (ENDAT_TX_INPUT_CLOCK_FREQUENCY / freq),
-                    ENDAT_RX_INPUT_CLOCK_FREQUENCY / (ENDAT_RX_INPUT_CLOCK_FREQUENCY / (freq * 8)));
-
-    ns = ENDAT_DELAY_COUNTER_INCREMENT*(2*ICSS_PRU_CORE_CLOCK/freq); /* rx arm >= 2 clock */
-
-    /* should be divisible by 5 */
-    if(ns % 5)
-    {
-        ns /= 5, ns += 1,  ns *= 5;
-    }
-
-    clk_cfg->tx_div = ENDAT_TX_INPUT_CLOCK_FREQUENCY / freq - 1;
-    clk_cfg->rx_div = ENDAT_RX_INPUT_CLOCK_FREQUENCY / (freq * 8) - 1;
-    clk_cfg->rx_en_cnt = ns;
-    clk_cfg->rx_div_attr = ENDAT_RX_SAMPLE_SIZE;
-
-    if(freq == 16000000)
-    {
-        clk_cfg->rx_div_attr |= ENDAT_RX_SESQUI_DIV;
-    }
-
-    DebugP_logInfo("\r| clock config values - tx_div: %u\trx_div: %u\trx_en_cnt: %u\trx_div_attr: %x\n",
-                    clk_cfg->tx_div, clk_cfg->rx_div, clk_cfg->rx_en_cnt, clk_cfg->rx_div_attr);
-
-    return 0;
-}
 
 static uint32_t endat_do_sanity_tst_delay(uint32_t delay)
 {
-    /* (unsigned short)~0 is also a multiple of 5 */
-    if(delay > (unsigned short)~0)
+    /* 0xFFFF is also a multiple of 5 */
+    if(delay > 0xFFFFU)
     {
         DebugP_log("\r| ERROR: delay greater than %uns, enter lesser value\n|\n|\n",
-                    (unsigned short)~0);
+                    0xFFFFU);
         return delay;
     }
 
@@ -1284,23 +1666,56 @@ static uint32_t endat_do_sanity_tst_delay(uint32_t delay)
     return delay;
 }
 
-static int32_t endat_position_loop_status;
-
-/* position period in microsecond */
+/**
+ * \brief   Calculate position loop period in microseconds
+ *
+ * \param   freq    Position loop frequency in Hz
+ *
+ * \retval  >0      Period in microseconds
+ * \retval  -1      Error (invalid frequency)
+ *
+ * \note    Returns negative value on error for backward compatibility with usage pattern
+ */
 static int32_t endat_calc_position_period(uint32_t freq)
 {
-    /* 16KHz limitation due to the timer */
+    uint32_t i;
+    uint32_t is_multi_ch = 0;
+    const endat_attrs *attrs[CONFIG_ENDAT_NUM_INSTANCES] = {NULL};
+
+    for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
+    {
+        attrs[i] = endat_get_attrs(gAppEndatHandle[i]);
+
+        if((gAppEndatHandle[i] == NULL) || (attrs[i] == NULL))
+        {
+            DebugP_log("\r\n\nERROR: NULL handle/attrs for EnDAT instance %u, exiting endat_calc_position_period()\n", i);
+            return -1;
+        }
+    }
+
+    /* Check if any instance uses multi-channel mode */
+    for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
+    {
+        if(attrs[i]->mode != ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU)
+        {
+            is_multi_ch = 1;
+            break;
+        }
+    }
+
+    /* Validate frequency limits - 16KHz max due to timer limitations */
     if(freq > 16000)
     {
         DebugP_log("\r| ERROR: enter frequency less than or equal 16KHz\n|\n|\n");
         return -1;
     }
-    else if((gEndat_is_multi_ch || gEndat_is_load_share_mode)&& freq > 8000)
+    else if(is_multi_ch && freq > 8000)
     {
         DebugP_log("\r| ERROR: enter frequency less than or equal 8KHz in multi channel configuration\n|\n|\n");
         return -1;
     }
 
+    /* Calculate period in microseconds */
     return 1000000 / freq;
 }
 
@@ -1311,115 +1726,370 @@ static void endat_position_loop_decide_termination(void *args)
     while(1)
     {
         DebugP_scanf("%c", &c);
-        endat_position_loop_status = ENDAT_POSITION_LOOP_STOP;
+        gEndatPositionLoopStatus = ENDAT_POSITION_LOOP_STOP;
         break;
     }
     TaskP_exit();
 }
 
-void endat_process_position_command(uint32_t a0)
+static void endat_process_2_1_position_command(endat_handle handle)
 {
     uint32_t crc;
+    const endat_attrs *attrs = endat_get_attrs(handle);
+    endat_priv *priv = endat_get_priv(handle);
+    uint32_t i;
+    uint32_t instance;
+    int32_t status;
 
-    endat_command_process(priv, 1, NULL);
-    endat_recvd_process(priv, 1, &gEndat_format_data_mtrctrl[a0]);
-    crc = endat_recvd_validate(priv, 1, &gEndat_format_data_mtrctrl[a0]);
-
-    if(!(crc & 0x1))
+    if((handle == NULL) || (priv == NULL) || (attrs == NULL))
     {
-        gEndat_mtrctrl_crc_err[a0]++;
+        DebugP_log("\r\n\nERROR: NULL handle/priv/attrs\n");
+        return;
+    }
+
+    instance = attrs->instance;
+
+    status = endat_command_process(handle, 1, NULL);
+    if(status != SystemP_SUCCESS)
+    {
+        if(status == SystemP_TIMEOUT)
+        {
+            DebugP_log("\r| ERROR: endat_command_process timed out\n");
+        }
+        else
+        {
+            DebugP_log("\r| ERROR: endat_command_process failed with status %d\n", status);
+        }
+        return;
+    }
+
+    if(attrs->mode != ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU)
+    {
+        for(i = 0; i < ENDAT_NUM_CH_PER_SLICE_MAX; i++)
+        {
+            if(attrs->channel_mask & (1 << i))
+            {
+                status = endat_multi_channel_set_cur(handle, i);
+                if(status != SystemP_SUCCESS)
+                {
+                    DebugP_log("\r| ERROR: Ch set failed: %d\n", status);
+                    return;
+                }
+                status = endat_recvd_process(handle, 1, &gAppEndatFormatDataMtrCtrl[instance][i]);
+                if(status != SystemP_SUCCESS)
+                {
+                    DebugP_log("\r| ERROR: Recvd process failed: %d\n", status);
+                    return;
+                }
+                crc = endat_recvd_validate(handle, 1, &gAppEndatFormatDataMtrCtrl[instance][i]);
+
+                if(!(crc & 0x1))
+                {
+                    gAppEndatMtrCtrlCrcErr[instance][i]++;
+                }
+            }
+        }
+
+    }
+    else
+    {
+        if(priv->current_channel >= ENDAT_NUM_CH_PER_SLICE_MAX)
+        {
+            DebugP_log("\r| ERROR: Invalid current_channel\n");
+            return;
+        }
+
+        status = endat_recvd_process(handle, 1, &gAppEndatFormatDataMtrCtrl[instance][priv->current_channel]);
+        if(status != SystemP_SUCCESS)
+        {
+            DebugP_log("\r| ERROR: Recvd process failed: %d\n", status);
+            return;
+        }
+        crc = endat_recvd_validate(handle, 1, &gAppEndatFormatDataMtrCtrl[instance][priv->current_channel]);
+        if(!(crc & 0x1))
+        {
+            gAppEndatMtrCtrlCrcErr[instance][priv->current_channel]++;
+        }
     }
 }
 
-uint16_t _endat_process_2_2_position_command(int32_t cmd,
-        struct cmd_supplement *cmd_supplement, uint32_t a0)
+static uint16_t endat_handle_2_2_position_command(endat_handle handle, uint32_t cmd, endat_cmd_supplement *cmd_supplement, uint32_t a0)
 {
     uint32_t crc;
+    uint32_t instance;
+    endat_priv *priv = endat_get_priv(handle);
+    const endat_attrs *attrs = endat_get_attrs(handle);
+    uint8_t flag_idx;
+    int32_t status;
 
-    endat_command_process(priv, cmd, cmd_supplement);
-    endat_recvd_process(priv, cmd, &gEndat_format_data_mtrctrl[a0]);
-    crc = endat_recvd_validate(priv, cmd, &gEndat_format_data_mtrctrl[a0]);
+    if((handle == NULL) || (priv == NULL) || (attrs == NULL))
+    {
+        DebugP_log("\r\n\nERROR: NULL handle/priv/attrs\n");
+        return 0;
+    }
+
+    instance = attrs->instance;
+    flag_idx = (attrs->load_share_enabled) ? a0 : 0;
+
+    status = endat_recvd_process(handle, cmd, &gAppEndatFormatDataMtrCtrl[instance][a0]);
+    if(status != SystemP_SUCCESS)
+    {
+        DebugP_log("\r| ERROR: Recvd process failed: %d\n", status);
+        return 0;
+    }
+    crc = endat_recvd_validate(handle, cmd, &gAppEndatFormatDataMtrCtrl[instance][a0]);
 
     if(!(crc & 0x1))
     {
-        gEndat_2_2_crc_position_err_cnt[a0]++;
+        gAppEndat22CrcPositionErrCnt[instance][a0]++;
     }
 
-    if(priv->flags.info1 && !(crc & 0x2))
+    if(priv->flags[flag_idx].info1 && !(crc & 0x2))
     {
-        gEndat_2_2_crc_addinfo1_err_cnt[a0]++;
+        gAppEndat22CrcAddinfo1ErrCnt[instance][a0]++;
     }
 
-    endat_addinfo_track(priv, cmd, cmd_supplement);
+    status = endat_addinfo_track(handle, cmd, cmd_supplement);
+    if(status != SystemP_SUCCESS)
+    {
+        DebugP_log("\r| ERROR: endat_addinfo_track failed with status %d\n", status);
+    }
 
-    return gEndat_format_data_mtrctrl[a0].position_addinfo.addinfo1.addinfo & 0xFFFF;
+    return gAppEndatFormatDataMtrCtrl[instance][a0].position_addinfo.addinfo1.addinfo & 0xFFFF;
 }
 
-void endat_process_2_2_position_command(uint32_t a0)
+static void endat_process_2_2_position_command(endat_handle handle)
 {
-    uint32_t cmd;
-    struct cmd_supplement cmd_supplement;
+    uint32_t cmd, i;
+    endat_cmd_supplement cmd_supplement;
     uint16_t pos_word;
+    uint32_t instance;
+    endat_priv *priv = endat_get_priv(handle);
+    const endat_attrs *attrs = endat_get_attrs(handle);
+    int32_t status;
 
-    if(((!gEndat_is_multi_ch || !gEndat_is_load_share_mode) && priv->has_safety[priv->current_channel]) )
+    if((handle == NULL) || (priv == NULL) || (attrs == NULL) || (priv->current_channel >= ENDAT_NUM_CH_PER_SLICE_MAX))
     {
-        cmd = 9, cmd_supplement.address = gEndat_2_2_loop_mrs;
+        DebugP_log("\r\n\nERROR: NULL handle/priv/attrs or invalid current_channel\n");
+        return;
+    }
+
+    instance = attrs->instance;
+
+    if(((attrs->mode != ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU) && priv->has_safety[priv->current_channel]))
+    {
+        cmd = 9;
+        if(attrs->load_share_enabled)
+        {
+            /* Load-share mode: populate addresses for enabled channels */
+            if(attrs->channel0_enabled) cmd_supplement.address[0] = gAppEndat22LoopMrs[instance];
+            if(attrs->channel1_enabled) cmd_supplement.address[1] = gAppEndat22LoopMrs[instance];
+            if(attrs->channel2_enabled) cmd_supplement.address[2] = gAppEndat22LoopMrs[instance];
+        }
+        else
+        {
+            /* Single/multi-channel single-PRU mode: populate only index 0 */
+            cmd_supplement.address[0] = gAppEndat22LoopMrs[instance];
+        }
     }
     else
     {
         cmd = 8;
     }
 
-    pos_word = _endat_process_2_2_position_command(cmd, &cmd_supplement, a0);
-
-    if((gEndat_is_multi_ch) || (!priv->has_safety[priv->current_channel]) || (gEndat_is_load_share_mode))
+    status = endat_command_process(handle, cmd, &cmd_supplement);
+    if(status != SystemP_SUCCESS)
     {
+        if(status == SystemP_TIMEOUT)
+        {
+            DebugP_log("\r| ERROR: endat_command_process timed out\n");
+        }
+        else
+        {
+            DebugP_log("\r| ERROR: endat_command_process failed with status %d\n", status);
+        }
         return;
     }
 
-    /* WORD3 in addinfo1 */
-    if(gEndat_2_2_loop_mrs == MRS_POS_VAL2_WORD1)
+    if(attrs->mode != ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU)
     {
-        gEndat_2_2_pos_val2[a0] &= 0xFFFF0000FFFFFFFF;
-        gEndat_2_2_pos_val2[a0] |= (unsigned long long)pos_word << 32;
-        gEndat_2_2_loop_mrs = MRS_POS_VAL2_WORD2;
-        /* WORD1 in addinfo1 */
+        for(i = 0; i < ENDAT_NUM_CH_PER_SLICE_MAX; i++)
+        {
+            if(attrs->channel_mask & (1 << i))
+            {
+                status = endat_multi_channel_set_cur(handle, i);
+                if(status != SystemP_SUCCESS)
+                {
+                    DebugP_log("\r| ERROR: endat_multi_channel_set_cur failed with status %d\n", status);
+                    return;
+                }
+                pos_word = endat_handle_2_2_position_command(handle, cmd, &cmd_supplement, i);
+
+                if (!priv->has_safety[i] || attrs->mode == ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU)
+                {
+                    continue;
+                }
+
+                /* WORD3 in addinfo1 */
+                if(gAppEndat22LoopMrs[instance] == MRS_POS_VAL2_WORD1)
+                {
+                    gAppEndat22PosVal2[instance][i] &= 0xFFFF0000FFFFFFFF;
+                    gAppEndat22PosVal2[instance][i] |= (unsigned long long)pos_word << 32;
+                    gAppEndat22LoopMrs[instance] = MRS_POS_VAL2_WORD2;
+                    /* WORD1 in addinfo1 */
+                }
+                else if(gAppEndat22LoopMrs[instance] == MRS_POS_VAL2_WORD2)
+                {
+                    gAppEndat22PosVal2[instance][i] &= 0xFFFFFFFFFFFF0000;
+                    gAppEndat22PosVal2[instance][i] |= (uint64_t)pos_word;
+                    gAppEndat22LoopMrs[instance] = MRS_POS_VAL2_WORD3;
+                    /* WORD2 in addinfo1 */
+                }
+                else if(gAppEndat22LoopMrs[instance] == MRS_POS_VAL2_WORD3)
+                {
+                    gAppEndat22PosVal2[instance][i] &= 0xFFFFFFFF0000FFFF;
+                    gAppEndat22PosVal2[instance][i] |= (unsigned long long)pos_word << 16;
+                    gAppEndat22LoopMrs[instance] = MRS_POS_VAL2_WORD1;
+                }
+            }
+        }
     }
-    else if(gEndat_2_2_loop_mrs == MRS_POS_VAL2_WORD2)
+    else
     {
-        gEndat_2_2_pos_val2[a0] &= 0xFFFFFFFFFFFF0000;
-        gEndat_2_2_pos_val2[a0] |= (uint64_t)pos_word;
-        gEndat_2_2_loop_mrs = MRS_POS_VAL2_WORD3;
-        /* WORD2 in addinfo1 */
-    }
-    else if(gEndat_2_2_loop_mrs == MRS_POS_VAL2_WORD3)
-    {
-        gEndat_2_2_pos_val2[a0] &= 0xFFFFFFFF0000FFFF;
-        gEndat_2_2_pos_val2[a0] |= (unsigned long long)pos_word << 16;
-        gEndat_2_2_loop_mrs = MRS_POS_VAL2_WORD1;
+        if(priv->current_channel >= ENDAT_NUM_CH_PER_SLICE_MAX)
+        {
+            DebugP_log("\r| ERROR: Invalid current_channel\n");
+            return;
+        }
+
+        pos_word = endat_handle_2_2_position_command(handle, cmd, &cmd_supplement, priv->current_channel);
+        if(!priv->has_safety[priv->current_channel])
+        {
+            return;
+        }
+
+        /* WORD3 in addinfo1 */
+        if(gAppEndat22LoopMrs[instance] == MRS_POS_VAL2_WORD1)
+        {
+            gAppEndat22PosVal2[instance][priv->current_channel] &= 0xFFFF0000FFFFFFFF;
+            gAppEndat22PosVal2[instance][priv->current_channel] |= (unsigned long long)pos_word << 32;
+            gAppEndat22LoopMrs[instance] = MRS_POS_VAL2_WORD2;
+            /* WORD1 in addinfo1 */
+        }
+        else if(gAppEndat22LoopMrs[instance] == MRS_POS_VAL2_WORD2)
+        {
+            gAppEndat22PosVal2[instance][priv->current_channel] &= 0xFFFFFFFFFFFF0000;
+            gAppEndat22PosVal2[instance][priv->current_channel] |= (uint64_t)pos_word;
+            gAppEndat22LoopMrs[instance] = MRS_POS_VAL2_WORD3;
+            /* WORD2 in addinfo1 */
+        }
+        else if(gAppEndat22LoopMrs[instance] == MRS_POS_VAL2_WORD3)
+        {
+            gAppEndat22PosVal2[instance][priv->current_channel] &= 0xFFFFFFFF0000FFFF;
+            gAppEndat22PosVal2[instance][priv->current_channel] |= (unsigned long long)pos_word << 16;
+            gAppEndat22LoopMrs[instance] = MRS_POS_VAL2_WORD1;
+        }
     }
 }
 
-void endat_position_loop(uint32_t a0)
+/**
+ * \brief   Position loop IRQ handler for continuous position reading (commands 101 and 107)
+ *
+ * \details This function is called by the timer interrupt handler during continuous
+ *          position reading mode. It increments gPositionLoopIrqCount to track IRQ events.
+ *          After every IRQ hit and increment of gPositionLoopIrqCount, the corresponding
+ *          EnDat command (101 for 2.1 or 107 for 2.2) is executed to read position data
+ *          from the encoder.
+ *
+ *          Used by:
+ *          - Command 101: EnDat 2.1 continuous position reading
+ *          - Command 107: EnDat 2.2 continuous position reading
+ */
+void endat_position_loop(void)
 {
-    if(endat_fn_position_loop != NULL)
-    {
-        if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
-        {
-            int32_t j;
+    gPositionLoopIrqCount++;
+}
 
-            for(j = 0; j < 3; j++)
+/* Function to print the appropriate header based on channel configurations */
+static void endat_print_position_header(endat_handle handle, uint32_t continuous, uint32_t is_2_2)
+
+{
+    const endat_attrs *attrs = endat_get_attrs(handle);
+    endat_priv *priv = endat_get_priv(handle);
+
+    if((handle == NULL) || (priv == NULL) || (attrs == NULL) || (priv->current_channel >= ENDAT_NUM_CH_PER_SLICE_MAX))
+    {
+        DebugP_log("\r\n\nERROR: NULL handle/priv/attrs or invalid current_channel\n");
+        return;
+    }
+
+    if(attrs->mode != ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU)
+    {
+        /*For multi-channel, we print a general header that accommodates all channels*/
+        /*For multi-channel, we print a general header that accommodates all channels*/
+        if(continuous)
+        {
+            DebugP_log("         position,    [revolution],  f1");
+            if(is_2_2)
             {
-                if(gEndat_multi_ch_mask & 1 << j)
+                DebugP_log(", f2");
+            }
+            DebugP_log("\r\n| ");
+        }
+        else
+        {
+            DebugP_log("         position,    [revolution], crc errors, f1");
+            if(is_2_2)
+            {
+                DebugP_log(", f2");
+            }
+            DebugP_log("\r\n| ");
+        }
+    }
+    else
+    {
+        /* For single channel, we check the specific channel configuration */
+        if(priv->multi_turn_res[priv->current_channel])
+        {
+            if(continuous)
+            {
+                DebugP_log("         position,       revolution, f1");
+                if(is_2_2)
                 {
-                    endat_multi_channel_set_cur(priv, j);
-                    endat_fn_position_loop(j);
+                    DebugP_log(", f2");
                 }
+                DebugP_log("\r\n| ");
+            }
+            else
+            {
+                DebugP_log("         position,       revolution, crc errors, f1");
+                if(is_2_2)
+                {
+                    DebugP_log(", f2");
+                }
+                DebugP_log("\r\n| ");
             }
         }
         else
         {
-            endat_fn_position_loop(0);
+            if(continuous)
+            {
+                DebugP_log("         position, f1");
+                if(is_2_2)
+                {
+                    DebugP_log(", f2");
+                }
+                DebugP_log("\r\n| ");
+            }
+            else
+            {
+                DebugP_log("         position, crc errors, f1");
+                if(is_2_2)
+                {
+                    DebugP_log(", f2");
+                }
+                DebugP_log("\r\n| ");
+            }
         }
     }
 }
@@ -1439,7 +2109,7 @@ static int32_t endat_loop_task_create(void)
 
     if(status != SystemP_SUCCESS)
     {
-        DebugP_log("\rTask2 creation failed\n");
+        DebugP_log("\r endat_position_loop_decide_termination task creation failed\n");
     }
 
     return status ;
@@ -1460,12 +2130,12 @@ static void endat_loop_timer_create(int32_t us)
     return ;
 }
 
-static int32_t endat_get_position_loop_chars(struct endat_priv *priv,
-        int32_t continuous, int32_t is_2_2)
+static uint32_t endat_get_position_loop_chars(uint32_t multi_turn_res, uint32_t continuous, uint32_t is_2_2)
 {
-    int32_t i;
+    uint32_t i = 0;
 
-    if(priv->multi_turn_res[priv->current_channel])
+    /* Base character count depends on multi-turn resolution */
+    if(multi_turn_res)
     {
         i = 34;
     }
@@ -1474,13 +2144,16 @@ static int32_t endat_get_position_loop_chars(struct endat_priv *priv,
         i = 16;
     }
 
+    /* Add space for CRC errors in non-continuous mode */
     if(!continuous)
     {
         i += 12;
     }
 
+    /* Add space for F1 field */
     i += 4;
 
+    /* Add space for F2 field in 2.2 mode */
     if(!continuous && is_2_2)
     {
         i += 4;
@@ -1489,866 +2162,355 @@ static int32_t endat_get_position_loop_chars(struct endat_priv *priv,
     return i;
 }
 
-static void endat_print_position_loop(struct endat_priv *priv, int32_t continuous,
-                                      int32_t is_2_2, int32_t ch)
+/* Modified version of endat_print_position_loop to handle channel-specific data sources */
+static void endat_print_position_loop(endat_handle handle, uint32_t continuous, uint32_t is_2_2, uint32_t ch)
 {
-    uint64_t max = pow(2, priv->single_turn_res[priv->current_channel]);
-    union position position;
+    endat_priv *priv = endat_get_priv(handle);
+    const endat_attrs *attrs = endat_get_attrs(handle);
+    uint32_t instance;
+    uint32_t current_channel;
+    uint64_t max;
+    endat_position_type position;
 
-    if(priv->type[priv->current_channel] == rotary)
+    if((handle == NULL) || (priv == NULL) || (attrs == NULL) || (ch >= ENDAT_NUM_CH_PER_SLICE_MAX) || (priv->current_channel >= ENDAT_NUM_CH_PER_SLICE_MAX))
+    {
+        DebugP_log("\r\n\nERROR: NULL handle/priv/attrs or ch >= ENDAT_NUM_CH_PER_SLICE_MAX or current_channel >= ENDAT_NUM_CH_PER_SLICE_MAX\n");
+        return;
+    }
+
+    instance = attrs->instance;
+    current_channel = priv->current_channel;
+    max = (uint64_t)1 << priv->single_turn_res[current_channel];
+
+    if(priv->type[current_channel] == ENDAT_ENCODER_TYPE_ROTARY)
     {
         position.angle = ((float)
-                          gEndat_format_data_mtrctrl[ch].position_addinfo.position.position) /
+                          gAppEndatFormatDataMtrCtrl[instance][ch].position_addinfo.position.position) /
                          (float)max * (float)360;
     }
     else
     {
         position.length =
-            gEndat_format_data_mtrctrl[ch].position_addinfo.position.position * priv->step[priv->current_channel];
+            gAppEndatFormatDataMtrCtrl[instance][ch].position_addinfo.position.position * priv->step[current_channel];
     }
 
     /* max value is 2x48, has 15 digits, so 16 is safe */
-    if(priv->multi_turn_res[priv->current_channel])
+    if(priv->multi_turn_res[current_channel])
     {
-        sprintf(gUart_buffer, "%16.12f, %16s", position.angle,
-                uint64_to_str(gEndat_format_data_mtrctrl[ch].position_addinfo.position.revolution));
+        sprintf(gUartBuffer, "%16.12f, %16s", position.angle,
+                uint64_to_str(gAppEndatFormatDataMtrCtrl[instance][ch].position_addinfo.position.revolution));
     }
     else
     {
-        if(priv->type[priv->current_channel] == rotary)
+        if(priv->type[current_channel] == ENDAT_ENCODER_TYPE_ROTARY)
         {
-            sprintf(gUart_buffer, "%16.12f", position.angle);
+            sprintf(gUartBuffer, "%16.12f", position.angle);
         }
         else
         {
-            sprintf(gUart_buffer, "%16s", uint64_to_str(position.length));
+            sprintf(gUartBuffer, "%16s", uint64_to_str(position.length));
         }
     }
 
-    DebugP_log("\r%s", gUart_buffer);
+    DebugP_log("\r%s", gUartBuffer);
 
     if(!continuous)
     {
         if(is_2_2)
         {
-            DebugP_log(", %10u", gEndat_2_2_crc_position_err_cnt[ch]);
+            DebugP_log(", %10u", gAppEndat22CrcPositionErrCnt[instance][ch]);
         }
         else
         {
-            DebugP_log(", %10u", gEndat_mtrctrl_crc_err[ch]);
+            DebugP_log(", %10u", gAppEndatMtrCtrlCrcErr[instance][ch]);
         }
     }
 
     DebugP_log(",%3u",
-                gEndat_format_data_mtrctrl[ch].position_addinfo.position.f1);
+                gAppEndatFormatDataMtrCtrl[instance][ch].position_addinfo.position.f1);
 
     if(!continuous && is_2_2)
     {
         DebugP_log(",%3u",
-                    gEndat_format_data_mtrctrl[ch].position_addinfo.position.f2);
+                    gAppEndatFormatDataMtrCtrl[instance][ch].position_addinfo.position.f2);
     }
 }
 
-static void endat_print_position_loop_channel_info(struct endat_priv *priv,
-        int32_t is_2_2)
+static void endat_process_host_command(endat_handle handle, int32_t cmd, endat_cmd_supplement *cmd_supplement)
 {
-    int32_t k, j, i = endat_get_position_loop_chars(priv, 0, is_2_2);
+    const endat_attrs *attrs = endat_get_attrs(handle);
+    endat_priv *priv = endat_get_priv(handle);
+    int32_t ret;
+    int32_t status;
+    int32_t i;
+    uint32_t val;
+    float ct;
 
-    /* add 3 extra to account for spacing b/n channels */
-    i += 3;
-    /* find mid point */
-    i /= 2;
-    /* account for "CHANNEL x" display */
-    i -= 4;
-
-    for(k = i, j = 0; j < 3; j++, k = i)
-        if(gEndat_multi_ch_mask & 1 << j)
-        {
-            while(k--)
-            {
-                DebugP_log("%c", ' ');
-            }
-
-            DebugP_log("\rCHANNEL %d", j);
-
-            /* 3 - extra to account for spacing b/n channels, 9 - "CHANNEL x" length */
-            k = endat_get_position_loop_chars(priv, 0, is_2_2) + 3 - i - 9;
-
-            while(k--)
-            {
-                DebugP_log("%c", ' ');
-            }
-        }
-}
-
-static void endat_handle_prop_delay(struct endat_priv *priv,
-                                    uint16_t prop_delay)
-{
-    /*convert rx_en_cnt into ns */
-    float ct = ((priv->rx_en_cnt/ENDAT_DELAY_COUNTER_INCREMENT)*((float)1000000000/priv->pru_clock))/2; /*one endat clock cycle time = 1/endat frequency = 2*rx_en_cnt*/
-    /* if propagation delay is more than half clock cycle time (2/endat frequency) then we have to reduce clock cycles for rx*/
-    if(prop_delay > (ct/2))
+    if((handle == NULL) ||
+       (priv == NULL) ||
+       (handle->priv->channel_rx_info == NULL) ||
+       (attrs == NULL) ||
+       (cmd_supplement == NULL) ||
+       (priv->current_channel >= ENDAT_NUM_CH_PER_SLICE_MAX))
     {
-        uint16_t dis = floor(prop_delay/ct);
-        /* convert propagation delay into rx arm counts */
-        uint16_t temp = ((uint16_t)(((float)prop_delay * priv->pru_clock )/1000000000)) * ENDAT_DELAY_COUNTER_INCREMENT;
-        endat_config_rx_arm_cnt(priv, temp);
-        /* propagation delay/cycle_time */
-        endat_config_rx_clock_disable(priv, dis);
+        DebugP_log("\r\n\nERROR: NULL handle/priv/channel_rx_info/attrs/cmd_supplement or invalid current_channel\n");
+        return;
     }
-    else
-    {
-        endat_config_rx_arm_cnt(priv, priv->rx_en_cnt);
-        endat_config_rx_clock_disable(priv, 0);
-    }
-}
-
-static void endat_process_periodic_command(int32_t cmd,
-                                       struct cmd_supplement *cmd_supplement, struct endat_priv *priv)
-{
-    if(cmd == 200)
-    {
-        endat_config_periodic_trigger(priv);
-        int32_t status;
-        int32_t pos_cmd = 1;
-        DebugP_assert(endat_command_process(priv, pos_cmd, NULL) >= 0);
-        priv->iep_reset_count = cmd_supplement->iep_reset_count;
-        if(gEndat_is_load_share_mode)
-        {
-            priv->ch0_trigger_count = gEndat_multi_ch_mask & (1<<0) ? cmd_supplement->ch0_trigger_count : 0;
-            priv->ch1_trigger_count = gEndat_multi_ch_mask & (1<<1) ? cmd_supplement->ch1_trigger_count : 0;
-            priv->ch2_trigger_count = gEndat_multi_ch_mask & (1<<2) ? cmd_supplement->ch2_trigger_count : 0;
-        }
-        else
-        {
-            priv->ch0_trigger_count = cmd_supplement->ch0_trigger_count;
-        }
-
-        if(endat_loop_task_create() != SystemP_SUCCESS)
-        {
-            DebugP_log("\r| ERROR: OS not allowing continuous mode as related Task creation failed\r\n|\r\n|\n");
-            DebugP_log("Task_create() failed!\n");
-            return;
-        }
-
-        struct endat_periodic_interface endat_periodic_interface;
-        endat_periodic_interface.pruicss_iep = priv->pruss_iep;
-        endat_periodic_interface.pruicss_dmem = priv->pruss_xchg;
-        endat_periodic_interface.load_share = priv->load_share;
-        endat_periodic_interface.ch0_trigger_count = priv->ch0_trigger_count;
-        endat_periodic_interface.ch1_trigger_count = priv->ch1_trigger_count;
-        endat_periodic_interface.ch2_trigger_count = priv->ch2_trigger_count;
-        endat_periodic_interface.cmp0_count = priv->iep_reset_count;
-
-        status = endat_config_periodic_mode(&endat_periodic_interface, gPruIcssXHandle);
-        DebugP_assert(0 != status);
-        endat_position_loop_status = ENDAT_POSITION_LOOP_START;
-
-        if(priv->multi_turn_res[priv->current_channel])
-        {
-            DebugP_log("\r|\n\r| press enter to stop the continuous mode\r\n|\r\n|         position,       revolution, f1\r\n| ");
-        }
-        else
-        {
-            DebugP_log("\r|\n\r| press enter to stop the continuous mode\r\n|\r\n|         position, f1\r\n| ");
-        }
-
-        while(1)
-            if(endat_position_loop_status == ENDAT_POSITION_LOOP_STOP)
-            {
-                endat_stop_periodic_continuous_mode(&endat_periodic_interface);
-                endat_config_host_trigger(priv);
-                return;
-            }
-            else
-            {
-                int32_t i;
-
-                if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
-                {
-                    int32_t j;
-                    for(i = 0, j = 0; j < 3; j++)
-                    {
-                        if(gEndat_multi_ch_mask & 1 << j)
-                        {
-                            endat_multi_channel_set_cur(priv, j);
-                            endat_recvd_process(priv, 1, &gEndat_format_data_mtrctrl[j]);
-                            i += endat_get_position_loop_chars(priv, 0, 0);
-                            DebugP_log("| ");
-                            DebugP_log("\r|\n\r| Channel: %10u\r\n| ", j);
-                            endat_print_position_loop(priv, 1, 0, j);
-                            DebugP_log(" ");
-                            DebugP_log("\n");
-                            i += 3;
-                        }
-                    }
-                }
-                else
-                {
-                    endat_recvd_process(priv, 1, &gEndat_format_data_mtrctrl[0]);
-
-                    i = endat_get_position_loop_chars(priv, 1, 0);
-                    endat_print_position_loop(priv, 1, 0, 0);
-                }
-                /* increase sleep value if glitches in display to be prevented (and would result in slower position display freq) */
-                ClockP_usleep(100);
-
-                while(i--)
-                {
-                    DebugP_log("%c", 8);
-                }
-            }
-
-
-    }
-}
-static void endat_process_host_command(int32_t cmd,
-                                       struct cmd_supplement *cmd_supplement, struct endat_priv *priv)
-{
-    struct endat_clk_cfg clk_cfg;
-    static int32_t timer_init;
 
     /* clock configuration */
     if(cmd == 100)
     {
-        if(endat_calc_clock(cmd_supplement->frequency, &clk_cfg) < 0)
+        if(endat_config_clock(handle, cmd_supplement->frequency) != SystemP_SUCCESS)
         {
+            DebugP_log("\r| ERROR: clock configuration failed\n|\n|\n");
             return;
         }
 
-        endat_config_clock(priv, &clk_cfg);
-
-        priv->rx_en_cnt = clk_cfg.rx_en_cnt;
-
-        if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
+        /* Compensate the wire delay for multi channel single PRU mode */
+        if((attrs->mode == ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU))
         {
-            int32_t j;
-            uint16_t d;
-
-            for(j = 0; j < 3; j++)
+            for(i = 0; i < ENDAT_NUM_CH_PER_SLICE_MAX; i++)
             {
-                if(gEndat_multi_ch_mask & 1 << j)
+                if(attrs->channel_mask & (1 << i))
                 {
-                    endat_multi_channel_set_cur(priv, j);
-                    endat_handle_prop_delay(priv, gEndat_prop_delay[priv->current_channel]);
-                    d = gEndat_prop_delay_max - gEndat_prop_delay[j];
-                    endat_config_wire_delay(priv, d);
+                    status = endat_multi_channel_set_cur(handle, i);
+                    if(status != SystemP_SUCCESS)
+                    {
+                        DebugP_log("\r| ERROR: Ch set failed: %d\n", status);
+                        return;
+                    }
+
+                    /* Calculate wire delay compensation based on propagation delay difference */
+                    val = gAppEndatPropDelayMax[attrs->instance] - gAppEndatPropDelay[attrs->instance][i];
+
+                    /* Convert ns to delay counter value - multiplication first for better precision */
+                    val = ENDAT_DELAY_COUNTER_INCREMENT*((uint16_t)((((float)val * attrs->core_clk_freq) / 1000000000)));
+                    status = endat_config_wire_delay(handle, val);
+                    if(status != SystemP_SUCCESS)
+                    {
+                        DebugP_log("\r| ERROR: endat_config_wire_delay failed with status %d\n", status);
+                    }
                 }
             }
         }
-        else
-        {
-            endat_handle_prop_delay(priv, gEndat_prop_delay[priv->current_channel]);
-        }
-
         /* set tST to 2us if frequency > 1MHz, else turn it off */
         if(cmd_supplement->frequency >= 1000000)
         {
-            cmd_supplement->frequency = 2000;
+            cmd_supplement->delay = 2000;
         }
         else
         {
-            cmd_supplement->frequency = 0;
+            cmd_supplement->delay = 0;
         }
-
         /* control loop */
-        if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
+        if(attrs->mode != ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU)
         {
-            int32_t j;
-            for(j = 0; j < 3; j++)
+            for(i = 0; i < ENDAT_NUM_CH_PER_SLICE_MAX; i++)
             {
-                if(gEndat_multi_ch_mask & 1 << j)
+                if(attrs->channel_mask & (1 << i))
                 {
-                    endat_multi_channel_set_cur(priv, j);
-                    endat_process_host_command(103, cmd_supplement, priv);
+                    cmd_supplement->selected_channel = i;
+                    endat_process_host_command(handle, 103, cmd_supplement);
                 }
            }
         }
         else
         {
-            endat_process_host_command(103, cmd_supplement, priv);
+            endat_process_host_command(handle, 103, cmd_supplement);
         }
-
     }
-    else if(cmd == 101)
-    {
-        int32_t us = endat_calc_position_period(cmd_supplement->frequency);
-
-        if(us < 0)
-        {
-            return;
-        }
-
-        if(endat_loop_task_create() != SystemP_SUCCESS)
-        {
-            DebugP_log("\r| ERROR: OS not allowing position loop as related Task creation failed\n|\n|\n");
-            DebugP_log("\rTask_create() failed!\n");
-            return;
-        }
-
-        endat_fn_position_loop = endat_process_position_command;
-
-        if(!timer_init)
-        {
-            endat_loop_timer_create(us);
-            timer_init = 1;
-        }
-
-        TimerP_start(gTimerBaseAddr[CONFIG_TIMER0]);
-        endat_position_loop_status = ENDAT_POSITION_LOOP_START;
-
-        if(priv->multi_turn_res[priv->current_channel])
-        {
-            DebugP_log("\r|\r\n| press enter to stop the position display|\n");
-
-            if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
-            {
-                int32_t j;
-
-                DebugP_log("\r|\n\r|");
-                endat_print_position_loop_channel_info(priv, 0);
-                DebugP_log("\r\n|\n");
-
-                for(j = 0; j < 3; j++)
-                {
-                    if(gEndat_multi_ch_mask & 1 << j)
-                    {
-                        DebugP_log("| ");
-                        DebugP_log("        position,       revolution, crc errors, f1\n");
-                        DebugP_log(" ");
-                    }
-                }
-                DebugP_log("\n");
-            }
-            else
-            {
-                DebugP_log("\r|         position,       revolution, crc errors, f1|\r\n ");
-            }
-        }
-        else
-        {
-            DebugP_log("|\n| press enter to stop the position display\n|\n");
-
-            if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
-            {
-                int32_t j;
-
-                DebugP_log("\r|\n\r|");
-                endat_print_position_loop_channel_info(priv, 0);
-                DebugP_log("\r\n|\n");
-
-                for(j = 0; j < 3; j++)
-                {
-                    if(gEndat_multi_ch_mask & 1 << j)
-                    {
-                        DebugP_log("| ");
-                        DebugP_log("        position, crc errors, f1\n");
-                        DebugP_log(" ");
-                    }
-                }
-                DebugP_log("\n");
-            }
-            else
-            {
-                DebugP_log("|         position, crc errors, f1\n| ");
-            }
-        }
-
-        while(1)
-            if(endat_position_loop_status == ENDAT_POSITION_LOOP_STOP)
-            {
-                TimerP_stop(gTimerBaseAddr[CONFIG_TIMER0]);
-                return;
-            }
-            else
-            {
-                int32_t i;
-
-                if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
-                {
-                    int32_t j;
-
-                    for(i = 0, j = 0; j < 3; j++)
-                    {
-                        if(gEndat_multi_ch_mask & 1 << j)
-                        {
-                            endat_multi_channel_set_cur(priv, j);
-                            i += endat_get_position_loop_chars(priv, 0, 0);
-                            DebugP_log("| ");
-                            endat_print_position_loop(priv, 0, 0, j);
-                            DebugP_log(" ");
-                            DebugP_log("\n");
-                            i += 3;
-                        }
-                    }
-                }
-                else
-                {
-                    i = endat_get_position_loop_chars(priv, 0, 0);
-                    endat_print_position_loop(priv, 0, 0, 0);
-                }
-
-                /* increase sleep value if glitches in display to be prevented (and would result in slower position display freq) */
-                ClockP_usleep(500);
-
-                while(i--)
-                {
-                    DebugP_log("%c", 8);
-                }
-            }
-    }
-
     else if(cmd == 102)
     {
-        priv->raw_data ^= 1;
+       priv->raw_data ^= 1;
     }
     else if(cmd == 103)
     {
-        uint32_t delay;
- 
         /* convert tst delay from ns to tst counts*/
-        cmd_supplement->frequency = ENDAT_DELAY_COUNTER_INCREMENT*((uint16_t)(((float)cmd_supplement->frequency * priv->pru_clock)/1000000000));
+        cmd_supplement->delay = ENDAT_DELAY_COUNTER_INCREMENT*((uint16_t)(((float)cmd_supplement->delay * attrs->core_clk_freq)/1000000000));
 
-        delay = endat_do_sanity_tst_delay(cmd_supplement->frequency);
+        val = endat_do_sanity_tst_delay(cmd_supplement->delay);
 
-        if(delay <= (uint16_t)~0)
+        if(val <= 0xFFFFU)
         {
-            endat_config_tst_delay(priv, (uint16_t) delay);
-        }
-    }
-    else if(cmd == 104)
-    {
-
-        if(endat_loop_task_create() != SystemP_SUCCESS)
-        {
-            DebugP_log("\r| ERROR: OS not allowing continuous mode as related Task creation failed\r\n|\r\n|\n");
-            DebugP_log("Task_create() failed!\n");
-            return;
-        }
-
-        endat_start_continuous_mode(priv);
-        endat_position_loop_status = ENDAT_POSITION_LOOP_START;
-
-        if(priv->multi_turn_res[priv->current_channel])
-        {
-            DebugP_log("\r|\n\r| press enter to stop the continuous mode\r\n|\r\n|         position,       revolution, f1\r\n| ");
-        }
-        else
-        {
-            DebugP_log("\r|\n\r| press enter to stop the continuous mode\r\n|\r\n|         position, f1\r\n| ");
-        }
-
-        while(1)
-            if(endat_position_loop_status == ENDAT_POSITION_LOOP_STOP)
+            if(attrs->mode != ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU)
             {
-                endat_stop_continuous_mode(priv);
-                return;
-            }
-            else
-            {
-                int32_t i;
-
-                if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
+                status = endat_multi_channel_set_cur(handle, cmd_supplement->selected_channel);
+                if(status != SystemP_SUCCESS)
                 {
-                    int32_t j;
-                    for(i = 0, j = 0; j < 3; j++)
-                    {
-                        if(gEndat_multi_ch_mask & 1 << j)
-                        {
-                            endat_multi_channel_set_cur(priv, j);
-                            endat_recvd_process(priv, 1, &gEndat_format_data_mtrctrl[j]);
-                            i += endat_get_position_loop_chars(priv, 0, 0);
-                            DebugP_log("| ");
-                            DebugP_log("\r|\n\r| Channel: %10u\r\n| ", j);
-                            endat_print_position_loop(priv, 1, 0, j);
-                            DebugP_log(" ");
-                            DebugP_log("\n");
-                            i += 3;
-                        }
-                    }
-                }
-                else
-                {
-                    endat_recvd_process(priv, 1, &gEndat_format_data_mtrctrl[0]);
-
-                    i = endat_get_position_loop_chars(priv, 1, 0);
-                    endat_print_position_loop(priv, 1, 0, 0);
-                }
-                /* increase sleep value if glitches in display to be prevented (and would result in slower position display freq) */
-                ClockP_usleep(100);
-
-                while(i--)
-                {
-                    DebugP_log("%c", 8);
+                    DebugP_log("\r| ERROR: Ch set failed: %d\n", status);
+                    return;
                 }
             }
+            status = endat_config_tst_delay(handle, (uint16_t) val);
+            if(status != SystemP_SUCCESS)
+            {
+                DebugP_log("\r| ERROR: endat_config_tst_delay failed with status %d\n", status);
+            }
+        }
     }
     else if(cmd == 105)
     {
-        uint32_t val;
         /* convert rx arm delay from ns to rx arm count*/
-        cmd_supplement->frequency = ENDAT_DELAY_COUNTER_INCREMENT*((uint16_t)(((float)cmd_supplement->frequency * priv->pru_clock)/1000000000));
+        cmd_supplement->delay = ENDAT_DELAY_COUNTER_INCREMENT*((uint16_t)(((float)cmd_supplement->delay * attrs->core_clk_freq)/1000000000));
 
         /* reuse tST delay sanity check */
-        val = endat_do_sanity_tst_delay(cmd_supplement->frequency);
+        val = endat_do_sanity_tst_delay(cmd_supplement->delay);
 
-        if(val <= (uint16_t)~0)
+        if(val <= 0xFFFFU)
         {
-            endat_config_rx_arm_cnt(priv, (uint16_t)val);
+            if(attrs->mode != ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU)
+            {
+                status = endat_multi_channel_set_cur(handle, cmd_supplement->selected_channel);
+                if(status != SystemP_SUCCESS)
+                {
+                    DebugP_log("\r| ERROR: Ch set failed: %d\n", status);
+                    return;
+                }
+            }
+            status = endat_config_rx_arm_cnt(handle, (uint16_t)val);
+            if(status != SystemP_SUCCESS)
+            {
+                DebugP_log("\r| ERROR: endat_config_rx_arm_cnt failed with status %d\n", status);
+            }
         }
     }
     else if(cmd == 106)
     {
-        
-        /*convert rx_en_cnt into 1 enadt clock cycle period */ 
-        float ct = ((priv->rx_en_cnt/ENDAT_DELAY_COUNTER_INCREMENT)*((float)1000000000/priv->pru_clock))/2;
-        uint16_t dis = floor(cmd_supplement->frequency / ct);
+        /* endat cycle period in ns */
+        ct = (float)1000000000 / priv->endat_freq;
+        val = floor(cmd_supplement->delay / ct);
 
-        endat_config_rx_clock_disable(priv, dis);
+        if(attrs->mode != ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU)
+        {
+            status = endat_multi_channel_set_cur(handle, cmd_supplement->selected_channel);
+            if(status != SystemP_SUCCESS)
+            {
+                DebugP_log("\r| ERROR: Ch set failed: %d\n", status);
+                return;
+            }
+        }
+
+        status = endat_config_rx_clock_disable(handle, val);
+        if(status != SystemP_SUCCESS)
+        {
+            DebugP_log("\r| ERROR: endat_config_rx_clock_disable failed with status %d\n", status);
+        }
     }
     else if(cmd == 108)
     {
-        /* reuse tST delay sanity check */
-        uint32_t val = endat_do_sanity_tst_delay(cmd_supplement->frequency);
-
-        if(val > (uint16_t)~0)
+        if(attrs->mode != ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU)
         {
-            return;
+            status = endat_multi_channel_set_cur(handle, cmd_supplement->selected_channel);
+            if(status != SystemP_SUCCESS)
+            {
+                DebugP_log("\r| ERROR: Ch set failed: %d\n", status);
+                return;
+            }
         }
-        endat_handle_prop_delay(priv, (uint16_t)val);
-
+        ret = endat_config_propagation_delay(handle, cmd_supplement->delay);
+        if(ret != SystemP_SUCCESS)
+        {
+            DebugP_log("\r| ERROR: Failed to configure propagation delay\n");
+        }
     }
     else if(cmd == 109)
     {
         /* convert from ns to wire delay count*/
-        cmd_supplement->frequency = ENDAT_DELAY_COUNTER_INCREMENT*((uint16_t)(((float)cmd_supplement->frequency * priv->pru_clock)/1000000000));
+        cmd_supplement->delay = ENDAT_DELAY_COUNTER_INCREMENT*((uint16_t)(((float)cmd_supplement->delay * attrs->core_clk_freq)/1000000000));
         /* reuse tST delay sanity check */
-        uint32_t val = endat_do_sanity_tst_delay(cmd_supplement->frequency);
+        val = endat_do_sanity_tst_delay(cmd_supplement->delay);
 
-        endat_multi_channel_set_cur(priv, cmd_supplement->address);
-        endat_config_wire_delay(priv, val);
-    }
-    else if(cmd == 107)
-    {
-        int32_t us = endat_calc_position_period(cmd_supplement->frequency);
-
-        if(us < 0)
+        if(val <= 0xFFFFU)
         {
-            return;
-        }
-        if(endat_loop_task_create() != SystemP_SUCCESS)
-        {
-            DebugP_log("\r| ERROR: OS not allowing position loop as related Task creation failed\n|\n|\n");
-            DebugP_log("\rTask_create() failed!\n");
-            return;
-        }
-
-        endat_fn_position_loop = endat_process_2_2_position_command;
-
-        if(!timer_init)
-        {
-            endat_loop_timer_create(us);
-            timer_init = 1;
-        }
-
-        /* reset additional info's if present */
-        endat_command_process(priv, 5, NULL);
-        endat_addinfo_track(priv, 5, NULL);
-
-        gEndat_2_2_loop_mrs = MRS_POS_VAL2_WORD1;
-
-        TimerP_start(gTimerBaseAddr[CONFIG_TIMER0]);
-        endat_position_loop_status = ENDAT_POSITION_LOOP_START;
-
-        /* so that proper position value 2 is displayed from the begining */
-        ClockP_usleep(us * 3);
-
-        if((!gEndat_is_multi_ch && !priv->has_safety[priv->current_channel]) || (!gEndat_is_load_share_mode && !priv->has_safety[priv->current_channel]))
-        {
-            DebugP_log("\r|\n| encoder does not support safety, position value 2 would not be displayed\n|\n");
-        }
-
-        DebugP_log("\r|\n\r| press enter to stop the position display\n\r|\n");
-
-        if(priv->multi_turn_res[priv->current_channel])
-        {
-            if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
+            if(attrs->mode != ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU)
             {
-                int32_t j;
-
-                DebugP_log("\r|\n\r|");
-                endat_print_position_loop_channel_info(priv, 1);
-                DebugP_log("\n\r|\n");
-
-                for(j = 0; j < 3; j++)
+                status = endat_multi_channel_set_cur(handle, cmd_supplement->selected_channel);
+                if(status != SystemP_SUCCESS)
                 {
-                    if(gEndat_multi_ch_mask & 1 << j)
-                    {
-                        DebugP_log("\r| ");
-                        DebugP_log("        position,       revolution, crc errors, f1, f2");
-                        DebugP_log(" ");
-                    }
-                }
-                DebugP_log("\r\n");
-            }
-            else
-            {
-                DebugP_log("\r|         position,       revolution, crc errors, f1, f2");
-
-                if(priv->has_safety[priv->current_channel])
-                {
-                    DebugP_log(",      position(2),    revolution(2), crc errors(2)");
-                }
-                DebugP_log("\r\n| ");
-            }
-        }
-        else
-        {
-            if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
-            {
-                int32_t j;
-
-                DebugP_log("\r|\n\r|");
-                endat_print_position_loop_channel_info(priv, 1);
-                DebugP_log("\r\n|\r\n");
-
-                for(j = 0; j < 3; j++)
-                {
-                    if(gEndat_multi_ch_mask & 1 << j)
-                    {
-                        DebugP_log("| ");
-                        DebugP_log("        position, crc errors, f1");
-                        DebugP_log(" ");
-                    }
-                }
-                DebugP_log("\n");
-            }
-            else
-            {
-                DebugP_log("|         position, crc errors, f1, f2 ");
-
-                if(priv->has_safety[priv->current_channel])
-                {
-                    DebugP_log(",      position(2), crc errors(2)");
-                }
-                DebugP_log("\r\n| ");
-            }
-        }
-
-        while(1)
-            if(endat_position_loop_status == ENDAT_POSITION_LOOP_STOP)
-            {
-                TimerP_stop(gTimerBaseAddr[CONFIG_TIMER0]);
-
-                /* reset additional info1 */
-                endat_command_process(priv, 5, NULL);
-                endat_addinfo_track(priv, 5, NULL);
-                return;
-            }
-            else
-            {
-                int32_t i;
-
-                if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
-                {
-                    int32_t j;
-
-                    for(i = 0, j = 0; j < 3; j++)
-                    {
-                        if(gEndat_multi_ch_mask & 1 << j)
-                        {
-                            endat_multi_channel_set_cur(priv, j);
-                            i += endat_get_position_loop_chars(priv, 0, 1);
-                            DebugP_log("| ");
-                            endat_print_position_loop(priv, 0, 1, j);
-                            DebugP_log(" ");
-                            DebugP_log("\n");
-                            i += 3;
-                        }
-                    }
-                }
-                else
-                {
-                    i = endat_get_position_loop_chars(priv, 0, 1);
-                    endat_print_position_loop(priv, 0, 1, 0);
-                }
-
-                if((!gEndat_is_multi_ch && priv->has_safety[priv->current_channel]) || (!gEndat_is_load_share_mode && priv->has_safety[priv->current_channel]))
-                {
-                    uint64_t multi_turn, single_turn;
-                    union position position2;
-                    uint64_t max = pow(2, priv->single_turn_res[priv->current_channel]);
-
-                    multi_turn = ENDAT_GET_POS_MULTI_TURN(gEndat_2_2_pos_val2[0], priv);
-                    single_turn = ENDAT_GET_POS_SINGLE_TURN(gEndat_2_2_pos_val2[0], priv);
-
-                    if(priv->type[priv->current_channel] == rotary)
-                    {
-                        position2.angle = (float)single_turn / (float)max * (float)360;
-                    }
-                    else
-                    {
-                        position2.length = single_turn * priv->step[priv->current_channel];
-                    }
-
-                    DebugP_log(", ");
-
-                    if(priv->multi_turn_res[priv->current_channel])
-                    {
-                        sprintf(gUart_buffer, "%16.12f, %16s", position2.angle, uint64_to_str(multi_turn));
-                    }
-                    else
-                    {
-                        if(priv->type[priv->current_channel] == rotary)
-                        {
-                            sprintf(gUart_buffer, "%16.12f", position2.angle);
-                        }
-                        else
-                        {
-                            sprintf(gUart_buffer, "%16s", uint64_to_str(position2.length));
-                        }
-                    }
-
-                    DebugP_log("%s", gUart_buffer);
-
-                    DebugP_log(",    %10u", gEndat_2_2_crc_addinfo1_err_cnt[0]);
-                }
-
-                /* increase sleep value if glitches in display to be prevented (and would result in slower position display freq) */
-                ClockP_usleep(100);
-
-                if((!gEndat_is_multi_ch && priv->has_safety[priv->current_channel]) || (!gEndat_is_load_share_mode && priv->has_safety[priv->current_channel]))
-                {
-                    if(priv->multi_turn_res[priv->current_channel])
-                    {
-                        i += 2 + 46 + 3;
-                    }
-                    else
-                    {
-                        i += 2 + 28 + 3;
-                    }
-                }
-
-                while(i--)
-                {
-                    DebugP_log("%c", 8);
+                    DebugP_log("\r| ERROR: Ch set failed: %d\n", status);
+                    return;
                 }
             }
+            status = endat_config_wire_delay(handle, val);
+            if(status != SystemP_SUCCESS)
+            {
+                DebugP_log("\r| ERROR: endat_config_wire_delay failed with status %d\n", status);
+            }
+        }
     }
     else if(cmd == 110)
     {
-        uint32_t recovery_time;
-        if(gEndat_is_multi_ch||gEndat_is_load_share_mode)
+        if(attrs->mode != ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU)
         {
-            int32_t j;
-            for( j = 0; j < 3; j++)
+            for(i = 0; i < ENDAT_NUM_CH_PER_SLICE_MAX; i++)
             {
-                if(gEndat_multi_ch_mask & 1 << j)
+                if(attrs->channel_mask & (1 << i))
                 {
-                    endat_multi_channel_set_cur(priv, j);
-                    DebugP_log("channel: %d",priv->current_channel);
+                    status = endat_multi_channel_set_cur(handle, i);
+                    if(status != SystemP_SUCCESS)
+                    {
+                        DebugP_log("\r| ERROR: Ch set failed: %d\n", status);
+                        continue;
+                    }
+                    DebugP_log("\n Channel: %d \n", i);
                     DebugP_log("\t");
 
-                    recovery_time = endat_get_recovery_time(priv);
-                    DebugP_log("\r Recovery Time: %10u ns \n", recovery_time);
-                    DebugP_log("\r Current value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.currentCounterValue);
-                    DebugP_log("\r Previous value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.lastCounterValue);
-                    DebugP_log("\r Starting value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.startingValue);
+                    status = endat_get_recovery_time(handle, &val);
+                    if(status != SystemP_SUCCESS)
+                    {
+                        DebugP_log("\r| ERROR: endat_get_recovery_time failed with status %d\n", status);
+                        continue;
+                    }
+                    DebugP_log("\r Recovery Time: %10u ns \n", val);
+                    if(priv->current_channel < ENDAT_NUM_CH_PER_SLICE_MAX)
+                    {
+                        DebugP_log("\r Current value of RT counter: %10u \n", priv->channel_rx_info->ch[priv->current_channel].recovery_time_parms.current_counter_value);
+                        DebugP_log("\r Previous value of RT counter: %10u \n", priv->channel_rx_info->ch[priv->current_channel].recovery_time_parms.last_counter_value);
+                        DebugP_log("\r Starting value of RT counter: %10u \n", priv->channel_rx_info->ch[priv->current_channel].recovery_time_parms.starting_value);
+                    }
                 }
             }
         }
         else
         {
-            recovery_time = endat_get_recovery_time(priv);
-            DebugP_log("\r Recovery Time: %10u ns \n", recovery_time);
-            DebugP_log("\r Current value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.currentCounterValue);
-            DebugP_log("\r Previous value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.lastCounterValue);
-            DebugP_log("\r Starting value of RT counter: %10u \n", priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.startingValue);
-        }
-
-    }
-    else if(cmd == 111)
-    {
-        DebugP_log("\r|press enter to stop the long time continuous mode\n|");
-        if(endat_loop_task_create() != SystemP_SUCCESS)
-        {
-            DebugP_log("\r| ERROR: OS not allowing position loop as related Task creation failed\n|\n|\n");
-            DebugP_log("\rTask_create() failed!\n");
-            return;
-        }
-
-        endat_position_loop_status = ENDAT_POSITION_LOOP_START;
-
-        uint64_t poaition_read = 0;
-        /*clear CRC error count */
-        memset(gEndat_mtrctrl_crc_err, 0, 3);
-        while(1)
-        {
-            if(endat_position_loop_status == ENDAT_POSITION_LOOP_STOP)
+            status = endat_get_recovery_time(handle, &val);
+            if(status != SystemP_SUCCESS)
             {
-
-                if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
-                {
-                    int32_t j;
-
-                    for(j = 0; j < 3; j++)
-                    {
-                        if(gEndat_multi_ch_mask & 1 << j)
-                        {
-                           DebugP_log("\r -------Channel %u ------\n", j);
-                           DebugP_log("\r position command sent = %u \n", poaition_read);
-                           DebugP_log("\r CRC failures encountered = %u \n", gEndat_mtrctrl_crc_err[j]);
-                           DebugP_log(" ");
-                           DebugP_log("\r");
-                        }
-                    }
-                }
-                else
-                {
-                    DebugP_log("\r position command sent = %u \n", poaition_read);
-                    DebugP_log("\r CRC failures encountered = %u \n", gEndat_mtrctrl_crc_err[0]);
-                    DebugP_log(" ");
-                    DebugP_log("\r");
-                }
-
+                DebugP_log("\r| ERROR: endat_get_recovery_time failed with status %d\n", status);
                 return;
             }
-            else
-            {
-                poaition_read++;
-                if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
-                {
-                    int32_t j;
-
-                    for(j = 0; j < 3; j++)
-                    {
-                        if(gEndat_multi_ch_mask & 1 << j)
-                        {
-                            endat_multi_channel_set_cur(priv, j);
-                            endat_process_position_command(j);
-                        }
-                    }
-                }
-                else
-                {
-                    endat_process_position_command(0);
-                }
-
-                /* increase sleep value if glitches in display to be prevented (and would result in slower position display freq) */
-                ClockP_usleep(500);
-
-            }
+            DebugP_log("\r Recovery Time: %10u ns \n", val);
+            DebugP_log("\r Current value of RT counter: %10u \n", priv->channel_rx_info->ch[priv->current_channel].recovery_time_parms.current_counter_value);
+            DebugP_log("\r Previous value of RT counter: %10u \n", priv->channel_rx_info->ch[priv->current_channel].recovery_time_parms.last_counter_value);
+            DebugP_log("\r Starting value of RT counter: %10u \n", priv->channel_rx_info->ch[priv->current_channel].recovery_time_parms.starting_value);
         }
     }
     else if(cmd == 112)
     {
-        if(cmd_supplement->frequency == 1)
+        if(attrs->mode != ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU)
         {
-            endat_enable_rt_measurement(priv);
+            status = endat_multi_channel_set_cur(handle, cmd_supplement->selected_channel);
+            if(status != SystemP_SUCCESS)
+            {
+                DebugP_log("\r| ERROR: Ch set failed: %d\n", status);
+                return;
+            }
+        }
+        if(cmd_supplement->enable_rt == 1)
+        {
+            status = endat_enable_rt_measurement(handle);
+            if(status != SystemP_SUCCESS)
+            {
+                DebugP_log("\r| ERROR: endat_enable_rt_measurement failed with status %d\n", status);
+            }
         }
         else
         {
-            endat_disable_rt_measurement(priv);
+            status = endat_disable_rt_measurement(handle);
+            if(status != SystemP_SUCCESS)
+            {
+                DebugP_log("\r| ERROR: endat_disable_rt_measurement failed with status %d\n", status);
+            }
         }
     }
     else
@@ -2357,348 +2519,1509 @@ static void endat_process_host_command(int32_t cmd,
     }
 }
 
-static void endat_handle_rx(struct endat_priv *priv, int32_t cmd)
+/* NOTE: Validation error for any module instance will lead to failure of this function */
+static int32_t endat_process_continuous_mode_command(endat_handle handle[CONFIG_ENDAT_NUM_INSTANCES], int32_t cmd, endat_cmd_supplement cmd_supplement[CONFIG_ENDAT_NUM_INSTANCES])
 {
-    uint32_t crc;
-    union endat_format_data endat_format_data;
+    static int32_t timer_init;
+    int32_t periodic_cmd[CONFIG_ENDAT_NUM_INSTANCES], status;
+    uint32_t char_count;
+    endat_cmd_supplement periodic_cmd_supplement[CONFIG_ENDAT_NUM_INSTANCES];
+    uint32_t i = 0, j = 0;
+    const endat_attrs *attrs[CONFIG_ENDAT_NUM_INSTANCES] = {NULL};
+    endat_priv *priv[CONFIG_ENDAT_NUM_INSTANCES] = {NULL};
+    int8_t is_cap_mode;
+    uint64_t irq_count;
+    uint64_t multi_turn, single_turn, position_read, max;
+    endat_position_type position;
+    int32_t us, ret;
+    uint32_t prev_irq_cnt[CONFIG_ENDAT_NUM_INSTANCES] = {0};
+    uint32_t curr_irq_cnt;
+    uint32_t irq_ch_idx[CONFIG_ENDAT_NUM_INSTANCES] = {0};
 
+    if(cmd == 200)
+    {
+        if(cmd_supplement[CONFIG_ENDAT0].iep_reset_count == 0)
+        {
+            DebugP_log("\r\n\n| ERROR: Invalid iep_reset_count value\n");
+            return SystemP_FAILURE;
+        }
+    }
+#if defined(SOC_AM243X)
+    else if(cmd == 201)
+    {
+        if(cmd_supplement[CONFIG_ENDAT0].iep_sync0_period == 0)
+        {
+            DebugP_log("\r\n\n| ERROR: Invalid iep_sync0_period value\n");
+            return SystemP_FAILURE;
+        }
+    }
+#endif
+
+    for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
+    {
+        attrs[i] = endat_get_attrs(handle[i]);
+        priv[i] = endat_get_priv(handle[i]);
+
+        if((handle[i] == NULL) || (priv[i] == NULL) || (attrs[i] == NULL))
+        {
+            DebugP_log("\r\n\nERROR: NULL handle/priv/attrs for EnDAT instance %u\n", i);
+            return SystemP_FAILURE;
+        }
+
+        if(cmd == 200)
+        {
+            if(attrs[i]->mode == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
+            {
+                if(((attrs[i]->channel0_enabled) && (cmd_supplement[i].ch_trigger_count[0] > cmd_supplement[CONFIG_ENDAT0].iep_reset_count)) ||
+                   ((attrs[i]->channel1_enabled) && (cmd_supplement[i].ch_trigger_count[1] > cmd_supplement[CONFIG_ENDAT0].iep_reset_count)) ||
+                   ((attrs[i]->channel2_enabled) && (cmd_supplement[i].ch_trigger_count[2] > cmd_supplement[CONFIG_ENDAT0].iep_reset_count)))
+                {
+                    DebugP_log("\r\n\nERROR: Channel trigger count exceeds IEP reset count for EnDAT instance %u\n", i);
+                    return SystemP_FAILURE;
+                }
+            }
+            else
+            {
+                if(cmd_supplement[i].ch_trigger_count[0] > cmd_supplement[CONFIG_ENDAT0].iep_reset_count)
+                {
+                    DebugP_log("\r\n\nERROR: Channel trigger count exceeds IEP reset count for EnDAT instance %u\n", i);
+                    return SystemP_FAILURE;
+                }
+            }
+        }
+    }
+
+    if((cmd != 101) && (cmd != 104) && (cmd != 107) && (cmd != 111) && (cmd != 200) && (cmd != 201))
+    {
+        DebugP_log("\r\n\nERROR: Invalid cmd in endat_process_continuous_mode_command()\n");
+        return SystemP_FAILURE;
+    }
+
+    /* Get periodic command FIRST, before task creation, to avoid UART contention */
+    if(cmd == 200 || cmd == 201)
+    {
+        for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
+        {
+#if (CONFIG_ENDAT_NUM_INSTANCES > 1)
+            DebugP_log("\r| Enter position command for periodic mode EnDat Module %d: ", i);
+#else
+            DebugP_log("\r| Enter position command for periodic mode: ");
+#endif
+            /* Get periodic command for continuous mode */
+            periodic_cmd[i] = endat_get_command(handle[i]);
+
+            if(periodic_cmd[i] == SystemP_FAILURE)
+            {
+                DebugP_log("\r| ERROR: endat_get_command() failed for EnDAT instance %u\n", i);
+                return SystemP_FAILURE;
+            }
+
+            if(ENDAT_POSITION_CMD(periodic_cmd[i]))
+            {
+                if(HAVE_COMMAND_SUPPLEMENT(periodic_cmd[i]))
+                {
+                    status = endat_get_command_supplement(handle[i], periodic_cmd[i], &periodic_cmd_supplement[i]);
+                    if(status == SystemP_FAILURE)
+                    {
+                        DebugP_log("\r| ERROR: Failed to get command supplement for periodic command for EnDAT instance %u\n", i);
+                        return SystemP_FAILURE;
+                    }
+                }
+            }
+            else
+            {
+                DebugP_log("\r| ERROR: Invalid command for periodic mode for EnDAT instance %u\r\n|\r\n|\n", i);
+                return SystemP_FAILURE;
+            }
+        }
+    }
+
+    /* Common task creation for all continuous mode commands */
+    if(endat_loop_task_create() != SystemP_SUCCESS)
+    {
+        DebugP_log("\r| ERROR: OS not allowing continuous mode as related Task creation failed\r\n|\r\n|\n");
+        DebugP_log("Task_create() failed!\n");
+        return SystemP_FAILURE;
+    }
+
+    /* Set position loop status for all commands */
+    gEndatPositionLoopStatus = ENDAT_POSITION_LOOP_START;
+
+    if(cmd == 200 || cmd == 201)
+    {
+        is_cap_mode = (cmd == 201) ? 1 : 0;
+        memset(&gEndatPeriodicInterface, 0, sizeof(endat_periodic_interface));
+        gEndatPeriodicInterface.is_cap_mode = is_cap_mode;
+        /*ASSUMPTION: IEP reset count is same for all instances*/
+        if(is_cap_mode)
+        {
+            gEndatPeriodicInterface.iep_reset_count = cmd_supplement[CONFIG_ENDAT0].iep_sync0_period;
+        }
+        else
+        {
+            gEndatPeriodicInterface.iep_reset_count = cmd_supplement[CONFIG_ENDAT0].iep_reset_count;
+        }
+
+        for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
+        {
+            /*
+            * Send command once in host trigger mode, to ensure that command data is
+            * populated in PRU shared memory as required.
+            * ASSUMPTION: Host trigger mode is active when this function is called.
+            */
+            ret = endat_command_process(handle[i], periodic_cmd[i], &periodic_cmd_supplement[i]);
+            if(ret != SystemP_SUCCESS)
+            {
+                if(ret == SystemP_TIMEOUT)
+                {
+                    DebugP_log("\r| ERROR: Command processing timed out, endat_command_process failed for EnDAT instance %u\r\n|\r\n|\n", i);
+                }
+                else
+                {
+                    DebugP_log("\r| ERROR: Failed to process command, endat_command_process failed for EnDAT instance %u\r\n|\r\n|\n", i);
+                }
+                return SystemP_FAILURE;
+            }
+
+            gEndatPeriodicInterface.handle[i] = handle[i];
+            if(is_cap_mode)
+            {
+                status = endat_config_periodic_trigger_cap_mode(handle[i]);
+                if(status != SystemP_SUCCESS)
+                {
+                    DebugP_log("\r| ERROR: CAP trigger config failed for EnDAT instance %u: %d\n", i, status);
+                    return SystemP_FAILURE;
+                }
+            }
+            else
+            {
+                status = endat_config_periodic_trigger_cmp_mode(handle[i]);
+                if(status != SystemP_SUCCESS)
+                {
+                    DebugP_log("\r| ERROR: CMP trigger config failed for EnDAT instance %u: %d\n", i, status);
+                    return SystemP_FAILURE;
+                }
+                if(attrs[i]->mode == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
+                {
+                    if(attrs[i]->channel0_enabled)
+                    {
+                        gEndatPeriodicInterface.periodic_trigger_count[i][0] = cmd_supplement[i].ch_trigger_count[0];
+                    }
+                    if(attrs[i]->channel1_enabled)
+                    {
+                        gEndatPeriodicInterface.periodic_trigger_count[i][1] = cmd_supplement[i].ch_trigger_count[1];
+                    }
+                    if(attrs[i]->channel2_enabled)
+                    {
+                        gEndatPeriodicInterface.periodic_trigger_count[i][2] = cmd_supplement[i].ch_trigger_count[2];
+                    }
+                }
+                else
+                {
+                    gEndatPeriodicInterface.periodic_trigger_count[i][0] = cmd_supplement[i].ch_trigger_count[0];
+                }
+            }
+        }
+
+        status = endat_config_periodic_mode(&gEndatPeriodicInterface);
+        if(SystemP_SUCCESS != status)
+        {
+            DebugP_log("\r| ERROR: Failed to configure periodic %s mode|\n", is_cap_mode ? "CAP" : "CMP");
+            return SystemP_FAILURE;
+        }
+
+        /* Determine IRQ channel index for each instance (based on load share mode) */
+        for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
+        {
+            if(attrs[i]->mode == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
+            {
+                /* In load share mode, use channel index for first enabled channel */
+                if(attrs[i]->channel0_enabled)
+                {
+                    irq_ch_idx[i] = 0;
+                }
+                else if(attrs[i]->channel1_enabled)
+                {
+                    irq_ch_idx[i] = 1;
+                }
+                else if(attrs[i]->channel2_enabled)
+                {
+                    irq_ch_idx[i] = 2;
+                }
+            }
+            else
+            {
+                irq_ch_idx[i] = 0;
+            }
+
+            /* Initialize previous IRQ count with current value */
+            prev_irq_cnt[i] = gPruEndatIrqCnt[i][irq_ch_idx[i]];
+        }
+
+        DebugP_log("\r|\n\r| Press enter to stop the continuous mode\r\n|\r\n");
+
+        while(1)
+        {
+            if(gEndatPositionLoopStatus == ENDAT_POSITION_LOOP_STOP)
+            {
+                if(endat_stop_periodic_mode(&gEndatPeriodicInterface) != SystemP_SUCCESS)
+                {
+                    return SystemP_FAILURE;
+                }
+                return SystemP_SUCCESS;
+            }
+            else
+            {
+                /* Wait for IRQ count to increment for at least one instance before reading position */
+                for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
+                {
+                    /* Wait for IRQ count to increment */
+                    while(1)
+                    {
+                        curr_irq_cnt = gPruEndatIrqCnt[i][irq_ch_idx[i]];
+                        if(gEndatPositionLoopStatus == ENDAT_POSITION_LOOP_STOP)
+                        {
+                            break;
+                        }
+                        /* Break as soon as IRQ count increments to avoid missing IRQs at high rates */
+                        if(curr_irq_cnt != prev_irq_cnt[i])
+                        {
+                            break;
+                        }
+                        
+                        ClockP_usleep(ENDAT_PERIODIC_MODE_POLL_SLEEP_US);
+                    }
+
+                    /* Check stop condition before updating prev_irq_cnt */
+                    if(gEndatPositionLoopStatus == ENDAT_POSITION_LOOP_STOP)
+                    {
+                        break;
+                    }
+
+                    prev_irq_cnt[i] = curr_irq_cnt;
+                }
+
+                /* If stop was requested during IRQ wait, continue for proper cleanup */
+                if(gEndatPositionLoopStatus == ENDAT_POSITION_LOOP_STOP)
+                {
+                    continue;
+                }
+
+                char_count = 0;
+
+                for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
+                {
+
+#if (CONFIG_ENDAT_NUM_INSTANCES > 1)
+                    DebugP_log("\r| --- EnDat Module %d --- |\r\n", i);
+#endif
+                    endat_print_position_header(handle[i], 0, VALID_2_2_CMD(periodic_cmd[i]));
+
+                    if(attrs[i]->mode != ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU)
+                    {
+                        for(j = 0; j < ENDAT_NUM_CH_PER_SLICE_MAX; j++)
+                        {
+                            if(attrs[i]->channel_mask & (1 << j))
+                            {
+                                status = endat_multi_channel_set_cur(handle[i], j);
+                                if(status != SystemP_SUCCESS)
+                                {
+                                    DebugP_log("\r| ERROR: Ch set failed: %d\n", status);
+                                    continue;
+                                }
+                                status = endat_recvd_process(handle[i], periodic_cmd[i], &gAppEndatFormatDataMtrCtrl[i][j]);
+                                if(status != SystemP_SUCCESS)
+                                {
+                                    DebugP_log("\r| ERROR: Recvd process failed: %d\n", status);
+                                    continue;
+                                }
+                                char_count += endat_get_position_loop_chars(priv[i]->multi_turn_res[priv[i]->current_channel], 0, VALID_2_2_CMD(periodic_cmd[i]));
+                                DebugP_log("\r\n| Ch-%d: \n", j);
+                                endat_print_position_loop(handle[i], 0, VALID_2_2_CMD(periodic_cmd[i]), j);
+                                DebugP_log("\n| ");
+                                char_count += 3;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        status = endat_recvd_process(handle[i], periodic_cmd[i], &gAppEndatFormatDataMtrCtrl[i][0]);
+                        if(status != SystemP_SUCCESS)
+                        {
+                            DebugP_log("\r| ERROR: Recvd process failed: %d\n", status);
+                            continue;
+                        }
+                        char_count = endat_get_position_loop_chars(priv[i]->multi_turn_res[priv[i]->current_channel], 0, VALID_2_2_CMD(periodic_cmd[i]));
+                        endat_print_position_loop(handle[i], 0, VALID_2_2_CMD(periodic_cmd[i]), 0);
+                        DebugP_log("\n| ");
+                    }
+                }
+                while(char_count--)
+                {
+                    DebugP_log("%c", 8);
+                }
+            }
+        }
+    }
+    /* Command 101: Simulate motor control 2.1 position loop */
+    else if(cmd == 101)
+    {
+        us = endat_calc_position_period(cmd_supplement->frequency);
+
+        if(us < 0)
+        {
+            return SystemP_FAILURE;
+        }
+
+        gPositionLoopIrqCount = 0;
+        irq_count = 0;
+
+        if(!timer_init)
+        {
+            endat_loop_timer_create(us);
+            timer_init = 1;
+        }
+
+        TimerP_start(gTimerBaseAddr[CONFIG_TIMER0]);
+
+        DebugP_log("\r|\r\n| Press enter to stop the position display|\n");
+
+        while(1)
+        {
+            if(gEndatPositionLoopStatus == ENDAT_POSITION_LOOP_STOP)
+            {
+                TimerP_stop(gTimerBaseAddr[CONFIG_TIMER0]);
+                return SystemP_SUCCESS;
+            }
+            else
+            {
+                char_count = 0;
+                irq_count = gPositionLoopIrqCount;
+                /* Wait till timer IRQ hit */
+                while(irq_count == gPositionLoopIrqCount)
+                {
+                    ;
+                }
+                /* Process all instances */
+                for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
+                {
+
+                    endat_process_2_1_position_command(handle[i]);
+
+#if(CONFIG_ENDAT_NUM_INSTANCES > 1)
+                        DebugP_log("\r| --- EnDat Module %d ---|\r\n", i);
+#endif
+
+                    endat_print_position_header(handle[i], 0, 0);
+
+                    if(attrs[i]->mode != ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU)
+                    {
+                        for(j = 0; j < ENDAT_NUM_CH_PER_SLICE_MAX; j++)
+                        {
+                            if(attrs[i]->channel_mask & (1 << j))
+                            {
+                                status = endat_multi_channel_set_cur(handle[i], j);
+                                if(status != SystemP_SUCCESS)
+                                {
+                                    DebugP_log("\r| ERROR: Ch set failed: %d\n", status);
+                                    continue;
+                                }
+                                char_count += endat_get_position_loop_chars(priv[i]->multi_turn_res[priv[i]->current_channel], 0, 0);
+                                DebugP_log("\r\n| Ch-%d: \n", j);
+                                endat_print_position_loop(handle[i], 0, 0, j);
+                                DebugP_log("\n| ");
+                                char_count += 3;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        char_count = endat_get_position_loop_chars(priv[i]->multi_turn_res[priv[i]->current_channel], 0, 0);
+                        endat_print_position_loop(handle[i], 0, 0, priv[i]->current_channel);
+                        DebugP_log("\n| ");
+                    }
+                }
+
+                while(char_count--)
+                {
+                    DebugP_log("%c", 8);
+                }
+            }
+        }
+    }
+    /* Command 104: Start continuous mode */
+    else if(cmd == 104)
+    {
+        for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
+        {
+            status = endat_start_continuous_mode(handle[i]);
+            if(status != SystemP_SUCCESS)
+            {
+                DebugP_log("\r| ERROR: endat_start_continuous_mode failed for instance %d with status %d\n", i, status);
+                return SystemP_FAILURE;
+            }
+        }
+
+        DebugP_log("\r|\n\r| press enter to stop the continuous mode\r\n|\r\n");
+
+        while(1)
+        {
+            if(gEndatPositionLoopStatus == ENDAT_POSITION_LOOP_STOP)
+            {
+                for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
+                {
+                    status = endat_stop_continuous_mode(handle[i]);
+                    if(status != SystemP_SUCCESS)
+                    {
+                        if(status == SystemP_TIMEOUT)
+                        {
+                            DebugP_log("\r| ERROR: endat_stop_continuous_mode timed out for instance %d \n", i);
+                        }
+                        else
+                        {
+                            DebugP_log("\r| ERROR: endat_stop_continuous_mode failed for instance %d with status %d\n", i, status);
+                        }
+                    }
+                }
+                return SystemP_SUCCESS;
+            }
+            else
+            {
+                char_count = 0;
+
+                /* Process all instances */
+                for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
+                {
+#if (CONFIG_ENDAT_NUM_INSTANCES > 1)
+                    DebugP_log("\r| --- EnDat Module %d ---|\r\n", i);
+#endif
+                    endat_print_position_header(handle[i], 1, 0);
+
+                    if(attrs[i]->mode != ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU)
+                    {
+                        for(j = 0; j < ENDAT_NUM_CH_PER_SLICE_MAX; j++)
+                        {
+                            if(attrs[i]->channel_mask & (1 << j))
+                            {
+                                status = endat_multi_channel_set_cur(handle[i], j);
+                                if(status != SystemP_SUCCESS)
+                                {
+                                    DebugP_log("\r| ERROR: Ch set failed for EnDAT instance %u ch %u: %d\n", i, j, status);
+                                    continue;
+                                }
+                                status = endat_recvd_process(handle[i], 1, &gAppEndatFormatDataMtrCtrl[i][j]);
+                                if(status != SystemP_SUCCESS)
+                                {
+                                    DebugP_log("\r| ERROR: Recvd process failed for EnDAT instance %u ch %u: %d\n", i, j, status);
+                                    continue;
+                                }
+                                char_count += endat_get_position_loop_chars(priv[i]->multi_turn_res[priv[i]->current_channel], 0, 0);
+                                DebugP_log("\r\n| Ch-%d: \n", j);
+                                endat_print_position_loop(handle[i], 1, 0, j);
+                                DebugP_log("\n| ");
+                                char_count += 3;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        status = endat_recvd_process(handle[i], 1, &gAppEndatFormatDataMtrCtrl[i][priv[i]->current_channel]);
+                        if(status != SystemP_SUCCESS)
+                        {
+                            DebugP_log("\r| ERROR: Recvd process failed for EnDAT instance %u: %d\n", i, status);
+                            continue;
+                        }
+                        char_count = endat_get_position_loop_chars(priv[i]->multi_turn_res[priv[i]->current_channel], 1, 0);
+                        endat_print_position_loop(handle[i], 1, 0, priv[i]->current_channel);
+                        DebugP_log("\n| ");
+                    }
+                }
+
+                /* increase sleep value if glitches in display to be prevented (and would result in slower position display freq) */
+                ClockP_usleep(POSITION_LOOP_DISPLAY_DELAY_US);
+                while(char_count--)
+                {
+                    DebugP_log("%c", 8);
+                }
+            }
+        }
+    }
+    /* Command 107: Simulate motor control 2.2 position loop */
+    else if(cmd == 107)
+    {
+        us = endat_calc_position_period(cmd_supplement->frequency);
+
+        if(us < 0)
+        {
+            return SystemP_FAILURE;
+        }
+
+        gPositionLoopIrqCount = 0;
+
+        /* This setup is similar to command 101 */
+        if(!timer_init)
+        {
+            endat_loop_timer_create(us);
+            timer_init = 1;
+        }
+
+        /* reset additional info's if present */
+        for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
+        {
+            status = endat_command_process(handle[i], 5, NULL);
+            if(status != SystemP_SUCCESS)
+            {
+                if(status == SystemP_TIMEOUT)
+                {
+                    DebugP_log("\r| ERROR: Command processing timed out, endat_command_process failed for instance %d with status %d\n", i, status);
+                }
+                else
+                {
+                    DebugP_log("\r| ERROR: endat_command_process failed for instance %d with status %d\n", i, status);
+                }
+            }
+            status = endat_addinfo_track(handle[i], 5, NULL);
+            if(status != SystemP_SUCCESS)
+            {
+                DebugP_log("\r| ERROR: endat_addinfo_track failed for instance %d with status %d\n", i, status);
+            }
+            gAppEndat22LoopMrs[i] = MRS_POS_VAL2_WORD1;
+        }
+
+        TimerP_start(gTimerBaseAddr[CONFIG_TIMER0]);
+        gEndatPositionLoopStatus = ENDAT_POSITION_LOOP_START;
+
+        /* Wait for proper position value 2 to be ready from the beginning */
+        ClockP_usleep(us * POSITION_VAL2_READY_DELAY_MULT);
+
+        for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
+        {
+            if(attrs[i]->mode != ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU)
+            {
+                for(j = 0; j < ENDAT_NUM_CH_PER_SLICE_MAX; j++)
+                {
+                    if(attrs[i]->channel_mask & (1 << j))
+                    {
+#if (CONFIG_ENDAT_NUM_INSTANCES > 1)
+                        DebugP_log("\r|\n| EnDat Module: %d,  Channel: %d, encoder does not support safety, position value 2 would not be displayed\n|\n ", i, j);
+#else
+                        DebugP_log("\r|\n| Channel: %d, encoder does not support safety, position value 2 would not be displayed\n|\n ", j);
+#endif
+                    }
+                }
+            }
+        }
+
+        DebugP_log("\r|\n\r| Press enter to stop the position display\n\r|\n");
+
+        while(1)
+        {
+            if(gEndatPositionLoopStatus == ENDAT_POSITION_LOOP_STOP)
+            {
+                TimerP_stop(gTimerBaseAddr[CONFIG_TIMER0]);
+
+                for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
+                {
+                    /* reset additional info's if present */
+                    status = endat_command_process(handle[i], 5, NULL);
+                    if(status != SystemP_SUCCESS)
+                    {
+                        if(status == SystemP_TIMEOUT)
+                        {
+                            DebugP_log("\r| ERROR: Command processing timed out, endat_command_process failed for instance %d with status %d\n", i, status);
+                        }
+                        else
+                        {
+                            DebugP_log("\r| ERROR: endat_command_process failed for instance %d with status %d\n", i, status);
+                        }
+                    }
+                    status = endat_addinfo_track(handle[i], 5, NULL);
+                    if(status != SystemP_SUCCESS)
+                    {
+                        DebugP_log("\r| ERROR: endat_addinfo_track failed for instance %d with status %d\n", i, status);
+                    }
+                }
+                return SystemP_SUCCESS;
+            }
+            else
+            {
+                char_count = 0;
+
+                irq_count = gPositionLoopIrqCount;
+                /* Wait till timer IRQ hit */
+                while(irq_count == gPositionLoopIrqCount)
+                {
+                    ;
+                }
+
+                /* Process all instances */
+                for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
+                {
+                    endat_process_2_2_position_command(handle[i]);
+
+                    if(CONFIG_ENDAT_NUM_INSTANCES > 1)
+                    {
+                        DebugP_log("\r|\n\r| --- EnDat Module %d ---|\r\n", i);
+                    }
+
+                    endat_print_position_header(handle[i], 0, 1);
+
+                    if(attrs[i]->mode != ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU)
+                    {
+                        for(j = 0; j < ENDAT_NUM_CH_PER_SLICE_MAX; j++)
+                        {
+                            if(attrs[i]->channel_mask & (1 << j))
+                            {
+                                status = endat_multi_channel_set_cur(handle[i], j);
+                                if(status != SystemP_SUCCESS)
+                                {
+                                    DebugP_log("\r| ERROR: Ch set failed for EnDAT instance %u ch %u: %d\n", i, j, status);
+                                    continue;
+                                }
+                                char_count += endat_get_position_loop_chars(priv[i]->multi_turn_res[priv[i]->current_channel], 0, 1);
+                                DebugP_log("\r\n| Ch-%d: \n", j);
+                                endat_print_position_loop(handle[i], 0, 1, j);
+
+                                if(priv[i]->has_safety[priv[i]->current_channel])
+                                {
+                                    max = (uint64_t)1 << priv[i]->single_turn_res[priv[i]->current_channel];
+
+                                    multi_turn = ENDAT_GET_POS_MULTI_TURN(gAppEndat22PosVal2[i][j], priv[i]);
+                                    single_turn = ENDAT_GET_POS_SINGLE_TURN(gAppEndat22PosVal2[i][j], priv[i]);
+
+                                    if(priv[i]->type[priv[i]->current_channel] == ENDAT_ENCODER_TYPE_ROTARY)
+                                    {
+                                        position.angle = (float)single_turn / (float)max * (float)360;
+                                    }
+                                    else
+                                    {
+                                        position.length = single_turn * priv[i]->step[priv[i]->current_channel];
+                                    }
+
+                                    DebugP_log(", ");
+
+                                    if(priv[i]->multi_turn_res[priv[i]->current_channel])
+                                    {
+                                        sprintf(gUartBuffer, "%16.12f, %16s", position.angle, uint64_to_str(multi_turn));
+                                    }
+                                    else
+                                    {
+                                        if(priv[i]->type[priv[i]->current_channel] == ENDAT_ENCODER_TYPE_ROTARY)
+                                        {
+                                            sprintf(gUartBuffer, "%16.12f", position.angle);
+                                        }
+                                        else
+                                        {
+                                            sprintf(gUartBuffer, "%16s", uint64_to_str(position.length));
+                                        }
+                                    }
+
+                                    DebugP_log("%s", gUartBuffer);
+                                    DebugP_log(",    %10u", gAppEndat22CrcAddinfo1ErrCnt[i][j]);
+                                }
+
+                                DebugP_log("\n| ");
+                                char_count += 3;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        char_count = endat_get_position_loop_chars(priv[i]->multi_turn_res[priv[i]->current_channel], 0, 1);
+                        endat_print_position_loop(handle[i], 0, 1, priv[i]->current_channel);
+
+                        if(priv[i]->has_safety[priv[i]->current_channel])
+                        {
+                            max = (uint64_t)1 << priv[i]->single_turn_res[priv[i]->current_channel];
+
+                            multi_turn = ENDAT_GET_POS_MULTI_TURN(gAppEndat22PosVal2[i][0], priv[i]);
+                            single_turn = ENDAT_GET_POS_SINGLE_TURN(gAppEndat22PosVal2[i][0], priv[i]);
+
+                            if(priv[i]->type[priv[i]->current_channel] == ENDAT_ENCODER_TYPE_ROTARY)
+                            {
+                                position.angle = (float)single_turn / (float)max * (float)360;
+                            }
+                            else
+                            {
+                                position.length = single_turn * priv[i]->step[priv[i]->current_channel];
+                            }
+
+                            DebugP_log(", ");
+
+                            if(priv[i]->multi_turn_res[priv[i]->current_channel])
+                            {
+                                sprintf(gUartBuffer, "%16.12f, %16s", position.angle, uint64_to_str(multi_turn));
+                            }
+                            else
+                            {
+                                if(priv[i]->type[priv[i]->current_channel] == ENDAT_ENCODER_TYPE_ROTARY)
+                                {
+                                    sprintf(gUartBuffer, "%16.12f", position.angle);
+                                }
+                                else
+                                {
+                                    sprintf(gUartBuffer, "%16s", uint64_to_str(position.length));
+                                }
+                            }
+
+                            DebugP_log("%s", gUartBuffer);
+                            DebugP_log(",    %10u", gAppEndat22CrcAddinfo1ErrCnt[i][0]);
+
+                            if(priv[i]->multi_turn_res[priv[i]->current_channel])
+                            {
+                                char_count += 2 + 46 + 3;
+                            }
+                            else
+                            {
+                                char_count += 2 + 28 + 3;
+                            }
+                        }
+
+                        DebugP_log("\n| ");
+                    }
+                }
+
+                while(char_count--)
+                {
+                    DebugP_log("%c", 8);
+                }
+            }
+        }
+    }
+    /* Command 111: Simulate motor control 2.1 position loop for long time */
+    else if(cmd == 111)
+    {
+        DebugP_log("\r|press enter to stop the long time continuous mode\n|");
+
+        position_read = 0;
+        /*clear CRC error count */
+        for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
+        {
+            memset(gAppEndatMtrCtrlCrcErr[i], 0, sizeof(gAppEndatMtrCtrlCrcErr[i]));
+        }
+        while(1)
+        {
+            if(gEndatPositionLoopStatus == ENDAT_POSITION_LOOP_STOP)
+            {
+                for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
+                {
+                    if(CONFIG_ENDAT_NUM_INSTANCES > 1)
+                    {
+                        DebugP_log("\r| --- EnDat Module %d ---|\r\n", i);
+                    }
+                    if(attrs[i]->mode != ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU)
+                    {
+                        for(j = 0; j < ENDAT_NUM_CH_PER_SLICE_MAX; j++)
+                        {
+                            if(attrs[i]->channel_mask & (1 << j))
+                            {
+                                DebugP_log("\r -------Channel %u ------\n", j);
+                                DebugP_log("\r position command sent = %llu \n", position_read);
+                                DebugP_log("\r CRC failures encountered = %u \n", gAppEndatMtrCtrlCrcErr[i][j]);
+                                DebugP_log(" ");
+                                DebugP_log("\r");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        DebugP_log("\r position command sent = %llu \n", position_read);
+                        DebugP_log("\r CRC failures encountered = %u \n", gAppEndatMtrCtrlCrcErr[i][priv[i]->current_channel]);
+                        DebugP_log(" ");
+                        DebugP_log("\r");
+                    }
+                }
+                return SystemP_SUCCESS;
+            }
+            else
+            {
+                position_read++;
+
+                /* Process position command */
+                for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
+                {
+                    endat_process_2_1_position_command(handle[i]);
+                }
+                /* increase sleep value if glitches in display to be prevented (and would result in slower position display freq) */
+                ClockP_usleep(POSITION_LOOP_2_1_DELAY_US);
+            }
+        }
+    }
+    return SystemP_SUCCESS;
+}
+
+static void endat_handle_rx(endat_handle handle, int32_t cmd)
+{
+    const endat_priv *priv = endat_get_priv(handle);
+    uint32_t crc;
+    endat_format_data endat_format_data;
+    int32_t status;
+
+    if((handle == NULL) || (priv == NULL))
+    {
+        DebugP_log("\r\n\nERROR: NULL handle/priv\n");
+        return;
+    }
+
+    /* Display raw data if enabled */
     if(priv->raw_data)
     {
-        endat_display_raw_data(cmd, priv);
+        endat_display_raw_data(handle, cmd);
     }
 
-    endat_recvd_process(priv, cmd,  &endat_format_data);
-    crc = endat_recvd_validate(priv, cmd, &endat_format_data);
-    endat_recvd_print(cmd, priv, &endat_format_data, crc);
-
-    return;
-}
-
-static void endat_print_encoder_info(struct endat_priv *priv)
-{
-    DebugP_log("EnDat 2.%d %s encoder\tID: %u %s\tSN: %c %u %c\n\n",
-                priv->cmd_set_2_2 ? 2 : 1,
-                (priv->type[priv->current_channel] == rotary) ? "rotary" : "linear",
-                priv->id.binary, (char *)&priv->id.ascii,
-                (char)priv->sn.ascii_msb, priv->sn.binary, (char)priv->sn.ascii_lsb);
-    DebugP_log("\rPosition: %d bits ", priv->pos_res);
-
-    if(priv->type[priv->current_channel] == rotary)
+    /* Process, validate, and print received data */
+    status = endat_recvd_process(handle, cmd, &endat_format_data);
+    if(status != SystemP_SUCCESS)
     {
-        DebugP_log("(singleturn: %d, multiturn: %d) ", priv->single_turn_res[priv->current_channel],
-                    priv->multi_turn_res[priv->current_channel]);
+        DebugP_log("\r| ERROR: Recvd process failed: %d\n", status);
+        return;
+    }
+    crc = endat_recvd_validate(handle, cmd, &endat_format_data);
+    endat_recvd_print(handle, cmd, &endat_format_data, crc);
+}
+
+static void endat_print_encoder_info(endat_handle handle)
+{
+    endat_priv *priv = endat_get_priv(handle);
+    const endat_attrs *attrs = endat_get_attrs(handle);
+    uint32_t ch;
+    const char *encoder_type;
+
+    if((handle == NULL) || (priv == NULL) || (attrs == NULL) || (priv->current_channel >= ENDAT_NUM_CH_PER_SLICE_MAX))
+    {
+        DebugP_log("\r\n\nERROR: NULL handle/priv/attrs or invalid current_channel\n");
+        return;
     }
 
-    DebugP_log("[resolution: %d %s]", priv->step[priv->current_channel],
-                priv->type[priv->current_channel] == rotary ? "M/rev" : "nm");
-    DebugP_log("\r\n\nPropagation delay: %dns",
-                gEndat_prop_delay[priv->current_channel]);
-    DebugP_log("\n\n\n");
+    ch = priv->current_channel;
+    encoder_type = (priv->type[ch] == ENDAT_ENCODER_TYPE_ROTARY) ? "rotary" : "linear";
+
+    /* Print encoder type */
+    DebugP_log("\rEnDat 2.%d %s encoder \n",
+                priv->cmd_set_2_2 ? 2 : 1,
+                encoder_type);
+
+    /* Print encoder ID */
+    DebugP_log("\rID: %u %s \n",
+                priv->id.binary, (char *)&priv->id.ascii);
+
+    /* Print serial number */
+    DebugP_log("\rSN: %c %u %c \n",
+                (char)priv->sn.ascii_msb, priv->sn.binary, (char)priv->sn.ascii_lsb);
+
+    /* Print position resolution */
+    DebugP_log("\rPosition: %d bits \n", priv->pos_res);
+
+    if(priv->type[ch] == ENDAT_ENCODER_TYPE_ROTARY)
+    {
+        DebugP_log("\rSingleturn: %d, Multiturn: %d\n",
+                    priv->single_turn_res[ch],
+                    priv->multi_turn_res[ch]);
+    }
+
+    /* Print resolution */
+    DebugP_log("\rResolution: %d %s \n",
+                priv->step[ch],
+                (priv->type[ch] == ENDAT_ENCODER_TYPE_ROTARY) ? "M/rev" : "nm");
+
+    /* Print propagation delay */
+    DebugP_log("\rPropagation delay: %dns \n",
+                gAppEndatPropDelay[attrs->instance][ch]);
 }
+
+/**
+ * \brief   EnDAT diagnostic application main function
+ *
+ * \details This function implements the main diagnostic application flow for EnDAT
+ *          encoder interface. It initializes the EnDAT driver, loads and starts PRU
+ *          firmware, and provides an interactive menu-driven interface for various
+ *          encoder operations including:
+ *          - Position data acquisition (single-shot and continuous)
+ *          - Additional information read/write
+ *          - Encoder parameter configuration
+ *          - Memory operations
+ *          - Test command operations
+ *          - Propagation delay configuration
+ *
+ *          Flow:
+ *          1. Initialize SoC drivers and board drivers
+ *          2. Enable booster pack power pins if configured
+ *          3. Display firmware version
+ *          4. Initialize PRU-ICSS subsystem
+ *          5. Initialize EnDAT driver for all instances
+ *          6. Load and run PRU firmware(s)
+ *          7. Read encoder information at low frequency
+ *          8. Calculate and store propagation delays
+ *          9. Configure default operating frequency based on encoder type
+ *          10. Enter interactive menu loop for encoder operations
+ *          11. De-initialize on exit
+ *
+ *          Encoder Type Detection:
+ *          - EnDAT 2.2 encoders: Default frequency 8 MHz (AM243X) or 5 MHz (other SoCs)
+ *              - \note Safety command is not supported for multi-channel single-PRU mode.
+ *                      This limitation exists because EnDAT 2.2 commands with additional info
+ *                      have variable RX length depending on the configuration. If one channel
+ *                      enables additional info while another doesn't, the RX lengths differ,
+ *                      which cannot be handled in multi-channel single-PRU firmware where all
+ *                      channels share the same PRU core and timing constraints.
+ *          - EnDAT 2.1 encoders: Default frequency 1 MHz
+ *
+ *          Clock Configuration:
+ *          - Assumes UART clock source for peripheral clock
+ *          - ICSSG devices: 192 MHz UART clock
+ *          - ICSSM devices: 160 MHz UART clock
+ *          - If default clock not achievable, use command 100 to set custom frequency
+ *
+ *          Multi-Channel Support:
+ *          - Single channel single PRU: One encoder per PRU core
+ *          - Multi-channel single PRU: Multiple encoders on one PRU core
+ *          - Multi-channel multi-PRU (load share): Each channel on separate PRU core
+ *          - Propagation delay compensation applied for multi-channel configurations
+ *
+ *          NOTE on driver APIs:
+ *          EnDAT driver APIs use a following validation approach:
+ *          - **Handle validation**: All public APIs validate the handle parameter for NULL
+ *          - **Array bounds checking**: APIs with array parameters or index parameters perform bounds validation
+ *          - **Internal structure validation**: Internal structures (attrs, priv, pruicss_xchg, pruicss_handle)
+ *            are validated for NULL before dereferencing to prevent undefined behavior
+ *
+ * \param[in]   args    Unused
+ */
 
 void endat_main(void *args)
 {
-    int32_t i;
-    struct cmd_supplement cmd_supplement;
+    uint8_t ch_num;
+    uint32_t i = 0;
+    uint32_t j = 0;
+    uint32_t prop_delay_cnt;
+    const endat_attrs *attrs[CONFIG_ENDAT_NUM_INSTANCES] = {NULL};
+    endat_priv *priv[CONFIG_ENDAT_NUM_INSTANCES] = {NULL};
+    endat_params endat_params_instance[CONFIG_ENDAT_NUM_INSTANCES];
+    endat_cmd_supplement cmd_supplement[CONFIG_ENDAT_NUM_INSTANCES];
+    int32_t status;
+    int32_t cmd;
+    int8_t rt_error = 0;
+    uint8_t is_cmd_continuous = 0;
+    uint32_t rt_status = 0;
 
-    uint64_t icssClk;
+    /* ========================================================================== */
+    /* STEP 1: Initialize SoC drivers and board drivers                           */
+    /* ========================================================================== */
+    Drivers_open();  /*Open SoC drivers*/
+    Board_driversOpen(); /*Open board-specific drivers*/
 
-    void *pruicss_cfg;
-    void *pruicss_iep;
+    /* ========================================================================== */
+    /* STEP 2: Initialize PRU-ICSS and ENDAT driver                              */
+    /* ========================================================================== */
 
-    endat_clock_config endat_clk_config;
+    /* Get and display ENDAT firmware version from PRU firmware image */
+    endat_display_fw_version();
 
-    /* Open drivers to open the UART driver for console */
-    Drivers_open();
-    Board_driversOpen();
+    /* Initialize PRU-ICSS instance, initialize DRAM, and disable PRU cores */
+    endat_pruicss_init();
 
-/*C16 pin High for Enabling ch0 in booster pack */
-#if(CONFIG_ENDAT0_BOOSTER_PACK && CONFIG_ENDAT0_CHANNEL0)
-    GPIO_setDirMode(ENC1_EN_BASE_ADDR, ENC1_EN_PIN, ENC1_EN_DIR);
-    GPIO_pinWriteHigh(ENC1_EN_BASE_ADDR, ENC1_EN_PIN);
-#endif
-/*B17 pin High for Enabling ch2 in booster pack */
-#if(CONFIG_ENDAT0_BOOSTER_PACK && CONFIG_ENDAT0_CHANNEL2)
-    GPIO_setDirMode(ENC2_EN_BASE_ADDR, ENC2_EN_PIN, ENC2_EN_DIR);
-    GPIO_pinWriteHigh(ENC2_EN_BASE_ADDR, ENC2_EN_PIN);
-#endif
-
-    i = endat_get_fw_version();
-
-    DebugP_log("\n\n\n");
-    DebugP_log("EnDat firmware \t: %x.%x.%x (%s)\n\n", (i >> 24) & 0x7F,
-                (i >> 16) & 0xFF, i & 0xFFFF, i & (1 << 31) ? "internal" : "release");
-
-    gEndat_is_multi_ch = CONFIG_ENDAT0_MODE & 1;
-    gEndat_is_load_share_mode = CONFIG_ENDAT0_MODE & 2;
-    endat_pre_init();
-
-
-    if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
+    /* Run the loop for all ENDAT instances defined in SysConfig
+     * ASSUMPTIONS:
+     *      - i = 0 will use CONFIG_ENDAT0
+     *      - i = 1 will use CONFIG_ENDAT1 when ENDAT_DUAL_PRU_SLICE_ENABLE is defined
+     */
+    for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
     {
+        /* Initialize EnDAT parameters with defaults and set PRU-ICSS handle */
+        endat_params_init(&endat_params_instance[i]);
+        /* Default values are set by endat_params_init():
+         *   - cmd_process_delay_us = 1000us (delay for command processing polling loop)
+         *   - fw_wait_delay_us = 1000us (delay for firmware status checks)
+         *   - max_wait_loop_count = 1000 (maximum wait loop count, 1000ms with default cmd_process_delay_us)
+         *   - channel_rx_info = NULL (must be set before endat_init())
+         *   - ch_info_global_addr = 0 (must be set before endat_init())
+         * If needed, delay values can be modified before calling endat_init():
+         *   endat_params_instance[i].cmd_process_delay_us = <custom_value>;
+         *   endat_params_instance[i].fw_wait_delay_us = <custom_value>;
+         *   endat_params_instance[i].max_wait_loop_count = <custom_value>;
+         */
+        endat_params_instance[i].pruicss_handle = gPruIcssXHandle;
 
-        gEndat_multi_ch_mask=(CONFIG_ENDAT0_CHANNEL0<<0|CONFIG_ENDAT0_CHANNEL1<<1|CONFIG_ENDAT0_CHANNEL2<<2);
+        /* Set channel RX info memory - pointer to channel information structure array */
+        endat_params_instance[i].channel_rx_info = (endat_ch_rx_info_array *)(&gEndatChInfo[i]);
+        /* Translate the TCMB local view addr to SoC view addr for firmware access.
+         * ASSUMPTION: Application is running on R5FSS0_CORE0 and gEndatChInfo is defined in R5FSS0_CORE0 BTCM memory region.
+         * Note: Need to update CPU0_BTCM_SOCVIEW macro if it is not R5FSS0_CORE0 or BTCM memory.
+         */
+        endat_params_instance[i].ch_info_global_addr = (uint32_t)(CPU0_BTCM_SOCVIEW((uint32_t)(endat_params_instance[i].channel_rx_info)));
 
-        DebugP_log("\r\nchannels %s %s %s selected\n",
-                    gEndat_multi_ch_mask & ENDAT_MULTI_CH0 ? "0" : "",
-                    gEndat_multi_ch_mask & ENDAT_MULTI_CH1 ? "1" : "",
-                    gEndat_multi_ch_mask & ENDAT_MULTI_CH2 ? "2" : "");
+        /* Initialize EnDAT driver instance
+         * This calls: endat_hw_init(), endat_config_channel(), endat_config_load_share(), endat_config_multi_channel_mask()
+         * endat_set_default_initialization() and endat_config_host_trigger().
+         */
+        gAppEndatHandle[i] = endat_init(i, &endat_params_instance[i]);
+        /* Get pointer to EnDAT attrs and priv */
+        attrs[i] = endat_get_attrs(gAppEndatHandle[i]);
+        priv[i] = endat_get_priv(gAppEndatHandle[i]);
 
-        if(!gEndat_multi_ch_mask)
+        DebugP_log("\r\n|------------------------------------------------------------------------------|");
+#if (CONFIG_ENDAT_NUM_INSTANCES > 1)
+        DebugP_log("\r\n EnDAT Instance %u", i);
+#endif
+
+        if((gAppEndatHandle[i] == NULL) || (attrs[i] == NULL) || (priv[i] == NULL))
         {
-            DebugP_log("\r\nERROR: please select channels to be used in multi channel configuration -\n\n");
-            DebugP_log("\rexit %s as no channel selected in multichannel configuration\n",
-                          __func__);
+            DebugP_log("\r\nERROR: EnDAT initialization failed for EnDAT instance %u\n", i);
             return;
         }
-    }
-    else
-    {
 
-        i = CONFIG_ENDAT0_CHANNEL0 & 0;
-
-        i += CONFIG_ENDAT0_CHANNEL1;
-
-        i += CONFIG_ENDAT0_CHANNEL2<<1;
-
-        if(i < 0 || i > 2)
+        /* Display HW instances used, operation mode and enabled channels */
+        DebugP_log("\r\nPRU-ICSS instance: %u, PRU-ICSS slice number: %u\n", attrs[i]->pruicss_instance, attrs[i]->pruicss_slice);
+        if(attrs[i]->mode == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
         {
-           DebugP_log("\r\nWARNING: invalid channel selected, defaulting to Channel 0\n");
-           i = 0;
+            /* Multi-channel multi-PRU (load share) mode: Each channel uses a separate PRU core */
+            DebugP_log("\r\nEnDAT Load Share Demo application is running......\n");
+            for(ch_num = 0; ch_num < ENDAT_NUM_CH_PER_SLICE_MAX; ch_num++)
+            {
+                if(attrs[i]->channel_mask & (1 << ch_num))
+                {
+                    DebugP_log("\r\nChannel %u is enabled\n", ch_num);
+                }
+            }
         }
-    }
-
-    DebugP_log("\r\n\n");
-
-    /*Translate the TCM local view addr to globel view addr */
-    uint64_t gEndatChInfoGlobalAddr = CPU0_BTCM_SOCVIEW((uint64_t)&gEndatChInfo);
-
-    pruicss_cfg = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->cfgRegBase);
-    pruicss_iep  = (void *)(((PRUICSS_HwAttrs *)(gPruIcssXHandle->hwAttrs))->iep0RegBase);
-
-    icssClk = ICSS_PRU_CORE_CLOCK;
-
-    /*3 channel pheripheral clock configuration*/
-    endat_clk_config.pru_clock = icssClk;
-    endat_clk_config.pru_uart_clock = ENDAT_INPUT_CLOCK_UART_FREQUENCY;
-    endat_clk_config.rx_clock_source = CONFIG_ENDAT0_TX_RX_FIFO_CLOCK_SOURCE;
-    endat_clk_config.tx_clock_source = CONFIG_ENDAT0_TX_RX_FIFO_CLOCK_SOURCE;
-
-
-    #if (PRUICSS_SLICEx == 1)
-        priv = endat_init((struct endat_pruss_xchg *)((PRUICSS_HwAttrs *)(
-                          gPruIcssXHandle->hwAttrs))->pru1DramBase, &gEndatChInfo, gEndatChInfoGlobalAddr, pruicss_cfg, pruicss_iep, PRUICSS_SLICEx, &endat_clk_config);
-
-    #else
-        priv = endat_init((struct endat_pruss_xchg *)((PRUICSS_HwAttrs *)(
-                          gPruIcssXHandle->hwAttrs))->pru0DramBase, &gEndatChInfo, gEndatChInfoGlobalAddr,  pruicss_cfg, pruicss_iep, PRUICSS_SLICEx, &endat_clk_config);
-    #endif
-
-
-
-
-    if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
-    {
-        endat_config_multi_channel_mask(priv, gEndat_multi_ch_mask, gEndat_is_load_share_mode);
-    }
-    else
-    {
-        endat_config_channel(priv, i);
-    }
-
-    endat_config_host_trigger(priv);
-
-    /* Configure Delays based on the ICSSG frequency*/
-    /* Count = ((required delay * icssClk)/1000) */
-    priv->pruss_xchg->endat_delay_125ns = ((icssClk*125)/1000000000);
-    priv->pruss_xchg->endat_delay_51us = ((icssClk*51)/1000000 );
-    priv->pruss_xchg->endat_delay_5us = ((icssClk*5)/1000000);
-    priv->pruss_xchg->endat_delay_1ms = ((icssClk/1000) * 1);
-    priv->pruss_xchg->endat_delay_2ms = ((icssClk/1000) * 2);
-    priv->pruss_xchg->endat_delay_12ms = ((icssClk/1000) * 12);
-    priv->pruss_xchg->endat_delay_50ms = ((icssClk/1000) * 50);
-    priv->pruss_xchg->endat_delay_380ms = ((icssClk/1000) * 380);
-    priv->pruss_xchg->endat_delay_900ms = ((icssClk/1000) * 900);
-    priv->pruss_xchg->icssg_clk = icssClk;
-
-
-    i = endat_pruicss_load_run_fw(priv);
-
-    if(i < 0)
-    {
-        DebugP_log("\rERROR: EnDat initialization failed -\n\n");
-
-        if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
+        else if(attrs[i]->mode == ENDAT_MODE_MULTI_CHANNEL_SINGLE_PRU)
         {
-            uint8_t tmp;
+            /* Multi-channel single PRU mode: Multiple channels handled by one PRU core */
+            DebugP_log("\r\nEnDAT Multi channel, Single PRU Demo application is running......\n");
+            for(ch_num = 0; ch_num < ENDAT_NUM_CH_PER_SLICE_MAX; ch_num++)
+            {
+                if(attrs[i]->channel_mask & (1 << ch_num))
+                {
+                    DebugP_log("\r\nChannel %u is enabled\n", ch_num);
+                }
+            }
+        }
+        else
+        {
+            /* Single channel single PRU mode: One channel on one PRU core */
+            DebugP_log("\r\nEnDAT Single channel, Single PRU Demo application is running......\n");
+            DebugP_log("\r\nChannel %u is enabled\n", priv[i]->current_channel);
+        }
 
-            tmp = endat_multi_channel_detected(priv) & gEndat_multi_ch_mask;
-            tmp ^= gEndat_multi_ch_mask;
+        DebugP_log("\r\n|------------------------------------------------------------------------------|\n\n");
+    }
+
+    /* ========================================================================== */
+    /* STEP 3: Load and run PRU firmware                                          */
+    /* ========================================================================== */
+    /* Load PRU firmware image to IRAM, reset and enable PRU cores.
+     * The firmware selection depends on configuration mode:
+     * - Single channel single PRU: Load single channel firmware
+     * - Multi-channel single PRU: Load multi-channel firmware
+     * - Multi-channel multi-PRU: Load separate firmware for RTU-PRU, PRU, TX-PRU
+     * After loading, wait for firmware initialization acknowledgment.
+     */
+
+    DebugP_log("\r\nPRU-ICSS firmware loading started\n");
+
+    endat_pruicss_load_run_fw();
+
+    DebugP_log("\r\nPRU-ICSS firmware loading is complete\n");
+
+    /* Load firmware for all EnDAT instances */
+    for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
+    {
+        /* Wait for firmware initialization acknowledgment */
+        status = endat_wait_initialization(gAppEndatHandle[i], WAIT_5_SECOND, attrs[i]->channel_mask);
+
+        if(status != SystemP_SUCCESS)
+        {
+            if(status == SystemP_TIMEOUT)
+            {
+#if (CONFIG_ENDAT_NUM_INSTANCES > 1)
+                DebugP_log("\rERROR: EnDAT initialization timeout for instance %d -\n\n", i);
+#else
+                DebugP_log("\rERROR: EnDAT initialization timeout -\n\n");
+#endif 
+            }
+            else
+            {
+#if (CONFIG_ENDAT_NUM_INSTANCES > 1)
+                DebugP_log("\rERROR: EnDAT initialization failed for instance %d -\n\n", i);
+#else
+                DebugP_log("\rERROR: EnDAT initialization failed -\n\n");
+#endif 
+            }
+
+        if(attrs[i]->mode != ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU)
+        {
+            ch_num = endat_multi_channel_detected(gAppEndatHandle[i]) & (attrs[i]->channel_mask);
+            ch_num ^= (attrs[i]->channel_mask);
             DebugP_log("\r\tunable to detect encoder in channel %s %s %s\n",
-                        tmp & ENDAT_MULTI_CH0 ? "0" : "",
-                        tmp & ENDAT_MULTI_CH1 ? "1" : "",
-                        tmp & ENDAT_MULTI_CH2 ? "2" : "");
+                        ch_num & (1 << 0) ? "0" : "",
+                        ch_num & (1 << 1) ? "1" : "",
+                        ch_num & (1 << 2) ? "2" : "");
         }
         else
         {
             DebugP_log("\r\tcheck whether encoder is connected and ensure proper connections\n");
         }
 
-        DebugP_log("\rexit %s due to failed firmware initialization\n", __func__);
-        return;
+            DebugP_log("\r\nExit %s due to failed firmware initialization\n", __func__);
+            goto deinit;
+        }
     }
 
-    /* read encoder info at low frequency so that cable length won't affect */
-    cmd_supplement.frequency = 200 * 1000;
-    endat_process_host_command(100, &cmd_supplement, priv);
+    /* ========================================================================== */
+    /* STEP 4: Read encoder information and calculate propagation delays          */
+    /* ========================================================================== */
+    /* For each EnDAT instance:
+     * 1. Set clock to initialization frequency (200 kHz) for reliable communication
+     * 2. Read encoder information (manufacturer, type, serial number, resolution, etc.)
+     * 3. Measure propagation delay from PRU firmware
+     * 4. Convert propagation delay from clock cycles to nanoseconds
+     * 5. For multi-channel mode: Find maximum propagation delay for wire delay compensation
+     * 6. Display encoder information for each channel
+     *
+     * Propagation delay is critical for:
+     * - Accurate timing of encoder transactions
+     * - Wire delay compensation in multi-channel configurations
+     * - Ensuring all channels are synchronized properly
+     */
 
-    if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
+    for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
     {
-        int32_t j;
 
-        for(j = 0; j < 3; j++)
+        cmd_supplement[i].frequency = ENDAT_INIT_FREQ;
+        endat_process_host_command(gAppEndatHandle[i], 100, &cmd_supplement[i]);
+        if(attrs[i]->mode == ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU)
         {
-            if(gEndat_multi_ch_mask & 1 << j)
+
+            status = endat_get_encoder_info(gAppEndatHandle[i]);
+            if(status != SystemP_SUCCESS)
             {
-                endat_multi_channel_set_cur(priv, j);
-                /*Initialization of RT parameters*/
-                endat_init_rt_measurement(priv);
-                if(endat_get_encoder_info(priv) < 0)
+                if(status == SystemP_TIMEOUT)
                 {
-                    DebugP_log("\rEnDat initialization channel %d failed\n", j);
-                    DebugP_log("\rexit %s due to failed initialization\n", __func__);
-                    return;
+                    DebugP_log("\rEnDat initialization timeout during channel information read for EnDAT instance %u\n", i);
                 }
-                /*convert cnt to time in ns ((cnt*1000000000)/icssClk) before use*/
-                gEndat_prop_delay[priv->current_channel] = endat_get_prop_delay(priv)*((float)(1000000000)/icssClk);
-                DebugP_log("\n\t\t\t\tCHANNEL %d\n\n", j);
-                endat_print_encoder_info(priv);
+                else
+                {
+                    DebugP_log("\rEnDat initialization failed during channel information read for EnDAT instance %u\n", i);
+                }
+                DebugP_log("\rexit %s due to failed initialization for EnDAT instance %u\n", __func__, i);
+                goto deinit;
+            }
+
+            status = endat_get_prop_delay(gAppEndatHandle[i], &prop_delay_cnt);
+            if(status != SystemP_SUCCESS)
+            {
+                DebugP_log("\rEnDat get propagation delay failed for EnDAT instance %u\n", i);
+                DebugP_log("\rexit %s due to failed propagation delay read for EnDAT instance %u\n", __func__, i);
+                goto deinit;
+            }
+            gAppEndatPropDelay[i][priv[i]->current_channel] = prop_delay_cnt*((float)(1000000000)/attrs[i]->core_clk_freq);
+
+            DebugP_log("\r\nCHANNEL %d \n", priv[i]->current_channel);
+            endat_print_encoder_info(gAppEndatHandle[i]);
+        }
+        else
+        {
+            for(j = 0; j < ENDAT_NUM_CH_PER_SLICE_MAX; j++)
+            {
+                if(attrs[i]->channel_mask & (1 << j))
+                {
+                    status = endat_multi_channel_set_cur(gAppEndatHandle[i], j);
+                    if(status != SystemP_SUCCESS)
+                    {
+                        DebugP_log("\rCh %d switch failed: %d\n", j, status);
+                        goto deinit;
+                    }
+
+                    status = endat_get_encoder_info(gAppEndatHandle[i]);
+                    if(status != SystemP_SUCCESS)
+                    {
+                        if(status == SystemP_TIMEOUT)
+                        {
+                            DebugP_log("\rEnDat initialization timeout during channel information read\n");
+                        }
+                        else
+                        {
+                            DebugP_log("\rEnDat initialization failed during channel information read\n");
+                        }
+                        DebugP_log("\rexit %s due to failed initialization\n", __func__);
+                        goto deinit;
+                    }
+
+                    status = endat_get_prop_delay(gAppEndatHandle[i], &prop_delay_cnt);
+                    if(status != SystemP_SUCCESS)
+                    {
+                        DebugP_log("\rEnDat get propagation delay failed for channel %d\n", j);
+                        DebugP_log("\rexit %s due to failed propagation delay read\n", __func__);
+                        goto deinit;
+                    }
+                    gAppEndatPropDelay[i][priv[i]->current_channel] = prop_delay_cnt*((float)(1000000000)/attrs[i]->core_clk_freq);
+
+                    DebugP_log("\r\nCHANNEL %d\n", j);
+                    endat_print_encoder_info(gAppEndatHandle[i]);
+                }
+            }
+            /* Find max propagation delay among all channels to compensate wire delay */
+            gAppEndatPropDelayMax[i] = gAppEndatPropDelay[i][0] > gAppEndatPropDelay[i][1] ?
+                                   gAppEndatPropDelay[i][0] : gAppEndatPropDelay[i][1];
+            gAppEndatPropDelayMax[i] = gAppEndatPropDelayMax[i] > gAppEndatPropDelay[i][2] ?
+                                   gAppEndatPropDelayMax[i] : gAppEndatPropDelay[i][2];
+
+        }
+    }
+
+    /* ========================================================================== */
+    /* STEP 5: Configure EnDAT operating frequency based on encoder type          */
+    /* ========================================================================== */
+    /* Configure operating frequency for each EnDAT instance using command 100.
+     * Frequency selection is based on detected encoder type:
+     * - EnDAT 2.2 encoders: 8 MHz (AM243X) or 5 MHz (other SoCs)
+     * - EnDAT 2.1 encoders: 1 MHz
+     *
+     * ASSUMPTIONS:
+     * - All encoders connected to same PRU slice are of same type (2.1 or 2.2)
+     * - 3-channel peripheral clock source is UART
+     * - ICSSG devices: 192 MHz UART clock
+     * - ICSSM devices: 160 MHz UART clock
+     *
+     * NOTE:
+     * Use command 100 from the interactive menu to manually change frequency if needed.
+     *
+     * The configuration includes:
+     * - Clock divisor calculation based on source clock and target frequency
+     * - Propagation delay compensation for multi-channel configurations
+     * - Wire delay configuration to synchronize channels
+     * - tST (safety time) configuration: 2us for frequencies >= 1 MHz, 0 otherwise
+     */
+
+    for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
+    {
+        if(priv[i]->cmd_set_2_2)
+        {
+#if defined(SOC_AM261X)
+            cmd_supplement[i].frequency = 5 * 1000 * 1000;
+#else
+            cmd_supplement[i].frequency = 8 * 1000 * 1000;
+#endif
+        }
+        else
+        {
+            cmd_supplement[i].frequency = 1 * 1000 * 1000;
+        }
+
+#if (CONFIG_ENDAT_NUM_INSTANCES > 1)
+        DebugP_log("\r\nEnDAT Instance %u: Configuring clock frequency to %u Hz (EnDAT %s)\n",
+                   i, cmd_supplement[i].frequency, priv[i]->cmd_set_2_2 ? "2.2" : "2.1");
+#else
+        DebugP_log("\r\nConfiguring clock frequency to %u Hz (EnDAT %s)\n",
+                   cmd_supplement[i].frequency, priv[i]->cmd_set_2_2 ? "2.2" : "2.1");
+#endif
+
+        endat_process_host_command(gAppEndatHandle[i], 100, &cmd_supplement[i]);
+
+#if (CONFIG_ENDAT_NUM_INSTANCES > 1)
+        DebugP_log("\r\nEnDAT Instance %u: Clock configuration completed\n", i);
+#else
+        DebugP_log("\r\nClock configuration completed\n");
+#endif
+    }
+
+    DebugP_log("\r\n|--------------------------------------------------------------------------------|\n");
+    DebugP_log("\r| NOTE: If target frequency is not achievable with the current clock source,     |\n");
+    DebugP_log("\r|       Use command 100 from the menu to manually set a different frequency.     |\n");
+    DebugP_log("\r|--------------------------------------------------------------------------------|\n\n");
+
+    /* ========================================================================== */
+    /* STEP 6: Interactive menu loop for encoder operations                       */
+    /* ========================================================================== */
+    /* Enter the main application loop to process user commands.
+     * The application supports two types of commands:
+     * 1. Host commands (100-106): Configuration and control commands
+     *    - Clock frequency configuration
+     *    - Propagation delay settings
+     *    - Wire delay configuration
+     *    - Motor control simulation modes
+     * 2. Encoder commands (1-14): Communication with encoder
+     *    - Position read (single-shot and continuous)
+     *    - Additional information read
+     *    - Parameter read/write
+     *    - Memory operations
+     *    - Test commands
+     *
+     * For dual PRU slice configurations:
+     * - Commands are executed sequentially on both instances
+     * - Each instance can have independent settings via cmd_supplement array
+     * - Continuous mode commands run simultaneously on all instances
+     */
+    while(1)
+    {
+        j = 0;
+        rt_error = 0;
+        is_cmd_continuous = 0;
+        rt_status = 0;
+
+        status = endat_handle_user(gAppEndatHandle, cmd_supplement);
+        if(status != SystemP_SUCCESS)
+        {
+            DebugP_log("\r| ERROR: endat_handle_user() failed, skipping command execution\r\n|\r\n|\n");
+            continue;
+        }
+
+        /*Check if any of the Encoder instance has Continuous mode Encoder communication command*/
+        is_cmd_continuous = 0;
+        for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
+        {
+            cmd = cmd_supplement[i].cmd_type;
+            if(cmd == SystemP_FAILURE)
+            {
+                DebugP_log("\r| ERROR: Invalid command for instance %d, skipping command execution for this instance\r\n|\r\n|\n", i);
+                continue;
+            }
+            if(VALID_CONT_MODE_CMD(cmd))
+            {
+                is_cmd_continuous = 1;
+                break;
             }
         }
 
-        gEndat_prop_delay_max = gEndat_prop_delay[0] > gEndat_prop_delay[1] ?
-                               gEndat_prop_delay[0] : gEndat_prop_delay[1];
-        gEndat_prop_delay_max = gEndat_prop_delay_max > gEndat_prop_delay[2] ?
-                               gEndat_prop_delay_max : gEndat_prop_delay[2];
-
-    }
-    else
-    {
-        /*Initialization of RT parameters*/
-        endat_init_rt_measurement(priv);
-        if(endat_get_encoder_info(priv) < 0)
+        /*Continuous mode*/
+        /*ASSUMPTION: All ENCODERS assuming INSTANCE 0 configuration are used for all instances*/
+        if(is_cmd_continuous == 1 && VALID_CONT_MODE_CMD(cmd_supplement[CONFIG_ENDAT0].cmd_type))
         {
-            DebugP_log("\rEnDat initialization failed\n");
-            DebugP_log("\rexit %s due to failed initialization\n", __func__);
-            return;
-        }
-        /*convert cnt to time in ns ((cnt*1000000000)/icssClk) before use*/
-        gEndat_prop_delay[priv->current_channel] = endat_get_prop_delay(priv)*((float)(1000000000)/icssClk);
+            DebugP_log("\r\n| Command %d will be executed on all encoders |\n\n", cmd);
+            status = endat_process_continuous_mode_command(gAppEndatHandle, cmd, cmd_supplement);
 
-        endat_print_encoder_info(priv);
-    }
-
-    /* default frequency - 8MHz for 2.2 encoders, 1MHz for 2.1 encoders */
-    if(priv->cmd_set_2_2)
-    {
-    #if (ENDAT_INPUT_CLOCK_UART_FREQUENCY == 160000000) || (ENDAT_INPUT_CLOCK_FREQUENCY == 200000000)
-        cmd_supplement.frequency = 5 * 1000 * 1000;
-    #else
-        cmd_supplement.frequency = 8 * 1000 * 1000;
-    #endif
-
-    }
-    else
-    {
-        cmd_supplement.frequency = 1 * 1000 * 1000;
-    }
-
-    endat_process_host_command(100, &cmd_supplement, priv);
-
-    while(1)
-    {
-        int32_t cmd;
-
-        cmd = endat_handle_user(&cmd_supplement);
-
-        if(cmd < 0)
-        {
-            continue;
-        }
-
-        if(VALID_HOST_CMD(cmd))
-        {
-            endat_process_host_command(cmd, &cmd_supplement, priv);
-            DebugP_log("\r|\n\r|\n");
-            continue;
-        }
-
-        if(VALID_PERIODIC_CMD(cmd))
-        {
-            endat_process_periodic_command(cmd, &cmd_supplement, priv);
-            DebugP_log("\r|\n\r|\n");
-            continue;
-        }
-
-        if(endat_command_process(priv, cmd, &cmd_supplement) < 0)
-        {
-            continue;
-        }
-
-        if(gEndat_is_multi_ch || gEndat_is_load_share_mode)
-        {
-            int32_t j;
-            int8_t rt_error;
-
-            DebugP_log("\r|\n");
-
-            for(j = 0; j < 3; j++)
+            if(status != SystemP_SUCCESS)
             {
-                if(gEndat_multi_ch_mask & 1 << j)
+                DebugP_log("\r| ERROR: Continuous mode command failed.\n");
+                while(gEndatPositionLoopStatus != ENDAT_POSITION_LOOP_STOP)
                 {
-                    endat_multi_channel_set_cur(priv, j);
-                    DebugP_log("\r|\n|\t\t\t\tCHANNEL %d\n", j);
-                    endat_handle_rx(priv, cmd);
-                    /* Recovery Time validation */
-                    if(endat_status_rt_measurement(priv) == 1)
+                    ;
+                }
+            }
+
+            /* Restore host trigger for periodic mode commands (200/201) on any exit */
+            if((cmd == 200 || cmd == 201))
+            {
+                for(j = 0; j < CONFIG_ENDAT_NUM_INSTANCES; j++)
+                {
+                    status = endat_config_host_trigger(gAppEndatHandle[j]);
+                    if(status != SystemP_SUCCESS)
                     {
-                        rt_error =  endat_check_rt_error(priv);
-                        if(rt_error != RT_NO_ERROR)
+                        DebugP_log("\r| ERROR: Host trigger restore failed for instance %d: %d\n", j, status);
+                    }
+                }
+            }
+
+            DebugP_log("\r|\n\r|\n");
+            continue;
+        }
+        if(is_cmd_continuous == 1 && (!VALID_CONT_MODE_CMD(cmd_supplement[CONFIG_ENDAT0].cmd_type)))
+        {
+            DebugP_log("\r\n| Configure continuous mode command for instance 0 `CONFIG_ENDAT0'. Command will be executed on all ENCODERS |\n\n");
+            continue;
+        }
+
+        for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
+        {
+#if (CONFIG_ENDAT_NUM_INSTANCES > 1)
+            DebugP_log("\r\n| Command execution for Endat Module: %d |\n", i);
+#endif
+            cmd = cmd_supplement[i].cmd_type;
+
+            /*Host command*/
+            if(VALID_HOST_CMD(cmd))
+            {
+                endat_process_host_command(gAppEndatHandle[i], cmd, &cmd_supplement[i]);
+                DebugP_log("\r|\n\r|\n");
+                continue;
+            }
+            status = endat_command_process(gAppEndatHandle[i], cmd, &cmd_supplement[i]);
+            if(status != SystemP_SUCCESS)
+            {
+                if(status == SystemP_TIMEOUT)
+                {
+                    DebugP_log("\r| ERROR: Command %d timeout occurred for EnDAT instance %u\n", cmd, i);
+                }
+                else
+                {
+                    DebugP_log("\r| ERROR: Failed to process command, endat_command_process failed for EnDAT instance %u\r\n|\r\n|\n", i);
+                }
+                continue;
+            }
+
+            if(attrs[i]->mode != ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU)
+            {
+                DebugP_log("\r|\n");
+
+                for(j = 0; j < ENDAT_NUM_CH_PER_SLICE_MAX; j++)
+                {
+                    if(attrs[i]->channel_mask & (1 << j))
+                    {
+                        status = endat_multi_channel_set_cur(gAppEndatHandle[i], j);
+                        if(status != SystemP_SUCCESS)
                         {
-                            DebugP_log("\r Error: Channel %d - Recovery time out of expected range. \n", priv->current_channel);
-                            if(rt_error == RT_COUNTER_STUCK_ERROR)
+                            DebugP_log("\r| ERROR: Ch set failed for EnDAT instance %u ch %u: %d\n", i, j, status);
+                            continue;
+                        }
+                        DebugP_log("\r|\n|\t\t\t\tCHANNEL %d\n", j);
+                        endat_handle_rx(gAppEndatHandle[i], cmd);
+                        /* Recovery Time validation */
+                        if(endat_status_rt_measurement(gAppEndatHandle[i], &rt_status) == SystemP_SUCCESS && rt_status == 1)
+                        {
+                            if(endat_check_rt_error(gAppEndatHandle[i], &rt_error) == SystemP_SUCCESS && rt_error != ENDAT_RT_NO_ERROR)
                             {
-                                DebugP_log("\r Error: Counter for Channel %d is stuck.\n", priv->current_channel);
+                                if(rt_error == ENDAT_RT_COUNTER_STUCK_ERROR)
+                                {
+                                    DebugP_log("\r Error: Counter for Channel %d is stuck.\n", j);
+                                }
+                                else
+                                {
+                                    DebugP_log("\r Error: Channel %d - Recovery time out of expected range. \n", j);
+                                }
                             }
                         }
                     }
                 }
             }
-        }
-        else
-        {
-            int8_t rt_error;
-            endat_handle_rx(priv, cmd);
-            /* Recovery Time validation */
-            if(endat_status_rt_measurement(priv) == 1)
+            else
             {
-                rt_error =  endat_check_rt_error(priv);
-                if(rt_error == RT_COUNTER_STUCK_ERROR)
+                endat_handle_rx(gAppEndatHandle[i], cmd);
+                /* Recovery Time validation */
+                if(endat_status_rt_measurement(gAppEndatHandle[i], &rt_status) == SystemP_SUCCESS && rt_status == 1)
                 {
-                    DebugP_log("\r Error: Channel %d - Recovery time out of expected range. \n", priv->current_channel);
-                    if(priv->endatChRxInfo->ch[priv->current_channel].recoveryTimeParms.isCounterStuck == 1)
+                    if(endat_check_rt_error(gAppEndatHandle[i], &rt_error) == SystemP_SUCCESS && rt_error != ENDAT_RT_NO_ERROR)
                     {
-                        DebugP_log("\r Error: Counter for Channel %d is stuck. \n", priv->current_channel);
+                        if(rt_error == ENDAT_RT_COUNTER_STUCK_ERROR)
+                        {
+                            DebugP_log("\r Error: Counter for Channel %d is stuck. \n", priv[i]->current_channel);
+                        }
+                        else
+                        {
+                            DebugP_log("\r Error: Channel %d - Recovery time out of expected range. \n", priv[i]->current_channel);
+                        }
                     }
                 }
             }
+
+            /* this cannot be done except as last in loop; additional info becomes applicable from next command onwards only */
+            status = endat_addinfo_track(gAppEndatHandle[i], cmd, &cmd_supplement[i]);
+            if(status != SystemP_SUCCESS)
+            {
+                DebugP_log("\r| ERROR: endat_addinfo_track failed for instance %d with status %d\n", i, status);
+            }
         }
 
-        /* this cannot be done except as last in loop; additional info becomes applicable from next command onwards only */
-        endat_addinfo_track(priv, cmd, &cmd_supplement);
+    }
+deinit:
+    /* ========================================================================== */
+    /* STEP 7: Deinitialize ENDAT driver and other drivers                        */
+    /* ========================================================================== */
+    for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
+    {
+        endat_deinit(gAppEndatHandle[i]);
     }
 
     Board_driversClose();
     Drivers_close();
+    return;
 }
-

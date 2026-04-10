@@ -384,7 +384,7 @@ This section lists changes which could affect user applications developed using 
 </tr>
 <tr>
     <td> Position Sense EnDat
-    <td> Structure \ref cmd_supplement
+    <td> Structure `cmd_supplement`
     <td> Added variables `cmp3`, `cmp5` and `cmp6`
     <td> Needed for periodic mode
 </tr>
@@ -414,13 +414,13 @@ This section lists changes which could affect user applications developed using 
 </tr>
 <tr>
     <td> Current Sense %SDFM
-    <td> Structure \ref SDFM_Ctrl
+    <td> Structure `SDFM_Ctrl`
     <td> Removed variables: `ctrl` and `stat`, and added variables `sdfm_en`, `sdfm_en_ack` and `sdfm_pru_id`
     <td> -
 </tr>
 <tr>
     <td> Current Sense %SDFM
-    <td> Structure \ref SDFM_CfgTrigger
+    <td> Structure `SDFM_CfgTrigger`
     <td> Removed variables `trig_samp_time`, `oc_prd_iep_cnt` and `sample_count`, and added variables `en_double_nc_sampling`, `first_samp_trig_time` and `second_samp_trig_time`
     <td> -
 </tr>

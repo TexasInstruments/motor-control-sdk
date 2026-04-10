@@ -3,6 +3,7 @@ const common = require("../common.js");
 const component_file_list = [
     "source/position_sense/bissc/.project/project.js",
     "source/position_sense/endat/.project/project.js",
+    "source/position_sense/endat3/.project/project.js",
     "source/position_sense/nikon/.project/project.js",
     "source/position_sense/tamagawa/.project/project.js",
     "source/position_sense/tamagawa_over_soc_uart/.project/project.js",
@@ -17,6 +18,7 @@ const device_defines = {
 const example_file_list = [
     "examples/position_sense/bissc_diagnostic/single_channel/.project/project.js",
     "examples/position_sense/endat_diagnostic/single_channel/.project/project.js",
+    "examples/position_sense/endat3_diagnostic/single_channel/.project/project.js",
     "examples/position_sense/nikon_diagnostic/single_channel/.project/project.js",
     "examples/position_sense/tamagawa_diagnostic/single_channel/.project/project.js",
     "examples/position_sense/tamagawa_diagnostic_over_soc_uart/.project/project.js",
@@ -27,6 +29,7 @@ const example_file_list = [
     "examples/rtlibs/utilities/datalog/.project/mcsdk_project.js",
     "source/position_sense/bissc/firmware/single_channel/.project/project.js",
     "source/position_sense/endat/firmware/single_channel/.project/project.js",
+    "source/position_sense/endat3/firmware/single_channel/.project/project.js",
     "source/position_sense/nikon/firmware/single_channel/.project/project.js",
     "source/position_sense/tamagawa/firmware/single_channel/.project/project.js",
 ];
@@ -60,9 +63,13 @@ function getSysCfgDevice(board) {
         default:
         case "am263px-cc":
             return "AM263Px";
-        case "am263px-cc-addon-ind":
+        case "am263px-cc-dp83826/am263px-cc":
             return "AM263Px";
-        case "am263px-cc-addon-auto":
+        case "am263px-cc-dp83tg720/am263px-cc":
+            return "AM263Px";
+        case "am263px-lp-dp83869/am263px-lp":
+            return "AM263Px";
+        case "am263px-cc-dp83869/am263px-cc":
             return "AM263Px";
     }
 }
@@ -76,9 +83,13 @@ function getProjectSpecDevice(board) {
         default:
         case "am263px-cc":
             return "AM263Px";
-        case "am263px-cc-addon-ind":
+        case "am263px-cc-dp83826/am263px-cc":
             return "AM263Px";
-        case "am263px-cc-addon-auto":
+        case "am263px-cc-dp83tg720/am263px-cc":
+            return "AM263Px";
+        case "am263px-lp-dp83869/am263px-lp":
+            return "AM263Px";
+        case "am263px-cc-dp83869/am263px-cc":
             return "AM263Px";
     }
 }
@@ -94,9 +105,13 @@ function getSysCfgPkg(board) {
         default:
         case "am263px-cc":
             return "ZCZ_S";
-        case "am263px-cc-addon-ind":
+        case "am263px-cc-dp83826/am263px-cc":
             return "ZCZ_S";
-        case "am263px-cc-addon-auto":
+        case "am263px-cc-dp83tg720/am263px-cc":
+            return "ZCZ_S";
+        case "am263px-lp-dp83869/am263px-lp":
+            return "ZCZ_C";
+        case "am263px-cc-dp83869/am263px-cc":
             return "ZCZ_S";
     }
 }
@@ -108,9 +123,13 @@ function getSysCfgPart(board) {
         default:
         case "am263px-cc":
             return "AM263P4";
-        case "am263px-cc-addon-ind":
+        case "am263px-cc-dp83826/am263px-cc":
             return "AM263P4";
-        case "am263px-cc-addon-auto":
+        case "am263px-cc-dp83tg720/am263px-cc":
+            return "AM263P4";
+        case "am263px-lp-dp83869/am263px-lp":
+            return "AM263P4";
+        case "am263px-cc-dp83869/am263px-cc":
             return "AM263P4";
     }
 }
@@ -122,9 +141,13 @@ function getDevToolTirex(board) {
         default:
         case "am263px-cc":
             return "TMDSCNCD263P";
-        case "am263px-cc-addon-ind":
+        case "am263px-cc-dp83826/am263px-cc":
             return "TMDSCNCD263P";
-        case "am263px-cc-addon-auto":
+        case "am263px-cc-dp83tg720/am263px-cc":
+            return "TMDSCNCD263P";
+        case "am263px-lp-dp83869/am263px-lp":
+            return "LP-AM263P";
+        case "am263px-cc-dp83869/am263px-cc":
             return "TMDSCNCD263P";
     }
 }
@@ -156,8 +179,20 @@ function getProductNameProjectSpec() {
     return "MOTOR_CONTROL_SDK_AM263PX";
 }
 
+function getIcsdkProductNameProjectSpec() {
+    return "INDUSTRIAL_COMMUNICATIONS_SDK_AM263PX";
+}
+
+function getMcusdkProductNameProjectSpec() {
+    return "MCU_PLUS_SDK_AM263PX";
+}
+
 function getFlashAddr() {
     return 0x60000000;
+}
+
+function getOsList(cpu) {
+    return ["nortos", "freertos"];
 }
 
 module.exports = {
@@ -173,5 +208,8 @@ module.exports = {
     getProperty,
     getLinuxFwName,
     getProductNameProjectSpec,
+    getIcsdkProductNameProjectSpec,
+    getMcusdkProductNameProjectSpec,
     getFlashAddr,
+    getOsList,
 };

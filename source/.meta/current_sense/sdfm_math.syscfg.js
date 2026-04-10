@@ -28,7 +28,7 @@ function getFilterOutputRange(FilterType, OSR)
   }
 
   return filter_32bit_Output;
-  
+
 }
 
 exports =

@@ -864,7 +864,7 @@ NIKON_STOP_BIT_FOUND_16MHZ?:
 ;		9.Then send MDF2 in case of EEPROM read
 ; 		10.Send MDF0 and repeat step 6, 7 and 9 for MDF1 and MDF2 in case of EEPROM write.
 ;		11.Do a global reinit after certain(10usec) delay and
-; 		   Repeat 1-7 after 300usec for Read or 30milisec for write delay.
+; 		   Repeat 1-7 after 300usec for Read or 30millisec for write delay.
 ;	(end code)
 ;
 ;	 Worst case peak cycle usage:

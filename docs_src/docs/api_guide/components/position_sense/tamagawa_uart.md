@@ -12,7 +12,6 @@ The Tamagawa over UART module provides implementation to execute the Tamagawa en
 -  2.5 Mbps and 5 Mbps encoder support
 -  Supports all Data Readout, Reset and EEPROM commands
 
-
 ## Features Not Supported
 
 -  Other baud rates
@@ -24,10 +23,9 @@ The Tamagawa over UART module provides implementation to execute the Tamagawa en
 
 SysConfig can be used to configure the following:
 - Baud rate selection (2461538 bps for 2.5 Mbps encoder, 4923076 bps for 5 Mbps encoder)
-- Communication mode selection (Tested using polling mode with UART LLD)
+- Communication mode selection (tested using polling mode with UART LLD)
 - Configuring GPIO62 signal with J2 pin (RTSn pin for software-based flow control)
 - UART instance selection
-
 
 ## Example
 

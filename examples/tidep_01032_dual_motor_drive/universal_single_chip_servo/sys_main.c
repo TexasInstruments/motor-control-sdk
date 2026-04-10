@@ -95,6 +95,7 @@ void universal_motorcontrol_main(void *args)
 #error Note select a right estimator/sensor for this project
 #endif
 
+#if defined(MOTOR2_CONNECTED)
 #if defined(MOTOR2_ESMO)
     systemVars.estType_M2 = EST_TYPE_ESMO;         // the estimator is ESMO
 #elif defined(MOTOR2_ESMO) && defined(MOTOR2_ENC)
@@ -108,6 +109,7 @@ void universal_motorcontrol_main(void *args)
 #else
 #error Note select a right estimator/sensor for this project
 #endif
+#endif  // MOTOR2_CONNECTED
 
 #if defined(MOTOR1_INLINE_SDFM)
     systemVars.currentSenseType_M1 = CURSEN_TYPE_INLINE_SDFM;
@@ -115,12 +117,13 @@ void universal_motorcontrol_main(void *args)
 #error Note select a right current sensor for this project
 #endif  // Current Sense Type
 
+#if defined(MOTOR2_CONNECTED)
 #if defined(MOTOR2_INLINE_SDFM)
     systemVars.currentSenseType_M2 = CURSEN_TYPE_INLINE_SDFM;
 #else
 #error Note select a right current sensor for this project
 #endif  // Current Sense Type
-
+#endif  // MOTOR2_CONNECTED
     //  Open drivers and boards
     Drivers_open();
     Board_driversOpen();
@@ -155,6 +158,7 @@ void universal_motorcontrol_main(void *args)
     motorVars_M1.faultMtrNow.bit.gateDriver =
     HAL_MTR_setGateDriver(motorHandle_M1->halMtrHandle);
 
+#if defined(MOTOR2_CONNECTED)
     // set control parameters for motor 2
     motorHandle_M2 = (MOTOR_Handle)(&motorVars_M2);
     // set the reference speed, this can be replaced or removed
@@ -171,7 +175,7 @@ void universal_motorcontrol_main(void *args)
 
     motorVars_M2.faultMtrNow.bit.gateDriver =
     HAL_MTR_setGateDriver(motorHandle_M2->halMtrHandle);
-    
+#endif  // MOTOR2_CONNECTED    
 
 
 #if defined(DATALOG_EN)
@@ -229,10 +233,12 @@ void universal_motorcontrol_main(void *args)
     //Run offset calibration for motor 1
     runMotorOffsetsCalculation(motorHandle_M1);
 
+#if defined(MOTOR2_CONNECTED)
     motorVars_M2.flagEnableOffsetCalc = TRUE;
 
     //Run offset calibration for motor 1
     runMotorOffsetsCalculation(motorHandle_M2);
+#endif  // MOTOR2_CONNECTED
 
     // Hardware interrupt instance
     HwiP_Params hwiPrms;
@@ -252,7 +258,7 @@ void universal_motorcontrol_main(void *args)
 
     /* Clear the SDFM interrupt */
     HAL_ackMtrSdfmInt(MTR_1);
-
+#endif
 #if defined (MOTOR2_INLINE_SDFM)
     /* Register & enable interrupt */
     HwiP_Params_init(&hwiPrms);
@@ -266,8 +272,6 @@ void universal_motorcontrol_main(void *args)
     /* Clear the SDFM interrupt */
     HAL_ackMtrSdfmInt(MTR_2);
 #endif
-#endif
-
 
     systemVars.powerRelayWaitTime_ms = POWER_RELAY_WAIT_TIME_ms;
 
@@ -289,8 +293,10 @@ void universal_motorcontrol_main(void *args)
     }
 
     motorVars_M1.flagInitializeDone = TRUE;
-    motorVars_M2.flagInitializeDone = TRUE;
 
+#if defined(MOTOR2_CONNECTED)
+    motorVars_M2.flagInitializeDone = TRUE;
+#endif  // MOTOR2_CONNECTED
     while(systemVars.flagEnableSystem == TRUE)
     {
 
@@ -339,11 +345,15 @@ void universal_motorcontrol_main(void *args)
             {
                 case 1:     // motor 1 protection check
                     runMotorMonitor(motorHandle_M1);
+#if defined(MOTOR2_CONNECTED)
                     runMotorMonitor(motorHandle_M2);
+#endif  // MOTOR2_CONNECTED
                     break;
                 case 2:
                     calculateRMSData(motorHandle_M1);
+#if defined(MOTOR2_CONNECTED)
                     calculateRMSData(motorHandle_M2);
+#endif  // MOTOR2_CONNECTED
                     break;
                 case 3:
 #if defined(MOTOR1_PI_TUNE) || defined(MOTOR2_PI_TUNE)
@@ -353,7 +363,9 @@ void universal_motorcontrol_main(void *args)
                     break;
                 case 4:     // calculate motor protection value
                     calcMotorOverCurrentThreshold(motorHandle_M1);
+#if defined(MOTOR2_CONNECTED)
                     calcMotorOverCurrentThreshold(motorHandle_M2);
+#endif  // MOTOR2_CONNECTED
                     break;
                 case 5:     // system control
                     systemVars.timerBase_1ms = 0;
@@ -368,14 +380,17 @@ void universal_motorcontrol_main(void *args)
         }       // 1ms Timer
 
         runMotorControl(motorHandle_M1);
+#if defined(MOTOR2_CONNECTED)
         runMotorControl(motorHandle_M2);
+#endif  // MOTOR2_CONNECTED
 
     } // end of while() loop
 
     // disable the PWM
     HAL_disablePWM(motorHandle_M1->halMtrHandle);
+#if defined(MOTOR2_CONNECTED)
     HAL_disablePWM(motorHandle_M2->halMtrHandle);
-
+#endif  // MOTOR2_CONNECTED
     DebugP_log("end of main!!\r\n");
 
     Board_driversClose();

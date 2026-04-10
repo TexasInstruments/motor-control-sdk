@@ -38,9 +38,9 @@
                     %let pwm_channel_name = peripheralPin.$solution.peripheralPinName;
 /*Macros of `peripheralPin.$solution.peripheralPinName` owned by `instance["$ownedBy"].$name` */
                     %let pwm_channel_macro = instance["$ownedBy"].$name + "_PWM_SET" + pwm_channel_name.substring(8,9) + "_INSTANCE_" + pwm_channel_name.substring(10,12)
-#define `pwm_channel_macro + "_DUTY_CYCLE"`                  (`instance["duty_cycle"]`U) 
-#define `pwm_channel_macro + "_RISE_EDGE_DELAY_IN_NSEC"`     (`instance["rise_edge_delay"]`U) 
-#define `pwm_channel_macro + "_FALL_EDGE_DELAY_IN_NSEC"`     (`instance["fall_edge_delay"]`U)  
+#define `pwm_channel_macro + "_DUTY_CYCLE"`                  (`(instance["duty_cycle"] % 1 === 0) ? (instance["duty_cycle"]).toFixed(1) : (instance["duty_cycle"])`F)
+#define `pwm_channel_macro + "_RISE_EDGE_DELAY_IN_NSEC"`     (`(instance["rise_edge_delay"] % 1 === 0) ? (instance["rise_edge_delay"]).toFixed(1) : (instance["rise_edge_delay"])`F) 
+#define `pwm_channel_macro + "_FALL_EDGE_DELAY_IN_NSEC"`     (`(instance["fall_edge_delay"] % 1 === 0) ? (instance["fall_edge_delay"]).toFixed(1) : (instance["fall_edge_delay"])`F) 
                      
                 % }
             %}

@@ -38,9 +38,9 @@
 ;*             Defining the Clock Modes with their respective values 		    	*
 ;************************************************************************************
 
-	.include "../../../../mcu_plus_sdk/source/pru_io/firmware/common/icss_regs.inc"
-	.include "../../../../mcu_plus_sdk/source/pru_io/firmware/common/icss_cfg_regs.inc"
-	.include "../../../../mcu_plus_sdk/source/pru_io/firmware/common/icss_constant_defines.inc"
+	.include "pru_io/firmware/common/icss_regs.inc"
+	.include "pru_io/firmware/common/icss_cfg_regs.inc"
+	.include "pru_io/firmware/common/icss_constant_defines.inc"
 
 	.asg	R30.t24,	NIKON_CH0_RX_EN
 	.asg	R31.t27,	NIKON_CH0_RX_CLR_OVF

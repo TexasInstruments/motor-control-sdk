@@ -37,72 +37,6 @@ __sdfm_macros_h .set    1
     .include "sdfm.h"
 
 ;************************************************************************************
-;
-;   Macro: M_WRITE_C24_BLK_INDEX
-;
-;   Write C24 block index for local PRU DMEM
-;   
-;   PEAK cycles:
-;        3 cycles
-;   Pseudo code:
-;       ICSSG_PRU_CTBIR0[0-7] = blk_index;
-;
-;   Parameters:
-;      blk_ind : local DMEM base address for pru constant entry 24 block index 
-;
-;   Returns:
-;      None
-;
-;************************************************************************************
-M_WRITE_C24_BLK_INDEX .macro blk_index
-    ; Set DMEM (C24) block offset
-    LDI     TEMP_REG0.b0, blk_index
-    SBCO    &TEMP_REG0.b0, CT_PRU_ICSSG_CTRL, PRUx_CNTLSELF_CONST_IDX0_REG, 1
-    ; delay for update to land?
-    NOP                                                                      
-    .endm
-
-;************************************************************************************
-;
-;   Macro: M_SET_SD_HW_REG_BASE_PTR
-;
-;   Set SD HW registers base pointer
-;
-;   PEAK cycles:
-;        5 cycles
-;
-;   Pseudo code:
-;       (start code)
-;       if(slice_id==0)
-;       {
-;           base_ptr = PRUx_CFG_BASE + 0x48;
-;       }
-;       else
-;       {
-;           base_ptr = PRUx_CFG_BASE + 0x94;
-;       }
-;       (endcode) 
-;   Parameters:
-;      base_ptr : R24
-;
-;   Returns:
-;      None
-;
-;************************************************************************************
-M_SET_SD_HW_REG_BASE_PTR  .macro  base_ptr
-    ;load PRU slice number
-    LBBO    &TEMP_REG0.b0, SDFM_CFG_BASE_PTR_REG, SDFM_PRU_ID_OFFSET,  SDFM_PRU_ID_SZ
-    ; Check slice ID 0 or 1
-    QBEQ    pru_id1?, TEMP_REG0.b0, 1
-pru_id0?:
-    LDI32   base_ptr, PRUx_CFG_BASE+ICSSG_CFG_PRU0_SD0_CLK
-    QBA     set_sd_hw_reg_base_ptr_end?
-pru_id1?:
-    LDI32   base_ptr, PRUx_CFG_BASE+ICSSG_CFG_PRU1_SD0_CLK
-set_sd_hw_reg_base_ptr_end?:
-    .endm
-
-;************************************************************************************
 ;   Macro: M_ACC3_PROCESS
 ;
 ;   Calculates Sinc3 sample value from ACC3 & Sinc3 variables
@@ -121,7 +55,7 @@ set_sd_hw_reg_base_ptr_end?:
 ;       cn5 = cn5 & 0x0FFFFFFF
 ;       (endcode) 
 ;   Parameters:
-;      DN1, DN3, DN5 : Sinc3 differntiator state variables
+;      DN1, DN3, DN5 : Sinc3 differentiator state variables
 ;
 ;   Result:
 ;      CN5 : Output sample
@@ -155,10 +89,10 @@ M_ACC3_PROCESS  .macro  DN1, DN3, DN5
 ;       dn1 = dn0;
 ;       cn4 = cn3 - dn3;
 ;       dn3 = cn3;
-;       cn5 = cn5 & 0x0FFFFFFF
+;       cn5 = cn4 & 0x0FFFFFFF
 ;       (endcode) 
 ;   Parameters:
-;      DN1, DN3: Sinc2 differntiator state variables
+;      DN1, DN3: Sinc2 differentiator state variables
 ;
 ;   Result:
 ;      CN5 : Output sample
@@ -191,7 +125,7 @@ M_ACC2_PROCESS  .macro  DN1, DN3
 ;       cn5 = cn3 & 0x0FFFFFFF
 ;       (endcode) 
 ;   Parameters:
-;      DN1 : Sinc1 differntiator state variables
+;      DN1 : Sinc1 differentiator state variables
 ;
 ;   Result:
 ;      CN5 : Output sample
@@ -255,7 +189,7 @@ M_PRU_TM_DISABLE .macro
 ;
 ;   Macro: M_SDFM_PHASE_DELAY_FOR_RAISING_EDGE
 ;
-;   Calculate number of PRU cycles between data raising edge  and upcoming nearest clock raising edge 
+;   Calculate number of PRU cycles between data rising edge and upcoming nearest clock rising edge 
 ;
 ;   Invokes:
 ;       None
@@ -264,8 +198,8 @@ M_PRU_TM_DISABLE .macro
 ;      None
 ;
 ;   Results: TEMP_REG1.w0 -> PRU cycles
-;            TEMP_REG1.w2 -> Raising Edge status 
-;            TEMP_REG2    -> MAX PRU cyles between clk & data edge 
+;            TEMP_REG1.w2 -> Rising edge status
+;            TEMP_REG2    -> MAX PRU cycles between clk & data edge 
 ;
 ;
 ;************************************************************************************
@@ -361,7 +295,7 @@ DELAY_DONE:
 ;
 ;   Macro: M_SDFM_PHASE_DELAY_FOR_FALLING_EDGE
 ;
-;  Calculate number of PRU cycles between data raising edge  and upcoming nearest clock falling edge 
+;  Calculate number of PRU cycles between data rising edge and upcoming nearest clock falling edge 
 ;
 ;   Invokes:
 ;       None
@@ -370,8 +304,8 @@ DELAY_DONE:
 ;      None
 ;
 ;   Results: TEMP_REG1.w0 -> PRU cycles
-;            TEMP_REG1.w2 -> falling edage status 
-;            TEMP_REG2    -> MAX PRU cyles between clk & data edge 
+;            TEMP_REG1.w2 -> Falling edge status
+;            TEMP_REG2    -> MAX PRU cycles between clk & data edge 
 ;
 ;
 ;************************************************************************************ 

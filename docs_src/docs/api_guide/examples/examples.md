@@ -1,12 +1,6 @@
 #  Examples and Demos {#EXAMPLES}
 This page lists all the examples and demos supported in this SDK.
 
-\cond SOC_AM64X
-- \subpage EXAMPLES_POSITION_SENSE
-- \subpage EXAMPLES_CURRENT_SENSE
-- \subpage EXAMPLE_PRUICSS_PWM_DEADBAND_EPWM_SYNC
-\endcond
-
 \cond SOC_AM243X
 - \subpage EXAMPLE_TIDEP_01032_REFERENCE_DESIGN
 - \subpage EXAMPLES_POSITION_SENSE

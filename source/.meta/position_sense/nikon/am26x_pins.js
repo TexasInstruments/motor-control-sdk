@@ -50,15 +50,24 @@ function getInterfacePinList(inst)
     pinList.push({ pinName: Slice.toString()+"_GPIO3", displayName: "NIKON_CHANNEL1_CLK", rx: false});
     pinList.push({ pinName: Slice.toString()+"_GPIO10", displayName: "NIKON_CHANNEL1_RX", rx: true});
 
-    pinList.push({ pinName: Slice.toString()+"_GPIO8", displayName: "NIKON_CHANNEL2_TX_ENABLE", rx: false});
-    /* PR0_PRU0_GPIO7 is not pinned out at the device level and therefore not supported for PRU0 */
-    if(Slice == "PR0_PRU1")
+    // PR0_PRU0_GPIO7 Pin is only available for AM261x SoC. It's not available for AM263Px & AM263x SoC.
+    if(is_am261x_soc)
     {
-      pinList.push({ pinName: Slice.toString()+"_GPIO7", displayName: "NIKON_CHANNEL2_TX", rx: false});
+        pinList.push({ pinName: Slice.toString()+"_GPIO8", displayName: "NIKON_CHANNEL2_TX_ENABLE", rx: false});
+        pinList.push({ pinName: Slice.toString()+"_GPIO7", displayName: "NIKON_CHANNEL2_TX", rx: false});
+        pinList.push({ pinName: Slice.toString()+"_GPIO6", displayName: "NIKON_CHANNEL2_CLK", rx: false});
+        pinList.push({ pinName: Slice.toString()+"_GPIO11", displayName: "NIKON_CHANNEL2_RX", rx: true});
     }
-    pinList.push({ pinName: Slice.toString()+"_GPIO6", displayName: "NIKON_CHANNEL2_CLK", rx: false});
-    pinList.push({ pinName: Slice.toString()+"_GPIO11", displayName: "NIKON_CHANNEL2_RX", rx: true});
-
+    else if(is_am263px_soc || is_am263x_soc)
+    {
+        if(Slice == "PR0_PRU1")
+        {
+            pinList.push({ pinName: Slice.toString()+"_GPIO8", displayName: "NIKON_CHANNEL2_TX_ENABLE", rx: false});
+            pinList.push({ pinName: Slice.toString()+"_GPIO7", displayName: "NIKON_CHANNEL2_TX", rx: false});
+            pinList.push({ pinName: Slice.toString()+"_GPIO6", displayName: "NIKON_CHANNEL2_CLK", rx: false});
+            pinList.push({ pinName: Slice.toString()+"_GPIO11", displayName: "NIKON_CHANNEL2_RX", rx: true});
+        }
+    }
     return pinList;
 }
 
@@ -86,7 +95,7 @@ function pinmuxRequirements(inst) {
 
         pinmux.setConfigurableDefault( pinResource, "rx", pin.rx );
 
-        if(inst["Channel_0"]==true){
+        if(inst["channel_0"]==true){
             if( (pin.pinName == Slice.toString()+"_GPIO2") || (pin.pinName == Slice.toString()+"_GPIO1") || (pin.pinName == Slice.toString()+"_GPIO0") || (pin.pinName == Slice.toString()+"_GPIO9")){
                  pinResource.used = true;
             }
@@ -96,7 +105,7 @@ function pinmuxRequirements(inst) {
             }
         }
 
-        if(inst["Channel_1"]==true){
+        if(inst["channel_1"]==true){
             if( (pin.pinName == Slice.toString()+"_GPIO5") || (pin.pinName == Slice.toString()+"_GPIO4") || (pin.pinName == Slice.toString()+"_GPIO3") || (pin.pinName == Slice.toString()+"_GPIO10")){
                   pinResource.used = true;
              }
@@ -105,10 +114,24 @@ function pinmuxRequirements(inst) {
                 pinResource.used = false;
             }
         }
-
-        if(Slice =="PR0_PRU1")
+        if(is_am263x_soc || is_am263px_soc)
         {
-            if(inst["Channel_2"]==true){
+            if(Slice =="PR0_PRU1")
+            {
+                if(inst["channel_2"]==true){
+                    if( (pin.pinName == Slice.toString()+"_GPIO8") || (pin.pinName == Slice.toString()+"_GPIO7") || (pin.pinName == Slice.toString()+"_GPIO6") || (pin.pinName == Slice.toString()+"_GPIO11")){
+                        pinResource.used = true;
+                    }
+                }else{
+                        if( (pin.pinName == Slice.toString()+"_GPIO8") || (pin.pinName == Slice.toString()+"_GPIO7") || (pin.pinName == Slice.toString()+"_GPIO6") || (pin.pinName == Slice.toString()+"_GPIO11")){
+                        pinResource.used = false;
+                    }
+                }
+            }
+        }
+        else
+        {
+            if(inst["channel_2"]==true){
                 if( (pin.pinName == Slice.toString()+"_GPIO8") || (pin.pinName == Slice.toString()+"_GPIO7") || (pin.pinName == Slice.toString()+"_GPIO6") || (pin.pinName == Slice.toString()+"_GPIO11")){
                     pinResource.used = true;
                 }
@@ -117,19 +140,7 @@ function pinmuxRequirements(inst) {
                     pinResource.used = false;
                 }
             }
-        }else{
-            if(inst["Channel_2"]==true){
-                if( (pin.pinName == Slice.toString()+"_GPIO8") || (pin.pinName == Slice.toString()+"_GPIO6") || (pin.pinName == Slice.toString()+"_GPIO11")){
-                    pinResource.used = true;
-                }
-            }else{
-                    if( (pin.pinName == Slice.toString()+"_GPIO8") || (pin.pinName == Slice.toString()+"_GPIO6") || (pin.pinName == Slice.toString()+"_GPIO11")){
-                    pinResource.used = false;
-                }
-            }
         }
-
-
         resources.push( pinResource );
     }
 
@@ -158,7 +169,6 @@ function getPeripheralPinNames(inst)
 
     return pinNameList;
 }
-
 
 exports = {
 

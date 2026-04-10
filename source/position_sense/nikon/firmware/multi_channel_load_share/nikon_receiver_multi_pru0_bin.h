@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Texas Instruments Incorporated
+ * Copyright (C) 2025-2026 Texas Instruments Incorporated
  * All rights reserved not granted herein.
  *
  * Limited License.
@@ -51,10 +51,10 @@
  *
  */
 
-const uint32_t NikonFirmwareMultiMakePRU_0[] = {
+const uint32_t NikonFirmwareMultiMakePru0_0[] = {
 0x21000300,
 0x00000208,
-0x01010007,
+0x01010009,
 0x2effbb80,
 0x9103184d,
 0x2400024d,
@@ -71,15 +71,33 @@ const uint32_t NikonFirmwareMultiMakePRU_0[] = {
 0x80912492,
 0x91171870,
 0x91191813,
-0x69001307,
-0x91743a92,
-0xcf05f2fd,
-0x24002012,
-0x81743a92,
+0x51011319,
+0x5100130b,
+0x24022891,
+0x90913892,
+0xf11c1291,
+0x24023592,
+0x90921813,
+0xce1391f8,
+0x24023892,
+0x90923891,
+0xf1003192,
+0x21002a00,
+0x24022891,
+0x90913892,
+0xf1741291,
+0x24023492,
+0x90921813,
+0xce1391ee,
+0x24000191,
+0x08139191,
+0x24022892,
+0x90923892,
+0xe1741291,
 0x24000112,
 0x81011812,
 0x91011811,
-0x570011f7,
+0x570011e5,
 0x910e180d,
 0x910f182d,
 0xd1004d08,
@@ -273,7 +291,7 @@ const uint32_t NikonFirmwareMultiMakePRU_0[] = {
 0x10fffff2,
 0xd02df203,
 0x1008080e,
-0x2100e000,
+0x2100f200,
 0x1600080e,
 0x13018989,
 0x1e0dffff,
@@ -402,8 +420,8 @@ const uint32_t NikonFirmwareMultiMakePRU_0[] = {
 0x6f000fc0,
 0x91191812,
 0x2400007e,
-0x69001202,
-0x2400239f,
+0x51011202,
+0x2400269f,
 0x24000250,
 0x81151850,
 0x91031811,

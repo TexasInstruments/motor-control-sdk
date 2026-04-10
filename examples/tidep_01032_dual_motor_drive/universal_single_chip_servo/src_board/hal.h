@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2025 Texas Instruments Incorporated
+ *  Copyright (C) 2025-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -120,14 +120,14 @@ extern uint32_t loadSize_sfradata;
 //------------------------------------------------------------------------------
 #if defined(BP_AM2BLDCSERVO)
 
-// EPWM defines 
-#define MTR1_PWM_U_BASE         EPWM0_AXIS1_BASE_ADDR
-#define MTR1_PWM_V_BASE         EPWM1_AXIS1_BASE_ADDR
-#define MTR1_PWM_W_BASE         EPWM2_AXIS1_BASE_ADDR
-#define MTR2_PWM_U_BASE         EPWM0_AXIS2_BASE_ADDR
-#define MTR2_PWM_V_BASE         EPWM1_AXIS2_BASE_ADDR
-#define MTR2_PWM_W_BASE         EPWM2_AXIS2_BASE_ADDR
-#define MTR2_PWM_WB_BASE        EPWM2_B_AXIS2_BASE_ADDR
+// EPWM defines
+#define MTR1_PWM_U_BASE                  EPWM0_AXIS1_BASE_ADDR
+#define MTR1_PWM_V_BASE                  EPWM1_AXIS1_BASE_ADDR
+#define MTR1_PWM_W_BASE                  EPWM2_AXIS1_BASE_ADDR
+#define MTR2_PWM_U_BASE                  EPWM0_AXIS2_BASE_ADDR
+#define MTR2_PWM_V_BASE                  EPWM1_AXIS2_BASE_ADDR
+#define MTR2_PWM_W_BASE                  EPWM2_AXIS2_BASE_ADDR
+#define MTR2_PWM_WB_BASE                 EPWM2_B_AXIS2_BASE_ADDR
 
 //! \brief Defines the gpio for enabling Power Module
 #define MTR1_GATE_EN_GPIO                CONFIG_AXIS1_GATE_EN_GPIO_PIN  //67
@@ -136,99 +136,76 @@ extern uint32_t loadSize_sfradata;
 #define MTR2_GATE_EN_GPIO                CONFIG_AXIS2_GATE_EN_GPIO_PIN  //67
 #define MTR2_GATE_EN_GPIO_BASE_ADD       CONFIG_AXIS2_GATE_EN_GPIO_BASE_ADDR
 
-/*PRU defines */ 
+/*PRU defines */
 /*PRUICSS*/
 PRUICSS_Handle gPruIcssXHandle;
-#define CPU0_BTCM_SOCVIEW(x) (CSL_R5FSS0_CORE0_BTCM_BASE+(x - CSL_R5FSS0_BTCM_BASE))
-#define PRUICSS_INSTANCE  CONFIG_PRU_ICSS0
-#define ICSS_PRU_CORE_CLOCK CONFIG_PRU_ICSS0_CORE_CLK_FREQ_HZ
-#define ICSS_PRU_IEP_CLOCK CONFIG_PRU_ICSS0_IEP_CLK_FREQ_HZ //CONFIG_PRU_ICSS0_UART_CLK_FREQ_HZ, add from sysconfig
-#define ENDAT_INPUT_CLOCK_UART_FREQUENCY CONFIG_PRU_ICSS0_UART_CLK_FREQ_HZ
-#define PRUICSS_ENABLE_SA_MUX_MODE 1
+#define CPU0_BTCM_SOCVIEW(x)             (CSL_R5FSS0_CORE0_BTCM_BASE+(x - CSL_R5FSS0_BTCM_BASE))
+
+#define PRUICSS_INSTANCE                 CONFIG_PRU_ICSS0
 
 /*EnDat Encoder defines*/
-#define  ENDAT_PRUICSSx      CONFIG_ENDAT0_PRUICSSx
-#define  ENDAT_PRUICSS_SLICEx        CONFIG_ENDAT0_PRUICSS_PRUx
+#define ENDAT_PRUICSS_INSTANCE                      CONFIG_ENDAT0_PRUICSS_INSTANCE
+#define ENDAT_PRUICSS_SLICE                         CONFIG_ENDAT0_PRUICSS_SLICE
 
-#if (ENDAT_PRUICSS_SLICEx == PRUICSS_PRU1)
-#define  MOTOR1_ENDAT_PRUICSS_CORE          PRUICSS_RTU_PRU1 
-#else
-#define  MOTOR1_ENDAT_PRUICSS_CORE          PRUICSS_RTU_PRU0
+#if defined (MOTOR1_ABS_ENC)
+#define MOTOR1_ENDAT_PRUICSS_CORE                   CONFIG_ENDAT0_PRUICSS_RTU_PRU_ID
+#define MOTOR1_ENDAT_ENABLE_CHANNEL                 0
+#define MOTOR1_PRU_TRIGGER_HOST_ENDAT_EVT_NUMBER    ( 18 )
+#define MOTOR1_ICSSG_PRU_ENDAT_INT_NUM              CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_0
 #endif
 
-#define  MOTOR1_ENDAT_ENABLE_CHANNEL        0
-#define  MOTOR1_PRU_TRIGGER_HOST_ENDAT_EVT_NUMBER            ( 18 )
-#define  MOTOR1_ICSSG_PRU_ENDAT_INT_NUM    CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_0
-
-#if (ENDAT_PRUICSS_SLICEx == PRUICSS_PRU1)
-#define  MOTOR2_ENDAT_PRUICSS_CORE          PRUICSS_TX_PRU1
-#else
-#define  MOTOR2_ENDAT_PRUICSS_CORE          PRUICSS_TX_PRU0
+#if defined (MOTOR2_ABS_ENC)
+#define MOTOR2_ENDAT_PRUICSS_CORE                   CONFIG_ENDAT0_PRUICSS_TX_PRU_ID
+#define MOTOR2_ENDAT_ENABLE_CHANNEL                 2
+#define MOTOR2_PRU_TRIGGER_HOST_ENDAT_EVT_NUMBER    ( 20 )
+#define MOTOR2_ICSSG_PRU_ENDAT_INT_NUM              CSLR_R5FSS0_CORE1_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_1
 #endif
 
-#define  MOTOR2_ENDAT_ENABLE_CHANNEL        2
-#define  MOTOR2_PRU_TRIGGER_HOST_ENDAT_EVT_NUMBER            ( 20 )
-#define  MOTOR2_ICSSG_PRU_ENDAT_INT_NUM    CSLR_R5FSS0_CORE1_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_1
+#define ENDAT_WAIT_5_SECOND                         5000
 
-#define  ENDAT_RX_FIFO_CLOCK_SOURCE  CONFIG_ENDAT0_TX_RX_FIFO_CLOCK_SOURCE
-#define  ENDAT_TX_FIFO_CLOCK_SOURCE  CONFIG_ENDAT0_TX_RX_FIFO_CLOCK_SOURCE
+#define CLOCK_UPDATE                                100
+#define CONFIG_TST_DELAY                            103
+#define ENDAT_FREQUENCY                             8000000
 
-#define  ENDAT_ENABLE_CHANNEL_MASK  (CONFIG_ENDAT0_CHANNEL0<<0|CONFIG_ENDAT0_CHANNEL1<<1|CONFIG_ENDAT0_CHANNEL2<<2) 
-#define  ENDAT_WAIT_5_SECOND        5000
-
-#if CONFIG_ENDAT0_TX_RX_FIFO_CLOCK_SOURCE == 1
-#define ENDAT_RX_INPUT_CLOCK_FREQUENCY ICSS_PRU_CORE_CLOCK
-#define ENDAT_TX_INPUT_CLOCK_FREQUENCY ICSS_PRU_CORE_CLOCK
-#else
-#define ENDAT_RX_INPUT_CLOCK_FREQUENCY ENDAT_INPUT_CLOCK_UART_FREQUENCY
-#define ENDAT_TX_INPUT_CLOCK_FREQUENCY ENDAT_INPUT_CLOCK_UART_FREQUENCY
-#endif
-
-#define ENDAT_RX_SAMPLE_SIZE    7
-
-#define CLOCK_UPDATE                       100
-#define CONFIG_TST_DELAY                   103
-#define ENDAT_FREQUENCY                    8000000
 /* Position feedback trigger point is set to 25 microseconds.
  * This is calculated as (25 * 300000000) / 10000000,
  * where the IEP clock is 300MHz.
  */
-#define ENDAT_TRIGGER_POINT                7500
+#define ENDAT_TRIGGER_POINT                         7500
 
+#define ENDAT_8_BYTE_REG_OFFSET                     (8U)
 
 /*SDFM defines*/
-#define SDFM_PRUICSSx    CONFIG_SDFM0_ICSSGx
-#define  SDFM_PRUICSS_SLICEx        CONFIG_SDFM0_SLICE 
+#define SDFM_PRUICSS_INSTANCE                       CONFIG_SDFM0_ICSSGx
+#define SDFM_PRUICSS_SLICE                          CONFIG_SDFM0_SLICE
 
-#if (SDFM_PRUICSS_SLICEx == PRUICSS_PRU1)
-#define  MOTOR1_SDFM_PRUICSS_CORE          PRUICSS_RTU_PRU1
+#if defined (MOTOR1_INLINE_SDFM)
+#if (SDFM_PRUICSS_SLICE == PRUICSS_PRU1)
+#define MOTOR1_SDFM_PRUICSS_CORE                    PRUICSS_RTU_PRU1
 #else
-#define  MOTOR1_SDFM_PRUICSS_CORE          PRUICSS_RTU_PRU0
+#define MOTOR1_SDFM_PRUICSS_CORE                    PRUICSS_RTU_PRU0
+#endif
+/* R5F interrupt settings for ICSSG */
+#define MOTOR1_ICSSG_PRU_SDFM_INT_NUM               ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_3 )  /* VIM interrupt number */
+#define MOTOR1_PRU_TRIGGER_HOST_SDFM_EVT_NUMBER     ( 3 + 18 ) /* PRU event number for SDFM interrupt */
 #endif
 
-#define  SDFM_MCLK_VALUE           CONFIG_SDFM0_CHANNEL0_MCLK /*Common clock is used for all channel */
-#define  SDFM_NC_OSR_VALUE         CONFIG_SDFM0_CHANNEL0_NC_OSR /*Common NC OSR is used for all channel */
-#define  SDFM_NORMAL_CURRENT_TRIGGER_POINT  CONFIG_SDFM0_CHANNEL0_FIRST_TRIGGER_POINT
-#define  SDFM_EPWM_SYNC_SOURCE     CONFIG_SDFM0_CHANNEL0_EPWM_SOURCE
-
-/* R5F interrupt settings for ICSSG */
-#define  MOTOR1_ICSSG_PRU_SDFM_INT_NUM          ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_3 )  /* VIM interrupt number */
-#define  MOTOR1_PRU_TRIGGER_HOST_SDFM_EVT_NUMBER   ( 6 + 18 ) /* PRU event number for SDFM interrupt */
-
-#if (SDFM_PRUICSS_SLICEx == PRUICSS_PRU1)
-#define  MOTOR2_SDFM_PRUICSS_CORE          PRUICSS_PRU1
+#if defined (MOTOR2_INLINE_SDFM)
+#if (SDFM_PRUICSS_SLICE == PRUICSS_PRU1)
+#define MOTOR2_SDFM_PRUICSS_CORE                    PRUICSS_PRU1
 #else
-#define  MOTOR2_SDFM_PRUICSS_CORE          PRUICSS_PRU0
+#define MOTOR2_SDFM_PRUICSS_CORE                    PRUICSS_PRU0
 #endif
 
 /* R5F interrupt settings for ICSSG */
-#define  MOTOR2_ICSSG_PRU_SDFM_INT_NUM          ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_4 )  /* VIM interrupt number */
-#define  MOTOR2_PRU_TRIGGER_HOST_SDFM_EVT_NUMBER   ( 3+18 ) /* PRU event number for SDFM interrupt */
+#define MOTOR2_ICSSG_PRU_SDFM_INT_NUM               ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_4 )  /* VIM interrupt number */
+#define MOTOR2_PRU_TRIGGER_HOST_SDFM_EVT_NUMBER     ( 6 + 18 ) /* PRU event number for SDFM interrupt */
+#endif
 
-#define BP_AM2BLDCSERVO_VDC_BUS_VOLTAGE   24.0f
+#define BP_AM2BLDCSERVO_VDC_BUS_VOLTAGE             24.0f
 /* Sigma delta filter output range for SINC3 OSR64: 64*64*64 */
-#define SDFM_FULL_SCALE         262144.0f
-#define SDFM_HALF_SCALE         131072.0f
+#define SDFM_FULL_SCALE                             262144.0f
+#define SDFM_HALF_SCALE                             131072.0f
 
 #else   // Not select a kit
 #error Board configuration not specified. Please define a valid board for this project.
@@ -290,7 +267,9 @@ typedef enum
 __attribute__ ((section(".tcm_code"))) extern void motor1CtrlISR(void  *handle);
 
 //! \brief The main interrupt service (ISR) routine
+#if defined(MOTOR2_CONNECTED)
 __attribute__ ((section(".tcm_code"))) extern void motor2CtrlISR(void *handle);
+#endif
 
 #if defined(MOTOR1_INLINE_SDFM) || defined(MOTOR2_INLINE_SDFM)
 //! \brief     Acknowledges an interrupt from the SDFM so that another SDFM
@@ -307,8 +286,10 @@ static inline void HAL_ackMtrSdfmInt(uint8_t motorNum)
     }
     else if(motorNum == 1)
     {
+#if defined(MOTOR2_INLINE_SDFM)
         // clear the SDFM interrupt flag for motor 2
         PRUICSS_clearEvent(gPruIcssXHandle, MOTOR2_PRU_TRIGGER_HOST_SDFM_EVT_NUMBER);
+#endif
     }
     else
     {

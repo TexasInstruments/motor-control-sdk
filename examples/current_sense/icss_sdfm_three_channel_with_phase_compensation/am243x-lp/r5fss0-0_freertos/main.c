@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2025 Texas Instruments Incorporated
+ *  Copyright (C) 2025-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -45,11 +45,11 @@ StackType_t gMainTaskStack[MAIN_TASK_SIZE] __attribute__((aligned(32)));
 StaticTask_t gMainTaskObj;
 TaskHandle_t gMainTask;
 
-void sdfm_main(void *args);
+void sdfmMain(void *args);
 
 void freertos_main(void *args)
 {
-    sdfm_main(NULL);
+    sdfmMain(NULL);
 
     vTaskDelete(NULL);
 }

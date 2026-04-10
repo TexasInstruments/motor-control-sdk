@@ -5,17 +5,31 @@
     }
     let profile_list = ["release", "debug"];
 
+    // Get SDK versions and SysConfig version
+    const syscfgVersion = args.utils.getSysCfgVersionProjectSpec(args.project.device);
+    const sdkVersion    = args.utils.getSdkVersionProjectSpec(args.project.device);
+    const icsdkVersion  = args.utils.getIcsdkVersionProjectSpec(args.project.device);
+    const mcusdkVersion = args.utils.getMcusdkVersionProjectSpec(args.project.device);
+
     products = "";
     if("syscfgfile" in args.project) {
-        products+=`sysconfig;`
+        products+=`sysconfig:${syscfgVersion};`
     }
 
     if(((args.project.device == "am263px") || (args.project.device == "am261x")) && (args.utils.getProductNameProjectSpec(args.project.device) != "MOTOR_CONTROL_SDK_AMXXX")) {
-        products+="MOTOR-CONTROL-SDK-"+args.project.device.toUpperCase()
+        products+="MOTOR-CONTROL-SDK-"+args.project.device.toUpperCase()+":"+sdkVersion;
+        products+=";INDUSTRIAL-COMMUNICATIONS-SDK-"+args.project.device.toUpperCase()+":"+icsdkVersion;
+        products+=";MCU-PLUS-SDK-"+args.project.device.toUpperCase()+":"+mcusdkVersion;
     } else {
-        products+=`com.ti.${args.utils.getProductNameProjectSpec(args.project.device)}`
+        products+=`com.ti.${args.utils.getProductNameProjectSpec(args.project.device)}:${sdkVersion}`;
+        products+=`;com.ti.${args.utils.getIcsdkProductNameProjectSpec(args.project.device)}:${icsdkVersion}`;
+        products+=`;com.ti.${args.utils.getMcusdkProductNameProjectSpec(args.project.device)}:${mcusdkVersion}`;
     }
+
     productName = args.utils.getProductNameProjectSpec(args.project.device);
+    icsdkProductName = args.utils.getIcsdkProductNameProjectSpec(args.project.device);
+    mcusdkProductName = args.utils.getMcusdkProductNameProjectSpec(args.project.device);
+
     if(args.project.projecspecFileAction)  // should be renamed to projectspecFileAction
     {
         defaultAction = args.project.projecspecFileAction;
@@ -23,20 +37,6 @@
     else
     {
         defaultAction = args.utils.getDefaultActionProjectSpec();
-    }
-    indCommRequired = 0
-    obj = args.project.libdirs;
-    for (prop in obj) {
-        if ( obj.hasOwnProperty(prop) && Array.isArray(obj[prop]) && prop == 'common') {
-            for(let val of obj[prop]) {
-                if (val.includes("MCU_PLUS_SDK_IND_COMMS_LIBS_PATH")) {
-                      indCommRequired = 1;
-                }
-            }
-        }
-    }
-    if (indCommRequired == 1) {
-        products+=";com.ti.MCU_PLUS_IND_COMMS_LIBS";
     }
 %%}
 <?xml version="1.0" encoding="UTF-8"?>
@@ -173,7 +173,7 @@
         % let projectPath = `${obj.relpath}/${obj.board}/${obj.cpu}_${obj.os}/${obj.cgt}`;
         % if(args.project["defaultPruPostBuildSteps"]) {
         postBuildStep="
-            -$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=PRUFirmware  -o pru_load_bin.h `projectName`.out; if ${CCS_HOST_OS} == win32 $(CCS_INSTALL_DIR)/utils/cygwin/sed -i '0r ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h' pru_load_bin.h ; if ${CCS_HOST_OS} == linux sed -i '0r ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h' pru_load_bin.h ;
+            -$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=PRUFirmware  -o pru_load_bin.h `projectName`.out; if ${CCS_HOST_OS} == win32 $(CCS_INSTALL_DIR)/utils/cygwin/sed -i '0r ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h' pru_load_bin.h ; if ${CCS_HOST_OS} == linux sed -i '0r ${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/pru_load_bin_copyright.h' pru_load_bin.h ;
         "
         % }
         % if("postBuildSteps" in args.project) {
@@ -193,7 +193,7 @@
         "
         % }
         % } else {
-        postBuildStep="$(MAKE) -C ${CCS_PROJECT_DIR} -f makefile_ccs_bootimage_gen OUTNAME=${BuildArtifactFileBaseName} PROFILE=${ConfigName} MOTOR_CONTROL_SDK_PATH=${MOTOR_CONTROL_SDK_PATH} MCU_PLUS_SDK_PATH=${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk CG_TOOL_ROOT=${CG_TOOL_ROOT} CCS_INSTALL_DIR=${CCS_INSTALL_DIR} CCS_IDE_MODE=${CCS_IDE_MODE} DEVICE=`args.project.device`"
+        postBuildStep="$(MAKE) -C ${CCS_PROJECT_DIR} -f makefile_ccs_bootimage_gen OUTNAME=${BuildArtifactFileBaseName} PROFILE=${ConfigName} MOTOR_CONTROL_SDK_PATH=${MOTOR_CONTROL_SDK_PATH} MCU_PLUS_SDK_PATH=${MCU_PLUS_SDK_PATH} CG_TOOL_ROOT=${CG_TOOL_ROOT} CCS_INSTALL_DIR=${CCS_INSTALL_DIR} CCS_IDE_MODE=${CCS_IDE_MODE} DEVICE=`args.project.device`"
         % }
 
         % if("syscfgfile" in args.project) {
@@ -272,10 +272,9 @@
         % if(args.project.device == "am273x") {
         <pathVariable name="DSPLIB_PATH" path="${COM_TI_`productName`_INSTALL_DIR}/source/dsplib_c66x_3_4_0_0" scope="project" />
         % }
+        <pathVariable name="`args.dependentIcsdkName`" path="${COM_TI_`icsdkProductName`_INSTALL_DIR}" scope="project" />
+        <pathVariable name="`args.dependentMcusdkName`" path="${COM_TI_`mcusdkProductName`_INSTALL_DIR}" scope="project" />
         <pathVariable name="`args.sdkName`" path="${COM_TI_`productName`_INSTALL_DIR}" scope="project" />
-        % if (indCommRequired == 1) {
-        <pathVariable name="MCU_PLUS_SDK_IND_COMMS_LIBS_PATH" path="${COM_TI_MCU_PLUS_IND_COMMS_LIBS}" scope="project" />
-        % }
         % filelist = args.utils.getFileListProjectSpec(args.project.files, args.project.filedirs, args.project.dirPath)
         % for (file of filelist) {
         <file path="`file`" openOnCreation="false" excludeFromBuild="false" action="`defaultAction`">

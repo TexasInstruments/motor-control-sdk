@@ -1,0 +1,151 @@
+%%{
+    let module = system.modules[args[0]];
+%%}
+/*
+ * Nikon
+ */
+
+%if(module)
+%{
+/* Nikon attributes (compile-time data only) */
+static nikon_attrs gNikonAttrs[CONFIG_NIKON_NUM_INSTANCES] =
+{
+% for(let i = 0; i < module.$instances.length; i++) {
+    % let instance = module.$instances[i];
+    % let pruicss_instance = 0;
+    % /* Determine ICSS type and instance index */
+    % if(instance.instance === "ICSSM" || instance.instance === "ICSSM0" || instance.instance === "ICSSM1") {
+        % if(instance.instance === "ICSSM1") {
+            % pruicss_instance = 1;
+        % }
+    % } else {
+        % if(instance.instance === "ICSSG1") {
+            % pruicss_instance = 1;
+        % }
+    % }
+    % /* Calculate mode based on channel configuration and load share (for compile-time firmware selection) */
+    % let mode = "NIKON_MODE_SINGLE_CHANNEL_SINGLE_PRU";  /* Default: NIKON_MODE_SINGLE_CHANNEL_SINGLE_PRU */
+    % /* Check if multiple channels are enabled */
+    % if(((instance.channel_0 & 1) && (instance.channel_1 & 1)) || ((instance.channel_1 & 1) && (instance.channel_2 & 1)) || ((instance.channel_2 & 1) && (instance.channel_0 & 1))) {
+        % mode = "NIKON_MODE_MULTI_CHANNEL_SINGLE_PRU";  /* NIKON_MODE_MULTI_CHANNEL_SINGLE_PRU */
+    % }
+    % /* Load share mode overrides multi-channel mode */
+    % if(instance.Multi_Channel_Load_Share & 1) {
+        % mode = "NIKON_MODE_MULTI_CHANNEL_MULTI_PRU";  /* NIKON_MODE_MULTI_CHANNEL_MULTI_PRU */
+    % }
+    % /* Calculate channel_mask */
+    % let channel_mask = ((instance.channel_0 & 1) | ((instance.channel_1 & 1) << 1) | ((instance.channel_2 & 1) << 2));
+    % /* Calculate individual channel enabled flags */
+    % let channel0_enabled = (instance.channel_0 & 1);
+    % let channel1_enabled = (instance.channel_1 & 1);
+    % let channel2_enabled = (instance.channel_2 & 1);
+    % /* Calculate total number of channels enabled */
+    % let total_channels = channel0_enabled + channel1_enabled + channel2_enabled;
+    % /* Determine PRU-ICSS Slice (0 or 1) */
+    % let pruicss_slice = 1;  /* Default to PRU1 */
+    % if(instance.instance === "ICSSG0") {
+        % if(instance.PRU_ICSSG0_PRU.$assign === "PRU_ICSSG0_PRU0") {
+            % pruicss_slice = 0;
+        % }
+    % } else if(instance.instance === "ICSSG1") {
+        % if(instance.PRU_ICSSG1_PRU.$assign === "PRU_ICSSG1_PRU0") {
+            % pruicss_slice = 0;
+        % }
+    % } else {
+        % /* For ICSSM, use pruicss_slice configuration */
+        % pruicss_slice = (instance.PRU_Slice == "PRU1") ? 1 : 0;
+    % }
+    % /* Determine protocol version */
+    % let protocol_version = (instance.protocolVersion === 3.0) ? "NIKON_PROTOCOL_V3_0" : "NIKON_PROTOCOL_V2_1";
+    % /* Determine IEP instance number (0 for IEP0, 1 for IEP1) */
+    % let iep_instance = (instance.IEP_Instance === "IEP0") ? 0 : 1;
+    % /* Determine ICSS type and generate IEP base address using CSL macros */
+    % let is_icssm = (instance.instance === "ICSSM" || instance.instance === "ICSSM0" || instance.instance === "ICSSM1");
+    % let iep_base_addr_expr;
+    % if(is_icssm) {
+        % /* ICSSM only has IEP0 - use CSL_ICSS_M_PR1_IEP0_SLV_REGS_BASE offset */
+        % if(instance.instance === "ICSSM1") {
+            % /* AM261x: ICSSM1 */
+            % iep_base_addr_expr = `(void *)(CSL_ICSSM1_INTERNAL + CSL_ICSS_M_PR1_IEP0_SLV_REGS_BASE)`;
+        % } else {
+            % /* AM263x/AM263Px/AM261x: ICSSM0 */
+            % iep_base_addr_expr = `(void *)(CSL_ICSSM0_INTERNAL_U_BASE + CSL_ICSS_M_PR1_IEP0_SLV_REGS_BASE)`;
+        % }
+    % } else {
+        % /* ICSSG has both IEP0 and IEP1 - use direct CSL macros */
+        % if(instance.instance === "ICSSG1") {
+            % if(iep_instance === 0) {
+                % iep_base_addr_expr = `(void *)CSL_PRU_ICSSG1_IEP0_BASE`;
+            % } else {
+                % iep_base_addr_expr = `(void *)CSL_PRU_ICSSG1_IEP1_BASE`;
+            % }
+        % } else {
+            % /* ICSSG0 */
+            % if(iep_instance === 0) {
+                % iep_base_addr_expr = `(void *)CSL_PRU_ICSSG0_IEP0_BASE`;
+            % } else {
+                % iep_base_addr_expr = `(void *)CSL_PRU_ICSSG0_IEP1_BASE`;
+            % }
+        % }
+    % }
+    % /* Determine IEP CMP and CAP event numbers based on load share mode */
+    % let iep_cmp_ch0, iep_cmp_ch1, iep_cmp_ch2, iep_cap_ch0, iep_cap_ch1, iep_cap_ch2;
+    % if(instance.Multi_Channel_Load_Share) {
+        % iep_cmp_ch0 = instance.CMP_Event_Num_CH0;
+        % iep_cmp_ch1 = instance.CMP_Event_Num_CH1;
+        % iep_cmp_ch2 = instance.CMP_Event_Num_CH2;
+        % iep_cap_ch0 = instance.CAP_Event_Num_CH0;
+        % iep_cap_ch1 = instance.CAP_Event_Num_CH1;
+        % iep_cap_ch2 = instance.CAP_Event_Num_CH2;
+    % } else {
+        % /* Use the same event for all channels in non-load share mode */
+        % iep_cmp_ch0 = instance.CMP_Event_Num;
+        % iep_cmp_ch1 = instance.CMP_Event_Num;
+        % iep_cmp_ch2 = instance.CMP_Event_Num;
+        % iep_cap_ch0 = instance.CAP_Event_Num;
+        % iep_cap_ch1 = instance.CAP_Event_Num;
+        % iep_cap_ch2 = instance.CAP_Event_Num;
+    % }
+    {
+        .instance = `i`U,
+        .mode = `mode`,
+        .pruicss_instance = `pruicss_instance`U,
+        .pruicss_slice = `pruicss_slice`U,
+        .load_share_enabled = `(instance.Multi_Channel_Load_Share) ? "1U" : "0U"`,
+        .channel_mask = 0x`channel_mask.toString(16).toUpperCase()`U,
+        .channel0_enabled = `channel0_enabled`U,
+        .channel1_enabled = `channel1_enabled`U,
+        .channel2_enabled = `channel2_enabled`U,
+        .total_channels = `total_channels`U,
+        .baud_rate = `instance.baudrate`U,
+        .core_clk_freq = `instance.pru.$name.toUpperCase()`_CORE_CLK_FREQ_HZ,
+        .uart_clk_freq = `instance.pru.$name.toUpperCase()`_UART_CLK_FREQ_HZ,
+        .iep_clk_freq = `instance.pru.$name.toUpperCase()`_IEP_CLK_FREQ_HZ,
+        .is_core_clk = `instance.Tx_Rx_Clk_Source`U,
+        .protocol_version = `protocol_version`,
+        .iep_instance = `iep_instance`U,
+        .iep_cmp_event = {`iep_cmp_ch0`U, `iep_cmp_ch1`U, `iep_cmp_ch2`U},
+        .iep_cap_event = {`iep_cap_ch0`U, `iep_cap_ch1`U, `iep_cap_ch2`U},
+        .iep_base_addr = `iep_base_addr_expr`,
+    },
+% }
+};
+
+/* Nikon priv objects - initialized by the driver */
+static nikon_priv gNikonPriv[CONFIG_NIKON_NUM_INSTANCES];
+
+/* Nikon driver configuration */
+nikon_config gNikonHandle[CONFIG_NIKON_NUM_INSTANCES] =
+{
+% for(let i = 0; i < module.$instances.length; i++) {
+    % let instance = module.$instances[i];
+    {
+        .priv = &gNikonPriv[`instance.$name.toUpperCase()`],
+        .attrs = &gNikonAttrs[`instance.$name.toUpperCase()`],
+    },
+% }
+};
+
+uint32_t gNikonConfigNum = CONFIG_NIKON_NUM_INSTANCES;
+
+%}

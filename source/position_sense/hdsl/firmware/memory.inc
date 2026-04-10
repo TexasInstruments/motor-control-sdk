@@ -224,6 +224,7 @@ CHANNEL .sassign r18, channel_s
 	.asg							r25.w0, RET_ADDR3
 	.asg							r25.b2, MODIFIED_HEADER_STARTED
 	.asg							r25.b3, FIFO_L ;load fifo
+	.asg							r25.b3, BYTE_LEVEL ;checking tx_fifo byte level before tx end
 
 short_msg_s .struct
 crc		.short
@@ -288,7 +289,7 @@ VEL0		.set						0x17
 ;SUMMARY		.set					0x18
 	.if $defined("HDSL_CHECK_ALIGNMENT_PHASE")
 CURRENT_ALIGN_PHASE .set 				0x18 ; For debug only for checking current align phase
-	.endif   
+	.endif
 VPOS4		.set						0x19
 VPOS3		.set						0x1A
 VPOS2		.set						0x1B
@@ -418,6 +419,12 @@ ECAP_ECCLR	.set						0x30
 ECAP_ECCTL1	.set						0x28
 IEP_CNT		.set						0x10
 IEP_CAPR6_RISE .set                     0x50
+IEP_CAPR7_RISE .set                     0x60
+	.if $defined(SLICE1)
+IEP_CAPR_RISE	.set IEP_CAPR6_RISE
+	.else
+IEP_CAPR_RISE	.set IEP_CAPR7_RISE
+	.endif
 TXPRU1_CTRL .set 						0x00025800
 TXPRU1_IMEM_BASE .set 					0x0000C000
 

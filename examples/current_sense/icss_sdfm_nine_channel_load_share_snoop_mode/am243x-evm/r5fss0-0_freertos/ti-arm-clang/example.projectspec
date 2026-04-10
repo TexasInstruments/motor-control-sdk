@@ -12,7 +12,7 @@
     <project
         title="Icss Sdfm Nine Channel Load Share Snoop Mode"
         name = "icss_sdfm_nine_channel_load_share_snoop_mode_am243x-evm_r5fss0-0_freertos_ti-arm-clang"
-        products="sysconfig;com.ti.MOTOR_CONTROL_SDK_AMXXX"
+        products="sysconfig:1.23.0;com.ti.MOTOR_CONTROL_SDK_AMXXX:2025.00.00.01;com.ti.INDUSTRIAL_COMMUNICATIONS_SDK_AMXXX:2025.00.00.01;com.ti.MCU_PLUS_SDK_AMXXX:07.03.00.01"
         configurations="
             Release,
             Debug,
@@ -30,11 +30,11 @@
 
         compilerBuildOptions="
             -I${CG_TOOL_ROOT}/include/c
-            -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source
+            -I${MCU_PLUS_SDK_PATH}/source
             -I${MOTOR_CONTROL_SDK_PATH}/source
-            -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/FreeRTOS-Kernel/include
-            -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F
-            -I${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/am243x/r5f
+            -I${MCU_PLUS_SDK_PATH}/source/kernel/freertos/FreeRTOS-Kernel/include
+            -I${MCU_PLUS_SDK_PATH}/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F
+            -I${MCU_PLUS_SDK_PATH}/source/kernel/freertos/config/am243x/r5f
             -I${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/include
             -I${MOTOR_CONTROL_SDK_PATH}/examples/current_sense/icss_sdfm_nine_channel_load_share_snoop_mode
             -I${MOTOR_CONTROL_SDK_PATH}/examples/current_sense
@@ -49,11 +49,12 @@
             -Wno-gnu-variable-sized-type-not-at-end
             -Wno-unused-function
             -DSOC_AM243X
+            -DOS_FREERTOS
         "
         linkerBuildOptions="
-            -i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/lib
-            -i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers/lib
-            -i${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/board/lib
+            -i${MCU_PLUS_SDK_PATH}/source/kernel/freertos/lib
+            -i${MCU_PLUS_SDK_PATH}/source/drivers/lib
+            -i${MCU_PLUS_SDK_PATH}/source/board/lib
             -i${MOTOR_CONTROL_SDK_PATH}/source/current_sense/sdfm/lib
             -i${MOTOR_CONTROL_SDK_PATH}/source/pruicss_pwm/lib
             -i${CG_TOOL_ROOT}/lib
@@ -64,7 +65,7 @@
             --gen_xml_func_hash
         "
 
-        postBuildStep="$(MAKE) -C ${CCS_PROJECT_DIR} -f makefile_ccs_bootimage_gen OUTNAME=${BuildArtifactFileBaseName} PROFILE=${ConfigName} MOTOR_CONTROL_SDK_PATH=${MOTOR_CONTROL_SDK_PATH} MCU_PLUS_SDK_PATH=${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk CG_TOOL_ROOT=${CG_TOOL_ROOT} CCS_INSTALL_DIR=${CCS_INSTALL_DIR} CCS_IDE_MODE=${CCS_IDE_MODE} DEVICE=am243x"
+        postBuildStep="$(MAKE) -C ${CCS_PROJECT_DIR} -f makefile_ccs_bootimage_gen OUTNAME=${BuildArtifactFileBaseName} PROFILE=${ConfigName} MOTOR_CONTROL_SDK_PATH=${MOTOR_CONTROL_SDK_PATH} MCU_PLUS_SDK_PATH=${MCU_PLUS_SDK_PATH} CG_TOOL_ROOT=${CG_TOOL_ROOT} CCS_INSTALL_DIR=${CCS_INSTALL_DIR} CCS_IDE_MODE=${CCS_IDE_MODE} DEVICE=am243x"
 
         enableSysConfigTool="true"
         sysConfigBuildOptions="
@@ -79,10 +80,10 @@
             "
             linkerBuildOptions="
                 -lfreertos.am243x.r5f.ti-arm-clang.release.lib
-                -ldrivers.am243x.r5f.ti-arm-clang.release.lib
-                -lboard.am243x.r5f.ti-arm-clang.release.lib
-                -lmotorcontrol_sdfm.am243x.r5f.ti-arm-clang.release.lib
-                -lpruicss_pwm.am243x.r5f.ti-arm-clang.release.lib
+                -ldrivers.am243x.r5f.ti-arm-clang.freertos.release.lib
+                -lboard.am243x.r5f.ti-arm-clang.freertos.release.lib
+                -lmotorcontrol_sdfm.am243x.r5f.ti-arm-clang.freertos.release.lib
+                -lpruicss_pwm.am243x.r5f.ti-arm-clang.freertos.release.lib
                 -llibc.a
                 -llibsysbm.a
             "
@@ -93,24 +94,22 @@
             "
             linkerBuildOptions="
                 -lfreertos.am243x.r5f.ti-arm-clang.debug.lib
-                -ldrivers.am243x.r5f.ti-arm-clang.debug.lib
-                -lboard.am243x.r5f.ti-arm-clang.debug.lib
-                -lmotorcontrol_sdfm.am243x.r5f.ti-arm-clang.debug.lib
-                -lpruicss_pwm.am243x.r5f.ti-arm-clang.debug.lib
+                -ldrivers.am243x.r5f.ti-arm-clang.freertos.debug.lib
+                -lboard.am243x.r5f.ti-arm-clang.freertos.debug.lib
+                -lmotorcontrol_sdfm.am243x.r5f.ti-arm-clang.freertos.debug.lib
+                -lpruicss_pwm.am243x.r5f.ti-arm-clang.freertos.debug.lib
                 -llibc.a
                 -llibsysbm.a
             "
         ></configuration>
+        <pathVariable name="IND_COMMS_SDK_PATH" path="${COM_TI_INDUSTRIAL_COMMUNICATIONS_SDK_AMXXX_INSTALL_DIR}" scope="project" />
+        <pathVariable name="MCU_PLUS_SDK_PATH" path="${COM_TI_MCU_PLUS_SDK_AMXXX_INSTALL_DIR}" scope="project" />
         <pathVariable name="MOTOR_CONTROL_SDK_PATH" path="${COM_TI_MOTOR_CONTROL_SDK_AMXXX_INSTALL_DIR}" scope="project" />
-        <file path="../../../app_sdfm.c" openOnCreation="false" excludeFromBuild="false" action="copy">
-        </file>
-        <file path="../../../../epwm_dc.c" openOnCreation="false" excludeFromBuild="false" action="copy">
-        </file>
-        <file path="../../../../epwm_drv_aux.c" openOnCreation="false" excludeFromBuild="false" action="copy">
-        </file>
-        <file path="../../../../epwm_mod.c" openOnCreation="false" excludeFromBuild="false" action="copy">
+        <file path="../../../../app_sdfm.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
         <file path="../../../../sdfm_example.c" openOnCreation="false" excludeFromBuild="false" action="copy">
+        </file>
+        <file path="../../../../sdfm_epwm.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>
         <file path="../main.c" openOnCreation="false" excludeFromBuild="false" action="copy">
         </file>

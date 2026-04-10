@@ -30,19 +30,19 @@ const filedirs = {
 
 const libdirs_nortos = {
     common: [
-        "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/nortos/lib",
-        "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers/lib",
-        "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/board/lib",
-        "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/mathlib/lib",
+        "${MCU_PLUS_SDK_PATH}/source/kernel/nortos/lib",
+        "${MCU_PLUS_SDK_PATH}/source/drivers/lib",
+        "${MCU_PLUS_SDK_PATH}/source/board/lib",
+        "${MCU_PLUS_SDK_PATH}/source/mathlib/lib",
     ],
 };
 
 const libdirs_freertos = {
     common: [
-        "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/lib",
-        "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/drivers/lib",
-        "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/board/lib",
-        "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/mathlib/lib",
+        "${MCU_PLUS_SDK_PATH}/source/kernel/freertos/lib",
+        "${MCU_PLUS_SDK_PATH}/source/drivers/lib",
+        "${MCU_PLUS_SDK_PATH}/source/board/lib",
+        "${MCU_PLUS_SDK_PATH}/source/mathlib/lib",
     ],
 };
 
@@ -52,20 +52,20 @@ const includes_nortos_r5f = {
         "${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/transforms/park",
         "${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/transforms/ipark",
         "${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/transforms/svgen",
-        "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/mathlib/trig",
+        "${MCU_PLUS_SDK_PATH}/source/mathlib/trig",
     ],
 };
 
 const includes_freertos_r5f = {
     common: [
-        "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/FreeRTOS-Kernel/include",
-        "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F",
-        "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/kernel/freertos/config/am263px/r5f",
+        "${MCU_PLUS_SDK_PATH}/source/kernel/freertos/FreeRTOS-Kernel/include",
+        "${MCU_PLUS_SDK_PATH}/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F",
+        "${MCU_PLUS_SDK_PATH}/source/kernel/freertos/config/am263px/r5f",
         "${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/transforms/clarke",
         "${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/transforms/park",
         "${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/transforms/ipark",
         "${MOTOR_CONTROL_SDK_PATH}/source/rtlibs/transforms/svgen",
-        "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/mathlib/trig",
+        "${MCU_PLUS_SDK_PATH}/source/mathlib/trig",
     ],
 };
 

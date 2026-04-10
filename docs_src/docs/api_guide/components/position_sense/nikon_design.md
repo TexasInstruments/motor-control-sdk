@@ -94,9 +94,46 @@ At start-up, the application running on the Arm®-based core initializes the mod
 
 After the PRU starts executing, the Nikon interface is operational and the application can use it to communicate with an encoder. Use the Nikon diagnostic example to learn more about initialization and communication with the Nikon interface. This Nikon diagnostic example also provides an easy way to validate all the Nikon commands. The diagnostic example provides menu options on the host PC in a serial terminal application, where the user can select the command code and additional data (if needed) to be sent. Based on the command code, the application updates the Nikon interface with the CDF and MDF (in case of EEPROM access) and triggers transaction. The application then waits until it receives an indication of complete transaction by the firmware through the interface before displaying the result.
 
-### Firmware Architecture {#NIKON_DESIGN_FLOW}
+### Firmware Architecture
 
-The firmware first initializes the local variables. Then it checks whether it is host trigger mode or periodic trigger mode. In host trigger mode, it waits until a command has been triggered through the interface. In periodic trigger mode, the firmware sets host trigger bit based on IEP compare 3 event configured. Upon triggering, the transmit data is set up based on the command code and the data is transmitted. The application then waits until receiving all the data that depends on the command code. The on-the-fly CRC over the received data then commences, and the interface is updated with the result. The CRC verification occurs next and the interface indicates command completion. The firmware then waits for the next command trigger from the interface.
+\cond SOC_AM243X
+
+Deterministic behavior of the 32 bit RISC core running up to 333 MHz provides resolution on sampling external signals and generating external signals. It makes use of 3 channel peripheral interface support in PRU for data transmission/reception.
+
+The PRU-ICSS firmware supports the following configurations:
+1. Single Channel per PRU slice
+2. Multi Channel with encoders of same make per PRU slice
+3. Multi Channel with encoders of different make under load share mode per PRU slice
+
+\endcond
+
+\cond SOC_AM261X
+
+Deterministic behavior of the 32 bit RISC core running up to 225 MHz provides resolution on sampling external signals and generating external signals. It makes use of 3 channel peripheral interface support in PRU for data transmission/reception.
+
+The PRU-ICSS firmware supports the following configuration:
+1. Single Channel per PRU slice
+
+\endcond
+
+\cond (SOC_AM263X || SOC_AM263PX)
+
+Deterministic behavior of the 32 bit RISC core running up to 200 MHz provides resolution on sampling external signals and generating external signals. It makes use of 3 channel peripheral interface support in PRU for data transmission/reception.
+
+The PRU-ICSS firmware supports the following configuration:
+1. Single Channel per PRU slice
+
+\endcond
+
+#### Nikon Firmware Flow {#NIKON_DESIGN_FLOW}
+
+The firmware first initializes the local variables. Then it checks the operation mode: host trigger mode, periodic CMP mode, or periodic CAP mode.
+
+**Host Trigger Mode:** The firmware waits until a command has been triggered through the interface by the host application.
+
+**Periodic CMP/CAP Mode:** The firmware monitors the configured IEP compare event and sets the host trigger bit when the event occurs, automatically initiating Nikon transactions at regular intervals.
+
+Upon triggering (from any mode), the transmit data is set up based on the command code and the data is transmitted. The application then waits until receiving all the data that depends on the command code. The on-the-fly CRC over the received data then commences, and the interface is updated with the result. The CRC verification occurs next and the interface indicates command completion. The firmware then waits for the next command trigger from the interface or IEP compare/capture event.
 
 \image html nikon_firmware_flow.png "Overview Flow Chart"
 
@@ -126,13 +163,28 @@ In case of 16 Mbps, the Data is received and downsampled without On-the-fly CRC 
 \image html nikon_receive_16mhz_data.png "16 MHz Rx frames receive Flow Chart"
 \image html nikon_post_processing.png "16 MHz post-processing Flow Chart"
 
-### Continuous mode
+### Periodic Trigger Modes
 
-\image html nikon_continuous_mode.png "Continuous mode"
+The Nikon receiver supports two types of periodic trigger modes for continuous position sampling: CMP (Compare) mode and CAP (Capture) mode.
 
-Nikon receiver application has the support for continuous mode in which periodically MT Command is transmitted to encoder and its position data is read and the CRC is computed.
-User can stop continuous mode by hitting any key in UART console.
-Input cycle time should be greater than or equal to the Nikon cycle time by considering the maximum encoder address and timeouts.
+**Periodic CMP Mode (Compare Event Mode):** In CMP mode, IEP timer compare event triggers position sampling. The firmware monitors the configured IEP compare event and automatically initiates Nikon transactions when the IEP timer counter matches the compare value. This enables fixed-rate periodic sampling.
+
+**Periodic CAP Mode (Capture Event Mode):** In CAP mode, external signals trigger position sampling through IEP capture events. The capture event is triggered on the rising edge of the external input pulse, enabling event-driven position capture. \if (SOC_AM243X || SOC_AM64X) Internal signals can also be mapped to IEP capture events via TIMESYNC/GPIOMUX router. \else Internal signals can also be mapped to IEP capture events via XBAR. \endif
+
+Following is the operation flow for periodic mode:
+1. Firmware polls IEP CMP/CAP status register and clears status after event is detected
+2. On event detection, firmware initiates Nikon transaction
+3. Position data is automatically updated in shared memory
+4. R5F interrupt notifies application of new data
+5. The firmware checks the current trigger mode. If still in periodic mode, it returns to step 1 to wait for the next IEP CMP/CAP event. If the mode has been switched to host trigger mode, the firmware stops periodic operation.
+
+\image html nikon_periodic_mode.png "Periodic Trigger Mode"
+
+\cond SOC_AM243X
+\note In load share mode, each channel can have independent IEP CMP/CAP event configuration.
+\endcond
+
+\attention Input cycle time should be greater than or equal to the Nikon cycle time by considering the maximum encoder address and timeouts.
 
 ### Receive CRC
 
@@ -140,148 +192,146 @@ The CRC is the last byte of the last received data frame. The firmware then stor
 
 \image html nikon_verify_crc.png "Verify CRC Flow Chart"
 
-#### Pin Multiplexing {#NIKON_PIN_USAGE}
+## Pin Multiplexing {#NIKON_PIN_USAGE}
+
+\attention \ref PRUICSS_PERIPHERAL_IF_MODE_SIGNAL_CONFIGURATION section has details on PRU pin functions in Peripheral IF mode
+
 \note
-    - k = 0,1 (PRU-ICSS Instance) for AM243x/AM261x/AM64x and k = 0 for AM263x/AM263Px
+    - k = 0,1 (PRU-ICSS Instance) for AM243x/AM261x and k = 0 for AM263Px
     - n = 0,1 (PRU-ICSS Slice)
 
 <table>
 <tr>
     <th>Pin name
     <th>Signal name
-	<th>Function
+    <th>Function
 </tr>
 <tr>
     <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO0 \else PRG<%k>_PRU<n>_GPO0 \endif
     <td>pru<n>_nikon0_clk
-	<td>Channel 0 clock
+    <td>Channel 0 clock
 </tr>
 <tr>
     <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO1 \else PRG<%k>_PRU<n>_GPO1 \endif
     <td>pru<n>_nikon0_out
-	<td>Channel 0 transmit
+    <td>Channel 0 transmit
 </tr>
 <tr>
     <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO2 \else PRG<%k>_PRU<n>_GPO2 \endif
-    <td>pru<n>_nikon0_outen
-	<td>Channel 0 transmit enable
+    <td>pru<n>_nikon0_out_en
+    <td>Channel 0 transmit enable
 </tr>
 <tr>
     <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPI9 \else PRG<%k>_PRU<n>_GPI13/PRG<%k>_PRU<n>_GPI9 \endif
     <td>pru<n>_nikon0_in
-	<td>Channel 0 receive
+    <td>Channel 0 receive
 </tr>
 <tr>
     <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO3 \else PRG<%k>_PRU<n>_GPO3 \endif
     <td>pru<n>_nikon1_clk
-	<td>Channel 1 clock
+    <td>Channel 1 clock
 </tr>
 <tr>
     <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO4 \else PRG<%k>_PRU<n>_GPO4 \endif
     <td>pru<n>_nikon1_out
-	<td>Channel 1 transmit
+    <td>Channel 1 transmit
 </tr>
 <tr>
     <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO5 \else PRG<%k>_PRU<n>_GPO5 \endif
-    <td>pru<n>_nikon1_outen
-	<td>Channel 1 transmit enable
+    <td>pru<n>_nikon1_out_en
+    <td>Channel 1 transmit enable
 </tr>
 <tr>
     <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPI10 \else PRG<%k>_PRU<n>_GPI14/PRG<%k>_PRU<n>_GPI10 \endif
     <td>pru<n>_nikon1_in
-	<td>Channel 1 receive
+    <td>Channel 1 receive
 </tr>
 <tr>
     <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO6 \else PRG<%k>_PRU<n>_GPO6 \endif
     <td>pru<n>_nikon2_clk
-	<td>Channel 2 clock
+    <td>Channel 2 clock
 </tr>
 <tr>
     <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO7 \else PRG<%k>_PRU<n>_GPO12/PRG<%k>_PRU<n>_GPO7 \endif
     <td>pru<n>_nikon2_out
-	<td>Channel 2 transmit
+    <td>Channel 2 transmit
 </tr>
 <tr>
     <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO8 \else PRG<%k>_PRU<n>_GPO8 \endif
-    <td>pru<n>_nikon2_outen
-	<td>Channel 2 transmit enable
+    <td>pru<n>_nikon2_out_en
+    <td>Channel 2 transmit enable
 </tr>
 <tr>
     <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPI11 \else PRG<%k>_PRU<n>_GPI11 \endif
     <td>pru<n>_nikon2_in
-	<td>Channel 2 receive
+    <td>Channel 2 receive
 </tr>
 </table>
 
 \cond SOC_AM243X
-##### LP-AM243 Booster Pack Pin Multiplexing
+### LP-AM243 + BP-AM2BLDCSERVO Booster Pack Pin Multiplexing for SDK example
 <table>
 <tr>
     <th>Pin name
     <th>Signal name
-	<th>Function
+    <th>Function
 </tr>
 <tr>
     <td>PRG0_PRU1_GPO0
     <td>pru1_nikon0_clk
-	<td>Channel 0 clock
+    <td>PRU1 Channel 0 clock
 </tr>
 <tr>
     <td>PRG0_PRU1_GPO1
     <td>pru1_nikon0_out
-	<td>Channel 0 transmit
+    <td>PRU1 Channel 0 transmit
 </tr>
 <tr>
     <td>PRG0_PRU1_GPO2
     <td>pru1_nikon0_out_en
-	<td>Channel 0 transmit enable
-</tr>
-<tr>
-    <td>PRG0_PRU1_GPI9
-    <td>pru1_nikon0_in
-	<td>Channel 0 receive (if(G_MUX_EN==0))
+    <td>PRU1 Channel 0 transmit enable
 </tr>
 <tr>
     <td>PRG0_PRU1_GPI13
     <td>pru1_nikon0_in
-	<td>Channel 0 receive (if(G_MUX_EN==1))
+    <td>PRU1 Channel 0 receive when SA mux selection is enabled (ICSSG_SA_MX_REG[7] G_MUX_EN = 1)
 </tr>
 <tr>
     <td>PRG0_PRU1_GPO6
     <td>pru1_nikon2_clk
-	<td>Channel 2 clock
+    <td>PRU1 Channel 2 clock
 </tr>
 <tr>
     <td>PRG0_PRU1_GPO12
     <td>pru1_nikon2_out
-	<td>Channel 2 transmit
+    <td>PRU1 Channel 2 transmit when SA mux selection is enabled (ICSSG_SA_MX_REG[7] G_MUX_EN = 1)
 </tr>
 <tr>
     <td>PRG0_PRU1_GPO8
     <td>pru1_nikon2_out_en
-	<td>Channel 2 transmit enable
+    <td>PRU1 Channel 2 transmit enable
 </tr>
 <tr>
     <td>PRG0_PRU1_GPI11
     <td>pru1_nikon2_in
-	<td>Channel 2 receive
+    <td>PRU1 Channel 2 receive
 </tr>
 <tr>
-    <td>GPIO Pin(GPIO1_78)
+    <td>GPIO Pin (GPIO1_78/C16)
     <td>ENC0_EN
-    <td>Enable 3 channel peripheral interface mode in Axis 1 of BP (C16 GPIO pin)
+    <td>Enable encoder voltage in Axis 1 of BP (Fix this pin to high with SoC GPIO mode)
 </tr>
 <tr>
-    <td>GPIO Pin(GPIO1_77)
+    <td>GPIO Pin (GPIO1_77/B17)
     <td>ENC2_EN
-    <td>Enable 3 channel peripheral interface mode in Axis 2 of BP (B17 GPIO pin)
+    <td>Enable encoder voltage in Axis 2 of BP (Fix this pin to high with SoC GPIO mode)
 </tr>
 </table>
 
 \endcond
 
-\cond  SOC_AM261X
-##### LP-AM261 Booster Pack Pin Multiplexing
+\cond SOC_AM261X
+### LP-AM261 + BP-AM2BLDCSERVO Booster Pack Pin Multiplexing for SDK example
 <table>
 <tr>
     <th>Pin name
@@ -290,65 +340,90 @@ The CRC is the last byte of the last received data frame. The firmware then stor
 </tr>
 <tr>
     <td>PR1_PRU0_GPIO0
-    <td>pru1_nikon0_clk
-    <td>Channel 0 clock
+    <td>pru0_nikon0_clk
+    <td>PRU0 Channel 0 clock
 </tr>
 <tr>
     <td>PR1_PRU0_GPIO1
-    <td>pru1_nikon0_out
-    <td>Channel 0 transmit
+    <td>pru0_nikon0_out
+    <td>PRU0 Channel 0 transmit
 </tr>
 <tr>
     <td>PR1_PRU0_GPIO2
-    <td>pru1_nikon0_out_en
-    <td>Channel 0 transmit enable
+    <td>pru0_nikon0_out_en
+    <td>PRU0 Channel 0 transmit enable
 </tr>
 <tr>
     <td>PR1_PRU0_GPI9
-    <td>pru1_nikon0_in
-    <td>Channel 0 receive
+    <td>pru0_nikon0_in
+    <td>PRU0 Channel 0 receive
 </tr>
 <tr>
-    <td>GPIO Pin (GPIO_21)
-    <td>ENC0_EN
-    <td>Enable 3 channel peripheral interface in Axis 1 of BP (B10 GPIO pin)
+    <td>PR1_PRU1_GPIO0
+    <td>pru1_nikon0_clk
+    <td>PRU1 Channel 0 clock
+</tr>
+<tr>
+    <td>PR1_PRU1_GPIO1
+    <td>pru1_nikon0_out
+    <td>PRU1 Channel 0 transmit
+</tr>
+<tr>
+    <td>PR1_PRU1_GPIO2
+    <td>pru1_nikon0_out_en
+    <td>PRU1 Channel 0 transmit enable
+</tr>
+<tr>
+    <td>PR1_PRU1_GPI9
+    <td>pru1_nikon0_in
+    <td>PRU1 Channel 0 receive
+</tr>
+<tr>
+    <td>GPIO Pin (GPIO_21/B10)
+    <td>ENC0_EN (PRU0)
+    <td>Enable encoder voltage in Axis 1 of BP (Fix this pin to high with SoC GPIO mode)
+</tr>
+<tr>
+    <td>GPIO Pin (GPIO_22/A10)
+    <td>ENC0_EN (PRU1)
+    <td>Enable encoder voltage in Axis 2 of BP (Fix this pin to high with SoC GPIO mode)
 </tr>
 </table>
 \endcond
 
 \cond (SOC_AM263X || SOC_AM263PX)
 
-##### @VAR_LP_BOARD_NAME Booster Pack Pin Multiplexing
+### @VAR_LP_BOARD_NAME + BP-AM2BLDCSERVO Booster Pack Pin Multiplexing for SDK example
 <table>
 <tr>
     <th>Pin name
     <th>Signal name
-	<th>Function
+    <th>Function
 </tr>
 <tr>
     <td>PR0_PRU0_GPIO3
-    <td>pru1_endat1_clk
-	<td>Channel 1 clock
+    <td>pru0_nikon1_clk
+    <td>PRU0 Channel 1 clock
 </tr>
 <tr>
     <td>PR0_PRU0_GPO4
-    <td>pru1_endat1_out
-	<td>Channel 1 transmit
+    <td>pru0_nikon1_out
+    <td>PRU0 Channel 1 transmit
 </tr>
 <tr>
     <td>PR0_PRU0_GPO5
-    <td>pru1_endat1_outen
-	<td>Channel 1 transmit enable
+    <td>pru0_nikon1_out_en
+    <td>PRU0 Channel 1 transmit enable
 </tr>
 <tr>
     <td>PR0_PRU0_GPI10
-    <td>pru1_endat1_in
-	<td>Channel 1 receive
+    <td>pru0_nikon1_in
+    <td>PRU0 Channel 1 receive
 </tr>
 <tr>
-    <td>SDFM0_D1 Pin (J8.73)
+    <td>GPIO Pin (SDFM0_D1/D13)
     <td>ENC1_EN
-    <td>Enable 3 channel peripheral interface in Axis 1 of BP (D13 GPIO pin)
+    <td>Enable encoder voltage in Axis 1 of BP (Fix this pin to high with SoC GPIO mode)
 </tr>
 </table>
 \endcond

@@ -3,6 +3,7 @@ const common = require("../common.js");
 const component_file_list = [
     "source/position_sense/bissc/.project/project.js",
     "source/position_sense/endat/.project/project.js",
+    "source/position_sense/endat3/.project/project.js",
     "source/position_sense/hdsl/.project/project.js",
     "source/position_sense/nikon/.project/project.js",
     "source/position_sense/tamagawa/.project/project.js",
@@ -15,10 +16,16 @@ const device_defines = {
 };
 
 const example_file_list = [
+    "examples/position_sense/bissc_diagnostic/dual_channel/.project/project.js",
     "examples/position_sense/bissc_diagnostic/single_channel/.project/project.js",
+    "examples/position_sense/endat_diagnostic/dual_channel/.project/project.js",
     "examples/position_sense/endat_diagnostic/single_channel/.project/project.js",
+    "examples/position_sense/endat3_diagnostic/single_channel/.project/project.js",
+    "examples/position_sense/hdsl_diagnostic/dual_channel/.project/project.js",
     "examples/position_sense/hdsl_diagnostic/single_channel/.project/project.js",
+    "examples/position_sense/nikon_diagnostic/dual_channel/.project/project.js",
     "examples/position_sense/nikon_diagnostic/single_channel/.project/project.js",
+    "examples/position_sense/tamagawa_diagnostic/dual_channel/.project/project.js",
     "examples/position_sense/tamagawa_diagnostic/single_channel/.project/project.js",
     "examples/rtlibs/dcl/dcl_df22/.project/mcsdk_project.js",
     "examples/rtlibs/dcl/dcl_pi/.project/mcsdk_project.js",
@@ -27,6 +34,7 @@ const example_file_list = [
     "examples/rtlibs/utilities/datalog/.project/mcsdk_project.js",
     "source/position_sense/bissc/firmware/single_channel/.project/project.js",
     "source/position_sense/endat/firmware/single_channel/.project/project.js",
+    "source/position_sense/endat3/firmware/single_channel/.project/project.js",
     "source/position_sense/hdsl/firmware/freerun_225_mhz/.project/project.js",
     "source/position_sense/hdsl/firmware/sync_225_mhz/.project/project.js",
     "source/position_sense/nikon/firmware/single_channel/.project/project.js",
@@ -174,8 +182,20 @@ function getProductNameProjectSpec() {
     return "MOTOR_CONTROL_SDK_AM261X";
 }
 
+function getIcsdkProductNameProjectSpec() {
+    return "INDUSTRIAL_COMMUNICATIONS_SDK_AM261X";
+}
+
+function getMcusdkProductNameProjectSpec() {
+    return "MCU_PLUS_SDK_AM261X";
+}
+
 function getFlashAddr() {
     return 0x60000000;
+}
+
+function getOsList(cpu) {
+    return ["nortos", "freertos"];
 }
 
 module.exports = {
@@ -191,5 +211,8 @@ module.exports = {
     getProperty,
     getLinuxFwName,
     getProductNameProjectSpec,
+    getIcsdkProductNameProjectSpec,
+    getMcusdkProductNameProjectSpec,
     getFlashAddr,
+    getOsList,
 };

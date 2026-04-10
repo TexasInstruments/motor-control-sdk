@@ -22,7 +22,7 @@ const filedirs = {
 
 const includes = {
     common: [
-        "${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/common",
+        "${MCU_PLUS_SDK_PATH}/source/pru_io/firmware/common",
     ],
 };
 
@@ -69,7 +69,7 @@ function getmakefilePruPostBuildSteps(cpu, board)
     }
     return  [
         "$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix="+ core + "_Firmware  -o "+ core.toLocaleLowerCase() + "_load_bin.h " + "pruicss_pwm_with_phase_shift_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
-        "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h "+ core.toLocaleLowerCase() + "_load_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/pruicss_pwm/pruicss_pwm_with_phase_shift/firmware/"+ board + "/" +core.toLocaleLowerCase() + "_load_bin.h ;"+ 
+        "$(CAT) ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h "+ core.toLocaleLowerCase() + "_load_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/pruicss_pwm/pruicss_pwm_with_phase_shift/firmware/"+ board + "/" +core.toLocaleLowerCase() + "_load_bin.h ;"+ 
         "$(RM) "+ core.toLocaleLowerCase() + "_load_bin.h;"
     ];
 }
@@ -88,9 +88,9 @@ function getccsPruPostBuildSteps(cpu, board)
     }
     return  [
         "$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix="+ core + "_Firmware  -o "+ core.toLocaleLowerCase() + "_load_bin.h " + "pruicss_pwm_with_phase_shift_" + board + "_" + cpu + "_fw_ti-pru-cgt.out;"+ 
-        "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h "+ core.toLocaleLowerCase() + "_load_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/pruicss_pwm/pruicss_pwm_with_phase_shift/firmware/"+ board + "/" +core.toLocaleLowerCase() + "_load_bin.h ;"+ 
+        "if ${CCS_HOST_OS} == linux cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h "+ core.toLocaleLowerCase() + "_load_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/pruicss_pwm/pruicss_pwm_with_phase_shift/firmware/"+ board + "/" +core.toLocaleLowerCase() + "_load_bin.h ;"+ 
         "if ${CCS_HOST_OS} == linux rm "+ core.toLocaleLowerCase() + "_load_bin.h;"+
-        "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h "+ core.toLocaleLowerCase() + "_load_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/pruicss_pwm/pruicss_pwm_with_phase_shift/firmware/"+ board + "/" +core.toLocaleLowerCase() + "_load_bin.h ;"+ 
+        "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/cat ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h "+ core.toLocaleLowerCase() + "_load_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/pruicss_pwm/pruicss_pwm_with_phase_shift/firmware/"+ board + "/" +core.toLocaleLowerCase() + "_load_bin.h ;"+ 
         "if ${CCS_HOST_OS} == win32  $(CCS_INSTALL_DIR)/utils/cygwin/rm "+ core.toLocaleLowerCase() + "_load_bin.h;"
     ];
 }
@@ -105,8 +105,6 @@ function getComponentProperty() {
     property.isInternal = false;
     property.description = "PRU ICSS PWM with phase shift PRU Project"
     property.buildOptionCombos = buildOptionCombos;
-    property.pru_main_file = "main";
-    property.pru_linker_file = "linker";
     property.isSkipTopLevelBuild = true;
     property.skipUpdatingTirex = true;
 

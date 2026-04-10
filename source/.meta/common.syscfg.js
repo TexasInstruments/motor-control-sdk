@@ -16,16 +16,6 @@ function getSelfSysCfgCoreName() {
             return "r5fss0-0";
         case "am261x":
             return "r5fss0-0";
-        case "am273x":
-            return "r5fss0-0";
-        case "awr294x":
-            return "r5fss0-0";
-        case "am62x":
-            return "m4fss0-0";
-        case "am65x":
-            return system.context;
-        case "f29h85x":
-            return system.context;
     }
 };
 
@@ -34,10 +24,6 @@ function isSciClientSupported() {
         case "am243x":
             return true;
         case "am64x":
-            return true;
-        case "am65x":
-            return true;
-        case "am62x":
             return true;
         default:
             return false;
@@ -59,7 +45,7 @@ function getDefaultR5Freq()
 {
     let defaultVal = "400MHz";
     if(getSocName() == "am261x" && getSocPackage() == "ZFG")
-    {   
+    {
         defaultVal = "500MHz";
     }
     return defaultVal;
@@ -74,7 +60,7 @@ function getR5Freq()
     {
         let instance = module.$static;
         let config = module.getInstanceConfig(instance);
-        
+
         r5Freq = config.r5ClockFreq;
     }
 
@@ -90,25 +76,13 @@ function getSocName() {
         return "am263x";
     if(system.deviceData.device == "AM263Px")
         return "am263px";
-    if((system.deviceData.device == "AM261x_ZCZ") || (system.deviceData.device == "AM261x_ZFG"))
+    if((system.deviceData.device == "AM261x_ZCZ") || (system.deviceData.device == "AM261x_ZNC") || (system.deviceData.device == "AM261x_ZEJ") || (system.deviceData.device == "AM261x_ZFG") || (system.deviceData.device == "AM261x_ZFG_400"))
         return "am261x";
-    if(system.deviceData.device == "AM273x")
-        return "am273x";
-    if(system.deviceData.device == "AM65xx_SR2.0_beta")
-        return "am65x";
-    if((system.deviceData.device == "AWR294X") || (system.deviceData.device == "AWR294XLOP"))
-        return "awr294x";
-    if(system.deviceData.device == "AM62x")
-        return "am62x";
-    if(system.deviceData.device == "F29H85x")
-        return "f29h85x";
 };
 
 function getDeviceName() {
     if(system.deviceData.device == "AM64x")
         return "am64x-evm";
-    if(system.deviceData.device == "AM65xx_SR2.0_beta")
-        return "am65x-idk";
     if(system.deviceData.device == "AM243x_ALV_beta")
         return "am243x-evm";
     if(system.deviceData.device == "AM243x_ALX_beta")
@@ -121,12 +95,31 @@ function getDeviceName() {
         return "am261x-som";
     if(system.deviceData.device == "AM261x_ZFG")
         return "am261x-lp";
-    if(system.deviceData.device == "AM273x")
-        return "am273x-evm";
-    if(system.deviceData.device == "AWR294X")
-        return "awr294x-evm";
-    if(system.deviceData.device == "AM62x")
-        return "am62x-sk";
+    if(system.deviceData.device == "AM261x_ZFG_400")
+        return "am261x-lp";
+};
+
+function getBoardName() {
+    if(system.deviceData.device == "AM64x")
+        return "am64x-evm";
+    if(system.deviceData.device == "AM243x_ALV_beta")
+        return "am243x-evm";
+    if(system.deviceData.device == "AM243x_ALX_beta")
+        return "am243x-lp";
+    if(system.deviceData.device == "AM263x_beta")
+        return "am263x-cc";
+    if(system.deviceData.device == "AM263Px") {
+        if (system.deviceData.package == "ZCZ_C")
+            return "am263px-lp";
+        if (system.deviceData.package == "ZCZ_S" || system.deviceData.package == "ZCZ_F")
+            return "am263px-cc";
+    }
+    if(system.deviceData.device == "AM261x_ZCZ")
+        return "am261x-som";
+    if(system.deviceData.device == "AM261x_ZFG")
+        return "am261x-lp";
+    if(system.deviceData.device == "AM261x_ZFG_400")
+        return "am261x-lp";
 };
 
 function isCName(id) {
@@ -256,11 +249,7 @@ function isMcuDomainSupported()
     switch(getSocName()) {
         case "am243x":
             return true;
-        case "am65x":
-            return true;
         case "am64x":
-            return true;
-        case "am62x":
             return true;
         default:
             return false;
@@ -306,6 +295,81 @@ function isWakeupDomainSupported()
         default:
             return false;
     }
+}
+function isMSSDomainSupported()
+{
+    switch(getSocName()) {
+        case "am273x":
+            return true;
+        default:
+            return false;
+    }
+}
+
+function getUseMSSDomainPeripheralsConfig()
+{
+  let config = {
+        name: "useMSSDomainPeripherals",
+        displayName: "Use MSS Domain Peripherals",
+        default: false,
+        readOnly: false,
+        onChange: function(inst, ui) {
+            if(inst.useMSSDomainPeripherals == true &&
+                inst.useDSSDomainPeripherals != undefined)
+            {
+                inst.useDSSDomainPeripherals = false;
+            }
+        }
+    }
+
+    if(getSocName().match(/am273x/))
+    {
+        if(getSelfSysCfgCoreName().includes("r5f"))
+        {
+            /*For MSS Domain r5*/
+            config.default = true;
+        }
+
+    }
+
+    return config;
+}
+
+function isDSSDomainSupported()
+{
+    switch(getSocName()) {
+    case "am273x":
+        return true;
+    default:
+        return false;
+    }
+}
+
+function getUseDSSDomainPeripheralsConfig()
+{
+    let config = {
+        name: "useDSSDomainPeripherals",
+        displayName: "Use DSS Domain Peripherals",
+        default: false,
+        readOnly: false,
+        onChange: function(inst, ui) {
+            if(inst.useDSSDomainPeripherals == true &&
+                inst.useMSSDomainPeripherals != undefined)
+            {
+                inst.useMSSDomainPeripherals = false;
+            }
+        }
+    }
+
+    if(getSocName().match(/am273x/))
+    {
+        if(getSelfSysCfgCoreName().includes("c66"))
+        {
+            config.default = true;
+        }
+    }
+
+    return config;
 }
 
 function findDuplicates(arrayToCheck)
@@ -454,6 +518,11 @@ exports = {
     getNodePath,
     getOtherContextNames,
     onMigrate,
+    getBoardName,
+    isDSSDomainSupported,
+    getUseDSSDomainPeripheralsConfig,
+    isMSSDomainSupported,
+    getUseMSSDomainPeripheralsConfig,
 
     validate: {
         checkSameInstanceName : function (instance, report) {

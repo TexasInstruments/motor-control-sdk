@@ -157,48 +157,73 @@ BISSC_CHECK_OPERATING_MODE:
 	.else
 	LBCO 	&SCRATCH2.b0, 	PRUx_DMEM, 	BISSC_OPMODE_CH0_CONFIG_OFFSET, 1
 	.endif
-    ;If opmode=1, Host trigger
-	;If opmode=0, Periodic trigger
-	QBNE	BISSC_HANDLE_HOST_TRIGGER,	SCRATCH2.b0,		0
+	;Operating mode configuration:
+	;  opmode=0: Periodic CMP trigger mode - uses IEP compare events (0-15)
+    ;  opmode=1: Host trigger mode - software-triggered by R5F
+	;  opmode=2: Periodic CAP trigger mode - uses IEP capture events (0-7)
+	QBEQ	BISSC_HANDLE_HOST_TRIGGER,	SCRATCH2.b0,		1
+	QBEQ	BISSC_HANDLE_PERIODIC_TRIGGER_CMP_MODE,	SCRATCH2.b0,	0
 
-BISSC_HANDLE_PERIODIC_TRIGGER:
-	; Get pending events from IEP
-    LBCO    &SCRATCH1,    ICSS_IEP,    ICSS_IEP_CMP_STATUS_REG,    4
-    .if $isdefed("ENABLE_MULTI_MAKE_RTU")
-    ; wait till IEP CH0 CMP event
-    QBBC    BISSC_CHECK_OPERATING_MODE ,    SCRATCH1,    IEP_CH0_CMP_EVNT
-    ; Clear IEP CH0 CMP event
-    LDI SCRATCH1.b0, (1<<IEP_CH0_CMP_EVNT)
-    .elseif $isdefed("ENABLE_MULTI_MAKE_PRU") ;Check PRU host trigger  for ch1
-    ; wait till IEP CH1 CMP event
-    QBBC    BISSC_CHECK_OPERATING_MODE,    SCRATCH1,    IEP_CH1_CMP_EVNT
-    ; Clear IEP CH1 CMP event
-    LDI SCRATCH1.b0, (1<<IEP_CH1_CMP_EVNT)
-    .elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
-    ; wait till IEP CH2 CMP event
-    QBBC    BISSC_CHECK_OPERATING_MODE,    SCRATCH1,    IEP_CH2_CMP_EVNT
-    ; Clear IEP CH2 CMP event
-    LDI SCRATCH1.b0, (1<<IEP_CH2_CMP_EVNT)
-    .else
-    ; wait till IEP CH0 CMP event
-    QBBC    BISSC_CHECK_OPERATING_MODE,    SCRATCH1,    IEP_CH0_CMP_EVNT
-    ; Clear IEP CH2 CMP event
-    LDI SCRATCH1.b0, (1<<IEP_CH0_CMP_EVNT)
-    .endif
-    ; store compare event status
-    SBCO	&SCRATCH1,	ICSS_IEP,  ICSS_IEP_CMP_STATUS_REG,	4
-BISSC_SKIP_IEP_CMP_STATUS?:
-    ; SET command TRIGGER
-    LDI		SCRATCH1.b0,	1
+BISSC_HANDLE_PERIODIC_TRIGGER_CAP_MODE:
+	; Periodic CAP Mode: Wait for external event captured by IEP
+	; - Reads IEP base address dynamically from DMEM
+	; - Monitors CAP event status register for configured event
+	; - Clears event by reading capture register value
+
+	; Get IEP instance from DMEM (offset > 255, load offset first)
+	LDI		SCRATCH1.w0,	BISSC_IEP_BASE_ADDR_OFFSET
+	LBCO	&SCRATCH2,	PRUx_DMEM,	SCRATCH1.w0,	4
+	LBBO	&SCRATCH.w0,	SCRATCH2,	ICSS_IEP_CAP_STATUS_REG,	2
+
+	; Wait till IEP CAP event
+	LDI		SCRATCH1.w0,	BISSC_IEP_CAP_EVENT_OFFSET
+	LBCO	&SCRATCH3.b0,	PRUx_DMEM,	SCRATCH1.w0,	1
+	QBBC	BISSC_CHECK_OPERATING_MODE,	SCRATCH.w0,	SCRATCH3.b0
+	; Read cap register offset from DMEM
+	LDI		SCRATCH1.w0,	BISSC_IEP_CAPTURE_REG_OFFSET
+	LBCO	&SCRATCH,	PRUx_DMEM,	SCRATCH1.w0,	4
+	; Clear capture event by reading capture register value
+	LBBO	&SCRATCH1,	SCRATCH,	0,	4
+
+	JMP	SET_TRIGGER_BIT
+
+BISSC_HANDLE_PERIODIC_TRIGGER_CMP_MODE:
+	; Periodic CMP Mode: Wait for IEP counter to match compare value
+	; - Reads IEP base address dynamically from DMEM
+	; - Monitors CMP event status register for configured event
+	; - Clears event by writing to CMP status register
+
+	; Get IEP instance from DMEM (offset > 255, load offset first)
+	LDI		SCRATCH1.w0,	BISSC_IEP_BASE_ADDR_OFFSET
+	LBCO	&SCRATCH2,	PRUx_DMEM,	SCRATCH1.w0,	4
+	LBBO	&SCRATCH.w0,	SCRATCH2,	ICSS_IEP_CMP_STATUS_REG,	2
+
+	; Wait till IEP CMP event get set
+	LDI		SCRATCH1.w0,	BISSC_IEP_CMP_EVENT_OFFSET
+	LBCO	&SCRATCH3.b0,	PRUx_DMEM,	SCRATCH1.w0,	1
+	QBBC	BISSC_CHECK_OPERATING_MODE,	SCRATCH.w0,	SCRATCH3.b0
+	; Clear IEP CMP event
+	LDI	SCRATCH2.w0,	1
+	LSL	SCRATCH2.w0,	SCRATCH2.w0,	SCRATCH3.b0
+
+	; Get IEP instance from DMEM to write clear status (offset > 255, load offset first)
+	LDI		SCRATCH1.w0,	BISSC_IEP_BASE_ADDR_OFFSET
+	LBCO	&SCRATCH3,	PRUx_DMEM,	SCRATCH1.w0,	4
+	SBBO	&SCRATCH2.w0,	SCRATCH3,	ICSS_IEP_CMP_STATUS_REG,	2
+
+SET_TRIGGER_BIT:
+	; SET command TRIGGER
+	LDI	SCRATCH1.b0,	1
 	.if $isdefed("ENABLE_MULTI_MAKE_RTU")
-	SBCO    &SCRATCH1.b0,	PRUx_DMEM, BISSC_CYCLE_TRIGGER_CH0_STATUS_OFFSET,	1
+	SBCO	&SCRATCH1.b0,	PRUx_DMEM,	BISSC_CYCLE_TRIGGER_CH0_STATUS_OFFSET,	1
 	.elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
-	SBCO    &SCRATCH1.b0,	PRUx_DMEM, BISSC_CYCLE_TRIGGER_CH1_STATUS_OFFSET,	1
+	SBCO	&SCRATCH1.b0,	PRUx_DMEM,	BISSC_CYCLE_TRIGGER_CH1_STATUS_OFFSET,	1
 	.elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
-	SBCO    &SCRATCH1.b0,	PRUx_DMEM, BISSC_CYCLE_TRIGGER_CH2_STATUS_OFFSET,	1
+	SBCO	&SCRATCH1.b0,	PRUx_DMEM,	BISSC_CYCLE_TRIGGER_CH2_STATUS_OFFSET,	1
 	.else
-	SBCO    &SCRATCH1.b0,	PRUx_DMEM, BISSC_CYCLE_TRIGGER_CH0_STATUS_OFFSET,	1
+	SBCO	&SCRATCH1.b0,	PRUx_DMEM,	BISSC_CYCLE_TRIGGER_CH0_STATUS_OFFSET,	1
 	.endif
+
 BISSC_HANDLE_HOST_TRIGGER:
     ;If Host Trigger=1, request made by R5F to Firmware, now Firmware do processing and when done set trigger to 0 so that R5F application can act further.
 	.if $isdefed("ENABLE_MULTI_MAKE_RTU")
@@ -689,8 +714,21 @@ BISSC_CTRL_COMMUNICATION_SKIP?:
 	M_BISSC_SAFETY_POST_PROCESSING
 	NOP
 BISSC_SKIP_SAFETY_POSTPROCESSING:
-	LDI 	SCRATCH1, BISSC_CONFIG_DELAY_40US_OFFSET
-	LBCO 	&SCRATCH2, PRUx_DMEM, SCRATCH1, 4 ;wait here for 40(biss_timeout))  useconds
+	; Load appropriate timeout value based on channel and PRU core configuration
+	.if $isdefed("ENABLE_MULTI_MAKE_RTU")
+	; RTU-PRU always handles CH0
+	LDI 	SCRATCH1, BISSC_CH0_ENCODER_TIMEOUT_OFFSET
+	.elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
+	; PRU always handles CH1
+	LDI 	SCRATCH1, BISSC_CH1_ENCODER_TIMEOUT_OFFSET
+	.elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
+	; TXPRU always handles CH2
+	LDI 	SCRATCH1, BISSC_CH2_ENCODER_TIMEOUT_OFFSET
+	.else
+	; Single channel or multi channel single PRU
+	LDI 	SCRATCH1, BISSC_CH0_ENCODER_TIMEOUT_OFFSET
+	.endif
+	LBCO 	&SCRATCH2, PRUx_DMEM, SCRATCH1, 4
 	LSR		SCRATCH2, SCRATCH2, 1
 BISSC_DELAY_LOOP1?:
 	SUB 	SCRATCH2, SCRATCH2, 1
@@ -738,9 +776,9 @@ BISSC_SKIP_RESET_BIT?:
 	LDI 	R30.b3, 0
 	.if $isdefed("ENABLE_MULTI_MAKE_RTU")
 	;skip interrupt to R5F in host trigger
-	QBNE 	BISSC_SKIP_INTERRUPT_TRIGGER, STATUS_REG1, 0
+	QBEQ 	BISSC_SKIP_INTERRUPT_TRIGGER, STATUS_REG1, 1
 	;Generate interrupt to R5F
-    LDI     R31.w0, BISSC_RTU_TRIGGER_HOST_EVT;				(pr0_pru_mst_intr[2]_intr_req)
+    LDI     R31.w0, BISSC_RTU_TRIGGER_HOST_EVT
 BISSC_SKIP_INTERRUPT_TRIGGER:
 	M_BISSC_LS_WAIT_FOR_SYNC
 	QBBC	BISSC_SKIP_GLOBAL_REINIT?, PRIMARY_CORE, 0
@@ -748,9 +786,9 @@ BISSC_SKIP_INTERRUPT_TRIGGER:
 	M_BISSC_LS_CLEAR
 	.elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
 	;skip interrupt to R5F in host trigger
-	QBNE 	BISSC_SKIP_INTERRUPT_TRIGGER, STATUS_REG1, 0
+	QBEQ 	BISSC_SKIP_INTERRUPT_TRIGGER, STATUS_REG1, 1
 	;Generate interrupt to R5F
-    LDI     R31.w0, BISSC_PRU_TRIGGER_HOST_EVT;				(pr0_pru_mst_intr[3]_intr_req)
+    LDI     R31.w0, BISSC_PRU_TRIGGER_HOST_EVT
 BISSC_SKIP_INTERRUPT_TRIGGER:
 	M_BISSC_LS_WAIT_FOR_SYNC
 	QBBC	BISSC_SKIP_GLOBAL_REINIT?, PRIMARY_CORE, 1
@@ -758,9 +796,9 @@ BISSC_SKIP_INTERRUPT_TRIGGER:
 	M_BISSC_LS_CLEAR
 	.elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
 	;skip interrupt to R5F in host trigger
-	QBNE 	BISSC_SKIP_INTERRUPT_TRIGGER, STATUS_REG1, 0
+	QBEQ 	BISSC_SKIP_INTERRUPT_TRIGGER, STATUS_REG1, 1
 	;Generate interrupt to R5F
-    LDI     R31.w0, BISSC_TXPRU_TRIGGER_HOST_EVT;			(pr0_pru_mst_intr[4]_intr_req)
+    LDI     R31.w0, BISSC_TXPRU_TRIGGER_HOST_EVT
 BISSC_SKIP_INTERRUPT_TRIGGER:
 	M_BISSC_LS_WAIT_FOR_SYNC
 	QBBC	BISSC_SKIP_GLOBAL_REINIT?, PRIMARY_CORE, 2
@@ -768,9 +806,9 @@ BISSC_SKIP_INTERRUPT_TRIGGER:
 	M_BISSC_LS_CLEAR
 	.else
 	;skip interrupt to R5F in host trigger
-	QBNE 	BISSC_SKIP_INTERRUPT_TRIGGER, STATUS_REG1, 0
+	QBEQ 	BISSC_SKIP_INTERRUPT_TRIGGER, STATUS_REG1, 1
 	;Generate interrupt to R5F
-    LDI     R31.w0, BISSC_RTU_TRIGGER_HOST_EVT;				(pr0_pru_mst_intr[2]_intr_req)
+    LDI     R31.w0, BISSC_PRU_TRIGGER_HOST_EVT
 BISSC_SKIP_INTERRUPT_TRIGGER:
 	SET 	R31, BISSC_TX_GLOBAL_REINIT ; Set TX_EN low
 	.endif

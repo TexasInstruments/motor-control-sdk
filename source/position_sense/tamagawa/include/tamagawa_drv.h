@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2022 Texas Instruments Incorporated
+ *  Copyright (C) 2022-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -39,6 +39,24 @@
  *
  * Here is the list of APIs used for Tamagawa encoder communication protocol
  *
+ *  \par Validation Strategy
+ *  Tamagawa driver APIs use following validation approach:
+ *  - **Handle validation**: All public APIs validate the handle parameter for NULL
+ *  - **Array bounds checking**: APIs with array parameters or index parameters perform bounds validation
+ *  - **Internal structure validation**: All APIs validate internal structure pointers (attrs, priv, tamagawa_xchg, pruicss_handle, etc.)
+ *    for NULL before dereferencing to provide protection against NULL pointer dereferences
+ *
+ *  @{
+ */
+
+/**
+ *  \ingroup TAMAGAWA_API_MODULE
+ *  \defgroup TAMAGAWA_INTERFACE_MODULE Tamagawa PRU-ICSS Interface Structures
+ *
+ *  This module contains structures that define the PRU-ICSS firmware interface
+ *  for Tamagawa encoder communication. These structures are mapped to PRU DRAM
+ *  and provide the communication interface between ARM and PRU cores.
+ *
  *  @{
  */
 
@@ -50,10 +68,10 @@ extern "C" {
 /*                             Include Files                                  */
 /* ========================================================================== */
 
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-
 #include <drivers/pruicss.h>
 
 /* ========================================================================== */
@@ -61,506 +79,983 @@ extern "C" {
 /* ========================================================================== */
 
 /**
- *  \brief 3 channel Peripheral clock Source 
+ *  \brief  Maximum number of channels supported per PRU slice
  */
-#define PRU_UART_CLOCK_SOURCE  (0)
-#define PRU_CORE_CLOCK_SOURCE  (1)
+#define TAMAGAWA_MAX_CHANNELS_PER_SLICE             (3)
 
-/**
- *  \brief  Used to set the value of Tamagawa multi-channel mask based on the whether the Channel 0 is selected or not
+/** \brief Single PRU - Single channel configuration mode
+ *
+ *  Only one channel (ch0, ch1, or ch2) is used with a single PRU core.
+ *  This is the simplest configuration for single encoder applications.
  */
-#define TAMAGAWA_MULTI_CH0 (1 << 0)
+#define TAMAGAWA_MODE_SINGLE_CHANNEL_SINGLE_PRU     (0U)
 
-/**
- *  \brief  Used to set the value of Tamagawa multi-channel mask based on the whether the Channel 1 is selected or not
+/** \brief Single PRU - Multichannel configuration mode
+ *
+ *  Multiple channels (up to 3: ch0, ch1, ch2) are managed by a single PRU core.
+ *  All channels share the same PRU core resources without load sharing.
  */
-#define TAMAGAWA_MULTI_CH1 (1 << 1)
+#define TAMAGAWA_MODE_MULTI_CHANNEL_SINGLE_PRU      (1U)
 
-/**
- *  \brief  Used to set the value of Tamagawa multi-channel mask based on the whether the Channel 2 is selected or not
+/** \brief Multi PRU - Load share configuration mode
+ *
+ *  Multiple channels are distributed across multiple PRU cores with load sharing.
+ *  Each PRU core handles different channels with synchronized global reinit operations.
  */
-#define TAMAGAWA_MULTI_CH2 (1 << 2)
+#define TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU       (2U)
 
 /**
- *  \brief  Used to set the maximum channels supported
+ *  \brief  Tamagawa operation mode: Periodic trigger mode using iep compare event
+ *
+ *  In periodic mode, the PRU firmware automatically triggers position readout
+ *  based on IEP compare events.
  */
-#define MAX_CHANNELS (3)
+#define TAMAGAWA_OPMODE_PERIODIC_CMP                (0x0U)
 
 /**
- *  \brief  Used to set the maximum address that can be used for EEPROM Read/Write
+ *  \brief  Tamagawa operation mode: Host trigger
+ *
+ *  In host trigger mode, the R5F host processor explicitly triggers
+ *  each position readout by setting the trigger bit.
  */
-#define MAX_EEPROM_ADDRESS (127)
+#define TAMAGAWA_OPMODE_HOST_TRIGGER                (0x1U)
 
 /**
- *  \brief  Used to set the maximum value that can be written in EEPROM
+ *  \brief  Tamagawa operation mode: Periodic trigger mode using iep capture event
+ *
+ *  In periodic mode, the PRU firmware automatically triggers position readout
+ *  based on IEP capture events.
  */
-#define MAX_EEPROM_WRITE_DATA (255)
+#define TAMAGAWA_OPMODE_PERIODIC_CAP                (0x2U)
 
 /**
- * 
- * \brief  Used to set the Rx oversampling rate
- * 
-*/
-#define TAMAGAWA_RX_OVERSAMPLING_RATE    (8)
-
+ *  \brief  Enable cycle trigger for firmware
+ */
+#define TAMAGAWA_ENABLE_CYCLE_TRIGGER               (0x1)
 
 /**
-*    \brief    Data ID codes
-*/
-enum data_id
+ *  \brief  Disable cycle trigger for firmware
+ */
+#define TAMAGAWA_DISABLE_CYCLE_TRIGGER              (0x0)
+
+/** \brief Allowed Tamagawa communication frequency: 2.5 MHz */
+#define TAMAGAWA_FREQ_2_5_MHZ                       (2500000U)
+
+/** \brief Allowed Tamagawa communication frequency: 5 MHz */
+#define TAMAGAWA_FREQ_5_MHZ                         (5000000U)
+
+/**
+ *  \brief  Maximum IEP CAP event number (0-7)
+ *  \details IEP supports 8 capture events (CAP0-CAP7)
+ */
+#define TAMAGAWA_IEP_MAX_CAP_EVENT                  (0x8U)
+
+/**
+ *  \brief  Maximum IEP CMP event number (0-15)
+ *  \details IEP supports 16 compare events (CMP0-CMP15)
+ */
+#define TAMAGAWA_IEP_MAX_CMP_EVENT                  (0x10U)
+
+/**
+ *  \brief  Maximum EEPROM address that can be used for EEPROM Read/Write
+ */
+#define TAMAGAWA_MAX_EEPROM_ADDRESS                 (127)
+
+/**
+ *  \brief  Maximum value that can be written to EEPROM
+ */
+#define TAMAGAWA_MAX_EEPROM_WRITE_DATA              (255)
+
+/**
+ *  \brief  RX oversampling rate. Set 7 for 8x oversampling.
+ */
+#define TAMAGAWA_RX_OVERSAMPLING_RATE               (7)
+
+/**
+ *  \brief  Delay counter increment value. 5 ns based on 200 MHz clock,
+ *          as Three Channel Peripheral interface needs this value in
+ *          200 MHz clock units.
+ */
+#define TAMAGAWA_DELAY_COUNTER_INCREMENT            (5)
+
+/**
+ *  \brief  Number of bytes in CRC calculation for EEPROM Write (CF + ADF + EDF)
+ */
+#define TAMAGAWA_EEPROM_WRITE_CRC_BYTES             (3)
+
+/**
+ *  \brief  Number of bytes in CRC calculation for EEPROM Read (CF + ADF)
+ */
+#define TAMAGAWA_EEPROM_READ_CRC_BYTES              (2)
+
+/**
+ *  \brief  Number of bits in a byte
+ */
+#define TAMAGAWA_BITS_PER_BYTE                      (8)
+
+/**
+ *  \brief  CRC calculation array size for storing frame data
+ */
+#define TAMAGAWA_CRC_DATA_ARRAY_SIZE                (12)
+
+/**
+ *  \brief  Default command process delay in microseconds
+ *
+ *  This delay is used in command wait loops to prevent busy-waiting and
+ *  allow timeout detection. Can be overridden via tamagawa_params.
+ */
+#define TAMAGAWA_DEFAULT_CMD_WAIT_DELAY_US          (100)
+
+/**
+ *  \brief  Default maximum wait loop count
+ *
+ *  Maximum number of wait loop iterations in \ref tamagawa_command_wait to detect
+ *  communication failures. The actual timeout is: max_wait_loop_count × cmd_wait_delay_us.
+ *  With defaults (50 × 100 us = 5000 us). Can be overridden via tamagawa_params.
+ */
+#define TAMAGAWA_DEFAULT_MAX_WAIT_LOOP_COUNT        (50U)
+
+/**
+ *  \brief  Tamagawa EEPROM Control Field value for Write operation
+ */
+#define TAMAGAWA_CF_EEPROM_WRITE                    (0x32U)
+
+/**
+ *  \brief  Tamagawa EEPROM Control Field value for Read operation
+ */
+#define TAMAGAWA_CF_EEPROM_READ                     (0xEAU)
+/**
+ * \brief IEP CAP0 register offset - cslr common file does not have defined cap registers
+ * FIXME: Remove these definitions once they are available in cslr_common.h
+ */
+#define TAMAGAWA_CFG_REG_SIZE                       (4U)
+#define TAMAGAWA_CSL_ICSS_PR1_IEP0_SLV_CAP0_REG0    (CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG + 2U*TAMAGAWA_CFG_REG_SIZE)
+
+/**
+ * \brief 8-byte register offset for IEP registers
+ */
+#define TAMAGAWA_8_BYTE_REG_OFFSET                  (8U)
+
+/**
+ *  \brief  Tamagawa Data ID codes
+ */
+typedef enum tamagawa_data_id_e
 {
-    DATA_ID_0,  /**< Data readout data in one revolution */
-    DATA_ID_1,  /**< Data readout multi-turn data */
-    DATA_ID_2,  /**< Data readout encoder ID */
-    DATA_ID_3,  /**< Data readout data in one revolution, encoder ID, multi-turn, encoder error */
+    DATA_ID_0,  /**< Data readout: data in one revolution */
+    DATA_ID_1,  /**< Data readout: multi-turn data */
+    DATA_ID_2,  /**< Data readout: encoder ID */
+    DATA_ID_3,  /**< Data readout: data in one revolution, encoder ID, multi-turn, encoder error */
     DATA_ID_6,  /**< EEPROM write */
     DATA_ID_7,  /**< Reset */
     DATA_ID_8,  /**< Reset */
     DATA_ID_C,  /**< Reset */
     DATA_ID_D,  /**< EEPROM read */
-    PERIODIC_TRIGGER_CMD, /**< periodic trigger command */
+    PERIODIC_TRIGGER_CMP_CMD, /**< Periodic trigger command using IEP compare event */
+    PERIODIC_TRIGGER_CAP_CMD, /**< Periodic trigger command using IEP capture event */
     DATA_ID_NUM /**< Number of Data ID codes */
-};
+} tamagawa_data_id;
 
 /* ========================================================================== */
 /*                         Structure Declarations                             */
 /* ========================================================================== */
 
 /**
- *    \brief    Structure defining tamagawa per channel interface
+ *    \brief    Structure defining Tamagawa per channel interface
  *
- *    \details  Firmware per channel interface
+ *    \details  Firmware per channel interface containing received data words
+ *              and calculated CRC for each channel
  */
-struct tamagawa_ch_info
+typedef struct tamagawa_ch_info_s
 {
-    volatile uint32_t    pos_word0;          /**<word0 for receiving Rx data  */
-
-    volatile uint32_t   pos_word1;          /**<word1 for receiving Rx data  */
-
-    volatile uint32_t   pos_word2;          /**<word2 for receiving Rx data  */
-
-    volatile uint32_t  cal_crc;             /**<word for receiving the CRC  */
-
-};
+    volatile uint32_t pos_word0;
+        /**< Word 0 for receiving RX data */
+    volatile uint32_t pos_word1;
+        /**< Word 1 for receiving RX data */
+    volatile uint32_t pos_word2;
+        /**< Word 2 for receiving RX data */
+    volatile uint32_t cal_crc;
+        /**< Word for receiving the calculated CRC */
+} tamagawa_ch_info;
 
 /**
  *    \brief    Structure defining Tamagawa command interface
  *
- *    \details  Firmware command interface
+ *    \details  Firmware command interface used to send commands to the encoder
  */
-struct tamagawa_cmd
+typedef struct tamagawa_cmd_s
 {
-    volatile uint32_t   word0;/**< command,                                                         <br>
-                                    [Byte 0] control field <br> **/
-    volatile uint32_t   word1;/**< command parameters,                                              <br>
-                                    [Byte 0] No. of Tx frames                                        <br>
-                                    [Byte 1] No. of Rx frames                                        <br>
-
-                                    */
-
-};
+    volatile uint32_t word0;
+        /**< Command word 0: [Byte 0] control field */
+    volatile uint32_t word1;
+        /**< Command word 1: [Byte 0] No. of TX frames, [Byte 1] No. of RX frames */
+} tamagawa_cmd;
 
 /**
  *    \brief    Structure defining Tamagawa configuration interface
  *
- *    \details  Firmware configuration interface
+ *    \details  Firmware configuration interface for operation mode and channel selection
  */
-struct tamagawa_config
+typedef struct tamagawa_fw_config_s
 {
-    volatile uint8_t  opmode;/**< operation mode selection: 0 - periodic trigger, 1 - host trigger */
-    volatile uint8_t  channel;/**< channel mask (1 << channel), 0 < channel < 3. This has to be      <br>
-                                        selected before running firmware. Once initialization is complete,<br>
-                                        it will reflect the detected channels in the selected mask.       <br>
-                                        Multichannel can have upto 3 selected, while single channel only one */
-    volatile uint8_t  trigger;/**< command trigger. Set LSB to send cmd, will be cleared upon cmd    <br>
-                                        completion. Note that cmd has to be setup before trigger */
-    volatile uint8_t  status;/**< initialization status: 1 - upon successful.  */
-};
+    volatile uint8_t opmode;
+        /**< Operation mode selection:
+         *   - 0: TAMAGAWA_OPMODE_PERIODIC_CMP (periodic trigger using IEP compare event)
+         *   - 1: TAMAGAWA_OPMODE_HOST_TRIGGER (host trigger mode)
+         *   - 2: TAMAGAWA_OPMODE_PERIODIC_CAP (periodic trigger using IEP capture event) */
+    volatile uint8_t channel;
+        /**< Channel mask (1 << channel), channel = 0, 1, or 2. This must be selected before running firmware.
+             Once initialization is complete, it will reflect the detected channels in the selected mask.
+             Multi-channel can have up to 3 channels selected, single channel only one */
+    volatile uint8_t trigger;
+        /**< Command trigger: Set LSB to send command, will be cleared upon command completion.
+             Note that command must be set up before trigger */
+    volatile uint8_t status;
+} tamagawa_fw_config;
 
 /**
- * \brief Tamagawa Interface Received data
- **/
-struct rx_frames_received
-{
-    uint32_t abs;   /**< Data in one revolution */
-    uint32_t abm;   /**< Multi-turn Data */
-    uint8_t  cf;    /**< Control Frame */
-    uint8_t  sf;    /**< Status Frame */
-    uint8_t  enid;  /**< Encoder ID */
-    uint8_t  almc;  /**< Encoder error */
-    uint8_t  adf;   /**< EEPROM address */
-    uint8_t  edf;   /**< EEPROM data */
-    uint8_t  crc;   /**< CRC */
-};
-/**
- * \brief Tamagawa Interface
- */
-struct tamagawa_interface
-{
-    uint8_t ch_mask;   //**< Mask for what channel is required*/
-    volatile uint32_t  rx_div_factor;   //**< Rx Divide factor*/
-
-    volatile uint32_t  tx_div_factor;   //**< Tx Divide factor*/
-
-    volatile uint32_t  oversample_rate; //**< Oversampling rate*/
-
-    uint32_t version;  /**< Firmware version */
-    uint8_t  data_id;  /**< Data ID code */
-    struct rx_frames_received rx_frames_received;      /**< Received data */
-    uint8_t tx_frames;  /**< Number of Tx frames */
-    uint8_t rx_frames;  /**< Number of Rx frames */
-};
-
-struct config
-{
-    uint8_t  ch0;   /**< config for channel 0 */
-    uint8_t  ch1;   /**< config for channel 1 */
-    uint8_t  ch2;   /**< config for channel 2 */
-};
-
-/**
- * \brief Tamagawa EEPROM Interface
- */
-struct tamagawa_eeprom_interface
-{
-    volatile uint32_t cmd; /**< holds the value of command id for EEPROM commands */
-    volatile uint32_t adf; /**< holds the value of ADF for EEPROM commands */
-    volatile uint32_t edf; /**< holds the value of EDF for EEPROM Write command */
-    volatile uint32_t crc; /**< holds the value of CRC for EEPROM commands */
-
-    volatile uint32_t word0; /**< used for CRC calculation */
-    volatile uint32_t word1; /**< used for CRC calculation */
-    volatile uint32_t word2; /**< used for CRC calculation */
-
-    uint64_t eeprom_tx_data; /**< used to store the bits for tx in eeprom read/write */
-};
-
-
-/**
- *    \brief    Structure defining Tamagawa interface
+ * \brief Tamagawa received frame data
  *
- *    \details  Firmware config, command and channel interface
- *
+ * \details This structure contains all the parsed fields from a received Tamagawa frame
  */
-struct tamagawa_xchg
+typedef struct tamagawa_rx_frames_s
 {
-    struct tamagawa_config   config;/**< config interface */
-    struct tamagawa_cmd      cmd;/**< command interface */
-    struct tamagawa_ch_info  ch[3];/**< per channel interface */
-
-    struct tamagawa_interface tamagawa_interface;/**< tamagawa interface */
-    struct tamagawa_eeprom_interface tamagawa_eeprom_interface[3];/**< tamagawa interface for EEPROM commands */
-};
+    uint32_t abs;
+        /**< Data in one revolution (absolute position) */
+    uint32_t abm;
+        /**< Multi-turn data (absolute multi-turn) */
+    uint8_t cf;
+        /**< Control Frame */
+    uint8_t sf;
+        /**< Status Frame */
+    uint8_t enid;
+        /**< Encoder ID */
+    uint8_t almc;
+        /**< Encoder error */
+    uint8_t adf;
+        /**< EEPROM address */
+    uint8_t edf;
+        /**< EEPROM data */
+    uint8_t crc;
+        /**< CRC */
+} tamagawa_rx_frames;
 
 /**
- * \brief   Used to configure the Tamagawa Clock.
+ * \brief Tamagawa main interface structure
  *
+ * \details This structure contains the main firmware interface parameters including
+ *          channel configuration, clock settings, and received data
  */
-struct tamagawa_clk_cfg
+typedef struct tamagawa_interface_s
 {
-    uint16_t  rx_div;   /**< Rx Div factor*/
-    uint16_t  tx_div;   /**< Tx Div factor*/
-    uint16_t  rx_os_rate; /*rx oversample rate*/
-    uint8_t   rx_clk_source; /*rx clock source*/
-    uint8_t   tx_clk_source; /*tx clock source*/
-};
-
-
-/**
- * \brief   Used to store the register offsets depending on different PRU slices.
- *
- */
-struct register_offsets
-{
-    int32_t ICSS_CFG_PRUx_ED_CH0_CFG0;
-    int32_t ICSS_CFG_PRUx_ED_CH1_CFG0;
-    int32_t ICSS_CFG_PRUx_ED_CH2_CFG0;
-    int32_t ICSS_CFG_PRUx_ED_CH0_CFG1;
-    int32_t ICSS_CFG_PRUx_ED_CH1_CFG1;
-    int32_t ICSS_CFG_PRUx_ED_CH2_CFG1;
-    int32_t ICSS_CFG_GPCFGx;
-    int32_t ICSS_CFG_PRUx_ED_RXCFG;
-    int32_t ICSS_CFG_PRUx_ED_TXCFG;
-};
+    uint32_t version;
+        /**< Firmware version */
+    uint8_t data_id;
+        /**< Data ID code */
+    tamagawa_rx_frames rx_frames_received;
+        /**< Received data frames */
+    uint8_t tx_frames;
+        /**< Number of TX frames */
+    uint8_t rx_frames;
+        /**< Number of RX frames */
+} tamagawa_interface;
 
 /**
- * \brief   Used to structures defining the Tamagawa interface, PRU slice and register offsets.
+ * \brief Tamagawa channel configuration structure
  *
+ * \details Configuration for individual channel enable/disable
  */
-struct tamagawa_priv
+typedef struct tamagawa_channel_config_s
 {
-    int32_t channel;    /**< Holds the ID of the current channel being used*/
+    uint8_t ch0;
+        /**< Configuration for channel 0 */
+    uint8_t ch1;
+        /**< Configuration for channel 1 */
+    uint8_t ch2;
+        /**< Configuration for channel 2 */
+} tamagawa_channel_config;
+
+/**
+ * \brief   Tamagawa periodic trigger configuration structure
+ *
+ * \details Contains IEP event configuration for periodic trigger mode per channel
+ */
+typedef struct tamagawa_periodic_trigger_cfg_s
+{
+    volatile uint8_t iep_cmp_event;
+    /**< IEP compare event number for periodic CMP mode */
+    volatile uint8_t iep_cap_event;
+    /**< IEP capture event number for periodic CAP mode */
+    volatile uint16_t reserved;
+    /**< Reserved for alignment */
+    volatile uint32_t iep_capture_reg;
+    /**< IEP capture register address for periodic CAP mode */
+} tamagawa_periodic_trigger_cfg;
+
+/**
+ * \brief Tamagawa EEPROM interface structure
+ *
+ * \details Structure containing EEPROM command parameters and TX data preparation
+ */
+typedef struct tamagawa_eeprom_interface_s
+{
+    volatile uint32_t cmd;
+        /**< Holds the value of command ID for EEPROM commands */
+    volatile uint32_t adf;
+        /**< Holds the value of ADF (EEPROM address) for EEPROM commands */
+    volatile uint32_t edf;
+        /**< Holds the value of EDF (EEPROM data) for EEPROM Write command */
+    volatile uint32_t crc;
+        /**< Holds the value of CRC for EEPROM commands */
+    volatile uint32_t word0;
+        /**< Used for CRC calculation */
+    volatile uint32_t word1;
+        /**< Used for CRC calculation */
+    volatile uint32_t word2;
+        /**< Used for CRC calculation */
+    uint64_t eeprom_tx_data;
+        /**< Used to store the bits for TX in EEPROM read/write */
+} tamagawa_eeprom_interface;
+
+/**
+ *    \brief    Structure defining complete Tamagawa PRU-ICSS exchange interface
+ *
+ *    \details  This is the top-level structure mapped to PRU DRAM that contains
+ *              all firmware interfaces for configuration, command, per-channel data,
+ *              and EEPROM operations
+ */
+typedef struct tamagawa_xchg_s
+{
+    tamagawa_fw_config config[TAMAGAWA_MAX_CHANNELS_PER_SLICE];
+        /**< Firmware configuration interface (Only index 0 is used when load share is disabled) */
+    tamagawa_cmd cmd[TAMAGAWA_MAX_CHANNELS_PER_SLICE];
+        /**< Command interface (Only index 0 is used when load share is disabled) */
+    tamagawa_ch_info ch[TAMAGAWA_MAX_CHANNELS_PER_SLICE];
+        /**< Per-channel interface array (3 channels) */
+    tamagawa_eeprom_interface tamagawa_eeprom_interface[TAMAGAWA_MAX_CHANNELS_PER_SLICE];
+        /**< Tamagawa interface for EEPROM commands (Only index 0 is used when load share is disabled)*/
+    volatile uint8_t execution_state[TAMAGAWA_MAX_CHANNELS_PER_SLICE];
+    /**< PRU firmware execution state for load share mode synchronization.
+     *   Used internally by firmware to coordinate multi-PRU operations */
+    volatile uint8_t primary_core_mask;
+    /**< Primary PRU core mask for load share mode synchronization (0x1, 0x2, or 0x4).
+     *   Indicates which channel's PRU acts as primary coordinator */
+    volatile uint32_t iep_base_addr;
+        /**< IEP base address for periodic trigger mode */
+    tamagawa_periodic_trigger_cfg trigger_params[TAMAGAWA_MAX_CHANNELS_PER_SLICE];
+        /**< Periodic trigger configuration parameters for each channel (ch0, ch1, ch2).
+         *   Contains IEP event numbers and capture register addresses */
+} tamagawa_xchg;
+
+/**
+ * \brief   Tamagawa clock configuration structure
+ *
+ * \details Used to configure the Tamagawa clock dividers and source selection
+ */
+typedef struct tamagawa_clk_cfg_s
+{
+    /** RX divide factor */
+    uint16_t rx_div;
+    /** TX divide factor */
+    uint16_t tx_div;
+    /** RX oversample rate */
+    uint16_t rx_os_rate;
+    /** RX clock source (0: UART clock, 1: Core clock) */
+    uint8_t rx_clk_source;
+    /** TX clock source (0: UART clock, 1: Core clock) */
+    uint8_t tx_clk_source;
+    /** RX enable counter */
     uint16_t rx_en_cnt;
-    struct tamagawa_xchg *tamagawa_xchg;    /**<Structure defining Tamagawa interface*/
-    void *pruss_cfg;    /**< ICSS PRU config base address*/
-    int32_t slice_value;    /**< PRUx Slice being used*/
-    struct register_offsets register_offset_val;    /**< Register offset values based on PRUx slice selection*/
-    void *pruss_iep; /**< ICSS IEP base address*/
-    uint64_t periodic_trigger_count; /**< IEP CMP event used in periodic trigger mode */
-    uint64_t iep_reset_count; /**<IEP CMP0 reg used in periodic trigger mode to reset IEP*/
-    uint64_t pru_clock; /**<PRU CORE Clock*/
-    uint64_t pru_uart_clock; /*ICSS PRU UART clock value*/
-    uint8_t rx_clock_source; /*3 channel Peripheral RX clock source*/
-    uint8_t tx_clock_source; /*3 channel Peripheral TX clock source*/
-};
+} tamagawa_clk_cfg;
+
+/**
+ * \brief   Tamagawa attributes structure
+ *
+ * \details Contains compile-time configuration parameters from SysConfig.
+ *          This structure is read-only and populated by SysConfig-generated code.
+ */
+typedef struct tamagawa_attrs_s
+{
+    /** Tamagawa instance index */
+    uint8_t instance;
+    /**< Tamagawa configuration mode.
+     *   0 = TAMAGAWA_MODE_SINGLE_CHANNEL_SINGLE_PRU (one channel, one PRU)
+     *   1 = TAMAGAWA_MODE_MULTI_CHANNEL_SINGLE_PRU (multiple channels, one PRU)
+     *   2 = TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU (multiple channels, load-share mode) */
+    uint8_t mode;
+    /** PRU-ICSS instance (0 or 1) */
+    uint8_t pruicss_instance;
+    /** PRU slice (0 = PRU0, 1 = PRU1) */
+    uint8_t pruicss_slice;
+    /** Channel mask indicating enabled channels (bit 0: Ch0, bit 1: Ch1, bit 2: Ch2) */
+    uint8_t channel_mask;
+    /** Channel 0 enabled flag (0 or 1) */
+    uint8_t channel0_enabled;
+    /** Channel 1 enabled flag (0 or 1) */
+    uint8_t channel1_enabled;
+    /** Channel 2 enabled flag (0 or 1) */
+    uint8_t channel2_enabled;
+    /** Total number of channels enabled (1-3) */
+    uint8_t total_channels;
+    /** Baud rate in Hz (typically 2500000 or 5000000) */
+    uint32_t baud_rate;
+    /** PRU core clock frequency in Hz */
+    uint32_t core_clk_freq;
+    /** PRU UART clock frequency in Hz */
+    uint32_t uart_clk_freq;
+    /** IEP clock frequency in Hz */
+    uint32_t iep_clk_freq;
+    /** Clock source selection (0: UART clock, 1: Core clock) */
+    uint8_t is_core_clk;
+    /** Load-share mode enabled flag (0: disabled, 1: enabled). Used with TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU */
+    uint8_t load_share_enabled;
+    /**< IEP instance number used for periodic trigger mode */
+    uint8_t iep_instance;
+    /**< IEP compare event number array for each channel [0]=CH0, [1]=CH1, [2]=CH2
+     *   In non-load share mode, all channels use [0] value */
+    uint8_t iep_cmp_event[TAMAGAWA_MAX_CHANNELS_PER_SLICE];
+    /**< IEP capture event number array for each channel [0]=CH0, [1]=CH1, [2]=CH2
+     *   In non-load share mode, all channels use [0] value */
+    uint8_t iep_cap_event[TAMAGAWA_MAX_CHANNELS_PER_SLICE];
+    /**< IEP base address for IEP timer configuration in periodic trigger mode */
+    void *iep_base_addr;
+} tamagawa_attrs;
+
+/**
+ * \brief   Tamagawa private runtime state structure
+ *
+ * \details Contains runtime state information for a Tamagawa instance.
+ *          This structure is initialized by the driver during \ref tamagawa_init.
+ */
+typedef struct tamagawa_priv_s
+{
+    /** Flag to track if instance is initialized (1 = open, 0 = closed) */
+    uint8_t is_open;
+    /** Currently selected channel ID (0-2) */
+    uint8_t channel;
+    /** Pointer to PRU-ICSS firmware interface structure (mapped to PRU DRAM) */
+    tamagawa_xchg *tamagawa_xchg;
+    /** Tamagawa clock configuration */
+    tamagawa_clk_cfg clk_cfg;
+    /** PRU-ICSS handle
+      *  Copied from params in \ref tamagawa_init. */
+    PRUICSS_Handle pruicss_handle;
+    /** Command process delay in microseconds (for timeout handling)
+     *  Copied from params in \ref tamagawa_init. */
+    uint32_t cmd_wait_delay_us;
+    /** Maximum wait loop iteration count.
+     *  Used in \ref tamagawa_command_wait to detect communication failures.
+     *  Actual timeout = max_wait_loop_count × cmd_wait_delay_us microseconds
+     *  Copied from params in \ref tamagawa_init. */
+    uint32_t max_wait_loop_count;
+    /**< Main Tamagawa interface, (Only index 0 is used when load share is disabled) */
+    tamagawa_interface tamagawa_interface[TAMAGAWA_MAX_CHANNELS_PER_SLICE];
+} tamagawa_priv;
+
+/**
+ * \brief   Tamagawa configuration structure (handle)
+ *
+ * \details This structure combines the read-only attributes (from SysConfig)
+ *          with the runtime private state. It serves as the Tamagawa handle.
+ */
+typedef struct tamagawa_config_s
+{
+    /** Pointer to private runtime state */
+    tamagawa_priv *priv;
+    /** Pointer to read-only attributes (from SysConfig) */
+    const tamagawa_attrs *attrs;
+} tamagawa_config;
+
+/**
+ * \brief   Tamagawa handle type
+ *
+ * \details Opaque pointer to a Tamagawa configuration structure.
+ *          Returned by \ref tamagawa_init and used in all Tamagawa APIs.
+ */
+typedef tamagawa_config *tamagawa_handle;
+
+/**
+ * \brief   Tamagawa initialization parameters structure
+ *
+ * \details Contains runtime parameters passed to \ref tamagawa_init.
+ *          Initialize with \ref tamagawa_params_init before use.
+ */
+typedef struct tamagawa_params_s
+{
+    /** PRU-ICSS handle (must be valid, obtained from PRUICSS_open) */
+    PRUICSS_Handle pruicss_handle;
+    /** Command process delay in microseconds (used in command wait timeout loop)
+     *  Default: 100 us */
+    uint32_t cmd_wait_delay_us;
+    /** Maximum wait loop iteration count.
+     *  Used in \ref tamagawa_command_wait to detect communication failures.
+     *  Actual timeout = max_wait_loop_count × cmd_wait_delay_us microseconds.
+     *  Default: 50 (gives 50 × 100 us = 5000 us with default cmd_wait_delay_us) */
+    uint32_t max_wait_loop_count;
+} tamagawa_params;
 
 /* ========================================================================== */
 /*                       Function Declarations                                */
 /* ========================================================================== */
 
 /**
- *  \brief      send the tamagawa command and wait till firmware acknowledges
+ *  \brief      Initialize Tamagawa parameters structure with default values
  *
- *  \param[in]  priv            cookie returned by tamagawa_init
- *  \param[in]  cmd             tamagawa command number
- *  \param[in]  gTamagawa_multi_ch_mask  Multi-channel mask to keep track of which channels are selected
+ *  \details    This function initializes a \ref tamagawa_params structure with default
+ *              values. Call this function before setting custom parameters and passing
+ *              to \ref tamagawa_init.
  *
- *  \retval     0       success
- *  \retval     -EINVAL failure
+ *  \param[out] params          Pointer to \ref tamagawa_params structure to initialize
  *
  */
-int32_t tamagawa_command_process(struct tamagawa_priv *priv, int32_t cmd, uint8_t gTamagawa_multi_ch_mask);
+void tamagawa_params_init(tamagawa_params *params);
 
 /**
- *  \brief      setup the tamagawa command in the PRU interface buffer
+ *  \brief      Initialize a Tamagawa instance
  *
- *  \param[in]  priv            cookie returned by tamagawa_init
- *  \param[in]  cmd             tamagawa command number
- *  \param[in]  gTamagawa_multi_ch_mask Multi-channel mask to keep track of which channels are selected
+ *  \details    This function initializes a Tamagawa instance by setting up the firmware
+ *              interface and configuring hardware based on \ref tamagawa_attrs and \ref tamagawa_params.
+ *              The function validates all input parameters and initializes the PRU-ICSS interface.
  *
- *  \retval     0       success
- *  \retval     -EINVAL failure
+ *              This function performs the following operations:
+ *              - Validates index against the number of configured instances (gTamagawaConfigNum)
+ *              - Validates PRUICSS handle is not NULL
+ *              - Validates PRU slice value (0 or 1)
+ *              - Validates IEP compare event (0-15) and capture event (0-7) for enabled channels
+ *              - Validates clock frequencies (must be positive)
+ *              - Validates IEP instance (0 or 1)
+ *              - Validates clock source selection (0 or 1)
+ *              - Validates baud rate (must be TAMAGAWA_FREQ_2_5_MHZ or TAMAGAWA_FREQ_5_MHZ)
+ *              - Sets up PRU DRAM base address for firmware interface
+ *              - Marks handle as open
  *
+ *              Internal API calls (in order):
+ *              - tamagawa_config_clr_cfg0() - Clears PRU Three Channel Peripheral Interface CFG0 registers
+ *              - \ref tamagawa_config_channel() - Configures channel mask for both single and multi-channel modes
+ *              - PRUICSS_setGpMuxSelect() - Sets GP mux selection for Three Channel Peripheral Interface
+ *              - tamagawa_config_iep_base_address() - Writes IEP base address offset to PRU DRAM
+ *              - \ref tamagawa_config_iep_cmp_event() - Configures IEP CMP event number in PRU DRAM for enabled channels
+ *              - \ref tamagawa_config_iep_cap_event() - Configures IEP CAP event number and capture register in PRU DRAM for enabled channels
+ *              - tamagawa_config_load_share() - Configures primary core mask and enables load-share hardware (for TAMAGAWA_MODE_MULTI_CHANNEL_MULTI_PRU mode only)
+ *              - \ref tamagawa_set_baudrate() - Configures communication baud rate from attrs configuration
+ *              - \ref tamagawa_config_host_trigger() - Sets default trigger mode to host trigger
+ *
+ *  \param[in]  index            Index of Tamagawa handle to use in the gTamagawaHandle handle array
+ *  \param[in]  params           Pointer to structure containing Tamagawa parameters. Use \ref tamagawa_params_init
+ *                               to initialize with defaults before setting custom values. Must not be NULL.
+ *
+ *  \retval     handle           Pointer to initialized tamagawa_handle instance
+ *  \retval     NULL             On validation failure (invalid index, NULL params, invalid configuration, or internal API call failure)
+ *
+ *  \note       Channel configuration, trigger mode, and baud rate are automatically set during initialization based on
+ *              SysConfig parameters. Applications do not need to call configuration functions separately.
  */
-int32_t tamagawa_command_build(struct tamagawa_priv *priv, int32_t cmd,  uint8_t gTamagawa_multi_ch_mask);
+tamagawa_handle tamagawa_init(uint32_t index, const tamagawa_params *params);
 
 /**
- *  \brief      trigger sending the tamagawa command in PRU
+ *  \brief      Deinitialize Tamagawa interface and release resources
  *
- *  \param[in]  priv     cookie returned by tamagawa_init
+ *  \details    This function deinitializes a Tamagawa instance by marking it as closed.
+ *              It does not free memory as the handle is statically allocated via SysConfig.
+ *              After calling this function, the handle should not be used until reinitialized
+ *              with \ref tamagawa_init.
  *
+ *  \param[in]  handle    Tamagawa handle returned by \ref tamagawa_init
+ *
+ *  \note       NULL check: If handle is NULL, function returns without performing any operation.
  */
-void tamagawa_command_send(struct tamagawa_priv *priv);
+void tamagawa_deinit(tamagawa_handle handle);
 
 /**
- *  \brief  wait till PRU finishes tamagawa transaction
+ *  \brief      Process a Tamagawa command (build, send, and wait for completion)
  *
- *  \param[in]  priv     cookie returned by tamagawa_init
+ *  \details    This function combines command setup, triggering, and waiting for
+ *              completion in a single call. It internally calls:
+ *              - \ref tamagawa_command_build : Setup command in PRU interface buffer
+ *              - \ref tamagawa_command_send : Trigger PRU to send command
+ *              - \ref tamagawa_command_wait : Wait for PRU to complete transaction
  *
+ *              For EEPROM commands (DATA_ID_6, DATA_ID_D), the function also resets the
+ *              command ID for all channels after completion. The multi-channel mask for
+ *              EEPROM operations is determined automatically from the enabled channels
+ *              configured in the attrs structure.
+ *
+ *  \param[in]  handle           Tamagawa handle returned by \ref tamagawa_init
+ *  \param[in]  cmd              Tamagawa command number (see \ref tamagawa_data_id)
+ *
+ *  \retval     SystemP_SUCCESS  Command processed successfully
+ *  \retval     SystemP_TIMEOUT  On timeout waiting for firmware acknowledgment (propagated from \ref tamagawa_command_wait)
+ *  \retval     SystemP_FAILURE  Command processing failed (invalid handle or invalid command)
  */
-void tamagawa_command_wait(struct tamagawa_priv *priv);
+int32_t tamagawa_command_process(tamagawa_handle handle, int32_t cmd);
+
+/**
+ *  \brief      Build a Tamagawa command in the PRU interface
+ *
+ *  \details    This function sets up the Tamagawa command parameters in the PRU interface
+ *              based on the command type. The command is not sent until \ref tamagawa_command_send
+ *              is called. For EEPROM commands (DATA_ID_6, DATA_ID_D), this function prepares
+ *              the TX data with CF, ADF, EDF, and CRC fields. The multi-channel mask for
+ *              EEPROM operations is determined automatically from the enabled channels
+ *              configured in the attrs structure.
+ *
+ *  \param[in]  handle           Tamagawa handle returned by \ref tamagawa_init
+ *  \param[in]  cmd              Tamagawa command number (see \ref tamagawa_data_id)
+ *
+ *  \retval     SystemP_SUCCESS  Command built successfully
+ *  \retval     SystemP_FAILURE  Command build failed (invalid handle, unsupported command)
+ */
+int32_t tamagawa_command_build(tamagawa_handle handle, int32_t cmd);
+
+/**
+ *  \brief      Trigger sending the Tamagawa command in PRU
+ *
+ *  \details    This function triggers the PRU firmware to send the command that was previously
+ *              set up using \ref tamagawa_command_build. It sets the trigger bit in the PRU
+ *              interface, which signals the firmware to start the transaction.
+ *
+ *  \param[in]  handle    Tamagawa handle returned by \ref tamagawa_init
+ *
+ *  \retval     SystemP_SUCCESS    Command trigger successful
+ *  \retval     SystemP_FAILURE    NULL handle provided
+ */
+int32_t tamagawa_command_send(tamagawa_handle handle);
+
+/**
+ *  \brief      Wait until PRU finishes Tamagawa transaction
+ *
+ *  \details    This function waits in a polling loop until the PRU firmware clears the trigger
+ *              bit, indicating that the command has been completed. This is a blocking call with
+ *              timeout protection.
+ *
+ *  \param[in]  handle    Tamagawa handle returned by \ref tamagawa_init
+ *
+ *  \retval     SystemP_SUCCESS    Command completed successfully
+ *  \retval     SystemP_FAILURE    NULL handle provided
+ *  \retval     SystemP_TIMEOUT    Timeout occurred (configured via tamagawa_params.max_wait_loop_count
+ *                                 before calling \ref tamagawa_init, default: 5000 us = 50 loops × 100 us/loop)
+ */
+int32_t tamagawa_command_wait(tamagawa_handle handle);
+
+/**
+ *  \brief      Configure global RX auto arm counter for Tamagawa interface
+ *
+ *  \details    This function configures the global RX auto arm counter register for all three
+ *              channels. The counter value determines the timing for RX enable.
+ *
+ *  \param[in]  handle      Tamagawa handle returned by \ref tamagawa_init
+ *  \param[in]  rx_en_cnt   Value to be set in global RX auto arm counter register
+ *
+ *  \retval     SystemP_SUCCESS    Configuration successful
+ *  \retval     SystemP_FAILURE    NULL handle provided
+ */
+int32_t tamagawa_config_global_rx_arm_cnt(tamagawa_handle handle, uint16_t  rx_en_cnt);
+
+/**
+ *  \brief      Configure Tamagawa clock dividers and source selection
+ *
+ *  \details    This function configures the PRU Three Channel Peripheral Interface's RX and TX clock
+ *              dividers and clock source selection. It writes to PRUx_ED_RXCFG and PRUx_ED_TXCFG registers.
+ *
+ *  \param[in]  handle    Tamagawa handle returned by \ref tamagawa_init
+ *  \param[in]  clk_cfg   Pointer to structure containing clock configuration data
+ *
+ *  \retval     SystemP_SUCCESS    Configuration successful
+ *  \retval     SystemP_FAILURE    NULL handle or NULL clk_cfg provided
+ */
+int32_t tamagawa_config_clock(tamagawa_handle handle, tamagawa_clk_cfg *clk_cfg);
+
+/**
+ *  \brief      Configure Tamagawa interface for host trigger mode
+ *
+ *  \details    In this mode, commands are sent when explicitly triggered by the host using
+ *              \ref tamagawa_command_send.
+ *
+ *  \param[in]  handle    Tamagawa handle returned by \ref tamagawa_init
+ *
+ *  \retval     SystemP_SUCCESS    Configuration successful
+ *  \retval     SystemP_FAILURE    NULL handle provided
+ */
+int32_t tamagawa_config_host_trigger(tamagawa_handle handle);
+
+/**
+ *  \brief      Configure Tamagawa interface for periodic trigger using IEP compare mode
+ *
+ *  \details    Configures the Tamagawa firmware to use IEP CMP (compare) events for periodic triggering.
+ *              Position data is sampled automatically when the IEP compare event occurs.
+ *
+ *              **Configuration requirements:**
+ *              - IEP hardware CMP registers must be configured separately
+ *              - Use \ref tamagawa_config_iep_cmp_event to set event number in firmware. This function
+ *                is called inside \ref tamagawa_init by default.
+ *              - CMP event range: 0-15
+ *
+ *  \param[in]  handle    Tamagawa handle returned by \ref tamagawa_init
+ *
+ *  \retval     SystemP_SUCCESS    Configuration successful
+ *  \retval     SystemP_FAILURE    NULL handle provided
+ */
+int32_t tamagawa_config_periodic_trigger_cmp_mode(tamagawa_handle handle);
 
 
 /**
- *  \brief  configure tamagawa clock
+ *  \brief      Configure channel mask for Tamagawa interface
  *
- *  \param[in]  priv    cookie returned by tamagawa_init
- *  \param[in]  clk_cfg pointer to structure containing clock configuration data
+ *  \details    This function configures the channel mask for both single-channel and multi-channel modes.
+ *              In single-channel mode, it also stores the specific channel index in priv->channel
+ *              based on the channel enable flags (channel0_enabled, channel1_enabled, channel2_enabled).
  *
+ *  \param[in]  handle    Tamagawa handle returned by \ref tamagawa_init
+ *  \param[in]  mask      Channel mask (valid range 1-7 for up to 3 channels)
+ *                        - Bit 0: Channel 0
+ *                        - Bit 1: Channel 1
+ *                        - Bit 2: Channel 2
+ *
+ *  \retval     SystemP_SUCCESS    Configuration successful
+ *  \retval     SystemP_FAILURE    NULL handle or invalid mask (mask == 0 or mask > 0x07)
+ *
+ *  \note       NULL check: Strict check on handle. Mask bounds checked (1-7).
  */
-void tamagawa_config_clock(struct tamagawa_priv *priv, struct tamagawa_clk_cfg *clk_cfg);
+int32_t tamagawa_config_channel(tamagawa_handle handle, uint8_t mask);
 
 /**
- *  \brief      configure tamagawa master for host trigger mode
+ *  \brief      Set current channel for receive processing in multi-channel mode
  *
- *  \param[in]  priv    cookie returned by tamagawa_init
+ *  \details    In multi-channel configuration, after the receive transaction is complete,
+ *              call this function to select each channel before invoking RX parsing APIs
+ *              to process the data received on that channel.
  *
+ *  \param[in]  handle    Tamagawa handle returned by \ref tamagawa_init
+ *  \param[in]  ch        Channel number to be selected (0-2, see \ref TAMAGAWA_MAX_CHANNELS_PER_SLICE)
+ *
+ *  \retval     SystemP_SUCCESS    Configuration successful
+ *  \retval     SystemP_FAILURE    NULL handle or invalid channel (ch >= TAMAGAWA_MAX_CHANNELS_PER_SLICE)
+ *
+ *  \note       NULL check: Strict check on handle. Channel bounds checked (0-2).
  */
-void tamagawa_config_host_trigger(struct tamagawa_priv *priv);
+int32_t tamagawa_multi_channel_set_cur(tamagawa_handle handle, uint8_t ch);
 
 /**
- *  \brief      configure tamagawa master in periodic trigger mode
+ *  \brief      Update the current requested command ID in Tamagawa interface
  *
- *  \param[in]  priv    cookie returned by tamagawa_init
+ *  \details    This function updates the data_id field in the Tamagawa interface structure.
+ *              For EEPROM commands (DATA_ID_6, DATA_ID_D), it also sets the command ID for
+ *              all three channels in the EEPROM interface.
  *
+ *  \param[in]  handle    Tamagawa handle returned by \ref tamagawa_init
+ *  \param[in]  cmd       Tamagawa command number (see \ref tamagawa_data_id)
+ *
+ *  \retval     SystemP_SUCCESS    Update successful
+ *  \retval     SystemP_FAILURE    NULL handle provided
  */
-void tamagawa_config_periodic_trigger(struct tamagawa_priv *priv);
+int32_t tamagawa_update_data_id(tamagawa_handle handle, int32_t cmd);
 
 /**
- *  \brief      select channel to be used by tamagawa master
+ *  \brief      Update the ADF (EEPROM address) field for EEPROM command
  *
- *  \param[in]  priv    cookie returned by tamagawa_init
- *  \param[in]  ch      channel to be selected
+ *  \details    This function updates the ADF (Address Field) in the Tamagawa EEPROM interface
+ *              for the specified channel. This is used for both EEPROM Read (DATA_ID_D) and
+ *              EEPROM Write (DATA_ID_6) commands.
  *
+ *  \param[in]  handle    Tamagawa handle returned by \ref tamagawa_init
+ *  \param[in]  val       ADF value to be updated (valid range 0-127, see \ref TAMAGAWA_MAX_EEPROM_ADDRESS)
+ *  \param[in]  ch        Channel number that is currently selected (0-2, see \ref TAMAGAWA_MAX_CHANNELS_PER_SLICE)
+ *
+ *  \retval     SystemP_SUCCESS    Update successful
+ *  \retval     SystemP_FAILURE    NULL handle, invalid channel (ch >= TAMAGAWA_MAX_CHANNELS_PER_SLICE),
+ *                                 or invalid ADF value (val > TAMAGAWA_MAX_EEPROM_ADDRESS)
+ *
+ *  \note       NULL check: Strict check on handle. Channel and ADF value bounds checked.
  */
-void tamagawa_config_channel(struct tamagawa_priv *priv, uint32_t ch);
+int32_t tamagawa_update_adf(tamagawa_handle handle, uint32_t val, uint8_t ch);
 
 /**
- *  \brief      select mask of channels to be used in multi channel configuration by tamagawa master
+ *  \brief      Update the EDF (EEPROM data) field for EEPROM Write command
  *
- *  \param[in]  priv    cookie returned by tamagawa_init
- *  \param[in]  mask    channel mask
+ *  \details    This function updates the EDF (Encoder Data Field) in the Tamagawa EEPROM
+ *              interface for the specified channel. This is used only for EEPROM Write
+ *              (DATA_ID_6) commands.
  *
+ *  \param[in]  handle    Tamagawa handle returned by \ref tamagawa_init
+ *  \param[in]  val       EDF value to be updated (valid range 0-255, see \ref TAMAGAWA_MAX_EEPROM_WRITE_DATA)
+ *  \param[in]  ch        Channel number that is currently selected (0-2, see \ref TAMAGAWA_MAX_CHANNELS_PER_SLICE)
+ *
+ *  \retval     SystemP_SUCCESS    Update successful
+ *  \retval     SystemP_FAILURE    NULL handle, invalid channel (ch >= TAMAGAWA_MAX_CHANNELS_PER_SLICE),
+ *                                 or invalid EDF value (val > TAMAGAWA_MAX_EEPROM_WRITE_DATA)
+ *
+ *  \note       NULL check: Strict check on handle. Channel and EDF value bounds checked.
  */
-void tamagawa_config_multi_channel_mask(struct tamagawa_priv *priv, uint8_t mask);
+int32_t tamagawa_update_edf(tamagawa_handle handle, uint32_t val, uint8_t ch);
 
 /**
- *  \brief      select channels detected in multi channel configuration by tamagawa master.    <br>
- *              required to be invoked only if firmware indicates initialization failure    <br>
- *              to know the channels that has been detected. Initialization success implies <br>
- *              that all channels indicated has been detected.
+ *  \brief      Parse the data in Tamagawa interface received from the encoder
  *
- *  \param[in]  priv    cookie returned by tamagawa_init
+ *  \details    This function extracts and parses the received frame data based on the command
+ *              type. It populates the rx_frames_received structure in the Tamagawa interface
+ *              with the parsed data (CF, SF, ABS, ABM, ENID, ALMC, ADF, EDF, CRC).
  *
- *  \retval     mask    mask of the detected channels
+ *  \param[in]  handle    Tamagawa handle returned by \ref tamagawa_init
+ *  \param[in]  cmd       Tamagawa command number (see \ref tamagawa_data_id)
  *
+ *  \retval     SystemP_SUCCESS    Data parsed successfully
+ *  \retval     SystemP_FAILURE    Parsing failed (invalid handle or unsupported command)
  */
-uint8_t tamagawa_multi_channel_detected(struct tamagawa_priv *priv);
+int32_t tamagawa_parse(tamagawa_handle handle, int32_t cmd);
 
 /**
- *  \brief      In multi channel configuration, select channel before receive processing in <br>
- *              multi channel configuration. After receive is complete, select each channel <br>
- *              and invoke rx API's to parse data recieved in each channel.
+ *  \brief      Verify the CRC computed by PRU firmware against encoder CRC
  *
- *  \param[in]  priv    cookie returned by tamagawa_init
- *  \param[in]  ch      channel number to be selected
+ *  \details    This function checks the CRC verification result computed by the PRU firmware.
+ *              The firmware calculates CRC and stores the result in cal_crc field. A value
+ *              of 1 indicates successful CRC verification.
  *
+ *  \param[in]  handle    Tamagawa handle returned by \ref tamagawa_init
+ *
+ *  \retval     SystemP_SUCCESS    CRC verification passed
+ *  \retval     SystemP_FAILURE    CRC verification failed or NULL handle
  */
-void tamagawa_multi_channel_set_cur(struct tamagawa_priv *priv, uint32_t ch);
-
-
+int32_t tamagawa_crc_verify(tamagawa_handle handle);
 
 /**
- *  \brief      Initialize tamagawa firmware interface address and get the pointer
- *              to struct tamagawa_priv instance
+ *  \brief      Update CRC field for EEPROM command
  *
- *  \param[in]  tamagawa_xchg      tamagawa firmware interface address
- *  \param[in]  pruss_cfg       ICSS PRU config base address
- *  \param[in]  pruss_iep       ICSS PRU IEP base address
- *  \param[in]  slice_value     PRUx slice value : 0 for PRU0 and 1 for PRU1
+ *  \details    This function calculates and updates the CRC field for EEPROM commands
+ *              based on CF, ADF, and EDF values. It internally calls the CRC calculation
+ *              function. For EEPROM Write (DATA_ID_6), CRC is calculated over 3 bytes
+ *              (CF + ADF + EDF). For EEPROM Read (DATA_ID_D), CRC is calculated over
+ *              2 bytes (CF + ADF).
  *
- *  \retval     priv            pointer to struct tamagawa_priv instance
+ *  \param[in]  handle    Tamagawa handle returned by \ref tamagawa_init
+ *  \param[in]  cmd       Tamagawa command number (DATA_ID_6 or DATA_ID_D)
+ *  \param[in]  ch        Channel number that is currently selected (0-2, see \ref TAMAGAWA_MAX_CHANNELS_PER_SLICE)
  *
+ *  \retval     SystemP_SUCCESS    CRC update successful
+ *  \retval     SystemP_FAILURE    NULL handle or invalid channel (ch >= TAMAGAWA_MAX_CHANNELS_PER_SLICE)
+ *
+ *  \note       NULL check: Strict check on handle. Channel bounds checked (0-2).
  */
-struct tamagawa_priv *tamagawa_init(struct tamagawa_xchg *tamagawa_xchg, void *pruss_cfg, void *pruss_iep, uint32_t slice_value);
+int32_t tamagawa_update_crc(tamagawa_handle handle, int32_t cmd, uint8_t ch);
 
 /**
- *  \brief      update the current requested command id in tamagawa interface.    <br>
+ *  \brief      Set Tamagawa communication baud rate
  *
+ *  \details    This function calculates and configures the RX/TX division factors and
+ *              oversampling rate based on the specified baud rate. It internally calls:
+ *              - \ref tamagawa_config_clock : Configure clock dividers
+ *              - \ref tamagawa_config_global_rx_arm_cnt : Configure RX auto arm counter
  *
- *  \param[in]  priv    cookie returned by tamagawa_init
- *  \param[in]  cmd     tamagawa command number
+ *              The function also updates the firmware interface with the calculated
+ *              division factors and oversampling rate.
  *
+ *  \param[in]  handle      Tamagawa handle returned by \ref tamagawa_init
+ *  \param[in]  baud_rate   Baud rate of the Tamagawa encoder in Hz (2.5 MHz or 5 MHz)
+ *
+ *  \retval     SystemP_SUCCESS    Configuration successful
+ *  \retval     SystemP_FAILURE    NULL handle provided
+ *
+ *  \note       The RX auto arm counter is configured for 1us delay. This may need adjustment
+ *              based on specific encoder requirements.
  */
-
-void tamagawa_update_data_id(struct tamagawa_priv *priv, int32_t cmd);
+int32_t tamagawa_set_baudrate(tamagawa_handle handle, double baud_rate);
 
 /**
- *  \brief      update the adf(address of EEPROM) field entered by user for EEPROM command in tamagawa interface.<br>
+ *  \brief      Get pointer to Tamagawa attributes structure
  *
+ *  \details    This function returns a const pointer to the attributes structure containing
+ *              compile-time configuration parameters from SysConfig. The attrs structure is
+ *              read-only and should not be modified.
  *
- *  \param[in]  priv    cookie returned by tamagawa_init
- *  \param[in]  val     ADF value to be updated
- *  \param[in]  ch      channel number that is currently selected
+ *  \param[in]  handle    Tamagawa handle returned by \ref tamagawa_init
  *
+ *  \retval     attrs     Pointer to const tamagawa_attrs structure
+ *  \retval     NULL      If handle is NULL
+ *
+ *  \note       NULL check: Strict check on handle. Returns NULL on NULL handle.
  */
-
-void tamagawa_update_adf(struct tamagawa_priv *priv, uint32_t val, uint32_t ch);
+const tamagawa_attrs* tamagawa_get_attrs(tamagawa_handle handle);
 
 /**
- *  \brief      update the edf(data for EEPROM) field entered by user for EEPROM command in tamagawa interface.<br>
+ *  \brief      Get pointer to Tamagawa private structure
  *
+ *  \details    This function returns a pointer to the private structure containing runtime
+ *              state information. This is typically used for advanced operations or debugging.
  *
- *  \param[in]  priv    cookie returned by tamagawa_init
- *  \param[in]  val     EDF value to be updated
- *  \param[in]  ch      channel number that is currently selected
+ *  \param[in]  handle    Tamagawa handle returned by \ref tamagawa_init
  *
+ *  \retval     priv      Pointer to tamagawa_priv structure
+ *  \retval     NULL      If handle is NULL
+ *
+ *  \note       NULL check: Strict check on handle. Returns NULL on NULL handle.
+ *  \warning    Modifying priv structure fields directly can lead to undefined behavior.
+ *              Use provided APIs for configuration changes.
  */
-
-void tamagawa_update_edf(struct tamagawa_priv *priv, uint32_t val, uint32_t ch);
-
+tamagawa_priv* tamagawa_get_priv(tamagawa_handle handle);
 
 /**
- *  \brief      Parse the data in tamagawa interface.<br>
+ *  \brief      Configure IEP CMP event for periodic trigger (DMEM configuration only)
  *
+ *  \details    This function configures the IEP compare event information in PRU shared
+ *              memory (DMEM) for firmware access. It writes the event number to trigger_params
+ *              structure. This function does NOT configure IEP hardware registers.
  *
- *  \param[in]  cmd     tamagawa command number
- *  \param[in]  priv    cookie returned by tamagawa_init
+ *  \param[in]  handle          Tamagawa handle returned by \ref tamagawa_init
+ *  \param[in]  channel         Tamagawa channel number (0-2). Used in load share mode,
+ *                              ignored in single PRU mode (always uses index 0).
+ *  \param[in]  event_num       CMP event number (0-15)
  *
+ *  \retval     SystemP_SUCCESS  CMP event configured successfully
+ *  \retval     SystemP_FAILURE  On NULL handle or invalid event_num/channel
+ *
+ *  \note       This function only configures firmware DMEM, not IEP hardware.
+ *              Application must separately configure IEP CMP hardware registers.
  */
-int32_t tamagawa_parse(int32_t cmd, struct tamagawa_priv *priv);
+int32_t tamagawa_config_iep_cmp_event(tamagawa_handle handle, uint8_t channel, uint8_t event_num);
 
 /**
- *  \brief      verify the CRC computed with the encoder crc.<br>
+ *  \brief      Configure IEP CAP event for periodic trigger (DMEM configuration only)
  *
+ *  \details    This function configures the IEP capture event information in PRU shared
+ *              memory (DMEM) for firmware access. It writes the capture register address
+ *              and event number to trigger_params structure. This function does NOT configure
+ *              IEP hardware registers.
  *
- *  \param[in]  priv    cookie returned by tamagawa_init
+ *  \param[in]  handle          Tamagawa handle returned by \ref tamagawa_init
+ *  \param[in]  channel         Tamagawa channel number (0-2). Used in load share mode,
+ *                              ignored in single PRU mode (always uses index 0).
+ *  \param[in]  event_num       CAP event number (0-7)
  *
- *  \retval     1/0     if verify correctly, return 1 else return 0.
+ *  \retval     SystemP_SUCCESS  CAP event configured successfully
+ *  \retval     SystemP_FAILURE  On NULL handle, invalid event_num/channel, or NULL IEP base address
+ *
+ *  \note       This function only configures firmware DMEM, not IEP hardware.
+ *              Application must separately configure IEP CAP hardware registers.
  *
  */
-
-int32_t tamagawa_crc_verify(struct tamagawa_priv *priv);
+int32_t tamagawa_config_iep_cap_event(tamagawa_handle handle, uint8_t channel, uint8_t event_num);
 
 /**
- *  \brief      Pass the values of CF(Control Field), ADF(address of EEPROM) and EDF(data for EEPROM) to the CRC calculator fucntion and update the CRC field.<br>
+ *  \brief      Configure Tamagawa interface for periodic trigger using IEP capture mode
  *
+ *  \details    Configures the Tamagawa firmware to use IEP CAP (capture) events for periodic triggering.
+ *              Position data is sampled automatically when an external signal triggers
+ *              the IEP capture event.
  *
- *  \param[in]  priv    cookie returned by tamagawa_init
- *  \param[in]  cmd     tamagawa command number
- *  \param[in]  ch      channel number that is currently selected
+ *              **Configuration requirements:**
+ *              - IEP hardware CAP registers must be configured separately
+ *              - External signal to IEP capture input should be configured
+ *              - Use \ref tamagawa_config_iep_cap_event to set event number in firmware. This function
+ *                is called inside \ref tamagawa_init by default.
+ *              - CAP event range: 0-7
  *
+ *  \param[in]  handle  Tamagawa handle returned by \ref tamagawa_init
+ *
+ *  \retval     SystemP_SUCCESS  CAP mode configured successfully
+ *  \retval     SystemP_FAILURE  On NULL handle
+ *
+ *  \note       This function only configures firmware DMEM, not IEP hardware.
+ *              Application must separately configure IEP CAP hardware registers.
  */
-
-void tamagawa_update_crc(struct tamagawa_priv *priv, int32_t cmd, uint32_t ch);
-
-/**
- *  \brief      Update the values for oversample rate and division factor for Tx and Rx.<br>
- *
- *
- *  \param[in]  priv    cookie returned by tamagawa_init
- *  \param[in]  baudrate     baud rate of the tamagawa encoder
- *
- */
-
-void tamagawa_set_baudrate(struct tamagawa_priv *priv, double baudrate);
-
-/**
- *  \brief      Reset the values of the variables used in CRC calculation to 0.<br>
- *
- *
- *  \param[in]  priv    cookie returned by tamagawa_init
- *
- */
-
-void tamagawa_eeprom_crc_reinit(struct tamagawa_priv *priv);
-
-/**
- *  \brief      Reverse the bits of a number.<br>
- *
- *
- *  \param[in]  data    8 bit value for any of CF(Control Field), ADF(address of EEPROM) or EDF(data for EEPROM)
- *
- *  \retval     reversed_num    number obtained after reversing the bits of data provided
- *
- */
-
-uint32_t tamagawa_reverse_bits(int8_t data);
-
-/**
- *  \brief      Add the start and the stop bit to the reversed data.<br>
- *
- *
- *  \param[in]  eeprom_tx_data    holds the value of the Tx data to be sent
- *  \param[in]  data    holds the value of CF(Control Field), ADF(address of EEPROM) or EDF(data for EEPROM)
- *
- *  \retval     eeprom_tx_data    64 bit integer that holds the value of the Tx data to be sent
- *
- */
-
-uint64_t tamagawa_prepare_eeprom_tx_data(uint64_t eeprom_tx_data, volatile uint32_t data);
-
-/**
- *  \brief      Prepare the required EEPROM command from the CF(Control Field), ADF(address of EEPROM) and EDF(data for EEPROM).<br>
- *
- *
- *  \param[in]  priv    cookie returned by tamagawa_init
- *  \param[in]  cmd     tamagawa command number
- *  \param[in]  ch      channel number that is currently selected
- *
- */
-
-void tamagawa_prepare_eeprom_command(struct tamagawa_priv *priv, int32_t cmd, uint32_t ch);
+int32_t tamagawa_config_periodic_trigger_cap_mode(tamagawa_handle handle);
 
 /** @} */
 
@@ -568,4 +1063,6 @@ void tamagawa_prepare_eeprom_command(struct tamagawa_priv *priv, int32_t cmd, ui
 }
 #endif
 
-#endif
+/** @} */
+
+#endif /* TAMAGAWA_DRV_H_ */

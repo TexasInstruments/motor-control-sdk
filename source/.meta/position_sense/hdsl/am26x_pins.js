@@ -1,4 +1,3 @@
-
 let common = system.getScript("/common");
 let device = common.getDeviceName();
 let pinmux = system.getScript("/drivers/pinmux/pinmux");
@@ -6,7 +5,8 @@ let is_am261x_soc = (device === "am261x-lp") ? true : false;
 
 function getInterfaceName(inst)
 {
-if (is_am261x_soc) {
+    if (is_am261x_soc)
+    {
         if(inst.instance === "ICSSM0") {
             return "PRU-ICSS0";
         } else {
@@ -42,11 +42,7 @@ function getInterfacePinList(inst)
     pinList.push({ pinName: Slice.toString()+"_GPIO10", displayName: "HDSL_CHANNEL1_RX", rx: true});
 
     pinList.push({ pinName: Slice.toString()+"_GPIO8", displayName: "HDSL_CHANNEL2_TX_ENABLE", rx: false});
-    /* PR0_PRU0_GPIO7 is not pinned out at the device level and therefore not supported for PRU0 */
-    if(Slice == "PR0_PRU1")
-    {
-      pinList.push({ pinName: Slice.toString()+"_GPIO7", displayName: "HDSL_CHANNEL2_TX", rx: false});
-    }
+    pinList.push({ pinName: Slice.toString()+"_GPIO7", displayName: "HDSL_CHANNEL2_TX", rx: false});
     pinList.push({ pinName: Slice.toString()+"_GPIO6", displayName: "HDSL_CHANNEL2_CLK", rx: false});
     pinList.push({ pinName: Slice.toString()+"_GPIO11", displayName: "HDSL_CHANNEL2_RX", rx: true});
 
@@ -77,7 +73,7 @@ function pinmuxRequirements(inst) {
 
         pinmux.setConfigurableDefault( pinResource, "rx", pin.rx );
 
-        if(inst["Channel_0"]==true){
+        if(inst["channel_0"]==true){
             if( (pin.pinName == Slice.toString()+"_GPIO2") || (pin.pinName == Slice.toString()+"_GPIO1") || (pin.pinName == Slice.toString()+"_GPIO0") || (pin.pinName == Slice.toString()+"_GPIO9")){
                  pinResource.used = true;
             }
@@ -87,7 +83,7 @@ function pinmuxRequirements(inst) {
             }
         }
 
-        if(inst["Channel_1"]==true){
+        if(inst["channel_1"]==true){
             if( (pin.pinName == Slice.toString()+"_GPIO5") || (pin.pinName == Slice.toString()+"_GPIO4") || (pin.pinName == Slice.toString()+"_GPIO3") || (pin.pinName == Slice.toString()+"_GPIO10")){
                   pinResource.used = true;
              }
@@ -97,29 +93,15 @@ function pinmuxRequirements(inst) {
             }
         }
 
-        if(Slice =="PR0_PRU1")
-        {
-            if(inst["Channel_2"]==true){
-                if( (pin.pinName == Slice.toString()+"_GPIO8") || (pin.pinName == Slice.toString()+"_GPIO7") || (pin.pinName == Slice.toString()+"_GPIO6") || (pin.pinName == Slice.toString()+"_GPIO11")){
-                    pinResource.used = true;
-                }
-            }else{
-                    if( (pin.pinName == Slice.toString()+"_GPIO8") || (pin.pinName == Slice.toString()+"_GPIO7") || (pin.pinName == Slice.toString()+"_GPIO6") || (pin.pinName == Slice.toString()+"_GPIO11")){
-                    pinResource.used = false;
-                }
+        if(inst["channel_2"]==true){
+            if( (pin.pinName == Slice.toString()+"_GPIO8") || (pin.pinName == Slice.toString()+"_GPIO7") || (pin.pinName == Slice.toString()+"_GPIO6") || (pin.pinName == Slice.toString()+"_GPIO11")){
+                pinResource.used = true;
             }
         }else{
-            if(inst["Channel_2"]==true){
-                if( (pin.pinName == Slice.toString()+"_GPIO8") || (pin.pinName == Slice.toString()+"_GPIO6") || (pin.pinName == Slice.toString()+"_GPIO11")){
-                    pinResource.used = true;
-                }
-            }else{
-                    if( (pin.pinName == Slice.toString()+"_GPIO8") || (pin.pinName == Slice.toString()+"_GPIO6") || (pin.pinName == Slice.toString()+"_GPIO11")){
-                    pinResource.used = false;
-                }
+                if( (pin.pinName == Slice.toString()+"_GPIO8") || (pin.pinName == Slice.toString()+"_GPIO7") || (pin.pinName == Slice.toString()+"_GPIO6") || (pin.pinName == Slice.toString()+"_GPIO11")){
+                pinResource.used = false;
             }
         }
-
 
         resources.push( pinResource );
     }
@@ -129,7 +111,7 @@ function pinmuxRequirements(inst) {
         displayName: interfaceName,
         interfaceName: interfaceName,
         resources: resources,
-         canShareWith: "/motor_control"
+        canShareWith: "/motor_control"
     };
 
     return [peripheralRequirements];
@@ -149,7 +131,6 @@ function getPeripheralPinNames(inst)
 
     return pinNameList;
 }
-
 
 exports = {
 

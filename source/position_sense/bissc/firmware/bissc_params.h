@@ -131,13 +131,28 @@ BISSC_CH2_VALID_BIT_IDX			.set 	26			;RX valid bit index channel 2
 BISSC_MAX_FRAME_SIZE			.set	256			;Max frame size for Processing delay measurement
 BISSC_MAX_WAIT_FOR_ENC_DETECT	.set	10000		;Max wait count for encoder detected
 
-BISSC_RTU_TRIGGER_HOST_EVT		.set 	34			;event 0 trigger
-BISSC_PRU_TRIGGER_HOST_EVT	    .set    35          ;event 1 trigger
-BISSC_TXPRU_TRIGGER_HOST_EVT	.set    36          ;event 2 trigger
-
-IEP_CH0_CMP_EVNT					.set    3       ;IEP CMP3 event
-IEP_CH1_CMP_EVNT					.set    5		;IEP CMP5 event
-IEP_CH2_CMP_EVNT					.set    6		;IEP CMP6 event
-
 BISSC_SAFETY_CRC_POLY			.set 	0x190D9		;polynomial for 16-bit crc safety support
 BISSC_SAFETY_CRC_LEN 			.set 	16			;number of safety crc bits received
+
+	.if	$isdefed("SLICE1")
+	.if $isdefed("ENABLE_MULTI_MAKE_RTU") | $isdefed("ENABLE_MULTI_MAKE_PRU") | $isdefed("ENABLE_MULTI_MAKE_TXPRU")
+	; Multi-channel load share using multiple PRUs
+BISSC_RTU_TRIGGER_HOST_EVT              .set	34			;( (0x20 | 2), pr0_pru_mst_intr[2]_intr_req )
+BISSC_PRU_TRIGGER_HOST_EVT              .set	35			;( (0x20 | 3), pr0_pru_mst_intr[3]_intr_req )
+BISSC_TXPRU_TRIGGER_HOST_EVT            .set	36			;( (0x20 | 4), pr0_pru_mst_intr[4]_intr_req )
+	.else
+	; Single PRU
+BISSC_PRU_TRIGGER_HOST_EVT              .set	34			;( (0x20 | 2), pr0_pru_mst_intr[2]_intr_req )
+	.endif
+	.else
+	; "SLICE0"
+	.if $isdefed("ENABLE_MULTI_MAKE_RTU") | $isdefed("ENABLE_MULTI_MAKE_PRU") | $isdefed("ENABLE_MULTI_MAKE_TXPRU")
+	; Multi-channel load share using multiple PRUs
+BISSC_RTU_TRIGGER_HOST_EVT              .set	37			;( (0x20 | 5), pr0_pru_mst_intr[5]_intr_req )
+BISSC_PRU_TRIGGER_HOST_EVT              .set	38			;( (0x20 | 6), pr0_pru_mst_intr[6]_intr_req )
+BISSC_TXPRU_TRIGGER_HOST_EVT            .set	39			;( (0x20 | 7), pr0_pru_mst_intr[7]_intr_req )
+	.else
+	; Single PRU
+BISSC_PRU_TRIGGER_HOST_EVT              .set	37			;( (0x20 | 5), pr0_pru_mst_intr[5]_intr_req )
+	.endif
+	.endif

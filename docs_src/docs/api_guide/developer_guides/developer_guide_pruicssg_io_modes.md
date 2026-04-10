@@ -111,7 +111,7 @@ The following sections contain a brief overview of different modes.
 - RX Start Bit of '1' or '0'
 - Flexible HW-assisted clock output generation to allow free running, stop high and stop low (after last RX data), or stop high (after last TX data) operation with optional software clock override feature
 
-#### Signal Configuration
+#### Signal Configuration {#PRUICSS_PERIPHERAL_IF_MODE_SIGNAL_CONFIGURATION}
 
 <table>
 <tr>
@@ -163,7 +163,7 @@ The following sections contain a brief overview of different modes.
     <td> -
 </tr>
 <tr>
-    <td> PRG<k>_PRU<n>_GPO7
+    <td> PRG<k>_PRU<n>_GPO7 (*note 4)
     <td> PERIF2_OUT
     <td> Channel 2 Data Out
     <td> Channel 2 Data Out
@@ -175,13 +175,13 @@ The following sections contain a brief overview of different modes.
     <td> Channel 2 Output Enable
 </tr>
 <tr>
-    <td> PRG<k>_PRU<n>_GPI9
+    <td> PRG<k>_PRU<n>_GPI9 (*note 4)
     <td> PERIF0_IN
     <td> Channel 0 Data In
     <td> Channel 0 Data In
 </tr>
 <tr>
-    <td> PRG<k>_PRU<n>_GPI10
+    <td> PRG<k>_PRU<n>_GPI10 (*note 4)
     <td> PERIF1_IN
     <td> Channel 1 Data In
     <td> Channel 1 Data In
@@ -216,6 +216,7 @@ The following sections contain a brief overview of different modes.
     1. These signals are shared with the GPIO, MII, and SD modes. To configure for Peripheral IF, PRU_ICSS_GPCFGx[29-26] PR1_PRUy_GP_MUX_SEL needs to be set to 1h.
     2. Some devices may not pin out all 29 bits of R31 and all 32 bits of R30. For which pins are available on a specific device, see the device-specific datasheet for device pin mapping.
     3. This alternate pinmux is enabled when SA mux selection register is configured (ICSSG_SA_MX_REG[7] G_MUX_EN = 1)
+    4. This is the default pinmux when SA mux selection is not enabled (ICSSG_SA_MX_REG[7] G_MUX_EN = 0)
 
 ### SD mode {#PRUICSS_SD_MODE}
 
@@ -292,12 +293,12 @@ The following images show the block diagram of the Sigma Delta hardware integrat
     <td> SD demodulator clock channel 4
 </tr>
 <tr>
-    <td> PRG<k>_PRU<n>_GPI9
+    <td> PRG<k>_PRU<n>_GPI9  (*note 5)
     <td> SD4_D
     <td> SD demodulator data channel 4
 </tr>
 <tr>
-    <td> PRG<k>_PRU<n>_GPI10
+    <td> PRG<k>_PRU<n>_GPI10  (*note 5)
     <td> SD5_CLK
     <td> SD demodulator clock channel 5
 </tr>
@@ -353,3 +354,4 @@ The following images show the block diagram of the Sigma Delta hardware integrat
     2. Some devices may not pin out all 29 bits of R31 and all 32 bits of R30. For which pins are available on a specific device, see the device-specific datasheet for device pin mapping.
     3. This alternate pinmux is only available when SA mux selection register is configured (ICSSG_SA_MX_REG[7] G_MUX_EN = 1)
     4. The PRG<k>_PRU0_GPI1 signal (muxed with SD0_D) can be used as SD_CLKOUT when PRU_ICSSG generates the clock. This is a trade-off as the PRU application will lose one SD channel. SD_CLKOUT needs to go through a clock generator chip if driving multiple sigma delta modulators and also be looped back into PRU_ICSSG as SD_CLKIN, typically pru_gpi16. For more details, please see section "6.4.5.2.2.3.5.1 Sigma Delta Block Diagram and Signals" of <a href="https://www.ti.com/lit/ug/spruim2h/spruim2h.pdf" target="_blank">AM243x Technical Reference Manual</a>.
+    5. This is the default pinmux when SA mux selection is not enabled (ICSSG_SA_MX_REG[7] G_MUX_EN = 0)

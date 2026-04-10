@@ -2,40 +2,83 @@ let inst_name;
 
 function onValidate(inst, validation) {
     for (let channel = 0; channel < 9; channel++) {
+        /* Only validate enabled channels */
+        if (!inst["Enable_Channel_" + channel]) {
+            continue;
+        }
+
         inst_name = "Ch" + channel.toString() + "_NC_OSR";
         let nosr = inst[inst_name];
 
         if (nosr < 4 || nosr > 256) {
             validation.logError(
-                "NC OSR should be between 4 to 256 (inclusive)! - Check Channel_" + channel + " NC OSR = " + nosr,
+                "NC OSR should be between 4 and 256 (inclusive)! - Check Channel_" + channel + " NC OSR = " + nosr,
                 inst, inst_name);
         }
 
-        inst_name = "Ch" + channel.toString() + "_OC_OSR";
-        let cosr = inst[inst_name];
+        /* Comparator-specific validation — only when comparator is enabled */
+        if (inst["Ch" + channel.toString() + "_ComparatorEnable"]) {
+            inst_name = "Ch" + channel.toString() + "_OC_OSR";
+            let cosr = inst[inst_name];
 
-        if (cosr < 8 || cosr > 256) {
-            validation.logError(
-                "OC OSR should be between 8 and 256 (inclusive)! - Check Channel_" + channel + " OC OSR = " + cosr,
-                inst, inst_name);
+            if (cosr < 4 || cosr > 256) {
+                validation.logError(
+                    "OC OSR should be between 4 and 256 (inclusive)! - Check Channel_" + channel + " OC OSR = " + cosr,
+                    inst, inst_name);
+            }
+
+            inst_name = "Ch" + channel.toString() + "_HLT";
+            let HLT = inst[inst_name];
+
+            if (HLT < 0 || HLT > 16777216) {
+                validation.logError(
+                    "HLT should be between 0 and 16777216 (inclusive)! - Check Channel_" + channel + " HLT = " + HLT,
+                    inst, inst_name);
+            }
+
+            inst_name = "Ch" + channel.toString() + "_LLT";
+            let LLT = inst[inst_name];
+
+            if (LLT < 0 || LLT > 16777216) {
+                validation.logError(
+                    "LLT should be between 0 and 16777216 (inclusive)! - Check Channel_" + channel + " LLT = " + LLT,
+                    inst, inst_name);
+            }
+
+            if (HLT < LLT) {
+                inst_name = "Ch" + channel.toString() + "_HLT";
+                validation.logError(
+                    "High Level Threshold should be >= Low Level Threshold for Channel_" + channel,
+                    inst, inst_name);
+            }
+
+            /* Zero cross threshold — only when zero cross detection is enabled */
+            if (inst["Ch" + channel.toString() + "_ZeroCross_Enable"]) {
+                inst_name = "Ch" + channel.toString() + "_ZCT";
+                let ZCT = inst[inst_name];
+
+                if (ZCT < 0 || ZCT > 16777216) {
+                    validation.logError(
+                        "Zero Cross Threshold should be between 0 and 16777216 (inclusive)! - Check Channel_" + channel + " ZCT = " + ZCT,
+                        inst, inst_name);
+                }
+            }
         }
 
-        inst_name = "Ch" + channel.toString() + "_HLT";
-        let HLT = inst[inst_name];
+        /* Fast detect threshold validation — only when fast detect is enabled */
+        if (inst["Ch" + channel.toString() + "_FastDetect"]) {
+            inst_name = "Ch" + channel.toString() + "_ZeroMinTh";
+            let ZeroMinTh = inst[inst_name];
 
-        if (HLT < 0 || HLT > 16777216) {
-            validation.logError(
-                "HLT should be between 0 to 16777216(inclusive)! - Check Channel_" + channel + " HLT = " + HLT,
-                inst, inst_name);
-        }
+            inst_name = "Ch" + channel.toString() + "_ZeroMaxTh";
+            let ZeroMaxTh = inst[inst_name];
 
-        inst_name = "Ch" + channel.toString() + "_LLT";
-        let LLT = inst[inst_name];
-
-        if (LLT < 0 || LLT > 16777216) {
-            validation.logError(
-                "LLT should be between 0 to 16777216(inclusive)! - Check Channel_" + channel + " LLT = " + LLT,
-                inst, inst_name);
+            if (ZeroMinTh > ZeroMaxTh) {
+                inst_name = "Ch" + channel.toString() + "_ZeroMinTh";
+                validation.logError(
+                    "Zero Count Min Threshold should be <= Max Threshold for Channel_" + channel,
+                    inst, inst_name);
+            }
         }
     }
 
@@ -53,834 +96,342 @@ function onValidate(inst, validation) {
     inst_name = "SDFM_CLK_GEN";
     let clock_gen = inst[inst_name];
 
-    if ((clock_gen != "3") && Phase_Delay) {
+    if ((clock_gen != "0") && Phase_Delay) {
         validation.logError(
-            "Select SDFM clock generation from IEP0 (option 3) for phase compensation",
+            "Select SDFM clock generation from IEP for phase compensation",
             inst, inst_name);
     }
 
-    let channel_id = 0;
-    inst_name = "Enable_Channel_0";
-    let ch0 = inst[inst_name];
-    inst_name = "Enable_Channel_1";
-    let ch1 = inst[inst_name];
-    inst_name = "Enable_Channel_2";
-    let ch2 = inst[inst_name];
-    channel_id = (ch0 | (ch1 << 1) | (ch2 << 2));
+    /* Get PRU/RTU/TXPRU trigger and snoop mode settings */
+    inst_name = "PRU_EnableSnoopNC";
+    let pru_snoop_mode = inst[inst_name];
+    inst_name = "RTU_EnableSnoopNC";
+    let rtu_snoop_mode = inst[inst_name];
+    inst_name = "TXPRU_EnableSnoopNC";
+    let txpru_snoop_mode = inst[inst_name];
 
-    inst_name = "Ch0_SDFM Clock";
-    let clock_ch0 = inst[inst_name];
-    inst_name = "Ch1_SDFM Clock";
-    let clock_ch1 = inst[inst_name];
-    inst_name = "Ch2_SDFM Clock";
-    let clock_ch2 = inst[inst_name];
+    inst_name = "PRU_EnableTriggerMode";
+    let pru_trig_mode = inst[inst_name];
+    inst_name = "RTU_EnableTriggerMode";
+    let rtu_trig_mode = inst[inst_name];
+    inst_name = "TXPRU_EnableTriggerMode";
+    let txpru_trig_mode = inst[inst_name];
 
-    inst_name = "Ch0_NC_OSR";
-    let nosr_ch0 = inst[inst_name];
-    inst_name = "Ch1_NC_OSR";
-    let nosr_ch1 = inst[inst_name];
-    inst_name = "Ch2_NC_OSR";
-    let nosr_ch2 = inst[inst_name];
-
-    inst_name = "Ch0_EnableDoubleUpdate";
-    let double_update_ch0 = inst[inst_name];
-    inst_name = "Ch1_EnableDoubleUpdate";
-    let double_update_ch1 = inst[inst_name];
-    inst_name = "Ch2_EnableDoubleUpdate";
-    let double_update_ch2 = inst[inst_name];
-
-    inst_name = "Ch0_EnableContinuousMode";
-    let cont_mode_ch0 = inst[inst_name];
-    inst_name = "Ch1_EnableContinuousMode";
-    let cont_mode_ch1 = inst[inst_name];
-    inst_name = "Ch2_EnableContinuousMode";
-    let cont_mode_ch2 = inst[inst_name];
-
-    inst_name = "Ch0_FirstTriggerPoint";
-    let first_trig_point_ch0 = inst[inst_name];
-    inst_name = "Ch1_FirstTriggerPoint";
-    let first_trig_point_ch1 = inst[inst_name];
-    inst_name = "Ch2_FirstTriggerPoint";
-    let first_trig_point_ch2 = inst[inst_name];
-
-    inst_name = "Ch0_SecondTriggerPoint";
-    let second_trig_point_ch0 = inst[inst_name];
-    inst_name = "Ch1_SecondTriggerPoint";
-    let second_trig_point_ch1 = inst[inst_name];
-    inst_name = "Ch2_SecondTriggerPoint";
-    let second_trig_point_ch2 = inst[inst_name];
-
-    inst_name = "Ch0_EPWM_SYNC";
-    let epwm_sync_ch0 = inst[inst_name];
-    inst_name = "Ch1_EPWM_SYNC";
-    let epwm_sync_ch1 = inst[inst_name];
-    inst_name = "Ch2_EPWM_SYNC";
-    let epwm_sync_ch2 = inst[inst_name];
-
-    inst_name = "Ch0_Epwm_Source";
-    let epwm_source_ch0 = inst[inst_name];
-    inst_name = "Ch1_Epwm_Source";
-    let epwm_source_ch1 = inst[inst_name];
-    inst_name = "Ch2_Epwm_Source";
-    let epwm_source_ch2 = inst[inst_name];
-
-    switch (channel_id) {
-        case 3:
-            if (clock_ch0 != clock_ch1) {
-                inst_name = "Ch0_SDFM Clock";
-                validation.logError(
-                    "SDFM clock value should be same for Channel 0 and Channel 1",
-                    inst, inst_name);
+    /* Check that channels 3-8 are disabled when PRU snoop mode is active without load share */
+    if(pru_snoop_mode && !Load_Share) {
+        let hasEnabledInvalidChannels = false;
+        for (let ch = 3; ch < 9; ch++) {
+            if (inst["Enable_Channel_" + ch]) {
+                hasEnabledInvalidChannels = true;
+                break;
             }
-            if (nosr_ch0 != nosr_ch1) {
-                inst_name = "Ch0_NC_OSR";
-                validation.logError(
-                    "NC OSR value should be same for Channel 0 and Channel 1",
-                    inst, inst_name);
-            }
-            if (double_update_ch0 != double_update_ch1) {
-                inst_name = "Ch0_EnableDoubleUpdate";
-                validation.logError(
-                    "Enable double update for Channel 0 and Channel 1",
-                    inst, inst_name);
-            }
-            if (cont_mode_ch0 != cont_mode_ch1) {
-                inst_name = "Ch0_EnableContinuousMode";
-                validation.logError(
-                    "Enable continuous mode for Channel 0 and Channel 1",
-                    inst, inst_name);
-            }
-            if (first_trig_point_ch0 != first_trig_point_ch1) {
-                inst_name = "Ch0_FirstTriggerPoint";
-                validation.logError(
-                    "First trigger point should be same for Channel 0 and Channel 1",
-                    inst, inst_name);
-            }
-            if (second_trig_point_ch0 != second_trig_point_ch1) {
-                inst_name = "Ch0_SecondTriggerPoint";
-                validation.logError(
-                    "Second trigger point should be same for Channel 0 and Channel 1",
-                    inst, inst_name);
-            }
-            if (epwm_sync_ch0 != epwm_sync_ch1) {
-                inst_name = "Ch0_EPWM_SYNC";
-                validation.logError(
-                    "Enable EPWM synchronization for Channel 0 and Channel 1",
-                    inst, inst_name);
-            }
-            if (epwm_source_ch0 != epwm_source_ch1) {
-                inst_name = "Ch0_Epwm_Source";
-                validation.logError(
-                    "EPWM synchronization source should be same for Channel 0 and Channel 1",
-                    inst, inst_name);
-            }
-            break;
-        case 5:
-            if (clock_ch0 != clock_ch2) {
-                inst_name = "Ch0_SDFM Clock";
-                validation.logError(
-                    "SDFM clock value should be same for Channel 0 and Channel 2",
-                    inst, inst_name);
-            }
-            if (nosr_ch0 != nosr_ch2) {
-                inst_name = "Ch0_NC_OSR";
-                validation.logError(
-                    "NC OSR value should be same for Channel 0 and Channel 2",
-                    inst, inst_name);
-            }
-            if (double_update_ch0 != double_update_ch2) {
-                inst_name = "Ch0_EnableDoubleUpdate";
-                validation.logError(
-                    "Enable double update for Channel 0 and Channel 2",
-                    inst, inst_name);
-            }
-            if (cont_mode_ch0 != cont_mode_ch2) {
-                inst_name = "Ch0_EnableContinuousMode";
-                validation.logError(
-                    "Enable continuous mode for Channel 0 and Channel 2",
-                    inst, inst_name);
-            }
-            if (first_trig_point_ch0 != first_trig_point_ch2) {
-                inst_name = "Ch0_FirstTriggerPoint";
-                validation.logError(
-                    "First trigger point should be same for Channel 0 and Channel 2",
-                    inst, inst_name);
-            }
-            if (second_trig_point_ch0 != second_trig_point_ch2) {
-                inst_name = "Ch0_SecondTriggerPoint";
-                validation.logError(
-                    "Second trigger point should be same for Channel 0 and Channel 2",
-                    inst, inst_name);
-            }
-            if (epwm_sync_ch0 != epwm_sync_ch2) {
-                inst_name = "Ch0_EPWM_SYNC";
-                validation.logError(
-                    "Enable EPWM synchronization for Channel 0 and Channel 2",
-                    inst, inst_name);
-            }
-            if (epwm_source_ch0 != epwm_source_ch2) {
-                inst_name = "Ch0_Epwm_Source";
-                validation.logError(
-                    "EPWM synchronization source should be same for Channel 0 and Channel 2",
-                    inst, inst_name);
-            }
-            break;
-        case 6:
-            if (clock_ch1 != clock_ch2) {
-                inst_name = "Ch1_SDFM Clock";
-                validation.logError(
-                    "SDFM clock value should be same for Channel 1 and Channel 2",
-                    inst, inst_name);
-            }
-            if (nosr_ch1 != nosr_ch2) {
-                inst_name = "Ch1_NC_OSR";
-                validation.logError(
-                    "NC OSR value should be same for Channel 1 and Channel 2",
-                    inst, inst_name);
-            }
-            if (double_update_ch1 != double_update_ch2) {
-                inst_name = "Ch1_EnableDoubleUpdate";
-                validation.logError(
-                    "Enable double update for Channel 1 and Channel 2",
-                    inst, inst_name);
-            }
-            if (cont_mode_ch1 != cont_mode_ch2) {
-                inst_name = "Ch1_EnableContinuousMode";
-                validation.logError(
-                    "Enable continuous mode for Channel 1 and Channel 2",
-                    inst, inst_name);
-            }
-            if (first_trig_point_ch1 != first_trig_point_ch2) {
-                inst_name = "Ch1_FirstTriggerPoint";
-                validation.logError(
-                    "First trigger point should be same for Channel 1 and Channel 2",
-                    inst, inst_name);
-            }
-            if (second_trig_point_ch1 != second_trig_point_ch2) {
-                inst_name = "Ch1_SecondTriggerPoint";
-                validation.logError(
-                    "Second trigger point should be same for Channel 1 and Channel 2",
-                    inst, inst_name);
-            }
-            if (epwm_sync_ch1 != epwm_sync_ch2) {
-                inst_name = "Ch1_EPWM_SYNC";
-                validation.logError(
-                    "Enable EPWM synchronization for Channel 1 and Channel 2",
-                    inst, inst_name);
-            }
-            if (epwm_source_ch1 != epwm_source_ch2) {
-                inst_name = "Ch1_Epwm_Source";
-                validation.logError(
-                    "EPWM synchronization source should be same for Channel 1 and Channel 2",
-                    inst, inst_name);
-            }
-            break;
-        case 7:
-            if ((clock_ch0 != clock_ch1) || (clock_ch0 != clock_ch2) || (clock_ch1 != clock_ch2)) {
-                inst_name = "Ch0_SDFM Clock";
-                validation.logError(
-                    "SDFM clock value should be same for Channel 0, Channel 1 and Channel 2",
-                    inst, inst_name);
-            }
-            if ((nosr_ch0 != nosr_ch1) || (nosr_ch1 != nosr_ch2) || (nosr_ch0 != nosr_ch2)) {
-                inst_name = "Ch0_NC_OSR";
-                validation.logError(
-                    "NC OSR value should be same for Channel 0, Channel 1 and Channel 2",
-                    inst, inst_name);
-            }
-            if ((double_update_ch0 != double_update_ch1) || (double_update_ch0 != double_update_ch2) || (double_update_ch1 != double_update_ch2)) {
-                inst_name = "Ch0_EnableDoubleUpdate";
-                validation.logError(
-                    "Enable double update for Channel 0, Channel 1 and Channel 2",
-                    inst, inst_name);
-            }
-            if ((cont_mode_ch0 != cont_mode_ch1) || (cont_mode_ch0 != cont_mode_ch2) || (cont_mode_ch1 != cont_mode_ch2)) {
-                inst_name = "Ch0_EnableContinuousMode";
-                validation.logError(
-                    "Enable continuous mode for Channel 0, Channel 1 and Channel 2",
-                    inst, inst_name);
-            }
-            if ((first_trig_point_ch0 != first_trig_point_ch1) || (first_trig_point_ch0 != first_trig_point_ch2) || (first_trig_point_ch1 != first_trig_point_ch2)) {
-                inst_name = "Ch0_FirstTriggerPoint";
-                validation.logError(
-                    "First trigger point should be same for Channel 0, Channel 1 and Channel 2",
-                    inst, inst_name);
-            }
-            if ((second_trig_point_ch0 != second_trig_point_ch1) || (second_trig_point_ch0 != second_trig_point_ch2) || (second_trig_point_ch1 != second_trig_point_ch2)) {
-                inst_name = "Ch0_SecondTriggerPoint";
-                validation.logError(
-                    "Second trigger point should be same for Channel 0, Channel 1 and Channel 2",
-                    inst, inst_name);
-            }
-            if ((epwm_sync_ch0 != epwm_sync_ch1) || (epwm_sync_ch0 != epwm_sync_ch2) || (epwm_sync_ch1 != epwm_sync_ch2)) {
-                inst_name = "Ch0_EPWM_SYNC";
-                validation.logError(
-                    "Enable EPWM synchronization for Channel 0, Channel 1 and Channel 2",
-                    inst, inst_name);
-            }
-            if ((epwm_source_ch0 != epwm_source_ch1) || (epwm_source_ch0 != epwm_source_ch2) || (epwm_source_ch1 != epwm_source_ch2)) {
-                inst_name = "Ch0_Epwm_Source";
-                validation.logError(
-                    "EPWM synchronization source should be same for Channel 0, Channel 1 and Channel 2",
-                    inst, inst_name);
-            }
-            break;
-        case 0:
-        case 1:
-        case 2:
-        case 4:
-        default:
-            break;
+        }
+        if (hasEnabledInvalidChannels) {
+            validation.logError(
+                "Channels 3-8 are enabled but not supported in PRU snoop mode without load share. Disable PRU snoop mode or enable load share to access and disable those channels.",
+                inst, "PRU_EnableSnoopNC");
+        }
     }
 
-    // Channel group 3-5 validation
-    let channel_id1 = 0;
-    inst_name = "Enable_Channel_3";
-    let ch3 = inst[inst_name];
-    inst_name = "Enable_Channel_4";
-    let ch4 = inst[inst_name];
-    inst_name = "Enable_Channel_5";
-    let ch5 = inst[inst_name];
-    channel_id1 = (ch3 | (ch4 << 1) | (ch5 << 2));
-
-    inst_name = "Ch3_SDFM Clock";
-    let clock_ch3 = inst[inst_name];
-    inst_name = "Ch4_SDFM Clock";
-    let clock_ch4 = inst[inst_name];
-    inst_name = "Ch5_SDFM Clock";
-    let clock_ch5 = inst[inst_name];
-
-    inst_name = "Ch3_NC_OSR";
-    let nosr_ch3 = inst[inst_name];
-    inst_name = "Ch4_NC_OSR";
-    let nosr_ch4 = inst[inst_name];
-    inst_name = "Ch5_NC_OSR";
-    let nosr_ch5 = inst[inst_name];
-
-    inst_name = "Ch3_EnableDoubleUpdate";
-    let double_update_ch3 = inst[inst_name];
-    inst_name = "Ch4_EnableDoubleUpdate";
-    let double_update_ch4 = inst[inst_name];
-    inst_name = "Ch5_EnableDoubleUpdate";
-    let double_update_ch5 = inst[inst_name];
-
-    inst_name = "Ch3_EnableContinuousMode";
-    let cont_mode_ch3 = inst[inst_name];
-    inst_name = "Ch4_EnableContinuousMode";
-    let cont_mode_ch4 = inst[inst_name];
-    inst_name = "Ch5_EnableContinuousMode";
-    let cont_mode_ch5 = inst[inst_name];
-
-    inst_name = "Ch3_FirstTriggerPoint";
-    let first_trig_point_ch3 = inst[inst_name];
-    inst_name = "Ch4_FirstTriggerPoint";
-    let first_trig_point_ch4 = inst[inst_name];
-    inst_name = "Ch5_FirstTriggerPoint";
-    let first_trig_point_ch5 = inst[inst_name];
-
-    inst_name = "Ch3_SecondTriggerPoint";
-    let second_trig_point_ch3 = inst[inst_name];
-    inst_name = "Ch4_SecondTriggerPoint";
-    let second_trig_point_ch4 = inst[inst_name];
-    inst_name = "Ch5_SecondTriggerPoint";
-    let second_trig_point_ch5 = inst[inst_name];
-
-    inst_name = "Ch3_EPWM_SYNC";
-    let epwm_sync_ch3 = inst[inst_name];
-    inst_name = "Ch4_EPWM_SYNC";
-    let epwm_sync_ch4 = inst[inst_name];
-    inst_name = "Ch5_EPWM_SYNC";
-    let epwm_sync_ch5 = inst[inst_name];
-
-    inst_name = "Ch3_Epwm_Source";
-    let epwm_source_ch3 = inst[inst_name];
-    inst_name = "Ch4_Epwm_Source";
-    let epwm_source_ch4 = inst[inst_name];
-    inst_name = "Ch5_Epwm_Source";
-    let epwm_source_ch5 = inst[inst_name];
-
-    switch (channel_id1) {
-        case 3:
-            if (clock_ch3 != clock_ch4) {
-                inst_name = "Ch3_SDFM Clock";
-                validation.logError(
-                    "SDFM clock value should be same for Channel 3 and Channel 4",
-                    inst, inst_name);
-            }
-            if (nosr_ch3 != nosr_ch4) {
-                inst_name = "Ch3_NC_OSR";
-                validation.logError(
-                    "NC OSR value should be same for Channel 3 and Channel 4",
-                    inst, inst_name);
-            }
-            if (double_update_ch3 != double_update_ch4) {
-                inst_name = "Ch3_EnableDoubleUpdate";
-                validation.logError(
-                    "Enable double update for Channel 3 and Channel 4",
-                    inst, inst_name);
-            }
-            if (cont_mode_ch3 != cont_mode_ch4) {
-                inst_name = "Ch3_EnableContinuousMode";
-                validation.logError(
-                    "Enable continuous mode for Channel 3 and Channel 4",
-                    inst, inst_name);
-            }
-            if (first_trig_point_ch3 != first_trig_point_ch4) {
-                inst_name = "Ch3_FirstTriggerPoint";
-                validation.logError(
-                    "First trigger point should be same for Channel 3 and Channel 4",
-                    inst, inst_name);
-            }
-            if (second_trig_point_ch3 != second_trig_point_ch4) {
-                inst_name = "Ch3_SecondTriggerPoint";
-                validation.logError(
-                    "Second trigger point should be same for Channel 3 and Channel 4",
-                    inst, inst_name);
-            }
-            if (epwm_sync_ch3 != epwm_sync_ch4) {
-                inst_name = "Ch3_EPWM_SYNC";
-                validation.logError(
-                    "Enable EPWM synchronization for Channel 3 and Channel 4",
-                    inst, inst_name);
-            }
-            if (epwm_source_ch3 != epwm_source_ch4) {
-                inst_name = "Ch3_Epwm_Source";
-                validation.logError(
-                    "EPWM synchronization source should be same for Channel 3 and Channel 4",
-                    inst, inst_name);
-            }
-            break;
-        case 5:
-            if (clock_ch3 != clock_ch5) {
-                inst_name = "Ch3_SDFM Clock";
-                validation.logError(
-                    "SDFM clock value should be same for Channel 3 and Channel 5",
-                    inst, inst_name);
-            }
-            if (nosr_ch3 != nosr_ch5) {
-                inst_name = "Ch3_NC_OSR";
-                validation.logError(
-                    "NC OSR value should be same for Channel 3 and Channel 5",
-                    inst, inst_name);
-            }
-            if (double_update_ch3 != double_update_ch5) {
-                inst_name = "Ch3_EnableDoubleUpdate";
-                validation.logError(
-                    "Enable double update for Channel 3 and Channel 5",
-                    inst, inst_name);
-            }
-            if (cont_mode_ch3 != cont_mode_ch5) {
-                inst_name = "Ch3_EnableContinuousMode";
-                validation.logError(
-                    "Enable continuous mode for Channel 3 and Channel 5",
-                    inst, inst_name);
-            }
-            if (first_trig_point_ch3 != first_trig_point_ch5) {
-                inst_name = "Ch3_FirstTriggerPoint";
-                validation.logError(
-                    "First trigger point should be same for Channel 3 and Channel 5",
-                    inst, inst_name);
-            }
-            if (second_trig_point_ch3 != second_trig_point_ch5) {
-                inst_name = "Ch3_SecondTriggerPoint";
-                validation.logError(
-                    "Second trigger point should be same for Channel 3 and Channel 5",
-                    inst, inst_name);
-            }
-            if (epwm_sync_ch3 != epwm_sync_ch5) {
-                inst_name = "Ch3_EPWM_SYNC";
-                validation.logError(
-                    "Enable EPWM synchronization for Channel 3 and Channel 5",
-                    inst, inst_name);
-            }
-            if (epwm_source_ch3 != epwm_source_ch5) {
-                inst_name = "Ch3_Epwm_Source";
-                validation.logError(
-                    "EPWM synchronization source should be same for Channel 3 and Channel 5",
-                    inst, inst_name);
-            }
-            break;
-        case 6:
-            if (clock_ch4 != clock_ch5) {
-                inst_name = "Ch4_SDFM Clock";
-                validation.logError(
-                    "SDFM clock value should be same for Channel 4 and Channel 5",
-                    inst, inst_name);
-            }
-            if (nosr_ch4 != nosr_ch5) {
-                inst_name = "Ch4_NC_OSR";
-                validation.logError(
-                    "NC OSR value should be same for Channel 4 and Channel 5",
-                    inst, inst_name);
-            }
-            if (double_update_ch4 != double_update_ch5) {
-                inst_name = "Ch4_EnableDoubleUpdate";
-                validation.logError(
-                    "Enable double update for Channel 4 and Channel 5",
-                    inst, inst_name);
-            }
-            if (cont_mode_ch4 != cont_mode_ch5) {
-                inst_name = "Ch4_EnableContinuousMode";
-                validation.logError(
-                    "Enable continuous mode for Channel 4 and Channel 5",
-                    inst, inst_name);
-            }
-            if (first_trig_point_ch4 != first_trig_point_ch5) {
-                inst_name = "Ch4_FirstTriggerPoint";
-                validation.logError(
-                    "First trigger point should be same for Channel 4 and Channel 5",
-                    inst, inst_name);
-            }
-            if (second_trig_point_ch4 != second_trig_point_ch5) {
-                inst_name = "Ch4_SecondTriggerPoint";
-                validation.logError(
-                    "Second trigger point should be same for Channel 4 and Channel 5",
-                    inst, inst_name);
-            }
-            if (epwm_sync_ch4 != epwm_sync_ch5) {
-                inst_name = "Ch4_EPWM_SYNC";
-                validation.logError(
-                    "Enable EPWM synchronization for Channel 4 and Channel 5",
-                    inst, inst_name);
-            }
-            if (epwm_source_ch4 != epwm_source_ch5) {
-                inst_name = "Ch4_Epwm_Source";
-                validation.logError(
-                    "EPWM synchronization source should be same for Channel 4 and Channel 5",
-                    inst, inst_name);
-            }
-            break;
-        case 7:
-            if ((clock_ch3 != clock_ch4) || (clock_ch3 != clock_ch5) || (clock_ch4 != clock_ch5)) {
-                inst_name = "Ch3_SDFM Clock";
-                validation.logError(
-                    "SDFM clock value should be same for Channel 3, Channel 4 and Channel 5",
-                    inst, inst_name);
-            }
-            if ((nosr_ch3 != nosr_ch4) || (nosr_ch3 != nosr_ch5) || (nosr_ch4 != nosr_ch5)) {
-                inst_name = "Ch3_NC_OSR";
-                validation.logError(
-                    "NC OSR value should be same for Channel 3, Channel 4 and Channel 5",
-                    inst, inst_name);
-            }
-            if ((double_update_ch3 != double_update_ch4) || (double_update_ch3 != double_update_ch5) || (double_update_ch4 != double_update_ch5)) {
-                inst_name = "Ch3_EnableDoubleUpdate";
-                validation.logError(
-                    "Enable double update for Channel 3, Channel 4 and Channel 5",
-                    inst, inst_name);
-            }
-            if ((cont_mode_ch3 != cont_mode_ch4) || (cont_mode_ch3 != cont_mode_ch5) || (cont_mode_ch4 != cont_mode_ch5)) {
-                inst_name = "Ch3_EnableContinuousMode";
-                validation.logError(
-                    "Enable continuous mode for Channel 3, Channel 4 and Channel 5",
-                    inst, inst_name);
-            }
-            if ((first_trig_point_ch3 != first_trig_point_ch4) || (first_trig_point_ch3 != first_trig_point_ch5) || (first_trig_point_ch4 != first_trig_point_ch5)) {
-                inst_name = "Ch3_FirstTriggerPoint";
-                validation.logError(
-                    "First trigger point should be same for Channel 3, Channel 4 and Channel 5",
-                    inst, inst_name);
-            }
-            if ((second_trig_point_ch3 != second_trig_point_ch4) || (second_trig_point_ch3 != second_trig_point_ch5) || (second_trig_point_ch4 != second_trig_point_ch5)) {
-                inst_name = "Ch3_SecondTriggerPoint";
-                validation.logError(
-                    "Second trigger point should be same for Channel 3, Channel 4 and Channel 5",
-                    inst, inst_name);
-            }
-            if ((epwm_sync_ch3 != epwm_sync_ch4) || (epwm_sync_ch3 != epwm_sync_ch5) || (epwm_sync_ch4 != epwm_sync_ch5)) {
-                inst_name = "Ch3_EPWM_SYNC";
-                validation.logError(
-                    "Enable EPWM synchronization for Channel 3, Channel 4 and Channel 5",
-                    inst, inst_name);
-            }
-            if ((epwm_source_ch3 != epwm_source_ch4) || (epwm_source_ch3 != epwm_source_ch5) || (epwm_source_ch4 != epwm_source_ch5)) {
-                inst_name = "Ch3_Epwm_Source";
-                validation.logError(
-                    "EPWM synchronization source should be same for Channel 3, Channel 4 and Channel 5",
-                    inst, inst_name);
-            }
-            break;
-        case 0:
-        case 1:
-        case 2:
-        case 4:
-        default:
-            break;
+    /* Check that if snoop mode is enabled, trigger mode must be enabled too */
+    if(pru_snoop_mode && !pru_trig_mode) {
+        inst_name = "PRU_EnableTriggerMode";
+        validation.logError(
+            "Enable trigger mode for SDFM PRU channels",
+            inst, inst_name);
     }
 
-    // Channel group 6-8 validation
-    let channel_id2 = 0;
-    inst_name = "Enable_Channel_6";
-    let ch6 = inst[inst_name];
-    inst_name = "Enable_Channel_7";
-    let ch7 = inst[inst_name];
-    inst_name = "Enable_Channel_8";
-    let ch8 = inst[inst_name];
-    channel_id2 = (ch6 | (ch7 << 1) | (ch8 << 2));
+    if(rtu_snoop_mode && !rtu_trig_mode) {
+        inst_name = "RTU_EnableTriggerMode";
+        validation.logError(
+            "Enable trigger mode for SDFM RTU channels",
+            inst, inst_name);
+    }
 
-    inst_name = "Ch6_SDFM Clock";
-    let clock_ch6 = inst[inst_name];
-    inst_name = "Ch7_SDFM Clock";
-    let clock_ch7 = inst[inst_name];
-    inst_name = "Ch8_SDFM Clock";
-    let clock_ch8 = inst[inst_name];
+    if(txpru_snoop_mode && !txpru_trig_mode) {
+        inst_name = "TXPRU_EnableTriggerMode";
+        validation.logError(
+            "Enable trigger mode for SDFM TXPRU channels",
+            inst, inst_name);
+    }
 
-    inst_name = "Ch6_NC_OSR";
-    let nosr_ch6 = inst[inst_name];
-    inst_name = "Ch7_NC_OSR";
-    let nosr_ch7 = inst[inst_name];
-    inst_name = "Ch8_NC_OSR";
-    let nosr_ch8 = inst[inst_name];
+    /* Check that RTU/TXPRU snoop and trigger modes can only be enabled in load share mode.
+     * In non-load-share mode, only PRU core is available for snoop/trigger functionality. */
+    if (!Load_Share && rtu_snoop_mode) {
+        inst_name = "RTU_EnableSnoopNC";
+        validation.logError(
+            "RTU snoop mode is only available in load share mode",
+            inst, inst_name);
+    }
 
-    inst_name = "Ch6_EnableDoubleUpdate";
-    let double_update_ch6 = inst[inst_name];
-    inst_name = "Ch7_EnableDoubleUpdate";
-    let double_update_ch7 = inst[inst_name];
-    inst_name = "Ch8_EnableDoubleUpdate";
-    let double_update_ch8 = inst[inst_name];
+    if (!Load_Share && txpru_snoop_mode) {
+        inst_name = "TXPRU_EnableSnoopNC";
+        validation.logError(
+            "TXPRU snoop mode is only available in load share mode",
+            inst, inst_name);
+    }
 
-    inst_name = "Ch6_EnableContinuousMode";
-    let cont_mode_ch6 = inst[inst_name];
-    inst_name = "Ch7_EnableContinuousMode";
-    let cont_mode_ch7 = inst[inst_name];
-    inst_name = "Ch8_EnableContinuousMode";
-    let cont_mode_ch8 = inst[inst_name];
+    if (!Load_Share && rtu_trig_mode) {
+        inst_name = "RTU_EnableTriggerMode";
+        validation.logError(
+            "RTU trigger mode is only available in load share mode",
+            inst, inst_name);
+    }
 
-    inst_name = "Ch6_FirstTriggerPoint";
-    let first_trig_point_ch6 = inst[inst_name];
-    inst_name = "Ch7_FirstTriggerPoint";
-    let first_trig_point_ch7 = inst[inst_name];
-    inst_name = "Ch8_FirstTriggerPoint";
-    let first_trig_point_ch8 = inst[inst_name];
+    if (!Load_Share && txpru_trig_mode) {
+        inst_name = "TXPRU_EnableTriggerMode";
+        validation.logError(
+            "TXPRU trigger mode is only available in load share mode",
+            inst, inst_name);
+    }
 
-    inst_name = "Ch6_SecondTriggerPoint";
-    let second_trig_point_ch6 = inst[inst_name];
-    inst_name = "Ch7_SecondTriggerPoint";
-    let second_trig_point_ch7 = inst[inst_name];
-    inst_name = "Ch8_SecondTriggerPoint";
-    let second_trig_point_ch8 = inst[inst_name];
+    if (!Load_Share && inst.RTU_EnableDoubleUpdate) {
+        inst_name = "RTU_EnableDoubleUpdate";
+        validation.logError(
+            "RTU double update is only available in load share mode",
+            inst, inst_name);
+    }
 
-    inst_name = "Ch6_EPWM_SYNC";
-    let epwm_sync_ch6 = inst[inst_name];
-    inst_name = "Ch7_EPWM_SYNC";
-    let epwm_sync_ch7 = inst[inst_name];
-    inst_name = "Ch8_EPWM_SYNC";
-    let epwm_sync_ch8 = inst[inst_name];
+    if (!Load_Share && inst.TXPRU_EnableDoubleUpdate) {
+        inst_name = "TXPRU_EnableDoubleUpdate";
+        validation.logError(
+            "TXPRU double update is only available in load share mode",
+            inst, inst_name);
+    }
 
-    inst_name = "Ch6_Epwm_Source";
-    let epwm_source_ch6 = inst[inst_name];
-    inst_name = "Ch7_Epwm_Source";
-    let epwm_source_ch7 = inst[inst_name];
-    inst_name = "Ch8_Epwm_Source";
-    let epwm_source_ch8 = inst[inst_name];
+    /* Double update is only valid when corresponding trigger mode is enabled */
+    if (inst.PRU_EnableDoubleUpdate && !inst.PRU_EnableTriggerMode) {
+        inst_name = "PRU_EnableDoubleUpdate";
+        validation.logWarning(
+            "PRU double update requires PRU trigger mode enabled",
+            inst, inst_name);
+    }
 
-    switch (channel_id2) {
-        case 3:
-            if (clock_ch6 != clock_ch7) {
-                inst_name = "Ch6_SDFM Clock";
-                validation.logError(
-                    "SDFM clock value should be same for Channel 6 and Channel 7",
-                    inst, inst_name);
-            }
-            if (nosr_ch6 != nosr_ch7) {
-                inst_name = "Ch6_NC_OSR";
-                validation.logError(
-                    "NC OSR value should be same for Channel 6 and Channel 7",
-                    inst, inst_name);
-            }
-            if (double_update_ch6 != double_update_ch7) {
-                inst_name = "Ch6_EnableDoubleUpdate";
-                validation.logError(
-                    "Enable double update for Channel 6 and Channel 7",
-                    inst, inst_name);
-            }
-            if (cont_mode_ch6 != cont_mode_ch7) {
-                inst_name = "Ch6_EnableContinuousMode";
-                validation.logError(
-                    "Enable continuous mode for Channel 6 and Channel 7",
-                    inst, inst_name);
-            }
-            if (first_trig_point_ch6 != first_trig_point_ch7) {
-                inst_name = "Ch6_FirstTriggerPoint";
-                validation.logError(
-                    "First trigger point should be same for Channel 6 and Channel 7",
-                    inst, inst_name);
-            }
-            if (second_trig_point_ch6 != second_trig_point_ch7) {
-                inst_name = "Ch6_SecondTriggerPoint";
-                validation.logError(
-                    "Second trigger point should be same for Channel 6 and Channel 7",
-                    inst, inst_name);
-            }
-            if (epwm_sync_ch6 != epwm_sync_ch7) {
-                inst_name = "Ch6_EPWM_SYNC";
-                validation.logError(
-                    "Enable EPWM synchronization for Channel 6 and Channel 7",
-                    inst, inst_name);
-            }
-            if (epwm_source_ch6 != epwm_source_ch7) {
-                inst_name = "Ch6_Epwm_Source";
-                validation.logError(
-                    "EPWM synchronization source should be same for Channel 6 and Channel 7",
-                    inst, inst_name);
-            }
+    if (Load_Share && inst.RTU_EnableDoubleUpdate && !inst.RTU_EnableTriggerMode) {
+        inst_name = "RTU_EnableDoubleUpdate";
+        validation.logWarning(
+            "RTU double update requires RTU trigger mode enabled",
+            inst, inst_name);
+    }
+
+    if (Load_Share && inst.TXPRU_EnableDoubleUpdate && !inst.TXPRU_EnableTriggerMode) {
+        inst_name = "TXPRU_EnableDoubleUpdate";
+        validation.logWarning(
+            "TXPRU double update requires TXPRU trigger mode enabled",
+            inst, inst_name);
+    }
+
+    /* Get all channel settings */
+    let channel_enabled = [];
+    let channel_acc_source = [];
+    let channel_nc_osr = [];
+    let channel_clock = [];
+
+    for(let i = 0; i < 9; i++) {
+        channel_enabled[i] = inst["Enable_Channel_" + i];
+        channel_acc_source[i] = inst["Ch" + i + "_AccSource"];
+        channel_nc_osr[i] = inst["Ch" + i + "_NC_OSR"];
+        channel_clock[i] = inst["Ch" + i + "_SDFM_Clock"];
+    }
+    /* Validate IEP compare event selection - each PRU core must use different compare event */
+    validateIepCompareEvents(inst, validation, pru_trig_mode, rtu_trig_mode, txpru_trig_mode, Load_Share);
+
+    /* VALIDATION FOR LOAD SHARE MODE */
+    if(Load_Share) {
+        /* RTU manages channels 0-2 */
+        if(rtu_trig_mode ) {
+            validateChannelsConsistency(inst, validation, 0, 2, channel_enabled, channel_acc_source, channel_nc_osr, channel_clock);
+        }
+
+        /* PRU manages channels 3-5 */
+        if(pru_trig_mode ) {
+            validateChannelsConsistency(inst, validation, 3, 5, channel_enabled, channel_acc_source, channel_nc_osr, channel_clock);
+        }
+
+        /* TXPRU manages channels 6-8 */
+        if(txpru_trig_mode ) {
+            validateChannelsConsistency(inst, validation, 6, 8, channel_enabled, channel_acc_source, channel_nc_osr, channel_clock);
+        }
+    }
+    /* VALIDATION FOR NON-LOAD SHARE MODE */
+    else {
+        /* In non-load share mode with trigger mode enabled, all channels must have consistent settings */
+        if(pru_trig_mode ) {
+            /* Check all channels (0-8) for consistency */
+            validateAllChannelsConsistency(inst, validation, channel_enabled, channel_acc_source, channel_nc_osr, channel_clock);
+        }
+    }
+
+    /* Validate trigger point relationships when trigger mode is enabled */
+    if(pru_trig_mode) {
+        /* FirstTriggerPoint must be less than SecondTriggerPoint when double update is enabled */
+        if(inst.PRU_EnableDoubleUpdate && inst.PRU_FirstTriggerPoint >= inst.PRU_SecondTriggerPoint) {
+            inst_name = "PRU_FirstTriggerPoint";
+            validation.logError(
+                "PRU first trigger point must be less than second trigger point when double update is enabled",
+                inst, inst_name);
+        }
+    }
+
+    if(Load_Share && rtu_trig_mode) {
+        if(inst.RTU_EnableDoubleUpdate && inst.RTU_FirstTriggerPoint >= inst.RTU_SecondTriggerPoint) {
+            inst_name = "RTU_FirstTriggerPoint";
+            validation.logError(
+                "RTU first trigger point must be less than second trigger point when double update is enabled",
+                inst, inst_name);
+        }
+    }
+
+    if(Load_Share && txpru_trig_mode) {
+        if(inst.TXPRU_EnableDoubleUpdate && inst.TXPRU_FirstTriggerPoint >= inst.TXPRU_SecondTriggerPoint) {
+            inst_name = "TXPRU_FirstTriggerPoint";
+            validation.logError(
+                "TXPRU first trigger point must be less than second trigger point when double update is enabled",
+                inst, inst_name);
+        }
+    }
+}
+
+function validateChannelsConsistency(inst, validation, startCh, endCh, enabled, acc_source, nc_osr, clock) {
+    let enabled_channels = [];
+
+    /* Find enabled channels in the range */
+    for(let i = startCh; i <= endCh; i++) {
+        if(enabled[i]) {
+            enabled_channels.push(i);
+        }
+    }
+
+    /* Skip if less than 2 channels are enabled */
+    if(enabled_channels.length < 2) {
+        return;
+    }
+
+    /* Get reference values from first enabled channel */
+    let ref_ch = enabled_channels[0];
+    let ref_acc_source = acc_source[ref_ch];
+    let ref_nc_osr = nc_osr[ref_ch];
+    let ref_clock = clock[ref_ch];
+
+    /* Check all enabled channels have consistent settings */
+    for(let i = 1; i < enabled_channels.length; i++) {
+        let ch = enabled_channels[i];
+
+        /* Check accumulator source */
+        if(acc_source[ch] != ref_acc_source) {
+            inst_name = "Ch" + ref_ch + "_AccSource";
+            validation.logError(
+                "Accumulator source should be same for Channels " + startCh + " through " + endCh + " in trigger mode",
+                inst, inst_name);
             break;
-        case 5:
-            if (clock_ch6 != clock_ch8) {
-                inst_name = "Ch6_SDFM Clock";
-                validation.logError(
-                    "SDFM clock value should be same for Channel 6 and Channel 8",
-                    inst, inst_name);
-            }
-            if (nosr_ch6 != nosr_ch8) {
-                inst_name = "Ch6_NC_OSR";
-                validation.logError(
-                    "NC OSR value should be same for Channel 6 and Channel 8",
-                    inst, inst_name);
-            }
-            if (double_update_ch6 != double_update_ch8) {
-                inst_name = "Ch6_EnableDoubleUpdate";
-                validation.logError(
-                    "Enable double update for Channel 6 and Channel 8",
-                    inst, inst_name);
-            }
-            if (cont_mode_ch6 != cont_mode_ch8) {
-                inst_name = "Ch6_EnableContinuousMode";
-                validation.logError(
-                    "Enable continuous mode for Channel 6 and Channel 8",
-                    inst, inst_name);
-            }
-            if (first_trig_point_ch6 != first_trig_point_ch8) {
-                inst_name = "Ch6_FirstTriggerPoint";
-                validation.logError(
-                    "First trigger point should be same for Channel 6 and Channel 8",
-                    inst, inst_name);
-            }
-            if (second_trig_point_ch6 != second_trig_point_ch8) {
-                inst_name = "Ch6_SecondTriggerPoint";
-                validation.logError(
-                    "Second trigger point should be same for Channel 6 and Channel 8",
-                    inst, inst_name);
-            }
-            if (epwm_sync_ch6 != epwm_sync_ch8) {
-                inst_name = "Ch6_EPWM_SYNC";
-                validation.logError(
-                    "Enable EPWM synchronization for Channel 6 and Channel 8",
-                    inst, inst_name);
-            }
-            if (epwm_source_ch6 != epwm_source_ch8) {
-                inst_name = "Ch6_Epwm_Source";
-                validation.logError(
-                    "EPWM synchronization source should be same for Channel 6 and Channel 8",
-                    inst, inst_name);
-            }
+        }
+
+        /* Check NC OSR */
+        if(nc_osr[ch] != ref_nc_osr) {
+            inst_name = "Ch" + ref_ch + "_NC_OSR";
+            validation.logError(
+                "NC OSR value should be same for Channels " + startCh + " through " + endCh + " in trigger mode",
+                inst, inst_name);
             break;
-        case 6:
-            if (clock_ch7 != clock_ch8) {
-                inst_name = "Ch7_SDFM Clock";
-                validation.logError(
-                    "SDFM clock value should be same for Channel 7 and Channel 8",
-                    inst, inst_name);
-            }
-            if (nosr_ch7 != nosr_ch8) {
-                inst_name = "Ch7_NC_OSR";
-                validation.logError(
-                    "NC OSR value should be same for Channel 7 and Channel 8",
-                    inst, inst_name);
-            }
-            if (double_update_ch7 != double_update_ch8) {
-                inst_name = "Ch7_EnableDoubleUpdate";
-                validation.logError(
-                    "Enable double update for Channel 7 and Channel 8",
-                    inst, inst_name);
-            }
-            if (cont_mode_ch7 != cont_mode_ch8) {
-                inst_name = "Ch7_EnableContinuousMode";
-                validation.logError(
-                    "Enable continuous mode for Channel 7 and Channel 8",
-                    inst, inst_name);
-            }
-            if (first_trig_point_ch7 != first_trig_point_ch8) {
-                inst_name = "Ch7_FirstTriggerPoint";
-                validation.logError(
-                    "First trigger point should be same for Channel 7 and Channel 8",
-                    inst, inst_name);
-            }
-            if (second_trig_point_ch7 != second_trig_point_ch8) {
-                inst_name = "Ch7_SecondTriggerPoint";
-                validation.logError(
-                    "Second trigger point should be same for Channel 7 and Channel 8",
-                    inst, inst_name);
-            }
-            if (epwm_sync_ch7 != epwm_sync_ch8) {
-                inst_name = "Ch7_EPWM_SYNC";
-                validation.logError(
-                    "Enable EPWM synchronization for Channel 7 and Channel 8",
-                    inst, inst_name);
-            }
-            if (epwm_source_ch7 != epwm_source_ch8) {
-                inst_name = "Ch7_Epwm_Source";
-                validation.logError(
-                    "EPWM synchronization source should be same for Channel 7 and Channel 8",
-                    inst, inst_name);
-            }
+        }
+
+        /* Check clock */
+        if(clock[ch] != ref_clock) {
+            inst_name = "Ch" + ref_ch + "_SDFM_Clock";
+            validation.logError(
+                "SDFM clock value should be same for Channels " + startCh + " through " + endCh + " in trigger mode",
+                inst, inst_name);
             break;
-        case 7:
-            if ((clock_ch6 != clock_ch7) || (clock_ch6 != clock_ch8) || (clock_ch7 != clock_ch8)) {
-                inst_name = "Ch6_SDFM Clock";
-                validation.logError(
-                    "SDFM clock value should be same for Channel 6, Channel 7 and Channel 8",
-                    inst, inst_name);
-            }
-            if ((nosr_ch6 != nosr_ch7) || (nosr_ch6 != nosr_ch8) || (nosr_ch7 != nosr_ch8)) {
-                inst_name = "Ch6_NC_OSR";
-                validation.logError(
-                    "NC OSR value should be same for Channel 6, Channel 7 and Channel 8",
-                    inst, inst_name);
-            }
-            if ((double_update_ch6 != double_update_ch7) || (double_update_ch6 != double_update_ch8) || (double_update_ch7 != double_update_ch8)) {
-                inst_name = "Ch6_EnableDoubleUpdate";
-                validation.logError(
-                    "Enable double update for Channel 6, Channel 7 and Channel 8",
-                    inst, inst_name);
-            }
-            if ((cont_mode_ch6 != cont_mode_ch7) || (cont_mode_ch6 != cont_mode_ch8) || (cont_mode_ch7 != cont_mode_ch8)) {
-                inst_name = "Ch6_EnableContinuousMode";
-                validation.logError(
-                    "Enable continuous mode for Channel 6, Channel 7 and Channel 8",
-                    inst, inst_name);
-            }
-            if ((first_trig_point_ch6 != first_trig_point_ch7) || (first_trig_point_ch6 != first_trig_point_ch8) || (first_trig_point_ch7 != first_trig_point_ch8)) {
-                inst_name = "Ch6_FirstTriggerPoint";
-                validation.logError(
-                    "First trigger point should be same for Channel 6, Channel 7 and Channel 8",
-                    inst, inst_name);
-            }
-            if ((second_trig_point_ch6 != second_trig_point_ch7) || (second_trig_point_ch6 != second_trig_point_ch8) || (second_trig_point_ch7 != second_trig_point_ch8)) {
-                inst_name = "Ch6_SecondTriggerPoint";
-                validation.logError(
-                    "Second trigger point should be same for Channel 6, Channel 7 and Channel 8",
-                    inst, inst_name);
-            }
-            if ((epwm_sync_ch6 != epwm_sync_ch7) || (epwm_sync_ch6 != epwm_sync_ch8) || (epwm_sync_ch7 != epwm_sync_ch8)) {
-                inst_name = "Ch6_EPWM_SYNC";
-                validation.logError(
-                    "Enable EPWM synchronization for Channel 6, Channel 7 and Channel 8",
-                    inst, inst_name);
-            }
-            if ((epwm_source_ch6 != epwm_source_ch7) || (epwm_source_ch6 != epwm_source_ch8) || (epwm_source_ch7 != epwm_source_ch8)) {
-                inst_name = "Ch6_Epwm_Source";
-                validation.logError(
-                    "EPWM synchronization source should be same for Channel 6, Channel 7 and Channel 8",
-                    inst, inst_name);
-            }
+        }
+    }
+}
+
+function validateAllChannelsConsistency(inst, validation, enabled, acc_source, nc_osr, clock) {
+    let enabled_channels = [];
+
+    /* Find all enabled channels */
+    for(let i = 0; i < 9; i++) {
+        if(enabled[i]) {
+            enabled_channels.push(i);
+        }
+    }
+
+    /* Skip if less than 2 channels are enabled */
+    if(enabled_channels.length < 2) {
+        return;
+    }
+
+    /* Get reference values from first enabled channel */
+    let ref_ch = enabled_channels[0];
+    let ref_acc_source = acc_source[ref_ch];
+    let ref_nc_osr = nc_osr[ref_ch];
+    let ref_clock = clock[ref_ch];
+
+    /* Check all enabled channels have consistent settings */
+    for(let i = 1; i < enabled_channels.length; i++) {
+        let ch = enabled_channels[i];
+
+        /* Check accumulator source */
+        if(acc_source[ch] != ref_acc_source) {
+            inst_name = "Ch" + ref_ch + "_AccSource";
+            validation.logError(
+                "Accumulator source should be same for all channels in trigger mode",
+                inst, inst_name);
             break;
-        case 0:
-        case 1:
-        case 2:
-        case 4:
-        default:
+        }
+
+        /* Check NC OSR */
+        if(nc_osr[ch] != ref_nc_osr) {
+            inst_name = "Ch" + ref_ch + "_NC_OSR";
+            validation.logError(
+                "NC OSR value should be same for all channels in trigger mode",
+                inst, inst_name);
             break;
+        }
+
+        /* Check clock */
+        if(clock[ch] != ref_clock) {
+            inst_name = "Ch" + ref_ch + "_SDFM_Clock";
+            validation.logError(
+                "SDFM clock value should be same for all channels in trigger mode",
+                inst, inst_name);
+            break;
+        }
+    }
+}
+
+function validateIepCompareEvents(inst, validation, pru_trig, rtu_trig, txpru_trig, load_share) {
+    /* Only validate if at least one trigger mode is enabled */
+    if(!pru_trig && !rtu_trig && !txpru_trig) {
+        return;
+    }
+
+    let pru_cmp = inst["PRU_SelectIepCmpEvent"];
+    let rtu_cmp = inst["RTU_SelectIepCmpEvent"];
+    let txpru_cmp = inst["TXPRU_SelectIepCmpEvent"];
+
+    /* In load share mode, validate between enabled PRU cores */
+    if(load_share) {
+        /* Check PRU vs RTU */
+        if(pru_trig && rtu_trig && pru_cmp === rtu_cmp) {
+            validation.logError(
+                "PRU and RTU cannot use the same IEP compare event. PRU uses CMP" + pru_cmp + ", RTU uses CMP" + rtu_cmp,
+                inst, "PRU_SelectIepCmpEvent");
+        }
+
+        /* Check PRU vs TXPRU */
+        if(pru_trig && txpru_trig && pru_cmp === txpru_cmp) {
+            validation.logError(
+                "PRU and TXPRU cannot use the same IEP compare event. PRU uses CMP" + pru_cmp + ", TXPRU uses CMP" + txpru_cmp,
+                inst, "PRU_SelectIepCmpEvent");
+        }
+
+        /* Check RTU vs TXPRU */
+        if(rtu_trig && txpru_trig && rtu_cmp === txpru_cmp) {
+            validation.logError(
+                "RTU and TXPRU cannot use the same IEP compare event. RTU uses CMP" + rtu_cmp + ", TXPRU uses CMP" + txpru_cmp,
+                inst, "RTU_SelectIepCmpEvent");
+        }
     }
 }
 

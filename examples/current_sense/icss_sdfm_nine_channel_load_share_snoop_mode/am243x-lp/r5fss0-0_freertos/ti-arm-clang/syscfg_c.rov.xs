@@ -4,5 +4,5 @@
  *  View (ROV) tool.
  */
 var crovFiles = [
-    "mcu_plus_sdk/source/kernel/freertos/rov/FreeRTOS.rov.js",
+    "source/kernel/freertos/rov/FreeRTOS.rov.js",
 ];

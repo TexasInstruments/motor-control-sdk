@@ -4,6 +4,7 @@ const component_file_list = [
     "source/current_sense/sdfm/.project/project.js",
     "source/position_sense/bissc/.project/project.js",
     "source/position_sense/endat/.project/project.js",
+    "source/position_sense/endat3/.project/project.js",
     "source/position_sense/hdsl/.project/project.js",
     "source/position_sense/nikon/.project/project.js",
     "source/position_sense/tamagawa/.project/project.js",
@@ -17,11 +18,11 @@ const device_defines = {
 };
 
 const example_file_list = [
+    "examples/current_sense/icss_sdfm_nine_channel_load_share_continuous_mode/.project/project.js",
     "examples/current_sense/icss_sdfm_nine_channel_load_share_snoop_mode/.project/project.js",
-    "examples/current_sense/icss_sdfm_nine_channel_with_continuous_mode/.project/project.js",
-    "examples/current_sense/icss_sdfm_three_channel_single_pru_mode/.project/project.js",
+    "examples/current_sense/icss_sdfm_nine_channel_single_pru_mode/.project/project.js",
+    "examples/current_sense/icss_sdfm_three_channel_single_pru_continuous_mode/.project/project.js",
     "examples/current_sense/icss_sdfm_three_channel_single_pru_snoop_mode/.project/project.js",
-    "examples/current_sense/icss_sdfm_three_channel_with_continuous_mode/.project/project.js",
     "examples/current_sense/icss_sdfm_three_channel_with_phase_compensation/.project/project.js",
     "examples/position_sense/bissc_diagnostic/multi_channel_load_share/.project/project.js",
     "examples/position_sense/bissc_diagnostic/multi_channel_single_pru/.project/project.js",
@@ -29,12 +30,14 @@ const example_file_list = [
     "examples/position_sense/endat_diagnostic/multi_channel_load_share/.project/project.js",
     "examples/position_sense/endat_diagnostic/multi_channel_single_pru/.project/project.js",
     "examples/position_sense/endat_diagnostic/single_channel/.project/project.js",
+    "examples/position_sense/endat3_diagnostic/single_channel/.project/project.js",
     "examples/position_sense/hdsl_diagnostic/multi_channel/.project/project.js",
     "examples/position_sense/hdsl_diagnostic/single_channel/.project/project.js",
     "examples/position_sense/nikon_diagnostic/multi_channel_load_share/.project/project.js",
     "examples/position_sense/nikon_diagnostic/multi_channel_single_pru/.project/project.js",
     "examples/position_sense/nikon_diagnostic/single_channel/.project/project.js",
-    "examples/position_sense/tamagawa_diagnostic/multi_channel/.project/project.js",
+    "examples/position_sense/tamagawa_diagnostic/multi_channel_load_share/.project/project.js",
+    "examples/position_sense/tamagawa_diagnostic/multi_channel_single_pru/.project/project.js",
     "examples/position_sense/tamagawa_diagnostic/single_channel/.project/project.js",
     "examples/pruicss_pwm/pruicss_pwm_dead_band_epwm_sync/.project/project.js",
     "examples/pruicss_pwm/pruicss_pwm_with_phase_shift/.project/project.js",
@@ -52,6 +55,7 @@ const example_file_list = [
     "source/position_sense/endat/firmware/multi_channel_load_share/.project/project.js",
     "source/position_sense/endat/firmware/multi_channel_single_pru/.project/project.js",
     "source/position_sense/endat/firmware/single_channel/.project/project.js",
+    "source/position_sense/endat3/firmware/single_channel/.project/project.js",
     "source/position_sense/hdsl/firmware/freerun_225_mhz/.project/project.js",
     "source/position_sense/hdsl/firmware/multichannel_ch0/.project/project.js",
     "source/position_sense/hdsl/firmware/multichannel_ch0_sync_mode/.project/project.js",
@@ -63,7 +67,8 @@ const example_file_list = [
     "source/position_sense/nikon/firmware/multi_channel_load_share/.project/project.js",
     "source/position_sense/nikon/firmware/multi_channel_single_pru/.project/project.js",
     "source/position_sense/nikon/firmware/single_channel/.project/project.js",
-    "source/position_sense/tamagawa/firmware/multi_channel/.project/project.js",
+    "source/position_sense/tamagawa/firmware/multi_channel_load_share/.project/project.js",
+    "source/position_sense/tamagawa/firmware/multi_channel_single_pru/.project/project.js",
     "source/position_sense/tamagawa/firmware/single_channel/.project/project.js",
     "source/pruicss_pwm/pruicss_pwm_with_phase_shift/firmware/.project/project.js",
     "source/pruicss_iep_sync_out_generation/.project/project.js",
@@ -188,6 +193,14 @@ function getProductNameProjectSpec() {
     return "MOTOR_CONTROL_SDK_AM243X";
 }
 
+function getIcsdkProductNameProjectSpec() {
+    return "INDUSTRIAL_COMMUNICATIONS_SDK_AM243X";
+}
+
+function getMcusdkProductNameProjectSpec() {
+    return "MCU_PLUS_SDK_AM243X";
+}
+
 function getFlashAddr() {
     return 0x60000000;
 }
@@ -195,6 +208,10 @@ function getFlashAddr() {
 function getEnableGccBuild() {
     const IsGccBuildEnabled = 0;
     return IsGccBuildEnabled;
+}
+
+function getOsList(cpu) {
+    return ["nortos", "freertos"];
 }
 
 module.exports = {
@@ -210,6 +227,9 @@ module.exports = {
     getProperty,
     getLinuxFwName,
     getProductNameProjectSpec,
+    getIcsdkProductNameProjectSpec,
+    getMcusdkProductNameProjectSpec,
     getFlashAddr,
     getEnableGccBuild,
+    getOsList,
 };

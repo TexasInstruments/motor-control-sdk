@@ -96,8 +96,8 @@ The PRG<k>_PRU1/0_GPI1 signal (muxed with SD0_D) can be used as SD_CLKOUT when P
 <tr>
     <td>5
     <td>200
-	<td>10 (0x)
-    <td>4 (0x01)
+	<td>10 (0x13)
+    <td>4 (0x03)
     <td>5 = 200/(10*4)
 </tr>
 </table>
@@ -147,7 +147,7 @@ ICSSG IEP has Sync0/Sync1 cyclic generation mode to generate clock which can be 
 <tr>
     <td> \ref SDFM_enableIep
     <td> Enables IEP timer
-    <td>20
+    <td> None
 </tr>
 <tr>
     <td> \ref SDFM_configSync1Delay
@@ -180,7 +180,7 @@ ICSSG IEP has Sync0/Sync1 cyclic generation mode to generate clock which can be 
 	<td> 9  (10-1)
     <td> 19 (20-1)
     <td> Any unsigned integer value
-    <td> IEP clock 300 MHz, SD clk = 10 MHz, Div = 200/10 = 20, one period time = 20 IEP cycles, high plus time = 10 IEP cycles (50% duty cycle)
+    <td> IEP clock 200 MHz, SD clk = 10 MHz, Div = 200/10 = 20, one period time = 20 IEP cycles, high pulse time = 10 IEP cycles (50% duty cycle)
 </tr>
 </table>
 
@@ -229,84 +229,255 @@ The Fast Detect is used for fast over current detection and trip generation. It 
 - Zero count maximum limit in fast detect window
 - Zero count minimum limit in fast detect window
 
+## SDFM IEP CMP Event Configuration {#SDFM_IEP_CMP_CONFIG}
+The Industrial Ethernet Peripheral (IEP) compare events are used to trigger %SDFM normal current sampling in trigger mode. %SDFM supports user-selectable IEP CMP events via SysConfig, providing flexibility for different system configurations.
+
+### IEP CMP Event Selection via SysConfig
+Users can select IEP compare events (CMP0-CMP15) and IEP instance via SysConfig to trigger %SDFM sampling. The selection depends on the system configuration and resource availability.
+
+### CMP Event Conflict Warnings
+
+\attention The following CMP events require special attention to avoid conflicts:
+
+- **CMP0 - IEP Counter Reset**: CMP0 is used to reset the IEP counter to trigger periodic sampling when EPWM synchronization is not used. The cycle period of the IEP counter depends on the configured `IEP Reset Frequency (Hz)` in SysConfig.
+
+- **CMP1 and CMP2 - SYNC0/SYNC1 Outputs**: When using IEP SYNC mode for %SDFM clock generation:
+  - CMP1 is used to start clock on IEP SYNC0 output pin
+  - CMP2 is used to start clock on IEP SYNC1 output pin
+  - If your application uses IEP for clock generation, select CMP3-CMP15 for sampling triggers to avoid conflicts
+
+### Default CMP Event Configurations for Trigger Mode
+
+The table below shows the default IEP compare events used by each PRU core in trigger mode. These defaults are configured via SysConfig and can be changed as needed.
+
+<table>
+<tr>
+    <th>Configuration</th>
+    <th>Default CMP Events</th>
+    <th>Notes</th>
+</tr>
+<tr>
+    <td>Single PRU trigger mode</td>
+    <td>CMP3</td>
+    <td>Configurable via SysConfig under PRU core settings.</td>
+</tr>
+<tr>
+    <td>Load-Share Mode (9 channels, 3 PRU cores)</td>
+    <td>RTU: CMP4, PRU: CMP3, TXPRU: CMP5</td>
+    <td>Each PRU core uses its dedicated CMP event. Configurable via SysConfig. SysConfig validates that different cores use different CMP events.</td>
+</tr>
+</table>
+
+\note For detailed interrupt and event mappings per example, refer to the INTC Mapping table below.
+
 ## SDFM INTC Mapping {#SDFM_INTC_MAPPING}
+
+The following table shows the PRU event to R5F host interrupt mapping for all SDFM examples:
+
 <table>
   <tr>
     <th>Example</th>
-    <th>PRU Event</th>
-    <th>Host Channel</th>
+    <th>PRU Core</th>
+    <th>Channel(s)</th>
+    <th>PRU Event Number</th>
+    <th>PRU Event Name</th>
+    <th>Host Interrupt</th>
+    <th>IEP CMP Event</th>
   </tr>
+
+  <!-- Nine Channel Single PRU Mode (Trigger) -->
+  <tr>
+    <td rowspan="1">${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_nine_channel_single_pru_mode</td>
+    <td>PRU</td>
+    <td>Ch0-Ch8</td>
+    <td>21</td>
+    <td>pr[0/1]_pru_mst_intr[5]_intr_req</td>
+    <td>HOST_INTR_PEND_0</td>
+    <td>CMP3 (default)</td>
+  </tr>
+
+  <!-- Three Channel Single PRU Continuous Mode -->
+  <tr>
+    <td rowspan="9">${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_three_channel_single_pru_continuous_mode</td>
+    <td>PRU</td>
+    <td>Ch0</td>
+    <td>21</td>
+    <td>pr[0/1]_pru_mst_intr[5]_intr_req</td>
+    <td>HOST_INTR_PEND_0</td>
+    <td>N/A (continuous)</td>
+  </tr>
+  <tr>
+    <td>PRU</td>
+    <td>Ch1</td>
+    <td>22</td>
+    <td>pr[0/1]_pru_mst_intr[6]_intr_req</td>
+    <td>HOST_INTR_PEND_1</td>
+    <td>N/A (continuous)</td>
+  </tr>
+  <tr>
+    <td>PRU</td>
+    <td>Ch2</td>
+    <td>23</td>
+    <td>pr[0/1]_pru_mst_intr[7]_intr_req</td>
+    <td>HOST_INTR_PEND_2</td>
+    <td>N/A (continuous)</td>
+  </tr>
+   <tr>
+    <td>PRU</td>
+    <td>Ch3</td>
+    <td>24</td>
+    <td>pr[0/1]_pru_mst_intr[8]_intr_req</td>
+    <td>HOST_INTR_PEND_3</td>
+    <td>N/A (continuous)</td>
+  </tr>
+  <tr>
+    <td>PRU</td>
+    <td>Ch4</td>
+    <td>25</td>
+    <td>pr[0/1]_pru_mst_intr[9]_intr_req</td>
+    <td>HOST_INTR_PEND_4</td>
+    <td>N/A (continuous)</td>
+  </tr>
+  <tr>
+    <td>PRU</td>
+    <td>Ch5</td>
+    <td>26</td>
+    <td>pr[0/1]_pru_mst_intr[10]_intr_req</td>
+    <td>HOST_INTR_PEND_5</td>
+    <td>N/A (continuous)</td>
+  </tr>
+   <tr>
+    <td>PRU</td>
+    <td>Ch6</td>
+    <td>27</td>
+    <td>pr[0/1]_pru_mst_intr[11]_intr_req</td>
+    <td>HOST_INTR_PEND_6</td>
+    <td>N/A (continuous)</td>
+  </tr>
+   <tr>
+    <td>PRU</td>
+    <td>Ch7</td>
+    <td>28</td>
+    <td>pr[0/1]_pru_mst_intr[12]_intr_req</td>
+    <td>HOST_INTR_PEND_7</td>
+    <td>N/A (continuous)</td>
+  </tr>
+   <tr>
+    <td>PRU</td>
+    <td>Ch8</td>
+    <td>29</td>
+    <td>pr[0/1]_pru_mst_intr[13]_intr_req</td>
+    <td>HOST_INTR_PEND_0</td>
+    <td>N/A (continuous)</td>
+  </tr>
+
+  <!-- Nine Channel Load Share Snoop Mode (Trigger) -->
   <tr>
     <td rowspan="3">${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_nine_channel_load_share_snoop_mode</td>
-    <td>INTC event/input number 21 (pr[0/1]_pru_mst_intr[5]_intr_req)</td>
-    <td>Host Channel 3</td>
+    <td>RTU-PRU</td>
+    <td>Ch0-Ch2</td>
+    <td>21</td>
+    <td>pr[0/1]_pru_mst_intr[5]_intr_req</td>
+    <td>HOST_INTR_PEND_0</td>
+    <td>CMP4 (default)</td>
   </tr>
   <tr>
-    <td>INTC event/input number 24 (pr[0/1]_pru_mst_intr[8]_intr_req)</td>
-    <td>Host Channel 6</td>
+    <td>PRU</td>
+    <td>Ch3-Ch5</td>
+    <td>24</td>
+    <td>pr[0/1]_pru_mst_intr[8]_intr_req</td>
+    <td>HOST_INTR_PEND_3</td>
+    <td>CMP3 (default)</td>
   </tr>
   <tr>
-    <td>INTC event/input number 27 (pr[0/1]_pru_mst_intr[11]_intr_req)</td>
-    <td>Host Channel 9</td>
+    <td>TX-PRU</td>
+    <td>Ch6-Ch8</td>
+    <td>27</td>
+    <td>pr[0/1]_pru_mst_intr[11]_intr_req</td>
+    <td>HOST_INTR_PEND_6</td>
+    <td>CMP5 (default)</td>
+  </tr>
+
+  <!-- Nine Channel Load Share Continuous Mode (Common IRQ) -->
+  <tr>
+    <td rowspan="3">${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_nine_channel_load_share_continuous_mode<br/>(Common IRQ Mode)</td>
+    <td>RTU-PRU</td>
+    <td>Ch0-Ch2</td>
+    <td>21, 22, 23</td>
+    <td>pr[0/1]_pru_mst_intr[5,6,7]_intr_req</td>
+    <td>HOST_INTR_PEND_0 (shared)</td>
+    <td>N/A (continuous)</td>
   </tr>
   <tr>
-    <td rowspan="7">${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_nine_channel_with_continuous_mode</td>
-    <td>INTC event/input number 21 (pr[0/1]_pru_mst_intr[5]_intr_req)</td>
-    <td>Host Channel 3</td>
+    <td>PRU</td>
+    <td>Ch3-Ch5</td>
+    <td>24, 25, 26</td>
+    <td>pr[0/1]_pru_mst_intr[8,9,10]_intr_req</td>
+    <td>HOST_INTR_PEND_3 (shared)</td>
+    <td>N/A (continuous)</td>
   </tr>
   <tr>
-    <td>INTC event/input number 22 (pr[0/1]_pru_mst_intr[6]_intr_req)</td>
-    <td>Host Channel 4</td>
+    <td>TX-PRU</td>
+    <td>Ch6-Ch8</td>
+    <td>27, 28, 29</td>
+    <td>pr[0/1]_pru_mst_intr[11,12,13]_intr_req</td>
+    <td>HOST_INTR_PEND_6 (shared)</td>
+    <td>N/A (continuous)</td>
   </tr>
+
+  <!-- Three Channel Single PRU Snoop Mode -->
   <tr>
-    <td>INTC event/input number 23 (pr[0/1]_pru_mst_intr[7]_intr_req)</td>
-    <td>Host Channel 5</td>
+    <td rowspan="1">${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_three_channel_single_pru_snoop_mode</td>
+    <td>PRU</td>
+    <td>Ch0-Ch2</td>
+    <td>21</td>
+    <td>pr[0/1]_pru_mst_intr[5]_intr_req</td>
+    <td>HOST_INTR_PEND_0</td>
+    <td>CMP3 </td>
   </tr>
+
+  <!-- Three Channel with Phase Compensation -->
   <tr>
-    <td>INTC event/input number 24 (pr[0/1]_pru_mst_intr[8]_intr_req)</td>
-    <td>Host Channel 6</td>
-  </tr>
-  <tr>
-    <td>INTC event/input number 25 (pr[0/1]_pru_mst_intr[9]_intr_req)</td>
-    <td>Host Channel 7</td>
-  </tr>
-  <tr>
-    <td>INTC event/input number 26 (pr[0/1]_pru_mst_intr[10]_intr_req)</td>
-    <td>Host Channel 8</td>
-  </tr>
-  <tr>
-    <td>INTC event/input number 27 (pr[0/1]_pru_mst_intr[11]_intr_req)</td>
-    <td>Host Channel 9</td>
-  </tr>
-  <tr>
-    <td>${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_three_channel_single_pru_mode</td>
-    <td>INTC event/input number 21 (pr[0/1]_pru_mst_intr[5]_intr_req)</td>
-    <td>Host Channel 3</td>
-  </tr>
-  <tr>
-    <td>${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_three_channel_single_pru_snoop_mode</td>
-    <td>INTC event/input number 21 (pr[0/1]_pru_mst_intr[5]_intr_req)</td>
-    <td>Host Channel 3</td>
-  </tr>
-  <tr>
-    <td rowspan="3">${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_three_channel_with_continuous_mode</td>
-    <td>INTC event/input number 21 (pr[0/1]_pru_mst_intr[5]_intr_req)</td>
-    <td>Host Channel 3</td>
-  </tr>
-  <tr>
-    <td>INTC event/input number 22 (pr[0/1]_pru_mst_intr[6]_intr_req)</td>
-    <td>Host Channel 4</td>
-  </tr>
-  <tr>
-    <td>INTC event/input number 23 (pr[0/1]_pru_mst_intr[7]_intr_req)</td>
-    <td>Host Channel 5</td>
-  </tr>
-  <tr>
-    <td>${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_three_channel_with_phase_compensation</td>
-    <td>INTC event/input number 21 (pr[0/1]_pru_mst_intr[5]_intr_req)</td>
-    <td>Host Channel 3</td>
+    <td rowspan="1">${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_three_channel_with_phase_compensation</td>
+    <td>PRU</td>
+    <td>Ch0-Ch2</td>
+    <td>21</td>
+    <td>pr[0/1]_pru_mst_intr[5]_intr_req</td>
+    <td>HOST_INTR_PEND_0</td>
+    <td>CMP3 </td>
   </tr>
 </table>
+
+**Notes:**
+- PRU Event Numbers are defined in `icssg_sdfm.h` as ICSS_SDFM_TRIGGER_EVNT_CHx (range: 21-29)
+- Common IRQ mode (load share continuous): All channels per PRU core map to one shared host interrupt
+- IEP CMP events are configurable via SysConfig; defaults shown here
+
+## Load Share Mode Common IRQ Handler {#SDFM_LOAD_SHARE_COMMON_IRQ}
+
+The load share continuous mode examples support an optimized interrupt handling approach using common IRQ handlers per PRU core, controlled by the `SDFM_LOAD_SHARE_COMMON_IRQ_ENABLE` macro in `app_sdfm.c`.
+
+### Common IRQ Mode (Default)
+When enabled (`SDFM_LOAD_SHARE_COMMON_IRQ_ENABLE = 1`):
+- Each PRU core uses one shared interrupt handler for all its channels:
+  - RTU PRU: `sdfmCommonIrqHandlerRTU()` handles channels 0-2
+  - PRU: `sdfmCommonIrqHandlerPRU()` handles channels 3-5
+  - TX PRU: `sdfmCommonIrqHandlerTXPRU()` handles channels 6-8
+- All three channels per PRU core map to the first channel's host event:
+  - Channels 0-2: CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_0
+  - Channels 3-5: CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_3
+  - Channels 6-8: CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_6
+
+
+### Individual IRQ Mode 
+When disabled (`SDFM_LOAD_SHARE_COMMON_IRQ_ENABLE = 0`):
+- Each channel has its own dedicated interrupt handler (`sdfmIrqHandlerCh0` through `sdfmIrqHandlerCh8`)
+- Requires individual SysConfig INTC mapping for each channel
+- Uses more R5F interrupt resources
+
+\note Due to host interrupt limitations, channel 8 shares HOST_INTR_PEND_0 with channel 0 in individual IRQ mode. If both channels are enabled together in continuous mode, remap channel 8 to an available host event via SysConfig to avoid conflicts.
+
+\note Due to high interrupt overload when multiple channels are enabled and individual interrupts are used with low normal current OSR, there is a high risk of R5F overload. The R5F may not be able to process all interrupts in this scenario. For such use cases, common IRQ mode is suitable to avoid interrupt overload.  
 
 # ICSS SDFM Examples Implementation
 Following section describes the flow of the examples.
@@ -321,20 +492,20 @@ Following section describes the flow of the examples.
     <th>Description
 </tr>
 <tr>
-    <td>${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_nine_channel_with_continuous_mode</td>
-    <td> Application specific sources for ICSS %SDFM for continuous normal current sampling for nine channels </td>
+    <td>${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_nine_channel_load_share_continuous_mode</td>
+    <td>Application specific sources for ICSS %SDFM for continuous normal current sampling for nine channels using load share mode (3 PRU cores). Uses common IRQ mode.</td>
 </tr>
 <tr>
     <td> ${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_nine_channel_load_share_snoop_mode</td>
-    <td>Application specific sources for ICSS %SDFM for trigger based normal current sampling for nine channels using ICSS %SDFM snoop mode.</td>
+    <td>Application specific sources for ICSS %SDFM for trigger based normal current sampling for nine channels using load share mode and ICSS %SDFM snoop mode.</td>
 </tr>
 <tr>
-    <td> ${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_three_channel_single_pru_mode</td>
-    <td> Application specific sources for ICSS %SDFM for trigger based normal current sampling for three channels </td>
+    <td> ${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_nine_channel_single_pru_mode</td>
+    <td>Application specific sources for ICSS %SDFM for trigger based normal current sampling for nine channels using single PRU core.</td>
 </tr>
 <tr>
-    <td>${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_three_channel_with_continuous_mode</td>
-    <td> Application specific sources for ICSS %SDFM for continuous normal current sampling for three channels </td>
+    <td>${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_three_channel_single_pru_continuous_mode</td>
+    <td><td>Application specific sources for ICSS %SDFM for continuous normal current sampling using single PRU core (supports up to nine channels). NOTE: It is not recommended to use more than three channels together when OSR is below 128 to avoid interrupt overload.</td>
 </tr>
 <tr>
     <td> ${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_three_channel_single_pru_snoop_mode</td>
@@ -397,7 +568,8 @@ Following are different examples for ICSS %SDFM:
         - Trigger-based normal current synchronized with EPWM<br>
         - PRU-ICSS PWM trip-based fast detect<br>
         - Double Update<br>
-        - Up to 9-channel support using load share mode<br>
+        - Up to 9-channel support using single PRU mode
+        - Up to 9-channel support using load share mode <br>
         - OSR 8 - 256 <br>
         - SINC1, SINC2 and SINC3 filter
         - Supported clock sources:
@@ -408,9 +580,7 @@ Following are different examples for ICSS %SDFM:
     <td>
         - OSR values must be identical for both normal current and over current<br>
         - Normal current trigger mode does not support over current<br>
-        - Zero cross detection is not supported<br>
-        - Support for nine channels in trigger mode
-            - **Note:** An example of nine channels using a single PRU for trigger mode will be available in the next release
+        - Zero cross detection is not supported
     </td>
 </tr>
 <tr>
@@ -450,16 +620,16 @@ Following are different examples for ICSS %SDFM:
 # ICSS SDFM Debug Guide {#SDFM_EXAMPLES_DEBUG_GUIDE}
 This section provides a comprehensive debugging guide for troubleshooting issues that may arise during %SDFM testing or development. Follow these steps to identify and resolve potential problems.
 
-\note For initial debugging, use the `icss_sdfm_three_channel_with_continuous_mode` example. This basic example has minimal dependencies and uses the internal eCAP clock source. Refer to \ref BASIC_SDFM_EXAMPLES for setup instructions. This example helps determine whether an issue is hardware or software related.
+\note For initial debugging, use the `icss_sdfm_three_channel_single_pru_continuous_mode` example. This basic example has minimal dependencies and uses the internal eCAP clock source. Refer to \ref BASIC_SDFM_EXAMPLES for setup instructions. This example helps determine whether an issue is hardware or software related.
 
 ## SDFM Register Configuration
 The PRU_ICSSG_CFG registers from offset 0x44 to 0xD8 are allocated for %SDFM configuration. To review and verify the %SDFM settings:
 
-1. Halt the Arm® Cortex®-R5F core
+1. Halt the R5F core
 2. Open the memory browser window
 3. Enter the base address of the PRU_ICSSG_CFG registers and view the configured values
 
-> **Note:** Ensure you are entering the correct address for %SDFM registers. Each ICSS instance has a different address for the CFG registers.
+\note Ensure you are entering the correct address for %SDFM registers. Each ICSS instance has a different address for the CFG registers.
 
 For detailed register descriptions, refer to section 6.4.14.5 PRU_ICSSG_CFG Registers in the AM243x Technical Reference Manual (TRM).
 
@@ -490,7 +660,9 @@ To verify IEP configuration:
 3. Review `IEP_CMP_CFG_REG` to ensure all compare events are properly configured for trigger mode
 4. Check `IEP_CMP_STATUS_REG` to verify that corresponding compare events are setting status flags correctly
 5. Validate that Compare Registers are configured with correct trigger point values
-> **Note:** Ensure you are entering the correct address for IEP registers. Each ICSS instance has a different address for the IEP registers.
+
+\note Ensure you are entering the correct address for IEP registers. Each ICSS instance has a different address for the IEP registers.
+
 \image html SDFM_debug_IEP_registers_view1.png "PRU-ICSS IEP register view"
 \image html SDFM_debug_IEP_registers_view2.png "PRU-ICSS IEP CMP events register view"
 
@@ -499,51 +671,23 @@ For detailed register descriptions, refer to section `6.4.14.9` PRU_IEP_IEP Regi
 ## Interrupt Controller Internal Signals Mapping
 If you experience missing PRU interrupts or incorrect IRQ mapping, verify the interrupt mapping between PRU and R5F in the SysConfig PRU INTC module. The Host channel number and PRU Event should match your configuration.
 
-For example, the %SDFM basic example uses:
-- PRU Event: `21: pr0_pru_mst_intr[5]_intr_req`
-- Host Channel: 3
+For example, a basic %SDFM example uses:
+- PRU Event: `21: pr[0/1]_pru_mst_intr[5]_intr_req`
+- Host Interrupt: HOST_INTR_PEND_0 (Channel 0)
 
 \image html SDFM_debug_INTC_module.png "PRU-ICSS INTC view"
 
-The interrupt service routine (ISR) configuration is implemented in `app.sdfm.c`. Here's a key code snippet showing the configuration:
+The interrupt service routine (ISR) configuration is implemented in `app_sdfm.c`. Here's a key code snippet showing the configuration:
 
 ```c
-/* R5F interrupt settings for ICSSG */
-#define ICSSG_PRU_SDFM_INT_NUM          ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_1 )
-
-/* Register & enable ICSSG PRU SDFM FW interrupt */
-HwiP_Params_init(&hwiPrms);
-hwiPrms.intNum      = ICSSG_PRU_SDFM_INT_NUM;
-hwiPrms.callback    = &pruSdfmIrqHandler;
-hwiPrms.args        = 0;
-hwiPrms.isPulse     = FALSE;
-hwiPrms.isFIQ       = FALSE;
-status              = HwiP_construct(&gIcssgPruSdfmHwiObject, &hwiPrms);
-DebugP_assert(status == SystemP_SUCCESS);
-
-/* PRU SDFM FW IRQ handler */
-void pruSdfmIrqHandler(void *args)
-{
-    /* Increment PRU SDFM IRQ count for debugging */
-    gPruSdfmIrqCnt++;
-    /* Clear interrupt at source */
-    PRUICSS_clearEvent(gPruIcssHandle, PRU_TRIGGER_HOST_SDFM_EVT_CH0);
-
-    if(sdfmPruIdxCnt >= MAX_SAMPLES)
-    {
-        sdfmPruIdxCnt = 0;
-    }
-    sdfm_ch_samples[SDFM_CH0][sdfmPruIdxCnt] = SDFM_getFilterData(gHPruSdfm, 0);
-    sdfm_ch_samples[SDFM_CH1][sdfmPruIdxCnt] = SDFM_getFilterData(gHPruSdfm, 1);
-    sdfm_ch_samples[SDFM_CH2][sdfmPruIdxCnt] = SDFM_getFilterData(gHPruSdfm, 2);
-
-    sdfmPruIdxCnt++;
-}
+/* R5F interrupt numbers for ICSSG SDFM - Continuous mode */
+#define ICSSG_SDFM_HOST_INTR_NUM_CH0    (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_0)
 ```
 
-The PRU event number is defined in `icssg_sdfm.h`:
+The PRU event numbers are defined in `icssg_sdfm.h`:
 ```c
-#define PRU_TRIGGER_HOST_SDFM_EVT_CH0  ( 3+18 )
+#define ICSS_SDFM_TRIGGER_EVNT_CH0  (3+18)   /* PRU Event 21 */
+/* ... continuing through CH8 (PRU Event 29) */
 ```
 
 ## PRU Debug

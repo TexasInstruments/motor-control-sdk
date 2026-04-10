@@ -25,7 +25,7 @@ Design is split into three parts:
     2. Firmware running in PRU
     3. Driver running in Arm®-based core
 
-Application is supposed to use the EnDat driver APIs to leverage EnDat functionality.
+Application is supposed to use the BiSS-C driver APIs to leverage BiSS-C functionality.
 
 Default SDK examples three channel peripheral interface in \if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PRU0 of PRU-ICSSM \else Slice 1 (either 1 core or 3 cores based on the configuration) of PRU-ICSSG0 \endif.
 
@@ -35,37 +35,32 @@ Default SDK examples three channel peripheral interface in \if (SOC_AM263X || SO
 <tr>
     <th>Parameter
     <th>Value
-	<th>Details
+    <th>Details
 </tr>
 <tr>
     <td>Maximum Cable Length
     <td>100m
-	<td>Supports up to 10MHz with delay compensation
-</tr>
-<tr>
-    <td>Maximum Frequency
-    <td>10 MHz
-	<td>Supports up to 100m cable.
+    <td>Supports up to 10MHz with delay compensation
 </tr>
 <tr>
     <td>Startup/Initialization Frequency
     <td>1 MHz
-	<td>After power on or reset
+    <td>After power on or reset
 </tr>
 <tr>
     <td>Frequencies supported
     <td>Up to 10 MHz
-	<td>Changeable at run-time
+    <td>Changeable at run-time
 </tr>
 <tr>
     <td>CRC
-    <td>6/4 bits
-	<td>Position-data/control-data verification
+    <td>6/16 bits
+    <td>Position-data/control-data verification
 </tr>
 <tr>
     <td>Receive oversample ratio
     <td>1x to 8x
-	<td>Tested with 4x, 6x & 8x (Frequency specific)
+    <td>Tested with 4x, 6x and 8x (Frequency specific)
 </tr>
 </table>
 
@@ -77,14 +72,12 @@ Refer to TRM for details
 
 \cond SOC_AM243X
 
-Following section describes the firmware implementation of BISS-C receiver on PRU-ICSS.
-Deterministic behavior of the 32 bit RISC core running up to 333 MHz provides resolution on sampling external signals and generating external signals.
-It makes use of 3 channel peripheral interface support in PRU for data transmission.
+Following section describes the firmware implementation of BISS-C receiver on PRU-ICSS. Deterministic behavior of the 32 bit RISC core running up to 333 MHz provides resolution on sampling external signals and generating external signals. It makes use of 3 channel peripheral interface support in PRU for data transmission.
 
-There are three different variations of PRU-ICSS firmware.
-1. Single Channel
-2. Multi Channel with encoders of same make
-3. Multi Channel with encoders of different make under load sharing
+The PRU-ICSS firmware supports the following configurations:
+1. Single Channel per PRU slice
+2. Multi Channel with encoders of same make per PRU slice
+3. Multi Channel with encoders of different make under load share mode per PRU slice
 
 #### Implementation for Single Channel and Multi-channel with encoder of same make
 Single core of PRU-ICSSG slice is used in this configuration.
@@ -100,12 +93,10 @@ Each of PRU, TX-PRU and RTU-PRU handle one channel in this configuration. Load s
 
 \cond SOC_AM261X
 
-Following section describes the firmware implementation of BISS-C receiver on PRU-ICSS.
-Deterministic behavior of the 32 bit RISC core running up to 225 MHz provides resolution on sampling external signals and generating external signals.
-It makes use of 3 channel peripheral interface support in PRU for data transmission.
+Following section describes the firmware implementation of BISS-C receiver on PRU-ICSS. Deterministic behavior of the 32 bit RISC core running up to 225 MHz provides resolution on sampling external signals and generating external signals. It makes use of 3 channel peripheral interface support in PRU for data transmission.
 
-The PRU-ICSS firmware supports the following configuration.
-1. Single Channel
+The PRU-ICSS firmware supports the following configuration:
+1. Single Channel per PRU slice
 
 #### Implementation for Single Channel
 Single core of PRU-ICSS slice is used in this configuration.
@@ -116,12 +107,10 @@ Single core of PRU-ICSS slice is used in this configuration.
 
 \cond (SOC_AM263X || SOC_AM263PX)
 
-Following section describes the firmware implementation of BISS-C receiver on PRU-ICSS.
-Deterministic behavior of the 32 bit RISC core running up to 200 MHz provides resolution on sampling external signals and generating external signals.
-It makes use of 3 channel peripheral interface support in PRU for data transmission.
+Following section describes the firmware implementation of BISS-C receiver on PRU-ICSS. Deterministic behavior of the 32 bit RISC core running up to 200 MHz provides resolution on sampling external signals and generating external signals. It makes use of 3 channel peripheral interface support in PRU for data transmission.
 
-The PRU-ICSS firmware supports the following configuration.
-1. Single Channel
+The PRU-ICSS firmware supports the following configuration:
+1. Single Channel per PRU slice
 
 #### Implementation for Single Channel
 Single core of PRU-ICSS slice is used in this configuration.
@@ -130,17 +119,23 @@ Single core of PRU-ICSS slice is used in this configuration.
 
 \endcond
 
-####	Firmware Architecture
+#### Firmware Architecture
 
 \image html bissc_overall_firmware.png "Overall Block Diagram"
 
-Firmware first detects and estimates the processing delay of the encoder as part of the initialization. Then it waits for the user to provide command (user after setting up the command, user sets command trigger bit), upon detecting trigger, first it checks whether the clock frequency has changed and if yes, it re-estimates the processing delay for the new clock frequency.
+Firmware first detects and estimates the processing delay of the encoder as part of the initialization. Then it checks the operation mode: host trigger mode, periodic CMP mode, or periodic CAP mode.
 
-Then it reads the position data and checks if a control communication is in process. It verifies the position data CRC by comparing it with the on-the-fly computation of CRC. In case of control communication mode, it backs up the CDS bit and transmits the CDM bit by overriding the clock pulse during the BISS-C cycle timeout phase. If the control communication is in progress it goes back to read the position data for the next cycle. If the control communication is completed, it updates the control command status, position data status and returns to wait for the next trigger command from Arm-based core.
+**Host Trigger Mode:** The firmware waits until a command has been triggered through the interface by the host application.
 
-In case of Safety mode enabled, firmware will be executed as explained below:
+**Periodic CMP/CAP Mode:** The firmware monitors the configured IEP compare/capture event and sets the host trigger bit when the event occurs, automatically initiating BiSS-C transactions at regular intervals.
 
-\image html bissc_safety_rx_flow.png "RX flow when Safety is enabled "
+Upon detecting trigger, first it checks whether the clock frequency has changed and if yes, it re-estimates the processing delay for the new clock frequency.
+
+Then it reads the position data and checks if a control communication is in process. It verifies the position data CRC by comparing it with the on-the-fly computation of CRC. In case of control communication mode, it backs up the CDS bit and transmits the CDM bit by overriding the clock pulse during the BISS-C cycle timeout phase. If the control communication is in progress it goes back to read the position data for the next cycle. If the control communication is completed, it updates the control command status, position data status and returns to wait for the next trigger from the interface or IEP compare/capture event.
+
+In case the "safety mode" is enabled, firmware will be executed as explained below:
+
+\image html bissc_safety_rx_flow.png "RX flow when Safety is enabled"
 
 Firmware will perform configuration as usual and then before entering into RX it checks whether safety is enabled for that particular encoder or not. If enabled, firmware will perform receive and downsample and CRC computation is excluded, after all the encoders data bits are read successfully, before going into timeout firmware will perform post-processing to compute the 16 bit CRC for safety enabled encoders. Please note that post-processing will be applicable only for the encoders for which safety is enabled using control communication. Please find below an image that explains CPW and SPW as per BiSS-C safety specifications.
 
@@ -152,7 +147,7 @@ Above image is taken from <a href="https://biss-interface.com/download/biss-safe
 
 \note Firmware running on PRU-ICSS will remain HALTED if encoder is not detected and application will wait for 5 seconds and exit with error code.
 
-#####	 Initialization
+##### Initialization
 \image html biss_initialization.png "Initialization for All Modes"
 
 Initialization is performed both on the Arm-based core and PRU as shown in the figure above. During the initialization, based on the clock frequency selected the PRU detects the encoder and estimates its processing delay in terms of clock cycles. The processing delay is measured 8 times and an average value is used for compensation. Note that whenever the user changes the clock frequency, the initialization routine on the PRU is executed to estimate the processing delay.
@@ -161,7 +156,7 @@ If using "Multi Channel with encoders of different make" configuration where loa
 
 There needs to be a synchronization between PRUs before changing any global configuration. For this purpose, each active PRU core sets synchronization bit before any operation needing synchronization and clears the synchronization bit when it is ready. The assigned primary core will wait for all active channel's synchronization bits to be cleared and then perform the global configuration.
 
-#####	Receive Position Data
+##### Receive Position Data
 \image html main_bissc.png "BISS-C main loop for Position Data"
 
 Once the firmware receives the trigger from Arm-based core, it will first calculate the RX frame size and check if there is a change in the clock frequency from the previous run. If yes, it will recalculate the processing delay of the encoder for the given clock frequency.
@@ -170,177 +165,56 @@ Next, it will start the clock signal to wait for the acknowledgement bit followe
 
 The program will then wait for the timeout period and verify CRC of the position data bits. If the program is in control mode, it will check if the control command cycle is completed. If yes, it will update the results and the status bits before returning to the starting point.
 
-#####	Control Communication
+##### Control Communication
 \image html bissc_read_control_communication.png "BISS-C control communication loop"
 
 BISS-C control communication is performed over multiple cycles. Refer to the standard for more details on control communication. The firmware expects a control command as a 16-bit hex value. Once a control communication is started, the program will first transmit 14 0's as CDM bit during the timeout period at the end of the BISS-C cycle. This is then followed by a start bit to indicate to the encoder that control communication is in progress. The figure shown above explains the flow for a register read access. The register write access and control commands follow similar steps. Example commands for the register read access are given in the table below.
 
 \image html bissc_hex_control_commands.png "BISS-C hex commands"
 
-#####   Post-processing for 16-bit Safety CRC
+##### Post-processing for 16-bit Safety CRC
 \image html bissc_safety_postprocessing_16_bit_crc.png "BISS-C Safety post-processing for 16-bit Safety CRC"
 
 In case safety is enabled, only receive and downsample for the RX bits will be performed first. CRC computation will be performed during timeout in the post-processing section. Processing will be done in loop for all encoders across channels. 16-bit CRC is computed using XOR based approach with the provided polynomial from the BiSS specifications and compared with the received CRC and the error statistics are updated.
 
-###### Continuous mode
+###### Periodic Trigger Modes
 
-\image html bissc_continuous_mode.png "Continuous Mode"
+The BiSS-C receiver supports two types of periodic trigger modes for continuous position sampling: CMP (Compare) mode and CAP (Capture) mode.
 
-BiSS-C receiver application has support for continuous mode in which clock is periodically supplied to the encoder and its position data is read and CRC is computed.
-User can stop continuous mode by hitting any key in UART console.
-Input cycle time should be greater than or equal to the BiSS cycle time considering position data bits, E, W, CRC and timeout.
+**Periodic CMP Mode (Compare Event Mode):** In CMP mode, IEP timer compare event triggers position sampling. The firmware monitors the configured IEP compare event and automatically initiates BiSS-C transactions when the IEP timer counter matches the compare value. This enables fixed-rate periodic sampling.
+
+**Periodic CAP Mode (Capture Event Mode):** In CAP mode, external signals trigger position sampling through IEP capture events. The capture event is triggered on the rising edge of the external input pulse, enabling event-driven position capture. \if (SOC_AM243X || SOC_AM64X) Internal signals can also be mapped to IEP capture events via TIMESYNC/GPIOMUX router. \else Internal signals can also be mapped to IEP capture events via XBAR. \endif
+
+Following is the operation flow for periodic mode:
+1. Firmware polls IEP CMP/CAP status register and clears status after event is detected
+2. On event detection, firmware initiates BiSS-C transaction
+3. Position data is automatically updated in shared memory
+4. R5F interrupt notifies application of new data
+5. The firmware checks the current trigger mode. If still in periodic mode, it returns to step 1 to wait for the next IEP CMP/CAP event. If the mode has been switched to host trigger mode, the firmware stops periodic operation.
+
+\image html bissc_periodic_mode.png "Periodic Trigger Mode"
+
+\cond SOC_AM243X
+\note In load share mode, each channel can have independent IEP CMP/CAP event configuration.
+\endcond
+
+\attention Input cycle time should be greater than or equal to the BiSS-C cycle time by considering the position data bits, E, W, CRC and timeout.
 
 ### 3 Channel Peripheral Interface
 
-The physical data transmission in 3 channel peripheral interface is done using RS-485 standard. The data is transmitted as differential signals using the RS485 between the 3 channel peripheral interface Receiver and the encoder.
+The physical data transmission in 3 channel peripheral interface is done using RS-485 standard. The data is transmitted as differential signals using the RS485 between the 3 channel peripheral interface receiver and the encoder.
 
-The Receiver sends the clock to the BISS-C encoder, data transmission in either direction (one at a time) occurs in synchronism with the clock. The design uses two differential signals for each of the lines (clock and data).
+The receiver sends the clock to the BISS-C encoder, data transmission in either direction (one at a time) occurs in synchronism with the clock. The design uses two differential signals for each of the lines (clock and data).
 
-BISS-C Receiver and the encoder are connected using the RS-485 transceiver. Data is transmitted differentially over RS-485. It has the advantages of high noise immunity and long distance transmission capabilities.
+BISS-C receiver and the encoder are connected using the RS-485 transceiver. Data is transmitted differentially over RS-485. It has the advantages of high noise immunity and long distance transmission capabilities.
 
 #### Pin Multiplexing {#BISSC_PIN_USAGE}
+
+\attention \ref PRUICSS_PERIPHERAL_IF_MODE_SIGNAL_CONFIGURATION section has details on PRU pin functions in Peripheral IF mode
+
 \note
-    - k = 0,1 (PRU-ICSS Instance) for AM243x/AM261x/AM64x and k = 0 for AM263x/AM263Px
+    - k = 0,1 (PRU-ICSS Instance) for AM243x/AM261x and k = 0 for AM263Px
     - n = 0,1 (PRU-ICSS Slice)
-
-<table>
-<tr>
-    <th>Pin name
-    <th>Signal name
-	<th>Function
-</tr>
-<tr>
-    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO0 \else PRG<%k>_PRU<n>_GPO0 \endif
-    <td>pru<n>_bissc0_clk
-	<td>Channel 0 clock
-</tr>
-<tr>
-    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO1 \else PRG<%k>_PRU<n>_GPO1 \endif
-    <td>pru<n>_bissc0_out
-	<td>Channel 0 transmit
-</tr>
-<tr>
-    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO2 \else PRG<%k>_PRU<n>_GPO2 \endif
-    <td>pru<n>_bissc0_outen
-	<td>Channel 0 transmit disable
-</tr>
-<tr>
-    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPI9 \else PRG<%k>_PRU<n>_GPI13/PRG<%k>_PRU<n>_GPI9 \endif
-    <td>pru<n>_bissc0_in
-	<td>Channel 0 receive
-</tr>
-<tr>
-    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO3 \else PRG<%k>_PRU<n>_GPO3 \endif
-    <td>pru<n>_bissc1_clk
-	<td>Channel 1 clock
-</tr>
-<tr>
-    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO4 \else PRG<%k>_PRU<n>_GPO4 \endif
-    <td>pru<n>_bissc1_out
-	<td>Channel 1 transmit
-</tr>
-<tr>
-    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO5 \else PRG<%k>_PRU<n>_GPO5 \endif
-    <td>pru<n>_bissc1_outen
-	<td>Channel 1 transmit disable
-</tr>
-<tr>
-    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPI10 \else PRG<%k>_PRU<n>_GPI14/PRG<%k>_PRU<n>_GPI10 \endif
-    <td>pru<n>_bissc1_in
-	<td>Channel 1 receive
-</tr>
-<tr>
-    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO6 \else PRG<%k>_PRU<n>_GPO6 \endif
-    <td>pru<n>_bissc2_clk
-	<td>Channel 2 clock
-</tr>
-<tr>
-    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO7 \else PRG<%k>_PRU<n>_GPO12/PRG<%k>_PRU<n>_GPO7 \endif
-    <td>pru<n>_bissc2_out
-	<td>Channel 2 transmit
-</tr>
-<tr>
-    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO8 \else PRG<%k>_PRU<n>_GPO8 \endif
-    <td>pru<n>_bissc2_outen
-	<td>Channel 2 transmit disable
-</tr>
-<tr>
-    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPI11 \else PRG<%k>_PRU<n>_GPI11 \endif
-    <td>pru<n>_bissc2_in
-	<td>Channel 2 receive
-</tr>
-</table>
-
-
-\cond SOC_AM243X
-##### LP-AM243 Booster Pack Pin Multiplexing
-<table>
-<tr>
-    <th>Pin name
-    <th>Signal name
-	<th>Function
-</tr>
-<tr>
-    <td>PRG0_PRU1_GPO0
-    <td>pru1_bissc0_clk
-	<td>Channel 0 clock
-</tr>
-<tr>
-    <td>PRG0_PRU1_GPO1
-    <td>pru1_bissc0_out
-	<td>Channel 0 transmit
-</tr>
-<tr>
-    <td>GPIO Pin(GPIO_22)
-    <td>BISSC_CH0_OUT_EN
-	<td>Channel 0 transmit disable
-</tr>
-<tr>
-    <td>PRG0_PRU1_GPI9
-    <td>pru1_bissc0_in
-	<td>Channel 0 receive (if(G_MUX_EN==0))
-</tr>
-<tr>
-    <td>PRG0_PRU1_GPI13
-    <td>pru1_bissc0_in
-	<td>Channel 0 receive (if(G_MUX_EN==1))
-</tr>
-<tr>
-    <td>PRG0_PRU1_GPO6
-    <td>pru1_bissc2_clk
-	<td>Channel 2 clock
-</tr>
-<tr>
-    <td>PRG0_PRU1_GPO12
-    <td>pru1_bissc2_out
-	<td>Channel 2 transmit
-</tr>
-<tr>
-    <td>GPIO Pin(GPIO_28)
-    <td>BISSC_CH2_OUT_EN
-	<td>Channel 2 transmit disable
-</tr>
-<tr>
-    <td>PRG0_PRU1_GPI11
-    <td>pru1_bissc2_in
-	<td>Channel 2 receive
-</tr>
-<tr>
-    <td>GPIO Pin(GPIO1_78)
-    <td>ENC0_EN
-    <td>Enable 3 channel peripheral interface mode in Axis 1 of BP (C16 GPIO pin)
-</tr>
-<tr>
-    <td>GPIO Pin(GPIO1_77)
-    <td>ENC2_EN
-    <td>Enable 3 channel peripheral interface mode in Axis 2 of BP (B17 GPIO pin)
-</tr>
-</table>
-
-\endcond
-
-\cond  SOC_AM261X
-#### LP-AM261 Booster Pack Pin Multiplexing
 
 <table>
 <tr>
@@ -349,67 +223,183 @@ BISS-C Receiver and the encoder are connected using the RS-485 transceiver. Data
     <th>Function
 </tr>
 <tr>
-    <td>PR1_PRU0_GPIO0
-    <td>pru1_bissc0_clk
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO0 \else PRG<%k>_PRU<n>_GPO0 \endif
+    <td>pru<n>_bissc0_clk
     <td>Channel 0 clock
 </tr>
 <tr>
-    <td>PR1_PRU0_GPIO1
-    <td>pru1_bissc0_out
-    <td>Channel 0 transmit
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO2 \else PRG<%k>_PRU<n>_GPO2 \endif
+    <td>pru<n>_bissc0_out_en
+    <td>Channel 0 transmit enable (Fix this pin to low with SoC GPIO mode)
 </tr>
 <tr>
-    <td>GPIO Pin(GPIO_83)
-    <td>BISSC_CH0_OUT_EN
-    <td>Channel 0 transmit disable
-</tr>
-<tr>
-    <td>PR1_PRU0_GPI9
-    <td>pru1_bissc0_in
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPI9 \else PRG<%k>_PRU<n>_GPI13/PRG<%k>_PRU<n>_GPI9 \endif
+    <td>pru<n>_bissc0_in
     <td>Channel 0 receive
 </tr>
 <tr>
-    <td>GPIO Pin (GPIO_21)
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO3 \else PRG<%k>_PRU<n>_GPO3 \endif
+    <td>pru<n>_bissc1_clk
+    <td>Channel 1 clock
+</tr>
+<tr>
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO5 \else PRG<%k>_PRU<n>_GPO5 \endif
+    <td>pru<n>_bissc1_out_en
+    <td>Channel 1 transmit enable (Fix this pin to low with SoC GPIO mode)
+</tr>
+<tr>
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPI10 \else PRG<%k>_PRU<n>_GPI14/PRG<%k>_PRU<n>_GPI10 \endif
+    <td>pru<n>_bissc1_in
+    <td>Channel 1 receive
+</tr>
+<tr>
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO6 \else PRG<%k>_PRU<n>_GPO6 \endif
+    <td>pru<n>_bissc2_clk
+    <td>Channel 2 clock
+</tr>
+<tr>
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPO8 \else PRG<%k>_PRU<n>_GPO8 \endif
+    <td>pru<n>_bissc2_out_en
+    <td>Channel 2 transmit enable (Fix this pin to low with SoC GPIO mode)
+</tr>
+<tr>
+    <td>\if (SOC_AM263X || SOC_AM263PX || SOC_AM261X) PR<%k>_PRU<n>_GPI11 \else PRG<%k>_PRU<n>_GPI11 \endif
+    <td>pru<n>_bissc2_in
+    <td>Channel 2 receive
+</tr>
+</table>
+
+\cond SOC_AM243X
+##### LP-AM243 + BP-AM2BLDCSERVO Booster Pack Pin Multiplexing for SDK example
+<table>
+<tr>
+    <th>Pin name
+    <th>Signal name
+    <th>Function
+</tr>
+<tr>
+    <td>PRG0_PRU1_GPO0
+    <td>pru1_bissc0_clk
+    <td>PRU1 Channel 0 clock
+</tr>
+<tr>
+    <td>GPIO Pin (PRG0_PRU1_GPO2/M2)
+    <td>pru1_bissc0_out_en
+    <td>PRU1 Channel 0 transmit enable (Fix this pin to low with SoC GPIO mode)
+</tr>
+<tr>
+    <td>PRG0_PRU1_GPI13
+    <td>pru1_bissc0_in
+    <td>PRU1 Channel 0 receive when SA mux selection is enabled (ICSSG_SA_MX_REG[7] G_MUX_EN = 1)
+</tr>
+<tr>
+    <td>PRG0_PRU1_GPO6
+    <td>pru1_bissc2_clk
+    <td>PRU1 Channel 2 clock
+</tr>
+<tr>
+    <td>GPIO Pin (PRG0_PRU1_GPO8/F4)
+    <td>pru1_bissc2_out_en
+    <td>PRU1 Channel 2 transmit enable (Fix this pin to low with SoC GPIO mode)
+</tr>
+<tr>
+    <td>PRG0_PRU1_GPI11
+    <td>pru1_bissc2_in
+    <td>PRU1 Channel 2 receive
+</tr>
+<tr>
+    <td>GPIO Pin (GPIO1_78/C16)
     <td>ENC0_EN
-    <td>Enable 3 channel peripheral interface in Axis 1 of BP (B10 GPIO pin)
+    <td>Enable encoder voltage in Axis 1 of BP (Fix this pin to high with SoC GPIO mode)
+</tr>
+<tr>
+    <td>GPIO Pin (GPIO1_77/B17)
+    <td>ENC2_EN
+    <td>Enable encoder voltage in Axis 2 of BP (Fix this pin to high with SoC GPIO mode)
 </tr>
 </table>
 
 \endcond
 
-\cond (SOC_AM263X || SOC_AM263PX)
-
-##### @VAR_LP_BOARD_NAME Booster Pack Pin Multiplexing
+\cond SOC_AM261X
+##### LP-AM261 + BP-AM2BLDCSERVO Booster Pack Pin Multiplexing for SDK example
 <table>
 <tr>
     <th>Pin name
     <th>Signal name
-	<th>Function
+    <th>Function
+</tr>
+<tr>
+    <td>PR1_PRU0_GPIO0
+    <td>pru0_bissc0_clk
+    <td>PRU0 Channel 0 clock
+</tr>
+<tr>
+    <td>GPIO Pin (GPIO_83/B4)
+    <td>pru0_bissc0_out_en
+    <td>PRU0 Channel 0 transmit enable (Fix this pin to low with SoC GPIO mode)
+</tr>
+<tr>
+    <td>PR1_PRU0_GPI9
+    <td>pru0_bissc0_in
+    <td>PRU0 Channel 0 receive
+</tr>
+<tr>
+    <td>PR1_PRU1_GPIO0
+    <td>pru1_bissc0_clk
+    <td>PRU1 Channel 0 clock
+</tr>
+<tr>
+    <td>GPIO Pin (GPIO_73/W17)
+    <td>pru1_bissc0_out_en
+    <td>PRU1 Channel 0 transmit enable (Fix this pin to low with SoC GPIO mode)
+</tr>
+<tr>
+    <td>PR1_PRU1_GPI9
+    <td>pru1_bissc0_in
+    <td>PRU1 Channel 0 receive
+</tr>
+<tr>
+    <td>GPIO Pin (GPIO_21/B10)
+    <td>ENC0_EN (PRU0)
+    <td>Enable encoder voltage in Axis 1 of BP (Fix this pin to high with SoC GPIO mode)
+</tr>
+<tr>
+    <td>GPIO Pin (GPIO_22/A10)
+    <td>ENC0_EN (PRU1)
+    <td>Enable encoder voltage in Axis 2 of BP (Fix this pin to high with SoC GPIO mode)
+</tr>
+</table>
+\endcond
+
+\cond (SOC_AM263X || SOC_AM263PX)
+
+##### @VAR_LP_BOARD_NAME + BP-AM2BLDCSERVO Booster Pack Pin Multiplexing for SDK example
+<table>
+<tr>
+    <th>Pin name
+    <th>Signal name
+    <th>Function
 </tr>
 <tr>
     <td>PR0_PRU0_GPIO3
-    <td>pru1_endat1_clk
-	<td>Channel 1 clock
+    <td>pru0_bissc1_clk
+    <td>PRU0 Channel 1 clock
 </tr>
 <tr>
-    <td>PR0_PRU0_GPO4
-    <td>pru1_endat1_out
-	<td>Channel 1 transmit
-</tr>
-<tr>
-    <td>PR0_PRU0_GPO5
-    <td>pru1_endat1_outen
-	<td>Channel 1 transmit enable
+    <td>GPIO Pin (PR0_PRU0_GPIO5)
+    <td>pru0_bissc1_out_en
+    <td>PRU0 Channel 1 transmit enable (Fix this pin to low with SoC GPIO mode)
 </tr>
 <tr>
     <td>PR0_PRU0_GPI10
-    <td>pru1_endat1_in
-	<td>Channel 1 receive
+    <td>pru0_bissc1_in
+    <td>PRU0 Channel 1 receive
 </tr>
 <tr>
-    <td>SDFM0_D1 Pin (J8.73)
+    <td>GPIO Pin (SDFM0_D1/D13)
     <td>ENC1_EN
-    <td>Enable 3 channel peripheral interface in Axis 1 of BP (D13 GPIO pin)
+    <td>Enable encoder voltage in Axis 1 of BP (Fix this pin to high with SoC GPIO mode)
 </tr>
 </table>
 \endcond

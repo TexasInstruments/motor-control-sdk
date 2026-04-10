@@ -1,51 +1,90 @@
 /**
  * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
  * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
- * @cliArgs --device "AM263x_beta" --part "AM263x" --package "ZCZ" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@07.03.01"
- * @v2CliArgs --device "AM2631-Q1" --package "NFBGA (ZCZ)" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@07.03.01"
- * @versions {"tool":"1.21.0+3721"}
+ * @cliArgs --device "AM263x_beta" --part "AM263x" --package "ZCZ" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@2025.00.00" --product "INDUSTRIAL_COMMUNICATIONS_SDK@2025.00.00" --product "MCU_PLUS_SDK@07.03.01"
+ * @v2CliArgs --device "AM2631-Q1" --package "NFBGA (ZCZ)" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@2025.00.00" --product "INDUSTRIAL_COMMUNICATIONS_SDK@2025.00.00" --product "MCU_PLUS_SDK@07.03.01"
+ * @versions {"tool":"1.25.0+4268"}
  */
 
 /**
  * Import the modules used in this configuration.
  */
-const pruicss         = scripting.addModule("/drivers/pruicss/pruicss", {}, false);
-const pruicss1        = pruicss.addInstance();
-const debug_log       = scripting.addModule("/kernel/dpl/debug_log");
-const dpl_cfg         = scripting.addModule("/kernel/dpl/dpl_cfg");
-const mpu_armv7       = scripting.addModule("/kernel/dpl/mpu_armv7", {}, false);
-const mpu_armv71      = mpu_armv7.addInstance();
-const mpu_armv72      = mpu_armv7.addInstance();
-const mpu_armv73      = mpu_armv7.addInstance();
-const mpu_armv74      = mpu_armv7.addInstance();
-const timer           = scripting.addModule("/kernel/dpl/timer", {}, false);
-const timer1          = timer.addInstance();
-const default_linker  = scripting.addModule("/memory_configurator/default_linker", {}, false);
-const default_linker1 = default_linker.addInstance();
-const general         = scripting.addModule("/memory_configurator/general", {}, false);
-const general1        = general.addInstance();
-const region          = scripting.addModule("/memory_configurator/region", {}, false);
-const region1         = region.addInstance();
-const section         = scripting.addModule("/memory_configurator/section", {}, false);
-const section1        = section.addInstance();
-const section2        = section.addInstance();
-const section3        = section.addInstance();
-const section4        = section.addInstance();
-const section5        = section.addInstance();
-const section6        = section.addInstance();
-const section7        = section.addInstance();
-const section8        = section.addInstance();
-const section9        = section.addInstance();
-const section10       = section.addInstance();
-const section11       = section.addInstance();
-const section12       = section.addInstance();
-const section13       = section.addInstance();
-const endat           = scripting.addModule("/position_sense/endat", {}, false);
-const endat1          = endat.addInstance();
+const epwm                = scripting.addModule("/drivers/epwm/epwm", {}, false);
+const epwm1               = epwm.addInstance();
+const pruicss             = scripting.addModule("/drivers/pruicss/pruicss", {}, false);
+const pruicss1            = pruicss.addInstance();
+const debug_log           = scripting.addModule("/kernel/dpl/debug_log");
+const dpl_cfg             = scripting.addModule("/kernel/dpl/dpl_cfg");
+const mpu_armv7           = scripting.addModule("/kernel/dpl/mpu_armv7", {}, false);
+const mpu_armv71          = mpu_armv7.addInstance();
+const mpu_armv72          = mpu_armv7.addInstance();
+const mpu_armv73          = mpu_armv7.addInstance();
+const mpu_armv74          = mpu_armv7.addInstance();
+const timer               = scripting.addModule("/kernel/dpl/timer", {}, false);
+const timer1              = timer.addInstance();
+const default_linker      = scripting.addModule("/memory_configurator/default_linker", {}, false);
+const default_linker1     = default_linker.addInstance();
+const general             = scripting.addModule("/memory_configurator/general", {}, false);
+const general1            = general.addInstance();
+const region              = scripting.addModule("/memory_configurator/region", {}, false);
+const region1             = region.addInstance();
+const section             = scripting.addModule("/memory_configurator/section", {}, false);
+const section1            = section.addInstance();
+const section2            = section.addInstance();
+const section3            = section.addInstance();
+const section4            = section.addInstance();
+const section5            = section.addInstance();
+const section6            = section.addInstance();
+const section7            = section.addInstance();
+const section8            = section.addInstance();
+const section9            = section.addInstance();
+const section10           = section.addInstance();
+const section11           = section.addInstance();
+const section12           = section.addInstance();
+const section13           = section.addInstance();
+const endat               = scripting.addModule("/position_sense/endat", {}, false);
+const endat1              = endat.addInstance();
+const epwm_syncout_xbar   = scripting.addModule("/xbar/epwm_syncout_xbar/epwm_syncout_xbar", {}, false);
+const epwm_syncout_xbar1  = epwm_syncout_xbar.addInstance();
+const soc_timesync_xbar1  = scripting.addModule("/xbar/soc_timesync_xbar1/soc_timesync_xbar1", {}, false);
+const soc_timesync_xbar11 = soc_timesync_xbar1.addInstance();
 
 /**
  * Write custom configuration values to the imported modules.
  */
+epwm1.$name                         = "CONFIG_EPWM0";
+epwm1.epwmTimebase_period           = 65000;
+epwm1.epwmTimebase_counterMode      = "EPWM_COUNTER_MODE_UP_DOWN";
+epwm1.epwmTimebase_syncOutPulseMode = ["EPWM_SYNC_OUT_PULSE_ON_CNTR_ZERO"];
+epwm1.EPWM.$assign                  = "EPWM0";
+
+const soc_ctrl_adc    = scripting.addModule("/drivers/soc_ctrl/v0/subModules/soc_ctrl_adc", {}, false);
+const soc_ctrl_adc1   = soc_ctrl_adc.addInstance({}, false);
+soc_ctrl_adc1.$name   = "soc_ctrl_adc0";
+const soc_ctrl        = scripting.addModule("/drivers/soc_ctrl/soc_ctrl", {}, false);
+soc_ctrl.soc_ctrl_adc = soc_ctrl_adc1;
+
+const soc_ctrl_cmpss    = scripting.addModule("/drivers/soc_ctrl/v0/subModules/soc_ctrl_cmpss", {}, false);
+const soc_ctrl_cmpss1   = soc_ctrl_cmpss.addInstance({}, false);
+soc_ctrl_cmpss1.$name   = "soc_ctrl_cmpss0";
+soc_ctrl.soc_ctrl_cmpss = soc_ctrl_cmpss1;
+
+const soc_ctrl_ecap    = scripting.addModule("/drivers/soc_ctrl/v0/subModules/soc_ctrl_ecap", {}, false);
+const soc_ctrl_ecap1   = soc_ctrl_ecap.addInstance({}, false);
+soc_ctrl_ecap1.$name   = "soc_ctrl_ecap0";
+soc_ctrl.soc_ctrl_ecap = soc_ctrl_ecap1;
+
+const soc_ctrl_epwm    = scripting.addModule("/drivers/soc_ctrl/v0/subModules/soc_ctrl_epwm", {}, false);
+const soc_ctrl_epwm1   = soc_ctrl_epwm.addInstance({}, false);
+soc_ctrl_epwm1.$name   = "soc_ctrl_epwm0";
+epwm.epwmTbClkSync     = soc_ctrl_epwm1;
+soc_ctrl.soc_ctrl_epwm = soc_ctrl_epwm1;
+
+const soc_ctrl_sdfm    = scripting.addModule("/drivers/soc_ctrl/v0/subModules/soc_ctrl_sdfm", {}, false);
+const soc_ctrl_sdfm1   = soc_ctrl_sdfm.addInstance({}, false);
+soc_ctrl_sdfm1.$name   = "soc_ctrl_sdfm0";
+soc_ctrl.soc_ctrl_sdfm = soc_ctrl_sdfm1;
+
 debug_log.enableUartLog            = true;
 debug_log.enableCssLog             = false;
 debug_log.uartLog.$name            = "CONFIG_UART0";
@@ -68,6 +107,7 @@ mpu_armv73.$name             = "CONFIG_MPU_REGION2";
 mpu_armv73.baseAddr          = 0x80000;
 mpu_armv73.size              = 15;
 mpu_armv73.accessPermissions = "Supervisor RD+WR, User RD";
+mpu_armv73.attributes        = "Cached+Sharable";
 
 mpu_armv74.$name             = "CONFIG_MPU_REGION3";
 mpu_armv74.accessPermissions = "Supervisor RD+WR, User RD";
@@ -278,13 +318,11 @@ endat1.Channel_1                         = true;
 endat1.Channel_0                         = false;
 endat1.PRU_Slice                         = "PRU0";
 endat1.Booster_Pack                      = true;
-endat1.ICSSM.PR0_PRU0_GPIO9.rx           = false;
-endat1.ICSSM.PR0_PRU0_GPIO11.rx          = false;
 endat1.PRU_MUX_SEL_GPIO64.$name          = "PRU_MUX_SEL_GPIO64";
 endat1.PRU_MUX_SEL_GPIO64.GPIO_n.$assign = "EPWM7_B";
 endat1.MUX_EN_GPIO58.$name               = "MUX_EN_GPIO58";
 endat1.MUX_EN_GPIO58.GPIO_n.$assign      = "EPWM10_B";
-endat1.ENC1_EN.$name                     = "ENC1_EN";
+endat1.ENC1_EN.$name                     = "ENDAT0_BP_POWER_EN0";
 endat1.ENC1_EN.GPIO_n.$assign            = "SDFM0_D1";
 
 pruicss1.$name                           = "CONFIG_PRU_ICSS0";
@@ -292,13 +330,22 @@ endat1.pru                               = pruicss1;
 pruicss1.AdditionalICSSSettings[0].$name = "CONFIG_PRU_ICSS_IO0";
 pruicss1.intcMapping.create(1);
 pruicss1.intcMapping[0].$name            = "CONFIG_ICSS0_INTC_MODE1_MAPPING0";
-pruicss1.intcMapping[0].event            = "18";
+pruicss1.intcMapping[0].event            = "21";
+
+epwm_syncout_xbar1.$name      = "CONFIG_EPWM_SYNCOUT_XBAR0";
+epwm_syncout_xbar1.xbarOutput = ["EPWM0_SYNCOUT"];
+
+soc_timesync_xbar11.$name      = "CONFIG_SOC_TIMESYNC_XBAR1_0";
+soc_timesync_xbar11.xbarOutput = "SOC_TIMESYNC_XBAR1_PWM_SYNCOUT_XBAR_OUT_0";
+soc_timesync_xbar11.instance   = "SOC_TIMESYNC_XBAR1_ICSS_MODULE_0";
 
 /**
  * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future
  * version of the tool will not impact the pinmux you originally saw.  These lines can be completely deleted in order to
  * re-solve from scratch.
  */
+epwm1.EPWM.A.$suggestSolution                 = "EPWM0_A";
+epwm1.EPWM.B.$suggestSolution                 = "EPWM0_B";
 endat1.ICSSM.$suggestSolution                 = "ICSSM";
 endat1.ICSSM.PR0_PRU0_GPIO5.$suggestSolution  = "PR0_PRU0_GPIO5";
 endat1.ICSSM.PR0_PRU0_GPIO4.$suggestSolution  = "PR0_PRU0_GPIO4";

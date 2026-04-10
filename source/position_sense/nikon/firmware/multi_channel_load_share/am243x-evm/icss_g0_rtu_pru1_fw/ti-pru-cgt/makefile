@@ -57,7 +57,7 @@ all: $(OBJS) $(CMD_SRCS)
 $(OBJDIR)/%.obj %.obj: %.asm
 	@echo 'Building file: "$^"'
 	@echo 'Invoking: PRU Compiler'
-	"$(CGT_TI_PRU_PATH)/bin/clpru" -DICSSG0 -DRTU_PRU1 -DSLICE1 -v4 -v4 --define=SOC_AM243X --define=ENABLE_MULTI_MAKE_RTU --include_path="${CG_TOOL_ROOT}/include" --include_path="${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source" --include_path="${MOTOR_CONTROL_SDK_PATH}/source" --include_path="${MOTOR_CONTROL_SDK_PATH}/source/position_sense/nikon/firmware"  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little --preproc_with_compile --preproc_dependency="$(basename $(<F)).d_raw" $^
+	"$(CGT_TI_PRU_PATH)/bin/clpru" -DICSSG0 -DRTU_PRU1 -DSLICE1 -v4 -v4 --define=SOC_AM243X --define=ENABLE_MULTI_MAKE_RTU --define=OS_FW --include_path="${CG_TOOL_ROOT}/include" --include_path="${MCU_PLUS_SDK_PATH}/source" --include_path="${MOTOR_CONTROL_SDK_PATH}/source" --include_path="${MOTOR_CONTROL_SDK_PATH}/source/position_sense/nikon/firmware"  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little --preproc_with_compile --preproc_dependency="$(basename $(<F)).d_raw" $^
 	@echo 'Finished building: "$^"'
 	@echo ' '
 
@@ -65,7 +65,7 @@ $(OBJDIR)/%.obj %.obj: %.asm
 nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru1_fw_ti-pru-cgt.out: $(OBJS) $(CMD_SRCS)
 	@echo 'Building target: "$@"'
 	@echo 'Invoking: PRU Linker'
-	"$(CGT_TI_PRU_PATH)/bin/clpru" -DICSSG0 -DRTU_PRU1 -DSLICE1 -v4 -v4 --define=SOC_AM243X --define=ENABLE_MULTI_MAKE_RTU  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little -z -m"nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru1_fw_ti-pru-cgt.map" --disable_auto_rts   --diag_wrap=off --display_error_number --warn_sections --xml_link_info="nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru1_fw_ti-pru-cgt_linkInfo.xml" --disable_auto_rts --diag_suppress=10063-D --entry_point=NIKON_INIT --disable_auto_rts  --rom_model -o "nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru1_fw_ti-pru-cgt.out" $^
+	"$(CGT_TI_PRU_PATH)/bin/clpru" -DICSSG0 -DRTU_PRU1 -DSLICE1 -v4 -v4 --define=SOC_AM243X --define=ENABLE_MULTI_MAKE_RTU --define=OS_FW  --define=_DEBUG_=1 -g --diag_warning=225 --diag_wrap=off --display_error_number --endian=little -z -m"nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru1_fw_ti-pru-cgt.map" --disable_auto_rts   --diag_wrap=off --display_error_number --warn_sections --xml_link_info="nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru1_fw_ti-pru-cgt_linkInfo.xml" --disable_auto_rts --diag_suppress=10063-D --entry_point=NIKON_INIT --disable_auto_rts  --rom_model -o "nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru1_fw_ti-pru-cgt.out" $^
 	@echo 'Finished building target: "$@"'
 	@echo ' '
 	@$(MAKE) --no-print-directory post-build
@@ -79,8 +79,8 @@ clean:
 	-@echo ' '
 
 post-build:
-		-$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=NikonFirmwareMultiMakeRTU -o nikon_receiver_multi_rtu_pru1_bin.h  nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru1_fw_ti-pru-cgt.out
-		-$(CAT) ${MOTOR_CONTROL_SDK_PATH}/mcu_plus_sdk/source/pru_io/firmware/pru_load_bin_copyright.h nikon_receiver_multi_rtu_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/nikon/firmware/multi_channel_load_share/nikon_receiver_multi_rtu_pru1_bin.h
+		-$(CG_TOOL_ROOT)/bin/hexpru --diag_wrap=off --array --array:name_prefix=NikonFirmwareMultiMakeRtuPru1 -o nikon_receiver_multi_rtu_pru1_bin.h  nikon_peripheral_interface_multi_ch_load_share_am243x-evm_icss_g0_rtu_pru1_fw_ti-pru-cgt.out
+		-$(CAT) ${MOTOR_CONTROL_SDK_PATH}/source/pru_ti_text_file_license_copyright.h nikon_receiver_multi_rtu_pru1_bin.h > ${MOTOR_CONTROL_SDK_PATH}/source/position_sense/nikon/firmware/multi_channel_load_share/nikon_receiver_multi_rtu_pru1_bin.h
 		-$(RM)  nikon_receiver_multi_rtu_pru1_bin.h
 	-@echo ' '
 

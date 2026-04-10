@@ -1,5 +1,5 @@
 
-; Copyright (C) 2022 Texas Instruments Incorporated
+; Copyright (C) 2022-2025 Texas Instruments Incorporated
 ;
 ; Redistribution and use in source and binary forms, with or without
 ; modification, are permitted provided that the following conditions
@@ -66,23 +66,33 @@ RET2	.macro
 
 	.include "tamagawa_icss_reg_defs.h"
 	.include "tamagawa_interface.h"
-	.include "../../../../mcu_plus_sdk/source/pru_io/firmware/common/icss_regs.inc"
+	.include "pru_io/firmware/common/icss_regs.inc"
 	.include "single_ch_receive_frames.h"
 	.include "multi_ch_receive_frames.h"
     .include "firmware_version.h"
     .include "tamagawa_send.h"
     .include "eeprom_read.h"
     .include "eeprom_write.h"
+    .include "tamagawa_sync_macros.h"
 
 	.asg	R28,	SCRATCH
 	.asg	R29,	SCRATCH1
+	.asg	R26,	SCRATCH2
+	.asg	R27,	SCRATCH3
 	.asg	R7.b0,	TAMAGAWA_ENABLE_CHx
+    ;TAMAGAWA_ENABLED_CHANNELS is used only load share mode, to sync channels and do global reint
+    .asg    R9.b0,  TAMAGAWA_ENABLED_CHANNELS
 	.asg	c25,	PRUx_DMEM
 
 	.asg	R27.b0,	TX_DATA0
 	.asg	R27.b1,	TX_DATA1
 	.asg	R1.b1,	TX_FRAMES
 	.asg	R6.b0,	RX_FRAMES
+    .asg	R31.t19,	TAMAGAWA_TX_GLOBAL_REINIT
+
+TAMAGAWA_TX_BUSY_CH0             .set  5
+TAMAGAWA_TX_BUSY_CH1             .set  13
+TAMAGAWA_TX_BUSY_CH2             .set  21
 
 
 ;**********************
@@ -95,7 +105,7 @@ main:
 TAMAGAWA_INIT:
 
     ;If PRU0 is defined in symbols, it will select all PRU0 CFG registers.
-    .if	$isdefed("PRU0")
+	.if	$isdefed("PRU0") | $isdefed("RTU_PRU0") | $isdefed("TX_PRU0")
     ;Data Memory address for PRU0 is loaded in PRUx_DMEM
     .asg	PRU0_DMEM,		PRUx_DMEM
 	.asg    ICSS_CFG_PRU0_ENDAT_CH0_CFG1, ICSS_CFG_PRUx_ED_CH0_CFG1
@@ -110,7 +120,7 @@ TAMAGAWA_INIT:
 	.endif
 
     ;If PRU1 is defined in symbols, it will select all PRU1 CFG registers.
-    .if	$isdefed("PRU1")
+	.if	$isdefed("PRU1") | $isdefed("RTU_PRU1") | $isdefed("TX_PRU1")
     ;Data Memory address for PRU1 is loaded in PRUx_DMEM
     .asg	PRU1_DMEM,		PRUx_DMEM
 	.asg    ICSS_CFG_PRU1_ENDAT_CH0_CFG1, ICSS_CFG_PRUx_ED_CH0_CFG1
@@ -124,37 +134,23 @@ TAMAGAWA_INIT:
     .asg    ICSS_CFG_GPCFG1,              ICSS_CFG_PRUx_GPCFG
 	.endif
 
-	; Initalize ENDAT mode
-	; 	ICSS_CFG.GPCFG1[27:26] = 1
-	LDI		R0.b0,	4
-    ;It will initialize Endat Mode for PRU1
-	SBCO	&R0.b0,	ICSS_CFG,	ICSS_CFG_PRUx_GPCFG+3,	1
-
-	; Initialize PRUx_TAMAGAWA_CH0_CFG0/1 by clearing all channel CFG registers
-	ZERO	&R0,	4
-
-	LDI     SCRATCH1.w0, ICSS_CFG_PRUx_ED_CH0_CFG0
-	SBCO	&R0,	ICSS_CFG,	SCRATCH1.w0,	4
-	LDI     SCRATCH1.w0, ICSS_CFG_PRUx_ED_CH1_CFG0
-	SBCO	&R0,	ICSS_CFG,	SCRATCH1.w0,	4
-	LDI     SCRATCH1.w0, ICSS_CFG_PRUx_ED_CH2_CFG0
-	SBCO	&R0,	ICSS_CFG,	SCRATCH1.w0,	4
-
 	; clear all registers
 	ZERO	&R0,	120
 
     ; (Channel Mask) Record channel enabled by host, save it after zeroing registers (done above)
-	LBCO	&TAMAGAWA_ENABLE_CHx,	PRUx_DMEM,	TAMAGAWA_CHANNEL_CONFIG_OFFSET,	1
-
-	.if	$defined("ENABLE_MULTI_CHANNEL")=0
-        ;  if no channel selected,set channel mask default to ch0
-        ;  if more than 1 channel selected,set channel mask default to ch0
-        AND     TAMAGAWA_ENABLE_CHx,	TAMAGAWA_ENABLE_CHx, 0x7
-        QBEQ    TAMAGAWA_DEFAULT_CH,	TAMAGAWA_ENABLE_CHx, 0x7
-        QBEQ    TAMAGAWA_DEFAULT_CH,	TAMAGAWA_ENABLE_CHx, 0
-        JMP     TAMAGAWA_SKIP_DEFAULT_CH
+	LBCO    &TAMAGAWA_ENABLE_CHx,	PRUx_DMEM,	TAMAGAWA_CHANNEL_CONFIG_OFFSET,	1
+    .if $isdefed("ENABLE_MULTI_MAKE_RTU") | $isdefed("ENABLE_MULTI_MAKE_PRU") | $isdefed("ENABLE_MULTI_MAKE_TXPRU")
+    MOV     TAMAGAWA_ENABLED_CHANNELS, TAMAGAWA_ENABLE_CHx
+    AND     TAMAGAWA_ENABLE_CHx, TAMAGAWA_ENABLE_CHx, (1<<TAMAGAWA_CHANNEL_BIT_ID)
+    .elseif	$defined("ENABLE_MULTI_CHANNEL")=0
+    ;  if no channel selected,set channel mask default to ch0
+    ;  if more than 1 channel selected,set channel mask default to ch0
+    AND     TAMAGAWA_ENABLE_CHx,	TAMAGAWA_ENABLE_CHx, 0x7
+    QBEQ    TAMAGAWA_DEFAULT_CH,	TAMAGAWA_ENABLE_CHx, 0x7
+    QBEQ    TAMAGAWA_DEFAULT_CH,	TAMAGAWA_ENABLE_CHx, 0
+    JMP     TAMAGAWA_SKIP_DEFAULT_CH
 TAMAGAWA_DEFAULT_CH:
-        LDI     TAMAGAWA_ENABLE_CHx, 0x1
+    LDI     TAMAGAWA_ENABLE_CHx, 0x1
 TAMAGAWA_SKIP_DEFAULT_CH:
 	.endif
 
@@ -165,19 +161,111 @@ TAMAGAWA_SKIP_INIT_SUCCESS:
 
 CHECK_OPERATING_MODE:
 	LBCO	&R0.b0,	PRUx_DMEM,	TAMAGAWA_OPMODE_CONFIG_OFFSET,	1
-    ;If opmode=1, Host trigger is done
-	;If opmode=0, Periodic trigger is done
-	QBNE	HANDLE_HOST_TRIGGER_MODE,	R0.b0,		0
+	;  opmode=0: Periodic CMP trigger mode - uses IEP compare events (0-15)
+    ;  opmode=1: Host trigger mode - software-triggered by R5F
+	;  opmode=2: Periodic CAP trigger mode - uses IEP capture events (0-7)
+	QBEQ	HANDLE_HOST_TRIGGER_MODE,	R0.b0,		1
+	QBEQ	HANDLE_PERIODIC_TRIGGER_CMP_MODE,	R0.b0,		0
 
-HANDLE_PERIODIC_TRIGGER_MODE:
-    ;Get compare event status
-    LBCO	&R0,	ICSS_IEP,	ICSS_IEP_CMP_STATUS_REG,	4
-    ; wait till IEP CMP3 event
-	QBBC	CHECK_OPERATING_MODE,	R0,	IEP_CMP_EVNT
-	; Clear IEP CMP3 event
-	SET	R0,	R0,	IEP_CMP_EVNT
-    ; store compare event status
-    SBCO	&R0,	ICSS_IEP,  ICSS_IEP_CMP_STATUS_REG,	4
+HANDLE_PERIODIC_TRIGGER_CAP_MODE:
+	; Periodic CAP Mode: Wait for external event captured by IEP
+	; - Reads IEP base address dynamically from DMEM
+	; - Monitors CAP event status register for configured event
+	; - Clears event by reading capture register value
+
+    ; Load IEP base address from DMEM (offset from PRU-ICSS base)
+    LBCO	&SCRATCH1,	PRUx_DMEM,	TAMAGAWA_IEP_BASE_ADDR_OFFSET,	4
+
+    ; Get capture event status from IEP
+    LBBO	&SCRATCH.w0,	SCRATCH1,	ICSS_IEP_CAP_STATUS_REG,	2
+
+    ; Wait till IEP CAP event - Per-channel for load share mode
+    .if $isdefed("ENABLE_MULTI_MAKE_RTU")
+    ; RTU-PRU handles CH0 in load share mode
+    LBCO	&SCRATCH3.b0,	PRUx_DMEM,	TAMAGAWA_CH0_IEP_CAP_EVENT_OFFSET,	1
+    QBBC	CHECK_OPERATING_MODE,	SCRATCH.w0,	SCRATCH3.b0
+    ; Read cap register offset from DMEM
+    LBCO	&SCRATCH,	PRUx_DMEM,	TAMAGAWA_CH0_IEP_CAPTURE_REG_OFFSET,	4
+    ; Clear capture event by reading capture register value
+    LBBO	&SCRATCH1,	SCRATCH,	0,	4
+    .elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
+    ; PRU handles CH1 in load share mode
+    LBCO	&SCRATCH3.b0,	PRUx_DMEM,	TAMAGAWA_CH1_IEP_CAP_EVENT_OFFSET,	1
+    QBBC	CHECK_OPERATING_MODE,	SCRATCH.w0,	SCRATCH3.b0
+    ; Read cap register offset from DMEM
+    LBCO	&SCRATCH,	PRUx_DMEM,	TAMAGAWA_CH1_IEP_CAPTURE_REG_OFFSET,	4
+    ; Clear capture event by reading capture register value
+    LBBO	&SCRATCH1,	SCRATCH,	0,	4
+    .elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
+    ; TX-PRU handles CH2 in load share mode
+    LBCO	&SCRATCH3.b0,	PRUx_DMEM,	TAMAGAWA_CH2_IEP_CAP_EVENT_OFFSET,	1
+    QBBC	CHECK_OPERATING_MODE,	SCRATCH.w0,	SCRATCH3.b0
+    ; Read cap register offset from DMEM
+    LBCO	&SCRATCH,	PRUx_DMEM,	TAMAGAWA_CH2_IEP_CAPTURE_REG_OFFSET,	4
+    ; Clear capture event by reading capture register value
+    LBBO	&SCRATCH1,	SCRATCH,	0,	4
+    .else
+    ; Single/multi-channel single PRU mode - use CH0 event
+    LBCO	&SCRATCH3.b0,	PRUx_DMEM,	TAMAGAWA_CH0_IEP_CAP_EVENT_OFFSET,	1
+    QBBC	CHECK_OPERATING_MODE,	SCRATCH.w0,	SCRATCH3.b0
+    ; Read cap register offset from DMEM
+    LBCO	&SCRATCH,	PRUx_DMEM,	TAMAGAWA_CH0_IEP_CAPTURE_REG_OFFSET,	4
+    ; Clear capture event by reading capture register value
+    LBBO	&SCRATCH1,	SCRATCH,	0,	4
+    .endif
+
+    ; SET command TRIGGER
+    LDI		R0.b0,	1
+    SBCO    &R0.b0,	PRUx_DMEM, TAMAGAWA_INTFC_CMD_TRIGGER_OFFSET,	1
+    JMP     HANDLE_HOST_TRIGGER_MODE
+
+HANDLE_PERIODIC_TRIGGER_CMP_MODE:
+	; Periodic CMP Mode: Wait for IEP counter to match compare value
+	; - Reads IEP base address dynamically from DMEM
+	; - Monitors CMP event status register for configured event
+	; - Clears event by writing to CMP status register
+
+    ; Load IEP base address from DMEM (offset from PRU-ICSS base)
+    LBCO	&SCRATCH1,	PRUx_DMEM,	TAMAGAWA_IEP_BASE_ADDR_OFFSET,	4
+
+    ; Get compare event status from IEP
+    LBBO	&SCRATCH.w0,	SCRATCH1,	ICSS_IEP_CMP_STATUS_REG,	2
+
+    ; Wait till IEP CMP event get set - Per-channel for load share mode
+    .if $isdefed("ENABLE_MULTI_MAKE_RTU")
+    ; RTU-PRU handles CH0 in load share mode
+    LBCO	&SCRATCH3.b0,	PRUx_DMEM,	TAMAGAWA_CH0_IEP_CMP_EVENT_OFFSET,	1
+    QBBC	CHECK_OPERATING_MODE,	SCRATCH.w0,	SCRATCH3.b0
+    ; Clear IEP CMP event
+    LDI	SCRATCH2.w0,	1
+    LSL	SCRATCH2.w0,	SCRATCH2.w0,	SCRATCH3.w0
+    .elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
+    ; PRU handles CH1 in load share mode
+    LBCO	&SCRATCH3.b0,	PRUx_DMEM,	TAMAGAWA_CH1_IEP_CMP_EVENT_OFFSET,	1
+    QBBC	CHECK_OPERATING_MODE,	SCRATCH.w0,	SCRATCH3.b0
+    ; Clear IEP CMP event
+    LDI	SCRATCH2.w0,	1
+    LSL	SCRATCH2.w0,	SCRATCH2.w0,	SCRATCH3.w0
+    .elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
+    ; TX-PRU handles CH2 in load share mode
+    LBCO	&SCRATCH3.b0,	PRUx_DMEM,	TAMAGAWA_CH2_IEP_CMP_EVENT_OFFSET,	1
+    QBBC	CHECK_OPERATING_MODE,	SCRATCH.w0,	SCRATCH3.b0
+    ; Clear IEP CMP event
+    LDI	SCRATCH2.w0,	1
+    LSL	SCRATCH2.w0,	SCRATCH2.w0,	SCRATCH3.w0
+    .else
+    ; Single/multi-channel single PRU mode - use CH0 event
+    LBCO	&SCRATCH3.b0,	PRUx_DMEM,	TAMAGAWA_CH0_IEP_CMP_EVENT_OFFSET,	1
+    QBBC	CHECK_OPERATING_MODE,	SCRATCH.w0,	SCRATCH3.b0
+    ; Clear IEP CMP event
+    LDI	SCRATCH2.w0,	1
+    LSL	SCRATCH2.w0,	SCRATCH2.w0,	SCRATCH3.w0
+    .endif
+
+    ; Get IEP instance from DMEM to write clear status
+    LBCO	&SCRATCH3,	PRUx_DMEM,	TAMAGAWA_IEP_BASE_ADDR_OFFSET,	4
+    SBBO	&SCRATCH2.w0,	SCRATCH3,	ICSS_IEP_CMP_STATUS_REG,	2
+
     ; SET command TRIGGER
     LDI		R0.b0,	1
     SBCO    &R0.b0,	PRUx_DMEM, TAMAGAWA_INTFC_CMD_TRIGGER_OFFSET,	1
@@ -186,7 +274,7 @@ HANDLE_HOST_TRIGGER_MODE:
     ;If Host Trigger=1, request made by R5F to Firmware, now Firmware do processing and when done set trigger to 0 so that R5F application can act further.
     LBCO	&R0.b0,	PRUx_DMEM,	TAMAGAWA_INTFC_CMD_TRIGGER_OFFSET,	1
     ;wait till host trigger is set to 1.
-	QBEQ            HANDLE_HOST_TRIGGER_MODE, R0.b0,	0
+	QBEQ            CHECK_OPERATING_MODE, R0.b0,	0
     ;load Tx data which will be loaded in Tx FIFO.
 	LBCO	&TX_DATA0,	PRUx_DMEM,	TAMAGAWA_WORD_0_OFFSET,	1
     ;load Tx data which will be loaded in Tx FIFO.
@@ -203,20 +291,24 @@ TAMAGAWA_HOST_CMD_END:
     ;Clear Host Trigger
 	SBCO	&R3.b0,	PRUx_DMEM,	TAMAGAWA_INTFC_CMD_TRIGGER_OFFSET,	1
     ;check PRU host trigger for all three channels
-    LBCO	&R3.b0,	PRUx_DMEM,	TAMAGAWA_OPMODE_CONFIG_OFFSET,	1 
+    LBCO	&R3.b0,	PRUx_DMEM,	TAMAGAWA_OPMODE_CONFIG_OFFSET,	1
     ;skip interrupt to R5F in host trigger
-    QBNE    SKIP_INTERRUPT_TRIGGER,  R3.b0,  0
-    ;Generate interrupt to R5F
-    LDI     R31.w0, 34;PRU_TRIGGER_HOST_TAMAGAWA_EVT0 ( pr0_pru_mst_intr[2]_intr_req )
-    ;Global reinit
-    set     R31, TAMAGAWA_TX_GLOBAL_REINIT
-    ;Handle next Postition in periodic trigger
-    JMP		HANDLE_PERIODIC_TRIGGER_MODE
-
+    QBEQ    SKIP_INTERRUPT_TRIGGER,  R3.b0,  1
+    ;Generate interrupt to R5F - different events for load-share mode
+    .if $isdefed("ENABLE_MULTI_MAKE_RTU")
+    LDI     R31.w0, TAMAGAWA_RTU_TRIGGER_HOST_EVT   
+    .elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
+    LDI     R31.w0, TAMAGAWA_PRU_TRIGGER_HOST_EVT    
+    .elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
+    LDI     R31.w0, TAMAGAWA_TXPRU_TRIGGER_HOST_EVT  
+    .else
+    LDI     R31.w0, TAMAGAWA_PRU_TRIGGER_HOST_EVT    ; Single/dual PRU mode
+    .endif
 SKIP_INTERRUPT_TRIGGER:
-    ;Handle next Position request by user.
-    JMP		HANDLE_HOST_TRIGGER_MODE
-
+    ;Global reinit
+    M_TAMAGAWA_LS_GLOBAL_REINIT
+    ;Handle next request
+    JMP     CHECK_OPERATING_MODE
 
 ;******************************************************************************************************************************************************
 ;	Function: FN_SEND_RECEIVE_TAMAGAWA
@@ -306,12 +398,6 @@ TX_END:
 
 	.if	$defined("ENABLE_MULTI_CHANNEL")
 MULTI_CHANNEL_RECEIVE:
-    ;enable Rx for channel 0
-    SET     R30,R30.t24
-    ;enable Rx for channel 1
-    SET     R30,R30.t25
-    ;enable Rx for channel 2
-    SET     R30,R30.t26
 
 	RECEIVE_FRAMES_M R2.b1 ,R4.b1 , RX_FRAMES , R4.b2 , SCRATCH, SCRATCH1,TAMAGAWA_ENABLE_CHx,PRUx_DMEM
 CH0_RX_TO_INTERFACE:
@@ -338,8 +424,7 @@ SINGLE_CHANNEL_RECEIVE:
 CHECK_CH0:
     ;If channel 0 enabled, start Rx for channel 0
     QBBC    CHECK_CH1, TAMAGAWA_ENABLE_CHx,0
-    ;enable Rx for channel 0
-    SET     R30,R30.t24
+
     ;4 is mid bit no. for rx oversample data for channel 0
     RECEIVE_FRAMES_S    R2.b1,R4.b1,RX_FRAMES,R4.b2,SCRATCH, SCRATCH1,0x1,4,R3.b0,PRUx_DMEM,TAMAGAWA_CH0_CRC_OFFSET
     ;storing Channel 0 Rx data to Tamagawa Interface created in R5F application
@@ -347,8 +432,7 @@ CHECK_CH0:
 CHECK_CH1:
     ;If channel 1 enabled, start Rx for channel 1
     QBBC    CHECK_CH2, TAMAGAWA_ENABLE_CHx,1
-    ;enable Rx for channel 1
-    SET     R30,R30.t25
+
     ; 4+8 is mid bit no. for rx oversample data for channel 1
     RECEIVE_FRAMES_S    R2.b1,R4.b1,RX_FRAMES,R4.b2,SCRATCH, SCRATCH1,0x2,4+8,R3.b0,PRUx_DMEM,TAMAGAWA_CH1_CRC_OFFSET
     ;storing Channel 1 Rx data to Tamagawa Interface created in R5F application
@@ -356,8 +440,7 @@ CHECK_CH1:
 CHECK_CH2:
     ;If channel 0 enabled, start Rx for channel 2
     QBBC    ALL_CHANNEL_DONE, TAMAGAWA_ENABLE_CHx,2
-    ;enable Rx for channel 2
-    SET     R30,R30.t26
+
     ; 4+16 is mid bit no. for rx oversample data for channel 2
     RECEIVE_FRAMES_S    R2.b1,R4.b1,RX_FRAMES,R4.b2,SCRATCH, SCRATCH1,0x4,4+16,R3.b0,PRUx_DMEM,TAMAGAWA_CH2_CRC_OFFSET
     ;storing Channel 2 Rx data to Tamagawa Interface created in R5F application
@@ -389,9 +472,14 @@ ALL_CHANNEL_DONE:
 
 FN_SEND:
 	; Program tx_frame_size ICSS_CFG_PRUx_ED_CH0_CFG0[15:11] to 10
-	; Program rx_frame_size in ICSS_CFG_PRUx_ED_CH0_CFG0[27:16]	to 110
-    ; loading rx frame size to maximum bits we can receive from tamagawa encoder for a particular command ID
-    LDI     R2.w1 , 110
+	; Program rx_frame_size in ICSS_CFG_PRUx_ED_CH0_CFG0[27:16]
+    ; Load number of TX and RX frames
+    LBCO	&SCRATCH1.w0, PRUx_DMEM, TAMAGAWA_WORD_1_OFFSET, 2
+    ; Total frames in response = TX data frames + RX data frames
+    ADD     SCRATCH1.w0, SCRATCH1.b0, SCRATCH1.b1
+    ; Multiply by 8 to convert from bytes to bits
+    LSL     SCRATCH1.w0, SCRATCH1.w0, 3
+    MOV     R2.w1, SCRATCH1.w0
     ; if channel 0 is enabled, updation of frame sizes will be done.
     QBBC    TAMAGAWA_SKIP15_CH0, TAMAGAWA_ENABLE_CHx,	0
     ;loading PRUx_ED_CFG0 Register for updating Tx frame size

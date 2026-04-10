@@ -74,8 +74,8 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 
 ### EVM Hardware Setup 
 \imageStyle{SDFM_EVMHw_SETUP_image.jpeg,width:40%}
-\image html SDFM_EVMHw_SETUP_image.jpeg  "Hardware Setup SDFM"
-\image html SDFM_EVM_SETUP_FOR_PHASE_DELAY.png  "SDFM: EVM and IO breakout board setup view"
+\image html SDFM_EVMHw_SETUP_image.jpeg "Hardware Setup SDFM"
+\image html SDFM_EVM_SETUP_FOR_PHASE_DELAY.png "SDFM: EVM and IO breakout board setup view"
 \cond SOC_AM243X
 ## Hardware Prerequisites for LP
 - AMC1035EVM
@@ -84,8 +84,8 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 
 ### LP Hardware Setup
 \imageStyle{SDFM_LPHw_SETUP_FOR_PHASE_DELAY.jpeg,width:40%}
-\image html SDFM_LPHw_SETUP_FOR_PHASE_DELAY.jpeg  "LP Hardware setup"
-\image html SDFM_LP_HWSETUP_FOR_PHASE_DELAY.png  "SDFM: LP setup view"
+\image html SDFM_LPHw_SETUP_FOR_PHASE_DELAY.jpeg "LP Hardware setup"
+\image html SDFM_LP_HWSETUP_FOR_PHASE_DELAY.png "SDFM: LP setup view"
 \endcond
 ## Build, load and run
 

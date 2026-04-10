@@ -15,7 +15,7 @@ function SDmodulatorSettings(channel)
 	density_1s = (inst) => {
                 let temp= (inst["Ch" + channel.toString() + "_DC_Input"] + inst["Ch" + channel.toString() + "_Vclipping"]) / (2 * inst["Ch" + channel.toString() + "_Vclipping"]);
                 return temp;}
-				
+
 	Theoretical_Data_Filter = (inst) => {
 					let temp = Math.floor((Math.abs(inst["Ch" + channel.toString() + "_DC_Input"]) / inst["Ch" + channel.toString() + "_Vclipping"])*sd_definition.getFilterOutputRange(inst["Ch" + channel.toString() + "_AccSource"], inst["Ch" + channel.toString() + "_NC_OSR"]));
 					if(inst["Ch" + channel.toString() + "_DC_Input"] < 0)
@@ -23,11 +23,11 @@ function SDmodulatorSettings(channel)
 						temp = -1 * temp;
 					}
 					return temp;}
-	
+
 	Theoretical_Comparator_Filter = (inst) => {
 					let temp = (inst["Ch" + channel.toString() + "_DC_Input"] + inst["Ch" + channel.toString() + "_Vclipping"]) / (2 * inst["Ch" + channel.toString() + "_Vclipping"]) * sd_definition.getFilterOutputRange(inst["Ch" + channel.toString() + "_AccSource"], inst["Ch" + channel.toString() + "_OC_OSR"]);
 					return temp;}
-	
+
 
 	Settings =
 	[
@@ -37,7 +37,7 @@ function SDmodulatorSettings(channel)
 			description : 'Select SD Modulator Frequency in Hz',
 			hidden      : true,
 			getValue    : (inst) => {
-                let SDMCLK =  inst["Ch" + channel.toString() + "_SDFM Clock"];
+                let SDMCLK =  inst["Ch" + channel.toString() + "_SDFM_Clock"];
                 return SDMCLK;
             },
             default     : 20000000,
@@ -67,91 +67,26 @@ function SDmodulatorSettings(channel)
 
 		{
 			name        : "Ch" + channel.toString() + "_Theoritical_DataFilterOutput",
-			displayName : "Theoritical Data Filter Output",
-			description : 'Theoritical Data filter Output',
+			displayName : "Theoretical Data Filter Output",
+			description : 'Theoretical Data Filter Output',
 			hidden      : true,
 			getValue    : Theoretical_Data_Filter,
 		    default     : 0,
 		},
 		{
 			name        : "Ch" + channel.toString() + "_Theoritical_ComparatorFilterOutput",
-			displayName : "Theoritical Comparator Filter Output",
-			description : 'Theoritical Comparator filter Output',
+			displayName : "Theoretical Comparator Filter Output",
+			description : 'Theoretical Comparator Filter Output',
 			hidden      : true,
 			getValue    : Theoretical_Comparator_Filter,
 		    default     : 0,
 		},
 
-	
+
 	]
 	return(Settings);
 }
-// SD Normal current settings //
 
-function configNCsamplingMode(inst, ui)
-{
-    for (let channel = 0; channel < 9; channel++)
-	{
-        let status = inst["Ch" + channel.toString() + "_EnableContinuousMode"];
-		let status1 = inst["Enable_Channel_" + channel.toString()];
-        
-        if(status1)
-		{
-			ui["Ch" + channel.toString() + "_FirstTriggerPoint"].hidden = status;
-			ui["Ch" + channel.toString() + "_EnableDoubleUpdate"].hidden = status;
-		}
-		
-	}
-
-}
-
-function doubleUpdateConfig(inst, ui)
-{
-    for (let channel = 0; channel < 9; channel++)
-	{
-        let status = inst["Ch" + channel.toString() + "_EnableDoubleUpdate"];
-        ui["Ch" + channel.toString() + "_SecondTriggerPoint"].hidden = !status;
- 
-	}
-
-}
-
-function onChangeEnableEPWM(inst, ui)
-{
-	for (let channel = 0; channel < 9; channel++)
-    {
-        let status = inst["Ch" + channel.toString() + "_EPWM_SYNC"];
-        ui["Ch" + channel.toString() + "_Epwm_Source"].hidden = !status;
-    }
-}
-
-function epwmSettings(channel)
-{
-	let Settings = [];
-	
-	Settings =
-    [
-		{
-			name: "Ch" + channel.toString() + "_Epwm_Source",
-			displayName : "Source of SD SYNC Event",
-			description : 'Source of SD SYNC Event',
-			hidden      : true,
-			default     : "0",
-			options     :
-			[
-				{
-					name: "0",
-					displayName: "SDFM SYNC source is EPWM0 SYNC out event",
-				},
-				{
-					name:"3",
-					displayName: "SDFM SYNC source is EPWM3 SYNC out event",
-				},
-			]
-		},
-	]
-	return(Settings)
-}
 function SDnormalCurrentConfigs(channel)
 {
 	let Settings = [];
@@ -161,39 +96,10 @@ function SDnormalCurrentConfigs(channel)
 		{
 			name: "Ch" + channel.toString() + "_NC_OSR",
 			displayName : "Normal Current OSR",
-			description : 'Normal Current OSR',
+			description : 'Normal Current Over Sampling Ratio (Valid range: 4-256)',
 			hidden      : true,
 			default     : 64,
-		},
-		{
-			name        : "Ch" + channel.toString() + "_EnableContinuousMode",
-			displayName : "Enable NC Continuous Mode",
-			description : 'Enable NC Continuous Mode',
-			hidden      : true,
-            default     : false,
-            onChange	: configNCsamplingMode,        
-		},
-		{
-			name        : "Ch" + channel.toString() + "_FirstTriggerPoint",
-			displayName : "First Trigger Point (us)",
-			description : 'First Trigger Point (us)',
-			hidden      : true,
-			default     : 15,
-		},
-        {
-			name        : "Ch" + channel.toString() + "_EnableDoubleUpdate",
-			displayName : "Enable Double Update",
-			description : 'Enable Double Update',
-			hidden      : true,
-            default     : false,
-		    onChange    : doubleUpdateConfig,
-		},
-        {
-			name        : "Ch" + channel.toString() + "_SecondTriggerPoint",
-			displayName : "Second Trigger Point (us)",
-			description : 'Second Trigger Point (us)',
-			hidden      : true,
-			default     : 30,
+			range       : [4, 256],
 		},
         {
 			name        : "Ch" + channel.toString() + "_Datarate_DF",
@@ -252,19 +158,6 @@ function SDnormalCurrentConfigs(channel)
             },
             default     : 0,
 		},
-		{
-			name: "Ch" + channel.toString() + "_EPWM_SYNC",
-			displayName : "Use EPWM Synchronization",
-			description : 'Use EPWM Synchronization',
-			hidden      : true,
-			default     : false,
-			onChange    : onChangeEnableEPWM
-		},
-		{
-			name        : "GROUP_EPWM",
-			displayName : "SDSYNC Feature Settings",
-			config      : epwmSettings(channel)
-		},
 
 	]
 	return(Settings);
@@ -277,7 +170,7 @@ function fill_channel_array(channel)
             {
 				name: "Ch" + channel.toString() + "_AccSource",
 				displayName : "SD Accumulator Source",
-				description : 'SD Accumulator Source',
+				description : 'Selects the SINC filter type for sigma-delta data filtering.',
 				hidden      : true,
 				default     : "0",
                 options: [
@@ -322,10 +215,10 @@ function fill_channel_array(channel)
 				displayName : "Fast Detect Configuration",
 				config      : useFastDetect.fastDetectConfigs(channel)
 			},
-		    
+
             {
 				name: "GROUP_NormalCurrent",
-				displayName : "Normal Current Configurtion",
+				displayName : "Normal Current Configuration",
 				collapsed   : false,
 				config     : SDnormalCurrentConfigs(channel),
 			},

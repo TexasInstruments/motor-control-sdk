@@ -1,26 +1,13 @@
 {
     "name": "MOTOR_CONTROL_SDK",
     "displayName": "MOTOR CONTROL SDK",
-    "version": "11.00.00",
+    "version": "2025.00.00",
     "documentationPath": "../docs",
     "includePaths": [
         "../source",
-        "../ind_comms_sdk/source",
-        "../mcu_plus_sdk/source/sysconfig",
-        "../mcu_plus_sdk/source/networking/enet/core/sysconfig",
     ],
     "components": [
         "/motor_control",
-        "/industrial_comms/industrial_comms",
-        "/kernel/dpl",
-        "/drivers/drivers",
-        "/board/board",
-        "/fs/fs",
-        "/networking/networking",
-        "/security/security",
-        "/usb/usb",
-        "/pru_io/pru_io",
-        "/memory_configurator/components"
     ],
     "devices": [
         "AM64x",
@@ -244,7 +231,27 @@
         }, {
             "name": "r5fss0-1",
             "targetdbId": "Cortex_R5_1"
-        },{
+        }, {
+            "name": "hsm0-0",
+            "targetdbId": "Cortex_M4_0"
+        }],
+        "AM261x_ZNC": [{
+            "name": "r5fss0-0",
+            "targetdbId": "Cortex_R5_0"
+        }, {
+            "name": "r5fss0-1",
+            "targetdbId": "Cortex_R5_1"
+        }, {
+            "name": "hsm0-0",
+            "targetdbId": "Cortex_M4_0"
+        }],
+        "AM261x_ZEJ": [{
+            "name": "r5fss0-0",
+            "targetdbId": "Cortex_R5_0"
+        }, {
+            "name": "r5fss0-1",
+            "targetdbId": "Cortex_R5_1"
+        }, {
             "name": "hsm0-0",
             "targetdbId": "Cortex_M4_0"
         }],
@@ -254,7 +261,17 @@
         }, {
             "name": "r5fss0-1",
             "targetdbId": "Cortex_R5_1"
-        },{
+        }, {
+            "name": "hsm0-0",
+            "targetdbId": "Cortex_M4_0"
+        }],
+        "AM261x_ZFG_400": [{
+            "name": "r5fss0-0",
+            "targetdbId": "Cortex_R5_0"
+        }, {
+            "name": "r5fss0-1",
+            "targetdbId": "Cortex_R5_1"
+        }, {
             "name": "hsm0-0",
             "targetdbId": "Cortex_M4_0"
         }],
@@ -266,5 +283,5 @@
         "showSignals": true,
         "showUsed": true
     },
-    "minToolVersion" : "1.22.0"
+    "minToolVersion" : "1.23.0"
 }

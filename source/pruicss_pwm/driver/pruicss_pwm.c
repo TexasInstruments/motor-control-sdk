@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023 Texas Instruments Incorporated
+ *  Copyright (C) 2023-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -58,8 +58,10 @@ PRUICSS_PWM_Handle PRUICSS_PWM_open(uint32_t index, PRUICSS_Handle pruIcssHandle
 {
     PRUICSS_PWM_Handle  handle = NULL;
 
-    /* Check index */
-    if(index >= gPruIcssPwmConfigNum || (pruIcssHandle == NULL))
+    /* Check index and validate pruIcssHandle */
+    if((index >= gPruIcssPwmConfigNum) ||
+       (pruIcssHandle == NULL) ||
+       (pruIcssHandle->hwAttrs == NULL))
     {
         return NULL;
     }
@@ -77,7 +79,8 @@ int32_t PRUICSS_PWM_setIepCounterLower_32bitValue(PRUICSS_PWM_Handle handle, uin
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (iepInstance < PRUICSS_NUM_IEP_INSTANCES) && (value <= PRUICSS_IEP_COUNT_REG_MAX))
+    if ((handle != NULL) && (handle->pruIcssHandle != NULL) && (handle->pruIcssHandle->hwAttrs != NULL) &&
+        (iepInstance < PRUICSS_NUM_IEP_INSTANCES) && (value <= PRUICSS_IEP_COUNT_REG_MAX))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)((handle->pruIcssHandle)->hwAttrs);
@@ -95,7 +98,7 @@ int32_t PRUICSS_PWM_setIepCounterLower_32bitValue(PRUICSS_PWM_Handle handle, uin
         }
     }
 
-    return retVal;    
+    return retVal;
 }
 
 int32_t PRUICSS_PWM_setIepCounterUpper_32bitValue(PRUICSS_PWM_Handle handle, uint8_t iepInstance, uint32_t value)
@@ -103,7 +106,8 @@ int32_t PRUICSS_PWM_setIepCounterUpper_32bitValue(PRUICSS_PWM_Handle handle, uin
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (iepInstance < PRUICSS_NUM_IEP_INSTANCES) && (value <= PRUICSS_IEP_COUNT_REG_MAX))
+    if ((handle != NULL) && (handle->pruIcssHandle != NULL) && (handle->pruIcssHandle->hwAttrs != NULL) &&
+        (iepInstance < PRUICSS_NUM_IEP_INSTANCES) && (value <= PRUICSS_IEP_COUNT_REG_MAX))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)((handle->pruIcssHandle)->hwAttrs);
@@ -121,7 +125,7 @@ int32_t PRUICSS_PWM_setIepCounterUpper_32bitValue(PRUICSS_PWM_Handle handle, uin
         }
     }
 
-    return retVal;    
+    return retVal;
 }
 
 int32_t PRUICSS_PWM_configureIepShadowModeEnable(PRUICSS_PWM_Handle handle, uint8_t iepInstance, uint8_t enable)
@@ -129,7 +133,8 @@ int32_t PRUICSS_PWM_configureIepShadowModeEnable(PRUICSS_PWM_Handle handle, uint
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (iepInstance < PRUICSS_NUM_IEP_INSTANCES) && (enable < 2))
+    if ((handle != NULL) && (handle->pruIcssHandle != NULL) && (handle->pruIcssHandle->hwAttrs != NULL) &&
+        (iepInstance < PRUICSS_NUM_IEP_INSTANCES) && (enable < 2))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)((handle->pruIcssHandle)->hwAttrs);
@@ -155,7 +160,8 @@ int32_t PRUICSS_PWM_configureIepCmp0ResetEnable(PRUICSS_PWM_Handle handle, uint8
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (iepInstance < PRUICSS_NUM_IEP_INSTANCES) && (enable < 2))
+    if ((handle != NULL) && (handle->pruIcssHandle != NULL) && (handle->pruIcssHandle->hwAttrs != NULL) &&
+        (iepInstance < PRUICSS_NUM_IEP_INSTANCES) && (enable < 2))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)((handle->pruIcssHandle)->hwAttrs);
@@ -181,7 +187,8 @@ int32_t PRUICSS_PWM_configureIepCompareEnable(PRUICSS_PWM_Handle handle, uint8_t
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (iepInstance < PRUICSS_NUM_IEP_INSTANCES) && (value <= PRUICSS_IEP_CMP_EVENTS_ENABLE_MAX_VALUE))
+    if ((handle != NULL) && (handle->pruIcssHandle != NULL) && (handle->pruIcssHandle->hwAttrs != NULL) &&
+        (iepInstance < PRUICSS_NUM_IEP_INSTANCES) && (value <= PRUICSS_IEP_CMP_EVENTS_ENABLE_MAX_VALUE))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)((handle->pruIcssHandle)->hwAttrs);
@@ -199,7 +206,7 @@ int32_t PRUICSS_PWM_configureIepCompareEnable(PRUICSS_PWM_Handle handle, uint8_t
         }
     }
 
-    return retVal;    
+    return retVal;
 }
 
 int32_t PRUICSS_PWM_setIepCompareEventLower_32bitValue(PRUICSS_PWM_Handle handle, uint8_t iepInstance, uint8_t cmpEvent, uint32_t value)
@@ -208,7 +215,8 @@ int32_t PRUICSS_PWM_setIepCompareEventLower_32bitValue(PRUICSS_PWM_Handle handle
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (iepInstance < PRUICSS_NUM_IEP_INSTANCES) && (cmpEvent < PRUICSS_NUM_IEP_CMP_EVENTS))
+    if ((handle != NULL) && (handle->pruIcssHandle != NULL) && (handle->pruIcssHandle->hwAttrs != NULL) &&
+        (iepInstance < PRUICSS_NUM_IEP_INSTANCES) && (cmpEvent < PRUICSS_NUM_IEP_CMP_EVENTS))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)((handle->pruIcssHandle)->hwAttrs);
@@ -241,8 +249,8 @@ int32_t PRUICSS_PWM_setIepCompareEventLower_32bitValue(PRUICSS_PWM_Handle handle
                 break;
         }
 
-    } 
-    
+    }
+
     return retVal;
 }
 
@@ -254,7 +262,8 @@ int32_t PRUICSS_PWM_setIepCompareEventUpper_32bitValue(PRUICSS_PWM_Handle handle
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (iepInstance < PRUICSS_NUM_IEP_INSTANCES) && (cmpEvent < PRUICSS_NUM_IEP_CMP_EVENTS))
+    if ((handle != NULL) && (handle->pruIcssHandle != NULL) && (handle->pruIcssHandle->hwAttrs != NULL) &&
+        (iepInstance < PRUICSS_NUM_IEP_INSTANCES) && (cmpEvent < PRUICSS_NUM_IEP_CMP_EVENTS))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)((handle->pruIcssHandle)->hwAttrs);
@@ -288,8 +297,8 @@ int32_t PRUICSS_PWM_setIepCompareEventUpper_32bitValue(PRUICSS_PWM_Handle handle
         }
 
     }
-    
-    return retVal;    
+
+    return retVal;
 }
 
 int32_t PRUICSS_PWM_setPwmDebounceValue(PRUICSS_PWM_Handle handle, uint8_t pwmSet, uint8_t value)
@@ -297,7 +306,8 @@ int32_t PRUICSS_PWM_setPwmDebounceValue(PRUICSS_PWM_Handle handle, uint8_t pwmSe
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (pwmSet < PRUICSS_NUM_PWM_SETS) && (value <= PRUICSS_PWM_DEBOUNCE_MAX_VALUE))
+    if ((handle != NULL) && (handle->pruIcssHandle != NULL) && (handle->pruIcssHandle->hwAttrs != NULL) &&
+        (pwmSet < PRUICSS_NUM_PWM_SETS) && (value <= PRUICSS_PWM_DEBOUNCE_MAX_VALUE))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)((handle->pruIcssHandle)->hwAttrs);
@@ -323,7 +333,7 @@ int32_t PRUICSS_PWM_setPwmDebounceValue(PRUICSS_PWM_Handle handle, uint8_t pwmSe
         }
     }
 
-    return retVal;    
+    return retVal;
 }
 
 int32_t PRUICSS_PWM_setPwmTripMask(PRUICSS_PWM_Handle handle, uint8_t pwmSet, uint16_t maskValue)
@@ -331,7 +341,8 @@ int32_t PRUICSS_PWM_setPwmTripMask(PRUICSS_PWM_Handle handle, uint8_t pwmSet, ui
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (pwmSet < PRUICSS_NUM_PWM_SETS) && (maskValue <= PRUICSS_PWM_TRIP_MASK_MAX_VALUE))
+    if ((handle != NULL) && (handle->pruIcssHandle != NULL) && (handle->pruIcssHandle->hwAttrs != NULL) &&
+        (pwmSet < PRUICSS_NUM_PWM_SETS) && (maskValue <= PRUICSS_PWM_TRIP_MASK_MAX_VALUE))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)((handle->pruIcssHandle)->hwAttrs);
@@ -357,7 +368,7 @@ int32_t PRUICSS_PWM_setPwmTripMask(PRUICSS_PWM_Handle handle, uint8_t pwmSet, ui
         }
     }
 
-    return retVal;    
+    return retVal;
 }
 
 int32_t PRUICSS_PWM_getPwmTripMask(PRUICSS_PWM_Handle handle, uint8_t pwmSet, uint16_t *maskValuePtr)
@@ -365,7 +376,8 @@ int32_t PRUICSS_PWM_getPwmTripMask(PRUICSS_PWM_Handle handle, uint8_t pwmSet, ui
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (pwmSet < PRUICSS_NUM_PWM_SETS) && (maskValuePtr != NULL))
+    if ((handle != NULL) && (handle->pruIcssHandle != NULL) && (handle->pruIcssHandle->hwAttrs != NULL) &&
+        (pwmSet < PRUICSS_NUM_PWM_SETS) && (maskValuePtr != NULL))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)((handle->pruIcssHandle)->hwAttrs);
@@ -391,7 +403,7 @@ int32_t PRUICSS_PWM_getPwmTripMask(PRUICSS_PWM_Handle handle, uint8_t pwmSet, ui
         }
     }
 
-    return retVal;    
+    return retVal;
 }
 
 
@@ -401,7 +413,8 @@ int32_t PRUICSS_PWM_configurePwmCmp0TripResetEnable(PRUICSS_PWM_Handle handle, u
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (pwmSet < PRUICSS_NUM_PWM_SETS) && (enable < 2))
+    if ((handle != NULL) && (handle->pruIcssHandle != NULL) && (handle->pruIcssHandle->hwAttrs != NULL) &&
+        (pwmSet < PRUICSS_NUM_PWM_SETS) && (enable < 2))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)((handle->pruIcssHandle)->hwAttrs);
@@ -427,7 +440,7 @@ int32_t PRUICSS_PWM_configurePwmCmp0TripResetEnable(PRUICSS_PWM_Handle handle, u
         }
     }
 
-    return retVal;    
+    return retVal;
 }
 
 int32_t PRUICSS_PWM_generatePwmTripReset(PRUICSS_PWM_Handle handle, uint8_t pwmSet)
@@ -435,7 +448,8 @@ int32_t PRUICSS_PWM_generatePwmTripReset(PRUICSS_PWM_Handle handle, uint8_t pwmS
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (pwmSet < PRUICSS_NUM_PWM_SETS))
+    if ((handle != NULL) && (handle->pruIcssHandle != NULL) && (handle->pruIcssHandle->hwAttrs != NULL) &&
+        (pwmSet < PRUICSS_NUM_PWM_SETS))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)((handle->pruIcssHandle)->hwAttrs);
@@ -461,7 +475,7 @@ int32_t PRUICSS_PWM_generatePwmTripReset(PRUICSS_PWM_Handle handle, uint8_t pwmS
         }
     }
 
-    return retVal;    
+    return retVal;
 }
 
 int32_t PRUICSS_PWM_generatePwmOverCurrentErrorTrip(PRUICSS_PWM_Handle handle, uint8_t pwmSet)
@@ -469,7 +483,8 @@ int32_t PRUICSS_PWM_generatePwmOverCurrentErrorTrip(PRUICSS_PWM_Handle handle, u
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (pwmSet < PRUICSS_NUM_PWM_SETS))
+    if ((handle != NULL) && (handle->pruIcssHandle != NULL) && (handle->pruIcssHandle->hwAttrs != NULL) &&
+        (pwmSet < PRUICSS_NUM_PWM_SETS))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)((handle->pruIcssHandle)->hwAttrs);
@@ -495,7 +510,7 @@ int32_t PRUICSS_PWM_generatePwmOverCurrentErrorTrip(PRUICSS_PWM_Handle handle, u
         }
     }
 
-    return retVal;    
+    return retVal;
 }
 
 int32_t PRUICSS_PWM_generatePwmPositionFeedbackErrorTrip(PRUICSS_PWM_Handle handle, uint8_t pwmSet)
@@ -503,7 +518,8 @@ int32_t PRUICSS_PWM_generatePwmPositionFeedbackErrorTrip(PRUICSS_PWM_Handle hand
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (pwmSet < PRUICSS_NUM_PWM_SETS))
+    if ((handle != NULL) && (handle->pruIcssHandle != NULL) && (handle->pruIcssHandle->hwAttrs != NULL) &&
+        (pwmSet < PRUICSS_NUM_PWM_SETS))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)((handle->pruIcssHandle)->hwAttrs);
@@ -529,7 +545,7 @@ int32_t PRUICSS_PWM_generatePwmPositionFeedbackErrorTrip(PRUICSS_PWM_Handle hand
         }
     }
 
-    return retVal;    
+    return retVal;
 }
 
 int32_t PRUICSS_PWM_clearPwmTripResetStatus(PRUICSS_PWM_Handle handle, uint8_t pwmSet)
@@ -537,7 +553,8 @@ int32_t PRUICSS_PWM_clearPwmTripResetStatus(PRUICSS_PWM_Handle handle, uint8_t p
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (pwmSet < PRUICSS_NUM_PWM_SETS))
+    if ((handle != NULL) && (handle->pruIcssHandle != NULL) && (handle->pruIcssHandle->hwAttrs != NULL) &&
+        (pwmSet < PRUICSS_NUM_PWM_SETS))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)((handle->pruIcssHandle)->hwAttrs);
@@ -563,7 +580,7 @@ int32_t PRUICSS_PWM_clearPwmTripResetStatus(PRUICSS_PWM_Handle handle, uint8_t p
         }
     }
 
-    return retVal;    
+    return retVal;
 }
 
 int32_t PRUICSS_PWM_clearPwmOverCurrentErrorTrip(PRUICSS_PWM_Handle handle, uint8_t pwmSet)
@@ -571,7 +588,8 @@ int32_t PRUICSS_PWM_clearPwmOverCurrentErrorTrip(PRUICSS_PWM_Handle handle, uint
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (pwmSet < PRUICSS_NUM_PWM_SETS))
+    if ((handle != NULL) && (handle->pruIcssHandle != NULL) && (handle->pruIcssHandle->hwAttrs != NULL) &&
+        (pwmSet < PRUICSS_NUM_PWM_SETS))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)((handle->pruIcssHandle)->hwAttrs);
@@ -597,7 +615,7 @@ int32_t PRUICSS_PWM_clearPwmOverCurrentErrorTrip(PRUICSS_PWM_Handle handle, uint
         }
     }
 
-    return retVal;    
+    return retVal;
 }
 
 int32_t PRUICSS_PWM_clearPwmPositionFeedbackErrorTrip(PRUICSS_PWM_Handle handle, uint8_t pwmSet)
@@ -605,7 +623,8 @@ int32_t PRUICSS_PWM_clearPwmPositionFeedbackErrorTrip(PRUICSS_PWM_Handle handle,
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (pwmSet < PRUICSS_NUM_PWM_SETS))
+    if ((handle != NULL) && (handle->pruIcssHandle != NULL) && (handle->pruIcssHandle->hwAttrs != NULL) &&
+        (pwmSet < PRUICSS_NUM_PWM_SETS))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)((handle->pruIcssHandle)->hwAttrs);
@@ -631,7 +650,7 @@ int32_t PRUICSS_PWM_clearPwmPositionFeedbackErrorTrip(PRUICSS_PWM_Handle handle,
         }
     }
 
-    return retVal;    
+    return retVal;
 }
 
 int32_t PRUICSS_PWM_getPwmTripTriggerCauseVector(PRUICSS_PWM_Handle handle, uint8_t pwmSet)
@@ -639,7 +658,8 @@ int32_t PRUICSS_PWM_getPwmTripTriggerCauseVector(PRUICSS_PWM_Handle handle, uint
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (pwmSet < PRUICSS_NUM_PWM_SETS))
+    if ((handle != NULL) && (handle->pruIcssHandle != NULL) && (handle->pruIcssHandle->hwAttrs != NULL) &&
+        (pwmSet < PRUICSS_NUM_PWM_SETS))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)((handle->pruIcssHandle)->hwAttrs);
@@ -669,7 +689,8 @@ int32_t PRUICSS_PWM_getPwmTripStatus(PRUICSS_PWM_Handle handle, uint8_t pwmSet)
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (pwmSet < PRUICSS_NUM_PWM_SETS))
+    if ((handle != NULL) && (handle->pruIcssHandle != NULL) && (handle->pruIcssHandle->hwAttrs != NULL) &&
+        (pwmSet < PRUICSS_NUM_PWM_SETS))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)((handle->pruIcssHandle)->hwAttrs);
@@ -709,7 +730,7 @@ int32_t PRUICSS_PWM_clearPwmTripStatus(PRUICSS_PWM_Handle handle, uint8_t pwmSet
         }
     }
 
-    return retVal; 
+    return retVal;
 }
 
 int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalA0(PRUICSS_PWM_Handle handle, uint8_t pwmSet, uint8_t state, uint8_t action)
@@ -717,7 +738,8 @@ int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalA0(PRUICSS_PWM_Handle handle, uint
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (pwmSet < PRUICSS_NUM_PWM_SETS) && (state < PRUICSS_NUM_PWM_STATES) && (action < PRUICSS_NUM_PWM_OUTPUT_ACTIONS))
+    if ((handle != NULL) && (handle->pruIcssHandle != NULL) && (handle->pruIcssHandle->hwAttrs != NULL) &&
+        (pwmSet < PRUICSS_NUM_PWM_SETS) && (state < PRUICSS_NUM_PWM_STATES) && (action < PRUICSS_NUM_PWM_OUTPUT_ACTIONS))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)((handle->pruIcssHandle)->hwAttrs);
@@ -791,12 +813,12 @@ int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalA0(PRUICSS_PWM_Handle handle, uint
                         break;
                 }
                 break;
-                
+
 
         }
     }
 
-    return retVal; 
+    return retVal;
 }
 
 int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalB0(PRUICSS_PWM_Handle handle, uint8_t pwmSet, uint8_t state, uint8_t action)
@@ -804,7 +826,8 @@ int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalB0(PRUICSS_PWM_Handle handle, uint
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (pwmSet < PRUICSS_NUM_PWM_SETS) && (state < PRUICSS_NUM_PWM_STATES) && (action < PRUICSS_NUM_PWM_OUTPUT_ACTIONS))
+    if ((handle != NULL) && (handle->pruIcssHandle != NULL) && (handle->pruIcssHandle->hwAttrs != NULL) &&
+        (pwmSet < PRUICSS_NUM_PWM_SETS) && (state < PRUICSS_NUM_PWM_STATES) && (action < PRUICSS_NUM_PWM_OUTPUT_ACTIONS))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)((handle->pruIcssHandle)->hwAttrs);
@@ -878,7 +901,7 @@ int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalB0(PRUICSS_PWM_Handle handle, uint
                         break;
                 }
                 break;
-                
+
 
         }
     }
@@ -891,7 +914,8 @@ int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalA1(PRUICSS_PWM_Handle handle, uint
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (pwmSet < PRUICSS_NUM_PWM_SETS) && (state < PRUICSS_NUM_PWM_STATES) && (action < PRUICSS_NUM_PWM_OUTPUT_ACTIONS))
+    if ((handle != NULL) && (handle->pruIcssHandle != NULL) && (handle->pruIcssHandle->hwAttrs != NULL) &&
+        (pwmSet < PRUICSS_NUM_PWM_SETS) && (state < PRUICSS_NUM_PWM_STATES) && (action < PRUICSS_NUM_PWM_OUTPUT_ACTIONS))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)((handle->pruIcssHandle)->hwAttrs);
@@ -976,7 +1000,8 @@ int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalB1(PRUICSS_PWM_Handle handle, uint
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (pwmSet < PRUICSS_NUM_PWM_SETS) && (state < PRUICSS_NUM_PWM_STATES) && (action < PRUICSS_NUM_PWM_OUTPUT_ACTIONS))
+    if ((handle != NULL) && (handle->pruIcssHandle != NULL) && (handle->pruIcssHandle->hwAttrs != NULL) &&
+        (pwmSet < PRUICSS_NUM_PWM_SETS) && (state < PRUICSS_NUM_PWM_STATES) && (action < PRUICSS_NUM_PWM_OUTPUT_ACTIONS))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)((handle->pruIcssHandle)->hwAttrs);
@@ -1061,7 +1086,8 @@ int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalA2(PRUICSS_PWM_Handle handle, uint
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (pwmSet < PRUICSS_NUM_PWM_SETS) && (state < PRUICSS_NUM_PWM_STATES) && (action < PRUICSS_NUM_PWM_OUTPUT_ACTIONS))
+    if ((handle != NULL) && (handle->pruIcssHandle != NULL) && (handle->pruIcssHandle->hwAttrs != NULL) &&
+        (pwmSet < PRUICSS_NUM_PWM_SETS) && (state < PRUICSS_NUM_PWM_STATES) && (action < PRUICSS_NUM_PWM_OUTPUT_ACTIONS))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)((handle->pruIcssHandle)->hwAttrs);
@@ -1147,7 +1173,8 @@ int32_t PRUICSS_PWM_actionOnOutputCfgPwmSignalB2(PRUICSS_PWM_Handle handle, uint
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (pwmSet < PRUICSS_NUM_PWM_SETS) && (state < PRUICSS_NUM_PWM_STATES) && (action < PRUICSS_NUM_PWM_OUTPUT_ACTIONS))
+    if ((handle != NULL) && (handle->pruIcssHandle != NULL) && (handle->pruIcssHandle->hwAttrs != NULL) &&
+        (pwmSet < PRUICSS_NUM_PWM_SETS) && (state < PRUICSS_NUM_PWM_STATES) && (action < PRUICSS_NUM_PWM_OUTPUT_ACTIONS))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)((handle->pruIcssHandle)->hwAttrs);
@@ -1233,13 +1260,13 @@ int32_t PRUICSS_PWM_configurePwmEfficiencyModeEnable(PRUICSS_PWM_Handle handle, 
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (enable < 2))
+    if ((handle != NULL) && (handle->pruIcssHandle != NULL) && (handle->pruIcssHandle->hwAttrs != NULL) && (enable < 2))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)((handle->pruIcssHandle)->hwAttrs);
         HW_WR_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_PIN_MX),CSL_ICSSCFG_PIN_MX_PWM_EFC_EN, enable);
     }
-    return retVal;    
+    return retVal;
 }
 
 int32_t PRUICSS_PWM_enableIEP1Slave(PRUICSS_PWM_Handle handle, uint8_t enable)
@@ -1248,13 +1275,13 @@ int32_t PRUICSS_PWM_enableIEP1Slave(PRUICSS_PWM_Handle handle, uint8_t enable)
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (enable < 2))
+    if ((handle != NULL) && (handle->pruIcssHandle != NULL) && (handle->pruIcssHandle->hwAttrs != NULL) && (enable < 2))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)((handle->pruIcssHandle)->hwAttrs);
 
         HW_WR_FIELD32((hwAttrs->cfgRegBase + CSL_ICSSCFG_IEPCLK),
-                      CSL_ICSSCFG_IEPCLK_IEP1_SLV_EN, 1);
+                      CSL_ICSSCFG_IEPCLK_IEP1_SLV_EN, enable);
     }
     return retVal;
 
@@ -1266,7 +1293,8 @@ int32_t PRUICSS_PWM_enableIEPResetOnEPWM0SyncOut(PRUICSS_PWM_Handle handle, uint
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (iepInstance < PRUICSS_NUM_IEP_INSTANCES) && (enable < 2))
+    if ((handle != NULL) && (handle->pruIcssHandle != NULL) && (handle->pruIcssHandle->hwAttrs != NULL) &&
+        (iepInstance < PRUICSS_NUM_IEP_INSTANCES) && (enable < 2))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)((handle->pruIcssHandle)->hwAttrs);
@@ -1294,7 +1322,8 @@ int32_t PRUICSS_PWM_enableIEPResetOnEPWM3SyncOut(PRUICSS_PWM_Handle handle, uint
     PRUICSS_HwAttrs const   *hwAttrs;
     int32_t                 retVal = SystemP_FAILURE;
 
-    if ((handle != NULL) && (iepInstance < PRUICSS_NUM_IEP_INSTANCES) && (enable < 2))
+    if ((handle != NULL) && (handle->pruIcssHandle != NULL) && (handle->pruIcssHandle->hwAttrs != NULL) &&
+        (iepInstance < PRUICSS_NUM_IEP_INSTANCES) && (enable < 2))
     {
         retVal = SystemP_SUCCESS;
         hwAttrs = (PRUICSS_HwAttrs const *)((handle->pruIcssHandle)->hwAttrs);
@@ -1326,7 +1355,7 @@ int32_t PRUICSS_PWM_attrsInit(PRUICSS_PWM_Handle handle)
 
     if(handle!=NULL){
 
-        /*Intializes the pwm parameters with default values & maps compare events, output in intial, active, trip states and disables all pwm signals*/
+        /*Initializes the pwm parameters with default values & maps compare events, output in initial, active, trip states and disables all pwm signals*/
         for(currentPwmSet=PRUICSS_PWM_SET0; currentPwmSet<=PRUICSS_PWM_SET1; currentPwmSet++)
         {
             for(currentPwmInstance=0; currentPwmInstance < PRUICSS_NUM_OF_PWMINSTANCES_PER_PWM_SET; currentPwmInstance++)
@@ -1366,7 +1395,7 @@ int32_t PRUICSS_PWM_attrsInit(PRUICSS_PWM_Handle handle)
 
         retVal = SystemP_SUCCESS;
     }
-    return retVal;  
+    return retVal;
 }
 
 int32_t PRUICSS_PWM_stateInit(PRUICSS_PWM_Handle handle, uint8_t pwmSet, uint8_t instance, uint8_t outputCfgInitialState, uint8_t outputCfgActiveState, uint8_t outputCfgTripState)
@@ -1393,7 +1422,7 @@ int32_t PRUICSS_PWM_signalEnable(PRUICSS_PWM_Handle handle, uint8_t pwmSet, uint
     return retVal;
 }
 
-int32_t PRUICSS_PWM_config(PRUICSS_PWM_Handle handle, uint8_t pwmSet, uint8_t instance,  uint32_t dutyCycle, uint32_t riseEdgeDelay, uint32_t fallEdgeDelay)
+int32_t PRUICSS_PWM_config(PRUICSS_PWM_Handle handle, uint8_t pwmSet, uint8_t instance,  float dutyCycle, float riseEdgeDelay, float fallEdgeDelay)
 {
     int32_t retVal = SystemP_FAILURE;
     /*Updates parameters of pwm signal with specified duty cycle, fall edge & rise edge delay*/
@@ -1410,21 +1439,23 @@ int32_t PRUICSS_PWM_config(PRUICSS_PWM_Handle handle, uint8_t pwmSet, uint8_t in
 int32_t PRUICSS_PWM_stateConfig(PRUICSS_PWM_Handle handle)
 {
     int32_t status = SystemP_FAILURE;
+    uint8_t currentPwmSet;
+
     if((handle!=NULL))
     {
         status = SystemP_SUCCESS;
-        for(uint8_t currentPwmSet=0; currentPwmSet< PRUICSS_NUM_PWM_SETS; currentPwmSet++)
+        for(currentPwmSet=0; currentPwmSet< PRUICSS_NUM_PWM_SETS; currentPwmSet++)
         {
             if((handle->pwmAttrs)[currentPwmSet][0].enable == 1 && (SystemP_SUCCESS == status))
             {
 
-                /*configure PWM A0 signal of intial, active, trip states*/
+                /*configure PWM A0 signal of initial, active, trip states*/
                 status = PRUICSS_PWM_actionOnOutputCfgPwmSignalA0(handle, currentPwmSet, PRUICSS_PWM_INTIAL_STATE, (handle->pwmAttrs)[currentPwmSet][0].outputCfgInitialState);
                 if(SystemP_SUCCESS == status)
                 {
                     status = PRUICSS_PWM_actionOnOutputCfgPwmSignalA0(handle, currentPwmSet, PRUICSS_PWM_ACTIVE_STATE, (handle->pwmAttrs)[currentPwmSet][0].outputCfgActiveState);
                 }
-   
+
                 if(SystemP_SUCCESS == status)
                 {
                     status = PRUICSS_PWM_actionOnOutputCfgPwmSignalA0(handle, currentPwmSet, PRUICSS_PWM_TRIP_STATE, (handle->pwmAttrs)[currentPwmSet][0].outputCfgTripState);
@@ -1433,7 +1464,7 @@ int32_t PRUICSS_PWM_stateConfig(PRUICSS_PWM_Handle handle)
 
             if((handle->pwmAttrs)[currentPwmSet][1].enable == 1 && (SystemP_SUCCESS == status))
             {
-                /*configure PWM B0 signal of intial, active, trip states*/
+                /*configure PWM B0 signal of initial, active, trip states*/
                 status = PRUICSS_PWM_actionOnOutputCfgPwmSignalB0(handle, currentPwmSet, PRUICSS_PWM_INTIAL_STATE, (handle->pwmAttrs)[currentPwmSet][1].outputCfgInitialState);
                 if(SystemP_SUCCESS == status)
                 {
@@ -1448,7 +1479,7 @@ int32_t PRUICSS_PWM_stateConfig(PRUICSS_PWM_Handle handle)
 
             if((handle->pwmAttrs)[currentPwmSet][2].enable == 1 && (SystemP_SUCCESS == status))
             {
-                /*configure PWM A1 signal of intial, active, trip states*/
+                /*configure PWM A1 signal of initial, active, trip states*/
                 status = PRUICSS_PWM_actionOnOutputCfgPwmSignalA1(handle, currentPwmSet, PRUICSS_PWM_INTIAL_STATE, (handle->pwmAttrs)[currentPwmSet][2].outputCfgInitialState);
                 if(SystemP_SUCCESS == status)
                 {
@@ -1463,7 +1494,7 @@ int32_t PRUICSS_PWM_stateConfig(PRUICSS_PWM_Handle handle)
 
             if((handle->pwmAttrs)[currentPwmSet][3].enable == 1 && (SystemP_SUCCESS == status))
             {
-                /*configure PWM B1 signal of intial, active, trip states*/
+                /*configure PWM B1 signal of initial, active, trip states*/
                 status = PRUICSS_PWM_actionOnOutputCfgPwmSignalB1(handle, currentPwmSet, PRUICSS_PWM_INTIAL_STATE, (handle->pwmAttrs)[currentPwmSet][3].outputCfgInitialState);
                 if(SystemP_SUCCESS == status)
                 {
@@ -1478,13 +1509,13 @@ int32_t PRUICSS_PWM_stateConfig(PRUICSS_PWM_Handle handle)
 
             if((handle->pwmAttrs)[currentPwmSet][4].enable == 1 && (SystemP_SUCCESS == status))
             {
-                /*configure PWM A2 signal of intial, active, trip states*/
+                /*configure PWM A2 signal of initial, active, trip states*/
                 status = PRUICSS_PWM_actionOnOutputCfgPwmSignalA2(handle, currentPwmSet, PRUICSS_PWM_INTIAL_STATE, (handle->pwmAttrs)[currentPwmSet][4].outputCfgInitialState);
                 if(SystemP_SUCCESS == status)
                 {
                     status = PRUICSS_PWM_actionOnOutputCfgPwmSignalA2(handle, currentPwmSet, PRUICSS_PWM_ACTIVE_STATE, (handle->pwmAttrs)[currentPwmSet][4].outputCfgActiveState);
                 }
- 
+
                 if(SystemP_SUCCESS == status)
                 {
                     status = PRUICSS_PWM_actionOnOutputCfgPwmSignalA2(handle, currentPwmSet, PRUICSS_PWM_TRIP_STATE, (handle->pwmAttrs)[currentPwmSet][4].outputCfgTripState);
@@ -1493,7 +1524,7 @@ int32_t PRUICSS_PWM_stateConfig(PRUICSS_PWM_Handle handle)
 
             if((handle->pwmAttrs)[currentPwmSet][5].enable == 1 && (SystemP_SUCCESS == status))
             {
-                /*configure PWM B2 signal of intial, active, trip states*/
+                /*configure PWM B2 signal of initial, active, trip states*/
                 status = PRUICSS_PWM_actionOnOutputCfgPwmSignalB2(handle, currentPwmSet, PRUICSS_PWM_INTIAL_STATE, (handle->pwmAttrs)[currentPwmSet][5].outputCfgInitialState);
                 if(SystemP_SUCCESS == status)
                 {
@@ -1525,7 +1556,7 @@ int32_t PRUICSS_PWM_changePwmSetToIntialState(PRUICSS_PWM_Handle handle, uint8_t
             * clear trip reset status of pwm set 0
             */
             PRUICSS_PWM_clearPwmTripResetStatus(handle, PRUICSS_PWM_SET0);
-        }    
+        }
 
         if(pwmSetMask & (1<<PRUICSS_PWM_SET1))
         {
@@ -1537,7 +1568,7 @@ int32_t PRUICSS_PWM_changePwmSetToIntialState(PRUICSS_PWM_Handle handle, uint8_t
             * clear trip reset status of pwm set 1
             */
             PRUICSS_PWM_clearPwmTripResetStatus(handle, PRUICSS_PWM_SET1);
-        }  
+        }
 
         if(pwmSetMask & (1<<PRUICSS_PWM_SET2))
         {
@@ -1549,7 +1580,7 @@ int32_t PRUICSS_PWM_changePwmSetToIntialState(PRUICSS_PWM_Handle handle, uint8_t
             * clear trip reset status of pwm set 2
             */
             PRUICSS_PWM_clearPwmTripResetStatus(handle, PRUICSS_PWM_SET2);
-        } 
+        }
 
         if(pwmSetMask & (1<<PRUICSS_PWM_SET3))
         {
@@ -1561,10 +1592,10 @@ int32_t PRUICSS_PWM_changePwmSetToIntialState(PRUICSS_PWM_Handle handle, uint8_t
             * clear trip reset status of pwm set 3
             */
             PRUICSS_PWM_clearPwmTripResetStatus(handle, PRUICSS_PWM_SET3);
-        } 
+        }
         retVal = SystemP_SUCCESS;
-    } 
-    return retVal; 
+    }
+    return retVal;
 }
 
 int32_t PRUICSS_PWM_pruIcssPwmFrequencyInit(PRUICSS_PWM_Handle handle, uint32_t pruIcssPwmFrequency)
@@ -1581,11 +1612,14 @@ int32_t PRUICSS_PWM_pruIcssPwmFrequencyInit(PRUICSS_PWM_Handle handle, uint32_t 
 int32_t PRUICSS_PWM_iepConfig(PRUICSS_PWM_Handle handle)
 {
     int32_t status = SystemP_FAILURE;
+    uint8_t  currentPwmInstance, currentPwmSet;
+    uint32_t compare0_val;
+
     if((handle!=NULL))
     {
         status = SystemP_SUCCESS;
         /* compare0_val is calculated based on pwm period */
-        uint32_t compare0_val = (float)((((handle->iepAttrs)->pruIcssIepClkFrequency *((handle->iepAttrs)->iep0IncrementValue)))/((handle->iepAttrs)->pruIcssPwmFrequency));
+        compare0_val = (float)((((handle->iepAttrs)->pruIcssIepClkFrequency *((handle->iepAttrs)->iep0IncrementValue)))/((handle->iepAttrs)->pruIcssPwmFrequency));
 
         if(((handle->iepAttrs)->enableIep0) == 1U)
         {
@@ -1594,15 +1628,27 @@ int32_t PRUICSS_PWM_iepConfig(PRUICSS_PWM_Handle handle)
             status= PRUICSS_controlIepCounter((handle->pruIcssHandle), PRUICSS_IEP_INST0, 0);
             if(SystemP_SUCCESS == status)
             {
-                /*Intialize IEP0 count value*/
-                status= PRUICSS_PWM_setIepCounterLower_32bitValue(handle, PRUICSS_IEP_INST0, 0xFFFFFFFF);
+                /*Initialize IEP0 count value*/
+                status= PRUICSS_PWM_setIepCounterLower_32bitValue(handle, PRUICSS_IEP_INST0, PRUICSS_IEP_COUNTER_LOWER_32_BIT_INIT_VALUE);
             }
 
             if(SystemP_SUCCESS == status)
             {
-                status= PRUICSS_PWM_setIepCounterUpper_32bitValue(handle, PRUICSS_IEP_INST0, 0xFFFFFFFF);
+                status= PRUICSS_PWM_setIepCounterUpper_32bitValue(handle, PRUICSS_IEP_INST0, PRUICSS_IEP_COUNTER_UPPER_32_BIT_INIT_VALUE);
             }
-            
+
+            for(currentPwmSet=PRUICSS_PWM_SET0; (currentPwmSet < PRUICSS_NUM_PWM_SETS) && (SystemP_SUCCESS == status); currentPwmSet++)
+            {
+                for(currentPwmInstance=0; (currentPwmInstance < PRUICSS_NUM_OF_PWMINSTANCES_PER_PWM_SET) && (SystemP_SUCCESS == status); currentPwmInstance++)
+                {
+                    if(((handle)->pwmAttrs[currentPwmSet][currentPwmInstance]).enable == 1)
+                    {
+                            /*configure cmp value of current pwm*/
+                            status = PRUICSS_PWM_setIepCompareEventUpper_32bitValue(handle, (handle->pwmAttrs[currentPwmSet][currentPwmInstance]).iepInstance, (handle->pwmAttrs[currentPwmSet][currentPwmInstance]).compareEvent, PRUICSS_IEP_COUNT_REG_MAX);
+                    }
+                }
+            }
+
             if(SystemP_SUCCESS == status)
             {
                 /*Enable or disable shadow mode of IEP0*/
@@ -1648,10 +1694,10 @@ int32_t PRUICSS_PWM_iepConfig(PRUICSS_PWM_Handle handle)
                 else
                 {
                     /*Configure IEP0 compare 0 event to reset on (pruicss pwm period)*/
-                    status = PRUICSS_PWM_setIepCompareEventLower_32bitValue(handle, PRUICSS_IEP_INST0, CMP_EVENT0, compare0_val);   
+                    status = PRUICSS_PWM_setIepCompareEventLower_32bitValue(handle, PRUICSS_IEP_INST0, CMP_EVENT0, compare0_val);
                 }
             }
-            
+
 
         }
 
@@ -1661,30 +1707,30 @@ int32_t PRUICSS_PWM_iepConfig(PRUICSS_PWM_Handle handle)
             status= PRUICSS_controlIepCounter((handle->pruIcssHandle), PRUICSS_IEP_INST1, 0);
             if(SystemP_SUCCESS == status)
             {
-               /*Intialize IEP1 count value*/
-                status= PRUICSS_PWM_setIepCounterLower_32bitValue(handle, PRUICSS_IEP_INST1, 0xFFFFFFFF);
+               /*Initialize IEP1 count value*/
+                status= PRUICSS_PWM_setIepCounterLower_32bitValue(handle, PRUICSS_IEP_INST1, PRUICSS_IEP_COUNTER_LOWER_32_BIT_INIT_VALUE);
             }
 
-            
+
             if(SystemP_SUCCESS == status)
             {
-                status= PRUICSS_PWM_setIepCounterUpper_32bitValue(handle, PRUICSS_IEP_INST1, 0xFFFFFFFF);
+                status= PRUICSS_PWM_setIepCounterUpper_32bitValue(handle, PRUICSS_IEP_INST1, PRUICSS_IEP_COUNTER_UPPER_32_BIT_INIT_VALUE);
             }
-            
+
             if(SystemP_SUCCESS == status)
             {
                if(((handle->iepAttrs)->enableIEP0ShadowMode) == 1)
                 {
-                    /*Configure IEP0 compare 0 event to reset on (pruicss pwm period/2) with one clock cycle delay*/
+                    /*Configure IEP1 compare 0 event to reset on (pruicss pwm period/2) with one clock cycle delay*/
                     status = PRUICSS_PWM_setIepCompareEventUpper_32bitValue(handle, PRUICSS_IEP_INST1, CMP_EVENT0, ((compare0_val/2) +1));
                 }
                 else
                 {
-                    /*Configure IEP0 compare 0 event to reset on (pruicss pwm period)*/
-                    status = PRUICSS_PWM_setIepCompareEventLower_32bitValue(handle, PRUICSS_IEP_INST1, CMP_EVENT0, compare0_val);    
+                    /*Configure IEP1 compare 0 event to reset on (pruicss pwm period)*/
+                    status = PRUICSS_PWM_setIepCompareEventLower_32bitValue(handle, PRUICSS_IEP_INST1, CMP_EVENT0, compare0_val);
                 }
             }
-            
+
             if(SystemP_SUCCESS == status)
             {
                 /*Enable or disable EPWM0 sync out to reset IEP1*/
@@ -1696,13 +1742,13 @@ int32_t PRUICSS_PWM_iepConfig(PRUICSS_PWM_Handle handle)
                 /*Enable or disable EPWM3 sync out to reset IEP1*/
                 status = PRUICSS_PWM_enableIEPResetOnEPWM3SyncOut(handle, PRUICSS_IEP_INST1, (handle->iepAttrs)->enableIep1ResetOnEpwm3_Sync);
             }
- 
+
             if(SystemP_SUCCESS == status)
             {
-               /*Enable  IEP1 slave mode*/
+               /*Enable IEP1 slave mode*/
                 status = PRUICSS_PWM_enableIEP1Slave(handle, (handle->iepAttrs)->enableIep1SlaveMode);
             }
- 
+
             if(SystemP_SUCCESS == status)
             {
                 /*Enable cmp 0 reset of IEP1 counter*/
@@ -1710,7 +1756,7 @@ int32_t PRUICSS_PWM_iepConfig(PRUICSS_PWM_Handle handle)
             }
 
             if(SystemP_SUCCESS == status)
-            {     
+            {
                 /*Enable shadow mode of IEP1*/
                 status=PRUICSS_PWM_configureIepShadowModeEnable(handle, PRUICSS_IEP_INST1, (handle->iepAttrs)->enableIEP1ShadowMode);
             }
@@ -1720,59 +1766,56 @@ int32_t PRUICSS_PWM_iepConfig(PRUICSS_PWM_Handle handle)
         {
             compare0_val = (float)((((handle->iepAttrs)->pruIcssIepClkFrequency *((handle->iepAttrs)->iep1IncrementValue)))/((handle->iepAttrs)->pruIcssPwmFrequency));
 
-            /*Disable IEP0 counter*/
+            /*Disable IEP1 counter*/
             status= PRUICSS_controlIepCounter((handle->pruIcssHandle), PRUICSS_IEP_INST1, 0);
             if(SystemP_SUCCESS == status)
             {
-               /*Intialize IEP0 count value*/
+               /*Initialize IEP1 count value*/
                 status= PRUICSS_PWM_setIepCounterLower_32bitValue(handle, PRUICSS_IEP_INST1, 0xFFFFFFFF);
             }
 
-            
+
             if(SystemP_SUCCESS == status)
             {
                 status= PRUICSS_PWM_setIepCounterUpper_32bitValue(handle, PRUICSS_IEP_INST1, 0xFFFFFFFF);
             }
-            
+
             if(SystemP_SUCCESS == status)
             {
-               /*Enable or disable EPWM0 sync out to reset IEP*/
+               /*Enable or disable EPWM0 sync out to reset IEP1*/
                 status = PRUICSS_PWM_enableIEPResetOnEPWM0SyncOut(handle, PRUICSS_IEP_INST1, (handle->iepAttrs)->enableIep1ResetOnEpwm0_Sync);
             }
-                
-            
+
+
             if(SystemP_SUCCESS == status)
             {
-                /*Enable or disable EPWM3 sync out to reset IEP*/
+                /*Enable or disable EPWM3 sync out to reset IEP1*/
                 status = PRUICSS_PWM_enableIEPResetOnEPWM3SyncOut(handle, PRUICSS_IEP_INST1, (handle->iepAttrs)->enableIep1ResetOnEpwm3_Sync);
             }
 
-  
             if(SystemP_SUCCESS == status)
             {
                 /*Enable cmp 0 reset of IEP1 counter*/
                 status = PRUICSS_PWM_configureIepCmp0ResetEnable(handle, PRUICSS_IEP_INST1, (handle->iepAttrs)->enableIep1ResetOnCompare0);
             }
 
-         
             if(SystemP_SUCCESS == status)
             {
                 /*Set IEP1 counter Increment value*/
                 status = PRUICSS_setIepCounterIncrementValue((handle->pruIcssHandle), PRUICSS_IEP_INST1, (handle->iepAttrs)->iep1IncrementValue);
             }
 
-            
             if(SystemP_SUCCESS == status)
             {
-                if(((handle->iepAttrs)->enableIEP0ShadowMode) == 1)
+                if(((handle->iepAttrs)->enableIEP1ShadowMode) == 1)
                 {
-                    /*Configure IEP0 compare 0 event to reset on (pruicss pwm period/2) with one clock cycle delay*/
+                    /*Configure IEP1 compare 0 event to reset on (pruicss pwm period/2) with one clock cycle delay*/
                     status = PRUICSS_PWM_setIepCompareEventUpper_32bitValue(handle, PRUICSS_IEP_INST1, CMP_EVENT0, ((compare0_val/2) +1));
                 }
                 else
                 {
-                    /*Configure IEP0 compare 0 event to reset on (pruicss pwm period/2) with one clock cycle delay*/
-                    status = PRUICSS_PWM_setIepCompareEventLower_32bitValue(handle, PRUICSS_IEP_INST1, CMP_EVENT0, compare0_val);   
+                    /*Configure IEP1 compare 0 event to reset on (pruicss pwm period)*/
+                    status = PRUICSS_PWM_setIepCompareEventLower_32bitValue(handle, PRUICSS_IEP_INST1, CMP_EVENT0, compare0_val);
                 }
             }
 
@@ -1782,7 +1825,7 @@ int32_t PRUICSS_PWM_iepConfig(PRUICSS_PWM_Handle handle)
                 status=PRUICSS_PWM_configureIepShadowModeEnable(handle, PRUICSS_IEP_INST1, (handle->iepAttrs)->enableIEP1ShadowMode);
             }
         }
- 
+
         if(SystemP_SUCCESS == status)
         {
             /*Enable IEP CMP flags to auto clear after state transition*/

@@ -39,8 +39,9 @@
 ;*             Defining the Clock Modes with their respective values 		    	*
 ;************************************************************************************
 
-	.include "../../../../mcu_plus_sdk/source/pru_io/firmware/common/icss_regs.inc"
-	.include "../../../../mcu_plus_sdk/source/pru_io/firmware/common/icss_cfg_regs.inc"
+	.include "pru_io/firmware/common/icss_regs.inc"
+	.include "pru_io/firmware/common/icss_cfg_regs.inc"
+	.include "pru_io/firmware/common/icss_iep_regs.inc"
 
 	.asg	R30.t24,	BISSC_CH0_RX_EN
 	.asg	R31.t27,	BISSC_CH0_RX_CLR_OVF

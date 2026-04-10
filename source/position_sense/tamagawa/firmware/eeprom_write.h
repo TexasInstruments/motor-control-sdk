@@ -71,7 +71,7 @@
 ;		pru_dmem -	Data Memory address for PRU
 ;
 ;   Worst case peak cycle usage:   750 (aprpox.)
-;   For EEPROM Write, the Control Field (CF), Address (ADF), Data (EDF) and CRC frames should be transmitted to the encoder in about 8.0 μs and 16.0 μs for 5 Mbps and 2.5 Mbps Tamagawa Encoders respectively.
+;   For EEPROM Write, the Control Field (CF), Address (ADF), Data (EDF) and CRC frames should be transmitted to the encoder in about 8.0 us and 16.0 us for 5 Mbps and 2.5 Mbps Tamagawa Encoders respectively.
 ;
 ;**************************************************************************************************************************************
 

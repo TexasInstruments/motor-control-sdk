@@ -7,6 +7,70 @@
         "resourceSubClass": [
             "example.general"
         ],
+        "description": "A Icss Sdfm Nine Channel Load Share Continuous Mode Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "icss_sdfm_nine_channel_load_share_continuous_mode",
+        "location": "../../examples/current_sense/icss_sdfm_nine_channel_load_share_continuous_mode/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "TMDS243EVM"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "current_sense",
+            "icss_sdfm_nine_channel_load_share_continuous_mode",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "description": "A Icss Sdfm Nine Channel Load Share Continuous Mode Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "icss_sdfm_nine_channel_load_share_continuous_mode",
+        "location": "../../examples/current_sense/icss_sdfm_nine_channel_load_share_continuous_mode/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "LP-AM243"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "current_sense",
+            "icss_sdfm_nine_channel_load_share_continuous_mode",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
         "description": "A Icss Sdfm Nine Channel Load Share Snoop Mode Example. CPU is R5FSS0-0 running FREERTOS.",
         "name": "icss_sdfm_nine_channel_load_share_snoop_mode",
         "location": "../../examples/current_sense/icss_sdfm_nine_channel_load_share_snoop_mode/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
@@ -71,9 +135,9 @@
         "resourceSubClass": [
             "example.general"
         ],
-        "description": "A Icss Sdfm Nine Channel With Continuous Mode Example. CPU is R5FSS0-0 running FREERTOS.",
-        "name": "icss_sdfm_nine_channel_with_continuous_mode",
-        "location": "../../examples/current_sense/icss_sdfm_nine_channel_with_continuous_mode/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "description": "A Icss Sdfm Nine Channel Single Pru Mode Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "icss_sdfm_nine_channel_single_pru_mode",
+        "location": "../../examples/current_sense/icss_sdfm_nine_channel_single_pru_mode/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "TMDS243EVM"
         ],
@@ -85,7 +149,7 @@
         ],
         "subCategories": [
             "current_sense",
-            "icss_sdfm_nine_channel_with_continuous_mode",
+            "icss_sdfm_nine_channel_single_pru_mode",
             "r5fss0-0_freertos"
         ],
         "mainCategories": [
@@ -103,9 +167,9 @@
         "resourceSubClass": [
             "example.general"
         ],
-        "description": "A Icss Sdfm Nine Channel With Continuous Mode Example. CPU is R5FSS0-0 running FREERTOS.",
-        "name": "icss_sdfm_nine_channel_with_continuous_mode",
-        "location": "../../examples/current_sense/icss_sdfm_nine_channel_with_continuous_mode/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "description": "A Icss Sdfm Nine Channel Single Pru Mode Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "icss_sdfm_nine_channel_single_pru_mode",
+        "location": "../../examples/current_sense/icss_sdfm_nine_channel_single_pru_mode/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "LP-AM243"
         ],
@@ -117,7 +181,7 @@
         ],
         "subCategories": [
             "current_sense",
-            "icss_sdfm_nine_channel_with_continuous_mode",
+            "icss_sdfm_nine_channel_single_pru_mode",
             "r5fss0-0_freertos"
         ],
         "mainCategories": [
@@ -135,9 +199,9 @@
         "resourceSubClass": [
             "example.general"
         ],
-        "description": "A Icss Sdfm Three Channel Single Pru Mode Example. CPU is R5FSS0-0 running FREERTOS.",
-        "name": "icss_sdfm_three_channel_single_pru_mode",
-        "location": "../../examples/current_sense/icss_sdfm_three_channel_single_pru_mode/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "description": "A Icss Sdfm Three Channel Single Pru Continuous Mode Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "icss_sdfm_three_channel_single_pru_continuous_mode",
+        "location": "../../examples/current_sense/icss_sdfm_three_channel_single_pru_continuous_mode/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "TMDS243EVM"
         ],
@@ -149,7 +213,7 @@
         ],
         "subCategories": [
             "current_sense",
-            "icss_sdfm_three_channel_single_pru_mode",
+            "icss_sdfm_three_channel_single_pru_continuous_mode",
             "r5fss0-0_freertos"
         ],
         "mainCategories": [
@@ -167,9 +231,9 @@
         "resourceSubClass": [
             "example.general"
         ],
-        "description": "A Icss Sdfm Three Channel Single Pru Mode Example. CPU is R5FSS0-0 running FREERTOS.",
-        "name": "icss_sdfm_three_channel_single_pru_mode",
-        "location": "../../examples/current_sense/icss_sdfm_three_channel_single_pru_mode/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "description": "A Icss Sdfm Three Channel Single Pru Continuous Mode Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "icss_sdfm_three_channel_single_pru_continuous_mode",
+        "location": "../../examples/current_sense/icss_sdfm_three_channel_single_pru_continuous_mode/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "LP-AM243"
         ],
@@ -181,7 +245,7 @@
         ],
         "subCategories": [
             "current_sense",
-            "icss_sdfm_three_channel_single_pru_mode",
+            "icss_sdfm_three_channel_single_pru_continuous_mode",
             "r5fss0-0_freertos"
         ],
         "mainCategories": [
@@ -246,70 +310,6 @@
         "subCategories": [
             "current_sense",
             "icss_sdfm_three_channel_single_pru_snoop_mode",
-            "r5fss0-0_freertos"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ]
-    },
-    {
-        "resourceType": "project.ccs",
-        "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
-        ],
-        "description": "A Icss Sdfm Three Channel With Continuous Mode Example. CPU is R5FSS0-0 running FREERTOS.",
-        "name": "icss_sdfm_three_channel_with_continuous_mode",
-        "location": "../../examples/current_sense/icss_sdfm_three_channel_with_continuous_mode/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
-        "devtools": [
-            "TMDS243EVM"
-        ],
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
-        "subCategories": [
-            "current_sense",
-            "icss_sdfm_three_channel_with_continuous_mode",
-            "r5fss0-0_freertos"
-        ],
-        "mainCategories": [
-            [
-                "Examples",
-                "Development Tools"
-            ]
-        ]
-    },
-    {
-        "resourceType": "project.ccs",
-        "resourceClass": [
-            "example"
-        ],
-        "resourceSubClass": [
-            "example.general"
-        ],
-        "description": "A Icss Sdfm Three Channel With Continuous Mode Example. CPU is R5FSS0-0 running FREERTOS.",
-        "name": "icss_sdfm_three_channel_with_continuous_mode",
-        "location": "../../examples/current_sense/icss_sdfm_three_channel_with_continuous_mode/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
-        "devtools": [
-            "LP-AM243"
-        ],
-        "kernel": [
-            "freertos"
-        ],
-        "compiler": [
-            "ticlang"
-        ],
-        "subCategories": [
-            "current_sense",
-            "icss_sdfm_three_channel_with_continuous_mode",
             "r5fss0-0_freertos"
         ],
         "mainCategories": [
@@ -688,6 +688,39 @@
         "resourceSubClass": [
             "example.general"
         ],
+        "description": "A Endat3 Diagnostic Single Channel Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "endat3_diagnostic_single_channel",
+        "location": "../../examples/position_sense/endat3_diagnostic/single_channel/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "LP-AM243"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "position_sense",
+            "endat3_diagnostic",
+            "single_channel",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
         "description": "A Hdsl Diagnostic Multi Channel Example. CPU is R5FSS0-0 running FREERTOS.",
         "name": "hdsl_diagnostic_multi_channel",
         "location": "../../examples/position_sense/hdsl_diagnostic/multi_channel/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
@@ -919,11 +952,11 @@
         "resourceSubClass": [
             "example.general"
         ],
-        "description": "A Tamagawa Diagnostic Multi Channel Example. CPU is R5FSS0-0 running FREERTOS.",
-        "name": "tamagawa_diagnostic_multi_channel",
-        "location": "../../examples/position_sense/tamagawa_diagnostic/multi_channel/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "description": "A Tamagawa Diagnostic Multi Channel Load Share Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "tamagawa_diagnostic_multi_channel_load_share",
+        "location": "../../examples/position_sense/tamagawa_diagnostic/multi_channel_load_share/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
-            "TMDS243EVM"
+            "LP-AM243"
         ],
         "kernel": [
             "freertos"
@@ -934,7 +967,7 @@
         "subCategories": [
             "position_sense",
             "tamagawa_diagnostic",
-            "multi_channel",
+            "multi_channel_load_share",
             "r5fss0-0_freertos"
         ],
         "mainCategories": [
@@ -952,9 +985,42 @@
         "resourceSubClass": [
             "example.general"
         ],
-        "description": "A Tamagawa Diagnostic Multi Channel Example. CPU is R5FSS0-0 running FREERTOS.",
-        "name": "tamagawa_diagnostic_multi_channel",
-        "location": "../../examples/position_sense/tamagawa_diagnostic/multi_channel/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "description": "A Tamagawa Diagnostic Multi Channel Single Pru Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "tamagawa_diagnostic_multi_channel_single_pru",
+        "location": "../../examples/position_sense/tamagawa_diagnostic/multi_channel_single_pru/am243x-evm/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
+        "devtools": [
+            "TMDS243EVM"
+        ],
+        "kernel": [
+            "freertos"
+        ],
+        "compiler": [
+            "ticlang"
+        ],
+        "subCategories": [
+            "position_sense",
+            "tamagawa_diagnostic",
+            "multi_channel_single_pru",
+            "r5fss0-0_freertos"
+        ],
+        "mainCategories": [
+            [
+                "Examples",
+                "Development Tools"
+            ]
+        ]
+    },
+    {
+        "resourceType": "project.ccs",
+        "resourceClass": [
+            "example"
+        ],
+        "resourceSubClass": [
+            "example.general"
+        ],
+        "description": "A Tamagawa Diagnostic Multi Channel Single Pru Example. CPU is R5FSS0-0 running FREERTOS.",
+        "name": "tamagawa_diagnostic_multi_channel_single_pru",
+        "location": "../../examples/position_sense/tamagawa_diagnostic/multi_channel_single_pru/am243x-lp/r5fss0-0_freertos/ti-arm-clang/example.projectspec",
         "devtools": [
             "LP-AM243"
         ],
@@ -967,7 +1033,7 @@
         "subCategories": [
             "position_sense",
             "tamagawa_diagnostic",
-            "multi_channel",
+            "multi_channel_single_pru",
             "r5fss0-0_freertos"
         ],
         "mainCategories": [

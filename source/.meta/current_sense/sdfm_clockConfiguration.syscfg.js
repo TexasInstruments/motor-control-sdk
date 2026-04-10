@@ -1,5 +1,5 @@
 let common   = system.getScript("/common");
- 
+
 let SDFM_ClockSource = [
 	{ name: "0", displayName: "Source is SD8_CLK common for all nine channels" },
 	{ name: "1", displayName: "Source is respective channel clock" },
@@ -13,28 +13,29 @@ for (let channel = 0; channel < 9; channel++)
 	ClockConfigs = ClockConfigs.concat
 	(
 	  [
-	    {
-         name: "Ch" + channel.toString() + "_SDCLKSEL",
-         displayName: "Channel" + channel.toString() + " SDCLK Source",
-         description: "Channel" + channel.toString() + " SDCLK Source",
-		    hidden	: true,
-         default: SDFM_ClockSource[0].name,
-         options: SDFM_ClockSource
+      {
+        name: "Ch" + channel.toString() + "_SDCLKSEL",
+        displayName: "Channel" + channel.toString() + " SDCLK Source",
+        description: "Channel" + channel.toString() + " SDCLK Source",
+        hidden: true,
+        default: SDFM_ClockSource[0].name,
+        options: SDFM_ClockSource
+      },
+      {
+        name: "Ch" + channel.toString() + "_SDFM_Clock",
+        displayName: "Channel" + channel.toString() + " SDFM Clock (Hz)",
+        description: "Channel" + channel.toString() + " SDFM Clock (Hz)",
+        hidden: true,
+        default: 20000000,
+        readOnly: true,
+      },
+      {
+        name: "Ch" + channel.toString() + "_CLKINV",
+        displayName: "Enable Channel" + channel.toString() + " Clock Inversion",
+        description: "Enable Channel" + channel.toString() + " Clock Inversion",
+        hidden: true,
+        default: false,
 	    },
-        {
-         name: "Ch" + channel.toString() + "_SDFM Clock",
-         displayName: "Channel" + channel.toString() + " SDFM Clock (Hz)",
-         description: "Channel" + channel.toString() + " SDFM Clock (Hz)",
-		    hidden	: true,
-         default: 20000000,
-        },
-        {
-         name: "Ch" + channel.toString() + "_CLKINV",
-         displayName: "Enable Channel" + channel.toString() + " Clock Inversion",
-         description: "Enable Channel" + channel.toString() + " Clock Inversion",
-		    hidden: true,
-         default: false,
-	    },  
 	  ]
 	);
 }

@@ -1,5 +1,5 @@
 
-; Copyright (C) 2021-2023 Texas Instruments Incorporated
+; Copyright (C) 2021-2026 Texas Instruments Incorporated
 ;
 ; Redistribution and use in source and binary forms, with or without
 ; modification, are permitted provided that the following conditions
@@ -36,7 +36,7 @@ FIRMWARE_VERSION_MAJOR	.set			0x1
 ;  bit3..0		minor number
 FIRMWARE_VERSION_MINOR	.set			0x1
 ICSS_FIRMWARE_RELEASE	.set            ((FIRMWARE_VERSION_MAJOR << 4) | (FIRMWARE_VERSION_MINOR << 0))
-ICSS_BUILD_VERSION	.set                0x3
+ICSS_BUILD_VERSION	.set                0x6
 
 ;number of cycles for 1 bit
     .if $isdefed("FREERUN_300_MHZ") | $isdefed("SYNC_300_MHZ")
@@ -181,8 +181,8 @@ MSG_READ .set							1
 FLAG_ACK .set							7
 LOFF .set							5
 
-
-; This interrupt is used for EVENT interrupt
+    .if $defined(SLICE1)
+; This interrupt is used for EVENT interrupt for SLICE1
 PRU_ARM_EVENT0 .set						(18 - 16) ;SYS_EVENT_18 is pr1_pru_mst_intr<2>_int_req
 PRU0_ARM_IRQ .set						(0x20 | PRU_ARM_EVENT0)
 
@@ -201,6 +201,27 @@ PRU0_ARM_IRQ4 .set						(0x20 | PRU_ARM_EVENT4)
 
 PRU_ARM_EVENT5 .set                     (16 - 16) ;SYS_EVENT_16 is pr1_pru_mst_intr<0>_int_req
 PRU0_ARM_IRQ5 .set                      (0x20 | PRU_ARM_EVENT5)
+    .else
+; This interrupt is used for EVENT interrupt for SLICE0
+PRU_ARM_EVENT0 .set						(18 + 8 - 16) ;SYS_EVENT_26 is pr1_pru_mst_intr<10>_int_req
+PRU0_ARM_IRQ .set						(0x20 | PRU_ARM_EVENT0)
+
+PRU_ARM_EVENT1 .set						(19 + 8 - 16) ;SYS_EVENT_27 is pr1_pru_mst_intr<11>_int_req
+PRU0_ARM_IRQ1 .set						(0x20 | PRU_ARM_EVENT1)
+
+PRU_ARM_EVENT2 .set						(20 + 8 - 16) ;SYS_EVENT_28 is pr1_pru_mst_intr<12>_int_req
+PRU0_ARM_IRQ2 .set						(0x20 | PRU_ARM_EVENT2)
+
+PRU_ARM_EVENT3 .set						(21 + 8 - 16) ;SYS_EVENT_29 is pr1_pru_mst_intr<13>_int_req
+PRU0_ARM_IRQ3 .set						(0x20 | PRU_ARM_EVENT3)
+
+; This interrupt is used for EVENT_S interrupt
+PRU_ARM_EVENT4 .set						(22 + 8 - 16) ;SYS_EVENT_30 is pr1_pru_mst_intr<14>_int_req
+PRU0_ARM_IRQ4 .set						(0x20 | PRU_ARM_EVENT4)
+
+PRU_ARM_EVENT5 .set                     (16 + 8 - 16) ;SYS_EVENT_24 is pr1_pru_mst_intr<8>_int_req
+PRU0_ARM_IRQ5 .set                      (0x20 | PRU_ARM_EVENT5)
+    .endif
 ;constants for event_h/l (event_h is saved in low part of register when read from memory!)
 ;event_h
 EVENT_INT .set							7
@@ -320,3 +341,6 @@ MAX_ALLOWED_CYCLE_DIFF .set             10000
 
 ;MAX cycle differene allowed between the SYNC pulse and extra edge
 CAPPING_CYCLE_DIFF .set             18
+
+;4 bit pru cycles for 225m f/w
+PRU_CYCLES_4BITS .set               96; 24cycles/bit * 4 bits

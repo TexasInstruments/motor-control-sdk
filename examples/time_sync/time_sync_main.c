@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2025 Texas Instruments Incorporated
+ *  Copyright (C) 2025-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -46,8 +46,9 @@
 
 const uint8_t gIepIncrementValue = 5;
 
-/** \brief Global Structure pointer holding PRUSS1 memory Map. */
+/** \brief Global handle for PRUICSS0 instance */
 PRUICSS_Handle gPruIcss0Handle;
+/** \brief Global handle for PRUICSS1 instance */
 PRUICSS_Handle gPruIcss1Handle;
 
 static TCA6424_Config  gTCA6424_Config;
@@ -77,7 +78,7 @@ TimesyncDebug timesyncDebug1;
 #define TIMESYNC_EVENT_ROUTER_OUT12_OFFSET     (12U * TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U)
 #define TIMESYNC_EVENT_ROUTER_OUT8_OFFSET      (8U * TIMESYNC_EVENT_ROUTER_REG_SIZE + 4U)
 #define TIMESYNC_EVENT_ROUTER_IN25_TO_OUT12    (0x00010019U)  /* PRU_ICSSG0_PR1_EDC0_SYNC0_OUT_0 to PRG1_IEP0_LATCH_IN0 */
-#define TIMESYNC_EVENT_ROUTER_IN4_TO_OUT8      (0x00010004U)  /* PINFUCTION_PRG0_IEP0_LATCH_IN0 to PRG0_IEP0_LATCH_IN0 */
+#define TIMESYNC_EVENT_ROUTER_IN4_TO_OUT8      (0x00010004U)  /* PINFUNCTION_PRG0_IEP0_LATCH_IN0 to PRG0_IEP0_LATCH_IN0 */
 
 /* IEP configuration values */
 #define IEP_SYNC_PULSE_WIDTH                   (200U)
@@ -128,7 +129,7 @@ void pru_icss_with_time_sync_main(void *args)
 {
     Drivers_open();
 
-    int status;
+    int32_t status;
     status = Board_driversOpen();
     DebugP_assert(SystemP_SUCCESS == status);
 
@@ -164,7 +165,7 @@ void pru_icss_with_time_sync_main(void *args)
 
 #ifdef TIME_RECEIVER
     /*TIME SYNC router configuration */
-    /*Connect TIMESYNC_INTRTR0_IN4(PINFUCTION_PRG0_IEP0_LATCH_IN0) to TIMESYNC_INTRTR0_OUT8 (PRG0_IEP0_LATCH_IN0)*/
+    /*Connect TIMESYNC_INTRTR0_IN4(PINFUNCTION_PRG0_IEP0_LATCH_IN0) to TIMESYNC_INTRTR0_OUT8 (PRG0_IEP0_LATCH_IN0)*/
     HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + TIMESYNC_EVENT_ROUTER_OUT8_OFFSET), TIMESYNC_EVENT_ROUTER_IN4_TO_OUT8);
     timesyncHandle0 = timesync_init(&timesyncParams0, IEP_REG_ADDR(gPruIcss0Handle, 0));
     timesyncHandle0->iepIncrementValue = gIepIncrementValue;

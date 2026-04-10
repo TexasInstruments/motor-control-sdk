@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2025 Texas Instruments Incorporated
+ *  Copyright (C) 2025-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -161,6 +161,7 @@ void updatePruIcssPwmParamsInDmem(float dutycycle)
     uint32_t axesPhaseShiftValue = PHASE_SHIFT_BETWEEN_AXES;
     uint8_t iepIncrementValue = IEP_INCREMENT_VALUE;
     uint32_t pruIcssPwmPeriodby2 = (((float)(pruIcssIepClkFrequency * iepIncrementValue) / (pruIcssPwmFrequency))/2);
+    uint8_t i;
 
     /*Below parameter configures initial value of scheduler used to update compare values of axis 0*/
     gPruIcssPwmParams->SchedulerIntialValue = pruIcssPwmPeriodby2;
@@ -172,7 +173,7 @@ void updatePruIcssPwmParamsInDmem(float dutycycle)
     gPruIcssPwmParams->axis2_0_increment_value  = (gPruIcssPwmParams->SchedulerIntialValue) - (gPruIcssPwmParams->axis0_1_increment_value + gPruIcssPwmParams->axis1_2_increment_value );
 
     /* NOTE : Compare Increment and decrement values are updated once every PWM period in PRU Firmware*/
-    for(uint8_t i = 0; i < NUMBER_OF_AXES; i++)
+    for(i = 0; i < NUMBER_OF_AXES; i++)
     {
         /*Initialize duty cycles of all PWM channels*/
 
@@ -328,9 +329,10 @@ void configureIntialAndTripStates(void *args)
  */
 void pru_icss_with_phase_shift_main(void *args)
 {
+    int32_t status;
+
     Drivers_open();
 
-    int status;
     status = Board_driversOpen();
     DebugP_assert(SystemP_SUCCESS == status);
 
@@ -367,7 +369,7 @@ void pru_icss_with_phase_shift_main(void *args)
     ClockP_usleep(500);
     DebugP_log("PRUICSS PWM firmware version \t: %x.%x.%x (%s)\n\n", ((PRU0_G0_Firmware_0[0])>> 24) & 0x7F,
                 ((PRU0_G0_Firmware_0[0]) >> 16) & 0xFF, (PRU0_G0_Firmware_0[0]) & 0xFFFF, (PRU0_G0_Firmware_0[0]) & (1 << 31) ? "internal" : "release");
-    
+
     /*PWM SET 0 -> byte_0[0:5]
         *byte_0 -> bit 0 -> pwm0(PWM0_0_POS)
         *byte_0 -> bit 1 -> pwm1(PWM0_0_NEG)
@@ -394,7 +396,7 @@ void pru_icss_with_phase_shift_main(void *args)
         {
             /* Increment the timeout counter */
             timeoutCount++;
-            
+
             /* Check for timeout */
             if (timeoutCount >= timeoutThreshold)
             {
@@ -422,18 +424,18 @@ void pru_icss_with_phase_shift_main(void *args)
         updatePruIcssPwmParamsInDmem(75);
         /* Generate PWM signals for 500usecs with 75% duty cycle*/
         ClockP_usleep(500);
-        /* Fix PRGx_PWMy_Az and PRGx_PWMy_Bz to ~(initial_state), this can be altered to 
-         * to Fix PRGx_PWMy_Az to and PRGx_PWMy_Bz to initial_state by changing 
+        /* Fix PRGx_PWMy_Az and PRGx_PWMy_Bz to ~(initial_state), this can be altered to
+         * to Fix PRGx_PWMy_Az to and PRGx_PWMy_Bz to initial_state by changing
          * FIX_PRGX_PWMY_AZ_PRGX_PWMY_BZ_TO_INITIAL_STATE_COMPLIMENT to 0 in PRU firmware
-         * and rebuilding PRU project 
+         * and rebuilding PRU project
          */
-        /* when FIX_PRGX_PWMY_AZ_PRGX_PWMY_BZ_TO_INITIAL_STATE_COMPLIMENT is set to 1, generating or stopping of 
-         * PWM signal is decided while configuring second compare event and AXIS_X_SKIP_CMP_UP_AND_DOWN_INIT_VAL 
+        /* when FIX_PRGX_PWMY_AZ_PRGX_PWMY_BZ_TO_INITIAL_STATE_COMPLIMENT is set to 1, generating or stopping of
+         * PWM signal is decided while configuring second compare event and AXIS_X_SKIP_CMP_UP_AND_DOWN_INIT_VAL
          * can be used to generate or stop PWM signal initially
-         * 
-         * when FIX_PRGX_PWMY_AZ_PRGX_PWMY_BZ_TO_INITIAL_STATE_COMPLIMENT is set to 0, generating or stopping of 
+         *
+         * when FIX_PRGX_PWMY_AZ_PRGX_PWMY_BZ_TO_INITIAL_STATE_COMPLIMENT is set to 0, generating or stopping of
          * PWM signal is decided while configuring first compare event and AXIS_X_SKIP_CMP_UP_AND_DOWN_INIT_VAL
-         * parameter configuration will be redundant 
+         * parameter configuration will be redundant
         */
         gPruIcssPwmParams->stop_axis_x_pwm_y_signals = 0x003F3F3F;
         /* Stop for 500usec*/

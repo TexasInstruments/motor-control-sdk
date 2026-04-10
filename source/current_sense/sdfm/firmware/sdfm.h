@@ -1,7 +1,7 @@
 ;
 ; sdfm.h
 ;
-; Copyright (c) 2023, Texas Instruments Incorporated
+; Copyright (c) 2023-25, Texas Instruments Incorporated
 ; All rights reserved.
 ;
 ;  Redistribution and use in source and binary forms, with or without
@@ -36,80 +36,60 @@
 __sdfm_h    .set    1
 
 ;
-; Substitution symbols
-;
-        .asg    C0, CT_PRU_ICSSG_INTC           ; Constant Table, PRU_ICSSG INTC
-        .asg    C1, CT_PRU_ICSSG_IEP1           ; Constant Table, PRU_ICSSG IEP1
-        .asg    C3, CT_PRU_ICSSG_ECAP           ; Constant Table, PRU_ICSSG ECAP0
-        .asg    C4, CT_PRU_ICSSG_CFG            ; Constant Table, PRU_ICSSG CFG
-        .asg    C8, CT_PRU_ICSSG_IEP0_0x100     ; Constant Table, PRU_ICSSG IEP0_0x100
-        .asg    C10, CT_PRU_ICSSG_TM            ; Constant Table, PRU_ICSSG TM
-        .asg    C11, CT_PRU_ICSSG_CTRL          ; Constant Table, PRU Control
-        .asg    C24, CT_PRU_ICSSG_LOC_DMEM      ; Constant Table, local PRU DMEM
-        .asg    C26, CT_PRU_ICSSG_IEP0          ; Constant Table, PRU_ICSSG IEP0
-	    .asg	CT_PRU_ICSSG_LOC_DMEM,		PRUx_DMEM  ;DMEM base address
+; define symbols
+; Free registers: R24.b1-b3
+    .asg    C4, CT_PRU_ICSSG_CFG            ; Constant Table, PRU_ICSSG CFG
+    .asg    C10, CT_PRU_ICSSG_TM            ; Constant Table, PRU_ICSSG TM
+       
+    ; Temporary registers
+    .asg    R1, TEMP_REG0                       ; temporary register 0
+    .asg    R2, TEMP_REG1                       ; temporary register 1
+    .asg    R3, TEMP_REG2                       ; temporary register 2
+    .asg    R4, TEMP_REG3                       ; temporary register 3
 
-        .asg    R1, TEMP_REG0                       ; temporary register 0
-        .asg    R2, TEMP_REG1                       ; temporary register 1
-        .asg    R3, TEMP_REG2                       ; temporary register 2
-        .asg    R4, TEMP_REG3                       ; temporary register 3
+    ; Data registers
+    .asg    R5, DN0                             ; SD integrator 3 (ACC3) output
+    .asg    R6, CN3                             ; SDFM differentiator 1 output
+    .asg    R7, CN4                             ; SDFM differentiator 2 output
+    .asg    R8, CN5                             ; SDFM differentiator 3 output
+    .asg    R9, ACC3_DN1_CH0                    ; Ch X (0...8), differentiator 1 state
+    .asg    R10, ACC3_DN3_CH0                   ; Ch X (0...8), differentiator 2 state
+    .asg    R11, ACC3_DN5_CH0                   ; Ch X (0...8), differentiator 3 state
+    .asg    R12, ACC3_DN1_CH1                   ; CH Y (0...8), differentiator 1 state
+    .asg    R13, ACC3_DN3_CH1                   ; CH Y (0...8), differentiator 2 state
+    .asg    R14, ACC3_DN5_CH1                   ; CH Y (0...8), differentiator 3 state
+    .asg    R15, ACC3_DN1_CH2                   ; CH Z (0...8), differentiator 1 state
+    .asg    R16, ACC3_DN3_CH2                   ; CH Z (0...8), differentiator 2 state
+    .asg    R17, ACC3_DN5_CH2                   ; CH Z (0...8), differentiator 3 state
 
-        .asg    R23, SDFM_CFG_BASE_PTR_REG      ; SDFM CFG FW registers base pointer register
-        .asg    R24, SD_HW_BASE_PTR_REG         ; SD hardware base pointer register
-        .asg    R25.w0, RET_ADDR_REG            ; function return register
+    ; Configuration registers
+    .asg    R19, OC_HIGH_THR                    ; SD OC High threshold
+    .asg    R20, OUT_SAMP_BUF_REG               ; address of local interleaved NC output sample buffer
+    .asg    R21, MASK_REG                       ; integrator & differentiator output mask
 
-        .asg    R5, DN0                         ; SD integrator 3 (ACC3) output
-        .asg    R6, CN3                         ; SDFM differentiator 1 output
-        .asg    R7, CN4                         ; SDFM differentiator 2 output
-        .asg    R8, CN5                         ; SDFM differentiator 3 output
-        .asg    R21, MASK_REG                    ; integrator & differentiator output mask
+    ; Multi-part registers
+    .asg    R22.b0, NC_SAMPLE_COUNT             ; min no. of continuous sample for sin filter
+    .asg    R22.b1, EN_NC_TRIGGER_MODE          ; Enable continuous NC mode
+    .asg    R22.w2, NC_SAMPLE_DONE              ; Enable Snoop mode
 
-        .asg    R26.w0, COMPARATOR_EN           ; SD comparator enable for different channels
-        .asg    R26.b2, ZERO_CROSS_EN           ; SD Zero Crossing enable for different channels
-        .asg    R26.b3, NC_SINC_FILTER_TYPE             ; SINC filter type for NC 
-        .asg    R19, OC_HIGH_THR              ; SD OC High threshold
-        .asg    R27, OC_LOW_THR              ; SD OC Low threshold
+    .asg    R23.w0, CURRENT_ACTIVE_CHANNEL      ; Current active channel being processed
+    .asg    R23.w2, NC_SINC_FILTER_TYPE         ; SINC filter type for NC
+    .asg    R24.b0, EN_DOUBLE_UPDATE            ; Enable double update mode
 
+    .asg    R25.w0, RET_ADDR_REG                ; function return register
 
-        .asg    R29, GPIO_TGL_ADDR              ; Address to write to for the GPIO toggle
+    .asg    R26.w0, COMPARATOR_EN               ; SD comparator enable for different channels
+    .asg    R26.b2, ZERO_CROSS_EN               ; SD Zero Crossing enable for different channels
+    .asg    R26.b3, CURRENT_LOOP_COUNT          ; Current loop count for sampling
 
-        .asg    R9, ACC3_DN1_CH0                ; Ch X (0...8), differentiator 1 state
-        .asg    R10, ACC3_DN3_CH0               ; Ch X (0...8), differentiator 2 state
-        .asg    R11, ACC3_DN5_CH0               ; Ch X (0...8), differentiator 3 state
-        .asg    R12, ACC3_DN1_CH1               ; CH Y (0...8), differentiator 1 state
-        .asg    R13, ACC3_DN3_CH1               ; CH Y (0...8), differentiator 2 state
-        .asg    R14, ACC3_DN5_CH1               ; CH Y (0...8), differentiator 3 state
-        .asg    R15, ACC3_DN1_CH2               ; CH Z (0...8), differentiator 1 state
-        .asg    R16, ACC3_DN3_CH2               ; CH Z (0...8), differentiator 2 state
-        .asg    R17, ACC3_DN5_CH2               ; CH Z (0...8), differentiator 3 state
+    .asg    R27, OC_LOW_THR                     ; SD OC Low threshold
 
-        .asg    R22.b0, SD_CH0_ID                ; SD channel0 ID
-        .asg    R22.b1, SD_CH1_ID                ; SD Channel1 ID
-        .asg    R22.b2, SD_CH2_ID                ; SD Channel2 ID  
-        .asg    R22.b3, NC_SAMPLE_COUNT          ; min no. of continuous sample for sin filter
-        .asg    R20, OUT_SAMP_BUF_REG            ; address of local interleaved NC output sample buffer
+    .asg    R28.b0, SAMP_CNT_REG                ; NC sample count
+    .asg    R28.b1, SAMP_NAME                   ; First/second sample number
+    .asg    R28.w2, SD_CHANNEL_MASK             ; NC channel mask (bits 0-8 for channels 0-8)
 
-        .asg    R28.b0,  SAMP_CNT_REG             ; NC sample count
-        .asg    R28.b1,  SAMP_NAME                ; First/second sample number
-        .asg    R28.b2,  NC_CHANNEL_MASK          ; NC channel mask 
-        .asg    R28.b3,  EN_DOUBLE_UPDATE
+    .asg    R29, GPIO_TGL_ADDR                  ; Address to write to for the GPIO toggle
 
-;Fast detect registers(using only in SDFM init)
-
-        .asg R19.b0,  FAST_TZ_OUT_REG
-        .asg R19.b1,  FAST_WINDOW_REG
-        .asg R19.b2,  FAST_ONE_MAX_REG
-        .asg R19.b3,  FAST_ONE_MIN_REG
-        .asg R27.b0,  FAST_ZERO_MAX_REG
-        .asg R27.b1,  FAST_ZERO_MIN_REG
-
-
-;
-; Symbolic constants for ICSSG/PRU HW
-;
-
-; DMEM
-PRUx_DSELF_BASE                 .set (0x00000000)   ;  Own Data RAM (8kB)
 
 ; SPAD Bank IDs for Xfer instructions
 ;
@@ -117,37 +97,6 @@ BANK0                           .set 10
 BANK1                           .set 11
 BANK2                           .set 12
 BANK3                           .set 13
-
-; PRU_ICSSG_INTC events
-;
-SYS_EVT_IEP_TIM_CAP_CMP_PEND    .set 7              ; IEP0 tim_cap_cmp_pend
-
-; PRU_ICSSG_INTC
-;
-ICSSG_INTC_HIPIR1               .set 0x0904             ; Host Int 1 Prioritized Interrupt Register
-ICSSG_INTC_HIPIR                .set ICSSG_INTC_HIPIR1  ; using Host Interrupt 1
-ICSSG_INTC_SICR                 .set 0x0024             ; Sys Interrupt Indexed Deassert
-NONE_HINT_BIT                   .set 31                 ; ICSSG_PRI_HINT_REG:NONE_HINT_0 bit number
-
-; PRU_ICSSG_PRU_CTRL
-;
-ICSSG_CNTLSELF_BASE             .set 0
-PRUx_CNTL_CONST_IDX0_OFFSET     .set 0x0020         ;  Constant Table Block Index Reg 0
-PRUx_CNTLSELF_CONST_IDX0_REG    .set (ICSSG_CNTLSELF_BASE + PRUx_CNTL_CONST_IDX0_OFFSET)
-
-
-; ICSSG_PRU_CTBIR0:C24_BLK_INDEX, PRU Constant Entry C24 Block Index
-C24_BLK_INDEX_FW_REGS_VAL       .set 0
-C24_BLK_INDEX_OUT_SAMP_BUF_VAL  .set 8
-
-; PRU_ICSSG_CFG
-;
-PRUx_CFG_BASE                   .set (0x00026000)
-ICSSG_CFG_GPCFG0                .set 0x0008 ;  GP IO Configuration Register 0
-ICSSG_CFG_GPCFG1                .set 0x000C ;  GP IO Configuration Register 1
-ICSSG_CFG_SPPC                  .set 0x0034 ;  Scratch PAD priority and config
-ICSSG_CFG_PRU0_SD0_CLK          .set 0x48
-ICSSG_CFG_PRU1_SD0_CLK          .set 0x94
 
     .if $isdefed("SDFM_LOAD_SHARE_MODE")
     .if $isdefed("SDFM_RTU_CORE")
@@ -162,112 +111,20 @@ ICSSG_CFG_PWMx                   .set 0x130 ; PWM0 configuration register offset
     .endif ;SDFM_LOAD_SHARE_MODE
 
 
-;
-; ICSSG_GPCFGn_REG:PR1_PRUn_GP_MUX_SEL, Controls the icss_wrap mux sel
-;   n: {0,1}, PRU ID
-PR1_PRUn_GP_MUX_SEL_SHIFT       .set 26
-PR1_PRUn_GP_MUX_SEL_MASK        .set 0xF
-PR1_PRUn_GP_MUX_SEL_VAL         .set 0011b
-
-; ICSSG_SPP_REG:XFR_SHIFT_EN, Shift enable using R0[4:0] to define the number of 32-bit offset for XIN and XOUT operations
-XFR_SHIFT_EN_BN                 .set 1
-RTU_XFR_SHIFT_EN                .set 3
-
-; ICSSG_PRUn_SD_CLK_SEL_REGi
-;   n: {0,1}, PRU ID
-;   i: {0...8}, SD Channel Number
-; ICSSG_PRUn_SD_CLK_SEL_REGi:PRUn_SD_CLK_SELi, Selects the clock source
-PRUn_SD_CLK_SELi_SHIFT          .set 0
-PRUn_SD_CLK_SELi_MASK           .set 11b
-PRUn_SD_CLK_SELi_VAL            .set 00b
-; ICSSG_PRUn_SD_CLK_SEL_REGi:PRUn_SD_CLK_INVi, Optional clock inversion post clock selection mux
-PRUn_SD_CLK_INVi_SHIFT          .set 2
-PRUn_SD_CLK_INVi_MASK           .set 1b
-; ICSSG_PRUn_SD_CLK_SEL_REGi:PRUn_SD_ACC_SELi, Selects to ACC source
-PRUn_SD_ACC_SELi_SHIFT          .set 4
-PRUn_SD_ACC_SELi_MASK           .set 11b
-PRUn_SD_ACC_SELi_VAL            .set 00b
-; ICSSG_PRUn_SD_CLK_SEL_REGi:PRUn_FD_ZERO_MIN_LIMIT_i
-PRUn_FD_ZERO_MIN_LIMIT_i_SHIFT  .set 11
-PRUn_FD_ZERO_MIN_LIMIT_i_MASK   .set 0x1F
-; ICSSG_PRUn_SD_CLK_SEL_REGi:PRUn_FD_ZERO_MAX_LIMIT_i
-PRUn_FD_ZERO_MAX_LIMIT_i_SHIFT  .set 17
-PRUn_FD_ZERO_MAX_LIMIT_i_MASK   .set 0x1F
-
-;MACRO FOR TASK MANAGER
-CMP4_EVENT_NUMBER        .set  20
-CMP_EVENT_BIT_SHIFT          .set  8
-CMP7_EVENT_NUMBER        .set  23
-CMP8_EVENT_NUMBER        .set  24
-
-
-
-; ICSSG_PRUn_SD_SAMPLE_SIZE_REGi
-;   n: {0,1}, PRU ID
-;   i: {0...8}, SD Channel Number
-; ICSSG_PRUn_SD_SAMPLE_SIZE_REGi:PRUn_SD_SAMPLE_SIZEi, Over Sample Rate
-PRUn_SD_SAMPLE_SIZEi_SHIFT      .set 0
-PRUn_SD_SAMPLE_SIZEi_MASK       .set 0xFF
-; ICSSG_PRUn_SD_SAMPLE_SIZE_REGi:PRUn_FD_WINDOW_SIZE_i
-PRUn_FD_WINDOW_SIZE_i_SHIFT     .set 8
-PRUn_FD_WINDOW_SIZE_i_MASK      .set 111b
-; ICSSG_PRUn_SD_SAMPLE_SIZE_REGi:PRUn_FD_ONE_MIN_LIMIT_i
-PRUn_FD_ONE_MIN_LIMIT_i_SHIFT   .set 11
-PRUn_FD_ONE_MIN_LIMIT_i_MASK    .set 0x1F
-; ICSSG_PRUn_SD_SAMPLE_SIZE_REGi:PRUn_FD_ONE_MAX_LIMIT_i
-PRUn_FD_ONE_MAX_LIMIT_i_SHIFT   .set 17
-PRUn_FD_ONE_MAX_LIMIT_i_MASK    .set 0x1F
-; ICSSG_PRUn_SD_SAMPLE_SIZE_REGi:PRUn_FD_EN_i
-PRUn_FD_EN_i_BN                 .set 23
-
-; PRU_ICSSG_IEP
-;
-ICSSG_IEP_GLOBAL_CFG_REG        .set 0x0000 ; Global Configuration Register
-ICSSG_IEP_COUNT_REG0            .set 0x0010 ; 64-bit Count Value Low Register
-ICSSG_IEP_COUNT_REG1            .set 0x0014 ; 64-bit Count Value High Register
-ICSSG_IEP_CMP_CFG_REG           .set 0x0070 ; Compare Configuration Register
-ICSSG_IEP_CMP_STATUS_REG        .set 0x0074 ; Compare Status Register
-ICSSG_IEP_CMP0_REG0             .set 0x0078 ; Compare 0 Low Register
-ICSSG_IEP_CMP0_REG1             .set 0x007C ; Compare 0 High Register
-ICSSG_IEP_CMP1_REG0             .set 0x0080 ; Compare 1 Low Register
-ICSSG_IEP_CMP1_REG1             .set 0x0084 ; Compare 1 High Register
-ICSSG_IEP_CMP2_REG0             .set 0x0088 ; Compare 2 Low Register
-ICSSG_IEP_CMP2_REG1             .set 0x008C ; Compare 2 High Register
-ICSSG_IEP_CMP3_REG0             .set 0x0090 ; Compare 3 Low Register
-ICSSG_IEP_CMP3_REG1             .set 0x0094 ; Compare 3 High Register
-ICSSG_IEP_CMP4_REG0             .set 0x0098 ; compare 4 low Register
-ICSSG_IEP_CMP4_REG1             .set 0x009C ; compare 4 High Register
-ICSSG_IEP_CMP7_REG0             .set 0x00B0 ; compare 7 low Register
-ICSSG_IEP_CMP7_REG1             .set 0x00B4 ; compare 7 High Register
-ICSSG_IEP_CMP8_REG0             .set 0x00C0 ; compare 4 low Register
-ICSSG_IEP_CMP8_REG1             .set 0x00C4 ; compare 4 High Register
-ICSSG_IEP_PWM_REG               .set 0x0008 ; PWM Sync Out Register, offset from 0x100
-; ICSSG_IEP_GLOBAL_CFG_REG:CNT_ENABLE_BN
-CNT_ENABLE_BN                   .set 0
-; ICSSG_IEP_GLOBAL_CFG_REG:DEFAULT_INC
-DEFAULT_INC_BN                  .set 4
-; ICSSG_IEP_CMP_STATUS_REG:CMP_STATUS
-CMP_STATUS_CMP1_BN              .set 1
-
 ; PRU_ICSSG Tasks Manager
 ;
-TM_CFG_PRU0_BASE                .set 0x0002A000
-TM_CFG_RTU0_BASE                .set 0x0002A100
-TM_CFG_PRU1_BASE                .set 0x0002A200
-TM_CFG_RTU1_BASE                .set 0x0002A300
-TM_CFG_TX_PRU0_BASE             .set 0x0002A400
-TM_CFG_TX_PRU1_BASE             .set 0x0002A500
 TASKS_MGR_TS1_PC_S0             .set 0x08
 TASKS_MGR_TS1_PC_S1             .set 0x0C
 TASKS_MGR_TS1_GEN_CFG1          .set 0x38
+CMP_EVENT_BIT_SHIFT             .set 8
+IEP_DEFAULT_INC                 .set 1
+TASK_IEP0_STARTING_EVT          .set 16
+TASK_IEP1_STARTING_EVT          .set 40
 
-;MASK for phase delay
+;Mask for phase delay
 SDFM_11_MASK                    .set  0x00010002
 SDFM_01_MASK                    .set  0x00000002
 TM_YIELD_XID                    .set 252
-
-;IEP_CFG
-IEP_DEFAULT_INC                 .set 0x1
 
 ;SD_CH_ID
     .if $isdefed("SDFM_LOAD_SHARE_MODE")
@@ -290,6 +147,26 @@ SD_CH2                       .set 1000b
 SD_CH0                       .set 0000b
 SD_CH1                       .set 0001b
 SD_CH2                       .set 0010b 
+SD_CH3                       .set 0011b
+SD_CH4                       .set 0100b
+SD_CH5                       .set 0101b
+SD_CH6                       .set 0110b
+SD_CH7                       .set 0111b
+SD_CH8                       .set 1000b
    .endif
+
+; IEP Base Addresses
+PRU_ICSS_IEP1_BASE              .set PRUx_IEP0_BASE + 0x1000
+
+; SPAD Bank for SD Ch context storage
+BANK_CTXT_NC                    .set BANK0
+BANK_SINGLE_PRU_DIFF_STATE      .set BANK1
+
+; Differentiator state located in BANK locations 9-17
+NUM_REGS_DIFF_STATE             .set 9      ; Number of PRU registers for differentiator state
+OUT_SAMP_MASK                   .set 0x0FFFFFFF ; 28-bit mask applied to Integrator & Differentiator output
+
+; Required sample for stable NC sample = NC_SAMP_CNT - 1
+NC_SAMP_CNT                     .set 4
 
    .endif  ; __sdfm_h

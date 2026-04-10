@@ -1,5 +1,5 @@
 
-; Copyright (C) 2021-2023 Texas Instruments Incorporated
+; Copyright (C) 2021-2026 Texas Instruments Incorporated
 ;
 ; Redistribution and use in source and binary forms, with or without
 ; modification, are permitted provided that the following conditions
@@ -509,9 +509,10 @@ demap_data_symbols:
 	.sect ".text"
 
 ;----------------------------------------------------
-;transport_layer_recv_msg
-;Handles Hiperface DSL messages receiving
-;?? cycles
+;Function: transport_layer_recv_msg
+;Description: Receives and processes transport layer messages
+; This function handles RX message processing with TX timing maintained
+; via two push operations at the start
 ;input:
 ;output:
 ;modifies:
@@ -624,7 +625,7 @@ transport_layer_check_for_new_msg:
 	or		REG_TMP0.b0, REG_TMP0.b0, REG_TMP0.b1
 	and		REG_TMP0.b0, REG_TMP0.b0, 0x0f
 	or		REG_TMP11.b3, REG_TMP11.b3, REG_TMP0.b0
-	.if $defined("HDSL_MULTICHANNEL")
+	.if $defined("FREERUN_300_MHZ")
 	CALL2 WAIT_TX_FIFO_FREE
 	CALL3 PUSH_FIFO_3_8x
 	.endif
@@ -846,6 +847,7 @@ transport_layer_resend_msg_read:
 transport_layer_resend_msg_end:
 transport_layer_recv_msg_end:
 	jmp		transport_layer_recv_msg_done
+
 ;----------------------------------------------------
 ;transport_layer_send_msg
 ;Handles Hiperface DSL messages sending
@@ -858,7 +860,15 @@ transport_layer_recv_msg_end:
 transport_layer_send_msg:
 ;TODO: reduce cycles
 ; Skip message processing until one v-frame is complete
-	qbbc			transport_layer_send_msg_end, H_FRAME.flags, FLAG_NORMAL_FLOW
+	qbbs	no_send_msg_end		, H_FRAME.flags, FLAG_NORMAL_FLOW
+	.if !$defined("HDSL_MULTICHANNEL")
+	.if $defined("EXT_SYNC_ENABLE")
+	CALL3 PUSH_FIFO_2B_8x  ; PUSH 1 for SYS_CTRL reset path
+	CALL3 PUSH_FIFO_2B_8x  ; PUSH 2 for SYS_CTRL reset path
+	.endif
+	.endif
+	qba transport_layer_send_msg_end
+no_send_msg_end:
 	ldi		SEND_PARA, M_PAR_IDLE
 ;check if we discard any messages and reset parameter channel
 	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, SYS_CTRL, 1
@@ -870,6 +880,12 @@ transport_layer_send_msg:
 	ldi		SEND_PARA, M_PAR_INIT
 	zero		&SHORT_MSG, (6)
 	clr		H_FRAME.flags, H_FRAME.flags, FLAG_PARA_BUSY
+	.if !$defined("HDSL_MULTICHANNEL")
+	.if $defined("EXT_SYNC_ENABLE")
+	CALL3 PUSH_FIFO_2B_8x  ; PUSH 1 for SYS_CTRL reset path
+	CALL3 PUSH_FIFO_2B_8x  ; PUSH 2 for SYS_CTRL reset path
+	.endif
+	.endif
 	qba		transport_layer_send_msg_end
 transport_layer_send_msg_no_reset_sys_ctrl:
 ;check if we discard any messages and reset parameter channel
@@ -882,10 +898,19 @@ transport_layer_send_msg_no_reset_sys_ctrl:
 	ldi		SEND_PARA, M_PAR_INIT
 	zero		&SHORT_MSG, (6)
 	clr		H_FRAME.flags, H_FRAME.flags, FLAG_PARA_BUSY
+	.if !$defined("HDSL_MULTICHANNEL")
+	.if $defined("EXT_SYNC_ENABLE")
+	CALL3 PUSH_FIFO_2B_8x  ; PUSH 1 for SAFE_CTRL reset path
+	CALL3 PUSH_FIFO_2B_8x  ; PUSH 2 for SAFE_CTRL reset path
+	.endif
+	.endif
 	qba		transport_layer_send_msg_end
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; PART 1 Peak cycles: ~40 cycles
+
 transport_layer_send_msg_no_reset_safe_ctrl:
 ;do not send new message if we are not finished with message
-
 	qbbc		transport_layer_check_for_new_short_msg, H_FRAME.flags, FLAG_PARA_BUSY
 	sub		SHORT_MSG.bits_left, SHORT_MSG.bits_left, 4
 
@@ -901,6 +926,12 @@ transport_layer_send_msg_no_reset_safe_ctrl:
 ;set long msg channel to unbusy
 	clr		H_FRAME.flags, H_FRAME.flags, FLAG_PARA_BUSY
 transport_layer_send_not_last_nibble:
+	.if !$defined("HDSL_MULTICHANNEL")
+	.if $defined("EXT_SYNC_ENABLE")
+	CALL3 PUSH_FIFO_2B_8x  ; PUSH 1 for message busy path
+	CALL3 PUSH_FIFO_2B_8x  ; PUSH 2 for message busy path
+	.endif
+	.endif
 	qba		transport_layer_send_msg_end
 transport_layer_send_dont_send_crc:
 ;are we sending short or long message?
@@ -924,6 +955,10 @@ transport_layer_send_sending_short_msg:
 	lsr		SEND_PARA, SHORT_MSG32, SHORT_MSG.bits_left
 ;no special char -> only 4 bits
 	and		SEND_PARA, SEND_PARA, 0x0f
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; PART 2 Peak cycles: ~47 cycles
+
 transport_layer_send_sending_calc_crc:
 ;calculate running CRC
 	ldi		REG_TMP2, (LUT_CRC16+PDMEM00)
@@ -937,10 +972,20 @@ transport_layer_send_sending_calc_crc:
 	qbne		transport_layer_send_sending_msg_crc_dont_flip, SHORT_MSG.bits_left, 16
 	xor		SHORT_MSG_CRC_L, SHORT_MSG_CRC_L, 0xff
 transport_layer_send_sending_msg_crc_dont_flip:
+	.if !$defined("HDSL_MULTICHANNEL")
+	.if $defined("EXT_SYNC_ENABLE")
+	CALL3 PUSH_FIFO_2B_8x  ; PUSH 1 for message busy (continuing) path
+	CALL3 PUSH_FIFO_2B_8x  ; PUSH 2 for message busy (continuing) path
+	.endif
+	.endif
 	qba		transport_layer_send_msg_end
 transport_layer_check_for_new_short_msg:
 ;check for SLAVE_REG_CTRL if we read/write data
-
+	.if !$defined("HDSL_MULTICHANNEL")
+	.if $defined("EXT_SYNC_ENABLE")
+	CALL3 PUSH_FIFO_2B_8x  ; PUSH 1 for short/long message paths
+	.endif
+	.endif
 	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, SLAVE_REG_CTRL, 1
 	qbeq		transport_layer_no_short_msg, REG_TMP0.b0, 0x3f
 ; Clear ONLINE_STATUS_1_FRES in ONLINE_STATUS_1 register
@@ -963,6 +1008,9 @@ transport_layer_check_for_new_short_msg:
 	mov		SHORT_MSG.data, SHORT_MSG.addr
 	ldi		SHORT_MSG.bits_left, (8*3)
 	qba		transport_layer_short_msg_dir_end
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; PART 3 Peak cycles: ~47 cycles
 transport_layer_short_msg_write:
 ;we write slave register -> DIR=0
 ;load data from S_PC_DATA for writing
@@ -974,11 +1022,24 @@ transport_layer_short_msg_dir_end:
 	ldi		SHORT_MSG.timeout, 64
 ;set para channel to busy
 	set		H_FRAME.flags, H_FRAME.flags, FLAG_PARA_BUSY
+	.if !$defined("HDSL_MULTICHANNEL")
+	.if $defined("EXT_SYNC_ENABLE")
+	CALL3 PUSH_FIFO_2B_8x  ; PUSH 2 for short message path
+	.endif
+	.endif
 	qba		transport_layer_send_msg_end
 transport_layer_no_short_msg:
 ;check for new long msg
+
 	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, PC_CTRL, 1
-	qbbc		transport_layer_send_msg_end, REG_TMP0.b0, 0
+	qbbs	long_msg_start	, REG_TMP0.b0, 0
+	.if !$defined("HDSL_MULTICHANNEL")
+	.if $defined("EXT_SYNC_ENABLE")
+	CALL3 PUSH_FIFO_2B_8x  ; PUSH 2 for long message path
+	.endif
+	.endif
+	qba transport_layer_send_msg_end
+long_msg_start:
 	clr		REG_TMP0.b0, REG_TMP0.b0, 0
 	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, PC_CTRL, 1
 ;set para channel to busy
@@ -992,8 +1053,11 @@ transport_layer_no_short_msg:
 	set			REG_TMP1.b0, REG_TMP1.b0, 7
 	mov		SHORT_MSG.addr, REG_TMP1.b0
 	ldi		SHORT_MSG.bits_left, 16
-
-
+	.if !$defined("HDSL_MULTICHANNEL")
+	.if $defined("EXT_SYNC_ENABLE")
+	CALL3 PUSH_FIFO_2B_8x  ; PUSH 2 for long message path
+	.endif
+	.endif
 ;using PC_OFF?
 	qbbc		transport_layer_assemble_long_msg_no_pc_off, REG_TMP1.b0, LOFF
 ; Bit 7 should be set for long message in PC_OFF_H
@@ -1004,6 +1068,10 @@ transport_layer_assemble_long_msg_no_pc_off:
 
 	lsr		REG_TMP0.b0, SHORT_MSG.bits_left, 3
 	sbco		&REG_TMP1, MASTER_REGS_CONST, LONG_MSG_BUFFER, b0
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; PART 4 Peak cycles: ~47 cycles
+
 ;skip LLEN on read operation
 	qbbs		transport_layer_assemble_long_msg_no_llen, SHORT_MSG.addr, 6
 ;get LLEN
@@ -1056,10 +1124,18 @@ update_events_no_int16:
 	sbco		&REG_TMP0.b0, MASTER_REGS_CONST, EVENT_UPDATE_PENDING, 1
 transport_layer_no_qmlw_event:
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; PART 5 Peak cycles: ~47 cycles
+
 ; Update QMLW bits in ONLINE_STATUS registers
 	lbco		&REG_TMP0.b0, MASTER_REGS_CONST, MASTER_QM, 1
     and	        REG_TMP0.b0, REG_TMP0.b0, 0x7f
 ; Set QMLW if value is < 14
+	.if !$defined("HDSL_MULTICHANNEL")
+	.if $defined("EXT_SYNC_ENABLE")
+	CALL3 PUSH_FIFO_2B_8x  ; PUSH 3 for long message path
+	.endif
+	.endif
     qble	    transport_layer_online_status_qm_not_low, REG_TMP0.b0, 14
 ; Set QMLW bits
 	lbco		&REG_TMP0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 6
@@ -1079,6 +1155,7 @@ transport_layer_online_status_qm_update_done:
 	.if $defined("HDSL_MULTICHANNEL")
 	CALL3 PUSH_FIFO_2B_8x
 	.endif
+
 ; update POS bits in ONLINE_STATUS_D and EVENT
     lbco        &REG_TMP1.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
 	lbco		&REG_TMP0, MASTER_REGS_CONST, EVENT_H, 4
@@ -1093,8 +1170,12 @@ no_update_for_POS_bit:
 	ldi		r31.w0, PRU0_ARM_IRQ
 update_events_no_int14:
     sbco        &REG_TMP1.b0, MASTER_REGS_CONST, ONLINE_STATUS_D_H, 1
+	.if !$defined("HDSL_MULTICHANNEL")
+	.if $defined("EXT_SYNC_ENABLE")
+	CALL3 PUSH_FIFO_2B_8x  ; PUSH 4 for long message path
+	.endif
+	.endif
 	jmp		transport_layer_send_msg_done
-
 
 ;--------------------------------------------------
 ;v_frame calculations

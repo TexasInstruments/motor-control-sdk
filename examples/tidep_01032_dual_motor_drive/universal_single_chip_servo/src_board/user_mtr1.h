@@ -305,7 +305,7 @@ extern "C"
 #define USER_M1_IC_OFFSET_AD    SDFM_HALF_SCALE
 
 //! \brief ADC current offset for CMPSS
-#define USER_M1_IS_OFFSET_CMPSS     (uint16_t)((USER_M1_IA_OFFSET_AD + USER_M1_IB_OFFSET_AD + USER_M1_IC_OFFSET_AD) / 3.0f)
+#define USER_M1_IS_OFFSET_CMPSS     ((uint16_t)0U)  // Not applicable for SDFM
 
 //! \brief ADC voltage offsets for A, B, and C phases
 #define USER_M1_VA_OFFSET_SF    1.5f//2.0480f //(0.500514159f)

@@ -147,10 +147,51 @@ const utils = {
     getProductNameProjectSpec: (device) => {
 
         if(common.isDevelopmentMode())
-            return "MOTOR_CONTROL_SDK_AMXXX"
+            return "MOTOR_CONTROL_SDK_AMXXX";
 
         return require(`./device/project_${device}`).getProductNameProjectSpec();
     },
+
+    getIcsdkProductNameProjectSpec: (device) => {
+
+        if(common.isDevelopmentMode())
+            return "INDUSTRIAL_COMMUNICATIONS_SDK_AMXXX";
+
+        return require(`./device/project_${device}`).getIcsdkProductNameProjectSpec();
+    },
+
+    getMcusdkProductNameProjectSpec: (device) => {
+
+        if(common.isDevelopmentMode())
+            return "MCU_PLUS_SDK_AMXXX";
+
+        return require(`./device/project_${device}`).getMcusdkProductNameProjectSpec();
+    },
+
+    getSdkVersionProjectSpec: (device) => {
+
+        if(common.isDevelopmentMode())
+            return versions.sdkVersions.default.version;
+
+        return versions.sdkVersions[device].version || versions.sdkVersions.default.version;
+    },
+
+    getIcsdkVersionProjectSpec: (device) => {
+
+        if(common.isDevelopmentMode())
+            return versions.icsdkVersions.default.version;
+
+        return versions.icsdkVersions[device].version || versions.icsdkVersions.default.version;
+    },
+
+    getMcusdkVersionProjectSpec: (device) => {
+
+        if(common.isDevelopmentMode())
+                    return versions.mcusdkVersions.default.version;
+
+        return versions.mcusdkVersions[device].version || versions.mcusdkVersions.default.version;
+    },
+
     /* default action for files in project spec, i.e copy or link */
     getDefaultActionProjectSpec: () => {
 
@@ -258,12 +299,17 @@ function genProjectSpecExample(device) {
             project.relpath = common.path.relative(path.normalize(__dirname + "/.."), project.dirPath);
             project = _.merge({}, project, buildOption);
             project = _.merge({}, project, build_property);
+            project = common.updateLibsWithOs(project, buildOption.os);
             project = common.mergeCgtOptions(project, commonCgtOptions);
             project = common.mergeCgtOptions(project, common_build_property);
+            project = common.addOsDefine(project, buildOption.os);
+            project = common.addOsIncludes(project, buildOption.os, buildOption);
             project.dirPath = projectSpecOutPath;
 
             let args = {
                 sdkName: "MOTOR_CONTROL_SDK_PATH",
+                dependentIcsdkName: "IND_COMMS_SDK_PATH",
+                dependentMcusdkName: "MCU_PLUS_SDK_PATH",
                 sdkPath: common.path.relative(projectSpecOutPath, path.normalize(__dirname + "/..")),
                 relPath: common.path.relative(project.dirPath, "."),
                 project: project,

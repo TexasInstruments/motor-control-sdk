@@ -17,7 +17,7 @@ Only one core - PRU is used for this example.
 The example does the following:
 
  - Sets %SDFM channels: Channel 0 - Channel 2
- - Configures Normal current and Over current settings based on parameters configured in sysconfig
+ - Configures Normal current and Over current settings based on parameters configured in SysConfig
 
 
 # Nine Channels 
@@ -28,7 +28,7 @@ The example does the following:
 
  - Enables load share mode
  - Sets %SDFM channels: Channel 0 - Channel 8
- - Configures Normal current and Over current settings based on parameters configured in sysconfig
+ - Configures Normal current and Over current settings based on parameters configured in SysConfig
 
  # Important files and directory structure
 
@@ -39,11 +39,11 @@ The example does the following:
 </tr>
 <tr>
     <td>${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_nine_channel_load_share_snoop_mode</td>
-    <td> Application specific sources for ICSS %SDFM for trigger based normal current sampling for nine channels </td>
+    <td>Application specific sources for ICSS %SDFM for trigger based normal current sampling for nine channels using load share mode and snoop mode</td>
 </tr>
 <tr>
     <td>${SDK_INSTALL_PATH}/examples/current_sense/icss_sdfm_three_channel_single_pru_snoop_mode</td>
-    <td> Application specific sources for ICSS %SDFM for trigger based normal current sampling for three channels </td>
+    <td>Application specific sources for ICSS %SDFM for trigger based normal current sampling for three channels using single PRU core and snoop mode</td>
 </tr>
 <tr>
     <td>${SDK_INSTALL_PATH}/examples/current_sense</td>
@@ -72,7 +72,7 @@ The example does the following:
  ----------------|-----------
  CPU + OS        | r5fss0-0 freertos
  ICSSG           | ICSSG0
- PRU             | PRU0 (single channel)
+ PRU             | PRU0 (single PRU)
  ^               | PRU0, RTU-PRU0, TXPRU0 (multi channel using three PRUs - load share mode)
  Toolchain       | ti-arm-clang
  Board           | @VAR_BOARD_NAME_LOWER, @VAR_LP_BOARD_NAME_LOWER
@@ -92,7 +92,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 
 ### EVM Hardware Setup
 \image html SDFM_HwSetup_image.PNG  "Hardware Setup SDFM"
-\image html SDFM_EVM_HW_setup.png  "SDFM: EVM and 3axis board setup view"
+\image html SDFM_EVM_HW_setup.png "SDFM: EVM and 3axis board setup view"
 \cond SOC_AM243X
 ## Hardware Prerequisites for LP
 - AMC1035EVM
@@ -100,8 +100,8 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 - Signal generator
 
 ### LP Hardware Setup
-\image html SDFM_LpHwSetup_image.png  "LP Hardware setup"
-\image html SDFM_LpHwSetup.png  "SDFM: LP setup view"
+\image html SDFM_LpHwSetup_image.png "LP Hardware setup"
+\image html SDFM_LpHwSetup.png "SDFM: LP setup view"
 \endcond
 ## Build, load and run
 
@@ -134,7 +134,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 </tr>
 <tr>
         <td></td>
-        <td>2. Draw the graph of raw the graph of sdfm_ch_samples array </td>
+        <td>2. Draw the graph of sdfm_ch_samples array </td>
         <td>\image html SDFM_Continuous_mode_sample.PNG "NC sample data"</td>
  </tr>
 
@@ -195,7 +195,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 </tr>
 <tr>
         <td></td>
-        <td>2. Set ecap_divider variable in sdfm.c file for different sd clock generation</td>
+        <td>2. Set ecap_divider variable in app_sdfm.c file for different sd clock generation</td>
         <td></td>
  </tr>
  <tr>
@@ -231,7 +231,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 
 
 <tr>
-        <td>7. To check Threshold comparator and Over current for</td>
+        <td>7. To check Threshold comparator and Over current</td>
         <td>1. Enable Comparator filter  </td>
         <td> Trip status bit must be set for the respective pwm trip zone block and TZ_OUT pin must be high</td>
 </tr>
@@ -286,7 +286,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 <tr>
         <td></td>
         <td>5. 1) Observe TZ_OUT PIN.
-               2) Check zero/one count max & zero/one count min threshold hit bits in memory map</td>
+               2) Check zero/one count max and zero/one count min threshold hit bits in memory map</td>
         <td></td>
 </tr>
 <tr>
@@ -441,7 +441,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 </tr>
 <tr>
         <td></td>
-        <td>3. Configure SYNC_OUT0 and SYNC_OUT0 pins inside PRU ICSSG IEP SysConfig module </td>
+        <td>3. Configure SYNC_OUT0 and SYNC_OUT1 pins inside PRU ICSSG IEP SysConfig module </td>
         <td> </td>
 </tr>
 <tr>

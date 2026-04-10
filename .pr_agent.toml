@@ -1,22 +1,19 @@
-[config]
-pr_commands = [
-    "/review",
-    "/improve --pr_code_suggestions.commitable_code_suggestions=true --pr_code_suggestions.suggestions_score_threshold=5"
-]
+[review_agent]
+# Only show the most critical issues inline
+inline_comments_severity_threshold = 2
+# Show feedback only as inline
+comments_location_policy = "inline"
 
-handle_push_trigger = true
-push_trigger_ignore_bot_commits = true
-push_trigger_ignore_merge_commits = true
-push_trigger_wait_for_initial_review = false
-push_commands = [
-    "/describe",
-    "/review"
-]
-[ignore]
-glob = [
-    '*.out',  # Compiled binaries 
-    '*.jpg',  # JPEG images
-    '*.png',  # PNG images
-    '*.ppt*', # PPT files
-    '*.html'  # Html files
-]
+# Ignore low-signal PRs and generated code
+[config]
+ignore_pr_labels = ["chore", "skip-review"]
+ignore_language_framework = ["protobuf"]
+
+# Display a minimal set of findings and keep most sections collapsed
+[review_agent_ux]
+finding_overflow_count = 1
+resolved_overflow_count = 1
+expand_description = true
+expand_code = false
+expand_evidence = false
+expand_prompt = false 

@@ -5,7 +5,7 @@ function onChangeComparatorEnable(inst, ui)
 		let status = inst["Ch" + channel.toString() + "_ComparatorEnable"];
 
 		ui["Ch" + channel.toString() + "_OC_OSR"].hidden = !status;
-		
+
 		ui["Ch" + channel.toString() + "_Datarate_CF"].hidden = !status;
 		ui["Ch" + channel.toString() + "_Latency_CF"].hidden = !status;
 
@@ -13,6 +13,7 @@ function onChangeComparatorEnable(inst, ui)
 		ui["Ch" + channel.toString() + "_LLT"].hidden = !status;
 
 		ui["Ch" + channel.toString() + "_ZeroCross_Enable"].hidden = !status;
+		ui["Ch" + channel.toString() + "_ZCT"].hidden = !(status && inst["Ch" + channel.toString() + "_ZeroCross_Enable"]);
 
 	}
 
@@ -26,21 +27,23 @@ function onChangeUseZeroCrossSettings(inst, ui)
         ui["Ch" + channel.toString() + "_ZCT"].hidden = !status;
     }
 }
-// Comparator settings //
+
+/* Comparator settings */
 function comparatorSettings(channel)
 {
 	let Settings = [];
 	let order = 0;
 
 	Settings =
-    
+
 	  [
 		{
 			name: "Ch" + channel.toString() + "_OC_OSR",
 			displayName : "Over Current OSR",
-			description : 'Over Current OSR',
+			description : 'Over Current Over Sampling Ratio for comparator filter',
 			hidden      : true,
 			default     : 16,
+			range       : [4, 256],
 		},
 		{
 			name        : "Ch" + channel.toString() + "_Datarate_CF",
@@ -81,19 +84,21 @@ function comparatorSettings(channel)
 			displayName : "High Level Threshold",
 			description : 'High Level Threshold',
 			hidden      : true,
-            default     : "32767",
+            default     : 32767,
+			range       : [0, 16777216],
 		},
 		{
 			name: "Ch" + channel.toString() + "_LLT",
             displayName : "Low Level Threshold",
             description : 'Low Level Threshold',
             hidden      : true,
-            default     : "0",
+            default     : 0,
+			range       : [0, 16777216],
 		},
 		{
 			name: "Ch" + channel.toString() + "_ZeroCross_Enable",
 			displayName : "Enable Zero Cross Detection",
-			description : 'Enable Zero Cross Detection',
+			description : 'Enable zero-crossing detection',
 			hidden		: true,
 			default     : false,
 			onChange	: onChangeUseZeroCrossSettings,
@@ -109,13 +114,14 @@ function comparatorSettings(channel)
                     displayName : "Zero Cross Threshold",
                     description : 'Zero Cross Threshold',
                     hidden      : true,
-                    default     : "32767",  
+                    default     : 32767,
+					range       : [0, 16777216],
                 },
 
           ]
         },
 	]
-    
+
     return(Settings);
 }
 

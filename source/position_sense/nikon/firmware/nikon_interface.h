@@ -102,6 +102,7 @@ NIKON_CONFIG_DELAY_1US_OFFSET               .set    0x5C            ;1 micro sec
 NIKON_CONFIG_ICSS_CLK_OFFSET                .set    0x60            ;icss clock configuration offset
 
 NIKON_POSITION_DATA_ENC0_RES_OFFSET         .set    0x68            ;Base Offset for encoder 0
+
 NIKON_INFO_FIELD_OFFSET                     .set    0x00            ;information field offset
 NIKON_INFO_FIELD_CH0_OFFSET                 .set    0x00            ;information field ch0 offset
 NIKON_INFO_FIELD_CH1_OFFSET                 .set    0x02            ;information field ch1 offset
@@ -154,3 +155,35 @@ NIKON_POSITION_DATA_ENC4_RES_OFFSET         .set    0x148           ;offset of r
 NIKON_POSITION_DATA_ENC5_RES_OFFSET         .set    0x180           ;offset of raw data receive from encoder 5
 NIKON_POSITION_DATA_ENC6_RES_OFFSET         .set    0x1B8           ;offset of raw data receive from encoder 6
 NIKON_POSITION_DATA_ENC7_RES_OFFSET         .set    0x1F0           ;offset of raw data receive from encoder 7
+
+NIKON_IEP_BASE_ADDR_OFFSET                  .set    0x228           ;IEP base address for periodic trigger
+NIKON_CH0_IEP_CMP_EVENT_OFFSET              .set    0x22C           ;IEP CMP event number for ch0
+NIKON_CH0_IEP_CAP_EVENT_OFFSET              .set    0x22D           ;IEP CAP event number for ch0
+NIKON_CH0_IEP_RESERVED_EVENT_OFFSET         .set    0x22E           ;reserved, 2 bytes for alignment
+NIKON_CH0_IEP_CAPTURE_REG_OFFSET            .set    0x230           ;IEP capture register offset for ch0
+NIKON_CH1_IEP_CMP_EVENT_OFFSET              .set    0x234           ;IEP CMP event number for ch1
+NIKON_CH1_IEP_CAP_EVENT_OFFSET              .set    0x235           ;IEP CAP event number for ch1
+NIKON_CH1_IEP_RESERVED_EVENT_OFFSET         .set    0x226           ;reserved, 2 bytes for alignment
+NIKON_CH1_IEP_CAPTURE_REG_OFFSET            .set    0x238           ;IEP capture register offset for ch1
+NIKON_CH2_IEP_CMP_EVENT_OFFSET              .set    0x23C           ;IEP CMP event number for ch2
+NIKON_CH2_IEP_CAP_EVENT_OFFSET              .set    0x23D           ;IEP CAP event number for ch2
+NIKON_CH2_IEP_RESERVED_EVENT_OFFSET         .set    0x23E           ;reserved, 2 bytes for alignment
+NIKON_CH2_IEP_CAPTURE_REG_OFFSET            .set    0x240           ;IEP capture register offset for ch2
+
+	.if $isdefed("ENABLE_MULTI_MAKE_RTU")
+NIKON_IEP_CMP_EVENT_OFFSET              .set    NIKON_CH0_IEP_CMP_EVENT_OFFSET      ;IEP CMP event number for ch0
+NIKON_IEP_CAP_EVENT_OFFSET              .set    NIKON_CH0_IEP_CAP_EVENT_OFFSET      ;IEP CAP event number for ch0
+NIKON_IEP_CAPTURE_REG_OFFSET            .set    NIKON_CH0_IEP_CAPTURE_REG_OFFSET    ;IEP capture register offset for ch0
+    .elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
+NIKON_IEP_CMP_EVENT_OFFSET              .set    NIKON_CH1_IEP_CMP_EVENT_OFFSET      ;IEP CMP event number for ch1
+NIKON_IEP_CAP_EVENT_OFFSET              .set    NIKON_CH1_IEP_CAP_EVENT_OFFSET      ;IEP CAP event number for ch1
+NIKON_IEP_CAPTURE_REG_OFFSET            .set    NIKON_CH1_IEP_CAPTURE_REG_OFFSET    ;IEP capture register offset for ch1
+	.elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
+NIKON_IEP_CMP_EVENT_OFFSET              .set    NIKON_CH2_IEP_CMP_EVENT_OFFSET      ;IEP CMP event number for ch2
+NIKON_IEP_CAP_EVENT_OFFSET              .set    NIKON_CH2_IEP_CAP_EVENT_OFFSET      ;IEP CAP event number for ch2
+NIKON_IEP_CAPTURE_REG_OFFSET            .set    NIKON_CH2_IEP_CAPTURE_REG_OFFSET    ;IEP capture register offset for ch2
+    .else
+NIKON_IEP_CMP_EVENT_OFFSET              .set    NIKON_CH0_IEP_CMP_EVENT_OFFSET      ;IEP CMP event number for ch0
+NIKON_IEP_CAP_EVENT_OFFSET              .set    NIKON_CH0_IEP_CAP_EVENT_OFFSET      ;IEP CAP event number for ch0
+NIKON_IEP_CAPTURE_REG_OFFSET            .set    NIKON_CH0_IEP_CAPTURE_REG_OFFSET    ;IEP capture register offset for ch0
+	.endif

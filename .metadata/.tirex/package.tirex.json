@@ -4,7 +4,7 @@
         "id": "com.ti.MOTOR_CONTROL_SDK_AMXXX",
         "name": "MOTOR CONTROL SDK for AMXXX",
         "rootCategory": [ "MOTOR CONTROL SDK", "MOTOR CONTROL SDK for AMXXX" ],
-        "version": "11.00.00.01",
+        "version": "2025.00.00.01",
         "type": "software",
         "image": "./motor_control_sdk.png",
         "license": "../../license.txt",
@@ -12,9 +12,11 @@
         "tags": ["SDK", "Baremetal", "FreeRTOS"],
         "description": "Motor Control SDK contains examples, libraries and tools to develop RTOS and no-RTOS based applications enabling real-time communication for position and current sense from motors, and real-time control libraries for ARM R5F CPU and related peripherals.",
         "dependencies": [
-            { "packageId": "sysconfig", "version": "1.22.0", "require": "mandatory" },
-            { "packageId": "ti_cgt_tiarmclang", "version": "4.0.1", "require": "mandatory" },
-            { "packageId": "arm.gnu.aarch64-none", "version": "9.2.1", "require": "mandatory" }
+            { "packageId": "arm.gnu.aarch64-none", "version": "9.2.1", "require": "mandatory" },
+            { "packageId": "com.ti.INDUSTRIAL_COMMUNICATIONS_SDK_AMXXX", "version": "2025.00.00.01", "require": "mandatory" },
+            { "packageId": "com.ti.MCU_PLUS_SDK_AMXXX", "version": "07.03.00.01", "require": "mandatory" },
+            { "packageId": "sysconfig", "version": "1.23.0", "require": "mandatory" },
+            { "packageId": "ti_cgt_tiarmclang", "version": "4.0.1", "require": "mandatory" }
         ]
     }
 ]

@@ -1,6 +1,6 @@
 
 ;
-; Copyright (C) 2021-23 Texas Instruments Incorporated
+; Copyright (C) 2021-26 Texas Instruments Incorporated
 ;
 ; Redistribution and use in source and binary forms, with or without
 ; modification, are permitted provided that the following conditions
@@ -31,8 +31,8 @@
 ; OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;
 
-	.include "../../../../mcu_plus_sdk/source/pru_io/firmware/common/icss_regs.inc"
-	.include "../../../../mcu_plus_sdk/source/pru_io/firmware/common/icss_cfg_regs.inc"
+	.include "pru_io/firmware/common/icss_regs.inc"
+	.include "pru_io/firmware/common/icss_cfg_regs.inc"
 
 	.asg	R30.t24,	ENDAT_CH0_RX_EN
 	.asg	R31.t27,	ENDAT_CH0_RX_CLR_OVF
@@ -58,19 +58,44 @@ ENDAT_TX_CH0_SEL	.set					0
 ENDAT_TX_CH1_SEL	.set					1
 ENDAT_TX_CH2_SEL	.set					2
 
-
-; ICSSG INTC events
-PRU_TRIGGER_HOST_ENDAT_EVT0  .set         34
-PRU_TRIGGER_HOST_ENDAT_EVT1  .set         35
-PRU_TRIGGER_HOST_ENDAT_EVT2  .set         36
-
-;CMP event for periodic mode
-;CMP event 3 for channel 0
-IEP_CH0_CMP_EVNT					.set    3
-;CMP event 5 for channel 1
-IEP_CH1_CMP_EVNT					.set    5
-;CMP event 6 for channel 2
-IEP_CH2_CMP_EVNT					.set    6
+;=============================================================================
+; PRU Event Numbers for Host Interrupt Triggering 
+;=============================================================================
+; These event numbers are used by PRU firmware to trigger host interrupts
+; after completing encoder operations in periodic mode.
+;
+; Event number mapping:
+; - SLICE1 Multi-PRU: RTU=34, PRU=35, TXPRU=36
+; - SLICE1 Single-PRU: PRU=34
+; - SLICE0 Multi-PRU: RTU=37, PRU=38, TXPRU=39
+; - SLICE0 Single-PRU: PRU=37
+;
+; Application side uses (event - 16) for R5F interrupt mapping:
+; - SLICE1: 18, 19, 20 (= 34-16, 35-16, 36-16)
+; - SLICE0: 21, 22, 23 (= 37-16, 38-16, 39-16)
+;=============================================================================
+	.if	$isdefed("SLICE1")
+	.if $isdefed("ENABLE_MULTI_MAKE_RTU") | $isdefed("ENABLE_MULTI_MAKE_PRU") | $isdefed("ENABLE_MULTI_MAKE_TXPRU")
+	; Multi-channel load share using multiple PRUs
+ENDAT_RTU_TRIGGER_HOST_EVT              .set	34			;( (0x20 | 2), pr0_pru_mst_intr[2]_intr_req )
+ENDAT_PRU_TRIGGER_HOST_EVT              .set	35			;( (0x20 | 3), pr0_pru_mst_intr[3]_intr_req )
+ENDAT_TXPRU_TRIGGER_HOST_EVT            .set	36			;( (0x20 | 4), pr0_pru_mst_intr[4]_intr_req )
+	.else
+	; Single PRU
+ENDAT_PRU_TRIGGER_HOST_EVT              .set	34			;( (0x20 | 2), pr0_pru_mst_intr[2]_intr_req )
+	.endif
+	.else
+	; "SLICE0"
+	.if $isdefed("ENABLE_MULTI_MAKE_RTU") | $isdefed("ENABLE_MULTI_MAKE_PRU") | $isdefed("ENABLE_MULTI_MAKE_TXPRU")
+	; Multi-channel load share using multiple PRUs
+ENDAT_RTU_TRIGGER_HOST_EVT              .set	37			;( (0x20 | 5), pr0_pru_mst_intr[5]_intr_req )
+ENDAT_PRU_TRIGGER_HOST_EVT              .set	38			;( (0x20 | 6), pr0_pru_mst_intr[6]_intr_req )
+ENDAT_TXPRU_TRIGGER_HOST_EVT            .set	39			;( (0x20 | 7), pr0_pru_mst_intr[7]_intr_req )
+	.else
+	; Single PRU
+ENDAT_PRU_TRIGGER_HOST_EVT              .set	37			;( (0x20 | 5), pr0_pru_mst_intr[5]_intr_req )
+	.endif
+	.endif
 
 ; CLK MODE bits R30[20:19]
 ENDAT_TX_CLK_MODE_FREERUN_STOPLOW	.set	(0 << 3)

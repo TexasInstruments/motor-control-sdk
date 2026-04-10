@@ -6,20 +6,20 @@
 
 The Tamagawa over UART application does the following:
 
-- Configures pinmux, GPIO, UART (UART clock to 192MHz, Baud rate, etc.)
-- Initializes UART0 for debug log & \if SOC_AM263PX UART3 \else UART1 \endif for communication
+- Configures pinmux, GPIO, UART (UART clock to 192 MHz, baud rate, etc.)
+- Initializes UART0 for debug log and \if SOC_AM263PX UART3 \else UART1 \endif for encoder communication
 - Selects UART LLD with polling mode for encoder communication
 - Loads and executes Tamagawa example on Arm® Cortex®-R5F
 
 
-Connect the Tamagawa encoder via RS-485 Half-Duplex EVM to LP-AM263.
-The connections between LP-AM263 and RS-485:
+Connect the Tamagawa encoder via RS-485 Half-Duplex EVM to the LaunchPad.
+The connections between the LaunchPad and RS-485 EVM:
 
 UART RX Pin(\if SOC_AM263PX  UART3_RXD \else  UART1_RXD \endif)->JMP1-R,
 UART TX Pin(\if SOC_AM263PX  UART3_TXD \else  UART1_TXD \endif)->JMP4-D,
 GPIO Pin(GPIO62)->JMP3-DE
 
-The Tamagawa over UART example runs on R5F and communicates with Tamagawa encoder by UART instance. It presents the user with menu options to select Data ID code (as defined by Tamagawa) to be sent to the encoder. The application collects the data entered by the user and configures the relevant command. Then via the UART LLD write API, the command is passed to encoder. Once the command is sent, the encoder starts to respond, and UART LLD read API starts to read this response. Response is stored in the Tamagawa interface, the status of the transaction is checked by CRC calculation. If the status indicates success, the result is presented to the user otherwise it prints CRC failure.
+The Tamagawa over UART example runs on R5F and communicates with Tamagawa encoder using a UART instance. It presents the user with menu options to select a Data ID code (as defined by Tamagawa) to be sent to the encoder. The application collects the data entered by the user and configures the relevant command. Then via the UART LLD write API, the command is passed to the encoder. Once the command is sent, the encoder starts to respond, and the UART LLD read API reads this response. The response is stored in the Tamagawa interface structure, and the data integrity is verified by CRC calculation. If CRC verification passes, the result is presented to the user, otherwise a CRC failure message is displayed.
 
 ### Example Flow-Chart
 
@@ -49,15 +49,22 @@ The Tamagawa over UART example runs on R5F and communicates with Tamagawa encode
 
 # Supported Combinations
 
-\cond (SOC_AM263X || SOC_AM263PX)
-
+\cond (SOC_AM263X)
  Parameter      | Value
  ---------------|-----------
  CPU + OS       | r5fss0-0 freertos
  Toolchain      | ti-arm-clang
  Board          | @VAR_LP_BOARD_NAME_LOWER
- Example folder | examples/position_sense/tamagawa_diagnostic_over_soc_uart
+ Example folder | examples/position_sense/tamagawa_diagnostic_over_soc_uart/am263x-lp/r5fss0-0_freertos
+\endcond
 
+\cond (SOC_AM263PX)
+ Parameter      | Value
+ ---------------|-----------
+ CPU + OS       | r5fss0-0 freertos
+ Toolchain      | ti-arm-clang
+ Board          | @VAR_LP_BOARD_NAME_LOWER
+ Example folder | examples/position_sense/tamagawa_diagnostic_over_soc_uart/am263px-lp/r5fss0-0_freertos
 \endcond
 
 # Steps to Run the Example
@@ -173,12 +180,12 @@ Shown below is a sample output when the application is run:
         <td>Readout from EEPROM</td>
         <td>Transmit following data:
         <br>Proper address of the EEPROM that you want to read.<br>
-		<br>Receive following data:
-        <br>Control Field for EEPROM Write command
-        <br>EEPROM address that you want to write to
-        <br>Data that you want to write to the EEPROM
+        <br>Receive following data:
+        <br>Control Field for EEPROM Read command
+        <br>EEPROM address that was read from
+        <br>Data read from the EEPROM
         <br>CRC value
-		</td>
+        </td>
         <td>CRC success with EDF, ADF, CF and CRC values printed in the terminal.</td>
     </tr>
 	<tr>

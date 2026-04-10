@@ -1,5 +1,5 @@
 
-; Copyright (C) 2021-2023 Texas Instruments Incorporated
+; Copyright (C) 2021-2026 Texas Instruments Incorporated
 ;
 ; Redistribution and use in source and binary forms, with or without
 ; modification, are permitted provided that the following conditions
@@ -102,7 +102,6 @@ l?:
     ldi         dst, 1
 end?:
     .endm
-
 WAIT .macro delay
     lsr delay, delay, 1
 l?: sub delay,delay,1
@@ -169,6 +168,24 @@ TX_CLK_DIV_WAIT .macro div,tmp0
     .endm
 
 WAIT_TX_DONE .macro
+	.if !$defined("FREERUN_300_MHZ")
+;Wait untill fifo level drops to 0
+	.if $defined(CHANNEL_0)
+wait_fifo_level_0_ch0?:
+    AND BYTE_LEVEL, R31.b0, 0x1C
+    QBNE   wait_fifo_level_0_ch0?, BYTE_LEVEL, 0
+	.endif
+	.if $defined(CHANNEL_1)
+wait_fifo_level_0_ch1?:
+    AND BYTE_LEVEL, R31.b1, 0x1C
+    QBNE   wait_fifo_level_0_ch1?, BYTE_LEVEL, 0
+	.endif
+	.if $defined(CHANNEL_2)
+wait_fifo_level_0_ch2?:
+    AND BYTE_LEVEL, R31.b2, 0x1C
+    QBNE   wait_fifo_level_0_ch2?, BYTE_LEVEL, 0
+	.endif	
+	.endif
     ;WAIT_TX_FIFO_CLEAR
 l?:
 	qbbs		l?, r31, TX_GLOBAL_REINIT_ACTIVE

@@ -129,37 +129,63 @@ NIKON_CHECK_OPERATING_MODE:
 	.else
 	LBCO 	&SCRATCH2.b0, 	PRUx_DMEM, 	NIKON_OPMODE_CONFIG_OFFSET, 1
 	.endif
-    ;If opmode=1, Host trigger
-	;If opmode=0, Periodic trigger
-	QBNE	NIKON_HANDLE_HOST_TRIGGER,	SCRATCH2.b0,		0
+	;Operating mode configuration:
+	;  opmode=0: Periodic CMP trigger mode - uses IEP compare events (0-15)
+    ;  opmode=1: Host trigger mode - software-triggered by R5F
+	;  opmode=2: Periodic CAP trigger mode - uses IEP capture events (0-7)
+	QBEQ	NIKON_HANDLE_HOST_TRIGGER,	SCRATCH2.b0,		1
+	QBEQ	NIKON_HANDLE_PERIODIC_TRIGGER_CMP_MODE,	SCRATCH2.b0,	0
 
-NIKON_HANDLE_PERIODIC_TRIGGER:
-	; Get pending events from IEP
-	LBCO	&SCRATCH1,	ICSS_IEP,	ICSS_IEP_CMP_STATUS_REG,	4
-	.if $isdefed("ENABLE_MULTI_MAKE_RTU")
-	; wait till IEP CMP3 event
-    QBBC    NIKON_CHECK_OPERATING_MODE ,    SCRATCH1,    IEP_CH0_CMP_EVNT
+NIKON_HANDLE_PERIODIC_TRIGGER_CAP_MODE:
+	; Periodic CAP Mode: Wait for external event captured by IEP
+	; - Reads IEP base address dynamically from DMEM
+	; - Monitors CAP event status register for configured event
+	; - Clears event by reading capture register value
+
+	; Get pending CAP events from IEP
+	LDI 	SCRATCH.w0, NIKON_IEP_BASE_ADDR_OFFSET
+    LBCO	&SCRATCH1,	PRUx_DMEM,	SCRATCH.w0,	4
+    ; Get capture event status from IEP
+    LBBO	&SCRATCH.w0,	SCRATCH1,	ICSS_IEP_CAP_STATUS_REG,	2
+
+	; Wait till IEP CAP event
+	LDI		SCRATCH1.w0,	NIKON_IEP_CAP_EVENT_OFFSET
+	LBCO	&SCRATCH2.b0,	PRUx_DMEM,	SCRATCH1.w0,	1
+	QBBC	NIKON_CHECK_OPERATING_MODE,	SCRATCH.w0,	SCRATCH2.b0
+	; Read cap register offset from DMEM
+	LDI		SCRATCH1.w0,	NIKON_IEP_CAPTURE_REG_OFFSET
+	LBCO	&SCRATCH,	PRUx_DMEM,	SCRATCH1.w0,	4
+	; Clear capture event by reading capture register value
+	LBBO	&SCRATCH1,	SCRATCH,	0,	4
+
+	JMP SET_TRIGGER
+
+NIKON_HANDLE_PERIODIC_TRIGGER_CMP_MODE:
+	; Periodic CMP Mode: Wait for IEP counter to match compare value
+	; - Reads IEP base address dynamically from DMEM
+	; - Monitors CMP event status register for configured event
+	; - Clears event by writing to CMP status register
+
+	; Get pending CMP events from IEP
+	LDI 	SCRATCH.w0, NIKON_IEP_BASE_ADDR_OFFSET
+    LBCO	&SCRATCH1,	PRUx_DMEM,	SCRATCH.w0,	4
+	; Get compare event status from IEP
+    LBBO	&SCRATCH.w0,	SCRATCH1,	ICSS_IEP_CMP_STATUS_REG,	2
+
+	; wait till IEP CMP event
+	LDI		SCRATCH1.w0,	NIKON_IEP_CMP_EVENT_OFFSET
+	LBCO	&SCRATCH2.b0,	PRUx_DMEM,	SCRATCH1.w0,	1
+	QBBC	NIKON_CHECK_OPERATING_MODE,	SCRATCH.w0,	SCRATCH2.b0
     ; Clear IEP CH0 CMP event
-    LDI SCRATCH1.b0, (1<<IEP_CH0_CMP_EVNT)
-    .elseif $isdefed("ENABLE_MULTI_MAKE_PRU") ;Check PRU host trigger  for ch1
-    ; wait till IEP CH1 CMP event
-    QBBC    NIKON_CHECK_OPERATING_MODE,    SCRATCH1,    IEP_CH1_CMP_EVNT
-    ; Clear IEP CH1 CMP event
-    LDI SCRATCH1.b0, (1<<IEP_CH1_CMP_EVNT)
-    .elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
-    ; wait till IEP CH2 CMP event
-    QBBC    NIKON_CHECK_OPERATING_MODE,    SCRATCH1,    IEP_CH2_CMP_EVNT
-    ; Clear IEP CH2 CMP event
-    LDI SCRATCH1.b0, (1<<IEP_CH2_CMP_EVNT)
-    .else
-    ; wait till IEP CH0 CMP event
-    QBBC    NIKON_CHECK_OPERATING_MODE,    SCRATCH1,    IEP_CH0_CMP_EVNT
-    ; Clear IEP CH0 CMP event
-    LDI SCRATCH1.b0, (1<<IEP_CH0_CMP_EVNT)
-    .endif
+	LDI	SCRATCH.w0,	1
+	LSL	SCRATCH.w0,	SCRATCH.w0,	SCRATCH2.b0
+
     ; store compare event status
-    SBCO	&SCRATCH1,	ICSS_IEP,  ICSS_IEP_CMP_STATUS_REG,	4
-NIKON_SKIP_IEP_CMP_STATUS?:
+	LDI		SCRATCH1.w0,	NIKON_IEP_BASE_ADDR_OFFSET
+	LBCO	&SCRATCH1,	PRUx_DMEM,	SCRATCH1.w0,	4
+	SBBO	&SCRATCH.w0,	SCRATCH1,	ICSS_IEP_CMP_STATUS_REG,	2
+
+SET_TRIGGER:
     ; SET command TRIGGER
     LDI		SCRATCH1.b0,	1
 	.if $isdefed("ENABLE_MULTI_MAKE_RTU")
@@ -171,6 +197,7 @@ NIKON_SKIP_IEP_CMP_STATUS?:
 	.else
 	SBCO    &SCRATCH1.b0,	PRUx_DMEM, NIKON_HOST_TRIGGER_STATUS_OFFSET,	1
 	.endif
+
 NIKON_HANDLE_HOST_TRIGGER:
 
     ;If Host Trigger=1, request made by R5F to Firmware, now Firmware do processing and when done set trigger to 0 so that R5F application can act further.
@@ -328,9 +355,9 @@ NIKON_CLEAR_CYCLE_TRIGGER:
 	LDI 	R30.b3, 0
 	.if $isdefed("ENABLE_MULTI_MAKE_RTU")
     ;skip interrupt to R5F in host trigger
-    QBNE    NIKON_SKIP_INTERRUPT_TRIGGER,  SCRATCH1.b0,  0
+    QBEQ    NIKON_SKIP_INTERRUPT_TRIGGER,  SCRATCH1.b0,  1
 	;Generate interrupt to R5F
-	LDI 	R31.w0, NIKON_RTU_TRIGGER_HOST_EVT				;NIKON_RTU_TRIGGER_HOST_EVT (pr0_pru_mst_intr[2]_intr_req)
+	LDI 	R31.w0, NIKON_RTU_TRIGGER_HOST_EVT
 NIKON_SKIP_INTERRUPT_TRIGGER:
 	M_NIKON_LS_WAIT_FOR_SYNC
 	QBBC 	NIKON_SKIP_GLOBAL_REINIT, PRIMARY_CORE, 0
@@ -338,9 +365,9 @@ NIKON_SKIP_INTERRUPT_TRIGGER:
 	M_NIKON_LS_CLEAR
 	.elseif $isdefed("ENABLE_MULTI_MAKE_PRU")
 	;skip interrupt to R5F in host trigger
-    QBNE    NIKON_SKIP_INTERRUPT_TRIGGER,  SCRATCH1.b0,  0
+    QBEQ    NIKON_SKIP_INTERRUPT_TRIGGER,  SCRATCH1.b0,  1
 	;Generate interrupt to R5F
-	LDI 	R31.w0, NIKON_PRU_TRIGGER_HOST_EVT				;NIKON_PRU_TRIGGER_HOST_EVT (pr0_pru_mst_intr[3]_intr_req)
+	LDI 	R31.w0, NIKON_PRU_TRIGGER_HOST_EVT
 NIKON_SKIP_INTERRUPT_TRIGGER:
 	M_NIKON_LS_WAIT_FOR_SYNC
 	QBBC 	NIKON_SKIP_GLOBAL_REINIT, PRIMARY_CORE, 1
@@ -348,9 +375,9 @@ NIKON_SKIP_INTERRUPT_TRIGGER:
 	M_NIKON_LS_CLEAR
 	.elseif $isdefed("ENABLE_MULTI_MAKE_TXPRU")
 	;skip interrupt to R5F in host trigger
-    QBNE    NIKON_SKIP_INTERRUPT_TRIGGER,  SCRATCH1.b0,  0
+    QBEQ    NIKON_SKIP_INTERRUPT_TRIGGER,  SCRATCH1.b0,  1
 	;Generate interrupt to R5F
-	LDI 	R31.w0, NIKON_TXPRU_TRIGGER_HOST_EVT			;NIKON_TXPRU_TRIGGER_HOST_EVT (pr0_pru_mst_intr[4]_intr_req)
+	LDI 	R31.w0, NIKON_TXPRU_TRIGGER_HOST_EVT
 NIKON_SKIP_INTERRUPT_TRIGGER:
 	M_NIKON_LS_WAIT_FOR_SYNC
 	QBBC 	NIKON_SKIP_GLOBAL_REINIT, PRIMARY_CORE, 2
@@ -358,9 +385,9 @@ NIKON_SKIP_INTERRUPT_TRIGGER:
 	M_NIKON_LS_CLEAR
 	.else
 	;skip interrupt to R5F in host trigger
-    QBNE    NIKON_SKIP_INTERRUPT_TRIGGER,  SCRATCH1.b0,  0
+    QBEQ    NIKON_SKIP_INTERRUPT_TRIGGER,  SCRATCH1.b0,  1
 	;Generate interrupt to R5F
-	LDI 	R31.w0, NIKON_RTU_TRIGGER_HOST_EVT				;NIKON_RTU_TRIGGER_HOST_EVT (pr0_pru_mst_intr[2]_intr_req)
+	LDI 	R31.w0, NIKON_PRU_TRIGGER_HOST_EVT
 NIKON_SKIP_INTERRUPT_TRIGGER:
 	SET 	R31, NIKON_TX_GLOBAL_REINIT
 	.endif

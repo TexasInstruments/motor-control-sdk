@@ -1,4 +1,4 @@
-#  EnDAT Diagnostic {#EXAMPLE_MOTORCONTROL_ENDAT}
+#  EnDat Diagnostic {#EXAMPLE_MOTORCONTROL_ENDAT}
 
 [TOC]
 
@@ -12,12 +12,23 @@ receiver interface.
 \note ICSSM UART clock set to 160 MHz is used to drive the EnDat interface. In three channel interface of PRU-ICSS, receive (Rx) is oversampled at 8x of send (Tx). Therefore, the encoder interface frequency "f" should be such that 160 MHz is divisible by "f" and "8 times f".
 \endcond
 
+\cond SOC_AM243X || SOC_AM64X
+\note EnDat firmware is tested with ICSS Core Clock running at 200 MHz/300 MHz frequency or ICSS UART Clock running at 192 MHz only.
+\endcond
+
+\cond SOC_AM261X
+\note EnDat firmware is tested with ICSS Core Clock running at 225 MHz frequency or ICSS UART Clock running at 160 MHz only.
+\endcond
+
+\cond (SOC_AM263X || SOC_AM263PX)
+\note EnDat firmware is tested with ICSS Core Clock running at 200 MHz frequency or ICSS UART Clock running at 192 MHz only.
+\endcond
 
 The diagnostic invokes these APIs to:
 - initialize EnDat,
 \cond (SOC_AM243X || SOC_AM64X)
-- select one configuration among concurrent multi-channel with encoders of same make, multi-channel with encoders of different make, and single channel configuration based on SysConfig,
-- select the channel (channels in the case of concurrent multi-channel with encoders of same make or multi-channel with encoders of different make),
+- select one configuration among concurrent multi channel with encoders of same make, multi channel with encoders of different make, and single channel configuration based on SysConfig,
+- select the channel (channels in the case of concurrent multi channel with encoders of same make or multi channel with encoders of different make),
 \endcond
 - configure the host trigger mode,
 - and run the firmware.
@@ -43,48 +54,71 @@ Once the initial setup is over:
 - Two types of menu options are presented. One type (1-14) will send an EnDat command as per EnDat 2.2 specification.
 - The other type (100-108) allows the user to configure clock frequency, various timing parameters, simulate motor control loop using 2.1 command as well as 2.2 command with safety (redundant position information), switch to continuous clock mode, and monitor raw data.
 \cond (SOC_AM243X || SOC_AM64X)
-- Concurrent multi-channel with encoder of same make configuration can work simultaneously for up to three encoders with identical part numbers. All variants of 2.2 position commands as well as the 2.1 position command are supported, and an additional option (109) to configure wire delay (useful when propagation delay in each channel is different) is available.
+- Concurrent multi channel with encoder of same make configuration can work simultaneously for up to three encoders with identical part numbers. All variants of 2.2 position commands as well as the 2.1 position command are supported, and an additional option (109) to configure wire delay (useful when propagation delay in each channel is different) is available.
 - Single PRU core handles enabled channels in single channel and Multi-Channel with encoders of same make configuration.
 \endcond
 - Application by default handles wire delay as required. The menu option provides a way to override it.
 
 After the user selects an EnDat command:
 - the diagnostic asks for more details to frame the command and performs a basic sanity check on the user-entered values.
-- Then the EnDat APIs are invoked to process the command set, set the host trigger bit, and wait until the host trigger bit is cleared. \if (SOC_AM243X || SOC_AM64X) If multi-channel with encoders of different make is used, these operations are done for each channel.\endif
+- Then the EnDat APIs are invoked to process the command set, set the host trigger bit, and wait until the host trigger bit is cleared. \if (SOC_AM243X || SOC_AM64X) If multi channel with encoders of different make is used, these operations are done for each channel.\endif
 - The received EnDat data is processed & validated using the defined APIs. The result is then presented to the user.
 
-### Channel Selection In Sysconfig
+### Channel Selection In SysConfig
 
 \cond SOC_AM243X || SOC_AM64X
-\image html EnDat_channel_selection_In_sysconfig.PNG      "Channel Selection In Sysconfig"
+\image html EnDat_channel_selection_In_sysconfig.PNG "Channel Selection In SysConfig"
 \endcond
 
 \cond SOC_AM261X
-\image html EnDat_channel_selection_In_sysconfig_for_am261x.PNG   "Channel Selection In Sysconfig"
+\image html EnDat_channel_selection_In_sysconfig_for_am261x.PNG "Channel Selection In SysConfig"
 \endcond
 
 \cond (SOC_AM263X || SOC_AM263PX )
-\image html EnDat_channel_selection_In_sysconfig_for_am263x.PNG   "Channel Selection In Sysconfig"
+\image html EnDat_channel_selection_In_sysconfig_for_am263x.PNG "Channel Selection In SysConfig"
 \endcond
 
 \cond (SOC_AM243X || SOC_AM64X)
-\image html Endat_channel_selection_configuration.png     "EnDAT configuration selection between Single/Multi channel "
+\image html Endat_channel_selection_configuration.png "Mode selection based on number of channels and encoder type"
 \endcond
 
-### Periodic Continuous Mode
-Current SDK example uses IEP CMP event to trigger periodic mode. CMP0 is used to get periodic CMP events by resetting the IEP counter continuously. Firmware triggers an Arm® Cortex®-R5F interrupt after getting a response from the encoder. The application code uses a callback function to clear the PRU interrupt, which can be modified as per the use case. Currently, command 200 is used to demonstrate the periodic mode, which informs the firmware to use position cmd 1. It prints the response written by the firmware on the UART terminal.
-CMP3 is used for single channel and single PRU multi-channel mode. For multi-channel load share mode, CMP3 is used for RTU core, CMP5 is used for PRU core and CMP6 is used for TX PRU core channel. To use changes in CMP event, the following macros need to be updated in the application `endat_periodic_trigger.h` file and source file `endat_icss_reg_defs.h`:
-```c
-#define IEP_CH0_CMP_EVNT ( 3 )
-#define IEP_CH1_CMP_EVNT ( 5 )
-#define IEP_CH2_CMP_EVNT ( 6 )
-```
+## Periodic Trigger Modes {#ENDAT_EXAMPLE_PERIODIC_MODE}
 
-> **Note:** To disable IEP counter reset by CMP0 event, the following code needs to be disabled in `endat_periodic_trigger.c`:
-```c
-event |= IEP_CMP0_ENABLE;
-event |= IEP_RST_CNT_EN;
-```
+The EnDat diagnostic application supports two types of periodic trigger modes for continuous position sampling as described in \ref ENDAT_PERIODIC_MODES.
+
+### CMP Mode (Compare Event Mode)
+- Implementation: Command 200 demonstrates this mode, user can select any position command
+- Configuration: Uses a user-defined compare value to trigger sampling events
+- IEP Counter Reset: Uses CMP0 by default (skip if reset is handled differently)
+- Notification: Firmware triggers an Arm® Cortex®-R5F interrupt after receiving encoder response
+
+### CAP Mode (Capture Event Mode)
+- Implementation: Command 201 demonstrates this mode, user can select any position command
+\cond SOC_AM243X || SOC_AM64X
+- Router Configuration for CAP6/CAP7 (LATCH_IN0/LATCH_IN1) via TIMESYNC router and CAP0 via GPIOMUX router (requires external GPIO connection)
+    - This example configures the TIMESYNC/GPIOMUX router to use IEP SYNC OUT0 as an input signal for the CAP6/CAP7/CAP0 events. This configuration includes:
+        - CMP1: Generates SYNC OUT0 signal (skip if not using SYNC OUT0)
+    - NOTE: All router configuration is optional if this signal path isn't needed
+
+\endcond
+\cond (SOC_AM263PX || SOC_AM261X || SOC_AM263X)
+- XBAR Configuration for CAP6/CAP7 (LATCH_IN0/LATCH_IN1)
+    - This example configures the XBAR for routing EPWM SYNC OUT as input to CAP using SysConfig
+    - Customization: XBAR settings can be modified for alternative inputs
+    - NOTE: XBAR routing configuration is optional if not needed
+\endcond
+- NOTE: When using different CAP events instead of the ones used in SDK example, ensure all related configurations (source selection, signal routing, etc.) are properly done.
+- Notification: Firmware triggers an R5F interrupt after receiving encoder response
+
+### Important Notes for Periodic Mode
+
+1. Initialization: Call \ref endat_command_process() once in host trigger mode before switching to periodic mode
+2. Automatic Behavior: In periodic mode, \ref endat_command_process() skips sending operations (PRU firmware handles triggering via IEP events)
+3. CMP Resource Allocation
+    - Avoid using CMP0 if it's already used to IEP counter reset
+    - Avoid using CMP1/CMP2 if they're used to SYNC OUT generation
+    - Avoid sharing CMP events across different channels or instances of EnDat or other encoders. Each CMP event must be assigned exclusively to a single encoder channel.
+
 ### Endat Example Implementation
 
 The following section describes the Example implementation of EnDat on Arm®-based core.
@@ -100,46 +134,57 @@ The following section describes the Example implementation of EnDat on Arm®-bas
 <tr><td colspan="2" bgcolor=#F0F0F0> ${SDK_INSTALL_PATH}/examples/position_sense/endat_diagnostic</td></tr>
 <tr>
     <td>endat_diagnostic.c</td>
-    <td>EnDAT diagnostic application</td>
+    <td>EnDat diagnostic application</td>
 </tr>
 <tr><td colspan="2" bgcolor=#F0F0F0> ${SDK_INSTALL_PATH}/source/position_sense/endat</td></tr>
 <tr>
     <td>firmware/</td>
-    <td>Folder containing EnDAT firmware sources.</td>
+    <td>Folder containing EnDat firmware sources</td>
 </tr>
 <tr>
     <td>driver/</td>
-    <td>EnDAT diagnostic driver.</td>
+    <td>EnDat diagnostic driver</td>
 </tr>
 </table>
 
 # Supported Combinations {#EXAMPLES_MOTORCONTROL_ENDAT_COMBOS}
 
-\cond SOC_AM64X
+\cond SOC_AM64X || SOC_AM243X
 
  Parameter      | Value
  ---------------|-----------
  CPU + OS       | r5fss0-0 freertos
  ICSSG          | ICSSG0
- PRU            | PRU1 (single channel, multi-channel using single PRU)
- ^              | PRU1, RTU-PRU1, TXPRU1 (multi-channel using three PRUs - load share mode)
+ PRU            | PRU1 (single channel, multi channel using single PRU)
+ ^              | PRU1, RTU-PRU1, TXPRU1 (multi channel using three PRUs - load share mode)
  Toolchain      | ti-arm-clang
- Board          | @VAR_BOARD_NAME_LOWER
- Example folder | examples/position_sense/endat_diagnostic
+ Board          | @VAR_BOARD_NAME_LOWER, @VAR_LP_BOARD_NAME_LOWER
+ Example folder | examples/position_sense/endat_diagnostic/single_channel
+ ^              | examples/position_sense/endat_diagnostic/multi_channel_single_pru
+ ^              | examples/position_sense/endat_diagnostic/multi_channel_load_share
 
-\endcond
 
-\cond SOC_AM243X
+## Single Channel with Single PRU Example
+This example supports one EnDat channel using one PRU. In this example:
+- 1 EnDat driver instance and corresponding SysConfig EnDat module instance is used.
 
- Parameter      | Value
- ---------------|-----------
- CPU + OS       | r5fss0-0 freertos
- ICSSG          | ICSSG0
- PRU            | PRU1 (single channel, multi-channel using single PRU)
- ^              | PRU1, RTU-PRU1, TXPRU1 (multi-channel using three PRUs - load share mode)
- Toolchain      | ti-arm-clang
- Board          | @VAR_BOARD_NAME_LOWER (3 channel and 1 channel examples), @VAR_LP_BOARD_NAME_LOWER (2 channel and 1 channel examples)
- Example folder | examples/position_sense/endat_diagnostic
+##  Multi Channel with Single PRU Example
+This example supports up to three EnDat channels using one PRU. In this example:
+- Encoders of the same frequency must be connected to all configured channels.
+- Data reception must happen simultaneously on all channels.
+- The encoder configuration and cable length should be the same on all channels.
+- If encoders across channels don't respond at the same time, this example will not work. Load share configuration should be used instead.
+- 1 EnDat driver instance and corresponding SysConfig EnDat module instance is used for all channels.
+
+## Multi Channel with Multiple PRUs (Load Share) Example
+This example supports up to three EnDat channels using three PRUs from same PRU-ICSSG slice. In this example:
+- Load share mode is used. Refer \ref PRUICSSG_LOAD_SHARE_MODE for more details.
+- Encoders of different make can be connected across channels.
+- Encoders of the same frequency must be connected to all configured channels.
+- Data reception can start independently on all channels.
+- Each channel can have different memory areas, MRS codes, or parameters (command type remains the same).
+- After a command is sent, all channels wait for a response and process the response independently. However, all channels must finish processing before the next command can be triggered.
+- 1 EnDat driver instance and corresponding SysConfig EnDat module instance is used for all channels.
 
 \endcond
 
@@ -149,10 +194,25 @@ The following section describes the Example implementation of EnDat on Arm®-bas
  ---------------|-----------
  CPU + OS       | r5fss0-0 freertos
  ICSSM          | ICSSM1
- PRU            | PRU0
+ PRU            | PRU0 (single channel)
+ ^              | PRU0, PRU1 (dual channel)
  Toolchain      | ti-arm-clang
- Board          |  @VAR_LP_BOARD_NAME_LOWER (Single channel example)
- Example folder | examples/position_sense/endat_diagnostic
+ Board          | @VAR_LP_BOARD_NAME_LOWER
+ Example folder | examples/position_sense/endat_diagnostic/single_channel
+ ^              | examples/position_sense/endat_diagnostic/dual_channel
+
+## Single Channel with Single PRU Example
+This example supports one EnDat channel using one PRU. In this example:
+- 1 EnDat driver instance and corresponding SysConfig EnDat module instance is used.
+
+## Dual Channel with Two PRUs Example
+This example supports two EnDat channels using two PRUs from same PRU-ICSSM. In this example:
+- Two independent EnDat driver instances run simultaneously. Each driver instance has a corresponding SysConfig EnDat module instance.
+- Each instance operates independently on a different PRU slice (PRU0 or PRU1).
+- Both instances share common PRU-ICSS level resources.
+- Different PRUs can handle encoders with different frequencies simultaneously. For example, you can connect a 4 MHz encoder to a PRU0 channel, while connecting an 8 MHz encoder to a PRU1 channel.
+- For dual channel example testing, the application takes commands for both instances from user, then sends the commands one by one for each channel. So the user needs to ensure that the entered command for both instances is correct to perform the correct operation. For continuous/periodic modes, always enter the same command and parameters for both instances, as it uses the same command for both.
+- When using two instances example, avoid selecting the same CMP event or CAP event for both instances. Each instance must use a different IEP event number to prevent conflicts.
 
 \endcond
 
@@ -161,12 +221,15 @@ The following section describes the Example implementation of EnDat on Arm®-bas
  Parameter      | Value
  ---------------|-----------
  CPU + OS       | r5fss0-0 freertos
- ICSSM          | ICSSM
+ ICSSM          | ICSSM0
  PRU            | PRU0
  Toolchain      | ti-arm-clang
- Board          | @VAR_LP_BOARD_NAME_LOWER (Single channel example)
- Example folder | examples/position_sense/endat_diagnostic
+ Board          | @VAR_LP_BOARD_NAME_LOWER
+ Example folder | examples/position_sense/endat_diagnostic/single_channel
 
+## Single Channel with Single PRU Example
+This example supports one EnDat channel using one PRU. In this example:
+- 1 EnDat driver instance and corresponding SysConfig EnDat module instance is used.
 \endcond
 
 # Steps to Run the Example
@@ -177,7 +240,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 \cond SOC_AM243X
 
 ## Hardware Prerequisites with TMDS243EVM
-- EnDAT Encoder(s)
+- EnDat Encoder(s)
 - <a href="https://www.ti.com/tool/TMDS243EVM" target="_blank"> TMDS243EVM Board </a>
 - <a href="http://www.ti.com/tool/TIDA-00179" target="_blank"> TIDA-00179 Universal Digital Interface to Absolute Position Encoders </a>
 - <a href="../TIDEP-01015RevE1.1(001)_Sch.pdf" target="_blank"> TIDEP-01015 3 Axis Board </a>
@@ -187,7 +250,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 
 ## Hardware Prerequisites with LP-AM243
 
-- EnDAT Encoder(s)
+- EnDat Encoder(s)
 - <a href="https://www.ti.com/tool/LP-AM243" target="_blank"> LP-AM243 Board </a>
 - <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
 \endcond
@@ -196,7 +259,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 
 ## Hardware Prerequisites with LP-AM261
 
-- EnDAT Encoder(s)
+- EnDat Encoder(s)
 - <a href="https://www.ti.com/tool/LP-AM261" target="_blank"> LP-AM261 Board </a>
 - <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
 \endcond
@@ -205,7 +268,7 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 
 ## Hardware Prerequisites with LP-AM263
 
-- EnDAT Encoder(s)
+- EnDat Encoder(s)
 - <a href="https://www.ti.com/tool/LP-AM263" target="_blank"> LP-AM263 Board </a>
 - <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
 \endcond
@@ -214,25 +277,26 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 
 ## Hardware Prerequisites with LP-AM263P
 
-- EnDAT Encoder(s)
+- EnDat Encoder(s)
 - <a href="https://www.ti.com/tool/LP-AM263P" target="_blank"> LP-AM263P Board </a>
 - <a href="https://www.ti.com/tool/BP-AM2BLDCSERVO" target="_blank"> BP-AM2BLDCSERVO </a>
 \endcond
 
 \cond SOC_AM243X
 
-## Hardware Setup with TMDS243EVM
+## Hardware Setup (Using TMDS243EVM, TIDA-00179, TIDEP-01015 and Interface board)
 \imageStyle{EnDAT_Connections.png,width:40%}
-\image html EnDAT_Connections.png "Hardware Setup with TMDS243EVM"
+\image html EnDAT_Connections.png "Hardware Setup using TMDS243EVM, TIDA-00179, TIDEP-01015 and Interface board for EnDat"
 
-## Hardware Setup with LP-AM243
+## Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack and LP-AM243)
 \imageStyle{EnDat_Booster_Pack.png,width:40%}
-\image html EnDat_Booster_Pack.png  "Hardware Setup with LP-AM243"
+\image html EnDat_Booster_Pack.png "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for EnDat"
 \note
-    - The PROC109A version of LP supports two channels
+    - The PROC109A version of LP-AM243 with BP-AM2BLDCSERVO Booster Pack supports two channels
     - To enable the second channel on LP, SW6 needs to be turned OFF
+    - To enable VSENSOR1/VSENSOR2, BoosterPack pins J8.73/J8.74 must be set high (In this example, this pin is configured in GPIO mode and pulled high)
 
-#### Booster Pack Jumper Configuration
+### BP-AM2BLDCSERVO Booster Pack Jumper Configuration
 <table>
 <tr>
     <th>Designator</th>
@@ -305,20 +369,28 @@ Other than the basic EVM setup mentioned in <a href="@VAR_MCU_SDK_DOCS_PATH/EVM_
 \cond (SOC_AM263X || SOC_AM263PX)
 
 \if SOC_AM263X
-## Hardware Setup with LP-AM263
+## Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack and LP-AM263)
 \imageStyle{EnDat_am263x_hw_Setup.jpeg,width:60%}
-\image html EnDat_am263x_hw_Setup.jpeg "Hardware Setup for single channel on LP-AM263 + BP"
+\image html EnDat_am263x_hw_Setup.jpeg "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for EnDat"
 \else
-## Hardware Setup with LP-AM263PX
+## Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack and LP-AM263P)
 \imageStyle{EnDat_am263px_hw_Setup.jpeg,width:60%}
-\image html EnDat_am263px_hw_Setup.jpeg "Hardware Setup for single channel on LP-AM263P + BP"
+\image html EnDat_am263px_hw_Setup.jpeg "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for EnDat"
 \endif
 
-#### LaunchPad Jumper Configuration
+\note
+    - To enable VSENSOR1, BoosterPack pin J8.73 must be set high (In this example, this pin is configured in GPIO mode and pulled high)
+
+\cond (SOC_AM263X)
+### LP-AM263 Jumper Configuration
+\endcond
+\cond (SOC_AM263PX)
+### LP-AM263P Jumper Configuration
+\endcond
 
 Connect the jumpers J13 and J26 for providing 3.3V and 5V to boosterpack.
 
-#### Booster Pack Jumper Configuration
+### BP-AM2BLDCSERVO Booster Pack Jumper Configuration
 <table>
 <tr>
     <th>Designator</th>
@@ -390,15 +462,19 @@ Connect the jumpers J13 and J26 for providing 3.3V and 5V to boosterpack.
 \endcond
 \cond SOC_AM261X
 
-## Hardware Setup with LP-AM261
-\imageStyle{EnDat_am261x_hw_Setup.jpeg,width:40%}
-\image html EnDat_am261x_hw_Setup.jpeg  "Hardware Setup with LP-AM261"
+## Hardware Setup (Using BP-AM2BLDCSERVO Booster Pack and LP-AM261)
+\note
+    - The Rev. A version of LP-AM261 with BP-AM2BLDCSERVO Booster Pack supports two channels
+    - To enable VSENSOR1/VSENSOR2, BoosterPack pins J8.73/J8.74 must be set high (In this example, this pin is configured in GPIO mode and pulled high)
 
-#### LaunchPad Jumper Configuration
+\imageStyle{EnDat_am261x_hw_Setup.jpeg,width:40%}
+\image html EnDat_am261x_hw_Setup.jpeg "Hardware Setup of BP-AM2BLDCSERVO Booster Pack + LP for EnDat"
+
+### LP-AM261 Jumper Configuration
 
 Connect the jumpers J13 and J26 for providing 3.3V and 5V to boosterpack.
 
-#### Booster Pack Jumper Configuration
+### BP-AM2BLDCSERVO Booster Pack Jumper Configuration
 <table>
 <tr>
     <th>Designator</th>
@@ -481,10 +557,10 @@ Connect the jumpers J13 and J26 for providing 3.3V and 5V to boosterpack.
 Shown below is a sample output when the application is run:
 
 \imageStyle{EnDAT_Initialization_UART_PRINT.png,width:60%}
-\image html EnDAT_Initialization_UART_PRINT.png "EnDAT Usage"
+\image html EnDAT_Initialization_UART_PRINT.png "EnDat Usage"
 
 ## EnDat Debug Guide {#ENDAT_DEBUG_GUIDE}
-This section describes how to debug the EnDat application, including a guide to debugging the EnDat example and firmware. Several common debugging steps on verifying the configuration of key registers, hardware details for probing pins, debugging firmware, common issues with multi-channel or continuous mode, etc. are described in \ref ENCODER_EXAMPLES_DEBUG_GUIDE.
+This section describes how to debug the EnDat application, including a guide to debugging the EnDat example and firmware. Several common debugging steps on verifying the configuration of key registers, hardware details for probing pins, debugging firmware, common issues with multi channel or continuous mode, etc. are described in \ref ENCODER_EXAMPLES_DEBUG_GUIDE.
 
 If the EnDat interface is not initializing correctly, the steps mentioned below can help identify the root cause. Additionally, ensure that the hardware connections and software configurations are properly set up before proceeding with debugging.
 
@@ -657,7 +733,7 @@ Troubleshooting steps:
         <td style="text-align: center">CRC success </td>
     </tr>
     <tr>
-        <td>8. Enter 8 to select "Encoder send position values + Additional Information(s)"<br>&emsp; <b>Note: Write is not permanent. When read again using Command 11, encoder will return the default value</b></td>
+        <td>8. Enter 8 to select "Encoder send position values + Additional Information(s)"<br>&emsp; <b>Note: </b>Write is not permanent. When read again using Command 11, encoder will return the default value</td>
         <td style="text-align: center">Values followed by 0x45 represent the last byte of the data received by encoder<br> CRC success </td>
     </tr>
     <tr>
@@ -1065,17 +1141,51 @@ Troubleshooting steps:
         <td style="text-align: center">Recovery Time is set to 1.25 us <= RT <= 3.75us or  10 us <= RT <= 30 us</td>
     </tr>
     <tr>
-        <td rowspan="2" style="text-align: center">31.</td>
-        <td rowspan="2" style="text-align: center">To test periodic continuous mode</td>
-        <td>1. Enter 200 to enable periodic mode </td>
+        <td rowspan="5" style="text-align: center">31.</td>
+        <td rowspan="5" style="text-align: center">To test periodic CMP mode</td>
+        <td>1. Enter 200 to enable periodic CMP mode </td>
         <td style="text-align: center"> </td>
     </tr>
     <tr>
-        <td>2. Enter 5000 (in ns) for position read time </td>
+        <td>2. Enter IEP reset count (in IEP timer count) - the periodic cycle time </td>
+        <td style="text-align: center"> </td>
+    </tr>
+    <tr>
+        <td>3. Enter channel trigger count (in IEP timer count) - when to trigger position read within the cycle </td>
+        <td style="text-align: center"> </td>
+    </tr>
+    <tr>
+        <td>4. Select position command (Valid commands: 1, 8, 9, 10, 11, 13) </td>
         <td style="text-align: center">Position Values are changing when rotor moves </td>
     </tr>
     <tr>
-        <td rowspan="2" style="text-align: center">32.</td>
+        <td><b>Note:</b> If the selected command requires supplements (e.g., command 9 needs MRS code), the system will prompt for those parameters before the periodic mode starts.</td>
+        <td style="text-align: center"> </td>
+    </tr>
+    <tr>
+        <td rowspan="5" style="text-align: center">32.</td>
+        <td rowspan="5" style="text-align: center">To test periodic CAP mode</td>
+        <td>1. Enter 201 to enable periodic CAP mode </td>
+        <td style="text-align: center"> </td>
+    </tr>
+    <tr>
+        <td>2. Enter IEP SYNC0 period (in IEP time count) - the CAP event generation period </td>
+        <td style="text-align: center"> </td>
+    </tr>
+    <tr>
+        <td><b>Note:</b> Step 2. valid for AM243x examples, For AM26x it is configured in SysConfig </td>
+        <td style="text-align: center"> </td>
+    </tr>
+    <tr>
+        <td>3. Select position command (Valid commands: 1, 8, 9, 10, 11, 13) </td>
+        <td style="text-align: center">Position Values are changing when rotor moves </td>
+    </tr>
+    <tr>
+        <td><b>Note:</b> If the selected command requires supplements (e.g., command 9 needs MRS code), the system will prompt for those parameters before the periodic mode starts.</td>
+        <td style="text-align: center"> </td>
+    </tr>
+    <tr>
+        <td rowspan="2" style="text-align: center">33.</td>
         <td rowspan="2" style="text-align: center">Long term test</td>
         <td>1. Enter 111 to enable Long time continuous mode  </td>
         <td></td>

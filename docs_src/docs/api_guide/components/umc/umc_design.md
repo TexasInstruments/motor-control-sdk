@@ -83,7 +83,7 @@ The system setup for the TIDEP-01032 system is shown in the image below:
 4. Dual-axis (6 channels) 3-phase sigma-delta modulated current feedback
 5. Dual-axis absolute encoder position feedback
 
-## System Overview 
+## System Overview
 
 ### Block Diagram
 
@@ -180,7 +180,7 @@ The `HAL_setupEncoder` function is used to initialize the encoder interface. The
 
 ##### How to modify encoder interface
 
-To enable support for another encoder, first add the encoder module in sysconfig. The encoder initialization code can be added in the `HAL_setupEncoder` function. The position response data can be read and converted in the `HAL_getMtrEncoderPosition` function. Additional encoder parameters and the encoder handle can be defined in the `hal.h` and `hal.c` files, similar to EnDAT.
+To enable support for another encoder, first add the encoder module in SysConfig. The encoder initialization code can be added in the `HAL_setupEncoder` function. The position response data can be read and converted in the `HAL_getMtrEncoderPosition` function. Additional encoder parameters and the encoder handle can be defined in the `hal.h` and `hal.c` files, similar to EnDAT.
 
 #### SDFM Interface
 
@@ -244,7 +244,7 @@ Signal Mapping Table:
 </tr>
 </table>
 
-`HAL_setupSDFM` and `HAL_readMtrSdfmData` functions are used to initialize %SDFM and to get %SDFM samples, respectively. Other relevant macros and %SDFM handle are defined in `hal.h` and `hal.c`. The current example uses a common configuration for both motors and PRU0 channel and RTU channels in load share mode for sampling. The IEP SYNC output is used to generate a 20 MHz %SDFM clock. Parameter configuration can be changed in `hal.h` file and %SDFM Sysconfig.
+`HAL_setupSDFM` and `HAL_readMtrSdfmData` functions are used to initialize %SDFM and to get %SDFM samples, respectively. Other relevant macros and %SDFM handle are defined in `hal.h` and `hal.c`. The current example uses a common configuration for both motors and PRU0 channel and RTU channels in load share mode for sampling. The IEP SYNC output is used to generate a 20 MHz %SDFM clock. Parameter configuration can be changed in `hal.h` file and %SDFM SysConfig.
 
 #### EPWM Interface
 
@@ -376,7 +376,7 @@ EPWM configuration is handled by `HAL_setupPWMs` function in `hal.c` file. The p
 
 \note To update the output frequency of the EPWM, the `#define USER_M1_PWM_FREQ_kHz` macro in `user_mtr.h` file needs to be updated. Additionally, the `#define APP_EPWM_OUTPUT_FREQ` in `epwm.h` also needs to be updated.
 
-# Examples 
+# Examples
 
 - \ref EXAMPLE_TIDEP_01032_REFERENCE_DESIGN
 

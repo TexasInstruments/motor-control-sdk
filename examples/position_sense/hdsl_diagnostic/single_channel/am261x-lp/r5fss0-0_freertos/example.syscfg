@@ -1,9 +1,9 @@
 /**
  * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
  * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
- * @cliArgs --device "AM261x_ZFG" --part "AM2612" --package "ZFG" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@10.00.01"
- * @v2CliArgs --device "AM2612" --package "NFBGA (ZFG)" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@10.00.01"
- * @versions {"tool":"1.21.2+3837"}
+ * @cliArgs --device "AM261x_ZFG" --part "AM2612" --package "ZFG" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@2025.00.00" --product "INDUSTRIAL_COMMUNICATIONS_SDK@2025.00.00" --product "MCU_PLUS_SDK@07.03.01"
+ * @v2CliArgs --device "AM2612" --package "NFBGA (ZFG)" --variant "500MHz" --context "r5fss0-0" --product "MOTOR_CONTROL_SDK@2025.00.00" --product "INDUSTRIAL_COMMUNICATIONS_SDK@2025.00.00" --product "MCU_PLUS_SDK@07.03.01"
+ * @versions {"tool":"1.25.0+4268"}
  */
 
 /**
@@ -13,6 +13,9 @@ const ioexp               = scripting.addModule("/board/ioexp/ioexp", {}, false)
 const ioexp1              = ioexp.addInstance();
 const i2c                 = scripting.addModule("/drivers/i2c/i2c", {}, false);
 const i2c1                = i2c.addInstance();
+const pruicss             = scripting.addModule("/drivers/pruicss/pruicss", {}, false);
+const pruicss1            = pruicss.addInstance();
+const pruicss2            = pruicss.addInstance();
 const debug_log           = scripting.addModule("/kernel/dpl/debug_log");
 const dpl_cfg             = scripting.addModule("/kernel/dpl/dpl_cfg");
 const mpu_armv7           = scripting.addModule("/kernel/dpl/mpu_armv7", {}, false);
@@ -48,17 +51,25 @@ const soc_timesync_xbar11 = soc_timesync_xbar1.addInstance();
 /**
  * Write custom configuration values to the imported modules.
  */
-ioexp1.$name                                    = "CONFIG_IOEXP0";
-ioexp1.TCA6408ARGTR_port0_pinBP_BO_MUX_EN_mode  = 0;
-ioexp1.TCA6408ARGTR_port0_pinBP_BO_MUX_EN_state = 1;
-ioexp1.TCA6408ARGTR_port0_pinBP_MUX_SW_S1_mode  = 0;
-ioexp1.TCA6408ARGTR_port0_pinBP_MUX_SW_SO_mode  = 0;
-ioexp1.TCA6408ARGTR_port0_pinBP_MUX_SW_SO_state = 1;
+ioexp1.$name                                   = "CONFIG_IOEXP0";
+ioexp1.i2cAddress                              = "LP-RevA 0x20";
+ioexp1.TCA6408ARGT_port0_pinBP_BO_MUX_EN_mode  = 0;
+ioexp1.TCA6408ARGT_port0_pinBP_BO_MUX_EN_state = 1;
+ioexp1.TCA6408ARGT_port0_pinBP_MUX_SW_S1_mode  = 0;
+ioexp1.TCA6408ARGT_port0_pinBP_MUX_SW_SO_mode  = 0;
+ioexp1.TCA6408ARGT_port0_pinBP_MUX_SW_SO_state = 1;
 
 i2c1.$name              = "CONFIG_I2C0";
 ioexp1.peripheralDriver = i2c1;
 i2c1.I2C.$assign        = "I2C0";
 i2c1.I2C_child.$name    = "drivers_i2c_v1_i2c_v1_template0";
+
+pruicss2.$name                                                                               = "CONFIG_PRU_ICSS1";
+pruicss2.iepSyncMode                                                                         = true;
+pruicss2.AdditionalICSSSettings[0].$name                                                     = "CONFIG_PRU_ICSS_IO1";
+pruicss2.AdditionalICSSSettings[0].PruIepIO.create(1);
+pruicss2.AdditionalICSSSettings[0].PruIepIO[0].$name                                         = "CONFIG_PRU_ICSS_IEP0";
+pruicss2.AdditionalICSSSettings[0].PruIepIO[0]["PRU-ICSS0-IEP"].PR0_IEP0_EDC_SYNC_OUT0.$used = true;
 
 debug_log.enableUartLog            = true;
 debug_log.enableCssLog             = false;
@@ -287,34 +298,31 @@ section13.output_section[0].alignment = 4;
 
 hdsl1.$name                               = "CONFIG_HDSL0";
 hdsl1.PRU_Slice                           = "PRU0";
-hdsl1.Booster_Pack                        = true;
 hdsl1.Mode                                = "SYNC";
+hdsl1.Booster_Pack                        = true;
 hdsl1["PRU-ICSS1"].$assign                = "PRU-ICSS1";
 hdsl1["PRU-ICSS1"].PR1_PRU0_GPIO2.$assign = "GPIO83";
-hdsl1["PRU-ICSS1"].PR1_PRU0_GPIO2.$used   = true;
 hdsl1["PRU-ICSS1"].PR1_PRU0_GPIO1.$assign = "GPIO82";
-hdsl1["PRU-ICSS1"].PR1_PRU0_GPIO1.$used   = true;
 hdsl1["PRU-ICSS1"].PR1_PRU0_GPIO0.$assign = "GPIO81";
-hdsl1["PRU-ICSS1"].PR1_PRU0_GPIO0.$used   = true;
 hdsl1["PRU-ICSS1"].PR1_PRU0_GPIO9.$assign = "GPIO80";
-hdsl1["PRU-ICSS1"].PR1_PRU0_GPIO9.$used   = true;
-hdsl1.ENC1_EN.$name                       = "ENC1_EN";
-hdsl1.ENC1_EN.GPIO_n.$assign              = "GPIO21";
+hdsl1.ENC0_EN.$name                       = "HDSL0_BP_POWER_EN0";
+hdsl1.ENC0_EN.GPIO_n.$assign              = "GPIO21";
 
-const pruicss                            = scripting.addModule("/drivers/pruicss/pruicss", {}, false);
-const pruicss1                           = pruicss.addInstance({}, false);
 pruicss1.$name                           = "CONFIG_PRU_ICSS0";
+pruicss1.iepSyncMode                     = true;
 hdsl1.pru                                = pruicss1;
-pruicss1.AdditionalICSSSettings[0].$name = "CONFIG_PRU_ICSS_IO1";
+pruicss1.AdditionalICSSSettings[0].$name = "CONFIG_PRU_ICSS_IO0";
 
 soc_timesync_xbar11.$name      = "CONFIG_SOC_TIMESYNC_XBAR1_0";
-soc_timesync_xbar11.instance   = "SOC_TIMESYNC_XBAR1_ICSS_MODULE_0";
 soc_timesync_xbar11.xbarOutput = "SOC_TIMESYNC_XBAR1_ICSSM0_EDC0_SYNC_OUT_0";
+soc_timesync_xbar11.instance   = "SOC_TIMESYNC_XBAR1_ICSS_MODULE_1";
 
 /**
  * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future
  * version of the tool will not impact the pinmux you originally saw.  These lines can be completely deleted in order to
  * re-solve from scratch.
  */
-i2c1.I2C.SCL.$suggestSolution = "GPIO135";
-i2c1.I2C.SDA.$suggestSolution = "GPIO134";
+i2c1.I2C.SCL.$suggestSolution                                                                           = "GPIO135";
+i2c1.I2C.SDA.$suggestSolution                                                                           = "GPIO134";
+pruicss2.AdditionalICSSSettings[0].PruIepIO[0]["PRU-ICSS0-IEP"].$suggestSolution                        = "PRU-ICSS0-IEP";
+pruicss2.AdditionalICSSSettings[0].PruIepIO[0]["PRU-ICSS0-IEP"].PR0_IEP0_EDC_SYNC_OUT0.$suggestSolution = "GPIO119";

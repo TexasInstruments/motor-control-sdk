@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023 Texas Instruments Incorporated
+ *  Copyright (C) 2023-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -30,9 +30,9 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* This example demonstrates the UART RX and TX operation by echoing char
- * that it recieves in blocking, interrupt mode of operation.
- * When user types 'quit', the application ends.
+/* This example demonstrates Tamagawa encoder communication over SoC UART.
+ * It provides a menu-driven interface for executing Tamagawa Data ID commands
+ * and displays the encoder response with CRC verification.
  */
 #include <stdio.h>
 #include <string.h>
@@ -187,16 +187,29 @@ static void tamagawa_display_menu(void)
 
 void uart_tamagawa(void *args)
 {
-    Drivers_open();
-    Board_driversOpen();
-
-
     uint32_t uart_communication_instance = CONFIG_UART0;
     uint32_t uart_gpio_base_address = CSL_GPIO0_U_BASE;
     uint32_t uart_gpio_pin_number = CONFIG_GPIO0_PIN;
     uint32_t uart_gpio_pin_direction = GPIO_DIRECTION_OUTPUT;
+    int32_t ret;
 
-    tamagawa_init(tamagawa_interface, uart_communication_instance, uart_gpio_base_address, uart_gpio_pin_number,  uart_gpio_pin_direction);
+    Drivers_open();
+    Board_driversOpen();
+
+    if(tamagawa_interface == NULL)
+    {
+        DebugP_log("\r\n ERROR: tamagawa_interface is NULL, exiting uart_tamagawa()\n");
+        return;
+    }
+
+    ret = tamagawa_init(tamagawa_interface, uart_communication_instance, uart_gpio_base_address, uart_gpio_pin_number, uart_gpio_pin_direction);
+
+    if(ret != SystemP_SUCCESS)
+    {
+        DebugP_log("\r\n ERROR: tamagawa_init failed, exiting uart_tamagawa()\n");
+        return;
+    }
+
     DebugP_log("[UART] Tamagawa example started ...\r\n");
     while(1)
     {
@@ -214,7 +227,7 @@ void uart_tamagawa(void *args)
         status = tamagawa_command_process(tamagawa_interface, gUartHandleLld, cmd);
         /* Case of command process failure */
 
-        if (status < 0)
+        if (status != SystemP_SUCCESS)
         {
             DebugP_log("\r\n ERROR: Command process failure \n");
             continue;

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2023-24 Texas Instruments Incorporated
+ *  Copyright (C) 2023-2026 Texas Instruments Incorporated
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -30,6 +30,44 @@
  *  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/**
+ * \file  endat_periodic_trigger.c
+ *
+ * \brief EnDAT periodic trigger mode implementation using IEP timer
+ *
+ * This file implements periodic trigger mode for EnDAT encoder interface.
+ * In periodic mode, encoder position command is automatically triggered at regular
+ * intervals by PRU using the PRU-ICSS Industrial Ethernet Peripheral (IEP) timer,
+ * eliminating the need for host (R5F) intervention to trigger a command. After the
+ * response is received, PRU triggers host (R5F) interrupt.
+ *
+ * \par Periodic Trigger Modes:
+ * The EnDAT driver supports two IEP-based periodic trigger modes:
+ * - **CMP Mode (Compare)**: Time-based periodic sampling using IEP compare events (CMP0-CMP15)
+ *   - Firmware monitors IEP counter and triggers when counter matches compare value
+ * - **CAP Mode (Capture)**: Event-driven sampling using IEP capture events (CAP0-CAP7)
+ *   - Firmware waits for external hardware signal routed through TIMESYNC/GPIOMUX router (AM243x)
+ *     or XBAR (AM26x)
+ *
+ * \par IEP Timer Configuration:
+ * The IEP timer is a PRU-ICSS instance-level resource shared between slices.
+ * Therefore, IEP configuration uses the first handle (CONFIG_ENDAT0) to access
+ * the PRU-ICSS hardware attributes, regardless of how many slices are active.
+ *
+ * \par First instance (CONFIG_ENDAT0) is used for shared resources:
+ * Several operations use gAppEndatHandle[CONFIG_ENDAT0] to access shared PRU-ICSS
+ * resources:
+ * 1. IEP timer configuration (endat_config_iep()): IEP is PRU-ICSS instance-level,
+ *    not slice-specific. Using first handle ensures consistent access.
+ * 2. INTC initialization (endat_config_periodic_mode()): INTC is initialized once
+ *    per PRU-ICSS instance, not per slice.
+ * 3. This approach works correctly because validation in endat_pruicss_init()
+ *    ensures both instances use the same PRU-ICSS instance.
+ */
+
+/* ========================================================================== */
+/*                             Include Files                                  */
+/* ========================================================================== */
 
 #include<stdio.h>
 #include<stdint.h>
@@ -42,282 +80,1249 @@
 #include "endat_periodic_trigger.h"
 #include <drivers/soc.h>
 #include <position_sense/endat/include/endat_drv.h>
-#include <position_sense/endat/include/endat_interface.h>
-#include "ti_drivers_open_close.h"
-#include "ti_board_open_close.h"
 
-HwiP_Params hwiPrms;
-static HwiP_Object gIcssgEncoderHwiObject0;  /* ICSSG EnDat PRU FW HWI */
-static HwiP_Object gIcssgEncoderHwiObject1;  /* ICSSG EnDat PRU FW HWI */
-static HwiP_Object gIcssgEncoderHwiObject2;  /* ICSSG EnDat PRU FW HWI */
+/* ========================================================================== */
+/*                           Macros & Typedefs                                */
+/* ========================================================================== */
 
-/* ICSS Interrupt settings */
-#ifdef PRUICSSM
-#if (CONFIG_ENDAT0_PRUICSSx == 1)
-#define ICSS_PRU_ENDAT_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_0 )
-#define ICSS_RTU_ENDAT_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_1 )
-#define ICSS_TXPRU_ENDAT_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_2 )
+/*
+ * NOTE: Host Interrupt Number Synchronization
+ *
+ * The host interrupt numbers defined below (e.g., ICSS_PRU_ENDAT_INT_NUM)
+ * must match the interrupt channel assignments in SysConfig:
+ *     PRU(ICSS) module -> INTC section -> INTC Host Interrupt
+ *
+ * Host interrupt channels route PRU events to the R5F core. The mapping is:
+ *     Host Interrupt 2-9 in SysConfig = HOST_INTR_PEND_0-7 registers
+ *
+ * If you change the host interrupt assignments in SysConfig, update these
+ * macros accordingly to maintain proper interrupt delivery from PRU to R5F.
+ */
+#ifndef SOC_AM243X
+/* ICSSM Interrupt Numbers */
+#if(CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
+#if(CONFIG_ENDAT0_PRUICSS_INSTANCE == 1)
+#define ICSS_RTU_ENDAT_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_0)
+#define ICSS_PRU_ENDAT_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_1)
+#define ICSS_TXPRU_ENDAT_INT_NUM       (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_2)
 #else
-#define ICSS_PRU_ENDAT_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_0 )
-#define ICSS_RTU_ENDAT_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_1 )
-#define ICSS_TXPRU_ENDAT_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_2 )
+#define ICSS_RTU_ENDAT_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_0)
+#define ICSS_PRU_ENDAT_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_1)
+#define ICSS_TXPRU_ENDAT_INT_NUM       (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_2)
 #endif
 #else
-#if (CONFIG_ENDAT0_PRUICSSx == 1)
-#define ICSS_PRU_ENDAT_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_0 )
-#define ICSS_RTU_ENDAT_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_1 )
-#define ICSS_TXPRU_ENDAT_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_2 )
+#if(CONFIG_ENDAT0_PRUICSS_INSTANCE == 1)
+#define ICSS_PRU_ENDAT_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_0)
 #else
-#define ICSS_PRU_ENDAT_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_0 )
-#define ICSS_RTU_ENDAT_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_1 )
-#define ICSS_TXPRU_ENDAT_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_2 )
+#define ICSS_PRU_ENDAT_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_0)
 #endif
 #endif
-uint32_t gPruEnDatIrqCnt0;
-uint32_t gPruEnDatIrqCnt1;
-uint32_t gPruEnDatIrqCnt2;
-
-/*global variable */
-void *gPruss_iep; 
-
-
-
-PRUICSS_Handle gPruIcssXHandle;
-
-/* ICSS INTC configuration */
-#if (CONFIG_ENDAT0_PRUICSSx == 1)
-    extern PRUICSS_IntcInitData icss1_intc_initdata;
 #else
-    extern PRUICSS_IntcInitData icss0_intc_initdata;
+/* ICSSG Interrupt Numbers */
+#if(CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
+#if(CONFIG_ENDAT0_PRUICSS_INSTANCE == 1)
+#define ICSS_RTU_ENDAT_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_0)
+#define ICSS_PRU_ENDAT_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_1)
+#define ICSS_TXPRU_ENDAT_INT_NUM       (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_2)
+#else
+#define ICSS_RTU_ENDAT_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_0)
+#define ICSS_PRU_ENDAT_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_1)
+#define ICSS_TXPRU_ENDAT_INT_NUM       (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_2)
+#endif
+#else
+#if(CONFIG_ENDAT0_PRUICSS_INSTANCE == 1)
+#define ICSS_PRU_ENDAT_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG1_PR1_HOST_INTR_PEND_0)
+#else
+#define ICSS_PRU_ENDAT_INT_NUM         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_0)
+#endif
+#endif
 #endif
 
-void endat_config_iep(struct endat_periodic_interface *endat_periodic_interface)
+/*
+ * NOTE: The INTC event numbers defined below must match the corresponding
+ * definitions in the PRU firmware header file:
+ *     "source/position_sense/endat/firmware/endat_icss_reg_defs.h"
+ *
+ * These event numbers are used for communication between the R5F and
+ * PRU firmware. Any changes to these values must be synchronized between
+ * both files to ensure proper interrupt handling.
+ */
+#if(CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
+#if(CONFIG_ENDAT0_PRUICSS_SLICE == 1)
+/* SLICE1 Multi-PRU: Events 34,35,36 -> 18,19,20 */
+/** \brief RTU-PRU EnDAT interrupt event number (18 = 34 - 16) */
+#define RTU_TRIGGER_HOST_ENDAT_EVT      (34-16)
+/** \brief PRU EnDAT interrupt event number (19 = 35 - 16) */
+#define PRU_TRIGGER_HOST_ENDAT_EVT      (35-16)
+/** \brief TX-PRU EnDAT interrupt event number (20 = 36 - 16) */
+#define TXPRU_TRIGGER_HOST_ENDAT_EVT    (36-16)
+#else
+/* SLICE0 Multi-PRU: Events 37,38,39 -> 21,22,23 */
+/** \brief RTU-PRU EnDAT interrupt event number (21 = 37 - 16) */
+#define RTU_TRIGGER_HOST_ENDAT_EVT      (37-16)
+/** \brief PRU EnDAT interrupt event number (22 = 38 - 16) */
+#define PRU_TRIGGER_HOST_ENDAT_EVT      (38-16)
+/** \brief TX-PRU EnDAT interrupt event number (23 = 39 - 16) */
+#define TXPRU_TRIGGER_HOST_ENDAT_EVT    (39-16)
+#endif
+#else
+#if(CONFIG_ENDAT0_PRUICSS_SLICE == 1)
+/* SLICE1 Single-PRU: Event 34 -> 18 */
+/** \brief PRU EnDAT interrupt event number (18 = 34 - 16) */
+#define PRU_TRIGGER_HOST_ENDAT_EVT      (34-16)
+#else
+/* SLICE0 Single-PRU: Event 37 -> 21 */
+/** \brief PRU EnDAT interrupt event number (21 = 37 - 16) */
+#define PRU_TRIGGER_HOST_ENDAT_EVT      (37-16)
+#endif
+#endif
+
+#if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
+/* NOTE: Dual handle example using PRU0 and PRU1 is tested only with
+ * ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU mode on AM261x. For enabling other
+ * combinations, update code and remove this line.
+ */
+
+/*
+ * NOTE: Host Interrupt Number Synchronization
+ *
+ * The host interrupt numbers defined below (e.g., ICSS_PRU_ENDAT_INT_NUM)
+ * must match the interrupt channel assignments in SysConfig:
+ *     PRU(ICSS) module -> INTC section -> INTC Host Interrupt
+ *
+ * Host interrupt channels route PRU events to the R5F core. The mapping is:
+ *     Host Interrupt 2-9 in SysConfig = HOST_INTR_PEND_0-7 registers
+ *
+ * If you change the host interrupt assignments in SysConfig, update these
+ * macros accordingly to maintain proper interrupt delivery from PRU to R5F.
+ */
+#if(CONFIG_ENDAT1_PRUICSS_INSTANCE == 1)
+#define ICSS_PRU_ENDAT_INT_NUM_SECOND_SLICE         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM1_PR1_HOST_INTR_PEND_1)
+#else
+#define ICSS_PRU_ENDAT_INT_NUM_SECOND_SLICE         (CSLR_R5FSS0_CORE0_INTR_PRU_ICSSM0_PR1_HOST_INTR_PEND_1)
+#endif
+
+
+/*
+ * NOTE: The INTC event numbers defined below must match the corresponding
+ * definitions in the PRU firmware header file:
+ *     "source/position_sense/endat/firmware/endat_icss_reg_defs.h"
+ *
+ * These event numbers are used for communication between the R5F and
+ * PRU firmware. Any changes to these values must be synchronized between
+ * both files to ensure proper interrupt handling.
+ */
+#if(CONFIG_ENDAT1_PRUICSS_SLICE == 1)
+/* Second instance SLICE1: Event 34 -> 18 */
+#define PRU_TRIGGER_HOST_ENDAT_EVT_SECOND_SLICE     (34-16)
+#else
+/* Second instance SLICE0: Event 37 -> 21 */
+#define PRU_TRIGGER_HOST_ENDAT_EVT_SECOND_SLICE     (37-16)
+#endif /* CONFIG_ENDAT1_PRUICSS_SLICE */
+
+#endif /* ENDAT_DUAL_PRU_SLICE_ENABLE */
+
+/* ========================================================================== */
+/*                            Global Variables                                */
+/* ========================================================================== */
+
+static HwiP_Object gEndatHwiObject[CONFIG_ENDAT_NUM_INSTANCES][ENDAT_NUM_CH_PER_SLICE_MAX];
+uint32_t gPruEndatIrqCnt[CONFIG_ENDAT_NUM_INSTANCES][ENDAT_NUM_CH_PER_SLICE_MAX] = {0};
+
+/* PRU-ICSS INTC Initialization Data Structure */
+/* ASSUMPTION: Same PRU-ICSS instance is used for multiple EnDAT handles in this example */
+#if(CONFIG_ENDAT0_PRUICSS_INSTANCE == 1)
+extern PRUICSS_IntcInitData icss1_intc_initdata;
+#else
+extern PRUICSS_IntcInitData icss0_intc_initdata;
+#endif
+
+/* ========================================================================== */
+/*                       Function Declarations                                */
+/* ========================================================================== */
+
+/* IEP Configuration Functions */
+#if defined(SOC_AM243X)
+static int32_t endat_config_iep_cap_for_sync(endat_handle handle, uint32_t iep_sync0_period);
+static void endat_disable_iep_cap_sync(void *pru_iep);
+#endif /* SOC_AM243X */
+
+static int32_t endat_config_iep(endat_periodic_interface *endat_periodic_interface);
+
+/* IEP Counter Control */
+static int32_t endat_enable_iep_counter(PRUICSS_Handle pruicss_handle, uint8_t iep_instance);
+static int32_t endat_disable_iep_counter(PRUICSS_Handle pruicss_handle, uint8_t iep_instance);
+
+/* IEP Reset Control */
+static void endat_enable_iep_reset_on_cmp0(void *pru_iep, uint64_t iep_reset_count);
+static void endat_disable_iep_reset_on_cmp0(void *pru_iep);
+
+/* IEP CAP Event Functions */
+static void endat_enable_iep_cap_event(void *pru_iep, uint8_t event_num);
+static void endat_disable_iep_cap_event(void *pru_iep, uint8_t event_num);
+
+/* IEP CMP Event Functions */
+static void endat_enable_iep_cmp_event(void *pru_iep, uint64_t trigger_point, uint8_t event_num);
+static void endat_disable_iep_cmp_event(void *pru_iep, uint8_t event_num);
+
+/* Interrupt Configuration */
+static void endat_interrupt_config(void *pruicss_handle);
+
+/* IRQ Handlers */
+void endat_pru_irq_handler(void *pruicss_handle);
+
+#if(CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
+void endat_rtupru_irq_handler(void *pruicss_handle);
+void endat_txpru_irq_handler(void *pruicss_handle);
+#endif
+
+#if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
+/* NOTE: Dual handle example using PRU0 and PRU1 is tested only with
+ * ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU mode on AM261x. Only PRU IRQ
+ * handler is defined.
+ */
+void endat_pru_irq_handler_second_slice(void *pruicss_handle);
+#endif
+
+/* ========================================================================== */
+/*                          Function Definitions                              */
+/* ========================================================================== */
+
+/**
+ * \brief Configure IEP CAP mode for periodic trigger using SYNC signal
+ *
+ * \details This function configures IEP SYNC OUT0 generation and routes it to CAP inputs via TIMESYNC/GPIOMUX router
+ *
+ * Channel Configuration:
+ * - Non-Load Share: CAP6 (LATCH_IN0) via TIMESYNC router
+ * - Load Share Ch0: CAP6 (LATCH_IN0) via TIMESYNC router
+ * - Load Share Ch1: CAP0 from GPIO0_GPIO_4 via GPIOMUX router (requires external GPIO connection)
+ * - Load Share Ch2: CAP7 (LATCH_IN1) via TIMESYNC router
+ *
+ * \param handle EnDAT driver handle
+ * \param iep_sync0_period IEP SYNC OUT0 period in IEP clock cycles
+ */
+#if defined(SOC_AM243X)
+static int32_t endat_config_iep_cap_for_sync(endat_handle handle, uint32_t iep_sync0_period)
 {
-    /*reset iep timer*/
-    void *pruicss_iep = endat_periodic_interface->pruicss_iep;
-    struct endat_pruss_xchg *pruss_xchg = endat_periodic_interface->pruicss_dmem;
-    uint8_t temp;
-    uint8_t event;
-    uint32_t cmp_reg0;
-    uint32_t cmp_reg1;
-    uint32_t event_clear;
+    const endat_attrs *attrs = NULL;
+    void *pru_iep;
+    uint32_t reg_value;
 
-    /*clear IEP*/
-    temp = HW_RD_REG8((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG );
-    temp &= 0xFE;
-    HW_WR_REG8((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG, temp);
-
-    /* cmp cfg reg */
-    event = HW_RD_REG8((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG);
-    event_clear = HW_RD_REG8((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG);
-
-    /*enable IEP reset by cmp0 event*/
-    event |= IEP_CMP0_ENABLE;
-    event |= IEP_RST_CNT_EN;
-    event_clear |= 1;
-
-    /*set IEP counter to ZERO*/
-    HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG0, 0);
-    HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG1, 0);
-
-    /*Clear all event & configure*/
-    if(endat_periodic_interface->load_share)
+    attrs = endat_get_attrs(handle);
+    if((handle == NULL) || (attrs == NULL))
     {
-        /*enable event*/
-        event |= pruss_xchg->config[0].channel==1?(0x1 << (IEP_CH0_CMP_EVNT + 1)):0; 
-        event |= pruss_xchg->config[1].channel==2?(0x1 << (IEP_CH1_CMP_EVNT + 1)):0;  
-        event |= pruss_xchg->config[2].channel==4?(0x1 << (IEP_CH2_CMP_EVNT + 1)):0;  
+        DebugP_log("\r\n\n|ERROR: endat_config_iep_cap_for_sync() failed due to NULL handle/attrs");
+        return SystemP_FAILURE;
+    }
 
-        /*clear event*/
-        event_clear |= pruss_xchg->config[0].channel==1?(0x1 << IEP_CH0_CMP_EVNT):0; 
-        event_clear |= pruss_xchg->config[1].channel==2?(0x1 << IEP_CH1_CMP_EVNT):0; 
-        event_clear |= pruss_xchg->config[2].channel==4?(0x1 << IEP_CH2_CMP_EVNT):0;  
+    pru_iep = attrs->iep_base_addr;
+    if(pru_iep == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat_config_iep_cap_for_sync() failed due to NULL iep_base_addr");
+        return SystemP_FAILURE;
+    }
 
-        if(pruss_xchg->config[0].channel)
+    /* Configure IEP CMP1 to start SYNC OUT0 after 100 cycles */
+    endat_enable_iep_cmp_event(pru_iep, ENDAT_IEP_CMP1_START_DELAY, ENDAT_IEP_CMP_EVENT_FOR_SYNC0);
+
+    /* Enable SYNC OUT0 cyclic generation */
+    reg_value = HW_RD_REG32((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_SYNC_CTRL_REG);
+    reg_value |= (ENDAT_IEP_SYNC_CTRL_SYNC01_EN_MASK | ENDAT_IEP_SYNC_CTRL_SYNC0_EN_MASK);
+    reg_value |= ENDAT_IEP_SYNC_CTRL_SYNC0_CYCLIC_EN_MASK;
+    HW_WR_REG32((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_SYNC_CTRL_REG, reg_value);
+
+    /* Configure SYNC OUT0 pulse width and period */
+    HW_WR_REG32((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_SYNC_PWIDTH_REG, ENDAT_IEP_SYNC0_PULSE_WIDTH);
+    HW_WR_REG32((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_SYNC0_PERIOD_REG, (iep_sync0_period-1));
+
+    /* Route SYNC OUT0 to LATCH inputs via TIMESYNC/GPIOMUX router */
+    if(attrs->load_share_enabled)
+    {
+        if(attrs->iep_instance == 0)
         {
-            cmp_reg0 = (endat_periodic_interface->ch0_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
-            cmp_reg1 = (endat_periodic_interface->ch0_trigger_count>>32 & 0xffffffff);
-
-            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + IEP_CH0_CMP_EVNT*8),  cmp_reg0);
-            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + IEP_CH0_CMP_EVNT*8),  cmp_reg1);
+            if(attrs->channel0_enabled)
+            {
+                if(attrs->pruicss_instance == 1)
+                {
+                    /* ICSSG1: Connect IEP0 SYNC OUT0 output to LATCH_IN0 */
+                    HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + ENDAT_TIMESYNC_EVENT_ROUTER_OUT12_OFFSET),
+                                ENDAT_TIMESYNC_EVENT_ROUTER_IN29);
+                }
+                else
+                {
+                    /* ICSSG0: Connect IEP0 SYNC OUT0 output to LATCH_IN0 */
+                    HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + ENDAT_TIMESYNC_EVENT_ROUTER_OUT8_OFFSET),
+                                ENDAT_TIMESYNC_EVENT_ROUTER_IN25);
+                }
+            }
+            if(attrs->channel2_enabled)
+            {
+                if(attrs->pruicss_instance == 1)
+                {
+                    /* ICSSG1: Connect IEP0 SYNC OUT0 output to LATCH_IN1 */
+                    HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + ENDAT_TIMESYNC_EVENT_ROUTER_OUT13_OFFSET),
+                                ENDAT_TIMESYNC_EVENT_ROUTER_IN29);
+                }
+                else
+                {
+                    /* ICSSG0: Connect IEP0 SYNC OUT0 output to LATCH_IN1 */
+                    HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + ENDAT_TIMESYNC_EVENT_ROUTER_OUT9_OFFSET),
+                                ENDAT_TIMESYNC_EVENT_ROUTER_IN25);
+                }
+            }
+        }
+        else
+        {
+            if(attrs->channel0_enabled)
+            {
+                if(attrs->pruicss_instance == 1)
+                {
+                    /* ICSSG1: Connect IEP1 SYNC OUT0 output to LATCH_IN0 */
+                    HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + ENDAT_TIMESYNC_EVENT_ROUTER_OUT14_OFFSET),
+                                ENDAT_TIMESYNC_EVENT_ROUTER_IN31);
+                }
+                else
+                {
+                    /* ICSSG0: Connect IEP1 SYNC OUT0 output to LATCH_IN0 */
+                    HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + ENDAT_TIMESYNC_EVENT_ROUTER_OUT10_OFFSET),
+                                ENDAT_TIMESYNC_EVENT_ROUTER_IN27);
+                }
+            }
+            if(attrs->channel2_enabled)
+            {
+                if(attrs->pruicss_instance == 1)
+                {
+                    /* ICSSG1: Connect IEP1 SYNC OUT0 output to LATCH_IN1 */
+                    HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + ENDAT_TIMESYNC_EVENT_ROUTER_OUT15_OFFSET),
+                                ENDAT_TIMESYNC_EVENT_ROUTER_IN31);
+                }
+                else
+                {
+                    /* ICSSG0: Connect IEP1 SYNC OUT0 output to LATCH_IN1 */
+                    HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + ENDAT_TIMESYNC_EVENT_ROUTER_OUT11_OFFSET),
+                                ENDAT_TIMESYNC_EVENT_ROUTER_IN27);
+                }
+            }
         }
 
-        if(pruss_xchg->config[1].channel)
+        /* GPIOMUX router configuration for channel 1 */
+        if(attrs->channel1_enabled)
         {
-            cmp_reg0 = (endat_periodic_interface->ch1_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
-            cmp_reg1 = (endat_periodic_interface->ch1_trigger_count>>32 & 0xffffffff);
+            if(attrs->pruicss_instance == 1)
+            {
+                DebugP_log("\r\n ERROR: GPIOMUX router can not be configured for routing event to PRU-ICSSG1\r\n");
+                return SystemP_FAILURE;
+            }
 
-            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + IEP_CH1_CMP_EVNT*8),  cmp_reg0);
-            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + IEP_CH1_CMP_EVNT*8),  cmp_reg1);
-
+            /* Route GPIO to IEP CAP0 input*/
+            if(attrs->iep_instance == 0)
+            {
+                /* Connect GPIO to IEP0 CAP_IN */
+                HW_WR_REG32((CSL_MAIN_GPIOMUX_INTROUTER0_CFG_BASE + ENDAT_GPIOMUX_INTROUTER0_IEP0_CAP_OFFSET),
+                            ENDAT_GPIOMUX_INTROUTER0_CAP_GPIO_IN);
+            }
+            else
+            {
+                /* Connect GPIO to IEP1 CAP_IN */
+                HW_WR_REG32((CSL_MAIN_GPIOMUX_INTROUTER0_CFG_BASE + ENDAT_GPIOMUX_INTROUTER0_IEP1_CAP_OFFSET),
+                            ENDAT_GPIOMUX_INTROUTER0_CAP_GPIO_IN);
+            }
         }
-
-        if(pruss_xchg->config[2].channel)
-        {
-            cmp_reg0 = (endat_periodic_interface->ch2_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
-            cmp_reg1 = (endat_periodic_interface->ch2_trigger_count>>32 & 0xffffffff);
-
-            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + IEP_CH2_CMP_EVNT*8),  cmp_reg0);
-            HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + IEP_CH2_CMP_EVNT*8),  cmp_reg1);
-
-        }
-
     }
     else
     {
-        event |= (0x1 << (IEP_CH0_CMP_EVNT + 1));
-        event_clear |= (0x1 << IEP_CH0_CMP_EVNT);
-        cmp_reg0 = (endat_periodic_interface->ch0_trigger_count & 0xffffffff) - IEP_DEFAULT_INC;
-        cmp_reg1 = (endat_periodic_interface->ch0_trigger_count>>32 & 0xffffffff);
-
-        HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + IEP_CH0_CMP_EVNT*8),  cmp_reg0);
-        HW_WR_REG32((uint8_t*)pruicss_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + IEP_CH0_CMP_EVNT*8),  cmp_reg1);
-
+        /* Non-load share mode: Route SYNC OUT0 to LATCH_IN0 for single channel */
+        if(attrs->iep_instance == 0)
+        {
+            if(attrs->pruicss_instance == 1)
+            {
+                /* ICSSG1: Connect IEP0 SYNC OUT0 output to LATCH_IN0 */
+                HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + ENDAT_TIMESYNC_EVENT_ROUTER_OUT12_OFFSET),
+                            ENDAT_TIMESYNC_EVENT_ROUTER_IN29);
+            }
+            else
+            {
+                /* ICSSG0: Connect IEP0 SYNC OUT0 output to LATCH_IN0 */
+                HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + ENDAT_TIMESYNC_EVENT_ROUTER_OUT8_OFFSET),
+                            ENDAT_TIMESYNC_EVENT_ROUTER_IN25);
+            }
+        }
+        else
+        {
+            if(attrs->pruicss_instance == 1)
+            {
+                /* ICSSG1: Connect IEP1 SYNC OUT0 output to LATCH_IN0 */
+                HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + ENDAT_TIMESYNC_EVENT_ROUTER_OUT14_OFFSET),
+                            ENDAT_TIMESYNC_EVENT_ROUTER_IN31);
+            }
+            else
+            {
+                /* ICSSG0: Connect IEP1 SYNC OUT0 output to LATCH_IN0 */
+                HW_WR_REG32((CSL_TIMESYNC_EVENT_INTROUTER0_CFG_BASE + ENDAT_TIMESYNC_EVENT_ROUTER_OUT10_OFFSET),
+                            ENDAT_TIMESYNC_EVENT_ROUTER_IN27);
+            }
+        }
     }
-    /*clear event*/
-    HW_WR_REG8((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, event_clear);
-    /*enable  event*/
-    HW_WR_REG8((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG, event);
+    return SystemP_SUCCESS;
+}
+#endif /* SOC_AM243X */
 
-    /*configure cmp0 registers*/
-    cmp_reg0 = (endat_periodic_interface->cmp0_count & 0xffffffff) - IEP_DEFAULT_INC;
-    cmp_reg1 = (endat_periodic_interface->cmp0_count>>32 & 0xffffffff);
-    HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0,  cmp_reg0);
-    HW_WR_REG32((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1,  cmp_reg1);
+/**
+ * \brief Disable IEP CAP mode SYNC generation
+ *
+ * \details This function disables IEP SYNC OUT0 generation and CMP1 event used for sync.
+ * This is typically called during periodic mode shutdown.
+ *
+ * \param pru_iep Pointer to PRU-ICSS IEP Base Address
+ */
+#if defined(SOC_AM243X)
+/**
+ * \brief Disable IEP SYNC OUT0 generation for CAP mode
+ *
+ * \details This function disables IEP SYNC OUT0 signal generation that was
+ *          configured for CAP mode periodic triggering. Called during cleanup
+ *          when stopping periodic mode.
+ *
+ *          **Operations performed:**
+ *          - Disables SYNC OUT0 enable bit
+ *          - Disables SYNC OUT0 cyclic generation
+ *          - Disables CMP1 event
+ *
+ * \param[in] pru_iep IEP register base address
+ *
+ * \note Only used on AM243x for CAP mode cleanup
+ * \note Companion function to endat_config_iep_cap_for_sync()
+ */
+static void endat_disable_iep_cap_sync(void *pru_iep)
+{
+    uint32_t reg_value;
 
+    if(pru_iep == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat_disable_iep_cap_sync() failed due to NULL pru_iep");
+        return;
+    }
 
-    /*write IEP default increment & IEP start*/
-    temp = HW_RD_REG8((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG );
-    temp &= 0x0F;
-    temp |= 0x10;
-    temp |= IEP_COUNTER_EN;
-    HW_WR_REG8((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG, temp);
+    /* Disable SYNC OUT0 generation */
+    reg_value = HW_RD_REG32((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_SYNC_CTRL_REG);
+    reg_value &= ~(ENDAT_IEP_SYNC_CTRL_SYNC01_EN_MASK | ENDAT_IEP_SYNC_CTRL_SYNC0_EN_MASK); /* SYNC OUT0 disable */
+    reg_value &= ~ENDAT_IEP_SYNC_CTRL_SYNC0_CYCLIC_EN_MASK; /* SYNC OUT0 cyclic disable */
+    HW_WR_REG32((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_SYNC_CTRL_REG, reg_value);
+
+    /* Disable CMP1 event (configured for SYNC OUT0) */
+    endat_disable_iep_cmp_event(pru_iep, ENDAT_IEP_CMP_EVENT_FOR_SYNC0);
+}
+#endif /* SOC_AM243X */
+
+/**
+ * \brief Enable IEP reset on CMP0 event
+ *
+ * \param pru_iep Pointer to PRU-ICSS IEP Base Address
+ * \param iep_reset_count IEP counter value for reset (period)
+ */
+static void endat_enable_iep_reset_on_cmp0(void *pru_iep, uint64_t iep_reset_count)
+{
+    uint16_t event;
+    uint32_t reg0;
+    uint32_t reg1;
+
+    if(pru_iep == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat_enable_iep_reset_on_cmp0() failed due to NULL pru_iep");
+        return;
+    }
+
+    /* Clear event */
+    HW_WR_REG16((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, (1 << ENDAT_IEP_CMP_EVENT_FOR_RESET));
+
+    /* Set IEP_CMP0_REG0 and IEP_CMP0_REG1 registers */
+    reg0 = ENDAT_GET_LOWER_32BITS(iep_reset_count);
+    reg1 = ENDAT_GET_UPPER_32BITS(iep_reset_count);
+
+    HW_WR_REG32((uint8_t *)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0), reg0);
+    HW_WR_REG32((uint8_t *)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1), reg1);
+
+    /* Read CMP CFG register */
+    event = HW_RD_REG16((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG);
+
+    /* Enable IEP reset by CMP0 event */
+    event |= (1 << ENDAT_IEP_SLV_CMP_CFG_REG_CMP_EN_SHIFT);  /* CMP0 enable bit */
+    event |= (1 << ENDAT_IEP_SLV_CMP_CFG_REG_CMP0_RST_CNT_EN_SHIFT);  /* Reset counter enable bit */
+
+    /* Enable event */
+    HW_WR_REG16((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG, event);
 }
 
-
-void endat_interrupt_config(struct endat_periodic_interface *endat_periodic_interface)
+/**
+ * \brief Disable IEP reset on CMP0 event
+ *
+ * \param pru_iep Pointer to PRU-ICSS IEP Base Address
+ */
+static void endat_disable_iep_reset_on_cmp0(void *pru_iep)
 {
-    struct endat_pruss_xchg *pruss_xchg = endat_periodic_interface->pruicss_dmem;
+    uint16_t event;
+
+    if(pru_iep == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat_disable_iep_reset_on_cmp0() failed due to NULL pru_iep");
+        return;
+    }
+
+    /* Read CMP CFG register */
+    event = HW_RD_REG16((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG);
+
+    /* Disable IEP reset by CMP0 event */
+    event &= ~(1 << ENDAT_IEP_SLV_CMP_CFG_REG_CMP_EN_SHIFT);  /* Clear CMP0 enable bit */
+    event &= ~(1 << ENDAT_IEP_SLV_CMP_CFG_REG_CMP0_RST_CNT_EN_SHIFT);  /* Clear Reset counter enable bit */
+
+    /* Write back the modified value */
+    HW_WR_REG16((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG, event);
+
+    /* Clear IEP_CMP0_REG0 and IEP_CMP0_REG1 registers */
+    HW_WR_REG32((uint8_t *)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0), 0);
+    HW_WR_REG32((uint8_t *)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1), 0);
+}
+
+/**
+ * \brief Enable IEP counter
+ *
+ * \param handle EnDAT driver handle
+ */
+static int32_t endat_enable_iep_counter(PRUICSS_Handle pruicss_handle, uint8_t iep_instance)
+{
     int32_t status;
-    if(endat_periodic_interface->load_share)
+
+    if(pruicss_handle == NULL)
     {
-        if(pruss_xchg->config[0].channel)
-        {
-            /* Register & enable ICSSG EnDat PRU FW interrupt */
-            HwiP_Params_init(&hwiPrms);
-            hwiPrms.intNum      = ICSS_PRU_ENDAT_INT_NUM;
-            hwiPrms.callback    = &pruEnDatIrqHandler;
-            hwiPrms.args        = 0;
-            hwiPrms.isPulse     = FALSE;
-            hwiPrms.isFIQ       = FALSE;
-            status              = HwiP_construct(&gIcssgEncoderHwiObject0, &hwiPrms);
-            DebugP_assert(status == SystemP_SUCCESS);
+        DebugP_log("\r\n\n|ERROR: endat_enable_iep_counter() failed due to NULL pruicss_handle");
+        return SystemP_FAILURE;
+    }
 
+    /* Configure and enable IEP counter */
+    status = PRUICSS_setIepCounterIncrementValue(pruicss_handle, iep_instance, ENDAT_IEP_COUNTER_INCREMENT);
+
+    if(status == SystemP_SUCCESS)
+    {
+        status = PRUICSS_controlIepCounter(pruicss_handle, iep_instance, ENDAT_IEP_COUNTER_ENABLE);
+    }
+
+    return status;
+}
+
+/**
+ * \brief Disable IEP counter
+ *
+ * \param handle EnDAT driver handle
+ */
+static int32_t endat_disable_iep_counter(PRUICSS_Handle pruicss_handle, uint8_t iep_instance)
+{
+    int32_t status;
+
+    if(pruicss_handle == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat_disable_iep_counter() failed due to NULL pruicss_handle");
+        return SystemP_FAILURE;
+    }
+
+    /* Disable IEP counter */
+    status = PRUICSS_controlIepCounter(pruicss_handle, iep_instance, ENDAT_IEP_COUNTER_DISABLE);
+    return status;
+}
+
+/**
+ * \brief Disable IEP CMP event
+ *
+ * \param pru_iep Pointer to PRU-ICSS IEP Base Address
+ * \param event_num CMP event number (0-15)
+ */
+static void endat_disable_iep_cmp_event(void *pru_iep, uint8_t event_num)
+{
+    uint32_t reg0;
+
+    if(pru_iep == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat_disable_iep_cmp_event() failed due to NULL pru_iep");
+        return;
+    }
+
+    /* Disable the CMP event */
+    /* Read the current register value */
+    reg0 = HW_RD_REG32(((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG));
+    /* Clear the CMP_EN bit (AND with the negated new value) */
+    reg0 &= ~(((uint32_t)1U << event_num) << ENDAT_IEP_SLV_CMP_CFG_REG_CMP_EN_SHIFT);
+    /* Write back the modified value */
+    HW_WR_REG32(((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG), reg0);
+
+    /* Clear CMP register values */
+    /* IEP CMP registers 8-15 have a gap in memory layout and require an additional 8-byte offset */
+    if(event_num > 7)
+    {
+        HW_WR_REG32((uint8_t *)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + event_num*ENDAT_8_BYTE_REG_OFFSET + ENDAT_8_BYTE_REG_OFFSET), 0);
+        HW_WR_REG32((uint8_t *)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + event_num*ENDAT_8_BYTE_REG_OFFSET + ENDAT_8_BYTE_REG_OFFSET), 0);
+    }
+    else
+    {
+        HW_WR_REG32((uint8_t *)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + event_num*ENDAT_8_BYTE_REG_OFFSET), 0);
+        HW_WR_REG32((uint8_t *)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + event_num*ENDAT_8_BYTE_REG_OFFSET), 0);
+    }
+}
+
+/**
+ * \brief Disable IEP CAP event
+ *
+ * \param pru_iep Pointer to PRU-ICSS IEP Base Address
+ * \param event_num CAP event number (0-7)
+ */
+static void endat_disable_iep_cap_event(void *pru_iep, uint8_t event_num)
+{
+    uint32_t reg0;
+
+    if(pru_iep == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat_disable_iep_cap_event() failed due to NULL pru_iep");
+        return;
+    }
+
+    /* Disable the CAP event */
+    /* Read the current register value */
+    reg0 = HW_RD_REG32(((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG));
+
+    /*
+     * Clear the CAP_EN bit (AND with the negated new value)
+     * NOTE: IEP CAP6 and CAP7 has 2 register bits each. So bit 8 needs
+     * to be cleared for CAP7. Only clearing capture rise bit for CAP6 and CAP7.
+     */
+    if(event_num == 7)
+    {
+        reg0 &= ~((uint32_t)1U << (event_num + 1));
+    }
+    else
+    {
+        reg0 &= ~((uint32_t)1U << event_num);
+    }
+    /* Write back the modified value */
+    HW_WR_REG32(((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG), reg0);
+}
+
+/**
+ * \brief Enable IEP CAP event
+ *
+ * \param pru_iep Pointer to PRU-ICSS IEP Base Address
+ * \param event_num CAP event number (0-7)
+ */
+static void endat_enable_iep_cap_event(void *pru_iep, uint8_t event_num)
+{
+    uint32_t reg0;
+
+    if(pru_iep == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat_enable_iep_cap_event() failed due to NULL pru_iep");
+        return;
+    }
+
+    /* Configure the CAP event in IEP hardware register */
+    /* Read the current register value */
+    reg0 = HW_RD_REG32(((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG));
+
+    /*
+     * Set the CAP_EN bit (OR with the new value)
+     * NOTE: IEP CAP6 and CAP7 has 2 register bits each. So bit 8 needs
+     * to be set for CAP7. Only setting capture rise bit for CAP6 and CAP7.
+     */
+    if(event_num == 7)
+    {
+        reg0 |= ((uint32_t)1U << (event_num + 1));
+    }
+    else
+    {
+        reg0 |= ((uint32_t)1U << event_num);
+    }
+    /* Write back the modified value */
+    HW_WR_REG32(((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CAP_CFG_REG), reg0);
+}
+
+/**
+ * \brief Enable IEP CMP event
+ *
+ * \param pru_iep Pointer to PRU-ICSS IEP Base Address
+ * \param trigger_point IEP counter value for trigger
+ * \param event_num CMP event number (0-15)
+ */
+static void endat_enable_iep_cmp_event(void *pru_iep, uint64_t trigger_point, uint8_t event_num)
+{
+    uint32_t reg0;
+    uint32_t reg1;
+
+    if(pru_iep == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat_enable_iep_cmp_event() failed due to NULL pru_iep");
+        return;
+    }
+
+    /* Clear event */
+    HW_WR_REG16((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_STATUS_REG, (uint16_t)(1 << event_num));
+
+    /* Write trigger point to CMP registers */
+    reg0 = ENDAT_GET_LOWER_32BITS(trigger_point);
+    reg1 = ENDAT_GET_UPPER_32BITS(trigger_point);
+    /* IEP CMP registers 8-15 have a gap in memory layout and require an additional 8-byte offset */
+    if(event_num > 7)
+    {
+        HW_WR_REG32((uint8_t *)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + event_num*ENDAT_8_BYTE_REG_OFFSET + ENDAT_8_BYTE_REG_OFFSET), reg0);
+        HW_WR_REG32((uint8_t *)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + event_num*ENDAT_8_BYTE_REG_OFFSET + ENDAT_8_BYTE_REG_OFFSET), reg1);
+    }
+    else
+    {
+        HW_WR_REG32((uint8_t *)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG0 + event_num*ENDAT_8_BYTE_REG_OFFSET), reg0);
+        HW_WR_REG32((uint8_t *)pru_iep + (CSL_ICSS_PR1_IEP0_SLV_CMP0_REG1 + event_num*ENDAT_8_BYTE_REG_OFFSET), reg1);
+    }
+
+    /* Configure the IEP CMP event in hardware registers */
+    /* Read the current register value */
+    reg0 = HW_RD_REG32(((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG));
+
+    /* Set the CMP_EN bit (OR with the new value) */
+    reg0 |= ((uint32_t)1U << event_num) << ENDAT_IEP_SLV_CMP_CFG_REG_CMP_EN_SHIFT;
+
+    /* Write back the modified value */
+    HW_WR_REG32(((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_CMP_CFG_REG), reg0);
+}
+
+/**
+ * \brief Configure IEP timer for EnDAT periodic trigger mode
+ *
+ * \details This function configures the PRU-ICSS IEP (Industrial Ethernet Peripheral) timer
+ *          to support periodic trigger mode for encoder transactions. It handles
+ *          both CMP (compare) and CAP (capture) modes based on configuration.
+ *
+ *          **Configuration performed:**
+ *          1. Disables IEP counter
+ *          2. Resets IEP counter to zero
+ *          3. **CMP Mode (is_cap_mode = 0):**
+ *             - Enables IEP counter reset on CMP0 event (defines period)
+ *             - Configures CMP events for each enabled channel with trigger counts
+ *             - IEP counter automatically resets when reaching iep_reset_count
+ *          4. **CAP Mode (is_cap_mode = 1):**
+ *             - On AM243x: Configures IEP SYNC output and routes to capture pins
+ *             - Enables CAP events for each enabled channel
+ *             - CAP events triggered by external signals
+ *          5. Re-enables IEP counter
+ *
+ *          **Multi-instance handling:**
+ *          - Uses CONFIG_ENDAT0 handle for PRU-ICSS instance-level resources (IEP is shared)
+ *          - Assumes all EnDAT instances use the same PRU-ICSS and IEP instance
+ *          - Supports dual PRU slice configuration when ENDAT_DUAL_PRU_SLICE_ENABLE defined
+ *
+ *          **Load share mode:**
+ *          - Iterates through enabled channels based on channel_mask
+ *          - Configures CMP/CAP events for each active channel independently
+ *
+ * \param[in] endat_periodic_interface Pointer to periodic interface structure
+ * \note This function assumes the handle and IEP base address are valid (set by endat_init())
+ */
+static int32_t endat_config_iep(endat_periodic_interface *endat_periodic_interface)
+{
+    const endat_attrs *attrs[CONFIG_ENDAT_NUM_INSTANCES] = {NULL};
+    endat_priv *priv[CONFIG_ENDAT_NUM_INSTANCES] = {NULL};
+    uint8_t ch_idx;
+    uint32_t i;
+    void *pru_iep;
+    int32_t status;
+
+    /* NULL check on interface pointer and handle(s) */
+    if(endat_periodic_interface == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat_config_iep() failed due to NULL endat_periodic_interface pointer");
+        return SystemP_FAILURE;
+    }
+
+    for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
+    {
+        attrs[i] = endat_get_attrs(endat_periodic_interface->handle[i]);
+        priv[i] = endat_get_priv(endat_periodic_interface->handle[i]);
+        if((endat_periodic_interface->handle[i] == NULL) || (attrs[i] == NULL) || (priv[i] == NULL))
+        {
+            DebugP_log("\r\n\n|ERROR: endat_config_iep() failed due to NULL handle/attrs/priv for EnDAT instance %u", i);
+            return SystemP_FAILURE;
         }
-        if(pruss_xchg->config[1].channel)
-        {
-            /* Register & enable ICSSG EnDat PRU FW interrupt */
-            HwiP_Params_init(&hwiPrms);
-            hwiPrms.intNum      = ICSS_RTU_ENDAT_INT_NUM;
-            hwiPrms.callback    = &rtuEnDatIrqHandler;
-            hwiPrms.args        = 0;
-            hwiPrms.isPulse     = FALSE;
-            hwiPrms.isFIQ       = FALSE;
-            status              = HwiP_construct(&gIcssgEncoderHwiObject1, &hwiPrms);
-            DebugP_assert(status == SystemP_SUCCESS);
+    }
 
+    /* PRU-ICSS Level Global Configuration uses first EnDAT handle */
+    /* ASSUMPTION: Same PRU-ICSS instance and IEP instance are used for multiple EnDAT handles in this example */
+    pru_iep = attrs[CONFIG_ENDAT0]->iep_base_addr;
+    if(pru_iep == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat_config_iep() failed due to NULL iep_base_addr");
+        return SystemP_FAILURE;
+    }
+
+    if(priv[CONFIG_ENDAT0]->pruicss_handle == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat_config_iep() failed due to NULL pruicss_handle");
+        return SystemP_FAILURE;
+    }
+
+    /* Disable IEP counter */
+    status = endat_disable_iep_counter(priv[CONFIG_ENDAT0]->pruicss_handle, attrs[CONFIG_ENDAT0]->iep_instance);
+    if(status == SystemP_FAILURE)
+    {
+        DebugP_log("\r\n\n|ERROR: endat_disable_iep_counter() failed");
+        return SystemP_FAILURE;
+    }
+
+    /* Set IEP counter to ZERO */
+    HW_WR_REG32((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG0, 0);
+    HW_WR_REG32((uint8_t *)pru_iep + CSL_ICSS_PR1_IEP0_SLV_COUNT_REG1, 0);
+
+    /* Configure IEP reset/sync based on mode */
+    if(endat_periodic_interface->is_cap_mode)
+    {
+#if defined(SOC_AM243X)
+        /*
+         * Configure IEP for generating SYNC and route it to IEP capture pins using TIMESYNC/GPIOMUX router on AM243x.
+         *
+         * If CONFIG_ENDAT_NUM_INSTANCES > 1 and CAP mode is used, configuration for signal routing to
+         * capture pins needs to be added based on availability.
+         */
+        status = endat_config_iep_cap_for_sync(endat_periodic_interface->handle[CONFIG_ENDAT0], ENDAT_GET_LOWER_32BITS(endat_periodic_interface->iep_reset_count));
+        if(status == SystemP_FAILURE)
+        {
+            DebugP_log("\r\n\n|ERROR: endat_config_iep_cap_for_sync() failed");
+            return SystemP_FAILURE;
         }
-        if(pruss_xchg->config[2].channel)
+#endif
+        for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
         {
-            /* Register & enable ICSSG EnDat PRU FW interrupt */
-            HwiP_Params_init(&hwiPrms);
-            hwiPrms.intNum      = ICSS_TXPRU_ENDAT_INT_NUM;
-            hwiPrms.callback    = &txpruEnDatIrqHandler;
-            hwiPrms.args        = 0;
-            hwiPrms.isPulse     = FALSE;
-            hwiPrms.isFIQ       = FALSE;
-            status              = HwiP_construct(&gIcssgEncoderHwiObject2, &hwiPrms);
-            DebugP_assert(status == SystemP_SUCCESS);
-
+            /* Configure CAP events for channels */
+            if(attrs[i]->load_share_enabled)
+            {
+                /* Load share mode: Iterate through enabled channels using channel_mask */
+                for(ch_idx = 0; ch_idx < ENDAT_NUM_CH_PER_SLICE_MAX; ch_idx++)
+                {
+                    if(attrs[i]->channel_mask & (1U << ch_idx))
+                    {
+                        endat_enable_iep_cap_event(pru_iep, attrs[i]->iep_cap_event[ch_idx]);
+                    }
+                }
+            }
+            else
+            {
+                /* Non-load share mode*/
+                endat_enable_iep_cap_event(pru_iep, attrs[i]->iep_cap_event[0]);
+            }
         }
     }
     else
     {
-        /* Register & enable ICSSG EnDat PRU FW interrupt */
-        HwiP_Params_init(&hwiPrms);
-        hwiPrms.intNum      = ICSS_PRU_ENDAT_INT_NUM;
-        hwiPrms.callback    = &pruEnDatIrqHandler;
-        hwiPrms.args        = 0;
-        hwiPrms.isPulse     = FALSE;
-        hwiPrms.isFIQ       = FALSE;
-        status              = HwiP_construct(&gIcssgEncoderHwiObject0, &hwiPrms);
-        DebugP_assert(status == SystemP_SUCCESS);
+        /* CMP mode: Enable IEP reset on CMP0 */
+        endat_enable_iep_reset_on_cmp0(pru_iep, endat_periodic_interface->iep_reset_count);
 
+        for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
+        {
+            /* Configure CMP events for channels */
+            if(attrs[i]->load_share_enabled)
+            {
+                /* Load share mode: Iterate through enabled channels using channel_mask */
+                for(ch_idx = 0; ch_idx < ENDAT_NUM_CH_PER_SLICE_MAX; ch_idx++)
+                {
+                    if(attrs[i]->channel_mask & (1U << ch_idx))
+                    {
+                        endat_enable_iep_cmp_event(pru_iep, endat_periodic_interface->periodic_trigger_count[i][ch_idx], attrs[i]->iep_cmp_event[ch_idx]);
+                    }
+                }
+            }
+            else
+            {
+                /* Non-load share mode: Use index 0 always */
+                endat_enable_iep_cmp_event(pru_iep, endat_periodic_interface->periodic_trigger_count[i][0], attrs[i]->iep_cmp_event[0]);
+            }
+        }
     }
 
-}    
-uint32_t  endat_config_periodic_mode(struct endat_periodic_interface *endat_periodic_interface, PRUICSS_Handle handle)
-{
-    int32_t  status;
-    gPruIcssXHandle = handle;
-    gPruss_iep = endat_periodic_interface->pruicss_iep;
-    /*configure IEP*/
-    endat_config_iep(endat_periodic_interface);
-    /* Initialize ICSS INTC */
-#if (CONFIG_BISSC0_PRUICSSx == 1)
-    status = PRUICSS_intcInit(gPruIcssXHandle, &icss1_intc_initdata);
-    if (status != SystemP_SUCCESS)
+    /* PRU-ICSS Level Global Configuration uses first EnDAT handle */
+    /* ASSUMPTION: Same PRU-ICSS instance and IEP instance are used for multiple EnDAT handles in this example */
+
+    /* Enable IEP counter */
+    status = endat_enable_iep_counter(priv[CONFIG_ENDAT0]->pruicss_handle, attrs[CONFIG_ENDAT0]->iep_instance);
+    if(status == SystemP_FAILURE)
     {
-        return 0;
+        DebugP_log("\r\n\n|ERROR: endat_enable_iep_counter() failed");
+        return SystemP_FAILURE;
+    }
+    return SystemP_SUCCESS;
+}
+
+/**
+ * \brief Configure and register PRU interrupt handlers for EnDAT periodic mode
+ *
+ * \details This function registers interrupt service routines (ISRs) for PRU firmware
+ *          interrupts in periodic trigger mode. When PRU firmware completes a EnDAT
+ *          encoder transaction, it triggers an interrupt to notify the R5F host.
+ *
+ *          **Load share mode (ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU):**
+ *          - Channel 0: RTU-PRU interrupt (endat_rtupru_irq_handler)
+ *          - Channel 1: PRU interrupt (endat_pru_irq_handler)
+ *          - Channel 2: TX-PRU interrupt (endat_txpru_irq_handler)
+ *          - Each channel has independent ISR registration based on enabled channels
+ *
+ *          **Single/Multi-channel single PRU mode:**
+ *          - Single PRU interrupt (endat_pru_irq_handler)
+ *          - One ISR handles all enabled channels on the PRU
+ *
+ *          **Dual PRU slice mode (ENDAT_DUAL_PRU_SLICE_ENABLE):**
+ *          - Registers second slice interrupt if CONFIG_ENDAT1 is enabled
+ *          - Uses separate interrupt number and handler for second slice
+ *
+ * \param[in] pruicss_handle PRU-ICSS handle obtained from endat_priv structure.
+ *                           Passed to ISR callbacks for PRU-ICSS register access.
+ *
+ * \note This function uses HwiP_construct() which asserts on failure
+ * \note Interrupt numbers are device and configuration specific (defined by macros)
+ */
+static void endat_interrupt_config(void *pruicss_handle)
+{
+    int32_t status;
+    HwiP_Params hwi_params;
+
+    if(pruicss_handle == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat_interrupt_config() failed due to NULL pruicss_handle");
+        return;
+    }
+
+#if(CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
+#if(CONFIG_ENDAT0_CHANNEL0_ENABLED == 1)
+    /* Register and enable RTU-PRU FW interrupt */
+    HwiP_Params_init(&hwi_params);
+    hwi_params.intNum   = ICSS_RTU_ENDAT_INT_NUM;
+    hwi_params.callback = &endat_rtupru_irq_handler;
+    hwi_params.args     = pruicss_handle;
+    hwi_params.isPulse  = FALSE;
+    hwi_params.isFIQ    = FALSE;
+    status              = HwiP_construct(&gEndatHwiObject[CONFIG_ENDAT0][0], &hwi_params);
+    DebugP_assert(status == SystemP_SUCCESS);
+#endif
+#if(CONFIG_ENDAT0_CHANNEL1_ENABLED == 1)
+    /* Register and enable PRU FW interrupt */
+    HwiP_Params_init(&hwi_params);
+    hwi_params.intNum   = ICSS_PRU_ENDAT_INT_NUM;
+    hwi_params.callback = &endat_pru_irq_handler;
+    hwi_params.args     = pruicss_handle;
+    hwi_params.isPulse  = FALSE;
+    hwi_params.isFIQ    = FALSE;
+    status              = HwiP_construct(&gEndatHwiObject[CONFIG_ENDAT0][1], &hwi_params);
+    DebugP_assert(status == SystemP_SUCCESS);
+#endif
+#if(CONFIG_ENDAT0_CHANNEL2_ENABLED == 1)
+
+    /* Register and enable TX-PRU FW interrupt */
+    HwiP_Params_init(&hwi_params);
+    hwi_params.intNum   = ICSS_TXPRU_ENDAT_INT_NUM;
+    hwi_params.callback = &endat_txpru_irq_handler;
+    hwi_params.args     = pruicss_handle;
+    hwi_params.isPulse  = FALSE;
+    hwi_params.isFIQ    = FALSE;
+    status              = HwiP_construct(&gEndatHwiObject[CONFIG_ENDAT0][2], &hwi_params);
+    DebugP_assert(status == SystemP_SUCCESS);
+#endif
+#else
+    /* Register and enable PRU FW interrupt */
+    HwiP_Params_init(&hwi_params);
+    hwi_params.intNum   = ICSS_PRU_ENDAT_INT_NUM;
+    hwi_params.callback = &endat_pru_irq_handler;
+    hwi_params.args     = pruicss_handle;
+    hwi_params.isPulse  = FALSE;
+    hwi_params.isFIQ    = FALSE;
+    status              = HwiP_construct(&gEndatHwiObject[CONFIG_ENDAT0][0], &hwi_params);
+    DebugP_assert(status == SystemP_SUCCESS);
+#endif
+
+#if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
+    /* NOTE: Dual handle example using PRU0 and PRU1 is tested only with
+    * ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU mode on AM261x. Configuration is
+    * done for one channel only, assuming single PRU mode.
+    */
+    /* Register and enable PRU FW interrupt */
+    HwiP_Params_init(&hwi_params);
+    hwi_params.intNum   = ICSS_PRU_ENDAT_INT_NUM_SECOND_SLICE;
+    hwi_params.callback = &endat_pru_irq_handler_second_slice;
+    hwi_params.args     = pruicss_handle;
+    hwi_params.isPulse  = FALSE;
+    hwi_params.isFIQ    = FALSE;
+    status              = HwiP_construct(&gEndatHwiObject[CONFIG_ENDAT1][0], &hwi_params);
+    DebugP_assert(status == SystemP_SUCCESS);
+#endif
+}
+
+int32_t endat_config_periodic_mode(endat_periodic_interface *endat_periodic_interface)
+{
+    int32_t status;
+    uint32_t i;
+    endat_priv *priv = NULL;
+    void *pruicss_handle = NULL;
+
+    /* NULL check on interface pointer and handle(s) */
+    if(endat_periodic_interface == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat_config_periodic_mode() failed due to NULL endat_periodic_interface pointer");
+        return SystemP_FAILURE;
+    }
+
+    for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
+    {
+        if(endat_periodic_interface->handle[i] == NULL)
+        {
+            DebugP_log("\r\n\n|ERROR: endat_config_periodic_mode() failed due to NULL handle for EnDAT instance %u", i);
+            return SystemP_FAILURE;
+        }
+    }
+
+    /* PRU-ICSS Level Global Configuration uses first EnDAT handle */
+    /* ASSUMPTION: Same PRU-ICSS instance is used for multiple EnDAT handles in this example */
+    priv = endat_get_priv(endat_periodic_interface->handle[CONFIG_ENDAT0]);
+    if(priv == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat_config_periodic_mode() failed due to NULL priv pointer");
+        return SystemP_FAILURE;
+    }
+
+    pruicss_handle = (void *)(priv->pruicss_handle);
+    if(pruicss_handle == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat_config_periodic_mode() failed due to NULL pruicss_handle");
+        return SystemP_FAILURE;
+    }
+
+    /* Configure IEP */
+    status = endat_config_iep(endat_periodic_interface);
+    if(status != SystemP_SUCCESS)
+    {
+        DebugP_log("\r\n\n|ERROR: endat_config_iep() failed inside endat_config_periodic_mode()");
+        return status;
+    }
+
+    /* Initialize PRU-ICSS Interrupt Controller */
+    /* ASSUMPTION: Same PRU-ICSS instance is used for multiple EnDAT handles in this example */
+#if(CONFIG_ENDAT0_PRUICSS_INSTANCE == 1)
+    status = PRUICSS_intcInit(pruicss_handle, &icss1_intc_initdata);
+    if(status != SystemP_SUCCESS)
+    {
+        DebugP_log("\r\n\n|ERROR: PRUICSS_intcInit() failed inside endat_config_periodic_mode()");
+        return status;
     }
 #else
-    status = PRUICSS_intcInit(gPruIcssXHandle, &icss0_intc_initdata);
-    if (status != SystemP_SUCCESS)
+    status = PRUICSS_intcInit(pruicss_handle, &icss0_intc_initdata);
+    if(status != SystemP_SUCCESS)
     {
-        return 0;
+        DebugP_log("\r\n\n|ERROR: PRUICSS_intcInit() failed inside endat_config_periodic_mode()");
+        return status;
     }
 #endif
-    /*config Interrupt*/
-    endat_interrupt_config(endat_periodic_interface);
-    return 1;
-
+    /* Configure Interrupts */
+    endat_interrupt_config(pruicss_handle);
+    return SystemP_SUCCESS;
 }
 
-void endat_stop_periodic_continuous_mode(struct endat_periodic_interface *endat_periodic_interface)
+int32_t endat_stop_periodic_mode(endat_periodic_interface *endat_periodic_interface)
 {
-    /*reset iep timer*/
-    void *pruicss_iep = endat_periodic_interface->pruicss_iep;
-    uint8_t temp;
-    /*clear IEP*/
-    temp = HW_RD_REG8((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG );
-    temp &= 0xFE;
-    HW_WR_REG8((uint8_t*)pruicss_iep + CSL_ICSS_PR1_IEP0_SLV_GLOBAL_CFG_REG, temp);
+    const endat_attrs *attrs[CONFIG_ENDAT_NUM_INSTANCES] = {NULL};
+    endat_priv *priv[CONFIG_ENDAT_NUM_INSTANCES] = {NULL};
+    uint8_t ch_idx;
+    uint32_t i;
+    void *pru_iep;
+    int32_t status;
+
+    /* NULL check on interface pointer and handle(s) */
+    if(endat_periodic_interface == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat_stop_periodic_mode() failed due to NULL endat_periodic_interface pointer");
+        return SystemP_FAILURE;
+    }
+
+    for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
+    {
+        attrs[i] = endat_get_attrs(endat_periodic_interface->handle[i]);
+        priv[i] = endat_get_priv(endat_periodic_interface->handle[i]);
+        if((endat_periodic_interface->handle[i] == NULL) || (attrs[i] == NULL) || (priv[i] == NULL))
+        {
+            DebugP_log("\r\n\n|ERROR: endat_stop_periodic_mode() failed due to NULL handle/attrs/priv for EnDAT instance %u", i);
+            return SystemP_FAILURE;
+        }
+    }
+
+    /* PRU-ICSS Level Global Configuration uses first EnDAT handle */
+    /* ASSUMPTION: Same PRU-ICSS instance and IEP instance is used for multiple EnDAT handles in this example */
+    pru_iep = attrs[CONFIG_ENDAT0]->iep_base_addr;
+    if(pru_iep == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat_stop_periodic_mode() failed due to NULL iep_base_addr");
+        return SystemP_FAILURE;
+    }
+
+    if(priv[CONFIG_ENDAT0]->pruicss_handle == NULL)
+    {
+        DebugP_log("\r\n\n|ERROR: endat_stop_periodic_mode() failed due to NULL pruicss_handle");
+        return SystemP_FAILURE;
+    }
+
+    /* Disable IEP counter first */
+    status = endat_disable_iep_counter(priv[CONFIG_ENDAT0]->pruicss_handle, attrs[CONFIG_ENDAT0]->iep_instance);
+    if(status == SystemP_FAILURE)
+    {
+        DebugP_log("\r\n\n|ERROR: endat_disable_iep_counter() failed");
+        return SystemP_FAILURE;
+    }
+
+    /* Disable events based on mode */
+    if(endat_periodic_interface->is_cap_mode)
+    {
+        for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
+        {
+            /* CAP mode: Disable capture events */
+            if(attrs[i]->load_share_enabled)
+            {
+                /* Load share mode: Iterate through enabled channels using channel_mask */
+                for(ch_idx = 0; ch_idx < ENDAT_NUM_CH_PER_SLICE_MAX; ch_idx++)
+                {
+                    if(attrs[i]->channel_mask & (1U << ch_idx))
+                    {
+                        endat_disable_iep_cap_event(pru_iep, attrs[i]->iep_cap_event[ch_idx]);
+                    }
+                }
+            }
+            else
+            {
+                /* Non-load share mode: Use index 0 always */
+                endat_disable_iep_cap_event(pru_iep, attrs[i]->iep_cap_event[0]);
+            }
+        }
+        /* Disable IEP SYNC generation for CAP mode */
+#if defined(SOC_AM243X)
+        endat_disable_iep_cap_sync(pru_iep);
+#endif /* SOC_AM243X */
+    }
+    else
+    {
+        for(i = 0; i < CONFIG_ENDAT_NUM_INSTANCES; i++)
+        {
+            /* CMP mode: Disable compare events */
+            if(attrs[i]->load_share_enabled)
+            {
+                /* Load share mode: Iterate through enabled channels using channel_mask */
+                for(ch_idx = 0; ch_idx < ENDAT_NUM_CH_PER_SLICE_MAX; ch_idx++)
+                {
+                    if(attrs[i]->channel_mask & (1U << ch_idx))
+                    {
+                        endat_disable_iep_cmp_event(pru_iep, attrs[i]->iep_cmp_event[ch_idx]);
+                    }
+                }
+            }
+            else
+            {
+                /* Non-load share mode: Use index 0 always */
+                endat_disable_iep_cmp_event(pru_iep, attrs[i]->iep_cmp_event[0]);
+            }
+        }
+        /* Disable IEP reset on CMP0 event */
+        endat_disable_iep_reset_on_cmp0(pru_iep);
+    }
+
+#if(CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
+#if(CONFIG_ENDAT0_CHANNEL0_ENABLED == 1)
+    HwiP_destruct(&gEndatHwiObject[CONFIG_ENDAT0][0]);
+#endif
+#if(CONFIG_ENDAT0_CHANNEL1_ENABLED == 1)
+    HwiP_destruct(&gEndatHwiObject[CONFIG_ENDAT0][1]);
+#endif
+#if(CONFIG_ENDAT0_CHANNEL2_ENABLED == 1)
+    HwiP_destruct(&gEndatHwiObject[CONFIG_ENDAT0][2]);
+#endif
+#else
+    HwiP_destruct(&gEndatHwiObject[CONFIG_ENDAT0][0]);
+#endif
+
+#if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
+    /* NOTE: Dual handle example using PRU0 and PRU1 is tested only with
+    * ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU mode on AM261x. Configuration is
+    * done for one channel only, assuming single PRU mode.
+    */
+    HwiP_destruct(&gEndatHwiObject[CONFIG_ENDAT1][0]);
+#endif
+    return SystemP_SUCCESS;
 }
 
-/* PRU EnDat FW IRQ handler */
-void pruEnDatIrqHandler(void *args)
+/* PRU FW IRQ handler */
+void endat_pru_irq_handler(void *pruicss_handle)
 {
-    /* Increment PRU ENDAT IRQ count */
-    gPruEnDatIrqCnt0++;
+    if(pruicss_handle == NULL)
+    {
+        return;
+    }
+
+    /* Increment IRQ count */
+#if(CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
+    /* In load share mode, index 1 is used for channel 1 connected to PRU */
+    gPruEndatIrqCnt[CONFIG_ENDAT0][1]++;
+#else
+    /* In single PRU mode, index 0 is used for any channel connected to PRU */
+    gPruEndatIrqCnt[CONFIG_ENDAT0][0]++;
+#endif
+    /* Clear interrupt at source */
+    PRUICSS_clearEvent((PRUICSS_Handle)pruicss_handle, PRU_TRIGGER_HOST_ENDAT_EVT);
+}
+
+#if(CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
+/* RTU-PRU FW IRQ handler */
+void endat_rtupru_irq_handler(void *pruicss_handle)
+{
+    if(pruicss_handle == NULL)
+    {
+        return;
+    }
+
+    /* Increment IRQ count */
+    gPruEndatIrqCnt[CONFIG_ENDAT0][0]++;
 
     /* Clear interrupt at source */
-    PRUICSS_clearEvent(gPruIcssXHandle, PRU_TRIGGER_HOST_ENDAT_EVT0);
+    PRUICSS_clearEvent((PRUICSS_Handle)pruicss_handle, RTU_TRIGGER_HOST_ENDAT_EVT);
 }
-/* PRU EnDat FW IRQ handler */
-void rtuEnDatIrqHandler(void *args)
+
+/* TX-PRU FW IRQ handler */
+void endat_txpru_irq_handler(void *pruicss_handle)
 {
-    /* Increment PRU ENDAT IRQ count */
-    gPruEnDatIrqCnt1++;
+    if(pruicss_handle == NULL)
+    {
+        return;
+    }
+
+    /* Increment IRQ count */
+    gPruEndatIrqCnt[CONFIG_ENDAT0][2]++;
 
     /* Clear interrupt at source */
-    PRUICSS_clearEvent(gPruIcssXHandle, PRU_TRIGGER_HOST_ENDAT_EVT1);
+    PRUICSS_clearEvent((PRUICSS_Handle)pruicss_handle, TXPRU_TRIGGER_HOST_ENDAT_EVT);
 }
-/* PRU EnDat FW IRQ handler */
-void txpruEnDatIrqHandler(void *args)
+#endif
+
+#if defined(ENDAT_DUAL_PRU_SLICE_ENABLE)
+/* NOTE: Dual handle example using PRU0 and PRU1 is tested only with
+ * ENDAT_MODE_SINGLE_CHANNEL_SINGLE_PRU mode on AM261x. Only PRU IRQ
+ * handler is defined.
+ */
+
+/* PRU FW IRQ handler */
+void endat_pru_irq_handler_second_slice(void *pruicss_handle)
 {
-    /*Increment PRU ENDAT IRQ count */
-    gPruEnDatIrqCnt2++;
+    if(pruicss_handle == NULL)
+    {
+        return;
+    }
+
+    /* Increment IRQ count */
+    /* In single PRU mode, index 0 is used for any channel connected to PRU */
+    gPruEndatIrqCnt[CONFIG_ENDAT1][0]++;
 
     /* Clear interrupt at source */
-    PRUICSS_clearEvent(gPruIcssXHandle, PRU_TRIGGER_HOST_ENDAT_EVT2);
+    PRUICSS_clearEvent((PRUICSS_Handle)pruicss_handle, PRU_TRIGGER_HOST_ENDAT_EVT_SECOND_SLICE);
 }
+#endif

@@ -55,6 +55,106 @@ function mergeCgtOptions(project, commonCgtOptions) {
     return project;
 }
 
+function addOsDefine(project, os) {
+
+    let osDefine = "OS_" + os.toUpperCase().replace(/-/g, "_");;
+    if (project.hasOwnProperty("defines") &&
+        project["defines"].hasOwnProperty("common") &&
+        project["defines"]["common"].includes(osDefine) == false) {
+            project["defines"]["common"].push(osDefine);
+    }
+    return project;
+}
+
+function addOsIncludes(project, os, buildOption) {
+    let includes = [];
+    switch(os) {
+        case "freertos":
+            includes.push("${MCU_PLUS_SDK_PATH}/source/kernel/freertos/FreeRTOS-Kernel/include");
+            if (buildOption.cpu.match(/m4f*/)) {
+                includes.push("${MCU_PLUS_SDK_PATH}/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CM4F");
+                cpu = "m4f";
+            } else if (buildOption.cpu.match (/r5f*/)) {
+                includes.push("${MCU_PLUS_SDK_PATH}/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F");
+                cpu = "r5f";
+            } else if (buildOption.cpu.match(/a53*/)) {
+                includes.push("${MCU_PLUS_SDK_PATH}/source/kernel/freertos/portable/GCC/ARM_CA53");
+                cpu = "a53";
+            } else if (buildOption.cpu.match(/c66*/)) {
+                includes.push("${MCU_PLUS_SDK_PATH}/source/kernel/freertos/portable/TI_CGT/DSP_C66");
+                cpu = "c66";
+            }
+            includes.push("${MCU_PLUS_SDK_PATH}/source/kernel/freertos/config/" + buildOption.device + "/" + cpu);
+            break;
+        case "freertos-smp":
+            includes.push("${MCU_PLUS_SDK_PATH}/source/kernel/freertos/FreeRTOS-Kernel-smp/include");
+            if (buildOption.cpu.match(/a53*/)) {
+                includes.push("${MCU_PLUS_SDK_PATH}/source/kernel/freertos/portable_smp/GCC/ARM_CA53");
+                cpu = "a53";
+            }
+            includes.push("${MCU_PLUS_SDK_PATH}/source/kernel/freertos/config/" + buildOption.device + "/" + cpu + "-smp");
+            break;
+        case "freertos_mpu":
+            includes.push("${MCU_PLUS_SDK_PATH}/source/kernel/freertos/FreeRTOS-Kernel/include");
+            if (buildOption.cpu.match (/r5f*/)) {
+                includes.push("${MCU_PLUS_SDK_PATH}/source/kernel/freertos/portable/TI_ARM_CLANG/ARM_CR5F_MPU");
+                cpu = "r5f_mpu";
+            }
+            includes.push("${MCU_PLUS_SDK_PATH}/source/kernel/freertos/config/" + buildOption.device + "/" + cpu);
+            break;
+        case "safertos":
+            includes.push("${MCU_PLUS_SDK_PATH}/source/kernel/safertos/safeRTOS/kernel/include_api");
+            includes.push("${MCU_PLUS_SDK_PATH}/source/kernel/safertos/safeRTOS/config");
+            break;
+        case "nortos":
+        default:
+            break;
+    }
+    if (project.hasOwnProperty("includes") &&
+        project["includes"].hasOwnProperty("common")) {
+            for (let include of includes) {
+                if (project["includes"]["common"].includes(include) == false)
+                    project["includes"]["common"].push(include);
+            };
+    }
+    return project;
+}
+
+function getLibsBuiltwithoutOS() {
+    return [
+        "sfra",
+    ];
+}
+
+function getLibsBuiltwithOS() {
+    return [
+    ];
+}
+
+function updateLibsWithOs(project, os) {
+    let osList = require(`./device/project_${device}`).getOsList(buildOption.cpu);
+    if (project.hasOwnProperty("libs") &&
+        project["libs"].hasOwnProperty("common")) {
+        let libs_list = [];
+
+        for (let lib of project["libs"]["common"]) {
+            let libWithOs = lib.replace(/\${ConfigName}/, buildOption.os + "." + "${ConfigName}");
+            libWithOs = libWithOs.replace(/release\.lib/, buildOption.os + "." + "release.lib");
+            if (osList.some(osItem => lib.match(new RegExp("^" + osItem + "\\."))) ||
+            getLibsBuiltwithOS().some(libWithOs => lib.match(new RegExp("^" + libWithOs))) ||
+            getLibsBuiltwithoutOS().some(libWithoutOs => lib.match(new RegExp("^" + libWithoutOs)))) {
+                libs_list.push(lib);
+            }
+            else
+            {
+                libs_list.push(libWithOs);
+            }
+        };
+        project["libs"]["common"] = libs_list;
+    }
+    return project;
+}
+
 function relative(pathStr1, pathStr2) {
     let relpath = path.relative(pathStr1, pathStr2)
 
@@ -115,7 +215,7 @@ function deleteFile(filepath)
       try {
         await fs_promise.unlink(filepath);
       } catch (e) {
-        /* file doens't exist. Skip error!! */
+        /* file doesn't exist. Skip error!! */
       }
     })();
 }
@@ -225,11 +325,71 @@ function getToolVersions(device) {
  * console.log(defaultVersion); // "10.02.00"
  */
 function getSdkVersion(device) {
+    if (isDevelopmentMode()) {
+        return versions.sdkVersions.default.version;
+    }
+
     if (versions.sdkVersions.hasOwnProperty(device) &&
         versions.sdkVersions[device].hasOwnProperty('version')) {
         return versions.sdkVersions[device].version;
     }
     return versions.sdkVersions.default.version;
+}
+
+/**
+ * Get ICSDK version for a specific device
+ *
+ * @param {string} device - Device identifier (e.g., 'am64x', 'am243x')
+ * @returns {string} ICSDK version string for the specified device
+ *                   If device-specific version isn't found, returns default version
+ *
+ * @example
+ * // Returns am64x-specific ICSDK version
+ * const icsdkVersion = getIcsdkVersion('am64x');
+ * console.log(icsdkVersion); // "11.00.00"
+ *
+ * // For unknown device, returns default SDK version
+ * const defaultVersion = getIcsdkVersion('unknown');
+ * console.log(defaultVersion); // "10.02.00"
+ */
+function getIcsdkVersion(device) {
+    if (isDevelopmentMode()) {
+        return versions.icsdkVersions.default.version;
+    }
+
+    if (versions.icsdkVersions.hasOwnProperty(device) &&
+        versions.icsdkVersions[device].hasOwnProperty('version')) {
+        return versions.icsdkVersions[device].version;
+    }
+    return versions.icsdkVersions.default.version;
+}
+
+/**
+ * Get MCU+ SDK version for a specific device
+ *
+ * @param {string} device - Device identifier (e.g., 'am64x', 'am243x')
+ * @returns {string} MCU+ SDK version string for the specified device
+ *                   If device-specific version isn't found, returns default version
+ *
+ * @example
+ * // Returns am64x-specific MCU+ SDK version
+ * const mcusdkVersion = getMcusdkVersion('am64x');
+ * console.log(mcusdkVersion); // "11.00.00"
+ *
+ * // For unknown device, returns default SDK version
+ * const defaultVersion = getMcusdkVersion('unknown');
+ * console.log(defaultVersion); // "10.02.00"
+ */
+function getMcusdkVersion(device) {
+    if (isDevelopmentMode()) {
+        return versions.mcusdkVersions.default.version;
+    }
+
+    if (versions.mcusdkVersions.hasOwnProperty(device) &&
+        versions.mcusdkVersions[device].hasOwnProperty('version')) {
+        return versions.mcusdkVersions[device].version;
+    }
+    return versions.mcusdkVersions.default.version;
 }
 
 /**
@@ -254,6 +414,11 @@ module.exports = {
     setInstrumentationMode,
     cleanBuildfiles,
     mergeCgtOptions,
+    addOsDefine,
+    addOsIncludes,
+    updateLibsWithOs,
+    getLibsBuiltwithOS,
+    getLibsBuiltwithoutOS,
     convertTemplateToFile,
     path: {
         relative,
@@ -265,5 +430,7 @@ module.exports = {
     versions,
     getToolVersions,
     getSdkVersion,
+    getIcsdkVersion,
+    getMcusdkVersion,
     formatSdkVersion,
 };

@@ -3,17 +3,13 @@
 [TOC]
 
 This page lists all the examples related to position sense.
-\cond SOC_AM64X || SOC_AM243X
--# \subpage EXAMPLE_MOTORCONTROL_ENDAT
--# \subpage EXAMPLE_MOTORCONTROL_HDSL
--# \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA
-\endcond
-\cond SOC_AM64X || SOC_AM243X
--# \subpage EXAMPLE_MOTORCONTROL_ENDAT
--# \subpage EXAMPLE_MOTORCONTROL_HDSL
--# \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA
+\cond SOC_AM243X
 -# \subpage EXAMPLE_MOTORCONTROL_BISSC
+-# \subpage EXAMPLE_MOTORCONTROL_ENDAT
+-# \subpage EXAMPLE_MOTORCONTROL_ENDAT3
+-# \subpage EXAMPLE_MOTORCONTROL_HDSL
 -# \subpage EXAMPLE_MOTORCONTROL_NIKON
+-# \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA
 \endcond
 \cond SOC_AM263X
 -# \subpage EXAMPLE_MOTORCONTROL_BISSC
@@ -25,6 +21,7 @@ This page lists all the examples related to position sense.
 \cond SOC_AM263PX
 -# \subpage EXAMPLE_MOTORCONTROL_BISSC
 -# \subpage EXAMPLE_MOTORCONTROL_ENDAT
+-# \subpage EXAMPLE_MOTORCONTROL_ENDAT3
 -# \subpage EXAMPLE_MOTORCONTROL_NIKON
 -# \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA
 -# \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA_OVER_UART
@@ -32,6 +29,7 @@ This page lists all the examples related to position sense.
 \cond SOC_AM261X
 -# \subpage EXAMPLE_MOTORCONTROL_BISSC
 -# \subpage EXAMPLE_MOTORCONTROL_ENDAT
+-# \subpage EXAMPLE_MOTORCONTROL_ENDAT3
 -# \subpage EXAMPLE_MOTORCONTROL_HDSL
 -# \subpage EXAMPLE_MOTORCONTROL_NIKON
 -# \subpage EXAMPLE_MOTORCONTROL_TAMAGAWA
@@ -100,7 +98,7 @@ When using alternative pin options, the 'G_MUX_EN' bit of the 'ICSSG_SA_MX_REG' 
 \endcond
 
 \cond (SOC_AM243X)
-#### LP-AM243 Booster Pack Pin Configuration
+#### LP-AM243 + BP-AM2BLDCSERVO Booster Pack Pin Multiplexing for SDK example
 <table>
 <tr>
    <th>Pin name
@@ -128,9 +126,9 @@ When using alternative pin options, the 'G_MUX_EN' bit of the 'ICSSG_SA_MX_REG' 
    <td>Channel 0 receive
 </tr>
 <tr>
-   <td>GPIO1_78 Pin (J8.73)
-   <td>ENC1_EN (J8.73)
-   <td>Enable 3 channel peripheral interface in Axis 1 of BP (C16 GPIO pin)
+   <td>GPIO Pin (GPIO1_78/C16)
+   <td>J8.73
+   <td>Enable encoder voltage in Axis 1 of BP (Fix this pin to high with SoC GPIO mode)
 </tr>
 <tr>
    <td>PRG0_PRU1_GPO6
@@ -153,15 +151,15 @@ When using alternative pin options, the 'G_MUX_EN' bit of the 'ICSSG_SA_MX_REG' 
    <td>Channel 2 receive
 </tr>
 <tr>
-   <td>GPIO1_77 Pin (J8.74)
-   <td>ENC2_EN
-   <td>Enable 3 channel peripheral interface in Axis 2 of BP (B17 GPIO pin)
+   <td>GPIO Pin (GPIO1_77/B17)
+   <td>J8.74
+   <td>Enable encoder voltage in Axis 2 of BP (Fix this pin to high with SoC GPIO mode)
 </tr>
 </table>
 \endcond
 
 \cond SOC_AM261X
-#### LP-AM261 Booster Pack Pin Configuration
+#### LP-AM261 + BP-AM2BLDCSERVO Booster Pack Pin Multiplexing for SDK example
 <table>
 <tr>
    <th>Pin name
@@ -171,34 +169,59 @@ When using alternative pin options, the 'G_MUX_EN' bit of the 'ICSSG_SA_MX_REG' 
 <tr>
    <td>PR1_PRU0_GPIO0
    <td>J2.11
-   <td>Channel 0 clock
+   <td>PRU0 Channel 0 clock
 </tr>
 <tr>
    <td>PR1_PRU0_GPIO1
    <td>J7.67
-   <td>Channel 0 transmit
+   <td>PRU0 Channel 0 transmit
 </tr>
 <tr>
    <td>PR1_PRU0_GPIO3
    <td>J7.68
-   <td>Channel 0 transmit enable
+   <td>PRU0 Channel 0 transmit enable
 </tr>
 <tr>
-    <td>PR1_PRU0_GPI9
-    <td>J8.71
-    <td>Channel 0 receive
+   <td>PR1_PRU0_GPI9
+   <td>J8.71
+   <td>PRU0 Channel 0 receive
 </tr>
 <tr>
-   <td>GPIO21 Pin (J8.73)
-   <td>ENC1_EN
-   <td>Enable 3 channel peripheral interface in Axis 1 of BP (B10 GPIO pin)
+   <td>GPIO Pin (GPIO_21/B10)
+   <td>J8.73
+   <td>Enable encoder voltage in Axis 1 of BP (Fix this pin to high with SoC GPIO mode)
+</tr>
+<tr>
+   <td>PR1_PRU1_GPIO0
+   <td>J7.69
+   <td>PRU1 Channel 0 clock
+</tr>
+<tr>
+   <td>PR1_PRU1_GPIO1
+   <td>J8.72
+   <td>PRU1 Channel 0 transmit
+</tr>
+<tr>
+   <td>PR1_PRU1_GPIO2
+   <td>J6.57
+   <td>PRU1 Channel 0 transmit enable
+</tr>
+<tr>
+   <td>PR1_PRU1_GPI9
+   <td>J7.70
+   <td>PRU1 Channel 0 receive
+</tr>
+<tr>
+   <td>GPIO Pin (GPIO_22/A10)
+   <td>J8.74
+   <td>Enable encoder voltage in Axis 2 of BP (Fix this pin to high with SoC GPIO mode)
 </tr>
 </table>
 \endcond
 
 \cond (SOC_AM263X || SOC_AM263PX)
 
-##### @VAR_LP_BOARD_NAME Booster Pack Pin Configuration
+#### @VAR_LP_BOARD_NAME + BP-AM2BLDCSERVO Booster Pack Pin Multiplexing for SDK example
 <table>
 <tr>
    <th>Pin name
@@ -226,9 +249,9 @@ When using alternative pin options, the 'G_MUX_EN' bit of the 'ICSSG_SA_MX_REG' 
    <td>Channel 1 receive
 </tr>
 <tr>
-   <td>SDFM0_D1 Pin (J8.73)
-   <td>ENC1_EN
-   <td>Enable 3 channel peripheral interface in Axis 1 of BP (D13 GPIO pin)
+   <td>GPIO Pin (SDFM0_D1/D13)
+   <td>J8.73
+   <td>Enable encoder voltage in Axis 1 of BP (Fix this pin to high with SoC GPIO mode)
 </tr>
 </table>
 \endcond
@@ -260,28 +283,28 @@ For PRU-related issues, verify that the application is loading the PRU firmware 
 
 \note This subsection is applicable for BiSS-C, EnDat, Nikon A-format, and Tamagawa only.
 
-- In this mode, data transmission and reception must happen simultaneously on all channels.
+- Data transmission and reception must happen simultaneously on all channels.
 - The encoder configuration and cable length should be the same on all channels.
 - If encoders across channels don't respond at the same time, this mode will not work. Load share configuration should be used instead.
 
 #### Multi-channel with load share mode
 
-\note This subsection is applicable for BiSS-C, EnDat, HDSL, and Nikon A-format only.
+\note This subsection is not applicable for EnDAT3.
 
-- In this mode, data transmission and reception can happen independently on all channels.
+- Data transmission and reception can happen independently on all channels.
 - After a command is sent, all channels wait for a response and process the response independently. However, all channels must finish processing before the next command can be triggered. (This restriction does not apply to HDSL. HDSL channels can continue operating independently.)
 
-### Periodic Continuous Mode
+### Periodic Trigger Mode
 
-\note This subsection is applicable for BiSS-C, EnDat, Nikon A-format and Tamagawa only. Load share mode is not available for Tamagawa.
+\note This subsection is not applicable for HDSL.
 
-SDK examples uses IEP CMP event to trigger periodic mode. CMP0 is used to get periodic CMP events by resetting the IEP counter continuously. Firmware triggers a R5F interrupt after getting a response from the encoder. The application code uses a callback function to clear the PRU interrupt, which can be modified as per the use case. CMP3 is used for single channel and single PRU multi-channel mode. For multi-channel load share mode, CMP3 is used for RTU core, CMP5 is used for PRU core and CMP6 is used for TX PRU core channel. Refer the example specific page for details on how to modify the compare events.
+SDK examples uses IEP compare/capture event(s) to trigger commands in periodic mode. Firmware triggers a R5F interrupt after getting a response from the encoder. The application code uses a callback function to clear the PRU interrupt, which can be modified as per the use case. CMP/CAP event number can be configured using SysConfig module of encoder. Refer the example specific page for details (see \ref NIKON_EXAMPLE_PERIODIC_MODE).
 
-When programming the values for CMP based trigger events, ensure that the command send and receive can complete within the cycle time (configured with CMP0). In multi-channel, ensure that command completion for timings for all channels are considered. Incorrect values may send PRU FW in bad state. Also, refer to encoder specifications to ensure that requirement for mimimum interval between two commands is met.
+When programming the values for periodic trigger CMP/CAP mode, ensure that the command send and receive can complete within the cycle time. In multi-channel, ensure that command completion for timings for all channels are considered. Incorrect values may send PRU FW in bad state. Also, refer to encoder specifications to ensure that requirement for mimimum interval between two commands is met.
 
 ### IEP Registers Configuration
 
-The Industrial Ethernet Peripheral (IEP) is used for periodic continuous mode. If the IEP is not configured correctly, periodic continuous mode will not work.
+The Industrial Ethernet Peripheral (IEP) is used for periodic trigger mode. If the IEP is not configured correctly, periodic trigger mode will not work.
 
 To verify IEP configuration:
 
@@ -305,44 +328,56 @@ Table 4-1573 of the AM261x Sitara Processors Technical Reference Manual Register
 \endif
 
 ### Interrupt Controller Internal Signals Mapping
-If you experience missing PRU interrupts or incorrect IRQ mapping, verify the interrupt mapping between PRU and R5F in the SysConfig PRU INTC module. The Host channel number and PRU Event should match your configuration.
+If you experience missing PRU interrupts or incorrect IRQ mapping, verify the interrupt mapping between PRU and R5F.
 
-For example, the EnDAT example uses:
+- The host interrupt numbers defined in "*_periodic_trigger.c" file(s) in SDK examples (e.g., ICSS_PRU_ENDAT_INT_NUM) must match the interrupt channel assignments in SysConfig PRU(ICSS) module -> INTC section -> INTC Host Interrupt
+- Host interrupt channels route PRU events to the R5F core
+- Mapping: Host Interrupt 2-9 in SysConfig = HOST_INTR_PEND_0-7 registers
+- If the host interrupt assignments are changed in SysConfig, macros in "*_periodic_trigger.c" file(s) need to be updated accordingly to maintain proper interrupt delivery from PRU to R5F.
+- The INTC event numbers defined "*_periodic_trigger.c" file(s) must match the corresponding definitions in the PRU firmware header file (e.g., "source/position_sense/endat/firmware/endat_icss_reg_defs.h")
+- These event numbers are used for communication between the R5F and PRU firmware. Any changes to these values must be synchronized between both files (firmware and application) to ensure proper interrupt handling.
+
+For example, the EnDAT single channel example uses:
 - PRU Event: `18: pr0_pru_mst_intr[2]_intr_req`
-- Host Channel: 2
+- Channel: 2
+- Host Interrupt: 2
 
 \image html EnDAT_debug_INTC_view.png "PRU-ICSS INTC view"
 
 The interrupt service routine (ISR) configuration is implemented in `endat_periodic_trigger.c`. Here's a key code snippet showing the configuration:
 
 ```c
-/* R5F interrupt settings for ICSSG */
-#define ICSS_PRU_ENDAT_INT_NUM         ( CSLR_R5FSS0_CORE0_INTR_PRU_ICSSG0_PR1_HOST_INTR_PEND_0 )
+   /* Register and enable PRU FW interrupt */
+   HwiP_Params_init(&hwi_params);
+   hwi_params.intNum   = ICSS_PRU_ENDAT_INT_NUM;
+   hwi_params.callback = &endat_pru_irq_handler;
+   hwi_params.args     = pruicss_handle;
+   hwi_params.isPulse  = FALSE;
+   hwi_params.isFIQ    = FALSE;
+   status              = HwiP_construct(&gEndatHwiObject[CONFIG_ENDAT0][0], &hwi_params);
+   DebugP_assert(status == SystemP_SUCCESS);
 
-/* Register & enable ICSSG EnDat PRU FW interrupt */
-HwiP_Params_init(&hwiPrms);
-hwiPrms.intNum      = ICSS_PRU_ENDAT_INT_NUM;
-hwiPrms.callback    = &pruEnDatIrqHandler;
-hwiPrms.args        = 0;
-hwiPrms.isPulse     = FALSE;
-hwiPrms.isFIQ       = FALSE;
-status              = HwiP_construct(&gIcssgEncoderHwiObject0, &hwiPrms);
-DebugP_assert(status == SystemP_SUCCESS);
+   /* PRU FW IRQ handler */
+   void endat_pru_irq_handler(void *pruicss_handle)
+   {
+      if(pruicss_handle == NULL)
+      {
+         return;
+      }
 
-/* PRU EnDat FW IRQ handler */
-void pruEnDatIrqHandler(void *args)
-{
-    /* Increment PRU ENDAT IRQ count */
-    gPruEnDatIrqCnt0++;
-
-    /* Clear interrupt at source */
-    PRUICSS_clearEvent(gPruIcssXHandle, PRU_TRIGGER_HOST_ENDAT_EVT0);
-}
+      /* Increment IRQ count */
+   #if(CONFIG_ENDAT0_MODE == ENDAT_MODE_MULTI_CHANNEL_MULTI_PRU)
+      /* In load share mode, index 1 is used for channel 1 connected to PRU */
+      gPruEndatIrqCnt[CONFIG_ENDAT0][1]++;
+   #else
+      /* In single PRU mode, index 0 is used for any channel connected to PRU */
+      gPruEndatIrqCnt[CONFIG_ENDAT0][0]++;
+   #endif
+      /* Clear interrupt at source */
+      PRUICSS_clearEvent((PRUICSS_Handle)pruicss_handle, PRU_TRIGGER_HOST_ENDAT_EVT);
+   }
 ```
 
-The PRU event number is defined in `endat_periodic_trigger.h`:
-```c
-#define PRU_TRIGGER_HOST_ENDAT_EVT0   ( 2+16 )
-```
+The R5F interrupt number "ICSS_PRU_ENDAT_INT_NUM" and PRU event number "PRU_TRIGGER_HOST_ENDAT_EVT" and is defined in `endat_periodic_trigger.h`.
 
 \note Arm is a registered trademark of Arm Limited (or its subsidiaries or affiliates) in the US and/or elsewhere.
